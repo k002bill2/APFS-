@@ -1,0 +1,197 @@
+/* =========================================================================
+   농림수산식품모태펀드 투자자산관리시스템 — 디자인 토큰
+   도메인 톤: 숲(forest green). 브랜드 블루/시안은 강조·링크·차트 보조.
+   사용자 지정 브랜드 색: #0058A8 #00AAE5 #2D7846 #7BB93C #58585B
+   ========================================================================= */
+
+@font-face{font-family:"Pretendard";font-weight:400;font-style:normal;font-display:swap;
+  src:url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Regular.woff2") format("woff2");}
+@font-face{font-family:"Pretendard";font-weight:500;font-style:normal;font-display:swap;
+  src:url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Medium.woff2") format("woff2");}
+@font-face{font-family:"Pretendard";font-weight:600;font-style:normal;font-display:swap;
+  src:url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-SemiBold.woff2") format("woff2");}
+@font-face{font-family:"Pretendard";font-weight:700;font-style:normal;font-display:swap;
+  src:url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Bold.woff2") format("woff2");}
+@font-face{font-family:"Pretendard";font-weight:800;font-style:normal;font-display:swap;
+  src:url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-ExtraBold.woff2") format("woff2");}
+
+:root{
+  --font-sans:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",system-ui,sans-serif;
+
+  /* brand */
+  --brand-blue:#0058A8;
+  --brand-cyan:#00AAE5;
+  --brand-forest:#2D7846;
+  --brand-lime:#7BB93C;
+  --brand-gray:#58585B;
+
+  /* surfaces (light) */
+  --bg:#F4F6F2;
+  --bg-deep:#ECEFEA;
+  --card:#FFFFFF;
+  --card-raised:#FFFFFF;
+  --foreground:#1A2620;
+  --muted:#F0F3EE;
+  --muted-foreground:#5E6B60;
+  --caption:#7C887E;
+  --border:rgba(31,54,40,.12);
+  --border-strong:rgba(31,54,40,.20);
+  --input:rgba(31,54,40,.16);
+
+  /* roles — 이미지 지정 역할색 */
+  --primary:#0E963B;
+  --primary-hover:#0B7E31;
+  --primary-foreground:#FFFFFF;
+  --secondary:#1DCDA7;
+  --secondary-foreground:#06291F;
+  --accent:#0158A8;          /* navy — links, focus, emphasis */
+  --accent-foreground:#FFFFFF;
+  --cyan:#1DCDA7;
+  --ring:#0158A8;
+
+  /* status */
+  --success:#1DCDA7;
+  --success-soft:#DCF7F0;
+  --warning:#FBB424;
+  --warning-soft:#FEF3DA;
+  --danger:#FF6B42;
+  --danger-soft:#FFE7DF;
+  --info:#0158A8;
+  --info-soft:#DDE9F5;
+
+  /* chart palette — vivid 19-color categorical spectrum.
+     1–6 = contrast-aware spread (bars vs line stay distinct); 7–19 extend it. */
+  --chart-1:#22C55E;  /* green   */
+  --chart-2:#0EA5E9;  /* sky     */
+  --chart-3:#6366F1;  /* indigo  */
+  --chart-4:#14B8A6;  /* teal    */
+  --chart-5:#F59E0B;  /* amber   */
+  --chart-6:#EC4899;  /* pink    */
+  --chart-7:#10B981;
+  --chart-8:#22D3EE;
+  --chart-9:#3B82F6;
+  --chart-10:#7C3AED;
+  --chart-11:#8B5CF6;
+  --chart-12:#A855F7;
+  --chart-13:#C026D3;
+  --chart-14:#D946EF;
+  --chart-15:#E879F9;
+  --chart-16:#F43F5E;
+  --chart-17:#F87171;
+  --chart-18:#FB923C;
+  --chart-19:#FACC15;
+  --chart-grid:rgba(31,54,40,.14);
+
+  /* fund-source fixed colors (PANTONE) */
+  --fs-agri:#2D7846;   /* 농식품 모태 · 356C  RGB 45/120/70  */
+  --fs-fish:#00AAE5;   /* 수산 모태   · 2995C RGB 0/170/229  */
+  --fs-ops:#7BB93C;    /* 운영비      · 368C  RGB 123/185/60 */
+  --fs-etc:#58585B;    /* 기타 사업   · 425C  RGB 88/88/91   */
+
+  --radius:12px;
+  --radius-lg:16px;
+  --radius-sm:8px;
+  --shadow-sm:0 1px 2px rgba(20,40,28,.06),0 1px 1px rgba(20,40,28,.04);
+  --shadow-md:0 4px 14px rgba(20,40,28,.08),0 1px 3px rgba(20,40,28,.05);
+  --shadow-lg:0 12px 34px rgba(20,40,28,.14),0 4px 10px rgba(20,40,28,.07);
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+
+.dark{
+  --bg:#0F1310;
+  --bg-deep:#0A0D0A;
+  --card:#181D17;
+  --card-raised:#1D231C;
+  --foreground:#E6EBE2;
+  --muted:#1F261D;
+  --muted-foreground:#9AA694;
+  --caption:#828E7D;
+  --border:rgba(255,255,255,.10);
+  --border-strong:rgba(255,255,255,.16);
+  --input:rgba(255,255,255,.16);
+
+  --primary:#2FB85C;          /* dark: forest green */
+  --primary-hover:#46CB71;
+  --primary-foreground:#06210F;
+  --secondary:#33DDB8;
+  --secondary-foreground:#04241B;
+  --accent:#3F9BE8;
+  --accent-foreground:#04121A;
+  --cyan:#33DDB8;
+  --ring:#3F9BE8;
+
+  --success:#33DDB8;
+  --success-soft:rgba(51,221,184,.16);
+  --warning:#FBC04A;
+  --warning-soft:rgba(251,180,36,.16);
+  --danger:#FF7E59;
+  --danger-soft:rgba(255,107,66,.18);
+  --info:#3F9BE8;
+  --info-soft:rgba(63,155,232,.16);
+
+  --chart-1:#34D27B;
+  --chart-2:#38BDF8;
+  --chart-3:#818CF8;
+  --chart-4:#2DD4BF;
+  --chart-5:#FBBF24;
+  --chart-6:#F472B6;
+  --chart-7:#34D399;
+  --chart-8:#67E8F9;
+  --chart-9:#60A5FA;
+  --chart-10:#A78BFA;
+  --chart-11:#A78BFA;
+  --chart-12:#C084FC;
+  --chart-13:#E879F9;
+  --chart-14:#F0ABFC;
+  --chart-15:#F9A8D4;
+  --chart-16:#FB7185;
+  --chart-17:#FCA5A5;
+  --chart-18:#FDBA74;
+  --chart-19:#FDE047;
+  --chart-grid:rgba(255,255,255,.10);
+
+  --fs-agri:#4E9E68;
+  --fs-fish:#2DC0F0;
+  --fs-ops:#9AD058;
+  --fs-etc:#9A9CA1;
+
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow-md:0 4px 14px rgba(0,0,0,.45);
+  --shadow-lg:0 14px 38px rgba(0,0,0,.55);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font-sans);
+  background:var(--bg);
+  color:var(--foreground);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  word-break:keep-all;
+}
+.tabular{font-variant-numeric:tabular-nums;}
+::selection{background:color-mix(in srgb,var(--primary) 26%,transparent);}
+
+/* scrollbars */
+*{scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent;}
+*::-webkit-scrollbar{width:10px;height:10px;}
+*::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:99px;border:3px solid transparent;background-clip:content-box;}
+*::-webkit-scrollbar-track{background:transparent;}
+
+/* focus ring */
+:focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 45%,transparent);outline-offset:2px;}
+
+/* typography helpers */
+.t-display{font-size:34px;line-height:1.08;font-weight:800;letter-spacing:-.02em;}
+.t-h1{font-size:23px;line-height:1.3;font-weight:700;letter-spacing:-.02em;}
+.t-h2{font-size:18px;line-height:1.4;font-weight:700;letter-spacing:-.01em;}
+.t-cardtitle{font-size:15px;line-height:1.4;font-weight:600;}
+.t-body{font-size:14px;line-height:1.6;font-weight:400;}
+.t-label{font-size:12.5px;line-height:1.4;font-weight:600;color:var(--muted-foreground);letter-spacing:.01em;}
+.t-caption{font-size:11.5px;line-height:1.4;font-weight:500;color:var(--caption);}
+
+@keyframes dashFade{from{transform:translateY(7px)}to{transform:none}}
+@keyframes drawline{from{stroke-dashoffset:var(--len);}to{stroke-dashoffset:0;}}
+@keyframes growbar{from{transform:scaleY(1);}to{transform:scaleY(1);}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;}}

@@ -1,0 +1,70 @@
+/* =========================================================================
+   Tweaks 오버라이드 — data-accent / data-surface / data-cardtone (documentElement)
+   라이트: :root:not(.dark)[...]  다크: :root.dark[...]  → 둘 다 base 토큰을 이긴다.
+   기본값(forest / soft / card)은 tokens.css 그대로이므로 규칙 없음.
+   ========================================================================= */
+
+/* ---------------- 브랜드 무드 : 바다(Ocean) ---------------- */
+:root:not(.dark)[data-accent="ocean"]{
+  --primary:#0058A8; --primary-hover:#06497F; --secondary:#0090C6; --secondary-foreground:#04263A;
+  --accent:#0058A8; --ring:#0058A8;
+  --chart-1:#0058A8; --chart-2:#00AAE5; --chart-3:#2D7846; --chart-4:#1AA0AE; --chart-5:#E0A93B; --chart-6:#5B7FB0;
+}
+:root.dark[data-accent="ocean"]{
+  --primary:#54A8F2; --primary-hover:#6FB8F5; --secondary:#33C0F0;
+  --accent:#54A8F2; --ring:#54A8F2;
+  --chart-1:#54A8F2; --chart-2:#33C0F0; --chart-3:#5FAE6E; --chart-4:#46BFD0; --chart-5:#EBB85A; --chart-6:#8FB0DA;
+}
+
+/* ---------------- 브랜드 무드 : 수확(Harvest) ---------------- */
+:root:not(.dark)[data-accent="harvest"]{
+  --primary:#5FA22E; --primary-hover:#4F8A26; --secondary:#C77A12; --secondary-foreground:#3A2406;
+  --accent:#2D7846; --ring:#5FA22E;
+  --chart-1:#7BB93C; --chart-2:#E0A93B; --chart-3:#2D7846; --chart-4:#C77A12; --chart-5:#0090C6; --chart-6:#A9743F;
+}
+:root.dark[data-accent="harvest"]{
+  --primary:#9AD058; --primary-hover:#A9DB6E; --secondary:#EBB85A;
+  --accent:#7FC25A; --ring:#9AD058;
+  --chart-1:#9AD058; --chart-2:#EBB85A; --chart-3:#5FAE6E; --chart-4:#C18B58; --chart-5:#33C0F0; --chart-6:#C9A06A;
+}
+
+/* ---------------- 표면 질감 : 또렷하게(Flat / sharp) ---------------- */
+:root[data-surface="flat"]{
+  --radius:6px; --radius-lg:8px; --radius-sm:4px;
+  --shadow-sm:0 0 0 1px transparent; --shadow-md:0 1px 2px rgba(20,40,28,.05); --shadow-lg:0 3px 10px rgba(20,40,28,.10);
+}
+:root:not(.dark)[data-surface="flat"]{ --border:rgba(31,54,40,.20); --border-strong:rgba(31,54,40,.30); }
+:root.dark[data-surface="flat"]{ --border:rgba(255,255,255,.16); --border-strong:rgba(255,255,255,.26); }
+
+/* ---------------- 표면 질감 : 입체(Floating / soft elevated) ---------------- */
+:root[data-surface="float"]{
+  --radius:18px; --radius-lg:22px; --radius-sm:13px;
+  --border:transparent; --border-strong:rgba(31,54,40,.10);
+}
+:root:not(.dark)[data-surface="float"]{
+  --shadow-sm:0 6px 18px rgba(20,40,28,.10),0 2px 5px rgba(20,40,28,.06);
+  --shadow-md:0 14px 36px rgba(20,40,28,.14),0 5px 12px rgba(20,40,28,.08);
+  --shadow-lg:0 28px 60px rgba(20,40,28,.20),0 10px 22px rgba(20,40,28,.10);
+}
+:root.dark[data-surface="float"]{
+  --border-strong:rgba(255,255,255,.08);
+  --shadow-sm:0 6px 20px rgba(0,0,0,.5); --shadow-md:0 16px 40px rgba(0,0,0,.6); --shadow-lg:0 30px 64px rgba(0,0,0,.7);
+}
+
+/* ---------------- 캔버스 톤 : 심리스(Seamless) ---------------- */
+:root:not(.dark)[data-cardtone="seamless"]{
+  --bg:#FBFCFB; --bg-deep:#F2F5F2; --card:#FBFCFB; --card-raised:#FFFFFF;
+  --border:rgba(31,54,40,.16); --border-strong:rgba(31,54,40,.26); --muted:#EEF2EC;
+}
+:root.dark[data-cardtone="seamless"]{
+  --bg:#121613; --bg-deep:#0C0F0C; --card:#121613; --card-raised:#1A201A;
+  --border:rgba(255,255,255,.13); --border-strong:rgba(255,255,255,.20); --muted:#1B211A;
+}
+
+/* ---------------- 캔버스 톤 : 색조(Tinted) ---------------- */
+:root:not(.dark)[data-cardtone="tint"]{
+  --bg:#E8F0E5; --bg-deep:#DDE9D9; --card:#FFFFFF; --card-raised:#FFFFFF; --muted:#EAF1E6;
+}
+:root.dark[data-cardtone="tint"]{
+  --bg:#0C140E; --bg-deep:#070C08; --card:#19221B; --card-raised:#1F2922; --muted:#1E281F;
+}

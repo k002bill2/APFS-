@@ -1,0 +1,26 @@
+{
+  "_comment": "APFS 프로젝트 스킬 트리거 규칙. skillName 은 .claude/skills/ 의 실제 스킬과 일치해야 한다. enforcement: suggest(추천) | block(차단). skill-activator.sh(UserPromptSubmit hook)가 키워드 매칭으로 사용.",
+  "rules": [
+    {
+      "skillName": "code-reviewer",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["review", "PR", "코드 리뷰", "리뷰", "검토", "audit", "취약점", "보안"],
+      "intentPatterns": ["(review|check|audit|검토|리뷰).*(code|코드|pr|changes|변경)"]
+    },
+    {
+      "skillName": "dashboard-ui",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["대시보드", "dashboard", "위젯", "widget", "차트", "chart", "레이아웃", "layout", "component", "컴포넌트", "react", "ui", "화면", "페이지", "테마", "theme", "lucide", "tailwind"],
+      "intentPatterns": ["(create|build|add|make|만들|추가|작성).*(component|widget|page|위젯|차트|화면|페이지|대시보드)"]
+    },
+    {
+      "skillName": "apfs-bundle",
+      "priority": "critical",
+      "enforcement": "suggest",
+      "keywords": ["번들", "bundle", "manifest", "template", "gzip", "base64", "자산", "asset", "인코딩", "디코드", "decode", "encode", "blob", "omelette", "artifact", "html", "html 파일"],
+      "intentPatterns": ["(edit|modify|patch|수정|편집|고치).*(번들|bundle|manifest|template|html|자산|asset)"]
+    }
+  ]
+}
