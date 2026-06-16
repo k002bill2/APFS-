@@ -15,7 +15,6 @@ const {
 } = UI;
 const { Sparkline, Donut, LineTrend, HBars, useMeasure, fmtEok } = Charts;
 const D = APFS_DATA;
-const h = React.createElement;
 const cx = (...a) => a.filter(Boolean).join(" ");
 
 /* ───────────────────────────────────────────────
@@ -204,56 +203,45 @@ const TYPES = [
    KPI 미니카드
 ─────────────────────────────────────────────── */
 function RiskKpiCard({ kpi }) {
-  return h("div", {
-    className: "rounded-card border border-border bg-card shadow-sm px-[18px] py-[14px] flex flex-col gap-2 min-w-0",
-  },
-    h("div", { className: "flex items-center justify-between gap-2" },
-      h("div", { className: "flex items-center gap-2 min-w-0" },
-        h(ColorChip, { icon: kpi.icon, color: kpi.accent, size: 32, iconSize: 17 }),
-        h("span", { className: "t-label truncate" }, kpi.label)),
-      h("div", { className: "shrink-0 w-[70px]" },
-        h(Sparkline, { data: kpi.trend, color: kpi.accent, id: kpi.id, height: 32 }))),
-    h("div", { className: "flex items-baseline gap-1.5" },
-      h("span", { className: "t-display tabular", style: { fontSize: 26, letterSpacing: "-.01em", color: kpi.accent } }, kpi.value),
-      h("span", { className: "text-[12.5px] font-semibold", style: { color: "var(--muted-foreground)" } }, kpi.unit)),
-    h(DeltaBadge, { value: kpi.delta, label: kpi.deltaLabel, invert: kpi.invert }));
+  return (
+    <div
+      className="rounded-card border border-border bg-card shadow-sm px-[18px] py-[14px] flex flex-col gap-2 min-w-0"><div className="flex items-center justify-between gap-2"><div className="flex items-center gap-2 min-w-0"><ColorChip icon={kpi.icon} color={kpi.accent} size={32} iconSize={17} /><span className="t-label truncate">{kpi.label}</span></div><div className="shrink-0 w-[70px]"><Sparkline data={kpi.trend} color={kpi.accent} id={kpi.id} height={32} /></div></div><div className="flex items-baseline gap-1.5"><span
+          className="t-display tabular"
+          style={{ fontSize: 26, letterSpacing: "-.01em", color: kpi.accent }}>{kpi.value}</span><span
+          className="text-[12.5px] font-semibold"
+          style={{ color: "var(--muted-foreground)" }}>{kpi.unit}</span></div><DeltaBadge value={kpi.delta} label={kpi.deltaLabel} invert={kpi.invert} /></div>
+  );
 }
 
 /* ───────────────────────────────────────────────
    5단계 처리 스텝퍼
 ─────────────────────────────────────────────── */
 function StepBadge({ stepIndex }) {
-  return h("div", { className: "inline-flex items-center gap-[3px]" },
-    STEPS.map((s, i) => {
-      const done = i < stepIndex;
-      const active = i === stepIndex;
-      const future = i > stepIndex;
-      return h("div", {
-        key: i,
-        className: "inline-flex flex-col items-center gap-[2px]",
-      },
-        h("div", {
-          style: {
-            width: i === stepIndex ? 20 : 14,
-            height: 5,
-            borderRadius: 3,
-            background: active
-              ? "var(--primary)"
-              : done
-              ? "color-mix(in srgb,var(--primary) 40%,transparent)"
-              : "var(--border)",
-            transition: "width .2s",
-          },
-        }),
-        active && h("span", {
-          className: "text-[9.5px] font-bold whitespace-nowrap",
-          style: { color: "var(--primary)", lineHeight: 1 },
-        }, s));
-    }),
-    h("span", {
-      className: "ml-1 text-[11px] font-semibold",
-      style: { color: stepIndex === 4 ? "var(--success)" : "var(--muted-foreground)" },
-    }, STEPS[stepIndex]));
+  return (
+    <div className="inline-flex items-center gap-[3px]">{STEPS.map((s, i) => {
+        const done = i < stepIndex;
+        const active = i === stepIndex;
+        const future = i > stepIndex;
+        return (
+          <div key={i} className="inline-flex flex-col items-center gap-[2px]"><div
+              style={{
+                width: i === stepIndex ? 20 : 14,
+                height: 5,
+                borderRadius: 3,
+                background: active
+                  ? "var(--primary)"
+                  : done
+                  ? "color-mix(in srgb,var(--primary) 40%,transparent)"
+                  : "var(--border)",
+                transition: "width .2s",
+              }} />{active && <span
+              className="text-[9.5px] font-bold whitespace-nowrap"
+              style={{ color: "var(--primary)", lineHeight: 1 }}>{s}</span>}</div>
+        );
+      })}<span
+        className="ml-1 text-[11px] font-semibold"
+        style={{ color: stepIndex === 4 ? "var(--success)" : "var(--muted-foreground)" }}>{STEPS[stepIndex]}</span></div>
+  );
 }
 
 /* ───────────────────────────────────────────────
@@ -274,247 +262,120 @@ function Risk({ onNav }) {
     return ALERTS.filter((a) => activeTypes[a.type]);
   }, [activeTypes, anyTypeActive]);
 
-  return h("div", {
-    className: "max-w-[1320px] mx-auto",
-    style: { animation: "dashFade .35s var(--ease) both" },
-  },
-
-    /* ── PageHeader ── */
-    h(PageHeader, {
-      crumbs: ["홈", "조기경보", "리스크 모니터링"],
-      title: "조기경보 리스크 관리",
-      sub: "운용사 리스크 지수 추이 · 조기경보 발생 현황 · 5단계 처리 — 2026-06-16 기준",
-      actions: h(React.Fragment, null,
-        h(Button, {
-          variant: "outline",
-          size: "sm",
-          leadingIcon: "chevron-left",
-          onClick: () => onNav("main"),
-        }, "메인으로"),
-        h(Button, {
-          variant: "primary",
-          size: "sm",
-          leadingIcon: "download",
-        }, "내보내기")),
-    }),
-
-    /* ── 필터 바 ── */
-    h("div", {
-      className: "flex items-center gap-3 flex-wrap mb-4 px-0.5",
-    },
-      h("span", { className: "t-label text-[12.5px]" }, "기간"),
-      h(SegTabs, {
-        options: [
-          { value: "주간", label: "주간" },
-          { value: "월간", label: "월간" },
-          { value: "분기별", label: "분기별" },
-        ],
-        value: period,
-        onChange: setPeriod,
-        size: "sm",
-      }),
-      h("div", { style: { width: 1, height: 20, background: "var(--border)" } }),
-      h("span", { className: "t-label text-[12.5px]" }, "유형"),
-      TYPES.map((t) =>
-        h(FilterChip, {
-          key: t.id,
-          active: !!activeTypes[t.id],
-          onClick: () => toggleType(t.id),
-          dot: activeTypes[t.id] ? "var(--primary)" : undefined,
-        }, t.label)),
-      anyTypeActive && h("button", {
-        onClick: () => setActiveTypes({}),
-        className: "text-[12px] font-semibold cursor-pointer",
-        style: { color: "var(--muted-foreground)", background: "none", border: "none", padding: 0 },
-      }, "필터 초기화")),
-
-    /* ── KPI 미니카드 4열 ── */
-    h("div", { className: "grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4" },
-      KPI_RISK.map((kpi) => h(RiskKpiCard, { key: kpi.id, kpi }))),
-
-    /* ── 리스크 지수 추이 (전체 너비) ── */
-    h(ChartCard, {
-      title: "리스크 지수 추이",
-      sub: "월별 리스크 지수 · 임계선 60 초과 시 즉시 대응",
-      icon: "trending",
-      accent: "var(--danger)",
-      right: h("div", { className: "flex items-center gap-2" },
-        h("span", {
-          className: "inline-flex items-center gap-1.5 text-[12px] font-semibold",
-          style: { color: "var(--danger)" },
-        },
-          h("span", {
-            style: {
-              display: "inline-block",
-              width: 18,
-              height: 2,
-              borderTop: "2px dashed var(--danger)",
-              borderRadius: 2,
-            },
-          }),
-          "임계선 60"),
-        h(IconBtn, { icon: "more", label: "더보기", size: 34 })),
-    },
-      h(LineTrend, {
-        data: D.RISK_TREND,
-        threshold: D.RISK_THRESHOLD,
-        height: 220,
-        color: "var(--danger)",
-      })),
-
-    /* ── 조기경보 목록 테이블 ── */
-    h("div", {
-      className: "rounded-card-lg border border-border bg-card shadow-sm overflow-hidden mt-4 mb-4",
-    },
-      /* 카드 헤더 */
-      h("div", { className: "flex items-center justify-between gap-3 flex-wrap px-5 sm:px-6 pt-5 pb-4 border-b border-border" },
-        h("div", { className: "flex items-center gap-2.5" },
-          h(ColorChip, { icon: "shield-alert", color: "var(--danger)", size: 34, iconSize: 18 }),
-          h("div", null,
-            h("div", { className: "t-cardtitle" }, "조기경보 목록"),
-            h("div", { className: "t-caption mt-px" },
-              h("span", { style: { color: "var(--danger)", fontWeight: 700 } }, filteredAlerts.length + "건"),
-              " 표시 중 (전체 ", ALERTS.length, "건)"))),
-        h("div", { className: "flex items-center gap-2" },
-          h(StatusBadge, { tone: "danger", label: "경고 " + ALERTS.filter((a) => a.gradeTone === "danger").length + "건" }),
-          h(StatusBadge, { tone: "warning", label: "주의 " + ALERTS.filter((a) => a.gradeTone === "warning").length + "건" }),
-          h(IconBtn, { icon: "refresh", label: "새로고침", size: 34 }),
-          h(IconBtn, { icon: "download", label: "내보내기", size: 34 }))),
-
-      /* 테이블 */
-      h("div", { className: "overflow-x-auto" },
-        h("table", { className: "w-full border-collapse min-w-[880px]" },
-          h("thead", null,
-            h("tr", { style: { background: "color-mix(in srgb,var(--muted) 60%,transparent)" } },
-              [
-                ["운용사", "left", "pl-5 sm:pl-6"],
-                ["경보 유형", "left", ""],
-                ["등급", "left", ""],
-                ["발생일", "left", ""],
-                ["처리 상태", "left", ""],
-                ["담당자", "left", ""],
-                ["", "right", "pr-5 sm:pr-6"],
-              ].map(([label, align, extra], i) =>
-                h("th", {
-                  key: i,
-                  className: cx(
-                    "t-label font-semibold px-4 py-3 whitespace-nowrap",
-                    align === "right" ? "text-right" : "text-left",
-                    extra),
-                }, label)))),
-          h("tbody", null,
-            filteredAlerts.length === 0
-              ? h("tr", null,
-                  h("td", { colSpan: 7, style: { padding: 0 } },
-                    h(EmptyState, { msg: "선택한 유형의 경보가 없습니다", icon: "shield", height: 120 })))
-              : filteredAlerts.map((row, i) =>
-                  h("tr", {
-                    key: row.id,
-                    className: "border-t border-border transition-colors cursor-pointer",
-                    style: { background: selectedRow === row.id ? "color-mix(in srgb,var(--primary) 5%,transparent)" : "transparent" },
-                    onClick: () => setSelectedRow(selectedRow === row.id ? null : row.id),
-                    onMouseEnter: (e) => {
-                      if (selectedRow !== row.id)
-                        e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)";
-                    },
-                    onMouseLeave: (e) => {
-                      if (selectedRow !== row.id)
-                        e.currentTarget.style.background = "transparent";
-                    },
-                  },
-                    /* 운용사 */
-                    h("td", { className: "px-4 pl-5 sm:pl-6 py-3.5 whitespace-nowrap" },
-                      h("div", { className: "flex items-center gap-2.5" },
-                        h("span", {
-                          className: "inline-flex items-center justify-center w-8 h-8 rounded-[8px] text-white text-[11px] font-bold shrink-0",
-                          style: { background: row.gpColor },
-                        }, row.gpCode),
-                        h("div", null,
-                          h("div", { className: "text-[13.5px] font-semibold", style: { color: "var(--foreground)" } }, row.gp),
-                          h("div", { className: "t-caption text-[11px]" }, row.id)))),
-                    /* 경보 유형 */
-                    h("td", { className: "px-4 py-3.5 whitespace-nowrap" },
-                      h("div", null,
-                        h("div", { className: "text-[13px] font-semibold", style: { color: "var(--foreground)" } }, row.type),
-                        h("div", { className: "t-caption text-[11px] mt-0.5 max-w-[200px] truncate" }, row.desc))),
-                    /* 등급 */
-                    h("td", { className: "px-4 py-3.5 whitespace-nowrap" },
-                      h(StatusBadge, { tone: row.gradeTone, label: row.grade, size: "md" })),
-                    /* 발생일 */
-                    h("td", { className: "px-4 py-3.5 whitespace-nowrap tabular text-[13px]", style: { color: "var(--muted-foreground)" } }, row.date),
-                    /* 처리 상태 스텝퍼 */
-                    h("td", { className: "px-4 py-3.5" },
-                      h(StepBadge, { stepIndex: row.step })),
-                    /* 담당자 */
-                    h("td", { className: "px-4 py-3.5 whitespace-nowrap" },
-                      h("div", { className: "flex items-center gap-1.5" },
-                        h("span", {
-                          className: "inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-[10px] font-bold shrink-0",
-                          style: { background: "var(--muted-foreground)", fontSize: 10 },
-                        }, row.manager[0]),
-                        h("span", { className: "text-[13px] font-medium", style: { color: "var(--foreground)" } }, row.manager))),
-                    /* 액션 */
-                    h("td", { className: "px-4 pr-5 sm:pr-6 py-3.5 text-right whitespace-nowrap" },
-                      h(Button, {
-                        variant: "outline",
-                        size: "sm",
-                        leadingIcon: "external",
-                        onClick: (e) => { e.stopPropagation(); },
-                      }, "상세보기")))))),
-
-        /* 푸터 */
-        h("div", { className: "flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 py-3.5 border-t border-border" },
-          h("span", { className: "t-caption" },
-            "총 ", h("b", { style: { color: "var(--foreground)" } }, ALERTS.length + "건"),
-            " 중 ", filteredAlerts.length + "건 표시"),
-          h("div", { className: "flex items-center gap-1.5" },
-            h(IconBtn, { icon: "chevron-left", label: "이전", size: 32 }),
-            h("span", {
-              className: "inline-flex items-center justify-center w-8 h-8 rounded-lg text-[13px] font-bold",
-              style: { background: "color-mix(in srgb,var(--primary) 12%,transparent)", color: "var(--primary)" },
-            }, "1"),
-            h(IconBtn, { icon: "chevron-right", label: "다음", size: 32 }))))),
-
-    /* ── 하단 2열: 도넛 + HBars ── */
-    h("div", { className: "grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4" },
-
-      /* 왼쪽: 상태 분포 도넛 */
-      h(ChartCard, {
-        title: "운용사 상태 분포",
-        sub: "전체 237개 운용사 · 자펀드 기준",
-        icon: "pie-chart",
-        accent: "var(--primary)",
-        right: h(IconBtn, { icon: "more", label: "더보기", size: 34 }),
-        footer: h("div", { className: "flex items-center gap-5 flex-wrap" },
-          D.STATUS_DONUT.map((d) =>
-            h("div", { key: d.key, className: "flex items-center gap-1.5" },
-              h("span", {
-                className: "w-2.5 h-2.5 rounded-full shrink-0",
-                style: { background: d.color },
-              }),
-              h("span", { className: "t-caption text-[12px]" }, d.name),
-              h("span", { className: "text-[13px] font-bold tabular", style: { color: d.color } }, d.value)))),
-      },
-        h(Donut, {
-          data: D.STATUS_DONUT,
-          height: 220,
-        })),
-
-      /* 오른쪽: 조기경보 건수 상위 운용사 */
-      h(ChartCard, {
-        title: "운용사별 조기경보 현황",
-        sub: "경보 건수 상위 5개 운용사",
-        icon: "building",
-        accent: "var(--warning)",
-        right: h("div", { className: "flex items-center gap-1" },
-          h(StatusBadge, { tone: "warning", label: "이번 달", size: "sm" }),
-          h(IconBtn, { icon: "more", label: "더보기", size: 34 })),
-      },
-        h(HBars, {
-          data: GP_BARS,
-          height: 220,
-        }))),
-
+  return (
+    <div
+      className="max-w-[1320px] mx-auto"
+      style={{ animation: "dashFade .35s var(--ease) both" }}><PageHeader
+        crumbs={["홈", "조기경보", "리스크 모니터링"]}
+        title="조기경보 리스크 관리"
+        sub="운용사 리스크 지수 추이 · 조기경보 발생 현황 · 5단계 처리 — 2026-06-16 기준"
+        actions={<><Button
+            variant="outline"
+            size="sm"
+            leadingIcon="chevron-left"
+            onClick={() => onNav("main")}>메인으로</Button><Button variant="primary" size="sm" leadingIcon="download">내보내기</Button></>} /><div className="flex items-center gap-3 flex-wrap mb-4 px-0.5"><span className="t-label text-[12.5px]">기간</span><SegTabs
+          options={[
+            { value: "주간", label: "주간" },
+            { value: "월간", label: "월간" },
+            { value: "분기별", label: "분기별" },
+          ]}
+          value={period}
+          onChange={setPeriod}
+          size="sm" /><div style={{ width: 1, height: 20, background: "var(--border)" }} /><span className="t-label text-[12.5px]">유형</span>{TYPES.map((t) =>
+          <FilterChip
+            key={t.id}
+            active={!!activeTypes[t.id]}
+            onClick={() => toggleType(t.id)}
+            dot={activeTypes[t.id] ? "var(--primary)" : undefined}>{t.label}</FilterChip>)}{anyTypeActive && <button
+          onClick={() => setActiveTypes({})}
+          className="text-[12px] font-semibold cursor-pointer"
+          style={{ color: "var(--muted-foreground)", background: "none", border: "none", padding: 0 }}>필터 초기화</button>}</div><div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">{KPI_RISK.map((kpi) => <RiskKpiCard key={kpi.id} kpi={kpi} />)}</div><ChartCard
+        title="리스크 지수 추이"
+        sub="월별 리스크 지수 · 임계선 60 초과 시 즉시 대응"
+        icon="trending"
+        accent="var(--danger)"
+        right={<div className="flex items-center gap-2"><span
+            className="inline-flex items-center gap-1.5 text-[12px] font-semibold"
+            style={{ color: "var(--danger)" }}><span
+              style={{
+                display: "inline-block",
+                width: 18,
+                height: 2,
+                borderTop: "2px dashed var(--danger)",
+                borderRadius: 2,
+              }} />임계선 60</span><IconBtn icon="more" label="더보기" size={34} /></div>}><LineTrend
+          data={D.RISK_TREND}
+          threshold={D.RISK_THRESHOLD}
+          height={220}
+          color="var(--danger)" /></ChartCard><div
+        className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden mt-4 mb-4"><div
+          className="flex items-center justify-between gap-3 flex-wrap px-5 sm:px-6 pt-5 pb-4 border-b border-border"><div className="flex items-center gap-2.5"><ColorChip icon="shield-alert" color="var(--danger)" size={34} iconSize={18} /><div><div className="t-cardtitle">조기경보 목록</div><div className="t-caption mt-px"><span style={{ color: "var(--danger)", fontWeight: 700 }}>{filteredAlerts.length + "건"}</span>표시 중 (전체 {ALERTS.length}건)</div></div></div><div className="flex items-center gap-2"><StatusBadge
+              tone="danger"
+              label={"경고 " + ALERTS.filter((a) => a.gradeTone === "danger").length + "건"} /><StatusBadge
+              tone="warning"
+              label={"주의 " + ALERTS.filter((a) => a.gradeTone === "warning").length + "건"} /><IconBtn icon="refresh" label="새로고침" size={34} /><IconBtn icon="download" label="내보내기" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[880px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
+                  ["운용사", "left", "pl-5 sm:pl-6"],
+                  ["경보 유형", "left", ""],
+                  ["등급", "left", ""],
+                  ["발생일", "left", ""],
+                  ["처리 상태", "left", ""],
+                  ["담당자", "left", ""],
+                  ["", "right", "pr-5 sm:pr-6"],
+                ].map(([label, align, extra], i) =>
+                  <th
+                    key={i}
+                    className={cx(
+                      "t-label font-semibold px-4 py-3 whitespace-nowrap",
+                      align === "right" ? "text-right" : "text-left",
+                      extra)}>{label}</th>)}</tr></thead><tbody>{filteredAlerts.length === 0
+                ? <tr><td colSpan={7} style={{ padding: 0 }}><EmptyState msg="선택한 유형의 경보가 없습니다" icon="shield" height={120} /></td></tr>
+                : filteredAlerts.map((row, i) =>
+                    <tr
+                      key={row.id}
+                      className="border-t border-border transition-colors cursor-pointer"
+                      style={{ background: selectedRow === row.id ? "color-mix(in srgb,var(--primary) 5%,transparent)" : "transparent" }}
+                      onClick={() => setSelectedRow(selectedRow === row.id ? null : row.id)}
+                      onMouseEnter={(e) => {
+                        if (selectedRow !== row.id)
+                          e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)";
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedRow !== row.id)
+                          e.currentTarget.style.background = "transparent";
+                      }}><td className="px-4 pl-5 sm:pl-6 py-3.5 whitespace-nowrap"><div className="flex items-center gap-2.5"><span
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-[8px] text-white text-[11px] font-bold shrink-0"
+                            style={{ background: row.gpColor }}>{row.gpCode}</span><div><div
+                              className="text-[13.5px] font-semibold"
+                              style={{ color: "var(--foreground)" }}>{row.gp}</div><div className="t-caption text-[11px]">{row.id}</div></div></div></td><td className="px-4 py-3.5 whitespace-nowrap"><div><div
+                            className="text-[13px] font-semibold"
+                            style={{ color: "var(--foreground)" }}>{row.type}</div><div className="t-caption text-[11px] mt-0.5 max-w-[200px] truncate">{row.desc}</div></div></td><td className="px-4 py-3.5 whitespace-nowrap"><StatusBadge tone={row.gradeTone} label={row.grade} size="md" /></td><td
+                        className="px-4 py-3.5 whitespace-nowrap tabular text-[13px]"
+                        style={{ color: "var(--muted-foreground)" }}>{row.date}</td><td className="px-4 py-3.5"><StepBadge stepIndex={row.step} /></td><td className="px-4 py-3.5 whitespace-nowrap"><div className="flex items-center gap-1.5"><span
+                            className="inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-[10px] font-bold shrink-0"
+                            style={{ background: "var(--muted-foreground)", fontSize: 10 }}>{row.manager[0]}</span><span
+                            className="text-[13px] font-medium"
+                            style={{ color: "var(--foreground)" }}>{row.manager}</span></div></td><td className="px-4 pr-5 sm:pr-6 py-3.5 text-right whitespace-nowrap"><Button
+                          variant="outline"
+                          size="sm"
+                          leadingIcon="external"
+                          onClick={(e) => { e.stopPropagation(); }}>상세보기</Button></td></tr>)}</tbody></table><div
+            className="flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 py-3.5 border-t border-border"><span className="t-caption">총 <b style={{ color: "var(--foreground)" }}>{ALERTS.length + "건"}</b>중 {filteredAlerts.length + "건 표시"}</span><div className="flex items-center gap-1.5"><IconBtn icon="chevron-left" label="이전" size={32} /><span
+                className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[13px] font-bold"
+                style={{ background: "color-mix(in srgb,var(--primary) 12%,transparent)", color: "var(--primary)" }}>1</span><IconBtn icon="chevron-right" label="다음" size={32} /></div></div></div></div><div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4"><ChartCard
+          title="운용사 상태 분포"
+          sub="전체 237개 운용사 · 자펀드 기준"
+          icon="pie-chart"
+          accent="var(--primary)"
+          right={<IconBtn icon="more" label="더보기" size={34} />}
+          footer={<div className="flex items-center gap-5 flex-wrap">{D.STATUS_DONUT.map((d) =>
+              <div key={d.key} className="flex items-center gap-1.5"><span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ background: d.color }} /><span className="t-caption text-[12px]">{d.name}</span><span className="text-[13px] font-bold tabular" style={{ color: d.color }}>{d.value}</span></div>)}</div>}><Donut data={D.STATUS_DONUT} height={220} /></ChartCard><ChartCard
+          title="운용사별 조기경보 현황"
+          sub="경보 건수 상위 5개 운용사"
+          icon="building"
+          accent="var(--warning)"
+          right={<div className="flex items-center gap-1"><StatusBadge tone="warning" label="이번 달" size="sm" /><IconBtn icon="more" label="더보기" size={34} /></div>}><HBars data={GP_BARS} height={220} /></ChartCard></div></div>
   ); // end root div
 }
 

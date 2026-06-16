@@ -66,4 +66,4 @@ function TweakApp() {
 apply(init.accent, init.surface, init.cardtone);
 const mount = document.createElement("div");
 document.body.appendChild(mount);
-ReactDOM.createRoot(mount).render(React.createElement(TweakApp));
+ReactDOM.createRoot(mount).render(<TweakApp />);

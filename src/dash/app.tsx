@@ -19,7 +19,6 @@ const { useState, useEffect } = React;
 const { AppShell, PageHeader } = Shell;
 const { Button, ColorChip, StatusBadge } = UI;
 const D = APFS_DATA;
-const h = React.createElement;
 
 const ls = {
   get: (k, d) => { try { return localStorage.getItem(k) ?? d; } catch (e) { return d; } },
@@ -36,24 +35,32 @@ const STUBS = {
 
 function Stub({ route, onNav }) {
   const s = STUBS[route];
-  return h("div", { style: { maxWidth: 1100, margin: "0 auto", animation: "dashFade .35s var(--ease) both" } },
-    h(PageHeader, { crumbs: s.crumb, title: s.title, sub: s.desc,
-      actions: h(Button, { variant: "outline", size: "sm", leadingIcon: "chevron-left", onClick: () => onNav("main") }, "메인으로") }),
-    h("div", { style: {
-      border: "1px dashed var(--border-strong)", borderRadius: 16, padding: "56px 32px", textAlign: "center",
-      background: "color-mix(in srgb,var(--card) 70%,transparent)", display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
-    } },
-      h(ColorChip, { icon: s.icon, color: s.accent, size: 64, iconSize: 32 }),
-      h("div", null,
-        h("div", { style: { fontSize: 18, fontWeight: 700 } }, s.title + " 서브 대시보드"),
-        h("p", { className: "t-body", style: { margin: "8px auto 0", maxWidth: 560, color: "var(--muted-foreground)" } },
-          "이번 시안 범위는 ", h("strong", null, "디자인 시스템 + 메인 종합 대시보드"), " 입니다. ", s.title, " 화면은 위 위젯 구성으로 다음 단계에 제작됩니다.")),
-      h("div", { style: { display: "flex", gap: 8, alignItems: "center" } },
-        h(StatusBadge, { tone: "info", icon: "layers", label: s.prd }),
-        h(StatusBadge, { tone: "warning", icon: "clock", label: "다음 단계 산출물" })),
-      h("div", { style: { display: "flex", gap: 10, marginTop: 4 } },
-        h(Button, { variant: "primary", size: "sm", leadingIcon: "home", onClick: () => onNav("main") }, "메인 종합 보기"),
-        h(Button, { variant: "ghost", size: "sm", leadingIcon: "layers", onClick: () => onNav("designsystem") }, "디자인 시스템"))));
+  return (
+    <div
+      style={{ maxWidth: 1100, margin: "0 auto", animation: "dashFade .35s var(--ease) both" }}><PageHeader
+        crumbs={s.crumb}
+        title={s.title}
+        sub={s.desc}
+        actions={<Button
+          variant="outline"
+          size="sm"
+          leadingIcon="chevron-left"
+          onClick={() => onNav("main")}>메인으로</Button>} /><div
+        style={{
+          border: "1px dashed var(--border-strong)", borderRadius: 16, padding: "56px 32px", textAlign: "center",
+          background: "color-mix(in srgb,var(--card) 70%,transparent)", display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
+        }}><ColorChip icon={s.icon} color={s.accent} size={64} iconSize={32} /><div><div style={{ fontSize: 18, fontWeight: 700 }}>{s.title + " 서브 대시보드"}</div><p
+            className="t-body"
+            style={{ margin: "8px auto 0", maxWidth: 560, color: "var(--muted-foreground)" }}>이번 시안 범위는 <strong>디자인 시스템 + 메인 종합 대시보드</strong>{" 입니다. "}{s.title}{" 화면은 위 위젯 구성으로 다음 단계에 제작됩니다."}</p></div><div style={{ display: "flex", gap: 8, alignItems: "center" }}><StatusBadge tone="info" icon="layers" label={s.prd} /><StatusBadge tone="warning" icon="clock" label="다음 단계 산출물" /></div><div style={{ display: "flex", gap: 10, marginTop: 4 }}><Button
+            variant="primary"
+            size="sm"
+            leadingIcon="home"
+            onClick={() => onNav("main")}>메인 종합 보기</Button><Button
+            variant="ghost"
+            size="sm"
+            leadingIcon="layers"
+            onClick={() => onNav("designsystem")}>디자인 시스템</Button></div></div></div>
+  );
 }
 
 function App() {
@@ -86,26 +93,34 @@ function App() {
   const onNav = (r) => { setRoute(r); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   let page;
-  if (route === "designsystem") page = h(DesignSystem);
-  else if (route === "main") page = h(Main, { onNav });
-  else if (route === "performance") page = h(Performance, { onNav });
-  else if (route === "risk") page = h(Risk, { onNav });
-  else if (route === "gp-health") page = h(GpHealth, { onNav });
-  else if (route === "accounting") page = h(Accounting, { onNav });
-  else if (route === "schedule") page = h(Schedule, { onNav });
-  else if (route === "subfund") page = h(SubFund, { onNav });
-  else if (route === "report") page = h(Report, { onNav });
-  else if (STUBS[route]) page = h(Stub, { route, onNav });
-  else page = h(Main, { onNav });
+  if (route === "designsystem") page = <DesignSystem />;
+  else if (route === "main") page = <Main onNav={onNav} />;
+  else if (route === "performance") page = <Performance onNav={onNav} />;
+  else if (route === "risk") page = <Risk onNav={onNav} />;
+  else if (route === "gp-health") page = <GpHealth onNav={onNav} />;
+  else if (route === "accounting") page = <Accounting onNav={onNav} />;
+  else if (route === "schedule") page = <Schedule onNav={onNav} />;
+  else if (route === "subfund") page = <SubFund onNav={onNav} />;
+  else if (route === "report") page = <Report onNav={onNav} />;
+  else if (STUBS[route]) page = <Stub route={route} onNav={onNav} />;
+  else page = <Main onNav={onNav} />;
 
-  return h(AppShell, {
-    theme, onToggleTheme: () => setTheme((t) => (t === "dark" ? "light" : "dark")),
-    role, onRole: setRole, route, onNav,
-    lnbOpen, onToggleLnb: () => setLnbOpen((o) => !o),
-    wide, onToggleWide: () => setWide((x) => !x),
-    notifs, onReadAll: () => setNotifs((ns) => ns.map((n) => ({ ...n, read: true }))),
-  }, page);
+  return (
+    <AppShell
+      theme={theme}
+      onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+      role={role}
+      onRole={setRole}
+      route={route}
+      onNav={onNav}
+      lnbOpen={lnbOpen}
+      onToggleLnb={() => setLnbOpen((o) => !o)}
+      wide={wide}
+      onToggleWide={() => setWide((x) => !x)}
+      notifs={notifs}
+      onReadAll={() => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })))}>{page}</AppShell>
+  );
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(h(App));
+root.render(<App />);

@@ -15,7 +15,6 @@ const {
 } = UI;
 const { ComposedBars } = Charts;
 const D = APFS_DATA;
-const h = React.createElement;
 const cx = (...a) => a.filter(Boolean).join(" ");
 
 /* ─────────────────────────────────────────────
@@ -149,47 +148,38 @@ function resultTone(result) {
 const STEPS = ["작성", "접수", "승인", "확정"];
 
 function Stepper({ activeStep }) {
-  return h("div", { className: "flex items-center gap-0", "aria-label": "보고 승인 단계" },
-    STEPS.map((label, i) => {
-      const done = i < activeStep;
-      const active = i === activeStep;
-      const [color] = toneVar(active ? "primary" : done ? "success" : "info");
-      return h(React.Fragment, { key: label },
-        h("div", { className: "flex flex-col items-center gap-1" },
-          h("div", {
-            className: "inline-flex items-center justify-center w-8 h-8 rounded-full text-[12px] font-bold transition-all",
-            style: {
-              background: done
-                ? "color-mix(in srgb,var(--success) 15%,transparent)"
-                : active
-                  ? "color-mix(in srgb,var(--primary) 15%,transparent)"
-                  : "var(--muted)",
-              color: done ? "var(--success)" : active ? "var(--primary)" : "var(--muted-foreground)",
-              border: active ? "2px solid var(--primary)" : done ? "2px solid var(--success)" : "2px solid var(--border)",
-            },
-          },
-            done
-              ? h(Icon, { name: "check", size: 14, stroke: 2.5 })
-              : h("span", null, i + 1)
-          ),
-          h("span", {
-            className: "text-[11px] font-semibold whitespace-nowrap",
-            style: {
-              color: active ? "var(--primary)" : done ? "var(--success)" : "var(--muted-foreground)",
-            },
-          }, label)
-        ),
-        i < STEPS.length - 1 && h("div", {
-          className: "flex-1 h-[2px] mx-2 rounded-full",
-          style: {
-            minWidth: 32,
-            background: done
-              ? "var(--success)"
-              : "var(--border)",
-          },
-        })
-      );
-    })
+  return (
+    <div className="flex items-center gap-0" aria-label="보고 승인 단계">{STEPS.map((label, i) => {
+        const done = i < activeStep;
+        const active = i === activeStep;
+        const [color] = toneVar(active ? "primary" : done ? "success" : "info");
+        return (
+          <React.Fragment key={label}><div className="flex flex-col items-center gap-1"><div
+                className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[12px] font-bold transition-all"
+                style={{
+                  background: done
+                    ? "color-mix(in srgb,var(--success) 15%,transparent)"
+                    : active
+                      ? "color-mix(in srgb,var(--primary) 15%,transparent)"
+                      : "var(--muted)",
+                  color: done ? "var(--success)" : active ? "var(--primary)" : "var(--muted-foreground)",
+                  border: active ? "2px solid var(--primary)" : done ? "2px solid var(--success)" : "2px solid var(--border)",
+                }}>{done
+                  ? <Icon name="check" size={14} stroke={2.5} />
+                  : <span>{i + 1}</span>}</div><span
+                className="text-[11px] font-semibold whitespace-nowrap"
+                style={{
+                  color: active ? "var(--primary)" : done ? "var(--success)" : "var(--muted-foreground)",
+                }}>{label}</span></div>{i < STEPS.length - 1 && <div
+              className="flex-1 h-[2px] mx-2 rounded-full"
+              style={{
+                minWidth: 32,
+                background: done
+                  ? "var(--success)"
+                  : "var(--border)",
+              }} />}</React.Fragment>
+        );
+      })}</div>
   );
 }
 
@@ -198,23 +188,15 @@ function Stepper({ activeStep }) {
 ─────────────────────────────────────────────── */
 function ScheduleCard({ item }) {
   const [color, softBg] = toneVar(item.tone);
-  return h("div", {
-    className: "flex items-start gap-3 rounded-card border border-border bg-card px-4 py-3 shadow-sm",
-  },
-    h("div", {
-      className: "inline-flex items-center justify-center shrink-0 rounded-[8px] text-[10px] font-bold w-10 h-10",
-      style: { background: softBg, color },
-    }, item.dday),
-    h("div", { className: "min-w-0 flex-1" },
-      h("div", { className: "text-[13px] font-semibold truncate", style: { color: "var(--foreground)" } }, item.title),
-      h("div", { className: "flex items-center gap-1.5 mt-0.5" },
-        h("span", {
-          className: "inline-block rounded-full px-2 py-0.5 text-[10.5px] font-bold",
-          style: { background: softBg, color },
-        }, item.kind),
-        h("span", { className: "t-caption text-[11px]" }, item.date)
-      )
-    )
+  return (
+    <div
+      className="flex items-start gap-3 rounded-card border border-border bg-card px-4 py-3 shadow-sm"><div
+        className="inline-flex items-center justify-center shrink-0 rounded-[8px] text-[10px] font-bold w-10 h-10"
+        style={{ background: softBg, color }}>{item.dday}</div><div className="min-w-0 flex-1"><div
+          className="text-[13px] font-semibold truncate"
+          style={{ color: "var(--foreground)" }}>{item.title}</div><div className="flex items-center gap-1.5 mt-0.5"><span
+            className="inline-block rounded-full px-2 py-0.5 text-[10.5px] font-bold"
+            style={{ background: softBg, color }}>{item.kind}</span><span className="t-caption text-[11px]">{item.date}</span></div></div></div>
   );
 }
 
@@ -225,102 +207,48 @@ function MinistryTab() {
   // 현재 승인 단계: 접수 단계(index 1) 활성화
   const activeStep = 1;
 
-  return h("div", { className: "flex flex-col gap-4" },
-    /* 스텝퍼 */
-    h("div", {
-      className: "rounded-card border border-border bg-card px-6 py-5 shadow-sm flex items-center gap-2",
-    },
-      h("div", { className: "flex-1 flex items-center gap-4" },
-        h(ColorChip, { icon: "file", color: "var(--primary)", size: 32, iconSize: 17 }),
-        h("div", null,
-          h("div", { className: "text-[14px] font-bold", style: { color: "var(--foreground)" } }, "보고 승인 흐름"),
-          h("div", { className: "t-caption text-[11.5px]" }, "2분기 운용현황 보고 현재 진행 단계")
-        )
-      ),
-      h("div", { className: "flex items-center gap-2 shrink-0" },
-        h(Stepper, { activeStep })
-      )
-    ),
-
-    /* 보고서 테이블 */
-    h("div", { className: "rounded-card-lg border border-border bg-card shadow-sm overflow-hidden" },
-      h("div", { className: "flex items-center justify-between gap-4 px-5 py-4 border-b border-border" },
-        h("div", { className: "flex items-center gap-2" },
-          h("h3", { className: "text-[16px] font-bold" }, "보고서 목록"),
-          h(CountPill, { count: MINISTRY_REPORTS.length })
-        ),
-        h("div", { className: "flex items-center gap-2" },
-          h(Button, { variant: "primary", size: "sm", leadingIcon: "plus" }, "신규 보고 등록"),
-          h(IconBtn, { icon: "download", label: "내보내기", size: 34 })
-        )
-      ),
-
-      h("div", { className: "overflow-x-auto" },
-        h("table", { className: "w-full border-collapse min-w-[760px]" },
-          h("thead", null,
-            h("tr", { style: { background: "color-mix(in srgb,var(--muted) 60%,transparent)" } },
-              [
-                ["보고서명", "left"],
-                ["보고유형", "center"],
-                ["보고기관", "center"],
-                ["보고일", "center"],
-                ["상태", "center"],
-                ["담당자", "center"],
-                ["액션", "right"],
-              ].map(([label, align], i) =>
-                h("th", {
-                  key: i,
-                  className: cx(
-                    "t-label font-semibold px-4 py-3 whitespace-nowrap",
-                    align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
-                    i === 0 && "pl-6"
-                  ),
-                }, label)
-              )
-            )
-          ),
-          h("tbody", null,
-            MINISTRY_REPORTS.map((r) =>
-              h("tr", {
-                key: r.id,
-                className: "border-t border-border transition-colors",
-                onMouseEnter: (e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)"),
-                onMouseLeave: (e) => (e.currentTarget.style.background = "transparent"),
-              },
-                h("td", { className: "px-4 pl-6 py-3.5" },
-                  h("div", { className: "text-[13.5px] font-semibold", style: { color: "var(--foreground)" } }, r.name)
-                ),
-                h("td", { className: "px-4 py-3.5 text-center" },
-                  h("span", {
-                    className: "inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold",
-                    style: {
-                      background: r.type === "수시"
-                        ? "color-mix(in srgb,var(--warning) 14%,transparent)"
-                        : "color-mix(in srgb,var(--info) 14%,transparent)",
-                      color: r.type === "수시" ? "var(--warning)" : "var(--info)",
-                    },
-                  }, r.type)
-                ),
-                h("td", { className: "px-4 py-3.5 text-center text-[13px] font-semibold", style: { color: "var(--foreground)" } }, r.org),
-                h("td", { className: "px-4 py-3.5 text-center t-caption tabular text-[12.5px]" }, r.date),
-                h("td", { className: "px-4 py-3.5 text-center" },
-                  h(StatusBadge, { tone: reportTone(r.status), label: r.status, size: "sm" })
-                ),
-                h("td", { className: "px-4 py-3.5 text-center text-[13px] font-semibold", style: { color: "var(--foreground)" } }, r.manager),
-                h("td", { className: "px-4 pr-5 py-3.5 text-right" },
-                  r.action === "-"
-                    ? h("span", { className: "t-caption text-[12px]" }, "—")
-                    : h(Button, {
-                        variant: r.action === "작성" ? "primary" : "outline",
-                        size: "sm",
-                      }, r.action)
-                )
-              )
-            )
-          )
-        )
-      )
-    )
+  return (
+    <div className="flex flex-col gap-4"><div
+        className="rounded-card border border-border bg-card px-6 py-5 shadow-sm flex items-center gap-2"><div className="flex-1 flex items-center gap-4"><ColorChip icon="file" color="var(--primary)" size={32} iconSize={17} /><div><div className="text-[14px] font-bold" style={{ color: "var(--foreground)" }}>보고 승인 흐름</div><div className="t-caption text-[11.5px]">2분기 운용현황 보고 현재 진행 단계</div></div></div><div className="flex items-center gap-2 shrink-0"><Stepper activeStep={activeStep} /></div></div><div
+        className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
+          className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">보고서 목록</h3><CountPill count={MINISTRY_REPORTS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">신규 보고 등록</Button><IconBtn icon="download" label="내보내기" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[760px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
+                  ["보고서명", "left"],
+                  ["보고유형", "center"],
+                  ["보고기관", "center"],
+                  ["보고일", "center"],
+                  ["상태", "center"],
+                  ["담당자", "center"],
+                  ["액션", "right"],
+                ].map(([label, align], i) =>
+                  <th
+                    key={i}
+                    className={cx(
+                      "t-label font-semibold px-4 py-3 whitespace-nowrap",
+                      align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
+                      i === 0 && "pl-6"
+                    )}>{label}</th>
+                )}</tr></thead><tbody>{MINISTRY_REPORTS.map((r) =>
+                <tr
+                  key={r.id}
+                  className="border-t border-border transition-colors"
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><td className="px-4 pl-6 py-3.5"><div
+                      className="text-[13.5px] font-semibold"
+                      style={{ color: "var(--foreground)" }}>{r.name}</div></td><td className="px-4 py-3.5 text-center"><span
+                      className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+                      style={{
+                        background: r.type === "수시"
+                          ? "color-mix(in srgb,var(--warning) 14%,transparent)"
+                          : "color-mix(in srgb,var(--info) 14%,transparent)",
+                        color: r.type === "수시" ? "var(--warning)" : "var(--info)",
+                      }}>{r.type}</span></td><td
+                    className="px-4 py-3.5 text-center text-[13px] font-semibold"
+                    style={{ color: "var(--foreground)" }}>{r.org}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{r.date}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={reportTone(r.status)} label={r.status} size="sm" /></td><td
+                    className="px-4 py-3.5 text-center text-[13px] font-semibold"
+                    style={{ color: "var(--foreground)" }}>{r.manager}</td><td className="px-4 pr-5 py-3.5 text-right">{r.action === "-"
+                      ? <span className="t-caption text-[12px]">—</span>
+                      : <Button variant={r.action === "작성" ? "primary" : "outline"} size="sm">{r.action}</Button>}</td></tr>
+              )}</tbody></table></div></div></div>
   );
 }
 
@@ -328,85 +256,56 @@ function MinistryTab() {
    수탁보고 탭 콘텐츠
 ─────────────────────────────────────────────── */
 function CustodyTab() {
-  return h("div", { className: "rounded-card-lg border border-border bg-card shadow-sm overflow-hidden" },
-    h("div", { className: "flex items-center justify-between gap-4 px-5 py-4 border-b border-border" },
-      h("div", { className: "flex items-center gap-2" },
-        h("h3", { className: "text-[16px] font-bold" }, "수탁 데이터 검증 현황"),
-        h(CountPill, { count: CUSTODY_VERIFICATIONS.filter((c) => c.mismatch).length, urgent: true })
-      ),
-      h("div", { className: "flex items-center gap-2" },
-        h(Button, { variant: "outline", size: "sm", leadingIcon: "upload" }, "데이터 업로드"),
-        h(IconBtn, { icon: "refresh", label: "재검증", size: 34 })
-      )
-    ),
-
-    h("div", { className: "overflow-x-auto" },
-      h("table", { className: "w-full border-collapse min-w-[740px]" },
-        h("thead", null,
-          h("tr", { style: { background: "color-mix(in srgb,var(--muted) 60%,transparent)" } },
-            [
-              ["검증유형", "left"],
-              ["대상 자펀드", "left"],
-              ["업로드일", "center"],
-              ["비교검증결과", "center"],
-              ["상태", "center"],
-              ["액션", "right"],
-            ].map(([label, align], i) =>
-              h("th", {
-                key: i,
-                className: cx(
-                  "t-label font-semibold px-4 py-3 whitespace-nowrap",
-                  align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
-                  i === 0 && "pl-6"
-                ),
-              }, label)
-            )
-          )
-        ),
-        h("tbody", null,
-          CUSTODY_VERIFICATIONS.map((r) =>
-            h("tr", {
-              key: r.id,
-              className: "border-t border-border transition-colors",
-              style: r.mismatch
-                ? { background: "color-mix(in srgb,var(--danger) 6%,transparent)" }
-                : undefined,
-              onMouseEnter: (e) => {
-                if (!r.mismatch) e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)";
-              },
-              onMouseLeave: (e) => {
-                e.currentTarget.style.background = r.mismatch
-                  ? "color-mix(in srgb,var(--danger) 6%,transparent)"
-                  : "transparent";
-              },
-            },
-              h("td", { className: "px-4 pl-6 py-3.5" },
-                h("div", { className: "flex items-center gap-2" },
-                  r.mismatch && h(Icon, { name: "alert-circle", size: 15, style: { color: "var(--danger)", flexShrink: 0 } }),
-                  h("span", { className: "text-[13.5px] font-semibold", style: { color: "var(--foreground)" } }, r.vtype)
-                )
-              ),
-              h("td", { className: "px-4 py-3.5 text-[13px]", style: { color: "var(--foreground)" } }, r.fund),
-              h("td", { className: "px-4 py-3.5 text-center t-caption tabular text-[12.5px]" }, r.uploadDate),
-              h("td", { className: "px-4 py-3.5 text-center" },
-                h(StatusBadge, { tone: resultTone(r.result), label: r.result, size: "sm",
-                  icon: r.result === "일치" ? "check-circle" : "x-circle" })
-              ),
-              h("td", { className: "px-4 py-3.5 text-center" },
-                h(StatusBadge, { tone: custodyTone(r.status), label: r.status, size: "sm" })
-              ),
-              h("td", { className: "px-4 pr-5 py-3.5 text-right" },
-                h(Button, {
-                  variant: r.mismatch ? "outline" : "ghost",
-                  size: "sm",
-                  style: r.mismatch ? { color: "var(--danger)", borderColor: "var(--danger)" } : undefined,
-                }, r.mismatch ? "불일치 검토" : "상세 보기")
-              )
-            )
-          )
-        )
-      )
-    )
+  return (
+    <div
+      className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
+        className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">수탁 데이터 검증 현황</h3><CountPill
+            count={CUSTODY_VERIFICATIONS.filter((c) => c.mismatch).length}
+            urgent={true} /></div><div className="flex items-center gap-2"><Button variant="outline" size="sm" leadingIcon="upload">데이터 업로드</Button><IconBtn icon="refresh" label="재검증" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[740px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
+                ["검증유형", "left"],
+                ["대상 자펀드", "left"],
+                ["업로드일", "center"],
+                ["비교검증결과", "center"],
+                ["상태", "center"],
+                ["액션", "right"],
+              ].map(([label, align], i) =>
+                <th
+                  key={i}
+                  className={cx(
+                    "t-label font-semibold px-4 py-3 whitespace-nowrap",
+                    align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
+                    i === 0 && "pl-6"
+                  )}>{label}</th>
+              )}</tr></thead><tbody>{CUSTODY_VERIFICATIONS.map((r) =>
+              <tr
+                key={r.id}
+                className="border-t border-border transition-colors"
+                style={r.mismatch
+                  ? { background: "color-mix(in srgb,var(--danger) 6%,transparent)" }
+                  : undefined}
+                onMouseEnter={(e) => {
+                  if (!r.mismatch) e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = r.mismatch
+                    ? "color-mix(in srgb,var(--danger) 6%,transparent)"
+                    : "transparent";
+                }}><td className="px-4 pl-6 py-3.5"><div className="flex items-center gap-2">{r.mismatch && <Icon
+                      name="alert-circle"
+                      size={15}
+                      style={{ color: "var(--danger)", flexShrink: 0 }} />}<span
+                      className="text-[13.5px] font-semibold"
+                      style={{ color: "var(--foreground)" }}>{r.vtype}</span></div></td><td
+                  className="px-4 py-3.5 text-[13px]"
+                  style={{ color: "var(--foreground)" }}>{r.fund}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{r.uploadDate}</td><td className="px-4 py-3.5 text-center"><StatusBadge
+                    tone={resultTone(r.result)}
+                    label={r.result}
+                    size="sm"
+                    icon={r.result === "일치" ? "check-circle" : "x-circle"} /></td><td className="px-4 py-3.5 text-center"><StatusBadge tone={custodyTone(r.status)} label={r.status} size="sm" /></td><td className="px-4 pr-5 py-3.5 text-right"><Button
+                    variant={r.mismatch ? "outline" : "ghost"}
+                    size="sm"
+                    style={r.mismatch ? { color: "var(--danger)", borderColor: "var(--danger)" } : undefined}>{r.mismatch ? "불일치 검토" : "상세 보기"}</Button></td></tr>
+            )}</tbody></table></div></div>
   );
 }
 
@@ -414,106 +313,53 @@ function CustodyTab() {
    등록원부 탭 콘텐츠
 ─────────────────────────────────────────────── */
 function RegistryTab() {
-  return h("div", { className: "flex flex-col gap-4" },
-    /* 원부 테이블 */
-    h("div", { className: "rounded-card-lg border border-border bg-card shadow-sm overflow-hidden" },
-      h("div", { className: "flex items-center justify-between gap-4 px-5 py-4 border-b border-border" },
-        h("div", { className: "flex items-center gap-2" },
-          h("h3", { className: "text-[16px] font-bold" }, "등록원부 관리"),
-          h(CountPill, { count: REGISTRY_FUNDS.length })
-        ),
-        h("div", { className: "flex items-center gap-2" },
-          h(Button, { variant: "primary", size: "sm", leadingIcon: "plus" }, "원부 등록"),
-          h(IconBtn, { icon: "download", label: "일괄 다운로드", size: 34 })
-        )
-      ),
-
-      h("div", { className: "overflow-x-auto" },
-        h("table", { className: "w-full border-collapse min-w-[860px]" },
-          h("thead", null,
-            h("tr", { style: { background: "color-mix(in srgb,var(--muted) 60%,transparent)" } },
-              [
-                ["자펀드코드", "left"],
-                ["자펀드명", "left"],
-                ["운용사", "left"],
-                ["등록일", "center"],
-                ["최종수정일", "center"],
-                ["버전", "center"],
-                ["상태", "center"],
-                ["다운로드", "right"],
-              ].map(([label, align], i) =>
-                h("th", {
-                  key: i,
-                  className: cx(
-                    "t-label font-semibold px-4 py-3 whitespace-nowrap",
-                    align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
-                    i === 0 && "pl-6"
-                  ),
-                }, label)
-              )
-            )
-          ),
-          h("tbody", null,
-            REGISTRY_FUNDS.map((r) =>
-              h("tr", {
-                key: r.code,
-                className: "border-t border-border transition-colors",
-                onMouseEnter: (e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)"),
-                onMouseLeave: (e) => (e.currentTarget.style.background = "transparent"),
-              },
-                h("td", { className: "px-4 pl-6 py-3.5 tabular text-[12.5px] font-mono font-semibold", style: { color: "var(--accent)" } }, r.code),
-                h("td", { className: "px-4 py-3.5 text-[13.5px] font-semibold", style: { color: "var(--foreground)" } }, r.name),
-                h("td", { className: "px-4 py-3.5 text-[13px]", style: { color: "var(--muted-foreground)" } }, r.gp),
-                h("td", { className: "px-4 py-3.5 text-center t-caption tabular text-[12px]" }, r.regDate),
-                h("td", { className: "px-4 py-3.5 text-center t-caption tabular text-[12px]" }, r.lastModified),
-                h("td", { className: "px-4 py-3.5 text-center text-[12.5px] font-bold tabular", style: { color: "var(--primary)" } }, r.version),
-                h("td", { className: "px-4 py-3.5 text-center" },
-                  h(StatusBadge, { tone: registryTone(r.status), label: r.status, size: "sm" })
-                ),
-                h("td", { className: "px-4 pr-5 py-3.5 text-right" },
-                  h(IconBtn, { icon: "download", label: `${r.name} 다운로드`, size: 32 })
-                )
-              )
-            )
-          )
-        )
-      )
-    ),
-
-    /* 수정이력 타임라인 */
-    h("div", { className: "rounded-card border border-border bg-card px-5 py-4 shadow-sm" },
-      h("div", { className: "flex items-center gap-2 mb-4" },
-        h(ColorChip, { icon: "clock", color: "var(--info)", size: 28, iconSize: 15 }),
-        h("h4", { className: "text-[14px] font-bold" }, "최근 수정이력")
-      ),
-      h("div", { className: "flex flex-col" },
-        REGISTRY_HISTORY.map((item, i) =>
-          h("div", {
-            key: i,
-            className: cx("flex items-start gap-3 pb-4", i < REGISTRY_HISTORY.length - 1 && "border-b border-border mb-4"),
-          },
-            h("div", { className: "flex flex-col items-center shrink-0" },
-              h("div", {
-                className: "w-2 h-2 rounded-full mt-1.5",
-                style: { background: "var(--primary)" },
-              }),
-              i < REGISTRY_HISTORY.length - 1 && h("div", {
-                className: "w-px flex-1 mt-1",
-                style: { background: "var(--border)", minHeight: 20 },
-              })
-            ),
-            h("div", { className: "min-w-0 flex-1" },
-              h("div", { className: "flex items-center gap-2 flex-wrap" },
-                h("span", { className: "text-[12.5px] font-bold", style: { color: "var(--foreground)" } }, item.fund),
-                h("span", { className: "t-caption tabular text-[11.5px]" }, item.date)
-              ),
-              h("div", { className: "text-[12.5px] mt-0.5", style: { color: "var(--muted-foreground)" } }, item.change),
-              h("div", { className: "t-caption text-[11px] mt-0.5" }, "처리: ", item.by)
-            )
-          )
-        )
-      )
-    )
+  return (
+    <div className="flex flex-col gap-4"><div
+        className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
+          className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">등록원부 관리</h3><CountPill count={REGISTRY_FUNDS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">원부 등록</Button><IconBtn icon="download" label="일괄 다운로드" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[860px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
+                  ["자펀드코드", "left"],
+                  ["자펀드명", "left"],
+                  ["운용사", "left"],
+                  ["등록일", "center"],
+                  ["최종수정일", "center"],
+                  ["버전", "center"],
+                  ["상태", "center"],
+                  ["다운로드", "right"],
+                ].map(([label, align], i) =>
+                  <th
+                    key={i}
+                    className={cx(
+                      "t-label font-semibold px-4 py-3 whitespace-nowrap",
+                      align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
+                      i === 0 && "pl-6"
+                    )}>{label}</th>
+                )}</tr></thead><tbody>{REGISTRY_FUNDS.map((r) =>
+                <tr
+                  key={r.code}
+                  className="border-t border-border transition-colors"
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><td
+                    className="px-4 pl-6 py-3.5 tabular text-[12.5px] font-mono font-semibold"
+                    style={{ color: "var(--accent)" }}>{r.code}</td><td
+                    className="px-4 py-3.5 text-[13.5px] font-semibold"
+                    style={{ color: "var(--foreground)" }}>{r.name}</td><td
+                    className="px-4 py-3.5 text-[13px]"
+                    style={{ color: "var(--muted-foreground)" }}>{r.gp}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{r.regDate}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{r.lastModified}</td><td
+                    className="px-4 py-3.5 text-center text-[12.5px] font-bold tabular"
+                    style={{ color: "var(--primary)" }}>{r.version}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={registryTone(r.status)} label={r.status} size="sm" /></td><td className="px-4 pr-5 py-3.5 text-right"><IconBtn icon="download" label={`${r.name} 다운로드`} size={32} /></td></tr>
+              )}</tbody></table></div></div><div className="rounded-card border border-border bg-card px-5 py-4 shadow-sm"><div className="flex items-center gap-2 mb-4"><ColorChip icon="clock" color="var(--info)" size={28} iconSize={15} /><h4 className="text-[14px] font-bold">최근 수정이력</h4></div><div className="flex flex-col">{REGISTRY_HISTORY.map((item, i) =>
+            <div
+              key={i}
+              className={cx("flex items-start gap-3 pb-4", i < REGISTRY_HISTORY.length - 1 && "border-b border-border mb-4")}><div className="flex flex-col items-center shrink-0"><div
+                  className="w-2 h-2 rounded-full mt-1.5"
+                  style={{ background: "var(--primary)" }} />{i < REGISTRY_HISTORY.length - 1 && <div
+                  className="w-px flex-1 mt-1"
+                  style={{ background: "var(--border)", minHeight: 20 }} />}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2 flex-wrap"><span
+                    className="text-[12.5px] font-bold"
+                    style={{ color: "var(--foreground)" }}>{item.fund}</span><span className="t-caption tabular text-[11.5px]">{item.date}</span></div><div
+                  className="text-[12.5px] mt-0.5"
+                  style={{ color: "var(--muted-foreground)" }}>{item.change}</div><div className="t-caption text-[11px] mt-0.5">처리: {item.by}</div></div></div>
+          )}</div></div></div>
   );
 }
 
@@ -522,18 +368,13 @@ function RegistryTab() {
 ─────────────────────────────────────────────── */
 function KpiBox({ icon, color, label, value, sub, tone }) {
   const [c, softBg] = toneVar(tone || "primary");
-  return h("div", {
-    className: "rounded-card border border-border bg-card px-5 py-4 shadow-sm flex items-center gap-4",
-  },
-    h("div", {
-      className: "inline-flex items-center justify-center shrink-0 rounded-[12px]",
-      style: { width: 44, height: 44, background: softBg, color: c },
-    }, h(Icon, { name: icon, size: 22, stroke: 2 })),
-    h("div", { className: "min-w-0 flex-1" },
-      h("div", { className: "t-label text-[11.5px] mb-0.5" }, label),
-      h("div", { className: "text-[22px] font-extrabold tabular leading-tight", style: { color: "var(--foreground)" } }, value),
-      sub && h("div", { className: "t-caption text-[11.5px] mt-0.5" }, sub)
-    )
+  return (
+    <div
+      className="rounded-card border border-border bg-card px-5 py-4 shadow-sm flex items-center gap-4"><div
+        className="inline-flex items-center justify-center shrink-0 rounded-[12px]"
+        style={{ width: 44, height: 44, background: softBg, color: c }}><Icon name={icon} size={22} stroke={2} /></div><div className="min-w-0 flex-1"><div className="t-label text-[11.5px] mb-0.5">{label}</div><div
+          className="text-[22px] font-extrabold tabular leading-tight"
+          style={{ color: "var(--foreground)" }}>{value}</div>{sub && <div className="t-caption text-[11.5px] mt-0.5">{sub}</div>}</div></div>
   );
 }
 
@@ -555,113 +396,52 @@ function Report({ onNav }) {
     { value: "registry", label: "등록원부" },
   ];
 
-  return h("div", {
-    className: "max-w-[1320px] mx-auto",
-    style: { animation: "dashFade .35s var(--ease) both" },
-  },
-    /* ── PageHeader ── */
-    h(PageHeader, {
-      crumbs: ["홈", "부처보고", "보고 관리"],
-      title: "부처보고·수탁보고",
-      sub: "보고서 제출, 수탁 데이터 검증, 등록원부 관리 — 2026-06-16 기준",
-      actions: h(React.Fragment, null,
-        h(Button, {
-          variant: "outline",
-          size: "sm",
-          leadingIcon: "chevron-left",
-          onClick: () => onNav && onNav("main"),
-        }, "메인으로"),
-        h(Button, { variant: "primary", size: "sm", leadingIcon: "download" }, "전체 내보내기")
-      ),
-    }),
-
-    /* ── KPI 3열 ── */
-    h("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4" },
-      h(KpiBox, {
-        icon: "file",
-        tone: "primary",
-        label: "이번 분기 보고서",
-        value: "4건",
-        sub: "제출완료 3 / 미제출 1",
-      }),
-      h(KpiBox, {
-        icon: "shield",
-        tone: "warning",
-        label: "수탁보고 검증",
-        value: "진행중 2건",
-        sub: "불일치 항목 재검토 중",
-      }),
-      h(KpiBox, {
-        icon: "clock",
-        tone: "info",
-        label: "등록원부 최종갱신",
-        value: "2026-06-10",
-        sub: "스마트팜 그로스 1호",
-      })
-    ),
-
-    /* ── 탭 + 콘텐츠 ── */
-    h("div", { className: "flex flex-col gap-4 mb-4" },
-      h("div", { className: "flex items-center gap-3" },
-        h(SegTabs, {
-          options: tabOptions,
-          value: tab,
-          onChange: setTab,
-          size: "md",
-        })
-      ),
-      tab === "ministry" && h(MinistryTab),
-      tab === "custody" && h(CustodyTab),
-      tab === "registry" && h(RegistryTab)
-    ),
-
-    /* ── 하단 2열: 연도별 차트 + 보고 일정 ── */
-    h("div", { className: "grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4" },
-
-      /* 연도별 투자현황 */
-      h(ChartCard, {
-        title: "연도별 투자·집행 현황",
-        sub: "계획 대비 실적 (억원)",
-        icon: "chart",
-        accent: "var(--primary)",
-        minH: 240,
-      },
-        h("div", { style: { height: 200 } },
-          h(ComposedBars, {
-            data: INVEST_HISTORY,
-            height: 200,
-            planColor: "var(--chart-3)",
-            actualColor: "var(--primary)",
-          })
-        ),
-        h("div", { className: "flex items-center gap-4 mt-2 px-1" },
-          h("div", { className: "flex items-center gap-1.5" },
-            h("span", { className: "w-3 h-3 rounded-sm inline-block shrink-0", style: { background: "var(--chart-3)" } }),
-            h("span", { className: "t-caption text-[11.5px]" }, "계획")
-          ),
-          h("div", { className: "flex items-center gap-1.5" },
-            h("span", { className: "w-3 h-3 rounded-sm inline-block shrink-0", style: { background: "var(--primary)" } }),
-            h("span", { className: "t-caption text-[11.5px]" }, "실적")
-          )
-        )
-      ),
-
-      /* 보고 일정 카드 */
-      h("div", { className: "rounded-card-lg border border-border bg-card shadow-sm overflow-hidden" },
-        h("div", { className: "flex items-center justify-between gap-3 px-5 py-4 border-b border-border" },
-          h("div", { className: "flex items-center gap-2" },
-            h(ColorChip, { icon: "calendar", color: "var(--warning)", size: 30, iconSize: 16 }),
-            h("h3", { className: "text-[15px] font-bold" }, "보고 일정 현황")
-          ),
-          scheduleItems.length > 0 && h(CountPill, { count: scheduleItems.length })
-        ),
-        h("div", { className: "flex flex-col gap-2 px-4 py-3 overflow-y-auto", style: { maxHeight: 280 } },
-          scheduleItems.length === 0
-            ? h("div", { className: "py-8 text-center t-caption" }, "예정된 보고 일정이 없습니다.")
-            : scheduleItems.map((item, i) => h(ScheduleCard, { key: i, item }))
-        )
-      )
-    )
+  return (
+    <div
+      className="max-w-[1320px] mx-auto"
+      style={{ animation: "dashFade .35s var(--ease) both" }}><PageHeader
+        crumbs={["홈", "부처보고", "보고 관리"]}
+        title="부처보고·수탁보고"
+        sub="보고서 제출, 수탁 데이터 검증, 등록원부 관리 — 2026-06-16 기준"
+        actions={<><Button
+            variant="outline"
+            size="sm"
+            leadingIcon="chevron-left"
+            onClick={() => onNav && onNav("main")}>메인으로</Button><Button variant="primary" size="sm" leadingIcon="download">전체 내보내기</Button></>} /><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4"><KpiBox
+          icon="file"
+          tone="primary"
+          label="이번 분기 보고서"
+          value="4건"
+          sub="제출완료 3 / 미제출 1" /><KpiBox
+          icon="shield"
+          tone="warning"
+          label="수탁보고 검증"
+          value="진행중 2건"
+          sub="불일치 항목 재검토 중" /><KpiBox
+          icon="clock"
+          tone="info"
+          label="등록원부 최종갱신"
+          value="2026-06-10"
+          sub="스마트팜 그로스 1호" /></div><div className="flex flex-col gap-4 mb-4"><div className="flex items-center gap-3"><SegTabs options={tabOptions} value={tab} onChange={setTab} size="md" /></div>{tab === "ministry" && <MinistryTab />}{tab === "custody" && <CustodyTab />}{tab === "registry" && <RegistryTab />}</div><div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4"><ChartCard
+          title="연도별 투자·집행 현황"
+          sub="계획 대비 실적 (억원)"
+          icon="chart"
+          accent="var(--primary)"
+          minH={240}><div style={{ height: 200 }}><ComposedBars
+              data={INVEST_HISTORY}
+              height={200}
+              planColor="var(--chart-3)"
+              actualColor="var(--primary)" /></div><div className="flex items-center gap-4 mt-2 px-1"><div className="flex items-center gap-1.5"><span
+                className="w-3 h-3 rounded-sm inline-block shrink-0"
+                style={{ background: "var(--chart-3)" }} /><span className="t-caption text-[11.5px]">계획</span></div><div className="flex items-center gap-1.5"><span
+                className="w-3 h-3 rounded-sm inline-block shrink-0"
+                style={{ background: "var(--primary)" }} /><span className="t-caption text-[11.5px]">실적</span></div></div></ChartCard><div
+          className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
+            className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><ColorChip icon="calendar" color="var(--warning)" size={30} iconSize={16} /><h3 className="text-[15px] font-bold">보고 일정 현황</h3></div>{scheduleItems.length > 0 && <CountPill count={scheduleItems.length} />}</div><div
+            className="flex flex-col gap-2 px-4 py-3 overflow-y-auto"
+            style={{ maxHeight: 280 }}>{scheduleItems.length === 0
+              ? <div className="py-8 text-center t-caption">예정된 보고 일정이 없습니다.</div>
+              : scheduleItems.map((item, i) => <ScheduleCard key={i} item={item} />)}</div></div></div></div>
   );
 }
 

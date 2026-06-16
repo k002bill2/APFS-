@@ -5,7 +5,6 @@ import { Icon } from './icons';
 import { Charts } from './charts';
 
 const { Sparkline } = Charts;
-const h = React.createElement;
 const cx = (...a) => a.filter(Boolean).join(" ");
 
 const toneVar = (t) => ({
@@ -19,23 +18,23 @@ const toneVar = (t) => ({
 
 /* ---- ColorChip ---- */
 function ColorChip({ icon, color = "var(--primary)", soft, size = 36, iconSize = 20 }) {
-  return h("span", {
-    className: "inline-flex items-center justify-center shrink-0 rounded-[10px]",
-    style: { width: size, height: size, background: soft || `color-mix(in srgb,${color} 13%,transparent)`, color },
-  }, h(Icon, { name: icon, size: iconSize, stroke: 2 }));
+  return (
+    <span
+      className="inline-flex items-center justify-center shrink-0 rounded-[10px]"
+      style={{ width: size, height: size, background: soft || `color-mix(in srgb,${color} 13%,transparent)`, color }}><Icon name={icon} size={iconSize} stroke={2} /></span>
+  );
 }
 
 /* ---- StatusBadge ---- */
 function StatusBadge({ tone = "success", label, icon, size = "md" }) {
   const [c, soft] = toneVar(tone);
-  return h("span", {
-    className: cx("inline-flex items-center gap-[5px] rounded-[7px] font-bold leading-tight whitespace-nowrap",
-      size === "sm" ? "px-[7px] py-[2px] text-[11px]" : "px-[9px] py-[3px] text-xs"),
-    style: { background: soft, color: c },
-  },
-    icon ? h(Icon, { name: icon, size: 13, stroke: 2.4 })
-         : h("span", { className: "w-1.5 h-1.5 rounded-full", style: { background: c } }),
-    label);
+  return (
+    <span
+      className={cx("inline-flex items-center gap-[5px] rounded-[7px] font-bold leading-tight whitespace-nowrap",
+        size === "sm" ? "px-[7px] py-[2px] text-[11px]" : "px-[9px] py-[3px] text-xs")}
+      style={{ background: soft, color: c }}>{icon ? <Icon name={icon} size={13} stroke={2.4} />
+           : <span className="w-1.5 h-1.5 rounded-full" style={{ background: c }} />}{label}</span>
+  );
 }
 
 /* ---- DeltaBadge ---- */
@@ -43,86 +42,76 @@ function DeltaBadge({ value, label, invert }) {
   const good = invert ? value < 0 : value > 0;
   const c = good ? "var(--success)" : "var(--danger)";
   const up = value > 0;
-  return h("span", { className: "inline-flex items-center gap-1 text-[12.5px] font-bold", style: { color: c } },
-    h(Icon, { name: up ? "trending" : "trending-down", size: 14, stroke: 2.5 }),
-    h("span", { className: "tabular" }, (up ? "+" : "") + value),
-    label && h("span", { className: "text-caption font-medium text-[11.5px]" }, label));
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-[12.5px] font-bold"
+      style={{ color: c }}><Icon name={up ? "trending" : "trending-down"} size={14} stroke={2.5} /><span className="tabular">{(up ? "+" : "") + value}</span>{label && <span className="text-caption font-medium text-[11.5px]">{label}</span>}</span>
+  );
 }
 
 /* ---- StatCard ---- */
 function StatCard({ kpi, onClick, emphasis }) {
   const c = kpi.accent;
-  return h("button", {
-    onClick,
-    className: cx("stat-card relative text-left w-full flex flex-col gap-2.5 overflow-hidden",
-      "rounded-card border border-border bg-card px-[18px] py-4 font-[inherit] text-[inherit] transition-shadow duration-200",
-      emphasis ? "shadow-md" : "shadow-sm", onClick ? "cursor-pointer" : "cursor-default"),
-  },
-    h("div", { className: "flex items-center justify-between gap-2" },
-      h("div", { className: "flex items-center gap-[9px] min-w-0" },
-        h(ColorChip, { icon: kpi.icon, color: c, size: 32, iconSize: 18 }),
-        h("span", { className: "t-label whitespace-nowrap overflow-hidden text-ellipsis" }, kpi.label)),
-      kpi.fr && h("span", { className: "t-caption text-[10px] opacity-80 whitespace-nowrap" }, kpi.fr)),
-    h("div", { className: "flex items-end gap-2" },
-      h("div", { className: "flex-1 min-w-0" },
-        h("div", { className: "flex items-baseline gap-1 whitespace-nowrap" },
-          h("span", { className: "t-display tabular", style: { fontSize: emphasis ? 24 : 22, letterSpacing: "-.01em" } }, kpi.value),
-          h("span", { className: "text-[12.5px] font-semibold text-muted-foreground" }, kpi.unit)),
-        h("div", { className: "mt-[5px]" }, h(DeltaBadge, { value: kpi.delta, label: kpi.deltaLabel, invert: kpi.invertDelta }))),
-      h("div", { className: "w-[78px] shrink-0" }, h(Sparkline, { data: kpi.trend, color: c, id: kpi.id, height: 38 }))),
-    kpi.progress != null && h("div", { className: "h-[5px] rounded-full bg-muted overflow-hidden mt-0.5" },
-      h("div", { className: "h-full rounded-full", style: { width: kpi.progress + "%", background: c } })));
+  return (
+    <button
+      onClick={onClick}
+      className={cx("stat-card relative text-left w-full flex flex-col gap-2.5 overflow-hidden",
+        "rounded-card border border-border bg-card px-[18px] py-4 font-[inherit] text-[inherit] transition-shadow duration-200",
+        emphasis ? "shadow-md" : "shadow-sm", onClick ? "cursor-pointer" : "cursor-default")}><div className="flex items-center justify-between gap-2"><div className="flex items-center gap-[9px] min-w-0"><ColorChip icon={kpi.icon} color={c} size={32} iconSize={18} /><span className="t-label whitespace-nowrap overflow-hidden text-ellipsis">{kpi.label}</span></div>{kpi.fr && <span className="t-caption text-[10px] opacity-80 whitespace-nowrap">{kpi.fr}</span>}</div><div className="flex items-end gap-2"><div className="flex-1 min-w-0"><div className="flex items-baseline gap-1 whitespace-nowrap"><span
+              className="t-display tabular"
+              style={{ fontSize: emphasis ? 24 : 22, letterSpacing: "-.01em" }}>{kpi.value}</span><span className="text-[12.5px] font-semibold text-muted-foreground">{kpi.unit}</span></div><div className="mt-[5px]"><DeltaBadge value={kpi.delta} label={kpi.deltaLabel} invert={kpi.invertDelta} /></div></div><div className="w-[78px] shrink-0"><Sparkline data={kpi.trend} color={c} id={kpi.id} height={38} /></div></div>{kpi.progress != null && <div className="h-[5px] rounded-full bg-muted overflow-hidden mt-0.5"><div
+          className="h-full rounded-full"
+          style={{ width: kpi.progress + "%", background: c }} /></div>}</button>
+  );
 }
 
 /* ---- Card (generic) ---- */
 function Card({ children, accent, pad = 18, className, style, span }) {
-  return h("section", {
-    className: cx(span && "dcol-" + span, "rounded-card border border-border bg-card shadow-sm min-w-0", className),
-    style: { padding: pad, ...style },
-  }, children);
+  return (
+    <section
+      className={cx(span && "dcol-" + span, "rounded-card border border-border bg-card shadow-sm min-w-0", className)}
+      style={{ padding: pad, ...style }}>{children}</section>
+  );
 }
 
 /* ---- ChartCard ---- */
 function ChartCard({ title, sub, icon, accent = "var(--primary)", right, children, footer, span, minH }) {
-  return h("section", {
-    className: cx(span && "dcol-" + span, "flex flex-col rounded-card border border-border bg-card shadow-sm min-w-0 overflow-hidden"),
-  },
-    h("header", { className: "flex items-center justify-between gap-3 px-[18px] py-[14px] border-b border-border" },
-      h("div", { className: "flex items-center gap-2.5 min-w-0" },
-        h(ColorChip, { icon, color: accent, size: 34, iconSize: 18 }),
-        h("div", { className: "min-w-0" },
-          h("div", { className: "t-cardtitle whitespace-nowrap overflow-hidden text-ellipsis" }, title),
-          sub && h("div", { className: "t-caption mt-px" }, sub))),
-      right && h("div", { className: "flex items-center gap-1.5 shrink-0" }, right)),
-    h("div", { className: "p-[18px] flex-1", style: { minHeight: minH } }, children),
-    footer && h("div", { className: "px-[18px] py-2.5 border-t border-border", style: { background: "color-mix(in srgb,var(--muted) 55%,transparent)" } }, footer));
+  return (
+    <section
+      className={cx(span && "dcol-" + span, "flex flex-col rounded-card border border-border bg-card shadow-sm min-w-0 overflow-hidden")}><header
+        className="flex items-center justify-between gap-3 px-[18px] py-[14px] border-b border-border"><div className="flex items-center gap-2.5 min-w-0"><ColorChip icon={icon} color={accent} size={34} iconSize={18} /><div className="min-w-0"><div className="t-cardtitle whitespace-nowrap overflow-hidden text-ellipsis">{title}</div>{sub && <div className="t-caption mt-px">{sub}</div>}</div></div>{right && <div className="flex items-center gap-1.5 shrink-0">{right}</div>}</header><div className="p-[18px] flex-1" style={{ minHeight: minH }}>{children}</div>{footer && <div
+        className="px-[18px] py-2.5 border-t border-border"
+        style={{ background: "color-mix(in srgb,var(--muted) 55%,transparent)" }}>{footer}</div>}</section>
+  );
 }
 
 /* ---- SegTabs ---- */
 function SegTabs({ options, value, onChange, size = "md" }) {
-  return h("div", { className: "inline-flex bg-muted rounded-[9px] p-[3px] gap-0.5" },
-    options.map((o) => {
-      const v = o.value ?? o, lab = o.label ?? o;
-      const active = v === value;
-      return h("button", {
-        key: v, onClick: () => onChange(v),
-        className: cx("cursor-pointer font-[inherit] border-0 rounded-[7px] font-semibold transition-all duration-150",
-          size === "sm" ? "px-2.5 py-1 text-xs" : "px-[13px] py-[5px] text-[12.5px]",
-          active ? "bg-card text-primary shadow-sm" : "bg-transparent text-muted-foreground"),
-      }, lab);
-    }));
+  return (
+    <div className="inline-flex bg-muted rounded-[9px] p-[3px] gap-0.5">{options.map((o) => {
+        const v = o.value ?? o, lab = o.label ?? o;
+        const active = v === value;
+        return (
+          <button
+            key={v}
+            onClick={() => onChange(v)}
+            className={cx("cursor-pointer font-[inherit] border-0 rounded-[7px] font-semibold transition-all duration-150",
+              size === "sm" ? "px-2.5 py-1 text-xs" : "px-[13px] py-[5px] text-[12.5px]",
+              active ? "bg-card text-primary shadow-sm" : "bg-transparent text-muted-foreground")}>{lab}</button>
+        );
+      })}</div>
+  );
 }
 
 /* ---- FilterChip ---- */
 function FilterChip({ active, children, onClick, dot }) {
-  return h("button", {
-    onClick,
-    className: cx("inline-flex items-center gap-1.5 cursor-pointer font-[inherit] rounded-lg px-[11px] py-[5px] text-[12.5px] font-semibold border transition-all duration-150",
-      active ? "text-primary" : "border-border-strong text-muted-foreground bg-card"),
-    style: active ? { background: "color-mix(in srgb,var(--primary) 10%,transparent)", borderColor: "color-mix(in srgb,var(--primary) 28%,transparent)" } : undefined,
-  },
-    dot && h("span", { className: "w-[7px] h-[7px] rounded-full", style: { background: dot } }),
-    children);
+  return (
+    <button
+      onClick={onClick}
+      className={cx("inline-flex items-center gap-1.5 cursor-pointer font-[inherit] rounded-lg px-[11px] py-[5px] text-[12.5px] font-semibold border transition-all duration-150",
+        active ? "text-primary" : "border-border-strong text-muted-foreground bg-card")}
+      style={active ? { background: "color-mix(in srgb,var(--primary) 10%,transparent)", borderColor: "color-mix(in srgb,var(--primary) 28%,transparent)" } : undefined}>{dot && <span className="w-[7px] h-[7px] rounded-full" style={{ background: dot }} />}{children}</button>
+  );
 }
 
 /* ---- Button ---- */
@@ -135,43 +124,45 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
     ghost: "bg-transparent text-muted-foreground",
     accent: "bg-accent text-accent-foreground",
   }[variant];
-  return h("button", {
-    onClick, className: cx("ui-btn ui-" + variant, "inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border border-transparent transition-all duration-150", sizeCls, variantCls),
-    style,
-  },
-    leadingIcon && h(Icon, { name: leadingIcon, size: size === "sm" ? 14 : 16, stroke: 2.2 }),
-    children,
-    trailingIcon && h(Icon, { name: trailingIcon, size: size === "sm" ? 14 : 16, stroke: 2.2 }));
+  return (
+    <button
+      onClick={onClick}
+      className={cx("ui-btn ui-" + variant, "inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border border-transparent transition-all duration-150", sizeCls, variantCls)}
+      style={style}>{leadingIcon && <Icon name={leadingIcon} size={size === "sm" ? 14 : 16} stroke={2.2} />}{children}{trailingIcon && <Icon name={trailingIcon} size={size === "sm" ? 14 : 16} stroke={2.2} />}</button>
+  );
 }
 
 /* ---- IconBtn ---- */
 function IconBtn({ icon, onClick, label, badge, active, size = 38 }) {
-  return h("button", {
-    onClick, "aria-label": label, title: label,
-    className: cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border border-transparent transition-all duration-150",
-      active ? "bg-muted text-primary" : "bg-transparent text-muted-foreground"),
-    style: { width: size, height: size },
-  },
-    h(Icon, { name: icon, size: 20, stroke: 2 }),
-    badge > 0 && h("span", {
-      className: "absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center border-2 border-card",
-    }, badge > 99 ? "99+" : badge));
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border border-transparent transition-all duration-150",
+        active ? "bg-muted text-primary" : "bg-transparent text-muted-foreground")}
+      style={{ width: size, height: size }}><Icon name={icon} size={20} stroke={2} />{badge > 0 && <span
+        className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</button>
+  );
 }
 
 /* ---- EmptyState ---- */
 function EmptyState({ msg = "표시할 데이터가 없습니다", icon = "inbox", height = 160 }) {
-  return h("div", { className: "flex flex-col items-center justify-center gap-2 text-caption", style: { height } },
-    h(Icon, { name: icon, size: 30, stroke: 1.7 }),
-    h("div", { className: "text-[13px] font-medium" }, msg));
+  return (
+    <div
+      className="flex flex-col items-center justify-center gap-2 text-caption"
+      style={{ height }}><Icon name={icon} size={30} stroke={1.7} /><div className="text-[13px] font-medium">{msg}</div></div>
+  );
 }
 
 /* ---- CountPill ---- */
 function CountPill({ count, urgent }) {
   if (!count) return null;
-  return h("span", {
-    className: cx("min-w-[18px] h-[18px] px-[5px] rounded-full text-[10.5px] font-bold inline-flex items-center justify-center", urgent ? "bg-danger text-white" : "text-primary"),
-    style: urgent ? undefined : { background: "color-mix(in srgb,var(--primary) 15%,transparent)" },
-  }, count > 99 ? "99+" : count);
+  return (
+    <span
+      className={cx("min-w-[18px] h-[18px] px-[5px] rounded-full text-[10.5px] font-bold inline-flex items-center justify-center", urgent ? "bg-danger text-white" : "text-primary")}
+      style={urgent ? undefined : { background: "color-mix(in srgb,var(--primary) 15%,transparent)" }}>{count > 99 ? "99+" : count}</span>
+  );
 }
 
 export const UI = { ColorChip, StatusBadge, DeltaBadge, StatCard, Card, ChartCard, SegTabs, FilterChip, Button, IconBtn, EmptyState, CountPill, toneVar };

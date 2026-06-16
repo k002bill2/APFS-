@@ -60,9 +60,9 @@ APFS/
 
 ```bash
 npm install
-npm run dev       # Vite dev 서버 (HMR) — http://localhost:5173
+npm run dev       # Vite dev 서버 (HMR) — http://localhost:5273
 npm run build     # production 빌드 → dist/
-npm run preview   # 빌드 결과 미리보기 — http://localhost:4173
+npm run preview   # 빌드 결과 미리보기 — http://localhost:4273
 ```
 
 - `localStorage`에 테마/역할/Tweaks 설정을 영속화합니다.

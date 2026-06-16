@@ -10,6 +10,7 @@ const P = {
   building:["M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16","M15 9h3a2 2 0 0 1 2 2v10","M8 7h2","M8 11h2","M8 15h2","M3 21h18"],
   wallet:["M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v0","M3 7v10a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-3","M21 10h-5a2 2 0 0 0 0 4h5a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1Z"],
   file:["M14 3v5h5","M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z","M9 13h6","M9 17h6"],
+  "file-check":["M14 3v5h5","M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z","M9 15l2 2 4-4"],
   chart:["M3 3v18h18","M7 15l3-4 3 2 4-6"],
   "chart-bar":["M3 3v18h18","M8 17v-5","M13 17V8","M18 17v-9"],
   settings:["M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z","M19.4 13a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7.7 2 2 0 0 1-4 0 1.6 1.6 0 0 0-2.7-.7l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 4.6 13a2 2 0 0 1 0-4 1.6 1.6 0 0 0 .7-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-.7 2 2 0 0 1 4 0 1.6 1.6 0 0 0 2.7.7l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 .3 2Z"],
@@ -50,6 +51,8 @@ const P = {
 const MAP = {
   home:["Home"], landmark:["Landmark"], "shield-alert":["ShieldAlert"], "shield-check":["ShieldCheck"],
   building:["Building2","Building"], wallet:["Wallet"], file:["FileText","File"],
+  // file-check: lucide FileCheck2는 체크가 문서 밖에 분리돼 20px에서 깨져 보임 →
+  // MAP 미등록으로 자체 P 경로(문서+중앙 체크, `file` 계열과 일관)를 강제 사용.
   chart:["ChartLine","LineChart","TrendingUp"], "chart-bar":["ChartColumn","BarChart3","BarChart"],
   settings:["Settings"], target:["Target"], trending:["TrendingUp"], "trending-down":["TrendingDown"],
   calendar:["Calendar"], bell:["Bell"], search:["Search"], menu:["Menu"], "panel-left":["PanelLeft"],
@@ -91,21 +94,28 @@ function renderNode(node) {
 
 function Icon({ name, size = 20, stroke = 2, className, style }) {
   const node = lucideNode(name);
-  const children = node ? renderNode(node) : (P[name] || []).map((p, i) => React.createElement("path", { key: i, d: p }));
+  const children = node ? renderNode(node) : (P[name] || []).map((p, i) => <path key={i} d={p} />);
   if (!node && !P[name]) return null;
-  return React.createElement("svg", {
-    width: size, height: size, viewBox: "0 0 24 24", fill: "none",
-    preserveAspectRatio: "xMidYMid meet",
-    stroke: "currentColor", strokeWidth: stroke, strokeLinecap: "round",
-    strokeLinejoin: "round", className,
-    style: {
-      flex: "0 0 auto", display: "block",
-      width: size, height: size,
-      minWidth: size, minHeight: size, maxWidth: size, maxHeight: size,
-      aspectRatio: "1 / 1", ...style,
-    },
-    "aria-hidden": true,
-  }, children);
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      preserveAspectRatio="xMidYMid meet"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      style={{
+        flex: "0 0 auto", display: "block",
+        width: size, height: size,
+        minWidth: size, minHeight: size, maxWidth: size, maxHeight: size,
+        aspectRatio: "1 / 1", ...style,
+      }}
+      aria-hidden={true}>{children}</svg>
+  );
 }
 
 export { Icon };
