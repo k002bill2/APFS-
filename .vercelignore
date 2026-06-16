@@ -1,19 +1,16 @@
-# Vercel에는 src/ 대시보드 소스만 배포한다.
-# 내부 문서(PRD 등)·에이전트 설정·구버전 오프라인 번들은 공개 배포에서 제외.
+# Vite 빌드 입력(package.json·src/·index.html·*.config.*)은 반드시 포함된다.
+# Vercel은 outputDirectory(dist/)만 서빙하므로 아래는 빌드 업로드에서만 제외.
 
 .claude/
 dev/
 docs/
 Claude code system setup/
 node_modules/
+dist/
 
-# 마크다운 문서 (CLAUDE.md, AGENTS.md, README.md 등)
+# 마크다운 문서 (CLAUDE.md, AGENTS.md, README.md 등 — 빌드 불필요)
 *.md
 
-# 패키지 메타 (정적 배포라 빌드 불필요)
-package.json
-package-lock.json
-
-# 구버전 오프라인 자가완결 번들 — 최신 화면은 src/에서 서빙
+# 구버전 오프라인 자가완결 번들 (Vite 산출물이 대체)
 농식품모태펀드 대시보드.html
 농식품모태펀드 대시보드 (오프라인).html
