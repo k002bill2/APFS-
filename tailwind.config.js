@@ -1,0 +1,27 @@
+module.exports = {
+  content: ['./index.html', './src/**/*.{ts,tsx,js,jsx}'],
+  darkMode: 'class',
+  corePlugins: { preflight: false },
+  theme: { extend: {
+    colors: {
+      bg: 'var(--bg)', 'bg-deep': 'var(--bg-deep)',
+      card: 'var(--card)', 'card-raised': 'var(--card-raised)',
+      foreground: 'var(--foreground)', muted: 'var(--muted)',
+      'muted-foreground': 'var(--muted-foreground)', caption: 'var(--caption)',
+      border: 'var(--border)', 'border-strong': 'var(--border-strong)',
+      primary: 'var(--primary)', 'primary-hover': 'var(--primary-hover)',
+      'primary-foreground': 'var(--primary-foreground)',
+      secondary: 'var(--secondary)', accent: 'var(--accent)',
+      'accent-foreground': 'var(--accent-foreground)', cyan: 'var(--cyan)', ring: 'var(--ring)',
+      success: 'var(--success)', 'success-soft': 'var(--success-soft)',
+      warning: 'var(--warning)', 'warning-soft': 'var(--warning-soft)',
+      danger: 'var(--danger)', 'danger-soft': 'var(--danger-soft)',
+      info: 'var(--info)', 'info-soft': 'var(--info-soft)',
+      'brand-blue': 'var(--brand-blue)', 'brand-cyan': 'var(--brand-cyan)',
+    },
+    borderRadius: { card: 'var(--radius)', 'card-lg': 'var(--radius-lg)', 'card-sm': 'var(--radius-sm)' },
+    boxShadow: { sm: 'var(--shadow-sm)', md: 'var(--shadow-md)', lg: 'var(--shadow-lg)' },
+    fontFamily: { sans: 'var(--font-sans)' },
+    transitionTimingFunction: { ds: 'cubic-bezier(.4,0,.2,1)' },
+  } },
+};

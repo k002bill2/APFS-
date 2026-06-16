@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>농림수산식품모태펀드 투자자산관리시스템 — 대시보드</title>
+<script>
+  /* Tweaks 상태 복원 — 페인트 전에 적용해 깜빡임 방지 */
+  try {
+    var r = document.documentElement;
+    var dark = localStorage.getItem("apfs.theme") === "dark";
+    if (dark) r.classList.add("dark");
+    r.dataset.accent = localStorage.getItem("apfs.accent") || "forest";
+    r.dataset.surface = localStorage.getItem("apfs.surface") || "soft";
+    r.dataset.cardtone = localStorage.getItem("apfs.cardtone") || "card";
+    r.style.background = dark ? "#0F1310" : "#FBFCFB";
+  } catch (e) {}
+</script>
+<style>
+  html{background:var(--bg);}
+  #root{min-height:100vh;background:var(--bg);}
+  /* 전체 너비 토글 — 페이지 컨테이너의 고정 max-width 해제 */
+  html[data-width="full"] main > div{max-width:none!important;}
+  /* 버튼·인풋이 색을 명시하지 않으면 본문색(=다크모드 대응 토큰)을 상속하도록 강제.
+     일부 버튼이 UA 기본 검정(rgb(0,0,0))을 쓰던 다크모드 검은 글자 버그를 차단. */
+  button,input,select,textarea{color:inherit;}
+  /* preflight off + Tailwind border 유틸 호환: 전역 border 기본값 복원.
+     네이티브 버튼의 UA outset 테두리 제거 + .border 유틸을 solid 헤어라인으로 렌더. */
+  *,::before,::after{border-width:0;border-style:solid;border-color:var(--border);}
+  .boot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:100vh;color:var(--muted-foreground);}
+  .boot-dot{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--brand-blue),var(--brand-cyan));animation:bootpulse 1s var(--ease) infinite alternate;}
+  @keyframes bootpulse{from{opacity:.5;transform:scale(.9);}to{opacity:1;transform:scale(1.05);}}
+
+  /* ===== 반응형 그리드 시스템 ===== */
+  .dash-grid{display:grid;grid-template-columns:repeat(12,1fr);align-items:start;}
+  .dcol-4{grid-column:span 4;}
+  .dcol-5{grid-column:span 5;}
+  .dcol-6{grid-column:span 6;}
+  .dcol-7{grid-column:span 7;}
+  .dcol-8{grid-column:span 8;}
+  .dcol-12{grid-column:span 12;}
+
+  /* 데스크탑 좁힘 — Hero 2단, 메인 블록 풀폭 */
+  @media (max-width:1180px){
+    .hero-aum{grid-template-columns:1fr 1fr!important;}
+    .hero-main{grid-column:1 / -1;}
+  }
+  /* 태블릿 — 비대칭 분할(7·8·5·4)은 풀폭, 균등 6·6은 유지 */
+  @media (max-width:1024px){
+    .dcol-4,.dcol-5,.dcol-7,.dcol-8{grid-column:1 / -1;}
+  }
+  /* 모바일 — 전부 1단, Hero 세로 적층 */
+  @media (max-width:760px){
+    .dash-grid{grid-template-columns:1fr;}
+    .dcol-4,.dcol-5,.dcol-6,.dcol-7,.dcol-8,.dcol-12{grid-column:1 / -1;}
+    .hero-aum{grid-template-columns:1fr!important;padding:20px!important;}
+  }
+
+  /* ===== 반응형 GNB ===== */
+  @media (max-width:1080px){.gnb-search{display:none!important;}}
+  @media (max-width:920px){.gnb-title{display:none!important;}}
+  @media (max-width:720px){.gnb-user{display:none!important;}}
+  /* 메인 영역 패딩 축소 */
+  @media (max-width:760px){.dash-main{padding:16px 14px 32px!important;}}
+  /* 모바일 LNB 드로어 백드롭 */
+  .lnb-backdrop{position:fixed;inset:58px 0 0 0;background:rgba(0,0,0,.42);z-index:44;opacity:0;pointer-events:none;transition:opacity .25s;}
+  .lnb-backdrop.show{opacity:1;pointer-events:auto;}
+  /* hover 모티프 */
+  .stat-card:hover{box-shadow:var(--shadow-md)!important;}
+  .shortcut:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)!important;}
+  .ui-btn:active{transform:scale(.97);}
+  .ui-primary:hover{background:var(--primary-hover)!important;}
+  .ui-outline:hover{background:var(--muted)!important;}
+  .ui-ghost:hover{background:var(--muted)!important;color:var(--foreground)!important;}
+  nav button:hover{background:var(--muted)!important;}
+  /* 상세 필터 드로어 — 리스크 노출도 슬라이더 */
+  .apfs-range{-webkit-appearance:none;-moz-appearance:none;appearance:none;height:6px;border-radius:99px;background:var(--brand-blue);outline:none;cursor:pointer;}
+  .apfs-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:99px;background:#fff;border:3px solid var(--brand-blue);box-shadow:var(--shadow-sm);cursor:pointer;margin-top:0;}
+  .apfs-range::-moz-range-thumb{width:18px;height:18px;border-radius:99px;background:#fff;border:3px solid var(--brand-blue);box-shadow:var(--shadow-sm);cursor:pointer;}
+  .apfs-range::-moz-range-track{height:6px;border-radius:99px;background:var(--brand-blue);}
+</style>
+  <script type="module" crossorigin src="/assets/index-D5WXkOpb.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-92AUZirl.css">
+</head>
+<body>
+<div id="root"><div class="boot"><div class="boot-dot"></div><div style="font-size:13px;font-weight:600;">대시보드 불러오는 중…</div></div></div>
+
+</body>
+</html>
