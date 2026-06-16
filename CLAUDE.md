@@ -6,103 +6,77 @@
 
 **APFS** — 농림수산식품모태펀드 투자자산관리시스템(Agriculture·Forestry·Fisheries Food Fund Investment Asset Management System)의 **대시보드 UI 프로토타입**.
 
-이 저장소는 **빌드된 단일 HTML 산출물 하나**로 구성됩니다. 백엔드 없이 더미 데이터로 화면이 완결되는 오프라인 데모이며, Claude Artifact 스타일의 "omelette starter scaffold"에서 내보낸 자가-완결(self-contained) 번들입니다.
+**2026-06 Vite + React 18 + TypeScript 빌드로 마이그레이션됨** (이전: no-build CDN React 단일 HTML 번들). 백엔드 없이 더미 데이터로 화면이 완결되는 프론트엔드 SPA입니다.
 
-- 빌드 시스템 없음 (`package.json`, 번들러 설정, `node_modules` 모두 없음)
-- 백엔드/API 없음 — 모든 데이터는 임베디드 더미 데이터(`APFS_DATA`)
-- 의존성은 전부 파일 안에 인라인 (오프라인 동작)
+- 빌드: **Vite** (`npm run dev` / `npm run build` → `dist/`)
+- 백엔드/API 없음 — 모든 데이터는 `src/dash/data.ts`의 `APFS_DATA`
+- 배포: **Vercel** (`framework=vite`, `dist/` 서빙) — `main` push 시 자동 배포
 
 ## 파일 구조
 
 ```
 APFS/
-├── README.md                              # 거의 비어 있음
-├── CLAUDE.md                              # 이 파일
-├── 농식품모태펀드 대시보드.html              # ★ 정본 산출물 — 자가완결 오프라인 단일 파일 (~1.45MB)
-├── 농식품모태펀드 대시보드 (오프라인).html   # (구버전) first-commit 시점 번들 — 위 정본이 대체
-└── src/                                   # 편집용 소스 트리 (오프라인 번들은 여기서 재생성)
-    ├── dashboard.html                     # dev 엔트리 — dash/* 모듈 참조, Tailwind/React/lucide/Babel CDN (편집 시 온라인 필요)
-    └── dash/                              # 앱 모듈: data·icons·charts·components·shell·designsystem·main_widgets·main·performance·app(.js), tweaks-panel·tweaks_app(.jsx), tokens·tweaks(.css), assets/logo*.svg
+├── index.html                  # ★ Vite 엔트리 (#root + boot markup + 테마 복원 인라인 스크립트)
+├── vite.config.ts              # @vitejs/plugin-react
+├── tsconfig.json               # 느슨한 설정 (strict:false — Phase 0 미타입 코드 빌드 허용)
+├── tailwind.config.js          # CDN 인라인 config 재현 (preflight:false, CSS변수 컬러, darkMode:class)
+├── postcss.config.js           # tailwindcss + autoprefixer
+├── package.json                # react, react-dom, vite, tailwindcss, typescript ...
+├── vercel.json                 # framework=vite, buildCommand=vite build, outputDirectory=dist
+├── src/
+│   ├── main.tsx                # 엔트리: tailwind.css + tokens.css + tweaks.css + app + tweaks_app import
+│   ├── styles/tailwind.css     # @tailwind base/components/utilities
+│   └── dash/                   # 앱 모듈 (ES modules, React.createElement 기반)
+│       ├── data.ts                              # APFS_DATA (메뉴/위젯/지표)
+│       ├── icons/charts/components/shell/designsystem/main_widgets/main(.tsx)
+│       ├── performance/risk/gp_health/accounting/schedule/subfund/report(.tsx)  # PRD 페이지
+│       ├── app.tsx                              # 앱 루트 (#root 마운트)
+│       ├── tweaks-panel/tweaks_app(.tsx)        # 디자인 토큰 조정 패널
+│       └── tokens.css / tweaks.css / assets/logo*.svg
+└── 농식품모태펀드 대시보드*.html  # (레거시) 구 오프라인 자가완결 번들 — Vite 전환 전 산출물, 더 이상 정본 아님
 ```
 
-> 정본은 루트 `농식품모태펀드 대시보드.html`(오프라인 자가완결). `src/`는 사람이 직접 고치는 소스이고, 의미 있는 변경은 `src/`에서 한 뒤 omelette/Artifact 번들로 다시 내보내 정본을 갱신합니다.
+## 모듈 아키텍처
 
-## 번들 아키텍처 (가장 중요 — 편집 전 반드시 이해)
+`src/dash/*.tsx|ts`는 표준 **ES 모듈**입니다. 각 모듈이 컴포넌트/데이터를 `export`하고 다음 모듈이 `import`로 받아 씁니다. (이전 `(function(w){…})(window)` 전역 IIFE 패턴은 2026-06 마이그레이션으로 제거됨.)
 
-`농식품모태펀드 대시보드 (오프라인).html`은 사람이 직접 읽고 고치도록 만든 소스가 **아닙니다**. 다음 4개의 특수 `<script>` 태그로 구성된 자체 번들 포맷입니다.
+**앱 모듈 (역할)**
+- `data.ts` → `APFS_DATA` — 메뉴/위젯/지표 등 화면 더미 데이터 소스
+- `components.tsx` → `UI` — Button, ColorChip, StatusBadge, SegTabs 등 (Tailwind 유틸 className 기반)
+- `icons.tsx` → `Icon` — lucide 스타일 자체 라인 아이콘 (lucide npm도 사용)
+- `charts.tsx` → `Charts` — Recharts 동일 스펙의 자체 SVG 차트 프리미티브 (Sparkline/Donut/LineTrend/HBars 등)
+- `shell.tsx` → `Shell` — GNB / LNB(3-레벨) / 브레드크럼 / 알림센터 / RBAC 게이팅 / 테마 토글
+- `designsystem.tsx` → 컬러 토큰·타이포·공통 컴포넌트 프리뷰
+- `main_widgets.tsx` + `main.tsx` → 메인 종합 대시보드 (공유 위젯 + 3개 레이아웃 시안)
+- PRD 페이지: `performance` `risk` `gp_health` `accounting` `schedule` `subfund` `report`.tsx (각 `Pages.*` export)
+- `app.tsx` → 테마/역할/라우트 상태, `#root`에 마운트
+- `tweaks-panel.tsx` + `tweaks_app.tsx` → 디자인 토큰 조정 패널 (data-* 속성 + localStorage 영속화, 효과는 CSS 변수로)
 
-| 태그 | 내용 |
-|------|------|
-| (loader, 일반 inline `<script>`) | DOMContentLoaded 시 manifest를 풀어 blob URL로 만들고 template을 렌더 |
-| `<script type="__bundler/manifest">` | `{ uuid: { mime, compressed, data(base64) } }` — 모든 자산(JS/이미지). `compressed:true`면 gzip |
-| `<script type="__bundler/ext_resources">` | `[{ id, uuid }]` — 코드에서 `window.__resources[id]`로 참조하는 리소스(로고 등) |
-| `<script type="__bundler/template">` | JSON 문자열로 escape된 실제 앱 HTML. `<script src="<uuid>">`로 위 자산들을 참조 |
+**벤더**: React 18 / ReactDOM (npm), lucide. JSX 변환은 **빌드타임(esbuild)** — 브라우저 Babel은 제거됨.
 
-**렌더 흐름**: loader가 manifest의 각 자산을 base64 디코드(+필요시 gzip 해제) → `Blob`/`data:` URL 생성 → template 문자열의 uuid를 blob URL로 치환 → `DOMParser`로 파싱 후 `document.documentElement`를 교체 → `<script>`를 재생성해 실행(React → ReactDOM → Babel 순서 보존) → `text/babel`은 `Babel.transformScriptTags()`로 변환.
-
-> blob URL은 `file://` 문서에서 null origin이라, loader가 `integrity`/`crossorigin` 속성을 의도적으로 제거합니다(SRI 깨짐 방지). 이건 정상 동작입니다.
-
-## 임베디드 모듈 맵
-
-template이 참조하는 16개 `<script>` 중 핵심은 자체 작성 앱 모듈입니다. 각 모듈은 `(function(w){ ... })(window)` 패턴으로 `window`에 컴포넌트를 노출하고 다음 모듈이 `w.Xxx`로 받아 씁니다.
-
-**벤더 라이브러리 (수정 대상 아님)**
-- React (development build), ReactDOM (development build)
-- `lucide v0.460.0`, Babel standalone (`text/babel` JSX 변환용)
-
-**앱 모듈 (Korean 주석으로 역할 명시)**
-- `한국어 더미 데이터` → `window.APFS_DATA` (메뉴/위젯/지표 등 화면 데이터 소스)
-- `디자인 시스템 미리보기` → 컬러 토큰·타이포·공통 컴포넌트
-- `공통 래퍼 컴포넌트` → `window.UI` (Button, ColorChip, StatusBadge, SegTabs 등; Tailwind 유틸 className 기반)
-- `lucide 스타일 라인 아이콘` → `window.Icon`
-- `SVG 차트 프리미티브` → Recharts 동일 스펙의 자체 SVG 차트
-- `전역 셸` → `window.Shell` (GNB / LNB / 브레드크럼 / 알림센터 / RBAC 게이팅 / 테마 토글)
-- `메인 종합 대시보드 — 공유 위젯` + `메인 종합 대시보드 — 3개 레이아웃 시안`
-- `투자 성과·포트폴리오 서브페이지`
-- `앱 루트` → 테마/역할/라우트 상태, 서브 대시보드 스텁, `#root`에 마운트
-- `Tweaks 앱` → 디자인 토큰 조정 패널(data-* 속성 + localStorage 영속화, 효과는 CSS 변수로)
-- `bb8dca10` (`text/jsx`) → omelette starter scaffold 진입점
-
-**라우트/페이지 스텁** (앱 루트의 `STUBS`, PRD 절 참조와 함께):
-- `risk` 조기경보 리스크 (PRD 5.6 / 5.7)
-- `gp-health` 운용사 건전성 (PRD 5.5)
-- `accounting` 회계·자금 마감 (PRD 5.10 / 5.11)
-- `performance` 투자 성과·포트폴리오 (PRD 5.4 / 5.9)
-- `schedule` 일정·알림 센터
-- 메인 종합 대시보드, 디자인 시스템 프리뷰
-
-셸은 RBAC `role` 기반으로 `D.MENU`를 필터링(`m.roles.includes(role)`)하므로 역할에 따라 보이는 메뉴가 달라집니다.
+**RBAC**: `Shell`이 `role` 기반으로 `APFS_DATA.MENU`를 필터링(`m.roles.includes(role)`)하므로 역할에 따라 보이는 메뉴가 달라집니다. 메뉴는 PRD 부록 A의 3-레벨(대분류 9 / 중분류 33 / 리프 137개). 역할 3등급: admin(9) / manager(8) / viewer(5).
 
 ## 실행 방법
 
-빌드/서버 불필요 — 브라우저로 HTML 파일을 직접 엽니다.
-
 ```bash
-open "농식품모태펀드 대시보드 (오프라인).html"   # macOS
+npm install
+npm run dev       # Vite dev 서버 (HMR) — http://localhost:5173
+npm run build     # production 빌드 → dist/
+npm run preview   # 빌드 결과 미리보기 — http://localhost:4173
 ```
 
-- 오프라인 동작하지만, **Pretendard 폰트만 `cdn.jsdelivr.net`에서 로드**합니다(네트워크 없으면 시스템 폰트로 폴백). 그 외 모든 코드/이미지는 파일 내장.
 - `localStorage`에 테마/역할/Tweaks 설정을 영속화합니다.
+- 배포: `main`에 push하면 Vercel이 `vite build` 후 `dist/`를 서빙합니다(자동 배포).
 
-## 편집 시 주의사항
+## 편집 시
 
-앱 로직을 고치려면 임베디드 자산(gzip+base64)을 **꺼내서 → 수정 → 다시 인코딩**해야 합니다. template 문자열도 JSON-escape 되어 있습니다. 단순 텍스트 검색/치환으로는 거의 불가능합니다.
+표준 React/TypeScript 편집입니다 — `src/dash/*.tsx`를 직접 수정하고 `npm run dev`로 확인합니다.
 
-자산을 추출·확인할 때 쓰는 디코드 레시피:
-
-```python
-import re, json, base64, gzip
-f = "농식품모태펀드 대시보드 (오프라인).html"
-data = open(f, encoding="utf-8").read()
-manifest = json.loads(re.search(r'<script type="__bundler/manifest">\s*(.*?)\s*</script>', data, re.S).group(1))
-def decode(uuid):
-    e = manifest[uuid]; raw = base64.b64decode(e["data"])
-    return gzip.decompress(raw) if e.get("compressed") else raw
-# template(실제 앱 HTML)도 JSON 문자열:
-template = json.loads(re.search(r'<script type="__bundler/template">\s*(.*?)\s*</script>', data, re.S).group(1))
-```
-
-**권장**: 의미 있는 변경은 이 번들을 직접 패치하지 말고, **`src/` 편집용 소스에서 수정한 뒤 omelette/Artifact 번들로 다시 내보내** 루트 정본 `농식품모태펀드 대시보드.html`을 갱신하세요. `src/dashboard.html`을 로컬 서버(예: `python3 -m http.server`)로 열면 모듈을 직접 편집·확인할 수 있습니다(Tailwind/React/lucide/Babel CDN 사용 — 편집 시 온라인 필요). 번들 재생성 파이프라인이 필요하면 사용자에게 확인하세요.
+- 현재 코드는 `React.createElement`(별칭 `h`) 기반(**Phase 0**). **JSX 전환(Phase 2)·TypeScript 타입화(Phase 3)는 후속 작업** — 진행 시 점진적으로.
+- `tsc --noEmit`은 현재 타입 에러를 다수 보고하지만 빌드(esbuild)는 타입체크를 하지 않아 `vite build`는 green입니다.
+- 색/간격/타이포는 하드코딩 대신 CSS 변수 토큰(`tokens.css`)을 사용하세요 — Tweaks 패널이 런타임 조정합니다.
+- 새 페이지/메뉴는 역할 가시성(`roles`)을 명시하고, 라이트/다크 모두에서 대비를 확인하세요.
+- **레거시**: 루트 `농식품모태펀드 대시보드*.html`(구 오프라인 번들)은 더 이상 정본이 아닙니다. `apfs-bundle` 스킬(번들 gzip+base64 디코드/재인코드)도 이 레거시 파일에만 해당하며, 신규 작업엔 불필요합니다.
 
 ## 디자인 토큰 / 브랜드
 
@@ -137,7 +111,7 @@ template = json.loads(re.search(r'<script type="__bundler/template">\s*(.*?)\s*<
 - 서브에이전트는 Primary 승인 없이 공유 파일을 수정하지 않는다.
 - 윤리적 우려(민감정보·시스템 손상 위험 등) 발생 시 **즉시 중단** 후 사용자에게 보고.
 - 능력 초과 태스크는 즉시 에스컬레이션.
-- 파일 생성/편집 전 해당 SKILL을 먼저 참조(특히 번들 편집은 `apfs-bundle`).
+- 파일 생성/편집 전 해당 SKILL을 먼저 참조(UI/디자인은 `dashboard-ui`).
 
 ## 멀티에이전트 실행 패턴
 - **1순위 — Workflow 도구**: 인라인 JS, `export const meta`로 시작, 전역 `agent()`/`parallel()`/`pipeline()`/`phase()`/`log()`. 동시성 자동 캡 `min(16, cpu-2)`, 격리 `agent(p,{isolation:'worktree'})`.
@@ -146,7 +120,7 @@ template = json.loads(re.search(r'<script type="__bundler/template">\s*(.*?)\s*<
 
 ## Skills (자동 활성화)
 - `UserPromptSubmit` hook(`.claude/hooks/skill-activator.sh`)이 프롬프트를 stdin JSON으로 받아 `.claude/hooks/skill-rules.json`의 키워드와 매칭, 관련 스킬을 컨텍스트로 추천.
-- 프로젝트 스킬: `code-reviewer`(리뷰) · `dashboard-ui`(UI/디자인) · `apfs-bundle`(번들 디코드/편집/재인코드).
+- 프로젝트 스킬: `code-reviewer`(리뷰) · `dashboard-ui`(UI/디자인) · `apfs-bundle`(레거시 오프라인 번들 전용 — 현 Vite 구조엔 불필요).
 - 새 스킬 추가 시 `skill-rules.json`의 트리거도 함께 갱신.
 
 ## Dev Docs 워크플로우
