@@ -75,7 +75,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
                           style={{
                             width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6,
                             border: "none", font: "inherit", cursor: "pointer", borderRadius: 6, padding: "4px 10px",
-                            background: "transparent", color: "var(--foreground)", fontSize: 11.5, fontWeight: 700,
+                            background: "transparent", color: "var(--foreground)", fontSize: 13, fontWeight: 700,
                           }}><span
                             style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{c.label}</span><div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>{subCount > 0 && <CountPill count={subCount} urgent={m.urgent} />}<Icon
                               name="chevron-down"
@@ -87,7 +87,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
                               width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
                               border: "none", font: "inherit", cursor: (leaf.path || m.path) ? "pointer" : "default",
                               borderRadius: 6, padding: "5px 10px",
-                              background: "transparent", color: "var(--muted-foreground)", fontSize: 12, fontWeight: 500,
+                              background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 500,
                             }}><span
                               style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{leaf.label}</span>{leaf.badge > 0 && <CountPill count={leaf.badge} urgent={m.urgent} />}</button>)}</div>}</div>
                     );
@@ -99,7 +99,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
                       style={{
                         width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
                         border: "none", font: "inherit", cursor: "pointer", borderRadius: 7, padding: "6px 10px",
-                        background: "transparent", color: "var(--muted-foreground)", fontSize: 12.5, fontWeight: 500,
+                        background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 500,
                       }}><span
                         style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{c.label}</span>{c.badge > 0 && <CountPill count={c.badge} urgent={m.urgent} />}</button>
                   );
