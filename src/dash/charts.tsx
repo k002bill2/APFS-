@@ -129,7 +129,7 @@ function Donut({ data, height = 220, thickness = 26, centerLabel, onSlice, activ
 }
 
 /* ===================== ComposedBars (계획 vs 실적 + 집행률 라인) ===================== */
-function ComposedBars({ data, height = 280 }: { data: any[]; height?: number }) {
+function ComposedBars({ data, height = 280 }: { data: any[]; height?: number; planColor?: string; actualColor?: string }) {
   const [ref, W] = useMeasure();
   const [hi, setHi] = useState(null);
   const m = { t: 16, r: 44, b: 28, l: 46 };

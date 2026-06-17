@@ -133,7 +133,7 @@ function ChecklistRow({ item }) {
   );
 }
 
-function FeeRow({ label, value, sub, highlight }) {
+function FeeRow({ label, value, sub, highlight }: { label?: React.ReactNode; value?: React.ReactNode; sub?: React.ReactNode; highlight?: string }) {
   return (
     <div
       className="flex items-center justify-between py-2.5 border-b border-border last:border-b-0"><div><div

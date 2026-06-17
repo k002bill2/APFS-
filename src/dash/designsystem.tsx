@@ -10,7 +10,7 @@ const { Sparkline, Donut, LineTrend } = Charts;
 const D = APFS_DATA;
 const { useState } = React;
 
-function Swatch({ name, varName, hex }) {
+function Swatch({ name, varName, hex }: { name?: React.ReactNode; varName?: string; hex?: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}><span
         style={{ width: 38, height: 38, borderRadius: 9, background: `var(${varName})`, border: "1px solid var(--border)", flex: "0 0 auto", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.08)" }} /><div style={{ minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 700 }}>{name}</div><div className="t-caption tabular" style={{ fontSize: 10.5 }}>{hex || varName}</div></div></div>
@@ -24,7 +24,7 @@ function Group({ title, children, cols = 2 }) {
   );
 }
 
-function Section({ title, desc, children }) {
+function Section({ title, desc, children }: { title?: React.ReactNode; desc?: React.ReactNode; children?: React.ReactNode }) {
   return (
     <section style={{ marginBottom: 26 }}><div style={{ marginBottom: 12 }}><h2 className="t-h2" style={{ margin: 0 }}>{title}</h2>{desc && <p
           className="t-body"

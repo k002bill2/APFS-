@@ -27,7 +27,7 @@ const rollup = (item) => item.children ? item.children.reduce((s, c) => s + (c.b
 function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
   const [expanded, setExpanded] = useState({ risk: true });
   const menu = D.MENU.filter((m) => m.roles.includes(role));
-  const posStyle = mobile
+  const posStyle: React.CSSProperties = mobile
     ? { position: "fixed", top: 58, left: 0, width: 270, height: "calc(100vh - 58px)", zIndex: 45,
         transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
         boxShadow: drawerOpen ? "var(--shadow-lg)" : "none", transition: "transform .24s var(--ease)" }
@@ -58,7 +58,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
                   background: isActive ? "color-mix(in srgb,var(--primary) 12%,transparent)" : "transparent",
                   color: isActive ? "var(--primary)" : "var(--foreground)", fontWeight: isActive ? 700 : 500, fontSize: 13.5,
                   transition: "background .15s",
-                }}><Icon name={m.icon} size={20} stroke={isActive ? 2.3 : 2} />{open && <span style={{ flex: 1, textAlign: "left", whiteSpace: "nowrap" }}>{m.label}</span>}{open && m.isNew && <span style={{ fontSize: 9.5, fontWeight: 800, color: "var(--accent)" }}>NEW</span>}{count > 0 && (open
+                }}><Icon name={m.icon} size={20} stroke={isActive ? 2.3 : 2} />{open && <span style={{ flex: 1, textAlign: "left", whiteSpace: "nowrap" }}>{m.label}</span>}{open && (m as any).isNew && <span style={{ fontSize: 9.5, fontWeight: 800, color: "var(--accent)" }}>NEW</span>}{count > 0 && (open
                   ? <CountPill count={count} urgent={m.urgent} />
                   : <span
                   style={{ position: "absolute", top: 6, right: 8, width: 7, height: 7, borderRadius: 99, background: m.urgent ? "var(--danger)" : "var(--primary)" }} />)}{open && hasKids && <Icon

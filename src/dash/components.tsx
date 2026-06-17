@@ -43,7 +43,7 @@ function StatusBadge({ tone = "success", label, icon, size = "md" }: { tone?: To
 }
 
 /* ---- DeltaBadge ---- */
-function DeltaBadge({ value, label, invert }: { value: number; label?: React.ReactNode; invert?: boolean }) {
+function DeltaBadge({ value, label, invert }: { value: any; label?: React.ReactNode; invert?: boolean }) {
   const good = invert ? value < 0 : value > 0;
   const c = good ? "var(--success)" : "var(--danger)";
   const up = value > 0;

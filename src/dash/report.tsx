@@ -366,7 +366,7 @@ function RegistryTab() {
 /* ─────────────────────────────────────────────
    KPI 카드 (단순 수치 표시)
 ─────────────────────────────────────────────── */
-function KpiBox({ icon, color, label, value, sub, tone }) {
+function KpiBox({ icon, color, label, value, sub, tone }: { icon?: string; color?: string; label?: React.ReactNode; value?: React.ReactNode; sub?: React.ReactNode; tone?: string }) {
   const [c, softBg] = toneVar(tone || "primary");
   return (
     <div

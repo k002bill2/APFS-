@@ -69,7 +69,7 @@ function buildCalMap(schedule) {
 /* ================================================================
  * KPI 미니카드
  * ================================================================ */
-function KpiCard({ icon, label, value, unit, tone, delta, deltaLabel }) {
+function KpiCard({ icon, label, value, unit, tone, delta, deltaLabel }: { icon?: string; label?: React.ReactNode; value?: React.ReactNode; unit?: string; tone?: string; delta?: number | null; deltaLabel?: React.ReactNode }) {
   const [color] = toneVar(tone);
   return (
     <div
@@ -209,7 +209,7 @@ function EvidenceTable() {
 /* ================================================================
  * 재무요약 카드
  * ================================================================ */
-function FinanceRow({ label, value, tone }) {
+function FinanceRow({ label, value, tone }: { label?: React.ReactNode; value?: React.ReactNode; tone?: string }) {
   const [color] = tone ? toneVar(tone) : ["var(--foreground)"];
   return (
     <div

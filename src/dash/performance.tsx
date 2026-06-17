@@ -30,7 +30,7 @@ function BarSpark({ data, color = "var(--chart-1)", up = true }) {
 }
 
 /* 상단 요약 스탯 pill */
-function StatPill({ icon, label, value, tone }) {
+function StatPill({ icon, label, value, tone }: { icon?: string; label?: React.ReactNode; value?: React.ReactNode; tone?: string }) {
   return (
     <div
       className="flex items-center gap-2.5 rounded-card border border-border bg-card px-3.5 py-2 shadow-sm"><ColorChip icon={icon} color={tone || "var(--primary)"} size={30} iconSize={16} /><div className="leading-tight"><div className="t-caption text-[11px]">{label}</div><div

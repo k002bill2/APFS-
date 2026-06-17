@@ -14,10 +14,10 @@ const { ExecChart, StatusDonut, IndustryCard, ScheduleCard, MiniKpis, ShortcutGr
 const { PageHeader } = Shell;
 const D = APFS_DATA;
 
-const Grid = ({ children, gap = 16, style }) => <div className="dash-grid" style={{ gap, ...style }}>{children}</div>;
-const KpiRow = ({ children, min = 212 }) => <div
+const Grid = ({ children, gap = 16, style }: { children?: React.ReactNode; gap?: number; style?: React.CSSProperties }) => <div className="dash-grid" style={{ gap, ...style }}>{children}</div>;
+const KpiRow = ({ children, min = 212 }: { children?: React.ReactNode; min?: number }) => <div
   style={{ display: "grid", gridTemplateColumns: `repeat(auto-fit,minmax(${min}px,1fr))`, gap: 14 }}>{children}</div>;
-const Stack = ({ children, gap = 16 }) => <div style={{ display: "flex", flexDirection: "column", gap }}>{children}</div>;
+const Stack = ({ children, gap = 16 }: { children?: React.ReactNode; gap?: number }) => <div style={{ display: "flex", flexDirection: "column", gap }}>{children}</div>;
 
 /* ===== 시안 A — 스탠다드 12컬럼 ===== */
 function VariantA({ s, onNav }) {
@@ -92,7 +92,7 @@ function GaugeLight({ value }) {
         style={{ fontSize: 26, fontWeight: 800, fill: "#fff" }}>{value + "%"}</text></svg>
   );
 }
-function HeroStat({ icon, label, value, unit, delta, danger, onNav }) {
+function HeroStat({ icon, label, value, unit, delta, danger, onNav }: { icon: string; label?: React.ReactNode; value?: React.ReactNode; unit?: string; delta?: React.ReactNode; danger?: boolean; onNav?: () => void }) {
   return (
     <button
       onClick={onNav}

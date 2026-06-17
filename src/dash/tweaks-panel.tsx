@@ -288,7 +288,7 @@ export function TweaksPanel({ title = 'Tweaks', children }) {
 
 // ── Layout helpers ──────────────────────────────────────────────────────────
 
-export function TweakSection({ label, children }) {
+export function TweakSection({ label, children }: { label?: React.ReactNode; children?: React.ReactNode }) {
   return (
     <>
       <div className="twk-sect">{label}</div>
@@ -297,7 +297,7 @@ export function TweakSection({ label, children }) {
   );
 }
 
-export function TweakRow({ label, value, children, inline = false }) {
+export function TweakRow({ label, value, children, inline = false }: { label?: React.ReactNode; value?: any; children?: React.ReactNode; inline?: boolean }) {
   return (
     <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
       <div className="twk-lbl">

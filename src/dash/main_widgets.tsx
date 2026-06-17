@@ -30,7 +30,7 @@ function ExecChart({ period, setPeriod, fund, setFund, span }) {
         style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}><Legend color="var(--chart-grid)" label="계획" /><Legend color="var(--chart-1)" label="실적" /><Legend color="var(--chart-3)" label="집행률 %" line={true} /><span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>{funds.map((f) => <FilterChip key={f} active={fund === f} onClick={() => setFund(f)}>{f}</FilterChip>)}</span></div>}><ComposedBars data={data} height={270} /></ChartCard>
   );
 }
-function Legend({ color, label, line }) {
+function Legend({ color, label, line }: { color?: string; label?: React.ReactNode; line?: boolean }) {
   return (
     <span
       style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600, color: "var(--muted-foreground)" }}>{line ? <span style={{ width: 16, height: 2.5, borderRadius: 2, background: color }} /> : <span style={{ width: 10, height: 10, borderRadius: 3, background: color }} />}{label}</span>
@@ -79,7 +79,7 @@ function IndustryCard({ span, onNav, height = 240 }) {
 }
 
 /* 다가오는 일정/알림 */
-function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }) {
+function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }: { span?: number | string; onNav?: (r: string) => void; rows?: number; scroll?: boolean; maxH?: number }) {
   const list = scroll ? D.SCHEDULE : D.SCHEDULE.slice(0, rows);
   const ddayColor = (t) => (t === "danger" ? "var(--danger)" : t === "warning" ? "var(--warning)" : "var(--accent)");
   return (
@@ -112,7 +112,7 @@ function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }) {
 }
 
 /* 보조 KPI 미니카드 */
-function MiniKpis({ vertical }) {
+function MiniKpis({ vertical }: { vertical?: boolean }) {
   const toneC = { warning: "var(--warning)", danger: "var(--danger)", success: "var(--success)" };
   return (
     <div

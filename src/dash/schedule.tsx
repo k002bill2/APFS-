@@ -184,7 +184,7 @@ function CalendarView({ items }) {
 function TimelineView({ items }) {
   // 날짜별 그룹
   const grouped = useMemo(() => {
-    const map = {};
+    const map: Record<string, any[]> = {};
     items.forEach((item) => {
       if (!map[item.date]) map[item.date] = [];
       map[item.date].push(item);
@@ -195,7 +195,7 @@ function TimelineView({ items }) {
   return (
     <div
       className="flex flex-col gap-0"
-      style={{ animation: "dashFade .35s var(--ease) both" }}>{grouped.map(([date, entries], gi) => <div key={date} className="flex gap-0"><div className="flex flex-col items-center mr-3" style={{ width: 32 }}><div
+      style={{ animation: "dashFade .35s var(--ease) both" }}>{grouped.map(([date, entries], gi: number) => <div key={date} className="flex gap-0"><div className="flex flex-col items-center mr-3" style={{ width: 32 }}><div
             className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-[11px]"
             style={{ background: "var(--muted)", color: "var(--muted-foreground)", border: "2px solid var(--border)" }}>{fmtDate(date).split("(")[0]}</div>{gi < grouped.length - 1 && <div
             className="flex-1 w-px"
@@ -293,7 +293,7 @@ function Schedule({ onNav }) {
       const d = new Date(item.date);
       const today = new Date("2026-06-16");
       if (periodFilter === "이번 주") {
-        const diff = (d - today) / 86400000;
+        const diff = (d.getTime() - today.getTime()) / 86400000;
         return diff >= 0 && diff <= 6;
       }
       if (periodFilter === "이번 달") {
@@ -316,7 +316,7 @@ function Schedule({ onNav }) {
   const thisWeekDeadlines = SCHEDULE_EXT.filter((item) => {
     const d = new Date(item.date);
     const today = new Date("2026-06-16");
-    const diff = (d - today) / 86400000;
+    const diff = (d.getTime() - today.getTime()) / 86400000;
     return diff >= 0 && diff <= 6;
   }).length;
 
