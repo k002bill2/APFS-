@@ -41,7 +41,8 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
         display: "flex", flexDirection: "column", overflow: "hidden", ...posStyle,
       }}><div
         style={{ padding: open ? "14px 14px 8px" : "14px 8px 8px", flex: 1, overflowY: "auto", overflowX: "hidden" }}>{menu.map((m) => {
-          const count = m.id === "risk" ? rollup(m) : 0;
+          const showCounts = m.id === "risk";
+          const count = showCounts ? rollup(m) : 0;
           const isActive = m.path && m.path === route;
           const hasKids = !!m.children;
           const isOpen = expanded[m.id];
@@ -75,7 +76,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
                             border: "none", font: "inherit", cursor: "pointer", borderRadius: 6, padding: "4px 10px",
                             background: "transparent", color: "var(--foreground)", fontSize: 13, fontWeight: 700,
                           }}><span
-                            style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{c.label}</span><div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>{subCount > 0 && <CountPill count={subCount} urgent={m.urgent} />}<Icon
+                            style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{c.label}</span><div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>{showCounts && subCount > 0 && <CountPill count={subCount} urgent={m.urgent} />}<Icon
                               name="chevron-down"
                               size={12}
                               style={{ transform: subOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .15s", opacity: .5 }} /></div></button>{subOpen && <div style={{ paddingLeft: 14, marginBottom: 2 }}>{c.children.map((leaf, j) => <button
@@ -87,7 +88,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
                               borderRadius: 6, padding: "5px 10px",
                               background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 500,
                             }}><span
-                              style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{leaf.label}</span>{leaf.badge > 0 && <CountPill count={leaf.badge} urgent={m.urgent} />}</button>)}</div>}</div>
+                              style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{leaf.label}</span>{showCounts && leaf.badge > 0 && <CountPill count={leaf.badge} urgent={m.urgent} />}</button>)}</div>}</div>
                     );
                   }
                   return (
@@ -99,7 +100,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
                         border: "none", font: "inherit", cursor: "pointer", borderRadius: 7, padding: "6px 10px",
                         background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 500,
                       }}><span
-                        style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{c.label}</span>{c.badge > 0 && <CountPill count={c.badge} urgent={m.urgent} />}</button>
+                        style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{c.label}</span>{showCounts && c.badge > 0 && <CountPill count={c.badge} urgent={m.urgent} />}</button>
                   );
                 })}</div>}</div>
           );
