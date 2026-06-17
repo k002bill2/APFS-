@@ -173,4 +173,34 @@ function RiskTrendCard({ span, height = 200 }) {
   );
 }
 
-export const MainWidgets = { ExecChart, StatusDonut, IndustryCard, ScheduleCard, MiniKpis, ShortcutGrid, ShortcutCard, RiskTrendCard, Legend };
+/* 퀵메뉴 — 자주 쓰는 업무 바로가기 (GNB 팝오버 → 메인 인라인 바) */
+function QuickTasksBar({ onNav }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
+      background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14,
+      boxShadow: "var(--shadow-sm)", padding: "12px 16px", marginBottom: 18,
+    }}><div style={{ display: "flex", flexDirection: "column", gap: 1, paddingRight: 14, borderRight: "1px solid var(--border)", flex: "0 0 auto" }}><span
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700 }}><Icon name="grid" size={15} />퀵메뉴</span><span
+        className="t-caption" style={{ fontSize: 10.5 }}>자주 쓰는 업무</span></div><div
+      style={{ display: "flex", gap: 8, flexWrap: "wrap", flex: 1 }}>{D.QUICKMENU.map((q, i) => <button
+        key={i}
+        onClick={() => onNav(q.to)}
+        title={q.label}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "var(--card-raised)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+        style={{
+          position: "relative", display: "flex", alignItems: "center", gap: 9, cursor: "pointer",
+          border: "1px solid var(--border)", background: "var(--card-raised)", borderRadius: 11, padding: "8px 13px 8px 9px",
+          font: "inherit", transition: "background .15s,border-color .15s",
+        }}><ColorChip icon={q.icon} color={q.urgent ? "var(--danger)" : "var(--primary)"} size={30} iconSize={16} /><span
+          style={{ fontSize: 12.5, fontWeight: 600, color: "var(--foreground)" }}>{q.label}</span>{q.badge > 0 && <span
+          style={{
+            minWidth: 17, height: 17, padding: "0 5px", borderRadius: 99,
+            background: "var(--danger)", color: "#fff", fontSize: 10, fontWeight: 800,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>{q.badge > 99 ? "99+" : q.badge}</span>}</button>)}</div></div>
+  );
+}
+
+export const MainWidgets = { ExecChart, StatusDonut, IndustryCard, ScheduleCard, MiniKpis, ShortcutGrid, ShortcutCard, RiskTrendCard, QuickTasksBar, Legend };

@@ -10,7 +10,7 @@ import { APFS_DATA } from './data';
 const { useState } = React;
 const { StatCard, ChartCard, Card, Button, ColorChip, StatusBadge, DeltaBadge } = UI;
 const { Gauge, Sparkline, Donut } = Charts;
-const { ExecChart, StatusDonut, IndustryCard, ScheduleCard, MiniKpis, ShortcutGrid, RiskTrendCard } = MainWidgets;
+const { ExecChart, StatusDonut, IndustryCard, ScheduleCard, MiniKpis, ShortcutGrid, RiskTrendCard, QuickTasksBar } = MainWidgets;
 const { PageHeader } = Shell;
 const D = APFS_DATA;
 
@@ -153,7 +153,7 @@ function Main({ onNav }) {
                 border: `1.5px solid ${variant === v.id ? "var(--foreground)" : "var(--border-strong)"}`,
                 background: variant === v.id ? "color-mix(in srgb,var(--foreground) 8%,var(--card))" : "var(--card)",
                 color: variant === v.id ? "var(--foreground)" : "var(--muted-foreground)",
-              }}><span style={{ fontSize: 12.5, fontWeight: 700 }}>{"시안 " + v.id + " · " + v.name}</span><span style={{ fontSize: 10.5, marginLeft: 6, opacity: .8 }}>{v.desc}</span></button>)}</div><span className="t-caption" style={{ marginLeft: "auto" }}>3종 중 선택 — 동작 그대로 비교</span></div><div key={variant} style={{ animation: "dashFade .35s var(--ease) both" }}><V s={s} onNav={onNav} /></div></div>
+              }}><span style={{ fontSize: 12.5, fontWeight: 700 }}>{"시안 " + v.id + " · " + v.name}</span><span style={{ fontSize: 10.5, marginLeft: 6, opacity: .8 }}>{v.desc}</span></button>)}</div><span className="t-caption" style={{ marginLeft: "auto" }}>3종 중 선택 — 동작 그대로 비교</span></div>{variant !== "B" && <QuickTasksBar onNav={onNav} />}<div key={variant} style={{ animation: "dashFade .35s var(--ease) both" }}><V s={s} onNav={onNav} /></div></div>
   );
 }
 

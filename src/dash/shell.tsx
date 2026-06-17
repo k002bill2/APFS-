@@ -40,21 +40,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
         flex: "0 0 auto", background: "var(--card)", borderRight: "1px solid var(--border)",
         display: "flex", flexDirection: "column", overflow: "hidden", ...posStyle,
       }}><div
-        style={{ padding: open ? "14px 14px 8px" : "14px 8px 8px", flex: 1, overflowY: "auto", overflowX: "hidden" }}>{open && <div style={{ marginBottom: 4 }}><div
-          className="t-caption"
-          style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px 6px", textTransform: "none", fontWeight: 700, letterSpacing: ".02em" }}><Icon name="star" size={13} style={{ color: "var(--warning)" }} />즐겨찾기</div>{D.FAVORITES.map((f, i) => <button
-            key={i}
-            onClick={() => onNav(f.to)}
-            title={f.label}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "var(--foreground)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--muted-foreground)"; }}
-            style={{
-              width: "100%", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", border: "none", font: "inherit",
-              borderRadius: 8, padding: "7px 10px", background: "transparent", color: "var(--muted-foreground)",
-              fontSize: 13, fontWeight: 500, textAlign: "left", transition: "background .15s,color .15s",
-            }}><Icon name={f.icon} size={15} stroke={2} style={{ color: "var(--caption)", flex: "0 0 auto" }} /><span
-              style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{f.label}</span></button>)}<div
-          style={{ height: 1, background: "var(--border)", margin: "8px 4px 2px" }} /></div>}{menu.map((m) => {
+        style={{ padding: open ? "14px 14px 8px" : "14px 8px 8px", flex: 1, overflowY: "auto", overflowX: "hidden" }}>{menu.map((m) => {
           const count = rollup(m);
           const isActive = m.path && m.path === route;
           const hasKids = !!m.children;
@@ -194,39 +180,42 @@ function RoleSwitch({ role, onRole }) {
   );
 }
 
-/* ---------- GNB ---------- */
-/* ---------- Quick menu (GNB grid popover) ---------- */
-function QuickMenu({ onNav }) {
+/* ---------- Favorites FAB (우측하단 플로팅 즐겨찾기) ---------- */
+function FavoritesFab({ onNav }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ position: "relative" }}><IconBtn icon="grid" onClick={() => setOpen((o) => !o)} label="퀵메뉴" active={open} size={38} />{open && <><div
+    <div style={{ position: "fixed", right: 24, bottom: 24, zIndex: 60, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12 }}>{open && <><div
         onClick={() => setOpen(false)}
-        style={{ position: "fixed", inset: 0, zIndex: 40 }} /><div
+        style={{ position: "fixed", inset: 0, zIndex: -1 }} /><div
         style={{
-          position: "absolute", top: "calc(100% + 8px)", right: 0, width: 300, zIndex: 41,
-          background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, boxShadow: "var(--shadow-lg)",
-          padding: 12, animation: "dashFade .16s var(--ease) both",
-        }}><div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, padding: "0 2px" }}><span
-            style={{ fontSize: 12.5, fontWeight: 700 }}>퀵메뉴</span><span className="t-caption" style={{ fontSize: 10.5 }}>자주 쓰는 업무</span></div><div
-          style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>{D.QUICKMENU.map((q, i) => <button
+          width: 244, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14,
+          boxShadow: "var(--shadow-lg)", padding: 8, animation: "dashFade .16s var(--ease) both",
+        }}><div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 8px 8px" }}><Icon name="star" size={14} style={{ color: "var(--warning)" }} /><span
+            style={{ fontSize: 12.5, fontWeight: 700 }}>즐겨찾기</span></div>{D.FAVORITES.map((f, i) => <button
             key={i}
-            onClick={() => { onNav(q.to); setOpen(false); }}
-            title={q.label}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "var(--card-raised)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+            onClick={() => { onNav(f.to); setOpen(false); }}
+            title={f.label}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "var(--foreground)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--muted-foreground)"; }}
             style={{
-              position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 7, cursor: "pointer",
-              border: "1px solid var(--border)", background: "var(--card-raised)", borderRadius: 12, padding: "14px 6px 11px",
-              font: "inherit", transition: "background .15s,border-color .15s",
-            }}><ColorChip icon={q.icon} color={q.urgent ? "var(--danger)" : "var(--primary)"} size={36} iconSize={19} /><span
-              style={{ fontSize: 11.5, fontWeight: 600, color: "var(--foreground)" }}>{q.label}</span>{q.badge > 0 && <span
-              style={{
-                position: "absolute", top: 7, right: 7, minWidth: 16, height: 16, padding: "0 4px", borderRadius: 99,
-                background: "var(--danger)", color: "#fff", fontSize: 9.5, fontWeight: 800,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>{q.badge > 99 ? "99+" : q.badge}</span>}</button>)}</div></div></>}</div>
+              width: "100%", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", border: "none", font: "inherit",
+              borderRadius: 9, padding: "9px 10px", background: "transparent", color: "var(--muted-foreground)",
+              fontSize: 12.5, fontWeight: 500, textAlign: "left", transition: "background .15s,color .15s",
+            }}><Icon name={f.icon} size={16} stroke={2} style={{ color: "var(--caption)", flex: "0 0 auto" }} /><span
+              style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{f.label}</span></button>)}</div></>}<button
+        onClick={() => setOpen((o) => !o)}
+        aria-label="즐겨찾기"
+        aria-expanded={open}
+        style={{
+          width: 46, height: 46, borderRadius: 99, cursor: "pointer", border: "none",
+          background: "#23C55E", color: "#fff", boxShadow: "var(--shadow-lg)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "transform .18s var(--ease)", transform: open ? "rotate(90deg) scale(1.04)" : "none",
+        }}><Icon name={open ? "x" : "star"} size={20} stroke={2.2} /></button></div>
   );
 }
+
+/* ---------- GNB ---------- */
 
 function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWide, notifs, onOpenNotif, onNav }) {
   const unread = notifs.filter((n) => !n.read).length;
@@ -252,7 +241,7 @@ function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWi
             border: "none", background: "transparent", outline: "none", font: "inherit", fontSize: 12.5,
             color: "var(--foreground)", width: "100%",
           }} /><kbd
-          style={{ fontSize: 10, fontWeight: 600, background: "var(--card)", borderRadius: 5, padding: "1px 5px", border: "1px solid var(--border)" }}>/</kbd></label><RoleSwitch role={role} onRole={onRole} /><div style={{ display: "flex", alignItems: "center", gap: 2 }}><QuickMenu onNav={onNav} /><IconBtn
+          style={{ fontSize: 10, fontWeight: 600, background: "var(--card)", borderRadius: 5, padding: "1px 5px", border: "1px solid var(--border)" }}>/</kbd></label><RoleSwitch role={role} onRole={onRole} /><div style={{ display: "flex", alignItems: "center", gap: 2 }}><IconBtn
           icon={wide ? "collapse-h" : "expand-h"}
           onClick={onToggleWide}
           label={wide ? "고정 너비" : "전체 너비"}
@@ -319,9 +308,9 @@ function AppShell(props) {
           mobile={mobile}
           drawerOpen={drawer} /><main
           className="dash-main"
-          style={{ flex: 1, minWidth: 0, padding: "22px 26px 40px" }}>{children}</main></div>{mobile && <div
+          style={{ flex: 1, minWidth: 0, padding: "22px 26px 104px" }}>{children}</main></div>{mobile && <div
         className={"lnb-backdrop" + (drawer ? " show" : "")}
-        onClick={() => setDrawer(false)} />}<NotifDrawer
+        onClick={() => setDrawer(false)} />}<FavoritesFab onNav={navClose} /><NotifDrawer
         open={notifOpen}
         onClose={() => setNotifOpen(false)}
         notifs={notifs}
