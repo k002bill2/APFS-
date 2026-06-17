@@ -40,9 +40,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
         flex: "0 0 auto", background: "var(--card)", borderRight: "1px solid var(--border)",
         display: "flex", flexDirection: "column", overflow: "hidden", ...posStyle,
       }}><div
-        style={{ padding: open ? "14px 14px 8px" : "14px 8px 8px", flex: 1, overflowY: "auto", overflowX: "hidden" }}>{open && <div
-          className="t-caption"
-          style={{ padding: "4px 10px 8px", textTransform: "none", fontWeight: 700, letterSpacing: ".02em" }}>업무 메뉴</div>}{menu.map((m) => {
+        style={{ padding: open ? "14px 14px 8px" : "14px 8px 8px", flex: 1, overflowY: "auto", overflowX: "hidden" }}>{menu.map((m) => {
           const count = rollup(m);
           const isActive = m.path && m.path === route;
           const hasKids = !!m.children;
