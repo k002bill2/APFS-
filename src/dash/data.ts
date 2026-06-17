@@ -321,5 +321,22 @@ const PORTFOLIO = [
     value:"1,040,000", change:0.0, risk:"ULTRA-LOW", riskTone:"success", hist:[6,6,6,6,6,6,6,6] },
 ];
 
+// 퀵메뉴 — GNB 그리드 팝오버 (자주 쓰는 업무 바로가기 6종)
+const QUICKMENU = [
+  { label: "투자등록", icon: "plus", to: "performance" },
+  { label: "보고서", icon: "file", to: "gp-health" },
+  { label: "경보", icon: "shield-alert", to: "risk", urgent: true, badge: 14 },
+  { label: "평가", icon: "activity", to: "risk" },
+  { label: "회계", icon: "wallet", to: "accounting" },
+  { label: "문서", icon: "inbox", to: "gp-health" },
+];
+
+// 즐겨찾기 — LNB 상단 고정 (사용자가 핀한 업무 딥링크)
+const FAVORITES = [
+  { label: "투자등록 신청", icon: "plus", to: "performance" },
+  { label: "조합 등록/변경 신청", icon: "file", to: "gp-health" },
+  { label: "전문인력 확인서 출력", icon: "download", to: "accounting" },
+];
+
 export const APFS_DATA = { KPI, EXEC_Q, EXEC_Y, STATUS_DONUT, INDUSTRY, SCHEDULE, MINI, SHORTCUTS,
-  RISK_TREND, RISK_THRESHOLD, NOTIFS, ROLES, MENU, PORTFOLIO };
+  RISK_TREND, RISK_THRESHOLD, NOTIFS, ROLES, MENU, PORTFOLIO, QUICKMENU, FAVORITES };

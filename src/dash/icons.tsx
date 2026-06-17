@@ -45,6 +45,8 @@ const P = {
   "arrow-right":["M5 12h14","M13 6l6 6-6 6"],
   clock:["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z","M12 7.5V12l3 2"],
   layers:["M12 3 3 8l9 5 9-5-9-5Z","M3 13l9 5 9-5","M3 18l9 5 9-5"],
+  grid:["M4 4h7v7H4Z","M13 4h7v7h-7Z","M4 13h7v7H4Z","M13 13h7v7h-7Z"],
+  star:["M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17l-5.2 2.6 1-5.8-4.3-4.1 5.9-.9L12 3.5Z"],
 };
 
 /* kebab 이름 → Lucide PascalCase (대체 후보 포함) */
@@ -65,6 +67,7 @@ const MAP = {
   maximize:["Maximize2","Maximize"], minimize:["Minimize2","Minimize"],
   "expand-h":["UnfoldHorizontal","MoveHorizontal","StretchHorizontal"],
   "collapse-h":["FoldHorizontal","MoveHorizontal"],
+  grid:["LayoutGrid","Grid3x3","Grid"], star:["Star"],
 };
 
 // Lucide IconNode 조회: [[tag, attrs, children?], ...]
