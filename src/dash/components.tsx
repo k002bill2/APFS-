@@ -5,9 +5,14 @@ import { Icon } from './icons';
 import { Charts } from './charts';
 
 const { Sparkline } = Charts;
-const cx = (...a) => a.filter(Boolean).join(" ");
+const cx = (...a: any[]) => a.filter(Boolean).join(" ");
 
-const toneVar = (t) => ({
+/* 공유 타입 — 다른 모듈은 `import type { Tone, Size } from './components'` */
+export type Tone = "primary" | "success" | "warning" | "danger" | "info" | "cyan";
+export type Size = "sm" | "md" | "lg";
+type ToneLike = Tone | string;
+
+const toneVar = (t?: ToneLike): [string, string] => ({
   primary: ["var(--primary)", "color-mix(in srgb,var(--primary) 12%,transparent)"],
   success: ["var(--success)", "var(--success-soft)"],
   warning: ["var(--warning)", "var(--warning-soft)"],
@@ -17,7 +22,7 @@ const toneVar = (t) => ({
 }[t] || ["var(--primary)", "color-mix(in srgb,var(--primary) 12%,transparent)"]);
 
 /* ---- ColorChip ---- */
-function ColorChip({ icon, color = "var(--primary)", soft, size = 36, iconSize = 20 }) {
+function ColorChip({ icon, color = "var(--primary)", soft, size = 36, iconSize = 20 }: { icon: string; color?: string; soft?: string; size?: number; iconSize?: number }) {
   return (
     <span
       className="inline-flex items-center justify-center shrink-0 rounded-[10px]"
@@ -26,7 +31,7 @@ function ColorChip({ icon, color = "var(--primary)", soft, size = 36, iconSize =
 }
 
 /* ---- StatusBadge ---- */
-function StatusBadge({ tone = "success", label, icon, size = "md" }) {
+function StatusBadge({ tone = "success", label, icon, size = "md" }: { tone?: ToneLike; label?: React.ReactNode; icon?: string; size?: "sm" | "md" }) {
   const [c, soft] = toneVar(tone);
   return (
     <span
@@ -38,7 +43,7 @@ function StatusBadge({ tone = "success", label, icon, size = "md" }) {
 }
 
 /* ---- DeltaBadge ---- */
-function DeltaBadge({ value, label, invert }) {
+function DeltaBadge({ value, label, invert }: { value: number; label?: React.ReactNode; invert?: boolean }) {
   const good = invert ? value < 0 : value > 0;
   const c = good ? "var(--success)" : "var(--danger)";
   const up = value > 0;
@@ -50,7 +55,7 @@ function DeltaBadge({ value, label, invert }) {
 }
 
 /* ---- StatCard ---- */
-function StatCard({ kpi, onClick, emphasis }) {
+function StatCard({ kpi, onClick, emphasis }: { kpi: any; onClick?: () => void; emphasis?: boolean }) {
   const c = kpi.accent;
   return (
     <button
@@ -66,7 +71,7 @@ function StatCard({ kpi, onClick, emphasis }) {
 }
 
 /* ---- Card (generic) ---- */
-function Card({ children, accent, pad = 18, className, style, span }) {
+function Card({ children, accent, pad = 18, className, style, span }: { children?: React.ReactNode; accent?: string; pad?: number; className?: string; style?: React.CSSProperties; span?: number | string }) {
   return (
     <section
       className={cx(span && "dcol-" + span, "rounded-card border border-border bg-card shadow-sm min-w-0", className)}
@@ -75,7 +80,7 @@ function Card({ children, accent, pad = 18, className, style, span }) {
 }
 
 /* ---- ChartCard ---- */
-function ChartCard({ title, sub, icon, accent = "var(--primary)", right, children, footer, span, minH }) {
+function ChartCard({ title, sub, icon, accent = "var(--primary)", right, children, footer, span, minH }: { title?: React.ReactNode; sub?: React.ReactNode; icon?: string; accent?: string; right?: React.ReactNode; children?: React.ReactNode; footer?: React.ReactNode; span?: number | string; minH?: number }) {
   return (
     <section
       className={cx(span && "dcol-" + span, "flex flex-col rounded-card border border-border bg-card shadow-sm min-w-0 overflow-hidden")}><header
@@ -86,7 +91,7 @@ function ChartCard({ title, sub, icon, accent = "var(--primary)", right, childre
 }
 
 /* ---- SegTabs ---- */
-function SegTabs({ options, value, onChange, size = "md" }) {
+function SegTabs({ options, value, onChange, size = "md" }: { options: any[]; value?: any; onChange?: (v: any) => void; size?: "sm" | "md" }) {
   return (
     <div className="inline-flex bg-muted rounded-[9px] p-[3px] gap-0.5">{options.map((o) => {
         const v = o.value ?? o, lab = o.label ?? o;
@@ -104,7 +109,7 @@ function SegTabs({ options, value, onChange, size = "md" }) {
 }
 
 /* ---- FilterChip ---- */
-function FilterChip({ active, children, onClick, dot }) {
+function FilterChip({ active, children, onClick, dot }: { active?: boolean; children?: React.ReactNode; onClick?: () => void; dot?: string }) {
   return (
     <button
       onClick={onClick}
@@ -115,7 +120,7 @@ function FilterChip({ active, children, onClick, dot }) {
 }
 
 /* ---- Button ---- */
-function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, children, onClick, style }) {
+function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, children, onClick, style }: { variant?: "primary" | "secondary" | "outline" | "ghost" | "accent"; size?: Size; leadingIcon?: string; trailingIcon?: string; children?: React.ReactNode; onClick?: (e?: any) => void; style?: React.CSSProperties }) {
   const sizeCls = size === "sm" ? "px-[11px] py-1.5 text-[12.5px]" : size === "lg" ? "px-5 py-[11px] text-[13.5px]" : "px-[15px] py-2 text-[13.5px]";
   const variantCls = {
     primary: "bg-primary text-primary-foreground",
@@ -133,7 +138,7 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
 }
 
 /* ---- IconBtn ---- */
-function IconBtn({ icon, onClick, label, badge, active, size = 38 }) {
+function IconBtn({ icon, onClick, label, badge, active, size = 38 }: { icon: string; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number }) {
   return (
     <button
       onClick={onClick}
@@ -147,7 +152,7 @@ function IconBtn({ icon, onClick, label, badge, active, size = 38 }) {
 }
 
 /* ---- EmptyState ---- */
-function EmptyState({ msg = "표시할 데이터가 없습니다", icon = "inbox", height = 160 }) {
+function EmptyState({ msg = "표시할 데이터가 없습니다", icon = "inbox", height = 160 }: { msg?: string; icon?: string; height?: number }) {
   return (
     <div
       className="flex flex-col items-center justify-center gap-2 text-caption"
@@ -156,7 +161,7 @@ function EmptyState({ msg = "표시할 데이터가 없습니다", icon = "inbox
 }
 
 /* ---- CountPill ---- */
-function CountPill({ count, urgent }) {
+function CountPill({ count, urgent }: { count?: number; urgent?: boolean }) {
   if (!count) return null;
   return (
     <span

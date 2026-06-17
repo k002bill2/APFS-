@@ -4,8 +4,8 @@ import React from 'react';
 const { useRef, useState, useLayoutEffect, useEffect } = React;
 
 /* ---- 측정 훅 ---- */
-function useMeasure() {
-  const ref = useRef(null);
+function useMeasure(): [any, number] {
+  const ref = useRef<HTMLDivElement>(null);
   const [width, setW] = useState(0);
   useLayoutEffect(() => {
     if (!ref.current) return;
@@ -39,7 +39,7 @@ function smoothPath(pts) {
   return d;
 }
 
-function Tip({ x, y, children, show }) {
+function Tip({ x, y, children, show }: { x: number; y: number; children?: React.ReactNode; show?: boolean }) {
   if (!show) return null;
   return (
     <div
@@ -53,7 +53,7 @@ function Tip({ x, y, children, show }) {
 }
 
 /* ===================== Sparkline ===================== */
-function Sparkline({ data, color = "var(--primary)", height = 34, area = true, id }) {
+function Sparkline({ data, color = "var(--primary)", height = 34, area = true, id }: { data: number[]; color?: string; height?: number; area?: boolean; id?: string }) {
   const [ref, W] = useMeasure();
   const h = height, pad = 3;
   const min = Math.min(...data), max = Math.max(...data);
@@ -77,7 +77,7 @@ function Sparkline({ data, color = "var(--primary)", height = 34, area = true, i
 }
 
 /* ===================== Donut ===================== */
-function Donut({ data, height = 220, thickness = 26, centerLabel, onSlice, activeKey }) {
+function Donut({ data, height = 220, thickness = 26, centerLabel, onSlice, activeKey }: { data: any[]; height?: number; thickness?: number; centerLabel?: React.ReactNode; onSlice?: (d: any) => void; activeKey?: string }) {
   const [ref, W] = useMeasure();
   const [hover, setHover] = useState(null);
   const size = Math.min(W || height, height);
@@ -129,7 +129,7 @@ function Donut({ data, height = 220, thickness = 26, centerLabel, onSlice, activ
 }
 
 /* ===================== ComposedBars (계획 vs 실적 + 집행률 라인) ===================== */
-function ComposedBars({ data, height = 280 }) {
+function ComposedBars({ data, height = 280 }: { data: any[]; height?: number }) {
   const [ref, W] = useMeasure();
   const [hi, setHi] = useState(null);
   const m = { t: 16, r: 44, b: 28, l: 46 };
@@ -208,7 +208,7 @@ function ComposedBars({ data, height = 280 }) {
 }
 
 /* ===================== LineTrend (임계선) ===================== */
-function LineTrend({ data, threshold, height = 220, color = "var(--chart-1)" }) {
+function LineTrend({ data, threshold, height = 220, color = "var(--chart-1)" }: { data: any[]; threshold?: number; height?: number; color?: string }) {
   const [ref, W] = useMeasure();
   const [hi, setHi] = useState(null);
   const m = { t: 14, r: 14, b: 24, l: 32 };
@@ -304,7 +304,7 @@ function squarify(items, x, y, w, h) {
   }
   return out;
 }
-function Treemap({ data, height = 240, onCell }) {
+function Treemap({ data, height = 240, onCell }: { data: any[]; height?: number; onCell?: (c: any) => void }) {
   const [ref, W] = useMeasure();
   const [hi, setHi] = useState(null);
   const sorted = [...data].sort((a, b) => b.value - a.value);
@@ -336,7 +336,7 @@ function Treemap({ data, height = 240, onCell }) {
 }
 
 /* ===================== HBars (수평 순위) ===================== */
-function HBars({ data, height = 220, unit = "%" }) {
+function HBars({ data, height = 220, unit = "%" }: { data: any[]; height?: number; unit?: string }) {
   const [ref, W] = useMeasure();
   const max = Math.max(...data.map((d) => d.value));
   const rowH = height / data.length;
@@ -356,7 +356,7 @@ function HBars({ data, height = 220, unit = "%" }) {
 }
 
 /* ===================== Gauge (반원) ===================== */
-function Gauge({ value, max = 100, label, height = 150, color = "var(--primary)" }) {
+function Gauge({ value, max = 100, label, height = 150, color = "var(--primary)" }: { value: number; max?: number; label?: React.ReactNode; height?: number; color?: string }) {
   const [ref, W] = useMeasure();
   const cx = (W || 200) / 2, cy = height - 14, r = Math.min(cx - 14, height - 28);
   const frac = Math.min(1, value / max);
