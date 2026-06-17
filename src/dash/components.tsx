@@ -12,7 +12,7 @@ export type Tone = "primary" | "success" | "warning" | "danger" | "info" | "cyan
 export type Size = "sm" | "md" | "lg";
 type ToneLike = Tone | string;
 
-const toneVar = (t?: ToneLike): [string, string] => ({
+const toneVar = (t?: ToneLike): string[] => ({
   primary: ["var(--primary)", "color-mix(in srgb,var(--primary) 12%,transparent)"],
   success: ["var(--success)", "var(--success-soft)"],
   warning: ["var(--warning)", "var(--warning-soft)"],

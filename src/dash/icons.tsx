@@ -84,7 +84,7 @@ function lucideNode(name) {
   return null;
 }
 
-function renderNode(node) {
+function renderNode(node: any[]): any {
   return node.map((el, i) => {
     const tag = el[0], attrs = el[1] || {}, kids = el[2];
     const props = Object.assign({ key: i }, attrs);
@@ -92,7 +92,7 @@ function renderNode(node) {
   });
 }
 
-function Icon({ name, size = 20, stroke = 2, className, style }) {
+function Icon({ name, size = 20, stroke = 2, className, style }: { name: string; size?: number; stroke?: number; className?: string; style?: React.CSSProperties }) {
   const node = lucideNode(name);
   const children = node ? renderNode(node) : (P[name] || []).map((p, i) => <path key={i} d={p} />);
   if (!node && !P[name]) return null;
