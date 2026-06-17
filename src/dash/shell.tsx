@@ -41,7 +41,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
         display: "flex", flexDirection: "column", overflow: "hidden", ...posStyle,
       }}><div
         style={{ padding: open ? "14px 14px 8px" : "14px 8px 8px", flex: 1, overflowY: "auto", overflowX: "hidden" }}>{menu.map((m) => {
-          const count = rollup(m);
+          const count = m.id === "risk" ? rollup(m) : 0;
           const isActive = m.path && m.path === route;
           const hasKids = !!m.children;
           const isOpen = expanded[m.id];
@@ -261,20 +261,21 @@ function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWi
 }
 
 /* ---------- PageHeader (breadcrumb + title + actions) ---------- */
-function PageHeader({ crumbs, title, sub, actions }) {
+function PageHeader({ crumbs, title, sub, actions }: { crumbs: string[]; title?: React.ReactNode; sub?: React.ReactNode; actions?: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: 18 }}><nav
-        aria-label="위치"
-        style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>{crumbs.map((c, i) => <React.Fragment key={i}>{i > 0 && <Icon name="chevron-right" size={13} style={{ color: "var(--caption)" }} />}<span
+    <div style={{ marginBottom: 18 }}><div
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}><nav
+          aria-label="위치"
+          style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>{crumbs.map((c, i) => <React.Fragment key={i}>{i > 0 && <Icon name="chevron-right" size={13} style={{ color: "var(--caption)" }} />}<span
             aria-current={i === crumbs.length - 1 ? "page" : undefined}
             style={{
               fontSize: 12, fontWeight: i === crumbs.length - 1 ? 700 : 500,
               color: i === crumbs.length - 1 ? "var(--foreground)" : "var(--caption)",
-            }}>{c}</span></React.Fragment>)}</nav><div
-        style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}><div><h1 className="t-h1" style={{ margin: 0 }}>{title}</h1>{sub && <p
-            className="t-body"
-            style={{ margin: "4px 0 0", color: "var(--muted-foreground)", fontSize: 13 }}>{sub}</p>}</div>{actions && <div
-          style={{ display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto" }}>{actions}</div>}</div></div>
+            }}>{c}</span></React.Fragment>)}</nav>{actions && <div
+          style={{ display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto" }}>{actions}</div>}</div>{title && <div
+        style={{ marginTop: 10 }}><h1 className="t-h1" style={{ margin: 0 }}>{title}</h1>{sub && <p
+          className="t-body"
+          style={{ margin: "4px 0 0", color: "var(--muted-foreground)", fontSize: 13 }}>{sub}</p>}</div>}</div>
   );
 }
 

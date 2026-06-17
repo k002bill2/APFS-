@@ -191,10 +191,10 @@ function QuickTasksBar({ onNav }) {
         onMouseLeave={(e) => { e.currentTarget.style.background = "var(--card-raised)"; e.currentTarget.style.borderColor = "var(--border)"; }}
         style={{
           position: "relative", display: "flex", alignItems: "center", gap: 9, cursor: "pointer",
-          border: "1px solid var(--border)", background: "var(--card-raised)", borderRadius: 11, padding: "8px 13px 8px 9px",
+          border: "1px solid var(--border)", background: "var(--card-raised)", borderRadius: 11, padding: "8px 14px",
           font: "inherit", transition: "background .15s,border-color .15s",
-        }}><ColorChip icon={q.icon} color={q.urgent ? "var(--danger)" : "var(--primary)"} size={30} iconSize={16} /><span
-          style={{ fontSize: 12.5, fontWeight: 600, color: "var(--foreground)" }}>{q.label}</span>{q.badge > 0 && <span
+        }}><span
+          style={{ fontSize: 12.5, fontWeight: 600, color: q.urgent ? "var(--danger)" : "var(--foreground)" }}>{q.label}</span>{q.badge > 0 && <span
           style={{
             minWidth: 17, height: 17, padding: "0 5px", borderRadius: 99,
             background: "var(--danger)", color: "#fff", fontSize: 10, fontWeight: 800,

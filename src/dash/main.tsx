@@ -141,8 +141,6 @@ function Main({ onNav }) {
   return (
     <div style={{ maxWidth: 1320, margin: "0 auto" }}><PageHeader
         crumbs={["홈", "메인 종합"]}
-        title="메인 종합 대시보드"
-        sub="흩어진 핵심 지표를 단일 화면에서 — 2026-06-15 14:32 기준"
         actions={<><Button variant="outline" size="sm" leadingIcon="refresh">새로고침</Button><Button variant="primary" size="sm" leadingIcon="download">리포트</Button></>} /><div
         style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18, flexWrap: "wrap", padding: "10px 14px", background: "var(--muted)", border: "1px dashed var(--border-strong)", borderRadius: 12 }}><span
           style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--foreground)" }}><Icon name="layers" size={15} />레이아웃 시안</span><div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{VARIANTS.map((v) => <button
