@@ -130,7 +130,7 @@ const VARIANTS = [
   { id: "C", name: "운영 모니터", desc: "고밀도 벤토" },
 ];
 
-function Main({ onNav }) {
+function Main({ onNav, navStyle, onNavStyle }: { onNav: any; navStyle?: string; onNavStyle?: (v: string) => void }) {
   const [variant, setVariant] = useState(() => localStorage.getItem("apfs.variant") || "A");
   const [period, setPeriod] = useState("분기");
   const [fund, setFund] = useState("전체");
@@ -151,7 +151,17 @@ function Main({ onNav }) {
                 border: `1.5px solid ${variant === v.id ? "var(--foreground)" : "var(--border-strong)"}`,
                 background: variant === v.id ? "color-mix(in srgb,var(--foreground) 8%,var(--card))" : "var(--card)",
                 color: variant === v.id ? "var(--foreground)" : "var(--muted-foreground)",
-              }}><span style={{ fontSize: 12.5, fontWeight: 700 }}>{"시안 " + v.id + " · " + v.name}</span><span style={{ fontSize: 10.5, marginLeft: 6, opacity: .8 }}>{v.desc}</span></button>)}</div><span className="t-caption" style={{ marginLeft: "auto" }}>3종 중 선택 — 동작 그대로 비교</span></div>{variant !== "B" && <QuickTasksBar onNav={onNav} />}<div key={variant} style={{ animation: "dashFade .35s var(--ease) both" }}><V s={s} onNav={onNav} /></div></div>
+              }}><span style={{ fontSize: 12.5, fontWeight: 700 }}>{"시안 " + v.id + " · " + v.name}</span><span style={{ fontSize: 10.5, marginLeft: 6, opacity: .8 }}>{v.desc}</span></button>)}</div><span className="t-caption">3종 중 선택 — 동작 그대로 비교</span>{onNavStyle && <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}><span className="t-caption">네비게이션</span><div style={{ display: "flex", alignItems: "center", gap: 2, background: "var(--card)", border: "1px solid var(--border-strong)", borderRadius: 9, padding: 3 }}>{[["classic", "panel-left", "기본"], ["rail", "grid", "레일"]].map(([val, icon, label]) => <button
+            key={val}
+            onClick={() => onNavStyle(val)}
+            aria-pressed={navStyle === val}
+            title={label + " 네비게이션"}
+            style={{
+              display: "flex", alignItems: "center", gap: 5, cursor: "pointer", border: "none", font: "inherit",
+              borderRadius: 7, padding: "5px 10px", fontSize: 11.5, fontWeight: 700,
+              background: navStyle === val ? "color-mix(in srgb,var(--foreground) 9%,var(--card))" : "transparent",
+              color: navStyle === val ? "var(--foreground)" : "var(--caption)", transition: "all .15s",
+            }}><Icon name={icon} size={15} />{label}</button>)}</div></div>}</div>{variant !== "B" && <QuickTasksBar onNav={onNav} />}<div key={variant} style={{ animation: "dashFade .35s var(--ease) both" }}><V s={s} onNav={onNav} /></div></div>
   );
 }
 

@@ -69,6 +69,7 @@ function App() {
   const [route, setRoute] = useState(() => ls.get("apfs.route", "designsystem"));
   const [lnbOpen, setLnbOpen] = useState(() => ls.get("apfs.lnb", "1") === "1");
   const [wide, setWide] = useState(() => ls.get("apfs.width", "fixed") === "full");
+  const [navStyle, setNavStyle] = useState(() => ls.get("apfs.navstyle", "classic"));
   const [notifs, setNotifs] = useState(D.NOTIFS);
 
   useEffect(() => {
@@ -79,6 +80,7 @@ function App() {
   useEffect(() => ls.set("apfs.role", role), [role]);
   useEffect(() => ls.set("apfs.route", route), [route]);
   useEffect(() => ls.set("apfs.lnb", lnbOpen ? "1" : "0"), [lnbOpen]);
+  useEffect(() => ls.set("apfs.navstyle", navStyle), [navStyle]);
   useEffect(() => {
     document.documentElement.dataset.width = wide ? "full" : "fixed";
     ls.set("apfs.width", wide ? "full" : "fixed");
@@ -94,7 +96,7 @@ function App() {
 
   let page;
   if (route === "designsystem") page = <DesignSystem />;
-  else if (route === "main") page = <Main onNav={onNav} />;
+  else if (route === "main") page = <Main onNav={onNav} navStyle={navStyle} onNavStyle={setNavStyle} />;
   else if (route === "performance") page = <Performance onNav={onNav} />;
   else if (route === "risk") page = <Risk onNav={onNav} />;
   else if (route === "gp-health") page = <GpHealth onNav={onNav} />;
@@ -115,6 +117,8 @@ function App() {
       onNav={onNav}
       lnbOpen={lnbOpen}
       onToggleLnb={() => setLnbOpen((o) => !o)}
+      navStyle={navStyle}
+      onNavStyle={setNavStyle}
       wide={wide}
       onToggleWide={() => setWide((x) => !x)}
       notifs={notifs}

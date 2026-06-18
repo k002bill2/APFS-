@@ -23,6 +23,53 @@ function useIsMobile(bp) {
 
 const rollup = (item) => item.children ? item.children.reduce((s, c) => s + (c.badge || 0), 0) || (item.badge || 0) : (item.badge || 0);
 
+/* ---------- 메뉴 자식 렌더링 (Lnb·RailNav 공유 — 3레벨: 하위그룹/리프/직접리프, 카운터는 조기경보만) ---------- */
+function MenuChildren({ m, expanded, setExpanded, onNav }) {
+  const showCounts = m.id === "risk";
+  return (
+    <>{m.children.map((c, i) => {
+      if (c.sub && c.children) {
+        const subKey = m.id + ":s" + i;
+        const subOpen = expanded[subKey];
+        const subCount = c.children.reduce((s, x) => s + (x.badge || 0), 0) || (c.badge || 0);
+        return (
+          <div key={i} style={{ marginBottom: 1 }}><button
+              onClick={() => setExpanded((e) => ({ ...e, [subKey]: !e[subKey] }))}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6,
+                border: "none", font: "inherit", cursor: "pointer", borderRadius: 6, padding: "4px 10px",
+                background: "transparent", color: "var(--foreground)", fontSize: 13, fontWeight: 700,
+              }}><span
+                style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{c.label}</span><div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>{showCounts && subCount > 0 && <CountPill count={subCount} urgent={m.urgent} />}<Icon
+                  name="chevron-down"
+                  size={12}
+                  style={{ transform: subOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .15s", opacity: .5 }} /></div></button>{subOpen && <div style={{ paddingLeft: 14, marginBottom: 2 }}>{c.children.map((leaf, j) => <button
+                key={j}
+                onClick={() => leaf.path ? onNav(leaf.path) : m.path ? onNav(m.path) : undefined}
+                style={{
+                  width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+                  border: "none", font: "inherit", cursor: (leaf.path || m.path) ? "pointer" : "default",
+                  borderRadius: 6, padding: "5px 10px",
+                  background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 500,
+                }}><span
+                  style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{leaf.label}</span>{showCounts && leaf.badge > 0 && <CountPill count={leaf.badge} urgent={m.urgent} />}</button>)}</div>}</div>
+        );
+      }
+      return (
+        <button
+          key={i}
+          onClick={() => c.path ? onNav(c.path) : m.path ? onNav(m.path) : undefined}
+          style={{
+            width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+            border: "none", font: "inherit", cursor: "pointer", borderRadius: 7, padding: "6px 10px",
+            background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 500,
+          }}><span
+            style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{c.label}</span>{showCounts && c.badge > 0 && <CountPill count={c.badge} urgent={m.urgent} />}</button>
+      );
+    })}</>
+  );
+}
+
 /* ---------- LNB ---------- */
 function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
   const [expanded, setExpanded] = useState({ risk: true });
@@ -63,46 +110,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
                   style={{ position: "absolute", top: 6, right: 8, width: 7, height: 7, borderRadius: 99, background: m.urgent ? "var(--danger)" : "var(--primary)" }} />)}{open && hasKids && <Icon
                   name="chevron-down"
                   size={15}
-                  style={{ transform: isOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .18s", opacity: .6 }} />}</button>{open && hasKids && isOpen && <div style={{ margin: "2px 0 4px", paddingLeft: 16 }}>{m.children.map((c, i) => {
-                  if (c.sub && c.children) {
-                    const subKey = m.id + ":s" + i;
-                    const subOpen = expanded[subKey];
-                    const subCount = c.children.reduce((s, x) => s + (x.badge || 0), 0) || (c.badge || 0);
-                    return (
-                      <div key={i} style={{ marginBottom: 1 }}><button
-                          onClick={() => setExpanded((e) => ({ ...e, [subKey]: !e[subKey] }))}
-                          style={{
-                            width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6,
-                            border: "none", font: "inherit", cursor: "pointer", borderRadius: 6, padding: "4px 10px",
-                            background: "transparent", color: "var(--foreground)", fontSize: 13, fontWeight: 700,
-                          }}><span
-                            style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{c.label}</span><div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>{showCounts && subCount > 0 && <CountPill count={subCount} urgent={m.urgent} />}<Icon
-                              name="chevron-down"
-                              size={12}
-                              style={{ transform: subOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .15s", opacity: .5 }} /></div></button>{subOpen && <div style={{ paddingLeft: 14, marginBottom: 2 }}>{c.children.map((leaf, j) => <button
-                            key={j}
-                            onClick={() => leaf.path ? onNav(leaf.path) : m.path ? onNav(m.path) : undefined}
-                            style={{
-                              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-                              border: "none", font: "inherit", cursor: (leaf.path || m.path) ? "pointer" : "default",
-                              borderRadius: 6, padding: "5px 10px",
-                              background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 500,
-                            }}><span
-                              style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{leaf.label}</span>{showCounts && leaf.badge > 0 && <CountPill count={leaf.badge} urgent={m.urgent} />}</button>)}</div>}</div>
-                    );
-                  }
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => c.path ? onNav(c.path) : m.path ? onNav(m.path) : undefined}
-                      style={{
-                        width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-                        border: "none", font: "inherit", cursor: "pointer", borderRadius: 7, padding: "6px 10px",
-                        background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 500,
-                      }}><span
-                        style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{c.label}</span>{showCounts && c.badge > 0 && <CountPill count={c.badge} urgent={m.urgent} />}</button>
-                  );
-                })}</div>}</div>
+                  style={{ transform: isOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .18s", opacity: .6 }} />}</button>{open && hasKids && isOpen && <div style={{ margin: "2px 0 4px", paddingLeft: 16 }}><MenuChildren m={m} expanded={expanded} setExpanded={setExpanded} onNav={onNav} /></div>}</div>
           );
         })}</div><div
         style={{ borderTop: "1px solid var(--border)", padding: open ? "8px 10px" : "8px" }}><button
@@ -118,6 +126,71 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
         style={{ borderTop: "1px solid var(--border)", padding: open ? "10px 14px" : "10px 8px" }}>{open
           ? <div style={{ display: "flex", alignItems: "center", gap: 10 }}><ColorChip icon="shield-check" color="var(--success)" size={30} iconSize={16} /><div style={{ lineHeight: 1.3 }}><div style={{ fontSize: 11.5, fontWeight: 700 }}>보안 접속 정상</div><div className="t-caption" style={{ fontSize: 10.5 }}>내부망 · TLS 1.3</div></div></div>
           : <div style={{ display: "flex", justifyContent: "center" }}><Icon name="shield-check" size={18} style={{ color: "var(--success)" }} /></div>}</div></nav>
+  );
+}
+
+/* ---------- RailNav (ClickUp형 아이콘 레일 + 우측 슬라이드 패널) ---------- */
+function RailNav({ role, route, onNav, mobile, drawerOpen }) {
+  const menu = D.MENU.filter((m) => m.roles.includes(role));
+  const [active, setActive] = useState(null);
+  const [hover, setHover] = useState(null);
+  const [expanded, setExpanded] = useState({});
+  const activeM = menu.find((m) => m.id === active);
+  useEffect(() => { setActive(null); }, [route]);
+  if (mobile && !drawerOpen) return null;
+
+  const railBtn = (key, icon, label, isActive, onClick, count, urgent = false) => (
+    <button
+      key={key} onClick={onClick} aria-label={label} aria-current={isActive ? "page" : undefined}
+      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "var(--muted)"; const r = e.currentTarget.getBoundingClientRect(); setHover({ label, top: r.top + r.height / 2 }); }}
+      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; setHover(null); }}
+      style={{
+        position: "relative", width: 48, height: 48, borderRadius: 12, cursor: "pointer", border: "none", font: "inherit",
+        display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto",
+        background: isActive ? "color-mix(in srgb,var(--primary) 13%,transparent)" : "transparent",
+        color: isActive ? "var(--primary)" : "var(--foreground)", transition: "background .15s",
+      }}><Icon name={icon} size={21} stroke={isActive ? 2.3 : 2} />{count > 0 && <span
+        style={{ position: "absolute", top: 7, right: 8, width: 7, height: 7, borderRadius: 99, background: urgent ? "var(--danger)" : "var(--primary)" }} />}</button>
+  );
+
+  return (
+    <>{hover && !mobile && <div style={{
+        position: "fixed", left: 70, top: hover.top, transform: "translateY(-50%)", zIndex: 70, pointerEvents: "none",
+        background: "color-mix(in srgb,var(--foreground) 92%,transparent)", color: "var(--bg)",
+        fontSize: 12, fontWeight: 600, padding: "5px 10px", borderRadius: 8, whiteSpace: "nowrap",
+        boxShadow: "var(--shadow-lg)", animation: "dashFade .12s var(--ease) both",
+      }}>{hover.label}</div>}{activeM && <><div
+        onClick={() => setActive(null)}
+        style={{ position: "fixed", inset: 0, zIndex: 46 }} /><div
+        style={{
+          position: "fixed", left: 64, top: 58, bottom: 0, width: 264, zIndex: 47,
+          background: "var(--card)", borderRight: "1px solid var(--border)", boxShadow: "var(--shadow-lg)",
+          display: "flex", flexDirection: "column", animation: "railSlide .2s var(--ease) both",
+        }}><div style={{ display: "flex", alignItems: "center", gap: 9, padding: "16px 16px 14px", borderBottom: "1px solid var(--border)", flex: "0 0 auto" }}><ColorChip
+            icon={activeM.icon} color={activeM.urgent ? "var(--danger)" : "var(--primary)"} size={30} iconSize={16} /><span
+            style={{ fontSize: 14.5, fontWeight: 700 }}>{activeM.label}</span></div><div
+          style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: 10 }}>{activeM.path && <button
+            onClick={() => { onNav(activeM.path); setActive(null); }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 8, border: "none", font: "inherit", cursor: "pointer",
+              borderRadius: 8, padding: "8px 10px", background: "transparent", color: "var(--primary)", fontSize: 12.5, fontWeight: 700, marginBottom: 4,
+            }}><Icon name="arrow-right" size={14} />전체 보기</button>}<MenuChildren
+            m={activeM} expanded={expanded} setExpanded={setExpanded} onNav={(r) => { onNav(r); setActive(null); }} /></div></div></>}<nav
+      aria-label="주 메뉴"
+      aria-hidden={mobile && !drawerOpen ? true : undefined}
+      style={{
+        flex: "0 0 auto", position: mobile ? "fixed" : "sticky", left: mobile ? 0 : undefined, top: 58,
+        height: "calc(100vh - 58px)", width: 64, zIndex: 48,
+        background: "var(--card)", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column",
+      }}><div
+        style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "12px 8px", display: "flex", flexDirection: "column", gap: 4 }}>{menu.map((m) => railBtn(m.id, m.icon, m.label, m.path === route || active === m.id,
+          () => { if (m.children) setActive((a) => (a === m.id ? null : m.id)); else { onNav(m.path); setActive(null); } },
+          m.id === "risk" ? rollup(m) : 0, m.urgent))}</div><div
+        style={{ borderTop: "1px solid var(--border)", padding: "8px" }}>{railBtn("ds", "layers", "디자인 시스템", route === "designsystem", () => { onNav("designsystem"); setActive(null); }, 0)}</div><div
+        style={{ borderTop: "1px solid var(--border)", padding: "10px 8px", display: "flex", justifyContent: "center" }}><Icon
+          name="shield-check" size={18} style={{ color: "var(--success)" }} /></div></nav></>
   );
 }
 
@@ -283,13 +356,14 @@ function PageHeader({ crumbs, title, sub, actions }: { crumbs: string[]; title?:
 /* ---------- AppShell ---------- */
 function AppShell(props) {
   const { wide, onToggleWide } = props;
-  const { theme, onToggleTheme, role, onRole, route, onNav, lnbOpen, onToggleLnb, notifs, onReadAll, children } = props;
+  const { theme, onToggleTheme, role, onRole, route, onNav, lnbOpen, onToggleLnb, navStyle, notifs, onReadAll, children } = props;
   const [notifOpen, setNotifOpen] = useState(false);
   const mobile = useIsMobile(760);
   const [drawer, setDrawer] = useState(false);
   useEffect(() => { setDrawer(false); }, [route]);
   const handleMenu = () => (mobile ? setDrawer((d) => !d) : onToggleLnb());
   const navClose = (r) => { onNav(r); setDrawer(false); };
+  const rail = navStyle === "rail";
   return (
     <div
       style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}><Gnb
@@ -302,13 +376,9 @@ function AppShell(props) {
         onToggleWide={onToggleWide}
         notifs={notifs}
         onOpenNotif={() => setNotifOpen(true)}
-        onNav={navClose} /><div style={{ display: "flex", flex: 1, alignItems: "flex-start" }}><Lnb
-          open={mobile ? true : lnbOpen}
-          role={role}
-          route={route}
-          onNav={navClose}
-          mobile={mobile}
-          drawerOpen={drawer} /><main
+        onNav={navClose} /><div style={{ display: "flex", flex: 1, alignItems: "flex-start" }}>{rail
+          ? <RailNav role={role} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />
+          : <Lnb open={mobile ? true : lnbOpen} role={role} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />}<main
           className="dash-main"
           style={{ flex: 1, minWidth: 0, padding: "22px 26px 104px" }}>{children}</main></div>{mobile && <div
         className={"lnb-backdrop" + (drawer ? " show" : "")}
