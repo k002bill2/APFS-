@@ -23,6 +23,16 @@ function useIsMobile(bp) {
 
 const rollup = (item) => item.children ? item.children.reduce((s, c) => s + (c.badge || 0), 0) || (item.badge || 0) : (item.badge || 0);
 
+/* 모든 중분류 서브그룹(`m.id:s{i}`)을 펼친 상태로 초기화 — 서브메뉴 기본 오픈. 키 인덱스는 MenuChildren의 c.map((c,i)) 인덱스와 일치해야 한다. */
+const allSubGroupsExpanded = () => {
+  const map: Record<string, boolean> = {};
+  D.MENU.forEach((m) => {
+    if (!m.children) return;
+    m.children.forEach((c, i) => { if (c.sub && c.children) map[m.id + ":s" + i] = true; });
+  });
+  return map;
+};
+
 /* ---------- 메뉴 자식 렌더링 (Lnb·RailNav 공유 — 3레벨: 하위그룹/리프/직접리프, 카운터는 조기경보만) ---------- */
 function MenuChildren({ m, expanded, setExpanded, onNav }) {
   const showCounts = m.id === "risk";
@@ -72,7 +82,7 @@ function MenuChildren({ m, expanded, setExpanded, onNav }) {
 
 /* ---------- LNB ---------- */
 function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
-  const [expanded, setExpanded] = useState({ risk: true });
+  const [expanded, setExpanded] = useState(() => ({ ...allSubGroupsExpanded(), risk: true }));
   const menu = D.MENU.filter((m) => m.roles.includes(role));
   const posStyle: React.CSSProperties = mobile
     ? { position: "fixed", top: 58, left: 0, width: 270, height: "calc(100vh - 58px)", zIndex: 45,
@@ -134,7 +144,7 @@ function RailNav({ role, route, onNav, mobile, drawerOpen }) {
   const menu = D.MENU.filter((m) => m.roles.includes(role));
   const [active, setActive] = useState(null);
   const [hover, setHover] = useState(null);
-  const [expanded, setExpanded] = useState({});
+  const [expanded, setExpanded] = useState(allSubGroupsExpanded);
   const activeM = menu.find((m) => m.id === active);
   useEffect(() => { setActive(null); }, [route]);
   if (mobile && !drawerOpen) return null;
