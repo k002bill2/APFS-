@@ -1,14 +1,31 @@
 /* 디자인 시스템 미리보기 — 컬러 토큰 · 타이포 · 공통 컴포넌트 (라이트/다크 공용) */
 import React from 'react';
-import { Icon } from './icons';
 import { UI } from './components';
 import { Charts } from './charts';
+import { GalleryCharts } from './gallery_charts';
 import { APFS_DATA } from './data';
 
 const { ColorChip, StatusBadge, StatCard, ChartCard, Button, FilterChip, SegTabs, DeltaBadge, Card } = UI;
-const { Sparkline, Donut, LineTrend } = Charts;
+const { Sparkline, Donut, LineTrend, GroupedBars, ComposedBars, Gauge, HBars, Treemap } = Charts;
+const { ColumnTrack, ProgressRing, DualSeries, PieLabeled, UsageSegments } = GalleryCharts;
 const D = APFS_DATA;
 const { useState } = React;
+
+/* 차트 갤러리 타일 — 소문자 키커 + 제목 + 차트 */
+function ChartTile({ kicker, title, value, children }: { kicker?: string; title?: string; value?: React.ReactNode; children?: React.ReactNode }) {
+  return (
+    <Card style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
+      <div>
+        <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--caption)" }}>{kicker}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 5, minHeight: 18 }}>
+          <span style={{ fontSize: 15.5, fontWeight: 800, letterSpacing: "-.01em" }}>{title}</span>
+          {value && <span className="tabular" style={{ marginLeft: "auto", fontSize: 17, fontWeight: 800 }}>{value}</span>}
+        </div>
+      </div>
+      <div style={{ marginTop: "auto", minWidth: 0 }}>{children}</div>
+    </Card>
+  );
+}
 
 function Swatch({ name, varName, hex }: { name?: React.ReactNode; varName?: string; hex?: string }) {
   return (
@@ -35,6 +52,8 @@ function Section({ title, desc, children }: { title?: React.ReactNode; desc?: Re
 function DesignSystem() {
   const [chip, setChip] = useState("정상");
   const [seg, setSeg] = useState("월");
+  const indTotal = D.INDUSTRY.reduce((s: number, d: any) => s + d.value, 0);
+  const indPct = D.INDUSTRY.slice(0, 5).map((d: any) => ({ name: d.name, value: Math.round((d.value / indTotal) * 100), color: d.color }));
   return (
     <div style={{ maxWidth: 1180, animation: "dashFade .4s var(--ease) both" }}><div
         style={{ display: "flex", alignItems: "center", gap: 12, padding: "18px 22px", marginBottom: 24, borderRadius: 16, background: "linear-gradient(110deg,color-mix(in srgb,var(--primary) 14%,var(--card)),color-mix(in srgb,var(--brand-cyan) 10%,var(--card)))", border: "1px solid var(--border)" }}><ColorChip icon="layers" color="var(--primary)" size={46} iconSize={24} /><div><div className="t-h2" style={{ fontSize: 17 }}>디자인 시스템 미리보기</div><p
@@ -60,18 +79,81 @@ function DesignSystem() {
             title="출자·집행 추이"
             sub="ChartCard — 컬러칩 + 제목 + 기간 필터"
             icon="landmark"
-            accent="var(--chart-3)"
+            accent="var(--chart-1)"
             right={<SegTabs options={["월", "분기", "연"]} value={seg} onChange={setSeg} size="sm" />}
             minH={180}><LineTrend
               data={D.RISK_TREND}
               threshold={D.RISK_THRESHOLD}
               height={170}
-              color="var(--chart-3)" /></ChartCard><ChartCard
+              color="var(--chart-1)" /></ChartCard><ChartCard
             title="상태 분포"
             sub="Donut — 중앙 총건수, 조각 hover"
             icon="shield-check"
             accent="var(--primary)"
-            minH={180}><Donut data={D.STATUS_DONUT} height={180} centerLabel="총 자펀드" /></ChartCard></div></Section></div>
+            minH={180}><Donut data={D.STATUS_DONUT} height={180} centerLabel="총 자펀드" /></ChartCard></div></Section>
+
+      <Section title="4. 차트 스타일" desc="동일한 토큰·애니메이션을 공유하는 차트 컴포넌트 모음. 카드에 담아 그대로 사용합니다.">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(252px,1fr))", gap: 16 }}>
+          <ChartTile kicker="Column" title="지역별 출자·집행">
+            <GroupedBars data={D.REGION_BARS} height={156} />
+          </ChartTile>
+          <ChartTile kicker="Column" title="연도별 계획·실적">
+            <GroupedBars data={D.EXEC_Y} height={156} />
+          </ChartTile>
+          <ChartTile kicker="Bar" title="산업별 투자 비중">
+            <HBars data={indPct} height={156} unit="%" />
+          </ChartTile>
+          <ChartTile kicker="Area + Line" title="출자·집행 현황">
+            <ComposedBars data={D.EXEC_Q} height={168} />
+          </ChartTile>
+          <ChartTile kicker="Circular" title="자펀드 상태 분포">
+            <Donut data={D.STATUS_DONUT} height={168} centerLabel="총 자펀드" />
+          </ChartTile>
+          <ChartTile kicker="Gauge" title="모태펀드 집행률">
+            <Gauge value={78} label="집행률" height={156} color="var(--primary)" />
+          </ChartTile>
+          <ChartTile kicker="Line" title="리스크 지수 추이">
+            <LineTrend data={D.RISK_TREND} threshold={D.RISK_THRESHOLD} height={156} color="var(--chart-1)" />
+          </ChartTile>
+          <ChartTile kicker="Treemap" title="산업별 비중(면적)">
+            <Treemap data={D.INDUSTRY} height={168} />
+          </ChartTile>
+          <ChartTile kicker="Sparkline" title="월별 운용자산" value="23,840">
+            <Sparkline data={D.KPI[0].trend} height={60} color="var(--chart-1)" id="ds-spark" />
+          </ChartTile>
+          <ChartTile kicker="Column" title="월별 신규 등록">
+            <ColumnTrack data={[{ name: "1월", value: 32, label: "32건" }, { name: "2월", value: 48 }, { name: "3월", value: 27 }, { name: "4월", value: 41 }, { name: "5월", value: 14 }]} height={160} highlight={1} />
+          </ChartTile>
+          <ChartTile kicker="Column" title="요일별 처리량">
+            <ColumnTrack data={[{ name: "월", value: 22 }, { name: "화", value: 18 }, { name: "수", value: 25 }, { name: "목", value: 16 }, { name: "금", value: 38, label: "38건" }, { name: "토", value: 20 }, { name: "일", value: 12 }]} height={160} highlight={4} soft={true} />
+          </ChartTile>
+          <ChartTile kicker="Circular" title="총 운용 자펀드">
+            <ProgressRing value={237} max={300} height={168} top="총 자펀드" center="237" />
+          </ChartTile>
+          <ChartTile kicker="Gauge" title="목표 달성률">
+            <ProgressRing value={42} max={100} height={168} top="달성" center="42%" color="var(--chart-4)" />
+          </ChartTile>
+          <ChartTile kicker="Pie" title="자금 원천 비중">
+            <PieLabeled data={D.STATUS_DONUT} height={170} />
+          </ChartTile>
+          <ChartTile kicker="Area ·2계열" title="도메인별 추이">
+            <DualSeries a={[12, 20, 16, 28, 24, 33]} b={[8, 14, 19, 17, 26, 29]} labels={["1Q", "", "2Q", "", "3Q", "4Q"]} height={170} area={true} id="ds-da" />
+          </ChartTile>
+          <ChartTile kicker="Line ·2계열" title="계획 vs 실적 라인">
+            <DualSeries a={[22, 30, 26, 34, 31, 38]} b={[18, 24, 29, 27, 33, 30]} labels={["1Q", "", "2Q", "", "3Q", "4Q"]} height={170} area={false} id="ds-dl" />
+          </ChartTile>
+          <ChartTile kicker="Usage" title="예산 집행 현황" value="78%">
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
+              <UsageSegments filled={8} total={10} height={30} />
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span className="t-caption">집행 18,600억</span>
+                <span className="t-caption">잔여 5,240억</span>
+              </div>
+            </div>
+          </ChartTile>
+        </div>
+      </Section>
+    </div>
   );
 }
 

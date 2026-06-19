@@ -192,7 +192,10 @@ body{
 .t-caption{font-size:11.5px;line-height:1.4;font-weight:500;color:var(--caption);}
 
 @keyframes dashFade{from{transform:translateY(7px)}to{transform:none}}
-@keyframes railSlide{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+@keyframes dashPop{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes railSlide{from{transform:translateX(-12px)}to{transform:none}}
+@keyframes ncFade{from{opacity:0}to{opacity:1}}
+@keyframes ncPop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
 @keyframes drawline{from{stroke-dashoffset:var(--len);}to{stroke-dashoffset:0;}}
 @keyframes growbar{from{transform:scaleY(1);}to{transform:scaleY(1);}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;}}

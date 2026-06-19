@@ -204,34 +204,254 @@ function RailNav({ role, route, onNav, mobile, drawerOpen }) {
   );
 }
 
-/* ---------- Notifications drawer ---------- */
-function NotifDrawer({ open, onClose, notifs, onReadAll }) {
-  const { ColorChip } = UI;
-  const tones = { danger: "danger", warning: "warning", info: "info", success: "success" };
+/* ===== 알림 공통 헬퍼 ===== */
+const NC_TAGICON: Record<string, string> = {
+  결재: "file", 메모: "check-circle", ToDo: "check-circle", 긴급공지: "alert-triangle", 긴급: "alert-triangle",
+  공지: "bell", 환전: "landmark", 보완요청: "alert-triangle", 처리완료: "check-circle",
+  준법: "shield-check", 운영: "settings", 회의: "users", 출장: "arrow-right", 휴가: "calendar",
+};
+const NC_SUMICON: Record<string, string> = { 메모: "check-circle", 공지사항: "bell", 일정: "calendar", 시스템: "shield-check" };
+
+function ncRow(key: string, p: any) {
+  const { tone = "info", icon, tag, title, meta, date, dday } = p;
+  const ic = icon || (tag && NC_TAGICON[tag]) || "bell";
   return (
-    <><div
-        onClick={onClose}
-        style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,.42)", opacity: open ? 1 : 0,
-          pointerEvents: open ? "auto" : "none", transition: "opacity .25s", zIndex: 60,
-        }} /><aside
-        aria-label="알림센터"
-        style={{
-          position: "fixed", top: 0, right: 0, bottom: 0, width: 380, maxWidth: "92vw", background: "var(--card)",
-          boxShadow: "var(--shadow-lg)", borderLeft: "1px solid var(--border)", zIndex: 61,
-          transform: open ? "translateX(0)" : "translateX(100%)", transition: "transform .26s var(--ease)",
-          display: "flex", flexDirection: "column",
-        }}><header
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px", borderBottom: "1px solid var(--border)" }}><div style={{ display: "flex", alignItems: "center", gap: 9 }}><Icon name="bell" size={19} /><span style={{ fontSize: 15, fontWeight: 700 }}>알림센터</span><span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--danger)" }}>{notifs.filter((n) => !n.read).length + " 새 알림"}</span></div><IconBtn icon="x" onClick={onClose} label="닫기" size={34} /></header><div
-          style={{ padding: "10px 18px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}><span className="t-caption" style={{ fontSize: 14 }}>최근 7일</span><button
-            onClick={onReadAll}
-            style={{ border: "none", background: "transparent", color: "var(--accent)", fontSize: 14, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>모두 읽음</button></div><div style={{ flex: 1, overflowY: "auto", padding: 12 }}>{notifs.map((n) => <div
-            key={n.id}
-            style={{
-              display: "flex", gap: 11, padding: "12px 12px", borderRadius: 11, marginBottom: 4,
-              background: n.read ? "transparent" : "color-mix(in srgb,var(--primary) 5%,transparent)",
-            }}><ColorChip icon={n.icon} color={`var(--${tones[n.tone]})`} size={34} iconSize={17} /><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: n.read ? 500 : 700, lineHeight: 1.4 }}>{n.title}</div><div style={{ display: "flex", gap: 8, marginTop: 4, alignItems: "center" }}><StatusBadge tone={tones[n.tone]} label={n.cat} size="sm" /><span className="t-caption">{n.time}</span></div></div>{!n.read && <span
-              style={{ width: 7, height: 7, borderRadius: 99, background: "var(--danger)", flex: "0 0 auto", marginTop: 6 }} />}</div>)}</div></aside></>
+    <button key={key} style={{
+      display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 10, width: "100%",
+      textAlign: "left", border: "none", background: "color-mix(in srgb, var(--muted) 45%, var(--card))", font: "inherit", cursor: "pointer", marginBottom: 4,
+    }}>
+      <Icon name={ic} size={16} style={{ color: `var(--${tone})`, flex: "0 0 auto" }} />
+      {tag && <StatusBadge tone={tone} label={"　　"} size="sm" />}
+      <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600, color: "var(--foreground)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</span>
+      {meta && <span className="t-caption" style={{ whiteSpace: "nowrap", flex: "0 0 auto" }}>{meta}</span>}
+      {(date || dday) && <span style={{ whiteSpace: "nowrap", flex: "0 0 auto", fontSize: 11.5, fontWeight: dday ? 800 : 600, color: dday ? `var(--${tone})` : "var(--caption)" }}>{dday || date}</span>}
+    </button>
+  );
+}
+
+function ncMemoBody(withBar: boolean) {
+  const T = D.NOTIF_CENTER.todo;
+  const all = [...T.delayed, ...T.progress, ...T.upcoming];
+  return (
+    <div>
+      {withBar && <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        <input type="text" placeholder="검색어를 입력하세요" style={{ flex: 1, padding: "8px 12px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--muted)", font: "inherit", fontSize: 13, color: "var(--foreground)", outline: "none" }} />
+        <button style={{ padding: "8px 14px", borderRadius: 10, border: "none", background: "var(--primary)", color: "#fff", font: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>+ 등록</button>
+      </div>}
+      {all.map((t: any, i: number) => ncRow("mm" + i, { tone: "info", icon: "check-circle", title: t.title, meta: t.due ? "마감 " + t.due : (t.start ? "시작 " + t.start : "") }))}
+    </div>
+  );
+}
+
+function NcScheduleBody() {
+  const S = D.NOTIF_CENTER.schedule;
+  const rows = [...S.today.map((s: any) => ({ ...s, when: "오늘" })), ...S.week.map((s: any) => ({ ...s, when: "이번 주" }))];
+  const [sel, setSel] = useState<number | null>(null);
+  const YEAR = 2026, MONTH = 5, TODAY = 19;
+  const first = new Date(YEAR, MONTH, 1).getDay();
+  const daysIn = new Date(YEAR, MONTH + 1, 0).getDate();
+  const eventDays: Record<number, any[]> = {};
+  rows.forEach((r: any) => { if (r.day) (eventDays[r.day] = eventDays[r.day] || []).push(r); });
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < first; i++) cells.push(null);
+  for (let d = 1; d <= daysIn; d++) cells.push(d);
+  const dow = ["일", "월", "화", "수", "목", "금", "토"];
+  const visible = sel ? rows.filter((r: any) => r.day === sel) : rows;
+  return (
+    <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+      <div style={{ width: 250, flex: "0 0 auto", padding: "2px 2px 4px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 10 }}>
+          <Icon name="calendar" size={14} style={{ color: "var(--brand-blue)" }} />
+          <span style={{ fontSize: 13.5, fontWeight: 800, letterSpacing: "-.01em" }}>2026년 6월</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2 }}>
+          {dow.map((w, i) => <div key={"h" + i} style={{ textAlign: "center", fontSize: 10.5, fontWeight: 700, padding: "2px 0", color: i === 0 ? "var(--danger)" : i === 6 ? "var(--brand-blue)" : "var(--caption)" }}>{w}</div>)}
+          {cells.map((d, i) => {
+            if (d === null) return <div key={"e" + i} />;
+            const evs = eventDays[d];
+            const isSel = sel === d, isToday = d === TODAY;
+            const tone = evs ? evs[0].tone : null;
+            return (
+              <button key={"d" + i} onClick={() => evs && setSel(isSel ? null : d)} style={{
+                position: "relative", aspectRatio: "1", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                gap: 1, border: "none", borderRadius: 7, font: "inherit", cursor: evs ? "pointer" : "default",
+                background: isSel ? "var(--brand-blue)" : isToday ? "var(--muted)" : "transparent",
+                color: isSel ? "#fff" : "var(--foreground)", fontSize: 11.5, fontWeight: isToday || evs ? 700 : 500,
+              }}>
+                {String(d)}
+                {evs && <span style={{ width: 4, height: 4, borderRadius: 99, background: isSel ? "#fff" : `var(--${tone})` }} />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ flex: 1, minWidth: 0, borderLeft: "1px solid var(--border)", paddingLeft: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 6px 8px" }}>
+          <span style={{ fontSize: 13, fontWeight: 800, color: "var(--foreground)" }}>{sel ? "6월 " + sel + "일 일정" : "전체 일정"}</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)" }}>{visible.length}</span>
+          {sel && <button onClick={() => setSel(null)} style={{ marginLeft: "auto", border: "none", background: "transparent", color: "var(--brand-blue)", font: "inherit", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>전체 보기</button>}
+        </div>
+        {visible.map((s: any, i: number) => (
+          <button key={"sr" + i} onClick={() => s.day && setSel(s.day)} style={{
+            display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 10, width: "100%",
+            textAlign: "left", border: "none", font: "inherit", cursor: "pointer", marginBottom: 4,
+            background: s.day === sel ? "color-mix(in srgb,var(--brand-blue) 12%,var(--card))" : "color-mix(in srgb, var(--muted) 45%, var(--card))",
+          }}>
+            <Icon name={NC_TAGICON[s.tag] || "calendar"} size={16} style={{ color: `var(--${s.tone})`, flex: "0 0 auto" }} />
+            <StatusBadge tone={s.tone} label={"　　"} size="sm" />
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.title}</span>
+            <span className="t-caption" style={{ whiteSpace: "nowrap", flex: "0 0 auto" }}>{s.by + (s.time ? " · " + s.time : "")}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 범용 가운데 모달 ---------- */
+function CenterModal({ open, onClose, title, icon, width, children, footer }: {
+  open: boolean; onClose: () => void; title: string; icon?: string;
+  width?: number; children?: React.ReactNode; footer?: React.ReactNode[];
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [open, onClose]);
+  if (!open) return null;
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(15,19,16,.5)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", zIndex: 70, animation: "ncFade .18s var(--ease) both" }} />
+      <div role="dialog" aria-label={title} style={{ position: "fixed", inset: 0, zIndex: 71, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, pointerEvents: "none" }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ width: width || 560, maxWidth: "100%", maxHeight: "86vh", background: "var(--card)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-lg)", border: "1px solid var(--border)", display: "flex", flexDirection: "column", overflow: "hidden", pointerEvents: "auto", animation: "ncPop .2s var(--ease) both" }}>
+          <header style={{ display: "flex", alignItems: "center", gap: 9, padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
+            {icon && <Icon name={icon} size={18} style={{ color: "var(--brand-blue)" }} />}
+            <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: "-.01em" }}>{title}</span>
+            <div style={{ flex: 1 }} />
+            <IconBtn icon="x" onClick={onClose} label="닫기" size={34} />
+          </header>
+          <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px 18px" }}>{children}</div>
+          {footer && <footer style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: "14px 18px", borderTop: "1px solid var(--border)" }}>{footer}</footer>}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ---------- 알림센터 모달 (5-tab) ---------- */
+function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [tab, setTab] = useState("all");
+  const NC = D.NOTIF_CENTER;
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+  useEffect(() => { if (open) setTab("all"); }, [open]);
+  const memoCount = NC.todo.delayed.length + NC.todo.progress.length + NC.todo.upcoming.length;
+  const scCount = NC.schedule.today.length + NC.schedule.week.length;
+  const noCount = NC.notice.length;
+  const syCount = NC.system.length;
+  const total = memoCount + scCount + noCount + syCount;
+  const cap = (n: number) => (n > 99 ? "99+" : String(n));
+  const tabs = [
+    { id: "all", label: "전체" },
+    { id: "memo", label: "메모", count: memoCount },
+    { id: "notice", label: "공지사항", count: noCount },
+    { id: "schedule", label: "일정", count: scCount },
+    { id: "system", label: "시스템", count: syCount },
+  ];
+  function Body() {
+    if (tab === "all") {
+      const recent = [
+        { tone: "danger",  tag: "결재",     title: "물품구매 신청의 건",                      meta: "물품구매 · 김정원", date: "2026-06-15" },
+        { tone: "warning", tag: "메모",     title: "5월 결산 전표 검토·승인",                   meta: "마감 2026.06.21",   dday: "D-2" },
+        { tone: "danger",  tag: "긴급공지", title: "휴가 및 휴직 결재선 및 신청 가이드",        meta: "경영지원실",        date: "2026-06-15" },
+        { tone: "info",    tag: "환전",     title: "로고스벤처투자조합 1호 환율(1,200원) 확정", meta: "홍길동",            date: "2026-06-11" },
+        { tone: "warning", tag: "준법",     title: "투자전확인서류(IL0203) 제출 기한 임박",     meta: "IL0203",            date: "2026-06-15" },
+      ];
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div>
+            <div style={{ marginBottom: 4, fontSize: 12, fontWeight: 600, color: "var(--muted-foreground)" }}>최근 알림 · 3일 이내</div>
+            <div>{recent.map((r, i) => ncRow("rc" + i, r))}</div>
+          </div>
+        </div>
+      );
+    }
+    if (tab === "memo") return ncMemoBody(true);
+    if (tab === "notice") return <div>{NC.notice.map((n: any, i: number) => ncRow("no" + i, { tone: n.tone, tag: n.tag, title: n.title, meta: n.by, date: n.date }))}</div>;
+    if (tab === "schedule") return <NcScheduleBody />;
+    if (tab === "system") return <div>{NC.system.map((s: any, i: number) => ncRow("sy" + i, { tone: s.tone, tag: s.tag, title: s.title, meta: s.code, date: s.date }))}</div>;
+    return null;
+  }
+  if (!open) return null;
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(15,19,16,.5)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", zIndex: 70, animation: "ncFade .18s var(--ease) both" }} />
+      <div role="dialog" aria-label="알림센터" style={{ position: "fixed", inset: 0, zIndex: 71, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, pointerEvents: "none" }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ width: 1000, maxWidth: "100%", height: 680, maxHeight: "90vh", background: "var(--card)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-lg)", border: "1px solid var(--border)", display: "flex", flexDirection: "column", overflow: "hidden", pointerEvents: "auto", animation: "ncPop .2s var(--ease) both" }}>
+          <header style={{ display: "flex", alignItems: "center", gap: 9, padding: "18px 22px", borderBottom: "1px solid var(--border)" }}>
+            <Icon name="bell" size={18} style={{ color: "var(--brand-blue)" }} />
+            <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.01em" }}>알림센터</span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "var(--danger)", borderRadius: 99, padding: "2px 9px", minWidth: 22, textAlign: "center" }}>{cap(total)}</span>
+            <div style={{ flex: 1 }} />
+            <button onClick={onClose} style={{ border: "none", background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 600, fontFamily: "inherit", cursor: "pointer", padding: "6px 8px" }}>모두 읽음</button>
+            <IconBtn icon="x" onClick={onClose} label="닫기" size={36} />
+          </header>
+          <div style={{ display: "flex", gap: 2, padding: "0 14px", borderBottom: "1px solid var(--border)", overflowX: "auto" }}>
+            {tabs.map((t) => {
+              const on = tab === t.id;
+              return (
+                <button key={t.id} onClick={() => setTab(t.id)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "13px 16px", border: "none", background: "transparent", font: "inherit", cursor: "pointer", whiteSpace: "nowrap", position: "relative", color: on ? "var(--brand-blue)" : "var(--muted-foreground)", fontWeight: on ? 800 : 600, fontSize: 14, borderBottom: on ? "2px solid var(--brand-blue)" : "2px solid transparent", marginBottom: -1 }}>
+                  {t.label}
+                  {t.count ? <span style={{ fontSize: 11, fontWeight: 800, borderRadius: 99, padding: "1px 7px", background: on ? "var(--brand-blue)" : "var(--muted)", color: on ? "#fff" : "var(--muted-foreground)" }}>{cap(t.count)}</span> : null}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "18px 18px 22px" }}><Body /></div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ---------- 사용자 메뉴 ---------- */
+function UserMenu({ onUserModal }: { onUserModal: (id: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const items = [
+    { id: "memo", label: "메모", icon: "check-circle", danger: false },
+    { id: "schedule", label: "일정", icon: "calendar", danger: false },
+    { id: "logout", label: "로그아웃", icon: "external", danger: true },
+  ];
+  return (
+    <div style={{ position: "relative" }}>
+      <button onClick={() => setOpen((o) => !o)} aria-label="사용자 메뉴" style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", border: "none", background: "transparent", font: "inherit", padding: "2px 4px" }}>
+        <span style={{ width: 32, height: 32, borderRadius: 99, background: "var(--brand-gray)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon name="user" size={18} stroke={2.2} />
+        </span>
+        <span className="gnb-user" style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.2, textAlign: "left" }}>
+          <div>김정원</div><div className="t-caption" style={{ fontSize: 10.5 }}>투자운용본부</div>
+        </span>
+        <Icon name="chevron-down" size={14} style={{ opacity: .5, marginLeft: 2 }} />
+      </button>
+      {open && <>
+        <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+        <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, width: 200, zIndex: 41, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, boxShadow: "var(--shadow-lg)", padding: 6, animation: "dashFade .16s var(--ease) both" }}>
+          {items.map((it) => (
+            <React.Fragment key={it.id}>
+              {it.id === "logout" && <div style={{ height: 1, background: "var(--border)", margin: "6px 4px" }} />}
+              <button onClick={() => { setOpen(false); onUserModal(it.id); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", textAlign: "left", padding: "9px 10px", border: "none", background: "transparent", font: "inherit", cursor: "pointer", borderRadius: 8, color: it.danger ? "var(--danger)" : "var(--foreground)", fontSize: 13.5, fontWeight: 600 }}>
+                <Icon name={it.icon} size={16} />{it.label}
+              </button>
+            </React.Fragment>
+          ))}
+        </div>
+      </>}
+    </div>
   );
 }
 
@@ -301,7 +521,7 @@ function FavoritesFab({ onNav }) {
 
 /* ---------- GNB ---------- */
 
-function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWide, notifs, onOpenNotif, onNav }) {
+function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWide, notifs, onOpenNotif, onNav, onUserModal }) {
   const unread = notifs.filter((n) => !n.read).length;
   return (
     <header
@@ -334,13 +554,7 @@ function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWi
           icon={theme === "dark" ? "sun" : "moon"}
           onClick={onToggleTheme}
           label="라이트/다크"
-          size={38} /><IconBtn icon="bell" onClick={onOpenNotif} label="알림" badge={unread} size={38} /></div><button
-        style={{
-          display: "flex", alignItems: "center", gap: 8, cursor: "pointer", border: "none", background: "transparent", font: "inherit", padding: "2px 4px",
-        }}><span
-          style={{ width: 32, height: 32, borderRadius: 99, background: "var(--brand-gray)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="user" size={18} stroke={2.2} /></span><span
-          className="gnb-user"
-          style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.2, textAlign: "left" }}><div>김정원</div><div className="t-caption" style={{ fontSize: 10.5 }}>투자운용본부</div></span></button></header>
+          size={38} /><IconBtn icon="bell" onClick={onOpenNotif} label="알림" badge={unread} size={38} /></div><UserMenu onUserModal={onUserModal} /></header>
   );
 }
 
@@ -366,8 +580,9 @@ function PageHeader({ crumbs, title, sub, actions }: { crumbs: string[]; title?:
 /* ---------- AppShell ---------- */
 function AppShell(props) {
   const { wide, onToggleWide } = props;
-  const { theme, onToggleTheme, role, onRole, route, onNav, lnbOpen, onToggleLnb, navStyle, notifs, onReadAll, children } = props;
+  const { theme, onToggleTheme, role, onRole, route, onNav, lnbOpen, onToggleLnb, navStyle, notifs, children } = props;
   const [notifOpen, setNotifOpen] = useState(false);
+  const [userModal, setUserModal] = useState<string | null>(null);
   const mobile = useIsMobile(760);
   const [drawer, setDrawer] = useState(false);
   useEffect(() => { setDrawer(false); }, [route]);
@@ -386,17 +601,14 @@ function AppShell(props) {
         onToggleWide={onToggleWide}
         notifs={notifs}
         onOpenNotif={() => setNotifOpen(true)}
-        onNav={navClose} /><div style={{ display: "flex", flex: 1, alignItems: "flex-start" }}>{rail
+        onNav={navClose}
+        onUserModal={setUserModal} /><div style={{ display: "flex", flex: 1, alignItems: "flex-start" }}>{rail
           ? <RailNav role={role} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />
           : <Lnb open={mobile ? true : lnbOpen} role={role} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />}<main
           className="dash-main"
           style={{ flex: 1, minWidth: 0, padding: "22px 26px 104px" }}>{children}</main></div>{mobile && <div
         className={"lnb-backdrop" + (drawer ? " show" : "")}
-        onClick={() => setDrawer(false)} />}<FavoritesFab onNav={navClose} /><NotifDrawer
-        open={notifOpen}
-        onClose={() => setNotifOpen(false)}
-        notifs={notifs}
-        onReadAll={onReadAll} /></div>
+        onClick={() => setDrawer(false)} />}<FavoritesFab onNav={navClose} /><NotifCenter open={notifOpen} onClose={() => setNotifOpen(false)} /><CenterModal open={userModal === "memo"} onClose={() => setUserModal(null)} title="메모" icon="check-circle" width={620}>{ncMemoBody(true)}</CenterModal><CenterModal open={userModal === "schedule"} onClose={() => setUserModal(null)} title="일정" icon="calendar" width={880}><NcScheduleBody /></CenterModal><CenterModal open={userModal === "logout"} onClose={() => setUserModal(null)} title="로그아웃" icon="external" width={400} footer={[<button key="c" onClick={() => setUserModal(null)} style={{ padding: "9px 16px", borderRadius: 10, border: "1px solid var(--border-strong)", background: "var(--card)", font: "inherit", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>취소</button>, <button key="o" onClick={() => setUserModal(null)} style={{ padding: "9px 16px", borderRadius: 10, border: "none", background: "var(--brand-blue)", color: "#fff", font: "inherit", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>로그아웃</button>]}><div style={{ padding: "6px 4px", fontSize: 14, lineHeight: 1.6, color: "var(--foreground)" }}>정말 로그아웃 하시겠습니까?</div></CenterModal></div>
   );
 }
 
