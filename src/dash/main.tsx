@@ -10,7 +10,7 @@ import { APFS_DATA } from './data';
 const { useState } = React;
 const { StatCard, ChartCard, Card, Button, ColorChip, StatusBadge, DeltaBadge } = UI;
 const { Gauge, Sparkline, Donut } = Charts;
-const { ExecChart, StatusDonut, IndustryCard, ScheduleCard, MiniKpis, ShortcutGrid, RiskTrendCard, QuickTasksBar } = MainWidgets;
+const { ExecChart, StatusDonut, IndustryCard, ScheduleCard, MiniKpis, ShortcutGrid, RiskTrendCard, RegionBarCard, QuickTasksBar } = MainWidgets;
 const { PageHeader } = Shell;
 const D = APFS_DATA;
 
@@ -120,7 +120,7 @@ function StatusBar() {
   );
 }
 function VariantC({ s, onNav }) {
-  return <Stack gap={14}><StatusBar /><KpiRow min={190}>{D.KPI.map((k) => <StatCard key={k.id} kpi={k} onClick={() => {}} />)}</KpiRow><Grid gap={14}><div className="dcol-8"><Stack gap={14}><ExecChart {...s} /><Grid gap={14}><IndustryCard onNav={onNav} span={6} height={210} /><RiskTrendCard span={6} height={210} /></Grid></Stack></div><div className="dcol-4"><Stack gap={14}><StatusDonut {...s} onNav={onNav} height={176} /><ScheduleCard onNav={onNav} rows={4} /><MiniKpis vertical={true} /></Stack></div></Grid><div><div className="t-label" style={{ textTransform: "none", marginBottom: 10 }}>영역 바로가기</div><ShortcutGrid onNav={onNav} cols={5} /></div></Stack>;
+  return <Stack gap={14}><StatusBar /><KpiRow min={190}>{D.KPI.map((k) => <StatCard key={k.id} kpi={k} onClick={() => {}} />)}</KpiRow><Grid gap={14}><div className="dcol-8"><Stack gap={14}><ExecChart {...s} /><Grid gap={14}><IndustryCard onNav={onNav} span={6} height={210} /><RiskTrendCard span={6} height={210} /></Grid><RegionBarCard height={240} /></Stack></div><div className="dcol-4"><Stack gap={14}><StatusDonut {...s} onNav={onNav} height={176} /><ScheduleCard onNav={onNav} rows={4} /><MiniKpis vertical={true} /></Stack></div></Grid><div><div className="t-label" style={{ textTransform: "none", marginBottom: 10 }}>영역 바로가기</div><ShortcutGrid onNav={onNav} cols={5} /></div></Stack>;
 }
 
 /* ===== 래퍼 ===== */

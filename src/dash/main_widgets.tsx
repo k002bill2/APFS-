@@ -3,11 +3,12 @@ import React from 'react';
 import { Icon } from './icons';
 import { UI } from './components';
 import { Charts } from './charts';
-import { APFS_DATA } from './data';
+import { APFS_DATA, MenuStore, useMenuSel } from './data';
 
 const { ColorChip, StatusBadge, StatCard, ChartCard, Card, Button, FilterChip, SegTabs, CountPill } = UI;
-const { ComposedBars, Donut, Treemap, LineTrend, HBars, Gauge, Sparkline } = Charts;
+const { ComposedBars, GroupedBars, Donut, Treemap, LineTrend, HBars, Gauge, Sparkline } = Charts;
 const D = APFS_DATA;
+const ALLMENU = D.ALLMENU;
 
 const MoreBtn = () => <button
   aria-label="더보기"
@@ -173,34 +174,132 @@ function RiskTrendCard({ span, height = 200 }) {
   );
 }
 
-/* 퀵메뉴 — 자주 쓰는 업무 바로가기 (GNB 팝오버 → 메인 인라인 바) */
-function QuickTasksBar({ onNav }) {
+/* 메뉴 편집 모달 */
+function MenuPickerModal({ open, onClose, initialTab }: { open: boolean; onClose: () => void; initialTab?: string }) {
+  const tabs = [
+    { kind: "quick", label: "퀵메뉴", icon: "grid", def: D.DEFAULT_QUICK, max: 8 },
+    { kind: "fav", label: "즐겨찾기", icon: "star", def: D.DEFAULT_FAV, max: 6 },
+  ];
+  const [tab, setTab] = React.useState(initialTab || "quick");
+  React.useEffect(() => { if (open) setTab(initialTab || "quick"); }, [open, initialTab]);
+  const cur = tabs.find((t) => t.kind === tab)!;
+  const accent = cur.kind === "fav" ? "var(--warning)" : "var(--primary)";
+  const sel = useMenuSel(cur.kind, cur.def);
+  const selSet = new Set(sel);
+  const toggle = (key: string) => {
+    let next: string[];
+    if (selSet.has(key)) next = sel.filter((k) => k !== key);
+    else { if (sel.length >= cur.max) return; next = [...sel, key]; }
+    MenuStore.set(cur.kind, next);
+  };
+  const cats: any[] = [];
+  (ALLMENU || []).forEach((o: any) => {
+    let c = cats.find((x: any) => x.cat === o.cat);
+    if (!c) { c = { cat: o.cat, urgent: o.urgent, subs: [] }; cats.push(c); }
+    let s = c.subs.find((x: any) => x.sub === o.sub);
+    if (!s) { s = { sub: o.sub, items: [] }; c.subs.push(s); }
+    s.items.push(o);
+  });
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+  if (!open) return null;
   return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
-      background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14,
-      boxShadow: "var(--shadow-sm)", padding: "12px 16px", marginBottom: 18,
-    }}><div style={{ display: "flex", flexDirection: "column", gap: 1, paddingRight: 14, borderRight: "1px solid var(--border)", flex: "0 0 auto" }}><span
-        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700 }}><Icon name="grid" size={15} />퀵메뉴</span><span
-        className="t-caption" style={{ fontSize: 10.5 }}>자주 쓰는 업무</span></div><div
-      style={{ display: "flex", gap: 8, flexWrap: "wrap", flex: 1 }}>{D.QUICKMENU.map((q, i) => <button
-        key={i}
-        onClick={() => onNav(q.to)}
-        title={q.label}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "var(--card-raised)"; e.currentTarget.style.borderColor = "var(--border)"; }}
-        style={{
-          position: "relative", display: "flex", alignItems: "center", gap: 9, cursor: "pointer",
-          border: "1px solid var(--border)", background: "var(--card-raised)", borderRadius: 11, padding: "8px 14px",
-          font: "inherit", transition: "background .15s,border-color .15s",
-        }}><span
-          style={{ fontSize: 12.5, fontWeight: 600, color: q.urgent ? "var(--danger)" : "var(--foreground)" }}>{q.label}</span>{q.badge > 0 && <span
-          style={{
-            minWidth: 17, height: 17, padding: "0 5px", borderRadius: 99,
-            background: "var(--danger)", color: "#fff", fontSize: 10, fontWeight: 800,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>{q.badge > 99 ? "99+" : q.badge}</span>}</button>)}</div></div>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 120, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, animation: "dashFade .16s var(--ease) both" }}>
+      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" style={{ width: "min(960px,100%)", maxHeight: "84vh", display: "flex", flexDirection: "column", background: "var(--card)", border: "1px solid var(--border)", borderRadius: 20, boxShadow: "var(--shadow-lg)", overflow: "hidden", animation: "dashPop .2s var(--ease) both" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "20px 22px 14px" }}>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.01em" }}>메뉴 편집</div>
+            <div className="t-caption" style={{ marginTop: 3 }}>전체 메뉴에서 자주 쓰는 업무를 골라 바로가기를 구성하세요.</div>
+          </div>
+          <button onClick={onClose} aria-label="닫기" style={{ flex: "0 0 auto", border: "none", background: "var(--muted)", borderRadius: 9, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--muted-foreground)" }}><Icon name="x" size={17} /></button>
+        </div>
+        <div style={{ display: "flex", gap: 6, padding: "0 24px 12px", borderBottom: "1px solid var(--border)" }}>
+          {tabs.map((t) => {
+            const on = t.kind === tab;
+            const tac = t.kind === "fav" ? "var(--warning)" : "var(--primary)";
+            return <button key={t.kind} onClick={() => setTab(t.kind)} style={{ display: "inline-flex", alignItems: "center", gap: 7, border: "none", cursor: "pointer", font: "inherit", padding: "9px 14px", borderRadius: 10, background: on ? `color-mix(in srgb,${tac} 14%,var(--card))` : "transparent", color: on ? tac : "var(--caption)", fontSize: 13.5, fontWeight: 700, transition: "background .15s,color .15s" }}>
+              <Icon name={t.icon} size={15} />{t.label}
+            </button>;
+          })}
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "18px 24px 10px", columnWidth: 248, columnGap: 28 }}>
+          {cats.map((c: any) => <div key={c.cat} style={{ breakInside: "avoid", marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 9 }}>
+              <span style={{ width: 6, height: 6, borderRadius: 99, background: c.urgent ? "var(--danger)" : "var(--primary)", flex: "0 0 auto" }} />
+              <span style={{ fontSize: 13.5, fontWeight: 800, letterSpacing: "-.01em" }}>{c.cat}</span>
+            </div>
+            {c.subs.map((s: any) => <div key={s.sub} style={{ marginBottom: 11, paddingLeft: 13, borderLeft: "1px solid var(--border)" }}>
+              <div className="t-caption" style={{ fontWeight: 600, marginBottom: 7 }}>{s.sub}</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {s.items.map((o: any) => {
+                  const on = selSet.has(o.key);
+                  const full = !on && sel.length >= cur.max;
+                  return <button key={o.key} onClick={() => toggle(o.key)} disabled={full} title={full ? "최대 " + cur.max + "개까지 선택" : o.label} style={{ font: "inherit", cursor: full ? "not-allowed" : "pointer", opacity: full ? .4 : 1, display: "inline-flex", alignItems: "center", gap: 5, border: "1px solid " + (on ? "transparent" : "var(--border)"), background: on ? `color-mix(in srgb,${accent} 16%,var(--card))` : "transparent", color: on ? accent : "var(--muted-foreground)", fontSize: 12.5, fontWeight: on ? 700 : 500, borderRadius: 9, padding: "6px 11px", whiteSpace: "nowrap", transition: "background .15s,color .15s,border-color .15s" }}>
+                    {on && <Icon name={cur.kind === "fav" ? "star" : "check"} size={12} stroke={2.4} />}{o.label}
+                  </button>;
+                })}
+              </div>
+            </div>)}
+          </div>)}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 22px", borderTop: "1px solid var(--border)" }}>
+          <button onClick={() => MenuStore.set(cur.kind, cur.def)} style={{ border: "none", background: "transparent", cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600, color: "var(--caption)", padding: "8px 4px", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="settings" size={14} />기본값으로 초기화</button>
+          <Button variant="primary" size="md" onClick={onClose}>완료</Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
-export const MainWidgets = { ExecChart, StatusDonut, IndustryCard, ScheduleCard, MiniKpis, ShortcutGrid, ShortcutCard, RiskTrendCard, QuickTasksBar, Legend };
+/* 퀵메뉴 — 자주 쓰는 업무 바로가기 (GNB 팝오버 → 메인 인라인 바) */
+function QuickTasksBar({ onNav }: { onNav: (r: string) => void }) {
+  const [edit, setEdit] = React.useState(false);
+  const keys = useMenuSel("quick", D.DEFAULT_QUICK || []);
+  const items = MenuStore.resolve(keys);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, boxShadow: "var(--shadow-sm)", padding: "12px 16px", marginBottom: 18 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 1, paddingRight: 14, borderRight: "1px solid var(--border)", flex: "0 0 auto" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700 }}><Icon name="grid" size={15} />퀵메뉴</span>
+        <span className="t-caption" style={{ fontSize: 10.5 }}>자주 쓰는 업무</span>
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flex: 1 }}>
+        {items.length === 0
+          ? <span className="t-caption" style={{ alignSelf: "center" }}>오른쪽 설정에서 바로가기를 추가하세요.</span>
+          : items.map((q: any) => <button key={q.key} onClick={() => onNav(q.to)} title={q.label}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--card-raised)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+              style={{ position: "relative", display: "flex", alignItems: "center", gap: 7, cursor: "pointer", border: "1px solid var(--border)", background: "var(--card-raised)", borderRadius: 11, padding: "8px 14px", font: "inherit", transition: "background .15s,border-color .15s" }}>
+              <span style={{ fontSize: 12.5, fontWeight: 600, color: q.urgent ? "var(--danger)" : "var(--foreground)" }}>{q.label}</span>
+              {q.badge > 0 && <span style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 99, background: "var(--danger)", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{q.badge > 99 ? "99+" : q.badge}</span>}
+            </button>)
+        }
+      </div>
+      <button onClick={() => setEdit(true)} aria-label="퀵메뉴 편집" title="퀵메뉴 편집"
+        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "var(--foreground)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--caption)"; }}
+        style={{ flex: "0 0 auto", marginLeft: "auto", width: 38, height: 38, borderRadius: 10, border: "1px solid var(--border)", background: "transparent", color: "var(--caption)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background .15s,color .15s" }}>
+        <Icon name="settings" size={18} />
+      </button>
+      <MenuPickerModal open={edit} onClose={() => setEdit(false)} />
+    </div>
+  );
+}
+
+function RegionBarCard({ span, height = 240 }: { span?: number | string; height?: number }) {
+  return (
+    <ChartCard title="지역별 출자·집행" sub="계획 대비 실적" icon="chart-bar" accent="var(--chart-2)" span={span}
+      right={<><SegTabs options={["금액", "건수"]} value="금액" onChange={() => {}} size="sm" /><MoreBtn /></>}
+      footer={<div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <Legend color="var(--chart-grid)" label="계획" />
+        <Legend color="var(--chart-2)" label="실적" />
+      </div>}>
+      <GroupedBars data={D.REGION_BARS || []} height={height} />
+    </ChartCard>
+  );
+}
+
+export const MainWidgets = { ExecChart, StatusDonut, IndustryCard, ScheduleCard, MiniKpis, ShortcutGrid, ShortcutCard, RiskTrendCard, RegionBarCard, QuickTasksBar, MenuPickerModal, Legend };

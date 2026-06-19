@@ -1,4 +1,5 @@
 /* 한국어 더미 데이터 — 백엔드 없이 화면 완결. PRD 근거 위젯만. */
+import React from 'react';
 const spark = (arr) => arr;
 
 const KPI = [
@@ -338,5 +339,140 @@ const FAVORITES = [
   { label: "전문인력 확인서 출력", icon: "download", to: "accounting" },
 ];
 
+const REGION_BARS = [
+  { name:"수도권", plan:5200, actual:4760 },
+  { name:"강원", plan:1800, actual:1520 },
+  { name:"충청", plan:3900, actual:3610 },
+  { name:"전라", plan:4400, actual:4180 },
+  { name:"경상", plan:4100, actual:3720 },
+  { name:"제주", plan:1200, actual:1040 },
+];
+
+const NOTIF_CENTER = {
+  todo: {
+    delayed: [
+      { title:"2분기 운용현황 수탁보고 초안 작성", due:"2026.06.10", dday:"D+9" },
+      { title:"그린루트벤처스 실사 결과 정리", due:"2026.06.14", dday:"D+5" },
+    ],
+    progress: [
+      { title:"5월 결산 전표 검토·승인", due:"2026.06.21", dday:"D-2", near:true },
+      { title:"신규 자펀드 등록원부 반영 확인", due:"2026.07.02", dday:"D-13" },
+      { title:"포트폴리오 리밸런싱 검토", start:"2026.06.19", dday:"마감 미정" },
+    ],
+    upcoming: [
+      { title:"3분기 투자심의 자료 준비", start:"2026.06.30", dday:"D-11" },
+    ],
+  },
+  approval: [
+    { tag:"결재", tone:"danger",  title:"물품구매 신청의 건", form:"물품구매", by:"김정원", date:"2026-06-15" },
+    { tag:"합의", tone:"info",    title:"코어밸류파트너스 출자약정 변경", form:"계약변경", by:"이서준", date:"2026-06-14" },
+    { tag:"결재", tone:"danger",  title:"로고스벤처투자조합 1호 운용지시", form:"운용지시서", by:"홍길동", date:"2026-06-13" },
+    { tag:"반려", tone:"warning", title:"5월 출장 정산의 건", form:"일반기안서", by:"박도윤", date:"2026-06-11" },
+    { tag:"참조", tone:"info",    title:"휴가 및 휴직 신청 가이드 안내", form:"일반기안서", by:"홍길동", date:"2026-06-10" },
+    { tag:"의결", tone:"success", title:"㈜컬리 회수위원회 의견서", form:"회수위원회", by:"홍길동", date:"2026-06-09" },
+  ],
+  schedule: {
+    today: [
+      { tag:"회의", tone:"info",    title:"농협 운용현황 점검 회의", by:"김정원", time:"AM 09:00", day:19 },
+      { tag:"출장", tone:"warning", title:"부산 자펀드 운용사 실사", by:"이서준", time:"PM 02:00", day:19 },
+      { tag:"휴가", tone:"success", title:"연차", by:"박도윤", time:"", day:19 },
+    ],
+    week: [
+      { tag:"보고", tone:"danger", title:"수탁보고 — 2분기 운용현황 제출", by:"김정원", time:"AM 10:00", date:"06.20 금", day:20 },
+      { tag:"회의", tone:"info",   title:"3분기 투자심의위원회", by:"운용본부", time:"PM 03:00", date:"06.23 월", day:23 },
+      { tag:"휴가", tone:"success", title:"오전반차", by:"강현우", time:"", date:"06.24 화", day:24 },
+    ],
+  },
+  notice: [
+    { tag:"긴급공지", tone:"danger", title:"휴가 및 휴직 결재선 및 신청 가이드", by:"경영지원실", date:"2026-06-15" },
+    { tag:"긴급공지", tone:"danger", title:"창립기념일 휴무 안내", by:"경영지원실", date:"2026-06-12" },
+    { tag:"공지", tone:"info", title:"인사발령 공지", by:"인사팀", date:"2026-06-10" },
+    { tag:"공지", tone:"info", title:"증명서 발급 신청 안내", by:"인사팀", date:"2026-06-09" },
+    { tag:"공지", tone:"info", title:"투자관리시스템 정기점검 안내", by:"정보화팀", date:"2026-06-08" },
+  ],
+  bank: [
+    { tag:"보완요청", tone:"warning", title:"로고스벤처투자조합 1호 회수 1,000,000,000원 운용지시 보완 요청", fund:"로고스벤처투자조합 1호", by:"홍길동", date:"2026-06-15" },
+    { tag:"처리완료", tone:"success", title:"로고스벤처투자조합 1호 투자 1,000,000,000원 운용지시 처리 완료", fund:"로고스벤처투자조합 1호", by:"홍길동", date:"2026-06-13" },
+    { tag:"환전", tone:"info", title:"로고스벤처투자조합 1호 환율(1,200원) 확정", fund:"로고스벤처투자조합 1호", by:"홍길동", date:"2026-06-11" },
+  ],
+  system: [
+    { tag:"준법", tone:"danger",  title:"투자전확인서류(IL0203) 제출 기한 임박", code:"IL0203", date:"2026-06-15" },
+    { tag:"준법", tone:"warning", title:"개인투자행위제한 준수서약서 갱신 필요", code:"PG0357", date:"2026-06-12" },
+    { tag:"운영", tone:"info",    title:"이해충돌 체크리스트 담당자 지정 요청", code:"PG0356", date:"2026-06-11" },
+    { tag:"운영", tone:"info",    title:"오류보고 1건 담당자 미지정", code:"KiiPS", date:"2026-06-10" },
+    { tag:"준법", tone:"warning", title:"투자후확인서류(IL0121) 검토 대기", code:"IL0121", date:"2026-06-09" },
+  ],
+};
+
+const CAT_ICON: Record<string,string> = { "투자자산관리":"landmark", "조기경보":"shield-alert", "운용사 보고":"building", "회계 관리":"wallet", "부처보고":"file", "통계조회":"chart", "관리자":"settings" };
+const MENU_FULL = [
+  { cat:"투자자산관리", to:"performance", subs:[
+    { name:"모태/자펀드 관리", leaves:["출자 약정 관리","출자 집행","회수 관리"] },
+    { name:"사후관리",         leaves:["정기보고 점검","현장 실사","시정 조치"] },
+    { name:"투자기업 정보",     leaves:["기업 현황","재무제표 조회","투자 이력"] },
+  ]},
+  { cat:"조기경보", to:"risk", urgent:true, subs:[
+    { name:"리스크 모니터링", leaves:["지표 대시보드","알림 설정",{label:"경보 이력",badge:14}] },
+    { name:"가치평가 관리",   leaves:["평가 등록","평가 검토","평가 확정"] },
+  ]},
+  { cat:"운용사 보고", to:"gp-health", subs:[
+    { name:"운용기관 정보",  leaves:["등록 현황","인력 현황","변경 신청"] },
+    { name:"재무·조합 정보", leaves:["재무제표","조합 현황","출자자 명부"] },
+    { name:"자펀드 검증",    leaves:["결성 검증","운용 검증","청산 검증"] },
+  ]},
+  { cat:"회계 관리", to:"accounting", subs:[
+    { name:"자금관리",  leaves:["입출금 내역","자금 계획","이체 승인"] },
+    { name:"분개·전표", leaves:["전표 입력","전표 조회","분개 관리"] },
+    { name:"결산관리",  leaves:["월 결산","분기 결산","연 결산"] },
+  ]},
+  { cat:"부처보고", to:"gp-health", subs:[
+    { name:"등록원부 관리", leaves:["원부 등록","원부 변경","원부 조회"] },
+    { name:"수탁보고",      leaves:["정기 보고","수시 보고","보고 이력"] },
+  ]},
+  { cat:"통계조회", to:"performance", subs:[
+    { name:"투자 성과",   leaves:["포트폴리오 현황","수익률 분석","벤치마크 비교"] },
+    { name:"통계 리포트", leaves:["정형 보고서","맞춤 통계","데이터 다운로드"] },
+  ]},
+  { cat:"관리자", to:"main", subs:[
+    { name:"통합 모니터링", leaves:["시스템 현황","접속 로그","알림 관리"] },
+    { name:"권한 관리",     leaves:["사용자 관리","역할 관리","메뉴 권한"] },
+    { name:"시스템 관리",   leaves:["코드 관리","공통 설정","배치 관리"] },
+  ]},
+];
+const ALLMENU: any[] = [];
+MENU_FULL.forEach((c, ci) => c.subs.forEach((g, gi) => g.leaves.forEach((lf: any, li) => {
+  const o = typeof lf === "string" ? { label: lf } : lf;
+  ALLMENU.push({ key: "c" + ci + "-" + gi + "-" + li, label: o.label, to: c.to, icon: CAT_ICON[c.cat], cat: c.cat, sub: g.name, urgent: c.urgent || o.urgent, badge: o.badge });
+})));
+const DEFAULT_QUICK = ["c0-0-1", "c1-0-2", "c2-0-0", "c3-0-2", "c4-0-0", "c5-0-0"];
+const DEFAULT_FAV = ["c0-0-0", "c1-0-0", "c3-1-0"];
+
+export const MenuStore = {
+  _key: (kind: string) => "apfs.menu.v2." + kind,
+  get(kind: string) {
+    try { const v = JSON.parse(localStorage.getItem(this._key(kind)) || "null"); if (Array.isArray(v)) return v; } catch (e) {}
+    return null;
+  },
+  keysOr(kind: string, def: string[]) { return this.get(kind) || def; },
+  set(kind: string, keys: string[]) {
+    try { localStorage.setItem(this._key(kind), JSON.stringify(keys)); } catch (e) {}
+    window.dispatchEvent(new CustomEvent("apfs-menu-change", { detail: { kind } }));
+  },
+  resolve(keys: string[]) { return keys.map((k) => ALLMENU.find((o) => o.key === k)).filter(Boolean); },
+};
+
+export function useMenuSel(kind: string, def: string[]) {
+  const { useState: uS, useEffect: uE } = React;
+  const [keys, setKeys] = uS<string[]>(() => MenuStore.keysOr(kind, def));
+  uE(() => {
+    setKeys(MenuStore.keysOr(kind, def));
+    const f = (e: Event) => { const ce = e as CustomEvent; if (!ce.detail || ce.detail.kind === kind) setKeys(MenuStore.keysOr(kind, def)); };
+    window.addEventListener("apfs-menu-change", f);
+    return () => window.removeEventListener("apfs-menu-change", f);
+  }, [kind]);
+  return keys;
+}
+
 export const APFS_DATA = { KPI, EXEC_Q, EXEC_Y, STATUS_DONUT, INDUSTRY, SCHEDULE, MINI, SHORTCUTS,
-  RISK_TREND, RISK_THRESHOLD, NOTIFS, ROLES, MENU, PORTFOLIO, QUICKMENU, FAVORITES };
+  RISK_TREND, RISK_THRESHOLD, REGION_BARS, NOTIFS, NOTIF_CENTER, ROLES, MENU, PORTFOLIO, QUICKMENU, FAVORITES,
+  ALLMENU, DEFAULT_QUICK, DEFAULT_FAV };

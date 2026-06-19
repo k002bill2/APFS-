@@ -390,4 +390,19 @@ function Gauge({ value, max = 100, label, height = 150, color = "var(--primary)"
   );
 }
 
-export const Charts = { Sparkline, Donut, ComposedBars, LineTrend, Treemap, HBars, Gauge, useMeasure, fmtEok };
+/* ===================== GroupedBars (세로 막대 — 계획 vs 실적) ===================== */
+function GroupedBars({ data, height = 240 }: { data: any[]; height?: number }) {
+  const [ref, W] = useMeasure();
+  const [hi, setHi] = useState(null);
+  const m = { t: 16, r: 12, b: 28, l: 44 };
+  const iw = (W || 600) - m.l - m.r, ih = height - m.t - m.b;
+  const maxAmt = niceMax(Math.max(...data.map((d) => Math.max(d.plan, d.actual))));
+  const band = iw / data.length, bw = Math.min(18, band / 3.2);
+  const yAmt = (v) => m.t + ih - (v / maxAmt) * ih;
+  const ticks = [0, .25, .5, .75, 1].map((t) => t * maxAmt);
+  return (
+    <div ref={ref} style={{ position: "relative", width: "100%", height }}>{W > 0 && <svg width={W} height={height}>{ticks.map((t, i) => <g key={i}><line x1={m.l} x2={m.l + iw} y1={yAmt(t)} y2={yAmt(t)} stroke="var(--chart-grid)" strokeDasharray="3 3" /><text x={m.l - 8} y={yAmt(t) + 4} textAnchor="end" style={{ fontSize: 10.5, fill: "var(--caption)" }} className="tabular">{t.toLocaleString()}</text></g>)}{data.map((d, i) => { const x = m.l + band * i + band / 2; const active = hi === i; return <g key={i} onMouseEnter={() => setHi(i)} onMouseLeave={() => setHi(null)}><rect x={m.l + band * i} y={m.t} width={band} height={ih} fill={active ? "var(--muted)" : "transparent"} opacity={.6} /><rect x={x - bw - 2} y={yAmt(d.plan)} width={bw} height={ih - (yAmt(d.plan) - m.t)} rx={5} fill="var(--chart-grid)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + "ms" }} /><rect x={x + 2} y={yAmt(d.actual)} width={bw} height={ih - (yAmt(d.actual) - m.t)} rx={5} fill="var(--chart-2)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + 80 + "ms" }} /><text x={x} y={m.t + ih + 18} textAnchor="middle" style={{ fontSize: 11.5, fill: "var(--muted-foreground)", fontWeight: 600 }}>{d.name}</text></g>; })}</svg>}{hi !== null && <Tip x={m.l + band * hi + band / 2} y={yAmt(Math.max(data[hi].plan, data[hi].actual))} show={true}><div>{data[hi].name}</div><div style={{ color: "color-mix(in srgb,var(--bg) 70%,var(--chart-2))" }}>실적 {fmtEok(data[hi].actual)}억</div></Tip>}</div>
+  );
+}
+
+export const Charts = { Sparkline, Donut, ComposedBars, GroupedBars, LineTrend, Treemap, HBars, Gauge, useMeasure, fmtEok };
