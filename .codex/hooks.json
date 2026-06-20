@@ -1,0 +1,24 @@
+{
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": {
+        "tool_name": "functions.apply_patch"
+      },
+      "handler": {
+        "type": "command",
+        "command": "scripts/codex-guard.sh"
+      }
+    },
+    {
+      "event": "PreToolUse",
+      "matcher": {
+        "tool_name": "functions.exec_command"
+      },
+      "handler": {
+        "type": "command",
+        "command": "scripts/codex-guard.sh"
+      }
+    }
+  ]
+}
