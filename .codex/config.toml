@@ -1,0 +1,13 @@
+# Project-local Codex harness configuration.
+#
+# This file documents the intended repo-local harness. User-level Codex
+# configuration still controls model, approval, sandbox, and enabled MCP servers.
+
+[features]
+codex_hooks = true
+
+[apfs_harness]
+canonical_source = "src/"
+product_source_of_truth = "CLAUDE.md"
+required_build = "npm run build"
+legacy_bundle_glob = "농식품모태펀드 대시보드*.html"

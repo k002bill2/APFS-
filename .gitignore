@@ -1,2 +1,5 @@
 node_modules/
 dist/
+
+# transient design-import scratch (claude.ai/design sync)
+.design-import/

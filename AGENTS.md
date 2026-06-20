@@ -1,27 +1,54 @@
 # AGENTS.md
 
-이 파일은 이 저장소에서 작업할 때 Codex(및 `AGENTS.md` 규약을 읽는 도구)에게 주는 안내입니다.
+이 파일은 이 저장소에서 Codex(및 `AGENTS.md` 규약을 읽는 도구)가 따라야 하는 작업 하네스입니다.
 
-## 단일 정본: `CLAUDE.md`
+## 단일 정본
 
-이 저장소의 **제품/번들 규약은 `CLAUDE.md`를 단일 정본(single source of truth)으로 따릅니다.** 중복 유지로 인한 문서 드리프트를 막기 위해, 제품 관련 내용은 이 파일에 복제하지 않고 `CLAUDE.md`를 참조합니다.
+제품/업무/번들 규약은 `CLAUDE.md`가 단일 정본입니다. 이 파일은 제품 사실을 복제하지 않고, Codex가 어떤 순서와 검증 기준으로 작업해야 하는지만 고정합니다.
 
-작업 전 `CLAUDE.md`의 다음 섹션을 반드시 읽으세요(제품 사실은 도구와 무관하게 동일):
+작업 전 `CLAUDE.md`의 다음 섹션을 읽으세요.
 
-- **프로젝트 개요 / 파일 구조** — 무엇이며 어디에 무엇이 있는지
-- **번들 아키텍처** — 편집 전 필수 (omelette 번들: loader + manifest + ext_resources + template)
-- **임베디드 모듈 맵** — `window.*` 노출 패턴과 모듈 역할
-- **실행 방법 / 편집 시 주의사항**
-- **디자인 토큰·브랜드 / 도메인 컨텍스트**
+- 프로젝트 개요 / 파일 구조
+- 모듈 아키텍처
+- 실행 방법
+- 편집 시
+- 디자인 토큰 / 브랜드
+- 도메인 컨텍스트
 
-## ⚠️ 가장 중요한 주의 (한 줄 요약)
+## 현재 정본 구현
 
-정본 산출물은 루트 **`농식품모태펀드 대시보드.html`**(자가완결 오프라인 단일 파일)이고, 사람이 고치는 **편집용 소스는 `src/`** 입니다. 번들 HTML은 자산이 gzip+base64로 인코딩돼 **직접 텍스트 편집이 사실상 불가**하므로, 의미 있는 변경은 **`src/`에서 수정한 뒤 번들로 다시 내보내** 정본을 갱신합니다. (상세 절차·디코드 레시피는 `CLAUDE.md` 「편집 시 주의사항」 참조.)
+- 정본 편집 표면은 `src/` 아래 Vite + React 18 + TypeScript 소스입니다.
+- 배포 산출물은 `npm run build`로 생성되는 `dist/`입니다.
+- 루트의 `농식품모태펀드 대시보드*.html` 파일은 Vite 전환 전 레거시 오프라인 번들입니다. 사용자가 명시적으로 요청하지 않는 한 직접 편집하지 마세요.
 
-## Claude Code 전용 — Codex 해당 없음
+## Codex 작업 규칙
 
-`CLAUDE.md` 후반의 **「Claude Code 통합 시스템(Parallel Agents + Skills + Dev Docs)」** 섹션과 `.claude/`(agents·hooks·commands·skills)·`dev/`·Workflow 도구는 **Claude Code 전용 도구 설정**입니다. Codex 작업에는 해당이 없으니 무시하세요. 단, 그 섹션이 인용하는 **제품 사실**(번들/모듈 구조 등)은 위 공유 섹션과 동일합니다.
+- 변경 전 실제 파일과 현재 Git 상태를 확인합니다.
+- 사용자가 요청한 범위에 직접 필요한 파일만 수정합니다.
+- 기존 사용자 변경을 되돌리지 않습니다.
+- UI 변경은 `tokens.css`, `tweaks.css`, 공통 컴포넌트, 기존 Tailwind 유틸 패턴을 우선 사용합니다.
+- 메뉴/라우트 변경은 `src/dash/data.ts`의 `APFS_DATA.MENU`와 `src/dash/app.tsx` 라우트 분기를 함께 검토합니다.
+- 더미 데이터는 백엔드/API가 아니라 `src/dash/data.ts`의 `APFS_DATA`에서 관리합니다.
 
----
+## 검증 기준
 
-> 유지보수 메모: 제품 규약을 바꿀 때는 **`CLAUDE.md` 한 곳만** 수정하면 됩니다. 이 파일은 포인터이므로 동기화가 따로 필요 없습니다.
+기본 검증:
+
+```bash
+npm run build
+```
+
+참고:
+
+- `tsc --noEmit`은 현재 Phase 0 미타입 코드 때문에 알려진 타입 오류가 있을 수 있습니다.
+- 빌드 확인 후 `git status --short --branch`로 수정 범위와 사전 존재 변경을 구분합니다.
+
+## 하네스 자산
+
+- `.agents/skills/apfs-dashboard-workflow/` — APFS 대시보드 UI/라우트/데이터 변경 workflow.
+- `.codex/hooks.json` + `scripts/codex-guard.sh` — 레거시 번들 직접 편집 같은 고위험 작업을 막는 Codex hook 설정.
+- `docs/codex-harness.md` — 이 저장소에 적용된 Codex 하네스 레이어 설명.
+
+## Claude Code 전용
+
+`CLAUDE.md` 후반의 Claude Code 통합 시스템, `.claude/`, `dev/`, Workflow 도구 설명은 Claude Code 전용입니다. Codex 작업에는 직접 적용하지 않습니다. 단, 그 섹션이 인용하는 제품 사실이 앞쪽 공유 섹션과 일치하는 경우 제품 이해 자료로만 참고할 수 있습니다.
