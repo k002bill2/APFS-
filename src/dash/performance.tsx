@@ -5,6 +5,7 @@ import { Icon } from './icons';
 import { UI } from './components';
 import { Shell } from './shell';
 import { APFS_DATA } from './data';
+import { mn, MT } from './mask';
 
 const { useState, useEffect } = React;
 const { Button, StatusBadge, FilterChip, SegTabs, IconBtn, ColorChip } = UI;
@@ -33,9 +34,9 @@ function BarSpark({ data, color = "var(--chart-1)", up = true }) {
 function StatPill({ icon, label, value, tone }: { icon?: string; label?: React.ReactNode; value?: React.ReactNode; tone?: string }) {
   return (
     <div
-      className="flex items-center gap-2.5 rounded-card border border-border bg-card px-3.5 py-2 shadow-sm"><ColorChip icon={icon} color={tone || "var(--primary)"} size={30} iconSize={16} /><div className="leading-tight"><div className="t-caption text-[11px]">{label}</div><div
+      className="flex items-center gap-2.5 rounded-card border border-border bg-card px-3.5 py-2 shadow-sm"><ColorChip icon={icon} color={tone || "var(--primary)"} size={30} iconSize={16} /><div className="leading-tight"><div className="t-caption text-[11px]"><MT>{label}</MT></div><div
           className="text-[15px] font-bold tabular"
-          style={tone ? { color: tone } : undefined}>{value}</div></div></div>
+          style={tone ? { color: tone } : undefined}>{mn(value)}</div></div></div>
   );
 }
 
@@ -163,7 +164,7 @@ function Performance({ onNav }) {
               onClick={() => onNav("main")}>메인으로</Button><Button variant="primary" size="sm" leadingIcon="download">리포트</Button></>} /><section
           className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden mb-4"><div
             className="flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 pt-5 pb-4"><div className="flex items-center gap-2.5"><h2 className="text-[19px] font-bold tracking-[-.02em]">투자포트폴리오</h2><span
-                className="inline-flex items-center gap-1 text-caption text-[12.5px] font-semibold"><Icon name="check-circle" size={14} style={{ color: "var(--warning)" }} />120</span></div><div className="flex items-center gap-2.5"><StatPill icon="trending" label="일일 수익률" value="+12.4%" tone="var(--success)" /><StatPill icon="wallet" label="순자산" value="₩4.2조" /></div></div><div
+                className="inline-flex items-center gap-1 text-caption text-[12.5px] font-semibold"><Icon name="check-circle" size={14} style={{ color: "var(--warning)" }} />{mn("120")}</span></div><div className="flex items-center gap-2.5"><StatPill icon="trending" label="일일 수익률" value="+12.4%" tone="var(--success)" /><StatPill icon="wallet" label="순자산" value="₩4.2조" /></div></div><div
             className="flex items-center gap-2 flex-wrap px-5 sm:px-6 py-3 border-t border-border"><IconBtn icon="filter" label="필터" size={34} />{chips.length
               ? chips.map((c) => <FilterChip key={c.key} active={true} onClick={() => removeChip(c.key)}><span>{c.label}</span><Icon name="x" size={13} /></FilterChip>)
               : <span className="text-[12.5px]" style={{ color: "var(--caption)" }}>적용된 필터 없음</span>}<div className="flex-1" /><Button
@@ -181,22 +182,22 @@ function Performance({ onNav }) {
                   onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><td className="px-4 pl-5 sm:pl-6 py-3.5"><div className="flex items-center gap-3"><span
                         className="inline-flex items-center justify-center w-9 h-9 rounded-[9px] text-white text-[12px] font-bold shrink-0"
-                        style={{ background: r.codeColor }}>{r.code}</span><div className="min-w-0"><div
+                        style={{ background: r.codeColor }}><MT>{r.code}</MT></span><div className="min-w-0"><div
                           className="text-[14.5px] font-bold leading-tight"
-                          style={{ color: "var(--foreground)" }}>{r.name}</div><div className="t-caption mt-0.5">{r.meta}</div></div></div></td><td
+                          style={{ color: "var(--foreground)" }}><MT>{r.name}</MT></div><div className="t-caption mt-0.5"><MT>{r.meta}</MT></div></div></div></td><td
                     className="px-4 py-3.5 text-right tabular text-[14.5px] font-semibold whitespace-nowrap"
-                    style={{ color: "var(--foreground)" }}>{r.value}</td><td
+                    style={{ color: "var(--foreground)" }}>{mn(r.value)}</td><td
                     className="px-4 py-3.5 text-right tabular text-[14px] font-bold whitespace-nowrap"
-                    style={{ color: changeColor(r.change) }}>{fmtChange(r.change)}</td><td className="px-4 py-3.5"><span
+                    style={{ color: changeColor(r.change) }}>{mn(fmtChange(r.change))}</td><td className="px-4 py-3.5"><span
                       className="inline-flex items-center rounded-full px-2.5 py-1 text-[10.5px] font-bold tracking-wide"
                       style={{
                         background: `color-mix(in srgb,var(--${r.riskTone}) 14%,transparent)`,
                         color: `var(--${r.riskTone})`,
-                      }}>{r.risk}</span></td><td className="px-4 py-3.5"><BarSpark data={r.hist} color={r.codeColor} up={r.change >= 0} /></td><td className="px-4 pr-5 sm:pr-6 py-3.5 text-right"><button
+                      }}><MT>{r.risk}</MT></span></td><td className="px-4 py-3.5"><BarSpark data={r.hist} color={r.codeColor} up={r.change >= 0} /></td><td className="px-4 pr-5 sm:pr-6 py-3.5 text-right"><button
                       aria-label="편집"
                       className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                       style={{ border: "none", background: "transparent" }}><Icon name="file" size={18} /></button></td></tr>)}</tbody></table></div><div
-            className="flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 py-4 border-t border-border"><span className="t-caption">총 1,208개 중 <b style={{ color: "var(--foreground)" }}>{rows.length + "개"}</b>{" "}항목 표시 중</span><div className="flex items-center gap-2"><button
+            className="flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 py-4 border-t border-border"><span className="t-caption">총 {mn("1,208")}개 중 <b style={{ color: "var(--foreground)" }}>{mn(rows.length + "개")}</b>{" "}항목 표시 중</span><div className="flex items-center gap-2"><button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground cursor-pointer"
                 style={{ border: "1px solid var(--border)", background: "var(--card)" }}><Icon name="chevron-left" size={16} /></button>{[1, 2, 3].map((n) => <button
@@ -216,13 +217,13 @@ function Performance({ onNav }) {
             className="rounded-card-lg border border-border p-6"
             style={{ background: "color-mix(in srgb,var(--muted) 50%,var(--card))" }}><h3 className="text-[17px] font-bold mb-3">분기별 전망</h3><p
               className="t-body text-[13.5px] leading-relaxed"
-              style={{ color: "var(--muted-foreground)", maxWidth: 540 }}>재무 모델링에 따르면 농식품 정책펀드 포트폴리오는 강세 추세를 보일 것으로 예측됩니다. 다음 회계연도에는 스마트팜·푸드테크 등 신성장 분야로의 다변화를 권장합니다.</p><div className="flex items-end gap-10 mt-6"><div><div className="t-caption mb-1">신뢰 지수</div><div
+              style={{ color: "var(--muted-foreground)", maxWidth: 540 }}>재무 모델링에 따르면 농식품 정책펀드 포트폴리오는 강세 추세를 보일 것으로 예측됩니다. 다음 회계연도에는 스마트팜·푸드테크 등 신성장 분야로의 다변화를 권장합니다.</p><div className="flex items-end gap-10 mt-6"><div><div className="t-caption mb-1"><MT>신뢰 지수</MT></div><div
                   className="text-[30px] font-extrabold tabular"
-                  style={{ color: "var(--accent)" }}>88%</div></div><div><div className="t-caption mb-1">변동성 지수</div><div
+                  style={{ color: "var(--accent)" }}>{mn("88%")}</div></div><div><div className="t-caption mb-1"><MT>변동성 지수</MT></div><div
                   className="text-[30px] font-extrabold"
-                  style={{ color: "var(--success)" }}>낮음</div></div></div></div><div
+                  style={{ color: "var(--success)" }}><MT>낮음</MT></div></div></div></div><div
             className="rounded-card-lg p-6 text-white relative overflow-hidden"
-            style={{ background: "#439E00", boxShadow: "var(--shadow-md)" }}><div className="relative"><h3 className="text-[17px] font-bold mb-1.5">자본 준비금</h3><p className="text-[13px] mb-1" style={{ opacity: .85 }}>출자 가능 미집행 자금 현황입니다.</p><div className="text-[34px] font-extrabold tabular mb-5 leading-tight">₩1,402,990<span className="text-[16px] font-semibold ml-1" style={{ opacity: .8 }}>백만</span></div><button
+            style={{ background: "#439E00", boxShadow: "var(--shadow-md)" }}><div className="relative"><h3 className="text-[17px] font-bold mb-1.5">자본 준비금</h3><p className="text-[13px] mb-1" style={{ opacity: .85 }}>출자 가능 미집행 자금 현황입니다.</p><div className="text-[34px] font-extrabold tabular mb-5 leading-tight">{mn("₩1,402,990")}<span className="text-[16px] font-semibold ml-1" style={{ opacity: .8 }}>백만</span></div><button
                 className="w-full inline-flex items-center justify-center gap-2 rounded-[10px] py-3 text-[13.5px] font-bold cursor-pointer transition-colors"
                 style={{ background: "rgba(255,255,255,.18)", color: "#fff", border: "1px solid rgba(255,255,255,.3)" }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,.28)")}

@@ -6,6 +6,7 @@ import { Shell } from './shell';
 import { UI } from './components';
 import { Charts } from './charts';
 import { APFS_DATA } from './data';
+import { mn, MT } from './mask';
 
 const { useState, useMemo } = React;
 const { PageHeader } = Shell;
@@ -205,9 +206,9 @@ const TYPES = [
 function RiskKpiCard({ kpi }) {
   return (
     <div
-      className="rounded-card border border-border bg-card shadow-sm px-[18px] py-[14px] flex flex-col gap-2 min-w-0"><div className="flex items-center justify-between gap-2"><div className="flex items-center gap-2 min-w-0"><ColorChip icon={kpi.icon} color={kpi.accent} size={32} iconSize={17} /><span className="t-label truncate">{kpi.label}</span></div><div className="shrink-0 w-[70px]"><Sparkline data={kpi.trend} color={kpi.accent} id={kpi.id} height={32} /></div></div><div className="flex items-baseline gap-1.5"><span
+      className="rounded-card border border-border bg-card shadow-sm px-[18px] py-[14px] flex flex-col gap-2 min-w-0"><div className="flex items-center justify-between gap-2"><div className="flex items-center gap-2 min-w-0"><ColorChip icon={kpi.icon} color={kpi.accent} size={32} iconSize={17} /><span className="t-label truncate"><MT>{kpi.label}</MT></span></div><div className="shrink-0 w-[70px]"><Sparkline data={kpi.trend} color={kpi.accent} id={kpi.id} height={32} /></div></div><div className="flex items-baseline gap-1.5"><span
           className="t-display tabular"
-          style={{ fontSize: 26, letterSpacing: "-.01em", color: kpi.accent }}>{kpi.value}</span><span
+          style={{ fontSize: 26, letterSpacing: "-.01em", color: kpi.accent }}>{mn(kpi.value)}</span><span
           className="text-[12.5px] font-semibold"
           style={{ color: "var(--muted-foreground)" }}>{kpi.unit}</span></div><DeltaBadge value={kpi.delta} label={kpi.deltaLabel} invert={kpi.invert} /></div>
   );
@@ -309,11 +310,11 @@ function Risk({ onNav }) {
           height={220}
           color="var(--danger)" /></ChartCard><div
         className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden mt-4 mb-4"><div
-          className="flex items-center justify-between gap-3 flex-wrap px-5 sm:px-6 pt-5 pb-4 border-b border-border"><div className="flex items-center gap-2.5"><ColorChip icon="shield-alert" color="var(--danger)" size={34} iconSize={18} /><div><div className="t-cardtitle">조기경보 목록</div><div className="t-caption mt-px"><span style={{ color: "var(--danger)", fontWeight: 700 }}>{filteredAlerts.length + "건"}</span>표시 중 (전체 {ALERTS.length}건)</div></div></div><div className="flex items-center gap-2"><StatusBadge
+          className="flex items-center justify-between gap-3 flex-wrap px-5 sm:px-6 pt-5 pb-4 border-b border-border"><div className="flex items-center gap-2.5"><ColorChip icon="shield-alert" color="var(--danger)" size={34} iconSize={18} /><div><div className="t-cardtitle">조기경보 목록</div><div className="t-caption mt-px"><span style={{ color: "var(--danger)", fontWeight: 700 }}>{mn(filteredAlerts.length + "건")}</span>표시 중 (전체 {mn(ALERTS.length)}건)</div></div></div><div className="flex items-center gap-2"><StatusBadge
               tone="danger"
-              label={"경고 " + ALERTS.filter((a) => a.gradeTone === "danger").length + "건"} /><StatusBadge
+              label={"경고 " + mn(ALERTS.filter((a) => a.gradeTone === "danger").length) + "건"} /><StatusBadge
               tone="warning"
-              label={"주의 " + ALERTS.filter((a) => a.gradeTone === "warning").length + "건"} /><IconBtn icon="refresh" label="새로고침" size={34} /><IconBtn icon="download" label="내보내기" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[880px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
+              label={"주의 " + mn(ALERTS.filter((a) => a.gradeTone === "warning").length) + "건"} /><IconBtn icon="refresh" label="새로고침" size={34} /><IconBtn icon="download" label="내보내기" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[880px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
                   ["운용사", "left", "pl-5 sm:pl-6"],
                   ["경보 유형", "left", ""],
                   ["등급", "left", ""],
@@ -344,22 +345,22 @@ function Risk({ onNav }) {
                           e.currentTarget.style.background = "transparent";
                       }}><td className="px-4 pl-5 sm:pl-6 py-3.5 whitespace-nowrap"><div className="flex items-center gap-2.5"><span
                             className="inline-flex items-center justify-center w-8 h-8 rounded-[8px] text-white text-[11px] font-bold shrink-0"
-                            style={{ background: row.gpColor }}>{row.gpCode}</span><div><div
+                            style={{ background: row.gpColor }}><MT>{row.gpCode}</MT></span><div><div
                               className="text-[13.5px] font-semibold"
-                              style={{ color: "var(--foreground)" }}>{row.gp}</div><div className="t-caption text-[11px]">{row.id}</div></div></div></td><td className="px-4 py-3.5 whitespace-nowrap"><div><div
+                              style={{ color: "var(--foreground)" }}><MT>{row.gp}</MT></div><div className="t-caption text-[11px]"><MT>{row.id}</MT></div></div></div></td><td className="px-4 py-3.5 whitespace-nowrap"><div><div
                             className="text-[13px] font-semibold"
-                            style={{ color: "var(--foreground)" }}>{row.type}</div><div className="t-caption text-[11px] mt-0.5 max-w-[200px] truncate">{row.desc}</div></div></td><td className="px-4 py-3.5 whitespace-nowrap"><StatusBadge tone={row.gradeTone} label={row.grade} size="md" /></td><td
+                            style={{ color: "var(--foreground)" }}><MT>{row.type}</MT></div><div className="t-caption text-[11px] mt-0.5 max-w-[200px] truncate"><MT>{row.desc}</MT></div></div></td><td className="px-4 py-3.5 whitespace-nowrap"><StatusBadge tone={row.gradeTone} label={row.grade} size="md" /></td><td
                         className="px-4 py-3.5 whitespace-nowrap tabular text-[13px]"
-                        style={{ color: "var(--muted-foreground)" }}>{row.date}</td><td className="px-4 py-3.5"><StepBadge stepIndex={row.step} /></td><td className="px-4 py-3.5 whitespace-nowrap"><div className="flex items-center gap-1.5"><span
+                        style={{ color: "var(--muted-foreground)" }}>{mn(row.date)}</td><td className="px-4 py-3.5"><StepBadge stepIndex={row.step} /></td><td className="px-4 py-3.5 whitespace-nowrap"><div className="flex items-center gap-1.5"><span
                             className="inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-[10px] font-bold shrink-0"
-                            style={{ background: "var(--muted-foreground)", fontSize: 10 }}>{row.manager[0]}</span><span
+                            style={{ background: "var(--muted-foreground)", fontSize: 10 }}><MT>{row.manager[0]}</MT></span><span
                             className="text-[13px] font-medium"
-                            style={{ color: "var(--foreground)" }}>{row.manager}</span></div></td><td className="px-4 pr-5 sm:pr-6 py-3.5 text-right whitespace-nowrap"><Button
+                            style={{ color: "var(--foreground)" }}><MT>{row.manager}</MT></span></div></td><td className="px-4 pr-5 sm:pr-6 py-3.5 text-right whitespace-nowrap"><Button
                           variant="outline"
                           size="sm"
                           leadingIcon="external"
                           onClick={(e) => { e.stopPropagation(); }}>상세보기</Button></td></tr>)}</tbody></table><div
-            className="flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 py-3.5 border-t border-border"><span className="t-caption">총 <b style={{ color: "var(--foreground)" }}>{ALERTS.length + "건"}</b>중 {filteredAlerts.length + "건 표시"}</span><div className="flex items-center gap-1.5"><IconBtn icon="chevron-left" label="이전" size={32} /><span
+            className="flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 py-3.5 border-t border-border"><span className="t-caption">총 <b style={{ color: "var(--foreground)" }}>{mn(ALERTS.length + "건")}</b>중 {mn(filteredAlerts.length + "건 표시")}</span><div className="flex items-center gap-1.5"><IconBtn icon="chevron-left" label="이전" size={32} /><span
                 className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[13px] font-bold"
                 style={{ background: "color-mix(in srgb,var(--primary) 12%,transparent)", color: "var(--primary)" }}>1</span><IconBtn icon="chevron-right" label="다음" size={32} /></div></div></div></div><div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4"><ChartCard
           title="운용사 상태 분포"
@@ -370,7 +371,7 @@ function Risk({ onNav }) {
           footer={<div className="flex items-center gap-5 flex-wrap">{D.STATUS_DONUT.map((d) =>
               <div key={d.key} className="flex items-center gap-1.5"><span
                   className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ background: d.color }} /><span className="t-caption text-[12px]">{d.name}</span><span className="text-[13px] font-bold tabular" style={{ color: d.color }}>{d.value}</span></div>)}</div>}><Donut data={D.STATUS_DONUT} height={220} /></ChartCard><ChartCard
+                  style={{ background: d.color }} /><span className="t-caption text-[12px]"><MT>{d.name}</MT></span><span className="text-[13px] font-bold tabular" style={{ color: d.color }}>{mn(d.value)}</span></div>)}</div>}><Donut data={D.STATUS_DONUT} height={220} /></ChartCard><ChartCard
           title="운용사별 조기경보 현황"
           sub="경보 건수 상위 5개 운용사"
           icon="building"

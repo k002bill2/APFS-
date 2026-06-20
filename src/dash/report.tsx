@@ -6,6 +6,7 @@ import { Shell } from './shell';
 import { UI } from './components';
 import { Charts } from './charts';
 import { APFS_DATA } from './data';
+import { mn, MT } from './mask';
 
 const { useState, useMemo } = React;
 const { PageHeader } = Shell;
@@ -192,11 +193,11 @@ function ScheduleCard({ item }) {
     <div
       className="flex items-start gap-3 rounded-card border border-border bg-card px-4 py-3 shadow-sm"><div
         className="inline-flex items-center justify-center shrink-0 rounded-[8px] text-[10px] font-bold w-10 h-10"
-        style={{ background: softBg, color }}>{item.dday}</div><div className="min-w-0 flex-1"><div
+        style={{ background: softBg, color }}>{mn(item.dday)}</div><div className="min-w-0 flex-1"><div
           className="text-[13px] font-semibold truncate"
-          style={{ color: "var(--foreground)" }}>{item.title}</div><div className="flex items-center gap-1.5 mt-0.5"><span
+          style={{ color: "var(--foreground)" }}><MT>{item.title}</MT></div><div className="flex items-center gap-1.5 mt-0.5"><span
             className="inline-block rounded-full px-2 py-0.5 text-[10.5px] font-bold"
-            style={{ background: softBg, color }}>{item.kind}</span><span className="t-caption text-[11px]">{item.date}</span></div></div></div>
+            style={{ background: softBg, color }}>{item.kind}</span><span className="t-caption text-[11px]">{mn(item.date)}</span></div></div></div>
   );
 }
 
@@ -234,7 +235,7 @@ function MinistryTab() {
                   onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><td className="px-4 pl-6 py-3.5"><div
                       className="text-[13.5px] font-semibold"
-                      style={{ color: "var(--foreground)" }}>{r.name}</div></td><td className="px-4 py-3.5 text-center"><span
+                      style={{ color: "var(--foreground)" }}><MT>{r.name}</MT></div></td><td className="px-4 py-3.5 text-center"><span
                       className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold"
                       style={{
                         background: r.type === "수시"
@@ -243,9 +244,9 @@ function MinistryTab() {
                         color: r.type === "수시" ? "var(--warning)" : "var(--info)",
                       }}>{r.type}</span></td><td
                     className="px-4 py-3.5 text-center text-[13px] font-semibold"
-                    style={{ color: "var(--foreground)" }}>{r.org}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{r.date}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={reportTone(r.status)} label={r.status} size="sm" /></td><td
+                    style={{ color: "var(--foreground)" }}><MT>{r.org}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{mn(r.date)}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={reportTone(r.status)} label={r.status} size="sm" /></td><td
                     className="px-4 py-3.5 text-center text-[13px] font-semibold"
-                    style={{ color: "var(--foreground)" }}>{r.manager}</td><td className="px-4 pr-5 py-3.5 text-right">{r.action === "-"
+                    style={{ color: "var(--foreground)" }}><MT>{r.manager}</MT></td><td className="px-4 pr-5 py-3.5 text-right">{r.action === "-"
                       ? <span className="t-caption text-[12px]">—</span>
                       : <Button variant={r.action === "작성" ? "primary" : "outline"} size="sm">{r.action}</Button>}</td></tr>
               )}</tbody></table></div></div></div>
@@ -295,9 +296,9 @@ function CustodyTab() {
                       size={15}
                       style={{ color: "var(--danger)", flexShrink: 0 }} />}<span
                       className="text-[13.5px] font-semibold"
-                      style={{ color: "var(--foreground)" }}>{r.vtype}</span></div></td><td
+                      style={{ color: "var(--foreground)" }}><MT>{r.vtype}</MT></span></div></td><td
                   className="px-4 py-3.5 text-[13px]"
-                  style={{ color: "var(--foreground)" }}>{r.fund}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{r.uploadDate}</td><td className="px-4 py-3.5 text-center"><StatusBadge
+                  style={{ color: "var(--foreground)" }}><MT>{r.fund}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{mn(r.uploadDate)}</td><td className="px-4 py-3.5 text-center"><StatusBadge
                     tone={resultTone(r.result)}
                     label={r.result}
                     size="sm"
@@ -340,13 +341,13 @@ function RegistryTab() {
                   onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><td
                     className="px-4 pl-6 py-3.5 tabular text-[12.5px] font-mono font-semibold"
-                    style={{ color: "var(--accent)" }}>{r.code}</td><td
+                    style={{ color: "var(--accent)" }}><MT>{r.code}</MT></td><td
                     className="px-4 py-3.5 text-[13.5px] font-semibold"
-                    style={{ color: "var(--foreground)" }}>{r.name}</td><td
+                    style={{ color: "var(--foreground)" }}><MT>{r.name}</MT></td><td
                     className="px-4 py-3.5 text-[13px]"
-                    style={{ color: "var(--muted-foreground)" }}>{r.gp}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{r.regDate}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{r.lastModified}</td><td
+                    style={{ color: "var(--muted-foreground)" }}><MT>{r.gp}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{mn(r.regDate)}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{mn(r.lastModified)}</td><td
                     className="px-4 py-3.5 text-center text-[12.5px] font-bold tabular"
-                    style={{ color: "var(--primary)" }}>{r.version}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={registryTone(r.status)} label={r.status} size="sm" /></td><td className="px-4 pr-5 py-3.5 text-right"><IconBtn icon="download" label={`${r.name} 다운로드`} size={32} /></td></tr>
+                    style={{ color: "var(--primary)" }}>{mn(r.version)}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={registryTone(r.status)} label={r.status} size="sm" /></td><td className="px-4 pr-5 py-3.5 text-right"><IconBtn icon="download" label={`${r.name} 다운로드`} size={32} /></td></tr>
               )}</tbody></table></div></div><div className="rounded-card border border-border bg-card px-5 py-4 shadow-sm"><div className="flex items-center gap-2 mb-4"><ColorChip icon="clock" color="var(--info)" size={28} iconSize={15} /><h4 className="text-[14px] font-bold">최근 수정이력</h4></div><div className="flex flex-col">{REGISTRY_HISTORY.map((item, i) =>
             <div
               key={i}
@@ -356,9 +357,9 @@ function RegistryTab() {
                   className="w-px flex-1 mt-1"
                   style={{ background: "var(--border)", minHeight: 20 }} />}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2 flex-wrap"><span
                     className="text-[12.5px] font-bold"
-                    style={{ color: "var(--foreground)" }}>{item.fund}</span><span className="t-caption tabular text-[11.5px]">{item.date}</span></div><div
+                    style={{ color: "var(--foreground)" }}><MT>{item.fund}</MT></span><span className="t-caption tabular text-[11.5px]">{mn(item.date)}</span></div><div
                   className="text-[12.5px] mt-0.5"
-                  style={{ color: "var(--muted-foreground)" }}>{item.change}</div><div className="t-caption text-[11px] mt-0.5">처리: {item.by}</div></div></div>
+                  style={{ color: "var(--muted-foreground)" }}><MT>{item.change}</MT></div><div className="t-caption text-[11px] mt-0.5">처리: <MT>{item.by}</MT></div></div></div>
           )}</div></div></div>
   );
 }
@@ -372,9 +373,9 @@ function KpiBox({ icon, color, label, value, sub, tone }: { icon?: string; color
     <div
       className="rounded-card border border-border bg-card px-5 py-4 shadow-sm flex items-center gap-4"><div
         className="inline-flex items-center justify-center shrink-0 rounded-[12px]"
-        style={{ width: 44, height: 44, background: softBg, color: c }}><Icon name={icon} size={22} stroke={2} /></div><div className="min-w-0 flex-1"><div className="t-label text-[11.5px] mb-0.5">{label}</div><div
+        style={{ width: 44, height: 44, background: softBg, color: c }}><Icon name={icon} size={22} stroke={2} /></div><div className="min-w-0 flex-1"><div className="t-label text-[11.5px] mb-0.5"><MT>{label}</MT></div><div
           className="text-[22px] font-extrabold tabular leading-tight"
-          style={{ color: "var(--foreground)" }}>{value}</div>{sub && <div className="t-caption text-[11.5px] mt-0.5">{sub}</div>}</div></div>
+          style={{ color: "var(--foreground)" }}>{mn(value)}</div>{sub && <div className="t-caption text-[11.5px] mt-0.5"><MT>{sub}</MT></div>}</div></div>
   );
 }
 

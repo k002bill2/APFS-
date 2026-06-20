@@ -1,5 +1,6 @@
 /* SVG 차트 프리미티브 — Recharts 동일 스펙(가로 그리드, 토큰색, 둥근 막대, 단일 진입 애니메이션). */
 import React from 'react';
+import { mn, MT } from './mask';
 
 const { useRef, useState, useLayoutEffect, useEffect } = React;
 
@@ -77,7 +78,7 @@ function Sparkline({ data, color = "var(--primary)", height = 34, area = true, i
 }
 
 /* ===================== Donut ===================== */
-function Donut({ data, height = 220, thickness = 26, centerLabel, onSlice, activeKey }: { data: any[]; height?: number; thickness?: number; centerLabel?: React.ReactNode; onSlice?: (d: any) => void; activeKey?: string }) {
+function Donut({ data, height = 220, thickness = 26, centerLabel, centerValue, onSlice, activeKey }: { data: any[]; height?: number; thickness?: number; centerLabel?: React.ReactNode; centerValue?: React.ReactNode; onSlice?: (d: any) => void; activeKey?: string }) {
   const [ref, W] = useMeasure();
   const [hover, setHover] = useState(null);
   const size = Math.min(W || height, height);
@@ -120,7 +121,7 @@ function Donut({ data, height = 220, thickness = 26, centerLabel, onSlice, activ
           y={cy - 6}
           textAnchor="middle"
           style={{ fontSize: 26, fontWeight: 800, fill: "var(--foreground)" }}
-          className="tabular">{total}</text><text
+          className="tabular">{centerValue ?? mn(total)}</text><text
           x={cx}
           y={cy + 15}
           textAnchor="middle"
@@ -326,12 +327,12 @@ function Treemap({ data, height = 240, onCell }: { data: any[]; height?: number;
               color: "#fff", boxShadow: hi === i ? "inset 0 0 0 2px rgba(255,255,255,.85)" : "none",
               transition: "box-shadow .15s", display: "flex", flexDirection: "column", justifyContent: "space-between",
             }}>{big && <div
-              style={{ fontSize: 11.5, fontWeight: 700, lineHeight: 1.25, textShadow: "0 1px 2px rgba(0,0,0,.25)" }}>{c.name}</div>}{big && <div style={{ textShadow: "0 1px 2px rgba(0,0,0,.25)" }}><span className="tabular" style={{ fontSize: 15, fontWeight: 800 }}>{pct}</span><span style={{ fontSize: 10, opacity: .9 }}>%</span></div>}</div>
+              style={{ fontSize: 11.5, fontWeight: 700, lineHeight: 1.25, textShadow: "0 1px 2px rgba(0,0,0,.25)" }}><MT>{c.name}</MT></div>}{big && <div style={{ textShadow: "0 1px 2px rgba(0,0,0,.25)" }}><span className="tabular" style={{ fontSize: 15, fontWeight: 800 }}>{mn(pct)}</span><span style={{ fontSize: 10, opacity: .9 }}>%</span></div>}</div>
         );
       })}{hi !== null && <Tip
         x={cells[hi].x + cells[hi].w / 2}
         y={cells[hi].y + cells[hi].h / 2}
-        show={true}>{cells[hi].name + " · " + cells[hi].value.toLocaleString() + "억원"}</Tip>}</div>
+        show={true}>{mn(cells[hi].name + " · " + cells[hi].value.toLocaleString() + "억원")}</Tip>}</div>
   );
 }
 
@@ -347,11 +348,11 @@ function HBars({ data, height = 220, unit = "%" }: { data: any[]; height?: numbe
         <div
           key={i}
           style={{ display: "flex", alignItems: "center", height: rowH, gap: 8 }}><div
-            style={{ width: labelW, fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "var(--foreground)" }}>{d.name}</div><div
+            style={{ width: labelW, fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "var(--foreground)" }}><MT>{d.name}</MT></div><div
             style={{ flex: 1, height: 16, background: "var(--muted)", borderRadius: 5, overflow: "hidden" }}><div
               style={{ width: (d.value / max) * 100 + "%", height: "100%", background: d.color || "var(--chart-1)", borderRadius: 5, transformOrigin: "left", animation: "growbar .5s var(--ease) both", animationDelay: i * 50 + "ms" }} /></div><div
             className="tabular"
-            style={{ width: valW, textAlign: "right", fontSize: 13, fontWeight: 700 }}>{d.value + unit}</div></div>)}</div>
+            style={{ width: valW, textAlign: "right", fontSize: 13, fontWeight: 700 }}>{mn(d.value + unit)}</div></div>)}</div>
   );
 }
 
@@ -382,7 +383,7 @@ function Gauge({ value, max = 100, label, height = 150, color = "var(--primary)"
           y={cy - 6}
           textAnchor="middle"
           style={{ fontSize: 28, fontWeight: 800, fill: "var(--foreground)" }}
-          className="tabular">{value + (max === 100 ? "%" : "")}</text>{label && <text
+          className="tabular">{mn(value + (max === 100 ? "%" : ""))}</text>{label && <text
           x={cx}
           y={cy + 12}
           textAnchor="middle"

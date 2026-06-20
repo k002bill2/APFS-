@@ -4,6 +4,7 @@ import { Icon } from './icons';
 import { UI } from './components';
 import { Charts } from './charts';
 import { APFS_DATA, MenuStore, useMenuSel } from './data';
+import { mn, MT, useMask } from './mask';
 
 const { ColorChip, StatusBadge, StatCard, ChartCard, Card, Button, FilterChip, SegTabs, CountPill } = UI;
 const { ComposedBars, GroupedBars, Donut, Treemap, LineTrend, HBars, Gauge, Sparkline } = Charts;
@@ -40,6 +41,7 @@ function Legend({ color, label, line }: { color?: string; label?: React.ReactNod
 
 /* 상태 분포 도넛 */
 function StatusDonut({ active, setActive, onNav, span, height = 200 }) {
+  useMask();
   const total = D.STATUS_DONUT.reduce((s, d) => s + d.value, 0);
   return (
     <ChartCard
@@ -52,6 +54,7 @@ function StatusDonut({ active, setActive, onNav, span, height = 200 }) {
         data={D.STATUS_DONUT}
         height={height}
         centerLabel="총 대상"
+        centerValue={mn(total)}
         activeKey={active}
         onSlice={(s) => { setActive(active === s.key ? null : s.key); }} /><div
         style={{ display: "flex", flexDirection: "column", gap: 7, marginTop: 12 }}>{D.STATUS_DONUT.map((s) => <button
@@ -60,7 +63,7 @@ function StatusDonut({ active, setActive, onNav, span, height = 200 }) {
           style={{
             display: "flex", alignItems: "center", gap: 9, border: "none", cursor: "pointer", font: "inherit",
             background: active === s.key ? "var(--muted)" : "transparent", borderRadius: 8, padding: "6px 9px", textAlign: "left",
-          }}><span style={{ width: 9, height: 9, borderRadius: 99, background: s.color }} /><span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{s.name}</span><span className="tabular" style={{ fontSize: 13, fontWeight: 700 }}>{s.value}</span><span className="t-caption" style={{ width: 42, textAlign: "right" }}>{((s.value / total) * 100).toFixed(0) + "%"}</span></button>)}{active && <button
+          }}><span style={{ width: 9, height: 9, borderRadius: 99, background: s.color }} /><span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}><MT>{s.name}</MT></span><span className="tabular" style={{ fontSize: 13, fontWeight: 700 }}>{mn(s.value)}</span><span className="t-caption" style={{ width: 42, textAlign: "right" }}>{mn(((s.value / total) * 100).toFixed(0)) + "%"}</span></button>)}{active && <button
           onClick={() => onNav("risk")}
           style={{ marginTop: 4, border: "none", cursor: "pointer", font: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: "color-mix(in srgb,var(--primary) 11%,transparent)", color: "var(--primary)", borderRadius: 8, padding: "8px", fontSize: 12.5, fontWeight: 700 }}>{"조기경보 대시보드에서 ‘" + D.STATUS_DONUT.find((x) => x.key === active).name + "’ 보기"}<Icon name="arrow-right" size={15} /></button>}</div></ChartCard>
   );
@@ -81,6 +84,7 @@ function IndustryCard({ span, onNav, height = 240 }) {
 
 /* 다가오는 일정/알림 */
 function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }: { span?: number | string; onNav?: (r: string) => void; rows?: number; scroll?: boolean; maxH?: number }) {
+  useMask();
   const list = scroll ? D.SCHEDULE : D.SCHEDULE.slice(0, rows);
   const ddayColor = (t) => (t === "danger" ? "var(--danger)" : t === "warning" ? "var(--warning)" : "var(--accent)");
   return (
@@ -103,8 +107,8 @@ function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }: { span?: nu
             style={{
               display: "flex", alignItems: "center", gap: 12, border: "none", cursor: "pointer", font: "inherit", textAlign: "left",
               padding: "11px 6px", borderBottom: i < list.length - 1 ? "1px solid var(--border)" : "none", background: "transparent", flex: "0 0 auto",
-            }}><div style={{ width: 46, textAlign: "center", flex: "0 0 auto" }}><div style={{ fontSize: 13, fontWeight: 800, color: ddayColor(s.tone) }}>{s.dday}</div><div className="t-caption" style={{ fontSize: 10 }}>{s.date.slice(5).replace("-", "/")}</div></div><div style={{ width: 1, alignSelf: "stretch", background: "var(--border)" }} /><div style={{ flex: 1, minWidth: 0 }}><div
-                style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.title}</div><div style={{ display: "flex", gap: 7, marginTop: 3, alignItems: "center" }}><StatusBadge tone={s.tone} label={s.kind} size="sm" /><span className="t-caption">{s.to}</span></div></div><Icon
+            }}><div style={{ width: 46, textAlign: "center", flex: "0 0 auto" }}><div style={{ fontSize: 13, fontWeight: 800, color: ddayColor(s.tone) }}>{mn(s.dday)}</div><div className="t-caption" style={{ fontSize: 10 }}>{mn(s.date.slice(5).replace("-", "/"))}</div></div><div style={{ width: 1, alignSelf: "stretch", background: "var(--border)" }} /><div style={{ flex: 1, minWidth: 0 }}><div
+                style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><MT>{s.title}</MT></div><div style={{ display: "flex", gap: 7, marginTop: 3, alignItems: "center" }}><StatusBadge tone={s.tone} label={s.kind} size="sm" /><span className="t-caption"><MT>{s.to}</MT></span></div></div><Icon
               name="chevron-right"
               size={16}
               style={{ color: "var(--caption)", flex: "0 0 auto" }} /></button>)}{scroll && <div
@@ -114,6 +118,7 @@ function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }: { span?: nu
 
 /* 보조 KPI 미니카드 */
 function MiniKpis({ vertical }: { vertical?: boolean }) {
+  useMask();
   const toneC = { warning: "var(--warning)", danger: "var(--danger)", success: "var(--success)" };
   return (
     <div
@@ -124,7 +129,7 @@ function MiniKpis({ vertical }: { vertical?: boolean }) {
           borderRadius: 12, padding: "13px 15px", boxShadow: "var(--shadow-sm)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
         }}><div style={{ minWidth: 0 }}><div
             className="t-label"
-            style={{ textTransform: "none", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.label}</div><div style={{ display: "flex", alignItems: "baseline", gap: 3, marginTop: 4 }}><span className="t-display tabular" style={{ fontSize: 24 }}>{m.value}</span><span
+            style={{ textTransform: "none", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><MT>{m.label}</MT></div><div style={{ display: "flex", alignItems: "baseline", gap: 3, marginTop: 4 }}><span className="t-display tabular" style={{ fontSize: 24 }}>{mn(m.value)}</span><span
               style={{ fontSize: 12, fontWeight: 600, color: "var(--muted-foreground)" }}>{m.unit}</span></div></div><ColorChip
           icon={m.tone === "success" ? "check-circle" : "file"}
           color={toneC[m.tone]}
