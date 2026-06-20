@@ -5,6 +5,7 @@ import { Icon } from './icons';
 import { Shell } from './shell';
 import { UI } from './components';
 import { APFS_DATA } from './data';
+import { mn, MT } from './mask';
 
 const { useState, useEffect, useMemo, useCallback } = React;
 const { PageHeader } = Shell;
@@ -79,7 +80,7 @@ function KpiCard({ icon, color, label, value, unit, tone }) {
   const [c, soft] = toneVar(tone || "info");
   return (
     <div
-      className="flex items-center gap-3 rounded-card border border-border bg-card px-4 py-3.5 shadow-sm flex-1 min-w-0"><ColorChip icon={icon} color={c} size={40} iconSize={20} /><div className="min-w-0"><div className="t-label text-[12px]">{label}</div><div className="flex items-baseline gap-1 mt-0.5"><span className="text-[22px] font-bold tabular" style={{ color: c }}>{value}</span><span className="text-[12px] font-semibold text-muted-foreground">{unit}</span></div></div></div>
+      className="flex items-center gap-3 rounded-card border border-border bg-card px-4 py-3.5 shadow-sm flex-1 min-w-0"><ColorChip icon={icon} color={c} size={40} iconSize={20} /><div className="min-w-0"><div className="t-label text-[12px]"><MT>{label}</MT></div><div className="flex items-baseline gap-1 mt-0.5"><span className="text-[22px] font-bold tabular" style={{ color: c }}>{mn(value)}</span><span className="text-[12px] font-semibold text-muted-foreground">{unit}</span></div></div></div>
   );
 }
 
@@ -100,8 +101,8 @@ function ScheduleCard({ item, onAdd }) {
           border: `1px solid color-mix(in srgb,${toneVar(tone)[0]} 25%,transparent)`,
         }}><span className="text-[10px] font-bold" style={{ color: toneVar(tone)[0] }}>{item.kind}</span><span
           className="text-[15px] font-extrabold tabular leading-tight"
-          style={{ color: toneVar(tone)[0] }}>{item.dday}</span></div><div className="shrink-0"><ColorChip icon={kindIcon} color={kindColor} size={36} iconSize={18} /></div><div className="flex-1 min-w-0"><div className="flex items-center gap-2 flex-wrap"><span className="text-[14px] font-bold text-foreground truncate">{item.title}</span><StatusBadge tone="info" label={item.to} size="sm" /></div><div
-          className="flex items-center gap-3 mt-1 text-[12px] text-muted-foreground"><Icon name="calendar" size={12} stroke={2} /><span>{fmtDate(item.date)}</span>{item.time && <><Icon name="clock" size={12} stroke={2} /><span>{item.time}</span></>}{item.owner && <><Icon name="user" size={12} stroke={2} /><span>{item.owner}</span></>}</div></div><div className="shrink-0 flex items-center gap-1.5"><IconBtn icon="bell" label="알림 추가" size={32} onClick={onAdd} /><Button variant="ghost" size="sm" leadingIcon="plus">추가</Button></div></div>
+          style={{ color: toneVar(tone)[0] }}>{mn(item.dday)}</span></div><div className="shrink-0"><ColorChip icon={kindIcon} color={kindColor} size={36} iconSize={18} /></div><div className="flex-1 min-w-0"><div className="flex items-center gap-2 flex-wrap"><span className="text-[14px] font-bold text-foreground truncate"><MT>{item.title}</MT></span><StatusBadge tone="info" label={item.to} size="sm" /></div><div
+          className="flex items-center gap-3 mt-1 text-[12px] text-muted-foreground"><Icon name="calendar" size={12} stroke={2} /><span>{mn(fmtDate(item.date))}</span>{item.time && <><Icon name="clock" size={12} stroke={2} /><span>{mn(item.time)}</span></>}{item.owner && <><Icon name="user" size={12} stroke={2} /><span><MT>{item.owner}</MT></span></>}</div></div><div className="shrink-0 flex items-center gap-1.5"><IconBtn icon="bell" label="알림 추가" size={32} onClick={onAdd} /><Button variant="ghost" size="sm" leadingIcon="plus">추가</Button></div></div>
   );
 }
 
@@ -173,7 +174,7 @@ function CalendarView({ items }) {
               icon={KIND_ICON[item.kind] || "calendar"}
               color={KIND_COLOR[item.kind] || "var(--info)"}
               size={28}
-              iconSize={14} /><div className="flex-1 min-w-0"><div className="text-[12.5px] font-semibold truncate text-foreground">{item.title}</div><span className="text-[11px] text-muted-foreground">{item.time || ""}</span></div></div>)}</div></div>}{selectedDate && selectedItems.length === 0 && <div
+              iconSize={14} /><div className="flex-1 min-w-0"><div className="text-[12.5px] font-semibold truncate text-foreground"><MT>{item.title}</MT></div><span className="text-[11px] text-muted-foreground">{item.time ? mn(item.time) : ""}</span></div></div>)}</div></div>}{selectedDate && selectedItems.length === 0 && <div
         className="mt-3 text-center text-[12.5px] text-muted-foreground py-4 border-t border-border">{`6월 ${selectedDate}일에 일정이 없습니다.`}</div>}</div>
   );
 }
@@ -197,11 +198,11 @@ function TimelineView({ items }) {
       className="flex flex-col gap-0"
       style={{ animation: "dashFade .35s var(--ease) both" }}>{grouped.map(([date, entries], gi: number) => <div key={date} className="flex gap-0"><div className="flex flex-col items-center mr-3" style={{ width: 32 }}><div
             className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-[11px]"
-            style={{ background: "var(--muted)", color: "var(--muted-foreground)", border: "2px solid var(--border)" }}>{fmtDate(date).split("(")[0]}</div>{gi < grouped.length - 1 && <div
+            style={{ background: "var(--muted)", color: "var(--muted-foreground)", border: "2px solid var(--border)" }}>{mn(fmtDate(date).split("(")[0])}</div>{gi < grouped.length - 1 && <div
             className="flex-1 w-px"
             style={{ background: "var(--border)", minHeight: 16, margin: "4px 0" }} />}</div><div className="flex-1 pb-4"><div
             className="text-[12px] font-bold mb-1.5 mt-1"
-            style={{ color: "var(--muted-foreground)" }}>{fmtDate(date)}</div><div className="flex flex-col gap-2">{entries.map((item, ii) => {
+            style={{ color: "var(--muted-foreground)" }}>{mn(fmtDate(date))}</div><div className="flex flex-col gap-2">{entries.map((item, ii) => {
               const tone = ddayTone(item);
               const [c, soft] = toneVar(tone);
               return (
@@ -210,8 +211,8 @@ function TimelineView({ items }) {
                   className="flex items-start gap-2.5 rounded-[8px] px-3 py-2.5 border border-border"
                   style={{ background: soft, borderColor: `color-mix(in srgb,${c} 22%,transparent)` }}><span
                     className="w-2 h-2 rounded-full shrink-0 mt-[6px]"
-                    style={{ background: c }} /><div className="flex-1 min-w-0"><div className="flex items-center gap-2 flex-wrap"><span className="text-[13px] font-semibold text-foreground">{item.title}</span><StatusBadge tone={tone} label={item.dday} size="sm" /><StatusBadge tone="info" label={item.kind} icon={KIND_ICON[item.kind]} size="sm" /></div><div
-                      className="flex items-center gap-2 mt-0.5 text-[11px] text-muted-foreground">{item.time && <><Icon name="clock" size={11} stroke={2} /><span>{item.time}</span></>}{item.owner && <><Icon name="user" size={11} stroke={2} /><span>{item.owner}</span></>}<Icon name="arrow-right" size={11} stroke={2} /><span>{item.to}</span></div></div></div>
+                    style={{ background: c }} /><div className="flex-1 min-w-0"><div className="flex items-center gap-2 flex-wrap"><span className="text-[13px] font-semibold text-foreground"><MT>{item.title}</MT></span><StatusBadge tone={tone} label={item.dday} size="sm" /><StatusBadge tone="info" label={item.kind} icon={KIND_ICON[item.kind]} size="sm" /></div><div
+                      className="flex items-center gap-2 mt-0.5 text-[11px] text-muted-foreground">{item.time && <><Icon name="clock" size={11} stroke={2} /><span>{mn(item.time)}</span></>}{item.owner && <><Icon name="user" size={11} stroke={2} /><span><MT>{item.owner}</MT></span></>}<Icon name="arrow-right" size={11} stroke={2} /><span><MT>{item.to}</MT></span></div></div></div>
               );
             })}</div></div></div>)}</div>
   );
@@ -259,7 +260,7 @@ function NotifPanel({ notifs, onReadAll }) {
                 className="shrink-0 flex items-center justify-center rounded-[8px] mt-0.5"
                 style={{ width: 28, height: 28, background: `color-mix(in srgb,${c} 16%,transparent)`, color: c }}><Icon name={n.icon} size={14} stroke={2} /></span><div className="flex-1 min-w-0"><div
                   className={cx("text-[12.5px] font-semibold leading-snug truncate", !n.read && "text-foreground")}
-                  style={{ color: n.read ? "var(--muted-foreground)" : "var(--foreground)" }}>{n.title}</div><div className="flex items-center gap-2 mt-0.5"><span className="text-[10.5px] text-muted-foreground">{n.time}</span><StatusBadge tone={n.tone} label={n.cat} size="sm" /></div></div>{!n.read && <span
+                  style={{ color: n.read ? "var(--muted-foreground)" : "var(--foreground)" }}><MT>{n.title}</MT></div><div className="flex items-center gap-2 mt-0.5"><span className="text-[10.5px] text-muted-foreground">{mn(n.time)}</span><StatusBadge tone={n.tone} label={n.cat} size="sm" /></div></div>{!n.read && <span
                 className="w-2 h-2 rounded-full shrink-0 mt-1.5"
                 style={{ background: c }} />}</button>
           );
@@ -386,7 +387,7 @@ function Schedule({ onNav }) {
               ? <EmptyState msg="해당 기간·종류에 일정이 없습니다" icon="calendar" height={200} />
               : filtered.map((item, i) => <ScheduleCard key={i} item={item} onAdd={() => {}} />)}</div>}{/* 캘린더뷰 */
           view === "calendar" && <div className="rounded-card border border-border bg-card shadow-sm p-4"><CalendarView items={SCHEDULE_EXT} /></div>}{/* 타임라인뷰 */
-          view === "timeline" && <div className="rounded-card border border-border bg-card shadow-sm p-4"><div className="text-[13px] font-semibold mb-3 text-muted-foreground">{filtered.length + "건 · " + periodFilter}</div>{filtered.length === 0
+          view === "timeline" && <div className="rounded-card border border-border bg-card shadow-sm p-4"><div className="text-[13px] font-semibold mb-3 text-muted-foreground">{mn(filtered.length) + "건 · " + periodFilter}</div>{filtered.length === 0
               ? <EmptyState msg="해당 기간·종류에 일정이 없습니다" icon="calendar" height={160} />
               : <TimelineView items={filtered} />}</div>}</div><div className="min-w-0"><NotifPanel
             notifs={notifs}
@@ -417,7 +418,7 @@ function Schedule({ onNav }) {
                       className="flex-1 rounded-full overflow-hidden"
                       style={{ height: 6, background: "var(--muted)" }}><div
                         className="h-full rounded-full transition-all duration-500"
-                        style={{ width: (cnt / maxCnt * 100) + "%", background: color }} /></div><span className="text-[11.5px] font-bold tabular shrink-0" style={{ color }}>{cnt + "건"}</span></div>
+                        style={{ width: (cnt / maxCnt * 100) + "%", background: color }} /></div><span className="text-[11.5px] font-bold tabular shrink-0" style={{ color }}>{mn(cnt) + "건"}</span></div>
                 );
               })}</div></div></div></div></div>
   );

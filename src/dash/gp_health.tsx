@@ -6,6 +6,7 @@ import { Shell } from './shell';
 import { UI } from './components';
 import { Charts } from './charts';
 import { APFS_DATA } from './data';
+import { mn, MT } from './mask';
 
 const { useState, useMemo } = React;
 const { PageHeader } = Shell;
@@ -109,7 +110,7 @@ function KpiPill({ icon, label, value, tone }) {
   return (
     <div
       className="flex items-center gap-3 rounded-card border border-border bg-card px-4 py-3 shadow-sm flex-1"
-      style={{ minWidth: 0 }}><ColorChip icon={icon} color={color} size={34} iconSize={18} /><div className="min-w-0"><div className="t-caption text-[11.5px] mb-0.5">{label}</div><div
+      style={{ minWidth: 0 }}><ColorChip icon={icon} color={color} size={34} iconSize={18} /><div className="min-w-0"><div className="t-caption text-[11.5px] mb-0.5"><MT>{label}</MT></div><div
           className="text-[15px] font-bold leading-tight truncate"
           style={{ color: "var(--foreground)" }}>{value}</div></div></div>
   );
@@ -138,9 +139,9 @@ function FeeRow({ label, value, sub, highlight }: { label?: React.ReactNode; val
     <div
       className="flex items-center justify-between py-2.5 border-b border-border last:border-b-0"><div><div
           className="text-[13.5px] font-semibold"
-          style={{ color: "var(--foreground)" }}>{label}</div>{sub && <div className="t-caption text-[11.5px] mt-0.5">{sub}</div>}</div><div
+          style={{ color: "var(--foreground)" }}><MT>{label}</MT></div>{sub && <div className="t-caption text-[11.5px] mt-0.5">{mn(sub)}</div>}</div><div
         className="text-[15px] font-bold tabular"
-        style={{ color: highlight || "var(--foreground)" }}>{value}</div></div>
+        style={{ color: highlight || "var(--foreground)" }}>{mn(value)}</div></div>
   );
 }
 
@@ -206,24 +207,24 @@ function GpHealth({ onNav }) {
             }}>{GP_LIST.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><Icon
             name="chevron-down"
             size={16}
-            style={{ color: "var(--muted-foreground)", flexShrink: 0, pointerEvents: "none" }} /></div><KpiPill icon="wallet" label="AUM" value={gp.kpi.aum} tone="var(--primary)" /><KpiPill
+            style={{ color: "var(--muted-foreground)", flexShrink: 0, pointerEvents: "none" }} /></div><KpiPill icon="wallet" label="AUM" value={mn(gp.kpi.aum)} tone="var(--primary)" /><KpiPill
           icon="shield-check"
           label="신용등급"
-          value={gp.kpi.creditRaw + " (" + gp.kpi.creditNote + ")"}
-          tone="var(--accent)" /><KpiPill icon="star" label="성과평가등급" value={gp.kpi.perfGrade} tone="var(--chart-3)" /><KpiPill
+          value={<MT>{gp.kpi.creditRaw + " (" + gp.kpi.creditNote + ")"}</MT>}
+          tone="var(--accent)" /><KpiPill icon="star" label="성과평가등급" value={<MT>{gp.kpi.perfGrade}</MT>} tone="var(--chart-3)" /><KpiPill
           icon="users"
           label="운용인력"
-          value={gp.kpi.staffCount + "명"}
+          value={mn(gp.kpi.staffCount + "명")}
           tone="var(--secondary)" /></div><div className="grid gap-4 mb-4" style={{ gridTemplateColumns: "2fr 1fr" }}><ChartCard
           title="건전성 체크리스트"
           sub={gp.name + " 기준 " + totalCount + "항목"}
           icon="clipboard-list"
           accent="var(--primary)"
-          right={<div className="flex items-center gap-2"><StatusBadge tone="success" label={"완료 " + okCount + "/" + totalCount} />{failedItems.length > 0 && <CountPill count={failedItems.length} urgent={true} />}</div>}><div className="divide-y" style={{ margin: "0 -18px", padding: "0 18px" }}>{CHECKLIST_BASE.map((item) => <ChecklistRow key={item.id} item={item} />)}</div></ChartCard><ChartCard title="의무투자비율" sub="달성현황" icon="target" accent="var(--primary)"><div className="flex flex-col items-center gap-4 pt-2"><Gauge value={78} max={100} color="var(--primary)" height={140} label="집행률" /><div
+          right={<div className="flex items-center gap-2"><StatusBadge tone="success" label={"완료 " + mn(okCount) + "/" + mn(totalCount)} />{failedItems.length > 0 && <CountPill count={failedItems.length} urgent={true} />}</div>}><div className="divide-y" style={{ margin: "0 -18px", padding: "0 18px" }}>{CHECKLIST_BASE.map((item) => <ChecklistRow key={item.id} item={item} />)}</div></ChartCard><ChartCard title="의무투자비율" sub="달성현황" icon="target" accent="var(--primary)"><div className="flex flex-col items-center gap-4 pt-2"><Gauge value={78} max={100} color="var(--primary)" height={140} label="집행률" /><div
               className="flex items-center justify-center gap-2 text-[12.5px] font-semibold"
-              style={{ color: "var(--warning)" }}><Icon name="alert-triangle" size={14} /><span>목표 80%까지 <b>2.0%p</b>잔여</span></div><div className="flex items-center gap-3"><div className="text-center"><div
+              style={{ color: "var(--warning)" }}><Icon name="alert-triangle" size={14} /><span>{mn("목표 80%까지")} <b>{mn("2.0%p")}</b>잔여</span></div><div className="flex items-center gap-3"><div className="text-center"><div
                   className="text-[28px] font-extrabold tabular"
-                  style={{ color: "var(--primary)" }}>78%</div><div className="t-caption text-[11.5px]">당분기 집행률</div></div><div className="w-px h-8 bg-border" /><div className="text-center"><DeltaBadge value="+2.4%" label="전분기 대비" /></div></div><div className="w-full"><div className="flex justify-between t-caption text-[11px] mb-1"><span>0%</span><span style={{ color: "var(--warning)" }}>▼ 목표 80%</span><span>100%</span></div><div className="relative h-3 rounded-full bg-muted overflow-hidden"><div
+                  style={{ color: "var(--primary)" }}>{mn("78%")}</div><div className="t-caption text-[11.5px]"><MT>당분기 집행률</MT></div></div><div className="w-px h-8 bg-border" /><div className="text-center"><DeltaBadge value="+2.4%" label="전분기 대비" /></div></div><div className="w-full"><div className="flex justify-between t-caption text-[11px] mb-1"><span>0%</span><span style={{ color: "var(--warning)" }}>▼ 목표 80%</span><span>100%</span></div><div className="relative h-3 rounded-full bg-muted overflow-hidden"><div
                   style={{
                     width: "78%", height: "100%", background: "var(--primary)",
                     borderRadius: "9999px", transition: "width .6s var(--ease)",
@@ -248,7 +249,7 @@ function GpHealth({ onNav }) {
               size={14}
               style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", color: "var(--muted-foreground)", pointerEvents: "none" }} /></div>}><div><div
               className="flex items-center gap-2 rounded-[8px] px-3 py-2 mb-3 text-[12px] font-semibold"
-              style={{ background: "color-mix(in srgb,var(--info) 10%,transparent)", color: "var(--info)" }}><Icon name="info" size={14} /><span>{"기준금액 " + FEE_BASE_AMT + "억원 · IRR " + (IRR_ACTUAL * 100).toFixed(1) + "% · 허들 " + (IRR_HURDLE * 100).toFixed(0) + "% · 캐리율 " + (CARRY_RATE * 100).toFixed(0) + "%"}</span></div><FeeRow
+              style={{ background: "color-mix(in srgb,var(--info) 10%,transparent)", color: "var(--info)" }}><Icon name="info" size={14} /><span>{mn("기준금액 " + FEE_BASE_AMT + "억원 · IRR " + (IRR_ACTUAL * 100).toFixed(1) + "% · 허들 " + (IRR_HURDLE * 100).toFixed(0) + "% · 캐리율 " + (CARRY_RATE * 100).toFixed(0) + "%")}</span></div><FeeRow
               label="관리보수"
               sub={FEE_BASE_AMT + "억 × " + (MGMT_RATE * 100).toFixed(1) + "%"}
               value={mgmtFee.toFixed(2) + "억"} /><FeeRow
@@ -261,9 +262,9 @@ function GpHealth({ onNav }) {
               value={"−" + penalty.toFixed(1) + "억"}
               highlight="var(--danger)" /><div className="my-3 border-t border-border-strong" /><div className="flex items-center justify-between"><div><div
                   className="text-[13px] font-bold"
-                  style={{ color: "var(--muted-foreground)" }}>정산 보수 합계</div><div className="t-caption text-[11.5px] mt-0.5">{feePeriod + " 기준"}</div></div><div className="text-right"><div
+                  style={{ color: "var(--muted-foreground)" }}><MT>정산 보수 합계</MT></div><div className="t-caption text-[11.5px] mt-0.5">{feePeriod + " 기준"}</div></div><div className="text-right"><div
                   className="text-[24px] font-extrabold tabular"
-                  style={{ color: "var(--primary)" }}>{totalFee.toFixed(2) + "억"}</div><div className="t-caption text-[11.5px] mt-0.5">VAT 별도</div></div></div></div></ChartCard><ChartCard
+                  style={{ color: "var(--primary)" }}>{mn(totalFee.toFixed(2) + "억")}</div><div className="t-caption text-[11.5px] mt-0.5">VAT 별도</div></div></div></div></ChartCard><ChartCard
           title="운용사 AUM 순위"
           sub="전체 GP 비교 (억원 기준)"
           icon="bar-chart-2"
@@ -303,19 +304,19 @@ function GpHealth({ onNav }) {
                       e.currentTarget.style.background = "transparent";
                   }}><td className="px-4 pl-5 sm:pl-6 py-3.5"><div className="flex items-center gap-2.5"><span
                         className="inline-flex items-center justify-center w-7 h-7 rounded-[7px] text-white text-[11px] font-bold shrink-0"
-                        style={{ background: AUM_COLORS[i % AUM_COLORS.length] }}>{row.name.slice(0, 2)}</span><span
+                        style={{ background: AUM_COLORS[i % AUM_COLORS.length] }}><MT>{row.name.slice(0, 2)}</MT></span><span
                         className="text-[14px] font-semibold"
-                        style={{ color: "var(--foreground)" }}>{row.name}</span></div></td><td
+                        style={{ color: "var(--foreground)" }}><MT>{row.name}</MT></span></div></td><td
                     className="px-4 py-3.5 text-right tabular text-[14px] font-bold"
-                    style={{ color: "var(--foreground)" }}>{row.aum.toFixed(1)}</td><td
+                    style={{ color: "var(--foreground)" }}>{mn(row.aum.toFixed(1))}</td><td
                     className="px-4 py-3.5 text-[13.5px] font-semibold"
-                    style={{ color: "var(--accent)" }}>{row.credit}</td><td className="px-4 py-3.5"><StatusBadge tone={healthTone(row.health)} label={row.health} /></td><td
+                    style={{ color: "var(--accent)" }}><MT>{row.credit}</MT></td><td className="px-4 py-3.5"><StatusBadge tone={healthTone(row.health)} label={row.health} /></td><td
                     className="px-4 py-3.5 text-[13.5px] font-semibold"
-                    style={{ color: "var(--foreground)" }}>{row.performance}</td><td className="px-4 py-3.5 text-right">{row.warnings > 0
+                    style={{ color: "var(--foreground)" }}><MT>{row.performance}</MT></td><td className="px-4 py-3.5 text-right">{row.warnings > 0
                       ? <CountPill count={row.warnings} urgent={row.warnings >= 3} />
                       : <span className="text-[13px] font-semibold" style={{ color: "var(--success)" }}>0</span>}</td><td
                     className="px-4 py-3.5 t-caption text-[12.5px]"
-                    style={{ color: "var(--muted-foreground)" }}>{row.lastReport}</td><td className="px-4 pr-5 sm:pr-6 py-3.5 text-center"><Button
+                    style={{ color: "var(--muted-foreground)" }}>{mn(row.lastReport)}</td><td className="px-4 pr-5 sm:pr-6 py-3.5 text-center"><Button
                       variant={row.id === selectedGpId ? "primary" : "outline"}
                       size="sm"
                       onClick={(e) => { e.stopPropagation(); setSelectedGpId(row.id); }}>상세</Button></td></tr>)}</tbody></table></div></section></div>

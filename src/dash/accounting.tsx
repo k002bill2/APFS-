@@ -6,6 +6,7 @@ import { Shell } from './shell';
 import { UI } from './components';
 import { Charts } from './charts';
 import { APFS_DATA } from './data';
+import { mn, MT } from './mask';
 
 const { useState, useMemo } = React;
 const { PageHeader } = Shell;
@@ -73,7 +74,7 @@ function KpiCard({ icon, label, value, unit, tone, delta, deltaLabel }: { icon?:
   const [color] = toneVar(tone);
   return (
     <div
-      className="rounded-card border border-border bg-card px-4 py-3 shadow-sm flex items-center gap-3"><ColorChip icon={icon} color={color} size={38} iconSize={20} /><div className="flex-1 min-w-0"><div className="t-caption text-[12px]">{label}</div><div className="flex items-baseline gap-1.5 mt-0.5"><span className="text-[22px] font-bold tabular leading-none" style={{ color }}>{value}</span><span className="text-[12px] text-caption">{unit}</span></div>{delta != null && <div className="mt-1"><DeltaBadge
+      className="rounded-card border border-border bg-card px-4 py-3 shadow-sm flex items-center gap-3"><ColorChip icon={icon} color={color} size={38} iconSize={20} /><div className="flex-1 min-w-0"><div className="t-caption text-[12px]"><MT>{label}</MT></div><div className="flex items-baseline gap-1.5 mt-0.5"><span className="text-[22px] font-bold tabular leading-none" style={{ color }}>{mn(value)}</span><span className="text-[12px] text-caption">{unit}</span></div>{delta != null && <div className="mt-1"><DeltaBadge
             value={delta}
             label={deltaLabel}
             invert={tone === "warning" || tone === "danger"} /></div>}</div></div>
@@ -173,7 +174,7 @@ function VoucherTable() {
                 className="text-left px-3 py-2.5 t-caption font-semibold whitespace-nowrap">{th}</th>)}</tr></thead><tbody>{VOUCHERS.map((v) =>
             <tr
               key={v.no}
-              className="border-b border-border hover:bg-muted transition-colors"><td className="px-3 py-2.5 font-mono text-[12px] whitespace-nowrap">{v.no}</td><td className="px-3 py-2.5 whitespace-nowrap text-caption">{v.date}</td><td className="px-3 py-2.5 font-semibold">{v.account}</td><td className="px-3 py-2.5 tabular text-right whitespace-nowrap">{v.debit ? v.debit.toLocaleString() : "—"}</td><td className="px-3 py-2.5 tabular text-right whitespace-nowrap">{v.credit ? v.credit.toLocaleString() : "—"}</td><td className="px-3 py-2.5 whitespace-nowrap">{v.author}</td><td className="px-3 py-2.5 whitespace-nowrap"><StatusBadge tone={STATUS_TONE[v.status] || "info"} label={v.status} size="sm" /></td><td className="px-3 py-2.5 whitespace-nowrap"><div className="flex gap-1.5">{v.status === "승인대기" && <Button variant="primary" size="sm" onClick={() => {}}>승인</Button>}{v.status === "승인대기" && <Button variant="outline" size="sm" onClick={() => {}}>반려</Button>}</div></td></tr>)}</tbody></table></div>
+              className="border-b border-border hover:bg-muted transition-colors"><td className="px-3 py-2.5 font-mono text-[12px] whitespace-nowrap"><MT>{v.no}</MT></td><td className="px-3 py-2.5 whitespace-nowrap text-caption">{mn(v.date)}</td><td className="px-3 py-2.5 font-semibold"><MT>{v.account}</MT></td><td className="px-3 py-2.5 tabular text-right whitespace-nowrap">{v.debit ? mn(v.debit.toLocaleString()) : "—"}</td><td className="px-3 py-2.5 tabular text-right whitespace-nowrap">{v.credit ? mn(v.credit.toLocaleString()) : "—"}</td><td className="px-3 py-2.5 whitespace-nowrap"><MT>{v.author}</MT></td><td className="px-3 py-2.5 whitespace-nowrap"><StatusBadge tone={STATUS_TONE[v.status] || "info"} label={v.status} size="sm" /></td><td className="px-3 py-2.5 whitespace-nowrap"><div className="flex gap-1.5">{v.status === "승인대기" && <Button variant="primary" size="sm" onClick={() => {}}>승인</Button>}{v.status === "승인대기" && <Button variant="outline" size="sm" onClick={() => {}}>반려</Button>}</div></td></tr>)}</tbody></table></div>
   );
 }
 
@@ -185,8 +186,8 @@ function PendingTable() {
                 className="text-left px-3 py-2.5 t-caption font-semibold whitespace-nowrap">{th}</th>)}</tr></thead><tbody>{PENDING.map((p) =>
             <tr
               key={p.no}
-              className={cx("border-b border-border hover:bg-muted transition-colors", p.overdue && "bg-[color-mix(in_srgb,var(--danger)_5%,transparent)]")}><td className="px-3 py-2.5 font-mono text-[12px] whitespace-nowrap">{p.no}</td><td className="px-3 py-2.5 font-semibold">{p.desc}</td><td className="px-3 py-2.5 tabular text-right whitespace-nowrap">{p.amount.toLocaleString()}</td><td className="px-3 py-2.5 text-caption whitespace-nowrap">{p.created}</td><td className="px-3 py-2.5 whitespace-nowrap">{p.manager}</td><td className="px-3 py-2.5 whitespace-nowrap"><span
-                  style={{ color: p.overdue ? "var(--danger)" : "var(--foreground)", fontWeight: p.overdue ? 700 : 400 }}>{p.due}</span>{p.overdue && <StatusBadge tone="danger" label="기한초과" size="sm" />}</td></tr>)}</tbody></table></div>
+              className={cx("border-b border-border hover:bg-muted transition-colors", p.overdue && "bg-[color-mix(in_srgb,var(--danger)_5%,transparent)]")}><td className="px-3 py-2.5 font-mono text-[12px] whitespace-nowrap"><MT>{p.no}</MT></td><td className="px-3 py-2.5 font-semibold"><MT>{p.desc}</MT></td><td className="px-3 py-2.5 tabular text-right whitespace-nowrap">{mn(p.amount.toLocaleString())}</td><td className="px-3 py-2.5 text-caption whitespace-nowrap">{mn(p.created)}</td><td className="px-3 py-2.5 whitespace-nowrap"><MT>{p.manager}</MT></td><td className="px-3 py-2.5 whitespace-nowrap"><span
+                  style={{ color: p.overdue ? "var(--danger)" : "var(--foreground)", fontWeight: p.overdue ? 700 : 400 }}>{mn(p.due)}</span>{p.overdue && <StatusBadge tone="danger" label="기한초과" size="sm" />}</td></tr>)}</tbody></table></div>
   );
 }
 
@@ -199,10 +200,10 @@ function EvidenceTable() {
                 className="text-left px-3 py-2.5 t-caption font-semibold whitespace-nowrap">{th}</th>)}</tr></thead><tbody>{NO_EVIDENCE.map((e) =>
             <tr
               key={e.no}
-              className="border-b border-border hover:bg-muted transition-colors"><td className="px-3 py-2.5 font-mono text-[12px] whitespace-nowrap">{e.no}</td><td className="px-3 py-2.5 text-caption whitespace-nowrap">{e.txDate}</td><td className="px-3 py-2.5 tabular text-right whitespace-nowrap">{e.amount.toLocaleString()}</td><td className="px-3 py-2.5 whitespace-nowrap"><div className="flex items-center gap-1.5"><Icon
+              className="border-b border-border hover:bg-muted transition-colors"><td className="px-3 py-2.5 font-mono text-[12px] whitespace-nowrap"><MT>{e.no}</MT></td><td className="px-3 py-2.5 text-caption whitespace-nowrap">{mn(e.txDate)}</td><td className="px-3 py-2.5 tabular text-right whitespace-nowrap">{mn(e.amount.toLocaleString())}</td><td className="px-3 py-2.5 whitespace-nowrap"><div className="flex items-center gap-1.5"><Icon
                     name={EV_ICON[e.evType] || "file"}
                     size={14}
-                    style={{ color: "var(--warning)" }} /><span className="font-semibold">{e.evType}</span></div></td><td className="px-3 py-2.5 text-caption">{e.reason}</td></tr>)}</tbody></table></div>
+                    style={{ color: "var(--warning)" }} /><span className="font-semibold"><MT>{e.evType}</MT></span></div></td><td className="px-3 py-2.5 text-caption"><MT>{e.reason}</MT></td></tr>)}</tbody></table></div>
   );
 }
 
@@ -213,7 +214,7 @@ function FinanceRow({ label, value, tone }: { label?: React.ReactNode; value?: R
   const [color] = tone ? toneVar(tone) : ["var(--foreground)"];
   return (
     <div
-      className="flex items-center justify-between py-2 border-b border-border last:border-0"><span className="t-caption text-[13px]">{label}</span><span className="text-[14px] font-bold tabular" style={{ color }}>{value}</span></div>
+      className="flex items-center justify-between py-2 border-b border-border last:border-0"><span className="t-caption text-[13px]"><MT>{label}</MT></span><span className="text-[14px] font-bold tabular" style={{ color }}>{mn(value)}</span></div>
   );
 }
 
@@ -222,7 +223,7 @@ function BsCard() {
     <div
       className="rounded-card border border-border bg-card px-4 py-4 shadow-sm flex-1"><div className="flex items-center gap-2 mb-3"><ColorChip icon="landmark" color="var(--accent)" size={30} iconSize={16} /><span className="text-[14px] font-bold">재무상태표 요약</span></div><FinanceRow label="자산 총계" value="2조 3,840억원" /><FinanceRow label="부채 총계" value="800억원" tone="danger" /><FinanceRow label="자본 총계" value="2조 3,040억원" tone="success" /><div
         className="mt-3 rounded-[8px] px-3 py-2"
-        style={{ background: "color-mix(in srgb,var(--success) 10%,transparent)" }}><span className="text-[12px] font-bold" style={{ color: "var(--success)" }}>부채비율 3.5% — 안정적</span></div></div>
+        style={{ background: "color-mix(in srgb,var(--success) 10%,transparent)" }}><span className="text-[12px] font-bold" style={{ color: "var(--success)" }}>{mn("부채비율 3.5% — 안정적")}</span></div></div>
   );
 }
 
@@ -231,7 +232,7 @@ function PlCard() {
     <div
       className="rounded-card border border-border bg-card px-4 py-4 shadow-sm flex-1"><div className="flex items-center gap-2 mb-3"><ColorChip icon="trending" color="var(--primary)" size={30} iconSize={16} /><span className="text-[14px] font-bold">손익계산서 요약</span></div><FinanceRow label="총 수익" value="240억원" tone="success" /><FinanceRow label="총 비용" value="180억원" tone="danger" /><FinanceRow label="당기순이익" value="60억원" tone="primary" /><div
         className="mt-3 rounded-[8px] px-3 py-2"
-        style={{ background: "color-mix(in srgb,var(--primary) 10%,transparent)" }}><span className="text-[12px] font-bold" style={{ color: "var(--primary)" }}>순이익률 25.0%</span></div></div>
+        style={{ background: "color-mix(in srgb,var(--primary) 10%,transparent)" }}><span className="text-[12px] font-bold" style={{ color: "var(--primary)" }}>{mn("순이익률 25.0%")}</span></div></div>
   );
 }
 
@@ -251,7 +252,7 @@ function AuditTimeline() {
               className="absolute left-[15px] top-[28px] bottom-0 w-[2px]"
               style={{ background: "var(--border)" }} />}<span
               className="shrink-0 inline-flex items-center justify-center rounded-full z-10"
-              style={{ width: 30, height: 30, background: soft, color, border: `1.5px solid ${color}` }}><Icon name={iconName} size={15} stroke={2} /></span><div className="flex-1 pt-0.5"><div className="flex items-center justify-between gap-2 flex-wrap"><span className="text-[13px] font-semibold">{item.user}</span><span className="t-caption text-[11.5px] whitespace-nowrap">{item.time}</span></div><span className="text-[12.5px] text-caption">{item.action}</span></div></div>
+              style={{ width: 30, height: 30, background: soft, color, border: `1.5px solid ${color}` }}><Icon name={iconName} size={15} stroke={2} /></span><div className="flex-1 pt-0.5"><div className="flex items-center justify-between gap-2 flex-wrap"><span className="text-[13px] font-semibold"><MT>{item.user}</MT></span><span className="t-caption text-[11.5px] whitespace-nowrap">{mn(item.time)}</span></div><span className="text-[12.5px] text-caption"><MT>{item.action}</MT></span></div></div>
         );
       })}</div>
   );

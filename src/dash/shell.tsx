@@ -2,7 +2,8 @@
 import React from 'react';
 import { Icon } from './icons';
 import { UI } from './components';
-import { APFS_DATA } from './data';
+import { APFS_DATA, useMenuSel, MenuStore } from './data';
+import { MainWidgets } from './main_widgets';
 import logoUrl from './assets/logo.svg';
 import logoWhiteUrl from './assets/logo_white.svg';
 
@@ -216,14 +217,14 @@ function ncRow(key: string, p: any) {
   const { tone = "info", icon, tag, title, meta, date, dday } = p;
   const ic = icon || (tag && NC_TAGICON[tag]) || "bell";
   return (
-    <button key={key} style={{
+    <button key={key} className="nc-row" style={{
       display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 10, width: "100%",
       textAlign: "left", border: "none", background: "color-mix(in srgb, var(--muted) 45%, var(--card))", font: "inherit", cursor: "pointer", marginBottom: 4,
     }}>
       <Icon name={ic} size={16} style={{ color: `var(--${tone})`, flex: "0 0 auto" }} />
       {tag && <StatusBadge tone={tone} label={"　　"} size="sm" />}
       <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600, color: "var(--foreground)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</span>
-      {meta && <span className="t-caption" style={{ whiteSpace: "nowrap", flex: "0 0 auto" }}>{meta}</span>}
+      {meta && <span className="t-caption nc-meta" style={{ whiteSpace: "nowrap", flex: "0 0 auto" }}>{meta}</span>}
       {(date || dday) && <span style={{ whiteSpace: "nowrap", flex: "0 0 auto", fontSize: 11.5, fontWeight: dday ? 800 : 600, color: dday ? `var(--${tone})` : "var(--caption)" }}>{dday || date}</span>}
     </button>
   );
@@ -234,9 +235,9 @@ function ncMemoBody(withBar: boolean) {
   const all = [...T.delayed, ...T.progress, ...T.upcoming];
   return (
     <div>
-      {withBar && <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-        <input type="text" placeholder="검색어를 입력하세요" style={{ flex: 1, padding: "8px 12px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--muted)", font: "inherit", fontSize: 13, color: "var(--foreground)", outline: "none" }} />
-        <button style={{ padding: "8px 14px", borderRadius: 10, border: "none", background: "var(--primary)", color: "#fff", font: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>+ 등록</button>
+      {withBar && <div className="nc-memobar">
+        <input type="text" placeholder="검색어를 입력하세요" className="nc-search" />
+        <button className="nc-addbtn">+ 등록</button>
       </div>}
       {all.map((t: any, i: number) => ncRow("mm" + i, { tone: "info", icon: "check-circle", title: t.title, meta: t.due ? "마감 " + t.due : (t.start ? "시작 " + t.start : "") }))}
     </div>
@@ -375,7 +376,7 @@ function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) 
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           <div>
-            <div style={{ marginBottom: 4, fontSize: 12, fontWeight: 600, color: "var(--muted-foreground)" }}>최근 알림 · 3일 이내</div>
+            <div className="nc-section" style={{ marginBottom: 4 }}>최근 알림 · 3일 이내</div>
             <div>{recent.map((r, i) => ncRow("rc" + i, r))}</div>
           </div>
         </div>
@@ -487,35 +488,53 @@ function RoleSwitch({ role, onRole }) {
 /* ---------- Favorites FAB (우측하단 플로팅 즐겨찾기) ---------- */
 function FavoritesFab({ onNav }) {
   const [open, setOpen] = useState(false);
+  const [edit, setEdit] = useState(false);
+  const favKeys = useMenuSel("fav", D.DEFAULT_FAV);
+  const favs = MenuStore.resolve(favKeys);
+  const { MenuPickerModal } = MainWidgets;
   return (
-    <div style={{ position: "fixed", right: 24, bottom: 24, zIndex: 60, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12 }}>{open && <><div
-        onClick={() => setOpen(false)}
-        style={{ position: "fixed", inset: 0, zIndex: -1 }} /><div
-        style={{
-          width: 244, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14,
-          boxShadow: "var(--shadow-lg)", padding: 8, animation: "dashFade .16s var(--ease) both",
-        }}><div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 8px 8px" }}><Icon name="star" size={14} style={{ color: "var(--warning)" }} /><span
-            style={{ fontSize: 12.5, fontWeight: 700 }}>즐겨찾기</span></div>{D.FAVORITES.map((f, i) => <button
-            key={i}
-            onClick={() => { onNav(f.to); setOpen(false); }}
-            title={f.label}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "var(--foreground)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--muted-foreground)"; }}
-            style={{
-              width: "100%", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", border: "none", font: "inherit",
-              borderRadius: 9, padding: "9px 10px", background: "transparent", color: "var(--muted-foreground)",
-              fontSize: 12.5, fontWeight: 500, textAlign: "left", transition: "background .15s,color .15s",
-            }}><Icon name={f.icon} size={16} stroke={2} style={{ color: "var(--caption)", flex: "0 0 auto" }} /><span
-              style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{f.label}</span></button>)}</div></>}<button
+    <div style={{ position: "fixed", right: 24, bottom: 24, zIndex: 60, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12 }}>
+      <MenuPickerModal open={edit} onClose={() => setEdit(false)} initialTab="fav" />
+      {open && <>
+        <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: -1 }} />
+        <div style={{ width: 244, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, boxShadow: "var(--shadow-lg)", padding: 8, animation: "dashFade .16s var(--ease) both" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 8px 8px" }}>
+            <Icon name="star" size={14} style={{ color: "var(--warning)" }} />
+            <span style={{ fontSize: 12.5, fontWeight: 700 }}>즐겨찾기</span>
+            <button
+              onClick={() => { setOpen(false); setEdit(true); }}
+              aria-label="즐겨찾기 설정"
+              title="즐겨찾기 설정"
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "var(--foreground)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--caption)"; }}
+              style={{ marginLeft: "auto", flex: "0 0 auto", width: 26, height: 26, borderRadius: 7, border: "none", background: "transparent", color: "var(--caption)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background .15s,color .15s" }}>
+              <Icon name="settings" size={15} />
+            </button>
+          </div>
+          {favs.length === 0
+            ? <div className="t-caption" style={{ padding: "4px 10px 10px" }}>설정(⚙)에서 즐겨찾기를 추가하세요.</div>
+            : favs.map((f: any, i: number) => (
+              <button
+                key={f.key}
+                onClick={() => { onNav(f.to); setOpen(false); }}
+                title={f.label}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "var(--foreground)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--muted-foreground)"; }}
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", border: "none", font: "inherit", borderRadius: 9, padding: "9px 10px", background: "transparent", color: "var(--muted-foreground)", fontSize: 12.5, fontWeight: 500, textAlign: "left", transition: "background .15s,color .15s" }}>
+                <Icon name={f.icon} size={16} stroke={2} style={{ color: "var(--caption)", flex: "0 0 auto" }} />
+                <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{f.label}</span>
+              </button>
+            ))}
+        </div>
+      </>}
+      <button
         onClick={() => setOpen((o) => !o)}
         aria-label="즐겨찾기"
         aria-expanded={open}
-        style={{
-          width: 46, height: 46, borderRadius: 99, cursor: "pointer", border: "none",
-          background: "#23C55E", color: "#fff", boxShadow: "var(--shadow-lg)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          transition: "transform .18s var(--ease)", transform: open ? "rotate(90deg) scale(1.04)" : "none",
-        }}><Icon name={open ? "x" : "star"} size={20} stroke={2.2} /></button></div>
+        style={{ width: 46, height: 46, borderRadius: 99, cursor: "pointer", border: "none", background: "#23C55E", color: "#fff", boxShadow: "var(--shadow-lg)", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform .18s var(--ease)", transform: open ? "rotate(90deg) scale(1.04)" : "none" }}>
+        <Icon name={open ? "x" : "star"} size={20} stroke={2.2} />
+      </button>
+    </div>
   );
 }
 

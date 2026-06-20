@@ -68,6 +68,7 @@ const MAP = {
   "expand-h":["UnfoldHorizontal","MoveHorizontal","StretchHorizontal"],
   "collapse-h":["FoldHorizontal","MoveHorizontal"],
   grid:["LayoutGrid","Grid3x3","Grid"], star:["Star"],
+  eye:["Eye"], "eye-off":["EyeOff","EyeClosed"],
 };
 
 // Lucide IconNode 조회: [[tag, attrs, children?], ...]

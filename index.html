@@ -78,6 +78,22 @@
   .apfs-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:99px;background:#fff;border:3px solid var(--brand-blue);box-shadow:var(--shadow-sm);cursor:pointer;margin-top:0;}
   .apfs-range::-moz-range-thumb{width:18px;height:18px;border-radius:99px;background:#fff;border:3px solid var(--brand-blue);box-shadow:var(--shadow-sm);cursor:pointer;}
   .apfs-range::-moz-range-track{height:6px;border-radius:99px;background:var(--brand-blue);}
+  /* ===== 알림센터 모달 ===== */
+  @keyframes ncFade{from{opacity:0;}to{opacity:1;}}
+  @keyframes ncPop{from{opacity:0;transform:translateY(10px) scale(.985);}to{opacity:1;transform:none;}}
+  .nc-row{transition:background .14s var(--ease);}
+  .nc-row:hover{background:var(--muted)!important;}
+  .nc-sumcard{transition:transform .16s var(--ease),box-shadow .16s var(--ease),border-color .16s var(--ease);}
+  .nc-sumcard:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:var(--border-strong)!important;}
+  .nc-section{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--caption);}
+  .nc-tabs::-webkit-scrollbar{height:0;}
+  .nc-memobar{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
+  .nc-search{flex:1;height:40px;border:1px solid var(--border)!important;border-radius:10px;background:var(--muted);padding:0 14px;font:inherit;font-size:13.5px;color:var(--foreground);outline:none;}
+  .nc-search:focus{border-color:var(--brand-blue)!important;background:var(--card);}
+  .nc-addbtn{height:40px;padding:0 16px;border:none;border-radius:10px;background:var(--brand-blue);color:#fff;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;}
+  .nc-addbtn:hover{background:var(--primary-hover);}
+  @media (max-width:720px){.nc-sumgrid{grid-template-columns:repeat(2,1fr)!important;}}
+  @media (max-width:560px){.nc-meta{display:none;}}
 </style>
 </head>
 <body>

@@ -6,6 +6,7 @@ import { Charts } from './charts';
 import { MainWidgets } from './main_widgets';
 import { Shell } from './shell';
 import { APFS_DATA } from './data';
+import { mn, MT } from './mask';
 
 const { useState } = React;
 const { StatCard, ChartCard, Card, Button, ColorChip, StatusBadge, DeltaBadge } = UI;
@@ -36,10 +37,10 @@ function HeroAUM({ onNav }) {
         display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", gap: 22, alignItems: "center",
       }}><div
         style={{ position: "absolute", inset: 0, background: "radial-gradient(120% 140% at 100% 0%,rgba(255,255,255,.14),transparent 55%)", pointerEvents: "none" }} /><div className="hero-main" style={{ position: "relative" }}><div
-          style={{ display: "flex", alignItems: "center", gap: 8, opacity: .9, fontSize: 12.5, fontWeight: 600 }}><Icon name="landmark" size={16} />총 운용자산 (AUM)<span style={{ fontSize: 10.5, opacity: .7 }}>{aum.fr}</span></div><div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 8 }}><span
+          style={{ display: "flex", alignItems: "center", gap: 8, opacity: .9, fontSize: 12.5, fontWeight: 600 }}><Icon name="landmark" size={16} /><MT>총 운용자산 (AUM)</MT><span style={{ fontSize: 10.5, opacity: .7 }}><MT>{aum.fr}</MT></span></div><div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 8 }}><span
             className="tabular"
-            style={{ fontSize: 46, fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1 }}>{aum.value}</span><span style={{ fontSize: 18, fontWeight: 600, opacity: .85 }}>{aum.unit}</span></div><div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12 }}><span
-            style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,.18)", borderRadius: 8, padding: "4px 9px", fontSize: 12.5, fontWeight: 700 }}><Icon name="trending" size={14} />+3.2% 전월 대비</span><div style={{ width: 120, opacity: .95 }}><Sparkline data={aum.trend} color="#bdeaff" id="hero" height={34} area={false} /></div></div><div style={{ display: "flex", gap: 8, marginTop: 18 }}><Button
+            style={{ fontSize: 46, fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1 }}>{mn(aum.value)}</span><span style={{ fontSize: 18, fontWeight: 600, opacity: .85 }}>{aum.unit}</span></div><div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12 }}><span
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,.18)", borderRadius: 8, padding: "4px 9px", fontSize: 12.5, fontWeight: 700 }}><Icon name="trending" size={14} />{mn("+3.2% 전월 대비")}</span><div style={{ width: 120, opacity: .95 }}><Sparkline data={aum.trend} color="#bdeaff" id="hero" height={34} area={false} /></div></div><div style={{ display: "flex", gap: 8, marginTop: 18 }}><Button
             variant="outline"
             size="sm"
             style={{ background: "rgba(255,255,255,.16)", color: "#fff", borderColor: "rgba(255,255,255,.3)" }}
@@ -49,7 +50,7 @@ function HeroAUM({ onNav }) {
             style={{ background: "transparent", color: "#fff", borderColor: "rgba(255,255,255,.3)" }}
             trailingIcon="arrow-right"
             onClick={() => onNav("performance")}>성과 상세</Button></div></div><div
-        style={{ position: "relative", textAlign: "center", borderLeft: "1px solid rgba(255,255,255,.18)", paddingLeft: 18 }}><div style={{ fontSize: 12.5, fontWeight: 600, opacity: .9, marginBottom: 2 }}>모태펀드 집행률</div><GaugeLight value={78} /><div style={{ fontSize: 11.5, opacity: .8, marginTop: 2 }}>목표 80% · 잔여 2%p</div></div><div
+        style={{ position: "relative", textAlign: "center", borderLeft: "1px solid rgba(255,255,255,.18)", paddingLeft: 18 }}><div style={{ fontSize: 12.5, fontWeight: 600, opacity: .9, marginBottom: 2 }}>모태펀드 집행률</div><GaugeLight value={78} /><div style={{ fontSize: 11.5, opacity: .8, marginTop: 2 }}>{mn("목표 80% · 잔여 2%p")}</div></div><div
         style={{ position: "relative", display: "flex", flexDirection: "column", gap: 12 }}><HeroStat
           icon="trending"
           label="전체 평균 IRR"
@@ -89,7 +90,7 @@ function GaugeLight({ value }) {
         x={65}
         y={64}
         textAnchor="middle"
-        style={{ fontSize: 26, fontWeight: 800, fill: "#fff" }}>{value + "%"}</text></svg>
+        style={{ fontSize: 26, fontWeight: 800, fill: "#fff" }}>{mn(value + "%")}</text></svg>
   );
 }
 function HeroStat({ icon, label, value, unit, delta, danger, onNav }: { icon: string; label?: React.ReactNode; value?: React.ReactNode; unit?: string; delta?: React.ReactNode; danger?: boolean; onNav?: () => void }) {
@@ -100,8 +101,8 @@ function HeroStat({ icon, label, value, unit, delta, danger, onNav }: { icon: st
         border: "none", cursor: onNav ? "pointer" : "default", font: "inherit", textAlign: "left", color: "#fff",
         background: "rgba(255,255,255,.12)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12,
       }}><span
-        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,.18)", flex: "0 0 auto" }}><Icon name={icon} size={19} /></span><div style={{ flex: 1 }}><div style={{ fontSize: 11.5, opacity: .9, fontWeight: 600 }}>{label}</div><div style={{ display: "flex", alignItems: "baseline", gap: 4 }}><span className="tabular" style={{ fontSize: 24, fontWeight: 800 }}>{value}</span><span style={{ fontSize: 12, opacity: .85 }}>{unit}</span><span
-            style={{ fontSize: 11.5, fontWeight: 700, marginLeft: 4, color: danger ? "#ffd9d6" : "#bff0c4" }}>{delta}</span></div></div></button>
+        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,.18)", flex: "0 0 auto" }}><Icon name={icon} size={19} /></span><div style={{ flex: 1 }}><div style={{ fontSize: 11.5, opacity: .9, fontWeight: 600 }}><MT>{label}</MT></div><div style={{ display: "flex", alignItems: "baseline", gap: 4 }}><span className="tabular" style={{ fontSize: 24, fontWeight: 800 }}>{mn(value)}</span><span style={{ fontSize: 12, opacity: .85 }}>{unit}</span><span
+            style={{ fontSize: 11.5, fontWeight: 700, marginLeft: 4, color: danger ? "#ffd9d6" : "#bff0c4" }}>{mn(delta)}</span></div></div></button>
   );
 }
 
@@ -116,7 +117,7 @@ function StatusBar() {
     <div
       style={{ display: "flex", gap: 10, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, padding: 8, boxShadow: "var(--shadow-sm)" }}>{D.STATUS_DONUT.map((st) => <div
         key={st.key}
-        style={{ flex: st.value, minWidth: 70, background: `color-mix(in srgb,${st.color} 13%,transparent)`, borderRadius: 8, padding: "8px 12px" }}><div style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: 99, background: st.color }} /><span style={{ fontSize: 11.5, fontWeight: 700, color: st.color }}>{st.name}</span></div><div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 2 }}><span className="tabular" style={{ fontSize: 20, fontWeight: 800 }}>{st.value}</span><span className="t-caption">{((st.value / total) * 100).toFixed(0) + "%"}</span></div></div>)}</div>
+        style={{ flex: st.value, minWidth: 70, background: `color-mix(in srgb,${st.color} 13%,transparent)`, borderRadius: 8, padding: "8px 12px" }}><div style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: 99, background: st.color }} /><span style={{ fontSize: 11.5, fontWeight: 700, color: st.color }}><MT>{st.name}</MT></span></div><div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 2 }}><span className="tabular" style={{ fontSize: 20, fontWeight: 800 }}>{mn(st.value)}</span><span className="t-caption">{mn(((st.value / total) * 100).toFixed(0) + "%")}</span></div></div>)}</div>
   );
 }
 function VariantC({ s, onNav }) {
