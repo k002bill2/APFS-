@@ -54,6 +54,7 @@ function CheckRow({ label, checked, onClick }) {
   return (
     <button
       onClick={onClick}
+      aria-pressed={checked}
       className="flex items-center gap-3 w-full text-left cursor-pointer bg-transparent border-0 py-2">
       <span
         className="inline-flex items-center justify-center shrink-0 transition-all duration-150"
@@ -73,6 +74,9 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
   const ASSETS = ["주식", "채권", "실물 자산", "사모 펀드"];
   const [sel, setSel] = useState(applied.assets);
   const [risk, setRisk] = useState(applied.risk == null ? 50 : applied.risk);
+  // riskOn: 슬라이더는 "off" 상태가 없으므로(항상 위치값) 활성 여부를 별도로 추적.
+  // 미활성으로 열고 슬라이더를 안 건드린 채 적용하면 risk 필터가 제멋대로 켜지는 것 방지.
+  const [riskOn, setRiskOn] = useState(applied.risk != null);
   const [period, setPeriod] = useState(applied.period || "당기 회계연도");
   const toggle = (a) => setSel((s) => ({ ...s, [a]: !s[a] }));
   // 드로어가 열릴 때마다 현재 적용된 필터로 초기화 (칩 제거 등 외부 변경 반영)
@@ -80,6 +84,7 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
     if (open) {
       setSel(applied.assets);
       setRisk(applied.risk == null ? 50 : applied.risk);
+      setRiskOn(applied.risk != null);
       setPeriod(applied.period || "당기 회계연도");
     }
   }, [open]);
@@ -109,19 +114,21 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
         </header>
         <div className="flex-1 overflow-y-auto px-6 py-6" style={{ display: "flex", flexDirection: "column", gap: 26 }}>
           <div>
-            <div className="text-[13px] font-bold mb-2" style={{ color: "var(--muted-foreground)" }}>자산 유형</div>
+            <div className="text-[13px] font-bold mb-2" style={{ color: "var(--muted-foreground)" }}>자산 유형
+              <span style={{ fontWeight: 500, color: "var(--caption)", marginLeft: 6 }}>· 데이터 연동 후 적용</span></div>
             <div className="flex flex-col">
               {ASSETS.map((a) => <CheckRow key={a} label={a} checked={!!sel[a]} onClick={() => toggle(a)} />)}
             </div>
           </div>
           <div>
-            <div className="text-[13px] font-bold mb-3" style={{ color: "var(--muted-foreground)" }}>리스크 노출도</div>
+            <div className="text-[13px] font-bold mb-3" style={{ color: "var(--muted-foreground)" }}>리스크 노출도
+              {!riskOn && <span style={{ fontWeight: 500, color: "var(--caption)", marginLeft: 6 }}>· 미적용 (슬라이더 조정 시 적용)</span>}</div>
             <input
               type="range"
               min={0}
               max={100}
               value={risk}
-              onChange={(e) => setRisk(+e.target.value)}
+              onChange={(e) => { setRisk(+e.target.value); setRiskOn(true); }}
               className="apfs-range"
               style={{ width: "100%", accentColor: "var(--brand-blue)" }}
             />
@@ -131,12 +138,13 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
             </div>
           </div>
           <div>
-            <div className="text-[13px] font-bold mb-2.5" style={{ color: "var(--muted-foreground)" }}>기간 설정</div>
+            <div className="text-[13px] font-bold mb-2.5" style={{ color: "var(--muted-foreground)" }}>기간 설정
+              <span style={{ fontWeight: 500, color: "var(--caption)", marginLeft: 6 }}>· 데이터 연동 후 적용</span></div>
             <div className="relative">
               <select
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
-                className="w-full text-[14px] font-semibold cursor-pointer appearance-none"
+                className="w-full text-[16px] font-semibold cursor-pointer appearance-none"
                 style={{
                   color: "var(--foreground)", background: "var(--card)", border: "1px solid var(--border)",
                   borderRadius: 10, padding: "11px 44px 11px 14px", fontFamily: "inherit", outline: "none",
@@ -151,11 +159,9 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
             </div>
           </div>
         </div>
-        <div className="px-6 py-5 border-t border-border" style={{ flex: "0 0 auto" }}>
-          <button
-            onClick={() => onApply({ assets: sel, risk, period })}
-            className="ui-btn w-full inline-flex items-center justify-center gap-2 cursor-pointer text-[14px] font-bold"
-            style={{ background: "#1F1F22", color: "#fff", borderRadius: 12, padding: "14px", border: "none" }}>필터 적용</button>
+        <div className="px-6 py-5 border-t border-border" style={{ flex: "0 0 auto", display: "flex", gap: 8 }}>
+          <Button variant="outline" size="md" onClick={() => { setSel({}); setRisk(50); setRiskOn(false); setPeriod("당기 회계연도"); }}>초기화</Button>
+          <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => onApply({ assets: sel, risk: riskOn ? risk : null, period })}>필터 적용</Button>
         </div>
       </aside>
     </>
@@ -297,11 +303,18 @@ function Performance({ onNav }) {
   const [page, setPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
   const [modal, setModal] = useState<string | null>(null); // null | "create" | "edit"
-  const [applied, setApplied] = useState({ period: "당기 회계연도", assets: { "주식": true, "채권": true }, risk: 50 });
+  // risk 기본 null = 필터 해제(로드 시 전체 행). 실제 필터링되므로 비-null이면 즉시 행을 숨김 → opt-in.
+  const [applied, setApplied] = useState<{ period: string | null; assets: Record<string, boolean>; risk: number | null }>({ period: "당기 회계연도", assets: { "주식": true, "채권": true }, risk: null });
   const [selected, setSelected] = useState<Record<number, boolean>>({});
   const [rows, setRows] = useState(D.PORTFOLIO);
-  const allChecked = rows.length > 0 && rows.every((_, i) => selected[i]);
-  const toggleAll = () => setSelected(allChecked ? {} : rows.reduce((o, _, i) => ((o[i] = true), o), {} as Record<number, boolean>));
+  // 슬라이더 값(0~100) → 리스크 버킷 라벨 (칩 표시 + 실제 행 필터 공용 도메인)
+  const riskLabel = (r) => (r == null ? null : r < 33 ? "리스크 보수적" : r < 66 ? "리스크 중립" : "리스크 공격적");
+  const ROW_RISK_LABEL: Record<string, string> = { "ULTRA-LOW": "리스크 보수적", "LOW": "리스크 보수적", "MEDIUM": "리스크 중립", "HIGH": "리스크 공격적" };
+  const wantRisk = riskLabel(applied.risk); // applied.risk null(칩 제거)이면 필터 해제
+  // risk만 행 데이터에 매핑 → 실제 필터. 원본 인덱스 보존(selection이 인덱스 기반). 자산유형/기간은 no-op(드로어 캡션으로 신호)
+  const filtered = rows.map((r, i) => ({ r, i })).filter(({ r }) => !wantRisk || ROW_RISK_LABEL[r.risk] === wantRisk);
+  const allChecked = filtered.length > 0 && filtered.every(({ i }) => selected[i]);
+  const toggleAll = () => setSelected(allChecked ? {} : filtered.reduce((o, { i }) => ((o[i] = true), o), {} as Record<number, boolean>));
   const toggleRow = (i) => setSelected((s) => ({ ...s, [i]: !s[i] }));
   const addRow = () => setRows((rs) => [{
     code: "NEW", codeColor: "var(--chart-1)", name: "신규 등록 자산", meta: "신규 · 미분류",
@@ -315,7 +328,6 @@ function Performance({ onNav }) {
     setPage(1);
   };
 
-  const riskLabel = (r) => (r == null ? null : r < 33 ? "리스크 보수적" : r < 66 ? "리스크 중립" : "리스크 공격적");
   // 적용된 필터 → 칩 목록 (드로어와 연동)
   const chips = [];
   if (applied.period) chips.push({ key: "period", label: applied.period });
@@ -383,7 +395,7 @@ function Performance({ onNav }) {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, i) => (
+                {filtered.map(({ r, i }) => (
                   <tr
                     key={i}
                     className="group border-t border-border transition-colors"
@@ -437,7 +449,7 @@ function Performance({ onNav }) {
 
           {/* 푸터 */}
           <div className="flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 py-4 border-t border-border">
-            <span className="t-caption">총 {mn("1,208")}개 중 <b style={{ color: "var(--foreground)" }}>{mn(rows.length) + "개"}</b> 항목 표시 중</span>
+            <span className="t-caption">총 {mn("1,208")}개 중 <b style={{ color: "var(--foreground)" }}>{mn(filtered.length) + "개"}</b> 항목 표시 중</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
