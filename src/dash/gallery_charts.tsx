@@ -1,6 +1,7 @@
 /* 갤러리용 추가 차트 — 기존 토큰/이징 공유. Charts에 합류. */
 import React, { useState } from 'react';
 import { Charts } from './charts';
+import { mn } from './mask';
 
 const { useMeasure, fmtEok } = Charts;
 
@@ -43,7 +44,7 @@ function ColumnTrack({ data, height = 160, highlight = null, accent = "var(--pri
         position: "absolute", left: band * hi + band / 2, top: m.t + ih - (data[hi].value / max) * ih - 30,
         transform: "translateX(-50%)", background: "var(--foreground)", color: "var(--bg)", fontSize: 11.5, fontWeight: 700,
         padding: "3px 8px", borderRadius: 7, whiteSpace: "nowrap", pointerEvents: "none",
-      }}>{data[hi].label || data[hi].value}</div>}
+      }}>{mn(data[hi].label || data[hi].value)}</div>}
     </div>
   );
 }
@@ -94,7 +95,7 @@ function DualSeries({ a, b, labels, height = 170, area = false, ca = "var(--char
         </defs>
         {ticks.map((t, i) => <g key={i}>
           <line x1={m.l} x2={m.l+iw} y1={m.t+ih-(t/max)*ih} y2={m.t+ih-(t/max)*ih} stroke="var(--chart-grid)" strokeDasharray="3 3" />
-          <text x={m.l-6} y={m.t+ih-(t/max)*ih+4} textAnchor="end" style={{ fontSize: 10, fill: "var(--caption)" }} className="tabular">{t.toLocaleString()}</text>
+          <text x={m.l-6} y={m.t+ih-(t/max)*ih+4} textAnchor="end" style={{ fontSize: 10, fill: "var(--caption)" }} className="tabular">{mn(t.toLocaleString())}</text>
         </g>)}
         {(labels||[]).map((lb, i) => <text key={"x"+i} x={m.l+(i/(labels!.length-1))*iw} y={height-6} textAnchor="middle" style={{ fontSize: 10.5, fill: "var(--caption)", fontWeight: 600 }}>{lb}</text>)}
         {series(b, cb, "b")}{series(a, ca, "a")}
@@ -122,7 +123,7 @@ function PieLabeled({ data, height = 170 }: { data: any[]; height?: number }) {
           const lx = cx + lr * Math.cos(mid), ly = cy + lr * Math.sin(mid);
           return <g key={i}>
             <path d={arc(a0, a1)} fill={d.color} stroke="var(--card)" strokeWidth={2} />
-            {frac > 0.06 && <text x={lx} y={ly+4} textAnchor="middle" style={{ fontSize: 12, fontWeight: 800, fill: "#fff" }}>{Math.round(frac*100)+"%"}</text>}
+            {frac > 0.06 && <text x={lx} y={ly+4} textAnchor="middle" style={{ fontSize: 12, fontWeight: 800, fill: "#fff" }}>{mn(Math.round(frac*100))+"%"}</text>}
           </g>;
         })}
       </svg>}

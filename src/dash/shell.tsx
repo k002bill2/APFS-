@@ -1,5 +1,6 @@
 /* 전역 셸 — GNB / LNB / 브레드크럼 / 알림센터 / RBAC 게이팅 / 테마 토글 */
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { Icon } from './icons';
 import { UI } from './components';
 import { APFS_DATA, useMenuSel, MenuStore } from './data';
@@ -84,6 +85,8 @@ function MenuChildren({ m, expanded, setExpanded, onNav }) {
 /* ---------- LNB ---------- */
 function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
   const [expanded, setExpanded] = useState(() => ({ ...allSubGroupsExpanded(), risk: true }));
+  const [hover, setHover] = useState<any>(null);
+  const hoverTimer = React.useRef<any>(null);
   const menu = D.MENU.filter((m) => m.roles.includes(role));
   const posStyle: React.CSSProperties = mobile
     ? { position: "fixed", top: 58, left: 0, width: 270, height: "calc(100vh - 58px)", zIndex: 45,
@@ -109,6 +112,8 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
                 onClick={() => { if (m.path) onNav(m.path); if (hasKids && open) setExpanded((e) => ({ ...e, [m.id]: !e[m.id] })); }}
                 aria-current={isActive ? "page" : undefined}
                 title={!open ? m.label : undefined}
+                onMouseEnter={(e) => { if (!open && !mobile && hasKids) { clearTimeout(hoverTimer.current); const r = e.currentTarget.getBoundingClientRect(); setHover({ m, top: r.top }); } }}
+                onMouseLeave={() => { if (!open) { clearTimeout(hoverTimer.current); hoverTimer.current = setTimeout(() => setHover(null), 160); } }}
                 style={{
                   position: "relative", width: "100%", display: "flex", alignItems: "center", gap: 11, cursor: "pointer",
                   border: "none", font: "inherit", borderRadius: 9, padding: open ? "9px 10px" : "10px", justifyContent: open ? "flex-start" : "center",
@@ -136,7 +141,31 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
           }}><Icon name="layers" size={20} />{open && <span style={{ whiteSpace: "nowrap" }}>디자인 시스템</span>}</button></div><div
         style={{ borderTop: "1px solid var(--border)", padding: open ? "10px 14px" : "10px 8px" }}>{open
           ? <div style={{ display: "flex", alignItems: "center", gap: 10 }}><ColorChip icon="shield-check" color="var(--success)" size={30} iconSize={16} /><div style={{ lineHeight: 1.3 }}><div style={{ fontSize: 11.5, fontWeight: 700 }}>보안 접속 정상</div><div className="t-caption" style={{ fontSize: 10.5 }}>내부망 · TLS 1.3</div></div></div>
-          : <div style={{ display: "flex", justifyContent: "center" }}><Icon name="shield-check" size={18} style={{ color: "var(--success)" }} /></div>}</div></nav>
+          : <div style={{ display: "flex", justifyContent: "center" }}><Icon name="shield-check" size={18} style={{ color: "var(--success)" }} /></div>}</div>
+      {!open && !mobile && hover && ReactDOM.createPortal(
+        <div
+          onMouseEnter={() => { clearTimeout(hoverTimer.current); setHover(hover); }}
+          onMouseLeave={() => { clearTimeout(hoverTimer.current); hoverTimer.current = setTimeout(() => setHover(null), 160); }}
+          style={{
+            position: "fixed", left: 70, top: Math.max(64, Math.min(hover.top, window.innerHeight - 320)), width: 264, zIndex: 70,
+            background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14,
+            boxShadow: "var(--shadow-lg)", padding: 10, animation: "railSlide .18s var(--ease) both",
+          }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "6px 8px 10px", borderBottom: "1px solid var(--border)", marginBottom: 6 }}>
+            <ColorChip icon={hover.m.icon} color={hover.m.urgent ? "var(--danger)" : "var(--primary)"} size={30} iconSize={16} />
+            <span style={{ fontSize: 13.5, fontWeight: 700 }}>{hover.m.label}</span>
+          </div>
+          {hover.m.path && <button
+            onClick={() => { onNav(hover.m.path); setHover(null); }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 8, border: "none", font: "inherit", cursor: "pointer",
+              borderRadius: 8, padding: "8px 10px", background: "transparent", color: "var(--primary)", fontSize: 12.5, fontWeight: 700, marginBottom: 4,
+            }}><Icon name="arrow-right" size={14} />전체 보기</button>}
+          <MenuChildren m={hover.m} expanded={expanded} setExpanded={setExpanded} onNav={(r) => { onNav(r); setHover(null); }} />
+        </div>, document.body)}
+      </nav>
   );
 }
 
@@ -166,11 +195,12 @@ function RailNav({ role, route, onNav, mobile, drawerOpen }) {
 
   return (
     <>{hover && !mobile && <div style={{
-        position: "fixed", left: 70, top: hover.top, transform: "translateY(-50%)", zIndex: 70, pointerEvents: "none",
+        position: "fixed", left: 70, zIndex: 70, pointerEvents: "none",
+        ...(hover.bottom != null ? { bottom: hover.bottom } : { top: hover.top, transform: "translateY(-50%)" }),
         background: "color-mix(in srgb,var(--foreground) 92%,transparent)", color: "var(--bg)",
         fontSize: 12, fontWeight: 600, padding: "5px 10px", borderRadius: 8, whiteSpace: "nowrap",
         boxShadow: "var(--shadow-lg)", animation: "dashFade .12s var(--ease) both",
-      }}>{hover.label}</div>}{activeM && <><div
+      }}>{hover.label}{hover.sub && <div style={{ fontSize: 10.5, fontWeight: 500, opacity: .78, marginTop: 2 }}>{hover.sub}</div>}</div>}{activeM && <><div
         onClick={() => setActive(null)}
         style={{ position: "fixed", inset: 0, zIndex: 46 }} /><div
         style={{
@@ -200,7 +230,9 @@ function RailNav({ role, route, onNav, mobile, drawerOpen }) {
           () => { if (m.children) setActive((a) => (a === m.id ? null : m.id)); else { onNav(m.path); setActive(null); } },
           m.id === "risk" ? rollup(m) : 0, m.urgent))}</div><div
         style={{ borderTop: "1px solid var(--border)", padding: "8px" }}>{railBtn("ds", "layers", "디자인 시스템", route === "designsystem", () => { onNav("designsystem"); setActive(null); }, 0)}</div><div
-        style={{ borderTop: "1px solid var(--border)", padding: "10px 8px", display: "flex", justifyContent: "center" }}><Icon
+        style={{ borderTop: "1px solid var(--border)", padding: "10px 8px", display: "flex", justifyContent: "center" }}
+        onMouseEnter={() => setHover({ label: "보안 접속 정상", sub: "내부망 · TLS 1.3", bottom: 10 })}
+        onMouseLeave={() => setHover(null)}><Icon
           name="shield-check" size={18} style={{ color: "var(--success)" }} /></div></nav></>
   );
 }
@@ -293,7 +325,7 @@ function NcScheduleBody() {
           {sel && <button onClick={() => setSel(null)} style={{ marginLeft: "auto", border: "none", background: "transparent", color: "var(--brand-blue)", font: "inherit", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>전체 보기</button>}
         </div>
         {visible.map((s: any, i: number) => (
-          <button key={"sr" + i} onClick={() => s.day && setSel(s.day)} style={{
+          <button key={"sr" + i} onClick={() => s.day && setSel(s.day)} className="nc-row" style={{
             display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 10, width: "100%",
             textAlign: "left", border: "none", font: "inherit", cursor: "pointer", marginBottom: 4,
             background: s.day === sel ? "color-mix(in srgb,var(--brand-blue) 12%,var(--card))" : "color-mix(in srgb, var(--muted) 45%, var(--card))",
@@ -301,7 +333,7 @@ function NcScheduleBody() {
             <Icon name={NC_TAGICON[s.tag] || "calendar"} size={16} style={{ color: `var(--${s.tone})`, flex: "0 0 auto" }} />
             <StatusBadge tone={s.tone} label={"　　"} size="sm" />
             <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.title}</span>
-            <span className="t-caption" style={{ whiteSpace: "nowrap", flex: "0 0 auto" }}>{s.by + (s.time ? " · " + s.time : "")}</span>
+            <span className="t-caption nc-meta" style={{ whiteSpace: "nowrap", flex: "0 0 auto" }}>{s.by + (s.time ? " · " + s.time : "")}</span>
           </button>
         ))}
       </div>
