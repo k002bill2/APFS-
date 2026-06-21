@@ -28,6 +28,13 @@
       "enforcement": "suggest",
       "keywords": ["번들", "bundle", "manifest", "template", "gzip", "base64", "자산", "asset", "인코딩", "디코드", "decode", "encode", "blob", "omelette", "artifact", "html", "html 파일"],
       "intentPatterns": ["(edit|modify|patch|수정|편집|고치).*(번들|bundle|manifest|template|html|자산|asset)"]
+    },
+    {
+      "skillName": "apfs-capture-schema",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["캡처", "현행시스템", "실화면", "필드 추출", "페이지 생성", "스키마", "OCR", "조회 화면", "FFMS", "RISK", "REPORT", "TRUST", "BRIEF", "실물검증", "공고문"],
+      "intentPatterns": ["(캡처|capture|OCR).*(페이지|스키마|schema|page|필드|field)", "(현행시스템|실화면|실물).*(추출|생성|동결|배선|schema)"]
     }
   ]
 }
