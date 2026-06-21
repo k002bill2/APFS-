@@ -36,7 +36,7 @@ export function statusTone(label: string): Tone {
 
 const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: "var(--caption)", marginBottom: 5, display: "block" };
 const inputStyle: React.CSSProperties = {
-  width: "100%", boxSizing: "border-box", padding: "8px 11px", fontSize: 13.5, font: "inherit",
+  width: "100%", boxSizing: "border-box", padding: "8px 11px", fontSize: 16, font: "inherit",
   border: "1px solid var(--border-strong)", borderRadius: 9, background: "var(--card)", color: "var(--foreground)",
 };
 
@@ -137,7 +137,7 @@ export function RowFormModal({ mode, initial, onSave, onClose, onDelete }: {
         </div>
 
         {/* 푸터 */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "14px 18px", borderTop: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, rowGap: 8, flexWrap: "wrap", padding: "14px 18px", borderTop: "1px solid var(--border)" }}>
           <div>
             {mode === "edit" && onDelete && (
               confirmDel

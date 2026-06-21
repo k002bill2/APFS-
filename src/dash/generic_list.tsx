@@ -166,7 +166,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       <Card pad={0} style={{ overflow: "hidden" }}>
         {/* 카드 헤더: 타이틀 + KPI 배지 */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 18px", flexWrap: "wrap" }}>
-          <h3 style={{ fontSize: 15.5, fontWeight: 700 }}><MT>{title}</MT></h3>
+          <h3 style={{ fontSize: 15.5, fontWeight: 700 }}>{title}</h3>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <KpiBadge icon="trending" color="var(--chart-1)" label="평균 변동률"
               value={mn((avgUp ? "+" : "-") + Math.abs(avgChange).toFixed(1)) + "%"}
@@ -179,7 +179,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         {/* 툴바: 필터 칩 / 선택 액션 */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 18px", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", background: "color-mix(in srgb, var(--muted) 35%, transparent)", flexWrap: "wrap" }}>
           {selected.size > 0 ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <span style={{ fontSize: 13, fontWeight: 600 }}>{selected.size}건 선택됨</span>
               <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger)" }} onClick={bulkDelete}>선택 삭제</Button>
               <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>선택 해제</Button>
@@ -191,7 +191,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               {chips.length === 0 && <span style={{ fontSize: 12.5, color: "var(--caption)" }}>필터 없음</span>}
             </div>
           )}
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
             <Button variant="ghost" size="sm" leadingIcon="panel-left">상세필터</Button>
             <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(23)); setSelected(new Set()); setPage(1); }} />
             <Button variant="primary" size="sm" leadingIcon="plus" onClick={() => setModal({ mode: "create" })}>신규 등록</Button>
@@ -205,7 +205,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               <thead>
                 <tr style={{ background: "color-mix(in srgb, var(--muted) 55%, transparent)" }}>
                   <th style={{ padding: cellPad, width: 44 }}>
-                    <input type="checkbox" checked={allOnPage} onChange={toggleAll} aria-label="전체 선택" style={{ accentColor: "var(--primary)", width: 15, height: 15, cursor: "pointer" }} />
+                    <input type="checkbox" checked={allOnPage} onChange={toggleAll} aria-label="전체 선택" style={{ accentColor: "var(--primary)", width: 17, height: 17, cursor: "pointer" }} />
                   </th>
                   {[["항목명", "left"], ["금액 (백만원)", "right"], ["변동률", "center"], ["상태", "center"], ["추이", "center"], ["", "right"]].map(([label, align], i) => (
                     <th key={i} style={{ padding: cellPad, textAlign: align as any, fontSize: 12, fontWeight: 700, color: "var(--caption)", whiteSpace: "nowrap", borderBottom: "1px solid var(--border)" }}>{label}</th>
@@ -217,14 +217,16 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                   const sel = selected.has(r.id);
                   return (
                     <tr key={r.id}
-                      style={{ borderBottom: "1px solid var(--border)", background: sel ? "color-mix(in srgb, var(--primary) 6%, transparent)" : undefined, transition: "background .12s" }}
+                      style={{ borderBottom: "1px solid var(--border)", background: sel ? "color-mix(in srgb, var(--primary) 6%, transparent)" : undefined, transition: "background .12s", cursor: "pointer" }}
+                      title="더블클릭하여 상세·수정"
+                      onDoubleClick={() => setModal({ mode: "edit", row: r })}
                       onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = "color-mix(in srgb, var(--muted) 40%, transparent)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = sel ? "color-mix(in srgb, var(--primary) 6%, transparent)" : "transparent"; }}>
                       <td style={{ padding: cellPad }}>
-                        <input type="checkbox" checked={sel} onChange={() => toggleRow(r.id)} aria-label={r.name + " 선택"} style={{ accentColor: "var(--primary)", width: 15, height: 15, cursor: "pointer" }} />
+                        <input type="checkbox" checked={sel} onChange={() => toggleRow(r.id)} aria-label={r.name + " 선택"} style={{ accentColor: "var(--primary)", width: 17, height: 17, cursor: "pointer" }} />
                       </td>
                       <td style={{ padding: cellPad }}>
-                        <div style={{ minWidth: 200 }}>
+                        <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 13.5, fontWeight: 600 }}><MT>{r.name}</MT></div>
                           <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 1 }}><MT>{r.category}</MT></div>
                         </div>
@@ -234,7 +236,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                       <td style={{ padding: cellPad, textAlign: "center" }}><StatusBadge tone={statusTone(r.status)} label={r.status} size="sm" /></td>
                       <td style={{ padding: cellPad, textAlign: "center" }}><MiniBars data={r.trend} color={r.color} /></td>
                       <td style={{ padding: cellPad, textAlign: "right" }}>
-                        <IconBtn icon="file" label={r.name + " 상세·수정"} size={32} onClick={() => setModal({ mode: "edit", row: r })} />
+                        <IconBtn icon="file" label={r.name + " 상세·수정"} size={32} />
                       </td>
                     </tr>
                   );
@@ -248,7 +250,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
             </table>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12, padding: 18 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: 12, padding: 18 }}>
             {pageRows.map((r) => (
               <button key={r.id} onClick={() => setModal({ mode: "edit", row: r })}
                 style={{ textAlign: "left", border: "1px solid var(--border)", borderRadius: 12, padding: 14, background: "var(--card)", cursor: "pointer", font: "inherit", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -285,7 +287,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
             ))}
             <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} />
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <SegTabs size="sm" value={view} onChange={setView} options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "상세 뷰" }]} />
             <IconBtn icon="download" label="다운로드" size={32} />
             <IconBtn icon="external" label="새 창" size={32} />
@@ -297,7 +299,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       {/* ── 하단 요약 2-카드 ── */}
       <div style={{ display: "flex", gap: 16, marginTop: 16, flexWrap: "wrap" }}>
         {/* 좌: 진행률 요약 */}
-        <Card style={{ flex: "1 1 380px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <Card style={{ flex: "1 1 300px", minWidth: 0, display: "flex", flexDirection: "column", gap: 14 }}>
           <h4 style={{ fontSize: 14, fontWeight: 700 }}><MT>{(parent || title) + " 진행 요약"}</MT></h4>
           <p style={{ fontSize: 12.5, color: "var(--muted-foreground)", lineHeight: 1.6, margin: 0 }}>
             <MT>{"정상·완료 항목 비중과 평균 변동률을 종합한 진행 지표입니다."}</MT>
@@ -309,10 +311,10 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         </Card>
 
         {/* 우: 합계 금액 강조 (forest green) */}
-        <Card pad={20} style={{ flex: "1 1 320px", background: "var(--primary)", border: "none", color: "#fff", display: "flex", flexDirection: "column", gap: 8 }}>
+        <Card pad={20} style={{ flex: "1 1 260px", minWidth: 0, background: "var(--primary)", border: "none", color: "#fff", display: "flex", flexDirection: "column", gap: 8 }}>
           <span style={{ fontSize: 12.5, fontWeight: 600, opacity: .85 }}><MT>{"총 운용 금액"}</MT></span>
           <span style={{ fontSize: 12, opacity: .7 }}><MT>{title + " 누적 합계"}</MT></span>
-          <span className="tabular" style={{ fontSize: 32, fontWeight: 800, letterSpacing: "-.01em", margin: "4px 0" }}>{"₩" + mn(sumAmount.toLocaleString())}</span>
+          <span className="tabular" style={{ fontSize: "clamp(22px, 6vw, 32px)", fontWeight: 800, letterSpacing: "-.01em", margin: "4px 0", overflowWrap: "anywhere" }}>{"₩" + mn(sumAmount.toLocaleString())}</span>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px 14px", borderRadius: 10, background: "rgba(255,255,255,.18)", fontSize: 12.5, fontWeight: 600 }}>
             <Icon name="trending" size={15} stroke={2.4} /><MT>{"전기 대비 추이 보기"}</MT>
           </div>

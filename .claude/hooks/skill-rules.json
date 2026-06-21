@@ -16,6 +16,13 @@
       "intentPatterns": ["(create|build|add|make|만들|추가|작성).*(component|widget|page|위젯|차트|화면|페이지|대시보드)"]
     },
     {
+      "skillName": "responsive-ui",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["반응형", "responsive", "모바일", "mobile", "태블릿", "tablet", "브레이크포인트", "breakpoint", "레이아웃", "layout", "페이지", "page", "화면", "모달", "modal", "테이블", "table", "리스트", "list", "위젯", "widget", "오버플로", "overflow", "미디어쿼리", "media query", "clamp", "flexwrap"],
+      "intentPatterns": ["(create|build|add|make|edit|만들|추가|작성|수정|편집).*(page|화면|페이지|모달|modal|레이아웃|layout|테이블|table|리스트|list|위젯|widget|컴포넌트|component)", "(반응형|responsive|모바일|mobile|태블릿|tablet)"]
+    },
+    {
       "skillName": "apfs-bundle",
       "priority": "critical",
       "enforcement": "suggest",

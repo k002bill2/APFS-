@@ -112,7 +112,7 @@ npm run preview   # 빌드 결과 미리보기 — http://localhost:4273
 - 서브에이전트는 Primary 승인 없이 공유 파일을 수정하지 않는다.
 - 윤리적 우려(민감정보·시스템 손상 위험 등) 발생 시 **즉시 중단** 후 사용자에게 보고.
 - 능력 초과 태스크는 즉시 에스컬레이션.
-- 파일 생성/편집 전 해당 SKILL을 먼저 참조(UI/디자인은 `dashboard-ui`).
+- 파일 생성/편집 전 해당 SKILL을 먼저 참조(UI/디자인은 `dashboard-ui`, 화면 반응형은 `responsive-ui`).
 
 ## 멀티에이전트 실행 패턴
 - **1순위 — Workflow 도구**: 인라인 JS, `export const meta`로 시작, 전역 `agent()`/`parallel()`/`pipeline()`/`phase()`/`log()`. 동시성 자동 캡 `min(16, cpu-2)`, 격리 `agent(p,{isolation:'worktree'})`.
@@ -121,7 +121,7 @@ npm run preview   # 빌드 결과 미리보기 — http://localhost:4273
 
 ## Skills (자동 활성화)
 - `UserPromptSubmit` hook(`.claude/hooks/skill-activator.sh`)이 프롬프트를 stdin JSON으로 받아 `.claude/hooks/skill-rules.json`의 키워드와 매칭, 관련 스킬을 컨텍스트로 추천.
-- 프로젝트 스킬: `code-reviewer`(리뷰) · `dashboard-ui`(UI/디자인) · `apfs-bundle`(레거시 오프라인 번들 전용 — 현 Vite 구조엔 불필요).
+- 프로젝트 스킬: `code-reviewer`(리뷰) · `dashboard-ui`(UI/디자인) · `responsive-ui`(반응형 — 페이지/위젯/모달/테이블 작성·수정 시 누락 방지 체크리스트+검증) · `apfs-bundle`(레거시 오프라인 번들 전용 — 현 Vite 구조엔 불필요).
 - 새 스킬 추가 시 `skill-rules.json`의 트리거도 함께 갱신.
 
 ## Dev Docs 워크플로우

@@ -148,12 +148,13 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
         style={{ borderTop: "1px solid var(--border)", padding: open ? "10px 14px" : "10px 8px" }}>{open
           ? <div style={{ display: "flex", alignItems: "center", gap: 10 }}><ColorChip icon="shield-check" color="var(--success)" size={30} iconSize={16} /><div style={{ lineHeight: 1.3 }}><div style={{ fontSize: 11.5, fontWeight: 700 }}>보안 접속 정상</div><div className="t-caption" style={{ fontSize: 10.5 }}>내부망 · TLS 1.3</div></div></div>
           : <div style={{ display: "flex", justifyContent: "center" }}><Icon name="shield-check" size={18} style={{ color: "var(--success)" }} /></div>}</div>
-      {!open && !mobile && hover && ReactDOM.createPortal(
+      {!open && !mobile && hover && (() => { const flyTop = Math.max(64, Math.min(hover.top, window.innerHeight - 360)); return ReactDOM.createPortal(
         <div
           onMouseEnter={() => { clearTimeout(hoverTimer.current); setHover(hover); }}
           onMouseLeave={() => { clearTimeout(hoverTimer.current); hoverTimer.current = setTimeout(() => setHover(null), 160); }}
           style={{
-            position: "fixed", left: 70, top: Math.max(64, Math.min(hover.top, window.innerHeight - 320)), width: 264, zIndex: 70,
+            position: "fixed", left: 70, top: flyTop, width: 264, zIndex: 70,
+            maxHeight: window.innerHeight - flyTop - 16, overflowY: "auto", overflowX: "hidden",
             background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14,
             boxShadow: "var(--shadow-lg)", padding: 10, animation: "railSlide .18s var(--ease) both",
           }}>
@@ -170,7 +171,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
               borderRadius: 8, padding: "8px 10px", background: "transparent", color: "var(--primary)", fontSize: 12.5, fontWeight: 700, marginBottom: 4,
             }}><Icon name="arrow-right" size={14} />전체 보기</button>}
           <MenuChildren m={hover.m} expanded={expanded} setExpanded={setExpanded} onNav={(r) => { onNav(r); setHover(null); }} />
-        </div>, document.body)}
+        </div>, document.body); })()}
       </nav>
   );
 }
@@ -298,8 +299,8 @@ function NcScheduleBody() {
   const dow = ["일", "월", "화", "수", "목", "금", "토"];
   const visible = sel ? rows.filter((r: any) => r.day === sel) : rows;
   return (
-    <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-      <div style={{ width: 250, flex: "0 0 auto", padding: "2px 2px 4px" }}>
+    <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
+      <div style={{ width: "min(250px, 100%)", flex: "0 0 auto", padding: "2px 2px 4px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 10 }}>
           <Icon name="calendar" size={14} style={{ color: "var(--brand-blue)" }} />
           <span style={{ fontSize: 13.5, fontWeight: 800, letterSpacing: "-.01em" }}>2026년 6월</span>
@@ -325,7 +326,7 @@ function NcScheduleBody() {
           })}
         </div>
       </div>
-      <div style={{ flex: 1, minWidth: 0, borderLeft: "1px solid var(--border)", paddingLeft: 16 }}>
+      <div style={{ flexBasis: "min(100%, 300px)", flexGrow: 1, flexShrink: 1, minWidth: 0, borderLeft: "1px solid var(--border)", paddingLeft: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 6px 8px" }}>
           <span style={{ fontSize: 13, fontWeight: 800, color: "var(--foreground)" }}>{sel ? "6월 " + sel + "일 일정" : "전체 일정"}</span>
           <span style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)" }}>{visible.length}</span>
@@ -431,7 +432,7 @@ function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) 
   return (
     <>
       <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(15,19,16,.5)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", zIndex: 70, animation: "ncFade .18s var(--ease) both" }} />
-      <div role="dialog" aria-label="알림센터" style={{ position: "fixed", inset: 0, zIndex: 71, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, pointerEvents: "none" }}>
+      <div role="dialog" aria-label="알림센터" style={{ position: "fixed", inset: 0, zIndex: 71, display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(8px, 3vw, 24px)", pointerEvents: "none" }}>
         <div onClick={(e) => e.stopPropagation()} style={{ width: 1000, maxWidth: "100%", height: 680, maxHeight: "90vh", background: "var(--card)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-lg)", border: "1px solid var(--border)", display: "flex", flexDirection: "column", overflow: "hidden", pointerEvents: "auto", animation: "ncPop .2s var(--ease) both" }}>
           <header style={{ display: "flex", alignItems: "center", gap: 9, padding: "18px 22px", borderBottom: "1px solid var(--border)" }}>
             <Icon name="bell" size={18} style={{ color: "var(--brand-blue)" }} />
@@ -586,7 +587,7 @@ function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWi
       style={{
         position: "sticky", top: 0, zIndex: 50, height: 58, flex: "0 0 auto",
         background: "color-mix(in srgb,var(--card) 86%,transparent)", backdropFilter: "blur(10px)",
-        borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 12, padding: "0 16px",
+        borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: "clamp(6px, 1.5vw, 12px)", padding: "0 clamp(8px, 2vw, 16px)",
       }}><IconBtn icon="menu" onClick={onToggleLnb} label="메뉴 접기/펴기" size={38} /><img
         src={theme === "dark" ? logoWhiteUrl : logoUrl}
         alt="APFS 농업정책보험금융원"
@@ -616,8 +617,8 @@ function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWi
   );
 }
 
-/* ---------- PageHeader (breadcrumb + title + actions) ---------- */
-function PageHeader({ crumbs, title, sub, actions }: { crumbs: string[]; title?: React.ReactNode; sub?: React.ReactNode; actions?: React.ReactNode }) {
+/* ---------- PageHeader (breadcrumb + actions; title/sub props accepted but no longer rendered) ---------- */
+function PageHeader({ crumbs, actions }: { crumbs: string[]; title?: React.ReactNode; sub?: React.ReactNode; actions?: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 18 }}><div
         style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}><nav
@@ -628,10 +629,7 @@ function PageHeader({ crumbs, title, sub, actions }: { crumbs: string[]; title?:
               fontSize: 12, fontWeight: i === crumbs.length - 1 ? 700 : 500,
               color: i === crumbs.length - 1 ? "var(--foreground)" : "var(--caption)",
             }}>{c}</span></React.Fragment>)}</nav>{actions && <div
-          style={{ display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto" }}>{actions}</div>}</div>{title && <div
-        style={{ marginTop: 10 }}><h1 className="t-h1" style={{ margin: 0 }}>{title}</h1>{sub && <p
-          className="t-body"
-          style={{ margin: "4px 0 0", color: "var(--muted-foreground)", fontSize: 13 }}>{sub}</p>}</div>}</div>
+          style={{ display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto" }}>{actions}</div>}</div></div>
   );
 }
 
