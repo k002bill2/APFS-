@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR:-/Users/younghwankang/WORK/WORKSPACE/APFS}/.claude/hooks/skill-activator.sh\" \"$PROMPT\""
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-/Users/younghwankang/Work/APFS}/.claude/hooks/skill-activator.sh\" \"$PROMPT\""
           }
         ]
       }
@@ -49,11 +49,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR:-/Users/younghwankang/WORK/WORKSPACE/APFS}/.claude/hooks/pre-compact-reminder.sh\""
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-/Users/younghwankang/Work/APFS}/.claude/hooks/pre-compact-reminder.sh\""
           }
         ]
       }
     ]
   },
-  "model": "claude-sonnet-4-6"
+  "model": "claude-opus-4-8[1m]"
 }

@@ -121,6 +121,7 @@ npm run preview   # 빌드 결과 미리보기 — http://localhost:4273
 
 ## Skills (자동 활성화)
 - `UserPromptSubmit` hook(`.claude/hooks/skill-activator.sh`)이 프롬프트를 stdin JSON으로 받아 `.claude/hooks/skill-rules.json`의 키워드와 매칭, 관련 스킬을 컨텍스트로 추천.
+- `PreCompact` hook(`.claude/hooks/pre-compact-reminder.sh`)이 컨텍스트 컴팩트 직전 dev-docs 저장 등 리마인더를 출력. (두 훅 모두 `settings.json`의 `hooks` 블록에 등록됨.)
 - 프로젝트 스킬: `code-reviewer`(리뷰) · `dashboard-ui`(UI/디자인) · `responsive-ui`(반응형 — 페이지/위젯/모달/테이블 작성·수정 시 누락 방지 체크리스트+검증) · `apfs-bundle`(레거시 오프라인 번들 전용 — 현 Vite 구조엔 불필요).
 - 새 스킬 추가 시 `skill-rules.json`의 트리거도 함께 갱신.
 
@@ -133,3 +134,11 @@ npm run preview   # 빌드 결과 미리보기 — http://localhost:4273
 |------|------|
 | 전체 안전 프로토콜 | `docs/Parallel_Agents_Safety_Protocol_v3_1_0.md` |
 | 셋업 가이드/원문 | `Claude code system setup/` |
+
+## 하네스 변경 이력
+
+하네스(에이전트·스킬·훅·설정)의 진화를 추적한다. 구성요소 추가/삭제/수정 시 여기에 기록한다.
+
+| 날짜 | 변경 내용 | 대상 | 사유 |
+|------|----------|------|------|
+| 2026-06-20 | 훅 fallback 경로 수정(`WORK/WORKSPACE/APFS`→`Work/APFS`), 모델 핀 `claude-opus-4-8[1m]`로 변경, PreCompact 훅 문서화, 본 변경이력 신설 | `settings.json`, `CLAUDE.md` | 하네스 현황 감사에서 발견된 drift 3건 정리 |
