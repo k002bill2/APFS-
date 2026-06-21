@@ -111,7 +111,7 @@ const MENU = [
   { id:"asset", label:"투자자산관리", icon:"landmark", path:"asset", roles:["admin","manager","viewer"], children:[
     { label:"모태펀드관리", sub:true, children:[
       { label:"자펀드 공고 정보관리" },
-      { label:"모태펀드 조성 및 출자현황", path:"main" },
+      { label:"모태펀드 조성 및 출자현황", path:"asset-funding" },
     ]},
     { label:"조합관리", sub:true, children:[
       { label:"자펀드정보관리" },
