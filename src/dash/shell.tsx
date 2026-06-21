@@ -102,7 +102,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
   return (
     <nav
       aria-label="주 메뉴"
-      aria-hidden={mobile && !drawerOpen ? true : undefined}
+      {...(mobile && !drawerOpen ? { inert: "" } : {})}
       style={{
         flex: "0 0 auto", background: "var(--card)", borderRight: "1px solid var(--border)",
         display: "flex", flexDirection: "column", overflow: "hidden", ...posStyle,
@@ -154,15 +154,16 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
           onMouseLeave={() => { clearTimeout(hoverTimer.current); hoverTimer.current = setTimeout(() => setHover(null), 160); }}
           style={{
             position: "fixed", left: 70, top: flyTop, width: 264, zIndex: 70,
-            maxHeight: window.innerHeight - flyTop - 16, overflowY: "auto", overflowX: "hidden",
+            maxHeight: window.innerHeight - flyTop - 16,
             background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14,
-            boxShadow: "var(--shadow-lg)", padding: 10, animation: "railSlide .18s var(--ease) both",
+            boxShadow: "var(--shadow-lg)", display: "flex", flexDirection: "column", overflow: "hidden",
+            animation: "railSlide .18s var(--ease) both",
           }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "6px 8px 10px", borderBottom: "1px solid var(--border)", marginBottom: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "14px 16px 10px", borderBottom: "1px solid var(--border)", flex: "0 0 auto" }}>
             <ColorChip icon={hover.m.icon} color={hover.m.urgent ? "var(--danger)" : "var(--primary)"} size={30} iconSize={16} />
             <span style={{ fontSize: 13.5, fontWeight: 700 }}>{hover.m.label}</span>
           </div>
-          {hover.m.path && <button
+          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: 10 }}>{hover.m.path && <button
             onClick={() => { onNav(hover.m.path); setHover(null); }}
             onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
@@ -170,7 +171,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
               width: "100%", display: "flex", alignItems: "center", gap: 8, border: "none", font: "inherit", cursor: "pointer",
               borderRadius: 8, padding: "8px 10px", background: "transparent", color: "var(--primary)", fontSize: 12.5, fontWeight: 700, marginBottom: 4,
             }}><Icon name="arrow-right" size={14} />전체 보기</button>}
-          <MenuChildren m={hover.m} expanded={expanded} setExpanded={setExpanded} onNav={(r) => { onNav(r); setHover(null); }} />
+          <MenuChildren m={hover.m} expanded={expanded} setExpanded={setExpanded} onNav={(r) => { onNav(r); setHover(null); }} /></div>
         </div>, document.body); })()}
       </nav>
   );
@@ -501,7 +502,7 @@ function RoleSwitch({ role, onRole }) {
   const [open, setOpen] = useState(false);
   const cur = D.ROLES.find((r) => r.id === role);
   return (
-    <div style={{ position: "relative" }}><button
+    <div className="gnb-rolesw" style={{ position: "relative" }}><button
         onClick={() => setOpen((o) => !o)}
         style={{
           display: "flex", alignItems: "center", gap: 8, cursor: "pointer", font: "inherit",
@@ -604,12 +605,12 @@ function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWi
             border: "none", background: "transparent", outline: "none", font: "inherit", fontSize: 12.5,
             color: "var(--foreground)", width: "100%",
           }} /><kbd
-          style={{ fontSize: 10, fontWeight: 600, background: "var(--card)", borderRadius: 5, padding: "1px 5px", border: "1px solid var(--border)" }}>/</kbd></label><RoleSwitch role={role} onRole={onRole} /><div style={{ display: "flex", alignItems: "center", gap: 2 }}><IconBtn
+          style={{ fontSize: 10, fontWeight: 600, background: "var(--card)", borderRadius: 5, padding: "1px 5px", border: "1px solid var(--border)" }}>/</kbd></label><RoleSwitch role={role} onRole={onRole} /><div style={{ display: "flex", alignItems: "center", gap: 2 }}><span className="gnb-wide" style={{ display: "inline-flex" }}><IconBtn
           icon={wide ? "collapse-h" : "expand-h"}
           onClick={onToggleWide}
           label={wide ? "고정 너비" : "전체 너비"}
           active={wide}
-          size={38} /><IconBtn
+          size={38} /></span><IconBtn
           icon={theme === "dark" ? "sun" : "moon"}
           onClick={onToggleTheme}
           label="라이트/다크"

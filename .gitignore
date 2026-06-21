@@ -6,3 +6,13 @@ dist/
 
 # SDD scratch (briefs/reports/diffs/ledger)
 .superpowers/
+
+# Playwright MCP 테스트 산출물 (스크린샷·콘솔로그·스냅샷)
+.playwright-mcp/
+
+# claude.ai/design 동기화 export (원본 SSOT는 claude.ai/design)
+docs/apfs-dashboard/
+
+# OS / MS Office 임시·잠금 파일
+.DS_Store
+~$*
