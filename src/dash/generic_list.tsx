@@ -355,6 +355,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         <RowFormModal
           mode={modal.mode}
           initial={modal.row}
+          schema={schema}
           onSave={save}
           onClose={() => setModal(null)}
           onDelete={modal.row ? () => deleteOne(modal.row!.id) : undefined} />

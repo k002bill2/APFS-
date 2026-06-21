@@ -5,6 +5,8 @@ import { createPortal } from 'react-dom';
 import { Icon } from './icons';
 import { UI } from './components';
 import type { Tone } from './components';
+import { SchemaField } from './schemas/renderers';
+import type { PageSchema } from './schemas/types';
 
 const { useState } = React;
 const { Button } = UI;
@@ -35,10 +37,6 @@ export function statusTone(label: string): Tone {
 }
 
 const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: "var(--caption)", marginBottom: 5, display: "block" };
-const inputStyle: React.CSSProperties = {
-  width: "100%", boxSizing: "border-box", padding: "8px 11px", fontSize: 16, font: "inherit",
-  border: "1px solid var(--border-strong)", borderRadius: 9, background: "var(--card)", color: "var(--foreground)",
-};
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -49,34 +47,36 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function RowFormModal({ mode, initial, onSave, onClose, onDelete }: {
+export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete }: {
   mode: "create" | "edit";
   initial?: Row;
+  schema: PageSchema;
   onSave: (row: Row) => void;
   onClose: () => void;
   onDelete?: () => void;
 }) {
-  const [name, setName] = useState(initial?.name ?? "");
-  const [category, setCategory] = useState(initial?.category ?? "");
-  const [amount, setAmount] = useState(String(initial?.amount ?? ""));
-  const [change, setChange] = useState(String(initial?.change ?? ""));
-  const [status, setStatus] = useState(initial?.status ?? STATUS_CHOICES[0].label);
+  const [vals, setVals] = useState<Record<string, string>>(() => {
+    const seed: Record<string, string> = {};
+    for (const f of schema.fields) seed[f.key] = initial ? String((initial as any)[f.key] ?? '') : (f.control === 'select' ? (f.options?.[0] ?? '') : '');
+    return seed;
+  });
   const [err, setErr] = useState("");
   const [confirmDel, setConfirmDel] = useState(false);
+  const set = (k: string, v: string) => setVals((p) => ({ ...p, [k]: v }));
 
   const submit = () => {
-    if (!name.trim()) { setErr("항목명을 입력하세요."); return; }
+    const req = schema.fields.find((f) => f.required && !String(vals[f.key] ?? '').trim());
+    if (req) { setErr(`${req.label}을(를) 입력하세요.`); return; }
     onSave({
-      id: initial?.id ?? "",
-      icon: initial?.icon ?? "layers",
-      color: initial?.color ?? "var(--chart-1)",
-      name: name.trim(),
-      category: category.trim(),
-      amount: Number(amount) || 0,
-      change: Number(change) || 0,
-      status,
+      id: initial?.id ?? '',
+      icon: initial?.icon ?? 'layers', color: initial?.color ?? 'var(--chart-1)',
+      name: (vals.name ?? '').trim(),
+      category: (vals.category ?? schema.entity).trim(),
+      amount: Number(vals.amount) || 0, change: Number(vals.change) || 0,
+      status: vals.status ?? (schema.statusDomain?.[0]?.label ?? '정상'),
       trend: initial?.trend ?? [4, 6, 5, 8, 7],
-    });
+      ...vals,
+    } as Row);
   };
 
   return createPortal(
@@ -106,34 +106,12 @@ export function RowFormModal({ mode, initial, onSave, onClose, onDelete }: {
 
         {/* 폼 */}
         <div style={{ padding: 18, overflowY: "auto" }}>
-          <Field label="항목명 *">
-            <input
-              value={name}
-              onChange={(e) => { setName(e.target.value); if (err) setErr(""); }}
-              placeholder="항목명을 입력하세요"
-              style={{ ...inputStyle, ...(err ? { borderColor: "var(--danger)" } : {}) }} />
-            {err && <span style={{ fontSize: 11.5, color: "var(--danger)", marginTop: 4, display: "block" }}>{err}</span>}
-          </Field>
-          <Field label="구분">
-            <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="분류" style={inputStyle} />
-          </Field>
-          <div style={{ display: "flex", gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <Field label="금액 (백만원)">
-                <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" style={inputStyle} />
-              </Field>
-            </div>
-            <div style={{ flex: 1 }}>
-              <Field label="변동률 (%)">
-                <input type="number" value={change} onChange={(e) => setChange(e.target.value)} placeholder="0.0" style={inputStyle} />
-              </Field>
-            </div>
-          </div>
-          <Field label="상태">
-            <select value={status} onChange={(e) => setStatus(e.target.value)} style={inputStyle}>
-              {STATUS_CHOICES.map((s) => <option key={s.label} value={s.label}>{s.label}</option>)}
-            </select>
-          </Field>
+          {schema.fields.map((f) => (
+            <Field key={f.key} label={f.label + (f.required ? ' *' : '')}>
+              <SchemaField field={f} value={vals[f.key] ?? ''} onChange={(v) => { set(f.key, v); if (err) setErr(''); }} />
+            </Field>
+          ))}
+          {err && <span style={{ fontSize: 11.5, color: "var(--danger)", display: "block" }}>{err}</span>}
         </div>
 
         {/* 푸터 */}
