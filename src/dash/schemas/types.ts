@@ -7,6 +7,8 @@ export type CellType = typeof CELL_TYPES[number];
 export const FIELD_CONTROLS = ['text','number','select','date','textarea','file','checkbox','readonly'] as const;
 export type FieldControl = typeof FIELD_CONTROLS[number];
 
+export const TONE_VALUES = ['primary','success','warning','danger','info','cyan'] as const;
+
 export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; }
 export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; }
 export interface KpiSpec { key: string; label: string; icon: string; color: string; from: 'sum'|'avg'|'rate'; column: string; }
@@ -34,10 +36,10 @@ export const PageSchemaZ = z.object({
   route: z.string(), title: z.string(), kind: z.enum(['list','form']), entity: z.string(),
   columns: z.array(ColumnZ), fields: z.array(FieldZ),
   filters: z.array(z.string()).optional(), kpis: z.array(KpiZ).optional(),
-  statusDomain: z.array(z.object({ label: z.string(), tone: z.string() })).optional(),
+  statusDomain: z.array(z.object({ label: z.string(), tone: z.enum(TONE_VALUES) })).optional(),
   provenance: ProvenanceZ,
 });
 
 export function parsePageSchema(obj: unknown): PageSchema {
-  return PageSchemaZ.parse(obj) as PageSchema;
+  return PageSchemaZ.parse(obj);
 }
