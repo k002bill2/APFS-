@@ -3,3 +3,6 @@ dist/
 
 # transient design-import scratch (claude.ai/design sync)
 .design-import/
+
+# SDD scratch (briefs/reports/diffs/ledger)
+.superpowers/
