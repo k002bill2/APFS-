@@ -113,4 +113,4 @@ vite v5.4.21 building for production...
 
 ## 커밋 해시
 
-(커밋 후 갱신)
+`6180138` — fix(schemas): TONE_VALUES const + z.enum으로 타입-런타임 경계 정합 강제
