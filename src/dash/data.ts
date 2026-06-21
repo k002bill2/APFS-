@@ -264,12 +264,15 @@ const MENU = [
     ]},
   ]},
 
-  { id:"report", label:"부처보고", icon:"file", path:"report", roles:["admin","manager"], children:[
-    { label:"모태펀드", sub:true, children:[{ label:"연도별투자현황" }] },
-    { label:"등록원부", sub:true, children:[{ label:"등록원부관리", path:"report" }] },
+  { id:"report", label:"보고관리", icon:"file", path:"report", roles:["admin","manager"], children:[
+    { label:"부처보고", path:"report-bucheo", children:[
+      { label:"모태펀드", sub:true, children:[{ label:"연도별투자현황" }] },
+      { label:"등록원부", sub:true, children:[{ label:"등록원부관리", path:"report-sutack" }] },
+    ]},
+    { label:"수탁보고", path:"report-sutack" },
   ]},
 
-  { id:"trustee", label:"수탁보고", icon:"file-check", path:"report", roles:["admin","manager"], children:[
+  { id:"trustee", label:"수탁보고", icon:"file-check", path:"report-sutack", roles:["admin","manager"], children:[
     { label:"자펀드수탁", sub:true, children:[
       { label:"실물자료관리(업로드)" },
       { label:"실물검증비교조회" },
@@ -284,8 +287,6 @@ const MENU = [
       { label:"입출금정보비교조회" },
     ]},
   ]},
-
-  { id:"stats", label:"통계조회", icon:"chart", path:"performance", roles:["admin","manager","viewer"] },
 
   { id:"admin", label:"관리자", icon:"settings", roles:["admin"], children:[
     { label:"시스템관리", sub:true, children:[
