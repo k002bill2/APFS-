@@ -2,6 +2,7 @@
    레이아웃: KPI 배지 · 필터 칩 툴바 · CRUD 테이블 · 페이지네이션 · 하단 요약 2-카드.
    route 값(한글 레이블 또는 경로)으로 제목·브레드크럼을 자동 구성. */
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from './icons';
 import { Shell } from './shell';
 import { UI } from './components';
@@ -11,9 +12,11 @@ import { RowFormModal, statusTone } from './generic_list_modal';
 import type { Row } from './generic_list_modal';
 import { resolveSchema } from './schemas';
 import { Cell } from './schemas/renderers';
+import { resolveFilterField, YEAR_OPTIONS } from './schemas/filter_field';
+import type { FilterField } from './schemas/filter_field';
 import type { PageSchema } from './schemas/types';
 
-const { useState } = React;
+const { useState, useEffect } = React;
 const { PageHeader } = Shell;
 const { Card, Button, StatusBadge, IconBtn, ColorChip, SegTabs, DeltaBadge } = UI;
 const D = APFS_DATA;
@@ -60,9 +63,16 @@ function makeRows(schema: PageSchema, n: number): Row[] {
     const extra: Record<string, unknown> = {};
     for (const c of schema.columns) {
       if (['name', 'amount', 'change', 'status', 'trend'].includes(c.key)) continue;
-      extra[c.key] = c.type === 'amount' || c.type === 'number' || c.type === 'rate'
-        ? (i + 1) * 100 + (i * 7) % 90
-        : c.label + ' ' + String(i + 1).padStart(3, '0');
+      const field = schema.fields.find((f) => f.key === c.key);
+      if (field?.control === 'select' && field.options?.length) {
+        extra[c.key] = field.options[i % field.options.length];     // enum 도메인 시드 → 상세필터 매칭 성립
+      } else if (/(년도|연도)/.test(c.label)) {
+        extra[c.key] = YEAR_OPTIONS[i % YEAR_OPTIONS.length];        // 년도 도메인 시드 → year 필터 매칭
+      } else if (c.type === 'amount' || c.type === 'number' || c.type === 'rate') {
+        extra[c.key] = (i + 1) * 100 + (i * 7) % 90;
+      } else {
+        extra[c.key] = c.label + ' ' + String(i + 1).padStart(3, '0');
+      }
     }
     return { ...base, ...extra } as Row;
   });
@@ -101,11 +111,14 @@ function KpiBadge({ icon, color, label, value, valueColor }: { icon: string; col
   );
 }
 
-/* 제거 가능한 필터 칩 */
-function FilterPill({ label, onRemove }: { label: string; onRemove: () => void }) {
+/* 제거 가능한 필터 칩 — 라벨(평문 UI 라벨) + 선택값(데이터 → MT 마스킹). 태그형은 값 없음. */
+function FilterPill({ label, value, onRemove }: { label: string; value?: string; onRemove: () => void }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 8px 5px 11px", borderRadius: 9, fontSize: 12.5, fontWeight: 600, background: "color-mix(in srgb, var(--primary) 10%, transparent)", color: "var(--primary)" }}>
-      <MT>{label}</MT>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+        <span>{label}{value ? ":" : ""}</span>
+        {value ? <MT>{value}</MT> : null}
+      </span>
       <button onClick={onRemove} aria-label={label + " 필터 제거"} style={{ display: "inline-flex", border: 0, background: "transparent", cursor: "pointer", color: "inherit", padding: 0 }}>
         <Icon name="x" size={13} stroke={2.4} />
       </button>
@@ -161,26 +174,176 @@ function MoreMenu({ onRegister, editable }: { onRegister: () => void; editable: 
   );
 }
 
+/* ── 드로어 체크 행 — 박스+체크 시각 (토큰 기반, 라이트/다크 양립) ── */
+function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={checked}
+      style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", cursor: "pointer", background: "transparent", border: 0, padding: "8px 0", font: "inherit" }}>
+      <span style={{
+        display: "inline-flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto", width: 24, height: 24, borderRadius: 7, transition: "all .15s var(--ease)",
+        background: checked ? "var(--primary)" : "var(--card)",
+        border: checked ? "1px solid var(--primary)" : "1.5px solid var(--border-strong)" }}>
+        {checked && <Icon name="check" size={16} stroke={3} style={{ color: "#fff" }} />}
+      </span>
+      <span style={{ fontSize: 14, fontWeight: 600, color: "var(--foreground)" }}>{label}</span>
+    </button>
+  );
+}
+
+/* 값-필터 컨트롤 — kind별 입력(year/enum select · date · number · text).
+   입력 폰트 16px(iOS 포커스 줌 방지), 색은 토큰(라이트/다크 양립). 빈 값 = 미적용. */
+const drawerInputStyle: React.CSSProperties = {
+  // font 단축속성을 먼저(Pretendard 상속) → fontSize 16을 뒤에: 명시값이 단축속성을 이겨 iOS 줌(<16px) 방지 보장.
+  width: "100%", boxSizing: "border-box", padding: "9px 11px", font: "inherit", fontSize: 16,
+  border: "1px solid var(--border-strong)", borderRadius: 9, background: "var(--card)", color: "var(--foreground)",
+};
+
+function DrawerFilterControl({ ff, value, onChange }: { ff: FilterField; value: string; onChange: (v: string) => void }) {
+  let control: React.ReactNode;
+  if (ff.kind === "year" || ff.kind === "enum") {
+    control = (
+      <select value={value} onChange={(e) => onChange(e.target.value)} style={drawerInputStyle}>
+        <option value="">전체</option>
+        {ff.options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+    );
+  } else if (ff.kind === "date") {
+    control = <input type="date" value={value} onChange={(e) => onChange(e.target.value)} style={drawerInputStyle} />;
+  } else if (ff.kind === "number") {
+    control = <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder="값 입력" style={drawerInputStyle} />;
+  } else {
+    control = <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={ff.label + " 입력"} style={drawerInputStyle} />;
+  }
+  return (
+    <label style={{ display: "block", marginBottom: 16 }}>
+      <span style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--muted-foreground)", marginBottom: 6 }}>
+        {ff.label}
+        {/* 매칭 컬럼이 없어 더미데이터를 거를 수 없는 필터(조회 파라미터) — 무신호 no-op 방지 */}
+        {!ff.columnKey && <span style={{ fontWeight: 500, color: "var(--caption)", marginLeft: 6 }}>· 데이터 연동 후 적용</span>}
+      </span>
+      {control}
+    </label>
+  );
+}
+
+/* ── 우측 슬라이드인: 스키마 기반 상세 필터 드로어 ──
+   schema.filters 각 항목을 타입에 맞는 컨트롤로 노출한다 — 값-필터는 값 픽커, 카테고리는 on/off 토글.
+   상태 SSOT = Record<라벨, 값>(빈 값=미적용). 적용 시 부모 filterValues를 갱신해 행을 실제 필터링한다.
+   Portal로 body 직계 렌더(루트 dashFade transform의 영향 차단), 좁은 화면은 maxWidth 92vw로 축소. */
+function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
+  open: boolean; onClose: () => void; schema: PageSchema; applied: Record<string, string>; onApply: (next: Record<string, string>) => void;
+}) {
+  const filters = schema.filters ?? [];
+  const [draft, setDraft] = useState<Record<string, string>>(() => ({ ...applied }));
+  // 열릴 때마다 현재 활성 값으로 초기화 (툴바에서 칩 제거 등 외부 변경 반영)
+  useEffect(() => { if (open) setDraft({ ...applied }); }, [open]);
+  const setVal = (label: string, v: string) => setDraft((prev) => ({ ...prev, [label]: v }));
+  const toggleTag = (label: string) => setDraft((prev) => {
+    const next = { ...prev };
+    next[label] ? delete next[label] : (next[label] = label);
+    return next;
+  });
+  // 빈 값은 제거하고 적용 (미선택 필터는 비활성)
+  const apply = () => { onApply(Object.fromEntries(Object.entries(draft).filter(([, v]) => v !== ""))); onClose(); };
+  return createPortal(
+    <>
+      <div
+        onClick={onClose}
+        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.42)", zIndex: 80, opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none", transition: "opacity .25s var(--ease)" }} />
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="상세 필터"
+        {...(open ? {} : { inert: "" })}
+        style={{
+          position: "fixed", top: 0, right: 0, bottom: 0, width: 408, maxWidth: "92vw", boxSizing: "border-box", zIndex: 81,
+          background: "var(--card)", borderLeft: "1px solid var(--border)", boxShadow: "var(--shadow-lg)",
+          transform: open ? "translateX(0)" : "translateX(100%)", transition: "transform .3s var(--ease)",
+          display: "flex", flexDirection: "column" }}>
+        <header style={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, height: 62, padding: "0 clamp(14px,3vw,20px)", borderBottom: "1px solid var(--border)" }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-.02em", color: "var(--foreground)" }}>상세 필터</h2>
+          <IconBtn icon="x" onClick={onClose} label="닫기" size={38} />
+        </header>
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px clamp(14px,3vw,20px)" }}>
+          {filters.length === 0 ? (
+            <div style={{ fontSize: 13, color: "var(--caption)", textAlign: "center", padding: "28px 0" }}>설정 가능한 필터가 없습니다.</div>
+          ) : (
+            <>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--muted-foreground)", marginBottom: 10 }}>필터 항목</div>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {filters.map((label) => {
+                  const ff = resolveFilterField(label, schema);
+                  return ff.kind === "tag"
+                    ? <DrawerCheckRow key={label} label={label} checked={!!draft[label]} onClick={() => toggleTag(label)} />
+                    : <DrawerFilterControl key={label} ff={ff} value={draft[label] ?? ""} onChange={(v) => setVal(label, v)} />;
+                })}
+              </div>
+            </>
+          )}
+        </div>
+        <div style={{ flex: "0 0 auto", display: "flex", gap: 8, padding: "14px clamp(14px,3vw,20px)", borderTop: "1px solid var(--border)" }}>
+          <Button variant="outline" size="md" onClick={() => setDraft({})}>초기화</Button>
+          <Button variant="primary" size="md" style={{ flex: 1 }} onClick={apply}>필터 적용</Button>
+        </div>
+      </aside>
+    </>,
+    document.body
+  );
+}
+
+/* 활성 필터(filterValues)로 행 1건의 통과 여부 판정.
+   값-필터(year/enum/date/number/text)는 모두 AND, 카테고리 태그끼리는 합집합(OR).
+   text/number는 부분일치(includes), 그 외(year/enum/date)는 정확일치. columnKey 미해결 필터는 무시(칩만). */
+function rowMatchesFilters(row: Row, schema: PageSchema, filterValues: Record<string, string>): boolean {
+  const active = Object.entries(filterValues).filter(([, v]) => v !== "");
+  if (active.length === 0) return true;
+  const tags: string[] = [];
+  for (const [label, value] of active) {
+    const ff = resolveFilterField(label, schema);
+    if (ff.kind === "tag") { tags.push(label); continue; }
+    if (!ff.columnKey) continue;
+    const rv = String((row as Record<string, unknown>)[ff.columnKey] ?? "");
+    const ok = ff.kind === "text" || ff.kind === "number"
+      ? rv.toLowerCase().includes(value.toLowerCase())
+      : rv === value;
+    if (!ok) return false;
+  }
+  if (tags.length > 0 && !tags.includes(row.category)) return false;
+  return true;
+}
+
 export function GenericListPage({ route, onNav }: { route: string; onNav: (r: string) => void }) {
   const { title, crumbs, parent } = findMenuContext(route);
   const schema = resolveSchema(route);
   const editable = schema.fields.length > 0;
   const [rows, setRows] = useState<Row[]>(() => makeRows(schema, 23));
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
-  const [chips, setChips] = useState<string[]>(schema.filters ?? []);
+  // 상태 SSOT: 필터 라벨 → 선택값(빈 값/부재 = 비활성). 칩·행필터 모두 여기서 파생.
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
   const [page, setPage] = useState(1);
   const [view, setView] = useState("list");
   const [modal, setModal] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
 
-  const total = rows.length;
+  // 활성 필터로 행을 실제 필터링 → 표·KPI·페이지네이션 모두 필터 결과 기준
+  const filtered = rows.filter((r) => rowMatchesFilters(r, schema, filterValues));
+  // 칩: filterValues에서 파생 (값-필터는 "라벨: 값", 카테고리 태그는 값 없이 라벨만)
+  const chipItems = Object.entries(filterValues).map(([label, value]) => ({
+    label, value: resolveFilterField(label, schema).kind === "tag" ? undefined : value,
+  }));
+  const removeFilter = (label: string) => setFilterValues((prev) => { const n = { ...prev }; delete n[label]; return n; });
+
+  const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / PER));
   const curPage = Math.min(page, totalPages);
-  const pageRows = rows.slice((curPage - 1) * PER, curPage * PER);
+  const pageRows = filtered.slice((curPage - 1) * PER, curPage * PER);
 
-  // 파생 KPI
-  const sumAmount = rows.reduce((s, r) => s + r.amount, 0);
-  const avgChange = total ? rows.reduce((s, r) => s + r.change, 0) / total : 0;
-  const goodRate = total ? Math.round(rows.filter((r) => r.status === "정상" || r.status === "완료").length / total * 100) : 0;
+  // 파생 KPI (필터 결과 기준)
+  const sumAmount = filtered.reduce((s, r) => s + r.amount, 0);
+  const avgChange = total ? filtered.reduce((s, r) => s + r.change, 0) / total : 0;
+  const goodRate = total ? Math.round(filtered.filter((r) => r.status === "정상" || r.status === "완료").length / total * 100) : 0;
   const avgUp = avgChange >= 0;
 
   // 선택 토글
@@ -248,12 +411,12 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           ) : (
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <Icon name="filter" size={16} style={{ color: "var(--caption)" }} />
-              {chips.map((c) => <FilterPill key={c} label={c} onRemove={() => setChips((p) => p.filter((x) => x !== c))} />)}
-              {chips.length === 0 && <span style={{ fontSize: 12.5, color: "var(--caption)" }}>필터 없음</span>}
+              {chipItems.map((c) => <FilterPill key={c.label} label={c.label} value={c.value} onRemove={() => removeFilter(c.label)} />)}
+              {chipItems.length === 0 && <span style={{ fontSize: 12.5, color: "var(--caption)" }}>필터 없음</span>}
             </div>
           )}
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
-            <Button variant="ghost" size="sm" leadingIcon="panel-left">상세필터</Button>
+            <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
             <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); setSelected(new Set()); setPage(1); }} />
             <MoreMenu onRegister={() => setModal({ mode: "create" })} editable={editable} />
           </div>
@@ -265,7 +428,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 780 }}>
               <thead>
                 <tr style={{ background: "color-mix(in srgb, var(--muted) 55%, transparent)" }}>
-                  <th style={{ padding: cellPad, width: 44 }}>
+                  <th style={{ padding: cellPad, width: 44, borderBottom: "1px solid var(--border)" }}>
                     <input type="checkbox" checked={allOnPage} onChange={toggleAll} aria-label="전체 선택" style={{ accentColor: "var(--primary)", width: 17, height: 17, cursor: "pointer" }} />
                   </th>
                   {schema.columns.map((c) => (
@@ -417,6 +580,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           onClose={() => setModal(null)}
           onDelete={modal.row ? () => deleteOne(modal.row!.id) : undefined} />
       )}
+
+      <ListFilterDrawer
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        schema={schema}
+        applied={filterValues}
+        onApply={(next) => { setFilterValues(next); setPage(1); }} />
     </div>
   );
 }
