@@ -273,7 +273,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                       {c.label}{c.unit ? ` (${c.unit})` : ''}
                     </th>
                   ))}
-                  <th style={{ padding: cellPad, width: 56 }} />
+                  <th style={{ padding: cellPad, width: 56, textAlign: "right", fontSize: 12, fontWeight: 700, color: "var(--caption)", whiteSpace: "nowrap", borderBottom: "1px solid var(--border)" }}>{editable ? "관리" : ""}</th>
                 </tr>
               </thead>
               <tbody>
@@ -304,7 +304,14 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                         if (c.key === 'trend') {
                           return (
                             <td key={c.key} style={{ padding: cellPad, textAlign: (c.align || 'left') as any }}>
-                              <MiniBars data={r.trend} color={r.color} />
+                              <MT w={40}><MiniBars data={r.trend} color={r.color} /></MT>
+                            </td>
+                          );
+                        }
+                        if (c.type === 'status') {
+                          return (
+                            <td key={c.key} style={{ padding: cellPad, textAlign: (c.align || 'left') as any }}>
+                              <MT w={48}><Cell col={c} value={(r as any)[c.key]} color={r.color} statusDomain={schema.statusDomain} /></MT>
                             </td>
                           );
                         }
@@ -316,7 +323,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                         );
                       })}
                       <td style={{ padding: cellPad, textAlign: "right" }}>
-                        {editable && <IconBtn icon="file" label={r.name + " 상세·수정"} size={32} />}
+                        {editable && <MT w={20}><IconBtn icon="file" label={r.name + " 상세·수정"} size={32} /></MT>}
                       </td>
                     </tr>
                   );
