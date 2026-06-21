@@ -18,6 +18,7 @@ import { Pages as ReportBucheoPages } from './report_bucheo';
 import { Pages as ReportSutackPages } from './report_sutack';
 import { Pages as AssetPages } from './asset';
 import { GenericListPage } from './generic_list';
+import { AssetFunding } from './asset_funding';
 const ReportMain = ReportMainPages.ReportMain;
 const ReportBucheo = ReportBucheoPages.ReportBucheo;
 const ReportSutack = ReportSutackPages.ReportSutack;
@@ -73,6 +74,7 @@ function App() {
   else if (route === "schedule") page = <Schedule onNav={onNav} />;
   else if (route === "subfund") page = <SubFund onNav={onNav} />;
   else if (route === "asset") page = <AssetMain onNav={onNav} />;
+  else if (route === "asset-funding") page = <AssetFunding onNav={onNav} />;
   else if (route === "report") page = <ReportMain onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "report-sutack") page = <ReportSutack onNav={onNav} />;
