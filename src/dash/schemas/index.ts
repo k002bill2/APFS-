@@ -1,8 +1,9 @@
 import type { PageSchema } from './types';
 import { DEFAULT_SCHEMA } from './_default';
-// 파일럿 스키마는 Task 8에서 여기 import & ALL 배열에 추가한다.
+import { schema as s연도별투자현황 } from './연도별투자현황';
+import { schema as s조합별월간보고현황 } from './조합별_월간보고_현황';
 
-const ALL: PageSchema[] = [];
+const ALL: PageSchema[] = [s연도별투자현황, s조합별월간보고현황];
 
 export function buildRegistry(list: PageSchema[]): Record<string, PageSchema> {
   const m: Record<string, PageSchema> = {};
