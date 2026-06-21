@@ -59,12 +59,12 @@ function MenuChildren({ m, expanded, setExpanded, onNav }) {
                   size={12}
                   style={{ transform: subOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .15s", opacity: .5 }} /></div></button>{subOpen && <div style={{ paddingLeft: 14, marginBottom: 2 }}>{c.children.map((leaf, j) => <button
                 key={j}
-                onClick={() => leaf.path ? onNav(leaf.path) : m.path ? onNav(m.path) : undefined}
+                onClick={() => onNav(leaf.path || leaf.label)}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                 style={{
                   width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-                  border: "none", font: "inherit", cursor: (leaf.path || m.path) ? "pointer" : "default",
+                  border: "none", font: "inherit", cursor: "pointer",
                   borderRadius: 6, padding: "5px 10px",
                   background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 500, transition: "background .15s",
                 }}><span
@@ -74,7 +74,7 @@ function MenuChildren({ m, expanded, setExpanded, onNav }) {
       return (
         <button
           key={i}
-          onClick={() => c.path ? onNav(c.path) : m.path ? onNav(m.path) : undefined}
+          onClick={() => onNav(c.path || c.label)}
           onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
           style={{
