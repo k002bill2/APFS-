@@ -52,7 +52,7 @@ const P = {
 /* kebab 이름 → Lucide PascalCase (대체 후보 포함) */
 const MAP = {
   home:["Home"], landmark:["Landmark"], "shield-alert":["ShieldAlert"], "shield-check":["ShieldCheck"],
-  building:["Building2","Building"], wallet:["Wallet"], file:["FileText","File"],
+  building:["Building2","Building"], wallet:["Wallet"], file:["FileText","File"], bookmark:["Bookmark"],
   // file-check: lucide FileCheck2는 체크가 문서 밖에 분리돼 20px에서 깨져 보임 →
   // MAP 미등록으로 자체 P 경로(문서+중앙 체크, `file` 계열과 일관)를 강제 사용.
   chart:["ChartLine","LineChart","TrendingUp"], "chart-bar":["ChartColumn","BarChart3","BarChart"],
