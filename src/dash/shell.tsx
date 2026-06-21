@@ -47,10 +47,12 @@ function MenuChildren({ m, expanded, setExpanded, onNav }) {
         return (
           <div key={i} style={{ marginBottom: 1 }}><button
               onClick={() => setExpanded((e) => ({ ...e, [subKey]: !e[subKey] }))}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               style={{
                 width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6,
                 border: "none", font: "inherit", cursor: "pointer", borderRadius: 6, padding: "4px 10px",
-                background: "transparent", color: "var(--foreground)", fontSize: 13, fontWeight: 700,
+                background: "transparent", color: "var(--foreground)", fontSize: 13, fontWeight: 700, transition: "background .15s",
               }}><span
                 style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{c.label}</span><div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>{showCounts && subCount > 0 && <CountPill count={subCount} urgent={m.urgent} />}<Icon
                   name="chevron-down"
@@ -58,11 +60,13 @@ function MenuChildren({ m, expanded, setExpanded, onNav }) {
                   style={{ transform: subOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .15s", opacity: .5 }} /></div></button>{subOpen && <div style={{ paddingLeft: 14, marginBottom: 2 }}>{c.children.map((leaf, j) => <button
                 key={j}
                 onClick={() => leaf.path ? onNav(leaf.path) : m.path ? onNav(m.path) : undefined}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                 style={{
                   width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
                   border: "none", font: "inherit", cursor: (leaf.path || m.path) ? "pointer" : "default",
                   borderRadius: 6, padding: "5px 10px",
-                  background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 500,
+                  background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 500, transition: "background .15s",
                 }}><span
                   style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{leaf.label}</span>{showCounts && leaf.badge > 0 && <CountPill count={leaf.badge} urgent={m.urgent} />}</button>)}</div>}</div>
         );
@@ -71,10 +75,12 @@ function MenuChildren({ m, expanded, setExpanded, onNav }) {
         <button
           key={i}
           onClick={() => c.path ? onNav(c.path) : m.path ? onNav(m.path) : undefined}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
           style={{
             width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
             border: "none", font: "inherit", cursor: "pointer", borderRadius: 7, padding: "6px 10px",
-            background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 500,
+            background: "transparent", color: "var(--muted-foreground)", fontSize: 13, fontWeight: 500, transition: "background .15s",
           }}><span
             style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "left" }}>{c.label}</span>{showCounts && c.badge > 0 && <CountPill count={c.badge} urgent={m.urgent} />}</button>
       );
@@ -174,6 +180,7 @@ function RailNav({ role, route, onNav, mobile, drawerOpen }) {
   const menu = D.MENU.filter((m) => m.roles.includes(role));
   const [active, setActive] = useState(null);
   const [hover, setHover] = useState(null);
+  const [hoveredId, setHoveredId] = useState(null);
   const [expanded, setExpanded] = useState(allSubGroupsExpanded);
   const activeM = menu.find((m) => m.id === active);
   useEffect(() => { setActive(null); }, [route]);
@@ -182,12 +189,12 @@ function RailNav({ role, route, onNav, mobile, drawerOpen }) {
   const railBtn = (key, icon, label, isActive, onClick, count, urgent = false) => (
     <button
       key={key} onClick={onClick} aria-label={label} aria-current={isActive ? "page" : undefined}
-      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "var(--muted)"; const r = e.currentTarget.getBoundingClientRect(); setHover({ label, top: r.top + r.height / 2 }); }}
-      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; setHover(null); }}
+      onMouseEnter={(e) => { if (!isActive) setHoveredId(key); const r = e.currentTarget.getBoundingClientRect(); setHover({ label, top: r.top + r.height / 2 }); }}
+      onMouseLeave={() => { setHoveredId(null); setHover(null); }}
       style={{
         position: "relative", width: 48, height: 48, borderRadius: 12, cursor: "pointer", border: "none", font: "inherit",
         display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto",
-        background: isActive ? "color-mix(in srgb,var(--primary) 13%,transparent)" : "transparent",
+        background: isActive ? "color-mix(in srgb,var(--primary) 13%,transparent)" : (hoveredId === key ? "var(--muted)" : "transparent"),
         color: isActive ? "var(--primary)" : "var(--foreground)", transition: "background .15s",
       }}><Icon name={icon} size={21} stroke={isActive ? 2.3 : 2} />{count > 0 && <span
         style={{ position: "absolute", top: 7, right: 8, width: 7, height: 7, borderRadius: 99, background: urgent ? "var(--danger)" : "var(--primary)" }} />}</button>

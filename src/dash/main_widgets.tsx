@@ -14,7 +14,6 @@ const ALLMENU = D.ALLMENU;
 const MoreBtn = () => <button
   aria-label="더보기"
   style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--caption)", display: "inline-flex", padding: 4, borderRadius: 7 }}><Icon name="more" size={18} /></button>;
-const ExcelBtn = () => <Button variant="ghost" size="sm" leadingIcon="download">엑셀</Button>;
 
 /* 출자·집행 현황 */
 function ExecChart({ period, setPeriod, fund, setFund, span }) {
@@ -27,9 +26,9 @@ function ExecChart({ period, setPeriod, fund, setFund, span }) {
       icon="landmark"
       accent="var(--chart-3)"
       span={span}
-      right={<><SegTabs options={["분기", "연"]} value={period} onChange={setPeriod} size="sm" /><ExcelBtn /><MoreBtn /></>}
+      right={<><SegTabs options={["분기", "연"]} value={period} onChange={setPeriod} size="sm" /><MoreBtn /></>}
       footer={<div
-        style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}><Legend color="var(--chart-grid)" label="계획" /><Legend color="var(--chart-1)" label="실적" /><Legend color="var(--chart-3)" label="집행률 %" line={true} /><span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>{funds.map((f) => <FilterChip key={f} active={fund === f} onClick={() => setFund(f)}>{f}</FilterChip>)}</span></div>}><ComposedBars data={data} height={270} /></ChartCard>
+        style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}><Legend color="var(--chart-grid)" label={<MT>계획</MT>} /><Legend color="var(--chart-1)" label={<MT>실적</MT>} /><Legend color="var(--chart-3)" label={<MT>집행률 %</MT>} line={true} /><span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>{funds.map((f) => <FilterChip key={f} active={fund === f} onClick={() => setFund(f)}><MT>{f}</MT></FilterChip>)}</span></div>}><ComposedBars data={data} height={270} /></ChartCard>
   );
 }
 function Legend({ color, label, line }: { color?: string; label?: React.ReactNode; line?: boolean }) {
@@ -151,8 +150,8 @@ function ShortcutCard({ s, onNav }) {
         background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, padding: 16,
         boxShadow: "var(--shadow-sm)", display: "flex", flexDirection: "column", gap: 12, transition: "transform .18s,box-shadow .18s", position: "relative", overflow: "hidden",
       }}><div
-        style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><ColorChip icon={s.icon} color={c} size={40} iconSize={21} /><Icon name="arrow-right" size={17} style={{ color: "var(--caption)" }} /></div><div><div style={{ fontSize: 14.5, fontWeight: 700 }}>{s.title}</div><div className="t-caption" style={{ marginTop: 3, lineHeight: 1.4 }}>{s.desc}</div></div><div
-        style={{ display: "flex", alignItems: "center", gap: 7, marginTop: "auto" }}><span style={{ fontSize: 12.5, fontWeight: 800, color: c }}>{s.metric}</span></div></button>
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><ColorChip icon={s.icon} color={c} size={40} iconSize={21} /><Icon name="arrow-right" size={17} style={{ color: "var(--caption)" }} /></div><div><div style={{ fontSize: 14.5, fontWeight: 700 }}><MT>{s.title}</MT></div><div className="t-caption" style={{ marginTop: 3, lineHeight: 1.4 }}><MT>{s.desc}</MT></div></div><div
+        style={{ display: "flex", alignItems: "center", gap: 7, marginTop: "auto" }}><span style={{ fontSize: 12.5, fontWeight: 800, color: c }}><MT>{s.metric}</MT></span></div></button>
   );
 }
 function ShortcutGrid({ onNav, cols = 5 }) {
@@ -279,7 +278,7 @@ function QuickTasksBar({ onNav }: { onNav: (r: string) => void }) {
               onMouseLeave={(e) => { e.currentTarget.style.background = "var(--card-raised)"; e.currentTarget.style.borderColor = "var(--border)"; }}
               style={{ position: "relative", display: "flex", alignItems: "center", gap: 7, cursor: "pointer", border: "1px solid var(--border)", background: "var(--card-raised)", borderRadius: 11, padding: "8px 14px", font: "inherit", transition: "background .15s,border-color .15s" }}>
               <span style={{ fontSize: 12.5, fontWeight: 600, color: q.urgent ? "var(--danger)" : "var(--foreground)" }}>{q.label}</span>
-              {q.badge > 0 && <span style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 99, background: "var(--danger)", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{q.badge > 99 ? "99+" : q.badge}</span>}
+              {q.badge > 0 && <span style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 99, background: "var(--danger)", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{mn(q.badge > 99 ? "99+" : String(q.badge))}</span>}
             </button>)
         }
       </div>
