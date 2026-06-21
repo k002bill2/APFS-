@@ -9,6 +9,9 @@ import { APFS_DATA } from './data';
 import { mn, MT } from './mask';
 import { RowFormModal, statusTone } from './generic_list_modal';
 import type { Row } from './generic_list_modal';
+import { resolveSchema } from './schemas';
+import { Cell } from './schemas/renderers';
+import type { PageSchema } from './schemas/types';
 
 const { useState } = React;
 const { PageHeader } = Shell;
@@ -40,10 +43,10 @@ const ROW_COLORS = ["var(--chart-1)", "var(--chart-3)", "var(--chart-4)", "var(-
 const ROW_CATS = ["투자성과", "리스크", "회계마감", "운용사보고", "컴플라이언스"];
 const ROW_STATUS = ["정상", "진행중", "검토중", "보류", "완료"];
 
-function makeRows(n: number): Row[] {
+function makeRows(schema: PageSchema, n: number): Row[] {
   return Array.from({ length: n }, (_, i) => {
     const k = i % 5;
-    return {
+    const base: Row = {
       id: "R" + String(i + 1).padStart(3, "0"),
       icon: ROW_ICONS[k],
       color: ROW_COLORS[k],
@@ -51,9 +54,17 @@ function makeRows(n: number): Row[] {
       category: ROW_CATS[k],
       amount: 1200 * (i + 1) + ((i * 137) % 800),
       change: Number((((i * 13) % 200) / 10 - 8).toFixed(1)),
-      status: ROW_STATUS[i % 5],
+      status: (schema.statusDomain?.[i % (schema.statusDomain.length || 1)]?.label) ?? ROW_STATUS[i % 5],
       trend: [3, 5, 4, 7, 6].map((v, j) => v + ((i + j * 2) % 4)),
     };
+    const extra: Record<string, unknown> = {};
+    for (const c of schema.columns) {
+      if (['name', 'amount', 'change', 'status', 'trend'].includes(c.key)) continue;
+      extra[c.key] = c.type === 'amount' || c.type === 'number' || c.type === 'rate'
+        ? (i + 1) * 100 + (i * 7) % 90
+        : c.label + ' ' + String(i + 1).padStart(3, '0');
+    }
+    return { ...base, ...extra } as Row;
   });
 }
 
@@ -104,9 +115,10 @@ function FilterPill({ label, onRemove }: { label: string; onRemove: () => void }
 
 export function GenericListPage({ route, onNav }: { route: string; onNav: (r: string) => void }) {
   const { title, crumbs, parent } = findMenuContext(route);
-  const [rows, setRows] = useState<Row[]>(() => makeRows(23));
+  const schema = resolveSchema(route);
+  const [rows, setRows] = useState<Row[]>(() => makeRows(schema, 23));
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
-  const [chips, setChips] = useState<string[]>(["투자성과", "리스크", "회계마감", "운용사보고"]);
+  const [chips, setChips] = useState<string[]>(schema.filters ?? []);
   const [page, setPage] = useState(1);
   const [view, setView] = useState("list");
   const [modal, setModal] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null);
@@ -193,7 +205,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           )}
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
             <Button variant="ghost" size="sm" leadingIcon="panel-left">상세필터</Button>
-            <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(23)); setSelected(new Set()); setPage(1); }} />
+            <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); setSelected(new Set()); setPage(1); }} />
             <Button variant="primary" size="sm" leadingIcon="plus" onClick={() => setModal({ mode: "create" })}>신규 등록</Button>
           </div>
         </div>
@@ -207,9 +219,12 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                   <th style={{ padding: cellPad, width: 44 }}>
                     <input type="checkbox" checked={allOnPage} onChange={toggleAll} aria-label="전체 선택" style={{ accentColor: "var(--primary)", width: 17, height: 17, cursor: "pointer" }} />
                   </th>
-                  {[["항목명", "left"], ["금액 (백만원)", "right"], ["변동률", "center"], ["상태", "center"], ["추이", "center"], ["", "right"]].map(([label, align], i) => (
-                    <th key={i} style={{ padding: cellPad, textAlign: align as any, fontSize: 12, fontWeight: 700, color: "var(--caption)", whiteSpace: "nowrap", borderBottom: "1px solid var(--border)" }}>{label}</th>
+                  {schema.columns.map((c) => (
+                    <th key={c.key} style={{ padding: cellPad, textAlign: (c.align || 'left') as any, fontSize: 12, fontWeight: 700, color: "var(--caption)", whiteSpace: "nowrap", borderBottom: "1px solid var(--border)" }}>
+                      {c.label}{c.unit ? ` (${c.unit})` : ''}
+                    </th>
                   ))}
+                  <th style={{ padding: cellPad, width: 56 }} />
                 </tr>
               </thead>
               <tbody>
@@ -225,16 +240,31 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                       <td style={{ padding: cellPad }}>
                         <input type="checkbox" checked={sel} onChange={() => toggleRow(r.id)} aria-label={r.name + " 선택"} style={{ accentColor: "var(--primary)", width: 17, height: 17, cursor: "pointer" }} />
                       </td>
-                      <td style={{ padding: cellPad }}>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 13.5, fontWeight: 600 }}><MT>{r.name}</MT></div>
-                          <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 1 }}><MT>{r.category}</MT></div>
-                        </div>
-                      </td>
-                      <td className="tabular" style={{ padding: cellPad, textAlign: "right", fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap" }}>{mn(r.amount.toLocaleString())}</td>
-                      <td style={{ padding: cellPad, textAlign: "center" }}><div style={{ display: "inline-flex" }}><DeltaBadge value={r.change} /></div></td>
-                      <td style={{ padding: cellPad, textAlign: "center" }}><StatusBadge tone={statusTone(r.status)} label={r.status} size="sm" /></td>
-                      <td style={{ padding: cellPad, textAlign: "center" }}><MiniBars data={r.trend} color={r.color} /></td>
+                      {schema.columns.map((c) => {
+                        if (c.key === 'name') {
+                          return (
+                            <td key={c.key} style={{ padding: cellPad }}>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontSize: 13.5, fontWeight: 600 }}><MT>{r.name}</MT></div>
+                                <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 1 }}><MT>{r.category}</MT></div>
+                              </div>
+                            </td>
+                          );
+                        }
+                        if (c.key === 'trend') {
+                          return (
+                            <td key={c.key} style={{ padding: cellPad, textAlign: (c.align || 'left') as any }}>
+                              <MiniBars data={r.trend} color={r.color} />
+                            </td>
+                          );
+                        }
+                        const isAmount = c.type === 'amount';
+                        return (
+                          <td key={c.key} style={{ padding: cellPad, textAlign: (c.align || 'left') as any, whiteSpace: isAmount ? 'nowrap' : undefined, fontSize: isAmount ? 13.5 : undefined, fontWeight: isAmount ? 600 : undefined }} className={isAmount ? "tabular" : undefined}>
+                            <Cell col={c} value={(r as any)[c.key]} color={r.color} statusDomain={schema.statusDomain} />
+                          </td>
+                        );
+                      })}
                       <td style={{ padding: cellPad, textAlign: "right" }}>
                         <IconBtn icon="file" label={r.name + " 상세·수정"} size={32} />
                       </td>
@@ -242,7 +272,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                   );
                 })}
                 {pageRows.length === 0 && (
-                  <tr><td colSpan={7} style={{ padding: "48px 0", textAlign: "center", color: "var(--caption)", fontSize: 13 }}>
+                  <tr><td colSpan={schema.columns.length + 2} style={{ padding: "48px 0", textAlign: "center", color: "var(--caption)", fontSize: 13 }}>
                     <Icon name="inbox" size={28} stroke={1.7} style={{ margin: "0 auto 8px" }} />표시할 항목이 없습니다
                   </td></tr>
                 )}
