@@ -108,13 +108,13 @@ const ROLES = [
 const MENU = [
   { id:"home", label:"대시보드", icon:"home", path:"main", roles:["admin","manager","viewer"] },
 
-  { id:"asset", label:"투자자산관리", icon:"landmark", roles:["admin","manager","viewer"], children:[
+  { id:"asset", label:"투자자산관리", icon:"landmark", path:"asset", roles:["admin","manager","viewer"], children:[
     { label:"모태펀드관리", sub:true, children:[
       { label:"자펀드 공고 정보관리" },
       { label:"모태펀드 조성 및 출자현황", path:"main" },
     ]},
     { label:"조합관리", sub:true, children:[
-      { label:"자펀드정보관리", path:"subfund" },
+      { label:"자펀드정보관리" },
       { label:"조합원정보조회" },
       { label:"자펀드별조합원조회" },
     ]},

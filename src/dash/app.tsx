@@ -16,10 +16,12 @@ import { SubFund } from './subfund';
 import { Pages as ReportMainPages } from './report_main';
 import { Pages as ReportBucheoPages } from './report_bucheo';
 import { Pages as ReportSutackPages } from './report_sutack';
+import { Pages as AssetPages } from './asset';
 import { GenericListPage } from './generic_list';
 const ReportMain = ReportMainPages.ReportMain;
 const ReportBucheo = ReportBucheoPages.ReportBucheo;
 const ReportSutack = ReportSutackPages.ReportSutack;
+const AssetMain = AssetPages.AssetMain;
 
 const { useState, useEffect } = React;
 const { AppShell } = Shell;
@@ -70,6 +72,7 @@ function App() {
   else if (route === "accounting") page = <Accounting onNav={onNav} />;
   else if (route === "schedule") page = <Schedule onNav={onNav} />;
   else if (route === "subfund") page = <SubFund onNav={onNav} />;
+  else if (route === "asset") page = <AssetMain onNav={onNav} />;
   else if (route === "report") page = <ReportMain onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "report-sutack") page = <ReportSutack onNav={onNav} />;

@@ -113,6 +113,50 @@ function FilterPill({ label, onRemove }: { label: string; onRemove: () => void }
   );
 }
 
+/* ===== 더보기 드롭다운 메뉴 (kebab) — performance.tsx MoreMenu 패턴 차용 ===== */
+function MenuItem({ icon, label, onClick, ph, danger }: { icon: string; label: string; onClick?: () => void; ph?: boolean; danger?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className="nc-row"
+      style={{
+        display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 11px",
+        borderRadius: 8, border: "none", background: "transparent", font: "inherit",
+        fontSize: 13.5, fontWeight: 600, cursor: "pointer",
+        color: danger ? "var(--danger)" : "var(--foreground)", textAlign: "left",
+      }}>
+      <Icon name={icon} size={17} style={{ color: danger ? "var(--danger)" : "var(--muted-foreground)", flex: "0 0 auto" }} />
+      {ph ? <MT>{label}</MT> : label}
+    </button>
+  );
+}
+
+function MoreMenu({ onRegister }: { onRegister: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <IconBtn icon="more" label="더보기" size={34} active={open} onClick={() => setOpen((o) => !o)} />
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 30 }} />
+          <div
+            role="menu"
+            className="absolute right-0 mt-1.5 z-40"
+            style={{
+              minWidth: 188, background: "var(--card)", border: "1px solid var(--border)",
+              borderRadius: 12, boxShadow: "var(--shadow-lg)", padding: 6, animation: "ncPop .16s var(--ease) both",
+            }}>
+            <MenuItem icon="plus" label="등록" onClick={() => { setOpen(false); onRegister(); }} />
+            <div style={{ height: 1, background: "var(--border)", margin: "5px 4px" }} />
+            <MenuItem icon="download" label="내보내기" ph onClick={() => setOpen(false)} />
+            <MenuItem icon="file" label="인쇄" ph onClick={() => setOpen(false)} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function GenericListPage({ route, onNav }: { route: string; onNav: (r: string) => void }) {
   const { title, crumbs, parent } = findMenuContext(route);
   const schema = resolveSchema(route);
@@ -206,7 +250,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
             <Button variant="ghost" size="sm" leadingIcon="panel-left">상세필터</Button>
             <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); setSelected(new Set()); setPage(1); }} />
-            <Button variant="primary" size="sm" leadingIcon="plus" onClick={() => setModal({ mode: "create" })}>신규 등록</Button>
+            <MoreMenu onRegister={() => setModal({ mode: "create" })} />
           </div>
         </div>
 
@@ -233,12 +277,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                   return (
                     <tr key={r.id}
                       style={{ borderBottom: "1px solid var(--border)", background: sel ? "color-mix(in srgb, var(--primary) 6%, transparent)" : undefined, transition: "background .12s", cursor: "pointer" }}
-                      title="더블클릭하여 상세·수정"
+                      title="클릭하여 선택 · 더블클릭하여 상세·수정"
+                      onClick={() => toggleRow(r.id)}
                       onDoubleClick={() => setModal({ mode: "edit", row: r })}
                       onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = "color-mix(in srgb, var(--muted) 40%, transparent)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = sel ? "color-mix(in srgb, var(--primary) 6%, transparent)" : "transparent"; }}>
                       <td style={{ padding: cellPad }}>
-                        <input type="checkbox" checked={sel} onChange={() => toggleRow(r.id)} aria-label={r.name + " 선택"} style={{ accentColor: "var(--primary)", width: 17, height: 17, cursor: "pointer" }} />
+                        <input type="checkbox" checked={sel} onChange={() => toggleRow(r.id)} onClick={(e) => e.stopPropagation()} aria-label={r.name + " 선택"} style={{ accentColor: "var(--primary)", width: 17, height: 17, cursor: "pointer" }} />
                       </td>
                       {schema.columns.map((c) => {
                         if (c.key === 'name') {
