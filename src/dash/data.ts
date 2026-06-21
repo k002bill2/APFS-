@@ -3,7 +3,7 @@ import React from 'react';
 const spark = (arr) => arr;
 
 const KPI = [
-  { id:"aum",  label:"총 AUM (운용자산)", value:"2조 3,840", unit:"억원", accent:"var(--chart-3)", icon:"landmark",
+  { id:"aum",  label:"총 AUM (운용자산)", value:"23,840", unit:"억원", accent:"var(--chart-3)", icon:"landmark",
     delta:+3.2, deltaLabel:"전월 대비", trend:spark([198,205,201,214,222,219,231,238]) , fr:"FR-5.5-01" },
   { id:"exec", label:"모태펀드 집행률", value:"78.0", unit:"%", accent:"var(--primary)", icon:"target",
     delta:+1.4, deltaLabel:"목표 80% 대비", trend:spark([62,66,69,71,72,74,76,78]), fr:"FR-5.1-07", progress:78 },
