@@ -2,8 +2,9 @@ import type { PageSchema } from './types';
 import { DEFAULT_SCHEMA } from './_default';
 import { schema as s연도별투자현황 } from './연도별투자현황';
 import { schema as s조합별월간보고현황 } from './조합별_월간보고_현황';
+import { schema as s자펀드공고정보관리 } from './자펀드_공고_정보관리';
 
-const ALL: PageSchema[] = [s연도별투자현황, s조합별월간보고현황];
+const ALL: PageSchema[] = [s연도별투자현황, s조합별월간보고현황, s자펀드공고정보관리];
 
 export function buildRegistry(list: PageSchema[]): Record<string, PageSchema> {
   const m: Record<string, PageSchema> = {};

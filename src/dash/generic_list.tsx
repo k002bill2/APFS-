@@ -131,7 +131,7 @@ function MenuItem({ icon, label, onClick, ph, danger }: { icon: string; label: s
   );
 }
 
-function MoreMenu({ onRegister }: { onRegister: () => void }) {
+function MoreMenu({ onRegister, editable }: { onRegister: () => void; editable: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
@@ -146,8 +146,12 @@ function MoreMenu({ onRegister }: { onRegister: () => void }) {
               minWidth: 188, background: "var(--card)", border: "1px solid var(--border)",
               borderRadius: 12, boxShadow: "var(--shadow-lg)", padding: 6, animation: "ncPop .16s var(--ease) both",
             }}>
-            <MenuItem icon="plus" label="등록" onClick={() => { setOpen(false); onRegister(); }} />
-            <div style={{ height: 1, background: "var(--border)", margin: "5px 4px" }} />
+            {editable && (
+              <>
+                <MenuItem icon="plus" label="등록" onClick={() => { setOpen(false); onRegister(); }} />
+                <div style={{ height: 1, background: "var(--border)", margin: "5px 4px" }} />
+              </>
+            )}
             <MenuItem icon="download" label="내보내기" ph onClick={() => setOpen(false)} />
             <MenuItem icon="file" label="인쇄" ph onClick={() => setOpen(false)} />
           </div>
@@ -160,6 +164,7 @@ function MoreMenu({ onRegister }: { onRegister: () => void }) {
 export function GenericListPage({ route, onNav }: { route: string; onNav: (r: string) => void }) {
   const { title, crumbs, parent } = findMenuContext(route);
   const schema = resolveSchema(route);
+  const editable = schema.fields.length > 0;
   const [rows, setRows] = useState<Row[]>(() => makeRows(schema, 23));
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [chips, setChips] = useState<string[]>(schema.filters ?? []);
@@ -250,7 +255,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
             <Button variant="ghost" size="sm" leadingIcon="panel-left">상세필터</Button>
             <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); setSelected(new Set()); setPage(1); }} />
-            <MoreMenu onRegister={() => setModal({ mode: "create" })} />
+            <MoreMenu onRegister={() => setModal({ mode: "create" })} editable={editable} />
           </div>
         </div>
 
@@ -277,9 +282,9 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                   return (
                     <tr key={r.id}
                       style={{ borderBottom: "1px solid var(--border)", background: sel ? "color-mix(in srgb, var(--primary) 6%, transparent)" : undefined, transition: "background .12s", cursor: "pointer" }}
-                      title="클릭하여 선택 · 더블클릭하여 상세·수정"
+                      title={editable ? "클릭하여 선택 · 더블클릭하여 상세·수정" : "클릭하여 선택"}
                       onClick={() => toggleRow(r.id)}
-                      onDoubleClick={() => setModal({ mode: "edit", row: r })}
+                      onDoubleClick={editable ? () => setModal({ mode: "edit", row: r }) : undefined}
                       onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = "color-mix(in srgb, var(--muted) 40%, transparent)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = sel ? "color-mix(in srgb, var(--primary) 6%, transparent)" : "transparent"; }}>
                       <td style={{ padding: cellPad }}>
@@ -311,7 +316,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                         );
                       })}
                       <td style={{ padding: cellPad, textAlign: "right" }}>
-                        <IconBtn icon="file" label={r.name + " 상세·수정"} size={32} />
+                        {editable && <IconBtn icon="file" label={r.name + " 상세·수정"} size={32} />}
                       </td>
                     </tr>
                   );
@@ -327,8 +332,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: 12, padding: 18 }}>
             {pageRows.map((r) => (
-              <button key={r.id} onClick={() => setModal({ mode: "edit", row: r })}
-                style={{ textAlign: "left", border: "1px solid var(--border)", borderRadius: 12, padding: 14, background: "var(--card)", cursor: "pointer", font: "inherit", display: "flex", flexDirection: "column", gap: 10 }}>
+              <button key={r.id} onClick={editable ? () => setModal({ mode: "edit", row: r }) : undefined}
+                style={{ textAlign: "left", border: "1px solid var(--border)", borderRadius: 12, padding: 14, background: "var(--card)", cursor: editable ? "pointer" : "default", font: "inherit", display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <ColorChip icon={r.icon} color={r.color} size={36} iconSize={18} />
                   <div style={{ minWidth: 0 }}>
