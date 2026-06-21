@@ -23,8 +23,12 @@ export function Cell({ col, value, color, statusDomain }: { col: ColumnSpec; val
   }
 }
 
-export function SchemaField({ field, value, onChange }: { field: FieldSpec; value: string; onChange: (v: string) => void }) {
-  const base: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '8px 11px', fontSize: 13.5, font: 'inherit', border: '1px solid var(--border-strong)', borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)' };
+export function SchemaField({ field, value, onChange, invalid }: { field: FieldSpec; value: string; onChange: (v: string) => void; invalid?: boolean }) {
+  const base: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box', padding: '8px 11px', fontSize: 13.5, font: 'inherit',
+    border: `1px solid ${invalid ? 'var(--danger)' : 'var(--border-strong)'}`,
+    borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
+  };
   switch (field.control) {
     case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} style={{ ...base, resize: 'vertical' }} />;
     case 'select':   return <select value={value} onChange={(e) => onChange(e.target.value)} style={base}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>;

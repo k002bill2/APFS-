@@ -7,6 +7,7 @@ import { UI } from './components';
 import type { Tone } from './components';
 import { SchemaField } from './schemas/renderers';
 import type { PageSchema } from './schemas/types';
+import { buildRow } from './schemas/build_row';
 
 const { useState } = React;
 const { Button } = UI;
@@ -38,11 +39,16 @@ export function statusTone(label: string): Tone {
 
 const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: "var(--caption)", marginBottom: 5, display: "block" };
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, errMsg }: { label: string; children: React.ReactNode; errMsg?: string }) {
   return (
     <label style={{ display: "block", marginBottom: 14 }}>
       <span style={labelStyle}>{label}</span>
       {children}
+      {errMsg && (
+        <span style={{ fontSize: 11.5, color: "var(--danger)", display: "block", marginTop: 4 }}>
+          {errMsg}
+        </span>
+      )}
     </label>
   );
 }
@@ -60,23 +66,17 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
     for (const f of schema.fields) seed[f.key] = initial ? String((initial as any)[f.key] ?? '') : (f.control === 'select' ? (f.options?.[0] ?? '') : '');
     return seed;
   });
-  const [err, setErr] = useState("");
+  const [errKey, setErrKey] = useState("");
   const [confirmDel, setConfirmDel] = useState(false);
-  const set = (k: string, v: string) => setVals((p) => ({ ...p, [k]: v }));
+  const set = (k: string, v: string) => {
+    setVals((p) => ({ ...p, [k]: v }));
+    if (errKey === k) setErrKey('');
+  };
 
   const submit = () => {
     const req = schema.fields.find((f) => f.required && !String(vals[f.key] ?? '').trim());
-    if (req) { setErr(`${req.label}을(를) 입력하세요.`); return; }
-    onSave({
-      id: initial?.id ?? '',
-      icon: initial?.icon ?? 'layers', color: initial?.color ?? 'var(--chart-1)',
-      name: (vals.name ?? '').trim(),
-      category: (vals.category ?? schema.entity).trim(),
-      amount: Number(vals.amount) || 0, change: Number(vals.change) || 0,
-      status: vals.status ?? (schema.statusDomain?.[0]?.label ?? '정상'),
-      trend: initial?.trend ?? [4, 6, 5, 8, 7],
-      ...vals,
-    } as Row);
+    if (req) { setErrKey(req.key); return; }
+    onSave(buildRow(vals, initial, schema));
   };
 
   return createPortal(
@@ -107,11 +107,15 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
         {/* 폼 */}
         <div style={{ padding: 18, overflowY: "auto" }}>
           {schema.fields.map((f) => (
-            <Field key={f.key} label={f.label + (f.required ? ' *' : '')}>
-              <SchemaField field={f} value={vals[f.key] ?? ''} onChange={(v) => { set(f.key, v); if (err) setErr(''); }} />
+            <Field key={f.key} label={f.label + (f.required ? ' *' : '')} errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
+              <SchemaField
+                field={f}
+                value={vals[f.key] ?? ''}
+                onChange={(v) => set(f.key, v)}
+                invalid={errKey === f.key}
+              />
             </Field>
           ))}
-          {err && <span style={{ fontSize: 11.5, color: "var(--danger)", display: "block" }}>{err}</span>}
         </div>
 
         {/* 푸터 */}
