@@ -64,6 +64,7 @@ function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
       cardTitle="모태펀드 조성·출자 현황표"
       headerActions={<>
         <Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>
+        <Button variant="outline" size="sm" leadingIcon="layers" onClick={() => onNav && onNav('asset-funding-aggrid')}>AG Grid PoC</Button>
         <Button variant="primary" size="sm" leadingIcon="download">내보내기</Button>
       </>}
       kpis={<>
