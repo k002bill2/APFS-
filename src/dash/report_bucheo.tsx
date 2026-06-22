@@ -103,8 +103,7 @@ function KpiBox({ icon, label, value, sub, tone }: { icon?: string; label?: Reac
       className="rounded-card border border-border bg-card px-5 py-4 shadow-sm flex items-center gap-4"><div
         className="inline-flex items-center justify-center shrink-0 rounded-[12px]"
         style={{ width: 44, height: 44, background: softBg, color: c }}><Icon name={icon} size={22} stroke={2} /></div><div className="min-w-0 flex-1"><div className="t-label text-[11.5px] mb-0.5"><MT>{label}</MT></div><div
-          className="text-[22px] font-extrabold tabular leading-tight"
-          style={{ color: "var(--foreground)" }}>{mn(value)}</div>{sub && <div className="t-caption text-[11.5px] mt-0.5"><MT>{sub}</MT></div>}</div></div>
+          className="text-[22px] font-extrabold tabular leading-tight text-foreground">{mn(value)}</div>{sub && <div className="t-caption text-[11.5px] mt-0.5"><MT>{sub}</MT></div>}</div></div>
   );
 }
 
@@ -142,7 +141,7 @@ function ReportBucheo({ onNav }: { onNav?: (route: string) => void }) {
           label="승인 대기"
           value="1건"
           sub="모태펀드 집행실적 보고" /></div><div className="flex flex-col gap-4"><div
-          className="rounded-card border border-border bg-card px-6 py-5 shadow-sm flex items-center gap-2"><div className="flex-1 flex items-center gap-4"><ColorChip icon="file" color="var(--primary)" size={32} iconSize={17} /><div><div className="text-[14px] font-bold" style={{ color: "var(--foreground)" }}>보고 승인 흐름</div><div className="t-caption text-[11.5px]">2분기 운용현황 보고 현재 진행 단계</div></div></div><div className="flex items-center gap-2 shrink-0"><Stepper activeStep={activeStep} /></div></div><div
+          className="rounded-card border border-border bg-card px-6 py-5 shadow-sm flex items-center gap-2"><div className="flex-1 flex items-center gap-4"><ColorChip icon="file" color="var(--primary)" size={32} iconSize={17} /><div><div className="text-[14px] font-bold text-foreground">보고 승인 흐름</div><div className="t-caption text-[11.5px]">2분기 운용현황 보고 현재 진행 단계</div></div></div><div className="flex items-center gap-2 shrink-0"><Stepper activeStep={activeStep} /></div></div><div
           className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
             className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">보고서 목록</h3><CountPill count={MINISTRY_REPORTS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">신규 보고 등록</Button><IconBtn icon="download" label="내보내기" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[760px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
                     ["보고서명", "left"],
@@ -166,8 +165,7 @@ function ReportBucheo({ onNav }: { onNav?: (route: string) => void }) {
                     className="border-t border-border transition-colors"
                     onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><td className="px-4 pl-6 py-3.5"><div
-                        className="text-[13.5px] font-semibold"
-                        style={{ color: "var(--foreground)" }}><MT>{r.name}</MT></div></td><td className="px-4 py-3.5 text-center"><span
+                        className="text-[13.5px] font-semibold text-foreground"><MT>{r.name}</MT></div></td><td className="px-4 py-3.5 text-center"><span
                         className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold"
                         style={{
                           background: r.type === "수시"
@@ -175,10 +173,8 @@ function ReportBucheo({ onNav }: { onNav?: (route: string) => void }) {
                             : "color-mix(in srgb,var(--info) 14%,transparent)",
                           color: r.type === "수시" ? "var(--warning)" : "var(--info)",
                         }}>{r.type}</span></td><td
-                      className="px-4 py-3.5 text-center text-[13px] font-semibold"
-                      style={{ color: "var(--foreground)" }}><MT>{r.org}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{mn(r.date)}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={reportTone(r.status)} label={r.status} size="sm" /></td><td
-                      className="px-4 py-3.5 text-center text-[13px] font-semibold"
-                      style={{ color: "var(--foreground)" }}><MT>{r.manager}</MT></td><td className="px-4 pr-5 py-3.5 text-right">{r.action === "-"
+                      className="px-4 py-3.5 text-center text-[13px] font-semibold text-foreground"><MT>{r.org}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{mn(r.date)}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={reportTone(r.status)} label={r.status} size="sm" /></td><td
+                      className="px-4 py-3.5 text-center text-[13px] font-semibold text-foreground"><MT>{r.manager}</MT></td><td className="px-4 pr-5 py-3.5 text-right">{r.action === "-"
                         ? <span className="t-caption text-[12px]">—</span>
                         : <Button variant={r.action === "작성" ? "primary" : "outline"} size="sm">{r.action}</Button>}</td></tr>
                 )}</tbody></table></div></div></div></div>

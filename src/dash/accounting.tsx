@@ -115,8 +115,9 @@ function CalendarView({ calMap }) {
           <span
             key={i}
             title={e.title}
+            className="shrink-0"
             style={{
-              width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+              width: 7, height: 7, borderRadius: "50%",
               background: e.tone === "danger" ? "var(--danger)" : e.tone === "warning" ? "var(--warning)" : "var(--info)",
             }} />)}</div>
     );
@@ -124,14 +125,16 @@ function CalendarView({ calMap }) {
 
   return (
     <div className="select-none"><div
-        style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2, marginBottom: 4 }}>{DAYS_LABEL.map((dl) =>
+        className="grid gap-0.5 mb-1"
+        style={{ gridTemplateColumns: "repeat(7,1fr)" }}>{DAYS_LABEL.map((dl) =>
           <div
             key={dl}
             className="text-center t-caption text-[11px] font-bold pb-1"
-            style={{ color: dl === "일" ? "var(--danger)" : dl === "토" ? "var(--accent)" : "var(--muted-foreground)" }}>{dl}</div>)}</div><div style={{ display: "flex", flexDirection: "column", gap: 2 }}>{weeks.map((week, wi) =>
+            style={{ color: dl === "일" ? "var(--danger)" : dl === "토" ? "var(--accent)" : "var(--muted-foreground)" }}>{dl}</div>)}</div><div className="flex flex-col gap-0.5">{weeks.map((week, wi) =>
           <div
             key={wi}
-            style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2 }}>{week.map((d, di) => {
+            className="grid gap-0.5"
+            style={{ gridTemplateColumns: "repeat(7,1fr)" }}>{week.map((d, di) => {
               const isToday = d === todayDate;
               const inD7 = d !== null && d > todayDate && d <= dPlus7;
               const events = d ? (calMap[dateKey(d)] || []) : [];
@@ -203,7 +206,7 @@ function EvidenceTable() {
               className="border-b border-border hover:bg-muted transition-colors"><td className="px-3 py-2.5 font-mono text-[12px] whitespace-nowrap"><MT>{e.no}</MT></td><td className="px-3 py-2.5 text-caption whitespace-nowrap">{mn(e.txDate)}</td><td className="px-3 py-2.5 tabular text-right whitespace-nowrap">{mn(e.amount.toLocaleString())}</td><td className="px-3 py-2.5 whitespace-nowrap"><div className="flex items-center gap-1.5"><Icon
                     name={EV_ICON[e.evType] || "file"}
                     size={14}
-                    style={{ color: "var(--warning)" }} /><span className="font-semibold"><MT>{e.evType}</MT></span></div></td><td className="px-3 py-2.5 text-caption"><MT>{e.reason}</MT></td></tr>)}</tbody></table></div>
+                    className="text-warning" /><span className="font-semibold"><MT>{e.evType}</MT></span></div></td><td className="px-3 py-2.5 text-caption"><MT>{e.reason}</MT></td></tr>)}</tbody></table></div>
   );
 }
 
@@ -223,7 +226,7 @@ function BsCard() {
     <div
       className="rounded-card border border-border bg-card px-4 py-4 shadow-sm flex-1"><div className="flex items-center gap-2 mb-3"><ColorChip icon="landmark" color="var(--accent)" size={30} iconSize={16} /><span className="text-[14px] font-bold">재무상태표 요약</span></div><FinanceRow label="자산 총계" value="2조 3,840억원" /><FinanceRow label="부채 총계" value="800억원" tone="danger" /><FinanceRow label="자본 총계" value="2조 3,040억원" tone="success" /><div
         className="mt-3 rounded-[8px] px-3 py-2"
-        style={{ background: "color-mix(in srgb,var(--success) 10%,transparent)" }}><span className="text-[12px] font-bold" style={{ color: "var(--success)" }}>{mn("부채비율 3.5% — 안정적")}</span></div></div>
+        style={{ background: "color-mix(in srgb,var(--success) 10%,transparent)" }}><span className="text-[12px] font-bold text-success">{mn("부채비율 3.5% — 안정적")}</span></div></div>
   );
 }
 
@@ -232,7 +235,7 @@ function PlCard() {
     <div
       className="rounded-card border border-border bg-card px-4 py-4 shadow-sm flex-1"><div className="flex items-center gap-2 mb-3"><ColorChip icon="trending" color="var(--primary)" size={30} iconSize={16} /><span className="text-[14px] font-bold">손익계산서 요약</span></div><FinanceRow label="총 수익" value="240억원" tone="success" /><FinanceRow label="총 비용" value="180억원" tone="danger" /><FinanceRow label="당기순이익" value="60억원" tone="primary" /><div
         className="mt-3 rounded-[8px] px-3 py-2"
-        style={{ background: "color-mix(in srgb,var(--primary) 10%,transparent)" }}><span className="text-[12px] font-bold" style={{ color: "var(--primary)" }}>{mn("순이익률 25.0%")}</span></div></div>
+        style={{ background: "color-mix(in srgb,var(--primary) 10%,transparent)" }}><span className="text-[12px] font-bold text-primary">{mn("순이익률 25.0%")}</span></div></div>
   );
 }
 
@@ -249,8 +252,7 @@ function AuditTimeline() {
         return (
           <div key={i} className="flex gap-3 pb-4 relative">{// Vertical line
             i < AUDIT_LOG.length - 1 && <div
-              className="absolute left-[15px] top-[28px] bottom-0 w-[2px]"
-              style={{ background: "var(--border)" }} />}<span
+              className="absolute left-[15px] top-[28px] bottom-0 w-[2px] bg-border" />}<span
               className="shrink-0 inline-flex items-center justify-center rounded-full z-10"
               style={{ width: 30, height: 30, background: soft, color, border: `1.5px solid ${color}` }}><Icon name={iconName} size={15} stroke={2} /></span><div className="flex-1 pt-0.5"><div className="flex items-center justify-between gap-2 flex-wrap"><span className="text-[13px] font-semibold"><MT>{item.user}</MT></span><span className="t-caption text-[11.5px] whitespace-nowrap">{mn(item.time)}</span></div><span className="text-[12.5px] text-caption"><MT>{item.action}</MT></span></div></div>
         );
@@ -283,8 +285,8 @@ function Accounting({ onNav }) {
             size="sm"
             leadingIcon="chevron-left"
             onClick={() => onNav && onNav("main")}>메인으로</Button><Button variant="primary" size="sm" leadingIcon="download">내보내기</Button></>} /><div
-        style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 16 }}
-        className="overflow-x-auto"><KpiCard
+        style={{ gridTemplateColumns: "repeat(4,1fr)" }}
+        className="overflow-x-auto grid gap-3 mb-4"><KpiCard
           icon="file"
           label="미결 전표"
           value="23"
@@ -311,21 +313,20 @@ function Accounting({ onNav }) {
           unit="억원"
           tone="info"
           delta={null} /></div><div
-        style={{ display: "grid", gridTemplateColumns: "1.4fr 0.6fr", gap: 16, marginBottom: 16 }}><div
+        className="grid gap-4 mb-4"
+        style={{ gridTemplateColumns: "1.4fr 0.6fr" }}><div
           className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
             className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border"><div className="flex items-center gap-2.5"><ColorChip icon="calendar" color="var(--primary)" size={32} iconSize={17} /><div><div className="text-[16px] font-bold">6월 마감 캘린더</div><div className="t-caption text-[12px]">2026년 6월 — 마감·보고·실사 일정</div></div></div><div className="flex items-center gap-2"><div className="flex items-center gap-1.5"><span
-                  className="inline-block w-2.5 h-2.5 rounded-full"
-                  style={{ background: "var(--danger)" }} /><span className="t-caption text-[11px]">마감</span></div><div className="flex items-center gap-1.5"><span
-                  className="inline-block w-2.5 h-2.5 rounded-full"
-                  style={{ background: "var(--warning)" }} /><span className="t-caption text-[11px]">경고</span></div><div className="flex items-center gap-1.5"><span
-                  className="inline-block w-2.5 h-2.5 rounded-full"
-                  style={{ background: "var(--info)" }} /><span className="t-caption text-[11px]">정보</span></div></div></div><div className="px-5 py-4"><CalendarView calMap={calMap} /></div></div><div style={{ display: "flex", flexDirection: "column", gap: 12 }}><BsCard /><PlCard /></div></div><div
+                  className="inline-block w-2.5 h-2.5 rounded-full bg-danger" /><span className="t-caption text-[11px]">마감</span></div><div className="flex items-center gap-1.5"><span
+                  className="inline-block w-2.5 h-2.5 rounded-full bg-warning" /><span className="t-caption text-[11px]">경고</span></div><div className="flex items-center gap-1.5"><span
+                  className="inline-block w-2.5 h-2.5 rounded-full bg-info" /><span className="t-caption text-[11px]">정보</span></div></div></div><div className="px-5 py-4"><CalendarView calMap={calMap} /></div></div><div className="flex flex-col gap-3"><BsCard /><PlCard /></div></div><div
         className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden mb-4"><div className="flex items-center justify-between px-5 pt-5 pb-3"><div className="flex items-center gap-2.5"><ColorChip icon="file-text" color="var(--accent)" size={32} iconSize={17} /><span className="text-[16px] font-bold">전표 관리</span></div><SegTabs
             options={TAB_OPTIONS}
             value={voucherTab}
             onChange={setVoucherTab}
             size="sm" /></div><div className="border-t border-border px-1 py-1">{voucherTab === "general"  && <VoucherTable />}{voucherTab === "pending"  && <PendingTable />}{voucherTab === "evidence" && <EvidenceTable />}</div></div><div
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}><ChartCard
+        className="grid gap-4 mb-4"
+        style={{ gridTemplateColumns: "1fr 1fr" }}><ChartCard
           title="분기별 자금수지 현황"
           sub="계획 vs 실적 (억원) + 집행률(%)"
           icon="wallet"

@@ -148,8 +148,8 @@ function IconBtn({ icon, onClick, label, badge, active, size = 38 }: { icon: str
       aria-label={label}
       title={label}
       className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border transition-all duration-150",
-        active ? "bg-card text-primary" : "bg-transparent text-muted-foreground border-transparent")}
-      style={{ width: size, height: size, ...(active ? { borderColor: "var(--ring)" } : {}) }}><Icon name={icon} size={20} stroke={2} />{badge > 0 && <span
+        active ? "bg-card text-primary border-ring" : "bg-transparent text-muted-foreground border-transparent")}
+      style={{ width: size, height: size }}><Icon name={icon} size={20} stroke={2} />{badge > 0 && <span
         className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</button>
   );
 }

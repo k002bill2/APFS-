@@ -26,7 +26,7 @@ function ColumnTrack({ data, height = 160, highlight = null, accent = "var(--pri
   const max = niceMax(Math.max(...data.map((d) => d.value)));
   const band = (W || 300) / data.length, bw = Math.min(22, band * 0.46);
   return (
-    <div ref={ref} style={{ position: "relative", width: "100%", height }}>
+    <div ref={ref} className="relative w-full" style={{ height }}>
       {W > 0 && <svg width={W} height={height}>
         {data.map((d, i) => {
           const x = band * i + band / 2;
@@ -40,10 +40,10 @@ function ColumnTrack({ data, height = 160, highlight = null, accent = "var(--pri
           </g>;
         })}
       </svg>}
-      {hi !== null && data[hi] && <div style={{
-        position: "absolute", left: band * hi + band / 2, top: m.t + ih - (data[hi].value / max) * ih - 30,
-        transform: "translateX(-50%)", background: "var(--foreground)", color: "var(--bg)", fontSize: 11.5, fontWeight: 700,
-        padding: "3px 8px", borderRadius: 7, whiteSpace: "nowrap", pointerEvents: "none",
+      {hi !== null && data[hi] && <div className="absolute bg-foreground text-bg font-bold whitespace-nowrap pointer-events-none" style={{
+        left: band * hi + band / 2, top: m.t + ih - (data[hi].value / max) * ih - 30,
+        transform: "translateX(-50%)", fontSize: 11.5,
+        padding: "3px 8px", borderRadius: 7,
       }}>{mn(data[hi].label || data[hi].value)}</div>}
     </div>
   );
@@ -56,7 +56,7 @@ function ProgressRing({ value, max = 100, height = 168, top, center, color = "va
   const cx = (W || 200) / 2, cy = height / 2, r = Math.min(cx, cy) - 12, sw = 14;
   const C = 2 * Math.PI * r, frac = Math.min(1, value / max);
   return (
-    <div ref={ref} style={{ position: "relative", width: "100%", height }}>
+    <div ref={ref} className="relative w-full" style={{ height }}>
       {W > 0 && <svg width={W} height={height}>
         <circle cx={cx} cy={cy} r={r} fill="none" stroke={tk} strokeWidth={sw} />
         <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round"
@@ -64,9 +64,9 @@ function ProgressRing({ value, max = 100, height = 168, top, center, color = "va
           transform={`rotate(-90 ${cx} ${cy})`}
           style={{ transition: "stroke-dashoffset .6s var(--ease)" }} />
       </svg>}
-      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
         {top && <div className="t-caption" style={{ fontSize: 11.5 }}>{top}</div>}
-        <div className="tabular" style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.02em" }}>{center}</div>
+        <div className="tabular font-extrabold" style={{ fontSize: 22, letterSpacing: "-.02em" }}>{center}</div>
       </div>
     </div>
   );
@@ -87,7 +87,7 @@ function DualSeries({ a, b, labels, height = 170, area = false, ca = "var(--char
     </g>;
   };
   return (
-    <div ref={ref} style={{ width: "100%", height }}>
+    <div ref={ref} className="w-full" style={{ height }}>
       {W > 0 && <svg width={W} height={height}>
         <defs>
           <linearGradient id={id + "-a"} x1={0} y1={0} x2={0} y2={1}><stop offset="0%" stopColor={ca} stopOpacity={.28} /><stop offset="100%" stopColor={ca} stopOpacity={.02} /></linearGradient>
@@ -115,7 +115,7 @@ function PieLabeled({ data, height = 170 }: { data: any[]; height?: number }) {
     return `M${cx},${cy} L${x0},${y0} A${r},${r} 0 ${a1-a0>Math.PI?1:0} 1 ${x1},${y1} Z`;
   };
   return (
-    <div ref={ref} style={{ width: "100%", height }}>
+    <div ref={ref} className="w-full" style={{ height }}>
       {W > 0 && <svg width={W} height={height}>
         {data.map((d, i) => {
           const frac = d.value / total, a0 = ang, a1 = ang + frac * Math.PI * 2; ang = a1;
@@ -135,10 +135,10 @@ function PieLabeled({ data, height = 170 }: { data: any[]; height?: number }) {
 function UsageSegments({ filled, total, height = 30, color = "var(--primary)" }: { filled: number; total: number; height?: number; color?: string }) {
   const [ref, W] = useMeasure();
   return (
-    <div ref={ref} style={{ width: "100%", height, display: "flex", gap: 5 }}>
+    <div ref={ref} className="w-full flex" style={{ height, gap: 5 }}>
       {W > 0 && Array.from({ length: total }, (_, i) =>
-        <div key={i} style={{
-          flex: 1, borderRadius: 6,
+        <div key={i} className="flex-1" style={{
+          borderRadius: 6,
           background: i < filled ? `color-mix(in srgb,${color} ${100 - i * 12}%,var(--card))` : "var(--muted)",
         }} />
       )}

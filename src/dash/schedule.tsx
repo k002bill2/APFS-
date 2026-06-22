@@ -197,12 +197,10 @@ function TimelineView({ items }) {
     <div
       className="flex flex-col gap-0"
       style={{ animation: "dashFade .35s var(--ease) both" }}>{grouped.map(([date, entries], gi: number) => <div key={date} className="flex gap-0"><div className="flex flex-col items-center mr-3" style={{ width: 32 }}><div
-            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-[11px]"
-            style={{ background: "var(--muted)", color: "var(--muted-foreground)", border: "2px solid var(--border)" }}>{mn(fmtDate(date).split("(")[0])}</div>{gi < grouped.length - 1 && <div
-            className="flex-1 w-px"
-            style={{ background: "var(--border)", minHeight: 16, margin: "4px 0" }} />}</div><div className="flex-1 pb-4"><div
-            className="text-[12px] font-bold mb-1.5 mt-1"
-            style={{ color: "var(--muted-foreground)" }}>{mn(fmtDate(date))}</div><div className="flex flex-col gap-2">{entries.map((item, ii) => {
+            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-[11px] bg-muted text-muted-foreground border-2 border-border">{mn(fmtDate(date).split("(")[0])}</div>{gi < grouped.length - 1 && <div
+            className="flex-1 w-px bg-border my-1"
+            style={{ minHeight: 16 }} />}</div><div className="flex-1 pb-4"><div
+            className="text-[12px] font-bold mb-1.5 mt-1 text-muted-foreground">{mn(fmtDate(date))}</div><div className="flex flex-col gap-2">{entries.map((item, ii) => {
               const tone = ddayTone(item);
               const [c, soft] = toneVar(tone);
               return (
@@ -240,10 +238,9 @@ function NotifPanel({ notifs, onReadAll }) {
       style={{ minHeight: 400 }}><div
         className="flex items-center justify-between px-4 py-3 border-b border-border"><div className="flex items-center gap-2"><ColorChip icon="bell" color="var(--accent)" size={30} iconSize={15} /><span className="text-[14px] font-bold text-foreground">최근 알림</span>{unread > 0 && <CountPill count={unread} urgent={true} />}</div>{unread > 0 && <button
           onClick={markAllRead}
-          className="text-[11.5px] font-semibold cursor-pointer"
-          style={{ color: "var(--primary)", background: "none", border: "none" }}>모두 읽음</button>}</div><div
-        className="flex flex-col divide-y"
-        style={{ borderColor: "var(--border)" }}>{items.map((n) => {
+          className="text-[11.5px] font-semibold cursor-pointer text-primary"
+          style={{ background: "none", border: "none" }}>모두 읽음</button>}</div><div
+        className="flex flex-col divide-y border-border">{items.map((n) => {
           const [c, soft] = toneVar(n.tone);
           return (
             <button
@@ -415,8 +412,8 @@ function Schedule({ onNav }) {
                       size={13}
                       stroke={2}
                       style={{ color, flexShrink: 0 }} /><span className="text-[12px] font-semibold w-16 shrink-0 text-muted-foreground">{kind}</span><div
-                      className="flex-1 rounded-full overflow-hidden"
-                      style={{ height: 6, background: "var(--muted)" }}><div
+                      className="flex-1 rounded-full overflow-hidden bg-muted"
+                      style={{ height: 6 }}><div
                         className="h-full rounded-full transition-all duration-500"
                         style={{ width: (cnt / maxCnt * 100) + "%", background: color }} /></div><span className="text-[11.5px] font-bold tabular shrink-0" style={{ color }}>{mn(cnt) + "건"}</span></div>
                 );

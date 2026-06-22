@@ -13,7 +13,8 @@ const ALLMENU = D.ALLMENU;
 
 const MoreBtn = () => <button
   aria-label="더보기"
-  style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--caption)", display: "inline-flex", padding: 4, borderRadius: 7 }}><Icon name="more" size={18} /></button>;
+  className="cursor-pointer text-caption inline-flex p-1"
+  style={{ border: "none", background: "transparent", borderRadius: 7 }}><Icon name="more" size={18} /></button>;
 
 /* 출자·집행 현황 */
 function ExecChart({ period, setPeriod, fund, setFund, span }) {
@@ -28,13 +29,14 @@ function ExecChart({ period, setPeriod, fund, setFund, span }) {
       span={span}
       right={<><SegTabs options={["분기", "연"]} value={period} onChange={setPeriod} size="sm" /><MoreBtn /></>}
       footer={<div
-        style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}><Legend color="var(--chart-grid)" label={<MT>계획</MT>} /><Legend color="var(--chart-1)" label={<MT>실적</MT>} /><Legend color="var(--chart-3)" label={<MT>집행률 %</MT>} line={true} /><span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>{funds.map((f) => <FilterChip key={f} active={fund === f} onClick={() => setFund(f)}><MT>{f}</MT></FilterChip>)}</span></div>}><ComposedBars data={data} height={270} /></ChartCard>
+        className="flex items-center gap-4 flex-wrap"><Legend color="var(--chart-grid)" label={<MT>계획</MT>} /><Legend color="var(--chart-1)" label={<MT>실적</MT>} /><Legend color="var(--chart-3)" label={<MT>집행률 %</MT>} line={true} /><span className="flex gap-1.5" style={{ marginLeft: "auto" }}>{funds.map((f) => <FilterChip key={f} active={fund === f} onClick={() => setFund(f)}><MT>{f}</MT></FilterChip>)}</span></div>}><ComposedBars data={data} height={270} /></ChartCard>
   );
 }
 function Legend({ color, label, line }: { color?: string; label?: React.ReactNode; line?: boolean }) {
   return (
     <span
-      style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600, color: "var(--muted-foreground)" }}>{line ? <span style={{ width: 16, height: 2.5, borderRadius: 2, background: color }} /> : <span style={{ width: 10, height: 10, borderRadius: 3, background: color }} />}{label}</span>
+      className="inline-flex items-center gap-1.5 font-semibold text-muted-foreground"
+      style={{ fontSize: 11.5 }}>{line ? <span className="w-4" style={{ height: 2.5, borderRadius: 2, background: color }} /> : <span className="w-2.5 h-2.5" style={{ borderRadius: 3, background: color }} />}{label}</span>
   );
 }
 
@@ -56,15 +58,18 @@ function StatusDonut({ active, setActive, onNav, span, height = 200 }) {
         centerValue={mn(total)}
         activeKey={active}
         onSlice={(s) => { setActive(active === s.key ? null : s.key); }} /><div
-        style={{ display: "flex", flexDirection: "column", gap: 7, marginTop: 12 }}>{D.STATUS_DONUT.map((s) => <button
+        className="flex flex-col mt-3"
+        style={{ gap: 7 }}>{D.STATUS_DONUT.map((s) => <button
           key={s.key}
           onClick={() => setActive(active === s.key ? null : s.key)}
+          className="flex items-center cursor-pointer text-left"
           style={{
-            display: "flex", alignItems: "center", gap: 9, border: "none", cursor: "pointer", font: "inherit",
-            background: active === s.key ? "var(--muted)" : "transparent", borderRadius: 8, padding: "6px 9px", textAlign: "left",
-          }}><span style={{ width: 9, height: 9, borderRadius: 99, background: s.color }} /><span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}><MT>{s.name}</MT></span><span className="tabular" style={{ fontSize: 13, fontWeight: 700 }}>{mn(s.value)}</span><span className="t-caption" style={{ width: 42, textAlign: "right" }}>{mn(((s.value / total) * 100).toFixed(0)) + "%"}</span></button>)}{active && <button
+            gap: 9, border: "none", font: "inherit",
+            background: active === s.key ? "var(--muted)" : "transparent", borderRadius: 8, padding: "6px 9px",
+          }}><span style={{ width: 9, height: 9, borderRadius: 99, background: s.color }} /><span className="flex-1 font-semibold" style={{ fontSize: 13 }}><MT>{s.name}</MT></span><span className="tabular font-bold" style={{ fontSize: 13 }}>{mn(s.value)}</span><span className="t-caption text-right" style={{ width: 42 }}>{mn(((s.value / total) * 100).toFixed(0)) + "%"}</span></button>)}{active && <button
           onClick={() => onNav("risk")}
-          style={{ marginTop: 4, border: "none", cursor: "pointer", font: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: "color-mix(in srgb,var(--primary) 11%,transparent)", color: "var(--primary)", borderRadius: 8, padding: "8px", fontSize: 12.5, fontWeight: 700 }}>{"조기경보 대시보드에서 ‘" + D.STATUS_DONUT.find((x) => x.key === active).name + "’ 보기"}<Icon name="arrow-right" size={15} /></button>}</div></ChartCard>
+          className="mt-1 cursor-pointer flex items-center justify-center gap-1.5 text-primary p-2"
+          style={{ border: "none", font: "inherit", fontWeight: 700, background: "color-mix(in srgb,var(--primary) 11%,transparent)", borderRadius: 8, fontSize: 12.5 }}>{"조기경보 대시보드에서 ‘" + D.STATUS_DONUT.find((x) => x.key === active).name + "’ 보기"}<Icon name="arrow-right" size={15} /></button>}</div></ChartCard>
   );
 }
 
@@ -97,21 +102,24 @@ function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }: { span?: nu
           variant="ghost"
           size="sm"
           trailingIcon="arrow-right"
-          onClick={() => onNav("schedule")}>전체</Button></>}><div style={{ position: "relative" }}><div
+          onClick={() => onNav("schedule")}>전체</Button></>}><div className="relative"><div
+          className="flex flex-col"
           style={scroll
-              ? { display: "flex", flexDirection: "column", maxHeight: maxH, overflowY: "auto", margin: "0 -6px", padding: "0 6px" }
-              : { display: "flex", flexDirection: "column" }}>{list.map((s, i) => <button
+              ? { maxHeight: maxH, overflowY: "auto", margin: "0 -6px", padding: "0 6px" }
+              : {}}>{list.map((s, i) => <button
             key={i}
             onClick={() => onNav("schedule")}
+            className="flex items-center gap-3 cursor-pointer text-left shrink-0"
             style={{
-              display: "flex", alignItems: "center", gap: 12, border: "none", cursor: "pointer", font: "inherit", textAlign: "left",
-              padding: "11px 6px", borderBottom: i < list.length - 1 ? "1px solid var(--border)" : "none", background: "transparent", flex: "0 0 auto",
-            }}><div style={{ width: 46, textAlign: "center", flex: "0 0 auto" }}><div style={{ fontSize: 13, fontWeight: 800, color: ddayColor(s.tone) }}>{mn(s.dday)}</div><div className="t-caption" style={{ fontSize: 10 }}>{mn(s.date.slice(5).replace("-", "/"))}</div></div><div style={{ width: 1, alignSelf: "stretch", background: "var(--border)" }} /><div style={{ flex: 1, minWidth: 0 }}><div
-                style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><MT>{s.title}</MT></div><div style={{ display: "flex", gap: 7, marginTop: 3, alignItems: "center" }}><StatusBadge tone={s.tone} label={s.kind} size="sm" /><span className="t-caption"><MT>{s.to}</MT></span></div></div><Icon
+              border: "none", font: "inherit",
+              padding: "11px 6px", borderBottom: i < list.length - 1 ? "1px solid var(--border)" : "none", background: "transparent",
+            }}><div className="text-center shrink-0" style={{ width: 46 }}><div className="font-extrabold" style={{ fontSize: 13, color: ddayColor(s.tone) }}>{mn(s.dday)}</div><div className="t-caption" style={{ fontSize: 10 }}>{mn(s.date.slice(5).replace("-", "/"))}</div></div><div className="bg-border" style={{ width: 1, alignSelf: "stretch" }} /><div className="flex-1 min-w-0"><div
+                className="font-semibold truncate" style={{ fontSize: 13 }}><MT>{s.title}</MT></div><div className="flex items-center" style={{ gap: 7, marginTop: 3 }}><StatusBadge tone={s.tone} label={s.kind} size="sm" /><span className="t-caption"><MT>{s.to}</MT></span></div></div><Icon
               name="chevron-right"
               size={16}
               style={{ color: "var(--caption)", flex: "0 0 auto" }} /></button>)}{scroll && <div
-            style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 28, pointerEvents: "none", background: "linear-gradient(transparent,var(--card))" }} />}</div></div></ChartCard>
+            className="absolute left-0 right-0 bottom-0 h-7 pointer-events-none"
+            style={{ background: "linear-gradient(transparent,var(--card))" }} />}</div></div></ChartCard>
   );
 }
 
@@ -121,15 +129,17 @@ function MiniKpis({ vertical }: { vertical?: boolean }) {
   const toneC = { warning: "var(--warning)", danger: "var(--danger)", success: "var(--success)" };
   return (
     <div
-      style={{ display: "grid", gridTemplateColumns: vertical ? "1fr" : "repeat(3,1fr)", gap: 12 }}>{D.MINI.map((m) => <div
+      className="grid gap-3"
+      style={{ gridTemplateColumns: vertical ? "1fr" : "repeat(3,1fr)" }}>{D.MINI.map((m) => <div
         key={m.id}
+        className="bg-card border border-border shadow-sm flex items-center justify-between gap-2"
         style={{
-          background: "var(--card)", border: "1px solid var(--border)",
-          borderRadius: 12, padding: "13px 15px", boxShadow: "var(--shadow-sm)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-        }}><div style={{ minWidth: 0 }}><div
-            className="t-label"
-            style={{ textTransform: "none", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><MT>{m.label}</MT></div><div style={{ display: "flex", alignItems: "baseline", gap: 3, marginTop: 4 }}><span className="t-display tabular" style={{ fontSize: 24 }}>{mn(m.value)}</span><span
-              style={{ fontSize: 12, fontWeight: 600, color: "var(--muted-foreground)" }}>{m.unit}</span></div></div><ColorChip
+          borderRadius: 12, padding: "13px 15px",
+        }}><div className="min-w-0"><div
+            className="t-label truncate"
+            style={{ textTransform: "none" }}><MT>{m.label}</MT></div><div className="flex mt-1" style={{ alignItems: "baseline", gap: 3 }}><span className="t-display tabular" style={{ fontSize: 24 }}>{mn(m.value)}</span><span
+              className="font-semibold text-muted-foreground"
+              style={{ fontSize: 12 }}>{m.unit}</span></div></div><ColorChip
           icon={m.tone === "success" ? "check-circle" : "file"}
           color={toneC[m.tone]}
           size={34}
@@ -144,20 +154,20 @@ function ShortcutCard({ s, onNav }) {
   return (
     <button
       onClick={() => onNav(s.to)}
-      className="shortcut"
+      className="shortcut text-left cursor-pointer bg-card border border-border p-4 shadow-sm flex flex-col gap-3 relative overflow-hidden"
       style={{
-        textAlign: "left", cursor: "pointer", font: "inherit", color: "inherit",
-        background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, padding: 16,
-        boxShadow: "var(--shadow-sm)", display: "flex", flexDirection: "column", gap: 12, transition: "transform .18s,box-shadow .18s", position: "relative", overflow: "hidden",
+        font: "inherit", color: "inherit",
+        borderRadius: 14, transition: "transform .18s,box-shadow .18s",
       }}><div
-        style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><ColorChip icon={s.icon} color={c} size={40} iconSize={21} /><Icon name="arrow-right" size={17} style={{ color: "var(--caption)" }} /></div><div><div style={{ fontSize: 14.5, fontWeight: 700 }}><MT>{s.title}</MT></div><div className="t-caption" style={{ marginTop: 3, lineHeight: 1.4 }}><MT>{s.desc}</MT></div></div><div
-        style={{ display: "flex", alignItems: "center", gap: 7, marginTop: "auto" }}><span style={{ fontSize: 12.5, fontWeight: 800, color: c }}><MT>{s.metric}</MT></span></div></button>
+        className="flex items-center justify-between"><ColorChip icon={s.icon} color={c} size={40} iconSize={21} /><Icon name="arrow-right" size={17} style={{ color: "var(--caption)" }} /></div><div><div className="font-bold" style={{ fontSize: 14.5 }}><MT>{s.title}</MT></div><div className="t-caption" style={{ marginTop: 3, lineHeight: 1.4 }}><MT>{s.desc}</MT></div></div><div
+        className="flex items-center" style={{ gap: 7, marginTop: "auto" }}><span className="font-extrabold" style={{ fontSize: 12.5, color: c }}><MT>{s.metric}</MT></span></div></button>
   );
 }
 function ShortcutGrid({ onNav, cols = 5 }) {
   return (
     <div
-      style={{ display: "grid", gridTemplateColumns: `repeat(${cols},1fr)`, gap: 14 }}>{D.SHORTCUTS.map((s) => <ShortcutCard key={s.id} s={s} onNav={onNav} />)}</div>
+      className="grid gap-3.5"
+      style={{ gridTemplateColumns: `repeat(${cols},1fr)` }}>{D.SHORTCUTS.map((s) => <ShortcutCard key={s.id} s={s} onNav={onNav} />)}</div>
   );
 }
 
@@ -212,37 +222,37 @@ function MenuPickerModal({ open, onClose, initialTab }: { open: boolean; onClose
   }, [open]);
   if (!open) return null;
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 120, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, animation: "dashFade .16s var(--ease) both" }}>
-      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" style={{ width: "min(960px,100%)", maxHeight: "84vh", display: "flex", flexDirection: "column", background: "var(--card)", border: "1px solid var(--border)", borderRadius: 20, boxShadow: "var(--shadow-lg)", overflow: "hidden", animation: "dashPop .2s var(--ease) both" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "20px 22px 14px" }}>
+    <div onClick={onClose} className="fixed inset-0 flex items-center justify-center p-5" style={{ zIndex: 120, background: "rgba(0,0,0,.5)", animation: "dashFade .16s var(--ease) both" }}>
+      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" className="flex flex-col bg-card border border-border shadow-lg overflow-hidden" style={{ width: "min(960px,100%)", maxHeight: "84vh", borderRadius: 20, animation: "dashPop .2s var(--ease) both" }}>
+        <div className="flex items-start justify-between gap-3" style={{ padding: "20px 22px 14px" }}>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.01em" }}>메뉴 편집</div>
+            <div className="font-extrabold" style={{ fontSize: 17, letterSpacing: "-.01em" }}>메뉴 편집</div>
             <div className="t-caption" style={{ marginTop: 3 }}>전체 메뉴에서 자주 쓰는 업무를 골라 바로가기를 구성하세요.</div>
           </div>
-          <button onClick={onClose} aria-label="닫기" style={{ flex: "0 0 auto", border: "none", background: "var(--muted)", borderRadius: 9, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--muted-foreground)" }}><Icon name="x" size={17} /></button>
+          <button onClick={onClose} aria-label="닫기" className="shrink-0 bg-muted w-8 h-8 flex items-center justify-center cursor-pointer text-muted-foreground" style={{ border: "none", borderRadius: 9 }}><Icon name="x" size={17} /></button>
         </div>
-        <div style={{ display: "flex", gap: 6, padding: "0 24px 12px", borderBottom: "1px solid var(--border)" }}>
+        <div className="flex gap-1.5 pt-0 pb-3 px-6 border-b border-border">
           {tabs.map((t) => {
             const on = t.kind === tab;
             const tac = t.kind === "fav" ? "var(--warning)" : "var(--primary)";
-            return <button key={t.kind} onClick={() => setTab(t.kind)} style={{ display: "inline-flex", alignItems: "center", gap: 7, border: "none", cursor: "pointer", font: "inherit", padding: "9px 14px", borderRadius: 10, background: on ? `color-mix(in srgb,${tac} 14%,var(--card))` : "transparent", color: on ? tac : "var(--caption)", fontSize: 13.5, fontWeight: 700, transition: "background .15s,color .15s" }}>
+            return <button key={t.kind} onClick={() => setTab(t.kind)} className="inline-flex items-center cursor-pointer" style={{ gap: 7, border: "none", font: "inherit", fontWeight: 700, padding: "9px 14px", borderRadius: 10, background: on ? `color-mix(in srgb,${tac} 14%,var(--card))` : "transparent", color: on ? tac : "var(--caption)", fontSize: 13.5, transition: "background .15s,color .15s" }}>
               <Icon name={t.icon} size={15} />{t.label}
             </button>;
           })}
         </div>
-        <div style={{ flex: 1, overflowY: "auto", padding: "18px 24px 10px", columnWidth: 248, columnGap: 28 }}>
-          {cats.map((c: any) => <div key={c.cat} style={{ breakInside: "avoid", marginBottom: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 9 }}>
-              <span style={{ width: 6, height: 6, borderRadius: 99, background: c.urgent ? "var(--danger)" : "var(--primary)", flex: "0 0 auto" }} />
-              <span style={{ fontSize: 13.5, fontWeight: 800, letterSpacing: "-.01em" }}>{c.cat}</span>
+        <div className="flex-1 overflow-y-auto" style={{ padding: "18px 24px 10px", columnWidth: 248, columnGap: 28 }}>
+          {cats.map((c: any) => <div key={c.cat} className="mb-5" style={{ breakInside: "avoid" }}>
+            <div className="flex items-center" style={{ gap: 7, marginBottom: 9 }}>
+              <span className="w-1.5 h-1.5 shrink-0" style={{ borderRadius: 99, background: c.urgent ? "var(--danger)" : "var(--primary)" }} />
+              <span className="font-extrabold" style={{ fontSize: 13.5, letterSpacing: "-.01em" }}>{c.cat}</span>
             </div>
-            {c.subs.map((s: any) => <div key={s.sub} style={{ marginBottom: 11, paddingLeft: 13, borderLeft: "1px solid var(--border)" }}>
-              <div className="t-caption" style={{ fontWeight: 600, marginBottom: 7 }}>{s.sub}</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {c.subs.map((s: any) => <div key={s.sub} className="border-l border-border" style={{ marginBottom: 11, paddingLeft: 13 }}>
+              <div className="t-caption font-semibold" style={{ marginBottom: 7 }}>{s.sub}</div>
+              <div className="flex flex-wrap gap-1.5">
                 {s.items.map((o: any) => {
                   const on = selSet.has(o.key);
                   const full = !on && sel.length >= cur.max;
-                  return <button key={o.key} onClick={() => toggle(o.key)} disabled={full} title={full ? "최대 " + cur.max + "개까지 선택" : o.label} style={{ font: "inherit", cursor: full ? "not-allowed" : "pointer", opacity: full ? .4 : 1, display: "inline-flex", alignItems: "center", gap: 5, border: "1px solid " + (on ? "transparent" : "var(--border)"), background: on ? `color-mix(in srgb,${accent} 16%,var(--card))` : "transparent", color: on ? accent : "var(--muted-foreground)", fontSize: 12.5, fontWeight: on ? 700 : 500, borderRadius: 9, padding: "6px 11px", whiteSpace: "nowrap", transition: "background .15s,color .15s,border-color .15s" }}>
+                  return <button key={o.key} onClick={() => toggle(o.key)} disabled={full} title={full ? "최대 " + cur.max + "개까지 선택" : o.label} className="inline-flex items-center whitespace-nowrap" style={{ font: "inherit", cursor: full ? "not-allowed" : "pointer", opacity: full ? .4 : 1, gap: 5, border: "1px solid " + (on ? "transparent" : "var(--border)"), background: on ? `color-mix(in srgb,${accent} 16%,var(--card))` : "transparent", color: on ? accent : "var(--muted-foreground)", fontSize: 12.5, fontWeight: on ? 700 : 500, borderRadius: 9, padding: "6px 11px", transition: "background .15s,color .15s,border-color .15s" }}>
                     {on && <Icon name={cur.kind === "fav" ? "star" : "check"} size={12} stroke={2.4} />}{o.label}
                   </button>;
                 })}
@@ -250,8 +260,8 @@ function MenuPickerModal({ open, onClose, initialTab }: { open: boolean; onClose
             </div>)}
           </div>)}
         </div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 22px", borderTop: "1px solid var(--border)" }}>
-          <button onClick={() => MenuStore.set(cur.kind, cur.def)} style={{ border: "none", background: "transparent", cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600, color: "var(--caption)", padding: "8px 4px", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="settings" size={14} />기본값으로 초기화</button>
+        <div className="flex items-center justify-between gap-3 border-t border-border" style={{ padding: "14px 22px" }}>
+          <button onClick={() => MenuStore.set(cur.kind, cur.def)} className="cursor-pointer text-caption py-2 px-1 inline-flex items-center gap-1.5" style={{ border: "none", background: "transparent", font: "inherit", fontWeight: 600, fontSize: 12.5 }}><Icon name="settings" size={14} />기본값으로 초기화</button>
           <Button variant="primary" size="md" onClick={onClose}>완료</Button>
         </div>
       </div>
@@ -265,27 +275,29 @@ function QuickTasksBar({ onNav }: { onNav: (r: string) => void }) {
   const keys = useMenuSel("quick", D.DEFAULT_QUICK || []);
   const items = MenuStore.resolve(keys);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, boxShadow: "var(--shadow-sm)", padding: "12px 16px", marginBottom: 18 }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 1, paddingRight: 14, borderRight: "1px solid var(--border)", flex: "0 0 auto" }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700 }}><Icon name="grid" size={15} />퀵메뉴</span>
+    <div className="flex items-center gap-3.5 flex-wrap bg-card border border-border shadow-sm py-3 px-4" style={{ borderRadius: 14, marginBottom: 18 }}>
+      <div className="flex flex-col pr-3.5 border-r border-border shrink-0" style={{ gap: 1 }}>
+        <span className="inline-flex items-center gap-1.5 font-bold" style={{ fontSize: 13 }}><Icon name="grid" size={15} />퀵메뉴</span>
         <span className="t-caption" style={{ fontSize: 10.5 }}>자주 쓰는 업무</span>
       </div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flex: 1 }}>
+      <div className="flex gap-2 flex-wrap flex-1">
         {items.length === 0
           ? <span className="t-caption" style={{ alignSelf: "center" }}>오른쪽 설정에서 바로가기를 추가하세요.</span>
           : items.map((q: any) => <button key={q.key} onClick={() => onNav(q.to)} title={q.label}
               onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "var(--card-raised)"; e.currentTarget.style.borderColor = "var(--border)"; }}
-              style={{ position: "relative", display: "flex", alignItems: "center", gap: 7, cursor: "pointer", border: "1px solid var(--border)", background: "var(--card-raised)", borderRadius: 11, padding: "8px 14px", font: "inherit", transition: "background .15s,border-color .15s" }}>
-              <span style={{ fontSize: 12.5, fontWeight: 600, color: q.urgent ? "var(--danger)" : "var(--foreground)" }}>{q.label}</span>
-              {q.badge > 0 && <span style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 99, background: "var(--danger)", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{mn(q.badge > 99 ? "99+" : String(q.badge))}</span>}
+              className="relative flex items-center cursor-pointer border border-border bg-card-raised py-2 px-3.5"
+              style={{ gap: 7, borderRadius: 11, font: "inherit", transition: "background .15s,border-color .15s" }}>
+              <span className="font-semibold" style={{ fontSize: 12.5, color: q.urgent ? "var(--danger)" : "var(--foreground)" }}>{q.label}</span>
+              {q.badge > 0 && <span className="bg-danger font-extrabold flex items-center justify-center" style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 99, color: "#fff", fontSize: 10 }}>{mn(q.badge > 99 ? "99+" : String(q.badge))}</span>}
             </button>)
         }
       </div>
       <button onClick={() => setEdit(true)} aria-label="퀵메뉴 편집" title="퀵메뉴 편집"
         onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "var(--foreground)"; }}
         onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--caption)"; }}
-        style={{ flex: "0 0 auto", marginLeft: "auto", width: 38, height: 38, borderRadius: 10, border: "1px solid var(--border)", background: "transparent", color: "var(--caption)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background .15s,color .15s" }}>
+        className="shrink-0 border border-border text-caption cursor-pointer flex items-center justify-center"
+        style={{ marginLeft: "auto", width: 38, height: 38, borderRadius: 10, background: "transparent", transition: "background .15s,color .15s" }}>
         <Icon name="settings" size={18} />
       </button>
       <MenuPickerModal open={edit} onClose={() => setEdit(false)} />
@@ -297,7 +309,7 @@ function RegionBarCard({ span, height = 240 }: { span?: number | string; height?
   return (
     <ChartCard title="지역별 출자·집행" sub="계획 대비 실적" icon="chart-bar" accent="var(--chart-2)" span={span}
       right={<><SegTabs options={["금액", "건수"]} value="금액" onChange={() => {}} size="sm" /><MoreBtn /></>}
-      footer={<div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+      footer={<div className="flex items-center gap-4">
         <Legend color="var(--chart-grid)" label="계획" />
         <Legend color="var(--chart-2)" label="실적" />
       </div>}>

@@ -15,11 +15,11 @@ const { Card, ColorChip } = UI;
    value는 호출자가 이미 mn() 처리해 넘기는 ReactNode(숫자/단위), 라벨은 MT(원본 동일). */
 export function KpiBadge({ icon, color, label, value, valueColor }: { icon: string; color: string; label: string; value: React.ReactNode; valueColor?: string }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, border: "1px solid var(--border)", borderRadius: 12, padding: "8px 14px", background: "var(--card)" }}>
+    <div className="flex items-center gap-2.5 py-2 px-3.5 bg-card" style={{ border: "1px solid var(--border)", borderRadius: 12 }}>
       <ColorChip icon={icon} color={color} size={30} iconSize={16} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 1, lineHeight: 1.2 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--caption)" }}><MT>{label}</MT></span>
-        <span className="tabular" style={{ fontSize: 16, fontWeight: 800, color: valueColor || "var(--foreground)" }}>{value}</span>
+      <div className="flex flex-col" style={{ gap: 1, lineHeight: 1.2 }}>
+        <span className="font-semibold text-caption" style={{ fontSize: 11 }}><MT>{label}</MT></span>
+        <span className="tabular font-extrabold" style={{ fontSize: 16, color: valueColor || "var(--foreground)" }}>{value}</span>
       </div>
     </div>
   );
@@ -50,8 +50,6 @@ export interface GridFrameProps {
   children: React.ReactNode;
 }
 
-const ROW = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' } as const;
-
 export function GridFrame({
   crumbs, title, sub, headerActions, cardTitle, kpis,
   toolbarLeft, toolbarRight, footerLeft, footerCenter, footerRight, children,
@@ -63,21 +61,21 @@ export function GridFrame({
       {/* PageHeader: 현 shell은 title/sub를 렌더하지 않으므로(crumbs·actions만) title/sub는 카드헤더가 직접 그린다.
           title은 forward-compat용으로 계속 넘기되 라이브 제목은 카드 <h3> — 향후 shell이 title 렌더를 복원하면 중복 주의 */}
       <PageHeader crumbs={crumbs} title={title} actions={headerActions} />
-      <Card pad={0} style={{ overflow: 'hidden' }}>
+      <Card pad={0} className="overflow-hidden">
         {/* 카드 헤더: 타이틀(+sub 캡션) + KPI 슬롯 */}
-        <div style={{ ...ROW, gap: 16, padding: '16px 18px' }}>
-          <div style={{ minWidth: 0 }}>
-            <h3 style={{ fontSize: 15.5, fontWeight: 700 }}>{cardTitle ?? title}</h3>
-            {sub && <p style={{ fontSize: 12.5, color: 'var(--caption)', margin: '2px 0 0', lineHeight: 1.4 }}>{sub}</p>}
+        <div className="flex items-center justify-between flex-wrap gap-4" style={{ padding: '16px 18px' }}>
+          <div className="min-w-0">
+            <h3 className="font-bold" style={{ fontSize: 20 }}>{cardTitle ?? title}</h3>
+            {sub && <p className="text-caption" style={{ fontSize: 12.5, margin: '2px 0 0', lineHeight: 1.4 }}>{sub}</p>}
           </div>
-          {kpis && <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>{kpis}</div>}
+          {kpis && <div className="flex gap-2.5 flex-wrap">{kpis}</div>}
         </div>
 
         {/* 툴바 */}
         {hasToolbar && (
-          <div style={{ ...ROW, gap: 12, padding: '10px 18px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'color-mix(in srgb, var(--muted) 35%, transparent)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{toolbarLeft}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>{toolbarRight}</div>
+          <div className="flex items-center justify-between flex-wrap gap-3" style={{ padding: '10px 18px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'color-mix(in srgb, var(--muted) 35%, transparent)' }}>
+            <div className="flex items-center gap-2 flex-wrap">{toolbarLeft}</div>
+            <div className="flex items-center gap-1 flex-wrap">{toolbarRight}</div>
           </div>
         )}
 
@@ -86,10 +84,10 @@ export function GridFrame({
 
         {/* 푸터 */}
         {hasFooter && (
-          <div style={{ ...ROW, gap: 12, padding: '12px 18px', borderTop: '1px solid var(--border)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', minWidth: 0, fontSize: 12.5, color: 'var(--caption)' }}>{footerLeft}</span>
-            {footerCenter && <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>{footerCenter}</div>}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>{footerRight}</div>
+          <div className="flex items-center justify-between flex-wrap gap-3" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)' }}>
+            <span className="flex items-center min-w-0 text-caption" style={{ fontSize: 12.5 }}>{footerLeft}</span>
+            {footerCenter && <div className="flex items-center gap-1 flex-wrap">{footerCenter}</div>}
+            <div className="flex items-center gap-1.5 flex-wrap">{footerRight}</div>
           </div>
         )}
       </Card>

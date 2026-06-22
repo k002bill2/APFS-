@@ -29,9 +29,7 @@ export function MT({ children, w }: { children?: React.ReactNode; w?: number }) 
   const len = typeof children === 'string' ? children.length : 8;
   const width = w ?? Math.max(28, Math.min(110, Math.round(len * 6.5)));
   return (
-    <span style={{
-      display: 'inline-block',
-      background: 'var(--muted-foreground)',
+    <span className="inline-block bg-muted-foreground" style={{
       borderRadius: 4,
       width,
       height: '0.72em',

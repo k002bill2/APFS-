@@ -75,16 +75,16 @@ function KpiBox({ icon, label, value, sub, tone }: {
   return (
     <div className="rounded-card border border-border bg-card px-5 py-4 shadow-sm flex items-center gap-4">
       <div
-        className="inline-flex items-center justify-center shrink-0 rounded-[12px]"
-        style={{ width: 44, height: 44, background: softBg, color: c }}
+        className="inline-flex items-center justify-center shrink-0 rounded-[12px] w-11 h-11"
+        style={{ background: softBg, color: c }}
       >
         <Icon name={icon} size={22} stroke={2} />
       </div>
       <div className="min-w-0 flex-1">
         <div className="t-label text-[11.5px] mb-0.5"><MT>{label}</MT></div>
         <div
-          className="text-[22px] font-extrabold tabular leading-tight"
-          style={{ color: "var(--foreground)", overflowWrap: "anywhere" }}
+          className="text-[22px] font-extrabold tabular leading-tight text-foreground"
+          style={{ overflowWrap: "anywhere" }}
         >{mn(value)}</div>
         {sub && <div className="t-caption text-[11.5px] mt-0.5"><MT>{sub}</MT></div>}
       </div>
@@ -109,8 +109,7 @@ function NavCard({ icon, tone, title, desc, badge, badgeUrgent, onClick }: {
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left rounded-card-lg border border-border bg-card px-6 py-5 shadow-sm transition-all hover:shadow-md flex items-start gap-4 group"
-      style={{ cursor: "pointer" }}
+      className="w-full text-left rounded-card-lg border border-border bg-card px-6 py-5 shadow-sm transition-all hover:shadow-md flex items-start gap-4 group cursor-pointer"
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.background = "color-mix(in srgb,var(--muted) 40%,transparent)";
       }}
@@ -126,15 +125,12 @@ function NavCard({ icon, tone, title, desc, badge, badgeUrgent, onClick }: {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <span className="text-[16px] font-bold" style={{ color: "var(--foreground)" }}>{title}</span>
+          <span className="text-[16px] font-bold text-foreground">{title}</span>
           {badge !== undefined && <CountPill count={badge} urgent={badgeUrgent} />}
         </div>
-        <p className="text-[13px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>{desc}</p>
+        <p className="text-[13px] leading-relaxed text-muted-foreground">{desc}</p>
       </div>
-      <div
-        className="shrink-0 mt-1 transition-transform group-hover:translate-x-1"
-        style={{ color: "var(--muted-foreground)" }}
-      >
+      <div className="shrink-0 mt-1 transition-transform group-hover:translate-x-1 text-muted-foreground">
         <Icon name="chevron-right" size={20} />
       </div>
     </button>
@@ -205,7 +201,7 @@ function AssetMain({ onNav }: { onNav?: (route: string) => void }) {
               <span className="t-caption text-[11.5px]">계획</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-sm inline-block shrink-0" style={{ background: "var(--primary)" }} />
+              <span className="w-3 h-3 rounded-sm inline-block shrink-0 bg-primary" />
               <span className="t-caption text-[11.5px]">실적</span>
             </div>
           </div>
@@ -269,25 +265,24 @@ function AssetMain({ onNav }: { onNav?: (route: string) => void }) {
               {RECENT_ASSETS.map((r) => (
                 <tr
                   key={r.id}
-                  className="border-t border-border transition-colors"
-                  style={{ cursor: "pointer" }}
+                  className="border-t border-border transition-colors cursor-pointer"
                   title="더블클릭하여 상세 보기"
                   onDoubleClick={() => go(r.route)}
                   onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
                   onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
                 >
                   <td className="px-4 pl-6 py-3.5">
-                    <div className="text-[13.5px] font-semibold" style={{ color: "var(--foreground)" }}><MT>{r.name}</MT></div>
+                    <div className="text-[13.5px] font-semibold text-foreground"><MT>{r.name}</MT></div>
                     <div className="t-caption text-[11.5px] mt-0.5 font-mono"><MT w={44}>{r.id}</MT></div>
                   </td>
                   <td className="px-4 py-3.5 text-center">
                     <span
-                      className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold"
-                      style={{ background: "color-mix(in srgb,var(--accent) 13%,transparent)", color: "var(--accent)" }}
+                      className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold text-accent"
+                      style={{ background: "color-mix(in srgb,var(--accent) 13%,transparent)" }}
                     ><MT w={40}>{r.type}</MT></span>
                   </td>
-                  <td className="px-4 py-3.5 text-[13px] font-semibold" style={{ color: "var(--foreground)" }}><MT>{r.gp}</MT></td>
-                  <td className="px-4 py-3.5 text-right tabular text-[13.5px] font-bold whitespace-nowrap" style={{ color: "var(--foreground)" }}>{mn(r.aum)}</td>
+                  <td className="px-4 py-3.5 text-[13px] font-semibold text-foreground"><MT>{r.gp}</MT></td>
+                  <td className="px-4 py-3.5 text-right tabular text-[13.5px] font-bold whitespace-nowrap text-foreground">{mn(r.aum)}</td>
                   <td className="px-4 py-3.5 text-center"><StatusBadge tone={r.tone as any} label={r.status} size="sm" /></td>
                   <td className="px-4 pr-5 py-3.5 text-right">
                     <Button variant="ghost" size="sm" onClick={() => go(r.route)}>보기</Button>

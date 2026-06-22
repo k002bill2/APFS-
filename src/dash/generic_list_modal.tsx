@@ -37,15 +37,15 @@ export function statusTone(label: string): Tone {
   return STATUS_CHOICES.find((s) => s.label === label)?.tone ?? "info";
 }
 
-const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: "var(--caption)", marginBottom: 5, display: "block" };
+const labelStyle: React.CSSProperties = { fontSize: 12, marginBottom: 5 };
 
 function Field({ label, children, errMsg }: { label: string; children: React.ReactNode; errMsg?: string }) {
   return (
-    <label style={{ display: "block", marginBottom: 14 }}>
-      <span style={labelStyle}>{label}</span>
+    <label className="block mb-3.5">
+      <span className="font-semibold text-caption block" style={labelStyle}>{label}</span>
       {children}
       {errMsg && (
-        <span style={{ fontSize: 11.5, color: "var(--danger)", display: "block", marginTop: 4 }}>
+        <span className="text-danger block mt-1" style={{ fontSize: 11.5 }}>
           {errMsg}
         </span>
       )}
@@ -82,30 +82,33 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
   return createPortal(
     <div
       onClick={onClose}
+      className="fixed inset-0 flex items-start justify-center overflow-y-auto"
       style={{
-        position: "fixed", inset: 0, zIndex: 80, display: "flex", alignItems: "flex-start", justifyContent: "center",
-        background: "color-mix(in srgb, #000 42%, transparent)", padding: "6vh 20px 40px", overflowY: "auto",
+        zIndex: 80,
+        background: "color-mix(in srgb, #000 42%, transparent)", padding: "6vh 20px 40px",
       }}>
       <div
         onClick={(e) => e.stopPropagation()}
+        className="w-full bg-card shadow-lg overflow-hidden flex flex-col"
         style={{
-          width: "100%", maxWidth: 460, background: "var(--card)", border: "1px solid var(--border)",
-          borderRadius: 16, boxShadow: "var(--shadow-lg)", overflow: "hidden", maxHeight: "86vh", display: "flex", flexDirection: "column",
+          maxWidth: 460, border: "1px solid var(--border)",
+          borderRadius: 16, maxHeight: "86vh",
           animation: "dashFade .18s var(--ease) both",
         }}>
         {/* 헤더 */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px", borderBottom: "1px solid var(--border)" }}>
-          <span style={{ fontSize: 16, fontWeight: 700 }}>{mode === "create" ? "신규 등록" : "항목 수정"}</span>
+        <div className="flex items-center justify-between" style={{ padding: "16px 18px", borderBottom: "1px solid var(--border)" }}>
+          <span className="font-bold" style={{ fontSize: 16 }}>{mode === "create" ? "신규 등록" : "항목 수정"}</span>
           <button
             onClick={onClose}
             aria-label="닫기"
-            style={{ display: "inline-flex", border: 0, background: "transparent", cursor: "pointer", color: "var(--muted-foreground)", padding: 4 }}>
+            className="inline-flex cursor-pointer text-muted-foreground p-1"
+            style={{ border: 0, background: "transparent" }}>
             <Icon name="x" size={18} stroke={2.2} />
           </button>
         </div>
 
         {/* 폼 */}
-        <div style={{ padding: 18, overflowY: "auto" }}>
+        <div className="overflow-y-auto" style={{ padding: 18 }}>
           {schema.fields.map((f) => (
             <Field key={f.key} label={f.label + (f.required ? ' *' : '')} errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
               <SchemaField
@@ -119,7 +122,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
         </div>
 
         {/* 푸터 */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, rowGap: 8, flexWrap: "wrap", padding: "14px 18px", borderTop: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between flex-wrap gap-x-2.5 gap-y-2" style={{ padding: "14px 18px", borderTop: "1px solid var(--border)" }}>
           <div>
             {mode === "edit" && onDelete && (
               confirmDel
@@ -127,7 +130,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
                 : <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: "var(--danger)" }} onClick={() => setConfirmDel(true)}>삭제</Button>
             )}
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={onClose}>취소</Button>
             <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
           </div>

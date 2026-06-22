@@ -65,7 +65,7 @@ function CheckRow({ label, checked, onClick }) {
         }}>
         {checked && <Icon name="check" size={17} stroke={3} style={{ color: "#fff" }} />}
       </span>
-      <span className="text-[14px] font-semibold" style={{ color: "var(--foreground)" }}>{label}</span>
+      <span className="text-[14px] font-semibold text-foreground">{label}</span>
     </button>
   );
 }
@@ -93,8 +93,9 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
     <>
       <div
         onClick={onClose}
+        className="fixed inset-0"
         style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,.42)", zIndex: 70,
+          background: "rgba(0,0,0,.42)", zIndex: 70,
           opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none", transition: "opacity .25s var(--ease)",
         }}
       />
@@ -102,51 +103,49 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
         aria-label="포트폴리오 상세 필터"
         role="dialog"
         aria-modal="true"
+        className="fixed top-0 right-0 bottom-0 flex flex-col bg-card border-l border-border shadow-lg"
         style={{
-          position: "fixed", top: 0, right: 0, bottom: 0, width: 408, maxWidth: "92vw", zIndex: 71,
-          background: "var(--card)", borderLeft: "1px solid var(--border)", boxShadow: "var(--shadow-lg)",
+          width: 408, maxWidth: "92vw", zIndex: 71,
           transform: open ? "translateX(0)" : "translateX(100%)", transition: "transform .3s var(--ease)",
-          display: "flex", flexDirection: "column",
         }}>
-        <header className="flex items-center justify-between px-6 border-b border-border" style={{ height: 62, flex: "0 0 auto" }}>
-          <h2 className="text-[16px] font-bold tracking-[-.02em]" style={{ color: "var(--foreground)" }}>포트폴리오 상세 필터</h2>
+        <header className="flex items-center justify-between px-6 border-b border-border shrink-0" style={{ height: 62 }}>
+          <h2 className="text-[16px] font-bold tracking-[-.02em] text-foreground">포트폴리오 상세 필터</h2>
           <IconBtn icon="x" onClick={onClose} label="닫기" size={38} />
         </header>
-        <div className="flex-1 overflow-y-auto px-6 py-6" style={{ display: "flex", flexDirection: "column", gap: 26 }}>
+        <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col" style={{ gap: 26 }}>
           <div>
-            <div className="text-[13px] font-bold mb-2" style={{ color: "var(--muted-foreground)" }}>자산 유형
-              <span style={{ fontWeight: 500, color: "var(--caption)", marginLeft: 6 }}>· 데이터 연동 후 적용</span></div>
+            <div className="text-[13px] font-bold mb-2 text-muted-foreground">자산 유형
+              <span className="font-medium text-caption ml-1.5">· 데이터 연동 후 적용</span></div>
             <div className="flex flex-col">
               {ASSETS.map((a) => <CheckRow key={a} label={a} checked={!!sel[a]} onClick={() => toggle(a)} />)}
             </div>
           </div>
           <div>
-            <div className="text-[13px] font-bold mb-3" style={{ color: "var(--muted-foreground)" }}>리스크 노출도
-              {!riskOn && <span style={{ fontWeight: 500, color: "var(--caption)", marginLeft: 6 }}>· 미적용 (슬라이더 조정 시 적용)</span>}</div>
+            <div className="text-[13px] font-bold mb-3 text-muted-foreground">리스크 노출도
+              {!riskOn && <span className="font-medium text-caption ml-1.5">· 미적용 (슬라이더 조정 시 적용)</span>}</div>
             <input
               type="range"
               min={0}
               max={100}
               value={risk}
               onChange={(e) => { setRisk(+e.target.value); setRiskOn(true); }}
-              className="apfs-range"
-              style={{ width: "100%", accentColor: "var(--brand-blue)" }}
+              className="apfs-range w-full"
+              style={{ accentColor: "var(--brand-blue)" }}
             />
             <div className="flex items-center justify-between mt-2">
-              <span className="text-[12.5px] font-semibold" style={{ color: "var(--muted-foreground)" }}>보수적</span>
-              <span className="text-[12.5px] font-semibold" style={{ color: "var(--muted-foreground)" }}>공격적</span>
+              <span className="text-[12.5px] font-semibold text-muted-foreground">보수적</span>
+              <span className="text-[12.5px] font-semibold text-muted-foreground">공격적</span>
             </div>
           </div>
           <div>
-            <div className="text-[13px] font-bold mb-2.5" style={{ color: "var(--muted-foreground)" }}>기간 설정
-              <span style={{ fontWeight: 500, color: "var(--caption)", marginLeft: 6 }}>· 데이터 연동 후 적용</span></div>
+            <div className="text-[13px] font-bold mb-2.5 text-muted-foreground">기간 설정
+              <span className="font-medium text-caption ml-1.5">· 데이터 연동 후 적용</span></div>
             <div className="relative">
               <select
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
-                className="w-full text-[16px] font-semibold cursor-pointer appearance-none"
+                className="w-full text-[16px] font-semibold cursor-pointer appearance-none text-foreground bg-card border border-border"
                 style={{
-                  color: "var(--foreground)", background: "var(--card)", border: "1px solid var(--border)",
                   borderRadius: 10, padding: "11px 44px 11px 14px", fontFamily: "inherit", outline: "none",
                 }}>
                 {["당기 회계연도", "전기 회계연도", "최근 1년", "최근 3년", "설정 기간"].map((o) => <option key={o} value={o}>{o}</option>)}
@@ -154,12 +153,13 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
               <Icon
                 name="chevron-down"
                 size={20}
-                style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: "var(--muted-foreground)", pointerEvents: "none" }}
+                className="absolute right-3.5 pointer-events-none text-muted-foreground"
+                style={{ top: "50%", transform: "translateY(-50%)" }}
               />
             </div>
           </div>
         </div>
-        <div className="px-6 py-5 border-t border-border" style={{ flex: "0 0 auto", display: "flex", gap: 8 }}>
+        <div className="px-6 py-5 border-t border-border shrink-0 flex gap-2">
           <Button variant="outline" size="md" onClick={() => { setSel({}); setRisk(50); setRiskOn(false); setPeriod("당기 회계연도"); }}>초기화</Button>
           <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => onApply({ assets: sel, risk: riskOn ? risk : null, period })}>필터 적용</Button>
         </div>
@@ -173,14 +173,14 @@ function MenuItem({ icon, label, onClick, ph, danger }: { icon: string; label: s
   return (
     <button
       onClick={onClick}
-      className="nc-row"
+      className="nc-row flex items-center gap-2.5 w-full text-left cursor-pointer"
       style={{
-        display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 11px",
+        padding: "9px 11px",
         borderRadius: 8, border: "none", background: "transparent", font: "inherit",
-        fontSize: 13.5, fontWeight: 600, cursor: "pointer",
-        color: danger ? "var(--danger)" : "var(--foreground)", textAlign: "left",
+        fontSize: 13.5, fontWeight: 600,
+        color: danger ? "var(--danger)" : "var(--foreground)",
       }}>
-      <Icon name={icon} size={17} style={{ color: danger ? "var(--danger)" : "var(--muted-foreground)", flex: "0 0 auto" }} />
+      <Icon name={icon} size={17} className="shrink-0" style={{ color: danger ? "var(--danger)" : "var(--muted-foreground)" }} />
       {ph ? <MT>{label}</MT> : label}
     </button>
   );
@@ -193,17 +193,17 @@ function MoreMenu({ onRegister, onDelete, count }: { onRegister: () => void; onD
       <IconBtn icon="more" label="더보기" size={34} active={open} onClick={() => setOpen((o) => !o)} />
       {open && (
         <>
-          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 30 }} />
+          <div onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: 30 }} />
           <div
             role="menu"
-            className="absolute right-0 mt-1.5 z-40"
+            className="absolute right-0 mt-1.5 z-40 bg-card border border-border shadow-lg p-1.5"
             style={{
-              minWidth: 188, background: "var(--card)", border: "1px solid var(--border)",
-              borderRadius: 12, boxShadow: "var(--shadow-lg)", padding: 6, animation: "ncPop .16s var(--ease) both",
+              minWidth: 188,
+              borderRadius: 12, animation: "ncPop .16s var(--ease) both",
             }}>
             <MenuItem icon="plus" label="등록" onClick={() => { setOpen(false); onRegister(); }} />
             <MenuItem icon="trash" label={count > 0 ? "삭제 (" + count + ")" : "삭제"} danger onClick={() => { setOpen(false); onDelete(); }} />
-            <div style={{ height: 1, background: "var(--border)", margin: "5px 4px" }} />
+            <div className="bg-border" style={{ height: 1, margin: "5px 4px" }} />
             <MenuItem icon="download" label="내보내기" ph onClick={() => setOpen(false)} />
             <MenuItem icon="file" label="인쇄" ph onClick={() => setOpen(false)} />
           </div>
@@ -216,16 +216,18 @@ function MoreMenu({ onRegister, onDelete, count }: { onRegister: () => void; onD
 /* ===== 신규 등록 모달 (내용 placeholder) ===== */
 function RegField({ label, span }: { label: string; span?: boolean }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 7, gridColumn: span ? "1 / -1" : "auto" }}>
+    <div className="flex flex-col" style={{ gap: 7, gridColumn: span ? "1 / -1" : "auto" }}>
       <div className="t-caption"><MT>{label}</MT></div>
       <div
+        className="flex border border-border bg-muted"
         style={{
-          height: span ? 92 : 44, borderRadius: 10, border: "1px solid var(--border)", background: "var(--muted)",
-          display: "flex", alignItems: span ? "flex-start" : "center", padding: span ? "13px 14px" : "0 14px",
+          height: span ? 92 : 44, borderRadius: 10,
+          alignItems: span ? "flex-start" : "center", padding: span ? "13px 14px" : "0 14px",
         }}>
         <span
           aria-hidden={true}
-          style={{ display: "block", height: "0.7em", width: span ? "64%" : "44%", borderRadius: 5, background: "var(--muted-foreground)", opacity: 0.16 }}
+          className="block bg-muted-foreground"
+          style={{ height: "0.7em", width: span ? "64%" : "44%", borderRadius: 5, opacity: 0.16 }}
         />
       </div>
     </div>
@@ -239,27 +241,27 @@ function RegisterModal({ open, mode = "create", onClose, onSubmit }: { open: boo
     <>
       <div
         onClick={onClose}
-        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 80, animation: "ncFade .16s var(--ease) both" }}
+        className="fixed inset-0"
+        style={{ background: "rgba(0,0,0,.45)", zIndex: 80, animation: "ncFade .16s var(--ease) both" }}
       />
-      <div style={{ position: "fixed", inset: 0, zIndex: 81, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, pointerEvents: "none" }}>
+      <div className="fixed inset-0 flex items-center justify-center p-5 pointer-events-none" style={{ zIndex: 81 }}>
         <div
           role="dialog"
           aria-modal="true"
           aria-label="신규 등록"
           onClick={(e) => e.stopPropagation()}
+          className="bg-card rounded-card-lg shadow-lg border border-border flex flex-col overflow-hidden pointer-events-auto"
           style={{
-            width: 560, maxWidth: "100%", maxHeight: "86vh", background: "var(--card)",
-            borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-lg)", border: "1px solid var(--border)",
-            display: "flex", flexDirection: "column", overflow: "hidden", pointerEvents: "auto",
+            width: 560, maxWidth: "100%", maxHeight: "86vh",
             animation: "ncPop .2s var(--ease) both",
           }}>
-          <header className="flex items-center justify-between gap-3 px-6 border-b border-border" style={{ height: 62, flex: "0 0 auto" }}>
+          <header className="flex items-center justify-between gap-3 px-6 border-b border-border shrink-0" style={{ height: 62 }}>
             <div className="flex items-center gap-2.5 min-w-0">
-              <h2 className="text-[16px] font-bold tracking-[-.02em]" style={{ color: "var(--foreground)" }}>{edit ? "수정" : "신규 등록"}</h2>
+              <h2 className="text-[16px] font-bold tracking-[-.02em] text-foreground">{edit ? "수정" : "신규 등록"}</h2>
             </div>
             <IconBtn icon="x" onClick={onClose} label="닫기" size={38} />
           </header>
-          <div className="flex-1 overflow-y-auto px-6 py-6" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px 16px" }}>
+          <div className="flex-1 overflow-y-auto px-6 py-6 grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "18px 16px" }}>
             <RegField label="자산 식별자" span />
             <RegField label="자산명" />
             <RegField label="자산 분류" />
@@ -269,7 +271,7 @@ function RegisterModal({ open, mode = "create", onClose, onSubmit }: { open: boo
             <RegField label="담당자" />
             <RegField label="비고" span />
           </div>
-          <footer className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border" style={{ flex: "0 0 auto" }}>
+          <footer className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border shrink-0">
             <Button variant="outline" size="md" onClick={onClose}>{edit ? "닫기" : "취소"}</Button>
             <Button variant="primary" size="md" leadingIcon="check" onClick={() => (onSubmit ? onSubmit() : onClose())}>{edit ? "저장" : "등록"}</Button>
           </footer>
@@ -398,8 +400,7 @@ function Performance({ onNav }) {
                 {filtered.map(({ r, i }) => (
                   <tr
                     key={i}
-                    className="group border-t border-border transition-colors"
-                    style={{ cursor: "pointer" }}
+                    className="group border-t border-border transition-colors cursor-pointer"
                     onDoubleClick={() => setModal("edit")}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
@@ -414,13 +415,13 @@ function Performance({ onNav }) {
                           className="inline-flex items-center justify-center w-9 h-9 rounded-[9px] text-white text-[12px] font-bold shrink-0"
                           style={{ background: r.codeColor }}><MT>{r.code}</MT></span>
                         <div className="min-w-0">
-                          <div className="text-[14.5px] font-bold leading-tight" style={{ color: "var(--foreground)" }}><MT>{r.name}</MT></div>
+                          <div className="text-[14.5px] font-bold leading-tight text-foreground"><MT>{r.name}</MT></div>
                           <div className="t-caption mt-0.5"><MT>{r.meta}</MT></div>
                         </div>
                       </div>
                     </td>
                     {/* 가치 */}
-                    <td className="px-4 py-3.5 text-right tabular text-[14.5px] font-semibold whitespace-nowrap" style={{ color: "var(--foreground)" }}>{mn(r.value)}</td>
+                    <td className="px-4 py-3.5 text-right tabular text-[14.5px] font-semibold whitespace-nowrap text-foreground">{mn(r.value)}</td>
                     {/* 변동폭 */}
                     <td className="px-4 py-3.5 text-right tabular text-[14px] font-bold whitespace-nowrap" style={{ color: changeColor(r.change) }}>{mn(fmtChange(r.change))}</td>
                     {/* 리스크 등급 */}
@@ -449,12 +450,11 @@ function Performance({ onNav }) {
 
           {/* 푸터 */}
           <div className="flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 py-4 border-t border-border">
-            <span className="t-caption">총 {mn("1,208")}개 중 <b style={{ color: "var(--foreground)" }}>{mn(filtered.length) + "개"}</b> 항목 표시 중</span>
+            <span className="t-caption">총 {mn("1,208")}개 중 <b className="text-foreground">{mn(filtered.length) + "개"}</b> 항목 표시 중</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground cursor-pointer"
-                style={{ border: "1px solid var(--border)", background: "var(--card)" }}><Icon name="chevron-left" size={16} /></button>
+                className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground cursor-pointer border border-border bg-card"><Icon name="chevron-left" size={16} /></button>
               {[1, 2, 3].map((n) => (
                 <button
                   key={n}
@@ -466,8 +466,7 @@ function Performance({ onNav }) {
               ))}
               <button
                 onClick={() => setPage((p) => Math.min(3, p + 1))}
-                className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground cursor-pointer"
-                style={{ border: "1px solid var(--border)", background: "var(--card)" }}><Icon name="chevron-right" size={16} /></button>
+                className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground cursor-pointer border border-border bg-card"><Icon name="chevron-right" size={16} /></button>
             </div>
             <div className="flex items-center gap-3">
               <SegTabs options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "상세 뷰" }]} value={view} onChange={setView} size="sm" />
@@ -483,25 +482,25 @@ function Performance({ onNav }) {
           {/* 분기별 전망 */}
           <div className="rounded-card-lg border border-border p-6" style={{ background: "color-mix(in srgb,var(--muted) 50%,var(--card))" }}>
             <h3 className="text-[17px] font-bold mb-3"><MT>분기별 전망</MT></h3>
-            <p className="t-body text-[13.5px] leading-relaxed" style={{ color: "var(--muted-foreground)", maxWidth: 540 }}>
+            <p className="t-body text-[13.5px] leading-relaxed text-muted-foreground" style={{ maxWidth: 540 }}>
               {["100%", "97%", "58%"].map((wd, i) => (
-                <span key={i} aria-hidden={true} style={{ display: "block", height: "0.72em", margin: "0.42em 0", borderRadius: 5, background: "currentColor", opacity: 0.14, width: wd }} />
+                <span key={i} aria-hidden={true} className="block" style={{ height: "0.72em", margin: "0.42em 0", borderRadius: 5, background: "currentColor", opacity: 0.14, width: wd }} />
               ))}
             </p>
             <div className="flex items-end gap-10 mt-6">
               <div>
                 <div className="t-caption mb-1"><MT>신뢰 지수</MT></div>
-                <div className="text-[30px] font-extrabold tabular" style={{ color: "var(--accent)" }}>{mn("88%")}</div>
+                <div className="text-[30px] font-extrabold tabular text-accent">{mn("88%")}</div>
               </div>
               <div>
                 <div className="t-caption mb-1"><MT>변동성 지수</MT></div>
-                <div className="text-[30px] font-extrabold" style={{ color: "var(--success)" }}><MT>낮음</MT></div>
+                <div className="text-[30px] font-extrabold text-success"><MT>낮음</MT></div>
               </div>
             </div>
           </div>
 
           {/* 자본 준비금 (단색) */}
-          <div className="rounded-card-lg p-6 text-white relative overflow-hidden" style={{ background: "#439E00", boxShadow: "var(--shadow-md)" }}>
+          <div className="rounded-card-lg p-6 text-white relative overflow-hidden shadow-md" style={{ background: "#439E00" }}>
             <div className="relative">
               <h3 className="text-[17px] font-bold mb-1.5"><MT>자본 준비금</MT></h3>
               <p className="text-[13px] mb-1" style={{ opacity: .85 }}><MT>출자 가능 미집행 자금 현황입니다.</MT></p>
