@@ -39,7 +39,7 @@
 
 | 마찰점 | IBSheet 판정 | AG Grid | 승자 |
 |---|---|---|---|
-| ① 테마(CSS변수+다크+Tweaks 런타임) | PARTIAL(브리지 필요) | Theming API가 CSS변수 네이티브+다크 1급, 토큰 주입 가능 | 🟢 **AG Grid** |
+| ① 테마(CSS변수+다크+Tweaks 런타임) | PARTIAL(브리지 필요) | **confirmed**: `withParams`가 var() 리터럴 주입 → Tweaks 런타임 편집 **자동추종**(theme 재생성 불요), 다크 1급. 전제 v33+ | 🟢 **AG Grid** |
 | ② 전역 마스킹(`mask.tsx _on`) | REFUTED(per-column) | 역시 native 없음, formatter+refreshCells로 근소 우위 | 🟡 AG Grid(근소) |
 | ③ 선언형 React 통합 | PARTIAL/REFUTED(명령형 폴링) | 완전 선언형, 반응적 props, React 셀 | 🟢 **AG Grid(결정적)** |
 | ④ 라이선스(배포 환경) | REFUTED(도메인 바인딩→Vercel 불가) | Community 무료/키불요, Enterprise도 도메인 무관 | 🟢 **AG Grid(결정적)** |
@@ -81,11 +81,16 @@
 
 ---
 
-## 6. 신뢰도 고지 (방법론)
+## 6. 신뢰도 고지 (방법론) — 양쪽 검증 완료(대칭)
 
-| 리포트 | Research(1차출처) | 적대적 재검증(반증 시도) |
-|---|---|---|
-| IBSheet | ✅ 완료 | ✅ **완료(8건)** |
-| AG Grid | ✅ 완료 | ⚠️ **미완 — 세션 사용량 한도(9:20pm KST 리셋)** |
+| 리포트 | Research(1차출처) | 적대적 재검증(반증 시도) | 결과 |
+|---|---|---|---|
+| IBSheet | ✅ 완료 | ✅ **완료(8건)** | partial 6 / refuted 2(전역마스킹·preview운영) |
+| AG Grid | ✅ 완료 | ✅ **완료(8건, resume로 완주)** | **confirmed 4 / partial 4 / refuted 0** |
 
-AG Grid 판정은 공식문서 1차 출처(ag-grid.com·license-pricing·npm `license` 필드·`(e)` 마커)에 근거하나, IBSheet에 적용했던 "회의적 검토관 반증" 레이어는 아직 없다. 따라서 **두 리포트의 신뢰도는 비대칭**이다 — IBSheet의 마찰점은 적대적으로 확정된 반면, AG Grid의 우위는 1차출처 기반이되 독립 반증 전이다. AG Grid 적대적 검증은 워크플로우 resume로 저비용 보강 가능(`resumeFromRunId: wf_6fecda14-2b5`, Research/Map 캐시 재사용).
+**두 리포트의 신뢰도는 이제 대칭**이다 — 양쪽 모두 공식문서 1차 출처 + "회의적 검토관 8명 반증 시도"를 거쳤다. 핵심 결과:
+- **AG Grid 자체엔 refuted 0건.** confirmed 4건이 도입의 핵심 이득을 굳혔다 — **X2 테마(var() 런타임 자동추종, 원안의 risk:high가 gain으로 반전)**, L10 스파크라인(Community 무료), L11/L12 외부필터(Community), 멀티컬럼 정렬(Community).
+- partial 4건은 "되지만 전제가 있다"는 정직한 단서 — M2 합계행(앱 사전계산 전제), 라이선스(도입 PR에서 Enterprise import 감사), X1 마스킹(`mask.tsx _on` const→가변 리팩터+force refresh), X3 반응형(우회는 카드 측 UI 재구현, IBSheet도 불가라 tie).
+- IBSheet의 'REFUTED' 2건(전역 마스킹 native 부재, Vercel preview 도메인 운영 불가)은 그대로 확정.
+
+> 상세 검증 8건은 [`AGGrid_feasibility_report.md` 부록 D](./AGGrid_feasibility_report.md) 및 [`IBSheet_feasibility_report.md` 부록 A](./IBSheet_feasibility_report.md) 참조.
