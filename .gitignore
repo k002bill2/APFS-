@@ -13,6 +13,9 @@ dist/
 # claude.ai/design 동기화 export (원본 SSOT는 claude.ai/design)
 docs/apfs-dashboard/
 
+# UI/UX 재구성 참고 자료 (로컬 작업용 산출물)
+docs/APFS_UIUX_reconstruction.pptx
+
 # OS / MS Office 임시·잠금 파일
 .DS_Store
 ~$*
