@@ -4,6 +4,8 @@ import React from 'react';
 import { Icon } from './icons';
 import { Charts } from './charts';
 import { mn, MT, useMask } from './mask';
+import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
+import * as ToggleGroup from '@radix-ui/react-toggle-group';
 
 const { Sparkline } = Charts;
 const cx = (...a: any[]) => a.filter(Boolean).join(" ");
@@ -95,19 +97,28 @@ function ChartCard({ title, sub, icon, accent = "var(--primary)", right, childre
 
 /* ---- SegTabs ---- */
 function SegTabs({ options, value, onChange, size = "md" }: { options: any[]; value?: any; onChange?: (v: any) => void; size?: "sm" | "md" }) {
+  const sv = (x: any) => (x == null ? "" : String(x));
   return (
-    <div className="inline-flex bg-muted rounded-[9px] p-[3px] gap-0.5">{options.map((o) => {
+    <ToggleGroup.Root
+      type="single"
+      value={sv(value)}
+      onValueChange={(nv) => {
+        if (!nv) return; // 활성 항목 재클릭 시 해제 방지(항상 1개 선택 유지)
+        const opt = options.find((o) => sv(o.value ?? o) === nv);
+        onChange && onChange(opt != null ? (opt.value ?? opt) : nv);
+      }}
+      className="inline-flex bg-muted rounded-[9px] p-[3px] gap-0.5">{options.map((o) => {
         const v = o.value ?? o, lab = o.label ?? o;
         const active = v === value;
         return (
-          <button
-            key={v}
-            onClick={() => onChange(v)}
+          <ToggleGroup.Item
+            key={sv(v)}
+            value={sv(v)}
             className={cx("cursor-pointer font-[inherit] border-0 rounded-[7px] font-semibold transition-all duration-150",
               size === "sm" ? "px-2.5 py-1 text-xs" : "px-[13px] py-[5px] text-[12.5px]",
-              active ? "bg-card text-primary shadow-sm" : "bg-transparent text-muted-foreground")}>{lab}</button>
+              active ? "bg-card text-primary shadow-sm" : "bg-transparent text-muted-foreground")}>{lab}</ToggleGroup.Item>
         );
-      })}</div>
+      })}</ToggleGroup.Root>
   );
 }
 
@@ -141,16 +152,22 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
 }
 
 /* ---- IconBtn ---- */
-function IconBtn({ icon, onClick, label, badge, active, size = 38 }: { icon: string; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number }) {
-  return (
+function IconBtn({ icon, onClick, label, badge, active, size = 38, activeClassName, activeStyle }: { icon: string; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; activeClassName?: string; activeStyle?: React.CSSProperties }) {
+  const btn = (
     <button
       onClick={onClick}
       aria-label={label}
-      title={label}
       className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border transition-all duration-150",
-        active ? "bg-card text-primary border-ring" : "bg-transparent text-muted-foreground border-transparent")}
-      style={{ width: size, height: size }}><Icon name={icon} size={20} stroke={2} />{badge > 0 && <span
+        active ? (activeClassName || "bg-card text-primary border-ring") : "bg-transparent text-muted-foreground border-transparent")}
+      style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}><Icon name={icon} size={20} stroke={2} />{badge > 0 && <span
         className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</button>
+  );
+  if (!label) return btn;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{btn}</TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
 

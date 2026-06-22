@@ -6,6 +6,9 @@ import { UI } from './components';
 import { APFS_DATA, useMenuSel, MenuStore } from './data';
 import { mn, MT } from './mask';
 import { MainWidgets } from './main_widgets';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuLabel, DropdownMenuSeparator } from './ui/dropdown-menu';
+import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from './ui/command';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
 import logoUrl from './assets/logo.svg';
 import logoWhiteUrl from './assets/logo_white.svg';
 
@@ -262,11 +265,11 @@ function RailNav({ role, route, onNav, mobile, drawerOpen }) {
 
 /* ===== 알림 공통 헬퍼 ===== */
 const NC_TAGICON: Record<string, string> = {
-  결재: "file", 메모: "check-circle", ToDo: "check-circle", 긴급공지: "alert-triangle", 긴급: "alert-triangle",
+  결재: "file", 메모: "memo", ToDo: "check-circle", 긴급공지: "alert-triangle", 긴급: "alert-triangle",
   공지: "bell", 환전: "landmark", 보완요청: "alert-triangle", 처리완료: "check-circle",
   준법: "shield-check", 운영: "settings", 회의: "users", 출장: "arrow-right", 휴가: "calendar",
 };
-const NC_SUMICON: Record<string, string> = { 메모: "check-circle", 공지사항: "bell", 일정: "calendar", 시스템: "shield-check" };
+const NC_SUMICON: Record<string, string> = { 메모: "memo", 공지사항: "bell", 일정: "calendar", 시스템: "shield-check" };
 
 function ncRow(key: string, p: any) {
   const { tone = "info", icon, tag, title, meta, date, dday } = p;
@@ -294,7 +297,7 @@ function ncMemoBody(withBar: boolean) {
         <input type="text" placeholder="검색어를 입력하세요" className="nc-search" />
         <button className="nc-addbtn">+ 등록</button>
       </div>}
-      {all.map((t: any, i: number) => ncRow("mm" + i, { tone: "info", icon: "check-circle", title: t.title, meta: t.due ? "마감 " + t.due : (t.start ? "시작 " + t.start : "") }))}
+      {all.map((t: any, i: number) => ncRow("mm" + i, { tone: "info", icon: "memo", title: t.title, meta: t.due ? "마감 " + t.due : (t.start ? "시작 " + t.start : "") }))}
     </div>
   );
 }
@@ -369,29 +372,19 @@ function CenterModal({ open, onClose, title, icon, width, children, footer }: {
   open: boolean; onClose: () => void; title: string; icon?: string;
   width?: number; children?: React.ReactNode; footer?: React.ReactNode[];
 }) {
-  useEffect(() => {
-    if (!open) return;
-    const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", k);
-    return () => window.removeEventListener("keydown", k);
-  }, [open, onClose]);
-  if (!open) return null;
   return (
-    <>
-      <div onClick={onClose} className="fixed inset-0" style={{ background: "rgba(15,19,16,.5)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", zIndex: 70, animation: "ncFade .18s var(--ease) both" }} />
-      <div role="dialog" aria-label={title} className="fixed inset-0 flex items-center justify-center p-6 pointer-events-none" style={{ zIndex: 71 }}>
-        <div onClick={(e) => e.stopPropagation()} className="max-w-full bg-card rounded-card-lg shadow-lg flex flex-col overflow-hidden pointer-events-auto" style={{ width: width || 560, maxHeight: "86vh", border: "1px solid var(--border)", animation: "ncPop .2s var(--ease) both" }}>
-          <header className="flex items-center py-4 px-5" style={{ gap: 9, borderBottom: "1px solid var(--border)" }}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-h-[86vh] max-w-[calc(100vw-32px)]" style={{ width: width || 560 }}>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2.5">
             {icon && <Icon name={icon} size={18} style={{ color: "var(--brand-blue)" }} />}
-            <span className="font-extrabold" style={{ fontSize: 16, letterSpacing: "-.01em" }}>{title}</span>
-            <div className="flex-1" />
-            <IconBtn icon="x" onClick={onClose} label="닫기" size={34} />
-          </header>
-          <div className="flex-1 overflow-y-auto" style={{ padding: "14px 16px 18px" }}>{children}</div>
-          {footer && <footer className="flex justify-end gap-2" style={{ padding: "14px 18px", borderTop: "1px solid var(--border)" }}>{footer}</footer>}
-        </div>
-      </div>
-    </>
+            {title}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto" style={{ padding: "14px 16px 18px" }}>{children}</div>
+        {footer && <DialogFooter className="justify-end">{footer}</DialogFooter>}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -399,12 +392,6 @@ function CenterModal({ open, onClose, title, icon, width, children, footer }: {
 function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [tab, setTab] = useState("all");
   const NC = D.NOTIF_CENTER;
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
   useEffect(() => { if (open) setTab("all"); }, [open]);
   const memoCount = NC.todo.delayed.length + NC.todo.progress.length + NC.todo.upcoming.length;
   const scCount = NC.schedule.today.length + NC.schedule.week.length;
@@ -443,103 +430,95 @@ function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) 
     if (tab === "system") return <div>{NC.system.map((s: any, i: number) => ncRow("sy" + i, { tone: s.tone, tag: s.tag, title: s.title, meta: s.code, date: s.date }))}</div>;
     return null;
   }
-  if (!open) return null;
   return (
-    <>
-      <div onClick={onClose} className="fixed inset-0" style={{ background: "rgba(15,19,16,.5)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", zIndex: 70, animation: "ncFade .18s var(--ease) both" }} />
-      <div role="dialog" aria-label="알림센터" className="fixed inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 71, padding: "clamp(8px, 3vw, 24px)" }}>
-        <div onClick={(e) => e.stopPropagation()} className="max-w-full bg-card rounded-card-lg shadow-lg flex flex-col overflow-hidden pointer-events-auto" style={{ width: 1000, height: 680, maxHeight: "90vh", border: "1px solid var(--border)", animation: "ncPop .2s var(--ease) both" }}>
-          <header className="flex items-center" style={{ gap: 9, padding: "18px 22px", borderBottom: "1px solid var(--border)" }}>
-            <Icon name="bell" size={18} style={{ color: "var(--brand-blue)" }} />
-            <span className="font-extrabold" style={{ fontSize: 17, letterSpacing: "-.01em" }}>알림센터</span>
-            <span className="text-center font-extrabold bg-danger" style={{ fontSize: 12, color: "#fff", borderRadius: 99, padding: "2px 9px", minWidth: 22 }}>{cap(total)}</span>
-            <div className="flex-1" />
-            <button onClick={onClose} className="text-muted-foreground font-semibold cursor-pointer py-1.5 px-2" style={{ border: "none", background: "transparent", fontSize: 13, fontFamily: "inherit" }}>모두 읽음</button>
-            <IconBtn icon="x" onClick={onClose} label="닫기" size={36} />
-          </header>
-          <div className="flex gap-0.5 overflow-x-auto py-0 px-3.5" style={{ borderBottom: "1px solid var(--border)" }}>
-            {tabs.map((t) => {
-              const on = tab === t.id;
-              return (
-                <button key={t.id} onClick={() => setTab(t.id)} className="flex items-center cursor-pointer whitespace-nowrap relative" style={{ gap: 7, padding: "13px 16px", border: "none", background: "transparent", font: "inherit", color: on ? "var(--brand-blue)" : "var(--muted-foreground)", fontWeight: on ? 800 : 600, fontSize: 14, borderBottom: on ? "2px solid var(--brand-blue)" : "2px solid transparent", marginBottom: -1 }}>
-                  {t.label}
-                  {t.count ? <span className="font-extrabold" style={{ fontSize: 11, borderRadius: 99, padding: "1px 7px", background: on ? "var(--brand-blue)" : "var(--muted)", color: on ? "#fff" : "var(--muted-foreground)" }}>{cap(t.count)}</span> : null}
-                </button>
-              );
-            })}
-          </div>
-          <div className="flex-1 overflow-y-auto" style={{ padding: "18px 18px 22px" }}><Body /></div>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent hideClose className="max-w-[calc(100vw-32px)] max-h-[90vh]" style={{ width: 1000, height: 680 }}>
+        <DialogDescription className="sr-only">메모·공지사항·일정·시스템 알림 모음</DialogDescription>
+        <header className="flex items-center" style={{ gap: 9, padding: "18px 22px", borderBottom: "1px solid var(--border)" }}>
+          <Icon name="bell" size={18} style={{ color: "var(--brand-blue)" }} />
+          <DialogTitle className="font-extrabold" style={{ fontSize: 17, letterSpacing: "-.01em" }}>알림센터</DialogTitle>
+          <span className="text-center font-extrabold bg-danger" style={{ fontSize: 12, color: "#fff", borderRadius: 99, padding: "2px 9px", minWidth: 22 }}>{cap(total)}</span>
+          <div className="flex-1" />
+          <button onClick={onClose} className="text-muted-foreground font-semibold cursor-pointer py-1.5 px-2" style={{ border: "none", background: "transparent", fontSize: 13, fontFamily: "inherit" }}>모두 읽음</button>
+          <IconBtn icon="x" onClick={onClose} label="닫기" size={36} />
+        </header>
+        <div className="flex gap-0.5 overflow-x-auto py-0 px-3.5" style={{ borderBottom: "1px solid var(--border)" }}>
+          {tabs.map((t) => {
+            const on = tab === t.id;
+            return (
+              <button key={t.id} onClick={() => setTab(t.id)} className="flex items-center cursor-pointer whitespace-nowrap relative" style={{ gap: 7, padding: "13px 16px", border: "none", background: "transparent", font: "inherit", color: on ? "var(--brand-blue)" : "var(--muted-foreground)", fontWeight: on ? 800 : 600, fontSize: 14, borderBottom: on ? "2px solid var(--brand-blue)" : "2px solid transparent", marginBottom: -1 }}>
+                {t.label}
+                {t.count ? <span className="font-extrabold" style={{ fontSize: 11, borderRadius: 99, padding: "1px 7px", background: on ? "var(--brand-blue)" : "var(--muted)", color: on ? "#fff" : "var(--muted-foreground)" }}>{cap(t.count)}</span> : null}
+              </button>
+            );
+          })}
         </div>
-      </div>
-    </>
+        <div className="flex-1 overflow-y-auto" style={{ padding: "18px 18px 22px" }}><Body /></div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
 /* ---------- 사용자 메뉴 ---------- */
 function UserMenu({ onUserModal }: { onUserModal: (id: string) => void }) {
-  const [open, setOpen] = useState(false);
   const items = [
-    { id: "memo", label: "메모", icon: "check-circle", danger: false },
+    { id: "memo", label: "메모", icon: "memo", danger: false },
     { id: "schedule", label: "일정", icon: "calendar", danger: false },
     { id: "logout", label: "로그아웃", icon: "external", danger: true },
   ];
   return (
-    <div className="relative">
-      <button onClick={() => setOpen((o) => !o)} aria-label="사용자 메뉴" className="flex items-center gap-2 cursor-pointer py-0.5 px-1" style={{ border: "none", background: "transparent", font: "inherit" }}>
-        <span className="w-8 h-8 flex items-center justify-center" style={{ borderRadius: 99, background: "var(--brand-gray)", color: "#fff" }}>
-          <Icon name="user" size={18} stroke={2.2} />
-        </span>
-        <span className="gnb-user font-semibold text-left" style={{ fontSize: 12.5, lineHeight: 1.2 }}>
-          <div>김정원</div><div className="t-caption" style={{ fontSize: 10.5 }}>투자운용본부</div>
-        </span>
-        <Icon name="chevron-down" size={14} style={{ opacity: .5, marginLeft: 2 }} />
-      </button>
-      {open && <>
-        <div onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: 40 }} />
-        <div className="absolute right-0 bg-card shadow-lg p-1.5" style={{ top: "calc(100% + 6px)", width: 200, zIndex: 41, border: "1px solid var(--border)", borderRadius: 12, animation: "dashFade .16s var(--ease) both" }}>
-          {items.map((it) => (
-            <React.Fragment key={it.id}>
-              {it.id === "logout" && <div className="bg-border my-1.5 mx-1" style={{ height: 1 }} />}
-              <button onClick={() => { setOpen(false); onUserModal(it.id); }} className="flex items-center w-full text-left cursor-pointer" style={{ gap: 9, padding: "9px 10px", border: "none", background: "transparent", font: "inherit", fontWeight: 600, borderRadius: 8, color: it.danger ? "var(--danger)" : "var(--foreground)", fontSize: 13.5 }}>
-                <Icon name={it.icon} size={16} />{it.label}
-              </button>
-            </React.Fragment>
-          ))}
-        </div>
-      </>}
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button aria-label="사용자 메뉴" className="flex items-center gap-2 cursor-pointer py-0.5 px-1" style={{ border: "none", background: "transparent", font: "inherit" }}>
+          <span className="w-8 h-8 flex items-center justify-center" style={{ borderRadius: 99, background: "var(--brand-gray)", color: "#fff" }}>
+            <Icon name="user" size={18} stroke={2.2} />
+          </span>
+          <span className="gnb-user font-semibold text-left" style={{ fontSize: 12.5, lineHeight: 1.2 }}>
+            <div>김정원</div><div className="t-caption" style={{ fontSize: 10.5 }}>투자운용본부</div>
+          </span>
+          <Icon name="chevron-down" size={14} style={{ opacity: .5, marginLeft: 2 }} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-[200px]">
+        {items.map((it) => (
+          <React.Fragment key={it.id}>
+            {it.id === "logout" && <DropdownMenuSeparator />}
+            <DropdownMenuItem danger={it.danger} onSelect={() => onUserModal(it.id)}>
+              <Icon name={it.icon} size={16} className="shrink-0" />{it.label}
+            </DropdownMenuItem>
+          </React.Fragment>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
-/* ---------- Role switcher ---------- */
+/* ---------- Role switcher — Radix DropdownMenu(RadioGroup, 키보드 내비·radio 시맨틱) ---------- */
 function RoleSwitch({ role, onRole }) {
-  const [open, setOpen] = useState(false);
   const cur = D.ROLES.find((r) => r.id === role);
   return (
-    <div className="gnb-rolesw relative"><button
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 cursor-pointer bg-card py-1.5 px-2.5"
-        style={{
-          font: "inherit",
-          border: "1px solid var(--border-strong)", borderRadius: 9,
-        }}><span
-          className="bg-success" style={{ width: 7, height: 7, borderRadius: 99 }} /><span className="font-semibold" style={{ fontSize: 12.5 }}>{cur.short}</span><Icon name="chevron-down" size={14} style={{ opacity: .5 }} /></button>{open && <><div
-          onClick={() => setOpen(false)}
-          className="fixed inset-0" style={{ zIndex: 40 }} /><div
-          className="absolute right-0 bg-card shadow-lg p-1.5"
-          style={{
-            top: "calc(100% + 6px)", width: 240, zIndex: 41,
-            border: "1px solid var(--border)", borderRadius: 12,
-          }}><div className="t-caption pt-1.5 px-2.5 pb-1">역할 전환 (RBAC 데모)</div>{D.ROLES.map((r) => <button
-            key={r.id}
-            onClick={() => { onRole(r.id); setOpen(false); }}
-            className="w-full text-left cursor-pointer flex flex-col"
-            style={{
-              border: "none", font: "inherit", borderRadius: 8, padding: "9px 10px",
-              background: r.id === role ? "color-mix(in srgb,var(--primary) 10%,transparent)" : "transparent",
-              gap: 1,
-            }}><span
-              className="font-bold" style={{ fontSize: 13, color: r.id === role ? "var(--primary)" : "var(--foreground)" }}>{r.name}</span><span className="t-caption">{r.desc}</span></button>)}</div></>}</div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="gnb-rolesw flex items-center gap-2 cursor-pointer bg-card py-1.5 px-2.5"
+          style={{ font: "inherit", border: "1px solid var(--border-strong)", borderRadius: 9 }}>
+          <span className="bg-success" style={{ width: 7, height: 7, borderRadius: 99 }} />
+          <span className="font-semibold" style={{ fontSize: 12.5 }}>{cur.short}</span>
+          <Icon name="chevron-down" size={14} style={{ opacity: .5 }} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-[240px]">
+        <DropdownMenuLabel>역할 전환 (RBAC 데모)</DropdownMenuLabel>
+        <DropdownMenuRadioGroup value={role} onValueChange={onRole}>
+          {D.ROLES.map((r) => (
+            <DropdownMenuRadioItem key={r.id} value={r.id}>
+              <span className="font-bold" style={{ fontSize: 13, color: r.id === role ? "var(--primary)" : "var(--foreground)" }}>{r.name}</span>
+              <span className="t-caption">{r.desc}</span>
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -601,9 +580,65 @@ function FavoritesFab({ onNav }) {
 
 /* ---------- GNB ---------- */
 
+/* ---------- Command 팔레트 (GNB '/' 검색) ---------- */
+/* MENU(3-레벨)를 역할 필터링해 평탄화 → {cat, items:[{label, sub, nav}]} 그룹 */
+function flattenMenu(role: string) {
+  const groups: { cat: string; items: { label: string; sub?: string; nav: string }[] }[] = [];
+  for (const top of D.MENU) {
+    if (top.roles && !top.roles.includes(role)) continue;
+    const items: { label: string; sub?: string; nav: string }[] = [];
+    if (top.path && !top.children) items.push({ label: top.label, nav: top.path });
+    (top.children || []).forEach((mid: any) => {
+      if (mid.children) mid.children.forEach((leaf: any) => items.push({ label: leaf.label, sub: mid.label, nav: leaf.path || leaf.label }));
+      else items.push({ label: mid.label, nav: mid.path || mid.label });
+    });
+    if (items.length) groups.push({ cat: top.label, items });
+  }
+  return groups;
+}
+
+function MenuCommand({ open, onOpenChange, onNav, role }: { open: boolean; onOpenChange: (o: boolean) => void; onNav: (r: string) => void; role: string }) {
+  const groups = React.useMemo(() => flattenMenu(role), [role]);
+  return (
+    <CommandDialog open={open} onOpenChange={onOpenChange}>
+      <CommandInput placeholder="메뉴·운용사·자펀드 검색…" />
+      <CommandList>
+        <CommandEmpty>결과가 없습니다.</CommandEmpty>
+        {groups.map((g) => (
+          <CommandGroup key={g.cat} heading={g.cat}>
+            {g.items.map((it, i) => (
+              <CommandItem
+                key={g.cat + i}
+                value={it.label + " " + (it.sub || "") + " " + g.cat}
+                onSelect={() => { onNav(it.nav); onOpenChange(false); }}>
+                <Icon name="chevron-right" size={14} className="shrink-0 text-caption" />
+                <span className="flex-1 truncate">{it.label}</span>
+                {it.sub && <span className="shrink-0 text-[11px] text-caption">{it.sub}</span>}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        ))}
+      </CommandList>
+    </CommandDialog>
+  );
+}
+
 function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWide, notifs, onOpenNotif, onNav, onUserModal }) {
   const unread = notifs.filter((n) => !n.read).length;
+  const [cmdOpen, setCmdOpen] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing = !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setCmdOpen((o) => !o); return; }
+      if (e.key === "/" && !typing) { e.preventDefault(); setCmdOpen(true); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   return (
+    <>
+    <MenuCommand open={cmdOpen} onOpenChange={setCmdOpen} onNav={onNav} role={role} />
     <header
       className="sticky top-0 shrink-0 flex items-center"
       style={{
@@ -615,28 +650,28 @@ function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWi
         alt="APFS 농업정책보험금융원"
         style={{ height: 24, width: "auto" }} /><div className="bg-border" style={{ width: 1, height: 22 }} /><div
         className="gnb-title font-bold whitespace-nowrap"
-        style={{ fontSize: 14.5, letterSpacing: "-.01em" }}>농림수산식품모태펀드 투자자산관리시스템</div><div className="flex-1" /><label
-        className="gnb-search flex items-center gap-2 bg-muted text-caption"
+        style={{ fontSize: 14.5, letterSpacing: "-.01em" }}>농림수산식품모태펀드 투자자산관리시스템</div><div className="flex-1" /><button
+        type="button"
+        onClick={() => setCmdOpen(true)}
+        aria-label="명령 팔레트 열기"
+        className="gnb-search flex items-center gap-2 bg-muted text-caption cursor-pointer"
         style={{
-          borderRadius: 10, padding: "7px 12px",
-          width: 260,
-        }}><Icon name="search" size={16} /><input
-          placeholder="메뉴·운용사·자펀드 검색"
-          className="text-foreground w-full"
-          style={{
-            border: "none", background: "transparent", outline: "none", font: "inherit", fontSize: 12.5,
-          }} /><kbd
+          borderRadius: 10, padding: "7px 12px", width: 260, border: "none", font: "inherit",
+        }}><Icon name="search" size={16} /><span className="flex-1 text-left" style={{ fontSize: 12.5 }}>메뉴·운용사·자펀드 검색</span><kbd
           className="font-semibold bg-card"
-          style={{ fontSize: 10, borderRadius: 5, padding: "1px 5px", border: "1px solid var(--border)" }}>/</kbd></label><RoleSwitch role={role} onRole={onRole} /><div className="flex items-center gap-0.5"><span className="gnb-wide inline-flex"><IconBtn
+          style={{ fontSize: 10, borderRadius: 5, padding: "1px 5px", border: "1px solid var(--border)" }}>/</kbd></button><RoleSwitch role={role} onRole={onRole} /><div className="flex items-center gap-0.5"><span className="gnb-wide inline-flex"><IconBtn
           icon={wide ? "collapse-h" : "expand-h"}
           onClick={onToggleWide}
           label={wide ? "고정 너비" : "전체 너비"}
           active={wide}
+          activeClassName="text-primary border-transparent"
+          activeStyle={{ background: "color-mix(in srgb, var(--primary) 12%, transparent)" }}
           size={38} /></span><IconBtn
           icon={theme === "dark" ? "sun" : "moon"}
           onClick={onToggleTheme}
           label="라이트/다크"
           size={38} /><IconBtn icon="bell" onClick={onOpenNotif} label="알림" badge={unread} size={38} /></div><UserMenu onUserModal={onUserModal} /></header>
+    </>
   );
 }
 
@@ -687,7 +722,7 @@ function AppShell(props) {
           className="dash-main flex-1 min-w-0"
           style={{ padding: "22px 26px 104px" }}>{children}</main></div>{mobile && <div
         className={"lnb-backdrop" + (drawer ? " show" : "")}
-        onClick={() => setDrawer(false)} />}<FavoritesFab onNav={navClose} /><NotifCenter open={notifOpen} onClose={() => setNotifOpen(false)} /><CenterModal open={userModal === "memo"} onClose={() => setUserModal(null)} title="메모" icon="check-circle" width={620}>{ncMemoBody(true)}</CenterModal><CenterModal open={userModal === "schedule"} onClose={() => setUserModal(null)} title="일정" icon="calendar" width={880}><NcScheduleBody /></CenterModal><CenterModal open={userModal === "logout"} onClose={() => setUserModal(null)} title="로그아웃" icon="external" width={400} footer={[<button key="c" onClick={() => setUserModal(null)} className="bg-card cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "1px solid var(--border-strong)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>취소</button>, <button key="o" onClick={() => setUserModal(null)} className="bg-brand-blue cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "none", color: "#fff", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>로그아웃</button>]}><div className="py-1.5 px-1 text-foreground" style={{ fontSize: 14, lineHeight: 1.6 }}>정말 로그아웃 하시겠습니까?</div></CenterModal></div>
+        onClick={() => setDrawer(false)} />}<FavoritesFab onNav={navClose} /><NotifCenter open={notifOpen} onClose={() => setNotifOpen(false)} /><CenterModal open={userModal === "memo"} onClose={() => setUserModal(null)} title="메모" icon="memo" width={620}>{ncMemoBody(true)}</CenterModal><CenterModal open={userModal === "schedule"} onClose={() => setUserModal(null)} title="일정" icon="calendar" width={880}><NcScheduleBody /></CenterModal><CenterModal open={userModal === "logout"} onClose={() => setUserModal(null)} title="로그아웃" icon="external" width={400} footer={[<button key="c" onClick={() => setUserModal(null)} className="bg-card cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "1px solid var(--border-strong)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>취소</button>, <button key="o" onClick={() => setUserModal(null)} className="bg-brand-blue cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "none", color: "#fff", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>로그아웃</button>]}><div className="py-1.5 px-1 text-foreground" style={{ fontSize: 14, lineHeight: 1.6 }}>정말 로그아웃 하시겠습니까?</div></CenterModal></div>
   );
 }
 

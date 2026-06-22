@@ -1,13 +1,12 @@
 /* 일반 리스트 페이지의 CRUD 모달 — 신규 등록 / 수정 / 삭제(2단계 확인).
-   네이티브 dialog(alert/confirm) 미사용 — 인라인 오버레이로 구현. */
+   Radix Dialog 기반(focus trap·Escape·aria-modal·포커스 복귀 제공). */
 import React from 'react';
-import { createPortal } from 'react-dom';
-import { Icon } from './icons';
 import { UI } from './components';
 import type { Tone } from './components';
 import { SchemaField } from './schemas/renderers';
 import type { PageSchema } from './schemas/types';
 import { buildRow } from './schemas/build_row';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
 
 const { useState } = React;
 const { Button } = UI;
@@ -79,36 +78,18 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
     onSave(buildRow(vals, initial, schema));
   };
 
-  return createPortal(
-    <div
-      onClick={onClose}
-      className="fixed inset-0 flex items-start justify-center overflow-y-auto"
-      style={{
-        zIndex: 80,
-        background: "color-mix(in srgb, #000 42%, transparent)", padding: "6vh 20px 40px",
-      }}>
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-full bg-card shadow-lg overflow-hidden flex flex-col"
-        style={{
-          maxWidth: 460, border: "1px solid var(--border)",
-          borderRadius: 16, maxHeight: "86vh",
-          animation: "dashFade .18s var(--ease) both",
-        }}>
-        {/* 헤더 */}
-        <div className="flex items-center justify-between" style={{ padding: "16px 18px", borderBottom: "1px solid var(--border)" }}>
-          <span className="font-bold" style={{ fontSize: 16 }}>{mode === "create" ? "신규 등록" : "항목 수정"}</span>
-          <button
-            onClick={onClose}
-            aria-label="닫기"
-            className="inline-flex cursor-pointer text-muted-foreground p-1"
-            style={{ border: 0, background: "transparent" }}>
-            <Icon name="x" size={18} stroke={2.2} />
-          </button>
-        </div>
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-[460px] max-h-[86vh]">
+        <DialogHeader>
+          <DialogTitle>{mode === "create" ? "신규 등록" : "항목 수정"}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {mode === "create" ? "신규 항목 등록 양식" : "항목 수정 양식"}
+          </DialogDescription>
+        </DialogHeader>
 
         {/* 폼 */}
-        <div className="overflow-y-auto" style={{ padding: 18 }}>
+        <div className="overflow-y-auto p-[18px]">
           {schema.fields.map((f) => (
             <Field key={f.key} label={f.label + (f.required ? ' *' : '')} errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
               <SchemaField
@@ -122,7 +103,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
         </div>
 
         {/* 푸터 */}
-        <div className="flex items-center justify-between flex-wrap gap-x-2.5 gap-y-2" style={{ padding: "14px 18px", borderTop: "1px solid var(--border)" }}>
+        <DialogFooter>
           <div>
             {mode === "edit" && onDelete && (
               confirmDel
@@ -134,9 +115,8 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
             <Button variant="outline" size="sm" onClick={onClose}>취소</Button>
             <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
           </div>
-        </div>
-      </div>
-    </div>,
-    document.body
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
