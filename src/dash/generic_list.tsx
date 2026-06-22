@@ -178,10 +178,11 @@ function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: b
 }
 
 /* 값-필터 컨트롤 — kind별 입력(year/enum select · date · number · text).
-   입력 폰트 16px(iOS 포커스 줌 방지), 색은 토큰(라이트/다크 양립). 빈 값 = 미적용. */
+   입력 폰트 14px(전 컨트롤 기본 사이즈로 통일), 색은 토큰(라이트/다크 양립). 빈 값 = 미적용.
+   주의: <16px라 iOS Safari는 포커스 시 자동 줌인됨 — 14px 통일을 우선한 결과. */
 const drawerInputStyle: React.CSSProperties = {
-  // font 단축속성을 먼저(Pretendard 상속) → fontSize 16을 뒤에: 명시값이 단축속성을 이겨 iOS 줌(<16px) 방지 보장.
-  width: "100%", boxSizing: "border-box", padding: "9px 11px", font: "inherit", fontSize: 16,
+  // font 단축속성을 먼저(Pretendard 상속) → fontSize를 뒤에: 명시값이 단축속성을 이김.
+  width: "100%", boxSizing: "border-box", padding: "9px 11px", font: "inherit", fontSize: 14,
   border: "1px solid var(--border-strong)", borderRadius: 9, background: "var(--card)", color: "var(--foreground)",
 };
 

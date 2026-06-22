@@ -25,7 +25,7 @@ export function Cell({ col, value, color, statusDomain }: { col: ColumnSpec; val
 
 export function SchemaField({ field, value, onChange, invalid }: { field: FieldSpec; value: string; onChange: (v: string) => void; invalid?: boolean }) {
   const base: React.CSSProperties = {
-    width: '100%', boxSizing: 'border-box', padding: '8px 11px', fontSize: 13.5, font: 'inherit',
+    width: '100%', boxSizing: 'border-box', padding: '8px 11px', fontSize: 14, font: 'inherit',
     border: `1px solid ${invalid ? 'var(--danger)' : 'var(--border-strong)'}`,
     borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
   };
