@@ -5,6 +5,7 @@ import { UI } from './components';
 import { Charts } from './charts';
 import { APFS_DATA, MenuStore, useMenuSel } from './data';
 import { mn, MT, useMask } from './mask';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 
 const { ColorChip, StatusBadge, StatCard, ChartCard, Card, Button, FilterChip, SegTabs, CountPill } = UI;
 const { ComposedBars, GroupedBars, Donut, Treemap, LineTrend, HBars, Gauge, Sparkline } = Charts;
@@ -88,7 +89,7 @@ function IndustryCard({ span, onNav, height = 240 }) {
 
 /* 다가오는 일정/알림 */
 function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }: { span?: number | string; onNav?: (r: string) => void; rows?: number; scroll?: boolean; maxH?: number }) {
-  useMask();
+  const masked = useMask();
   const list = scroll ? D.SCHEDULE : D.SCHEDULE.slice(0, rows);
   const ddayColor = (t) => (t === "danger" ? "var(--danger)" : t === "warning" ? "var(--warning)" : "var(--accent)");
   return (
@@ -114,7 +115,7 @@ function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }: { span?: nu
               border: "none", font: "inherit",
               padding: "11px 6px", borderBottom: i < list.length - 1 ? "1px solid var(--border)" : "none", background: "transparent",
             }}><div className="text-center shrink-0" style={{ width: 46 }}><div className="font-extrabold" style={{ fontSize: 13, color: ddayColor(s.tone) }}>{mn(s.dday)}</div><div className="t-caption" style={{ fontSize: 10 }}>{mn(s.date.slice(5).replace("-", "/"))}</div></div><div className="bg-border" style={{ width: 1, alignSelf: "stretch" }} /><div className="flex-1 min-w-0"><div
-                className="font-semibold truncate" style={{ fontSize: 13 }}><MT>{s.title}</MT></div><div className="flex items-center" style={{ gap: 7, marginTop: 3 }}><StatusBadge tone={s.tone} label={s.kind} size="sm" /><span className="t-caption"><MT>{s.to}</MT></span></div></div><Icon
+                className="font-semibold truncate" style={{ fontSize: 13 }}><MT>{s.title}</MT></div><div className="flex items-center" style={{ gap: 7, marginTop: 3 }}>{masked ? <MT w={s.kind.length * 14 + 20} /> : <StatusBadge tone={s.tone} label={s.kind} size="sm" />}<span className="t-caption"><MT>{s.to}</MT></span></div></div><Icon
               name="chevron-right"
               size={16}
               style={{ color: "var(--caption)", flex: "0 0 auto" }} /></button>)}{scroll && <div
@@ -214,20 +215,13 @@ function MenuPickerModal({ open, onClose, initialTab }: { open: boolean; onClose
     if (!s) { s = { sub: o.sub, items: [] }; c.subs.push(s); }
     s.items.push(o);
   });
-  React.useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
-  if (!open) return null;
   return (
-    <div onClick={onClose} className="fixed inset-0 flex items-center justify-center p-5" style={{ zIndex: 120, background: "rgba(0,0,0,.5)", animation: "dashFade .16s var(--ease) both" }}>
-      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" className="flex flex-col bg-card border border-border shadow-lg overflow-hidden" style={{ width: "min(960px,100%)", maxHeight: "84vh", borderRadius: 20, animation: "dashPop .2s var(--ease) both" }}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent hideClose className="max-w-[calc(100vw-32px)] max-h-[84vh] rounded-[20px]" style={{ width: "min(960px,100%)" }}>
         <div className="flex items-start justify-between gap-3" style={{ padding: "20px 22px 14px" }}>
           <div>
-            <div className="font-extrabold" style={{ fontSize: 17, letterSpacing: "-.01em" }}>메뉴 편집</div>
-            <div className="t-caption" style={{ marginTop: 3 }}>전체 메뉴에서 자주 쓰는 업무를 골라 바로가기를 구성하세요.</div>
+            <DialogTitle className="font-extrabold" style={{ fontSize: 17, letterSpacing: "-.01em" }}>메뉴 편집</DialogTitle>
+            <DialogDescription className="t-caption" style={{ marginTop: 3 }}>전체 메뉴에서 자주 쓰는 업무를 골라 바로가기를 구성하세요.</DialogDescription>
           </div>
           <button onClick={onClose} aria-label="닫기" className="shrink-0 bg-muted w-8 h-8 flex items-center justify-center cursor-pointer text-muted-foreground" style={{ border: "none", borderRadius: 9 }}><Icon name="x" size={17} /></button>
         </div>
@@ -264,8 +258,8 @@ function MenuPickerModal({ open, onClose, initialTab }: { open: boolean; onClose
           <button onClick={() => MenuStore.set(cur.kind, cur.def)} className="cursor-pointer text-caption py-2 px-1 inline-flex items-center gap-1.5" style={{ border: "none", background: "transparent", font: "inherit", fontWeight: 600, fontSize: 12.5 }}><Icon name="settings" size={14} />기본값으로 초기화</button>
           <Button variant="primary" size="md" onClick={onClose}>완료</Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

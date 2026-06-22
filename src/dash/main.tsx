@@ -23,7 +23,7 @@ const Stack = ({ children, gap = 16 }: { children?: React.ReactNode; gap?: numbe
 
 /* ===== 시안 A — 스탠다드 12컬럼 ===== */
 function VariantA({ s, onNav }) {
-  return <Stack gap={18}><KpiRow>{D.KPI.map((k, i) => <StatCard key={k.id} kpi={k} emphasis={i === 0} onClick={() => {}} />)}</KpiRow><Grid><ExecChart {...s} span={8} /><StatusDonut {...s} onNav={onNav} span={4} /></Grid><Grid><IndustryCard onNav={onNav} span={6} height={360} /><ScheduleCard onNav={onNav} span={6} scroll={true} maxH={360} /></Grid><div><div className="t-label mb-2.5" style={{ textTransform: "none" }}>영역 바로가기</div><ShortcutGrid onNav={onNav} cols={5} /></div><MiniKpis /></Stack>;
+  return <Stack gap={18}><KpiRow>{D.KPI.map((k, i) => <StatCard key={k.id} kpi={k} emphasis={i === 0} onClick={() => {}} />)}</KpiRow><Grid><ExecChart {...s} span={8} /><StatusDonut {...s} onNav={onNav} span={4} /></Grid><Grid><IndustryCard onNav={onNav} span={6} height={360} /><ScheduleCard onNav={onNav} span={6} scroll={true} maxH={360} /></Grid><div><ShortcutGrid onNav={onNav} cols={5} /></div><MiniKpis /></Stack>;
 }
 
 /* ===== 시안 B — 임원 브리핑 (Hero) ===== */
@@ -116,7 +116,7 @@ function HeroStat({ icon, label, value, unit, delta, danger, onNav }: { icon: st
 }
 
 function VariantB({ s, onNav }) {
-  return <Stack gap={18}><Grid><HeroAUM onNav={onNav} /></Grid><Grid><ExecChart {...s} span={8} /><StatusDonut {...s} onNav={onNav} span={4} height={184} /></Grid><Grid><IndustryCard onNav={onNav} span={7} height={330} /><ScheduleCard onNav={onNav} span={5} scroll={true} maxH={330} /></Grid><div><div className="t-label mb-2.5" style={{ textTransform: "none" }}>영역 바로가기</div><ShortcutGrid onNav={onNav} cols={5} /></div></Stack>;
+  return <Stack gap={18}><Grid><HeroAUM onNav={onNav} /></Grid><Grid><ExecChart {...s} span={8} /><StatusDonut {...s} onNav={onNav} span={4} height={184} /></Grid><Grid><IndustryCard onNav={onNav} span={7} height={330} /><ScheduleCard onNav={onNav} span={5} scroll={true} maxH={330} /></Grid><div><ShortcutGrid onNav={onNav} cols={5} /></div></Stack>;
 }
 
 /* ===== 시안 C — 운영 모니터 (Dense bento) ===== */
@@ -132,7 +132,7 @@ function StatusBar() {
   );
 }
 function VariantC({ s, onNav }) {
-  return <Stack gap={14}><StatusBar /><KpiRow min={190}>{D.KPI.map((k) => <StatCard key={k.id} kpi={k} onClick={() => {}} />)}</KpiRow><Grid gap={14}><div className="dcol-8"><Stack gap={14}><ExecChart {...s} /><Grid gap={14}><IndustryCard onNav={onNav} span={6} height={210} /><RiskTrendCard span={6} height={210} /></Grid><RegionBarCard height={240} /></Stack></div><div className="dcol-4"><Stack gap={14}><StatusDonut {...s} onNav={onNav} height={176} /><ScheduleCard onNav={onNav} rows={4} /><MiniKpis vertical={true} /></Stack></div></Grid><div><div className="t-label mb-2.5" style={{ textTransform: "none" }}>영역 바로가기</div><ShortcutGrid onNav={onNav} cols={5} /></div></Stack>;
+  return <Stack gap={14}><StatusBar /><KpiRow min={190}>{D.KPI.map((k) => <StatCard key={k.id} kpi={k} onClick={() => {}} />)}</KpiRow><Grid gap={14}><div className="dcol-8"><Stack gap={14}><ExecChart {...s} /><Grid gap={14}><IndustryCard onNav={onNav} span={6} height={210} /><RiskTrendCard span={6} height={210} /></Grid><RegionBarCard height={240} /></Stack></div><div className="dcol-4"><Stack gap={14}><StatusDonut {...s} onNav={onNav} height={176} /><ScheduleCard onNav={onNav} rows={4} /><MiniKpis vertical={true} /></Stack></div></Grid><div><ShortcutGrid onNav={onNav} cols={5} /></div></Stack>;
 }
 
 /* ===== 래퍼 ===== */

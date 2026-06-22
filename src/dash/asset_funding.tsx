@@ -61,15 +61,14 @@ function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
     <GridFrame
       crumbs={['홈', '투자자산관리', '모태펀드관리', '모태펀드 조성 및 출자현황']}
       title="모태펀드 조성 및 출자현황"
-      sub="연도별 조성현황(기금 소스별)·출자현황 집계 — 단위: 금액 억원(추정) / 조합수 개"
       cardTitle="모태펀드 조성·출자 현황표"
       headerActions={<>
         <Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>
         <Button variant="primary" size="sm" leadingIcon="download">내보내기</Button>
       </>}
       kpis={<>
-        <KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={mn(fmt(TOTAL.c[0])) + ' 억원'} />
-        <KpiBadge icon="wallet" color="var(--accent)" label="누적 출자금액" value={mn(fmt(TOTAL.u[1])) + ' 억원'} />
+        <KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={mn(fmt(TOTAL.c[0])) + ' 억원'} valueSize={14} />
+        <KpiBadge icon="wallet" color="var(--accent)" label="누적 출자금액" value={mn(fmt(TOTAL.u[1])) + ' 억원'} valueSize={14} />
         <KpiBadge icon="layers" color="var(--chart-1)" label="누적 조합수" value={mn(fmt(TOTAL.u[0])) + ' 개'} />
       </>}
       toolbarLeft={<>
