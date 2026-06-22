@@ -53,6 +53,17 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-/Users/younghwankang/Work/APFS}/.claude/hooks/block-main-write.sh\""
+          }
+        ]
+      }
     ]
   },
   "model": "claude-opus-4-8[1m]"
