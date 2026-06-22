@@ -59,6 +59,18 @@
   --info:#0158A8;
   --info-soft:#DDE9F5;
 
+  /* shadcn/ui 호환 별칭 토큰 — 기존 토큰을 var() 간접참조로 가리킨다.
+     이렇게 하면 .dark와 Tweaks(data-* 무드)에서 원본 토큰이 바뀔 때 자동 추종하므로
+     :root/.dark 양쪽에 중복 정의할 필요가 없다(--destructive-foreground만 리터럴). */
+  --background:var(--bg);
+  --card-foreground:var(--foreground);
+  --popover:var(--card-raised);          /* seamless 무드에서 --card==--bg가 돼도 팝오버는 elevated 표면 유지 */
+  --popover-foreground:var(--foreground);
+  --destructive:var(--danger);
+  --destructive-foreground:#FFFFFF;
+  --accent-surface:var(--muted);         /* shadcn 메뉴 항목 hover 표면(브랜드 navy 아님, 무드 비종속) */
+  --accent-surface-foreground:var(--foreground);
+
   /* chart palette — vivid 19-color categorical spectrum.
      1–6 = contrast-aware spread (bars vs line stay distinct); 7–19 extend it. */
   --chart-1:#22C55E;  /* green   */
@@ -160,6 +172,9 @@
   --shadow-lg:0 14px 38px rgba(0,0,0,.55);
 }
 
+/* ⚠ load-bearing(삭제 금지): preflight:false 환경에서 shadcn/ui 컴포넌트의
+   패딩+테두리 합산 사이징(h-9/px-4 등)을 보장하는 box-sizing 베이스라인.
+   index.html의 border-width:0 리셋과 짝을 이뤄 Tailwind border 유틸 호환을 공급한다. */
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
 body{

@@ -62,8 +62,7 @@ function KpiBox({ icon, label, value, sub, tone }: {
       <div className="min-w-0 flex-1">
         <div className="t-label text-[11.5px] mb-0.5"><MT>{label}</MT></div>
         <div
-          className="text-[22px] font-extrabold tabular leading-tight"
-          style={{ color: "var(--foreground)" }}
+          className="text-[22px] font-extrabold tabular leading-tight text-foreground"
         >{mn(value)}</div>
         {sub && <div className="t-caption text-[11.5px] mt-0.5"><MT>{sub}</MT></div>}
       </div>
@@ -84,8 +83,7 @@ function ScheduleCard({ item }: { item: any }) {
       >{mn(item.dday)}</div>
       <div className="min-w-0 flex-1">
         <div
-          className="text-[13px] font-semibold truncate"
-          style={{ color: "var(--foreground)" }}
+          className="text-[13px] font-semibold truncate text-foreground"
         ><MT>{item.title}</MT></div>
         <div className="flex items-center gap-1.5 mt-0.5">
           <span
@@ -116,8 +114,7 @@ function NavCard({ icon, color, title, desc, badge, badgeUrgent, onClick }: {
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left rounded-card-lg border border-border bg-card px-6 py-5 shadow-sm transition-all hover:shadow-md flex items-start gap-4 group"
-      style={{ cursor: "pointer" }}
+      className="w-full text-left rounded-card-lg border border-border bg-card px-6 py-5 shadow-sm transition-all hover:shadow-md flex items-start gap-4 group cursor-pointer"
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.background = "color-mix(in srgb,var(--muted) 40%,transparent)";
       }}
@@ -134,21 +131,18 @@ function NavCard({ icon, color, title, desc, badge, badgeUrgent, onClick }: {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-1">
           <span
-            className="text-[16px] font-bold"
-            style={{ color: "var(--foreground)" }}
+            className="text-[16px] font-bold text-foreground"
           >{title}</span>
           {badge !== undefined && (
             <CountPill count={badge} urgent={badgeUrgent} />
           )}
         </div>
         <p
-          className="text-[13px] leading-relaxed"
-          style={{ color: "var(--muted-foreground)" }}
+          className="text-[13px] leading-relaxed text-muted-foreground"
         >{desc}</p>
       </div>
       <div
-        className="shrink-0 mt-1 transition-transform group-hover:translate-x-1"
-        style={{ color: "var(--muted-foreground)" }}
+        className="shrink-0 mt-1 transition-transform group-hover:translate-x-1 text-muted-foreground"
       >
         <Icon name="chevron-right" size={20} />
       </div>
@@ -262,8 +256,7 @@ function ReportMain({ onNav }: { onNav?: (route: string) => void }) {
             </div>
             <div className="flex items-center gap-1.5">
               <span
-                className="w-3 h-3 rounded-sm inline-block shrink-0"
-                style={{ background: "var(--primary)" }}
+                className="w-3 h-3 rounded-sm inline-block shrink-0 bg-primary"
               />
               <span className="t-caption text-[11.5px]">실적</span>
             </div>
@@ -339,8 +332,7 @@ function ReportMain({ onNav }: { onNav?: (route: string) => void }) {
                 >
                   <td className="px-4 pl-6 py-3.5">
                     <div
-                      className="text-[13.5px] font-semibold"
-                      style={{ color: "var(--foreground)" }}
+                      className="text-[13.5px] font-semibold text-foreground"
                     ><MT>{r.name}</MT></div>
                   </td>
                   <td className="px-4 py-3.5 text-center">
@@ -355,8 +347,7 @@ function ReportMain({ onNav }: { onNav?: (route: string) => void }) {
                     >{r.type}</span>
                   </td>
                   <td
-                    className="px-4 py-3.5 text-center text-[13px] font-semibold"
-                    style={{ color: "var(--foreground)" }}
+                    className="px-4 py-3.5 text-center text-[13px] font-semibold text-foreground"
                   ><MT>{r.org}</MT></td>
                   <td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{mn(r.date)}</td>
                   <td className="px-4 py-3.5 text-center">

@@ -44,11 +44,12 @@ function Tip({ x, y, children, show }: { x: number; y: number; children?: React.
   if (!show) return null;
   return (
     <div
+      className="absolute bg-foreground text-bg font-semibold pointer-events-none whitespace-nowrap shadow-lg"
       style={{
-        position: "absolute", left: x, top: y, transform: "translate(-50%,-115%)",
-        background: "var(--foreground)", color: "var(--bg)", padding: "7px 10px",
-        borderRadius: 9, fontSize: 12, fontWeight: 600, pointerEvents: "none",
-        whiteSpace: "nowrap", boxShadow: "var(--shadow-lg)", zIndex: 5, lineHeight: 1.5,
+        left: x, top: y, transform: "translate(-50%,-115%)",
+        padding: "7px 10px",
+        borderRadius: 9, fontSize: 12,
+        zIndex: 5, lineHeight: 1.5,
       }}>{children}</div>
   );
 }
@@ -66,7 +67,7 @@ function Sparkline({ data, color = "var(--primary)", height = 34, area = true, i
   const dline = pts.length ? smoothPath(pts) : "";
   const gid = "sp" + (id || color).replace(/[^a-z0-9]/gi, "");
   return (
-    <div ref={ref} style={{ width: "100%", height: h }}>{W > 0 && <svg width={W} height={h}><defs><linearGradient id={gid} x1={0} y1={0} x2={0} y2={1}><stop offset="0%" stopColor={color} stopOpacity={.22} /><stop offset="100%" stopColor={color} stopOpacity={0} /></linearGradient></defs>{area && <path
+    <div ref={ref} className="w-full" style={{ height: h }}>{W > 0 && <svg width={W} height={h}><defs><linearGradient id={gid} x1={0} y1={0} x2={0} y2={1}><stop offset="0%" stopColor={color} stopOpacity={.22} /><stop offset="100%" stopColor={color} stopOpacity={0} /></linearGradient></defs>{area && <path
           d={`${dline} L${pts[pts.length-1][0]},${h} L${pts[0][0]},${h} Z`}
           fill={`url(#${gid})`} />}<path
           d={dline}
@@ -101,7 +102,7 @@ function Donut({ data, height = 220, thickness = 26, centerLabel, centerValue, o
     return { ...d, path, mid: (s + e) / 2 };
   });
   return (
-    <div ref={ref} style={{ position: "relative", width: "100%", height: size }}>{W > 0 && <svg width={W} height={size} style={{ display: "block" }}>{arcs.map((arc, i) => {
+    <div ref={ref} className="relative w-full" style={{ height: size }}>{W > 0 && <svg width={W} height={size} className="block">{arcs.map((arc, i) => {
           const active = activeKey ? activeKey === arc.key : hover === i;
           const dim = (activeKey && activeKey !== arc.key) || (hover !== null && hover !== i);
           return (
@@ -120,12 +121,13 @@ function Donut({ data, height = 220, thickness = 26, centerLabel, centerValue, o
           x={cx}
           y={cy - 6}
           textAnchor="middle"
-          style={{ fontSize: 26, fontWeight: 800, fill: "var(--foreground)" }}
-          className="tabular">{centerValue ?? mn(total)}</text><text
+          style={{ fontSize: 26, fill: "var(--foreground)" }}
+          className="tabular font-extrabold">{centerValue ?? mn(total)}</text><text
           x={cx}
           y={cy + 15}
           textAnchor="middle"
-          style={{ fontSize: 12, fontWeight: 600, fill: "var(--caption)" }}>{centerLabel || "총 건수"}</text></svg>}</div>
+          className="font-semibold"
+          style={{ fontSize: 12, fill: "var(--caption)" }}>{centerLabel || "총 건수"}</text></svg>}</div>
   );
 }
 
@@ -142,7 +144,7 @@ function ComposedBars({ data, height = 280 }: { data: any[]; height?: number; pl
   const ticks = [0, .25, .5, .75, 1].map((t) => t * maxAmt);
   const linePts = data.map((d, i) => [m.l + band * i + band / 2, yRate(d.rate)]);
   return (
-    <div ref={ref} style={{ position: "relative", width: "100%", height }}>{W > 0 && <svg width={W} height={height}><defs><linearGradient id="cbline" x1={0} y1={0} x2={0} y2={1}><stop offset="0%" stopColor="var(--chart-3)" stopOpacity={.25} /><stop offset="100%" stopColor="var(--chart-3)" stopOpacity={.02} /></linearGradient></defs>{ticks.map((t, i) => <g key={i}><line
+    <div ref={ref} className="relative w-full" style={{ height }}>{W > 0 && <svg width={W} height={height}><defs><linearGradient id="cbline" x1={0} y1={0} x2={0} y2={1}><stop offset="0%" stopColor="var(--chart-3)" stopOpacity={.25} /><stop offset="100%" stopColor="var(--chart-3)" stopOpacity={.02} /></linearGradient></defs>{ticks.map((t, i) => <g key={i}><line
             x1={m.l}
             x2={m.l + iw}
             y1={yAmt(t)}
@@ -187,7 +189,8 @@ function ComposedBars({ data, height = 280 }: { data: any[]; height?: number; pl
                 x={x}
                 y={m.t + ih + 18}
                 textAnchor="middle"
-                style={{ fontSize: 11.5, fill: "var(--muted-foreground)", fontWeight: 600 }}>{d.name}</text></g>
+                className="font-semibold"
+                style={{ fontSize: 11.5, fill: "var(--muted-foreground)" }}>{d.name}</text></g>
           );
         })}<path
           d={smoothPath(linePts)}
@@ -220,7 +223,7 @@ function LineTrend({ data, threshold, height = 220, color = "var(--chart-1)" }: 
   const pts = data.map((d, i) => [x(i), y(d.v)]);
   const dline = smoothPath(pts);
   return (
-    <div ref={ref} style={{ position: "relative", width: "100%", height }}>{W > 0 && <svg width={W} height={height}><defs><linearGradient id="ltgrad" x1={0} y1={0} x2={0} y2={1}><stop offset="0%" stopColor={color} stopOpacity={.22} /><stop offset="100%" stopColor={color} stopOpacity={.02} /></linearGradient></defs>{[0, .5, 1].map((t, i) => <line
+    <div ref={ref} className="relative w-full" style={{ height }}>{W > 0 && <svg width={W} height={height}><defs><linearGradient id="ltgrad" x1={0} y1={0} x2={0} y2={1}><stop offset="0%" stopColor={color} stopOpacity={.22} /><stop offset="100%" stopColor={color} stopOpacity={.02} /></linearGradient></defs>{[0, .5, 1].map((t, i) => <line
           key={i}
           x1={m.l}
           x2={m.l + iw}
@@ -238,7 +241,8 @@ function LineTrend({ data, threshold, height = 220, color = "var(--chart-1)" }: 
           x={m.l + iw}
           y={y(threshold) - 5}
           textAnchor="end"
-          style={{ fontSize: 10.5, fill: "var(--danger)", fontWeight: 700 }}>{"임계 " + threshold}</text>}<path
+          className="font-bold"
+          style={{ fontSize: 10.5, fill: "var(--danger)" }}>{"임계 " + threshold}</text>}<path
           d={`${dline} L${pts[pts.length-1][0]},${m.t+ih} L${pts[0][0]},${m.t+ih} Z`}
           fill="url(#ltgrad)" /><path
           d={dline}
@@ -312,7 +316,7 @@ function Treemap({ data, height = 240, onCell }: { data: any[]; height?: number;
   const cells = W > 0 ? squarify(sorted, 0, 0, W, height) : [];
   const total = data.reduce((s, d) => s + d.value, 0);
   return (
-    <div ref={ref} style={{ position: "relative", width: "100%", height }}>{cells.map((c, i) => {
+    <div ref={ref} className="relative w-full" style={{ height }}>{cells.map((c, i) => {
         const pct = ((c.value / total) * 100).toFixed(1);
         const big = c.w > 78 && c.h > 44;
         return (
@@ -321,13 +325,15 @@ function Treemap({ data, height = 240, onCell }: { data: any[]; height?: number;
             onMouseEnter={() => setHi(i)}
             onMouseLeave={() => setHi(null)}
             onClick={() => onCell && onCell(c)}
+            className="absolute overflow-hidden flex flex-col justify-between"
             style={{
-              position: "absolute", left: c.x + 1, top: c.y + 1, width: Math.max(0, c.w - 2), height: Math.max(0, c.h - 2),
-              background: c.color, borderRadius: 7, padding: "8px 9px", overflow: "hidden", cursor: onCell ? "pointer" : "default",
+              left: c.x + 1, top: c.y + 1, width: Math.max(0, c.w - 2), height: Math.max(0, c.h - 2),
+              background: c.color, borderRadius: 7, padding: "8px 9px", cursor: onCell ? "pointer" : "default",
               color: "#fff", boxShadow: hi === i ? "inset 0 0 0 2px rgba(255,255,255,.85)" : "none",
-              transition: "box-shadow .15s", display: "flex", flexDirection: "column", justifyContent: "space-between",
+              transition: "box-shadow .15s",
             }}>{big && <div
-              style={{ fontSize: 11.5, fontWeight: 700, lineHeight: 1.25, textShadow: "0 1px 2px rgba(0,0,0,.25)" }}><MT>{c.name}</MT></div>}{big && <div style={{ textShadow: "0 1px 2px rgba(0,0,0,.25)" }}><span className="tabular" style={{ fontSize: 15, fontWeight: 800 }}>{mn(pct)}</span><span style={{ fontSize: 10, opacity: .9 }}>%</span></div>}</div>
+              className="font-bold"
+              style={{ fontSize: 11.5, lineHeight: 1.25, textShadow: "0 1px 2px rgba(0,0,0,.25)" }}><MT>{c.name}</MT></div>}{big && <div style={{ textShadow: "0 1px 2px rgba(0,0,0,.25)" }}><span className="tabular font-extrabold" style={{ fontSize: 15 }}>{mn(pct)}</span><span style={{ fontSize: 10, opacity: .9 }}>%</span></div>}</div>
         );
       })}{hi !== null && <Tip
         x={cells[hi].x + cells[hi].w / 2}
@@ -344,15 +350,19 @@ function HBars({ data, height = 220, unit = "%" }: { data: any[]; height?: numbe
   const labelW = 110, valW = 52;
   const bw = (W || 400) - labelW - valW;
   return (
-    <div ref={ref} style={{ width: "100%", height }}>{W > 0 && data.map((d, i) =>
+    <div ref={ref} className="w-full" style={{ height }}>{W > 0 && data.map((d, i) =>
         <div
           key={i}
-          style={{ display: "flex", alignItems: "center", height: rowH, gap: 8 }}><div
-            style={{ width: labelW, fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "var(--foreground)" }}><MT>{d.name}</MT></div><div
-            style={{ flex: 1, height: 16, background: "var(--muted)", borderRadius: 5, overflow: "hidden" }}><div
-              style={{ width: (d.value / max) * 100 + "%", height: "100%", background: d.color || "var(--chart-1)", borderRadius: 5, transformOrigin: "left", animation: "growbar .5s var(--ease) both", animationDelay: i * 50 + "ms" }} /></div><div
-            className="tabular"
-            style={{ width: valW, textAlign: "right", fontSize: 13, fontWeight: 700 }}>{mn(d.value + unit)}</div></div>)}</div>
+          className="flex items-center gap-2"
+          style={{ height: rowH }}><div
+            className="truncate font-semibold text-foreground"
+            style={{ width: labelW, fontSize: 12.5 }}><MT>{d.name}</MT></div><div
+            className="flex-1 bg-muted overflow-hidden"
+            style={{ height: 16, borderRadius: 5 }}><div
+              className="h-full"
+              style={{ width: (d.value / max) * 100 + "%", background: d.color || "var(--chart-1)", borderRadius: 5, transformOrigin: "left", animation: "growbar .5s var(--ease) both", animationDelay: i * 50 + "ms" }} /></div><div
+            className="tabular text-right font-bold"
+            style={{ width: valW, fontSize: 13 }}>{mn(d.value + unit)}</div></div>)}</div>
   );
 }
 
@@ -368,7 +378,7 @@ function Gauge({ value, max = 100, label, height = 150, color = "var(--primary)"
     return `M${x0},${y0} A${r},${r} 0 ${end - start > Math.PI ? 1 : 0} 1 ${x1},${y1}`;
   };
   return (
-    <div ref={ref} style={{ width: "100%", height, position: "relative" }}>{W > 0 && <svg width={W} height={height}><path
+    <div ref={ref} className="w-full relative" style={{ height }}>{W > 0 && <svg width={W} height={height}><path
           d={arc(Math.PI, 2 * Math.PI)}
           fill="none"
           stroke="var(--muted)"
@@ -382,12 +392,13 @@ function Gauge({ value, max = 100, label, height = 150, color = "var(--primary)"
           x={cx}
           y={cy - 6}
           textAnchor="middle"
-          style={{ fontSize: 28, fontWeight: 800, fill: "var(--foreground)" }}
-          className="tabular">{mn(value + (max === 100 ? "%" : ""))}</text>{label && <text
+          style={{ fontSize: 28, fill: "var(--foreground)" }}
+          className="tabular font-extrabold">{mn(value + (max === 100 ? "%" : ""))}</text>{label && <text
           x={cx}
           y={cy + 12}
           textAnchor="middle"
-          style={{ fontSize: 11.5, fill: "var(--caption)", fontWeight: 600 }}>{label}</text>}</svg>}</div>
+          className="font-semibold"
+          style={{ fontSize: 11.5, fill: "var(--caption)" }}>{label}</text>}</svg>}</div>
   );
 }
 
@@ -402,7 +413,7 @@ function GroupedBars({ data, height = 240 }: { data: any[]; height?: number }) {
   const yAmt = (v) => m.t + ih - (v / maxAmt) * ih;
   const ticks = [0, .25, .5, .75, 1].map((t) => t * maxAmt);
   return (
-    <div ref={ref} style={{ position: "relative", width: "100%", height }}>{W > 0 && <svg width={W} height={height}>{ticks.map((t, i) => <g key={i}><line x1={m.l} x2={m.l + iw} y1={yAmt(t)} y2={yAmt(t)} stroke="var(--chart-grid)" strokeDasharray="3 3" /><text x={m.l - 8} y={yAmt(t) + 4} textAnchor="end" style={{ fontSize: 10.5, fill: "var(--caption)" }} className="tabular">{t.toLocaleString()}</text></g>)}{data.map((d, i) => { const x = m.l + band * i + band / 2; const active = hi === i; return <g key={i} onMouseEnter={() => setHi(i)} onMouseLeave={() => setHi(null)}><rect x={m.l + band * i} y={m.t} width={band} height={ih} fill={active ? "var(--muted)" : "transparent"} opacity={.6} /><rect x={x - bw - 2} y={yAmt(d.plan)} width={bw} height={ih - (yAmt(d.plan) - m.t)} rx={5} fill="var(--chart-grid)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + "ms" }} /><rect x={x + 2} y={yAmt(d.actual)} width={bw} height={ih - (yAmt(d.actual) - m.t)} rx={5} fill="var(--chart-2)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + 80 + "ms" }} /><text x={x} y={m.t + ih + 18} textAnchor="middle" style={{ fontSize: 11.5, fill: "var(--muted-foreground)", fontWeight: 600 }}>{d.name}</text></g>; })}</svg>}{hi !== null && <Tip x={m.l + band * hi + band / 2} y={yAmt(Math.max(data[hi].plan, data[hi].actual))} show={true}><div>{data[hi].name}</div><div style={{ color: "color-mix(in srgb,var(--bg) 70%,var(--chart-2))" }}>실적 {fmtEok(data[hi].actual)}억</div></Tip>}</div>
+    <div ref={ref} className="relative w-full" style={{ height }}>{W > 0 && <svg width={W} height={height}>{ticks.map((t, i) => <g key={i}><line x1={m.l} x2={m.l + iw} y1={yAmt(t)} y2={yAmt(t)} stroke="var(--chart-grid)" strokeDasharray="3 3" /><text x={m.l - 8} y={yAmt(t) + 4} textAnchor="end" style={{ fontSize: 10.5, fill: "var(--caption)" }} className="tabular">{t.toLocaleString()}</text></g>)}{data.map((d, i) => { const x = m.l + band * i + band / 2; const active = hi === i; return <g key={i} onMouseEnter={() => setHi(i)} onMouseLeave={() => setHi(null)}><rect x={m.l + band * i} y={m.t} width={band} height={ih} fill={active ? "var(--muted)" : "transparent"} opacity={.6} /><rect x={x - bw - 2} y={yAmt(d.plan)} width={bw} height={ih - (yAmt(d.plan) - m.t)} rx={5} fill="var(--chart-grid)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + "ms" }} /><rect x={x + 2} y={yAmt(d.actual)} width={bw} height={ih - (yAmt(d.actual) - m.t)} rx={5} fill="var(--chart-2)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + 80 + "ms" }} /><text x={x} y={m.t + ih + 18} textAnchor="middle" className="font-semibold" style={{ fontSize: 11.5, fill: "var(--muted-foreground)" }}>{d.name}</text></g>; })}</svg>}{hi !== null && <Tip x={m.l + band * hi + band / 2} y={yAmt(Math.max(data[hi].plan, data[hi].actual))} show={true}><div>{data[hi].name}</div><div style={{ color: "color-mix(in srgb,var(--bg) 70%,var(--chart-2))" }}>실적 {fmtEok(data[hi].actual)}억</div></Tip>}</div>
   );
 }
 

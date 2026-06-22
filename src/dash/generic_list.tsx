@@ -2,7 +2,6 @@
    레이아웃: KPI 배지 · 필터 칩 툴바 · CRUD 테이블 · 페이지네이션 · 하단 요약 2-카드.
    route 값(한글 레이블 또는 경로)으로 제목·브레드크럼을 자동 구성. */
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { Icon } from './icons';
 import { Shell } from './shell';
 import { UI } from './components';
@@ -15,6 +14,9 @@ import { Cell } from './schemas/renderers';
 import { resolveFilterField, YEAR_OPTIONS } from './schemas/filter_field';
 import type { FilterField } from './schemas/filter_field';
 import type { PageSchema } from './schemas/types';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
+import { toast } from './ui/sonner';
+import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 
 const { useState, useEffect } = React;
 const { PageHeader } = Shell;
@@ -87,7 +89,7 @@ const PER = 20;
 function MiniBars({ data, color }: { data: number[]; color: string }) {
   const max = Math.max(...data, 1);
   return (
-    <div style={{ display: "inline-flex", alignItems: "flex-end", gap: 3, height: 20 }}>
+    <div className="inline-flex items-end" style={{ gap: 3, height: 20 }}>
       {data.map((v, i) => (
         <span key={i} style={{
           width: 5, borderRadius: 2, height: Math.max(3, (v / max) * 20),
@@ -101,11 +103,11 @@ function MiniBars({ data, color }: { data: number[]; color: string }) {
 /* 헤더 우측 KPI 배지 (라벨/값 마스킹) */
 function KpiBadge({ icon, color, label, value, valueColor }: { icon: string; color: string; label: string; value: React.ReactNode; valueColor?: string }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, border: "1px solid var(--border)", borderRadius: 12, padding: "8px 14px", background: "var(--card)" }}>
+    <div className="flex items-center gap-2.5 border border-border bg-card py-1.5 px-3.5" style={{ borderRadius: 12 }}>
       <ColorChip icon={icon} color={color} size={30} iconSize={16} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 1, lineHeight: 1.2 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--caption)" }}><MT>{label}</MT></span>
-        <span className="tabular" style={{ fontSize: 16, fontWeight: 800, color: valueColor || "var(--foreground)" }}>{value}</span>
+      <div className="flex flex-col" style={{ gap: 1, lineHeight: 1.2 }}>
+        <span className="font-semibold text-caption" style={{ fontSize: 11 }}><MT>{label}</MT></span>
+        <span className="tabular font-extrabold" style={{ fontSize: 14, color: valueColor || "var(--foreground)" }}>{value}</span>
       </div>
     </div>
   );
@@ -114,63 +116,45 @@ function KpiBadge({ icon, color, label, value, valueColor }: { icon: string; col
 /* 제거 가능한 필터 칩 — 라벨(평문 UI 라벨) + 선택값(데이터 → MT 마스킹). 태그형은 값 없음. */
 function FilterPill({ label, value, onRemove }: { label: string; value?: string; onRemove: () => void }) {
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 8px 5px 11px", borderRadius: 9, fontSize: 12.5, fontWeight: 600, background: "color-mix(in srgb, var(--primary) 10%, transparent)", color: "var(--primary)" }}>
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+    <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: "5px 8px 5px 11px", borderRadius: 9, fontSize: 12.5, background: "color-mix(in srgb, var(--primary) 10%, transparent)" }}>
+      <span className="inline-flex items-center gap-1">
         <span>{label}{value ? ":" : ""}</span>
         {value ? <MT>{value}</MT> : null}
       </span>
-      <button onClick={onRemove} aria-label={label + " 필터 제거"} style={{ display: "inline-flex", border: 0, background: "transparent", cursor: "pointer", color: "inherit", padding: 0 }}>
+      <button onClick={onRemove} aria-label={label + " 필터 제거"} className="inline-flex border-0 cursor-pointer p-0" style={{ background: "transparent", color: "inherit" }}>
         <Icon name="x" size={13} stroke={2.4} />
       </button>
     </span>
   );
 }
 
-/* ===== 더보기 드롭다운 메뉴 (kebab) — performance.tsx MoreMenu 패턴 차용 ===== */
-function MenuItem({ icon, label, onClick, ph, danger }: { icon: string; label: string; onClick?: () => void; ph?: boolean; danger?: boolean }) {
-  return (
-    <button
-      onClick={onClick}
-      className="nc-row"
-      style={{
-        display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 11px",
-        borderRadius: 8, border: "none", background: "transparent", font: "inherit",
-        fontSize: 13.5, fontWeight: 600, cursor: "pointer",
-        color: danger ? "var(--danger)" : "var(--foreground)", textAlign: "left",
-      }}>
-      <Icon name={icon} size={17} style={{ color: danger ? "var(--danger)" : "var(--muted-foreground)", flex: "0 0 auto" }} />
-      {ph ? <MT>{label}</MT> : label}
-    </button>
-  );
-}
-
+/* ===== 더보기 드롭다운 메뉴 (kebab) — Radix DropdownMenu(키보드 내비·menuitem 시맨틱) ===== */
 function MoreMenu({ onRegister, editable }: { onRegister: () => void; editable: boolean }) {
-  const [open, setOpen] = useState(false);
   return (
-    <div className="relative">
-      <IconBtn icon="more" label="더보기" size={34} active={open} onClick={() => setOpen((o) => !o)} />
-      {open && (
-        <>
-          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 30 }} />
-          <div
-            role="menu"
-            className="absolute right-0 mt-1.5 z-40"
-            style={{
-              minWidth: 188, background: "var(--card)", border: "1px solid var(--border)",
-              borderRadius: 12, boxShadow: "var(--shadow-lg)", padding: 6, animation: "ncPop .16s var(--ease) both",
-            }}>
-            {editable && (
-              <>
-                <MenuItem icon="plus" label="등록" onClick={() => { setOpen(false); onRegister(); }} />
-                <div style={{ height: 1, background: "var(--border)", margin: "5px 4px" }} />
-              </>
-            )}
-            <MenuItem icon="download" label="내보내기" ph onClick={() => setOpen(false)} />
-            <MenuItem icon="file" label="인쇄" ph onClick={() => setOpen(false)} />
-          </div>
-        </>
-      )}
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label="더보기"
+        className="inline-flex items-center justify-center rounded-card-sm text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
+        style={{ width: 34, height: 34 }}>
+        <Icon name="more" size={20} stroke={2} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        {editable && (
+          <>
+            <DropdownMenuItem onSelect={onRegister}>
+              <Icon name="plus" size={17} className="shrink-0 text-muted-foreground" />등록
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+        <DropdownMenuItem>
+          <Icon name="download" size={17} className="shrink-0 text-muted-foreground" /><MT>내보내기</MT>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Icon name="file" size={17} className="shrink-0 text-muted-foreground" /><MT>인쇄</MT>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -180,14 +164,15 @@ function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: b
     <button
       onClick={onClick}
       aria-pressed={checked}
-      style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", cursor: "pointer", background: "transparent", border: 0, padding: "8px 0", font: "inherit" }}>
-      <span style={{
-        display: "inline-flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto", width: 24, height: 24, borderRadius: 7, transition: "all .15s var(--ease)",
+      className="flex items-center gap-3 w-full text-left cursor-pointer border-0 py-2 px-0"
+      style={{ background: "transparent", font: "inherit" }}>
+      <span className="inline-flex items-center justify-center shrink-0" style={{
+        width: 24, height: 24, borderRadius: 7, transition: "all .15s var(--ease)",
         background: checked ? "var(--primary)" : "var(--card)",
         border: checked ? "1px solid var(--primary)" : "1.5px solid var(--border-strong)" }}>
         {checked && <Icon name="check" size={16} stroke={3} style={{ color: "#fff" }} />}
       </span>
-      <span style={{ fontSize: 14, fontWeight: 600, color: "var(--foreground)" }}>{label}</span>
+      <span className="font-semibold text-foreground" style={{ fontSize: 14 }}>{label}</span>
     </button>
   );
 }
@@ -217,11 +202,11 @@ function DrawerFilterControl({ ff, value, onChange }: { ff: FilterField; value: 
     control = <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={ff.label + " 입력"} style={drawerInputStyle} />;
   }
   return (
-    <label style={{ display: "block", marginBottom: 16 }}>
-      <span style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--muted-foreground)", marginBottom: 6 }}>
+    <label className="block mb-4">
+      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>
         {ff.label}
         {/* 매칭 컬럼이 없어 더미데이터를 거를 수 없는 필터(조회 파라미터) — 무신호 no-op 방지 */}
-        {!ff.columnKey && <span style={{ fontWeight: 500, color: "var(--caption)", marginLeft: 6 }}>· 데이터 연동 후 적용</span>}
+        {!ff.columnKey && <span className="font-medium text-caption" style={{ marginLeft: 6 }}>· 데이터 연동 후 적용</span>}
       </span>
       {control}
     </label>
@@ -247,32 +232,21 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
   });
   // 빈 값은 제거하고 적용 (미선택 필터는 비활성)
   const apply = () => { onApply(Object.fromEntries(Object.entries(draft).filter(([, v]) => v !== ""))); onClose(); };
-  return createPortal(
-    <>
-      <div
-        onClick={onClose}
-        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.42)", zIndex: 80, opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none", transition: "opacity .25s var(--ease)" }} />
-      <aside
-        role="dialog"
-        aria-modal="true"
-        aria-label="상세 필터"
-        {...(open ? {} : { inert: "" })}
-        style={{
-          position: "fixed", top: 0, right: 0, bottom: 0, width: 408, maxWidth: "92vw", boxSizing: "border-box", zIndex: 81,
-          background: "var(--card)", borderLeft: "1px solid var(--border)", boxShadow: "var(--shadow-lg)",
-          transform: open ? "translateX(0)" : "translateX(100%)", transition: "transform .3s var(--ease)",
-          display: "flex", flexDirection: "column" }}>
-        <header style={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, height: 62, padding: "0 clamp(14px,3vw,20px)", borderBottom: "1px solid var(--border)" }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-.02em", color: "var(--foreground)" }}>상세 필터</h2>
+  return (
+    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
+        <SheetHeader>
+          <SheetTitle>상세 필터</SheetTitle>
+          <SheetDescription className="sr-only">목록을 조건으로 거르는 상세 필터</SheetDescription>
           <IconBtn icon="x" onClick={onClose} label="닫기" size={38} />
-        </header>
-        <div style={{ flex: 1, overflowY: "auto", padding: "20px clamp(14px,3vw,20px)" }}>
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto" style={{ padding: "20px clamp(14px,3vw,20px)" }}>
           {filters.length === 0 ? (
-            <div style={{ fontSize: 13, color: "var(--caption)", textAlign: "center", padding: "28px 0" }}>설정 가능한 필터가 없습니다.</div>
+            <div className="text-caption text-center" style={{ fontSize: 13, padding: "28px 0" }}>설정 가능한 필터가 없습니다.</div>
           ) : (
             <>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--muted-foreground)", marginBottom: 10 }}>필터 항목</div>
-              <div style={{ display: "flex", flexDirection: "column" }}>
+              <div className="font-bold text-muted-foreground" style={{ fontSize: 13, marginBottom: 10 }}>필터 항목</div>
+              <div className="flex flex-col">
                 {filters.map((label) => {
                   const ff = resolveFilterField(label, schema);
                   return ff.kind === "tag"
@@ -283,13 +257,12 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
             </>
           )}
         </div>
-        <div style={{ flex: "0 0 auto", display: "flex", gap: 8, padding: "14px clamp(14px,3vw,20px)", borderTop: "1px solid var(--border)" }}>
+        <SheetFooter>
           <Button variant="outline" size="md" onClick={() => setDraft({})}>초기화</Button>
           <Button variant="primary" size="md" style={{ flex: 1 }} onClick={apply}>필터 적용</Button>
-        </div>
-      </aside>
-    </>,
-    document.body
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -315,7 +288,7 @@ function rowMatchesFilters(row: Row, schema: PageSchema, filterValues: Record<st
 }
 
 export function GenericListPage({ route, onNav }: { route: string; onNav: (r: string) => void }) {
-  const { title, crumbs, parent } = findMenuContext(route);
+  const { title, crumbs } = findMenuContext(route);
   const schema = resolveSchema(route);
   const editable = schema.fields.length > 0;
   const [rows, setRows] = useState<Row[]>(() => makeRows(schema, 23));
@@ -343,7 +316,6 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   // 파생 KPI (필터 결과 기준)
   const sumAmount = filtered.reduce((s, r) => s + r.amount, 0);
   const avgChange = total ? filtered.reduce((s, r) => s + r.change, 0) / total : 0;
-  const goodRate = total ? Math.round(filtered.filter((r) => r.status === "정상" || r.status === "완료").length / total * 100) : 0;
   const avgUp = avgChange >= 0;
 
   // 선택 토글
@@ -362,19 +334,24 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
   // CRUD
   const save = (row: Row) => {
-    setRows((prev) => modal?.mode === "create"
+    const creating = modal?.mode === "create";
+    setRows((prev) => creating
       ? [{ ...row, id: nextId() }, ...prev]
       : prev.map((r) => (r.id === row.id ? row : r)));
     setModal(null);
+    toast.success(creating ? "항목이 등록되었습니다" : "항목이 수정되었습니다");
   };
   const deleteOne = (id: string) => {
     setRows((prev) => prev.filter((r) => r.id !== id));
     setSelected((prev) => { const n = new Set(prev); n.delete(id); return n; });
     setModal(null);
+    toast.success("항목이 삭제되었습니다");
   };
   const bulkDelete = () => {
+    const n = selected.size;
     setRows((prev) => prev.filter((r) => !selected.has(r.id)));
     setSelected(new Set());
+    if (n) toast.success(`${n}개 항목을 삭제했습니다`);
   };
 
   const cellPad = "11px 14px";
@@ -387,11 +364,11 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         actions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav("main")}>메인으로</Button>} />
 
       {/* ── 메인 리스트 카드 ── */}
-      <Card pad={0} style={{ overflow: "hidden" }}>
+      <Card pad={0} className="overflow-hidden">
         {/* 카드 헤더: 타이틀 + KPI 배지 */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 18px", flexWrap: "wrap" }}>
-          <h3 style={{ fontSize: 15.5, fontWeight: 700 }}>{title}</h3>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div className="flex items-center justify-between gap-4 flex-wrap" style={{ padding: "6px 18px" }}>
+          <h3 className="font-bold" style={{ fontSize: 20 }}>{title}</h3>
+          <div className="flex gap-2.5 flex-wrap">
             <KpiBadge icon="trending" color="var(--chart-1)" label="평균 변동률"
               value={mn((avgUp ? "+" : "-") + Math.abs(avgChange).toFixed(1)) + "%"}
               valueColor={avgUp ? "var(--success)" : "var(--danger)"} />
@@ -401,21 +378,21 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         </div>
 
         {/* 툴바: 필터 칩 / 선택 액션 */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 18px", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", background: "color-mix(in srgb, var(--muted) 35%, transparent)", flexWrap: "wrap" }}>
+        <div className="flex items-center justify-between gap-3 border-t border-b border-border flex-wrap" style={{ padding: "10px 18px", background: "color-mix(in srgb, var(--muted) 35%, transparent)" }}>
           {selected.size > 0 ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>{selected.size}건 선택됨</span>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="font-semibold" style={{ fontSize: 13 }}>{selected.size}건 선택됨</span>
               <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger)" }} onClick={bulkDelete}>선택 삭제</Button>
               <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>선택 해제</Button>
             </div>
           ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <Icon name="filter" size={16} style={{ color: "var(--caption)" }} />
+            <div className="flex items-center gap-2 flex-wrap">
+              <Icon name="filter" size={16} className="text-caption" />
               {chipItems.map((c) => <FilterPill key={c.label} label={c.label} value={c.value} onRemove={() => removeFilter(c.label)} />)}
-              {chipItems.length === 0 && <span style={{ fontSize: 12.5, color: "var(--caption)" }}>필터 없음</span>}
+              {chipItems.length === 0 && <span className="text-caption" style={{ fontSize: 12.5 }}>필터 없음</span>}
             </div>
           )}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+          <div className="flex items-center gap-1 flex-wrap">
             <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
             <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); setSelected(new Set()); setPage(1); }} />
             <MoreMenu onRegister={() => setModal({ mode: "create" })} editable={editable} />
@@ -424,19 +401,19 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
         {/* 테이블 / 상세 뷰 */}
         {view === "list" ? (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 780 }}>
+          <div className="overflow-x-auto">
+            <table className="w-full" style={{ borderCollapse: "collapse", minWidth: 780 }}>
               <thead>
                 <tr style={{ background: "color-mix(in srgb, var(--muted) 55%, transparent)" }}>
-                  <th style={{ padding: cellPad, width: 44, borderBottom: "1px solid var(--border)" }}>
-                    <input type="checkbox" checked={allOnPage} onChange={toggleAll} aria-label="전체 선택" style={{ accentColor: "var(--primary)", width: 17, height: 17, cursor: "pointer" }} />
+                  <th className="border-b border-border" style={{ padding: cellPad, width: 44 }}>
+                    <input type="checkbox" checked={allOnPage} onChange={toggleAll} aria-label="전체 선택" className="cursor-pointer" style={{ accentColor: "var(--primary)", width: 17, height: 17 }} />
                   </th>
                   {schema.columns.map((c) => (
-                    <th key={c.key} style={{ padding: cellPad, textAlign: (c.align || 'left') as any, fontSize: 12, fontWeight: 700, color: "var(--caption)", whiteSpace: "nowrap", borderBottom: "1px solid var(--border)" }}>
+                    <th key={c.key} className="font-bold text-caption whitespace-nowrap border-b border-border" style={{ padding: cellPad, textAlign: (c.align || 'left') as any, fontSize: 12 }}>
                       {c.label}{c.unit ? ` (${c.unit})` : ''}
                     </th>
                   ))}
-                  <th style={{ padding: cellPad, width: 56, textAlign: "right", fontSize: 12, fontWeight: 700, color: "var(--caption)", whiteSpace: "nowrap", borderBottom: "1px solid var(--border)" }}>{editable ? "관리" : ""}</th>
+                  <th className="text-right font-bold text-caption whitespace-nowrap border-b border-border" style={{ padding: cellPad, width: 56, fontSize: 12 }}>{editable ? "관리" : ""}</th>
                 </tr>
               </thead>
               <tbody>
@@ -444,22 +421,23 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                   const sel = selected.has(r.id);
                   return (
                     <tr key={r.id}
-                      style={{ borderBottom: "1px solid var(--border)", background: sel ? "color-mix(in srgb, var(--primary) 6%, transparent)" : undefined, transition: "background .12s", cursor: "pointer" }}
+                      className="border-b border-border cursor-pointer"
+                      style={{ background: sel ? "color-mix(in srgb, var(--primary) 6%, transparent)" : undefined, transition: "background .12s" }}
                       title={editable ? "클릭하여 선택 · 더블클릭하여 상세·수정" : "클릭하여 선택"}
                       onClick={() => toggleRow(r.id)}
                       onDoubleClick={editable ? () => setModal({ mode: "edit", row: r }) : undefined}
                       onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = "color-mix(in srgb, var(--muted) 40%, transparent)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = sel ? "color-mix(in srgb, var(--primary) 6%, transparent)" : "transparent"; }}>
                       <td style={{ padding: cellPad }}>
-                        <input type="checkbox" checked={sel} onChange={() => toggleRow(r.id)} onClick={(e) => e.stopPropagation()} aria-label={r.name + " 선택"} style={{ accentColor: "var(--primary)", width: 17, height: 17, cursor: "pointer" }} />
+                        <input type="checkbox" checked={sel} onChange={() => toggleRow(r.id)} onClick={(e) => e.stopPropagation()} aria-label={r.name + " 선택"} className="cursor-pointer" style={{ accentColor: "var(--primary)", width: 17, height: 17 }} />
                       </td>
                       {schema.columns.map((c) => {
                         if (c.key === 'name') {
                           return (
                             <td key={c.key} style={{ padding: cellPad }}>
-                              <div style={{ minWidth: 0 }}>
-                                <div style={{ fontSize: 13.5, fontWeight: 600 }}><MT>{r.name}</MT></div>
-                                <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 1 }}><MT>{r.category}</MT></div>
+                              <div className="min-w-0">
+                                <div className="font-semibold" style={{ fontSize: 13.5 }}><MT>{r.name}</MT></div>
+                                <div className="text-muted-foreground" style={{ fontSize: 12, marginTop: 1 }}><MT>{r.category}</MT></div>
                               </div>
                             </td>
                           );
@@ -485,34 +463,35 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                           </td>
                         );
                       })}
-                      <td style={{ padding: cellPad, textAlign: "right" }}>
+                      <td className="text-right" style={{ padding: cellPad }}>
                         {editable && <MT w={20}><IconBtn icon="file" label={r.name + " 상세·수정"} size={32} /></MT>}
                       </td>
                     </tr>
                   );
                 })}
                 {pageRows.length === 0 && (
-                  <tr><td colSpan={schema.columns.length + 2} style={{ padding: "48px 0", textAlign: "center", color: "var(--caption)", fontSize: 13 }}>
-                    <Icon name="inbox" size={28} stroke={1.7} style={{ margin: "0 auto 8px" }} />표시할 항목이 없습니다
+                  <tr><td colSpan={schema.columns.length + 2} className="text-center text-caption" style={{ padding: "48px 0", fontSize: 13 }}>
+                    <Icon name="inbox" size={28} stroke={1.7} className="mt-0 mb-2 mx-auto" />표시할 항목이 없습니다
                   </td></tr>
                 )}
               </tbody>
             </table>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: 12, padding: 18 }}>
+          <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", padding: 18 }}>
             {pageRows.map((r) => (
               <button key={r.id} onClick={editable ? () => setModal({ mode: "edit", row: r }) : undefined}
-                style={{ textAlign: "left", border: "1px solid var(--border)", borderRadius: 12, padding: 14, background: "var(--card)", cursor: editable ? "pointer" : "default", font: "inherit", display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                className="text-left border border-border bg-card flex flex-col gap-2.5 p-3.5"
+                style={{ borderRadius: 12, cursor: editable ? "pointer" : "default", font: "inherit" }}>
+                <div className="flex items-center gap-2.5">
                   <ColorChip icon={r.icon} color={r.color} size={36} iconSize={18} />
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 600 }}><MT>{r.name}</MT></div>
-                    <div style={{ fontSize: 12, color: "var(--muted-foreground)" }}><MT>{r.category}</MT></div>
+                  <div className="min-w-0">
+                    <div className="font-semibold" style={{ fontSize: 13.5 }}><MT>{r.name}</MT></div>
+                    <div className="text-muted-foreground" style={{ fontSize: 12 }}><MT>{r.category}</MT></div>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span className="tabular" style={{ fontSize: 15, fontWeight: 700 }}>{mn(r.amount.toLocaleString())}</span>
+                <div className="flex items-center justify-between">
+                  <span className="tabular font-bold" style={{ fontSize: 15 }}>{mn(r.amount.toLocaleString())}</span>
                   <DeltaBadge value={r.change} />
                 </div>
                 <StatusBadge tone={statusTone(r.status)} label={r.status} size="sm" />
@@ -522,9 +501,9 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         )}
 
         {/* 푸터: 건수 · 페이지네이션 · 뷰 토글 · 내보내기 */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 18px", borderTop: "1px solid var(--border)", flexWrap: "wrap" }}>
-          <span style={{ fontSize: 12.5, color: "var(--caption)" }}>총 {mn(String(total))}개 중 {mn(String(pageRows.length))}개 항목 표시 중</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <div className="flex items-center justify-between gap-3 border-t border-border flex-wrap" style={{ padding: "12px 18px" }}>
+          <span className="text-caption" style={{ fontSize: 12.5 }}>총 {mn(String(total))}개 중 {mn(String(pageRows.length))}개 항목 표시 중</span>
+          <div className="flex items-center gap-1">
             <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => setPage((p) => Math.max(1, p - 1))} />
             {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 5).map((p) => (
               <button key={p} onClick={() => setPage(p)} style={{
@@ -537,7 +516,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
             ))}
             <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} />
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          <div className="flex items-center gap-1.5 flex-wrap">
             <SegTabs size="sm" value={view} onChange={setView} options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "상세 뷰" }]} />
             <IconBtn icon="download" label="다운로드" size={32} />
             <IconBtn icon="external" label="새 창" size={32} />
@@ -545,31 +524,6 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           </div>
         </div>
       </Card>
-
-      {/* ── 하단 요약 2-카드 ── */}
-      <div style={{ display: "flex", gap: 16, marginTop: 16, flexWrap: "wrap" }}>
-        {/* 좌: 진행률 요약 */}
-        <Card style={{ flex: "1 1 300px", minWidth: 0, display: "flex", flexDirection: "column", gap: 14 }}>
-          <h4 style={{ fontSize: 14, fontWeight: 700 }}><MT>{(parent || title) + " 진행 요약"}</MT></h4>
-          <p style={{ fontSize: 12.5, color: "var(--muted-foreground)", lineHeight: 1.6, margin: 0 }}>
-            <MT>{"정상·완료 항목 비중과 평균 변동률을 종합한 진행 지표입니다."}</MT>
-          </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: "auto" }}>
-            <span className="tabular" style={{ fontSize: 34, fontWeight: 800, color: "var(--accent)" }}>{mn(String(goodRate))}%</span>
-            <StatusBadge tone="success" icon="trending" label="정상 진행" size="sm" />
-          </div>
-        </Card>
-
-        {/* 우: 합계 금액 강조 (forest green) */}
-        <Card pad={20} style={{ flex: "1 1 260px", minWidth: 0, background: "var(--primary)", border: "none", color: "#fff", display: "flex", flexDirection: "column", gap: 8 }}>
-          <span style={{ fontSize: 12.5, fontWeight: 600, opacity: .85 }}><MT>{"총 운용 금액"}</MT></span>
-          <span style={{ fontSize: 12, opacity: .7 }}><MT>{title + " 누적 합계"}</MT></span>
-          <span className="tabular" style={{ fontSize: "clamp(22px, 6vw, 32px)", fontWeight: 800, letterSpacing: "-.01em", margin: "4px 0", overflowWrap: "anywhere" }}>{"₩" + mn(sumAmount.toLocaleString())}</span>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px 14px", borderRadius: 10, background: "rgba(255,255,255,.18)", fontSize: 12.5, fontWeight: 600 }}>
-            <Icon name="trending" size={15} stroke={2.4} /><MT>{"전기 대비 추이 보기"}</MT>
-          </div>
-        </Card>
-      </div>
 
       {modal && (
         <RowFormModal

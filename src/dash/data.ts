@@ -157,7 +157,7 @@ const MENU = [
 
   { id:"risk", label:"조기경보", icon:"shield-alert", path:"risk", badge:14, urgent:true, roles:["admin","manager","viewer"], children:[
     { label:"조기경보", sub:true, badge:9, children:[
-      { label:"조기경보 관리", path:"risk", badge:9 },
+      { label:"조기경보 관리", path:"risk-manage", badge:9 },
       { label:"운용사별 조기경보 조회" },
       { label:"자펀드별 조기경보 조회" },
       { label:"법률/규약위반사항 관리", badge:2 },

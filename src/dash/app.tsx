@@ -9,6 +9,7 @@ import { DesignSystem } from './designsystem';
 import { Main } from './main';
 import { Performance } from './performance';
 import { Risk } from './risk';
+import { RiskManage } from './risk_manage';
 import { GpHealth } from './gp_health';
 import { Accounting } from './accounting';
 import { Schedule } from './schedule';
@@ -19,6 +20,8 @@ import { Pages as ReportSutackPages } from './report_sutack';
 import { Pages as AssetPages } from './asset';
 import { GenericListPage } from './generic_list';
 import { AssetFunding } from './asset_funding';
+import { Toaster } from './ui/sonner';
+import { TooltipProvider } from './ui/tooltip';
 const ReportMain = ReportMainPages.ReportMain;
 const ReportBucheo = ReportBucheoPages.ReportBucheo;
 const ReportSutack = ReportSutackPages.ReportSutack;
@@ -69,6 +72,7 @@ function App() {
   else if (route === "main") page = <Main onNav={onNav} navStyle={navStyle} onNavStyle={setNavStyle} />;
   else if (route === "performance") page = <Performance onNav={onNav} />;
   else if (route === "risk") page = <Risk onNav={onNav} />;
+  else if (route === "risk-manage") page = <RiskManage onNav={onNav} />;
   else if (route === "gp-health") page = <GpHealth onNav={onNav} />;
   else if (route === "accounting") page = <Accounting onNav={onNav} />;
   else if (route === "schedule") page = <Schedule onNav={onNav} />;
@@ -81,6 +85,7 @@ function App() {
   else page = <GenericListPage route={route} onNav={onNav} />;
 
   return (
+    <TooltipProvider delayDuration={300}>
     <AppShell
       theme={theme}
       onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
@@ -95,7 +100,8 @@ function App() {
       wide={wide}
       onToggleWide={() => setWide((x) => !x)}
       notifs={notifs}
-      onReadAll={() => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })))}>{page}</AppShell>
+      onReadAll={() => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })))}>{page}<Toaster theme={theme} /></AppShell>
+    </TooltipProvider>
   );
 }
 

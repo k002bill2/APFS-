@@ -61,20 +61,19 @@ function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
     <GridFrame
       crumbs={['홈', '투자자산관리', '모태펀드관리', '모태펀드 조성 및 출자현황']}
       title="모태펀드 조성 및 출자현황"
-      sub="연도별 조성현황(기금 소스별)·출자현황 집계 — 단위: 금액 억원(추정) / 조합수 개"
       cardTitle="모태펀드 조성·출자 현황표"
       headerActions={<>
         <Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>
         <Button variant="primary" size="sm" leadingIcon="download">내보내기</Button>
       </>}
       kpis={<>
-        <KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={mn(fmt(TOTAL.c[0])) + ' 억원'} />
-        <KpiBadge icon="wallet" color="var(--accent)" label="누적 출자금액" value={mn(fmt(TOTAL.u[1])) + ' 억원'} />
+        <KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={mn(fmt(TOTAL.c[0])) + ' 억원'} valueSize={14} />
+        <KpiBadge icon="wallet" color="var(--accent)" label="누적 출자금액" value={mn(fmt(TOTAL.u[1])) + ' 억원'} valueSize={14} />
         <KpiBadge icon="layers" color="var(--chart-1)" label="누적 조합수" value={mn(fmt(TOTAL.u[0])) + ' 개'} />
       </>}
       toolbarLeft={<>
         <Icon name="file" size={16} style={{ color: 'var(--caption)' }} />
-        <span style={{ fontSize: 12.5, color: 'var(--caption)' }}>기금 소스별(농특회계·농안기금·FTA·수산발전기금·농금원) 조성액 · 결성 조합수/출자금액 집계</span>
+        <span className="text-caption" style={{ fontSize: 12.5 }}>기금 소스별(농특회계·농안기금·FTA·수산발전기금·농금원) 조성액 · 결성 조합수/출자금액 집계</span>
       </>}
       toolbarRight={<IconBtn icon="refresh" label="새로고침" size={34} />}
       footerLeft={<span>{'2010 ~ 2025년 · 총 ' + mn(String(FUNDING_ROWS.length)) + '개 연도'}</span>}>
@@ -106,19 +105,19 @@ function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
                 className="border-t border-border transition-colors"
                 onMouseEnter={(e) => { e.currentTarget.style.background = 'color-mix(in srgb,var(--muted) 45%,transparent)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
-                <td className="px-4 pl-5 py-2.5 whitespace-nowrap tabular text-[13px] font-semibold" style={{ color: 'var(--foreground)' }}>{row.y}</td>
+                <td className="px-4 pl-5 py-2.5 whitespace-nowrap tabular text-[13px] font-semibold text-foreground">{row.y}</td>
                 {row.c.map((v, i) => <NumCell key={i} v={v} strong={i === 0} />)}
                 {row.u.map((v, i) => <NumCell key={i} v={v} />)}
               </tr>
             ))}
             {/* 합계행 — 캡처 연녹색 강조 재현 */}
-            <tr className="border-t-2" style={{ background: 'color-mix(in srgb,var(--primary) 9%,transparent)', borderColor: 'var(--primary)' }}>
-              <td className="px-4 pl-5 py-3 whitespace-nowrap text-[13px] font-extrabold" style={{ color: 'var(--primary)' }}>합 계</td>
+            <tr className="border-t-2 border-primary" style={{ background: 'color-mix(in srgb,var(--primary) 9%,transparent)' }}>
+              <td className="px-4 pl-5 py-3 whitespace-nowrap text-[13px] font-extrabold text-primary">합 계</td>
               {TOTAL.c.map((v, i) => (
-                <td key={i} className="px-3 py-3 text-right tabular text-[13px] font-extrabold whitespace-nowrap" style={{ color: 'var(--foreground)' }}>{mn(fmt(v))}</td>
+                <td key={i} className="px-3 py-3 text-right tabular text-[13px] font-extrabold whitespace-nowrap text-foreground">{mn(fmt(v))}</td>
               ))}
               {TOTAL.u.map((v, i) => (
-                <td key={i} className="px-3 py-3 text-right tabular text-[13px] font-extrabold whitespace-nowrap" style={{ color: 'var(--foreground)' }}>{mn(fmt(v))}</td>
+                <td key={i} className="px-3 py-3 text-right tabular text-[13px] font-extrabold whitespace-nowrap text-foreground">{mn(fmt(v))}</td>
               ))}
             </tr>
           </tbody>

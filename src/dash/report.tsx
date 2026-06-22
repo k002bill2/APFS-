@@ -194,8 +194,7 @@ function ScheduleCard({ item }) {
       className="flex items-start gap-3 rounded-card border border-border bg-card px-4 py-3 shadow-sm"><div
         className="inline-flex items-center justify-center shrink-0 rounded-[8px] text-[10px] font-bold w-10 h-10"
         style={{ background: softBg, color }}>{mn(item.dday)}</div><div className="min-w-0 flex-1"><div
-          className="text-[13px] font-semibold truncate"
-          style={{ color: "var(--foreground)" }}><MT>{item.title}</MT></div><div className="flex items-center gap-1.5 mt-0.5"><span
+          className="text-[13px] font-semibold truncate text-foreground"><MT>{item.title}</MT></div><div className="flex items-center gap-1.5 mt-0.5"><span
             className="inline-block rounded-full px-2 py-0.5 text-[10.5px] font-bold"
             style={{ background: softBg, color }}>{item.kind}</span><span className="t-caption text-[11px]">{mn(item.date)}</span></div></div></div>
   );
@@ -210,7 +209,7 @@ function MinistryTab() {
 
   return (
     <div className="flex flex-col gap-4"><div
-        className="rounded-card border border-border bg-card px-6 py-5 shadow-sm flex items-center gap-2"><div className="flex-1 flex items-center gap-4"><ColorChip icon="file" color="var(--primary)" size={32} iconSize={17} /><div><div className="text-[14px] font-bold" style={{ color: "var(--foreground)" }}>보고 승인 흐름</div><div className="t-caption text-[11.5px]">2분기 운용현황 보고 현재 진행 단계</div></div></div><div className="flex items-center gap-2 shrink-0"><Stepper activeStep={activeStep} /></div></div><div
+        className="rounded-card border border-border bg-card px-6 py-5 shadow-sm flex items-center gap-2"><div className="flex-1 flex items-center gap-4"><ColorChip icon="file" color="var(--primary)" size={32} iconSize={17} /><div><div className="text-[14px] font-bold text-foreground">보고 승인 흐름</div><div className="t-caption text-[11.5px]">2분기 운용현황 보고 현재 진행 단계</div></div></div><div className="flex items-center gap-2 shrink-0"><Stepper activeStep={activeStep} /></div></div><div
         className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
           className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">보고서 목록</h3><CountPill count={MINISTRY_REPORTS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">신규 보고 등록</Button><IconBtn icon="download" label="내보내기" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[760px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
                   ["보고서명", "left"],
@@ -234,8 +233,7 @@ function MinistryTab() {
                   className="border-t border-border transition-colors"
                   onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><td className="px-4 pl-6 py-3.5"><div
-                      className="text-[13.5px] font-semibold"
-                      style={{ color: "var(--foreground)" }}><MT>{r.name}</MT></div></td><td className="px-4 py-3.5 text-center"><span
+                      className="text-[13.5px] font-semibold text-foreground"><MT>{r.name}</MT></div></td><td className="px-4 py-3.5 text-center"><span
                       className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold"
                       style={{
                         background: r.type === "수시"
@@ -243,10 +241,8 @@ function MinistryTab() {
                           : "color-mix(in srgb,var(--info) 14%,transparent)",
                         color: r.type === "수시" ? "var(--warning)" : "var(--info)",
                       }}>{r.type}</span></td><td
-                    className="px-4 py-3.5 text-center text-[13px] font-semibold"
-                    style={{ color: "var(--foreground)" }}><MT>{r.org}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{mn(r.date)}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={reportTone(r.status)} label={r.status} size="sm" /></td><td
-                    className="px-4 py-3.5 text-center text-[13px] font-semibold"
-                    style={{ color: "var(--foreground)" }}><MT>{r.manager}</MT></td><td className="px-4 pr-5 py-3.5 text-right">{r.action === "-"
+                    className="px-4 py-3.5 text-center text-[13px] font-semibold text-foreground"><MT>{r.org}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{mn(r.date)}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={reportTone(r.status)} label={r.status} size="sm" /></td><td
+                    className="px-4 py-3.5 text-center text-[13px] font-semibold text-foreground"><MT>{r.manager}</MT></td><td className="px-4 pr-5 py-3.5 text-right">{r.action === "-"
                       ? <span className="t-caption text-[12px]">—</span>
                       : <Button variant={r.action === "작성" ? "primary" : "outline"} size="sm">{r.action}</Button>}</td></tr>
               )}</tbody></table></div></div></div>
@@ -294,11 +290,9 @@ function CustodyTab() {
                 }}><td className="px-4 pl-6 py-3.5"><div className="flex items-center gap-2">{r.mismatch && <Icon
                       name="alert-circle"
                       size={15}
-                      style={{ color: "var(--danger)", flexShrink: 0 }} />}<span
-                      className="text-[13.5px] font-semibold"
-                      style={{ color: "var(--foreground)" }}><MT>{r.vtype}</MT></span></div></td><td
-                  className="px-4 py-3.5 text-[13px]"
-                  style={{ color: "var(--foreground)" }}><MT>{r.fund}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{mn(r.uploadDate)}</td><td className="px-4 py-3.5 text-center"><StatusBadge
+                      className="text-danger shrink-0" />}<span
+                      className="text-[13.5px] font-semibold text-foreground"><MT>{r.vtype}</MT></span></div></td><td
+                  className="px-4 py-3.5 text-[13px] text-foreground"><MT>{r.fund}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{mn(r.uploadDate)}</td><td className="px-4 py-3.5 text-center"><StatusBadge
                     tone={resultTone(r.result)}
                     label={r.result}
                     size="sm"
@@ -340,26 +334,19 @@ function RegistryTab() {
                   className="border-t border-border transition-colors"
                   onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><td
-                    className="px-4 pl-6 py-3.5 tabular text-[12.5px] font-mono font-semibold"
-                    style={{ color: "var(--accent)" }}><MT>{r.code}</MT></td><td
-                    className="px-4 py-3.5 text-[13.5px] font-semibold"
-                    style={{ color: "var(--foreground)" }}><MT>{r.name}</MT></td><td
-                    className="px-4 py-3.5 text-[13px]"
-                    style={{ color: "var(--muted-foreground)" }}><MT>{r.gp}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{mn(r.regDate)}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{mn(r.lastModified)}</td><td
-                    className="px-4 py-3.5 text-center text-[12.5px] font-bold tabular"
-                    style={{ color: "var(--primary)" }}>{mn(r.version)}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={registryTone(r.status)} label={r.status} size="sm" /></td><td className="px-4 pr-5 py-3.5 text-right"><IconBtn icon="download" label={`${r.name} 다운로드`} size={32} /></td></tr>
+                    className="px-4 pl-6 py-3.5 tabular text-[12.5px] font-mono font-semibold text-accent"><MT>{r.code}</MT></td><td
+                    className="px-4 py-3.5 text-[13.5px] font-semibold text-foreground"><MT>{r.name}</MT></td><td
+                    className="px-4 py-3.5 text-[13px] text-muted-foreground"><MT>{r.gp}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{mn(r.regDate)}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{mn(r.lastModified)}</td><td
+                    className="px-4 py-3.5 text-center text-[12.5px] font-bold tabular text-primary">{mn(r.version)}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={registryTone(r.status)} label={r.status} size="sm" /></td><td className="px-4 pr-5 py-3.5 text-right"><IconBtn icon="download" label={`${r.name} 다운로드`} size={32} /></td></tr>
               )}</tbody></table></div></div><div className="rounded-card border border-border bg-card px-5 py-4 shadow-sm"><div className="flex items-center gap-2 mb-4"><ColorChip icon="clock" color="var(--info)" size={28} iconSize={15} /><h4 className="text-[14px] font-bold">최근 수정이력</h4></div><div className="flex flex-col">{REGISTRY_HISTORY.map((item, i) =>
             <div
               key={i}
               className={cx("flex items-start gap-3 pb-4", i < REGISTRY_HISTORY.length - 1 && "border-b border-border mb-4")}><div className="flex flex-col items-center shrink-0"><div
-                  className="w-2 h-2 rounded-full mt-1.5"
-                  style={{ background: "var(--primary)" }} />{i < REGISTRY_HISTORY.length - 1 && <div
-                  className="w-px flex-1 mt-1"
-                  style={{ background: "var(--border)", minHeight: 20 }} />}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2 flex-wrap"><span
-                    className="text-[12.5px] font-bold"
-                    style={{ color: "var(--foreground)" }}><MT>{item.fund}</MT></span><span className="t-caption tabular text-[11.5px]">{mn(item.date)}</span></div><div
-                  className="text-[12.5px] mt-0.5"
-                  style={{ color: "var(--muted-foreground)" }}><MT>{item.change}</MT></div><div className="t-caption text-[11px] mt-0.5">처리: <MT>{item.by}</MT></div></div></div>
+                  className="w-2 h-2 rounded-full mt-1.5 bg-primary" />{i < REGISTRY_HISTORY.length - 1 && <div
+                  className="w-px flex-1 mt-1 bg-border"
+                  style={{ minHeight: 20 }} />}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2 flex-wrap"><span
+                    className="text-[12.5px] font-bold text-foreground"><MT>{item.fund}</MT></span><span className="t-caption tabular text-[11.5px]">{mn(item.date)}</span></div><div
+                  className="text-[12.5px] mt-0.5 text-muted-foreground"><MT>{item.change}</MT></div><div className="t-caption text-[11px] mt-0.5">처리: <MT>{item.by}</MT></div></div></div>
           )}</div></div></div>
   );
 }
@@ -374,8 +361,7 @@ function KpiBox({ icon, color, label, value, sub, tone }: { icon?: string; color
       className="rounded-card border border-border bg-card px-5 py-4 shadow-sm flex items-center gap-4"><div
         className="inline-flex items-center justify-center shrink-0 rounded-[12px]"
         style={{ width: 44, height: 44, background: softBg, color: c }}><Icon name={icon} size={22} stroke={2} /></div><div className="min-w-0 flex-1"><div className="t-label text-[11.5px] mb-0.5"><MT>{label}</MT></div><div
-          className="text-[22px] font-extrabold tabular leading-tight"
-          style={{ color: "var(--foreground)" }}>{mn(value)}</div>{sub && <div className="t-caption text-[11.5px] mt-0.5"><MT>{sub}</MT></div>}</div></div>
+          className="text-[22px] font-extrabold tabular leading-tight text-foreground">{mn(value)}</div>{sub && <div className="t-caption text-[11.5px] mt-0.5"><MT>{sub}</MT></div>}</div></div>
   );
 }
 
@@ -435,8 +421,7 @@ function Report({ onNav }) {
               actualColor="var(--primary)" /></div><div className="flex items-center gap-4 mt-2 px-1"><div className="flex items-center gap-1.5"><span
                 className="w-3 h-3 rounded-sm inline-block shrink-0"
                 style={{ background: "var(--chart-3)" }} /><span className="t-caption text-[11.5px]">계획</span></div><div className="flex items-center gap-1.5"><span
-                className="w-3 h-3 rounded-sm inline-block shrink-0"
-                style={{ background: "var(--primary)" }} /><span className="t-caption text-[11.5px]">실적</span></div></div></ChartCard><div
+                className="w-3 h-3 rounded-sm inline-block shrink-0 bg-primary" /><span className="t-caption text-[11.5px]">실적</span></div></div></ChartCard><div
           className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
             className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><ColorChip icon="calendar" color="var(--warning)" size={30} iconSize={16} /><h3 className="text-[15px] font-bold">보고 일정 현황</h3></div>{scheduleItems.length > 0 && <CountPill count={scheduleItems.length} />}</div><div
             className="flex flex-col gap-2 px-4 py-3 overflow-y-auto"

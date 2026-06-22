@@ -209,8 +209,7 @@ function RiskKpiCard({ kpi }) {
       className="rounded-card border border-border bg-card shadow-sm px-[18px] py-[14px] flex flex-col gap-2 min-w-0"><div className="flex items-center justify-between gap-2"><div className="flex items-center gap-2 min-w-0"><ColorChip icon={kpi.icon} color={kpi.accent} size={32} iconSize={17} /><span className="t-label truncate"><MT>{kpi.label}</MT></span></div><div className="shrink-0 w-[70px]"><Sparkline data={kpi.trend} color={kpi.accent} id={kpi.id} height={32} /></div></div><div className="flex items-baseline gap-1.5"><span
           className="t-display tabular"
           style={{ fontSize: 26, letterSpacing: "-.01em", color: kpi.accent }}>{mn(kpi.value)}</span><span
-          className="text-[12.5px] font-semibold"
-          style={{ color: "var(--muted-foreground)" }}>{kpi.unit}</span></div><DeltaBadge value={kpi.delta} label={kpi.deltaLabel} invert={kpi.invert} /></div>
+          className="text-[12.5px] font-semibold text-muted-foreground">{kpi.unit}</span></div><DeltaBadge value={kpi.delta} label={kpi.deltaLabel} invert={kpi.invert} /></div>
   );
 }
 
@@ -236,8 +235,8 @@ function StepBadge({ stepIndex }) {
                   : "var(--border)",
                 transition: "width .2s",
               }} />{active && <span
-              className="text-[9.5px] font-bold whitespace-nowrap"
-              style={{ color: "var(--primary)", lineHeight: 1 }}>{s}</span>}</div>
+              className="text-[9.5px] font-bold whitespace-nowrap text-primary"
+              style={{ lineHeight: 1 }}>{s}</span>}</div>
         );
       })}<span
         className="ml-1 text-[11px] font-semibold"
@@ -282,26 +281,24 @@ function Risk({ onNav }) {
           ]}
           value={period}
           onChange={setPeriod}
-          size="sm" /><div style={{ width: 1, height: 20, background: "var(--border)" }} /><span className="t-label text-[12.5px]">유형</span>{TYPES.map((t) =>
+          size="sm" /><div className="h-5 bg-border" style={{ width: 1 }} /><span className="t-label text-[12.5px]">유형</span>{TYPES.map((t) =>
           <FilterChip
             key={t.id}
             active={!!activeTypes[t.id]}
             onClick={() => toggleType(t.id)}
             dot={activeTypes[t.id] ? "var(--primary)" : undefined}>{t.label}</FilterChip>)}{anyTypeActive && <button
           onClick={() => setActiveTypes({})}
-          className="text-[12px] font-semibold cursor-pointer"
-          style={{ color: "var(--muted-foreground)", background: "none", border: "none", padding: 0 }}>필터 초기화</button>}</div><div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">{KPI_RISK.map((kpi) => <RiskKpiCard key={kpi.id} kpi={kpi} />)}</div><ChartCard
+          className="text-[12px] font-semibold cursor-pointer text-muted-foreground p-0"
+          style={{ background: "none", border: "none" }}>필터 초기화</button>}</div><div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">{KPI_RISK.map((kpi) => <RiskKpiCard key={kpi.id} kpi={kpi} />)}</div><ChartCard
         title="리스크 지수 추이"
         sub="월별 리스크 지수 · 임계선 60 초과 시 즉시 대응"
         icon="trending"
         accent="var(--danger)"
         right={<div className="flex items-center gap-2"><span
-            className="inline-flex items-center gap-1.5 text-[12px] font-semibold"
-            style={{ color: "var(--danger)" }}><span
+            className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-danger"><span
+              className="inline-block h-0.5"
               style={{
-                display: "inline-block",
                 width: 18,
-                height: 2,
                 borderTop: "2px dashed var(--danger)",
                 borderRadius: 2,
               }} />임계선 60</span><IconBtn icon="more" label="더보기" size={34} /></div>}><LineTrend
@@ -310,7 +307,7 @@ function Risk({ onNav }) {
           height={220}
           color="var(--danger)" /></ChartCard><div
         className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden mt-4 mb-4"><div
-          className="flex items-center justify-between gap-3 flex-wrap px-5 sm:px-6 pt-5 pb-4 border-b border-border"><div className="flex items-center gap-2.5"><ColorChip icon="shield-alert" color="var(--danger)" size={34} iconSize={18} /><div><div className="t-cardtitle">조기경보 목록</div><div className="t-caption mt-px"><span style={{ color: "var(--danger)", fontWeight: 700 }}>{mn(filteredAlerts.length + "건")}</span>표시 중 (전체 {mn(ALERTS.length)}건)</div></div></div><div className="flex items-center gap-2"><StatusBadge
+          className="flex items-center justify-between gap-3 flex-wrap px-5 sm:px-6 pt-5 pb-4 border-b border-border"><div className="flex items-center gap-2.5"><ColorChip icon="shield-alert" color="var(--danger)" size={34} iconSize={18} /><div><div className="t-cardtitle">조기경보 목록</div><div className="t-caption mt-px"><span className="text-danger font-bold">{mn(filteredAlerts.length + "건")}</span>표시 중 (전체 {mn(ALERTS.length)}건)</div></div></div><div className="flex items-center gap-2"><StatusBadge
               tone="danger"
               label={"경고 " + mn(ALERTS.filter((a) => a.gradeTone === "danger").length) + "건"} /><StatusBadge
               tone="warning"
@@ -329,7 +326,7 @@ function Risk({ onNav }) {
                       "t-label font-semibold px-4 py-3 whitespace-nowrap",
                       align === "right" ? "text-right" : "text-left",
                       extra)}>{label}</th>)}</tr></thead><tbody>{filteredAlerts.length === 0
-                ? <tr><td colSpan={7} style={{ padding: 0 }}><EmptyState msg="선택한 유형의 경보가 없습니다" icon="shield" height={120} /></td></tr>
+                ? <tr><td colSpan={7} className="p-0"><EmptyState msg="선택한 유형의 경보가 없습니다" icon="shield" height={120} /></td></tr>
                 : filteredAlerts.map((row, i) =>
                     <tr
                       key={row.id}
@@ -346,23 +343,19 @@ function Risk({ onNav }) {
                       }}><td className="px-4 pl-5 sm:pl-6 py-3.5 whitespace-nowrap"><div className="flex items-center gap-2.5"><span
                             className="inline-flex items-center justify-center w-8 h-8 rounded-[8px] text-white text-[11px] font-bold shrink-0"
                             style={{ background: row.gpColor }}><MT>{row.gpCode}</MT></span><div><div
-                              className="text-[13.5px] font-semibold"
-                              style={{ color: "var(--foreground)" }}><MT>{row.gp}</MT></div><div className="t-caption text-[11px]"><MT>{row.id}</MT></div></div></div></td><td className="px-4 py-3.5 whitespace-nowrap"><div><div
-                            className="text-[13px] font-semibold"
-                            style={{ color: "var(--foreground)" }}><MT>{row.type}</MT></div><div className="t-caption text-[11px] mt-0.5 max-w-[200px] truncate"><MT>{row.desc}</MT></div></div></td><td className="px-4 py-3.5 whitespace-nowrap"><StatusBadge tone={row.gradeTone} label={row.grade} size="md" /></td><td
-                        className="px-4 py-3.5 whitespace-nowrap tabular text-[13px]"
-                        style={{ color: "var(--muted-foreground)" }}>{mn(row.date)}</td><td className="px-4 py-3.5"><StepBadge stepIndex={row.step} /></td><td className="px-4 py-3.5 whitespace-nowrap"><div className="flex items-center gap-1.5"><span
-                            className="inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-[10px] font-bold shrink-0"
-                            style={{ background: "var(--muted-foreground)", fontSize: 10 }}><MT>{row.manager[0]}</MT></span><span
-                            className="text-[13px] font-medium"
-                            style={{ color: "var(--foreground)" }}><MT>{row.manager}</MT></span></div></td><td className="px-4 pr-5 sm:pr-6 py-3.5 text-right whitespace-nowrap"><Button
+                              className="text-[13.5px] font-semibold text-foreground"><MT>{row.gp}</MT></div><div className="t-caption text-[11px]"><MT>{row.id}</MT></div></div></div></td><td className="px-4 py-3.5 whitespace-nowrap"><div><div
+                            className="text-[13px] font-semibold text-foreground"><MT>{row.type}</MT></div><div className="t-caption text-[11px] mt-0.5 max-w-[200px] truncate"><MT>{row.desc}</MT></div></div></td><td className="px-4 py-3.5 whitespace-nowrap"><StatusBadge tone={row.gradeTone} label={row.grade} size="md" /></td><td
+                        className="px-4 py-3.5 whitespace-nowrap tabular text-[13px] text-muted-foreground">{mn(row.date)}</td><td className="px-4 py-3.5"><StepBadge stepIndex={row.step} /></td><td className="px-4 py-3.5 whitespace-nowrap"><div className="flex items-center gap-1.5"><span
+                            className="inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-[10px] font-bold shrink-0 bg-muted-foreground"
+                            style={{ fontSize: 10 }}><MT>{row.manager[0]}</MT></span><span
+                            className="text-[13px] font-medium text-foreground"><MT>{row.manager}</MT></span></div></td><td className="px-4 pr-5 sm:pr-6 py-3.5 text-right whitespace-nowrap"><Button
                           variant="outline"
                           size="sm"
                           leadingIcon="external"
                           onClick={(e) => { e.stopPropagation(); }}>상세보기</Button></td></tr>)}</tbody></table><div
-            className="flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 py-3.5 border-t border-border"><span className="t-caption">총 <b style={{ color: "var(--foreground)" }}>{mn(ALERTS.length + "건")}</b>중 {mn(filteredAlerts.length + "건 표시")}</span><div className="flex items-center gap-1.5"><IconBtn icon="chevron-left" label="이전" size={32} /><span
-                className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[13px] font-bold"
-                style={{ background: "color-mix(in srgb,var(--primary) 12%,transparent)", color: "var(--primary)" }}>1</span><IconBtn icon="chevron-right" label="다음" size={32} /></div></div></div></div><div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4"><ChartCard
+            className="flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 py-3.5 border-t border-border"><span className="t-caption">총 <b className="text-foreground">{mn(ALERTS.length + "건")}</b>중 {mn(filteredAlerts.length + "건 표시")}</span><div className="flex items-center gap-1.5"><IconBtn icon="chevron-left" label="이전" size={32} /><span
+                className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[13px] font-bold text-primary"
+                style={{ background: "color-mix(in srgb,var(--primary) 12%,transparent)" }}>1</span><IconBtn icon="chevron-right" label="다음" size={32} /></div></div></div></div><div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4"><ChartCard
           title="운용사 상태 분포"
           sub="전체 237개 운용사 · 자펀드 기준"
           icon="pie-chart"

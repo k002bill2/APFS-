@@ -69,8 +69,8 @@ function ExecBar({ value, tone }) {
         style={{ minWidth: 64 }}><div
           className="h-full rounded-full transition-all"
           style={{ width: value + "%", background: color }} /></div><span
-        className="text-[12px] font-bold tabular whitespace-nowrap"
-        style={{ color, minWidth: 36, textAlign: "right" }}>{mn(value.toFixed(1)) + "%"}</span></div>
+        className="text-[12px] font-bold tabular whitespace-nowrap text-right"
+        style={{ color, minWidth: 36 }}>{mn(value.toFixed(1)) + "%"}</span></div>
   );
 }
 
@@ -91,12 +91,10 @@ function CrossRow({ row }) {
     <div
       className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0"
       style={{ background: isA ? "transparent" : "color-mix(in srgb,var(--danger) 4%,transparent)" }}><div className="w-[90px] shrink-0"><span
-          className="text-[12px] font-bold font-mono"
-          style={{ color: "var(--foreground)" }}><MT>{row.code}</MT></span></div><div className="flex-1 min-w-0"><div className="flex items-center gap-2 flex-wrap"><span
-            className="text-[11px] font-bold px-2 py-0.5 rounded-[5px]"
+          className="text-[12px] font-bold font-mono text-foreground"><MT>{row.code}</MT></span></div><div className="flex-1 min-w-0"><div className="flex items-center gap-2 flex-wrap"><span
+            className="text-[11px] font-bold px-2 py-0.5 rounded-[5px] text-info"
             style={{
               background: "color-mix(in srgb,var(--info) 12%,transparent)",
-              color: "var(--info)",
             }}><MT>{row.type}</MT></span><span
             className="text-[11px] font-semibold px-2 py-0.5 rounded-[5px]"
             style={{
@@ -107,8 +105,7 @@ function CrossRow({ row }) {
             }}>{"CASE " + row.caseType}</span></div><div className="t-caption mt-0.5">{mn(row.date)}</div></div><div className="text-right shrink-0" style={{ minWidth: 130 }}>{isA
           ? <StatusBadge tone="success" label="자동승인 완료" size="sm" />
           : <div className="flex flex-col items-end gap-1"><StatusBadge tone="danger" label="검토 필요" size="sm" />{row.diff > 0 && <span
-            className="text-[11px] font-bold tabular"
-            style={{ color: "var(--danger)" }}>{"차이 " + mn(row.diff.toLocaleString()) + "원"}</span>}</div>}</div></div>
+            className="text-[11px] font-bold tabular text-danger">{"차이 " + mn(row.diff.toLocaleString()) + "원"}</span>}</div>}</div></div>
   );
 }
 
@@ -123,18 +120,12 @@ function SubFundRow({ row, selected, onSelect }) {
         : undefined}
       onMouseEnter={(e) => { if (!selected) e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)"; }}
       onMouseLeave={(e) => { if (!selected) e.currentTarget.style.background = "transparent"; }}><td className="px-4 pl-5 py-3 whitespace-nowrap"><span
-          className="text-[12px] font-bold font-mono"
-          style={{ color: "var(--muted-foreground)" }}><MT>{row.code}</MT></span></td><td className="px-3 py-3 min-w-[160px]"><span
-          className="text-[13.5px] font-semibold"
-          style={{ color: "var(--foreground)" }}><MT>{row.name}</MT></span></td><td
-        className="px-3 py-3 whitespace-nowrap text-[13px]"
-        style={{ color: "var(--muted-foreground)" }}><MT>{row.gp}</MT></td><td
-        className="px-3 py-3 whitespace-nowrap tabular text-[13px]"
-        style={{ color: "var(--muted-foreground)" }}>{mn(row.est)}</td><td className="px-3 py-3 text-right whitespace-nowrap"><span
-          className="text-[13.5px] font-bold tabular"
-          style={{ color: "var(--foreground)" }}>{mn(row.aum.toFixed(1))}</span><span
-          className="text-[11px] ml-0.5"
-          style={{ color: "var(--muted-foreground)" }}>억</span></td><td className="px-3 py-3" style={{ minWidth: 140 }}><ExecBar value={row.exec} tone={row.tone} /></td><td className="px-3 py-3 whitespace-nowrap"><StatusBadge tone={row.tone} label={row.status} size="sm" /></td><td className="px-3 py-3 text-right whitespace-nowrap"><span
+          className="text-[12px] font-bold font-mono text-muted-foreground"><MT>{row.code}</MT></span></td><td className="px-3 py-3 min-w-[160px]"><span
+          className="text-[13.5px] font-semibold text-foreground"><MT>{row.name}</MT></span></td><td
+        className="px-3 py-3 whitespace-nowrap text-[13px] text-muted-foreground"><MT>{row.gp}</MT></td><td
+        className="px-3 py-3 whitespace-nowrap tabular text-[13px] text-muted-foreground">{mn(row.est)}</td><td className="px-3 py-3 text-right whitespace-nowrap"><span
+          className="text-[13.5px] font-bold tabular text-foreground">{mn(row.aum.toFixed(1))}</span><span
+          className="text-[11px] ml-0.5 text-muted-foreground">억</span></td><td className="px-3 py-3" style={{ minWidth: 140 }}><ExecBar value={row.exec} tone={row.tone} /></td><td className="px-3 py-3 whitespace-nowrap"><StatusBadge tone={row.tone} label={row.status} size="sm" /></td><td className="px-3 py-3 text-right whitespace-nowrap"><span
           className="text-[13px] font-semibold tabular"
           style={{ color: row.remain < 1 ? "var(--danger)" : row.remain < 2 ? "var(--warning)" : "var(--foreground)" }}>{mn(row.remain.toFixed(1)) + "년"}</span></td><td className="px-3 pr-5 py-3 text-right"><div className="flex items-center justify-end gap-1"><IconBtn icon="file" label="상세보기" size={30} /><IconBtn icon="edit" label="편집" size={30} /></div></td></tr>
   );
@@ -149,17 +140,16 @@ function SelectedDetail({ row }) {
         style={{ minHeight: 220 }}><div className="text-center"><Icon
             name="mouse-pointer"
             size={32}
-            style={{ color: "var(--muted-foreground)", margin: "0 auto 8px" }} /><p className="t-caption text-[13px]">테이블에서 자펀드를 클릭하면</p><p className="t-caption text-[13px]">상세 정보가 여기 표시됩니다.</p></div></div>
+            className="text-muted-foreground"
+            style={{ margin: "0 auto 8px" }} /><p className="t-caption text-[13px]">테이블에서 자펀드를 클릭하면</p><p className="t-caption text-[13px]">상세 정보가 여기 표시됩니다.</p></div></div>
     );
   }
   return (
     <div
       className="rounded-card border border-border bg-card shadow-sm p-5 flex flex-col gap-4"
       style={{ animation: "dashFade .3s var(--ease) both" }}><div className="flex items-start justify-between gap-3"><div><div
-            className="text-[11px] font-bold font-mono mb-0.5"
-            style={{ color: "var(--muted-foreground)" }}><MT>{row.code}</MT></div><div
-            className="text-[16px] font-bold leading-tight"
-            style={{ color: "var(--foreground)" }}><MT>{row.name}</MT></div><div className="t-caption mt-1"><MT>{row.gp}</MT>{" · 설립 "}{mn(row.est)}</div></div><StatusBadge tone={row.tone} label={row.status} size="sm" /></div><div className="grid grid-cols-2 gap-3">{[
+            className="text-[11px] font-bold font-mono mb-0.5 text-muted-foreground"><MT>{row.code}</MT></div><div
+            className="text-[16px] font-bold leading-tight text-foreground"><MT>{row.name}</MT></div><div className="t-caption mt-1"><MT>{row.gp}</MT>{" · 설립 "}{mn(row.est)}</div></div><StatusBadge tone={row.tone} label={row.status} size="sm" /></div><div className="grid grid-cols-2 gap-3">{[
           { label: "AUM", value: row.aum.toFixed(1) + " 억원" },
           { label: "집행률", value: row.exec.toFixed(1) + "%" },
           { label: "잔존기간", value: row.remain.toFixed(1) + " 년" },
@@ -169,8 +159,7 @@ function SelectedDetail({ row }) {
             key={label}
             className="rounded-[8px] p-3"
             style={{ background: "color-mix(in srgb,var(--muted) 50%,transparent)" }}><div className="t-caption text-[11px] mb-0.5">{label}</div><div
-              className="text-[15px] font-bold tabular"
-              style={{ color: "var(--foreground)" }}>{mn(value)}</div></div>)}</div><div><div className="t-caption text-[11px] mb-1.5">집행률 진행</div><ExecBar value={row.exec} tone={row.tone} /></div><div className="flex items-center gap-2 pt-1"><Button variant="outline" size="sm" leadingIcon="file">보고서</Button><Button variant="primary" size="sm" leadingIcon="edit">수정</Button></div></div>
+              className="text-[15px] font-bold tabular text-foreground">{mn(value)}</div></div>)}</div><div><div className="t-caption text-[11px] mb-1.5">집행률 진행</div><ExecBar value={row.exec} tone={row.tone} /></div><div className="flex items-center gap-2 pt-1"><Button variant="outline" size="sm" leadingIcon="file">보고서</Button><Button variant="primary" size="sm" leadingIcon="edit">수정</Button></div></div>
   );
 }
 
@@ -230,13 +219,13 @@ function SubFund({ onNav }) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="자펀드명·코드·운용사 검색"
-              className="text-[13px] rounded-[8px] border border-border bg-muted pl-8 pr-3 py-2 outline-none transition-colors"
+              className="text-[13px] rounded-[8px] border border-border bg-muted pl-8 pr-3 py-2 outline-none transition-colors text-foreground"
               style={{
                 width: 230,
-                color: "var(--foreground)",
                 fontFamily: "inherit",
               }} /><span
-              style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}><Icon name="search" size={15} style={{ color: "var(--muted-foreground)" }} /></span></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[860px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{["자펀드코드", "자펀드명", "운용사", "설립일", "AUM(억원)", "집행률", "상태", "잔존기간", "액션"].map((col, i) =>
+              className="absolute left-2.5 pointer-events-none"
+              style={{ top: "50%", transform: "translateY(-50%)" }}><Icon name="search" size={15} className="text-muted-foreground" /></span></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[860px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{["자펀드코드", "자펀드명", "운용사", "설립일", "AUM(억원)", "집행률", "상태", "잔존기간", "액션"].map((col, i) =>
                   <th
                     key={col}
                     className={cx(
@@ -251,9 +240,8 @@ function SubFund({ onNav }) {
                       row={row}
                       selected={selectedCode === row.code}
                       onSelect={setSelectedCode} />)}</tbody></table></div><div
-          className="flex items-center justify-between gap-4 flex-wrap px-5 py-3.5 border-t border-border"><span className="t-caption"><b style={{ color: "var(--foreground)" }}>{mn(filteredRows.length) + "개"}</b>{mn("자펀드 표시 중 (전체 237개)")}</span><div className="flex items-center gap-1.5"><IconBtn icon="chevron-left" label="이전 페이지" size={30} /><span
-              className="text-[13px] font-semibold px-2"
-              style={{ color: "var(--foreground)" }}>1 / 30</span><IconBtn icon="chevron-right" label="다음 페이지" size={30} /></div></div></section><div className="grid grid-cols-1 lg:grid-cols-2 gap-4"><ChartCard
+          className="flex items-center justify-between gap-4 flex-wrap px-5 py-3.5 border-t border-border"><span className="t-caption"><b className="text-foreground">{mn(filteredRows.length) + "개"}</b>{mn("자펀드 표시 중 (전체 237개)")}</span><div className="flex items-center gap-1.5"><IconBtn icon="chevron-left" label="이전 페이지" size={30} /><span
+              className="text-[13px] font-semibold px-2 text-foreground">1 / 30</span><IconBtn icon="chevron-right" label="다음 페이지" size={30} /></div></div></section><div className="grid grid-cols-1 lg:grid-cols-2 gap-4"><ChartCard
           title="연도별 출자·분배 현황"
           sub="계획 대비 실적 (단위: 억원)"
           icon="trending"
