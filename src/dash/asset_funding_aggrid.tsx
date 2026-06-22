@@ -4,20 +4,24 @@
 
    검증 목표(docs/AGGrid_feasibility_report.md 부록 C·E):
    - 테마 자동추종 · 다단 중첩헤더 · pinned 합계행 · 정렬 · 마스킹(mn) valueFormatter
-   - 명령 툴바(generic_list 동형): 행 선택→선택삭제/해제 · 상세필터 · 새로고침 · kebab(등록/내보내기/인쇄)
-   - 푸터(generic_list 동형): 건수 · 페이지네이션 · 리스트/상세 뷰 토글 · 다운로드/새창/더보기
-     → 페이저=AG Grid pagination(Community) + 커스텀 외관, 상세뷰=React 카드(L6 단일 데이터·렌더러 이원화)
+   - 명령 툴바: 행 선택→선택삭제/해제 · 상세필터 · 새로고침 · kebab(등록/내보내기/인쇄)
+   - 푸터: 건수 · 페이지네이션 · 리스트/상세 뷰 토글 · 다운로드/새창/더보기
+   - 등록(Dialog→행 추가) · 상세필터(Sheet→AG Grid External Filter, L12 Community 실증)
+     → 모달/드로어 UI는 ui/dialog·ui/sheet 프리미티브 재사용
 
    ⚠️ AG Grid v35.3.1(v33+) Theming API: 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지. */
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import type { CSSProperties } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
 import { mn } from './mask';
 import { GridFrame, KpiBadge } from './grid_frame';
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
-import type { ColDef, ColGroupDef, ValueFormatterParams, CellStyle, GridApi, GridReadyEvent, SelectionChangedEvent } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, ValueFormatterParams, CellStyle, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode } from 'ag-grid-community';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
+import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
 import { toast } from './ui/sonner';
 
 const { Button, IconBtn, SegTabs, ColorChip } = UI;
@@ -95,8 +99,14 @@ const columnDefs: (ColDef<FundingRow> | ColGroupDef<FundingRow>)[] = [
   },
 ];
 
+/* 드로어/모달 입력 — 폰트 16px(iOS 포커스 줌 방지), 색은 토큰 */
+const inputStyle: CSSProperties = {
+  width: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 16,
+  border: '1px solid var(--border-strong)', borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
+};
+
 /* ── kebab(···) 더보기 메뉴 — generic_list MoreMenu와 동형(Radix DropdownMenu) ── */
-function PoCMoreMenu({ onExport }: { onExport: () => void }) {
+function PoCMoreMenu({ onRegister, onExport }: { onRegister: () => void; onExport: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -106,7 +116,7 @@ function PoCMoreMenu({ onExport }: { onExport: () => void }) {
         <Icon name="more" size={20} stroke={2} />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem onSelect={() => toast.info('등록 — PoC 스텁(RowFormModal 연동 지점)')}>
+        <DropdownMenuItem onSelect={onRegister}>
           <Icon name="plus" size={17} className="shrink-0 text-muted-foreground" />등록
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -136,10 +146,19 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 
 export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<FundingRow> | null>(null);
-  const [rows, setRows] = useState<FundingRow[]>(ROWS);   // 삭제/새로고침 위해 가변
+  const [rows, setRows] = useState<FundingRow[]>(ROWS);   // 삭제/등록/새로고침 위해 가변
   const [selCount, setSelCount] = useState(0);
   const [view, setView] = useState('list');               // list | detail (L6 토글)
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: ROWS.length });
+
+  // 상세필터(External Filter) 상태 — L12 실증
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [fYear, setFYear] = useState('');                 // 사업연도 (정확일치)
+  const [fMin, setFMin] = useState('');                   // 출자금액 최소 (이상)
+
+  // 등록 모달 상태
+  const [regOpen, setRegOpen] = useState(false);
+  const [draft, setDraft] = useState({ y: '', c0: '', u1: '' });
 
   const onGridReady = useCallback((e: GridReadyEvent<FundingRow>) => { apiRef.current = e.api; }, []);
   const onSelectionChanged = useCallback((e: SelectionChangedEvent<FundingRow>) => { setSelCount(e.api.getSelectedRows().length); }, []);
@@ -147,6 +166,17 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
     const api = apiRef.current; if (!api) return;
     setPage({ current: api.paginationGetCurrentPage(), total: api.paginationGetTotalPages(), rowCount: api.paginationGetRowCount() });
   }, []);
+
+  // 외부 필터: 값 바뀌면 그리드에 재적용 통지(L12 — Community external filter)
+  const filterActive = fYear !== '' || fMin !== '';
+  useEffect(() => { apiRef.current?.onFilterChanged(); }, [fYear, fMin]);
+  const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
+  const doesExternalFilterPass = useCallback((node: IRowNode<FundingRow>) => {
+    const r = node.data; if (!r) return true;
+    if (fYear && r.y !== fYear) return false;
+    if (fMin && Number(r.u1) < Number(fMin)) return false;
+    return true;
+  }, [fYear, fMin]);
 
   const refresh = () => { setRows([...ROWS]); apiRef.current?.deselectAll(); toast.success('새로고침했습니다'); };
   const clearSel = () => apiRef.current?.deselectAll();
@@ -160,14 +190,28 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
   };
   const exportCsv = () => { apiRef.current?.exportDataAsCsv({ fileName: '모태펀드_조성출자현황.csv' }); toast.success('CSV로 내보냈습니다'); };
 
-  // 푸터 건수: 리스트=현재 페이지 표시 수, 상세=전체
-  const shown = view === 'list' ? Math.min(PAGE_SIZE, Math.max(0, page.rowCount - page.current * PAGE_SIZE)) : rows.length;
+  // 등록 — Dialog 입력으로 새 연도 행 추가(CRUD add)
+  const saveRegister = () => {
+    if (!draft.y.trim()) { toast.error('연도를 입력하세요'); return; }
+    const row: FundingRow = { y: draft.y.trim(), c0: Number(draft.c0) || 0, c1: 0, c2: 0, c3: 0, c4: 0, c5: 0, u0: 0, u1: Number(draft.u1) || 0 };
+    setRows((prev) => [row, ...prev]);
+    setRegOpen(false);
+    setDraft({ y: '', c0: '', u1: '' });
+    toast.success('항목이 등록되었습니다');
+  };
+
+  // 카드(상세 뷰)·푸터 건수는 동일 필터 술어를 공유(단일 데이터·렌더러 이원화)
+  const filteredRows = rows.filter((r) => (!fYear || r.y === fYear) && (!fMin || r.u1 >= Number(fMin)));
+  const shown = view === 'list'
+    ? Math.min(PAGE_SIZE, Math.max(0, page.rowCount - page.current * PAGE_SIZE))
+    : filteredRows.length;
+  const totalForCount = view === 'list' ? page.rowCount : filteredRows.length;
 
   return (
     <GridFrame
       crumbs={['홈', '투자자산관리', '모태펀드관리', '모태펀드 조성 및 출자현황 (AG Grid PoC)']}
       title="모태펀드 조성 및 출자현황 — AG Grid PoC"
-      sub="AG Grid Community v35.3.1 · frame+children 점진전략 + 명령 툴바 + 푸터 실증 — 단위: 금액 억원(추정) / 조합수 개"
+      sub="AG Grid Community v35.3.1 · frame+children + 명령 툴바 + 푸터 + 등록/상세필터(External Filter) 실증 — 단위: 금액 억원(추정) / 조합수 개"
       cardTitle="모태펀드 조성·출자 현황표 (AG Grid)"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('asset-funding')}>수제 테이블 원본</Button>}
       kpis={<>
@@ -184,15 +228,24 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
       ) : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
-          <span className="text-caption" style={{ fontSize: 12.5 }}>행 체크박스로 선택 → 선택 삭제 · 헤더 클릭=정렬 · 하단 페이저·뷰토글</span>
+          {filterActive ? (
+            <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
+              {fYear ? '연도: ' + fYear : ''}{fYear && fMin ? ' · ' : ''}{fMin ? '출자금액 ≥ ' + fMin : ''}
+              <button onClick={() => { setFYear(''); setFMin(''); }} aria-label="필터 제거" className="inline-flex border-0 cursor-pointer p-0" style={{ background: 'transparent', color: 'inherit' }}>
+                <Icon name="x" size={13} stroke={2.4} />
+              </button>
+            </span>
+          ) : (
+            <span className="text-caption" style={{ fontSize: 12.5 }}>행 선택→삭제 · 헤더=정렬 · 상세필터 · kebab=등록/내보내기/인쇄</span>
+          )}
         </>
       )}
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => toast.info('상세필터 — PoC 스텁(ListFilterDrawer 연동 지점)')}>상세필터</Button>
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
-        <PoCMoreMenu onExport={exportCsv} />
+        <PoCMoreMenu onRegister={() => setRegOpen(true)} onExport={exportCsv} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(view === 'list' ? page.rowCount : rows.length)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + mn(String(totalForCount)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}</span>}
       footerCenter={view === 'list' && page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -210,7 +263,7 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
       </>}>
 
       {view === 'list' ? (
-        /* AG Grid 본체 — autoHeight + pagination(Community). 커스텀 페이저가 외관, AG Grid가 엔진 */
+        /* AG Grid 본체 — autoHeight + pagination + external filter(L12, Community) */
         <div style={{ padding: '0 2px 2px' }}>
           <AgGridReact<FundingRow>
             theme={apfsTheme}
@@ -223,15 +276,17 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
             pagination
             paginationPageSize={PAGE_SIZE}
             suppressPaginationPanel
+            isExternalFilterPresent={isExternalFilterPresent}
+            doesExternalFilterPass={doesExternalFilterPass}
             onGridReady={onGridReady}
             onSelectionChanged={onSelectionChanged}
             onPaginationChanged={onPaginationChanged}
           />
         </div>
       ) : (
-        /* 상세 뷰 — React 카드(L6 검증: 단일 rowData 공유, 렌더러만 이원화) */
+        /* 상세 뷰 — React 카드(L6: 단일 rowData 공유, 같은 필터 술어 적용) */
         <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(220px, 100%), 1fr))', padding: 18 }}>
-          {rows.map((r) => (
+          {filteredRows.map((r) => (
             <div key={r.y} className="border border-border bg-card flex flex-col gap-2.5 p-3.5" style={{ borderRadius: 12 }}>
               <div className="flex items-center gap-2.5">
                 <ColorChip icon="landmark" color="var(--primary)" size={34} iconSize={16} />
@@ -250,8 +305,67 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
               </div>
             </div>
           ))}
+          {filteredRows.length === 0 && (
+            <div className="text-caption text-center" style={{ gridColumn: '1/-1', padding: '40px 0', fontSize: 13 }}>조건에 맞는 항목이 없습니다</div>
+          )}
         </div>
       )}
+
+      {/* ── 상세필터 드로어(Sheet) — AG Grid External Filter 구동(L12) ── */}
+      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
+          <SheetHeader>
+            <SheetTitle>상세 필터</SheetTitle>
+            <SheetDescription className="sr-only">External Filter로 행을 거르는 상세 필터</SheetDescription>
+            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
+            <label className="block mb-4">
+              <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>사업연도</span>
+              <select value={fYear} onChange={(e) => setFYear(e.target.value)} style={inputStyle}>
+                <option value="">전체</option>
+                {ROWS.map((r) => <option key={r.y} value={r.y}>{r.y}</option>)}
+              </select>
+            </label>
+            <label className="block mb-4">
+              <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>출자금액 최소(억원 이상)</span>
+              <input type="number" value={fMin} onChange={(e) => setFMin(e.target.value)} placeholder="예: 800" style={inputStyle} />
+            </label>
+          </div>
+          <SheetFooter>
+            <Button variant="outline" size="md" onClick={() => { setFYear(''); setFMin(''); }}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {/* ── 등록 모달(Dialog) — 새 연도 행 추가(CRUD add) ── */}
+      <Dialog open={regOpen} onOpenChange={setRegOpen}>
+        <DialogContent className="max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle>신규 등록</DialogTitle>
+            <DialogDescription className="sr-only">연도별 조성·출자 항목 등록</DialogDescription>
+          </DialogHeader>
+          <div className="overflow-y-auto" style={{ padding: 18 }}>
+            <label className="block mb-3.5">
+              <span className="font-semibold text-caption block" style={{ fontSize: 12, marginBottom: 5 }}>연도 *</span>
+              <input value={draft.y} onChange={(e) => setDraft((d) => ({ ...d, y: e.target.value }))} placeholder="예: 2026" style={inputStyle} />
+            </label>
+            <label className="block mb-3.5">
+              <span className="font-semibold text-caption block" style={{ fontSize: 12, marginBottom: 5 }}>조성 합계(억원)</span>
+              <input type="number" value={draft.c0} onChange={(e) => setDraft((d) => ({ ...d, c0: e.target.value }))} placeholder="0" style={inputStyle} />
+            </label>
+            <label className="block mb-3.5">
+              <span className="font-semibold text-caption block" style={{ fontSize: 12, marginBottom: 5 }}>출자금액(억원)</span>
+              <input type="number" value={draft.u1} onChange={(e) => setDraft((d) => ({ ...d, u1: e.target.value }))} placeholder="0" style={inputStyle} />
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setRegOpen(false)}>취소</Button>
+            <Button variant="primary" size="sm" leadingIcon="check" onClick={saveRegister}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </GridFrame>
   );
 }
