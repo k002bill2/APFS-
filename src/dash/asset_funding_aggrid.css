@@ -1,0 +1,13 @@
+/* ── AG Grid 합계(pinned/floating) 행 가시성 보정 ──────────────────────────────
+   증상: pinnedBottomRowData(합계 행)가 레이아웃·내용·hit-test는 정상인데 화면에 안 보임.
+   원인: AG Grid 행 등장 애니메이션이 새 행에 .ag-opacity-zero(=opacity:0 !important)를
+        붙였다가 다음 프레임에 제거하는데, pinned(floating top/bottom) 행에서는 그 제거가
+        누락돼 클래스가 영구히 남는다 → 행 전체가 opacity:0(자식 셀까지 곱연산으로 투명).
+   수정: floating 행 opacity를 강제로 1. AG Grid 규칙이 !important라 React 인라인 style
+        (getRowStyle)으로는 못 이기므로 더 높은 specificity + !important로 오버라이드한다.
+   주의: 이건 우리 자체 보정 규칙일 뿐, 금지 대상인 AG Grid 레거시 테마 CSS
+        (ag-grid.css / ag-theme-*.css) import가 아니다 — Theming API와 충돌하지 않는다. */
+.ag-floating-top .ag-row,
+.ag-floating-bottom .ag-row {
+  opacity: 1 !important;
+}

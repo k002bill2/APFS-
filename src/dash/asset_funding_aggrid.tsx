@@ -10,6 +10,7 @@
      → 모달/드로어 UI는 ui/dialog·ui/sheet 프리미티브 재사용
 
    ⚠️ AG Grid v35.3.1(v33+) Theming API: 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지. */
+import './asset_funding_aggrid.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정 — 파일 상단 주석 참조
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { CSSProperties } from 'react';
 import { UI } from './components';
@@ -53,6 +54,8 @@ const flat = (r: { y: string; c: number[]; u: number[] }): FundingRow =>
   ({ y: r.y, c0: r.c[0], c1: r.c[1], c2: r.c[2], c3: r.c[3], c4: r.c[4], c5: r.c[5], u0: r.u[0], u1: r.u[1] });
 const ROWS: FundingRow[] = RAW.map(flat);
 const TOTAL_ROW: FundingRow = { y: '합 계', c0: 4987.3, c1: 507, c2: 2190, c3: 1650, c4: 640, c5: 0.3, u0: 154, u1: 14124.1 };
+// 매 렌더 새 배열을 넘기면 AG Grid가 pinned 행을 재생성(=행 애니메이션 재발) → 모듈 상수로 고정
+const PINNED_BOTTOM: FundingRow[] = [TOTAL_ROW];
 const PAGE_SIZE = 12;   // 16행 → 2페이지
 
 /* 정수=천단위 콤마, 소수=1자리 — 원본 fmt 재현 */
@@ -269,7 +272,7 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
             theme={apfsTheme}
             rowData={rows}
             columnDefs={columnDefs}
-            pinnedBottomRowData={[TOTAL_ROW]}
+            pinnedBottomRowData={PINNED_BOTTOM}
             domLayout="autoHeight"
             defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
             rowSelection={{ mode: 'multiRow', checkboxes: true, headerCheckbox: true }}
