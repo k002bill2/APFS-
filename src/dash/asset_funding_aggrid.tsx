@@ -214,13 +214,12 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
     <GridFrame
       crumbs={['홈', '투자자산관리', '모태펀드관리', '모태펀드 조성 및 출자현황 (AG Grid PoC)']}
       title="모태펀드 조성 및 출자현황 — AG Grid PoC"
-      sub="AG Grid Community v35.3.1 · frame+children + 명령 툴바 + 푸터 + 등록/상세필터(External Filter) 실증 — 단위: 금액 억원(추정) / 조합수 개"
       cardTitle="모태펀드 조성·출자 현황표 (AG Grid)"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('asset-funding')}>수제 테이블 원본</Button>}
       kpis={<>
-        <KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={mn(fmt(TOTAL_ROW.c0)) + ' 억원'} />
-        <KpiBadge icon="wallet" color="var(--accent)" label="누적 출자금액" value={mn(fmt(TOTAL_ROW.u1)) + ' 억원'} />
-        <KpiBadge icon="layers" color="var(--chart-1)" label="누적 조합수" value={mn(fmt(TOTAL_ROW.u0)) + ' 개'} />
+        <KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={mn(fmt(TOTAL_ROW.c0)) + ' 억원'} valueSize={14} />
+        <KpiBadge icon="wallet" color="var(--accent)" label="누적 출자금액" value={mn(fmt(TOTAL_ROW.u1)) + ' 억원'} valueSize={14} />
+        <KpiBadge icon="layers" color="var(--chart-1)" label="누적 조합수" value={mn(fmt(TOTAL_ROW.u0)) + ' 개'} valueSize={14} />
       </>}
       toolbarLeft={selCount > 0 ? (
         <>
@@ -259,7 +258,7 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
         </>
       ) : undefined}
       footerRight={<>
-        <SegTabs size="sm" value={view} onChange={setView} options={[{ value: 'list', label: '리스트 뷰' }, { value: 'detail', label: '상세 뷰' }]} />
+        <SegTabs size="sm" value={view} onChange={setView} options={[{ value: 'list', label: '리스트 뷰' }, { value: 'detail', label: '카드뷰' }]} />
         <IconBtn icon="download" label="다운로드" size={32} onClick={exportCsv} />
         <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
         <IconBtn icon="more" label="더보기" size={32} />

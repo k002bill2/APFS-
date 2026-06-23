@@ -439,7 +439,7 @@ function Performance({ onNav }) {
                 className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground cursor-pointer border border-border bg-card"><Icon name="chevron-right" size={16} /></button>
             </div>
             <div className="flex items-center gap-3">
-              <SegTabs options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "상세 뷰" }]} value={view} onChange={setView} size="sm" />
+              <SegTabs options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "카드뷰" }]} value={view} onChange={setView} size="sm" />
               <div className="flex items-center gap-0.5">
                 {["download", "external", "file", "more"].map((ic, i) => <IconBtn key={i} icon={ic} label={ic} size={34} />)}
               </div>

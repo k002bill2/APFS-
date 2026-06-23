@@ -518,7 +518,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
             <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} />
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
-            <SegTabs size="sm" value={view} onChange={setView} options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "상세 뷰" }]} />
+            <SegTabs size="sm" value={view} onChange={setView} options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "카드뷰" }]} />
             <IconBtn icon="download" label="다운로드" size={32} />
             <IconBtn icon="external" label="새 창" size={32} />
             <IconBtn icon="more" label="더보기" size={32} />
