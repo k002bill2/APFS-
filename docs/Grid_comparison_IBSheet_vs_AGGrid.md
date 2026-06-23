@@ -94,3 +94,37 @@
 - IBSheet의 'REFUTED' 2건(전역 마스킹 native 부재, Vercel preview 도메인 운영 불가)은 그대로 확정.
 
 > 상세 검증 8건은 [`AGGrid_feasibility_report.md` 부록 D](./AGGrid_feasibility_report.md) 및 [`IBSheet_feasibility_report.md` 부록 A](./IBSheet_feasibility_report.md) 참조.
+
+---
+
+## 7. 웹표준성 · 웹접근성 · 웹취약점 비교 (공공 관점)
+
+> ⚠️ **전제: "웹접근성 품질인증"은 웹사이트 단위 인증**이라 그리드 라이브러리(컴포넌트/모듈)는 받을 수 없다([wa.or.kr 약관](http://wa.or.kr/m4/provision.asp) — "웹 페이지로 구현된 모듈·웹 애플리케이션 등 웹 솔루션 접수 불가"). **APFS 최종 사이트의 KWCAG 인증은 어느 라이브러리를 쓰든 통합 단계에서 직접 확보**해야 한다. 라이브러리는 "그 인증을 깨지 않을 역량"만 제공한다.
+
+| 축 | AG Grid (오픈소스, v35.3.1) | IBSheet (상용, 폐쇄소스) |
+|---|---|---|
+| **웹표준성** | div 그리드 + `role="grid"` ARIA(네이티브 `<table>` 아님), W3C 표준 접근. **오픈소스라 생성 마크업 직접 검증 가능** | "순수 스크립트·HTML5·웹표준·크로스브라우저"(벤더 명시). 폐쇄소스라 **구매 전 마크업 독립 검증 불가** |
+| **웹접근성** | WCAG/ARIA·키보드·스크린리더 **문서화** + ARIA 라벨 커스터마이즈. **명시된 한계: 고정행/열 스크린리더 탐색 불가**(DOM 분리) | **SA(소프트웨어접근성) 인증** 주장 + 웹표준 JS. **웹용 KWCAG 레벨·스크린리더 세부는 비공개(불투명)**. 국내 공공 납품 실적 = 실무 심사 통과 경험 |
+| **웹취약점** | **CVE 공개 추적**(예: CVE-2024-38996 prototype pollution ≤31.3.4, 패치됨·EPSS 0.05%). `npm audit`/Snyk 감사 가능. React 셀렌더러=**자동 이스케이프(XSS 안전)**. ↔ 공개 공격면·npm 공급망 노출 | **공개 CVE 추적 없음**(폐쇄 바이너리 → "CVE 없음 ≠ 안전", 독립 감사 불가). 벤더 관리 + 국내 보안성 검토 경험. 라이선스 배포=공급망 통제. `Type:'Html'` 셀=**원시 주입 → 수동 sanitize 필요** |
+
+### 7-1. 웹표준성 — 사실상 동등 ("표 흉내" + ARIA)
+둘 다 네이티브 시맨틱 `<table>`이 아니라 JS로 div 그리드를 그리고 `role="grid"`로 표 의미를 부여한다. "순수 HTML 시맨틱"을 엄격히 보면 둘 다 100%는 아니고 ARIA로 보완하는 **동일 접근**. 차이는 **검증 가능성** — AG Grid는 오픈소스라 DOM을 즉시 검사 가능, IBSheet는 폐쇄라 벤더 주장 의존.
+
+### 7-2. 웹접근성 — AG Grid 투명 / IBSheet 공공 친화
+- **AG Grid**: WCAG 정렬 ARIA·키보드·스크린리더를 문서화하고 **자기 한계(고정행/열 스크린리더 불가)까지 공개** — 검토에 유리.
+- **IBSheet**: **SA(소프트웨어접근성) 인증**은 웹 KWCAG 품질인증과 **다른 제도**. 웹 세부는 비공개지만 **국내 공공 다수 납품 = 실제 웹접근성 심사 통과 트랙레코드**라는 실무 신호가 강함.
+- **공통**: 최종 사이트 KWCAG 인증 자동 보장 없음 → 통합 시 NVDA·키보드 직접 테스트 필수.
+
+### 7-3. 웹취약점 — "투명/감사가능" vs "불투명/벤더관리"
+- **AG Grid**: 취약점이 공개 CVE로 추적·`npm audit` 자체 감사 가능, **현 v35.3.1은 알려진 CVE 이후 버전**. React 셀렌더러 자동 이스케이프로 셀 XSS 기본 안전.
+- **IBSheet**: 공개 CVE 트레일 없음 → **"알려진 취약점 없음 ≠ 안전"**, 독립 감사 불가·벤더 의존. 단 npm 공급망 공격면 없음. `Type:'Html'` 셀에 외부 데이터 시 **수동 sanitize 안 하면 XSS**.
+
+### 7-4. 공공(APFS) 권고
+- **KWCAG 인증이 계약 요건**이면: 어느 쪽도 자동 보장 안 됨 → **PoC에서 NVDA·키보드 검사 필수**. AG Grid는 한계가 공개돼 회피 설계 가능, IBSheet는 벤더에 **KWCAG 적합성 확인서** 요청.
+- **보안성 검토(행안부 SW개발보안) 대비**: AG Grid는 `npm audit`+버전핀으로 근거 제출 용이, IBSheet는 **벤더 보안성 확인서/취약점 점검 결과** 필요(폐쇄소스라 자체 점검 불가).
+- 셀에 외부/사용자 데이터를 HTML로 넣을 땐 **둘 다 sanitize**, 단 AG Grid React 렌더러가 기본 안전판.
+
+**한 줄 요약: 세 축 모두 진짜 변수는 "투명성(AG Grid, 자체 검증·감사 가능) vs 벤더 의존(IBSheet, 국산 인증·납품실적 보증)"이다.** 공공 보안성 검토엔 감사가능성이, 형식 요건·관행엔 국산 인증·실적이 강점.
+
+> **검증 한계**: IBSheet 웹접근성/보안 세부는 폐쇄소스라 공식 문서 확인 범위가 제한적(불투명 자체가 비교 포인트). 공식 결정 문서로 승격 시 벤더 확인서(KWCAG 적합성·보안 점검) 수령 + 적대적 재검증 권장.
+> **출처**: [AG Grid Accessibility](https://www.ag-grid.com/react-data-grid/accessibility/) · [AG Grid CVE(CVEdetails)](https://www.cvedetails.com/product/46941/Ag-grid-Ag-grid.html) · [CVE-2024-38996(Snyk)](https://security.snyk.io/package/npm/ag-grid-community) · [IBSheet 주요기능](http://www.ibleaders.co.kr/solution/ibsheet?t=2) · [웹접근성 품질인증 약관](http://wa.or.kr/m4/provision.asp) · [KWCAG 2.2](https://a11ykr.github.io/kwcag22/)
