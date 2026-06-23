@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AG Grid 도입 타당성 리포트 — APFS 대시보드 (+ IBSheet 헤드투헤드)</title>
+<style>:root{--fg:#1c2024;--muted:#5b6168;--line:#e3e6ea;--line2:#eef1f4;--accent:#0158A8;--green:#0E963B;--bg:#fff;--code-bg:#f3f5f7;--th-bg:#f6f8fa;--zebra:#fafbfc;--quote-bg:#f7faf8}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;background:#eef1f4;color:var(--fg);font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",Roboto,"Malgun Gothic",sans-serif;line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}.page{max-width:920px;margin:32px auto;background:var(--bg);padding:48px 56px 72px;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 28px rgba(0,0,0,.05)}h1,h2,h3,h4,h5,h6{line-height:1.35;font-weight:800;color:#10141a}h1{font-size:1.85em;margin:.2em 0 .8em;padding-bottom:.4em;border-bottom:3px solid var(--green);color:var(--green)}h2{font-size:1.4em;margin:1.9em 0 .7em;padding-left:.5em;border-left:4px solid var(--accent)}h3{font-size:1.15em;margin:1.5em 0 .5em}h4{font-size:1.02em;margin:1.2em 0 .4em;color:var(--muted)}p{margin:.7em 0}a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(1,88,168,.3)}a:hover{border-bottom-color:var(--accent)}code{background:var(--code-bg);padding:.12em .42em;border-radius:5px;font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;font-size:.86em;color:#b4205a}strong{font-weight:700;color:#10141a}hr{border:0;border-top:1px solid var(--line);margin:2em 0}blockquote{margin:1.1em 0;padding:.8em 1.1em;background:var(--quote-bg);border-left:4px solid var(--green);border-radius:0 8px 8px 0;color:var(--muted);font-size:.95em}blockquote a{color:var(--green)}ul,ol{margin:.6em 0;padding-left:1.5em}li{margin:.32em 0}li>ul,li>ol{margin:.2em 0}.tbl-wrap{overflow-x:auto;margin:1.1em 0;border:1px solid var(--line);border-radius:10px}table{border-collapse:collapse;width:100%;font-size:.9em}thead th{background:var(--th-bg);font-weight:700;color:#10141a;text-align:left;position:sticky;top:0}th,td{padding:9px 13px;border-bottom:1px solid var(--line2);border-right:1px solid var(--line2);vertical-align:top}th:last-child,td:last-child{border-right:0}tbody tr:nth-child(even){background:var(--zebra)}tbody tr:hover{background:#f0f6ff}tbody tr:last-child td{border-bottom:0}@media(max-width:640px){.page{margin:0;padding:24px 18px 48px;border-radius:0}body{font-size:14px}}@media print{body{background:#fff}.page{box-shadow:none;margin:0;max-width:none;border-radius:0;padding:0}.tbl-wrap{overflow:visible}}</style>
+</head>
+<body>
+<main class="page">
+<h1>AG Grid 도입 타당성 리포트 — APFS 대시보드 (+ IBSheet 헤드투헤드)</h1>
+<blockquote>작성: 멀티에이전트 워크플로우(resume로 완주) — Research/Map/<strong>적대적 Verify 8건/리포트 모두 완료</strong><br>근거: AG Grid 공식문서 1차 출처(ag-grid.com·license-pricing·npm) 직접 판독 + 적대적 반증 + 직전 IBSheet 리포트 비교<br>독자: APFS 프론트엔드 결정권자 | 작성일 2026-06-22 | 기준 버전: v33+(최신 v35.3.1)</blockquote>
+<blockquote>✅ <strong>방법론(검증 완료):</strong> AG Grid 능력 판정은 Research 에이전트 3종이 공식문서를 브라우저로 직접 읽어 확보한 <strong>1차 출처</strong>(에디션은 <code>(e)</code> 마커·license-pricing Feature Breakdown·npm <code>license</code> 필드로 교차확인)에 더해, <strong>회의적 검토관 8명이 핵심 주장을 공식문서로 반증 시도(적대적 검증)</strong> 한 결과로 확정됐다. <strong>AG Grid 자체 판정은 refuted 0건</strong>(confirmed 4 / partial 4) — 'REFUTED' 태그는 모두 IBSheet 측 실패점이다. 전체 검증 결과는 <strong>부록 D</strong> 참조. 표기 <code>[1차출처]</code>=공식문서 직접 확인, <code>[검증]</code>=적대적 재검증 통과, <code>[미검증]</code>=확인 불가.</blockquote>
+<blockquote>⚠️ <strong>백분율 주의:</strong> 본 리포트의 분모는 GridFrame 양식 <strong>36개 기능점</strong>(직전 IBSheet 리포트는 46건) — 분모가 달라 백분율 직접 비교 금지. 핵심 결론(마찰점 해소 여부)으로 비교할 것.</blockquote>
+<hr>
+<h2>1. 한 줄 결론</h2>
+<p><strong>현행 기능의 대부분이 AG Grid로 구현 가능하며, 그중 핵심은 거의 전부 무료 Community(MIT)로 커버된다. 결정적으로 AG Grid는 IBSheet의 4대 마찰점 중 3개(테마·React통합·라이선스)를 구조적으로 해소한다.</strong> 남는 진짜 약점은 단 두 가지 — ① <strong>반응형/모바일 카드 재배치 불가(IBSheet와 동일한 한계)</strong>, ② <strong>번들 크기.</strong> 그리고 Enterprise(유료) 강제는 사실상 <strong>native 스파크라인과 native Excel export 두 기능뿐</strong>인데, 둘 다 Community 우회로(커스텀 React 셀 + CSV/클라이언트 xlsx)가 있다.</p>
+<blockquote><strong>IBSheet vs AG Grid 한 줄 비교:</strong> IBSheet는 "표 자체"는 강하나 우리 앱 정체성(토큰테마·React선언성·Vercel배포)과 충돌. <strong>AG Grid는 그 충돌을 대부분 없앤다</strong> — 명령형→선언형, 도메인라이선스→무료/개발자단위, 테마격리→CSS변수 네이티브. 대신 IBSheet가 native로 주던 것(합계행·Excel)이 AG Grid에선 Community 우회 또는 Enterprise.</blockquote>
+<hr>
+<h2>2. 기능별 구현가능성 매트릭스</h2>
+<p>척도: <strong>gain</strong>(현행 개선) / <strong>parity</strong>(동등) / <strong>workaround</strong>(우회) / <strong>loss</strong>(동등 불가) / <strong>blocker</strong>(차단). 에디션: <strong>무료</strong>=Community(MIT) / <strong>유료</strong>=Enterprise. <code>vs IB</code>: AG Grid가 IBSheet보다 나음(▲) / 동등(=) / IBSheet가 나음(▼).</p>
+<h3>2-1. 프레임(GridFrame 외곽 — React 유지, 그리드 무관)</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>기능</th><th>AG Grid지원</th><th>에디션</th><th>평가</th><th>공수</th><th>리스크</th><th>vs IB</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td>F1 브레드크럼 / F2 카드헤더</td><td>해당없음</td><td>—</td><td>parity</td><td>low</td><td>low</td><td>=</td><td>프레임 영역, 무변경</td></tr>
+<tr><td>F3 KPI 요약뱃지(필터집합 파생)</td><td>config</td><td>무료</td><td><strong>parity</strong></td><td>low</td><td>medium</td><td><strong>▲</strong></td><td><strong>선언형이라 <code>onModelUpdated</code>/<code>onFilterChanged</code> → React state → KPI 재렌더.</strong> IBSheet의 instance 폴링 불필요 [1차출처]</td></tr>
+<tr><td>F4 툴바 / F5 푸터 / L13 필터칩 / L15 토스트</td><td>해당없음</td><td>—</td><td>parity</td><td>low</td><td>low</td><td>=</td><td>UI는 React, 그리드 API 이벤트만 연결</td></tr>
+<tr><td>F6 maxWidth+dashFade</td><td>config</td><td>무료</td><td>parity</td><td>low</td><td>low</td><td>=</td><td>컨테이너 CSS 유지</td></tr>
+</tbody>
+</table></div>
+<h3>2-2. 리스트(L*) — 그리드 본체</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>기능</th><th>AG Grid지원</th><th>에디션</th><th>평가</th><th>공수</th><th>리스크</th><th>vs IB</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td>L1 행 체크박스+전체선택</td><td>native</td><td>무료</td><td><strong>gain</strong></td><td>low</td><td>low</td><td>=</td><td><code>rowSelection</code> 객체(multiRow·checkboxes·headerCheckbox). 단 <strong>구 <code>checkboxSelection</code> colDef는 v32.2부터 폐기</strong>, 신 API 사용 [1차출처]</td></tr>
+<tr><td>L2 일괄삭제</td><td>native</td><td>무료</td><td>parity</td><td>low</td><td>low</td><td>=</td><td><code>applyTransaction({remove})</code></td></tr>
+<tr><td>L3 모달 CRUD+2단확인</td><td>native</td><td>무료</td><td>parity</td><td>medium</td><td>low</td><td><strong>▲</strong></td><td>인셀편집(Text/Number/Date/Select/Checkbox 에디터) 무료. <strong>모달 유지 시에도 선언형이라 React폼↔rowData state 동기 자연스러움.</strong> 단 <strong>native "dirty cell" API 없음</strong> → <code>cellValueChanged</code>/<code>cellEditRequest</code>+<code>getRowId</code>로 변경추적 [1차출처]</td></tr>
+<tr><td>L4 행 클릭/더블클릭/hover</td><td>native</td><td>무료</td><td>parity</td><td>low</td><td>low</td><td>=</td><td>hover/선택 스타일은 Theming 토큰으로(X2 참조)</td></tr>
+<tr><td>L5 클라이언트 페이지네이션</td><td>native</td><td>무료</td><td>parity</td><td>low</td><td>low</td><td>=</td><td><code>pagination=true</code>+<code>paginationPageSize</code> [1차출처]</td></tr>
+<tr><td>L6 뷰토글(테이블↔카드)</td><td>(카드는 grid밖)</td><td>무료</td><td><strong>loss</strong></td><td>medium</td><td>medium</td><td>=</td><td>카드뷰는 native 아님 → React 카드 렌더러 병행. 단일 rowData 공유(렌더러 이원화). IBSheet와 동일</td></tr>
+<tr><td>L7 스키마주도 컬럼(9 cell types)</td><td>config</td><td>무료</td><td><strong>gain</strong></td><td>medium</td><td>low</td><td><strong>▲</strong></td><td>colDefs로 매핑. <strong>pii/status/gp/rate도 React 셀 렌더러로 깔끔</strong> (IBSheet는 Html문자열)</td></tr>
+<tr><td>L8 타입별 셀렌더러(숫자우측·단위)</td><td>native</td><td>무료</td><td>parity</td><td>low</td><td>low</td><td>=</td><td><code>type</code>/<code>valueFormatter</code>/<code>cellClass</code></td></tr>
+<tr><td>L9 StatusBadge(tone 색칩)</td><td>custom-render</td><td>무료</td><td><strong>gain</strong></td><td>low</td><td>low</td><td><strong>▲</strong></td><td><strong>기존 React <code>StatusBadge</code> 컴포넌트를 셀 렌더러로 그대로 투입.</strong> 토큰 색 자동추종(IBSheet는 Html+브리징 필요) [1차출처]</td></tr>
+<tr><td><strong>L10 MiniBars 스파크라인 셀</strong></td><td>native(유료) <strong>또는</strong> custom-render(무료)</td><td><strong>유료 or 무료</strong></td><td><strong>gain</strong></td><td>low~med</td><td>low</td><td><strong>▲</strong></td><td><strong>두 경로:</strong> ⓐ native <code>agSparklineCellRenderer</code>=<strong>Enterprise</strong>(AG Charts 기반), ⓑ <strong>기존 React <code>MiniBars</code>를 셀 렌더러로 투입=Community 무료</strong>. <strong>IBSheet에선 React 반응성 상실(loss)이었으나 AG Grid는 진짜 React 컴포넌트로 보존</strong> [1차출처]</td></tr>
+<tr><td>L11 상세필터 드로어</td><td>config</td><td>무료</td><td>parity</td><td>medium</td><td>low</td><td>=</td><td>Text/Number/Date 필터+floating filter 무료. <strong>Set Filter(엑셀형 체크)=Enterprise</strong>지만 우리 드로어는 커스텀이라 불요 [1차출처]</td></tr>
+<tr><td>L12 복합 행필터(값AND·태그OR·부분/정확)</td><td>config</td><td>무료</td><td>parity</td><td>medium</td><td>medium</td><td>=</td><td>external filter(<code>isExternalFilterPresent</code>/<code>doesExternalFilterPass</code>)로 임의 술어 구현=무료. 복합식을 우리가 직접 정의 [1차출처]</td></tr>
+<tr><td>L14 빈상태</td><td>config</td><td>무료</td><td>parity</td><td>low</td><td>low</td><td>=</td><td><code>overlayNoRowsTemplate</code> 또는 React 오버레이</td></tr>
+<tr><td>L16 kebab 드롭다운</td><td>해당없음</td><td>—</td><td>parity</td><td>low</td><td>low</td><td>=</td><td>앱 레벨</td></tr>
+</tbody>
+</table></div>
+<h3>2-3. 매트릭스(M*) — 에디션 경계 주의 구역</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>기능</th><th>AG Grid지원</th><th>에디션</th><th>평가</th><th>공수</th><th>리스크</th><th>vs IB</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td>M1 2단 중첩헤더</td><td>native</td><td>무료</td><td><strong>gain</strong></td><td>low</td><td>low</td><td>=</td><td><strong>Column Groups + <code>colSpan</code>=Community 무료</strong> [1차출처]</td></tr>
+<tr><td>M2 계산 합계행</td><td>config</td><td><strong>무료(주의)</strong></td><td>parity</td><td>low</td><td>medium</td><td>▼(약간)</td><td><strong><code>pinnedBottomRowData</code>로 수동계산 합계행=Community 무료.</strong> 단 <strong><code>aggFunc</code>/<code>grandTotalRow</code> 자동집계는 Enterprise(RowGrouping).</strong> 우리 합계는 단일 총계라 무료 pinned row로 충분. IBSheet는 <code>FormulaRow</code> 자동집계가 native라 약간 우위 [1차출처]</td></tr>
+<tr><td>M3 조건부 셀스타일</td><td>config</td><td>무료</td><td>parity</td><td>low</td><td>low</td><td>=</td><td><code>cellClassRules</code>/<code>cellStyle</code>/<code>rowClassRules</code>=무료 [1차출처]</td></tr>
+<tr><td>M4 조회전용 매트릭스</td><td>native</td><td>무료</td><td><strong>gain</strong></td><td>low</td><td>low</td><td>=</td><td><code>editable=false</code>. 다단헤더+고정열+정렬+pinned합계 모두 무료</td></tr>
+</tbody>
+</table></div>
+<h3>2-4. 횡단 관심사(X*) — 마찰점 집중 구역</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>기능</th><th>AG Grid지원</th><th>에디션</th><th>평가</th><th>공수</th><th>리스크</th><th>vs IB</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td><strong>X1 마스킹 mn()/MT 전역 토글</strong></td><td>custom</td><td>무료</td><td><strong>workaround</strong></td><td>medium</td><td>medium</td><td><strong>▲(약간)</strong></td><td><strong>[검증·partial]</strong> native 전역토글 없음(IBSheet와 동일). 텍스트=<code>valueFormatter</code>가 <code>mn()</code> 참조, 배지/스파크라인=렌더러 내부 분기. <strong>블로커: 현 <code>mask.tsx</code>의 <code>_on</code>이 로드시 <code>const</code>(16행)라 런타임 토글 불가</strong> → 3작업 전제: ⓐ<code>_on</code> 가변화, ⓑ토글 후 <code>refreshCells({force:true})</code>(마스크는 행 값 불변 → force 없으면 change-detection이 전부 skip), ⓒmemo 렌더러가 토글 신호 재독취. 표준 Community API만으로 가능하나 자동 아님</td></tr>
+<tr><td><strong>X2 테마: CSS변수+다크+Tweaks 런타임</strong></td><td>native</td><td>무료</td><td><strong>gain</strong></td><td>medium</td><td>medium</td><td><strong>▲▲</strong></td><td><strong>Theming API(v33 기본)=CSS변수+JS theme객체. 다크모드 1급(<code>data-ag-theme-mode</code> 런타임 토글, <code>colorSchemeDark</code>). <code>backgroundColor</code>/<code>foregroundColor</code>/<code>accentColor</code> 파라미터에 우리 <code>var(--token)</code> 주입 가능 → Tweaks 런타임 변경이 CSS캐스케이드로 추종.</strong> IBSheet의 "자동추종 불가+브리지" 문제를 구조적으로 해소 [1차출처]</td></tr>
+<tr><td><strong>X3 반응형(모바일 카드 재배치)</strong></td><td>config</td><td>무료</td><td><strong>loss</strong></td><td>high</td><td>high</td><td><strong>=</strong></td><td>column flex/autoSize/hide·resize/터치=무료. <strong>그러나 좁은화면 행→카드 재배치는 native 미지원</strong> — IBSheet와 동일한 한계. AG Grid가 해소 못하는 유일한 마찰 [1차출처]</td></tr>
+<tr><td>X4 RBAC editable</td><td>config</td><td>무료</td><td>parity</td><td>low</td><td>low</td><td>=</td><td><code>editable</code> 콜백. 메뉴 가시성은 Shell</td></tr>
+<tr><td><strong>X5 내보내기/인쇄</strong></td><td>native</td><td><strong>CSV무료 / Excel유료</strong></td><td><strong>gain</strong>(조건부)</td><td>low~med</td><td>low</td><td><strong>▲</strong></td><td><strong>CSV=Community 클라이언트 단독. Excel=Enterprise(단 클라이언트 단독, 서드파티/서버 불필요).</strong> IBSheet는 PDF/Excel이 <strong>서버모듈(POI) 의존</strong>이었으나 AG Grid Excel은 서버 불요 → 백엔드 없는 본 프로토타입에 유리 [1차출처]</td></tr>
+<tr><td>X6 접근성</td><td>native</td><td>무료</td><td>parity</td><td>medium</td><td>low</td><td>=</td><td>WCAG 2.0 AA/Section508 지향, ARIA+<code>setGridAriaProperty</code>. 단 <strong>pinned 행/열 스크린리더 탐색 한계</strong> [1차출처]</td></tr>
+</tbody>
+</table></div>
+<h3>2-5. 커스텀 셀 / 아키텍처 / 비표 위젯</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>기능</th><th>AG Grid지원</th><th>에디션</th><th>평가</th><th>공수</th><th>리스크</th><th>vs IB</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td>커스텀셀: ColorChip·ExecBar·HBars 진행바</td><td>custom-render</td><td>무료</td><td><strong>gain</strong></td><td>low</td><td>low</td><td><strong>▲</strong></td><td><strong>기존 React 컴포넌트 그대로 셀 렌더러 투입, 토큰 자동추종.</strong> IBSheet는 Html+클래스 브리징</td></tr>
+<tr><td><strong>아키텍처: 선언형 frame+children</strong></td><td>native</td><td>무료</td><td><strong>gain</strong></td><td>medium</td><td>low</td><td><strong>▲▲</strong></td><td><strong><code>AgGridReact</code>는 선언형 — <code>rowData</code>/<code>columnDefs</code>를 props/state로, 변경 시 그리드 반응적 갱신. 셀 렌더러=실제 React 컴포넌트.</strong> IBSheet의 "마운트1회·props무반응·instance폴링" 문제 없음 [1차출처]</td></tr>
+<tr><td>비표: Calendar/Timeline/Stepper/Notif/Slider/Tab/Detail모달</td><td>해당없음</td><td>—</td><td>parity</td><td>low</td><td>low</td><td>=</td><td>표 아님 → React 유지, 그리드 무관</td></tr>
+<tr><td>행 그룹핑/트리/마스터디테일</td><td>native</td><td><strong>유료</strong></td><td>(현재 미사용)</td><td>—</td><td>—</td><td>—</td><td><strong>Enterprise.</strong> 현행 미사용(타임라인 날짜그룹은 React 뷰). 향후 필요 시 유료벽 [1차출처]</td></tr>
+<tr><td>대용량/가상화</td><td>native</td><td>무료</td><td><strong>gain</strong></td><td>low</td><td>low</td><td>▲</td><td><strong>행+열 가상화 기본=무료. Infinite Row Model도 무료</strong>("Enterprise not required for infinite scrolling"). Server-Side Row Model만 Enterprise [1차출처]</td></tr>
+<tr><td><strong>라이선스/비용</strong></td><td>—</td><td><strong>무료/개발자단위</strong></td><td><strong>gain</strong></td><td>—</td><td>low</td><td><strong>▲▲</strong></td><td><strong>Community=MIT, 키 불요, 프로덕션 무료. Enterprise=개발자당 $999(영구,1년업뎃)·Bundle $1,498, per-developer &amp; per-deployment, 도메인 바인딩 없음.</strong> IBSheet의 "도메인/URL 바인딩→Vercel preview 불가" 문제가 <strong>원천적으로 없음</strong> [1차출처]</td></tr>
+</tbody>
+</table></div>
+<hr>
+<h2>3. AG Grid로 '얻는 것' (특히 IBSheet 대비)</h2>
+<ol><li><strong>선언형 React 통합 [1차출처]</strong> — <code>AgGridReact</code>는 <code>rowData</code>/<code>columnDefs</code>를 props로 받아 state 변경에 반응. 셀 렌더러가 실제 React 컴포넌트. → <strong>기존 <code>StatusBadge</code>·<code>ColorChip</code>·<code>MiniBars</code>·<code>ExecBar</code>를 거의 그대로 셀에 투입.</strong> IBSheet의 명령형 임피던스(instance 폴링)가 사라진다. <strong>가장 큰 가치.</strong></li><li><strong>CSS변수 Theming + 다크모드 1급 [1차출처]</strong> — Theming API(v33 기본)에 우리 <code>var(--token)</code>을 파라미터로 주입 → Tweaks 런타임 변경/다크토글이 캐스케이드로 추종. IBSheet의 테마격리·브리지 문제 해소.</li><li><strong>라이선스 [1차출처]</strong> — Community MIT 무료(키 불요). Enterprise도 개발자단위·도메인 바인딩 없음 → <strong>Vercel preview 회전 도메인 문제 원천 부재.</strong> (IBSheet의 운영성 REFUTED 항목이 AG Grid엔 없음)</li><li><strong>스파크라인(L10)이 loss→gain</strong> — IBSheet에선 React 반응성 상실이었으나, AG Grid는 ⓐEnterprisenativeⓑCommunity 커스텀 React 셀 둘 다 가능. <strong>기존 <code>MiniBars</code>를 무료로 보존.</strong></li><li><strong>클라이언트 Excel/CSV [1차출처]</strong> — CSV 무료·클라이언트 단독, Excel은 Enterprise지만 <strong>서버 불요</strong>. IBSheet의 POI 서버모듈 의존이 없다.</li><li><strong>대용량·가상화 무료 [1차출처]</strong> — 행/열 가상화 기본, Infinite Row Model까지 Community.</li></ol>
+<hr>
+<h2>4. AG Grid가 '잃는 것 / 마찰점' (과장 없이)</h2>
+<ol><li><strong>[loss·미해소] 반응형/모바일 카드 재배치 [1차출처]</strong> — 좁은 화면 행→카드 reflow는 native 미지원. <strong>IBSheet와 동일한 한계로, AG Grid도 이건 못 푼다.</strong> responsive-ui 규약 충돌은 그대로. 카드뷰(L6)는 React 병행으로 우회.</li><li><strong>[비용] Enterprise 유료벽</strong> — 우리 현행 기능 기준으론 <strong>native 스파크라인·native Excel</strong> 정도만 Enterprise 강제. 단 향후 <strong>행그룹핑·자동집계(aggFunc)·트리·마스터디테일·Set Filter·Server-Side Model</strong>을 쓰면 개발자당 $999. <strong>M2 자동합계를 native로 원하면 Enterprise</strong>(우회: pinned row 수동계산=무료).</li><li><strong>[주의] 번들 크기</strong> — AG Grid는 큰 의존성(모듈 트리쉐이킹으로 완화 가능하나 IBSheet 로더 대비 무겁다). <code>[미검증·정량 미측정]</code></li><li><strong>[tie] 전역 마스킹</strong> — native 단일토글은 AG Grid도 없음(IBSheet와 동일). 단 valueFormatter 팩토리+refreshCells로 약간 더 깔끔.</li><li><strong>[주의] API 세대 차이 [1차출처]</strong> — v32.2~v33에서 API가 크게 바뀜(<code>checkboxSelection</code>→<code>rowSelection</code> 객체, CSS테마→Theming API, 모듈 등록 <code>AllCommunityModule</code>). 예제/블로그가 구·신 혼재 → 최신 기준으로 작성 필요.</li><li><strong>[미검증] native dirty-cell 부재</strong> — 변경추적은 이벤트 기반(<code>cellValueChanged</code>+<code>getRowId</code>). IBSheet의 <code>getSaveJson</code>류 턴키 저장 JSON은 없음 → 트랜잭션/이벤트로 직접 구성.</li></ol>
+<hr>
+<h2>5. AG Grid vs IBSheet 헤드투헤드</h2>
+<h3>5-1. IBSheet 4대 마찰점 — 누가 이기나</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>마찰점</th><th>IBSheet</th><th>AG Grid</th><th>승자</th></tr></thead>
+<tbody>
+<tr><td><strong>① 테마(CSS변수+다크+Tweaks 런타임)</strong></td><td>PARTIAL — 런타임전환 되나 토큰 자동추종 불가, 브리지 필요</td><td><strong>Theming API가 CSS변수 네이티브 + 다크 1급, 토큰 주입 가능</strong></td><td><strong>🟢 AG Grid</strong></td></tr>
+<tr><td><strong>② 전역 마스킹</strong></td><td>REFUTED — per-column, 전역토글 없음</td><td>역시 native 없음, 단 formatter+refreshCells로 약간 깔끔</td><td>🟡 AG Grid(근소)</td></tr>
+<tr><td><strong>③ 선언형 React 통합</strong></td><td>PARTIAL/REFUTED — 명령형, props무반응, 폴링</td><td><strong>완전 선언형, 셀=React컴포넌트, 반응적 props</strong></td><td><strong>🟢 AG Grid(결정적)</strong></td></tr>
+<tr><td><strong>④ 라이선스(배포환경)</strong></td><td>REFUTED — 도메인바인딩, Vercel preview 불가</td><td><strong>Community 무료/키불요, Enterprise도 도메인무관</strong></td><td><strong>🟢 AG Grid(결정적)</strong></td></tr>
+<tr><td>(참고) 반응형/모바일</td><td>loss</td><td>loss</td><td>⚪ 무승부(둘 다 못함)</td></tr>
+<tr><td>(참고) native 합계행 자동집계</td><td>🟢 <code>FormulaRow</code> native</td><td>pinned수동=무료 / 자동집계=Enterprise</td><td>🔵 IBSheet(근소)</td></tr>
+<tr><td>(참고) Excel export</td><td>서버모듈(POI) 의존</td><td>Enterprise지만 클라이언트 단독</td><td>🟢 AG Grid</td></tr>
+<tr><td>(참고) 도메인 친화(한국 공공 SI 표준)</td><td>🟢 익숙함·레퍼런스</td><td>상대적으로 생소</td><td>🔵 IBSheet</td></tr>
+</tbody>
+</table></div>
+<h3>5-2. 종합 권고</h3>
+<p><strong>APFS의 기술 정체성(React 선언형 · CSS변수 토큰테마 · 다크모드 · Vercel 무백엔드 배포)과의 정합성은 AG Grid가 IBSheet보다 명백히 높다.</strong> IBSheet의 4대 마찰점 중 3개가 AG Grid에서 구조적으로 사라지고, 비용은 <strong>Community($0)</strong> 로 현행 기능 대부분을 덮는다.</p>
+<ul><li><strong>1순위 권고 — AG Grid Community(무료) 전면 검토.</strong> 현행 리스트·매트릭스·KPI·커스텀셀·테마·CRUD가 거의 전부 Community로 가능. 기존 React 셀 컴포넌트 재사용이라 마이그레이션 비용도 낮다.</li><li><strong>Enterprise는 "필요해지면"</strong> — native 스파크라인을 원하거나, 자동집계(aggFunc)·행그룹핑·트리·마스터디테일·Set Filter가 실제로 필요해질 때만 개발자당 $999. 그 전까지 우회로(커스텀 React 스파크라인, pinned 수동합계, external filter)로 충분.</li><li><strong>IBSheet가 더 나은 유일한 시나리오</strong> — (a)팀이 IBSheet에 강하게 숙련됐고 한국 공공 SI 납품 관행상 IBSheet 레퍼런스가 요구되거나, (b)서버집계 기반 대용량 자동합계 매트릭스가 핵심이고 React 통합·Vercel 제약이 없을 때. <strong>본 프로토타입엔 해당 없음.</strong></li><li><strong>공통 미해결</strong> — 둘 다 모바일 카드 재배치는 못 한다. 모바일이 1급 요구면 그리드 라이브러리 교체와 무관하게 <strong>카드뷰(React)</strong> 를 따로 유지해야 한다.</li></ul>
+<h3>5-3. frame+children 점진 전략 — AG Grid에서 더 깨끗하다</h3>
+<p>GridFrame(React 프레임)은 유지하고 <code>children</code>만 그리드로 교체하는 전략은 <strong>AG Grid에서 IBSheet보다 매끄럽다.</strong> 이유: AG Grid는 선언형이라 F3 KPI·F5 건수의 "필터된 행 파생"을 <code>onModelUpdated</code>/<code>onFilterChanged</code> 이벤트 → React state로 받아 프레임이 자연 재렌더한다(IBSheet는 instance 폴링 필요). <strong>첫 PoC 후보:</strong> ⓐ위험 최소 = <code>asset_funding</code>(조회전용 매트릭스 M4, KPI 연동 적음), ⓑ가치 최대 = <code>generic_list</code>(CRUD+커스텀셀+필터를 한 번에 검증, 기존 React 셀 재사용 효과 확인). AG Grid는 ⓑ도 무리 없다.</p>
+<hr>
+<h2>부록 A. Community(무료) vs Enterprise(유료) 경계 — 1차출처 요약</h2>
+<p><strong>Community (MIT, 무료, 키 불요):</strong> colDefs/rowData 바인딩, 셀편집(Text/Number/Date/Select/Checkbox 에디터), 단일+<strong>다중 컬럼 정렬</strong>, Text/Number/BigInt/Date 필터·floating filter·Quick Filter·external filter, 클라이언트+<strong>Infinite</strong> Row Model, 페이지네이션, 행선택(rowSelection 객체·checkboxes·headerCheckbox), CRUD(applyTransaction+getRowId+valueSetter), <strong>완전 React 통합·React 셀 렌더러</strong>, 다단 컬럼그룹, pinned 열/상하단행, colSpan+rowSpan(클래식), 행/열 가상화, <strong>Theming API+다크모드</strong>, cellClassRules/cellStyle, valueFormatter, CSV export, 접근성(ARIA).</p>
+<p><strong>Enterprise (유료, 개발자당 $999 / Bundle $1,498, 도메인 바인딩 없음):</strong> Set Filter·Multi Filter·Advanced Filter, Rich Select·Formula 에디터, Server-Side·Viewport Row Model, Cell/Range Selection, <strong>aggFunc 집계·grandTotalRow·행그룹핑(RowGrouping)</strong>, 트리데이터, 마스터/디테일, <strong>자동 셀병합(enableCellSpan/spanRows, v33.1)</strong>, <strong>native 스파크라인(agSparklineCellRenderer)</strong>, <strong>Excel export</strong>(클라이언트 단독·서버불요).</p>
+<h2>부록 B. 버전 의존성 주의 [1차출처]</h2>
+<ul><li>Theming API: v32.2 opt-in → <strong>v33.0 기본</strong>(이전엔 CSS 테마파일 import). 최신 v35.3.1.</li><li><code>enableCellSpan</code>/<code>spanRows</code>(자동 셀병합): v33.1+. <code>enableRowPinning</code>(사용자 행고정): v33.3+.</li><li>행선택 신 API(<code>rowSelection</code> 객체): v32.2+ (구 <code>checkboxSelection</code>/<code>rowSelection:'multiple'</code> 폐기 경로).</li><li>모듈 등록: <code>AllCommunityModule</code> + <code>AgGridProvider</code>(신 모듈 시스템).</li></ul>
+<h2>부록 C. 잔여 미검증 항목 (PoC 실측 후 갱신)</h2>
+<ul><li><strong>번들 크기 정량</strong> — ✅ <strong>PoC 실측 완료(부록 E)</strong>: AllCommunityModule = <strong>+1,157 kB min / +326 kB gzip</strong>(gzip 2.2배). worst-case 상한 — 특정 모듈만 import 시 트리쉐이킹으로 축소 가능.</li><li><code>var(--token)</code> ↔ theme 파라미터 <strong>전 크롬 매핑 완전성</strong> — ✅ <strong>PoC 실측 완료(부록 E)</strong>: 핵심 4개 파라미터만 바인딩 → 헤더 배경·테두리·행 색 등 <strong>파생 크롬이 라이트/다크 모두 자동추종, drift 없음.</strong></li><li><strong>full-width 행(fullWidthCellRenderer)의 행선택 무손실</strong> — 여전히 <code>[미검증]</code>(매트릭스 PoC 범위 밖 — generic_list/모바일 2차 PoC 몫)</li><li><strong>M2 합계행 "앱이 전 화면 합계 사전계산" 전제의 보편성</strong> — <code>[검증·partial]</code>(화면별 점검 필요 — 단 PoC의 단일 총계는 <code>pinnedBottomRowData</code>로 정상 동작)</li><li>pinned row 스크린리더 한계가 공공기관 접근성 기준 충족 여부 — <code>[1차출처·영향 미평가]</code></li></ul>
+<h2>부록 D. 적대적 검증 결과 (8건 — refuted 0, confirmed 4 / partial 4)</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>#</th><th>검증한 주장</th><th>판정</th><th>핵심 근거 / 정정</th><th>출처</th></tr></thead>
+<tbody>
+<tr><td>D-1</td><td><strong>X2 테마</strong>: Tweaks 런타임 CSS변수 편집이 Theming API로 라이브 전파되는가</td><td>✅ <strong>confirmed</strong></td><td><code>withParams</code>는 var() 리터럴을 <strong>가공 없이</strong> CSS 커스텀 프로퍼티로 주입 → 브라우저가 paint시 resolve → <code>--primary</code> mutate 시 <strong>theme 재생성 없이 자동추종</strong>. <code>data-ag-theme-mode</code>로 다크 동기화. <strong>원안 risk:high/workaround 폐기 → gain 확정.</strong> 전제 v33+. 전부 Community</td><td>theming-parameters / theming-css</td></tr>
+<tr><td>D-2</td><td><strong>L10 스파크라인</strong>: native는 Enterprise지만 자체 MiniBars를 Community 셀렌더러로 넣으면 무료</td><td>✅ <strong>confirmed</strong></td><td>native <code>agSparklineCellRenderer</code>=Enterprise(SparklinesModule). 임의 SVG를 <code>colDef.cellRenderer</code>로=Community/MIT, 버전게이트 없음. <strong>Enterprise 불필요</strong></td><td>sparklines-installation</td></tr>
+<tr><td>D-3</td><td><strong>L11/L12 필터</strong>: Community External Filter로 복합식(AND/태그OR/부분·정확) 단일 콜백 이식, Set/Advanced Filter 불요</td><td>✅ <strong>confirmed</strong></td><td><code>ExternalFilterModule</code>=Community, <code>doesExternalFilterPass</code>는 임의 행 술어. Set/Multi/Advanced=Enterprise이나 우리 드로어가 UI 제공 → 불요. <strong>단 CSRM 전용·UI 미제공</strong></td><td>iModule.ts</td></tr>
+<tr><td>D-4</td><td><strong>멀티컬럼 정렬</strong>이 Community(마케팅 묶음이 Enterprise처럼 보일 뿐)</td><td>✅ <strong>confirmed</strong></td><td>Row Sorting 문서·npm MIT·소스(community-modules/core)·비교표 4개 교차일치. Enterprise가 파는 건 'advanced grouping/sorting'이지 멀티정렬 자체 아님</td><td>row-sorting</td></tr>
+<tr><td>D-5</td><td><strong>M2 합계행</strong> = <code>pinnedBottomRowData</code>(Community), Enterprise aggregation 불요</td><td>🟡 <strong>partial</strong></td><td>라이선스 경계 confirmed. <strong>단 "앱이 전 화면 합계 사전계산" 전제는 문서로 보편성 인증 불가</strong> → 화면별 점검</td><td>license-pricing</td></tr>
+<tr><td>D-6</td><td><strong>라이선스</strong>: Community MIT·키불요·도메인무바인딩, baseline이 Enterprise 안 끌어들임</td><td>🟡 <strong>partial</strong></td><td>라이선스 confirmed(Vercel preview 그냥 동작). <strong>단 "baseline 100% Community"는 AG Grid 미도입이라 vacuously true</strong> → 도입 PR에서 import 감사 필요</td><td>license-pricing</td></tr>
+<tr><td>D-7</td><td><strong>X1 마스킹</strong>: mn/MT 재사용 + <code>refreshCells({force:true})</code>로 런타임 전역 가림 동작</td><td>🟡 <strong>partial</strong></td><td>셀렌더러·valueFormatter·refreshCells 전부 Community. <code>force:true</code>가 핵심(마스크는 행 값 불변). <strong>단 <code>mask.tsx _on</code>이 const라 런타임 토글 불가 → 가변화+force호출+memo재독취 3작업 전제</strong></td><td>view-refresh</td></tr>
+<tr><td>D-8</td><td><strong>X3 반응형</strong>: 모바일 카드재배치 native 미지원(loss), 우회 시 정렬/선택/가상화 무손실</td><td>🟡 <strong>partial</strong></td><td>native 미지원 confirmed(GitHub #3137/#3556). 우회 시 <strong>데이터레벨 정렬·세로 가상화는 보존되나, 카드 측 정렬/선택 조작 UI는 직접 재구현</strong>, full-width 행선택 무손실은 미검증. 우회비용 high. IBSheet도 불가 → <strong>tie</strong></td><td>full-width-rows</td></tr>
+</tbody>
+</table></div>
+<blockquote><strong>검증 요지:</strong> AG Grid 자체엔 refuted가 없다. confirmed 4건은 도입의 핵심 이득(테마·스파크라인·필터·정렬)을 굳혔고, partial 4건은 "되지만 전제/배선이 있다"는 정직한 단서(합계행 전제·라이선스 감사·마스킹 리팩터·반응형 우회)다.</blockquote>
+<h2>부록 E. PoC 실측 결과 (2026-06-23, AG Grid Community v35.3.1)</h2>
+<p><code>asset_funding</code>을 <strong>frame+children 점진전략</strong>으로 PoC 구현(<code>src/dash/asset_funding_aggrid.tsx</code>, 원본 무손상). 라우트 <code>asset-funding-aggrid</code>, 원본 페이지 헤더에 "AG Grid PoC" 버튼으로 왕복. 실제 dev 서버(localhost:5273)에서 라이트/다크 렌더·콘솔·정렬 확인.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>검증 항목</th><th>결과</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td><strong>빌드</strong></td><td>✅ green</td><td><code>vite build</code> exit 0, 3455 modules</td></tr>
+<tr><td><strong>렌더(런타임)</strong></td><td>✅ 정상</td><td>blank grid 없음 — <code>ModuleRegistry.registerModules([AllCommunityModule])</code> 등록 효과</td></tr>
+<tr><td><strong>콘솔</strong></td><td>✅ 클린</td><td>AG Grid 에러·모듈 미등록·테마 충돌·라이선스 워터마크 <strong>0건</strong>(Vite HMR 메시지만)</td></tr>
+<tr><td><strong>테마 자동추종(X2)</strong></td><td>✅ <strong>confirmed 실증</strong></td><td><code>themeQuartz.withParams</code>에 핵심 4개(<code>backgroundColor/foregroundColor/accentColor/borderColor</code>)만 <code>var(--token)</code> 바인딩 → <strong><code>data-ag-theme-mode</code> 없이 <code>.dark</code> 캐스케이드로 다크 자동전환</strong>, 헤더 배경·테두리·행 색 등 <strong>파생 크롬 drift 없음</strong></td></tr>
+<tr><td><strong>2단 중첩헤더(M1)</strong></td><td>✅ 정상</td><td>구분(고정열) \</td></tr>
+<tr><td><strong>pinned 합계행(M2)</strong></td><td>✅ 정상</td><td><code>pinnedBottomRowData</code>로 하단 고정, bold, <strong>정렬 시에도 데이터에 섞이지 않고 고정 유지</strong></td></tr>
+<tr><td><strong>정렬(Community)</strong></td><td>✅ 정상</td><td>헤더 클릭 → 행 재정렬 + 정렬 화살표, 합계행 제외</td></tr>
+<tr><td><strong>마스킹(X1)</strong></td><td>✅ valueFormatter 경로 동작</td><td><code>mn()</code>을 valueFormatter에서 호출 → 전 숫자 <code>000</code> 마스킹 표시(mask <code>_on</code> ON 상태 반영). <strong>단 런타임 토글은 미검증</strong>(<code>_on</code> const, D-7 전제)</td></tr>
+<tr><td><strong>선택 액션(L1·L2)</strong></td><td>✅ 정상</td><td><code>rowSelection</code>(v35 객체 API) 체크박스 33개 렌더 → 2건 선택 시 "2건 선택됨 / 선택 삭제 / 선택 해제" 툴바 전환, 삭제 동작. <code>onSelectionChanged</code>→React state</td></tr>
+<tr><td><strong>kebab 메뉴(L16)</strong></td><td>✅ 정상</td><td>Radix DropdownMenu(generic_list MoreMenu 동형): 등록 / 내보내기 / 인쇄 — GridFrame toolbarRight 슬롯(순수 React)</td></tr>
+<tr><td><strong>CSV 내보내기(X5)</strong></td><td>✅ Community</td><td><code>exportDataAsCsv()</code> 클라이언트 단독·서버 불요(IBSheet POI 서버모듈 대비 우위). Excel(.xlsx)만 Enterprise</td></tr>
+<tr><td><strong>페이지네이션(L5)</strong></td><td>✅ Community</td><td><code>pagination</code>+<code>paginationPageSize=12</code>→16행 2페이지. <code>suppressPaginationPanel</code>로 AG Grid 페이저 숨기고 <strong>커스텀 페이저(footerCenter)가 <code>paginationGoToPage()</code> 제어</strong> — 엔진 AG Grid, 외관 토큰. 페이지당 12행만 렌더 확인</td></tr>
+<tr><td><strong>뷰토글 리스트↔카드(L6)</strong></td><td>✅ <strong>실증</strong></td><td>푸터 SegTabs로 전환: <strong>리스트=AG Grid 표 / 상세=React 카드, 단일 rowData 공유</strong>(렌더러 이원화). IBSheet 카드뷰 unverified였던 지점을 AG Grid는 React 카드 병행으로 해소</td></tr>
+<tr><td><strong>푸터 슬롯(건수/페이저/뷰토글/아이콘)</strong></td><td>✅ 정상</td><td>"총 N개 중 M개 표시 중"+페이저+리스트/상세+다운로드/새창/더보기 — 전부 GridFrame footerLeft/Center/Right(순수 React)</td></tr>
+<tr><td><strong>상세필터(L12, External Filter)</strong></td><td>✅ <strong>실증·Community</strong></td><td>Sheet 드로어(ui/sheet 재사용)→<code>isExternalFilterPresent</code>/<code>doesExternalFilterPass</code>+<code>onFilterChanged()</code>. "출자금액 ≥ 1000" 적용 시 16행→6행 정확 필터, 필터 칩+제거 동작. <strong>L12(복합 외부필터=Community) 실측 확인</strong></td></tr>
+<tr><td><strong>등록(CRUD add)</strong></td><td>✅ 정상</td><td>Dialog(ui/dialog 재사용)→입력→<code>setRows</code> prepend. 2026 추가 시 그리드 최상단 반영 + 활성 필터 동시 통과</td></tr>
+<tr><td><strong>번들 증분</strong></td><td>⚠️ <strong>+1,157 kB min / +326 kB gzip</strong></td><td>baseline 267 kB → 593 kB gzip(2.2배). AllCommunityModule worst-case — 특정 모듈만 import 시 축소 가능</td></tr>
+</tbody>
+</table></div>
+<p><strong>PoC 결론:</strong> <code>frame+children</code> 전략은 <strong>실제로 깨끗하게 동작</strong>한다 — GridFrame(프레임)은 무변경, AG Grid가 <code>children</code>만 차지. <strong>가장 큰 불확실성이었던 테마 자동추종(X2)이 실제 앱에서 라이트/다크 모두 drift 없이 확인</strong>됐다. 추가로 <strong>generic_list 동형 명령 툴바(행 선택→선택 삭제/해제 · 상세필터 · 새로고침 · kebab 등록/내보내기/인쇄)와 푸터(건수 · 페이지네이션 · 리스트↔카드 뷰토글 · 다운로드/새창/더보기)까지 AG Grid에 그대로 이식·실측 완료</strong> — 선택은 <code>rowSelection</code>, 페이징은 <code>pagination</code>+커스텀 페이저, 뷰토글은 표(AG Grid)↔카드(React) 단일 데이터 공유(L6), 내보내기는 <code>exportDataAsCsv()</code>(Community), 메뉴는 Radix(toolbar/footer 슬롯=순수 React). 또한 <strong>등록(Dialog→행 추가)과 상세필터(Sheet→AG Grid External Filter, L12)도 실연동·실측 완료</strong> — 모달/드로어 UI는 ui/dialog·ui/sheet 프리미티브 재사용, 필터는 Community external filter로 16행→6행 정확 동작. 유일한 실질 비용은 <strong>번들 +326 kB gzip</strong>(worst-case). <strong>미검증으로 남은 것</strong>(generic_list 2차 PoC 몫): React 셀 렌더러 재사용(StatusBadge/MiniBars), <strong>CRUD 수정/삭제 폼</strong>(등록 add는 완료, edit/2단삭제확인은 미구현), <strong>마스킹 런타임 토글</strong>(<code>mask.tsx _on</code> 가변화 선행 필요), 모바일 카드 재배치(X3). ⚠️ asset_funding PoC가 green이라고 "AG Grid 전면 검증"으로 읽으면 안 된다 — 위 미검증 표면이 generic_list PoC를 필요로 한다.</p>
+</main>
+</body>
+</html>

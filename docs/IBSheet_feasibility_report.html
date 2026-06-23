@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBSheet 도입 타당성 리포트 — APFS 대시보드</title>
+<style>:root{--fg:#1c2024;--muted:#5b6168;--line:#e3e6ea;--line2:#eef1f4;--accent:#0158A8;--green:#0E963B;--bg:#fff;--code-bg:#f3f5f7;--th-bg:#f6f8fa;--zebra:#fafbfc;--quote-bg:#f7faf8}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;background:#eef1f4;color:var(--fg);font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",Roboto,"Malgun Gothic",sans-serif;line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}.page{max-width:920px;margin:32px auto;background:var(--bg);padding:48px 56px 72px;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 28px rgba(0,0,0,.05)}h1,h2,h3,h4,h5,h6{line-height:1.35;font-weight:800;color:#10141a}h1{font-size:1.85em;margin:.2em 0 .8em;padding-bottom:.4em;border-bottom:3px solid var(--green);color:var(--green)}h2{font-size:1.4em;margin:1.9em 0 .7em;padding-left:.5em;border-left:4px solid var(--accent)}h3{font-size:1.15em;margin:1.5em 0 .5em}h4{font-size:1.02em;margin:1.2em 0 .4em;color:var(--muted)}p{margin:.7em 0}a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(1,88,168,.3)}a:hover{border-bottom-color:var(--accent)}code{background:var(--code-bg);padding:.12em .42em;border-radius:5px;font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;font-size:.86em;color:#b4205a}strong{font-weight:700;color:#10141a}hr{border:0;border-top:1px solid var(--line);margin:2em 0}blockquote{margin:1.1em 0;padding:.8em 1.1em;background:var(--quote-bg);border-left:4px solid var(--green);border-radius:0 8px 8px 0;color:var(--muted);font-size:.95em}blockquote a{color:var(--green)}ul,ol{margin:.6em 0;padding-left:1.5em}li{margin:.32em 0}li>ul,li>ol{margin:.2em 0}.tbl-wrap{overflow-x:auto;margin:1.1em 0;border:1px solid var(--line);border-radius:10px}table{border-collapse:collapse;width:100%;font-size:.9em}thead th{background:var(--th-bg);font-weight:700;color:#10141a;text-align:left;position:sticky;top:0}th,td{padding:9px 13px;border-bottom:1px solid var(--line2);border-right:1px solid var(--line2);vertical-align:top}th:last-child,td:last-child{border-right:0}tbody tr:nth-child(even){background:var(--zebra)}tbody tr:hover{background:#f0f6ff}tbody tr:last-child td{border-bottom:0}@media(max-width:640px){.page{margin:0;padding:24px 18px 48px;border-radius:0}body{font-size:14px}}@media print{body{background:#fff}.page{box-shadow:none;margin:0;max-width:none;border-radius:0;padding:0}.tbl-wrap{overflow:visible}}</style>
+</head>
+<body>
+<main class="page">
+<h1>IBSheet 도입 타당성 리포트 — APFS 대시보드</h1>
+<blockquote>작성: 멀티에이전트 워크플로우(14 agents · 공식문서 적대적 검증) | 독자: 프론트엔드 결정권자<br>근거: 기능 매트릭스 47건 + IBSheet 공식문서 적대적 검증 8건 | 작성일 2026-06-22</blockquote>
+<hr>
+<h2>1. 한 줄 결론</h2>
+<p><strong>현행 기능 46건 중 41건(약 89%)은 IBSheet로 구현 가능하다(parity 28 + gain 6 + workaround 7).</strong><br>진짜 마찰점은 "표 자체"가 아니라 표를 감싼 우리 앱의 정체성 — 즉</p>
+<ol><li>다크 + CSS변수토큰 + Tweaks 런타임 테마,</li><li><code>mask.tsx</code> 단일 전역 마스킹 토글,</li><li>선언형 React ↔ 명령형 인스턴스 임피던스 불일치,</li><li>Vercel preview 도메인 회전 환경의 URL 단위 라이선스</li></ol>
+<p>— 이 네 가지다. <strong>그리드 본체(매트릭스·합계·다단헤더·정렬·대용량)는 오히려 IBSheet가 더 잘한다.</strong> 잃는 것은 그리드 밖 영역과 "셀 안에 React를 넣어둔" 커스텀 시각화다.</p>
+<hr>
+<h2>2. 기능별 구현가능성 매트릭스</h2>
+<p>평가 척도: <strong>gain</strong>(현행보다 개선) / <strong>parity</strong>(동등) / <strong>workaround</strong>(우회로 구현, 우아함 손실) / <strong>loss</strong>(동등 불가) / <strong>blocker</strong>(도입 차단). 검증결과 컬럼은 적대적 검증의 confirmed/refuted/partial/unverified.</p>
+<h3>2-1. 프레임(GridFrame 외곽 — IBSheet 범위 밖, React 유지)</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>기능</th><th>IBSheet지원</th><th>평가</th><th>공수</th><th>리스크</th><th>검증결과</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td>F1 브레드크럼/PageHeader</td><td>해당없음</td><td>parity</td><td>low</td><td>low</td><td>—</td><td>프레임 영역, 변경 없음</td></tr>
+<tr><td>F2 카드헤더 title+sub</td><td>해당없음</td><td>parity</td><td>low</td><td>low</td><td>—</td><td>프레임 영역</td></tr>
+<tr><td>F3 KPI 요약뱃지(필터집합 파생 sum/avg)</td><td>config</td><td>parity</td><td>medium</td><td>medium</td><td>confirmed(추출 API)</td><td>합계는 FormulaRow/getShownRows로 추출 가능하나 <strong>카드형 KPI는 React가 그리고 필터집합 동기화에 instance 폴링 필요</strong> — 임피던스 비용의 구체적 발현</td></tr>
+<tr><td>F4 툴바슬롯</td><td>해당없음</td><td>parity</td><td>low</td><td>low</td><td>confirmed(getCheckedRows)</td><td>UI는 React, 액션만 instance 메서드로 연결</td></tr>
+<tr><td>F5 푸터슬롯(건수·페이지네이션·뷰토글·내보내기)</td><td>config</td><td>parity</td><td>medium</td><td>medium</td><td>confirmed</td><td>건수가 <strong>필터된 행 파생</strong> → F3과 동일하게 instance 동기화 필요</td></tr>
+<tr><td>F6 maxWidth1280+dashFade</td><td>config</td><td>parity</td><td>low</td><td>low</td><td>confirmed</td><td>컨테이너 CSS 유지</td></tr>
+</tbody>
+</table></div>
+<h3>2-2. 리스트(L*) — 그리드 본체</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>기능</th><th>IBSheet지원</th><th>평가</th><th>공수</th><th>리스크</th><th>검증결과</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td>L1 행 체크박스+전체선택</td><td>native</td><td><strong>gain</strong></td><td>low</td><td>low</td><td>confirmed(Type:Bool + HeaderCheck:1)</td><td>수동 Set 관리보다 견고</td></tr>
+<tr><td>L2 일괄삭제</td><td>native</td><td>parity</td><td>low</td><td>low</td><td>confirmed(deleteRow+Deleted=1)</td><td>서버 연동 시 오히려 유리</td></tr>
+<tr><td>L3 모달 CRUD+2단확인</td><td>native</td><td><strong>workaround</strong></td><td>medium</td><td>medium</td><td>confirmed(인셀편집 native)</td><td>인셀편집 채택 시 모달 UX 상실, 모달 유지 시 그리드 표시전용+React폼 이중관리. 2단확인은 Radix 유지</td></tr>
+<tr><td>L4 행 클릭/더블클릭/hover</td><td>native</td><td>parity</td><td>low</td><td>low</td><td>confirmed</td><td>hover 톤은 CSS변수 의존 → X2 위험 상속</td></tr>
+<tr><td>L5 클라이언트 페이지네이션</td><td>native</td><td>parity</td><td>low</td><td>low</td><td>confirmed(SearchMode/PageLength)</td><td>페이지버튼 UI 모양 다를 수 있어 커스텀 푸터+instance 제어 권장</td></tr>
+<tr><td>L6 뷰토글(테이블↔카드)</td><td>unverified</td><td><strong>loss</strong></td><td>high</td><td>high</td><td><strong>unverified(카드뷰)</strong></td><td>카드뷰 문서 근거 없음 → React 카드 렌더러 병행+토글 스왑. "데이터 소스 이원화"는 과장 — 단일 APFS_DATA 공유하면 데이터는 하나, <strong>"렌더러 이원화"가 정확</strong></td></tr>
+<tr><td>L7 스키마주도 컬럼(9 cell types)</td><td>config</td><td>workaround</td><td>medium</td><td>medium</td><td>confirmed(Cols 매핑)</td><td>text/code/amount/date/number는 직매핑, pii/status/gp/rate는 Button:'Html' 재구현. SSOT가 React→IBSheet 옵션으로 이동</td></tr>
+<tr><td>L8 타입별 셀렌더러(숫자우측·tabular·단위)</td><td>native</td><td><strong>gain</strong></td><td>low</td><td>low</td><td>confirmed(Align+Format)</td><td>숫자/날짜 포맷은 IBSheet 강점</td></tr>
+<tr><td>L9 StatusBadge(tone 색칩)</td><td>custom-render</td><td><strong>workaround</strong></td><td>medium</td><td>medium</td><td><strong>partial</strong></td><td>Button:'Html'로 배지 재현 confirmed. 색이 var(--success) 의존 → 자동 추종 안 됨, X2 브리징 필요</td></tr>
+<tr><td>L10 MiniBars 스파크라인 셀</td><td>custom-render</td><td><strong>loss</strong></td><td>high</td><td>high</td><td><strong>partial/unverified</strong></td><td>인셀 차트 native unverified(IB Chart는 별도 제품). Button:'Html'+SVG 우회만 — React 선언성/반응성 상실 confirmed, Row.Height 수동, 렌더 성능 동등성 unverified</td></tr>
+<tr><td>L11 상세필터 드로어</td><td>config</td><td>parity</td><td>medium</td><td>medium</td><td>confirmed(ShowFilterRow)</td><td>UX 다름 → React 드로어 유지, 값만 instance로 적용 권장</td></tr>
+<tr><td>L12 복합 행필터(값AND+태그OR+부분/정확)</td><td>native</td><td>parity</td><td>medium</td><td>medium</td><td><strong>partial</strong></td><td>열간 AND·열내 다중선택 OR·Text 부분일치 confirmed. <strong>복합식 단일 선언 동등표현 + 사용자 필터콜백은 unverified</strong> — 앱레벨 getShownRows 자체 술어 필터 필요 가능</td></tr>
+<tr><td>L13 제거가능 필터칩</td><td>해당없음</td><td>parity</td><td>low</td><td>low</td><td>—</td><td>칩 UI는 React, 단방향 배선만</td></tr>
+<tr><td>L14 빈상태 EmptyState</td><td>config</td><td>parity</td><td>low</td><td>low</td><td>confirmed(NoDataMessage)</td><td>커스텀 디자인은 HTML 커스터마이즈 또는 React 오버레이</td></tr>
+<tr><td>L15 토스트(sonner)</td><td>해당없음</td><td>parity</td><td>low</td><td>low</td><td>—</td><td>앱 레벨, 이벤트 연결만</td></tr>
+<tr><td>L16 kebab 드롭다운</td><td>해당없음</td><td>parity</td><td>low</td><td>low</td><td>confirmed(export)/unverified(print)</td><td>내보내기 위임은 gain, 인쇄는 unverified</td></tr>
+</tbody>
+</table></div>
+<h3>2-3. 매트릭스(M*) — IBSheet의 최적 적용 영역</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>기능</th><th>IBSheet지원</th><th>평가</th><th>공수</th><th>리스크</th><th>검증결과</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td>M1 2단 중첩헤더</td><td>config</td><td><strong>gain</strong></td><td>low</td><td>low</td><td>confirmed(Header 배열+HeaderMerge)</td><td>수동 colSpan/rowSpan보다 선언적</td></tr>
+<tr><td>M2 계산된 합계행</td><td>config</td><td><strong>gain</strong></td><td>low</td><td>low</td><td>confirmed(FormulaRow+setMergeRange)</td><td>하드코딩 TOTAL을 자동계산으로 대체</td></tr>
+<tr><td>M3 조건부 셀스타일</td><td>config</td><td>parity</td><td>medium</td><td>medium</td><td>confirmed(Formula/AddClassFormula)</td><td>muted/강조 색이 CSS변수 의존 → X2 위험 상속</td></tr>
+<tr><td>M4 조회전용 매트릭스</td><td>native</td><td><strong>gain</strong></td><td>low</td><td>low</td><td>confirmed(CanEdit:0)</td><td><strong>IBSheet가 가장 자연스러운 적용 영역</strong></td></tr>
+</tbody>
+</table></div>
+<h3>2-4. 횡단 관심사(X*) — 마찰점 집중 구역</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>기능</th><th>IBSheet지원</th><th>평가</th><th>공수</th><th>리스크</th><th>검증결과</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td>X1 마스킹 mn()/MT 전역 토글</td><td>custom-render</td><td><strong>workaround</strong></td><td>high</td><td>high</td><td><strong>REFUTED</strong></td><td>전역 마스킹/토글 native 없음(반증 확정). 마스킹은 per-column 모델. 동등효과는 전 컬럼 순회 CustomFormat 주입 또는 렌더 이벤트 일괄변환을 <code>_on</code>에 직접 배선 — 단일토글의 우아함 상실</td></tr>
+<tr><td>X2 테마: CSS변수+다크+Tweaks 런타임</td><td>(정정됨)</td><td><strong>친화성 마찰</strong>(loss 아님)</td><td>high</td><td>high</td><td><strong>PARTIAL</strong></td><td>매트릭스의 "loss/전부 unverified"는 틀림. 런타임 테마전환 confirmed(<code>Def.setCurrentStyle</code>/<code>getCurrentStyle</code>/<code>clearCurrentStyle</code>, 8.3.0.18+, localStorage, 설정팝업). 다크그레이 프리셋 실재(OS 자동토글만 미문서). <strong>진짜 미확인은 "앱 var(--token) 자동 추종"뿐</strong> → 토큰을 setCurrentStyle로 주입+열린 시트 새로고침 브리지 필요</td></tr>
+<tr><td>X3 반응형(모바일 카드 재배치)</td><td>config</td><td><strong>loss</strong></td><td>high</td><td>high</td><td>confirmed/한계</td><td>컨테이너 리사이즈는 되나 본질이 표 → 모바일 카드 재배치 불가, 예제에 min-width 제약. 좁은 화면은 가로스크롤 표로 고정 (responsive-ui 규약과 충돌)</td></tr>
+<tr><td>X4 RBAC editable 게이팅</td><td>config</td><td>parity</td><td>low</td><td>low</td><td>confirmed(CanEdit)</td><td>메뉴 가시성은 Shell 책임, 무관</td></tr>
+<tr><td>X5 내보내기/인쇄</td><td>native</td><td><strong>gain</strong>(조건부)</td><td>low</td><td>medium</td><td><strong>partial</strong></td><td>Excel/PDF export confirmed이나 <strong>Down2Pdf.jsp+POI 서버모듈 의존 → 백엔드 없는 본 프로토타입엔 인프라 필요</strong>. 인쇄 전용 API unverified. 현행 stub 대비론 개선</td></tr>
+<tr><td>X6 접근성(Radix focus trap/aria)</td><td>unverified</td><td>parity</td><td>medium</td><td>medium</td><td>verified(SA인증)/unverified(aria세부)</td><td>오버레이는 Radix 유지. 그리드 SA 품질인증 보유, WAI-ARIA 세부 마크업 unverified</td></tr>
+</tbody>
+</table></div>
+<h3>2-5. 커스텀 셀 / 비표 위젯 / 아키텍처</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>기능</th><th>IBSheet지원</th><th>평가</th><th>공수</th><th>리스크</th><th>검증결과</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td>커스텀셀: ColorChip(gp)</td><td>custom-render</td><td>workaround</td><td>medium</td><td>medium</td><td>partial</td><td>Button:'Html' 주입 confirmed, 토큰 연동 X2 위험 상속</td></tr>
+<tr><td>커스텀셀: ExecBar/HBars 진행바</td><td>custom-render</td><td>workaround</td><td>medium</td><td>medium</td><td>partial</td><td>Button:'Html'+AddClassFormula 우회, 테마토큰 X2 위험</td></tr>
+<tr><td><strong>아키텍처: 선언형 frame+children vs 명령형 instance</strong></td><td>config</td><td><strong>workaround</strong></td><td>high</td><td>medium</td><td><strong>PARTIAL(프레이밍 REFUTED)</strong></td><td>"큰 마찰 없이 통합"은 반증. @ibsheet/react는 <strong>마운트 시 1회만 생성, props 변경에 반응 안 함</strong>("does NOT react to prop changes after initial mount"). 동적 갱신은 ref instance 메서드 또는 key 강제 리마운트. 이 배선 자체가 마찰의 실체</td></tr>
+<tr><td>비표: Calendar/Timeline/Card Grid/Steppers/Notif/KPI카드/AuditTimeline/탭/슬라이더/상세모달</td><td>해당없음</td><td>parity</td><td>low</td><td>low</td><td>—</td><td>표 아님 → React 유지, IBSheet 무관(탭은 인스턴스 라이프사이클 주의)</td></tr>
+<tr><td>조건부 행 하이라이트</td><td>config</td><td>parity</td><td>low</td><td>medium</td><td>confirmed</td><td>Color/Formula로 native, danger tint 토큰 의존은 X2 위험</td></tr>
+<tr><td><strong>라이선스 비용/도메인 바인딩</strong></td><td>native</td><td><strong>loss</strong></td><td>medium</td><td>high</td><td><strong>PARTIAL(운영가능성 REFUTED)</strong></td><td>바인딩·도메인별 라이선스·비공개 가격 전부 confirmed. 그러나 <strong>"Vercel preview 회전 환경 운영 관리 가능"은 반증</strong> — 모든 URL 개별 발급 필요, 와일드카드 미지원. localhost만 무검증</td></tr>
+</tbody>
+</table></div>
+<hr>
+<h2>3. IBSheet 도입으로 '얻는 것' (gain) — 모두 공식문서 confirmed</h2>
+<p>그리드 본체에 집중된다.</p>
+<ul><li><strong>다단/병합 헤더(M1)</strong> — <code>Header</code> 배열 + <code>Cfg.HeaderMerge</code>로 선언적. 현행 수동 colSpan/rowSpan보다 우월.</li><li><strong>계산 합계행/소계(M2)</strong> — <code>FormulaRow</code>(sum/avg/count) + <code>makeSubTotal</code> + <code>setMergeRange</code>. 하드코딩 TOTAL 배열을 자동계산으로 대체. <strong>실데이터 연동 시 특히 가치.</strong></li><li><strong>숫자/날짜 포맷(L8)</strong> — <code>Align:'Right'</code> + <code>Format:'#,##0 억원'</code>로 천단위·단위접미·소수 native.</li><li><strong>인셀 편집 + dirty 추적</strong> — Added/Changed/Deleted 자동 추적, <code>getSaveJson</code>. <strong>서버 연동 시 CRUD가 오히려 유리.</strong></li><li><strong>고정 열(LeftCols) · 정렬 · 엑셀형 필터</strong> — 가로 넓은 매트릭스에 native 고정열.</li><li><strong>전체선택 체크박스(L1)</strong> — <code>HeaderCheck:1</code> 내장이 수동 Set 관리보다 견고.</li><li><strong>대용량(≤5만행 비페이징 / ScrollAppend / ServerPaging)</strong> — 단, "가상 스크롤/100만행 고효율"은 마케팅 문구로 메커니즘 미문서(unverified). 대용량=페이징 전략으로 한정 이해.</li><li><strong>내보내기(X5)</strong> — Excel/PDF/CSV/Image. 단 PDF/Excel은 <strong>서버모듈 의존</strong>(4 참조).</li><li><strong>조회전용 매트릭스(M4)</strong> — 다단헤더+합계+고정열+정렬을 한 번에. <strong>IBSheet가 가장 빛나는 영역.</strong></li></ul>
+<hr>
+<h2>4. '잃는 것 / 마찰점' (적대적 검증 반영, 과장 없이)</h2>
+<h3>4-1. [최대 마찰] 테마 — PARTIAL, "loss" 아님</h3>
+<p>런타임 테마 전환은 <strong>confirmed</strong>(<code>Def.setCurrentStyle</code>/<code>getCurrentStyle</code>/<code>clearCurrentStyle</code>, 8.3.0.18+, localStorage 영속, 설정팝업 UI). 다크그레이 프리셋도 실재. <strong>유일하게 unverified인 것은 "앱의 <code>var(--token)</code>을 그리드가 자동 추종"하는 메커니즘.</strong> 따라서 리스크는 "리테마 불가"가 아니라 <strong>"앱 토큰 자동추종 불가 → Tweaks/다크 토글 시 토큰을 <code>setCurrentStyle</code>로 주입하고 이미 열린 시트를 새로고침하는 브리지 코드 필요."</strong> 그리드만 테마 이탈할 위험은 실재하나 해결 경로가 있는 마찰이다.</p>
+<h3>4-2. [REFUTED] 전역 마스킹 토글의 우아함 상실</h3>
+<p><code>mask.tsx</code>의 단일 <code>_on</code> 한 줄로 전 화면을 마스킹/해제하는 native 기능은 <strong>IBSheet에 없음(반증 확정).</strong> 마스킹은 per-column(<code>Format</code>/<code>CustomFormat</code>/<code>setAttribute</code>)이 기본. 동등효과는 만들 수 있으나 <strong>전 컬럼 순회 CustomFormat 주입 또는 렌더 이벤트 일괄변환을 직접 구현해 <code>_on</code>에 배선</strong>해야 한다.</p>
+<h3>4-3. [REFUTED 프레이밍] 선언형 ↔ 명령형 임피던스 불일치</h3>
+<p>@ibsheet/react는 <strong>마운트 시 1회만 그리드 생성, props 변경에 반응하지 않는다</strong>(공식: "does NOT react to prop changes after initial mount", <code>useEffect([])</code>). 동적 갱신은 (1) ref instance 명령형 메서드 또는 (2) <code>key</code> 강제 리마운트. 구체적 대가: <strong>F3 KPI 배지·F5 푸터 건수가 "필터된 행" 파생</strong> → IBSheet 본체로 바꾸면 props가 아니라 instance 폴링으로 동기화해야 함. frame↔children 경계가 무거워진다.</p>
+<h3>4-4. [loss] 커스텀 시각화 셀 — PARTIAL</h3>
+<p>Button:'Html'로 HTML/SVG 재현은 confirmed. 그러나 (a) React 선언성/반응성 상실 confirmed, (b) 테마토큰 반응성은 부분적(그리드 크롬은 별도 브리징), (c) 렌더 성능 동등성 unverified(행 높이 변동 시 <code>Row.Height</code> 수동).</p>
+<h3>4-5. [loss] 반응형/모바일</h3>
+<p>컨테이너 리사이즈는 되나 본질이 표. <strong>모바일 카드형 재배치 불가</strong>, 예제에 min-width 제약. responsive-ui 규약과 충돌.</p>
+<h3>4-6. [loss] 카드 뷰토글 — unverified ≠ unsupported</h3>
+<p>IBSheet 카드뷰는 unverified(문서 근거 없음, custom cell/CSS로 구현 여지). React 카드 렌더러 병행+토글 스왑이 현실적. <strong>"데이터 소스 이원화"는 과장 — 단일 APFS_DATA를 공유하는 "렌더러 이원화"가 정확.</strong></p>
+<h3>4-7. [loss] 라이선스 — 운영성 REFUTED</h3>
+<p>도메인/IP/포트 단위 바인딩, URL마다 라이선스 필요, 공개 가격표 없음 — <strong>전부 confirmed.</strong> 그러나 <strong>"Vercel preview URL 회전 환경 운영 관리 가능"은 반증</strong>: 모든 URL 개별 발급 필요 + 와일드카드/동적 도메인 미지원. localhost만 무검증.</p>
+<h3>4-8. [partial] 복합 필터 / 내보내기·인쇄</h3>
+<ul><li>L12: 열간 AND·열내 OR·Text 부분일치 confirmed, <strong>복합식 단일선언+사용자 필터콜백 unverified</strong> → 앱레벨 자체 필터 필요 가능.</li><li>X5: Excel/PDF confirmed이나 <strong>서버모듈(POI) 의존</strong>, 인쇄 전용 API unverified.</li></ul>
+<hr>
+<h2>5. 권고</h2>
+<h3>결론: <strong>부분 도입 — 조회전용 매트릭스·대용량 조회 페이지에 한정</strong></h3>
+<p><strong>전면 도입 거부 이유:</strong> 손실 4건(반응형/모바일, 카드 뷰토글, 커스텀 시각화 셀, 라이선스 운영성)과 마찰 3건(테마 토큰 브리징, 전역 마스킹 재구현, 선언형↔명령형 배선)이 <strong>CRUD 리스트 페이지에 집중</strong>된다. 이들은 무료 OSS 스택으로 이미 동작 중이며, IBSheet로 바꿔 얻는 것이 잃는 것보다 작다.</p>
+<p><strong>미도입 거부 이유:</strong> M1/M2/M4(다단헤더·자동합계·조회전용 매트릭스)와 대용량 조회는 IBSheet가 명백히 우월(전부 confirmed).</p>
+<p><strong>부분 도입 범위(gain 클러스터):</strong></p>
+<ul><li>조회전용 매트릭스(M4) — 다단헤더·합계행·고정열·정렬·내보내기를 native로.</li><li>대용량 조회전용 페이지 — 페이징 전략 활용.</li><li><strong>CRUD·커스텀시각화·마스킹·카드토글이 있는 리스트는 React 유지.</strong></li></ul>
+<p><strong>전제 조건:</strong></p>
+<ol><li>IBSheet는 <strong>고정 운영/스테이징 도메인에만</strong> 노출, 회전 preview에는 미발급.</li><li>PDF/Excel export는 <strong>서버모듈 인프라 확보</strong> 후에만 gain으로 계상.</li><li>테마는 <code>setCurrentStyle</code> <strong>브리지 코드 + 시트 새로고침</strong>을 PoC에서 먼저 검증.</li></ol>
+<h3>frame+children 점진 전략 — <strong>가능하며 권장</strong></h3>
+<p>GridFrame은 PageHeader·카드헤더+KPI·툴바·푸터를 프레임으로 소유하고 테이블 본체만 <code>children</code>으로 주입한다(코드 확인). 따라서 <strong>GridFrame은 React로 유지하고 children만 IBSheet로 교체하는 점진 전략이 아키텍처적으로 깨끗하다.</strong> IBSheet 범위는 정확히 children에 국한되고, 프레임 영역(F1·F2·F4·L13·L15 등)은 모두 parity로 무변경.</p>
+<p><strong>단, 점진 전략이 숨기는 비용:</strong> F3 KPI 배지·F5 푸터 건수가 "필터된 행"에서 파생되므로, children이 IBSheet가 되는 순간 이 값들은 props가 아니라 <strong>instance 폴링/이벤트로 동기화</strong>해야 한다. <strong>M4 같은 조회전용·KPI 없는 매트릭스부터 children 스왑을 시작하면 이 비용을 최소화하며 안전하게 검증할 수 있다.</strong></p>
+<hr>
+<h2>부록 A. 적대적 검증 출처 (8건)</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>#</th><th>주장</th><th>판정</th><th>핵심 출처</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>다크+토큰+Tweaks 런타임 테마 동기</td><td><strong>partial</strong></td><td>portal.ibsheet.com 8.3.0.18 릴리스노트 (setCurrentStyle 신설)</td></tr>
+<tr><td>2</td><td>커스텀 셀(스파크라인/배지) 반응성+성능 유지</td><td><strong>partial</strong></td><td>portal 72000529987 (Button:'Html'), React 연동 매뉴얼</td></tr>
+<tr><td>3</td><td>전역 마스킹 토글 동등 전역 재현</td><td><strong>refuted</strong></td><td>portal 72000595307 (per-column 모델)</td></tr>
+<tr><td>4</td><td>선언형 React ↔ 명령형 "큰 마찰 없이 통합"</td><td><strong>partial(프레이밍 refuted)</strong></td><td>github.com/ibsheet/ibsheet-react-component README</td></tr>
+<tr><td>5</td><td>카드 뷰토글 유지(데이터 소스 이원화)</td><td><strong>partial</strong></td><td>ibsheet.com/ibsheet (카드뷰 미문서)</td></tr>
+<tr><td>6</td><td>Vercel preview 회전 환경 라이선스 운영 가능</td><td><strong>partial(운영성 refuted)</strong></td><td>portal 72000601965 라이선스 정책</td></tr>
+<tr><td>7</td><td>내보내기/인쇄 순수 gain</td><td><strong>partial</strong></td><td>portal 72000529994 (서버모듈 의존), 인쇄 API 미문서</td></tr>
+<tr><td>8</td><td>L12 복합필터 native 동등 표현</td><td><strong>partial</strong></td><td>portal 72000530038 (Filter 행 검색유형)</td></tr>
+</tbody>
+</table></div>
+<h2>부록 B. 코드 정독 추가 발견 기능 (baseline 32건 외)</h2>
+<p>매트릭스에는 합산했으나, 전수조사에서 baseline에 없던 그리드/비표 기능들 — IBSheet로 옮기지 않고 React로 유지할 항목들이다:</p>
+<ul><li><strong>Calendar View</strong> (accounting/schedule) — 월간 캘린더 + 이벤트 도트</li><li><strong>Timeline View</strong> (schedule) — 날짜 그룹 수직 타임라인 + D-day</li><li><strong>Audit Timeline</strong> (accounting) — 수직 감사 로그</li><li><strong>Steppers</strong> (risk 5단계, report 4단계) — 진행 단계 인디케이터</li><li><strong>Notification Panel</strong> (schedule) — 읽음/안읽음 알림 사이드바</li><li><strong>Range Slider</strong> (performance) — 리스크 노출 필터 슬라이더</li><li><strong>In-cell Search Input</strong> (subfund) — 실시간 행 필터 입력</li><li><strong>Detail Expansion Modal/Card</strong> (subfund/performance) — 행 상세 패널</li><li><strong>Tab-based Content Switching</strong> (accounting/report/schedule) — SegTabs 콘텐츠 전환</li><li>조건부 행 하이라이트(연체/불일치 danger tint), 진행바 셀(ExecBar/HBars), code 컬럼 monospace, count pill 등</li></ul>
+<blockquote>이들 대부분은 "표가 아닌" 위젯이라 IBSheet 범위 밖이며, frame+children 전략에서 <strong>그대로 React로 유지</strong>된다.</blockquote>
+</main>
+</body>
+</html>
