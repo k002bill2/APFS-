@@ -11,3 +11,21 @@
 .ag-floating-bottom .ag-row {
   opacity: 1 !important;
 }
+
+/* ── 합계(floating-bottom) 행 강조 — 원본 매트릭스(asset_funding.tsx)의 연녹색 강조 재현 ──
+   증상: pinned 합계 행이 테마 배경(var(--card)=흰색) 그대로라 일반 데이터 행과 구분되지 않음.
+        숫자 셀 굵기(700)만 차이 → 헤더의 "수제 테이블 원본"과 토글 비교 시 강조 누락이 드러남.
+   수정: 행에 primary 9% 틴트 배경 + 상단 primary 강조 테두리, '구분'(합 계) 라벨은 primary 굵게.
+        숫자 셀의 색/굵기는 numStyle(진한 700)을 그대로 둠 — 원본과 동일(숫자까지 녹색은 아님).
+   왜 CSS인가: 합계 강조는 pinned-left '구분' 셀(.ag-pinned-left-floating-bottom)과 center 숫자
+        셀이 별도 DOM 컨테이너라, 행 전체를 한 번에 덮으려면 행 단위 셀렉터가 필요(cellStyle 불가).
+   왜 !important인가: Quartz 테마가 행 배경을 var(--card)로 직접 칠해 specificity로 못 이김.
+        색은 모두 var(--primary)/color-mix → 라이트/다크 자동 추종(테마 토큰 바인딩과 동일 원칙). */
+.ag-floating-bottom .ag-row {
+  background: color-mix(in srgb, var(--primary) 9%, transparent) !important;
+  border-top: 2px solid var(--primary) !important;
+}
+.ag-pinned-left-floating-bottom .ag-cell {
+  color: var(--primary) !important;
+  font-weight: 800 !important;
+}
