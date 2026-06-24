@@ -409,16 +409,16 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
           </DialogHeader>
           <div className="overflow-y-auto" style={{ padding: 18 }}>
             <label className="block mb-3.5">
-              <span className="font-semibold text-caption block" style={{ fontSize: 12, marginBottom: 5 }}>연도 *</span>
-              <input value={draft.y} onChange={(e) => setDraft((d) => ({ ...d, y: e.target.value }))} placeholder="예: 2026" style={inputStyle} />
+              <span className="font-semibold text-caption block" style={{ fontSize: 14, marginBottom: 5 }}>연도 *</span>
+              <input value={draft.y} onChange={(e) => setDraft((d) => ({ ...d, y: e.target.value }))} placeholder="예: 2026" style={{ ...inputStyle, fontSize: 14 }} />
             </label>
             <label className="block mb-3.5">
-              <span className="font-semibold text-caption block" style={{ fontSize: 12, marginBottom: 5 }}>조성 합계(억원)</span>
-              <input type="number" value={draft.c0} onChange={(e) => setDraft((d) => ({ ...d, c0: e.target.value }))} placeholder="0" style={inputStyle} />
+              <span className="font-semibold text-caption block" style={{ fontSize: 14, marginBottom: 5 }}>조성 합계(억원)</span>
+              <input type="number" value={draft.c0} onChange={(e) => setDraft((d) => ({ ...d, c0: e.target.value }))} placeholder="0" style={{ ...inputStyle, fontSize: 14 }} />
             </label>
             <label className="block mb-3.5">
-              <span className="font-semibold text-caption block" style={{ fontSize: 12, marginBottom: 5 }}>출자금액(억원)</span>
-              <input type="number" value={draft.u1} onChange={(e) => setDraft((d) => ({ ...d, u1: e.target.value }))} placeholder="0" style={inputStyle} />
+              <span className="font-semibold text-caption block" style={{ fontSize: 14, marginBottom: 5 }}>출자금액(억원)</span>
+              <input type="number" value={draft.u1} onChange={(e) => setDraft((d) => ({ ...d, u1: e.target.value }))} placeholder="0" style={{ ...inputStyle, fontSize: 14 }} />
             </label>
           </div>
           <DialogFooter>
