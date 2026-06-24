@@ -61,7 +61,10 @@ export function GridFrame({
       {/* PageHeader: 현 shell은 title/sub를 렌더하지 않으므로(crumbs·actions만) title/sub는 카드헤더가 직접 그린다.
           title은 forward-compat용으로 계속 넘기되 라이브 제목은 카드 <h3> — 향후 shell이 title 렌더를 복원하면 중복 주의 */}
       <PageHeader crumbs={crumbs} title={title} actions={headerActions} />
-      <Card pad={0} className="overflow-hidden">
+      {/* ⚠️ overflow-hidden 제거: 푸터 sticky가 뷰포트 기준으로 달라붙으려면 조상에 scrollport가 없어야 한다.
+          가로 클리핑은 이미 각 children이 자체 overflow-x:auto 래퍼로 책임진다(asset_funding=overflow-x-auto+min-w,
+          AG Grid=내부 스크롤). 카드 모서리 클리핑은 푸터가 하단 모서리를 직접 라운딩해 보완. */}
+      <Card pad={0}>
         {/* 카드 헤더: 타이틀(+sub 캡션) + KPI 슬롯 */}
         <div className="flex items-center justify-between flex-wrap gap-4" style={{ padding: '6px 18px' }}>
           <div className="min-w-0">
@@ -82,9 +85,11 @@ export function GridFrame({
         {/* 본문: 테이블 (가로 스크롤은 children 책임 — 상단 계약 주석 참조) */}
         {children}
 
-        {/* 푸터 */}
+        {/* 푸터 — sticky 하단 고정: 긴 목록을 스크롤해도 건수·페이지네이션·뷰토글이 항상 보인다.
+            background 불투명(스크롤되는 행이 비치지 않게) + 하단 모서리 라운딩(카드 overflow:hidden 제거 보완)
+            + zIndex는 FAB(60)보다 낮게 둬 우하단 FAB 클릭성을 침범하지 않게 한다. */}
         {hasFooter && (
-          <div className="flex items-center justify-between flex-wrap gap-3" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)' }}>
+          <div className="flex items-center justify-between flex-wrap gap-3" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', position: 'sticky', bottom: 0, zIndex: 20, background: 'var(--card)', borderBottomLeftRadius: 'var(--radius)', borderBottomRightRadius: 'var(--radius)' }}>
             <span className="flex items-center min-w-0 text-caption" style={{ fontSize: 12.5 }}>{footerLeft}</span>
             {footerCenter && <div className="flex items-center gap-1 flex-wrap">{footerCenter}</div>}
             <div className="flex items-center gap-1.5 flex-wrap">{footerRight}</div>
