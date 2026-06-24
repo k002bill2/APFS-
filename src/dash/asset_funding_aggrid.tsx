@@ -56,7 +56,7 @@ const ROWS: FundingRow[] = RAW.map(flat);
 const TOTAL_ROW: FundingRow = { y: '합 계', c0: 4987.3, c1: 507, c2: 2190, c3: 1650, c4: 640, c5: 0.3, u0: 154, u1: 14124.1 };
 // 매 렌더 새 배열을 넘기면 AG Grid가 pinned 행을 재생성(=행 애니메이션 재발) → 모듈 상수로 고정
 const PINNED_BOTTOM: FundingRow[] = [TOTAL_ROW];
-const PAGE_SIZE = 12;   // 16행 → 2페이지
+const PAGE_SIZE = 20;   // 16행 → 1페이지
 
 /* 정수=천단위 콤마, 소수=1자리 — 원본 fmt 재현 */
 const fmt = (n: number): string =>
