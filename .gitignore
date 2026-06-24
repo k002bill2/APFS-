@@ -19,3 +19,6 @@ docs/APFS_UIUX_reconstruction.pptx
 # OS / MS Office 임시·잠금 파일
 .DS_Store
 ~$*
+
+# 로컬 툴 프로젝트 설정 (git_path 등 개인 절대경로 포함 — 환경별 로컬 파일)
+.aos-project.json
