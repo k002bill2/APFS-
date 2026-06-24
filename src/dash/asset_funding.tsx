@@ -33,7 +33,7 @@ const FUNDING_ROWS: FundingRow[] = [
 /* 캡처 합계행 실측값 (열 합·행 합과 일치 검증 완료) */
 const TOTAL = { c: [4987.3, 507, 2190, 1650, 640, 0.3], u: [154, 14124.1] };
 
-const CO_COLS = ['합계', '농특회계', '농안기금', 'FTA', '수산발전기금', '농금원'];
+const CO_COLS = ['합계', '농특회계', '농안기금', 'FTA', '수산발전기금', '일반회계'];
 const IN_COLS = ['조합수', '출자금액'];
 
 /* 정수는 천단위 콤마, 소수는 1자리까지 — 캡처 표기 재현 */
@@ -74,7 +74,7 @@ function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
       </>}
       toolbarLeft={<>
         <Icon name="file" size={16} style={{ color: 'var(--caption)' }} />
-        <span className="text-caption" style={{ fontSize: 12.5 }}>기금 소스별(농특회계·농안기금·FTA·수산발전기금·농금원) 조성액 · 결성 조합수/출자금액 집계</span>
+        <span className="text-caption" style={{ fontSize: 12.5 }}>기금 소스별(농특회계·농안기금·FTA·수산발전기금·일반회계) 조성액 · 결성 조합수/출자금액 집계</span>
       </>}
       toolbarRight={<IconBtn icon="refresh" label="새로고침" size={34} />}
       footerLeft={<span>{'2010 ~ 2025년 · 총 ' + mn(String(FUNDING_ROWS.length)) + '개 연도'}</span>}>

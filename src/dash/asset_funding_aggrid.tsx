@@ -85,7 +85,7 @@ const apfsTheme = themeQuartz.withParams({
   wrapperBorderRadius: 0,
 });
 
-const CO = ['합계', '농특회계', '농안기금', 'FTA', '수산발전기금', '농금원'];
+const CO = ['합계', '농특회계', '농안기금', 'FTA', '수산발전기금', '일반회계'];
 const numCol = (field: string, header: string, strong?: boolean): ColDef<FundingRow> => ({
   field: field as keyof FundingRow, headerName: header, flex: 1, minWidth: 92,
   valueFormatter: numFmt, cellStyle: numStyle(strong) as any, type: 'rightAligned',
@@ -148,6 +148,28 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
+/* ── 카드(상세) 뷰 빌딩블록 — 리스트(표)의 전 컬럼을 카드에서 재현 ──
+   "축은 두고 데이터는 가린다": 그룹명·컬럼명은 비마스킹, 값만 mn(fmt()).
+   표의 numStyle을 재현해 0은 muted, 강조열(합계/출자금액)은 bold → 리스트와 시각적 의미 일치. */
+function CardGroupLabel({ children }: { children: string }) {
+  return (
+    <div className="font-semibold text-muted-foreground" style={{
+      fontSize: 11, letterSpacing: '.02em', paddingBottom: 4, borderBottom: '1px solid var(--border)',
+    }}>{children}</div>
+  );
+}
+function CardRow({ label, value, strong }: { label: string; value: number; strong?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-caption shrink-0" style={{ fontSize: 12 }}>{label}</span>
+      <span className="tabular" style={{
+        fontSize: strong ? 14 : 13, fontWeight: strong ? 700 : 500,
+        color: value === 0 ? 'var(--muted-foreground)' : 'var(--foreground)',
+      }}>{mn(fmt(value))}</span>
+    </div>
+  );
+}
+
 export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<FundingRow> | null>(null);
   const [rows, setRows] = useState<FundingRow[]>(ROWS);   // 삭제/등록/새로고침 위해 가변
@@ -198,7 +220,7 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
   const exportExcel = () => {
     const cell = (v: number) => mn(fmt(v));
     const head1 = ['구분', '조성현황', '', '', '', '', '', '출자현황', ''];
-    const head2 = ['', ...CO, '조합수', '출자금액'];   // CO = ['합계','농특회계','농안기금','FTA','수산발전기금','농금원']
+    const head2 = ['', ...CO, '조합수', '출자금액'];   // CO = ['합계','농특회계','농안기금','FTA','수산발전기금','일반회계']
     const body = filteredRows.map((r) => [r.y, cell(r.c0), cell(r.c1), cell(r.c2), cell(r.c3), cell(r.c4), cell(r.c5), cell(r.u0), cell(r.u1)]);
     const totalRow = ['합 계', cell(TOTAL_ROW.c0), cell(TOTAL_ROW.c1), cell(TOTAL_ROW.c2), cell(TOTAL_ROW.c3), cell(TOTAL_ROW.c4), cell(TOTAL_ROW.c5), cell(TOTAL_ROW.u0), cell(TOTAL_ROW.u1)];
     const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body, totalRow]);
@@ -307,27 +329,32 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
           />
         </div>
       ) : (
-        /* 상세 뷰 — React 카드(L6: 단일 rowData 공유, 같은 필터 술어 적용) */
-        <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(220px, 100%), 1fr))', padding: 18 }}>
-          {filteredRows.map((r) => (
-            <div key={r.y} className="border border-border bg-card flex flex-col gap-2.5 p-3.5" style={{ borderRadius: 12 }}>
-              <div className="flex items-center gap-2.5">
-                <ColorChip icon="landmark" color="var(--primary)" size={34} iconSize={16} />
-                <div className="min-w-0">
-                  <div className="font-semibold" style={{ fontSize: 14 }}>{r.y}년</div>
-                  <div className="text-muted-foreground" style={{ fontSize: 12 }}>조성·출자 현황</div>
+        /* 상세 뷰 — React 카드(L6: 단일 rowData 공유, 같은 필터 술어 적용).
+           리스트(표)의 2단 그룹헤더(조성현황 c0~c5 · 출자현황 u0·u1)를 카드 안에서 전부 재현한다. */
+        <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))', padding: 18 }}>
+          {filteredRows.map((r) => {
+            const co = [r.c0, r.c1, r.c2, r.c3, r.c4, r.c5];   // 조성현황 6열 — CO 라벨과 같은 순서
+            return (
+              <div key={r.y} className="border border-border bg-card flex flex-col gap-3 p-3.5" style={{ borderRadius: 12 }}>
+                <div className="flex items-center gap-2.5">
+                  <ColorChip icon="landmark" color="var(--primary)" size={34} iconSize={16} />
+                  <div className="min-w-0">
+                    <div className="font-semibold" style={{ fontSize: 14 }}>{r.y}년</div>
+                    <div className="text-muted-foreground" style={{ fontSize: 12 }}>조성·출자 현황</div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <CardGroupLabel>조성현황</CardGroupLabel>
+                  {CO.map((label, i) => <CardRow key={i} label={label} value={co[i]} strong={i === 0} />)}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <CardGroupLabel>출자현황</CardGroupLabel>
+                  <CardRow label="조합수" value={r.u0} />
+                  <CardRow label="출자금액" value={r.u1} strong />
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-caption" style={{ fontSize: 12 }}>조성 합계</span>
-                <span className="tabular font-bold" style={{ fontSize: 14 }}>{mn(fmt(r.c0))}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-caption" style={{ fontSize: 12 }}>출자금액</span>
-                <span className="tabular font-bold" style={{ fontSize: 14 }}>{mn(fmt(r.u1))}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           {filteredRows.length === 0 && (
             <div className="text-caption text-center" style={{ gridColumn: '1/-1', padding: '40px 0', fontSize: 13 }}>조건에 맞는 항목이 없습니다</div>
           )}
