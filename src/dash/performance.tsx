@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, 
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { toast } from './ui/sonner';
+import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 
 const { useState, useEffect } = React;
 const { Button, StatusBadge, FilterChip, SegTabs, IconBtn, ColorChip } = UI;
@@ -160,7 +161,7 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
 }
 
 /* ===== 더보기 드롭다운 메뉴 — Radix DropdownMenu(키보드 내비·aria-haspopup·menuitem 시맨틱) ===== */
-function MoreMenu({ onRegister, onDelete, count }: { onRegister: () => void; onDelete: () => void; count: number }) {
+function MoreMenu({ onRegister, onDelete, onExport, count }: { onRegister: () => void; onDelete: () => void; onExport: () => void; count: number }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -177,8 +178,8 @@ function MoreMenu({ onRegister, onDelete, count }: { onRegister: () => void; onD
           <Icon name="trash" size={17} className="shrink-0 text-danger" />{count > 0 ? "삭제 (" + count + ")" : "삭제"}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <Icon name="download" size={17} className="shrink-0 text-muted-foreground" /><MT>내보내기</MT>
+        <DropdownMenuItem onSelect={onExport}>
+          <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
         </DropdownMenuItem>
         <DropdownMenuItem>
           <Icon name="file" size={17} className="shrink-0 text-muted-foreground" /><MT>인쇄</MT>
@@ -301,6 +302,20 @@ function Performance({ onNav }) {
   const changeColor = (v) => (v > 0 ? "var(--success)" : v < 0 ? "var(--danger)" : "var(--muted-foreground)");
   const fmtChange = (v) => (v > 0 ? "+" : "") + v.toFixed(2) + "%";
 
+  // Excel(.xlsx) 내보내기 — SheetJS. 고정 6컬럼(성과이력 스파크라인·관리 제외), 현재 필터(filtered) 반영.
+  // 값은 화면과 동일하게 mn()로 마스킹(숫자만 0치환·_on 자동추종, 셀은 텍스트). change는 화면처럼 mn(fmtChange()).
+  const exportExcel = () => {
+    const cell = (v) => mn(typeof v === "number" ? v.toLocaleString() : String(v ?? ""));
+    const header = ["자산코드", "자산명", "구분", "가치 (KRW, 백만)", "변동폭 (24시)", "리스크 등급"];
+    const body = filtered.map(({ r }) => [cell(r.code), cell(r.name), cell(r.meta), cell(r.value), mn(fmtChange(r.change)), cell(r.risk)]);
+    const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
+    ws["!cols"] = [{ wch: 10 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 12 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "투자포트폴리오");
+    XLSX.writeFile(wb, "투자포트폴리오.xlsx");
+    toast.success("Excel로 내보냈습니다");
+  };
+
   return (
     <>
       <div className="max-w-[1320px] mx-auto" style={{ animation: "dashFade .35s var(--ease) both" }}>
@@ -332,7 +347,7 @@ function Performance({ onNav }) {
             <div className="flex-1" />
             <Button variant="outline" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
             <IconBtn icon="refresh" label="새로고침" size={34} />
-            <MoreMenu onRegister={() => setModal("create")} onDelete={() => { if (selCount) setDelOpen(true); }} count={selCount} />
+            <MoreMenu onRegister={() => setModal("create")} onDelete={() => { if (selCount) setDelOpen(true); }} onExport={exportExcel} count={selCount} />
             <AlertDialog open={delOpen} onOpenChange={setDelOpen}>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -441,7 +456,8 @@ function Performance({ onNav }) {
             <div className="flex items-center gap-3">
               <SegTabs options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "카드뷰" }]} value={view} onChange={setView} size="sm" />
               <div className="flex items-center gap-0.5">
-                {["download", "external", "file", "more"].map((ic, i) => <IconBtn key={i} icon={ic} label={ic} size={34} />)}
+                <IconBtn icon="download" label="다운로드" size={34} onClick={exportExcel} />
+                {["external", "file", "more"].map((ic, i) => <IconBtn key={i} icon={ic} label={ic} size={34} />)}
               </div>
             </div>
           </div>

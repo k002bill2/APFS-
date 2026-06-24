@@ -24,6 +24,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
 import { toast } from './ui/sonner';
+import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 
 const { Button, IconBtn, SegTabs, ColorChip } = UI;
 
@@ -124,7 +125,7 @@ function PoCMoreMenu({ onRegister, onExport }: { onRegister: () => void; onExpor
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onExport}>
-          <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (CSV)
+          <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => window.print()}>
           <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
@@ -191,7 +192,27 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
     apiRef.current?.deselectAll();
     toast.success(`${sel.length}개 항목을 삭제했습니다`);
   };
-  const exportCsv = () => { apiRef.current?.exportDataAsCsv({ fileName: '모태펀드_조성출자현황.csv' }); toast.success('CSV로 내보냈습니다'); };
+  // Excel(.xlsx) 내보내기 — SheetJS. 화면의 2단 그룹헤더(병합)·합계행을 재현하고, 현재 필터를 반영한다.
+  // 값은 화면과 동일하게 mn(fmt())로 마스킹·포맷 → 마스크 ON이면 placeholder, _on=false면 실값으로 자동 전환(SSOT).
+  // ⚠️ fmt()가 콤마 문자열을 만들므로 셀은 '텍스트'다(숫자 연산 불가). 화면 미러링이 목적인 PoC라 의도된 선택.
+  const exportExcel = () => {
+    const cell = (v: number) => mn(fmt(v));
+    const head1 = ['구분', '조성현황', '', '', '', '', '', '출자현황', ''];
+    const head2 = ['', ...CO, '조합수', '출자금액'];   // CO = ['합계','농특회계','농안기금','FTA','수산발전기금','농금원']
+    const body = filteredRows.map((r) => [r.y, cell(r.c0), cell(r.c1), cell(r.c2), cell(r.c3), cell(r.c4), cell(r.c5), cell(r.u0), cell(r.u1)]);
+    const totalRow = ['합 계', cell(TOTAL_ROW.c0), cell(TOTAL_ROW.c1), cell(TOTAL_ROW.c2), cell(TOTAL_ROW.c3), cell(TOTAL_ROW.c4), cell(TOTAL_ROW.c5), cell(TOTAL_ROW.u0), cell(TOTAL_ROW.u1)];
+    const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body, totalRow]);
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },   // 구분 (A1:A2)
+      { s: { r: 0, c: 1 }, e: { r: 0, c: 6 } },   // 조성현황 (B1:G1, 6열)
+      { s: { r: 0, c: 7 }, e: { r: 0, c: 8 } },   // 출자현황 (H1:I1, 2열)
+    ];
+    ws['!cols'] = [{ wch: 8 }, { wch: 11 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 10 }, { wch: 8 }, { wch: 12 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '조성출자현황');
+    XLSX.writeFile(wb, '모태펀드_조성출자현황.xlsx');
+    toast.success('Excel로 내보냈습니다');
+  };
 
   // 등록 — Dialog 입력으로 새 연도 행 추가(CRUD add)
   const saveRegister = () => {
@@ -245,7 +266,7 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
-        <PoCMoreMenu onRegister={() => setRegOpen(true)} onExport={exportCsv} />
+        <PoCMoreMenu onRegister={() => setRegOpen(true)} onExport={exportExcel} />
       </>}
       footerLeft={<span>{'총 ' + mn(String(totalForCount)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}</span>}
       footerCenter={view === 'list' && page.total > 1 ? (
@@ -259,7 +280,7 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
       ) : undefined}
       footerRight={<>
         <SegTabs size="sm" value={view} onChange={setView} options={[{ value: 'list', label: '리스트 뷰' }, { value: 'detail', label: '카드뷰' }]} />
-        <IconBtn icon="download" label="다운로드" size={32} onClick={exportCsv} />
+        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
         <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
         <IconBtn icon="more" label="더보기" size={32} />
       </>}>

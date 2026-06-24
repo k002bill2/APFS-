@@ -17,6 +17,7 @@ import type { PageSchema } from './schemas/types';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { toast } from './ui/sonner';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
+import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 
 const { useState, useEffect } = React;
 const { PageHeader } = Shell;
@@ -129,7 +130,7 @@ function FilterPill({ label, value, onRemove }: { label: string; value?: string;
 }
 
 /* ===== 더보기 드롭다운 메뉴 (kebab) — Radix DropdownMenu(키보드 내비·menuitem 시맨틱) ===== */
-function MoreMenu({ onRegister, editable }: { onRegister: () => void; editable: boolean }) {
+function MoreMenu({ onRegister, onExport, editable }: { onRegister: () => void; onExport: () => void; editable: boolean }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -147,8 +148,8 @@ function MoreMenu({ onRegister, editable }: { onRegister: () => void; editable: 
             <DropdownMenuSeparator />
           </>
         )}
-        <DropdownMenuItem>
-          <Icon name="download" size={17} className="shrink-0 text-muted-foreground" /><MT>내보내기</MT>
+        <DropdownMenuItem onSelect={onExport}>
+          <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
         </DropdownMenuItem>
         <DropdownMenuItem>
           <Icon name="file" size={17} className="shrink-0 text-muted-foreground" /><MT>인쇄</MT>
@@ -355,6 +356,21 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     if (n) toast.success(`${n}개 항목을 삭제했습니다`);
   };
 
+  // Excel(.xlsx) 내보내기 — SheetJS. 스키마 컬럼을 동적 추출(스파크라인 trend는 값 없음 → 제외),
+  // 현재 필터(filtered) 반영. 값은 화면과 동일하게 mn()로 마스킹(숫자만 0치환·_on 자동추종, 셀은 텍스트).
+  const exportExcel = () => {
+    const cols = schema.columns.filter((c) => c.key !== 'trend');
+    const cell = (v: any) => mn(typeof v === 'number' ? v.toLocaleString() : String(v ?? ''));
+    const header = cols.map((c) => c.label + (c.unit ? ` (${c.unit})` : ''));
+    const body = filtered.map((r) => cols.map((c) => cell((r as any)[c.key])));
+    const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
+    ws['!cols'] = cols.map((c) => ({ wch: c.key === 'name' ? 22 : 16 }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '목록');
+    XLSX.writeFile(wb, `${title}.xlsx`);
+    toast.success('Excel로 내보냈습니다');
+  };
+
   const cellPad = "11px 14px";
 
   return (
@@ -396,7 +412,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           <div className="flex items-center gap-1 flex-wrap">
             <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
             <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); setSelected(new Set()); setPage(1); }} />
-            <MoreMenu onRegister={() => setModal({ mode: "create" })} editable={editable} />
+            <MoreMenu onRegister={() => setModal({ mode: "create" })} onExport={exportExcel} editable={editable} />
           </div>
         </div>
 
@@ -519,7 +535,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             <SegTabs size="sm" value={view} onChange={setView} options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "카드뷰" }]} />
-            <IconBtn icon="download" label="다운로드" size={32} />
+            <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
             <IconBtn icon="external" label="새 창" size={32} />
             <IconBtn icon="more" label="더보기" size={32} />
           </div>
