@@ -85,7 +85,7 @@ const apfsTheme = themeQuartz.withParams({
   wrapperBorderRadius: 0,
 });
 
-const CO = ['합계', '농특회계', '농안기금', 'FTA', '수산발전기금', '농금원'];
+const CO = ['합계', '농특회계', '농안기금', 'FTA', '수산발전기금', '일반회계'];
 const numCol = (field: string, header: string, strong?: boolean): ColDef<FundingRow> => ({
   field: field as keyof FundingRow, headerName: header, flex: 1, minWidth: 92,
   valueFormatter: numFmt, cellStyle: numStyle(strong) as any, type: 'rightAligned',
@@ -220,7 +220,7 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
   const exportExcel = () => {
     const cell = (v: number) => mn(fmt(v));
     const head1 = ['구분', '조성현황', '', '', '', '', '', '출자현황', ''];
-    const head2 = ['', ...CO, '조합수', '출자금액'];   // CO = ['합계','농특회계','농안기금','FTA','수산발전기금','농금원']
+    const head2 = ['', ...CO, '조합수', '출자금액'];   // CO = ['합계','농특회계','농안기금','FTA','수산발전기금','일반회계']
     const body = filteredRows.map((r) => [r.y, cell(r.c0), cell(r.c1), cell(r.c2), cell(r.c3), cell(r.c4), cell(r.c5), cell(r.u0), cell(r.u1)]);
     const totalRow = ['합 계', cell(TOTAL_ROW.c0), cell(TOTAL_ROW.c1), cell(TOTAL_ROW.c2), cell(TOTAL_ROW.c3), cell(TOTAL_ROW.c4), cell(TOTAL_ROW.c5), cell(TOTAL_ROW.u0), cell(TOTAL_ROW.u1)];
     const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body, totalRow]);
