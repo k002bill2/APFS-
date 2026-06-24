@@ -114,7 +114,7 @@ function PoCMoreMenu({ onRegister, onExport }: { onRegister: () => void; onExpor
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="더보기"
-        className="inline-flex items-center justify-center rounded-card-sm text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
+        className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
         style={{ width: 34, height: 34 }}>
         <Icon name="more" size={20} stroke={2} />
       </DropdownMenuTrigger>
