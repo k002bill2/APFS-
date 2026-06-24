@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>농림수산식품모태펀드 현행시스템 — 데이터 구성도 · 업무흐름도</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<!-- 테마 플래시 방지: 페인트 전에 저장된 테마 복원 -->
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('apfs-docs-theme');
+      if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
+</script>
+<style>
+  :root {
+    --bg: #f5f8f4;
+    --surface: #ffffff;
+    --surface-2: #f1f5f1;
+    --text: #1f2933;
+    --muted: #5b6b62;
+    --border: #e3ebe4;
+    --primary: #0e963b;
+    --primary-deep: #2d7846;
+    --accent: #0058a8;
+    --cyan: #00aae5;
+    --code-bg: #eef3ee;
+    --shadow: 0 1px 2px rgba(16, 40, 24, .04), 0 8px 24px rgba(16, 40, 24, .06);
+    --radius: 14px;
+    --maxw: 1000px;
+  }
+  [data-theme="dark"] {
+    --bg: #0e1411;
+    --surface: #161f1a;
+    --surface-2: #1b261f;
+    --text: #e7efe9;
+    --muted: #9fb2a6;
+    --border: #28342c;
+    --primary: #41cf6e;
+    --primary-deep: #7bb93c;
+    --accent: #5aa6ff;
+    --cyan: #2bc6ef;
+    --code-bg: #1b261f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 30px rgba(0, 0, 0, .35);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.7;
+    font-size: 16px;
+    letter-spacing: -.01em;
+  }
+
+  /* ── 헤더 ─────────────────────────── */
+  header.site {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    -webkit-backdrop-filter: saturate(1.4) blur(10px);
+    backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .site-inner {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .brand .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent);
+    flex: none;
+  }
+  .brand b {
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .brand span { color: var(--muted); font-weight: 500; }
+  .spacer { flex: 1; }
+  button.toggle {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 7px 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: border-color .15s, background .15s, transform .05s;
+  }
+  button.toggle:hover { border-color: var(--primary); }
+  button.toggle:active { transform: translateY(1px); }
+
+  /* ── 본문 레이아웃 ─────────────────── */
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 32px 24px 96px; }
+
+  .hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 30px 32px;
+    margin-bottom: 26px;
+  }
+  .hero h1 {
+    margin: 0 0 6px;
+    font-size: clamp(22px, 3.2vw, 30px);
+    line-height: 1.25;
+    letter-spacing: -.02em;
+  }
+  .hero .sub { color: var(--muted); font-size: 14px; }
+
+  /* TOC 칩 내비 */
+  nav.toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 30px;
+  }
+  nav.toc a {
+    text-decoration: none;
+    color: var(--primary-deep);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  nav.toc a:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  }
+
+  /* ── 마크다운 타이포그래피 ─────────── */
+  .md { }
+  .md h2 {
+    margin: 46px 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+    font-size: 22px;
+    letter-spacing: -.02em;
+    scroll-margin-top: 78px;
+  }
+  .md h3 {
+    margin: 30px 0 12px;
+    font-size: 17px;
+    color: var(--primary-deep);
+    scroll-margin-top: 78px;
+  }
+  .md h2 + h3 { margin-top: 18px; }
+  .md p { margin: 12px 0; }
+  .md strong { color: var(--text); font-weight: 700; }
+  .md a { color: var(--accent); }
+
+  .md ul, .md ol { padding-left: 22px; margin: 12px 0; }
+  .md li { margin: 6px 0; }
+  .md li::marker { color: var(--primary); }
+
+  .md blockquote {
+    margin: 18px 0;
+    padding: 12px 18px;
+    border-left: 4px solid var(--primary);
+    background: var(--surface-2);
+    border-radius: 0 10px 10px 0;
+    color: var(--muted);
+    font-size: 14.5px;
+  }
+  .md blockquote p { margin: 0; }
+
+  .md code {
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .88em;
+    color: var(--primary-deep);
+  }
+
+  .md hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  /* ── 표 ───────────────────────────── */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 18px 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    background: var(--surface);
+    -webkit-overflow-scrolling: touch;
+  }
+  .md table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    min-width: 560px;
+  }
+  .md thead th {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 14%, var(--surface)), var(--surface));
+    color: var(--primary-deep);
+    text-align: left;
+    font-weight: 700;
+    padding: 12px 14px;
+    border-bottom: 2px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+  }
+  .md tbody td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .md tbody tr:nth-child(even) { background: color-mix(in srgb, var(--primary) 3.5%, var(--surface)); }
+  .md tbody tr:hover { background: color-mix(in srgb, var(--primary) 7%, var(--surface)); }
+  .md tbody td:first-child { font-weight: 600; white-space: nowrap; }
+  .md table strong { color: var(--primary-deep); }
+
+  /* ── Mermaid 다이어그램 카드 ──────── */
+  .mermaid {
+    background: #ffffff;            /* classDef 파스텔 채움이 라이트/다크 공통으로 보이도록 항상 흰 배경 */
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin: 22px 0;
+    overflow-x: auto;
+    text-align: center;
+    line-height: normal;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mermaid svg { max-width: 100%; height: auto; }
+  .mermaid:not([data-processed]) {
+    color: var(--muted);
+    font-size: 13px;
+    text-align: left;
+    white-space: pre-wrap;
+    font-family: ui-monospace, monospace;
+  }
+
+  /* ── 줌/드래그 뷰포트 (다이어그램 확대·이동) ──────── */
+  .mermaid.dz-viewport {
+    padding: 0;
+    overflow: hidden;
+    height: clamp(360px, 72vh, 680px);
+    cursor: grab;
+    touch-action: none;        /* 한 손가락 드래그를 팬으로 사용 */
+    text-align: left;
+    position: relative;
+  }
+  .mermaid.dz-viewport.grabbing { cursor: grabbing; }
+  .dz-stage {
+    position: absolute;
+    top: 0; left: 0;
+    transform-origin: 0 0;
+    will-change: transform;
+  }
+  .dz-stage svg { max-width: none !important; height: auto; display: block; }
+  .dz-controls {
+    position: absolute;
+    top: 12px; right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 5;
+  }
+  .dz-controls button {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid #d7e0d8;
+    background: rgba(255, 255, 255, .92);
+    color: #1f2933;
+    border-radius: 9px;
+    font-size: 19px; font-weight: 600; line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .14);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    transition: border-color .15s, color .15s, transform .05s;
+  }
+  .dz-controls button:hover { border-color: var(--primary); color: var(--primary); }
+  .dz-controls button:active { transform: translateY(1px); }
+  .dz-hint {
+    position: absolute;
+    left: 12px; bottom: 10px;
+    z-index: 5;
+    font-size: 11px;
+    color: #5b6b62;
+    background: rgba(255, 255, 255, .82);
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid #d7e0d8;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  footer.site {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 24px 60px;
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+
+  @media print {
+    header.site, button.toggle, nav.toc { display: none !important; }
+    body { background: #fff; }
+    .hero, .table-wrap, .mermaid { box-shadow: none; }
+    .mermaid { break-inside: avoid; }
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 15px; }
+    .wrap { padding: 22px 14px 72px; }
+    .hero { padding: 22px 18px; }
+    .site-inner { padding: 10px 14px; }
+    .brand span { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="site">
+  <div class="site-inner">
+    <div class="brand">
+      <span class="dot" aria-hidden="true"></span>
+      <b>APFS 현행시스템</b>
+      <span>· 데이터 구성도 · 업무흐름도</span>
+    </div>
+    <div class="spacer"></div>
+    <button class="toggle" id="themeBtn" type="button" aria-label="테마 전환">
+      <span id="themeIcon">🌙</span><span id="themeLabel">다크</span>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <nav class="toc" id="toc" aria-label="목차"></nav>
+  <article class="md" id="content" aria-busy="true">문서를 렌더링하는 중…</article>
+</main>
+
+<footer class="site">
+  생성: 마크다운 → HTML 변환 · 다이어그램은 Mermaid로 브라우저에서 렌더링됩니다.
+  (오프라인 열람 시 CDN 접근이 필요합니다.)
+</footer>
+
+<!-- ── 마크다운 원문(인라인 임베드: file:// 에서도 동작) ───────────────── -->
+<script type="text/markdown" id="src">
+# 농림수산식품모태펀드 현행시스템 — 데이터 구성도 · 업무흐름도
+
+> 출처: docs/Data_backup 화면캡처 5종 + 현행시스템 메뉴표. 개념/논리 레벨. (현행 legacy 시스템이며 대시보드 프로토타입 모델 아님)
+
+---
+
+## 1. 시스템 개요 (6종)
+
+| 시스템 | 역할 | 핵심 엔티티 |
+|--------|------|-------------|
+| **FFMS** 투자자산관리 | 모태펀드 조성·공고부터 자펀드 선정·출자배분, 투자집행, 사후보고(수시/정기/총회), 투자기업·실적, 모니터링(재무·실사·사후관리·보수)까지의 운용 본체 | 모태펀드, 자펀드, 운용사(GP), 조합원(LP), 공고, 투자심의, 출자배분, 투자기업, 투자실적·회수, 사후보고, 모니터링 |
+| **RISK** 조기경보 | 운용사·자펀드 정량지표·재무·수익률을 평가하여 조기경보 결과·종합등급 산정, 리스크 이벤트 관리, 가치평가·IRR·Portfolio Report | 운용사 정량지표, 조기경보 결과·종합등급, 법률·규약위반/주주변동/소송/인력변동, 신용·현금흐름등급, 가치평가, IRR, Portfolio Report |
+| **REPORT** 자펀드보고 | 운용사 ERP → 농금원 보고 파일 업로드·분류·조회 채널, 조합별 보고 현황 및 실물검증 결과 조회 | 보고파일(업로드), 일일/월간/반기/수시보고, 실물검증 결과 |
+| **TRUST** 수탁 | 수탁기관 실물자료 ↔ 운용사 보고 대사(실물검증), 모태펀드 수탁 계좌·입출금 관리·비교조회 | 수탁기관, 실물자료(월별), 실물검증 결과, 수탁 계좌정보, 입출금정보, 공통/자펀드코드 |
+| **BRIEF** 등록원부·부처보고 | 투자조합 법적 등록원부(레지스트리)·이력 관리, 조합원·전문인력·납입출자금 등재, 농림축산식품부 대상 연도별 투자현황 보고 | 등록원부·이력, 조합원, 납입출자금, 전문인력, 연도별투자현황·상세 |
+| **ACCT** 회계 | 계정과목·결산양식 기초관리, 전표 분개·증빙·일마감, 장부·재무제표·결산, 고정자산·감가상각, 계좌·자금일보·출자금현황 | 계정과목, 결산양식, 전표·증빙, 장부·재무제표, 회기, 고정자산·감가상각, 계좌, 자금일보, 출자금현황, 회계거래처 |
+
+---
+
+## 2. 데이터 구성도
+
+### 2.1 투자·리스크 구조 (펀드구조 · 투자집행 · 보고·모니터링 · 리스크·평가)
+
+```mermaid
+flowchart LR
+  subgraph dom_fund["펀드구조"]
+    motae["모태펀드(펀드오브펀드)"]
+    subfund["자펀드(투자조합)"]
+    gp["운용사(GP)"]
+    lp["조합원(출자자/LP)"]
+  end
+
+  subgraph dom_exec["투자집행"]
+    notice["공고"]
+    review["투자심의"]
+    alloc["출자배분(운용사·농금원)"]
+    portco["투자기업(피투자회사)"]
+    deal["투자실적·회수"]
+  end
+
+  subgraph dom_report["보고·모니터링"]
+    repfile["보고파일(업로드)"]
+    report["보고(일일/월간/반기/수시/정기)"]
+    meeting["조합원총회·예상자금요청보고"]
+    monitor["모니터링(재무·실사·사후관리·관리보수)"]
+  end
+
+  subgraph dom_risk["리스크·평가"]
+    ewi["운용사 정량지표"]
+    grade["조기경보 결과·종합등급"]
+    rkevent["리스크이벤트(위반·주주·소송·인력)"]
+    cgrade["신용·현금흐름등급"]
+    valuation["가치평가 결과"]
+    irr["IRR·Portfolio Report"]
+  end
+
+  subgraph dom_common["공통"]
+    code["공통코드·자펀드코드"]
+    user["사용자·권한"]
+  end
+
+  motae -->|"1:N 출자"| subfund
+  notice -->|"1:N 모집"| subfund
+  gp -->|"1:N 운용"| subfund
+  subfund -->|"N:M 출자"| lp
+  review -->|"1:N 선정/승인"| subfund
+  subfund -->|"1:N 가짐"| alloc
+  motae -->|"1:N 농금원출자"| alloc
+  gp -->|"1:N 운용사배분"| alloc
+  subfund -->|"1:N 투자"| portco
+  subfund -->|"1:N 발생"| deal
+  deal -->|"N:1 대상"| portco
+
+  subfund -->|"1:N 제출"| report
+  gp -->|"1:N 제출주체"| report
+  gp -->|"1:N 업로드"| repfile
+  repfile -.->|"분류/적재"| report
+  subfund -->|"1:N 개최/제출"| meeting
+  gp -->|"1:N 대상"| monitor
+  subfund -->|"1:N 대상"| monitor
+
+  gp -->|"1:N 측정"| ewi
+  ewi -->|"N:1 산정근거"| grade
+  gp -->|"1:N 발생"| rkevent
+  rkevent -.->|"입력"| grade
+  gp -->|"1:N 평가"| grade
+  subfund -->|"1:N 평가"| grade
+  portco -->|"1:N 부여"| cgrade
+  subfund -->|"1:N 평가"| valuation
+  portco -->|"1:N 평가"| valuation
+  motae -->|"1:N 평가"| valuation
+  subfund -->|"1:N 산출"| irr
+  deal -.->|"투자/회수 입력"| irr
+
+  code -.->|"기준/식별"| subfund
+  user -.->|"접근권한"| subfund
+
+  %% ── 도메인/시스템 색상 ──
+  classDef fund fill:#dcfce7,stroke:#16a34a,color:#14532d;
+  classDef exec fill:#dbeafe,stroke:#2563eb,color:#1e3a8a;
+  classDef report fill:#fef3c7,stroke:#b45309,color:#78350f;
+  classDef risk fill:#fee2e2,stroke:#dc2626,color:#7f1d1d;
+  classDef common fill:#f1f5f9,stroke:#64748b,color:#334155;
+  class gp,lp,motae,subfund fund;
+  class alloc,deal,notice,portco,review exec;
+  class meeting,monitor,repfile,report report;
+  class cgrade,ewi,grade,irr,rkevent,valuation risk;
+  class code,user common;
+```
+
+### 2.2 자금·회계·수탁·부처보고 구조 (회계·자금 · 수탁·대사 · 부처보고·원부)
+
+```mermaid
+flowchart LR
+  subgraph dom_ref["참조 (투자·리스크 뷰 앵커)"]
+    motae["모태펀드"]
+    subfund["자펀드(투자조합)"]
+    lp["조합원(LP)"]
+    portco["투자기업"]
+    deal["투자실적·회수"]
+    alloc["출자배분"]
+    report["보고"]
+  end
+
+  subgraph dom_acct["회계·자금"]
+    coa["계정과목(Chart of Accounts)"]
+    closeform["결산양식"]
+    voucher["전표·증빙"]
+    ledger["장부·재무제표·결산"]
+    account["계좌"]
+    capital["출자금현황"]
+    asset["고정자산·감가상각"]
+    counterparty["회계거래처"]
+  end
+
+  subgraph dom_trust["수탁·대사"]
+    trustee["수탁기관(신탁은행)"]
+    realdata["실물자료(월별)"]
+    verify["실물검증·확정"]
+    trustacct["수탁 계좌정보"]
+    trustcash["수탁 입출금정보"]
+  end
+
+  subgraph dom_brief["부처보고·원부"]
+    registry["등록원부·이력"]
+    expert["전문인력"]
+    paidin["납입출자금"]
+    yearstat["연도별투자현황·상세"]
+    mafra["농림축산식품부(부처)"]
+  end
+
+  alloc -.->|"자금유입"| capital
+  voucher -->|"N:M 분개(차변/대변)"| coa
+  voucher -->|"N:M 집계/구성"| ledger
+  ledger -->|"N:1 양식따름"| closeform
+  account -->|"1:N 입출금 계상"| voucher
+  asset -->|"1:N 상각 계상"| voucher
+  counterparty -->|"1:N 거래상대"| voucher
+  capital -.->|"N:M 출자입출"| account
+  portco -.->|"경영체=거래처 매핑"| counterparty
+
+  trustee -->|"1:N 수탁"| subfund
+  trustee -->|"1:N 수탁"| motae
+  subfund -->|"1:N 월별제출"| realdata
+  realdata -->|"1:1 대사산출"| verify
+  report -.->|"보고 대사대상"| verify
+  motae -->|"1:N 보유"| trustacct
+  trustacct -->|"1:N 거래"| trustcash
+  trustcash -.->|"자금 대사"| account
+
+  subfund -->|"1:1 등재"| registry
+  registry -->|"1:N 등재"| expert
+  lp -.->|"등록원부 등재"| registry
+  lp -->|"1:N 납입"| paidin
+  subfund -.->|"집계원천"| yearstat
+  yearstat -->|"부처보고"| mafra
+  deal -.->|"집계원천"| yearstat
+
+  %% ── 도메인/시스템 색상 ──
+  classDef fund fill:#dcfce7,stroke:#16a34a,color:#14532d;
+  classDef exec fill:#dbeafe,stroke:#2563eb,color:#1e3a8a;
+  classDef report fill:#fef3c7,stroke:#b45309,color:#78350f;
+  classDef acct fill:#ede9fe,stroke:#7c3aed,color:#4c1d95;
+  classDef trust fill:#cffafe,stroke:#0e7490,color:#164e63;
+  classDef brief fill:#e0e7ff,stroke:#4f46e5,color:#312e81;
+  class lp,motae,subfund fund;
+  class alloc,deal,portco exec;
+  class report report;
+  class account,asset,capital,closeform,coa,counterparty,ledger,voucher acct;
+  class realdata,trustacct,trustcash,trustee,verify trust;
+  class expert,mafra,paidin,registry,yearstat brief;
+```
+
+
+**범례**
+- **실선 화살표** = 구조·소유 관계(카디널리티 라벨 `1:N` / `N:M` / `N:1`).
+- **점선 화살표(`-.->`)** = 시스템 간 데이터 흐름·대사·집계 연계.
+- 가독성을 위해 데이터 구성도를 **두 뷰로 분할**: (2.1) 투자·리스크 구조 = 펀드구조→투자집행→보고·모니터링→리스크·평가, (2.2) 자금·회계·수탁·부처보고 구조. 두 뷰에 모두 나오는 `자펀드`·`모태펀드`는 **동일 엔티티**(2.2에서는 앵커로 참조)다.
+- **조합원(LP) 카디널리티 주석**: 동일 LP가 여러 자펀드에 출자할 수 있어 법적 주체 기준은 **N:M**으로 표기. 단, BRIEF 등록원부의 조합원 등재는 자펀드별 행(per-fund row) 기준이므로 등재 관점에서는 **1:N**(`등록원부 1:N 조합원`)이다.
+
+**도메인별 핵심 엔티티**
+- **펀드구조**: 모태펀드가 자펀드에 출자(1:N), 운용사(GP)가 자펀드를 운용(1:N), 조합원(LP)이 자펀드에 출자(N:M).
+- **투자집행**: 공고 → 자펀드 모집, 투자심의 → 선정, 출자배분(운용사·농금원 2종), 자펀드 → 투자기업 투자, 투자실적·회수 발생.
+- **보고·모니터링**: 운용사 보고파일 업로드 → 분류·적재 → 보고, 조합원총회·예상자금요청, 운용사·자펀드 모니터링.
+- **리스크·평가**: 운용사 정량지표·리스크이벤트가 조기경보 결과(종합등급)의 산정근거, 투자기업 신용·현금흐름등급, 모태/조합/피투자 가치평가, IRR·Portfolio Report.
+- **회계·자금**: 전표가 **계정과목**을 차변/대변으로 참조(분개, N:M)하고 **장부**로 집계·구성(N:M), 장부는 **결산양식**을 따름(N:1). 계좌·고정자산·회계거래처가 전표로 계상, 출자금현황은 계좌를 통해 출자입출(N:M).
+- **수탁·대사**: 수탁기관이 자펀드·모태펀드 자산 수탁, 자펀드 실물자료(월별) → 실물검증·확정, 수탁 계좌정보 → 입출금정보(1:N), 입출금정보는 회계 계좌와 자금 대사.
+- **부처보고·원부**: 자펀드 → 등록원부 등재(1:1), 조합원/전문인력/납입출자금 등재, 자펀드·투자실적이 연도별투자현황으로 집계되어 농림축산식품부(부처) 보고.
+
+---
+
+## 3. 업무흐름도
+
+```mermaid
+flowchart TD
+  ext_erp["운용사 ERP (외부 운용사 시스템)"]
+  ext_bank["수탁기관/신탁은행 (외부)"]
+  ext_mafra["농림축산식품부 MAFRA (부처)"]
+
+  subgraph ffms["투자자산관리 (FFMS)"]
+    f_notice["공고 등록 (모태펀드 출자공고)"]
+    f_apply["자펀드 모집/신청 접수"]
+    f_review["투자심의 (체크리스트·승인)"]
+    f_select["자펀드 선정"]
+    f_alloc["출자배분 (운용사·농금원)"]
+    f_invest["투자집행 → 투자실적/회수"]
+    f_postrep["사후보고 (수시/정기/조합원총회/예상자금)"]
+    f_monitor["모니터링 (재무·실사·사후관리·관리보수)"]
+    f_trustconf["자펀드수탁 확정 (실물검증 반영)"]
+  end
+
+  subgraph brief["등록원부·부처보고 (BRIEF)"]
+    b_registry["등록원부 등재 (조합원·전문인력·이력)"]
+    b_yearstat["연도별 투자현황·상세 집계"]
+  end
+
+  subgraph report["자펀드보고 (REPORT)"]
+    r_upload["보고파일 업로드 (일일/월간/반기/수시)"]
+    r_view["보고 파일 조회·조합별 현황"]
+    r_verify["실물검증 결과 조회"]
+  end
+
+  subgraph risk["조기경보 (RISK)"]
+    k_indicator["정량지표·재무·수익률 평가"]
+    k_event["리스크 이벤트 등록 (위반·소송·주주변동·인력변동)"]
+    k_grade["조기경보 결과·종합등급 산정 (전월 비교)"]
+    k_value["가치평가 (모태/조합/피투자) ·IRR·Portfolio"]
+  end
+
+  subgraph trust["수탁 (TRUST)"]
+    t_recon["실물자료 대사 (보고 vs 수탁 실물)"]
+    t_account["계좌·입출금 정보 관리/비교조회"]
+  end
+
+  subgraph acct["회계 (ACCT)"]
+    a_capital["출자금현황 정보관리"]
+    a_voucher["전표 분개·증빙·일마감"]
+    a_cash["계좌잔액·자금일보"]
+    a_close["결산 (장부→재무제표)"]
+  end
+
+  f_notice -->|"1:N 모집/결성"| f_apply
+  f_apply -->|"심의 안건"| f_review
+  f_review -->|"승인"| f_select
+  f_select -->|"결성결과 전달"| b_registry
+  b_registry -->|"등재 완료"| f_alloc
+  f_alloc -->|"투자 재원"| f_invest
+
+  ext_erp -->|"보고 제출"| r_upload
+  f_invest -->|"사후보고 접수"| f_postrep
+  r_upload -->|"보고 데이터 적재"| r_view
+  r_view -->|"FFMS 반영"| f_postrep
+
+  f_postrep -->|"모니터링 대상"| f_monitor
+  f_postrep -->|"실적·재무 공급"| k_indicator
+  f_monitor -->|"모니터링 결과"| k_indicator
+  k_indicator -->|"이상감지"| k_event
+  k_event -->|"등급 산정근거"| k_grade
+  k_grade -->|"평가 반영"| k_value
+  k_grade -->|"리스크 피드백 (loop)"| f_monitor
+
+  r_upload -->|"실물 대사 요청"| r_verify
+  ext_bank -->|"실물자료 월별 제공"| t_recon
+  r_verify -->|"보고-실물 대사"| t_recon
+  t_recon -->|"검증 결과"| f_trustconf
+
+  f_alloc -->|"출자 자금 유입"| a_capital
+  a_capital -->|"자금 전표화"| a_voucher
+  ext_bank -->|"계좌·입출금 내역"| t_account
+  t_account -->|"자금 대사/정합"| a_cash
+  a_voucher -->|"잔액 검증"| a_cash
+  a_cash -->|"결산 마감"| a_close
+  a_cash -->|"자금잔액·출자정보 제공"| f_postrep
+
+  k_value -->|"평가손익·IRR 근거"| a_close
+  a_close -.->|"장부 자산·자금 잔액 기초데이터"| k_value
+  f_invest -->|"투자실적 집계"| b_yearstat
+  a_close -->|"출자금·재무 수치"| b_yearstat
+  b_yearstat -->|"부처보고 제출"| ext_mafra
+
+  f_monitor -->|"사후관리 활동"| f_trustconf
+
+  %% ── 도메인/시스템 색상 ──
+  classDef fund fill:#dcfce7,stroke:#16a34a,color:#14532d;
+  classDef report fill:#fef3c7,stroke:#b45309,color:#78350f;
+  classDef risk fill:#fee2e2,stroke:#dc2626,color:#7f1d1d;
+  classDef acct fill:#ede9fe,stroke:#7c3aed,color:#4c1d95;
+  classDef trust fill:#cffafe,stroke:#0e7490,color:#164e63;
+  classDef brief fill:#e0e7ff,stroke:#4f46e5,color:#312e81;
+  classDef ext fill:#1f2937,stroke:#0f172a,color:#f8fafc;
+  class f_alloc,f_apply,f_invest,f_monitor,f_notice,f_postrep,f_review,f_select,f_trustconf fund;
+  class r_upload,r_verify,r_view report;
+  class k_event,k_grade,k_indicator,k_value risk;
+  class a_capital,a_cash,a_close,a_voucher acct;
+  class t_account,t_recon trust;
+  class b_registry,b_yearstat brief;
+  class ext_bank,ext_erp,ext_mafra ext;
+```
+
+**단계 설명** (위 → 아래, end-to-end)
+1. **공고·모집·심의** (FFMS): 공고 등록 → 자펀드 모집/신청 접수 → 투자심의(체크리스트·승인) → 선정.
+2. **등재·배분** (BRIEF→FFMS): 선정 결과를 BRIEF 등록원부에 등재 → 등재 완료 후 출자배분(운용사·농금원).
+3. **투자집행·보고** (FFMS·REPORT): 출자 재원으로 투자집행 → 투자실적/회수. 운용사 ERP가 보고파일 업로드 → 조회·조합별 현황 → FFMS 사후보고 반영.
+4. **모니터링·조기경보** (FFMS·RISK): 사후보고 → **모니터링** → 정량지표·재무·수익률 평가 → 이상감지 시 리스크 이벤트 → 종합등급 산정 → 가치평가·IRR.
+5. **수탁 대사** (REPORT·TRUST): 보고 실물 대사 요청 → 수탁기관 월별 실물자료와 대사(실물검증) → 검증 결과를 자펀드수탁 확정에 반영.
+6. **회계·자금** (FFMS·TRUST·ACCT): 출자 자금 유입 → 전표화. 수탁기관 계좌·입출금 내역 → 자금 대사/정합 → 자금일보 → 결산 마감.
+7. **부처보고** (FFMS·ACCT→BRIEF→MAFRA): 투자실적·결산 수치를 연도별 투자현황으로 집계 → 농림축산식품부에 부처보고 제출.
+
+**주요 피드백 루프**
+- **리스크 피드백 루프**: `조기경보 종합등급 → 모니터링` — 산정된 종합등급·결과가 사후관리·모니터링의 근거로 환류된다. 모니터링 결과는 다시 정량지표 평가(`f_monitor → k_indicator`)로 들어가 spine(사후보고 → 모니터링 → 조기경보)을 완성한다.
+- **회계↔리스크 양방향 정합**: `가치평가·IRR → 결산`(평가손익 근거)과 `결산 장부 자산·자금 잔액 → 가치평가·IRR`(기초데이터)의 양방향 흐름.
+- **자금↔예상자금요청 루프**: `자금일보·출자금현황 → 사후보고(조합예상자금요청)` — 자금 잔액·출자 정보가 캐피탈콜/예상자금 보고에 연계된다.
+- **사후관리 환류**: `모니터링 → 자펀드수탁 확정` — 사후관리 활동 결과가 수탁 확정 단계에 반영.
+
+---
+
+## 4. 부록 — 시스템별 엔티티·관계 매핑
+
+### 4.1 FFMS — 투자자산관리
+
+| 구분 | 내용 |
+|------|------|
+| **핵심 엔티티** | 모태펀드, 공고, 자펀드(투자조합), 운용사(GP), 조합원(LP), 투자심의, 출자배분, 투자기업, 투자실적(투자·회수), 보고(수시/정기), 조합원총회, 조합예상자금요청보고, 운용사 재무정보, 투자금 실사보고, 사후관리기록, 관리보수, 수탁검증(실물검증/확정), 사용자/권한/공통코드 |
+| **주요 관계** | 모태펀드 →(1:N 출자) 자펀드 · 공고 →(1:N 모집) 자펀드 · 운용사 →(1:N 운용) 자펀드 · 조합원 ↔(N:M 출자) 자펀드 · 자펀드 →(1:N 투자) 투자기업 · 자펀드 →(1:N 발생) 투자실적 →(N:1 대상) 투자기업 · 투자심의 →(1:N 선정/승인) 자펀드 · 자펀드/운용사 →(1:N 제출) 보고 · 운용사 →(1:N 수취) 관리보수 |
+| **횡단 링크** | → RISK: 운용사·자펀드·투자기업 마스터 및 투자실적/재무 공급 / ← REPORT: 업로드 보고파일·실물검증 결과 수신 / →← ACCT: 출자배분·관리보수·자금흐름이 전표·자금일보·출자금현황 원천 / →← TRUST: 자펀드수탁(실물검증/확정) 연계 / → BRIEF: 자펀드 결성·조합원·투자실적 마스터 공급 |
+
+### 4.2 RISK — 조기경보
+
+| 구분 | 내용 |
+|------|------|
+| **핵심 엔티티** | (참조) 모태펀드·운용사·자펀드·투자기업 / 운용사 정량지표, 조기경보 결과(종합등급), 법률·규약위반사항, 주주변동, 소송, 운용인력변동, 신용등급, 현금흐름등급, 가치평가 결과, IRR, Portfolio Report |
+| **주요 관계** | 운용사 →(1:N 측정) 정량지표 →(N:1 산정근거) 조기경보 결과 · 운용사 →(1:N 발생) 위반/주주변동/소송/인력변동 · 운용사·자펀드 →(1:N 평가받음) 종합등급 · 투자기업 →(1:N 부여) 신용·현금흐름등급 · 자펀드·투자기업·모태펀드 →(1:N 평가됨) 가치평가 · 자펀드·투자기업 →(1:N 산출) IRR · 자펀드 →(1:N 집계) Portfolio Report |
+| **횡단 링크** | ← FFMS: 운용사·자펀드·투자기업 마스터 및 투자/회수·재무 수신 / ← TRUST: 자펀드 투자자산·거래내역·평가시점 데이터 수신 / ← 외부 신용평가기관: 신용등급 / → FFMS·모니터링: 종합등급·리스크 이벤트 제공 / → ACCT·부처보고: 가치평가·IRR·Portfolio 근거 제공 |
+
+### 4.3 REPORT — 자펀드보고
+
+| 구분 | 내용 |
+|------|------|
+| **핵심 엔티티** | 보고파일(업로드), 일일보고, 월간보고, 반기보고, 수시보고, 실물검증(결과) / (참조) 자펀드(투자조합), 운용사(GP) |
+| **주요 관계** | 운용사 →(1:N 업로드) 보고파일 →(1:N 분류/적재) 일일/월간/반기/수시보고 · 자펀드 →(1:N 제출 대상) 각 보고 · 자펀드 →(1:N 검증 대상) 실물검증 · 월간보고 →(1:N 대사 검증) 실물검증 |
+| **횡단 링크** | upstream: 운용사 ERP → 보고파일 업로드 / 양식 ← FFMS 보고양식관리·Q그룹 외부연동 / downstream: 보고 데이터 → FFMS 사후보고관리·일일보고 전송관리 / 실물검증 ↔ TRUST 실물자료·실물검증비교조회 / 참조 마스터: 자펀드·운용사 코드 ← FFMS |
+
+### 4.4 TRUST — 수탁
+
+| 구분 | 내용 |
+|------|------|
+| **핵심 엔티티** | (참조) 모태펀드·자펀드·운용사 / 수탁기관(신탁은행), 실물자료(월별 업로드), 실물검증결과(비교조회), 계좌정보, 입출금정보(거래내역), 공통코드, 자펀드코드 |
+| **주요 관계** | 수탁기관 →(1:N 수탁) 자펀드·모태펀드 · 자펀드 →(1:N 월별 제출) 실물자료 · 수탁기관 →(1:N 제공) 실물자료 →(1:1 대사 산출) 실물검증결과 · 운용사 →(1:N 보고데이터 대사대상) 실물검증결과 · 모태펀드 →(1:N 보유) 계좌정보 →(1:N 거래발생) 입출금정보 · 자펀드코드 →(1:1 식별) 자펀드 |
+| **횡단 링크** | ← REPORT/FFMS: 운용사·자펀드 보고 데이터 수신해 실물검증 대사 / ← 외부연동(Q그룹): 자펀드코드 정합 / ↔ 외부 수탁기관: 실물자료·계좌/입출금 송수신 / ← FFMS: 모태/자펀드/운용사 마스터·출자배분 참조 / → ACCT: 수탁 계좌·입출금이 자금관리와 대사·정합 / → FFMS·부처보고: 실물검증 확정 결과 제공 |
+
+### 4.5 BRIEF — 등록원부·부처보고
+
+| 구분 | 내용 |
+|------|------|
+| **핵심 엔티티** | 등록원부, 등록원부이력, 조합원, 납입출자금, 전문인력 / (참조) 운용사(GP)·자펀드·모태펀드 / 연도별투자현황, 연도별투자현황상세 / 사용자, 사용자권한, 사용자조합권한 |
+| **주요 관계** | 자펀드 →(1:1 등재) 등록원부 →(1:N) 등록원부이력 · 등록원부 →(1:N) 조합원·전문인력 · 조합원 →(1:N 납입) 납입출자금 · 운용사 →(1:1) 업무집행조합원 역할 등재 · 연도별투자현황 →(1:N 집계-명세) 연도별투자현황상세 · 모태펀드 →(1:N 부처보고 대상) 연도별투자현황 · 사용자조합권한 ↔(N:M) 자펀드 |
+| **횡단 링크** | ← FFMS: 자펀드 결성·운용사·조합원·투자실적 마스터 수신(등록원부 등재·연도별현황 집계 원천) / → MAFRA(부처): 연도별투자현황·상세 부처보고 제출 / ↔ FFMS: 사용자조합권한이 공유 자펀드 목록 참조해 접근범위 통제 |
+
+### 4.6 ACCT — 회계
+
+| 구분 | 내용 |
+|------|------|
+| **핵심 엔티티** | 계정과목, 결산양식, 전표, 전표증빙, 일마감, 장부(재무제표), 회계기간/회기, 고정자산(유무형), 감가상각, 계좌, 자금일보, 출자금현황, 농식품경영체, 회계거래처, 휴일 |
+| **주요 관계** | 전표 ↔(N:M 분개) 계정과목 · 전표 →(1:N) 전표증빙 · 전표 →(N:1) 회기 · 일마감 →(1:N 마감/잠금) 전표 · 전표 →(N:M 집계/구성) 장부 →(N:1 양식) 결산양식 · 고정자산 →(1:N) 감가상각 →(1:N 계상) 전표 · 계좌 →(1:N) 자금일보 · 계좌 →(1:N 계상) 전표 · 출자금현황 ↔(N:M) 계좌 · 회계거래처 →(1:N) 전표 · 농식품경영체 →(1:1 매핑) 회계거래처 · 휴일 →(1:N) 일마감 |
+| **횡단 링크** | ← FFMS: 모태펀드 조성·출자배분이 출자금현황으로 유입 / ↔ TRUST: 모태펀드 수탁 계좌·입출금이 계좌관리·자금일보와 정합 / ↔ FFMS/RISK: 농식품경영체 경영체·IR 정보 연계 / → 부처보고: 결산 재무제표·출자금현황이 연도별 투자/자금 현황 기초 수치 / ↔ RISK: 장부 자산·자금 잔액이 가치평가·IRR 기초데이터 / → 사후보고: 자금일보·출자금현황이 조합예상자금요청보고와 연계 |
+</script>
+
+<!-- ── 렌더러: marked(마크다운) + mermaid(다이어그램) ───────────────── -->
+<script type="module">
+  import { marked } from 'https://cdn.jsdelivr.net/npm/marked@12.0.2/lib/marked.esm.js';
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+
+  const article = document.getElementById('content');
+
+  // 1) mermaid 펜스를 marked에 넘기기 전에 추출(이스케이프 방지)
+  const raw = document.getElementById('src').textContent;
+  const diagrams = [];
+  const PH = i => `%%MERMAIDBLOCK${i}%%`;
+  const md = raw.replace(/```mermaid\r?\n([\s\S]*?)```/g, (_, code) => {
+    diagrams.push(code.replace(/\s+$/, ''));
+    return PH(diagrams.length - 1);
+  });
+
+  // 2) 나머지 마크다운 렌더 + 표 가로 스크롤 래핑
+  marked.setOptions({ gfm: true, breaks: false });
+  let html = marked.parse(md);
+  html = html.replace(/<table>/g, '<div class="table-wrap"><table>')
+             .replace(/<\/table>/g, '</table></div>');
+
+  // 3) 플레이스홀더 → mermaid 컨테이너로 치환(원본 코드 그대로 textContent에)
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  diagrams.forEach((code, i) => {
+    const re = new RegExp(`(?:<p>)?\\s*${PH(i)}\\s*(?:</p>)?`);
+    html = html.replace(re, () => `<pre class="mermaid">${esc(code)}</pre>`);
+  });
+
+  article.innerHTML = html;
+  article.removeAttribute('aria-busy');
+
+  // 4) 헤딩에 id 부여 + TOC(h2) 생성
+  let n = 0;
+  article.querySelectorAll('h2, h3').forEach(h => { if (!h.id) h.id = 'sec-' + (++n); });
+  const toc = document.getElementById('toc');
+  article.querySelectorAll('h2').forEach(h => {
+    const a = document.createElement('a');
+    a.href = '#' + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+  });
+
+  // 5) mermaid 초기화/렌더 (테마 연동)
+  function mermaidThemeVars() {
+    return { fontFamily: 'Pretendard, sans-serif', fontSize: '14px' };
+  }
+  async function renderMermaid() {
+    // 이미 처리된 다이어그램은 원본 코드로 되돌려 재렌더 준비
+    document.querySelectorAll('.mermaid[data-processed]').forEach((el, i) => {
+      el.removeAttribute('data-processed');
+      el.innerHTML = esc(diagrams[i]);
+    });
+    try {
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'loose',
+        theme: 'base',
+        themeVariables: mermaidThemeVars(),
+        flowchart: { htmlLabels: true, curve: 'basis', useMaxWidth: false }
+      });
+      await mermaid.run({ querySelector: '.mermaid' });
+    } catch (e) {
+      console.error('[mermaid] render error', e);
+    }
+  }
+  await renderMermaid();
+
+  // 6) 다이어그램 줌/팬 (확대·드래그 이동)
+  // 폰트 로드 후 SVG 자연 크기를 측정해야 fit이 정확하다.
+  await (document.fonts ? document.fonts.ready : Promise.resolve());
+  document.querySelectorAll('.mermaid[data-processed]').forEach(setupZoom);
+
+  function setupZoom(vp) {
+    const svg = vp.querySelector('svg');
+    if (!svg || vp.classList.contains('dz-viewport')) return;
+    vp.classList.add('dz-viewport');
+
+    // SVG를 변환 무대(stage)로 감싼다 — transform은 stage에만 적용
+    const stage = document.createElement('div');
+    stage.className = 'dz-stage';
+    vp.insertBefore(stage, svg);
+    stage.appendChild(svg);
+    svg.style.maxWidth = 'none';
+
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    let scale = 1, tx = 0, ty = 0, fitScale = 1;
+    const apply = () => { stage.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`; };
+
+    function natural() {                       // transform 영향 없는 SVG 원본 크기
+      const prev = stage.style.transform;
+      stage.style.transform = 'none';
+      const r = svg.getBoundingClientRect();
+      stage.style.transform = prev;
+      return { w: r.width || 1, h: r.height || 1 };
+    }
+    function fit() {                           // 뷰포트에 맞춰 중앙 정렬
+      const vw = vp.clientWidth, vh = vp.clientHeight, n = natural();
+      fitScale = Math.min(vw / n.w, vh / n.h, 1) || 1;
+      scale = fitScale;
+      tx = (vw - n.w * scale) / 2;
+      ty = (vh - n.h * scale) / 2;
+      apply();
+    }
+    function zoomAt(cx, cy, f) {               // (cx,cy) 지점을 고정한 채 줌
+      const ns = clamp(scale * f, fitScale * 0.5, fitScale * 12);
+      tx = cx - (cx - tx) * (ns / scale);
+      ty = cy - (cy - ty) * (ns / scale);
+      scale = ns;
+      apply();
+    }
+
+    // 컨트롤 버튼
+    const ctr = document.createElement('div');
+    ctr.className = 'dz-controls';
+    const mk = (t, lbl) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = t; b.title = lbl; b.setAttribute('aria-label', lbl);
+      return b;
+    };
+    const bIn = mk('＋', '확대'), bOut = mk('－', '축소'), bRst = mk('⟲', '화면맞춤');
+    ctr.append(bIn, bOut, bRst);
+    vp.appendChild(ctr);
+
+    const hint = document.createElement('div');
+    hint.className = 'dz-hint';
+    hint.textContent = '드래그로 이동 · 버튼/더블클릭/Ctrl+휠로 확대';
+    vp.appendChild(hint);
+
+    bIn.addEventListener('click', () => zoomAt(vp.clientWidth / 2, vp.clientHeight / 2, 1.3));
+    bOut.addEventListener('click', () => zoomAt(vp.clientWidth / 2, vp.clientHeight / 2, 1 / 1.3));
+    bRst.addEventListener('click', fit);
+
+    // 휠: 단독은 페이지 스크롤 유지, Ctrl/⌘+휠일 때만 줌(스크롤 트랩 방지)
+    vp.addEventListener('wheel', (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      const r = vp.getBoundingClientRect();
+      zoomAt(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.12 : 1 / 1.12);
+    }, { passive: false });
+
+    // 드래그 팬 (마우스·터치 통합: Pointer Events)
+    let drag = false, sx = 0, sy = 0;
+    vp.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.dz-controls')) return;
+      drag = true; sx = e.clientX - tx; sy = e.clientY - ty;
+      vp.setPointerCapture(e.pointerId);
+      vp.classList.add('grabbing');
+    });
+    vp.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      tx = e.clientX - sx; ty = e.clientY - sy;
+      apply();
+    });
+    const endDrag = () => { drag = false; vp.classList.remove('grabbing'); };
+    vp.addEventListener('pointerup', endDrag);
+    vp.addEventListener('pointercancel', endDrag);
+
+    // 더블클릭/더블탭: 클릭 지점 확대
+    vp.addEventListener('dblclick', (e) => {
+      const r = vp.getBoundingClientRect();
+      zoomAt(e.clientX - r.left, e.clientY - r.top, 1.6);
+    });
+
+    fit();
+  }
+
+  // 7) 테마 토글
+  const btn = document.getElementById('themeBtn');
+  const icon = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  function syncToggleUI() {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = dark ? '☀️' : '🌙';
+    label.textContent = dark ? '라이트' : '다크';
+  }
+  syncToggleUI();
+  btn.addEventListener('click', () => {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const next = dark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('apfs-docs-theme', next); } catch (e) {}
+    syncToggleUI();
+    // mermaid 카드 배경은 항상 흰색이라 재렌더 불필요하지만, 안정성 위해 유지
+  });
+</script>
+</body>
+</html>
