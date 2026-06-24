@@ -15,7 +15,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import type { CSSProperties } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn } from './mask';
+import { mn, useMask } from './mask';
 import { GridFrame, KpiBadge } from './grid_frame';
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
@@ -186,6 +186,8 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
   const [regOpen, setRegOpen] = useState(false);
   const [draft, setDraft] = useState({ y: '', c0: '', u1: '' });
 
+  const masked = useMask();   // 마스크 ON이면 Excel 숫자 셀 값을 0으로(실값 비노출) — 표시 모양은 z 서식이 담당
+
   const onGridReady = useCallback((e: GridReadyEvent<FundingRow>) => { apiRef.current = e.api; }, []);
   const onSelectionChanged = useCallback((e: SelectionChangedEvent<FundingRow>) => { setSelCount(e.api.getSelectedRows().length); }, []);
   const onPaginationChanged = useCallback(() => {
@@ -215,15 +217,24 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
     toast.success(`${sel.length}개 항목을 삭제했습니다`);
   };
   // Excel(.xlsx) 내보내기 — SheetJS. 화면의 2단 그룹헤더(병합)·합계행을 재현하고, 현재 필터를 반영한다.
-  // 값은 화면과 동일하게 mn(fmt())로 마스킹·포맷 → 마스크 ON이면 placeholder, _on=false면 실값으로 자동 전환(SSOT).
-  // ⚠️ fmt()가 콤마 문자열을 만들므로 셀은 '텍스트'다(숫자 연산 불가). 화면 미러링이 목적인 PoC라 의도된 선택.
+  // 숫자 컬럼은 실제 숫자(t:'n')+숫자서식(z)으로 기록 → Excel이 화면 그리드(type:'rightAligned')와 동일하게 자동 우측 정렬,
+  // 실데이터 연동 시(_on=false) 합계 계산도 가능. (커뮤니티 xlsx는 셀 정렬 '스타일'을 쓰지 못하므로 숫자 셀로 정렬을 얻는다.)
+  // 마스크 ON이면 값을 0으로 써서 실값을 파일에 남기지 않는다(비노출). 서식의 정수/소수 판단은 '원값'을 따른다(소수 컬럼은 0.0로 표시).
   const exportExcel = () => {
-    const cell = (v: number) => mn(fmt(v));
+    const zFmt = (v: number) => (Number.isInteger(v) ? '#,##0' : '#,##0.0');   // 화면 fmt()와 동일한 콤마/소수 규칙
+    const numKeys = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'u0', 'u1'] as const;   // 헤더 순: 합계·농특회계·농안기금·FTA·수산발전기금·일반회계 / 조합수·출자금액
     const head1 = ['구분', '조성현황', '', '', '', '', '', '출자현황', ''];
     const head2 = ['', ...CO, '조합수', '출자금액'];   // CO = ['합계','농특회계','농안기금','FTA','수산발전기금','일반회계']
-    const body = filteredRows.map((r) => [r.y, cell(r.c0), cell(r.c1), cell(r.c2), cell(r.c3), cell(r.c4), cell(r.c5), cell(r.u0), cell(r.u1)]);
-    const totalRow = ['합 계', cell(TOTAL_ROW.c0), cell(TOTAL_ROW.c1), cell(TOTAL_ROW.c2), cell(TOTAL_ROW.c3), cell(TOTAL_ROW.c4), cell(TOTAL_ROW.c5), cell(TOTAL_ROW.u0), cell(TOTAL_ROW.u1)];
-    const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body, totalRow]);
+    const dataSrc = [...filteredRows, TOTAL_ROW];      // 본문 + pinned 합계행(화면과 동일)
+    const dataRows = dataSrc.map((r) => [r.y, ...numKeys.map((k) => (masked ? 0 : (r[k] as number)))]);
+    const aoa = [head1, head2, ...dataRows];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    // 숫자 컬럼(열 1~8, 데이터는 행 2부터)에 화면 포맷과 일치하는 숫자서식 부여
+    dataSrc.forEach((r, i) =>
+      numKeys.forEach((k, j) => {
+        const addr = XLSX.utils.encode_cell({ r: i + 2, c: j + 1 });
+        if (ws[addr]) ws[addr].z = zFmt(r[k] as number);
+      }));
     ws['!merges'] = [
       { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },   // 구분 (A1:A2)
       { s: { r: 0, c: 1 }, e: { r: 0, c: 6 } },   // 조성현황 (B1:G1, 6열)

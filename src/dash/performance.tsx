@@ -6,7 +6,7 @@ import { Icon } from './icons';
 import { UI } from './components';
 import { Shell } from './shell';
 import { APFS_DATA } from './data';
-import { mn, MT } from './mask';
+import { mn, MT, useMask } from './mask';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
@@ -261,6 +261,7 @@ function Performance({ onNav }) {
   const [selected, setSelected] = useState<Record<number, boolean>>({});
   const [delOpen, setDelOpen] = useState(false);
   const [rows, setRows] = useState(D.PORTFOLIO);
+  const masked = useMask();   // Excel 우측정렬 숫자 셀(가치·변동폭)의 마스킹 시 값을 0으로(실값 비노출)
   // 슬라이더 값(0~100) → 리스크 버킷 라벨 (칩 표시 + 실제 행 필터 공용 도메인)
   const riskLabel = (r) => (r == null ? null : r < 33 ? "리스크 보수적" : r < 66 ? "리스크 중립" : "리스크 공격적");
   const ROW_RISK_LABEL: Record<string, string> = { "ULTRA-LOW": "리스크 보수적", "LOW": "리스크 보수적", "MEDIUM": "리스크 중립", "HIGH": "리스크 공격적" };
@@ -303,12 +304,21 @@ function Performance({ onNav }) {
   const fmtChange = (v) => (v > 0 ? "+" : "") + v.toFixed(2) + "%";
 
   // Excel(.xlsx) 내보내기 — SheetJS. 고정 6컬럼(성과이력 스파크라인·관리 제외), 현재 필터(filtered) 반영.
-  // 값은 화면과 동일하게 mn()로 마스킹(숫자만 0치환·_on 자동추종, 셀은 텍스트). change는 화면처럼 mn(fmtChange()).
+  // 가치·변동폭은 화면처럼 우측정렬 → 숫자 셀(t:'n'+z)로 기록(Excel 자동 우측정렬·실데이터 연동 시 계산 가능).
+  // 텍스트 컬럼(자산코드·자산명·구분·리스크등급)은 화면처럼 텍스트 셀(좌측). 마스크 ON이면 숫자 셀 값을 0으로 비노출.
   const exportExcel = () => {
     const cell = (v) => mn(typeof v === "number" ? v.toLocaleString() : String(v ?? ""));
+    const zVal = (v) => (Number.isInteger(v) ? "#,##0" : "#,##0.0");          // 가치
+    const zChg = '+0.00"%";-0.00"%";0.00"%"';                                  // 변동폭 — fmtChange(부호+2소수+%)와 동일, "%"는 리터럴(스케일링 없음)
     const header = ["자산코드", "자산명", "구분", "가치 (KRW, 백만)", "변동폭 (24시)", "리스크 등급"];
-    const body = filtered.map(({ r }) => [cell(r.code), cell(r.name), cell(r.meta), cell(r.value), mn(fmtChange(r.change)), cell(r.risk)]);
+    const body = filtered.map(({ r }) => [cell(r.code), cell(r.name), cell(r.meta), masked ? 0 : r.value, masked ? 0 : r.change, cell(r.risk)]);
     const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
+    // 숫자 컬럼(가치=열3, 변동폭=열4)에 화면 포맷과 일치하는 숫자서식 부여(데이터는 헤더 다음=행1부터)
+    filtered.forEach(({ r }, i) => {
+      const setZ = (c, z) => { const a = XLSX.utils.encode_cell({ r: i + 1, c }); if (ws[a]) ws[a].z = z; };
+      setZ(3, zVal(r.value));
+      setZ(4, zChg);
+    });
     ws["!cols"] = [{ wch: 10 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 12 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "투자포트폴리오");

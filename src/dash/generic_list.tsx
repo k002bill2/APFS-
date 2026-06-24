@@ -6,7 +6,7 @@ import { Icon } from './icons';
 import { Shell } from './shell';
 import { UI } from './components';
 import { APFS_DATA } from './data';
-import { mn, MT } from './mask';
+import { mn, MT, useMask } from './mask';
 import { RowFormModal, statusTone } from './generic_list_modal';
 import type { Row } from './generic_list_modal';
 import { resolveSchema } from './schemas';
@@ -293,6 +293,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const { title, crumbs } = findMenuContext(route);
   const schema = resolveSchema(route);
   const editable = schema.fields.length > 0;
+  const masked = useMask();   // Excel 우측정렬 숫자 셀의 마스킹 시 값을 0으로(실값 비노출)
   const [rows, setRows] = useState<Row[]>(() => makeRows(schema, 23));
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   // 상태 SSOT: 필터 라벨 → 선택값(빈 값/부재 = 비활성). 칩·행필터 모두 여기서 파생.
@@ -356,14 +357,28 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     if (n) toast.success(`${n}개 항목을 삭제했습니다`);
   };
 
-  // Excel(.xlsx) 내보내기 — SheetJS. 스키마 컬럼을 동적 추출(스파크라인 trend는 값 없음 → 제외),
-  // 현재 필터(filtered) 반영. 값은 화면과 동일하게 mn()로 마스킹(숫자만 0치환·_on 자동추종, 셀은 텍스트).
+  // Excel(.xlsx) 내보내기 — SheetJS. 스키마 컬럼을 동적 추출(스파크라인 trend는 값 없음 → 제외), 현재 필터(filtered) 반영.
+  // 화면 우측정렬(align:'right') 숫자 컬럼만 숫자 셀(t:'n'+z)로 기록 → Excel 자동 우측정렬·실데이터 연동 시 계산 가능.
+  // 그 외(text/code/date/status·center 정렬)는 화면처럼 텍스트 셀(좌측). 마스크 ON이면 숫자 셀 값을 0으로 비노출.
+  // ※ Excel은 center 정렬을 스타일 없이 못 내므로(커뮤니티 xlsx 한계) center 숫자 컬럼은 텍스트(좌측) 유지가 최선.
   const exportExcel = () => {
     const cols = schema.columns.filter((c) => c.key !== 'trend');
     const cell = (v: any) => mn(typeof v === 'number' ? v.toLocaleString() : String(v ?? ''));
+    const zFmt = (v: number) => (Number.isInteger(v) ? '#,##0' : '#,##0.0');
+    const isNum = (c: typeof cols[number], v: any) => c.align === 'right' && typeof v === 'number';   // 우측정렬 숫자 컬럼만
     const header = cols.map((c) => c.label + (c.unit ? ` (${c.unit})` : ''));
-    const body = filtered.map((r) => cols.map((c) => cell((r as any)[c.key])));
+    const body = filtered.map((r) => cols.map((c) => {
+      const v = (r as any)[c.key];
+      return isNum(c, v) ? (masked ? 0 : v) : cell(v);
+    }));
     const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
+    // 숫자 셀에 화면 포맷과 일치하는 숫자서식(z) 부여 (행: 헤더 다음=1부터)
+    filtered.forEach((r, i) => cols.forEach((c, j) => {
+      const v = (r as any)[c.key];
+      if (!isNum(c, v)) return;
+      const addr = XLSX.utils.encode_cell({ r: i + 1, c: j });
+      if (ws[addr]) ws[addr].z = zFmt(v);
+    }));
     ws['!cols'] = cols.map((c) => ({ wch: c.key === 'name' ? 22 : 16 }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, '목록');
