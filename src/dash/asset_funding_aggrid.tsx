@@ -382,15 +382,15 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             <label className="block mb-4">
-              <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>사업연도</span>
-              <select value={fYear} onChange={(e) => setFYear(e.target.value)} style={inputStyle}>
+              <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>사업연도</span>
+              <select value={fYear} onChange={(e) => setFYear(e.target.value)} style={{ ...inputStyle, fontSize: 14 }}>
                 <option value="">전체</option>
                 {ROWS.map((r) => <option key={r.y} value={r.y}>{r.y}</option>)}
               </select>
             </label>
             <label className="block mb-4">
-              <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>출자금액 최소(억원 이상)</span>
-              <input type="number" value={fMin} onChange={(e) => setFMin(e.target.value)} placeholder="예: 800" style={inputStyle} />
+              <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>출자금액 최소(억원 이상)</span>
+              <input type="number" value={fMin} onChange={(e) => setFMin(e.target.value)} placeholder="예: 800" style={{ ...inputStyle, fontSize: 14 }} />
             </label>
           </div>
           <SheetFooter>
