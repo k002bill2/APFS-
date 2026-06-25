@@ -105,7 +105,7 @@ const columnDefs: (ColDef<FundingRow> | ColGroupDef<FundingRow>)[] = [
 
 /* 드로어/모달 입력 — 폰트 16px(iOS 포커스 줌 방지), 색은 토큰 */
 const inputStyle: CSSProperties = {
-  width: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 16,
+  width: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,
   border: '1px solid var(--border-strong)', borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
 };
 
@@ -383,14 +383,14 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>사업연도</span>
-              <select value={fYear} onChange={(e) => setFYear(e.target.value)} style={{ ...inputStyle, fontSize: 14 }}>
+              <select value={fYear} onChange={(e) => setFYear(e.target.value)} style={inputStyle}>
                 <option value="">전체</option>
                 {ROWS.map((r) => <option key={r.y} value={r.y}>{r.y}</option>)}
               </select>
             </label>
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>출자금액 최소(억원 이상)</span>
-              <input type="number" value={fMin} onChange={(e) => setFMin(e.target.value)} placeholder="예: 800" style={{ ...inputStyle, fontSize: 14 }} />
+              <input type="number" value={fMin} onChange={(e) => setFMin(e.target.value)} placeholder="예: 800" style={inputStyle} />
             </label>
           </div>
           <SheetFooter>
@@ -410,15 +410,15 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
           <div className="overflow-y-auto" style={{ padding: 18 }}>
             <label className="block mb-3.5">
               <span className="font-semibold text-caption block" style={{ fontSize: 14, marginBottom: 5 }}>연도 *</span>
-              <input value={draft.y} onChange={(e) => setDraft((d) => ({ ...d, y: e.target.value }))} placeholder="예: 2026" style={{ ...inputStyle, fontSize: 14 }} />
+              <input value={draft.y} onChange={(e) => setDraft((d) => ({ ...d, y: e.target.value }))} placeholder="예: 2026" style={inputStyle} />
             </label>
             <label className="block mb-3.5">
               <span className="font-semibold text-caption block" style={{ fontSize: 14, marginBottom: 5 }}>조성 합계(억원)</span>
-              <input type="number" value={draft.c0} onChange={(e) => setDraft((d) => ({ ...d, c0: e.target.value }))} placeholder="0" style={{ ...inputStyle, fontSize: 14 }} />
+              <input type="number" value={draft.c0} onChange={(e) => setDraft((d) => ({ ...d, c0: e.target.value }))} placeholder="0" style={inputStyle} />
             </label>
             <label className="block mb-3.5">
               <span className="font-semibold text-caption block" style={{ fontSize: 14, marginBottom: 5 }}>출자금액(억원)</span>
-              <input type="number" value={draft.u1} onChange={(e) => setDraft((d) => ({ ...d, u1: e.target.value }))} placeholder="0" style={{ ...inputStyle, fontSize: 14 }} />
+              <input type="number" value={draft.u1} onChange={(e) => setDraft((d) => ({ ...d, u1: e.target.value }))} placeholder="0" style={inputStyle} />
             </label>
           </div>
           <DialogFooter>
