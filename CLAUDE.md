@@ -144,3 +144,4 @@ npm run preview   # 빌드 결과 미리보기 — http://localhost:4273
 | 2026-06-20 | 훅 fallback 경로 수정(`WORK/WORKSPACE/APFS`→`Work/APFS`), 모델 핀 `claude-opus-4-8[1m]`로 변경, PreCompact 훅 문서화, 본 변경이력 신설 | `settings.json`, `CLAUDE.md` | 하네스 현황 감사에서 발견된 drift 3건 정리 |
 | 2026-06-23 | `main`/`master`에서 `git commit`·`push` 직행을 차단하는 PreToolUse(Bash) 가드 훅 추가(`block-main-write.sh`) | `settings.json`, `.claude/hooks/block-main-write.sh` | main push의 Vercel 프로덕션 자동배포 직행 사고 방지 |
 | 2026-06-23 | `commit-push-pr`를 skill→command로 정리(인자 플래그·`allowed-tools` 확보, 안전 규약 유지), 중복 정의 제거 | `.claude/commands/commit-push-pr.md` | `/commit-push-pr` 트리거 단일화 + 사용자 전용 git 워크플로엔 command가 적합 |
+| 2026-06-25 | `responsive-ui` 스킬의 입력 폰트 규칙을 `≥16px`→`=14px(프로젝트 표준)`으로 정정(iOS 자동확대 지식·탈출구는 보존). 체크리스트5·쿡북F·검증·함정표 4곳 | `.claude/skills/responsive-ui/SKILL.md` | 코드 실제 컨벤션(폼 컨트롤 14px 통일, 커밋 a677118)과 스킬 간 drift 해소 — 스킬을 따르면 오히려 컨벤션 위반이던 역설 제거 |
