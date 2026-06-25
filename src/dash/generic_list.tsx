@@ -190,11 +190,16 @@ const drawerInputStyle: React.CSSProperties = {
 function DrawerFilterControl({ ff, value, onChange }: { ff: FilterField; value: string; onChange: (v: string) => void }) {
   let control: React.ReactNode;
   if (ff.kind === "year" || ff.kind === "enum") {
+    // Safari menulist는 세로 padding을 무시해 select가 input보다 낮게 렌더됨(WebKit 22 vs 37px).
+    // appearance:none으로 높이를 맞추고, 사라진 네이티브 화살표는 chevron으로 보강. (date는 달력 아이콘 보존 위해 미적용)
     control = (
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={drawerInputStyle}>
-        <option value="">전체</option>
-        {ff.options.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
+      <div className="relative">
+        <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...drawerInputStyle, appearance: "none", WebkitAppearance: "none", paddingRight: 32 }}>
+          <option value="">전체</option>
+          {ff.options.map((o) => <option key={o} value={o}>{o}</option>)}
+        </select>
+        <Icon name="chevron-down" size={16} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted-foreground)", pointerEvents: "none" }} />
+      </div>
     );
   } else if (ff.kind === "date") {
     control = <input type="date" value={value} onChange={(e) => onChange(e.target.value)} style={drawerInputStyle} />;

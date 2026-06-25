@@ -383,10 +383,15 @@ export function AssetFundingAgGrid({ onNav }: { onNav?: (r: string) => void }) {
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>사업연도</span>
-              <select value={fYear} onChange={(e) => setFYear(e.target.value)} style={inputStyle}>
-                <option value="">전체</option>
-                {ROWS.map((r) => <option key={r.y} value={r.y}>{r.y}</option>)}
-              </select>
+              {/* Safari menulist는 세로 padding을 무시해 select가 input보다 낮게 렌더됨(WebKit 측정 22 vs 37px).
+                  appearance:none으로 padding을 살려 높이를 맞추고, 사라진 네이티브 화살표는 chevron 아이콘으로 보강. */}
+              <div className="relative">
+                <select value={fYear} onChange={(e) => setFYear(e.target.value)} style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
+                  <option value="">전체</option>
+                  {ROWS.map((r) => <option key={r.y} value={r.y}>{r.y}</option>)}
+                </select>
+                <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
+              </div>
             </label>
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>출자금액 최소(억원 이상)</span>
