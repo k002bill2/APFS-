@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { Icon } from './icons';
 import { Shell } from './shell';
 import { UI } from './components';
-import { APFS_DATA } from './data';
+import { APFS_DATA, HistoryStore } from './data';
 import { DesignSystem } from './designsystem';
 import { Main } from './main';
 import { Performance } from './performance';
@@ -52,6 +52,7 @@ function App() {
   }, [theme]);
   useEffect(() => ls.set("apfs.role", role), [role]);
   useEffect(() => ls.set("apfs.route", route), [route]);
+  useEffect(() => { HistoryStore.push(route); }, [route]);   // 방문기록 적재(복원된 초기 라우트 포함)
   useEffect(() => ls.set("apfs.lnb", lnbOpen ? "1" : "0"), [lnbOpen]);
   useEffect(() => ls.set("apfs.navstyle", navStyle), [navStyle]);
   useEffect(() => {

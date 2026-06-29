@@ -3,7 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Icon } from './icons';
 import { UI } from './components';
-import { APFS_DATA, useMenuSel, MenuStore } from './data';
+import { APFS_DATA, useMenuSel, MenuStore, HistoryStore } from './data';
 import { mn, MT } from './mask';
 import { MainWidgets } from './main_widgets';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuLabel, DropdownMenuSeparator } from './ui/dropdown-menu';
@@ -13,7 +13,7 @@ import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuT
 import logoUrl from './assets/logo.svg';
 import logoWhiteUrl from './assets/logo_white.svg';
 
-const { useState, useEffect } = React;
+const { useState, useEffect, useContext, useRef } = React;
 const { ColorChip, IconBtn, CountPill, StatusBadge, Button, SegTabs } = UI;
 const D = APFS_DATA;
 
@@ -703,8 +703,140 @@ function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWi
   );
 }
 
+/* ---------- 방문기록 (최근 열어본 페이지 드롭다운) ---------- */
+
+/* PageHeader가 14개 페이지에서 각자 호출되므로, onNav/route를 매번 prop으로 넘기지 않고
+   AppShell에서 Context로 한 번 공급한다(소비처: PageHeader → HistoryMenu). */
+const NavContext = React.createContext<{ onNav: (r: string) => void; route: string } | null>(null);
+
+/* route(= leaf의 path 또는 path가 없으면 leaf.label) → {label, crumbs, icon} 해석 인덱스.
+   D.MENU를 모든 레벨로 한 번 펼쳐 만든다(상위 카테고리 icon 상속). */
+const ROUTE_META: Record<string, { label: string; crumbs: string[]; icon: string }> = (() => {
+  const idx: Record<string, { label: string; crumbs: string[]; icon: string }> = {};
+  for (const top of D.MENU as any[]) {
+    const icon = top.icon || "file";
+    if (top.path) idx[top.path] = { label: top.label, crumbs: ["홈", top.label], icon };
+    const walk = (nodes: any[], trail: string[]) => {
+      for (const n of nodes) {
+        if (n.children) { walk(n.children, [...trail, n.label]); continue; }   // 그룹 노드는 이동 대상 아님
+        const meta = { label: n.label, crumbs: ["홈", top.label, ...trail, n.label], icon };
+        if (n.path) idx[n.path] = meta;
+        if (!idx[n.label]) idx[n.label] = meta;                                // GenericListPage는 path 없으면 leaf.label로 라우팅
+      }
+    };
+    if (top.children) walk(top.children, []);
+  }
+  // 하드코딩 페이지(app.tsx에서 직접 라우팅)는 D.MENU 카테고리 라벨이 아니라
+  // '사용자가 실제로 본 페이지 제목'(각 페이지 PageHeader의 마지막 crumb)으로 정밀화한다.
+  // ⚠ 해당 페이지의 crumbs가 바뀌면 여기도 함께 갱신.
+  const pages: Record<string, { label: string; crumbs: string[]; icon: string }> = {
+    designsystem: { label: "디자인 시스템", crumbs: ["홈", "디자인 시스템"], icon: "layers" },
+    main: { label: "대시보드", crumbs: ["홈", "대시보드"], icon: "home" },
+    risk: { label: "리스크 모니터링", crumbs: ["홈", "조기경보", "리스크 모니터링"], icon: "shield-alert" },
+    "risk-manage": { label: "조기경보 관리", crumbs: ["홈", "조기경보", "조기경보 관리"], icon: "shield-alert" },
+    accounting: { label: "회계·자금 마감", crumbs: ["홈", "회계 관리", "회계·자금 마감"], icon: "wallet" },
+    "gp-health": { label: "운용사 건전성", crumbs: ["홈", "운용관리", "운용사 건전성"], icon: "building" },
+    performance: { label: "투자 성과·포트폴리오", crumbs: ["홈", "통계조회", "투자 성과·포트폴리오"], icon: "trending" },
+    schedule: { label: "일정·알림 센터", crumbs: ["홈", "일정·알림 센터"], icon: "calendar" },
+    report: { label: "개요", crumbs: ["홈", "보고관리", "개요"], icon: "file" },
+    "report-bucheo": { label: "부처보고", crumbs: ["홈", "보고관리", "부처보고"], icon: "file" },
+    "report-sutack": { label: "수탁보고", crumbs: ["홈", "보고관리", "수탁보고"], icon: "file" },
+    subfund: { label: "자펀드 정보관리", crumbs: ["홈", "투자자산관리", "자펀드 정보관리"], icon: "landmark" },
+    asset: { label: "개요", crumbs: ["홈", "투자자산관리", "개요"], icon: "landmark" },
+  };
+  for (const k in pages) idx[k] = pages[k];   // 페이지 제목이 카테고리 라벨보다 우선
+  return idx;
+})();
+function routeMeta(route: string) {
+  return ROUTE_META[route] || { label: route, crumbs: ["홈", route], icon: "file" };
+}
+
+/* localStorage 방문기록 구독 훅(MenuStore의 useMenuSel과 동일한 CustomEvent 패턴) */
+function useHistory(): string[] {
+  const [list, setList] = useState<string[]>(() => HistoryStore.get());
+  useEffect(() => {
+    const f = () => setList(HistoryStore.get());
+    window.addEventListener("apfs-history-change", f);
+    return () => window.removeEventListener("apfs-history-change", f);
+  }, []);
+  return list;
+}
+
+function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: string }) {
+  const [open, setOpen] = useState(false);
+  const hist = useHistory();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const items = hist.filter((r) => r !== route).map((r) => ({ r, ...routeMeta(r) }));   // 현재 페이지는 제외
+  useEffect(() => { setOpen(false); }, [route]);                                          // 이동하면 닫기
+  // 키보드 닫기: Esc → 닫고 트리거로 포커스 복귀(feat/nav-keyboard-a11y 일관성)
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.stopPropagation(); setOpen(false); rootRef.current?.querySelector("button")?.focus(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+  return (
+    <div ref={rootRef} className="relative inline-flex">
+      <IconBtn icon="clock" onClick={() => setOpen((o) => !o)} label="방문기록" size={38} active={open} expanded={open} />
+      {open && <>
+        <div onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: 59 }} />
+        <div
+          className="bg-card shadow-lg"
+          role="menu"
+          aria-label="방문기록"
+          style={{
+            position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 60,
+            width: "min(284px, calc(100vw - 24px))", maxHeight: "min(60vh, 420px)", overflowY: "auto",
+            border: "1px solid var(--border)", borderRadius: 14, padding: 8,
+            animation: "dashFade .16s var(--ease) both",
+          }}>
+          <div className="flex items-center gap-1.5 pt-1.5 px-2 pb-2">
+            <Icon name="clock" size={14} style={{ color: "var(--primary)" }} />
+            <span className="font-bold" style={{ fontSize: 12.5 }}>최근 방문</span>
+            {items.length > 0 && <button
+              onClick={() => HistoryStore.clear()}
+              aria-label="방문기록 지우기"
+              title="방문기록 지우기"
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "var(--foreground)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--caption)"; }}
+              className="ml-auto shrink-0 cursor-pointer inline-flex items-center gap-1"
+              style={{ borderRadius: 7, border: "none", background: "transparent", color: "var(--caption)", font: "inherit", fontWeight: 600, fontSize: 11.5, padding: "4px 7px", transition: "background .15s,color .15s" }}>
+              <Icon name="trash" size={12} />지우기
+            </button>}
+          </div>
+          {items.length === 0
+            ? <div className="t-caption pt-1 px-2.5 pb-2.5" style={{ fontSize: 12 }}>최근 방문한 페이지가 없습니다.</div>
+            : items.map(({ r, label, crumbs, icon }) => {
+              const parent = crumbs.length > 2 ? crumbs[crumbs.length - 2] : crumbs[0];
+              return (
+                <button
+                  key={r}
+                  role="menuitem"
+                  onClick={() => { onNav(r); setOpen(false); }}
+                  title={crumbs.join(" › ")}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  className="w-full flex items-center gap-2.5 cursor-pointer text-left"
+                  style={{ border: "none", font: "inherit", borderRadius: 9, padding: "8px 10px", background: "transparent", color: "var(--foreground)", transition: "background .15s" }}>
+                  <Icon name={icon} size={16} stroke={2} style={{ color: "var(--caption)", flex: "0 0 auto" }} />
+                  <span className="flex-1 min-w-0">
+                    <span className="block whitespace-nowrap overflow-hidden" style={{ textOverflow: "ellipsis", fontSize: 12.5, fontWeight: 600 }}>{label}</span>
+                    <span className="block whitespace-nowrap overflow-hidden" style={{ textOverflow: "ellipsis", fontSize: 11, color: "var(--caption)" }}>{parent}</span>
+                  </span>
+                </button>
+              );
+            })}
+        </div>
+      </>}
+    </div>
+  );
+}
+
 /* ---------- PageHeader (breadcrumb + actions; title/sub props accepted but no longer rendered) ---------- */
 function PageHeader({ crumbs, actions }: { crumbs: string[]; title?: React.ReactNode; sub?: React.ReactNode; actions?: React.ReactNode }) {
+  const nav = useContext(NavContext);   // 방문기록 버튼이 쓸 onNav/route (AppShell이 공급)
   return (
     <div style={{ marginBottom: 18 }}><div
         className="flex items-center justify-between gap-4 flex-wrap"><nav
@@ -714,8 +846,8 @@ function PageHeader({ crumbs, actions }: { crumbs: string[]; title?: React.React
             style={{
               fontSize: 12, fontWeight: i === crumbs.length - 1 ? 700 : 500,
               color: i === crumbs.length - 1 ? "var(--foreground)" : "var(--caption)",
-            }}>{c}</span></React.Fragment>)}</nav>{actions && <div
-          className="flex items-center gap-2 shrink-0">{actions}</div>}</div></div>
+            }}>{c}</span></React.Fragment>)}</nav><div
+          className="flex items-center gap-2 shrink-0">{actions}{nav && <HistoryMenu onNav={nav.onNav} route={nav.route} />}</div></div></div>
   );
 }
 
@@ -746,9 +878,9 @@ function AppShell(props) {
         onNav={navClose}
         onUserModal={setUserModal} /><div className="flex flex-1 items-start">{rail
           ? <RailNav role={role} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />
-          : <Lnb open={mobile ? true : lnbOpen} role={role} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />}<main
+          : <Lnb open={mobile ? true : lnbOpen} role={role} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />}<NavContext.Provider value={{ onNav: navClose, route }}><main
           className="dash-main flex-1 min-w-0"
-          style={{ padding: "22px 26px 104px" }}>{children}</main></div>{mobile && <div
+          style={{ padding: "22px 26px 104px" }}>{children}</main></NavContext.Provider></div>{mobile && <div
         className={"lnb-backdrop" + (drawer ? " show" : "")}
         onClick={() => setDrawer(false)} />}<FavoritesFab onNav={navClose} /><NotifCenter open={notifOpen} onClose={() => setNotifOpen(false)} /><CenterModal open={userModal === "memo"} onClose={() => setUserModal(null)} title="메모" icon="memo" width={620}>{ncMemoBody(true)}</CenterModal><CenterModal open={userModal === "schedule"} onClose={() => setUserModal(null)} title="일정" icon="calendar" width={880}><NcScheduleBody /></CenterModal><CenterModal open={userModal === "logout"} onClose={() => setUserModal(null)} title="로그아웃" icon="external" width={400} footer={[<button key="c" onClick={() => setUserModal(null)} className="bg-card cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "1px solid var(--border-strong)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>취소</button>, <button key="o" onClick={() => setUserModal(null)} className="bg-brand-blue cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "none", color: "var(--on-brand-solid)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>로그아웃</button>]}><div className="py-1.5 px-1 text-foreground" style={{ fontSize: 14, lineHeight: 1.6 }}>정말 로그아웃 하시겠습니까?</div></CenterModal></div>
   );
