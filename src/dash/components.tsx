@@ -138,7 +138,7 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
   const sizeCls = size === "sm" ? "px-[11px] py-1.5 text-[12.5px]" : size === "lg" ? "px-5 py-[11px] text-[13.5px]" : "px-[15px] py-2 text-[13.5px]";
   const variantCls = {
     primary: "bg-primary text-primary-foreground",
-    secondary: "text-white bg-[var(--brand-gray)]",
+    secondary: "text-[color:var(--on-brand-solid)] bg-[var(--brand-gray)]",
     outline: "bg-card text-foreground border-border-strong",
     ghost: "bg-transparent text-muted-foreground",
     accent: "bg-accent text-accent-foreground",
@@ -160,7 +160,7 @@ function IconBtn({ icon, onClick, label, badge, active, size = 38, activeClassNa
       className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border transition-all duration-150",
         active ? (activeClassName || "bg-card text-primary border-ring") : "bg-transparent text-muted-foreground border-transparent")}
       style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}><Icon name={icon} size={20} stroke={2} />{badge > 0 && <span
-        className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</button>
+        className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-[color:var(--destructive-foreground)] text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</button>
   );
   if (!label) return btn;
   return (
@@ -185,7 +185,7 @@ function CountPill({ count, urgent }: { count?: number; urgent?: boolean }) {
   if (!count) return null;
   return (
     <span
-      className={cx("min-w-[18px] h-[18px] px-[5px] rounded-full text-[10.5px] font-bold inline-flex items-center justify-center", urgent ? "bg-danger text-white" : "text-primary")}
+      className={cx("min-w-[18px] h-[18px] px-[5px] rounded-full text-[10.5px] font-bold inline-flex items-center justify-center", urgent ? "bg-danger text-[color:var(--destructive-foreground)]" : "text-primary")}
       style={urgent ? undefined : { background: "color-mix(in srgb,var(--primary) 15%,transparent)" }}>{count > 99 ? "99+" : count}</span>
   );
 }

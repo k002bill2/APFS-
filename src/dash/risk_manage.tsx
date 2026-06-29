@@ -6,6 +6,10 @@ import { Shell } from './shell';
 import { UI } from './components';
 import { Charts } from './charts';
 import { mn, MT } from './mask';
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef, ICellRendererParams, RowClickedEvent } from 'ag-grid-community';
+import { apfsTheme } from './aggrid_theme';   // 공유 테마(회색 행선택) SSOT
+import './aggrid_shared.css';
 
 const { useState, useMemo } = React;
 const { PageHeader } = Shell;
@@ -127,6 +131,64 @@ function DueBadge({ dday, date }: { dday: string; date: string }) {
 /* ───────────────────────────────────────────────
    메인 페이지
 ─────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────
+   AG Grid — 처리 워크리스트 컬럼 정의 (수제 <table> 본체 대체)
+   행선택 회색은 공유 테마(--row-selected)가 칠한다(인라인 선택색 제거).
+─────────────────────────────────────────────── */
+const vCenter = { display: "flex", alignItems: "center" } as const;
+
+function GpCell(p: ICellRendererParams) {
+  const r = p.data; if (!r) return null;
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className="inline-flex items-center justify-center w-8 h-8 rounded-[8px] text-white text-[11px] font-bold shrink-0" style={{ background: r.gpColor }}><MT>{r.gpCode}</MT></span>
+      <div className="min-w-0">
+        <div className="text-[13.5px] font-semibold text-foreground"><MT>{r.gp}</MT></div>
+        <div className="t-caption text-[11px]"><MT>{r.id}</MT></div>
+      </div>
+    </div>
+  );
+}
+function TypeCell(p: ICellRendererParams) {
+  const r = p.data; if (!r) return null;
+  return (
+    <div className="min-w-0">
+      <div className="text-[13px] font-semibold text-foreground"><MT>{r.type}</MT></div>
+      <div className="t-caption text-[11px] mt-0.5 truncate"><MT>{r.desc}</MT></div>
+    </div>
+  );
+}
+function ManagerCell(p: ICellRendererParams) {
+  const r = p.data; if (!r) return null;
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-[10px] font-bold shrink-0 bg-muted-foreground"><MT>{r.manager[0]}</MT></span>
+      <span className="text-[13px] font-medium text-foreground"><MT>{r.manager}</MT></span>
+    </div>
+  );
+}
+
+const WORK_COLS: ColDef[] = [
+  { headerName: "운용사", field: "gp", flex: 1.6, minWidth: 180, cellStyle: vCenter, cellRenderer: GpCell },
+  { headerName: "경보 유형", field: "type", flex: 2, minWidth: 190, cellStyle: vCenter, cellRenderer: TypeCell },
+  { headerName: "등급", field: "grade", width: 84, cellStyle: vCenter, cellRenderer: (p: ICellRendererParams) => <StatusBadge tone={p.data.gradeTone} label={p.data.grade} size="md" /> },
+  { headerName: "접수일", field: "received", width: 112, cellStyle: { ...vCenter, fontVariantNumeric: "tabular-nums", color: "var(--muted-foreground)", fontSize: 13 }, valueFormatter: (p: any) => mn(p.value) },
+  { headerName: "처리기한", field: "due", width: 108, cellStyle: vCenter, cellRenderer: (p: ICellRendererParams) => <DueBadge dday={p.data.dday} date={p.data.due} /> },
+  { headerName: "처리 상태", field: "status", width: 112, cellStyle: vCenter, cellRenderer: (p: ICellRendererParams) => <StatusBadge tone={statusToneOf(p.data.status)} label={p.data.status} size="md" /> },
+  { headerName: "담당자", field: "manager", width: 132, cellStyle: vCenter, cellRenderer: ManagerCell },
+  {
+    headerName: "", colId: "action", width: 124, sortable: false, resizable: false, type: "rightAligned",
+    cellStyle: { display: "flex", alignItems: "center", justifyContent: "flex-end" },
+    cellRenderer: (p: ICellRendererParams) => (
+      <Button
+        variant={p.data.status === "종결" ? "outline" : "primary"}
+        size="sm"
+        leadingIcon={p.data.status === "종결" ? "external" : "check"}
+        onClick={(e: any) => e.stopPropagation()}>{PRIMARY_ACTION[p.data.status]}</Button>
+    ),
+  },
+];
+
 function RiskManage({ onNav }: { onNav: (r: string) => void }) {
   const [tab, setTab] = useState("전체");
   const [activeTypes, setActiveTypes] = useState<Record<string, boolean>>({});
@@ -208,68 +270,18 @@ function RiskManage({ onNav }: { onNav: (r: string) => void }) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse min-w-[940px]">
-            <thead>
-              <tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>
-                {[
-                  ["운용사", "left", "pl-5 sm:pl-6"],
-                  ["경보 유형", "left", ""],
-                  ["등급", "left", ""],
-                  ["접수일", "left", ""],
-                  ["처리기한", "left", ""],
-                  ["처리 상태", "left", ""],
-                  ["담당자", "left", ""],
-                  ["", "right", "pr-5 sm:pr-6"],
-                ].map(([label, align, extra], i) =>
-                  <th key={i} className={cx("t-label font-semibold px-4 py-3 whitespace-nowrap", align === "right" ? "text-right" : "text-left", extra)}>{label}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0
-                ? <tr><td colSpan={8} className="p-0"><EmptyState msg="조건에 맞는 처리 항목이 없습니다" icon="inbox" height={120} /></td></tr>
-                : filtered.map((row) =>
-                    <tr
-                      key={row.id}
-                      className="border-t border-border transition-colors cursor-pointer"
-                      style={{ background: selectedRow === row.id ? "color-mix(in srgb,var(--primary) 5%,transparent)" : "transparent" }}
-                      onClick={() => setSelectedRow(selectedRow === row.id ? null : row.id)}
-                      onMouseEnter={(e) => { if (selectedRow !== row.id) e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)"; }}
-                      onMouseLeave={(e) => { if (selectedRow !== row.id) e.currentTarget.style.background = "transparent"; }}>
-                      <td className="px-4 pl-5 sm:pl-6 py-3.5 whitespace-nowrap">
-                        <div className="flex items-center gap-2.5">
-                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-[8px] text-white text-[11px] font-bold shrink-0" style={{ background: row.gpColor }}><MT>{row.gpCode}</MT></span>
-                          <div className="min-w-0">
-                            <div className="text-[13.5px] font-semibold text-foreground"><MT>{row.gp}</MT></div>
-                            <div className="t-caption text-[11px]"><MT>{row.id}</MT></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap">
-                        <div className="min-w-0">
-                          <div className="text-[13px] font-semibold text-foreground"><MT>{row.type}</MT></div>
-                          <div className="t-caption text-[11px] mt-0.5 max-w-[200px] truncate"><MT>{row.desc}</MT></div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap"><StatusBadge tone={row.gradeTone} label={row.grade} size="md" /></td>
-                      <td className="px-4 py-3.5 whitespace-nowrap tabular text-[13px] text-muted-foreground">{mn(row.received)}</td>
-                      <td className="px-4 py-3.5 whitespace-nowrap"><DueBadge dday={row.dday} date={row.due} /></td>
-                      <td className="px-4 py-3.5 whitespace-nowrap"><StatusBadge tone={statusToneOf(row.status)} label={row.status} size="md" /></td>
-                      <td className="px-4 py-3.5 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-[10px] font-bold shrink-0 bg-muted-foreground"><MT>{row.manager[0]}</MT></span>
-                          <span className="text-[13px] font-medium text-foreground"><MT>{row.manager}</MT></span>
-                        </div>
-                      </td>
-                      <td className="px-4 pr-5 sm:pr-6 py-3.5 text-right whitespace-nowrap">
-                        <Button
-                          variant={row.status === "종결" ? "outline" : "primary"}
-                          size="sm"
-                          leadingIcon={row.status === "종결" ? "external" : "check"}
-                          onClick={(e: any) => { e.stopPropagation(); }}>{PRIMARY_ACTION[row.status]}</Button>
-                      </td>
-                    </tr>)}
-            </tbody>
-          </table>
+          <AgGridReact
+            theme={apfsTheme}
+            rowData={filtered}
+            columnDefs={WORK_COLS}
+            getRowId={(p) => p.data.id}
+            domLayout="autoHeight"
+            rowHeight={56}
+            defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
+            rowSelection={{ mode: "singleRow", checkboxes: false, enableClickSelection: true }}
+            onRowClicked={(e: RowClickedEvent) => setSelectedRow(e.data?.id ?? null)}
+            overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 처리 항목이 없습니다</span>'}
+          />
 
           <div className="flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 py-3.5 border-t border-border">
             <span className="t-caption">총 <b className="text-foreground">{mn(WORKITEMS.length + "건")}</b> 중 {mn(filtered.length + "건 표시")}</span>

@@ -33,8 +33,8 @@ function HeroAUM({ onNav }) {
     <div
       className="hero-aum dcol-12 relative overflow-hidden shadow-md grid items-center p-6"
       style={{
-        borderRadius: 18, color: "#fff",
-        background: "linear-gradient(120deg,#1F5A34 0%,#1d6e6a 52%,#0A6F9E 100%)",
+        borderRadius: 18, color: "var(--on-brand-solid)",
+        background: "var(--gradient-hero)",
         gridTemplateColumns: "1.5fr 1fr 1fr", gap: 22,
       }}><div
         className="absolute inset-0 pointer-events-none"
@@ -44,14 +44,14 @@ function HeroAUM({ onNav }) {
             className="tabular font-extrabold"
             style={{ fontSize: 46, letterSpacing: "-.02em", lineHeight: 1 }}>{mn(aum.value)}</span><span className="font-semibold" style={{ fontSize: 18, opacity: .85 }}>{aum.unit}</span></div><div className="flex items-center gap-3 mt-3"><span
             className="inline-flex items-center font-bold"
-            style={{ gap: 5, background: "rgba(255,255,255,.18)", borderRadius: 8, padding: "4px 9px", fontSize: 12.5 }}><Icon name="trending" size={14} />{mn("+3.2% 전월 대비")}</span><div style={{ width: 120, opacity: .95 }}><Sparkline data={aum.trend} color="#bdeaff" id="hero" height={34} area={false} /></div></div><div className="flex gap-2" style={{ marginTop: 18 }}><Button
+            style={{ gap: 5, background: "rgba(255,255,255,.18)", borderRadius: 8, padding: "4px 9px", fontSize: 12.5 }}><Icon name="trending" size={14} />{mn("+3.2% 전월 대비")}</span><div style={{ width: 120, opacity: .95 }}><Sparkline data={aum.trend} color="var(--on-gradient-sky)" id="hero" height={34} area={false} /></div></div><div className="flex gap-2" style={{ marginTop: 18 }}><Button
             variant="outline"
             size="sm"
-            style={{ background: "rgba(255,255,255,.16)", color: "#fff", borderColor: "rgba(255,255,255,.3)" }}
+            style={{ background: "rgba(255,255,255,.16)", color: "var(--on-brand-solid)", borderColor: "rgba(255,255,255,.3)" }}
             leadingIcon="download">월간 리포트</Button><Button
             variant="outline"
             size="sm"
-            style={{ background: "transparent", color: "#fff", borderColor: "rgba(255,255,255,.3)" }}
+            style={{ background: "transparent", color: "var(--on-brand-solid)", borderColor: "rgba(255,255,255,.3)" }}
             trailingIcon="arrow-right"
             onClick={() => onNav("performance")}>성과 상세</Button></div></div><div
         className="relative text-center"
@@ -88,7 +88,7 @@ function GaugeLight({ value }) {
         strokeLinecap="round" /><path
         d="M19 70 A46 46 0 0 1 111 70"
         fill="none"
-        stroke="#bff0c4"
+        stroke="var(--on-gradient-mint)"
         strokeWidth={11}
         strokeLinecap="round"
         strokeDasharray={c}
@@ -96,7 +96,7 @@ function GaugeLight({ value }) {
         x={65}
         y={64}
         textAnchor="middle"
-        style={{ fontSize: 26, fontWeight: 800, fill: "#fff" }}>{mn(value + "%")}</text></svg>
+        style={{ fontSize: 26, fontWeight: 800, fill: "var(--on-brand-solid)" }}>{mn(value + "%")}</text></svg>
   );
 }
 function HeroStat({ icon, label, value, unit, delta, danger, onNav }: { icon: string; label?: React.ReactNode; value?: React.ReactNode; unit?: string; delta?: React.ReactNode; danger?: boolean; onNav?: () => void }) {
@@ -105,13 +105,13 @@ function HeroStat({ icon, label, value, unit, delta, danger, onNav }: { icon: st
       onClick={onNav}
       className="text-left flex items-center gap-3 py-3 px-3.5"
       style={{
-        border: "none", cursor: onNav ? "pointer" : "default", font: "inherit", color: "#fff",
+        border: "none", cursor: onNav ? "pointer" : "default", font: "inherit", color: "var(--on-brand-solid)",
         background: "rgba(255,255,255,.12)", borderRadius: 12,
       }}><span
         className="inline-flex items-center justify-center shrink-0"
         style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,.18)" }}><Icon name={icon} size={19} /></span><div className="flex-1"><div className="font-semibold" style={{ fontSize: 11.5, opacity: .9 }}><MT>{label}</MT></div><div className="flex items-baseline gap-1"><span className="tabular font-extrabold" style={{ fontSize: 24 }}>{mn(value)}</span><span style={{ fontSize: 12, opacity: .85 }}>{unit}</span><span
             className="font-bold ml-1"
-            style={{ fontSize: 11.5, color: danger ? "#ffd9d6" : "#bff0c4" }}>{mn(delta)}</span></div></div></button>
+            style={{ fontSize: 11.5, color: danger ? "var(--on-gradient-danger)" : "var(--on-gradient-mint)" }}>{mn(delta)}</span></div></div></button>
   );
 }
 

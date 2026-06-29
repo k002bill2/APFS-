@@ -323,14 +323,14 @@ const PORTFOLIO = [
     value:"1,040,000", change:0.0, risk:"ULTRA-LOW", riskTone:"success", hist:[6,6,6,6,6,6,6,6] },
 ];
 
-// 퀵메뉴 — GNB 그리드 팝오버 (자주 쓰는 업무 바로가기 6종)
+// 퀵메뉴 — 메인 상단 정적 카드 섹션 (자주 쓰는 업무 바로가기 6종, 기능 설명 포함)
 const QUICKMENU = [
-  { label: "투자등록", icon: "plus", to: "performance" },
-  { label: "보고서", icon: "file", to: "gp-health" },
-  { label: "경보", icon: "shield-alert", to: "risk", urgent: true, badge: 14 },
-  { label: "평가", icon: "activity", to: "risk" },
-  { label: "회계", icon: "wallet", to: "accounting" },
-  { label: "문서", icon: "inbox", to: "gp-health" },
+  { label: "투자등록", desc: "신규 출자·투자 건 등록 및 심의 요청", icon: "plus", to: "performance", tone: "primary" },
+  { label: "보고서 제출", desc: "운용사 정기·수시 보고서 작성·제출", icon: "file", to: "gp-health", tone: "info" },
+  { label: "조기경보 확인", desc: "리스크 경보 모니터링 및 위반 처리", icon: "shield-alert", to: "risk", tone: "danger", urgent: true, badge: 14 },
+  { label: "운용사 평가", desc: "건전성·체크리스트 기반 정기 평가", icon: "activity", to: "risk", tone: "warning" },
+  { label: "회계 마감", desc: "일자별 자금수지·전표 검토·승인", icon: "wallet", to: "accounting", tone: "success" },
+  { label: "문서함", desc: "수신 문서·결재함 조회 및 처리", icon: "inbox", to: "gp-health", tone: "info" },
 ];
 
 // 즐겨찾기 — LNB 상단 고정 (사용자가 핀한 업무 딥링크)
@@ -445,7 +445,6 @@ MENU_FULL.forEach((c, ci) => c.subs.forEach((g, gi) => g.leaves.forEach((lf: any
   const o = typeof lf === "string" ? { label: lf } : lf;
   ALLMENU.push({ key: "c" + ci + "-" + gi + "-" + li, label: o.label, to: c.to, icon: CAT_ICON[c.cat], cat: c.cat, sub: g.name, urgent: c.urgent || o.urgent, badge: o.badge });
 })));
-const DEFAULT_QUICK = ["c0-0-1", "c1-0-2", "c2-0-0", "c3-0-2", "c4-0-0", "c5-0-0"];
 const DEFAULT_FAV = ["c0-0-0", "c1-0-0", "c3-1-0"];
 
 export const MenuStore = {
@@ -476,4 +475,4 @@ export function useMenuSel(kind: string, def: string[]) {
 
 export const APFS_DATA = { KPI, EXEC_Q, EXEC_Y, STATUS_DONUT, INDUSTRY, SCHEDULE, MINI, SHORTCUTS,
   RISK_TREND, RISK_THRESHOLD, REGION_BARS, NOTIFS, NOTIF_CENTER, ROLES, MENU, PORTFOLIO, QUICKMENU, FAVORITES,
-  ALLMENU, DEFAULT_QUICK, DEFAULT_FAV };
+  ALLMENU, DEFAULT_FAV };

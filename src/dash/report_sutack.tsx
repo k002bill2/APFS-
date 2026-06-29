@@ -1,10 +1,14 @@
 /* 수탁보고 전용 페이지 — FR-5.9
-   APFS forest-green 토큰 + Tailwind 유틸리티. */
+   APFS 인디고/블루 토큰 + Tailwind 유틸리티. */
 import React from 'react';
 import { Icon } from './icons';
 import { Shell } from './shell';
 import { UI } from './components';
 import { mn, MT } from './mask';
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef, ICellRendererParams } from 'ag-grid-community';
+import { apfsTheme } from './aggrid_theme';   // 공유 테마(회색 행선택)·모듈등록 SSOT
+import './aggrid_shared.css';                  // floating-row opacity 보정 등 공유 보정 CSS
 
 const { useState } = React;
 const { PageHeader } = Shell;
@@ -98,6 +102,111 @@ function resultTone(result: string) {
 }
 
 /* ─────────────────────────────────────────────
+   AG Grid 컬럼 정의 (수제 <table> → AgGridReact 전환)
+   "축은 두고 데이터는 가린다": 헤더·StatusBadge·아이콘은 비마스킹.
+   텍스트(유형·자펀드·코드·운용사 등)는 cellRenderer + <MT>, 날짜·버전은 valueFormatter + mn().
+   결과/상태 = StatusBadge, 액션/다운로드 = Button/IconBtn(sortable:false).
+   불일치 행 강조는 모듈상수 getRowStyle로 보존, hover/선택은 공유 테마가 담당.
+─────────────────────────────────────────────── */
+const dateFmt = (p: { value: any }) => (p.value ? mn(p.value) : "");
+const cellMid = { display: "flex", alignItems: "center" } as const;
+const cellCenter = { display: "flex", alignItems: "center", justifyContent: "center" } as const;
+const cellRight = { display: "flex", alignItems: "center", justifyContent: "flex-end" } as const;
+
+type CustodyRow = (typeof CUSTODY_VERIFICATIONS)[number];
+const custodyColumns: ColDef<CustodyRow>[] = [
+  {
+    field: "vtype", headerName: "검증유형", flex: 1.1, minWidth: 130, cellStyle: cellMid,
+    cellRenderer: (p: ICellRendererParams<CustodyRow>) => (
+      <div className="flex items-center gap-2">
+        {p.data?.mismatch && <Icon name="alert-circle" size={15} className="text-danger shrink-0" />}
+        <span className="text-[13.5px] font-semibold text-foreground"><MT>{p.value}</MT></span>
+      </div>
+    ),
+  },
+  {
+    field: "fund", headerName: "대상 자펀드", flex: 1.7, minWidth: 210, cellStyle: cellMid,
+    cellRenderer: (p: ICellRendererParams<CustodyRow>) => (
+      <span className="text-[13px] text-foreground"><MT>{p.value}</MT></span>
+    ),
+  },
+  {
+    field: "uploadDate", headerName: "업로드일", flex: 0.9, minWidth: 110, valueFormatter: dateFmt,
+    cellStyle: { ...cellCenter, color: "var(--muted-foreground)", fontSize: 12.5, fontVariantNumeric: "tabular-nums" },
+  },
+  {
+    field: "result", headerName: "비교검증결과", flex: 1, minWidth: 120, cellStyle: cellCenter,
+    cellRenderer: (p: ICellRendererParams<CustodyRow>) => (
+      <StatusBadge tone={resultTone(p.value) as any} label={p.value} size="sm" icon={p.value === "일치" ? "check-circle" : "x-circle"} />
+    ),
+  },
+  {
+    field: "status", headerName: "상태", flex: 0.8, minWidth: 100, cellStyle: cellCenter,
+    cellRenderer: (p: ICellRendererParams<CustodyRow>) => (
+      <StatusBadge tone={custodyTone(p.value) as any} label={p.value} size="sm" />
+    ),
+  },
+  {
+    headerName: "액션", colId: "action", flex: 0.9, minWidth: 120, sortable: false, resizable: false, cellStyle: cellRight,
+    cellRenderer: (p: ICellRendererParams<CustodyRow>) => (
+      <Button variant={p.data?.mismatch ? "outline" : "ghost"} size="sm"
+        style={p.data?.mismatch ? { color: "var(--danger)", borderColor: "var(--danger)" } : undefined}>
+        {p.data?.mismatch ? "불일치 검토" : "상세 보기"}
+      </Button>
+    ),
+  },
+];
+const custodyRowStyle = (p: { data?: CustodyRow }) =>
+  p.data?.mismatch ? { background: "color-mix(in srgb,var(--danger) 6%,transparent)" } : undefined;
+
+type RegistryRow = (typeof REGISTRY_FUNDS)[number];
+const registryColumns: ColDef<RegistryRow>[] = [
+  {
+    field: "code", headerName: "자펀드코드", flex: 1, minWidth: 120, cellStyle: cellMid,
+    cellRenderer: (p: ICellRendererParams<RegistryRow>) => (
+      <span className="tabular text-[12.5px] font-mono font-semibold text-accent"><MT>{p.value}</MT></span>
+    ),
+  },
+  {
+    field: "name", headerName: "자펀드명", flex: 1.4, minWidth: 160, cellStyle: cellMid,
+    cellRenderer: (p: ICellRendererParams<RegistryRow>) => (
+      <span className="text-[13.5px] font-semibold text-foreground"><MT>{p.value}</MT></span>
+    ),
+  },
+  {
+    field: "gp", headerName: "운용사", flex: 1.2, minWidth: 140, cellStyle: cellMid,
+    cellRenderer: (p: ICellRendererParams<RegistryRow>) => (
+      <span className="text-[13px] text-muted-foreground"><MT>{p.value}</MT></span>
+    ),
+  },
+  {
+    field: "regDate", headerName: "등록일", flex: 0.9, minWidth: 108, valueFormatter: dateFmt,
+    cellStyle: { ...cellCenter, color: "var(--muted-foreground)", fontSize: 12, fontVariantNumeric: "tabular-nums" },
+  },
+  {
+    field: "lastModified", headerName: "최종수정일", flex: 0.9, minWidth: 112, valueFormatter: dateFmt,
+    cellStyle: { ...cellCenter, color: "var(--muted-foreground)", fontSize: 12, fontVariantNumeric: "tabular-nums" },
+  },
+  {
+    field: "version", headerName: "버전", flex: 0.6, minWidth: 80,
+    valueFormatter: (p) => (p.value ? mn(p.value) : ""),
+    cellStyle: { ...cellCenter, color: "var(--primary)", fontWeight: 700, fontSize: 12.5, fontVariantNumeric: "tabular-nums" },
+  },
+  {
+    field: "status", headerName: "상태", flex: 0.7, minWidth: 100, cellStyle: cellCenter,
+    cellRenderer: (p: ICellRendererParams<RegistryRow>) => (
+      <StatusBadge tone={registryTone(p.value) as any} label={p.value} size="sm" />
+    ),
+  },
+  {
+    headerName: "다운로드", colId: "download", flex: 0.7, minWidth: 96, sortable: false, resizable: false, cellStyle: cellRight,
+    cellRenderer: (p: ICellRendererParams<RegistryRow>) => (
+      <IconBtn icon="download" label={`${p.data?.name} 다운로드`} size={32} />
+    ),
+  },
+];
+
+/* ─────────────────────────────────────────────
    수탁검증 탭 콘텐츠
 ─────────────────────────────────────────────── */
 function CustodyTab() {
@@ -106,49 +215,14 @@ function CustodyTab() {
       className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
         className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">수탁 데이터 검증 현황</h3><CountPill
             count={CUSTODY_VERIFICATIONS.filter((c) => c.mismatch).length}
-            urgent={true} /></div><div className="flex items-center gap-2"><Button variant="outline" size="sm" leadingIcon="upload">데이터 업로드</Button><IconBtn icon="refresh" label="재검증" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[740px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
-                ["검증유형", "left"],
-                ["대상 자펀드", "left"],
-                ["업로드일", "center"],
-                ["비교검증결과", "center"],
-                ["상태", "center"],
-                ["액션", "right"],
-              ].map(([label, align], i) =>
-                <th
-                  key={i}
-                  className={cx(
-                    "t-label font-semibold px-4 py-3 whitespace-nowrap",
-                    align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
-                    i === 0 && "pl-6"
-                  )}>{label}</th>
-              )}</tr></thead><tbody>{CUSTODY_VERIFICATIONS.map((r) =>
-              <tr
-                key={r.id}
-                className="border-t border-border transition-colors"
-                style={r.mismatch
-                  ? { background: "color-mix(in srgb,var(--danger) 6%,transparent)" }
-                  : undefined}
-                onMouseEnter={(e) => {
-                  if (!r.mismatch) e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = r.mismatch
-                    ? "color-mix(in srgb,var(--danger) 6%,transparent)"
-                    : "transparent";
-                }}><td className="px-4 pl-6 py-3.5"><div className="flex items-center gap-2">{r.mismatch && <Icon
-                      name="alert-circle"
-                      size={15}
-                      className="text-danger shrink-0" />}<span
-                      className="text-[13.5px] font-semibold text-foreground"><MT>{r.vtype}</MT></span></div></td><td
-                  className="px-4 py-3.5 text-[13px] text-foreground"><MT>{r.fund}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{mn(r.uploadDate)}</td><td className="px-4 py-3.5 text-center"><StatusBadge
-                    tone={resultTone(r.result) as any}
-                    label={r.result}
-                    size="sm"
-                    icon={r.result === "일치" ? "check-circle" : "x-circle"} /></td><td className="px-4 py-3.5 text-center"><StatusBadge tone={custodyTone(r.status) as any} label={r.status} size="sm" /></td><td className="px-4 pr-5 py-3.5 text-right"><Button
-                    variant={r.mismatch ? "outline" : "ghost"}
-                    size="sm"
-                    style={r.mismatch ? { color: "var(--danger)", borderColor: "var(--danger)" } : undefined}>{r.mismatch ? "불일치 검토" : "상세 보기"}</Button></td></tr>
-            )}</tbody></table></div></div>
+            urgent={true} /></div><div className="flex items-center gap-2"><Button variant="outline" size="sm" leadingIcon="upload">데이터 업로드</Button><IconBtn icon="refresh" label="재검증" size={34} /></div></div><div style={{ padding: "0 2px 2px" }}><AgGridReact<CustodyRow>
+              theme={apfsTheme}
+              rowData={CUSTODY_VERIFICATIONS}
+              columnDefs={custodyColumns}
+              getRowStyle={custodyRowStyle}
+              domLayout="autoHeight"
+              rowHeight={52}
+              defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }} /></div></div>
   );
 }
 
@@ -159,34 +233,13 @@ function RegistryTab() {
   return (
     <div className="flex flex-col gap-4"><div
         className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
-          className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">등록원부 관리</h3><CountPill count={REGISTRY_FUNDS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">원부 등록</Button><IconBtn icon="download" label="일괄 다운로드" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[860px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
-                  ["자펀드코드", "left"],
-                  ["자펀드명", "left"],
-                  ["운용사", "left"],
-                  ["등록일", "center"],
-                  ["최종수정일", "center"],
-                  ["버전", "center"],
-                  ["상태", "center"],
-                  ["다운로드", "right"],
-                ].map(([label, align], i) =>
-                  <th
-                    key={i}
-                    className={cx(
-                      "t-label font-semibold px-4 py-3 whitespace-nowrap",
-                      align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
-                      i === 0 && "pl-6"
-                    )}>{label}</th>
-                )}</tr></thead><tbody>{REGISTRY_FUNDS.map((r) =>
-                <tr
-                  key={r.code}
-                  className="border-t border-border transition-colors"
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><td
-                    className="px-4 pl-6 py-3.5 tabular text-[12.5px] font-mono font-semibold text-accent"><MT>{r.code}</MT></td><td
-                    className="px-4 py-3.5 text-[13.5px] font-semibold text-foreground"><MT>{r.name}</MT></td><td
-                    className="px-4 py-3.5 text-[13px] text-muted-foreground"><MT>{r.gp}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{mn(r.regDate)}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{mn(r.lastModified)}</td><td
-                    className="px-4 py-3.5 text-center text-[12.5px] font-bold tabular text-primary">{mn(r.version)}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={registryTone(r.status) as any} label={r.status} size="sm" /></td><td className="px-4 pr-5 py-3.5 text-right"><IconBtn icon="download" label={`${r.name} 다운로드`} size={32} /></td></tr>
-              )}</tbody></table></div></div><div className="rounded-card border border-border bg-card px-5 py-4 shadow-sm"><div className="flex items-center gap-2 mb-4"><ColorChip icon="clock" color="var(--info)" size={28} iconSize={15} /><h4 className="text-[14px] font-bold">최근 수정이력</h4></div><div className="flex flex-col">{REGISTRY_HISTORY.map((item, i) =>
+          className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">등록원부 관리</h3><CountPill count={REGISTRY_FUNDS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">원부 등록</Button><IconBtn icon="download" label="일괄 다운로드" size={34} /></div></div><div style={{ padding: "0 2px 2px" }}><AgGridReact<RegistryRow>
+                theme={apfsTheme}
+                rowData={REGISTRY_FUNDS}
+                columnDefs={registryColumns}
+                domLayout="autoHeight"
+                rowHeight={52}
+                defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }} /></div></div><div className="rounded-card border border-border bg-card px-5 py-4 shadow-sm"><div className="flex items-center gap-2 mb-4"><ColorChip icon="clock" color="var(--info)" size={28} iconSize={15} /><h4 className="text-[14px] font-bold">최근 수정이력</h4></div><div className="flex flex-col">{REGISTRY_HISTORY.map((item, i) =>
             <div
               key={i}
               className={cx("flex items-start gap-3 pb-4", i < REGISTRY_HISTORY.length - 1 && "border-b border-border mb-4")}><div className="flex flex-col items-center shrink-0"><div

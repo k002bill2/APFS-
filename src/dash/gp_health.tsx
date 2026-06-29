@@ -1,5 +1,5 @@
 /* 운용사 건전성 서브페이지 — FR-5.5
-   APFS forest-green 토큰 + Tailwind 유틸리티. JSX (Vite). */
+   APFS 인디고/블루 토큰 + Tailwind 유틸리티. JSX (Vite). */
 import React from 'react';
 import { Icon } from './icons';
 import { Shell } from './shell';
@@ -7,8 +7,12 @@ import { UI } from './components';
 import { Charts } from './charts';
 import { APFS_DATA } from './data';
 import { mn, MT } from './mask';
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef, GridApi, GridReadyEvent, ICellRendererParams, ValueFormatterParams } from 'ag-grid-community';
+import { apfsTheme } from './aggrid_theme';   // 공유 테마(회색 행선택) SSOT
+import './aggrid_shared.css';
 
-const { useState, useMemo } = React;
+const { useState, useMemo, useRef, useEffect, useCallback } = React;
 const { PageHeader } = Shell;
 const {
   ColorChip, StatusBadge, DeltaBadge, Card, ChartCard, SegTabs,
@@ -16,7 +20,6 @@ const {
 } = UI;
 const { Gauge, HBars } = Charts;
 const D = APFS_DATA;
-const cx = (...a) => a.filter(Boolean).join(" ");
 
 /* ───────────────────────── 로컬 더미 데이터 ───────────────────────── */
 
@@ -78,6 +81,16 @@ const GP_LIST = [
     },
   },
 ];
+
+/* AUM 차트/그리드 아바타 공용 팔레트 (인덱스 결정적) */
+const AUM_COLORS = [
+  "var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)",
+  "var(--chart-5)", "var(--chart-6)", "var(--chart-7)",
+];
+
+/* 그리드 행 데이터 — 아바타 색을 인덱스로 동결(정렬해도 색 고정). 정적 목록이라 모듈 상수. */
+type GpRow = typeof GP_LIST[number] & { _color: string };
+const GP_ROWS: GpRow[] = GP_LIST.map((g, i) => ({ ...g, _color: AUM_COLORS[i % AUM_COLORS.length] }));
 
 /* 건전성 체크리스트 (선택된 운용사 기준 공통 더미) */
 const CHECKLIST_BASE = [
@@ -162,10 +175,6 @@ function GpHealth({ onNav }) {
   const failedItems = CHECKLIST_BASE.filter((c) => c.status !== "ok");
 
   /* AUM HBars 데이터 */
-  const AUM_COLORS = [
-    "var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)",
-    "var(--chart-5)", "var(--chart-6)", "var(--chart-7)",
-  ];
   const hbarsData = GP_LIST.map((g, i) => ({
     name: g.name,
     value: g.aum,
@@ -176,6 +185,74 @@ function GpHealth({ onNav }) {
   /* 건전성 등급 → StatusBadge tone */
   const healthTone = (grade) =>
     grade === "A" ? "success" : grade === "B" ? "info" : "danger";
+
+  /* ── AG Grid: 단일 선택이 페이지 전체(상단 KPI·체크리스트·보수정산)를 구동 ──
+     수제 테이블의 행클릭=선택(setSelectedGpId)을 보존. 선택 행 회색 강조는 공유 테마
+     (--row-selected) 자동 — selectedGpId(상단 드롭다운/행클릭/상세 버튼 공용 SSOT)를
+     그리드 선택상태로 동기화한다(클릭→state→effect→그리드선택; 루프 없음). */
+  const apiRef = useRef<GridApi<GpRow> | null>(null);
+  const syncSel = useCallback((api: GridApi<GpRow>) => {
+    api.forEachNode((n) => {
+      const sel = n.data?.id === selectedGpId;
+      if (n.isSelected() !== sel) n.setSelected(sel);
+    });
+  }, [selectedGpId]);
+  const onGridReady = useCallback((e: GridReadyEvent<GpRow>) => { apiRef.current = e.api; syncSel(e.api); }, [syncSel]);
+  useEffect(() => { if (apiRef.current) syncSel(apiRef.current); }, [selectedGpId, syncSel]);
+
+  const columnDefs = useMemo<ColDef<GpRow>[]>(() => [
+    {
+      field: "name", headerName: "운용사명", flex: 2, minWidth: 200,
+      cellStyle: { display: "flex", alignItems: "center" },
+      cellRenderer: (p: ICellRendererParams<GpRow>) => (
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex items-center justify-center w-7 h-7 rounded-[7px] text-white text-[11px] font-bold shrink-0"
+            style={{ background: p.data?._color }}><MT>{p.data?.name.slice(0, 2)}</MT></span>
+          <span className="text-[14px] font-semibold text-foreground"><MT>{p.data?.name}</MT></span>
+        </div>
+      ),
+    },
+    {
+      field: "aum", headerName: "AUM(억원)", type: "rightAligned", flex: 1, minWidth: 110,
+      valueFormatter: (p: ValueFormatterParams<GpRow, number>) => (p.value == null ? "" : mn(p.value.toFixed(1))),
+      cellStyle: { textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 700, color: "var(--foreground)" },
+    },
+    {
+      field: "credit", headerName: "신용등급", flex: 1, minWidth: 100,
+      cellStyle: { display: "flex", alignItems: "center" },
+      cellRenderer: (p: ICellRendererParams<GpRow>) => <span className="text-[13.5px] font-semibold text-accent"><MT>{p.data?.credit}</MT></span>,
+    },
+    {
+      field: "health", headerName: "건전성등급", flex: 1, minWidth: 110,
+      cellStyle: { display: "flex", alignItems: "center" },
+      cellRenderer: (p: ICellRendererParams<GpRow>) => <StatusBadge tone={healthTone(p.data?.health)} label={p.data?.health} />,
+    },
+    {
+      field: "performance", headerName: "성과평가", flex: 1, minWidth: 100,
+      cellStyle: { display: "flex", alignItems: "center" },
+      cellRenderer: (p: ICellRendererParams<GpRow>) => <span className="text-[13.5px] font-semibold text-foreground"><MT>{p.data?.performance}</MT></span>,
+    },
+    {
+      field: "warnings", headerName: "조기경보건수", type: "rightAligned", flex: 1, minWidth: 120,
+      cellStyle: { display: "flex", alignItems: "center", justifyContent: "flex-end" },
+      cellRenderer: (p: ICellRendererParams<GpRow>) => (p.value > 0
+        ? <CountPill count={p.value} urgent={p.value >= 3} />
+        : <span className="text-[13px] font-semibold text-success">0</span>),
+    },
+    {
+      field: "lastReport", headerName: "최종보고일", flex: 1, minWidth: 110,
+      valueFormatter: (p: ValueFormatterParams<GpRow, string>) => mn(p.value),
+      cellStyle: { display: "flex", alignItems: "center", fontSize: 12.5, color: "var(--muted-foreground)" },
+    },
+    {
+      colId: "__detail", headerName: "상세", width: 96, sortable: false, resizable: false,
+      cellStyle: { display: "flex", alignItems: "center", justifyContent: "center" },
+      cellRenderer: (p: ICellRendererParams<GpRow>) => (
+        <Button variant={p.data?.id === selectedGpId ? "primary" : "outline"} size="sm"
+          onClick={(e) => { e.stopPropagation(); p.data && setSelectedGpId(p.data.id); }}>상세</Button>
+      ),
+    },
+  ], [selectedGpId]);
 
   return (
     <div
@@ -266,50 +343,21 @@ function GpHealth({ onNav }) {
           icon="bar-chart-2"
           accent="var(--chart-2)"><HBars data={hbarsData} height={210} unit="억" /></ChartCard></div><section
         className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden mb-6"><div
-          className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border"><div className="flex items-center gap-2.5"><ColorChip icon="list" color="var(--primary)" size={32} iconSize={17} /><h2 className="t-cardtitle">전체 운용사 현황</h2><CountPill count={GP_LIST.length} /></div><div className="flex items-center gap-2"><IconBtn icon="refresh" label="새로고침" size={34} /><IconBtn icon="download" label="내보내기" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[860px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
-                  ["운용사명",    "left",   "pl-5 sm:pl-6"],
-                  ["AUM(억원)",   "right",  ""],
-                  ["신용등급",    "left",   ""],
-                  ["건전성등급",  "left",   ""],
-                  ["성과평가",    "left",   ""],
-                  ["조기경보건수","right",  ""],
-                  ["최종보고일",  "left",   ""],
-                  ["상세",        "center", "pr-5 sm:pr-6"],
-                ].map((c, i) =>
-                  <th
-                    key={i}
-                    className={cx(
-                      "t-label font-semibold px-4 py-3 whitespace-nowrap",
-                      c[1] === "right" ? "text-right" : c[1] === "center" ? "text-center" : "text-left",
-                      c[2],
-                    )}>{c[0]}</th>)}</tr></thead><tbody>{GP_LIST.map((row, i) =>
-                <tr
-                  key={row.id}
-                  className={cx(
-                    "border-t border-border transition-colors cursor-pointer",
-                    row.id === selectedGpId && "bg-muted",
-                  )}
-                  onClick={() => setSelectedGpId(row.id)}
-                  onMouseEnter={(e) => {
-                    if (row.id !== selectedGpId)
-                      e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (row.id !== selectedGpId)
-                      e.currentTarget.style.background = "transparent";
-                  }}><td className="px-4 pl-5 sm:pl-6 py-3.5"><div className="flex items-center gap-2.5"><span
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-[7px] text-white text-[11px] font-bold shrink-0"
-                        style={{ background: AUM_COLORS[i % AUM_COLORS.length] }}><MT>{row.name.slice(0, 2)}</MT></span><span
-                        className="text-[14px] font-semibold text-foreground"><MT>{row.name}</MT></span></div></td><td
-                    className="px-4 py-3.5 text-right tabular text-[14px] font-bold text-foreground">{mn(row.aum.toFixed(1))}</td><td
-                    className="px-4 py-3.5 text-[13.5px] font-semibold text-accent"><MT>{row.credit}</MT></td><td className="px-4 py-3.5"><StatusBadge tone={healthTone(row.health)} label={row.health} /></td><td
-                    className="px-4 py-3.5 text-[13.5px] font-semibold text-foreground"><MT>{row.performance}</MT></td><td className="px-4 py-3.5 text-right">{row.warnings > 0
-                      ? <CountPill count={row.warnings} urgent={row.warnings >= 3} />
-                      : <span className="text-[13px] font-semibold text-success">0</span>}</td><td
-                    className="px-4 py-3.5 t-caption text-[12.5px] text-muted-foreground">{mn(row.lastReport)}</td><td className="px-4 pr-5 sm:pr-6 py-3.5 text-center"><Button
-                      variant={row.id === selectedGpId ? "primary" : "outline"}
-                      size="sm"
-                      onClick={(e) => { e.stopPropagation(); setSelectedGpId(row.id); }}>상세</Button></td></tr>)}</tbody></table></div></section></div>
+          className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border"><div className="flex items-center gap-2.5"><ColorChip icon="list" color="var(--primary)" size={32} iconSize={17} /><h2 className="t-cardtitle">전체 운용사 현황</h2><CountPill count={GP_LIST.length} /></div><div className="flex items-center gap-2"><IconBtn icon="refresh" label="새로고침" size={34} /><IconBtn icon="download" label="내보내기" size={34} /></div></div><div style={{ padding: "0 2px 2px" }}>
+                <AgGridReact<GpRow>
+                  theme={apfsTheme}
+                  rowData={GP_ROWS}
+                  columnDefs={columnDefs}
+                  getRowId={(p) => p.data.id}
+                  domLayout="autoHeight"
+                  rowHeight={56}
+                  defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
+                  rowSelection={{ mode: "singleRow", checkboxes: false }}
+                  rowStyle={{ cursor: "pointer" }}
+                  onGridReady={onGridReady}
+                  onRowClicked={(e) => e.data && setSelectedGpId(e.data.id)}
+                />
+              </div></section></div>
   );
 }
 

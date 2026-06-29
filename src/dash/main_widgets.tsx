@@ -160,7 +160,7 @@ function ShortcutCard({ s, onNav }) {
         font: "inherit", color: "inherit",
         borderRadius: 14, transition: "transform .18s,box-shadow .18s",
       }}><div
-        className="flex items-center justify-between"><ColorChip icon={s.icon} color={c} size={40} iconSize={21} /><Icon name="arrow-right" size={17} style={{ color: "var(--caption)" }} /></div><div><div className="font-bold" style={{ fontSize: 14.5 }}><MT>{s.title}</MT></div><div className="t-caption" style={{ marginTop: 3, lineHeight: 1.4 }}><MT>{s.desc}</MT></div></div><div
+        className="flex items-center justify-between"><ColorChip icon={s.icon} color={c} size={40} iconSize={21} /><Icon name="arrow-right" size={17} style={{ color: "var(--caption)" }} /></div><div><div className="font-bold" style={{ fontSize: 14.5 }}>{s.title}</div><div className="t-caption" style={{ marginTop: 3, lineHeight: 1.4 }}>{s.desc}</div></div><div
         className="flex items-center" style={{ gap: 7, marginTop: "auto" }}><span className="font-extrabold" style={{ fontSize: 12.5, color: c }}><MT>{s.metric}</MT></span></div></button>
   );
 }
@@ -189,16 +189,10 @@ function RiskTrendCard({ span, height = 200 }) {
   );
 }
 
-/* 메뉴 편집 모달 */
-function MenuPickerModal({ open, onClose, initialTab }: { open: boolean; onClose: () => void; initialTab?: string }) {
-  const tabs = [
-    { kind: "quick", label: "퀵메뉴", icon: "grid", def: D.DEFAULT_QUICK, max: 8 },
-    { kind: "fav", label: "즐겨찾기", icon: "star", def: D.DEFAULT_FAV, max: 6 },
-  ];
-  const [tab, setTab] = React.useState(initialTab || "quick");
-  React.useEffect(() => { if (open) setTab(initialTab || "quick"); }, [open, initialTab]);
-  const cur = tabs.find((t) => t.kind === tab)!;
-  const accent = cur.kind === "fav" ? "var(--warning)" : "var(--primary)";
+/* 즐겨찾기 편집 모달 (개인설정 — 즐겨찾기 전용) */
+function MenuPickerModal({ open, onClose }: { open: boolean; onClose: () => void; initialTab?: string }) {
+  const cur = { kind: "fav", def: D.DEFAULT_FAV, max: 6 };
+  const accent = "var(--warning)";
   const sel = useMenuSel(cur.kind, cur.def);
   const selSet = new Set(sel);
   const toggle = (key: string) => {
@@ -220,21 +214,12 @@ function MenuPickerModal({ open, onClose, initialTab }: { open: boolean; onClose
       <DialogContent hideClose className="max-w-[calc(100vw-32px)] max-h-[84vh] rounded-[20px]" style={{ width: "min(960px,100%)" }}>
         <div className="flex items-start justify-between gap-3" style={{ padding: "20px 22px 14px" }}>
           <div>
-            <DialogTitle className="font-extrabold" style={{ fontSize: 17, letterSpacing: "-.01em" }}>메뉴 편집</DialogTitle>
-            <DialogDescription className="t-caption" style={{ marginTop: 3 }}>전체 메뉴에서 자주 쓰는 업무를 골라 바로가기를 구성하세요.</DialogDescription>
+            <DialogTitle className="font-extrabold inline-flex items-center gap-2" style={{ fontSize: 17, letterSpacing: "-.01em" }}><Icon name="star" size={17} style={{ color: "var(--warning)" }} />즐겨찾기 편집</DialogTitle>
+            <DialogDescription className="t-caption" style={{ marginTop: 3 }}>전체 메뉴에서 자주 쓰는 화면을 골라 즐겨찾기에 등록하세요. (최대 {cur.max}개)</DialogDescription>
           </div>
           <button onClick={onClose} aria-label="닫기" className="shrink-0 bg-muted w-8 h-8 flex items-center justify-center cursor-pointer text-muted-foreground" style={{ border: "none", borderRadius: 9 }}><Icon name="x" size={17} /></button>
         </div>
-        <div className="flex gap-1.5 pt-0 pb-3 px-6 border-b border-border">
-          {tabs.map((t) => {
-            const on = t.kind === tab;
-            const tac = t.kind === "fav" ? "var(--warning)" : "var(--primary)";
-            return <button key={t.kind} onClick={() => setTab(t.kind)} className="inline-flex items-center cursor-pointer" style={{ gap: 7, border: "none", font: "inherit", fontWeight: 700, padding: "9px 14px", borderRadius: 10, background: on ? `color-mix(in srgb,${tac} 14%,var(--card))` : "transparent", color: on ? tac : "var(--caption)", fontSize: 13.5, transition: "background .15s,color .15s" }}>
-              <Icon name={t.icon} size={15} />{t.label}
-            </button>;
-          })}
-        </div>
-        <div className="flex-1 overflow-y-auto" style={{ padding: "18px 24px 10px", columnWidth: 248, columnGap: 28 }}>
+        <div className="flex-1 overflow-y-auto border-t border-border" style={{ padding: "18px 24px 10px", columnWidth: 248, columnGap: 28 }}>
           {cats.map((c: any) => <div key={c.cat} className="mb-5" style={{ breakInside: "avoid" }}>
             <div className="flex items-center" style={{ gap: 7, marginBottom: 9 }}>
               <span className="w-1.5 h-1.5 shrink-0" style={{ borderRadius: 99, background: c.urgent ? "var(--danger)" : "var(--primary)" }} />
@@ -247,7 +232,7 @@ function MenuPickerModal({ open, onClose, initialTab }: { open: boolean; onClose
                   const on = selSet.has(o.key);
                   const full = !on && sel.length >= cur.max;
                   return <button key={o.key} onClick={() => toggle(o.key)} disabled={full} title={full ? "최대 " + cur.max + "개까지 선택" : o.label} className="inline-flex items-center whitespace-nowrap" style={{ font: "inherit", cursor: full ? "not-allowed" : "pointer", opacity: full ? .4 : 1, gap: 5, border: "1px solid " + (on ? "transparent" : "var(--border)"), background: on ? `color-mix(in srgb,${accent} 16%,var(--card))` : "transparent", color: on ? accent : "var(--muted-foreground)", fontSize: 12.5, fontWeight: on ? 700 : 500, borderRadius: 9, padding: "6px 11px", transition: "background .15s,color .15s,border-color .15s" }}>
-                    {on && <Icon name={cur.kind === "fav" ? "star" : "check"} size={12} stroke={2.4} />}{o.label}
+                    {on && <Icon name="star" size={12} stroke={2.4} />}{o.label}
                   </button>;
                 })}
               </div>
@@ -263,38 +248,38 @@ function MenuPickerModal({ open, onClose, initialTab }: { open: boolean; onClose
   );
 }
 
-/* 퀵메뉴 — 자주 쓰는 업무 바로가기 (GNB 팝오버 → 메인 인라인 바) */
+/* 퀵메뉴 — 자주 쓰는 업무 바로가기 (정적 설명 카드 섹션) */
+const QUICK_TONE: any = { danger: "var(--danger)", primary: "var(--primary)", warning: "var(--warning)", success: "var(--success)", info: "var(--accent)" };
 function QuickTasksBar({ onNav }: { onNav: (r: string) => void }) {
-  const [edit, setEdit] = React.useState(false);
-  const keys = useMenuSel("quick", D.DEFAULT_QUICK || []);
-  const items = MenuStore.resolve(keys);
+  const items: any[] = D.QUICKMENU || [];
   return (
-    <div className="flex items-center gap-3.5 flex-wrap bg-card border border-border shadow-sm py-3 px-4" style={{ borderRadius: 14, marginBottom: 18 }}>
-      <div className="flex flex-col pr-3.5 border-r border-border shrink-0" style={{ gap: 1 }}>
-        <span className="inline-flex items-center gap-1.5 font-bold" style={{ fontSize: 13 }}><Icon name="grid" size={15} />퀵메뉴</span>
-        <span className="t-caption" style={{ fontSize: 10.5 }}>자주 쓰는 업무</span>
+    <div style={{ marginBottom: 18 }}>
+      <div className="flex items-center flex-wrap" style={{ gap: "4px 8px", marginBottom: 11 }}>
+        <span className="inline-flex items-center gap-1.5 font-bold" style={{ fontSize: 13.5 }}><Icon name="grid" size={15} style={{ color: "var(--primary)" }} />퀵메뉴</span>
+        <span className="t-caption" style={{ fontSize: 11.5 }}>자주 쓰는 업무를 바로 실행하세요</span>
       </div>
-      <div className="flex gap-2 flex-wrap flex-1">
-        {items.length === 0
-          ? <span className="t-caption" style={{ alignSelf: "center" }}>오른쪽 설정에서 바로가기를 추가하세요.</span>
-          : items.map((q: any) => <button key={q.key} onClick={() => onNav(q.to)} title={q.label}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--card-raised)"; e.currentTarget.style.borderColor = "var(--border)"; }}
-              className="relative flex items-center cursor-pointer border border-border bg-card-raised py-2 px-3.5"
-              style={{ gap: 7, borderRadius: 11, font: "inherit", transition: "background .15s,border-color .15s" }}>
-              <span className="font-semibold" style={{ fontSize: 12.5, color: q.urgent ? "var(--danger)" : "var(--foreground)" }}>{q.label}</span>
-              {q.badge > 0 && <span className="bg-danger font-extrabold flex items-center justify-center" style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 99, color: "#fff", fontSize: 10 }}>{mn(q.badge > 99 ? "99+" : String(q.badge))}</span>}
-            </button>)
-        }
+      <div className="grid" style={{ gap: "clamp(8px,1.4vw,14px)", gridTemplateColumns: "repeat(auto-fill,minmax(min(232px,100%),1fr))" }}>
+        {items.map((q, i) => {
+          const c = QUICK_TONE[q.tone] || "var(--primary)";
+          return (
+            <button key={i} onClick={() => onNav(q.to)} title={q.label}
+              className="quick-card text-left cursor-pointer bg-card border border-border shadow-sm flex items-center gap-3 p-3.5 relative overflow-hidden"
+              style={{ font: "inherit", color: "inherit", borderRadius: 13, minHeight: 64, transition: "transform .18s var(--ease),box-shadow .18s,border-color .18s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = c; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 24px -14px " + c; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = ""; }}>
+              <ColorChip icon={q.icon} color={c} size={40} iconSize={21} />
+              <div className="flex-1" style={{ minWidth: 0 }}>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold whitespace-nowrap overflow-hidden" style={{ fontSize: 13.5, textOverflow: "ellipsis", color: q.urgent ? "var(--danger)" : "var(--foreground)" }}>{q.label}</span>
+                  {q.badge > 0 && <span className="bg-danger font-extrabold flex items-center justify-center shrink-0" style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 99, color: "var(--destructive-foreground)", fontSize: 10 }}>{mn(q.badge > 99 ? "99+" : String(q.badge))}</span>}
+                </div>
+                <div className="t-caption" style={{ marginTop: 2, lineHeight: 1.35, fontSize: 11.5 }}>{q.desc}</div>
+              </div>
+              <Icon name="arrow-right" size={16} style={{ color: "var(--caption)", flexShrink: 0 }} />
+            </button>
+          );
+        })}
       </div>
-      <button onClick={() => setEdit(true)} aria-label="퀵메뉴 편집" title="퀵메뉴 편집"
-        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "var(--foreground)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--caption)"; }}
-        className="shrink-0 border border-border text-caption cursor-pointer flex items-center justify-center"
-        style={{ marginLeft: "auto", width: 38, height: 38, borderRadius: 10, background: "transparent", transition: "background .15s,color .15s" }}>
-        <Icon name="settings" size={18} />
-      </button>
-      <MenuPickerModal open={edit} onClose={() => setEdit(false)} />
     </div>
   );
 }

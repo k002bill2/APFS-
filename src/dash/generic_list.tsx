@@ -18,8 +18,12 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { toast } from './ui/sonner';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode } from 'ag-grid-community';
+import { apfsTheme } from './aggrid_theme';   // 공유 테마(회색 행선택) SSOT
+import './aggrid_shared.css';
 
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
 const { PageHeader } = Shell;
 const { Card, Button, StatusBadge, IconBtn, ColorChip, SegTabs, DeltaBadge } = UI;
 const D = APFS_DATA;
@@ -171,7 +175,7 @@ function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: b
         width: 24, height: 24, borderRadius: 7, transition: "all .15s var(--ease)",
         background: checked ? "var(--primary)" : "var(--card)",
         border: checked ? "1px solid var(--primary)" : "1.5px solid var(--border-strong)" }}>
-        {checked && <Icon name="check" size={16} stroke={3} style={{ color: "#fff" }} />}
+        {checked && <Icon name="check" size={16} stroke={3} style={{ color: "var(--primary-foreground)" }} />}
       </span>
       <span className="font-semibold text-foreground" style={{ fontSize: 14 }}>{label}</span>
     </button>
@@ -299,16 +303,18 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const schema = resolveSchema(route);
   const editable = schema.fields.length > 0;
   const masked = useMask();   // Excel 우측정렬 숫자 셀의 마스킹 시 값을 0으로(실값 비노출)
+  const apiRef = useRef<GridApi<Row> | null>(null);
   const [rows, setRows] = useState<Row[]>(() => makeRows(schema, 23));
-  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [selCount, setSelCount] = useState(0);   // AG Grid 선택 행 수(수제 Set 선택 대체)
   // 상태 SSOT: 필터 라벨 → 선택값(빈 값/부재 = 비활성). 칩·행필터 모두 여기서 파생.
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState({ current: 0, total: 1, rowCount: 23 });   // AG Grid 페이지네이션 미러
   const [view, setView] = useState("list");
   const [modal, setModal] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  // 활성 필터로 행을 실제 필터링 → 표·KPI·페이지네이션 모두 필터 결과 기준
+  // 활성 필터로 행을 실제 필터링 → KPI·카드뷰·건수는 이 결과 기준
+  // (그리드 리스트뷰는 external filter로 동일 술어를 적용 — 페이지네이션은 그리드가 소유).
   const filtered = rows.filter((r) => rowMatchesFilters(r, schema, filterValues));
   // 칩: filterValues에서 파생 (값-필터는 "라벨: 값", 카테고리 태그는 값 없이 라벨만)
   const chipItems = Object.entries(filterValues).map(([label, value]) => ({
@@ -316,29 +322,70 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   }));
   const removeFilter = (label: string) => setFilterValues((prev) => { const n = { ...prev }; delete n[label]; return n; });
 
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / PER));
-  const curPage = Math.min(page, totalPages);
-  const pageRows = filtered.slice((curPage - 1) * PER, curPage * PER);
-
   // 파생 KPI (필터 결과 기준)
   const sumAmount = filtered.reduce((s, r) => s + r.amount, 0);
-  const avgChange = total ? filtered.reduce((s, r) => s + r.change, 0) / total : 0;
+  const avgChange = filtered.length ? filtered.reduce((s, r) => s + r.change, 0) / filtered.length : 0;
   const avgUp = avgChange >= 0;
 
-  // 선택 토글
-  const toggleRow = (id: string) => setSelected((prev) => {
-    const next = new Set(prev);
-    next.has(id) ? next.delete(id) : next.add(id);
-    return next;
-  });
-  const allOnPage = pageRows.length > 0 && pageRows.every((r) => selected.has(r.id));
-  const toggleAll = () => setSelected((prev) => {
-    const next = new Set(prev);
-    if (allOnPage) pageRows.forEach((r) => next.delete(r.id));
-    else pageRows.forEach((r) => next.add(r.id));
-    return next;
-  });
+  // ── AG Grid 연결 ──
+  const onGridReady = useCallback((e: GridReadyEvent<Row>) => { apiRef.current = e.api; }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<Row>) => { setSelCount(e.api.getSelectedRows().length); }, []);
+  const onPaginationChanged = useCallback(() => {
+    const api = apiRef.current; if (!api) return;
+    setPage({ current: api.paginationGetCurrentPage(), total: api.paginationGetTotalPages(), rowCount: api.paginationGetRowCount() });
+  }, []);
+
+  // 외부 필터(상세필터 드로어 → 그리드 행 거르기). 값이 바뀌면 그리드에 재적용 통지.
+  const filterActive = Object.values(filterValues).some((v) => v !== "");
+  useEffect(() => { apiRef.current?.onFilterChanged(); }, [filterValues]);
+  const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
+  const doesExternalFilterPass = useCallback(
+    (node: IRowNode<Row>) => (node.data ? rowMatchesFilters(node.data, schema, filterValues) : true),
+    [schema, filterValues]);
+
+  // ── 스키마 주도 컬럼 정의 ──
+  // 특수 컬럼(name=2줄 · trend=스파크라인)만 전용 cellRenderer, 그 외는 Cell 재사용(마스킹 내장).
+  // 마지막 '관리' 컬럼은 editable일 때만 — 더블클릭 수정과 동일하게 수정 모달을 연다.
+  const columnDefs = useMemo<ColDef<Row>[]>(() => {
+    const cols: ColDef<Row>[] = schema.columns.map((c): ColDef<Row> => {
+      if (c.key === "name") {
+        return {
+          field: "name", headerName: c.label, flex: 2, minWidth: 180,
+          cellStyle: { display: "flex", flexDirection: "column", justifyContent: "center" },
+          cellRenderer: (p: ICellRendererParams<Row>) => (
+            <div className="min-w-0" style={{ lineHeight: 1.25 }}>
+              <div className="font-semibold" style={{ fontSize: 13.5 }}><MT>{p.data?.name}</MT></div>
+              <div className="text-muted-foreground" style={{ fontSize: 12 }}><MT>{p.data?.category}</MT></div>
+            </div>
+          ),
+        };
+      }
+      if (c.key === "trend") {
+        return {
+          field: "trend", headerName: c.label, width: 120, sortable: false,
+          cellStyle: { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any },
+          cellRenderer: (p: ICellRendererParams<Row>) => <MT w={40}><MiniBars data={(p.value as number[]) || []} color={p.data?.color || "var(--chart-1)"} /></MT>,
+        };
+      }
+      const right = c.align === "right";
+      return {
+        field: c.key as any, headerName: c.label + (c.unit ? ` (${c.unit})` : ""),   // 스키마 동적 키 — Row 정적 타입 밖
+        flex: 1, minWidth: 110, type: right ? "rightAligned" : undefined,
+        cellStyle: { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any, ...(right ? { justifyContent: "flex-end" } : {}) },
+        cellRenderer: (p: ICellRendererParams<Row>) => <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} />,
+      };
+    });
+    if (editable) {
+      cols.push({
+        headerName: "관리", colId: "__manage", width: 76, pinned: "right", sortable: false, resizable: false,
+        cellStyle: { display: "flex", alignItems: "center", justifyContent: "center" },
+        cellRenderer: (p: ICellRendererParams<Row>) => (
+          <MT w={20}><IconBtn icon="file" label={(p.data?.name || "") + " 상세·수정"} size={32} onClick={() => p.data && setModal({ mode: "edit", row: p.data })} /></MT>
+        ),
+      });
+    }
+    return cols;
+  }, [schema, editable]);
 
   // CRUD
   const save = (row: Row) => {
@@ -351,15 +398,17 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   };
   const deleteOne = (id: string) => {
     setRows((prev) => prev.filter((r) => r.id !== id));
-    setSelected((prev) => { const n = new Set(prev); n.delete(id); return n; });
+    apiRef.current?.deselectAll();
     setModal(null);
     toast.success("항목이 삭제되었습니다");
   };
   const bulkDelete = () => {
-    const n = selected.size;
-    setRows((prev) => prev.filter((r) => !selected.has(r.id)));
-    setSelected(new Set());
-    if (n) toast.success(`${n}개 항목을 삭제했습니다`);
+    const sel = apiRef.current?.getSelectedRows() ?? [];
+    if (!sel.length) return;
+    const ids = new Set(sel.map((r) => r.id));
+    setRows((prev) => prev.filter((r) => !ids.has(r.id)));
+    apiRef.current?.deselectAll();
+    toast.success(`${sel.length}개 항목을 삭제했습니다`);
   };
 
   // Excel(.xlsx) 내보내기 — SheetJS. 스키마 컬럼을 동적 추출(스파크라인 trend는 값 없음 → 제외), 현재 필터(filtered) 반영.
@@ -391,7 +440,9 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     toast.success('Excel로 내보냈습니다');
   };
 
-  const cellPad = "11px 14px";
+  // 푸터 건수 — 리스트뷰는 그리드 페이지 기준, 카드뷰는 필터 결과 기준
+  const shown = view === "list" ? Math.min(PER, Math.max(0, page.rowCount - page.current * PER)) : filtered.length;
+  const totalForCount = view === "list" ? page.rowCount : filtered.length;
 
   return (
     <div style={{ maxWidth: 1280, margin: "0 auto", animation: "dashFade .3s var(--ease) both" }}>
@@ -416,11 +467,11 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
         {/* 툴바: 필터 칩 / 선택 액션 */}
         <div className="flex items-center justify-between gap-3 border-t border-b border-border flex-wrap" style={{ padding: "10px 18px", background: "color-mix(in srgb, var(--muted) 35%, transparent)" }}>
-          {selected.size > 0 ? (
+          {selCount > 0 ? (
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="font-semibold" style={{ fontSize: 13 }}>{selected.size}건 선택됨</span>
+              <span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
               <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger)" }} onClick={bulkDelete}>선택 삭제</Button>
-              <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>선택 해제</Button>
+              <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
             </div>
           ) : (
             <div className="flex items-center gap-2 flex-wrap">
@@ -431,92 +482,40 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           )}
           <div className="flex items-center gap-1 flex-wrap">
             <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-            <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); setSelected(new Set()); setPage(1); }} />
+            <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); }} />
             <MoreMenu onRegister={() => setModal({ mode: "create" })} onExport={exportExcel} editable={editable} />
           </div>
         </div>
 
         {/* 테이블 / 상세 뷰 */}
         {view === "list" ? (
-          <div className="overflow-x-auto">
-            <table className="w-full" style={{ borderCollapse: "collapse", minWidth: 780 }}>
-              <thead>
-                <tr style={{ background: "color-mix(in srgb, var(--muted) 55%, transparent)" }}>
-                  <th className="border-b border-border" style={{ padding: cellPad, width: 44 }}>
-                    <input type="checkbox" checked={allOnPage} onChange={toggleAll} aria-label="전체 선택" className="cursor-pointer" style={{ accentColor: "var(--primary)", width: 17, height: 17 }} />
-                  </th>
-                  {schema.columns.map((c) => (
-                    <th key={c.key} className="font-bold text-caption whitespace-nowrap border-b border-border" style={{ padding: cellPad, textAlign: (c.align || 'left') as any, fontSize: 12 }}>
-                      {c.label}{c.unit ? ` (${c.unit})` : ''}
-                    </th>
-                  ))}
-                  <th className="text-right font-bold text-caption whitespace-nowrap border-b border-border" style={{ padding: cellPad, width: 56, fontSize: 12 }}>{editable ? "관리" : ""}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageRows.map((r) => {
-                  const sel = selected.has(r.id);
-                  return (
-                    <tr key={r.id}
-                      className="border-b border-border cursor-pointer"
-                      style={{ background: sel ? "color-mix(in srgb, var(--primary) 6%, transparent)" : undefined, transition: "background .12s" }}
-                      title={editable ? "클릭하여 선택 · 더블클릭하여 상세·수정" : "클릭하여 선택"}
-                      onClick={() => toggleRow(r.id)}
-                      onDoubleClick={editable ? () => setModal({ mode: "edit", row: r }) : undefined}
-                      onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = "color-mix(in srgb, var(--muted) 40%, transparent)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = sel ? "color-mix(in srgb, var(--primary) 6%, transparent)" : "transparent"; }}>
-                      <td style={{ padding: cellPad }}>
-                        <input type="checkbox" checked={sel} onChange={() => toggleRow(r.id)} onClick={(e) => e.stopPropagation()} aria-label={r.name + " 선택"} className="cursor-pointer" style={{ accentColor: "var(--primary)", width: 17, height: 17 }} />
-                      </td>
-                      {schema.columns.map((c) => {
-                        if (c.key === 'name') {
-                          return (
-                            <td key={c.key} style={{ padding: cellPad }}>
-                              <div className="min-w-0">
-                                <div className="font-semibold" style={{ fontSize: 13.5 }}><MT>{r.name}</MT></div>
-                                <div className="text-muted-foreground" style={{ fontSize: 12, marginTop: 1 }}><MT>{r.category}</MT></div>
-                              </div>
-                            </td>
-                          );
-                        }
-                        if (c.key === 'trend') {
-                          return (
-                            <td key={c.key} style={{ padding: cellPad, textAlign: (c.align || 'left') as any }}>
-                              <MT w={40}><MiniBars data={r.trend} color={r.color} /></MT>
-                            </td>
-                          );
-                        }
-                        if (c.type === 'status') {
-                          return (
-                            <td key={c.key} style={{ padding: cellPad, textAlign: (c.align || 'left') as any }}>
-                              <MT w={48}><Cell col={c} value={(r as any)[c.key]} color={r.color} statusDomain={schema.statusDomain} /></MT>
-                            </td>
-                          );
-                        }
-                        const isAmount = c.type === 'amount';
-                        return (
-                          <td key={c.key} style={{ padding: cellPad, textAlign: (c.align || 'left') as any, whiteSpace: isAmount ? 'nowrap' : undefined, fontSize: isAmount ? 13.5 : undefined, fontWeight: isAmount ? 600 : undefined }} className={isAmount ? "tabular" : undefined}>
-                            <Cell col={c} value={(r as any)[c.key]} color={r.color} statusDomain={schema.statusDomain} />
-                          </td>
-                        );
-                      })}
-                      <td className="text-right" style={{ padding: cellPad }}>
-                        {editable && <MT w={20}><IconBtn icon="file" label={r.name + " 상세·수정"} size={32} /></MT>}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {pageRows.length === 0 && (
-                  <tr><td colSpan={schema.columns.length + 2} className="text-center text-caption" style={{ padding: "48px 0", fontSize: 13 }}>
-                    <Icon name="inbox" size={28} stroke={1.7} className="mt-0 mb-2 mx-auto" />표시할 항목이 없습니다
-                  </td></tr>
-                )}
-              </tbody>
-            </table>
+          /* AG Grid 본체 — 스키마 주도 컬럼 + 체크박스 선택 + 페이지네이션 + external filter.
+             더블클릭=수정 모달(editable 한정). 행선택 배경은 공유 테마의 --row-selected(회색). */
+          <div style={{ padding: "0 2px 2px" }}>
+            <AgGridReact<Row>
+              theme={apfsTheme}
+              rowData={rows}
+              columnDefs={columnDefs}
+              getRowId={(p) => p.data.id}
+              domLayout="autoHeight"
+              rowHeight={52}
+              defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
+              rowSelection={{ mode: "multiRow", checkboxes: true, headerCheckbox: true }}
+              pagination
+              paginationPageSize={PER}
+              suppressPaginationPanel
+              isExternalFilterPresent={isExternalFilterPresent}
+              doesExternalFilterPass={doesExternalFilterPass}
+              onGridReady={onGridReady}
+              onSelectionChanged={onSelectionChanged}
+              onPaginationChanged={onPaginationChanged}
+              onRowDoubleClicked={editable ? (e) => e.data && setModal({ mode: "edit", row: e.data }) : undefined}
+              overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">표시할 항목이 없습니다</span>'}
+            />
           </div>
         ) : (
           <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", padding: 18 }}>
-            {pageRows.map((r) => (
+            {filtered.map((r) => (
               <button key={r.id} onClick={editable ? () => setModal({ mode: "edit", row: r }) : undefined}
                 className="text-left border border-border bg-card flex flex-col gap-2.5 p-3.5"
                 style={{ borderRadius: 12, cursor: editable ? "pointer" : "default", font: "inherit" }}>
@@ -539,20 +538,22 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
         {/* 푸터: 건수 · 페이지네이션 · 뷰 토글 · 내보내기 */}
         <div className="flex items-center justify-between gap-3 border-t border-border flex-wrap" style={{ padding: "12px 18px" }}>
-          <span className="text-caption" style={{ fontSize: 12.5 }}>총 {mn(String(total))}개 중 {mn(String(pageRows.length))}개 항목 표시 중</span>
-          <div className="flex items-center gap-1">
-            <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => setPage((p) => Math.max(1, p - 1))} />
-            {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 5).map((p) => (
-              <button key={p} onClick={() => setPage(p)} style={{
-                width: 32, height: 32, borderRadius: 8, border: "1px solid",
-                borderColor: p === curPage ? "var(--primary)" : "var(--border)",
-                background: p === curPage ? "color-mix(in srgb, var(--primary) 10%, transparent)" : "transparent",
-                color: p === curPage ? "var(--primary)" : "var(--foreground)",
-                font: "inherit", fontSize: 13, fontWeight: p === curPage ? 700 : 500, cursor: "pointer", transition: "all .12s",
-              }}>{p}</button>
-            ))}
-            <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} />
-          </div>
+          <span className="text-caption" style={{ fontSize: 12.5 }}>총 {mn(String(totalForCount))}개 중 {mn(String(shown))}개 항목 표시 중</span>
+          {view === "list" && page.total > 1 ? (
+            <div className="flex items-center gap-1">
+              <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
+              {Array.from({ length: page.total }, (_, i) => i).map((i) => (
+                <button key={i} onClick={() => apiRef.current?.paginationGoToPage(i)} style={{
+                  width: 32, height: 32, borderRadius: 8, border: "1px solid",
+                  borderColor: i === page.current ? "var(--primary)" : "var(--border)",
+                  background: i === page.current ? "color-mix(in srgb, var(--primary) 10%, transparent)" : "transparent",
+                  color: i === page.current ? "var(--primary)" : "var(--foreground)",
+                  font: "inherit", fontSize: 13, fontWeight: i === page.current ? 700 : 500, cursor: "pointer", transition: "all .12s",
+                }}>{i + 1}</button>
+              ))}
+              <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => apiRef.current?.paginationGoToNextPage()} />
+            </div>
+          ) : <div />}
           <div className="flex items-center gap-1.5 flex-wrap">
             <SegTabs size="sm" value={view} onChange={setView} options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "카드뷰" }]} />
             <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
@@ -577,7 +578,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         onClose={() => setFilterOpen(false)}
         schema={schema}
         applied={filterValues}
-        onApply={(next) => { setFilterValues(next); setPage(1); }} />
+        onApply={(next) => { setFilterValues(next); apiRef.current?.paginationGoToFirstPage(); }} />
     </div>
   );
 }

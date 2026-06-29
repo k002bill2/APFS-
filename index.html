@@ -79,8 +79,8 @@
   nav button:hover{background:var(--muted)!important;}
   /* 상세 필터 드로어 — 리스크 노출도 슬라이더 */
   .apfs-range{-webkit-appearance:none;appearance:none;height:6px;border-radius:99px;background:var(--brand-blue);outline:none;cursor:pointer;}
-  .apfs-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:99px;background:#fff;border:3px solid var(--brand-blue);box-shadow:var(--shadow-sm);cursor:pointer;margin-top:0;}
-  .apfs-range::-moz-range-thumb{width:18px;height:18px;border-radius:99px;background:#fff;border:3px solid var(--brand-blue);box-shadow:var(--shadow-sm);cursor:pointer;}
+  .apfs-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:99px;background:var(--on-brand-solid);border:3px solid var(--brand-blue);box-shadow:var(--shadow-sm);cursor:pointer;margin-top:0;}
+  .apfs-range::-moz-range-thumb{width:18px;height:18px;border-radius:99px;background:var(--on-brand-solid);border:3px solid var(--brand-blue);box-shadow:var(--shadow-sm);cursor:pointer;}
   .apfs-range::-moz-range-track{height:6px;border-radius:99px;background:var(--brand-blue);}
   /* ===== 알림센터 모달 ===== */
   @keyframes ncFade{from{opacity:0;}to{opacity:1;}}
@@ -94,7 +94,7 @@
   .nc-memobar{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
   .nc-search{flex:1;height:40px;border:1px solid var(--border)!important;border-radius:10px;background:var(--muted);padding:0 14px;font:inherit;font-size:13.5px;color:var(--foreground);outline:none;}
   .nc-search:focus{border-color:var(--brand-blue)!important;background:var(--card);}
-  .nc-addbtn{height:40px;padding:0 16px;border:none;border-radius:10px;background:var(--brand-blue);color:#fff;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;}
+  .nc-addbtn{height:40px;padding:0 16px;border:none;border-radius:10px;background:var(--brand-blue);color:var(--on-brand-solid);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;}
   .nc-addbtn:hover{background:var(--primary-hover);}
   @media (max-width:720px){.nc-sumgrid{grid-template-columns:repeat(2,1fr)!important;}}
   @media (max-width:560px){.nc-meta{display:none;}}

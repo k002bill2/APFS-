@@ -329,7 +329,7 @@ function Treemap({ data, height = 240, onCell }: { data: any[]; height?: number;
             style={{
               left: c.x + 1, top: c.y + 1, width: Math.max(0, c.w - 2), height: Math.max(0, c.h - 2),
               background: c.color, borderRadius: 7, padding: "8px 9px", cursor: onCell ? "pointer" : "default",
-              color: "#fff", boxShadow: hi === i ? "inset 0 0 0 2px rgba(255,255,255,.85)" : "none",
+              color: "var(--on-chart-fill)", boxShadow: hi === i ? "inset 0 0 0 2px rgba(255,255,255,.85)" : "none",
               transition: "box-shadow .15s",
             }}>{big && <div
               className="font-bold"

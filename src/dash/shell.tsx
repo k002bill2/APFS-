@@ -335,10 +335,10 @@ function NcScheduleBody() {
                 aspectRatio: "1",
                 gap: 1, border: "none", borderRadius: 7, font: "inherit", cursor: evs ? "pointer" : "default",
                 background: isSel ? "var(--brand-blue)" : isToday ? "var(--muted)" : "transparent",
-                color: isSel ? "#fff" : "var(--foreground)", fontSize: 11.5, fontWeight: isToday || evs ? 700 : 500,
+                color: isSel ? "var(--on-brand-solid)" : "var(--foreground)", fontSize: 11.5, fontWeight: isToday || evs ? 700 : 500,
               }}>
                 {String(d)}
-                {evs && <span className="w-1 h-1" style={{ borderRadius: 99, background: isSel ? "#fff" : `var(--${tone})` }} />}
+                {evs && <span className="w-1 h-1" style={{ borderRadius: 99, background: isSel ? "var(--on-brand-solid)" : `var(--${tone})` }} />}
               </button>
             );
           })}
@@ -437,7 +437,7 @@ function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) 
         <header className="flex items-center" style={{ gap: 9, padding: "18px 22px", borderBottom: "1px solid var(--border)" }}>
           <Icon name="bell" size={18} style={{ color: "var(--brand-blue)" }} />
           <DialogTitle className="font-extrabold" style={{ fontSize: 17, letterSpacing: "-.01em" }}>알림센터</DialogTitle>
-          <span className="text-center font-extrabold bg-danger" style={{ fontSize: 12, color: "#fff", borderRadius: 99, padding: "2px 9px", minWidth: 22 }}>{cap(total)}</span>
+          <span className="text-center font-extrabold bg-danger" style={{ fontSize: 12, color: "var(--destructive-foreground)", borderRadius: 99, padding: "2px 9px", minWidth: 22 }}>{cap(total)}</span>
           <div className="flex-1" />
           <button onClick={onClose} className="text-muted-foreground font-semibold cursor-pointer py-1.5 px-2" style={{ border: "none", background: "transparent", fontSize: 13, fontFamily: "inherit" }}>모두 읽음</button>
           <IconBtn icon="x" onClick={onClose} label="닫기" size={36} />
@@ -448,7 +448,7 @@ function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) 
             return (
               <button key={t.id} onClick={() => setTab(t.id)} className="flex items-center cursor-pointer whitespace-nowrap relative" style={{ gap: 7, padding: "13px 16px", border: "none", background: "transparent", font: "inherit", color: on ? "var(--brand-blue)" : "var(--muted-foreground)", fontWeight: on ? 800 : 600, fontSize: 14, borderBottom: on ? "2px solid var(--brand-blue)" : "2px solid transparent", marginBottom: -1 }}>
                 {t.label}
-                {t.count ? <span className="font-extrabold" style={{ fontSize: 11, borderRadius: 99, padding: "1px 7px", background: on ? "var(--brand-blue)" : "var(--muted)", color: on ? "#fff" : "var(--muted-foreground)" }}>{cap(t.count)}</span> : null}
+                {t.count ? <span className="font-extrabold" style={{ fontSize: 11, borderRadius: 99, padding: "1px 7px", background: on ? "var(--brand-blue)" : "var(--muted)", color: on ? "var(--on-brand-solid)" : "var(--muted-foreground)" }}>{cap(t.count)}</span> : null}
               </button>
             );
           })}
@@ -470,7 +470,7 @@ function UserMenu({ onUserModal }: { onUserModal: (id: string) => void }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button aria-label="사용자 메뉴" className="flex items-center gap-2 cursor-pointer py-0.5 px-1" style={{ border: "none", background: "transparent", font: "inherit" }}>
-          <span className="w-8 h-8 flex items-center justify-center" style={{ borderRadius: 99, background: "var(--brand-gray)", color: "#fff" }}>
+          <span className="w-8 h-8 flex items-center justify-center" style={{ borderRadius: 99, background: "var(--brand-gray)", color: "var(--on-brand-solid)" }}>
             <Icon name="user" size={18} stroke={2.2} />
           </span>
           <span className="gnb-user font-semibold text-left" style={{ fontSize: 12.5, lineHeight: 1.2 }}>
@@ -571,7 +571,7 @@ function FavoritesFab({ onNav }) {
         aria-label="즐겨찾기"
         aria-expanded={open}
         className="cursor-pointer shadow-lg flex items-center justify-center"
-        style={{ width: 46, height: 46, borderRadius: 99, border: "none", background: "#23C55E", color: "#fff", transition: "transform .18s var(--ease)", transform: open ? "rotate(90deg) scale(1.04)" : "none" }}>
+        style={{ width: 46, height: 46, borderRadius: 99, border: "none", background: "var(--brand-solid)", color: "var(--on-brand-solid)", transition: "transform .18s var(--ease)", transform: open ? "rotate(90deg) scale(1.04)" : "none" }}>
         <Icon name={open ? "x" : "star"} size={20} stroke={2.2} />
       </button>
     </div>
@@ -722,7 +722,7 @@ function AppShell(props) {
           className="dash-main flex-1 min-w-0"
           style={{ padding: "22px 26px 104px" }}>{children}</main></div>{mobile && <div
         className={"lnb-backdrop" + (drawer ? " show" : "")}
-        onClick={() => setDrawer(false)} />}<FavoritesFab onNav={navClose} /><NotifCenter open={notifOpen} onClose={() => setNotifOpen(false)} /><CenterModal open={userModal === "memo"} onClose={() => setUserModal(null)} title="메모" icon="memo" width={620}>{ncMemoBody(true)}</CenterModal><CenterModal open={userModal === "schedule"} onClose={() => setUserModal(null)} title="일정" icon="calendar" width={880}><NcScheduleBody /></CenterModal><CenterModal open={userModal === "logout"} onClose={() => setUserModal(null)} title="로그아웃" icon="external" width={400} footer={[<button key="c" onClick={() => setUserModal(null)} className="bg-card cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "1px solid var(--border-strong)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>취소</button>, <button key="o" onClick={() => setUserModal(null)} className="bg-brand-blue cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "none", color: "#fff", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>로그아웃</button>]}><div className="py-1.5 px-1 text-foreground" style={{ fontSize: 14, lineHeight: 1.6 }}>정말 로그아웃 하시겠습니까?</div></CenterModal></div>
+        onClick={() => setDrawer(false)} />}<FavoritesFab onNav={navClose} /><NotifCenter open={notifOpen} onClose={() => setNotifOpen(false)} /><CenterModal open={userModal === "memo"} onClose={() => setUserModal(null)} title="메모" icon="memo" width={620}>{ncMemoBody(true)}</CenterModal><CenterModal open={userModal === "schedule"} onClose={() => setUserModal(null)} title="일정" icon="calendar" width={880}><NcScheduleBody /></CenterModal><CenterModal open={userModal === "logout"} onClose={() => setUserModal(null)} title="로그아웃" icon="external" width={400} footer={[<button key="c" onClick={() => setUserModal(null)} className="bg-card cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "1px solid var(--border-strong)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>취소</button>, <button key="o" onClick={() => setUserModal(null)} className="bg-brand-blue cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "none", color: "var(--on-brand-solid)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>로그아웃</button>]}><div className="py-1.5 px-1 text-foreground" style={{ fontSize: 14, lineHeight: 1.6 }}>정말 로그아웃 하시겠습니까?</div></CenterModal></div>
   );
 }
 

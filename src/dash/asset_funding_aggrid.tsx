@@ -10,16 +10,16 @@
      → 모달/드로어 UI는 ui/dialog·ui/sheet 프리미티브 재사용
 
    ⚠️ AG Grid v35.3.1(v33+) Theming API: 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지. */
-import './asset_funding_aggrid.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정 — 파일 상단 주석 참조
+import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정 + 합계행 강조(공유)
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { CSSProperties } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
 import { mn, useMask } from './mask';
 import { GridFrame, KpiBadge } from './grid_frame';
+import { apfsTheme, fmt, numFmt, numStyle } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
 import { AgGridReact } from 'ag-grid-react';
-import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
-import type { ColDef, ColGroupDef, ValueFormatterParams, CellStyle, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode } from 'ag-grid-community';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
@@ -27,9 +27,6 @@ import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 
 const { Button, IconBtn, SegTabs, ColorChip } = UI;
-
-// v33+ 필수: 모듈 미등록 시 런타임 blank grid + 콘솔 에러. import 시 1회 등록.
-ModuleRegistry.registerModules([AllCommunityModule]);
 
 /* ── 데이터(원본 asset_funding.tsx에서 PoC 격리 위해 복제) ── */
 type FundingRow = { y: string; c0: number; c1: number; c2: number; c3: number; c4: number; c5: number; u0: number; u1: number };
@@ -58,32 +55,6 @@ const TOTAL_ROW: FundingRow = { y: '합 계', c0: 4987.3, c1: 507, c2: 2190, c3:
 // 매 렌더 새 배열을 넘기면 AG Grid가 pinned 행을 재생성(=행 애니메이션 재발) → 모듈 상수로 고정
 const PINNED_BOTTOM: FundingRow[] = [TOTAL_ROW];
 const PAGE_SIZE = 20;   // 16행 → 1페이지
-
-/* 정수=천단위 콤마, 소수=1자리 — 원본 fmt 재현 */
-const fmt = (n: number): string =>
-  Number.isInteger(n) ? n.toLocaleString() : n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-
-/* 숫자 셀 포맷터 — mn() 마스킹 통합(X1 검증: valueFormatter 경로) */
-const numFmt = (p: ValueFormatterParams): string => (p.value == null ? '' : mn(fmt(p.value as number)));
-
-/* 0=muted, 합계열(strong)=bold — 원본 NumCell 조건부 스타일 재현(M3). 색은 var(--token) → 다크 자동추종 */
-const numStyle = (strong?: boolean) => (p: { value: unknown; node: { rowPinned?: string | null } }): CellStyle => ({
-  textAlign: 'right',
-  fontVariantNumeric: 'tabular-nums',
-  fontWeight: strong || p.node.rowPinned ? 700 : 500,
-  color: p.value === 0 ? 'var(--muted-foreground)' : 'var(--foreground)',
-});
-
-/* ── 테마: 핵심 시맨틱 파라미터만 토큰 바인딩, 파생 크롬은 derive하게 둠(부록 C·E 테스트) ── */
-const apfsTheme = themeQuartz.withParams({
-  backgroundColor: 'var(--card)',
-  foregroundColor: 'var(--foreground)',
-  accentColor: 'var(--primary)',
-  borderColor: 'var(--border)',
-  fontFamily: 'inherit',
-  headerFontWeight: 600,
-  wrapperBorderRadius: 0,
-});
 
 const CO = ['합계', '농특회계', '농안기금', 'FTA', '수산발전기금', '일반회계'];
 const numCol = (field: string, header: string, strong?: boolean): ColDef<FundingRow> => ({

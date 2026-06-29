@@ -1,6 +1,6 @@
 /* 자펀드 정보관리 페이지 — FR-5.3
    자펀드 목록·KPI·교차검증·산업별 비중·출자/분배 현황
-   APFS forest-green 토큰 + Tailwind 유틸리티. */
+   APFS 인디고/블루 토큰 + Tailwind 유틸리티. */
 import React from 'react';
 import { Icon } from './icons';
 import { Shell } from './shell';
@@ -8,6 +8,10 @@ import { UI } from './components';
 import { Charts } from './charts';
 import { APFS_DATA } from './data';
 import { mn, MT } from './mask';
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef, RowClickedEvent } from 'ag-grid-community';
+import { apfsTheme, numFmt, numStyle } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
+import './aggrid_shared.css';
 
 const { useState, useMemo } = React;
 const { PageHeader } = Shell;
@@ -109,27 +113,55 @@ function CrossRow({ row }) {
   );
 }
 
-/** 자펀드 테이블 행 */
-function SubFundRow({ row, selected, onSelect }) {
-  return (
-    <tr
-      onClick={() => onSelect(selected ? null : row.code)}
-      className="border-t border-border transition-colors cursor-pointer"
-      style={selected
-        ? { background: "color-mix(in srgb,var(--primary) 6%,transparent)" }
-        : undefined}
-      onMouseEnter={(e) => { if (!selected) e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)"; }}
-      onMouseLeave={(e) => { if (!selected) e.currentTarget.style.background = "transparent"; }}><td className="px-4 pl-5 py-3 whitespace-nowrap"><span
-          className="text-[12px] font-bold font-mono text-muted-foreground"><MT>{row.code}</MT></span></td><td className="px-3 py-3 min-w-[160px]"><span
-          className="text-[13.5px] font-semibold text-foreground"><MT>{row.name}</MT></span></td><td
-        className="px-3 py-3 whitespace-nowrap text-[13px] text-muted-foreground"><MT>{row.gp}</MT></td><td
-        className="px-3 py-3 whitespace-nowrap tabular text-[13px] text-muted-foreground">{mn(row.est)}</td><td className="px-3 py-3 text-right whitespace-nowrap"><span
-          className="text-[13.5px] font-bold tabular text-foreground">{mn(row.aum.toFixed(1))}</span><span
-          className="text-[11px] ml-0.5 text-muted-foreground">억</span></td><td className="px-3 py-3" style={{ minWidth: 140 }}><ExecBar value={row.exec} tone={row.tone} /></td><td className="px-3 py-3 whitespace-nowrap"><StatusBadge tone={row.tone} label={row.status} size="sm" /></td><td className="px-3 py-3 text-right whitespace-nowrap"><span
-          className="text-[13px] font-semibold tabular"
-          style={{ color: row.remain < 1 ? "var(--danger)" : row.remain < 2 ? "var(--warning)" : "var(--foreground)" }}>{mn(row.remain.toFixed(1)) + "년"}</span></td><td className="px-3 pr-5 py-3 text-right"><div className="flex items-center justify-end gap-1"><IconBtn icon="file" label="상세보기" size={30} /><IconBtn icon="edit" label="편집" size={30} /></div></td></tr>
-  );
-}
+/* ── 자펀드 목록 AG Grid 컬럼 (수제 <table>·SubFundRow 대체) ──
+   본체만 교체: 코드·자펀드명·운용사는 MT, 설립일은 mn, AUM은 numFmt(우측정렬),
+   집행률 ExecBar·상태 StatusBadge·잔존기간 색상·액션 버튼은 셀 렌더러로 보존.
+   행 클릭 = 단일 선택(회색, 공유 테마) → SelectedDetail 패널. */
+const SUBFUND_COLS: ColDef<any>[] = [
+  {
+    field: "code", headerName: "자펀드코드", width: 124,
+    cellStyle: { display: "flex", alignItems: "center" },
+    cellRenderer: (p: any) => <span className="text-[12px] font-bold font-mono text-muted-foreground"><MT>{p.value}</MT></span>,
+  },
+  {
+    field: "name", headerName: "자펀드명", flex: 2, minWidth: 160,
+    cellStyle: { display: "flex", alignItems: "center" },
+    cellRenderer: (p: any) => <span className="text-[13.5px] font-semibold text-foreground"><MT>{p.value}</MT></span>,
+  },
+  {
+    field: "gp", headerName: "운용사", flex: 1, minWidth: 120,
+    cellStyle: { display: "flex", alignItems: "center" },
+    cellRenderer: (p: any) => <span className="text-[13px] text-muted-foreground"><MT>{p.value}</MT></span>,
+  },
+  {
+    field: "est", headerName: "설립일", width: 110,
+    valueFormatter: (p: any) => mn(p.value),
+    cellStyle: { display: "flex", alignItems: "center", fontVariantNumeric: "tabular-nums", color: "var(--muted-foreground)" },
+  },
+  {
+    field: "aum", headerName: "AUM (억원)", type: "rightAligned", width: 124,
+    valueFormatter: numFmt, cellStyle: numStyle(true) as any,
+  },
+  {
+    field: "exec", headerName: "집행률", width: 168,
+    cellStyle: { display: "flex", alignItems: "center" },
+    cellRenderer: (p: any) => <ExecBar value={p.value} tone={p.data.tone} />,
+  },
+  {
+    field: "status", headerName: "상태", width: 112,
+    cellStyle: { display: "flex", alignItems: "center" },
+    cellRenderer: (p: any) => <StatusBadge tone={p.data.tone} label={p.value} size="sm" />,
+  },
+  {
+    field: "remain", headerName: "잔존기간", type: "rightAligned", width: 112,
+    cellRenderer: (p: any) => <span className="text-[13px] font-semibold tabular" style={{ color: p.value < 1 ? "var(--danger)" : p.value < 2 ? "var(--warning)" : "var(--foreground)" }}>{mn(p.value.toFixed(1)) + "년"}</span>,
+  },
+  {
+    colId: "action", headerName: "액션", width: 100, sortable: false, resizable: false, type: "rightAligned",
+    cellStyle: { display: "flex", alignItems: "center", justifyContent: "flex-end" },
+    cellRenderer: (_p: any) => <div className="flex items-center justify-end gap-1"><IconBtn icon="file" label="상세보기" size={30} /><IconBtn icon="edit" label="편집" size={30} /></div>,
+  },
+];
 
 /** 선택된 자펀드 상세 요약 카드 */
 function SelectedDetail({ row }) {
@@ -225,21 +257,7 @@ function SubFund({ onNav }) {
                 fontFamily: "inherit",
               }} /><span
               className="absolute left-2.5 pointer-events-none"
-              style={{ top: "50%", transform: "translateY(-50%)" }}><Icon name="search" size={15} className="text-muted-foreground" /></span></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[860px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{["자펀드코드", "자펀드명", "운용사", "설립일", "AUM(억원)", "집행률", "상태", "잔존기간", "액션"].map((col, i) =>
-                  <th
-                    key={col}
-                    className={cx(
-                      "t-label font-semibold px-3 py-3 whitespace-nowrap text-left",
-                      i === 0 && "pl-5",
-                      (i === 4 || i === 7) && "text-right",
-                      i === 8 && "text-right pr-5")}>{col}</th>)}</tr></thead><tbody>{filteredRows.length === 0
-                ? <tr><td colSpan={9} className="py-12 text-center t-caption">조건에 맞는 자펀드가 없습니다.</td></tr>
-                : filteredRows.map((row) =>
-                    <SubFundRow
-                      key={row.code}
-                      row={row}
-                      selected={selectedCode === row.code}
-                      onSelect={setSelectedCode} />)}</tbody></table></div><div
+              style={{ top: "50%", transform: "translateY(-50%)" }}><Icon name="search" size={15} className="text-muted-foreground" /></span></div></div><div style={{ padding: "0 2px 2px" }}><AgGridReact theme={apfsTheme} rowData={filteredRows} columnDefs={SUBFUND_COLS} getRowId={(p) => (p.data as any).code} domLayout="autoHeight" rowHeight={52} defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }} rowSelection={{ mode: "singleRow", checkboxes: false, enableClickSelection: true }} onRowClicked={(e: RowClickedEvent) => { if (e.data) setSelectedCode((e.data as any).code); }} overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 자펀드가 없습니다.</span>'} /></div><div
           className="flex items-center justify-between gap-4 flex-wrap px-5 py-3.5 border-t border-border"><span className="t-caption"><b className="text-foreground">{mn(filteredRows.length) + "개"}</b>{mn("자펀드 표시 중 (전체 237개)")}</span><div className="flex items-center gap-1.5"><IconBtn icon="chevron-left" label="이전 페이지" size={30} /><span
               className="text-[13px] font-semibold px-2 text-foreground">1 / 30</span><IconBtn icon="chevron-right" label="다음 페이지" size={30} /></div></div></section><div className="grid grid-cols-1 lg:grid-cols-2 gap-4"><ChartCard
           title="연도별 출자·분배 현황"
