@@ -464,7 +464,7 @@ export const MenuStore = {
 /* 방문기록(최근 열어본 페이지) — route 키 배열을 최근순·중복제거·최대 N개로 영속화.
    MenuStore와 동일한 localStorage + CustomEvent 패턴(구독은 useHistory 훅). */
 const HISTORY_KEY = "apfs.history.v1";
-const HISTORY_MAX = 8;
+const HISTORY_MAX = 30;
 export const HistoryStore = {
   get(): string[] {
     try { const v = JSON.parse(localStorage.getItem(HISTORY_KEY) || "null"); if (Array.isArray(v)) return v.filter((x) => typeof x === "string"); } catch (e) {}

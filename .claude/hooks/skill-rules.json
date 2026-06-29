@@ -56,6 +56,20 @@
       "enforcement": "suggest",
       "keywords": ["상세필터", "상세 필터", "필터 드로어", "필터 항목", "필터 칩", "필터 패널", "필터 컨트롤", "filter drawer", "detail filter", "year picker", "연도 필터", "값 필터", "filterValues", "resolveFilterField"],
       "intentPatterns": ["(상세\\s?필터|필터\\s?(드로어|항목|칩|패널|컨트롤|drawer)).*(만들|추가|작성|수정|바꾸|변경|개선|build|add|edit)", "(필터).*(년도|연도|year|열거|enum|select|체크박스|checkbox|값 선택)"]
+    },
+    {
+      "skillName": "apfs-aggrid",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["ag grid", "aggrid", "AgGridReact", "컬럼", "column", "pinned", "합계행", "고정행", "그룹헤더", "2단 헤더", "ColGroupDef", "셀 렌더러", "cellRenderer", "valueFormatter", "정렬", "행선택", "엑셀 내보내기", "excel", "xlsx", "SheetJS"],
+      "intentPatterns": ["(ag\\s?grid|aggrid|aggridreact|컬럼|column|pinned|합계행|고정행|그룹헤더|셀\\s?렌더러|cellrenderer|valueformatter).*(만들|추가|작성|수정|정렬|sort|build|add|edit)", "(엑셀|excel|xlsx|sheetjs).*(내보내|export|다운로드)"]
+    },
+    {
+      "skillName": "apfs-form-modal",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["등록 폼", "등록폼", "수정 모달", "폼 모달", "RowFormModal", "CRUD 모달", "필드 컨트롤", "FIELD_CONTROLS", "입력 양식", "삭제 확인", "radio", "라디오", "2단 폼", "스키마 폼"],
+      "intentPatterns": ["(등록|수정|crud|입력|폼|form).*(모달|modal|양식)", "(rowformmodal|필드\\s?컨트롤|field_controls|radio|라디오|스키마\\s?폼).*(추가|만들|작성|수정|add|edit)"]
     }
   ]
 }
