@@ -23,6 +23,13 @@
       "intentPatterns": ["(create|build|add|make|edit|만들|추가|작성|수정|편집).*(page|화면|페이지|모달|modal|레이아웃|layout|테이블|table|리스트|list|위젯|widget|컴포넌트|component)", "(반응형|responsive|모바일|mobile|태블릿|tablet)"]
     },
     {
+      "skillName": "color-tokens",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["색", "컬러", "color", "팔레트", "palette", "토큰", "token", "css 변수", "하드코딩", "hardcode", "hex", "대비", "contrast", "다크모드", "dark mode", "전경색", "foreground", "배경색", "tokens.css", "brand-solid", "primary-foreground"],
+      "intentPatterns": ["(색|컬러|color|팔레트|palette|토큰|token|hex|대비|contrast).*(바꾸|변경|적용|토큰화|tokenize|하드코딩|hardcode|추가|만들|edit|change|apply)", "(하드코딩|hardcode|raw).*(색|컬러|color|hex)", "(다크|dark|라이트|light).*(대비|contrast|전경|배경|foreground)"]
+    },
+    {
       "skillName": "apfs-bundle",
       "priority": "critical",
       "enforcement": "suggest",
