@@ -6,9 +6,12 @@ import { Icon } from './icons';
 import { UI } from './components';
 import { mn } from './mask';
 import { GridFrame, KpiBadge } from './grid_frame';
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef, ColGroupDef, ValueGetterParams } from 'ag-grid-community';
+import { apfsTheme, numFmt, numStyle } from './aggrid_theme';   // 공유 테마(회색 행선택)·포매터 SSOT
+import './aggrid_shared.css';
 
 const { Button, IconBtn } = UI;
-const cx = (...a: (string | false | undefined)[]) => a.filter(Boolean).join(' ');
 
 /* FFMS 캡처 실측 — 추측 금지. c=조성현황(억원), u=출자현황(조합수 개 / 출자금액 억원) */
 type FundingRow = { y: string; c: number[]; u: number[] };
@@ -43,20 +46,28 @@ function fmt(n: number): string {
     : n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
-/* 숫자 셀 — 0은 muted, 합계열(첫 컬럼)은 강조. 숫자는 mn 마스킹 */
-function NumCell({ v, strong }: { v: number; strong?: boolean }) {
-  return (
-    <td
-      className="px-3 py-2.5 text-right tabular text-[13px] whitespace-nowrap"
-      style={{ color: v === 0 ? 'var(--muted-foreground)' : 'var(--foreground)', fontWeight: strong ? 700 : 500 }}>
-      {mn(fmt(v))}
-    </td>
-  );
-}
+/* ── AG Grid 컬럼 — 2단 중첩헤더(조성현황 c[0..5] · 출자현황 u[0..1]) ──
+   데이터 구조(c[]/u[])를 보존하려 valueGetter로 인덱스 접근. 숫자는 numFmt(mn 마스킹),
+   0=muted·합계열=bold는 numStyle, pinned 합계행은 numStyle이 자동 bold + 공유 CSS가 강조. */
+const coCol = (i: number, header: string, strong?: boolean): ColDef<FundingRow> => ({
+  headerName: header, flex: 1, minWidth: 92, type: 'rightAligned',
+  valueGetter: (p: ValueGetterParams<FundingRow>) => p.data?.c?.[i],
+  valueFormatter: numFmt, cellStyle: numStyle(strong) as any,
+});
+const inCol = (i: number, header: string): ColDef<FundingRow> => ({
+  headerName: header, flex: 1, minWidth: 92, type: 'rightAligned',
+  valueGetter: (p: ValueGetterParams<FundingRow>) => p.data?.u?.[i],
+  valueFormatter: numFmt, cellStyle: numStyle() as any,
+});
+const columnDefs: (ColDef<FundingRow> | ColGroupDef<FundingRow>)[] = [
+  { field: 'y', headerName: '구분', pinned: 'left', width: 120, cellStyle: { fontWeight: 600 } },
+  { headerName: '조성현황', marryChildren: true, children: CO_COLS.map((h, i) => coCol(i, h, i === 0)) },
+  { headerName: '출자현황', marryChildren: true, children: IN_COLS.map((h, i) => inCol(i, h)) },
+];
+// pinned 합계행 — 매 렌더 새 배열 금지(모듈 상수). 공유 CSS가 강조 처리.
+const PINNED_BOTTOM: FundingRow[] = [{ y: '합 계', c: TOTAL.c, u: TOTAL.u }];
 
 function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
-  const headBg = { background: 'color-mix(in srgb,var(--muted) 60%,transparent)' };
-
   return (
     <GridFrame
       crumbs={['홈', '투자자산관리', '모태펀드관리', '모태펀드 조성 및 출자현황']}
@@ -79,50 +90,16 @@ function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
       toolbarRight={<IconBtn icon="refresh" label="새로고침" size={34} />}
       footerLeft={<span>{'2010 ~ 2025년 · 총 ' + mn(String(FUNDING_ROWS.length)) + '개 연도'}</span>}>
 
-      {/* 매트릭스 본체 — Card(overflow:hidden) 내부이므로 가로 스크롤은 이 래퍼가 책임 */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse min-w-[880px]">
-          <thead>
-            {/* 1단: 그룹 헤더 (구분 rowSpan · 조성현황 colSpan6 · 출자현황 colSpan2) */}
-            <tr style={headBg}>
-              <th rowSpan={2} className="t-label font-semibold px-4 py-3 text-left align-middle whitespace-nowrap pl-5 border-b border-border">구분</th>
-              <th colSpan={6} className="t-label font-bold px-3 py-2.5 text-center whitespace-nowrap border-b border-l border-border" style={{ color: 'var(--primary)' }}>조성현황</th>
-              <th colSpan={2} className="t-label font-bold px-3 py-2.5 text-center whitespace-nowrap border-b border-l border-border" style={{ color: 'var(--accent)' }}>출자현황</th>
-            </tr>
-            {/* 2단: 세부 컬럼 */}
-            <tr style={headBg}>
-              {CO_COLS.map((c, i) => (
-                <th key={c} className={cx('t-label font-semibold px-3 py-2.5 text-right whitespace-nowrap border-b border-border', i === 0 && 'border-l')}>{c}</th>
-              ))}
-              {IN_COLS.map((c, i) => (
-                <th key={c} className={cx('t-label font-semibold px-3 py-2.5 text-right whitespace-nowrap border-b border-border', i === 0 && 'border-l')}>{c}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {FUNDING_ROWS.map((row) => (
-              <tr
-                key={row.y}
-                className="border-t border-border transition-colors"
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'color-mix(in srgb,var(--muted) 45%,transparent)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
-                <td className="px-4 pl-5 py-2.5 whitespace-nowrap tabular text-[13px] font-semibold text-foreground">{row.y}</td>
-                {row.c.map((v, i) => <NumCell key={i} v={v} strong={i === 0} />)}
-                {row.u.map((v, i) => <NumCell key={i} v={v} />)}
-              </tr>
-            ))}
-            {/* 합계행 — 캡처 연녹색 강조 재현 */}
-            <tr className="border-t-2 border-primary" style={{ background: 'color-mix(in srgb,var(--primary) 9%,transparent)' }}>
-              <td className="px-4 pl-5 py-3 whitespace-nowrap text-[13px] font-extrabold text-primary">합 계</td>
-              {TOTAL.c.map((v, i) => (
-                <td key={i} className="px-3 py-3 text-right tabular text-[13px] font-extrabold whitespace-nowrap text-foreground">{mn(fmt(v))}</td>
-              ))}
-              {TOTAL.u.map((v, i) => (
-                <td key={i} className="px-3 py-3 text-right tabular text-[13px] font-extrabold whitespace-nowrap text-foreground">{mn(fmt(v))}</td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
+      {/* 매트릭스 본체 — AG Grid(2단 중첩헤더 + pinned 합계행). 가로 스크롤은 AG Grid 내부 뷰포트가 담당 */}
+      <div style={{ padding: '0 2px 2px' }}>
+        <AgGridReact<FundingRow>
+          theme={apfsTheme}
+          rowData={FUNDING_ROWS}
+          columnDefs={columnDefs}
+          pinnedBottomRowData={PINNED_BOTTOM}
+          domLayout="autoHeight"
+          defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
+        />
       </div>
     </GridFrame>
   );
