@@ -219,5 +219,12 @@
 - **Sheet 전환**: `ListFilterDrawer`(generic_list 상세필터) · `FilterDrawer`(performance 포트폴리오 상세필터). `createPortal` 수동 드로어 제거.
 - **브라우저 검증**: 상세필터 → 우측 슬라이드 Sheet(딤 오버레이·전체높이·체크박스/슬라이더/select·초기화/적용), 닫기 X에 Tooltip. 콘솔 에러 0.
 
-### ⏭ 남은 1건 — 의도적 보류
-- **Phase 2 NavigationMenu (Lnb 접힘-레일 호버 플라이아웃)** — `shell.tsx`의 hover 타이머+portal+MenuChildren이 얽힌 정교한 동작 코드. Radix NavigationMenu 전면 재작성은 **주 네비게이션 회귀 위험**이 커 별도 집중 작업으로 권장. **핵심 키보드-내비 갭은 Command 팔레트(`/`·⌘K → 137개 리프 전부 키보드 접근)가 이미 대체**하므로 우선순위 낮음. 착수 시: Lnb 상위항목 트리거를 NavigationMenu.Trigger로, 플라이아웃을 NavigationMenu.Content로 재구성 + 포커스 진입/roving 처리.
+### ✅ Phase 2-b — NavigationMenu (완료, 실제 키보드 검증) — 2026-06-29
+브랜치 `feat/nav-keyboard-a11y` (PR 예정). 의존성 `@radix-ui/react-navigation-menu` 추가.
+- **접힘 LNB 플라이아웃 + RailNav 슬라이드 패널** 둘 다 Radix NavigationMenu로 전환. `src/dash/ui/navigation-menu.tsx` 신설(orientation=vertical, **Viewport 미사용** → Content가 Item에 인라인, **position:fixed**로 레일 overflow 클리핑 탈출).
+- LNB: 손짠 hover-타이머+portal 제거 → `LnbFlyItem`(트리거 hover/포커스/Enter 오픈, top은 트리거 위치 계산). RailNav: 클릭-전용 패널 + 접근불가 호버툴팁 제거 → `RailItem`(풀-하이트 슬라이드). 둘 다 `navValue` controlled로 navigate 시 닫기.
+- **실제 키 이벤트 검증**(라이트/다크): ↓↑ 트리거 이동 · Enter 오픈 · Tab 패널 진입 · Escape 닫기+트리거 포커스 복귀 · hover-open 보존. 플라이아웃 computed #181D17(다크 카드). 빌드 green.
+- 🔑 **함정 기록**: ① Radix NavigationMenu.Root에 비-List 자식(footer div)을 섞으면 트리거 활성화가 깨진다 → 바깥 `<nav>` 래퍼 + NavigationMenu는 List만 감싸고 footer는 바깥. ② Radix는 포커스 출처(키보드 vs 프로그래밍)를 추적해 **JS `.focus()`+key로는 키보드-오픈이 발화 안 됨** → 검증은 실제 Tab/Arrow 진입으로.
+- 잔여(별개): RailNav 라벨 툴팁은 패널 헤더 + title 속성으로 대체(Radix Tooltip 미적용). NavigationMenu 자체 a11y로 충분.
+
+> **shadcn/Radix 도입 Phase 0–3 전부 완료.** 이 프로젝트는 dev/active에서 아카이브 가능.
