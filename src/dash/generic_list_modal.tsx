@@ -38,9 +38,9 @@ export function statusTone(label: string): Tone {
 
 const labelStyle: React.CSSProperties = { fontSize: 12, marginBottom: 5 };
 
-function Field({ label, children, errMsg }: { label: string; children: React.ReactNode; errMsg?: string }) {
+function Field({ label, children, errMsg, className }: { label: string; children: React.ReactNode; errMsg?: string; className?: string }) {
   return (
-    <label className="block mb-3.5">
+    <label className={`block mb-3.5 ${className ?? ''}`}>
       <span className="font-semibold text-caption block" style={labelStyle}>{label}</span>
       {children}
       {errMsg && (
@@ -62,9 +62,11 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
 }) {
   const [vals, setVals] = useState<Record<string, string>>(() => {
     const seed: Record<string, string> = {};
-    for (const f of schema.fields) seed[f.key] = initial ? String((initial as any)[f.key] ?? '') : (f.control === 'select' ? (f.options?.[0] ?? '') : '');
+    for (const f of schema.fields) seed[f.key] = initial ? String((initial as any)[f.key] ?? '') : ((f.control === 'select' || f.control === 'radio') ? (f.options?.[0] ?? '') : '');
     return seed;
   });
+  // 항목 수가 많으면(>6) 2단 wide 레이아웃으로 자동 적응. 적으면 기존 1단(좁은) 모달.
+  const wide = schema.fields.length > 6;
   const [errKey, setErrKey] = useState("");
   const [confirmDel, setConfirmDel] = useState(false);
   const set = (k: string, v: string) => {
@@ -80,7 +82,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-[460px] max-h-[86vh]">
+      <DialogContent className={wide ? "max-w-[880px] max-h-[88vh]" : "max-w-[460px] max-h-[86vh]"}>
         <DialogHeader>
           <DialogTitle>{mode === "create" ? "신규 등록" : "항목 수정"}</DialogTitle>
           <DialogDescription className="sr-only">
@@ -88,18 +90,27 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
           </DialogDescription>
         </DialogHeader>
 
-        {/* 폼 */}
+        {/* 폼 — wide(항목 多)면 2단 그리드(좁은 화면은 1단으로 적층), textarea/file은 전체 폭 차지 */}
         <div className="overflow-y-auto p-[18px]">
-          {schema.fields.map((f) => (
-            <Field key={f.key} label={f.label + (f.required ? ' *' : '')} errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
-              <SchemaField
-                field={f}
-                value={vals[f.key] ?? ''}
-                onChange={(v) => set(f.key, v)}
-                invalid={errKey === f.key}
-              />
-            </Field>
-          ))}
+          <div className={wide ? "grid grid-cols-1 sm:grid-cols-2 gap-x-5" : ""}>
+            {schema.fields.map((f) => {
+              const span2 = wide && (f.control === "textarea" || f.control === "file");
+              return (
+                <Field
+                  key={f.key}
+                  label={f.label + (f.required ? ' *' : '')}
+                  className={span2 ? "sm:col-span-2" : undefined}
+                  errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
+                  <SchemaField
+                    field={f}
+                    value={vals[f.key] ?? ''}
+                    onChange={(v) => set(f.key, v)}
+                    invalid={errKey === f.key}
+                  />
+                </Field>
+              );
+            })}
+          </div>
         </div>
 
         {/* 푸터 */}

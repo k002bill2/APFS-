@@ -20,7 +20,6 @@ import { Pages as ReportSutackPages } from './report_sutack';
 import { Pages as AssetPages } from './asset';
 import { GenericListPage } from './generic_list';
 import { AssetFunding } from './asset_funding';
-import { AssetFundingAgGrid } from './asset_funding_aggrid';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
 const ReportMain = ReportMainPages.ReportMain;
@@ -80,7 +79,6 @@ function App() {
   else if (route === "subfund") page = <SubFund onNav={onNav} />;
   else if (route === "asset") page = <AssetMain onNav={onNav} />;
   else if (route === "asset-funding") page = <AssetFunding onNav={onNav} />;
-  else if (route === "asset-funding-aggrid") page = <AssetFundingAgGrid onNav={onNav} />;
   else if (route === "report") page = <ReportMain onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "report-sutack") page = <ReportSutack onNav={onNav} />;

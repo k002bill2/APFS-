@@ -35,6 +35,17 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} style={base} />;
     case 'date':     return <input type="date" value={value} onChange={(e) => onChange(e.target.value)} style={base} />;
     case 'checkbox': return <input type="checkbox" checked={value === 'true'} onChange={(e) => onChange(String(e.target.checked))} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />;
+    // 라디오 — 옵션 가로 나열(Y/N, Y/N/해당없음 등). 네이티브 input + accentColor 토큰(라이트/다크 양립).
+    case 'radio': return (
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', minHeight: 38 }}>
+        {(field.options || ['Y', 'N']).map((o) => (
+          <label key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14, color: 'var(--foreground)' }}>
+            <input type="radio" name={field.key} value={o} checked={value === o} onChange={() => onChange(o)} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />
+            {o}
+          </label>
+        ))}
+      </div>
+    );
     case 'file':     return <input type="file" style={{ ...base, padding: 6 }} />;
     case 'readonly': return <div style={{ ...base, background: 'var(--muted)', color: 'var(--muted-foreground)' }}>{value || '—'}</div>;
     default:         return <input value={value} onChange={(e) => onChange(e.target.value)} style={base} />;
