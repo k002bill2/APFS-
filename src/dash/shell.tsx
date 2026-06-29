@@ -9,6 +9,7 @@ import { MainWidgets } from './main_widgets';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuLabel, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from './ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } from './ui/navigation-menu';
 import logoUrl from './assets/logo.svg';
 import logoWhiteUrl from './assets/logo_white.svg';
 
@@ -95,12 +96,60 @@ function MenuChildren({ m, expanded, setExpanded, onNav }) {
   );
 }
 
+/* ---------- 접힘 LNB 플라이아웃 아이템 (Radix NavigationMenu — 키보드 진입 경로) ----------
+   트리거(아이콘) hover/포커스/Enter로 플라이아웃 오픈(기존 hover-전용 갭 해소). Content는 fixed로
+   레일 overflow 클리핑 탈출(top은 트리거 위치로 계산). 자식 없는 항목은 단순 NavigationMenuLink. */
+function LnbFlyItem({ m, count, isActive, expanded, setExpanded, onNav }) {
+  const triggerRef = React.useRef<any>(null);
+  const [top, setTop] = useState(64);
+  const place = () => { const r = triggerRef.current?.getBoundingClientRect(); if (r) setTop(Math.max(64, Math.min(r.top, window.innerHeight - 360))); };
+  const dot = count > 0 ? <span className="absolute top-1.5 right-2" style={{ width: 7, height: 7, borderRadius: 99, background: m.urgent ? "var(--danger)" : "var(--primary)" }} /> : null;
+  const btnStyle: React.CSSProperties = {
+    gap: 11, border: "none", font: "inherit", borderRadius: 9, padding: "10px", justifyContent: "center",
+    background: isActive ? "color-mix(in srgb,var(--primary) 12%,transparent)" : "transparent",
+    color: isActive ? "var(--primary)" : "var(--foreground)", fontWeight: isActive ? 700 : 500, transition: "background .15s",
+  };
+  if (!m.children) {
+    return (
+      <NavigationMenuItem className="mb-0.5">
+        <NavigationMenuLink asChild>
+          <button onClick={() => m.path && onNav(m.path)} aria-label={m.label} aria-current={isActive ? "page" : undefined}
+            className="relative w-full flex items-center cursor-pointer" style={btnStyle}>
+            <Icon name={m.icon} size={20} stroke={isActive ? 2.3 : 2} />{dot}</button>
+        </NavigationMenuLink>
+      </NavigationMenuItem>
+    );
+  }
+  return (
+    <NavigationMenuItem value={m.id} className="mb-0.5">
+      <NavigationMenuTrigger ref={triggerRef} onPointerEnter={place} onFocus={place} aria-label={m.label}
+        className="relative w-full flex items-center" style={btnStyle}>
+        <Icon name={m.icon} size={20} stroke={isActive ? 2.3 : 2} />{dot}</NavigationMenuTrigger>
+      <NavigationMenuContent style={{ left: 70, top, width: 264, maxHeight: `calc(100vh - ${top + 16}px)`, animation: "railSlide .18s var(--ease) both" }}>
+        <div className="flex items-center shrink-0 pt-3.5 px-4 pb-2.5" style={{ gap: 9, borderBottom: "1px solid var(--border)" }}>
+          <ColorChip icon={m.icon} color={m.urgent ? "var(--danger)" : "var(--primary)"} size={30} iconSize={16} />
+          <span className="font-bold" style={{ fontSize: 13.5 }}>{m.label}</span>
+        </div>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-2.5">{m.path && <NavigationMenuLink asChild>
+          <button onClick={() => onNav(m.path)}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            className="w-full flex items-center gap-2 cursor-pointer py-2 px-2.5 text-primary mb-1"
+            style={{ border: "none", font: "inherit", fontWeight: 700, borderRadius: 8, background: "transparent", fontSize: 12.5 }}>
+            <Icon name="arrow-right" size={14} />전체 보기</button></NavigationMenuLink>}
+          <MenuChildren m={m} expanded={expanded} setExpanded={setExpanded} onNav={onNav} /></div>
+      </NavigationMenuContent>
+    </NavigationMenuItem>
+  );
+}
+
 /* ---------- LNB ---------- */
 function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
   const [expanded, setExpanded] = useState(() => ({ ...allSubGroupsExpanded(), risk: true }));
-  const [hover, setHover] = useState<any>(null);
-  const hoverTimer = React.useRef<any>(null);
+  const [navValue, setNavValue] = useState("");
   const menu = D.MENU.filter((m) => m.roles.includes(role));
+  const collapsed = !open && !mobile;
+  const navTo = (r) => { onNav(r); setNavValue(""); };
   const posStyle: React.CSSProperties = mobile
     ? { position: "fixed", top: 58, left: 0, width: 270, height: "calc(100vh - 58px)", zIndex: 45,
         transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
@@ -113,7 +162,13 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
       className="shrink-0 bg-card flex flex-col overflow-hidden"
       style={{
         borderRight: "1px solid var(--border)", ...posStyle,
-      }}><div
+      }}>{collapsed
+        ? <NavigationMenu orientation="vertical" value={navValue} onValueChange={setNavValue}
+            className="flex-1 overflow-y-auto overflow-x-hidden block max-w-none" style={{ padding: "14px 8px 8px" }}><NavigationMenuList className="gap-0.5">{menu.map((m) => <LnbFlyItem
+              key={m.id} m={m} count={m.id === "risk" ? rollup(m) : 0}
+              isActive={!!(m.path && m.path === route)}
+              expanded={expanded} setExpanded={setExpanded} onNav={navTo} />)}</NavigationMenuList></NavigationMenu>
+        : <div
         className="flex-1 overflow-y-auto overflow-x-hidden"
         style={{ padding: open ? "14px 14px 8px" : "14px 8px 8px" }}>{menu.map((m) => {
           const showCounts = m.id === "risk";
@@ -126,8 +181,6 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
                 onClick={() => { if (m.path) onNav(m.path); if (hasKids && open) setExpanded((e) => ({ ...e, [m.id]: !e[m.id] })); }}
                 aria-current={isActive ? "page" : undefined}
                 title={!open ? m.label : undefined}
-                onMouseEnter={(e) => { if (!open && !mobile && hasKids) { clearTimeout(hoverTimer.current); const r = e.currentTarget.getBoundingClientRect(); setHover({ m, top: r.top }); } }}
-                onMouseLeave={() => { if (!open) { clearTimeout(hoverTimer.current); hoverTimer.current = setTimeout(() => setHover(null), 160); } }}
                 className="relative w-full flex items-center cursor-pointer"
                 style={{
                   gap: 11, border: "none", font: "inherit", borderRadius: 9, padding: open ? "9px 10px" : "10px", justifyContent: open ? "flex-start" : "center",
@@ -143,11 +196,11 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
                   size={15}
                   style={{ transform: isOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .18s", opacity: .6 }} />}</button>{open && hasKids && isOpen && <div className="mt-0.5 mb-1 mx-0 pl-4"><MenuChildren m={m} expanded={expanded} setExpanded={setExpanded} onNav={onNav} /></div>}</div>
           );
-        })}</div><div
+        })}</div>}<div
         style={{ borderTop: "1px solid var(--border)", padding: open ? "8px 10px" : "8px" }}><button
           onClick={() => onNav("designsystem")}
           aria-current={route === "designsystem" ? "page" : undefined}
-          title={!open ? "디자인 시스템" : undefined}
+          title={collapsed ? "디자인 시스템" : undefined}
           className="relative w-full flex items-center cursor-pointer"
           style={{
             gap: 11, border: "none", font: "inherit", borderRadius: 9, padding: open ? "9px 10px" : "10px", justifyContent: open ? "flex-start" : "center",
@@ -157,32 +210,6 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
         style={{ borderTop: "1px solid var(--border)", padding: open ? "10px 14px" : "10px 8px" }}>{open
           ? <div className="flex items-center gap-2.5"><ColorChip icon="shield-check" color="var(--success)" size={30} iconSize={16} /><div style={{ lineHeight: 1.3 }}><div className="font-bold" style={{ fontSize: 11.5 }}>보안 접속 정상</div><div className="t-caption" style={{ fontSize: 10.5 }}>내부망 · TLS 1.3</div></div></div>
           : <div className="flex justify-center"><Icon name="shield-check" size={18} style={{ color: "var(--success)" }} /></div>}</div>
-      {!open && !mobile && hover && (() => { const flyTop = Math.max(64, Math.min(hover.top, window.innerHeight - 360)); return ReactDOM.createPortal(
-        <div
-          onMouseEnter={() => { clearTimeout(hoverTimer.current); setHover(hover); }}
-          onMouseLeave={() => { clearTimeout(hoverTimer.current); hoverTimer.current = setTimeout(() => setHover(null), 160); }}
-          className="fixed bg-card shadow-lg flex flex-col overflow-hidden"
-          style={{
-            left: 70, top: flyTop, width: 264, zIndex: 70,
-            maxHeight: window.innerHeight - flyTop - 16,
-            border: "1px solid var(--border)", borderRadius: 14,
-            animation: "railSlide .18s var(--ease) both",
-          }}>
-          <div className="flex items-center shrink-0 pt-3.5 px-4 pb-2.5" style={{ gap: 9, borderBottom: "1px solid var(--border)" }}>
-            <ColorChip icon={hover.m.icon} color={hover.m.urgent ? "var(--danger)" : "var(--primary)"} size={30} iconSize={16} />
-            <span className="font-bold" style={{ fontSize: 13.5 }}>{hover.m.label}</span>
-          </div>
-          <div className="flex-1 overflow-y-auto overflow-x-hidden p-2.5">{hover.m.path && <button
-            onClick={() => { onNav(hover.m.path); setHover(null); }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-            className="w-full flex items-center gap-2 cursor-pointer py-2 px-2.5 text-primary mb-1"
-            style={{
-              border: "none", font: "inherit", fontWeight: 700,
-              borderRadius: 8, background: "transparent", fontSize: 12.5,
-            }}><Icon name="arrow-right" size={14} />전체 보기</button>}
-          <MenuChildren m={hover.m} expanded={expanded} setExpanded={setExpanded} onNav={(r) => { onNav(r); setHover(null); }} /></div>
-        </div>, document.body); })()}
       </nav>
   );
 }
