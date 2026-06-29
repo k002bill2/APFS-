@@ -152,11 +152,13 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
 }
 
 /* ---- IconBtn ---- */
-function IconBtn({ icon, onClick, label, badge, active, size = 38, activeClassName, activeStyle }: { icon: string; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; activeClassName?: string; activeStyle?: React.CSSProperties }) {
+function IconBtn({ icon, onClick, label, badge, active, size = 38, activeClassName, activeStyle, expanded }: { icon: string; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean }) {
   const btn = (
     <button
       onClick={onClick}
       aria-label={label}
+      aria-haspopup={expanded === undefined ? undefined : "menu"}
+      aria-expanded={expanded}
       className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border transition-all duration-150",
         active ? (activeClassName || "bg-card text-primary border-ring") : "bg-transparent text-muted-foreground border-transparent")}
       style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}><Icon name={icon} size={20} stroke={2} />{badge > 0 && <span

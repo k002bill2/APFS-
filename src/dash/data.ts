@@ -461,6 +461,29 @@ export const MenuStore = {
   resolve(keys: string[]) { return keys.map((k) => ALLMENU.find((o) => o.key === k)).filter(Boolean); },
 };
 
+/* 방문기록(최근 열어본 페이지) — route 키 배열을 최근순·중복제거·최대 N개로 영속화.
+   MenuStore와 동일한 localStorage + CustomEvent 패턴(구독은 useHistory 훅). */
+const HISTORY_KEY = "apfs.history.v1";
+const HISTORY_MAX = 8;
+export const HistoryStore = {
+  get(): string[] {
+    try { const v = JSON.parse(localStorage.getItem(HISTORY_KEY) || "null"); if (Array.isArray(v)) return v.filter((x) => typeof x === "string"); } catch (e) {}
+    return [];
+  },
+  push(route: string) {
+    if (!route) return;
+    const cur = this.get();
+    if (cur[0] === route) return;                         // 이미 최상단이면 churn 방지
+    const next = [route, ...cur.filter((r) => r !== route)].slice(0, HISTORY_MAX);
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(next)); } catch (e) {}
+    window.dispatchEvent(new CustomEvent("apfs-history-change"));
+  },
+  clear() {
+    try { localStorage.removeItem(HISTORY_KEY); } catch (e) {}
+    window.dispatchEvent(new CustomEvent("apfs-history-change"));
+  },
+};
+
 export function useMenuSel(kind: string, def: string[]) {
   const { useState: uS, useEffect: uE } = React;
   const [keys, setKeys] = uS<string[]>(() => MenuStore.keysOr(kind, def));
