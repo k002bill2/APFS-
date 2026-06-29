@@ -1,5 +1,5 @@
 /* 회계·자금 마감 페이지 — FR-5.10 / FR-5.11
-   APFS forest-green 토큰 + Tailwind 유틸리티. JSX (Vite). */
+   APFS 인디고/블루 토큰 + Tailwind 유틸리티. JSX (Vite). */
 import React from 'react';
 import { Icon } from './icons';
 import { Shell } from './shell';
@@ -7,6 +7,10 @@ import { UI } from './components';
 import { Charts } from './charts';
 import { APFS_DATA } from './data';
 import { mn, MT } from './mask';
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef, ICellRendererParams } from 'ag-grid-community';
+import { apfsTheme, numFmt } from './aggrid_theme';   // 공유 테마(회색 행선택)·포매터 SSOT
+import './aggrid_shared.css';                          // floating-row opacity 보정 등 공유 보정 CSS
 
 const { useState, useMemo } = React;
 const { PageHeader } = Shell;
@@ -169,44 +173,117 @@ function CalendarView({ calMap }) {
  * ================================================================ */
 const STATUS_TONE = { 승인완료: "success", 승인대기: "warning", 반려: "danger" };
 
+/* ── AG Grid 컬럼 정의 (수제 <table> → AgGridReact 전환) ──
+   "축은 두고 데이터는 가린다": 헤더·StatusBadge는 비마스킹.
+   텍스트(전표번호·계정·담당자·사유 등)=cellRenderer+<MT>, 날짜=valueFormatter+mn(),
+   금액=우측정렬 숫자(numFmt: mn 내장 / 차·대변은 0을 '—'로). 초과/연체 행 강조는 모듈상수 getRowStyle. */
+const dateFmt = (p: { value: any }) => (p.value ? mn(p.value) : "");
+const amtDashFmt = (p: { value: any }) => (p.value ? mn(p.value.toLocaleString()) : "—");
+const cellMid = { display: "flex", alignItems: "center" } as const;
+const cellRight = { display: "flex", alignItems: "center", justifyContent: "flex-end", fontVariantNumeric: "tabular-nums" } as const;
+
+type VoucherRow = (typeof VOUCHERS)[number];
+const voucherColumns: ColDef<VoucherRow>[] = [
+  { field: "no", headerName: "전표번호", flex: 1.1, minWidth: 132, cellStyle: cellMid,
+    cellRenderer: (p: ICellRendererParams<VoucherRow>) => <span className="font-mono text-[12px]"><MT>{p.value}</MT></span> },
+  { field: "date", headerName: "일자", flex: 0.9, minWidth: 104, valueFormatter: dateFmt,
+    cellStyle: { ...cellMid, color: "var(--muted-foreground)" } },
+  { field: "account", headerName: "계정과목", flex: 1.2, minWidth: 128, cellStyle: { ...cellMid, fontWeight: 600 },
+    cellRenderer: (p: ICellRendererParams<VoucherRow>) => <MT>{p.value}</MT> },
+  { field: "debit", headerName: "차변(원)", flex: 1, minWidth: 110, type: "rightAligned", valueFormatter: amtDashFmt, cellStyle: cellRight },
+  { field: "credit", headerName: "대변(원)", flex: 1, minWidth: 110, type: "rightAligned", valueFormatter: amtDashFmt, cellStyle: cellRight },
+  { field: "author", headerName: "작성자", flex: 0.8, minWidth: 90, cellStyle: cellMid,
+    cellRenderer: (p: ICellRendererParams<VoucherRow>) => <MT>{p.value}</MT> },
+  { field: "status", headerName: "상태", flex: 0.8, minWidth: 96, cellStyle: cellMid,
+    cellRenderer: (p: ICellRendererParams<VoucherRow>) => <StatusBadge tone={STATUS_TONE[p.value] || "info"} label={p.value} size="sm" /> },
+  { headerName: "액션", colId: "action", flex: 1, minWidth: 128, sortable: false, resizable: false, cellStyle: cellMid,
+    cellRenderer: (p: ICellRendererParams<VoucherRow>) =>
+      p.data?.status === "승인대기"
+        ? <div className="flex gap-1.5"><Button variant="primary" size="sm" onClick={() => {}}>승인</Button><Button variant="outline" size="sm" onClick={() => {}}>반려</Button></div>
+        : null },
+];
+
+type PendingRow = (typeof PENDING)[number];
+const pendingColumns: ColDef<PendingRow>[] = [
+  { field: "no", headerName: "전표번호", flex: 1, minWidth: 132, cellStyle: cellMid,
+    cellRenderer: (p: ICellRendererParams<PendingRow>) => <span className="font-mono text-[12px]"><MT>{p.value}</MT></span> },
+  { field: "desc", headerName: "미결내용", flex: 1.7, minWidth: 180, cellStyle: { ...cellMid, fontWeight: 600 },
+    cellRenderer: (p: ICellRendererParams<PendingRow>) => <MT>{p.value}</MT> },
+  { field: "amount", headerName: "금액(원)", flex: 1, minWidth: 120, type: "rightAligned", valueFormatter: numFmt, cellStyle: cellRight },
+  { field: "created", headerName: "생성일", flex: 0.9, minWidth: 104, valueFormatter: dateFmt,
+    cellStyle: { ...cellMid, color: "var(--muted-foreground)" } },
+  { field: "manager", headerName: "담당자", flex: 0.8, minWidth: 90, cellStyle: cellMid,
+    cellRenderer: (p: ICellRendererParams<PendingRow>) => <MT>{p.value}</MT> },
+  { field: "due", headerName: "처리기한", flex: 1.1, minWidth: 130, cellStyle: { ...cellMid, gap: 8 },
+    cellRenderer: (p: ICellRendererParams<PendingRow>) => (
+      <>
+        <span style={{ color: p.data?.overdue ? "var(--danger)" : "var(--foreground)", fontWeight: p.data?.overdue ? 700 : 400 }}>{mn(p.value)}</span>
+        {p.data?.overdue && <StatusBadge tone="danger" label="기한초과" size="sm" />}
+      </>
+    ) },
+];
+const pendingRowStyle = (p: { data?: PendingRow }) =>
+  p.data?.overdue ? { background: "color-mix(in srgb,var(--danger) 5%,transparent)" } : undefined;
+
+const EV_ICON: Record<string, string> = { 세금계산서: "file-text", 영수증: "receipt", 계약서: "scroll" };
+type EvidenceRow = (typeof NO_EVIDENCE)[number];
+const evidenceColumns: ColDef<EvidenceRow>[] = [
+  { field: "no", headerName: "전표번호", flex: 1, minWidth: 132, cellStyle: cellMid,
+    cellRenderer: (p: ICellRendererParams<EvidenceRow>) => <span className="font-mono text-[12px]"><MT>{p.value}</MT></span> },
+  { field: "txDate", headerName: "거래일", flex: 0.9, minWidth: 104, valueFormatter: dateFmt,
+    cellStyle: { ...cellMid, color: "var(--muted-foreground)" } },
+  { field: "amount", headerName: "금액(원)", flex: 1, minWidth: 120, type: "rightAligned", valueFormatter: numFmt, cellStyle: cellRight },
+  { field: "evType", headerName: "증빙유형", flex: 1, minWidth: 120, cellStyle: cellMid,
+    cellRenderer: (p: ICellRendererParams<EvidenceRow>) => (
+      <div className="flex items-center gap-1.5">
+        <Icon name={EV_ICON[p.value] || "file"} size={14} className="text-warning" />
+        <span className="font-semibold"><MT>{p.value}</MT></span>
+      </div>
+    ) },
+  { field: "reason", headerName: "미첨부 사유", flex: 1.7, minWidth: 180, cellStyle: { ...cellMid, color: "var(--muted-foreground)" },
+    cellRenderer: (p: ICellRendererParams<EvidenceRow>) => <MT>{p.value}</MT> },
+];
+
 function VoucherTable() {
   return (
-    <div className="overflow-x-auto"><table className="w-full text-[13px] border-collapse"><thead><tr className="border-b border-border">{["전표번호", "일자", "계정과목", "차변(원)", "대변(원)", "작성자", "상태", "액션"].map((th) =>
-              <th
-                key={th}
-                className="text-left px-3 py-2.5 t-caption font-semibold whitespace-nowrap">{th}</th>)}</tr></thead><tbody>{VOUCHERS.map((v) =>
-            <tr
-              key={v.no}
-              className="border-b border-border hover:bg-muted transition-colors"><td className="px-3 py-2.5 font-mono text-[12px] whitespace-nowrap"><MT>{v.no}</MT></td><td className="px-3 py-2.5 whitespace-nowrap text-caption">{mn(v.date)}</td><td className="px-3 py-2.5 font-semibold"><MT>{v.account}</MT></td><td className="px-3 py-2.5 tabular text-right whitespace-nowrap">{v.debit ? mn(v.debit.toLocaleString()) : "—"}</td><td className="px-3 py-2.5 tabular text-right whitespace-nowrap">{v.credit ? mn(v.credit.toLocaleString()) : "—"}</td><td className="px-3 py-2.5 whitespace-nowrap"><MT>{v.author}</MT></td><td className="px-3 py-2.5 whitespace-nowrap"><StatusBadge tone={STATUS_TONE[v.status] || "info"} label={v.status} size="sm" /></td><td className="px-3 py-2.5 whitespace-nowrap"><div className="flex gap-1.5">{v.status === "승인대기" && <Button variant="primary" size="sm" onClick={() => {}}>승인</Button>}{v.status === "승인대기" && <Button variant="outline" size="sm" onClick={() => {}}>반려</Button>}</div></td></tr>)}</tbody></table></div>
+    <div style={{ padding: "0 2px 2px" }}>
+      <AgGridReact<VoucherRow>
+        theme={apfsTheme}
+        rowData={VOUCHERS}
+        columnDefs={voucherColumns}
+        domLayout="autoHeight"
+        rowHeight={46}
+        defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }} />
+    </div>
   );
 }
 
 function PendingTable() {
   return (
-    <div className="overflow-x-auto"><table className="w-full text-[13px] border-collapse"><thead><tr className="border-b border-border">{["전표번호", "미결내용", "금액(원)", "생성일", "담당자", "처리기한"].map((th) =>
-              <th
-                key={th}
-                className="text-left px-3 py-2.5 t-caption font-semibold whitespace-nowrap">{th}</th>)}</tr></thead><tbody>{PENDING.map((p) =>
-            <tr
-              key={p.no}
-              className={cx("border-b border-border hover:bg-muted transition-colors", p.overdue && "bg-[color-mix(in_srgb,var(--danger)_5%,transparent)]")}><td className="px-3 py-2.5 font-mono text-[12px] whitespace-nowrap"><MT>{p.no}</MT></td><td className="px-3 py-2.5 font-semibold"><MT>{p.desc}</MT></td><td className="px-3 py-2.5 tabular text-right whitespace-nowrap">{mn(p.amount.toLocaleString())}</td><td className="px-3 py-2.5 text-caption whitespace-nowrap">{mn(p.created)}</td><td className="px-3 py-2.5 whitespace-nowrap"><MT>{p.manager}</MT></td><td className="px-3 py-2.5 whitespace-nowrap"><span
-                  style={{ color: p.overdue ? "var(--danger)" : "var(--foreground)", fontWeight: p.overdue ? 700 : 400 }}>{mn(p.due)}</span>{p.overdue && <StatusBadge tone="danger" label="기한초과" size="sm" />}</td></tr>)}</tbody></table></div>
+    <div style={{ padding: "0 2px 2px" }}>
+      <AgGridReact<PendingRow>
+        theme={apfsTheme}
+        rowData={PENDING}
+        columnDefs={pendingColumns}
+        getRowStyle={pendingRowStyle}
+        domLayout="autoHeight"
+        rowHeight={46}
+        defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }} />
+    </div>
   );
 }
 
 function EvidenceTable() {
-  const EV_ICON = { 세금계산서: "file-text", 영수증: "receipt", 계약서: "scroll" };
   return (
-    <div className="overflow-x-auto"><table className="w-full text-[13px] border-collapse"><thead><tr className="border-b border-border">{["전표번호", "거래일", "금액(원)", "증빙유형", "미첨부 사유"].map((th) =>
-              <th
-                key={th}
-                className="text-left px-3 py-2.5 t-caption font-semibold whitespace-nowrap">{th}</th>)}</tr></thead><tbody>{NO_EVIDENCE.map((e) =>
-            <tr
-              key={e.no}
-              className="border-b border-border hover:bg-muted transition-colors"><td className="px-3 py-2.5 font-mono text-[12px] whitespace-nowrap"><MT>{e.no}</MT></td><td className="px-3 py-2.5 text-caption whitespace-nowrap">{mn(e.txDate)}</td><td className="px-3 py-2.5 tabular text-right whitespace-nowrap">{mn(e.amount.toLocaleString())}</td><td className="px-3 py-2.5 whitespace-nowrap"><div className="flex items-center gap-1.5"><Icon
-                    name={EV_ICON[e.evType] || "file"}
-                    size={14}
-                    className="text-warning" /><span className="font-semibold"><MT>{e.evType}</MT></span></div></td><td className="px-3 py-2.5 text-caption"><MT>{e.reason}</MT></td></tr>)}</tbody></table></div>
+    <div style={{ padding: "0 2px 2px" }}>
+      <AgGridReact<EvidenceRow>
+        theme={apfsTheme}
+        rowData={NO_EVIDENCE}
+        columnDefs={evidenceColumns}
+        domLayout="autoHeight"
+        rowHeight={46}
+        defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }} />
+    </div>
   );
 }
 

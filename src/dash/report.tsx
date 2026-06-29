@@ -1,5 +1,5 @@
 /* 부처보고·수탁보고 페이지 — FR-5.8 / 5.9
-   APFS forest-green 토큰 + Tailwind 유틸리티. JSX 없음. */
+   APFS 인디고/블루 토큰 + Tailwind 유틸리티. JSX 없음. */
 import React from 'react';
 import { Icon } from './icons';
 import { Shell } from './shell';

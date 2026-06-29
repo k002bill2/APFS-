@@ -1,12 +1,16 @@
 /* 투자자산관리 메인 페이지 — 모태펀드·자펀드 투자자산 종합 현황 개요
    route: 'asset' — FR-5.1 / 5.5
-   APFS forest-green 토큰 + Tailwind 유틸리티 (report_main.tsx 패턴 차용). */
+   APFS 인디고/블루 토큰 + Tailwind 유틸리티 (report_main.tsx 패턴 차용). */
 import React from 'react';
 import { Icon } from './icons';
 import { Shell } from './shell';
 import { UI } from './components';
 import { Charts } from './charts';
 import { mn, MT } from './mask';
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef, RowDoubleClickedEvent } from 'ag-grid-community';
+import { apfsTheme } from './aggrid_theme';   // 공유 테마(회색 선택) SSOT
+import './aggrid_shared.css';
 
 const { PageHeader } = Shell;
 const { ColorChip, StatusBadge, Card, ChartCard, Button, CountPill, toneVar } = UI;
@@ -143,6 +147,48 @@ function NavCard({ icon, tone, title, desc, badge, badgeUrgent, onClick }: {
 function AssetMain({ onNav }: { onNav?: (route: string) => void }) {
   const go = (route: string) => onNav && onNav(route);
 
+  /* 최근 투자자산 활동 AG Grid 컬럼 (수제 <table> 대체) — 본체만 교체.
+     자펀드명(2줄)·유형 칩·운용사·상태는 셀 렌더러, AUM은 mn 우측정렬, 더블클릭=라우팅 보존. */
+  const RECENT_COLS = React.useMemo<ColDef<any>[]>(() => [
+    {
+      field: "name", headerName: "자펀드명", flex: 2, minWidth: 180,
+      cellStyle: { display: "flex", flexDirection: "column", justifyContent: "center" },
+      cellRenderer: (p: any) => (
+        <div className="min-w-0" style={{ lineHeight: 1.3 }}>
+          <div className="text-[13.5px] font-semibold text-foreground"><MT>{p.data.name}</MT></div>
+          <div className="t-caption text-[11.5px] mt-0.5 font-mono"><MT w={44}>{p.data.id}</MT></div>
+        </div>
+      ),
+    },
+    {
+      field: "type", headerName: "유형", width: 120,
+      cellStyle: { display: "flex", alignItems: "center", justifyContent: "center" },
+      cellRenderer: (p: any) => (
+        <span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold text-accent" style={{ background: "color-mix(in srgb,var(--accent) 13%,transparent)" }}><MT w={40}>{p.value}</MT></span>
+      ),
+    },
+    {
+      field: "gp", headerName: "운용사", flex: 1, minWidth: 140,
+      cellStyle: { display: "flex", alignItems: "center" },
+      cellRenderer: (p: any) => <span className="text-[13px] font-semibold text-foreground"><MT>{p.value}</MT></span>,
+    },
+    {
+      field: "aum", headerName: "AUM", type: "rightAligned", width: 110,
+      valueFormatter: (p: any) => mn(p.value),
+      cellStyle: { fontVariantNumeric: "tabular-nums", fontWeight: 700 },
+    },
+    {
+      field: "status", headerName: "상태", width: 112,
+      cellStyle: { display: "flex", alignItems: "center", justifyContent: "center" },
+      cellRenderer: (p: any) => <StatusBadge tone={p.data.tone as any} label={p.value} size="sm" />,
+    },
+    {
+      colId: "go", headerName: "바로가기", width: 100, sortable: false, resizable: false, type: "rightAligned",
+      cellStyle: { display: "flex", alignItems: "center", justifyContent: "flex-end" },
+      cellRenderer: (p: any) => <Button variant="ghost" size="sm" onClick={() => onNav && onNav(p.data.route)}>보기</Button>,
+    },
+  ], [onNav]);
+
   return (
     <div
       className="max-w-[1320px] mx-auto"
@@ -238,59 +284,17 @@ function AssetMain({ onNav }: { onNav?: (route: string) => void }) {
           </div>
           <Button variant="ghost" size="sm" onClick={() => go("자펀드정보관리")}>자펀드 전체 보기 →</Button>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse min-w-[720px]">
-            <thead>
-              <tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>
-                {[
-                  ["자펀드명", "left"],
-                  ["유형", "center"],
-                  ["운용사", "left"],
-                  ["AUM", "right"],
-                  ["상태", "center"],
-                  ["바로가기", "right"],
-                ].map(([label, align], i) => (
-                  <th
-                    key={i}
-                    className={cx(
-                      "t-label font-semibold px-4 py-3 whitespace-nowrap",
-                      align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
-                      i === 0 && "pl-6"
-                    )}
-                  >{label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {RECENT_ASSETS.map((r) => (
-                <tr
-                  key={r.id}
-                  className="border-t border-border transition-colors cursor-pointer"
-                  title="더블클릭하여 상세 보기"
-                  onDoubleClick={() => go(r.route)}
-                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
-                >
-                  <td className="px-4 pl-6 py-3.5">
-                    <div className="text-[13.5px] font-semibold text-foreground"><MT>{r.name}</MT></div>
-                    <div className="t-caption text-[11.5px] mt-0.5 font-mono"><MT w={44}>{r.id}</MT></div>
-                  </td>
-                  <td className="px-4 py-3.5 text-center">
-                    <span
-                      className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold text-accent"
-                      style={{ background: "color-mix(in srgb,var(--accent) 13%,transparent)" }}
-                    ><MT w={40}>{r.type}</MT></span>
-                  </td>
-                  <td className="px-4 py-3.5 text-[13px] font-semibold text-foreground"><MT>{r.gp}</MT></td>
-                  <td className="px-4 py-3.5 text-right tabular text-[13.5px] font-bold whitespace-nowrap text-foreground">{mn(r.aum)}</td>
-                  <td className="px-4 py-3.5 text-center"><StatusBadge tone={r.tone as any} label={r.status} size="sm" /></td>
-                  <td className="px-4 pr-5 py-3.5 text-right">
-                    <Button variant="ghost" size="sm" onClick={() => go(r.route)}>보기</Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{ padding: "0 2px 2px" }}>
+          <AgGridReact
+            theme={apfsTheme}
+            rowData={RECENT_ASSETS}
+            columnDefs={RECENT_COLS}
+            getRowId={(p) => (p.data as any).id}
+            domLayout="autoHeight"
+            rowHeight={56}
+            defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
+            onRowDoubleClicked={(e: RowDoubleClickedEvent) => { if (e.data) go((e.data as any).route); }}
+          />
         </div>
       </div>
     </div>

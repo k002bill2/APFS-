@@ -1,5 +1,5 @@
 /* 투자 성과·포트폴리오 서브페이지 — 첨부 디자인(테이블 + 하단 2카드) 스타일.
-   APFS forest-green 토큰 + Tailwind 유틸리티.
+   APFS 인디고/블루 토큰 + Tailwind 유틸리티.
    claude.ai/design 프로젝트 dash/performance.js 충실 포팅(행 선택·더보기 메뉴·등록 모달 포함). */
 import React from 'react';
 import { Icon } from './icons';
@@ -7,19 +7,27 @@ import { UI } from './components';
 import { Shell } from './shell';
 import { APFS_DATA } from './data';
 import { mn, MT, useMask } from './mask';
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode } from 'ag-grid-community';
+import { apfsTheme } from './aggrid_theme';   // 공유 테마(회색 행선택) SSOT
+import './aggrid_shared.css';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
-import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
 const { Button, StatusBadge, FilterChip, SegTabs, IconBtn, ColorChip } = UI;
 const { PageHeader } = Shell;
 const D = APFS_DATA;
 const cx = (...a) => a.filter(Boolean).join(" ");
+
+/* 포트폴리오 행 — 안정 _id 부여(선택삭제용; code는 'NEW' 추가 시 중복 가능해 부적합) */
+type PRow = (typeof D.PORTFOLIO)[number] & { _id: string };
+let SEQ = 0;
+const withId = (r: (typeof D.PORTFOLIO)[number]): PRow => ({ ...r, _id: "P" + (++SEQ) });
 
 /* 막대형 스파크라인 (성과 이력) — 최근 5칸, 낮은 높이 */
 function BarSpark({ data, color = "var(--chart-1)", up = true }) {
@@ -70,7 +78,7 @@ function CheckRow({ label, checked, onClick }) {
           background: checked ? "var(--brand-blue)" : "var(--card)",
           border: checked ? "1px solid var(--brand-blue)" : "1.5px solid var(--border-strong)",
         }}>
-        {checked && <Icon name="check" size={17} stroke={3} style={{ color: "#fff" }} />}
+        {checked && <Icon name="check" size={17} stroke={3} style={{ color: "var(--on-brand-solid)" }} />}
       </span>
       <span className="text-[14px] font-semibold text-foreground">{label}</span>
     </button>
@@ -238,19 +246,6 @@ function RegisterModal({ open, mode = "create", onClose, onSubmit }: { open: boo
   );
 }
 
-/* ===== 행 선택 체크박스 — Radix Checkbox(Space 토글 등 키보드 제공) ===== */
-function RowCheck({ checked, onChange }: { checked: boolean; onChange: () => void }) {
-  return (
-    <Checkbox
-      checked={checked}
-      onCheckedChange={() => onChange()}
-      onClick={(e) => e.stopPropagation()}
-      aria-label="행 선택"
-      className="align-middle"
-    />
-  );
-}
-
 function Performance({ onNav }) {
   const [view, setView] = useState("list");
   const [page, setPage] = useState(1);
@@ -258,35 +253,43 @@ function Performance({ onNav }) {
   const [modal, setModal] = useState<string | null>(null); // null | "create" | "edit"
   // risk 기본 null = 필터 해제(로드 시 전체 행). 실제 필터링되므로 비-null이면 즉시 행을 숨김 → opt-in.
   const [applied, setApplied] = useState<{ period: string | null; assets: Record<string, boolean>; risk: number | null }>({ period: "당기 회계연도", assets: { "주식": true, "채권": true }, risk: null });
-  const [selected, setSelected] = useState<Record<number, boolean>>({});
+  const apiRef = useRef<GridApi<PRow> | null>(null);
+  const [selCount, setSelCount] = useState(0);   // AG Grid 선택 행 수(수제 Record 선택 대체)
   const [delOpen, setDelOpen] = useState(false);
-  const [rows, setRows] = useState(D.PORTFOLIO);
+  const [rows, setRows] = useState<PRow[]>(() => D.PORTFOLIO.map(withId));
   const masked = useMask();   // Excel 우측정렬 숫자 셀(가치·변동폭)의 마스킹 시 값을 0으로(실값 비노출)
   // 슬라이더 값(0~100) → 리스크 버킷 라벨 (칩 표시 + 실제 행 필터 공용 도메인)
   const riskLabel = (r) => (r == null ? null : r < 33 ? "리스크 보수적" : r < 66 ? "리스크 중립" : "리스크 공격적");
   const ROW_RISK_LABEL: Record<string, string> = { "ULTRA-LOW": "리스크 보수적", "LOW": "리스크 보수적", "MEDIUM": "리스크 중립", "HIGH": "리스크 공격적" };
   const wantRisk = riskLabel(applied.risk); // applied.risk null(칩 제거)이면 필터 해제
-  // risk만 행 데이터에 매핑 → 실제 필터. 원본 인덱스 보존(selection이 인덱스 기반). 자산유형/기간은 no-op(드로어 캡션으로 신호)
-  const filtered = rows.map((r, i) => ({ r, i })).filter(({ r }) => !wantRisk || ROW_RISK_LABEL[r.risk] === wantRisk);
-  const allChecked = filtered.length > 0 && filtered.every(({ i }) => selected[i]);
-  const toggleAll = () => setSelected(allChecked ? {} : filtered.reduce((o, { i }) => ((o[i] = true), o), {} as Record<number, boolean>));
-  const toggleRow = (i) => setSelected((s) => ({ ...s, [i]: !s[i] }));
+  // risk만 행 데이터에 매핑 → AG Grid External Filter(L12)로 거른다. 자산유형/기간은 no-op(드로어 캡션으로 신호).
+  // filtered는 푸터 건수·Excel 내보내기 용도(그리드 본체는 동일 술어를 external filter로 적용).
+  const filtered = rows.filter((r) => !wantRisk || ROW_RISK_LABEL[r.risk] === wantRisk);
   const addRow = () => {
-    setRows((rs) => [{
+    setRows((rs) => [withId({
       code: "NEW", codeColor: "var(--chart-1)", name: "신규 등록 자산", meta: "신규 · 미분류",
       value: "0", change: 0, risk: "MEDIUM", riskTone: "info", hist: [1, 1, 1, 1, 1],
-    }, ...rs]);
+    }), ...rs]);
     toast.success("자산이 등록되었습니다");
   };
-  const selCount = rows.filter((_, i) => selected[i]).length;
   const deleteSelected = () => {
-    if (!selCount) return;
-    const n = selCount;
-    setRows((rs) => rs.filter((_, i) => !selected[i]));
-    setSelected({});
+    const sel = apiRef.current?.getSelectedRows() ?? [];
+    if (!sel.length) return;
+    const ids = new Set(sel.map((r) => r._id));
+    setRows((rs) => rs.filter((r) => !ids.has(r._id)));
+    apiRef.current?.deselectAll();
     setPage(1);
-    toast.success(`${n}개 항목을 삭제했습니다`);
+    toast.success(`${sel.length}개 항목을 삭제했습니다`);
   };
+
+  // ── AG Grid 연결: 다중행 체크박스 선택 + risk External Filter ──
+  const onGridReady = useCallback((e: GridReadyEvent<PRow>) => { apiRef.current = e.api; }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<PRow>) => { setSelCount(e.api.getSelectedRows().length); }, []);
+  useEffect(() => { apiRef.current?.onFilterChanged(); }, [wantRisk]);
+  const isExternalFilterPresent = useCallback(() => wantRisk != null, [wantRisk]);
+  const doesExternalFilterPass = useCallback(
+    (node: IRowNode<PRow>) => (node.data ? (!wantRisk || ROW_RISK_LABEL[node.data.risk] === wantRisk) : true),
+    [wantRisk]);
 
   // 적용된 필터 → 칩 목록 (드로어와 연동)
   const chips = [];
@@ -303,6 +306,58 @@ function Performance({ onNav }) {
   const changeColor = (v) => (v > 0 ? "var(--success)" : v < 0 ? "var(--danger)" : "var(--muted-foreground)");
   const fmtChange = (v) => (v > 0 ? "+" : "") + v.toFixed(2) + "%";
 
+  // ── 컬럼 정의(고정 6컬럼) ──
+  // 2줄 자산식별자(아바타+이름+메타)·우측정렬 숫자(가치/변동폭, 마스킹 valueFormatter)·리스크 배지·스파크라인·관리.
+  // 헤더는 비마스킹(AG Grid headerName 평문) — 수제 표의 <MT> 헤더 마스킹을 규약대로 정규화("축은 두고 데이터는 가린다").
+  // 성과이력 스파크는 비마스킹(원본 보존: aria-hidden·숫자 없음). 관리 버튼은 수정 모달(더블클릭과 동일 동작).
+  const columnDefs = useMemo<ColDef<PRow>[]>(() => [
+    {
+      field: "name", headerName: "자산 식별자", flex: 2, minWidth: 240,
+      cellStyle: { display: "flex", alignItems: "center" },
+      cellRenderer: (p: ICellRendererParams<PRow>) => (
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center justify-center w-9 h-9 rounded-[9px] text-[color:var(--on-chart-fill)] text-[12px] font-bold shrink-0"
+            style={{ background: p.data?.codeColor }}><MT>{p.data?.code}</MT></span>
+          <div className="min-w-0">
+            <div className="text-[14.5px] font-bold leading-tight text-foreground"><MT>{p.data?.name}</MT></div>
+            <div className="t-caption mt-0.5"><MT>{p.data?.meta}</MT></div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      field: "value", headerName: "가치 (KRW, 백만)", type: "rightAligned", flex: 1, minWidth: 150,
+      valueFormatter: (p) => mn(p.value),
+      // value는 콤마 포함 포맷 문자열 → 기본 문자열 정렬이면 1,040,000 < 284,200로 오정렬. 숫자 비교로 교정.
+      comparator: (a, b) => parseFloat(String(a).replace(/,/g, "")) - parseFloat(String(b).replace(/,/g, "")),
+      cellStyle: { textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 600, color: "var(--foreground)" },
+    },
+    {
+      field: "change", headerName: "변동폭 (24시)", type: "rightAligned", flex: 1, minWidth: 130,
+      valueFormatter: (p) => mn(fmtChange(p.value)),
+      cellStyle: (p) => ({ textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 700, color: changeColor(p.value) }),
+    },
+    {
+      field: "risk", headerName: "리스크 등급", flex: 1, minWidth: 130,
+      cellStyle: { display: "flex", alignItems: "center" },
+      cellRenderer: (p: ICellRendererParams<PRow>) => (
+        <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[10.5px] font-bold tracking-wide"
+          style={{ background: `color-mix(in srgb,var(--${p.data?.riskTone}) 14%,transparent)`, color: `var(--${p.data?.riskTone})` }}>
+          <MT w={36}>{p.data?.risk}</MT></span>
+      ),
+    },
+    {
+      field: "hist", headerName: "성과 이력", flex: 1, minWidth: 120, sortable: false,
+      cellStyle: { display: "flex", alignItems: "center" },
+      cellRenderer: (p: ICellRendererParams<PRow>) => <BarSpark data={p.data?.hist || []} color={p.data?.codeColor} up={(p.data?.change ?? 0) >= 0} />,
+    },
+    {
+      colId: "__manage", headerName: "관리", width: 72, pinned: "right", sortable: false, resizable: false,
+      cellStyle: { display: "flex", alignItems: "center", justifyContent: "center" },
+      cellRenderer: () => <IconBtn icon="file" label="편집" size={32} onClick={() => setModal("edit")} />,
+    },
+  ], []);
+
   // Excel(.xlsx) 내보내기 — SheetJS. 고정 6컬럼(성과이력 스파크라인·관리 제외), 현재 필터(filtered) 반영.
   // 가치·변동폭은 화면처럼 우측정렬 → 숫자 셀(t:'n'+z)로 기록(Excel 자동 우측정렬·실데이터 연동 시 계산 가능).
   // 텍스트 컬럼(자산코드·자산명·구분·리스크등급)은 화면처럼 텍스트 셀(좌측). 마스크 ON이면 숫자 셀 값을 0으로 비노출.
@@ -311,10 +366,10 @@ function Performance({ onNav }) {
     const zVal = (v) => (Number.isInteger(v) ? "#,##0" : "#,##0.0");          // 가치
     const zChg = '+0.00"%";-0.00"%";0.00"%"';                                  // 변동폭 — fmtChange(부호+2소수+%)와 동일, "%"는 리터럴(스케일링 없음)
     const header = ["자산코드", "자산명", "구분", "가치 (KRW, 백만)", "변동폭 (24시)", "리스크 등급"];
-    const body = filtered.map(({ r }) => [cell(r.code), cell(r.name), cell(r.meta), masked ? 0 : r.value, masked ? 0 : r.change, cell(r.risk)]);
+    const body = filtered.map((r) => [cell(r.code), cell(r.name), cell(r.meta), masked ? 0 : r.value, masked ? 0 : r.change, cell(r.risk)]);
     const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
     // 숫자 컬럼(가치=열3, 변동폭=열4)에 화면 포맷과 일치하는 숫자서식 부여(데이터는 헤더 다음=행1부터)
-    filtered.forEach(({ r }, i) => {
+    filtered.forEach((r, i) => {
       const setZ = (c, z) => { const a = XLSX.utils.encode_cell({ r: i + 1, c }); if (ws[a]) ws[a].z = z; };
       setZ(3, zVal(r.value));
       setZ(4, zChg);
@@ -368,79 +423,31 @@ function Performance({ onNav }) {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>취소</AlertDialogCancel>
-                  <AlertDialogAction className="bg-danger text-white" onClick={deleteSelected}>삭제</AlertDialogAction>
+                  <AlertDialogAction className="bg-danger text-[color:var(--destructive-foreground)]" onClick={deleteSelected}>삭제</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           </div>
 
-          {/* 테이블 */}
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse min-w-[840px]">
-              <thead>
-                <tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>
-                  <th className="pl-5 sm:pl-6 pr-2 py-3 text-left" style={{ width: 1 }}>
-                    <RowCheck checked={allChecked} onChange={toggleAll} />
-                  </th>
-                  {[["자산 식별자", "left"], ["가치 (KRW, 백만)", "right"], ["변동폭 (24시)", "right"], ["리스크 등급", "left"], ["성과 이력", "left"], ["관리", "right"]].map((c, i) => (
-                    <th
-                      key={i}
-                      className={cx("t-label font-semibold px-4 py-3 whitespace-nowrap", c[1] === "right" ? "text-right" : "text-left", i === 5 && "pr-5 sm:pr-6")}>
-                      <MT>{c[0]}</MT>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(({ r, i }) => (
-                  <tr
-                    key={i}
-                    className="group border-t border-border transition-colors cursor-pointer"
-                    onDoubleClick={() => setModal("edit")}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                    {/* 선택 */}
-                    <td className="pl-5 sm:pl-6 pr-2 py-3.5" style={{ width: 1 }}>
-                      <RowCheck checked={!!selected[i]} onChange={() => toggleRow(i)} />
-                    </td>
-                    {/* 자산 식별자 */}
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="inline-flex items-center justify-center w-9 h-9 rounded-[9px] text-white text-[12px] font-bold shrink-0"
-                          style={{ background: r.codeColor }}><MT>{r.code}</MT></span>
-                        <div className="min-w-0">
-                          <div className="text-[14.5px] font-bold leading-tight text-foreground"><MT>{r.name}</MT></div>
-                          <div className="t-caption mt-0.5"><MT>{r.meta}</MT></div>
-                        </div>
-                      </div>
-                    </td>
-                    {/* 가치 */}
-                    <td className="px-4 py-3.5 text-right tabular text-[14.5px] font-semibold whitespace-nowrap text-foreground">{mn(r.value)}</td>
-                    {/* 변동폭 */}
-                    <td className="px-4 py-3.5 text-right tabular text-[14px] font-bold whitespace-nowrap" style={{ color: changeColor(r.change) }}>{mn(fmtChange(r.change))}</td>
-                    {/* 리스크 등급 */}
-                    <td className="px-4 py-3.5">
-                      <span
-                        className="inline-flex items-center rounded-full px-2.5 py-1 text-[10.5px] font-bold tracking-wide"
-                        style={{
-                          background: `color-mix(in srgb,var(--${r.riskTone}) 14%,transparent)`,
-                          color: `var(--${r.riskTone})`,
-                        }}><MT w={36}>{r.risk}</MT></span>
-                    </td>
-                    {/* 성과 이력 */}
-                    <td className="px-4 py-3.5"><BarSpark data={r.hist} color={r.codeColor} up={r.change >= 0} /></td>
-                    {/* 관리 */}
-                    <td className="px-4 pr-5 sm:pr-6 py-3.5 text-right">
-                      <button
-                        aria-label="편집"
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                        style={{ border: "none", background: "transparent" }}><Icon name="file" size={18} /></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* 테이블 — AG Grid 본체(체크박스 다중선택 + risk External Filter + 더블클릭=수정 모달).
+              행선택 회색은 공유 테마(--row-selected) 자동. 헤더=정렬. 카드/페이지네이션 토글은 푸터(장식) 유지. */}
+          <div style={{ padding: "0 2px 2px" }}>
+            <AgGridReact<PRow>
+              theme={apfsTheme}
+              rowData={rows}
+              columnDefs={columnDefs}
+              getRowId={(p) => p.data._id}
+              domLayout="autoHeight"
+              rowHeight={60}
+              defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
+              rowSelection={{ mode: "multiRow", checkboxes: true, headerCheckbox: true }}
+              isExternalFilterPresent={isExternalFilterPresent}
+              doesExternalFilterPass={doesExternalFilterPass}
+              onGridReady={onGridReady}
+              onSelectionChanged={onSelectionChanged}
+              onRowDoubleClicked={(e) => e.data && setModal("edit")}
+              overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">표시할 항목이 없습니다</span>'}
+            />
           </div>
 
           {/* 푸터 */}
@@ -496,14 +503,14 @@ function Performance({ onNav }) {
           </div>
 
           {/* 자본 준비금 (단색) */}
-          <div className="rounded-card-lg p-6 text-white relative overflow-hidden shadow-md" style={{ background: "#439E00" }}>
+          <div className="rounded-card-lg p-6 text-[color:var(--on-brand-solid)] relative overflow-hidden shadow-md" style={{ background: "var(--brand-solid)" }}>
             <div className="relative">
               <h3 className="text-[17px] font-bold mb-1.5"><MT>자본 준비금</MT></h3>
               <p className="text-[13px] mb-1" style={{ opacity: .85 }}><MT>출자 가능 미집행 자금 현황입니다.</MT></p>
               <div className="text-[34px] font-extrabold tabular mb-5 leading-tight">{mn("₩1,402,990")}</div>
               <button
                 className="w-full inline-flex items-center justify-center gap-2 rounded-[10px] py-3 text-[13.5px] font-bold cursor-pointer transition-colors"
-                style={{ background: "rgba(255,255,255,.18)", color: "#fff", border: "1px solid rgba(255,255,255,.3)" }}
+                style={{ background: "rgba(255,255,255,.18)", color: "var(--on-brand-solid)", border: "1px solid rgba(255,255,255,.3)" }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,.28)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,.18)")}>
                 <Icon name="trending" size={16} /><MT>배분 요청</MT></button>

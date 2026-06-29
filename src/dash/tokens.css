@@ -1,7 +1,7 @@
 /* =========================================================================
    농림수산식품모태펀드 투자자산관리시스템 — 디자인 토큰
-   도메인 톤: 숲(forest green). 브랜드 블루/시안은 강조·링크·차트 보조.
-   사용자 지정 브랜드 색: #0058A8 #00AAE5 #2D7846 #7BB93C #58585B
+   도메인 톤: 인디고/블루/틸. 강조·링크·차트 보조.
+   사용자 지정 브랜드 색: #6366F1 #3B82F6 #2BBEAE #32D1AF #58585B
    ========================================================================= */
 
 @font-face{font-family:"Pretendard";font-weight:400;font-style:normal;font-display:swap;
@@ -19,10 +19,10 @@
   --font-sans:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",system-ui,sans-serif;
 
   /* brand */
-  --brand-blue:#0058A8;
-  --brand-cyan:#00AAE5;
-  --brand-forest:#2D7846;
-  --brand-lime:#7BB93C;
+  --brand-blue:#6366F1;
+  --brand-cyan:#3B82F6;
+  --brand-forest:#2BBEAE;
+  --brand-lime:#32D1AF;
   --brand-gray:#58585B;
 
   /* surfaces (light) */
@@ -37,26 +37,27 @@
   --border:rgba(31,54,40,.12);
   --border-strong:rgba(31,54,40,.20);
   --input:rgba(31,54,40,.16);
+  --row-selected:color-mix(in srgb, var(--brand-gray) 16%, transparent);   /* 표/AG Grid 행선택 회색(중립) — 브랜드색 비종속 */
 
   /* roles — 이미지 지정 역할색 */
-  --primary:#0E963B;
-  --primary-hover:#0B7E31;
+  --primary:#6366F1;
+  --primary-hover:#4F46E5;
   --primary-foreground:#FFFFFF;
-  --secondary:#1DCDA7;
+  --secondary:#32D1AF;
   --secondary-foreground:#06291F;
-  --accent:#0158A8;          /* navy — links, focus, emphasis */
+  --accent:#3B82F6;          /* blue — links, focus, emphasis */
   --accent-foreground:#FFFFFF;
-  --cyan:#1DCDA7;
-  --ring:#0158A8;
+  --cyan:#32D1AF;
+  --ring:#3B82F6;
 
   /* status */
-  --success:#1DCDA7;
-  --success-soft:#DCF7F0;
+  --success:#32D1AF;
+  --success-soft:#DEF7F0;
   --warning:#FBB424;
   --warning-soft:#FEF3DA;
   --danger:#FF6B42;
   --danger-soft:#FFE7DF;
-  --info:#0158A8;
+  --info:#3B82F6;
   --info-soft:#DDE9F5;
 
   /* shadcn/ui 호환 별칭 토큰 — 기존 토큰을 var() 간접참조로 가리킨다.
@@ -71,12 +72,23 @@
   --accent-surface:var(--muted);         /* shadcn 메뉴 항목 hover 표면(브랜드 navy 아님, 무드 비종속) */
   --accent-surface-foreground:var(--foreground);
 
+  /* solid brand surfaces & on-fill foregrounds — 테마 고정(라이트=다크, .dark 미재정의).
+     적응형 --primary는 다크에서 밝아져(#818CF8) 흰 전경 대비가 깨지므로, 흰 글자/아이콘을
+     얹는 고정 솔리드 표면·그라디언트·데이터색 칠에는 아래 고정 토큰을 쓴다. */
+  --brand-solid:#4F46E5;          /* 솔리드 브랜드 표면(FAB·자본준비금 카드) */
+  --on-brand-solid:#FFFFFF;       /* 고정 브랜드/그라디언트 표면 위 흰 글자·아이콘 */
+  --gradient-hero:linear-gradient(120deg,#3730A3 0%,#1d6e6a 52%,#0A6F9E 100%);  /* Hero AUM 배경(인디고→틸→블루) */
+  --on-gradient-mint:#BFF0EA;     /* Hero 위 민트 강조(게이지·양수 델타) */
+  --on-gradient-sky:#BDEAFF;      /* Hero 위 스카이 보조선(스파크라인) */
+  --on-gradient-danger:#FFD9D6;   /* Hero 위 음수/위험 델타 */
+  --on-chart-fill:#FFFFFF;        /* 데이터색(var(--chart-n)) 칠 위 흰 라벨 — 값 고정, 대비 미보장 */
+
   /* chart palette — vivid 19-color categorical spectrum.
      1–6 = contrast-aware spread (bars vs line stay distinct); 7–19 extend it. */
-  --chart-1:#22C55E;  /* green   */
-  --chart-2:#0EA5E9;  /* sky     */
-  --chart-3:#6366F1;  /* indigo  */
-  --chart-4:#14B8A6;  /* teal    */
+  --chart-1:#6366F1;  /* indigo  */
+  --chart-2:#3B82F6;  /* blue    */
+  --chart-3:#14B8A6;  /* teal    */
+  --chart-4:#8B5CF6;  /* violet  */
   --chart-5:#F59E0B;  /* amber   */
   --chart-6:#EC4899;  /* pink    */
   --chart-7:#10B981;
@@ -95,10 +107,10 @@
   --chart-grid:rgba(31,54,40,.14);
 
   /* fund-source fixed colors (PANTONE) */
-  --fs-agri:#2D7846;   /* 농식품 모태 · 356C  RGB 45/120/70  */
-  --fs-fish:#00AAE5;   /* 수산 모태   · 2995C RGB 0/170/229  */
-  --fs-ops:#7BB93C;    /* 운영비      · 368C  RGB 123/185/60 */
-  --fs-etc:#58585B;    /* 기타 사업   · 425C  RGB 88/88/91   */
+  --fs-agri:#6366F1;   /* 농식품 모태 */
+  --fs-fish:#3B82F6;   /* 수산 모태   */
+  --fs-ops:#13B8A6;    /* 운영비      */
+  --fs-etc:#58585B;    /* 기타 사업   */
 
   --radius:12px;
   --radius-lg:16px;
@@ -121,16 +133,17 @@
   --border:rgba(255,255,255,.10);
   --border-strong:rgba(255,255,255,.16);
   --input:rgba(255,255,255,.16);
+  --row-selected:color-mix(in srgb, var(--brand-gray) 60%, transparent);   /* dark: 어두운 카드 위 가시성 위해 알파 상향 */
 
-  --primary:#2FB85C;          /* dark: forest green */
-  --primary-hover:#46CB71;
-  --primary-foreground:#06210F;
+  --primary:#818CF8;          /* dark: indigo */
+  --primary-hover:#A5B4FC;
+  --primary-foreground:#10142E;
   --secondary:#33DDB8;
   --secondary-foreground:#04241B;
-  --accent:#3F9BE8;
+  --accent:#60A5FA;
   --accent-foreground:#04121A;
   --cyan:#33DDB8;
-  --ring:#3F9BE8;
+  --ring:#60A5FA;
 
   --success:#33DDB8;
   --success-soft:rgba(51,221,184,.16);
@@ -138,13 +151,13 @@
   --warning-soft:rgba(251,180,36,.16);
   --danger:#FF7E59;
   --danger-soft:rgba(255,107,66,.18);
-  --info:#3F9BE8;
-  --info-soft:rgba(63,155,232,.16);
+  --info:#60A5FA;
+  --info-soft:rgba(96,165,250,.16);
 
-  --chart-1:#34D27B;
-  --chart-2:#38BDF8;
-  --chart-3:#818CF8;
-  --chart-4:#2DD4BF;
+  --chart-1:#818CF8;
+  --chart-2:#60A5FA;
+  --chart-3:#2DD4BF;
+  --chart-4:#A78BFA;
   --chart-5:#FBBF24;
   --chart-6:#F472B6;
   --chart-7:#34D399;
@@ -162,9 +175,9 @@
   --chart-19:#FDE047;
   --chart-grid:rgba(255,255,255,.10);
 
-  --fs-agri:#4E9E68;
-  --fs-fish:#2DC0F0;
-  --fs-ops:#9AD058;
+  --fs-agri:#818CF8;
+  --fs-fish:#60A5FA;
+  --fs-ops:#2DD4BF;
   --fs-etc:#9A9CA1;
 
   --shadow-sm:0 1px 2px rgba(0,0,0,.4);

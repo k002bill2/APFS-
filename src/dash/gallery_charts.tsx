@@ -123,7 +123,7 @@ function PieLabeled({ data, height = 170 }: { data: any[]; height?: number }) {
           const lx = cx + lr * Math.cos(mid), ly = cy + lr * Math.sin(mid);
           return <g key={i}>
             <path d={arc(a0, a1)} fill={d.color} stroke="var(--card)" strokeWidth={2} />
-            {frac > 0.06 && <text x={lx} y={ly+4} textAnchor="middle" style={{ fontSize: 12, fontWeight: 800, fill: "#fff" }}>{mn(Math.round(frac*100))+"%"}</text>}
+            {frac > 0.06 && <text x={lx} y={ly+4} textAnchor="middle" style={{ fontSize: 12, fontWeight: 800, fill: "var(--on-chart-fill)" }}>{mn(Math.round(frac*100))+"%"}</text>}
           </g>;
         })}
       </svg>}

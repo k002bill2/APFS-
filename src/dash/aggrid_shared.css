@@ -1,0 +1,30 @@
+/* ── AG Grid 공유 보정 CSS (모든 그리드 공통) ─────────────────────────────────
+   ⚠️ 레거시 테마 CSS(ag-grid.css/ag-theme-*.css)가 아니다 — Theming API와 무충돌인
+   우리 자체 보정 규칙. */
+
+/* ── 합계(pinned/floating) 행 가시성 보정 ──
+   증상: pinnedTop/BottomRowData 행이 레이아웃·hit-test는 정상인데 화면에 안 보임.
+   원인: 행 등장 애니메이션이 .ag-opacity-zero(opacity:0 !important)를 붙였다가 다음
+        프레임에 제거하는데, pinned 행에서는 그 제거가 누락돼 클래스가 영구히 남음.
+   수정: floating 행 opacity 강제 1. AG Grid 규칙이 !important라 인라인 style(getRowStyle)
+        로는 못 이기므로 더 높은 specificity + !important로 오버라이드. */
+.ag-floating-top .ag-row,
+.ag-floating-bottom .ag-row {
+  opacity: 1 !important;
+}
+
+/* ── 합계(floating-bottom) 행 강조 — 매트릭스 표 합계행 시각 구분 ──
+   pinned 합계 행이 테마 배경(var(--card)) 그대로면 일반 행과 구분 안 됨.
+   primary 9% 틴트 + 상단 강조 테두리, pinned-left '구분' 라벨은 primary 굵게.
+   색은 var(--primary)/color-mix → 라이트/다크 자동 추종.
+   왜 CSS인가: pinned-left 셀과 center 셀이 별도 DOM 컨테이너라 행 전체를 한 번에
+        덮으려면 행 단위 셀렉터 필요(cellStyle 불가). 왜 !important: Quartz가 행 배경을
+        var(--card)로 직접 칠해 specificity로 못 이김. */
+.ag-floating-bottom .ag-row {
+  background: color-mix(in srgb, var(--primary) 9%, transparent) !important;
+  border-top: 2px solid var(--primary) !important;
+}
+.ag-pinned-left-floating-bottom .ag-cell {
+  color: var(--primary) !important;
+  font-weight: 800 !important;
+}

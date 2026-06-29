@@ -1,6 +1,6 @@
 /* 보고관리 메인 페이지 — 부처보고·수탁보고 개요
    route: 'report' — FR-5.8 / 5.9
-   APFS forest-green 토큰 + Tailwind 유틸리티. */
+   APFS 인디고/블루 토큰 + Tailwind 유틸리티. */
 import React from 'react';
 import { Icon } from './icons';
 import { Shell } from './shell';
@@ -8,6 +8,10 @@ import { UI } from './components';
 import { Charts } from './charts';
 import { APFS_DATA } from './data';
 import { mn, MT } from './mask';
+import './aggrid_shared.css';
+import { apfsTheme } from './aggrid_theme';
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef } from 'ag-grid-community';
 
 const { useState, useMemo } = React;
 const { PageHeader } = Shell;
@@ -149,6 +153,53 @@ function NavCard({ icon, color, title, desc, badge, badgeUrgent, onClick }: {
     </button>
   );
 }
+
+/* ─────────────────────────────────────────────
+   AG Grid — 최근 보고 활동 표 (수제 <table> 대체)
+   "축은 두고 데이터는 가린다": 헤더·유형 pill·StatusBadge는 비마스킹,
+   보고서명·기관은 <MT>, 보고일은 mn(). 조회전용(선택·페이지네이션 없음).
+   onNav는 grid context로 전달 → cellRenderer가 params.context.onNav로 사용.
+─────────────────────────────────────────────── */
+type ReportRow = typeof RECENT_REPORTS[number];
+
+function NameCell(p: any) {
+  return <div className="text-[13.5px] font-semibold text-foreground"><MT>{p.value}</MT></div>;
+}
+function OrgCell(p: any) {
+  return <span className="text-[13px] font-semibold text-foreground"><MT>{p.value}</MT></span>;
+}
+function TypeCell(p: any) {
+  const sutack = p.value === "수탁보고";
+  return (
+    <span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold" style={{
+      background: sutack ? "color-mix(in srgb,var(--secondary) 14%,transparent)" : "color-mix(in srgb,var(--primary) 14%,transparent)",
+      color: sutack ? "var(--secondary)" : "var(--primary)",
+    }}>{p.value}</span>
+  );
+}
+function StatusCell(p: any) {
+  const r = p.data as ReportRow | undefined;
+  if (!r) return null;
+  return <StatusBadge tone={r.tone as any} label={r.status} size="sm" />;
+}
+function LinkCell(p: any) {
+  const r = p.data as ReportRow | undefined;
+  if (!r) return null;
+  return (
+    <Button variant="ghost" size="sm" onClick={() => p.context?.onNav?.(r.type === "수탁보고" ? "report-sutack" : "report-bucheo")}>보기</Button>
+  );
+}
+
+const reportColumns: ColDef<ReportRow>[] = [
+  { field: "name", headerName: "보고서명", flex: 2, minWidth: 200, cellRenderer: NameCell },
+  { field: "type", headerName: "유형", flex: 1, minWidth: 100, cellRenderer: TypeCell },
+  { field: "org", headerName: "기관", flex: 1, minWidth: 100, cellRenderer: OrgCell },
+  { field: "date", headerName: "보고일", flex: 1, minWidth: 112,
+    valueFormatter: (p) => (p.value == null ? "" : mn(p.value)),
+    cellStyle: { color: "var(--muted-foreground)", fontSize: "12.5px", fontVariantNumeric: "tabular-nums" } },
+  { field: "status", headerName: "상태", flex: 1, minWidth: 100, cellRenderer: StatusCell },
+  { headerName: "바로가기", width: 104, minWidth: 92, sortable: false, resizable: false, type: "rightAligned", cellRenderer: LinkCell },
+];
 
 /* ─────────────────────────────────────────────
    메인 컴포넌트: ReportMain
@@ -299,71 +350,16 @@ function ReportMain({ onNav }: { onNav?: (route: string) => void }) {
             >부처보고 전체 보기 →</Button>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse min-w-[700px]">
-            <thead>
-              <tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>
-                {[
-                  ["보고서명", "left"],
-                  ["유형", "center"],
-                  ["기관", "center"],
-                  ["보고일", "center"],
-                  ["상태", "center"],
-                  ["바로가기", "right"],
-                ].map(([label, align], i) =>
-                  <th
-                    key={i}
-                    className={cx(
-                      "t-label font-semibold px-4 py-3 whitespace-nowrap",
-                      align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
-                      i === 0 && "pl-6"
-                    )}
-                  >{label}</th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {RECENT_REPORTS.map((r) =>
-                <tr
-                  key={r.id}
-                  className="border-t border-border transition-colors"
-                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
-                >
-                  <td className="px-4 pl-6 py-3.5">
-                    <div
-                      className="text-[13.5px] font-semibold text-foreground"
-                    ><MT>{r.name}</MT></div>
-                  </td>
-                  <td className="px-4 py-3.5 text-center">
-                    <span
-                      className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold"
-                      style={{
-                        background: r.type === "수탁보고"
-                          ? "color-mix(in srgb,var(--secondary) 14%,transparent)"
-                          : "color-mix(in srgb,var(--primary) 14%,transparent)",
-                        color: r.type === "수탁보고" ? "var(--secondary)" : "var(--primary)",
-                      }}
-                    >{r.type}</span>
-                  </td>
-                  <td
-                    className="px-4 py-3.5 text-center text-[13px] font-semibold text-foreground"
-                  ><MT>{r.org}</MT></td>
-                  <td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{mn(r.date)}</td>
-                  <td className="px-4 py-3.5 text-center">
-                    <StatusBadge tone={r.tone as any} label={r.status} size="sm" />
-                  </td>
-                  <td className="px-4 pr-5 py-3.5 text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onNav && onNav(r.type === "수탁보고" ? "report-sutack" : "report-bucheo")}
-                    >보기</Button>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div style={{ padding: "0 2px 2px" }}>
+          <AgGridReact<ReportRow>
+            theme={apfsTheme}
+            rowData={RECENT_REPORTS}
+            columnDefs={reportColumns}
+            context={{ onNav }}
+            domLayout="autoHeight"
+            rowHeight={48}
+            defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
+          />
         </div>
       </div>
     </div>

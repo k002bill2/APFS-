@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom/client';
 import { useTweaks, TweaksPanel, TweakSection, TweakColor, TweakRadio } from './tweaks-panel';
 
 const MOODS = [
-  { key: "forest",  pal: ["#2D7846", "#7BB93C", "#0058A8"] },
+  { key: "forest",  pal: ["#6366F1", "#32D1AF", "#3B82F6"] },
   { key: "ocean",   pal: ["#0058A8", "#00AAE5", "#1AA0AE"] },
   { key: "harvest", pal: ["#7BB93C", "#E0A93B", "#C77A12"] },
 ];
@@ -50,7 +50,7 @@ function TweakApp() {
       <TweakColor label="팔레트" value={t.moodPal}
         options={MOODS.map((m) => m.pal)} onChange={onMood} />
       <div style={{ fontSize: 10.5, color: "rgba(41,38,27,.5)", marginTop: -4 }}>
-        숲 · 바다 · 수확 — KPI·차트·도넛 색이 함께 바뀝니다
+        인디고 · 바다 · 수확 — KPI·차트·도넛 색이 함께 바뀝니다
       </div>
       <TweakSection label="질감 & 캔버스" />
       <TweakRadio label="표면" value={t.surface}

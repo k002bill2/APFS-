@@ -159,7 +159,7 @@ function CalendarView({ items }) {
                 border: isToday ? "none" : isSelected ? "1px solid color-mix(in srgb,var(--primary) 35%,transparent)" : "1px solid var(--border)",
               }}><span
                 className="text-[12px] font-bold leading-tight"
-                style={{ color: isToday ? "#fff" : (i % 7 === 0 ? "var(--danger)" : i % 7 === 6 ? "var(--accent)" : "var(--foreground)") }}>{day}</span>{dots.length > 0 && <div className="flex gap-[3px] mt-1">{dots.map((item, di) => <span
+                style={{ color: isToday ? "var(--primary-foreground)" : (i % 7 === 0 ? "var(--danger)" : i % 7 === 6 ? "var(--accent)" : "var(--foreground)") }}>{day}</span>{dots.length > 0 && <div className="flex gap-[3px] mt-1">{dots.map((item, di) => <span
                   key={di}
                   className="w-[5px] h-[5px] rounded-full"
                   style={{ background: toneVar(ddayTone(item))[0] }} />)}</div>}</button>
