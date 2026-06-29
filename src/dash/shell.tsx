@@ -13,7 +13,7 @@ import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuT
 import logoUrl from './assets/logo.svg';
 import logoWhiteUrl from './assets/logo_white.svg';
 
-const { useState, useEffect, useContext, useRef } = React;
+const { useState, useEffect, useLayoutEffect, useContext, useRef } = React;
 const { ColorChip, IconBtn, CountPill, StatusBadge, Button, SegTabs } = UI;
 const D = APFS_DATA;
 
@@ -766,8 +766,20 @@ function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: stri
   const [open, setOpen] = useState(false);
   const hist = useHistory();
   const rootRef = useRef<HTMLDivElement>(null);
+  const [maxH, setMaxH] = useState(420);
   const items = hist.filter((r) => r !== route).map((r) => ({ r, ...routeMeta(r) }));   // 현재 페이지는 제외
   useEffect(() => { setOpen(false); }, [route]);                                          // 이동하면 닫기
+  // 화면 높이에 맞춤: 트리거 하단부터 뷰포트 바닥까지(매직넘버 대신 뷰포트 비례). paint 전 측정으로 깜빡임 방지.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const r = rootRef.current?.getBoundingClientRect();
+      if (r) setMaxH(Math.max(160, window.innerHeight - r.bottom - 22));   // 6px 갭 + 16px 바닥 여백
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [open]);
   // 키보드 닫기: Esc → 닫고 트리거로 포커스 복귀(feat/nav-keyboard-a11y 일관성)
   useEffect(() => {
     if (!open) return;
@@ -788,7 +800,7 @@ function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: stri
           aria-label="방문기록"
           style={{
             position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 60,
-            width: "min(284px, calc(100vw - 24px))", maxHeight: "min(60vh, 420px)", overflowY: "auto",
+            width: "min(284px, calc(100vw - 24px))", maxHeight: maxH, overflowY: "auto",
             border: "1px solid var(--border)", borderRadius: 14, padding: 8,
             animation: "dashFade .16s var(--ease) both",
           }}>
