@@ -154,7 +154,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
     ? { position: "fixed", top: 58, left: 0, width: 270, height: "calc(100vh - 58px)", zIndex: 45,
         transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
         boxShadow: drawerOpen ? "var(--shadow-lg)" : "none", transition: "transform .24s var(--ease)" }
-    : { width: open ? 260 : 66, position: "sticky", top: 58, height: "calc(100vh - 58px)", transition: "width .22s var(--ease)" };
+    : { width: open ? 260 : 66, position: "sticky", top: 58, height: "calc(100vh - 58px)", zIndex: 48, transition: "width .22s var(--ease)" };
   return (
     <nav
       aria-label="주 메뉴"

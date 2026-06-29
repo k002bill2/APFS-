@@ -435,14 +435,6 @@ function QuickTasksBar({ onNav }: { onNav: (r: string) => void }) {
   const items: any[] = D.QUICKMENU || [];
   return (
     <div style={{ marginBottom: 18 }}>
-      <div className="flex items-center justify-between flex-wrap" style={{ gap: 12, marginBottom: 12 }}>
-        <div>
-          <div className="flex items-center flex-wrap" style={{ gap: "4px 8px" }}>
-            <span className="inline-flex items-center gap-1.5 font-bold" style={{ fontSize: 13.5 }}><Icon name="grid" size={15} style={{ color: "var(--primary)" }} />퀵메뉴</span>
-            <span className="t-caption" style={{ fontSize: 11.5 }}>레이어드 글래스 C타입 · 두 장이 겹친 깊이감</span>
-          </div>
-        </div>
-      </div>
       <div style={{ animation: "dashFade .22s var(--ease) both" }}>
         <ConceptLayeredGlass items={items} onNav={onNav} />
       </div>
