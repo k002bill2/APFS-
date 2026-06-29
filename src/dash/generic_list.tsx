@@ -3,7 +3,6 @@
    route 값(한글 레이블 또는 경로)으로 제목·브레드크럼을 자동 구성. */
 import React from 'react';
 import { Icon } from './icons';
-import { Shell } from './shell';
 import { UI } from './components';
 import { APFS_DATA } from './data';
 import { mn, MT, useMask } from './mask';
@@ -22,10 +21,10 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode } from 'ag-grid-community';
 import { apfsTheme } from './aggrid_theme';   // 공유 테마(회색 행선택) SSOT
 import './aggrid_shared.css';
+import { GridFrame, KpiBadge } from './grid_frame';   // 공통 양식 셸 + KPI 배지(apfs-grid 스킬 SSOT)
 
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
-const { PageHeader } = Shell;
-const { Card, Button, StatusBadge, IconBtn, ColorChip, SegTabs, DeltaBadge } = UI;
+const { Button, StatusBadge, IconBtn, ColorChip, SegTabs, DeltaBadge } = UI;
 const D = APFS_DATA;
 
 /* MENU를 재귀 탐색해 route와 일치하는 항목의 제목·breadcrumb·상위 레이블을 반환 */
@@ -105,18 +104,7 @@ function MiniBars({ data, color }: { data: number[]; color: string }) {
   );
 }
 
-/* 헤더 우측 KPI 배지 (라벨/값 마스킹) */
-function KpiBadge({ icon, color, label, value, valueColor }: { icon: string; color: string; label: string; value: React.ReactNode; valueColor?: string }) {
-  return (
-    <div className="flex items-center gap-2.5 border border-border bg-card py-1.5 px-3.5" style={{ borderRadius: 12 }}>
-      <ColorChip icon={icon} color={color} size={30} iconSize={16} />
-      <div className="flex flex-col" style={{ gap: 1, lineHeight: 1.2 }}>
-        <span className="font-semibold text-caption" style={{ fontSize: 11 }}><MT>{label}</MT></span>
-        <span className="tabular font-extrabold" style={{ fontSize: 14, color: valueColor || "var(--foreground)" }}>{value}</span>
-      </div>
-    </div>
-  );
-}
+/* KpiBadge는 grid_frame.tsx(GridFrame SSOT)에서 import — 인라인 정의 제거(apfs-grid 양식 이관) */
 
 /* 제거 가능한 필터 칩 — 라벨(평문 UI 라벨) + 선택값(데이터 → MT 마스킹). 태그형은 값 없음. */
 function FilterPill({ label, value, onRemove }: { label: string; value?: string; onRemove: () => void }) {
@@ -445,49 +433,59 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const totalForCount = view === "list" ? page.rowCount : filtered.length;
 
   return (
-    <div style={{ maxWidth: 1280, margin: "0 auto", animation: "dashFade .3s var(--ease) both" }}>
-      <PageHeader
-        crumbs={crumbs}
-        title={title}
-        actions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav("main")}>메인으로</Button>} />
+    <GridFrame
+      crumbs={crumbs}
+      title={title}
+      headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav("main")}>메인으로</Button>}
+      kpis={<>
+        <KpiBadge icon="trending" color="var(--chart-1)" label="평균 변동률"
+          value={mn((avgUp ? "+" : "-") + Math.abs(avgChange).toFixed(1)) + "%"}
+          valueColor={avgUp ? "var(--success)" : "var(--danger)"} />
+        <KpiBadge icon="wallet" color="var(--accent)" label="합계 금액"
+          value={"₩" + mn(Math.round(sumAmount / 100).toLocaleString()) + "억"} />
+      </>}
+      toolbarLeft={selCount > 0 ? (
+        <>
+          <span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
+          <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger)" }} onClick={bulkDelete}>선택 삭제</Button>
+          <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+        </>
+      ) : (
+        <>
+          <Icon name="filter" size={16} className="text-caption" />
+          {chipItems.map((c) => <FilterPill key={c.label} label={c.label} value={c.value} onRemove={() => removeFilter(c.label)} />)}
+          {chipItems.length === 0 && <span className="text-caption" style={{ fontSize: 12.5 }}>필터 없음</span>}
+        </>
+      )}
+      toolbarRight={<>
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
+        <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); }} />
+        <MoreMenu onRegister={() => setModal({ mode: "create" })} onExport={exportExcel} editable={editable} />
+      </>}
+      footerLeft={'총 ' + mn(String(totalForCount)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}
+      footerCenter={view === "list" && page.total > 1 ? (
+        <>
+          <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
+          {Array.from({ length: page.total }, (_, i) => i).map((i) => (
+            <button key={i} onClick={() => apiRef.current?.paginationGoToPage(i)} style={{
+              width: 32, height: 32, borderRadius: 8, border: "1px solid",
+              borderColor: i === page.current ? "var(--primary)" : "var(--border)",
+              background: i === page.current ? "color-mix(in srgb, var(--primary) 10%, transparent)" : "transparent",
+              color: i === page.current ? "var(--primary)" : "var(--foreground)",
+              font: "inherit", fontSize: 13, fontWeight: i === page.current ? 700 : 500, cursor: "pointer", transition: "all .12s",
+            }}>{i + 1}</button>
+          ))}
+          <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => apiRef.current?.paginationGoToNextPage()} />
+        </>
+      ) : undefined}
+      footerRight={<>
+        <SegTabs size="sm" value={view} onChange={setView} options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "카드뷰" }]} />
+        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
+        <IconBtn icon="external" label="새 창" size={32} />
+        <IconBtn icon="more" label="더보기" size={32} />
+      </>}>
 
-      {/* ── 메인 리스트 카드 ── */}
-      <Card pad={0} className="overflow-hidden">
-        {/* 카드 헤더: 타이틀 + KPI 배지 */}
-        <div className="flex items-center justify-between gap-4 flex-wrap" style={{ padding: "6px 18px" }}>
-          <h3 className="font-bold" style={{ fontSize: 20 }}>{title}</h3>
-          <div className="flex gap-2.5 flex-wrap">
-            <KpiBadge icon="trending" color="var(--chart-1)" label="평균 변동률"
-              value={mn((avgUp ? "+" : "-") + Math.abs(avgChange).toFixed(1)) + "%"}
-              valueColor={avgUp ? "var(--success)" : "var(--danger)"} />
-            <KpiBadge icon="wallet" color="var(--accent)" label="합계 금액"
-              value={"₩" + mn(Math.round(sumAmount / 100).toLocaleString()) + "억"} />
-          </div>
-        </div>
-
-        {/* 툴바: 필터 칩 / 선택 액션 */}
-        <div className="flex items-center justify-between gap-3 border-t border-b border-border flex-wrap" style={{ padding: "10px 18px", background: "color-mix(in srgb, var(--muted) 35%, transparent)" }}>
-          {selCount > 0 ? (
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
-              <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger)" }} onClick={bulkDelete}>선택 삭제</Button>
-              <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 flex-wrap">
-              <Icon name="filter" size={16} className="text-caption" />
-              {chipItems.map((c) => <FilterPill key={c.label} label={c.label} value={c.value} onRemove={() => removeFilter(c.label)} />)}
-              {chipItems.length === 0 && <span className="text-caption" style={{ fontSize: 12.5 }}>필터 없음</span>}
-            </div>
-          )}
-          <div className="flex items-center gap-1 flex-wrap">
-            <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-            <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); }} />
-            <MoreMenu onRegister={() => setModal({ mode: "create" })} onExport={exportExcel} editable={editable} />
-          </div>
-        </div>
-
-        {/* 테이블 / 상세 뷰 */}
+        {/* 테이블 / 상세 뷰 (GridFrame children) */}
         {view === "list" ? (
           /* AG Grid 본체 — 스키마 주도 컬럼 + 체크박스 선택 + 페이지네이션 + external filter.
              더블클릭=수정 모달(editable 한정). 행선택 배경은 공유 테마의 --row-selected(회색). */
@@ -536,33 +534,6 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           </div>
         )}
 
-        {/* 푸터: 건수 · 페이지네이션 · 뷰 토글 · 내보내기 */}
-        <div className="flex items-center justify-between gap-3 border-t border-border flex-wrap" style={{ padding: "12px 18px" }}>
-          <span className="text-caption" style={{ fontSize: 12.5 }}>총 {mn(String(totalForCount))}개 중 {mn(String(shown))}개 항목 표시 중</span>
-          {view === "list" && page.total > 1 ? (
-            <div className="flex items-center gap-1">
-              <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
-              {Array.from({ length: page.total }, (_, i) => i).map((i) => (
-                <button key={i} onClick={() => apiRef.current?.paginationGoToPage(i)} style={{
-                  width: 32, height: 32, borderRadius: 8, border: "1px solid",
-                  borderColor: i === page.current ? "var(--primary)" : "var(--border)",
-                  background: i === page.current ? "color-mix(in srgb, var(--primary) 10%, transparent)" : "transparent",
-                  color: i === page.current ? "var(--primary)" : "var(--foreground)",
-                  font: "inherit", fontSize: 13, fontWeight: i === page.current ? 700 : 500, cursor: "pointer", transition: "all .12s",
-                }}>{i + 1}</button>
-              ))}
-              <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => apiRef.current?.paginationGoToNextPage()} />
-            </div>
-          ) : <div />}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <SegTabs size="sm" value={view} onChange={setView} options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "카드뷰" }]} />
-            <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
-            <IconBtn icon="external" label="새 창" size={32} />
-            <IconBtn icon="more" label="더보기" size={32} />
-          </div>
-        </div>
-      </Card>
-
       {modal && (
         <RowFormModal
           mode={modal.mode}
@@ -579,6 +550,6 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         schema={schema}
         applied={filterValues}
         onApply={(next) => { setFilterValues(next); apiRef.current?.paginationGoToFirstPage(); }} />
-    </div>
+    </GridFrame>
   );
 }
