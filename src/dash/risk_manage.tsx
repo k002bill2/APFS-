@@ -141,7 +141,7 @@ function GpCell(p: ICellRendererParams) {
   const r = p.data; if (!r) return null;
   return (
     <div className="flex items-center gap-2.5">
-      <span className="inline-flex items-center justify-center w-8 h-8 rounded-[8px] text-white text-[11px] font-bold shrink-0" style={{ background: r.gpColor }}><MT>{r.gpCode}</MT></span>
+      <span className="inline-flex items-center justify-center w-8 h-8 rounded-[8px] text-[color:var(--on-chart-fill)] text-[11px] font-bold shrink-0" style={{ background: r.gpColor }}><MT>{r.gpCode}</MT></span>
       <div className="min-w-0">
         <div className="text-[13.5px] font-semibold text-foreground"><MT>{r.gp}</MT></div>
         <div className="t-caption text-[11px]"><MT>{r.id}</MT></div>

@@ -206,7 +206,7 @@ function GpHealth({ onNav }) {
       cellStyle: { display: "flex", alignItems: "center" },
       cellRenderer: (p: ICellRendererParams<GpRow>) => (
         <div className="flex items-center gap-2.5">
-          <span className="inline-flex items-center justify-center w-7 h-7 rounded-[7px] text-white text-[11px] font-bold shrink-0"
+          <span className="inline-flex items-center justify-center w-7 h-7 rounded-[7px] text-[color:var(--on-chart-fill)] text-[11px] font-bold shrink-0"
             style={{ background: p.data?._color }}><MT>{p.data?.name.slice(0, 2)}</MT></span>
           <span className="text-[14px] font-semibold text-foreground"><MT>{p.data?.name}</MT></span>
         </div>
