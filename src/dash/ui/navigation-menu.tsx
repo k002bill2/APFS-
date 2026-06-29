@@ -24,7 +24,8 @@ const NavigationMenuList = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.List>
 >(({ className, ...props }, ref) => (
-  <NavigationMenuPrimitive.List ref={ref} className={cn('flex flex-col', className)} {...props} />
+  // preflight:false 환경 — <ul> 기본 disc 마커/패딩 리셋(list-none m-0 p-0) 필수.
+  <NavigationMenuPrimitive.List ref={ref} className={cn('flex flex-col list-none m-0 p-0', className)} {...props} />
 ));
 NavigationMenuList.displayName = NavigationMenuPrimitive.List.displayName;
 
