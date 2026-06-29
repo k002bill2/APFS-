@@ -25,7 +25,8 @@ export function Cell({ col, value, color, statusDomain }: { col: ColumnSpec; val
 
 export function SchemaField({ field, value, onChange, invalid }: { field: FieldSpec; value: string; onChange: (v: string) => void; invalid?: boolean }) {
   const base: React.CSSProperties = {
-    width: '100%', boxSizing: 'border-box', padding: '8px 11px', fontSize: 14, font: 'inherit',
+    // ⚠️ fontFamily(longhand)로 패밀리만 상속 — `font: 'inherit'`(shorthand)는 font-size까지 리셋해 위의 fontSize:14를 부모값으로 덮어쓴다.
+    width: '100%', boxSizing: 'border-box', padding: '8px 11px', fontSize: 14, fontFamily: 'inherit',
     border: `1px solid ${invalid ? 'var(--danger)' : 'var(--border-strong)'}`,
     borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
   };
