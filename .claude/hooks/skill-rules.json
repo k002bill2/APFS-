@@ -70,6 +70,13 @@
       "enforcement": "suggest",
       "keywords": ["등록 폼", "등록폼", "수정 모달", "폼 모달", "RowFormModal", "CRUD 모달", "필드 컨트롤", "FIELD_CONTROLS", "입력 양식", "삭제 확인", "radio", "라디오", "2단 폼", "스키마 폼"],
       "intentPatterns": ["(등록|수정|crud|입력|폼|form).*(모달|modal|양식)", "(rowformmodal|필드\\s?컨트롤|field_controls|radio|라디오|스키마\\s?폼).*(추가|만들|작성|수정|add|edit)"]
+    },
+    {
+      "skillName": "z-index",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["z-index", "zIndex", "z-인덱스", "z인덱스", "쌓임", "쌓임맥락", "쌓임 맥락", "stacking", "stacking context", "레이어", "레이어 순서", "layer", "가려", "가림", "겹침", "위에", "아래", "플라이아웃", "flyout", "드롭다운", "dropdown", "오버레이", "overlay", "모달이 안 보", "모달", "modal", "팝오버", "popover", "툴팁", "tooltip", "포털", "portal", "백드롭", "backdrop", "sticky", "transform", "z-modal", "z-popover"],
+      "intentPatterns": ["(z-index|zindex|z-인덱스|쌓임|stacking|레이어|layer).*(바꾸|변경|올리|낮추|적용|지정|추가|만들|수정|순서|fix|set|change|order)", "(플라이아웃|flyout|드롭다운|dropdown|오버레이|overlay|모달|modal|팝오버|popover|툴팁|tooltip|패널|카드).*(가려|가림|안 보|숨|겹침|아래|뒤에|위로|안 올라|덮)", "(쌓임\\s?맥락|stacking\\s?context|z-index|zindex|portal|포털|sticky|transform).*(트랩|trap|갇|문제|버그|점검|확인)"]
     }
   ]
 }
