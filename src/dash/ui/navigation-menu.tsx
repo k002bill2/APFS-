@@ -4,6 +4,9 @@
      Content 내 포커스 스코프를 제공(기존 마우스 전용 갭 해소).
    - orientation="vertical" 세로 레일. Viewport 미사용 → Content가 각 Item 안에 인라인 렌더되며,
      소비처가 position:fixed + left/top 으로 배치해 레일 overflow 클리핑을 탈출한다(plan §2.6: ancestor transform 없음).
+     ⚠ fixed는 컨테이닝 블록만 뷰포트로 탈출하고 **쌓임 맥락은 box-tree 조상**을 따른다. 소비처 nav가
+     position:sticky/relative+z-index 등으로 쌓임 맥락을 만들면 이 Content(z-popover)가 그 안에 갇혀,
+     transform 스택 맥락을 가진 본문(예: dashFade) 아래로 칠해질 수 있다 → **소비처 nav에 양수 z-index 필수**(RailNav/Lnb=48).
    - 표면 bg-card/border-border, z-popover(85, 셸 chrome 위), 포커스는 전역 outline 통일(shadcn ring 미사용).
    - opacity 모디파이어 금지 규약 준수(애니메이션 유틸만 사용). */
 import * as React from 'react';
