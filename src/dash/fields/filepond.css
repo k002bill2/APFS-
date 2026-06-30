@@ -1,0 +1,43 @@
+/* FilePond 토큰 테마 — filepond.min.css(컴포넌트에서 먼저 import)를 토큰 기반으로 오버라이드.
+   FilePond 기본은 라이트 고정색이라 다크에서 패널이 밝게 떠 보인다 → 토큰으로 라이트/다크 양립. */
+
+.filepond--root {
+  font-family: var(--font-sans, inherit);
+  font-size: 14px;
+  margin-bottom: 0;
+}
+
+/* 드롭 패널 — 카드 톤으로 통일 */
+.filepond--panel-root {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+/* 안내 라벨 */
+.filepond--drop-label {
+  color: var(--muted-foreground);
+}
+.filepond--drop-label label {
+  font-size: 13.5px;
+}
+.filepond--label-action {
+  color: var(--primary);
+  text-decoration-color: color-mix(in srgb, var(--primary) 50%, transparent);
+  text-underline-offset: 2px;
+}
+
+/* 드래그 오버(드롭 직전) 하이라이트 */
+.filepond--drip-blob {
+  background: var(--primary);
+}
+
+/* 업로드 아이템 패널 — 상태색은 FilePond 기본 유지, 다크에서 idle만 대비 보정 */
+.dark .filepond--item-panel {
+  background: var(--border-strong);
+}
+
+/* 액션 버튼(삭제 등) 포커스 링 — 접근성 */
+.filepond--file-action-button:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}

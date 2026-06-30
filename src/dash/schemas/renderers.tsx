@@ -8,6 +8,10 @@ import type { Tone } from '../components';
 
 const { StatusBadge, ColorChip, DeltaBadge } = UI;
 
+// 무거운 에디터/업로더는 코드 스플리팅 — 모달이 열려 해당 컨트롤이 렌더될 때만 로드.
+const RichTextField = React.lazy(() => import('../fields/RichTextField').then((m) => ({ default: m.RichTextField })));
+const FilePondField = React.lazy(() => import('../fields/FilePondField').then((m) => ({ default: m.FilePondField })));
+
 // status tone을 스키마의 statusDomain에서 해결(모달 의존 제거 → 순환 차단).
 function toneFor(label: string, domain?: StatusDomainEntry[]): Tone {
   return domain?.find((d) => d.label === label)?.tone ?? 'info';
@@ -50,6 +54,18 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
       </div>
     );
     case 'file':     return <input type="file" style={{ ...base, padding: 6 }} />;
+    // Tiptap 리치 텍스트 에디터 — lazy 로드. Suspense fallback은 base 톤 placeholder.
+    case 'richtext': return (
+      <React.Suspense fallback={<div style={{ ...base, color: 'var(--muted-foreground)' }}>에디터 불러오는 중…</div>}>
+        <RichTextField value={value} onChange={onChange} label={field.label} />
+      </React.Suspense>
+    );
+    // FilePond 파일 업로더 — lazy 로드.
+    case 'filepond': return (
+      <React.Suspense fallback={<div style={{ ...base, color: 'var(--muted-foreground)' }}>업로더 불러오는 중…</div>}>
+        <FilePondField value={value} onChange={onChange} />
+      </React.Suspense>
+    );
     case 'readonly': return <div style={{ ...base, background: 'var(--muted)', color: 'var(--muted-foreground)' }}>{value || '—'}</div>;
     default:         return <input value={value} onChange={(e) => onChange(e.target.value)} style={base} />;
   }
