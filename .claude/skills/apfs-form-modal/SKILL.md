@@ -26,13 +26,15 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 |---------|-------------------|------|
 | `text` | `<input type=text>` | 기본 |
 | `number` | `<input type=number>` | 숫자 |
-| `date` | `<input type=date>` | 날짜 picker |
+| `date` | shadcn Radix `DatePicker`(달력+Popover) | 네이티브 input 아님 — 값 계약 `'YYYY-MM-DD'`·KST 함정 →[[apfs-datepicker]] |
 | `select` | `<select>`+`options` | 첫 옵션 시드 |
 | `radio` | 가로 라디오(`accentColor`)+`options` | Y/N, Y/N/해당없음 등. 첫 옵션 시드 |
 | `checkbox` | `<input type=checkbox>` | 'true'/'false' 문자열 |
 | `textarea` | `<textarea rows=4>` | 2단 시 전체 폭 |
 | `file` | `<input type=file>` | 2단 시 전체 폭 |
 | `readonly` | muted `<div>` | 운용사·자펀드 등 상위 고정값 |
+
+> ⚠️ **무거운 외부 컨트롤** `richtext`(Tiptap)·`filepond`(react-filepond): 4단계 배선(`FIELD_CONTROLS`→`src/dash/fields/`→lazy `SchemaField`→`span2`)과 **무음실패 함정**(FilePond 비제어·Tiptap mousedown·required richtext `<p></p>` false-pass)은 메모리 `[[heavy-form-controls-richtext-filepond]]` + `src/dash/fields/` 참조.
 
 ## 스키마 작성 (PageSchema · kind:'form')
 ```ts
