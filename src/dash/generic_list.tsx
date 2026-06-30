@@ -16,6 +16,7 @@ import type { PageSchema } from './schemas/types';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { toast } from './ui/sonner';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
+import { DatePicker } from './ui/date-picker';
 import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode } from 'ag-grid-community';
@@ -194,7 +195,8 @@ function DrawerFilterControl({ ff, value, onChange }: { ff: FilterField; value: 
       </div>
     );
   } else if (ff.kind === "date") {
-    control = <input type="date" value={value} onChange={(e) => onChange(e.target.value)} style={drawerInputStyle} />;
+    // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(정확일치 필터 계약).
+    control = <DatePicker value={value} onChange={onChange} ariaLabel={ff.label} />;
   } else if (ff.kind === "number") {
     control = <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder="값 입력" style={drawerInputStyle} />;
   } else {
