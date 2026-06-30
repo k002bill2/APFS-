@@ -38,9 +38,16 @@ export function statusTone(label: string): Tone {
 
 const labelStyle: React.CSSProperties = { fontSize: 12, marginBottom: 5 };
 
-function Field({ label, children, errMsg, className }: { label: string; children: React.ReactNode; errMsg?: string; className?: string }) {
+// plain=true면 <label> 대신 <div>로 감싼다.
+// ⚠️ richtext(Tiptap)·filepond처럼 내부에 자체 버튼/컨트롤을 품은 복합 컨트롤은 절대 <label>로 감싸면 안 된다:
+//    <label>은 라벨 가능한 첫 자손과 암묵 연결되는데, 에디터 본문은 라벨 불가(div[role=textbox])라
+//    건너뛰고 툴바의 첫 버튼(B/굵게)과 연결된다 → 본문을 hover하면 B가 hover로 켜지고, 본문을 클릭하면
+//    B 버튼이 클릭돼 toggleBold가 발화한다(빈 문단에 bold가 박혀 "B가 켜진 채 안 꺼짐"). 그래서 <div>로 감싼다.
+//    (네이티브 단일 컨트롤은 <label> 암묵 연결이 정상·접근성 이점이 있어 그대로 둔다. 에디터는 자체 aria-label 보유.)
+function Field({ label, children, errMsg, className, plain }: { label: string; children: React.ReactNode; errMsg?: string; className?: string; plain?: boolean }) {
+  const Wrap: any = plain ? 'div' : 'label';
   return (
-    <label className={`block mb-3.5 ${className ?? ''}`}>
+    <Wrap className={`block mb-3.5 ${className ?? ''}`}>
       <span className="font-semibold text-caption block" style={labelStyle}>{label}</span>
       {children}
       {errMsg && (
@@ -48,7 +55,7 @@ function Field({ label, children, errMsg, className }: { label: string; children
           {errMsg}
         </span>
       )}
-    </label>
+    </Wrap>
   );
 }
 
@@ -94,12 +101,15 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
         <div className="overflow-y-auto p-[18px]">
           <div className={wide ? "grid grid-cols-1 sm:grid-cols-2 gap-x-5" : ""}>
             {schema.fields.map((f) => {
-              const span2 = wide && (f.control === "textarea" || f.control === "file" || f.control === "richtext" || f.control === "filepond");
+              // richtext/filepond = 내부에 자체 버튼/컨트롤을 품은 복합 컨트롤 → <label> 래핑 금지(Field plain).
+              const complex = f.control === "richtext" || f.control === "filepond";
+              const span2 = wide && (f.control === "textarea" || f.control === "file" || complex);
               return (
                 <Field
                   key={f.key}
                   label={f.label + (f.required ? ' *' : '')}
                   className={span2 ? "sm:col-span-2" : undefined}
+                  plain={complex}
                   errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
                   <SchemaField
                     field={f}
