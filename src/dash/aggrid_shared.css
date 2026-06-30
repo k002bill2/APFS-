@@ -28,3 +28,29 @@
   color: var(--primary) !important;
   font-weight: 800 !important;
 }
+
+/* ── 헤더 타이틀 placeholder (마스크 ON 한정) ──
+   "축은 두고 데이터는 가린다"의 확장: 빈 스켈레톤 표 표현을 위해 헤더 라벨도 가린다.
+   MT(텍스트 스켈레톤)와 동일 톤 — bg=muted-foreground, radius 4, height 0.72em, opacity .28.
+   텍스트는 transparent로 숨겨 레이아웃(폭)은 보존 → 바 폭이 라벨 길이에 비례(MT와 일관).
+   ⚠️ :root[data-mask="on"] 게이팅(mask.tsx가 _on을 투영) — _on=false(실데이터) 전환 시 실제 헤더 자동 복원.
+   세로 컬럼 라인은 테마(columnBorder/headerColumnBorder)가 담당하므로 구조는 그대로 보인다. */
+:root[data-mask="on"] .ag-header-cell-text,
+:root[data-mask="on"] .ag-header-group-text {
+  color: transparent !important;
+  position: relative;
+}
+:root[data-mask="on"] .ag-header-cell-text::after,
+:root[data-mask="on"] .ag-header-group-text::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 0.72em;
+  border-radius: 4px;
+  background: var(--muted-foreground);
+  opacity: 0.28;
+  pointer-events: none;
+}

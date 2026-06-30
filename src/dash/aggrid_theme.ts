@@ -24,6 +24,10 @@ export const apfsTheme = themeQuartz.withParams({
   fontFamily: 'inherit',
   headerFontWeight: 600,
   wrapperBorderRadius: 0,
+  // 세로 컬럼 구분선 — 헤더·본문 모두. 구조(축)라 마스크와 무관하게 상시 표시. 색은 토큰(라이트/다크 추종).
+  columnBorder: { color: 'var(--border)' },
+  headerColumnBorder: { color: 'var(--border)' },
+  headerColumnBorderHeight: '100%',
 });
 
 /* 정수=천단위 콤마, 소수=1자리 — 프로젝트 공통 숫자 표기 */
