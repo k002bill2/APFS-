@@ -1,6 +1,7 @@
 import React from 'react';
 import { UI } from '../components';
 import { mn, MT } from '../mask';
+import { DatePicker } from '../ui/date-picker';
 import { renderKind } from './dispatch';
 import type { ColumnSpec, FieldSpec, StatusDomainEntry } from './types';
 import type { Tone } from '../components';
@@ -34,7 +35,8 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} style={{ ...base, resize: 'vertical' }} />;
     case 'select':   return <select value={value} onChange={(e) => onChange(e.target.value)} style={base}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>;
     case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} style={base} />;
-    case 'date':     return <input type="date" value={value} onChange={(e) => onChange(e.target.value)} style={base} />;
+    // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(네이티브 input과 동일 계약).
+    case 'date':     return <DatePicker value={value} onChange={onChange} invalid={invalid} ariaLabel={field.label} />;
     case 'checkbox': return <input type="checkbox" checked={value === 'true'} onChange={(e) => onChange(String(e.target.checked))} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />;
     // 라디오 — 옵션 가로 나열(Y/N, Y/N/해당없음 등). 네이티브 input + accentColor 토큰(라이트/다크 양립).
     case 'radio': return (
