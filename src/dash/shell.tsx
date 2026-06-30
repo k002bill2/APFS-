@@ -14,7 +14,7 @@ import logoUrl from './assets/logo.svg';
 import logoWhiteUrl from './assets/logo_white.svg';
 
 const { useState, useEffect, useLayoutEffect, useContext, useRef } = React;
-const { ColorChip, IconBtn, CountPill, StatusBadge, Button, SegTabs } = UI;
+const { ColorChip, IconBtn, StatusBadge, Button, SegTabs } = UI;
 const D = APFS_DATA;
 
 function useIsMobile(bp) {
@@ -30,6 +30,9 @@ function useIsMobile(bp) {
 
 const rollup = (item) => item.children ? item.children.reduce((s, c) => s + (c.badge || 0), 0) || (item.badge || 0) : (item.badge || 0);
 
+/* 새 항목(badge) 표시용 작은 점 — 숫자 카운트 대신 사용. urgent면 빨강(--danger). */
+const NewDot = ({ urgent }: { urgent?: boolean }) => <span className="shrink-0" style={{ width: 6, height: 6, borderRadius: 99, background: urgent ? "var(--danger)" : "var(--primary)" }} />;
+
 /* 모든 중분류 서브그룹(`m.id:s{i}`)을 펼친 상태로 초기화 — 서브메뉴 기본 오픈. 키 인덱스는 MenuChildren의 c.map((c,i)) 인덱스와 일치해야 한다. */
 const allSubGroupsExpanded = () => {
   const map: Record<string, boolean> = {};
@@ -42,7 +45,7 @@ const allSubGroupsExpanded = () => {
 
 /* ---------- 메뉴 자식 렌더링 (Lnb·RailNav 공유 — 3레벨: 하위그룹/리프/직접리프, 카운터는 조기경보만) ---------- */
 function MenuChildren({ m, expanded, setExpanded, onNav }) {
-  const showCounts = m.id === "risk";
+  const showDots = m.id === "risk";
   return (
     <>{m.children.map((c, i) => {
       if (c.sub && c.children) {
@@ -60,7 +63,7 @@ function MenuChildren({ m, expanded, setExpanded, onNav }) {
                 background: "transparent", fontSize: 13, transition: "background .15s",
               }}><span
                 className="whitespace-nowrap overflow-hidden text-left"
-                style={{ textOverflow: "ellipsis" }}>{c.label}</span><div className="flex items-center gap-1 shrink-0">{showCounts && subCount > 0 && <CountPill count={subCount} urgent={m.urgent} />}<Icon
+                style={{ textOverflow: "ellipsis" }}>{c.label}</span><div className="flex items-center gap-1.5 shrink-0">{showDots && subCount > 0 && <NewDot urgent={m.urgent} />}<Icon
                   name="chevron-down"
                   size={12}
                   style={{ transform: subOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .15s", opacity: .5 }} /></div></button>{subOpen && <div className="mb-0.5 pl-3.5">{c.children.map((leaf, j) => <button
@@ -75,7 +78,7 @@ function MenuChildren({ m, expanded, setExpanded, onNav }) {
                   background: "transparent", fontSize: 13, transition: "background .15s",
                 }}><span
                   className="whitespace-nowrap overflow-hidden text-left"
-                  style={{ textOverflow: "ellipsis" }}>{leaf.label}</span>{showCounts && leaf.badge > 0 && <CountPill count={leaf.badge} urgent={m.urgent} />}</button>)}</div>}</div>
+                  style={{ textOverflow: "ellipsis" }}>{leaf.label}</span>{showDots && leaf.badge > 0 && <NewDot urgent={m.urgent} />}</button>)}</div>}</div>
         );
       }
       return (
@@ -90,7 +93,7 @@ function MenuChildren({ m, expanded, setExpanded, onNav }) {
             background: "transparent", fontSize: 13, transition: "background .15s",
           }}><span
             className="whitespace-nowrap overflow-hidden text-left"
-            style={{ textOverflow: "ellipsis" }}>{c.label}</span>{showCounts && c.badge > 0 && <CountPill count={c.badge} urgent={m.urgent} />}</button>
+            style={{ textOverflow: "ellipsis" }}>{c.label}</span>{showDots && c.badge > 0 && <NewDot urgent={m.urgent} />}</button>
       );
     })}</>
   );
@@ -188,7 +191,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
                   color: isActive ? "var(--primary)" : "var(--foreground)", fontWeight: isActive ? 700 : 500, fontSize: 13.5,
                   transition: "background .15s",
                 }}><Icon name={m.icon} size={20} stroke={isActive ? 2.3 : 2} />{open && <span className="flex-1 text-left whitespace-nowrap">{m.label}</span>}{open && (m as any).isNew && <span className="font-extrabold text-accent" style={{ fontSize: 9.5 }}>NEW</span>}{count > 0 && (open
-                  ? <CountPill count={count} urgent={m.urgent} />
+                  ? <span style={{ width: 7, height: 7, borderRadius: 99, flexShrink: 0, background: m.urgent ? "var(--danger)" : "var(--primary)" }} />
                   : <span
                   className="absolute top-1.5 right-2"
                   style={{ width: 7, height: 7, borderRadius: 99, background: m.urgent ? "var(--danger)" : "var(--primary)" }} />)}{open && hasKids && <Icon
