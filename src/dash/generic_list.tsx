@@ -491,7 +491,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         {view === "list" ? (
           /* AG Grid 본체 — 스키마 주도 컬럼 + 체크박스 선택 + 페이지네이션 + external filter.
              더블클릭=수정 모달(editable 한정). 행선택 배경은 공유 테마의 --row-selected(회색). */
-          <div style={{ padding: "0 2px 2px" }}>
+          <div>
             <AgGridReact<Row>
               theme={apfsTheme}
               rowData={rows}

@@ -350,7 +350,7 @@ function ReportMain({ onNav }: { onNav?: (route: string) => void }) {
             >부처보고 전체 보기 →</Button>
           </div>
         </div>
-        <div style={{ padding: "0 2px 2px" }}>
+        <div>
           <AgGridReact<ReportRow>
             theme={apfsTheme}
             rowData={RECENT_REPORTS}

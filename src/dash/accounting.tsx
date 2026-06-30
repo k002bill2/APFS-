@@ -246,7 +246,7 @@ const evidenceColumns: ColDef<EvidenceRow>[] = [
 
 function VoucherTable() {
   return (
-    <div style={{ padding: "0 2px 2px" }}>
+    <div>
       <AgGridReact<VoucherRow>
         theme={apfsTheme}
         rowData={VOUCHERS}
@@ -260,7 +260,7 @@ function VoucherTable() {
 
 function PendingTable() {
   return (
-    <div style={{ padding: "0 2px 2px" }}>
+    <div>
       <AgGridReact<PendingRow>
         theme={apfsTheme}
         rowData={PENDING}
@@ -275,7 +275,7 @@ function PendingTable() {
 
 function EvidenceTable() {
   return (
-    <div style={{ padding: "0 2px 2px" }}>
+    <div>
       <AgGridReact<EvidenceRow>
         theme={apfsTheme}
         rowData={NO_EVIDENCE}
