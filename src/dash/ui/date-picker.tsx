@@ -33,7 +33,11 @@ export function DatePicker({ value, onChange, invalid, disabled, placeholder = '
   const selected = parseValue(value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    // modal: Dialog(폼 모달)/Sheet(필터 드로어) 안에서 이 Popover는 body로 포털된다.
+    // 비-modal이면 부모 Dialog의 focus-trap이 포털된 캘린더 안 네이티브 년/월 <select>의
+    // 포커스를 즉시 빼앗아(activeElement→body) 드롭다운이 안 열린다(날짜 버튼은 클릭 즉발이라 영향 없음).
+    // modal Popover는 자체 focus scope를 스택 위에 얹어 부모 트랩을 일시중지 → select가 포커스 유지.
+    <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
         <button
           type="button"
