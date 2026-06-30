@@ -24,6 +24,13 @@ export const apfsTheme = themeQuartz.withParams({
   fontFamily: 'inherit',
   headerFontWeight: 600,
   wrapperBorderRadius: 0,
+  // 세로 컬럼 구분선 — 헤더·본문 모두. 구조(축)라 마스크와 무관하게 상시 표시. 색은 토큰(라이트/다크 추종).
+  columnBorder: { color: 'var(--border)' },
+  headerColumnBorder: { color: 'var(--border)' },
+  headerColumnBorderHeight: '100%',
+  // 리사이즈 핸들 표시선(기본 30% 높이 회색 바)을 숨김 — headerColumnBorder(full-height)와 겹쳐
+  // 짧은 중첩선으로 보이던 것 제거. 드래그 리사이즈 기능은 유지(핸들 영역은 그대로, 선만 투명).
+  headerColumnResizeHandleColor: 'transparent',
 });
 
 /* 정수=천단위 콤마, 소수=1자리 — 프로젝트 공통 숫자 표기 */

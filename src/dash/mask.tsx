@@ -11,6 +11,12 @@ import React from 'react';
    └──────────────────────────────────────────────────────────────────┘ */
 const _on = true;
 
+/* 마스크 상태를 루트 DOM 속성으로 투영 — CSS가 토글을 따라 분기하도록(예: AG Grid 헤더 placeholder).
+   _on이 SSOT이므로 여기서 1회 설정하면 _on=false 전환 시 헤더 placeholder도 함께 해제된다. */
+if (typeof document !== 'undefined') {
+  document.documentElement.dataset.mask = _on ? 'on' : 'off';
+}
+
 /** 마스크 상태 반환 (위 _on 스위치를 따른다). mn()/MT 가 내부에서 참조. */
 export function useMask(): boolean {
   return _on;
