@@ -72,6 +72,13 @@
       "intentPatterns": ["(등록|수정|crud|입력|폼|form).*(모달|modal|양식)", "(rowformmodal|필드\\s?컨트롤|field_controls|radio|라디오|스키마\\s?폼).*(추가|만들|작성|수정|add|edit)"]
     },
     {
+      "skillName": "apfs-datepicker",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["일자선택", "일자 선택", "날짜선택", "날짜 선택", "날짜입력", "날짜 입력", "달력", "date picker", "datepicker", "DatePicker", "캘린더", "calendar", "Radix Calendar", "react-day-picker", "popover 달력", "date-fns", "input type date", "기준일", "선택일", "타임존", "off-by-one", "하루 빠짐", "YYYY-MM-DD"],
+      "intentPatterns": ["(일자|날짜|date|달력|calendar|캘린더|datepicker).*(선택|입력|picker|만들|추가|작성|수정|통일|컴포넌트|component|add|edit)", "(날짜|일자|date).*(하루|off-by-one|빠짐|타임존|timezone|어긋)", "(달력|calendar|셀|cell).*(크기|무너|깨|collapse|이식|변환)"]
+    },
+    {
       "skillName": "z-index",
       "priority": "high",
       "enforcement": "suggest",
