@@ -284,7 +284,7 @@ function AssetMain({ onNav }: { onNav?: (route: string) => void }) {
           </div>
           <Button variant="ghost" size="sm" onClick={() => go("자펀드정보관리")}>자펀드 전체 보기 →</Button>
         </div>
-        <div style={{ padding: "0 2px 2px" }}>
+        <div>
           <AgGridReact
             theme={apfsTheme}
             rowData={RECENT_ASSETS}

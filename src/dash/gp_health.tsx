@@ -343,7 +343,7 @@ function GpHealth({ onNav }) {
           icon="bar-chart-2"
           accent="var(--chart-2)"><HBars data={hbarsData} height={210} unit="억" /></ChartCard></div><section
         className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden mb-6"><div
-          className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border"><div className="flex items-center gap-2.5"><ColorChip icon="list" color="var(--primary)" size={32} iconSize={17} /><h2 className="t-cardtitle">전체 운용사 현황</h2><CountPill count={GP_LIST.length} /></div><div className="flex items-center gap-2"><IconBtn icon="refresh" label="새로고침" size={34} /><IconBtn icon="download" label="내보내기" size={34} /></div></div><div style={{ padding: "0 2px 2px" }}>
+          className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border"><div className="flex items-center gap-2.5"><ColorChip icon="list" color="var(--primary)" size={32} iconSize={17} /><h2 className="t-cardtitle">전체 운용사 현황</h2><CountPill count={GP_LIST.length} /></div><div className="flex items-center gap-2"><IconBtn icon="refresh" label="새로고침" size={34} /><IconBtn icon="download" label="내보내기" size={34} /></div></div><div>
                 <AgGridReact<GpRow>
                   theme={apfsTheme}
                   rowData={GP_ROWS}

@@ -431,7 +431,7 @@ function Performance({ onNav }) {
 
           {/* 테이블 — AG Grid 본체(체크박스 다중선택 + risk External Filter + 더블클릭=수정 모달).
               행선택 회색은 공유 테마(--row-selected) 자동. 헤더=정렬. 카드/페이지네이션 토글은 푸터(장식) 유지. */}
-          <div style={{ padding: "0 2px 2px" }}>
+          <div>
             <AgGridReact<PRow>
               theme={apfsTheme}
               rowData={rows}

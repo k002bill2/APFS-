@@ -215,7 +215,7 @@ function CustodyTab() {
       className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
         className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">수탁 데이터 검증 현황</h3><CountPill
             count={CUSTODY_VERIFICATIONS.filter((c) => c.mismatch).length}
-            urgent={true} /></div><div className="flex items-center gap-2"><Button variant="outline" size="sm" leadingIcon="upload">데이터 업로드</Button><IconBtn icon="refresh" label="재검증" size={34} /></div></div><div style={{ padding: "0 2px 2px" }}><AgGridReact<CustodyRow>
+            urgent={true} /></div><div className="flex items-center gap-2"><Button variant="outline" size="sm" leadingIcon="upload">데이터 업로드</Button><IconBtn icon="refresh" label="재검증" size={34} /></div></div><div><AgGridReact<CustodyRow>
               theme={apfsTheme}
               rowData={CUSTODY_VERIFICATIONS}
               columnDefs={custodyColumns}
@@ -233,7 +233,7 @@ function RegistryTab() {
   return (
     <div className="flex flex-col gap-4"><div
         className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
-          className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">등록원부 관리</h3><CountPill count={REGISTRY_FUNDS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">원부 등록</Button><IconBtn icon="download" label="일괄 다운로드" size={34} /></div></div><div style={{ padding: "0 2px 2px" }}><AgGridReact<RegistryRow>
+          className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">등록원부 관리</h3><CountPill count={REGISTRY_FUNDS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">원부 등록</Button><IconBtn icon="download" label="일괄 다운로드" size={34} /></div></div><div><AgGridReact<RegistryRow>
                 theme={apfsTheme}
                 rowData={REGISTRY_FUNDS}
                 columnDefs={registryColumns}

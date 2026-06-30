@@ -21,6 +21,29 @@ const ghostBtn =
 // RDP 기본 클래스맵은 호출마다 새 객체를 생성한다 — 모듈 1회 호이스팅(셀(~42개)마다 재할당 방지).
 const DEFAULT_CN = getDefaultClassNames();
 
+// 🔴 components.* 는 react-day-picker에 "컴포넌트 타입"으로 전달된다 — 렌더마다 새 함수 정체성이면
+// React가 매 렌더 rdp-root를 언마운트→리마운트(전체 DOM 교체)한다. 트랩된 FocusScope(modal Popover/Dialog)
+// 안에서 네이티브 <select>를 열면, 이 리마운트의 removedNodes를 Radix FocusScope MutationObserver가
+// "focus 이탈"로 오판해 컨테이너로 focus를 되당겨 OS 드롭다운을 닫는 재렌더 폭주가 생긴다.
+// → Calendar props를 클로저로 잡지 않는 세 컴포넌트를 모듈 스코프로 호이스팅해 정체성을 영구 고정한다.
+function CalendarRoot({ className, rootRef, ...props }: any) {
+  return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />;
+}
+
+function CalendarChevron({ className, orientation, ...props }: any) {
+  if (orientation === 'left') return <ChevronLeftIcon className={cn('size-4', className)} {...props} />;
+  if (orientation === 'right') return <ChevronRightIcon className={cn('size-4', className)} {...props} />;
+  return <ChevronDownIcon className={cn('size-4', className)} {...props} />;
+}
+
+function CalendarWeekNumber({ children, ...props }: any) {
+  return (
+    <td {...props}>
+      <div className="flex size-[var(--cell-size)] items-center justify-center text-center">{children}</div>
+    </td>
+  );
+}
+
 function Calendar({
   className,
   classNames,
@@ -76,20 +99,10 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Root: ({ className, rootRef, ...props }) => (
-          <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />
-        ),
-        Chevron: ({ className, orientation, ...props }) => {
-          if (orientation === 'left') return <ChevronLeftIcon className={cn('size-4', className)} {...props} />;
-          if (orientation === 'right') return <ChevronRightIcon className={cn('size-4', className)} {...props} />;
-          return <ChevronDownIcon className={cn('size-4', className)} {...props} />;
-        },
+        Root: CalendarRoot,
+        Chevron: CalendarChevron,
         DayButton: CalendarDayButton,
-        WeekNumber: ({ children, ...props }) => (
-          <td {...props}>
-            <div className="flex size-[var(--cell-size)] items-center justify-center text-center">{children}</div>
-          </td>
-        ),
+        WeekNumber: CalendarWeekNumber,
         ...components,
       }}
       {...props}

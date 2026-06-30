@@ -288,7 +288,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
 
       {view === 'list' ? (
         /* AG Grid 본체 — autoHeight + pagination + external filter(L12, Community) */
-        <div style={{ padding: '0 2px 2px' }}>
+        <div>
           <AgGridReact<FundingRow>
             theme={apfsTheme}
             rowData={rows}

@@ -33,6 +33,13 @@ export function DatePicker({ value, onChange, invalid, disabled, placeholder = '
   const selected = parseValue(value);
 
   return (
+    // 🔴 non-modal로 둔다(`modal` 금지). Dialog(폼 모달)/Sheet(필터 드로어) 안에서 이 Popover는
+    // body로 포털되지만, 비-modal이라도 Radix FocusScope 스택이 부모 Dialog/Sheet 트랩을 자동 pause하므로
+    // 포털된 캘린더 안 네이티브 년/월 <select>가 포커스를 유지한다(년·월 드롭다운 정상 동작).
+    // 예전엔 `modal`로 부모 트랩을 눌렀으나, 진짜 원인은 calendar.tsx의 컴포넌트 정체성 리마운트 폭주였고
+    // 그걸 고친 뒤로 `modal`은 불필요해졌다. 오히려 `modal`은 disableOutsidePointerEvents로
+    // 캘린더 열린 동안 폼 전체를 inert(pointer-events:none)로 만들어 ① 다른 컨트롤 첫 클릭이 무시되는
+    // 2-click 회귀 ② Sheet 본문 스크롤 잠금 ③ 인라인 사용 시 전 페이지 freeze를 유발한다 → 재추가 금지.
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
