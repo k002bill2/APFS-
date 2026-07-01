@@ -11,22 +11,23 @@ import React from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { Bold, Italic, Strikethrough, Heading2, Heading3, List, ListOrdered, TextQuote, Undo2, Redo2, type LucideIcon } from 'lucide-react';
 import './richtext.css';
 
 const { useReducer, useEffect } = React;
 
-type BtnDef = { key: string; label: string; title: string; run: (e: Editor) => void; active: (e: Editor) => boolean; style?: React.CSSProperties };
+type BtnDef = { key: string; Icon: LucideIcon; title: string; run: (e: Editor) => void; active: (e: Editor) => boolean };
 
-// 서식 버튼 — chain().focus()로 포커스를 유지한 채 토글.
+// 서식 버튼 — chain().focus()로 포커스를 유지한 채 토글. (shadcn-tiptap 스킨: lucide 아이콘 툴바)
 const BTNS: BtnDef[] = [
-  { key: 'bold',   label: 'B',  title: '굵게',        run: (e) => e.chain().focus().toggleBold().run(),                 active: (e) => e.isActive('bold'),   style: { fontWeight: 800 } },
-  { key: 'italic', label: 'I',  title: '기울임',      run: (e) => e.chain().focus().toggleItalic().run(),               active: (e) => e.isActive('italic'), style: { fontStyle: 'italic' } },
-  { key: 'strike', label: 'S',  title: '취소선',      run: (e) => e.chain().focus().toggleStrike().run(),               active: (e) => e.isActive('strike'), style: { textDecoration: 'line-through' } },
-  { key: 'h2',     label: 'H2', title: '제목 2',      run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),  active: (e) => e.isActive('heading', { level: 2 }) },
-  { key: 'h3',     label: 'H3', title: '제목 3',      run: (e) => e.chain().focus().toggleHeading({ level: 3 }).run(),  active: (e) => e.isActive('heading', { level: 3 }) },
-  { key: 'ul',     label: '•',  title: '글머리 목록', run: (e) => e.chain().focus().toggleBulletList().run(),           active: (e) => e.isActive('bulletList') },
-  { key: 'ol',     label: '1.', title: '번호 목록',   run: (e) => e.chain().focus().toggleOrderedList().run(),          active: (e) => e.isActive('orderedList') },
-  { key: 'quote',  label: '❝', title: '인용',    run: (e) => e.chain().focus().toggleBlockquote().run(),           active: (e) => e.isActive('blockquote') },
+  { key: 'bold',   Icon: Bold,          title: '굵게',        run: (e) => e.chain().focus().toggleBold().run(),                 active: (e) => e.isActive('bold') },
+  { key: 'italic', Icon: Italic,        title: '기울임',      run: (e) => e.chain().focus().toggleItalic().run(),               active: (e) => e.isActive('italic') },
+  { key: 'strike', Icon: Strikethrough, title: '취소선',      run: (e) => e.chain().focus().toggleStrike().run(),               active: (e) => e.isActive('strike') },
+  { key: 'h2',     Icon: Heading2,      title: '제목 2',      run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),  active: (e) => e.isActive('heading', { level: 2 }) },
+  { key: 'h3',     Icon: Heading3,      title: '제목 3',      run: (e) => e.chain().focus().toggleHeading({ level: 3 }).run(),  active: (e) => e.isActive('heading', { level: 3 }) },
+  { key: 'ul',     Icon: List,          title: '글머리 목록', run: (e) => e.chain().focus().toggleBulletList().run(),           active: (e) => e.isActive('bulletList') },
+  { key: 'ol',     Icon: ListOrdered,   title: '번호 목록',   run: (e) => e.chain().focus().toggleOrderedList().run(),          active: (e) => e.isActive('orderedList') },
+  { key: 'quote',  Icon: TextQuote,     title: '인용',        run: (e) => e.chain().focus().toggleBlockquote().run(),           active: (e) => e.isActive('blockquote') },
 ];
 
 export function RichTextField({ value, onChange, label }: { value: string; onChange: (v: string) => void; label?: string }) {
@@ -50,28 +51,28 @@ export function RichTextField({ value, onChange, label }: { value: string; onCha
   return (
     <div className="apfs-richtext">
       <div className="apfs-richtext__toolbar" role="toolbar" aria-label="서식 도구">
+        {/* 실행취소/다시실행을 앞에 배치(shadcn-tiptap 툴바 순서). can() 게이트로 disabled. */}
+        <button type="button" title="실행취소" aria-label="실행취소" className="apfs-rt-btn"
+          disabled={!editor || !editor.can().undo()}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => editor?.chain().focus().undo().run()}><Undo2 size={16} strokeWidth={2} aria-hidden={true} /></button>
+        <button type="button" title="다시실행" aria-label="다시실행" className="apfs-rt-btn"
+          disabled={!editor || !editor.can().redo()}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => editor?.chain().focus().redo().run()}><Redo2 size={16} strokeWidth={2} aria-hidden={true} /></button>
+        <span className="apfs-richtext__sep" aria-hidden="true" />
         {BTNS.map((b) => (
           <button
             key={b.key} type="button" title={b.title} aria-label={b.title}
             aria-pressed={!!editor && b.active(editor)}
             className={'apfs-rt-btn' + (editor && b.active(editor) ? ' is-active' : '')}
-            style={b.style}
             disabled={!editor}
             // ⚠️ mousedown preventDefault — 버튼 클릭이 에디터 포커스/선택을 빼앗지 않게(선택 보존).
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor && b.run(editor)}>
-            {b.label}
+            <b.Icon size={16} strokeWidth={2} aria-hidden={true} />
           </button>
         ))}
-        <span className="apfs-richtext__sep" aria-hidden="true" />
-        <button type="button" title="실행취소" aria-label="실행취소" className="apfs-rt-btn"
-          disabled={!editor || !editor.can().undo()}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => editor?.chain().focus().undo().run()}>{'↶'}</button>
-        <button type="button" title="다시실행" aria-label="다시실행" className="apfs-rt-btn"
-          disabled={!editor || !editor.can().redo()}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => editor?.chain().focus().redo().run()}>{'↷'}</button>
       </div>
       <EditorContent editor={editor} />
     </div>
