@@ -31,7 +31,9 @@ export function Cell({ col, value, color, statusDomain }: { col: ColumnSpec; val
 export function SchemaField({ field, value, onChange, invalid }: { field: FieldSpec; value: string; onChange: (v: string) => void; invalid?: boolean }) {
   const base: React.CSSProperties = {
     // ⚠️ fontFamily(longhand)로 패밀리만 상속 — `font: 'inherit'`(shorthand)는 font-size까지 리셋해 위의 fontSize:14를 부모값으로 덮어쓴다.
-    width: '100%', boxSizing: 'border-box', padding: '8px 11px', fontSize: 14, fontFamily: 'inherit',
+    // ⚠️ 높이 규격 38px — DatePicker 버튼/radio와 일치시킨다. lineHeight:20(=text-sm)로 자연 높이를 20+16(pad)+2(border)=38로 맞추고
+    //    minHeight:38은 플로어 가드(DatePicker의 min-h-[38px] 미러). lineHeight 없으면 native input/select가 normal 메트릭으로 34·36px로 어긋난다.
+    width: '100%', boxSizing: 'border-box', padding: '8px 11px', fontSize: 14, lineHeight: '20px', minHeight: 38, fontFamily: 'inherit',
     border: `1px solid ${invalid ? 'var(--danger)' : 'var(--border-strong)'}`,
     borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
   };
