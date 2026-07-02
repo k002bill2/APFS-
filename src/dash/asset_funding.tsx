@@ -145,6 +145,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   const [rows, setRows] = useState<FundingRow[]>(ROWS);   // 삭제/등록/새로고침 위해 가변
   const [selCount, setSelCount] = useState(0);
   const [view, setView] = useState('list');               // list | detail (L6 토글)
+  const [showAll, setShowAll] = useState(false);          // 전체보기 — 페이지 크기를 전체 행 수로 키워 한 페이지에 모두 표시
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: ROWS.length });
 
   // 상세필터(External Filter) 상태 — L12 실증
@@ -263,8 +264,10 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
 
   // 카드(상세 뷰)·푸터 건수는 동일 필터 술어를 공유(단일 데이터·렌더러 이원화)
   const filteredRows = rows.filter((r) => matchText(r) && (!fYear || r.y === fYear) && (!fMin || r.u1 >= Number(fMin)));
+  // 전체보기 시 페이지 크기 = 전체 행 수 → total pages가 1이 되어 푸터 페이지네이션이 자동으로 숨는다
+  const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
   const shown = view === 'list'
-    ? Math.min(PAGE_SIZE, Math.max(0, page.rowCount - page.current * PAGE_SIZE))
+    ? Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize))
     : filteredRows.length;
   const totalForCount = view === 'list' ? page.rowCount : filteredRows.length;
 
@@ -319,6 +322,9 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
       footerRight={<>
         <SegTabs size="sm" value={view} onChange={setView} options={[{ value: 'list', label: '리스트 뷰' }, { value: 'detail', label: '카드뷰' }]} />
         <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
+        {view === 'list' && (
+          <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} onClick={() => setShowAll((v) => !v)} />
+        )}
         <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
         <IconBtn icon="more" label="더보기" size={32} />
       </>}>
@@ -335,7 +341,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
             defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
             rowSelection={{ mode: 'multiRow', checkboxes: true, headerCheckbox: true }}
             pagination
-            paginationPageSize={PAGE_SIZE}
+            paginationPageSize={pageSize}
             suppressPaginationPanel
             isExternalFilterPresent={isExternalFilterPresent}
             doesExternalFilterPass={doesExternalFilterPass}
@@ -391,7 +397,8 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
             {/* 검색어 — 모든 상세필터 공통 최상단. 행 전 컬럼 부분일치 */}
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>검색어</span>
-              <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} placeholder="검색어 입력" style={inputStyle} />
+              {/* Enter = 필터 적용과 동일(값은 즉시 반영형이라 드로어 닫기). IME 조합 확정 Enter는 제외 */}
+              <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="검색어 입력" style={inputStyle} />
             </label>
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>사업연도</span>
@@ -407,7 +414,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
             </label>
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>출자금액 최소(억원 이상)</span>
-              <input type="number" value={fMin} onChange={(e) => setFMin(e.target.value)} placeholder="예: 800" style={inputStyle} />
+              <input type="number" value={fMin} onChange={(e) => setFMin(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="예: 800" style={inputStyle} />
             </label>
           </div>
           <SheetFooter>
