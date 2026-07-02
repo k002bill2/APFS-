@@ -54,6 +54,13 @@ const ROW_ICONS = ["building", "layers", "target", "wallet", "chart-bar"];
 const ROW_COLORS = ["var(--chart-1)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-9)"];
 const ROW_CATS = ["투자성과", "리스크", "회계마감", "운용사보고", "컴플라이언스"];
 const ROW_STATUS = ["정상", "진행중", "검토중", "보류", "완료"];
+// 첨부파일(filepond) 필드 더미 시드 — 수정 모달에서 기존 첨부(Attachment) 표시 확인용.
+const DOC_SEED = [
+  "실사보고서.pdf, 재무제표_2026.xlsx",
+  "투자심의결과.pdf",
+  "현장점검_사진.zip, 점검체크리스트.docx, 의견서.hwp",
+  "분기보고서_2026Q1.pdf, 결산자료.xlsx",
+];
 
 function makeRows(schema: PageSchema, n: number): Row[] {
   return Array.from({ length: n }, (_, i) => {
@@ -81,6 +88,13 @@ function makeRows(schema: PageSchema, n: number): Row[] {
         extra[c.key] = (i + 1) * 100 + (i * 7) % 90;
       } else {
         extra[c.key] = c.label + ' ' + String(i + 1).padStart(3, '0');
+      }
+    }
+    // 첨부파일(filepond) 필드는 columns가 아니라 fields라 위 루프에서 시드되지 않는다.
+    // 수정 모달에서 기존 첨부가 Attachment로 보이도록 결정적 더미 파일명을 시드(3행마다 무첨부).
+    for (const f of schema.fields) {
+      if (f.control === 'filepond' && extra[f.key] == null && base[f.key] == null) {
+        extra[f.key] = i % 3 === 2 ? '' : DOC_SEED[i % DOC_SEED.length];
       }
     }
     return { ...base, ...extra } as Row;
