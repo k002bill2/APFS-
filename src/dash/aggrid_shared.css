@@ -29,6 +29,27 @@
   font-weight: 800 !important;
 }
 
+/* ── sticky 컬럼 헤더 (autoHeight 그리드 한정) ──
+   autoHeight 그리드는 페이지(window)가 스크롤러라 긴 목록에서 컬럼 헤더가 위로 사라진다.
+   sticky로 GNB(58px, shell.tsx) 아래에 상시 고정.
+   왜 overflow:visible 해제가 필요한가: sticky는 가장 가까운 클리핑/스크롤 조상에 갇히는데
+        AG Grid 구조 CSS가 .ag-root-wrapper와 .ag-root(.ag-layout-auto-height)에 overflow:hidden을
+        칠한다(카드~window 체인은 GridFrame sticky 푸터 작업 때 이미 뚫려 있음). 가로 클리핑은
+        내부 뷰포트(.ag-header-viewport/.ag-center-cols-viewport)가 자체 담당하므로 스필 없음.
+   왜 !important: AG Grid v33+가 구조 CSS를 그리드 마운트 시점에 <style>로 주입해 우리 번들
+        CSS보다 뒤에 온다 — .ag-root 쪽은 동일 specificity(0,2,0)라 순서로 지므로 강제.
+   ⚠️ .ag-layout-auto-height 게이팅 — domLayout="normal"(내부 스크롤) 그리드는 대상 아님.
+   z-index 30 = 그리드 로컬 스택(행·pinned 셀 위) — 셸 chrome(44~60)·오버레이 토큰(75~90) 아래. */
+.ag-root-wrapper.ag-layout-auto-height,
+.ag-root.ag-layout-auto-height {
+  overflow: visible !important;
+}
+.ag-root-wrapper.ag-layout-auto-height .ag-header {
+  position: sticky;
+  top: 58px;                 /* GNB 높이 (shell.tsx sticky header height:58) */
+  z-index: 30;
+}
+
 /* ── 헤더 타이틀 placeholder (마스크 ON 한정) ──
    "축은 두고 데이터는 가린다"의 확장: 빈 스켈레톤 표 표현을 위해 헤더 라벨도 가린다.
    MT(텍스트 스켈레톤)와 동일 톤 — bg=muted-foreground, radius 4, height 0.72em, opacity .28.
