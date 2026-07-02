@@ -70,6 +70,28 @@ const columnDefs: (ColDef<Row> | ColGroupDef<Row>)[] = [
 | 상세필터 | **External Filter**(Community): `isExternalFilterPresent`/`doesExternalFilterPass` + 값 변경 시 `apiRef.current?.onFilterChanged()`. 드로어 UI·필터칩은 →[[apfs-detail-filter]] |
 | 수정 진입 | `onRowDoubleClicked` → 스키마 모달(→[[apfs-form-modal]]) |
 | Excel 내보내기 | SheetJS(아래) — Community엔 `exportDataAsExcel` 없음 |
+| 우클릭 컨텍스트 메뉴 | **Community 대체**(내장 context menu는 Enterprise 전용): `onCellContextMenu`+`preventDefaultOnContextMenu`+공유 `RowContextMenu`(아래) |
+| pivot | **불가** — Enterprise 전용. Community 재현 불가(보류) |
+
+## 우클릭 컨텍스트 메뉴 / pivot (Community 경계)
+AG Grid의 **내장 context menu(`getContextMenuItems`)·pivot은 Enterprise 전용** — Set Filter/Excel export가 Enterprise라 External Filter/SheetJS로 우회한 것과 같은 갈림길.
+- **pivot** → Community 재현 불가(보류). 필요 시 Enterprise 도입뿐.
+- **context menu** → 공유 컴포넌트 `src/dash/row_context_menu.tsx`(`RowContextMenu`/`CtxItem`/`CtxMenuState`)로 대체. body Portal + `z-popover`(→[[z-index]] sticky/transform 쌓임맥락 트랩 회피), 뷰포트 가장자리 flip, 닫힘 경로 전부 소유(바깥클릭·Esc·scroll·resize·blur). **항목 폰트 14px**(프로젝트 폼 표준 →[[form-control-height-38-line-height-trap]]), 색은 토큰만(→[[color-tokens]]).
+
+배선(정본: asset_funding·generic_list):
+```tsx
+const [ctx, setCtx] = useState<CtxMenuState>(null);
+const handleCellContextMenu = (e: CellContextMenuEvent<Row>) => {
+  (e.event as MouseEvent | undefined)?.preventDefault();
+  if (!e.data || e.rowPinned) return;              // ⚠️ pinned 합계행 제외(삭제 무의미 + 합계 stale)
+  const ev = e.event as MouseEvent;
+  setCtx({ x: ev.clientX, y: ev.clientY, items: [/* 수정·복사·Excel·삭제 — 기존 CRUD 핸들러 재사용 */] });
+};
+// 그리드 props: preventDefaultOnContextMenu  onCellContextMenu={handleCellContextMenu}   (둘 다 Community 유효)
+// 렌더: <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
+```
+- **필수 가드**: `e.rowPinned`로 pinned 행 제외. `preventDefaultOnContextMenu`(Community grid옵션)가 브라우저 기본 메뉴를 억제(헤더·빈영역도 억제됨 — 허용 범위).
+- ⚠️ **행 복사는 마스크 ON시 `mn()`으로 실값 비노출**(Excel 내보내기와 동일 계약 — `valueFormatter`를 안 거치는 화면 밖 출력이라 직접 마스킹, 안 그러면 데이터 무결성 위반). 세부·함정은 →[[aggrid-community-context-menu]] 메모리.
 
 ## Excel(.xlsx) 내보내기 — SheetJS (community)
 AG Grid Community엔 Excel export가 없어 `xlsx`(SheetJS **@0.18.5**, **쓰기 전용** — `XLSX.read` 미사용 → 알려진 파싱 CVE 비해당)로 직접 생성한다. 화면 2단 헤더(병합 `!merges`)·합계행을 재현하고, **우측정렬 숫자 컬럼은 실제 숫자 셀(`t:'n'` + 숫자서식 `z`)** 로 써서 Excel이 화면과 같게 자동 우측정렬한다(커뮤니티 xlsx는 정렬 '스타일'을 못 쓴다 → 숫자 셀로 정렬을 얻음). **마스크 ON이면 값을 `0`으로 기록**(실값 비노출, 표시 모양은 `z` 서식이 담당). 최소 골격:
