@@ -18,6 +18,12 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
    별도 컨트롤이 필요한 새 kind를 추가할 때만 아래 정본 파일을 건드린다.
 - ⚠️ **정확일치가 안전의 전제 — 비대칭 주의**: 라벨이 field/column과 불일치하면 value 타입(year/enum/date/number/text)은 columnKey 미해결로 **안전하게 no-op+캡션**으로 격하되지만, 매칭이 전혀 안 되면 **tag로 떨어지고**, 그 라벨이 `ROW_CATS`(아래 시드 정합)에 없으면 토글 선택 시 **표가 통째로 비워진다**. value=무해, tag=표 증발 — 이 비대칭이 핵심 함정.
 
+## 예약 라벨 `검색어` — 모든 드로어 공통 최상단
+- 모든 상세필터 드로어의 **최상단에는 검색어 입력이 상시 고정**된다(schema.filters와 무관, filters가 비어도 노출).
+- 정본: `generic_list.tsx`의 `SEARCH_LABEL`("검색어"). `rowMatchesFilters`가 **resolveFilterField보다 먼저 특수 처리** — 행의 전 컬럼 부분일치(OR) + `row.category`, 다른 필터와는 AND.
+- ⚠️ **휴리스틱에 태우지 말 것**: "검색어"는 ③ 휴리스틱에서 **tag로 오판**된다 → ROW_CATS에 없으니 표 증발. 칩 파생(chipItems)도 같은 이유로 `label !== SEARCH_LABEL` 가드로 값-칩을 강제한다.
+- 자체 드로어(asset_funding·performance)도 동일 규약: 최상단 검색어 + 실제 행 전 컬럼 부분일치 배선(performance는 `applied.q`, asset_funding은 `fText`).
+
 ## 타입 도출 — `resolveFilterField(label, schema)` 우선순위
 - **① field 매칭**(label 정확일치, 가장 정확): `select`→enum(field.options) · `date`→date · 년도라벨→year · `number`→number · 그외→text.
 - **② column 매칭**: 년도라벨→year · `date`→date · `status`→enum(statusDomain) · amount/number/rate→number · 그외→text.

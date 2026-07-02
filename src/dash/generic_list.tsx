@@ -171,6 +171,11 @@ function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: b
   );
 }
 
+/* 예약 라벨: 상세필터 최상단 공통 검색어 — 스키마 filters와 무관하게 항상 노출.
+   resolveFilterField를 타지 않고(휴리스틱이 tag로 오판 → 표 증발) rowMatchesFilters에서 특수 처리:
+   행의 전 컬럼 부분일치(OR), 다른 필터와는 AND. */
+export const SEARCH_LABEL = "검색어";
+
 /* 값-필터 컨트롤 — kind별 입력(year/enum select · date · number · text).
    입력 폰트 14px(전 컨트롤 기본 사이즈로 통일), 색은 토큰(라이트/다크 양립). 빈 값 = 미적용.
    주의: <16px라 iOS Safari는 포커스 시 자동 줌인됨 — 14px 통일을 우선한 결과. */
@@ -242,6 +247,11 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
           <IconBtn icon="x" onClick={onClose} label="닫기" size={38} />
         </SheetHeader>
         <div className="flex-1 overflow-y-auto" style={{ padding: "20px clamp(14px,3vw,20px)" }}>
+          {/* 검색어 — 모든 상세필터 공통 최상단(예약 라벨). 전 컬럼 부분일치 검색 */}
+          <label className="block mb-4">
+            <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>{SEARCH_LABEL}</span>
+            <input type="text" value={draft[SEARCH_LABEL] ?? ""} onChange={(e) => setVal(SEARCH_LABEL, e.target.value)} placeholder="검색어 입력" style={drawerInputStyle} />
+          </label>
           {filters.length === 0 ? (
             <div className="text-caption text-center" style={{ fontSize: 13, padding: "28px 0" }}>설정 가능한 필터가 없습니다.</div>
           ) : (
@@ -275,6 +285,14 @@ function rowMatchesFilters(row: Row, schema: PageSchema, filterValues: Record<st
   if (active.length === 0) return true;
   const tags: string[] = [];
   for (const [label, value] of active) {
+    // 검색어(예약 라벨): 전 컬럼 부분일치(OR) — 휴리스틱(tag 오판) 우회, 다른 필터와는 AND
+    if (label === SEARCH_LABEL) {
+      const q = value.toLowerCase();
+      const hit = schema.columns.some((c) => String((row as Record<string, unknown>)[c.key] ?? "").toLowerCase().includes(q))
+        || row.category.toLowerCase().includes(q);
+      if (!hit) return false;
+      continue;
+    }
     const ff = resolveFilterField(label, schema);
     if (ff.kind === "tag") { tags.push(label); continue; }
     if (!ff.columnKey) continue;
@@ -307,8 +325,9 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   // (그리드 리스트뷰는 external filter로 동일 술어를 적용 — 페이지네이션은 그리드가 소유).
   const filtered = rows.filter((r) => rowMatchesFilters(r, schema, filterValues));
   // 칩: filterValues에서 파생 (값-필터는 "라벨: 값", 카테고리 태그는 값 없이 라벨만)
+  // 검색어(예약 라벨)는 휴리스틱이 tag로 오판하므로 값-칩으로 강제
   const chipItems = Object.entries(filterValues).map(([label, value]) => ({
-    label, value: resolveFilterField(label, schema).kind === "tag" ? undefined : value,
+    label, value: label !== SEARCH_LABEL && resolveFilterField(label, schema).kind === "tag" ? undefined : value,
   }));
   const removeFilter = (label: string) => setFilterValues((prev) => { const n = { ...prev }; delete n[label]; return n; });
 

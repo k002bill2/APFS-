@@ -87,6 +87,7 @@ function CheckRow({ label, checked, onClick }) {
 
 function FilterDrawer({ open, onClose, onApply, applied }) {
   const ASSETS = ["주식", "채권", "실물 자산", "사모 펀드"];
+  const [q, setQ] = useState(applied.q || "");   // 검색어 — 전 컬럼 부분일치(실제 행 필터)
   const [sel, setSel] = useState(applied.assets);
   const [risk, setRisk] = useState(applied.risk == null ? 50 : applied.risk);
   // riskOn: 슬라이더는 "off" 상태가 없으므로(항상 위치값) 활성 여부를 별도로 추적.
@@ -97,6 +98,7 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
   // 드로어가 열릴 때마다 현재 적용된 필터로 초기화 (칩 제거 등 외부 변경 반영)
   useEffect(() => {
     if (open) {
+      setQ(applied.q || "");
       setSel(applied.assets);
       setRisk(applied.risk == null ? 50 : applied.risk);
       setRiskOn(applied.risk != null);
@@ -113,6 +115,18 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
           <IconBtn icon="x" onClick={onClose} label="닫기" size={38} />
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col" style={{ gap: 26 }}>
+          {/* 검색어 — 모든 상세필터 공통 최상단. 자산 코드·명·구분·리스크 부분일치 */}
+          <div>
+            <div className="text-[13px] font-bold mb-2 text-muted-foreground">검색어</div>
+            <input
+              type="text"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="검색어 입력"
+              className="w-full text-[14px] text-foreground bg-card"
+              style={{ boxSizing: "border-box", padding: "10px 13px", fontFamily: "inherit", outline: "none", border: "1px solid var(--border-strong)", borderRadius: 10 }}
+            />
+          </div>
           <div>
             <div className="text-[13px] font-bold mb-2 text-muted-foreground">자산 유형
               <span className="font-medium text-caption ml-1.5">· 데이터 연동 후 적용</span></div>
@@ -160,8 +174,8 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
           </div>
         </div>
         <SheetFooter className="px-6 py-5">
-          <Button variant="outline" size="md" onClick={() => { setSel({}); setRisk(50); setRiskOn(false); setPeriod("당기 회계연도"); }}>초기화</Button>
-          <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => onApply({ assets: sel, risk: riskOn ? risk : null, period })}>필터 적용</Button>
+          <Button variant="outline" size="md" onClick={() => { setQ(""); setSel({}); setRisk(50); setRiskOn(false); setPeriod("당기 회계연도"); }}>초기화</Button>
+          <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => onApply({ q: q.trim() || null, assets: sel, risk: riskOn ? risk : null, period })}>필터 적용</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
@@ -252,7 +266,7 @@ function Performance({ onNav }) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [modal, setModal] = useState<string | null>(null); // null | "create" | "edit"
   // risk 기본 null = 필터 해제(로드 시 전체 행). 실제 필터링되므로 비-null이면 즉시 행을 숨김 → opt-in.
-  const [applied, setApplied] = useState<{ period: string | null; assets: Record<string, boolean>; risk: number | null }>({ period: "당기 회계연도", assets: { "주식": true, "채권": true }, risk: null });
+  const [applied, setApplied] = useState<{ q: string | null; period: string | null; assets: Record<string, boolean>; risk: number | null }>({ q: null, period: "당기 회계연도", assets: { "주식": true, "채권": true }, risk: null });
   const apiRef = useRef<GridApi<PRow> | null>(null);
   const [selCount, setSelCount] = useState(0);   // AG Grid 선택 행 수(수제 Record 선택 대체)
   const [delOpen, setDelOpen] = useState(false);
@@ -262,9 +276,12 @@ function Performance({ onNav }) {
   const riskLabel = (r) => (r == null ? null : r < 33 ? "리스크 보수적" : r < 66 ? "리스크 중립" : "리스크 공격적");
   const ROW_RISK_LABEL: Record<string, string> = { "ULTRA-LOW": "리스크 보수적", "LOW": "리스크 보수적", "MEDIUM": "리스크 중립", "HIGH": "리스크 공격적" };
   const wantRisk = riskLabel(applied.risk); // applied.risk null(칩 제거)이면 필터 해제
-  // risk만 행 데이터에 매핑 → AG Grid External Filter(L12)로 거른다. 자산유형/기간은 no-op(드로어 캡션으로 신호).
+  // 검색어 = 코드·자산명·구분·리스크·가치 부분일치(OR), risk 필터와는 AND
+  const wantQ = (applied.q || "").toLowerCase();
+  const matchQ = (r: PRow) => !wantQ || [r.code, r.name, r.meta, r.risk, r.value].some((v) => String(v ?? "").toLowerCase().includes(wantQ));
+  // risk·검색어만 행 데이터에 매핑 → AG Grid External Filter(L12)로 거른다. 자산유형/기간은 no-op(드로어 캡션으로 신호).
   // filtered는 푸터 건수·Excel 내보내기 용도(그리드 본체는 동일 술어를 external filter로 적용).
-  const filtered = rows.filter((r) => !wantRisk || ROW_RISK_LABEL[r.risk] === wantRisk);
+  const filtered = rows.filter((r) => matchQ(r) && (!wantRisk || ROW_RISK_LABEL[r.risk] === wantRisk));
   const addRow = () => {
     setRows((rs) => [withId({
       code: "NEW", codeColor: "var(--chart-1)", name: "신규 등록 자산", meta: "신규 · 미분류",
@@ -285,18 +302,20 @@ function Performance({ onNav }) {
   // ── AG Grid 연결: 다중행 체크박스 선택 + risk External Filter ──
   const onGridReady = useCallback((e: GridReadyEvent<PRow>) => { apiRef.current = e.api; }, []);
   const onSelectionChanged = useCallback((e: SelectionChangedEvent<PRow>) => { setSelCount(e.api.getSelectedRows().length); }, []);
-  useEffect(() => { apiRef.current?.onFilterChanged(); }, [wantRisk]);
-  const isExternalFilterPresent = useCallback(() => wantRisk != null, [wantRisk]);
+  useEffect(() => { apiRef.current?.onFilterChanged(); }, [wantRisk, wantQ]);
+  const isExternalFilterPresent = useCallback(() => wantRisk != null || wantQ !== "", [wantRisk, wantQ]);
   const doesExternalFilterPass = useCallback(
-    (node: IRowNode<PRow>) => (node.data ? (!wantRisk || ROW_RISK_LABEL[node.data.risk] === wantRisk) : true),
-    [wantRisk]);
+    (node: IRowNode<PRow>) => (node.data ? matchQ(node.data) && (!wantRisk || ROW_RISK_LABEL[node.data.risk] === wantRisk) : true),
+    [wantRisk, wantQ]);
 
   // 적용된 필터 → 칩 목록 (드로어와 연동)
   const chips = [];
+  if (applied.q) chips.push({ key: "q", label: "검색어: " + applied.q });
   if (applied.period) chips.push({ key: "period", label: applied.period });
   Object.keys(applied.assets || {}).filter((a) => applied.assets[a]).forEach((a) => chips.push({ key: "asset:" + a, label: a }));
   if (riskLabel(applied.risk)) chips.push({ key: "risk", label: riskLabel(applied.risk) });
   const removeChip = (key) => setApplied((f) => {
+    if (key === "q") return { ...f, q: null };
     if (key === "period") return { ...f, period: null };
     if (key === "risk") return { ...f, risk: null };
     if (key.startsWith("asset:")) { const a = key.slice(6); return { ...f, assets: { ...f.assets, [a]: false } }; }

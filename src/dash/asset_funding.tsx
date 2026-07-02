@@ -147,6 +147,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
 
   // 상세필터(External Filter) 상태 — L12 실증
   const [filterOpen, setFilterOpen] = useState(false);
+  const [fText, setFText] = useState('');                 // 검색어 (전 컬럼 부분일치)
   const [fYear, setFYear] = useState('');                 // 사업연도 (정확일치)
   const [fMin, setFMin] = useState('');                   // 출자금액 최소 (이상)
 
@@ -164,15 +165,19 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   }, []);
 
   // 외부 필터: 값 바뀌면 그리드에 재적용 통지(L12 — Community external filter)
-  const filterActive = fYear !== '' || fMin !== '';
-  useEffect(() => { apiRef.current?.onFilterChanged(); }, [fYear, fMin]);
+  // 검색어 = 행 전 컬럼 부분일치(OR), 다른 조건과는 AND
+  const matchText = useCallback((r: FundingRow) =>
+    !fText || Object.values(r).some((v) => String(v ?? '').toLowerCase().includes(fText.toLowerCase())), [fText]);
+  const filterActive = fText !== '' || fYear !== '' || fMin !== '';
+  useEffect(() => { apiRef.current?.onFilterChanged(); }, [fText, fYear, fMin]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<FundingRow>) => {
     const r = node.data; if (!r) return true;
+    if (!matchText(r)) return false;
     if (fYear && r.y !== fYear) return false;
     if (fMin && Number(r.u1) < Number(fMin)) return false;
     return true;
-  }, [fYear, fMin]);
+  }, [matchText, fYear, fMin]);
 
   const refresh = () => { setRows([...ROWS]); apiRef.current?.deselectAll(); toast.success('새로고침했습니다'); };
   const clearSel = () => apiRef.current?.deselectAll();
@@ -226,7 +231,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   };
 
   // 카드(상세 뷰)·푸터 건수는 동일 필터 술어를 공유(단일 데이터·렌더러 이원화)
-  const filteredRows = rows.filter((r) => (!fYear || r.y === fYear) && (!fMin || r.u1 >= Number(fMin)));
+  const filteredRows = rows.filter((r) => matchText(r) && (!fYear || r.y === fYear) && (!fMin || r.u1 >= Number(fMin)));
   const shown = view === 'list'
     ? Math.min(PAGE_SIZE, Math.max(0, page.rowCount - page.current * PAGE_SIZE))
     : filteredRows.length;
@@ -254,8 +259,8 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
           <Icon name="filter" size={16} className="text-caption" />
           {filterActive ? (
             <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {fYear ? '연도: ' + fYear : ''}{fYear && fMin ? ' · ' : ''}{fMin ? '출자금액 ≥ ' + fMin : ''}
-              <button onClick={() => { setFYear(''); setFMin(''); }} aria-label="필터 제거" className="inline-flex border-0 cursor-pointer p-0" style={{ background: 'transparent', color: 'inherit' }}>
+              {[fText && '검색어: ' + fText, fYear && '연도: ' + fYear, fMin && '출자금액 ≥ ' + fMin].filter(Boolean).join(' · ')}
+              <button onClick={() => { setFText(''); setFYear(''); setFMin(''); }} aria-label="필터 제거" className="inline-flex border-0 cursor-pointer p-0" style={{ background: 'transparent', color: 'inherit' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
             </span>
@@ -349,6 +354,11 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
+            {/* 검색어 — 모든 상세필터 공통 최상단. 행 전 컬럼 부분일치 */}
+            <label className="block mb-4">
+              <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>검색어</span>
+              <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} placeholder="검색어 입력" style={inputStyle} />
+            </label>
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>사업연도</span>
               {/* Safari menulist는 세로 padding을 무시해 select가 input보다 낮게 렌더됨(WebKit 측정 22 vs 37px).
@@ -367,7 +377,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
             </label>
           </div>
           <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => { setFYear(''); setFMin(''); }}>초기화</Button>
+            <Button variant="outline" size="md" onClick={() => { setFText(''); setFYear(''); setFMin(''); }}>초기화</Button>
             <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
           </SheetFooter>
         </SheetContent>
