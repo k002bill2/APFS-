@@ -71,7 +71,8 @@ const GROUPS: BtnDef[][] = [
 
 type PromptMode = null | 'link' | 'image';
 
-export function RichTextField({ value, onChange, label }: { value: string; onChange: (v: string) => void; label?: string }) {
+// required: 필수 필드 상시 표식 — 컨테이너 테두리만 danger(is-required, richtext.css). aria-required로 접근성 표기.
+export function RichTextField({ value, onChange, label, required }: { value: string; onChange: (v: string) => void; label?: string; required?: boolean }) {
   const [, force] = useReducer((x: number) => x + 1, 0);
   const [pMode, setPMode] = useState<PromptMode>(null); // URL 입력 바 모드(링크/이미지 공용)
   const [pUrl, setPUrl] = useState('');
@@ -86,7 +87,7 @@ export function RichTextField({ value, onChange, label }: { value: string; onCha
     immediatelyRender: false,       // Vite/SSR 안전 — 초기 null 후 마운트
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
     // 접근성 이름은 스키마 field.label에서 받는다(비-native div[role=textbox]라 외부 <label> 암묵연결 불가).
-    editorProps: { attributes: { class: 'apfs-prose', role: 'textbox', 'aria-multiline': 'true', 'aria-label': label || '내용' } },
+    editorProps: { attributes: { class: 'apfs-prose', role: 'textbox', 'aria-multiline': 'true', 'aria-label': label || '내용', ...(required ? { 'aria-required': 'true' } : {}) } },
   });
 
   // 트랜잭션마다 리렌더 → 툴바 활성 상태 동기화(v3 useEditor는 자동 리렌더 안 함).
@@ -117,7 +118,7 @@ export function RichTextField({ value, onChange, label }: { value: string; onCha
   const imageActive = !!editor && editor.isActive('image');
 
   return (
-    <div className="apfs-richtext">
+    <div className={'apfs-richtext' + (required ? ' is-required' : '')}>
       <div className="apfs-richtext__toolbar" role="toolbar" aria-label="서식 도구">
         {/* 실행취소/다시실행 — can() 게이트로 disabled. */}
         <button type="button" title="실행취소" aria-label="실행취소" className="apfs-rt-btn"

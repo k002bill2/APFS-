@@ -12,6 +12,12 @@
   border-color: var(--ring);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 22%, transparent);
 }
+/* 필수 필드 상시 표식 — 네이티브 인풋(SchemaField base)과 동일하게 포커스 중에도 빨간 테두리 유지
+   (:focus-within 규칙과 특이도 동률이라 뒤에 배치 + 명시 셀렉터로 승리). 포커스 링 그림자는 그대로 둔다. */
+.apfs-richtext.is-required,
+.apfs-richtext.is-required:focus-within {
+  border-color: var(--danger);
+}
 
 /* 툴바 — shadcn-tiptap 스킨: 투명 바 + 은은한 아이콘-토글 버튼.
    툴바 자체는 채우지 않고(border-bottom만), 버튼 hover/active가 --muted 칩으로 드러난다. */

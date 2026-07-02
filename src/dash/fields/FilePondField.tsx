@@ -17,13 +17,15 @@ import './filepond.css';
 // 플러그인 등록은 모듈 스코프에서 1회(렌더 중 등록 금지 — 매 렌더 재등록 방지).
 registerPlugin(FilePondPluginFileValidateSize, FilePondPluginFileValidateType);
 
-export function FilePondField({ onChange }: { value: string; onChange: (v: string) => void }) {
+// required: 필수 필드 상시 표식 — 드롭 패널 테두리만 danger(is-required, filepond.css).
+export function FilePondField({ onChange, required }: { value: string; onChange: (v: string) => void; required?: boolean }) {
   // ⚠️ 비제어(uncontrolled) — files prop을 React로 제어하지 않는다. FilePond가 내부 파일 목록을 단독 소유.
   //    제어 모드(files={state})에서 onupdatefiles가 넘기는 FilePondFile 객체를 그대로 files prop으로 되먹이면
   //    react-filepond가 이를 유효한 파일 소스로 인식하지 못해 내부 상태를 비운다(DOM엔 항목이 보이나 getFiles()=0
   //    → 드롭/선택이 "안 먹는" 것처럼 보임). 우리 용도는 파일명 캡처뿐이라 onupdatefiles로 읽어 직렬화만 한다.
   return (
     <FilePond
+      className={required ? 'is-required' : undefined}
       onupdatefiles={(items) => onChange(items.map((i) => i.file?.name ?? '').filter(Boolean).join(', '))}
       allowMultiple={true}
       maxFiles={10}

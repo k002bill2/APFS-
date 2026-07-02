@@ -14,6 +14,11 @@
   border-radius: 9px;
 }
 
+/* 필수 필드 상시 표식 — react-filepond className이 .filepond--root에 붙는다 */
+.filepond--root.is-required .filepond--panel-root {
+  border-color: var(--danger);
+}
+
 /* 안내 라벨 */
 .filepond--drop-label {
   color: var(--muted-foreground);

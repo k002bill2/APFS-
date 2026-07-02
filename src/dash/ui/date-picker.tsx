@@ -19,10 +19,12 @@ function parseValue(v: string): Date | undefined {
   return isValid(d) ? d : undefined;
 }
 
-export function DatePicker({ value, onChange, invalid, disabled, placeholder = '날짜 선택', ariaLabel }: {
+export function DatePicker({ value, onChange, invalid, required, disabled, placeholder = '날짜 선택', ariaLabel }: {
   value: string;
   onChange: (v: string) => void;
   invalid?: boolean;
+  // 필수 필드 상시 표식 — 테두리만 danger로. aria-invalid는 검증 실패(invalid)에만 붙인다.
+  required?: boolean;
   disabled?: boolean;
   placeholder?: string;
   // 트리거는 <button>이라 감싸는 <label>로 명명되지 않음(accname: label은 input류만 명명).
@@ -47,11 +49,12 @@ export function DatePicker({ value, onChange, invalid, disabled, placeholder = '
           disabled={disabled}
           aria-label={ariaLabel}
           aria-invalid={invalid || undefined}
+          aria-required={required || undefined}
           className={cn(
             'flex min-h-[38px] w-full items-center justify-between gap-2 rounded-[9px] border bg-card px-[11px] py-2 text-left text-sm text-foreground transition-colors',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             'disabled:cursor-not-allowed disabled:opacity-60',
-            invalid ? 'border-danger' : 'border-border-strong',
+            invalid || required ? 'border-danger' : 'border-border-strong',
           )}
         >
           <span className={cn('tabular-nums', !selected && 'text-muted-foreground')}>
