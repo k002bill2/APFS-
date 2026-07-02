@@ -16,7 +16,9 @@ import { mn, useMask } from './mask';
 import { GridFrame, KpiBadge } from './grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, CellContextMenuEvent } from 'ag-grid-community';
+import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
+import type { CtxItem, CtxMenuState } from './row_context_menu';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
@@ -154,6 +156,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
 
   // 등록 모달 상태
   const [regOpen, setRegOpen] = useState(false);
+  const [ctx, setCtx] = useState<CtxMenuState>(null);   // 우클릭 컨텍스트 메뉴 좌표·항목(null=닫힘)
   const [draft, setDraft] = useState({ y: '', c0: '', u1: '' });
 
   const masked = useMask();   // 마스크 ON이면 Excel 숫자 셀 값을 0으로(실값 비노출) — 표시 모양은 z 서식이 담당
@@ -189,6 +192,34 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
     setRows((prev) => prev.filter((r) => !ys.has(r.y)));
     apiRef.current?.deselectAll();
     toast.success(`${sel.length}개 항목을 삭제했습니다`);
+  };
+  // 단일 행 삭제 — 우클릭 컨텍스트 메뉴용(y가 행 식별자). 합계행은 호출부에서 제외.
+  const deleteOne = (y: string) => {
+    setRows((prev) => prev.filter((r) => r.y !== y));
+    apiRef.current?.deselectAll();
+    toast.success('항목을 삭제했습니다');
+  };
+  // 행 복사 — 구분(축)은 실값 유지, 숫자 값만 mn(fmt())로 마스킹(엑셀 내보내기와 동일 계약). TSV로 클립보드에.
+  const copyRow = (row: FundingRow) => {
+    const nums = (['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'u0', 'u1'] as const).map((k) => mn(fmt(row[k])));
+    navigator.clipboard?.writeText([row.y, ...nums].join('\t')).then(
+      () => toast.success('행을 복사했습니다'),
+      () => toast.error('복사에 실패했습니다'));
+  };
+  // 우클릭 컨텍스트 메뉴 — Community엔 내장 메뉴가 없어 onCellContextMenu로 직접 띄운다.
+  // pinned 합계행(rowPinned)·데이터 없는 셀은 제외(삭제 무의미 + 합계는 stale). 등록 전용이라 행 수정 항목은 없음.
+  const handleCellContextMenu = (e: CellContextMenuEvent<FundingRow>) => {
+    (e.event as MouseEvent | undefined)?.preventDefault();
+    const row = e.data;
+    if (!row || e.rowPinned) return;
+    const ev = e.event as MouseEvent;
+    const items: CtxItem[] = [
+      { label: '행 복사', icon: 'layers', onSelect: () => copyRow(row) },
+      { label: 'Excel 내보내기', icon: 'download', onSelect: exportExcel },
+      'sep',
+      { label: '행 삭제', icon: 'trash', danger: true, onSelect: () => deleteOne(row.y) },
+    ];
+    setCtx({ x: ev.clientX, y: ev.clientY, items });
   };
   // Excel(.xlsx) 내보내기 — SheetJS. 화면의 2단 그룹헤더(병합)·합계행을 재현하고, 현재 필터를 반영한다.
   // 숫자 컬럼은 실제 숫자(t:'n')+숫자서식(z)으로 기록 → Excel이 화면 그리드(type:'rightAligned')와 동일하게 자동 우측 정렬,
@@ -317,6 +348,8 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
             onGridReady={onGridReady}
             onSelectionChanged={onSelectionChanged}
             onPaginationChanged={onPaginationChanged}
+            preventDefaultOnContextMenu
+            onCellContextMenu={handleCellContextMenu}
           />
         </div>
       ) : (
@@ -418,6 +451,8 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
     </GridFrame>
   );
 }
