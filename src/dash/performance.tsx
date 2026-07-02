@@ -106,6 +106,10 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
     }
   }, [open]);
 
+  const apply = () => onApply({ q: q.trim() || null, assets: sel, risk: riskOn ? risk : null, period });
+  // 입력 중 Enter = 필터 적용 (한글 IME 조합 확정 Enter는 제외)
+  const applyOnEnter = (e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) apply(); };
+
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
@@ -122,6 +126,7 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
               type="text"
               value={q}
               onChange={(e) => setQ(e.target.value)}
+              onKeyDown={applyOnEnter}
               placeholder="검색어 입력"
               className="w-full text-[14px] text-foreground bg-card"
               style={{ boxSizing: "border-box", padding: "10px 13px", fontFamily: "inherit", outline: "none", border: "1px solid var(--border-strong)", borderRadius: 10 }}
@@ -175,7 +180,7 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
         </div>
         <SheetFooter className="px-6 py-5">
           <Button variant="outline" size="md" onClick={() => { setQ(""); setSel({}); setRisk(50); setRiskOn(false); setPeriod("당기 회계연도"); }}>초기화</Button>
-          <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => onApply({ q: q.trim() || null, assets: sel, risk: riskOn ? risk : null, period })}>필터 적용</Button>
+          <Button variant="primary" size="md" style={{ flex: 1 }} onClick={apply}>필터 적용</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

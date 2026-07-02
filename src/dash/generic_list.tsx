@@ -185,7 +185,9 @@ const drawerInputStyle: React.CSSProperties = {
   border: "1px solid var(--border-strong)", borderRadius: 9, background: "var(--card)", color: "var(--foreground)",
 };
 
-function DrawerFilterControl({ ff, value, onChange }: { ff: FilterField; value: string; onChange: (v: string) => void }) {
+function DrawerFilterControl({ ff, value, onChange, onEnter }: { ff: FilterField; value: string; onChange: (v: string) => void; onEnter?: () => void }) {
+  // Enter로 즉시 적용 — 한글 IME 조합 확정 Enter(isComposing)는 무시해 오적용 방지
+  const onKeyDown = (e: React.KeyboardEvent) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) onEnter?.(); };
   let control: React.ReactNode;
   if (ff.kind === "year" || ff.kind === "enum") {
     // Safari menulist는 세로 padding을 무시해 select가 input보다 낮게 렌더됨(WebKit 22 vs 37px).
@@ -203,9 +205,9 @@ function DrawerFilterControl({ ff, value, onChange }: { ff: FilterField; value: 
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(정확일치 필터 계약).
     control = <DatePicker value={value} onChange={onChange} ariaLabel={ff.label} />;
   } else if (ff.kind === "number") {
-    control = <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder="값 입력" style={drawerInputStyle} />;
+    control = <input type="number" value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} placeholder="값 입력" style={drawerInputStyle} />;
   } else {
-    control = <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={ff.label + " 입력"} style={drawerInputStyle} />;
+    control = <input type="text" value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} placeholder={ff.label + " 입력"} style={drawerInputStyle} />;
   }
   return (
     <label className="block mb-4">
@@ -238,6 +240,8 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
   });
   // 빈 값은 제거하고 적용 (미선택 필터는 비활성)
   const apply = () => { onApply(Object.fromEntries(Object.entries(draft).filter(([, v]) => v !== ""))); onClose(); };
+  // 입력 중 Enter = 필터 적용 (IME 조합 확정 Enter는 제외)
+  const applyOnEnter = (e: React.KeyboardEvent) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) apply(); };
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
@@ -250,7 +254,7 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
           {/* 검색어 — 모든 상세필터 공통 최상단(예약 라벨). 전 컬럼 부분일치 검색 */}
           <label className="block mb-4">
             <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>{SEARCH_LABEL}</span>
-            <input type="text" value={draft[SEARCH_LABEL] ?? ""} onChange={(e) => setVal(SEARCH_LABEL, e.target.value)} placeholder="검색어 입력" style={drawerInputStyle} />
+            <input type="text" value={draft[SEARCH_LABEL] ?? ""} onChange={(e) => setVal(SEARCH_LABEL, e.target.value)} onKeyDown={applyOnEnter} placeholder="검색어 입력" style={drawerInputStyle} />
           </label>
           {filters.length === 0 ? (
             <div className="text-caption text-center" style={{ fontSize: 13, padding: "28px 0" }}>설정 가능한 필터가 없습니다.</div>
@@ -262,7 +266,7 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
                   const ff = resolveFilterField(label, schema);
                   return ff.kind === "tag"
                     ? <DrawerCheckRow key={label} label={label} checked={!!draft[label]} onClick={() => toggleTag(label)} />
-                    : <DrawerFilterControl key={label} ff={ff} value={draft[label] ?? ""} onChange={(v) => setVal(label, v)} />;
+                    : <DrawerFilterControl key={label} ff={ff} value={draft[label] ?? ""} onChange={(v) => setVal(label, v)} onEnter={apply} />;
                 })}
               </div>
             </>
