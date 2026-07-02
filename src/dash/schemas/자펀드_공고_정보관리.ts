@@ -19,8 +19,8 @@ export const schema: PageSchema = {
     { key: 'seqNo',      label: '차수',      control: 'number' },
     { key: 'fundAccount',label: '자펀드계정', control: 'select', options: ['전체'] },
     { key: 'title',      label: '제목',      control: 'text', required: true },
-    { key: 'content',    label: '공고내용',  control: 'textarea' },
-    { key: 'attachment', label: '첨부파일',  control: 'file' },
+    { key: 'content',    label: '공고내용',  control: 'richtext' },
+    { key: 'attachment', label: '첨부파일',  control: 'filepond' },
   ],
   filters: ['사업년도', '정기/수시'],
   statusDomain: [

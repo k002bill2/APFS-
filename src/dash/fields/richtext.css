@@ -58,6 +58,51 @@
   margin: 0 4px;
 }
 
+/* 링크 URL 입력 바 — 툴바 아래 한 줄(포털/팝오버 없이 흐름 내). */
+.apfs-richtext__linkbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--muted);
+}
+.apfs-rt-linkinput {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 30px;
+  padding: 0 10px;
+  font-size: 14px;
+  color: var(--foreground);
+  background: var(--card);
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  outline: none;
+}
+.apfs-rt-linkinput:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 22%, transparent);
+}
+.apfs-rt-linkbtn {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-foreground);
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.apfs-rt-linkbtn.is-ghost {
+  color: var(--muted-foreground);
+  background: transparent;
+  border-color: var(--border-strong);
+}
+.apfs-rt-linkbtn:hover { filter: brightness(1.05); }
+.apfs-rt-linkbtn.is-ghost:hover { background: var(--card); color: var(--foreground); filter: none; }
+
 /* 편집 영역 — preflight:false라 목록/제목 기본 스타일을 명시적으로 복원 */
 .apfs-prose.ProseMirror {
   min-height: 220px;
@@ -96,6 +141,37 @@
   padding: .14em .38em;
   border-radius: 6px;
   font-size: .9em;
+}
+/* 코드 블록 = 칩 배경 판 + 가로 스크롤. 내부 code는 칩 배경 해제(이중 배경 방지). */
+.apfs-prose pre {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .7em .9em;
+  margin: .8em 0;
+  overflow-x: auto;
+  font-size: .9em;
+  line-height: 1.5;
+}
+.apfs-prose pre code { background: transparent; padding: 0; border-radius: 0; font-size: inherit; }
+/* 링크 = accent 색 밑줄(라이트/다크 대비 보존). */
+.apfs-prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+/* 이미지 = 에디터 폭 내로 제한 + 라운드. 선택 시(ProseMirror-selectednode) accent 링으로 표시. */
+.apfs-prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: .6em 0;
+}
+.apfs-prose img.ProseMirror-selectednode {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 .apfs-prose hr {
   border: none;
