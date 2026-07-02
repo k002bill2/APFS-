@@ -19,9 +19,11 @@ import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescrip
 import { DatePicker } from './ui/date-picker';
 import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode } from 'ag-grid-community';
+import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode, CellContextMenuEvent } from 'ag-grid-community';
 import { apfsTheme } from './aggrid_theme';   // 공유 테마(회색 행선택) SSOT
 import './aggrid_shared.css';
+import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
+import type { CtxItem, CtxMenuState } from './row_context_menu';
 import { GridFrame, KpiBadge } from './grid_frame';   // 공통 양식 셸 + KPI 배지(apfs-grid 스킬 SSOT)
 
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
@@ -321,6 +323,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const [showAll, setShowAll] = useState(false);   // 전체보기 — 페이지 크기를 전체 행 수로 키워 한 페이지에 모두 표시
   const [modal, setModal] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [ctx, setCtx] = useState<CtxMenuState>(null);   // 우클릭 컨텍스트 메뉴 좌표·항목(null=닫힘)
 
   // 활성 필터로 행을 실제 필터링 → KPI·카드뷰·건수는 이 결과 기준
   // (그리드 리스트뷰는 external filter로 동일 술어를 적용 — 페이지네이션은 그리드가 소유).
@@ -450,6 +453,30 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     toast.success('Excel로 내보냈습니다');
   };
 
+  // 행 복사 — 스키마 컬럼(스파크라인 trend 제외)을 TSV로. 마스크 ON이면 mn()으로 실값 비노출(엑셀과 동일 계약).
+  const copyRow = (row: Row) => {
+    const line = schema.columns.filter((c) => c.key !== 'trend')
+      .map((c) => mn(String((row as any)[c.key] ?? ''))).join('\t');
+    navigator.clipboard?.writeText(line).then(
+      () => toast.success('행을 복사했습니다'),
+      () => toast.error('복사에 실패했습니다'));
+  };
+
+  // 우클릭 컨텍스트 메뉴 — Community엔 내장 메뉴가 없어 onCellContextMenu(이벤트만 제공)로 직접 띄운다.
+  // pinned 행(합계 등)·데이터 없는 셀은 제외. 항목은 기존 CRUD 핸들러 재사용.
+  const handleCellContextMenu = (e: CellContextMenuEvent<Row>) => {
+    (e.event as MouseEvent | undefined)?.preventDefault();
+    const row = e.data;
+    if (!row || e.rowPinned) return;
+    const ev = e.event as MouseEvent;
+    const items: CtxItem[] = [];
+    if (editable) items.push({ label: '수정', icon: 'file', onSelect: () => setModal({ mode: 'edit', row }) });
+    items.push({ label: '행 복사', icon: 'layers', onSelect: () => copyRow(row) });
+    items.push({ label: 'Excel 내보내기', icon: 'download', onSelect: exportExcel });
+    if (editable) { items.push('sep'); items.push({ label: '삭제', icon: 'trash', danger: true, onSelect: () => deleteOne(row.id) }); }
+    setCtx({ x: ev.clientX, y: ev.clientY, items });
+  };
+
   // 전체보기 시 페이지 크기 = 전체 행 수 → total pages가 1이 되어 푸터 페이지네이션이 자동으로 숨는다
   const pageSize = showAll ? Math.max(rows.length, 1) : PER;
   // 푸터 건수 — 리스트뷰는 그리드 페이지 기준, 카드뷰는 필터 결과 기준
@@ -537,6 +564,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               onSelectionChanged={onSelectionChanged}
               onPaginationChanged={onPaginationChanged}
               onRowDoubleClicked={editable ? (e) => e.data && setModal({ mode: "edit", row: e.data }) : undefined}
+              preventDefaultOnContextMenu
+              onCellContextMenu={handleCellContextMenu}
               overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">표시할 항목이 없습니다</span>'}
             />
           </div>
@@ -579,6 +608,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         schema={schema}
         applied={filterValues}
         onApply={(next) => { setFilterValues(next); apiRef.current?.paginationGoToFirstPage(); }} />
+
+      <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
     </GridFrame>
   );
 }
