@@ -4,6 +4,15 @@ import { UI } from './components';
 import { Charts } from './charts';
 import { GalleryCharts } from './gallery_charts';
 import { APFS_DATA } from './data';
+import { Alert, AlertTitle, AlertDescription } from './ui/alert';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './ui/accordion';
+import { HoverCard, HoverCardTrigger, HoverCardContent } from './ui/hover-card';
+import { ScrollArea } from './ui/scroll-area';
+import { Spinner } from './ui/spinner';
+import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from './ui/input-group';
+import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from './ui/item';
+import { Search } from 'lucide-react';
+import { Icon } from './icons';
 
 const { ColorChip, StatusBadge, StatCard, ChartCard, Button, FilterChip, SegTabs, DeltaBadge, Card } = UI;
 const { Sparkline, Donut, LineTrend, GroupedBars, ComposedBars, Gauge, HBars, Treemap } = Charts;
@@ -98,6 +107,63 @@ function DesignSystem() {
             icon="shield-check"
             accent="var(--primary)"
             minH={180}><Donut data={D.STATUS_DONUT} height={180} centerLabel="총 자펀드" /></ChartCard></div></Section>
+
+      <Section title="3-1. Alert (인라인 콜아웃)" desc="폼 검증 요약·경고 배너용. 색은 -soft 배경 + 솔리드 전경 + color-mix 테두리(opacity 모디파이어 미사용). shadcn ring 없음.">
+        <div className="flex flex-col gap-2.5">
+          <Alert variant="default"><Icon name="bell" size={18} /><AlertTitle>안내</AlertTitle><AlertDescription>기본(default) 톤 — 중립 표면의 일반 안내.</AlertDescription></Alert>
+          <Alert variant="info"><Icon name="info" size={18} /><AlertTitle>진행 정보</AlertTitle><AlertDescription>info 톤 — 처리 상태·부가 설명.</AlertDescription></Alert>
+          <Alert variant="success"><Icon name="check-circle" size={18} /><AlertTitle>저장 완료</AlertTitle><AlertDescription>success 톤 — 정상 처리 확인.</AlertDescription></Alert>
+          <Alert variant="warning"><Icon name="alert-triangle" size={18} /><AlertTitle>확인 필요</AlertTitle><AlertDescription>warning 톤 — 필수 항목 누락 등 주의 환기.</AlertDescription></Alert>
+          <Alert variant="destructive"><Icon name="shield-alert" size={18} /><AlertTitle>처리 실패</AlertTitle><AlertDescription>destructive 톤 — 오류·파괴적 작업 경고.</AlertDescription></Alert>
+        </div>
+      </Section>
+
+      <Section title="3-2. 추가 프리미티브 (shadcn 갭 도입)" desc="Accordion · Hover Card · Scroll Area · Spinner · Input Group · Item — 정본 shadcn 갭 6종. 전부 토큰·전역 포커스·rounded-card 규약 적용.">
+        <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(340px,100%),1fr))" }}>
+          <Card className="flex flex-col gap-2">
+            <div className="t-label" style={{ textTransform: "none" }}>Accordion</div>
+            <Accordion type="single" collapsible>
+              <AccordionItem value="a"><AccordionTrigger>출자 조건은 무엇인가요?</AccordionTrigger><AccordionContent>모태펀드 출자 비율·존속기간·투자의무 등 조건을 접이식으로 표시합니다.</AccordionContent></AccordionItem>
+              <AccordionItem value="b"><AccordionTrigger>보고 주기는?</AccordionTrigger><AccordionContent>분기별 정기보고 + 수시보고. 마감 임박 항목은 일정 위젯에서 알림.</AccordionContent></AccordionItem>
+            </Accordion>
+          </Card>
+
+          <Card className="flex flex-col gap-3">
+            <div className="t-label" style={{ textTransform: "none" }}>Hover Card · Spinner</div>
+            <div className="flex items-center gap-4">
+              <HoverCard openDelay={120}>
+                <HoverCardTrigger asChild><button className="text-primary font-semibold underline underline-offset-2">GP 미리보기</button></HoverCardTrigger>
+                <HoverCardContent><div className="flex flex-col gap-1"><div className="font-semibold text-foreground">운용사 요약</div><div className="text-[13px] text-muted-foreground">누적 결성 · 투자 성과 · 조기경보 상태를 호버로 미리 봅니다.</div></div></HoverCardContent>
+              </HoverCard>
+              <div className="flex items-center gap-2 text-muted-foreground"><Spinner /><Spinner className="size-6 text-primary" /><span className="text-[13px]">로딩</span></div>
+            </div>
+          </Card>
+
+          <Card className="flex flex-col gap-2">
+            <div className="t-label" style={{ textTransform: "none" }}>Input Group</div>
+            <InputGroup>
+              <InputGroupAddon align="inline-start"><Search /></InputGroupAddon>
+              <InputGroupInput placeholder="자펀드·운용사 검색" />
+              <InputGroupAddon align="inline-end"><InputGroupButton variant="default" size="sm">검색</InputGroupButton></InputGroupAddon>
+            </InputGroup>
+          </Card>
+
+          <Card className="flex flex-col gap-2">
+            <div className="t-label" style={{ textTransform: "none" }}>Scroll Area</div>
+            <ScrollArea className="h-28 rounded-card border border-border">
+              <div className="flex flex-col gap-1 p-2.5 text-[13px] text-muted-foreground">{Array.from({ length: 12 }, (_, i) => <div key={i} className="py-0.5">항목 라인 {i + 1} — 넘치는 콘텐츠를 커스텀 스크롤바로 표시</div>)}</div>
+            </ScrollArea>
+          </Card>
+
+          <Card className="flex flex-col gap-2" style={{ gridColumn: "1 / -1" }}>
+            <div className="t-label" style={{ textTransform: "none" }}>Item (ItemGroup · Media · Content · Actions)</div>
+            <ItemGroup>
+              <Item variant="outline"><ItemMedia variant="icon"><Icon name="landmark" size={18} /></ItemMedia><ItemContent><ItemTitle>농식품 벤처투자조합 1호</ItemTitle><ItemDescription>결성 320억 · 운용사 ○○인베스트먼트 · 존속 8년</ItemDescription></ItemContent><ItemActions><StatusBadge tone="success" icon="check" label="정상" /></ItemActions></Item>
+              <Item variant="outline"><ItemMedia variant="icon"><Icon name="wallet" size={18} /></ItemMedia><ItemContent><ItemTitle>수산 스케일업 펀드</ItemTitle><ItemDescription>결성 150억 · 운용사 △△자산운용 · 조기경보 관찰</ItemDescription></ItemContent><ItemActions><StatusBadge tone="warning" icon="alert-triangle" label="주의" /></ItemActions></Item>
+            </ItemGroup>
+          </Card>
+        </div>
+      </Section>
 
       <Section title="4. 차트 스타일" desc="동일한 토큰·애니메이션을 공유하는 차트 컴포넌트 모음. 카드에 담아 그대로 사용합니다.">
         <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(252px,1fr))" }}>

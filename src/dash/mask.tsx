@@ -28,14 +28,15 @@ export function mn(v: any): string {
   return _on ? String(v).replace(/\d/g, '0') : String(v);
 }
 
-/** MT — 마스크 모드에서 텍스트를 회색 skeleton 바로 대체하는 컴포넌트 */
+/** MT — 마스크 모드에서 텍스트를 회색 skeleton 바로 대체하는 컴포넌트.
+   apfs-mask-pulse로 은은히 펄스(기저 .28↔중간 .12). reduced-motion은 tokens.css 전역 규칙이 무력화. */
 export function MT({ children, w }: { children?: React.ReactNode; w?: number }) {
   const on = useMask();
   if (!on) return <>{children}</>;
   const len = typeof children === 'string' ? children.length : 8;
   const width = w ?? Math.max(28, Math.min(110, Math.round(len * 6.5)));
   return (
-    <span className="inline-block bg-muted-foreground" style={{
+    <span className="inline-block bg-muted-foreground apfs-mask-pulse" style={{
       borderRadius: 4,
       width,
       height: '0.72em',
