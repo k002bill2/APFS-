@@ -68,7 +68,7 @@ export function RowContextMenu({ state, onClose }: { state: CtxMenuState; onClos
             role="menuitem"
             onClick={() => { it.onSelect(); onClose(); }}
             className={
-              'flex items-center gap-2.5 w-full rounded-card-sm px-2.5 py-2 text-[13px] text-left cursor-pointer select-none border-0 bg-transparent transition-colors ' +
+              'flex items-center gap-2.5 w-full rounded-card-sm px-2.5 py-2 text-[14px] text-left cursor-pointer select-none border-0 bg-transparent transition-colors ' +
               (it.danger
                 ? 'hover:bg-[color-mix(in_srgb,var(--danger)_10%,transparent)]'
                 : 'hover:bg-accent-surface')
