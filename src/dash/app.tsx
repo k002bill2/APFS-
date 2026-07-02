@@ -83,7 +83,9 @@ function App() {
   else if (route === "report") page = <ReportMain onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "report-sutack") page = <ReportSutack onNav={onNav} />;
-  else page = <GenericListPage route={route} onNav={onNav} />;
+  // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
+  // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
+  else page = <GenericListPage key={route} route={route} onNav={onNav} />;
 
   return (
     <TooltipProvider delayDuration={300}>

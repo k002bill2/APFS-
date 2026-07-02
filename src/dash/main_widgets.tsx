@@ -191,15 +191,12 @@ function RiskTrendCard({ span, height = 200 }) {
 
 /* 즐겨찾기 편집 모달 (개인설정 — 즐겨찾기 전용) */
 function MenuPickerModal({ open, onClose }: { open: boolean; onClose: () => void; initialTab?: string }) {
-  const cur = { kind: "fav", def: D.DEFAULT_FAV, max: 6 };
+  const cur = { kind: "fav", def: D.DEFAULT_FAV };   // 개수 제한 없음(구 max:6 해제)
   const accent = "var(--warning)";
   const sel = useMenuSel(cur.kind, cur.def);
   const selSet = new Set(sel);
   const toggle = (key: string) => {
-    let next: string[];
-    if (selSet.has(key)) next = sel.filter((k) => k !== key);
-    else { if (sel.length >= cur.max) return; next = [...sel, key]; }
-    MenuStore.set(cur.kind, next);
+    MenuStore.set(cur.kind, selSet.has(key) ? sel.filter((k) => k !== key) : [...sel, key]);
   };
   const cats: any[] = [];
   (ALLMENU || []).forEach((o: any) => {
@@ -215,7 +212,7 @@ function MenuPickerModal({ open, onClose }: { open: boolean; onClose: () => void
         <div className="flex items-start justify-between gap-3" style={{ padding: "20px 22px 14px" }}>
           <div>
             <DialogTitle className="font-extrabold inline-flex items-center gap-2" style={{ fontSize: 17, letterSpacing: "-.01em" }}><Icon name="star" size={17} style={{ color: "var(--warning)" }} />즐겨찾기 편집</DialogTitle>
-            <DialogDescription className="t-caption" style={{ marginTop: 3 }}>전체 메뉴에서 자주 쓰는 화면을 골라 즐겨찾기에 등록하세요. (최대 {cur.max}개)</DialogDescription>
+            <DialogDescription className="t-caption" style={{ marginTop: 3 }}>전체 메뉴에서 자주 쓰는 화면을 골라 즐겨찾기에 등록하세요.</DialogDescription>
           </div>
           <button onClick={onClose} aria-label="닫기" className="shrink-0 bg-muted w-8 h-8 flex items-center justify-center cursor-pointer text-muted-foreground" style={{ border: "none", borderRadius: 9 }}><Icon name="x" size={17} /></button>
         </div>
@@ -230,8 +227,7 @@ function MenuPickerModal({ open, onClose }: { open: boolean; onClose: () => void
               <div className="flex flex-wrap gap-1.5">
                 {s.items.map((o: any) => {
                   const on = selSet.has(o.key);
-                  const full = !on && sel.length >= cur.max;
-                  return <button key={o.key} onClick={() => toggle(o.key)} disabled={full} title={full ? "최대 " + cur.max + "개까지 선택" : o.label} className="inline-flex items-center whitespace-nowrap" style={{ font: "inherit", cursor: full ? "not-allowed" : "pointer", opacity: full ? .4 : 1, gap: 5, border: "1px solid " + (on ? "transparent" : "var(--border)"), background: on ? `color-mix(in srgb,${accent} 16%,var(--card))` : "transparent", color: on ? accent : "var(--muted-foreground)", fontSize: 12.5, fontWeight: on ? 700 : 500, borderRadius: 9, padding: "6px 11px", transition: "background .15s,color .15s,border-color .15s" }}>
+                  return <button key={o.key} onClick={() => toggle(o.key)} title={o.label} className="inline-flex items-center whitespace-nowrap cursor-pointer" style={{ font: "inherit", gap: 5, border: "1px solid " + (on ? "transparent" : "var(--border)"), background: on ? `color-mix(in srgb,${accent} 16%,var(--card))` : "transparent", color: on ? accent : "var(--muted-foreground)", fontSize: 12.5, fontWeight: on ? 700 : 500, borderRadius: 9, padding: "6px 11px", transition: "background .15s,color .15s,border-color .15s" }}>
                     {on && <Icon name="star" size={12} stroke={2.4} />}{o.label}
                   </button>;
                 })}

@@ -405,50 +405,32 @@ const NOTIF_CENTER = {
   ],
 };
 
-const CAT_ICON: Record<string,string> = { "투자자산관리":"landmark", "조기경보":"shield-alert", "운용사 보고":"building", "회계 관리":"wallet", "부처보고":"file", "통계조회":"chart", "관리자":"settings" };
-const MENU_FULL = [
-  { cat:"투자자산관리", to:"performance", subs:[
-    { name:"모태/자펀드 관리", leaves:["출자 약정 관리","출자 집행","회수 관리"] },
-    { name:"사후관리",         leaves:["정기보고 점검","현장 실사","시정 조치"] },
-    { name:"투자기업 정보",     leaves:["기업 현황","재무제표 조회","투자 이력"] },
-  ]},
-  { cat:"조기경보", to:"risk", urgent:true, subs:[
-    { name:"리스크 모니터링", leaves:["지표 대시보드","알림 설정",{label:"경보 이력",badge:14}] },
-    { name:"가치평가 관리",   leaves:["평가 등록","평가 검토","평가 확정"] },
-  ]},
-  { cat:"운용사 보고", to:"gp-health", subs:[
-    { name:"운용기관 정보",  leaves:["등록 현황","인력 현황","변경 신청"] },
-    { name:"재무·조합 정보", leaves:["재무제표","조합 현황","출자자 명부"] },
-    { name:"자펀드 검증",    leaves:["결성 검증","운용 검증","청산 검증"] },
-  ]},
-  { cat:"회계 관리", to:"accounting", subs:[
-    { name:"자금관리",  leaves:["입출금 내역","자금 계획","이체 승인"] },
-    { name:"분개·전표", leaves:["전표 입력","전표 조회","분개 관리"] },
-    { name:"결산관리",  leaves:["월 결산","분기 결산","연 결산"] },
-  ]},
-  { cat:"부처보고", to:"gp-health", subs:[
-    { name:"등록원부 관리", leaves:["원부 등록","원부 변경","원부 조회"] },
-    { name:"수탁보고",      leaves:["정기 보고","수시 보고","보고 이력"] },
-  ]},
-  { cat:"통계조회", to:"performance", subs:[
-    { name:"투자 성과",   leaves:["포트폴리오 현황","수익률 분석","벤치마크 비교"] },
-    { name:"통계 리포트", leaves:["정형 보고서","맞춤 통계","데이터 다운로드"] },
-  ]},
-  { cat:"관리자", to:"main", subs:[
-    { name:"통합 모니터링", leaves:["시스템 현황","접속 로그","알림 관리"] },
-    { name:"권한 관리",     leaves:["사용자 관리","역할 관리","메뉴 권한"] },
-    { name:"시스템 관리",   leaves:["코드 관리","공통 설정","배치 관리"] },
-  ]},
-];
+/* 즐겨찾기 도메인 = 실제 LNB 메뉴(MENU, PRD 부록 A) 평탄화.
+   (구 MENU_FULL 데모 트리는 실제 라우트와 리프 라벨이 달라 즐겨찾기가 딥링크되지 못했음 — 제거.)
+   key = nav(라우트 문자열, LNB flattenMenu와 동일 규칙: leaf.path || leaf.label)
+   → 그리드 헤더 별(★) 토글이 현재 route로 바로 on/off 하고, FAB은 리프로 딥링크된다. */
 const ALLMENU: any[] = [];
-MENU_FULL.forEach((c, ci) => c.subs.forEach((g, gi) => g.leaves.forEach((lf: any, li) => {
-  const o = typeof lf === "string" ? { label: lf } : lf;
-  ALLMENU.push({ key: "c" + ci + "-" + gi + "-" + li, label: o.label, to: c.to, icon: CAT_ICON[c.cat], cat: c.cat, sub: g.name, urgent: c.urgent || o.urgent, badge: o.badge });
-})));
-const DEFAULT_FAV = ["c0-0-0", "c1-0-0", "c3-1-0"];
+MENU.forEach((top: any) => {
+  if (top.path && !top.children) {
+    ALLMENU.push({ key: top.path, label: top.label, to: top.path, icon: top.icon, cat: top.label, sub: top.label, urgent: top.urgent, badge: top.badge });
+    return;
+  }
+  (top.children || []).forEach((mid: any) => {
+    if (mid.children) mid.children.forEach((leaf: any) => {
+      const nav = leaf.path || leaf.label;
+      ALLMENU.push({ key: nav, label: leaf.label, to: nav, icon: top.icon, cat: top.label, sub: mid.label, urgent: top.urgent || leaf.urgent, badge: leaf.badge });
+    });
+    else {
+      const nav = mid.path || mid.label;
+      ALLMENU.push({ key: nav, label: mid.label, to: nav, icon: top.icon, cat: top.label, sub: top.label, urgent: top.urgent, badge: mid.badge });
+    }
+  });
+});
+const DEFAULT_FAV = ["asset-funding", "risk-manage", "자펀드 공고 정보관리"];
 
 export const MenuStore = {
-  _key: (kind: string) => "apfs.menu.v2." + kind,
+  // v3: 즐겨찾기 key가 positional(c0-0-0)→라우트 문자열로 변경 — 구 저장분과 호환 안 되므로 버전 승격
+  _key: (kind: string) => "apfs.menu.v3." + kind,
   get(kind: string) {
     try { const v = JSON.parse(localStorage.getItem(this._key(kind)) || "null"); if (Array.isArray(v)) return v; } catch (e) {}
     return null;

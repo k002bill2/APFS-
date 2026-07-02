@@ -7,9 +7,32 @@ import React from 'react';
 import { Shell } from './shell';
 import { UI } from './components';
 import { MT } from './mask';
+import { Icon } from './icons';
+import { APFS_DATA, MenuStore, useMenuSel } from './data';
 
 const { PageHeader } = Shell;
 const { Card, ColorChip } = UI;
+
+/* 카드헤더 즐겨찾기 토글(★) — 현재 페이지(route)를 MenuStore 'fav'에 on/off. 개수 제한 없음.
+   route가 메뉴(ALLMENU, key=라우트)에 없으면 렌더하지 않는다(FAB에서 표시·딥링크 불가). */
+function FavStar({ route }: { route: string }) {
+  const favs = useMenuSel("fav", APFS_DATA.DEFAULT_FAV);
+  if (!APFS_DATA.ALLMENU.some((o: any) => o.key === route)) return null;
+  const on = favs.includes(route);
+  const toggle = () => MenuStore.set("fav", on ? favs.filter((k: string) => k !== route) : [...favs, route]);
+  return (
+    <button
+      type="button" onClick={toggle} aria-pressed={on}
+      aria-label={on ? "즐겨찾기 해제" : "즐겨찾기 추가"} title={on ? "즐겨찾기 해제" : "즐겨찾기 추가"}
+      className="inline-flex items-center justify-center cursor-pointer shrink-0"
+      style={{ width: 30, height: 30, border: "none", borderRadius: 8, background: "transparent", color: on ? "var(--warning)" : "var(--caption)", transition: "color .15s,background .15s" }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--muted)")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+      {/* on: 채운 별 — svg 루트 inline fill이 fill="none" 속성을 덮는다(단일 폐곡선 star 글리프) */}
+      <Icon name="star" size={17} style={on ? { fill: "var(--warning)" } : undefined} />
+    </button>
+  );
+}
 
 /* 헤더 우측 KPI 배지 — generic_list.tsx에서 verbatim 추출(라벨 MT 마스킹 포함).
    value는 호출자가 이미 mn() 처리해 넘기는 ReactNode(숫자/단위), 라벨은 MT(원본 동일). */
@@ -35,6 +58,9 @@ export interface GridFrameProps {
   cardTitle?: string;
   /** 카드 헤더 우측 KPI 배지군 슬롯 (KpiBadge 나열) */
   kpis?: React.ReactNode;
+  /** 즐겨찾기 토글(★) 활성 — 현재 페이지의 라우트(onNav 인자와 동일 문자열).
+      지정 시 카드헤더 타이틀 옆에 별 아이콘이 붙고, 클릭으로 MenuStore 'fav'에 on/off 된다. */
+  favRoute?: string;
   /** 툴바 좌: 필터칩·선택 액션 */
   toolbarLeft?: React.ReactNode;
   /** 툴바 우: 새로고침·상세필터 등 보조 액션 */
@@ -51,7 +77,7 @@ export interface GridFrameProps {
 }
 
 export function GridFrame({
-  crumbs, title, sub, headerActions, cardTitle, kpis,
+  crumbs, title, sub, headerActions, cardTitle, kpis, favRoute,
   toolbarLeft, toolbarRight, footerLeft, footerCenter, footerRight, children,
 }: GridFrameProps) {
   const hasToolbar = Boolean(toolbarLeft || toolbarRight);
@@ -68,7 +94,10 @@ export function GridFrame({
         {/* 카드 헤더: 타이틀(+sub 캡션) + KPI 슬롯 */}
         <div className="flex items-center justify-between flex-wrap gap-4" style={{ padding: '6px 18px' }}>
           <div className="min-w-0">
-            <h3 className="font-bold" style={{ fontSize: 20 }}>{cardTitle ?? title}</h3>
+            <div className="flex items-center" style={{ gap: 4 }}>
+              <h3 className="font-bold" style={{ fontSize: 20 }}>{cardTitle ?? title}</h3>
+              {favRoute && <FavStar route={favRoute} />}
+            </div>
             {sub && <p className="text-caption" style={{ fontSize: 12.5, margin: '2px 0 0', lineHeight: 1.4 }}>{sub}</p>}
           </div>
           {kpis && <div className="flex gap-2.5 flex-wrap">{kpis}</div>}
