@@ -12,8 +12,17 @@
     if (dark) r.classList.add("dark");
     r.dataset.accent = localStorage.getItem("apfs.accent") || "forest";
     r.dataset.surface = localStorage.getItem("apfs.surface") || "soft";
-    r.dataset.cardtone = localStorage.getItem("apfs.cardtone") || "card";
-    r.style.background = dark ? "#0F1310" : "#FBFCFB";
+    var cardtone = localStorage.getItem("apfs.cardtone") || "card";
+    r.dataset.cardtone = cardtone;
+    /* CSS 로드 전 초기 배경 = 복원된 cardtone×theme의 실제 --bg 리터럴.
+       (라이트/다크 --bg는 cardtone에만 좌우 — tokens.css + tweaks.css 동기화. accent/surface는 --bg 불변.)
+       이 값이 어긋나면 첫 페인트 색 튐(FOUC)이 난다. tokens/tweaks의 --bg를 바꾸면 여기도 갱신할 것. */
+    var BG = {
+      card:     { light: "#F4F6F2", dark: "#0F1310" },
+      seamless: { light: "#FBFCFB", dark: "#121613" },
+      tint:     { light: "#E8F0E5", dark: "#0C140E" },
+    };
+    r.style.background = (BG[cardtone] || BG.card)[dark ? "dark" : "light"];
   } catch (e) {}
 </script>
 <style>
