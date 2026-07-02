@@ -31,7 +31,9 @@
 
 ### 2-B. 커스텀 등가물 `have-custom` — "missing" 아님
 
-Button/IconBtn · Card/ChartCard/StatCard · Badge군(StatusBadge/DeltaBadge/CountPill/FilterChip) · Breadcrumb(PageHeader) · Sidebar(Shell Lnb/RailNav) · Tabs/Toggle/ToggleGroup(SegTabs) · Pagination · Progress · Skeleton(mask.tsx) · Separator · Label · Kbd · EmptyState · Avatar(ColorChip) · Collapsible · Combobox(부품 보유) · Typography(토큰 클래스). **도입 불필요.**
+Button/IconBtn · Card/ChartCard/StatCard · Badge군(StatusBadge/DeltaBadge/CountPill/FilterChip) · Breadcrumb(PageHeader) · Sidebar(Shell Lnb/RailNav) · Tabs/Toggle/ToggleGroup(SegTabs) · Pagination · Progress · Separator · Label · Kbd · EmptyState · Avatar(ColorChip) · Collapsible · Combobox(부품 보유) · Typography(토큰 클래스). **도입 불필요.**
+
+> **⚠️ 2026-07-03 override — Skeleton 정식 도입(위 목록에서 제외).** 당초 이 리포트는 Skeleton을 mask.tsx 등가물로 보고 "도입 불필요"로 분류했으나, 사용자 요청("전체 스켈레톤 적용")으로 정식 shadcn Skeleton을 신설·배선함. 산출물: (1) `ui/skeleton.tsx` — `Skeleton`(animate-pulse+`bg-muted`; 정본 `bg-primary/10`은 full-color 토큰 opacity 무음 드롭이라 금지) + `PageSkeleton`(라우트 로딩용 페이지 골격, responsive-ui 준수). (2) `app.tsx` — 라우트 전환마다 500ms 로딩창 합성(더미데이터라 실 async 없음) → PageSkeleton 노출. (3) mask.tsx MT / aggrid_shared.css 헤더 placeholder를 tokens.css `apfs-mask-pulse`(기저 .28↔중간 .12, reduced-motion 전역 무력화)로 **정적 바→펄스 승격**. 즉 로딩=PageSkeleton, 상시 데이터마스크=펄스 바로 이원화.
 
 ### 2-C. 의도적 아키텍처 대체 `missing-substituted` — 갭 아님
 

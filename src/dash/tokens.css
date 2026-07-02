@@ -226,4 +226,9 @@ body{
 @keyframes ncPop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
 @keyframes drawline{from{stroke-dashoffset:var(--len);}to{stroke-dashoffset:0;}}
 @keyframes growbar{from{transform:scaleY(1);}to{transform:scaleY(1);}}
+/* 마스크 스켈레톤 펄스 — mask.tsx MT / AG Grid 헤더 placeholder 전용.
+   코어 animate-pulse는 중간 opacity .5로 '밝아진다'. 마스크 바는 기저 .28로 은은히 떠 있어야 하므로
+   중간에 .12로 '어두워지는' 범위로 돈다(밝아지며 튀는 것 방지). reduced-motion은 아래 전역 규칙이 무력화. */
+@keyframes apfs-mask-pulse{0%,100%{opacity:.28}50%{opacity:.12}}
+.apfs-mask-pulse{animation:apfs-mask-pulse 2s cubic-bezier(.4,0,.6,1) infinite;}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;}}

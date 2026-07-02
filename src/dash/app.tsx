@@ -22,6 +22,7 @@ import { GenericListPage } from './generic_list';
 import { AssetFunding } from './asset_funding';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
+import { PageSkeleton } from './ui/skeleton';
 const ReportMain = ReportMainPages.ReportMain;
 const ReportBucheo = ReportBucheoPages.ReportBucheo;
 const ReportSutack = ReportSutackPages.ReportSutack;
@@ -44,6 +45,9 @@ function App() {
   const [wide, setWide] = useState(() => ls.get("apfs.width", "fixed") === "full");
   const [navStyle, setNavStyle] = useState(() => ls.get("apfs.navstyle", "classic"));
   const [notifs, setNotifs] = useState(D.NOTIFS);
+  // 라우트 로딩 스켈레톤 — 더미데이터라 실제 async가 없어, 전환마다 짧은 로딩창을 합성해
+  // 전 페이지에 PageSkeleton을 노출한다(500ms). 초기 진입(loading 기본 true)에도 1회 뜬다.
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -53,6 +57,11 @@ function App() {
   useEffect(() => ls.set("apfs.role", role), [role]);
   useEffect(() => ls.set("apfs.route", route), [route]);
   useEffect(() => { HistoryStore.push(route); }, [route]);   // 방문기록 적재(복원된 초기 라우트 포함)
+  useEffect(() => {                                            // 라우트 전환마다 로딩 스켈레톤 노출
+    setLoading(true);
+    const t = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(t);
+  }, [route]);
   useEffect(() => ls.set("apfs.lnb", lnbOpen ? "1" : "0"), [lnbOpen]);
   useEffect(() => ls.set("apfs.navstyle", navStyle), [navStyle]);
   useEffect(() => {
@@ -103,7 +112,7 @@ function App() {
       wide={wide}
       onToggleWide={() => setWide((x) => !x)}
       notifs={notifs}
-      onReadAll={() => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })))}>{page}<Toaster theme={theme} /></AppShell>
+      onReadAll={() => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })))}>{loading ? <PageSkeleton /> : page}<Toaster theme={theme} /></AppShell>
     </TooltipProvider>
   );
 }
