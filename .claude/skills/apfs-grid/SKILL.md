@@ -39,6 +39,9 @@ interface GridFrameProps {
   headerActions?: ReactNode; // PageHeader 우측 액션 — 내보내기 등 주 액션은 여기 한 곳에만(중복 금지)
   cardTitle?: string;        // 카드헤더 타이틀 (미지정 시 title 재사용)
   kpis?: ReactNode;          // 카드헤더 우측 KPI 배지군 (KpiBadge 나열)
+  favRoute?: string;         // 즐겨찾기 별(★) 토글 활성 — 현재 페이지 라우트(onNav 인자와 동일 문자열).
+                             // 지정 시 카드헤더 타이틀 옆에 별 렌더, 클릭=MenuStore 'fav' on/off(제한 없음).
+                             // 키 도메인=ALLMENU(key=라우트, MENU 평탄화) — 라우트가 메뉴에 없으면 별 미렌더.
   toolbarLeft?: ReactNode;   // 툴바 좌: 필터칩·선택 액션·컨텍스트 설명
   toolbarRight?: ReactNode;  // 툴바 우: 새로고침·상세필터 등
   footerLeft?: ReactNode;    // 푸터 좌: 건수 등 요약

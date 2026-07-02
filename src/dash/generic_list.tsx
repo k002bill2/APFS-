@@ -318,6 +318,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 23 });   // AG Grid 페이지네이션 미러
   const [view, setView] = useState("list");
+  const [showAll, setShowAll] = useState(false);   // 전체보기 — 페이지 크기를 전체 행 수로 키워 한 페이지에 모두 표시
   const [modal, setModal] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
 
@@ -449,14 +450,17 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     toast.success('Excel로 내보냈습니다');
   };
 
+  // 전체보기 시 페이지 크기 = 전체 행 수 → total pages가 1이 되어 푸터 페이지네이션이 자동으로 숨는다
+  const pageSize = showAll ? Math.max(rows.length, 1) : PER;
   // 푸터 건수 — 리스트뷰는 그리드 페이지 기준, 카드뷰는 필터 결과 기준
-  const shown = view === "list" ? Math.min(PER, Math.max(0, page.rowCount - page.current * PER)) : filtered.length;
+  const shown = view === "list" ? Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize)) : filtered.length;
   const totalForCount = view === "list" ? page.rowCount : filtered.length;
 
   return (
     <GridFrame
       crumbs={crumbs}
       title={title}
+      favRoute={route}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav("main")}>메인으로</Button>}
       kpis={<>
         <KpiBadge icon="trending" color="var(--chart-1)" label="평균 변동률"
@@ -480,7 +484,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       )}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); }} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); }} />
         <MoreMenu onRegister={() => setModal({ mode: "create" })} onExport={exportExcel} editable={editable} />
       </>}
       footerLeft={'총 ' + mn(String(totalForCount)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}
@@ -502,6 +506,9 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       footerRight={<>
         <SegTabs size="sm" value={view} onChange={setView} options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "카드뷰" }]} />
         <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
+        {view === "list" && (
+          <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} onClick={() => setShowAll((v) => !v)} />
+        )}
         <IconBtn icon="external" label="새 창" size={32} />
         <IconBtn icon="more" label="더보기" size={32} />
       </>}>
@@ -521,7 +528,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
               rowSelection={{ mode: "multiRow", checkboxes: true, headerCheckbox: true }}
               pagination
-              paginationPageSize={PER}
+              paginationPageSize={pageSize}
+              paginationPageSizeSelector={false}
               suppressPaginationPanel
               isExternalFilterPresent={isExternalFilterPresent}
               doesExternalFilterPass={doesExternalFilterPass}
