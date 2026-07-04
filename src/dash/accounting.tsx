@@ -115,10 +115,11 @@ function CalendarView({ calMap }) {
 
   function DotRow({ events }) {
     return (
-      <div className="flex flex-wrap gap-[3px] mt-[3px]">{events.slice(0, 3).map((e, i) =>
+      <div className="flex flex-wrap gap-[3px] mt-[3px]"><span className="sr-only">일정 있음</span>{events.slice(0, 3).map((e, i) =>
           <span
             key={i}
             title={e.title}
+            aria-hidden={true}
             className="shrink-0"
             style={{
               width: 7, height: 7, borderRadius: "50%",

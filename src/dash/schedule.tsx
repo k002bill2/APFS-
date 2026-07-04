@@ -153,6 +153,9 @@ function CalendarView({ items }) {
             <button
               key={day}
               onClick={() => setSelectedDate(isSelected ? null : day)}
+              aria-pressed={isSelected}
+              aria-current={isToday ? "date" : undefined}
+              aria-label={`6월 ${day}일${isToday ? " 오늘" : ""}${hasDates ? ", 일정 있음" : ""}`}
               className="flex flex-col items-center justify-start pt-1.5 rounded-[8px] min-h-[52px] cursor-pointer border transition-all duration-150"
               style={{
                 background: isToday ? "var(--primary)" : isSelected ? "color-mix(in srgb,var(--primary) 12%,transparent)" : "var(--card)",
@@ -253,7 +256,7 @@ function NotifPanel({ notifs, onReadAll }) {
                 borderBottom: "1px solid var(--border)",
               }}
               onMouseEnter={(e) => { if (n.read) e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 50%,transparent)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = n.read ? "transparent" : soft; }}><span
+              onMouseLeave={(e) => { e.currentTarget.style.background = n.read ? "transparent" : soft; }}>{!n.read && <span className="sr-only">안읽음 </span>}<span
                 className="shrink-0 flex items-center justify-center rounded-[8px] mt-0.5"
                 style={{ width: 28, height: 28, background: `color-mix(in srgb,${c} 16%,transparent)`, color: c }}><Icon name={n.icon} size={14} stroke={2} /></span><div className="flex-1 min-w-0"><div
                   className={cx("text-[12.5px] font-semibold leading-snug truncate", !n.read && "text-foreground")}
