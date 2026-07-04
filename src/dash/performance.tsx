@@ -128,6 +128,7 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={applyOnEnter}
               placeholder="검색어 입력"
+              aria-label="검색어"
               className="w-full text-[14px] text-foreground bg-card"
               style={{ boxSizing: "border-box", padding: "10px 13px", fontFamily: "inherit", border: "1px solid var(--border-strong)", borderRadius: 10 }}
             />
@@ -148,6 +149,7 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
               max={100}
               value={risk}
               onChange={(e) => { setRisk(+e.target.value); setRiskOn(true); }}
+              aria-label="리스크 노출도"
               className="apfs-range w-full"
               style={{ accentColor: "var(--brand-blue)" }}
             />
@@ -163,6 +165,7 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
               <select
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
+                aria-label="기간 설정"
                 className="w-full text-[16px] font-semibold cursor-pointer appearance-none text-foreground bg-card border border-border"
                 style={{
                   borderRadius: 10, padding: "11px 44px 11px 14px", fontFamily: "inherit",
@@ -480,11 +483,14 @@ function Performance({ onNav }) {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
+                aria-label="이전 페이지"
                 className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground cursor-pointer border border-border bg-card"><Icon name="chevron-left" size={16} /></button>
               {[1, 2, 3].map((n) => (
                 <button
                   key={n}
                   onClick={() => setPage(n)}
+                  aria-label={`${n} 페이지`}
+                  aria-current={page === n ? "page" : undefined}
                   className={cx("w-8 h-8 inline-flex items-center justify-center rounded-lg text-[13px] font-semibold cursor-pointer tabular transition-colors")}
                   style={page === n
                     ? { background: "color-mix(in srgb,var(--primary) 12%,transparent)", color: "var(--primary)", border: "1px solid color-mix(in srgb,var(--primary) 40%,transparent)" }
@@ -492,13 +498,14 @@ function Performance({ onNav }) {
               ))}
               <button
                 onClick={() => setPage((p) => Math.min(3, p + 1))}
+                aria-label="다음 페이지"
                 className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground cursor-pointer border border-border bg-card"><Icon name="chevron-right" size={16} /></button>
             </div>
             <div className="flex items-center gap-3">
               <SegTabs options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "카드뷰" }]} value={view} onChange={setView} size="sm" />
               <div className="flex items-center gap-0.5">
                 <IconBtn icon="download" label="다운로드" size={34} onClick={exportExcel} />
-                {["external", "file", "more"].map((ic, i) => <IconBtn key={i} icon={ic} label={ic} size={34} />)}
+                {[["external", "외부 링크"], ["file", "문서"], ["more", "더보기"]].map(([ic, lb]) => <IconBtn key={ic} icon={ic} label={lb} size={34} />)}
               </div>
             </div>
           </div>

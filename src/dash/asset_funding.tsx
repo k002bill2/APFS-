@@ -108,7 +108,7 @@ function PoCMoreMenu({ onRegister, onExport }: { onRegister: () => void; onExpor
 /* 페이지 번호 버튼 — generic_list 푸터 페이저 외관 재현(토큰 기반) */
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{
+    <button onClick={onClick} aria-label={`${n} 페이지`} aria-current={active ? 'page' : undefined} style={{
       width: 32, height: 32, borderRadius: 8, border: '1px solid',
       borderColor: active ? 'var(--primary)' : 'var(--border)',
       background: active ? 'color-mix(in srgb, var(--primary) 10%, transparent)' : 'transparent',

@@ -325,7 +325,7 @@ function ncMemoBody(withBar: boolean) {
   return (
     <div>
       {withBar && <div className="nc-memobar">
-        <input type="text" placeholder="검색어를 입력하세요" className="nc-search" />
+        <input type="text" placeholder="검색어를 입력하세요" aria-label="메모 검색" className="nc-search" />
         <button className="nc-addbtn">+ 등록</button>
       </div>}
       {all.map((t: any, i: number) => ncRow("mm" + i, { tone: "info", icon: "memo", title: t.title, meta: t.due ? "마감 " + t.due : (t.start ? "시작 " + t.start : "") }))}
@@ -473,11 +473,11 @@ function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) 
           <button onClick={onClose} className="text-muted-foreground font-semibold cursor-pointer py-1.5 px-2" style={{ border: "none", background: "transparent", fontSize: 13, fontFamily: "inherit" }}>모두 읽음</button>
           <IconBtn icon="x" onClick={onClose} label="닫기" size={36} />
         </header>
-        <div className="flex gap-0.5 overflow-x-auto py-0 px-3.5" style={{ borderBottom: "1px solid var(--border)" }}>
+        <div role="tablist" className="flex gap-0.5 overflow-x-auto py-0 px-3.5" style={{ borderBottom: "1px solid var(--border)" }}>
           {tabs.map((t) => {
             const on = tab === t.id;
             return (
-              <button key={t.id} onClick={() => setTab(t.id)} className="flex items-center cursor-pointer whitespace-nowrap relative" style={{ gap: 7, padding: "13px 16px", border: "none", background: "transparent", font: "inherit", color: on ? "var(--brand-blue)" : "var(--muted-foreground)", fontWeight: on ? 800 : 600, fontSize: 14, borderBottom: on ? "2px solid var(--brand-blue)" : "2px solid transparent", marginBottom: -1 }}>
+              <button key={t.id} role="tab" aria-selected={on} onClick={() => setTab(t.id)} className="flex items-center cursor-pointer whitespace-nowrap relative" style={{ gap: 7, padding: "13px 16px", border: "none", background: "transparent", font: "inherit", color: on ? "var(--brand-blue)" : "var(--muted-foreground)", fontWeight: on ? 800 : 600, fontSize: 14, borderBottom: on ? "2px solid var(--brand-blue)" : "2px solid transparent", marginBottom: -1 }}>
                 {t.label}
                 {t.count ? <span className="font-extrabold" style={{ fontSize: 11, borderRadius: 99, padding: "1px 7px", background: on ? "var(--brand-blue)" : "var(--muted)", color: on ? "var(--on-brand-solid)" : "var(--muted-foreground)" }}>{cap(t.count)}</span> : null}
               </button>
