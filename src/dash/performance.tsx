@@ -129,7 +129,7 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
               onKeyDown={applyOnEnter}
               placeholder="검색어 입력"
               className="w-full text-[14px] text-foreground bg-card"
-              style={{ boxSizing: "border-box", padding: "10px 13px", fontFamily: "inherit", outline: "none", border: "1px solid var(--border-strong)", borderRadius: 10 }}
+              style={{ boxSizing: "border-box", padding: "10px 13px", fontFamily: "inherit", border: "1px solid var(--border-strong)", borderRadius: 10 }}
             />
           </div>
           <div>
@@ -165,7 +165,7 @@ function FilterDrawer({ open, onClose, onApply, applied }) {
                 onChange={(e) => setPeriod(e.target.value)}
                 className="w-full text-[16px] font-semibold cursor-pointer appearance-none text-foreground bg-card border border-border"
                 style={{
-                  borderRadius: 10, padding: "11px 44px 11px 14px", fontFamily: "inherit", outline: "none",
+                  borderRadius: 10, padding: "11px 44px 11px 14px", fontFamily: "inherit",
                 }}>
                 {["당기 회계연도", "전기 회계연도", "최근 1년", "최근 3년", "설정 기간"].map((o) => <option key={o} value={o}>{o}</option>)}
               </select>

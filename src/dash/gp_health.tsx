@@ -275,7 +275,7 @@ function GpHealth({ onNav }) {
             onChange={(e) => setSelectedGpId(e.target.value)}
             className="flex-1 font-bold text-foreground cursor-pointer"
             style={{
-              background: "transparent", border: "none", outline: "none",
+              background: "transparent", border: "none",
               fontSize: 14, fontFamily: "inherit",
               appearance: "none",
             }}>{GP_LIST.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><Icon
@@ -318,7 +318,7 @@ function GpHealth({ onNav }) {
               style={{
                 border: "1px solid var(--border)", borderRadius: 8,
                 padding: "5px 28px 5px 10px", fontSize: 12.5,
-                fontFamily: "inherit", appearance: "none", outline: "none",
+                fontFamily: "inherit", appearance: "none",
               }}>{FEE_PERIODS.map((p) => <option key={p} value={p}>{p}</option>)}</select><Icon
               name="chevron-down"
               size={14}
