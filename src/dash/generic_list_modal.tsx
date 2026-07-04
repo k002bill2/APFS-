@@ -51,7 +51,7 @@ function Field({ label, children, errMsg, className, plain }: { label: string; c
       <span className="font-semibold text-caption block" style={labelStyle}>{label}</span>
       {children}
       {errMsg && (
-        <span className="text-danger block mt-1" style={{ fontSize: 11.5 }}>
+        <span role="alert" className="text-danger block mt-1" style={{ fontSize: 11.5 }}>
           {errMsg}
         </span>
       )}

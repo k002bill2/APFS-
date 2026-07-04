@@ -273,6 +273,7 @@ function GpHealth({ onNav }) {
             className="text-primary shrink-0" /><select
             value={selectedGpId}
             onChange={(e) => setSelectedGpId(e.target.value)}
+            aria-label="운용사 선택"
             className="flex-1 font-bold text-foreground cursor-pointer"
             style={{
               background: "transparent", border: "none",
@@ -314,6 +315,7 @@ function GpHealth({ onNav }) {
           right={<div className="relative"><select
               value={feePeriod}
               onChange={(e) => setFeePeriod(e.target.value)}
+              aria-label="보수정산 기간"
               className="bg-muted font-semibold text-foreground cursor-pointer"
               style={{
                 border: "1px solid var(--border)", borderRadius: 8,

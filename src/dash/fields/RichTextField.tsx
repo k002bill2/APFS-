@@ -172,6 +172,7 @@ export function RichTextField({ value, onChange, label, required }: { value: str
         <div className="apfs-richtext__linkbar">
           <input
             type="url" className="apfs-rt-linkinput" autoFocus
+            aria-label={pMode === 'image' ? '이미지 URL' : '링크 URL'}
             placeholder={pMode === 'image' ? 'https://…/image.png' : 'https://example.com'}
             value={pUrl}
             onChange={(e) => setPUrl(e.target.value)}

@@ -251,6 +251,7 @@ function SubFund({ onNav }) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="자펀드명·코드·운용사 검색"
+              aria-label="자펀드 검색"
               className="text-[13px] rounded-[8px] border border-border bg-muted pl-8 pr-3 py-2 outline-none transition-colors text-foreground"
               style={{
                 width: 230,

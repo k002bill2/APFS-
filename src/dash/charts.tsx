@@ -325,6 +325,10 @@ function Treemap({ data, height = 240, onCell }: { data: any[]; height?: number;
             onMouseEnter={() => setHi(i)}
             onMouseLeave={() => setHi(null)}
             onClick={() => onCell && onCell(c)}
+            role={onCell ? "button" : undefined}
+            tabIndex={onCell ? 0 : undefined}
+            onKeyDown={onCell ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCell(c); } } : undefined}
+            aria-label={onCell ? "투자 비중 상세 보기" : undefined}
             className="absolute overflow-hidden flex flex-col justify-between"
             style={{
               left: c.x + 1, top: c.y + 1, width: Math.max(0, c.w - 2), height: Math.max(0, c.h - 2),

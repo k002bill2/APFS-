@@ -127,6 +127,7 @@ function FilterChip({ active, children, onClick, dot }: { active?: boolean; chil
   return (
     <button
       onClick={onClick}
+      aria-pressed={!!active}
       className={cx("inline-flex items-center gap-1.5 cursor-pointer font-[inherit] rounded-lg px-[11px] py-[5px] text-[12.5px] font-semibold border transition-all duration-150",
         active ? "text-primary" : "border-border-strong text-muted-foreground bg-card")}
       style={active ? { background: "color-mix(in srgb,var(--primary) 10%,transparent)", borderColor: "color-mix(in srgb,var(--primary) 28%,transparent)" } : undefined}>{dot && <span className="w-[7px] h-[7px] rounded-full" style={{ background: dot }} />}{children}</button>
