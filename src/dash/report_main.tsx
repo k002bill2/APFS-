@@ -295,6 +295,7 @@ function ReportMain({ onNav }: { onNav?: (route: string) => void }) {
               height={200}
               planColor="var(--chart-3)"
               actualColor="var(--primary)"
+              ariaLabel="연도별 투자·집행 현황 (계획/실적/집행률) 막대 차트"
             />
           </div>
           <div className="flex items-center gap-4 mt-2 px-1">

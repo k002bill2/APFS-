@@ -418,7 +418,8 @@ function Report({ onNav }) {
               data={INVEST_HISTORY}
               height={200}
               planColor="var(--chart-3)"
-              actualColor="var(--primary)" /></div><div className="flex items-center gap-4 mt-2 px-1"><div className="flex items-center gap-1.5"><span
+              actualColor="var(--primary)"
+              ariaLabel="연도별 투자·회수 현황 (계획 대비 실적) 막대 차트" /></div><div className="flex items-center gap-4 mt-2 px-1"><div className="flex items-center gap-1.5"><span
                 className="w-3 h-3 rounded-sm inline-block shrink-0"
                 style={{ background: "var(--chart-3)" }} /><span className="t-caption text-[11.5px]">계획</span></div><div className="flex items-center gap-1.5"><span
                 className="w-3 h-3 rounded-sm inline-block shrink-0 bg-primary" /><span className="t-caption text-[11.5px]">실적</span></div></div></ChartCard><div

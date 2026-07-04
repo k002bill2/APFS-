@@ -143,7 +143,7 @@ function DesignSystem() {
             <div className="t-label" style={{ textTransform: "none" }}>Input Group</div>
             <InputGroup>
               <InputGroupAddon align="inline-start"><Search /></InputGroupAddon>
-              <InputGroupInput placeholder="자펀드·운용사 검색" />
+              <InputGroupInput placeholder="자펀드·운용사 검색" aria-label="자펀드·운용사 검색" />
               <InputGroupAddon align="inline-end"><InputGroupButton variant="default" size="sm">검색</InputGroupButton></InputGroupAddon>
             </InputGroup>
           </Card>

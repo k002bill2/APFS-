@@ -68,7 +68,7 @@ function Stepper({ activeStep }: { activeStep: number }) {
         const active = i === activeStep;
         const [color] = toneVar(active ? "primary" : done ? "success" : "info");
         return (
-          <React.Fragment key={label}><div className="flex flex-col items-center gap-1"><div
+          <React.Fragment key={label}><div className="flex flex-col items-center gap-1" aria-current={active ? "step" : undefined}><div
                 className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[12px] font-bold transition-all"
                 style={{
                   background: done
@@ -84,7 +84,7 @@ function Stepper({ activeStep }: { activeStep: number }) {
                 className="text-[11px] font-semibold whitespace-nowrap"
                 style={{
                   color: active ? "var(--primary)" : done ? "var(--success)" : "var(--muted-foreground)",
-                }}>{label}</span></div>{i < STEPS.length - 1 && <div
+                }}>{label}{done && <span className="sr-only"> 완료</span>}{active && <span className="sr-only"> 현재 단계</span>}</span></div>{i < STEPS.length - 1 && <div
               className="flex-1 h-[2px] mx-2 rounded-full"
               style={{
                 minWidth: 32,

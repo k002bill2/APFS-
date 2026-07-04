@@ -127,6 +127,7 @@ function FilterChip({ active, children, onClick, dot }: { active?: boolean; chil
   return (
     <button
       onClick={onClick}
+      aria-pressed={!!active}
       className={cx("inline-flex items-center gap-1.5 cursor-pointer font-[inherit] rounded-lg px-[11px] py-[5px] text-[12.5px] font-semibold border transition-all duration-150",
         active ? "text-primary" : "border-border-strong text-muted-foreground bg-card")}
       style={active ? { background: "color-mix(in srgb,var(--primary) 10%,transparent)", borderColor: "color-mix(in srgb,var(--primary) 28%,transparent)" } : undefined}>{dot && <span className="w-[7px] h-[7px] rounded-full" style={{ background: dot }} />}{children}</button>
@@ -152,13 +153,14 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
 }
 
 /* ---- IconBtn ---- */
-function IconBtn({ icon, onClick, label, badge, active, size = 38, activeClassName, activeStyle, expanded }: { icon: string; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean }) {
+function IconBtn({ icon, onClick, label, badge, active, size = 38, activeClassName, activeStyle, expanded, pressed }: { icon: string; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean }) {
   const btn = (
     <button
       onClick={onClick}
-      aria-label={label}
+      aria-label={label && badge && badge > 0 ? `${label} ${badge > 99 ? "99+" : badge}건` : label}
       aria-haspopup={expanded === undefined ? undefined : "menu"}
       aria-expanded={expanded}
+      aria-pressed={pressed}
       className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border transition-all duration-150",
         active ? (activeClassName || "bg-card text-primary border-ring") : "bg-transparent text-muted-foreground border-transparent")}
       style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}><Icon name={icon} size={20} stroke={2} />{badge > 0 && <span

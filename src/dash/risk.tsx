@@ -360,7 +360,8 @@ function Risk({ onNav }) {
           data={D.RISK_TREND}
           threshold={D.RISK_THRESHOLD}
           height={220}
-          color="var(--danger)" /></ChartCard><div
+          color="var(--danger)"
+          ariaLabel="리스크 지수 추이 선형 차트 (임계선 포함)" /></ChartCard><div
         className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden mt-4 mb-4"><div
           className="flex items-center justify-between gap-3 flex-wrap px-5 sm:px-6 pt-5 pb-4 border-b border-border"><div className="flex items-center gap-2.5"><ColorChip icon="shield-alert" color="var(--danger)" size={34} iconSize={18} /><div><div className="t-cardtitle">조기경보 목록</div><div className="t-caption mt-px"><span className="text-danger font-bold">{mn(filteredAlerts.length + "건")}</span>표시 중 (전체 {mn(ALERTS.length)}건)</div></div></div><div className="flex items-center gap-2"><StatusBadge
               tone="danger"

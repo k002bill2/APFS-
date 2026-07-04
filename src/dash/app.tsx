@@ -75,7 +75,12 @@ function App() {
     if (menu && !menu.roles.includes(role)) setRoute("main");
   }, [role]);
 
-  const onNav = (r) => { setRoute(r); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const onNav = (r) => {
+    setRoute(r);
+    // 모션 축소 선호 시 부드러운 스크롤 대신 즉시 이동 (WCAG 2.3.3)
+    const reduce = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  };
 
   let page;
   if (route === "designsystem") page = <DesignSystem />;

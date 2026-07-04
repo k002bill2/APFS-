@@ -51,7 +51,7 @@ function Field({ label, children, errMsg, className, plain }: { label: string; c
       <span className="font-semibold text-caption block" style={labelStyle}>{label}</span>
       {children}
       {errMsg && (
-        <span className="text-danger block mt-1" style={{ fontSize: 11.5 }}>
+        <span role="alert" className="text-danger block mt-1" style={{ fontSize: 11.5 }}>
           {errMsg}
         </span>
       )}
@@ -109,7 +109,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
                   key={f.key}
                   label={f.label + (f.required ? ' *' : '')}
                   className={span2 ? "sm:col-span-2" : undefined}
-                  plain={complex}
+                  plain={complex || f.control === "radio"}
                   errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
                   <SchemaField
                     field={f}
