@@ -239,7 +239,7 @@ function AssetMain({ onNav }: { onNav?: (route: string) => void }) {
           minH={240}
         >
           <div style={{ height: 200 }}>
-            <ComposedBars data={INVEST_HISTORY} height={200} planColor="var(--chart-3)" actualColor="var(--primary)" />
+            <ComposedBars data={INVEST_HISTORY} height={200} planColor="var(--chart-3)" actualColor="var(--primary)" ariaLabel="연도별 투자·집행 현황 (계획 대비 실적) 막대 차트" />
           </div>
           <div className="flex items-center gap-4 mt-2 px-1 flex-wrap">
             <div className="flex items-center gap-1.5">

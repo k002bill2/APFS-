@@ -132,7 +132,7 @@ function Donut({ data, height = 220, thickness = 26, centerLabel, centerValue, o
 }
 
 /* ===================== ComposedBars (계획 vs 실적 + 집행률 라인) ===================== */
-function ComposedBars({ data, height = 280 }: { data: any[]; height?: number; planColor?: string; actualColor?: string }) {
+function ComposedBars({ data, height = 280, ariaLabel }: { data: any[]; height?: number; planColor?: string; actualColor?: string; ariaLabel?: string }) {
   const [ref, W] = useMeasure();
   const [hi, setHi] = useState(null);
   const m = { t: 16, r: 44, b: 28, l: 46 };
@@ -144,7 +144,7 @@ function ComposedBars({ data, height = 280 }: { data: any[]; height?: number; pl
   const ticks = [0, .25, .5, .75, 1].map((t) => t * maxAmt);
   const linePts = data.map((d, i) => [m.l + band * i + band / 2, yRate(d.rate)]);
   return (
-    <div ref={ref} className="relative w-full" style={{ height }}>{W > 0 && <svg width={W} height={height}><defs><linearGradient id="cbline" x1={0} y1={0} x2={0} y2={1}><stop offset="0%" stopColor="var(--chart-3)" stopOpacity={.25} /><stop offset="100%" stopColor="var(--chart-3)" stopOpacity={.02} /></linearGradient></defs>{ticks.map((t, i) => <g key={i}><line
+    <div ref={ref} className="relative w-full" style={{ height }}>{W > 0 && <svg width={W} height={height} role={ariaLabel ? "img" : undefined} aria-label={ariaLabel}><defs><linearGradient id="cbline" x1={0} y1={0} x2={0} y2={1}><stop offset="0%" stopColor="var(--chart-3)" stopOpacity={.25} /><stop offset="100%" stopColor="var(--chart-3)" stopOpacity={.02} /></linearGradient></defs>{ticks.map((t, i) => <g key={i}><line
             x1={m.l}
             x2={m.l + iw}
             y1={yAmt(t)}
@@ -212,7 +212,7 @@ function ComposedBars({ data, height = 280 }: { data: any[]; height?: number; pl
 }
 
 /* ===================== LineTrend (임계선) ===================== */
-function LineTrend({ data, threshold, height = 220, color = "var(--chart-1)" }: { data: any[]; threshold?: number; height?: number; color?: string }) {
+function LineTrend({ data, threshold, height = 220, color = "var(--chart-1)", ariaLabel }: { data: any[]; threshold?: number; height?: number; color?: string; ariaLabel?: string }) {
   const [ref, W] = useMeasure();
   const [hi, setHi] = useState(null);
   const m = { t: 14, r: 14, b: 24, l: 32 };
@@ -223,7 +223,7 @@ function LineTrend({ data, threshold, height = 220, color = "var(--chart-1)" }: 
   const pts = data.map((d, i) => [x(i), y(d.v)]);
   const dline = smoothPath(pts);
   return (
-    <div ref={ref} className="relative w-full" style={{ height }}>{W > 0 && <svg width={W} height={height}><defs><linearGradient id="ltgrad" x1={0} y1={0} x2={0} y2={1}><stop offset="0%" stopColor={color} stopOpacity={.22} /><stop offset="100%" stopColor={color} stopOpacity={.02} /></linearGradient></defs>{[0, .5, 1].map((t, i) => <line
+    <div ref={ref} className="relative w-full" style={{ height }}>{W > 0 && <svg width={W} height={height} role={ariaLabel ? "img" : undefined} aria-label={ariaLabel}><defs><linearGradient id="ltgrad" x1={0} y1={0} x2={0} y2={1}><stop offset="0%" stopColor={color} stopOpacity={.22} /><stop offset="100%" stopColor={color} stopOpacity={.02} /></linearGradient></defs>{[0, .5, 1].map((t, i) => <line
           key={i}
           x1={m.l}
           x2={m.l + iw}
@@ -371,7 +371,7 @@ function HBars({ data, height = 220, unit = "%" }: { data: any[]; height?: numbe
 }
 
 /* ===================== Gauge (반원) ===================== */
-function Gauge({ value, max = 100, label, height = 150, color = "var(--primary)" }: { value: number; max?: number; label?: React.ReactNode; height?: number; color?: string }) {
+function Gauge({ value, max = 100, label, height = 150, color = "var(--primary)", ariaLabel }: { value: number; max?: number; label?: React.ReactNode; height?: number; color?: string; ariaLabel?: string }) {
   const [ref, W] = useMeasure();
   const cx = (W || 200) / 2, cy = height - 14, r = Math.min(cx - 14, height - 28);
   const frac = Math.min(1, value / max);
@@ -382,7 +382,7 @@ function Gauge({ value, max = 100, label, height = 150, color = "var(--primary)"
     return `M${x0},${y0} A${r},${r} 0 ${end - start > Math.PI ? 1 : 0} 1 ${x1},${y1}`;
   };
   return (
-    <div ref={ref} className="w-full relative" style={{ height }}>{W > 0 && <svg width={W} height={height}><path
+    <div ref={ref} className="w-full relative" style={{ height }}>{W > 0 && <svg width={W} height={height} role={ariaLabel ? "img" : undefined} aria-label={ariaLabel}><path
           d={arc(Math.PI, 2 * Math.PI)}
           fill="none"
           stroke="var(--muted)"
@@ -407,7 +407,7 @@ function Gauge({ value, max = 100, label, height = 150, color = "var(--primary)"
 }
 
 /* ===================== GroupedBars (세로 막대 — 계획 vs 실적) ===================== */
-function GroupedBars({ data, height = 240 }: { data: any[]; height?: number }) {
+function GroupedBars({ data, height = 240, ariaLabel }: { data: any[]; height?: number; ariaLabel?: string }) {
   const [ref, W] = useMeasure();
   const [hi, setHi] = useState(null);
   const m = { t: 16, r: 12, b: 28, l: 44 };
@@ -417,7 +417,7 @@ function GroupedBars({ data, height = 240 }: { data: any[]; height?: number }) {
   const yAmt = (v) => m.t + ih - (v / maxAmt) * ih;
   const ticks = [0, .25, .5, .75, 1].map((t) => t * maxAmt);
   return (
-    <div ref={ref} className="relative w-full" style={{ height }}>{W > 0 && <svg width={W} height={height}>{ticks.map((t, i) => <g key={i}><line x1={m.l} x2={m.l + iw} y1={yAmt(t)} y2={yAmt(t)} stroke="var(--chart-grid)" strokeDasharray="3 3" /><text x={m.l - 8} y={yAmt(t) + 4} textAnchor="end" style={{ fontSize: 10.5, fill: "var(--caption)" }} className="tabular">{t.toLocaleString()}</text></g>)}{data.map((d, i) => { const x = m.l + band * i + band / 2; const active = hi === i; return <g key={i} onMouseEnter={() => setHi(i)} onMouseLeave={() => setHi(null)}><rect x={m.l + band * i} y={m.t} width={band} height={ih} fill={active ? "var(--muted)" : "transparent"} opacity={.6} /><rect x={x - bw - 2} y={yAmt(d.plan)} width={bw} height={ih - (yAmt(d.plan) - m.t)} rx={5} fill="var(--chart-grid)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + "ms" }} /><rect x={x + 2} y={yAmt(d.actual)} width={bw} height={ih - (yAmt(d.actual) - m.t)} rx={5} fill="var(--chart-2)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + 80 + "ms" }} /><text x={x} y={m.t + ih + 18} textAnchor="middle" className="font-semibold" style={{ fontSize: 11.5, fill: "var(--muted-foreground)" }}>{d.name}</text></g>; })}</svg>}{hi !== null && <Tip x={m.l + band * hi + band / 2} y={yAmt(Math.max(data[hi].plan, data[hi].actual))} show={true}><div>{data[hi].name}</div><div style={{ color: "color-mix(in srgb,var(--bg) 70%,var(--chart-2))" }}>실적 {fmtEok(data[hi].actual)}억</div></Tip>}</div>
+    <div ref={ref} className="relative w-full" style={{ height }}>{W > 0 && <svg width={W} height={height} role={ariaLabel ? "img" : undefined} aria-label={ariaLabel}>{ticks.map((t, i) => <g key={i}><line x1={m.l} x2={m.l + iw} y1={yAmt(t)} y2={yAmt(t)} stroke="var(--chart-grid)" strokeDasharray="3 3" /><text x={m.l - 8} y={yAmt(t) + 4} textAnchor="end" style={{ fontSize: 10.5, fill: "var(--caption)" }} className="tabular">{t.toLocaleString()}</text></g>)}{data.map((d, i) => { const x = m.l + band * i + band / 2; const active = hi === i; return <g key={i} onMouseEnter={() => setHi(i)} onMouseLeave={() => setHi(null)}><rect x={m.l + band * i} y={m.t} width={band} height={ih} fill={active ? "var(--muted)" : "transparent"} opacity={.6} /><rect x={x - bw - 2} y={yAmt(d.plan)} width={bw} height={ih - (yAmt(d.plan) - m.t)} rx={5} fill="var(--chart-grid)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + "ms" }} /><rect x={x + 2} y={yAmt(d.actual)} width={bw} height={ih - (yAmt(d.actual) - m.t)} rx={5} fill="var(--chart-2)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + 80 + "ms" }} /><text x={x} y={m.t + ih + 18} textAnchor="middle" className="font-semibold" style={{ fontSize: 11.5, fill: "var(--muted-foreground)" }}>{d.name}</text></g>; })}</svg>}{hi !== null && <Tip x={m.l + band * hi + band / 2} y={yAmt(Math.max(data[hi].plan, data[hi].actual))} show={true}><div>{data[hi].name}</div><div style={{ color: "color-mix(in srgb,var(--bg) 70%,var(--chart-2))" }}>실적 {fmtEok(data[hi].actual)}억</div></Tip>}</div>
   );
 }
 

@@ -412,7 +412,8 @@ function Accounting({ onNav }) {
             data={D.EXEC_Q}
             height={220}
             planColor="var(--muted)"
-            actualColor="var(--primary)" /></ChartCard><div
+            actualColor="var(--primary)"
+            ariaLabel="분기별 자금수지 (계획 대비 실적) 막대 차트" /></ChartCard><div
           className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
             className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border"><div className="flex items-center gap-2.5"><ColorChip icon="shield-check" color="var(--info)" size={32} iconSize={17} /><div><div className="text-[16px] font-bold">감사 로그</div><div className="t-caption text-[12px]">최근 주요 처리 이력 (역순)</div></div></div><Button variant="ghost" size="sm" trailingIcon="chevron-right">전체 보기</Button></div><div className="px-5 py-4"><AuditTimeline /></div></div></div></div>
   );
