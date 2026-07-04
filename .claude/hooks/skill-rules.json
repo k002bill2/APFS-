@@ -84,6 +84,13 @@
       "enforcement": "suggest",
       "keywords": ["z-index", "zIndex", "z-인덱스", "z인덱스", "쌓임", "쌓임맥락", "쌓임 맥락", "stacking", "stacking context", "레이어", "레이어 순서", "layer", "가려", "가림", "겹침", "위에", "아래", "플라이아웃", "flyout", "드롭다운", "dropdown", "오버레이", "overlay", "모달이 안 보", "모달", "modal", "팝오버", "popover", "툴팁", "tooltip", "포털", "portal", "백드롭", "backdrop", "sticky", "transform", "z-modal", "z-popover"],
       "intentPatterns": ["(z-index|zindex|z-인덱스|쌓임|stacking|레이어|layer).*(바꾸|변경|올리|낮추|적용|지정|추가|만들|수정|순서|fix|set|change|order)", "(플라이아웃|flyout|드롭다운|dropdown|오버레이|overlay|모달|modal|팝오버|popover|툴팁|tooltip|패널|카드).*(가려|가림|안 보|숨|겹침|아래|뒤에|위로|안 올라|덮)", "(쌓임\\s?맥락|stacking\\s?context|z-index|zindex|portal|포털|sticky|transform).*(트랩|trap|갇|문제|버그|점검|확인)"]
+    },
+    {
+      "skillName": "web-a11y",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["접근성", "웹접근성", "웹 접근성", "a11y", "accessibility", "aria", "aria-label", "스크린리더", "스크린 리더", "screen reader", "키보드", "keyboard", "tab", "포커스", "focus", "초점", "대비", "contrast", "명도대비", "alt", "대체텍스트", "대체 텍스트", "wcag", "kwcag", "라이브리전", "live region", "aria-live", "role", "시맨틱", "semantic", "장애인", "저시력", "색맹", "reduced-motion", "라벨", "label", "focus trap", "포커스 트랩", "reflow", "리플로우"],
+      "intentPatterns": ["(create|build|add|make|edit|만들|추가|작성|수정|편집|개선).*(page|화면|페이지|모달|modal|폼|form|입력|input|위젯|widget|컴포넌트|component|테이블|table|리스트|list|버튼|button|셸|shell)", "(접근성|웹\\s?접근성|a11y|accessibility|aria|스크린리더|screen reader|키보드|keyboard|포커스|focus|초점|대비|contrast|wcag|kwcag|대체\\s?텍스트|alt|라이브리전|aria-live)", "(접근성|a11y|aria|키보드|대비|초점|focus).*(점검|확인|검증|맞|개선|추가|적용|audit|check|verify)"]
     }
   ]
 }
