@@ -158,6 +158,7 @@ function Main({ onNav, navStyle, onNavStyle }: { onNav: any; navStyle?: string; 
           style={{ fontSize: 12 }}><Icon name="layers" size={15} />레이아웃 시안</span><div className="flex gap-2 flex-wrap">{VARIANTS.map((v) => <button
             key={v.id}
             onClick={() => setV(v.id)}
+            aria-pressed={variant === v.id}
             className="cursor-pointer text-left py-1.5 px-3"
             style={{
                 font: "inherit", borderRadius: 9,

@@ -323,7 +323,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
         <SegTabs size="sm" value={view} onChange={setView} options={[{ value: 'list', label: '리스트 뷰' }, { value: 'detail', label: '카드뷰' }]} />
         <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
         {view === 'list' && (
-          <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} onClick={() => setShowAll((v) => !v)} />
+          <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} pressed={showAll} onClick={() => setShowAll((v) => !v)} />
         )}
         <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
         <IconBtn icon="more" label="더보기" size={32} />
