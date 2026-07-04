@@ -227,7 +227,7 @@ function MenuPickerModal({ open, onClose }: { open: boolean; onClose: () => void
               <div className="flex flex-wrap gap-1.5">
                 {s.items.map((o: any) => {
                   const on = selSet.has(o.key);
-                  return <button key={o.key} onClick={() => toggle(o.key)} title={o.label} className="inline-flex items-center whitespace-nowrap cursor-pointer" style={{ font: "inherit", gap: 5, border: "1px solid " + (on ? "transparent" : "var(--border)"), background: on ? `color-mix(in srgb,${accent} 16%,var(--card))` : "transparent", color: on ? accent : "var(--muted-foreground)", fontSize: 12.5, fontWeight: on ? 700 : 500, borderRadius: 9, padding: "6px 11px", transition: "background .15s,color .15s,border-color .15s" }}>
+                  return <button key={o.key} onClick={() => toggle(o.key)} title={o.label} aria-pressed={on} aria-label={`${o.label}, 즐겨찾기 ${on ? "해제" : "추가"}`} className="inline-flex items-center whitespace-nowrap cursor-pointer" style={{ font: "inherit", gap: 5, border: "1px solid " + (on ? "transparent" : "var(--border)"), background: on ? `color-mix(in srgb,${accent} 16%,var(--card))` : "transparent", color: on ? accent : "var(--muted-foreground)", fontSize: 12.5, fontWeight: on ? 700 : 500, borderRadius: 9, padding: "6px 11px", transition: "background .15s,color .15s,border-color .15s" }}>
                     {on && <Icon name="star" size={12} stroke={2.4} />}{o.label}
                   </button>;
                 })}

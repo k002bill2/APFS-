@@ -537,7 +537,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
           {Array.from({ length: page.total }, (_, i) => i).map((i) => (
-            <button key={i} onClick={() => apiRef.current?.paginationGoToPage(i)} style={{
+            <button key={i} onClick={() => apiRef.current?.paginationGoToPage(i)} aria-label={`${i + 1} 페이지`} aria-current={i === page.current ? "page" : undefined} style={{
               width: 32, height: 32, borderRadius: 8, border: "1px solid",
               borderColor: i === page.current ? "var(--primary)" : "var(--border)",
               background: i === page.current ? "color-mix(in srgb, var(--primary) 10%, transparent)" : "transparent",
