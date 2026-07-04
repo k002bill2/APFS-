@@ -157,7 +157,7 @@ function IconBtn({ icon, onClick, label, badge, active, size = 38, activeClassNa
   const btn = (
     <button
       onClick={onClick}
-      aria-label={label}
+      aria-label={label && badge && badge > 0 ? `${label} ${badge > 99 ? "99+" : badge}건` : label}
       aria-haspopup={expanded === undefined ? undefined : "menu"}
       aria-expanded={expanded}
       aria-pressed={pressed}
