@@ -363,7 +363,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const onSelectionChanged = useCallback((e: SelectionChangedEvent<Row>) => { setSelCount(e.api.getSelectedRows().length); }, []);
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
-    setPage({ current: api.paginationGetCurrentPage(), total: api.paginationGetTotalPages(), rowCount: api.paginationGetRowCount() });
+    const next = { current: api.paginationGetCurrentPage(), total: api.paginationGetTotalPages(), rowCount: api.paginationGetRowCount() };
+    setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next)); // 값 동일 시 동일 참조 반환→재렌더 방지
   }, []);
 
   // 외부 필터(상세필터 드로어 → 그리드 행 거르기). 값이 바뀌면 그리드에 재적용 통지.
