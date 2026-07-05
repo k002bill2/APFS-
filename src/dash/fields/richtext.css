@@ -201,7 +201,7 @@
   min-height: 220px;
   max-height: 360px;
   overflow-y: auto;
-  padding: 12px 14px;
+  padding: 12px 14px 12px 30px;   /* 좌측 여백=드래그 핸들 거터 */
   outline: none;
   font-size: 14px;
   line-height: 1.6;
@@ -412,6 +412,26 @@ caption.apfs-rt-tablebar .apfs-rt-imgbtn { gap: 1px; }
 /* ── 캡션(이미지/비디오/임베드) — 중앙 정렬 작은 텍스트영역. ── */
 .apfs-rt-caption { display: block; width: 100%; margin-top: 6px; padding: 2px 4px; text-align: center; font-size: .85em; color: var(--muted-foreground); background: transparent; border: none; outline: none; resize: none; font-family: inherit; }
 .apfs-rt-caption::placeholder { color: color-mix(in srgb, var(--muted-foreground) 60%, transparent); }
+
+/* ── 드래그앤드롭 — 좌측 그립 핸들 + 드롭 위치선. ── */
+.apfs-rt-blockdrag { position: relative; }
+.apfs-rt-draghandle {
+  position: absolute; left: -22px; top: 2px;
+  width: 18px; height: 22px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--muted-foreground); opacity: 0;
+  cursor: grab; border-radius: 4px; user-select: none;
+  transition: opacity .12s ease, background-color .12s ease;
+}
+.apfs-rt-blockdrag:hover > .apfs-rt-draghandle { opacity: .5; }
+.apfs-rt-draghandle:hover { opacity: 1 !important; background: var(--muted); color: var(--foreground); }
+.apfs-rt-draghandle:active { cursor: grabbing; }
+.apfs-rt-blockdrag.is-dragging { opacity: .4; }
+.apfs-rt-dropline { position: absolute; z-index: 1; background: var(--accent); border-radius: 2px; pointer-events: none; }
+.apfs-rt-dropline.is-top    { top: -3px;    left: 0; right: 0; height: 2px; }
+.apfs-rt-dropline.is-bottom { bottom: -3px; left: 0; right: 0; height: 2px; }
+.apfs-rt-dropline.is-left   { left: -4px;   top: 0; bottom: 0; width: 2px; }
+.apfs-rt-dropline.is-right  { right: -4px;  top: 0; bottom: 0; width: 2px; }
 
 /* 좁은 화면 — 편집 영역 최소 높이 축소(모달 세로 공간 절약) */
 @media (max-width: 640px) {
