@@ -10,12 +10,13 @@ import { insertTableRow, insertTableColumn, deleteRow, deleteColumn, deleteTable
 import { useToggleButtonState, useToggleButton } from '@platejs/toggle/react';
 import { Caption, CaptionTextarea } from '@platejs/caption/react';
 import { parseVideoUrl } from '@platejs/media';
+import { useDraggable, useDropLine } from '@platejs/dnd';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import {
   AlignLeft, AlignCenter, AlignRight, Trash2,
   ChevronRight, Info, TriangleAlert, CircleCheck, Lightbulb, Rows3, Columns3,
-  Plus, CalendarDays, AtSign,
+  Plus, CalendarDays, AtSign, GripVertical,
 } from 'lucide-react';
 
 /* 블록/리프를 시맨틱 태그로 렌더 — CSS(.apfs-prose <tag>)가 DOM 태그를 노린다. */
@@ -295,6 +296,30 @@ export function TagElement(props: any) {
       {props.children}
     </PlateElement>
   );
+}
+
+/* ── 드래그앤드롭(dnd) — 블록 좌측 그립 핸들로 순서 변경. ──
+   DndPlugin.render.aboveNodes로 최상위 블록만 감싼다(인라인/void/셀 내부 제외). NodeIdPlugin이 부여한
+   블록 id로 useDraggable이 드래그, useDropLine이 삽입 위치선을 표시. DndProvider는 aboveSlate가 자동 래핑. */
+function DraggableBlock({ element, children }: any) {
+  const { isDragging, nodeRef, handleRef } = useDraggable({ element });
+  const { dropLine } = useDropLine();
+  return (
+    <div ref={nodeRef} className={'apfs-rt-blockdrag' + (isDragging ? ' is-dragging' : '')}>
+      <div ref={handleRef as any} className="apfs-rt-draghandle" contentEditable={false} role="button" aria-label="블록 이동(드래그)" tabIndex={-1}>
+        <GripVertical size={14} strokeWidth={2} aria-hidden={true} />
+      </div>
+      <div className="apfs-rt-blockdrag__content">{children}</div>
+      {dropLine && <div className={'apfs-rt-dropline is-' + dropLine} contentEditable={false} aria-hidden="true" />}
+    </div>
+  );
+}
+// aboveNodes 래퍼 — 최상위 블록(경로 길이 1)에만 드래그 핸들. 그 외(인라인·void·표셀·목록항목)는 미래핑.
+export function BlockDraggable(props: any) {
+  const { editor, element } = props;
+  const path = editor.api.findPath(element);
+  if (!path || path.length !== 1 || !editor.api.isBlock(element)) return undefined;
+  return function Above({ children }: any) { return <DraggableBlock element={element}>{children}</DraggableBlock>; };
 }
 
 // 노드 타입 → 컴포넌트(=DOM 태그) 매핑. 배치별로 추가.

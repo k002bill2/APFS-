@@ -59,7 +59,12 @@ import { SlashPlugin, SlashInputPlugin } from '@platejs/slash-command/react';
 import { EmojiPlugin, EmojiInputPlugin } from '@platejs/emoji/react';
 import emojiMartData from '@emoji-mart/data';
 import { MarkdownPlugin } from '@platejs/markdown';
+import { NodeIdPlugin } from '@platejs/core';        // dnd는 블록 id 필수(getBlocksWithId)
+import { DndPlugin } from '@platejs/dnd';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { MentionInputElement, SlashInputElement, EmojiInputElement } from './RichTextCombobox';
+import { COMPONENTS, BlockDraggable } from './RichTextElements';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code, SquareCode, Keyboard,
   Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Pilcrow, List, ListOrdered, TextQuote,
@@ -72,7 +77,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
-import { COMPONENTS } from './RichTextElements';
 import './richtext.css';
 
 const { useRef, useState } = React;
@@ -114,6 +118,15 @@ const PLUGINS = [
   SlashPlugin, SlashInputPlugin,
   EmojiPlugin.configure({ options: { data: emojiMartData as any } }), EmojiInputPlugin,   // : 이모지
   MarkdownPlugin,   // 마크다운 직렬화(내보내기) — editor.api.markdown.serialize()
+  // ── 드래그앤드롭 ── NodeIdPlugin이 블록 id 부여(dnd 필수), DndPlugin이 aboveSlate로 DndProvider 자동 래핑.
+  NodeIdPlugin,
+  DndPlugin.configure({
+    options: { enableScroller: true },
+    render: {
+      aboveNodes: BlockDraggable,
+      aboveSlate: ({ children }: any) => <DndProvider backend={HTML5Backend}>{children}</DndProvider>,
+    },
+  }),
 ];
 
 // 콤보박스 input-element 컴포넌트 — COMPONENTS(RichTextElements)에 병합. 순환 import 방지로 여기서 결합.
