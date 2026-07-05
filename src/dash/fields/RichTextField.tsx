@@ -26,7 +26,7 @@
    window.prompt(스레드 차단)·Radix 팝오버(모달 포커스 경쟁) 대신 툴바 아래 인라인 바. pMode(link|image)로 UI 공유.
    버튼은 mousedown preventDefault로 선택을 보존하지만, URL 입력은 포커스를 정상 수신해야 하므로 걸지 않는다. */
 import React from 'react';
-import { Plate, PlateContent, PlateElement, PlateLeaf, usePlateEditor, useEditorState } from 'platejs/react';
+import { Plate, PlateContent, PlateElement, PlateLeaf, usePlateEditor, useEditorState, useEditorRef } from 'platejs/react';
 import type { PlateEditor } from 'platejs/react';
 import {
   BoldPlugin, ItalicPlugin, UnderlinePlugin, StrikethroughPlugin, CodePlugin,
@@ -37,7 +37,7 @@ import { CodeBlockPlugin } from '@platejs/code-block/react';   // CodeLinePlugin
 import { toggleCodeBlock } from '@platejs/code-block';         // tf.code_block.toggle()은 code_line을 텍스트노드로 오생성 → 정상 element 만드는 helper 사용
 import { ListPlugin } from '@platejs/list-classic/react';       // ul/ol/li/lic 하위 플러그인은 ListPlugin에 nested 등록됨
 import { LinkPlugin } from '@platejs/link/react';
-import { upsertLink, unwrapLink } from '@platejs/link';
+import { upsertLink, unwrapLink, getLinkAttributes } from '@platejs/link';
 import { ImagePlugin } from '@platejs/media/react';
 import { insertImage } from '@platejs/media';
 import {
@@ -57,9 +57,11 @@ const leafEl  = (as: string) => function Lf(props: any) { return <PlateLeaf as={
 
 /* a/img/hr — headless Plate의 기본 플러그인 컴포넌트는 미디어/링크를 실제로 렌더하지 않는다(레지스트리
    컴포넌트를 주라고 가정) → 명시 컴포넌트로 <a href>·<img src>·<hr>을 직접 그린다. */
-// 링크 = 인라인 <a href>. element.url을 슬레이트 attributes에 실어 DOM <a>에 href로 전달.
+// 링크 = 인라인 <a href>. href는 getLinkAttributes로 sanitize(javascript: 등 악성 URL이면 href 미부여)해
+// element.url 직접 주입의 XSS 경로를 차단. 외부/레거시 JSON 값이 그대로 parse돼도 안전.
 function LinkElement(props: any) {
-  return <PlateElement {...props} as="a" attributes={{ ...props.attributes, href: props.element.url, target: '_blank', rel: 'noopener noreferrer' }} />;
+  const editor = useEditorRef();
+  return <PlateElement {...props} as="a" attributes={{ ...props.attributes, ...getLinkAttributes(editor, props.element), target: '_blank', rel: 'noopener noreferrer' }} />;
 }
 // 이미지 = 보이드 블록. 시각 <img>는 contentEditable=false 래퍼에, {children}은 보이드 spacer(슬레이트 요구).
 function ImageElement(props: any) {
@@ -110,6 +112,11 @@ function toInitialValue(editor: PlateEditor, v: string) {
   if (s.startsWith('[')) { try { return JSON.parse(s); } catch { /* fall through */ } }
   const body = new DOMParser().parseFromString(s, 'text/html').body;
   return editor.api.html.deserialize({ element: body });
+}
+
+// 미디어/void 노드(img·hr) 존재 여부 — 재귀. 텍스트가 비어도 이미지/구분선만 있으면 "빈 문서" 아님.
+function hasMediaNode(nodes: any[]): boolean {
+  return Array.isArray(nodes) && nodes.some((n) => n && (n.type === 'img' || n.type === 'hr' || hasMediaNode(n.children)));
 }
 
 // ── active 조회 헬퍼(툴바용) ──
@@ -348,7 +355,11 @@ export function RichTextField({ value, onChange, label, required }: { value: str
 
   // 변경 → 직렬화. 빈 문서는 '' 방출(required 검증 정상화). 선택만 바뀐 경우(값 동일)는 스킵.
   function handleChange({ value: v }: { value: any }) {
-    const next = (editor as any).api.isEmpty() ? '' : JSON.stringify(v);
+    // 빈 판별 강화: isEmpty()는 공백-only 단락·다중 빈 단락을 non-empty로 봐 required false-pass 유발 →
+    // 전체 텍스트가 공백뿐이고 미디어(img/hr)도 없으면 '' 방출(상위 .trim() required 검증 정상화).
+    const text = ((editor as any).api.string([]) || '').trim();
+    const empty = text === '' && !hasMediaNode(v);
+    const next = empty ? '' : JSON.stringify(v);
     if (next === lastEmitted.current) return;
     lastEmitted.current = next;
     onChange(next);
