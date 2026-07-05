@@ -34,6 +34,7 @@ import {
 } from '@platejs/basic-nodes/react';
 import { TextAlignPlugin } from '@platejs/basic-styles/react';
 import { CodeBlockPlugin } from '@platejs/code-block/react';   // CodeLinePlugin은 CodeBlockPlugin에 nested 등록됨
+import { toggleCodeBlock } from '@platejs/code-block';         // tf.code_block.toggle()은 code_line을 텍스트노드로 오생성 → 정상 element 만드는 helper 사용
 import { ListPlugin } from '@platejs/list-classic/react';       // ul/ol/li/lic 하위 플러그인은 ListPlugin에 nested 등록됨
 import { LinkPlugin } from '@platejs/link/react';
 import { upsertLink, unwrapLink } from '@platejs/link';
@@ -133,7 +134,7 @@ const TURN_INTO: DDItem[] = [
   { key: 'ul',         Icon: List,        label: '글머리 목록', run: (e) => e.tf.ul.toggle() },
   { key: 'ol',         Icon: ListOrdered, label: '번호 목록',   run: (e) => e.tf.ol.toggle() },
   { key: 'blockquote', Icon: TextQuote,   label: '인용',        run: (e) => e.tf.blockquote.toggle() },
-  { key: 'code_block', Icon: SquareCode,  label: '코드 블록',   run: (e) => e.tf.code_block.toggle() },
+  { key: 'code_block', Icon: SquareCode,  label: '코드 블록',   run: (e) => toggleCodeBlock(e) }, // helper=정상 code_line element(tf.code_block.toggle은 텍스트노드 오생성)
 ];
 // 현재 커서 위치의 블록이 어느 Turn-into 항목인지(래퍼 블록은 some, 헤딩은 최내곽 type).
 function currentBlockKey(e: any): string {
@@ -305,7 +306,8 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl }: {
           onClick={() => (pMode === 'image' ? closeBar() : openImage())}><ImageIcon size={16} strokeWidth={2} aria-hidden={true} /></button>
         <button type="button" title="구분선" aria-label="구분선" className="apfs-rt-btn"
           onMouseDown={(e) => e.preventDefault()}
-          onClick={() => { editor.tf.insertNodes({ type: 'hr', children: [{ text: '' }] } as any); editor.tf.focus(); }}><Minus size={16} strokeWidth={2} aria-hidden={true} /></button>
+          // hr(void) 뒤에 빈 문단을 함께 삽입하고 커서를 그 문단에 두어야 삽입 직후 계속 입력 가능(void에 갇힘 방지).
+          onClick={() => { editor.tf.insertNodes([{ type: 'hr', children: [{ text: '' }] }, { type: 'p', children: [{ text: '' }] }] as any, { select: true }); editor.tf.focus(); }}><Minus size={16} strokeWidth={2} aria-hidden={true} /></button>
       </div>
 
       {/* URL 입력 바(링크·이미지 공용) — 텍스트 입력이라 mousedown preventDefault를 걸지 않는다. */}
