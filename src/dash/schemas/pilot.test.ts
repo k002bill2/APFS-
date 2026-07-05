@@ -40,7 +40,7 @@ describe('resolveSchema 파일럿 등록 확인', () => {
     expect(s.provenance.sourceSystem).toBe('FFMS');
     expect(s.fields.length).toBeGreaterThan(0);
     const controls = s.fields.map((f) => f.control);
-    expect(controls).toContain('richtext'); // 공고내용 = Tiptap 에디터(textarea에서 전환)
+    expect(controls).toContain('richtext'); // 공고내용 = Plate 에디터(textarea에서 전환)
     expect(controls).toContain('filepond'); // 첨부파일 = FilePond 드롭존(네이티브 file 입력에서 전환)
     expect(controls).toContain('select');
   });
