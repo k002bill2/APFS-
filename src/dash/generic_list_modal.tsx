@@ -39,7 +39,7 @@ export function statusTone(label: string): Tone {
 const labelStyle: React.CSSProperties = { fontSize: 12, marginBottom: 5 };
 
 // plain=true면 <label> 대신 <div>로 감싼다.
-// ⚠️ richtext(Tiptap)·filepond처럼 내부에 자체 버튼/컨트롤을 품은 복합 컨트롤은 절대 <label>로 감싸면 안 된다:
+// ⚠️ richtext(Plate)·filepond처럼 내부에 자체 버튼/컨트롤을 품은 복합 컨트롤은 절대 <label>로 감싸면 안 된다:
 //    <label>은 라벨 가능한 첫 자손과 암묵 연결되는데, 에디터 본문은 라벨 불가(div[role=textbox])라
 //    건너뛰고 툴바의 첫 버튼(B/굵게)과 연결된다 → 본문을 hover하면 B가 hover로 켜지고, 본문을 클릭하면
 //    B 버튼이 클릭돼 toggleBold가 발화한다(빈 문단에 bold가 박혀 "B가 켜진 채 안 꺼짐"). 그래서 <div>로 감싼다.

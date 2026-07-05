@@ -2,7 +2,7 @@
    현행시스템 "사후 등록" 양식 캡처(clipboard-2026-06-30) 실측 매핑. 등록/수정 모달은
    항목 수(9)가 많아 RowFormModal이 2단 wide로 자동 렌더한다.
    ── 특수 컨트롤 ──
-   · 내용(content)    → control: 'richtext'  (Tiptap 리치 텍스트 에디터, 2단에서 전체 폭)
+   · 내용(content)    → control: 'richtext'  (Plate 리치 텍스트 에디터, 2단에서 전체 폭)
    · 관련문서(documents) → control: 'filepond' (FilePond 파일 업로더, 2단에서 전체 폭, 총 10MB)
    ── 정합성 ──
    리스트 컬럼 key는 select 필드 key와 일치시켜(majorCat/recordType/deliveryType) 더미행 enum

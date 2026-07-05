@@ -59,7 +59,7 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
       </div>
     );
     case 'file':     return <input type="file" style={{ ...base, padding: 6 }} />;
-    // Tiptap 리치 텍스트 에디터 — lazy 로드. Suspense fallback은 base 톤 placeholder.
+    // Plate(platejs) 리치 텍스트 에디터 — lazy 로드. Suspense fallback은 base 톤 placeholder.
     case 'richtext': return (
       <React.Suspense fallback={<div style={{ ...base, color: 'var(--muted-foreground)' }}>에디터 불러오는 중…</div>}>
         <RichTextField value={value} onChange={onChange} label={field.label} required={requiredMark} />

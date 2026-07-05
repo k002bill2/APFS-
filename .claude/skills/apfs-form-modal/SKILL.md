@@ -34,7 +34,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 | `file` | `<input type=file>` | 2단 시 전체 폭 |
 | `readonly` | muted `<div>` | 운용사·자펀드 등 상위 고정값 |
 
-> ⚠️ **무거운 외부 컨트롤** `richtext`(Tiptap)·`filepond`(react-filepond): 4단계 배선(`FIELD_CONTROLS`→`src/dash/fields/`→lazy `SchemaField`→`span2`)과 **무음실패 함정**(FilePond 비제어·Tiptap mousedown·required richtext `<p></p>` false-pass)은 메모리 `[[heavy-form-controls-richtext-filepond]]` + `src/dash/fields/` 참조.
+> ⚠️ **무거운 외부 컨트롤** `richtext`(**Plate/platejs v53**, 2026-07-05 Tiptap에서 교체)·`filepond`(react-filepond): 4단계 배선(`FIELD_CONTROLS`→`src/dash/fields/`→lazy `SchemaField`→`span2`)과 **무음실패 함정**(FilePond 비제어·에디터 툴바 mousedown preventDefault·값=Slate JSON 문자열·빈 문서는 `api.isEmpty()`→`''`로 required false-pass 해소)은 메모리 `[[heavy-form-controls-richtext-filepond]]` + `src/dash/fields/RichTextField.tsx` 참조.
 
 ## 스키마 작성 (PageSchema · kind:'form')
 ```ts
