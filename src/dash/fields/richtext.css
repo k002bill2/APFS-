@@ -95,6 +95,61 @@
   margin: 0 4px;
 }
 
+/* 색(글꼴/배경) 드롭다운 트리거 — 아이콘 아래 현재색 바 */
+.apfs-rt-colorico { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; }
+.apfs-rt-colorbar { width: 16px; height: 3px; border-radius: 2px; border: 1px solid color-mix(in srgb, var(--border) 55%, transparent); }
+/* 스와치 그리드 */
+.apfs-rt-swatches { display: grid; grid-template-columns: repeat(6, 22px); gap: 5px; padding: 3px 3px 7px; }
+.apfs-rt-swatch {
+  width: 22px; height: 22px; padding: 0; border-radius: 6px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 70%, transparent);
+  transition: transform .1s ease;
+}
+.apfs-rt-swatch:hover { transform: scale(1.1); }
+.apfs-rt-swatch.is-sel { outline: 2px solid var(--ring); outline-offset: 1px; }
+
+/* 이미지 편집 — 선택 시 오버레이 툴바(정렬·너비·삭제) */
+.apfs-rt-imgwrap { margin: .6em 0; }               /* textAlign(inline style)이 이미지 정렬 */
+.apfs-rt-imgbox {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: top;
+}
+.apfs-rt-imgbox img { display: block; width: 100%; height: auto; border-radius: 8px; margin: 0; }
+.apfs-rt-imgbox.is-sel img { outline: 2px solid var(--ring); outline-offset: 2px; }
+.apfs-rt-imgbar {
+  position: absolute;
+  top: 8px; left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / .16);
+  z-index: 2;
+}
+.apfs-rt-imgbtn {
+  min-width: 26px; height: 26px; padding: 0 5px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  color: var(--muted-foreground);
+  background: transparent; border: 1px solid transparent; border-radius: 6px;
+  cursor: pointer;
+}
+.apfs-rt-imgbtn:hover:not(.is-active) { background: var(--muted); color: var(--foreground); }
+.apfs-rt-imgbtn.is-active { background: var(--muted); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 32%, transparent); }
+.apfs-rt-imgbtn.is-danger:hover { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+.apfs-rt-imgsep { width: 1px; height: 16px; background: var(--border); margin: 0 3px; }
+
+/* 확장 마크 — 형광펜/첨자. mark는 고정 노랑(라이트/다크 무관 가독 위해 전경도 고정). */
+.apfs-prose mark { background: #fde68a; color: #111827; padding: .02em .12em; border-radius: 3px; }
+.apfs-prose sub { font-size: .75em; line-height: 0; vertical-align: sub; }
+.apfs-prose sup { font-size: .75em; line-height: 0; vertical-align: super; }
+
 /* 링크 URL 입력 바 — 툴바 아래 한 줄(포털/팝오버 없이 흐름 내). */
 .apfs-richtext__linkbar {
   display: flex;

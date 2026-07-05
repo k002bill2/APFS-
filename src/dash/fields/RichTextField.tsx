@@ -26,13 +26,16 @@
    window.prompt(스레드 차단)·Radix 팝오버(모달 포커스 경쟁) 대신 툴바 아래 인라인 바. pMode(link|image)로 UI 공유.
    버튼은 mousedown preventDefault로 선택을 보존하지만, URL 입력은 포커스를 정상 수신해야 하므로 걸지 않는다. */
 import React from 'react';
-import { Plate, PlateContent, PlateElement, PlateLeaf, usePlateEditor, useEditorState, useEditorRef } from 'platejs/react';
+import { Plate, PlateContent, PlateElement, PlateLeaf, usePlateEditor, useEditorState, useEditorRef, useSelected, useReadOnly } from 'platejs/react';
 import type { PlateEditor } from 'platejs/react';
 import {
   BoldPlugin, ItalicPlugin, UnderlinePlugin, StrikethroughPlugin, CodePlugin,
   H1Plugin, H2Plugin, H3Plugin, BlockquotePlugin, HorizontalRulePlugin,
+  HighlightPlugin, SubscriptPlugin, SuperscriptPlugin,
 } from '@platejs/basic-nodes/react';
-import { TextAlignPlugin } from '@platejs/basic-styles/react';
+import { TextAlignPlugin, FontColorPlugin, FontBackgroundColorPlugin, FontSizePlugin, LineHeightPlugin } from '@platejs/basic-styles/react';
+import { IndentPlugin } from '@platejs/indent/react';
+import { indent, outdent } from '@platejs/indent';
 import { CodeBlockPlugin } from '@platejs/code-block/react';   // CodeLinePlugin은 CodeBlockPlugin에 nested 등록됨
 import { toggleCodeBlock } from '@platejs/code-block';         // tf.code_block.toggle()은 code_line을 텍스트노드로 오생성 → 정상 element 만드는 helper 사용
 import { ListPlugin } from '@platejs/list-classic/react';       // ul/ol/li/lic 하위 플러그인은 ListPlugin에 nested 등록됨
@@ -44,7 +47,10 @@ import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code, SquareCode,
   Heading1, Heading2, Heading3, Pilcrow, List, ListOrdered, TextQuote,
   AlignLeft, AlignCenter, AlignRight, AlignJustify, Minus, Link as LinkIcon, Unlink,
-  Image as ImageIcon, Undo2, Redo2, ChevronDown, Check, type LucideIcon,
+  Image as ImageIcon, Undo2, Redo2, ChevronDown, Check,
+  Highlighter, Subscript as SubscriptIcon, Superscript as SuperscriptIcon,
+  Baseline, PaintBucket, Type as TypeIcon, IndentIncrease, IndentDecrease, MoveVertical,
+  Trash2, type LucideIcon,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
 import './richtext.css';
@@ -63,11 +69,42 @@ function LinkElement(props: any) {
   const editor = useEditorRef();
   return <PlateElement {...props} as="a" attributes={{ ...props.attributes, ...getLinkAttributes(editor, props.element), target: '_blank', rel: 'noopener noreferrer' }} />;
 }
-// 이미지 = 보이드 블록. 시각 <img>는 contentEditable=false 래퍼에, {children}은 보이드 spacer(슬레이트 요구).
+// 이미지 = 보이드 블록. 선택 시 편집 툴바(정렬·너비·삭제) 오버레이. align/width는 element에 저장·적용.
+const IMG_WIDTHS = [{ label: 'S', v: '35%' }, { label: 'M', v: '65%' }, { label: 'L', v: '100%' }];
 function ImageElement(props: any) {
+  const { element } = props;
+  const editor = useEditorRef();
+  const selected = useSelected();
+  const readOnly = useReadOnly();
+  const align = element.align || 'left';
+  const width = element.width || '100%';
+  const set = (patch: any) => { const p = editor.api.findPath(element); if (p) editor.tf.setNodes(patch, { at: p }); };
+  const del = () => { const p = editor.api.findPath(element); if (p) editor.tf.removeNodes({ at: p }); editor.tf.focus(); };
+  const stop = (e: any) => e.preventDefault(); // 툴바 클릭이 이미지 선택을 빼앗지 않게
   return (
     <PlateElement {...props}>
-      <div contentEditable={false}><img src={props.element.url} alt="" /></div>
+      <div className="apfs-rt-imgwrap" contentEditable={false} style={{ textAlign: align as any }}>
+        <span className={'apfs-rt-imgbox' + (selected ? ' is-sel' : '')} style={{ width }}>
+          <img src={element.url} alt="" />
+          {selected && !readOnly && (
+            <span className="apfs-rt-imgbar" role="toolbar" aria-label="이미지 편집">
+              {[{ k: 'left', I: AlignLeft, t: '왼쪽' }, { k: 'center', I: AlignCenter, t: '가운데' }, { k: 'right', I: AlignRight, t: '오른쪽' }].map((a) => (
+                <button key={a.k} type="button" title={`${a.t} 정렬`} aria-label={`${a.t} 정렬`} aria-pressed={align === a.k}
+                  className={'apfs-rt-imgbtn' + (align === a.k ? ' is-active' : '')} onMouseDown={stop} onClick={() => set({ align: a.k })}>
+                  <a.I size={15} strokeWidth={2} aria-hidden={true} /></button>
+              ))}
+              <span className="apfs-rt-imgsep" aria-hidden="true" />
+              {IMG_WIDTHS.map((w) => (
+                <button key={w.v} type="button" title={`너비 ${w.label}`} aria-label={`너비 ${w.label}`} aria-pressed={width === w.v}
+                  className={'apfs-rt-imgbtn is-text' + (width === w.v ? ' is-active' : '')} onMouseDown={stop} onClick={() => set({ width: w.v })}>{w.label}</button>
+              ))}
+              <span className="apfs-rt-imgsep" aria-hidden="true" />
+              <button type="button" title="이미지 삭제" aria-label="이미지 삭제" className="apfs-rt-imgbtn is-danger" onMouseDown={stop} onClick={del}>
+                <Trash2 size={15} strokeWidth={2} aria-hidden={true} /></button>
+            </span>
+          )}
+        </span>
+      </div>
       {props.children}
     </PlateElement>
   );
@@ -93,13 +130,20 @@ const COMPONENTS: Record<string, any> = {
   a: LinkElement, img: ImageElement, hr: HrElement,
   bold: leafEl('strong'), italic: leafEl('em'), underline: leafEl('u'),
   strikethrough: leafEl('s'), code: leafEl('code'),
+  highlight: leafEl('mark'), subscript: leafEl('sub'), superscript: leafEl('sup'),
+  // color/backgroundColor/fontSize는 style을 leaf에 inject → 기본 <span>에 적용(태그 override 불필요)
 };
 
-// Plate 에디터 플러그인 스택 — 서식 스파인 전체.
+// Plate 에디터 플러그인 스택 — 서식 스파인 전체 + 확장(폰트/문단).
+const ALIGN_TARGETS = ['p', 'h1', 'h2', 'h3', 'lic'];   // 정렬/줄간격/들여쓰기 대상 블록(lic=목록 항목)
 const PLUGINS = [
   BoldPlugin, ItalicPlugin, UnderlinePlugin, StrikethroughPlugin, CodePlugin,
+  HighlightPlugin, SubscriptPlugin, SuperscriptPlugin,                 // 확장 마크
+  FontColorPlugin, FontBackgroundColorPlugin, FontSizePlugin,         // 글꼴 색/배경/크기(style inject)
   H1Plugin, H2Plugin, H3Plugin, BlockquotePlugin, HorizontalRulePlugin,
-  TextAlignPlugin.configure({ inject: { targetPlugins: ['p', 'h1', 'h2', 'h3', 'lic'] } }), // lic=목록 항목(내부 정렬 지원)
+  TextAlignPlugin.configure({ inject: { targetPlugins: ALIGN_TARGETS } }),
+  LineHeightPlugin.configure({ inject: { targetPlugins: ALIGN_TARGETS } }),
+  IndentPlugin.configure({ inject: { targetPlugins: ALIGN_TARGETS } }),
   CodeBlockPlugin,   // CodeLinePlugin·CodeSyntaxPlugin nested
   ListPlugin,        // BulletedList(ul)/NumberedList(ol)/ListItem(li)/ListItemContent(lic) nested
   LinkPlugin, ImagePlugin,
@@ -168,7 +212,15 @@ const MARKS: BtnDef[] = [
   { key: 'under',  Icon: UnderlineIcon, title: '밑줄',        run: (e) => e.tf.underline.toggle(),     active: (e) => markOn(e, 'underline') },
   { key: 'strike', Icon: Strikethrough, title: '취소선',      run: (e) => e.tf.strikethrough.toggle(), active: (e) => markOn(e, 'strikethrough') },
   { key: 'code',   Icon: Code,          title: '인라인 코드', run: (e) => e.tf.code.toggle(),          active: (e) => markOn(e, 'code') },
+  { key: 'hl',     Icon: Highlighter,   title: '형광펜',      run: (e) => e.tf.highlight.toggle(),     active: (e) => markOn(e, 'highlight') },
+  { key: 'sub',    Icon: SubscriptIcon, title: '아래 첨자',   run: (e) => e.tf.subscript.toggle(),     active: (e) => markOn(e, 'subscript') },
+  { key: 'sup',    Icon: SuperscriptIcon, title: '위 첨자',   run: (e) => e.tf.superscript.toggle(),   active: (e) => markOn(e, 'superscript') },
 ];
+
+// 글꼴색/배경색 팔레트(토큰이 아닌 고정 색 — 사용자 선택 색은 문서에 절대색으로 박혀야 라이트/다크 무관 유지).
+const PALETTE = ['#111827', '#ef4444', '#f59e0b', '#eab308', '#22c55e', '#0ea5e9', '#0158a8', '#8b5cf6', '#ec4899', '#78716c', '#94a3b8', '#ffffff'];
+const FONT_SIZES = ['12px', '14px', '16px', '18px', '24px', '30px', '36px'];
+const LINE_HEIGHTS = [{ label: '1.0', v: 1 }, { label: '1.15', v: 1.15 }, { label: '1.5', v: 1.5 }, { label: '2.0', v: 2 }];
 
 // 드롭다운 커맨드 실행 — 열릴 때 저장한 선택을 복원하고(포커스 소실 대비) 커맨드 실행 후 재포커스.
 function runWithSel(editor: any, sel: any, fn: (e: any) => void) {
@@ -225,6 +277,88 @@ function AlignDropdown() {
             <a.Icon size={16} strokeWidth={2} aria-hidden={true} />
             <span style={{ flex: 1 }}>{a.label}</span>
             {cur === a.key && <Check size={15} strokeWidth={2.4} aria-hidden={true} />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// 색(글꼴/배경) 드롭다운 — 팔레트 스와치 그리드 + 제거. controlled open으로 스와치 클릭 시 닫는다.
+function ColorDropdown({ mark, Icon, title }: { mark: 'color' | 'backgroundColor'; Icon: LucideIcon; title: string }) {
+  const editor = useEditorState();
+  const sel = useRef<any>(null);
+  const [open, setOpen] = useState(false);
+  const cur = (markOn(editor, mark) ? editor.api.marks()?.[mark] : null) as string | null;
+  const pick = (fn: (e: any) => void) => { runWithSel(editor, sel.current, fn); setOpen(false); };
+  return (
+    <DropdownMenu open={open} onOpenChange={(o) => { if (o) sel.current = editor.selection; setOpen(o); }}>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="apfs-rt-btn apfs-rt-btn--dd" title={title} aria-label={title}>
+          <span className="apfs-rt-colorico"><Icon size={16} strokeWidth={2} aria-hidden={true} /><span className="apfs-rt-colorbar" style={{ background: cur || 'transparent' }} /></span>
+          <ChevronDown size={12} strokeWidth={2} aria-hidden={true} className="apfs-rt-btn__chev" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+        <div className="apfs-rt-swatches" role="group" aria-label={title}>
+          {PALETTE.map((c) => (
+            <button key={c} type="button" className={'apfs-rt-swatch' + (cur === c ? ' is-sel' : '')} style={{ background: c }}
+              title={c} aria-label={c} onMouseDown={(ev) => ev.preventDefault()}
+              onClick={() => pick((e) => e.tf[mark].addMark(c))} />
+          ))}
+        </div>
+        <DropdownMenuItem onSelect={() => pick((e) => e.tf.removeMark(mark))}>
+          <Minus size={15} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>색 제거</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// 글자 크기 드롭다운.
+function FontSizeDropdown() {
+  const editor = useEditorState();
+  const sel = useRef<any>(null);
+  const cur = markOn(editor, 'fontSize') ? String(editor.api.marks()?.fontSize) : null;
+  return (
+    <DropdownMenu onOpenChange={(o) => { if (o) sel.current = editor.selection; }}>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="apfs-rt-btn apfs-rt-btn--dd" title="글자 크기" aria-label={`글자 크기${cur ? ': ' + cur : ''}`}>
+          <TypeIcon size={16} strokeWidth={2} aria-hidden={true} />
+          <ChevronDown size={12} strokeWidth={2} aria-hidden={true} className="apfs-rt-btn__chev" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+        {FONT_SIZES.map((s) => (
+          <DropdownMenuItem key={s} onSelect={() => runWithSel(editor, sel.current, (e) => e.tf.fontSize.addMark(s))}>
+            <span style={{ flex: 1 }}>{s.replace('px', '')}</span>{cur === s && <Check size={15} strokeWidth={2.4} aria-hidden={true} />}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuItem onSelect={() => runWithSel(editor, sel.current, (e) => e.tf.removeMark('fontSize'))}>
+          <span style={{ flex: 1 }}>기본</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// 줄 간격 드롭다운(블록 단위).
+function LineHeightDropdown() {
+  const editor = useEditorState();
+  const sel = useRef<any>(null);
+  const cur = (editor.api.block() as any)?.[0]?.lineHeight;
+  return (
+    <DropdownMenu onOpenChange={(o) => { if (o) sel.current = editor.selection; }}>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="apfs-rt-btn apfs-rt-btn--dd" title="줄 간격" aria-label="줄 간격">
+          <MoveVertical size={16} strokeWidth={2} aria-hidden={true} />
+          <ChevronDown size={12} strokeWidth={2} aria-hidden={true} className="apfs-rt-btn__chev" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+        {LINE_HEIGHTS.map((lh) => (
+          <DropdownMenuItem key={lh.label} onSelect={() => runWithSel(editor, sel.current, (e) => e.tf.lineHeight.setNodes(lh.v))}>
+            <span style={{ flex: 1 }}>{lh.label}</span>{cur === lh.v && <Check size={15} strokeWidth={2.4} aria-hidden={true} />}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
@@ -290,13 +424,26 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl }: {
         <span className="apfs-richtext__sep" aria-hidden="true" />
         <BlockTypeDropdown />
 
-        {/* 인라인 마크 */}
+        {/* 인라인 마크(굵게~위첨자) */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
         {MARKS.map(markBtn)}
 
-        {/* Align 드롭다운 */}
+        {/* 글꼴 — 색·배경색·크기 */}
+        <span className="apfs-richtext__sep" aria-hidden="true" />
+        <ColorDropdown mark="color" Icon={Baseline} title="글자 색" />
+        <ColorDropdown mark="backgroundColor" Icon={PaintBucket} title="배경 색" />
+        <FontSizeDropdown />
+
+        {/* 문단 — 정렬·줄간격·들여쓰기 */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
         <AlignDropdown />
+        <LineHeightDropdown />
+        <button type="button" title="내어쓰기" aria-label="내어쓰기" className="apfs-rt-btn"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => { outdent(editor); editor.tf.focus(); }}><IndentDecrease size={16} strokeWidth={2} aria-hidden={true} /></button>
+        <button type="button" title="들여쓰기" aria-label="들여쓰기" className="apfs-rt-btn"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => { indent(editor); editor.tf.focus(); }}><IndentIncrease size={16} strokeWidth={2} aria-hidden={true} /></button>
 
         {/* 삽입 — 링크/이미지(인라인 URL 바 토글)·구분선. 링크는 제거 버튼도 제공. */}
         <span className="apfs-richtext__sep" aria-hidden="true" />

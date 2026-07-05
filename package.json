@@ -12,6 +12,7 @@
     "@platejs/basic-nodes": "^53.0.0",
     "@platejs/basic-styles": "^53.0.0",
     "@platejs/code-block": "^53.0.0",
+    "@platejs/indent": "^53.0.0",
     "@platejs/link": "^53.3.1",
     "@platejs/list-classic": "^53.0.0",
     "@platejs/media": "^53.1.4",
