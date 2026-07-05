@@ -268,6 +268,151 @@
   margin: .8em 0;
 }
 
+/* 삽입 드롭다운 트리거 — Turn into와 동일 스킨이나 폭 자동(라벨 짧음). */
+.apfs-rt-turninto--insert { min-width: 0; }
+
+/* ── 표(table) ── 헤드리스라 테두리/헤더 배경/셀 패딩을 직접 스타일. slate 노드 자신이 <table>. */
+.apfs-prose .apfs-rt-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: .8em 0;
+  font-size: .95em;
+}
+.apfs-prose .apfs-rt-table td, .apfs-prose .apfs-rt-table th {
+  border: 1px solid var(--border-strong);
+  padding: 6px 10px;
+  vertical-align: top;
+  min-width: 48px;
+}
+.apfs-prose .apfs-rt-table th { background: var(--muted); font-weight: 700; text-align: left; }
+.apfs-prose .apfs-rt-table p { margin: 0; }
+/* 표 편집 툴바 — <caption>(테이블 상단 렌더)로. 항상 DOM에 존재(구조 고정)하고 가시성만 토글(셀 입력 중
+   selection 이탈 방지). 숨김은 display:none이 아닌 높이 0(레이아웃만 접기)로 노드 존재 유지. */
+caption.apfs-rt-tablebar {
+  caption-side: top;
+  display: flex; align-items: center; gap: 2px;
+  width: fit-content;
+  height: 0; margin: 0; padding: 0;
+  overflow: hidden; opacity: 0; pointer-events: none;
+  background: var(--popover);
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+caption.apfs-rt-tablebar.is-visible {
+  height: auto; margin-bottom: 5px; padding: 3px;
+  overflow: visible; opacity: 1; pointer-events: auto;
+  border-color: var(--border);
+  box-shadow: 0 2px 8px rgb(0 0 0 / .1);
+}
+caption.apfs-rt-tablebar .apfs-rt-imgbtn { gap: 1px; }
+
+/* ── 콜아웃(callout) ── variant별 색을 토큰 기반으로. */
+.apfs-rt-callout {
+  display: flex; gap: 10px;
+  margin: .8em 0;
+  padding: 12px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--muted);
+}
+.apfs-rt-callout__ico { flex: none; margin-top: 1px; color: var(--muted-foreground); }
+.apfs-rt-callout__body { flex: 1; min-width: 0; }
+.apfs-rt-callout__body > :first-child { margin-top: 0; }
+.apfs-rt-callout__body > :last-child { margin-bottom: 0; }
+.apfs-rt-callout.is-info    { background: color-mix(in srgb, #0ea5e9 12%, var(--card)); border-color: color-mix(in srgb, #0ea5e9 30%, transparent); }
+.apfs-rt-callout.is-info    .apfs-rt-callout__ico { color: #0ea5e9; }
+.apfs-rt-callout.is-warning { background: color-mix(in srgb, #f59e0b 14%, var(--card)); border-color: color-mix(in srgb, #f59e0b 32%, transparent); }
+.apfs-rt-callout.is-warning .apfs-rt-callout__ico { color: #d97706; }
+.apfs-rt-callout.is-success { background: color-mix(in srgb, #22c55e 12%, var(--card)); border-color: color-mix(in srgb, #22c55e 30%, transparent); }
+.apfs-rt-callout.is-success .apfs-rt-callout__ico { color: #16a34a; }
+.apfs-rt-callout.is-tip     { background: color-mix(in srgb, #8b5cf6 12%, var(--card)); border-color: color-mix(in srgb, #8b5cf6 30%, transparent); }
+.apfs-rt-callout.is-tip     .apfs-rt-callout__ico { color: #8b5cf6; }
+
+/* ── 다단 레이아웃(column) ── flex 행에 열 배치. */
+.apfs-rt-colgroup { display: flex; gap: 16px; margin: .8em 0; align-items: stretch; }
+.apfs-rt-col { flex: 1 1 0; min-width: 0; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 8px; }
+.apfs-rt-col > :first-child { margin-top: 0; }
+@media (max-width: 640px) { .apfs-rt-colgroup { flex-direction: column; } }
+
+/* ── 토글(collapsible) ── 닫히면 본문 숨김. 열림상태는 element에 is-open 클래스. */
+.apfs-rt-toggle { display: grid; grid-template-columns: 20px 1fr; gap: 4px; margin: .3em 0; }
+.apfs-rt-toggle__btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 24px; margin-top: 1px;
+  color: var(--muted-foreground); cursor: pointer; border-radius: 5px; user-select: none;
+}
+.apfs-rt-toggle__btn:hover { background: var(--muted); color: var(--foreground); }
+.apfs-rt-toggle__chev { transition: transform .12s ease; }
+.apfs-rt-toggle.is-open .apfs-rt-toggle__chev { transform: rotate(90deg); }
+.apfs-rt-toggle__body > :first-child { margin-top: 0; }
+
+/* ── 인라인 배지(날짜·멘션·태그) ── 공통 칩 + 종류별 색. */
+.apfs-rt-inline {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 0 6px; margin: 0 1px;
+  font-size: .88em; line-height: 1.5;
+  border-radius: 5px; vertical-align: baseline;
+  user-select: none; cursor: default;
+}
+.apfs-rt-inline.is-sel { outline: 2px solid var(--ring); outline-offset: 1px; }
+.apfs-rt-date    { background: color-mix(in srgb, #0ea5e9 16%, var(--card)); color: #0369a1; }
+.apfs-rt-mention { background: color-mix(in srgb, var(--accent) 16%, var(--card)); color: var(--accent); font-weight: 600; }
+.apfs-rt-tag     { background: var(--muted); color: var(--foreground); border: 1px solid var(--border); }
+/* 멘션 입력 중 칩(콤보박스 타이핑 앵커) — 트리거 @ + 입력 텍스트를 감싸는 은은한 칩. */
+.apfs-rt-mentioninput { display: inline-block; border-radius: 5px; background: var(--muted); padding: 0 4px; }
+
+/* ── 수식(math) — katex. 블록은 가운데 정렬 판, 인라인은 흐름 내. 선택 시 LaTeX 입력창(라이브 프리뷰). ── */
+.apfs-rt-equation { margin: .7em 0; padding: 8px 10px; border-radius: 8px; cursor: default; }
+.apfs-rt-equation.is-sel { background: var(--muted); outline: 1px solid var(--ring); }
+.apfs-rt-equation__body { display: flex; flex-direction: column; gap: 8px; }
+.apfs-rt-equation__render { text-align: center; overflow-x: auto; min-height: 1.4em; }
+.apfs-rt-equation__empty { color: var(--muted-foreground); font-size: .9em; }
+.apfs-rt-eqinput {
+  width: 100%; height: 30px; padding: 0 10px;
+  font-size: 13px; font-family: ui-monospace, monospace;
+  color: var(--foreground); background: var(--card);
+  border: 1px solid var(--border-strong); border-radius: 7px; outline: none;
+}
+.apfs-rt-eqinput:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 22%, transparent); }
+.apfs-rt-ieq { position: relative; padding: 0 2px; }
+.apfs-rt-ieq.is-sel { outline: 2px solid var(--ring); outline-offset: 1px; border-radius: 3px; }
+.apfs-rt-ieq__empty { color: var(--muted-foreground); font-size: .88em; }
+/* 인라인 수식 편집 팝오버 — 선택 시 아래에 LaTeX 입력. */
+.apfs-rt-ieq__pop {
+  position: absolute; top: 100%; left: 0; z-index: 3;
+  margin-top: 4px; padding: 4px;
+  background: var(--popover); border: 1px solid var(--border);
+  border-radius: 8px; box-shadow: 0 4px 14px rgb(0 0 0 / .16);
+}
+.apfs-rt-ieq__pop .apfs-rt-eqinput { width: 180px; height: 28px; }
+/* katex 자체 색을 본문색에 맞춤(다크모드 대비). */
+.apfs-prose .katex { color: var(--foreground); font-size: 1.05em; }
+
+/* ── 단축키 마크(kbd) ── */
+.apfs-prose kbd {
+  display: inline-block;
+  padding: .05em .4em;
+  font-size: .82em; font-family: ui-monospace, monospace;
+  color: var(--foreground);
+  background: var(--muted);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  line-height: 1.4;
+}
+
+/* ── 비디오/미디어 임베드 ── */
+.apfs-rt-video { display: block; width: 100%; height: auto; border-radius: 8px; }
+.apfs-rt-embed { position: relative; display: inline-block; max-width: 100%; vertical-align: top; }
+.apfs-rt-embed.is-sel { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 8px; }
+.apfs-rt-embed__frame { position: relative; display: block; width: 100%; padding-top: 56.25%; border-radius: 8px; overflow: hidden; }
+.apfs-rt-embed__frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.apfs-rt-embed__empty { display: block; padding: 20px; text-align: center; color: var(--muted-foreground); background: var(--muted); border-radius: 8px; font-size: .9em; }
+
+/* ── 캡션(이미지/비디오/임베드) — 중앙 정렬 작은 텍스트영역. ── */
+.apfs-rt-caption { display: block; width: 100%; margin-top: 6px; padding: 2px 4px; text-align: center; font-size: .85em; color: var(--muted-foreground); background: transparent; border: none; outline: none; resize: none; font-family: inherit; }
+.apfs-rt-caption::placeholder { color: color-mix(in srgb, var(--muted-foreground) 60%, transparent); }
+
 /* 좁은 화면 — 편집 영역 최소 높이 축소(모달 세로 공간 절약) */
 @media (max-width: 640px) {
   .apfs-prose { min-height: 160px; }
