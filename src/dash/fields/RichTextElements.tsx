@@ -7,6 +7,7 @@
 import { PlateElement, PlateLeaf, useEditorRef, useSelected, useReadOnly } from 'platejs/react';
 import { getLinkAttributes } from '@platejs/link';
 import { insertTableRow, insertTableColumn, deleteRow, deleteColumn, deleteTable } from '@platejs/table';
+import { useTodoListElement, useTodoListElementState } from '@platejs/list-classic/react';  // 체크리스트 li의 checkbox 상태·토글
 import { useToggleButtonState, useToggleButton } from '@platejs/toggle/react';
 import { Caption, CaptionTextarea } from '@platejs/caption/react';
 import { parseVideoUrl } from '@platejs/media';
@@ -16,12 +17,39 @@ import 'katex/dist/katex.min.css';
 import {
   AlignLeft, AlignCenter, AlignRight, Trash2,
   ChevronRight, Info, TriangleAlert, CircleCheck, Lightbulb, Rows3, Columns3,
-  Plus, CalendarDays, AtSign, GripVertical,
+  Plus, CalendarDays, AtSign, GripVertical, FileDown as FileDownIcon,
 } from 'lucide-react';
 
 /* 블록/리프를 시맨틱 태그로 렌더 — CSS(.apfs-prose <tag>)가 DOM 태그를 노린다. */
 export const blockEl = (as: string) => function El(props: any) { return <PlateElement as={as} {...props} />; };
 export const leafEl  = (as: string) => function Lf(props: any) { return <PlateLeaf as={as} {...props} />; };
+
+/* ── 목록 항목(li) — ul/ol/taskList가 공유하는 노드. ──
+   taskList의 li는 element.checked(boolean)를 갖는다. 'checked' in element로 판별해 체크박스를 렌더.
+   훅(useTodoListElement*)은 분기 전에 무조건 호출(React 훅 규칙). 체크박스는 contentEditable=false +
+   mousedown preventDefault로 클릭이 에디터 caret을 빼앗지 않게 한다. */
+export function ListItemElement(props: any) {
+  const { element } = props;
+  const isTask = 'checked' in element;
+  const state = useTodoListElementState({ element });
+  const { checkboxProps } = useTodoListElement(state);
+  return (
+    <PlateElement {...props} as="li" className={isTask ? ('apfs-rt-taskitem' + (checkboxProps.checked ? ' is-checked' : '')) : undefined}>
+      {isTask && (
+        <span className="apfs-rt-taskcheck" contentEditable={false}>
+          <input type="checkbox" checked={!!checkboxProps.checked} aria-label="완료 여부"
+            onMouseDown={(e) => e.preventDefault()}
+            onChange={(e) => checkboxProps.onCheckedChange?.(e.target.checked)} />
+        </span>
+      )}
+      {props.children}
+    </PlateElement>
+  );
+}
+/* taskList 컨테이너 = 불릿 없는 <ul>. 헤드리스라 COMPONENTS 등록 없으면 체크리스트가 통째로 안 보임. */
+export function TaskListElement(props: any) {
+  return <PlateElement {...props} as="ul" className={'apfs-rt-tasklist' + (props.className ? ' ' + props.className : '')} />;
+}
 
 /* ── 링크 = 인라인 <a href>. getLinkAttributes로 href sanitize(javascript: 등 차단). ── */
 export function LinkElement(props: any) {
@@ -112,6 +140,30 @@ export function MediaEmbedElement(props: any) {
           )}
         </span>
         <Caption><CaptionTextarea className="apfs-rt-caption" placeholder="캡션 입력…" /></Caption>
+      </div>
+      {props.children}
+    </PlateElement>
+  );
+}
+
+/* ── 파일 첨부(file) = 보이드 블록. base64 dataURL을 다운로드 링크로. (백엔드 없음 → data-URI 다운로드.) ── */
+export function FileElement(props: any) {
+  const { element } = props;
+  const editor = useEditorRef();
+  const readOnly = useReadOnly();
+  const del = () => { const p = editor.api.findPath(element); if (p) editor.tf.removeNodes({ at: p }); editor.tf.focus(); };
+  return (
+    <PlateElement {...props}>
+      <div className="apfs-rt-file" contentEditable={false}>
+        <a className="apfs-rt-file__link" href={element.url} download={element.name} target="_blank" rel="noopener noreferrer">
+          <FileDownIcon size={16} strokeWidth={2} aria-hidden={true} />
+          <span className="apfs-rt-file__name">{element.name || '첨부파일'}</span>
+          {element.size ? <span className="apfs-rt-file__size">{element.size}</span> : null}
+        </a>
+        {!readOnly && (
+          <button type="button" className="apfs-rt-imgbtn is-danger" aria-label="첨부 삭제" onMouseDown={(e) => e.preventDefault()} onClick={del}>
+            <Trash2 size={14} strokeWidth={2} aria-hidden={true} /></button>
+        )}
       </div>
       {props.children}
     </PlateElement>
@@ -327,8 +379,9 @@ export const COMPONENTS: Record<string, any> = {
   p: blockEl('p'), h1: blockEl('h1'), h2: blockEl('h2'), h3: blockEl('h3'),
   h4: blockEl('h4'), h5: blockEl('h5'), h6: blockEl('h6'),
   blockquote: blockEl('blockquote'), code_block: blockEl('pre'), code_line: blockEl('code'),
-  ul: blockEl('ul'), ol: blockEl('ol'), li: blockEl('li'), lic: blockEl('p'),
-  a: LinkElement, img: ImageElement, hr: HrElement,
+  ul: blockEl('ul'), ol: blockEl('ol'), li: ListItemElement, lic: blockEl('p'),
+  taskList: TaskListElement,
+  a: LinkElement, img: ImageElement, hr: HrElement, file: FileElement,
   video: VideoElement, media_embed: MediaEmbedElement,
   // 표
   table: TableElement, tr: blockEl('tr'), td: TableCellElement, th: TableCellElement,
