@@ -4,10 +4,26 @@
 
 /* 컨테이너 — 다른 폼 인풋(SchemaField base)과 동일한 테두리/배경/라운드 */
 .apfs-richtext {
+  position: relative;   /* 선택 서식 플로팅 툴바의 absolute 기준 */
   border: 1px solid var(--border-strong);
   border-radius: 9px;
   background: var(--card);
   overflow: hidden;
+}
+/* 컨텍스트 메뉴 래퍼 — 레이아웃에 영향 없이 우클릭만 가로챈다(display:contents). */
+.apfs-rt-ctxwrap { display: contents; }
+/* 선택 서식 플로팅 툴바 — 컨테이너 내부 absolute(비포털: 모달 DismissableLayer 회피). */
+.apfs-rt-floattoolbar {
+  position: absolute;
+  z-index: 1;
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--foreground) 14%, transparent);
 }
 .apfs-richtext:focus-within {
   border-color: var(--ring);
@@ -118,6 +134,12 @@
 }
 .apfs-rt-imgbox img { display: block; width: 100%; height: auto; border-radius: 8px; margin: 0; }
 .apfs-rt-imgbox.is-sel img { outline: 2px solid var(--ring); outline-offset: 2px; }
+/* 파일 첨부 칩(file 보이드) — base64 dataURL 다운로드 링크 */
+.apfs-rt-file { display: inline-flex; align-items: center; gap: 8px; margin: .4em 0; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--muted); max-width: 100%; }
+.apfs-rt-file__link { display: inline-flex; align-items: center; gap: 6px; color: var(--foreground); text-decoration: none; font-size: .9em; min-width: 0; }
+.apfs-rt-file__link:hover { color: var(--accent); }
+.apfs-rt-file__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.apfs-rt-file__size { color: var(--muted-foreground); font-size: .85em; flex: none; }
 .apfs-rt-imgbar {
   position: absolute;
   top: 8px; left: 50%;
@@ -151,6 +173,18 @@
 .apfs-prose sup { font-size: .75em; line-height: 0; vertical-align: super; }
 
 /* 링크 URL 입력 바 — 툴바 아래 한 줄(포털/팝오버 없이 흐름 내). */
+.apfs-rt-ddsep { height: 1px; margin: 4px -2px; background: var(--border); }
+.apfs-richtext__uploaderr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+}
+.apfs-richtext__uploaderr button { margin-left: auto; }
 .apfs-richtext__linkbar {
   display: flex;
   align-items: center;
@@ -221,6 +255,15 @@
 .apfs-prose ol { list-style: decimal; }
 .apfs-prose li { margin: .2em 0; }
 .apfs-prose li > p { margin: 0; }
+/* 체크리스트(taskList) — 불릿 없는 목록 + 각 항목 좌측 체크박스 */
+.apfs-prose .apfs-rt-tasklist { list-style: none; padding-left: 0; }
+.apfs-prose .apfs-rt-taskitem { list-style: none; display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+.apfs-rt-taskitem > .apfs-rt-taskcheck { flex: 0 0 auto; margin-top: 3px; user-select: none; }
+.apfs-rt-taskitem > .apfs-rt-taskcheck input { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; }
+.apfs-rt-taskitem > p { margin: 0; flex: 1 1 auto; min-width: 0; }
+.apfs-rt-taskitem.is-checked > p { text-decoration: line-through; color: var(--muted-foreground); }
+/* 중첩 하위목록은 체크박스 옆이 아니라 전체 폭으로 줄바꿈 */
+.apfs-rt-taskitem > .apfs-rt-tasklist, .apfs-rt-taskitem > ul, .apfs-rt-taskitem > ol { flex: 1 0 100%; }
 /* shadcn: 좌측 3px 보더 인용 + 여유 마진 */
 .apfs-prose blockquote {
   border-left: 3px solid var(--border-strong);

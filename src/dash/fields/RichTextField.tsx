@@ -1,16 +1,22 @@
 /* RichTextField — Plate(platejs v53) 기반 리치 텍스트 에디터. 스키마 control: 'richtext'.
    (2026-07 Tiptap v3 → Plate 교체. 2026-07 유료 제외 전 기능 확장: 표·콜아웃·다단·토글·날짜·수식·태그·
-    멘션·슬래시·이모지·글꼴·H4~6·Kbd·마크다운 단축.)
+    멘션·슬래시·이모지·글꼴·H4~6·Kbd·마크다운 단축. 2026-07 추가: 체크리스트(taskList)·이미지/파일 업로드
+    (base64+1MB 상한)·파일 첨부 칩·선택 서식 플로팅 툴바·우클릭 컨텍스트 메뉴(복사/복제/삭제)·문서 입출력
+    (MD/HTML/JSON import·export).)
+   ⚠️ 드래그 리사이즈(@platejs/resizable)는 CRUD 모달+DnD+onChange 직렬화 환경에서 "Maximum update depth"
+      렌더 루프를 유발해 제외 — 이미지 크기는 선택 오버레이의 S/M/L 프리셋으로 조절. 블록 마퀴 선택
+      (@platejs/selection)은 렌더트리 재구성(PlateContainer)+블록별 훅이 같은 루프 벡터라 보류(드래그 재정렬로 대체).
    ── 데이터 계약(HTML → Slate-JSON) ──
    Plate는 Slate JSON-native다. tiptap의 동기 getHTML()과 달리 Plate의 HTML 직렬화는 async라 키 입력마다
    쓰기엔 부적합. 저장 값을 HTML로 읽는 소비처가 없으므로 `value`를 **Slate value의 JSON 문자열**로 주고받는다.
    ⚠️ 빈 문서도 non-empty JSON이라 상위 required `.trim()`이 false-pass → onChange에서 진짜 빈 문서면 '' 방출.
-      "진짜 빈 문서" = 텍스트가 공백뿐 + 원자 노드(img/hr/table/수식/날짜/멘션/태그/콜아웃/다단/토글)도 없음.
+      "진짜 빈 문서" = 텍스트가 공백뿐 + 원자 노드(img/video/media_embed/file/hr/table/수식/날짜/멘션/태그/콜아웃/다단/토글)도 없음.
    초기화(비제어): value가 '['로 시작하면 JSON.parse, 아니면(레거시 HTML) editor.api.html.deserialize.
    ── 확장(플러그인) ──
    서식 스파인(basic-nodes marks/blocks) + list-classic + code-block + basic-styles(정렬/색/크기/글꼴) + indent +
-   link + media(Image) 에 더해: table / callout / layout(다단) / toggle / date / math(수식) / tag.
-   멘션·슬래시·이모지(콤보박스)·dnd·마크다운 내보내기는 후속 배치에서 배선.
+   link + media(Image/Video/MediaEmbed/File) 에 더해: table / callout / layout(다단) / toggle / date / math(수식) / tag /
+   list-classic의 taskList(체크리스트, ul/ol와 공존). 멘션·슬래시·이모지(콤보박스)·dnd 배선 완료.
+   선택 서식 플로팅 툴바=@platejs/floating(플러그인 불필요), 컨텍스트 메뉴=Radix ContextMenu(우클릭 블록 직접 조작).
    마크다운 단축(# , - , > , **bold**)은 v53에서 각 플러그인 inputRules에 내장 → 별도 AutoformatPlugin 불필요.
    ── element/leaf 컴포넌트 ──
    헤드리스라 시맨틱 태그를 직접 통제(RichTextElements.tsx의 COMPONENTS). Plate 기본 paragraph는 <div>라 override 필수.
@@ -35,12 +41,12 @@ import { IndentPlugin } from '@platejs/indent/react';
 import { indent, outdent } from '@platejs/indent';
 import { CodeBlockPlugin } from '@platejs/code-block/react';   // CodeLinePlugin은 CodeBlockPlugin에 nested 등록됨
 import { toggleCodeBlock, CodeBlockRules } from '@platejs/code-block'; // tf.code_block.toggle()은 code_line을 텍스트노드로 오생성 → helper 사용
-import { ListPlugin } from '@platejs/list-classic/react';       // ul/ol/li/lic 하위 플러그인은 ListPlugin에 nested 등록됨
-import { BulletedListRules, OrderedListRules } from '@platejs/list-classic';
+import { ListPlugin } from '@platejs/list-classic/react';       // ul/ol/li/lic + taskList 하위 플러그인은 ListPlugin에 nested 등록됨(taskList=체크리스트)
+import { BulletedListRules, OrderedListRules, TaskListRules } from '@platejs/list-classic';
 import { LinkPlugin } from '@platejs/link/react';
 import { upsertLink, unwrapLink, LinkRules } from '@platejs/link';
-import { ImagePlugin, VideoPlugin, MediaEmbedPlugin } from '@platejs/media/react';
-import { insertImage, insertMediaEmbed } from '@platejs/media';
+import { ImagePlugin, VideoPlugin, MediaEmbedPlugin, FilePlugin } from '@platejs/media/react';
+import { insertImage, insertMediaEmbed, insertImageFromFiles } from '@platejs/media';
 import { CaptionPlugin } from '@platejs/caption/react';
 import { TablePlugin, TableRowPlugin, TableCellPlugin, TableCellHeaderPlugin } from '@platejs/table/react';
 import { insertTable } from '@platejs/table';
@@ -63,20 +69,23 @@ import { NodeIdPlugin } from '@platejs/core';        // dnd는 블록 id 필수(
 import { DndPlugin } from '@platejs/dnd';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useFloatingToolbar, useFloatingToolbarState, offset, flip, shift } from '@platejs/floating';  // 선택 서식 플로팅 툴바(플러그인 불필요)
 import { MentionInputElement, SlashInputElement, EmojiInputElement } from './RichTextCombobox';
 import { COMPONENTS, BlockDraggable } from './RichTextElements';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code, SquareCode, Keyboard,
-  Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Pilcrow, List, ListOrdered, TextQuote,
+  Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Pilcrow, List, ListOrdered, ListChecks, TextQuote,
   AlignLeft, AlignCenter, AlignRight, AlignJustify, Minus, Link as LinkIcon, Unlink,
   Image as ImageIcon, Undo2, Redo2, ChevronDown, Check,
   Highlighter, Subscript as SubscriptIcon, Superscript as SuperscriptIcon,
   Baseline, PaintBucket, Type as TypeIcon, CaseSensitive, IndentIncrease, IndentDecrease, MoveVertical,
   Plus, Table as TableIcon, Info, Columns3, ListCollapse, CalendarDays, Sigma, Radical, FileDown,
-  Video, Clapperboard, Tag as TagIcon,
+  Video, Clapperboard, Tag as TagIcon, ImagePlus, Paperclip,
+  FileText, FileCode2, Braces, FileUp, Copy, CopyPlus, Trash2,
   type LucideIcon,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
+import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuSeparator } from '../ui/context-menu';
 import './richtext.css';
 
 const { useRef, useState } = React;
@@ -103,9 +112,9 @@ const PLUGINS = [
   LineHeightPlugin.configure({ inject: { targetPlugins: ALIGN_TARGETS } }),
   IndentPlugin.configure({ inject: { targetPlugins: ALIGN_TARGETS } }),
   CodeBlockPlugin.configure({ inputRules: [CodeBlockRules.markdown({ on: 'match' })] }),  // ``` → 코드블록
-  ListPlugin.configure({ inputRules: [BulletedListRules.markdown({ variant: '-' }), OrderedListRules.markdown({ variant: '.' })] }),  // - / 1.
+  ListPlugin.configure({ inputRules: [BulletedListRules.markdown({ variant: '-' }), OrderedListRules.markdown({ variant: '.' }), TaskListRules.markdown()] }),  // - / 1. / [ ]
   LinkPlugin.configure({ inputRules: [LinkRules.markdown(), LinkRules.autolink({ variant: 'space' }), LinkRules.autolink({ variant: 'break' })] }),
-  ImagePlugin, VideoPlugin, MediaEmbedPlugin,
+  ImagePlugin, VideoPlugin, MediaEmbedPlugin, FilePlugin,   // FilePlugin: 파일 첨부(file, 보이드) 노드
   CaptionPlugin.configure({ options: { query: { allow: ['img', 'video', 'media_embed'] } } }),  // img/비디오/임베드에 캡션
   // ── 확장 블록/보이드 ──
   TablePlugin, TableRowPlugin, TableCellPlugin, TableCellHeaderPlugin,
@@ -142,7 +151,7 @@ function toInitialValue(editor: PlateEditor, v: string) {
 }
 
 // 원자/미디어 노드 존재 여부 — 재귀. 텍스트가 비어도 이런 노드만 있으면 "빈 문서" 아님(required false-pass 방지).
-const ATOMIC_TYPES = new Set(['img', 'video', 'media_embed', 'hr', 'table', 'equation', 'inline_equation', 'date', 'mention', 'tag', 'callout', 'column_group', 'toggle']);
+const ATOMIC_TYPES = new Set(['img', 'video', 'media_embed', 'file', 'hr', 'table', 'equation', 'inline_equation', 'date', 'mention', 'tag', 'callout', 'column_group', 'toggle']);
 function hasAtomicNode(nodes: any[]): boolean {
   return Array.isArray(nodes) && nodes.some((n) => n && (ATOMIC_TYPES.has(n.type) || hasAtomicNode(n.children)));
 }
@@ -167,10 +176,12 @@ const TURN_INTO: DDItem[] = [
   { key: 'h6',         Icon: Heading6,    label: '제목 6',      run: (e) => e.tf.h6.toggle() },
   { key: 'ul',         Icon: List,        label: '글머리 목록', run: (e) => e.tf.ul.toggle() },
   { key: 'ol',         Icon: ListOrdered, label: '번호 목록',   run: (e) => e.tf.ol.toggle() },
+  { key: 'taskList',   Icon: ListChecks,  label: '체크리스트',  run: (e) => e.tf.taskList.toggle() },
   { key: 'blockquote', Icon: TextQuote,   label: '인용',        run: (e) => e.tf.blockquote.toggle() },
   { key: 'code_block', Icon: SquareCode,  label: '코드 블록',   run: (e) => toggleCodeBlock(e) },
 ];
 function currentBlockKey(e: any): string {
+  if (inNode(e, 'taskList')) return 'taskList';
   if (inNode(e, 'ul')) return 'ul';
   if (inNode(e, 'ol')) return 'ol';
   if (inNode(e, 'blockquote')) return 'blockquote';
@@ -181,7 +192,7 @@ function currentBlockKey(e: any): string {
 
 // ── 삽입 드롭다운 항목(원자/블록 노드 삽입) ──
 // run: 즉시 실행 / prompt: URL 입력 바를 해당 모드로 열기(비디오·임베드는 URL 필요).
-type InsertItem = { key: string; Icon: LucideIcon; label: string; run?: (e: any) => void; prompt?: 'video' | 'embed' };
+type InsertItem = { key: string; Icon: LucideIcon; label: string; run?: (e: any) => void; prompt?: 'video' | 'embed'; action?: 'file' };
 function insertHr(e: any) { e.tf.insertNodes([{ type: 'hr', children: [{ text: '' }] }, { type: 'p', children: [{ text: '' }] }], { select: true }); e.tf.focus(); }
 function insertToggle(e: any) { const id = 't' + Math.random().toString(36).slice(2, 9); e.tf.insertNodes({ type: 'toggle', id, children: [{ text: '' }] }, { select: true }); e.tf.focus(); }
 function insertTag(e: any) { e.tf.insertNodes({ type: 'tag', value: '태그', children: [{ text: '' }] } as any, { select: true }); e.tf.focus(); }
@@ -196,6 +207,7 @@ const INSERT_ITEMS: InsertItem[] = [
   { key: 'video',           Icon: Video,        label: '비디오',       prompt: 'video' },
   { key: 'embed',           Icon: Clapperboard, label: '미디어 임베드', prompt: 'embed' },
   { key: 'tag',             Icon: TagIcon,      label: '태그',         run: (e) => insertTag(e) },
+  { key: 'file',            Icon: Paperclip,    label: '파일 첨부',    action: 'file' },
   { key: 'hr',              Icon: Minus,        label: '구분선',       run: (e) => insertHr(e) },
 ];
 
@@ -219,6 +231,106 @@ const MARKS: BtnDef[] = [
   { key: 'sub',    Icon: SubscriptIcon, title: '아래 첨자',   run: (e) => e.tf.subscript.toggle(),     active: (e) => markOn(e, 'subscript') },
   { key: 'sup',    Icon: SuperscriptIcon, title: '위 첨자',   run: (e) => e.tf.superscript.toggle(),   active: (e) => markOn(e, 'superscript') },
 ];
+
+// 인라인 마크 버튼 묶음 — 상단 툴바와 플로팅 툴바가 공유. mousedown preventDefault 필수(클릭이 선택을 무너뜨리면
+// 플로팅 툴바가 클릭 도중 사라져 클릭이 유실됨 = caret/선택 회귀 재현).
+function MarkButtons({ editor }: { editor: any }) {
+  return (
+    <>
+      {MARKS.map((b) => {
+        const on = b.active(editor);
+        return (
+          <button key={b.key} type="button" title={b.title} aria-label={b.title} aria-pressed={on}
+            className={'apfs-rt-btn' + (on ? ' is-active' : '')}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => { b.run(editor); editor.tf.focus(); }}>
+            <b.Icon size={16} strokeWidth={2} aria-hidden={true} />
+          </button>
+        );
+      })}
+    </>
+  );
+}
+
+// 선택 서식 플로팅 툴바 — 텍스트를 드래그 선택하면 위에 떠서 마크 버튼 제공. BlockSelectionPlugin 불필요.
+// ⚠️ 모달(Radix Dialog) 안이라 body 포털 금지(DismissableLayer가 interact-outside로 모달을 닫음).
+//    컨테이너 내부 렌더 + floating-ui strategy:'absolute'(기본)로 position:relative 조상(.apfs-richtext) 기준 배치.
+function FloatingMarkToolbar() {
+  const editor = useEditorState();
+  const state = useFloatingToolbarState({
+    editorId: editor.id,
+    focusedEditorId: editor.id,
+    floatingOptions: { placement: 'top', middleware: [offset(8), flip(), shift({ padding: 8 })] },
+  } as any);
+  const { hidden, props, ref } = useFloatingToolbar(state);
+  if (hidden) return null;
+  return (
+    <div ref={ref as any} className="apfs-rt-floattoolbar" role="toolbar" aria-label="선택 서식" {...props}>
+      <MarkButtons editor={editor} />
+    </div>
+  );
+}
+
+// 노드 트리에서 id 전부 제거(복제 시 중복 id 방지 — NodeIdPlugin이 삽입 시 새 id 재부여).
+function stripIds(node: any) {
+  if (!node || typeof node !== 'object') return;
+  delete node.id;
+  if (Array.isArray(node.children)) node.children.forEach(stripIds);
+}
+
+// id로 노드 경로를 재귀 탐색(NodeIdPlugin이 블록에 id 부여). 중첩(목록/셀)까지 견고하게 해석.
+function findPathById(nodes: any[], id: string, base: number[] = []): number[] | null {
+  for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i];
+    if (n && n.id === id) return [...base, i];
+    if (n && Array.isArray(n.children)) { const r = findPathById(n.children, id, [...base, i]); if (r) return r; }
+  }
+  return null;
+}
+
+// 블록 우클릭 컨텍스트 메뉴 — BlockSelectionPlugin 없이 우클릭한 블록에 직접 작동(복사/복제/삭제).
+// Radix ContextMenu(Portal=레이어 분기)라 모달 위에 뜨고 DismissableLayer로 모달을 닫지 않는다.
+function EditorContextMenu({ children }: { children: React.ReactNode }) {
+  const editor = useEditorState();
+  const targetPath = useRef<number[] | null>(null);
+  function onContextMenu(e: React.MouseEvent) {
+    const el = (e.target as HTMLElement)?.closest?.('[data-block-id]');
+    const id = el?.getAttribute('data-block-id');
+    targetPath.current = id ? findPathById(editor.children as any[], id) : null;
+  }
+  function doCopy() {
+    const p = targetPath.current; if (!p) return;
+    const text = (editor as any).api.string(p) || '';
+    try { navigator.clipboard?.writeText(text); } catch { /* 클립보드 미허용 무시 */ }
+  }
+  function doDuplicate() {
+    const p = targetPath.current; if (!p) return;
+    const node = (editor as any).api.node(p)?.[0]; if (!node) return;
+    const clone = JSON.parse(JSON.stringify(node));
+    stripIds(clone);  // 자기+중첩 자식의 id 전부 제거 → NodeIdPlugin이 새 id 재부여(중복 id 방지)
+    const next = [...p.slice(0, -1), p[p.length - 1] + 1];
+    editor.tf.insertNodes(clone, { at: next, select: true });
+    editor.tf.focus();
+  }
+  function doDelete() {
+    const p = targetPath.current; if (!p) return;
+    editor.tf.removeNodes({ at: p });
+    editor.tf.focus();
+  }
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div onContextMenu={onContextMenu} className="apfs-rt-ctxwrap">{children}</div>
+      </ContextMenuTrigger>
+      <ContextMenuContent onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+        <ContextMenuItem onSelect={doCopy}><Copy size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>복사</span></ContextMenuItem>
+        <ContextMenuItem onSelect={doDuplicate}><CopyPlus size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>복제</span></ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem danger onSelect={doDelete}><Trash2 size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>삭제</span></ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+}
 
 // 글꼴색/배경색 팔레트(고정 색 — 문서에 절대색으로 박혀 라이트/다크 무관 유지).
 const PALETTE = ['#111827', '#ef4444', '#f59e0b', '#eab308', '#22c55e', '#0ea5e9', '#0158a8', '#8b5cf6', '#ec4899', '#78716c', '#94a3b8', '#ffffff'];
@@ -269,7 +381,7 @@ function BlockTypeDropdown() {
 
 // 삽입 드롭다운 — 표/콜아웃/다단/토글/날짜/수식/비디오/임베드/태그/구분선. 트리거는 '+ 삽입'.
 // prompt 항목(비디오·임베드)은 URL 입력 바를 열도록 openPrompt 콜백 호출.
-function InsertDropdown({ openPrompt }: { openPrompt: (m: 'video' | 'embed') => void }) {
+function InsertDropdown({ openPrompt, openFile }: { openPrompt: (m: 'video' | 'embed') => void; openFile: () => void }) {
   const editor = useEditorState();
   const sel = useRef<any>(null);
   return (
@@ -283,7 +395,7 @@ function InsertDropdown({ openPrompt }: { openPrompt: (m: 'video' | 'embed') => 
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
         {INSERT_ITEMS.map((t) => (
-          <DropdownMenuItem key={t.key} onSelect={() => (t.prompt ? openPrompt(t.prompt) : runWithSel(editor, sel.current, t.run!))}>
+          <DropdownMenuItem key={t.key} onSelect={() => (t.prompt ? openPrompt(t.prompt) : t.action === 'file' ? openFile() : runWithSel(editor, sel.current, t.run!))}>
             <t.Icon size={16} strokeWidth={2} aria-hidden={true} />
             <span style={{ flex: 1 }}>{t.label}</span>
           </DropdownMenuItem>
@@ -427,26 +539,106 @@ function LineHeightDropdown() {
   );
 }
 
-// 마크다운 내보내기 — editor.api.markdown.serialize()로 직렬화 후 .md 파일 다운로드(백엔드 없음, blob URL).
+// 문서 입출력 드롭다운 — 마크다운/HTML/JSON 내보내기·가져오기. getRoot=HTML export용 루트 DOM 접근자.
+function DocIODropdown({ openImport, getRoot }: { openImport: (m: 'md' | 'html' | 'json') => void; getRoot: () => HTMLElement | null }) {
+  const editor = useEditorState();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="apfs-rt-btn apfs-rt-btn--dd" title="문서 입출력" aria-label="문서 입출력">
+          <FileDown size={16} strokeWidth={2} aria-hidden={true} />
+          <ChevronDown size={12} strokeWidth={2} aria-hidden={true} className="apfs-rt-btn__chev" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+        <DropdownMenuItem onSelect={() => exportMarkdown(editor)}><FileText size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>마크다운 내보내기</span></DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => exportHtml(getRoot())}><FileCode2 size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>HTML 내보내기</span></DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => exportJson(editor)}><Braces size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>JSON 내보내기</span></DropdownMenuItem>
+        <div className="apfs-rt-ddsep" role="separator" />
+        <DropdownMenuItem onSelect={() => openImport('md')}><FileUp size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>마크다운 가져오기</span></DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => openImport('html')}><FileUp size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>HTML 가져오기</span></DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => openImport('json')}><FileUp size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>JSON 가져오기</span></DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// 텍스트를 파일로 다운로드(백엔드 없음, blob URL).
+function downloadText(name: string, text: string, mime: string) {
+  const blob = new Blob([text], { type: mime + ';charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+// 마크다운 내보내기 — editor.api.markdown.serialize()로 직렬화.
 function exportMarkdown(editor: any) {
   let md = '';
   try { md = editor.api.markdown.serialize(); } catch { md = ''; }
-  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = '내용.md';
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
+  downloadText('내용.md', md, 'text/markdown');
+}
+// JSON 내보내기 — 저장값 계약이 Slate JSON이므로 editor.children를 그대로 직렬화.
+function exportJson(editor: any) {
+  downloadText('내용.json', JSON.stringify(editor.children, null, 2), 'application/json');
+}
+// HTML 내보내기 — 렌더된 contenteditable(data-slate-editor)을 클론해 편집 chrome을 제거한 뒤 직렬화.
+// serializeHtml(async+PlateStatic)은 헤드리스 커스텀 노드에서 불안정 → DOM 직렬화가 결정적.
+// DnD 래퍼/드래그핸들/편집 오버레이/슬레이트 속성을 벗겨 깨끗한 시맨틱 HTML만 남긴다.
+function exportHtml(root: HTMLElement | null) {
+  const editable = root?.querySelector('[data-slate-editor]') as HTMLElement | null;
+  if (!editable) { downloadText('내용.html', '', 'text/html'); return; }
+  const clone = editable.cloneNode(true) as HTMLElement;
+  // 편집 UI chrome 제거(드래그핸들·드롭라인·이미지/표 편집 툴바·수식 입력·캡션 placeholder textarea).
+  clone.querySelectorAll('.apfs-rt-draghandle, .apfs-rt-dropline, .apfs-rt-imgbar, .apfs-rt-tablebar, .apfs-rt-eqinput, .apfs-rt-ieq__pop').forEach((n) => n.remove());
+  // DnD 래퍼 div 언랩(.apfs-rt-blockdrag > .apfs-rt-blockdrag__content > 실제 블록).
+  clone.querySelectorAll('.apfs-rt-blockdrag__content, .apfs-rt-blockdrag').forEach((w) => { const p = w.parentNode; if (p) { while (w.firstChild) p.insertBefore(w.firstChild, w); p.removeChild(w); } });
+  // 편집 전용 속성 제거.
+  clone.querySelectorAll('*').forEach((el) => {
+    [...el.attributes].forEach((a) => { if (a.name === 'contenteditable' || a.name === 'draggable' || a.name.startsWith('data-slate') || a.name.startsWith('data-block')) el.removeAttribute(a.name); });
+  });
+  const doc = `<!doctype html>\n<html lang="ko">\n<head><meta charset="utf-8"><title>내용</title></head>\n<body>\n${clone.innerHTML}\n</body>\n</html>\n`;
+  downloadText('내용.html', doc, 'text/html');
+}
+// 문서 전체 교체(가져오기) — 파싱 결과 노드를 setValue로 치환. 파서 실패 시 무시.
+function replaceValue(editor: any, nodes: any) {
+  if (Array.isArray(nodes) && nodes.length) { editor.tf.setValue(nodes); editor.tf.focus(); }
+}
+function importMarkdown(editor: any, text: string) {
+  try { replaceValue(editor, editor.api.markdown.deserialize(text)); } catch { /* 파싱 실패 무시 */ }
+}
+function importHtml(editor: any, text: string) {
+  try {
+    const body = new DOMParser().parseFromString(text, 'text/html').body;
+    replaceValue(editor, editor.api.html.deserialize({ element: body }));
+  } catch { /* 파싱 실패 무시 */ }
+}
+function importJson(editor: any, text: string) {
+  try { replaceValue(editor, JSON.parse(text)); } catch { /* 파싱 실패 무시 */ }
+}
+
+// 클라이언트 전용 업로드 — base64가 저장값에 인라인되므로 크기 상한을 둔다(백엔드 없음).
+const UPLOAD_MAX_BYTES = 1024 * 1024; // 1MB
+function humanSize(bytes: number): string {
+  if (bytes < 1024) return bytes + 'B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + 'KB';
+  return (bytes / 1024 / 1024).toFixed(1) + 'MB';
 }
 
 type PromptMode = null | 'link' | 'image' | 'video' | 'embed';
 
 // 툴바 — <Plate> 자식이라 useEditorState()로 매 변경 재렌더 → active 상태 동기 반영.
-function Toolbar({ pMode, setPMode, pUrl, setPUrl }: {
+function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef }: {
   pMode: PromptMode; setPMode: (m: PromptMode) => void; pUrl: string; setPUrl: (u: string) => void;
+  rootRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const editor = useEditorState();
   const savedSel = useRef<any>(null);
+  const imgUploadRef = useRef<HTMLInputElement>(null);
+  const fileUploadRef = useRef<HTMLInputElement>(null);
+  const importRef = useRef<HTMLInputElement>(null);
+  const importModeRef = useRef<'md' | 'html' | 'json'>('md');
+  const [uploadErr, setUploadErr] = useState('');
   const canUndo = !!editor.history?.undos?.length;
   const canRedo = !!editor.history?.redos?.length;
   const linkActive = inNode(editor, 'a');
@@ -466,20 +658,52 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl }: {
     setPMode(null);
     editor.tf.focus();
   }
+  // 클라이언트 업로드 — base64 인라인 전 크기 상한 강제(백엔드 없음).
+  function onPickImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (files && files.length) {
+      const over = Array.from(files).find((f) => f.size > UPLOAD_MAX_BYTES);
+      if (over) setUploadErr(`이미지가 너무 큽니다(${humanSize(over.size)}). 최대 ${humanSize(UPLOAD_MAX_BYTES)}까지 업로드할 수 있습니다.`);
+      else { setUploadErr(''); insertImageFromFiles(editor, files); editor.tf.focus(); }
+    }
+    e.target.value = '';
+  }
+  function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (f) {
+      if (f.size > UPLOAD_MAX_BYTES) setUploadErr(`파일이 너무 큽니다(${humanSize(f.size)}). 최대 ${humanSize(UPLOAD_MAX_BYTES)}까지 첨부할 수 있습니다.`);
+      else {
+        setUploadErr('');
+        const r = new FileReader();
+        r.onload = () => {
+          editor.tf.insertNodes([{ type: 'file', url: String(r.result), name: f.name, size: humanSize(f.size), children: [{ text: '' }] }, { type: 'p', children: [{ text: '' }] }] as any, { select: true });
+          editor.tf.focus();
+        };
+        r.readAsDataURL(f);
+      }
+    }
+    e.target.value = '';
+  }
+  // 문서 가져오기 — 포맷별 파서로 파싱 후 전체 교체(setValue). 파일 선택 트리거는 DocIODropdown.
+  function openImport(mode: 'md' | 'html' | 'json') { importModeRef.current = mode; importRef.current?.click(); }
+  function onImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (f) {
+      const r = new FileReader();
+      const mode = importModeRef.current;
+      r.onload = () => {
+        const text = String(r.result || '');
+        if (mode === 'md') importMarkdown(editor, text);
+        else if (mode === 'html') importHtml(editor, text);
+        else importJson(editor, text);
+      };
+      r.readAsText(f);
+    }
+    e.target.value = '';
+  }
+  const importAccept = '.md,.markdown,.html,.htm,.json,.txt';
   const promptLabel = pMode === 'image' ? '이미지 URL' : pMode === 'video' ? '비디오 URL' : pMode === 'embed' ? '임베드 URL(YouTube 등)' : '링크 URL';
   const promptPlaceholder = pMode === 'image' ? 'https://…/image.png' : pMode === 'video' ? 'https://…/video.mp4' : pMode === 'embed' ? 'https://youtube.com/watch?v=…' : 'https://example.com';
-
-  const markBtn = (b: BtnDef) => {
-    const on = b.active(editor);
-    return (
-      <button key={b.key} type="button" title={b.title} aria-label={b.title} aria-pressed={on}
-        className={'apfs-rt-btn' + (on ? ' is-active' : '')}
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => { b.run(editor); editor.tf.focus(); }}>
-        <b.Icon size={16} strokeWidth={2} aria-hidden={true} />
-      </button>
-    );
-  };
 
   return (
     <>
@@ -495,11 +719,11 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl }: {
         {/* Turn into · 삽입 — 블록 타입/노드 삽입 드롭다운 */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
         <BlockTypeDropdown />
-        <InsertDropdown openPrompt={openMedia} />
+        <InsertDropdown openPrompt={openMedia} openFile={() => fileUploadRef.current?.click()} />
 
         {/* 인라인 마크(굵게~위첨자) */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
-        {MARKS.map(markBtn)}
+        <MarkButtons editor={editor} />
 
         {/* 글꼴 — 서체·색·배경색·크기 */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
@@ -528,16 +752,29 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl }: {
         <button type="button" title="링크 제거" aria-label="링크 제거" className="apfs-rt-btn"
           disabled={!linkActive} onMouseDown={(e) => e.preventDefault()}
           onClick={() => { unwrapLink(editor); editor.tf.focus(); }}><Unlink size={16} strokeWidth={2} aria-hidden={true} /></button>
-        <button type="button" title="이미지" aria-label="이미지" aria-pressed={imageActive || pMode === 'image'}
+        <button type="button" title="이미지 URL" aria-label="이미지 URL" aria-pressed={imageActive || pMode === 'image'}
           className={'apfs-rt-btn' + (imageActive || pMode === 'image' ? ' is-active' : '')}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => (pMode === 'image' ? closeBar() : openImage())}><ImageIcon size={16} strokeWidth={2} aria-hidden={true} /></button>
+        <button type="button" title="이미지 업로드" aria-label="이미지 업로드" className="apfs-rt-btn"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => imgUploadRef.current?.click()}><ImagePlus size={16} strokeWidth={2} aria-hidden={true} /></button>
 
-        {/* 마크다운 내보내기 — 현재 문서를 .md 파일로 직렬화·다운로드(백엔드 없음, 클라이언트 blob). */}
+        {/* 문서 입출력 — 마크다운/HTML/JSON 내보내기·가져오기(백엔드 없음, 클라이언트 blob). */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
-        <button type="button" title="마크다운 내보내기" aria-label="마크다운 내보내기" className="apfs-rt-btn"
-          onMouseDown={(e) => e.preventDefault()} onClick={() => exportMarkdown(editor)}><FileDown size={16} strokeWidth={2} aria-hidden={true} /></button>
+        <DocIODropdown openImport={openImport} getRoot={() => rootRef.current} />
       </div>
+
+      {/* 숨은 파일 선택 input — 이미지 업로드 / 파일 첨부. base64 인라인 전 크기 상한 검증. */}
+      <input ref={imgUploadRef} type="file" accept="image/*" multiple hidden onChange={onPickImage} />
+      <input ref={fileUploadRef} type="file" hidden onChange={onPickFile} />
+      <input ref={importRef} type="file" accept={importAccept} hidden onChange={onImportFile} />
+      {uploadErr && (
+        <div className="apfs-richtext__uploaderr" role="alert">
+          {uploadErr}
+          <button type="button" className="apfs-rt-linkbtn is-ghost" onMouseDown={(e) => e.preventDefault()} onClick={() => setUploadErr('')}>닫기</button>
+        </div>
+      )}
 
       {/* URL 입력 바(링크·이미지 공용) — 텍스트 입력이라 mousedown preventDefault를 걸지 않는다. */}
       {pMode && (
@@ -568,6 +805,7 @@ export function RichTextField({ value, onChange, label, required }: { value: str
   const [pMode, setPMode] = useState<PromptMode>(null);
   const [pUrl, setPUrl] = useState('');
   const lastEmitted = useRef<string | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);  // HTML 내보내기 시 렌더된 편집영역 DOM 접근용
 
   const editor = usePlateEditor({
     plugins: PLUGINS,
@@ -586,16 +824,19 @@ export function RichTextField({ value, onChange, label, required }: { value: str
   }
 
   return (
-    <div className={'apfs-richtext' + (required ? ' is-required' : '')}>
+    <div ref={rootRef} className={'apfs-richtext' + (required ? ' is-required' : '')}>
       <Plate editor={editor} onChange={handleChange}>
-        <Toolbar pMode={pMode} setPMode={setPMode} pUrl={pUrl} setPUrl={setPUrl} />
-        <PlateContent
-          className="apfs-prose"
-          role="textbox"
-          aria-multiline="true"
-          aria-label={label || '내용'}
-          aria-required={required ? true : undefined}
-        />
+        <Toolbar pMode={pMode} setPMode={setPMode} pUrl={pUrl} setPUrl={setPUrl} rootRef={rootRef} />
+        <EditorContextMenu>
+          <PlateContent
+            className="apfs-prose"
+            role="textbox"
+            aria-multiline="true"
+            aria-label={label || '내용'}
+            aria-required={required ? true : undefined}
+          />
+        </EditorContextMenu>
+        <FloatingMarkToolbar />
       </Plate>
     </div>
   );
