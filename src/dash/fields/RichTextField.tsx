@@ -78,7 +78,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, AlignJustify, Minus, Link as LinkIcon, Unlink,
   Image as ImageIcon, Undo2, Redo2, ChevronDown, Check,
   Highlighter, Subscript as SubscriptIcon, Superscript as SuperscriptIcon,
-  Baseline, PaintBucket, Type as TypeIcon, CaseSensitive, IndentIncrease, IndentDecrease, MoveVertical,
+  Baseline, PaintBucket, CaseSensitive, IndentIncrease, IndentDecrease, MoveVertical,
   Plus, Table as TableIcon, Info, Columns3, ListCollapse, CalendarDays, Sigma, Radical, FileDown,
   Video, Clapperboard, Tag as TagIcon, ImagePlus, Paperclip,
   FileText, FileCode2, Braces, FileUp, Copy, CopyPlus, Trash2,
@@ -334,7 +334,8 @@ function EditorContextMenu({ children }: { children: React.ReactNode }) {
 
 // 글꼴색/배경색 팔레트(고정 색 — 문서에 절대색으로 박혀 라이트/다크 무관 유지).
 const PALETTE = ['#111827', '#ef4444', '#f59e0b', '#eab308', '#22c55e', '#0ea5e9', '#0158a8', '#8b5cf6', '#ec4899', '#78716c', '#94a3b8', '#ffffff'];
-const FONT_SIZES = ['12px', '14px', '16px', '18px', '24px', '30px', '36px'];
+// 글자 크기 스테퍼 단계(공식 Plate 범위). 값은 px 숫자.
+const FONT_SIZE_STEPS = [8, 9, 10, 12, 14, 16, 18, 24, 30, 36, 48, 60, 72, 96];
 const FONT_FAMILIES = [
   { label: '기본',        v: '' },
   { label: 'Pretendard', v: 'Pretendard, sans-serif' },
@@ -488,30 +489,34 @@ function FontFamilyDropdown() {
   );
 }
 
-// 글자 크기 드롭다운.
-function FontSizeDropdown() {
+// 글자 크기 스테퍼 — 공식 Plate 룩(− 값 +). 현재 마크 없으면 기본 16. ±로 단계 이동, 값 클릭 시 기본 복원.
+function FontSizeStepper() {
   const editor = useEditorState();
-  const sel = useRef<any>(null);
-  const cur = markOn(editor, 'fontSize') ? String(editor.api.marks()?.fontSize) : null;
+  const curPx = markOn(editor, 'fontSize') ? String(editor.api.marks()?.fontSize) : '';
+  const curNum = parseInt(curPx, 10) || 16;
+  const step = (dir: number) => {
+    editor.tf.focus();
+    const nums = FONT_SIZE_STEPS;
+    let idx = nums.indexOf(curNum);
+    if (idx === -1) {                              // 목록 밖 값 → 삽입 위치 기준 이동
+      const gt = nums.findIndex((n) => n > curNum);
+      idx = dir < 0 ? (gt <= 0 ? 0 : gt - 1) : (gt === -1 ? nums.length - 1 : gt);
+    } else {
+      idx = Math.max(0, Math.min(nums.length - 1, idx + dir));
+    }
+    (editor as any).tf.fontSize.addMark(nums[idx] + 'px');
+    editor.tf.focus();
+  };
+  const reset = () => { editor.tf.focus(); (editor as any).tf.removeMark('fontSize'); editor.tf.focus(); };
   return (
-    <DropdownMenu onOpenChange={(o) => { if (o) sel.current = editor.selection; }}>
-      <DropdownMenuTrigger asChild>
-        <button type="button" className="apfs-rt-btn apfs-rt-btn--dd" title="글자 크기" aria-label={`글자 크기${cur ? ': ' + cur : ''}`}>
-          <TypeIcon size={16} strokeWidth={2} aria-hidden={true} />
-          <ChevronDown size={12} strokeWidth={2} aria-hidden={true} className="apfs-rt-btn__chev" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
-        {FONT_SIZES.map((s) => (
-          <DropdownMenuItem key={s} onSelect={() => runWithSel(editor, sel.current, (e) => e.tf.fontSize.addMark(s))}>
-            <span style={{ flex: 1 }}>{s.replace('px', '')}</span>{cur === s && <Check size={15} strokeWidth={2.4} aria-hidden={true} />}
-          </DropdownMenuItem>
-        ))}
-        <DropdownMenuItem onSelect={() => runWithSel(editor, sel.current, (e) => e.tf.removeMark('fontSize'))}>
-          <span style={{ flex: 1 }}>기본</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <span className="apfs-rt-fontsize" role="group" aria-label="글자 크기">
+      <button type="button" className="apfs-rt-fontsize__btn" title="글자 크기 줄이기" aria-label="글자 크기 줄이기"
+        onMouseDown={(e) => e.preventDefault()} onClick={() => step(-1)}><Minus size={14} strokeWidth={2.2} aria-hidden={true} /></button>
+      <button type="button" className="apfs-rt-fontsize__val" title="기본 크기로" aria-label={`현재 글자 크기 ${curNum}, 클릭 시 기본`}
+        onMouseDown={(e) => e.preventDefault()} onClick={reset}>{curNum}</button>
+      <button type="button" className="apfs-rt-fontsize__btn" title="글자 크기 키우기" aria-label="글자 크기 키우기"
+        onMouseDown={(e) => e.preventDefault()} onClick={() => step(1)}><Plus size={14} strokeWidth={2.2} aria-hidden={true} /></button>
+    </span>
   );
 }
 
@@ -727,10 +732,10 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef }: {
 
         {/* 글꼴 — 서체·색·배경색·크기 */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
+        <FontSizeStepper />
         <FontFamilyDropdown />
         <ColorDropdown mark="color" Icon={Baseline} title="글자 색" />
         <ColorDropdown mark="backgroundColor" Icon={PaintBucket} title="배경 색" />
-        <FontSizeDropdown />
 
         {/* 문단 — 정렬·줄간격·들여쓰기 */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
