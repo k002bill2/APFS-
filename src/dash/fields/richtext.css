@@ -17,6 +17,7 @@
   position: absolute;
   z-index: 1;
   display: inline-flex;
+  align-items: center;
   gap: 2px;
   padding: 4px;
   border-radius: 8px;
@@ -103,6 +104,9 @@
 .apfs-rt-turninto > svg:first-child { color: var(--muted-foreground); flex: none; }
 .apfs-rt-turninto__label { flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .apfs-rt-turninto__chev { flex: none; opacity: .5; }
+/* 플로팅 툴바용 축소 Turn-into — 고정 최소폭 해제(선택 서식 바의 좁은 폭에 맞춤). */
+.apfs-rt-turninto--compact { min-width: 0; height: 28px; padding: 0 6px; font-size: 12px; gap: 4px; }
+.apfs-rt-turninto--compact .apfs-rt-turninto__label { max-width: 74px; }
 
 .apfs-richtext__sep {
   width: 1px;
@@ -110,6 +114,44 @@
   background: var(--border);
   margin: 0 4px;
 }
+
+/* 글자 크기 스테퍼 — 공식 Plate 룩(− 값 +). 테두리 박스 안에 감·값·증 3분할. */
+.apfs-rt-fontsize {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.apfs-rt-fontsize__btn {
+  width: 24px;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color .12s ease, color .12s ease;
+}
+.apfs-rt-fontsize__btn:hover { background: var(--muted); color: var(--foreground); }
+.apfs-rt-fontsize__val {
+  min-width: 30px;
+  height: 100%;
+  padding: 0 3px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--foreground);
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  transition: background-color .12s ease;
+}
+.apfs-rt-fontsize__val:hover { background: var(--muted); }
 
 /* 색(글꼴/배경) 드롭다운 트리거 — 아이콘 아래 현재색 바 */
 .apfs-rt-colorico { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; }
