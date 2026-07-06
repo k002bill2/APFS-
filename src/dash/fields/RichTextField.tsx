@@ -76,7 +76,7 @@ import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code, SquareCode, Keyboard,
   Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Pilcrow, List, ListOrdered, ListChecks, TextQuote,
   AlignLeft, AlignCenter, AlignRight, AlignJustify, Minus, Link as LinkIcon, Unlink,
-  Image as ImageIcon, Undo2, Redo2, ChevronDown, Check,
+  Image as ImageIcon, Undo2, Redo2, ChevronDown, Check, MoreHorizontal,
   Highlighter, Subscript as SubscriptIcon, Superscript as SuperscriptIcon,
   Baseline, PaintBucket, CaseSensitive, IndentIncrease, IndentDecrease, MoveVertical,
   Plus, Table as TableIcon, Info, Columns3, ListCollapse, CalendarDays, Sigma, Radical, FileDown,
@@ -231,13 +231,16 @@ const MARKS: BtnDef[] = [
   { key: 'sub',    Icon: SubscriptIcon, title: '아래 첨자',   run: (e) => e.tf.subscript.toggle(),     active: (e) => markOn(e, 'subscript') },
   { key: 'sup',    Icon: SuperscriptIcon, title: '위 첨자',   run: (e) => e.tf.superscript.toggle(),   active: (e) => markOn(e, 'superscript') },
 ];
+// 마크 분할 — PRIMARY(B I U S Code)는 아이콘 버튼으로 상시 노출, MORE(Kbd·형광펜·아래첨자·위첨자)는 More ⋯ 드롭다운으로 접는다.
+const PRIMARY_MARKS: BtnDef[] = MARKS.slice(0, 5);
+const MORE_MARKS: BtnDef[] = MARKS.slice(5);
 
-// 인라인 마크 버튼 묶음 — 상단 툴바와 플로팅 툴바가 공유. mousedown preventDefault 필수(클릭이 선택을 무너뜨리면
-// 플로팅 툴바가 클릭 도중 사라져 클릭이 유실됨 = caret/선택 회귀 재현).
-function MarkButtons({ editor }: { editor: any }) {
+// 인라인 마크 버튼 묶음 — 상단 툴바와 플로팅 툴바가 공유. marks로 표시 집합을 주입(기본=전체). mousedown preventDefault
+// 필수(클릭이 선택을 무너뜨리면 플로팅 툴바가 클릭 도중 사라져 클릭이 유실됨 = caret/선택 회귀 재현).
+function MarkButtons({ editor, marks = MARKS }: { editor: any; marks?: BtnDef[] }) {
   return (
     <>
-      {MARKS.map((b) => {
+      {marks.map((b) => {
         const on = b.active(editor);
         return (
           <button key={b.key} type="button" title={b.title} aria-label={b.title} aria-pressed={on}
@@ -255,18 +258,37 @@ function MarkButtons({ editor }: { editor: any }) {
 // 선택 서식 플로팅 툴바 — 텍스트를 드래그 선택하면 위에 떠서 마크 버튼 제공. BlockSelectionPlugin 불필요.
 // ⚠️ 모달(Radix Dialog) 안이라 body 포털 금지(DismissableLayer가 interact-outside로 모달을 닫음).
 //    컨테이너 내부 렌더 + floating-ui strategy:'absolute'(기본)로 position:relative 조상(.apfs-richtext) 기준 배치.
-function FloatingMarkToolbar() {
+function FloatingMarkToolbar({ savedSel, setPMode, setPUrl }: {
+  savedSel: React.MutableRefObject<any>; setPMode: (m: PromptMode) => void; setPUrl: (u: string) => void;
+}) {
   const editor = useEditorState();
+  // 내부 드롭다운(Turn-into·More) open 동안엔 툴바를 유지한다. 드롭다운이 열리며 선택이 무너져 hidden이 되면
+  // 트리거가 사라져 Radix 팝오버가 앵커를 잃고(포털 자식 언마운트) 깨지므로, ddOpen이면 마지막 위치로 강제 표시.
+  const [ddOpen, setDdOpen] = useState(false);
   const state = useFloatingToolbarState({
     editorId: editor.id,
     focusedEditorId: editor.id,
     floatingOptions: { placement: 'top', middleware: [offset(8), flip(), shift({ padding: 8 })] },
   } as any);
   const { hidden, props, ref } = useFloatingToolbar(state);
-  if (hidden) return null;
+  if (hidden && !ddOpen) return null;
+  // hidden이면 floating.style에 display:'none'이 박히므로 ddOpen 중엔 강제로 보이게 덮는다(위치는 마지막 값 유지).
+  const floatStyle = (props as any).style as React.CSSProperties;
+  const style: React.CSSProperties = (hidden && ddOpen) ? { ...floatStyle, display: 'inline-flex', visibility: 'visible' } : floatStyle;
+  const linkActive = inNode(editor, 'a');
   return (
-    <div ref={ref as any} className="apfs-rt-floattoolbar" role="toolbar" aria-label="선택 서식" {...props}>
-      <MarkButtons editor={editor} />
+    <div ref={ref as any} className="apfs-rt-floattoolbar" role="toolbar" aria-label="선택 서식" style={style}>
+      <BlockTypeDropdown compact onOpenChange={setDdOpen} />
+      <span className="apfs-richtext__sep" aria-hidden="true" />
+      <MarkButtons editor={editor} marks={PRIMARY_MARKS} />
+      <button type="button" title="링크" aria-label="링크" aria-pressed={linkActive}
+        className={'apfs-rt-btn' + (linkActive ? ' is-active' : '')}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => openLinkPrompt(editor, savedSel, setPUrl, setPMode)}>
+        <LinkIcon size={16} strokeWidth={2} aria-hidden={true} />
+      </button>
+      <span className="apfs-richtext__sep" aria-hidden="true" />
+      <MoreMarksDropdown onOpenChange={setDdOpen} />
     </div>
   );
 }
@@ -352,16 +374,23 @@ function runWithSel(editor: any, sel: any, fn: (e: any) => void) {
   fn(editor);
 }
 
-// Turn into 드롭다운 — 현재 블록 라벨 + 화살표.
-function BlockTypeDropdown() {
+// 링크 URL 바 열기 — 고정 툴바·플로팅 툴바 공유. 선택을 savedSel에 저장(applyPrompt가 복원해 적용)하고 pMode='link'.
+function openLinkPrompt(editor: any, savedSel: React.MutableRefObject<any>, setPUrl: (u: string) => void, setPMode: (m: PromptMode) => void) {
+  savedSel.current = editor.selection;
+  setPUrl((editor.api.node({ match: { type: 'a' } as any }) as any)?.[0]?.url || '');
+  setPMode('link');
+}
+
+// Turn into 드롭다운 — 현재 블록 라벨 + 화살표. compact=플로팅 툴바용 축소, onOpenChange=플로팅 툴바 hide 억제 연동.
+function BlockTypeDropdown({ compact, onOpenChange }: { compact?: boolean; onOpenChange?: (o: boolean) => void }) {
   const editor = useEditorState();
   const sel = useRef<any>(null);
   const curKey = currentBlockKey(editor);
   const cur = TURN_INTO.find((t) => t.key === curKey) || TURN_INTO[0];
   return (
-    <DropdownMenu onOpenChange={(o) => { if (o) sel.current = editor.selection; }}>
+    <DropdownMenu onOpenChange={(o) => { if (o) sel.current = editor.selection; onOpenChange?.(o); }}>
       <DropdownMenuTrigger asChild>
-        <button type="button" className="apfs-rt-turninto" title="블록 유형" aria-label={`블록 유형: ${cur.label}`}>
+        <button type="button" className={'apfs-rt-turninto' + (compact ? ' apfs-rt-turninto--compact' : '')} title="블록 유형" aria-label={`블록 유형: ${cur.label}`}>
           <cur.Icon size={15} strokeWidth={2} aria-hidden={true} />
           <span className="apfs-rt-turninto__label">{cur.label}</span>
           <ChevronDown size={14} strokeWidth={2} aria-hidden={true} className="apfs-rt-turninto__chev" />
@@ -375,6 +404,35 @@ function BlockTypeDropdown() {
             {curKey === t.key && <Check size={15} strokeWidth={2.4} aria-hidden={true} />}
           </DropdownMenuItem>
         ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// More ⋯ 드롭다운 — 확장 마크(Kbd·형광펜·아래첨자·위첨자)를 접어 담는다. 고정·플로팅 툴바 공유.
+// onOpenChange=플로팅 툴바 hide 억제 연동(열려 있는 동안 툴바 유지).
+function MoreMarksDropdown({ onOpenChange }: { onOpenChange?: (o: boolean) => void }) {
+  const editor = useEditorState();
+  const sel = useRef<any>(null);
+  return (
+    <DropdownMenu onOpenChange={(o) => { if (o) sel.current = editor.selection; onOpenChange?.(o); }}>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="apfs-rt-btn apfs-rt-btn--dd" title="추가 서식" aria-label="추가 서식">
+          <MoreHorizontal size={16} strokeWidth={2} aria-hidden={true} />
+          <ChevronDown size={12} strokeWidth={2} aria-hidden={true} className="apfs-rt-btn__chev" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+        {MORE_MARKS.map((b) => {
+          const on = b.active(editor);
+          return (
+            <DropdownMenuItem key={b.key} onSelect={() => runWithSel(editor, sel.current, b.run)}>
+              <b.Icon size={16} strokeWidth={2} aria-hidden={true} />
+              <span style={{ flex: 1 }}>{b.title}</span>
+              {on && <Check size={15} strokeWidth={2.4} aria-hidden={true} />}
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -633,12 +691,11 @@ function humanSize(bytes: number): string {
 type PromptMode = null | 'link' | 'image' | 'video' | 'embed';
 
 // 툴바 — <Plate> 자식이라 useEditorState()로 매 변경 재렌더 → active 상태 동기 반영.
-function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef }: {
+function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
   pMode: PromptMode; setPMode: (m: PromptMode) => void; pUrl: string; setPUrl: (u: string) => void;
-  rootRef: React.RefObject<HTMLDivElement | null>;
+  rootRef: React.RefObject<HTMLDivElement | null>; savedSel: React.MutableRefObject<any>;
 }) {
   const editor = useEditorState();
-  const savedSel = useRef<any>(null);
   const imgUploadRef = useRef<HTMLInputElement>(null);
   const fileUploadRef = useRef<HTMLInputElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
@@ -649,7 +706,7 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef }: {
   const linkActive = inNode(editor, 'a');
   const imageActive = inNode(editor, 'img');
 
-  function openLink() { savedSel.current = editor.selection; setPUrl((editor.api.node({ match: { type: 'a' } as any }) as any)?.[0]?.url || ''); setPMode('link'); }
+  function openLink() { openLinkPrompt(editor, savedSel, setPUrl, setPMode); }
   function openImage() { savedSel.current = editor.selection; setPUrl(''); setPMode('image'); }
   function openMedia(m: 'video' | 'embed') { savedSel.current = editor.selection; setPUrl(''); setPMode(m); }
   function closeBar() { setPMode(null); editor.tf.focus(); }
@@ -726,9 +783,10 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef }: {
         <BlockTypeDropdown />
         <InsertDropdown openPrompt={openMedia} openFile={() => fileUploadRef.current?.click()} />
 
-        {/* 인라인 마크(굵게~위첨자) */}
+        {/* 인라인 마크(굵게~인라인코드) + 확장 마크는 More ⋯ 드롭다운으로 접기 */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
-        <MarkButtons editor={editor} />
+        <MarkButtons editor={editor} marks={PRIMARY_MARKS} />
+        <MoreMarksDropdown />
 
         {/* 글꼴 — 서체·색·배경색·크기 */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
@@ -811,6 +869,7 @@ export function RichTextField({ value, onChange, label, required }: { value: str
   const [pUrl, setPUrl] = useState('');
   const lastEmitted = useRef<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);  // HTML 내보내기 시 렌더된 편집영역 DOM 접근용
+  const savedSel = useRef<any>(null);            // 링크 URL 바 열 때 선택 저장(고정·플로팅 툴바 공유)
 
   const editor = usePlateEditor({
     plugins: PLUGINS,
@@ -831,7 +890,7 @@ export function RichTextField({ value, onChange, label, required }: { value: str
   return (
     <div ref={rootRef} className={'apfs-richtext' + (required ? ' is-required' : '')}>
       <Plate editor={editor} onChange={handleChange}>
-        <Toolbar pMode={pMode} setPMode={setPMode} pUrl={pUrl} setPUrl={setPUrl} rootRef={rootRef} />
+        <Toolbar pMode={pMode} setPMode={setPMode} pUrl={pUrl} setPUrl={setPUrl} rootRef={rootRef} savedSel={savedSel} />
         <EditorContextMenu>
           <PlateContent
             className="apfs-prose"
@@ -841,7 +900,7 @@ export function RichTextField({ value, onChange, label, required }: { value: str
             aria-required={required ? true : undefined}
           />
         </EditorContextMenu>
-        <FloatingMarkToolbar />
+        <FloatingMarkToolbar savedSel={savedSel} setPMode={setPMode} setPUrl={setPUrl} />
       </Plate>
     </div>
   );

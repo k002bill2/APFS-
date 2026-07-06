@@ -17,6 +17,7 @@
   position: absolute;
   z-index: 1;
   display: inline-flex;
+  align-items: center;
   gap: 2px;
   padding: 4px;
   border-radius: 8px;
@@ -103,6 +104,9 @@
 .apfs-rt-turninto > svg:first-child { color: var(--muted-foreground); flex: none; }
 .apfs-rt-turninto__label { flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .apfs-rt-turninto__chev { flex: none; opacity: .5; }
+/* 플로팅 툴바용 축소 Turn-into — 고정 최소폭 해제(선택 서식 바의 좁은 폭에 맞춤). */
+.apfs-rt-turninto--compact { min-width: 0; height: 28px; padding: 0 6px; font-size: 12px; gap: 4px; }
+.apfs-rt-turninto--compact .apfs-rt-turninto__label { max-width: 74px; }
 
 .apfs-richtext__sep {
   width: 1px;
