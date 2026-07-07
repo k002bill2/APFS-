@@ -89,7 +89,11 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className={wide ? "max-w-[880px] max-h-[88vh]" : "max-w-[460px] max-h-[86vh]"}>
+      {/* 바깥 클릭으로는 안 닫힘 — 폼 작성 중 오터치 유실 방지 + 에디터 드롭다운을 닫으려는 바깥 클릭이
+          모달까지 닫는 문제 차단. 닫기는 X·취소·저장·Escape로만. 드롭다운/팝오버는 자체 Radix 레이어라
+          바깥 클릭 dismiss가 그대로 동작한다(최상위 레이어부터 닫힘). */}
+      <DialogContent className={wide ? "max-w-[880px] max-h-[88vh]" : "max-w-[460px] max-h-[86vh]"}
+        onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>{mode === "create" ? "신규 등록" : "항목 수정"}</DialogTitle>
           <DialogDescription className="sr-only">

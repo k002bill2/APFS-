@@ -48,7 +48,7 @@ import { upsertLink, unwrapLink, LinkRules } from '@platejs/link';
 import { ImagePlugin, VideoPlugin, MediaEmbedPlugin, FilePlugin } from '@platejs/media/react';
 import { insertImage, insertMediaEmbed, insertImageFromFiles } from '@platejs/media';
 import { CaptionPlugin } from '@platejs/caption/react';
-import { TablePlugin, TableRowPlugin, TableCellPlugin, TableCellHeaderPlugin } from '@platejs/table/react';
+import { TablePlugin, TableRowPlugin, TableCellPlugin, TableCellHeaderPlugin, useTableMergeState } from '@platejs/table/react';
 import { insertTable } from '@platejs/table';
 import { CalloutPlugin } from '@platejs/callout/react';
 import { insertCallout } from '@platejs/callout';
@@ -71,7 +71,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useFloatingToolbar, useFloatingToolbarState, offset, flip, shift } from '@platejs/floating';  // 선택 서식 플로팅 툴바(플러그인 불필요)
 import { MentionInputElement, SlashInputElement, EmojiInputElement } from './RichTextCombobox';
-import { COMPONENTS, BlockDraggable } from './RichTextElements';
+import { COMPONENTS, BlockDraggable, canSplitCell, DOC_PALETTE } from './RichTextElements';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code, SquareCode, Keyboard,
   Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Pilcrow, List, ListOrdered, ListChecks, TextQuote,
@@ -82,6 +82,7 @@ import {
   Plus, Table as TableIcon, Info, Columns3, ListCollapse, CalendarDays, Sigma, Radical, FileDown,
   Video, Clapperboard, Tag as TagIcon, ImagePlus, Paperclip,
   FileText, FileCode2, Braces, FileUp, Copy, CopyPlus, Trash2,
+  ArrowUpToLine, ArrowDownToLine, ArrowLeftToLine, ArrowRightToLine, Combine, Ungroup, X,
   type LucideIcon,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
@@ -141,13 +142,35 @@ const PLUGINS = [
 // 콤보박스 input-element 컴포넌트 — COMPONENTS(RichTextElements)에 병합. 순환 import 방지로 여기서 결합.
 const ALL_COMPONENTS = { ...COMPONENTS, mention_input: MentionInputElement, slash_input: SlashInputElement, emoji_input: EmojiInputElement };
 
+// 표 셀 자식 정규화 — HTML deserialize는 <td>텍스트</td>를 텍스트/인라인 직접 자식으로 만들 수 있는데,
+// Plate 표 트랜스폼(병합 등)은 셀 자식이 블록(p)임을 전제라 isEmpty가 "children is not iterable"로
+// 크래시한다(셀 병합 실측 버그 — 툴바 표 드롭다운 병합에도 있던 잠복 버그). 셀 자식이 전부
+// 텍스트/인라인이면 p 하나로 감싸고, 빈 셀은 빈 p를 넣는다. 트리 전체 재귀(셀 안 중첩 표 포함).
+const CELL_INLINE_TYPES = new Set(['a', 'mention', 'date', 'tag', 'inline_equation']);
+function normalizeTableCells(nodes: any): any {
+  if (!Array.isArray(nodes)) return nodes;
+  for (const n of nodes) {
+    if (!n || typeof n !== 'object' || !Array.isArray(n.children)) continue;
+    if (n.type === 'td' || n.type === 'th') {
+      if (!n.children.length) { n.children = [{ type: 'p', children: [{ text: '' }] }]; continue; }
+      if (n.children.every((c: any) => c && (typeof c.text === 'string' || CELL_INLINE_TYPES.has(c.type)))) {
+        n.children = [{ type: 'p', children: n.children }];
+        continue;
+      }
+    }
+    normalizeTableCells(n.children);
+  }
+  return nodes;
+}
+
 // 초기값(비제어): JSON이면 parse, 레거시 HTML이면 deserialize, 없으면 기본 빈 문단.
+// 어느 경로든 표 셀 구조를 정규화(과거 HTML 유래 JSON에도 비정규 셀이 저장돼 있을 수 있음).
 function toInitialValue(editor: PlateEditor, v: string) {
   const s = (v || '').trim();
   if (!s) return undefined;
-  if (s.startsWith('[')) { try { return JSON.parse(s); } catch { /* fall through */ } }
+  if (s.startsWith('[')) { try { return normalizeTableCells(JSON.parse(s)); } catch { /* fall through */ } }
   const body = new DOMParser().parseFromString(s, 'text/html').body;
-  return editor.api.html.deserialize({ element: body });
+  return normalizeTableCells(editor.api.html.deserialize({ element: body }));
 }
 
 // 원자/미디어 노드 존재 여부 — 재귀. 텍스트가 비어도 이런 노드만 있으면 "빈 문서" 아님(required false-pass 방지).
@@ -315,10 +338,28 @@ function findPathById(nodes: any[], id: string, base: number[] = []): number[] |
 function EditorContextMenu({ children }: { children: React.ReactNode }) {
   const editor = useEditorState();
   const targetPath = useRef<number[] | null>(null);
+  // 표 안 우클릭이면 표 조작 섹션 노출(공식 Plate 표 컨텍스트 메뉴 대응). setState라 메뉴 렌더에 반영.
+  const [ctxTable, setCtxTable] = useState(false);
+  const ctxSel = useRef<any>(null);     // 우클릭 시점 selection 저장(다중 셀 선택 보존) — TableDropdown의 runWithSel과 동일 이유
+  const merge = useTableMergeState();   // 병합/분할 가능 상태(현재 selection 반응형) — 훅 규칙상 항상 호출
   function onContextMenu(e: React.MouseEvent) {
-    const el = (e.target as HTMLElement)?.closest?.('[data-block-id]');
+    const target = e.target as HTMLElement;
+    const el = target?.closest?.('[data-block-id]');
     const id = el?.getAttribute('data-block-id');
     targetPath.current = id ? findPathById(editor.children as any[], id) : null;
+    ctxSel.current = editor.selection;
+    setCtxTable(!!target?.closest?.('table'));
+  }
+  // 표 트랜스폼 실행 — Radix 메뉴 열림/닫힘이 slate selection을 무너뜨리므로(병합이 no-op 되는 실측 버그),
+  // 우클릭 시점에 저장한 selection을 복원 후 실행(runWithSel 패턴). 단 저장분이 stale(표 밖)일 수 있어
+  // "표 안"일 때만 복원하고, 아니면 현재 selection 유지 → 그마저 표 밖이면 우클릭 블록(targetPath)으로 앵커.
+  function runTableOp(fn: (e: any) => void) {
+    // some(범위 내 노드 검색)로 판정 — above는 range 공통 조상(=table 자체)을 제외해 다중 셀 range에서 오탐(false).
+    const inTable = (r: any) => { try { return !!r && !!(editor as any).api.some({ at: r, match: { type: 'table' } }); } catch { return false; } };
+    editor.tf.focus();
+    if (ctxSel.current && inTable(ctxSel.current)) { try { editor.tf.select(ctxSel.current); } catch { /* 경로 무효 시 무시 */ } }
+    else if (!inTable(editor.selection) && targetPath.current) { try { editor.tf.select((editor as any).api.start(targetPath.current)); } catch { /* 경로 무효 시 무시 */ } }
+    fn(editor);
   }
   function doCopy() {
     const p = targetPath.current; if (!p) return;
@@ -347,15 +388,32 @@ function EditorContextMenu({ children }: { children: React.ReactNode }) {
       <ContextMenuContent onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
         <ContextMenuItem onSelect={doCopy}><Copy size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>복사</span></ContextMenuItem>
         <ContextMenuItem onSelect={doDuplicate}><CopyPlus size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>복제</span></ContextMenuItem>
+        {ctxTable && (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem onSelect={() => runTableOp((e) => e.tf.insert.tableRow({ before: true }))}><ArrowUpToLine size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>행 위에 삽입</span></ContextMenuItem>
+            <ContextMenuItem onSelect={() => runTableOp((e) => e.tf.insert.tableRow())}><ArrowDownToLine size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>행 아래에 삽입</span></ContextMenuItem>
+            <ContextMenuItem onSelect={() => runTableOp((e) => e.tf.remove.tableRow())}><X size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>행 삭제</span></ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onSelect={() => runTableOp((e) => e.tf.insert.tableColumn({ before: true }))}><ArrowLeftToLine size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>열 왼쪽에 삽입</span></ContextMenuItem>
+            <ContextMenuItem onSelect={() => runTableOp((e) => e.tf.insert.tableColumn())}><ArrowRightToLine size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>열 오른쪽에 삽입</span></ContextMenuItem>
+            <ContextMenuItem onSelect={() => runTableOp((e) => e.tf.remove.tableColumn())}><X size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>열 삭제</span></ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem disabled={!merge?.canMerge} onSelect={() => runTableOp((e) => e.tf.table.merge())}><Combine size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>셀 병합</span></ContextMenuItem>
+            <ContextMenuItem disabled={!(merge?.canSplit || canSplitCell(editor, ctxSel.current) || canSplitCell(editor))} onSelect={() => runTableOp((e) => e.tf.table.split())}><Ungroup size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>셀 분할</span></ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem danger onSelect={() => runTableOp((e) => e.tf.remove.table())}><Trash2 size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>표 삭제</span></ContextMenuItem>
+          </>
+        )}
         <ContextMenuSeparator />
-        <ContextMenuItem danger onSelect={doDelete}><Trash2 size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>삭제</span></ContextMenuItem>
+        <ContextMenuItem danger onSelect={doDelete}><Trash2 size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>{ctxTable ? '블록 삭제' : '삭제'}</span></ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );
 }
 
-// 글꼴색/배경색 팔레트(고정 색 — 문서에 절대색으로 박혀 라이트/다크 무관 유지).
-const PALETTE = ['#111827', '#ef4444', '#f59e0b', '#eab308', '#22c55e', '#0ea5e9', '#0158a8', '#8b5cf6', '#ec4899', '#78716c', '#94a3b8', '#ffffff'];
+// 글꼴색/배경색 팔레트는 RichTextElements의 DOC_PALETTE(표 셀 배경과 공유)로 이동.
+const PALETTE = DOC_PALETTE;
 // 글자 크기 스테퍼 단계(공식 Plate 범위). 값은 px 숫자.
 const FONT_SIZE_STEPS = [8, 9, 10, 12, 14, 16, 18, 24, 30, 36, 48, 60, 72, 96];
 const FONT_FAMILIES = [
@@ -373,6 +431,8 @@ function runWithSel(editor: any, sel: any, fn: (e: any) => void) {
   if (sel) { try { editor.tf.select(sel); } catch { /* 경로 무효 시 무시 */ } }
   fn(editor);
 }
+
+// canSplitCell(분할 게이트 — v53 canSplit 패키지 버그 우회)은 RichTextElements로 이동(표 캡션 툴바와 공유).
 
 // 링크 URL 바 열기 — 고정 툴바·플로팅 툴바 공유. 선택을 savedSel에 저장(applyPrompt가 복원해 적용)하고 pMode='link'.
 function openLinkPrompt(editor: any, savedSel: React.MutableRefObject<any>, setPUrl: (u: string) => void, setPMode: (m: PromptMode) => void) {
@@ -578,6 +638,80 @@ function FontSizeStepper() {
   );
 }
 
+// 표 드롭다운 — 공식 Plate 룩: 그리드 피커(8×8, hover=크기·클릭=삽입) + 행/열/셀/표 조작(플랫 메뉴).
+// 표 밖 선택이면 조작 항목 disabled. 공식처럼 제어형 open으로 삽입 직후 명시적 닫기(비항목 클릭은 Radix가 안 닫음).
+// useTableMergeState는 read-only 스토어 구독이라 렌더 루프 안전(write-back 훅 아님).
+function TableDropdown() {
+  const editor = useEditorState();
+  const sel = useRef<any>(null);
+  const [open, setOpen] = useState(false);
+  const [grid, setGrid] = useState({ rows: 0, cols: 0 });
+  const inTable = editor.api.some({ match: { type: 'table' } });
+  const merge = useTableMergeState();
+  const run = (fn: (e: any) => void) => runWithSel(editor, sel.current, fn);
+  const pickerLabel = grid.rows && grid.cols ? `${grid.rows} × ${grid.cols}` : '표 삽입';
+  return (
+    <DropdownMenu open={open} onOpenChange={(o) => { setOpen(o); if (o) { sel.current = editor.selection; setGrid({ rows: 0, cols: 0 }); } }}>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className={'apfs-rt-btn apfs-rt-btn--dd' + (inTable ? ' is-active' : '')} title="표" aria-label="표">
+          <TableIcon size={16} strokeWidth={2} aria-hidden={true} />
+          <ChevronDown size={12} strokeWidth={2} aria-hidden={true} className="apfs-rt-btn__chev" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+        {/* 그리드 피커 — 공식 TablePicker 이식(마우스무브로 N×M, 클릭 삽입) */}
+        <div className="apfs-rt-tablepicker" role="button" tabIndex={0} aria-label={`표 삽입 크기 선택: ${pickerLabel}`}
+          onMouseLeave={() => setGrid({ rows: 0, cols: 0 })}
+          onKeyDown={(e) => { if (e.key === 'Enter' && grid.rows) { setOpen(false); run((ed) => ed.tf.insert.table({ rowCount: grid.rows, colCount: grid.cols }, { select: true })); } }}
+          onClick={() => { if (grid.rows && grid.cols) { setOpen(false); run((ed) => ed.tf.insert.table({ rowCount: grid.rows, colCount: grid.cols }, { select: true })); } }}>
+          <div className="apfs-rt-tablegrid" aria-hidden="true">
+            {Array.from({ length: 64 }, (_, i) => {
+              const r = Math.floor(i / 8), c = i % 8;
+              return (
+                <div key={i} className={'apfs-rt-tablegrid__cell' + (r < grid.rows && c < grid.cols ? ' is-on' : '')}
+                  onMouseMove={() => { if (grid.rows !== r + 1 || grid.cols !== c + 1) setGrid({ rows: r + 1, cols: c + 1 }); }}
+                  onClick={(e) => { e.stopPropagation(); setOpen(false); run((ed) => ed.tf.insert.table({ rowCount: r + 1, colCount: c + 1 }, { select: true })); }} />
+              );
+            })}
+          </div>
+          <div className="apfs-rt-tablegrid__size">{pickerLabel}</div>
+        </div>
+        <div className="apfs-rt-ddsep" role="separator" aria-hidden="true" />
+        <DropdownMenuItem disabled={!inTable} onSelect={() => run((e) => e.tf.insert.tableRow({ before: true }))}>
+          <ArrowUpToLine size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>행 위에 삽입</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={!inTable} onSelect={() => run((e) => e.tf.insert.tableRow())}>
+          <ArrowDownToLine size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>행 아래에 삽입</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={!inTable} onSelect={() => run((e) => e.tf.remove.tableRow())}>
+          <X size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>행 삭제</span>
+        </DropdownMenuItem>
+        <div className="apfs-rt-ddsep" role="separator" aria-hidden="true" />
+        <DropdownMenuItem disabled={!inTable} onSelect={() => run((e) => e.tf.insert.tableColumn({ before: true }))}>
+          <ArrowLeftToLine size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>열 왼쪽에 삽입</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={!inTable} onSelect={() => run((e) => e.tf.insert.tableColumn())}>
+          <ArrowRightToLine size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>열 오른쪽에 삽입</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={!inTable} onSelect={() => run((e) => e.tf.remove.tableColumn())}>
+          <X size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>열 삭제</span>
+        </DropdownMenuItem>
+        <div className="apfs-rt-ddsep" role="separator" aria-hidden="true" />
+        <DropdownMenuItem disabled={!merge?.canMerge} onSelect={() => run((e) => e.tf.table.merge())}>
+          <Combine size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>셀 병합</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={!(merge?.canSplit || canSplitCell(editor, sel.current) || canSplitCell(editor))} onSelect={() => run((e) => e.tf.table.split())}>
+          <Ungroup size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>셀 분할</span>
+        </DropdownMenuItem>
+        <div className="apfs-rt-ddsep" role="separator" aria-hidden="true" />
+        <DropdownMenuItem danger disabled={!inTable} onSelect={() => run((e) => e.tf.remove.table())}>
+          <Trash2 size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>표 삭제</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 // 줄 간격 드롭다운(블록 단위).
 function LineHeightDropdown() {
   const editor = useEditorState();
@@ -664,8 +798,9 @@ function exportHtml(root: HTMLElement | null) {
   downloadText('내용.html', doc, 'text/html');
 }
 // 문서 전체 교체(가져오기) — 파싱 결과 노드를 setValue로 치환. 파서 실패 시 무시.
+// 가져온 문서(HTML/MD/JSON)의 표 셀도 정규화(비정규 셀이면 병합 트랜스폼이 크래시).
 function replaceValue(editor: any, nodes: any) {
-  if (Array.isArray(nodes) && nodes.length) { editor.tf.setValue(nodes); editor.tf.focus(); }
+  if (Array.isArray(nodes) && nodes.length) { editor.tf.setValue(normalizeTableCells(nodes)); editor.tf.focus(); }
 }
 function importMarkdown(editor: any, text: string) {
   try { replaceValue(editor, editor.api.markdown.deserialize(text)); } catch { /* 파싱 실패 무시 */ }
@@ -822,6 +957,7 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
         <button type="button" title="이미지 업로드" aria-label="이미지 업로드" className="apfs-rt-btn"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => imgUploadRef.current?.click()}><ImagePlus size={16} strokeWidth={2} aria-hidden={true} /></button>
+        <TableDropdown />
 
         {/* 문서 입출력 — 마크다운/HTML/JSON 내보내기·가져오기(백엔드 없음, 클라이언트 blob). */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
