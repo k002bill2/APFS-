@@ -661,6 +661,19 @@ caption.apfs-rt-tablebar .apfs-rt-imgbtn { gap: 1px; }
 .apfs-rt-blockdrag:hover > .apfs-rt-draghandle { opacity: .5; }
 .apfs-rt-draghandle:hover { opacity: 1 !important; background: var(--muted); color: var(--foreground); }
 .apfs-rt-draghandle:active { cursor: grabbing; }
+/* 표 블록 그립 — 좌상단 모서리 대각 바깥(공식 Plate "Drag to move" 위치).
+   기본 위치는 행 드래그 그립(첫 셀 왼쪽 -24px)과 겹쳐 표-이동 그립을 집기 어렵다.
+   행 그립과 동일한 카드 박스 룩으로 존재감을 주고, 표 hover 시 더 뚜렷하게. */
+.apfs-rt-blockdrag.is-table > .apfs-rt-draghandle {
+  top: -24px;
+  left: -22px;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--card);
+}
+.apfs-rt-blockdrag.is-table:hover > .apfs-rt-draghandle { opacity: .85; }
 .apfs-rt-blockdrag.is-dragging { opacity: .4; }
 .apfs-rt-dropline { position: absolute; z-index: 1; background: var(--accent); border-radius: 2px; pointer-events: none; }
 .apfs-rt-dropline.is-top    { top: -3px;    left: 0; right: 0; height: 2px; }

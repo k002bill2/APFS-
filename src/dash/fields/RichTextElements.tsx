@@ -577,9 +577,13 @@ export function TagElement(props: any) {
 function DraggableBlock({ element, children }: any) {
   const { isDragging, nodeRef, handleRef } = useDraggable({ element });
   const { dropLine } = useDropLine();
+  // 표 블록은 그립을 좌상단 모서리 대각 바깥으로 분리(공식 Plate "Drag to move" 룩) —
+  // 기본 위치(left:-22, top:2)는 행 드래그 그립(첫 셀 왼쪽)과 겹쳐 표-이동 그립을 집기 어렵다.
+  const isTable = element?.type === 'table';
+  const label = isTable ? '표 이동(드래그)' : '블록 이동(드래그)';
   return (
-    <div ref={nodeRef} className={'apfs-rt-blockdrag' + (isDragging ? ' is-dragging' : '')}>
-      <div ref={handleRef as any} className="apfs-rt-draghandle" contentEditable={false} role="button" aria-label="블록 이동(드래그)" tabIndex={-1}>
+    <div ref={nodeRef} className={'apfs-rt-blockdrag' + (isDragging ? ' is-dragging' : '') + (isTable ? ' is-table' : '')}>
+      <div ref={handleRef as any} className="apfs-rt-draghandle" contentEditable={false} role="button" aria-label={label} title={label} tabIndex={-1}>
         <GripVertical size={14} strokeWidth={2} aria-hidden={true} />
       </div>
       <div className="apfs-rt-blockdrag__content">{children}</div>
