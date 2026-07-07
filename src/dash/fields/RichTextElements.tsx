@@ -4,9 +4,27 @@
    Plate 기본 element는 <div>로 렌더된다 → 블록/마크 타입을 명시 시맨틱 태그로 override해야 CSS(.apfs-prose <tag>)가
    맞물린다. a/img/hr/table/toggle/callout/column/math/mention/date는 각자 명시 컴포넌트로 실제 DOM을 그린다.
    COMPONENTS는 RichTextField의 usePlateEditor({components})로 주입된다. 배치별로 항목이 늘어난다. */
-import { PlateElement, PlateLeaf, useEditorRef, useSelected, useReadOnly } from 'platejs/react';
+import type { CSSProperties } from 'react';
+import { useRef, useState } from 'react';
+import { PlateElement, PlateLeaf, useEditorRef, useSelected, useReadOnly, usePluginOption } from 'platejs/react';
 import { getLinkAttributes } from '@platejs/link';
 import { insertTableRow, insertTableColumn, deleteRow, deleteColumn, deleteTable } from '@platejs/table';
+// 셀 다중 선택(공식 Plate): useSelectedCells=selection→선택 셀 id 동기화(표 요소에서 1회 마운트),
+// useIsCellSelected=셀별 선택 구독(element.id 기반 — NodeIdPlugin이 셀에도 id 부여).
+// ⚠️ useSelectedCells는 플러그인 옵션에만 쓰는 가드된 write-back(useEditorSelector+equalityFn 메모)이라
+//    editor value를 건드리지 않는다 → resizable류 렌더 루프 벡터 아님(브라우저 콘솔로 무루프 검증).
+// 컬럼 리사이즈: useTableColSizes(colgroup 폭)+useTableCellElement(셀 인덱스)+useTableCellElementResizable
+// (핸들 props — 드래그 중 tableStore override만, 종료 시 setNodes 1회 커밋 → 이미지 resizable류 루프 벡터 아님).
+// tableStore는 TableProvider 스코프라 표 요소를 Provider로 감싼다.
+import {
+  TablePlugin, TableProvider, useSelectedCells, useIsCellSelected,
+  useTableColSizes, useTableCellElement, useTableCellElementResizable, useTableMergeState,
+  getOnSelectTableBorderFactory,   // 테두리 토글(none/outer/각 side) — 이웃 셀 협조·caret 셀 폴백 내장
+} from '@platejs/table/react';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
+// ResizeHandle: div 프리미티브(mousedown 기반). ⚠️ 초기 크기를 event.target.parentElement.offsetWidth로
+// 읽으므로 반드시 셀(td)의 직속 자식으로 렌더(래퍼로 감싸면 래퍼 폭을 읽어 오작동).
+import { ResizeHandle } from '@platejs/resizable';
 import { useTodoListElement, useTodoListElementState } from '@platejs/list-classic/react';  // 체크리스트 li의 checkbox 상태·토글
 import { useToggleButtonState, useToggleButton } from '@platejs/toggle/react';
 import { Caption, CaptionTextarea } from '@platejs/caption/react';
@@ -17,8 +35,38 @@ import 'katex/dist/katex.min.css';
 import {
   AlignLeft, AlignCenter, AlignRight, Trash2,
   ChevronRight, Info, TriangleAlert, CircleCheck, Lightbulb, Rows3, Columns3,
-  Plus, CalendarDays, AtSign, GripVertical, FileDown as FileDownIcon,
+  Plus, CalendarDays, AtSign, GripVertical, FileDown as FileDownIcon, Combine, Ungroup,
+  PaintBucket, Grid3x3, Square, SquareDashed, PanelTop, PanelBottom, PanelLeft, PanelRight, X as XIcon,
 } from 'lucide-react';
+
+// 문서 콘텐츠 팔레트(고정 절대색 — 문서에 박혀 라이트/다크 무관 유지). 글꼴색/형광(RichTextField)과 표 셀 배경이 공유.
+// 공식 Plate 피커와 동일한 구글 독스 계열 10열×8행: 그레이스케일 → 원색 → 밝은 톤 3단 → 어두운 톤 3단.
+export const DOC_PALETTE = [
+  '#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
+  '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
+  '#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc',
+  '#dd7e6b', '#ea9999', '#f9cb9c', '#ffe599', '#b6d7a8', '#a2c4c9', '#a4c2f4', '#9fc5e8', '#b4a7d6', '#d5a6bd',
+  '#cc4125', '#e06666', '#f6b26b', '#ffd966', '#93c47d', '#76a5af', '#6d9eeb', '#6fa8dc', '#8e7cc3', '#c27ba0',
+  '#a61c00', '#cc0000', '#e69138', '#f1c232', '#6aa84f', '#45818e', '#3c78d8', '#3d85c6', '#674ea7', '#a64d79',
+  '#85200c', '#990000', '#b45f06', '#bf9000', '#38761d', '#134f5c', '#1155cc', '#0b5394', '#351c75', '#741b47',
+  '#5b0f00', '#660000', '#783f04', '#7f6000', '#274e13', '#0c343d', '#1c4587', '#073763', '#20124d', '#4c1130',
+];
+
+// 병합 셀 분할 가능 여부 — v53 useTableMergeState.canSplit은 구조적으로 항상 false(패키지 버그:
+// getSelectedCellEntries가 셀 1개면 []를 반환하는데 canSplit은 length===1을 요구). 실행부
+// splitTableCell은 caret만으로 정상 동작하므로 게이트만 직접 계산한다. sel 지정 시 그 위치 기준.
+// ⚠️ editor.api.isExpanded()는 인자를 무시(항상 현재 selection)라 collapsed는 anchor/focus 비교로 자체 판정.
+//    (RichTextField·표 캡션 툴바가 공유 — Field→Elements 순환 import 방지 위해 여기 배치.)
+export function canSplitCell(editor: any, sel?: any): boolean {
+  try {
+    const at = sel ?? editor.selection;
+    if (!at?.anchor || !at?.focus) return false;
+    if (JSON.stringify(at.anchor) !== JSON.stringify(at.focus)) return false;  // expanded → 분할 아닌 병합 영역
+    const entry = editor.api.above({ at, match: (n: any) => n.type === 'td' || n.type === 'th' });
+    const c = entry?.[0];
+    return !!c && ((c.colSpan ?? 1) > 1 || (c.rowSpan ?? 1) > 1);
+  } catch { return false; }
+}
 
 /* 블록/리프를 시맨틱 태그로 렌더 — CSS(.apfs-prose <tag>)가 DOM 태그를 노린다. */
 export const blockEl = (as: string) => function El(props: any) { return <PlateElement as={as} {...props} />; };
@@ -183,10 +231,97 @@ export function HrElement(props: any) {
 /* ── 표(table) ──
    <table><tbody><tr><td|th> 구조. tbody를 명시해 유효 마크업 + slate 자식 매핑 유지.
    표 선택 시 상단 플로팅 툴바(행/열 추가·삭제). 셀은 블록 자식(p)을 담는 편집 컨테이너. */
+// 배경/테두리 적용 대상 셀 경로 — 다중 선택 셀 우선, 없으면 caret 셀 폴백(테두리 factory와 동일 규칙).
+function targetCellPaths(editor: any): any[] {
+  let cells = (editor as any).getApi(TablePlugin).table.getSelectedCells();
+  if (!cells?.length) {
+    const c = editor.api.block({ match: (n: any) => n.type === 'td' || n.type === 'th' });
+    cells = c ? [c[0]] : [];
+  }
+  return cells.map((c: any) => editor.api.findPath(c)).filter(Boolean);
+}
+
+// 셀 배경색 드롭다운(캡션 툴바) — DOC_PALETTE(문서 고정 절대색) 스와치 + 제거.
+// Radix 메뉴 열림/닫힘이 slate selection을 파괴하므로(컨텍스트 메뉴와 동일 실측) 열 때 저장→실행 시 복원.
+function CellBgDropdown({ editor, on }: { editor: any; on: boolean }) {
+  const sel = useRef<any>(null);
+  // 제어형 open — 스와치는 DropdownMenuItem이 아닌 일반 버튼이라 자동 닫힘이 없다(ColorDropdown과 동일 이유).
+  const [open, setOpen] = useState(false);
+  const run = (fn: () => void) => { editor.tf.focus(); if (sel.current) { try { editor.tf.select(sel.current); } catch { /* 경로 무효 시 무시 */ } } fn(); };
+  const apply = (c: string | null) => { setOpen(false); run(() => {
+    for (const at of targetCellPaths(editor)) {
+      if (c) editor.tf.setNodes({ background: c }, { at });
+      else editor.tf.unsetNodes('background', { at });
+    }
+  }); };
+  return (
+    <DropdownMenu open={open} onOpenChange={(o) => { if (o) sel.current = editor.selection; setOpen(o); }}>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="apfs-rt-imgbtn" title="셀 배경색" aria-label="셀 배경색" tabIndex={on ? 0 : -1} onMouseDown={(e) => e.preventDefault()}>
+          <PaintBucket size={14} aria-hidden />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+        <div className="apfs-rt-swatches" role="group" aria-label="셀 배경색 선택">
+          {DOC_PALETTE.map((c) => (
+            <button key={c} type="button" className="apfs-rt-swatch" style={{ background: c }} title={c} aria-label={c}
+              onMouseDown={(e) => e.preventDefault()} onClick={() => apply(c)} />
+          ))}
+        </div>
+        <DropdownMenuItem onSelect={() => apply(null)}><XIcon size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>배경 제거</span></DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// 셀 테두리 드롭다운(캡션 툴바) — 공식 Plate 테두리 메뉴(각 side·없음·바깥, 토글식).
+// 실제 조작은 getOnSelectTableBorderFactory가 담당(이웃 셀 협조 + caret 셀 폴백 내장).
+const BORDER_ITEMS: { key: string; Icon: any; label: string }[] = [
+  { key: 'top',    Icon: PanelTop,     label: '위 테두리' },
+  { key: 'bottom', Icon: PanelBottom,  label: '아래 테두리' },
+  { key: 'left',   Icon: PanelLeft,    label: '왼쪽 테두리' },
+  { key: 'right',  Icon: PanelRight,   label: '오른쪽 테두리' },
+  { key: 'none',   Icon: SquareDashed, label: '테두리 없음' },
+  { key: 'outer',  Icon: Square,       label: '바깥 테두리' },
+];
+function CellBorderDropdown({ editor, on }: { editor: any; on: boolean }) {
+  const sel = useRef<any>(null);
+  const run = (fn: () => void) => { editor.tf.focus(); if (sel.current) { try { editor.tf.select(sel.current); } catch { /* 경로 무효 시 무시 */ } } fn(); };
+  return (
+    <DropdownMenu onOpenChange={(o) => { if (o) sel.current = editor.selection; }}>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="apfs-rt-imgbtn" title="셀 테두리" aria-label="셀 테두리" tabIndex={on ? 0 : -1} onMouseDown={(e) => e.preventDefault()}>
+          <Grid3x3 size={14} aria-hidden />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+        {BORDER_ITEMS.map(({ key, Icon: Ico, label }) => (
+          <DropdownMenuItem key={key} onSelect={() => run(() => getOnSelectTableBorderFactory(editor)(key as any)())}>
+            <Ico size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>{label}</span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// TableProvider가 tableStore(컬럼 폭 override 등 리사이즈 상태)의 표별 스코프를 만든다 — 훅보다 바깥 래퍼 필수.
 export function TableElement(props: any) {
+  return <TableProvider><TableElementInner {...props} /></TableProvider>;
+}
+function TableElementInner(props: any) {
   const editor = useEditorRef();
   const selected = useSelected();
   const readOnly = useReadOnly();
+  // 셀 다중 선택 동기화(드래그/Shift+방향키로 selection이 셀 경계를 넘으면 선택 셀 id를 플러그인 옵션에 기록).
+  useSelectedCells();
+  // 셀 선택 진행 중이면 표에 is-cellselecting → 네이티브 텍스트 ::selection을 숨겨 셀 오버레이만 보이게(공식 룩).
+  const cellSelecting = !!usePluginOption(TablePlugin as any, '_selectedCellIds' as any);
+  // 컬럼 폭 — 노드 colSizes + 드래그 중 tableStore override 합성. 폭 지정 전(전부 0)엔 기존 100% 유동 유지.
+  const colSizes = useTableColSizes();
+  const hasColSizes = colSizes.some((s: number) => s > 0);
+  // 병합/분할 가능 상태(캡션 툴바 버튼) — 컨텍스트 메뉴·툴바 드롭다운과 동일 게이트.
+  const merge = useTableMergeState();
   const stop = (e: any) => e.preventDefault();
   // 표 트랜스폼 = @platejs/table의 export 헬퍼(현재 선택=셀 기준 동작). 버튼 mousedown preventDefault로 셀 선택 보존.
   const addRow = () => { insertTableRow(editor); editor.tf.focus(); };
@@ -194,31 +329,70 @@ export function TableElement(props: any) {
   const delRow = () => { deleteRow(editor); editor.tf.focus(); };
   const delCol = () => { deleteColumn(editor); editor.tf.focus(); };
   const delTable = () => { deleteTable(editor); editor.tf.focus(); };
+  const mergeCells = () => { (editor as any).tf.table.merge(); editor.tf.focus(); };
+  const splitCell = () => { (editor as any).tf.table.split(); editor.tf.focus(); };
+  const canSplit = merge?.canSplit || canSplitCell(editor);
   // slate 노드 자신을 <table>로 렌더(as="table") → 셀 클릭이 정상 선택 매핑. 툴바는 <table> 안에서 유효한
   // <caption contentEditable=false>로(편집 격리 + 상단 렌더). tbody는 유효 마크업용 비-slate 래퍼.
   // ⚠️ caption을 selected에 따라 조건부 마운트하면 DOM 구조가 바뀌어 셀 입력 중 selection이 이탈한다(첫 글자
   //    후 커서가 상단 블록으로 튐). → 항상 렌더하고 가시성만 className(is-visible)으로 토글해 구조를 고정한다.
-  const barOn = selected && !readOnly;
+  //    colgroup도 같은 이유로 항상 마운트(col 폭만 갱신).
+  const barOn = (selected || cellSelecting) && !readOnly;
   return (
-    <PlateElement {...props} as="table" className="apfs-rt-table">
+    <PlateElement {...props} as="table" className={'apfs-rt-table' + (cellSelecting ? ' is-cellselecting' : '') + (hasColSizes ? ' has-colsizes' : '')}>
       <caption className={'apfs-rt-tablebar' + (barOn ? ' is-visible' : '')} contentEditable={false} role="toolbar" aria-label="표 편집" aria-hidden={!barOn}>
         <button type="button" className="apfs-rt-imgbtn" title="행 추가" aria-label="행 추가" tabIndex={barOn ? 0 : -1} onMouseDown={stop} onClick={addRow}><Rows3 size={14} aria-hidden /><Plus size={11} aria-hidden /></button>
         <button type="button" className="apfs-rt-imgbtn" title="열 추가" aria-label="열 추가" tabIndex={barOn ? 0 : -1} onMouseDown={stop} onClick={addCol}><Columns3 size={14} aria-hidden /><Plus size={11} aria-hidden /></button>
+        <span className="apfs-rt-imgsep" aria-hidden="true" />
+        <button type="button" className="apfs-rt-imgbtn" title="셀 병합" aria-label="셀 병합" tabIndex={barOn ? 0 : -1} disabled={!merge?.canMerge} onMouseDown={stop} onClick={mergeCells}><Combine size={14} aria-hidden /></button>
+        <button type="button" className="apfs-rt-imgbtn" title="셀 분할" aria-label="셀 분할" tabIndex={barOn ? 0 : -1} disabled={!canSplit} onMouseDown={stop} onClick={splitCell}><Ungroup size={14} aria-hidden /></button>
+        <span className="apfs-rt-imgsep" aria-hidden="true" />
+        <CellBgDropdown editor={editor} on={barOn} />
+        <CellBorderDropdown editor={editor} on={barOn} />
         <span className="apfs-rt-imgsep" aria-hidden="true" />
         <button type="button" className="apfs-rt-imgbtn" title="행 삭제" aria-label="행 삭제" tabIndex={barOn ? 0 : -1} onMouseDown={stop} onClick={delRow}><Rows3 size={14} aria-hidden /><Trash2 size={11} aria-hidden /></button>
         <button type="button" className="apfs-rt-imgbtn" title="열 삭제" aria-label="열 삭제" tabIndex={barOn ? 0 : -1} onMouseDown={stop} onClick={delCol}><Columns3 size={14} aria-hidden /><Trash2 size={11} aria-hidden /></button>
         <span className="apfs-rt-imgsep" aria-hidden="true" />
         <button type="button" className="apfs-rt-imgbtn is-danger" title="표 삭제" aria-label="표 삭제" tabIndex={barOn ? 0 : -1} onMouseDown={stop} onClick={delTable}><Trash2 size={14} aria-hidden /></button>
       </caption>
+      <colgroup contentEditable={false}>
+        {colSizes.map((w: number, i: number) => <col key={i} style={w > 0 ? { width: w } : undefined} />)}
+      </colgroup>
       <tbody>{props.children}</tbody>
     </PlateElement>
   );
 }
 // td/th — colSpan/rowSpan을 element에서 반영. blockEl 대신 명시(속성 주입).
+// 셀 다중 선택 시 is-cellsel → CSS 오버레이(::after) 하이라이트(공식 Plate 셀 선택 룩).
+// 컬럼 리사이즈: 셀 우측 경계에 ResizeHandle(드래그로 열 너비 조절). ⚠️ ResizeHandle은 초기 크기를
+// parentElement.offsetWidth로 읽으므로 td 직속 자식이어야 한다(래퍼 금지). 행 높이(bottom)는 스코프 밖.
+// 테두리 한 변 → CSS 값. useTableCellElement().borders가 첫 행/첫 열 판단까지 끝낸 결과를 주므로
+// (기본: 전 셀 bottom/right + 첫 행 top + 첫 열 left, element.borders 오버라이드 반영) 인라인으로만 그린다.
+// 이 모델은 border-separate 전제(CSS에서 collapse→separate 전환) — collapse면 이웃 병합이 size:0을 되살림.
+const borderSide = (b: any) =>
+  b == null ? undefined : (b.size ?? 1) === 0 ? 'none' : `${b.size ?? 1}px ${b.style || 'solid'} ${b.color || 'var(--border-strong)'}`;
+
 export function TableCellElement(props: any) {
   const { element } = props;
+  const readOnly = useReadOnly();
+  const cellSelected = useIsCellSelected(element);
+  const { colIndex, colSpan, rowIndex, borders } = useTableCellElement();
+  const { rightProps } = useTableCellElementResizable({ colIndex, colSpan, rowIndex });
   const Tag = element.type === 'th' ? 'th' : 'td';
-  return <PlateElement {...props} as={Tag as any} attributes={{ ...props.attributes, colSpan: element.colSpan, rowSpan: element.rowSpan }} />;
+  const style: CSSProperties = {
+    backgroundColor: element.background || undefined,   // 셀 배경(문서 고정 절대색) — th 기본 --muted보다 인라인이 우선
+    borderTop: borderSide(borders?.top),
+    borderRight: borderSide(borders?.right),
+    borderBottom: borderSide(borders?.bottom),
+    borderLeft: borderSide(borders?.left),
+  };
+  return (
+    <PlateElement {...props} as={Tag as any} className={cellSelected ? 'is-cellsel' : undefined}
+      attributes={{ ...props.attributes, colSpan: element.colSpan, rowSpan: element.rowSpan, style }}>
+      {props.children}
+      {!readOnly && <ResizeHandle {...(rightProps as any)} className="apfs-rt-colresize" contentEditable={false} aria-label={`${colIndex + 1}열 너비 조절`} />}
+    </PlateElement>
+  );
 }
 
 /* ── 콜아웃(callout) = 블록 컨테이너. variant/icon을 element에 저장. ── */
