@@ -7,7 +7,6 @@ import { UI } from './components';
 import { APFS_DATA, HistoryStore } from './data';
 import { DesignSystem } from './designsystem';
 import { Main } from './main';
-import { Performance } from './performance';
 import { Risk } from './risk';
 import { RiskManage } from './risk_manage';
 import { GpHealth } from './gp_health';
@@ -42,7 +41,9 @@ const ls = {
 function App() {
   const [theme, setTheme] = useState(() => ls.get("apfs.theme", "light"));
   const [role, setRole] = useState(() => ls.get("apfs.role", "admin"));
-  const [route, setRoute] = useState(() => ls.get("apfs.route", "designsystem"));
+  // 레거시 route 별칭: 마이그레이션 전 'performance'로 저장된 localStorage/방문기록을 새 한글 route로 승격
+  // (안 하면 resolveSchema('performance')→DEFAULT_SCHEMA 폴백으로 영문 제네릭 표가 뜬다)
+  const [route, setRoute] = useState(() => { const r = ls.get("apfs.route", "designsystem"); return r === "performance" ? "투자 성과·포트폴리오" : r; });
   const [lnbOpen, setLnbOpen] = useState(() => ls.get("apfs.lnb", "1") === "1");
   const [wide, setWide] = useState(() => ls.get("apfs.width", "fixed") === "full");
   const [navStyle, setNavStyle] = useState(() => ls.get("apfs.navstyle", "classic"));
@@ -78,7 +79,7 @@ function App() {
   }, [role]);
 
   const onNav = (r) => {
-    setRoute(r);
+    setRoute(r === "performance" ? "투자 성과·포트폴리오" : r);   // 레거시 route 별칭(방문기록 등 잔존 'performance' 승격)
     // 모션 축소 선호 시 부드러운 스크롤 대신 즉시 이동 (WCAG 2.3.3)
     const reduce = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
     window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
@@ -87,7 +88,6 @@ function App() {
   let page;
   if (route === "designsystem") page = <DesignSystem />;
   else if (route === "main") page = <Main onNav={onNav} navStyle={navStyle} onNavStyle={setNavStyle} />;
-  else if (route === "performance") page = <Performance onNav={onNav} />;
   else if (route === "risk") page = <Risk onNav={onNav} />;
   else if (route === "risk-manage") page = <RiskManage onNav={onNav} />;
   else if (route === "gp-health") page = <GpHealth onNav={onNav} />;

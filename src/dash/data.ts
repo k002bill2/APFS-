@@ -76,7 +76,7 @@ const SHORTCUTS = [
   { id:"risk", title:"조기경보 리스크", desc:"운용사 상태·리스크 추이·위반 처리", metric:"경고 14건", tone:"danger", icon:"shield-alert", to:"risk" },
   { id:"gp",   title:"운용사 건전성", desc:"건전성·체크리스트·보수정산", metric:"운용사 38사", tone:"primary", icon:"building", to:"gp-health" },
   { id:"acct", title:"회계·자금 마감", desc:"일자별 마감·자금수지·전표 승인", metric:"미결 23건", tone:"warning", icon:"wallet", to:"accounting" },
-  { id:"perf", title:"투자 성과·포트폴리오", desc:"IRR·산업/지역 비중·컴플라이언스", metric:"평균 +12.6%", tone:"success", icon:"trending", to:"performance" },
+  { id:"perf", title:"투자 성과·포트폴리오", desc:"IRR·산업/지역 비중·컴플라이언스", metric:"평균 +12.6%", tone:"success", icon:"trending", to:"투자 성과·포트폴리오" },
   { id:"sched",title:"오늘 일정·알림", desc:"마감 임박·보고·실사 일정", metric:"임박 6건", tone:"info", icon:"calendar", to:"schedule" },
 ];
 
@@ -325,7 +325,7 @@ const PORTFOLIO = [
 
 // 퀵메뉴 — 메인 상단 정적 카드 섹션 (자주 쓰는 업무 바로가기 6종, 기능 설명 포함)
 const QUICKMENU = [
-  { label: "투자등록", desc: "신규 출자·투자 건 등록 및 심의 요청", icon: "plus", to: "performance", tone: "primary" },
+  { label: "투자등록", desc: "신규 출자·투자 건 등록 및 심의 요청", icon: "plus", to: "투자 성과·포트폴리오", tone: "primary" },
   { label: "보고서 제출", desc: "운용사 정기·수시 보고서 작성·제출", icon: "file", to: "gp-health", tone: "info" },
   { label: "조기경보 확인", desc: "리스크 경보 모니터링 및 위반 처리", icon: "shield-alert", to: "risk", tone: "danger", urgent: true, badge: 14 },
   { label: "운용사 평가", desc: "건전성·체크리스트 기반 정기 평가", icon: "activity", to: "risk", tone: "warning" },
@@ -335,7 +335,7 @@ const QUICKMENU = [
 
 // 즐겨찾기 — LNB 상단 고정 (사용자가 핀한 업무 딥링크)
 const FAVORITES = [
-  { label: "투자등록 신청", icon: "plus", to: "performance" },
+  { label: "투자등록 신청", icon: "plus", to: "투자 성과·포트폴리오" },
   { label: "조합 등록/변경 신청", icon: "file", to: "gp-health" },
   { label: "전문인력 확인서 출력", icon: "download", to: "accounting" },
 ];

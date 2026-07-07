@@ -395,6 +395,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       if (c.key === "trend") {
         return {
           field: "trend", headerName: c.label, width: 120, sortable: false,
+          cellDataType: false,   // 값은 number[](스파크라인) — 커스텀 렌더러라 타입 추론 불필요(AG Grid warning #48 억제)
           cellStyle: { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any },
           cellRenderer: (p: ICellRendererParams<Row>) => <MT w={40}><MiniBars data={(p.value as number[]) || []} color={p.data?.color || "var(--chart-1)"} /></MT>,
         };

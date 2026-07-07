@@ -53,7 +53,7 @@ function HeroAUM({ onNav }) {
             size="sm"
             style={{ background: "transparent", color: "var(--on-brand-solid)", borderColor: "rgba(255,255,255,.3)" }}
             trailingIcon="arrow-right"
-            onClick={() => onNav("performance")}>성과 상세</Button></div></div><div
+            onClick={() => onNav("투자 성과·포트폴리오")}>성과 상세</Button></div></div><div
         className="relative text-center"
         style={{ borderLeft: "1px solid rgba(255,255,255,.18)", paddingLeft: 18 }}><div className="font-semibold mb-0.5" style={{ fontSize: 12.5, opacity: .9 }}>모태펀드 집행률</div><GaugeLight value={78} /><div className="mt-0.5" style={{ fontSize: 11.5, opacity: .8 }}>{mn("목표 80% · 잔여 2%p")}</div></div><div
         className="relative flex flex-col gap-3"><HeroStat
