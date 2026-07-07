@@ -20,6 +20,7 @@ import { Pages as ReportSutackPages } from './report_sutack';
 import { Pages as AssetPages } from './asset';
 import { GenericListPage } from './generic_list';
 import { AssetFunding } from './asset_funding';
+import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
 import { PageSkeleton } from './ui/skeleton';
@@ -27,6 +28,7 @@ const ReportMain = ReportMainPages.ReportMain;
 const ReportBucheo = ReportBucheoPages.ReportBucheo;
 const ReportSutack = ReportSutackPages.ReportSutack;
 const AssetMain = AssetPages.AssetMain;
+const EditorPage = EditorPages.EditorPage;
 
 const { useState, useEffect } = React;
 const { AppShell } = Shell;
@@ -97,6 +99,7 @@ function App() {
   else if (route === "report") page = <ReportMain onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "report-sutack") page = <ReportSutack onNav={onNav} />;
+  else if (route === "editor") page = <EditorPage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;
