@@ -153,6 +153,39 @@
 }
 .apfs-rt-fontsize__val:hover { background: var(--muted); }
 
+/* 표 그리드 피커 — 공식 Plate TablePicker 룩(8×8, hover로 N×M 확정, 클릭 삽입). */
+.apfs-rt-tablepicker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 6px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  outline: none;
+}
+.apfs-rt-tablepicker:focus-visible { box-shadow: 0 0 0 2px var(--ring) inset; }
+.apfs-rt-tablegrid {
+  display: grid;
+  grid-template-columns: repeat(8, 14px);
+  gap: 2px;
+}
+.apfs-rt-tablegrid__cell {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  background: var(--muted);
+}
+.apfs-rt-tablegrid__cell.is-on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.apfs-rt-tablegrid__size {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
 /* 색(글꼴/배경) 드롭다운 트리거 — 아이콘 아래 현재색 바 */
 .apfs-rt-colorico { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; }
 .apfs-rt-colorbar { width: 16px; height: 3px; border-radius: 2px; border: 1px solid color-mix(in srgb, var(--border) 55%, transparent); }
