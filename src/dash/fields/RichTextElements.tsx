@@ -5,8 +5,8 @@
    맞물린다. a/img/hr/table/toggle/callout/column/math/mention/date는 각자 명시 컴포넌트로 실제 DOM을 그린다.
    COMPONENTS는 RichTextField의 usePlateEditor({components})로 주입된다. 배치별로 항목이 늘어난다. */
 import type { CSSProperties } from 'react';
-import { useRef, useState } from 'react';
-import { PlateElement, PlateLeaf, useEditorRef, useSelected, useReadOnly, usePluginOption } from 'platejs/react';
+import { createContext, useContext, useRef, useState } from 'react';
+import { PlateElement, PlateLeaf, useEditorRef, useSelected, useReadOnly, usePluginOption, usePath } from 'platejs/react';
 import { getLinkAttributes } from '@platejs/link';
 import { insertTableRow, insertTableColumn, deleteRow, deleteColumn, deleteTable } from '@platejs/table';
 // 셀 다중 선택(공식 Plate): useSelectedCells=selection→선택 셀 id 동기화(표 요소에서 1회 마운트),
@@ -20,6 +20,7 @@ import {
   TablePlugin, TableProvider, useSelectedCells, useIsCellSelected,
   useTableColSizes, useTableCellElement, useTableCellElementResizable, useTableMergeState,
   getOnSelectTableBorderFactory,   // 테두리 토글(none/outer/각 side) — 이웃 셀 협조·caret 셀 폴백 내장
+  useTableValue,                   // tableStore 구독 — 행 높이 드래그 중 rowSizeOverrides 미리보기
 } from '@platejs/table/react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
 // ResizeHandle: div 프리미티브(mousedown 기반). ⚠️ 초기 크기를 event.target.parentElement.offsetWidth로
@@ -362,6 +363,43 @@ function TableElementInner(props: any) {
     </PlateElement>
   );
 }
+// 행 드래그 그립 전달 컨텍스트 — tr의 자식은 td/th만 유효해 그립 버튼을 tr에 직접 못 넣는다.
+// TableRowElement(드래그 소스/드롭 타겟)가 handleRef를 내려주고, 첫 열 셀(TableCellElement)이 그립을 렌더.
+const RowDragContext = createContext<{ handleRef: any } | null>(null);
+
+// tr — 행 높이(세로 리사이즈) + 행 드래그 재정렬(공식 Plate 행 그립).
+// 높이: 확정=tr 노드의 element.size(setTableRowSize가 커밋), 미리보기=tableStore rowSizeOverrides.
+// dnd: type='table-row'로 문서 블록 DnD와 격리(accept가 type 기준), canDropNode로 같은 표 안 행끼리만.
+// 드롭라인은 tr이 position 불가(table-row)라 각 셀의 ::after 조각으로 이어 그린다(is-drop-top/bottom).
+export function TableRowElement(props: any) {
+  const { element } = props;
+  const readOnly = useReadOnly();
+  const path = usePath();
+  const rowIndex = path ? path[path.length - 1] : -1;
+  const overrides = useTableValue('rowSizeOverrides') as Map<number, number> | undefined;
+  const height = overrides?.get?.(rowIndex) ?? element.size ?? undefined;
+  const { isDragging, nodeRef, handleRef } = useDraggable({
+    element,
+    type: 'table-row',
+    canDropNode: ({ dragEntry, dropEntry }: any) =>
+      JSON.stringify(dragEntry[1].slice(0, -1)) === JSON.stringify(dropEntry[1].slice(0, -1)),
+  });
+  const { dropLine } = useDropLine({ id: element.id });
+  // slate DOM ref(attributes.ref)와 dnd 드롭 타겟 ref(nodeRef)를 병합 — 행 전체가 드롭존.
+  const slateRef = props.attributes?.ref;
+  const mergedRef = (el: any) => {
+    if (typeof slateRef === 'function') slateRef(el); else if (slateRef) slateRef.current = el;
+    if (nodeRef) (nodeRef as any).current = el;
+  };
+  const cls = (isDragging ? ' is-dragging' : '') + (dropLine ? ' is-drop-' + dropLine : '');
+  return (
+    <RowDragContext.Provider value={readOnly ? null : { handleRef }}>
+      <PlateElement {...props} as="tr" className={cls || undefined}
+        attributes={{ ...props.attributes, ref: mergedRef, style: height ? { height } : undefined }} />
+    </RowDragContext.Provider>
+  );
+}
+
 // td/th — colSpan/rowSpan을 element에서 반영. blockEl 대신 명시(속성 주입).
 // 셀 다중 선택 시 is-cellsel → CSS 오버레이(::after) 하이라이트(공식 Plate 셀 선택 룩).
 // 컬럼 리사이즈: 셀 우측 경계에 ResizeHandle(드래그로 열 너비 조절). ⚠️ ResizeHandle은 초기 크기를
@@ -375,9 +413,10 @@ const borderSide = (b: any) =>
 export function TableCellElement(props: any) {
   const { element } = props;
   const readOnly = useReadOnly();
+  const rowDrag = useContext(RowDragContext);   // 행 드래그 그립(첫 열 셀에만 렌더) — tr이 공급
   const cellSelected = useIsCellSelected(element);
   const { colIndex, colSpan, rowIndex, borders } = useTableCellElement();
-  const { rightProps } = useTableCellElementResizable({ colIndex, colSpan, rowIndex });
+  const { rightProps, bottomProps } = useTableCellElementResizable({ colIndex, colSpan, rowIndex });
   const Tag = element.type === 'th' ? 'th' : 'td';
   const style: CSSProperties = {
     backgroundColor: element.background || undefined,   // 셀 배경(문서 고정 절대색) — th 기본 --muted보다 인라인이 우선
@@ -391,6 +430,14 @@ export function TableCellElement(props: any) {
       attributes={{ ...props.attributes, colSpan: element.colSpan, rowSpan: element.rowSpan, style }}>
       {props.children}
       {!readOnly && <ResizeHandle {...(rightProps as any)} className="apfs-rt-colresize" contentEditable={false} aria-label={`${colIndex + 1}열 너비 조절`} />}
+      {!readOnly && <ResizeHandle {...(bottomProps as any)} className="apfs-rt-rowresize" contentEditable={false} aria-label={`${rowIndex + 1}행 높이 조절`} />}
+      {/* 행 드래그 그립 — 첫 열 셀 왼쪽 바깥(absolute), 행 hover 시 표시. 드래그 소스는 tr(useDraggable). */}
+      {rowDrag && colIndex === 0 && (
+        <span ref={rowDrag.handleRef} className="apfs-rt-rowgrip" contentEditable={false} role="button"
+          aria-label={`${rowIndex + 1}행 이동`} title="행 이동(드래그)">
+          <GripVertical size={13} aria-hidden />
+        </span>
+      )}
     </PlateElement>
   );
 }
@@ -558,7 +605,7 @@ export const COMPONENTS: Record<string, any> = {
   a: LinkElement, img: ImageElement, hr: HrElement, file: FileElement,
   video: VideoElement, media_embed: MediaEmbedElement,
   // 표
-  table: TableElement, tr: blockEl('tr'), td: TableCellElement, th: TableCellElement,
+  table: TableElement, tr: TableRowElement, td: TableCellElement, th: TableCellElement,
   // 블록 확장
   callout: CalloutElement, column_group: ColumnGroupElement, column: ColumnElement, toggle: ToggleElement,
   equation: EquationElement,
