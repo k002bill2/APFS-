@@ -93,14 +93,20 @@ Claude Code 안에서 Codex로 코드 리뷰·작업 위임을 하는 공식 플
 - 저렴한 모델은 스스로 멈추지 못한다 → 조언자가 완료 기준으로 중단시킨다.
 - 토큰 무거운 작업(코드베이스 분석·긴 로그·대량 요약)은 `analyzer`가 먼저 압축한다.
 - 큰 변경 리뷰는 `/codex:review --background` 후 `/codex:status`·`/codex:result` 로 확인.
+- **worker 보고 수신:** 가능하면 동기 실행으로 결과를 직접 받는다. 백그라운드 실행 시 완료 보고
+  텍스트가 조언자에게 전달되지 않을 수 있으므로, 보고를 기다리지 말고 산출물(staged diff·테스트 실행)을 직접 검증한다.
+- **조언자 직접 코딩 금지:** 구현은 worker 위임이 기본값. 예외는 단일 파일·30줄 이내 문서/설정 수정뿐이며, 예외여도 Codex 검증은 동일 적용.
+- **승인 후 정리:** 서브에이전트는 과제 완료 후에도 idle로 상주한다. 승인이 끝나면 TaskStop(또는
+  `ctrl+x ctrl+k`)으로 종료해 상주 에이전트를 남기지 않는다.
 
 ---
 
 ## 6. 설치 (한 번에)
 
 ```bash
-# 1) 파일 + Codex CLI + 설정을 한 번에
-bash install.sh
+# 1) 파일 + Codex CLI + 설정을 한 번에 (이 README와 같은 폴더의 install.sh 실행)
+bash install.sh                                        # 번들 폴더 안에서
+# bash docs/codex-advisor-worker-bundle/install.sh     # 저장소 루트에서라면
 
 # 2) 이어서 Claude Code 세션 안에서 (플러그인은 세션 내 명령)
 #    /plugin marketplace add openai/codex-plugin-cc
@@ -113,11 +119,14 @@ bash install.sh
 #    /model   → Fable 5 별칭/ID 확인 후 architect의 model 값과 일치시키기
 ```
 
-`install.sh` 가 하는 일: `~/.claude/CLAUDE.md` + `agents/{architect,worker,analyzer}.md` 생성, 구버전 `reviewer.md` 제거, Node/Codex 확인 및 `@openai/codex` 설치 시도, `~/.codex/config.toml` 검증 기본값(effort=high) 템플릿 생성.
+`install.sh` 가 하는 일: `~/.claude/CLAUDE.md` 의 **번들 마커 블록만 갱신**(블록 밖 개인 내용 보존, 마커 없는 구버전은 백업 후 전체 생성), `agents/{architect,worker,analyzer}.md` 생성(내용 동일 시 백업 없이 건너뜀), 구버전 `reviewer.md` 백업 후 제거, Node/Codex 확인 및 `@openai/codex` 설치 시도, `~/.codex/config.toml` 검증 기본값(effort=high) 템플릿 생성.
+
+> **개인 커스터마이징은 CLAUDE.md 의 마커 블록 밖에 작성**할 것 — 재설치해도 보존된다.
+> 마커: `<!-- codex-advisor-worker-bundle:start … -->` / `<!-- codex-advisor-worker-bundle:end -->`
 
 ---
 
-## 7. 설치 파일 전문 (참고용)
+## 7. 설치 파일 요약 (참고용 — 정본(SSOT)은 `install.sh` 의 heredoc)
 
 ### 7.1 `~/.claude/CLAUDE.md`
 ```markdown
