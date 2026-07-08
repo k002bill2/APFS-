@@ -99,6 +99,16 @@ export function ListItemElement(props: any) {
 export function TaskListElement(props: any) {
   return <PlateElement {...props} as="ul" className={'apfs-rt-tasklist' + (props.className ? ' ' + props.className : '')} />;
 }
+/* 번호 목록(ol) — list-classic엔 네이티브 번호 스타일이 없어 element.listStyleType(CSS list-style-type
+   키워드: decimal/lower-alpha/upper-alpha/lower-roman/upper-roman)를 노드 속성으로 저장·렌더한다.
+   인라인 style이 .apfs-prose ol{list-style:decimal}을 오버라이드(인라인 우선), 미설정 시 기본 decimal 유지.
+   속성은 Slate JSON에 실려 왕복하고, HTML 내보내기(DOM 클론)도 인라인 style을 그대로 보존한다.
+   ⚠️ 인라인 style은 top-level prop이 아니라 attributes.style로 넘겨야 DOM 노드에 실린다(TableCell/Row 규약). */
+export function OrderedListElement(props: any) {
+  const t = props.element?.listStyleType;
+  return <PlateElement {...props} as="ol"
+    attributes={t ? { ...props.attributes, style: { ...props.attributes?.style, listStyleType: t } } : props.attributes} />;
+}
 
 /* ── 링크 = 인라인 <a href>. getLinkAttributes로 href sanitize(javascript: 등 차단). ── */
 export function LinkElement(props: any) {
@@ -651,7 +661,7 @@ export const COMPONENTS: Record<string, any> = {
   p: blockEl('p'), h1: blockEl('h1'), h2: blockEl('h2'), h3: blockEl('h3'),
   h4: blockEl('h4'), h5: blockEl('h5'), h6: blockEl('h6'),
   blockquote: blockEl('blockquote'), code_block: blockEl('pre'), code_line: blockEl('code'),
-  ul: blockEl('ul'), ol: blockEl('ol'), li: ListItemElement, lic: blockEl('p'),
+  ul: blockEl('ul'), ol: OrderedListElement, li: ListItemElement, lic: blockEl('p'),
   taskList: TaskListElement,
   a: LinkElement, img: ImageElement, hr: HrElement, file: FileElement,
   video: VideoElement, media_embed: MediaEmbedElement,
