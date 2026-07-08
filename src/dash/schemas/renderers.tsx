@@ -12,6 +12,8 @@ const { StatusBadge, ColorChip, DeltaBadge } = UI;
 const RichTextField = React.lazy(() => import('../fields/RichTextField').then((m) => ({ default: m.RichTextField })));
 // filepond 컨트롤은 DocumentsField(기존 첨부 Attachment 표시 + FilePond 신규추가)로 렌더.
 const DocumentsField = React.lazy(() => import('../fields/DocumentsField').then((m) => ({ default: m.DocumentsField })));
+// tags 컨트롤은 TagsField(Plate SelectEditor 멀티 태그 입력)로 렌더 — 값은 JSON 배열 문자열.
+const TagsField = React.lazy(() => import('../fields/TagsField').then((m) => ({ default: m.TagsField })));
 
 // status tone을 스키마의 statusDomain에서 해결(모달 의존 제거 → 순환 차단).
 function toneFor(label: string, domain?: StatusDomainEntry[]): Tone {
@@ -69,6 +71,12 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     case 'filepond': return (
       <React.Suspense fallback={<div style={{ ...base, color: 'var(--muted-foreground)' }}>업로더 불러오는 중…</div>}>
         <DocumentsField value={value} onChange={onChange} required={requiredMark} />
+      </React.Suspense>
+    );
+    // 멀티 태그/라벨 입력 — Plate SelectEditor. lazy 로드. 값=JSON 배열 문자열, 빈 배열은 ''.
+    case 'tags': return (
+      <React.Suspense fallback={<div style={{ ...base, color: 'var(--muted-foreground)' }}>태그 입력 불러오는 중…</div>}>
+        <TagsField value={value} onChange={onChange} options={field.options} required={requiredMark} label={field.label} />
       </React.Suspense>
     );
     case 'readonly': return <div style={{ ...base, background: 'var(--muted)', color: 'var(--muted-foreground)' }}>{value || '—'}</div>;

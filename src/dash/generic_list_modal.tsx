@@ -105,8 +105,8 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
         <div className="overflow-y-auto p-[18px]">
           <div className={wide ? "grid grid-cols-1 sm:grid-cols-2 gap-x-5" : ""}>
             {schema.fields.map((f) => {
-              // richtext/filepond = 내부에 자체 버튼/컨트롤을 품은 복합 컨트롤 → <label> 래핑 금지(Field plain).
-              const complex = f.control === "richtext" || f.control === "filepond";
+              // richtext/filepond/tags = 내부에 자체 버튼/combobox를 품은 복합 컨트롤 → <label> 래핑 금지(Field plain).
+              const complex = f.control === "richtext" || f.control === "filepond" || f.control === "tags";
               const span2 = wide && (f.control === "textarea" || f.control === "file" || complex);
               return (
                 <Field

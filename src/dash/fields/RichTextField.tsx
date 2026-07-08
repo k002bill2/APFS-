@@ -243,6 +243,15 @@ const ALIGN_ITEMS: { key: string; Icon: LucideIcon; label: string }[] = [
   { key: 'justify', Icon: AlignJustify, label: '양쪽 정렬' },
 ];
 
+// 번호 목록 스타일 항목 — key는 CSS list-style-type 키워드 그대로(ol 노드 listStyleType 속성으로 저장).
+const OL_STYLES: { key: string; label: string }[] = [
+  { key: 'decimal',     label: 'Decimal (1, 2, 3)' },
+  { key: 'lower-alpha', label: 'Lower Alpha (a, b, c)' },
+  { key: 'upper-alpha', label: 'Upper Alpha (A, B, C)' },
+  { key: 'lower-roman', label: 'Lower Roman (i, ii, iii)' },
+  { key: 'upper-roman', label: 'Upper Roman (I, II, III)' },
+];
+
 // 인라인 마크 아이콘 버튼(B I U S code kbd 형광 첨자).
 const MARKS: BtnDef[] = [
   { key: 'bold',   Icon: Bold,          title: '굵게',        run: (e) => e.tf.bold.toggle(),          active: (e) => markOn(e, 'bold') },
@@ -433,6 +442,20 @@ function runWithSel(editor: any, sel: any, fn: (e: any) => void) {
   fn(editor);
 }
 
+// 번호 목록 스타일 조회/적용 — list-classic엔 네이티브 listStyleType이 없어 최근접 ol 노드 속성으로 다룬다.
+// currentOlStyle: 현재 selection이 ol 안이면 그 스타일(미설정 ol은 기본 decimal), 아니면 null(비활성).
+function currentOlStyle(e: any): string | null {
+  const ol = e.api.above({ match: { type: 'ol' } });
+  return ol ? (ol[0].listStyleType || 'decimal') : null;
+}
+// applyOlStyle: 번호 목록이 아니면 먼저 ol로 전환한 뒤(토글로 경로가 바뀌므로 재조회) 최근접 ol에만 스타일을
+// 실는다. match를 노드 동일성으로 못박아 중첩 ol/하위 노드에 잘못 꽂히지 않게 한다(at 경로만으론 부족).
+function applyOlStyle(e: any, value: string) {
+  if (!inNode(e, 'ol')) e.tf.ol.toggle();
+  const ol = e.api.above({ match: { type: 'ol' } });
+  if (ol) e.tf.setNodes({ listStyleType: value }, { at: ol[1], match: (n: any) => n === ol[0] });
+}
+
 // 다중 셀 선택 + 블록 전환 — 다중 셀 range에 목록/제목 토글을 그대로 실행하면 앵커 셀에만 적용됨(실측).
 // 열림 시점의 셀 선택(플러그인 그리드 우선, 없으면 저장 selection에 걸친 td/th 스캔)을 셀별로 순회하며
 // 셀 내부 전체를 선택해 개별 적용한다. 이미 대상 타입인 셀은 건너뜀(토글 API의 역전환 방지 = set 의미론).
@@ -590,6 +613,33 @@ function AlignDropdown() {
             <a.Icon size={16} strokeWidth={2} aria-hidden={true} />
             <span style={{ flex: 1 }}>{a.label}</span>
             {cur === a.key && <Check size={15} strokeWidth={2.4} aria-hidden={true} />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// 번호 목록 스타일 드롭다운 — ListOrdered 아이콘+chevron 트리거, 5종 번호 스타일 선택.
+// 선택 시 번호 목록으로 만들고(아니면 토글) 최근접 ol에 listStyleType 지정. 현재 스타일에 체크 표시.
+function OrderedListDropdown() {
+  const editor = useEditorState();
+  const sel = useRef<any>(null);
+  const cur = currentOlStyle(editor);
+  return (
+    <DropdownMenu onOpenChange={(o) => { if (o) sel.current = editor.selection; }}>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className={'apfs-rt-btn apfs-rt-btn--dd' + (cur ? ' is-active' : '')}
+          title="번호 목록" aria-label={cur ? `번호 목록: ${cur}` : '번호 목록'} aria-pressed={!!cur}>
+          <ListOrdered size={16} strokeWidth={2} aria-hidden={true} />
+          <ChevronDown size={12} strokeWidth={2} aria-hidden={true} className="apfs-rt-btn__chev" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+        {OL_STYLES.map((s) => (
+          <DropdownMenuItem key={s.key} onSelect={() => runWithSel(editor, sel.current, (ed) => applyOlStyle(ed, s.key))}>
+            <span style={{ flex: 1 }}>{s.label}</span>
+            {cur === s.key && <Check size={15} strokeWidth={2.4} aria-hidden={true} />}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
@@ -976,8 +1026,9 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
         <ColorDropdown mark="color" Icon={Baseline} title="글자 색" />
         <ColorDropdown mark="backgroundColor" Icon={PaintBucket} title="배경 색" />
 
-        {/* 문단 — 정렬·줄간격·들여쓰기 */}
+        {/* 문단 — 번호목록 스타일·정렬·줄간격·들여쓰기 */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
+        <OrderedListDropdown />
         <AlignDropdown />
         <LineHeightDropdown />
         <button type="button" title="내어쓰기" aria-label="내어쓰기" className="apfs-rt-btn"

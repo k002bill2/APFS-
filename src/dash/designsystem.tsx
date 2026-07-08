@@ -13,6 +13,8 @@ import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '
 import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from './ui/item';
 import { Search } from 'lucide-react';
 import { Icon } from './icons';
+import { SchemaField } from './schemas/renderers';
+import type { FieldSpec } from './schemas/types';
 
 const { ColorChip, StatusBadge, StatCard, ChartCard, Button, FilterChip, SegTabs, DeltaBadge, Card } = UI;
 const { Sparkline, Donut, LineTrend, GroupedBars, ComposedBars, Gauge, HBars, Treemap } = Charts;
@@ -57,6 +59,19 @@ function Section({ title, desc, children }: { title?: React.ReactNode; desc?: Re
     <section style={{ marginBottom: 26 }}><div className="mb-3"><h2 className="t-h2 m-0">{title}</h2>{desc && <p
           className="t-body text-muted-foreground"
           style={{ margin: "3px 0 0", fontSize: 13 }}>{desc}</p>}</div>{children}</section>
+  );
+}
+
+/* tags 폼 컨트롤 프리뷰 — 스키마 주도 SchemaField를 그대로 렌더(값=JSON 배열 문자열). */
+const TAGS_FIELD: FieldSpec = { key: 'labels', label: '분야 태그', control: 'tags', options: ['성장', '회수', '관리', '벤처', '수산', '농식품', 'ESG'] };
+function TagsPreview() {
+  const [v, setV] = useState('["성장","회수"]');
+  return (
+    <Card className="flex flex-col gap-2" style={{ gridColumn: "1 / -1" }}>
+      <div className="t-label" style={{ textTransform: "none" }}>Tags (SelectEditor · FIELD_CONTROLS 'tags')</div>
+      <div style={{ maxWidth: 520 }}><SchemaField field={TAGS_FIELD} value={v} onChange={setV} /></div>
+      <div className="t-caption">저장 값(직렬화): <code className="tabular">{v || '(빈 문자열)'}</code></div>
+    </Card>
   );
 }
 
@@ -162,6 +177,12 @@ function DesignSystem() {
               <Item variant="outline"><ItemMedia variant="icon"><Icon name="wallet" size={18} /></ItemMedia><ItemContent><ItemTitle>수산 스케일업 펀드</ItemTitle><ItemDescription>결성 150억 · 운용사 △△자산운용 · 조기경보 관찰</ItemDescription></ItemContent><ItemActions><StatusBadge tone="warning" icon="alert-triangle" label="주의" /></ItemActions></Item>
             </ItemGroup>
           </Card>
+        </div>
+      </Section>
+
+      <Section title="3-3. 폼 컨트롤 — 태그 입력" desc="스키마 'tags' 컨트롤(Plate SelectEditor). 여러 태그를 검색·선택·신규 생성. 값은 JSON 배열 문자열로 직렬화되어 RowFormModal 저장 계약을 따릅니다. 실제 조합 검증은 폼 모달(Dialog) 안에서 수행.">
+        <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(340px,100%),1fr))" }}>
+          <TagsPreview />
         </div>
       </Section>
 
