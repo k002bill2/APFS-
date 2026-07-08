@@ -17,5 +17,8 @@
     "ui": "@/dash/ui",
     "lib": "@/lib",
     "hooks": "@/dash/hooks"
+  },
+  "registries": {
+    "@plate": "https://platejs.org/r/{name}.json"
   }
 }
