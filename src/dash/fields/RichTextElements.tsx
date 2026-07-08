@@ -412,11 +412,58 @@ const borderSide = (b: any) =>
 
 export function TableCellElement(props: any) {
   const { element } = props;
+  const editor = useEditorRef();
   const readOnly = useReadOnly();
   const rowDrag = useContext(RowDragContext);   // 행 드래그 그립(첫 열 셀에만 렌더) — tr이 공급
   const cellSelected = useIsCellSelected(element);
   const { colIndex, colSpan, rowIndex, borders } = useTableCellElement();
   const { rightProps, bottomProps } = useTableCellElementResizable({ colIndex, colSpan, rowIndex });
+  // ── 열 리사이즈 컨테이너 제한 ──
+  // Plate의 우측 핸들 onResize는 "현재+다음 열 합 고정" 재분배를 내장하지만, 전제는 다음 열 colSizes가 실수(>0).
+  // colSizes 미동결(유동 100% 폭) 표에선 다음 열 값이 0 → max 클램프가 풀려 우측으로 무한 확장(실측 버그).
+  // ① 드래그 시작 시 colSizes가 비었거나 0이 섞여 있으면 현재 DOM 열 폭을 실측해 1회 동결 → 재분배 경로 활성화.
+  // ② 마지막 열은 재분배 상대(다음 열)가 없어 표가 컨테이너를 넘을 수 있으므로 시작 시점 여유폭으로 delta 클램프.
+  const colDragMax = useRef<number | null>(null);
+  const onColResizeStart = (ev: any) => {
+    const table = (ev.target as HTMLElement)?.closest?.('table') as HTMLTableElement | null;
+    if (!table) return;
+    // 열 폭 실측 — 셀이 가장 많은 행 기준, colSpan은 균등 분할
+    let best: HTMLTableRowElement | null = null; let colCount = 0;
+    for (const r of Array.from(table.rows)) {
+      const n = Array.from(r.cells).reduce((a, c) => a + (c.colSpan || 1), 0);
+      if (n > colCount) { colCount = n; best = r; }
+    }
+    const cellPath = editor.api.findPath(element);
+    const entry = cellPath ? (editor.api.above({ at: cellPath, match: (n: any) => n.type === 'table' }) as any) : null;
+    if (entry && best) {
+      const [tableNode, tablePath] = entry;
+      const cur = tableNode.colSizes;
+      if (!Array.isArray(cur) || cur.length < colCount || cur.some((s: number) => !(s > 0))) {
+        const sizes: number[] = [];
+        for (const c of Array.from(best.cells)) {
+          const span = c.colSpan || 1;
+          for (let i = 0; i < span; i++) sizes.push(Math.round(c.offsetWidth / span));
+        }
+        editor.tf.setNodes({ colSizes: sizes } as any, { at: tablePath });
+      }
+    }
+    const isLast = colCount > 0 && colIndex + (element.colSpan || 1) >= colCount;
+    const container = table.parentElement;
+    colDragMax.current = isLast && container ? Math.max(0, container.clientWidth - table.offsetWidth) : null;
+  };
+  const rightOpts = (rightProps as any)?.options || {};
+  const rightPropsClamped = {
+    ...(rightProps as any),
+    options: {
+      ...rightOpts,
+      onMouseDown: onColResizeStart,
+      onTouchStart: onColResizeStart,
+      onResize: (e: any) => {
+        const max = colDragMax.current;
+        rightOpts.onResize?.(max != null && e.delta > max ? { ...e, delta: max } : e);
+      },
+    },
+  };
   const Tag = element.type === 'th' ? 'th' : 'td';
   const style: CSSProperties = {
     backgroundColor: element.background || undefined,   // 셀 배경(문서 고정 절대색) — th 기본 --muted보다 인라인이 우선
@@ -429,7 +476,7 @@ export function TableCellElement(props: any) {
     <PlateElement {...props} as={Tag as any} className={cellSelected ? 'is-cellsel' : undefined}
       attributes={{ ...props.attributes, colSpan: element.colSpan, rowSpan: element.rowSpan, style }}>
       {props.children}
-      {!readOnly && <ResizeHandle {...(rightProps as any)} className="apfs-rt-colresize" contentEditable={false} aria-label={`${colIndex + 1}열 너비 조절`} />}
+      {!readOnly && <ResizeHandle {...(rightPropsClamped as any)} className="apfs-rt-colresize" contentEditable={false} aria-label={`${colIndex + 1}열 너비 조절`} />}
       {!readOnly && <ResizeHandle {...(bottomProps as any)} className="apfs-rt-rowresize" contentEditable={false} aria-label={`${rowIndex + 1}행 높이 조절`} />}
       {/* 행 드래그 그립 — 첫 열 셀 왼쪽 바깥(absolute), 행 hover 시 표시. 드래그 소스는 tr(useDraggable). */}
       {rowDrag && colIndex === 0 && (

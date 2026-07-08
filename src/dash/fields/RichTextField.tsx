@@ -118,7 +118,8 @@ const PLUGINS = [
   ImagePlugin, VideoPlugin, MediaEmbedPlugin, FilePlugin,   // FilePlugin: 파일 첨부(file, 보이드) 노드
   CaptionPlugin.configure({ options: { query: { allow: ['img', 'video', 'media_embed'] } } }),  // img/비디오/임베드에 캡션
   // ── 확장 블록/보이드 ──
-  TablePlugin, TableRowPlugin, TableCellPlugin, TableCellHeaderPlugin,
+  // minColumnWidth: 열 리사이즈 재분배 시 이웃 열이 0으로 뭉개지지 않는 하한(CSS td min-width 48과 동일 기준)
+  TablePlugin.configure({ options: { minColumnWidth: 48 } }), TableRowPlugin, TableCellPlugin, TableCellHeaderPlugin,
   CalloutPlugin, ColumnPlugin, ColumnItemPlugin, TogglePlugin,
   DatePlugin, TagPlugin,
   InlineEquationPlugin.configure({ inputRules: [MathRules.markdown({ variant: '$' })] }),    // $..$ → 인라인 수식
@@ -432,6 +433,50 @@ function runWithSel(editor: any, sel: any, fn: (e: any) => void) {
   fn(editor);
 }
 
+// 다중 셀 선택 + 블록 전환 — 다중 셀 range에 목록/제목 토글을 그대로 실행하면 앵커 셀에만 적용됨(실측).
+// 열림 시점의 셀 선택(플러그인 그리드 우선, 없으면 저장 selection에 걸친 td/th 스캔)을 셀별로 순회하며
+// 셀 내부 전체를 선택해 개별 적용한다. 이미 대상 타입인 셀은 건너뜀(토글 API의 역전환 방지 = set 의미론).
+// 단일 셀/표 밖이면 runWithSel과 동일 경로.
+function getSelectedCellsSafe(editor: any): any[] {
+  try { return (editor as any).getApi(TablePlugin).table.getSelectedCells() || []; } catch { return []; }
+}
+const LIST_KEYS = new Set(['ul', 'ol', 'taskList']);
+// 현재 selection의 블록 상태를 targetKey로 전환 — 토글 API는 목록 wrapper를 unwrap하지 않으므로
+// 목록 → 비목록 전환은 먼저 해당 목록을 토글 해제(p로 복귀)한 뒤 대상 타입을 적용한다(목록 → 목록은 토글이 직접 변환).
+function applyTurnInto(editor: any, targetKey: string, fn: (e: any) => void, reselect?: () => void) {
+  const cur = currentBlockKey(editor);
+  if (cur === targetKey) return;
+  if (LIST_KEYS.has(cur) && !LIST_KEYS.has(targetKey)) {
+    (editor.tf as any)[cur].toggle();          // 목록 해제 → p
+    reselect?.();                              // unwrap으로 경로가 변했을 수 있어 대상 범위 재선택
+    if (targetKey === 'p') return;             // 본문이 목표면 해제만으로 완료
+  }
+  fn(editor);
+}
+function runTurnInto(editor: any, sel: any, savedCells: any[], targetKey: string, fn: (e: any) => void) {
+  editor.tf.focus();
+  if (sel) { try { editor.tf.select(sel); } catch { /* 경로 무효 시 무시 */ } }
+  let cells = savedCells;
+  if (cells.length <= 1 && sel) {
+    try {
+      cells = Array.from(editor.api.nodes({ at: sel, match: (n: any) => n.type === 'td' || n.type === 'th' }) as any).map((en: any) => en[0]);
+    } catch { cells = savedCells; }
+  }
+  const paths = cells.map((c: any) => { try { return editor.api.findPath(c); } catch { return null; } }).filter(Boolean);
+  if (paths.length > 1) {
+    for (const p of paths) {
+      try {
+        const selectCell = () => editor.tf.select({ anchor: editor.api.start(p), focus: editor.api.end(p) });
+        selectCell();
+        applyTurnInto(editor, targetKey, fn, selectCell);
+      } catch { /* 셀 소실 시 해당 셀 무시 */ }
+    }
+    try { editor.tf.select(editor.api.end(paths[paths.length - 1])); } catch { /* caret 정리 실패 무시 */ }
+    return;
+  }
+  applyTurnInto(editor, targetKey, fn);
+}
+
 // canSplitCell(분할 게이트 — v53 canSplit 패키지 버그 우회)은 RichTextElements로 이동(표 캡션 툴바와 공유).
 
 // 링크 URL 바 열기 — 고정 툴바·플로팅 툴바 공유. 선택을 savedSel에 저장(applyPrompt가 복원해 적용)하고 pMode='link'.
@@ -445,10 +490,11 @@ function openLinkPrompt(editor: any, savedSel: React.MutableRefObject<any>, setP
 function BlockTypeDropdown({ compact, onOpenChange }: { compact?: boolean; onOpenChange?: (o: boolean) => void }) {
   const editor = useEditorState();
   const sel = useRef<any>(null);
+  const cells = useRef<any[]>([]);  // 열림 시점 다중 셀 선택 스냅샷 — 메뉴 조작이 셀 선택 상태를 지울 수 있어 저장
   const curKey = currentBlockKey(editor);
   const cur = TURN_INTO.find((t) => t.key === curKey) || TURN_INTO[0];
   return (
-    <DropdownMenu onOpenChange={(o) => { if (o) sel.current = editor.selection; onOpenChange?.(o); }}>
+    <DropdownMenu onOpenChange={(o) => { if (o) { sel.current = editor.selection; cells.current = getSelectedCellsSafe(editor); } onOpenChange?.(o); }}>
       <DropdownMenuTrigger asChild>
         <button type="button" className={'apfs-rt-turninto' + (compact ? ' apfs-rt-turninto--compact' : '')} title="블록 유형" aria-label={`블록 유형: ${cur.label}`}>
           <cur.Icon size={15} strokeWidth={2} aria-hidden={true} />
@@ -458,7 +504,7 @@ function BlockTypeDropdown({ compact, onOpenChange }: { compact?: boolean; onOpe
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
         {TURN_INTO.map((t) => (
-          <DropdownMenuItem key={t.key} onSelect={() => runWithSel(editor, sel.current, t.run)}>
+          <DropdownMenuItem key={t.key} onSelect={() => runTurnInto(editor, sel.current, cells.current, t.key, t.run)}>
             <t.Icon size={16} strokeWidth={2} aria-hidden={true} />
             <span style={{ flex: 1 }}>{t.label}</span>
             {curKey === t.key && <Check size={15} strokeWidth={2.4} aria-hidden={true} />}
