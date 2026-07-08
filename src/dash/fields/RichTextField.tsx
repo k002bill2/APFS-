@@ -118,7 +118,8 @@ const PLUGINS = [
   ImagePlugin, VideoPlugin, MediaEmbedPlugin, FilePlugin,   // FilePlugin: 파일 첨부(file, 보이드) 노드
   CaptionPlugin.configure({ options: { query: { allow: ['img', 'video', 'media_embed'] } } }),  // img/비디오/임베드에 캡션
   // ── 확장 블록/보이드 ──
-  TablePlugin, TableRowPlugin, TableCellPlugin, TableCellHeaderPlugin,
+  // minColumnWidth: 열 리사이즈 재분배 시 이웃 열이 0으로 뭉개지지 않는 하한(CSS td min-width 48과 동일 기준)
+  TablePlugin.configure({ options: { minColumnWidth: 48 } }), TableRowPlugin, TableCellPlugin, TableCellHeaderPlugin,
   CalloutPlugin, ColumnPlugin, ColumnItemPlugin, TogglePlugin,
   DatePlugin, TagPlugin,
   InlineEquationPlugin.configure({ inputRules: [MathRules.markdown({ variant: '$' })] }),    // $..$ → 인라인 수식
