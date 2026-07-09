@@ -7,7 +7,7 @@
 import type { CSSProperties } from 'react';
 import { createContext, useContext, useRef, useState } from 'react';
 import { PlateElement, PlateLeaf, useEditorRef, useSelected, useReadOnly, usePluginOption, usePath } from 'platejs/react';
-import { getLinkAttributes } from '@platejs/link';
+import { getLinkAttributes, validateUrl } from '@platejs/link';
 import { insertTableRow, insertTableColumn, deleteRow, deleteColumn, deleteTable } from '@platejs/table';
 // 셀 다중 선택(공식 Plate): useSelectedCells=selection→선택 셀 id 동기화(표 요소에서 1회 마운트),
 // useIsCellSelected=셀별 선택 구독(element.id 기반 — NodeIdPlugin이 셀에도 id 부여).
@@ -160,15 +160,22 @@ export function ImageElement(props: any) {
     if (e.finished) { setDragW(null); set({ width: `${Math.round(next)}px` }); } else { setDragW(next); }
   };
   const openLink = () => { setLinkDraft(element.link || ''); setLinkEditing(true); };
-  const saveLink = () => { const u = linkDraft.trim(); set({ link: u || undefined }); setLinkEditing(false); editor.tf.focus(); };
+  const saveLink = () => {
+    const u = linkDraft.trim();
+    if (u && !validateUrl(editor, u)) return;   // javascript: 등 무효/위험 스킴 거부 — 입력 유지
+    set({ link: u || undefined });
+    setLinkEditing(false);
+    editor.tf.focus();
+  };
   const removeLink = () => { set({ link: undefined }); setLinkEditing(false); editor.tf.focus(); };
   const imgEl = <img src={element.url} alt="" />;
+  const safeHref = element.link ? getLinkAttributes(editor, { type: 'a', url: element.link, children: [] } as any).href : undefined;
   return (
     <PlateElement {...props}>
       <div className="apfs-rt-imgwrap" contentEditable={false} style={{ textAlign: align as any }}>
         <span ref={imgboxRef} className={'apfs-rt-imgbox' + (selected ? ' is-sel' : '')} style={{ width }}>
-          {readOnly && element.link
-            ? <a href={element.link} target="_blank" rel="noreferrer">{imgEl}</a>
+          {readOnly && safeHref
+            ? <a href={safeHref} target="_blank" rel="noopener noreferrer">{imgEl}</a>
             : imgEl}
           {selected && !readOnly && (
             <>
