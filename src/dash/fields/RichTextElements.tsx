@@ -544,15 +544,44 @@ export function TableCellElement(props: any) {
   );
 }
 
-/* ── 콜아웃(callout) = 블록 컨테이너. variant/icon을 element에 저장. ── */
+/* ── 콜아웃(callout) = 블록 컨테이너. variant/icon을 element에 저장. 아이콘 버튼→종류 전환 드롭다운. ── */
 const CALLOUT_ICONS: Record<string, any> = { info: Info, warning: TriangleAlert, success: CircleCheck, tip: Lightbulb };
+const CALLOUT_VARIANTS = [
+  { key: 'info', label: '정보', Icon: Info },
+  { key: 'warning', label: '경고', Icon: TriangleAlert },
+  { key: 'success', label: '성공', Icon: CircleCheck },
+  { key: 'tip', label: '팁', Icon: Lightbulb },
+];
 export function CalloutElement(props: any) {
   const { element } = props;
+  const editor = useEditorRef();
+  const readOnly = useReadOnly();
   const variant = element.variant || 'info';
   const Ico = CALLOUT_ICONS[variant] || Info;
+  const setVariant = (v: string) => { const p = editor.api.findPath(element); if (p) editor.tf.setNodes({ variant: v } as any, { at: p }); };
   return (
     <PlateElement {...props} className={'apfs-rt-callout is-' + variant}>
-      <span className="apfs-rt-callout__ico" contentEditable={false} aria-hidden="true"><Ico size={18} strokeWidth={2} /></span>
+      {readOnly ? (
+        <span className="apfs-rt-callout__ico" contentEditable={false} aria-hidden="true"><Ico size={18} strokeWidth={2} /></span>
+      ) : (
+        <span className="apfs-rt-callout__ico-wrap" contentEditable={false}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="apfs-rt-callout__ico apfs-rt-callout__btn" aria-label="알림 종류 변경"
+                aria-haspopup="menu" onMouseDown={(e) => e.preventDefault()}>
+                <Ico size={18} strokeWidth={2} aria-hidden />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+              {CALLOUT_VARIANTS.map((v) => (
+                <DropdownMenuItem key={v.key} onSelect={() => setVariant(v.key)}>
+                  <v.Icon size={15} strokeWidth={2} aria-hidden style={{ marginRight: 8 }} />{v.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </span>
+      )}
       <div className="apfs-rt-callout__body">{props.children}</div>
     </PlateElement>
   );
