@@ -7,7 +7,7 @@
 import type { CSSProperties } from 'react';
 import { createContext, useContext, useRef, useState } from 'react';
 import { PlateElement, PlateLeaf, useEditorRef, useSelected, useReadOnly, usePluginOption, usePath } from 'platejs/react';
-import { getLinkAttributes } from '@platejs/link';
+import { getLinkAttributes, validateUrl } from '@platejs/link';
 import { insertTableRow, insertTableColumn, deleteRow, deleteColumn, deleteTable } from '@platejs/table';
 // 셀 다중 선택(공식 Plate): useSelectedCells=selection→선택 셀 id 동기화(표 요소에서 1회 마운트),
 // useIsCellSelected=셀별 선택 구독(element.id 기반 — NodeIdPlugin이 셀에도 id 부여).
@@ -28,13 +28,13 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { ResizeHandle } from '@platejs/resizable';
 import { useTodoListElement, useTodoListElementState } from '@platejs/list-classic/react';  // 체크리스트 li의 checkbox 상태·토글
 import { useToggleButtonState, useToggleButton } from '@platejs/toggle/react';
-import { Caption, CaptionTextarea } from '@platejs/caption/react';
+import { Caption, CaptionTextarea, useCaptionButton, useCaptionButtonState } from '@platejs/caption/react';
 import { parseVideoUrl } from '@platejs/media';
 import { useDraggable, useDropLine } from '@platejs/dnd';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import {
-  AlignLeft, AlignCenter, AlignRight, Trash2,
+  Trash2, Link2, Captions,
   ChevronRight, Info, TriangleAlert, CircleCheck, Lightbulb, Rows3, Columns3,
   Plus, CalendarDays, AtSign, GripVertical, FileDown as FileDownIcon, Combine, Ungroup,
   PaintBucket, Grid3x3, Square, SquareDashed, PanelTop, PanelBottom, PanelLeft, PanelRight, X as XIcon,
@@ -145,7 +145,6 @@ export function LinkElement(props: any) {
 }
 
 /* ── 이미지 = 보이드 블록. 선택 시 편집 툴바(정렬·너비·삭제) 오버레이. align/width는 element에 저장·적용. ── */
-const IMG_WIDTHS = [{ label: 'S', v: '35%' }, { label: 'M', v: '65%' }, { label: 'L', v: '100%' }];
 export function ImageElement(props: any) {
   const { element } = props;
   const editor = useEditorRef();
@@ -153,56 +152,70 @@ export function ImageElement(props: any) {
   const readOnly = useReadOnly();
   const align = element.align || 'left';
   const imgboxRef = useRef<HTMLSpanElement>(null);
-  const startW = useRef(0);
   const [dragW, setDragW] = useState<number | null>(null);
+  const [linkEditing, setLinkEditing] = useState(false);
+  const [linkDraft, setLinkDraft] = useState('');
   const width = dragW != null ? `${Math.round(dragW)}px` : (element.width || '100%');
+  const capBtn = useCaptionButton(useCaptionButtonState());   // 캡션 토글(정석): onClick이 visibleId=element.id + 포커스
   const set = (patch: any) => { const p = editor.api.findPath(element); if (p) editor.tf.setNodes(patch, { at: p }); };
   const del = () => { const p = editor.api.findPath(element); if (p) editor.tf.removeNodes({ at: p }); editor.tf.focus(); };
-  const stop = (e: any) => e.preventDefault(); // 툴바/핸들 클릭이 이미지 선택을 빼앗지 않게
-  // 드래그 리사이즈: mousedown에 현재 imgbox 폭을 기준으로 고정, onResize에서 로컬 state만 갱신(에디터 미접촉),
-  // finished:true에 setNodes 1회 커밋 → "Maximum update depth" 루프 벡터 회피(표 컬럼 리사이즈와 동일 패턴).
-  const onHandleDown = () => { startW.current = imgboxRef.current?.offsetWidth || 0; };
+  const stop = (e: any) => e.preventDefault(); // 툴바 클릭이 이미지 선택을 빼앗지 않게
+  // 드래그 리사이즈: 시작 폭은 e.initialSize(마우스·터치 공통), onResize에서 로컬 state만, finished:true에 setNodes 1회 커밋.
   const onHandleResize = (direction: 'left' | 'right') => (e: any) => {
     const mult = (align === 'center' ? 2 : 1) * (direction === 'left' ? -1 : 1);
-    const maxW = imgboxRef.current?.parentElement?.clientWidth || 9999; // .apfs-rt-imgwrap 폭
-    const next = Math.max(64, Math.min(startW.current + e.delta * mult, maxW));
-    if (e.finished) {
-      setDragW(null);
-      set({ width: `${Math.round(next)}px` });
-    } else {
-      setDragW(next);
-    }
+    const maxW = imgboxRef.current?.parentElement?.clientWidth || 9999;
+    const next = Math.max(64, Math.min((e.initialSize || 0) + e.delta * mult, maxW));
+    if (e.finished) { setDragW(null); set({ width: `${Math.round(next)}px` }); } else { setDragW(next); }
   };
+  const openLink = () => { setLinkDraft(element.link || ''); setLinkEditing(true); };
+  const saveLink = () => {
+    const u = linkDraft.trim();
+    if (u && !validateUrl(editor, u)) return;   // javascript: 등 무효/위험 스킴 거부 — 입력 유지
+    set({ link: u || undefined });
+    setLinkEditing(false);
+    editor.tf.focus();
+  };
+  const removeLink = () => { set({ link: undefined }); setLinkEditing(false); editor.tf.focus(); };
+  const imgEl = <img src={element.url} alt="" />;
+  const safeHref = element.link ? getLinkAttributes(editor, { type: 'a', url: element.link, children: [] } as any).href : undefined;
   return (
     <PlateElement {...props}>
       <div className="apfs-rt-imgwrap" contentEditable={false} style={{ textAlign: align as any }}>
         <span ref={imgboxRef} className={'apfs-rt-imgbox' + (selected ? ' is-sel' : '')} style={{ width }}>
-          <img src={element.url} alt="" />
+          {readOnly && safeHref
+            ? <a href={safeHref} target="_blank" rel="noopener noreferrer">{imgEl}</a>
+            : imgEl}
           {selected && !readOnly && (
             <>
               <ResizeHandle
-                options={{ direction: 'left', onMouseDown: onHandleDown, onResize: onHandleResize('left') } as any}
+                options={{ direction: 'left', onResize: onHandleResize('left') } as any}
                 className="apfs-rt-imgresize is-left" contentEditable={false} aria-label="이미지 너비 조절(왼쪽)" />
               <ResizeHandle
-                options={{ direction: 'right', onMouseDown: onHandleDown, onResize: onHandleResize('right') } as any}
+                options={{ direction: 'right', onResize: onHandleResize('right') } as any}
                 className="apfs-rt-imgresize is-right" contentEditable={false} aria-label="이미지 너비 조절(오른쪽)" />
             </>
           )}
           {selected && !readOnly && (
             <span className="apfs-rt-imgbar" role="toolbar" aria-label="이미지 편집">
-              {[{ k: 'left', I: AlignLeft, t: '왼쪽' }, { k: 'center', I: AlignCenter, t: '가운데' }, { k: 'right', I: AlignRight, t: '오른쪽' }].map((a) => (
-                <button key={a.k} type="button" title={`${a.t} 정렬`} aria-label={`${a.t} 정렬`} aria-pressed={align === a.k}
-                  className={'apfs-rt-imgbtn' + (align === a.k ? ' is-active' : '')} onMouseDown={stop} onClick={() => set({ align: a.k })}>
-                  <a.I size={15} strokeWidth={2} aria-hidden={true} /></button>
-              ))}
+              <button type="button" title="링크 편집" aria-label="링크 편집" aria-pressed={!!element.link}
+                className={'apfs-rt-imgbtn' + (element.link ? ' is-active' : '')} onMouseDown={stop} onClick={openLink}>
+                <Link2 size={15} strokeWidth={2} aria-hidden={true} /></button>
+              <button type="button" title="캡션" aria-label="캡션 추가" className="apfs-rt-imgbtn"
+                onMouseDown={stop} onClick={capBtn.props.onClick}>
+                <Captions size={15} strokeWidth={2} aria-hidden={true} /></button>
               <span className="apfs-rt-imgsep" aria-hidden="true" />
-              {IMG_WIDTHS.map((w) => (
-                <button key={w.v} type="button" title={`너비 ${w.label}`} aria-label={`너비 ${w.label}`} aria-pressed={width === w.v}
-                  className={'apfs-rt-imgbtn is-text' + (width === w.v ? ' is-active' : '')} onMouseDown={stop} onClick={() => set({ width: w.v })}>{w.label}</button>
-              ))}
-              <span className="apfs-rt-imgsep" aria-hidden="true" />
-              <button type="button" title="이미지 삭제" aria-label="이미지 삭제" className="apfs-rt-imgbtn is-danger" onMouseDown={stop} onClick={del}>
+              <button type="button" title="이미지 삭제" aria-label="이미지 삭제" className="apfs-rt-imgbtn is-danger"
+                onMouseDown={stop} onClick={del}>
                 <Trash2 size={15} strokeWidth={2} aria-hidden={true} /></button>
+            </span>
+          )}
+          {selected && !readOnly && linkEditing && (
+            <span className="apfs-rt-imginput" role="group" aria-label="이미지 링크 URL">
+              <input className="apfs-rt-imginput__field" type="url" placeholder="https://..." value={linkDraft}
+                autoFocus onMouseDown={(e) => e.stopPropagation()} onChange={(e) => setLinkDraft(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveLink(); } if (e.key === 'Escape') { e.preventDefault(); setLinkEditing(false); } }} />
+              <button type="button" className="apfs-rt-imgbtn is-text" onMouseDown={stop} onClick={saveLink}>적용</button>
+              {element.link && <button type="button" className="apfs-rt-imgbtn is-text" onMouseDown={stop} onClick={removeLink}>제거</button>}
             </span>
           )}
         </span>
@@ -553,15 +566,44 @@ export function TableCellElement(props: any) {
   );
 }
 
-/* ── 콜아웃(callout) = 블록 컨테이너. variant/icon을 element에 저장. ── */
+/* ── 콜아웃(callout) = 블록 컨테이너. variant/icon을 element에 저장. 아이콘 버튼→종류 전환 드롭다운. ── */
 const CALLOUT_ICONS: Record<string, any> = { info: Info, warning: TriangleAlert, success: CircleCheck, tip: Lightbulb };
+const CALLOUT_VARIANTS = [
+  { key: 'info', label: '정보', Icon: Info },
+  { key: 'warning', label: '경고', Icon: TriangleAlert },
+  { key: 'success', label: '성공', Icon: CircleCheck },
+  { key: 'tip', label: '팁', Icon: Lightbulb },
+];
 export function CalloutElement(props: any) {
   const { element } = props;
+  const editor = useEditorRef();
+  const readOnly = useReadOnly();
   const variant = element.variant || 'info';
   const Ico = CALLOUT_ICONS[variant] || Info;
+  const setVariant = (v: string) => { const p = editor.api.findPath(element); if (p) editor.tf.setNodes({ variant: v } as any, { at: p }); };
   return (
     <PlateElement {...props} className={'apfs-rt-callout is-' + variant}>
-      <span className="apfs-rt-callout__ico" contentEditable={false} aria-hidden="true"><Ico size={18} strokeWidth={2} /></span>
+      {readOnly ? (
+        <span className="apfs-rt-callout__ico" contentEditable={false} aria-hidden="true"><Ico size={18} strokeWidth={2} /></span>
+      ) : (
+        <span className="apfs-rt-callout__ico-wrap" contentEditable={false}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="apfs-rt-callout__ico apfs-rt-callout__btn" aria-label="알림 종류 변경"
+                aria-haspopup="menu" onMouseDown={(e) => e.preventDefault()}>
+                <Ico size={18} strokeWidth={2} aria-hidden />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+              {CALLOUT_VARIANTS.map((v) => (
+                <DropdownMenuItem key={v.key} onSelect={() => setVariant(v.key)}>
+                  <v.Icon size={15} strokeWidth={2} aria-hidden style={{ marginRight: 8 }} />{v.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </span>
+      )}
       <div className="apfs-rt-callout__body">{props.children}</div>
     </PlateElement>
   );
