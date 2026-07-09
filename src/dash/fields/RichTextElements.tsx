@@ -145,19 +145,18 @@ export function ImageElement(props: any) {
   const readOnly = useReadOnly();
   const align = element.align || 'left';
   const imgboxRef = useRef<HTMLSpanElement>(null);
-  const startW = useRef(0);
   const [dragW, setDragW] = useState<number | null>(null);
   const width = dragW != null ? `${Math.round(dragW)}px` : (element.width || '100%');
   const set = (patch: any) => { const p = editor.api.findPath(element); if (p) editor.tf.setNodes(patch, { at: p }); };
   const del = () => { const p = editor.api.findPath(element); if (p) editor.tf.removeNodes({ at: p }); editor.tf.focus(); };
   const stop = (e: any) => e.preventDefault(); // 툴바/핸들 클릭이 이미지 선택을 빼앗지 않게
-  // 드래그 리사이즈: mousedown에 현재 imgbox 폭을 기준으로 고정, onResize에서 로컬 state만 갱신(에디터 미접촉),
-  // finished:true에 setNodes 1회 커밋 → "Maximum update depth" 루프 벡터 회피(표 컬럼 리사이즈와 동일 패턴).
-  const onHandleDown = () => { startW.current = imgboxRef.current?.offsetWidth || 0; };
+  // 드래그 리사이즈: 시작 폭은 e.initialSize(라이브러리가 마우스·터치 공통으로 계산)를 사용,
+  // onResize에서 로컬 state만 갱신(에디터 미접촉), finished:true에 setNodes 1회 커밋
+  // → "Maximum update depth" 루프 벡터 회피(표 컬럼 리사이즈와 동일 패턴).
   const onHandleResize = (direction: 'left' | 'right') => (e: any) => {
     const mult = (align === 'center' ? 2 : 1) * (direction === 'left' ? -1 : 1);
     const maxW = imgboxRef.current?.parentElement?.clientWidth || 9999; // .apfs-rt-imgwrap 폭
-    const next = Math.max(64, Math.min(startW.current + e.delta * mult, maxW));
+    const next = Math.max(64, Math.min((e.initialSize || 0) + e.delta * mult, maxW));
     if (e.finished) {
       setDragW(null);
       set({ width: `${Math.round(next)}px` });
@@ -173,10 +172,10 @@ export function ImageElement(props: any) {
           {selected && !readOnly && (
             <>
               <ResizeHandle
-                options={{ direction: 'left', onMouseDown: onHandleDown, onResize: onHandleResize('left') } as any}
+                options={{ direction: 'left', onResize: onHandleResize('left') } as any}
                 className="apfs-rt-imgresize is-left" contentEditable={false} aria-label="이미지 너비 조절(왼쪽)" />
               <ResizeHandle
-                options={{ direction: 'right', onMouseDown: onHandleDown, onResize: onHandleResize('right') } as any}
+                options={{ direction: 'right', onResize: onHandleResize('right') } as any}
                 className="apfs-rt-imgresize is-right" contentEditable={false} aria-label="이미지 너비 조절(오른쪽)" />
             </>
           )}
