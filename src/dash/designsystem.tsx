@@ -150,7 +150,7 @@ function DesignSystem() {
                 <HoverCardTrigger asChild><button className="text-primary font-semibold underline underline-offset-2">GP 미리보기</button></HoverCardTrigger>
                 <HoverCardContent><div className="flex flex-col gap-1"><div className="font-semibold text-foreground">운용사 요약</div><div className="text-[13px] text-muted-foreground">누적 결성 · 투자 성과 · 조기경보 상태를 호버로 미리 봅니다.</div></div></HoverCardContent>
               </HoverCard>
-              <div className="flex items-center gap-2 text-muted-foreground"><Spinner /><Spinner className="size-6 text-primary" /><span className="text-[13px]">로딩</span></div>
+              <div className="flex items-center gap-2 text-muted-foreground"><Spinner /><Spinner size={8} className="text-primary" /><span className="text-[13px]">로딩</span></div>
             </div>
           </Card>
 
