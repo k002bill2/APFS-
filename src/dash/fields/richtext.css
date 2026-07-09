@@ -275,6 +275,28 @@
 .apfs-rt-imgbtn.is-danger:hover { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
 .apfs-rt-imgsep { width: 1px; height: 16px; background: var(--border); margin: 0 3px; }
 
+/* 이미지 링크 URL 입력 바 — 툴바 아래 팝오버. */
+.apfs-rt-imginput {
+  position: absolute;
+  top: 46px; left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 6px;
+  background: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / .16);
+  z-index: 3;
+  white-space: nowrap;
+}
+.apfs-rt-imginput__field {
+  width: 220px; height: 26px; padding: 0 8px;
+  font-size: 12px; color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--border); border-radius: 6px; outline: none;
+}
+.apfs-rt-imginput__field:focus { border-color: var(--ring); }
+
 /* 확장 마크 — 형광펜/첨자. mark는 고정 노랑(라이트/다크 무관 가독 위해 전경도 고정). */
 .apfs-prose mark { background: #fde68a; color: #111827; padding: .02em .12em; border-radius: 3px; }
 .apfs-prose sub { font-size: .75em; line-height: 0; vertical-align: sub; }
