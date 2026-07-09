@@ -29,7 +29,7 @@ const ReportSutack = ReportSutackPages.ReportSutack;
 const AssetMain = AssetPages.AssetMain;
 const EditorPage = EditorPages.EditorPage;
 
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 const { AppShell } = Shell;
 const D = APFS_DATA;
 
@@ -50,7 +50,11 @@ function App() {
   const [notifs, setNotifs] = useState(D.NOTIFS);
   // 라우트 로딩 스켈레톤 — 더미데이터라 실제 async가 없어, 전환마다 짧은 로딩창을 합성해
   // 전 페이지에 PageSkeleton을 노출한다(500ms). 초기 진입(loading 기본 true)에도 1회 뜬다.
+  // 단, 초기 진입은 index.html boot 스플래시(격자 스피너)와 중복이라 스피너 없이 스켈레톤만 —
+  // 스피너 오버레이는 라우트 전환(routeChanged)에서만 노출한다(스피너 2연속 방지).
   const [loading, setLoading] = useState(true);
+  const mountedRef = useRef(false);
+  const [routeChanged, setRouteChanged] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -61,6 +65,8 @@ function App() {
   useEffect(() => ls.set("apfs.route", route), [route]);
   useEffect(() => { HistoryStore.push(route); }, [route]);   // 방문기록 적재(복원된 초기 라우트 포함)
   useEffect(() => {                                            // 라우트 전환마다 로딩 스켈레톤 노출
+    setRouteChanged(mountedRef.current);                       // 초기 마운트 false, 이후 전환 true
+    mountedRef.current = true;
     setLoading(true);
     const t = setTimeout(() => setLoading(false), 500);
     return () => clearTimeout(t);
@@ -120,7 +126,7 @@ function App() {
       wide={wide}
       onToggleWide={() => setWide((x) => !x)}
       notifs={notifs}
-      onReadAll={() => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })))}>{loading ? <PageSkeleton /> : page}<Toaster theme={theme} /></AppShell>
+      onReadAll={() => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })))}>{loading ? <PageSkeleton withSpinner={routeChanged} /> : page}<Toaster theme={theme} /></AppShell>
     </TooltipProvider>
   );
 }

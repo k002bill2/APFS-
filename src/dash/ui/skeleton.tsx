@@ -6,6 +6,7 @@
    - PageSkeleton: 라우트 전환 로딩 시 전 페이지 공용 스켈레톤 화면(app.tsx가 500ms 노출).
      responsive-ui: KPI 행은 flexWrap+flexBasis(고정 grid-cols 금지), 테이블 블록은 카드 overflow:hidden 내부.
    - PageSkeleton 중앙 상단 40% 지점에 GridLoader Spinner를 오버레이(래퍼 div aria-hidden으로 SR 중복 차단).
+   - withSpinner(기본 true): false면 스피너 오버레이 생략 — 초기 진입은 boot 스플래시와 중복이라 스켈레톤만.
    사용: <Skeleton className="h-4 w-32" /> · 페이지 로딩: <PageSkeleton /> */
 import * as React from 'react';
 import { cn } from '@/lib/utils';
@@ -17,13 +18,15 @@ function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>)
 
 /* 페이지 로딩 스켈레톤 — PageHeader(브레드크럼+타이틀) · KPI 스탯 행 · 메인 테이블/차트 블록의
    일반형 대시보드 골격을 근사. 셸 <main>이 패딩(22/26/104)을 제공하므로 여기선 세로 스택만. */
-function PageSkeleton() {
+function PageSkeleton({ withSpinner = true }: { withSpinner?: boolean }) {
   return (
     <div className="max-w-[1320px] mx-auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 16 }} aria-busy="true" aria-live="polite">
       {/* 중앙 상단 40% 오버레이 스피너 — 래퍼 div에 aria-hidden(내부 GridLoader의 role=status 중복 안내 차단) */}
-      <div aria-hidden="true" style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1, pointerEvents: 'none' }}>
-        <Spinner size={8} className="text-primary" />
-      </div>
+      {withSpinner && (
+        <div aria-hidden="true" style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1, pointerEvents: 'none' }}>
+          <Spinner size={8} className="text-primary" />
+        </div>
+      )}
       {/* 브레드크럼 + 타이틀 */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <Skeleton className="h-3" style={{ width: 180 }} />
