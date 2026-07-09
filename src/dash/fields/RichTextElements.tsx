@@ -90,11 +90,17 @@ export function ListItemElement(props: any) {
   const isTask = 'checked' in element;
   const state = useTodoListElementState({ element });
   const { checkboxProps } = useTodoListElement(state);
-  /* 폰트사이즈는 텍스트 leaf에 인라인 style로 실리지만 ::marker(불릿·번호)는 li의 폰트사이즈를 상속한다.
-     leaf가 아닌 li 레벨이라 마크가 안 닿는다 → 첫 leaf의 fontSize를 CSS 변수로 li에 실어 ::marker가 참조하게 우회. */
-  const fs = firstTextLeaf(element)?.fontSize;
-  const liAttributes = fs
-    ? { ...props.attributes, style: { ...props.attributes?.style, ['--rt-marker-fs' as any]: fs } }
+  /* 폰트사이즈·bold·italic·글자색은 텍스트 leaf에 인라인으로 실리지만 ::marker(불릿·번호)는 li 레벨을
+     상속한다 → leaf 마크가 안 닿는다. 첫 leaf의 서식을 CSS 변수로 li에 실어 ::marker가 참조하게 우회.
+     (underline/strikethrough는 ::marker에 text-decoration 적용 불가라 제외 — CSS 스펙 한계.) */
+  const lf = firstTextLeaf(element);
+  const markerVars: Record<string, any> = {};
+  if (lf?.fontSize) markerVars['--rt-marker-fs'] = lf.fontSize;
+  if (lf?.bold) markerVars['--rt-marker-fw'] = 700;
+  if (lf?.italic) markerVars['--rt-marker-fst'] = 'italic';
+  if (lf?.color) markerVars['--rt-marker-color'] = lf.color;
+  const liAttributes = Object.keys(markerVars).length
+    ? { ...props.attributes, style: { ...props.attributes?.style, ...markerVars } }
     : props.attributes;
   return (
     <PlateElement {...props} attributes={liAttributes} as="li" className={isTask ? ('apfs-rt-taskitem' + (checkboxProps.checked ? ' is-checked' : '')) : undefined}>
