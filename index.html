@@ -39,8 +39,21 @@
      이 규칙을 제거하면 shadcn(및 .border 유틸) 테두리가 무음으로 사라진다. */
   *,::before,::after{border-width:0;border-style:solid;border-color:var(--border);}
   .boot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:100vh;color:var(--muted-foreground);}
-  .boot-dot{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--brand-blue),var(--brand-cyan));animation:bootpulse 1s var(--ease) infinite alternate;}
-  @keyframes bootpulse{from{opacity:.5;transform:scale(.9);}to{opacity:1;transform:scale(1.05);}}
+  /* GridLoader 재현 — 3×3 점 격자가 대각 스태거로 물결치듯 scale 0↔1 왕복.
+     색: 인라인 <style>엔 :root 토큰 정의가 없어 기존 boot-dot이 쓰던 --brand-blue 사용(hex 하드코딩 금지). */
+  .boot-grid{display:grid;grid-template-columns:repeat(3,6px);grid-template-rows:repeat(3,6px);gap:4px;}
+  .boot-grid span{width:6px;height:6px;border-radius:50%;background:var(--brand-blue);animation:bootgrid 1.2s var(--ease) infinite;}
+  .boot-grid span:nth-child(1){animation-delay:0s;}
+  .boot-grid span:nth-child(2){animation-delay:.1s;}
+  .boot-grid span:nth-child(3){animation-delay:.2s;}
+  .boot-grid span:nth-child(4){animation-delay:.1s;}
+  .boot-grid span:nth-child(5){animation-delay:.2s;}
+  .boot-grid span:nth-child(6){animation-delay:.3s;}
+  .boot-grid span:nth-child(7){animation-delay:.2s;}
+  .boot-grid span:nth-child(8){animation-delay:.3s;}
+  .boot-grid span:nth-child(9){animation-delay:.4s;}
+  @keyframes bootgrid{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(0);opacity:.35;}}
+  @media (prefers-reduced-motion:reduce){.boot-grid span{animation:none;transform:none;opacity:1;}}
 
   /* ===== 반응형 그리드 시스템 ===== */
   .dash-grid{display:grid;grid-template-columns:repeat(12,1fr);align-items:start;}
@@ -110,7 +123,7 @@
 </style>
 </head>
 <body>
-<div id="root"><div class="boot"><div class="boot-dot"></div><div style="font-size:13px;font-weight:600;">대시보드 불러오는 중…</div></div></div>
+<div id="root"><div class="boot"><div class="boot-grid"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div style="font-size:13px;font-weight:600;">대시보드 불러오는 중…</div></div></div>
 
 <script type="module" src="/src/main.tsx"></script>
 </body>

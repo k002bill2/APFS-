@@ -73,6 +73,14 @@ export function canSplitCell(editor: any, sel?: any): boolean {
 export const blockEl = (as: string) => function El(props: any) { return <PlateElement as={as} {...props} />; };
 export const leafEl  = (as: string) => function Lf(props: any) { return <PlateLeaf as={as} {...props} />; };
 
+/* li 하위에서 첫 텍스트 leaf(text 속성 보유 노드)를 children[0]로 내려가며 찾는다(깊이 제한).
+   구조는 보통 li > lic(p) > text 이지만 방어적으로 탐색한다. */
+function firstTextLeaf(node: any, depth = 5): any {
+  if (!node || depth < 0) return undefined;
+  if (typeof node.text === 'string') return node;
+  return firstTextLeaf(node.children?.[0], depth - 1);
+}
+
 /* ── 목록 항목(li) — ul/ol/taskList가 공유하는 노드. ──
    taskList의 li는 element.checked(boolean)를 갖는다. 'checked' in element로 판별해 체크박스를 렌더.
    훅(useTodoListElement*)은 분기 전에 무조건 호출(React 훅 규칙). 체크박스는 contentEditable=false +
@@ -82,8 +90,14 @@ export function ListItemElement(props: any) {
   const isTask = 'checked' in element;
   const state = useTodoListElementState({ element });
   const { checkboxProps } = useTodoListElement(state);
+  /* 폰트사이즈는 텍스트 leaf에 인라인 style로 실리지만 ::marker(불릿·번호)는 li의 폰트사이즈를 상속한다.
+     leaf가 아닌 li 레벨이라 마크가 안 닿는다 → 첫 leaf의 fontSize를 CSS 변수로 li에 실어 ::marker가 참조하게 우회. */
+  const fs = firstTextLeaf(element)?.fontSize;
+  const liAttributes = fs
+    ? { ...props.attributes, style: { ...props.attributes?.style, ['--rt-marker-fs' as any]: fs } }
+    : props.attributes;
   return (
-    <PlateElement {...props} as="li" className={isTask ? ('apfs-rt-taskitem' + (checkboxProps.checked ? ' is-checked' : '')) : undefined}>
+    <PlateElement {...props} attributes={liAttributes} as="li" className={isTask ? ('apfs-rt-taskitem' + (checkboxProps.checked ? ' is-checked' : '')) : undefined}>
       {isTask && (
         <span className="apfs-rt-taskcheck" contentEditable={false}>
           <input type="checkbox" checked={!!checkboxProps.checked} aria-label="완료 여부"

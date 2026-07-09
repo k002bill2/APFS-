@@ -935,7 +935,8 @@ function exportHtml(root: HTMLElement | null) {
   clone.querySelectorAll('*').forEach((el) => {
     [...el.attributes].forEach((a) => { if (a.name === 'contenteditable' || a.name === 'draggable' || a.name.startsWith('data-slate') || a.name.startsWith('data-block')) el.removeAttribute(a.name); });
   });
-  const doc = `<!doctype html>\n<html lang="ko">\n<head><meta charset="utf-8"><title>내용</title></head>\n<body>\n${clone.innerHTML}\n</body>\n</html>\n`;
+  // 인라인 --rt-marker-fs는 클론에 보존되므로, 리셋+::marker 규칙만 넣으면 내보낸 HTML 단독으로도 마커 크기가 재현된다(중첩 누수 방지 포함).
+  const doc = `<!doctype html>\n<html lang="ko">\n<head><meta charset="utf-8"><title>내용</title><style>li{--rt-marker-fs:1em}li::marker{font-size:var(--rt-marker-fs,1em)}</style></head>\n<body>\n${clone.innerHTML}\n</body>\n</html>\n`;
   downloadText('내용.html', doc, 'text/html');
 }
 // 문서 전체 교체(가져오기) — 파싱 결과 노드를 setValue로 치환. 파서 실패 시 무시.
