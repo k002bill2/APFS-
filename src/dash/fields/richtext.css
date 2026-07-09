@@ -330,12 +330,18 @@
 .apfs-prose ul { list-style: disc; }
 .apfs-prose ol { list-style: decimal; }
 .apfs-prose li { margin: .2em 0; }
-/* 불릿·번호 마커는 li 폰트사이즈를 상속 → leaf에 실린 fontSize 마크가 안 닿는다.
-   ListItemElement가 첫 leaf의 fontSize를 --rt-marker-fs로 li에 실어주면 마커가 본문 크기를 따라간다.
-   li에 1em 리셋을 선언: 요소 자신의 선언값이 상속값을 이기므로 중첩 자식 li가 부모의 --rt-marker-fs를
-   물려받는 누수를 막고(모두 1em), 인라인 style(--rt-marker-fs:NNpx)을 실은 li만 자기 값이 이긴다. */
-.apfs-prose li { --rt-marker-fs: 1em; }
-.apfs-prose li::marker { font-size: var(--rt-marker-fs, 1em); }
+/* 불릿·번호 마커는 li 레벨을 상속 → leaf에 실린 fontSize/bold/italic/color 마크가 안 닿는다.
+   ListItemElement가 첫 leaf의 서식을 --rt-marker-* 변수로 li에 실어주면 마커가 본문 서식을 따라간다.
+   li에 기본값 리셋을 선언: 요소 자신의 선언값이 상속값을 이기므로 중첩 자식 li가 부모의 --rt-marker-*를
+   물려받는 누수를 막고(모두 기본값), 인라인 style(--rt-marker-*)을 실은 li만 자기 값이 이긴다.
+   (underline/strikethrough는 ::marker에 text-decoration 적용 불가라 제외 — CSS 스펙 한계.) */
+.apfs-prose li { --rt-marker-fs: 1em; --rt-marker-fw: normal; --rt-marker-fst: normal; --rt-marker-color: currentColor; }
+.apfs-prose li::marker {
+  font-size: var(--rt-marker-fs, 1em);
+  font-weight: var(--rt-marker-fw, normal);
+  font-style: var(--rt-marker-fst, normal);
+  color: var(--rt-marker-color, currentColor);
+}
 .apfs-prose li > p { margin: 0; }
 /* 체크리스트(taskList) — 불릿 없는 목록 + 각 항목 좌측 체크박스 */
 .apfs-prose .apfs-rt-tasklist { list-style: none; padding-left: 0; }
