@@ -110,6 +110,14 @@ export function OrderedListElement(props: any) {
     attributes={t ? { ...props.attributes, style: { ...props.attributes?.style, listStyleType: t } } : props.attributes} />;
 }
 
+/* 글머리 목록(ul) — ol과 동형. 불릿 스타일(disc/circle/square)을 element.listStyleType로 저장·렌더한다.
+   인라인 style이 .apfs-prose ul{list-style:disc}를 오버라이드, 미설정 시 기본 disc 유지. */
+export function BulletedListElement(props: any) {
+  const t = props.element?.listStyleType;
+  return <PlateElement {...props} as="ul"
+    attributes={t ? { ...props.attributes, style: { ...props.attributes?.style, listStyleType: t } } : props.attributes} />;
+}
+
 /* ── 링크 = 인라인 <a href>. getLinkAttributes로 href sanitize(javascript: 등 차단). ── */
 export function LinkElement(props: any) {
   const editor = useEditorRef();
@@ -661,7 +669,7 @@ export const COMPONENTS: Record<string, any> = {
   p: blockEl('p'), h1: blockEl('h1'), h2: blockEl('h2'), h3: blockEl('h3'),
   h4: blockEl('h4'), h5: blockEl('h5'), h6: blockEl('h6'),
   blockquote: blockEl('blockquote'), code_block: blockEl('pre'), code_line: blockEl('code'),
-  ul: blockEl('ul'), ol: OrderedListElement, li: ListItemElement, lic: blockEl('p'),
+  ul: BulletedListElement, ol: OrderedListElement, li: ListItemElement, lic: blockEl('p'),
   taskList: TaskListElement,
   a: LinkElement, img: ImageElement, hr: HrElement, file: FileElement,
   video: VideoElement, media_embed: MediaEmbedElement,

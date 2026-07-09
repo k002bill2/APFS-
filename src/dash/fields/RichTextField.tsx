@@ -252,6 +252,13 @@ const OL_STYLES: { key: string; label: string }[] = [
   { key: 'upper-roman', label: 'Upper Roman (I, II, III)' },
 ];
 
+// 글머리 목록 불릿 항목 — key는 CSS list-style-type 키워드(ul 노드 listStyleType 속성으로 저장). Default=disc.
+const UL_STYLES: { key: string; label: string }[] = [
+  { key: 'disc',   label: 'Default (●)' },
+  { key: 'circle', label: 'Circle (○)' },
+  { key: 'square', label: 'Square (■)' },
+];
+
 // 인라인 마크 아이콘 버튼(B I U S code kbd 형광 첨자).
 const MARKS: BtnDef[] = [
   { key: 'bold',   Icon: Bold,          title: '굵게',        run: (e) => e.tf.bold.toggle(),          active: (e) => markOn(e, 'bold') },
@@ -456,6 +463,17 @@ function applyOlStyle(e: any, value: string) {
   if (ol) e.tf.setNodes({ listStyleType: value }, { at: ol[1], match: (n: any) => n === ol[0] });
 }
 
+// 글머리 목록 불릿 조회/적용 — ol과 동형. 미설정 ul은 기본 disc로 취급(Default 체크·is-active 구동).
+function currentUlStyle(e: any): string | null {
+  const ul = e.api.above({ match: { type: 'ul' } });
+  return ul ? (ul[0].listStyleType || 'disc') : null;
+}
+function applyUlStyle(e: any, value: string) {
+  if (!inNode(e, 'ul')) e.tf.ul.toggle();
+  const ul = e.api.above({ match: { type: 'ul' } });
+  if (ul) e.tf.setNodes({ listStyleType: value }, { at: ul[1], match: (n: any) => n === ul[0] });
+}
+
 // 다중 셀 선택 + 블록 전환 — 다중 셀 range에 목록/제목 토글을 그대로 실행하면 앵커 셀에만 적용됨(실측).
 // 열림 시점의 셀 선택(플러그인 그리드 우선, 없으면 저장 selection에 걸친 td/th 스캔)을 셀별로 순회하며
 // 셀 내부 전체를 선택해 개별 적용한다. 이미 대상 타입인 셀은 건너뜀(토글 API의 역전환 방지 = set 의미론).
@@ -638,6 +656,33 @@ function OrderedListDropdown() {
       <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
         {OL_STYLES.map((s) => (
           <DropdownMenuItem key={s.key} onSelect={() => runWithSel(editor, sel.current, (ed) => applyOlStyle(ed, s.key))}>
+            <span style={{ flex: 1 }}>{s.label}</span>
+            {cur === s.key && <Check size={15} strokeWidth={2.4} aria-hidden={true} />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// 글머리 목록 불릿 드롭다운 — List 아이콘+chevron 트리거, 3종 불릿(Default/Circle/Square) 선택.
+// 선택 시 글머리 목록으로 만들고(아니면 토글) 최근접 ul에 listStyleType 지정. 현재 불릿에 체크 표시.
+function BulletedListDropdown() {
+  const editor = useEditorState();
+  const sel = useRef<any>(null);
+  const cur = currentUlStyle(editor);
+  return (
+    <DropdownMenu onOpenChange={(o) => { if (o) sel.current = editor.selection; }}>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className={'apfs-rt-btn apfs-rt-btn--dd' + (cur ? ' is-active' : '')}
+          title="글머리 목록" aria-label={cur ? `글머리 목록: ${cur}` : '글머리 목록'} aria-pressed={!!cur}>
+          <List size={16} strokeWidth={2} aria-hidden={true} />
+          <ChevronDown size={12} strokeWidth={2} aria-hidden={true} className="apfs-rt-btn__chev" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+        {UL_STYLES.map((s) => (
+          <DropdownMenuItem key={s.key} onSelect={() => runWithSel(editor, sel.current, (ed) => applyUlStyle(ed, s.key))}>
             <span style={{ flex: 1 }}>{s.label}</span>
             {cur === s.key && <Check size={15} strokeWidth={2.4} aria-hidden={true} />}
           </DropdownMenuItem>
@@ -1026,8 +1071,9 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
         <ColorDropdown mark="color" Icon={Baseline} title="글자 색" />
         <ColorDropdown mark="backgroundColor" Icon={PaintBucket} title="배경 색" />
 
-        {/* 문단 — 번호목록 스타일·정렬·줄간격·들여쓰기 */}
+        {/* 문단 — 글머리/번호목록 스타일·정렬·줄간격·들여쓰기 */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
+        <BulletedListDropdown />
         <OrderedListDropdown />
         <AlignDropdown />
         <LineHeightDropdown />
