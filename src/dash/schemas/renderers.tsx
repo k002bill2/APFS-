@@ -64,7 +64,7 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     // Plate(platejs) 리치 텍스트 에디터 — lazy 로드. Suspense fallback은 base 톤 placeholder.
     case 'richtext': return (
       <React.Suspense fallback={<div style={{ ...base, color: 'var(--muted-foreground)' }}>에디터 불러오는 중…</div>}>
-        <RichTextField value={value} onChange={onChange} label={field.label} required={requiredMark} />
+        <RichTextField value={value} onChange={onChange} label={field.label} required={requiredMark} pageWidth="a4" />
       </React.Suspense>
     );
     // 첨부파일 — 기존 첨부(Attachment 표시) + FilePond 신규추가. lazy 로드.

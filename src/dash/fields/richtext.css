@@ -37,6 +37,28 @@
   border-color: var(--danger);
 }
 
+/* 본문 래퍼 — 디바이스 미리보기 최대폭(인라인 style)의 컨테이너. 평소엔 레이아웃 무영향. */
+.apfs-richtext__content-wrap { position: relative; }
+
+/* 네이티브 전체화면 — 우리 루트가 top layer. 툴바 상단 고정 + 본문 flex 채움 스크롤. 색은 토큰만. */
+.apfs-richtext__root:fullscreen {
+  background: var(--background);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+.apfs-richtext__root:fullscreen .apfs-richtext__content-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+/* 본문 높이 캡(max-height:360px) 해제 — 전체화면에선 content-wrap(flex:1)을 채우고 자체 스크롤. */
+.apfs-richtext__root:fullscreen .apfs-prose {
+  max-height: none;
+  height: 100%;
+}
+
 /* 툴바 — shadcn 에디터 스킨: 투명 바 + 은은한 아이콘-토글 버튼.
    툴바 자체는 채우지 않고(border-bottom만), 버튼 hover/active가 --muted 칩으로 드러난다. */
 .apfs-richtext__toolbar {
@@ -114,6 +136,26 @@
   background: var(--border);
   margin: 0 4px;
 }
+
+/* 편집 컨트롤 묶음 — 툴바와 동일 flex 흐름(래퍼가 레이아웃을 바꾸지 않게). 보기 모드=비활성(흐림+클릭 차단). */
+.apfs-rt-editcontrols {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+}
+.apfs-rt-editcontrols.is-disabled {
+  pointer-events: none;
+  opacity: .45;
+}
+/* 디바이스 미리보기 버튼 그룹 — 아이콘 버튼 3개. */
+.apfs-rt-devices {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+/* 모드 드롭다운 트리거 — Turn-into 룩 축소(편집/보기 라벨). */
+.apfs-rt-turninto--mode { min-width: 84px; }
 
 /* 글자 크기 스테퍼 — 공식 Plate 룩(− 값 +). 테두리 박스 안에 감·값·증 3분할. */
 .apfs-rt-fontsize {
