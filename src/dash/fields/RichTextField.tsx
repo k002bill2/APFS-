@@ -46,7 +46,7 @@ import { BulletedListRules, OrderedListRules, TaskListRules } from '@platejs/lis
 import { LinkPlugin } from '@platejs/link/react';
 import { upsertLink, unwrapLink, LinkRules } from '@platejs/link';
 import { ImagePlugin, VideoPlugin, MediaEmbedPlugin, FilePlugin } from '@platejs/media/react';
-import { insertImage, insertMediaEmbed, insertImageFromFiles } from '@platejs/media';
+import { insertImage, insertMediaEmbed, insertImageFromFiles, parseMediaUrl, parseTwitterUrl, parseVideoUrl } from '@platejs/media';
 import { CaptionPlugin } from '@platejs/caption/react';
 import { TablePlugin, TableRowPlugin, TableCellPlugin, TableCellHeaderPlugin, useTableMergeState } from '@platejs/table/react';
 import { insertTable } from '@platejs/table';
@@ -80,13 +80,14 @@ import {
   Highlighter, Subscript as SubscriptIcon, Superscript as SuperscriptIcon,
   Baseline, PaintBucket, CaseSensitive, IndentIncrease, IndentDecrease, MoveVertical,
   Plus, Table as TableIcon, Info, Columns3, ListCollapse, CalendarDays, Sigma, Radical, FileDown,
-  Video, Clapperboard, Tag as TagIcon, ImagePlus, Paperclip,
+  Video, Clapperboard, Tag as TagIcon, Upload, Paperclip,
   FileText, FileCode2, Braces, FileUp, Copy, CopyPlus, Trash2,
   ArrowUpToLine, ArrowDownToLine, ArrowLeftToLine, ArrowRightToLine, Combine, Ungroup, X,
   type LucideIcon,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuSeparator } from '../ui/context-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import './richtext.css';
 
 const { useRef, useState } = React;
@@ -569,7 +570,10 @@ function MoreMarksDropdown({ onOpenChange }: { onOpenChange?: (o: boolean) => vo
 
 // 삽입 드롭다운 — 표/콜아웃/다단/토글/날짜/수식/비디오/임베드/태그/구분선. 트리거는 '+ 삽입'.
 // prompt 항목(비디오·임베드)은 URL 입력 바를 열도록 openPrompt 콜백 호출.
-function InsertDropdown({ openPrompt, openFile }: { openPrompt: (m: 'video' | 'embed') => void; openFile: () => void }) {
+function InsertDropdown({ openPrompt, openFile, skipMenuRefocus }: {
+  openPrompt: (m: 'video' | 'embed') => void; openFile: () => void;
+  skipMenuRefocus: React.MutableRefObject<boolean>;
+}) {
   const editor = useEditorState();
   const sel = useRef<any>(null);
   return (
@@ -581,13 +585,55 @@ function InsertDropdown({ openPrompt, openFile }: { openPrompt: (m: 'video' | 'e
           <ChevronDown size={14} strokeWidth={2} aria-hidden={true} className="apfs-rt-turninto__chev" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+      {/* prompt 항목(video/embed)은 다음 틱에 다이얼로그를 열므로, onCloseAutoFocus의 editor 복귀가
+          다이얼로그 autoFocus를 도로 뺏는 실측 레이스를 피하려 skipMenuRefocus로 복귀를 1회 건너뛴다. */}
+      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); if (skipMenuRefocus.current) skipMenuRefocus.current = false; else editor.tf.focus(); }}>
         {INSERT_ITEMS.map((t) => (
-          <DropdownMenuItem key={t.key} onSelect={() => (t.prompt ? openPrompt(t.prompt) : t.action === 'file' ? openFile() : runWithSel(editor, sel.current, t.run!))}>
+          <DropdownMenuItem key={t.key} onSelect={() => (t.prompt ? (skipMenuRefocus.current = true, openPrompt(t.prompt)) : t.action === 'file' ? openFile() : runWithSel(editor, sel.current, t.run!))}>
             <t.Icon size={16} strokeWidth={2} aria-hidden={true} />
             <span style={{ flex: 1 }}>{t.label}</span>
           </DropdownMenuItem>
         ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// 이미지 드롭다운 — 공식 Playground의 이미지 버튼 대응(업로드 / URL). 트리거는 이미지 아이콘+chevron.
+// '컴퓨터에서 업로드'는 숨은 파일 input을 연다(onUpload). 'URL로 삽입'은 중앙 다이얼로그를 image 모드로 연다.
+function ImageDropdown({ active, savedSel, setPMode, setPUrl, onUpload, skipMenuRefocus }: {
+  active: boolean; savedSel: React.MutableRefObject<any>;
+  setPMode: (m: PromptMode) => void; setPUrl: (u: string) => void; onUpload: () => void;
+  skipMenuRefocus: React.MutableRefObject<boolean>;
+}) {
+  const editor = useEditorState();
+  const sel = useRef<any>(null);  // 열림 시점 selection 스냅샷 — 드롭다운이 열리면 editor.selection이 무너짐
+  return (
+    <DropdownMenu onOpenChange={(o) => { if (o) sel.current = editor.selection; }}>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className={'apfs-rt-btn apfs-rt-btn--dd' + (active ? ' is-active' : '')} title="이미지" aria-label="이미지">
+          <ImageIcon size={16} strokeWidth={2} aria-hidden={true} />
+          <ChevronDown size={12} strokeWidth={2} aria-hidden={true} className="apfs-rt-btn__chev" />
+        </button>
+      </DropdownMenuTrigger>
+      {/* onCloseAutoFocus의 editor 복귀가 다음 틱에 열리는 다이얼로그 autoFocus를 도로 뺏는 실측 레이스 →
+          다이얼로그를 여는 'URL로 삽입'에서만 skipMenuRefocus로 이 1회 복귀를 건너뛴다(업로드 경로는 복귀 유지). */}
+      <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); if (skipMenuRefocus.current) skipMenuRefocus.current = false; else editor.tf.focus(); }}>
+        <DropdownMenuItem onSelect={() => { savedSel.current = sel.current; onUpload(); }}>
+          <Upload size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>컴퓨터에서 업로드</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => {
+          // Radix 드롭다운→다이얼로그 포커스 경쟁(이 프로젝트 실측 함정): onSelect에서 preventDefault를 걸면
+          // Radix가 메뉴를 닫지 않아(onClose 스킵, react-menu index.js L455) 오히려 포커스가 엉킨다. 그래서
+          // 기본 닫힘은 그대로 두고(닫힘 시 onCloseAutoFocus의 editor.tf.focus가 먼저 실행) 다이얼로그 오픈만
+          // 다음 틱으로 미룬다 → 다이얼로그 autoFocus가 경쟁 없이 승리.
+          skipMenuRefocus.current = true;   // 이 경로는 다이얼로그로 포커스가 가야 하므로 메뉴 닫힘 재포커스 1회 스킵
+          savedSel.current = sel.current;   // 열림 시점 스냅샷 사용(드롭다운 경유라 editor.selection 직접 읽기 금지)
+          setPUrl('');
+          setTimeout(() => setPMode('image'), 0);
+        }}>
+          <LinkIcon size={16} strokeWidth={2} aria-hidden={true} /><span style={{ flex: 1 }}>URL로 삽입</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -890,8 +936,8 @@ function exportHtml(root: HTMLElement | null) {
   clone.querySelectorAll('*').forEach((el) => {
     [...el.attributes].forEach((a) => { if (a.name === 'contenteditable' || a.name === 'draggable' || a.name.startsWith('data-slate') || a.name.startsWith('data-block')) el.removeAttribute(a.name); });
   });
-  // 인라인 --rt-marker-fs는 클론에 보존되므로, 리셋+::marker 규칙만 넣으면 내보낸 HTML 단독으로도 마커 크기가 재현된다(중첩 누수 방지 포함).
-  const doc = `<!doctype html>\n<html lang="ko">\n<head><meta charset="utf-8"><title>내용</title><style>li{--rt-marker-fs:1em}li::marker{font-size:var(--rt-marker-fs,1em)}</style></head>\n<body>\n${clone.innerHTML}\n</body>\n</html>\n`;
+  // 인라인 --rt-marker-*는 클론에 보존되므로, 리셋+::marker 규칙만 넣으면 내보낸 HTML 단독으로도 마커 서식(크기·bold·italic·색)이 재현된다(중첩 누수 방지 포함).
+  const doc = `<!doctype html>\n<html lang="ko">\n<head><meta charset="utf-8"><title>내용</title><style>li{--rt-marker-fs:1em;--rt-marker-fw:normal;--rt-marker-fst:normal;--rt-marker-color:currentColor}li::marker{font-size:var(--rt-marker-fs,1em);font-weight:var(--rt-marker-fw,normal);font-style:var(--rt-marker-fst,normal);color:var(--rt-marker-color,currentColor)}</style></head>\n<body>\n${clone.innerHTML}\n</body>\n</html>\n`;
   downloadText('내용.html', doc, 'text/html');
 }
 // 문서 전체 교체(가져오기) — 파싱 결과 노드를 setValue로 치환. 파서 실패 시 무시.
@@ -920,6 +966,16 @@ function humanSize(bytes: number): string {
   return (bytes / 1024 / 1024).toFixed(1) + 'MB';
 }
 
+// 미디어(void 블록)는 목록 항목(li) 안에 살 수 없다 — list-classic 정규화가 이를 제거하며 li 분할 잔해(빈 li)만
+// 남긴다(실측 버그). 캐럿이 목록 안이면 최상위(mode:'highest'로 중첩목록도 최외곽 기준) 목록 바로 뒤 형제 경로를
+// 반환해 목록 밖에 삽입하게 한다. 목록 밖이면 undefined → 호출부는 기존 selection 기준 삽입 경로를 쓴다.
+function mediaInsertPath(editor: any): number[] | undefined {
+  const list = editor.api.above({ match: (n: any) => LIST_KEYS.has(n.type), mode: 'highest' });
+  if (!list) return undefined;
+  const p = list[1] as number[];
+  return [...p.slice(0, -1), p[p.length - 1] + 1];
+}
+
 type PromptMode = null | 'link' | 'image' | 'video' | 'embed';
 
 // 툴바 — <Plate> 자식이라 useEditorState()로 매 변경 재렌더 → active 상태 동기 반영.
@@ -932,6 +988,8 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
   const fileUploadRef = useRef<HTMLInputElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const importModeRef = useRef<'md' | 'html' | 'json'>('md');
+  // 메뉴 닫힘 시 에디터 재포커스를 1회 건너뛰는 플래그 — 드롭다운→다이얼로그(image/video/embed) 경로에서만 세운다.
+  const skipMenuRefocus = useRef(false);
   const [uploadErr, setUploadErr] = useState('');
   const canUndo = !!editor.history?.undos?.length;
   const canRedo = !!editor.history?.redos?.length;
@@ -939,16 +997,32 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
   const imageActive = inNode(editor, 'img');
 
   function openLink() { openLinkPrompt(editor, savedSel, setPUrl, setPMode); }
-  function openImage() { savedSel.current = editor.selection; setPUrl(''); setPMode('image'); }
-  function openMedia(m: 'video' | 'embed') { savedSel.current = editor.selection; setPUrl(''); setPMode(m); }
+  // 비디오·임베드도 이제 같은 중앙 다이얼로그를 연다(과거 인라인 바 → 다이얼로그 전환). InsertDropdown 항목의
+  // 기본 닫힘 후 onCloseAutoFocus(editor.tf.focus)와 다이얼로그 autoFocus가 경쟁하지 않도록 이미지와 동일하게
+  // 다이얼로그 오픈을 다음 틱으로 미룬다(브리프의 "openMedia 그대로"는 인라인 바 전제라 다이얼로그 전환에 맞춰 조정).
+  function openMedia(m: 'video' | 'embed') { savedSel.current = editor.selection; setPUrl(''); setTimeout(() => setPMode(m), 0); }
   function closeBar() { setPMode(null); editor.tf.focus(); }
   function applyPrompt() {
     const url = pUrl.trim();
     if (savedSel.current) editor.tf.select(savedSel.current);
+    // 캐럿이 목록 안이면 목록 바로 뒤 최상위 경로(at). 목록 밖이면 undefined → 기존 삽입 경로.
+    // 미디어(void) 뒤 trailing {type:'p'}는 필수: void 블록만 삽입하면 selection이 void에 남아 이후
+    // 타이핑이 무반응이 되는 실측 함정(hr에서 확인된 프로젝트 기지 사항). 기존 삽입 함수(insertImage 등)는
+    // nextBlock:true로 이를 스스로 처리하므로 else 경로는 무변경.
+    const at = mediaInsertPath(editor);
     if (pMode === 'link') { if (url) upsertLink(editor, { url }); else unwrapLink(editor); }
-    else if (pMode === 'image' && url) { insertImage(editor, url); }
-    else if (pMode === 'video' && url) { editor.tf.insertNodes([{ type: 'video', url, children: [{ text: '' }] }, { type: 'p', children: [{ text: '' }] }] as any, { select: true }); }
-    else if (pMode === 'embed' && url) { insertMediaEmbed(editor, { url }); }
+    else if (pMode === 'image' && url) {
+      if (at) editor.tf.insertNodes([{ type: 'img', url, children: [{ text: '' }] }, { type: 'p', children: [{ text: '' }] }] as any, { at, select: true });
+      else insertImage(editor, url);
+    }
+    else if (pMode === 'video' && url) { editor.tf.insertNodes([{ type: 'video', url, children: [{ text: '' }] }, { type: 'p', children: [{ text: '' }] }] as any, at ? { at, select: true } : { select: true }); }
+    else if (pMode === 'embed' && url) {
+      if (at) {
+        // insertMediaEmbed 소스와 동일 shape(provider/sourceUrl/id 파싱 보존) — 목록 밖 최상위에 직접 삽입.
+        const normalized = parseMediaUrl(url, { urlParsers: [parseTwitterUrl, parseVideoUrl] });
+        editor.tf.insertNodes([{ type: 'media_embed', id: normalized?.id, provider: normalized?.provider, sourceUrl: normalized?.sourceUrl, url: normalized?.url ?? url, children: [{ text: '' }] }, { type: 'p', children: [{ text: '' }] }] as any, { at, select: true });
+      } else insertMediaEmbed(editor, { url });
+    }
     setPMode(null);
     editor.tf.focus();
   }
@@ -958,7 +1032,16 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
     if (files && files.length) {
       const over = Array.from(files).find((f) => f.size > UPLOAD_MAX_BYTES);
       if (over) setUploadErr(`이미지가 너무 큽니다(${humanSize(over.size)}). 최대 ${humanSize(UPLOAD_MAX_BYTES)}까지 업로드할 수 있습니다.`);
-      else { setUploadErr(''); insertImageFromFiles(editor, files); editor.tf.focus(); }
+      else {
+        setUploadErr('');
+        if (savedSel.current) { try { editor.tf.select(savedSel.current); } catch { /* 경로 무효 시 무시 */ } }
+        // 캐럿이 목록 안이면 void 이미지가 li에 못 살므로, 목록 밖에 랜딩 문단을 만들어 selection을 옮긴 뒤
+        // insertImageFromFiles(selection 기준·비동기 FileReader)에 맡긴다 → 이미지가 목록 뒤 최상위에 삽입.
+        const at = mediaInsertPath(editor);
+        if (at) editor.tf.insertNodes([{ type: 'p', children: [{ text: '' }] }] as any, { at, select: true });
+        insertImageFromFiles(editor, files);
+        editor.tf.focus();
+      }
     }
     e.target.value = '';
   }
@@ -1013,7 +1096,7 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
         {/* Turn into · 삽입 — 블록 타입/노드 삽입 드롭다운 */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
         <BlockTypeDropdown />
-        <InsertDropdown openPrompt={openMedia} openFile={() => fileUploadRef.current?.click()} />
+        <InsertDropdown openPrompt={openMedia} openFile={() => fileUploadRef.current?.click()} skipMenuRefocus={skipMenuRefocus} />
 
         {/* 인라인 마크(굵게~인라인코드) + 확장 마크는 More ⋯ 드롭다운으로 접기 */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
@@ -1039,7 +1122,7 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => { indent(editor); editor.tf.focus(); }}><IndentIncrease size={16} strokeWidth={2} aria-hidden={true} /></button>
 
-        {/* 삽입 — 링크/이미지(인라인 URL 바 토글). 링크는 제거 버튼도 제공. */}
+        {/* 삽입 — 링크(인라인 URL 바 토글, 제거 버튼 제공) / 이미지(업로드·URL 통합 드롭다운). */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
         <button type="button" title="링크" aria-label="링크" aria-pressed={linkActive || pMode === 'link'}
           className={'apfs-rt-btn' + (linkActive || pMode === 'link' ? ' is-active' : '')}
@@ -1048,13 +1131,7 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
         <button type="button" title="링크 제거" aria-label="링크 제거" className="apfs-rt-btn"
           disabled={!linkActive} onMouseDown={(e) => e.preventDefault()}
           onClick={() => { unwrapLink(editor); editor.tf.focus(); }}><Unlink size={16} strokeWidth={2} aria-hidden={true} /></button>
-        <button type="button" title="이미지 URL" aria-label="이미지 URL" aria-pressed={imageActive || pMode === 'image'}
-          className={'apfs-rt-btn' + (imageActive || pMode === 'image' ? ' is-active' : '')}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => (pMode === 'image' ? closeBar() : openImage())}><ImageIcon size={16} strokeWidth={2} aria-hidden={true} /></button>
-        <button type="button" title="이미지 업로드" aria-label="이미지 업로드" className="apfs-rt-btn"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => imgUploadRef.current?.click()}><ImagePlus size={16} strokeWidth={2} aria-hidden={true} /></button>
+        <ImageDropdown active={imageActive || pMode === 'image'} savedSel={savedSel} setPMode={setPMode} setPUrl={setPUrl} onUpload={() => imgUploadRef.current?.click()} skipMenuRefocus={skipMenuRefocus} />
         <TableDropdown />
 
         {/* 문서 입출력 — 마크다운/HTML/JSON 내보내기·가져오기(백엔드 없음, 클라이언트 blob). */}
@@ -1073,8 +1150,8 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
         </div>
       )}
 
-      {/* URL 입력 바(링크·이미지 공용) — 텍스트 입력이라 mousedown preventDefault를 걸지 않는다. */}
-      {pMode && (
+      {/* 링크 URL 입력 바 — 선택 텍스트 문맥 편집이라 인라인 유지. 텍스트 입력이라 mousedown preventDefault 미적용. */}
+      {pMode === 'link' && (
         <div className="apfs-richtext__linkbar">
           <input
             type="url" className="apfs-rt-linkinput" autoFocus
@@ -1087,12 +1164,35 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
               if (e.key === 'Escape') { e.preventDefault(); closeBar(); }
             }}
           />
-          <button type="button" className="apfs-rt-linkbtn" onMouseDown={(e) => e.preventDefault()} onClick={applyPrompt}>
-            {pMode === 'link' ? '적용' : '삽입'}
-          </button>
+          <button type="button" className="apfs-rt-linkbtn" onMouseDown={(e) => e.preventDefault()} onClick={applyPrompt}>적용</button>
           <button type="button" className="apfs-rt-linkbtn is-ghost" onMouseDown={(e) => e.preventDefault()} onClick={closeBar}>취소</button>
         </div>
       )}
+
+      {/* 이미지·동영상·임베드 URL 삽입 — 중앙 다이얼로그(공식 Playground "Insert Image" 대응).
+          ui/dialog는 포털+z-modal 정본 모달 → 폼 모달 안 중첩이어도 DOM 순서상 위에 뜬다(임의 z 추가 금지). */}
+      <Dialog open={pMode === 'image' || pMode === 'video' || pMode === 'embed'} onOpenChange={(o) => { if (!o) closeBar(); }}>
+        <DialogContent className="max-w-md" aria-describedby={undefined} onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+          <DialogHeader>
+            <DialogTitle>{pMode === 'video' ? '동영상 삽입' : pMode === 'embed' ? '임베드 삽입' : '이미지 삽입'}</DialogTitle>
+          </DialogHeader>
+          <div style={{ padding: '16px 18px' }}>
+            <label htmlFor="apfs-rt-media-url" style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{promptLabel}</label>
+            <input
+              id="apfs-rt-media-url" type="url" autoFocus
+              placeholder={promptPlaceholder}
+              value={pUrl}
+              onChange={(e) => setPUrl(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyPrompt(); } }}
+              style={{ width: '100%', height: 38, lineHeight: '20px', padding: '0 10px', fontSize: 14, color: 'var(--foreground)', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 7 }}
+            />
+          </div>
+          <DialogFooter>
+            <button type="button" className="apfs-rt-linkbtn is-ghost" onClick={closeBar}>취소</button>
+            <button type="button" className="apfs-rt-linkbtn" onClick={applyPrompt}>삽입</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
