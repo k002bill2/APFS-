@@ -571,7 +571,7 @@ function MoreMarksDropdown({ onOpenChange }: { onOpenChange?: (o: boolean) => vo
 // 삽입 드롭다운 — 표/콜아웃/다단/토글/날짜/수식/비디오/임베드/태그/구분선. 트리거는 '+ 삽입'.
 // prompt 항목(비디오·임베드)은 URL 입력 바를 열도록 openPrompt 콜백 호출.
 function InsertDropdown({ openPrompt, openFile, skipMenuRefocus }: {
-  openPrompt: (m: 'video' | 'embed') => void; openFile: () => void;
+  openPrompt: (m: 'video' | 'embed', selSnapshot?: any) => void; openFile: () => void;
   skipMenuRefocus: React.MutableRefObject<boolean>;
 }) {
   const editor = useEditorState();
@@ -589,7 +589,7 @@ function InsertDropdown({ openPrompt, openFile, skipMenuRefocus }: {
           다이얼로그 autoFocus를 도로 뺏는 실측 레이스를 피하려 skipMenuRefocus로 복귀를 1회 건너뛴다. */}
       <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); if (skipMenuRefocus.current) skipMenuRefocus.current = false; else editor.tf.focus(); }}>
         {INSERT_ITEMS.map((t) => (
-          <DropdownMenuItem key={t.key} onSelect={() => (t.prompt ? (skipMenuRefocus.current = true, openPrompt(t.prompt)) : t.action === 'file' ? openFile() : runWithSel(editor, sel.current, t.run!))}>
+          <DropdownMenuItem key={t.key} onSelect={() => (t.prompt ? (skipMenuRefocus.current = true, openPrompt(t.prompt, sel.current)) : t.action === 'file' ? openFile() : runWithSel(editor, sel.current, t.run!))}>
             <t.Icon size={16} strokeWidth={2} aria-hidden={true} />
             <span style={{ flex: 1 }}>{t.label}</span>
           </DropdownMenuItem>
@@ -1000,7 +1000,9 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
   // 비디오·임베드도 이제 같은 중앙 다이얼로그를 연다(과거 인라인 바 → 다이얼로그 전환). InsertDropdown 항목의
   // 기본 닫힘 후 onCloseAutoFocus(editor.tf.focus)와 다이얼로그 autoFocus가 경쟁하지 않도록 이미지와 동일하게
   // 다이얼로그 오픈을 다음 틱으로 미룬다(브리프의 "openMedia 그대로"는 인라인 바 전제라 다이얼로그 전환에 맞춰 조정).
-  function openMedia(m: 'video' | 'embed') { savedSel.current = editor.selection; setPUrl(''); setTimeout(() => setPMode(m), 0); }
+  // selSnapshot: InsertDropdown이 메뉴 열림 시점에 잡아둔 selection. Radix가 포커스를 옮기면 editor.selection이
+  // null/stale이 되므로(Codex 리뷰 발견) 스냅샷을 우선 쓴다. 스냅샷 없으면(직접 호출 경로) 현재 selection.
+  function openMedia(m: 'video' | 'embed', selSnapshot?: any) { savedSel.current = selSnapshot ?? editor.selection; setPUrl(''); setTimeout(() => setPMode(m), 0); }
   function closeBar() { setPMode(null); editor.tf.focus(); }
   function applyPrompt() {
     const url = pUrl.trim();
