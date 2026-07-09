@@ -24,7 +24,7 @@
    버튼 나열을 피하려 블록타입·정렬·색·글꼴·삽입을 드롭다운으로 묶는다. active 상태는 <Plate> 컨텍스트 안에서만
    반응형 → 툴바를 Toolbar 자식으로 분리해 useEditorState()로 매 변경 재렌더 후 동기 조회. */
 import React from 'react';
-import { Plate, PlateContent, usePlateEditor, useEditorState } from 'platejs/react';
+import { Plate, PlateContent, usePlateEditor, useEditorState, useEditorReadOnly } from 'platejs/react';
 import type { PlateEditor } from 'platejs/react';
 import {
   BoldPlugin, ItalicPlugin, UnderlinePlugin, StrikethroughPlugin, CodePlugin, KbdPlugin,
@@ -83,14 +83,19 @@ import {
   Video, Clapperboard, Tag as TagIcon, Upload, Paperclip,
   FileText, FileCode2, Braces, FileUp, Copy, CopyPlus, Trash2,
   ArrowUpToLine, ArrowDownToLine, ArrowLeftToLine, ArrowRightToLine, Combine, Ungroup, X,
+  Monitor, Tablet, Smartphone, Maximize2, Minimize2, RotateCcw, Eye, PenLine,
   type LucideIcon,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuSeparator } from '../ui/context-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { PortalContainerContext } from '../ui/portal-container';
 import './richtext.css';
 
-const { useRef, useState } = React;
+const { useRef, useState, useEffect } = React;
+
+type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
+type EditorMode = 'editing' | 'viewing';
 
 // 정렬/줄간격/들여쓰기 대상 블록(lic=목록 항목). 헤딩 h4~h6까지 포함.
 const ALIGN_TARGETS = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'lic'];
@@ -303,6 +308,7 @@ function FloatingMarkToolbar({ savedSel, setPMode, setPUrl }: {
   savedSel: React.MutableRefObject<any>; setPMode: (m: PromptMode) => void; setPUrl: (u: string) => void;
 }) {
   const editor = useEditorState();
+  const readOnly = useEditorReadOnly();   // 보기 모드면 선택 서식 툴바 비활성(read-only 구독 — write-back 아님, 렌더 루프 안전)
   // 내부 드롭다운(Turn-into·More) open 동안엔 툴바를 유지한다. 드롭다운이 열리며 선택이 무너져 hidden이 되면
   // 트리거가 사라져 Radix 팝오버가 앵커를 잃고(포털 자식 언마운트) 깨지므로, ddOpen이면 마지막 위치로 강제 표시.
   const [ddOpen, setDdOpen] = useState(false);
@@ -312,7 +318,7 @@ function FloatingMarkToolbar({ savedSel, setPMode, setPUrl }: {
     floatingOptions: { placement: 'top', middleware: [offset(8), flip(), shift({ padding: 8 })] },
   } as any);
   const { hidden, props, ref } = useFloatingToolbar(state);
-  if (hidden && !ddOpen) return null;
+  if (readOnly || (hidden && !ddOpen)) return null;
   // hidden이면 floating.style에 display:'none'이 박히므로 ddOpen 중엔 강제로 보이게 덮는다(위치는 마지막 값 유지).
   const floatStyle = (props as any).style as React.CSSProperties;
   const style: React.CSSProperties = (hidden && ddOpen) ? { ...floatStyle, display: 'inline-flex', visibility: 'visible' } : floatStyle;
@@ -355,6 +361,7 @@ function findPathById(nodes: any[], id: string, base: number[] = []): number[] |
 // Radix ContextMenu(Portal=레이어 분기)라 모달 위에 뜨고 DismissableLayer로 모달을 닫지 않는다.
 function EditorContextMenu({ children }: { children: React.ReactNode }) {
   const editor = useEditorState();
+  const readOnly = useEditorReadOnly();   // 보기 모드면 커스텀 우클릭 메뉴 비활성 → 브라우저 기본 컨텍스트 메뉴
   const targetPath = useRef<number[] | null>(null);
   // 표 안 우클릭이면 표 조작 섹션 노출(공식 Plate 표 컨텍스트 메뉴 대응). setState라 메뉴 렌더에 반영.
   const [ctxTable, setCtxTable] = useState(false);
@@ -400,7 +407,7 @@ function EditorContextMenu({ children }: { children: React.ReactNode }) {
   }
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
+      <ContextMenuTrigger asChild disabled={readOnly}>
         <div onContextMenu={onContextMenu} className="apfs-rt-ctxwrap">{children}</div>
       </ContextMenuTrigger>
       <ContextMenuContent onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
@@ -794,9 +801,10 @@ function FontFamilyDropdown() {
   );
 }
 
-// 글자 크기 스테퍼 — 공식 Plate 룩(− 값 +). 현재 마크 없으면 기본 16. ±로 단계 이동, 값 클릭 시 기본 복원.
+// 글자 크기 스테퍼 — 공식 Plate 룩(− 값 +). 현재 마크 없으면 기본 16. ±로 단계 이동, 값 클릭 시 프리셋 목록 드롭다운.
 function FontSizeStepper() {
   const editor = useEditorState();
+  const sel = useRef<any>(null);
   const curPx = markOn(editor, 'fontSize') ? String(editor.api.marks()?.fontSize) : '';
   const curNum = parseInt(curPx, 10) || 16;
   const step = (dir: number) => {
@@ -812,13 +820,28 @@ function FontSizeStepper() {
     (editor as any).tf.fontSize.addMark(nums[idx] + 'px');
     editor.tf.focus();
   };
-  const reset = () => { editor.tf.focus(); (editor as any).tf.removeMark('fontSize'); editor.tf.focus(); };
   return (
     <span className="apfs-rt-fontsize" role="group" aria-label="글자 크기">
       <button type="button" className="apfs-rt-fontsize__btn" title="글자 크기 줄이기" aria-label="글자 크기 줄이기"
         onMouseDown={(e) => e.preventDefault()} onClick={() => step(-1)}><Minus size={14} strokeWidth={2.2} aria-hidden={true} /></button>
-      <button type="button" className="apfs-rt-fontsize__val" title="기본 크기로" aria-label={`현재 글자 크기 ${curNum}, 클릭 시 기본`}
-        onMouseDown={(e) => e.preventDefault()} onClick={reset}>{curNum}</button>
+      <DropdownMenu onOpenChange={(o) => { if (o) sel.current = editor.selection; }}>
+        <DropdownMenuTrigger asChild>
+          <button type="button" className="apfs-rt-fontsize__val" title="글자 크기 선택" aria-label={`글자 크기 선택, 현재 ${curNum}`}
+            onMouseDown={(e) => e.preventDefault()}>{curNum}</button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" style={{ minWidth: 72 }} onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+          {FONT_SIZE_STEPS.map((n) => (
+            <DropdownMenuItem key={n} onSelect={() => runWithSel(editor, sel.current, (e) => e.tf.fontSize.addMark(n + 'px'))}>
+              <span style={{ flex: 1 }}>{n}</span>
+              {curNum === n && <Check size={15} strokeWidth={2.4} aria-hidden={true} />}
+            </DropdownMenuItem>
+          ))}
+          <div className="apfs-rt-ddsep" role="separator" aria-hidden="true" />
+          <DropdownMenuItem onSelect={() => runWithSel(editor, sel.current, (e) => e.tf.removeMark('fontSize'))}>
+            <span style={{ flex: 1 }}>기본 크기</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <button type="button" className="apfs-rt-fontsize__btn" title="글자 크기 키우기" aria-label="글자 크기 키우기"
         onMouseDown={(e) => e.preventDefault()} onClick={() => step(1)}><Plus size={14} strokeWidth={2.2} aria-hidden={true} /></button>
     </span>
@@ -996,6 +1019,10 @@ function importMarkdown(editor: any, text: string) {
 function importHtml(editor: any, text: string) {
   try {
     const body = new DOMParser().parseFromString(text, 'text/html').body;
+    // 비콘텐츠 요소 제거 — Plate deserializer는 script/style 등의 textContent를 본문 텍스트로
+    // 흡수한다(호출자 책임). 걷어내지 않으면 <script>const FUND=…</script> 같은 소스가 본문으로 샌다.
+    // 미디어(iframe/img/video/audio/object/embed)는 정식 노드이므로 제거하지 않는다.
+    body.querySelectorAll('script, style, noscript, template').forEach((n) => n.remove());
     replaceValue(editor, editor.api.html.deserialize({ element: body }));
   } catch { /* 파싱 실패 무시 */ }
 }
@@ -1023,15 +1050,61 @@ function mediaInsertPath(editor: any): number[] | undefined {
 
 type PromptMode = null | 'link' | 'image' | 'video' | 'embed';
 
+// ── 프리뷰(디바이스) / 모드 컨트롤 ──
+// 디바이스 미리보기 — 본문 래퍼(.apfs-richtext__content-wrap) 최대폭 전환. 100% / 768 / 375.
+const DEVICE_ITEMS: { key: PreviewDevice; Icon: LucideIcon; label: string }[] = [
+  { key: 'desktop', Icon: Monitor,    label: '데스크톱' },
+  { key: 'tablet',  Icon: Tablet,     label: '태블릿' },
+  { key: 'mobile',  Icon: Smartphone, label: '모바일' },
+];
+const MODE_ITEMS: { key: EditorMode; Icon: LucideIcon; label: string }[] = [
+  { key: 'editing', Icon: PenLine, label: '편집' },
+  { key: 'viewing', Icon: Eye,     label: '보기' },
+];
+
+// 모드 드롭다운 — 편집(Editing)/보기(Viewing) 전환. Suggestion은 구현 안 함. 트리거는 Turn-into 룩.
+function ModeDropdown({ mode, setMode }: { mode: EditorMode; setMode: (m: EditorMode) => void }) {
+  const editor = useEditorState();
+  const cur = MODE_ITEMS.find((m) => m.key === mode) || MODE_ITEMS[0];
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="apfs-rt-turninto apfs-rt-turninto--mode" title="모드" aria-label={`모드: ${cur.label}`}>
+          <cur.Icon size={15} strokeWidth={2} aria-hidden={true} />
+          <span className="apfs-rt-turninto__label">{cur.label}</span>
+          <ChevronDown size={14} strokeWidth={2} aria-hidden={true} className="apfs-rt-turninto__chev" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+        {MODE_ITEMS.map((m) => (
+          <DropdownMenuItem key={m.key} onSelect={() => setMode(m.key)}>
+            <m.Icon size={16} strokeWidth={2} aria-hidden={true} />
+            <span style={{ flex: 1 }}>{m.label}</span>
+            {mode === m.key && <Check size={15} strokeWidth={2.4} aria-hidden={true} />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 // 툴바 — <Plate> 자식이라 useEditorState()로 매 변경 재렌더 → active 상태 동기 반영.
-function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
+function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
+  device, setDevice, mode, setMode, isFs, fsEnabled, onToggleFs, onRefresh }: {
   pMode: PromptMode; setPMode: (m: PromptMode) => void; pUrl: string; setPUrl: (u: string) => void;
   rootRef: React.RefObject<HTMLDivElement | null>; savedSel: React.MutableRefObject<any>;
+  device: PreviewDevice; setDevice: (d: PreviewDevice) => void;
+  mode: EditorMode; setMode: (m: EditorMode) => void;
+  isFs: boolean; fsEnabled: boolean; onToggleFs: () => void; onRefresh: () => void;
 }) {
   const editor = useEditorState();
+  const editControlsRef = useRef<HTMLDivElement>(null);
   const imgUploadRef = useRef<HTMLInputElement>(null);
   const fileUploadRef = useRef<HTMLInputElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
+  // 보기 모드: pointer-events:none는 마우스만 막으므로 inert로 서브트리 전체를 포커스 불가로 만든다(키보드 Tab+Enter 우회 차단).
+  // React 18은 inert prop 미지원 → ref로 속성 토글(Chrome 102+; 이 프로토타입은 Chrome 대상). aria-disabled는 별도 유지.
+  useEffect(() => { editControlsRef.current?.toggleAttribute('inert', mode === 'viewing'); }, [mode]);
   const importModeRef = useRef<'md' | 'html' | 'json'>('md');
   // 메뉴 닫힘 시 에디터 재포커스를 1회 건너뛰는 플래그 — 드롭다운→다이얼로그(image/video/embed) 경로에서만 세운다.
   const skipMenuRefocus = useRef(false);
@@ -1132,6 +1205,8 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
   return (
     <>
       <div className="apfs-richtext__toolbar" role="toolbar" aria-label="서식 도구">
+        {/* 편집 컨트롤 묶음 — 보기(viewing) 모드에선 비활성(pointer-events:none + 흐림). 프리뷰/모드 컨트롤은 이 밖(상시 활성). */}
+        <div ref={editControlsRef} className={'apfs-rt-editcontrols' + (mode === 'viewing' ? ' is-disabled' : '')} aria-disabled={mode === 'viewing' || undefined}>
         {/* 실행취소/다시실행 */}
         <button type="button" title="실행취소" aria-label="실행취소" className="apfs-rt-btn"
           disabled={!canUndo} onMouseDown={(e) => e.preventDefault()}
@@ -1185,6 +1260,35 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
         {/* 문서 입출력 — 마크다운/HTML/JSON 내보내기·가져오기(백엔드 없음, 클라이언트 blob). */}
         <span className="apfs-richtext__sep" aria-hidden="true" />
         <DocIODropdown openImport={openImport} getRoot={() => rootRef.current} />
+        </div>
+
+        {/* 프리뷰 컨트롤 — 디바이스 미리보기 / 전체화면 / 초기화. 보기 모드에서도 항상 활성. */}
+        <span className="apfs-richtext__sep" aria-hidden="true" />
+        <div className="apfs-rt-devices" role="group" aria-label="화면 크기 미리보기">
+          {DEVICE_ITEMS.map((d) => {
+            const on = device === d.key;
+            return (
+              <button key={d.key} type="button" title={`${d.label} 미리보기`} aria-label={`${d.label} 미리보기`} aria-pressed={on}
+                className={'apfs-rt-btn' + (on ? ' is-active' : '')}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setDevice(d.key)}><d.Icon size={16} strokeWidth={2} aria-hidden={true} /></button>
+            );
+          })}
+        </div>
+        {fsEnabled && (
+          <button type="button" title={isFs ? '전체화면 종료' : '전체화면'} aria-label={isFs ? '전체화면 종료' : '전체화면'} aria-pressed={isFs}
+            className={'apfs-rt-btn' + (isFs ? ' is-active' : '')}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={onToggleFs}>{isFs ? <Minimize2 size={16} strokeWidth={2} aria-hidden={true} /> : <Maximize2 size={16} strokeWidth={2} aria-hidden={true} />}</button>
+        )}
+        <button type="button" title="프리뷰 초기화" aria-label="프리뷰 초기화" className="apfs-rt-btn"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={onRefresh}><RotateCcw size={16} strokeWidth={2} aria-hidden={true} /></button>
+
+        {/* 모드 드롭다운 — 편집/보기 전환(맨 끝, 우측 정렬). */}
+        <div style={{ marginLeft: 'auto' }}>
+          <ModeDropdown mode={mode} setMode={setMode} />
+        </div>
       </div>
 
       {/* 숨은 파일 선택 input — 이미지 업로드 / 파일 첨부. base64 인라인 전 크기 상한 검증. */}
@@ -1246,18 +1350,52 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel }: {
 }
 
 // required: 필수 필드 상시 표식 — 컨테이너 테두리만 danger(is-required). aria-required로 접근성 표기.
-export function RichTextField({ value, onChange, label, required }: { value: string; onChange: (v: string) => void; label?: string; required?: boolean }) {
+// A4 210mm = 793.7px (CSS mm=96/25.4px 고정)
+const A4_WIDTH = '210mm';
+
+export function RichTextField({ value, onChange, label, required, pageWidth }: { value: string; onChange: (v: string) => void; label?: string; required?: boolean; pageWidth?: 'full' | 'a4' }) {
   const [pMode, setPMode] = useState<PromptMode>(null);
   const [pUrl, setPUrl] = useState('');
+  const [device, setDevice] = useState<PreviewDevice>('desktop');   // 디바이스 미리보기(본문 폭)
+  const [mode, setMode] = useState<EditorMode>('editing');          // 편집/보기 모드
+  const [isFs, setIsFs] = useState(false);                          // 네이티브 전체화면 여부
   const lastEmitted = useRef<string | null>(null);
-  const rootRef = useRef<HTMLDivElement>(null);  // HTML 내보내기 시 렌더된 편집영역 DOM 접근용
+  const rootRef = useRef<HTMLDivElement>(null);  // HTML 내보내기 + 전체화면 루트 element
   const savedSel = useRef<any>(null);            // 링크 URL 바 열 때 선택 저장(고정·플로팅 툴바 공유)
+  const fsEnabled = typeof document !== 'undefined' && !!document.fullscreenEnabled;
 
   const editor = usePlateEditor({
     plugins: PLUGINS,
     components: ALL_COMPONENTS,
     value: (ed) => toInitialValue(ed as PlateEditor, value),
   });
+
+  // 전체화면 상태 동기화 — 우리 루트가 전체화면 요소일 때만 isFs=true. ESC 종료 등 외부 이탈도 반영.
+  useEffect(() => {
+    const onFsChange = () => setIsFs(document.fullscreenElement === rootRef.current);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
+
+  function toggleFs() {
+    // requestFullscreen/exitFullscreen은 Promise를 반환하며 권한/유저제스처 부재 시 reject → 미가드 시 unhandled rejection.
+    // Promise 미반환 구형 브라우저 대비 optional chaining 유지.
+    if (isFs) { document.exitFullscreen?.()?.catch?.((e) => console.warn('fullscreen:', e)); }
+    else { rootRef.current?.requestFullscreen?.()?.catch?.((e) => console.warn('fullscreen:', e)); }
+  }
+  // 프리뷰 초기화 — 프리뷰 상태만 리셋(문서 내용은 건드리지 않음). editor.tf.* 호출 없음.
+  function refreshPreview() {
+    setDevice('desktop');
+    setMode('editing');
+    if (document.fullscreenElement === rootRef.current) document.exitFullscreen?.();
+  }
+
+  const deviceMaxWidth = device === 'tablet' ? 768 : device === 'mobile' ? 375
+    : (pageWidth === 'a4' ? A4_WIDTH : '100%');   // desktop: a4모드면 A4폭, 아니면 전체
+  const contentWrapStyle: React.CSSProperties = {
+    width: '100%', maxWidth: deviceMaxWidth, margin: '0 auto', transition: 'max-width .2s',
+    ...((device !== 'desktop' || pageWidth === 'a4') ? { boxShadow: '0 0 0 1px var(--border)' } : null),
+  };
 
   // 변경 → 직렬화. 진짜 빈 문서(텍스트 공백뿐 + 원자 노드 없음)면 '' 방출(required 검증 정상화).
   function handleChange({ value: v }: { value: any }) {
@@ -1270,20 +1408,30 @@ export function RichTextField({ value, onChange, label, required }: { value: str
   }
 
   return (
-    <div ref={rootRef} className={'apfs-richtext' + (required ? ' is-required' : '')}>
-      <Plate editor={editor} onChange={handleChange}>
-        <Toolbar pMode={pMode} setPMode={setPMode} pUrl={pUrl} setPUrl={setPUrl} rootRef={rootRef} savedSel={savedSel} />
-        <EditorContextMenu>
-          <PlateContent
-            className="apfs-prose"
-            role="textbox"
-            aria-multiline="true"
-            aria-label={label || '내용'}
-            aria-required={required ? true : undefined}
+    // 전체화면 중에만 포털 컨테이너를 루트로 지정 → body 포털 오버레이(드롭다운·다이얼로그·컨텍스트 메뉴)가
+    // top layer(=전체화면 서브트리) 안에서 보이게 한다. 비전체화면이면 null → Radix 기본(body).
+    <PortalContainerContext.Provider value={isFs ? rootRef.current : null}>
+      <div ref={rootRef} className={'apfs-richtext apfs-richtext__root' + (required ? ' is-required' : '')}>
+        <Plate editor={editor} onChange={handleChange} readOnly={mode === 'viewing'}>
+          <Toolbar
+            pMode={pMode} setPMode={setPMode} pUrl={pUrl} setPUrl={setPUrl} rootRef={rootRef} savedSel={savedSel}
+            device={device} setDevice={setDevice} mode={mode} setMode={setMode}
+            isFs={isFs} fsEnabled={fsEnabled} onToggleFs={toggleFs} onRefresh={refreshPreview}
           />
-        </EditorContextMenu>
-        <FloatingMarkToolbar savedSel={savedSel} setPMode={setPMode} setPUrl={setPUrl} />
-      </Plate>
-    </div>
+          <div className="apfs-richtext__content-wrap" style={contentWrapStyle}>
+            <EditorContextMenu>
+              <PlateContent
+                className="apfs-prose"
+                role="textbox"
+                aria-multiline="true"
+                aria-label={label || '내용'}
+                aria-required={required ? true : undefined}
+              />
+            </EditorContextMenu>
+          </div>
+          <FloatingMarkToolbar savedSel={savedSel} setPMode={setPMode} setPUrl={setPUrl} />
+        </Plate>
+      </div>
+    </PortalContainerContext.Provider>
   );
 }
