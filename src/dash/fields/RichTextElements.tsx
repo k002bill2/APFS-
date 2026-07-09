@@ -34,7 +34,7 @@ import { useDraggable, useDropLine } from '@platejs/dnd';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import {
-  Trash2, Link2, Captions,
+  Trash2, Link2, Captions, Replace,
   ChevronRight, Info, TriangleAlert, CircleCheck, Lightbulb, Rows3, Columns3,
   Plus, CalendarDays, AtSign, GripVertical, FileDown as FileDownIcon, Combine, Ungroup,
   PaintBucket, Grid3x3, Square, SquareDashed, PanelTop, PanelBottom, PanelLeft, PanelRight, X as XIcon,
@@ -153,8 +153,8 @@ export function ImageElement(props: any) {
   const align = element.align || 'left';
   const imgboxRef = useRef<HTMLSpanElement>(null);
   const [dragW, setDragW] = useState<number | null>(null);
-  const [linkEditing, setLinkEditing] = useState(false);
-  const [linkDraft, setLinkDraft] = useState('');
+  const [editMode, setEditMode] = useState<null | 'link' | 'src'>(null);   // 인라인 입력 바: 링크(하이퍼링크) vs 소스(이미지 주소)
+  const [draft, setDraft] = useState('');
   const width = dragW != null ? `${Math.round(dragW)}px` : (element.width || '100%');
   const capBtn = useCaptionButton(useCaptionButtonState());   // 캡션 토글(정석): onClick이 visibleId=element.id + 포커스
   const set = (patch: any) => { const p = editor.api.findPath(element); if (p) editor.tf.setNodes(patch, { at: p }); };
@@ -167,15 +167,21 @@ export function ImageElement(props: any) {
     const next = Math.max(64, Math.min((e.initialSize || 0) + e.delta * mult, maxW));
     if (e.finished) { setDragW(null); set({ width: `${Math.round(next)}px` }); } else { setDragW(next); }
   };
-  const openLink = () => { setLinkDraft(element.link || ''); setLinkEditing(true); };
-  const saveLink = () => {
-    const u = linkDraft.trim();
-    if (u && !validateUrl(editor, u)) return;   // javascript: 등 무효/위험 스킴 거부 — 입력 유지
-    set({ link: u || undefined });
-    setLinkEditing(false);
+  const openLink = () => { setDraft(element.link || ''); setEditMode('link'); };
+  const openSrc = () => { setDraft(element.url || ''); setEditMode('src'); };
+  const saveEdit = () => {
+    const v = draft.trim();
+    if (editMode === 'link') {
+      if (v && !validateUrl(editor, v)) return;   // javascript: 등 무효/위험 스킴 거부 — 입력 유지
+      set({ link: v || undefined });
+    } else if (editMode === 'src') {
+      if (!v) return;                              // 소스는 필수 — 비우면 무시(입력 유지)
+      set({ url: v });                             // 이미지 주소 교체(크기·정렬·캡션·링크 유지)
+    }
+    setEditMode(null);
     editor.tf.focus();
   };
-  const removeLink = () => { set({ link: undefined }); setLinkEditing(false); editor.tf.focus(); };
+  const removeLink = () => { set({ link: undefined }); setEditMode(null); editor.tf.focus(); };
   const imgEl = <img src={element.url} alt="" />;
   const safeHref = element.link ? getLinkAttributes(editor, { type: 'a', url: element.link, children: [] } as any).href : undefined;
   return (
@@ -197,6 +203,9 @@ export function ImageElement(props: any) {
           )}
           {selected && !readOnly && (
             <span className="apfs-rt-imgbar" role="toolbar" aria-label="이미지 편집">
+              <button type="button" title="이미지 교체" aria-label="이미지 주소 교체" aria-pressed={editMode === 'src'}
+                className={'apfs-rt-imgbtn' + (editMode === 'src' ? ' is-active' : '')} onMouseDown={stop} onClick={openSrc}>
+                <Replace size={15} strokeWidth={2} aria-hidden={true} /></button>
               <button type="button" title="링크 편집" aria-label="링크 편집" aria-pressed={!!element.link}
                 className={'apfs-rt-imgbtn' + (element.link ? ' is-active' : '')} onMouseDown={stop} onClick={openLink}>
                 <Link2 size={15} strokeWidth={2} aria-hidden={true} /></button>
@@ -209,13 +218,14 @@ export function ImageElement(props: any) {
                 <Trash2 size={15} strokeWidth={2} aria-hidden={true} /></button>
             </span>
           )}
-          {selected && !readOnly && linkEditing && (
-            <span className="apfs-rt-imginput" role="group" aria-label="이미지 링크 URL">
-              <input className="apfs-rt-imginput__field" type="url" placeholder="https://..." value={linkDraft}
-                autoFocus onMouseDown={(e) => e.stopPropagation()} onChange={(e) => setLinkDraft(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveLink(); } if (e.key === 'Escape') { e.preventDefault(); setLinkEditing(false); } }} />
-              <button type="button" className="apfs-rt-imgbtn is-text" onMouseDown={stop} onClick={saveLink}>적용</button>
-              {element.link && <button type="button" className="apfs-rt-imgbtn is-text" onMouseDown={stop} onClick={removeLink}>제거</button>}
+          {selected && !readOnly && editMode && (
+            <span className="apfs-rt-imginput" role="group" aria-label={editMode === 'src' ? '이미지 주소' : '이미지 링크 URL'}>
+              <input className="apfs-rt-imginput__field" type="url"
+                placeholder={editMode === 'src' ? 'https://.../image.png' : 'https://...'} value={draft}
+                autoFocus onMouseDown={(e) => e.stopPropagation()} onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveEdit(); } if (e.key === 'Escape') { e.preventDefault(); setEditMode(null); } }} />
+              <button type="button" className="apfs-rt-imgbtn is-text" onMouseDown={stop} onClick={saveEdit}>적용</button>
+              {editMode === 'link' && element.link && <button type="button" className="apfs-rt-imgbtn is-text" onMouseDown={stop} onClick={removeLink}>제거</button>}
             </span>
           )}
         </span>
