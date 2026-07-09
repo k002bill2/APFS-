@@ -144,15 +144,42 @@ export function ImageElement(props: any) {
   const selected = useSelected();
   const readOnly = useReadOnly();
   const align = element.align || 'left';
-  const width = element.width || '100%';
+  const imgboxRef = useRef<HTMLSpanElement>(null);
+  const startW = useRef(0);
+  const [dragW, setDragW] = useState<number | null>(null);
+  const width = dragW != null ? `${Math.round(dragW)}px` : (element.width || '100%');
   const set = (patch: any) => { const p = editor.api.findPath(element); if (p) editor.tf.setNodes(patch, { at: p }); };
   const del = () => { const p = editor.api.findPath(element); if (p) editor.tf.removeNodes({ at: p }); editor.tf.focus(); };
-  const stop = (e: any) => e.preventDefault(); // 툴바 클릭이 이미지 선택을 빼앗지 않게
+  const stop = (e: any) => e.preventDefault(); // 툴바/핸들 클릭이 이미지 선택을 빼앗지 않게
+  // 드래그 리사이즈: mousedown에 현재 imgbox 폭을 기준으로 고정, onResize에서 로컬 state만 갱신(에디터 미접촉),
+  // finished:true에 setNodes 1회 커밋 → "Maximum update depth" 루프 벡터 회피(표 컬럼 리사이즈와 동일 패턴).
+  const onHandleDown = () => { startW.current = imgboxRef.current?.offsetWidth || 0; };
+  const onHandleResize = (direction: 'left' | 'right') => (e: any) => {
+    const mult = (align === 'center' ? 2 : 1) * (direction === 'left' ? -1 : 1);
+    const maxW = imgboxRef.current?.parentElement?.clientWidth || 9999; // .apfs-rt-imgwrap 폭
+    const next = Math.max(64, Math.min(startW.current + e.delta * mult, maxW));
+    if (e.finished) {
+      setDragW(null);
+      set({ width: `${Math.round(next)}px` });
+    } else {
+      setDragW(next);
+    }
+  };
   return (
     <PlateElement {...props}>
       <div className="apfs-rt-imgwrap" contentEditable={false} style={{ textAlign: align as any }}>
-        <span className={'apfs-rt-imgbox' + (selected ? ' is-sel' : '')} style={{ width }}>
+        <span ref={imgboxRef} className={'apfs-rt-imgbox' + (selected ? ' is-sel' : '')} style={{ width }}>
           <img src={element.url} alt="" />
+          {selected && !readOnly && (
+            <>
+              <ResizeHandle
+                options={{ direction: 'left', onMouseDown: onHandleDown, onResize: onHandleResize('left') } as any}
+                className="apfs-rt-imgresize is-left" contentEditable={false} aria-label="이미지 너비 조절(왼쪽)" />
+              <ResizeHandle
+                options={{ direction: 'right', onMouseDown: onHandleDown, onResize: onHandleResize('right') } as any}
+                className="apfs-rt-imgresize is-right" contentEditable={false} aria-label="이미지 너비 조절(오른쪽)" />
+            </>
+          )}
           {selected && !readOnly && (
             <span className="apfs-rt-imgbar" role="toolbar" aria-label="이미지 편집">
               {[{ k: 'left', I: AlignLeft, t: '왼쪽' }, { k: 'center', I: AlignCenter, t: '가운데' }, { k: 'right', I: AlignRight, t: '오른쪽' }].map((a) => (
@@ -171,7 +198,6 @@ export function ImageElement(props: any) {
             </span>
           )}
         </span>
-        {/* 이미지 캡션 — CaptionPlugin이 img에 캡션 활성. CaptionTextarea는 자체 편집 처리(void 안 편집 영역). */}
         <Caption style={{ width }}>
           <CaptionTextarea className="apfs-rt-caption" placeholder="캡션 입력…" />
         </Caption>
