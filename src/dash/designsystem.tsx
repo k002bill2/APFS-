@@ -75,6 +75,19 @@ function TagsPreview() {
   );
 }
 
+/* richtext 폼 컨트롤 프리뷰 — Plate 에디터를 SchemaField 경유로 렌더(값=HTML 문자열). */
+const RICHTEXT_FIELD: FieldSpec = { key: 'content', label: '내용', control: 'richtext' };
+function RichTextPreview() {
+  const [v, setV] = useState('<p>농림수산식품 <strong>모태펀드</strong> 운용 현황 보고 내용을 입력합니다.</p>');
+  return (
+    <Card className="flex flex-col gap-2" style={{ gridColumn: "1 / -1" }}>
+      <div className="t-label" style={{ textTransform: "none" }}>Rich Text (Plate · FIELD_CONTROLS 'richtext')</div>
+      <div style={{ maxWidth: 860 }}><SchemaField field={RICHTEXT_FIELD} value={v} onChange={setV} /></div>
+      <div className="t-caption" style={{ wordBreak: "break-all", maxHeight: 72, overflow: "auto" }}>저장 값(직렬화): <code className="tabular">{v || '(빈 문자열)'}</code></div>
+    </Card>
+  );
+}
+
 function DesignSystem() {
   const [chip, setChip] = useState("정상");
   const [seg, setSeg] = useState("월");
@@ -183,6 +196,12 @@ function DesignSystem() {
       <Section title="3-3. 폼 컨트롤 — 태그 입력" desc="스키마 'tags' 컨트롤(Plate SelectEditor). 여러 태그를 검색·선택·신규 생성. 값은 JSON 배열 문자열로 직렬화되어 RowFormModal 저장 계약을 따릅니다. 실제 조합 검증은 폼 모달(Dialog) 안에서 수행.">
         <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(340px,100%),1fr))" }}>
           <TagsPreview />
+        </div>
+      </Section>
+
+      <Section title="3-4. 폼 컨트롤 — 리치텍스트 에디터" desc="스키마 'richtext' 컨트롤(Plate 에디터, lazy 로드). 서식·리스트·표·이미지 등 문서 편집. 값은 HTML 문자열로 직렬화되어 RowFormModal 저장 계약을 따릅니다. 실제 조합 검증은 폼 모달(Dialog) 안에서 수행.">
+        <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(340px,100%),1fr))" }}>
+          <RichTextPreview />
         </div>
       </Section>
 
