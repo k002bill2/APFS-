@@ -2,7 +2,7 @@
    (2026-07 Tiptap v3 → Plate 교체. 2026-07 유료 제외 전 기능 확장: 표·콜아웃·다단·토글·날짜·수식·태그·
     멘션·슬래시·이모지·글꼴·H4~6·Kbd·마크다운 단축. 2026-07 추가: 체크리스트(taskList)·이미지/파일 업로드
     (base64+1MB 상한)·파일 첨부 칩·선택 서식 플로팅 툴바·우클릭 컨텍스트 메뉴(복사/복제/삭제)·문서 입출력
-    (MD/HTML/JSON import·export).)
+    (MD/HTML/JSON import·export)·이모지 피커 툴바 버튼.)
    ⚠️ 드래그 리사이즈(@platejs/resizable)는 CRUD 모달+DnD+onChange 직렬화 환경에서 "Maximum update depth"
       렌더 루프를 유발해 제외 — 이미지 크기는 선택 오버레이의 S/M/L 프리셋으로 조절. 블록 마퀴 선택
       (@platejs/selection)은 렌더트리 재구성(PlateContainer)+블록별 훅이 같은 루프 벡터라 보류(드래그 재정렬로 대체).
@@ -73,6 +73,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useFloatingToolbar, useFloatingToolbarState, offset, flip, shift } from '@platejs/floating';  // 선택 서식 플로팅 툴바(플러그인 불필요)
 import { MentionInputElement, SlashInputElement, EmojiInputElement } from './RichTextCombobox';
+import { EmojiToolbarButton } from './EmojiToolbarButton';
 import { COMPONENTS, BlockDraggable, canSplitCell, DOC_PALETTE } from './RichTextElements';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code, SquareCode, Keyboard,
@@ -394,10 +395,15 @@ function FloatingMarkToolbar({ savedSel, setPMode, setPUrl }: {
   // 내부 드롭다운(Turn-into·More) open 동안엔 툴바를 유지한다. 드롭다운이 열리며 선택이 무너져 hidden이 되면
   // 트리거가 사라져 Radix 팝오버가 앵커를 잃고(포털 자식 언마운트) 깨지므로, ddOpen이면 마지막 위치로 강제 표시.
   const [ddOpen, setDdOpen] = useState(false);
+  // 표 안에서 선택하면 캡션 표 편집 툴바(caption-side:top)가 표 상단에 뜬다 → placement:'top'이면 첫 행에서
+  // 두 툴바가 같은 지점에 겹쳐 클릭이 막힌다(floating-ui flip은 뷰포트 경계만 피하지 정상흐름 캡션은 못 피함).
+  // 표 안에선 아래로 배치해 "위=표 구조 / 아래=텍스트 서식"으로 세로 분리한다. flip은 유지(모달 하단 경계 방어).
+  // 이 계산은 return null 가드보다 앞(훅 순서상 필수)이라 선택 없는 렌더에서도 돈다 → try/catch로 방어(line 465 패턴).
+  const inTable = (() => { try { return editor.api.some({ match: { type: 'table' } }); } catch { return false; } })();
   const state = useFloatingToolbarState({
     editorId: editor.id,
     focusedEditorId: editor.id,
-    floatingOptions: { placement: 'top', middleware: [offset(8), flip(), shift({ padding: 8 })] },
+    floatingOptions: { placement: inTable ? 'bottom' : 'top', middleware: [offset(8), flip(), shift({ padding: 8 })] },
   } as any);
   const { hidden, props, ref } = useFloatingToolbar(state);
   if (readOnly || (hidden && !ddOpen)) return null;
@@ -1301,6 +1307,7 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
         <span className="apfs-richtext__sep" aria-hidden="true" />
         <BlockTypeDropdown />
         <InsertDropdown openPrompt={openMedia} openFile={() => fileUploadRef.current?.click()} skipMenuRefocus={skipMenuRefocus} />
+        <EmojiToolbarButton />
 
         {/* 인라인 마크(굵게~인라인코드) + 확장 마크는 More ⋯ 드롭다운으로 접기 */}
         <span className="apfs-richtext__sep" aria-hidden="true" />

@@ -410,8 +410,8 @@
 /* 편집 영역 — preflight:false라 목록/제목 기본 스타일을 명시적으로 복원.
    본문 컨테이너는 PlateContent의 .apfs-prose(=[contenteditable]). 과거 tiptap의 .ProseMirror 복합 셀렉터에서 이관. */
 .apfs-prose {
-  min-height: 220px;
-  max-height: 360px;
+  min-height: 300px;
+  max-height: 600px;
   overflow-y: auto;
   padding: 12px 14px 12px 30px;   /* 좌측 여백=드래그 핸들 거터 */
   outline: none;
@@ -531,7 +531,9 @@
 .apfs-prose .apfs-rt-table td, .apfs-prose .apfs-rt-table th {
   /* border는 인라인(borders 모델)이 전담 — CSS에 남기면 비첫행 top 등이 이중선이 된다 */
   padding: 6px 10px;
-  vertical-align: top;
+  /* 셀 내용(체크박스·이모지·텍스트)을 행 높이의 세로 중앙에 — 같은 행의 키 큰 셀에 맞춰
+     늘어난 높이에서도 위로 쏠리지 않게 top→middle */
+  vertical-align: middle;
   min-width: 48px;
 }
 .apfs-prose .apfs-rt-table th { background: var(--muted); font-weight: 700; text-align: left; }
@@ -820,7 +822,7 @@ caption.apfs-rt-tablebar .apfs-rt-imgbtn { gap: 1px; }
 
 /* 좁은 화면 — 편집 영역 최소 높이 축소(모달 세로 공간 절약) */
 @media (max-width: 640px) {
-  .apfs-prose { min-height: 160px; }
+  .apfs-prose { min-height: 160px; max-height: 420px; }
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -870,4 +872,118 @@ caption.apfs-rt-tablebar .apfs-rt-imgbtn { gap: 1px; }
     font-size: 15px;
   }
   .apfs-editor-page .apfs-prose h1 { font-size: 1.7em; }
+}
+
+/* ── 이모지 피커 패널(툴바 Smile 버튼 → Popover) ── 색은 전부 토큰, 텍스트 14px 규약. */
+.apfs-rt-emoji { width: 320px; padding: 0; }
+.apfs-rt-emoji__panel { display: flex; flex-direction: column; }
+/* 검색 바 */
+.apfs-rt-emoji__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 8px 8px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.apfs-rt-emoji__search-ico {
+  position: absolute;
+  left: 18px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+.apfs-rt-emoji__input {
+  flex: 1;
+  height: 32px;
+  padding: 0 30px 0 30px;
+  font-size: 14px;
+  color: var(--foreground);
+  background: var(--muted);
+  border: 1px solid transparent;
+  border-radius: 7px;
+  outline: none;
+}
+.apfs-rt-emoji__input::placeholder { color: var(--muted-foreground); }
+.apfs-rt-emoji__input:focus { border-color: var(--ring); background: var(--background); }
+.apfs-rt-emoji__clear {
+  position: absolute;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.apfs-rt-emoji__clear:hover { background: var(--muted); color: var(--foreground); }
+/* 카테고리 탭 줄 */
+.apfs-rt-emoji__tabs {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.apfs-rt-emoji__tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color .12s ease, color .12s ease;
+}
+.apfs-rt-emoji__tab:hover { background: var(--muted); color: var(--foreground); }
+.apfs-rt-emoji__tab.is-active { color: var(--accent); background: var(--muted); }
+/* 그리드 스크롤 영역 */
+.apfs-rt-emoji__scroll {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 6px 8px 10px;
+}
+.apfs-rt-emoji__cat {
+  padding: 8px 2px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  position: sticky;
+  top: 0;
+  background: var(--popover);
+  z-index: 1;
+}
+.apfs-rt-emoji__grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 1px;
+}
+.apfs-rt-emoji__cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color .1s ease;
+}
+.apfs-rt-emoji__cell:hover { background: var(--muted); }
+.apfs-rt-emoji__empty {
+  padding: 28px 8px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--muted-foreground);
 }

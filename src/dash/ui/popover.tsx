@@ -5,6 +5,7 @@
 import * as React from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { cn } from '@/lib/utils';
+import { usePortalContainer } from './portal-container';
 
 const Popover = PopoverPrimitive.Root;
 const PopoverTrigger = PopoverPrimitive.Trigger;
@@ -13,8 +14,12 @@ const PopoverAnchor = PopoverPrimitive.Anchor;
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
->(({ className, align = 'start', sideOffset = 6, ...props }, ref) => (
-  <PopoverPrimitive.Portal>
+>(({ className, align = 'start', sideOffset = 6, ...props }, ref) => {
+  // 전체화면(requestFullscreen) 중 body 포털이 top layer 밖으로 새는 것 방지 — 주입된 fullscreen 루트로 포털.
+  // Provider 밖/기본값에선 undefined → Radix가 body로 폴백(기존 소비처 무영향). dropdown-menu와 동일 패턴.
+  const container = usePortalContainer();
+  return (
+  <PopoverPrimitive.Portal container={container}>
     <PopoverPrimitive.Content
       ref={ref}
       align={align}
@@ -28,7 +33,8 @@ const PopoverContent = React.forwardRef<
       {...props}
     />
   </PopoverPrimitive.Portal>
-));
+  );
+});
 PopoverContent.displayName = PopoverPrimitive.Content.displayName;
 
 export { Popover, PopoverTrigger, PopoverAnchor, PopoverContent };
