@@ -1188,6 +1188,11 @@ function importHtml(editor: any, text: string) {
     replaceValue(editor, editor.api.html.deserialize({ element: body }));
   } catch { /* 파싱 실패 무시 */ }
 }
+// ⚠ 보안 불변식: JSON 가져오기는 노드 트리를 신뢰하지 않는다(임의 속성 주입 가능).
+// XSS 방어는 렌더 시점이 authoritative — url/src를 가진 모든 노드는 safeUrl로 sanitize한다
+// (tag=safeUrl(nav), file/이미지=safeUrl(media)/getLinkAttributes, media_embed=parseVideoUrl 게이트).
+// 여기서 별도 정화를 하지 않는 이유: 타입 인지 정화기는 base64 data: 이미지/첨부를 오탐 제거할 위험이 큼.
+// 새로 url/src를 렌더하는 노드를 추가하면 반드시 safeUrl 경유로 sanitize할 것.
 function importJson(editor: any, text: string) {
   try { replaceValue(editor, JSON.parse(text)); } catch { /* 파싱 실패 무시 */ }
 }

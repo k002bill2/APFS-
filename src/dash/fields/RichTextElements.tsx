@@ -8,6 +8,7 @@ import type { CSSProperties } from 'react';
 import { createContext, useContext, useRef, useState } from 'react';
 import { PlateElement, PlateLeaf, useEditorRef, useSelected, useReadOnly, usePluginOption, usePath } from 'platejs/react';
 import { getLinkAttributes, validateUrl } from '@platejs/link';
+import { safeUrl } from './safeUrl';
 import { insertTableRow, insertTableColumn, deleteRow, deleteColumn, deleteTable } from '@platejs/table';
 // 셀 다중 선택(공식 Plate): useSelectedCells=selection→선택 셀 id 동기화(표 요소에서 1회 마운트),
 // useIsCellSelected=셀별 선택 구독(element.id 기반 — NodeIdPlugin이 셀에도 id 부여).
@@ -279,7 +280,7 @@ export function MediaEmbedElement(props: any) {
   const provider = parsed?.provider;
   const src = provider === 'youtube' ? `https://www.youtube.com/embed/${embedId}`
     : provider === 'vimeo' ? `https://player.vimeo.com/video/${embedId}`
-    : element.url;
+    : safeUrl(element.url, 'nav');   // dailymotion 등 미템플릿 provider fallback — iframe이라 nav 정책(data: 배제, http/https만)으로 sanitize
   return (
     <PlateElement {...props}>
       <div className="apfs-rt-imgwrap" contentEditable={false}>
@@ -303,10 +304,12 @@ export function FileElement(props: any) {
   const editor = useEditorRef();
   const readOnly = useReadOnly();
   const del = () => { const p = editor.api.findPath(element); if (p) editor.tf.removeNodes({ at: p }); editor.tf.focus(); };
+  // href는 safeUrl(media)로 sanitize — 첨부는 base64 data: URI가 정식이라 data:/blob:는 허용하되 javascript: 등은 차단.
+  const href = safeUrl(element.url, 'media');
   return (
     <PlateElement {...props}>
       <div className="apfs-rt-file" contentEditable={false}>
-        <a className="apfs-rt-file__link" href={element.url} download={element.name} target="_blank" rel="noopener noreferrer">
+        <a className="apfs-rt-file__link" href={href} download={element.name} target="_blank" rel="noopener noreferrer">
           <FileDownIcon size={16} strokeWidth={2} aria-hidden={true} />
           <span className="apfs-rt-file__name">{element.name || '첨부파일'}</span>
           {element.size ? <span className="apfs-rt-file__size">{element.size}</span> : null}
@@ -691,7 +694,9 @@ export function MentionElement(props: any) {
 /* ── 수식(math) — katex로 렌더. 블록(equation)/인라인(inline_equation). texExpression을 렌더. ── */
 function renderTex(tex: string, displayMode: boolean): string {
   try { return katex.renderToString(tex || '', { throwOnError: false, displayMode, output: 'html' }); }
-  catch { return tex || ''; }
+  // 예외 시 raw tex를 dangerouslySetInnerHTML에 그대로 넣으면 XSS(texExpression은 import로 주입 가능).
+  // HTML 이스케이프해 원본 LaTeX 소스만 텍스트로 노출(주입 차단). throwOnError:false라 정상엔 발동 안 하는 방어선.
+  catch { return (tex || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string)); }
 }
 export function EquationElement(props: any) {
   const editor = useEditorRef();

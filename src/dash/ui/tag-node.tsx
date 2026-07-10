@@ -13,6 +13,7 @@ import {
 } from 'platejs/react';
 
 import { cn } from '@/lib/utils';
+import { safeUrl } from '../fields/safeUrl';
 
 export function TagElement(props: PlateElementProps<TTagElement>) {
   const { element } = props;
@@ -34,9 +35,11 @@ export function TagElement(props: PlateElementProps<TTagElement>) {
   );
 
   // Vite 프로젝트 — Next.js <Link> 대신 평범한 <a>. url 있는 태그는 읽기전용에서만 링크로 렌더.
+  // href는 safeUrl(nav)로 sanitize — 가져오기(import)로 주입된 javascript:/data: 스킴 클릭 실행 차단.
+  const href = safeUrl(element.url, 'nav');
   const content =
-    readOnly && element.url ? (
-      <a href={element.url as string}>{badge}</a>
+    readOnly && href ? (
+      <a href={href}>{badge}</a>
     ) : (
       badge
     );
