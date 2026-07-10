@@ -531,7 +531,9 @@
 .apfs-prose .apfs-rt-table td, .apfs-prose .apfs-rt-table th {
   /* border는 인라인(borders 모델)이 전담 — CSS에 남기면 비첫행 top 등이 이중선이 된다 */
   padding: 6px 10px;
-  vertical-align: top;
+  /* 셀 내용(체크박스·이모지·텍스트)을 행 높이의 세로 중앙에 — 같은 행의 키 큰 셀에 맞춰
+     늘어난 높이에서도 위로 쏠리지 않게 top→middle */
+  vertical-align: middle;
   min-width: 48px;
 }
 .apfs-prose .apfs-rt-table th { background: var(--muted); font-weight: 700; text-align: left; }
