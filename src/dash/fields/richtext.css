@@ -141,15 +141,17 @@
   margin: 0 4px;
 }
 
-/* 편집 컨트롤 묶음 — 툴바와 동일 flex 흐름(래퍼가 레이아웃을 바꾸지 않게). 보기 모드=비활성(흐림+클릭 차단). */
+/* 편집 컨트롤 묶음 — display:contents로 자식들이 툴바의 단일 wrap 흐름에 직접 참여
+   (래퍼가 flex 아이템이면 내부 2줄 wrap 시 전체 폭을 차지해 뒤의 프리뷰 컨트롤이 다음 줄로 밀림).
+   보기 모드 비활성: pointer-events는 상속·inert는 노드 트리 기준이라 그대로 동작하고,
+   opacity는 박스가 없어 무효가 되므로 자식에 건다. */
 .apfs-rt-editcontrols {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 3px;
+  display: contents;
 }
 .apfs-rt-editcontrols.is-disabled {
   pointer-events: none;
+}
+.apfs-rt-editcontrols.is-disabled > * {
   opacity: .45;
 }
 /* 디바이스 미리보기 버튼 그룹 — 아이콘 버튼 3개. */
