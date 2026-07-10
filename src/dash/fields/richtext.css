@@ -873,3 +873,117 @@ caption.apfs-rt-tablebar .apfs-rt-imgbtn { gap: 1px; }
   }
   .apfs-editor-page .apfs-prose h1 { font-size: 1.7em; }
 }
+
+/* ── 이모지 피커 패널(툴바 Smile 버튼 → Popover) ── 색은 전부 토큰, 텍스트 14px 규약. */
+.apfs-rt-emoji { width: 320px; padding: 0; }
+.apfs-rt-emoji__panel { display: flex; flex-direction: column; }
+/* 검색 바 */
+.apfs-rt-emoji__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 8px 8px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.apfs-rt-emoji__search-ico {
+  position: absolute;
+  left: 18px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+.apfs-rt-emoji__input {
+  flex: 1;
+  height: 32px;
+  padding: 0 30px 0 30px;
+  font-size: 14px;
+  color: var(--foreground);
+  background: var(--muted);
+  border: 1px solid transparent;
+  border-radius: 7px;
+  outline: none;
+}
+.apfs-rt-emoji__input::placeholder { color: var(--muted-foreground); }
+.apfs-rt-emoji__input:focus { border-color: var(--ring); background: var(--background); }
+.apfs-rt-emoji__clear {
+  position: absolute;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.apfs-rt-emoji__clear:hover { background: var(--muted); color: var(--foreground); }
+/* 카테고리 탭 줄 */
+.apfs-rt-emoji__tabs {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.apfs-rt-emoji__tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color .12s ease, color .12s ease;
+}
+.apfs-rt-emoji__tab:hover { background: var(--muted); color: var(--foreground); }
+.apfs-rt-emoji__tab.is-active { color: var(--accent); background: var(--muted); }
+/* 그리드 스크롤 영역 */
+.apfs-rt-emoji__scroll {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 6px 8px 10px;
+}
+.apfs-rt-emoji__cat {
+  padding: 8px 2px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  position: sticky;
+  top: 0;
+  background: var(--popover);
+  z-index: 1;
+}
+.apfs-rt-emoji__grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 1px;
+}
+.apfs-rt-emoji__cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color .1s ease;
+}
+.apfs-rt-emoji__cell:hover { background: var(--muted); }
+.apfs-rt-emoji__empty {
+  padding: 28px 8px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--muted-foreground);
+}
