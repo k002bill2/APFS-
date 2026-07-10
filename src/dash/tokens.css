@@ -209,6 +209,11 @@ body{
 
 /* focus ring */
 :focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 45%,transparent);outline-offset:2px;}
+/* Input Group: 컨테이너가 focus-within(border-ring+ring)으로 초점을 이미 표시하므로
+   내부 컨트롤의 전역 3px outline은 중복·과함 → 제거(초점 가시성은 컨테이너가 유지).
+   전역 :focus-visible는 unlayered라 Tailwind outline-none(@layer utilities)으로 못 덮어
+   여기 unlayered·고특이도 규칙으로만 제압된다. */
+[data-slot="input-group"] [data-slot="input-group-control"]:focus-visible{outline:none;}
 
 /* typography helpers */
 .t-display{font-size:34px;line-height:1.08;font-weight:800;letter-spacing:-.02em;}
