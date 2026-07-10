@@ -72,6 +72,7 @@ import { DndPlugin } from '@platejs/dnd';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useFloatingToolbar, useFloatingToolbarState, offset, flip, shift } from '@platejs/floating';  // 선택 서식 플로팅 툴바(플러그인 불필요)
+import { RAW_MAX_BYTES, IMAGE_MAX_BYTES, estimateDataUrlBytes, compressImageDataUrl } from './image_compress';
 import { MentionInputElement, SlashInputElement, EmojiInputElement } from './RichTextCombobox';
 import { EmojiToolbarButton } from './EmojiToolbarButton';
 import { COMPONENTS, BlockDraggable, canSplitCell, DOC_PALETTE } from './RichTextElements';
@@ -173,6 +174,30 @@ const ListTabIndentPlugin = createPlatePlugin({ key: 'apfs-list-tab' }).override
   }),
 );
 
+// 이미지 업로드 초크포인트(ImagePlugin.uploadImage)는 모듈 레벨 플러그인 배열에 있어야 에디터 인스턴스
+// identity가 렌더마다 안정적으로 유지된다(플러그인/에디터 재생성→리마운트→caret 소실 방지). 따라서 컴포넌트
+// 상태(setUploadErr)로 에러를 표시하려면 module-level ref를 경유한다(Toolbar가 마운트 시 등록/해제).
+// ⚠️ 한계: 여러 RichTextField가 동시에 살면 마지막 마운트분만 가리킨다(폼 모달은 한 번에 하나라 허용).
+let reportUploadError: (msg: string) => void = () => {};
+
+// 삽입 3경로(붙여넣기/드래그/툴바) 공통 초크포인트. estimateDataUrlBytes로 원본 캡 → 압축 → 최종 캡 검증.
+// throw 시 @platejs/media의 insertImage가 호출되지 않아 삽입이 중단된다(프로토타입: 콘솔의 unhandled
+// rejection 1건은 허용 — 배너로 사용자에게 이미 알렸다).
+async function uploadImageChokepoint(dataUrl: string | ArrayBuffer): Promise<string> {
+  if (typeof dataUrl !== 'string') throw new Error('image: unsupported source');  // ArrayBuffer는 실경로에서 오지 않음
+  if (estimateDataUrlBytes(dataUrl) > RAW_MAX_BYTES) {
+    reportUploadError(`이미지가 너무 큽니다(${humanSize(estimateDataUrlBytes(dataUrl))}). 최대 ${humanSize(RAW_MAX_BYTES)}까지 업로드할 수 있습니다.`);
+    throw new Error('image: raw too large');
+  }
+  const out = await compressImageDataUrl(dataUrl);
+  if (estimateDataUrlBytes(out) > IMAGE_MAX_BYTES) {
+    reportUploadError(`압축 후에도 이미지가 너무 큽니다(${humanSize(estimateDataUrlBytes(out))}). 최대 ${humanSize(IMAGE_MAX_BYTES)}까지 저장할 수 있습니다.`);
+    throw new Error('image: compressed too large');
+  }
+  reportUploadError('');   // 성공 시 이전 에러 배너 클리어
+  return out;
+}
+
 // 각 플러그인에 마크다운 입력 단축(inputRules)을 주입. HeadingRules는 H1에만 붙여도 #~###### 전 레벨 담당.
 const PLUGINS = [
   BoldPlugin.configure({ inputRules: [BoldRules.markdown({ variant: '*' }), BoldRules.markdown({ variant: '_' })] }),
@@ -195,7 +220,8 @@ const PLUGINS = [
   CodeBlockPlugin.configure({ inputRules: [CodeBlockRules.markdown({ on: 'match' })] }),  // ``` → 코드블록
   ListPlugin.configure({ inputRules: [BulletedListRules.markdown({ variant: '-' }), OrderedListRules.markdown({ variant: '.' }), TaskListRules.markdown()] }),  // - / 1. / [ ]
   LinkPlugin.configure({ inputRules: [LinkRules.markdown(), LinkRules.autolink({ variant: 'space' }), LinkRules.autolink({ variant: 'break' })] }),
-  ImagePlugin, VideoPlugin, MediaEmbedPlugin, FilePlugin,   // FilePlugin: 파일 첨부(file, 보이드) 노드
+  ImagePlugin.configure({ options: { uploadImage: uploadImageChokepoint } }),   // 압축+용량 캡 초크포인트
+  VideoPlugin, MediaEmbedPlugin, FilePlugin,   // FilePlugin: 파일 첨부(file, 보이드) 노드
   CaptionPlugin.configure({ options: { query: { allow: ['img', 'video', 'media_embed'] } } }),  // img/비디오/임베드에 캡션
   // ── 확장 블록/보이드 ──
   // minColumnWidth: 열 리사이즈 재분배 시 이웃 열이 0으로 뭉개지지 않는 하한(CSS td min-width 48과 동일 기준)
@@ -1119,7 +1145,8 @@ function importJson(editor: any, text: string) {
 }
 
 // 클라이언트 전용 업로드 — base64가 저장값에 인라인되므로 크기 상한을 둔다(백엔드 없음).
-const UPLOAD_MAX_BYTES = 1024 * 1024; // 1MB
+// 파일 첨부(onPickFile)의 캡. 이미지는 압축 초크포인트가 하류에서 RAW_MAX_BYTES→IMAGE_MAX_BYTES로 처리.
+const UPLOAD_MAX_BYTES = IMAGE_MAX_BYTES; // 1MB (중복 정의 방지: image_compress의 IMAGE_MAX_BYTES와 동일)
 function humanSize(bytes: number): string {
   if (bytes < 1024) return bytes + 'B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + 'KB';
@@ -1197,6 +1224,9 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
   // 메뉴 닫힘 시 에디터 재포커스를 1회 건너뛰는 플래그 — 드롭다운→다이얼로그(image/video/embed) 경로에서만 세운다.
   const skipMenuRefocus = useRef(false);
   const [uploadErr, setUploadErr] = useState('');
+  // 붙여넣기/드래그 경로의 압축 초크포인트(module-level uploadImageChokepoint)가 이 배너로 에러를 알리도록 등록.
+  // Toolbar는 이미지 삽입이 가능한 동안 항상 <Plate> 아래 마운트돼 있으므로 미등록 구간이 없다.
+  useEffect(() => { reportUploadError = setUploadErr; return () => { reportUploadError = () => {}; }; }, []);
   const canUndo = !!editor.history?.undos?.length;
   const canRedo = !!editor.history?.redos?.length;
   const linkActive = inNode(editor, 'a');
@@ -1238,8 +1268,9 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
   function onPickImage(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (files && files.length) {
-      const over = Array.from(files).find((f) => f.size > UPLOAD_MAX_BYTES);
-      if (over) setUploadErr(`이미지가 너무 큽니다(${humanSize(over.size)}). 최대 ${humanSize(UPLOAD_MAX_BYTES)}까지 업로드할 수 있습니다.`);
+      // 사전검증은 초대형(RAW_MAX_BYTES)만 차단 — 실제 용량 압축·최종 캡(IMAGE_MAX_BYTES)은 하류 uploadImageChokepoint가 수행.
+      const over = Array.from(files).find((f) => f.size > RAW_MAX_BYTES);
+      if (over) setUploadErr(`이미지가 너무 큽니다(${humanSize(over.size)}). 최대 ${humanSize(RAW_MAX_BYTES)}까지 업로드할 수 있습니다.`);
       else {
         setUploadErr('');
         if (savedSel.current) { try { editor.tf.select(savedSel.current); } catch { /* 경로 무효 시 무시 */ } }
