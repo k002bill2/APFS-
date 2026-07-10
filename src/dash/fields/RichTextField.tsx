@@ -48,7 +48,7 @@ import { BulletedListRules, OrderedListRules, TaskListRules } from '@platejs/lis
 import { LinkPlugin } from '@platejs/link/react';
 import { upsertLink, unwrapLink, LinkRules } from '@platejs/link';
 import { ImagePlugin, VideoPlugin, MediaEmbedPlugin, FilePlugin } from '@platejs/media/react';
-import { insertImage, insertMediaEmbed, insertImageFromFiles, parseMediaUrl, parseTwitterUrl, parseVideoUrl } from '@platejs/media';
+import { insertImage, insertMediaEmbed, parseMediaUrl, parseTwitterUrl, parseVideoUrl } from '@platejs/media';
 import { CaptionPlugin } from '@platejs/caption/react';
 import { TablePlugin, TableRowPlugin, TableCellPlugin, TableCellHeaderPlugin, useTableMergeState } from '@platejs/table/react';
 import { insertTable } from '@platejs/table';
@@ -198,6 +198,38 @@ async function uploadImageChokepoint(dataUrl: string | ArrayBuffer): Promise<str
   return out;
 }
 
+// FileReader dataURL Promise 래퍼 — 압축 경로를 순차 await할 수 있게 한다.
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(file);
+  });
+}
+
+// 이미지 삽입 위치 고정(P2 수정). @platejs/media의 insertImageFromFiles는 FileReader+압축(uploadImage)을
+// await한 뒤 "그 시점의 현재 selection"에 삽입한다 → 압축 지연(원본 20MB까지 압축) 동안 caret을 옮기면
+// 이미지가 엉뚱한 문단에 박힌다. 여기서는 async 진입 직전 selection을 clone해 고정하고, 삽입 직전 그 위치를
+// 복원한다(caret 이동 무효화). 여러 파일은 select:true로 방금 삽입분 다음에 순차 적재. 캡 초과는 초크포인트가
+// throw → 해당 파일만 건너뛴다(배너로 이미 알림). ⚠️ 압축 중 사용자가 타이핑(=문서 변경)하면 clone 경로가
+// stale → select가 throw → catch로 현재 selection에 degrade(원본 라이브러리 동작과 동일, 더 나빠지지 않음).
+async function insertImagesPinned(editor: any, files: FileList | File[]): Promise<void> {
+  const clone = (s: any) => (s ? JSON.parse(JSON.stringify(s)) : null);
+  let anchor = clone(editor.selection);   // 압축 지연 전 삽입 지점 고정
+  for (const file of Array.from(files)) {
+    if (!file.type.startsWith('image/')) continue;
+    let dataUrl: string;
+    try { dataUrl = await readFileAsDataUrl(file); } catch { continue; }
+    let url: string;
+    try { url = await uploadImageChokepoint(dataUrl); } catch { continue; }   // 캡 초과 등 → 건너뜀
+    if (anchor) { try { editor.tf.select(anchor); } catch { /* 경로 무효(중간 편집) 시 현재 selection */ } }
+    insertImage(editor, url, { select: true } as any);
+    anchor = clone(editor.selection);   // 다음 이미지는 방금 삽입분 다음 블록에
+  }
+  editor.tf.focus();
+}
+
 // 각 플러그인에 마크다운 입력 단축(inputRules)을 주입. HeadingRules는 H1에만 붙여도 #~###### 전 레벨 담당.
 const PLUGINS = [
   BoldPlugin.configure({ inputRules: [BoldRules.markdown({ variant: '*' }), BoldRules.markdown({ variant: '_' })] }),
@@ -220,7 +252,23 @@ const PLUGINS = [
   CodeBlockPlugin.configure({ inputRules: [CodeBlockRules.markdown({ on: 'match' })] }),  // ``` → 코드블록
   ListPlugin.configure({ inputRules: [BulletedListRules.markdown({ variant: '-' }), OrderedListRules.markdown({ variant: '.' }), TaskListRules.markdown()] }),  // - / 1. / [ ]
   LinkPlugin.configure({ inputRules: [LinkRules.markdown(), LinkRules.autolink({ variant: 'space' }), LinkRules.autolink({ variant: 'break' })] }),
-  ImagePlugin.configure({ options: { uploadImage: uploadImageChokepoint } }),   // 압축+용량 캡 초크포인트
+  ImagePlugin.configure({ options: { uploadImage: uploadImageChokepoint } })   // 압축+용량 캡 초크포인트
+    // 이미지 파일 붙여넣기/드롭도 툴바와 동일하게 위치 고정 경로로(P2). 라이브러리 withImageUpload의
+    // insertData는 압축 await 후 현재 selection에 삽입 → 지연 중 caret 이동에 취약. 이미지 파일이면
+    // insertImagesPinned로 가로채고(정확히 1회 삽입 후 return), 그 외 데이터는 원본 insertData에 위임.
+    .overrideEditor(({ editor, tf: { insertData } }: any) => ({
+      transforms: {
+        insertData(dataTransfer: DataTransfer) {
+          const text = dataTransfer.getData('text/plain');
+          const files = dataTransfer.files;
+          if (!text && files && files.length && Array.from(files).some((f) => f.type.startsWith('image/'))) {
+            insertImagesPinned(editor, files);
+            return;
+          }
+          insertData(dataTransfer);
+        },
+      },
+    })),
   VideoPlugin, MediaEmbedPlugin, FilePlugin,   // FilePlugin: 파일 첨부(file, 보이드) 노드
   CaptionPlugin.configure({ options: { query: { allow: ['img', 'video', 'media_embed'] } } }),  // img/비디오/임베드에 캡션
   // ── 확장 블록/보이드 ──
@@ -1275,10 +1323,10 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
         setUploadErr('');
         if (savedSel.current) { try { editor.tf.select(savedSel.current); } catch { /* 경로 무효 시 무시 */ } }
         // 캐럿이 목록 안이면 void 이미지가 li에 못 살므로, 목록 밖에 랜딩 문단을 만들어 selection을 옮긴 뒤
-        // insertImageFromFiles(selection 기준·비동기 FileReader)에 맡긴다 → 이미지가 목록 뒤 최상위에 삽입.
+        // insertImagesPinned(고정 위치·순차 압축)에 맡긴다 → 이미지가 목록 뒤 최상위에 삽입.
         const at = mediaInsertPath(editor);
         if (at) editor.tf.insertNodes([{ type: 'p', children: [{ text: '' }] }] as any, { at, select: true });
-        insertImageFromFiles(editor, files);
+        insertImagesPinned(editor, files);
         editor.tf.focus();
       }
     }
