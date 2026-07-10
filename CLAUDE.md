@@ -129,6 +129,10 @@ npm run preview   # 빌드 결과 미리보기 — http://localhost:4273
 - `/dev-docs <task>` → 구현 → `/update-dev-docs` → `/save-and-compact` → (재시작) → `/resume`.
 - `dev/active/<task>/`에 plan·context·tasks 3-파일로 대규모 작업 컨텍스트를 관리.
 
+### superpowers plan/spec 문서 관례 (`docs/superpowers/`)
+- `specs/` = 설계 스펙(*왜/무엇을*), `plans/` = 구현 계획(*어떻게*, 체크박스 Task). superpowers `writing-plans`/`executing-plans` 산출물.
+- **완료(구현·머지)된 plan은 `completed/`로 이동**(`git mv`로 rename 보존). `plans/`엔 **진행 중 계획만** 둔다 → `plans/`에 파일이 있으면 "미완료" 신호. `specs/`는 설계 근거라 이동하지 않고 유지.
+
 ## 참조 문서
 | 문서 | 위치 |
 |------|------|
