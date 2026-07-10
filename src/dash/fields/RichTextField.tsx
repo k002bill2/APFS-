@@ -24,8 +24,10 @@
    버튼 나열을 피하려 블록타입·정렬·색·글꼴·삽입을 드롭다운으로 묶는다. active 상태는 <Plate> 컨텍스트 안에서만
    반응형 → 툴바를 Toolbar 자식으로 분리해 useEditorState()로 매 변경 재렌더 후 동기 조회. */
 import React from 'react';
-import { Plate, PlateContent, usePlateEditor, useEditorState, useEditorReadOnly } from 'platejs/react';
+import { Plate, PlateContent, usePlateEditor, useEditorState, useEditorReadOnly, createPlatePlugin } from 'platejs/react';
 import type { PlateEditor } from 'platejs/react';
+import { KEYS, PathApi } from 'platejs';
+import { BlockPlaceholderPlugin } from '@platejs/utils/react';
 import {
   BoldPlugin, ItalicPlugin, UnderlinePlugin, StrikethroughPlugin, CodePlugin, KbdPlugin,
   H1Plugin, H2Plugin, H3Plugin, H4Plugin, H5Plugin, H6Plugin, BlockquotePlugin, HorizontalRulePlugin,
@@ -99,6 +101,75 @@ type EditorMode = 'editing' | 'viewing';
 
 // 정렬/줄간격/들여쓰기 대상 블록(lic=목록 항목). 헤딩 h4~h6까지 포함.
 const ALIGN_TARGETS = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'lic'];
+/* ── 리스트 첫 항목 Tab 들여쓰기 ──
+   list-classic은 tf.tab을 래핑해 li이면 moveListItems(구조 중첩) 후 truthy 반환하지만, 첫 항목·이미 하위
+   리스트를 가진 항목 등은 못 움직여 드래그 다중선택 Tab이 통째로 무반응이었다. → FLAT-UNIFORM: Tab은 더 이상
+   구조 중첩을 만들지 않고, 선택 범위가 건드리는 모든 li에 liIndent(숫자)만 균일 증감한다(불릿+텍스트 24px 이동,
+   중첩과 시각 동일). 단일 caret도 동일 경로. Slate JSON 노드 속성이라 저장 왕복.
+   reverse=false: 들여쓰기, true: 내어쓰기. delegate: 단일 caret·liIndent 0에서만 list-classic outdent(리스트 해제)에 위임.
+   반환 true=처리함(호출측 추가동작 말 것), false=리스트 항목 아님(호출측이 indent()/outdent() 폴백). */
+function listTabIndent(editor: any, reverse: boolean, delegate: () => void): boolean {
+  // 대상 li 선정: api.nodes({li})는 collapsed caret이면 조상 li 체인을, range면 교차 li 전부를 반환한다.
+  // 그대로 쓰면 caret-in-child가 부모+자식 둘 다 +1 되어 이중 들여쓰기(사용자 버그). lic 기준 수집은
+  // 정규화된 리스트엔 맞지만 HTML-deserialize된 데모 seed는 li가 lic 없이 텍스트/‹p›를 직접 담아 빈손이 된다.
+  // → 구조 무관: (1) 선택이 li의 "자기 콘텐츠"(중첩 서브리스트가 아닌 직속 자식)를 실제로 건드린 li만 대상으로
+  //   추리고(=content-touched, caret-in-child에서 조상 배제), (2) 그중 다른 대상 li의 자손인 것을 제거(=outermost,
+  //   부모 들여쓰면 자식은 subtree로 따라 이동하므로 자식엔 별도 liIndent 금지).
+  const liType = editor.getType(KEYS.li);
+  if (!editor.selection) return false;
+  const liEntries = [...editor.api.nodes({ match: (n: any) => n.type === liType })];
+  if (liEntries.length === 0) return false;   // 리스트 아님 → 호출측이 indent()/outdent() 폴백
+
+  const isSublist = (n: any) => Array.isArray(n?.children) && n.children.some((c: any) => c.type === liType);
+  const selNodes = [...editor.api.nodes({ at: editor.selection })];   // 선택이 교차하는 모든 노드 [node,path]
+  // content-touched: 선택이 이 li의 직속 자식 중 서브리스트가 아닌 노드(=자기 콘텐츠)를 건드림
+  const touched = (liEntries as any[]).filter(([, liPath]) =>
+    selNodes.some(([n, p]: any) => PathApi.isChild(p, liPath) && !isSublist(n)));
+  if (touched.length === 0) return false;
+  // outermost: 다른 대상 li가 조상인 li 제거. PathApi.isAncestor(py, px) = py가 px의 조상.
+  const outerLis = (touched as any[]).filter(([, px]) =>
+    !(touched as any[]).some(([, py]) => py !== px && PathApi.isAncestor(py, px)));
+
+  if (!reverse) {                              // 들여쓰기: outer li 전부 +1
+    for (const [node, path] of outerLis) {
+      editor.tf.setNodes({ liIndent: (Number(node.liIndent) || 0) + 1 }, { at: path });
+    }
+    return true;
+  }
+
+  // 내어쓰기
+  if (outerLis.length === 1) {                 // 단일
+    const [node, path] = outerLis[0];
+    const cur = Number(node.liIndent) || 0;
+    if (cur === 0) { delegate(); return true; }   // liIndent 0 → list-classic outdent(중첩 seed 해제). top-level 평항목은 no-op(기존과 동일)
+    if (cur - 1 > 0) editor.tf.setNodes({ liIndent: cur - 1 }, { at: path });
+    else editor.tf.unsetNodes('liIndent', { at: path });
+    return true;
+  }
+  // range 내어쓰기: 각 li liIndent -= 1 (min 0). 구조 이동(delegate) 없음 — 경로 흔들지 말 것.
+  for (const [node, path] of outerLis) {
+    const cur = Number(node.liIndent) || 0;
+    if (cur > 0) {
+      if (cur - 1 > 0) editor.tf.setNodes({ liIndent: cur - 1 }, { at: path });
+      else editor.tf.unsetNodes('liIndent', { at: path });
+    }
+  }
+  return true;
+}
+
+/* tf.tab 오버라이드 — PLUGINS 맨 끝(ListPlugin 뒤) 등록 → "나중=바깥"이라 내 tab이 먼저 실행되고
+   delegate가 인자로 받은 inner tab(=list-classic)으로 내려간다. ⚠️ editor.tf.tab 재호출 금지(무한재귀). */
+const ListTabIndentPlugin = createPlatePlugin({ key: 'apfs-list-tab' }).overrideEditor(
+  ({ editor, tf: { tab } }: any) => ({
+    transforms: {
+      tab: (options: any) => {
+        if (listTabIndent(editor, !!options?.reverse, () => tab(options))) return true;
+        return tab(options);
+      },
+    },
+  }),
+);
+
 // 각 플러그인에 마크다운 입력 단축(inputRules)을 주입. HeadingRules는 H1에만 붙여도 #~###### 전 레벨 담당.
 const PLUGINS = [
   BoldPlugin.configure({ inputRules: [BoldRules.markdown({ variant: '*' }), BoldRules.markdown({ variant: '_' })] }),
@@ -135,6 +206,14 @@ const PLUGINS = [
   SlashPlugin, SlashInputPlugin,
   EmojiPlugin.configure({ options: { data: emojiMartData as any } }), EmojiInputPlugin,   // : 이모지
   MarkdownPlugin,   // 마크다운 직렬화(내보내기) — editor.api.markdown.serialize()
+  // 빈 블록 placeholder(포커스된 빈 문단·리스트 항목에만). editOnly라 viewing/read-only·내보내기 미표시.
+  // 기본 query는 path.length===1이라 중첩 lic 배제 → lic는 깊이 무관 허용, p는 최상위만(표 셀 안 빈 p 등 배제).
+  BlockPlaceholderPlugin.configure({
+    options: {
+      placeholders: { [KEYS.p]: '내용을 입력하세요…', [KEYS.lic]: '내용을 입력하세요…' },
+      query: ({ editor, node, path }: any) => node.type === editor.getType(KEYS.lic) || path.length === 1,
+    },
+  }),
   // ── 드래그앤드롭 ── NodeIdPlugin이 블록 id 부여(dnd 필수), DndPlugin이 aboveSlate로 DndProvider 자동 래핑.
   NodeIdPlugin,
   DndPlugin.configure({
@@ -144,6 +223,7 @@ const PLUGINS = [
       aboveSlate: ({ children }: any) => <DndProvider backend={HTML5Backend}>{children}</DndProvider>,
     },
   }),
+  ListTabIndentPlugin,   // 맨 끝(ListPlugin 뒤) — tf.tab 오버라이드가 list-classic 위에서 먼저 실행
 ];
 
 // 콤보박스 input-element 컴포넌트 — COMPONENTS(RichTextElements)에 병합. 순환 import 방지로 여기서 결합.
@@ -1194,10 +1274,10 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
         <LineHeightDropdown />
         <button type="button" title="내어쓰기" aria-label="내어쓰기" className="apfs-rt-btn"
           onMouseDown={(e) => e.preventDefault()}
-          onClick={() => { outdent(editor); editor.tf.focus(); }}><IndentDecrease size={16} strokeWidth={2} aria-hidden={true} /></button>
+          onClick={() => { if (!listTabIndent(editor, true, () => editor.tf.tab({ reverse: true }))) outdent(editor); editor.tf.focus(); }}><IndentDecrease size={16} strokeWidth={2} aria-hidden={true} /></button>
         <button type="button" title="들여쓰기" aria-label="들여쓰기" className="apfs-rt-btn"
           onMouseDown={(e) => e.preventDefault()}
-          onClick={() => { indent(editor); editor.tf.focus(); }}><IndentIncrease size={16} strokeWidth={2} aria-hidden={true} /></button>
+          onClick={() => { if (!listTabIndent(editor, false, () => editor.tf.tab({ reverse: false }))) indent(editor); editor.tf.focus(); }}><IndentIncrease size={16} strokeWidth={2} aria-hidden={true} /></button>
 
         {/* 삽입 — 링크(인라인 URL 바 토글, 제거 버튼 제공) / 이미지(업로드·URL 통합 드롭다운). */}
         <span className="apfs-richtext__sep" aria-hidden="true" />

@@ -421,6 +421,20 @@
 .apfs-prose:focus { outline: none; }
 .apfs-prose > :first-child { margin-top: 0; }
 .apfs-prose p { margin: 0 0 .6em; }
+/* 빈 블록 placeholder — BlockPlaceholderPlugin이 포커스된 빈 문단·리스트항목(lic)에 placeholder 속성만 주입한다
+   (editOnly라 viewing/내보내기 미표시). 플러그인은 표시 조건(빈+포커스)일 때만 속성을 붙이므로 CSS는 항상 노출로 둔다.
+   블록은 style="position:relative"라 ::before를 absolute로 겹쳐 caret/텍스트 흐름을 밀지 않는다. */
+.apfs-prose [data-slate-node="element"][placeholder]::before {
+  content: attr(placeholder);
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--muted-foreground);
+  opacity: .6;
+  pointer-events: none;
+  user-select: none;
+  height: 0;
+}
 /* 헤딩 위계 — shadcn 에디터 스케일(text-4xl/3xl/xl)을 모달 에디터에 맞춰 컴팩트하게 조정.
    원본은 h2 18px·h3 16px로 본문(14px)과 거의 안 구분됐다 → 위계를 또렷하게. */
 .apfs-prose h1 { font-size: 1.9em;  font-weight: 700; margin: .85em 0 .45em; line-height: 1.25; }

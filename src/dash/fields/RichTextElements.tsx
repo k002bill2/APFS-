@@ -99,8 +99,13 @@ export function ListItemElement(props: any) {
   if (lf?.bold) markerVars['--rt-marker-fw'] = 700;
   if (lf?.italic) markerVars['--rt-marker-fst'] = 'italic';
   if (lf?.color) markerVars['--rt-marker-color'] = lf.color;
-  const liAttributes = Object.keys(markerVars).length
-    ? { ...props.attributes, style: { ...props.attributes?.style, ...markerVars } }
+  /* liIndent: 중첩 불가한(같은 ul의 첫 자식) li를 Tab으로 들여쓸 때의 단계(×24px). 불릿+텍스트가 함께 이동해
+     실제 중첩과 시각적으로 동일. Slate JSON 노드 속성이라 저장 왕복. ⚠️ 인라인 style은 top-level prop이
+     아니라 attributes.style로 넘겨야 DOM 노드에 실린다(OrderedListElement listStyleType·TableCell/Row 규약). */
+  const liIndent = Number(element.liIndent) || 0;
+  const liStyle = { ...markerVars, ...(liIndent ? { marginLeft: liIndent * 24 } : {}) };
+  const liAttributes = Object.keys(liStyle).length
+    ? { ...props.attributes, style: { ...props.attributes?.style, ...liStyle } }
     : props.attributes;
   return (
     <PlateElement {...props} attributes={liAttributes} as="li" className={isTask ? ('apfs-rt-taskitem' + (checkboxProps.checked ? ' is-checked' : '')) : undefined}>
