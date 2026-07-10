@@ -38,6 +38,10 @@ export function statusTone(label: string): Tone {
 
 const labelStyle: React.CSSProperties = { fontSize: 12, marginBottom: 5 };
 
+// 문서 전체 문자 길이 상한 — 백엔드가 없어 richtext의 base64 인라인 이미지가 저장값에 누적되므로,
+// 개별 이미지 캡(1MB)과 별개로 문서 총량을 3M chars로 막는다(다수 이미지 누적 방어).
+const DOC_MAX_CHARS = 3 * 1024 * 1024;
+
 // plain=true면 <label> 대신 <div>로 감싼다.
 // ⚠️ richtext(Plate)·filepond처럼 내부에 자체 버튼/컨트롤을 품은 복합 컨트롤은 절대 <label>로 감싸면 안 된다:
 //    <label>은 라벨 가능한 첫 자손과 암묵 연결되는데, 에디터 본문은 라벨 불가(div[role=textbox])라
@@ -75,15 +79,24 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
   // 항목 수가 많으면(>6) 2단 wide 레이아웃으로 자동 적응. 적으면 기존 1단(좁은) 모달.
   const wide = schema.fields.length > 6;
   const [errKey, setErrKey] = useState("");
+  const [docErr, setDocErr] = useState("");
   const [confirmDel, setConfirmDel] = useState(false);
   const set = (k: string, v: string) => {
     setVals((p) => ({ ...p, [k]: v }));
     if (errKey === k) setErrKey('');
+    if (docErr) setDocErr('');
   };
 
   const submit = () => {
     const req = schema.fields.find((f) => f.required && !String(vals[f.key] ?? '').trim());
     if (req) { setErrKey(req.key); return; }
+    // 문서 총량 가드 — base64 인라인 이미지 누적으로 저장값이 과대해지는 것 방지.
+    const totalChars = Object.values(vals).reduce((s, v) => s + (v?.length || 0), 0);
+    if (totalChars > DOC_MAX_CHARS) {
+      setDocErr(`문서 용량이 너무 큽니다(약 ${Math.round(totalChars / 1024 / 1024)}MB). 이미지 수를 줄이거나 첨부파일로 올려주세요.`);
+      return;
+    }
+    setDocErr('');
     onSave(buildRow(vals, initial, schema));
   };
 
@@ -126,6 +139,11 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
             })}
           </div>
         </div>
+
+        {/* 문서 총량 초과 안내 — 필드별 에러(errMsg)와 동일 스타일의 전역 배너 */}
+        {docErr && (
+          <div role="alert" className="text-danger px-[18px] pb-1" style={{ fontSize: 12 }}>{docErr}</div>
+        )}
 
         {/* 푸터 */}
         <DialogFooter>
