@@ -141,7 +141,9 @@ function listTabIndent(editor: any, reverse: boolean, delegate: () => void): boo
   if (outerLis.length === 1) {                 // 단일
     const [node, path] = outerLis[0];
     const cur = Number(node.liIndent) || 0;
-    if (cur === 0) { delegate(); return true; }   // liIndent 0 → list-classic outdent(중첩 seed 해제). top-level 평항목은 no-op(기존과 동일)
+    // liIndent 0 → list-classic outdent(중첩 seed 해제). ⚠️ 단일 caret일 때만 위임: range가 outermost 필터로
+    // 1개 li로 줄어든 경우(부모+자식만 선택)엔 구조 이동을 유발하지 않도록 collapsed 게이트(개수≠caret).
+    if (cur === 0) { if (editor.api.isCollapsed()) delegate(); return true; }
     if (cur - 1 > 0) editor.tf.setNodes({ liIndent: cur - 1 }, { at: path });
     else editor.tf.unsetNodes('liIndent', { at: path });
     return true;
@@ -1037,7 +1039,7 @@ function exportHtml(root: HTMLElement | null) {
   clone.querySelectorAll('.apfs-rt-blockdrag__content, .apfs-rt-blockdrag').forEach((w) => { const p = w.parentNode; if (p) { while (w.firstChild) p.insertBefore(w.firstChild, w); p.removeChild(w); } });
   // 편집 전용 속성 제거.
   clone.querySelectorAll('*').forEach((el) => {
-    [...el.attributes].forEach((a) => { if (a.name === 'contenteditable' || a.name === 'draggable' || a.name.startsWith('data-slate') || a.name.startsWith('data-block')) el.removeAttribute(a.name); });
+    [...el.attributes].forEach((a) => { if (a.name === 'contenteditable' || a.name === 'draggable' || a.name === 'placeholder' || a.name.startsWith('data-slate') || a.name.startsWith('data-block')) el.removeAttribute(a.name); });
   });
   // 인라인 --rt-marker-*는 클론에 보존되므로, 리셋+::marker 규칙만 넣으면 내보낸 HTML 단독으로도 마커 서식(크기·bold·italic·색)이 재현된다(중첩 누수 방지 포함).
   const doc = `<!doctype html>\n<html lang="ko">\n<head><meta charset="utf-8"><title>내용</title><style>li{--rt-marker-fs:1em;--rt-marker-fw:normal;--rt-marker-fst:normal;--rt-marker-color:currentColor}li::marker{font-size:var(--rt-marker-fs,1em);font-weight:var(--rt-marker-fw,normal);font-style:var(--rt-marker-fst,normal);color:var(--rt-marker-color,currentColor)}</style></head>\n<body>\n${clone.innerHTML}\n</body>\n</html>\n`;
