@@ -394,10 +394,15 @@ function FloatingMarkToolbar({ savedSel, setPMode, setPUrl }: {
   // 내부 드롭다운(Turn-into·More) open 동안엔 툴바를 유지한다. 드롭다운이 열리며 선택이 무너져 hidden이 되면
   // 트리거가 사라져 Radix 팝오버가 앵커를 잃고(포털 자식 언마운트) 깨지므로, ddOpen이면 마지막 위치로 강제 표시.
   const [ddOpen, setDdOpen] = useState(false);
+  // 표 안에서 선택하면 캡션 표 편집 툴바(caption-side:top)가 표 상단에 뜬다 → placement:'top'이면 첫 행에서
+  // 두 툴바가 같은 지점에 겹쳐 클릭이 막힌다(floating-ui flip은 뷰포트 경계만 피하지 정상흐름 캡션은 못 피함).
+  // 표 안에선 아래로 배치해 "위=표 구조 / 아래=텍스트 서식"으로 세로 분리한다. flip은 유지(모달 하단 경계 방어).
+  // 이 계산은 return null 가드보다 앞(훅 순서상 필수)이라 선택 없는 렌더에서도 돈다 → try/catch로 방어(line 465 패턴).
+  const inTable = (() => { try { return editor.api.some({ match: { type: 'table' } }); } catch { return false; } })();
   const state = useFloatingToolbarState({
     editorId: editor.id,
     focusedEditorId: editor.id,
-    floatingOptions: { placement: 'top', middleware: [offset(8), flip(), shift({ padding: 8 })] },
+    floatingOptions: { placement: inTable ? 'bottom' : 'top', middleware: [offset(8), flip(), shift({ padding: 8 })] },
   } as any);
   const { hidden, props, ref } = useFloatingToolbar(state);
   if (readOnly || (hidden && !ddOpen)) return null;
