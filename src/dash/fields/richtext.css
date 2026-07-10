@@ -249,7 +249,7 @@
 .apfs-rt-swatch.is-sel { outline: 2px solid var(--ring); outline-offset: 1px; }
 
 /* 이미지 편집 — 선택 시 오버레이 툴바(정렬·너비·삭제) */
-.apfs-rt-imgwrap { margin: .6em 0; }               /* textAlign(inline style)이 이미지 정렬 */
+.apfs-rt-imgwrap { margin: .6em 0; }               /* 이미지는 인라인 flex(alignItems)로 정렬(이미지+캡션 함께). 비디오/임베드는 정렬 없음 */
 .apfs-rt-imgbox {
   position: relative;
   display: inline-block;

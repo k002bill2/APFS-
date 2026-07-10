@@ -34,7 +34,7 @@ import { useDraggable, useDropLine } from '@platejs/dnd';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import {
-  Trash2, Link2, Captions, Replace,
+  Trash2, Link2, Captions, Replace, AlignLeft, AlignCenter, AlignRight,
   ChevronRight, Info, TriangleAlert, CircleCheck, Lightbulb, Rows3, Columns3,
   Plus, CalendarDays, AtSign, GripVertical, FileDown as FileDownIcon, Combine, Ungroup,
   PaintBucket, Grid3x3, Square, SquareDashed, PanelTop, PanelBottom, PanelLeft, PanelRight, X as XIcon,
@@ -191,7 +191,10 @@ export function ImageElement(props: any) {
   const safeHref = element.link ? getLinkAttributes(editor, { type: 'a', url: element.link, children: [] } as any).href : undefined;
   return (
     <PlateElement {...props}>
-      <div className="apfs-rt-imgwrap" contentEditable={false} style={{ textAlign: align as any }}>
+      {/* flex-column + alignItems로 정렬 — text-align은 block인 <figcaption>(캡션)을 못 움직여 좁힌 이미지에서
+          캡션만 왼쪽에 남는다(Codex 지적). flex 교차축 정렬은 이미지 박스(inline-block)와 캡션(block)을 함께 정렬. */}
+      <div className="apfs-rt-imgwrap" contentEditable={false}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start' }}>
         <span ref={imgboxRef} className={'apfs-rt-imgbox' + (selected ? ' is-sel' : '')} style={{ width }}>
           {readOnly && safeHref
             ? <a href={safeHref} target="_blank" rel="noopener noreferrer">{imgEl}</a>
@@ -208,6 +211,13 @@ export function ImageElement(props: any) {
           )}
           {selected && !readOnly && (
             <span className="apfs-rt-imgbar" role="toolbar" aria-label="이미지 편집">
+              {/* 정렬(왼쪽/가운데/오른쪽) — element.align에 저장, imgwrap의 textAlign이 적용. 중앙정렬은 리사이즈도 대칭(onHandleResize의 mult). */}
+              {[{ k: 'left', I: AlignLeft, t: '왼쪽' }, { k: 'center', I: AlignCenter, t: '가운데' }, { k: 'right', I: AlignRight, t: '오른쪽' }].map((a) => (
+                <button key={a.k} type="button" title={`${a.t} 정렬`} aria-label={`${a.t} 정렬`} aria-pressed={align === a.k}
+                  className={'apfs-rt-imgbtn' + (align === a.k ? ' is-active' : '')} onMouseDown={stop} onClick={() => set({ align: a.k })}>
+                  <a.I size={15} strokeWidth={2} aria-hidden={true} /></button>
+              ))}
+              <span className="apfs-rt-imgsep" aria-hidden="true" />
               <button type="button" title="이미지 교체" aria-label="이미지 주소 교체" aria-pressed={editMode === 'src'}
                 className={'apfs-rt-imgbtn' + (editMode === 'src' ? ' is-active' : '')} onMouseDown={stop} onClick={openSrc}>
                 <Replace size={15} strokeWidth={2} aria-hidden={true} /></button>
