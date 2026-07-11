@@ -4,7 +4,7 @@
 # configuration still controls model, approval, sandbox, and enabled MCP servers.
 
 [features]
-codex_hooks = true
+hooks = true
 
 [apfs_harness]
 canonical_source = "src/"
