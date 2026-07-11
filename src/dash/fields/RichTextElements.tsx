@@ -693,10 +693,13 @@ export function MentionElement(props: any) {
 
 /* ── 수식(math) — katex로 렌더. 블록(equation)/인라인(inline_equation). texExpression을 렌더. ── */
 function renderTex(tex: string, displayMode: boolean): string {
-  try { return katex.renderToString(tex || '', { throwOnError: false, displayMode, output: 'html' }); }
+  // import(비신뢰 트리)로 texExpression이 비-문자열({}·123 등)일 수 있음 → 문자열 강제.
+  // (미강제 시 katex throw → catch의 .replace가 비-문자열에 없어 재-throw로 렌더 크래시.)
+  const s = typeof tex === 'string' ? tex : '';
+  try { return katex.renderToString(s, { throwOnError: false, displayMode, output: 'html' }); }
   // 예외 시 raw tex를 dangerouslySetInnerHTML에 그대로 넣으면 XSS(texExpression은 import로 주입 가능).
   // HTML 이스케이프해 원본 LaTeX 소스만 텍스트로 노출(주입 차단). throwOnError:false라 정상엔 발동 안 하는 방어선.
-  catch { return (tex || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string)); }
+  catch { return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string)); }
 }
 export function EquationElement(props: any) {
   const editor = useEditorRef();
