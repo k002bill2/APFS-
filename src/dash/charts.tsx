@@ -26,6 +26,7 @@ const niceMax = (v) => {
   return s * p;
 };
 const fmtEok = (v) => (v >= 10000 ? (v / 10000).toFixed(1).replace(/\.0$/, "") + "조" : v.toLocaleString());
+const fmtEokU = (v) => fmtEok(v) + (v >= 10000 ? "" : "억");
 
 // 부드러운 라인 (Catmull-Rom → bezier)
 function smoothPath(pts) {
@@ -207,7 +208,7 @@ function ComposedBars({ data, height = 280, ariaLabel }: { data: any[]; height?:
           strokeWidth={2.5} />)}</svg>}{hi !== null && <Tip
         x={linePts[hi][0]}
         y={Math.min(yAmt(data[hi].actual), linePts[hi][1])}
-        show={true}><div>{data[hi].name}</div><div style={{ color: "color-mix(in srgb,var(--bg) 70%,var(--chart-1))" }}>실적 {mn(fmtEok(data[hi].actual))}억 · 집행률 {mn(data[hi].rate)}%</div></Tip>}</div>
+        show={true}><div>{data[hi].name}</div><div style={{ color: "color-mix(in srgb,var(--bg) 70%,var(--chart-1))" }}>실적 {mn(fmtEokU(data[hi].actual))} · 집행률 {mn(data[hi].rate)}%</div></Tip>}</div>
   );
 }
 
@@ -417,7 +418,7 @@ function GroupedBars({ data, height = 240, ariaLabel }: { data: any[]; height?: 
   const yAmt = (v) => m.t + ih - (v / maxAmt) * ih;
   const ticks = [0, .25, .5, .75, 1].map((t) => t * maxAmt);
   return (
-    <div ref={ref} className="relative w-full" style={{ height }}>{W > 0 && <svg width={W} height={height} role={ariaLabel ? "img" : undefined} aria-label={ariaLabel}>{ticks.map((t, i) => <g key={i}><line x1={m.l} x2={m.l + iw} y1={yAmt(t)} y2={yAmt(t)} stroke="var(--chart-grid)" strokeDasharray="3 3" /><text x={m.l - 8} y={yAmt(t) + 4} textAnchor="end" style={{ fontSize: 10.5, fill: "var(--caption)" }} className="tabular">{t.toLocaleString()}</text></g>)}{data.map((d, i) => { const x = m.l + band * i + band / 2; const active = hi === i; return <g key={i} onMouseEnter={() => setHi(i)} onMouseLeave={() => setHi(null)}><rect x={m.l + band * i} y={m.t} width={band} height={ih} fill={active ? "var(--muted)" : "transparent"} opacity={.6} /><rect x={x - bw - 2} y={yAmt(d.plan)} width={bw} height={ih - (yAmt(d.plan) - m.t)} rx={5} fill="var(--chart-grid)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + "ms" }} /><rect x={x + 2} y={yAmt(d.actual)} width={bw} height={ih - (yAmt(d.actual) - m.t)} rx={5} fill="var(--chart-2)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + 80 + "ms" }} /><text x={x} y={m.t + ih + 18} textAnchor="middle" className="font-semibold" style={{ fontSize: 11.5, fill: "var(--muted-foreground)" }}>{d.name}</text></g>; })}</svg>}{hi !== null && <Tip x={m.l + band * hi + band / 2} y={yAmt(Math.max(data[hi].plan, data[hi].actual))} show={true}><div>{data[hi].name}</div><div style={{ color: "color-mix(in srgb,var(--bg) 70%,var(--chart-2))" }}>실적 {mn(fmtEok(data[hi].actual))}억</div></Tip>}</div>
+    <div ref={ref} className="relative w-full" style={{ height }}>{W > 0 && <svg width={W} height={height} role={ariaLabel ? "img" : undefined} aria-label={ariaLabel}>{ticks.map((t, i) => <g key={i}><line x1={m.l} x2={m.l + iw} y1={yAmt(t)} y2={yAmt(t)} stroke="var(--chart-grid)" strokeDasharray="3 3" /><text x={m.l - 8} y={yAmt(t) + 4} textAnchor="end" style={{ fontSize: 10.5, fill: "var(--caption)" }} className="tabular">{t.toLocaleString()}</text></g>)}{data.map((d, i) => { const x = m.l + band * i + band / 2; const active = hi === i; return <g key={i} onMouseEnter={() => setHi(i)} onMouseLeave={() => setHi(null)}><rect x={m.l + band * i} y={m.t} width={band} height={ih} fill={active ? "var(--muted)" : "transparent"} opacity={.6} /><rect x={x - bw - 2} y={yAmt(d.plan)} width={bw} height={ih - (yAmt(d.plan) - m.t)} rx={5} fill="var(--chart-grid)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + "ms" }} /><rect x={x + 2} y={yAmt(d.actual)} width={bw} height={ih - (yAmt(d.actual) - m.t)} rx={5} fill="var(--chart-2)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + 80 + "ms" }} /><text x={x} y={m.t + ih + 18} textAnchor="middle" className="font-semibold" style={{ fontSize: 11.5, fill: "var(--muted-foreground)" }}>{d.name}</text></g>; })}</svg>}{hi !== null && <Tip x={m.l + band * hi + band / 2} y={yAmt(Math.max(data[hi].plan, data[hi].actual))} show={true}><div>{data[hi].name}</div><div style={{ color: "color-mix(in srgb,var(--bg) 70%,var(--chart-2))" }}>실적 {mn(fmtEokU(data[hi].actual))}</div></Tip>}</div>
   );
 }
 
