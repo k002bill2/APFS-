@@ -54,7 +54,7 @@ APFS/
 
 **벤더**: React 18 / ReactDOM (npm), lucide. JSX 변환은 **빌드타임(esbuild)** — 브라우저 Babel은 제거됨.
 
-**RBAC**: `Shell`이 `role` 기반으로 `APFS_DATA.MENU`를 필터링(`m.roles.includes(role)`)하므로 역할에 따라 보이는 메뉴가 달라집니다. 메뉴는 PRD 부록 A의 3-레벨(대분류 9 / 중분류 33 / 리프 137개). 역할 3등급: admin(9) / manager(8) / viewer(5).
+**RBAC**: `Shell`이 `role` 기반으로 `APFS_DATA.MENU`를 필터링(`m.roles.includes(role)`)하므로 역할에 따라 보이는 메뉴가 달라집니다. 메뉴는 PRD 부록 A의 3-레벨(대분류 9 / 중분류 33 / 리프 137개). 역할 3등급: admin(8) / manager(7) / viewer(4) — 현 구현 최상위 메뉴 기준.
 
 ## 실행 방법
 
@@ -155,3 +155,5 @@ npm run preview   # 빌드 결과 미리보기 — http://localhost:4273
 | 2026-06-30 | `apfs-datepicker` 스킬 신설 + 트리거 등록(`shadcn-radix-calendar-datepicker` 메모리 승격·원본은 포인터로 슬림화) · `apfs-form-modal`에 무거운컨트롤 포인터+노후 `date`행 정정 · `heavy-form-controls` 메모리에 required-richtext false-pass 잠복버그 추가 | `.claude/skills/apfs-datepicker/SKILL.md`, `.claude/skills/apfs-form-modal/SKILL.md`, `.claude/hooks/skill-rules.json`, 메모리 2건 | "컴포넌트별 스킬 신설" 검토 결과 — 베이스라인 테스트(3에이전트 3/3)로 무거운-필드는 갭 미확인→스킬 신설 대신 포인터만. 달력은 전 화면 공용 프리미티브라 결정성 명분으로 메모리→스킬 승격. 테스트가 부수로 발견한 잠복버그 영속화 |
 | 2026-07-03 | `apfs-aggrid` 스킬에 "우클릭 컨텍스트 메뉴 / pivot(Community 경계)" 규약 추가(내장 메뉴·pivot=Enterprise→pivot 보류·메뉴는 `onCellContextMenu`+`preventDefaultOnContextMenu`+공유 `row_context_menu.tsx`, rowPinned 가드·항목 14px·복사 mn()마스킹) + `aggrid-community-context-menu` 메모리 신설 | `.claude/skills/apfs-aggrid/SKILL.md`, 메모리 1건 | context menu 기능 구현(PR #54)에서 정립한 Community 대체 패턴 영속화 — Set Filter/Excel과 동일한 Enterprise 게이트 우회 계보에 편입 |
 | 2026-07-03 | `web-a11y`(웹 접근성/KWCAG·WCAG) 스킬 신설 + 트리거 등록(페이지 생성/수정마다 광범위 발동) + 원칙 문서 `docs/A11Y.md` 정리 | `.claude/skills/web-a11y/SKILL.md`, `.claude/hooks/skill-rules.json`, `docs/A11Y.md` | 접근성 규약 영속화 — 코드베이스 실측으로 정본 패턴(IconBtn label→aria·Field `<label>` 암묵연결·Radix Dialog 트랩·alert/skeleton/spinner 라이브리전·전역 focus-visible/reduced-motion)과 실제 갭(placeholder≠접근名, 복합컨트롤 `<label>` 오연결)을 코드 위치와 함께 규약화. 대비/터치타깃/색은 color-tokens·responsive-ui로 크로스링크(중복 금지) |
+| 2026-07-11 | `dashboard-ui` 스킬에 "차트 정책" 섹션 추가 — 자체 SVG(charts.tsx) 확장이 유일 경로, 외부 차트 라이브러리 도입=사용자 재승인 사항(에이전트 권한 밖), Highcharts·amCharts·AG Charts Enterprise·FusionCharts는 라이선스 문제로 후보 영구 제외, 재검토 시 MIT/Apache/ISC만 | `.claude/skills/dashboard-ui/SKILL.md`, 메모리 1건 | 사용자 확정 정책 영속화. TDD 검증: 베이스라인(규칙 無)에서 에이전트가 "일정상 자체구현 비현실적"으로 ECharts 설치 결정(RED) → 정책 추가 후 동일 시나리오에서 charts.tsx 확장 주경로+라이브러리는 재승인 표기로 전환(GREEN). 부수 발견: dashboard-ui 스킬 본문 pre-Vite stale(같은 날 전면 갱신, 아래 행) |
+| 2026-07-11 | `dashboard-ui` 스킬 전면 갱신 — pre-Vite stale 제거(Babel standalone·window IIFE·"빌드 없음"·apfs-bundle 편집 절차·레거시 HTML 검증 → Vite/ES modules/GenericListPage 폴백/mn·MT 마스크/npm run dev 검증), 관련 스킬 크로스링크 섹션 신설, RBAC 카운트 실측 정정(admin 8/manager 7/viewer 4) | `.claude/skills/dashboard-ui/SKILL.md`, `CLAUDE.md` | 2026-06 Vite 마이그레이션 이후 방치된 drift 해소. Codex 리뷰 반영: 차트 툴팁 마스킹 과장 정정(ComposedBars·LineTrend·Treemap 툴팁 마스킹 미적용 확인), RBAC 9/8/5→8/7/4, 변경 이력 모순 해소 |
