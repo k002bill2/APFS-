@@ -854,7 +854,7 @@ function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: stri
 function PageHeader({ crumbs, actions }: { crumbs: string[]; title?: React.ReactNode; sub?: React.ReactNode; actions?: React.ReactNode }) {
   const nav = useContext(NavContext);   // 방문기록 버튼이 쓸 onNav/route (AppShell이 공급)
   return (
-    <div style={{ marginBottom: 18 }}><div
+    <div style={{ marginBottom: 10 }}><div
         className="flex items-center justify-between gap-4 flex-wrap"><nav
           aria-label="위치"
           className="flex items-center gap-1.5 flex-wrap">{crumbs.map((c, i) => <React.Fragment key={i}>{i > 0 && <Icon name="chevron-right" size={13} style={{ color: "var(--caption)" }} />}<span
@@ -896,7 +896,7 @@ function AppShell(props) {
           ? <RailNav role={role} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />
           : <Lnb open={mobile ? true : lnbOpen} role={role} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />}<NavContext.Provider value={{ onNav: navClose, route }}><main
           className="dash-main flex-1 min-w-0"
-          style={{ padding: "22px 26px 104px" }}>{children}</main></NavContext.Provider></div>{mobile && <div
+          style={{ padding: "14px 26px 104px" }}>{children}</main></NavContext.Provider></div>{mobile && <div
         className={"lnb-backdrop" + (drawer ? " show" : "")}
         onClick={() => setDrawer(false)} />}<FavoritesFab onNav={navClose} /><NotifCenter open={notifOpen} onClose={() => setNotifOpen(false)} /><CenterModal open={userModal === "memo"} onClose={() => setUserModal(null)} title="메모" icon="memo" width={620}>{ncMemoBody(true)}</CenterModal><CenterModal open={userModal === "schedule"} onClose={() => setUserModal(null)} title="일정" icon="calendar" width={880}><NcScheduleBody /></CenterModal><CenterModal open={userModal === "logout"} onClose={() => setUserModal(null)} title="로그아웃" icon="external" width={400} footer={[<button key="c" onClick={() => setUserModal(null)} className="bg-card cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "1px solid var(--border-strong)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>취소</button>, <button key="o" onClick={() => setUserModal(null)} className="bg-brand-blue cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "none", color: "var(--on-brand-solid)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>로그아웃</button>]}><div className="py-1.5 px-1 text-foreground" style={{ fontSize: 14, lineHeight: 1.6 }}>정말 로그아웃 하시겠습니까?</div></CenterModal></div>
   );
