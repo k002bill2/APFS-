@@ -84,6 +84,8 @@ function makeRows(schema: PageSchema, n: number): Row[] {
         extra[c.key] = field.options[i % field.options.length];     // enum 도메인 시드 → 상세필터 매칭 성립
       } else if (/(년도|연도)/.test(c.label)) {
         extra[c.key] = YEAR_OPTIONS[i % YEAR_OPTIONS.length];        // 년도 도메인 시드 → year 필터 매칭
+      } else if (/(차수|회차|순번|순서)/.test(c.label)) {
+        extra[c.key] = (i % 12) + 1;                                 // 차수/회차는 작은 서수(금액 시드 오적용 방지)
       } else if (c.type === 'amount' || c.type === 'number' || c.type === 'rate') {
         extra[c.key] = (i + 1) * 100 + (i * 7) % 90;
       } else {
