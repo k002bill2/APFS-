@@ -38,12 +38,15 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     // ⚠️ fontFamily(longhand)로 패밀리만 상속 — `font: 'inherit'`(shorthand)는 font-size까지 리셋해 위의 fontSize:14를 부모값으로 덮어쓴다.
     // ⚠️ 높이 규격 38px — DatePicker 버튼/radio와 일치시킨다. lineHeight:20(=text-sm)로 자연 높이를 20+16(pad)+2(border)=38로 맞추고
     //    minHeight:38은 플로어 가드(DatePicker의 min-h-[38px] 미러). lineHeight 없으면 native input/select가 normal 메트릭으로 34·36px로 어긋난다.
-    width: '100%', boxSizing: 'border-box', padding: '8px 11px', fontSize: 14, lineHeight: '20px', minHeight: 38, fontFamily: 'inherit',
+    // 🍎 Safari(WebKit): preflight:false라 native <select>(menulist)·<input type=number>가 UA 기본 박스모델을 그대로 쓴다.
+    //    Chrome은 lineHeight+minHeight로 38에 착지하지만 Safari는 native control에 자체 패딩/메트릭을 얹어 38을 초과 → 텍스트 input과 어긋난다.
+    //    명시 height:38(하드 클램프)으로 통일한다. textarea는 rows로 커야 하므로 아래에서 height:'auto'로 되돌린다.
+    width: '100%', boxSizing: 'border-box', padding: '8px 11px', fontSize: 14, lineHeight: '20px', height: 38, minHeight: 38, fontFamily: 'inherit',
     border: `1px solid ${invalid || requiredMark ? 'var(--danger)' : 'var(--border-strong)'}`,
     borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
   };
   switch (field.control) {
-    case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} style={{ ...base, resize: 'vertical' }} />;
+    case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} style={{ ...base, height: 'auto', resize: 'vertical' }} />;
     case 'select':   return <select value={value} onChange={(e) => onChange(e.target.value)} style={base}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>;
     case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} style={base} />;
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(네이티브 input과 동일 계약).

@@ -207,6 +207,12 @@ body{
 *::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:99px;border:3px solid transparent;background-clip:content-box;}
 *::-webkit-scrollbar-track{background:transparent;}
 
+/* 🍎 Safari 자동완성 버튼 잡음 제거 — preflight:false라 WebKit 부가 UI가 노출된다.
+   number/text 입력 포커스 시 붙는 연락처·자격증명 자동완성 버튼(👤⌄)을 숨긴다(사업년도=연도엔 무의미).
+   number 스피너(⇕)는 정상 어포던스라 보존. */
+input::-webkit-contacts-auto-fill-button,
+input::-webkit-credentials-auto-fill-button{visibility:hidden!important;display:none!important;pointer-events:none;position:absolute;right:0;}
+
 /* focus ring */
 :focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 45%,transparent);outline-offset:2px;}
 /* Input Group: 컨테이너가 focus-within(border-ring+ring)으로 초점을 이미 표시하므로
