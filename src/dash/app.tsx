@@ -7,27 +7,28 @@ import { UI } from './components';
 import { APFS_DATA, HistoryStore } from './data';
 import { DesignSystem } from './designsystem';
 import { Main } from './main';
-import { Risk } from './risk';
 import { RiskManage } from './risk_manage';
-import { GpHealth } from './gp_health';
-import { Accounting } from './accounting';
 import { Schedule } from './schedule';
 import { SubFund } from './subfund';
-import { Pages as ReportMainPages } from './report_main';
 import { Pages as ReportBucheoPages } from './report_bucheo';
-import { Pages as ReportSutackPages } from './report_sutack';
-import { Pages as AssetPages } from './asset';
 import { GenericListPage } from './generic_list';
 import { AssetFunding } from './asset_funding';
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
 import { PageSkeleton } from './ui/skeleton';
-const ReportMain = ReportMainPages.ReportMain;
 const ReportBucheo = ReportBucheoPages.ReportBucheo;
-const ReportSutack = ReportSutackPages.ReportSutack;
-const AssetMain = AssetPages.AssetMain;
 const EditorPage = EditorPages.EditorPage;
+
+// 삭제된 서브 대시보드 route → 대체 페이지(main) 별칭.
+// localStorage(apfs.route)·방문기록에 잔존한 옛 route로 진입하면 GenericListPage 폴백(영문 제네릭 표)으로
+// 떨어지므로, 여기서 안전 홈(main)으로 승격한다. 'performance'는 개명(한글 route)이라 별도 매핑.
+const ROUTE_ALIAS: Record<string, string> = {
+  performance: "투자 성과·포트폴리오",
+  asset: "main", risk: "main", "gp-health": "main",
+  accounting: "main", report: "main", "report-sutack": "main",
+};
+const aliasRoute = (r: string) => ROUTE_ALIAS[r] || r;
 
 const { useState, useEffect, useRef } = React;
 const { AppShell } = Shell;
@@ -41,9 +42,8 @@ const ls = {
 function App() {
   const [theme, setTheme] = useState(() => ls.get("apfs.theme", "light"));
   const [role, setRole] = useState(() => ls.get("apfs.role", "admin"));
-  // 레거시 route 별칭: 마이그레이션 전 'performance'로 저장된 localStorage/방문기록을 새 한글 route로 승격
-  // (안 하면 resolveSchema('performance')→DEFAULT_SCHEMA 폴백으로 영문 제네릭 표가 뜬다)
-  const [route, setRoute] = useState(() => { const r = ls.get("apfs.route", "designsystem"); return r === "performance" ? "투자 성과·포트폴리오" : r; });
+  // 삭제/개명된 route는 ROUTE_ALIAS로 승격(잔존 localStorage/방문기록 방어) — 안 하면 GenericListPage 폴백(영문 제네릭 표)
+  const [route, setRoute] = useState(() => aliasRoute(ls.get("apfs.route", "designsystem")));
   const [lnbOpen, setLnbOpen] = useState(() => ls.get("apfs.lnb", "1") === "1");
   const [wide, setWide] = useState(() => ls.get("apfs.width", "fixed") === "full");
   const [navStyle, setNavStyle] = useState(() => ls.get("apfs.navstyle", "classic"));
@@ -85,7 +85,7 @@ function App() {
   }, [role]);
 
   const onNav = (r) => {
-    setRoute(r === "performance" ? "투자 성과·포트폴리오" : r);   // 레거시 route 별칭(방문기록 등 잔존 'performance' 승격)
+    setRoute(aliasRoute(r));   // 삭제/개명된 route는 ROUTE_ALIAS로 승격(잔존 딥링크·방문기록 방어)
     // 모션 축소 선호 시 부드러운 스크롤 대신 즉시 이동 (WCAG 2.3.3)
     const reduce = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
     window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
@@ -94,17 +94,11 @@ function App() {
   let page;
   if (route === "designsystem") page = <DesignSystem />;
   else if (route === "main") page = <Main onNav={onNav} navStyle={navStyle} onNavStyle={setNavStyle} />;
-  else if (route === "risk") page = <Risk onNav={onNav} />;
   else if (route === "risk-manage") page = <RiskManage onNav={onNav} />;
-  else if (route === "gp-health") page = <GpHealth onNav={onNav} />;
-  else if (route === "accounting") page = <Accounting onNav={onNav} />;
   else if (route === "schedule") page = <Schedule onNav={onNav} />;
   else if (route === "subfund") page = <SubFund onNav={onNav} />;
-  else if (route === "asset") page = <AssetMain onNav={onNav} />;
   else if (route === "asset-funding") page = <AssetFunding onNav={onNav} />;
-  else if (route === "report") page = <ReportMain onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
-  else if (route === "report-sutack") page = <ReportSutack onNav={onNav} />;
   else if (route === "editor") page = <EditorPage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)

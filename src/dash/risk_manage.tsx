@@ -214,7 +214,6 @@ function RiskManage({ onNav }: { onNav: (r: string) => void }) {
         title="조기경보 관리"
         sub="발생한 조기경보의 배정·소명·조치·종결을 처리하는 운영 콘솔 — 2026-06-16 기준"
         actions={<>
-          <Button variant="outline" size="sm" leadingIcon="shield-alert" onClick={() => onNav("risk")}>모니터링 대시보드</Button>
           <Button variant="primary" size="sm" leadingIcon="download">내보내기</Button>
         </>} />
 

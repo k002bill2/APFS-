@@ -736,17 +736,11 @@ const ROUTE_META: Record<string, { label: string; crumbs: string[]; icon: string
   const pages: Record<string, { label: string; crumbs: string[]; icon: string }> = {
     designsystem: { label: "디자인 시스템", crumbs: ["홈", "디자인 시스템"], icon: "layers" },
     main: { label: "대시보드", crumbs: ["홈", "대시보드"], icon: "home" },
-    risk: { label: "리스크 모니터링", crumbs: ["홈", "조기경보", "리스크 모니터링"], icon: "shield-alert" },
     "risk-manage": { label: "조기경보 관리", crumbs: ["홈", "조기경보", "조기경보 관리"], icon: "shield-alert" },
-    accounting: { label: "회계·자금 마감", crumbs: ["홈", "회계 관리", "회계·자금 마감"], icon: "wallet" },
-    "gp-health": { label: "운용사 건전성", crumbs: ["홈", "운용관리", "운용사 건전성"], icon: "building" },
     performance: { label: "투자 성과·포트폴리오", crumbs: ["홈", "통계조회", "투자 성과·포트폴리오"], icon: "trending" },
     schedule: { label: "일정·알림 센터", crumbs: ["홈", "일정·알림 센터"], icon: "calendar" },
-    report: { label: "개요", crumbs: ["홈", "보고관리", "개요"], icon: "file" },
     "report-bucheo": { label: "부처보고", crumbs: ["홈", "보고관리", "부처보고"], icon: "file" },
-    "report-sutack": { label: "수탁보고", crumbs: ["홈", "보고관리", "수탁보고"], icon: "file" },
     subfund: { label: "자펀드 정보관리", crumbs: ["홈", "투자자산관리", "자펀드 정보관리"], icon: "landmark" },
-    asset: { label: "개요", crumbs: ["홈", "투자자산관리", "개요"], icon: "landmark" },
   };
   for (const k in pages) idx[k] = pages[k];   // 페이지 제목이 카테고리 라벨보다 우선
   return idx;

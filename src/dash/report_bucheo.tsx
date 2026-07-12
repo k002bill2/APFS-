@@ -173,11 +173,7 @@ function ReportBucheo({ onNav }: { onNav?: (route: string) => void }) {
         crumbs={["홈", "보고관리", "부처보고"]}
         title="부처보고"
         sub="보고서 제출 및 승인 관리 — 2026-06-16 기준"
-        actions={<><Button
-            variant="outline"
-            size="sm"
-            leadingIcon="chevron-left"
-            onClick={() => onNav && onNav("report")}>메인으로</Button><Button variant="primary" size="sm" leadingIcon="download">전체 내보내기</Button></>} /><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4"><KpiBox
+        actions={<><Button variant="primary" size="sm" leadingIcon="download">전체 내보내기</Button></>} /><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4"><KpiBox
           icon="file"
           tone="primary"
           label="이번 분기 보고서"
