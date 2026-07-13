@@ -108,7 +108,7 @@ const ROLES = [
 const MENU = [
   { id:"home", label:"대시보드", icon:"home", path:"main", roles:["admin","manager","viewer"] },
 
-  { id:"asset", label:"투자자산관리", icon:"landmark", path:"asset", roles:["admin","manager","viewer"], children:[
+  { id:"asset", label:"투자자산관리", icon:"landmark", roles:["admin","manager","viewer"], children:[
     { label:"모태펀드관리", sub:true, children:[
       { label:"자펀드 공고 정보관리" },
       { label:"모태펀드 조성 및 출자현황", path:"asset-funding" },
@@ -155,7 +155,7 @@ const MENU = [
     ]},
   ]},
 
-  { id:"risk", label:"조기경보", icon:"shield-alert", path:"risk", badge:14, urgent:true, roles:["admin","manager","viewer"], children:[
+  { id:"risk", label:"조기경보", icon:"shield-alert", badge:14, urgent:true, roles:["admin","manager","viewer"], children:[
     { label:"조기경보", sub:true, badge:9, children:[
       { label:"조기경보 관리", path:"risk-manage", badge:9 },
       { label:"운용사별 조기경보 조회" },
@@ -192,7 +192,7 @@ const MENU = [
     ]},
   ]},
 
-  { id:"gp", label:"자펀드 보고", icon:"building", path:"gp-health", roles:["admin","manager","viewer"], children:[
+  { id:"gp", label:"자펀드 보고", icon:"building", roles:["admin","manager","viewer"], children:[
     { label:"운영기관정보", sub:true, badge:3, children:[
       { label:"운용사별공통코드정보" },
       { label:"운용사정보", badge:1 },
@@ -233,7 +233,7 @@ const MENU = [
     { label:"파일", sub:true, badge:1, children:[{ label:"보고 파일 조회", badge:1 }] },
   ]},
 
-  { id:"acct", label:"회계", icon:"wallet", path:"accounting", roles:["admin","manager"], badge:23, children:[
+  { id:"acct", label:"회계", icon:"wallet", roles:["admin","manager"], badge:23, children:[
     { label:"기초관리", sub:true, children:[
       { label:"계정과목관리" },{ label:"결산양식관리" },
     ]},
@@ -264,15 +264,13 @@ const MENU = [
     ]},
   ]},
 
-  { id:"report", label:"보고관리", icon:"file", path:"report", roles:["admin","manager"], children:[
+  { id:"report", label:"보고관리", icon:"file", roles:["admin","manager"], children:[
     { label:"부처보고", path:"report-bucheo", children:[
       { label:"모태펀드", sub:true, children:[{ label:"연도별투자현황" }] },
-      { label:"등록원부", sub:true, children:[{ label:"등록원부관리", path:"report-sutack" }] },
     ]},
-    { label:"수탁보고", path:"report-sutack" },
   ]},
 
-  { id:"trustee", label:"수탁보고", icon:"file-check", path:"report-sutack", roles:["admin","manager"], children:[
+  { id:"trustee", label:"수탁보고", icon:"file-check", roles:["admin","manager"], children:[
     { label:"자펀드수탁", sub:true, children:[
       { label:"실물자료관리(업로드)" },
       { label:"실물검증비교조회" },
