@@ -41,8 +41,14 @@ function findMenuContext(route: string): { title: string; crumbs: string[]; pare
         continue;
       }
       for (const leaf of child.children) {
-        if (leaf.label === route || leaf.path === route)
-          return { title: leaf.label, crumbs: ["홈", top.label, child.label, leaf.label], parent: child.label };
+        if (leaf.label === route || leaf.path === route) {
+          // 보고관리 섹션은 사용자 요청에 따라 상위 카테고리(보고관리)를 크럼에서 생략하고
+          // 부처보고를 루트로 표기한다(예: 홈 > 부처보고 > 등록원부).
+          const crumbs = top.id === "report"
+            ? ["홈", child.label, leaf.label]
+            : ["홈", top.label, child.label, leaf.label];
+          return { title: leaf.label, crumbs, parent: child.label };
+        }
       }
     }
   }
