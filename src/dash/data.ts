@@ -264,11 +264,9 @@ const MENU = [
     ]},
   ]},
 
-  { id:"report", label:"보고관리", icon:"file", roles:["admin","manager"], children:[
-    { label:"부처보고", sub:true, children:[
-      { label:"모태펀드", path:"report-bucheo" },
-      { label:"등록원부" },
-    ]},
+  { id:"report", label:"부처보고", icon:"file", roles:["admin","manager"], children:[
+    { label:"모태펀드", path:"report-bucheo" },
+    { label:"등록원부" },
   ]},
 
   { id:"trustee", label:"수탁보고", icon:"file-check", roles:["admin","manager"], children:[
