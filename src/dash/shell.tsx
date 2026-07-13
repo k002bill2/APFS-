@@ -561,7 +561,7 @@ function FavoritesFab({ onNav }) {
   const favs = MenuStore.resolve(favKeys);
   const { MenuPickerModal } = MainWidgets;
   return (
-    <div className="fixed right-6 bottom-6 flex flex-col items-end gap-3" style={{ zIndex: 60 }}>
+    <div className="fixed right-6 flex flex-col items-end gap-3" style={{ zIndex: 60, bottom: 44 }}>
       <MenuPickerModal open={edit} onClose={() => setEdit(false)} initialTab="fav" />
       {open && <>
         <div onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: -1 }} />

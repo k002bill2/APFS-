@@ -558,7 +558,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         {view === "list" && (
           <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} onClick={() => setShowAll((v) => !v)} />
         )}
-        <IconBtn icon="external" label="새 창" size={32} />
+        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
         <IconBtn icon="more" label="더보기" size={32} />
       </>}>
 
