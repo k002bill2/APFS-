@@ -170,8 +170,8 @@ function ReportBucheo({ onNav }: { onNav?: (route: string) => void }) {
     <div
       className="max-w-[1320px] mx-auto"
       style={{ animation: "dashFade .35s var(--ease) both" }}><PageHeader
-        crumbs={["홈", "보고관리", "부처보고"]}
-        title="부처보고"
+        crumbs={["홈", "부처보고", "모태펀드"]}
+        title="모태펀드"
         sub="보고서 제출 및 승인 관리 — 2026-06-16 기준"
         actions={<><Button variant="primary" size="sm" leadingIcon="download">전체 내보내기</Button></>} /><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4"><KpiBox
           icon="file"

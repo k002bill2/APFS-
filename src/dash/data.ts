@@ -265,8 +265,9 @@ const MENU = [
   ]},
 
   { id:"report", label:"보고관리", icon:"file", roles:["admin","manager"], children:[
-    { label:"부처보고", path:"report-bucheo", children:[
-      { label:"모태펀드", sub:true, children:[{ label:"연도별투자현황" }] },
+    { label:"부처보고", sub:true, children:[
+      { label:"모태펀드", path:"report-bucheo" },
+      { label:"등록원부" },
     ]},
   ]},
 
