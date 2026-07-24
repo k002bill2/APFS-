@@ -188,7 +188,8 @@ export function ImageElement(props: any) {
     editor.tf.focus();
   };
   const removeLink = () => { set({ link: undefined }); setEditMode(null); editor.tf.focus(); };
-  const imgEl = <img src={element.url} alt="" />;
+  // src는 safeUrl(media) 경유 — data:/blob:는 정식 값, javascript: 등 실행 스킴 차단.
+  const imgEl = <img src={safeUrl(element.url, 'media')} alt="" />;
   const safeHref = element.link ? getLinkAttributes(editor, { type: 'a', url: element.link, children: [] } as any).href : undefined;
   return (
     <PlateElement {...props}>
@@ -262,7 +263,8 @@ export function VideoElement(props: any) {
     <PlateElement {...props}>
       <div className="apfs-rt-imgwrap" contentEditable={false}>
         <span className={'apfs-rt-imgbox' + (selected ? ' is-sel' : '')} style={{ width: element.width || '100%' }}>
-          <video className="apfs-rt-video" src={element.url} controls />
+          {/* src는 safeUrl(media) 경유 — data:/blob:는 정식 값, javascript: 등 실행 스킴 차단. */}
+          <video className="apfs-rt-video" src={safeUrl(element.url, 'media')} controls />
         </span>
         <Caption><CaptionTextarea className="apfs-rt-caption" placeholder="캡션 입력…" /></Caption>
       </div>
