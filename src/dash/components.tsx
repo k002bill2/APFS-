@@ -6,6 +6,7 @@ import { Charts } from './charts';
 import { mn, MT, useMask } from './mask';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
+import { Progress } from './ui/progress';
 
 const { Sparkline } = Charts;
 const cx = (...a: any[]) => a.filter(Boolean).join(" ");
@@ -135,7 +136,7 @@ function FilterChip({ active, children, onClick, dot }: { active?: boolean; chil
 }
 
 /* ---- Button ---- */
-function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, children, onClick, style }: { variant?: "primary" | "secondary" | "outline" | "ghost" | "accent"; size?: Size; leadingIcon?: string; trailingIcon?: string; children?: React.ReactNode; onClick?: (e?: any) => void; style?: React.CSSProperties }) {
+function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, children, onClick, style, loading, disabled }: { variant?: "primary" | "secondary" | "outline" | "ghost" | "accent"; size?: Size; leadingIcon?: string; trailingIcon?: string; children?: React.ReactNode; onClick?: (e?: any) => void; style?: React.CSSProperties; loading?: boolean; disabled?: boolean }) {
   const sizeCls = size === "sm" ? "px-[11px] py-1.5 text-[12.5px]" : size === "lg" ? "px-5 py-[11px] text-[13.5px]" : "px-[15px] py-2 text-[13.5px]";
   const variantCls = {
     primary: "bg-primary text-primary-foreground",
@@ -144,11 +145,15 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
     ghost: "bg-transparent text-muted-foreground",
     accent: "bg-accent text-accent-foreground",
   }[variant];
+  const iconSize = size === "sm" ? 14 : 16;
   return (
+    // loading은 disabled 속성을 쓰지 않는다(포커스 유지) — aria-busy + onClick 가드로 차단. disabled prop만 진짜 disabled.
     <button
-      onClick={onClick}
-      className={cx("ui-btn ui-" + variant, "inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border border-transparent transition-all duration-150", sizeCls, variantCls)}
-      style={style}>{leadingIcon && <Icon name={leadingIcon} size={size === "sm" ? 14 : 16} stroke={2.2} />}{children}{trailingIcon && <Icon name={trailingIcon} size={size === "sm" ? 14 : 16} stroke={2.2} />}</button>
+      onClick={(e) => { if (loading || disabled) return; onClick?.(e); }}
+      disabled={disabled}
+      aria-busy={loading || undefined}
+      className={cx("ui-btn ui-" + variant, "inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border border-transparent transition-all duration-tok-fast ease-ds motion-safe:active:scale-[.97] disabled:opacity-60 disabled:cursor-not-allowed", loading && "cursor-wait", sizeCls, variantCls)}
+      style={style}>{loading ? <Icon name="loader" size={iconSize} stroke={2.2} className="animate-spin" /> : leadingIcon && <Icon name={leadingIcon} size={iconSize} stroke={2.2} />}{children}{trailingIcon && <Icon name={trailingIcon} size={iconSize} stroke={2.2} />}</button>
   );
 }
 
@@ -161,7 +166,7 @@ function IconBtn({ icon, onClick, label, badge, active, size = 38, activeClassNa
       aria-haspopup={expanded === undefined ? undefined : "menu"}
       aria-expanded={expanded}
       aria-pressed={pressed}
-      className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border transition-all duration-150",
+      className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border transition-all duration-tok-fast ease-ds motion-safe:active:scale-95",
         active ? (activeClassName || "bg-card text-primary border-ring") : "bg-transparent text-muted-foreground border-transparent")}
       style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}><Icon name={icon} size={20} stroke={2} />{badge > 0 && <span
         className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-[color:var(--destructive-foreground)] text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</button>
@@ -194,4 +199,4 @@ function CountPill({ count, urgent }: { count?: number; urgent?: boolean }) {
   );
 }
 
-export const UI = { ColorChip, StatusBadge, DeltaBadge, StatCard, Card, ChartCard, SegTabs, FilterChip, Button, IconBtn, EmptyState, CountPill, toneVar };
+export const UI = { ColorChip, StatusBadge, DeltaBadge, StatCard, Card, ChartCard, SegTabs, FilterChip, Button, IconBtn, EmptyState, CountPill, Progress, toneVar };

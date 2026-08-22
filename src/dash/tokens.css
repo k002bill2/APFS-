@@ -119,6 +119,11 @@
   --shadow-md:0 4px 14px rgba(20,40,28,.08),0 1px 3px rgba(20,40,28,.05);
   --shadow-lg:0 12px 34px rgba(20,40,28,.14),0 4px 10px rgba(20,40,28,.07);
   --ease:cubic-bezier(.4,0,.2,1);
+  /* 모션 duration 토큰 — tailwind.config.js의 transitionDuration(duration-tok*)이 소비.
+     Tweaks 패널이 런타임 조정 가능(전역 인터랙션 속도 일원화). */
+  --dur-fast:120ms;
+  --dur:180ms;
+  --dur-slow:280ms;
 }
 
 .dark{
@@ -242,4 +247,9 @@ input::-webkit-credentials-auto-fill-button{visibility:hidden!important;display:
    중간에 .12로 '어두워지는' 범위로 돈다(밝아지며 튀는 것 방지). reduced-motion은 아래 전역 규칙이 무력화. */
 @keyframes apfs-mask-pulse{0%,100%{opacity:.28}50%{opacity:.12}}
 .apfs-mask-pulse{animation:apfs-mask-pulse 2s cubic-bezier(.4,0,.6,1) infinite;}
+/* 진행바(Progress) indeterminate — fill 폭 고정 + translateX 슬라이드(transform 컨벤션 준수, left/width 미사용). */
+@keyframes apfs-progress-indet{from{transform:translateX(-100%)}to{transform:translateX(340%)}}
+.apfs-progress-indet{animation:apfs-progress-indet 1.15s var(--ease) infinite;}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;}}
+/* 저모션: indeterminate 바가 0% 프레임(off-screen)에 얼어 '빈 트랙'으로 읽히는 것 방지 → 정적 저opacity 전폭 표시. */
+@media (prefers-reduced-motion:reduce){.apfs-progress-indet{animation:none;transform:none;width:100%!important;opacity:.45;}}

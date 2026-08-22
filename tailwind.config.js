@@ -32,6 +32,8 @@ module.exports = {
     boxShadow: { sm: 'var(--shadow-sm)', md: 'var(--shadow-md)', lg: 'var(--shadow-lg)' },
     fontFamily: { sans: 'var(--font-sans)' },
     transitionTimingFunction: { ds: 'cubic-bezier(.4,0,.2,1)' },
+    // 모션 duration 토큰 — tokens.css의 --dur*를 소비. 컴포넌트는 duration-tok-fast/duration-tok로 통일(리터럴 duration-150 분산 방지).
+    transitionDuration: { 'tok-fast': 'var(--dur-fast)', tok: 'var(--dur)', 'tok-slow': 'var(--dur-slow)' },
     // shadcn Radix portal(z-50)을 셸 raw 정수 chrome(모달 71/백드롭 70/FAB 60/헤더 50/플라이아웃 47/드롭다운 41) 위로 띄우는 통일 스케일.
     zIndex: { overlay: '75', modal: '80', popover: '85', tooltip: '90' },
     keyframes: {
