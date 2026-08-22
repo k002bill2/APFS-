@@ -38,8 +38,16 @@ APFS = 농림수산식품모태펀드 투자자산관리시스템 **대시보드
 ## 데이터 마스크
 `src/dash/mask.tsx`가 상시 ON으로 화면 데이터를 가린다(실데이터 연동 전). 숫자/금액/날짜는 `mn(v)`, 텍스트(인명·코드 등)는 `<MT>…</MT>`로 감싼다. 표 헤더·카드 제목·탭·단위·StatusBadge·차트 축·달력 날짜는 **가리지 않는다**("축은 두고 데이터는 가린다").
 
+## 인터랙션 · 모션 (전역 공통 — 새로 만들지 말고 재사용)
+버튼 로딩/비활성·진행 표시·클릭 피드백은 이미 공통 프리미티브가 있다. **페이지마다 스피너·진행바를 새로 만들지 말 것**(라이브러리 도입도 불필요 — PR #104에서 "라이브러리 0"으로 확립).
+- **로딩/비활성 버튼**: `UI.Button`의 `loading`(스피너 + `aria-busy`, 포커스 유지·클릭 자동 차단)·`disabled`(진짜 비활성) prop. 예: `<Button loading>저장 중</Button>`. ⚠️ 로딩을 `disabled` 속성으로 막지 말 것(포커스 유실) — `loading`이 처리.
+- **진행 표시**: `UI.Progress`(`src/dash/ui/progress.tsx`) — `value`(0~100)면 determinate, 생략하면 indeterminate. `label`로 접근名 지정. 예: `<Progress value={64} label="집행률" />`.
+- **클릭 press 피드백**: `Button`/`IconBtn`은 `motion-safe:active:scale` 내장. 새 클릭 타깃엔 `motion-safe:active:scale-[.97]`을 쓴다 — 전역 reduced-motion 규칙은 transition을 못 막으므로 `active:scale` 단독(motion-safe 없이) 사용 금지.
+- **모션 토큰**: duration은 `duration-tok-fast`/`duration-tok`(=`--dur-*` CSS 변수), easing은 `ease-ds`로 통일. 신규 리터럴 `duration-150` 금지. indeterminate 등 keyframe 애니메이션은 **저모션 폴백을 함께 정의**(0% 프레임이 화면 밖이면 "멈춤"으로 오독됨).
+- 스피너 본체=`Spinner`(`ui/spinner.tsx`, react-spinners 래퍼), 토스트=`sonner`. 프리뷰: designsystem "3-2-1. 인터랙션".
+
 ## 작업 가이드
-1. **재사용 우선**: 새 컴포넌트 전 `UI`/`Icon`/`Charts` 프리미티브에 이미 있는지 확인.
+1. **재사용 우선**: 새 컴포넌트 전 `UI`/`Icon`/`Charts` 프리미티브에 이미 있는지 확인(로딩·진행·press·모션은 위 "인터랙션·모션" 참조 — 새로 만들지 말 것).
 2. **토큰 사용**: 색/간격/타이포는 하드코딩 대신 CSS 변수 토큰 사용(Tweaks 패널이 런타임 조정).
 3. **RBAC 인지**: `Shell`은 `role` 기반으로 `APFS_DATA.MENU`를 필터링(`m.roles.includes(role)`). 역할 3등급(admin/manager/viewer). 새 메뉴/페이지는 역할 가시성(`roles`)을 명시.
 4. **테마 양립**: 라이트/다크 모두에서 대비/가독성 확인.
