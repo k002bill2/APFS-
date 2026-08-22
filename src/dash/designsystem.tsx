@@ -16,7 +16,7 @@ import { Icon } from './icons';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 
-const { ColorChip, StatusBadge, StatCard, ChartCard, Button, FilterChip, SegTabs, DeltaBadge, Card } = UI;
+const { ColorChip, StatusBadge, StatCard, ChartCard, Button, FilterChip, SegTabs, DeltaBadge, Card, Progress } = UI;
 const { Sparkline, Donut, LineTrend, GroupedBars, ComposedBars, Gauge, HBars, Treemap } = Charts;
 const { ColumnTrack, ProgressRing, DualSeries, PieLabeled, UsageSegments } = GalleryCharts;
 const D = APFS_DATA;
@@ -189,6 +189,29 @@ function DesignSystem() {
               <Item variant="outline"><ItemMedia variant="icon"><Icon name="landmark" size={18} /></ItemMedia><ItemContent><ItemTitle>농식품 벤처투자조합 1호</ItemTitle><ItemDescription>결성 320억 · 운용사 ○○인베스트먼트 · 존속 8년</ItemDescription></ItemContent><ItemActions><StatusBadge tone="success" icon="check" label="정상" /></ItemActions></Item>
               <Item variant="outline"><ItemMedia variant="icon"><Icon name="wallet" size={18} /></ItemMedia><ItemContent><ItemTitle>수산 스케일업 펀드</ItemTitle><ItemDescription>결성 150억 · 운용사 △△자산운용 · 조기경보 관찰</ItemDescription></ItemContent><ItemActions><StatusBadge tone="warning" icon="alert-triangle" label="주의" /></ItemActions></Item>
             </ItemGroup>
+          </Card>
+        </div>
+      </Section>
+
+      <Section title="3-2-1. 인터랙션 — 진행 표시 · 버튼 상태" desc="라이브러리 없이 CSS로 구현한 전역 공통 인터랙션. Progress(determinate/indeterminate) + Button loading/disabled + 버튼·아이콘버튼 press 스케일(motion-safe, 저모션 자동 존중). duration은 모션 토큰(--dur/duration-tok), easing은 ease-ds로 통일.">
+        <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(340px,100%),1fr))" }}>
+          <Card className="flex flex-col gap-3">
+            <div className="t-label" style={{ textTransform: "none" }}>Progress</div>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5"><span className="t-caption">Determinate · 64%</span><Progress value={64} label="집행률" /></div>
+              <div className="flex flex-col gap-1.5"><span className="t-caption">Indeterminate (불확정 진행)</span><Progress label="처리 중" /></div>
+              <div className="flex flex-col gap-1.5"><span className="t-caption">sm · 32%</span><Progress size="sm" value={32} label="진행률" /></div>
+            </div>
+          </Card>
+          <Card className="flex flex-col gap-3">
+            <div className="t-label" style={{ textTransform: "none" }}>Button 상태 (클릭 시 press 스케일)</div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="primary" leadingIcon="check">기본</Button>
+              <Button variant="primary" loading>저장 중</Button>
+              <Button variant="outline" disabled>비활성</Button>
+              <Button variant="ghost" loading>불러오는 중</Button>
+            </div>
+            <p className="t-caption m-0">loading은 포커스를 유지한 채 aria-busy로 알리고 클릭만 차단합니다. disabled만 실제 비활성.</p>
           </Card>
         </div>
       </Section>
