@@ -25,3 +25,7 @@ docs/솔루션비교/
 
 # 로컬 툴 프로젝트 설정 (git_path 등 개인 절대경로 포함 — 환경별 로컬 파일)
 .aos-project.json
+
+# 디자인 시스템 핸드오프 전달본 (doc/ 스냅샷 + 압축본 — 특정 시점 산출물, 원본은 src/·docs/ 정본, 저장소 미추적)
+doc/
+apfs-design-handoff.zip
