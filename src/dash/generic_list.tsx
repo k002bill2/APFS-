@@ -30,9 +30,14 @@ const { useState, useEffect, useRef, useCallback, useMemo } = React;
 const { Button, StatusBadge, IconBtn, ColorChip, SegTabs, DeltaBadge } = UI;
 const D = APFS_DATA;
 
+/* MENU 트리 노드 형태 — data.ts의 MENU는 선언 타입 없는 이질적 리터럴 배열이라
+   union 프로퍼티 접근(children/path)이 좁혀지지 않는다. 실제 트리 구조(라벨 필수,
+   path/children 선택)를 명시해 findMenuContext 안에서만 정합화한다. 런타임 무변경. */
+type MenuNode = { label: string; path?: string; children?: MenuNode[] };
+
 /* MENU를 재귀 탐색해 route와 일치하는 항목의 제목·breadcrumb·상위 레이블을 반환 */
 function findMenuContext(route: string): { title: string; crumbs: string[]; parent?: string } {
-  for (const top of D.MENU) {
+  for (const top of D.MENU as MenuNode[]) {
     if (!top.children) continue;
     for (const child of top.children) {
       if (!child.children) {
