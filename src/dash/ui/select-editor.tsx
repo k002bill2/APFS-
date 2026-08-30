@@ -105,6 +105,11 @@ export function SelectEditorContent({
 
   const editor = usePlateEditor(
     {
+      // enabled를 명시하면 usePlateEditor 반환 타입이 non-null(TPlateEditor)로 좁혀진다.
+      // 생략 시 조건부 타입이 collapse되지 않아 `| null`이 남아 아래 editor.tf/api 접근이
+      // possibly-null로 잡힌다. true는 라이브러리 계약상 undefined(기본)와 동일하게 editor를
+      // 생성하므로 런타임 동작은 그대로다.
+      enabled: true,
       plugins: [MultiSelectPlugin.withComponent(TagElement)],
       value: createEditorValue(value),
     },
