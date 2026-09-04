@@ -9,7 +9,7 @@ import React from 'react';
    │   _on = false → 마스크 OFF : 실데이터 그대로 표시                    │
    │ ▶ 실데이터 연동 시점에 false 로만 바꾸면 전 화면 마스크가 해제됨.   │
    └──────────────────────────────────────────────────────────────────┘ */
-const _on = true;
+const _on = false;
 
 /* 마스크 상태를 루트 DOM 속성으로 투영 — CSS가 토글을 따라 분기하도록(예: AG Grid 헤더 placeholder).
    _on이 SSOT이므로 여기서 1회 설정하면 _on=false 전환 시 헤더 placeholder도 함께 해제된다. */

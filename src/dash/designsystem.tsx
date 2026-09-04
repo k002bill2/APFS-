@@ -13,10 +13,12 @@ import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '
 import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from './ui/item';
 import { Search } from 'lucide-react';
 import { Icon } from './icons';
+import { CountUp } from './motion/count-up';
+import { Checkbox } from './ui/checkbox';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 
-const { ColorChip, StatusBadge, StatCard, ChartCard, Button, FilterChip, SegTabs, DeltaBadge, Card, Progress } = UI;
+const { ColorChip, StatusBadge, StatCard, ChartCard, Button, IconBtn, FilterChip, SegTabs, DeltaBadge, Card, Progress } = UI;
 const { Sparkline, Donut, LineTrend, GroupedBars, ComposedBars, Gauge, HBars, Treemap } = Charts;
 const { ColumnTrack, ProgressRing, DualSeries, PieLabeled, UsageSegments } = GalleryCharts;
 const D = APFS_DATA;
@@ -85,6 +87,66 @@ function RichTextPreview() {
       <div style={{ maxWidth: 860 }}><SchemaField field={RICHTEXT_FIELD} value={v} onChange={setV} /></div>
       <div className="t-caption" style={{ wordBreak: "break-all", maxHeight: 72, overflow: "auto" }}>저장 값(직렬화): <code className="tabular">{v || '(빈 문자열)'}</code></div>
     </Card>
+  );
+}
+
+/* 모션 인터랙션 프리뷰 — Animate UI(Motion) 도입분(카운트업·탭 슬라이드·버튼 spring·체크박스·reveal).
+   상태를 쓰므로 별도 컴포넌트로 분리(TagsPreview/RichTextPreview 관례). 저모션은 app.tsx 루트
+   <MotionConfig reducedMotion="user">가 transform/scale을 끄고 opacity만 남긴다(여기서 게이트 불필요). */
+function MotionPreview() {
+  const [seg, setSeg] = useState("월");
+  const [replay, setReplay] = useState(0);
+  const [chk, setChk] = useState<Record<string, boolean>>({ a: true, b: false });
+  return (
+    <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(340px,100%),1fr))" }}>
+      <Card className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="t-label" style={{ textTransform: "none" }}>KPI 카운트업 (CountUp)</div>
+          <Button variant="ghost" size="sm" leadingIcon="refresh" onClick={() => setReplay((r) => r + 1)}>재생</Button>
+        </div>
+        <div key={replay} className="flex flex-col gap-2">
+          <div className="flex items-baseline gap-2"><span className="t-display tabular" style={{ fontSize: 24 }}><CountUp value="23,840" /></span><span className="t-caption">단일 숫자·콤마 → 애니메이션</span></div>
+          <div className="flex items-baseline gap-2"><span className="t-display tabular" style={{ fontSize: 24 }}><CountUp value="94.2%" /></span><span className="t-caption">소수·단위 보존</span></div>
+          <div className="flex items-baseline gap-2"><span className="t-display tabular" style={{ fontSize: 24 }}><CountUp value="2조 3,840억원" /></span><span className="t-caption">복합(숫자 2개+) → 정적 폴백</span></div>
+        </div>
+        <p className="t-caption m-0">화면 진입 시 1회(useInView once). 마스크 ON·복합·비수치는 굴리지 않고 정적 표시(중간 프레임 오포맷 방지).</p>
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <div className="t-label" style={{ textTransform: "none" }}>탭 슬라이딩 인디케이터 (SegTabs)</div>
+        <SegTabs options={["일", "월", "분기", "연"]} value={seg} onChange={setSeg} />
+        <p className="t-caption m-0">활성 배경이 Motion <code>layoutId</code>로 슬라이드(spring.control). 인스턴스별 <code>useId</code>로 표시자를 분리해 여러 탭 그룹이 서로 튀지 않는다.</p>
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <div className="t-label" style={{ textTransform: "none" }}>버튼 spring hover · press</div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="primary" leadingIcon="check">기본</Button>
+          <Button variant="outline">아웃라인</Button>
+          <IconBtn icon="bell" label="알림" />
+          <IconBtn icon="settings" label="설정" />
+        </div>
+        <p className="t-caption m-0">hover 시 확대(버튼 1.03/아이콘 1.06), 누르면 축소(0.97/0.9) — spring.control. 색 전환은 CSS(transition-colors) 유지.</p>
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <div className="t-label" style={{ textTransform: "none" }}>체크박스 scale-pop</div>
+        <div className="flex flex-col gap-2.5">
+          {[{ id: "mp-chk-a", k: "a", label: "체크 시 표시자가 spring으로 팝(enter-only)" },
+            { id: "mp-chk-b", k: "b", label: "해제는 즉시 언마운트(오버레이 exit 비호환 회피)" }].map((o) => (
+            <div key={o.k} className="flex items-center gap-2.5">
+              <Checkbox id={o.id} checked={chk[o.k]} onCheckedChange={(v: any) => setChk((s) => ({ ...s, [o.k]: !!v }))} />
+              <label htmlFor={o.id} className="t-caption cursor-pointer select-none">{o.label}</label>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card reveal className="flex flex-col gap-2" style={{ gridColumn: "1 / -1" }}>
+        <div className="t-label" style={{ textTransform: "none" }}>스크롤 reveal (Card / ChartCard <code>reveal</code> prop)</div>
+        <p className="t-caption m-0">이 카드는 <code>reveal</code> opt-in — 화면 진입 시 fade + slide(y 12px, tween.reveal, viewport once). 래퍼 div 없이 root를 <code>motion.section</code>으로 전환해 grid 자식 신원(<code>dcol-span</code>)을 보존한다. 메인 차트 위젯 6개에 적용됨.</p>
+      </Card>
+    </div>
   );
 }
 
@@ -193,7 +255,7 @@ function DesignSystem() {
         </div>
       </Section>
 
-      <Section title="3-2-1. 인터랙션 — 진행 표시 · 버튼 상태" desc="라이브러리 없이 CSS로 구현한 전역 공통 인터랙션. Progress(determinate/indeterminate) + Button loading/disabled + 버튼·아이콘버튼 press 스케일(motion-safe, 저모션 자동 존중). duration은 모션 토큰(--dur/duration-tok), easing은 ease-ds로 통일.">
+      <Section title="3-2-1. 인터랙션 — 진행 표시 · 버튼 상태" desc="라이브러리 없이 CSS로 구현한 전역 공통 인터랙션. Progress(determinate/indeterminate) + Button loading/disabled. duration은 모션 토큰(--dur/duration-tok), easing은 ease-ds로 통일. (버튼·아이콘버튼 hover/press 스케일은 Motion spring으로 이전 → 3-2-2 참조)">
         <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(340px,100%),1fr))" }}>
           <Card className="flex flex-col gap-3">
             <div className="t-label" style={{ textTransform: "none" }}>Progress</div>
@@ -214,6 +276,10 @@ function DesignSystem() {
             <p className="t-caption m-0">loading은 포커스를 유지한 채 aria-busy로 알리고 클릭만 차단합니다. disabled만 실제 비활성.</p>
           </Card>
         </div>
+      </Section>
+
+      <Section title="3-2-2. 모션 인터랙션 (Animate UI · Motion)" desc="motion 13.2.0 spring 프리셋(motion/presets.ts) 기반 마이크로 인터랙션. 저모션(OS reduced-motion)은 app.tsx 루트 <MotionConfig reducedMotion=&quot;user&quot;>가 transform/scale을 끄고 opacity만 남긴다. ⚠ spring 컴포넌트는 duration이 아닌 stiffness/damping 기반이라 Tweaks 패널의 --dur* 속도 노브에 연동되지 않는다(2026-09-04 명시 결정).">
+        <MotionPreview />
       </Section>
 
       <Section title="3-3. 폼 컨트롤 — 태그 입력" desc="스키마 'tags' 컨트롤(Plate SelectEditor). 여러 태그를 검색·선택·신규 생성. 값은 JSON 배열 문자열로 직렬화되어 RowFormModal 저장 계약을 따릅니다. 실제 조합 검증은 폼 모달(Dialog) 안에서 수행.">
