@@ -1,12 +1,15 @@
 /* 공통 래퍼 컴포넌트 — Tailwind 유틸리티 className 기반.
    동적 색(accent/tone 토큰)·계산된 치수는 인라인 유지(Tailwind로 표현 불가), 나머지는 유틸리티. */
 import React from 'react';
+import { motion } from 'motion/react';
 import { Icon } from './icons';
 import { Charts } from './charts';
 import { mn, MT, useMask } from './mask';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import { Progress } from './ui/progress';
+import { spring } from './motion/presets';
+import { CountUp } from './motion/count-up';
 
 const { Sparkline } = Charts;
 const cx = (...a: any[]) => a.filter(Boolean).join(" ");
@@ -70,7 +73,7 @@ function StatCard({ kpi, onClick, emphasis }: { kpi: any; onClick?: () => void; 
         "rounded-card border border-border bg-card px-[18px] py-4 font-[inherit] text-[inherit] transition-shadow duration-200",
         emphasis ? "shadow-md" : "shadow-sm", onClick ? "cursor-pointer" : "cursor-default")}><div className="flex items-center justify-between gap-2"><div className="flex items-center gap-[9px] min-w-0"><ColorChip icon={kpi.icon} color={c} size={32} iconSize={18} /><span className="t-label whitespace-nowrap overflow-hidden text-ellipsis"><MT>{kpi.label}</MT></span></div>{kpi.fr && <span className="t-caption text-[10px] opacity-80 whitespace-nowrap"><MT>{kpi.fr}</MT></span>}</div><div className="flex items-end gap-2"><div className="flex-1 min-w-0"><div className="flex items-baseline gap-1 whitespace-nowrap"><span
               className="t-display tabular"
-              style={{ fontSize: emphasis ? 24 : 22, letterSpacing: "-.01em" }}>{mn(kpi.value)}</span><span className="text-[12.5px] font-semibold text-muted-foreground">{kpi.unit}</span></div><div className="mt-[5px]"><DeltaBadge value={kpi.delta} label={kpi.deltaLabel} invert={kpi.invertDelta} /></div></div><div className="w-[78px] shrink-0"><Sparkline data={kpi.trend} color={c} id={kpi.id} height={38} /></div></div>{kpi.progress != null && <div className="h-[5px] rounded-full bg-muted overflow-hidden mt-0.5"><div
+              style={{ fontSize: emphasis ? 24 : 22, letterSpacing: "-.01em" }}><CountUp value={kpi.value} /></span><span className="text-[12.5px] font-semibold text-muted-foreground">{kpi.unit}</span></div><div className="mt-[5px]"><DeltaBadge value={kpi.delta} label={kpi.deltaLabel} invert={kpi.invertDelta} /></div></div><div className="w-[78px] shrink-0"><Sparkline data={kpi.trend} color={c} id={kpi.id} height={38} /></div></div>{kpi.progress != null && <div className="h-[5px] rounded-full bg-muted overflow-hidden mt-0.5"><div
           className="h-full rounded-full"
           style={{ width: kpi.progress + "%", background: c }} /></div>}</button>
   );
@@ -99,6 +102,8 @@ function ChartCard({ title, sub, icon, accent = "var(--primary)", right, childre
 /* ---- SegTabs ---- */
 function SegTabs({ options, value, onChange, size = "md" }: { options: any[]; value?: any; onChange?: (v: any) => void; size?: "sm" | "md" }) {
   const sv = (x: any) => (x == null ? "" : String(x));
+  // 활성 표시자의 layoutId — SegTabs 인스턴스마다 고유(안 그러면 여러 탭 그룹의 표시자가 서로 튐)
+  const indicatorId = React.useId();
   return (
     <ToggleGroup.Root
       type="single"
@@ -115,9 +120,19 @@ function SegTabs({ options, value, onChange, size = "md" }: { options: any[]; va
           <ToggleGroup.Item
             key={sv(v)}
             value={sv(v)}
-            className={cx("cursor-pointer font-[inherit] border-0 rounded-[7px] font-semibold transition-all duration-150",
+            className={cx("relative cursor-pointer font-[inherit] border-0 rounded-[7px] font-semibold transition-colors duration-150",
               size === "sm" ? "px-2.5 py-1 text-xs" : "px-[13px] py-[5px] text-[12.5px]",
-              active ? "bg-card text-primary shadow-sm" : "bg-transparent text-muted-foreground")}>{lab}</ToggleGroup.Item>
+              active ? "text-primary" : "bg-transparent text-muted-foreground")}>
+            {/* 활성 배경 = Motion layoutId 표시자(탭 전환 시 슬라이드). 저모션 시 MotionConfig가 스냅으로 대체 */}
+            {active && (
+              <motion.span
+                layoutId={indicatorId}
+                className="absolute inset-0 rounded-[7px] bg-card shadow-sm"
+                transition={spring.control}
+              />
+            )}
+            <span className="relative z-[1]">{lab}</span>
+          </ToggleGroup.Item>
         );
       })}</ToggleGroup.Root>
   );
@@ -148,28 +163,37 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
   const iconSize = size === "sm" ? 14 : 16;
   return (
     // loading은 disabled 속성을 쓰지 않는다(포커스 유지) — aria-busy + onClick 가드로 차단. disabled prop만 진짜 disabled.
-    <button
+    // hover/press는 Motion spring(원본 Animate UI Button: hoverScale/tapScale). scale은 transform이라
+    // MotionConfig reducedMotion="user"가 저모션 시 자동 비활성. 색 전환은 CSS(transition-colors) 유지.
+    <motion.button
       onClick={(e) => { if (loading || disabled) return; onClick?.(e); }}
       disabled={disabled}
       aria-busy={loading || undefined}
-      className={cx("ui-btn ui-" + variant, "inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border border-transparent transition-all duration-tok-fast ease-ds motion-safe:active:scale-[.97] disabled:opacity-60 disabled:cursor-not-allowed", loading && "cursor-wait", sizeCls, variantCls)}
-      style={style}>{loading ? <Icon name="loader" size={iconSize} stroke={2.2} className="animate-spin" /> : leadingIcon && <Icon name={leadingIcon} size={iconSize} stroke={2.2} />}{children}{trailingIcon && <Icon name={trailingIcon} size={iconSize} stroke={2.2} />}</button>
+      whileHover={disabled || loading ? undefined : { scale: 1.03 }}
+      whileTap={disabled || loading ? undefined : { scale: 0.97 }}
+      transition={spring.control}
+      className={cx("ui-btn ui-" + variant, "inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border border-transparent transition-colors duration-tok-fast ease-ds disabled:opacity-60 disabled:cursor-not-allowed", loading && "cursor-wait", sizeCls, variantCls)}
+      style={style}>{loading ? <Icon name="loader" size={iconSize} stroke={2.2} className="animate-spin" /> : leadingIcon && <Icon name={leadingIcon} size={iconSize} stroke={2.2} />}{children}{trailingIcon && <Icon name={trailingIcon} size={iconSize} stroke={2.2} />}</motion.button>
   );
 }
 
 /* ---- IconBtn ---- */
 function IconBtn({ icon, onClick, label, badge, active, size = 38, activeClassName, activeStyle, expanded, pressed }: { icon: string; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean }) {
   const btn = (
-    <button
+    // hover/press는 Motion spring(색 전환은 CSS 유지). scale은 저모션 시 MotionConfig가 자동 비활성.
+    <motion.button
       onClick={onClick}
       aria-label={label && badge && badge > 0 ? `${label} ${badge > 99 ? "99+" : badge}건` : label}
       aria-haspopup={expanded === undefined ? undefined : "menu"}
       aria-expanded={expanded}
       aria-pressed={pressed}
-      className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border transition-all duration-tok-fast ease-ds motion-safe:active:scale-95",
+      whileHover={{ scale: 1.06 }}
+      whileTap={{ scale: 0.9 }}
+      transition={spring.control}
+      className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border transition-colors duration-tok-fast ease-ds",
         active ? (activeClassName || "bg-card text-primary border-ring") : "bg-transparent text-muted-foreground border-transparent")}
       style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}><Icon name={icon} size={20} stroke={2} />{badge > 0 && <span
-        className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-[color:var(--destructive-foreground)] text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</button>
+        className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-[color:var(--destructive-foreground)] text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</motion.button>
   );
   if (!label) return btn;
   return (

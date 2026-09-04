@@ -17,6 +17,7 @@ import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
 import { PageSkeleton } from './ui/skeleton';
+import { MotionConfig } from 'motion/react';
 const ReportBucheo = ReportBucheoPages.ReportBucheo;
 const EditorPage = EditorPages.EditorPage;
 
@@ -105,6 +106,9 @@ function App() {
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;
 
   return (
+    // reducedMotion="user": OS 저모션 선호 시 Motion의 transform/scale은 끄고 opacity는 유지.
+    // (tokens.css의 CSS animation 차단 규칙은 JS 구동 Motion에 무효 → 여기가 유일한 관문)
+    <MotionConfig reducedMotion="user">
     <TooltipProvider delayDuration={300}>
     <AppShell
       theme={theme}
@@ -122,6 +126,7 @@ function App() {
       notifs={notifs}
       onReadAll={() => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })))}>{loading ? <PageSkeleton withSpinner={routeChanged} /> : page}<Toaster theme={theme} /></AppShell>
     </TooltipProvider>
+    </MotionConfig>
   );
 }
 
