@@ -5,7 +5,9 @@
 import * as React from 'react';
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import { Check } from 'lucide-react';
+import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { spring } from '../motion/presets';
 
 const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
@@ -21,8 +23,16 @@ const Checkbox = React.forwardRef<
     )}
     {...props}
   >
-    <CheckboxPrimitive.Indicator className="flex items-center justify-center text-current">
-      <Check className="h-3.5 w-3.5" strokeWidth={3} />
+    {/* 체크 시 Indicator 마운트 → scale-pop enter(spring.control). 해제 시 Radix 즉시 언마운트(현행 동일, exit 애니 없음 = §4 회귀 회피).
+        scale는 transform이라 app.tsx의 MotionConfig reducedMotion="user"가 저모션에서 자동으로 끈다. */}
+    <CheckboxPrimitive.Indicator asChild>
+      <motion.span
+        className="flex items-center justify-center text-current"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={spring.control}>
+        <Check className="h-3.5 w-3.5" strokeWidth={3} />
+      </motion.span>
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 ));
