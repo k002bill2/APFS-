@@ -28,6 +28,7 @@ function ExecChart({ period, setPeriod, fund, setFund, span }) {
       icon="landmark"
       accent="var(--chart-3)"
       span={span}
+      reveal={true}
       right={<><SegTabs options={["분기", "연"]} value={period} onChange={setPeriod} size="sm" /><MoreBtn /></>}
       footer={<div
         className="flex items-center gap-4 flex-wrap"><Legend color="var(--chart-grid)" label={<MT>계획</MT>} /><Legend color="var(--chart-1)" label={<MT>실적</MT>} /><Legend color="var(--chart-3)" label={<MT>집행률 %</MT>} line={true} /><span className="flex gap-1.5" style={{ marginLeft: "auto" }}>{funds.map((f) => <FilterChip key={f} active={fund === f} onClick={() => setFund(f)}><MT>{f}</MT></FilterChip>)}</span></div>}><ComposedBars data={data} height={270} /></ChartCard>
@@ -52,6 +53,7 @@ function StatusDonut({ active, setActive, onNav, span, height = 200 }) {
       icon="shield-check"
       accent="var(--primary)"
       span={span}
+      reveal={true}
       right={<MoreBtn />}><Donut
         data={D.STATUS_DONUT}
         height={height}
@@ -83,6 +85,7 @@ function IndustryCard({ span, onNav, height = 240 }) {
       icon="chart-bar"
       accent="var(--chart-2)"
       span={span}
+      reveal={true}
       right={<><SegTabs options={["금액", "건수"]} value="금액" onChange={() => {}} size="sm" /><MoreBtn /></>}><Treemap data={D.INDUSTRY} height={height} onCell={() => onNav("투자 성과·포트폴리오")} /></ChartCard>
   );
 }
@@ -99,6 +102,7 @@ function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }: { span?: nu
       icon="calendar"
       accent="var(--warning)"
       span={span}
+      reveal={true}
       right={<><CountPill count={D.SCHEDULE.length} /><Button
           variant="ghost"
           size="sm"
@@ -181,6 +185,7 @@ function RiskTrendCard({ span, height = 200 }) {
       icon="activity"
       accent="var(--danger)"
       span={span}
+      reveal={true}
       right={<SegTabs options={["1M", "3M", "1Y"]} value="1Y" onChange={() => {}} size="sm" />}><LineTrend
         data={D.RISK_TREND}
         threshold={D.RISK_THRESHOLD}
@@ -440,7 +445,7 @@ function QuickTasksBar({ onNav }: { onNav: (r: string) => void }) {
 
 function RegionBarCard({ span, height = 240 }: { span?: number | string; height?: number }) {
   return (
-    <ChartCard title="지역별 출자·집행" sub="계획 대비 실적" icon="chart-bar" accent="var(--chart-2)" span={span}
+    <ChartCard title="지역별 출자·집행" sub="계획 대비 실적" icon="chart-bar" accent="var(--chart-2)" span={span} reveal={true}
       right={<><SegTabs options={["금액", "건수"]} value="금액" onChange={() => {}} size="sm" /><MoreBtn /></>}
       footer={<div className="flex items-center gap-4">
         <Legend color="var(--chart-grid)" label="계획" />

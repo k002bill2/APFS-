@@ -29,18 +29,28 @@
 
 빌드 green · 테스트 50/50 · 회귀 0.
 
+### 3-1. ✅ 추가 완료 (2026-09-04 이어서 세션) + 브라우저 실측
+
+| 항목 | 파일 | 검증 |
+|---|---|---|
+| 스크롤 reveal(fade+slide-in) | `presets.ts`(tween.reveal·revealVariants) + `components.tsx`(Card/ChartCard `reveal` opt-in) + `main_widgets.tsx`(차트 위젯 6개 `reveal={true}`) | route=main 실측: 뷰포트 내 카드는 로드 시 등장 후 **transform:none**(잔류 변환 없음=쌓임맥락 트랩 회피), 뷰포트 밖 카드는 translateY(12)·opacity:0 대기 → 스크롤 진입 시 발화, 콘솔 에러 0 |
+| 애니 Checkbox(scale-pop) | `src/dash/ui/checkbox.tsx` | 빌드 green(⚠ **미배선 프리미티브** — 실화면 체크박스는 AG Grid 내장·renderers.tsx raw input이라 현재 비가시. 도입 시 자동 적용) |
+
+**핵심 설계 결정**:
+- reveal은 **래퍼 div 금지** → root `<section>`을 `motion.section`으로 조건 전환(dcol-span 보존). `whileInView`+`viewport once`. 저모션은 MotionConfig가 y를 끔(게이트 불필요).
+- reveal 활성화는 **main 대시보드 차트 위젯에만**(위젯 정의부 6곳). StatCard(KPI)는 이미 CountUp이라 제외.
+- Checkbox는 공유 프리미티브라 **위험 최소 scale-pop**(Radix Indicator enter만, forceMount/controlled 재배선 안 함) — advisor의 forceMount+pathLength(양방향)는 indeterminate·form-reset 엣지 위험이라 미채택.
+
 ## 4. ⛔ 핵심 발견 — Radix 오버레이 exit 비호환 (다시 시도 말 것)
 
 Radix 오버레이를 `AnimatePresence + forceMount + asChild motion.div`로 감싸면 **enter spring은 완벽하나 exit(닫힘)가 발화 안 됨**. Animate UI 원본(`imskyleen/animate-ui`) 소스를 1:1 이식하고 5개 원인(스프레드 순서·key 위치·AnimatePresence 배치·useControlledState 로직·닫기 경로)을 전부 맞췄는데도 실패. 마운트 유지 소비처(`<Dialog open={regOpen}>`)에서도 실패.
 → **결정: 오버레이는 tailwindcss-animate 유지(회귀 방지). dialog.tsx는 원본으로 되돌림.** Motion은 Radix 충돌 없는 표면에만. 상세는 메모리 참조.
 
-## 5. ⬜ 남은 작업 (새 세션 시작점 — 서로 독립, 병렬 가능)
+## 5. 남은 작업
 
-전부 **비-Radix**라 exit 문제 없음. 각각 독립 추가:
-
-1. **스크롤 reveal** — 위젯이 뷰포트 진입 시 fade/slide-in. `useInView` + `motion.div` 래퍼. Card/ChartCard(components.tsx)에 opt-in prop로. ⚠ 레이아웃 흔들림·성능 주의(위젯 多), reduced-motion 존중.
-2. **애니 Switch/Checkbox** — 현재 정적. `src/dash/ui/checkbox.tsx` 등에 motion thumb/check. (Radix Checkbox지만 **enter/exit 오버레이가 아니라** 상태 전환이라 안전.)
-3. **Ripple / Shine / Tilt** — 버튼·카드 효과. 신규 `src/dash/motion/*` 프리미티브 + opt-in. 낮은 우선순위(장식성).
+1. ✅ **스크롤 reveal** — 완료(§3-1). Card/ChartCard `reveal` opt-in, main 차트 위젯 6개 활성.
+2. ✅ **애니 Checkbox** — 완료(§3-1, scale-pop). ⚠ 단 프리미티브 미배선 — 향후 실화면 체크박스를 이 `ui/checkbox.tsx`로 교체할 때 가시화됨.
+3. ⏸ **Ripple / Shine / Tilt** — **스킵(사용자 확인 대기)**. 투자자산관리 대시보드 톤에 장식성 과함(Step 1에서 불꽃/별/커서팔로우 제외한 것과 동일 논리). "모두 적용"의 잔여분이라 사용자가 명시 요청하면 추가.
 
 ## 6. 규약 / 함정 (새 세션 필독)
 

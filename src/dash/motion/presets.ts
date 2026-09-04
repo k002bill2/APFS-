@@ -25,7 +25,15 @@ export const tween = {
   overlay: { duration: 0.2, ease: EASE_DS }, // 모달/시트 백드롭 페이드
   ds: { duration: 0.18, ease: EASE_DS }, // 범용 ease-ds
   dropdown: { duration: 0.2, ease: EASE_DS }, // 원본 dropdown은 spring 아님
+  reveal: { duration: 0.4, ease: EASE_DS }, // 스크롤 진입 fade+slide(위젯 多라 spring 대신 차분한 tween)
 } satisfies Record<string, Transition>;
+
+/* 스크롤 reveal variants — Card/ChartCard의 opt-in reveal prop이 소비.
+   저모션은 app.tsx의 MotionConfig reducedMotion="user"가 y를 끄고 opacity만 남긴다(게이트 불필요). */
+export const revealVariants: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0 },
+};
 
 /* 팝오버 계열 공통 variants — Content에 transformOrigin(radix popper 변수)과 함께 사용 */
 export const popVariants: Variants = {

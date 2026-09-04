@@ -8,7 +8,7 @@ import { mn, MT, useMask } from './mask';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import { Progress } from './ui/progress';
-import { spring } from './motion/presets';
+import { spring, tween, revealVariants } from './motion/presets';
 import { CountUp } from './motion/count-up';
 
 const { Sparkline } = Charts;
@@ -79,23 +79,38 @@ function StatCard({ kpi, onClick, emphasis }: { kpi: any; onClick?: () => void; 
   );
 }
 
+/* ---- 스크롤 reveal props ----
+   opt-in reveal 시 root 태그를 motion.section으로 바꾸고 whileInView로 fade+slide.
+   래퍼 div를 끼우지 않아 dcol-span(grid 자식 신원)이 보존된다. 저모션은 MotionConfig가 y를 끈다. */
+const revealProps = {
+  variants: revealVariants,
+  initial: "hidden" as const,
+  whileInView: "visible" as const,
+  viewport: { once: true, margin: "0px 0px -10% 0px" } as const,
+  transition: tween.reveal,
+};
+
 /* ---- Card (generic) ---- */
-function Card({ children, accent, pad = 18, className, style, span }: { children?: React.ReactNode; accent?: string; pad?: number; className?: string; style?: React.CSSProperties; span?: number | string }) {
+function Card({ children, accent, pad = 18, className, style, span, reveal }: { children?: React.ReactNode; accent?: string; pad?: number; className?: string; style?: React.CSSProperties; span?: number | string; reveal?: boolean }) {
+  const Root: any = reveal ? motion.section : "section";
   return (
-    <section
+    <Root
       className={cx(span && "dcol-" + span, "rounded-card border border-border bg-card shadow-sm min-w-0", className)}
-      style={{ padding: pad, ...style }}>{children}</section>
+      style={{ padding: pad, ...style }}
+      {...(reveal ? revealProps : {})}>{children}</Root>
   );
 }
 
 /* ---- ChartCard ---- */
-function ChartCard({ title, sub, icon, accent = "var(--primary)", right, children, footer, span, minH }: { title?: React.ReactNode; sub?: React.ReactNode; icon?: string; accent?: string; right?: React.ReactNode; children?: React.ReactNode; footer?: React.ReactNode; span?: number | string; minH?: number }) {
+function ChartCard({ title, sub, icon, accent = "var(--primary)", right, children, footer, span, minH, reveal }: { title?: React.ReactNode; sub?: React.ReactNode; icon?: string; accent?: string; right?: React.ReactNode; children?: React.ReactNode; footer?: React.ReactNode; span?: number | string; minH?: number; reveal?: boolean }) {
+  const Root: any = reveal ? motion.section : "section";
   return (
-    <section
-      className={cx(span && "dcol-" + span, "flex flex-col rounded-card border border-border bg-card shadow-sm min-w-0 overflow-hidden")}><header
+    <Root
+      className={cx(span && "dcol-" + span, "flex flex-col rounded-card border border-border bg-card shadow-sm min-w-0 overflow-hidden")}
+      {...(reveal ? revealProps : {})}><header
         className="flex items-center justify-between gap-3 px-[18px] py-[14px] border-b border-border"><div className="flex items-center gap-2.5 min-w-0"><ColorChip icon={icon} color={accent} size={34} iconSize={18} /><div className="min-w-0"><div className="t-cardtitle whitespace-nowrap overflow-hidden text-ellipsis"><MT>{title}</MT></div>{sub && <div className="t-caption mt-px"><MT>{sub}</MT></div>}</div></div>{right && <div className="flex items-center gap-1.5 shrink-0">{right}</div>}</header><div className="p-[18px] flex-1" style={{ minHeight: minH }}>{children}</div>{footer && <div
         className="px-[18px] py-2.5 border-t border-border"
-        style={{ background: "color-mix(in srgb,var(--muted) 55%,transparent)" }}>{footer}</div>}</section>
+        style={{ background: "color-mix(in srgb,var(--muted) 55%,transparent)" }}>{footer}</div>}</Root>
   );
 }
 
