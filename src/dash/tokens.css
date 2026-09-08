@@ -29,6 +29,7 @@
   --bg:#F4F6F2;
   --bg-deep:#ECEFEA;
   --card:#FFFFFF;
+  --frame-bg:var(--bg);   /* GridFrame(리스트/매트릭스 페이지 카드) 배경 — 페이지 배경과 동일(2026-09-08 결정). 여기 한 줄로 전체 변경 */
   --card-raised:#FFFFFF;
   --foreground:#1A2620;
   --muted:#F0F3EE;
@@ -138,6 +139,7 @@
   --bg:#0F1310;
   --bg-deep:#0A0D0A;
   --card:#181D17;
+  --frame-bg:var(--bg);
   --card-raised:#1D231C;
   --foreground:#E6EBE2;
   --muted:#1F261D;

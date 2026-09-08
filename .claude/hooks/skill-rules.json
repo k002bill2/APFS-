@@ -68,7 +68,7 @@
       "skillName": "apfs-form-modal",
       "priority": "high",
       "enforcement": "suggest",
-      "keywords": ["등록 폼", "등록폼", "수정 모달", "폼 모달", "RowFormModal", "CRUD 모달", "필드 컨트롤", "FIELD_CONTROLS", "입력 양식", "삭제 확인", "radio", "라디오", "2단 폼", "스키마 폼"],
+      "keywords": ["등록 폼", "등록폼", "수정 모달", "폼 모달", "RowFormModal", "CRUD 모달", "필드 컨트롤", "FIELD_CONTROLS", "입력 양식", "삭제 확인", "radio", "라디오", "2단 폼", "스키마 폼", "명세 팝업", "명세 모달", "kv 그리드", "라벨 배열", "세로 배열", "가로 배열", "영문 라벨", "읽기전용 팝업"],
       "intentPatterns": ["(등록|수정|crud|입력|폼|form).*(모달|modal|양식)", "(rowformmodal|필드\\s?컨트롤|field_controls|radio|라디오|스키마\\s?폼).*(추가|만들|작성|수정|add|edit)"]
     },
     {
@@ -77,6 +77,20 @@
       "enforcement": "suggest",
       "keywords": ["일자선택", "일자 선택", "날짜선택", "날짜 선택", "날짜입력", "날짜 입력", "달력", "date picker", "datepicker", "DatePicker", "캘린더", "calendar", "Radix Calendar", "react-day-picker", "popover 달력", "date-fns", "input type date", "기준일", "선택일", "타임존", "off-by-one", "하루 빠짐", "YYYY-MM-DD"],
       "intentPatterns": ["(일자|날짜|date|달력|calendar|캘린더|datepicker).*(선택|입력|picker|만들|추가|작성|수정|통일|컴포넌트|component|add|edit)", "(날짜|일자|date).*(하루|off-by-one|빠짐|타임존|timezone|어긋)", "(달력|calendar|셀|cell).*(크기|무너|깨|collapse|이식|변환)"]
+    },
+    {
+      "skillName": "apfs-manage-page",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["목업", "mockup", "관리 화면", "관리형", "관리 페이지", "관리형 리스트", "KRDS", "구조도", "화면 구조도", "spec.json", "목업 변환", "우리 디자인으로", "우리 레이아웃", "검색 그리드", "search grid", "편집 팝업", "페이지 생성"],
+      "intentPatterns": ["(목업|mockup|krds|구조도|spec).*(변환|이식|구현|코딩|페이지|page|만들|작성|적용)", "(관리|manage).*(화면|페이지|리스트|list).*(만들|생성|작성|구현|코딩)", "(우리|현재).*(디자인|레이아웃).*(변형|맞춰|바꿔|적용)"]
+    },
+    {
+      "skillName": "apfs-stage-workflow",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["심사단계", "단계 전이", "상태 전이", "워크플로우", "workflow", "생애주기", "컨텍스트 액션", "단계별 작업", "단계별 버튼", "stage", "승인 단계", "행 선택 액션", "selbar", "취소 버튼", "확정 버튼", "신청→선정", "선정→결성"],
+      "intentPatterns": ["(심사단계|단계|stage|워크플로우|workflow|생애주기|상태).*(전이|전환|액션|버튼|승인|취소|확정|transition|처리)", "(행|row).*(선택|select).*(액션|action|버튼|작업|button)", "(신청|선정|결성|승인|반려).*(단계|처리|전이|버튼)"]
     },
     {
       "skillName": "z-index",

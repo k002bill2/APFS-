@@ -38,14 +38,15 @@ function ColorChip({ icon, color = "var(--primary)", soft, size = 36, iconSize =
 }
 
 /* ---- StatusBadge ---- */
-function StatusBadge({ tone = "success", label, icon, size = "md" }: { tone?: ToneLike; label?: React.ReactNode; icon?: string; size?: "sm" | "md" }) {
+/* dot=false면 앞 점 없이 텍스트만(심사단계처럼 배지가 촘촘히 반복되는 열). 기본 true — 기존 화면 무변경 */
+function StatusBadge({ tone = "success", label, icon, size = "md", dot = true }: { tone?: ToneLike; label?: React.ReactNode; icon?: string; size?: "sm" | "md" | "lg"; dot?: boolean }) {
   const [c, soft] = toneVar(tone);
   return (
     <span
       className={cx("inline-flex items-center gap-[5px] rounded-[7px] font-bold leading-tight whitespace-nowrap",
-        size === "sm" ? "px-[7px] py-[2px] text-[11px]" : "px-[9px] py-[3px] text-xs")}
+        size === "sm" ? "px-[7px] py-[2px] text-[11px]" : size === "lg" ? "px-[10px] py-[4px] text-[13px]" : "px-[9px] py-[3px] text-xs")}
       style={{ background: soft, color: c }}>{icon ? <Icon name={icon} size={13} stroke={2.4} />
-           : <span className="w-1.5 h-1.5 rounded-full" style={{ background: c }} />}{label}</span>
+           : dot ? <span className="w-1.5 h-1.5 rounded-full" style={{ background: c }} /> : null}{label}</span>
   );
 }
 
