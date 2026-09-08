@@ -63,13 +63,16 @@ function Field({ label, children, errMsg, className, plain }: { label: string; c
   );
 }
 
-export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete }: {
+export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete, title }: {
   mode: "create" | "edit";
   initial?: Row;
   schema: PageSchema;
   onSave: (row: Row) => void;
   onClose: () => void;
   onDelete?: () => void;
+  /** 모달 제목 오버라이드(선택). 미지정 시 mode별 기본("신규 등록"/"항목 수정").
+      워크플로우 화면처럼 같은 스키마를 단계별 다른 제목으로 여는 경우(예: 선정조합 등록/수정)에 사용. */
+  title?: string;
 }) {
   const [vals, setVals] = useState<Record<string, string>>(() => {
     const seed: Record<string, string> = {};
@@ -108,9 +111,9 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete 
       <DialogContent className={wide ? "max-w-[880px] max-h-[88vh]" : "max-w-[460px] max-h-[86vh]"}
         onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>{mode === "create" ? "신규 등록" : "항목 수정"}</DialogTitle>
+          <DialogTitle>{title ?? (mode === "create" ? "신규 등록" : "항목 수정")}</DialogTitle>
           <DialogDescription className="sr-only">
-            {mode === "create" ? "신규 항목 등록 양식" : "항목 수정 양식"}
+            {title ? `${title} 양식` : (mode === "create" ? "신규 항목 등록 양식" : "항목 수정 양식")}
           </DialogDescription>
         </DialogHeader>
 

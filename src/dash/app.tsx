@@ -9,7 +9,7 @@ import { DesignSystem } from './designsystem';
 import { Main } from './main';
 import { RiskManage } from './risk_manage';
 import { Schedule } from './schedule';
-import { SubFund } from './subfund';
+import { SubFundManage } from './subfund_manage';   // 자펀드관리(관리형 리스트, 구조도 v1.4). 구 subfund.tsx(FR-5.3 대시보드)는 미라우팅
 import { Pages as ReportBucheoPages } from './report_bucheo';
 import { GenericListPage } from './generic_list';
 import { AssetFunding } from './asset_funding';
@@ -97,7 +97,7 @@ function App() {
   else if (route === "main") page = <Main onNav={onNav} navStyle={navStyle} onNavStyle={setNavStyle} />;
   else if (route === "risk-manage") page = <RiskManage onNav={onNav} />;
   else if (route === "schedule") page = <Schedule onNav={onNav} />;
-  else if (route === "subfund") page = <SubFund onNav={onNav} />;
+  else if (route === "subfund") page = <SubFundManage onNav={onNav} />;
   else if (route === "asset-funding") page = <AssetFunding onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "editor") page = <EditorPage onNav={onNav} />;
