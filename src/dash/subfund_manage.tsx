@@ -372,7 +372,8 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
             ['조합상태', fSt, () => setFSt('')],
           ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <span>{label}:</span><MT>{value}</MT>
+              {/* 값만 표시(항목명 접두사 없음 — 2026-09-08 결정). 항목명은 × 버튼 aria-label에만 남긴다 */}
+              <MT>{value}</MT>
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex border-0 cursor-pointer p-0" style={{ background: 'transparent', color: 'inherit' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
