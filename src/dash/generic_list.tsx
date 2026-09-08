@@ -519,7 +519,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       kpis={<>
         <KpiBadge icon="trending" color="var(--chart-1)" label="평균 변동률"
           value={mn((avgUp ? "+" : "-") + Math.abs(avgChange).toFixed(1)) + "%"}
-          valueColor={avgUp ? "var(--success)" : "var(--danger)"} />
+          valueColor={avgUp ? "var(--success-text)" : "var(--danger-text)"} />
         <KpiBadge icon="wallet" color="var(--accent)" label="합계 금액"
           value={"₩" + mn(Math.round(sumAmount / 100).toLocaleString()) + "억"} />
       </>}

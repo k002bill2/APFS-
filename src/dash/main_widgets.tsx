@@ -94,7 +94,7 @@ function IndustryCard({ span, onNav, height = 240 }) {
 function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }: { span?: number | string; onNav?: (r: string) => void; rows?: number; scroll?: boolean; maxH?: number }) {
   const masked = useMask();
   const list = scroll ? D.SCHEDULE : D.SCHEDULE.slice(0, rows);
-  const ddayColor = (t) => (t === "danger" ? "var(--danger)" : t === "warning" ? "var(--warning)" : "var(--accent)");
+  const ddayColor = (t) => (t === "danger" ? "var(--danger-text)" : t === "warning" ? "var(--warning-text)" : "var(--accent)");   /* D-day=텍스트라 a11y -text 토큰 */
   return (
     <ChartCard
       title="다가오는 일정 · 알림"

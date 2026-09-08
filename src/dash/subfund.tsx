@@ -105,7 +105,7 @@ function CrossRow({ row }) {
               background: isA
                 ? "color-mix(in srgb,var(--success) 12%,transparent)"
                 : "color-mix(in srgb,var(--danger) 12%,transparent)",
-              color: isA ? "var(--success)" : "var(--danger)",
+              color: isA ? "var(--success-text)" : "var(--danger-text)",
             }}>{"CASE " + row.caseType}</span></div><div className="t-caption mt-0.5">{mn(row.date)}</div></div><div className="text-right shrink-0" style={{ minWidth: 130 }}>{isA
           ? <StatusBadge tone="success" label="자동승인 완료" size="sm" />
           : <div className="flex flex-col items-end gap-1"><StatusBadge tone="danger" label="검토 필요" size="sm" />{row.diff > 0 && <span
@@ -154,7 +154,7 @@ const SUBFUND_COLS: ColDef<any>[] = [
   },
   {
     field: "remain", headerName: "잔존기간", type: "rightAligned", width: 112,
-    cellRenderer: (p: any) => <span className="text-[13px] font-semibold tabular" style={{ color: p.value < 1 ? "var(--danger)" : p.value < 2 ? "var(--warning)" : "var(--foreground)" }}>{mn(p.value.toFixed(1)) + "년"}</span>,
+    cellRenderer: (p: any) => <span className="text-[13px] font-semibold tabular" style={{ color: p.value < 1 ? "var(--danger-text)" : p.value < 2 ? "var(--warning-text)" : "var(--foreground)" }}>{mn(p.value.toFixed(1)) + "년"}</span>,
   },
   {
     colId: "action", headerName: "액션", width: 100, sortable: false, resizable: false, type: "rightAligned",

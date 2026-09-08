@@ -33,22 +33,22 @@
   --foreground:#1A2620;
   --muted:#F0F3EE;
   --muted-foreground:#5E6B60;
-  --caption:#7C887E;
+  --caption:#66726A;   /* a11y: 3.4:1→4.6:1 on bg (WCAG AA 본문) — 이전 #7C887E는 소형 캡션에서 미달 */
   --border:rgba(31,54,40,.12);
   --border-strong:rgba(31,54,40,.20);
   --input:rgba(31,54,40,.16);
   --row-selected:color-mix(in srgb, var(--brand-gray) 16%, transparent);   /* 표/AG Grid 행선택 회색(중립) — 브랜드색 비종속 */
 
   /* roles — 이미지 지정 역할색 */
-  --primary:#6366F1;
+  --primary:#5A5FE8;   /* a11y: #6366F1→#5A5FE8 (흰 글자 4.47→4.96:1 AA). 차트/fs-agri는 별도 리터럴 토큰이라 인디고 유지 */
   --primary-hover:#4F46E5;
   --primary-foreground:#FFFFFF;
   --secondary:#32D1AF;
   --secondary-foreground:#06291F;
-  --accent:#3B82F6;          /* blue — links, focus, emphasis */
+  --accent:#2563EB;          /* blue — links, focus, emphasis. a11y: #3B82F6→#2563EB (링크텍스트 4.75:1·흰글자칠 5.17:1) */
   --accent-foreground:#FFFFFF;
   --cyan:#32D1AF;
-  --ring:#3B82F6;
+  --ring:#2563EB;
 
   /* status */
   --success:#32D1AF;
@@ -59,6 +59,14 @@
   --danger-soft:#FFE7DF;
   --info:#3B82F6;
   --info-soft:#DDE9F5;
+
+  /* status-as-text (WCAG AA 4.5:1) — 베이스 상태색(위)은 밝은 '칠'용이라 텍스트/배지 라벨로 쓰면 대비 미달
+     (라이트에서 amber 1.8:1·mint 1.9:1). 색이 '텍스트'이거나 soft 배지 위 라벨이면 아래 -text 토큰을 쓴다.
+     칠(점·막대·차트마크·아이콘)에는 계속 베이스 --warning/--success/--danger/--info 사용. .dark에서 필수 재정의(아래). */
+  --warning-text:#8A5A00;    /* on bg 5.5:1 / on warning-soft 5.4:1 */
+  --success-text:#067562;    /* on bg 5.2:1 / on success-soft 5.0:1 */
+  --danger-text:#C7340F;     /* on bg 4.9:1 / on danger-soft 4.5:1 */
+  --info-text:#1D5FD8;       /* on bg 5.3:1 / on info-soft 4.6:1 */
 
   /* shadcn/ui 호환 별칭 토큰 — 기존 토큰을 var() 간접참조로 가리킨다.
      이렇게 하면 .dark와 Tweaks(data-* 무드)에서 원본 토큰이 바뀔 때 자동 추종하므로
@@ -158,6 +166,13 @@
   --danger-soft:rgba(255,107,66,.18);
   --info:#60A5FA;
   --info-soft:rgba(96,165,250,.16);
+
+  /* status-as-text (dark) — 다크 카드·합성 soft 위에서 이미 통과(5.1~7.4:1)라 베이스 상태색을 그대로 재사용.
+     ⚠ 이 재정의 없으면 :root의 라이트용 어두운 값(#8A5A00 등)이 다크 카드로 새어 배지가 깨진다. */
+  --warning-text:#FBC04A;
+  --success-text:#33DDB8;
+  --danger-text:#FF7E59;
+  --info-text:#60A5FA;
 
   --chart-1:#818CF8;
   --chart-2:#60A5FA;

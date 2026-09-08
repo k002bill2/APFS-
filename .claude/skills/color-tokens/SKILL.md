@@ -24,6 +24,18 @@ APFS 대시보드의 색 토큰 규약. 전체 카탈로그·근거는 **`docs/C
 
 **트윈 함정**: 겉보기 같은 컴포넌트도 배경이 적응형이냐 고정이냐로 전경이 반대가 된다. 컨테이너 배경을 토큰화하면 **자식 전경색도 반드시 함께** 점검.
 
+## ★ 상태색은 "칠"과 "텍스트"를 토큰으로 가른다 (WCAG AA)
+`--warning`(앰버)·`--success`(민트)는 **밝은 색**이라 라이트에서 텍스트로 쓰면 대비가 무너진다(앰버 1.8:1·민트 1.9:1, soft 배지 위 1.6~2.4:1). 한 토큰으로 "선명한 점/막대"와 "4.5:1 텍스트"를 동시에 만족 못 한다 → **역할별 토큰 분리**:
+
+| 용도 | 토큰 | 비고 |
+|------|------|------|
+| **칠**(점·막대·차트마크·아이콘·progress) | `--warning`·`--success`·`--danger`·`--info` | 밝게 유지(선명함) |
+| **텍스트**(라벨·델타 숫자·달력 요일·배지 글자·soft 위 텍스트) | `--warning-text`·`--success-text`·`--danger-text`·`--info-text` | 라이트=어둡게(≥4.5:1), `.dark`=베이스와 동일(다크는 이미 통과) |
+
+- `.dark`에서 **-text 4개 반드시 재정의**(생략 시 라이트용 어두운 값이 다크 카드로 새어 배지 깨짐).
+- StatusBadge/DeltaBadge(components.tsx)는 이미 -text 사용 — 새 상태색 텍스트도 이 규약 준수.
+- 애매하면 자문: 이 색이 **글자/작은 마크**인가(→-text) **면적 있는 칠**인가(→베이스)?
+
 ## 신규 토큰 (테마 고정, `.dark` 미재정의)
 `--brand-solid`(#4F46E5) · `--on-brand-solid`(#fff) · `--gradient-hero` · `--on-gradient-{mint,sky,danger}` · `--on-chart-fill`. config에 named 유틸 없으니 Tailwind는 **arbitrary value** `text-[color:var(--on-brand-solid)]`로.
 

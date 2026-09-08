@@ -21,10 +21,10 @@ type ToneLike = Tone | string;
 
 const toneVar = (t?: ToneLike): string[] => ({
   primary: ["var(--primary)", "color-mix(in srgb,var(--primary) 12%,transparent)"],
-  success: ["var(--success)", "var(--success-soft)"],
-  warning: ["var(--warning)", "var(--warning-soft)"],
-  danger:  ["var(--danger)", "var(--danger-soft)"],
-  info:    ["var(--info)", "var(--info-soft)"],
+  success: ["var(--success-text)", "var(--success-soft)"],
+  warning: ["var(--warning-text)", "var(--warning-soft)"],
+  danger:  ["var(--danger-text)", "var(--danger-soft)"],
+  info:    ["var(--info-text)", "var(--info-soft)"],
   cyan:    ["var(--cyan)", "color-mix(in srgb,var(--cyan) 14%,transparent)"],
 }[t] || ["var(--primary)", "color-mix(in srgb,var(--primary) 12%,transparent)"]);
 
@@ -53,7 +53,7 @@ function StatusBadge({ tone = "success", label, icon, size = "md" }: { tone?: To
 function DeltaBadge({ value, label, invert }: { value: any; label?: React.ReactNode; invert?: boolean }) {
   useMask();
   const good = invert ? value < 0 : value > 0;
-  const c = good ? "var(--success)" : "var(--danger)";
+  const c = good ? "var(--success-text)" : "var(--danger-text)";   /* 델타 숫자=텍스트라 a11y -text 토큰(칠 아님) */
   const up = value > 0;
   return (
     <span

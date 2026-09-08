@@ -355,7 +355,7 @@ function NcScheduleBody() {
           <span className="font-extrabold" style={{ fontSize: 13.5, letterSpacing: "-.01em" }}>2026년 6월</span>
         </div>
         <div className="grid gap-0.5" style={{ gridTemplateColumns: "repeat(7,1fr)" }}>
-          {dow.map((w, i) => <div key={"h" + i} className="text-center font-bold py-0.5 px-0" style={{ fontSize: 10.5, color: i === 0 ? "var(--danger)" : i === 6 ? "var(--brand-blue)" : "var(--caption)" }}>{w}</div>)}
+          {dow.map((w, i) => <div key={"h" + i} className="text-center font-bold py-0.5 px-0" style={{ fontSize: 10.5, color: i === 0 ? "var(--danger-text)" : i === 6 ? "var(--accent)" : "var(--caption)" }}>{w}</div>)}
           {cells.map((d, i) => {
             if (d === null) return <div key={"e" + i} />;
             const evs = eventDays[d];
