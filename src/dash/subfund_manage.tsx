@@ -344,10 +344,8 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
       toolbarLeft={selected ? (
         /* 선택 행의 심사단계에 맞는 작업만 노출(공고관리 컨텍스트 액션 패턴). 취소 단계는 작업 없음 */
         <>
-          <span className="inline-flex items-center gap-1.5 font-semibold" style={{ fontSize: 13 }}>
-            <StatusBadge tone={STAGE_TONE[selected.stg]} label={selected.stg} size="lg" dot={false} />
-            <span className="truncate" style={{ maxWidth: 260 }}><MT>{selected.fn}</MT></span>
-          </span>
+          {/* 단계 배지만 표시 — 자펀드명은 선택 행에서 이미 보이므로 생략(2026-09-08 결정) */}
+          <StatusBadge tone={STAGE_TONE[selected.stg]} label={selected.stg} size="lg" dot={false} />
           {stageActs.map((a) => (
             <Button key={a.label} variant={a.primary ? 'primary' : 'outline'} size="sm" onClick={a.run}>{a.label}</Button>
           ))}
