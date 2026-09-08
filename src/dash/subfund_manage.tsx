@@ -28,7 +28,8 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { RowFormModal } from './generic_list_modal';
 import { SubFundFormEditModal } from './subfund_form_modal';   // 결성조합 수정 — 섹션형 전용 모달
 import { SubFundSpecModal } from './subfund_spec_modal';         // 자펀드 명세 — 읽기전용 팝업(S1_03 명세, 전 단계 공통)
-import { APPLY_SCHEMA, SELECT_SCHEMA, OPT_FG, OPT_FS, OPT_YEARS, OPT_MANAGER, OPT_MF } from './subfund_manage_schemas';
+import { APPLY_SCHEMA, SELECT_SCHEMA, OPT_AG, OPT_FG, OPT_FS, OPT_MANAGER, OPT_MF, CUR_YEAR } from './subfund_manage_schemas';
+import { PeriodPicker } from './ui/period-picker';   // 연도/일자 선택 표준(apfs-datepicker)
 
 const { Button, IconBtn, StatusBadge, FilterChip, SegTabs, ColorChip } = UI;
 
@@ -154,14 +155,17 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 }
 
 /* 드로어 필드 래퍼 — 라벨 + 컨트롤. noop=컬럼 미연동 필터(캡션으로 no-op 신호, apfs-detail-filter 규약) */
-function DrawerField({ label, noop, children }: { label: string; noop?: boolean; children: React.ReactNode }) {
+/* plain=true → <label> 대신 <div>: PeriodPicker/DatePicker 트리거는 <button>이라 <label> 암묵 연결이 안 되고(ariaLabel로 명명),
+   <label> 안 버튼 클릭이 라벨 활성화와 겹쳐 2회 토글되는 것을 막는다 */
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+  const Wrap: any = plain ? 'div' : 'label';
   return (
-    <label className="block mb-4">
+    <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
         {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
-    </label>
+    </Wrap>
   );
 }
 function DrawerSelect({ value, onChange, options, all = '전체' }: { value: string; onChange: (v: string) => void; options: string[]; all?: string }) {
@@ -203,7 +207,9 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   const [fMf, setFMf] = useState('');          // 모펀드 — 그리드 컬럼 아님(no-op)
   const [fManager, setFManager] = useState(''); // 심사담당자 — 동적 사용자 데이터(no-op)
   const [fAsOf, setFAsOf] = useState('');       // 기준일자(no-op)
-  const clearFilters = () => { setFStage(''); setFText(''); setFFund(''); setFType(''); setFYear(''); setFRt(''); setFSt(''); setFMf(''); setFManager(''); setFAsOf(''); };
+  const [fAg, setFAg] = useState('');           // 계정구분 — 행에 컬럼 없음(no-op)
+  const [fRisk, setFRisk] = useState('');       // 리스크담당자 — 동적 사용자 데이터(no-op)
+  const clearFilters = () => { setFStage(''); setFText(''); setFFund(''); setFType(''); setFYear(''); setFRt(''); setFSt(''); setFMf(''); setFManager(''); setFAsOf(''); setFAg(''); setFRisk(''); };
 
   const passes = useCallback((r: SubFundRow) => {
     if (fStage && r.stg !== fStage) return false;
@@ -464,15 +470,19 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
             <DrawerField label="검색어">
               <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="조합명·GP·단계 등 전 컬럼 검색" style={inputStyle} />
             </DrawerField>
+            {/* 원본(목업) 검색박스 11항목·순서 그대로: 모펀드·자펀드·계정구분·자펀드구분·사업연도·정기/수시·심사담당자·리스크담당자·심사단계·조합상태·기준일자.
+                그리드 컬럼과 미연동인 항목(모펀드·계정구분·담당자 2종·기준일자)은 noop 캡션(apfs-detail-filter). 연도/일자는 PeriodPicker 표준(apfs-datepicker) */}
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={OPT_MF} /></DrawerField>
-            <DrawerField label="자펀드 (결성 조합만)"><DrawerSelect value={fFund} onChange={setFFund} options={formedFunds} /></DrawerField>
+            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={formedFunds} /></DrawerField>
+            <DrawerField label="계정구분" noop><DrawerSelect value={fAg} onChange={setFAg} options={OPT_AG} /></DrawerField>
             <DrawerField label="자펀드구분"><DrawerSelect value={fType} onChange={setFType} options={OPT_FG} /></DrawerField>
-            <DrawerField label="사업연도"><DrawerSelect value={fYear} onChange={setFYear} options={OPT_YEARS} /></DrawerField>
+            <DrawerField label="사업연도" plain><PeriodPicker mode="year" value={fYear} onChange={setFYear} ariaLabel="사업연도" yearRange={[2000, CUR_YEAR + 1]} /></DrawerField>
             <DrawerField label="정기/수시"><DrawerSelect value={fRt} onChange={setFRt} options={['정기', '수시']} /></DrawerField>
             <DrawerField label="심사담당자" noop><DrawerSelect value={fManager} onChange={setFManager} options={OPT_MANAGER} /></DrawerField>
+            <DrawerField label="리스크담당자" noop><DrawerSelect value={fRisk} onChange={setFRisk} options={OPT_MANAGER} /></DrawerField>
             <DrawerField label="심사단계"><DrawerSelect value={fStage} onChange={(v) => setFStage(v as '' | Stage)} options={STAGES} /></DrawerField>
             <DrawerField label="조합상태"><DrawerSelect value={fSt} onChange={setFSt} options={OPT_FS} /></DrawerField>
-            <DrawerField label="기준일자" noop><input type="date" value={fAsOf} onChange={(e) => setFAsOf(e.target.value)} style={inputStyle} /></DrawerField>
+            <DrawerField label="기준일자" noop plain><PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" /></DrawerField>
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>

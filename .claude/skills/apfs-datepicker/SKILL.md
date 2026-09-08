@@ -1,6 +1,6 @@
 ---
 name: apfs-datepicker
-description: APFS 대시보드 일자선택 규약 — 네이티브 <input type="date"> 대신 shadcn Radix Calendar + Popover(DatePicker)를 전 화면 공용으로 쓴다. 날짜입력·일자선택·달력·date picker·DatePicker·Popover 달력을 만들거나 수정할 때, 값이 하루 어긋나거나(타임존) 달력 셀 크기가 무너지거나 팝오버가 모달 뒤에 가리거나 모달/드로어 안에서 년·월 드롭다운이 안 열리고 날짜가 선택 안 될 때 사용. Use when adding or editing date selection (calendar/date-picker/Popover) anywhere in the dashboard, or when a date is off-by-one, calendar cells collapse, the popover hides behind a modal, or the year/month dropdown won't open inside a dialog/drawer.
+description: APFS 대시보드 일자선택 규약 — 네이티브 <input type="date"> 대신 shadcn Radix Calendar + Popover(DatePicker)를 전 화면 공용으로 쓰고, 연도·월·분기·반기·일 선택은 PeriodPicker(ui/period-picker.tsx) 표준으로 통일한다. 날짜입력·일자선택·달력·date picker·DatePicker·Popover 달력·연도 선택·월 선택·분기/반기 선택을 만들거나 수정할 때, 값이 하루 어긋나거나(타임존) 달력 셀 크기가 무너지거나 팝오버가 모달 뒤에 가리거나 모달/드로어 안에서 년·월 드롭다운이 안 열리고 날짜가 선택 안 될 때 사용. Use when adding or editing date selection (calendar/date-picker/Popover) anywhere in the dashboard, or when a date is off-by-one, calendar cells collapse, the popover hides behind a modal, or the year/month dropdown won't open inside a dialog/drawer.
 ---
 
 # apfs-datepicker Skill
@@ -45,6 +45,21 @@ shadcn `new-york` 소스는 **Tailwind v4 문법**이다. 이 프로젝트는 **
   // v 는 반드시 'YYYY-MM-DD' 문자열. 빈 문자열 = 미선택.
   ```
 - `mode="single"` + `required` 미지정이라 **선택일 재클릭 = 해제**(`onChange('')`)가 유일한 clear 수단이다. 선택/해제 모두 팝오버를 닫는다(일관성).
+
+## PeriodPicker — 연도·월·분기·반기·일 선택 표준 (2026-09-08 사용자 확정)
+기간 단위 선택은 **`src/dash/ui/period-picker.tsx`의 `PeriodPicker`** 하나로 통일한다. 네이티브 `<input type="date|month">`·연도 `<select>` 나열 금지.
+- **`mode`** = `'day' | 'month' | 'quarter' | 'half' | 'year'`. **`day`는 기존 `DatePicker`에 그대로 위임**(달력·타임존 계약 재사용, 새 달력 만들지 말 것). 나머지는 같은 트리거(38px 폼 컨트롤 모사) + Popover 버튼 그리드.
+- **값 계약(문자열, 빈 문자열=미선택)**: `day 'YYYY-MM-DD'` · `month 'YYYY-MM'` · `quarter 'YYYY-Qn'` · `half 'YYYY-Hn'` · `year 'YYYY'`. 표시는 `formatPeriod(mode, v)`로 한글(`2026년 2분기`·`2026년 하반기`)이지만 **저장/필터 비교는 값 문자열**로.
+- 동작: 같은 값 재클릭 = 해제(DatePicker와 동일한 유일 clear 수단), 선택/해제 모두 팝오버 닫힘. 연도 그리드는 12년 페이지(12의 배수 정렬) ‹ ›, 월/분기/반기는 연도 ‹ ›. `yearRange`(기본 2000~2035)로 범위 제한.
+- 접근성: 트리거는 `<button>` → **`ariaLabel` 필수**(감싸는 `<label>`로 명명되지 않음). 그리드는 `role=listbox/option` + `aria-selected`. 소비처 라벨 래퍼는 `<label>` 대신 `<div>`(**`DrawerField plain`**) — `<label>` 안 버튼은 라벨 활성화와 겹쳐 2회 토글된다.
+- Popover는 non-modal(위 #5). Sheet(드로어)·Dialog 안에서 검증됨.
+```tsx
+import { PeriodPicker } from './ui/period-picker';
+<DrawerField label="사업연도" plain><PeriodPicker mode="year" value={fYear} onChange={setFYear} ariaLabel="사업연도" yearRange={[2000, CUR_YEAR + 1]} /></DrawerField>
+<DrawerField label="기준일자" plain><PeriodPicker mode="day"  value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" /></DrawerField>
+<PeriodPicker mode="quarter" value={q} onChange={setQ} ariaLabel="분기" />   // 'YYYY-Qn'
+```
+- 골드 소비처: `src/dash/subfund_manage.tsx` 상세필터(사업연도=year, 기준일자=day). 검증: 연도 그리드 열림 → 2018 클릭 → 트리거 `2018년`·필터 행 수 감소·칩 `사업연도:2018년`; day는 달력(rdp) 렌더.
 
 ## 범위/필터 작성 시 (날짜 2개로 기간)
 범위는 별도 컴포넌트가 아니라 **단일 `DatePicker` 2개**(시작/종료)로 구성하고 상태를 직접 소유한다. 이때 함정:

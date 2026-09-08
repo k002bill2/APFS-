@@ -19,7 +19,7 @@ export const OPT_TC = ['기업은행', '한국산업은행', '농협'];
 export const OPT_MF = ['농식품모태펀드', 'MOAF'];
 export const OPT_MANAGER = ['양한솔', '이성훈'];   // ⚠ 구조도 엑셀 예시값 — 실 담당자 마스터 연동 필요(동적 사용자 데이터)
 
-const CUR_YEAR = new Date().getFullYear();
+export const CUR_YEAR = new Date().getFullYear();
 export const OPT_YEARS = Array.from({ length: 12 }, (_, i) => String(CUR_YEAR + 1 - i));   // 내년~11년 전
 
 const PROVENANCE = { capturedAt: '2026-09-08', sourceSystem: 'FFMS(S1) 통합_화면_구조도_v1.4', captureFile: '자펀드관리_목업.html' };

@@ -75,8 +75,8 @@
       "skillName": "apfs-datepicker",
       "priority": "high",
       "enforcement": "suggest",
-      "keywords": ["일자선택", "일자 선택", "날짜선택", "날짜 선택", "날짜입력", "날짜 입력", "달력", "date picker", "datepicker", "DatePicker", "캘린더", "calendar", "Radix Calendar", "react-day-picker", "popover 달력", "date-fns", "input type date", "기준일", "선택일", "타임존", "off-by-one", "하루 빠짐", "YYYY-MM-DD"],
-      "intentPatterns": ["(일자|날짜|date|달력|calendar|캘린더|datepicker).*(선택|입력|picker|만들|추가|작성|수정|통일|컴포넌트|component|add|edit)", "(날짜|일자|date).*(하루|off-by-one|빠짐|타임존|timezone|어긋)", "(달력|calendar|셀|cell).*(크기|무너|깨|collapse|이식|변환)"]
+      "keywords": ["일자선택", "일자 선택", "날짜선택", "날짜 선택", "날짜입력", "날짜 입력", "달력", "date picker", "datepicker", "DatePicker", "캘린더", "calendar", "Radix Calendar", "react-day-picker", "popover 달력", "date-fns", "input type date", "기준일", "선택일", "타임존", "off-by-one", "하루 빠짐", "YYYY-MM-DD", "연도 선택", "연도선택", "월 선택", "월선택", "분기 선택", "분기", "반기", "기간 선택", "PeriodPicker", "period picker", "year picker", "month picker"],
+      "intentPatterns": ["(일자|날짜|date|달력|calendar|캘린더|datepicker).*(선택|입력|picker|만들|추가|작성|수정|통일|컴포넌트|component|add|edit)", "(날짜|일자|date).*(하루|off-by-one|빠짐|타임존|timezone|어긋)", "(달력|calendar|셀|cell).*(크기|무너|깨|collapse|이식|변환)", "(연도|월|분기|반기|기간|year|month|quarter|half).*(선택|picker|피커|고르|입력|필터)"]
     },
     {
       "skillName": "apfs-manage-page",
