@@ -357,14 +357,22 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           {(['' as const, ...STAGES] as ('' | Stage)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fStage === s} onClick={() => setFStage(s)}>{s || '전체'}</FilterChip>
           ))}
-          {filterActive && (
-            <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {[fText && '검색어: ' + fText, fFund && '자펀드', fType && fType, fYear && fYear + '년', fRt && fRt, fSt && fSt].filter(Boolean).join(' · ') || '필터 적용 중'}
-              <button type="button" onClick={clearFilters} aria-label="필터 제거" className="inline-flex border-0 cursor-pointer p-0" style={{ background: 'transparent', color: 'inherit' }}>
+          {/* 적용 중인 상세필터 — 항목별 개별 칩(각각 ×로 해제). 라벨=드로어 항목명, 값은 MT 마스킹(apfs-detail-filter) */}
+          {([
+            ['검색어', fText, () => setFText('')],
+            ['자펀드', fFund, () => setFFund('')],
+            ['자펀드구분', fType, () => setFType('')],
+            ['사업연도', fYear && fYear + '년', () => setFYear('')],
+            ['정기/수시', fRt, () => setFRt('')],
+            ['조합상태', fSt, () => setFSt('')],
+          ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
+            <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
+              <span>{label}:</span><MT>{value}</MT>
+              <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex border-0 cursor-pointer p-0" style={{ background: 'transparent', color: 'inherit' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
             </span>
-          )}
+          ))}
         </>
       )}
       toolbarRight={<>
@@ -400,7 +408,6 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           getRowId={(p) => p.data.id}
           pinnedBottomRowData={pinnedBottom}
           domLayout="autoHeight"
-          rowHeight={44}
           defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
           rowSelection={{ mode: 'singleRow', checkboxes: true, enableClickSelection: true }}
           selectionColumnDef={{ pinned: 'left', width: 44 }}   // 라디오 선택 열을 맨 앞 고정(목업 1열 '선택(라디오)')
