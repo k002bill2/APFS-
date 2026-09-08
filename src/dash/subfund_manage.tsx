@@ -19,7 +19,7 @@ import type { Tone } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, KpiBadge } from './grid_frame';
-import { apfsTheme, fmt, numFmt, numStyle } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
+import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
@@ -106,10 +106,10 @@ const columnDefs: (ColDef<SubFundRow> | ColGroupDef<SubFundRow>)[] = [
     valueFormatter: (p) => (p.node?.rowPinned ? '합 계' : String(p.value)) },
   { field: 'stg', headerName: '심사단계', width: 96, pinned: 'left', cellStyle: flexMid, sortable: true,
     cellRenderer: (p: any) => (p.node.rowPinned ? null : <StatusBadge tone={STAGE_TONE[p.value as Stage]} label={p.value} size="lg" dot={false} />) },
-  { ...txt('fn', '자펀드', 240), pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold"><MT>{p.value}</MT></span>) },
+  { ...txt('fn', '자펀드', 240), maxWidth: 360, pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold"><MT>{p.value}</MT></span>) },
   num('y', '사업연도', 92), txt('rt', '정기/수시', 88, true), num('ch', '차수', 70),
   txt('ctype', '조합유형', 150, true), txt('cg', '조합구분', 96, true), txt('cs', '조합성격', 120, true),
-  txt('gp1', '업무집행조합원1', 150), txt('gp2', '업무집행조합원2', 150),
+  { ...txt('gp1', '업무집행조합원1', 150), maxWidth: 240 }, { ...txt('gp2', '업무집행조합원2', 150), maxWidth: 240 },
   date('fd', '결성일'), date('rd', '등록일시'), num('yrs', '결과년수', 88), num('dur', '최초존속기간', 112), date('mat', '만기일'),
   num('rate', '기준수익률', 100),
   { headerName: '우선손실충당률', marryChildren: true, headerClass: 'apfs-grp-a', children: [num('lgp', 'GP', 80), txt('lmo', '농모태', 80, true)] },
@@ -416,6 +416,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           getRowId={(p) => p.data.id}
           pinnedBottomRowData={pinnedBottom}
           domLayout="autoHeight"
+          autoSizeStrategy={AUTO_SIZE_CONTENT}   // 컬럼 폭=내용 폭(잘림 방지). 긴 텍스트 컬럼은 maxWidth 캡
           defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
           rowSelection={{ mode: 'singleRow', checkboxes: true, enableClickSelection: true }}
           selectionColumnDef={{ pinned: 'left', width: 44 }}   // 라디오 선택 열을 맨 앞 고정(목업 1열 '선택(라디오)')

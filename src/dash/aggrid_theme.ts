@@ -10,10 +10,14 @@
      이 모듈을 import하는 모든 그리드가 등록을 공유한다.
    - ⚠️ 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지 — Theming API와 충돌. */
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
-import type { ValueFormatterParams, CellStyle } from 'ag-grid-community';
+import type { ValueFormatterParams, CellStyle, AutoSizeStrategy } from 'ag-grid-community';
 import { mn } from './mask';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
+
+/* 컬럼 폭 = 내용 폭(잘림 방지) — 그리드 기본 전략(2026-09-08 사용자 결정). 첫 데이터 렌더 때 헤더+셀 내용으로 자동 산정.
+   너무 긴 텍스트 컬럼(조합명·GP 등)은 colDef.maxWidth로 상한을 둔다. 사용: <AgGridReact autoSizeStrategy={AUTO_SIZE_CONTENT} …> */
+export const AUTO_SIZE_CONTENT: AutoSizeStrategy = { type: 'fitCellContents' };
 
 export const apfsTheme = themeQuartz.withParams({
   backgroundColor: 'var(--card)',
