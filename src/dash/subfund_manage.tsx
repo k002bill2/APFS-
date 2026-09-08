@@ -349,7 +349,6 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           {stageActs.map((a) => (
             <Button key={a.label} variant={a.primary ? 'primary' : 'outline'} size="sm" onClick={a.run}>{a.label}</Button>
           ))}
-          {stageActs.length === 0 && <span className="text-caption" style={{ fontSize: 12.5 }}>취소된 건 — 전이 작업 없음</span>}
           {/* 명세는 단계 무관 공통 조회(읽기전용) — 전이 액션 맵 밖에 둔다. 행 더블클릭과 동일 진입 */}
           <Button variant="outline" size="sm" leadingIcon="file" onClick={() => setModal({ kind: 'spec' })}>명세</Button>
           <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
