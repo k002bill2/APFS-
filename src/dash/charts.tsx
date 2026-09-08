@@ -243,7 +243,7 @@ function LineTrend({ data, threshold, height = 220, color = "var(--chart-1)", ar
           y={y(threshold) - 5}
           textAnchor="end"
           className="font-bold"
-          style={{ fontSize: 10.5, fill: "var(--danger)" }}>{"임계 " + threshold}</text>}<path
+          style={{ fontSize: 10.5, fill: "var(--danger-text)" }}>{"임계 " + threshold}</text>}<path
           d={`${dline} L${pts[pts.length-1][0]},${m.t+ih} L${pts[0][0]},${m.t+ih} Z`}
           fill="url(#ltgrad)" /><path
           d={dline}

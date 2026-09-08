@@ -130,7 +130,7 @@ function TypeCell(p: any) {
   return (
     <span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold" style={{
       background: susi ? "color-mix(in srgb,var(--warning) 14%,transparent)" : "color-mix(in srgb,var(--info) 14%,transparent)",
-      color: susi ? "var(--warning)" : "var(--info)",
+      color: susi ? "var(--warning-text)" : "var(--info-text)",
     }}>{p.value}</span>
   );
 }

@@ -143,7 +143,7 @@ function CalendarView({ items }) {
     <div style={{ animation: "dashFade .35s var(--ease) both" }}><div className="flex items-center justify-between mb-3"><span className="text-[15px] font-bold text-foreground">2026년 6월</span><div className="flex items-center gap-1"><IconBtn icon="chevron-left" label="이전 달" size={30} /><IconBtn icon="chevron-right" label="다음 달" size={30} /></div></div><div className="grid grid-cols-7 mb-1">{DAYS_KR.map((d, i) => <div
           key={d}
           className="text-center text-[11px] font-bold py-1"
-          style={{ color: i === 0 ? "var(--danger)" : i === 6 ? "var(--accent)" : "var(--muted-foreground)" }}>{d}</div>)}</div><div className="grid grid-cols-7 gap-1">{cells.map((day, i) => {
+          style={{ color: i === 0 ? "var(--danger-text)" : i === 6 ? "var(--accent)" : "var(--muted-foreground)" }}>{d}</div>)}</div><div className="grid grid-cols-7 gap-1">{cells.map((day, i) => {
           if (!day) return <div key={"e" + i} />;
           const isToday = day === today;
           const hasDates = byDate[day];

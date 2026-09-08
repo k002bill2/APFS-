@@ -109,139 +109,135 @@ const MENU = [
   { id:"home", label:"대시보드", icon:"home", path:"main", roles:["admin","manager","viewer"] },
 
   { id:"asset", label:"투자자산관리", icon:"landmark", roles:["admin","manager","viewer"], children:[
-    { label:"모태펀드관리", sub:true, children:[
+    { label:"모태펀드 관리", sub:true, children:[
       { label:"자펀드 공고 정보관리" },
       { label:"모태펀드 조성 및 출자현황", path:"asset-funding" },
     ]},
-    { label:"조합관리", sub:true, children:[
-      { label:"자펀드정보관리" },
-      { label:"조합원정보조회" },
-      { label:"자펀드별조합원조회" },
-    ]},
-    { label:"사후보고관리", sub:true, badge:4, children:[
-      { label:"투심보고 확정 및 승인", badge:2 },
-      { label:"투심보고 통계" },
-      { label:"내부 투자심의 구성관리" },
-      { label:"체크리스트 관리" },
-      { label:"수시보고 확인", badge:1 },
-      { label:"정기보고", badge:1 },
+    { label:"사후보고관리", sub:true, children:[
+      { label:"투자심의 관리" },
+      { label:"수시보고" },
+      { label:"정기보고" },
       { label:"조합원총회" },
-      { label:"조합예상자금요청보고" },
+      { label:"조합예상자금 정보보고" },
+      { label:"보고양식관리" },
+      { label:"보고 업데이트정보" },
     ]},
-    { label:"자펀드관리", sub:true, badge:1, children:[
+    { label:"자펀드 관리", sub:true, children:[
       { label:"자펀드 관리", path:"subfund" },
-      { label:"출자/분배조회(자펀드)", badge:1 },
-      { label:"출자/분배조회(농금원)" },
-      { label:"자펀드 투자실적현황" },
-      { label:"자펀드 수탁관리", badge:1 },
-      { label:"종합통계(확정)" },
+      { label:"(운용사)출자배분관리" },
+      { label:"조합원정보등록" },
+      { label:"자펀드별조합원관리" },
+      { label:"(농금원)출자배분관리" },
+      { label:"투자실적 현황(자펀드)" },
+      { label:"종합통계" },
+      { label:"자펀드수탁관리(실물검증)" },
+      { label:"자펀드수탁관리(확정)" },
+    ]},
+    { label:"통계", sub:true, children:[
+      { label:"투심승인정보조회" },
+      { label:"정기보고회수내역" },
     ]},
     { label:"투자기업정보", sub:true, children:[
-      { label:"투자기업정보(통합)" },
-      { label:"투자기업명세서(통합)" },
-      { label:"투자기업고용현황(통합)" },
+      { label:"투자기업정보" },
+      { label:"투자기업정보(전체)", path:"투자기업정보(통합)" },
+      { label:"투자기업 고용현황보고" },
       { label:"전체 투자실적" },
-      { label:"투자실적현황(투자기업)" },
-      { label:"투자금 회수현황" },
-      { label:"우수투자기업 관리" },
+      { label:"투자실적 현황(투자기업)" },
+      { label:"투자및회수상세정보" },
+      { label:"운용사별 재무제표" },
     ]},
-    { label:"운용사 모니터링", sub:true, badge:1, children:[
-      { label:"운용사 명세서" },
+    { label:"모니터링", sub:true, children:[
       { label:"운용사 재무정보 조회" },
-      { label:"투자금 실사보고 조회", badge:1 },
-      { label:"사후관리기록 관리" },
-      { label:"관리보수/성과보수 조회" },
-      { label:"자펀드 전체 보고현황" },
+      { label:"투자금 실사보고" },
+      { label:"사후관리기록", path:"사후관리기록 관리" },
+      { label:"관리보수관리" },
+      { label:"전체 보고현황" },
+    ]},
+    { label:"관리자", sub:true, children:[
+      { label:"사용자관리" },
+      { label:"공통코드관리" },
+      { label:"메뉴관리" },
+      { label:"일일보고 전송관리" },
     ]},
   ]},
 
   { id:"risk", label:"조기경보", icon:"shield-alert", badge:14, urgent:true, roles:["admin","manager","viewer"], children:[
     { label:"조기경보", sub:true, badge:9, children:[
-      { label:"조기경보 관리", path:"risk-manage", badge:9 },
       { label:"운용사별 조기경보 조회" },
       { label:"자펀드별 조기경보 조회" },
-      { label:"법률/규약위반사항 관리", badge:2 },
+      { label:"조기경보 조회", path:"risk-manage" },
+      { label:"법률/규약위반사항 관리" },
       { label:"운용사 주주변동관리" },
       { label:"운용사 소송관리" },
-      { label:"운용인력 변동관리", badge:1 },
-      { label:"조기경보 결과정보 관리" },
+      { label:"운용인력 변동관리" },
+      { label:"조기경보 결과정보 관리", badge:9 },
       { label:"조기경보 전월 비교 조회" },
     ]},
     { label:"기업정보", sub:true, children:[
-      { label:"투자기업정보(NICE 평가정보)" },
-      { label:"투자기업신용정보 조회" },
+      { label:"투자기업정보(전체)" },
+      { label:"기업개요" },
+      { label:"업체사업장정보" },
+      { label:"법정관리및화의정보" },
+      { label:"현금흐름등급" },
+      { label:"신용등급" },
     ]},
-    { label:"자펀드정보", sub:true, children:[
+    { label:"기초정보", sub:true, children:[
       { label:"운용사 정량지표 관리" },
-      { label:"운용사 유형별 정량지표 변동 조회" },
+      { label:"자펀드 정보 관리" },
       { label:"운용사 재무정보 비교 조회" },
       { label:"자펀드 수익률정보 비교 조회" },
-      { label:"자펀드 종합등급 변동 조회" },
     ]},
-    { label:"가치평가", sub:true, badge:3, children:[
+    { label:"통계정보", sub:true, children:[
+      { label:"운용사 유형별 정량지표 변동" },
+      { label:"종합등급 변동" },
+    ]},
+    { label:"가치평가", sub:true, children:[
       { label:"모태펀드 가치평가 결과조회" },
       { label:"투자조합 가치평가 결과조회" },
       { label:"피투자회사 가치평가 결과조회" },
       { label:"자펀드 투자자산 및 거래내역 조회" },
-      { label:"예외사항레포트", badge:1 },
+      { label:"예외사항리포트" },
       { label:"평가시점 데이터 확인" },
       { label:"Portfolio Report" },
       { label:"투자기업별(계약별) IRR" },
       { label:"투자기업별 IRR" },
       { label:"자펀드별 IRR" },
     ]},
+    { label:"관리자", sub:true, children:[
+      { label:"메뉴 관리" },
+      { label:"사용자권한 관리" },
+      { label:"공통코드 관리" },
+      { label:"도움말 관리" },
+    ]},
   ]},
 
   { id:"gp", label:"자펀드 보고", icon:"building", roles:["admin","manager","viewer"], children:[
-    { label:"운영기관정보", sub:true, badge:3, children:[
-      { label:"운용사별공통코드정보" },
-      { label:"운용사정보", badge:1 },
-      { label:"운용사인력현황", badge:1 },
-      { label:"공동 GP 펀드별인력현황", badge:1 },
-      { label:"운용사계정과목" },
-      { label:"운용사재무정보" },
-      { label:"운용사정량지표보고내역" },
+    { label:"업로드", sub:true, children:[
+      { label:"보고 파일 조회" },
     ]},
-    { label:"조합정보", sub:true, badge:6, children:[
-      { label:"조합정보", badge:1 },
-      { label:"조합원정보", badge:1 },
-      { label:"조합 투자운용인력", badge:1 },
-      { label:"조합 월별/반기별보고현황", badge:1 },
-      { label:"조합재무현황" },
-      { label:"조합계좌현황" },
-      { label:"조합 Call 요청일정및보고", badge:1 },
-      { label:"조합출자/분배현황", badge:1 },
-      { label:"조합원총회", badge:1 },
-      { label:"조합 관리보수 및 성과보수내역", badge:1 },
-      { label:"조합수시보고내역", badge:1 },
-      { label:"조합유가증권투자현황(상장주식)" },
+    { label:"일일보고조회", sub:true, children:[
+      { label:"조합별 수시보고 현황" },
     ]},
-    { label:"투자자산", sub:true, badge:3, children:[
-      { label:"투자기업정보", badge:1 },
-      { label:"투자기업고용현황(반기별)" },
-      { label:"투자기업재무정보" },
-      { label:"투자기업주주명부" },
-      { label:"투자자금실사보고", badge:1 },
-      { label:"프로젝트정보" },
-      { label:"투자기업투심현황", badge:1 },
-      { label:"투자약정정보", badge:1 },
-      { label:"투자거래정보" },
+    { label:"월간보고조회", sub:true, children:[
+      { label:"조합별 월간보고 현황" },
     ]},
-    { label:"월간보고조회", sub:true, badge:1, children:[{ label:"조합별 월간보고 현황", badge:1 }] },
-    { label:"반기보고조회", sub:true, badge:1, children:[{ label:"조합별 반기보고 현황", badge:1 }] },
-    { label:"실물검증", sub:true, badge:1, children:[{ label:"조합별 실물검증 결과 보고", badge:1 }] },
-    { label:"파일", sub:true, badge:1, children:[{ label:"보고 파일 조회", badge:1 }] },
+    { label:"반기보고조회", sub:true, children:[
+      { label:"조합별 반기보고 현황" },
+    ]},
+    { label:"실물검증", sub:true, children:[
+      { label:"조합별 실물검증 결과 보고" },
+    ]},
   ]},
 
-  { id:"acct", label:"회계", icon:"wallet", roles:["admin","manager"], badge:23, children:[
+  { id:"acct", label:"회계", icon:"wallet", roles:["admin","manager"], children:[
     { label:"기초관리", sub:true, children:[
-      { label:"계정과목관리" },{ label:"결산양식관리" },
+      { label:"계정과목 관리" },{ label:"결산양식 관리" },
     ]},
-    { label:"전표관리", sub:true, badge:23, children:[
-      { label:"일반전표관리", badge:23 },
-      { label:"삭제전표조회" },
-      { label:"미결계정관리", badge:8 },
-      { label:"전표증빙미첨부관리", badge:8 },
+    { label:"전표관리", sub:true, children:[
+      { label:"일반전표 관리" },
+      { label:"삭제전표 관리" },
+      { label:"미결계정 관리" },
+      { label:"전표증빙 미첨부 관리" },
       { label:"일마감" },{ label:"전표검색" },
     ]},
     { label:"장부조회", sub:true, children:[
@@ -250,14 +246,17 @@ const MENU = [
       { label:"손익계산서" },{ label:"합계잔액시산표" },
     ]},
     { label:"결산관리", sub:true, children:[
-      { label:"결산전표관리" },{ label:"회기생성/전기이월" },
+      { label:"결산전표 관리" },{ label:"회기생성/전기이월" },
+    ]},
+    { label:"고정자산", sub:true, children:[
+      { label:"유무형자산관리" },{ label:"감가상각비처리" },
     ]},
     { label:"자금관리", sub:true, children:[
       { label:"계좌관리" },{ label:"계좌잔액" },
       { label:"자금일보" },{ label:"출자금현황 정보관리" },
     ]},
-    { label:"고정자산", sub:true, children:[
-      { label:"유무형자산관리" },{ label:"감가상각비처리" },
+    { label:"농식품경영체", sub:true, children:[
+      { label:"경영체 정보 조회" },{ label:"IR정보 조회" },
     ]},
     { label:"설정", sub:true, children:[
       { label:"휴일관리" },{ label:"회계거래처관리" },
@@ -265,44 +264,55 @@ const MENU = [
   ]},
 
   { id:"report", label:"부처보고", icon:"file", roles:["admin","manager"], children:[
-    { label:"모태펀드", path:"report-bucheo" },
-    { label:"등록원부" },
+    { label:"모태펀드", sub:true, children:[
+      { label:"연도별투자현황", path:"report-bucheo" },
+    ]},
+    { label:"등록원부", sub:true, children:[
+      { label:"등록원부관리" },
+    ]},
+    { label:"관리자", sub:true, children:[
+      { label:"사용자관리" },
+      { label:"사용자권한관리" },
+      { label:"사용자조합권한관리" },
+    ]},
   ]},
 
   { id:"trustee", label:"수탁보고", icon:"file-check", roles:["admin","manager"], children:[
-    { label:"자펀드수탁", sub:true, children:[
+    { label:"자펀드 수탁", sub:true, children:[
       { label:"실물자료관리(업로드)" },
       { label:"실물검증비교조회" },
-      { label:"유가증권관리(업로드)" },
-      { label:"유가증권비교조회" },
+      { label:"공통코드조회" },
       { label:"자펀드코드 조회" },
     ]},
-    { label:"모태펀드수탁", sub:true, children:[
-      { label:"계좌정보관리" },
-      { label:"계좌정보비교조회" },
-      { label:"입출금정보관리" },
-      { label:"입출금정보비교조회" },
+    { label:"모태펀드 수탁", sub:true, children:[
+      { label:"모태수탁 공통코드" },
+      { label:"계좌정보 관리" },
+      { label:"계좌정보 비교조회" },
+      { label:"입출금 정보관리" },
+      { label:"입출금정보 비교조회" },
     ]},
   ]},
 
   { id:"admin", label:"관리자", icon:"settings", roles:["admin"], children:[
-    { label:"시스템관리", sub:true, children:[
-      { label:"공통코드관리" },{ label:"메뉴관리" },{ label:"도움말 관리" },
+    { label:"시스템 관리", sub:true, children:[
+      { label:"공통코드 관리" },{ label:"메뉴 관리" },{ label:"도움말 관리" },
     ]},
-    { label:"사용자관리", sub:true, children:[
-      { label:"사용자관리" },{ label:"사용자권한관리" },
+    { label:"사용자 관리", sub:true, children:[
+      { label:"사용자 관리" },{ label:"사용자 권한 관리" },
     ]},
     { label:"외부연동", sub:true, children:[
-      { label:"자펀드코드관리(운용사 ERP&수탁기관)" },
+      { label:"자펀드 코드관리(운용사ERP&수탁기관)" },
       { label:"연계 모니터링(API)" },
-      { label:"자펀드보고양식관리(운용사 ERP)" },
+      { label:"자펀드 보고 양식관리(운용사ERP)" },
     ]},
     { label:"보안", sub:true, children:[
       { label:"개인정보 접속관리" },
       { label:"사용자별 권한조회" },
       { label:"사용자별 로그조회" },
     ]},
-    { label:"게시판", sub:true, children:[{ label:"게시판관리" }] },
+    { label:"게시판", sub:true, children:[
+      { label:"게시판 관리" },
+    ]},
   ]},
 ];
 
