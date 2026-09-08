@@ -48,23 +48,18 @@ const DOC_MAX_CHARS = 3 * 1024 * 1024;
 //    건너뛰고 툴바의 첫 버튼(B/굵게)과 연결된다 → 본문을 hover하면 B가 hover로 켜지고, 본문을 클릭하면
 //    B 버튼이 클릭돼 toggleBold가 발화한다(빈 문단에 bold가 박혀 "B가 켜진 채 안 꺼짐"). 그래서 <div>로 감싼다.
 //    (네이티브 단일 컨트롤은 <label> 암묵 연결이 정상·접근성 이점이 있어 그대로 둔다. 에디터는 자체 aria-label 보유.)
-/* inline 배열(2026-09-08 사용자 결정): 라벨 좌(고정 104px)·컨트롤 우. 컨트롤은 셀을 꽉 채우지 않고 CONTROL_MAX까지만.
-   full=true(textarea/file/richtext 등 전체폭 항목)는 상한 없이 남은 폭 전부. 좁은 화면(<sm)은 세로 적층으로 폴백. */
-const LABEL_W = 104;
-const CONTROL_MAX = 280;
-function Field({ label, children, errMsg, className, plain, full }: { label: string; children: React.ReactNode; errMsg?: string; className?: string; plain?: boolean; full?: boolean }) {
+/* 배열: 라벨 위·컨트롤 아래(세로 적층, 기존 유지 — 2026-09-08 inline 시안은 사용자 원복). 컨트롤 폭은 renderers.tsx base가 fit-content로 결정. */
+function Field({ label, children, errMsg, className, plain }: { label: string; children: React.ReactNode; errMsg?: string; className?: string; plain?: boolean }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
-    <Wrap className={`flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 mb-3 ${className ?? ''}`}>
-      <span className="font-semibold text-caption shrink-0 sm:pt-[10px]" style={{ ...labelStyle, marginBottom: 0, width: LABEL_W }}>{label}</span>
-      <div className="min-w-0 flex-1" style={full ? undefined : { maxWidth: CONTROL_MAX }}>
-        {children}
-        {errMsg && (
-          <span role="alert" className="text-danger block mt-1" style={{ fontSize: 11.5 }}>
-            {errMsg}
-          </span>
-        )}
-      </div>
+    <Wrap className={`block mb-3.5 ${className ?? ''}`}>
+      <span className="font-semibold text-caption block" style={labelStyle}>{label}</span>
+      {children}
+      {errMsg && (
+        <span role="alert" className="text-danger block mt-1" style={{ fontSize: 11.5 }}>
+          {errMsg}
+        </span>
+      )}
     </Wrap>
   );
 }
@@ -135,7 +130,6 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
                   key={f.key}
                   label={f.label + (f.required ? ' *' : '')}
                   className={span2 ? "sm:col-span-2" : undefined}
-                  full={span2}
                   plain={complex || f.control === "radio"}
                   errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
                   <SchemaField
