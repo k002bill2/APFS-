@@ -22,6 +22,7 @@
         var(--card)로 직접 칠해 specificity로 못 이김. */
 .ag-floating-bottom .ag-row {
   background: var(--muted) !important;
+  border-top: 1px solid var(--border-strong) !important;   /* 본문과 합계 경계 — 1px 회색(2px primary 아님) */
 }
 .ag-pinned-left-floating-bottom .ag-cell {
   color: var(--primary) !important;
