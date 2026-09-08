@@ -375,6 +375,8 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
         </>
       )}
       toolbarRight={<>
+        {/* 금액 단위 표기 — 캡션(비마스킹). 카드헤더 sub 캡션을 없애면서 여기로 이동 */}
+        <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
         <Button variant="outline" size="sm" leadingIcon="download" onClick={exportExcel}>엑셀</Button>
