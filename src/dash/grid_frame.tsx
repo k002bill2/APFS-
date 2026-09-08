@@ -90,7 +90,8 @@ export function GridFrame({
       {/* ⚠️ overflow-hidden 제거: 푸터 sticky가 뷰포트 기준으로 달라붙으려면 조상에 scrollport가 없어야 한다.
           가로 클리핑은 이미 각 children이 자체 overflow-x:auto 래퍼로 책임진다(asset_funding=overflow-x-auto+min-w,
           AG Grid=내부 스크롤). 카드 모서리 클리핑은 푸터가 하단 모서리를 직접 라운딩해 보완. */}
-      <Card pad={0}>
+      {/* 프레임 카드는 테두리·그림자 없이 페이지 배경과 같은 색(--frame-bg 토큰, tokens.css 한 줄로 전체 변경). inline이 Card의 border/bg 클래스보다 우선 */}
+      <Card pad={0} style={{ background: 'var(--frame-bg)', border: 0, boxShadow: 'none' }}>
         {/* 카드 헤더: 타이틀(+sub 캡션) + KPI 슬롯 */}
         <div className="flex items-center justify-between flex-wrap gap-4" style={{ padding: '6px 18px' }}>
           <div className="min-w-0">
@@ -118,7 +119,7 @@ export function GridFrame({
             background 불투명(스크롤되는 행이 비치지 않게) + 하단 모서리 라운딩(카드 overflow:hidden 제거 보완)
             + zIndex는 FAB(60)보다 낮게 둬 우하단 FAB 클릭성을 침범하지 않게 한다. */}
         {hasFooter && (
-          <div className="flex items-center justify-between flex-wrap gap-3" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', position: 'sticky', bottom: 0, zIndex: 20, background: 'var(--card)', borderBottomLeftRadius: 'var(--radius)', borderBottomRightRadius: 'var(--radius)' }}>
+          <div className="flex items-center justify-between flex-wrap gap-3" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', position: 'sticky', bottom: 0, zIndex: 20, background: 'var(--frame-bg)', borderBottomLeftRadius: 'var(--radius)', borderBottomRightRadius: 'var(--radius)' }}>
             <span className="flex items-center min-w-0 text-caption" style={{ fontSize: 12.5 }}>{footerLeft}</span>
             {footerCenter && <div className="flex items-center gap-1 flex-wrap">{footerCenter}</div>}
             <div className="flex items-center gap-1.5 flex-wrap">{footerRight}</div>
