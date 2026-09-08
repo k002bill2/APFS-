@@ -104,7 +104,7 @@ const columnDefs: (ColDef<SubFundRow> | ColGroupDef<SubFundRow>)[] = [
   { field: 'no', headerName: 'No', width: 68, pinned: 'left', cellStyle: centerNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '합 계' : String(p.value)) },
   { field: 'stg', headerName: '심사단계', width: 96, pinned: 'left', cellStyle: flexMid, sortable: true,
-    cellRenderer: (p: any) => (p.node.rowPinned ? null : <StatusBadge tone={STAGE_TONE[p.value as Stage]} label={p.value} size="sm" dot={false} />) },
+    cellRenderer: (p: any) => (p.node.rowPinned ? null : <StatusBadge tone={STAGE_TONE[p.value as Stage]} label={p.value} dot={false} />) },
   { ...txt('fn', '자펀드', 240), pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold"><MT>{p.value}</MT></span>) },
   num('y', '사업연도', 92), txt('rt', '정기/수시', 88, true), num('ch', '차수', 70),
   txt('ctype', '조합유형', 150, true), txt('cg', '조합구분', 96, true), txt('cs', '조합성격', 120, true),
@@ -340,7 +340,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
         /* 선택 행의 심사단계에 맞는 작업만 노출(공고관리 컨텍스트 액션 패턴). 취소 단계는 작업 없음 */
         <>
           <span className="inline-flex items-center gap-1.5 font-semibold" style={{ fontSize: 13 }}>
-            <StatusBadge tone={STAGE_TONE[selected.stg]} label={selected.stg} size="sm" dot={false} />
+            <StatusBadge tone={STAGE_TONE[selected.stg]} label={selected.stg} dot={false} />
             <span className="truncate" style={{ maxWidth: 260 }}><MT>{selected.fn}</MT></span>
           </span>
           {stageActs.map((a) => (
@@ -436,7 +436,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
                   <div className="font-semibold truncate" style={{ fontSize: 14 }}><MT>{r.fn}</MT></div>
                   <div className="text-muted-foreground truncate" style={{ fontSize: 12 }}><MT>{r.gp1}</MT> · {r.y}년</div>
                 </div>
-                <StatusBadge tone={STAGE_TONE[r.stg]} label={r.stg} size="sm" dot={false} />
+                <StatusBadge tone={STAGE_TONE[r.stg]} label={r.stg} dot={false} />
               </div>
               <div className="flex flex-col gap-1.5">
                 {([['약정총액', r.c1], ['납입총액', r.p1], ['분배액', r.dist]] as [string, number | null][]).map(([label, v]) => (
