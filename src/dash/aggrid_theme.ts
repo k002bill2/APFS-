@@ -24,6 +24,7 @@ export const apfsTheme = themeQuartz.withParams({
   fontFamily: 'inherit',
   headerFontWeight: 600,
   wrapperBorderRadius: 0,
+  wrapperBorder: false,   // .ag-root-wrapper 외곽 테두리만 제거(2026-09-08) — 컬럼선·행선·헤더선은 유지. 프레임 카드가 테두리 없는 페이지 배경이라 맞춤
   // 세로 컬럼 구분선 — 헤더·본문 모두. 구조(축)라 마스크와 무관하게 상시 표시. 색은 토큰(라이트/다크 추종).
   columnBorder: { color: 'var(--border)' },
   headerColumnBorder: { color: 'var(--border)' },
