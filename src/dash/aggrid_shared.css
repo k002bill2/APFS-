@@ -15,14 +15,13 @@
 
 /* ── 합계(floating-bottom) 행 강조 — 매트릭스 표 합계행 시각 구분 ──
    pinned 합계 행이 테마 배경(var(--card)) 그대로면 일반 행과 구분 안 됨.
-   primary 9% 틴트 + 상단 강조 테두리, pinned-left '구분' 라벨은 primary 굵게.
-   색은 var(--primary)/color-mix → 라이트/다크 자동 추종.
+   회색 틴트(var(--muted), 2026-09-08 — 이전 primary 9% 틴트 + 2px primary 상단선은 사용자 결정으로 제거),
+   pinned-left '구분' 라벨은 primary 굵게. 색은 토큰 → 라이트/다크 자동 추종.
    왜 CSS인가: pinned-left 셀과 center 셀이 별도 DOM 컨테이너라 행 전체를 한 번에
         덮으려면 행 단위 셀렉터 필요(cellStyle 불가). 왜 !important: Quartz가 행 배경을
         var(--card)로 직접 칠해 specificity로 못 이김. */
 .ag-floating-bottom .ag-row {
-  background: color-mix(in srgb, var(--primary) 9%, transparent) !important;
-  border-top: 2px solid var(--primary) !important;
+  background: var(--muted) !important;
 }
 .ag-pinned-left-floating-bottom .ag-cell {
   color: var(--primary) !important;
