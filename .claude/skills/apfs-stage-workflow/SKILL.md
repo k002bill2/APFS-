@@ -12,8 +12,8 @@ description: APFS 리스트 화면의 "행 선택 → 그 행의 단계(심사�
 ## 핵심 규약 (CRITICAL)
 1. **전이는 오직 컨텍스트 액션으로.** 단계 셀(`StatusBadge` cellRenderer)에 onClick을 달지 않는다. 더블클릭 수정 진입도 단계 전이엔 쓰지 않는다.
 2. **단일 선택 + 안정 id.** `rowSelection={{mode:'singleRow',checkboxes:true,enableClickSelection:true}}` + `getRowId={(p)=>p.data.id}`. 전이로 `rowData`가 바뀌어도 선택이 유지돼 **새 단계의 액션이 자동으로 갱신**된다(선택 해제하지 말 것).
-3. **액션 맵은 단계별 배열 하나로.** primary는 단계당 **1개**(주 전이), 나머지 outline. 액션 라벨은 업무 동사("선정조합 등록"·"결성 확정"·"신청취소"). 말단 단계(취소)는 빈 배열 + 안내 캡션.
-4. **툴바 좌 슬롯은 경합한다**: `selected ? <selbar> : <필터칩>`. selbar = 단계 배지 + 대상명(MT) + 액션 버튼들 + `선택 해제`.
+3. **액션 맵은 단계별 배열 하나로.** primary는 단계당 **1개**(주 전이), 나머지 outline. 액션 라벨은 업무 동사("선정조합 등록"·"결성 확정"·"신청취소"). 말단 단계(취소)는 빈 배열 — **안내 캡션 없음**(2026-09-08 사용자 결정으로 제거).
+4. **툴바 좌 슬롯은 경합한다**: `selected ? <selbar> : <필터칩>`. selbar = 단계 배지(`size="lg" dot={false}`) + 전이 액션 버튼들 + 공통 조회(`명세`, 단계 무관) + `선택 해제`. **대상명(자펀드명)은 넣지 않는다** — 선택 행에서 이미 보임(2026-09-08 결정).
 5. **전이 = 불변 patch + toast.** `patchRow(id, {stg, ...부수효과})`. 부수효과는 도메인 정합(예: 취소→조합상태 '-', 결성 확정→결성일=오늘·운영중).
 6. **모달을 여는 액션**은 단계에 따라 **제목이 달라진다** → `RowFormModal title={...}` prop. 저장 콜백이 patch + 전이를 함께 수행(`saveSelect(f, target)`).
 7. **신규 등록 액션**(헤더 우측 primary)은 첫 단계 행을 **선두 삽입** + `setSelId(newId)` → 다음 액션이 바로 보인다.
@@ -45,9 +45,9 @@ const stageActs = !selected ? [] : ({
 
 // 툴바 좌 — 선택 시 selbar, 아니면 필터칩
 toolbarLeft={selected
-  ? <><StatusBadge tone={STAGE_TONE[selected.stg]} label={selected.stg} size="sm" /><MT>{selected.fn}</MT>
+  ? <><StatusBadge tone={STAGE_TONE[selected.stg]} label={selected.stg} size="lg" dot={false} />
       {stageActs.map((a) => <Button key={a.label} variant={a.primary ? 'primary' : 'outline'} size="sm" onClick={a.run}>{a.label}</Button>)}
-      {stageActs.length === 0 && <span className="text-caption">취소된 건 — 가능한 작업 없음</span>}
+      <Button variant="outline" size="sm" leadingIcon="file" onClick={() => setModal({ kind: 'spec' })}>명세</Button>   {/* 단계 무관 조회 — 액션 맵 밖 */}
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button></>
   : <>{STAGES.map((s) => <FilterChip …>{s}</FilterChip>)}</>}
 ```
