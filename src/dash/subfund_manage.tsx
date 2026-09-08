@@ -324,7 +324,6 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
     <GridFrame
       crumbs={['홈', '투자자산관리', '자펀드 관리', '자펀드관리']}
       title="자펀드관리"
-      sub="자펀드(투자조합) 검색·조회 및 심사단계(신청→선정→결성 / 취소) 생애주기 관리 · 금액 단위: 원"
       cardTitle="자펀드 목록"
       favRoute="subfund"
       headerActions={<>
