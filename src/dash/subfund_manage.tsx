@@ -479,13 +479,14 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={formedFunds} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAg} onChange={setFAg} options={OPT_AG} /></DrawerField>
             <DrawerField label="자펀드구분"><DrawerSelect value={fType} onChange={setFType} options={OPT_FG} /></DrawerField>
-            <DrawerField label="사업연도" plain><PeriodPicker mode="year" value={fYear} onChange={setFYear} ariaLabel="사업연도" yearRange={[2000, CUR_YEAR + 1]} /></DrawerField>
+            {/* PeriodPicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW) 적용 — 형제 DatePicker 소비처(renderers·generic_list)와 동일 */}
+            <DrawerField label="사업연도" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('year'), maxWidth: '100%' }}><PeriodPicker mode="year" value={fYear} onChange={setFYear} ariaLabel="사업연도" yearRange={[2000, CUR_YEAR + 1]} /></div></DrawerField>
             <DrawerField label="정기/수시"><DrawerSelect value={fRt} onChange={setFRt} options={['정기', '수시']} /></DrawerField>
             <DrawerField label="심사담당자" noop><DrawerSelect value={fManager} onChange={setFManager} options={OPT_MANAGER} /></DrawerField>
             <DrawerField label="리스크담당자" noop><DrawerSelect value={fRisk} onChange={setFRisk} options={OPT_MANAGER} /></DrawerField>
             <DrawerField label="심사단계"><DrawerSelect value={fStage} onChange={(v) => setFStage(v as '' | Stage)} options={STAGES} /></DrawerField>
             <DrawerField label="조합상태"><DrawerSelect value={fSt} onChange={setFSt} options={OPT_FS} /></DrawerField>
-            <DrawerField label="기준일자" noop plain><PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" /></DrawerField>
+            <DrawerField label="기준일자" noop plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" /></div></DrawerField>
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
