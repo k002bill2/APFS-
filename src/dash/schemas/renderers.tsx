@@ -58,7 +58,7 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
   switch (field.control) {
     case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical' }} />;
     // select: native UA 드롭다운 화살표가 오른쪽 경계에 붙지 않도록 오른쪽 패딩만 확대(화살표가 padding-right만큼 안쪽으로 밀림). 상하·좌측은 base 유지.
-    case 'select':   return <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...base, paddingRight: 30 }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>;
+    case 'select':   return <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...base, paddingRight: 34 }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>;
     case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} style={base} />;
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(네이티브 input과 동일 계약).
     // DatePicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW=120)을 적용
