@@ -34,6 +34,9 @@ export function Cell({ col, value, color, statusDomain }: { col: ColumnSpec; val
 export function SchemaField({ field, value, onChange, invalid }: { field: FieldSpec; value: string; onChange: (v: string) => void; invalid?: boolean }) {
   // 필수 필드는 채움 여부와 무관하게 빨간 테두리로 상시 표식(라벨 '*'와 병행). readonly는 입력 대상이 아니라 제외.
   const requiredMark = !!field.required && field.control !== 'readonly';
+  // 폭 하한을 타입별로 차등(2026-09-09 사용자 결정) — 일률 220 폐기. maxWidth:100%(필드 초과 방지)는 유지.
+  //   date=짧은 고정포맷(YYYY-MM-DD) 120 · select=이름만이면 fit-content로 더 좁아짐 130 · number=금액 자리수 180 · text/기본=이름/명칭 길게 240.
+  const minW = field.control === 'date' ? 120 : field.control === 'select' ? 130 : field.control === 'number' ? 180 : 240;
   const base: React.CSSProperties = {
     // ⚠️ fontFamily(longhand)로 패밀리만 상속 — `font: 'inherit'`(shorthand)는 font-size까지 리셋해 위의 fontSize:14를 부모값으로 덮어쓴다.
     // ⚠️ 높이 규격 38px — DatePicker 버튼/radio와 일치시킨다. lineHeight:20(=text-sm)로 자연 높이를 20+16(pad)+2(border)=38로 맞추고
@@ -41,9 +44,9 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     // 🍎 Safari(WebKit): preflight:false라 native <select>(menulist)·<input type=number>가 UA 기본 박스모델을 그대로 쓴다.
     //    Chrome은 lineHeight+minHeight로 38에 착지하지만 Safari는 native control에 자체 패딩/메트릭을 얹어 38을 초과 → 텍스트 input과 어긋난다.
     //    명시 height:38(하드 클램프)으로 통일한다. textarea는 rows로 커야 하므로 아래에서 height:'auto'로 되돌린다.
-    // 폭: 컨테이너를 꽉 채우지 않고 내용 맞춤(fit-content, 2026-09-08 사용자 결정). 너무 좁아지지 않게 min 220, 넘치지 않게 max 100%.
+    // 폭: 컨테이너를 꽉 채우지 않고 내용 맞춤(fit-content). 하한은 타입별 minW(위), 넘치지 않게 max 100%.
     //    textarea는 아래에서 100%로 되돌린다(긴 입력 항목).
-    width: 'fit-content', minWidth: 220, maxWidth: '100%', boxSizing: 'border-box', padding: '8px 11px', fontSize: 14, lineHeight: '20px', height: 38, minHeight: 38, fontFamily: 'inherit',
+    width: 'fit-content', minWidth: minW, maxWidth: '100%', boxSizing: 'border-box', padding: '8px 11px', fontSize: 14, lineHeight: '20px', height: 38, minHeight: 38, fontFamily: 'inherit',
     border: `1px solid ${invalid || requiredMark ? 'var(--danger)' : 'var(--border-strong)'}`,
     borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
   };
@@ -52,8 +55,8 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     case 'select':   return <select value={value} onChange={(e) => onChange(e.target.value)} style={base}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>;
     case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} style={base} />;
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(네이티브 input과 동일 계약).
-    // DatePicker 트리거는 w-full이라 fit-content 래퍼로 감싸 다른 컨트롤과 같은 폭 규칙(min 220)을 적용
-    case 'date':     return <div style={{ width: 'fit-content', minWidth: 220, maxWidth: '100%' }}><DatePicker value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
+    // DatePicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW=120)을 적용
+    case 'date':     return <div style={{ width: 'fit-content', minWidth: minW, maxWidth: '100%' }}><DatePicker value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
     case 'checkbox': return <input type="checkbox" checked={value === 'true'} onChange={(e) => onChange(String(e.target.checked))} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />;
     // 라디오 — 옵션 가로 나열(Y/N, Y/N/해당없음 등). 네이티브 input + accentColor 토큰(라이트/다크 양립).
     case 'radio': return (

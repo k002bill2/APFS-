@@ -26,6 +26,7 @@ export const apfsTheme = themeQuartz.withParams({
   borderColor: 'var(--border)',
   selectedRowBackgroundColor: 'var(--row-selected)',  // 행선택 = 회색(토큰). accentColor와 분리
   fontFamily: 'inherit',
+  headerHeight: 40,       // 헤더 행 높이(기본 48 축소). 2단 그룹헤더는 이 값×2=80px. 그룹/리프 공통 적용
   headerFontWeight: 600,
   wrapperBorderRadius: 0,
   wrapperBorder: false,   // .ag-root-wrapper 외곽 테두리만 제거(2026-09-08) — 컬럼선·행선·헤더선은 유지. 프레임 카드가 테두리 없는 페이지 배경이라 맞춤
