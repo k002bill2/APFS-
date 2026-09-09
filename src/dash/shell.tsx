@@ -6,7 +6,7 @@ import { UI } from './components';
 import { APFS_DATA, useMenuSel, MenuStore, HistoryStore } from './data';
 import { mn, MT } from './mask';
 import { MainWidgets } from './main_widgets';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuLabel, DropdownMenuSeparator } from './ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from './ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } from './ui/navigation-menu';
@@ -147,10 +147,10 @@ function LnbFlyItem({ m, count, isActive, expanded, setExpanded, onNav }) {
 }
 
 /* ---------- LNB ---------- */
-function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
+function Lnb({ open, route, onNav, mobile, drawerOpen }) {
   const [expanded, setExpanded] = useState(() => ({ ...allSubGroupsExpanded(), risk: true }));
   const [navValue, setNavValue] = useState("");
-  const menu = D.MENU.filter((m) => m.roles.includes(role));
+  const menu = D.MENU;
   const collapsed = !open && !mobile;
   const navTo = (r) => { onNav(r); setNavValue(""); };
   const posStyle: React.CSSProperties = mobile
@@ -263,8 +263,8 @@ function RailItem({ m, route, expanded, setExpanded, onNav }) {
 }
 
 /* ---------- RailNav (ClickUp형 아이콘 레일 + 우측 슬라이드 패널) ---------- */
-function RailNav({ role, route, onNav, mobile, drawerOpen }) {
-  const menu = D.MENU.filter((m) => m.roles.includes(role));
+function RailNav({ route, onNav, mobile, drawerOpen }) {
+  const menu = D.MENU;
   const [expanded, setExpanded] = useState(allSubGroupsExpanded);
   const [navValue, setNavValue] = useState("");
   useEffect(() => { setNavValue(""); }, [route]);
@@ -523,35 +523,6 @@ function UserMenu({ onUserModal }: { onUserModal: (id: string) => void }) {
   );
 }
 
-/* ---------- Role switcher — Radix DropdownMenu(RadioGroup, 키보드 내비·radio 시맨틱) ---------- */
-function RoleSwitch({ role, onRole }) {
-  const cur = D.ROLES.find((r) => r.id === role);
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          className="gnb-rolesw flex items-center gap-2 cursor-pointer bg-card py-1.5 px-2.5"
-          style={{ font: "inherit", border: "1px solid var(--border-strong)", borderRadius: 9 }}>
-          <span className="bg-success" style={{ width: 7, height: 7, borderRadius: 99 }} />
-          <span className="font-semibold" style={{ fontSize: 12.5 }}>{cur.short}</span>
-          <Icon name="chevron-down" size={14} style={{ opacity: .5 }} />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[240px]">
-        <DropdownMenuLabel>역할 전환 (RBAC 데모)</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={role} onValueChange={onRole}>
-          {D.ROLES.map((r) => (
-            <DropdownMenuRadioItem key={r.id} value={r.id}>
-              <span className="font-bold" style={{ fontSize: 13, color: r.id === role ? "var(--primary)" : "var(--foreground)" }}>{r.name}</span>
-              <span className="t-caption">{r.desc}</span>
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 /* ---------- Favorites FAB (우측하단 플로팅 즐겨찾기) ---------- */
 function FavoritesFab({ onNav }) {
   const [open, setOpen] = useState(false);
@@ -611,11 +582,10 @@ function FavoritesFab({ onNav }) {
 /* ---------- GNB ---------- */
 
 /* ---------- Command 팔레트 (GNB '/' 검색) ---------- */
-/* MENU(3-레벨)를 역할 필터링해 평탄화 → {cat, items:[{label, sub, nav}]} 그룹 */
-function flattenMenu(role: string) {
+/* MENU(3-레벨)를 평탄화 → {cat, items:[{label, sub, nav}]} 그룹 */
+function flattenMenu() {
   const groups: { cat: string; items: { label: string; sub?: string; nav: string }[] }[] = [];
   for (const top of D.MENU) {
-    if (top.roles && !top.roles.includes(role)) continue;
     const items: { label: string; sub?: string; nav: string }[] = [];
     if (top.path && !top.children) items.push({ label: top.label, nav: top.path });
     (top.children || []).forEach((mid: any) => {
@@ -627,8 +597,8 @@ function flattenMenu(role: string) {
   return groups;
 }
 
-function MenuCommand({ open, onOpenChange, onNav, role }: { open: boolean; onOpenChange: (o: boolean) => void; onNav: (r: string) => void; role: string }) {
-  const groups = React.useMemo(() => flattenMenu(role), [role]);
+function MenuCommand({ open, onOpenChange, onNav }: { open: boolean; onOpenChange: (o: boolean) => void; onNav: (r: string) => void }) {
+  const groups = React.useMemo(() => flattenMenu(), []);
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
       <CommandInput placeholder="메뉴·운용사·자펀드 검색…" />
@@ -654,7 +624,7 @@ function MenuCommand({ open, onOpenChange, onNav, role }: { open: boolean; onOpe
   );
 }
 
-function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWide, notifs, onOpenNotif, onNav, onUserModal }) {
+function Gnb({ theme, onToggleTheme, onToggleLnb, wide, onToggleWide, notifs, onOpenNotif, onNav, onUserModal }) {
   const unread = notifs.filter((n) => !n.read).length;
   const [cmdOpen, setCmdOpen] = useState(false);
   useEffect(() => {
@@ -669,7 +639,7 @@ function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWi
   }, []);
   return (
     <>
-    <MenuCommand open={cmdOpen} onOpenChange={setCmdOpen} onNav={onNav} role={role} />
+    <MenuCommand open={cmdOpen} onOpenChange={setCmdOpen} onNav={onNav} />
     <header
       className="sticky top-0 shrink-0 flex items-center"
       style={{
@@ -690,7 +660,7 @@ function Gnb({ theme, onToggleTheme, role, onRole, onToggleLnb, wide, onToggleWi
           borderRadius: 10, padding: "7px 12px", width: 260, border: "none", font: "inherit",
         }}><Icon name="search" size={16} /><span className="flex-1 text-left" style={{ fontSize: 12.5 }}>메뉴·운용사·자펀드 검색</span><kbd
           className="font-semibold bg-card"
-          style={{ fontSize: 10, borderRadius: 5, padding: "1px 5px", border: "1px solid var(--border)" }}>/</kbd></button><RoleSwitch role={role} onRole={onRole} /><div className="flex items-center gap-0.5"><span className="gnb-wide inline-flex"><IconBtn
+          style={{ fontSize: 10, borderRadius: 5, padding: "1px 5px", border: "1px solid var(--border)" }}>/</kbd></button><div className="flex items-center gap-0.5"><span className="gnb-wide inline-flex"><IconBtn
           icon={wide ? "collapse-h" : "expand-h"}
           onClick={onToggleWide}
           label={wide ? "고정 너비" : "전체 너비"}
@@ -863,7 +833,7 @@ function PageHeader({ crumbs, actions }: { crumbs: string[]; title?: React.React
 /* ---------- AppShell ---------- */
 function AppShell(props) {
   const { wide, onToggleWide } = props;
-  const { theme, onToggleTheme, role, onRole, route, onNav, lnbOpen, onToggleLnb, navStyle, notifs, children } = props;
+  const { theme, onToggleTheme, route, onNav, lnbOpen, onToggleLnb, navStyle, notifs, children } = props;
   const [notifOpen, setNotifOpen] = useState(false);
   const [userModal, setUserModal] = useState<string | null>(null);
   const mobile = useIsMobile(760);
@@ -877,8 +847,6 @@ function AppShell(props) {
       className="bg-bg flex flex-col" style={{ minHeight: "100vh" }}><Gnb
         theme={theme}
         onToggleTheme={onToggleTheme}
-        role={role}
-        onRole={onRole}
         onToggleLnb={handleMenu}
         wide={wide}
         onToggleWide={onToggleWide}
@@ -889,8 +857,8 @@ function AppShell(props) {
           gridTemplateColumns: mobile ? "minmax(0,1fr)" : rail ? "64px minmax(0,1fr)" : `${lnbOpen ? 260 : 66}px minmax(0,1fr)`,
           ...(mobile || rail ? {} : { transition: "grid-template-columns .22s var(--ease)" }),
         }}>{rail
-          ? <RailNav role={role} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />
-          : <Lnb open={mobile ? true : lnbOpen} role={role} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />}<NavContext.Provider value={{ onNav: navClose, route }}><main
+          ? <RailNav route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />
+          : <Lnb open={mobile ? true : lnbOpen} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />}<NavContext.Provider value={{ onNav: navClose, route }}><main
           className="dash-main flex-1 min-w-0"
           style={{ padding: "14px 26px 104px" }}>{children}</main></NavContext.Provider></div>{mobile && <div
         className={"lnb-backdrop" + (drawer ? " show" : "")}

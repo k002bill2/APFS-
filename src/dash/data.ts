@@ -98,12 +98,6 @@ const NOTIFS = [
 ];
 
 // RBAC 역할 (3등급)
-const ROLES = [
-  { id:"admin",   name:"시스템 관리자", short:"관리자", desc:"전 기능·관리자 시스템 접근" },
-  { id:"manager", name:"투자운용 실무자", short:"실무자", desc:"업무 처리·승인 요청·보고 등록" },
-  { id:"viewer",  name:"조회 권한자", short:"조회자", desc:"대시보드·통계 조회 전용" },
-];
-
 // LNB — PRD 부록A 전체 메뉴 체계 (대분류→중분류→메뉴 3단계)
 const MENU = [
   { id:"home", label:"대시보드", icon:"home", path:"main", roles:["admin","manager","viewer"] },
@@ -486,5 +480,5 @@ export function useMenuSel(kind: string, def: string[]) {
 }
 
 export const APFS_DATA = { KPI, EXEC_Q, EXEC_Y, STATUS_DONUT, INDUSTRY, SCHEDULE, MINI, SHORTCUTS,
-  RISK_TREND, RISK_THRESHOLD, REGION_BARS, NOTIFS, NOTIF_CENTER, ROLES, MENU, PORTFOLIO, QUICKMENU, FAVORITES,
+  RISK_TREND, RISK_THRESHOLD, REGION_BARS, NOTIFS, NOTIF_CENTER, MENU, PORTFOLIO, QUICKMENU, FAVORITES,
   ALLMENU, DEFAULT_FAV };

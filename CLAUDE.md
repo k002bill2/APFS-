@@ -46,21 +46,21 @@ APFS/
 - `components.tsx` → `UI` — Button, ColorChip, StatusBadge, SegTabs 등 (Tailwind 유틸 className 기반)
 - `icons.tsx` → `Icon` — lucide 스타일 자체 라인 아이콘 (lucide npm도 사용)
 - `charts.tsx` → `Charts` — Recharts 동일 스펙의 자체 SVG 차트 프리미티브 (Sparkline/Donut/LineTrend/HBars 등)
-- `shell.tsx` → `Shell` — GNB / LNB(3-레벨) / 브레드크럼 / 알림센터 / RBAC 게이팅 / 테마 토글
+- `shell.tsx` → `Shell` — GNB / LNB(3-레벨) / 브레드크럼 / 알림센터 / 테마 토글
 - `designsystem.tsx` → 컬러 토큰·타이포·공통 컴포넌트 프리뷰
 - `main_widgets.tsx` + `main.tsx` → 메인 종합 대시보드 (공유 위젯 + 3개 레이아웃 시안)
 - PRD 페이지: `performance` `risk` `gp_health` `accounting` `schedule` `report`.tsx (각 `Pages.*` export)
 - 자펀드 정보관리(route `subfund`): `subfund_manage.tsx`(`SubFundManage` export) + `subfund_form_modal`(결성조합 등록/수정) + `subfund_spec_modal`(읽기전용 명세 팝업) + `subfund_manage_schemas.ts`. 구 `subfund.tsx`(bespoke, `SubFund` export)는 2026-09-09 삭제됨.
-- `app.tsx` → 테마/역할/라우트 상태, `#root`에 마운트
+- `app.tsx` → 테마/라우트 상태, `#root`에 마운트
 - `tweaks-panel.tsx` + `tweaks_app.tsx` → 디자인 토큰 조정 패널 (data-* 속성 + localStorage 영속화, 효과는 CSS 변수로)
 
 **벤더**: React 18 / ReactDOM (npm), lucide. JSX 변환은 **빌드타임(esbuild)** — 브라우저 Babel은 제거됨.
 
-**RBAC**: `Shell`이 `role` 기반으로 `APFS_DATA.MENU`를 필터링(`m.roles.includes(role)`)하므로 역할에 따라 보이는 메뉴가 달라집니다. 메뉴는 PRD 부록 A의 3-레벨(대분류 9 / 중분류 33 / 리프 137개). 역할 3등급: admin(8) / manager(7) / viewer(4) — 현 구현 최상위 메뉴 기준.
+**메뉴**: `Shell`이 `APFS_DATA.MENU`를 그대로 렌더하며 모든 사용자에게 전 메뉴를 노출합니다. 메뉴는 PRD 부록 A의 3-레벨(대분류 9 / 중분류 33 / 리프 137개). (구 RBAC 데모 — `role` 상태·역할 스위처·`ROLES` 정의는 2026-09-09 제거됨. 백엔드/인증이 없는 프로토타입이라 실제 접근통제가 아닌 데모 토글이었음. MENU item의 `roles:` 필드는 잔존하나 현재 미사용.)
 
 ## 실행 방법
 
-- `localStorage`에 테마/역할/Tweaks 설정을 영속화합니다.
+- `localStorage`에 테마/Tweaks 설정을 영속화합니다.
 - 배포: `main`에 push하면 Vercel이 `vite build` 후 `dist/`를 서빙합니다(자동 배포).
 
 ## 편집 시
@@ -70,7 +70,7 @@ APFS/
 - 현재 코드는 `React.createElement`(별칭 `h`) 기반(**Phase 0**). **JSX 전환(Phase 2)·TypeScript 타입화(Phase 3)는 후속 작업** — 진행 시 점진적으로.
 - `tsc --noEmit`은 현재 타입 에러를 다수 보고하지만 빌드(esbuild)는 타입체크를 하지 않아 `vite build`는 green입니다.
 - 색/간격/타이포는 하드코딩 대신 CSS 변수 토큰(`tokens.css`)을 사용하세요 — Tweaks 패널이 런타임 조정합니다.
-- 새 페이지/메뉴는 역할 가시성(`roles`)을 명시하고, 라이트/다크 모두에서 대비를 확인하세요.
+- 새 페이지/메뉴는 라이트/다크 모두에서 대비를 확인하세요.
 - **데이터 마스크(빈 영역 placeholder)**: `src/dash/mask.tsx`가 화면 데이터를 가리는 토글입니다. **현재 OFF**(`const _on = false`, 2026-09-04 사용자 결정으로 마스크 해제 — 실데이터 그대로 표시). 다시 가려야 하면 `_on = true` 한 줄로 전 화면 마스크가 복귀합니다(`_on`이 SSOT). 마스크 상태와 무관하게 새 위젯에 데이터를 넣을 때는 규약을 유지하세요: 숫자/금액/날짜는 `mn(v)`, 텍스트(인명·코드 등)는 `<MT>{...}</MT>`로 감쌉니다(OFF일 때는 pass-through, 재활성 시 자동으로 다시 가려짐). 표 헤더·카드 제목·탭·단위·StatusBadge·차트 축·달력 날짜는 가리지 않습니다("축은 두고 데이터는 가린다").
 - **레거시**: 루트 `농식품모태펀드 대시보드*.html`(구 오프라인 번들)은 더 이상 정본이 아닙니다. `apfs-bundle` 스킬(번들 gzip+base64 디코드/재인코드)도 이 레거시 파일에만 해당하며, 신규 작업엔 불필요합니다.
 
