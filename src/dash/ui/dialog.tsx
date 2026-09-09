@@ -2,7 +2,9 @@
    - 표면: bg-card / border-border (기존 모달과 일치)
    - z-index: z-overlay(75) / z-modal(80) — 셸 raw 정수 chrome(모달 71) 위로
    - 포커스: shadcn ring 유틸 제거 → tokens.css 전역 :focus-visible outline으로 통일
-   - 애니메이션: tailwindcss-animate(animate-in/out, fade, zoom) */
+   - 애니메이션: Animate UI(animate-ui.com) Radix Dialog 열림 방식 — 콘텐츠는 from:'top' 3D 플립
+     (perspective+rotateX)+blur, 오버레이는 페이드. tailwind.config의 dialog-in/out 키프레임.
+     ⚠ 중앙정렬은 CSS translate 프로퍼티가 담당(transform은 플립 전용). Motion 미도입=Radix exit 트랩 회피. */
 import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
@@ -38,7 +40,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-modal flex w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-card-lg border border-border bg-card shadow-lg focus:outline-none duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+        'fixed left-1/2 top-1/2 z-modal flex w-full max-w-lg [translate:-50%_-50%] flex-col overflow-hidden rounded-card-lg border border-border bg-card shadow-lg focus:outline-none data-[state=open]:animate-dialog-in data-[state=closed]:animate-dialog-out',
         className,
       )}
       {...props}

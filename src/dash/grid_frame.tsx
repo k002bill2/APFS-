@@ -106,7 +106,7 @@ export function GridFrame({
 
         {/* 툴바 */}
         {hasToolbar && (
-          <div className="flex items-center justify-between flex-wrap gap-3" style={{ padding: '10px 18px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'color-mix(in srgb, var(--muted) 35%, transparent)' }}>
+          <div className="flex items-center justify-between flex-wrap gap-3" style={{ padding: '6px 18px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'color-mix(in srgb, var(--muted) 35%, transparent)' }}>
             <div className="flex items-center gap-2 flex-wrap">{toolbarLeft}</div>
             <div className="flex items-center gap-1 flex-wrap">{toolbarRight}</div>
           </div>
