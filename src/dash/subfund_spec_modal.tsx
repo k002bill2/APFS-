@@ -112,8 +112,8 @@ const IS: FsRow[] = [
 function Section({ title, unitNote, children }: { title: string; unitNote?: string; children: React.ReactNode }) {
   return (
     <section className="mb-5">
-      <h3 className="flex items-center gap-2 font-extrabold border-b-2 border-border pb-2 mb-3" style={{ fontSize: 14 }}>
-        {title}{unitNote && <span className="ml-auto text-caption font-semibold" style={{ fontSize: 12 }}>{unitNote}</span>}
+      <h3 className="flex items-center gap-2 text-lg font-bold border-b-2 border-border pb-2 mb-3">
+        {title}{unitNote && <span className="ml-auto text-caption font-semibold" style={{ fontSize: 12.5 }}>{unitNote}</span>}
       </h3>
       {children}
     </section>
@@ -122,13 +122,13 @@ function Section({ title, unitNote, children }: { title: string; unitNote?: stri
 function UnitSeg({ unit, onChange }: { unit: Unit; onChange: (u: Unit) => void }) {
   return (
     <div className="flex items-center justify-end gap-2 mb-3">
-      <span className="text-caption font-semibold" style={{ fontSize: 12 }}>금액 단위</span>
+      <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>금액 단위</span>
       <SegTabs size="sm" value={unit} onChange={(v: string) => onChange(v as Unit)} options={(['원', '백만원', '억원'] as Unit[]).map((u) => ({ value: u, label: u }))} />
     </div>
   );
 }
 const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)' };
-const DT_STYLE: React.CSSProperties = { padding: '8px 12px', fontSize: 12.5 };
+const DT_STYLE: React.CSSProperties = { padding: '8px 12px', fontSize: 13 };
 /* kv 그리드 — dt/dd 2열, full=행 전체. 값 없음 '-'(muted) */
 function KvGrid({ items, unit }: { items: OvItem[]; unit: Unit }) {
   return (
@@ -140,7 +140,7 @@ function KvGrid({ items, unit }: { items: OvItem[]; unit: Unit }) {
           <div key={o.l} className={`grid bg-card ${o.full ? 'sm:col-span-2' : ''}`} style={KV_COLS}>
             <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
             <dd className={`m-0 flex items-center min-w-0 ${isMoney ? 'justify-end tabular font-semibold' : ''} ${empty ? 'text-caption' : ''}`}
-              style={{ padding: '8px 12px', fontSize: 13, overflowWrap: 'anywhere' }}>
+              style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
               {empty ? '-' : isMoney ? money(o.won!, unit) : <MT>{o.v}</MT>}
             </dd>
           </div>
@@ -149,9 +149,9 @@ function KvGrid({ items, unit }: { items: OvItem[]; unit: Unit }) {
       {FILES.map((f) => (
         <div key={f.l} className="grid bg-card sm:col-span-2" style={KV_COLS}>
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{f.l}</dt>
-          <dd className={`m-0 flex items-center ${f.f ? '' : 'text-caption'}`} style={{ padding: '8px 12px', fontSize: 13 }}>
+          <dd className={`m-0 flex items-center ${f.f ? '' : 'text-caption'}`} style={{ padding: '8px 12px', fontSize: 14 }}>
             {f.f ? (
-              <a href="#" onClick={(e) => e.preventDefault()} className="inline-flex items-center gap-2 border border-border bg-muted no-underline" style={{ padding: '5px 10px', borderRadius: 6, fontSize: 12.5, color: 'inherit' }}>
+              <a href="#" onClick={(e) => e.preventDefault()} className="inline-flex items-center gap-2 border border-border bg-muted no-underline" style={{ padding: '5px 10px', borderRadius: 6, fontSize: 13, color: 'inherit' }}>
                 <span className="font-extrabold" style={{ padding: '1px 6px', borderRadius: 4, background: 'var(--danger)', color: 'var(--destructive-foreground)', fontSize: 10 }}>PDF</span>
                 <MT>{f.f}</MT>
               </a>
@@ -170,7 +170,7 @@ function FinGrid({ unit, zero }: { unit: Unit; zero: boolean }) {
   const cols = [...FIN_BS, ...FIN_IS];
   return (
     <div className="overflow-x-auto">
-      <table className="border-collapse" style={{ minWidth: 1180, fontSize: 12.5 }}>
+      <table className="border-collapse" style={{ minWidth: 1180, fontSize: 13 }}>
         <caption className="sr-only">재무정보 요약 — 대차대조표·손익계산서 2단 헤더</caption>
         <thead>
           <tr>
@@ -196,7 +196,7 @@ function FinGrid({ unit, zero }: { unit: Unit; zero: boolean }) {
 /* 재무제표 상세 표 — 항목/금액 2열, 그룹행·들여쓰기·합계 강조 */
 function FsTable({ rows, unit }: { rows: FsRow[]; unit: Unit }) {
   return (
-    <table className="w-full border-collapse" style={{ minWidth: 380, fontSize: 13 }}>
+    <table className="w-full border-collapse" style={{ minWidth: 380, fontSize: 14 }}>
       <thead><tr>
         <th scope="col" className="text-left font-bold bg-[color:var(--grid-header)] text-muted-foreground border-b border-border" style={{ padding: '6px 12px' }}>항목</th>
         <th scope="col" className="text-right font-bold bg-[color:var(--grid-header)] text-muted-foreground border-b border-border" style={{ padding: '6px 12px' }}>금액</th>
@@ -228,8 +228,10 @@ function FsDetailModal({ fn, unit: initUnit, onClose }: { fn: string; unit: Unit
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[720px] max-h-[88vh]">
         <DialogHeader>
-          <DialogTitle>재무제표 상세</DialogTitle>
-          <DialogDescription className="text-caption" style={{ fontSize: 12.5 }}>기준년월 {BASEYM} · <MT>{fn}</MT></DialogDescription>
+          <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
+            <DialogTitle className="shrink-0 text-xl">재무제표 상세</DialogTitle>
+            <DialogDescription className="text-caption truncate min-w-0">기준년월 {BASEYM} · <MT>{fn}</MT></DialogDescription>
+          </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">
           <UnitSeg unit={unit} onChange={setUnit} />
@@ -267,8 +269,10 @@ export function SubFundSpecModal({ row, onClose }: { row: SubFundRow; onClose: (
         {/* 중첩 팝업이 열려 있을 때는 바깥 클릭이 부모까지 닫지 않도록 차단 */}
         <DialogContent className="max-w-[880px] max-h-[88vh]" onInteractOutside={(e) => { if (fsOpen) e.preventDefault(); }}>
           <DialogHeader>
-            <DialogTitle>자펀드 명세</DialogTitle>
-            <DialogDescription className="text-caption" style={{ fontSize: 12.5 }}><MT>{row.fn}</MT></DialogDescription>
+            <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
+              <DialogTitle className="shrink-0 text-xl">자펀드 명세</DialogTitle>
+              <DialogDescription className="text-caption truncate min-w-0"><MT>{row.fn}</MT></DialogDescription>
+            </div>
           </DialogHeader>
           <div className="overflow-y-auto p-[46px]">
             <UnitSeg unit={unit} onChange={setUnit} />
