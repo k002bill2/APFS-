@@ -43,7 +43,7 @@ const extLabel = (name: string) => { const ext = name.split('.').pop()?.toUpperC
 function Section({ title, children, single }: { title: string; children: React.ReactNode; single?: boolean }) {
   return (
     <fieldset className="border-0 p-0 m-0 mb-1" style={{ minWidth: 0 }}>
-      <legend className="w-full font-bold" style={{ fontSize: 13.5, padding: '10px 0 8px', borderTop: '1px solid var(--border)', marginTop: 4 }}>{title}</legend>
+      <legend className="w-full flex items-center gap-2 text-lg font-bold border-b-2 border-border pb-2 mb-3">{title}</legend>
       <div className={single ? '' : 'grid grid-cols-1 sm:grid-cols-2 gap-x-5'}>{children}</div>
     </fieldset>
   );

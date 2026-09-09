@@ -60,7 +60,7 @@
   --danger:#FF6B42;
   --danger-soft:#FFE7DF;
   --info:#3B82F6;
-  --info-soft:#DDE9F5;
+  --info-soft:#f0f7ff;
 
   /* status-as-text (WCAG AA 4.5:1) — 베이스 상태색(위)은 밝은 '칠'용이라 텍스트/배지 라벨로 쓰면 대비 미달
      (라이트에서 amber 1.8:1·mint 1.9:1). 색이 '텍스트'이거나 soft 배지 위 라벨이면 아래 -text 토큰을 쓴다.

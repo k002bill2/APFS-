@@ -229,7 +229,7 @@ function FsDetailModal({ fn, unit: initUnit, onClose }: { fn: string; unit: Unit
       <DialogContent className="max-w-[720px] max-h-[88vh]">
         <DialogHeader>
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
-            <DialogTitle className="shrink-0 text-xl">재무제표 상세</DialogTitle>
+            <DialogTitle className="shrink-0">재무제표 상세</DialogTitle>
             <DialogDescription className="text-caption truncate min-w-0">기준년월 {BASEYM} · <MT>{fn}</MT></DialogDescription>
           </div>
         </DialogHeader>
@@ -273,7 +273,7 @@ export function SubFundSpecModal({ row, onClose }: { row: SubFundRow; onClose: (
         <DialogContent className="max-w-[880px] max-h-[88vh]" onInteractOutside={(e) => { if (fsOpen) e.preventDefault(); }}>
           <DialogHeader>
             <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
-              <DialogTitle className="shrink-0 text-xl">자펀드 명세</DialogTitle>
+              <DialogTitle className="shrink-0">자펀드 명세</DialogTitle>
               <DialogDescription className="text-caption truncate min-w-0"><MT>{row.fn}</MT></DialogDescription>
             </div>
           </DialogHeader>

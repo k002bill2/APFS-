@@ -12,6 +12,27 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 - **정본 예시(골드 레퍼런스)**: `src/dash/schemas/투자기업정보_통합.ts` — 21필드(readonly·radio·select·textarea·date·number·checkbox·text 혼합)라 2단 wide로 렌더되는 완성형.
 - **지원 SSOT**: `schemas/types.ts`(`FIELD_CONTROLS`+zod), `schemas/renderers.tsx`(`SchemaField` 컨트롤 렌더), `schemas/build_row.ts`(vals→Row 조립).
 
+## 모달 크롬 공통 규약 (헤더·본문 섹션 헤더) — 전 모달 SSOT
+모든 다이얼로그(등록/수정 폼·명세 팝업·알림센터·즐겨찾기·에디터 삽입 등)의 **제목/본문 섹션 제목 타이포는 여기 정본을 따른다.** 소비처마다 크기·굵기를 다시 지정하지 않는다. 골드 레퍼런스는 `subfund_spec_modal.tsx`(자펀드 명세)와 `subfund_form_modal.tsx`(결성조합 수정).
+
+1. **모달 헤더 = `DialogTitle` 공용 기본값(`src/dash/ui/dialog.tsx`).** 기본이 **`text-xl`(20px) `font-bold`** — **2026-09-09 사용자 결정으로 프리미티브 기본값을 `text-base`(16)→`text-xl`로 올려 전 모달을 통일했다. 이전 "소비처에서 `text-xl` override·공용 `ui/dialog.tsx`는 불변" 규칙은 폐기.** 소비처에서 `fontSize`·`font-extrabold` 등으로 **크기·굵기를 재지정하지 말 것**(드리프트 원인). 크기 예외가 정말 필요하면 그 한 곳만 로컬 override(예: 에디터 삽입 다이얼로그).
+2. **부제(대상명)가 있으면 제목 옆에 나란히.** `DialogHeader`가 `justify-between`이라 그냥 두면 부제가 우측 끝으로 밀린다 → 제목+부제를 한 래퍼로 묶는다:
+   ```tsx
+   <DialogHeader>
+     <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
+       <DialogTitle className="shrink-0">자펀드 명세</DialogTitle>
+       <DialogDescription className="text-caption truncate min-w-0"><MT>{대상명}</MT></DialogDescription>
+     </div>
+   </DialogHeader>
+   ```
+   `pr-8`은 우상단 X 닫기 버튼 공간 확보. 헤더 아이콘은 `size={18}`(20px 제목에 맞춤).
+3. **본문 섹션 헤더** — 모달 안 구획 제목은 아래 className 고정(밑줄형 헤딩). spec은 `<h3>`(`Section` 헬퍼), form은 `<fieldset>` 안 `<legend>`(폼 그룹 시맨틱 유지) — **태그는 문맥에 맞게, 시각 스타일은 동일**:
+   ```
+   flex items-center gap-2 text-lg font-bold border-b-2 border-border pb-2 mb-3
+   ```
+   (form의 `<legend>`는 `w-full`을 앞에 붙여 밑줄이 폭 전체를 덮게 한다.)
+4. **타이포 위계**: 모달 제목 `text-xl`(20) > 본문 섹션 제목 `text-lg`(18)·`font-bold` > 본문/입력 14 > 라벨·부제 12~13. ⚠ `preflight:false`+body base 폰트 없음이라 **bare heading은 UA 기본(h3≈18.7px)으로 튄다** → 인라인 `style={{fontSize}}` magic number 금지, Tailwind `text-*` 유틸로만 고정.
+
 ## 핵심 계약 (CRITICAL)
 1. **새 컨트롤은 `FIELD_CONTROLS`(types.ts)에 먼저 추가.** 컨트롤 종류는 `FIELD_CONTROLS` 배열이 **타입+zod enum을 동시 공급(SSOT)**. 배열에 없는 control을 스키마에 쓰면 `PageSchemaZ.parse`가 실패해 **스키마 테스트·빌드가 깨진다**. 추가 순서: ① `FIELD_CONTROLS`에 문자열 추가 → ② `SchemaField`(renderers.tsx)에 `case` 추가 → ③ 스키마에서 사용.
 2. **2단 적응은 자동.** `RowFormModal`이 `schema.fields.length > 6`이면 `max-w-[880px]` + `grid grid-cols-1 sm:grid-cols-2`(좁은 화면은 1단 적층)로, 6개 이하면 `max-w-[460px]` 단일 컬럼으로 **자동 렌더**. 호출자가 폭을 지정하지 않는다.
