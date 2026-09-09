@@ -2,6 +2,7 @@ import React from 'react';
 import { UI } from '../components';
 import { mn, MT } from '../mask';
 import { DatePicker } from '../ui/date-picker';
+import { Icon } from '../icons';
 import { renderKind } from './dispatch';
 import type { ColumnSpec, FieldSpec, StatusDomainEntry } from './types';
 import type { Tone } from '../components';
@@ -57,8 +58,14 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
   };
   switch (field.control) {
     case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical' }} />;
-    // select: native UA 드롭다운 화살표가 오른쪽 경계에 붙지 않도록 오른쪽 패딩만 확대(화살표가 padding-right만큼 안쪽으로 밀림). 상하·좌측은 base 유지.
-    case 'select':   return <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...base, paddingRight: 34 }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>;
+    // select: native 화살표는 Chrome UA가 오른쪽 경계에 고정해 padding으로 못 움직임 → appearance:none로 제거하고 lucide chevron을 오버레이(토큰색·다크대응).
+    //   아이콘은 pointer-events:none라 클릭이 select로 통과. 오른쪽 간격 = 아이콘 right(12px). paddingRight 34는 옵션 텍스트가 chevron과 겹치지 않게 확보.
+    case 'select':   return (
+      <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}>
+        <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...base, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: 34 }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>
+        <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--muted-foreground)' }} />
+      </div>
+    );
     case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} style={base} />;
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(네이티브 input과 동일 계약).
     // DatePicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW=120)을 적용
