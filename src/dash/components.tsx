@@ -194,7 +194,7 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
 }
 
 /* ---- IconBtn ---- */
-function IconBtn({ icon, onClick, label, badge, active, size = 38, activeClassName, activeStyle, expanded, pressed }: { icon: string; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean }) {
+function IconBtn({ icon, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed }: { icon: string; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean }) {
   const btn = (
     // hover/press는 Motion spring(색 전환은 CSS 유지). scale은 저모션 시 MotionConfig가 자동 비활성.
     <motion.button
@@ -208,8 +208,8 @@ function IconBtn({ icon, onClick, label, badge, active, size = 38, activeClassNa
       transition={spring.control}
       className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border transition-colors duration-tok-fast ease-ds",
         active ? (activeClassName || "bg-card text-primary border-ring") : "bg-transparent text-muted-foreground border-transparent")}
-      style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}><Icon name={icon} size={16} stroke={2} />{badge > 0 && <span
-        className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-[color:var(--destructive-foreground)] text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</motion.button>
+      style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}><Icon name={icon} size={iconSize} stroke={2} />{badge > 0 && <span
+        className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-[color:var(--destructive-foreground)] text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</motion.button>
   );
   if (!label) return btn;
   return (
