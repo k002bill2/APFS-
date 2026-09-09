@@ -24,7 +24,7 @@ APFS/
 ├── package.json                # react, react-dom, vite, tailwindcss, typescript ...
 ├── vercel.json                 # framework=vite, buildCommand=vite build, outputDirectory=dist
 ├── src/
-│   ├── main.tsx                # 엔트리: tailwind.css + tokens.css + tweaks.css + app + tweaks_app import
+│   ├── main.tsx                # 엔트리: tailwind.css + tokens.css + app import
 │   ├── styles/tailwind.css     # @tailwind base/components/utilities
 │   └── dash/                   # 앱 모듈 (ES modules, React.createElement 기반)
 │       ├── data.ts                              # APFS_DATA (메뉴/위젯/지표)
@@ -32,8 +32,7 @@ APFS/
 │       ├── performance/risk/gp_health/accounting/schedule/report(.tsx)  # PRD 페이지
 │       ├── subfund_manage(.tsx) + subfund_form_modal + subfund_spec_modal + subfund_manage_schemas.ts  # 자펀드 정보관리(구 subfund.tsx 대체)
 │       ├── app.tsx                              # 앱 루트 (#root 마운트)
-│       ├── tweaks-panel/tweaks_app(.tsx)        # 디자인 토큰 조정 패널
-│       └── tokens.css / tweaks.css / assets/logo*.svg
+│       └── tokens.css / assets/logo*.svg
 └── 농식품모태펀드 대시보드*.html  # (레거시) 구 오프라인 자가완결 번들 — Vite 전환 전 산출물, 더 이상 정본 아님
 ```
 
@@ -52,7 +51,6 @@ APFS/
 - PRD 페이지: `performance` `risk` `gp_health` `accounting` `schedule` `report`.tsx (각 `Pages.*` export)
 - 자펀드 정보관리(route `subfund`): `subfund_manage.tsx`(`SubFundManage` export) + `subfund_form_modal`(결성조합 등록/수정) + `subfund_spec_modal`(읽기전용 명세 팝업) + `subfund_manage_schemas.ts`. 구 `subfund.tsx`(bespoke, `SubFund` export)는 2026-09-09 삭제됨.
 - `app.tsx` → 테마/라우트 상태, `#root`에 마운트
-- `tweaks-panel.tsx` + `tweaks_app.tsx` → 디자인 토큰 조정 패널 (data-* 속성 + localStorage 영속화, 효과는 CSS 변수로)
 
 **벤더**: React 18 / ReactDOM (npm), lucide. JSX 변환은 **빌드타임(esbuild)** — 브라우저 Babel은 제거됨.
 
@@ -60,7 +58,7 @@ APFS/
 
 ## 실행 방법
 
-- `localStorage`에 테마/Tweaks 설정을 영속화합니다.
+- `localStorage`에 테마(라이트/다크) 설정을 영속화합니다.
 - 배포: `main`에 push하면 Vercel이 `vite build` 후 `dist/`를 서빙합니다(자동 배포).
 
 ## 편집 시
@@ -69,7 +67,7 @@ APFS/
 
 - 현재 코드는 `React.createElement`(별칭 `h`) 기반(**Phase 0**). **JSX 전환(Phase 2)·TypeScript 타입화(Phase 3)는 후속 작업** — 진행 시 점진적으로.
 - `tsc --noEmit`은 현재 타입 에러를 다수 보고하지만 빌드(esbuild)는 타입체크를 하지 않아 `vite build`는 green입니다.
-- 색/간격/타이포는 하드코딩 대신 CSS 변수 토큰(`tokens.css`)을 사용하세요 — Tweaks 패널이 런타임 조정합니다.
+- 색/간격/타이포는 하드코딩 대신 CSS 변수 토큰(`tokens.css`)을 사용하세요.
 - 새 페이지/메뉴는 라이트/다크 모두에서 대비를 확인하세요.
 - **데이터 마스크(빈 영역 placeholder)**: `src/dash/mask.tsx`가 화면 데이터를 가리는 토글입니다. **현재 OFF**(`const _on = false`, 2026-09-04 사용자 결정으로 마스크 해제 — 실데이터 그대로 표시). 다시 가려야 하면 `_on = true` 한 줄로 전 화면 마스크가 복귀합니다(`_on`이 SSOT). 마스크 상태와 무관하게 새 위젯에 데이터를 넣을 때는 규약을 유지하세요: 숫자/금액/날짜는 `mn(v)`, 텍스트(인명·코드 등)는 `<MT>{...}</MT>`로 감쌉니다(OFF일 때는 pass-through, 재활성 시 자동으로 다시 가려짐). 표 헤더·카드 제목·탭·단위·StatusBadge·차트 축·달력 날짜는 가리지 않습니다("축은 두고 데이터는 가린다").
 - **레거시**: 루트 `농식품모태펀드 대시보드*.html`(구 오프라인 번들)은 더 이상 정본이 아닙니다. `apfs-bundle` 스킬(번들 gzip+base64 디코드/재인코드)도 이 레거시 파일에만 해당하며, 신규 작업엔 불필요합니다.

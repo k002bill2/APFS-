@@ -278,7 +278,7 @@ function DesignSystem() {
         </div>
       </Section>
 
-      <Section title="3-2-2. 모션 인터랙션 (Animate UI · Motion)" desc="motion 13.2.0 spring 프리셋(motion/presets.ts) 기반 마이크로 인터랙션. 저모션(OS reduced-motion)은 app.tsx 루트 <MotionConfig reducedMotion=&quot;user&quot;>가 transform/scale을 끄고 opacity만 남긴다. ⚠ spring 컴포넌트는 duration이 아닌 stiffness/damping 기반이라 Tweaks 패널의 --dur* 속도 노브에 연동되지 않는다(2026-09-04 명시 결정).">
+      <Section title="3-2-2. 모션 인터랙션 (Animate UI · Motion)" desc="motion 13.2.0 spring 프리셋(motion/presets.ts) 기반 마이크로 인터랙션. 저모션(OS reduced-motion)은 app.tsx 루트 <MotionConfig reducedMotion=&quot;user&quot;>가 transform/scale을 끄고 opacity만 남긴다. ⚠ spring 컴포넌트는 duration이 아닌 stiffness/damping 기반이다(2026-09-04 명시 결정).">
         <MotionPreview />
       </Section>
 

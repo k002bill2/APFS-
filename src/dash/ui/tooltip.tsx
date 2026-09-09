@@ -27,7 +27,7 @@ const TooltipContent = React.forwardRef<
         'data-[state=delayed-open]:zoom-in-0 data-[state=instant-open]:zoom-in-0 data-[state=closed]:zoom-out-0',
         'data-[side=top]:slide-in-from-bottom-[15px] data-[side=bottom]:slide-in-from-top-[15px] data-[side=left]:slide-in-from-right-[15px] data-[side=right]:slide-in-from-left-[15px]',
         'data-[side=top]:slide-out-to-bottom-[15px] data-[side=bottom]:slide-out-to-top-[15px] data-[side=left]:slide-out-to-right-[15px] data-[side=right]:slide-out-to-left-[15px]',
-        // 열림=차분한 감속(--dur-slow), 닫힘=빠르게(--dur). var(--dur*)라 Tweaks·저모션 규칙 그대로 적용.
+        // 열림=차분한 감속(--dur-slow), 닫힘=빠르게(--dur). var(--dur*)라 저모션 규칙 그대로 적용.
         '[animation-duration:var(--dur-slow)] [animation-timing-function:cubic-bezier(0.22,1,0.36,1)]',
         'data-[state=closed]:[animation-duration:var(--dur)] data-[state=closed]:[animation-timing-function:cubic-bezier(0.4,0,1,1)]',
         className,

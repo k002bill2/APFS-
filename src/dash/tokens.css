@@ -71,11 +71,11 @@
   --info-text:#1D5FD8;       /* on bg 5.3:1 / on info-soft 4.6:1 */
 
   /* shadcn/ui 호환 별칭 토큰 — 기존 토큰을 var() 간접참조로 가리킨다.
-     이렇게 하면 .dark와 Tweaks(data-* 무드)에서 원본 토큰이 바뀔 때 자동 추종하므로
+     이렇게 하면 .dark에서 원본 토큰이 바뀔 때 자동 추종하므로
      :root/.dark 양쪽에 중복 정의할 필요가 없다(--destructive-foreground만 리터럴). */
   --background:var(--bg);
   --card-foreground:var(--foreground);
-  --popover:var(--card-raised);          /* seamless 무드에서 --card==--bg가 돼도 팝오버는 elevated 표면 유지 */
+  --popover:var(--card-raised);          /* --card==--bg인 경우에도 팝오버는 elevated 표면 유지 */
   --popover-foreground:var(--foreground);
   --destructive:var(--danger);
   --destructive-foreground:#FFFFFF;
@@ -130,7 +130,7 @@
   --shadow-lg:0 12px 34px rgba(20,40,28,.14),0 4px 10px rgba(20,40,28,.07);
   --ease:cubic-bezier(.4,0,.2,1);
   /* 모션 duration 토큰 — tailwind.config.js의 transitionDuration(duration-tok*)이 소비.
-     Tweaks 패널이 런타임 조정 가능(전역 인터랙션 속도 일원화). */
+     전역 인터랙션 속도를 여기서 일원화한다. */
   --dur-fast:120ms;
   --dur:180ms;
   --dur-slow:280ms;

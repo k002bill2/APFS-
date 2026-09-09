@@ -3,10 +3,7 @@
 
    ⚠ reduced-motion: 이 transition들은 JS(WAAPI/rAF) 구동이라 tokens.css의
    `*{animation-duration:.001ms}` CSS 규칙이 무효하다. 저모션은 app.tsx 루트의
-   <MotionConfig reducedMotion="user">가 담당(transform/scale은 끄고 opacity는 유지).
-
-   ⚠ Tweaks 패널의 --dur* 노브는 duration 기반이라 spring(stiffness/damping)에 연동되지 않는다.
-   → spring화된 컴포넌트는 의도적으로 Tweaks 속도 조정 대상에서 제외한다(명시 결정, 2026-09-04). */
+   <MotionConfig reducedMotion="user">가 담당(transform/scale은 끄고 opacity는 유지). */
 import type { Transition, Variants } from 'motion/react';
 
 const EASE_DS: [number, number, number, number] = [0.4, 0, 0.2, 1]; // = --ease / ease-ds
