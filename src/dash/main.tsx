@@ -100,9 +100,12 @@ function GaugeLight({ value }) {
   );
 }
 function HeroStat({ icon, label, value, unit, delta, danger, onNav }: { icon: string; label?: React.ReactNode; value?: React.ReactNode; unit?: string; delta?: React.ReactNode; danger?: boolean; onNav?: () => void }) {
+  // onNav 없는 HeroStat(예: IRR)은 비대화형 — <button>이면 포커스 가능한 no-op가 되어 키보드/SR 사용자가
+  // 눌러도 무동작인 함정이 된다. 동작이 있을 때만 <button>, 없으면 <div>로 렌더.
+  const Tag: any = onNav ? 'button' : 'div';
   return (
-    <button
-      onClick={onNav}
+    <Tag
+      {...(onNav ? { onClick: onNav, type: 'button' } : {})}
       className="text-left flex items-center gap-3 py-3 px-3.5"
       style={{
         border: "none", cursor: onNav ? "pointer" : "default", font: "inherit", color: "var(--on-brand-solid)",
@@ -111,7 +114,7 @@ function HeroStat({ icon, label, value, unit, delta, danger, onNav }: { icon: st
         className="inline-flex items-center justify-center shrink-0"
         style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,.18)" }}><Icon name={icon} size={19} /></span><div className="flex-1"><div className="font-semibold" style={{ fontSize: 11.5, opacity: .9 }}><MT>{label}</MT></div><div className="flex items-baseline gap-1"><span className="tabular font-extrabold" style={{ fontSize: 24 }}>{mn(value)}</span><span style={{ fontSize: 12, opacity: .85 }}>{unit}</span><span
             className="font-bold ml-1"
-            style={{ fontSize: 11.5, color: danger ? "var(--on-gradient-danger)" : "var(--on-gradient-mint)" }}>{mn(delta)}</span></div></div></button>
+            style={{ fontSize: 11.5, color: danger ? "var(--on-gradient-danger)" : "var(--on-gradient-mint)" }}>{mn(delta)}</span></div></div></Tag>
   );
 }
 

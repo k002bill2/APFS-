@@ -11,7 +11,7 @@ import { RiskManage } from './risk_manage';
 import { Schedule } from './schedule';
 import { SubFundManage } from './subfund_manage';   // 자펀드관리(관리형 리스트, 구조도 v1.4). 구 subfund.tsx(FR-5.3 대시보드)는 미라우팅
 import { Pages as ReportBucheoPages } from './report_bucheo';
-import { GenericListPage } from './generic_list';
+import { GenericListPage, findMenuContext } from './generic_list';
 import { AssetFunding } from './asset_funding';
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
@@ -30,6 +30,14 @@ const ROUTE_ALIAS: Record<string, string> = {
   accounting: "main", report: "main", "report-sutack": "main",
 };
 const aliasRoute = (r: string) => ROUTE_ALIAS[r] || r;
+
+// MENU 트리에 없는 앱 전용 라우트(대시보드·데모·에디터·일정)의 한글 제목 — aria-live 통지용.
+// 스키마/메뉴 리프 라우트는 findMenuContext가 한글 label을 돌려주므로 여기서 제외.
+// (schedule은 MENU path에 없어 findMenuContext가 영문 'schedule'로 폴백 → 여기서 한글 지정)
+const APP_ROUTE_TITLES: Record<string, string> = {
+  main: "메인 대시보드", designsystem: "디자인 시스템", editor: "문서 편집기", schedule: "일정 관리",
+};
+const routeTitleFor = (r: string) => APP_ROUTE_TITLES[r] || findMenuContext(r).title;
 
 const { useState, useEffect, useRef } = React;
 const { AppShell } = Shell;
@@ -55,6 +63,9 @@ function App() {
   const [loading, setLoading] = useState(true);
   const mountedRef = useRef(false);
   const [routeChanged, setRouteChanged] = useState(false);
+  // 라우트 전환 통지(SR) — 상태로 관리해 로딩 완료 시점에 1회만 채운다(렌더 중 즉시 채웠다
+  // effect가 지우는 이중 통지 방지). 초기 마운트/로딩 중엔 빈 문자열.
+  const [routeAnnounce, setRouteAnnounce] = useState("");
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -64,10 +75,16 @@ function App() {
   useEffect(() => ls.set("apfs.route", route), [route]);
   useEffect(() => { HistoryStore.push(route); }, [route]);   // 방문기록 적재(복원된 초기 라우트 포함)
   useEffect(() => {                                            // 라우트 전환마다 로딩 스켈레톤 노출
-    setRouteChanged(mountedRef.current);                       // 초기 마운트 false, 이후 전환 true
+    const changed = mountedRef.current;                        // 초기 마운트 false, 이후 전환 true
+    setRouteChanged(changed);
     mountedRef.current = true;
     setLoading(true);
-    const t = setTimeout(() => setLoading(false), 500);
+    setRouteAnnounce("");                                      // 로딩 중엔 통지 비움
+    const t = setTimeout(() => {
+      setLoading(false);
+      // 로딩 완료 후 실제 전환에서만 1회 통지(초기 마운트 제외) — 이중 통지 방지.
+      if (changed) setRouteAnnounce(`${routeTitleFor(route)} 페이지 열림`);
+    }, 500);
     return () => clearTimeout(t);
   }, [route]);
   useEffect(() => ls.set("apfs.lnb", lnbOpen ? "1" : "0"), [lnbOpen]);
@@ -102,6 +119,8 @@ function App() {
     // (tokens.css의 CSS animation 차단 규칙은 JS 구동 Motion에 무효 → 여기가 유일한 관문)
     <MotionConfig reducedMotion="user">
     <TooltipProvider delayDuration={300}>
+    {/* 라우트 전환 통지 라이브리전 — 상시 DOM 존재(SR 등록), 내용만 전환 후 채움 */}
+    <div aria-live="polite" className="sr-only">{routeAnnounce}</div>
     <AppShell
       theme={theme}
       onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}

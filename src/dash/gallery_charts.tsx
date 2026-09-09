@@ -27,7 +27,7 @@ function ColumnTrack({ data, height = 160, highlight = null, accent = "var(--pri
   const band = (W || 300) / data.length, bw = Math.min(22, band * 0.46);
   return (
     <div ref={ref} className="relative w-full" style={{ height }}>
-      {W > 0 && <svg width={W} height={height}>
+      {W > 0 && <svg width={W} height={height} role="img" aria-label={`${data.length}개 항목 세로 막대 차트`}>
         {data.map((d, i) => {
           const x = band * i + band / 2;
           const bh = (d.value / max) * ih;
@@ -88,7 +88,7 @@ function DualSeries({ a, b, labels, height = 170, area = false, ca = "var(--char
   };
   return (
     <div ref={ref} className="w-full" style={{ height }}>
-      {W > 0 && <svg width={W} height={height}>
+      {W > 0 && <svg width={W} height={height} role="img" aria-label="2계열 추이 비교 차트">
         <defs>
           <linearGradient id={id + "-a"} x1={0} y1={0} x2={0} y2={1}><stop offset="0%" stopColor={ca} stopOpacity={.28} /><stop offset="100%" stopColor={ca} stopOpacity={.02} /></linearGradient>
           <linearGradient id={id + "-b"} x1={0} y1={0} x2={0} y2={1}><stop offset="0%" stopColor={cb} stopOpacity={.26} /><stop offset="100%" stopColor={cb} stopOpacity={.02} /></linearGradient>
@@ -116,7 +116,7 @@ function PieLabeled({ data, height = 170 }: { data: any[]; height?: number }) {
   };
   return (
     <div ref={ref} className="w-full" style={{ height }}>
-      {W > 0 && <svg width={W} height={height}>
+      {W > 0 && <svg width={W} height={height} role="img" aria-label={`${data.length}개 카테고리 비중 파이 차트`}>
         {data.map((d, i) => {
           const frac = d.value / total, a0 = ang, a1 = ang + frac * Math.PI * 2; ang = a1;
           const mid = (a0 + a1) / 2, lr = r * 0.62;

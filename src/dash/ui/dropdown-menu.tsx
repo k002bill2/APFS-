@@ -6,6 +6,7 @@
    - 키보드 내비/aria-haspopup/menuitem 시맨틱: Radix 제공 */
 import * as React from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
+import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortalContainer } from './portal-container';
 
@@ -60,13 +61,19 @@ const DropdownMenuRadioItem = React.forwardRef<
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      'relative flex cursor-pointer select-none flex-col rounded-card-sm px-2.5 py-2 outline-none transition-colors',
+      // pl-8: 좌측 체크 지표 자리 확보. 선택 상태는 배경색(색)만이 아니라 체크 아이콘(비색)으로도 구분(WCAG 1.4.1).
+      'relative flex cursor-pointer select-none flex-col rounded-card-sm py-2 pl-8 pr-2.5 outline-none transition-colors',
       'focus:bg-accent-surface data-[highlighted]:bg-accent-surface data-[state=checked]:bg-[color-mix(in_srgb,var(--primary)_10%,transparent)]',
       'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className,
     )}
     {...props}
   >
+    <span className="absolute left-2.5 top-1/2 flex h-3.5 w-3.5 -translate-y-1/2 items-center justify-center">
+      <DropdownMenuPrimitive.ItemIndicator>
+        <Check className="h-3.5 w-3.5 text-primary" />
+      </DropdownMenuPrimitive.ItemIndicator>
+    </span>
     {children}
   </DropdownMenuPrimitive.RadioItem>
 ));
