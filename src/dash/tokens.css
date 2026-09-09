@@ -38,7 +38,7 @@
   --border:rgba(31,54,40,.12);
   --border-strong:rgba(31,54,40,.20);
   --input:rgba(31,54,40,.16);
-  --row-selected:#FBFBFB;   /* 표/AG Grid 행선택 — 아주 옅은 회색(2026-09-08 사용자 지정, 이전 brand-gray 16%). 다크는 아래 별도 */
+  --row-selected:#F3F4F6;   /* 표/AG Grid 행선택 — 옅은 회색(2026-09-09 사용자 지정; --bg 흰색 전환 후 #FBFBFB는 구분 불가라 상향). 다크는 아래 별도 */
 
   /* roles — 이미지 지정 역할색 */
   --primary:#5A5FE8;   /* a11y: #6366F1→#5A5FE8 (흰 글자 4.47→4.96:1 AA). 차트/fs-agri는 별도 리터럴 토큰이라 인디고 유지 */
