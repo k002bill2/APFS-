@@ -111,7 +111,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
           <DialogDescription className="sr-only">결성된 자펀드의 기본정보·약정납입·속성·보수·담당자·첨부서류를 수정하는 양식</DialogDescription>
         </DialogHeader>
 
-        <div className="overflow-y-auto p-[18px]">
+        <div className="overflow-y-auto p-[46px]">
           <Section title="기본정보">
             <F spec={s('mf', '모펀드구분', 'readonly')} value="농식품모태펀드" onChange={() => {}} />
             <F spec={s('y', '사업연도', 'readonly')} value={yLabel} onChange={() => {}} />

@@ -208,7 +208,7 @@ function IconBtn({ icon, onClick, label, badge, active, size = 38, activeClassNa
       transition={spring.control}
       className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border transition-colors duration-tok-fast ease-ds",
         active ? (activeClassName || "bg-card text-primary border-ring") : "bg-transparent text-muted-foreground border-transparent")}
-      style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}><Icon name={icon} size={20} stroke={2} />{badge > 0 && <span
+      style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}><Icon name={icon} size={16} stroke={2} />{badge > 0 && <span
         className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-[color:var(--destructive-foreground)] text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</motion.button>
   );
   if (!label) return btn;

@@ -118,8 +118,8 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
 공유 인프라에 들어간 것(전 그리드 자동 적용)과 페이지가 켜야 하는 것을 구분한다.
 
 **공유 인프라(이미 적용, 재설정 금지)**
-- `apfsTheme`: `wrapperBorder:false`(외곽 테두리만 제거, 컬럼선·행선·헤더선 유지) · `wrapperBorderRadius:0`.
-- `tokens.css --row-selected`: 라이트 `#FBFBFB`(다크는 brand-gray 60% 유지). ⚠ 마우스가 행 위에 있으면 `rowHoverColor`(primary 8%, AG 기본) 오버레이가 겹쳐 보라빛 — 선택색 측정은 `page.mouse.move(5,5)` 후 `::before` 배경으로.
+- `apfsTheme`: `wrapperBorder:false`(외곽 테두리만 제거, 컬럼선·행선·헤더선 유지) · `wrapperBorderRadius:0` · `headerHeight:40`(2026-09-09 기본 48→40 축소, 2단 그룹헤더는 ×2=80px. 그룹/리프 공통 — 별도 `groupHeaderHeight` grid 옵션 미설정이라 그룹행도 같은 값. 값 변경은 여기 한 곳).
+- `tokens.css --row-selected`: 라이트 `#F3F4F6`(2026-09-09 `#FBFBFB`→상향, `--bg` 흰색 전환 후 구분 불가라. 다크는 brand-gray 60% 유지). ⚠ 마우스가 행 위에 있으면 `rowHoverColor`(primary 8%, AG 기본) 오버레이가 겹쳐 보라빛 — 선택색 측정은 `page.mouse.move(5,5)` 후 `::before` 배경으로.
 - `aggrid_shared.css` 합계행: 배경 `var(--muted)` + 상단 `1px solid var(--border-strong)`(이전 primary 9% 틴트·2px primary 선은 제거됨). pinned-left "합 계" 라벨은 primary 굵게 유지.
 
 **페이지가 켜는 것**

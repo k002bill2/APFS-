@@ -57,7 +57,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 - **드로어 항목 = 목업 검색박스의 항목·순서 그대로**(자펀드관리: 모펀드·자펀드·계정구분·자펀드구분·사업연도·정기/수시·심사담당자·리스크담당자·심사단계·조합상태·기준일자). 검색어는 규약대로 최상단 상시. 행 컬럼과 미연동인 항목은 상태만 두고 `passes`에 넣지 않으며 `DrawerField noop`으로 `· 데이터 연동 후 적용` 캡션.
 - **연도/일자 컨트롤 = `PeriodPicker`**(사업연도 `mode="year"`, 기준일자 `mode="day"`) — 연도 `<select>`·네이티브 date 금지(→[[apfs-datepicker]] PeriodPicker 절). 버튼 트리거는 `DrawerField plain`(`<div>` 래퍼, `<label>` 이중 토글 방지) + `ariaLabel`.
 - **적용 칩은 항목별 개별 칩**(합쳐서 `A · B · C` 한 칩 금지). 각 칩 = **값만 표시**(항목명 접두사 없음, 2026-09-08 결정) + `×`(`aria-label="<항목> 필터 제거"`, 해당 필터만 해제). no-op 항목은 칩을 만들지 않는다. 값은 `<MT>` 마스킹.
-  - ⚠ **스키마 트랙과 불일치**: `generic_list.tsx` `FilterPill`은 여전히 `라벨: 값`. 통일(값만/라벨:값)은 **사용자 결정 사항** — 임의로 한쪽에 맞추지 말 것.
+  - ✅ **전 트랙 통일(2026-09-09)**: `generic_list.tsx` `FilterPill`·`asset_funding.tsx` 자체 칩 모두 **값만 표시**로 맞췄다(구 `라벨: 값`/합친 한 칩 폐기). 항목명은 `title`(호버)+`aria-label`로 회수. **"값만"은 항목명 제거지 연산자 제거가 아니다** — `출자금액 ≥ 800`은 `≥ 800`으로 남긴다. 태그형(value 없음)은 라벨이 곧 값 토큰이라 라벨을 표시.
 - 주 필터 1개(심사단계)는 툴바 `FilterChip`(전체+단계들)로 노출, 선택 행이 있으면 툴바 좌 슬롯이 selbar로 바뀐다(→[[apfs-stage-workflow]]).
 - 상태 SSOT는 `useState` N개 + `clearFilters`(초기화 버튼·전체 해제 공유). `passes`는 `useCallback`, 변경 시 `apiRef.current?.onFilterChanged()`(External Filter).
 

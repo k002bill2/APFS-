@@ -119,7 +119,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
         </DialogHeader>
 
         {/* 폼 — wide(항목 多)면 2단 그리드(좁은 화면은 1단으로 적층), textarea/file은 전체 폭 차지 */}
-        <div className="overflow-y-auto p-[18px]">
+        <div className="overflow-y-auto p-[46px]">
           <div className={wide ? "grid grid-cols-1 sm:grid-cols-2 gap-x-5" : ""}>
             {schema.fields.map((f) => {
               // richtext/filepond/tags = 내부에 자체 버튼/combobox를 품은 복합 컨트롤 → <label> 래핑 금지(Field plain).

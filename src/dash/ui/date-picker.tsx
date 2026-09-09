@@ -3,7 +3,7 @@
    - value/onChange는 'YYYY-MM-DD' 문자열(빈 문자열=미선택). 필터 정확일치·zod·Excel·마스크가 이 포맷에 의존.
    - 🔴 타임존: 로컬 자정 Date ↔ 문자열 변환에 toISOString() 절대 금지(KST에서 하루 빠짐).
      date-fns format(d,'yyyy-MM-dd')(로컬)·parseISO('YYYY-MM-DD')(로컬 자정)로만 변환.
-   - 트리거 버튼은 기존 14px 폼 컨트롤(border-strong/bg-card/radius 9/min-h 38)을 시각적으로 그대로 모사. */
+   - 트리거 버튼은 기존 14px 폼 컨트롤(border-strong/bg-card/radius 9/h 34 box-border)을 시각적으로 그대로 모사. */
 import * as React from 'react';
 import { format, parseISO, isValid } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -51,7 +51,7 @@ export function DatePicker({ value, onChange, invalid, required, disabled, place
           aria-invalid={invalid || undefined}
           aria-required={required || undefined}
           className={cn(
-            'flex min-h-[38px] w-full items-center justify-between gap-2 rounded-[9px] border bg-card px-[11px] py-2 text-left text-sm text-foreground transition-colors',
+            'flex h-[34px] box-border w-full items-center justify-between gap-2 rounded-[9px] border bg-card px-[11px] py-[7px] text-left text-sm text-foreground transition-colors',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             'disabled:cursor-not-allowed disabled:opacity-60',
             invalid || required ? 'border-danger' : 'border-border-strong',

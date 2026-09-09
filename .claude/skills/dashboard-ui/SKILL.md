@@ -43,6 +43,7 @@ APFS = 농림수산식품모태펀드 투자자산관리시스템 **대시보드
 - **로딩/비활성 버튼**: `UI.Button`의 `loading`(스피너 + `aria-busy`, 포커스 유지·클릭 자동 차단)·`disabled`(진짜 비활성) prop. 예: `<Button loading>저장 중</Button>`. ⚠️ 로딩을 `disabled` 속성으로 막지 말 것(포커스 유실) — `loading`이 처리.
 - **진행 표시**: `UI.Progress`(`src/dash/ui/progress.tsx`) — `value`(0~100)면 determinate, 생략하면 indeterminate. `label`로 접근名 지정. 예: `<Progress value={64} label="집행률" />`.
 - **클릭 press 피드백**: `Button`/`IconBtn`은 `motion-safe:active:scale` 내장. 새 클릭 타깃엔 `motion-safe:active:scale-[.97]`을 쓴다 — 전역 reduced-motion 규칙은 transition을 못 막으므로 `active:scale` 단독(motion-safe 없이) 사용 금지.
+- **아이콘 버튼(IconBtn) 규격**: 박스 `size`(기본 38px = 클릭 타깃)와 **글리프 16px 고정**은 분리 — `components.tsx`의 `IconBtn`이 내부 `<Icon size={16}>`로 렌더(2026-09-09 20→16 축소). 툴바·GNB·카드헤더 아이콘 버튼이 이 SSOT를 공유하므로 글리프 크기를 개별 지정하지 말 것. 클릭 타깃만 줄이려면 `size` prop(박스)을 조정.
 - **모션 토큰**: duration은 `duration-tok-fast`/`duration-tok`(=`--dur-*` CSS 변수), easing은 `ease-ds`로 통일. 신규 리터럴 `duration-150` 금지. indeterminate 등 keyframe 애니메이션은 **저모션 폴백을 함께 정의**(0% 프레임이 화면 밖이면 "멈춤"으로 오독됨).
 - 스피너 본체=`Spinner`(`ui/spinner.tsx`, react-spinners 래퍼), 토스트=`sonner`. 프리뷰: designsystem "3-2-1. 인터랙션".
 - **🔴 열림 애니메이션 끝 프레임에 `filter`/3D `transform`을 남기지 말 것**(2026-09-08 실측): 다이얼로그 `dialog-in` 키프레임에 `forwards` fill을 주면 `filter: blur(0px)`·`perspective()` 행렬이 영구 고정 → 모달 전체가 GPU 합성 레이어로 남아 **텍스트가 흐려진다**(서브픽셀 AA 상실). 열림은 fill-mode 없이(끝 상태=원래 스타일), `to`는 `filter:none`. 닫힘(`dialog-out`)만 `forwards`. 검증: 열린 뒤 `getComputedStyle(dialog).filter==='none' && transform==='none'`.

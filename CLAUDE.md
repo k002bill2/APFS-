@@ -29,7 +29,8 @@ APFS/
 │   └── dash/                   # 앱 모듈 (ES modules, React.createElement 기반)
 │       ├── data.ts                              # APFS_DATA (메뉴/위젯/지표)
 │       ├── icons/charts/components/shell/designsystem/main_widgets/main(.tsx)
-│       ├── performance/risk/gp_health/accounting/schedule/subfund/report(.tsx)  # PRD 페이지
+│       ├── performance/risk/gp_health/accounting/schedule/report(.tsx)  # PRD 페이지
+│       ├── subfund_manage(.tsx) + subfund_form_modal + subfund_spec_modal + subfund_manage_schemas.ts  # 자펀드 정보관리(구 subfund.tsx 대체)
 │       ├── app.tsx                              # 앱 루트 (#root 마운트)
 │       ├── tweaks-panel/tweaks_app(.tsx)        # 디자인 토큰 조정 패널
 │       └── tokens.css / tweaks.css / assets/logo*.svg
@@ -48,7 +49,8 @@ APFS/
 - `shell.tsx` → `Shell` — GNB / LNB(3-레벨) / 브레드크럼 / 알림센터 / RBAC 게이팅 / 테마 토글
 - `designsystem.tsx` → 컬러 토큰·타이포·공통 컴포넌트 프리뷰
 - `main_widgets.tsx` + `main.tsx` → 메인 종합 대시보드 (공유 위젯 + 3개 레이아웃 시안)
-- PRD 페이지: `performance` `risk` `gp_health` `accounting` `schedule` `subfund` `report`.tsx (각 `Pages.*` export)
+- PRD 페이지: `performance` `risk` `gp_health` `accounting` `schedule` `report`.tsx (각 `Pages.*` export)
+- 자펀드 정보관리(route `subfund`): `subfund_manage.tsx`(`SubFundManage` export) + `subfund_form_modal`(결성조합 등록/수정) + `subfund_spec_modal`(읽기전용 명세 팝업) + `subfund_manage_schemas.ts`. 구 `subfund.tsx`(bespoke, `SubFund` export)는 2026-09-09 삭제됨.
 - `app.tsx` → 테마/역할/라우트 상태, `#root`에 마운트
 - `tweaks-panel.tsx` + `tweaks_app.tsx` → 디자인 토큰 조정 패널 (data-* 속성 + localStorage 영속화, 효과는 CSS 변수로)
 

@@ -26,7 +26,9 @@ export const apfsTheme = themeQuartz.withParams({
   borderColor: 'var(--border)',
   selectedRowBackgroundColor: 'var(--row-selected)',  // 행선택 = 회색(토큰). accentColor와 분리
   fontFamily: 'inherit',
+  headerHeight: 40,       // 헤더 행 높이(기본 48 축소). 2단 그룹헤더는 이 값×2=80px. 그룹/리프 공통 적용
   headerFontWeight: 600,
+  headerBackgroundColor: 'var(--grid-header)',  // Quartz 기본(chromeBackgroundColor=fg 2% onto bg)과 동일 값을 토큰으로 명시 고정 — 색 불변, 명세 팝업 표 헤더와 SSOT 공유. tokens.css의 --grid-header
   wrapperBorderRadius: 0,
   wrapperBorder: false,   // .ag-root-wrapper 외곽 테두리만 제거(2026-09-08) — 컬럼선·행선·헤더선은 유지. 프레임 카드가 테두리 없는 페이지 배경이라 맞춤
   // 세로 컬럼 구분선 — 헤더·본문 모두. 구조(축)라 마스크와 무관하게 상시 표시. 색은 토큰(라이트/다크 추종).

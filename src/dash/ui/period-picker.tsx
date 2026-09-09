@@ -83,7 +83,7 @@ function GridPicker({ mode, value, onChange, ariaLabel, invalid, required, disab
           aria-invalid={invalid || undefined}
           aria-required={required || undefined}
           className={cn(
-            'flex min-h-[38px] w-full items-center justify-between gap-2 rounded-[9px] border bg-card px-[11px] py-2 text-left text-sm text-foreground transition-colors',
+            'flex h-[34px] box-border w-full items-center justify-between gap-2 rounded-[9px] border bg-card px-[11px] py-[7px] text-left text-sm text-foreground transition-colors',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             'disabled:cursor-not-allowed disabled:opacity-60',
             invalid || required ? 'border-danger' : 'border-border-strong',

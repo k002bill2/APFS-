@@ -9,7 +9,7 @@ import { mn, MT, useMask } from './mask';
 import { RowFormModal, statusTone } from './generic_list_modal';
 import type { Row } from './generic_list_modal';
 import { resolveSchema } from './schemas';
-import { Cell } from './schemas/renderers';
+import { Cell, controlMinWidth } from './schemas/renderers';   // controlMinWidth = 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { resolveFilterField, YEAR_OPTIONS } from './schemas/filter_field';
 import type { FilterField } from './schemas/filter_field';
 import type { PageSchema } from './schemas/types';
@@ -20,7 +20,7 @@ import { DatePicker } from './ui/date-picker';
 import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode, CellContextMenuEvent } from 'ag-grid-community';
-import { apfsTheme } from './aggrid_theme';   // 공유 테마(회색 행선택) SSOT
+import { apfsTheme, AUTO_SIZE_CONTENT } from './aggrid_theme';   // 공유 테마(회색 행선택)·내용폭 자동화 SSOT
 import './aggrid_shared.css';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
@@ -130,14 +130,12 @@ function MiniBars({ data, color }: { data: number[]; color: string }) {
 
 /* KpiBadge는 grid_frame.tsx(GridFrame SSOT)에서 import — 인라인 정의 제거(apfs-grid 양식 이관) */
 
-/* 제거 가능한 필터 칩 — 라벨(평문 UI 라벨) + 선택값(데이터 → MT 마스킹). 태그형은 값 없음. */
+/* 제거 가능한 필터 칩 — 값만 표시(항목명 접두사 없음, 2026-09-09 통일: typed 페이지 골드 규약과 일치).
+   항목명은 title(호버)·aria-label로 회수해 의미 손실을 상쇄한다. 값은 데이터→MT 마스킹. 태그형(value 없음)은 라벨=값 토큰이라 라벨을 그대로 표시. */
 function FilterPill({ label, value, onRemove }: { label: string; value?: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: "5px 8px 5px 11px", borderRadius: 9, fontSize: 12.5, background: "color-mix(in srgb, var(--primary) 10%, transparent)" }}>
-      <span className="inline-flex items-center gap-1">
-        <span>{label}{value ? ":" : ""}</span>
-        {value ? <MT>{value}</MT> : null}
-      </span>
+    <span title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: "5px 8px 5px 11px", borderRadius: 9, fontSize: 12.5, background: "color-mix(in srgb, var(--primary) 10%, transparent)" }}>
+      {value ? <MT>{value}</MT> : <span>{label}</span>}
       <button onClick={onRemove} aria-label={label + " 필터 제거"} className="inline-flex border-0 cursor-pointer p-0" style={{ background: "transparent", color: "inherit" }}>
         <Icon name="x" size={13} stroke={2.4} />
       </button>
@@ -202,11 +200,11 @@ export const SEARCH_LABEL = "검색어";
 /* 값-필터 컨트롤 — kind별 입력(year/enum select · date · number · text).
    입력 폰트 14px(전 컨트롤 기본 사이즈로 통일), 색은 토큰(라이트/다크 양립). 빈 값 = 미적용.
    주의: <16px라 iOS Safari는 포커스 시 자동 줌인됨 — 14px 통일을 우선한 결과. */
-const drawerInputStyle: React.CSSProperties = {
-  // font 단축속성을 먼저(Pretendard 상속) → fontSize를 뒤에: 명시값이 단축속성을 이김.
-  width: "100%", boxSizing: "border-box", padding: "9px 11px", font: "inherit", fontSize: 14,
+const drawerInputStyle = (kind?: string): React.CSSProperties => ({
+  // 폭은 fit-content(내용 맞춤, 2026-09-09), 하한은 타입별 controlMinWidth SSOT. font 단축속성 먼저 → fontSize 뒤(명시값이 단축을 이김, 패밀리만 상속).
+  width: "fit-content", minWidth: controlMinWidth(kind), maxWidth: "100%", boxSizing: "border-box", padding: "9px 11px", font: "inherit", fontSize: 14,
   border: "1px solid var(--border-strong)", borderRadius: 9, background: "var(--card)", color: "var(--foreground)",
-};
+});
 
 function DrawerFilterControl({ ff, value, onChange, onEnter }: { ff: FilterField; value: string; onChange: (v: string) => void; onEnter?: () => void }) {
   // Enter로 즉시 적용 — 한글 IME 조합 확정 Enter(isComposing)는 무시해 오적용 방지
@@ -216,8 +214,9 @@ function DrawerFilterControl({ ff, value, onChange, onEnter }: { ff: FilterField
     // Safari menulist는 세로 padding을 무시해 select가 input보다 낮게 렌더됨(WebKit 22 vs 37px).
     // appearance:none으로 높이를 맞추고, 사라진 네이티브 화살표는 chevron으로 보강. (date는 달력 아이콘 보존 위해 미적용)
     control = (
-      <div className="relative">
-        <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...drawerInputStyle, appearance: "none", WebkitAppearance: "none", paddingRight: 32 }}>
+      // 래퍼도 fit-content — block 100% 래퍼면 절대배치 chevron이 드로어 오른쪽 끝으로 떨어진다
+      <div className="relative" style={{ width: "fit-content", maxWidth: "100%" }}>
+        <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...drawerInputStyle("enum"), appearance: "none", WebkitAppearance: "none", paddingRight: 32 }}>
           <option value="">전체</option>
           {ff.options.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
@@ -225,12 +224,12 @@ function DrawerFilterControl({ ff, value, onChange, onEnter }: { ff: FilterField
       </div>
     );
   } else if (ff.kind === "date") {
-    // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(정확일치 필터 계약).
-    control = <DatePicker value={value} onChange={onChange} ariaLabel={ff.label} />;
+    // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(정확일치 필터 계약). DatePicker 트리거는 w-full이라 fit-content 래퍼로 폭 규칙 적용.
+    control = <div style={{ width: "fit-content", minWidth: controlMinWidth("date"), maxWidth: "100%" }}><DatePicker value={value} onChange={onChange} ariaLabel={ff.label} /></div>;
   } else if (ff.kind === "number") {
-    control = <input type="number" value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} placeholder="값 입력" style={drawerInputStyle} />;
+    control = <input type="number" value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} placeholder="값 입력" style={drawerInputStyle("number")} />;
   } else {
-    control = <input type="text" value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} placeholder={ff.label + " 입력"} style={drawerInputStyle} />;
+    control = <input type="text" value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} placeholder={ff.label + " 입력"} style={drawerInputStyle("text")} />;
   }
   return (
     <label className="block mb-4">
@@ -277,7 +276,7 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
           {/* 검색어 — 모든 상세필터 공통 최상단(예약 라벨). 전 컬럼 부분일치 검색 */}
           <label className="block mb-4">
             <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>{SEARCH_LABEL}</span>
-            <input type="text" value={draft[SEARCH_LABEL] ?? ""} onChange={(e) => setVal(SEARCH_LABEL, e.target.value)} onKeyDown={applyOnEnter} placeholder="검색어 입력" style={drawerInputStyle} />
+            <input type="text" value={draft[SEARCH_LABEL] ?? ""} onChange={(e) => setVal(SEARCH_LABEL, e.target.value)} onKeyDown={applyOnEnter} placeholder="검색어 입력" style={drawerInputStyle("text")} />
           </label>
           {filters.length === 0 ? (
             <div className="text-caption text-center" style={{ fontSize: 13, padding: "28px 0" }}>설정 가능한 필터가 없습니다.</div>
@@ -389,7 +388,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     const cols: ColDef<Row>[] = schema.columns.map((c): ColDef<Row> => {
       if (c.key === "name") {
         return {
-          field: "name", headerName: c.label, flex: 2, minWidth: 180,
+          field: "name", headerName: c.label, width: 240, minWidth: 180, maxWidth: 360,   // flex 제거(AUTO_SIZE_CONTENT 전제) — 골드 subfund_manage와 동일 폭 규칙
           cellStyle: { display: "flex", flexDirection: "column", justifyContent: "center" },
           cellRenderer: (p: ICellRendererParams<Row>) => (
             <div className="min-w-0" style={{ lineHeight: 1.25 }}>
@@ -401,7 +400,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       }
       if (c.key === "trend") {
         return {
-          field: "trend", headerName: c.label, width: 120, sortable: false,
+          field: "trend", headerName: c.label, width: 120, minWidth: 120, sortable: false,   // 스파크라인 — 내용폭 측정이 좁으니 하한 고정
           cellDataType: false,   // 값은 number[](스파크라인) — 커스텀 렌더러라 타입 추론 불필요(AG Grid warning #48 억제)
           cellStyle: { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any },
           cellRenderer: (p: ICellRendererParams<Row>) => <MT w={40}><MiniBars data={(p.value as number[]) || []} color={p.data?.color || "var(--chart-1)"} /></MT>,
@@ -410,7 +409,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       const right = c.align === "right";
       return {
         field: c.key as any, headerName: c.label + (c.unit ? ` (${c.unit})` : ""),   // 스키마 동적 키 — Row 정적 타입 밖
-        flex: 1, minWidth: 110, type: right ? "rightAligned" : undefined,
+        minWidth: 110, maxWidth: 240, type: right ? "rightAligned" : undefined,   // flex 제거(AUTO_SIZE_CONTENT 전제) — 긴 텍스트 컬럼 상한 캡
         cellStyle: { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any, ...(right ? { justifyContent: "flex-end" } : {}) },
         cellRenderer: (p: ICellRendererParams<Row>) => <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} />,
       };
@@ -578,6 +577,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               columnDefs={columnDefs}
               getRowId={(p) => p.data.id}
               domLayout="autoHeight"
+              autoSizeStrategy={AUTO_SIZE_CONTENT}   // 컬럼 폭=내용 폭(첫 렌더 1회). columnDefs flex 제거가 전제. 골드 subfund_manage와 동일
               rowHeight={52}
               defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
               rowSelection={{ mode: "multiRow", checkboxes: true, headerCheckbox: true }}
