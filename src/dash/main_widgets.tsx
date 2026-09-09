@@ -216,7 +216,7 @@ function MenuPickerModal({ open, onClose }: { open: boolean; onClose: () => void
       <DialogContent hideClose className="max-w-[calc(100vw-32px)] max-h-[84vh] rounded-[20px]" style={{ width: "min(960px,100%)" }}>
         <div className="flex items-start justify-between gap-3" style={{ padding: "20px 22px 14px" }}>
           <div>
-            <DialogTitle className="font-extrabold inline-flex items-center gap-2" style={{ fontSize: 17, letterSpacing: "-.01em" }}><Icon name="star" size={17} style={{ color: "var(--warning)" }} />즐겨찾기 편집</DialogTitle>
+            <DialogTitle className="inline-flex items-center gap-2"><Icon name="star" size={18} style={{ color: "var(--warning)" }} />즐겨찾기 편집</DialogTitle>
             <DialogDescription className="t-caption" style={{ marginTop: 3 }}>전체 메뉴에서 자주 쓰는 화면을 골라 즐겨찾기에 등록하세요.</DialogDescription>
           </div>
           <button onClick={onClose} aria-label="닫기" className="shrink-0 bg-muted w-8 h-8 flex items-center justify-center cursor-pointer text-muted-foreground" style={{ border: "none", borderRadius: 9 }}><Icon name="x" size={17} /></button>

@@ -466,7 +466,7 @@ function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) 
         <DialogDescription className="sr-only">메모·공지사항·일정·시스템 알림 모음</DialogDescription>
         <header className="flex items-center" style={{ gap: 9, padding: "18px 22px", borderBottom: "1px solid var(--border)" }}>
           <Icon name="bell" size={18} style={{ color: "var(--brand-blue)" }} />
-          <DialogTitle className="font-extrabold" style={{ fontSize: 17, letterSpacing: "-.01em" }}>알림센터</DialogTitle>
+          <DialogTitle>알림센터</DialogTitle>
           <span className="text-center font-extrabold bg-danger" style={{ fontSize: 12, color: "var(--destructive-foreground)", borderRadius: 99, padding: "2px 9px", minWidth: 22 }}>{cap(total)}</span>
           <div className="flex-1" />
           <button onClick={onClose} className="text-muted-foreground font-semibold cursor-pointer py-1.5 px-2" style={{ border: "none", background: "transparent", fontSize: 13, fontFamily: "inherit" }}>모두 읽음</button>
