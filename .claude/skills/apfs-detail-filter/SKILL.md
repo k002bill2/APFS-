@@ -52,6 +52,15 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 - [ ] **마스크 규약**: 칩은 라벨(평문 UI) + 값(`<MT>` 마스킹). 행 셀은 `Cell`이 마스킹. 단위·헤더·축은 비마스킹.
 - [ ] **토큰·테마**: 색은 `var(--...)`만(하드코딩 hex 금지 — 다크 양립). 태그 토글에 `aria-pressed={checked}`.
 
+## typed 페이지 트랙 (2026-09-08 — 골드 `subfund_manage.tsx`, 스키마 `GenericListPage`가 아닌 전용 페이지)
+전용 페이지는 `ListFilterDrawer`를 쓰지 않고 **자체 드로어**를 가진다. 규약은 위와 같되 다음이 다르다:
+- **드로어 항목 = 목업 검색박스의 항목·순서 그대로**(자펀드관리: 모펀드·자펀드·계정구분·자펀드구분·사업연도·정기/수시·심사담당자·리스크담당자·심사단계·조합상태·기준일자). 검색어는 규약대로 최상단 상시. 행 컬럼과 미연동인 항목은 상태만 두고 `passes`에 넣지 않으며 `DrawerField noop`으로 `· 데이터 연동 후 적용` 캡션.
+- **연도/일자 컨트롤 = `PeriodPicker`**(사업연도 `mode="year"`, 기준일자 `mode="day"`) — 연도 `<select>`·네이티브 date 금지(→[[apfs-datepicker]] PeriodPicker 절). 버튼 트리거는 `DrawerField plain`(`<div>` 래퍼, `<label>` 이중 토글 방지) + `ariaLabel`.
+- **적용 칩은 항목별 개별 칩**(합쳐서 `A · B · C` 한 칩 금지). 각 칩 = **값만 표시**(항목명 접두사 없음, 2026-09-08 결정) + `×`(`aria-label="<항목> 필터 제거"`, 해당 필터만 해제). no-op 항목은 칩을 만들지 않는다. 값은 `<MT>` 마스킹.
+  - ⚠ **스키마 트랙과 불일치**: `generic_list.tsx` `FilterPill`은 여전히 `라벨: 값`. 통일(값만/라벨:값)은 **사용자 결정 사항** — 임의로 한쪽에 맞추지 말 것.
+- 주 필터 1개(심사단계)는 툴바 `FilterChip`(전체+단계들)로 노출, 선택 행이 있으면 툴바 좌 슬롯이 selbar로 바뀐다(→[[apfs-stage-workflow]]).
+- 상태 SSOT는 `useState` N개 + `clearFilters`(초기화 버튼·전체 해제 공유). `passes`는 `useCallback`, 변경 시 `apiRef.current?.onFilterChanged()`(External Filter).
+
 ## 정본 코드 (로직은 여기, 스킬은 규약만)
 - `src/dash/schemas/filter_field.ts` — `resolveFilterField` + YEAR_OPTIONS + degrade 가드
 - `src/dash/generic_list.tsx` — `DrawerFilterControl` · `ListFilterDrawer` · `rowMatchesFilters` · `makeRows` 시드 · `FilterPill`

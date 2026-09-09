@@ -10,10 +10,14 @@
      이 모듈을 import하는 모든 그리드가 등록을 공유한다.
    - ⚠️ 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지 — Theming API와 충돌. */
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
-import type { ValueFormatterParams, CellStyle } from 'ag-grid-community';
+import type { ValueFormatterParams, CellStyle, AutoSizeStrategy } from 'ag-grid-community';
 import { mn } from './mask';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
+
+/* 컬럼 폭 = 내용 폭(잘림 방지) — 그리드 기본 전략(2026-09-08 사용자 결정). 첫 데이터 렌더 때 헤더+셀 내용으로 자동 산정.
+   너무 긴 텍스트 컬럼(조합명·GP 등)은 colDef.maxWidth로 상한을 둔다. 사용: <AgGridReact autoSizeStrategy={AUTO_SIZE_CONTENT} …> */
+export const AUTO_SIZE_CONTENT: AutoSizeStrategy = { type: 'fitCellContents' };
 
 export const apfsTheme = themeQuartz.withParams({
   backgroundColor: 'var(--card)',
@@ -24,6 +28,7 @@ export const apfsTheme = themeQuartz.withParams({
   fontFamily: 'inherit',
   headerFontWeight: 600,
   wrapperBorderRadius: 0,
+  wrapperBorder: false,   // .ag-root-wrapper 외곽 테두리만 제거(2026-09-08) — 컬럼선·행선·헤더선은 유지. 프레임 카드가 테두리 없는 페이지 배경이라 맞춤
   // 세로 컬럼 구분선 — 헤더·본문 모두. 구조(축)라 마스크와 무관하게 상시 표시. 색은 토큰(라이트/다크 추종).
   columnBorder: { color: 'var(--border)' },
   headerColumnBorder: { color: 'var(--border)' },

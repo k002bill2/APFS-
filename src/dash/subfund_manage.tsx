@@ -19,7 +19,7 @@ import type { Tone } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, KpiBadge } from './grid_frame';
-import { apfsTheme, fmt, numFmt, numStyle } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
+import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
@@ -28,7 +28,8 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { RowFormModal } from './generic_list_modal';
 import { SubFundFormEditModal } from './subfund_form_modal';   // 결성조합 수정 — 섹션형 전용 모달
 import { SubFundSpecModal } from './subfund_spec_modal';         // 자펀드 명세 — 읽기전용 팝업(S1_03 명세, 전 단계 공통)
-import { APPLY_SCHEMA, SELECT_SCHEMA, OPT_FG, OPT_FS, OPT_YEARS, OPT_MANAGER, OPT_MF } from './subfund_manage_schemas';
+import { APPLY_SCHEMA, SELECT_SCHEMA, OPT_AG, OPT_FG, OPT_FS, OPT_MANAGER, OPT_MF, CUR_YEAR } from './subfund_manage_schemas';
+import { PeriodPicker } from './ui/period-picker';   // 연도/일자 선택 표준(apfs-datepicker)
 
 const { Button, IconBtn, StatusBadge, FilterChip, SegTabs, ColorChip } = UI;
 
@@ -105,10 +106,10 @@ const columnDefs: (ColDef<SubFundRow> | ColGroupDef<SubFundRow>)[] = [
     valueFormatter: (p) => (p.node?.rowPinned ? '합 계' : String(p.value)) },
   { field: 'stg', headerName: '심사단계', width: 96, pinned: 'left', cellStyle: flexMid, sortable: true,
     cellRenderer: (p: any) => (p.node.rowPinned ? null : <StatusBadge tone={STAGE_TONE[p.value as Stage]} label={p.value} size="lg" dot={false} />) },
-  { ...txt('fn', '자펀드', 240), pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold"><MT>{p.value}</MT></span>) },
+  { ...txt('fn', '자펀드', 240), maxWidth: 360, pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold"><MT>{p.value}</MT></span>) },
   num('y', '사업연도', 92), txt('rt', '정기/수시', 88, true), num('ch', '차수', 70),
   txt('ctype', '조합유형', 150, true), txt('cg', '조합구분', 96, true), txt('cs', '조합성격', 120, true),
-  txt('gp1', '업무집행조합원1', 150), txt('gp2', '업무집행조합원2', 150),
+  { ...txt('gp1', '업무집행조합원1', 150), maxWidth: 240 }, { ...txt('gp2', '업무집행조합원2', 150), maxWidth: 240 },
   date('fd', '결성일'), date('rd', '등록일시'), num('yrs', '결과년수', 88), num('dur', '최초존속기간', 112), date('mat', '만기일'),
   num('rate', '기준수익률', 100),
   { headerName: '우선손실충당률', marryChildren: true, headerClass: 'apfs-grp-a', children: [num('lgp', 'GP', 80), txt('lmo', '농모태', 80, true)] },
@@ -154,14 +155,17 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 }
 
 /* 드로어 필드 래퍼 — 라벨 + 컨트롤. noop=컬럼 미연동 필터(캡션으로 no-op 신호, apfs-detail-filter 규약) */
-function DrawerField({ label, noop, children }: { label: string; noop?: boolean; children: React.ReactNode }) {
+/* plain=true → <label> 대신 <div>: PeriodPicker/DatePicker 트리거는 <button>이라 <label> 암묵 연결이 안 되고(ariaLabel로 명명),
+   <label> 안 버튼 클릭이 라벨 활성화와 겹쳐 2회 토글되는 것을 막는다 */
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+  const Wrap: any = plain ? 'div' : 'label';
   return (
-    <label className="block mb-4">
+    <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
         {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
-    </label>
+    </Wrap>
   );
 }
 function DrawerSelect({ value, onChange, options, all = '전체' }: { value: string; onChange: (v: string) => void; options: string[]; all?: string }) {
@@ -203,7 +207,9 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   const [fMf, setFMf] = useState('');          // 모펀드 — 그리드 컬럼 아님(no-op)
   const [fManager, setFManager] = useState(''); // 심사담당자 — 동적 사용자 데이터(no-op)
   const [fAsOf, setFAsOf] = useState('');       // 기준일자(no-op)
-  const clearFilters = () => { setFStage(''); setFText(''); setFFund(''); setFType(''); setFYear(''); setFRt(''); setFSt(''); setFMf(''); setFManager(''); setFAsOf(''); };
+  const [fAg, setFAg] = useState('');           // 계정구분 — 행에 컬럼 없음(no-op)
+  const [fRisk, setFRisk] = useState('');       // 리스크담당자 — 동적 사용자 데이터(no-op)
+  const clearFilters = () => { setFStage(''); setFText(''); setFFund(''); setFType(''); setFYear(''); setFRt(''); setFSt(''); setFMf(''); setFManager(''); setFAsOf(''); setFAg(''); setFRisk(''); };
 
   const passes = useCallback((r: SubFundRow) => {
     if (fStage && r.stg !== fStage) return false;
@@ -338,14 +344,11 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
       toolbarLeft={selected ? (
         /* 선택 행의 심사단계에 맞는 작업만 노출(공고관리 컨텍스트 액션 패턴). 취소 단계는 작업 없음 */
         <>
-          <span className="inline-flex items-center gap-1.5 font-semibold" style={{ fontSize: 13 }}>
-            <StatusBadge tone={STAGE_TONE[selected.stg]} label={selected.stg} size="lg" dot={false} />
-            <span className="truncate" style={{ maxWidth: 260 }}><MT>{selected.fn}</MT></span>
-          </span>
+          {/* 단계 배지만 표시 — 자펀드명은 선택 행에서 이미 보이므로 생략(2026-09-08 결정) */}
+          <StatusBadge tone={STAGE_TONE[selected.stg]} label={selected.stg} size="lg" dot={false} />
           {stageActs.map((a) => (
             <Button key={a.label} variant={a.primary ? 'primary' : 'outline'} size="sm" onClick={a.run}>{a.label}</Button>
           ))}
-          {stageActs.length === 0 && <span className="text-caption" style={{ fontSize: 12.5 }}>취소된 건 — 전이 작업 없음</span>}
           {/* 명세는 단계 무관 공통 조회(읽기전용) — 전이 액션 맵 밖에 둔다. 행 더블클릭과 동일 진입 */}
           <Button variant="outline" size="sm" leadingIcon="file" onClick={() => setModal({ kind: 'spec' })}>명세</Button>
           <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
@@ -366,7 +369,8 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
             ['조합상태', fSt, () => setFSt('')],
           ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <span>{label}:</span><MT>{value}</MT>
+              {/* 값만 표시(항목명 접두사 없음 — 2026-09-08 결정). 항목명은 × 버튼 aria-label에만 남긴다 */}
+              <MT>{value}</MT>
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex border-0 cursor-pointer p-0" style={{ background: 'transparent', color: 'inherit' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -409,6 +413,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           getRowId={(p) => p.data.id}
           pinnedBottomRowData={pinnedBottom}
           domLayout="autoHeight"
+          autoSizeStrategy={AUTO_SIZE_CONTENT}   // 컬럼 폭=내용 폭(잘림 방지). 긴 텍스트 컬럼은 maxWidth 캡
           defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
           rowSelection={{ mode: 'singleRow', checkboxes: true, enableClickSelection: true }}
           selectionColumnDef={{ pinned: 'left', width: 44 }}   // 라디오 선택 열을 맨 앞 고정(목업 1열 '선택(라디오)')
@@ -464,15 +469,19 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
             <DrawerField label="검색어">
               <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="조합명·GP·단계 등 전 컬럼 검색" style={inputStyle} />
             </DrawerField>
+            {/* 원본(목업) 검색박스 11항목·순서 그대로: 모펀드·자펀드·계정구분·자펀드구분·사업연도·정기/수시·심사담당자·리스크담당자·심사단계·조합상태·기준일자.
+                그리드 컬럼과 미연동인 항목(모펀드·계정구분·담당자 2종·기준일자)은 noop 캡션(apfs-detail-filter). 연도/일자는 PeriodPicker 표준(apfs-datepicker) */}
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={OPT_MF} /></DrawerField>
-            <DrawerField label="자펀드 (결성 조합만)"><DrawerSelect value={fFund} onChange={setFFund} options={formedFunds} /></DrawerField>
+            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={formedFunds} /></DrawerField>
+            <DrawerField label="계정구분" noop><DrawerSelect value={fAg} onChange={setFAg} options={OPT_AG} /></DrawerField>
             <DrawerField label="자펀드구분"><DrawerSelect value={fType} onChange={setFType} options={OPT_FG} /></DrawerField>
-            <DrawerField label="사업연도"><DrawerSelect value={fYear} onChange={setFYear} options={OPT_YEARS} /></DrawerField>
+            <DrawerField label="사업연도" plain><PeriodPicker mode="year" value={fYear} onChange={setFYear} ariaLabel="사업연도" yearRange={[2000, CUR_YEAR + 1]} /></DrawerField>
             <DrawerField label="정기/수시"><DrawerSelect value={fRt} onChange={setFRt} options={['정기', '수시']} /></DrawerField>
             <DrawerField label="심사담당자" noop><DrawerSelect value={fManager} onChange={setFManager} options={OPT_MANAGER} /></DrawerField>
+            <DrawerField label="리스크담당자" noop><DrawerSelect value={fRisk} onChange={setFRisk} options={OPT_MANAGER} /></DrawerField>
             <DrawerField label="심사단계"><DrawerSelect value={fStage} onChange={(v) => setFStage(v as '' | Stage)} options={STAGES} /></DrawerField>
             <DrawerField label="조합상태"><DrawerSelect value={fSt} onChange={setFSt} options={OPT_FS} /></DrawerField>
-            <DrawerField label="기준일자" noop><input type="date" value={fAsOf} onChange={(e) => setFAsOf(e.target.value)} style={inputStyle} /></DrawerField>
+            <DrawerField label="기준일자" noop plain><PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" /></DrawerField>
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>

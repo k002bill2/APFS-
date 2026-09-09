@@ -20,6 +20,8 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 5. **입력 폰트 14px.** 폼 컨트롤은 `renderers.tsx`의 `base` 스타일에서 **14px(프로젝트 표준)**. 16px 아님(→[[responsive-ui]]). 색·테두리·배경은 토큰만(→[[color-tokens]]).
    - ⚠️ **단축 속성 `font` 금지 — 패밀리는 `fontFamily`(longhand)로만 상속.** `base`에서 `fontSize: 14` **뒤에** `font: 'inherit'`를 쓰면 안 된다. `font`은 `font-style/variant/weight/`**`size`**`/line-height/family`를 한꺼번에 지정하는 shorthand라, 인라인 스타일이 키 순서대로 적용되며 **뒤에 온 `font:'inherit'`가 앞의 `fontSize:14`를 부모 상속값(모달=16px)으로 되돌린다** → 네이티브 `select/input`이 16px로 렌더(라벨 14px보다 큼). 패밀리(Pretendard)만 상속하려면 **`fontFamily: 'inherit'`**(longhand)를 써서 `fontSize:14`를 보존하라. 검증: 모달 열고 `getComputedStyle(select).fontSize === '14px'`.
 6. **필수값·삭제.** 필수는 `field.required`(미입력 시 첫 누락 필드에 인라인 에러). 삭제는 edit 모드에서 ghost→`삭제 확인`(danger) 2단계.
+7. **컨트롤 폭 = fit-content(2026-09-08 사용자 확정).** `renderers.tsx` `base`가 `width:'fit-content', minWidth:220, maxWidth:'100%'` — 셀을 꽉 채우지 않는다. **textarea만 `width:'100%'`**(긴 입력), `date`는 `DatePicker` 트리거가 `w-full`이라 같은 규칙의 `fit-content` 래퍼 `<div>`로 감싼다. 실측: input/select/date 220px(최소), file 298px(고유폭), textarea 전체폭.
+8. **배열은 라벨 위·컨트롤 아래(세로 적층) 고정.** ⚠ 안티패턴: 라벨 좌·컨트롤 우 inline 배열 — 2026-09-08 시안 후 **사용자 원복**. 다시 제안하지 말 것(폭만 fit-content로 줄이는 것이 결정).
 
 ## 컨트롤 종류 (FIELD_CONTROLS — types.ts SSOT)
 | control | 렌더(SchemaField) | 비고 |

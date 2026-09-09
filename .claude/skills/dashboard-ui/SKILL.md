@@ -45,6 +45,8 @@ APFS = 농림수산식품모태펀드 투자자산관리시스템 **대시보드
 - **클릭 press 피드백**: `Button`/`IconBtn`은 `motion-safe:active:scale` 내장. 새 클릭 타깃엔 `motion-safe:active:scale-[.97]`을 쓴다 — 전역 reduced-motion 규칙은 transition을 못 막으므로 `active:scale` 단독(motion-safe 없이) 사용 금지.
 - **모션 토큰**: duration은 `duration-tok-fast`/`duration-tok`(=`--dur-*` CSS 변수), easing은 `ease-ds`로 통일. 신규 리터럴 `duration-150` 금지. indeterminate 등 keyframe 애니메이션은 **저모션 폴백을 함께 정의**(0% 프레임이 화면 밖이면 "멈춤"으로 오독됨).
 - 스피너 본체=`Spinner`(`ui/spinner.tsx`, react-spinners 래퍼), 토스트=`sonner`. 프리뷰: designsystem "3-2-1. 인터랙션".
+- **🔴 열림 애니메이션 끝 프레임에 `filter`/3D `transform`을 남기지 말 것**(2026-09-08 실측): 다이얼로그 `dialog-in` 키프레임에 `forwards` fill을 주면 `filter: blur(0px)`·`perspective()` 행렬이 영구 고정 → 모달 전체가 GPU 합성 레이어로 남아 **텍스트가 흐려진다**(서브픽셀 AA 상실). 열림은 fill-mode 없이(끝 상태=원래 스타일), `to`는 `filter:none`. 닫힘(`dialog-out`)만 `forwards`. 검증: 열린 뒤 `getComputedStyle(dialog).filter==='none' && transform==='none'`.
+- **`StatusBadge` 옵션**: `size="sm"|"md"|"lg"`(11/12/13px) · `dot={false}`(앞 점 제거). 배지가 촘촘히 반복되는 열(심사단계)은 `lg`+`dot={false}`가 확정 규격.
 
 ## 작업 가이드
 1. **재사용 우선**: 새 컴포넌트 전 `UI`/`Icon`/`Charts` 프리미티브에 이미 있는지 확인(로딩·진행·press·모션은 위 "인터랙션·모션" 참조 — 새로 만들지 말 것).
@@ -55,7 +57,7 @@ APFS = 농림수산식품모태펀드 투자자산관리시스템 **대시보드
 6. **라우팅**: app.tsx가 route 문자열로 분기한다. 바스포크 페이지(main, risk, gp-health, accounting, schedule, subfund, asset, asset-funding, report* 등)는 명시 분기, **그 외 route는 전부 `GenericListPage`(스키마 주도, `src/dash/schemas/`)로 폴백**한다. route는 메뉴 리프의 한글 라벨(NFC)이 원칙이고 `apfs.route` localStorage에 **원시 문자열**로 영속화된다.
 
 ## 관련 스킬 (상세는 각 스킬 참조 — 중복 금지)
-리스트/그리드 골격=[[apfs-grid]], AG Grid 본체=[[apfs-aggrid]], CRUD 모달=[[apfs-form-modal]], 날짜 선택=[[apfs-datepicker]], 색 토큰=[[color-tokens]], 쌓임맥락=[[z-index]], 반응형=[[responsive-ui]], 접근성=[[web-a11y]].
+리스트/그리드 골격=[[apfs-grid]], AG Grid 본체=[[apfs-aggrid]], CRUD 모달=[[apfs-form-modal]], 상세필터=[[apfs-detail-filter]], 날짜/기간 선택=[[apfs-datepicker]], 단계 워크플로우=[[apfs-stage-workflow]], 카드뷰 토글=[[apfs-card-view]], 읽기전용 명세 팝업=[[apfs-spec-popup]], 목업→관리 페이지 조립=[[apfs-manage-page]], 색 토큰=[[color-tokens]], 쌓임맥락=[[z-index]], 반응형=[[responsive-ui]], 접근성=[[web-a11y]].
 
 ## 검증
 `npm run build`가 green이어야 한다(dev 서버가 떠도 프로덕션 빌드는 실패할 수 있다). 이후 `npm run dev`로 HMR 확인 — 위젯 렌더, 라이트/다크 테마 토글, 역할(admin/manager/viewer) 전환, 브라우저 콘솔 무오류.

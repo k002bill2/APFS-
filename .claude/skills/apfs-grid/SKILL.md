@@ -85,8 +85,15 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 </GridFrame>
 ```
 
+## 프레임 외관 규약 (2026-09-08 사용자 확정 — 자펀드관리에서 정립, GridFrame 전 페이지 공통)
+- **카드 배경 = 페이지 배경, 테두리·그림자 없음.** `grid_frame.tsx`가 `Card`에 inline `background:'var(--frame-bg)', border:0, boxShadow:'none'`을 얹는다(inline이 Card의 `border bg-card` 클래스보다 우선). `--frame-bg`는 `tokens.css` 라이트/다크 모두 `var(--bg)` — **전체 색을 바꾸려면 이 토큰 한 줄**. sticky 푸터 배경도 같은 토큰(안 그러면 흰 띠).
+- **`sub` 캡션은 쓰지 않는다.** 화면 설명 문구는 제거 대상(사용자 결정). 단위 표기는 **`toolbarRight` 맨 앞에 12px caption** `단위: 원`(비마스킹)으로.
+- **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `view==='list' && page.total>1`일 때만 페이저(`IconBtn chevron-left/right` + `PageBtn`) · `footerRight` = `SegTabs 리스트 뷰|카드뷰` + `IconBtn download / maximize(전체보기, list일 때만) / external(새 창) / more`. `PageBtn`은 골드(`asset_funding.tsx`·`subfund_manage.tsx`)에 **로컬 복사**돼 있는 헬퍼다 — 공유 export 아님, 골드에서 복사.
+- 카드뷰 전환·선택 동기화는 [[apfs-card-view]].
+
 ## 검증
 `npm run build`(exit 0) + `npm test`(스키마 zod) + 브라우저 라이트/다크·1280/768/400 시각 확인(responsive-ui 프로토콜) + 기존 페이지(generic_list 등) 무변경 회귀.
+- 프레임: `getComputedStyle(section).backgroundColor === 페이지 배경` · `borderTopWidth==='0px'` · `boxShadow==='none'`(라이트/다크 둘 다).
 
 ## 참조
 - UI/디자인 시스템 전반: [[dashboard-ui]]

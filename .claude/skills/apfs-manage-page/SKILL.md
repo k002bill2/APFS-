@@ -26,8 +26,13 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 심사단계 셀 + 단계별 작업 버튼 + 전이 | **[[apfs-stage-workflow]]** (신규 패턴) | 이 조립표 |
 | 편집 팝업(flat ≤ 25필드) | `kind:'form'` PageSchema + `RowFormModal`(단계별 제목은 `title` prop) | [[apfs-form-modal]] |
 | 편집 팝업(섹션·반복행·첨부표) | 전용 섹션형 모달 — `SchemaField` 재사용 | [[apfs-form-modal]] "확장: 섹션형·반복행" |
-| 사업연도/기준일 | 드로어=`<select>` 연도, 모달=`date` 컨트롤(DatePicker) | [[apfs-datepicker]] |
+| 사업연도/기준일자 | 드로어·모달 모두 **`PeriodPicker`**(`mode="year"` / `"day"`, `DrawerField plain`) — 연도 `<select>`·네이티브 date 금지 | [[apfs-datepicker]] "PeriodPicker" |
+| 적용 필터 칩 | 항목별 개별 칩, **값만**(접두사 없음) + × aria-label에 항목명 | [[apfs-detail-filter]] "typed 페이지 트랙" |
 | 엑셀 | SheetJS — 병합/리프 컬럼을 **columnDefs에서 자동 산출**(`flattenForExcel`), 마스크 시 숫자 0·텍스트 '' | [[apfs-aggrid]] |
+| 프레임 외관·푸터 | `--frame-bg`(테두리·그림자 없음), `sub` 미사용, 단위 캡션은 `toolbarRight`, 푸터 골드(건수·페이저·뷰 토글·아이콘) | [[apfs-grid]] "프레임 외관 규약" |
+| 리스트 ↔ 카드뷰 | 푸터 `SegTabs` + 카드 그리드 + 선택 유지 | **[[apfs-card-view]]** |
+| 읽기전용 명세 팝업 | `명세` 버튼 + 더블클릭 → 단위 토글·kv·재무요약·중첩 재무제표 | **[[apfs-spec-popup]]** |
+| 그리드 세부(폭·선택색·합계행·배지) | `AUTO_SIZE_CONTENT`+`maxWidth`, `wrapperBorder:false`, 합계 `--muted`+1px, 배지 `lg`/`dot={false}` | [[apfs-aggrid]] "관리형 페이지 그리드 규약" |
 | 색·대비 | 토큰만. 상태 텍스트는 `-text` 토큰(StatusBadge 내장) | [[color-tokens]] |
 
 ## 2. 목업에서 **버리는 것** (프로토타입 스캐폴딩 — 셸이 소유)
@@ -59,7 +64,9 @@ await page.evaluate(()=>localStorage.setItem('apfs.route','<path>')); await page
 - `pinnedBottomRowData`에 인라인 배열 금지 — 전이/등록으로 행이 변하므로 `useMemo([computeTotal(filteredRows)],[filteredRows])`.
 - `onPaginationChanged`는 값 비교 가드로 setState(매 호출 새 객체=렌더 루프, →[[aggrid-onpaginationchanged-render-loop]]).
 - AG Grid `cellStyle` 상수는 `CellStyle` 타입(React `CSSProperties` 아님 — 인덱스 시그니처 불일치).
-- 신규 등록 후 `setSelId(newId)`로 선택을 새 행에 두면 다음 단계 액션이 즉시 보인다.
+- 신규 등록 후 `setSelId(newId)`로 선택을 새 행에 두면 다음 단계 액션이 즉시 보인다 — 단 그리드 라디오는 `onRowDataUpdated`에서 따로 맞춰야 한다(→[[apfs-stage-workflow]] 규약 9).
+- selbar에 **대상명(조합명)·취소 안내 캡션을 넣지 않는다**(2026-09-08 제거). 카드헤더 `sub` 설명 캡션도 넣지 않는다.
+- 세분화 스킬 색인(2026-09-08): 프레임 외관 [[apfs-grid]] · 그리드 세부 [[apfs-aggrid]] · 칩/드로어 [[apfs-detail-filter]] · 컨트롤 폭 [[apfs-form-modal]] 계약7 · 기간 선택 [[apfs-datepicker]] · 카드뷰 [[apfs-card-view]] · 명세 팝업 [[apfs-spec-popup]] · 선택 SSOT [[apfs-stage-workflow]] 규약 9.
 
 ## 검증
 `npm run build`(exit 0) · `npm test` · 4절 런타임 체크 · [[responsive-ui]] 1280/768/400 · [[web-a11y]](라디오 접근名·다이얼로그 트랩은 AG Grid/Radix 내장).
