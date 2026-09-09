@@ -82,7 +82,6 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
         ))}
       </div>
     );
-    case 'file':     return <input type="file" style={{ ...base, padding: 6 }} />;
     // Plate(platejs) 리치 텍스트 에디터 — lazy 로드. Suspense fallback은 base 톤 placeholder.
     case 'richtext': return (
       <React.Suspense fallback={<div style={{ ...base, color: 'var(--muted-foreground)' }}>에디터 불러오는 중…</div>}>
@@ -90,6 +89,9 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
       </React.Suspense>
     );
     // 첨부파일 — 기존 첨부(Attachment 표시) + FilePond 신규추가. lazy 로드.
+    // 'file'(날것 <input type=file>)도 여기로 통일 — 스키마에 'file'을 써도 DocumentsField로 렌더(파일존 단일화).
+    // ⚠ generic_list_modal의 complex(=<label> 래핑 금지) 목록에 'file'도 포함돼야 함(찾아보기 버튼 하이재킹 방지).
+    case 'file':
     case 'filepond': return (
       <React.Suspense fallback={<div style={{ ...base, color: 'var(--muted-foreground)' }}>업로더 불러오는 중…</div>}>
         <DocumentsField value={value} onChange={onChange} required={requiredMark} />

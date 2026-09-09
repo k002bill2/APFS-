@@ -41,7 +41,10 @@ shadcn `new-york` 소스는 **Tailwind v4 문법**이다. 이 프로젝트는 **
 - **임의 위치에 직접 둘 때만**:
   ```tsx
   import { DatePicker } from '@/dash/ui/date-picker'; // 경로는 소비처 기준
-  <DatePicker value={v} onChange={setV} ariaLabel="기준일" invalid={!!err} />
+  // 🔴 트리거는 w-full — 폭을 내용에 맞추려면 fit-content 래퍼로 감싼다(아래 PeriodPicker 절 "폭" 규칙 참조).
+  <div style={{ width: 'fit-content', minWidth: 120, maxWidth: '100%' }}>
+    <DatePicker value={v} onChange={setV} ariaLabel="기준일" invalid={!!err} />
+  </div>
   // v 는 반드시 'YYYY-MM-DD' 문자열. 빈 문자열 = 미선택.
   ```
 - `mode="single"` + `required` 미지정이라 **선택일 재클릭 = 해제**(`onChange('')`)가 유일한 clear 수단이다. 선택/해제 모두 팝오버를 닫는다(일관성).
@@ -53,13 +56,17 @@ shadcn `new-york` 소스는 **Tailwind v4 문법**이다. 이 프로젝트는 **
 - 동작: 같은 값 재클릭 = 해제(DatePicker와 동일한 유일 clear 수단), 선택/해제 모두 팝오버 닫힘. 연도 그리드는 12년 페이지(12의 배수 정렬) ‹ ›, 월/분기/반기는 연도 ‹ ›. `yearRange`(기본 2000~2035)로 범위 제한.
 - 접근성: 트리거는 `<button>` → **`ariaLabel` 필수**(감싸는 `<label>`로 명명되지 않음). 그리드는 `role=listbox/option` + `aria-selected`. 소비처 라벨 래퍼는 `<label>` 대신 `<div>`(**`DrawerField plain`**) — `<label>` 안 버튼은 라벨 활성화와 겹쳐 2회 토글된다.
 - Popover는 non-modal(위 #5). Sheet(드로어)·Dialog 안에서 검증됨.
+- **🔴 폭 = 소비처가 `fit-content` 래퍼로 감싼다(w-full 트리거 계약)**: PeriodPicker/DatePicker 트리거 `<button>`은 **`w-full`(width:100%)** 이라 "부모가 정한 폭을 채운다". 그대로 `DrawerField plain`(=`block` 100%)·그리드 셀에 넣으면 **컨테이너 전체 폭(드로어 ≈368px)으로 늘어난다**(2026-09-09 subfund 상세필터 사업연도·기준일자 회귀 — PR #118의 `inputStyle` 폭 정합은 PeriodPicker 미경유라 놓침). 반드시 `<div style={{ width:'fit-content', minWidth: controlMinWidth(kind), maxWidth:'100%' }}>`로 감싼다 — `kind`는 year→`'year'`(130)·day→`'date'`(120). 형제 소비처 `renderers.tsx`(폼 모달 `case 'date'`)·`generic_list.tsx`(필터 드로어 `kind==='date'`)가 정본 패턴. `DrawerSelect`가 래퍼 없이 멀쩡한 건 `<select>`엔 고유 콘텐츠 폭이 있고 자신도 `fit-content`이기 때문(버튼엔 그게 없다).
+  - **래퍼를 프리미티브(`period-picker.tsx`/`date-picker.tsx`)에 넣지 마라**: `controlMinWidth`는 `schemas/renderers.tsx` 소유이고 그 파일이 `ui/date-picker`를 import → 프리미티브가 역참조하면 **import 사이클/레이어 역전**. "소비처가 감싼다"는 습관이 아니라 의존성 방향의 결과다. 트리거 `w-full`은 의도된 계약(소비처가 폭을 정함)이라 프리미티브에서 바꾸지 않는다.
 ```tsx
 import { PeriodPicker } from './ui/period-picker';
-<DrawerField label="사업연도" plain><PeriodPicker mode="year" value={fYear} onChange={setFYear} ariaLabel="사업연도" yearRange={[2000, CUR_YEAR + 1]} /></DrawerField>
-<DrawerField label="기준일자" plain><PeriodPicker mode="day"  value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" /></DrawerField>
-<PeriodPicker mode="quarter" value={q} onChange={setQ} ariaLabel="분기" />   // 'YYYY-Qn'
+import { controlMinWidth } from './schemas/renderers';   // 폭 하한 SSOT(fit-content 짝)
+// 🔴 트리거는 w-full → 소비처가 fit-content 래퍼로 감싸야 컨테이너 전체 폭으로 안 늘어난다(위 "폭" 규칙).
+<DrawerField label="사업연도" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('year'), maxWidth: '100%' }}><PeriodPicker mode="year" value={fYear} onChange={setFYear} ariaLabel="사업연도" yearRange={[2000, CUR_YEAR + 1]} /></div></DrawerField>
+<DrawerField label="기준일자" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day"  value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" /></div></DrawerField>
+<div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}><PeriodPicker mode="quarter" value={q} onChange={setQ} ariaLabel="분기" /></div>   // 'YYYY-Qn'
 ```
-- 골드 소비처: `src/dash/subfund_manage.tsx` 상세필터(사업연도=year, 기준일자=day). 검증: 연도 그리드 열림 → 2018 클릭 → 트리거 `2018년`·필터 행 수 감소·칩 `사업연도:2018년`; day는 달력(rdp) 렌더.
+- 골드 소비처: `src/dash/subfund_manage.tsx` 상세필터(사업연도=year, 기준일자=day, **둘 다 fit-content 래퍼로 감쌈**). 검증: 연도 그리드 열림 → 2018 클릭 → 트리거 `2018년`·필터 행 수 감소·칩 `사업연도:2018년`; day는 달력(rdp) 렌더. **트리거 폭 ≈130(year)/≈120(day)** — 드로어 전체 폭(≈368) 아님.
 
 ## 범위/필터 작성 시 (날짜 2개로 기간)
 범위는 별도 컴포넌트가 아니라 **단일 `DatePicker` 2개**(시작/종료)로 구성하고 상태를 직접 소유한다. 이때 함정:
@@ -72,6 +79,7 @@ import { PeriodPicker } from './ui/period-picker';
 - 15일 클릭 → `2026-06-15`(off-by-one 아님) · 재클릭 → `''`.
 - 라이트/다크 모두 셀 크기·대비(→[[responsive-ui]] · [[color-tokens]]).
 - Dialog(폼 모달)·Sheet(필터 드로어) **안에서** 팝오버가 오버레이 위로 부유하는지(→[[z-index]]).
+- **폭**: 트리거 `getBoundingClientRect().width`가 컨테이너 전체 폭이 아니라 내용 맞춤(minWidth 하한 근처, year≈130·date≈120)인지 — 드로어/그리드 셀에 넣었을 때 특히. fit-content 래퍼 누락 시 트리거가 `w-full`로 전 폭을 먹는다.
 
 ## 참조
 - 폼 모달 `control:'date'`: [[apfs-form-modal]] · 필터 `kind:'date'`: [[apfs-detail-filter]]

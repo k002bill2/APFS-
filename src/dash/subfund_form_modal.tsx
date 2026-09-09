@@ -12,6 +12,9 @@ import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
 import { OPT_AG, OPT_FG, OPT_FC, OPT_PT, OPT_FS, OPT_TC } from './subfund_manage_schemas';
 import type { SubFundRow } from './subfund_manage';
+// 첨부 셀 카드 — DocumentsField(filepond 통일 드롭존)와 동일 표시 프리미티브로, 슬롯 구조는 유지하고 셀만 온-시스템 카드로.
+import { RefreshCw, X as XIcon } from 'lucide-react';
+import { Attachment, AttachmentGroup, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentDescription, AttachmentActions, AttachmentAction } from './ui/attachment';
 
 const { useState, useRef } = React;
 const { Button, IconBtn } = UI;
@@ -33,6 +36,8 @@ type DocRow = { date: string; file: string };
 const nz = (v: string | number | null | undefined) => (v == null || v === '-' ? '' : String(v));
 const numOr = (v: string, d: number | null) => { const n = Number(v.replace(/[^0-9.-]/g, '')); return v !== '' && Number.isFinite(n) ? n : d; };
 const dateOr = (v: string, d: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : d);
+// 파일명 → 확장자 라벨(DocumentsField와 동일 규약). 확장자 없으면 '파일'.
+const extLabel = (name: string) => { const ext = name.split('.').pop()?.toUpperCase(); return ext && ext !== name.toUpperCase() ? ext : '파일'; };
 
 /* 섹션 — 제목 + 2단 그리드(좁으면 1단). RowFormModal의 wide 레이아웃과 동일 규격 */
 function Section({ title, children, single }: { title: string; children: React.ReactNode; single?: boolean }) {
@@ -206,11 +211,25 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
                       ? <SchemaField field={s(`dd${i}`, `${slot.name} 일자`, 'date')} value={docs[i].date} onChange={(val) => setDocs((p) => p.map((d, k) => (k === i ? { ...d, date: val } : d)))} />
                       : <span className="text-caption">—</span>}</td>
                     <td style={tdStyle}>
-                      <div className="flex items-center gap-2" style={{ border: '1.5px dashed var(--border-strong)', borderRadius: 6, padding: '5px 9px', background: 'color-mix(in srgb, var(--muted) 50%, transparent)' }}>
-                        <Button variant="outline" size="sm" onClick={() => pickFile(i)}>파일 선택</Button>
-                        <span className={`truncate ${docs[i].file ? 'font-semibold' : 'text-caption'}`} style={{ fontSize: 12, flex: 1, minWidth: 0 }}>{docs[i].file || '선택된 파일 없음'}</span>
-                        {docs[i].file && <IconBtn icon="x" label="첨부 제거" size={26} onClick={() => setDocs((p) => p.map((d, k) => (k === i ? { ...d, file: '' } : d)))} />}
-                      </div>
+                      {/* 파일 있으면 통일 카드(Attachment: 확장자 아이콘+파일명+교체/삭제), 없으면 파일 선택 버튼. 슬롯 구조는 유지. */}
+                      {docs[i].file ? (
+                        // AttachmentGroup(role=list)로 감싸 role="listitem" 카드의 리스트 시맨틱을 유효화(고아 listitem 방지, web-a11y).
+                        <AttachmentGroup>
+                          <Attachment size="sm">
+                            <AttachmentMedia fileName={docs[i].file} />
+                            <AttachmentContent>
+                              <AttachmentTitle>{docs[i].file}</AttachmentTitle>
+                              <AttachmentDescription state="done">{extLabel(docs[i].file)} · 첨부됨</AttachmentDescription>
+                            </AttachmentContent>
+                            <AttachmentActions>
+                              <AttachmentAction aria-label={`${slot.name} 첨부 교체`} title="교체" onClick={() => pickFile(i)}><RefreshCw /></AttachmentAction>
+                              <AttachmentAction aria-label={`${slot.name} 첨부 제거`} title="삭제" onClick={() => setDocs((p) => p.map((d, k) => (k === i ? { ...d, file: '' } : d)))}><XIcon /></AttachmentAction>
+                            </AttachmentActions>
+                          </Attachment>
+                        </AttachmentGroup>
+                      ) : (
+                        <Button variant="outline" size="sm" leadingIcon="upload" onClick={() => pickFile(i)}>파일 선택</Button>
+                      )}
                     </td>
                   </tr>))}</tbody>
               </table>

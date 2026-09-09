@@ -42,7 +42,6 @@ const ls = {
 
 function App() {
   const [theme, setTheme] = useState(() => ls.get("apfs.theme", "light"));
-  const [role, setRole] = useState(() => ls.get("apfs.role", "admin"));
   // 삭제/개명된 route는 ROUTE_ALIAS로 승격(잔존 localStorage/방문기록 방어) — 안 하면 GenericListPage 폴백(영문 제네릭 표)
   const [route, setRoute] = useState(() => aliasRoute(ls.get("apfs.route", "designsystem")));
   const [lnbOpen, setLnbOpen] = useState(() => ls.get("apfs.lnb", "1") === "1");
@@ -62,7 +61,6 @@ function App() {
     document.documentElement.style.background = "";
     ls.set("apfs.theme", theme);
   }, [theme]);
-  useEffect(() => ls.set("apfs.role", role), [role]);
   useEffect(() => ls.set("apfs.route", route), [route]);
   useEffect(() => { HistoryStore.push(route); }, [route]);   // 방문기록 적재(복원된 초기 라우트 포함)
   useEffect(() => {                                            // 라우트 전환마다 로딩 스켈레톤 노출
@@ -78,12 +76,6 @@ function App() {
     document.documentElement.dataset.width = wide ? "full" : "fixed";
     ls.set("apfs.width", wide ? "full" : "fixed");
   }, [wide]);
-
-  // 역할에 따라 접근 불가 라우트면 메인으로
-  useEffect(() => {
-    const menu = D.MENU.find((m) => m.path === route);
-    if (menu && !menu.roles.includes(role)) setRoute("main");
-  }, [role]);
 
   const onNav = (r) => {
     setRoute(aliasRoute(r));   // 삭제/개명된 route는 ROUTE_ALIAS로 승격(잔존 딥링크·방문기록 방어)
@@ -113,8 +105,6 @@ function App() {
     <AppShell
       theme={theme}
       onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-      role={role}
-      onRole={setRole}
       route={route}
       onNav={onNav}
       lnbOpen={lnbOpen}
