@@ -138,7 +138,7 @@ function KvGrid({ items, unit }: { items: OvItem[]; unit: Unit }) {
         const empty = isMoney ? o.won == null : o.v == null;
         return (
           <div key={o.l} className={`grid bg-card ${o.full ? 'sm:col-span-2' : ''}`} style={KV_COLS}>
-            <dt className="m-0 flex items-center bg-muted font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
+            <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
             <dd className={`m-0 flex items-center min-w-0 ${isMoney ? 'justify-end tabular font-semibold' : ''} ${empty ? 'text-caption' : ''}`}
               style={{ padding: '8px 12px', fontSize: 13, overflowWrap: 'anywhere' }}>
               {empty ? '-' : isMoney ? money(o.won!, unit) : <MT>{o.v}</MT>}
@@ -148,7 +148,7 @@ function KvGrid({ items, unit }: { items: OvItem[]; unit: Unit }) {
       })}
       {FILES.map((f) => (
         <div key={f.l} className="grid bg-card sm:col-span-2" style={KV_COLS}>
-          <dt className="m-0 flex items-center bg-muted font-bold text-muted-foreground" style={DT_STYLE}>{f.l}</dt>
+          <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{f.l}</dt>
           <dd className={`m-0 flex items-center ${f.f ? '' : 'text-caption'}`} style={{ padding: '8px 12px', fontSize: 13 }}>
             {f.f ? (
               <a href="#" onClick={(e) => e.preventDefault()} className="inline-flex items-center gap-2 border border-border bg-muted no-underline" style={{ padding: '5px 10px', borderRadius: 6, fontSize: 12.5, color: 'inherit' }}>
@@ -166,7 +166,7 @@ const negStyle = (v: number): React.CSSProperties | undefined => (v < 0 ? { colo
 
 /* 재무정보 요약 — 2단 헤더 표(기준년월 rowSpan + 대차대조표 9 + 손익 5). 가로는 자체 스크롤 */
 function FinGrid({ unit, zero }: { unit: Unit; zero: boolean }) {
-  const th = 'border border-border bg-muted font-bold text-center whitespace-nowrap';
+  const th = 'border border-border bg-[color:var(--grid-header)] font-bold text-center whitespace-nowrap';
   const cols = [...FIN_BS, ...FIN_IS];
   return (
     <div className="overflow-x-auto">
@@ -198,8 +198,8 @@ function FsTable({ rows, unit }: { rows: FsRow[]; unit: Unit }) {
   return (
     <table className="w-full border-collapse" style={{ minWidth: 380, fontSize: 13 }}>
       <thead><tr>
-        <th scope="col" className="text-left font-bold bg-muted text-muted-foreground border-b border-border" style={{ padding: '6px 12px' }}>항목</th>
-        <th scope="col" className="text-right font-bold bg-muted text-muted-foreground border-b border-border" style={{ padding: '6px 12px' }}>금액</th>
+        <th scope="col" className="text-left font-bold bg-[color:var(--grid-header)] text-muted-foreground border-b border-border" style={{ padding: '6px 12px' }}>항목</th>
+        <th scope="col" className="text-right font-bold bg-[color:var(--grid-header)] text-muted-foreground border-b border-border" style={{ padding: '6px 12px' }}>금액</th>
       </tr></thead>
       <tbody>
         {rows.map((r) => r.g ? (

@@ -34,6 +34,7 @@
   --foreground:#1A2620;
   --muted:#F0F3EE;
   --muted-foreground:#5E6B60;
+  --grid-header:color-mix(in srgb, var(--card), var(--foreground) 2%);   /* 표/그리드 헤더 공통색 = AG Grid Quartz chromeBackgroundColor(=fg 2% onto bg) 재현. --card·--foreground 참조라 다크 자동추종. 명세 팝업 kv dt·표 헤더가 이 토큰으로 그리드 헤더와 동일 */
   --caption:#66726A;   /* a11y: 3.4:1→4.6:1 on bg (WCAG AA 본문) — 이전 #7C887E는 소형 캡션에서 미달 */
   --border:rgba(31,54,40,.12);
   --border-strong:rgba(31,54,40,.20);
