@@ -114,6 +114,22 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
 ```
 정수/소수 혼합 `z` 서식·열폭 등 상세는 골드 주석(asset_funding.tsx `exportExcel`, →[[excel-export-sheetjs]] 메모리).
 
+## 관리형 페이지 그리드 규약 (2026-09-08 사용자 확정 — 골드 `subfund_manage.tsx`)
+공유 인프라에 들어간 것(전 그리드 자동 적용)과 페이지가 켜야 하는 것을 구분한다.
+
+**공유 인프라(이미 적용, 재설정 금지)**
+- `apfsTheme`: `wrapperBorder:false`(외곽 테두리만 제거, 컬럼선·행선·헤더선 유지) · `wrapperBorderRadius:0`.
+- `tokens.css --row-selected`: 라이트 `#FBFBFB`(다크는 brand-gray 60% 유지). ⚠ 마우스가 행 위에 있으면 `rowHoverColor`(primary 8%, AG 기본) 오버레이가 겹쳐 보라빛 — 선택색 측정은 `page.mouse.move(5,5)` 후 `::before` 배경으로.
+- `aggrid_shared.css` 합계행: 배경 `var(--muted)` + 상단 `1px solid var(--border-strong)`(이전 primary 9% 틴트·2px primary 선은 제거됨). pinned-left "합 계" 라벨은 primary 굵게 유지.
+
+**페이지가 켜는 것**
+- **컬럼 폭 = 내용 폭(잘림 방지)**: `autoSizeStrategy={AUTO_SIZE_CONTENT}`(`aggrid_theme.ts` export, `fitCellContents`). 긴 텍스트 컬럼은 `maxWidth` 캡(자펀드 360·GP 240). 검증: 잘린 셀 0 — `[...document.querySelectorAll('.ag-cell')].filter(c=>c.scrollWidth>c.clientWidth+1).length===0`. ⚠ 자동 산정 순간 컬럼 가상화가 풀려 전 컬럼을 그린다(35컬럼도 동작, 첫 프레임만 무거움). `asset_funding`·`generic_list`는 **미적용**(사용자 결정 전 유지).
+- **행 높이는 테마 기본(42px)** — `rowHeight` 오버라이드 금지(골드와 간격 통일).
+- **라디오 단일선택**: `rowSelection={{mode:'singleRow',checkboxes:true,enableClickSelection:true}}` + `selectionColumnDef={{pinned:'left',width:44}}` + `getRowId`. 선택 SSOT는 React state(→[[apfs-stage-workflow]] 규약 9).
+- **단계/상태 배지 셀**: `StatusBadge size="lg" dot={false}`(13px, 앞 점 없음 — 배지가 촘촘히 반복되는 열).
+- **엑셀**: 2단 헤더 병합·리프 키를 손으로 적지 말고 `flattenForExcel(columnDefs)`(골드 로컬 헬퍼, `ColGroupDef` 순회 → `head1/head2/keys/merges`)로 **columnDefs에서 자동 산출**. 마스크 시 숫자 0·텍스트 ''.
+- 카드뷰 토글은 [[apfs-card-view]], 읽기전용 명세는 [[apfs-spec-popup]].
+
 ## 마스킹 ("축은 두고 데이터는 가린다")
 - 마스크 API(SSOT): `import { mn, MT, useMask } from './mask';`. **`MASK_ON` 같은 상수 export는 없다** — 화면 표시는 `mn()`/`<MT>`가, 분기 판단은 훅 `const masked = useMask();`가 담당. 전역 토글은 `mask.tsx`의 `_on` 한 줄(현재 `true`).
 - 숫자 셀: `valueFormatter: numFmt` — `mn()` 내장(자동 마스킹). 텍스트 셀: cellRenderer에서 `<MT>{value}</MT>`.

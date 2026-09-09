@@ -18,6 +18,8 @@ description: APFS 리스트 화면의 "행 선택 → 그 행의 단계(심사�
 6. **모달을 여는 액션**은 단계에 따라 **제목이 달라진다** → `RowFormModal title={...}` prop. 저장 콜백이 patch + 전이를 함께 수행(`saveSelect(f, target)`).
 7. **신규 등록 액션**(헤더 우측 primary)은 첫 단계 행을 **선두 삽입** + `setSelId(newId)` → 다음 액션이 바로 보인다.
 8. 합계행이 있으면 `useMemo` 재계산(→[[apfs-aggrid]] 계약4). 색은 단계 tone 맵(`Record<Stage,Tone>`)으로만(→[[color-tokens]]).
+9. **선택 SSOT = React `selId`, 그리드는 따라간다** (Codex 리뷰 반영 2026-09-08). 그리드 선택은 두 시점에 되돌린다: ① `onGridReady`(카드뷰→리스트 복귀 등 재마운트) ② `onRowDataUpdated`(신규 등록 선두 삽입 — `rowData` 반영 후 노드가 생기므로 이때만 잡힌다). 둘 다 `selIdRef.current`를 읽어 `api.getRowNode(id)?.setSelected(true, true)`. 이걸 빼면 "툴바는 선택됐는데 라디오는 빈" 불일치. `선택 해제`는 `deselectAll()` → `onSelectionChanged`가 `selId`를 null로.
+10. **읽기전용 조회(`명세`)는 액션 맵 밖**, 전 단계 공통 버튼 + 행 더블클릭(→[[apfs-spec-popup]]). 더블클릭을 수정 진입에 쓰지 않는다.
 
 ## 코드 골격 (골드 발췌)
 ```tsx
