@@ -255,7 +255,10 @@ export function SubFundSpecModal({ row, onClose }: { row: SubFundRow; onClose: (
   const ov = buildOverview(row);
   const formed = row.stg === '결성';   // 미결성 조합은 재무정보 0
   const excel = () => {
+    // ⚠ 화면(KvGrid)이 그리는 소스는 ov + FILES 둘 다. export도 둘 다 직렬화한다
+    //   (한쪽만 넣으면 화면엔 보이는데 엑셀엔 빠지는 누락 발생 — 문서 3슬롯이 그 사례였음)
     const rows: (string | number)[][] = ov.map((o) => [o.l, 'won' in o ? (o.won ?? '') : (o.v ?? '')]);
+    FILES.forEach((f) => rows.push([f.l, f.f ?? '미첨부']));
     rows.push([], ['기준년월', BASEYM], ...[...FIN_BS, ...FIN_IS].map(([l, v]) => [l, formed ? v : 0]));
     const ws = XLSX.utils.aoa_to_sheet(rows);
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '자펀드 명세'); XLSX.writeFile(wb, `자펀드명세_${row.fn}.xlsx`);
