@@ -20,6 +20,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, KpiBadge } from './grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
+import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝) — 형제 드로어(asset_funding·generic_list)와 동일
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
@@ -141,10 +142,12 @@ function flattenForExcel(defs: (ColDef<SubFundRow> | ColGroupDef<SubFundRow>)[])
   return { head1, head2, keys, merges };
 }
 
-const inputStyle: CSSProperties = {
-  fontFamily: 'inherit', fontSize: 14, width: '100%', height: 38, padding: '0 12px',
+/* 드로어 입력 — 폭은 fit-content(내용 맞춤), 하한은 타입별 controlMinWidth SSOT(형제 드로어 asset_funding·generic_list와 동일). 색은 토큰.
+   ⚠️ font(단축) 먼저 → fontSize(명시) 뒤: 키 순서로 fontSize가 이김(패밀리만 상속). kind는 controlMinWidth 계약(text/select/number/date). */
+const inputStyle = (kind?: string): CSSProperties => ({
+  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,
   border: '1px solid var(--input)', borderRadius: 8, background: 'var(--card)', color: 'var(--foreground)',
-};
+});
 
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
   return (
@@ -169,9 +172,10 @@ function DrawerField({ label, noop, plain, children }: { label: string; noop?: b
   );
 }
 function DrawerSelect({ value, onChange, options, all = '전체' }: { value: string; onChange: (v: string) => void; options: string[]; all?: string }) {
+  // 래퍼도 fit-content — block 100% 래퍼면 절대배치 chevron이 드로어 오른쪽 끝으로 떨어진다(형제 드로어와 동일)
   return (
-    <div className="relative">
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
+    <div className="relative" style={{ width: 'fit-content', maxWidth: '100%' }}>
+      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputStyle('select'), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
         <option value="">{all}</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
@@ -467,7 +471,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             <DrawerField label="검색어">
-              <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="조합명·GP·단계 등 전 컬럼 검색" style={inputStyle} />
+              <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="조합명·GP·단계 등 전 컬럼 검색" style={inputStyle('text')} />
             </DrawerField>
             {/* 원본(목업) 검색박스 11항목·순서 그대로: 모펀드·자펀드·계정구분·자펀드구분·사업연도·정기/수시·심사담당자·리스크담당자·심사단계·조합상태·기준일자.
                 그리드 컬럼과 미연동인 항목(모펀드·계정구분·담당자 2종·기준일자)은 noop 캡션(apfs-detail-filter). 연도/일자는 PeriodPicker 표준(apfs-datepicker) */}
