@@ -9,12 +9,13 @@
    ⚠️ AG Grid v35.3.1(v33+) Theming API: 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정 + 합계행 강조(공유)
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, useMask } from './mask';
+import { mn, MT, useMask } from './mask';
+import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { GridFrame, KpiBadge } from './grid_frame';
-import { apfsTheme, fmt, numFmt, numStyle } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
+import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT·내용폭 자동화
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, CellContextMenuEvent } from 'ag-grid-community';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
@@ -57,7 +58,8 @@ const PAGE_SIZE = 20;   // 16행 → 1페이지
 
 const CO = ['합계', '농특회계', '농안기금', 'FTA', '수산발전기금', '일반회계'];
 const numCol = (field: string, header: string, strong?: boolean): ColDef<FundingRow> => ({
-  field: field as keyof FundingRow, headerName: header, flex: 1, minWidth: 92,
+  // flex 제거(2026-09-09) — AUTO_SIZE_CONTENT(fitCellContents)는 flex 컬럼을 무시하므로 내용폭 자동화의 전제로 flex를 뺀다. minWidth는 하한.
+  field: field as keyof FundingRow, headerName: header, minWidth: 92,
   valueFormatter: numFmt, cellStyle: numStyle(strong) as any, type: 'rightAligned',
 });
 
@@ -73,11 +75,12 @@ const columnDefs: (ColDef<FundingRow> | ColGroupDef<FundingRow>)[] = [
   },
 ];
 
-/* 드로어/모달 입력 — 폰트 16px(iOS 포커스 줌 방지), 색은 토큰 */
-const inputStyle: CSSProperties = {
-  width: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,
+/* 드로어/모달 입력 — 폭은 fit-content(내용 맞춤, 2026-09-09), 하한은 타입별 controlMinWidth SSOT. 색은 토큰.
+   ⚠️ font(단축) 먼저 → fontSize(명시) 뒤: 키 순서로 fontSize가 이김(패밀리만 상속). kind는 controlMinWidth 계약(text/select/number/date). */
+const inputStyle = (kind?: string): CSSProperties => ({
+  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,
   border: '1px solid var(--border-strong)', borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
-};
+});
 
 /* ── kebab(···) 더보기 메뉴 — generic_list MoreMenu와 동형(Radix DropdownMenu) ── */
 function PoCMoreMenu({ onRegister, onExport }: { onRegister: () => void; onExport: () => void }) {
@@ -293,11 +296,21 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {filterActive ? (
-            <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {[fText && '검색어: ' + fText, fYear && '연도: ' + fYear, fMin && '출자금액 ≥ ' + fMin].filter(Boolean).join(' · ')}
-              <button onClick={() => { setFText(''); setFYear(''); setFMin(''); }} aria-label="필터 제거" className="inline-flex border-0 cursor-pointer p-0" style={{ background: 'transparent', color: 'inherit' }}>
-                <Icon name="x" size={13} stroke={2.4} />
-              </button>
+            /* 값만 표시 개별 칩(2026-09-09 통일) — 항목명은 title(호버)·aria-label로 회수, ×는 해당 필터만 해제.
+               "값만"은 항목명 제거지 연산자 제거가 아니라 출자금액은 `≥ 값` 유지. 값은 mask 규약(검색어=텍스트 MT, 연도·금액=mn). */
+            <span className="inline-flex flex-wrap items-center gap-1.5">
+              {([
+                fText && { key: 'q', label: '검색어', node: <MT>{fText}</MT>, clear: () => setFText('') },
+                fYear && { key: 'y', label: '연도', node: <>{mn(fYear)}</>, clear: () => setFYear('') },
+                fMin && { key: 'm', label: '출자금액', node: <>{'≥ '}{mn(fMin)}</>, clear: () => setFMin('') },
+              ].filter(Boolean) as { key: string; label: string; node: ReactNode; clear: () => void }[]).map((c) => (
+                <span key={c.key} title={c.label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
+                  {c.node}
+                  <button onClick={c.clear} aria-label={c.label + ' 필터 제거'} className="inline-flex border-0 cursor-pointer p-0" style={{ background: 'transparent', color: 'inherit' }}>
+                    <Icon name="x" size={13} stroke={2.4} />
+                  </button>
+                </span>
+              ))}
             </span>
           ) : (
             <span className="text-caption" style={{ fontSize: 12.5 }}>행 선택→삭제 · 헤더=정렬 · 상세필터 · kebab=등록/내보내기/인쇄</span>
@@ -338,6 +351,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
             columnDefs={columnDefs}
             pinnedBottomRowData={PINNED_BOTTOM}
             domLayout="autoHeight"
+            autoSizeStrategy={AUTO_SIZE_CONTENT}   // 컬럼 폭=내용 폭(잘림 방지, 첫 렌더 1회). numCol flex 제거가 전제. 골드 subfund_manage와 동일
             defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
             rowSelection={{ mode: 'multiRow', checkboxes: true, headerCheckbox: true }}
             pagination
@@ -398,14 +412,15 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>검색어</span>
               {/* Enter = 필터 적용과 동일(값은 즉시 반영형이라 드로어 닫기). IME 조합 확정 Enter는 제외 */}
-              <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="검색어 입력" style={inputStyle} />
+              <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="검색어 입력" style={inputStyle('text')} />
             </label>
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>사업연도</span>
               {/* Safari menulist는 세로 padding을 무시해 select가 input보다 낮게 렌더됨(WebKit 측정 22 vs 37px).
                   appearance:none으로 padding을 살려 높이를 맞추고, 사라진 네이티브 화살표는 chevron 아이콘으로 보강. */}
-              <div className="relative">
-                <select value={fYear} onChange={(e) => setFYear(e.target.value)} style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
+              {/* 래퍼도 fit-content — 아니면 block 100% 래퍼에 절대배치 chevron이 드로어 오른쪽 끝으로 떨어진다 */}
+              <div className="relative" style={{ width: 'fit-content', maxWidth: '100%' }}>
+                <select value={fYear} onChange={(e) => setFYear(e.target.value)} style={{ ...inputStyle('select'), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
                   <option value="">전체</option>
                   {ROWS.map((r) => <option key={r.y} value={r.y}>{r.y}</option>)}
                 </select>
@@ -414,7 +429,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
             </label>
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>출자금액 최소(억원 이상)</span>
-              <input type="number" value={fMin} onChange={(e) => setFMin(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="예: 800" style={inputStyle} />
+              <input type="number" value={fMin} onChange={(e) => setFMin(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="예: 800" style={inputStyle('number')} />
             </label>
           </div>
           <SheetFooter>
@@ -434,15 +449,15 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
           <div className="overflow-y-auto" style={{ padding: 18 }}>
             <label className="block mb-3.5">
               <span className="font-semibold text-caption block" style={{ fontSize: 14, marginBottom: 5 }}>연도 *</span>
-              <input value={draft.y} onChange={(e) => setDraft((d) => ({ ...d, y: e.target.value }))} placeholder="예: 2026" style={inputStyle} />
+              <input value={draft.y} onChange={(e) => setDraft((d) => ({ ...d, y: e.target.value }))} placeholder="예: 2026" style={inputStyle('number')} />
             </label>
             <label className="block mb-3.5">
               <span className="font-semibold text-caption block" style={{ fontSize: 14, marginBottom: 5 }}>조성 합계(억원)</span>
-              <input type="number" value={draft.c0} onChange={(e) => setDraft((d) => ({ ...d, c0: e.target.value }))} placeholder="0" style={inputStyle} />
+              <input type="number" value={draft.c0} onChange={(e) => setDraft((d) => ({ ...d, c0: e.target.value }))} placeholder="0" style={inputStyle('number')} />
             </label>
             <label className="block mb-3.5">
               <span className="font-semibold text-caption block" style={{ fontSize: 14, marginBottom: 5 }}>출자금액(억원)</span>
-              <input type="number" value={draft.u1} onChange={(e) => setDraft((d) => ({ ...d, u1: e.target.value }))} placeholder="0" style={inputStyle} />
+              <input type="number" value={draft.u1} onChange={(e) => setDraft((d) => ({ ...d, u1: e.target.value }))} placeholder="0" style={inputStyle('number')} />
             </label>
           </div>
           <DialogFooter>

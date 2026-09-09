@@ -48,7 +48,7 @@ shadcn `new-york` 소스는 **Tailwind v4 문법**이다. 이 프로젝트는 **
 
 ## PeriodPicker — 연도·월·분기·반기·일 선택 표준 (2026-09-08 사용자 확정)
 기간 단위 선택은 **`src/dash/ui/period-picker.tsx`의 `PeriodPicker`** 하나로 통일한다. 네이티브 `<input type="date|month">`·연도 `<select>` 나열 금지.
-- **`mode`** = `'day' | 'month' | 'quarter' | 'half' | 'year'`. **`day`는 기존 `DatePicker`에 그대로 위임**(달력·타임존 계약 재사용, 새 달력 만들지 말 것). 나머지는 같은 트리거(38px 폼 컨트롤 모사) + Popover 버튼 그리드.
+- **`mode`** = `'day' | 'month' | 'quarter' | 'half' | 'year'`. **`day`는 기존 `DatePicker`에 그대로 위임**(달력·타임존 계약 재사용, 새 달력 만들지 말 것). 나머지는 같은 트리거(34px 폼 컨트롤 모사 — 2026-09-09 38→34, `h-[34px] box-border`) + Popover 버튼 그리드.
 - **값 계약(문자열, 빈 문자열=미선택)**: `day 'YYYY-MM-DD'` · `month 'YYYY-MM'` · `quarter 'YYYY-Qn'` · `half 'YYYY-Hn'` · `year 'YYYY'`. 표시는 `formatPeriod(mode, v)`로 한글(`2026년 2분기`·`2026년 하반기`)이지만 **저장/필터 비교는 값 문자열**로.
 - 동작: 같은 값 재클릭 = 해제(DatePicker와 동일한 유일 clear 수단), 선택/해제 모두 팝오버 닫힘. 연도 그리드는 12년 페이지(12의 배수 정렬) ‹ ›, 월/분기/반기는 연도 ‹ ›. `yearRange`(기본 2000~2035)로 범위 제한.
 - 접근성: 트리거는 `<button>` → **`ariaLabel` 필수**(감싸는 `<label>`로 명명되지 않음). 그리드는 `role=listbox/option` + `aria-selected`. 소비처 라벨 래퍼는 `<label>` 대신 `<div>`(**`DrawerField plain`**) — `<label>` 안 버튼은 라벨 활성화와 겹쳐 2회 토글된다.

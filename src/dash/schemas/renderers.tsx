@@ -31,28 +31,34 @@ export function Cell({ col, value, color, statusDomain }: { col: ColumnSpec; val
   }
 }
 
+/* 폼/필터 컨트롤 공용 폭 하한 SSOT(2026-09-09 사용자 결정) — 일률 220 폐기, 타입별 차등. maxWidth:100%(컨테이너 초과 방지)와 짝.
+   RowFormModal(SchemaField)·상세필터 드로어(asset_funding inputStyle·generic_list drawerInputStyle)가 모두 import해 숫자 복붙을 없앤다.
+   date=짧은 고정포맷(YYYY-MM-DD) 120 · select/enum/year=이름만이면 fit-content로 더 좁아짐 130 · number=금액 자릿수 180 · text/기본=이름/명칭 길게 240. */
+export function controlMinWidth(kind?: string): number {
+  return kind === 'date' ? 120 : (kind === 'select' || kind === 'enum' || kind === 'year') ? 130 : kind === 'number' ? 180 : 240;
+}
+
 export function SchemaField({ field, value, onChange, invalid }: { field: FieldSpec; value: string; onChange: (v: string) => void; invalid?: boolean }) {
   // 필수 필드는 채움 여부와 무관하게 빨간 테두리로 상시 표식(라벨 '*'와 병행). readonly는 입력 대상이 아니라 제외.
   const requiredMark = !!field.required && field.control !== 'readonly';
-  // 폭 하한을 타입별로 차등(2026-09-09 사용자 결정) — 일률 220 폐기. maxWidth:100%(필드 초과 방지)는 유지.
-  //   date=짧은 고정포맷(YYYY-MM-DD) 120 · select=이름만이면 fit-content로 더 좁아짐 130 · number=금액 자리수 180 · text/기본=이름/명칭 길게 240.
-  const minW = field.control === 'date' ? 120 : field.control === 'select' ? 130 : field.control === 'number' ? 180 : 240;
+  const minW = controlMinWidth(field.control);
   const base: React.CSSProperties = {
     // ⚠️ fontFamily(longhand)로 패밀리만 상속 — `font: 'inherit'`(shorthand)는 font-size까지 리셋해 위의 fontSize:14를 부모값으로 덮어쓴다.
-    // ⚠️ 높이 규격 38px — DatePicker 버튼/radio와 일치시킨다. lineHeight:20(=text-sm)로 자연 높이를 20+16(pad)+2(border)=38로 맞추고
-    //    minHeight:38은 플로어 가드(DatePicker의 min-h-[38px] 미러). lineHeight 없으면 native input/select가 normal 메트릭으로 34·36px로 어긋난다.
-    // 🍎 Safari(WebKit): preflight:false라 native <select>(menulist)·<input type=number>가 UA 기본 박스모델을 그대로 쓴다.
-    //    Chrome은 lineHeight+minHeight로 38에 착지하지만 Safari는 native control에 자체 패딩/메트릭을 얹어 38을 초과 → 텍스트 input과 어긋난다.
-    //    명시 height:38(하드 클램프)으로 통일한다. textarea는 rows로 커야 하므로 아래에서 height:'auto'로 되돌린다.
+    // ⚠️ 높이 규격 34px(2026-09-09 사용자 DevTools 스펙) — DatePicker/PeriodPicker 버튼·radio와 일치시킨다.
+    //    boxSizing:border-box + 명시 height:34가 하드 클램프로 이긴다: padding 7*2=14 + border 2 + lineHeight 20 = 36의 자연높이지만
+    //    height:34가 콘텐츠(18px)를 클램프(20px 라인박스 1px 오버플로우는 무해). ⚠ 산술이 안 맞는다고 되돌리지 말 것 — 사용자 측정 스펙이 정본.
+    //    minHeight:34는 플로어 가드. lineHeight:20 없으면 native input/select가 normal 메트릭으로 어긋나므로 유지.
+    // 🍎 Safari(WebKit): preflight:false라 native <select>·<input type=number>가 UA 박스모델을 쓴다 → 명시 height:34 하드 클램프로 통일(textarea만 아래서 height:'auto').
     // 폭: 컨테이너를 꽉 채우지 않고 내용 맞춤(fit-content). 하한은 타입별 minW(위), 넘치지 않게 max 100%.
     //    textarea는 아래에서 100%로 되돌린다(긴 입력 항목).
-    width: 'fit-content', minWidth: minW, maxWidth: '100%', boxSizing: 'border-box', padding: '8px 11px', fontSize: 14, lineHeight: '20px', height: 38, minHeight: 38, fontFamily: 'inherit',
+    width: 'fit-content', minWidth: minW, maxWidth: '100%', boxSizing: 'border-box', padding: '7px 11px', fontSize: 14, lineHeight: '20px', height: 34, minHeight: 34, fontFamily: 'inherit',
     border: `1px solid ${invalid || requiredMark ? 'var(--danger)' : 'var(--border-strong)'}`,
     borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
   };
   switch (field.control) {
     case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical' }} />;
-    case 'select':   return <select value={value} onChange={(e) => onChange(e.target.value)} style={base}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>;
+    // select: native UA 드롭다운 화살표가 오른쪽 경계에 붙지 않도록 오른쪽 패딩만 확대(화살표가 padding-right만큼 안쪽으로 밀림). 상하·좌측은 base 유지.
+    case 'select':   return <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...base, paddingRight: 30 }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>;
     case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} style={base} />;
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(네이티브 input과 동일 계약).
     // DatePicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW=120)을 적용
@@ -60,7 +66,7 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     case 'checkbox': return <input type="checkbox" checked={value === 'true'} onChange={(e) => onChange(String(e.target.checked))} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />;
     // 라디오 — 옵션 가로 나열(Y/N, Y/N/해당없음 등). 네이티브 input + accentColor 토큰(라이트/다크 양립).
     case 'radio': return (
-      <div role="radiogroup" aria-label={field.label} style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', minHeight: 38 }}>
+      <div role="radiogroup" aria-label={field.label} style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', minHeight: 34 }}>
         {(field.options || ['Y', 'N']).map((o) => (
           <label key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14, color: 'var(--foreground)' }}>
             <input type="radio" name={field.key} value={o} checked={value === o} onChange={() => onChange(o)} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />
