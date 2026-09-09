@@ -231,7 +231,7 @@ function FsDetailModal({ fn, unit: initUnit, onClose }: { fn: string; unit: Unit
           <DialogTitle>재무제표 상세</DialogTitle>
           <DialogDescription className="text-caption" style={{ fontSize: 12.5 }}>기준년월 {BASEYM} · <MT>{fn}</MT></DialogDescription>
         </DialogHeader>
-        <div className="overflow-y-auto p-[18px]">
+        <div className="overflow-y-auto p-[46px]">
           <UnitSeg unit={unit} onChange={setUnit} />
           <Section title="대차대조표" unitNote={`(단위: ${unit})`}><FsTable rows={BS} unit={unit} /></Section>
           <Section title="손익계산서" unitNote={`(단위: ${unit})`}><FsTable rows={IS} unit={unit} /></Section>
@@ -270,7 +270,7 @@ export function SubFundSpecModal({ row, onClose }: { row: SubFundRow; onClose: (
             <DialogTitle>자펀드 명세</DialogTitle>
             <DialogDescription className="text-caption" style={{ fontSize: 12.5 }}><MT>{row.fn}</MT></DialogDescription>
           </DialogHeader>
-          <div className="overflow-y-auto p-[18px]">
+          <div className="overflow-y-auto p-[46px]">
             <UnitSeg unit={unit} onChange={setUnit} />
             <Section title="자펀드 개요"><KvGrid items={ov} unit={unit} /></Section>
             <Section title="재무정보" unitNote={`(기준년월 ${BASEYM} · 단위: ${unit})`}><FinGrid unit={unit} zero={!formed} /></Section>
