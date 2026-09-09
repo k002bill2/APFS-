@@ -52,6 +52,7 @@ export interface SubFundRow {
   p1: number | null; p2: number | null;                         // 납입액 총액·모태
   rec: number | null; ti: number | null; tir: number | null; mi: number | null; mir: number | null; dist: number | null; mul: number | null;
   st: string; liq: string;
+  attach?: string;   // 첨부파일명 CSV(백엔드 없음 — 이름만 보관). 제안서접수 등록 시 DocumentsField(filepond)가 공급, saveApply가 행에 영속.
 }
 
 /* 데모 데이터 — 4개 심사단계(신청·선정·결성·취소) 전부 포함. 금액 N/A=null(문자 '-' 아님), 텍스트 N/A='-'.
@@ -307,7 +308,8 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
     const nextNo = rows.reduce((m, r) => Math.max(m, r.no), 0) + 1;
     const row: SubFundRow = { ...DEMO[0], id: crypto.randomUUID(), no: nextNo, y: String(f.y || today().slice(0, 4)), rt: String(f.rt || '정기'), ch: String(f.ch || '1'), stg: '신청',
       ctype: f.ctype || '-', cg: '-', cs: f.cs || '-', gp1: f.gp1 || '(미입력)', gp2: '-', fn: f.fn || '(신규 접수 조합)', rd: String(f.applyDate || today()),
-      dur: numOr(f.dur), rate: numOr(f.rate), c1: numOr(f.c1), c2: numOr(f.c2), c3: N, v1: numOr(f.c1), v2: numOr(f.c2), v3: N };
+      dur: numOr(f.dur), rate: numOr(f.rate), c1: numOr(f.c1), c2: numOr(f.c2), c3: N, v1: numOr(f.c1), v2: numOr(f.c2), v3: N,
+      attach: f.attach || '' };   // 첨부파일명 보존(Codex P2) — DocumentsField가 vals.attach로 직렬화한 이름을 행에 실음
     setRows((prev) => [row, ...prev]);
     setModal(null);
     setSelId(row.id);

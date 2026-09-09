@@ -56,7 +56,7 @@ export const APPLY_SCHEMA: PageSchema = parsePageSchema({
     { key: 'mgmtFee', label: '관리보수', control: 'text' },
     { key: 'perfFee', label: '성과보수', control: 'text' },
     { key: 'pm', label: '대표펀드매니저', control: 'text' },
-    { key: 'attach', label: '첨부파일 (PDF·HWP·DOCX, 최대 20MB)', control: 'file' },
+    { key: 'attach', label: '첨부파일', control: 'filepond' },
     { key: 'result', label: '선정결과', control: 'radio', options: ['취소', '탈락', '선정', '반납'] },
     { key: 'rejectReason', label: '탈락사유', control: 'textarea' },
   ],
