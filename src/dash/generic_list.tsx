@@ -35,8 +35,9 @@ const D = APFS_DATA;
    path/children 선택)를 명시해 findMenuContext 안에서만 정합화한다. 런타임 무변경. */
 type MenuNode = { label: string; path?: string; children?: MenuNode[] };
 
-/* MENU를 재귀 탐색해 route와 일치하는 항목의 제목·breadcrumb·상위 레이블을 반환 */
-function findMenuContext(route: string): { title: string; crumbs: string[]; parent?: string } {
+/* MENU를 재귀 탐색해 route와 일치하는 항목의 제목·breadcrumb·상위 레이블을 반환.
+   app.tsx의 라우트 전환 aria-live 통지가 route→한글 제목 변환에 재사용(export). */
+export function findMenuContext(route: string): { title: string; crumbs: string[]; parent?: string } {
   for (const top of D.MENU as MenuNode[]) {
     if (!top.children) continue;
     for (const child of top.children) {

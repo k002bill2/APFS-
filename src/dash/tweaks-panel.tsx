@@ -317,6 +317,7 @@ export function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit =
   return (
     <TweakRow label={label} value={`${value}${unit}`}>
       <input type="range" className="twk-slider" min={min} max={max} step={step}
+             aria-label={typeof label === 'string' ? label : undefined}
              value={value} onChange={(e) => onChange(Number(e.target.value))} />
     </TweakRow>
   );
@@ -328,6 +329,7 @@ export function TweakToggle({ label, value, onChange }) {
       <div className="twk-lbl"><span>{label}</span></div>
       <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
               role="switch" aria-checked={!!value}
+              aria-label={typeof label === 'string' ? label : undefined}
               onClick={() => onChange(!value)}><i /></button>
     </div>
   );
@@ -388,15 +390,32 @@ export function TweakRadio({ label, value, options, onChange }) {
     window.addEventListener('pointerup', up);
   };
 
+  // 키보드 조작(WAI-ARIA radiogroup): 화살표로 인접 세그먼트로 이동하며 즉시 선택(wrap).
+  // 선택된 버튼만 tabIndex=0(roving) — Tab은 그룹에 1회만 멈추고, 그 안은 화살표로 넘나든다.
+  // 포인터 드래그 경로(onPointerDown)는 그대로 둔다. focus는 preventScroll(패널 스크롤 튐 방지).
+  const moveFocus = (dir: number) => {
+    const next = (idx + dir + n) % n;
+    if (opts[next].value !== value) onChange(opts[next].value);
+    const btns = trackRef.current?.querySelectorAll('button[role="radio"]');
+    (btns?.[next] as HTMLElement | undefined)?.focus({ preventScroll: true });
+  };
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); moveFocus(1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); moveFocus(-1); }
+  };
+
   return (
     <TweakRow label={label}>
-      <div ref={trackRef} role="radiogroup" onPointerDown={onPointerDown}
+      <div ref={trackRef} role="radiogroup" aria-label={typeof label === 'string' ? label : undefined}
+           onPointerDown={onPointerDown} onKeyDown={onKeyDown}
            className={dragging ? 'twk-seg dragging' : 'twk-seg'}>
         <div className="twk-seg-thumb"
              style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`,
                       width: `calc((100% - 4px) / ${n})` }} />
         {opts.map((o) => (
-          <button key={o.value} type="button" role="radio" aria-checked={o.value === value}>
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value}
+                  tabIndex={o.value === value ? 0 : -1}
+                  onClick={() => { if (o.value !== value) onChange(o.value); }}>
             {o.label}
           </button>
         ))}
@@ -456,6 +475,7 @@ export function TweakNumber({ label, value, min, max, step = 1, unit = '', onCha
     <div className="twk-num">
       <span className="twk-num-lbl" onPointerDown={onScrubStart}>{label}</span>
       <input type="number" value={value} min={min} max={max} step={step}
+             aria-label={typeof label === 'string' ? label : undefined}
              onChange={(e) => onChange(clamp(Number(e.target.value)))} />
       {unit && <span className="twk-num-unit">{unit}</span>}
     </div>
@@ -494,6 +514,7 @@ export function TweakColor({ label, value, options, onChange }) {
       <div className="twk-row twk-row-h">
         <div className="twk-lbl"><span>{label}</span></div>
         <input type="color" className="twk-swatch" value={value}
+               aria-label={typeof label === 'string' ? label : undefined}
                onChange={(e) => onChange(e.target.value)} />
       </div>
     );
@@ -505,7 +526,7 @@ export function TweakColor({ label, value, options, onChange }) {
   const cur = key(value);
   return (
     <TweakRow label={label}>
-      <div className="twk-chips" role="radiogroup">
+      <div className="twk-chips" role="radiogroup" aria-label={typeof label === 'string' ? label : undefined}>
         {options.map((o, i) => {
           const colors = Array.isArray(o) ? o : [o];
           const [hero, ...rest] = colors;

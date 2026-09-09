@@ -25,7 +25,7 @@ const extLabel = (name: string) => {
   return ext && ext !== name.toUpperCase() ? ext : '파일';
 };
 
-export function DocumentsField({ value, onChange, required }: { value: string; onChange: (v: string) => void; required?: boolean }) {
+export function DocumentsField({ value, onChange, required, label }: { value: string; onChange: (v: string) => void; required?: boolean; label?: string }) {
   // 초기 value(수정 진입 시의 기존 첨부)를 1회만 캡처 — 이후 내부 상태가 단독 소유.
   const initialRef = React.useRef(value);
   const [existing, setExisting] = React.useState<string[]>(() => parseNames(initialRef.current));
@@ -39,7 +39,9 @@ export function DocumentsField({ value, onChange, required }: { value: string; o
   }, [existing, added]);
 
   return (
-    <div className="flex flex-col gap-2.5">
+    // 복합 컨트롤(첨부목록+FilePond)이라 Field는 <div>로 래핑(<label> 암묵연결 금지) → 보이는 라벨 span이
+    // orphan이 됨. role="group"+aria-label로 이 영역에 접근名을 직접 부여한다(bare div의 aria-label은 SR 무시).
+    <div className="flex flex-col gap-2.5" role="group" aria-label={label} aria-required={required || undefined}>
       {existing.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <div className="text-[12px] font-semibold text-muted-foreground">기존 첨부파일 ({existing.length})</div>

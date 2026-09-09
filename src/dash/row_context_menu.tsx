@@ -22,13 +22,53 @@ const MENU_W = 190;   // 고정 폭(가장자리 flip 계산에 사용)
 
 export function RowContextMenu({ state, onClose }: { state: CtxMenuState; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  // 키보드 접근: 열릴 때 여는 요소를 기억했다가 닫힘 시 복귀. 단, 항목 액션이 모달 등으로 포커스를
+  // 옮겼으면 건드리지 않는다 — 닫힘 직후 activeElement가 body인지(=아무도 안 가져감) 관찰해 판정.
+  const openerRef = useRef<HTMLElement | null>(null);
+  const isOpen = state != null;
 
-  // 모든 닫힘 경로 소유. capture 단계로 등록해 메뉴 항목 클릭보다 먼저 바깥클릭을 판정하지 않도록
-  // mousedown(바깥만)·keydown(Esc)·scroll/resize/blur는 즉시 닫는다.
+  // 포커스 관리는 열림/닫힘 "전환"에서만(isOpen 의존) — state 객체는 부모(그리드) 재렌더마다 새로
+  // 만들어질 수 있어, [state]에 걸면 화살표 내비 도중 재렌더가 이 effect를 재실행해 첫 항목으로
+  // 포커스가 스냅백된다. 열리면 여는 요소 기억 + 첫 항목 포커스, 닫히면 여는 요소로 복귀.
+  useEffect(() => {
+    if (!isOpen) return;
+    openerRef.current = document.activeElement as HTMLElement | null;
+    // rAF로 포털 DOM 배치 후 첫 항목 포커스. preventScroll: 아래 scroll capture가 self-close 오인 방지.
+    const raf = requestAnimationFrame(() => {
+      ref.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus({ preventScroll: true });
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      // 닫힘 후 다음 프레임에 포커스 복귀 — 그 사이 다른 UI(모달 등)가 포커스를 가져갔으면 건드리지 않는다.
+      // 비모달 액션(복사·엑셀·삭제)은 포커스가 body로 떨어지므로 여는 요소로 되돌린다(포커스 유실 방지).
+      const opener = openerRef.current;
+      requestAnimationFrame(() => {
+        const ae = document.activeElement;
+        if (!ae || ae === document.body) opener?.focus?.({ preventScroll: true });
+      });
+    };
+  }, [isOpen]);
+
+  // 모든 닫힘 경로 + 키보드 내비 소유. capture 단계로 등록해 메뉴 항목 클릭보다 먼저 바깥클릭을 판정하지
+  // 않도록 mousedown(바깥만)·keydown(Esc/화살표)·scroll/resize/blur를 처리한다.
   useEffect(() => {
     if (!state) return;
     const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) onClose(); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    // 키보드는 네이티브 document 리스너에서 일괄 처리(포털-to-body는 React synthetic onKeyDown이
+    // 루트 컨테이너 밖이라 안 잡히는 경우가 있어 확실한 경로로 통일). Esc=닫기, 화살표/Home/End=roving.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return; }
+      const items = Array.from(ref.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+      if (!items.length) return;
+      const cur = items.indexOf(document.activeElement as HTMLElement);
+      // preventDefault(스크롤) + stopImmediatePropagation: 우리가 처리한 화살표를 다른 리스너(AG Grid
+      // 그리드 내비 등)가 재처리해 포커스를 되돌리는 것을 차단(커스텀 메뉴가 키 이벤트를 독점).
+      const go = (i: number) => { e.preventDefault(); e.stopImmediatePropagation(); items[(i + items.length) % items.length].focus({ preventScroll: true }); };
+      if (e.key === 'ArrowDown') go(cur + 1);
+      else if (e.key === 'ArrowUp') go(cur - 1);
+      else if (e.key === 'Home') go(0);
+      else if (e.key === 'End') go(items.length - 1);
+    };
     document.addEventListener('mousedown', onDown, true);
     document.addEventListener('keydown', onKey, true);
     window.addEventListener('scroll', onClose, true);
@@ -66,6 +106,7 @@ export function RowContextMenu({ state, onClose }: { state: CtxMenuState; onClos
           <button
             key={i}
             role="menuitem"
+            tabIndex={-1}
             onClick={() => { it.onSelect(); onClose(); }}
             className={
               'flex items-center gap-2.5 w-full rounded-card-sm px-2.5 py-2 text-[14px] text-left cursor-pointer select-none border-0 bg-transparent transition-colors ' +

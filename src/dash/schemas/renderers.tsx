@@ -57,23 +57,23 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
   };
   switch (field.control) {
-    case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical' }} />;
+    case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical' }} />;
     // select: native 화살표는 Chrome UA가 오른쪽 경계에 고정해 padding으로 못 움직임 → appearance:none로 제거하고 lucide chevron을 오버레이(토큰색·다크대응).
     //   아이콘은 pointer-events:none라 클릭이 select로 통과. 오른쪽 간격 = 아이콘 right(12px). paddingRight 34는 옵션 텍스트가 chevron과 겹치지 않게 확보.
     case 'select':   return (
       <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}>
-        <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...base, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: 34 }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>
+        <select value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: 34 }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>
         <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--muted-foreground)' }} />
       </div>
     );
-    case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} style={base} />;
+    case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={base} />;
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(네이티브 input과 동일 계약).
     // DatePicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW=120)을 적용
     case 'date':     return <div style={{ width: 'fit-content', minWidth: minW, maxWidth: '100%' }}><DatePicker value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
-    case 'checkbox': return <input type="checkbox" checked={value === 'true'} onChange={(e) => onChange(String(e.target.checked))} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />;
+    case 'checkbox': return <input type="checkbox" checked={value === 'true'} onChange={(e) => onChange(String(e.target.checked))} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />;
     // 라디오 — 옵션 가로 나열(Y/N, Y/N/해당없음 등). 네이티브 input + accentColor 토큰(라이트/다크 양립).
     case 'radio': return (
-      <div role="radiogroup" aria-label={field.label} style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', minHeight: 34 }}>
+      <div role="radiogroup" aria-label={field.label} aria-required={requiredMark || undefined} aria-invalid={invalid || undefined} style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', minHeight: 34 }}>
         {(field.options || ['Y', 'N']).map((o) => (
           <label key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14, color: 'var(--foreground)' }}>
             <input type="radio" name={field.key} value={o} checked={value === o} onChange={() => onChange(o)} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />
@@ -94,7 +94,7 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     case 'file':
     case 'filepond': return (
       <React.Suspense fallback={<div style={{ ...base, color: 'var(--muted-foreground)' }}>업로더 불러오는 중…</div>}>
-        <DocumentsField value={value} onChange={onChange} required={requiredMark} />
+        <DocumentsField value={value} onChange={onChange} required={requiredMark} label={field.label} />
       </React.Suspense>
     );
     // 멀티 태그/라벨 입력 — Plate SelectEditor. lazy 로드. 값=JSON 배열 문자열, 빈 배열은 ''.
@@ -104,6 +104,6 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
       </React.Suspense>
     );
     case 'readonly': return <div style={{ ...base, background: 'var(--muted)', color: 'var(--muted-foreground)' }}>{value || '—'}</div>;
-    default:         return <input value={value} onChange={(e) => onChange(e.target.value)} style={base} />;
+    default:         return <input value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={base} />;
   }
 }
