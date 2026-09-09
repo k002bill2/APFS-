@@ -157,7 +157,7 @@ function Lnb({ open, role, route, onNav, mobile, drawerOpen }) {
     ? { position: "fixed", top: 58, left: 0, width: 270, height: "calc(100vh - 58px)", zIndex: 45,
         transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
         boxShadow: drawerOpen ? "var(--shadow-lg)" : "none", transition: "transform .24s var(--ease)" }
-    : { width: open ? 260 : 66, position: "sticky", top: 58, height: "calc(100vh - 58px)", zIndex: 48, transition: "width .22s var(--ease)" };
+    : { position: "sticky", top: 58, height: "calc(100vh - 58px)", zIndex: 48 };  /* 폭 애니메이션은 부모 grid-template-columns가 담당(레이아웃 트랙 보간) */
   return (
     <nav
       aria-label="주 메뉴"
@@ -310,8 +310,8 @@ function ncRow(key: string, p: any) {
       padding: "9px 12px", borderRadius: 10,
       border: "none", background: "color-mix(in srgb, var(--muted) 45%, var(--card))", font: "inherit",
     }}>
-      <Icon name={ic} size={16} style={{ color: `var(--${tone})`, flex: "0 0 auto" }} />
-      {tag && <><StatusBadge tone={tone} label={tag} size="sm" /><span className="sr-only">{({ danger: "위험", warning: "주의", success: "정상", info: "정보" } as Record<string, string>)[tone] || tone}</span></>}
+      {!tag && <Icon name={ic} size={16} style={{ color: `var(--${tone})`, flex: "0 0 auto" }} />}
+      {tag && <><StatusBadge tone={tone} label={tag} size="lg" dot={false} /><span className="sr-only">{({ danger: "위험", warning: "주의", success: "정상", info: "정보" } as Record<string, string>)[tone] || tone}</span></>}
       <span className="flex-1 min-w-0 font-semibold text-foreground whitespace-nowrap overflow-hidden" style={{ fontSize: 13.5, textOverflow: "ellipsis" }}><MT>{title}</MT></span>
       {meta && <span className="t-caption nc-meta whitespace-nowrap shrink-0"><MT>{meta}</MT></span>}
       {(date || dday) && <span className="whitespace-nowrap shrink-0" style={{ fontSize: 11.5, fontWeight: dday ? 800 : 600, color: dday ? `var(--${tone})` : "var(--caption)" }}>{mn(dday || date)}</span>}
@@ -387,8 +387,7 @@ function NcScheduleBody() {
             border: "none", font: "inherit",
             background: s.day === sel ? "color-mix(in srgb,var(--brand-blue) 12%,var(--card))" : "color-mix(in srgb, var(--muted) 45%, var(--card))",
           }}>
-            <Icon name={NC_TAGICON[s.tag] || "calendar"} size={16} style={{ color: `var(--${s.tone})`, flex: "0 0 auto" }} />
-            <StatusBadge tone={s.tone} label={s.tag} size="sm" />
+            <StatusBadge tone={s.tone} label={s.tag} size="lg" dot={false} />
             <span className="flex-1 min-w-0 font-semibold whitespace-nowrap overflow-hidden" style={{ fontSize: 13.5, textOverflow: "ellipsis" }}><MT>{s.title}</MT></span>
             <span className="t-caption nc-meta whitespace-nowrap shrink-0"><MT>{s.by + (s.time ? " · " + s.time : "")}</MT></span>
           </button>
@@ -886,7 +885,10 @@ function AppShell(props) {
         notifs={notifs}
         onOpenNotif={() => setNotifOpen(true)}
         onNav={navClose}
-        onUserModal={setUserModal} /><div className="flex flex-1 items-start">{rail
+        onUserModal={setUserModal} /><div className="grid flex-1 items-start" style={{
+          gridTemplateColumns: mobile ? "minmax(0,1fr)" : rail ? "64px minmax(0,1fr)" : `${lnbOpen ? 260 : 66}px minmax(0,1fr)`,
+          ...(mobile || rail ? {} : { transition: "grid-template-columns .22s var(--ease)" }),
+        }}>{rail
           ? <RailNav role={role} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />
           : <Lnb open={mobile ? true : lnbOpen} role={role} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />}<NavContext.Provider value={{ onNav: navClose, route }}><main
           className="dash-main flex-1 min-w-0"
