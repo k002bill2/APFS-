@@ -29,3 +29,6 @@ docs/솔루션비교/
 # 디자인 시스템 핸드오프 전달본 (doc/ 스냅샷 + 압축본 — 특정 시점 산출물, 원본은 src/·docs/ 정본, 저장소 미추적)
 doc/
 apfs-design-handoff.zip
+
+# impeccable 디자인 훅 로컬 캐시 (config·hook.cache — 로컬 산출물)
+.impeccable/
