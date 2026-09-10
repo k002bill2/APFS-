@@ -11,15 +11,20 @@
    - handler는 ref로 보관 → 소비처가 매 렌더 새 함수를 줘도 리스너를 재부착하지 않음. */
 import * as React from 'react';
 
-export type HotkeyCombo = { mod?: boolean; shift?: boolean; key: string };
+export type HotkeyCombo = { mod?: boolean; alt?: boolean; shift?: boolean; key: string };
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iP(hone|ad|od)/.test(navigator.platform);
 const MOD = isMac ? '⌘' : 'Ctrl+';
+const ALT = isMac ? '⌥' : 'Alt+';
 
-/* 힌트 + 바인딩 단일 소스 — DropdownMenuShortcut 표시와 useHotkey 바인딩을 같은 정의에서 구동. */
+/* 힌트 + 바인딩 단일 소스 — DropdownMenuShortcut 표시와 useHotkey 바인딩을 같은 정의에서 구동.
+   ⌥(alt) 조합: mod 조합이 아니라 입력창에서 자동 무시(타이핑 보호) + OS 예약이 아니라 도달 가능. */
 export const HOTKEYS = {
   register: { combo: { mod: true, key: 'Enter' } as HotkeyCombo, hint: isMac ? '⌘⏎' : 'Ctrl+Enter' },
   print: { combo: { mod: true, key: 'p' } as HotkeyCombo, hint: MOD + 'P' },
+  memo: { combo: { alt: true, key: 'm' } as HotkeyCombo, hint: ALT + 'M' },
+  schedule: { combo: { alt: true, key: 'e' } as HotkeyCombo, hint: ALT + 'E' },
+  logout: { combo: { alt: true, key: 'l' } as HotkeyCombo, hint: ALT + 'L' },
 } as const;
 
 export function useHotkey(combo: HotkeyCombo, handler: () => void, opts: { enabled?: boolean } = {}) {
@@ -31,10 +36,14 @@ export function useHotkey(combo: HotkeyCombo, handler: () => void, opts: { enabl
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (!!combo.mod !== mod) return;
+      if (!!combo.alt !== e.altKey) return;
       if (!!combo.shift !== e.shiftKey) return;
-      const match = combo.key.length === 1 ? e.key.toLowerCase() === combo.key.toLowerCase() : e.key === combo.key;
+      // ⌥+letter(Mac)는 특수문자를 내므로 code(물리 키, KeyM 등)로 매칭 — e.key는 'µ' 등으로 변질됨.
+      const match = combo.alt && combo.key.length === 1
+        ? e.code === 'Key' + combo.key.toUpperCase()
+        : combo.key.length === 1 ? e.key.toLowerCase() === combo.key.toLowerCase() : e.key === combo.key;
       if (!match) return;
-      // 수식어 없는 조합만 입력창에서 무시. mod 조합은 전역이라 항상 발화.
+      // mod(⌘/Ctrl) 조합만 입력창에서도 발화(⌘P 등 전역). alt·수식어없는 조합은 입력창에선 무시(타이핑·특수문자 입력 보호).
       if (!combo.mod) {
         const t = e.target as HTMLElement | null;
         if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
