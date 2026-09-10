@@ -14,76 +14,50 @@
      Content 언마운트로 자동 리셋. 오버레이 exit가 아닌 내부 레이아웃 애니라 Motion 트랩 무관. */
 import * as React from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
-import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { spring } from '../motion/presets';
 import { usePortalContainer } from './portal-container';
+import { MenuHighlightProvider, useMenuHighlight, ItemHighlight } from './menu-highlight';
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 
-/* 하이라이트 슬라이드 컨텍스트 — Content가 groupId(layoutId)와 활성 항목 id를 제공,
-   Item/RadioItem이 자신이 활성일 때만 공유 motion.span을 렌더한다. */
-const HighlightCtx = React.createContext<{ groupId: string; active: string | null; setActive: (id: string) => void } | null>(null);
-
-/* 활성 항목 뒤에 깔리는 슬라이드 배경. layoutId 공유라 항목 간 이동 시 spring으로 미끄러진다.
-   -z-10 + 부모 isolate로 항목 텍스트 뒤·팝오버 배경 앞에 위치. */
-function ItemHighlight({ id }: { id: string }) {
-  const ctx = React.useContext(HighlightCtx);
-  if (!ctx || ctx.active !== id) return null;
-  return (
-    <motion.span
-      layoutId={ctx.groupId}
-      className="absolute inset-0 -z-10 rounded-card-sm bg-accent-surface"
-      transition={spring.highlight}
-      aria-hidden
-    />
-  );
-}
-
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 6, align = 'end', children, ...props }, ref) => {
-  // groupId=layoutId(인스턴스 고유), active=현재 포커스된 항목 id. Content 언마운트 시 함께 리셋.
-  const groupId = React.useId();
-  const [active, setActive] = React.useState<string | null>(null);
-  const ctx = React.useMemo(() => ({ groupId, active, setActive }), [groupId, active]);
-  return (
-    <DropdownMenuPrimitive.Portal container={usePortalContainer()}>
-      <DropdownMenuPrimitive.Content
-        ref={ref}
-        align={align}
-        sideOffset={sideOffset}
-        className={cn(
-          'z-popover min-w-[11rem] overflow-hidden rounded-card border border-border bg-popover p-1.5 text-popover-foreground shadow-lg',
-          'origin-[var(--radix-dropdown-menu-content-transform-origin)] !duration-tok data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-          className,
-        )}
-        {...props}
-      >
-        <HighlightCtx.Provider value={ctx}>{children}</HighlightCtx.Provider>
-      </DropdownMenuPrimitive.Content>
-    </DropdownMenuPrimitive.Portal>
-  );
-});
+>(({ className, sideOffset = 6, align = 'end', children, ...props }, ref) => (
+  // 슬라이드 하이라이트 Provider는 Content 안 → 닫힘 시 Content unmount로 active가 리셋된다(menu-highlight 규약).
+  <DropdownMenuPrimitive.Portal container={usePortalContainer()}>
+    <DropdownMenuPrimitive.Content
+      ref={ref}
+      align={align}
+      sideOffset={sideOffset}
+      className={cn(
+        'z-popover min-w-[11rem] overflow-hidden rounded-card border border-border bg-popover p-1.5 text-popover-foreground shadow-lg',
+        'origin-[var(--radix-dropdown-menu-content-transform-origin)] !duration-tok data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+        className,
+      )}
+      {...props}
+    >
+      <MenuHighlightProvider>{children}</MenuHighlightProvider>
+    </DropdownMenuPrimitive.Content>
+  </DropdownMenuPrimitive.Portal>
+));
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
 
 const DropdownMenuItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & { inset?: boolean; danger?: boolean }
 >(({ className, inset, danger, children, onFocus, ...props }, ref) => {
-  const id = React.useId();
-  const ctx = React.useContext(HighlightCtx);
+  const { id, setActive } = useMenuHighlight();
   return (
     <DropdownMenuPrimitive.Item
       ref={ref}
       onFocus={(e) => {
         onFocus?.(e);
-        ctx?.setActive(id); // 포커스=하이라이트(포인터 이동도 item.focus() 경유). blur에선 미해제(잔류=animate-ui 원본).
+        setActive(); // 포커스=하이라이트(포인터 이동도 item.focus() 경유). blur에선 미해제(잔류=animate-ui 원본).
       }}
       className={cn(
         // isolate: -z-10 하이라이트가 항목 텍스트 뒤·팝오버 배경 앞에 갇히도록 자체 쌓임맥락 생성.
@@ -95,7 +69,7 @@ const DropdownMenuItem = React.forwardRef<
       )}
       {...props}
     >
-      <ItemHighlight id={id} />
+      <ItemHighlight id={id} danger={danger} />
       {children}
     </DropdownMenuPrimitive.Item>
   );
@@ -106,14 +80,13 @@ const DropdownMenuRadioItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.RadioItem>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.RadioItem>
 >(({ className, children, onFocus, ...props }, ref) => {
-  const id = React.useId();
-  const ctx = React.useContext(HighlightCtx);
+  const { id, setActive } = useMenuHighlight();
   return (
     <DropdownMenuPrimitive.RadioItem
       ref={ref}
       onFocus={(e) => {
         onFocus?.(e);
-        ctx?.setActive(id);
+        setActive();
       }}
       className={cn(
         // pl-8: 좌측 체크 지표 자리 확보. 선택 상태는 배경색(색)만이 아니라 체크 아이콘(비색)으로도 구분(WCAG 1.4.1).
@@ -149,7 +122,10 @@ const DropdownMenuSeparator = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>
 >(({ className, ...props }, ref) => (
-  <DropdownMenuPrimitive.Separator ref={ref} className={cn('-mx-1 my-1.5 h-px bg-border', className)} {...props} />
+  // relative z-10: 슬라이드 하이라이트(-z-10 span)는 positioned 항목(isolate, 페인트 step 6) 안이라
+  // non-positioned 구분선(step 3)보다 위에 그려진다 → 항목 간 이동 시 하이라이트가 1px 선을 덮었다 벗겨 깜빡임.
+  // 구분선을 positioned+양수 z(step 7)로 올려 하이라이트가 선 아래로 지나가게 한다.
+  <DropdownMenuPrimitive.Separator ref={ref} className={cn('relative z-10 -mx-1 my-1.5 h-px bg-border', className)} {...props} />
 ));
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
 

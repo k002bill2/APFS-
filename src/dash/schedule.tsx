@@ -339,7 +339,7 @@ function Schedule({ onNav }) {
             variant="outline"
             size="sm"
             leadingIcon="chevron-left"
-            onClick={() => onNav && onNav("main")}>메인으로</Button><Button variant="primary" size="sm" leadingIcon="download">내보내기</Button></>} /><div className="flex gap-3 flex-wrap mb-4"><KpiCard
+            onClick={() => onNav && onNav("main")}>메인으로</Button><Button variant="primary" size="sm" leadingIcon="download">내보내기</Button></>} /><div className="flex gap-3 flex-wrap mt-2.5 mb-4"><KpiCard
           icon="clock"
           color="var(--danger)"
           label="이번 주 마감"

@@ -6,6 +6,7 @@ import * as React from 'react';
 import * as ContextMenuPrimitive from '@radix-ui/react-context-menu';
 import { cn } from '@/lib/utils';
 import { usePortalContainer } from './portal-container';
+import { MenuHighlightProvider, useMenuHighlight, ItemHighlight } from './menu-highlight';
 
 const ContextMenu = ContextMenuPrimitive.Root;
 const ContextMenuTrigger = ContextMenuPrimitive.Trigger;
@@ -14,7 +15,8 @@ const ContextMenuGroup = ContextMenuPrimitive.Group;
 const ContextMenuContent = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Content>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
+  // 슬라이드 하이라이트 Provider는 Content 안 → 닫힘 시 unmount로 active 리셋(dropdown-menu와 동일 규약).
   <ContextMenuPrimitive.Portal container={usePortalContainer()}>
     <ContextMenuPrimitive.Content
       ref={ref}
@@ -24,7 +26,9 @@ const ContextMenuContent = React.forwardRef<
         className,
       )}
       {...props}
-    />
+    >
+      <MenuHighlightProvider>{children}</MenuHighlightProvider>
+    </ContextMenuPrimitive.Content>
   </ContextMenuPrimitive.Portal>
 ));
 ContextMenuContent.displayName = ContextMenuPrimitive.Content.displayName;
@@ -32,27 +36,38 @@ ContextMenuContent.displayName = ContextMenuPrimitive.Content.displayName;
 const ContextMenuItem = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Item> & { inset?: boolean; danger?: boolean }
->(({ className, inset, danger, ...props }, ref) => (
-  <ContextMenuPrimitive.Item
-    ref={ref}
-    className={cn(
-      'relative flex cursor-pointer select-none items-center gap-2.5 rounded-card-sm px-2.5 py-2 text-[13.5px] font-semibold outline-none transition-colors',
-      'focus:bg-accent-surface data-[highlighted]:bg-accent-surface',
-      'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-      danger ? 'text-danger' : 'text-foreground',
-      inset && 'pl-8',
-      className,
-    )}
-    {...props}
-  />
-));
+>(({ className, inset, danger, children, onFocus, ...props }, ref) => {
+  const { id, setActive } = useMenuHighlight();
+  return (
+    <ContextMenuPrimitive.Item
+      ref={ref}
+      onFocus={(e) => {
+        onFocus?.(e);
+        setActive(); // Radix가 포인터 이동에도 item.focus() 호출 → onFocus 하나로 hover·keyboard 모두 커버.
+      }}
+      className={cn(
+        // isolate: -z-10 하이라이트가 텍스트 뒤·팝오버 배경 앞에 갇히도록 자체 쌓임맥락 생성.
+        'relative isolate flex cursor-pointer select-none items-center gap-2.5 rounded-card-sm px-2.5 py-2 text-[13.5px] font-semibold outline-none',
+        'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+        danger ? 'text-danger' : 'text-foreground',
+        inset && 'pl-8',
+        className,
+      )}
+      {...props}
+    >
+      <ItemHighlight id={id} danger={danger} />
+      {children}
+    </ContextMenuPrimitive.Item>
+  );
+});
 ContextMenuItem.displayName = ContextMenuPrimitive.Item.displayName;
 
 const ContextMenuSeparator = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Separator>
 >(({ className, ...props }, ref) => (
-  <ContextMenuPrimitive.Separator ref={ref} className={cn('-mx-1 my-1.5 h-px bg-border', className)} {...props} />
+  // relative z-10: 슬라이드 하이라이트가 non-positioned 구분선을 덮어 깜빡이는 것을 방지(dropdown-menu.tsx와 동일 사유).
+  <ContextMenuPrimitive.Separator ref={ref} className={cn('relative z-10 -mx-1 my-1.5 h-px bg-border', className)} {...props} />
 ));
 ContextMenuSeparator.displayName = ContextMenuPrimitive.Separator.displayName;
 

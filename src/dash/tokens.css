@@ -246,11 +246,19 @@ input::-webkit-credentials-auto-fill-button{visibility:hidden!important;display:
    여기 unlayered·고특이도 규칙으로만 제압된다. */
 [data-slot="input-group"] [data-slot="input-group-control"]:focus-visible{outline:none;box-shadow:none;}
 /* 메뉴 항목: 초점 표시는 배경 하이라이트(bg-accent-surface)가 담당하므로 전역 box-shadow 글로우는 중복·과함 → 제거.
-   (dropdown/context/row 컨텍스트 메뉴 공통. 배경 하이라이트가 남아 WCAG 2.4.7 초점 가시성은 유지.) */
-[role="menuitem"]:focus-visible,[role="menuitemcheckbox"]:focus-visible,[role="menuitemradio"]:focus-visible{box-shadow:none;}
+   (dropdown/context/row 컨텍스트 메뉴 공통. 배경 하이라이트가 남아 WCAG 2.4.7 초점 가시성은 유지.)
+   [role="menu"] 컨테이너도 포함: Radix가 포인터 열기 시 Content(role="menu")로 focus를 옮기는데,
+   직후 아무 키나 누르면 Chrome이 이 컨테이너를 focus-visible로 승격 → 팝오버 카드 전체에 링이 그려진다.
+   초점 지표는 하이라이트된 menuitem이 담당(APG 메뉴 패턴)하므로 컨테이너 자신의 링은 끈다. */
+[role="menu"]:focus-visible,[role="menuitem"]:focus-visible,[role="menuitemcheckbox"]:focus-visible,[role="menuitemradio"]:focus-visible{box-shadow:none;}
 /* kebab(더보기) 메뉴 트리거: 열림/hover(bg-card+text-primary)와 focus-visible 배경으로 초점을 표시하므로
    전역 box-shadow 글로우는 제거. 배경 하이라이트가 남아 키보드 초점 가시성은 유지. */
 .apfs-menu-trigger:focus-visible{box-shadow:none;}
+/* 사용자 메뉴(아바타+이름) 트리거: 2줄 이름 블록을 통째로 감싸는 글로우는 '선택 박스'처럼 읽혀 과함.
+   초점 링을 아바타 원(.gnb-user-avatar)에만 표시해 WCAG 2.4.7(초점 가시성)은 유지하되 시각적으로 정리한다.
+   (.gnb-user-trigger:focus-visible 특이도 0,2,0 > 전역 :focus-visible 0,1,0 → 언레이어 규칙 이김) */
+.gnb-user-trigger:focus-visible{box-shadow:none;}
+.gnb-user-trigger:focus-visible .gnb-user-avatar{box-shadow:0 0 0 1px var(--ring),0 0 0 4px color-mix(in srgb,var(--ring) 20%,transparent);}
 
 /* typography helpers */
 .t-display{font-size:34px;line-height:1.08;font-weight:800;letter-spacing:-.02em;}

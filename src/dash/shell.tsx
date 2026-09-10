@@ -7,6 +7,7 @@ import { APFS_DATA, useMenuSel, MenuStore, HistoryStore } from './data';
 import { mn, MT } from './mask';
 import { MainWidgets } from './main_widgets';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuShortcut } from './ui/dropdown-menu';
+import { MenuHighlightProvider, useMenuHighlight, ItemHighlight } from './ui/menu-highlight';
 import { useHotkey, HOTKEYS } from './use-hotkey';   // 사용자 메뉴 ⌥ 단축키(도달 가능·입력창 자동 무시)
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from './ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
@@ -505,8 +506,8 @@ function UserMenu({ onUserModal }: { onUserModal: (id: string) => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button aria-label="사용자 메뉴" className="flex items-center gap-2 cursor-pointer py-0.5 px-1" style={{ border: "none", background: "transparent", font: "inherit" }}>
-          <span className="w-8 h-8 flex items-center justify-center" style={{ borderRadius: 99, background: "var(--brand-gray)", color: "var(--on-brand-solid)" }}>
+        <button aria-label="사용자 메뉴" className="gnb-user-trigger flex items-center gap-2 cursor-pointer py-0.5 px-1" style={{ border: "none", background: "transparent", font: "inherit" }}>
+          <span className="gnb-user-avatar w-8 h-8 flex items-center justify-center" style={{ borderRadius: 99, background: "var(--brand-gray)", color: "var(--on-brand-solid)" }}>
             <Icon name="user" size={18} stroke={2.2} />
           </span>
           <span className="gnb-user font-semibold text-left" style={{ fontSize: 12.5, lineHeight: 1.2 }}>
@@ -531,6 +532,26 @@ function UserMenu({ onUserModal }: { onUserModal: (id: string) => void }) {
 }
 
 /* ---------- Favorites FAB (우측하단 플로팅 즐겨찾기) ---------- */
+/* 즐겨찾기 항목 — HistoryItem과 동일 규약(공유 슬라이드 하이라이트). 훅을 쓰므로 별도 컴포넌트.
+   즉시배경/색 토글 제거 → hover·focus는 슬라이드 span이 담당, 색은 방문기록과 동일하게 foreground 고정. */
+function FavItem({ f, onSelect }: { f: any; onSelect: () => void }) {
+  const { id, setActive } = useMenuHighlight();
+  return (
+    <button
+      role="menuitem"
+      onClick={onSelect}
+      title={f.label}
+      onMouseEnter={setActive}
+      onFocus={setActive}
+      className="relative isolate w-full flex items-center gap-2.5 cursor-pointer text-left"
+      style={{ border: "none", font: "inherit", fontWeight: 500, borderRadius: 9, padding: "9px 10px", background: "transparent", color: "var(--foreground)", fontSize: 12.5 }}>
+      <ItemHighlight id={id} />
+      <Icon name={f.icon} size={16} stroke={2} style={{ color: "var(--caption)", flex: "0 0 auto" }} />
+      <span className="flex-1 whitespace-nowrap overflow-hidden" style={{ textOverflow: "ellipsis" }}>{f.label}</span>
+    </button>
+  );
+}
+
 function FavoritesFab({ onNav }) {
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(false);
@@ -542,7 +563,8 @@ function FavoritesFab({ onNav }) {
       <MenuPickerModal open={edit} onClose={() => setEdit(false)} initialTab="fav" />
       {open && <>
         <div onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: -1 }} />
-        <div className="bg-card shadow-lg p-2" style={{ width: 244, border: "1px solid var(--border)", borderRadius: 14, animation: "dashFade .16s var(--ease) both" }}>
+        <MenuHighlightProvider>
+        <div role="menu" aria-label="즐겨찾기" className="bg-card shadow-lg p-2" style={{ width: 244, border: "1px solid var(--border)", borderRadius: 14, animation: "dashFade .16s var(--ease) both" }}>
           <div className="flex items-center gap-1.5 pt-1.5 px-2 pb-2">
             <Icon name="star" size={14} style={{ color: "var(--warning)" }} />
             <span className="font-bold" style={{ fontSize: 12.5 }}>즐겨찾기</span>
@@ -559,20 +581,11 @@ function FavoritesFab({ onNav }) {
           </div>
           {favs.length === 0
             ? <div className="t-caption pt-1 px-2.5 pb-2.5">설정(⚙)에서 즐겨찾기를 추가하세요.</div>
-            : favs.map((f: any, i: number) => (
-              <button
-                key={f.key}
-                onClick={() => { onNav(f.to); setOpen(false); }}
-                title={f.label}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "var(--foreground)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--muted-foreground)"; }}
-                className="w-full flex items-center gap-2.5 cursor-pointer text-left"
-                style={{ border: "none", font: "inherit", fontWeight: 500, borderRadius: 9, padding: "9px 10px", background: "transparent", color: "var(--muted-foreground)", fontSize: 12.5, transition: "background .15s,color .15s" }}>
-                <Icon name={f.icon} size={16} stroke={2} style={{ color: "var(--caption)", flex: "0 0 auto" }} />
-                <span className="flex-1 whitespace-nowrap overflow-hidden" style={{ textOverflow: "ellipsis" }}>{f.label}</span>
-              </button>
+            : favs.map((f: any) => (
+              <FavItem key={f.key} f={f} onSelect={() => { onNav(f.to); setOpen(false); }} />
             ))}
         </div>
+        </MenuHighlightProvider>
       </>}
       <button
         onClick={() => setOpen((o) => !o)}
@@ -736,6 +749,32 @@ function useHistory(): string[] {
   return list;
 }
 
+/* 방문기록 항목 — 훅(useMenuHighlight)을 쓰려면 map 콜백이 아니라 별도 컴포넌트여야 한다.
+   활성 신호는 hover·focus 둘 다(bespoke 버튼은 hover가 focus를 유발하지 않음). blur/mouseleave에선
+   지우지 않는다(슬라이드 스냅 방지 — menu-highlight 규약). 배경은 슬라이드 span이 담당하므로 인라인
+   background 토글은 제거. `relative isolate`로 -z-10 span을 텍스트 뒤·팝오버 앞에 가둔다. */
+function HistoryItem({ r, label, crumbs, icon, onSelect }: { r: string; label: string; crumbs: string[]; icon: string; onSelect: () => void }) {
+  const { id, setActive } = useMenuHighlight();
+  const parent = crumbs.length > 2 ? crumbs[crumbs.length - 2] : crumbs[0];
+  return (
+    <button
+      role="menuitem"
+      onClick={onSelect}
+      title={crumbs.join(" › ")}
+      onMouseEnter={setActive}
+      onFocus={setActive}
+      className="relative isolate w-full flex items-center gap-2.5 cursor-pointer text-left"
+      style={{ border: "none", font: "inherit", borderRadius: 9, padding: "8px 10px", background: "transparent", color: "var(--foreground)" }}>
+      <ItemHighlight id={id} />
+      <Icon name={icon} size={16} stroke={2} style={{ color: "var(--caption)", flex: "0 0 auto" }} />
+      <span className="flex-1 min-w-0">
+        <span className="block whitespace-nowrap overflow-hidden" style={{ textOverflow: "ellipsis", fontSize: 12.5, fontWeight: 600 }}>{label}</span>
+        <span className="block whitespace-nowrap overflow-hidden" style={{ textOverflow: "ellipsis", fontSize: 11, color: "var(--caption)" }}>{parent}</span>
+      </span>
+    </button>
+  );
+}
+
 function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: string }) {
   const [open, setOpen] = useState(false);
   const hist = useHistory();
@@ -768,6 +807,7 @@ function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: stri
       <IconBtn icon="clock" onClick={() => setOpen((o) => !o)} label="방문기록" size={38} active={open} expanded={open} />
       {open && <>
         <div onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: 59 }} />
+        <MenuHighlightProvider>
         <div
           className="bg-card shadow-lg"
           role="menu"
@@ -794,31 +834,11 @@ function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: stri
           </div>
           {items.length === 0
             ? <div className="t-caption pt-1 px-2.5 pb-2.5" style={{ fontSize: 12 }}>최근 방문한 페이지가 없습니다.</div>
-            : items.map(({ r, label, crumbs, icon }) => {
-              const parent = crumbs.length > 2 ? crumbs[crumbs.length - 2] : crumbs[0];
-              return (
-                <button
-                  key={r}
-                  role="menuitem"
-                  onClick={() => { onNav(r); setOpen(false); }}
-                  title={crumbs.join(" › ")}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                  // 키보드 focus 가시성(WCAG 2.4.7): 전역 menuitem:focus-visible는 box-shadow를 끄므로(tokens.css),
-                  // hover와 동일하게 배경으로 초점을 표시한다(인라인 style가 Tailwind focus-visible 유틸을 이김).
-                  onFocus={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
-                  onBlur={(e) => { e.currentTarget.style.background = "transparent"; }}
-                  className="w-full flex items-center gap-2.5 cursor-pointer text-left"
-                  style={{ border: "none", font: "inherit", borderRadius: 9, padding: "8px 10px", background: "transparent", color: "var(--foreground)", transition: "background .15s" }}>
-                  <Icon name={icon} size={16} stroke={2} style={{ color: "var(--caption)", flex: "0 0 auto" }} />
-                  <span className="flex-1 min-w-0">
-                    <span className="block whitespace-nowrap overflow-hidden" style={{ textOverflow: "ellipsis", fontSize: 12.5, fontWeight: 600 }}>{label}</span>
-                    <span className="block whitespace-nowrap overflow-hidden" style={{ textOverflow: "ellipsis", fontSize: 11, color: "var(--caption)" }}>{parent}</span>
-                  </span>
-                </button>
-              );
-            })}
+            : items.map(({ r, label, crumbs, icon }) => (
+              <HistoryItem key={r} r={r} label={label} crumbs={crumbs} icon={icon} onSelect={() => { onNav(r); setOpen(false); }} />
+            ))}
         </div>
+        </MenuHighlightProvider>
       </>}
     </div>
   );
@@ -828,7 +848,7 @@ function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: stri
 function PageHeader({ crumbs, actions }: { crumbs: string[]; title?: React.ReactNode; sub?: React.ReactNode; actions?: React.ReactNode }) {
   const nav = useContext(NavContext);   // 방문기록 버튼이 쓸 onNav/route (AppShell이 공급)
   return (
-    <div style={{ marginBottom: 10 }}><div
+    <div><div
         className="flex items-center justify-between gap-4 flex-wrap"><nav
           aria-label="위치"
           className="flex items-center gap-1.5 flex-wrap">{crumbs.map((c, i) => <React.Fragment key={i}>{i > 0 && <Icon name="chevron-right" size={13} style={{ color: "var(--caption)" }} />}<span

@@ -394,7 +394,7 @@ function Report({ onNav }) {
             variant="outline"
             size="sm"
             leadingIcon="chevron-left"
-            onClick={() => onNav && onNav("main")}>메인으로</Button><Button variant="primary" size="sm" leadingIcon="download">전체 내보내기</Button></>} /><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4"><KpiBox
+            onClick={() => onNav && onNav("main")}>메인으로</Button><Button variant="primary" size="sm" leadingIcon="download">전체 내보내기</Button></>} /><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2.5 mb-4"><KpiBox
           icon="file"
           tone="primary"
           label="이번 분기 보고서"
