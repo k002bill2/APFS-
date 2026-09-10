@@ -20,7 +20,8 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, CellContextMenuEvent } from 'ag-grid-community';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuShortcut } from './ui/dropdown-menu';
+import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘⏎ 등록·⌘P 인쇄)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
 import { toast } from './ui/sonner';
@@ -88,13 +89,14 @@ function PoCMoreMenu({ onRegister, onExport }: { onRegister: () => void; onExpor
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="더보기"
-        className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
+        className="apfs-menu-trigger inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary focus-visible:bg-card focus-visible:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
         style={{ width: 34, height: 34 }}>
         <Icon name="more" size={20} stroke={2} />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem onSelect={onRegister}>
           <Icon name="plus" size={17} className="shrink-0 text-muted-foreground" />등록
+          <DropdownMenuShortcut>{HOTKEYS.register.hint}</DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onExport}>
@@ -102,6 +104,7 @@ function PoCMoreMenu({ onRegister, onExport }: { onRegister: () => void; onExpor
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => window.print()}>
           <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
+          <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -159,6 +162,9 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
 
   // 등록 모달 상태
   const [regOpen, setRegOpen] = useState(false);
+  // 앱-스코프 단축키: ⌘⏎=등록(모달 열림 중엔 비활성 → 이중 열림 방지), ⌘P=인쇄. kebab 열림 여부와 무관하게 페이지 레벨.
+  useHotkey(HOTKEYS.register.combo, () => setRegOpen(true), { enabled: !regOpen });
+  useHotkey(HOTKEYS.print.combo, () => window.print());
   const [ctx, setCtx] = useState<CtxMenuState>(null);   // 우클릭 컨텍스트 메뉴 좌표·항목(null=닫힘)
   const [draft, setDraft] = useState({ y: '', c0: '', u1: '' });
 
