@@ -804,6 +804,10 @@ function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: stri
                   title={crumbs.join(" › ")}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  // 키보드 focus 가시성(WCAG 2.4.7): 전역 menuitem:focus-visible는 box-shadow를 끄므로(tokens.css),
+                  // hover와 동일하게 배경으로 초점을 표시한다(인라인 style가 Tailwind focus-visible 유틸을 이김).
+                  onFocus={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
+                  onBlur={(e) => { e.currentTarget.style.background = "transparent"; }}
                   className="w-full flex items-center gap-2.5 cursor-pointer text-left"
                   style={{ border: "none", font: "inherit", borderRadius: 9, padding: "8px 10px", background: "transparent", color: "var(--foreground)", transition: "background .15s" }}>
                   <Icon name={icon} size={16} stroke={2} style={{ color: "var(--caption)", flex: "0 0 auto" }} />

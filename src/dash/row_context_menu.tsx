@@ -110,9 +110,10 @@ export function RowContextMenu({ state, onClose }: { state: CtxMenuState; onClos
             onClick={() => { it.onSelect(); onClose(); }}
             className={
               'flex items-center gap-2.5 w-full rounded-card-sm px-2.5 py-2 text-[14px] text-left cursor-pointer select-none border-0 bg-transparent transition-colors ' +
+              // 초점 표시: 전역 box-shadow 글로우를 메뉴 항목에서 제거했으므로(tokens.css) 키보드 초점은 배경으로 보인다.
               (it.danger
-                ? 'hover:bg-[color-mix(in_srgb,var(--danger)_10%,transparent)]'
-                : 'hover:bg-accent-surface')
+                ? 'hover:bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] focus-visible:bg-[color-mix(in_srgb,var(--danger)_10%,transparent)]'
+                : 'hover:bg-accent-surface focus-visible:bg-accent-surface')
             }
             style={{ font: 'inherit', color: it.danger ? 'var(--danger)' : undefined }}
           >

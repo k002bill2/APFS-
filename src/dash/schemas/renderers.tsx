@@ -43,6 +43,10 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
   // 필수 필드는 채움 여부와 무관하게 빨간 테두리로 상시 표식(라벨 '*'와 병행). readonly는 입력 대상이 아니라 제외.
   const requiredMark = !!field.required && field.control !== 'readonly';
   const minW = controlMinWidth(field.control);
+  // focus: 별도 링을 덧그리지 않고 기존 인라인 border 색만 --ring로 바꾸고 은은한 box-shadow 글로우(2026-09-10 사용자 요청).
+  //   인라인 border는 CSS :focus-visible로 못 덮으므로(명시도) 여기서 상태로 스왑한다. 전역 규칙과 톤 일치.
+  const [focused, setFocused] = React.useState(false);
+  const fh = { onFocus: () => setFocused(true), onBlur: () => setFocused(false) };
   const base: React.CSSProperties = {
     // ⚠️ fontFamily(longhand)로 패밀리만 상속 — `font: 'inherit'`(shorthand)는 font-size까지 리셋해 위의 fontSize:14를 부모값으로 덮어쓴다.
     // ⚠️ 높이 규격 34px(2026-09-09 사용자 DevTools 스펙) — DatePicker/PeriodPicker 버튼·radio와 일치시킨다.
@@ -55,18 +59,26 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     width: 'fit-content', minWidth: minW, maxWidth: '100%', boxSizing: 'border-box', padding: '7px 11px', fontSize: 14, lineHeight: '20px', height: 34, minHeight: 34, fontFamily: 'inherit',
     border: `1px solid ${invalid || requiredMark ? 'var(--danger)' : 'var(--border-strong)'}`,
     borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
+    transition: 'border-color .12s, box-shadow .12s',
   };
+  // ...base 뒤에 병합 — borderColor longhand가 base의 border shorthand 색을 이긴다(삽입 순서).
+  // ⚠ invalid/required는 focus 중에도 danger 테두리를 유지한다(검증 단서 소실 방지, Codex P2). 그땐 테두리를 --ring로 스왑하지 않고
+  //   글로우만 danger 색으로 맞춘다(정상 필드는 --ring 테두리+글로우).
+  const fs: React.CSSProperties = !focused ? {}
+    : (invalid || requiredMark)
+      ? { boxShadow: '0 0 0 3px color-mix(in srgb,var(--danger) 22%,transparent)' }
+      : { borderColor: 'var(--ring)', boxShadow: '0 0 0 3px color-mix(in srgb,var(--ring) 22%,transparent)' };
   switch (field.control) {
-    case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical' }} />;
+    case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical', ...fs }} />;
     // select: native 화살표는 Chrome UA가 오른쪽 경계에 고정해 padding으로 못 움직임 → appearance:none로 제거하고 lucide chevron을 오버레이(토큰색·다크대응).
     //   아이콘은 pointer-events:none라 클릭이 select로 통과. 오른쪽 간격 = 아이콘 right(12px). paddingRight 34는 옵션 텍스트가 chevron과 겹치지 않게 확보.
     case 'select':   return (
       <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}>
-        <select value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: 34 }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>
+        <select value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: 34, ...fs }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>
         <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--muted-foreground)' }} />
       </div>
     );
-    case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={base} />;
+    case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...fs }} />;
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(네이티브 input과 동일 계약).
     // DatePicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW=120)을 적용
     case 'date':     return <div style={{ width: 'fit-content', minWidth: minW, maxWidth: '100%' }}><DatePicker value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
@@ -104,6 +116,6 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
       </React.Suspense>
     );
     case 'readonly': return <div style={{ ...base, background: 'var(--muted)', color: 'var(--muted-foreground)' }}>{value || '—'}</div>;
-    default:         return <input value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={base} />;
+    default:         return <input value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...fs }} />;
   }
 }

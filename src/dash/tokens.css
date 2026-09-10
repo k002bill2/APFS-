@@ -236,13 +236,21 @@ body{
 input::-webkit-contacts-auto-fill-button,
 input::-webkit-credentials-auto-fill-button{visibility:hidden!important;display:none!important;pointer-events:none;position:absolute;right:0;}
 
-/* focus ring */
-:focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 45%,transparent);outline-offset:2px;}
+/* focus — 별도 링을 덧그리지 않고 요소에 '밀착'한 1px --ring 엣지 + 은은한 box-shadow 글로우(2026-09-10 사용자 요청).
+   outline 대신 box-shadow라 오프셋 간격 없이 테두리가 진해지는 느낌으로 읽힌다.
+   a11y(WCAG 1.4.11 Non-text Contrast AA): 꽉 찬 --ring 1px 엣지가 대비 3:1을 담보(글로우만으론 미달이라 1px 엣지 유지). */
+:focus-visible{outline:none;box-shadow:0 0 0 1px var(--ring),0 0 0 4px color-mix(in srgb,var(--ring) 20%,transparent);}
 /* Input Group: 컨테이너가 focus-within(border-ring+ring)으로 초점을 이미 표시하므로
-   내부 컨트롤의 전역 3px outline은 중복·과함 → 제거(초점 가시성은 컨테이너가 유지).
-   전역 :focus-visible는 unlayered라 Tailwind outline-none(@layer utilities)으로 못 덮어
+   내부 컨트롤의 전역 box-shadow 글로우는 중복·과함 → 제거(초점 가시성은 컨테이너가 유지).
+   전역 :focus-visible는 unlayered라 Tailwind 유틸(@layer utilities)로 못 덮어
    여기 unlayered·고특이도 규칙으로만 제압된다. */
-[data-slot="input-group"] [data-slot="input-group-control"]:focus-visible{outline:none;}
+[data-slot="input-group"] [data-slot="input-group-control"]:focus-visible{outline:none;box-shadow:none;}
+/* 메뉴 항목: 초점 표시는 배경 하이라이트(bg-accent-surface)가 담당하므로 전역 box-shadow 글로우는 중복·과함 → 제거.
+   (dropdown/context/row 컨텍스트 메뉴 공통. 배경 하이라이트가 남아 WCAG 2.4.7 초점 가시성은 유지.) */
+[role="menuitem"]:focus-visible,[role="menuitemcheckbox"]:focus-visible,[role="menuitemradio"]:focus-visible{box-shadow:none;}
+/* kebab(더보기) 메뉴 트리거: 열림/hover(bg-card+text-primary)와 focus-visible 배경으로 초점을 표시하므로
+   전역 box-shadow 글로우는 제거. 배경 하이라이트가 남아 키보드 초점 가시성은 유지. */
+.apfs-menu-trigger:focus-visible{box-shadow:none;}
 
 /* typography helpers */
 .t-display{font-size:34px;line-height:1.08;font-weight:800;letter-spacing:-.02em;}

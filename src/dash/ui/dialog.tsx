@@ -1,7 +1,7 @@
 /* shadcn/ui Dialog — Radix 기반. APFS 규약 적용:
    - 표면: bg-card / border-border (기존 모달과 일치)
    - z-index: z-overlay(75) / z-modal(80) — 셸 raw 정수 chrome(모달 71) 위로
-   - 포커스: shadcn ring 유틸 제거 → tokens.css 전역 :focus-visible outline으로 통일
+   - 포커스: shadcn ring 유틸 제거 → tokens.css 전역 :focus-visible box-shadow 글로우로 통일
    - 애니메이션: Animate UI(animate-ui.com) Radix Dialog 열림 방식 — 콘텐츠는 from:'top' 3D 플립
      (perspective+rotateX)+blur, 오버레이는 페이드. tailwind.config의 dialog-in/out 키프레임.
      ⚠ 중앙정렬은 CSS translate 프로퍼티가 담당(transform은 플립 전용). Motion 미도입=Radix exit 트랩 회피. */
