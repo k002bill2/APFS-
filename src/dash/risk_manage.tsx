@@ -218,7 +218,7 @@ function RiskManage({ onNav }: { onNav: (r: string) => void }) {
         </>} />
 
       {/* 툴바: 상태 탭 + 유형 필터 */}
-      <div className="flex items-center gap-3 flex-wrap mb-4 px-0.5">
+      <div className="flex items-center gap-3 flex-wrap mt-2.5 mb-4 px-0.5">
         <span className="t-label text-[12.5px]">상태</span>
         <SegTabs
           options={[

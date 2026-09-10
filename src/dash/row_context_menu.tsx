@@ -9,6 +9,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from './icons';
+import { MenuHighlightProvider, useMenuHighlight, ItemHighlight } from './ui/menu-highlight';
 
 /** 메뉴 항목 — 'sep'은 구분선. 그 외는 라벨+아이콘+동작(danger는 삭제류 강조). */
 export type CtxItem =
@@ -19,6 +20,31 @@ export type CtxItem =
 export type CtxMenuState = { x: number; y: number; items: CtxItem[] } | null;
 
 const MENU_W = 190;   // 고정 폭(가장자리 flip 계산에 사용)
+
+/* 메뉴 항목 버튼 — 훅(useMenuHighlight)을 쓰려면 map 콜백이 아니라 별도 컴포넌트여야 한다.
+   활성 신호는 hover(onMouseEnter)·keyboard focus(onFocus) 둘 다. 배경은 슬라이드 span이 담당하므로
+   기존 hover/focus-visible 배경 클래스는 제거(남기면 즉시배경+슬라이드 이중). `relative isolate`로
+   -z-10 span을 텍스트 뒤·팝오버 앞에 가둔다. danger는 span을 danger tint로. */
+function CtxMenuButton({ item, onClose }: { item: Exclude<CtxItem, 'sep'>; onClose: () => void }) {
+  const { id, setActive } = useMenuHighlight();
+  return (
+    <button
+      role="menuitem"
+      tabIndex={-1}
+      onClick={() => { item.onSelect(); onClose(); }}
+      onMouseEnter={setActive}
+      onFocus={setActive}
+      className="relative isolate flex items-center gap-2.5 w-full rounded-card-sm px-2.5 py-2 text-[14px] text-left cursor-pointer select-none border-0 bg-transparent"
+      style={{ font: 'inherit', color: item.danger ? 'var(--danger)' : undefined }}
+    >
+      <ItemHighlight id={id} danger={item.danger} />
+      {item.icon && (
+        <Icon name={item.icon} size={16} className={'shrink-0 ' + (item.danger ? '' : 'text-muted-foreground')} />
+      )}
+      {item.label}
+    </button>
+  );
+}
 
 export function RowContextMenu({ state, onClose }: { state: CtxMenuState; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -99,31 +125,17 @@ export function RowContextMenu({ state, onClose }: { state: CtxMenuState; onClos
       className="z-popover overflow-hidden rounded-card border border-border bg-popover p-1.5 text-popover-foreground shadow-lg"
       style={{ position: 'fixed', top, left, width: MENU_W, font: 'inherit' }}
     >
-      {state.items.map((it, i) =>
-        it === 'sep' ? (
-          <div key={i} className="-mx-1 my-1.5 h-px bg-border" />
-        ) : (
-          <button
-            key={i}
-            role="menuitem"
-            tabIndex={-1}
-            onClick={() => { it.onSelect(); onClose(); }}
-            className={
-              'flex items-center gap-2.5 w-full rounded-card-sm px-2.5 py-2 text-[14px] text-left cursor-pointer select-none border-0 bg-transparent transition-colors ' +
-              // 초점 표시: 전역 box-shadow 글로우를 메뉴 항목에서 제거했으므로(tokens.css) 키보드 초점은 배경으로 보인다.
-              (it.danger
-                ? 'hover:bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] focus-visible:bg-[color-mix(in_srgb,var(--danger)_10%,transparent)]'
-                : 'hover:bg-accent-surface focus-visible:bg-accent-surface')
-            }
-            style={{ font: 'inherit', color: it.danger ? 'var(--danger)' : undefined }}
-          >
-            {it.icon && (
-              <Icon name={it.icon} size={16} className={'shrink-0 ' + (it.danger ? '' : 'text-muted-foreground')} />
-            )}
-            {it.label}
-          </button>
-        )
-      )}
+      {/* Provider는 createPortal JSX 안 → state가 null이 되어 언마운트될 때 active가 리셋된다
+          (RowContextMenu 인스턴스 자체는 state null↔값으로 살아있으므로 여기 두지 않으면 stale). */}
+      <MenuHighlightProvider>
+        {state.items.map((it, i) =>
+          it === 'sep' ? (
+            <div key={i} className="relative z-10 -mx-1 my-1.5 h-px bg-border" /* z-10: 슬라이드 하이라이트가 선을 덮어 깜빡이는 것 방지(dropdown-menu.tsx 사유) */ />
+          ) : (
+            <CtxMenuButton key={i} item={it} onClose={onClose} />
+          )
+        )}
+      </MenuHighlightProvider>
     </div>,
     document.body,
   );

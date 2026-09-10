@@ -66,7 +66,7 @@ function EditorPage({ onNav }: { onNav?: (route: string) => void }) {
             size="sm"
             leadingIcon="chevron-left"
             onClick={() => onNav('main')}>메인으로</Button>} />
-      <RichTextField value={doc} onChange={setDoc} label="문서 본문" />
+      <div className="mt-2.5"><RichTextField value={doc} onChange={setDoc} label="문서 본문" /></div>
     </div>
   );
 }
