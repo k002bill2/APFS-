@@ -6,7 +6,8 @@ import { UI } from './components';
 import { APFS_DATA, useMenuSel, MenuStore, HistoryStore } from './data';
 import { mn, MT } from './mask';
 import { MainWidgets } from './main_widgets';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuShortcut } from './ui/dropdown-menu';
+import { useHotkey, HOTKEYS } from './use-hotkey';   // 사용자 메뉴 ⌥ 단축키(도달 가능·입력창 자동 무시)
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from './ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } from './ui/navigation-menu';
@@ -491,10 +492,15 @@ function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) 
 
 /* ---------- 사용자 메뉴 ---------- */
 function UserMenu({ onUserModal }: { onUserModal: (id: string) => void }) {
+  // ⌥ 단축키 — OS 예약키(⌘M 최소화·⌘Q 종료)를 피한 도달 가능한 조합. 입력창에선 자동 무시.
+  // hint와 combo가 HOTKEYS 단일 소스라 표시와 실제 바인딩이 어긋나지 않는다.
+  useHotkey(HOTKEYS.memo.combo, () => onUserModal("memo"));
+  useHotkey(HOTKEYS.schedule.combo, () => onUserModal("schedule"));
+  useHotkey(HOTKEYS.logout.combo, () => onUserModal("logout"));
   const items = [
-    { id: "memo", label: "메모", icon: "memo", danger: false },
-    { id: "schedule", label: "일정", icon: "calendar", danger: false },
-    { id: "logout", label: "로그아웃", icon: "external", danger: true },
+    { id: "memo", label: "메모", icon: "memo", danger: false, hk: HOTKEYS.memo },
+    { id: "schedule", label: "일정", icon: "calendar", danger: false, hk: HOTKEYS.schedule },
+    { id: "logout", label: "로그아웃", icon: "external", danger: true, hk: HOTKEYS.logout },
   ];
   return (
     <DropdownMenu>
@@ -515,6 +521,7 @@ function UserMenu({ onUserModal }: { onUserModal: (id: string) => void }) {
             {it.id === "logout" && <DropdownMenuSeparator />}
             <DropdownMenuItem danger={it.danger} onSelect={() => onUserModal(it.id)}>
               <Icon name={it.icon} size={16} className="shrink-0" />{it.label}
+              <DropdownMenuShortcut>{it.hk.hint}</DropdownMenuShortcut>
             </DropdownMenuItem>
           </React.Fragment>
         ))}
@@ -797,6 +804,10 @@ function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: stri
                   title={crumbs.join(" › ")}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  // 키보드 focus 가시성(WCAG 2.4.7): 전역 menuitem:focus-visible는 box-shadow를 끄므로(tokens.css),
+                  // hover와 동일하게 배경으로 초점을 표시한다(인라인 style가 Tailwind focus-visible 유틸을 이김).
+                  onFocus={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
+                  onBlur={(e) => { e.currentTarget.style.background = "transparent"; }}
                   className="w-full flex items-center gap-2.5 cursor-pointer text-left"
                   style={{ border: "none", font: "inherit", borderRadius: 9, padding: "8px 10px", background: "transparent", color: "var(--foreground)", transition: "background .15s" }}>
                   <Icon name={icon} size={16} stroke={2} style={{ color: "var(--caption)", flex: "0 0 auto" }} />

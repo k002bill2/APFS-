@@ -1,9 +1,9 @@
 /* shadcn/ui Accordion — Radix 기반. shadcn 원본 룩에 정렬(APFS 토큰 유지):
    - 트리거: text-sm(14px)·font-medium·hover:underline·items-start·py-4·rounded-md(shadcn 원본과 동일).
    - 셰브런: translate-y-0.5로 첫 줄 baseline 정렬(items-start와 짝).
-   - 구분선: border-border 토큰 + last:border-b-0(마지막 항목 하단선 제거, shadcn 원본).
+   - 구분선: 없음(항목 간 border 제거, 2026-09-10 사용자 요청). 필요 시 소비처에서 className으로 추가.
    - 포커스: shadcn의 `ring-ring/50 ring-[3px]`는 이 프로젝트에서 opacity 모디파이어 무음실패 →
-     대신 tokens.css 전역 :focus-visible outline(3px, color-mix ring 45%)이 동일 룩을 이미 제공.
+     대신 tokens.css 전역 :focus-visible box-shadow 글로우(1px --ring 엣지 + soft)가 동일 룩을 이미 제공.
      그래서 outline-none/ring 유틸은 붙이지 않는다(붙이면 오히려 링이 사라짐). */
 import * as React from 'react';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
@@ -16,7 +16,7 @@ const AccordionItem = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
 >(({ className, ...props }, ref) => (
-  <AccordionPrimitive.Item ref={ref} className={cn('border-b border-border last:border-b-0', className)} {...props} />
+  <AccordionPrimitive.Item ref={ref} className={cn(className)} {...props} />
 ));
 AccordionItem.displayName = 'AccordionItem';
 

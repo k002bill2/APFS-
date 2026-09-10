@@ -52,9 +52,10 @@ export function DatePicker({ value, onChange, invalid, required, disabled, place
           aria-required={required || undefined}
           className={cn(
             'flex h-[34px] box-border w-full items-center justify-between gap-2 rounded-[9px] border bg-card px-[11px] py-[7px] text-left text-sm text-foreground transition-colors',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            'focus-visible:outline-none',
             'disabled:cursor-not-allowed disabled:opacity-60',
-            invalid || required ? 'border-danger' : 'border-border-strong',
+            // invalid/required는 focus 중에도 danger 테두리 유지(검증 단서 소실 방지, Codex P2). border-ring는 정상 분기에만.
+            invalid || required ? 'border-danger' : 'border-border-strong focus-visible:border-ring',
           )}
         >
           <span className={cn('tabular-nums', !selected && 'text-muted-foreground')}>
