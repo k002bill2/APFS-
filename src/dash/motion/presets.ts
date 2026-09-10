@@ -15,6 +15,7 @@ export const spring = {
   panel: { type: 'spring', stiffness: 150, damping: 22 }, // sheet / accordion
   flip: { type: 'spring', stiffness: 280, damping: 20 }, // flip / 3D
   control: { type: 'spring', stiffness: 320, damping: 28 }, // switch/checkbox/버튼 press
+  highlight: { type: 'spring', stiffness: 350, damping: 35 }, // 드롭다운 항목 하이라이트 슬라이드(animate-ui MotionHighlight 원본값)
 } satisfies Record<string, Transition>;
 
 /* tween — 순수 opacity·원본이 spring 아닌 경우 */

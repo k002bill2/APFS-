@@ -491,6 +491,8 @@ function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) 
 
 /* ---------- 사용자 메뉴 ---------- */
 function UserMenu({ onUserModal }: { onUserModal: (id: string) => void }) {
+  // 단축키 힌트 미부여 — ⌘M(최소화)·⌘Q(종료)는 OS 예약키라 웹페이지가 가로챌 수 없어 동작 불가(=거짓 힌트).
+  // 단축키가 필요한 실제 액션(등록·인쇄 등)은 use-hotkey.ts의 HOTKEYS로 도달 가능한 조합만 부여한다.
   const items = [
     { id: "memo", label: "메모", icon: "memo", danger: false },
     { id: "schedule", label: "일정", icon: "calendar", danger: false },
