@@ -24,6 +24,8 @@ import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';   // kebab 더보기(asset_funding 동형)
+import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';   // kebab 트리거 툴팁(Provider는 app.tsx 루트)
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { RowFormModal } from './generic_list_modal';
@@ -185,6 +187,40 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
   );
 }
 
+/* kebab(···) 더보기 — 엑셀 옆. 헤더 primary였던 '제안서접수 등록'을 여기로 이동(asset_funding PoCMoreMenu 동형).
+   트리거는 Tooltip으로 감싼다(TooltipProvider는 app.tsx 루트). */
+function MoreMenu({ onRegister, size = 34 }: { onRegister: () => void; size?: number }) {
+  return (
+    <DropdownMenu>
+      {/* Tooltip/Dropdown 트리거를 같은 노드에 합성하면 Radix가 data-state를 서로 덮어써(Codex P2),
+          kebab의 data-[state=open] 열림 스타일이 죽는다 → span을 끼워 data-state 노드를 분리한다.
+          onFocus가 버블링하므로 span을 TooltipTrigger로 써도 안쪽 버튼 포커스에 툴팁이 정상 노출된다. */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex">
+            <DropdownMenuTrigger
+              aria-label="더보기"
+              className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
+              style={{ width: size, height: size }}>
+              <Icon name="more" size={20} stroke={2} />
+            </DropdownMenuTrigger>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>더보기</TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent>
+        <DropdownMenuItem onSelect={onRegister}>
+          <Icon name="plus" size={17} className="shrink-0 text-muted-foreground" />제안서접수 등록
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => window.print()}>
+          <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -197,6 +233,10 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   const [view, setView] = useState('list');               // list | detail — 푸터 SegTabs(골드 asset_funding 양식)
   const [showAll, setShowAll] = useState(false);          // 전체보기 — 페이지 크기를 전체 행 수로 키워 한 페이지에 모두 표시
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
+  /* 상단 kebab이 스크롤로 화면 밖에 나가면 푸터 kebab을 대신 노출(IntersectionObserver, root=뷰포트).
+     툴바는 sticky가 아니라 스크롤로 사라지고 푸터는 sticky bottom이라 항상 보이므로 성립(grid_frame 구조) */
+  const topMoreRef = useRef<HTMLSpanElement>(null);
+  const [topMoreVisible, setTopMoreVisible] = useState(true);
   const [modal, setModal] = useState<ModalState>(null);
   const masked = useMask();
 
@@ -228,6 +268,14 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   }, [fStage, fText, fFund, fType, fYear, fRt, fSt]);
   const filterActive = Boolean(fStage || fText || fFund || fType || fYear || fRt || fSt);
   useEffect(() => { apiRef.current?.onFilterChanged(); }, [passes]);
+  /* 상단 kebab 가시성 관찰 — 뷰포트에서 벗어나면(스크롤로 위로 사라짐) 푸터 kebab 노출 */
+  useEffect(() => {
+    const el = topMoreRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<SubFundRow>) => (node.data ? passes(node.data) : true), [passes]);
 
@@ -338,10 +386,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
       title="자펀드관리"
       cardTitle="자펀드 목록"
       favRoute="subfund"
-      headerActions={<>
-        <Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>
-        <Button variant="primary" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'apply' })}>제안서접수 등록</Button>
-      </>}
+      headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       kpis={<>
         <KpiBadge icon="layers" color="var(--primary)" label="전체 건수" value={mn(String(rows.length)) + ' 건'} />
         <KpiBadge icon="check-circle" color="var(--success)" label="결성 조합" value={mn(String(formedCount)) + ' 개'} />
@@ -390,6 +435,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
         <Button variant="outline" size="sm" leadingIcon="download" onClick={exportExcel}>엑셀</Button>
+        <span ref={topMoreRef} className="inline-flex"><MoreMenu onRegister={() => setModal({ kind: 'apply' })} /></span>
       </>}
       footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
       footerCenter={view === 'list' && page.total > 1 ? (
@@ -406,7 +452,8 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} pressed={showAll} onClick={() => setShowAll((v) => !v)} />
         )}
         <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        <IconBtn icon="more" label="더보기" size={32} />
+        {/* 상단 kebab이 화면 밖일 때만 노출(스크롤 시 등록/인쇄 접근 유지) */}
+        {!topMoreVisible && <MoreMenu size={32} onRegister={() => setModal({ kind: 'apply' })} />}
       </>}>
 
       {view === 'list' ? (
