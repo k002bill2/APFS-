@@ -192,14 +192,19 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
 function MoreMenu({ onRegister, size = 34 }: { onRegister: () => void; size?: number }) {
   return (
     <DropdownMenu>
+      {/* Tooltip/Dropdown 트리거를 같은 노드에 합성하면 Radix가 data-state를 서로 덮어써(Codex P2),
+          kebab의 data-[state=open] 열림 스타일이 죽는다 → span을 끼워 data-state 노드를 분리한다.
+          onFocus가 버블링하므로 span을 TooltipTrigger로 써도 안쪽 버튼 포커스에 툴팁이 정상 노출된다. */}
       <Tooltip>
         <TooltipTrigger asChild>
-          <DropdownMenuTrigger
-            aria-label="더보기"
-            className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
-            style={{ width: size, height: size }}>
-            <Icon name="more" size={20} stroke={2} />
-          </DropdownMenuTrigger>
+          <span className="inline-flex">
+            <DropdownMenuTrigger
+              aria-label="더보기"
+              className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
+              style={{ width: size, height: size }}>
+              <Icon name="more" size={20} stroke={2} />
+            </DropdownMenuTrigger>
+          </span>
         </TooltipTrigger>
         <TooltipContent>더보기</TooltipContent>
       </Tooltip>
