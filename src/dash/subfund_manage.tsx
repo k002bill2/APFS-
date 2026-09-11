@@ -31,7 +31,6 @@ import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { RowFormModal } from './generic_list_modal';
 import { SubFundFormEditModal } from './subfund_form_modal';   // 결성조합 수정 — 섹션형 전용 모달
-import { SubFundSpecModal } from './subfund_spec_modal';         // 자펀드 명세 — 읽기전용 팝업(S1_03 명세, 전 단계 공통)
 import { APPLY_SCHEMA, SELECT_SCHEMA, OPT_AG, OPT_FG, OPT_FS, OPT_MANAGER, OPT_MF, CUR_YEAR } from './subfund_manage_schemas';
 import { PeriodPicker } from './ui/period-picker';   // 연도/일자 선택 표준(apfs-datepicker)
 
@@ -275,7 +274,7 @@ function RegisterCombo({ label, onRegister, onExport }: { label: string; onRegis
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
-type ModalState = null | { kind: 'apply' } | { kind: 'select'; target: Stage } | { kind: 'formEdit' } | { kind: 'spec' };
+type ModalState = null | { kind: 'apply' } | { kind: 'select'; target: Stage } | { kind: 'formEdit' };
 
 export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<SubFundRow> | null>(null);
@@ -451,8 +450,6 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           {stageActs.map((a) => (
             <Button key={a.label} variant={a.primary ? 'primary' : 'outline'} size="sm" onClick={a.run}>{a.label}</Button>
           ))}
-          {/* 명세는 단계 무관 공통 조회(읽기전용) — 전이 액션 맵 밖에 둔다. 행 더블클릭과 동일 진입 */}
-          <Button variant="outline" size="sm" leadingIcon="file" onClick={() => setModal({ kind: 'spec' })}>명세</Button>
           <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
         </>
       ) : (
@@ -531,7 +528,6 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           onGridReady={onGridReady}
           onSelectionChanged={onSelectionChanged}
           onRowDataUpdated={onRowDataUpdated}
-          onRowDoubleClicked={(e) => { if (e.data && !e.node.rowPinned) { setSelId(e.data.id); setModal({ kind: 'spec' }); } }}   // 더블클릭=명세(읽기전용). 전이는 툴바 액션만
           onPaginationChanged={onPaginationChanged}
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 자펀드가 없습니다.</span>'}
         />
@@ -611,7 +607,6 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           title={selected.stg === '신청' ? '선정조합 등록' : '선정조합 정보 수정'}
           onSave={(f) => saveSelect(f, modal.target)} onClose={() => setModal(null)} />
       )}
-      {modal?.kind === 'spec' && selected && <SubFundSpecModal row={selected} onClose={() => setModal(null)} />}
       {modal?.kind === 'formEdit' && selected && (
         /* 결성조합 수정 — 섹션·반복행·첨부표가 있어 flat RowFormModal 대신 섹션형 전용 모달 */
         <SubFundFormEditModal row={selected}
