@@ -32,7 +32,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 신규 등록(1차 액션) | **툴바 독립 버튼** `Button variant="outline" size="sm" leadingIcon="plus"` — `toolbarRight`에서 **상세필터 오른쪽·새로고침 왼쪽**(kebab 왼쪽). **kebab 항목으로 넣지 않는다**(2026-09-11 사용자 결정으로 이전 "등록도 kebab 안" 규약을 뒤집음 — 진입 빈도 높은데 2클릭). 라벨은 도메인 액션명 그대로(`제안서접수 등록`), "등록"으로 축약 금지. 단축키 `⌘⏎`(`HOTKEYS.register`)는 유지되나 **화면 힌트는 없다**(Button이 Tooltip asChild 불가) | 툴바 순서=[[apfs-grid]] "관리형 리스트 툴바·타이틀 규약" · 모달=[[apfs-form-modal]] · 단축키=[[apfs-hotkeys]] |
 | 엑셀 | SheetJS — 병합/리프 컬럼을 **columnDefs에서 자동 산출**(`flattenForExcel`), 마스크 시 숫자 0·텍스트 ''. **진입=툴바 kebab `MoreMenu` "내보내기 (Excel)" 항목**(독립 "엑셀" 버튼 금지) + 푸터 `IconBtn download` + 단축키 `⌥D`(`HOTKEYS.export`) | [[apfs-aggrid]] · 툴바/kebab=[[apfs-grid]] · 단축키=[[apfs-hotkeys]] |
 | 프레임 외관·푸터 | `--frame-bg`(테두리·그림자 없음), `sub` 미사용, 단위 캡션은 `toolbarRight`, 푸터 골드(건수·페이저·뷰 토글·아이콘) | [[apfs-grid]] "프레임 외관 규약" |
-| 리스트 ↔ 카드뷰 | **opt-in(기본 미포함, 2026-09-11)** — 요구 시에만. 포함 시 푸터 `SegTabs` + 카드 그리드 + 선택 유지. **미포함이면 `view` state·`SegTabs`·카드 분기를 넣지 않는다**(리스트 뷰만) | **[[apfs-card-view]]** |
+| 리스트 ↔ 카드뷰 | **폐기(2026-09-11 사용자 결정)** — 만들지 않는다. 푸터에 뷰 토글 `SegTabs`를 두지 않고, `view` state·카드 분기도 넣지 않는다(리스트 뷰 단일 표현) | — |
 | 읽기전용 명세 팝업 | **opt-in(기본 미포함)** — 목업/사용자가 요구할 때만 포함. 포함 시 진입=`명세` 버튼 + 더블클릭(단위 토글·kv·재무요약). **미포함이면 selbar에 `명세` 버튼·`onRowDoubleClicked` 배선을 넣지 않는다**(자동 고정 금지) | **[[apfs-spec-popup]]** |
 | 그리드 세부(폭·선택색·합계행·배지) | `AUTO_SIZE_CONTENT`+`maxWidth`, `wrapperBorder:false`, 합계 `--muted`+1px, 배지 `lg`/`dot={false}` | [[apfs-aggrid]] "관리형 페이지 그리드 규약" |
 | 색·대비 | 토큰만. 상태 텍스트는 `-text` 토큰(StatusBadge 내장) | [[color-tokens]] |
@@ -68,7 +68,7 @@ await page.evaluate(()=>localStorage.setItem('apfs.route','<path>')); await page
 - AG Grid `cellStyle` 상수는 `CellStyle` 타입(React `CSSProperties` 아님 — 인덱스 시그니처 불일치).
 - 신규 등록 후 `setSelId(newId)`로 선택을 새 행에 두면 다음 단계 액션이 즉시 보인다 — 단 그리드 라디오는 `onRowDataUpdated`에서 따로 맞춰야 한다(→[[apfs-stage-workflow]] 규약 9).
 - selbar에 **대상명(조합명)·취소 안내 캡션을 넣지 않는다**(2026-09-08 제거). 카드헤더 `sub` 설명 캡션도 넣지 않는다.
-- 세분화 스킬 색인(2026-09-08): 프레임 외관 [[apfs-grid]] · 그리드 세부 [[apfs-aggrid]] · 칩/드로어 [[apfs-detail-filter]] · 컨트롤 폭 [[apfs-form-modal]] 계약7 · 기간 선택 [[apfs-datepicker]] · 카드뷰 [[apfs-card-view]] · 명세 팝업 [[apfs-spec-popup]] · 선택 SSOT [[apfs-stage-workflow]] 규약 9.
+- 세분화 스킬 색인(2026-09-08): 프레임 외관 [[apfs-grid]] · 그리드 세부 [[apfs-aggrid]] · 칩/드로어 [[apfs-detail-filter]] · 컨트롤 폭 [[apfs-form-modal]] 계약7 · 기간 선택 [[apfs-datepicker]] · 명세 팝업 [[apfs-spec-popup]] · 선택 SSOT [[apfs-stage-workflow]] 규약 9.
 
 ## 검증
 `npm run build`(exit 0) · `npm test` · 4절 런타임 체크 · [[responsive-ui]] 1280/768/400 · [[web-a11y]](라디오 접근名·다이얼로그 트랩은 AG Grid/Radix 내장).
