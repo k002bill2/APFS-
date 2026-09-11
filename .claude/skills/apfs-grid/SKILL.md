@@ -36,7 +36,7 @@ interface GridFrameProps {
   crumbs: string[];          // PageHeader 브레드크럼 (필수)
   title: string;             // 페이지 제목 (필수) — 카드헤더 <h3>로 렌더(cardTitle 미지정 시)
   sub?: string;              // 카드헤더 타이틀 아래 캡션으로 렌더 (단위 범례 등). 비마스킹
-  headerActions?: ReactNode; // PageHeader 우측 액션 — 내보내기 등 주 액션은 여기 한 곳에만(중복 금지)
+  headerActions?: ReactNode; // PageHeader 우측 액션. 매트릭스/집계형은 primary 내보내기를 여기 둔다(asset_funding). 관리형 리스트는 내보내기를 툴바 kebab에 두므로 여기엔 보통 '메인으로'만 → 아래 "관리형 리스트 툴바·타이틀 규약"
   cardTitle?: string;        // 카드헤더 타이틀 (미지정 시 title 재사용)
   kpis?: ReactNode;          // 카드헤더 우측 KPI 배지군 (KpiBadge 나열)
   favRoute?: string;         // 즐겨찾기 별(★) 토글 활성 — 현재 페이지 라우트(onNav 인자와 동일 문자열).
@@ -74,8 +74,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 <GridFrame
   crumbs={['홈','투자자산관리','모태펀드관리','모태펀드 조성 및 출자현황']}
   title="모태펀드 조성 및 출자현황"
-  sub="… 단위: 금액 억원(추정) / 조합수 개"
-  cardTitle="모태펀드 조성·출자 현황표"
+  cardTitle="모태펀드 조성·출자 현황표"   // 매트릭스/집계형 예외: 문서 정식명칭을 카드 제목으로(리스트형은 메뉴 리프와 일치)
   headerActions={<><Button variant="outline" leadingIcon="chevron-left" onClick={()=>onNav('main')}>메인으로</Button><Button variant="primary" leadingIcon="download">내보내기</Button></>}
   kpis={<><KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={mn(fmt(t)) + ' 억원'} /> …</>}
   toolbarLeft={<><Icon name="file" size={16} /><span>… 집계</span></>}
@@ -90,6 +89,14 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 - **`sub` 캡션은 쓰지 않는다.** 화면 설명 문구는 제거 대상(사용자 결정). 단위 표기는 **`toolbarRight` 맨 앞에 12px caption** `단위: 원`(비마스킹)으로.
 - **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `view==='list' && page.total>1`일 때만 페이저(`IconBtn chevron-left/right` + `PageBtn`) · `footerRight` = `SegTabs 리스트 뷰|카드뷰` + `IconBtn download / maximize(전체보기, list일 때만) / external(새 창) / more`. `PageBtn`은 골드(`asset_funding.tsx`·`subfund_manage.tsx`)에 **로컬 복사**돼 있는 헬퍼다 — 공유 export 아님, 골드에서 복사.
 - 카드뷰 전환·선택 동기화는 [[apfs-card-view]].
+
+## 관리형 리스트 툴바·타이틀 규약 (2026-09-11 subfund_manage에서 정립)
+리스트형(CRUD) 페이지 한정. 매트릭스/집계형은 위 골든(`headerActions` primary 내보내기)을 그대로 둔다.
+
+- **툴바 보조 액션은 kebab(⋯) `MoreMenu` 한 곳에.** 등록·내보내기(Excel)·인쇄를 kebab 항목으로 모으고 **내보내기용 독립 "엑셀" 버튼을 `toolbarRight`에 따로 두지 않는다**(kebab "내보내기 (Excel)" 항목으로 흡수). 내보내기 진입점은 결과적으로 **kebab 항목 + 푸터 `IconBtn download` + 단축키 `⌥D`** 세 곳 — 중복 아님(위 39행 "한 곳에만"은 *툴바 독립 버튼*을 두지 말라는 뜻).
+- **kebab 항목엔 단축키 힌트(`DropdownMenuShortcut`) 동반**: 등록 `HOTKEYS.register`(⌘⏎)·내보내기 `HOTKEYS.export`(⌥D)·인쇄 `HOTKEYS.print`(⌘P). 단축키 시스템·mod/⌥ 2티어·Windows 함정은 → [[apfs-hotkeys]] (여기서 표 복제 금지, 링크만).
+- **`MoreMenu`는 공유 컴포넌트가 아니다** — `generic_list.tsx`·`asset_funding.tsx`(`PoCMoreMenu`)·`subfund_manage.tsx`가 각자 **로컬 복사본**(`PageBtn`과 동일 방식, 공유 export 아님). 골드는 `subfund_manage.tsx`(Tooltip 래핑·`DropdownMenuShortcut`·`onRegister/onExport/size` props). 상단 `toolbarRight`의 `topMoreRef` + 화면 밖일 때 푸터 폴백 `!topMoreVisible && <MoreMenu>` 쌍으로 스크롤 중 접근 유지. 신규 페이지는 골드에서 복사하고 `onExport` 등 필요한 prop을 배선한다.
+- **타이틀은 메뉴 리프와 일치.** `cardTitle`·`title`·`crumbs` 리프를 **`data.ts` 메뉴 리프 라벨 문자열 그대로**(띄어쓰기 포함) 맞춘다. `cardTitle`이 `title`과 같으면 생략 가능(H1=`cardTitle ?? title`). **"○○ 목록" 같은 임의 축약 금지**(2026-09-11 "자펀드 목록"→"자펀드 관리" 정정). 매트릭스/집계형이 문서 정식명칭을 카드 제목으로 쓰는 것(asset_funding "…현황표")은 예외.
 
 ## 검증
 `npm run build`(exit 0) + `npm test`(스키마 zod) + 브라우저 라이트/다크·1280/768/400 시각 확인(responsive-ui 프로토콜) + 기존 페이지(generic_list 등) 무변경 회귀.
