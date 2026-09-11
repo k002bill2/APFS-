@@ -13,7 +13,9 @@ import { Cell, controlMinWidth } from './schemas/renderers';   // controlMinWidt
 import { resolveFilterField, YEAR_OPTIONS } from './schemas/filter_field';
 import type { FilterField } from './schemas/filter_field';
 import type { PageSchema } from './schemas/types';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
+import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';   // kebab 트리거 툴팁(Provider는 app.tsx 루트)
+import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘⏎ 등록·⌘P 인쇄·⌥D 내보내기)
 import { toast } from './ui/sonner';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { DatePicker } from './ui/date-picker';
@@ -153,30 +155,36 @@ function FilterPill({ label, value, onRemove }: { label: string; value?: string;
   );
 }
 
-/* ===== 더보기 드롭다운 메뉴 (kebab) — Radix DropdownMenu(키보드 내비·menuitem 시맨틱) ===== */
-function MoreMenu({ onRegister, onExport, editable }: { onRegister: () => void; onExport: () => void; editable: boolean }) {
+/* ===== 더보기 드롭다운 메뉴 (kebab) — Radix DropdownMenu(키보드 내비·menuitem 시맨틱) =====
+   내보내기(Excel)·인쇄만 남는다. 등록은 kebab에서 꺼내 툴바 독립 버튼으로 승격(2026-09-11 사용자 결정,
+   진입 빈도가 높은 1차 액션이라 2클릭→1클릭). 독립 '엑셀' 버튼은 두지 않는다(내보내기 항목으로 흡수).
+   골드 subfund_manage.tsx의 MoreMenu 동형 — Tooltip 래핑 + DropdownMenuShortcut 힌트 + size prop. */
+function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label="더보기"
-        className="apfs-menu-trigger inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary focus-visible:bg-card focus-visible:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
-        style={{ width: 34, height: 34 }}>
-        <Icon name="more" size={20} stroke={2} />
-      </DropdownMenuTrigger>
+      {/* Tooltip/Dropdown 트리거를 같은 노드에 합성하면 Radix가 data-state를 서로 덮어써
+          kebab의 data-[state=open] 열림 스타일이 죽는다 → span을 끼워 data-state 노드를 분리한다. */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex">
+            <DropdownMenuTrigger
+              aria-label="더보기"
+              className="apfs-menu-trigger inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary focus-visible:bg-card focus-visible:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
+              style={{ width: size, height: size }}>
+              <Icon name="more" size={20} stroke={2} />
+            </DropdownMenuTrigger>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>더보기</TooltipContent>
+      </Tooltip>
       <DropdownMenuContent>
-        {editable && (
-          <>
-            <DropdownMenuItem onSelect={onRegister}>
-              <Icon name="plus" size={17} className="shrink-0 text-muted-foreground" />등록
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
         <DropdownMenuItem onSelect={onExport}>
           <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
+          <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Icon name="file" size={17} className="shrink-0 text-muted-foreground" /><MT>인쇄</MT>
+        <DropdownMenuItem onSelect={() => window.print()}>
+          <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
+          <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -355,9 +363,14 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   // 상태 SSOT: 필터 라벨 → 선택값(빈 값/부재 = 비활성). 칩·행필터 모두 여기서 파생.
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 23 });   // AG Grid 페이지네이션 미러
-  const [view, setView] = useState("list");
+  const [viewState, setView] = useState("list");
+  // 카드뷰 미사용 스키마(hideCardView)는 SegTabs를 숨기고 리스트 뷰로 고정 — view === "list" 게이트가 모두 참이 된다
+  const view = schema.hideCardView ? "list" : viewState;
   const [showAll, setShowAll] = useState(false);   // 전체보기 — 페이지 크기를 전체 행 수로 키워 한 페이지에 모두 표시
   const [modal, setModal] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null);
+  /* 상단 kebab 가시성 — 뷰포트에서 벗어나면(스크롤) 푸터 kebab 폴백을 노출(골드 subfund_manage 동형) */
+  const topMoreRef = useRef<HTMLSpanElement>(null);
+  const [topMoreVisible, setTopMoreVisible] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
   const [ctx, setCtx] = useState<CtxMenuState>(null);   // 우클릭 컨텍스트 메뉴 좌표·항목(null=닫힘)
 
@@ -497,6 +510,22 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     toast.success('Excel로 내보냈습니다');
   };
 
+  /* 상단 kebab 가시성 관찰 — 뷰포트에서 벗어나면 푸터 kebab 폴백을 켠다(골드 subfund_manage 동형) */
+  useEffect(() => {
+    const el = topMoreRef.current;
+    // 미지원 환경에선 관찰이 불가능하므로 폴백을 상시 노출(true로 두면 푸터 kebab이 영원히 안 떠 내보내기·인쇄 접근이 끊긴다)
+    if (typeof IntersectionObserver === 'undefined') { setTopMoreVisible(false); return; }
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  /* 앱-스코프 단축키 — 등록 ⌘⏎(편집 가능 + 모달 닫힘일 때만)·인쇄 ⌘P·내보내기 ⌥D. 힌트는 kebab의 DropdownMenuShortcut */
+  useHotkey(HOTKEYS.register.combo, () => setModal({ mode: 'create' }), { enabled: editable && modal === null && !filterOpen && ctx === null });
+  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+
   // 행 복사 — 스키마 컬럼(스파크라인 trend 제외)을 TSV로. 마스크 ON이면 mn()으로 실값 비노출(엑셀과 동일 계약).
   const copyRow = (row: Row) => {
     const line = schema.columns.filter((c) => c.key !== 'trend')
@@ -555,8 +584,14 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       )}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <IconBtn icon="refresh" label="조회" size={34} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); }} />
-        <MoreMenu onRegister={() => setModal({ mode: "create" })} onExport={exportExcel} editable={editable} />
+        {/* 등록 = 이 화면의 1차 액션. kebab 밖 독립 버튼(outline)으로 두어 보조 액션(ghost·아이콘)과 위계를 가른다.
+            라벨은 도메인 액션명 그대로(스키마 entity — '공고 등록' 등), "등록"으로 줄이지 않는다.
+            편집 가능한 스키마(fields 보유)에서만 노출. Tooltip으로 감싸지 않는다(UI.Button은 asChild 트리거 불가). */}
+        {editable && (
+          <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ mode: "create" })}>{schema.entity + " 등록"}</Button>
+        )}
+        <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); }} />
+        <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>
       </>}
       footerLeft={'총 ' + mn(String(totalForCount)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}
       footerCenter={view === "list" && page.total > 1 ? (
@@ -575,13 +610,16 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         </>
       ) : undefined}
       footerRight={<>
-        <SegTabs size="sm" value={view} onChange={setView} options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "카드뷰" }]} />
+        {!schema.hideCardView && (
+          <SegTabs size="sm" value={view} onChange={setView} options={[{ value: "list", label: "리스트 뷰" }, { value: "detail", label: "카드뷰" }]} />
+        )}
         <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
         {view === "list" && (
-          <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} onClick={() => setShowAll((v) => !v)} />
+          <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} pressed={showAll} onClick={() => setShowAll((v) => !v)} />
         )}
         <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        <IconBtn icon="more" label="더보기" size={32} />
+        {/* 상단 kebab이 화면 밖일 때만 노출(스크롤 시 내보내기/인쇄 접근 유지). 등록은 툴바 버튼 + ⌘⏎로 접근 */}
+        {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
       </>}>
 
         {/* 테이블 / 상세 뷰 (GridFrame children) */}

@@ -30,12 +30,10 @@ export const schema: PageSchema = {
   filters: ['사업년도', '정기/수시'],
   // 공고 = 금액·변동률 없는 엔티티 → 제네릭 금액 KPI·카드 금액/상태 숨김
   hideMetrics: true,
-  // 건수형 KPI(계정구분별). 전체 + 농식품/수산 계정 건수 — 필터 결과에 반응
-  countKpis: [
-    { label: '전체 건수', icon: 'layers',       color: 'var(--primary)' },
-    { label: '농식품',    icon: 'check-circle', color: 'var(--success)', column: 'fundAccount', value: '농식품' },
-    { label: '수산',      icon: 'wallet',       color: 'var(--accent)',  column: 'fundAccount', value: '수산' },
-  ],
+  // KPI 배지 행 미포함(2026-09-11 사용자 결정) — 헤더 KPI 슬롯을 비운다. hideMetrics와 별개로 명시.
+  hideKpis: true,
+  // 카드뷰 미사용(2026-09-11 사용자 결정) — 푸터 리스트/카드뷰 SegTabs를 숨기고 리스트 뷰 고정.
+  hideCardView: true,
   // 목업 하단 DATA[] — 실제 계획공고 4건(합성 더미 대신 그대로 노출). moeFund 채워 수정 시 빈 값 방지
   sample: [
     { moeFund: '농식품모태펀드', bizYear: '2026', periodType: '정기', seqNo: 1, fundAccount: '농식품', title: '농림수산식품모태펀드 2026년 정기 출자사업(농식품 계정) 계획 공고', attachment: "260202(붙임) '26년 정기 출자사업(농식품투자 계정) 계획 공고_홈페이지.pdf" },

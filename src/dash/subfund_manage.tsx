@@ -18,7 +18,7 @@ import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
-import { GridFrame, KpiBadge } from './grid_frame';
+import { GridFrame } from './grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
 import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝) — 형제 드로어(asset_funding·generic_list)와 동일
 import { AgGridReact } from 'ag-grid-react';
@@ -35,7 +35,7 @@ import { SubFundSpecModal } from './subfund_spec_modal';         // 자펀드 �
 import { APPLY_SCHEMA, SELECT_SCHEMA, OPT_AG, OPT_FG, OPT_FS, OPT_MANAGER, OPT_MF, CUR_YEAR } from './subfund_manage_schemas';
 import { PeriodPicker } from './ui/period-picker';   // 연도/일자 선택 표준(apfs-datepicker)
 
-const { Button, IconBtn, StatusBadge, FilterChip, SegTabs, ColorChip } = UI;
+const { Button, IconBtn, StatusBadge, FilterChip, ColorChip } = UI;
 
 /* ──────────────────────────────
    도메인 타입 · 심사단계
@@ -233,7 +233,9 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<SubFundRow> | null>(null);
   const [rows, setRows] = useState<SubFundRow[]>(DEMO);
   const [selId, setSelId] = useState<string | null>(null);
-  const [view, setView] = useState('list');               // list | detail — 푸터 SegTabs(골드 asset_funding 양식)
+  // 카드뷰 미사용(2026-09-11 사용자 결정) — 푸터 SegTabs를 제거하고 리스트 뷰로 고정.
+  // 되살리려면 이 줄을 useState('list')로 되돌리고 footerRight에 SegTabs를 복원하면 된다(카드 렌더 분기는 그대로 남아 있다).
+  const view = 'list';
   const [showAll, setShowAll] = useState(false);          // 전체보기 — 페이지 크기를 전체 행 수로 키워 한 페이지에 모두 표시
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   /* 상단 kebab이 스크롤로 화면 밖에 나가면 푸터 kebab을 대신 노출(IntersectionObserver, root=뷰포트).
@@ -381,9 +383,6 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   };
   const selectInitial = selected ? { id: selected.id, y: selected.y, gp1: selected.gp1 === '-' ? '' : selected.gp1, fn: selected.fn, c1: selected.c1 ?? '', c2: selected.c2 ?? '', dur: selected.dur ?? '', rate: selected.rate ?? '', ctype: selected.ctype === '-' ? '' : selected.ctype, cs: selected.cs === '-' ? '' : selected.cs, my: selected.stg === '결성' ? '결성' : selected.stg === '취소' ? '취소' : '미결성', selDate: today() } : undefined;
 
-  /* KPI — 카드헤더 */
-  const totalCommit = rows.reduce((a, r) => a + (r.c1 ?? 0), 0);
-  const formedCount = rows.filter((r) => r.stg === '결성').length;
   const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
 
@@ -394,11 +393,6 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
       cardTitle="자펀드 관리"
       favRoute="subfund"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      kpis={<>
-        <KpiBadge icon="layers" color="var(--primary)" label="전체 건수" value={mn(String(rows.length)) + ' 건'} />
-        <KpiBadge icon="check-circle" color="var(--success)" label="결성 조합" value={mn(String(formedCount)) + ' 개'} />
-        <KpiBadge icon="wallet" color="var(--accent)" label="약정총액 합계" value={mn(fmt(Math.round(totalCommit / 1e8))) + ' 억원'} />
-      </>}
       toolbarLeft={selected ? (
         /* 선택 행의 심사단계에 맞는 작업만 노출(공고관리 컨텍스트 액션 패턴). 취소 단계는 작업 없음 */
         <>
@@ -455,7 +449,6 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
         </>
       ) : undefined}
       footerRight={<>
-        <SegTabs size="sm" value={view} onChange={setView} options={[{ value: 'list', label: '리스트 뷰' }, { value: 'detail', label: '카드뷰' }]} />
         <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
         {view === 'list' && (
           <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} pressed={showAll} onClick={() => setShowAll((v) => !v)} />
