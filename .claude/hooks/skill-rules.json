@@ -119,6 +119,13 @@
       "enforcement": "suggest",
       "keywords": ["접근성", "웹접근성", "웹 접근성", "a11y", "accessibility", "aria", "aria-label", "스크린리더", "스크린 리더", "screen reader", "키보드", "keyboard", "tab", "포커스", "focus", "초점", "대비", "contrast", "명도대비", "alt", "대체텍스트", "대체 텍스트", "wcag", "kwcag", "라이브리전", "live region", "aria-live", "role", "시맨틱", "semantic", "장애인", "저시력", "색맹", "reduced-motion", "라벨", "label", "focus trap", "포커스 트랩", "reflow", "리플로우"],
       "intentPatterns": ["(create|build|add|make|edit|만들|추가|작성|수정|편집|개선).*(page|화면|페이지|모달|modal|폼|form|입력|input|위젯|widget|컴포넌트|component|테이블|table|리스트|list|버튼|button|셸|shell)", "(접근성|웹\\s?접근성|a11y|accessibility|aria|스크린리더|screen reader|키보드|keyboard|포커스|focus|초점|대비|contrast|wcag|kwcag|대체\\s?텍스트|alt|라이브리전|aria-live)", "(접근성|a11y|aria|키보드|대비|초점|focus).*(점검|확인|검증|맞|개선|추가|적용|audit|check|verify)"]
+    },
+    {
+      "skillName": "apfs-hotkeys",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["단축키", "hotkey", "hot key", "shortcut", "키보드 단축키", "키바인딩", "키 바인딩", "keybinding", "key binding", "useHotkey", "HOTKEYS", "DropdownMenuShortcut", "명령 팔레트", "command palette", "커맨드 팔레트", "⌘", "⌥", "cmd", "ctrl", "alt", "meta", "modifier", "accelerator"],
+      "intentPatterns": ["(단축키|hotkey|shortcut|키바인딩|key ?binding).*(추가|변경|바꾸|만들|정의|충돌|정리|스킬|add|change|edit|make|define|conflict)", "(⌘|⌥|cmd|ctrl|alt|meta).*(키|key|조합|combo|충돌|conflict|바꾸|change)", "(단축키|shortcut).*(맥|mac|윈도우|windows|플랫폼|platform)"]
     }
   ]
 }
