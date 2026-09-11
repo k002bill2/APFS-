@@ -24,7 +24,8 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
   - **필요한 페이지만 opt-in**: 스키마에 `searchable: true` 한 줄. 정본 예시는 자펀드 공고 정보관리.
 - 정본: `generic_list.tsx`의 `SEARCH_LABEL`("검색어"). `rowMatchesFilters`가 **resolveFilterField보다 먼저 특수 처리** — 행의 전 컬럼 부분일치(OR) + `row.category`, 다른 필터와는 AND. OFF일 때는 드로어가 값을 세팅하지 않아 이 경로가 자연히 무발동(별도 가드 불필요).
 - ⚠️ **휴리스틱에 태우지 말 것**: "검색어"는 ③ 휴리스틱에서 **tag로 오판**된다 → ROW_CATS에 없으니 표 증발. 칩 파생(chipItems)도 같은 이유로 `label !== SEARCH_LABEL` 가드로 값-칩을 강제한다.
-- 자체 드로어(asset_funding·performance 등 typed 페이지)는 자체 검색어 배선을 가지므로 이 플래그와 무관하다(원하면 각 드로어에서 개별 게이트). GenericListPage만 `searchable` 대상. asset_funding은 `fText`, performance는 `applied.q`.
+- **typed 페이지(자체 드로어)도 동일하게 기본 OFF**: PageSchema를 안 쓰므로 `searchable` 대신 **로컬 `const SEARCHABLE = false`**(모듈/컴포넌트 상수)로 검색어 블록을 게이트한다 — 필요한 페이지만 `true`. 정본: `asset_funding.tsx`(`SEARCHABLE` 플래그가 드로어 검색어 `<label>`을 감쌈, 상태 `fText`/chip은 유지되나 입력이 숨겨져 값이 `''`로 고정→자연 무발동). performance는 `applied.q` 배선이라 같은 방식으로 게이트 가능.
+- ⚠️ **적용 누락 함정**: GenericListPage만 고치고 typed 페이지를 빠뜨리면 그 페이지에서 검색어가 계속 노출된다(2026-09-11 실제 발생 — asset_funding). "검색어 opt-in"은 **드로어를 가진 모든 표면**(generic_list + 각 typed 페이지)에서 각각 게이트해야 완결된다.
 
 ## 타입 도출 — `resolveFilterField(label, schema)` 우선순위
 - **① field 매칭**(label 정확일치, 가장 정확): `select`→enum(field.options) · `date`→date · 년도라벨→year · `number`→number · 그외→text.

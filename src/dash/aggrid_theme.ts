@@ -15,8 +15,14 @@ import { mn } from './mask';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-/* 컬럼 폭 = 내용 폭(잘림 방지) — 그리드 기본 전략(2026-09-08 사용자 결정). 첫 데이터 렌더 때 헤더+셀 내용으로 자동 산정.
-   너무 긴 텍스트 컬럼(조합명·GP 등)은 colDef.maxWidth로 상한을 둔다. 사용: <AgGridReact autoSizeStrategy={AUTO_SIZE_CONTENT} …> */
+/* 컬럼 폭 = 내용 폭(잘림 방지) — autoSizeStrategy 기본(2026-09-08 사용자 결정). 첫 데이터 렌더 때 헤더+셀 내용으로 자동 산정.
+   → 컬럼이 많아 프레임 폭을 넘는 넓은 테이블(자펀드관리 등)용. 긴 텍스트 컬럼은 colDef.maxWidth로 상한.
+   ⚠ 내용이 프레임보다 좁으면 우측에 빈 공간이 남는다. 이때는 이 전략 대신 컬럼 flex로 채운다(아래).
+   사용: <AgGridReact autoSizeStrategy={AUTO_SIZE_CONTENT} …>
+
+   ── 우측 빈 공간을 없애려면(좁은 매트릭스/집계 그리드, 조성·출자현황 등): autoSizeStrategy를 빼고 컬럼에 `flex:1` + `minWidth`.
+   flex는 그리드 폭을 동적으로 채우고 리사이즈에도 자동 재분배한다(JS 이벤트 불필요). minWidth가 하한이라 좁으면 가로 스크롤.
+   ✗ autoSizeStrategy `fitGridWidth`는 domLayout=autoHeight+지연 레이아웃에서 생성 시점 폭에 1회만 맞춰 빈 공간이 남는다(2026-09-11 실측). flex를 쓴다. */
 export const AUTO_SIZE_CONTENT: AutoSizeStrategy = { type: 'fitCellContents' };
 
 export const apfsTheme = themeQuartz.withParams({
