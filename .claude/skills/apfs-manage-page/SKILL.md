@@ -29,6 +29,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 편집 팝업(섹션·반복행·첨부표) | 전용 섹션형 모달 — `SchemaField` 재사용 | [[apfs-form-modal]] "확장: 섹션형·반복행" |
 | 사업연도/기준일자 | 드로어·모달 모두 **`PeriodPicker`**(`mode="year"` / `"day"`, `DrawerField plain`) — 연도 `<select>`·네이티브 date 금지 | [[apfs-datepicker]] "PeriodPicker" |
 | 적용 필터 칩 | 항목별 개별 칩, **값만**(접두사 없음) + × aria-label에 항목명 | [[apfs-detail-filter]] "typed 페이지 트랙" |
+| 신규 등록(1차 액션) | **툴바 독립 버튼** `Button variant="outline" size="sm" leadingIcon="plus"` — `toolbarRight`에서 **상세필터 오른쪽·새로고침 왼쪽**(kebab 왼쪽). **kebab 항목으로 넣지 않는다**(2026-09-11 사용자 결정으로 이전 "등록도 kebab 안" 규약을 뒤집음 — 진입 빈도 높은데 2클릭). 라벨은 도메인 액션명 그대로(`제안서접수 등록`), "등록"으로 축약 금지. 단축키 `⌘⏎`(`HOTKEYS.register`)는 유지되나 **화면 힌트는 없다**(Button이 Tooltip asChild 불가) | 툴바 순서=[[apfs-grid]] "관리형 리스트 툴바·타이틀 규약" · 모달=[[apfs-form-modal]] · 단축키=[[apfs-hotkeys]] |
 | 엑셀 | SheetJS — 병합/리프 컬럼을 **columnDefs에서 자동 산출**(`flattenForExcel`), 마스크 시 숫자 0·텍스트 ''. **진입=툴바 kebab `MoreMenu` "내보내기 (Excel)" 항목**(독립 "엑셀" 버튼 금지) + 푸터 `IconBtn download` + 단축키 `⌥D`(`HOTKEYS.export`) | [[apfs-aggrid]] · 툴바/kebab=[[apfs-grid]] · 단축키=[[apfs-hotkeys]] |
 | 프레임 외관·푸터 | `--frame-bg`(테두리·그림자 없음), `sub` 미사용, 단위 캡션은 `toolbarRight`, 푸터 골드(건수·페이저·뷰 토글·아이콘) | [[apfs-grid]] "프레임 외관 규약" |
 | 리스트 ↔ 카드뷰 | **opt-in(기본 미포함, 2026-09-11)** — 요구 시에만. 포함 시 푸터 `SegTabs` + 카드 그리드 + 선택 유지. **미포함이면 `view` state·`SegTabs`·카드 분기를 넣지 않는다**(리스트 뷰만) | **[[apfs-card-view]]** |

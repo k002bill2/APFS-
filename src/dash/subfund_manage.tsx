@@ -24,7 +24,7 @@ import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuShortcut } from './ui/dropdown-menu';   // kebab 더보기(asset_funding 동형)
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';   // kebab 더보기(asset_funding 동형)
 import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘⏎ 제안서접수 등록·⌘P 인쇄)
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';   // kebab 트리거 툴팁(Provider는 app.tsx 루트)
 import { toast } from './ui/sonner';
@@ -188,9 +188,10 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
   );
 }
 
-/* kebab(···) 더보기 — 등록·내보내기(Excel)·인쇄를 담는다. 독립 '엑셀' 버튼을 이 안으로 흡수(generic_list MoreMenu 동형).
+/* kebab(···) 더보기 — 내보내기(Excel)·인쇄. 등록은 kebab에서 꺼내 툴바 독립 버튼으로 승격(2026-09-11 사용자 결정,
+   진입 빈도가 높은 1차 액션이라 2클릭→1클릭). 독립 '엑셀' 버튼은 여전히 두지 않는다(내보내기 항목으로 흡수).
    트리거는 Tooltip으로 감싼다(TooltipProvider는 app.tsx 루트). */
-function MoreMenu({ onRegister, onExport, size = 34 }: { onRegister: () => void; onExport: () => void; size?: number }) {
+function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
   return (
     <DropdownMenu>
       {/* Tooltip/Dropdown 트리거를 같은 노드에 합성하면 Radix가 data-state를 서로 덮어써(Codex P2),
@@ -210,11 +211,6 @@ function MoreMenu({ onRegister, onExport, size = 34 }: { onRegister: () => void;
         <TooltipContent>더보기</TooltipContent>
       </Tooltip>
       <DropdownMenuContent>
-        <DropdownMenuItem onSelect={onRegister}>
-          <Icon name="plus" size={17} className="shrink-0 text-muted-foreground" />제안서접수 등록
-          <DropdownMenuShortcut>{HOTKEYS.register.hint}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onExport}>
           <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
           <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
@@ -444,8 +440,11 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
         {/* 금액 단위 표기 — 캡션(비마스킹). 카드헤더 sub 캡션을 없애면서 여기로 이동 */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
+        {/* 등록 = 이 화면의 1차 액션. kebab 밖 독립 버튼(outline)으로 두어 보조 액션(ghost·아이콘)과 위계를 가른다.
+            단축키 ⌘⏎(HOTKEYS.register)는 그대로 — 힌트는 kebab 항목이 사라지며 함께 빠졌다. */}
+        <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'apply' })}>제안서접수 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
-        <span ref={topMoreRef} className="inline-flex"><MoreMenu onRegister={() => setModal({ kind: 'apply' })} onExport={exportExcel} /></span>
+        <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>
       </>}
       footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
       footerCenter={view === 'list' && page.total > 1 ? (
@@ -462,8 +461,8 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} pressed={showAll} onClick={() => setShowAll((v) => !v)} />
         )}
         <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        {/* 상단 kebab이 화면 밖일 때만 노출(스크롤 시 등록/인쇄 접근 유지) */}
-        {!topMoreVisible && <MoreMenu size={32} onRegister={() => setModal({ kind: 'apply' })} onExport={exportExcel} />}
+        {/* 상단 kebab이 화면 밖일 때만 노출(스크롤 시 내보내기/인쇄 접근 유지). 등록은 툴바 버튼 + ⌘⏎로 접근 */}
+        {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
       </>}>
 
       {view === 'list' ? (

@@ -26,6 +26,7 @@ APFS의 앱-스코프 키보드 단축키는 **단일 훅 + 단일 레지스트�
 | `⌥E` / `Alt+E` | 일정 모달 | `HOTKEYS.schedule` | shell | Mac 실측 / **Windows 미실측** |
 | `⌥L` / `Alt+L` | 로그아웃 모달 | `HOTKEYS.logout` | shell | Mac 실측 / **Windows 미실측** |
 
+- **등록 `⌘⏎`는 화면 힌트가 없다**(2026-09-11~). 등록이 kebab 항목에서 툴바 독립 버튼으로 승격되며 `DropdownMenuShortcut` 힌트가 함께 빠졌다 — `UI.Button`은 `forwardRef`/rest props가 없어 Radix `Tooltip asChild` 트리거로 못 쓰고 `title`도 전달되지 않는다(→[[ui-button-not-radix-aschild-trigger]]). 바인딩은 정상 동작. 힌트를 되살리려면 Button `children`에 `<span>{HOTKEYS.register.hint}</span>`를 덧붙이는 방법뿐. 툴바 배치 규약은 →[[apfs-grid]].
 - **`⌘K`는 HOTKEYS 밖의 직접 리스너**(`shell.tsx`, `(e.key==="k"||"K") && (metaKey||ctrlKey)`)다. `useHotkey`가 바로 이 ⌘K 명령팔레트 패턴을 재사용 훅으로 일반화한 것 — 신규 단축키는 반드시 `HOTKEYS`+`useHotkey`로 만든다.
 
 ## Mac / Windows 대응 (질문 자주 나옴)

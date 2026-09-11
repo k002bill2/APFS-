@@ -104,9 +104,16 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 ## 관리형 리스트 툴바·타이틀 규약 (2026-09-11 subfund_manage에서 정립)
 리스트형(CRUD) 페이지 한정. 매트릭스/집계형은 위 골든(`headerActions` primary 내보내기)을 그대로 둔다.
 
-- **툴바 보조 액션은 kebab(⋯) `MoreMenu` 한 곳에.** 등록·내보내기(Excel)·인쇄를 kebab 항목으로 모으고 **내보내기용 독립 "엑셀" 버튼을 `toolbarRight`에 따로 두지 않는다**(kebab "내보내기 (Excel)" 항목으로 흡수). 내보내기 진입점은 결과적으로 **kebab 항목 + 푸터 `IconBtn download` + 단축키 `⌥D`** 세 곳 — 중복 아님(위 39행 "한 곳에만"은 *툴바 독립 버튼*을 두지 말라는 뜻).
-- **kebab 항목엔 단축키 힌트(`DropdownMenuShortcut`) 동반**: 등록 `HOTKEYS.register`(⌘⏎)·내보내기 `HOTKEYS.export`(⌥D)·인쇄 `HOTKEYS.print`(⌘P). 단축키 시스템·mod/⌥ 2티어·Windows 함정은 → [[apfs-hotkeys]] (여기서 표 복제 금지, 링크만).
-- **`MoreMenu`는 공유 컴포넌트가 아니다** — `generic_list.tsx`·`asset_funding.tsx`(`PoCMoreMenu`)·`subfund_manage.tsx`가 각자 **로컬 복사본**(`PageBtn`과 동일 방식, 공유 export 아님). 골드는 `subfund_manage.tsx`(Tooltip 래핑·`DropdownMenuShortcut`·`onRegister/onExport/size` props). 상단 `toolbarRight`의 `topMoreRef` + 화면 밖일 때 푸터 폴백 `!topMoreVisible && <MoreMenu>` 쌍으로 스크롤 중 접근 유지. 신규 페이지는 골드에서 복사하고 `onExport` 등 필요한 prop을 배선한다.
+- **1차 액션(등록)은 툴바 독립 버튼, 보조 액션은 kebab(⋯).** 2026-09-11 사용자 결정으로 *등록을 kebab 밖으로 승격*했다(이전 규약 "등록도 kebab 안에"를 뒤집음 — 진입 빈도가 높은데 2클릭이 걸렸다). 순서는 고정:
+  ```
+  toolbarRight:  단위: 원 │ ▣ 상세필터 │ ＋ 등록 │ ⟳ 새로고침 │ ⋯ kebab
+                 caption    ghost         outline    IconBtn      MoreMenu
+  ```
+  등록 버튼은 `<Button variant="outline" size="sm" leadingIcon="plus">`— 주변 보조 액션이 ghost·아이콘이라 outline 하나만으로 위계가 선다(primary는 과함). 라벨은 도메인 액션명 그대로(`제안서접수 등록`), "등록"으로 줄이지 않는다.
+- **kebab에 남는 것은 내보내기(Excel)·인쇄뿐.** **내보내기용 독립 "엑셀" 버튼을 `toolbarRight`에 따로 두지 않는다**(kebab 항목으로 흡수). 내보내기 진입점은 **kebab 항목 + 푸터 `IconBtn download` + 단축키 `⌥D`** 세 곳 — 중복 아님(위 39행 "한 곳에만"은 *툴바 독립 버튼*을 두지 말라는 뜻).
+- **kebab 항목엔 단축키 힌트(`DropdownMenuShortcut`) 동반**: 내보내기 `HOTKEYS.export`(⌥D)·인쇄 `HOTKEYS.print`(⌘P). ⚠️ **등록 ⌘⏎(`HOTKEYS.register`)는 바인딩만 살아 있고 화면 힌트가 없다** — `Button`은 `forwardRef`/rest props가 없어 Radix `Tooltip asChild` 트리거로 못 쓰고 `title`도 안 먹기 때문(→ [[ui-button-not-radix-aschild-trigger]] 함정). 힌트를 살리려면 Button `children`에 `<span>{HOTKEYS.register.hint}</span>`를 덧붙이는 방법뿐. 단축키 시스템·mod/⌥ 2티어·Windows 함정은 → [[apfs-hotkeys]] (여기서 표 복제 금지, 링크만).
+- **`MoreMenu`는 공유 컴포넌트가 아니다** — `generic_list.tsx`·`asset_funding.tsx`(`PoCMoreMenu`)·`subfund_manage.tsx`가 각자 **로컬 복사본**(`PageBtn`과 동일 방식, 공유 export 아님). 골드는 `subfund_manage.tsx`(Tooltip 래핑·`DropdownMenuShortcut`·`onExport/size` props — `onRegister`는 등록 승격으로 제거됨). 상단 `toolbarRight`의 `topMoreRef` + 화면 밖일 때 푸터 폴백 `!topMoreVisible && <MoreMenu>` 쌍으로 스크롤 중 접근 유지(등록은 툴바 버튼 + ⌘⏎로 접근하므로 폴백 대상이 아니다). 신규 페이지는 골드에서 복사하고 `onExport` 등 필요한 prop을 배선한다.
+- ⚠️ **미반영 트랙**: 스키마 주도 `generic_list.tsx`의 `MoreMenu`는 아직 `등록`을 kebab 안에 두고 있다(`onRegister`+`editable` 게이트). 이 규약을 그 트랙에 옮기려면 `toolbarRight`에 등록 버튼을 추가하고 kebab 항목·separator를 걷어내면 된다 — 미착수.
 - **타이틀은 메뉴 리프와 일치.** `cardTitle`·`title`·`crumbs` 리프를 **`data.ts` 메뉴 리프 라벨 문자열 그대로**(띄어쓰기 포함) 맞춘다. `cardTitle`이 `title`과 같으면 생략 가능(H1=`cardTitle ?? title`). **"○○ 목록" 같은 임의 축약 금지**(2026-09-11 "자펀드 목록"→"자펀드 관리" 정정). 매트릭스/집계형이 문서 정식명칭을 카드 제목으로 쓰는 것(asset_funding "…현황표")은 예외.
 
 ## 검증
