@@ -393,9 +393,9 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '자펀드 관리', '자펀드관리']}
-      title="자펀드관리"
-      cardTitle="자펀드 목록"
+      crumbs={['홈', '투자자산관리', '자펀드 관리', '자펀드 관리']}
+      title="자펀드 관리"
+      cardTitle="자펀드 관리"
       favRoute="subfund"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       kpis={<>
