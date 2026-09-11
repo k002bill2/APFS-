@@ -271,7 +271,7 @@ export function SubFundSpecModal({ row, onClose }: { row: SubFundRow; onClose: (
       <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
         {/* 중첩 팝업이 열려 있을 때는 바깥 클릭이 부모까지 닫지 않도록 차단 */}
         <DialogContent className="max-w-[880px] max-h-[88vh]" onInteractOutside={(e) => { if (fsOpen) e.preventDefault(); }}>
-          <DialogHeader>
+          <DialogHeader className="px-[46px]">
             <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
               <DialogTitle className="shrink-0">자펀드 명세</DialogTitle>
               <DialogDescription className="text-caption truncate min-w-0"><MT>{row.fn}</MT></DialogDescription>
@@ -282,7 +282,7 @@ export function SubFundSpecModal({ row, onClose }: { row: SubFundRow; onClose: (
             <Section title="자펀드 개요"><KvGrid items={ov} unit={unit} /></Section>
             <Section title="재무정보" unitNote={`(기준년월 ${BASEYM} · 단위: ${unit})`}><FinGrid unit={unit} zero={!formed} /></Section>
           </div>
-          <DialogFooter>
+          <DialogFooter className="px-[46px]">
             <div />
             <div className="flex gap-2">
               <Button variant="primary" size="sm" leadingIcon="file" onClick={() => setFsOpen(true)}>재무제표 상세</Button>
