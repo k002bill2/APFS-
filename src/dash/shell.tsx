@@ -729,7 +729,7 @@ const ROUTE_META: Record<string, { label: string; crumbs: string[]; icon: string
     performance: { label: "투자 성과·포트폴리오", crumbs: ["홈", "통계조회", "투자 성과·포트폴리오"], icon: "trending" },
     schedule: { label: "일정·알림 센터", crumbs: ["홈", "일정·알림 센터"], icon: "calendar" },
     "report-bucheo": { label: "모태펀드", crumbs: ["홈", "부처보고", "모태펀드"], icon: "file" },
-    subfund: { label: "자펀드 정보관리", crumbs: ["홈", "투자자산관리", "자펀드 정보관리"], icon: "landmark" },
+    subfund: { label: "자펀드 관리", crumbs: ["홈", "투자자산관리", "자펀드 관리", "자펀드 관리"], icon: "landmark" },
   };
   for (const k in pages) idx[k] = pages[k];   // 페이지 제목이 카테고리 라벨보다 우선
   return idx;

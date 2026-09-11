@@ -284,7 +284,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
     <GridFrame
       crumbs={['홈', '투자자산관리', '모태펀드관리', '모태펀드 조성 및 출자현황']}
       title="모태펀드 조성 및 출자현황"
-      cardTitle="모태펀드 조성·출자 현황표"
+      cardTitle="모태펀드 조성 및 출자현황"
       favRoute="asset-funding"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       kpis={<>
