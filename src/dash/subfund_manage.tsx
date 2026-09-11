@@ -188,9 +188,9 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
   );
 }
 
-/* kebab(···) 더보기 — 엑셀 옆. 헤더 primary였던 '제안서접수 등록'을 여기로 이동(asset_funding PoCMoreMenu 동형).
+/* kebab(···) 더보기 — 등록·내보내기(Excel)·인쇄를 담는다. 독립 '엑셀' 버튼을 이 안으로 흡수(generic_list MoreMenu 동형).
    트리거는 Tooltip으로 감싼다(TooltipProvider는 app.tsx 루트). */
-function MoreMenu({ onRegister, size = 34 }: { onRegister: () => void; size?: number }) {
+function MoreMenu({ onRegister, onExport, size = 34 }: { onRegister: () => void; onExport: () => void; size?: number }) {
   return (
     <DropdownMenu>
       {/* Tooltip/Dropdown 트리거를 같은 노드에 합성하면 Radix가 data-state를 서로 덮어써(Codex P2),
@@ -215,6 +215,10 @@ function MoreMenu({ onRegister, size = 34 }: { onRegister: () => void; size?: nu
           <DropdownMenuShortcut>{HOTKEYS.register.hint}</DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={onExport}>
+          <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
+          <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => window.print()}>
           <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
           <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
@@ -244,6 +248,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   // 앱-스코프 단축키: ⌘⏎=제안서접수 등록(모달 열림 중엔 비활성 → 이중 열림 방지), ⌘P=인쇄.
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'apply' }), { enabled: modal === null });
   useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.export.combo, () => exportExcel());
   const masked = useMask();
 
   /* 필터 — 심사단계는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
@@ -440,8 +445,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
-        <Button variant="outline" size="sm" leadingIcon="download" onClick={exportExcel}>엑셀</Button>
-        <span ref={topMoreRef} className="inline-flex"><MoreMenu onRegister={() => setModal({ kind: 'apply' })} /></span>
+        <span ref={topMoreRef} className="inline-flex"><MoreMenu onRegister={() => setModal({ kind: 'apply' })} onExport={exportExcel} /></span>
       </>}
       footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
       footerCenter={view === 'list' && page.total > 1 ? (
@@ -459,7 +463,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
         )}
         <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
         {/* 상단 kebab이 화면 밖일 때만 노출(스크롤 시 등록/인쇄 접근 유지) */}
-        {!topMoreVisible && <MoreMenu size={32} onRegister={() => setModal({ kind: 'apply' })} />}
+        {!topMoreVisible && <MoreMenu size={32} onRegister={() => setModal({ kind: 'apply' })} onExport={exportExcel} />}
       </>}>
 
       {view === 'list' ? (
