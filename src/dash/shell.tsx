@@ -72,6 +72,9 @@ const ancestorsOf = (route) => {
 function MenuChildren({ m, route, expanded, setExpanded, onNav }) {
   const showDots = m.id === "risk";
   const primaryBg = "color-mix(in srgb,var(--primary) 12%,transparent)";
+  // 활성 리프는 route(=bare label)만으론 중복 라벨('사용자관리' 등)에서 두 그룹 모두 매치 → aria-current 2중(ultrareview).
+  // ancestorsOf 첫-매치가 정한 소유 그룹(owner[subKey]/owner[m.id])에서만 마킹해, 경쟁 top이 열려 있어도 한 리프만 활성.
+  const owner = ancestorsOf(route);
   return (
     <>{m.children.map((c, i) => {
       if (c.sub && c.children) {
@@ -93,7 +96,7 @@ function MenuChildren({ m, route, expanded, setExpanded, onNav }) {
                   name="chevron-down"
                   size={12}
                   style={{ transform: subOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .15s", opacity: .5 }} /></div></button>{subOpen && <div className="mb-0.5 pl-3.5">{c.children.map((leaf, j) => {
-                const leafActive = (leaf.path || leaf.label) === route;
+                const leafActive = (leaf.path || leaf.label) === route && !!owner[subKey];
                 return (<button
                   key={j}
                   onClick={() => onNav(leaf.path || leaf.label)}
@@ -112,7 +115,7 @@ function MenuChildren({ m, route, expanded, setExpanded, onNav }) {
               })}</div>}</div>
         );
       }
-      const cActive = (c.path || c.label) === route;
+      const cActive = (c.path || c.label) === route && !!owner[m.id];
       return (
         <button
           key={i}
