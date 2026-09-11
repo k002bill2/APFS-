@@ -19,7 +19,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 ## 1. 영역 → 스킬 매핑 (조립표)
 | 목업 영역 | 우리 구현 | 규약 출처 |
 |-----------|-----------|-----------|
-| 페이지 골격(제목·KPI·툴바·푸터) | `GridFrame` + `KpiBadge` | [[apfs-grid]] |
+| 페이지 골격(제목·KPI·툴바·푸터) | `GridFrame` + `KpiBadge`. **타이틀(`cardTitle`·`title`·crumbs 리프)은 `data.ts` 메뉴 리프 라벨과 일치**(임의 "○○ 목록" 금지) | [[apfs-grid]] "관리형 리스트 툴바·타이틀 규약" |
 | 검색박스(인라인 N개 필터) | **주 필터 1개=툴바 `FilterChip`**(예: 심사단계) + 나머지=**상세필터 드로어(Sheet)**, 검색어 최상단 고정, 컬럼 미연동 필터는 `· 데이터 연동 후 적용` 캡션 | [[apfs-detail-filter]] |
 | 2단 헤더 그리드 + tfoot 합계 | AG Grid `ColGroupDef`(`marryChildren`) + `pinnedBottomRowData=useMemo([computeTotal(filteredRows)])` | [[apfs-aggrid]] |
 | 행 라디오 단일선택 | `rowSelection={{mode:'singleRow',checkboxes:true,enableClickSelection:true}}` + `selectionColumnDef={{pinned:'left'}}` + `getRowId` 안정 id | [[apfs-aggrid]] |
@@ -28,7 +28,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 편집 팝업(섹션·반복행·첨부표) | 전용 섹션형 모달 — `SchemaField` 재사용 | [[apfs-form-modal]] "확장: 섹션형·반복행" |
 | 사업연도/기준일자 | 드로어·모달 모두 **`PeriodPicker`**(`mode="year"` / `"day"`, `DrawerField plain`) — 연도 `<select>`·네이티브 date 금지 | [[apfs-datepicker]] "PeriodPicker" |
 | 적용 필터 칩 | 항목별 개별 칩, **값만**(접두사 없음) + × aria-label에 항목명 | [[apfs-detail-filter]] "typed 페이지 트랙" |
-| 엑셀 | SheetJS — 병합/리프 컬럼을 **columnDefs에서 자동 산출**(`flattenForExcel`), 마스크 시 숫자 0·텍스트 '' | [[apfs-aggrid]] |
+| 엑셀 | SheetJS — 병합/리프 컬럼을 **columnDefs에서 자동 산출**(`flattenForExcel`), 마스크 시 숫자 0·텍스트 ''. **진입=툴바 kebab `MoreMenu` "내보내기 (Excel)" 항목**(독립 "엑셀" 버튼 금지) + 푸터 `IconBtn download` + 단축키 `⌥D`(`HOTKEYS.export`) | [[apfs-aggrid]] · 툴바/kebab=[[apfs-grid]] · 단축키=[[apfs-hotkeys]] |
 | 프레임 외관·푸터 | `--frame-bg`(테두리·그림자 없음), `sub` 미사용, 단위 캡션은 `toolbarRight`, 푸터 골드(건수·페이저·뷰 토글·아이콘) | [[apfs-grid]] "프레임 외관 규약" |
 | 리스트 ↔ 카드뷰 | 푸터 `SegTabs` + 카드 그리드 + 선택 유지 | **[[apfs-card-view]]** |
 | 읽기전용 명세 팝업 | `명세` 버튼 + 더블클릭 → 단위 토글·kv·재무요약·중첩 재무제표 | **[[apfs-spec-popup]]** |

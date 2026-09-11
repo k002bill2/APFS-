@@ -93,7 +93,7 @@ export function GridFrame({
       {/* 프레임 카드는 테두리·그림자 없이 페이지 배경과 같은 색(--frame-bg 토큰, tokens.css 한 줄로 전체 변경). inline이 Card의 border/bg 클래스보다 우선 */}
       {/* marginTop:10 — PageHeader가 공용 하단 마진을 버리고 소비처가 간격을 책임지는 규약(page별 mt-2.5)에 맞춰,
           GridFrame 소비처(제네릭 리스트·asset_funding·subfund_manage 등)의 브레드크럼↔카드 간격을 한 곳에서 복구. */}
-      <Card pad={0} style={{ marginTop: 10, background: 'var(--frame-bg)', border: 0, boxShadow: 'none' }}>
+      <Card pad={0} style={{ marginTop: 0, background: 'var(--frame-bg)', border: 0, boxShadow: 'none' }}>
         {/* 카드 헤더: 타이틀(+sub 캡션) + KPI 슬롯 */}
         <div className="flex items-center justify-between flex-wrap gap-4" style={{ padding: '6px 18px' }}>
           <div className="min-w-0">

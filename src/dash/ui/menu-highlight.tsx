@@ -12,6 +12,10 @@
      (Radix Content는 닫힘 시 unmount / HistoryMenu는 {open && …} / row_context_menu는 createPortal JSX 안).
    - 항목 버튼에 `relative isolate` 필수: -z-10 span이 텍스트 뒤·팝오버 배경 앞에 갇히도록 자체
      쌓임맥락 생성. 구분선은 `relative z-10`으로 올려 슬라이드가 선 아래로 지나가게 한다(깜빡임 방지).
+   - 비활성 항목에 `z-[1]` 필수(useMenuHighlight의 active로 게이팅): isolate 형제 맥락은 DOM 순서로
+     페인트되므로, 활성(도착) 항목이 아래(DOM 후순위)에 있으면 그 안의 슬라이드 span이 위쪽 항목
+     텍스트를 덮어 "아래로 내릴 때 윗 글씨가 깜박"인다. 비활성을 양수 레이어로 올리고 활성은 z-auto로
+     두면 span(활성 내부, 레이어 0)이 항상 비활성 텍스트(레이어 1) 아래로 지나가 방향 무관하게 안 덮인다.
    - danger 항목은 span을 danger tint로(색 일관성). danger 아니면 accent-surface. */
 import * as React from 'react';
 import { motion } from 'motion/react';
@@ -34,7 +38,9 @@ export function useMenuHighlight() {
   const id = React.useId();
   const ctx = React.useContext(HighlightCtx);
   const setActive = React.useCallback(() => ctx?.setActive(id), [ctx, id]);
-  return { id, setActive };
+  // active: 이 항목이 현재 활성인가. 소비처가 비활성 항목에 z-[1]을 걸어 슬라이드 span이 형제 텍스트를
+  // 덮지 않게 게이팅한다(위 규약 "비활성 항목 z-[1]" 참조).
+  return { id, setActive, active: ctx?.active === id };
 }
 
 /* 활성 항목 뒤에 깔리는 슬라이드 배경. layoutId 공유라 항목 간 이동 시 spring으로 미끄러진다.

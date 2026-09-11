@@ -37,7 +37,7 @@ const ContextMenuItem = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Item> & { inset?: boolean; danger?: boolean }
 >(({ className, inset, danger, children, onFocus, ...props }, ref) => {
-  const { id, setActive } = useMenuHighlight();
+  const { id, setActive, active } = useMenuHighlight();
   return (
     <ContextMenuPrimitive.Item
       ref={ref}
@@ -48,6 +48,7 @@ const ContextMenuItem = React.forwardRef<
       className={cn(
         // isolate: -z-10 하이라이트가 텍스트 뒤·팝오버 배경 앞에 갇히도록 자체 쌓임맥락 생성.
         'relative isolate flex cursor-pointer select-none items-center gap-2.5 rounded-card-sm px-2.5 py-2 text-[13.5px] font-semibold outline-none',
+        !active && 'z-[1]', // 비활성 항목을 양수 레이어로: 슬라이드 span이 형제 텍스트를 덮는 방향성 깜박임 방지(menu-highlight 규약)
         'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
         danger ? 'text-danger' : 'text-foreground',
         inset && 'pl-8',

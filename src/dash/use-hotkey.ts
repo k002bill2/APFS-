@@ -22,6 +22,7 @@ const ALT = isMac ? '⌥' : 'Alt+';
 export const HOTKEYS = {
   register: { combo: { mod: true, key: 'Enter' } as HotkeyCombo, hint: isMac ? '⌘⏎' : 'Ctrl+Enter' },
   print: { combo: { mod: true, key: 'p' } as HotkeyCombo, hint: MOD + 'P' },
+  export: { combo: { alt: true, key: 'd' } as HotkeyCombo, hint: ALT + 'D' },   // D=Download/내보내기(⌥ 티어: OS 예약 아님·입력창 자동 무시)
   memo: { combo: { alt: true, key: 'm' } as HotkeyCombo, hint: ALT + 'M' },
   schedule: { combo: { alt: true, key: 'e' } as HotkeyCombo, hint: ALT + 'E' },
   logout: { combo: { alt: true, key: 'l' } as HotkeyCombo, hint: ALT + 'L' },

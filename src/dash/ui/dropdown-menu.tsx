@@ -51,7 +51,7 @@ const DropdownMenuItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & { inset?: boolean; danger?: boolean }
 >(({ className, inset, danger, children, onFocus, ...props }, ref) => {
-  const { id, setActive } = useMenuHighlight();
+  const { id, setActive, active } = useMenuHighlight();
   return (
     <DropdownMenuPrimitive.Item
       ref={ref}
@@ -62,6 +62,7 @@ const DropdownMenuItem = React.forwardRef<
       className={cn(
         // isolate: -z-10 하이라이트가 항목 텍스트 뒤·팝오버 배경 앞에 갇히도록 자체 쌓임맥락 생성.
         'relative isolate flex cursor-pointer select-none items-center gap-2.5 rounded-card-sm px-2.5 py-2 text-[13.5px] font-semibold outline-none',
+        !active && 'z-[1]', // 비활성 항목을 양수 레이어로: 슬라이드 span이 형제 텍스트를 덮는 방향성 깜박임 방지(menu-highlight 규약)
         'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
         danger ? 'text-danger' : 'text-foreground',
         inset && 'pl-8',
@@ -80,7 +81,7 @@ const DropdownMenuRadioItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.RadioItem>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.RadioItem>
 >(({ className, children, onFocus, ...props }, ref) => {
-  const { id, setActive } = useMenuHighlight();
+  const { id, setActive, active } = useMenuHighlight();
   return (
     <DropdownMenuPrimitive.RadioItem
       ref={ref}
@@ -92,6 +93,7 @@ const DropdownMenuRadioItem = React.forwardRef<
         // pl-8: 좌측 체크 지표 자리 확보. 선택 상태는 배경색(색)만이 아니라 체크 아이콘(비색)으로도 구분(WCAG 1.4.1).
         // isolate: -z-10 하이라이트가 텍스트 뒤·팝오버 배경 앞에 갇히도록. 체크 tint는 유지(비활성 항목의 선택 표시).
         'relative isolate flex cursor-pointer select-none flex-col rounded-card-sm py-2 pl-8 pr-2.5 outline-none',
+        !active && 'z-[1]', // 비활성 항목을 양수 레이어로: 슬라이드 span이 형제 텍스트를 덮는 방향성 깜박임 방지(menu-highlight 규약)
         'data-[state=checked]:bg-[color-mix(in_srgb,var(--primary)_10%,transparent)]',
         'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
         className,

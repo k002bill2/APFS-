@@ -26,7 +26,7 @@ const MENU_W = 190;   // 고정 폭(가장자리 flip 계산에 사용)
    기존 hover/focus-visible 배경 클래스는 제거(남기면 즉시배경+슬라이드 이중). `relative isolate`로
    -z-10 span을 텍스트 뒤·팝오버 앞에 가둔다. danger는 span을 danger tint로. */
 function CtxMenuButton({ item, onClose }: { item: Exclude<CtxItem, 'sep'>; onClose: () => void }) {
-  const { id, setActive } = useMenuHighlight();
+  const { id, setActive, active } = useMenuHighlight();
   return (
     <button
       role="menuitem"
@@ -34,7 +34,7 @@ function CtxMenuButton({ item, onClose }: { item: Exclude<CtxItem, 'sep'>; onClo
       onClick={() => { item.onSelect(); onClose(); }}
       onMouseEnter={setActive}
       onFocus={setActive}
-      className="relative isolate flex items-center gap-2.5 w-full rounded-card-sm px-2.5 py-2 text-[14px] text-left cursor-pointer select-none border-0 bg-transparent"
+      className={"relative isolate flex items-center gap-2.5 w-full rounded-card-sm px-2.5 py-2 text-[14px] text-left cursor-pointer select-none border-0 bg-transparent" + (active ? "" : " z-[1]")}
       style={{ font: 'inherit', color: item.danger ? 'var(--danger)' : undefined }}
     >
       <ItemHighlight id={id} danger={item.danger} />
