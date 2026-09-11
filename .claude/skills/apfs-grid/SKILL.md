@@ -97,6 +97,10 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 
 ## 프레임 외관 규약 (2026-09-08 사용자 확정 — 자펀드관리에서 정립, GridFrame 전 페이지 공통)
 - **카드 배경 = 페이지 배경, 테두리·그림자 없음.** `grid_frame.tsx`가 `Card`에 inline `background:'var(--frame-bg)', border:0, boxShadow:'none'`을 얹는다(inline이 Card의 `border bg-card` 클래스보다 우선). `--frame-bg`는 `tokens.css` 라이트/다크 모두 `var(--bg)` — **전체 색을 바꾸려면 이 토큰 한 줄**. sticky 푸터 배경도 같은 토큰(안 그러면 흰 띠).
+- **카드헤더 타이틀 행 높이 = 60px 고정**(2026-09-11 사용자 확정). 구성은 `padding: '15px 18px'` + 가장 큰 자식(FavStar 버튼 30px) → `30 + 15×2 = 60`. 높이는 **패딩 한 숫자로만** 조절한다.
+  - ⚠️ **`<h3>`에 `margin: 0`이 반드시 필요하다.** `tailwind.config.js`가 `corePlugins:{preflight:false}`라 브라우저 UA 기본 `h3{margin-block:1em}`이 살아 있고, `fontSize:20`이면 **위아래 20px씩 40px의 유령 마진**이 붙어 같은 패딩에도 행이 76px로 부푼다. `flex items-center`는 flex 아이템의 마진을 흡수하지 않으므로 정렬로는 해결되지 않는다. 정본: `<h3 className="font-bold" style={{ fontSize: 20, margin: 0, lineHeight: 1.4 }}>`.
+  - 같은 함정이 `<p>`·`<ul>`·`<h1~h6>` 전반에 적용된다 — 이 저장소에서 시맨틱 태그를 새로 쓸 때는 `margin: 0`을 기본 반사로 붙인다(아래 `sub` 캡션이 `margin:'2px 0 0'`을 명시한 이유).
+  - 툴바 행은 `padding: '6px 18px'`로 더 촘촘하다(의도된 위계 — 타이틀이 더 여유 있게). 타이틀 행만 바꿀 때 툴바를 따라 올리지 않는다.
 - **`sub` 캡션은 쓰지 않는다.** 화면 설명 문구는 제거 대상(사용자 결정). 단위 표기는 **`toolbarRight` 맨 앞에 12px caption** `단위: 원`(비마스킹)으로.
 - **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `page.total>1`일 때만 페이저(`IconBtn chevron-left/right` + `PageBtn`) · `footerRight` = `IconBtn download / maximize(전체보기) / external(새 창)` + 상단 kebab이 화면 밖일 때만 `!topMoreVisible && <MoreMenu size={32}>` 폴백(정적 `IconBtn more`는 onClick 없는 죽은 버튼이라 폐기 — `subfund_manage.tsx`·`generic_list.tsx` 둘 다 폴백형). ⚠️ 관찰 effect의 미지원 가드는 **`setTopMoreVisible(false)` 후 return**이어야 한다 — 그냥 `return`하면 초기값 `true`가 굳어 푸터 kebab이 영원히 안 뜨고 내보내기·인쇄 접근이 끊긴다(`if (!el) return`과 분리해 쓸 것). `PageBtn`은 골드(`asset_funding.tsx`·`subfund_manage.tsx`)에 **로컬 복사**돼 있는 헬퍼다 — 공유 export 아님, 골드에서 복사.
 - ⛔ **카드뷰(리스트 뷰|카드뷰 토글)는 폐기됐다(2026-09-11 사용자 결정).** 신규 페이지에 뷰 토글 `SegTabs`·`view` state·카드 렌더 분기를 **만들지 않는다** — 리스트 뷰 단일 표현이다. 전용 스킬 `apfs-card-view`도 같은 날 삭제됐다.

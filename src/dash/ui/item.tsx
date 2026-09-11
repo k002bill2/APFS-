@@ -79,7 +79,7 @@ function ItemTitle({ className, ...props }: React.HTMLAttributes<HTMLDivElement>
 }
 
 function ItemDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn('line-clamp-2 text-[13px] font-normal leading-normal text-muted-foreground', className)} {...props} />;
+  return <p className={cn('my-0 line-clamp-2 text-[13px] font-normal leading-normal text-muted-foreground', className)} {...props} />;
 }
 
 function ItemActions({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
