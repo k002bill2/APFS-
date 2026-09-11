@@ -14,7 +14,7 @@ import { OPT_AG, OPT_FG, OPT_FC, OPT_PT, OPT_FS, OPT_TC } from './subfund_manage
 import type { SubFundRow } from './subfund_manage';
 // 첨부 셀 카드 — DocumentsField(filepond 통일 드롭존)와 동일 표시 프리미티브로, 슬롯 구조는 유지하고 셀만 온-시스템 카드로.
 import { RefreshCw, X as XIcon } from 'lucide-react';
-import { Attachment, AttachmentGroup, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentDescription, AttachmentActions, AttachmentAction } from './ui/attachment';
+import { Attachment, AttachmentGroup, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentActions, AttachmentAction } from './ui/attachment';
 
 const { useState, useRef } = React;
 const { Button, IconBtn } = UI;
@@ -36,8 +36,6 @@ type DocRow = { date: string; file: string };
 const nz = (v: string | number | null | undefined) => (v == null || v === '-' ? '' : String(v));
 const numOr = (v: string, d: number | null) => { const n = Number(v.replace(/[^0-9.-]/g, '')); return v !== '' && Number.isFinite(n) ? n : d; };
 const dateOr = (v: string, d: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : d);
-// 파일명 → 확장자 라벨(DocumentsField와 동일 규약). 확장자 없으면 '파일'.
-const extLabel = (name: string) => { const ext = name.split('.').pop()?.toUpperCase(); return ext && ext !== name.toUpperCase() ? ext : '파일'; };
 
 /* 섹션 — 제목 + 2단 그리드(좁으면 1단). RowFormModal의 wide 레이아웃과 동일 규격 */
 function Section({ title, children, single }: { title: string; children: React.ReactNode; single?: boolean }) {
@@ -218,11 +216,10 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
                       {docs[i].file ? (
                         // AttachmentGroup(role=list)로 감싸 role="listitem" 카드의 리스트 시맨틱을 유효화(고아 listitem 방지, web-a11y).
                         <AttachmentGroup>
-                          <Attachment size="sm">
-                            <AttachmentMedia fileName={docs[i].file} />
+                          <Attachment size="sm" className="h-[34px] py-0">
+                            <AttachmentMedia fileName={docs[i].file} className="size-6" />
                             <AttachmentContent>
                               <AttachmentTitle>{docs[i].file}</AttachmentTitle>
-                              <AttachmentDescription state="done">{extLabel(docs[i].file)} · 첨부됨</AttachmentDescription>
                             </AttachmentContent>
                             <AttachmentActions>
                               <AttachmentAction aria-label={`${slot.name} 첨부 교체`} title="교체" onClick={() => pickFile(i)}><RefreshCw /></AttachmentAction>
