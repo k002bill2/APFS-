@@ -280,7 +280,9 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   /* 상단 kebab 가시성 관찰 — 뷰포트에서 벗어나면(스크롤로 위로 사라짐) 푸터 kebab 노출 */
   useEffect(() => {
     const el = topMoreRef.current;
-    if (!el || typeof IntersectionObserver === 'undefined') return;
+    // 미지원 환경에선 관찰이 불가능하므로 폴백을 상시 노출(true로 두면 푸터 kebab이 영원히 안 떠 내보내기·인쇄 접근이 끊긴다)
+    if (typeof IntersectionObserver === 'undefined') { setTopMoreVisible(false); return; }
+    if (!el) return;
     const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
     io.observe(el);
     return () => io.disconnect();

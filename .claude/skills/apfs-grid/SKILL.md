@@ -72,8 +72,8 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - 포함이면 `schema.countKpis`로 **선언만** 하면 자동 렌더되고 **필터 결과에 반응**한다(제네릭 금액 KPI를 대체).
     - `CountKpiSpec = { label; icon; color; column?; value? }` — `column+value`면 그 값과 일치하는 행 수, 없으면 전체 건수(`filtered` 파생).
     - 표준 팔레트: `layers`/`var(--primary)`(전체 건수) · `check-circle`/`var(--success)` · `wallet`/`var(--accent)`(도메인 2지표).
-  - **미포함이면 `schema.hideKpis: true`** — 헤더 KPI 슬롯만 비운다. `countKpis`와 제네릭 금액 KPI(평균 변동률·합계 금액)를 **둘 다** 무력화하되 **카드뷰 금액/상태는 유지**(hideMetrics와 분리). ⚠️ 금액 컬럼이 있는 엔티티는 `countKpis`를 안 넣는 것만으로는 안 된다 — 제네릭 금액 KPI가 폴백으로 남으므로 `hideKpis:true`가 필수(`generic_list.tsx` `kpis={schema.hideKpis ? undefined : countKpiNodes ? … : hideMetrics ? undefined : 금액KPI}`).
-  - **금액·변동률 개념 자체가 없는 엔티티**(공고 등)는 `hideMetrics: true`(제네릭 금액 KPI + 카드뷰 금액/상태 동시 제거). KPI 행만 끄려면 `hideKpis`, 금액 개념 전체를 끄려면 `hideMetrics`.
+  - **미포함이면 `schema.hideKpis: true`** — 헤더 KPI 슬롯만 비운다. `countKpis`와 제네릭 금액 KPI(평균 변동률·합계 금액)를 **둘 다** 무력화한다(hideMetrics와 분리 — 금액 개념 자체는 남는다). ⚠️ 금액 컬럼이 있는 엔티티는 `countKpis`를 안 넣는 것만으로는 안 된다 — 제네릭 금액 KPI가 폴백으로 남으므로 `hideKpis:true`가 필수(`generic_list.tsx` `kpis={schema.hideKpis ? undefined : countKpiNodes ? … : hideMetrics ? undefined : 금액KPI}`).
+  - **금액·변동률 개념 자체가 없는 엔티티**(공고 등)는 `hideMetrics: true`(제네릭 금액 KPI 제거 + 금액/상태 파생 표현 억제). KPI 행만 끄려면 `hideKpis`, 금액 개념 전체를 끄려면 `hideMetrics`.
 - 정본: **현재 두 트랙 모두 "미포함"이 실제 화면이다**(2026-09-11 사용자 지시로 자펀드 공고 정보관리·자펀드 관리에서 KPI 행 제거). 스키마 트랙 = `schemas/자펀드_공고_정보관리.ts`(`countKpis` 3배지 삭제 → `hideKpis: true`), typed 트랙 = `subfund_manage.tsx`(`kpis` prop과 KPI 전용 파생값 `totalCommit`·`formedCount`를 함께 삭제 — GridFrame이 `{kpis && …}`라 슬롯째 사라진다). 포함 예시가 필요하면 이 커밋 이전 리비전을 참고.
 
 ## 리스트 vs 매트릭스 — 어떤 children인가
@@ -98,8 +98,11 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 ## 프레임 외관 규약 (2026-09-08 사용자 확정 — 자펀드관리에서 정립, GridFrame 전 페이지 공통)
 - **카드 배경 = 페이지 배경, 테두리·그림자 없음.** `grid_frame.tsx`가 `Card`에 inline `background:'var(--frame-bg)', border:0, boxShadow:'none'`을 얹는다(inline이 Card의 `border bg-card` 클래스보다 우선). `--frame-bg`는 `tokens.css` 라이트/다크 모두 `var(--bg)` — **전체 색을 바꾸려면 이 토큰 한 줄**. sticky 푸터 배경도 같은 토큰(안 그러면 흰 띠).
 - **`sub` 캡션은 쓰지 않는다.** 화면 설명 문구는 제거 대상(사용자 결정). 단위 표기는 **`toolbarRight` 맨 앞에 12px caption** `단위: 원`(비마스킹)으로.
-- **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `view==='list' && page.total>1`일 때만 페이저(`IconBtn chevron-left/right` + `PageBtn`) · `footerRight` = `SegTabs 리스트 뷰|카드뷰` + `IconBtn download / maximize(전체보기, list일 때만) / external(새 창)` + 상단 kebab이 화면 밖일 때만 `!topMoreVisible && <MoreMenu size={32}>` 폴백(정적 `IconBtn more`는 onClick 없는 죽은 버튼이라 폐기 — `subfund_manage.tsx`·`generic_list.tsx` 둘 다 폴백형). `PageBtn`은 골드(`asset_funding.tsx`·`subfund_manage.tsx`)에 **로컬 복사**돼 있는 헬퍼다 — 공유 export 아님, 골드에서 복사.
-- 카드뷰 전환·선택 동기화는 [[apfs-card-view]]. **카드뷰가 의미 없는 엔티티는 스키마 트랙에서 `hideCardView: true`로 끈다**(2026-09-11 신설) — 푸터 `SegTabs`를 렌더하지 않고 `view`를 `"list"` 파생값으로 고정해 `view === "list"` 게이트(페이저·전체보기·그리드 본체)가 모두 참이 된다. `viewState`는 남기되 화면엔 리스트만 나온다. 표현 전용 플래그 3종은 서로 독립: `hideKpis`(헤더 KPI 슬롯) · `hideMetrics`(금액 개념 전체) · `hideCardView`(푸터 뷰 토글). 첫 적용 정본 = `schemas/자펀드_공고_정보관리.ts`. **typed 페이지는 플래그가 아니라 직접 제거한다** — `subfund_manage.tsx`는 `footerRight`의 `SegTabs`를 지우고 `const [view, setView] = useState('list')`를 `const view = 'list'` 상수로 내렸다(setView 호출처가 SegTabs뿐이었다). 카드 렌더 분기(`view === 'detail'`)는 복구 대비로 남겨 둔다.
+- **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `page.total>1`일 때만 페이저(`IconBtn chevron-left/right` + `PageBtn`) · `footerRight` = `IconBtn download / maximize(전체보기) / external(새 창)` + 상단 kebab이 화면 밖일 때만 `!topMoreVisible && <MoreMenu size={32}>` 폴백(정적 `IconBtn more`는 onClick 없는 죽은 버튼이라 폐기 — `subfund_manage.tsx`·`generic_list.tsx` 둘 다 폴백형). ⚠️ 관찰 effect의 미지원 가드는 **`setTopMoreVisible(false)` 후 return**이어야 한다 — 그냥 `return`하면 초기값 `true`가 굳어 푸터 kebab이 영원히 안 뜨고 내보내기·인쇄 접근이 끊긴다(`if (!el) return`과 분리해 쓸 것). `PageBtn`은 골드(`asset_funding.tsx`·`subfund_manage.tsx`)에 **로컬 복사**돼 있는 헬퍼다 — 공유 export 아님, 골드에서 복사.
+- ⛔ **카드뷰(리스트 뷰|카드뷰 토글)는 폐기됐다(2026-09-11 사용자 결정).** 신규 페이지에 뷰 토글 `SegTabs`·`view` state·카드 렌더 분기를 **만들지 않는다** — 리스트 뷰 단일 표현이다. 전용 스킬 `apfs-card-view`도 같은 날 삭제됐다.
+  - 스키마 트랙은 `schema.hideCardView: true`로 끈다(`generic_list.tsx`가 푸터 `SegTabs`를 렌더하지 않고 `view`를 `"list"` 파생값으로 고정). 기존 카드 렌더 코드는 아직 남아 있으나 도달 불가다.
+  - typed 트랙은 플래그 없이 직접 제거한다 — `subfund_manage.tsx`가 `SegTabs`를 지우고 `const view = 'list'` 상수로 내린 형태가 정본.
+  - 표현 전용 플래그 3종은 서로 독립: `hideKpis`(헤더 KPI 슬롯) · `hideMetrics`(금액 개념 전체) · `hideCardView`(푸터 뷰 토글).
 
 ## 관리형 리스트 툴바·타이틀 규약 (2026-09-11 subfund_manage에서 정립)
 리스트형(CRUD) 페이지 한정. 매트릭스/집계형은 위 골든(`headerActions` primary 내보내기)을 그대로 둔다.

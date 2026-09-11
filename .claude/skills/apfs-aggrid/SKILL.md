@@ -132,7 +132,7 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
 - **라디오 단일선택**: `rowSelection={{mode:'singleRow',checkboxes:true,enableClickSelection:true}}` + `selectionColumnDef={{pinned:'left',width:44}}` + `getRowId`. 선택 SSOT는 React state(→[[apfs-stage-workflow]] 규약 9).
 - **단계/상태 배지 셀**: `StatusBadge size="lg" dot={false}`(13px, 앞 점 없음 — 배지가 촘촘히 반복되는 열).
 - **엑셀**: 2단 헤더 병합·리프 키를 손으로 적지 말고 `flattenForExcel(columnDefs)`(골드 로컬 헬퍼, `ColGroupDef` 순회 → `head1/head2/keys/merges`)로 **columnDefs에서 자동 산출**. 마스크 시 숫자 0·텍스트 ''.
-- 카드뷰 토글은 [[apfs-card-view]], 읽기전용 명세는 [[apfs-spec-popup]].
+- 읽기전용 명세는 [[apfs-spec-popup]]. (카드뷰 토글 규약은 2026-09-11 폐기 — 리스트 뷰 단일 표현.)
 
 ## 마스킹 ("축은 두고 데이터는 가린다")
 - 마스크 API(SSOT): `import { mn, MT, useMask } from './mask';`. **`MASK_ON` 같은 상수 export는 없다** — 화면 표시는 `mn()`/`<MT>`가, 분기 판단은 훅 `const masked = useMask();`가 담당. 전역 토글은 `mask.tsx`의 `_on` 한 줄(현재 `true`).

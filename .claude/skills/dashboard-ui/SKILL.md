@@ -59,7 +59,7 @@ APFS = 농림수산식품모태펀드 투자자산관리시스템 **대시보드
 6. **라우팅**: app.tsx가 route 문자열로 분기한다. 바스포크 페이지(main, risk, gp-health, accounting, schedule, subfund, asset, asset-funding, report* 등)는 명시 분기, **그 외 route는 전부 `GenericListPage`(스키마 주도, `src/dash/schemas/`)로 폴백**한다. route는 메뉴 리프의 한글 라벨(NFC)이 원칙이고 `apfs.route` localStorage에 **원시 문자열**로 영속화된다.
 
 ## 관련 스킬 (상세는 각 스킬 참조 — 중복 금지)
-리스트/그리드 골격=[[apfs-grid]], AG Grid 본체=[[apfs-aggrid]], CRUD 모달=[[apfs-form-modal]], 상세필터=[[apfs-detail-filter]], 날짜/기간 선택=[[apfs-datepicker]], 단계 워크플로우=[[apfs-stage-workflow]], 카드뷰 토글=[[apfs-card-view]], 읽기전용 명세 팝업=[[apfs-spec-popup]], 목업→관리 페이지 조립=[[apfs-manage-page]], 색 토큰=[[color-tokens]], 쌓임맥락=[[z-index]], 반응형=[[responsive-ui]], 접근성=[[web-a11y]].
+리스트/그리드 골격=[[apfs-grid]], AG Grid 본체=[[apfs-aggrid]], CRUD 모달=[[apfs-form-modal]], 상세필터=[[apfs-detail-filter]], 날짜/기간 선택=[[apfs-datepicker]], 단계 워크플로우=[[apfs-stage-workflow]], 읽기전용 명세 팝업=[[apfs-spec-popup]], 목업→관리 페이지 조립=[[apfs-manage-page]], 색 토큰=[[color-tokens]], 쌓임맥락=[[z-index]], 반응형=[[responsive-ui]], 접근성=[[web-a11y]].
 
 ## 검증
 `npm run build`가 green이어야 한다(dev 서버가 떠도 프로덕션 빌드는 실패할 수 있다). 이후 `npm run dev`로 HMR 확인 — 위젯 렌더, 라이트/다크 테마 토글, 역할(admin/manager/viewer) 전환, 브라우저 콘솔 무오류.

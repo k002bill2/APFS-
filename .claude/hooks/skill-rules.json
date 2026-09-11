@@ -93,13 +93,6 @@
       "intentPatterns": ["(심사단계|단계|stage|워크플로우|workflow|생애주기|상태).*(전이|전환|액션|버튼|승인|취소|확정|transition|처리)", "(행|row).*(선택|select).*(액션|action|버튼|작업|button)", "(신청|선정|결성|승인|반려).*(단계|처리|전이|버튼)"]
     },
     {
-      "skillName": "apfs-card-view",
-      "priority": "high",
-      "enforcement": "suggest",
-      "keywords": ["카드뷰", "카드 뷰", "리스트 뷰", "리스트뷰", "뷰 토글", "뷰 전환", "카드 형태", "카드 그리드", "card view", "list view", "view toggle", "전체보기 토글"],
-      "intentPatterns": ["(카드\\s?뷰|리스트\\s?뷰|card view|list view).*(토글|전환|추가|만들|수정|선택|유지|toggle|switch|add|edit)", "(뷰|view).*(전환|토글|toggle|switch).*(선택|selection|유지|카드|리스트)"]
-    },
-    {
       "skillName": "apfs-spec-popup",
       "priority": "high",
       "enforcement": "suggest",
