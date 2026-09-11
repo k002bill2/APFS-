@@ -227,7 +227,7 @@ function FsDetailModal({ fn, unit: initUnit, onClose }: { fn: string; unit: Unit
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[720px] max-h-[88vh]">
-        <DialogHeader>
+        <DialogHeader className="px-[46px]">
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">재무제표 상세</DialogTitle>
             <DialogDescription className="text-caption truncate min-w-0">기준년월 {BASEYM} · <MT>{fn}</MT></DialogDescription>
@@ -238,7 +238,7 @@ function FsDetailModal({ fn, unit: initUnit, onClose }: { fn: string; unit: Unit
           <Section title="대차대조표" unitNote={`(단위: ${unit})`}><FsTable rows={BS} unit={unit} /></Section>
           <Section title="손익계산서" unitNote={`(단위: ${unit})`}><FsTable rows={IS} unit={unit} /></Section>
         </div>
-        <DialogFooter>
+        <DialogFooter className="px-[46px]">
           <div />
           <div className="flex gap-2">
             <Button variant="outline" size="sm" leadingIcon="download" onClick={excel}>엑셀</Button>
