@@ -8,7 +8,8 @@ description: APFS 읽기전용 "명세" 팝업 규약(자펀드 명세·운용�
 리스트 행의 **읽기전용 명세 팝업**. 골드: `src/dash/subfund_spec_modal.tsx`(`SubFundSpecModal` + 중첩 `FsDetailModal`), 출처 `S1_03_자펀드_명세.html`. 편집 모달과 다르다 — 입력 컨트롤 없음, 저장 없음.
 
 ## 진입 (CRITICAL)
-- **툴바 selbar의 `명세` 버튼**(전 단계 공통, 전이 액션 맵 **밖**) + **행 더블클릭**(`onRowDoubleClicked` → `setSelId(id)` + `setModal({kind:'spec'})`, `rowPinned` 제외). 워크플로우 페이지에서 더블클릭은 **수정이 아니라 명세**다(→[[apfs-stage-workflow]] 규약 10).
+- ⚠ **명세 팝업 자체가 opt-in**(2026-09-11 결정) — 페이지에 기본 고정으로 넣지 않는다. 목업/사용자가 요구할 때만 포함하고, 아니면 `명세` 버튼·`onRowDoubleClicked`를 아예 배선하지 않는다(→[[apfs-manage-page]] 조립표, [[apfs-stage-workflow]] 규약 4·10).
+- 포함할 때의 진입: **툴바 selbar의 `명세` 버튼**(전 단계 공통, 전이 액션 맵 **밖**) + **행 더블클릭**(`onRowDoubleClicked` → `setSelId(id)` + `setModal({kind:'spec'})`, `rowPinned` 제외). 워크플로우 페이지에서 더블클릭은 **수정이 아니라 명세**다(→[[apfs-stage-workflow]] 규약 10).
 - 모달 상태 유니온에 `{ kind: 'spec' }` 추가, 렌더는 `modal?.kind==='spec' && selected && <SubFundSpecModal row={selected} onClose=…/>`.
 
 ## 구성 규약

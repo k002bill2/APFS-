@@ -8,6 +8,7 @@ description: APFS 리스트/그리드 페이지의 "리스트 뷰 ↔ 카드뷰"
 GridFrame 페이지의 푸터 우측 **`리스트 뷰 | 카드뷰`** 토글과 카드 그리드. 골드: `src/dash/subfund_manage.tsx`(선택 동기화 포함) · `asset_funding.tsx`(조회형, 선택 없음).
 
 ## 규약 (CRITICAL)
+0. **opt-in(기본 미포함, 2026-09-11 결정)**: 카드뷰 토글은 페이지 기본이 아니다. 목업/사용자가 요구할 때만 추가하고, **미포함이면 `view` state·푸터 `SegTabs`·본문 카드 분기를 아예 넣지 않는다**(리스트 뷰만, 페이저·전체보기는 `view` 없이 그대로). 자동 고정 금지(→[[apfs-manage-page]] 조립표).
 1. **토글 위치·상태**: `footerRight`의 `SegTabs size="sm" value={view} onChange={setView} options=[{value:'list',label:'리스트 뷰'},{value:'detail',label:'카드뷰'}]`. state는 `const [view, setView] = useState('list')`. 페이저(`footerCenter`)와 `전체보기`(`maximize`)는 **`view==='list'`일 때만** 렌더.
 2. **본문 분기**: `view==='list' ? <AgGridReact …/> : <카드 그리드/>`. 같은 `filteredRows`를 공유(필터 술어 재사용, 별도 데이터 금지).
 3. **카드 그리드**: `<div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))', padding: 18 }}>`. 카드 = `<button type="button" aria-pressed={selId===r.id}>` `border bg-card rounded 12 p-3.5 text-left`, 선택 시 `borderColor: var(--primary)`. 카드 안: `ColorChip` + 제목(`<MT>`) + 부제(GP·연도) + 단계 `StatusBadge size="lg" dot={false}` + 핵심 금액 3줄(`mn(fmt())`, null→`-`).
