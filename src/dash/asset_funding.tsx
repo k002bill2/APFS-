@@ -1,10 +1,10 @@
 /* 모태펀드 조성 및 출자현황 — 투자자산관리 > 모태펀드관리
-   FFMS 캡처(image10) 실측: 연도별 조성현황(기금 소스별) + 출자현황 집계 매트릭스.
+   조성출자현황_목업.html(KRDS TO-BE) 기준: 연도별 조성현황(기금 소스별) + 출자현황 집계 매트릭스.
    2단 중첩 헤더 + pinned 합계행. AG Grid Community + 공통 양식 GridFrame(apfs-grid 스킬).
 
-   기능: 정렬 · 행 선택→선택삭제 · 등록(Dialog→행 추가) · 상세필터(Sheet→External Filter, L12 Community)
+   기능: 정렬 · 행 선택→선택삭제 · 상세필터(Sheet→External Filter, L12 Community)
         · 페이지네이션 · Excel(.xlsx, SheetJS) 내보내기 · 리스트/카드 뷰 토글.
-     → 모달/드로어 UI는 ui/dialog·ui/sheet 프리미티브 재사용.
+     → 드로어 UI는 ui/sheet 프리미티브 재사용.
 
    ⚠️ AG Grid v35.3.1(v33+) Theming API: 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정 + 합계행 강조(공유)
@@ -15,15 +15,14 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { GridFrame, KpiBadge } from './grid_frame';
-import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT·내용폭 자동화
+import { apfsTheme, fmt, numFmt, numStyle } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT. 그리드폭 채움은 컬럼 flex(numCol)
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, CellContextMenuEvent } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, CellContextMenuEvent, ValueFormatterParams } from 'ag-grid-community';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuShortcut } from './ui/dropdown-menu';
-import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘⏎ 등록·⌘P 인쇄)
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
+import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘P 인쇄)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 
@@ -32,47 +31,51 @@ const { Button, IconBtn, SegTabs, ColorChip } = UI;
 /* ── 데이터 — FFMS 캡처(image10) 실측 ── */
 type FundingRow = { y: string; c0: number; c1: number; c2: number; c3: number; c4: number; c5: number; u0: number; u1: number };
 const RAW: { y: string; c: number[]; u: number[] }[] = [
+  // c = [합계, 농특회계, 농안기금, FTA, 수산발전기금, 농금원] · u = [조합수, 출자금액]
   { y: '2010', c: [597.3, 507, 90, 0, 0, 0.3], u: [5, 547] },
-  { y: '2011', c: [500, 0, 500, 0, 0, 0], u: [6, 495] },
-  { y: '2012', c: [500, 0, 500, 0, 0, 0], u: [7, 540] },
-  { y: '2013', c: [500, 0, 500, 0, 0, 0], u: [7, 510] },
-  { y: '2014', c: [700, 0, 600, 0, 100, 0], u: [10, 790] },
-  { y: '2015', c: [600, 0, 0, 500, 100, 0], u: [8, 700] },
-  { y: '2016', c: [400, 0, 0, 300, 100, 0], u: [8, 1040] },
-  { y: '2017', c: [300, 0, 0, 200, 100, 0], u: [7, 700] },
-  { y: '2018', c: [200, 0, 0, 100, 100, 0], u: [6, 520] },
-  { y: '2019', c: [270, 0, 0, 200, 70, 0], u: [8, 622.5] },
-  { y: '2020', c: [420, 0, 0, 350, 70, 0], u: [10, 980] },
-  { y: '2021', c: [0, 0, 0, 0, 0, 0], u: [12, 1047] },
-  { y: '2022', c: [0, 0, 0, 0, 0, 0], u: [17, 1655.9] },
-  { y: '2023', c: [0, 0, 0, 0, 0, 0], u: [14, 1314.7] },
-  { y: '2024', c: [0, 0, 0, 0, 0, 0], u: [15, 1416] },
-  { y: '2025', c: [0, 0, 0, 0, 0, 0], u: [14, 1246] },
+  { y: '2011', c: [900, 780, 120, 0, 0, 0], u: [8, 820] },
+  { y: '2012', c: [1100, 900, 150, 30, 20, 0], u: [11, 1010] },
+  { y: '2013', c: [1200, 950, 150, 50, 50, 0], u: [13, 1120] },
+  { y: '2014', c: [1190, 900, 140, 60, 90, 0], u: [12, 1100] },
 ];
 const flat = (r: { y: string; c: number[]; u: number[] }): FundingRow =>
   ({ y: r.y, c0: r.c[0], c1: r.c[1], c2: r.c[2], c3: r.c[3], c4: r.c[4], c5: r.c[5], u0: r.u[0], u1: r.u[1] });
 const ROWS: FundingRow[] = RAW.map(flat);
-const TOTAL_ROW: FundingRow = { y: '합 계', c0: 4987.3, c1: 507, c2: 2190, c3: 1650, c4: 640, c5: 0.3, u0: 154, u1: 14124.1 };
+const TOTAL_ROW: FundingRow = { y: '합 계', c0: 4987.3, c1: 4037, c2: 650, c3: 140, c4: 160, c5: 0.3, u0: 49, u1: 4597 };
 // 매 렌더 새 배열을 넘기면 AG Grid가 pinned 행을 재생성(=행 애니메이션 재발) → 모듈 상수로 고정
 const PINNED_BOTTOM: FundingRow[] = [TOTAL_ROW];
-const PAGE_SIZE = 20;   // 16행 → 1페이지
+const PAGE_SIZE = 20;   // 5행 → 1페이지
 
-const CO = ['합계', '농특회계', '농안기금', 'FTA', '수산발전기금', '일반회계'];
-const numCol = (field: string, header: string, strong?: boolean): ColDef<FundingRow> => ({
-  // flex 제거(2026-09-09) — AUTO_SIZE_CONTENT(fitCellContents)는 flex 컬럼을 무시하므로 내용폭 자동화의 전제로 flex를 뺀다. minWidth는 하한.
-  field: field as keyof FundingRow, headerName: header, minWidth: 92,
-  valueFormatter: numFmt, cellStyle: numStyle(strong) as any, type: 'rightAligned',
+const CO = ['합계', '농특회계', '농안기금', 'FTA', '수산발전기금', '농금원'];
+
+/* ── 금액 단위 전환 (원/백만원/억원) ── 데이터는 억원 저장. 조합수(개)는 금액이 아니라 변환 제외. */
+type Unit = '원' | '백만원' | '억원';
+const UNITS: Unit[] = ['원', '백만원', '억원'];
+// 억원 저장값 → 선택 단위 숫자. ≤1소수 억원이라 원(×1e8)·백만원(×100) 모두 정수 → 기존 fmt() 규칙 그대로 재사용.
+const toUnit = (eok: number, unit: Unit): number => unit === '원' ? eok * 1e8 : unit === '백만원' ? eok * 100 : eok;
+// 금액 셀 포매터 — grid context.unit로 변환 후 마스킹·서식(numFmt 동형, 단위만 반영). 단위 바뀌면 refreshCells로 재적용.
+const moneyFmt = (p: ValueFormatterParams): string => {
+  if (p.value == null) return '';
+  const unit = (p.context as { unit?: Unit } | undefined)?.unit ?? '억원';
+  return mn(fmt(toUnit(p.value as number, unit)));
+};
+
+const numCol = (field: string, header: string, opts?: { strong?: boolean; count?: boolean }): ColDef<FundingRow> => ({
+  // flex:1 — 컬럼을 그리드(프레임) 폭에 맞춰 균등 분배(우측 빈 공간 제거), 리사이즈에도 자동 재분배. minWidth는 하한(좁으면 가로 스크롤).
+  field: field as keyof FundingRow, headerName: header, flex: 1, minWidth: 92,
+  // 금액=단위 반영(moneyFmt), 조합수=개수(numFmt, 단위 무관)
+  valueFormatter: opts?.count ? numFmt : moneyFmt, cellStyle: numStyle(opts?.strong) as any, type: 'rightAligned',
 });
 
 const columnDefs: (ColDef<FundingRow> | ColGroupDef<FundingRow>)[] = [
   { field: 'y', headerName: '구분', pinned: 'left', width: 120, cellStyle: { fontWeight: 600 } },
   {
     headerName: '조성현황', headerClass: 'apfs-grp-co', marryChildren: true,
-    children: [numCol('c0', '합계', true), ...CO.slice(1).map((h, i) => numCol('c' + (i + 1), h))],
+    children: [numCol('c0', '합계', { strong: true }), ...CO.slice(1).map((h, i) => numCol('c' + (i + 1), h))],
   },
   {
     headerName: '출자현황', headerClass: 'apfs-grp-in', marryChildren: true,
-    children: [numCol('u0', '조합수'), numCol('u1', '출자금액')],
+    children: [numCol('u0', '조합수', { count: true }), numCol('u1', '출자금액')],
   },
 ];
 
@@ -84,7 +87,7 @@ const inputStyle = (kind?: string): CSSProperties => ({
 });
 
 /* ── kebab(···) 더보기 메뉴 — generic_list MoreMenu와 동형(Radix DropdownMenu) ── */
-function PoCMoreMenu({ onRegister, onExport }: { onRegister: () => void; onExport: () => void }) {
+function PoCMoreMenu({ onExport }: { onExport: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -94,11 +97,6 @@ function PoCMoreMenu({ onRegister, onExport }: { onRegister: () => void; onExpor
         <Icon name="more" size={20} stroke={2} />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem onSelect={onRegister}>
-          <Icon name="plus" size={17} className="shrink-0 text-muted-foreground" />등록
-          <DropdownMenuShortcut>{HOTKEYS.register.hint}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onExport}>
           <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
         </DropdownMenuItem>
@@ -153,20 +151,19 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   const [view, setView] = useState('list');               // list | detail (L6 토글)
   const [showAll, setShowAll] = useState(false);          // 전체보기 — 페이지 크기를 전체 행 수로 키워 한 페이지에 모두 표시
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: ROWS.length });
+  const [unit, setUnit] = useState<Unit>('억원');           // 금액 단위(원/백만원/억원) — 조합수(개)는 불변
 
   // 상세필터(External Filter) 상태 — L12 실증
   const [filterOpen, setFilterOpen] = useState(false);
   const [fText, setFText] = useState('');                 // 검색어 (전 컬럼 부분일치)
   const [fYear, setFYear] = useState('');                 // 사업연도 (정확일치)
   const [fMin, setFMin] = useState('');                   // 출자금액 최소 (이상)
+  // 검색어 입력 opt-in — 기본 OFF(GenericListPage의 schema.searchable와 동일 규약, apfs-detail-filter 스킬). 필요 시 true.
+  const SEARCHABLE = false;
 
-  // 등록 모달 상태
-  const [regOpen, setRegOpen] = useState(false);
-  // 앱-스코프 단축키: ⌘⏎=등록(모달 열림 중엔 비활성 → 이중 열림 방지), ⌘P=인쇄. kebab 열림 여부와 무관하게 페이지 레벨.
-  useHotkey(HOTKEYS.register.combo, () => setRegOpen(true), { enabled: !regOpen });
+  // 앱-스코프 단축키: ⌘P=인쇄. (등록 기능 제거로 ⌘⏎ 등록 단축키도 함께 제거)
   useHotkey(HOTKEYS.print.combo, () => window.print());
   const [ctx, setCtx] = useState<CtxMenuState>(null);   // 우클릭 컨텍스트 메뉴 좌표·항목(null=닫힘)
-  const [draft, setDraft] = useState({ y: '', c0: '', u1: '' });
 
   const masked = useMask();   // 마스크 ON이면 Excel 숫자 셀 값을 0으로(실값 비노출) — 표시 모양은 z 서식이 담당
 
@@ -183,6 +180,8 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
     !fText || Object.values(r).some((v) => String(v ?? '').toLowerCase().includes(fText.toLowerCase())), [fText]);
   const filterActive = fText !== '' || fYear !== '' || fMin !== '';
   useEffect(() => { apiRef.current?.onFilterChanged(); }, [fText, fYear, fMin]);
+  // 단위 변경 → 금액 셀(context.unit 참조) 재포맷. 본문 + pinned 합계행 모두. (KPI·카드는 React state로 자동 갱신)
+  useEffect(() => { apiRef.current?.refreshCells({ force: true }); }, [unit]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<FundingRow>) => {
     const r = node.data; if (!r) return true;
@@ -236,39 +235,32 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   // 마스크 ON이면 값을 0으로 써서 실값을 파일에 남기지 않는다(비노출). 서식의 정수/소수 판단은 '원값'을 따른다(소수 컬럼은 0.0로 표시).
   const exportExcel = () => {
     const zFmt = (v: number) => (Number.isInteger(v) ? '#,##0' : '#,##0.0');   // 화면 fmt()와 동일한 콤마/소수 규칙
-    const numKeys = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'u0', 'u1'] as const;   // 헤더 순: 합계·농특회계·농안기금·FTA·수산발전기금·일반회계 / 조합수·출자금액
-    const head1 = ['구분', '조성현황', '', '', '', '', '', '출자현황', ''];
-    const head2 = ['', ...CO, '조합수', '출자금액'];   // CO = ['합계','농특회계','농안기금','FTA','수산발전기금','일반회계']
+    const numKeys = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'u0', 'u1'] as const;   // 헤더 순: 합계·농특회계·농안기금·FTA·수산발전기금·농금원 / 조합수·출자금액
+    const isMoney = (k: string) => k !== 'u0';   // u0=조합수(개)만 단위 변환 제외, 나머지는 금액
+    const cellVal = (r: FundingRow, k: (typeof numKeys)[number]) =>
+      masked ? 0 : isMoney(k) ? toUnit(r[k] as number, unit) : (r[k] as number);   // 화면과 동일: 금액은 선택 단위로, 조합수는 개수 그대로
+    const head1 = ['구분', `조성현황(${unit})`, '', '', '', '', '', '출자현황', ''];   // 단위를 헤더에 명시(스타일 불가 → 텍스트로)
+    const head2 = ['', ...CO, '조합수(개)', `출자금액(${unit})`];   // CO = ['합계','농특회계','농안기금','FTA','수산발전기금','농금원']
     const dataSrc = [...filteredRows, TOTAL_ROW];      // 본문 + pinned 합계행(화면과 동일)
-    const dataRows = dataSrc.map((r) => [r.y, ...numKeys.map((k) => (masked ? 0 : (r[k] as number)))]);
+    const dataRows = dataSrc.map((r) => [r.y, ...numKeys.map((k) => cellVal(r, k))]);
     const aoa = [head1, head2, ...dataRows];
     const ws = XLSX.utils.aoa_to_sheet(aoa);
-    // 숫자 컬럼(열 1~8, 데이터는 행 2부터)에 화면 포맷과 일치하는 숫자서식 부여
+    // 숫자 컬럼(열 1~8, 데이터는 행 2부터)에 화면 포맷과 일치하는 숫자서식 부여(변환값 기준)
     dataSrc.forEach((r, i) =>
       numKeys.forEach((k, j) => {
         const addr = XLSX.utils.encode_cell({ r: i + 2, c: j + 1 });
-        if (ws[addr]) ws[addr].z = zFmt(r[k] as number);
+        if (ws[addr]) ws[addr].z = zFmt(cellVal(r, k));
       }));
     ws['!merges'] = [
       { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },   // 구분 (A1:A2)
       { s: { r: 0, c: 1 }, e: { r: 0, c: 6 } },   // 조성현황 (B1:G1, 6열)
       { s: { r: 0, c: 7 }, e: { r: 0, c: 8 } },   // 출자현황 (H1:I1, 2열)
     ];
-    ws['!cols'] = [{ wch: 8 }, { wch: 11 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 10 }, { wch: 8 }, { wch: 12 }];
+    ws['!cols'] = [{ wch: 8 }, { wch: 13 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 14 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, '조성출자현황');
-    XLSX.writeFile(wb, '모태펀드_조성출자현황.xlsx');
+    XLSX.writeFile(wb, `모태펀드_조성출자현황_${unit}.xlsx`);
     toast.success('Excel로 내보냈습니다');
-  };
-
-  // 등록 — Dialog 입력으로 새 연도 행 추가(CRUD add)
-  const saveRegister = () => {
-    if (!draft.y.trim()) { toast.error('연도를 입력하세요'); return; }
-    const row: FundingRow = { y: draft.y.trim(), c0: Number(draft.c0) || 0, c1: 0, c2: 0, c3: 0, c4: 0, c5: 0, u0: 0, u1: Number(draft.u1) || 0 };
-    setRows((prev) => [row, ...prev]);
-    setRegOpen(false);
-    setDraft({ y: '', c0: '', u1: '' });
-    toast.success('항목이 등록되었습니다');
   };
 
   // 카드(상세 뷰)·푸터 건수는 동일 필터 술어를 공유(단일 데이터·렌더러 이원화)
@@ -284,12 +276,12 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
     <GridFrame
       crumbs={['홈', '투자자산관리', '모태펀드관리', '모태펀드 조성 및 출자현황']}
       title="모태펀드 조성 및 출자현황"
-      cardTitle="모태펀드 조성·출자 현황표"
+      cardTitle="모태펀드 조성 및 출자현황"
       favRoute="asset-funding"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       kpis={<>
-        <KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={mn(fmt(TOTAL_ROW.c0)) + ' 억원'} valueSize={14} />
-        <KpiBadge icon="wallet" color="var(--accent)" label="누적 출자금액" value={mn(fmt(TOTAL_ROW.u1)) + ' 억원'} valueSize={14} />
+        <KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={mn(fmt(toUnit(TOTAL_ROW.c0, unit))) + ' ' + unit} valueSize={14} />
+        <KpiBadge icon="wallet" color="var(--accent)" label="누적 출자금액" value={mn(fmt(toUnit(TOTAL_ROW.u1, unit))) + ' ' + unit} valueSize={14} />
         <KpiBadge icon="layers" color="var(--chart-1)" label="누적 조합수" value={mn(fmt(TOTAL_ROW.u0)) + ' 개'} valueSize={14} />
       </>}
       toolbarLeft={selCount > 0 ? (
@@ -319,14 +311,17 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
               ))}
             </span>
           ) : (
-            <span className="text-caption" style={{ fontSize: 12.5 }}>행 선택→삭제 · 헤더=정렬 · 상세필터 · kebab=등록/내보내기/인쇄</span>
+            <span className="text-caption" style={{ fontSize: 12.5 }}>행 선택→삭제 · 헤더=정렬 · 상세필터 · kebab=내보내기/인쇄</span>
           )}
         </>
       )}
       toolbarRight={<>
+        {/* 금액 단위 전환 — 캡션 + 세그먼트(원/백만원/억원). 조합수는 항상 개(변환 제외)라 캡션에 명시. */}
+        <span className="text-caption" style={{ fontSize: 12.5 }}>{'단위: ' + unit + ' · 조합수(개)'}</span>
+        <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
-        <PoCMoreMenu onRegister={() => setRegOpen(true)} onExport={exportExcel} />
+        <PoCMoreMenu onExport={exportExcel} />
       </>}
       footerLeft={<span>{'총 ' + mn(String(totalForCount)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}</span>}
       footerCenter={view === 'list' && page.total > 1 ? (
@@ -355,11 +350,11 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
             theme={apfsTheme}
             rowData={rows}
             columnDefs={columnDefs}
+            context={{ unit }}   // 금액 셀 포매터(moneyFmt)가 참조. 단위 변경 시 useEffect가 refreshCells로 재적용
             pinnedBottomRowData={PINNED_BOTTOM}
             domLayout="autoHeight"
-            autoSizeStrategy={AUTO_SIZE_CONTENT}   // 컬럼 폭=내용 폭(잘림 방지, 첫 렌더 1회). numCol flex 제거가 전제. 골드 subfund_manage와 동일
             defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
-            rowSelection={{ mode: 'multiRow', checkboxes: true, headerCheckbox: true }}
+            rowSelection={{ mode: 'multiRow', checkboxes: false, headerCheckbox: false }}   // 체크박스 열 제거(행 클릭으로 선택 유지→선택삭제 보존)
             pagination
             paginationPageSize={pageSize}
             suppressPaginationPanel
@@ -388,13 +383,13 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <CardGroupLabel>조성현황</CardGroupLabel>
-                  {CO.map((label, i) => <CardRow key={i} label={label} value={co[i]} strong={i === 0} />)}
+                  <CardGroupLabel>{'조성현황 (' + unit + ')'}</CardGroupLabel>
+                  {CO.map((label, i) => <CardRow key={i} label={label} value={toUnit(co[i], unit)} strong={i === 0} />)}
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <CardGroupLabel>출자현황</CardGroupLabel>
-                  <CardRow label="조합수" value={r.u0} />
-                  <CardRow label="출자금액" value={r.u1} strong />
+                  <CardRow label="조합수(개)" value={r.u0} />
+                  <CardRow label={'출자금액 (' + unit + ')'} value={toUnit(r.u1, unit)} strong />
                 </div>
               </div>
             );
@@ -414,12 +409,14 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* 검색어 — 모든 상세필터 공통 최상단. 행 전 컬럼 부분일치 */}
-            <label className="block mb-4">
-              <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>검색어</span>
-              {/* Enter = 필터 적용과 동일(값은 즉시 반영형이라 드로어 닫기). IME 조합 확정 Enter는 제외 */}
-              <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="검색어 입력" style={inputStyle('text')} />
-            </label>
+            {/* 검색어 — opt-in(SEARCHABLE, 기본 OFF). 최상단 고정, 행 전 컬럼 부분일치 */}
+            {SEARCHABLE && (
+              <label className="block mb-4">
+                <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>검색어</span>
+                {/* Enter = 필터 적용과 동일(값은 즉시 반영형이라 드로어 닫기). IME 조합 확정 Enter는 제외 */}
+                <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="검색어 입력" style={inputStyle('text')} />
+              </label>
+            )}
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>사업연도</span>
               {/* Safari menulist는 세로 padding을 무시해 select가 input보다 낮게 렌더됨(WebKit 측정 22 vs 37px).
@@ -444,34 +441,6 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
           </SheetFooter>
         </SheetContent>
       </Sheet>
-
-      {/* ── 등록 모달(Dialog) — 새 연도 행 추가(CRUD add) ── */}
-      <Dialog open={regOpen} onOpenChange={setRegOpen}>
-        <DialogContent className="max-w-[460px]">
-          <DialogHeader>
-            <DialogTitle>신규 등록</DialogTitle>
-            <DialogDescription className="sr-only">연도별 조성·출자 항목 등록</DialogDescription>
-          </DialogHeader>
-          <div className="overflow-y-auto" style={{ padding: 18 }}>
-            <label className="block mb-3.5">
-              <span className="font-semibold text-caption block" style={{ fontSize: 14, marginBottom: 5 }}>연도 *</span>
-              <input value={draft.y} onChange={(e) => setDraft((d) => ({ ...d, y: e.target.value }))} placeholder="예: 2026" style={inputStyle('number')} />
-            </label>
-            <label className="block mb-3.5">
-              <span className="font-semibold text-caption block" style={{ fontSize: 14, marginBottom: 5 }}>조성 합계(억원)</span>
-              <input type="number" value={draft.c0} onChange={(e) => setDraft((d) => ({ ...d, c0: e.target.value }))} placeholder="0" style={inputStyle('number')} />
-            </label>
-            <label className="block mb-3.5">
-              <span className="font-semibold text-caption block" style={{ fontSize: 14, marginBottom: 5 }}>출자금액(억원)</span>
-              <input type="number" value={draft.u1} onChange={(e) => setDraft((d) => ({ ...d, u1: e.target.value }))} placeholder="0" style={inputStyle('number')} />
-            </label>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setRegOpen(false)}>취소</Button>
-            <Button variant="primary" size="sm" leadingIcon="check" onClick={saveRegister}>저장</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
     </GridFrame>

@@ -123,7 +123,11 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
 - `aggrid_shared.css` 합계행: 배경 `var(--muted)` + 상단 `1px solid var(--border-strong)`(이전 primary 9% 틴트·2px primary 선은 제거됨). pinned-left "합 계" 라벨은 primary 굵게 유지.
 
 **페이지가 켜는 것**
-- **컬럼 폭 = 내용 폭(잘림 방지)**: `autoSizeStrategy={AUTO_SIZE_CONTENT}`(`aggrid_theme.ts` export, `fitCellContents`). 긴 텍스트 컬럼은 `maxWidth` 캡(자펀드 360·GP 240). 검증: 잘린 셀 0 — `[...document.querySelectorAll('.ag-cell')].filter(c=>c.scrollWidth>c.clientWidth+1).length===0`. ⚠ 자동 산정 순간 컬럼 가상화가 풀려 전 컬럼을 그린다(35컬럼도 동작, 첫 프레임만 무거움). `asset_funding`·`generic_list`는 **미적용**(사용자 결정 전 유지).
+- **컬럼 폭 = 그리드 특성으로 고른다.** AG Grid엔 "내용 맞춤 + 남는 공간 채움"을 한 방법으로 하는 수단이 없다:
+  - **넓은 다열 테이블**(컬럼 합 > 프레임 폭, 자펀드관리 등) → `autoSizeStrategy={AUTO_SIZE_CONTENT}`(`aggrid_theme.ts` export, `fitCellContents`, 내용 폭·잘림 방지). 긴 텍스트 컬럼은 `maxWidth` 캡(자펀드 360·GP 240). ⚠ 자동 산정 순간 컬럼 가상화가 풀려 전 컬럼을 그린다(35컬럼도 동작, 첫 프레임만 무거움).
+  - **좁은 매트릭스/집계 그리드**(컬럼 합 < 프레임 폭 → 우측 빈 공간, 조성·출자현황 등) → `autoSizeStrategy`를 **빼고** 컬럼에 **`flex:1` + `minWidth`**(예: `numCol`에 `flex:1, minWidth:92`). flex가 그리드 폭을 동적으로 채우고(우측 빈 공간 0) 리사이즈에도 자동 재분배한다. 고정폭 컬럼(pinned 구분 등)은 flex 없이 `width` 유지. 좁으면 minWidth 하한→가로 스크롤(반응형 보존).
+    - ✗ `autoSizeStrategy={fitGridWidth}`는 쓰지 말 것: `domLayout="autoHeight"`+지연 레이아웃에서 **생성 시점 폭에 1회만** 맞춰 빈 공간이 남는다(2026-09-11 asset_funding 실측 gap 455px). flex를 쓴다.
+  - 검증: 잘린 셀 0 — `[...document.querySelectorAll('.ag-cell')].filter(c=>c.scrollWidth>c.clientWidth+1).length===0`. **빈 공간 0**은 `.ag-center-cols-container` 폭이 아니라(pinned 컬럼 제외돼 항상 pinned폭만큼 작게 나옴) **헤더셀 폭 합 ≈ `.ag-root-wrapper` 폭**으로 본다: `Math.abs([...document.querySelectorAll('.ag-header-cell')].reduce((s,h)=>s+h.getBoundingClientRect().width,0) - document.querySelector('.ag-root-wrapper').getBoundingClientRect().width) < 4`.
 - **행 높이는 테마 기본(42px)** — `rowHeight` 오버라이드 금지(골드와 간격 통일).
 - **라디오 단일선택**: `rowSelection={{mode:'singleRow',checkboxes:true,enableClickSelection:true}}` + `selectionColumnDef={{pinned:'left',width:44}}` + `getRowId`. 선택 SSOT는 React state(→[[apfs-stage-workflow]] 규약 9).
 - **단계/상태 배지 셀**: `StatusBadge size="lg" dot={false}`(13px, 앞 점 없음 — 배지가 촘촘히 반복되는 열).
