@@ -33,6 +33,9 @@ export interface PageSchema {
   // 카드헤더 KPI 배지 행 전체를 숨긴다(헤더 슬롯만 — 카드뷰 금액/상태는 유지, hideMetrics와 분리).
   // KPI 행은 생성 스킬 HITL에서 "미포함" 선택 시 true. countKpis/제네릭 금액 KPI 모두 무력화.
   hideKpis?: boolean;
+  // 푸터의 리스트 뷰|카드뷰 SegTabs를 숨기고 리스트 뷰로 고정한다(카드뷰가 의미 없는 엔티티).
+  // 표현 전용 — hideKpis(헤더 KPI만)·hideMetrics(금액 개념 전체)와 독립.
+  hideCardView?: boolean;
   provenance: Provenance;
 }
 
@@ -57,6 +60,7 @@ export const PageSchemaZ = z.object({
   searchable: z.boolean().optional(),
   countKpis: z.array(z.object({ label: z.string(), icon: z.string(), color: z.string(), column: z.string().optional(), value: z.string().optional() })).optional(),
   hideKpis: z.boolean().optional(),
+  hideCardView: z.boolean().optional(),
   provenance: ProvenanceZ,
 });
 

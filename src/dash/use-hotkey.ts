@@ -55,5 +55,5 @@ export function useHotkey(combo: HotkeyCombo, handler: () => void, opts: { enabl
     };
     window.addEventListener('keydown', onKey, true); // capture: 브라우저 기본 동작보다 먼저 가로챔
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [enabled, combo.mod, combo.shift, combo.key]);
+  }, [enabled, combo.mod, combo.alt, combo.shift, combo.key]);
 }
