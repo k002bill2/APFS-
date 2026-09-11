@@ -30,6 +30,9 @@ export interface PageSchema {
   hideMetrics?: boolean;
   // 건수형 KPI(계정구분별 등). 있으면 제네릭 금액 KPI 대신 이것을 렌더한다.
   countKpis?: CountKpiSpec[];
+  // 카드헤더 KPI 배지 행 전체를 숨긴다(헤더 슬롯만 — 카드뷰 금액/상태는 유지, hideMetrics와 분리).
+  // KPI 행은 생성 스킬 HITL에서 "미포함" 선택 시 true. countKpis/제네릭 금액 KPI 모두 무력화.
+  hideKpis?: boolean;
   provenance: Provenance;
 }
 
@@ -53,6 +56,7 @@ export const PageSchemaZ = z.object({
   hideMetrics: z.boolean().optional(),
   searchable: z.boolean().optional(),
   countKpis: z.array(z.object({ label: z.string(), icon: z.string(), color: z.string(), column: z.string().optional(), value: z.string().optional() })).optional(),
+  hideKpis: z.boolean().optional(),
   provenance: ProvenanceZ,
 });
 

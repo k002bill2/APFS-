@@ -19,9 +19,14 @@ description: 현행시스템 화면 캡처(이미지)에서 실제 컬럼·필�
    - 표 컬럼 → `columns[]`: type 매핑(금액→amount, 비율/변동→rate, 날짜→date, 상태/등급→status(+statusDomain), 운용사/기관→gp, **영숫자 코드/ID→code**, **주민번호/계좌→pii**, 그 외→text), `unit`/`align`/중첩이면 `group`
    - 입력 컨트롤 → `fields[]`: control 매핑(textarea/file/select(+options)/date/checkbox/readonly)
    - 1~2행 → 샘플 인지용. 목업의 **실제 행을 그대로 노출**해야 하면 `sample: SampleRow[]`(키=column/field key)로 저장(부재 시 런타임 합성 더미)
-   - **KPI 행(기본 포함)** → `countKpis`: 최소 **전체 건수 + 도메인별 2지표**(예: 계정구분 농식품/수산). `{label,icon,color,column?,value?}` — 규약은 [[apfs-grid]] "KPI 배지 행". 금액 컬럼이 없는 엔티티는 `hideMetrics: true`도 함께.
+   - **KPI 행 후보** → 카드헤더 KPI 배지 후보를 **추출만** 해 둔다(전체 건수 + 도메인별 2지표 후보, 예: 계정구분 농식품/수산). ⚠️ 스키마에 바로 넣지 말 것 — 포함 여부는 2.5단계 HITL에서 결정한다. 규약은 [[apfs-grid]] "KPI 배지 행".
    - OS 파일다이얼로그 오버레이·가로스크롤 잘림 영역은 제외하고 플래그
-3. **검수·동결**: 추출 결과를 캡처 이미지와 1회 대조 → `provenance{capturedAt,sourceSystem,captureFile}` 채움 → `src/dash/schemas/<route>.ts`로 저장(parsePageSchema/zod 통과 필수).
+2.5. **HITL — KPI 배지 행 포함 여부(필수)**: 동결(3단계) 전에 `AskUserQuestion`으로 카드헤더 KPI 배지 행을 넣을지 묻는다. 헤더="KPI 배지", 질문="이 페이지 카드헤더에 KPI 배지 행을 넣을까요?", 옵션(2단계 추출 후보를 실제 값으로 채워 제시):
+   - **미포함 (Recommended)** — 새 기본값. 헤더 슬롯 비움.
+   - **전체 건수만** — `countKpis:[{전체 건수}]`.
+   - **전체 + 구분별 2지표** — 추출한 status/category 컬럼의 `column`/`value` 쌍으로 3배지.
+   답에 따라 3단계 동결 시 스키마에 반영: **미포함 → `hideKpis: true`**(금액 컬럼이 있어도 제네릭 금액 KPI 폴백을 확실히 끈다) · 포함 → `countKpis` 배열. 결정은 `provenance` 옆 주석(예: `// KPI: 미포함(HITL 2026-..)`)으로 남겨 재실행 시 재질문을 피한다. 규약 근거는 [[apfs-grid]] "KPI 배지 행".
+3. **검수·동결**: 추출 결과를 캡처 이미지와 1회 대조 → `provenance{capturedAt,sourceSystem,captureFile}` 채움 → 2.5단계 HITL 결정(`countKpis`/`hideKpis`) 반영 → `src/dash/schemas/<route>.ts`로 저장(parsePageSchema/zod 통과 필수).
 4. **충돌검사·배선**: 라벨이 중복 리프면 data.ts에 `path` 부여(필수) 후 그 path를 route로. schemas/index.ts의 ALL 배열에 import 추가(중복키면 buildRegistry가 빌드에러).
 5. **검증**: `npm test`(스키마 zod) + `npm run build` + `npm run dev` 시각 확인(라이트/다크) + responsive-ui 체크.
 

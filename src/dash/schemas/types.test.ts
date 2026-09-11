@@ -19,4 +19,8 @@ describe('parsePageSchema', () => {
     const { provenance, ...noProv } = valid as any;
     expect(() => parsePageSchema(noProv)).toThrow();
   });
+  it('hideKpis(옵션 KPI 행 플래그)를 통과시킨다', () => {
+    // 인터페이스↔zod 손수 이중정의 drift 가드 — KPI 배지 행 opt-in(2026-09-11)
+    expect(parsePageSchema({ ...valid, hideKpis: true }).hideKpis).toBe(true);
+  });
 });

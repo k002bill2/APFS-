@@ -20,8 +20,8 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 목업 영역 | 우리 구현 | 규약 출처 |
 |-----------|-----------|-----------|
 | 페이지 골격(제목·KPI·툴바·푸터) | `GridFrame` + `KpiBadge`. **타이틀(`cardTitle`·`title`·crumbs 리프)은 `data.ts` 메뉴 리프 라벨과 일치**(임의 "○○ 목록" 금지) | [[apfs-grid]] "관리형 리스트 툴바·타이틀 규약" |
-| **KPI 배지 행(기본 포함)** | 카드헤더 우측 3배지 = 전체 건수 + 도메인별 2지표. typed=`kpis` 직접, 스키마=`schema.countKpis`(자동·필터반응). 금액 없는 엔티티는 `hideMetrics:true` 병행 | [[apfs-grid]] "KPI 배지 행" |
-| 검색박스(인라인 N개 필터) | **주 필터 1개=툴바 `FilterChip`**(예: 심사단계) + 나머지=**상세필터 드로어(Sheet)**, 검색어 최상단 고정, 컬럼 미연동 필터는 `· 데이터 연동 후 적용` 캡션 | [[apfs-detail-filter]] |
+| **KPI 배지 행(옵션·HITL)** | 기본 미포함. SOP(3절) 5단계 HITL로 포함 여부를 물어 "포함" 시에만 3배지(전체 건수 + 도메인별 2지표). typed=`kpis` 직접(미포함=`kpis` 미전달), 스키마=`schema.countKpis`(미포함=`hideKpis:true`). 금액 개념 자체가 없으면 `hideMetrics:true` 병행 | [[apfs-grid]] "KPI 배지 행" |
+| 검색박스(인라인 N개 필터) | **주 필터 1개=툴바 `FilterChip`**(예: 심사단계) + 나머지=**상세필터 드로어(Sheet)**, 검색어는 **기본 OFF opt-in**(필요한 페이지만 `searchable`/`SEARCHABLE`로 켜고, 켜질 때만 최상단 — 자동 추가 금지), 컬럼 미연동 필터는 `· 데이터 연동 후 적용` 캡션 | [[apfs-detail-filter]] |
 | 2단 헤더 그리드 + tfoot 합계 | AG Grid `ColGroupDef`(`marryChildren`) + `pinnedBottomRowData=useMemo([computeTotal(filteredRows)])` | [[apfs-aggrid]] |
 | 행 라디오 단일선택 | `rowSelection={{mode:'singleRow',checkboxes:true,enableClickSelection:true}}` + `selectionColumnDef={{pinned:'left'}}` + `getRowId` 안정 id | [[apfs-aggrid]] |
 | 심사단계 셀 + 단계별 작업 버튼 + 전이 | **[[apfs-stage-workflow]]** (신규 패턴) | 이 조립표 |
@@ -31,8 +31,8 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 적용 필터 칩 | 항목별 개별 칩, **값만**(접두사 없음) + × aria-label에 항목명 | [[apfs-detail-filter]] "typed 페이지 트랙" |
 | 엑셀 | SheetJS — 병합/리프 컬럼을 **columnDefs에서 자동 산출**(`flattenForExcel`), 마스크 시 숫자 0·텍스트 ''. **진입=툴바 kebab `MoreMenu` "내보내기 (Excel)" 항목**(독립 "엑셀" 버튼 금지) + 푸터 `IconBtn download` + 단축키 `⌥D`(`HOTKEYS.export`) | [[apfs-aggrid]] · 툴바/kebab=[[apfs-grid]] · 단축키=[[apfs-hotkeys]] |
 | 프레임 외관·푸터 | `--frame-bg`(테두리·그림자 없음), `sub` 미사용, 단위 캡션은 `toolbarRight`, 푸터 골드(건수·페이저·뷰 토글·아이콘) | [[apfs-grid]] "프레임 외관 규약" |
-| 리스트 ↔ 카드뷰 | 푸터 `SegTabs` + 카드 그리드 + 선택 유지 | **[[apfs-card-view]]** |
-| 읽기전용 명세 팝업 | `명세` 버튼 + 더블클릭 → 단위 토글·kv·재무요약·중첩 재무제표 | **[[apfs-spec-popup]]** |
+| 리스트 ↔ 카드뷰 | **opt-in(기본 미포함, 2026-09-11)** — 요구 시에만. 포함 시 푸터 `SegTabs` + 카드 그리드 + 선택 유지. **미포함이면 `view` state·`SegTabs`·카드 분기를 넣지 않는다**(리스트 뷰만) | **[[apfs-card-view]]** |
+| 읽기전용 명세 팝업 | **opt-in(기본 미포함)** — 목업/사용자가 요구할 때만 포함. 포함 시 진입=`명세` 버튼 + 더블클릭(단위 토글·kv·재무요약). **미포함이면 selbar에 `명세` 버튼·`onRowDoubleClicked` 배선을 넣지 않는다**(자동 고정 금지) | **[[apfs-spec-popup]]** |
 | 그리드 세부(폭·선택색·합계행·배지) | `AUTO_SIZE_CONTENT`+`maxWidth`, `wrapperBorder:false`, 합계 `--muted`+1px, 배지 `lg`/`dot={false}` | [[apfs-aggrid]] "관리형 페이지 그리드 규약" |
 | 색·대비 | 토큰만. 상태 텍스트는 `-text` 토큰(StatusBadge 내장) | [[color-tokens]] |
 
@@ -44,7 +44,7 @@ GNB/LNB 전환 토글(`.opts`) · 상단바/출처시스템 메뉴/서브탭/LNB
 2. **분기**(0절). complex면 계속.
 3. **파일·라우트**: 기존 페이지를 덮어쓰지 말고 **새 파일**(`<domain>_manage.tsx`, `export function XxxManage`). `app.tsx` route 분기만 교체(구 파일은 미라우팅으로 두고 삭제는 PR에서 사용자 결정). `data.ts` 리프 `path`가 이미 있으면 유지, `favRoute`=그 path.
 4. **모달 스키마**: `<domain>_manage_schemas.ts`에 `kind:'form'` PageSchema들 + 공통코드 옵션 상수. **`schemas/index.ts ALL`에 등록 금지**(라우트 아님) — 대신 모듈 스코프 `parsePageSchema()`로 import 시점 zod 검증. `columns`·`provenance`는 zod 필수라 대표 컬럼만 선언.
-5. **페이지 조립**(1절 표대로). 행 타입: **숫자 N/A는 `null`**(문자 `'-'` 금지) → `valueFormatter: p => p.value==null ? '-' : numFmt(p)`(공유 numFmt에 null 가드만, 재구현 금지). 텍스트 N/A는 `'-'`.
+5. **페이지 조립**(1절 표대로). 조립 시작 전 **HITL — KPI 배지 행 포함 여부(필수)**: `AskUserQuestion`으로 카드헤더 KPI 배지 행을 넣을지 묻는다(헤더="KPI 배지", 옵션 = **미포함(Recommended)** / 전체 건수만 / 전체+구분별 2지표, 후보 값은 목업 DATA·spec에서 채움). 답 반영 — typed 트랙: 포함이면 `kpis={<>…KpiBadge…</>}`, **미포함이면 `kpis`를 아예 넘기지 않는다**(GridFrame `{kpis && …}`로 영역째 사라짐). 규약은 [[apfs-grid]] "KPI 배지 행". 이어서 행 타입: **숫자 N/A는 `null`**(문자 `'-'` 금지) → `valueFormatter: p => p.value==null ? '-' : numFmt(p)`(공유 numFmt에 null 가드만, 재구현 금지). 텍스트 N/A는 `'-'`.
 6. **검증**: `npm run build` + `npm test` + **aside repl 런타임**(4절). Codex 리뷰 후 커밋.
 
 ## 4. 런타임 검증 체크리스트 (빌드 green ≠ 동작)
