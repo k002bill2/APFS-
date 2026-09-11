@@ -2,7 +2,12 @@
    구성: ① 금액 단위 토글(원/백만원/억원) ② 자펀드 개요 kv 그리드(37항목 + 문서 3슬롯)
         ③ 재무정보 요약(2단 헤더: 대차대조표 9 · 손익계산서 5) ④ 푸터: 재무제표 상세(중첩 팝업)·엑셀·닫기
    행(SubFundRow)에 있는 값은 행에서, 없는 항목(보수·담당자·재무)은 명세 데모값을 쓴다(백엔드 없음).
-   섹션형 모달 규약(apfs-form-modal "확장" 절)과 동일 골격 — Radix Dialog 880px. */
+   섹션형 모달 규약(apfs-form-modal "확장" 절)과 동일 골격 — Radix Dialog 880px.
+
+   ⚠ 2026-09-11 사용자 결정: 자펀드 관리(subfund_manage.tsx)에서 **언와이어**됨(툴바 '명세' 버튼·행 더블클릭 진입 제거).
+      명세 팝업은 전 화면 opt-in 정책이다(investment_review_manage.tsx 상단 주석과 동일 결정).
+      이 파일은 삭제하지 않고 유지한다 — `apfs-spec-popup`·`apfs-form-modal` 스킬의 골드 레퍼런스이며,
+      다른 화면에서 명세 팝업이 필요해지면 이 골격을 재사용/재생성한다. 현재 import 하는 소비처는 없다. */
 import React, { useState } from 'react';
 import { UI } from './components';
 import { mn, MT } from './mask';

@@ -259,9 +259,10 @@ function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: b
   );
 }
 
-/* 예약 라벨: 상세필터 최상단 공통 검색어 — 스키마 filters와 무관하게 항상 노출.
+/* 예약 라벨: 상세필터 최상단 공통 검색어 — 스키마 filters 배열과 무관한 별도 슬롯이며,
+   노출은 `schema.searchable` opt-in(기본 OFF)에 달렸다. 현재 켜둔 스키마는 없다.
    resolveFilterField를 타지 않고(휴리스틱이 tag로 오판 → 표 증발) rowMatchesFilters에서 특수 처리:
-   행의 전 컬럼 부분일치(OR), 다른 필터와는 AND. */
+   행의 전 컬럼 부분일치(OR), 다른 필터와는 AND. 이 처리는 opt-in 여부와 무관하게 유지한다. */
 export const SEARCH_LABEL = "검색어";
 
 /* 값-필터 컨트롤 — kind별 입력(year/enum select · date · number · text).
@@ -312,25 +313,28 @@ function DrawerFilterControl({ ff, value, onChange, onEnter }: { ff: FilterField
 
 /* ── 우측 슬라이드인: 스키마 기반 상세 필터 드로어 ──
    schema.filters 각 항목을 타입에 맞는 컨트롤로 노출한다 — 값-필터는 값 픽커, 카테고리는 on/off 토글.
-   상태 SSOT = Record<라벨, 값>(빈 값=미적용). 적용 시 부모 filterValues를 갱신해 행을 실제 필터링한다.
+   **즉시 반영형**(2026-09-11 사용자 결정 — typed 페이지 asset_funding·subfund_manage와 통일): 선택·입력하는
+   즉시 부모 filterValues가 갱신돼 표가 줄어든다. draft 사본을 두고 "필터 적용"에서 커밋하던 방식은 폐기.
+   그래서 상태 SSOT는 부모의 `applied` 하나뿐이며(드로어 로컬 상태 없음), 툴바 칩 ×로 외부에서 값이 빠져도
+   재동기화 effect 없이 즉시 반영된다. 푸터 "필터 적용"은 **닫기** 역할(값은 이미 적용됨), "초기화"는 즉시 전체 해제.
    Portal로 body 직계 렌더(루트 dashFade transform의 영향 차단), 좁은 화면은 maxWidth 92vw로 축소. */
 function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
   open: boolean; onClose: () => void; schema: PageSchema; applied: Record<string, string>; onApply: (next: Record<string, string>) => void;
 }) {
   const filters = schema.filters ?? [];
-  const [draft, setDraft] = useState<Record<string, string>>(() => ({ ...applied }));
-  // 열릴 때마다 현재 활성 값으로 초기화 (툴바에서 칩 제거 등 외부 변경 반영)
-  useEffect(() => { if (open) setDraft({ ...applied }); }, [open]);
-  const setVal = (label: string, v: string) => setDraft((prev) => ({ ...prev, [label]: v }));
-  const toggleTag = (label: string) => setDraft((prev) => {
-    const next = { ...prev };
+  // 값 변경 = 즉시 적용. 빈 값("" = 전체/미선택)은 키째 지워 비활성으로 만든다(rowMatchesFilters 계약).
+  const setVal = (label: string, v: string) => {
+    const next = { ...applied };
+    v === "" ? delete next[label] : (next[label] = v);
+    onApply(next);
+  };
+  const toggleTag = (label: string) => {
+    const next = { ...applied };
     next[label] ? delete next[label] : (next[label] = label);
-    return next;
-  });
-  // 빈 값은 제거하고 적용 (미선택 필터는 비활성)
-  const apply = () => { onApply(Object.fromEntries(Object.entries(draft).filter(([, v]) => v !== ""))); onClose(); };
-  // 입력 중 Enter = 필터 적용 (IME 조합 확정 Enter는 제외)
-  const applyOnEnter = (e: React.KeyboardEvent) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) apply(); };
+    onApply(next);
+  };
+  // 입력 중 Enter = 드로어 닫기(값은 이미 반영돼 있다). IME 조합 확정 Enter는 제외
+  const closeOnEnter = (e: React.KeyboardEvent) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) onClose(); };
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
@@ -344,28 +348,28 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
           {schema.searchable && (
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>{SEARCH_LABEL}</span>
-              <input type="text" value={draft[SEARCH_LABEL] ?? ""} onChange={(e) => setVal(SEARCH_LABEL, e.target.value)} onKeyDown={applyOnEnter} placeholder="검색어 입력" style={drawerInputStyle("text")} />
+              <input type="text" value={applied[SEARCH_LABEL] ?? ""} onChange={(e) => setVal(SEARCH_LABEL, e.target.value)} onKeyDown={closeOnEnter} placeholder="검색어 입력" style={drawerInputStyle("text")} />
             </label>
           )}
           {filters.length === 0 && !schema.searchable ? (
             <div className="text-caption text-center" style={{ fontSize: 13, padding: "28px 0" }}>설정 가능한 필터가 없습니다.</div>
           ) : (
-            <>
-              <div className="font-bold text-muted-foreground" style={{ fontSize: 13, marginBottom: 10 }}>필터 항목</div>
-              <div className="flex flex-col">
-                {filters.map((label) => {
-                  const ff = resolveFilterField(label, schema);
-                  return ff.kind === "tag"
-                    ? <DrawerCheckRow key={label} label={label} checked={!!draft[label]} onClick={() => toggleTag(label)} />
-                    : <DrawerFilterControl key={label} ff={ff} value={draft[label] ?? ""} onChange={(v) => setVal(label, v)} onEnter={apply} />;
-                })}
-              </div>
-            </>
+            /* 섹션 제목("필터 항목")은 두지 않는다(2026-09-11 사용자 결정) — 드로어 제목 '상세 필터'가 이미
+               내용을 지시하므로 중복이다. 항목 라벨이 곧 소제목 역할을 한다. */
+            <div className="flex flex-col">
+              {filters.map((label) => {
+                const ff = resolveFilterField(label, schema);
+                return ff.kind === "tag"
+                  ? <DrawerCheckRow key={label} label={label} checked={!!applied[label]} onClick={() => toggleTag(label)} />
+                  : <DrawerFilterControl key={label} ff={ff} value={applied[label] ?? ""} onChange={(v) => setVal(label, v)} onEnter={onClose} />;
+              })}
+            </div>
           )}
         </div>
         <SheetFooter>
-          <Button variant="outline" size="md" onClick={() => setDraft({})}>초기화</Button>
-          <Button variant="primary" size="md" style={{ flex: 1 }} onClick={apply}>필터 적용</Button>
+          {/* 초기화 = 즉시 전체 해제(드로어는 열린 채) · 필터 적용 = 닫기(값은 이미 적용됨) — typed 페이지와 동일 */}
+          <Button variant="outline" size="md" onClick={() => onApply({})}>초기화</Button>
+          <Button variant="primary" size="md" style={{ flex: 1 }} onClick={onClose}>필터 적용</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
@@ -433,7 +437,10 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const chipItems = Object.entries(filterValues).map(([label, value]) => ({
     label, value: label !== SEARCH_LABEL && resolveFilterField(label, schema).kind === "tag" ? undefined : value,
   }));
-  const removeFilter = (label: string) => setFilterValues((prev) => { const n = { ...prev }; delete n[label]; return n; });
+  /* 필터 변경 단일 관문 — 드로어(즉시 반영)·툴바 칩 ×·초기화가 모두 이 함수를 거친다.
+     여기서만 첫 페이지로 되돌리므로 경로마다 정책이 갈리지 않는다(칩 ×만 페이지 유지되던 불일치 해소). */
+  const applyFilters = (next: Record<string, string>) => { setFilterValues(next); apiRef.current?.paginationGoToFirstPage(); };
+  const removeFilter = (label: string) => { const n = { ...filterValues }; delete n[label]; applyFilters(n); };
 
   // 파생 KPI (필터 결과 기준)
   const sumAmount = filtered.reduce((s, r) => s + r.amount, 0);
@@ -756,7 +763,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         onClose={() => setFilterOpen(false)}
         schema={schema}
         applied={filterValues}
-        onApply={(next) => { setFilterValues(next); apiRef.current?.paginationGoToFirstPage(); }} />
+        onApply={applyFilters} />
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
     </GridFrame>
