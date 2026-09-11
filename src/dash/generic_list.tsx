@@ -156,8 +156,9 @@ function FilterPill({ label, value, onRemove }: { label: string; value?: string;
 }
 
 /* ===== 더보기 드롭다운 메뉴 (kebab) — Radix DropdownMenu(키보드 내비·menuitem 시맨틱) =====
-   내보내기(Excel)·인쇄만 남는다. 등록은 kebab에서 꺼내 툴바 독립 버튼으로 승격(2026-09-11 사용자 결정,
-   진입 빈도가 높은 1차 액션이라 2클릭→1클릭). 독립 '엑셀' 버튼은 두지 않는다(내보내기 항목으로 흡수).
+   항목은 내보내기(Excel)·인쇄뿐이다. 독립 '엑셀' 버튼은 두지 않는다(내보내기 항목으로 흡수).
+   ⚠️ 툴바에서 이 kebab이 뜨는 건 **등록이 없는 스키마(editable=false)뿐**이다 — 등록이 있으면 같은 항목이
+   RegisterCombo의 ⌄ 드롭다운으로 들어간다(2026-09-11 사용자 결정). 푸터 폴백(!topMoreVisible)은 양쪽 공통.
    골드 subfund_manage.tsx의 MoreMenu 동형 — Tooltip 래핑 + DropdownMenuShortcut 힌트 + size prop. */
 function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
   return (
@@ -177,17 +178,65 @@ function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number
         </TooltipTrigger>
         <TooltipContent>더보기</TooltipContent>
       </Tooltip>
-      <DropdownMenuContent>
-        <DropdownMenuItem onSelect={onExport}>
-          <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
-          <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => window.print()}>
-          <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
-          <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
+      <DropdownMenuContent><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/* 보조 액션 항목(내보내기·인쇄) — kebab과 등록 combo 드롭다운이 **같은 조각**을 공유한다.
+   양쪽에 손수 복제하면 단축키 힌트·라벨이 갈라지므로 여기 한 곳만 고친다. */
+function MoreMenuItems({ onExport }: { onExport: () => void }) {
+  return (
+    <>
+      <DropdownMenuItem onSelect={onExport}>
+        <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
+        <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
+      </DropdownMenuItem>
+      <DropdownMenuItem onSelect={() => window.print()}>
+        <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
+        <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
+      </DropdownMenuItem>
+    </>
+  );
+}
+
+/* ===== 등록 combo(split) 버튼 — 등록 가능 스키마의 기본 툴바 형태(2026-09-11 사용자 결정) =====
+   좌: 1차 액션(등록) 즉시 실행 · 우: ⌄ 보조 액션 메뉴(내보내기·인쇄) — 툴바 kebab을 흡수한다.
+   외관은 Button variant="outline" size="sm"을 손수 재현한다. UI.Button을 쓸 수 없는 이유 2가지:
+   ① forwardRef/…rest가 없어 Radix asChild 트리거가 되지 않는다(무음으로 안 열림),
+   ② motion whileHover scale이 좌·우 절반에 따로 걸려 hover 시 이음매가 어긋난다.
+   ⚠️ 컨테이너에 overflow-hidden을 주지 않는다 — 전역 :focus-visible 링(box-shadow, tokens.css)이 잘려
+   키보드 초점 단서가 사라진다. 대신 각 절반에 좌/우 라운드를 직접 준다.
+   ⚠️ 트리거에 .apfs-menu-trigger를 붙이지 않는다 — 그 클래스는 focus 링을 끄고 배경(bg-card)으로 초점을
+   대신 표시하는데, combo는 이미 카드 배경이라 초점이 보이지 않게 된다. */
+function RegisterCombo({ label, onRegister, onExport }: { label: string; onRegister: () => void; onExport: () => void }) {
+  return (
+    <span className="inline-flex items-stretch rounded-[9px] border border-border-strong bg-card">
+      <button
+        type="button"
+        onClick={onRegister}
+        className="inline-flex items-center gap-[7px] rounded-l-[9px] border-0 bg-transparent px-[11px] py-1.5 font-[inherit] text-[12.5px] font-semibold text-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary">
+        <Icon name="plus" size={14} stroke={2.2} />{label}
+      </button>
+      {/* 두 절반의 경계선 — 컨테이너 테두리와 같은 토큰(장식이라 aria-hidden) */}
+      <span aria-hidden className="w-px self-stretch bg-border-strong" />
+      <DropdownMenu>
+        {/* Tooltip/Dropdown 트리거를 같은 노드에 합성하면 Radix가 data-state를 서로 덮어쓴다 → span으로 분리(MoreMenu 동형) */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">
+              <DropdownMenuTrigger
+                aria-label="더보기"
+                className="inline-flex h-full items-center justify-center rounded-r-[9px] border-0 bg-transparent px-2 text-muted-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary data-[state=open]:text-primary">
+                <Icon name="chevron-down" size={14} stroke={2.2} />
+              </DropdownMenuTrigger>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>더보기</TooltipContent>
+        </Tooltip>
+        <DropdownMenuContent align="end"><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
+      </DropdownMenu>
+    </span>
   );
 }
 
@@ -355,6 +404,8 @@ function rowMatchesFilters(row: Row, schema: PageSchema, filterValues: Record<st
 export function GenericListPage({ route, onNav }: { route: string; onNav: (r: string) => void }) {
   const { title, crumbs } = findMenuContext(route);
   const schema = resolveSchema(route);
+  /* editable = 등록 가능 스키마(fields 보유). 툴바 규약의 분기 하나를 이것이 결정한다(2026-09-11 사용자 결정):
+     등록이 있으면 combo(split) 버튼 하나로 합치고, 등록이 없으면 종전처럼 kebab(⋯) 단독. */
   const editable = schema.fields.length > 0;
   const masked = useMask();   // Excel 우측정렬 숫자 셀의 마스킹 시 값을 0으로(실값 비노출)
   const apiRef = useRef<GridApi<Row> | null>(null);
@@ -584,14 +635,18 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       )}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        {/* 등록 = 이 화면의 1차 액션. kebab 밖 독립 버튼(outline)으로 두어 보조 액션(ghost·아이콘)과 위계를 가른다.
+        {/* 등록이 있으면 combo(split) 버튼 — 좌: 1차 액션(등록) · 우: ⌄ 보조 액션(내보내기·인쇄).
             라벨은 도메인 액션명 그대로(스키마 entity — '공고 등록' 등), "등록"으로 줄이지 않는다.
-            편집 가능한 스키마(fields 보유)에서만 노출. Tooltip으로 감싸지 않는다(UI.Button은 asChild 트리거 불가). */}
+            ⚠️ topMoreRef는 combo·kebab 중 **실제로 렌더되는 쪽**이 들고 있어야 한다 — ref가 비면 관찰
+            effect가 early return해 topMoreVisible이 true로 굳고 푸터 폴백이 영원히 안 뜬다(내보내기·인쇄 단절). */}
         {editable && (
-          <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ mode: "create" })}>{schema.entity + " 등록"}</Button>
+          <span ref={topMoreRef} className="inline-flex">
+            <RegisterCombo label={schema.entity + " 등록"} onRegister={() => setModal({ mode: "create" })} onExport={exportExcel} />
+          </span>
         )}
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); }} />
-        <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>
+        {/* 등록이 없는 스키마(연도별투자현황·조합별 월간보고 현황 등)는 합칠 1차 액션이 없으므로 종전 kebab 단독 */}
+        {!editable && <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>}
       </>}
       footerLeft={'총 ' + mn(String(totalForCount)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}
       footerCenter={view === "list" && page.total > 1 ? (

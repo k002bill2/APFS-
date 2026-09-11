@@ -188,8 +188,9 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
   );
 }
 
-/* kebab(···) 더보기 — 내보내기(Excel)·인쇄. 등록은 kebab에서 꺼내 툴바 독립 버튼으로 승격(2026-09-11 사용자 결정,
-   진입 빈도가 높은 1차 액션이라 2클릭→1클릭). 독립 '엑셀' 버튼은 여전히 두지 않는다(내보내기 항목으로 흡수).
+/* kebab(···) 더보기 — 내보내기(Excel)·인쇄. 독립 '엑셀' 버튼은 두지 않는다(내보내기 항목으로 흡수).
+   ⚠️ 이 화면의 툴바에는 이 kebab이 뜨지 않는다 — 등록이 있는 리스트는 RegisterCombo의 ⌄로 같은 항목을
+   제공하는 것이 규약(2026-09-11 사용자 결정, apfs-grid). 여기 MoreMenu는 **푸터 폴백 전용**이다.
    트리거는 Tooltip으로 감싼다(TooltipProvider는 app.tsx 루트). */
 function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
   return (
@@ -210,17 +211,64 @@ function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number
         </TooltipTrigger>
         <TooltipContent>더보기</TooltipContent>
       </Tooltip>
-      <DropdownMenuContent>
-        <DropdownMenuItem onSelect={onExport}>
-          <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
-          <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => window.print()}>
-          <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
-          <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
+      <DropdownMenuContent><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/* 보조 액션 항목(내보내기·인쇄) — 푸터 폴백 kebab과 툴바 combo가 **같은 조각**을 공유한다.
+   양쪽에 복제하면 라벨·단축키 힌트가 갈라지므로 여기 한 곳만 고친다. */
+function MoreMenuItems({ onExport }: { onExport: () => void }) {
+  return (
+    <>
+      <DropdownMenuItem onSelect={onExport}>
+        <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
+        <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
+      </DropdownMenuItem>
+      <DropdownMenuItem onSelect={() => window.print()}>
+        <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
+        <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
+      </DropdownMenuItem>
+    </>
+  );
+}
+
+/* ===== 등록 combo(split) 버튼 — 등록이 있는 관리형 리스트의 툴바 기본 형태(apfs-grid 규약) =====
+   좌: 1차 액션(등록) 즉시 실행 · 우: ⌄ 보조 액션 메뉴(내보내기·인쇄) — 툴바 독립 kebab을 흡수한다.
+   generic_list.tsx의 로컬 복사본(MoreMenu·PageBtn과 동일한 복사 규약 — 공유 export 아님).
+   외관은 Button variant="outline" size="sm"을 손수 재현한다. UI.Button을 쓸 수 없는 이유 2가지:
+   ① forwardRef/…rest가 없어 Radix asChild 트리거가 되지 않는다(무음으로 안 열림),
+   ② motion whileHover scale이 좌·우 절반에 따로 걸려 hover 시 이음매가 어긋난다.
+   ⚠️ 컨테이너에 overflow-hidden 금지(전역 :focus-visible 링이 잘림), 트리거에 .apfs-menu-trigger 금지
+   (그 클래스는 링을 끄고 bg-card로 초점을 대신 표시하는데 combo는 이미 카드 배경이라 단서가 사라진다). */
+function RegisterCombo({ label, onRegister, onExport }: { label: string; onRegister: () => void; onExport: () => void }) {
+  return (
+    <span className="inline-flex items-stretch rounded-[9px] border border-border-strong bg-card">
+      <button
+        type="button"
+        onClick={onRegister}
+        className="inline-flex items-center gap-[7px] rounded-l-[9px] border-0 bg-transparent px-[11px] py-1.5 font-[inherit] text-[12.5px] font-semibold text-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary">
+        <Icon name="plus" size={14} stroke={2.2} />{label}
+      </button>
+      {/* 두 절반의 경계선 — 컨테이너 테두리와 같은 토큰(장식이라 aria-hidden) */}
+      <span aria-hidden className="w-px self-stretch bg-border-strong" />
+      <DropdownMenu>
+        {/* Tooltip/Dropdown 트리거를 같은 노드에 합성하면 Radix가 data-state를 서로 덮어쓴다 → span으로 분리 */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">
+              <DropdownMenuTrigger
+                aria-label="더보기"
+                className="inline-flex h-full items-center justify-center rounded-r-[9px] border-0 bg-transparent px-2 text-muted-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary data-[state=open]:text-primary">
+                <Icon name="chevron-down" size={14} stroke={2.2} />
+              </DropdownMenuTrigger>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>더보기</TooltipContent>
+        </Tooltip>
+        <DropdownMenuContent align="end"><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
+      </DropdownMenu>
+    </span>
   );
 }
 
@@ -436,11 +484,14 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
         {/* 금액 단위 표기 — 캡션(비마스킹). 카드헤더 sub 캡션을 없애면서 여기로 이동 */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        {/* 등록 = 이 화면의 1차 액션. kebab 밖 독립 버튼(outline)으로 두어 보조 액션(ghost·아이콘)과 위계를 가른다.
-            단축키 ⌘⏎(HOTKEYS.register)는 그대로 — 힌트는 kebab 항목이 사라지며 함께 빠졌다. */}
-        <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'apply' })}>제안서접수 등록</Button>
+        {/* 등록이 있는 리스트라 combo(split) 버튼 — 좌: 제안서접수 등록 · 우: ⌄ 내보내기·인쇄(apfs-grid 규약).
+            툴바 독립 kebab은 두지 않는다(항목이 combo 안으로 들어가 중복이 된다). 단축키 ⌘⏎는 그대로.
+            ⚠️ topMoreRef는 combo 래퍼가 들고 있어야 한다 — ref가 비면 관찰 effect가 early return해
+            topMoreVisible이 true로 굳고 푸터 폴백이 영원히 안 뜬다(내보내기·인쇄 접근 단절). */}
+        <span ref={topMoreRef} className="inline-flex">
+          <RegisterCombo label="제안서접수 등록" onRegister={() => setModal({ kind: 'apply' })} onExport={exportExcel} />
+        </span>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
-        <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>
       </>}
       footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
       footerCenter={view === 'list' && page.total > 1 ? (
