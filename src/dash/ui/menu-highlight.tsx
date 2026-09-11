@@ -1,7 +1,9 @@
 /* 메뉴 항목 슬라이드 하이라이트 — animate-ui(animate-ui.com) MotionHighlight 이식.
    활성 항목에만 layoutId 공유 motion.span을 렌더 → 포커스/hover가 옮겨가면 배경이 미끄러진다
-   (SegTabs 인디케이터와 동일 패턴). 4개 메뉴 표면이 이 한 구현을 공유한다:
-     ui/dropdown-menu(더보기 등) · ui/context-menu(에디터 표) · shell HistoryMenu(방문기록) · row_context_menu(행 우클릭).
+   (SegTabs 인디케이터와 동일 패턴). 메뉴 표면들이 이 한 구현을 공유한다:
+     ui/dropdown-menu(더보기 등) · ui/context-menu(에디터 표) · shell HistoryMenu(방문기록) · shell FavoritesFab(즐겨찾기) · row_context_menu(행 우클릭).
+   ⚠️ 이 프리미티브는 **열렸다 닫히는 팝업 메뉴 전용**이다(닫힘 시 Provider unmount=리셋). LNB처럼 **상주하는 네비게이션에는 쓰지 않는다**
+     — 활성 페이지 지속 표시와 잔류 슬라이드가 동시에 존재해 "배경 여러 개"로 보인다(2026-09-11 LNB 적용 후 원복). 상주 메뉴는 즉시 hover 배경.
 
    규약(왜 이렇게 — 어긋나면 슬라이드가 스냅되거나 이중 배경이 된다):
    - 활성 신호: Radix 메뉴는 포인터 이동도 item.focus()를 부르므로 onFocus 하나면 충분하다.

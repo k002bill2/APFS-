@@ -45,9 +45,28 @@ const allSubGroupsExpanded = () => {
   return map;
 };
 
-/* ---------- 메뉴 자식 렌더링 (Lnb·RailNav 공유 — 3레벨: 하위그룹/리프/직접리프, 카운터는 조기경보만) ---------- */
-function MenuChildren({ m, expanded, setExpanded, onNav }) {
+/* 현재 route의 조상 그룹(대분류 m.id + 중분류 m.id:sN)을 펼침 맵으로 — 현재 페이지 메뉴 자동 오픈용.
+   route = 리프의 path||label(NFC). 인덱스는 allSubGroupsExpanded/MenuChildren의 c.map 인덱스와 일치. */
+const ancestorsOf = (route) => {
+  const map: Record<string, boolean> = {};
+  if (!route) return map;
+  D.MENU.forEach((m) => {
+    if (!m.children) return;
+    m.children.forEach((c, i) => {
+      if (c.sub && c.children) {
+        if (c.children.some((leaf) => (leaf.path || leaf.label) === route)) { map[m.id] = true; map[m.id + ":s" + i] = true; }
+      } else if ((c.path || c.label) === route) { map[m.id] = true; }
+    });
+  });
+  return map;
+};
+
+/* ---------- 메뉴 자식 렌더링 (Lnb·RailNav 공유 — 3레벨: 하위그룹/리프/직접리프, 카운터는 조기경보만) ----------
+   route를 받아 현재 페이지 리프를 aria-current+primary로 표시. 배경은 즉시 hover(--muted) — 상주 네비라 슬라이드 미사용
+   (2026-09-11 슬라이드 원복: 상주 Provider에서 잔류 하이라이트가 활성표시와 겹쳐 "배경 여러 개"로 보임). */
+function MenuChildren({ m, route, expanded, setExpanded, onNav }) {
   const showDots = m.id === "risk";
+  const primaryBg = "color-mix(in srgb,var(--primary) 12%,transparent)";
   return (
     <>{m.children.map((c, i) => {
       if (c.sub && c.children) {
@@ -68,31 +87,39 @@ function MenuChildren({ m, expanded, setExpanded, onNav }) {
                 style={{ textOverflow: "ellipsis" }}>{c.label}</span><div className="flex items-center gap-1.5 shrink-0">{showDots && subCount > 0 && <NewDot urgent={m.urgent} />}<Icon
                   name="chevron-down"
                   size={12}
-                  style={{ transform: subOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .15s", opacity: .5 }} /></div></button>{subOpen && <div className="mb-0.5 pl-3.5">{c.children.map((leaf, j) => <button
-                key={j}
-                onClick={() => onNav(leaf.path || leaf.label)}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                className="w-full flex items-center justify-between gap-2 cursor-pointer px-2.5 text-muted-foreground"
-                style={{
-                  border: "none", font: "inherit", fontWeight: 500,
-                  borderRadius: 6, paddingTop: 5, paddingBottom: 5,
-                  background: "transparent", fontSize: 13, transition: "background .15s",
-                }}><span
-                  className="whitespace-nowrap overflow-hidden text-left"
-                  style={{ textOverflow: "ellipsis" }}>{leaf.label}</span>{showDots && leaf.badge > 0 && <NewDot urgent={m.urgent} />}</button>)}</div>}</div>
+                  style={{ transform: subOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .15s", opacity: .5 }} /></div></button>{subOpen && <div className="mb-0.5 pl-3.5">{c.children.map((leaf, j) => {
+                const leafActive = (leaf.path || leaf.label) === route;
+                return (<button
+                  key={j}
+                  onClick={() => onNav(leaf.path || leaf.label)}
+                  aria-current={leafActive ? "page" : undefined}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = leafActive ? primaryBg : "transparent"; }}
+                  className="w-full flex items-center justify-between gap-2 cursor-pointer px-2.5"
+                  style={{
+                    border: "none", font: "inherit", fontWeight: leafActive ? 700 : 500,
+                    borderRadius: 6, paddingTop: 5, paddingBottom: 5, fontSize: 13,
+                    color: leafActive ? "var(--primary)" : "var(--muted-foreground)",
+                    background: leafActive ? primaryBg : "transparent", transition: "background .15s",
+                  }}><span
+                    className="whitespace-nowrap overflow-hidden text-left"
+                    style={{ textOverflow: "ellipsis" }}>{leaf.label}</span>{showDots && leaf.badge > 0 && <NewDot urgent={m.urgent} />}</button>);
+              })}</div>}</div>
         );
       }
+      const cActive = (c.path || c.label) === route;
       return (
         <button
           key={i}
           onClick={() => onNav(c.path || c.label)}
+          aria-current={cActive ? "page" : undefined}
           onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          className="w-full flex items-center justify-between gap-2 cursor-pointer py-1.5 px-2.5 text-muted-foreground"
+          onMouseLeave={(e) => { e.currentTarget.style.background = cActive ? primaryBg : "transparent"; }}
+          className="w-full flex items-center justify-between gap-2 cursor-pointer py-1.5 px-2.5"
           style={{
-            border: "none", font: "inherit", fontWeight: 500, borderRadius: 7,
-            background: "transparent", fontSize: 13, transition: "background .15s",
+            border: "none", font: "inherit", fontWeight: cActive ? 700 : 500, borderRadius: 7, fontSize: 13,
+            color: cActive ? "var(--primary)" : "var(--muted-foreground)",
+            background: cActive ? primaryBg : "transparent", transition: "background .15s",
           }}><span
             className="whitespace-nowrap overflow-hidden text-left"
             style={{ textOverflow: "ellipsis" }}>{c.label}</span>{showDots && c.badge > 0 && <NewDot urgent={m.urgent} />}</button>
@@ -104,7 +131,7 @@ function MenuChildren({ m, expanded, setExpanded, onNav }) {
 /* ---------- 접힘 LNB 플라이아웃 아이템 (Radix NavigationMenu — 키보드 진입 경로) ----------
    트리거(아이콘) hover/포커스/Enter로 플라이아웃 오픈(기존 hover-전용 갭 해소). Content는 fixed로
    레일 overflow 클리핑 탈출(top은 트리거 위치로 계산). 자식 없는 항목은 단순 NavigationMenuLink. */
-function LnbFlyItem({ m, count, isActive, expanded, setExpanded, onNav }) {
+function LnbFlyItem({ m, count, isActive, route, expanded, setExpanded, onNav }) {
   const triggerRef = React.useRef<any>(null);
   const [top, setTop] = useState(64);
   const place = () => { const r = triggerRef.current?.getBoundingClientRect(); if (r) setTop(Math.max(64, Math.min(r.top, window.innerHeight - 360))); };
@@ -142,19 +169,60 @@ function LnbFlyItem({ m, count, isActive, expanded, setExpanded, onNav }) {
             className="w-full flex items-center gap-2 cursor-pointer py-2 px-2.5 text-primary mb-1"
             style={{ border: "none", font: "inherit", fontWeight: 700, borderRadius: 8, background: "transparent", fontSize: 12.5 }}>
             <Icon name="arrow-right" size={14} />전체 보기</button></NavigationMenuLink>}
-          <MenuChildren m={m} expanded={expanded} setExpanded={setExpanded} onNav={onNav} /></div>
+          <MenuChildren m={m} route={route} expanded={expanded} setExpanded={setExpanded} onNav={onNav} /></div>
       </NavigationMenuContent>
     </NavigationMenuItem>
   );
 }
 
+/* 확장 LNB 본문 — 대분류 그룹 버튼 + MenuChildren. 상주 네비라 슬라이드 미사용(즉시 hover는 각 버튼 인라인).
+   route/펼침 변경 시 활성 리프를 scrollIntoView(block:nearest)로 보이게 한다(자동 오픈 후 뷰포트 밖일 때, 창 스크롤은 고정). */
+function LnbTree({ menu, open, route, expanded, setExpanded, onNav }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => { const el = ref.current?.querySelector('[aria-current="page"]'); if (el) (el as HTMLElement).scrollIntoView({ block: "nearest" }); }, [route, expanded]);
+  return (
+    <div
+      ref={ref}
+      className="flex-1 overflow-y-auto overflow-x-hidden"
+      style={{ padding: open ? "14px 14px 8px" : "14px 8px 8px" }}>{menu.map((m) => {
+        const showCounts = m.id === "risk";
+        const count = showCounts ? rollup(m) : 0;
+        const isActive = m.path && m.path === route;
+        const hasKids = !!m.children;
+        const isOpen = expanded[m.id];
+        return (
+          <div key={m.id} className="mb-0.5"><button
+              onClick={() => { if (m.path) onNav(m.path); if (hasKids && open) setExpanded((e) => ({ ...e, [m.id]: !e[m.id] })); }}
+              aria-current={isActive ? "page" : undefined}
+              title={!open ? m.label : undefined}
+              className="relative w-full flex items-center cursor-pointer"
+              style={{
+                gap: 11, border: "none", font: "inherit", borderRadius: 9, padding: open ? "9px 10px" : "10px", justifyContent: open ? "flex-start" : "center",
+                background: isActive ? "color-mix(in srgb,var(--primary) 12%,transparent)" : "transparent",
+                color: isActive ? "var(--primary)" : "var(--foreground)", fontWeight: isActive ? 700 : 500, fontSize: 13.5,
+                transition: "background .15s",
+              }}><Icon name={m.icon} size={20} stroke={isActive ? 2.3 : 2} />{open && <span className="flex-1 text-left whitespace-nowrap">{m.label}</span>}{open && (m as any).isNew && <span className="font-extrabold text-accent" style={{ fontSize: 9.5 }}>NEW</span>}{count > 0 && (open
+                ? <span style={{ width: 7, height: 7, borderRadius: 99, flexShrink: 0, background: m.urgent ? "var(--danger)" : "var(--primary)" }} />
+                : <span
+                className="absolute top-1.5 right-2"
+                style={{ width: 7, height: 7, borderRadius: 99, background: m.urgent ? "var(--danger)" : "var(--primary)" }} />)}{open && hasKids && <Icon
+                name="chevron-down"
+                size={15}
+                style={{ transform: isOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .18s", opacity: .6 }} />}</button>{open && hasKids && isOpen && <div className="mt-0.5 mb-1 mx-0 pl-4"><MenuChildren m={m} route={route} expanded={expanded} setExpanded={setExpanded} onNav={onNav} /></div>}</div>
+        );
+      })}</div>
+  );
+}
+
 /* ---------- LNB ---------- */
 function Lnb({ open, route, onNav, mobile, drawerOpen }) {
-  const [expanded, setExpanded] = useState(() => ({ ...allSubGroupsExpanded(), risk: true }));
+  const [expanded, setExpanded] = useState(() => ({ ...allSubGroupsExpanded(), risk: true, ...ancestorsOf(route) }));
   const [navValue, setNavValue] = useState("");
   const menu = D.MENU;
   const collapsed = !open && !mobile;
   const navTo = (r) => { onNav(r); setNavValue(""); };
+  // 현재 페이지 메뉴 자동 오픈 — route 변경 시 조상 그룹만 편다(수동으로 접은 다른 그룹은 건드리지 않음: 병합만).
+  useLayoutEffect(() => { const a = ancestorsOf(route); if (Object.keys(a).length) setExpanded((e) => ({ ...e, ...a })); }, [route]);
   const posStyle: React.CSSProperties = mobile
     ? { position: "fixed", top: 58, left: 0, width: 270, height: "calc(100vh - 58px)", zIndex: 45,
         transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
@@ -171,37 +239,9 @@ function Lnb({ open, route, onNav, mobile, drawerOpen }) {
         ? <NavigationMenu orientation="vertical" value={navValue} onValueChange={setNavValue}
             className="flex-1 overflow-y-auto overflow-x-hidden block max-w-none" style={{ padding: "14px 8px 8px" }}><NavigationMenuList className="gap-0.5">{menu.map((m) => <LnbFlyItem
               key={m.id} m={m} count={m.id === "risk" ? rollup(m) : 0}
-              isActive={!!(m.path && m.path === route)}
+              isActive={!!(m.path && m.path === route)} route={route}
               expanded={expanded} setExpanded={setExpanded} onNav={navTo} />)}</NavigationMenuList></NavigationMenu>
-        : <div
-        className="flex-1 overflow-y-auto overflow-x-hidden"
-        style={{ padding: open ? "14px 14px 8px" : "14px 8px 8px" }}>{menu.map((m) => {
-          const showCounts = m.id === "risk";
-          const count = showCounts ? rollup(m) : 0;
-          const isActive = m.path && m.path === route;
-          const hasKids = !!m.children;
-          const isOpen = expanded[m.id];
-          return (
-            <div key={m.id} className="mb-0.5"><button
-                onClick={() => { if (m.path) onNav(m.path); if (hasKids && open) setExpanded((e) => ({ ...e, [m.id]: !e[m.id] })); }}
-                aria-current={isActive ? "page" : undefined}
-                title={!open ? m.label : undefined}
-                className="relative w-full flex items-center cursor-pointer"
-                style={{
-                  gap: 11, border: "none", font: "inherit", borderRadius: 9, padding: open ? "9px 10px" : "10px", justifyContent: open ? "flex-start" : "center",
-                  background: isActive ? "color-mix(in srgb,var(--primary) 12%,transparent)" : "transparent",
-                  color: isActive ? "var(--primary)" : "var(--foreground)", fontWeight: isActive ? 700 : 500, fontSize: 13.5,
-                  transition: "background .15s",
-                }}><Icon name={m.icon} size={20} stroke={isActive ? 2.3 : 2} />{open && <span className="flex-1 text-left whitespace-nowrap">{m.label}</span>}{open && (m as any).isNew && <span className="font-extrabold text-accent" style={{ fontSize: 9.5 }}>NEW</span>}{count > 0 && (open
-                  ? <span style={{ width: 7, height: 7, borderRadius: 99, flexShrink: 0, background: m.urgent ? "var(--danger)" : "var(--primary)" }} />
-                  : <span
-                  className="absolute top-1.5 right-2"
-                  style={{ width: 7, height: 7, borderRadius: 99, background: m.urgent ? "var(--danger)" : "var(--primary)" }} />)}{open && hasKids && <Icon
-                  name="chevron-down"
-                  size={15}
-                  style={{ transform: isOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .18s", opacity: .6 }} />}</button>{open && hasKids && isOpen && <div className="mt-0.5 mb-1 mx-0 pl-4"><MenuChildren m={m} expanded={expanded} setExpanded={setExpanded} onNav={onNav} /></div>}</div>
-          );
-        })}</div>}<div
+        : <LnbTree menu={menu} open={open} route={route} expanded={expanded} setExpanded={setExpanded} onNav={onNav} />}<div
         style={{ borderTop: "1px solid var(--border)", padding: open ? "8px 10px" : "8px" }}><button
           onClick={() => onNav("designsystem")}
           aria-current={route === "designsystem" ? "page" : undefined}
@@ -258,7 +298,7 @@ function RailItem({ m, route, expanded, setExpanded, onNav }) {
             className="w-full flex items-center gap-2 cursor-pointer py-2 px-2.5 text-primary mb-1"
             style={{ border: "none", font: "inherit", fontWeight: 700, borderRadius: 8, background: "transparent", fontSize: 12.5 }}>
             <Icon name="arrow-right" size={14} />전체 보기</button></NavigationMenuLink>}
-          <MenuChildren m={m} expanded={expanded} setExpanded={setExpanded} onNav={onNav} /></div>
+          <MenuChildren m={m} route={route} expanded={expanded} setExpanded={setExpanded} onNav={onNav} /></div>
       </NavigationMenuContent>
     </NavigationMenuItem>
   );

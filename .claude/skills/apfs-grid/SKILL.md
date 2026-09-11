@@ -65,14 +65,16 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 3. **마스킹.** `KpiBadge`는 라벨을 `<MT>`로 마스킹(generic_list verbatim) — 값은 호출자가 이미 `mn()` 처리해 넘긴다(단위 문자열은 비마스킹). 표 헤더·단위·탭·축(연도 등)·StatusBadge는 비마스킹("축은 두고 데이터는 가린다").
 4. **반응형.** 모든 슬롯 행에 `flexWrap` 내장. 호출자는 슬롯 내부 묶음에도 좁을 때 적층되도록 둘 것. 입력이 있으면 폰트 ≥16px(responsive-ui).
 
-## KPI 배지 행 (기본 포함)
-리스트/관리 페이지는 **카드헤더 우측 KPI 배지 행을 기본 포함**한다(`kpis` 슬롯). 최소 구성 = **전체 건수 + 도메인별 2지표**(3배지). 값은 호출자가 `mn()` 처리해 넘기고, 라벨은 `KpiBadge`가 `<MT>` 마스킹.
-- **typed 페이지**(subfund_manage 등): `kpis={<><KpiBadge …/>…</>}`로 값을 직접 계산해 나열. 예: 전체 건수·결성 조합·약정총액 합계.
-- **스키마 페이지**(GenericListPage/PageSchema): `schema.countKpis`로 **선언만** 하면 자동 렌더되고 **필터 결과에 반응**한다(제네릭 금액 KPI를 대체).
-  - `CountKpiSpec = { label; icon; color; column?; value? }` — `column+value`면 그 값과 일치하는 행 수, 없으면 전체 건수(`filtered` 파생).
-  - 표준 팔레트: `layers`/`var(--primary)`(전체 건수) · `check-circle`/`var(--success)` · `wallet`/`var(--accent)`(도메인 2지표).
-  - **금액·변동률 개념이 없는 엔티티**(공고 등)는 `hideMetrics: true`로 제네릭 금액 KPI(평균 변동률·합계 금액)와 카드뷰 금액/상태를 끄고 `countKpis`만 남긴다.
-- 정본: `subfund_manage.tsx`(typed, 하드코딩 KpiBadge) · `schemas/자펀드_공고_정보관리.ts`(countKpis).
+## KPI 배지 행 (옵션 — 생성 스킬 HITL 결정, 기본 미포함)
+카드헤더 우측 KPI 배지 행(`kpis` 슬롯)은 **옵션**이다(2026-09-11 규약 변경 — 이전 "기본 포함"에서 뒤집음). 페이지를 새로 생성할 때 [[apfs-capture-schema]]·[[apfs-manage-page]] SOP가 **HITL(`AskUserQuestion`)로 포함 여부를 먼저 묻고**, 사용자가 "포함"을 고른 경우에만 배지를 만든다. **기본값 = 미포함.** 포함 시 구성 = **전체 건수 + 도메인별 2지표**(3배지). 값은 호출자가 `mn()` 처리해 넘기고, 라벨은 `KpiBadge`가 `<MT>` 마스킹.
+- **typed 페이지**(subfund_manage 등): 포함이면 `kpis={<><KpiBadge …/>…</>}`로 값을 직접 계산해 나열, 미포함이면 `kpis`를 넘기지 않는다(`GridFrame`이 `{kpis && …}`라 영역째 사라짐).
+- **스키마 페이지**(GenericListPage/PageSchema):
+  - 포함이면 `schema.countKpis`로 **선언만** 하면 자동 렌더되고 **필터 결과에 반응**한다(제네릭 금액 KPI를 대체).
+    - `CountKpiSpec = { label; icon; color; column?; value? }` — `column+value`면 그 값과 일치하는 행 수, 없으면 전체 건수(`filtered` 파생).
+    - 표준 팔레트: `layers`/`var(--primary)`(전체 건수) · `check-circle`/`var(--success)` · `wallet`/`var(--accent)`(도메인 2지표).
+  - **미포함이면 `schema.hideKpis: true`** — 헤더 KPI 슬롯만 비운다. `countKpis`와 제네릭 금액 KPI(평균 변동률·합계 금액)를 **둘 다** 무력화하되 **카드뷰 금액/상태는 유지**(hideMetrics와 분리). ⚠️ 금액 컬럼이 있는 엔티티는 `countKpis`를 안 넣는 것만으로는 안 된다 — 제네릭 금액 KPI가 폴백으로 남으므로 `hideKpis:true`가 필수(`generic_list.tsx` `kpis={schema.hideKpis ? undefined : countKpiNodes ? … : hideMetrics ? undefined : 금액KPI}`).
+  - **금액·변동률 개념 자체가 없는 엔티티**(공고 등)는 `hideMetrics: true`(제네릭 금액 KPI + 카드뷰 금액/상태 동시 제거). KPI 행만 끄려면 `hideKpis`, 금액 개념 전체를 끄려면 `hideMetrics`.
+- 정본: 포함 예시 = `schemas/자펀드_공고_정보관리.ts`(countKpis) · `subfund_manage.tsx`(typed, 하드코딩 KpiBadge). 이 파일들은 "포함" 선택을 이미 반영한 정본이므로 **손대지 않는다**.
 
 ## 리스트 vs 매트릭스 — 어떤 children인가
 - **리스트**(항목 CRUD): 단일 헤더 + 체크박스 + 행 액션. 툴바=필터칩/선택, 푸터=건수+페이지네이션+뷰토글. 스키마 주도면 `generic_list.tsx`/PageSchema 트랙.
@@ -85,7 +87,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   title="모태펀드 조성 및 출자현황"
   cardTitle="모태펀드 조성·출자 현황표"   // 매트릭스/집계형 예외: 문서 정식명칭을 카드 제목으로(리스트형은 메뉴 리프와 일치)
   headerActions={<><Button variant="outline" leadingIcon="chevron-left" onClick={()=>onNav('main')}>메인으로</Button><Button variant="primary" leadingIcon="download">내보내기</Button></>}
-  kpis={<><KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={mn(fmt(t)) + ' 억원'} /> …</>}
+  kpis={<><KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={mn(fmt(t)) + ' 억원'} /> …</>}  // ⚠ 옵션: HITL "포함" 선택 시에만 전달(미포함이면 kpis 생략) — "KPI 배지 행" 절 참조
   toolbarLeft={<><Icon name="file" size={16} /><span>… 집계</span></>}
   toolbarRight={<IconBtn icon="refresh" label="새로고침" size={34} />}
   footerLeft={<span>{'2010 ~ 2025년 · 총 ' + mn('16') + '개 연도'}</span>}>
@@ -102,9 +104,16 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 ## 관리형 리스트 툴바·타이틀 규약 (2026-09-11 subfund_manage에서 정립)
 리스트형(CRUD) 페이지 한정. 매트릭스/집계형은 위 골든(`headerActions` primary 내보내기)을 그대로 둔다.
 
-- **툴바 보조 액션은 kebab(⋯) `MoreMenu` 한 곳에.** 등록·내보내기(Excel)·인쇄를 kebab 항목으로 모으고 **내보내기용 독립 "엑셀" 버튼을 `toolbarRight`에 따로 두지 않는다**(kebab "내보내기 (Excel)" 항목으로 흡수). 내보내기 진입점은 결과적으로 **kebab 항목 + 푸터 `IconBtn download` + 단축키 `⌥D`** 세 곳 — 중복 아님(위 39행 "한 곳에만"은 *툴바 독립 버튼*을 두지 말라는 뜻).
-- **kebab 항목엔 단축키 힌트(`DropdownMenuShortcut`) 동반**: 등록 `HOTKEYS.register`(⌘⏎)·내보내기 `HOTKEYS.export`(⌥D)·인쇄 `HOTKEYS.print`(⌘P). 단축키 시스템·mod/⌥ 2티어·Windows 함정은 → [[apfs-hotkeys]] (여기서 표 복제 금지, 링크만).
-- **`MoreMenu`는 공유 컴포넌트가 아니다** — `generic_list.tsx`·`asset_funding.tsx`(`PoCMoreMenu`)·`subfund_manage.tsx`가 각자 **로컬 복사본**(`PageBtn`과 동일 방식, 공유 export 아님). 골드는 `subfund_manage.tsx`(Tooltip 래핑·`DropdownMenuShortcut`·`onRegister/onExport/size` props). 상단 `toolbarRight`의 `topMoreRef` + 화면 밖일 때 푸터 폴백 `!topMoreVisible && <MoreMenu>` 쌍으로 스크롤 중 접근 유지. 신규 페이지는 골드에서 복사하고 `onExport` 등 필요한 prop을 배선한다.
+- **1차 액션(등록)은 툴바 독립 버튼, 보조 액션은 kebab(⋯).** 2026-09-11 사용자 결정으로 *등록을 kebab 밖으로 승격*했다(이전 규약 "등록도 kebab 안에"를 뒤집음 — 진입 빈도가 높은데 2클릭이 걸렸다). 순서는 고정:
+  ```
+  toolbarRight:  단위: 원 │ ▣ 상세필터 │ ＋ 등록 │ ⟳ 새로고침 │ ⋯ kebab
+                 caption    ghost         outline    IconBtn      MoreMenu
+  ```
+  등록 버튼은 `<Button variant="outline" size="sm" leadingIcon="plus">`— 주변 보조 액션이 ghost·아이콘이라 outline 하나만으로 위계가 선다(primary는 과함). 라벨은 도메인 액션명 그대로(`제안서접수 등록`), "등록"으로 줄이지 않는다.
+- **kebab에 남는 것은 내보내기(Excel)·인쇄뿐.** **내보내기용 독립 "엑셀" 버튼을 `toolbarRight`에 따로 두지 않는다**(kebab 항목으로 흡수). 내보내기 진입점은 **kebab 항목 + 푸터 `IconBtn download` + 단축키 `⌥D`** 세 곳 — 중복 아님(위 39행 "한 곳에만"은 *툴바 독립 버튼*을 두지 말라는 뜻).
+- **kebab 항목엔 단축키 힌트(`DropdownMenuShortcut`) 동반**: 내보내기 `HOTKEYS.export`(⌥D)·인쇄 `HOTKEYS.print`(⌘P). ⚠️ **등록 ⌘⏎(`HOTKEYS.register`)는 바인딩만 살아 있고 화면 힌트가 없다** — `Button`은 `forwardRef`/rest props가 없어 Radix `Tooltip asChild` 트리거로 못 쓰고 `title`도 안 먹기 때문(→ [[ui-button-not-radix-aschild-trigger]] 함정). 힌트를 살리려면 Button `children`에 `<span>{HOTKEYS.register.hint}</span>`를 덧붙이는 방법뿐. 단축키 시스템·mod/⌥ 2티어·Windows 함정은 → [[apfs-hotkeys]] (여기서 표 복제 금지, 링크만).
+- **`MoreMenu`는 공유 컴포넌트가 아니다** — `generic_list.tsx`·`asset_funding.tsx`(`PoCMoreMenu`)·`subfund_manage.tsx`가 각자 **로컬 복사본**(`PageBtn`과 동일 방식, 공유 export 아님). 골드는 `subfund_manage.tsx`(Tooltip 래핑·`DropdownMenuShortcut`·`onExport/size` props — `onRegister`는 등록 승격으로 제거됨). 상단 `toolbarRight`의 `topMoreRef` + 화면 밖일 때 푸터 폴백 `!topMoreVisible && <MoreMenu>` 쌍으로 스크롤 중 접근 유지(등록은 툴바 버튼 + ⌘⏎로 접근하므로 폴백 대상이 아니다). 신규 페이지는 골드에서 복사하고 `onExport` 등 필요한 prop을 배선한다.
+- ⚠️ **미반영 트랙**: 스키마 주도 `generic_list.tsx`의 `MoreMenu`는 아직 `등록`을 kebab 안에 두고 있다(`onRegister`+`editable` 게이트). 이 규약을 그 트랙에 옮기려면 `toolbarRight`에 등록 버튼을 추가하고 kebab 항목·separator를 걷어내면 된다 — 미착수.
 - **타이틀은 메뉴 리프와 일치.** `cardTitle`·`title`·`crumbs` 리프를 **`data.ts` 메뉴 리프 라벨 문자열 그대로**(띄어쓰기 포함) 맞춘다. `cardTitle`이 `title`과 같으면 생략 가능(H1=`cardTitle ?? title`). **"○○ 목록" 같은 임의 축약 금지**(2026-09-11 "자펀드 목록"→"자펀드 관리" 정정). 매트릭스/집계형이 문서 정식명칭을 카드 제목으로 쓰는 것(asset_funding "…현황표")은 예외.
 
 ## 검증
