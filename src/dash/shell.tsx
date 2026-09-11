@@ -535,7 +535,7 @@ function UserMenu({ onUserModal }: { onUserModal: (id: string) => void }) {
 /* 즐겨찾기 항목 — HistoryItem과 동일 규약(공유 슬라이드 하이라이트). 훅을 쓰므로 별도 컴포넌트.
    즉시배경/색 토글 제거 → hover·focus는 슬라이드 span이 담당, 색은 방문기록과 동일하게 foreground 고정. */
 function FavItem({ f, onSelect }: { f: any; onSelect: () => void }) {
-  const { id, setActive } = useMenuHighlight();
+  const { id, setActive, active } = useMenuHighlight();
   return (
     <button
       role="menuitem"
@@ -543,7 +543,7 @@ function FavItem({ f, onSelect }: { f: any; onSelect: () => void }) {
       title={f.label}
       onMouseEnter={setActive}
       onFocus={setActive}
-      className="relative isolate w-full flex items-center gap-2.5 cursor-pointer text-left"
+      className={"relative isolate w-full flex items-center gap-2.5 cursor-pointer text-left" + (active ? "" : " z-[1]")}
       style={{ border: "none", font: "inherit", fontWeight: 500, borderRadius: 9, padding: "9px 10px", background: "transparent", color: "var(--foreground)", fontSize: 12.5 }}>
       <ItemHighlight id={id} />
       <Icon name={f.icon} size={16} stroke={2} style={{ color: "var(--caption)", flex: "0 0 auto" }} />
@@ -754,7 +754,7 @@ function useHistory(): string[] {
    지우지 않는다(슬라이드 스냅 방지 — menu-highlight 규약). 배경은 슬라이드 span이 담당하므로 인라인
    background 토글은 제거. `relative isolate`로 -z-10 span을 텍스트 뒤·팝오버 앞에 가둔다. */
 function HistoryItem({ r, label, crumbs, icon, onSelect }: { r: string; label: string; crumbs: string[]; icon: string; onSelect: () => void }) {
-  const { id, setActive } = useMenuHighlight();
+  const { id, setActive, active } = useMenuHighlight();
   const parent = crumbs.length > 2 ? crumbs[crumbs.length - 2] : crumbs[0];
   return (
     <button
@@ -763,7 +763,7 @@ function HistoryItem({ r, label, crumbs, icon, onSelect }: { r: string; label: s
       title={crumbs.join(" › ")}
       onMouseEnter={setActive}
       onFocus={setActive}
-      className="relative isolate w-full flex items-center gap-2.5 cursor-pointer text-left"
+      className={"relative isolate w-full flex items-center gap-2.5 cursor-pointer text-left" + (active ? "" : " z-[1]")}
       style={{ border: "none", font: "inherit", borderRadius: 9, padding: "8px 10px", background: "transparent", color: "var(--foreground)" }}>
       <ItemHighlight id={id} />
       <Icon name={icon} size={16} stroke={2} style={{ color: "var(--caption)", flex: "0 0 auto" }} />
@@ -816,7 +816,10 @@ function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: stri
             position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 60,
             width: "min(284px, calc(100vw - 24px))", maxHeight: maxH, overflowY: "auto",
             border: "1px solid var(--border)", borderRadius: 14, padding: 8,
-            animation: "dashFade .16s var(--ease) both",
+            // ncFade(opacity 전용): dashFade의 translateY transform이 진입 160ms 동안 살아 있으면
+            // hover 시 ItemHighlight(layoutId motion.span)가 transform된 위치로 측정돼 "텍스트 위에서 생성"되는
+            // 첫 하이라이트 아티팩트를 유발한다. transform 없는 페이드로 교체해 레이아웃 측정을 정상화.
+            animation: "ncFade .16s var(--ease) both",
           }}>
           <div className="flex items-center gap-1.5 pt-1.5 px-2 pb-2">
             <Icon name="clock" size={14} style={{ color: "var(--primary)" }} />
