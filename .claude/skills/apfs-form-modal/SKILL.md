@@ -18,7 +18,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 1. **모달 헤더 = `DialogTitle` 공용 기본값(`src/dash/ui/dialog.tsx`).** 기본이 **`text-xl`(20px) `font-bold`** — **2026-09-09 사용자 결정으로 프리미티브 기본값을 `text-base`(16)→`text-xl`로 올려 전 모달을 통일했다. 이전 "소비처에서 `text-xl` override·공용 `ui/dialog.tsx`는 불변" 규칙은 폐기.** 소비처에서 `fontSize`·`font-extrabold` 등으로 **크기·굵기를 재지정하지 말 것**(드리프트 원인). 크기 예외가 정말 필요하면 그 한 곳만 로컬 override(예: 에디터 삽입 다이얼로그).
 2. **부제(대상명)가 있으면 제목 옆에 나란히.** `DialogHeader`가 `justify-between`이라 그냥 두면 부제가 우측 끝으로 밀린다 → 제목+부제를 한 래퍼로 묶는다:
    ```tsx
-   <DialogHeader>
+   <DialogHeader className="px-[46px]">
      <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
        <DialogTitle className="shrink-0">자펀드 명세</DialogTitle>
        <DialogDescription className="text-caption truncate min-w-0"><MT>{대상명}</MT></DialogDescription>
@@ -26,6 +26,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
    </DialogHeader>
    ```
    `pr-8`은 우상단 X 닫기 버튼 공간 확보. 헤더 아이콘은 `size={18}`(20px 제목에 맞춤).
+5. **본문 `p-[46px]` 패밀리는 헤더·푸터도 `px-[46px]`로 인셋 정렬(2026-09-11 PR #132).** 본문을 `p-[46px]`로 넓게 인셋하는 모달(`RowFormModal`·`subfund_form_modal`·`subfund_spec_modal`·`FsDetailModal`)은 `DialogHeader`·`DialogFooter`에 `className="px-[46px]"`를 얹어 제목·버튼을 본문 좌우 기준선에 맞춘다(위 예제처럼). `RowFormModal`의 `docErr` 경고 배너도 `px-[18px]`→`px-[46px]`. ⚠ **공용 `ui/dialog.tsx` 기본은 `px-[18px]` 유지** — alert/command/셸 등 좁은 다이얼로그가 46px로 역드리프트하지 않게 한다. `cn`=twMerge라 소비처 className이 기본 패딩을 외과적으로 덮는다. 실측 좌우 기준선 447/1233. 관련 메모리 [[modal-46px-family-header-footer-inset]](이 절이 정본).
 3. **본문 섹션 헤더** — 모달 안 구획 제목은 아래 className 고정(밑줄형 헤딩). spec은 `<h3>`(`Section` 헬퍼), form은 `<fieldset>` 안 `<legend>`(폼 그룹 시맨틱 유지) — **태그는 문맥에 맞게, 시각 스타일은 동일**:
    ```
    flex items-center gap-2 text-lg font-bold border-b-2 border-border pb-2 mb-3
@@ -42,6 +43,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
    - ⚠️ **단축 속성 `font` 금지 — 패밀리는 `fontFamily`(longhand)로만 상속.** `base`에서 `fontSize: 14` **뒤에** `font: 'inherit'`를 쓰면 안 된다. `font`은 `font-style/variant/weight/`**`size`**`/line-height/family`를 한꺼번에 지정하는 shorthand라, 인라인 스타일이 키 순서대로 적용되며 **뒤에 온 `font:'inherit'`가 앞의 `fontSize:14`를 부모 상속값(모달=16px)으로 되돌린다** → 네이티브 `select/input`이 16px로 렌더(라벨 14px보다 큼). 패밀리(Pretendard)만 상속하려면 **`fontFamily: 'inherit'`**(longhand)를 써서 `fontSize:14`를 보존하라. 검증: 모달 열고 `getComputedStyle(select).fontSize === '14px'`.
 6. **필수값·삭제.** 필수는 `field.required`(미입력 시 첫 누락 필드에 인라인 에러). 삭제는 edit 모드에서 ghost→`삭제 확인`(danger) 2단계.
 7. **컨트롤 폭 = fit-content + 타입별 minWidth(2026-09-09 사용자 확정, 이전 일률 220 폐기).** `renderers.tsx` `base`가 `width:'fit-content', minWidth:minW, maxWidth:'100%'` — 셀을 꽉 채우지 않고, 하한만 타입별로 차등. `minW`는 필드 위에서 `field.control`로 분기: **date 120**(짧은 고정포맷 YYYY-MM-DD) · **select 130**(이름만이면 fit-content로 더 좁아짐) · **number 180**(금액 자리수) · **text/기본 240**(GP명·조합명 등 명칭은 길게). **textarea만 `width:'100%'`**(긴 입력), `date`는 `DatePicker` 트리거가 `w-full`이라 같은 `minW`(=120) `fit-content` 래퍼 `<div>`로 감싼다. `maxWidth:'100%'`는 전 타입 공통(필드/셀 초과 방지 — 이것만 유지가 사용자 요구). 폭을 다시 일률값으로 되돌리지 말 것.
+   - **셀 채움 탈출구 `SchemaField fill` prop(2026-09-11 PR #132).** 반복행 테이블처럼 컨트롤이 **셀(컬럼) 폭을 꽉 채워야** 할 때만 `<SchemaField fill … />`. 이건 일률값 원복이 아니라 **컨텍스트가 폭을 지배할 때의 opt-in**이다 — `fill`이면 `width:'100%'` **그리고** `minWidth:0`(input·`date` 래퍼 둘 다), `select` 래퍼는 `display:'block' width:'100%'`. ⚠ `width:100%`만 주고 `minWidth`(text 240 등)를 남기면 **240min이 100%를 이겨** 200px 고정 컬럼을 넘쳐 옆 셀 위로 겹친다(Codex P2). 기본(prop 미전달)은 그대로 `fit-content`라 RowFormModal 그리드는 무영향. `date`는 `fill`이면 fit-content 래퍼도 `width:100% minWidth:0`로 같이 분기.
 8. **배열은 라벨 위·컨트롤 아래(세로 적층) 고정.** ⚠ 안티패턴: 라벨 좌·컨트롤 우 inline 배열 — 2026-09-08 시안 후 **사용자 원복**. 다시 제안하지 말 것(폭만 fit-content로 줄이는 것이 결정).
 
 ## 컨트롤 종류 (FIELD_CONTROLS — types.ts SSOT)
@@ -112,6 +114,13 @@ export const schema: PageSchema = {
 
 - **골드 레퍼런스**: `src/dash/subfund_form_modal.tsx`(결성조합 수정 — 6섹션·반복행 2종·첨부표 9행).
 - 규칙: ① Radix `Dialog` `max-w-[880px] max-h-[88vh]` + `onInteractOutside preventDefault`(RowFormModal과 동일) ② `<fieldset>/<legend>` 섹션, 본문은 `grid grid-cols-1 sm:grid-cols-2 gap-x-5`(wide 규격 동일) ③ **개별 컨트롤은 `SchemaField`(schemas/renderers.tsx) 재사용** — ad-hoc `FieldSpec`을 만들어 넘기면 14px·DatePicker·토큰이 자동(라벨 래퍼도 RowFormModal `Field` 규격 복제) ④ 반복행은 로컬 배열 state + `IconBtn icon="trash"` 행삭제 + `Button leadingIcon="plus"` 행추가 ⑤ 첨부는 hidden `<input type=file>` 1개를 슬롯별로 재사용(파일명만 보관, 백엔드 없음). **파일이 실린 슬롯 셀은 `ui/attachment.tsx`의 `Attachment` 카드**(확장자 아이콘+파일명+교체/삭제)로 렌더하되 단일 카드도 `AttachmentGroup`(role=list)로 감싼다(고아 listitem 방지 · web-a11y), 빈 슬롯은 `Button leadingIcon="upload"` [파일 선택] — 드롭존(DocumentsField)과 같은 카드 프리미티브를 공유해 파일 표시를 단일화(2026-09-09) ⑥ 저장은 `onSave(patch: Partial<Row>)` — 문자열 폼값→`number|null`·`'YYYY-MM-DD'` 변환은 모달이 책임.
+- **반복행 테이블 레이아웃 규약(2026-09-11 PR #132 사용자 결정)** — `subfund_form_modal.tsx`의 GP·담당자·첨부서류 3표 정본:
+  - **`tableLayout:'fixed'` 필수** (`<table className="w-full border-collapse" style={{ fontSize:13, minWidth:…, tableLayout:'fixed' }}>`). 이유 2가지(비자명): ⓐ 내용이 컬럼을 못 넓혀서 **nowrap `AttachmentTitle`이 실제 컬럼 폭 기준으로 `…`(ellipsis) 잘림** — auto면 파일명이 `<td>`→컬럼을 밀어 테이블이 넘치고 truncate가 안 걸린다. ⓑ **"width 미지정 컬럼 1개가 나머지 폭을 전부 흡수"가 결정론적**이 된다(auto는 내용 비율로 성명·EMAIL을 반씩 나눔).
+  - **컬럼 폭**: 좁은 컬럼만 `<th>`에 고정(구분 160/180 · 성명 200 · 문서구분/규약일자 150 · **삭제 40**), **정확히 하나의 `<th>`만 width 미지정**(기관명·EMAIL·첨부파일 = 나머지 흡수).
+  - **셀 스타일**: `thStyle`/`tdStyle`은 **좌 0·우 8**(컬럼 간격), 마지막 컬럼은 `thLast`/`tdLast`(우 0) → 첫/마지막 컬럼이 컨테이너 좌우 끝에 정렬. **헤더 밑줄 없음**(th `borderBottom` 제거) — th 13px bold caption `padding:'6px 0 12px'`, td `padding:'4px 0'`.
+  - **행 컨트롤은 전부 `<SchemaField fill … />`**(위 계약7 fill 참조 — 셀 채움+겹침 방지). 삭제 셀 `{...tdLast, textAlign:'center'}` + `IconBtn icon="trash" size={34}`.
+  - **섹션 간격**: `Section`의 `<fieldset>`는 `mb-7`(섹션 사이 여백).
+  - **첨부 카드 = 1줄·34px**: `Attachment size="sm" className="h-[34px] py-0"` + `AttachmentMedia className="size-6"`(36→24) + `AttachmentTitle`만(설명줄 `AttachmentDescription` 없음) → 날짜 입력 등 폼 컨트롤과 **높이 34px 정합**. 단일 카드도 `AttachmentGroup`(role=list) 유지(위 ⑤).
 - `RowFormModal`에 **`title?: string`** prop이 있다(2026-09-08) — 같은 flat 스키마를 단계별 다른 제목으로 열 때 사용(→[[apfs-stage-workflow]]).
 
 ## 읽기전용 명세(kv) 그리드 — 라벨 배열 규약 (2026-09-08 사용자 확정)

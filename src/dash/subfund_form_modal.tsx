@@ -14,7 +14,7 @@ import { OPT_AG, OPT_FG, OPT_FC, OPT_PT, OPT_FS, OPT_TC } from './subfund_manage
 import type { SubFundRow } from './subfund_manage';
 // 첨부 셀 카드 — DocumentsField(filepond 통일 드롭존)와 동일 표시 프리미티브로, 슬롯 구조는 유지하고 셀만 온-시스템 카드로.
 import { RefreshCw, X as XIcon } from 'lucide-react';
-import { Attachment, AttachmentGroup, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentDescription, AttachmentActions, AttachmentAction } from './ui/attachment';
+import { Attachment, AttachmentGroup, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentActions, AttachmentAction } from './ui/attachment';
 
 const { useState, useRef } = React;
 const { Button, IconBtn } = UI;
@@ -36,13 +36,11 @@ type DocRow = { date: string; file: string };
 const nz = (v: string | number | null | undefined) => (v == null || v === '-' ? '' : String(v));
 const numOr = (v: string, d: number | null) => { const n = Number(v.replace(/[^0-9.-]/g, '')); return v !== '' && Number.isFinite(n) ? n : d; };
 const dateOr = (v: string, d: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : d);
-// 파일명 → 확장자 라벨(DocumentsField와 동일 규약). 확장자 없으면 '파일'.
-const extLabel = (name: string) => { const ext = name.split('.').pop()?.toUpperCase(); return ext && ext !== name.toUpperCase() ? ext : '파일'; };
 
 /* 섹션 — 제목 + 2단 그리드(좁으면 1단). RowFormModal의 wide 레이아웃과 동일 규격 */
 function Section({ title, children, single }: { title: string; children: React.ReactNode; single?: boolean }) {
   return (
-    <fieldset className="border-0 p-0 m-0 mb-1" style={{ minWidth: 0 }}>
+    <fieldset className="border-0 p-0 m-0 mb-7" style={{ minWidth: 0 }}>
       <legend className="w-full flex items-center gap-2 text-lg font-bold border-b-2 border-border pb-2 mb-3">{title}</legend>
       <div className={single ? '' : 'grid grid-cols-1 sm:grid-cols-2 gap-x-5'}>{children}</div>
     </fieldset>
@@ -58,8 +56,11 @@ function F({ spec, value, onChange, full }: { spec: FieldSpec; value: string; on
     </Wrap>
   );
 }
-const thStyle: React.CSSProperties = { textAlign: 'left', fontSize: 11.5, fontWeight: 700, color: 'var(--caption)', padding: '6px 8px', borderBottom: '1px solid var(--border-strong)', whiteSpace: 'nowrap' };
-const tdStyle: React.CSSProperties = { padding: '6px 8px', borderBottom: '1px solid var(--border)', verticalAlign: 'middle' };
+// 컬럼 사이 간격은 오른쪽 8px로만 준다(좌측 0 → 첫 컬럼은 왼쪽 끝에 붙음). 마지막 컬럼은 thLast/tdLast로 우측 0(오른쪽 끝 정렬).
+const thStyle: React.CSSProperties = { textAlign: 'left', fontSize: 13, fontWeight: 700, color: 'var(--caption)', padding: '6px 0 12px', paddingRight: 8, whiteSpace: 'nowrap' };
+const tdStyle: React.CSSProperties = { padding: '4px 0', paddingRight: 8, verticalAlign: 'middle' };
+const thLast: React.CSSProperties = { ...thStyle, paddingRight: 0 };
+const tdLast: React.CSSProperties = { ...tdStyle, paddingRight: 0 };
 
 export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow; onSave: (patch: Partial<SubFundRow>) => void; onClose: () => void }) {
   const [v, setV] = useState<Record<string, string>>({
@@ -111,7 +112,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[880px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}>
-        <DialogHeader>
+        <DialogHeader className="px-[46px]">
           <DialogTitle>결성조합 수정</DialogTitle>
           <DialogDescription className="sr-only">결성된 자펀드의 기본정보·약정납입·속성·보수·담당자·첨부서류를 수정하는 양식</DialogDescription>
         </DialogHeader>
@@ -129,13 +130,13 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
                 <span className="text-caption" style={{ fontSize: 12 }}>— 대표·공동 GP를 행 단위로 추가/삭제</span>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 420 }}>
-                  <thead><tr><th style={{ ...thStyle, width: 160 }}>구분</th><th style={thStyle}>기관명(GP)</th><th style={{ ...thStyle, width: 56 }}></th></tr></thead>
+                <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 420, tableLayout: 'fixed' }}>
+                  <thead><tr><th style={{ ...thStyle, width: 160 }}>구분</th><th style={thStyle}>기관명(GP)</th><th style={{ ...thLast, width: 40 }}></th></tr></thead>
                   <tbody>{gps.map((g, i) => (
                     <tr key={i}>
-                      <td style={tdStyle}><SchemaField field={s(`gpk${i}`, '구분', 'select', { options: GP_KINDS })} value={g.kind} onChange={(val) => setGps((p) => p.map((x, k) => (k === i ? { ...x, kind: val } : x)))} /></td>
-                      <td style={tdStyle}><SchemaField field={s(`gpn${i}`, '기관명', 'text')} value={g.name} onChange={(val) => setGps((p) => p.map((x, k) => (k === i ? { ...x, name: val } : x)))} /></td>
-                      <td style={{ ...tdStyle, textAlign: 'center' }}><IconBtn icon="trash" label="행 삭제" size={30} onClick={() => setGps((p) => p.filter((_, k) => k !== i))} /></td>
+                      <td style={tdStyle}><SchemaField fill field={s(`gpk${i}`, '구분', 'select', { options: GP_KINDS })} value={g.kind} onChange={(val) => setGps((p) => p.map((x, k) => (k === i ? { ...x, kind: val } : x)))} /></td>
+                      <td style={tdStyle}><SchemaField fill field={s(`gpn${i}`, '기관명', 'text')} value={g.name} onChange={(val) => setGps((p) => p.map((x, k) => (k === i ? { ...x, name: val } : x)))} /></td>
+                      <td style={{ ...tdLast, textAlign: 'center' }}><IconBtn icon="trash" label="행 삭제" size={34} onClick={() => setGps((p) => p.filter((_, k) => k !== i))} /></td>
                     </tr>))}</tbody>
                 </table>
               </div>
@@ -185,14 +186,14 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
               <span className="text-caption" style={{ fontSize: 12 }}>— 구분·성명·EMAIL을 행 단위로 추가/삭제</span>
             </div>
             <div className="overflow-x-auto mb-3.5">
-              <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 560 }}>
-                <thead><tr><th style={{ ...thStyle, width: 180 }}>담당 구분</th><th style={thStyle}>성명</th><th style={thStyle}>EMAIL</th><th style={{ ...thStyle, width: 56 }}></th></tr></thead>
+              <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 560, tableLayout: 'fixed' }}>
+                <thead><tr><th style={{ ...thStyle, width: 180 }}>담당 구분</th><th style={{ ...thStyle, width: 200 }}>성명</th><th style={thStyle}>EMAIL</th><th style={{ ...thLast, width: 40 }}></th></tr></thead>
                 <tbody>{duties.map((d, i) => (
                   <tr key={i}>
-                    <td style={tdStyle}><SchemaField field={s(`dk${i}`, '담당 구분', 'select', { options: DUTY_KINDS })} value={d.kind} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, kind: val } : x)))} /></td>
-                    <td style={tdStyle}><SchemaField field={s(`dn${i}`, '성명', 'text', { pii: true })} value={d.name} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, name: val } : x)))} /></td>
-                    <td style={tdStyle}><SchemaField field={s(`de${i}`, 'EMAIL', 'text', { pii: true })} value={d.email} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, email: val } : x)))} /></td>
-                    <td style={{ ...tdStyle, textAlign: 'center' }}><IconBtn icon="trash" label="행 삭제" size={30} onClick={() => setDuties((p) => p.filter((_, k) => k !== i))} /></td>
+                    <td style={tdStyle}><SchemaField fill field={s(`dk${i}`, '담당 구분', 'select', { options: DUTY_KINDS })} value={d.kind} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, kind: val } : x)))} /></td>
+                    <td style={tdStyle}><SchemaField fill field={s(`dn${i}`, '성명', 'text', { pii: true })} value={d.name} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, name: val } : x)))} /></td>
+                    <td style={tdStyle}><SchemaField fill field={s(`de${i}`, 'EMAIL', 'text', { pii: true })} value={d.email} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, email: val } : x)))} /></td>
+                    <td style={{ ...tdLast, textAlign: 'center' }}><IconBtn icon="trash" label="행 삭제" size={34} onClick={() => setDuties((p) => p.filter((_, k) => k !== i))} /></td>
                   </tr>))}</tbody>
               </table>
             </div>
@@ -202,24 +203,23 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
             <p className="text-caption m-0 mb-2" style={{ fontSize: 12 }}>각 칸에서 [파일 선택] — 규약서는 규약일자를 함께 입력</p>
             <input ref={fileInput} type="file" className="sr-only" aria-label="첨부파일 선택" onChange={onFile} />
             <div className="overflow-x-auto mb-3.5">
-              <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 560 }}>
-                <thead><tr><th style={thStyle}>문서 구분</th><th style={{ ...thStyle, width: 170 }}>규약일자</th><th style={{ ...thStyle, width: 260 }}>첨부파일</th></tr></thead>
+              <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 560, tableLayout: 'fixed' }}>
+                <thead><tr><th style={{ ...thStyle, width: 150 }}>문서 구분</th><th style={{ ...thStyle, width: 150 }}>규약일자</th><th style={thLast}>첨부파일</th></tr></thead>
                 <tbody>{DOC_SLOTS.map((slot, i) => (
                   <tr key={slot.name}>
                     <td style={{ ...tdStyle, fontWeight: 600, whiteSpace: 'nowrap' }}>{slot.name}</td>
                     <td style={tdStyle}>{slot.hasDate
-                      ? <SchemaField field={s(`dd${i}`, `${slot.name} 일자`, 'date')} value={docs[i].date} onChange={(val) => setDocs((p) => p.map((d, k) => (k === i ? { ...d, date: val } : d)))} />
+                      ? <SchemaField fill field={s(`dd${i}`, `${slot.name} 일자`, 'date')} value={docs[i].date} onChange={(val) => setDocs((p) => p.map((d, k) => (k === i ? { ...d, date: val } : d)))} />
                       : <span className="text-caption">—</span>}</td>
-                    <td style={tdStyle}>
+                    <td style={tdLast}>
                       {/* 파일 있으면 통일 카드(Attachment: 확장자 아이콘+파일명+교체/삭제), 없으면 파일 선택 버튼. 슬롯 구조는 유지. */}
                       {docs[i].file ? (
                         // AttachmentGroup(role=list)로 감싸 role="listitem" 카드의 리스트 시맨틱을 유효화(고아 listitem 방지, web-a11y).
                         <AttachmentGroup>
-                          <Attachment size="sm">
-                            <AttachmentMedia fileName={docs[i].file} />
+                          <Attachment size="sm" className="h-[34px] py-0">
+                            <AttachmentMedia fileName={docs[i].file} className="size-6" />
                             <AttachmentContent>
                               <AttachmentTitle>{docs[i].file}</AttachmentTitle>
-                              <AttachmentDescription state="done">{extLabel(docs[i].file)} · 첨부됨</AttachmentDescription>
                             </AttachmentContent>
                             <AttachmentActions>
                               <AttachmentAction aria-label={`${slot.name} 첨부 교체`} title="교체" onClick={() => pickFile(i)}><RefreshCw /></AttachmentAction>
@@ -228,7 +228,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
                           </Attachment>
                         </AttachmentGroup>
                       ) : (
-                        <Button variant="outline" size="sm" leadingIcon="upload" onClick={() => pickFile(i)}>파일 선택</Button>
+                        <Button variant="outline" size="sm" leadingIcon="upload" style={{ height: 34 }} onClick={() => pickFile(i)}>파일 선택</Button>
                       )}
                     </td>
                   </tr>))}</tbody>
@@ -238,10 +238,10 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
           </Section>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="px-[46px]">
           <div />
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+            <Button variant="outline" size="sm" onClick={onClose}>취소</Button>
             <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
           </div>
         </DialogFooter>

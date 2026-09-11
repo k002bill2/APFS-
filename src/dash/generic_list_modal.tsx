@@ -111,7 +111,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
           바깥 클릭 dismiss가 그대로 동작한다(최상위 레이어부터 닫힘). */}
       <DialogContent className={wide ? "max-w-[880px] max-h-[88vh]" : "max-w-[460px] max-h-[86vh]"}
         onInteractOutside={(e) => e.preventDefault()}>
-        <DialogHeader>
+        <DialogHeader className="px-[46px]">
           <DialogTitle>{title ?? (mode === "create" ? "신규 등록" : "항목 수정")}</DialogTitle>
           <DialogDescription className="sr-only">
             {title ? `${title} 양식` : (mode === "create" ? "신규 항목 등록 양식" : "항목 수정 양식")}
@@ -146,11 +146,11 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
 
         {/* 문서 총량 초과 안내 — 필드별 에러(errMsg)와 동일 스타일의 전역 배너 */}
         {docErr && (
-          <div role="alert" className="text-danger px-[18px] pb-1" style={{ fontSize: 12 }}>{docErr}</div>
+          <div role="alert" className="text-danger px-[46px] pb-1" style={{ fontSize: 12 }}>{docErr}</div>
         )}
 
         {/* 푸터 */}
-        <DialogFooter>
+        <DialogFooter className="px-[46px]">
           <div>
             {mode === "edit" && onDelete && (
               confirmDel

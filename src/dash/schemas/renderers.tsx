@@ -39,7 +39,9 @@ export function controlMinWidth(kind?: string): number {
   return kind === 'date' ? 120 : (kind === 'select' || kind === 'enum' || kind === 'year') ? 130 : kind === 'number' ? 180 : 240;
 }
 
-export function SchemaField({ field, value, onChange, invalid }: { field: FieldSpec; value: string; onChange: (v: string) => void; invalid?: boolean }) {
+export function SchemaField({ field, value, onChange, invalid, fill }: { field: FieldSpec; value: string; onChange: (v: string) => void; invalid?: boolean; fill?: boolean }) {
+  // fill=true: 컨테이너(테이블 셀 등)를 꽉 채운다(width:100%). 기본은 fit-content(RowFormModal 그리드 규격 유지).
+  //   인라인 width는 CSS 클래스로 못 덮으므로 여기서 prop으로 스왑한다(select/date 래퍼까지 함께).
   // 필수 필드는 채움 여부와 무관하게 빨간 테두리로 상시 표식(라벨 '*'와 병행). readonly는 입력 대상이 아니라 제외.
   const requiredMark = !!field.required && field.control !== 'readonly';
   const minW = controlMinWidth(field.control);
@@ -56,7 +58,8 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     // 🍎 Safari(WebKit): preflight:false라 native <select>·<input type=number>가 UA 박스모델을 쓴다 → 명시 height:34 하드 클램프로 통일(textarea만 아래서 height:'auto').
     // 폭: 컨테이너를 꽉 채우지 않고 내용 맞춤(fit-content). 하한은 타입별 minW(위), 넘치지 않게 max 100%.
     //    textarea는 아래에서 100%로 되돌린다(긴 입력 항목).
-    width: 'fit-content', minWidth: minW, maxWidth: '100%', boxSizing: 'border-box', padding: '7px 11px', fontSize: 14, lineHeight: '20px', height: 34, minHeight: 34, fontFamily: 'inherit',
+    // fill=true면 셀(컬럼)이 폭을 지배 → minWidth 하한(text 240 등)을 풀어(0) 고정폭 컬럼을 넘쳐 겹치지 않게 한다(Codex P2).
+    width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%', boxSizing: 'border-box', padding: '7px 11px', fontSize: 14, lineHeight: '20px', height: 34, minHeight: 34, fontFamily: 'inherit',
     border: `1px solid ${invalid || requiredMark ? 'var(--danger)' : 'var(--border-strong)'}`,
     borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
     transition: 'border-color .12s, box-shadow .12s',
@@ -73,7 +76,7 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     // select: native 화살표는 Chrome UA가 오른쪽 경계에 고정해 padding으로 못 움직임 → appearance:none로 제거하고 lucide chevron을 오버레이(토큰색·다크대응).
     //   아이콘은 pointer-events:none라 클릭이 select로 통과. 오른쪽 간격 = 아이콘 right(12px). paddingRight 34는 옵션 텍스트가 chevron과 겹치지 않게 확보.
     case 'select':   return (
-      <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}>
+      <div style={{ position: 'relative', display: fill ? 'block' : 'inline-block', width: fill ? '100%' : undefined, maxWidth: '100%' }}>
         <select value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: 34, ...fs }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>
         <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--muted-foreground)' }} />
       </div>
@@ -81,7 +84,7 @@ export function SchemaField({ field, value, onChange, invalid }: { field: FieldS
     case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...fs }} />;
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(네이티브 input과 동일 계약).
     // DatePicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW=120)을 적용
-    case 'date':     return <div style={{ width: 'fit-content', minWidth: minW, maxWidth: '100%' }}><DatePicker value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
+    case 'date':     return <div style={{ width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%' }}><DatePicker value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
     case 'checkbox': return <input type="checkbox" checked={value === 'true'} onChange={(e) => onChange(String(e.target.checked))} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />;
     // 라디오 — 옵션 가로 나열(Y/N, Y/N/해당없음 등). 네이티브 input + accentColor 토큰(라이트/다크 양립).
     case 'radio': return (
