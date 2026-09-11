@@ -112,7 +112,7 @@ const IS: FsRow[] = [
 function Section({ title, unitNote, children }: { title: string; unitNote?: string; children: React.ReactNode }) {
   return (
     <section className="mb-5">
-      <h3 className="flex items-center gap-2 text-lg font-bold border-b-2 border-border pb-2 mb-3">
+      <h3 className="flex items-center gap-2 text-lg font-bold border-b-2 border-border pb-2 mt-0 mb-3">
         {title}{unitNote && <span className="ml-auto text-caption font-semibold" style={{ fontSize: 12.5 }}>{unitNote}</span>}
       </h3>
       {children}

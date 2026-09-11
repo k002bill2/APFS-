@@ -211,7 +211,7 @@ function MinistryTab() {
     <div className="flex flex-col gap-4"><div
         className="rounded-card border border-border bg-card px-6 py-5 shadow-sm flex items-center gap-2"><div className="flex-1 flex items-center gap-4"><ColorChip icon="file" color="var(--primary)" size={32} iconSize={17} /><div><div className="text-[14px] font-bold text-foreground">보고 승인 흐름</div><div className="t-caption text-[11.5px]">2분기 운용현황 보고 현재 진행 단계</div></div></div><div className="flex items-center gap-2 shrink-0"><Stepper activeStep={activeStep} /></div></div><div
         className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
-          className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">보고서 목록</h3><CountPill count={MINISTRY_REPORTS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">신규 보고 등록</Button><IconBtn icon="download" label="내보내기" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[760px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
+          className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold m-0">보고서 목록</h3><CountPill count={MINISTRY_REPORTS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">신규 보고 등록</Button><IconBtn icon="download" label="내보내기" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[760px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
                   ["보고서명", "left"],
                   ["보고유형", "center"],
                   ["보고기관", "center"],
@@ -256,7 +256,7 @@ function CustodyTab() {
   return (
     <div
       className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
-        className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">수탁 데이터 검증 현황</h3><CountPill
+        className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold m-0">수탁 데이터 검증 현황</h3><CountPill
             count={CUSTODY_VERIFICATIONS.filter((c) => c.mismatch).length}
             urgent={true} /></div><div className="flex items-center gap-2"><Button variant="outline" size="sm" leadingIcon="upload">데이터 업로드</Button><IconBtn icon="refresh" label="재검증" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[740px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
                 ["검증유형", "left"],
@@ -311,7 +311,7 @@ function RegistryTab() {
   return (
     <div className="flex flex-col gap-4"><div
         className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
-          className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold">등록원부 관리</h3><CountPill count={REGISTRY_FUNDS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">원부 등록</Button><IconBtn icon="download" label="일괄 다운로드" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[860px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
+          className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold m-0">등록원부 관리</h3><CountPill count={REGISTRY_FUNDS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">원부 등록</Button><IconBtn icon="download" label="일괄 다운로드" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[860px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
                   ["자펀드코드", "left"],
                   ["자펀드명", "left"],
                   ["운용사", "left"],
@@ -338,7 +338,7 @@ function RegistryTab() {
                     className="px-4 py-3.5 text-[13.5px] font-semibold text-foreground"><MT>{r.name}</MT></td><td
                     className="px-4 py-3.5 text-[13px] text-muted-foreground"><MT>{r.gp}</MT></td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{mn(r.regDate)}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{mn(r.lastModified)}</td><td
                     className="px-4 py-3.5 text-center text-[12.5px] font-bold tabular text-primary">{mn(r.version)}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={registryTone(r.status)} label={r.status} size="sm" /></td><td className="px-4 pr-5 py-3.5 text-right"><IconBtn icon="download" label={`${r.name} 다운로드`} size={32} /></td></tr>
-              )}</tbody></table></div></div><div className="rounded-card border border-border bg-card px-5 py-4 shadow-sm"><div className="flex items-center gap-2 mb-4"><ColorChip icon="clock" color="var(--info)" size={28} iconSize={15} /><h4 className="text-[14px] font-bold">최근 수정이력</h4></div><div className="flex flex-col">{REGISTRY_HISTORY.map((item, i) =>
+              )}</tbody></table></div></div><div className="rounded-card border border-border bg-card px-5 py-4 shadow-sm"><div className="flex items-center gap-2 mb-4"><ColorChip icon="clock" color="var(--info)" size={28} iconSize={15} /><h4 className="text-[14px] font-bold m-0">최근 수정이력</h4></div><div className="flex flex-col">{REGISTRY_HISTORY.map((item, i) =>
             <div
               key={i}
               className={cx("flex items-start gap-3 pb-4", i < REGISTRY_HISTORY.length - 1 && "border-b border-border mb-4")}><div className="flex flex-col items-center shrink-0"><div
@@ -424,7 +424,7 @@ function Report({ onNav }) {
                 style={{ background: "var(--chart-3)" }} /><span className="t-caption text-[11.5px]">계획</span></div><div className="flex items-center gap-1.5"><span
                 className="w-3 h-3 rounded-sm inline-block shrink-0 bg-primary" /><span className="t-caption text-[11.5px]">실적</span></div></div></ChartCard><div
           className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
-            className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><ColorChip icon="calendar" color="var(--warning)" size={30} iconSize={16} /><h3 className="text-[15px] font-bold">보고 일정 현황</h3></div>{scheduleItems.length > 0 && <CountPill count={scheduleItems.length} />}</div><div
+            className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><ColorChip icon="calendar" color="var(--warning)" size={30} iconSize={16} /><h3 className="text-[15px] font-bold m-0">보고 일정 현황</h3></div>{scheduleItems.length > 0 && <CountPill count={scheduleItems.length} />}</div><div
             className="flex flex-col gap-2 px-4 py-3 overflow-y-auto"
             style={{ maxHeight: 280 }}>{scheduleItems.length === 0
               ? <div className="py-8 text-center t-caption">예정된 보고 일정이 없습니다.</div>

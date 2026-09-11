@@ -95,10 +95,10 @@ export function GridFrame({
           GridFrame 소비처(제네릭 리스트·asset_funding·subfund_manage 등)의 브레드크럼↔카드 간격을 한 곳에서 복구. */}
       <Card pad={0} style={{ marginTop: 0, background: 'var(--frame-bg)', border: 0, boxShadow: 'none' }}>
         {/* 카드 헤더: 타이틀(+sub 캡션) + KPI 슬롯 */}
-        <div className="flex items-center justify-between flex-wrap gap-4" style={{ padding: '6px 18px' }}>
+        <div className="flex items-center justify-between flex-wrap gap-4" style={{ padding: '15px 18px' }}>
           <div className="min-w-0">
             <div className="flex items-center" style={{ gap: 4 }}>
-              <h3 className="font-bold" style={{ fontSize: 20 }}>{cardTitle ?? title}</h3>
+              <h3 className="font-bold" style={{ fontSize: 20, margin: 0, lineHeight: 1.4 }}>{cardTitle ?? title}</h3>
               {favRoute && <FavStar route={favRoute} />}
             </div>
             {sub && <p className="text-caption" style={{ fontSize: 12.5, margin: '2px 0 0', lineHeight: 1.4 }}>{sub}</p>}
