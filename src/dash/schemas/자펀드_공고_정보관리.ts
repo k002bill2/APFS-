@@ -26,7 +26,8 @@ export const schema: PageSchema = {
     { key: 'content',    label: '공고내용',  control: 'richtext' },
     { key: 'attachment', label: '첨부파일',  control: 'filepond' },
   ],
-  searchable: true,
+  // 상세필터 최상단 '검색어' 입력 미노출(2026-09-11 사용자 결정) — searchable을 켜지 않는다(기본 OFF).
+  // 이 화면의 필터는 아래 filters 2종뿐. 되살리려면 `searchable: true` 한 줄.
   filters: ['사업년도', '정기/수시'],
   // 공고 = 금액·변동률 없는 엔티티 → 제네릭 금액 KPI·카드 금액/상태 숨김
   hideMetrics: true,
