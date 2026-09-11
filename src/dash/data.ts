@@ -108,7 +108,7 @@ const MENU = [
       { label:"모태펀드 조성 및 출자현황", path:"asset-funding" },
     ]},
     { label:"사후보고관리", sub:true, children:[
-      { label:"투자심의 관리" },
+      { label:"투자심의 관리", path:"investment-review" },
       { label:"수시보고" },
       { label:"정기보고" },
       { label:"조합원총회" },
