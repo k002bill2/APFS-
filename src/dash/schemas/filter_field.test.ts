@@ -37,8 +37,10 @@ describe('resolveFilterField — 필터 라벨 → 컨트롤 타입 도출', () 
   });
 
   it('field-only 키(컬럼 부재) → columnKey 없음 (시드 안 됨 → 침묵 0건 방지)', () => {
-    // gongo의 자펀드계정 필드(key:fundAccount)는 columns에 없음
-    expect(resolveFilterField('자펀드계정', gongo).columnKey).toBeUndefined();
+    // gongo의 모펀드 필드(key:moeFund)는 select+options지만 columns에 없음 → enum이되 행필터 불가
+    const ff = resolveFilterField('모펀드', gongo);
+    expect(ff.kind).toBe('enum');
+    expect(ff.columnKey).toBeUndefined();
   });
 
   it('빈 옵션 select 필드 → text 격하 (빈 <select> 금지)', () => {

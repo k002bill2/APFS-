@@ -20,6 +20,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 목업 영역 | 우리 구현 | 규약 출처 |
 |-----------|-----------|-----------|
 | 페이지 골격(제목·KPI·툴바·푸터) | `GridFrame` + `KpiBadge`. **타이틀(`cardTitle`·`title`·crumbs 리프)은 `data.ts` 메뉴 리프 라벨과 일치**(임의 "○○ 목록" 금지) | [[apfs-grid]] "관리형 리스트 툴바·타이틀 규약" |
+| **KPI 배지 행(기본 포함)** | 카드헤더 우측 3배지 = 전체 건수 + 도메인별 2지표. typed=`kpis` 직접, 스키마=`schema.countKpis`(자동·필터반응). 금액 없는 엔티티는 `hideMetrics:true` 병행 | [[apfs-grid]] "KPI 배지 행" |
 | 검색박스(인라인 N개 필터) | **주 필터 1개=툴바 `FilterChip`**(예: 심사단계) + 나머지=**상세필터 드로어(Sheet)**, 검색어 최상단 고정, 컬럼 미연동 필터는 `· 데이터 연동 후 적용` 캡션 | [[apfs-detail-filter]] |
 | 2단 헤더 그리드 + tfoot 합계 | AG Grid `ColGroupDef`(`marryChildren`) + `pinnedBottomRowData=useMemo([computeTotal(filteredRows)])` | [[apfs-aggrid]] |
 | 행 라디오 단일선택 | `rowSelection={{mode:'singleRow',checkboxes:true,enableClickSelection:true}}` + `selectionColumnDef={{pinned:'left'}}` + `getRowId` 안정 id | [[apfs-aggrid]] |
