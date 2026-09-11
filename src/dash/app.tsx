@@ -13,6 +13,7 @@ import { SubFundManage } from './subfund_manage';   // 자펀드관리(관리형
 import { Pages as ReportBucheoPages } from './report_bucheo';
 import { GenericListPage, findMenuContext } from './generic_list';
 import { AssetFunding } from './asset_funding';
+import { InvestmentReviewManage } from './investment_review_manage';   // 투자심의관리(관리형 리스트, S1_01). GenericListPage 폴백 앞 분기
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -26,6 +27,7 @@ const EditorPage = EditorPages.EditorPage;
 // 떨어지므로, 여기서 안전 홈(main)으로 승격한다. 'performance'는 개명(한글 route)이라 별도 매핑.
 const ROUTE_ALIAS: Record<string, string> = {
   performance: "투자 성과·포트폴리오",
+  "투자심의 관리": "investment-review",   // 리프에 path 부여 전 잔존한 한글 route(localStorage·방문기록) 승격
   asset: "main", risk: "main", "gp-health": "main",
   accounting: "main", report: "main", "report-sutack": "main",
 };
@@ -108,6 +110,7 @@ function App() {
   else if (route === "schedule") page = <Schedule onNav={onNav} />;
   else if (route === "subfund") page = <SubFundManage onNav={onNav} />;
   else if (route === "asset-funding") page = <AssetFunding onNav={onNav} />;
+  else if (route === "investment-review") page = <InvestmentReviewManage onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "editor") page = <EditorPage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
