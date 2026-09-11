@@ -23,4 +23,8 @@ describe('parsePageSchema', () => {
     // 인터페이스↔zod 손수 이중정의 drift 가드 — KPI 배지 행 opt-in(2026-09-11)
     expect(parsePageSchema({ ...valid, hideKpis: true }).hideKpis).toBe(true);
   });
+  it('registerMenu(등록 combo 버튼 플래그)를 통과시킨다', () => {
+    // 인터페이스↔zod 손수 이중정의 drift 가드 — 등록 combo(split) 버튼 opt-in(2026-09-11)
+    expect(parsePageSchema({ ...valid, registerMenu: true }).registerMenu).toBe(true);
+  });
 });

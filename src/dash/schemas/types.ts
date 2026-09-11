@@ -36,6 +36,11 @@ export interface PageSchema {
   // 푸터의 리스트 뷰|카드뷰 SegTabs를 숨기고 리스트 뷰로 고정한다(카드뷰가 의미 없는 엔티티).
   // 표현 전용 — hideKpis(헤더 KPI만)·hideMetrics(금액 개념 전체)와 독립.
   hideCardView?: boolean;
+  // 툴바의 1차 액션(등록) 버튼을 combo(split) 버튼으로 렌더한다 — 좌: 등록 실행 · 우: ⌄ 보조 액션 메뉴.
+  // 켜면 툴바 독립 kebab(⋯)은 렌더하지 않는다(내보내기·인쇄가 combo 드롭다운으로 이동해 중복이므로).
+  // 푸터 폴백 kebab은 유지 — 스크롤로 툴바가 사라져도 보조 액션 접근이 끊기지 않는다.
+  // editable(fields 보유) 스키마에서만 의미가 있다. 표현 전용 — hide* 3종과 독립.
+  registerMenu?: boolean;
   provenance: Provenance;
 }
 
@@ -61,6 +66,7 @@ export const PageSchemaZ = z.object({
   countKpis: z.array(z.object({ label: z.string(), icon: z.string(), color: z.string(), column: z.string().optional(), value: z.string().optional() })).optional(),
   hideKpis: z.boolean().optional(),
   hideCardView: z.boolean().optional(),
+  registerMenu: z.boolean().optional(),
   provenance: ProvenanceZ,
 });
 

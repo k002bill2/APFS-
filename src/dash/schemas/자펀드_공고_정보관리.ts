@@ -34,6 +34,9 @@ export const schema: PageSchema = {
   hideKpis: true,
   // 카드뷰 미사용(2026-09-11 사용자 결정) — 푸터 리스트/카드뷰 SegTabs를 숨기고 리스트 뷰 고정.
   hideCardView: true,
+  // 등록 버튼을 combo(split) 버튼으로 — 좌: 공고 등록 · 우: ⌄ 내보내기·인쇄(2026-09-11 사용자 결정).
+  // 툴바 kebab(⋯)은 이 화면에서 사라지고 그 항목이 combo 드롭다운으로 들어간다.
+  registerMenu: true,
   // 목업 하단 DATA[] — 실제 계획공고 4건(합성 더미 대신 그대로 노출). moeFund 채워 수정 시 빈 값 방지
   sample: [
     { moeFund: '농식품모태펀드', bizYear: '2026', periodType: '정기', seqNo: 1, fundAccount: '농식품', title: '농림수산식품모태펀드 2026년 정기 출자사업(농식품 계정) 계획 공고', attachment: "260202(붙임) '26년 정기 출자사업(농식품투자 계정) 계획 공고_홈페이지.pdf" },
