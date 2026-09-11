@@ -111,21 +111,30 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 ## 관리형 리스트 툴바·타이틀 규약 (2026-09-11 subfund_manage에서 정립)
 리스트형(CRUD) 페이지 한정. 매트릭스/집계형은 위 골든(`headerActions` primary 내보내기)을 그대로 둔다.
 
-- **1차 액션(등록)은 툴바 독립 버튼, 보조 액션은 kebab(⋯).** 2026-09-11 사용자 결정으로 *등록을 kebab 밖으로 승격*했다(이전 규약 "등록도 kebab 안에"를 뒤집음 — 진입 빈도가 높은데 2클릭이 걸렸다). 순서는 고정:
+- 🔀 **1차 액션(등록)의 유무가 툴바 형태를 결정한다(2026-09-11 사용자 결정 — 최종).** 둘 중 하나이며 중간 형태는 없다:
   ```
-  toolbarRight:  단위: 원 │ ▣ 상세필터 │ ＋ 등록 │ ⟳ 새로고침 │ ⋯ kebab
-                 caption    ghost         outline    IconBtn      MoreMenu
+  등록 O:  단위: 원 │ ▣ 상세필터 │ [ ＋ 등록 │ ⌄ ] │ ⟳ 새로고침        ← combo(split) 버튼
+           caption    ghost        RegisterCombo      IconBtn            (툴바 독립 kebab 없음)
+
+  등록 X:  단위: 원 │ ▣ 상세필터 │ ⟳ 새로고침 │ ⋯ kebab                 ← 종전 그대로
+           caption    ghost        IconBtn      MoreMenu
   ```
-  등록 버튼은 `<Button variant="outline" size="sm" leadingIcon="plus">`— 주변 보조 액션이 ghost·아이콘이라 outline 하나만으로 위계가 선다(primary는 과함). 라벨은 도메인 액션명 그대로(`제안서접수 등록`), "등록"으로 줄이지 않는다.
+  - **등록이 있으면 combo 하나로 합친다** — 좌 절반 = 등록 즉시 실행 · 우 절반 `⌄` = 보조 액션 메뉴(내보내기·인쇄). 툴바에 독립 kebab을 **따로 두지 않는다**(항목이 combo 안으로 들어가 중복이 된다). **등록 버튼만 단독으로 두는 이전 형태(`＋ 등록` + `⋯ kebab` 분리)는 폐기**다.
+  - **등록이 없으면 합칠 1차 액션이 없으므로 kebab(⋯) 단독** — 종전 `MoreMenu` 그대로.
+  - 어느 쪽이든 **푸터 폴백 kebab은 유지**(`!topMoreVisible && <MoreMenu size={32}>`) — 스크롤로 툴바가 사라져도 내보내기·인쇄 접근이 끊기지 않는다.
+  - 스키마 트랙은 **자동 분기**다 — `generic_list.tsx`가 `editable = schema.fields.length > 0` 하나로 고르며 켜고 끄는 플래그는 없다(`registerMenu` 플래그는 도입 당일 폐기 — 규약이 `editable`로 결정되어 존재 이유가 사라졌다). typed 트랙도 같은 규약이며 `RegisterCombo`를 로컬 복사해 만든다(`MoreMenu`·`PageBtn`과 동일한 복사 규약).
+    ✅ **전 트랙 전환 완료(2026-09-11)**: 스키마 트랙 `generic_list.tsx`(등록 4화면) + typed `subfund_manage.tsx`(`제안서접수 등록`). typed 화면의 `MoreMenu`는 이제 **푸터 폴백 전용**이다(툴바에선 뜨지 않는다). `asset_funding.tsx`는 등록이 없는 매트릭스형이라 kebab(`PoCMoreMenu`) 단독 — 규약대로다.
+  - 등록 라벨은 도메인 액션명 그대로(`제안서접수 등록`·`공고 등록`), "등록"으로 줄이지 않는다. combo 좌 절반의 외관은 종전 `Button variant="outline" size="sm"`과 동일(`px-[11px] py-1.5 text-[12.5px]` / `bg-card` / `border-border-strong`) — 주변 보조 액션이 ghost·아이콘이라 outline 하나로 위계가 선다(primary는 과함).
 - **kebab에 남는 것은 내보내기(Excel)·인쇄뿐.** **내보내기용 독립 "엑셀" 버튼을 `toolbarRight`에 따로 두지 않는다**(kebab 항목으로 흡수). 내보내기 진입점은 **kebab 항목 + 푸터 `IconBtn download` + 단축키 `⌥D`** 세 곳 — 중복 아님(위 39행 "한 곳에만"은 *툴바 독립 버튼*을 두지 말라는 뜻).
 - **kebab 항목엔 단축키 힌트(`DropdownMenuShortcut`) 동반**: 내보내기 `HOTKEYS.export`(⌥D)·인쇄 `HOTKEYS.print`(⌘P). ⚠️ **등록 ⌘⏎(`HOTKEYS.register`)는 바인딩만 살아 있고 화면 힌트가 없다** — `Button`은 `forwardRef`/rest props가 없어 Radix `Tooltip asChild` 트리거로 못 쓰고 `title`도 안 먹기 때문(→ [[ui-button-not-radix-aschild-trigger]] 함정). 힌트를 살리려면 Button `children`에 `<span>{HOTKEYS.register.hint}</span>`를 덧붙이는 방법뿐. 단축키 시스템·mod/⌥ 2티어·Windows 함정은 → [[apfs-hotkeys]] (여기서 표 복제 금지, 링크만).
 - **`MoreMenu`는 공유 컴포넌트가 아니다** — `generic_list.tsx`·`asset_funding.tsx`(`PoCMoreMenu`)·`subfund_manage.tsx`가 각자 **로컬 복사본**(`PageBtn`과 동일 방식, 공유 export 아님). 골드는 `subfund_manage.tsx`(Tooltip 래핑·`DropdownMenuShortcut`·`onExport/size` props — `onRegister`는 등록 승격으로 제거됨). 상단 `toolbarRight`의 `topMoreRef` + 화면 밖일 때 푸터 폴백 `!topMoreVisible && <MoreMenu>` 쌍으로 스크롤 중 접근 유지(등록은 툴바 버튼 + ⌘⏎로 접근하므로 폴백 대상이 아니다). 신규 페이지는 골드에서 복사하고 `onExport` 등 필요한 prop을 배선한다.
-- ✅ **스키마 주도 트랙 반영 완료(2026-09-11)**: `generic_list.tsx`도 같은 규약이다 — 등록은 툴바 독립 버튼(`{editable && <Button variant="outline" leadingIcon="plus">{schema.entity + ' 등록'}</Button>}`, 라벨=스키마 `entity` 기반 도메인 액션명), kebab은 내보내기·인쇄만(+`DropdownMenuShortcut` 힌트·Tooltip 래핑·`size` prop). `topMoreRef`+IntersectionObserver 푸터 폴백, 핫키 3종(⌘⏎ 등록은 `enabled: editable && modal === null`), `IconBtn refresh` 라벨 `새로고침`, 푸터의 죽은 `IconBtn more`는 `MoreMenu` 폴백으로 교체까지 골드와 동형. `fields`가 없는 스키마(연도별투자현황·조합별 월간보고 현황)는 `editable=false`라 등록 버튼이 뜨지 않는다.
-- 🔀 **combo(split) 버튼 변형 — `schema.registerMenu: true` opt-in(2026-09-11, 자펀드 공고 정보관리에서 정립).** 켜면 `등록`과 kebab이 한 컨트롤로 합쳐진다: `[＋ 공고 등록 │ ⌄]` — 좌 절반=등록 즉시 실행, 우 절반=보조 액션 메뉴(내보내기·인쇄). **툴바 독립 kebab은 렌더하지 않고**(항목이 combo 안으로 이동) 푸터 폴백 kebab은 그대로 둔다. 기본값은 위 골드(등록 버튼 + kebab 분리)이며 플래그를 켠 화면만 변형이다.
-  - ⚠️ `topMoreRef`를 **combo 래퍼 span으로 옮겨야** 한다 — kebab만 지우고 ref를 안 옮기면 관찰 effect가 `if (!el) return`으로 빠져 `topMoreVisible`이 true로 굳고 푸터 폴백이 영원히 안 뜬다(내보내기·인쇄 접근 단절).
-  - ⚠️ combo는 `UI.Button`으로 만들 수 없다 — asChild 트리거 불가([[ui-button-not-radix-aschild-trigger]])에 더해 `motion` hover scale이 좌·우 절반에 따로 걸려 이음매가 어긋난다. outline 외관(`px-[11px] py-1.5 text-[12.5px]` / `bg-card` / `border-border-strong`)을 컨테이너+plain button으로 재현한다.
-  - ⚠️ 컨테이너에 `overflow-hidden` 금지(전역 `:focus-visible` box-shadow 링이 잘림), 트리거에 `.apfs-menu-trigger` 금지(그 클래스는 링을 끄고 `bg-card`로 초점을 대신 표시하는데 combo는 이미 카드 배경이라 단서가 사라짐 → [[global-focus-overhaul-exception-surfaces]]).
-  - kebab 항목은 `MoreMenuItems` 조각을 kebab과 combo가 **공유**한다(복제 시 단축키 힌트가 갈라진다).
+- ✅ **스키마 주도 트랙 반영 완료(2026-09-11)**: `generic_list.tsx`도 같은 규약이다 — `editable`이면 combo(`<RegisterCombo label={schema.entity + ' 등록'} …>`, 라벨=스키마 `entity` 기반 도메인 액션명)·아니면 kebab 단독, 메뉴 항목은 내보내기·인쇄만(+`DropdownMenuShortcut` 힌트·Tooltip 래핑·`size` prop). `topMoreRef`+IntersectionObserver 푸터 폴백, 핫키 3종(⌘⏎ 등록은 `enabled: editable && modal === null`), `IconBtn refresh` 라벨 `새로고침`, 푸터의 죽은 `IconBtn more`는 `MoreMenu` 폴백으로 교체까지 골드와 동형. `fields`가 없는 스키마(연도별투자현황·조합별 월간보고 현황)는 `editable=false`라 등록 버튼이 뜨지 않는다.
+- **`RegisterCombo` 구현 함정 4건**(정본: `generic_list.tsx`):
+  - ⚠️ `topMoreRef`는 **실제로 렌더되는 쪽**(combo 래퍼 또는 kebab)이 들고 있어야 한다 — ref가 비면 관찰 effect가 `if (!el) return`으로 빠져 `topMoreVisible`이 true로 굳고 푸터 폴백이 영원히 안 뜬다(내보내기·인쇄 접근 단절).
+  - ⚠️ combo를 `UI.Button`으로 만들 수 없다 — Radix `asChild` 트리거 불가([[ui-button-not-radix-aschild-trigger]])에 더해 `motion` hover scale이 좌·우 절반에 따로 걸려 이음매가 어긋난다. 컨테이너 + plain `<button>`으로 outline 외관을 재현한다.
+  - ⚠️ 컨테이너에 `overflow-hidden` 금지 — 전역 `:focus-visible` box-shadow 링(`tokens.css`)이 잘려 키보드 초점 단서가 사라진다. 대신 좌/우 절반에 `rounded-l-[9px]`·`rounded-r-[9px]`를 직접 준다.
+  - ⚠️ 트리거에 `.apfs-menu-trigger` 금지 — 그 클래스는 링을 끄고 `bg-card`로 초점을 대신 표시하는데 combo는 이미 카드 배경이라 단서가 사라진다(→ [[global-focus-overhaul-exception-surfaces]]). Tooltip은 `span`으로 감싸 `data-state` 충돌을 피한다(MoreMenu 동형).
+  - kebab 항목은 `MoreMenuItems` 조각을 kebab과 combo가 **공유**한다(복제하면 단축키 힌트가 갈라진다).
 - **타이틀은 메뉴 리프와 일치.** `cardTitle`·`title`·`crumbs` 리프를 **`data.ts` 메뉴 리프 라벨 문자열 그대로**(띄어쓰기 포함) 맞춘다. `cardTitle`이 `title`과 같으면 생략 가능(H1=`cardTitle ?? title`). **"○○ 목록" 같은 임의 축약 금지**(2026-09-11 "자펀드 목록"→"자펀드 관리" 정정). 매트릭스/집계형이 문서 정식명칭을 카드 제목으로 쓰는 것(asset_funding "…현황표")은 예외.
 
 ## 검증

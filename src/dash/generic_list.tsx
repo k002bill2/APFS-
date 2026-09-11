@@ -156,8 +156,9 @@ function FilterPill({ label, value, onRemove }: { label: string; value?: string;
 }
 
 /* ===== 더보기 드롭다운 메뉴 (kebab) — Radix DropdownMenu(키보드 내비·menuitem 시맨틱) =====
-   내보내기(Excel)·인쇄만 남는다. 등록은 kebab에서 꺼내 툴바 독립 버튼으로 승격(2026-09-11 사용자 결정,
-   진입 빈도가 높은 1차 액션이라 2클릭→1클릭). 독립 '엑셀' 버튼은 두지 않는다(내보내기 항목으로 흡수).
+   항목은 내보내기(Excel)·인쇄뿐이다. 독립 '엑셀' 버튼은 두지 않는다(내보내기 항목으로 흡수).
+   ⚠️ 툴바에서 이 kebab이 뜨는 건 **등록이 없는 스키마(editable=false)뿐**이다 — 등록이 있으면 같은 항목이
+   RegisterCombo의 ⌄ 드롭다운으로 들어간다(2026-09-11 사용자 결정). 푸터 폴백(!topMoreVisible)은 양쪽 공통.
    골드 subfund_manage.tsx의 MoreMenu 동형 — Tooltip 래핑 + DropdownMenuShortcut 힌트 + size prop. */
 function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
   return (
@@ -199,7 +200,7 @@ function MoreMenuItems({ onExport }: { onExport: () => void }) {
   );
 }
 
-/* ===== 등록 combo(split) 버튼 — schema.registerMenu opt-in(2026-09-11 사용자 결정) =====
+/* ===== 등록 combo(split) 버튼 — 등록 가능 스키마의 기본 툴바 형태(2026-09-11 사용자 결정) =====
    좌: 1차 액션(등록) 즉시 실행 · 우: ⌄ 보조 액션 메뉴(내보내기·인쇄) — 툴바 kebab을 흡수한다.
    외관은 Button variant="outline" size="sm"을 손수 재현한다. UI.Button을 쓸 수 없는 이유 2가지:
    ① forwardRef/…rest가 없어 Radix asChild 트리거가 되지 않는다(무음으로 안 열림),
@@ -403,9 +404,9 @@ function rowMatchesFilters(row: Row, schema: PageSchema, filterValues: Record<st
 export function GenericListPage({ route, onNav }: { route: string; onNav: (r: string) => void }) {
   const { title, crumbs } = findMenuContext(route);
   const schema = resolveSchema(route);
+  /* editable = 등록 가능 스키마(fields 보유). 툴바 규약의 분기 하나를 이것이 결정한다(2026-09-11 사용자 결정):
+     등록이 있으면 combo(split) 버튼 하나로 합치고, 등록이 없으면 종전처럼 kebab(⋯) 단독. */
   const editable = schema.fields.length > 0;
-  // 등록 combo(split) 버튼 모드 — 등록 버튼이 있는 스키마에서만 성립(등록이 없으면 합칠 1차 액션이 없다)
-  const comboMode = editable && !!schema.registerMenu;
   const masked = useMask();   // Excel 우측정렬 숫자 셀의 마스킹 시 값을 0으로(실값 비노출)
   const apiRef = useRef<GridApi<Row> | null>(null);
   const [rows, setRows] = useState<Row[]>(() => makeRows(schema, 23));
@@ -634,22 +635,18 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       )}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        {/* 등록 = 이 화면의 1차 액션. kebab 밖 독립 버튼(outline)으로 두어 보조 액션(ghost·아이콘)과 위계를 가른다.
+        {/* 등록이 있으면 combo(split) 버튼 — 좌: 1차 액션(등록) · 우: ⌄ 보조 액션(내보내기·인쇄).
             라벨은 도메인 액션명 그대로(스키마 entity — '공고 등록' 등), "등록"으로 줄이지 않는다.
-            편집 가능한 스키마(fields 보유)에서만 노출. Tooltip으로 감싸지 않는다(UI.Button은 asChild 트리거 불가).
-            schema.registerMenu가 켜지면 등록 + kebab 항목을 combo(split) 버튼 하나로 합치고 툴바 kebab은 없앤다. */}
-        {comboMode ? (
+            ⚠️ topMoreRef는 combo·kebab 중 **실제로 렌더되는 쪽**이 들고 있어야 한다 — ref가 비면 관찰
+            effect가 early return해 topMoreVisible이 true로 굳고 푸터 폴백이 영원히 안 뜬다(내보내기·인쇄 단절). */}
+        {editable && (
           <span ref={topMoreRef} className="inline-flex">
             <RegisterCombo label={schema.entity + " 등록"} onRegister={() => setModal({ mode: "create" })} onExport={exportExcel} />
           </span>
-        ) : editable && (
-          <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ mode: "create" })}>{schema.entity + " 등록"}</Button>
         )}
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); }} />
-        {/* combo 모드에선 kebab 항목이 combo 안으로 들어갔으므로 툴바 kebab을 렌더하지 않는다.
-            ⚠️ 이때 topMoreRef는 combo 래퍼가 들고 있어야 한다 — ref가 비면 관찰 effect가 early return해
-            topMoreVisible이 true로 굳고 푸터 폴백 kebab이 영원히 뜨지 않는다(내보내기·인쇄 접근 단절). */}
-        {!comboMode && <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>}
+        {/* 등록이 없는 스키마(연도별투자현황·조합별 월간보고 현황 등)는 합칠 1차 액션이 없으므로 종전 kebab 단독 */}
+        {!editable && <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>}
       </>}
       footerLeft={'총 ' + mn(String(totalForCount)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}
       footerCenter={view === "list" && page.total > 1 ? (
