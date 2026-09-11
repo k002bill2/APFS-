@@ -19,7 +19,7 @@ import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescrip
 import { DatePicker } from './ui/date-picker';
 import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode, CellContextMenuEvent } from 'ag-grid-community';
+import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode, CellContextMenuEvent, CellKeyDownEvent } from 'ag-grid-community';
 import { apfsTheme, AUTO_SIZE_CONTENT } from './aggrid_theme';   // 공유 테마(회색 행선택)·내용폭 자동화 SSOT
 import './aggrid_shared.css';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
@@ -69,7 +69,10 @@ const DOC_SEED = [
 ];
 
 function makeRows(schema: PageSchema, n: number): Row[] {
-  return Array.from({ length: n }, (_, i) => {
+  // 리터럴 샘플 우선 — 목업/캡처의 실제 행을 그대로 표시(합성 더미 대체). 개수=샘플 길이.
+  const sample = schema.sample?.length ? schema.sample : null;
+  const count = sample ? sample.length : n;
+  return Array.from({ length: count }, (_, i) => {
     const k = i % 5;
     const base: Row = {
       id: "R" + String(i + 1).padStart(3, "0"),
@@ -82,6 +85,12 @@ function makeRows(schema: PageSchema, n: number): Row[] {
       status: (schema.statusDomain?.[i % (schema.statusDomain.length || 1)]?.label) ?? ROW_STATUS[i % 5],
       trend: [3, 5, 4, 7, 6].map((v, j) => v + ((i + j * 2) % 4)),
     };
+    // 샘플 행: 리터럴 값이 base 기본값을 덮어쓴다(id/icon/color는 base 유지). 합성 시드 건너뜀.
+    // 카드뷰·KPI가 읽는 name/category도 실제 값으로 진실화(합성 "항목명 001"·가짜 금액 방지).
+    if (sample) {
+      const s = sample[i];
+      return { ...base, ...s, name: String(s.name ?? s.title ?? base.name), category: String(s.category ?? schema.entity) } as Row;
+    }
     const extra: Record<string, unknown> = {};
     for (const c of schema.columns) {
       if (['name', 'amount', 'change', 'status', 'trend'].includes(c.key)) continue;
@@ -274,12 +283,14 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
           <IconBtn icon="x" onClick={onClose} label="닫기" size={38} />
         </SheetHeader>
         <div className="flex-1 overflow-y-auto" style={{ padding: "20px clamp(14px,3vw,20px)" }}>
-          {/* 검색어 — 모든 상세필터 공통 최상단(예약 라벨). 전 컬럼 부분일치 검색 */}
-          <label className="block mb-4">
-            <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>{SEARCH_LABEL}</span>
-            <input type="text" value={draft[SEARCH_LABEL] ?? ""} onChange={(e) => setVal(SEARCH_LABEL, e.target.value)} onKeyDown={applyOnEnter} placeholder="검색어 입력" style={drawerInputStyle("text")} />
-          </label>
-          {filters.length === 0 ? (
+          {/* 검색어 — 예약 라벨, opt-in(schema.searchable). 최상단 고정, 전 컬럼 부분일치 검색 */}
+          {schema.searchable && (
+            <label className="block mb-4">
+              <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>{SEARCH_LABEL}</span>
+              <input type="text" value={draft[SEARCH_LABEL] ?? ""} onChange={(e) => setVal(SEARCH_LABEL, e.target.value)} onKeyDown={applyOnEnter} placeholder="검색어 입력" style={drawerInputStyle("text")} />
+            </label>
+          )}
+          {filters.length === 0 && !schema.searchable ? (
             <div className="text-caption text-center" style={{ fontSize: 13, padding: "28px 0" }}>설정 가능한 필터가 없습니다.</div>
           ) : (
             <>
@@ -364,6 +375,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const sumAmount = filtered.reduce((s, r) => s + r.amount, 0);
   const avgChange = filtered.length ? filtered.reduce((s, r) => s + r.change, 0) / filtered.length : 0;
   const avgUp = avgChange >= 0;
+  // 건수형 KPI(schema.countKpis) — column+value 매칭 행 수, 없으면 전체. 값은 필터 결과 기준.
+  const countKpiNodes = schema.countKpis?.map((k) => {
+    const n = k.column && k.value != null
+      ? filtered.filter((r) => String((r as Record<string, unknown>)[k.column!]) === k.value).length
+      : filtered.length;
+    return <KpiBadge key={k.label} icon={k.icon} color={k.color} label={k.label} value={mn(String(n)) + " 건"} />;
+  });
 
   // ── AG Grid 연결 ──
   const onGridReady = useCallback((e: GridReadyEvent<Row>) => { apiRef.current = e.api; }, []);
@@ -386,10 +404,16 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   // 특수 컬럼(name=2줄 · trend=스파크라인)만 전용 cellRenderer, 그 외는 Cell 재사용(마스킹 내장).
   // 마지막 '관리' 컬럼은 editable일 때만 — 더블클릭 수정과 동일하게 수정 모달을 연다.
   const columnDefs = useMemo<ColDef<Row>[]>(() => {
+    // 남는 그리드 폭을 채울 stretch 컬럼 = 주 식별/텍스트 컬럼(마지막 left-text, 또는 name).
+    // 이 컬럼만 flex로 잔여폭 흡수 + autoSize 제외(fitCellContents가 폭을 고정하지 않도록) → 우측 빈 공간 제거.
+    const textCols = schema.columns.filter((c) => (c.type === "text" || c.key === "name") && c.align !== "right" && c.key !== "trend");
+    const stretchKey = textCols.length ? textCols[textCols.length - 1].key : undefined;
     const cols: ColDef<Row>[] = schema.columns.map((c): ColDef<Row> => {
+      const stretch = c.key === stretchKey;
       if (c.key === "name") {
         return {
-          field: "name", headerName: c.label, width: 240, minWidth: 180, maxWidth: 360,   // flex 제거(AUTO_SIZE_CONTENT 전제) — 골드 subfund_manage와 동일 폭 규칙
+          field: "name", headerName: c.label,
+          ...(stretch ? { flex: 1, minWidth: 200, suppressAutoSize: true } : { width: 240, minWidth: 180, maxWidth: 360 }),   // stretch면 잔여폭 흡수, 아니면 골드 subfund_manage 폭 규칙
           cellStyle: { display: "flex", flexDirection: "column", justifyContent: "center" },
           cellRenderer: (p: ICellRendererParams<Row>) => (
             <div className="min-w-0" style={{ lineHeight: 1.25 }}>
@@ -410,20 +434,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       const right = c.align === "right";
       return {
         field: c.key as any, headerName: c.label + (c.unit ? ` (${c.unit})` : ""),   // 스키마 동적 키 — Row 정적 타입 밖
-        minWidth: 110, maxWidth: 240, type: right ? "rightAligned" : undefined,   // flex 제거(AUTO_SIZE_CONTENT 전제) — 긴 텍스트 컬럼 상한 캡
+        ...(stretch ? { flex: 1, minWidth: 200, suppressAutoSize: true } : { minWidth: 110, maxWidth: 240 }),   // stretch면 잔여폭 흡수, 아니면 긴 텍스트 상한 캡
+        type: right ? "rightAligned" : undefined,
         cellStyle: { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any, ...(right ? { justifyContent: "flex-end" } : {}) },
         cellRenderer: (p: ICellRendererParams<Row>) => <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} />,
       };
     });
-    if (editable) {
-      cols.push({
-        headerName: "관리", colId: "__manage", width: 76, pinned: "right", sortable: false, resizable: false,
-        cellStyle: { display: "flex", alignItems: "center", justifyContent: "center" },
-        cellRenderer: (p: ICellRendererParams<Row>) => (
-          <MT w={20}><IconBtn icon="file" label={(p.data?.name || "") + " 상세·수정"} size={32} onClick={() => p.data && setModal({ mode: "edit", row: p.data })} /></MT>
-        ),
-      });
-    }
+    // '관리' 액션 컬럼 제거(2026-09-11) — 행 더블클릭(onRowDoubleClicked)이 수정 모달을 열어 기능 대체.
     return cols;
   }, [schema, editable]);
 
@@ -516,13 +533,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       title={title}
       favRoute={route}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav("main")}>메인으로</Button>}
-      kpis={<>
+      kpis={countKpiNodes ? <>{countKpiNodes}</> : schema.hideMetrics ? undefined : (<>
         <KpiBadge icon="trending" color="var(--chart-1)" label="평균 변동률"
           value={mn((avgUp ? "+" : "-") + Math.abs(avgChange).toFixed(1)) + "%"}
           valueColor={avgUp ? "var(--success-text)" : "var(--danger-text)"} />
         <KpiBadge icon="wallet" color="var(--accent)" label="합계 금액"
           value={"₩" + mn(Math.round(sumAmount / 100).toLocaleString()) + "억"} />
-      </>}
+      </>)}
       toolbarLeft={selCount > 0 ? (
         <>
           <span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
@@ -579,7 +596,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               getRowId={(p) => p.data.id}
               domLayout="autoHeight"
               autoSizeStrategy={AUTO_SIZE_CONTENT}   // 컬럼 폭=내용 폭(첫 렌더 1회). columnDefs flex 제거가 전제. 골드 subfund_manage와 동일
-              rowHeight={52}
+              rowHeight={44}
               defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
               rowSelection={{ mode: "multiRow", checkboxes: true, headerCheckbox: true }}
               pagination
@@ -592,6 +609,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               onSelectionChanged={onSelectionChanged}
               onPaginationChanged={onPaginationChanged}
               onRowDoubleClicked={editable ? (e) => e.data && setModal({ mode: "edit", row: e.data }) : undefined}
+              onCellKeyDown={editable ? (e: CellKeyDownEvent<Row>) => {
+                // 관리 컬럼 제거 대체 — 키보드로 행에서 Enter 시 수정 모달(더블클릭과 동일). 선택 체크박스 컬럼은 Enter=선택 토글 유지.
+                const ke = e.event as KeyboardEvent | null;
+                if (!ke || ke.key !== "Enter" || !e.data) return;
+                if ((e.column?.getColId?.() ?? "").startsWith("ag-Grid")) return;
+                setModal({ mode: "edit", row: e.data });
+              } : undefined}
               preventDefaultOnContextMenu
               onCellContextMenu={handleCellContextMenu}
               overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">표시할 항목이 없습니다</span>'}
@@ -610,11 +634,15 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                     <div className="text-muted-foreground" style={{ fontSize: 12 }}><MT>{r.category}</MT></div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="tabular font-bold" style={{ fontSize: 15 }}>{mn(r.amount.toLocaleString())}</span>
-                  <DeltaBadge value={r.change} />
-                </div>
-                <StatusBadge tone={statusTone(r.status)} label={r.status} size="sm" />
+                {!schema.hideMetrics && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span className="tabular font-bold" style={{ fontSize: 15 }}>{mn(r.amount.toLocaleString())}</span>
+                      <DeltaBadge value={r.change} />
+                    </div>
+                    <StatusBadge tone={statusTone(r.status)} label={r.status} size="sm" />
+                  </>
+                )}
               </button>
             ))}
           </div>

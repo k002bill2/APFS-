@@ -18,11 +18,13 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
    별도 컨트롤이 필요한 새 kind를 추가할 때만 아래 정본 파일을 건드린다.
 - ⚠️ **정확일치가 안전의 전제 — 비대칭 주의**: 라벨이 field/column과 불일치하면 value 타입(year/enum/date/number/text)은 columnKey 미해결로 **안전하게 no-op+캡션**으로 격하되지만, 매칭이 전혀 안 되면 **tag로 떨어지고**, 그 라벨이 `ROW_CATS`(아래 시드 정합)에 없으면 토글 선택 시 **표가 통째로 비워진다**. value=무해, tag=표 증발 — 이 비대칭이 핵심 함정.
 
-## 예약 라벨 `검색어` — 모든 드로어 공통 최상단
-- 모든 상세필터 드로어의 **최상단에는 검색어 입력이 상시 고정**된다(schema.filters와 무관, filters가 비어도 노출).
-- 정본: `generic_list.tsx`의 `SEARCH_LABEL`("검색어"). `rowMatchesFilters`가 **resolveFilterField보다 먼저 특수 처리** — 행의 전 컬럼 부분일치(OR) + `row.category`, 다른 필터와는 AND.
+## 예약 라벨 `검색어` — opt-in, 켜지면 드로어 최상단 고정
+- 검색어 입력은 **기본 OFF**다. `PageSchema.searchable: true`인 페이지에서만 드로어 **최상단에 고정** 노출된다(2026-09-11, 기존 "상시 고정" 폐기). 켜지면 schema.filters와 무관하게(비어도) 뜨고, 끄면 아예 렌더되지 않는다.
+  - 배선: `types.ts`의 `searchable?: boolean`(+zod) → `generic_list.tsx` `ListFilterDrawer`가 `{schema.searchable && (…검색어 label…)}`로 게이트. 검색어 OFF이고 filters도 비면 "설정 가능한 필터가 없습니다"(`filters.length===0 && !schema.searchable`).
+  - **필요한 페이지만 opt-in**: 스키마에 `searchable: true` 한 줄. 정본 예시는 자펀드 공고 정보관리.
+- 정본: `generic_list.tsx`의 `SEARCH_LABEL`("검색어"). `rowMatchesFilters`가 **resolveFilterField보다 먼저 특수 처리** — 행의 전 컬럼 부분일치(OR) + `row.category`, 다른 필터와는 AND. OFF일 때는 드로어가 값을 세팅하지 않아 이 경로가 자연히 무발동(별도 가드 불필요).
 - ⚠️ **휴리스틱에 태우지 말 것**: "검색어"는 ③ 휴리스틱에서 **tag로 오판**된다 → ROW_CATS에 없으니 표 증발. 칩 파생(chipItems)도 같은 이유로 `label !== SEARCH_LABEL` 가드로 값-칩을 강제한다.
-- 자체 드로어(asset_funding·performance)도 동일 규약: 최상단 검색어 + 실제 행 전 컬럼 부분일치 배선(performance는 `applied.q`, asset_funding은 `fText`).
+- 자체 드로어(asset_funding·performance 등 typed 페이지)는 자체 검색어 배선을 가지므로 이 플래그와 무관하다(원하면 각 드로어에서 개별 게이트). GenericListPage만 `searchable` 대상. asset_funding은 `fText`, performance는 `applied.q`.
 
 ## 타입 도출 — `resolveFilterField(label, schema)` 우선순위
 - **① field 매칭**(label 정확일치, 가장 정확): `select`→enum(field.options) · `date`→date · 년도라벨→year · `number`→number · 그외→text.

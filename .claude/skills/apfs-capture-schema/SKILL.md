@@ -18,7 +18,8 @@ description: 현행시스템 화면 캡처(이미지)에서 실제 컬럼·필�
    - 상단 조회 컨트롤 → `filters`
    - 표 컬럼 → `columns[]`: type 매핑(금액→amount, 비율/변동→rate, 날짜→date, 상태/등급→status(+statusDomain), 운용사/기관→gp, **영숫자 코드/ID→code**, **주민번호/계좌→pii**, 그 외→text), `unit`/`align`/중첩이면 `group`
    - 입력 컨트롤 → `fields[]`: control 매핑(textarea/file/select(+options)/date/checkbox/readonly)
-   - 1~2행 → 샘플 인지용(스키마엔 저장 안 함; 더미는 런타임 생성)
+   - 1~2행 → 샘플 인지용. 목업의 **실제 행을 그대로 노출**해야 하면 `sample: SampleRow[]`(키=column/field key)로 저장(부재 시 런타임 합성 더미)
+   - **KPI 행(기본 포함)** → `countKpis`: 최소 **전체 건수 + 도메인별 2지표**(예: 계정구분 농식품/수산). `{label,icon,color,column?,value?}` — 규약은 [[apfs-grid]] "KPI 배지 행". 금액 컬럼이 없는 엔티티는 `hideMetrics: true`도 함께.
    - OS 파일다이얼로그 오버레이·가로스크롤 잘림 영역은 제외하고 플래그
 3. **검수·동결**: 추출 결과를 캡처 이미지와 1회 대조 → `provenance{capturedAt,sourceSystem,captureFile}` 채움 → `src/dash/schemas/<route>.ts`로 저장(parsePageSchema/zod 통과 필수).
 4. **충돌검사·배선**: 라벨이 중복 리프면 data.ts에 `path` 부여(필수) 후 그 path를 route로. schemas/index.ts의 ALL 배열에 import 추가(중복키면 buildRegistry가 빌드에러).

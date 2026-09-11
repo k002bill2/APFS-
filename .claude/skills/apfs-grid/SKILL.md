@@ -65,6 +65,15 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 3. **마스킹.** `KpiBadge`는 라벨을 `<MT>`로 마스킹(generic_list verbatim) — 값은 호출자가 이미 `mn()` 처리해 넘긴다(단위 문자열은 비마스킹). 표 헤더·단위·탭·축(연도 등)·StatusBadge는 비마스킹("축은 두고 데이터는 가린다").
 4. **반응형.** 모든 슬롯 행에 `flexWrap` 내장. 호출자는 슬롯 내부 묶음에도 좁을 때 적층되도록 둘 것. 입력이 있으면 폰트 ≥16px(responsive-ui).
 
+## KPI 배지 행 (기본 포함)
+리스트/관리 페이지는 **카드헤더 우측 KPI 배지 행을 기본 포함**한다(`kpis` 슬롯). 최소 구성 = **전체 건수 + 도메인별 2지표**(3배지). 값은 호출자가 `mn()` 처리해 넘기고, 라벨은 `KpiBadge`가 `<MT>` 마스킹.
+- **typed 페이지**(subfund_manage 등): `kpis={<><KpiBadge …/>…</>}`로 값을 직접 계산해 나열. 예: 전체 건수·결성 조합·약정총액 합계.
+- **스키마 페이지**(GenericListPage/PageSchema): `schema.countKpis`로 **선언만** 하면 자동 렌더되고 **필터 결과에 반응**한다(제네릭 금액 KPI를 대체).
+  - `CountKpiSpec = { label; icon; color; column?; value? }` — `column+value`면 그 값과 일치하는 행 수, 없으면 전체 건수(`filtered` 파생).
+  - 표준 팔레트: `layers`/`var(--primary)`(전체 건수) · `check-circle`/`var(--success)` · `wallet`/`var(--accent)`(도메인 2지표).
+  - **금액·변동률 개념이 없는 엔티티**(공고 등)는 `hideMetrics: true`로 제네릭 금액 KPI(평균 변동률·합계 금액)와 카드뷰 금액/상태를 끄고 `countKpis`만 남긴다.
+- 정본: `subfund_manage.tsx`(typed, 하드코딩 KpiBadge) · `schemas/자펀드_공고_정보관리.ts`(countKpis).
+
 ## 리스트 vs 매트릭스 — 어떤 children인가
 - **리스트**(항목 CRUD): 단일 헤더 + 체크박스 + 행 액션. 툴바=필터칩/선택, 푸터=건수+페이지네이션+뷰토글. 스키마 주도면 `generic_list.tsx`/PageSchema 트랙.
 - **매트릭스/집계**(조회전용): 2단 중첩헤더(`colSpan`/`rowSpan`)+합계행. 체크박스·CRUD·페이지네이션 없음. 툴바=컨텍스트 설명+새로고침, 푸터=건수. 캡처가 중첩헤더면 `apfs-capture-schema` SOP가 이쪽으로 escalate한다.
