@@ -46,18 +46,23 @@ const allSubGroupsExpanded = () => {
 };
 
 /* 현재 route의 조상 그룹(대분류 m.id + 중분류 m.id:sN)을 펼침 맵으로 — 현재 페이지 메뉴 자동 오픈용.
-   route = 리프의 path||label(NFC). 인덱스는 allSubGroupsExpanded/MenuChildren의 c.map 인덱스와 일치. */
+   route = 리프의 path||label(NFC). 인덱스는 allSubGroupsExpanded/MenuChildren의 c.map 인덱스와 일치.
+   ⚠ path 없는 중복 라벨(예: '사용자관리'가 asset·report 양쪽)은 route(=bare label)만으론 부모 구분 불가 →
+   **첫 상위그룹 매치에서 중단**한다. 안 그러면 두 그룹이 동시에 열리고 aria-current가 두 곳에 켜진다(ultrareview). */
 const ancestorsOf = (route) => {
   const map: Record<string, boolean> = {};
   if (!route) return map;
-  D.MENU.forEach((m) => {
-    if (!m.children) return;
+  for (const m of D.MENU) {
+    if (!m.children) continue;
+    let hit = false;
     m.children.forEach((c, i) => {
+      if (hit) return;
       if (c.sub && c.children) {
-        if (c.children.some((leaf) => (leaf.path || leaf.label) === route)) { map[m.id] = true; map[m.id + ":s" + i] = true; }
-      } else if ((c.path || c.label) === route) { map[m.id] = true; }
+        if (c.children.some((leaf) => (leaf.path || leaf.label) === route)) { map[m.id] = true; map[m.id + ":s" + i] = true; hit = true; }
+      } else if ((c.path || c.label) === route) { map[m.id] = true; hit = true; }
     });
-  });
+    if (hit) break;
+  }
   return map;
 };
 
@@ -179,7 +184,14 @@ function LnbFlyItem({ m, count, isActive, route, expanded, setExpanded, onNav })
    route/펼침 변경 시 활성 리프를 scrollIntoView(block:nearest)로 보이게 한다(자동 오픈 후 뷰포트 밖일 때, 창 스크롤은 고정). */
 function LnbTree({ menu, open, route, expanded, setExpanded, onNav }) {
   const ref = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => { const el = ref.current?.querySelector('[aria-current="page"]'); if (el) (el as HTMLElement).scrollIntoView({ block: "nearest" }); }, [route, expanded]);
+  const lastScrolled = useRef<string | null>(null);
+  // route가 실제로 바뀔 때만 활성 리프로 스크롤한다. deps에 expanded를 두는 건 자동 오픈 후 리프가 늦게 렌더돼도
+  // 잡기 위함이지, 수동 챙비론 토글마다 스크롤을 튀게 하려는 게 아니다(ultrareview) — lastScrolled로 route 변경만 통과.
+  useLayoutEffect(() => {
+    if (lastScrolled.current === route) return;
+    const el = ref.current?.querySelector('[aria-current="page"]');
+    if (el) { (el as HTMLElement).scrollIntoView({ block: "nearest" }); lastScrolled.current = route; }
+  }, [route, expanded]);
   return (
     <div
       ref={ref}
@@ -222,7 +234,8 @@ function Lnb({ open, route, onNav, mobile, drawerOpen }) {
   const collapsed = !open && !mobile;
   const navTo = (r) => { onNav(r); setNavValue(""); };
   // 현재 페이지 메뉴 자동 오픈 — route 변경 시 조상 그룹만 편다(수동으로 접은 다른 그룹은 건드리지 않음: 병합만).
-  useLayoutEffect(() => { const a = ancestorsOf(route); if (Object.keys(a).length) setExpanded((e) => ({ ...e, ...a })); }, [route]);
+  // 조상 중 아직 안 열린 게 있을 때만 새 객체를 방출 — 전부 열려 있으면 같은 참조를 반환해 불필요한 재렌더·2중 scroll 방지(ultrareview).
+  useLayoutEffect(() => { const a = ancestorsOf(route); setExpanded((e) => (Object.keys(a).some((k) => !e[k]) ? { ...e, ...a } : e)); }, [route]);
   const posStyle: React.CSSProperties = mobile
     ? { position: "fixed", top: 58, left: 0, width: 270, height: "calc(100vh - 58px)", zIndex: 45,
         transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
