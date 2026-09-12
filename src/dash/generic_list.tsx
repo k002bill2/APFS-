@@ -22,7 +22,7 @@ import { DatePicker } from './ui/date-picker';
 import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode, CellContextMenuEvent, CellKeyDownEvent } from 'ag-grid-community';
-import { apfsTheme, AUTO_SIZE_CONTENT } from './aggrid_theme';   // 공유 테마(회색 행선택)·내용폭 자동화 SSOT
+import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 행선택)·내용폭 자동화 SSOT
 import './aggrid_shared.css';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
@@ -697,7 +697,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               domLayout="autoHeight"
               autoSizeStrategy={AUTO_SIZE_CONTENT}   // 컬럼 폭=내용 폭(첫 렌더 1회). columnDefs flex 제거가 전제. 골드 subfund_manage와 동일
               rowHeight={44}
-              defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
+              defaultColDef={DEFAULT_COL_DEF}
               rowSelection={{ mode: "multiRow", checkboxes: true, headerCheckbox: true }}
               pagination
               paginationPageSize={pageSize}

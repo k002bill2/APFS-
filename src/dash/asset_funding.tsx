@@ -15,7 +15,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { GridFrame, KpiBadge } from './grid_frame';
-import { apfsTheme, fmt, numFmt, numStyle } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT. 그리드폭 채움은 컬럼 flex(numCol)
+import { apfsTheme, fmt, numFmt, numStyle, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT. 그리드폭 채움은 컬럼 flex(numCol)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, CellContextMenuEvent, ValueFormatterParams } from 'ag-grid-community';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
@@ -323,7 +323,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
           context={{ unit }}   // 금액 셀 포매터(moneyFmt)가 참조. 단위 변경 시 useEffect가 refreshCells로 재적용
           pinnedBottomRowData={PINNED_BOTTOM}
           domLayout="autoHeight"
-          defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
+          defaultColDef={DEFAULT_COL_DEF}
           rowSelection={{ mode: 'multiRow', checkboxes: false, headerCheckbox: false }}   // 체크박스 열 제거(행 클릭으로 선택 유지→선택삭제 보존)
           pagination
           paginationPageSize={pageSize}
