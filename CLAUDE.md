@@ -94,11 +94,11 @@ APFS/
 
 | Agent | model | 역할 |
 |-------|-------|------|
-| `primary-coordinator` | opus-4.8 | 태스크 분해·배분·검증·통합, 사용자 소통, 안전 강제 |
-| `code-explorer` | sonnet-4.6 | 코드베이스 탐색·분석 (읽기 전용) |
-| `code-reviewer` | sonnet-4.6 | 보안·성능·가독성·아키텍처 리뷰, Cross-Agent 검증 |
-| `verify-agent` | sonnet-4.6 | Fresh-context 독립 빌드/실행/무결성 검증 |
-| `code-architect` | opus-4.8 | 구현 전 설계 검토·의존성/리스크 분석 (읽기 전용) |
+| `primary-coordinator` | opus | 태스크 분해·배분·검증·통합, 사용자 소통, 안전 강제 |
+| `code-explorer` | sonnet | 코드베이스 탐색·분석 (읽기 전용) |
+| `code-reviewer` | sonnet | 보안·성능·가독성·아키텍처 리뷰, Cross-Agent 검증 |
+| `verify-agent` | sonnet | Fresh-context 독립 빌드/실행/무결성 검증 |
+| `code-architect` | opus | 구현 전 설계 검토·의존성/리스크 분석 (읽기 전용) |
 
 ## 핵심 안전 원칙 (항상 적용)
 - **Data Integrity 우선** — 데이터 손상/유실/노출 금지.
@@ -115,7 +115,7 @@ APFS/
 ## Skills (자동 활성화)
 - `UserPromptSubmit` hook(`.claude/hooks/skill-activator.sh`)이 프롬프트를 stdin JSON으로 받아 `.claude/hooks/skill-rules.json`의 키워드와 매칭, 관련 스킬을 컨텍스트로 추천.
 - `PreCompact` hook(`.claude/hooks/pre-compact-reminder.sh`)이 컨텍스트 컴팩트 직전 dev-docs 저장 등 리마인더를 출력. (두 훅 모두 `settings.json`의 `hooks` 블록에 등록됨.)
-- 프로젝트 스킬: `code-reviewer`(리뷰) · `dashboard-ui`(UI/디자인) · `responsive-ui`(반응형 — 페이지/위젯/모달/테이블 작성·수정 시 누락 방지 체크리스트+검증) · `apfs-bundle`(레거시 오프라인 번들 전용 — 현 Vite 구조엔 불필요).
+- **프로젝트 스킬 목록은 여기에 두지 않는다** — 실물이 정본이다: `.claude/skills/`(디렉토리명 = 스킬명), 트리거 규칙은 `.claude/hooks/skill-rules.json`. 목록을 문서에 열거하면 스킬이 늘 때마다 낡는다(2026-09-12 감사: 4개만 적혀 있어 13개 누락 확인). 현재 어떤 스킬이 있는지는 `ls .claude/skills`로 본다.
 - 새 스킬 추가 시 `skill-rules.json`의 트리거도 함께 갱신.
 
 ## Dev Docs 워크플로우

@@ -1,7 +1,7 @@
 ---
 name: primary-coordinator
 description: 멀티에이전트 작업의 조정자(Primary). 복잡한 태스크를 분해해 서브에이전트에 배분하고, 결과를 검증·통합하며, 윤리/안전 제약을 강제한다. 여러 단계·여러 에이전트가 필요한 작업, "오케스트레이션/조정/병렬"이 필요할 때 사용. Use to decompose and coordinate multi-step, multi-agent work.
-model: claude-opus-4-8
+model: opus
 tools: Read, Write, Edit, Grep, Glob, Bash, Task, TodoWrite
 ---
 
