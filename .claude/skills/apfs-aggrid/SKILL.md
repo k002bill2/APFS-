@@ -54,6 +54,32 @@ const columnDefs: (ColDef<Row> | ColGroupDef<Row>)[] = [
 - **첫 열 고정**: 구분/연도 등 행 식별 열은 `pinned: 'left'`.
 - **숫자 셀**: `valueFormatter: numFmt`(마스킹·콤마·소수 내장 — 공유 `fmt`는 정수=콤마/비정수=소수1자리, **자체 포매터 재구현 금지**), `cellStyle: numStyle(strong)`, `type: 'rightAligned'`. ⚠️ `numStyle(strong)`은 **셀마다 호출되는 함수를 반환**한다(정적 스타일 객체 아님) — 0=muted·pinned/strong=bold·tabular-nums 자동.
 
+### 헤더에 ⚠검토필요 마커 달기 (2026-09-12 `occasional_report_manage`에서 정립)
+규약 정본은 [[apfs-grid]]("검토필요 마커") — 여기엔 **AG Grid 배선 함정**만 둔다.
+```tsx
+import { reviewInnerHeader } from './review_marker';
+// 모듈 스코프에서 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid 가 헤더를 통째로 remount 한다.
+// 원문 문구가 역할별로 다르면(S1_04: 심사담당/리스크담당) 하나로 합치지 말고 갈라 만든다.
+const CONFIRM_HEADER: Record<Role, ReturnType<typeof reviewInnerHeader>> = {
+  js: reviewInnerHeader(CONFIRM_NOTE('js')), rs: reviewInnerHeader(CONFIRM_NOTE('rs')),
+};
+{ field: 'jsBy', headerName: '심사담당', width: 146, maxWidth: 146, sortable: true,
+  headerComponentParams: { innerHeaderComponent: CONFIRM_HEADER[role] },      // headerName 은 그대로 SSOT(params.displayName)
+  suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab' }                 // 키보드 도달용
+```
+- **`headerComponent`가 아니라 `headerComponentParams.innerHeaderComponent`** — 전자로 갈아끼우면 정렬 화살표·메뉴를 직접 다시 만들어야 한다.
+- 📌 "React 위임 핸들러는 AG Grid 네이티브 리스너보다 늦어 정렬이 걸린다"는 지적이 Codex 리뷰에서 반복해 나오지만,
+  **실측으로는 재현되지 않는다**(2026-09-12, 클릭 3연타·Enter·Space 각각에서 `aria-sort='none'` 유지, 정렬된 헤더 0개,
+  행 순서 문자열 동일). 다시 지적받으면 코드를 고치기 전에 같은 계측(행 순서 before/after)을 먼저 돌릴 것.
+- ⚠️ 마커 클릭이 헤더로 버블링되면 **정렬이 걸린다** → 트리거 버튼에서 `click`·`pointerdown`·`mousedown`을 `stopPropagation`(`ReviewMarker`에 내장). 헤더 라벨 클릭 정렬은 그대로 살아 있어야 한다(둘 다 실측할 것).
+- ⚠️ **Tab이 마커에 닿지 않는다** — AG Grid가 Tab을 가로채 다음 헤더 셀로 옮긴다(2026-09-12 실측). `suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab'`로 브라우저 기본 순서에 돌려주면 헤더 → 마커 → 다음 마커 → 그리드 본문 순으로 흐른다.
+- ⚠️ 마커를 단 컬럼은 헤더가 길어진다 — `width`/`maxWidth`가 같은 값으로 고정된 컬럼이면 **둘 다** 올린다(124→146). 남는 폭 흡수 컬럼(`maxWidth` 없는 컬럼)이 여전히 잉여를 먹는지 확인.
+- ⚠️ **마스크 ON이면 헤더 스켈레톤 바가 마커를 덮는다** — `aggrid_shared.css`가 `:root[data-mask=on] .ag-header-cell-text::after`로
+  텍스트 노드 전폭에 절대배치 바를 그리는데, innerHeader 마커도 그 안에 산다. 마커는 데이터가 아니라 항상 보여야 하므로
+  트리거에 `position:relative; z-index:1`(`ReviewMarker`에 내장). 검증은 `mask.tsx`의 `_on=true`로 실제 토글해 볼 것 —
+  DOM에서 `data-mask` 속성만 바꾸면 규칙이 잡히지 않아 오탐이 난다(2026-09-12 실측).
+- AG Grid의 React 커스텀 헤더는 **첫 페인트보다 늦게 붙는다** — 로드 직후 스냅샷하면 헤더 텍스트가 빈 문자열로 보인다(2026-09-12 오탐). 검증 스크립트는 2초 이상 대기 후 질의.
+
 ## 그리드 본체 (정본 props)
 ```tsx
 <AgGridReact<Row>

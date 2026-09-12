@@ -7,7 +7,9 @@
    - 심사단계 워크플로우   → 행(라디오) 선택 시 툴바 좌에 단계별 컨텍스트 액션 → 단계 전이(공고관리 패턴)
    - 편집 팝업 3종         → 제안서접수/선정조합 = RowFormModal(스키마), 결성조합 수정 = 섹션형 전용 모달
    - 엑셀                  → SheetJS(2단 헤더 병합 자동 산출, 마스크 시 실값 비노출)
-   목업의 GNB/LNB 토글·출처시스템 메뉴·⚠검토필요 마커·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
+   목업의 GNB/LNB 토글·출처시스템 메뉴·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
+   ⚠검토필요 마커는 **이식한다**(2026-09-12 사용자 지시) — 목업이 남긴 두 건(심사담당자·리스크담당자 옵션)을
+   상세필터 라벨 옆에 그대로 싣는다. 공용 `review_marker.tsx`, 규약은 apfs-grid 스킬.
 
    apfs-manage-page · apfs-stage-workflow 스킬의 골드 레퍼런스. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
@@ -32,7 +34,9 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { RowFormModal } from './generic_list_modal';
 import { SubFundFormEditModal } from './subfund_form_modal';   // 결성조합 수정 — 섹션형 전용 모달
 import { APPLY_SCHEMA, SELECT_SCHEMA, OPT_AG, OPT_FG, OPT_FS, OPT_MANAGER, OPT_MF, CUR_YEAR } from './subfund_manage_schemas';
-import { PeriodPicker } from './ui/period-picker';   // 연도/일자 선택 표준(apfs-datepicker)
+import { PeriodPicker } from './ui/period-picker';
+import { ReviewMarker } from './review_marker';
+import type { ReviewNote } from './review_marker';   // 연도/일자 선택 표준(apfs-datepicker)
 
 const { Button, IconBtn, StatusBadge, FilterChip, ColorChip } = UI;
 
@@ -163,12 +167,17 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 /* 드로어 필드 래퍼 — 라벨 + 컨트롤. noop=컬럼 미연동 필터(캡션으로 no-op 신호, apfs-detail-filter 규약) */
 /* plain=true → <label> 대신 <div>: PeriodPicker/DatePicker 트리거는 <button>이라 <label> 암묵 연결이 안 되고(ariaLabel로 명명),
    <label> 안 버튼 클릭이 라벨 활성화와 겹쳐 2회 토글되는 것을 막는다 */
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+/* 상세필터 ⚠검토필요 메모 — 목업(`자펀드관리_목업.html` 258·259행) `data-rec`/`data-dat` 원문 그대로.
+   설계 메모라 마스킹·엑셀 대상이 아니다. */
+const NOTE_JS: ReviewNote = { rec: '양한솔·이성훈 (구조도 엑셀 예시)', dat: '자펀드관리 팝업 예시값 — 전체 담당자 마스터 연동 필요' };
+const NOTE_RS: ReviewNote = { rec: '리스크담당자 목록(공통코드/사용자)', dat: '실 담당자 옵션값 미확인 — 없는 값 생성 안 함' };
+
+function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -582,8 +591,8 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
             {/* PeriodPicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW) 적용 — 형제 DatePicker 소비처(renderers·generic_list)와 동일 */}
             <DrawerField label="사업연도" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('year'), maxWidth: '100%' }}><PeriodPicker mode="year" value={fYear} onChange={setFYear} ariaLabel="사업연도" yearRange={[2000, CUR_YEAR + 1]} /></div></DrawerField>
             <DrawerField label="정기/수시"><DrawerSelect value={fRt} onChange={setFRt} options={['정기', '수시']} /></DrawerField>
-            <DrawerField label="심사담당자" noop><DrawerSelect value={fManager} onChange={setFManager} options={OPT_MANAGER} /></DrawerField>
-            <DrawerField label="리스크담당자" noop><DrawerSelect value={fRisk} onChange={setFRisk} options={OPT_MANAGER} /></DrawerField>
+            <DrawerField label="심사담당자" noop note={NOTE_JS}><DrawerSelect value={fManager} onChange={setFManager} options={OPT_MANAGER} /></DrawerField>
+            <DrawerField label="리스크담당자" noop note={NOTE_RS}><DrawerSelect value={fRisk} onChange={setFRisk} options={OPT_MANAGER} /></DrawerField>
             <DrawerField label="심사단계"><DrawerSelect value={fStage} onChange={(v) => setFStage(v as '' | Stage)} options={STAGES} /></DrawerField>
             <DrawerField label="조합상태"><DrawerSelect value={fSt} onChange={setFSt} options={OPT_FS} /></DrawerField>
             <DrawerField label="기준일자" noop plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" /></div></DrawerField>

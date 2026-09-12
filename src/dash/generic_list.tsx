@@ -9,7 +9,7 @@ import { mn, MT, useMask } from './mask';
 import { RowFormModal, statusTone } from './generic_list_modal';
 import type { Row } from './generic_list_modal';
 import { resolveSchema } from './schemas';
-import { Cell, controlMinWidth } from './schemas/renderers';   // controlMinWidth = 컨트롤 폭 하한 SSOT(fit-content 짝)
+import { Cell, AttachChips, controlMinWidth } from './schemas/renderers';   // controlMinWidth = 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { resolveFilterField, YEAR_OPTIONS } from './schemas/filter_field';
 import type { FilterField } from './schemas/filter_field';
 import type { PageSchema } from './schemas/types';
@@ -119,6 +119,12 @@ function makeRows(schema: PageSchema, n: number): Row[] {
     return { ...base, ...extra } as Row;
   });
 }
+
+/* 행 선택(체크박스) 옵션 — **모듈 상수로 호이스팅**(apfs-aggrid 규약 ⑦).
+   인라인 리터럴로 두면 렌더마다 새 객체가 되어 AG Grid가 컬럼을 재생성하고 폭을 선언값으로 되돌린다
+   (aggrid_theme.ts DEFAULT_COL_DEF 주석의 실측 사례와 동일 원인).
+   schema.hideRowSelection이면 이 prop 자체를 undefined로 넘겨 선택 컬럼을 없앤다(체크 해제가 아니라 컬럼 제거). */
+const ROW_SELECTION = { mode: "multiRow", checkboxes: true, headerCheckbox: true } as const;
 
 let SEQ = 500;
 const nextId = () => "R" + (++SEQ);
@@ -508,7 +514,18 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         ...(stretch ? { flex: 1, minWidth: 200, suppressAutoSize: true } : { minWidth: 110, maxWidth: 240 }),   // stretch면 잔여폭 흡수, 아니면 긴 텍스트 상한 캡
         type: right ? "rightAligned" : undefined,
         cellStyle: { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any, ...(right ? { justifyContent: "flex-end" } : {}) },
-        cellRenderer: (p: ICellRendererParams<Row>) => <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} />,
+        // attachFrom 컬럼(제목 등)은 값 뒤에 첨부 확장자 칩을 덧붙인다 — 첨부 전용 컬럼을 만들지 않는 표현 규약.
+        // 값(텍스트)은 min-w-0 + ellipsis로 줄고, 칩은 shrink-0이라 긴 제목에도 살아남는다.
+        cellRenderer: c.attachFrom
+          ? (p: ICellRendererParams<Row>) => (
+              <span className="inline-flex items-center gap-2 min-w-0 max-w-full">
+                <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                  <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} />
+                </span>
+                <AttachChips value={(p.data as Record<string, unknown> | undefined)?.[c.attachFrom!]} />
+              </span>
+            )
+          : (p: ICellRendererParams<Row>) => <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} />,
       };
     });
     // '관리' 액션 컬럼 제거(2026-09-11) — 행 더블클릭(onRowDoubleClicked)이 수정 모달을 열어 기능 대체.
@@ -686,7 +703,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
         {/* 테이블 / 상세 뷰 (GridFrame children) */}
         {view === "list" ? (
-          /* AG Grid 본체 — 스키마 주도 컬럼 + 체크박스 선택 + 페이지네이션 + external filter.
+          /* AG Grid 본체 — 스키마 주도 컬럼 + 체크박스 선택(hideRowSelection이면 없음) + 페이지네이션 + external filter.
              더블클릭=수정 모달(editable 한정). 행선택 배경은 공유 테마의 --row-selected(회색). */
           <div>
             <AgGridReact<Row>
@@ -698,7 +715,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               autoSizeStrategy={AUTO_SIZE_CONTENT}   // 컬럼 폭=내용 폭(첫 렌더 1회). columnDefs flex 제거가 전제. 골드 subfund_manage와 동일
               rowHeight={44}
               defaultColDef={DEFAULT_COL_DEF}
-              rowSelection={{ mode: "multiRow", checkboxes: true, headerCheckbox: true }}
+              rowSelection={schema.hideRowSelection ? undefined : ROW_SELECTION}
               pagination
               paginationPageSize={pageSize}
               paginationPageSizeSelector={false}

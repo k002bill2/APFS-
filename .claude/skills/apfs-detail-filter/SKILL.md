@@ -76,4 +76,8 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 3. 라이트/다크 대비 + [[responsive-ui]] 체크(드로어 92vw, 페이지 가로스크롤 없음).
 
 ## 참조
+- 원문 미정의 항목 라벨에 다는 검토필요 마커(ⓘ): 페이지별 로컬 `DrawerField`에 `note?: ReviewNote` prop을 더해
+  라벨 `<span>` 안에 `<ReviewMarker {...note} label={label} />`를 렌더한다. 실증 3화면(수시보고 3건·투자심의 3건·자펀드관리 2건),
+  문구는 목업 원문 전수 이식. 규약·함정(트리거가 span 인 이유, hover·포커스 규칙)은 [[apfs-grid]] "검토필요 마커" 절.
+
 - 페이지 골격/툴바 슬롯: [[apfs-grid]] · UI 토큰: [[dashboard-ui]] · 반응형: [[responsive-ui]] · 필터 라벨 출처: [[apfs-capture-schema]]

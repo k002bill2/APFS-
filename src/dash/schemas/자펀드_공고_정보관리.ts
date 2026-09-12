@@ -12,7 +12,8 @@ export const schema: PageSchema = {
     { key: 'periodType', label: '정기/수시',  type: 'text',   align: 'center' },
     { key: 'seqNo',      label: '차수',       type: 'number', align: 'center' },
     { key: 'fundAccount',label: '계정구분',   type: 'text',   align: 'center' },
-    { key: 'title',      label: '제목',       type: 'text',   align: 'left' },
+    // 첨부파일은 별도 컬럼을 만들지 않고 제목 뒤 확장자 칩(PDF 등)으로 표현(2026-09-12 사용자 결정).
+    { key: 'title',      label: '제목',       type: 'text',   align: 'left', attachFrom: 'attachment' },
   ],
   fields: [
     // 다중모펀드 옵션 ON 가정(목업) → 읽기전용에서 선택형으로 전환
@@ -35,6 +36,9 @@ export const schema: PageSchema = {
   hideKpis: true,
   // 카드뷰 미사용(2026-09-11 사용자 결정) — 푸터 리스트/카드뷰 SegTabs를 숨기고 리스트 뷰 고정.
   hideCardView: true,
+  // 행 선택 체크박스 제거(2026-09-12 사용자 결정) — 다건 선택/선택삭제가 없는 단건 CRUD 화면.
+  // 수정은 행 더블클릭·Enter, 삭제는 우클릭 메뉴/수정 모달로 유지.
+  hideRowSelection: true,
   // 목업 하단 DATA[] — 실제 계획공고 4건(합성 더미 대신 그대로 노출). moeFund 채워 수정 시 빈 값 방지
   sample: [
     { moeFund: '농식품모태펀드', bizYear: '2026', periodType: '정기', seqNo: 1, fundAccount: '농식품', title: '농림수산식품모태펀드 2026년 정기 출자사업(농식품 계정) 계획 공고', attachment: "260202(붙임) '26년 정기 출자사업(농식품투자 계정) 계획 공고_홈페이지.pdf" },

@@ -1,6 +1,8 @@
 import React from 'react';
 import { UI } from '../components';
-import { mn, MT } from '../mask';
+import { mn, MT, useMask } from '../mask';
+import { parseFileNames, fileExtLabel } from '../fields/file_names';   // 첨부 CSV 계약 파서(DocumentsField와 SSOT 공유)
+import { glyphFor } from '../ui/attachment';   // 확장자 → 아이콘·색 매핑(모달 첨부목록과 SSOT 공유)
 import { DatePicker } from '../ui/date-picker';
 import { Icon } from '../icons';
 import { renderKind } from './dispatch';
@@ -19,6 +21,37 @@ const TagsField = React.lazy(() => import('../fields/TagsField').then((m) => ({ 
 // status tone을 스키마의 statusDomain에서 해결(모달 의존 제거 → 순환 차단).
 function toneFor(label: string, domain?: StatusDomainEntry[]): Tone {
   return domain?.find((d) => d.label === label)?.tone ?? 'info';
+}
+
+/* 첨부파일 칩 — 리스트 셀 값 뒤에 붙는 확장자 배지(ColumnSpec.attachFrom). 첨부 컬럼을 따로 만들지 않고
+   제목 뒤에 "· PDF"처럼 덧붙이는 표현. 값 계약은 filepond와 동일한 CSV("a.pdf, b.xlsx").
+   마스크 경계: 확장자는 **유형 표식**(StatusBadge·단위와 동류)이라 가리지 않는다. 반면 파일명은 데이터이므로
+   마스크 ON에서는 tooltip(title)을 떼어 평문 누출을 막는다(마스크 경계 = 엑셀·파일명·툴팁까지). */
+export function AttachChips({ value, max = 3 }: { value?: unknown; max?: number }) {
+  const masked = useMask();
+  const names = parseFileNames(typeof value === 'string' ? value : '');
+  if (names.length === 0) return null;
+  const shown = names.slice(0, max);
+  return (
+    // shrink-0: 제목 셀은 flex 컨테이너(잔여폭 흡수)라 이게 없으면 긴 제목이 칩을 먼저 찌그러뜨린다.
+    <span className="inline-flex items-center gap-1 shrink-0" title={masked ? undefined : names.join(', ')}>
+      {shown.map((n, i) => {
+        // 아이콘·색은 파일 종류 신호(pdf=빨강·xlsx=초록…), 라벨은 회색 유지 — 칩이 상태 배지처럼 읽히지 않게.
+        const { Icon: FileGlyph, cls } = glyphFor(n);
+        return (
+          <span key={n + i} className="inline-flex items-center gap-1 whitespace-nowrap rounded-[6px] border border-border bg-muted px-[6px] py-px text-[11px] font-bold leading-4 text-muted-foreground">
+            {/* 색만으로 종류를 전달하지 않는다 — 옆 확장자 텍스트가 같은 정보를 문자로 준다(아이콘은 장식) */}
+            <FileGlyph aria-hidden className={`size-3.5 shrink-0 ${cls}`} />
+            {/* 칩 텍스트가 'PDF'뿐이라 무엇의 PDF인지 알 수 없다 → 접근名을 앞에 숨겨 붙인다 */}
+            <span className="sr-only">첨부파일 </span>{fileExtLabel(n)}
+          </span>
+        );
+      })}
+      {names.length > shown.length && (
+        <span className="text-[11px] font-semibold text-muted-foreground">+{names.length - shown.length}</span>
+      )}
+    </span>
+  );
 }
 
 export function Cell({ col, value, color, statusDomain }: { col: ColumnSpec; value: any; color?: string; statusDomain?: StatusDomainEntry[] }) {
