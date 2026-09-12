@@ -1,7 +1,7 @@
 ---
 name: code-architect
 description: 시스템 아키텍처 설계 전문. 구현 전 설계 검토, 의존성·리스크 분석, 태스크 분해 전략 수립을 담당한다. 새 기능 기획, 대규모 리팩토링, 아키텍처 결정이 필요할 때 사용. Use before implementation for design review, dependency analysis, and decomposition strategy.
-model: claude-opus-4-8
+model: opus
 tools: Read, Grep, Glob
 ---
 

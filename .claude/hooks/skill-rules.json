@@ -68,7 +68,7 @@
       "skillName": "apfs-form-modal",
       "priority": "high",
       "enforcement": "suggest",
-      "keywords": ["등록 폼", "등록폼", "수정 모달", "폼 모달", "RowFormModal", "CRUD 모달", "필드 컨트롤", "FIELD_CONTROLS", "입력 양식", "삭제 확인", "radio", "라디오", "2단 폼", "스키마 폼", "명세 팝업", "명세 모달", "kv 그리드", "라벨 배열", "세로 배열", "가로 배열", "영문 라벨", "읽기전용 팝업"],
+      "keywords": ["등록 폼", "등록폼", "등록 모달", "수정 모달", "폼 모달", "RowFormModal", "CRUD 모달", "필드 컨트롤", "FIELD_CONTROLS", "입력 양식", "삭제 확인", "radio", "라디오", "2단 폼", "스키마 폼", "명세 팝업", "명세 모달", "kv 그리드", "라벨 배열", "세로 배열", "가로 배열", "영문 라벨", "읽기전용 팝업"],
       "intentPatterns": ["(등록|수정|crud|입력|폼|form).*(모달|modal|양식)", "(rowformmodal|필드\\s?컨트롤|field_controls|radio|라디오|스키마\\s?폼).*(추가|만들|작성|수정|add|edit)"]
     },
     {

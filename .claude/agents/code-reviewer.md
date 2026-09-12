@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: 코드 리뷰 전문(보안·성능·가독성·아키텍처). 코드 작성/수정 직후, PR 전, 병합 전에 사용한다. Cross-Agent Verification 역할을 수행하며 Critical 이슈에는 Ethical Veto를 발동한다. Use immediately after writing or modifying code, and before merging.
-model: claude-sonnet-4-6
+model: sonnet
 tools: Read, Grep, Glob, Bash
 ---
 

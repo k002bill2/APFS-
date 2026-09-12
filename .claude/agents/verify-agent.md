@@ -1,7 +1,7 @@
 ---
 name: verify-agent
 description: Fresh-context 독립 검증 전문. 구현 후 별도 컨텍스트에서 빌드/실행/무결성을 독립적으로 확인해 확인 편향(confirmation bias)을 제거한다. 검증이 필요할 때, "정말 동작하는지" 확인이 필요할 때 사용. Use to independently verify that work actually works, in a fresh context.
-model: claude-sonnet-4-6
+model: sonnet
 tools: Read, Grep, Glob, Bash
 ---
 

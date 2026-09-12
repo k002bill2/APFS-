@@ -1,7 +1,7 @@
 ---
 name: code-explorer
 description: 코드베이스 탐색·분석 전용(읽기 전용). 파일 구조, 심볼 위치, 데이터 흐름, 컨벤션을 빠르게 파악해 보고한다. 파일을 수정하지 않는다. 무엇이 어디 있는지/어떻게 동작하는지 파악이 필요할 때 사용. Use for read-only codebase exploration and analysis.
-model: claude-sonnet-4-6
+model: sonnet
 tools: Read, Grep, Glob, Bash
 ---
 
