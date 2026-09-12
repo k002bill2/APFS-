@@ -110,11 +110,11 @@ const MENU = [
     { label:"사후보고관리", sub:true, children:[
       { label:"투자심의 관리", path:"investment-review" },
       { label:"수시보고", path:"occasional-report" },
-      { label:"정기보고" },
-      { label:"조합원총회" },
-      { label:"조합예상자금 정보보고" },
-      { label:"보고양식관리" },
-      { label:"보고 업데이트정보" },
+      { label:"정기보고", path:"regular-report" },
+      { label:"조합원총회", path:"general-meeting" },
+      { label:"조합예상자금 정보보고", path:"fund-cash-forecast" },
+      { label:"보고양식관리", path:"report-form" },
+      { label:"보고 업데이트정보", path:"report-update-info" },
     ]},
     { label:"자펀드 관리", sub:true, children:[
       { label:"자펀드 관리", path:"subfund" },
