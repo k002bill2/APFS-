@@ -21,7 +21,18 @@ description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규
    - **가변 행(삭제·추가로 합계 재계산 필요)** → `const pinned = useMemo(() => [computeTotal(rows)], [rows]);` — 렌더 간 참조 안정 + 데이터 변할 때만 새 배열.
    - ⚠️ 골드 예시 `asset_funding.tsx`는 삭제/등록을 지원하면서도 `PINNED_BOTTOM=[TOTAL_ROW]`(하드코딩 합계)를 쓴다 → **행 변경 후 합계가 stale**(프로토타입 더미라 미수정). 실데이터·가변 행이면 반드시 `useMemo` 재계산 쪽을 따를 것.
 5. **합계행 버그 보정 CSS.** `import './aggrid_shared.css'` 필수 — 안 하면 floating(합계)행이 `opacity:0` stuck으로 **안 보인다**(`!important`라 getRowStyle로 못 고침, CSS로만). 합계행 강조 틴트도 여기서 공유.
-6. **가로 스크롤은 children 책임이지만 AG Grid는 내부 스크롤을 가진다.** `domLayout="autoHeight"`를 쓰면 세로는 콘텐츠에 맞고 가로는 AG Grid 자체 뷰포트가 스크롤한다. 수제 `<table>`을 쓸 때만 `overflow-x-auto`+`min-width` 래퍼가 필요(→[[apfs-grid]] 계약1). 토큰만 사용(하드코딩 hex 금지, →[[color-tokens]]).
+6. **객체 prop은 전부 참조가 안정해야 한다 — 인라인 `{{…}}` 금지. 특히 `defaultColDef`·`autoSizeStrategy`.**
+   인라인 리터럴은 렌더마다 새 객체가 되고, AG Grid는 그때 컬럼을 재생성하면서 폭을 **`colDef.width`(선언 폭)로 되돌린다.**
+   `autoSizeStrategy`는 **최초 렌더 1회만** 적용되므로 한 번 되돌아가면 **복구되지 않는다.**
+   - 증상: 상태가 바뀌는 **아무 클릭**(필터 칩·셀 버튼·모달 개폐)에서 컬럼이 갑자기 좁아지고 우측에 빈 여백이 생긴다.
+     모달과 무관하다 — 오버레이 없는 필터 칩만으로도 재현된다(스크롤바 보정 가설은 실측으로 기각: 뷰포트 폭은 그대로).
+   - 실측(2026-09-12): 수시보고 컨테이너 `1513→1232px`(제목 465→330), 자펀드관리 합계폭 `1831→1788`(fn 279→240, no 80→68).
+   - 정본: **`aggrid_theme.ts`의 공용 상수** `DEFAULT_COL_DEF` · `AUTO_SIZE_CONTENT` · `FIT_GRID_WIDTH`를 import해 쓴다.
+     페이지 고유 객체(`rowSelection`·`selectionColumnDef`)는 **모듈 스코프 상수로 호이스팅**한다.
+   - `columnDefs`가 클로저를 캡처해야 하면(셀 버튼이 setState 호출 등) `useMemo(() => makeColumns(setX), [])` —
+     `useState` 세터는 안정하므로 deps `[]`가 성립한다. **`columnDefs`만 고정하고 `defaultColDef`를 인라인으로 두면 소용없다.**
+   - 검증: 폭을 재고 → 필터 칩 클릭 → 다시 재서 **같은 값**인지 확인(빌드 green으로는 절대 안 잡힌다).
+7. **가로 스크롤은 children 책임이지만 AG Grid는 내부 스크롤을 가진다.** `domLayout="autoHeight"`를 쓰면 세로는 콘텐츠에 맞고 가로는 AG Grid 자체 뷰포트가 스크롤한다. 수제 `<table>`을 쓸 때만 `overflow-x-auto`+`min-width` 래퍼가 필요(→[[apfs-grid]] 계약1). 토큰만 사용(하드코딩 hex 금지, →[[color-tokens]]).
 
 ## 컬럼 정의 (정본 패턴)
 ```tsx
@@ -50,8 +61,9 @@ const columnDefs: (ColDef<Row> | ColGroupDef<Row>)[] = [
   rowData={rows} columnDefs={columnDefs}
   pinnedBottomRowData={PINNED_BOTTOM}        // ④ 모듈 상수
   domLayout="autoHeight"
-  defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
-  rowSelection={{ mode: 'multiRow', checkboxes: true, headerCheckbox: true }}
+  autoSizeStrategy={AUTO_SIZE_CONTENT}       // ⑦ 공용 상수 (FIT_GRID_WIDTH도 동일 — 인라인 리터럴 금지)
+  defaultColDef={DEFAULT_COL_DEF}            // ⑦ 공용 상수 (aggrid_theme.ts) — 인라인 `{{…}}` 금지
+  rowSelection={ROW_SELECTION}               // ⑦ 모듈 상수로 호이스팅
   pagination paginationPageSize={PAGE_SIZE} suppressPaginationPanel   // 페이저는 GridFrame 푸터에서 커스텀
   isExternalFilterPresent={isExternalFilterPresent}                   // 상세필터(Community)
   doesExternalFilterPass={doesExternalFilterPass}

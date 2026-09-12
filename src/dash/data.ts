@@ -109,7 +109,7 @@ const MENU = [
     ]},
     { label:"사후보고관리", sub:true, children:[
       { label:"투자심의 관리", path:"investment-review" },
-      { label:"수시보고" },
+      { label:"수시보고", path:"occasional-report" },
       { label:"정기보고" },
       { label:"조합원총회" },
       { label:"조합예상자금 정보보고" },

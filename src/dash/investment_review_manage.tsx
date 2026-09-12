@@ -21,7 +21,7 @@ import type { Tone } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame } from './grid_frame';
-import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT } from './aggrid_theme';
+import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
@@ -454,7 +454,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
             pinnedBottomRowData={pinnedBottom}
             domLayout="autoHeight"
             autoSizeStrategy={AUTO_SIZE_CONTENT}
-            defaultColDef={{ sortable: true, resizable: true, suppressHeaderMenuButton: true }}
+            defaultColDef={DEFAULT_COL_DEF}
             rowSelection={{ mode: 'singleRow', checkboxes: true, enableClickSelection: true }}
             selectionColumnDef={{ pinned: 'left', width: 44 }}
             pagination paginationPageSize={pageSize} suppressPaginationPanel

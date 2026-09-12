@@ -25,6 +25,18 @@ ModuleRegistry.registerModules([AllCommunityModule]);
    ✗ autoSizeStrategy `fitGridWidth`는 domLayout=autoHeight+지연 레이아웃에서 생성 시점 폭에 1회만 맞춰 빈 공간이 남는다(2026-09-11 실측). flex를 쓴다. */
 export const AUTO_SIZE_CONTENT: AutoSizeStrategy = { type: 'fitCellContents' };
 
+/* 그리드 폭을 채우는 전략(우측 빈 공간 제거) — maxWidth 없는 컬럼이 잉여를 흡수한다.
+   나머지 컬럼에 `maxWidth`를 걸어 성장을 막으면 특정 컬럼 하나로만 잉여가 흘러간다. */
+export const FIT_GRID_WIDTH: AutoSizeStrategy = { type: 'fitGridWidth' };
+
+/* 공용 defaultColDef — **반드시 이 상수를 쓴다. 소비처에서 인라인 리터럴로 쓰지 말 것.**
+   ⚠ `defaultColDef={{ … }}`처럼 인라인으로 두면 렌더마다 새 객체가 되어 AG Grid가 컬럼을 재생성하고
+     폭을 **선언 폭(colDef.width)으로 되돌린다**. autoSizeStrategy는 최초 렌더 1회만 적용되므로
+     한 번 되돌아가면 복구되지 않는다 — 상태가 바뀌는 어떤 클릭(필터 칩·셀 버튼·모달 개폐)에서도 발생한다.
+     실측(2026-09-12): 수시보고 컨테이너 1513→1232px, 자펀드관리 합계폭 1831→1788px(fn 279→240).
+     뷰포트 폭은 그대로였다 — 모달 스크롤바 보정 문제가 아니다. */
+export const DEFAULT_COL_DEF = { sortable: true, resizable: true, suppressHeaderMenuButton: true } as const;
+
 export const apfsTheme = themeQuartz.withParams({
   backgroundColor: 'var(--card)',
   foregroundColor: 'var(--foreground)',
