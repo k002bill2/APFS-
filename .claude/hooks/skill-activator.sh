@@ -6,7 +6,10 @@
 #   1. 프롬프트 텍스트를 확보한다 ($1 인자 우선, 비어 있으면 stdin JSON의 .prompt).
 #      - Claude Code 는 UserPromptSubmit hook 으로 JSON 객체를 stdin 으로 전달한다.
 #      - settings.json 의 "$PROMPT" 치환이 비어 있는 환경에서도 동작하도록 stdin 을 폴백으로 읽는다.
-#   2. skill-rules.json 의 키워드/intentPatterns 와 매칭한다.
+#   2. skill-rules.json 의 keywords 와 매칭한다.
+#      - intentPatterns 는 읽지 않는다(2026-09-12 확인). jq 경로·grep 폴백 모두 keywords 전용이며,
+#        규칙 파일에 남은 intentPatterns 는 '이 스킬이 어떤 의도에서 떠야 하는가'를 적어둔 문서값이다.
+#        트리거를 추가하려면 반드시 keywords 에 넣어야 한다.
 #   3. 매칭된 스킬을 priority(critical>high>medium>low) 순으로 정렬해 stdout 으로 출력한다.
 #      - UserPromptSubmit hook 의 stdout 은 해당 턴의 추가 컨텍스트로 모델에 주입된다.
 #
