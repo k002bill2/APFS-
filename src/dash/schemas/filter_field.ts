@@ -22,9 +22,14 @@ const isEnumLabel = (s: string) => /(구분|유형|종류|상태|기준)/.test(s
 const year = (label: string, columnKey?: string): FilterField => ({ label, kind: 'year', options: [...YEAR_OPTIONS], columnKey });
 
 export function resolveFilterField(label: string, schema: PageSchema): FilterField {
-  // columnKey 불변식: 행은 schema.columns로 시드되므로, columns에 실재하는 키일 때만 columnKey를 부여한다.
-  // (field-only 키를 columnKey로 주면 makeRows가 시드하지 않아 침묵 0건이 됨 → 차라리 미부여=no-op+캡션으로 격하)
-  const colKey = (k: string) => (schema.columns.some((c) => c.key === k) ? k : undefined);
+  // columnKey 불변식: **행에 그 키가 실제로 시드될 때만** columnKey를 부여한다
+  // (시드 안 되는 키를 주면 매칭이 전무해 침묵 0건 → 차라리 미부여=no-op+캡션으로 격하).
+  // 시드 경로는 둘: ① schema.columns(makeRows 합성 시드) ② schema.sample(목업 리터럴 행 — 컬럼이 아닌
+  // 필드 키도 값이 실린다). ②를 인정해야 '모펀드'(field-only 키, 2026-09-12) 같은 필터가 진짜로 행을 거른다.
+  // sample 없는 스키마는 종전과 동일하게 격하된다.
+  const seeded = (k: string) => schema.columns.some((c) => c.key === k)
+    || !!schema.sample?.some((r) => r[k] !== undefined);
+  const colKey = (k: string) => (seeded(k) ? k : undefined);
   // 1) 폼 필드 매칭 — control + options 로 가장 정확한 타입
   const field = schema.fields.find((f) => f.label === label);
   if (field) {
