@@ -11,8 +11,10 @@ import { cn } from '@/lib/utils';
 
 export type AttachmentState = 'idle' | 'uploading' | 'processing' | 'error' | 'done';
 
-/* 파일명 확장자 → 아이콘 + 색 토큰 매핑 */
-function glyphFor(name = '') {
+/* 파일명 확장자 → 아이콘 + 색 토큰 매핑.
+   export 이유: 리스트 셀의 첨부 칩(schemas/renderers.tsx AttachChips)이 같은 매핑을 쓴다 —
+   모달의 첨부 목록과 리스트에서 pdf=빨강/xlsx=초록이 갈리지 않게 하는 SSOT. */
+export function glyphFor(name = '') {
   const ext = name.split('.').pop()?.toLowerCase() ?? '';
   if (ext === 'pdf') return { Icon: FileText, cls: 'text-danger' };
   if (['xls', 'xlsx', 'csv'].includes(ext)) return { Icon: FileSpreadsheet, cls: 'text-success' };

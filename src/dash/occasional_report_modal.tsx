@@ -131,6 +131,21 @@ function MetaList({ items }: { items: [string, string, boolean][] }) {
   );
 }
 
+// 서명란: 박스 없이 한 줄(우측 정렬). 좁은 폭에서만 줄바꿈 — dl>div 그룹은 HTML 스펙 허용
+function MetaInline({ items }: { items: [string, string, boolean][] }) {
+  return (
+    <dl className="m-0 mb-5 flex flex-wrap justify-end gap-x-5 gap-y-1" style={{ fontSize: 14 }}>
+      {items.map(([k, v, isDate]) => (
+        <div key={k} className="flex items-baseline gap-1.5">
+          <dt className="m-0 font-bold text-muted-foreground">{k}</dt>
+          <dd className="m-0 text-caption">:</dd>
+          <dd className="m-0">{isDate ? mn(v) : <MT>{v}</MT>}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 function CheckTable() {
   return (
     <div className="overflow-x-auto">
@@ -228,11 +243,7 @@ export function OccasionalReportModal({ onClose }: { onClose: () => void }) {
           </div>
           <Section title="가. 수시보고사항"><CheckTable /></Section>
           <Section title="나. 수시보고사항에 대한 요약"><SummaryTable /></Section>
-          <div className="flex justify-end mb-5">
-            <div className="border border-border" style={{ borderRadius: 8, padding: '14px 16px' }}>
-              <MetaList items={RPT_SIGN} />
-            </div>
-          </div>
+          <MetaInline items={RPT_SIGN} />
           <Section title="첨부파일"><FileTable /></Section>
         </div>
         <DialogFooter className="px-[46px]">

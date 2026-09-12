@@ -38,7 +38,8 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 색·대비 | 토큰만. 상태 텍스트는 `-text` 토큰(StatusBadge 내장) | [[color-tokens]] |
 
 ## 2. 목업에서 **버리는 것** (프로토타입 스캐폴딩 — 셸이 소유)
-GNB/LNB 전환 토글(`.opts`) · 상단바/출처시스템 메뉴/서브탭/LNB(`.topbar .sysmenu .subtab .lnb`) · ⚠검토필요 마커(`.review .rpop`) · 설계 메모(`.note`). **이식 대상은 검색필드·목록바·그리드·팝업·워크플로우 JS(STAGE_ACT)뿐.**
+GNB/LNB 전환 토글(`.opts`) · 상단바/출처시스템 메뉴/서브탭/LNB(`.topbar .sysmenu .subtab .lnb`) · 설계 메모(`.note`). **이식 대상은 검색필드·목록바·그리드·팝업·워크플로우 JS(STAGE_ACT)뿐.**
+  ⚠ 예외: **⚠검토필요 마커(`.review .rpop`)는 이식한다**(2026-09-12 사용자 지시로 규약 반전) — 규약·컴포넌트는 [[apfs-grid]]의 "검토필요 마커" 절, AG Grid 헤더 배선은 [[apfs-aggrid]].
 
 ## 3. SOP
 1. **읽기**: 목업 HTML 전체 + 형제 `*_spec.json`(필드·컬럼·codeRef 정본). 하단 `<script>`의 DATA/STAGE_ACT/팝업 row()가 실제 명세다.

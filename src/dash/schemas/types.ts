@@ -9,7 +9,9 @@ export type FieldControl = typeof FIELD_CONTROLS[number];
 
 export const TONE_VALUES = ['primary','success','warning','danger','info','cyan'] as const;
 
-export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; }
+// attachFrom: 이 컬럼의 값 뒤에 첨부파일 확장자 칩(PDF 등)을 붙인다. 값은 같은 행의 **필드 키**
+// (예: title 컬럼 + attachFrom:'attachment') — 첨부는 별도 컬럼을 만들지 않고 제목에 붙여 표현한다.
+export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; attachFrom?: string; }
 export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; }
 export interface KpiSpec { key: string; label: string; icon: string; color: string; from: 'sum'|'avg'|'rate'; column: string; }
 // 건수형 KPI — 금액 집계가 아닌 행 카운트. column+value 있으면 그 값과 일치하는 행 수, 없으면 전체 건수.
@@ -33,6 +35,9 @@ export interface PageSchema {
   // 카드헤더 KPI 배지 행 전체를 숨긴다(헤더 슬롯만 — 카드뷰 금액/상태는 유지, hideMetrics와 분리).
   // KPI 행은 생성 스킬 HITL에서 "미포함" 선택 시 true. countKpis/제네릭 금액 KPI 모두 무력화.
   hideKpis?: boolean;
+  // 행 선택 체크박스 컬럼(+헤더 전체선택)을 없앤다 → 다건 선택/선택삭제 툴바도 함께 사라진다.
+  // 단건 CRUD만 있는 화면(공고 등)에서 선택 UI가 군더더기일 때. 행 수정은 더블클릭·Enter·우클릭 메뉴로 유지.
+  hideRowSelection?: boolean;
   // 푸터의 리스트 뷰|카드뷰 SegTabs를 숨기고 리스트 뷰로 고정한다(카드뷰가 의미 없는 엔티티).
   // 표현 전용 — hideKpis(헤더 KPI만)·hideMetrics(금액 개념 전체)와 독립.
   hideCardView?: boolean;
@@ -42,6 +47,7 @@ export interface PageSchema {
 const ColumnZ = z.object({
   key: z.string(), label: z.string(), type: z.enum(CELL_TYPES),
   unit: z.string().optional(), align: z.enum(['left','right','center']).optional(), group: z.string().optional(),
+  attachFrom: z.string().optional(),
 });
 const FieldZ = z.object({
   key: z.string(), label: z.string(), control: z.enum(FIELD_CONTROLS),
@@ -60,6 +66,7 @@ export const PageSchemaZ = z.object({
   searchable: z.boolean().optional(),
   countKpis: z.array(z.object({ label: z.string(), icon: z.string(), color: z.string(), column: z.string().optional(), value: z.string().optional() })).optional(),
   hideKpis: z.boolean().optional(),
+  hideRowSelection: z.boolean().optional(),
   hideCardView: z.boolean().optional(),
   provenance: ProvenanceZ,
 });

@@ -26,7 +26,10 @@
          띄워 엉뚱한 팝업으로 바뀐다. 셀 링크는 **조회 전용**이며 단계 전이는 여전히 툴바에만 있다.
    - KPI 배지 행                → 미포함(2026-09-12 HITL 결정). 금액 개념이 없어 건수 지표뿐이었다.
    - 엑셀                       → SheetJS(단일 헤더, 마스크 시 실값 비노출)
-   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·⚠검토필요 마커는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
+   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
+   ⚠검토필요 마커는 **이식한다**(2026-09-12 사용자 지시) — 원문 미정의 지점을 화면에서 바로 보여주는
+     설계 메모라 스캐폴딩이 아니다. 목업 원문 5건 전부 옮겼다: 검색 3건(심사담당자·리스크담당자·구분) +
+     확인 컬럼 2건(심사담당·리스크담당). 공용 `review_marker.tsx`, 규약은 apfs-grid 스킬. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
@@ -46,6 +49,8 @@ import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
 import { PeriodPicker } from './ui/period-picker';
+import { ReviewMarker, reviewInnerHeader } from './review_marker';
+import type { ReviewNote } from './review_marker';
 import { OccasionalReportModal } from './occasional_report_modal';
 import { GpSpecModal } from './gp_spec_modal';
 import { SubFundSpecModal } from './subfund_spec_modal';
@@ -143,13 +148,36 @@ const date = (field: keyof OccReportRow, header: string, width = 128): ColDef<Oc
   field, headerName: header, width, maxWidth: width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
   valueFormatter: (p) => mn(p.value),
 });
+/* ⚠검토필요 메모 — 목업 `S1_04_수시보고.html`의 `data-rec`/`data-dat` 원문 그대로(5건).
+   확인 컬럼 2건은 담당 명칭만 다르다(심사담당 / 리스크담당) — 원문이 그렇게 갈라져 있으므로 합치지 않는다.
+   설계 메모라 마스킹·엑셀 대상이 아니다. */
+const CONFIRM_NOTE = (role: Role): ReviewNote => ({
+  rec: '확인 후 확인자명만 표시(취소 불가)',
+  dat: `확인자명이 확인버튼을 누른 로그인 사용자인지, 별도 지정된 ${ROLE_LABEL[role]}인지 원문 미정의(추론)`,
+});
+/* 모듈 스코프에 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid가 헤더를 통째로 remount한다 */
+const CONFIRM_HEADER: Record<Role, ReturnType<typeof reviewInnerHeader>> = {
+  js: reviewInnerHeader(CONFIRM_NOTE('js')),
+  rs: reviewInnerHeader(CONFIRM_NOTE('rs')),
+};
+/* 검색(상세필터) 메모 3건 — 원문 라벨: 심사담당자 · 리스크담당자 · 구분 */
+const FILTER_NOTES: Record<'js' | 'rs' | 'kind', ReviewNote> = {
+  js:   { rec: '심사담당자 목록(공통코드/사용자)', dat: '실 담당자 옵션값 미확인 — 없는 값 생성 안 함' },
+  rs:   { rec: '리스크담당자 목록(공통코드/사용자)', dat: '실 담당자 옵션값 미확인 — 없는 값 생성 안 함' },
+  kind: { rec: '보고구분 등 (공통코드)', dat: '실 옵션값 미확인 — 없는 값 생성 안 함' },
+};
+
 /* 확인 컬럼 — 미확인이면 셀 안 [확인] 버튼, 확인되면 확인자명 배지(목업 S1_04 `cell()` 그대로).
    2026-09-12 사용자 지시로 툴바 컨텍스트 액션을 대체한다 — 행 선택(체크박스)이 없어졌으므로
    전이를 실을 곳이 셀뿐이다(apfs-stage-workflow 규약 1의 이 화면 한정 예외).
    확인자명은 인명 데이터라 <MT> 마스킹, '확인' 라벨은 액션이라 비마스킹. */
 const confirmCol = (field: 'jsBy' | 'rsBy', header: string, role: Role,
                     onConfirm: (role: Role, id: string) => void): ColDef<OccReportRow> => ({
-  field, headerName: header, width: 124, maxWidth: 124, cellStyle: flexMid, sortable: true,
+  field, headerName: header, width: 146, maxWidth: 146, cellStyle: flexMid, sortable: true,
+  headerComponentParams: { innerHeaderComponent: CONFIRM_HEADER[role] },
+  /* Tab을 AG Grid 헤더 내비게이션에서 빼 브라우저 기본 순서로 넘긴다 — 안 하면 헤더 안의
+     ⚠마커 버튼에 키보드로 도달할 수 없다(AG Grid가 Tab을 가로채 다음 헤더 셀로 이동, 2026-09-12 실측). */
+  suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab',
   cellRenderer: (p: any) => (p.value
     ? <StatusBadge tone="success" label={<MT>{p.value}</MT>} size="lg" dot={false} />
     : <Button variant="outline" size="sm" onClick={() => onConfirm(role, p.data.id)}>확인</Button>),
@@ -217,12 +245,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -470,9 +498,9 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            <DrawerField label="심사담당자" noop><DrawerSelect value={fJs} onChange={setFJs} options={jsNames} /></DrawerField>
-            <DrawerField label="리스크담당자" noop><DrawerSelect value={fRs} onChange={setFRs} options={rsNames} /></DrawerField>
-            <DrawerField label="구분" noop><DrawerSelect value={fKind} onChange={setFKind} options={[]} /></DrawerField>
+            <DrawerField label="심사담당자" noop note={FILTER_NOTES.js}><DrawerSelect value={fJs} onChange={setFJs} options={jsNames} /></DrawerField>
+            <DrawerField label="리스크담당자" noop note={FILTER_NOTES.rs}><DrawerSelect value={fRs} onChange={setFRs} options={rsNames} /></DrawerField>
+            <DrawerField label="구분" noop note={FILTER_NOTES.kind}><DrawerSelect value={fKind} onChange={setFKind} options={[]} /></DrawerField>
             <DrawerField label="확인상태"><DrawerSelect value={fStage} onChange={(v) => setFStage(v as '' | Stage)} options={['미확인', '일부확인', '확인완료']} /></DrawerField>
             <DrawerField label="기간 시작 (보고일자)" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="조회기간 시작일" /></div></DrawerField>
             <DrawerField label="기간 종료 (보고일자)" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="조회기간 종료일" /></div></DrawerField>

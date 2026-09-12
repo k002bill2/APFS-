@@ -106,7 +106,9 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 - ⛔ **카드뷰(리스트 뷰|카드뷰 토글)는 폐기됐다(2026-09-11 사용자 결정).** 신규 페이지에 뷰 토글 `SegTabs`·`view` state·카드 렌더 분기를 **만들지 않는다** — 리스트 뷰 단일 표현이다. 전용 스킬 `apfs-card-view`도 같은 날 삭제됐다.
   - 스키마 트랙은 `schema.hideCardView: true`로 끈다(`generic_list.tsx`가 푸터 `SegTabs`를 렌더하지 않고 `view`를 `"list"` 파생값으로 고정). 기존 카드 렌더 코드는 아직 남아 있으나 도달 불가다.
   - typed 트랙은 플래그 없이 직접 제거한다 — `subfund_manage.tsx`가 `SegTabs`를 지우고 `const view = 'list'` 상수로 내린 형태가 정본.
-  - 표현 전용 플래그 3종은 서로 독립: `hideKpis`(헤더 KPI 슬롯) · `hideMetrics`(금액 개념 전체) · `hideCardView`(푸터 뷰 토글).
+  - 표현 전용 플래그 4종은 서로 독립: `hideKpis`(헤더 KPI 슬롯) · `hideMetrics`(금액 개념 전체) · `hideCardView`(푸터 뷰 토글) · `hideRowSelection`(행 선택 체크박스 컬럼).
+- **행 선택 체크박스 제거** — 다건 선택/선택삭제가 없는 단건 CRUD 화면은 `schema.hideRowSelection: true`(2026-09-12 자펀드 공고 정보관리). `generic_list.tsx`가 `rowSelection` prop 자체를 `undefined`로 넘겨 **선택 컬럼이 생성되지 않는다**(체크만 푸는 게 아니다). 선택이 없어지면 툴바의 `선택 삭제`/`선택 해제` 분기(`selCount > 0`)도 자동으로 도달 불가가 된다 — 수정은 행 더블클릭·Enter, 삭제는 우클릭 메뉴가 대체 경로다. ⚠️ `rowSelection` 객체는 **모듈 상수**여야 한다([[apfs-aggrid]] ⑦ — 인라인 리터럴은 렌더마다 컬럼 재생성 → 폭 되돌림).
+- **첨부파일은 컬럼을 만들지 않고 제목 뒤 칩으로** — `ColumnSpec.attachFrom: '<필드키>'`(예: `title` 컬럼 + `attachFrom:'attachment'`). `schemas/renderers.tsx`의 `AttachChips`가 CSV 값(`"a.pdf, b.xlsx"`)을 확장자 칩(아이콘+색은 `ui/attachment.tsx`의 `glyphFor` SSOT, 라벨은 회색)으로 렌더하고 4개째부터 `+N`으로 접는다. 마스크 경계: 확장자=유형 표식이라 비마스킹, 파일명 tooltip은 마스크 ON에서 제거.
 
 ## 관리형 리스트 툴바·타이틀 규약 (2026-09-11 subfund_manage에서 정립)
 리스트형(CRUD) 페이지 한정. 매트릭스/집계형은 위 골든(`headerActions` primary 내보내기)을 그대로 둔다.
@@ -136,6 +138,70 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - ⚠️ 트리거에 `.apfs-menu-trigger` 금지 — 그 클래스는 링을 끄고 `bg-card`로 초점을 대신 표시하는데 combo는 이미 카드 배경이라 단서가 사라진다(→ [[global-focus-overhaul-exception-surfaces]]). Tooltip은 `span`으로 감싸 `data-state` 충돌을 피한다(MoreMenu 동형).
   - kebab 항목은 `MoreMenuItems` 조각을 kebab과 combo가 **공유**한다(복제하면 단축키 힌트가 갈라진다).
 - **타이틀은 메뉴 리프와 일치.** `cardTitle`·`title`·`crumbs` 리프를 **`data.ts` 메뉴 리프 라벨 문자열 그대로**(띄어쓰기 포함) 맞춘다. `cardTitle`이 `title`과 같으면 생략 가능(H1=`cardTitle ?? title`). **"○○ 목록" 같은 임의 축약 금지**(2026-09-11 "자펀드 목록"→"자펀드 관리" 정정). 매트릭스/집계형이 문서 정식명칭을 카드 제목으로 쓰는 것(asset_funding "…현황표")은 예외.
+
+## 검토필요 마커(ⓘ) — 목업 설계메모 이식 (2026-09-12 사용자 지시, 정본)
+현행시스템 목업의 `.review`/`.rpop`(라벨 옆 마커 + 검토메모 팝오버)은 **이식한다**. 원문(현행시스템)이
+정의하지 않아 우리가 추론한 지점을 화면에서 바로 짚어주는 설계 메모라, GNB/LNB 토글·출처시스템 메뉴 같은
+프로토타입 스캐폴딩과 성격이 다르다(이전 규약 "이식하지 않는다"는 **폐기**).
+
+- 정본 컴포넌트: `src/dash/review_marker.tsx` — `ReviewMarker({ rec, dat, label })` · `reviewInnerHeader(note)` · `type ReviewNote`
+- 실증 3화면: `occasional_report_manage.tsx`(헤더 2 + 필터 3) · `investment_review_manage.tsx`(필터 3) · `subfund_manage.tsx`(필터 2)
+```tsx
+// 1) 라벨 옆 아무데나
+<span>심사담당<ReviewMarker rec="…" dat="…" label="심사담당" /></span>
+
+// 2) 상세필터 드로어 — 페이지별 로컬 DrawerField 에 note prop 을 더한다(3화면 동형)
+function DrawerField({ label, noop, plain, note, children }: { …; note?: ReviewNote }) { …
+  <span className="block …">{label}{note && <ReviewMarker {...note} label={label} />}{noop && …}</span> }
+<DrawerField label="심사담당자" noop note={FILTER_NOTES.js}>…</DrawerField>
+
+// 3) AG Grid 헤더 — innerHeaderComponent(정렬·메뉴 기본동작 보존) → [[apfs-aggrid]]
+const CONFIRM_HEADER: Record<Role, ReturnType<typeof reviewInnerHeader>> = {   // 모듈 스코프 고정(렌더마다 새 타입이면 헤더 remount)
+  js: reviewInnerHeader(CONFIRM_NOTE('js')), rs: reviewInnerHeader(CONFIRM_NOTE('rs')),
+};
+headerComponentParams: { innerHeaderComponent: CONFIRM_HEADER[role] },
+suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab',
+```
+
+### 내용 — 원문에서 전수로 옮긴다
+- **2줄 고정**: `추천`(우리가 택한 동작) · `데이터`(원문 미정의/추론 사유). 목업 문구 그대로, 창작 금지.
+- 목업 위치 `~/Downloads/통합/<영역>/<화면>.html`(예: `01_투자자산관리/S1_04_수시보고.html`), 마커는 `button.review[data-rec][data-dat]`.
+  ```bash
+  grep -o 'class="review"[^>]*' '<목업.html>'     # rec/dat 원문 추출 (마지막 1건은 JS 템플릿이라 제외)
+  ```
+- **전수 이식**: 마커는 검색(필터) 영역과 그리드 헤더 **양쪽에** 흩어져 있다 — 한쪽만 보면 빠진다(2026-09-12 필터 3건 누락 실사고).
+- 문구가 갈리면 합치지 않는다 — S1_04 확인 컬럼 2건은 담당 명칭만 다르다(심사담당/리스크담당). 역할 인자를 받는 팩토리로 만든다.
+- 출처 목업이 없으면 다른 화면 메모를 **차용하지 말고** 사용자에게 원문을 요청한다(차용본은 실제로 오기였다).
+
+### 붙는 위치·마스크 경계
+- **라벨에만**(헤더명·필드 라벨·섹션 제목). 셀 값·행 데이터엔 붙이지 않는다 — 행마다 반복되면 표가 죽는다.
+- 드로어에서는 라벨 암묵 연결(`label.control`)이 **select 로 유지**되는지 확인(트리거가 span 인 이유 — 아래 a11y). 팝오버 z-popover(85) > Sheet(80).
+- **마스크·엑셀 대상 아님**: 설계 메모지 행 데이터가 아니다 → `mn()`/`<MT>` 감싸지 않고 `EXPORT_COLS`에도 없다.
+
+### 외관 (2026-09-12 사용자가 시안 8종 중 선택)
+- **무채색 info 원**: lucide `Info`(14px, strokeWidth 2), 칠·테두리 없음, 기본 `text-muted-foreground` + `opacity-80`.
+  **hover · focus-visible · `data-[state=open]`에서 `--warning-text`로 강조**(`transition-colors duration-tok-fast`).
+  포인터 타깃은 `padding:3px`로 20px 확보(시각 크기 14px 유지).
+- 폐기된 시안: soft 배경 + `!` 글리프(안 띔) · 솔리드 amber 칠 + `TriangleAlert`(촌스러움). 되돌리지 말 것.
+- ⚠ 마커는 "여기 메모가 있다"는 **부차 신호**다 — 라벨보다 시선을 끌면 표가 시끄러워진다. 기본은 조용, hover에서만 색.
+- 팝오버 안 칩 2종은 대비 실측으로 골랐다(10.5px 볼드 = AA 4.5):
+  - `추천` = `toneVar('info')` — `toneVar('primary')`(초록 12% 혼합)는 라이트 **4.2:1로 미달**이었다 → info쌍은 5.29(라이트)/4.76(다크).
+  - `데이터` 배경에 `var(--muted)` 금지(다크에서 팝오버 표면과 동색) → `color-mix(in srgb,var(--muted-foreground) 16%,transparent)` = 4.51/4.73.
+
+### 상호작용
+- **hover로 열린다**(포인터가 트리거→팝오버로 넘어가는 사이 **140ms 유예**, 팝오버 위에서는 유지 — 팝오버에도 같은 enter/leave 핸들러).
+- **클릭은 열기 전용**(토글 아님) — hover로 이미 열린 것을 클릭 토글이 곧바로 닫아버린다. 닫기는 포인터 이탈·Escape·바깥클릭.
+- **키보드 Enter/Space는 토글**, Escape로 닫힘.
+- **포커스는 키보드로 열었을 때만 움직인다** — `onOpenAutoFocus`/`onCloseAutoFocus` 둘 다 비키보드 경로에서 `preventDefault`.
+  닫힘까지 막아야 한다: 안 막으면 hover가 닫힐 때 Radix가 초점을 트리거로 되돌려 **입력 중이던 컨트롤에서 포커스를 뺏는다**.
+
+### a11y·트리거 구현 (함정 3중)
+- 트리거는 **`<span role="button" tabIndex={0}>`이지 `<button>`이 아니다** — `<button>`은 labelable 이라 `<label>` 안에서 라벨을 가로챈다(select가 접근名을 잃음).
+- span 은 키보드로 click 이 생기지 않으므로 **Enter·Space를 직접 토글**(그래서 제어형 Popover). Space는 `preventDefault`로 스크롤도 막는다.
+- 클릭·mousedown 둘 다 `preventDefault` — 크롬은 `<label>` 안 클릭을 **mousedown 시점에** 연결 컨트롤로 포커스 전달한다. 기본동작을 막으면
+  Radix 자체 토글이 건너뛰어지니 상태는 우리가 뒤집고, 마커 포커스는 `focus()`로 직접 준다.
+- 접근名: 트리거 `aria-label="<라벨> 검토필요 메모 보기"`, 팝오버(`role=dialog`) `aria-label="<라벨> 검토필요 메모"`.
+- ⚠ 검증 시 `locator.click()`이 드로어에서 엉뚱한 대상(select)을 치는 일이 있다 — `boundingBox()` + `page.mouse.click(cx,cy)` 좌표 클릭으로 확인.
 
 ## 검증
 `npm run build`(exit 0) + `npm test`(스키마 zod) + 브라우저 라이트/다크·1280/768/400 시각 확인(responsive-ui 프로토콜) + 기존 페이지(generic_list 등) 무변경 회귀.

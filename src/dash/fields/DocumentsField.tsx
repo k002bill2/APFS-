@@ -16,19 +16,13 @@ import {
   AttachmentActions,
   AttachmentAction,
 } from '../ui/attachment';
-
-const parseNames = (v: string): string[] =>
-  (v || '').split(',').map((s) => s.trim()).filter(Boolean);
-
-const extLabel = (name: string) => {
-  const ext = name.split('.').pop()?.toUpperCase();
-  return ext && ext !== name.toUpperCase() ? ext : '파일';
-};
+// 파일명 파서·확장자 라벨은 리스트 셀의 첨부 칩과 공유(SSOT) — file_names.ts
+import { parseFileNames, fileExtLabel } from './file_names';
 
 export function DocumentsField({ value, onChange, required, label }: { value: string; onChange: (v: string) => void; required?: boolean; label?: string }) {
   // 초기 value(수정 진입 시의 기존 첨부)를 1회만 캡처 — 이후 내부 상태가 단독 소유.
   const initialRef = React.useRef(value);
-  const [existing, setExisting] = React.useState<string[]>(() => parseNames(initialRef.current));
+  const [existing, setExisting] = React.useState<string[]>(() => parseFileNames(initialRef.current));
   const [added, setAdded] = React.useState<string[]>([]);
 
   // 기존/신규 합쳐 상위 vals로 반영(계약: CSV 문자열).
@@ -51,7 +45,7 @@ export function DocumentsField({ value, onChange, required, label }: { value: st
                 <AttachmentMedia fileName={name} />
                 <AttachmentContent>
                   <AttachmentTitle>{name}</AttachmentTitle>
-                  <AttachmentDescription state="done">{extLabel(name)} · 업로드됨</AttachmentDescription>
+                  <AttachmentDescription state="done">{fileExtLabel(name)} · 업로드됨</AttachmentDescription>
                 </AttachmentContent>
                 <AttachmentActions>
                   <AttachmentAction aria-label={`${name} 다운로드`} title="다운로드"><Download /></AttachmentAction>
@@ -69,7 +63,7 @@ export function DocumentsField({ value, onChange, required, label }: { value: st
         </div>
       )}
       {/* 신규 추가 — FilePond. 기존 첨부가 있으면 required 표식은 이미 충족이므로 해제 */}
-      <FilePondField value="" onChange={(v) => setAdded(parseNames(v))} required={required && existing.length === 0} />
+      <FilePondField value="" onChange={(v) => setAdded(parseFileNames(v))} required={required && existing.length === 0} />
     </div>
   );
 }

@@ -31,7 +31,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 - **① field 매칭**(label 정확일치, 가장 정확): `select`→enum(field.options) · `date`→date · 년도라벨→year · `number`→number · 그외→text.
 - **② column 매칭**: 년도라벨→year · `date`→date · `status`→enum(statusDomain) · amount/number/rate→number · 그외→text.
 - **③ 휴리스틱**(무매칭): `년도|연도`→year · `일자|날짜|~일`→date · `구분|유형|종류|상태|기준`(도메인 없음)→text · 그외→**tag**(카테고리 on/off).
-- 반환 `{label, kind, options, columnKey}`. **columnKey는 행필터의 키** — ①(field.key가 columns에 실재)·②가 columnKey로 행을 거르고, ③ tag는 `row.category`로 거른다. **데모(자펀드 공고)의 사업년도·정기/수시가 바로 ① 경로**(field 매칭, 키가 columns에도 존재)라 표가 실제로 줄어든다. columnKey 없는 경우(field-only 키·휴리스틱 비-tag date/text)는 칩만 뜨고 행은 안 걸러진다(no-op, 아래 캡션 규약).
+- 반환 `{label, kind, options, columnKey}`. **columnKey는 행필터의 키** — ①(field.key가 행에 시드됨)·②가 columnKey로 행을 거르고, ③ tag는 `row.category`로 거른다. **데모(자펀드 공고)의 사업연도·정기/수시가 바로 ① 경로**(field 매칭, 키가 columns에도 존재)라 표가 실제로 줄어든다. 같은 스키마의 **모펀드는 columns엔 없지만 `sample` 리터럴 행이 값을 실어** 역시 ① 경로로 걸러진다(2026-09-12). columnKey 없는 경우(어디에도 시드되지 않는 field-only 키·휴리스틱 비-tag date/text)는 칩만 뜨고 행은 안 걸러진다(no-op, 아래 캡션 규약).
 
 ## 컨트롤 매핑 (DrawerFilterControl / DrawerCheckRow)
 | kind | 컨트롤 |
@@ -48,7 +48,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 
 ## 규약 체크리스트 (CRITICAL — 모르면 재발하는 함정)
 - [ ] **입력 16px + 키 순서**: `font:"inherit"` 먼저, `fontSize:16` **뒤**. (React 인라인은 키 순서대로 직렬화 → `font` 단축속성이 뒤에 오면 font-size를 리셋해 16px이 죽고 iOS 줌 부활.)
-- [ ] **columnKey 불변식**: 행은 `schema.columns`로 시드되므로 columnKey는 **columns에 실재하는 키일 때만** 부여(`filter_field.ts`의 colKey 가드). 이 가드 덕에 field-only 키는 침묵 0건이 아니라 no-op+캡션으로 안전 격하된다 — 가드를 우회해 직접 columnKey를 주면 시드 안 돼 침묵 0건이 되므로 가드를 유지할 것.
+- [ ] **columnKey 불변식**: columnKey는 **행에 그 키가 실제로 시드될 때만** 부여(`filter_field.ts`의 `seeded`/`colKey` 가드). 시드 경로는 둘 — ① `schema.columns`(makeRows 합성) ② `schema.sample`(목업 리터럴 행은 컬럼이 아닌 필드 키도 싣는다, 2026-09-12). 어느 쪽에도 없으면 침묵 0건 대신 no-op+캡션으로 안전 격하된다 — 가드를 우회해 직접 columnKey를 주지 말 것. ⚠️ sample 경로는 **`sample` 있는 스키마에만** 성립한다(현재 자펀드 공고 1종) — sample 없는 스키마의 field-only 키는 종전대로 격하.
 - [ ] **빈 `<select>` 금지**: options/statusDomain이 비면 enum 대신 **text로 격하**(선택지 없는 드롭다운 = 고장처럼 보임).
 - [ ] **columnKey 없는 값-필터**: `· 데이터 연동 후 적용` 캡션으로 no-op을 사용자에게 신호(무신호 무효 필터 금지).
 - [ ] **시드 정합**: `makeRows`가 컬럼에 도메인값을 심어야 value 필터가 매칭됨 — 년도라벨→YEAR_OPTIONS 순환, select 필드 옵션→options 순환. **tag는 예외**: `row.category`로 매칭되는데 이는 schema가 아니라 `generic_list.tsx`의 하드코딩 `ROW_CATS`에서 시드된다 → 새 tag 라벨이 `ROW_CATS`에 없으면 토글 선택 시 **표가 통째로 비워진다**(value의 안전 no-op과 다른 비대칭). 새 tag 필터는 `ROW_CATS`에 같은 라벨을 추가하거나 `ROW_CATS` 중 하나와 정확일치시킬 것.
@@ -76,4 +76,8 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 3. 라이트/다크 대비 + [[responsive-ui]] 체크(드로어 92vw, 페이지 가로스크롤 없음).
 
 ## 참조
+- 원문 미정의 항목 라벨에 다는 검토필요 마커(ⓘ): 페이지별 로컬 `DrawerField`에 `note?: ReviewNote` prop을 더해
+  라벨 `<span>` 안에 `<ReviewMarker {...note} label={label} />`를 렌더한다. 실증 3화면(수시보고 3건·투자심의 3건·자펀드관리 2건),
+  문구는 목업 원문 전수 이식. 규약·함정(트리거가 span 인 이유, hover·포커스 규칙)은 [[apfs-grid]] "검토필요 마커" 절.
+
 - 페이지 골격/툴바 슬롯: [[apfs-grid]] · UI 토큰: [[dashboard-ui]] · 반응형: [[responsive-ui]] · 필터 라벨 출처: [[apfs-capture-schema]]

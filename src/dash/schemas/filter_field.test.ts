@@ -13,7 +13,7 @@ describe('resolveFilterField — 필터 라벨 → 컨트롤 타입 도출', () 
   });
 
   it('number 필드 + 년도 라벨 → year + YEAR_OPTIONS + columnKey', () => {
-    const ff = resolveFilterField('사업년도', gongo);
+    const ff = resolveFilterField('사업연도', gongo);
     expect(ff.kind).toBe('year');
     expect(ff.options).toEqual(YEAR_OPTIONS);
     expect(ff.columnKey).toBe('bizYear');
@@ -36,11 +36,20 @@ describe('resolveFilterField — 필터 라벨 → 컨트롤 타입 도출', () 
       expect(resolveFilterField(f, d).kind).toBe('tag');
   });
 
-  it('field-only 키(컬럼 부재) → columnKey 없음 (시드 안 됨 → 침묵 0건 방지)', () => {
-    // gongo의 모펀드 필드(key:moeFund)는 select+options지만 columns에 없음 → enum이되 행필터 불가
-    const ff = resolveFilterField('모펀드', gongo);
+  it('field-only 키 + sample 부재 → columnKey 없음 (시드 안 됨 → 침묵 0건 방지)', () => {
+    // 모펀드 필드(key:moeFund)는 select+options지만 columns에 없다. sample도 없으면 makeRows가 시드하지 않으므로
+    // enum이되 행필터 불가(no-op+캡션)로 격하돼야 한다.
+    const { sample, ...noSample } = gongo;
+    const ff = resolveFilterField('모펀드', noSample);
     expect(ff.kind).toBe('enum');
     expect(ff.columnKey).toBeUndefined();
+  });
+
+  it('field-only 키 + sample에 값 존재 → columnKey 부여 (리터럴 행이 시드 경로)', () => {
+    // 자펀드 공고는 sample 4건이 moeFund를 싣는다 → 컬럼이 아니어도 행을 실제로 거를 수 있다(2026-09-12)
+    const ff = resolveFilterField('모펀드', gongo);
+    expect(ff.kind).toBe('enum');
+    expect(ff.columnKey).toBe('moeFund');
   });
 
   it('빈 옵션 select 필드 → text 격하 (빈 <select> 금지)', () => {

@@ -12,7 +12,9 @@
    - 투자준법감시내역 CRUD    → 별개 엔티티. [준법감시 등록|수정] 1버튼(상태별) + [삭제](있을 때만). RowFormModal(apfs-form-modal)
    - 상세(명세) 팝업          → opt-in(기본 미포함, 2026-09-11 사용자 결정 "필요할 때 생성"). 필요 시 apfs-spec-popup 규약으로 재생성
    - 엑셀                     → SheetJS(단일 헤더, 마스크 시 실값 비노출)
-   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·⚠검토필요 마커는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
+   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
+   ⚠검토필요 마커는 **이식한다**(2026-09-12 사용자 지시). 목업 `S1_01_투자심의관리.html` 원문 3건
+     (운용사·자펀드·담당자)을 그대로 옮겼다. 공용 `review_marker.tsx`, 규약은 apfs-grid 스킬. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
@@ -34,6 +36,8 @@ import * as XLSX from 'xlsx';
 import { RowFormModal } from './generic_list_modal';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
 import { PeriodPicker } from './ui/period-picker';
+import { ReviewMarker } from './review_marker';
+import type { ReviewNote } from './review_marker';
 import { COMPLIANCE_SCHEMA } from './investment_review_manage_schemas';
 
 const { Button, IconBtn, StatusBadge, FilterChip } = UI;
@@ -168,12 +172,19 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+/* 상세필터 ⚠검토필요 메모 — 목업 `S1_01_투자심의관리.html` 원문 3건 그대로 */
+const FILTER_NOTES: Record<'gp' | 'fund' | 'mgr', ReviewNote> = {
+  gp:   { rec: '운용사(GP) 목록', dat: '투심 목록 실데이터 3건으로 동기화' },
+  fund: { rec: '자펀드(조합) 목록', dat: '투심 목록 실데이터 3건으로 동기화 · 원본 검색영역에 자펀드 셀렉트 2회 중복 → 1개로 정리' },
+  mgr:  { rec: '담당자 목록(사용자 마스터 연동)', dat: '자펀드관리 화면의 담당자 예시(양한솔·이성훈)로 동기화 — 전체 담당자 마스터 연동은 여전히 필요' },
+};
+
+function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -481,10 +492,10 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
                 목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·투자심의상태·투자심의기간.
                 그리드 컬럼과 미연동인 항목(모펀드·계정구분·담당자)은 noop 캡션. 기간은 PeriodPicker day 2개(apfs-datepicker) */}
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
-            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
+            <DrawerField label="운용사" note={FILTER_NOTES.gp}><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
+            <DrawerField label="자펀드" note={FILTER_NOTES.fund}><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAg} onChange={setFAg} options={['농식품', '수산']} /></DrawerField>
-            <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={['양한솔', '이성훈']} /></DrawerField>
+            <DrawerField label="담당자" noop note={FILTER_NOTES.mgr}><DrawerSelect value={fMgr} onChange={setFMgr} options={['양한솔', '이성훈']} /></DrawerField>
             <DrawerField label="투자심의상태"><DrawerSelect value={fState} onChange={(v) => setFState(v as '' | '일정' | '결과')} options={['일정', '결과']} /></DrawerField>
             <DrawerField label="투자심의기간 시작" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="투자심의기간 시작일" /></div></DrawerField>
             <DrawerField label="투자심의기간 종료" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="투자심의기간 종료일" /></div></DrawerField>
