@@ -1,5 +1,5 @@
 {
-  "_comment": "APFS 프로젝트 스킬 트리거 규칙. skillName 은 .claude/skills/ 의 실제 스킬과 일치해야 한다. enforcement: suggest(추천) | block(차단). skill-activator.sh(UserPromptSubmit hook)가 키워드 매칭으로 사용.",
+  "_comment": "APFS 프로젝트 스킬 트리거 규칙. skillName 은 .claude/skills/ 의 실제 스킬과 일치해야 한다. enforcement: suggest(추천) | block(차단). skill-activator.sh(UserPromptSubmit hook)가 키워드 매칭으로 사용. ⚠️ intentPatterns 는 훅이 읽지 않는다(문서값 전용) — 실제 트리거는 keywords 로만 동작하므로 새 트리거는 반드시 keywords 에 추가한다.",
   "rules": [
     {
       "skillName": "code-reviewer",
