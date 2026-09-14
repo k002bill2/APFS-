@@ -61,6 +61,8 @@ export interface GridFrameProps {
   /** 즐겨찾기 토글(★) 활성 — 현재 페이지의 라우트(onNav 인자와 동일 문자열).
       지정 시 카드헤더 타이틀 옆에 별 아이콘이 붙고, 클릭으로 MenuStore 'fav'에 on/off 된다. */
   favRoute?: string;
+  /** PageHeader 와 카드 사이의 페이지 컨텍스트 탭(예: 관리자 화면의 AdminTabs). 전역 Shell 을 건드리지 않고 화면군 안의 이동 탭을 얹는다. */
+  tabs?: React.ReactNode;
   /** 툴바 좌: 필터칩·선택 액션 */
   toolbarLeft?: React.ReactNode;
   /** 툴바 우: 새로고침·상세필터 등 보조 액션 */
@@ -77,7 +79,7 @@ export interface GridFrameProps {
 }
 
 export function GridFrame({
-  crumbs, title, sub, headerActions, cardTitle, kpis, favRoute,
+  crumbs, title, sub, headerActions, cardTitle, kpis, favRoute, tabs,
   toolbarLeft, toolbarRight, footerLeft, footerCenter, footerRight, children,
 }: GridFrameProps) {
   const hasToolbar = Boolean(toolbarLeft || toolbarRight);
@@ -87,6 +89,7 @@ export function GridFrame({
       {/* PageHeader: 현 shell은 title/sub를 렌더하지 않으므로(crumbs·actions만) title/sub는 카드헤더가 직접 그린다.
           title은 forward-compat용으로 계속 넘기되 라이브 제목은 카드 <h3> — 향후 shell이 title 렌더를 복원하면 중복 주의 */}
       <PageHeader crumbs={crumbs} title={title} actions={headerActions} />
+      {tabs}
       {/* ⚠️ overflow-hidden 제거: 푸터 sticky가 뷰포트 기준으로 달라붙으려면 조상에 scrollport가 없어야 한다.
           가로 클리핑은 이미 각 children이 자체 overflow-x:auto 래퍼로 책임진다(asset_funding=overflow-x-auto+min-w,
           AG Grid=내부 스크롤). 카드 모서리 클리핑은 푸터가 하단 모서리를 직접 라운딩해 보완. */}
