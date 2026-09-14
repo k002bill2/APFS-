@@ -3,7 +3,7 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(검색기준+검색어·사용여부)  → 주 필터 1개 = 사용여부 FilterChip(툴바 좌) + 상세필터 드로어(검색어·검색기준). 검색어 opt-in(SEARCHABLE).
-   - 좌 코드구분 목록 ⟷ 우 선택 코드구분의 코드상세(master-detail) → GridFrame 하나 안에 2단 그리드(lg 이상 좌 420px / 우 잔여, 좁으면 세로 적층).
+   - 좌 코드구분 목록 ⟷ 우 선택 코드구분의 코드상세(master-detail) → GridFrame 하나 안에 2단 그리드(lg 이상 좌 440px / 우 잔여, 좁으면 세로 적층).
        각 패널은 자체 헤더 바(제목·건수·패널 액션)와 AG Grid 를 갖는다. 좌 선택(라디오)이 우측 데이터 소스를 정한다.
        우측은 코드구분 미선택이면 **empty state**(목업 overlay '좌측에서 코드구분을 선택해 주세요.')를 그리드 대신 그린다.
    - 그룹/상세 각각 등록·수정·삭제(목업 lg-·rg- 접두 버튼)  → 툴바 RegisterCombo(코드구분 등록, ⌘⏎) + 패널 바 액션(수정·삭제·코드 등록).
@@ -22,7 +22,7 @@ import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame } from './grid_frame';
-import { apfsTheme, FIT_GRID_WIDTH, DEFAULT_COL_DEF } from './aggrid_theme';
+import { apfsTheme, FIT_GRID_WIDTH, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -59,18 +59,18 @@ const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 
 type GroupView = CodeGroup & { upName: string; count: number };
 const GROUP_COLS: ColDef<GroupView>[] = [
-  { field: 'code', headerName: '코드구분', width: 104, minWidth: 90, maxWidth: 130, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
+  { field: 'code', headerName: '코드구분', width: 100, minWidth: 84, maxWidth: 120, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
   /* 코드구분명이 남는 폭을 흡수(maxWidth 없음 + FIT_GRID_WIDTH) */
-  { field: 'name', headerName: '코드구분명', width: 160, minWidth: 120, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'up', headerName: '상위코드구분', width: 118, maxWidth: 140, cellStyle: muted,
+  { field: 'name', headerName: '코드구분명', width: 150, minWidth: 100, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
+  { field: 'up', headerName: '상위코드구분', width: 126, minWidth: 118, maxWidth: 150, cellStyle: muted,
     cellRenderer: (p: any) => (p.value ? <MT>{`${p.value} (${p.data.upName})`}</MT> : <span>-</span>) },
-  { field: 'use', headerName: '사용여부', width: 88, maxWidth: 88, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} size="md" /> },
-];
+  { field: 'use', headerName: '사용여부', width: 90, minWidth: 90, maxWidth: 90, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} size="md" /> },
+];   // minWidth 합 392 ≤ 패널 폭(440-라디오 44) — FIT_GRID_WIDTH 축소가 헤더를 잘라먹지 않는 하한
+/* 우측 코드상세는 9컬럼이라 패널 폭(≈800px)을 넘는다 → 내용 맞춤(AUTO_SIZE_CONTENT) + 그리드 내부 가로 스크롤(apfs-aggrid "넓은 다열 테이블"). 긴 텍스트만 maxWidth 캡 */
 const DETAIL_COLS: ColDef<CodeDetail>[] = [
   { headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'code', headerName: '코드', width: 90, maxWidth: 120, cellStyle: flexMid, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
-  /* 코드명이 남는 폭을 흡수 */
-  { field: 'name', headerName: '코드명', width: 180, minWidth: 130, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
+  { field: 'name', headerName: '코드명', width: 180, minWidth: 130, maxWidth: 320, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'en', headerName: '코드명(영문)', width: 140, maxWidth: 200, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
   { field: 'ord', headerName: '정렬', width: 64, maxWidth: 64, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'rem', headerName: '비고', width: 170, maxWidth: 240, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
@@ -418,8 +418,8 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
         {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
       </>}>
 
-      {/* master-detail 2단 — lg 이상 좌 420px 고정·우 잔여, 미만은 세로 적층(responsive-ui 체크 3). 각 패널은 min-w-0 로 그리드 내부 스크롤을 보존 */}
-      <div className="grid grid-cols-1 lg:grid-cols-[420px_minmax(0,1fr)]">
+      {/* master-detail 2단 — lg 이상 좌 440px 고정·우 잔여, 미만은 세로 적층(responsive-ui 체크 3). 각 패널은 min-w-0 로 그리드 내부 스크롤을 보존 */}
+      <div className="grid grid-cols-1 lg:grid-cols-[440px_minmax(0,1fr)]">
         <section aria-label="코드구분 목록" className="min-w-0 lg:border-r border-border">
           <PaneBar title="코드구분 " count={groupViews.length}>
             {curG && (
@@ -469,7 +469,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
               columnDefs={DETAIL_COLS}
               getRowId={(p) => p.data.id}
               domLayout="autoHeight"
-              autoSizeStrategy={FIT_GRID_WIDTH}
+              autoSizeStrategy={AUTO_SIZE_CONTENT}
               defaultColDef={DEFAULT_COL_DEF}
               rowSelection={DETAIL_SELECTION}
               selectionColumnDef={SELECTION_COL}
