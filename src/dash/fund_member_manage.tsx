@@ -1,4 +1,4 @@
-/* 자펀드별조합원관리 — 관리형 리스트 페이지 (투자자산관리 > 자펀드 관리 > 자펀드별조합원관리).
+/* 자펀드별조합원조회 — 관리형 리스트 페이지 (투자자산관리 > 자펀드 관리 > 자펀드별조합원조회).
    출처: S1_18_자펀드별조합원관리.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
@@ -453,8 +453,8 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
       if (ws[a]) ws[a].z = '#,##0';
     }));
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.wch }));
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '자펀드별조합원관리');
-    XLSX.writeFile(wb, '자펀드별조합원관리.xlsx');
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '자펀드별조합원조회');
+    XLSX.writeFile(wb, '자펀드별조합원조회.xlsx');
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -463,8 +463,8 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '자펀드 관리', '자펀드별조합원관리']}
-      title="자펀드별조합원관리"
+      crumbs={['홈', '투자자산관리', '자펀드 관리', '자펀드별조합원조회']}
+      title="자펀드별조합원조회"
       favRoute="fund-member"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(계정구분) + 적용 중인 드로어 값 칩. 행 선택이 없어 selbar는 존재하지 않는다. */

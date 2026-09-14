@@ -1,4 +1,4 @@
-/* 투자심의관리 — 관리형 리스트 페이지 (투자자산관리 > 사후보고관리 > 투자심의 관리).
+/* 투심보고 확정 및 승인 — 관리형 리스트 페이지 (투자자산관리 > 사후보고관리 > 투심보고 확정 및 승인).
    출처: S1_01_투자심의관리.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
@@ -362,8 +362,8 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       if (ws[a]) ws[a].z = '#,##0';
     }));
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '자펀드' ? 30 : c.num ? 16 : 14 }));
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '투자심의관리');
-    XLSX.writeFile(wb, '투자심의관리.xlsx');
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '투심보고 확정 및 승인');
+    XLSX.writeFile(wb, '투심보고 확정 및 승인.xlsx');
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -385,9 +385,9 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '사후보고관리', '투자심의 관리']}
-      title="투자심의 관리"
-      cardTitle="투자심의 관리"
+      crumbs={['홈', '투자자산관리', '사후보고관리', '투심보고 확정 및 승인']}
+      title="투심보고 확정 및 승인"
+      cardTitle="투심보고 확정 및 승인"
       favRoute="investment-review"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={selected ? (

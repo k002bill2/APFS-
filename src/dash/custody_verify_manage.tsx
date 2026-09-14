@@ -1,4 +1,4 @@
-/* 자펀드수탁관리(실물검증) — 관리형 리스트 페이지 (투자자산관리 > 자펀드 관리 > 자펀드수탁관리(실물검증)).
+/* 자펀드 수탁관리 — 관리형 리스트 페이지 (투자자산관리 > 자펀드 관리 > 자펀드 수탁관리).
    출처: S1_26_자펀드수탁관리_실물검증_.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
@@ -481,14 +481,14 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
       ws['!cols'] = keys.map((k) => ({ wch: WIDE_KEYS.has(k) ? 30 : numKeys.has(k) ? 16 : 12 }));
       XLSX.utils.book_append_sheet(wb, ws, name);
     }
-    XLSX.writeFile(wb, '자펀드수탁관리(실물검증).xlsx');
+    XLSX.writeFile(wb, '자펀드 수탁관리.xlsx');
     toast.success('Excel로 내보냈습니다');
   };
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '자펀드 관리', '자펀드수탁관리(실물검증)']}
-      title="자펀드수탁관리(실물검증)"
+      crumbs={['홈', '투자자산관리', '자펀드 관리', '자펀드 수탁관리']}
+      title="자펀드 수탁관리"
       favRoute="custody-verify"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 적용 중인 드로어 값 칩. 주 필터(FilterChip 그룹)는 없다 — 목업 검색박스가 자펀드·기준일 2개뿐이고

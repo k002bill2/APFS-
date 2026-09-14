@@ -1,4 +1,4 @@
-/* 조합원정보등록 — 관리형 리스트 페이지 (투자자산관리 > 자펀드 관리 > 조합원정보등록).
+/* 조합원정보조회 — 관리형 리스트 페이지 (투자자산관리 > 자펀드 관리 > 조합원정보조회).
    출처: S1_15_조합원정보등록.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
@@ -341,8 +341,8 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === 'NO' ? 6 : c.header === '주소' ? 44 : c.header === '조합원' ? 28 : 22 }));
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '조합원정보등록');
-    XLSX.writeFile(wb, '조합원정보등록.xlsx');
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '조합원정보조회');
+    XLSX.writeFile(wb, '조합원정보조회.xlsx');
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -351,8 +351,8 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '자펀드 관리', '조합원정보등록']}
-      title="조합원정보등록"
+      crumbs={['홈', '투자자산관리', '자펀드 관리', '조합원정보조회']}
+      title="조합원정보조회"
       favRoute="member-info"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 — 주 필터 칩이 없는 화면이다(검색박스 유일 항목인 모펀드가 행과 미연동).

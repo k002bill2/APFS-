@@ -1,4 +1,4 @@
-/* 투자실적 현황(자펀드) — 투자자산관리 > 자펀드 관리 > 투자실적 현황(자펀드).
+/* 자펀드 투자실적현황 — 투자자산관리 > 자펀드 관리 > 자펀드 투자실적현황.
    출처: S1_24_투자실적_현황_자펀드_.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
@@ -520,7 +520,7 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
     ws['!cols'] = keys.map((k) => ({ wch: k === 'metric' ? 16 : k === 'y' ? 10 : 14 }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, view);
-    XLSX.writeFile(wb, `투자실적 현황(자펀드)_${view}_${unit}.xlsx`);
+    XLSX.writeFile(wb, `자펀드 투자실적현황_${view}_${unit}.xlsx`);
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -529,8 +529,8 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '자펀드 관리', '투자실적 현황(자펀드)']}
-      title="투자실적 현황(자펀드)"
+      crumbs={['홈', '투자자산관리', '자펀드 관리', '자펀드 투자실적현황']}
+      title="자펀드 투자실적현황"
       favRoute="fund-invest-status"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(투자실적구분 4뷰, 단일 선택). 드로어 항목이 전부 noop이라 적용 칩은 없다. */
