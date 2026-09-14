@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR:-/Users/younghwankang/Work/APFS}/.claude/hooks/skill-activator.sh\" \"$PROMPT\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/skill-activator.sh\" \"$PROMPT\""
           }
         ]
       }
@@ -49,7 +49,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR:-/Users/younghwankang/Work/APFS}/.claude/hooks/pre-compact-reminder.sh\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact-reminder.sh\""
           }
         ]
       }
@@ -60,7 +60,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR:-/Users/younghwankang/Work/APFS}/.claude/hooks/block-main-write.sh\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-main-write.sh\""
           }
         ]
       }

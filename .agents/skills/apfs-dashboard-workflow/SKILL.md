@@ -5,7 +5,7 @@ description: Use when changing the APFS dashboard UI, routes, menu data, dashboa
 
 # APFS Dashboard Workflow
 
-Use this skill for APFS dashboard work in `/Users/younghwankang/Work/APFS`.
+Use this skill for APFS dashboard work in this repository. Never hard-code an absolute checkout path — the working folder name differs per device, and a stale path silently targets a different checkout.
 
 ## Required Context
 
