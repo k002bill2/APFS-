@@ -1,0 +1,40 @@
+import type { PageSchema } from './types';
+
+export const schema: PageSchema = {
+  route: '자펀드별조합원관리',
+  title: '자펀드별조합원관리',
+  kind: 'list',
+  entity: '조합원',
+  columns: [
+    { key: 'no',              label: 'No',          type: 'number', align: 'center' },
+    { key: 'gp',              label: '운용사',      type: 'gp',     align: 'left' },
+    { key: 'subFund',         label: '자펀드',      type: 'text',   align: 'left' },
+    { key: 'accountType',     label: '계정구분',    type: 'text',   align: 'center' },
+    { key: 'registeredAt',    label: '등록일',      type: 'date',   align: 'center' },
+    { key: 'fundAmount',      label: '결성액',      type: 'amount', unit: '원', align: 'right' },
+    { key: 'member',          label: '조합원',      type: 'text',   align: 'left' },
+    { key: 'memberType',      label: '조합원구분',  type: 'text',   align: 'center' },
+    { key: 'memberCategory',  label: '조합원유형',  type: 'text',   align: 'center' },
+    { key: 'initCommit',      label: '최초 출자약정액', type: 'amount', unit: '원', align: 'right' },
+    { key: 'finalCommit',     label: '최종 출자약정액', type: 'amount', unit: '원', align: 'right' },
+    { key: 'note',            label: '비고',        type: 'text',   align: 'left' },
+    { key: 'hasTx',           label: '출자배분 거래유무', type: 'status', align: 'center' },
+  ],
+  fields: [
+    { key: 'gp',             label: '운용사',   control: 'text' },
+    { key: 'subFund',        label: '자펀드',   control: 'text' },
+    { key: 'member',         label: '조합원',   control: 'text', required: true },
+    { key: 'memberType',     label: '조합원구분', control: 'select', options: ['일반', '전략적 투자자', '정책금융'] },
+    { key: 'memberCategory', label: '조합원유형', control: 'select', options: ['농금원', '농협', '민간LP', '기타'] },
+    { key: 'initCommit',     label: '최초 출자약정액', control: 'number' },
+    { key: 'finalCommit',    label: '최종 출자약정액', control: 'number' },
+    { key: 'note',           label: '비고',     control: 'textarea' },
+  ],
+  filters: ['운용사', '자펀드', '계정구분'],
+  hideCardView: true,
+  provenance: {
+    capturedAt: '2026-09-12',
+    sourceSystem: 'FFMS',
+    captureFile: '/Users/younghwankang/Downloads/통합/01_투자자산관리/S1_18_자펀드별조합원관리.html',
+  },
+};
