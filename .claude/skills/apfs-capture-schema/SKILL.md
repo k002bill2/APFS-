@@ -1,32 +1,40 @@
 ---
 name: apfs-capture-schema
-description: 현행시스템 화면 캡처(이미지)에서 실제 컬럼·필드·값도메인을 추출해 src/dash/schemas/<route>.ts(PageSchema)로 동결하고, 스키마 주도 GenericListPage에 배선하는 절차. 페이지를 캡처 기반 도메인 데이터/양식으로 만들 때 사용.
+description: 현행시스템 목업 HTML(+`*_spec.json`) 또는 화면 캡처에서 실제 컬럼·필드·값도메인을 추출해 src/dash/schemas/<route>.ts(PageSchema)로 동결하고, 스키마 주도 GenericListPage에 배선하는 절차. 단일 헤더·flat 필드·단순 CRUD 화면을 페이지 코드 0줄로 만들 때 사용. 이름의 capture 는 연혁이며 실제 주 입력은 목업 HTML이다. Use when freezing a simple list/form screen into a PageSchema from a mockup HTML or a screen capture.
 ---
 
 # apfs-capture-schema
 
-현행시스템 캡처 → 검수된 정적 PageSchema → 스키마 주도 페이지. 추측 금지, 캡처 실측이 진실.
+출처(목업 HTML 또는 캡처) → 검수된 정적 PageSchema → 스키마 주도 페이지. 추측 금지, **출처 실측이 진실**.
 
 ## 입력
-- 캡처 이미지 경로 1~5장 (예: /tmp/apfs_caps/<SYS>/word/media/imageN.png)
+- **1순위 — 목업 HTML** + 형제 `*_spec.json` (예: `S1_30_투자기업정보.html`). **현재 동결된 스키마 대부분이 이 경로다.**
+- 2순위 — 화면 캡처 이미지 1~5장 (예: `/tmp/apfs_caps/<SYS>/word/media/imageN.png`). 목업이 없을 때만.
 - 대상 메뉴 리프 label (미지정 시 추출 후 매핑 제안)
 
+> ⚠️ **스킬 이름의 `capture`는 연혁이다** (이미지 전용이던 시절의 잔재, 2026-09-14 실측으로 정정).
+> **입력 매체는 트랙을 가르지 않는다** — 노선을 가르는 건 목업 복잡도다(→[[apfs-manage-page]] 0절).
+> 목업이 HTML이어도 단일 헤더·flat 필드·단순 CRUD면 이 스키마 트랙으로 온다. 전용 `.tsx`를 쓰지 않는다.
+
 ## SOP
-1. **분류**: 캡처를 flat-list / form / complex(조건부·중첩 헤더·대사표) 로 분류.
+1. **분류**: 출처를 flat-list / form / complex(조건부·중첩 헤더·대사표) 로 분류.
    complex면 즉시 중단하고 "전용 typed 페이지(risk.tsx식)로 escalate" 안내 — 스키마 트랙 밖.
-2. **추출(비전 1패스)**: Read로 이미지 열람.
+2. **추출(1패스)**: 매체에 따라 **읽는 법이 갈리고, 추출 항목은 같다**.
+   - **목업 HTML**: Read로 파일 전체. `<table>`의 `thead`/`th` → `columns[]`, 조회 영역 `<input>`/`<select>` → `filters`, 팝업·폼 컨트롤 → `fields[]`, `<tbody>` 실제 행 → `sample`. 하단 `<script>`에 DATA 배열이 있으면 **그게 값도메인 정본**이다. 형제 `*_spec.json`이 있으면 그쪽이 우선.
+   - **캡처 이미지**: Read로 이미지 열람(비전). OS 파일다이얼로그 오버레이·가로스크롤 잘림 영역은 제외하고 플래그.
+
+   추출 항목(공통):
    - 상단 조회 컨트롤 → `filters`
    - 표 컬럼 → `columns[]`: type 매핑(금액→amount, 비율/변동→rate, 날짜→date, 상태/등급→status(+statusDomain), 운용사/기관→gp, **영숫자 코드/ID→code**, **주민번호/계좌→pii**, 그 외→text), `unit`/`align`/중첩이면 `group`
    - 입력 컨트롤 → `fields[]`: control 매핑(textarea/file/select(+options)/date/checkbox/readonly)
    - 1~2행 → 샘플 인지용. 목업의 **실제 행을 그대로 노출**해야 하면 `sample: SampleRow[]`(키=column/field key)로 저장(부재 시 런타임 합성 더미)
    - **KPI 행 후보** → 카드헤더 KPI 배지 후보를 **추출만** 해 둔다(전체 건수 + 도메인별 2지표 후보, 예: 계정구분 농식품/수산). ⚠️ 스키마에 바로 넣지 말 것 — 포함 여부는 2.5단계 HITL에서 결정한다. 규약은 [[apfs-grid]] "KPI 배지 행".
-   - OS 파일다이얼로그 오버레이·가로스크롤 잘림 영역은 제외하고 플래그
 2.5. **HITL — KPI 배지 행 포함 여부(필수)**: 동결(3단계) 전에 `AskUserQuestion`으로 카드헤더 KPI 배지 행을 넣을지 묻는다. 헤더="KPI 배지", 질문="이 페이지 카드헤더에 KPI 배지 행을 넣을까요?", 옵션(2단계 추출 후보를 실제 값으로 채워 제시):
    - **미포함 (Recommended)** — 새 기본값. 헤더 슬롯 비움.
    - **전체 건수만** — `countKpis:[{전체 건수}]`.
    - **전체 + 구분별 2지표** — 추출한 status/category 컬럼의 `column`/`value` 쌍으로 3배지.
    답에 따라 3단계 동결 시 스키마에 반영: **미포함 → `hideKpis: true`**(금액 컬럼이 있어도 제네릭 금액 KPI 폴백을 확실히 끈다) · 포함 → `countKpis` 배열. 결정은 `provenance` 옆 주석(예: `// KPI: 미포함(HITL 2026-..)`)으로 남겨 재실행 시 재질문을 피한다. 규약 근거는 [[apfs-grid]] "KPI 배지 행".
-3. **검수·동결**: 추출 결과를 캡처 이미지와 1회 대조 → `provenance{capturedAt,sourceSystem,captureFile}` 채움 → 2.5단계 HITL 결정(`countKpis`/`hideKpis`) 반영 → `src/dash/schemas/<route>.ts`로 저장(parsePageSchema/zod 통과 필수).
+3. **검수·동결**: 추출 결과를 **출처(목업 HTML 또는 캡처)와 1회 대조** → `provenance{capturedAt,sourceSystem,captureFile}` 채움 — `captureFile`에는 **실제로 읽은 파일 경로**를 넣는다(`.html` 목업 경로도 그대로) → 2.5단계 HITL 결정(`countKpis`/`hideKpis`) 반영 → `src/dash/schemas/<route>.ts`로 저장(parsePageSchema/zod 통과 필수).
 4. **충돌검사·배선**: 라벨이 중복 리프면 data.ts에 `path` 부여(필수) 후 그 path를 route로. schemas/index.ts의 ALL 배열에 import 추가(중복키면 buildRegistry가 빌드에러).
 5. **검증**: `npm test`(스키마 zod) + `npm run build` + `npm run dev` 시각 확인(라이트/다크) + responsive-ui 체크.
 

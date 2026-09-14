@@ -31,9 +31,10 @@
     },
     {
       "skillName": "apfs-bundle",
-      "priority": "critical",
+      "_status": "archived 2026-09-14 — 대상 파일이 커밋 5fb2dfa로 삭제됨. priority를 critical→low로 내리고 키워드를 레거시 번들 고유어로 좁혔다. 이전 키워드의 html/artifact/자산/asset/template/blob 은 ASCII 단어경계 매칭이라 'html'만 있어도 매 턴 CRITICAL로 떴다.",
+      "priority": "low",
       "enforcement": "suggest",
-      "keywords": ["번들", "bundle", "manifest", "template", "gzip", "base64", "자산", "asset", "인코딩", "디코드", "decode", "encode", "blob", "omelette", "artifact", "html", "html 파일"],
+      "keywords": ["레거시 번들", "오프라인 번들", "자가완결", "omelette", "gzip", "base64"],
       "intentPatterns": ["(edit|modify|patch|수정|편집|고치).*(번들|bundle|manifest|template|html|자산|asset)"]
     },
     {

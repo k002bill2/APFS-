@@ -1,12 +1,29 @@
 ---
 name: apfs-bundle
-description: APFS 대시보드 단일 HTML 번들(omelette/Artifact 포맷)의 자산을 안전하게 추출·수정·재인코딩하는 절차. 번들/manifest/template/자산(JS·이미지)·gzip·base64 편집이 필요할 때 사용. Use when extracting, editing, or re-encoding the self-contained dashboard HTML bundle.
+description: "[아카이브] 구 APFS 단일 HTML 번들(omelette/Artifact 포맷)의 gzip+base64 자산을 추출·재인코딩하는 절차. ⚠️ 대상 파일 2종은 커밋 5fb2dfa로 저장소에서 삭제됐다 — 현행 작업에는 쓰지 않는다. git 이력에서 옛 번들을 꺼내 '읽어야' 할 때만 사용하고, 화면 추가·수정은 src/ 의 Vite 소스에서 한다. ARCHIVED: the bundle this describes no longer exists in the tree; use only to read an old bundle out of git history."
 ---
 
 # APFS 번들 편집 스킬
 
-## 언제 쓰나
-`농식품모태펀드 대시보드 (오프라인).html` 안의 앱 로직/자산을 고쳐야 할 때. 이 파일은 사람이 직접 읽는 소스가 **아니라** 자가완결 번들이며, 단순 텍스트 검색/치환으로는 거의 수정할 수 없다.
+## ⚠️ 아카이브 전용 (2026-09-14)
+
+> **대상 파일이 저장소에 없다.** `농식품모태펀드 대시보드 (오프라인).html` · `농식품모태펀드 대시보드.html` 2종은
+> 커밋 `5fb2dfa`("레거시 오프라인 대시보드 번들 2종 제거")로 삭제됐다.
+> 2026-06 Vite 마이그레이션 이후 정본은 `src/dash/*.tsx` 이며, 화면 작업은 전부 그쪽이다.
+
+**쓰는 경우 — 이것뿐이다.** git 이력에 남은 옛 번들을 꺼내 **읽어야** 할 때:
+
+```bash
+git show 5fb2dfa^:"농식품모태펀드 대시보드 (오프라인).html" > /tmp/old-bundle.html
+```
+
+그 다음 아래 "디코드 레시피"로 내용을 확인한다. 번들 구조·레시피 절은 이 목적을 위해 보존한다.
+
+**쓰지 않는 경우.** 화면 추가·수정, 버그 수정, 디자인 변경 — 전부 `src/`에서 한다(→[[dashboard-ui]]).
+번들을 되살려 재인코딩하지 않는다. 재인코딩 레시피는 과거 산출물을 재현해야 할 때만 유효하다.
+
+## (참고) 원래 용도
+이 파일은 사람이 직접 읽는 소스가 **아니라** 자가완결 번들이며, 단순 텍스트 검색/치환으로는 거의 수정할 수 없다.
 
 ## 번들 구조 (편집 전 필수 이해)
 4개의 특수 `<script>` 태그로 구성된다.

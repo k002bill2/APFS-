@@ -186,4 +186,4 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
 - 바깥 양식(GridFrame): [[apfs-grid]] — `import { GridFrame, KpiBadge } from './grid_frame';`. props: `crumbs·title·cardTitle·kpis·toolbarLeft/Right·footerLeft/Center/Right`(toolbar/pager prop을 발명하지 말 것).
 - 수정/등록 모달: [[apfs-form-modal]]
 - 상세필터 드로어: [[apfs-detail-filter]]
-- 색 토큰: [[color-tokens]] · 반응형: [[responsive-ui]] · 캡처→스키마: [[apfs-capture-schema]]
+- 색 토큰: [[color-tokens]] · 반응형: [[responsive-ui]] · 출처→스키마: [[apfs-capture-schema]]
