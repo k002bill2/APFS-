@@ -99,6 +99,11 @@ const NOTIFS = [
 
 // RBAC 역할 (3등급)
 // LNB — PRD 부록A 전체 메뉴 체계 (대분류→중분류→메뉴 3단계)
+/* LNB 메뉴 트리 — 현행시스템 메뉴 구조표(2026-09-14 캡처) 1:1 정본.
+   대분류 7(+대시보드 리프 1) / 중분류 34 / 리프 141.
+   ⚠️ nav 키 규약: leaf.path || leaf.label (data.ts ALLMENU·shell flattenMenu·generic_list findMenuContext 공통).
+   라벨이 구조표와 달라진 리프는 label만 구조표에 맞추고 기존 nav 키를 path:로 고정한다
+   — 스키마 route(schemas/*.ts)와 app.tsx 분기 문자열은 손대지 않는다. */
 const MENU = [
   { id:"home", label:"대시보드", icon:"home", path:"main", roles:["admin","manager","viewer"] },
 
@@ -107,61 +112,53 @@ const MENU = [
       { label:"자펀드 공고 정보관리" },
       { label:"모태펀드 조성 및 출자현황", path:"asset-funding" },
     ]},
+    { label:"조합관리", sub:true, children:[
+      { label:"자펀드정보관리" },
+      { label:"조합원정보조회", path:"member-info" },
+      { label:"자펀드별조합원조회", path:"fund-member" },
+    ]},
     { label:"사후보고관리", sub:true, children:[
-      { label:"투자심의 관리", path:"investment-review" },
-      { label:"수시보고", path:"occasional-report" },
+      { label:"투심보고 확정 및 승인", path:"investment-review" },
+      { label:"투심보고 통계" },
+      { label:"내부 투자심의 구성관리" },
+      { label:"체크리스트 관리" },
+      { label:"수시보고 확인", path:"occasional-report" },
       { label:"정기보고", path:"regular-report" },
       { label:"조합원총회", path:"general-meeting" },
-      { label:"조합예상자금 정보보고", path:"fund-cash-forecast" },
-      { label:"보고양식관리", path:"report-form" },
-      { label:"보고 업데이트정보", path:"report-update-info" },
+      { label:"조합예상자금요청보고", path:"fund-cash-forecast" },
     ]},
     { label:"자펀드 관리", sub:true, children:[
       { label:"자펀드 관리", path:"subfund" },
-      // 자펀드 관리 8리프(2026-09-12 typed 페이지 전환, S1_14~S1_27) — path는 app.tsx 분기와 1:1, 구 한글 route는 ROUTE_ALIAS로 승격
-      { label:"(운용사)출자배분관리", path:"gp-contribution" },
-      { label:"조합원정보등록", path:"member-info" },
-      { label:"자펀드별조합원관리", path:"fund-member" },
-      { label:"(농금원)출자배분관리", path:"apfs-contribution" },
-      { label:"투자실적 현황(자펀드)", path:"fund-invest-status" },
-      { label:"종합통계", path:"fund-stats" },
-      { label:"자펀드수탁관리(실물검증)", path:"custody-verify" },
-      { label:"자펀드수탁관리(확정)", path:"custody-confirm" },
-    ]},
-    { label:"통계", sub:true, children:[
-      { label:"투심승인정보조회" },
-      { label:"정기보고회수내역" },
+      { label:"출자/분배조회(자펀드)", path:"gp-contribution" },
+      { label:"출자/분배조회(농금원)", path:"apfs-contribution" },
+      { label:"자펀드 투자실적현황", path:"fund-invest-status" },
+      { label:"자펀드 수탁관리", path:"custody-verify" },
+      { label:"종합통계(확정)", path:"fund-stats" },
     ]},
     { label:"투자기업정보", sub:true, children:[
-      { label:"투자기업정보" },
-      { label:"투자기업정보(전체)", path:"투자기업정보(통합)" },
-      { label:"투자기업 고용현황보고" },
+      { label:"투자기업정보(통합)" },
+      { label:"투자기업명세서(통합)" },
+      { label:"투자기업고용현황(통합)", path:"투자기업 고용현황보고" },
       { label:"전체 투자실적" },
-      { label:"투자실적 현황(투자기업)" },
+      { label:"투자실적현황(투자기업)", path:"투자실적 현황(투자기업)" },
       { label:"투자금 회수현황" },
-      { label:"투자및회수상세정보" },
-      { label:"운용사별 재무제표" },
+      { label:"우수투자기업 관리" },
     ]},
-    { label:"모니터링", sub:true, children:[
+    { label:"운용사 모니터링", sub:true, children:[
+      { label:"운용사 명세서" },
       { label:"운용사 재무정보 조회" },
-      { label:"투자금 실사보고" },
-      { label:"사후관리기록", path:"사후관리기록 관리" },
-      { label:"관리보수관리" },
-      { label:"전체 보고현황" },
-    ]},
-    { label:"관리자", sub:true, children:[
-      { label:"사용자관리" },
-      { label:"공통코드관리" },
-      { label:"메뉴관리" },
-      { label:"일일보고 전송관리" },
+      { label:"투자금 실사보고 조회", path:"투자금 실사보고" },
+      { label:"사후관리기록 관리" },
+      { label:"관리보수/성과보수 조회", path:"관리보수관리" },
+      { label:"자펀드 전체 보고현황", path:"전체 보고현황" },
     ]},
   ]},
 
   { id:"risk", label:"조기경보", icon:"shield-alert", badge:14, urgent:true, roles:["admin","manager","viewer"], children:[
     { label:"조기경보", sub:true, badge:9, children:[
+      { label:"조기경보 관리", path:"risk-manage" },
       { label:"운용사별 조기경보 조회" },
       { label:"자펀드별 조기경보 조회" },
-      { label:"조기경보 조회", path:"risk-manage" },
       { label:"법률/규약위반사항 관리" },
       { label:"운용사 주주변동관리" },
       { label:"운용사 소송관리" },
@@ -170,22 +167,15 @@ const MENU = [
       { label:"조기경보 전월 비교 조회" },
     ]},
     { label:"기업정보", sub:true, children:[
-      { label:"투자기업정보(전체)" },
-      { label:"기업개요" },
-      { label:"업체사업장정보" },
-      { label:"법정관리및화의정보" },
-      { label:"현금흐름등급" },
-      { label:"신용등급" },
+      { label:"투자기업정보(NICE평가정보)" },
+      { label:"투자기업신용정보 조회" },
     ]},
-    { label:"기초정보", sub:true, children:[
+    { label:"자펀드정보", sub:true, children:[
       { label:"운용사 정량지표 관리" },
-      { label:"자펀드 정보 관리" },
+      { label:"운용사 유형별 정량지표 변동 조회" },
       { label:"운용사 재무정보 비교 조회" },
       { label:"자펀드 수익률정보 비교 조회" },
-    ]},
-    { label:"통계정보", sub:true, children:[
-      { label:"운용사 유형별 정량지표 변동" },
-      { label:"종합등급 변동" },
+      { label:"자펀드 종합등급 변동 조회" },
     ]},
     { label:"가치평가", sub:true, children:[
       { label:"모태펀드 가치평가 결과조회" },
@@ -199,20 +189,43 @@ const MENU = [
       { label:"투자기업별 IRR" },
       { label:"자펀드별 IRR" },
     ]},
-    { label:"관리자", sub:true, children:[
-      { label:"메뉴 관리" },
-      { label:"사용자권한 관리" },
-      { label:"공통코드 관리" },
-      { label:"도움말 관리" },
-    ]},
   ]},
 
   { id:"gp", label:"자펀드 보고", icon:"building", roles:["admin","manager","viewer"], children:[
-    { label:"업로드", sub:true, children:[
-      { label:"보고 파일 조회" },
+    { label:"운영기관정보", sub:true, children:[
+      { label:"운용사별 공통코드 정보" },
+      { label:"운용사 정보" },
+      { label:"운용사 인력현황" },
+      { label:"공통GP펀드별 인력현황" },
+      { label:"운용사 계정과목" },
+      { label:"운용사 재무보고" },
+      { label:"운용사 정량지표 보고내역" },
     ]},
-    { label:"일일보고조회", sub:true, children:[
-      { label:"조합별 수시보고 현황" },
+    { label:"조합정보", sub:true, children:[
+      { label:"조합정보" },
+      // 투자자산관리>조합관리에 같은 라벨이 있어 nav 키 충돌 — 이쪽에만 고유 path 부여(브레드크럼 오매칭 방지)
+      { label:"조합원정보조회", path:"gp-report/조합원정보조회" },
+      { label:"조합 투자운용인력" },
+      { label:"조합 월별/반기별 보고현황" },
+      { label:"조합 재무현황" },
+      { label:"조합 계좌현황" },
+      { label:"조합Call 요청일정 및 보고" },
+      { label:"조합 출자/분배 현황" },
+      { label:"조합원 총회" },
+      { label:"조합 관리보수 및 성과보수 내역" },
+      { label:"조합 수시보고 내역" },
+      { label:"조합 유가증권 투자현황(상장주식)" },
+    ]},
+    { label:"투자자산", sub:true, children:[
+      { label:"투자기업 정보" },
+      { label:"투자기업 고용현황(반기별)" },
+      { label:"투자기업 재무정보" },
+      { label:"투자기업 주주명부" },
+      { label:"투자자금 실사보고" },
+      { label:"프로젝트 정보" },
+      { label:"투자기업 투심현황" },
+      { label:"투자 약정정보" },
+      { label:"투자 거래정보" },
     ]},
     { label:"월간보고조회", sub:true, children:[
       { label:"조합별 월간보고 현황" },
@@ -222,6 +235,9 @@ const MENU = [
     ]},
     { label:"실물검증", sub:true, children:[
       { label:"조합별 실물검증 결과 보고" },
+    ]},
+    { label:"파일", sub:true, children:[
+      { label:"보고 파일 조회" },
     ]},
   ]},
 
@@ -266,17 +282,14 @@ const MENU = [
     { label:"등록원부", sub:true, children:[
       { label:"등록원부관리" },
     ]},
-    { label:"관리자", sub:true, children:[
-      { label:"사용자관리" },
-      { label:"사용자권한관리" },
-      { label:"사용자조합권한관리" },
-    ]},
   ]},
 
   { id:"trustee", label:"수탁보고", icon:"file-check", roles:["admin","manager"], children:[
     { label:"자펀드 수탁", sub:true, children:[
       { label:"실물자료관리(업로드)" },
       { label:"실물검증비교조회" },
+      { label:"유가증권관리(업로드)" },
+      { label:"유가증권비교조회" },
       { label:"공통코드조회" },
       { label:"자펀드코드 조회" },
     ]},
