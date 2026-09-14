@@ -304,10 +304,13 @@ const MENU = [
 
   { id:"admin", label:"관리자", icon:"settings", roles:["admin"], children:[
     { label:"시스템 관리", sub:true, children:[
-      { label:"공통코드 관리" },{ label:"메뉴 관리" },{ label:"도움말 관리" },
+      // typed 페이지 전환(2026-09-14, S0_106·S0_105) — 라벨은 구조표 그대로, nav 키만 path 로 고정.
+      // "프로그램 관리"는 구조표에 없던 리프 — 사용자 지시(이미지 IA: 시스템관리 첫 탭 = 프로그램관리)로 추가, 순서도 이미지 기준
+      // (프로그램 관리 → 공통코드 관리 → 메뉴 관리 → 도움말 관리). 근거: dev/active/system-admin-pages/BRIEF.md.
+      { label:"프로그램 관리", path:"program-manage" },{ label:"공통코드 관리", path:"code-manage" },{ label:"메뉴 관리", path:"menu-manage" },{ label:"도움말 관리" },
     ]},
     { label:"사용자 관리", sub:true, children:[
-      { label:"사용자 관리" },{ label:"사용자 권한 관리" },
+      { label:"사용자 관리" },{ label:"사용자 권한 관리", path:"user-permission-manage" },   // S0_102 typed 페이지
     ]},
     { label:"외부연동", sub:true, children:[
       { label:"자펀드 코드관리(운용사ERP&수탁기관)" },

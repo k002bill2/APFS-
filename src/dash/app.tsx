@@ -29,6 +29,11 @@ import { FundInvestStatus } from './fund_invest_status';                   // �
 import { FundStats } from './fund_stats';                                  // 종합통계(S1_25)
 import { CustodyVerifyManage } from './custody_verify_manage';             // 자펀드수탁관리(실물검증)(S1_26)
 import { CustodyConfirmManage } from './custody_confirm_manage';           // 자펀드수탁관리(확정)(S1_27)
+// 관리자 3리프(2026-09-14 typed 페이지 전환, AFIT 공통관리 S0_106·S0_105·S0_102). 동상 — GenericListPage 폴백 앞 분기
+import { CodeManage } from './code_manage';                                  // 공통코드 관리(S0_106, master-detail)
+import { MenuManage } from './menu_manage';                                  // 메뉴 관리(S0_105, 계층 트리)
+import { UserPermissionManage } from './user_permission_manage';             // 사용자 권한 관리(S0_102, 권한 매트릭스)
+import { ProgramManage } from './program_manage';                            // 프로그램 관리(S0_105 PROGRAMS 근거, 읽기 전용 목록)
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -59,6 +64,12 @@ const ROUTE_ALIAS: Record<string, string> = {
   "종합통계": "fund-stats",
   "자펀드수탁관리(실물검증)": "custody-verify",
   "자펀드수탁관리(확정)": "custody-confirm",
+  // 관리자 3리프(2026-09-14 typed 페이지 전환, S0_106·S0_105·S0_102) — 리프에 path 부여 전 잔존 한글 route(구조표 라벨)와
+  // 브리프가 지정한 짧은 한글 별칭(코드관리·메뉴관리·권한관리) 모두 승격
+  "공통코드 관리": "code-manage", "코드관리": "code-manage",
+  "메뉴 관리": "menu-manage", "메뉴관리": "menu-manage",
+  "사용자 권한 관리": "user-permission-manage", "권한관리": "user-permission-manage",
+  "프로그램 관리": "program-manage", "프로그램관리": "program-manage",
   asset: "main", risk: "main", "gp-health": "main",
   accounting: "main", report: "main", "report-sutack": "main",
 };
@@ -156,6 +167,10 @@ function App() {
   else if (route === "fund-stats") page = <FundStats onNav={onNav} />;
   else if (route === "custody-verify") page = <CustodyVerifyManage onNav={onNav} />;
   else if (route === "custody-confirm") page = <CustodyConfirmManage onNav={onNav} />;
+  else if (route === "code-manage") page = <CodeManage onNav={onNav} />;
+  else if (route === "menu-manage") page = <MenuManage onNav={onNav} />;
+  else if (route === "user-permission-manage") page = <UserPermissionManage onNav={onNav} />;
+  else if (route === "program-manage") page = <ProgramManage onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "editor") page = <EditorPage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
