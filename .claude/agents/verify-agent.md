@@ -31,8 +31,10 @@ tools: Read, Grep, Glob, Bash
 ```
 
 ## APFS 프로젝트 메모
-이 저장소는 npm/번들러/테스트 러너가 없다. 따라서 "테스트 실행" 대신 다음을 검증 수단으로 쓴다:
+Vite + React 18 + TypeScript SPA다. **빌드·테스트 러너가 있으니 반드시 실행한다** — `npm run build`(vite, exit 0 이어야 함) · `npm test`(vitest).
+`tsc --noEmit`은 타입 에러를 다수 보고하지만 `vite build`는 green이다(esbuild는 타입체크를 하지 않고 `tsconfig`도 `strict:false`) — 기존 타입 에러를 실패로 보고하지 말고 **이 변경이 새로 낸 것만** 본다.
+빌드 green ≠ 동작이므로 런타임은 `npm run dev` 후 브라우저로 확인하고 콘솔 에러 0·라이트/다크를 본다.
+보조 수단:
 - `settings.json`/`skill-rules.json` → `jq . <file>` 파싱.
 - hook 스크립트 → `bash -n <script>` 문법검사 + 직접 실행으로 출력 확인.
-- 대시보드 HTML → 파일 존재/크기, `<script type="__bundler/manifest">` 등 핵심 태그 존재, 필요 시 `open`으로 브라우저 로드 확인(수동).
 settings.json hook 변경은 **세션 재시작 후** 적용된다는 점을 검증 한계로 보고하라.

@@ -32,4 +32,4 @@ tools: Read, Grep, Glob
 - 불확실성은 숨기지 않고 표기한다.
 
 ## APFS 프로젝트 메모
-산출물은 단일 자가완결 HTML 번들이며, template이 16개 `<script>`(React/ReactDOM dev, lucide, Babel + 자체 앱 모듈)를 참조한다. 앱 모듈은 `(function(w){…})(window)` 패턴으로 `window`에 컴포넌트를 노출하고 다음 모듈이 받아 쓰는 **순서 의존** 구조다. 설계 검토 시: (1) 번들 직접 패치보다 원본 재생성이 안전, (2) 모듈 로드 순서(React→ReactDOM→Babel) 보존, (3) 디자인 토큰은 CSS 변수 기반 — 이 제약들을 반영하라.
+Vite + React 18 + TypeScript SPA다. `src/dash/*.tsx`는 표준 **ES 모듈**로 서로 `import`/`export` 한다 — 구 `(function(w){…})(window)` 전역 IIFE와 로드 순서 의존은 2026-06 마이그레이션으로 사라졌다. 설계 검토 시 반영할 제약: (1) 신규 화면은 **트랙 분기**를 먼저 판단한다 — 단순하면 `schemas/<route>.ts`+`GenericListPage`(페이지 코드 0줄), 2단 헤더·합계행·단계별 액션·섹션 모달이 있으면 전용 `.tsx`(`.claude/skills/apfs-manage-page` 0절). (2) 디자인 토큰은 `tokens.css` CSS 변수 기반이며 hex 하드코딩은 금지. (3) 백엔드가 없으므로 데이터 계층 설계는 더미 스키마 범위다.

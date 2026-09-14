@@ -49,4 +49,4 @@ Data Integrity · Transparency · Harm Prevention · Respect Boundaries · Hones
 ```
 
 ## APFS 프로젝트 메모
-이 저장소는 단일 HTML 번들(`농식품모태펀드 대시보드 (오프라인).html`)이 산출물이다. 빌드/백엔드/테스트 러너가 없고, 번들 자산은 gzip+base64로 인코딩돼 있다. 번들 수정 작업을 배분할 때는 `apfs-bundle` 스킬의 디코드/재인코드 절차를 반드시 따르도록 지시하라.
+이 저장소는 Vite + React 18 + TypeScript SPA다 — 소스 `src/dash/*.tsx`, 빌드 산출물 `dist/`. 백엔드·인증이 없고 데이터는 더미(`data.ts`·`schemas/*.ts`)다. 작업을 배분할 때 **완료 기준에 `npm run build`(exit 0)와 `npm test`를 포함**시키고, 화면 작업은 `.claude/skills/`의 영역별 스킬(`apfs-grid`·`apfs-aggrid`·`apfs-form-modal`·`apfs-manage-page` 등)을 따르도록 지시하라. ⚠️ 구 오프라인 HTML 번들 2종은 커밋 `5fb2dfa`로 삭제됐다 — `apfs-bundle` 절차로 작업을 보내지 않는다(그 스킬은 아카이브 전용).
