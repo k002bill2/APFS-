@@ -20,7 +20,10 @@ export type DetailPopup = typeof DETAIL_POPUPS[number];
 // **값이 그것과 같은 행만** 링크가 되고 나머지는 평상 셀이다(예: 보고구분 '월간보고'만 상세가 있는 정기보고).
 // 선언이 없는 스키마는 종전과 동일하게 동작한다(opt-in).
 export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; }
-export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; }
+// note: 라벨 옆 ⚠검토필요 마커(목업 `.review` data-rec/data-dat 원문). RowFormModal이 Field 라벨에 ReviewMarker로 렌더한다.
+// 설계 메모라 마스킹·엑셀 대상이 아니며, 문구는 목업 원문 그대로(창작 금지 — apfs-grid "검토필요 마커").
+export interface ReviewNoteSpec { rec: string; dat: string; }
+export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; note?: ReviewNoteSpec; }
 export interface KpiSpec { key: string; label: string; icon: string; color: string; from: 'sum'|'avg'|'rate'; column: string; }
 // 건수형 KPI — 금액 집계가 아닌 행 카운트. column+value 있으면 그 값과 일치하는 행 수, 없으면 전체 건수.
 export interface CountKpiSpec { label: string; icon: string; color: string; column?: string; value?: string; }
@@ -61,6 +64,7 @@ const ColumnZ = z.object({
 const FieldZ = z.object({
   key: z.string(), label: z.string(), control: z.enum(FIELD_CONTROLS),
   required: z.boolean().optional(), options: z.array(z.string()).optional(), pii: z.boolean().optional(),
+  note: z.object({ rec: z.string(), dat: z.string() }).optional(),
 });
 const KpiZ = z.object({ key: z.string(), label: z.string(), icon: z.string(), color: z.string(), from: z.enum(['sum','avg','rate']), column: z.string() });
 const ProvenanceZ = z.object({ capturedAt: z.string(), sourceSystem: z.string(), captureFile: z.string(), sourceUrl: z.string().optional() });
