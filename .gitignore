@@ -32,3 +32,13 @@ apfs-design-handoff.zip
 
 # impeccable 디자인 훅 로컬 캐시 (config·hook.cache — 로컬 산출물)
 .impeccable/
+
+# 타 에이전트 런타임용 스킬 미러 (.claude/skills/ 에서 생성 — 정본은 .claude/skills/)
+# ※ .agents/skills/apfs-dashboard-workflow/ 는 .claude 미러가 아닌 원본이라 이미 추적 중(계속 추적됨)
+.agents/skills/
+
+# Codex 서브에이전트 정의 (로컬 하네스 산출물 — .codex/config.toml·hooks.json 은 추적 정본)
+.codex/agents/
+
+# 스킬 안내도 HTML (세션 산출물 — 저장소 미추적)
+docs/skills-new-screen-architecture.html
