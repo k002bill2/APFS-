@@ -118,14 +118,15 @@ const MENU = [
     ]},
     { label:"자펀드 관리", sub:true, children:[
       { label:"자펀드 관리", path:"subfund" },
-      { label:"(운용사)출자배분관리" },
-      { label:"조합원정보등록" },
-      { label:"자펀드별조합원관리" },
-      { label:"(농금원)출자배분관리" },
-      { label:"투자실적 현황(자펀드)" },
-      { label:"종합통계" },
-      { label:"자펀드수탁관리(실물검증)" },
-      { label:"자펀드수탁관리(확정)" },
+      // 자펀드 관리 8리프(2026-09-12 typed 페이지 전환, S1_14~S1_27) — path는 app.tsx 분기와 1:1, 구 한글 route는 ROUTE_ALIAS로 승격
+      { label:"(운용사)출자배분관리", path:"gp-contribution" },
+      { label:"조합원정보등록", path:"member-info" },
+      { label:"자펀드별조합원관리", path:"fund-member" },
+      { label:"(농금원)출자배분관리", path:"apfs-contribution" },
+      { label:"투자실적 현황(자펀드)", path:"fund-invest-status" },
+      { label:"종합통계", path:"fund-stats" },
+      { label:"자펀드수탁관리(실물검증)", path:"custody-verify" },
+      { label:"자펀드수탁관리(확정)", path:"custody-confirm" },
     ]},
     { label:"통계", sub:true, children:[
       { label:"투심승인정보조회" },

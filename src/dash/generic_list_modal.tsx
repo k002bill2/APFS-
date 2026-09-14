@@ -7,6 +7,8 @@ import { SchemaField } from './schemas/renderers';
 import type { PageSchema } from './schemas/types';
 import { buildRow } from './schemas/build_row';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { ReviewMarker } from './review_marker';
+import type { ReviewNoteSpec } from './schemas/types';
 
 const { useState } = React;
 const { Button } = UI;
@@ -49,11 +51,13 @@ const DOC_MAX_CHARS = 3 * 1024 * 1024;
 //    B 버튼이 클릭돼 toggleBold가 발화한다(빈 문단에 bold가 박혀 "B가 켜진 채 안 꺼짐"). 그래서 <div>로 감싼다.
 //    (네이티브 단일 컨트롤은 <label> 암묵 연결이 정상·접근성 이점이 있어 그대로 둔다. 에디터는 자체 aria-label 보유.)
 /* 배열: 라벨 위·컨트롤 아래(세로 적층, 기존 유지 — 2026-09-08 inline 시안은 사용자 원복). 컨트롤 폭은 renderers.tsx base가 fit-content로 결정. */
-function Field({ label, children, errMsg, className, plain }: { label: string; children: React.ReactNode; errMsg?: string; className?: string; plain?: boolean }) {
+// note: FieldSpec.note → 라벨 옆 ⚠검토필요 마커(공용 ReviewMarker). 트리거가 <span role=button>이라 <label> 안에서도
+//   암묵 연결을 가로채지 않는다(review_marker.tsx 주석). 접근名은 마커가 `${label} 검토필요 메모 보기`로 만든다.
+function Field({ label, children, errMsg, className, plain, note }: { label: string; children: React.ReactNode; errMsg?: string; className?: string; plain?: boolean; note?: ReviewNoteSpec }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className={`block mb-3.5 ${className ?? ''}`}>
-      <span className="font-semibold text-caption block" style={labelStyle}>{label}</span>
+      <span className="font-semibold text-caption block" style={labelStyle}>{label}{note && <ReviewMarker {...note} label={label} />}</span>
       {children}
       {errMsg && (
         <span role="alert" className="text-danger block mt-1" style={{ fontSize: 11.5 }}>
@@ -131,6 +135,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
                   label={f.label + (f.required ? ' *' : '')}
                   className={span2 ? "sm:col-span-2" : undefined}
                   plain={complex || f.control === "radio"}
+                  note={f.note}
                   errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
                   <SchemaField
                     field={f}

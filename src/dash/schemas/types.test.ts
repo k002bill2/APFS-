@@ -42,3 +42,13 @@ describe('parsePageSchema', () => {
     expect(parsePageSchema(withAttach).columns[0].attachFrom).toBe('attachment');
   });
 });
+
+describe('FieldSpec.note(검토필요 메모)', () => {
+  it('fields[].note(rec/dat)를 보존한다 — RowFormModal 라벨 옆 ⚠마커 배선(2026-09-12)', () => {
+    const withNote = { ...valid, fields: [{ key: 'mem', label: '조합원', control: 'text', note: { rec: '원장에서 선택', dat: '옵션 미확인' } }] };
+    expect(parsePageSchema(withNote).fields[0].note).toEqual({ rec: '원장에서 선택', dat: '옵션 미확인' });
+  });
+  it('note는 rec·dat 둘 다 있어야 한다', () => {
+    expect(() => parsePageSchema({ ...valid, fields: [{ key: 'mem', label: '조합원', control: 'text', note: { rec: 'x' } }] })).toThrow();
+  });
+});

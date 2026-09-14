@@ -20,6 +20,15 @@ import { GeneralMeetingManage } from './general_meeting_manage';         // 조�
 import { FundCashForecastManage } from './fund_cash_forecast_manage';    // 조합예상자금 정보보고(S1_08). 동상
 import { ReportFormManage } from './report_form_manage';                 // 보고양식관리(S1_09). 동상
 import { ReportUpdateInfoManage } from './report_update_info_manage';    // 보고 업데이트정보(S1_10). 동상
+// 자펀드 관리 8리프(2026-09-12 typed 페이지 전환, S1_14~S1_27). 동상 — GenericListPage 폴백 앞 분기
+import { GpContributionManage } from './gp_contribution_manage';           // (운용사)출자배분관리(S1_14)
+import { MemberInfoManage } from './member_info_manage';                   // 조합원정보등록(S1_15)
+import { FundMemberManage } from './fund_member_manage';                   // 자펀드별조합원관리(S1_18)
+import { ApfsContributionManage } from './apfs_contribution_manage';       // (농금원)출자배분관리(S1_21)
+import { FundInvestStatus } from './fund_invest_status';                   // 투자실적 현황(자펀드)(S1_24)
+import { FundStats } from './fund_stats';                                  // 종합통계(S1_25)
+import { CustodyVerifyManage } from './custody_verify_manage';             // 자펀드수탁관리(실물검증)(S1_26)
+import { CustodyConfirmManage } from './custody_confirm_manage';           // 자펀드수탁관리(확정)(S1_27)
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -41,6 +50,15 @@ const ROUTE_ALIAS: Record<string, string> = {
   "조합예상자금 정보보고": "fund-cash-forecast",
   "보고양식관리": "report-form",
   "보고 업데이트정보": "report-update-info",
+  // 자펀드 관리 8리프(2026-09-12 typed 페이지 전환, S1_14~S1_27) — 리프에 path 부여 전 잔존 한글 route 승격
+  "(운용사)출자배분관리": "gp-contribution",
+  "조합원정보등록": "member-info",
+  "자펀드별조합원관리": "fund-member",
+  "(농금원)출자배분관리": "apfs-contribution",
+  "투자실적 현황(자펀드)": "fund-invest-status",
+  "종합통계": "fund-stats",
+  "자펀드수탁관리(실물검증)": "custody-verify",
+  "자펀드수탁관리(확정)": "custody-confirm",
   asset: "main", risk: "main", "gp-health": "main",
   accounting: "main", report: "main", "report-sutack": "main",
 };
@@ -130,6 +148,14 @@ function App() {
   else if (route === "fund-cash-forecast") page = <FundCashForecastManage onNav={onNav} />;
   else if (route === "report-form") page = <ReportFormManage onNav={onNav} />;
   else if (route === "report-update-info") page = <ReportUpdateInfoManage onNav={onNav} />;
+  else if (route === "gp-contribution") page = <GpContributionManage onNav={onNav} />;
+  else if (route === "member-info") page = <MemberInfoManage onNav={onNav} />;
+  else if (route === "fund-member") page = <FundMemberManage onNav={onNav} />;
+  else if (route === "apfs-contribution") page = <ApfsContributionManage onNav={onNav} />;
+  else if (route === "fund-invest-status") page = <FundInvestStatus onNav={onNav} />;
+  else if (route === "fund-stats") page = <FundStats onNav={onNav} />;
+  else if (route === "custody-verify") page = <CustodyVerifyManage onNav={onNav} />;
+  else if (route === "custody-confirm") page = <CustodyConfirmManage onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "editor") page = <EditorPage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
