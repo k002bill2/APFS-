@@ -78,7 +78,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 
 ## 리스트 vs 매트릭스 — 어떤 children인가
 - **리스트**(항목 CRUD): 단일 헤더 + 체크박스 + 행 액션. 툴바=필터칩/선택, 푸터=건수+페이지네이션+뷰토글. 스키마 주도면 `generic_list.tsx`/PageSchema 트랙.
-- **매트릭스/집계**(조회전용): 2단 중첩헤더(`colSpan`/`rowSpan`)+합계행. 체크박스·CRUD·페이지네이션 없음. 툴바=컨텍스트 설명+새로고침, 푸터=건수. 캡처가 중첩헤더면 `apfs-capture-schema` SOP가 이쪽으로 escalate한다.
+- **매트릭스/집계**(조회전용): 2단 중첩헤더(`colSpan`/`rowSpan`)+합계행. 체크박스·CRUD·페이지네이션 없음. 툴바=컨텍스트 설명+새로고침, 푸터=건수. 출처(목업 HTML·캡처)가 중첩헤더면 `apfs-capture-schema` SOP가 이쪽으로 escalate한다.
 
 ## 사용 예 (asset_funding 실증)
 ```tsx
@@ -210,4 +210,4 @@ suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab',
 ## 참조
 - UI/디자인 시스템 전반: [[dashboard-ui]]
 - 반응형 체크리스트·검증: [[responsive-ui]]
-- 캡처→매트릭스 escalate 경로: [[apfs-capture-schema]]
+- 출처→매트릭스 escalate 경로: [[apfs-capture-schema]]

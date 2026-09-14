@@ -1,4 +1,4 @@
-/* (운용사)출자배분관리 — 관리형 리스트 페이지 (투자자산관리 > 자펀드 관리 > (운용사)출자배분관리).
+/* 출자/분배조회(자펀드) — 관리형 리스트 페이지 (투자자산관리 > 자펀드 관리 > 출자/분배조회(자펀드)).
    출처: S1_14__운용사_출자배분관리.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
@@ -409,8 +409,8 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
     }));
     ws['!merges'] = merges;
     ws['!cols'] = keys.map((k) => ({ wch: k === 'fn' ? 30 : k === 'gp' ? 18 : NUM_KEYS.has(k) ? 17 : 12 }));
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '운용사출자배분관리');
-    XLSX.writeFile(wb, '(운용사)출자배분관리.xlsx');
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '출자·분배조회(자펀드)');
+    XLSX.writeFile(wb, '출자·분배조회(자펀드).xlsx');
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -419,8 +419,8 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '자펀드 관리', '(운용사)출자배분관리']}
-      title="(운용사)출자배분관리"
+      crumbs={['홈', '투자자산관리', '자펀드 관리', '출자/분배조회(자펀드)']}
+      title="출자/분배조회(자펀드)"
       favRoute="gp-contribution"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(출자/배분) + 적용 중인 드로어 값 칩. 행 선택이 없어 selbar는 존재하지 않는다. */
@@ -493,7 +493,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
             <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">(운용사)출자배분관리 목록을 거르는 상세 필터</SheetDescription>
+            <SheetDescription className="sr-only">출자/분배조회(자펀드) 목록을 거르는 상세 필터</SheetDescription>
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>

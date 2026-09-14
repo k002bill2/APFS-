@@ -1,8 +1,8 @@
-/* 조합예상자금 정보보고 — 조회형 리스트 페이지 (투자자산관리 > 사후보고관리 > 조합예상자금 정보보고).
+/* 조합예상자금요청보고 — 조회형 리스트 페이지 (투자자산관리 > 사후보고관리 > 조합예상자금요청보고).
    출처: S1_08_조합예상자금보고.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 타이틀                → ⚠ 목업 h1은 '조합예상자금요청보고'지만 **메뉴 리프 라벨 '조합예상자금 정보보고'**를 쓴다
+   - 타이틀                → 메뉴 리프 라벨 '조합예상자금요청보고' (2026-09-14 메뉴 개편으로 목업 h1과 일치하게 됨)
                              (apfs-grid "타이틀=메뉴 리프" 규약 — crumbs 리프·title·favRoute 모두 리프 기준).
    - 검색박스(모펀드·운용사·자펀드·계정구분·담당자·기준년월)
                            → 계정구분 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter).
@@ -371,8 +371,8 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
     }));
     ws['!merges'] = merges;
     ws['!cols'] = keys.map((k) => ({ wch: k === 'fn' ? 28 : k === 'gp' ? 22 : MONEY.has(k) ? 16 : 12 }));
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '조합예상자금 정보보고');
-    XLSX.writeFile(wb, `조합예상자금_정보보고_${unit}.xlsx`);
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '조합예상자금요청보고');
+    XLSX.writeFile(wb, `조합예상자금요청보고_${unit}.xlsx`);
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -381,8 +381,8 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '사후보고관리', '조합예상자금 정보보고']}
-      title="조합예상자금 정보보고"
+      crumbs={['홈', '투자자산관리', '사후보고관리', '조합예상자금요청보고']}
+      title="조합예상자금요청보고"
       favRoute="fund-cash-forecast"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(계정구분, 목업 검색박스의 chipGroup) + 적용 중인 드로어 값 칩(운용사·자펀드).
@@ -457,7 +457,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
             <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">조합예상자금 정보보고 목록을 거르는 상세 필터</SheetDescription>
+            <SheetDescription className="sr-only">조합예상자금요청보고 목록을 거르는 상세 필터</SheetDescription>
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>

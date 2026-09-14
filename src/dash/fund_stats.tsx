@@ -1,4 +1,4 @@
-/* 종합통계 — 읽기전용 통계 페이지 (투자자산관리 > 자펀드 관리 > 종합통계).
+/* 종합통계(확정) — 읽기전용 통계 페이지 (투자자산관리 > 자펀드 관리 > 종합통계(확정)).
    출처: S1_25_종합통계.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
@@ -462,8 +462,8 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
     }));
     ws['!merges'] = merges;
     ws['!cols'] = keys.map((k) => ({ wch: k === 'fund' ? 34 : k === 'fld' ? 16 : MONEY.has(k) ? 15 : 12 }));
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '종합통계');
-    XLSX.writeFile(wb, `종합통계_${unit}.xlsx`);
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '종합통계(확정)');
+    XLSX.writeFile(wb, `종합통계(확정)_${unit}.xlsx`);
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -473,8 +473,8 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '자펀드 관리', '종합통계']}
-      title="종합통계"
+      crumbs={['홈', '투자자산관리', '자펀드 관리', '종합통계(확정)']}
+      title="종합통계(확정)"
       favRoute="fund-stats"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(연도기준). 목업 select가 결성/선정 2개뿐이라 '전체' 칩은 없다.
@@ -539,7 +539,7 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
             <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">종합통계 조회 조건을 정하는 상세 필터</SheetDescription>
+            <SheetDescription className="sr-only">종합통계(확정) 조회 조건을 정하는 상세 필터</SheetDescription>
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>

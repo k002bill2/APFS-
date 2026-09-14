@@ -30,4 +30,4 @@ tools: Read, Grep, Glob, Bash
 ```
 
 ## APFS 프로젝트 메모
-산출물은 단일 HTML 번들이다. 실제 앱 코드는 `__bundler/manifest`(gzip+base64) 와 `__bundler/template`(JSON-escape된 HTML) 안에 있어 평범한 텍스트 검색으로는 안 보인다. 번들 내부를 분석하려면 `CLAUDE.md`/`apfs-bundle` 스킬의 디코드 레시피(Python)로 자산을 꺼낸 뒤 읽어야 한다. 이 점을 보고에 반드시 반영하라.
+Vite + React 18 + TypeScript SPA다. 앱 코드는 `src/dash/*.tsx`에 **평문 ES 모듈**로 있으므로 `grep`·`glob`이 그대로 통한다 — 구 번들처럼 gzip+base64를 풀어야 보이는 구조가 아니다(그 번들 2종은 커밋 `5fb2dfa`로 삭제됨). 탐색 시작점: 라우팅·테마는 `app.tsx`, 셸·메뉴는 `shell.tsx`+`data.ts`, 스키마 주도 화면은 `schemas/*.ts`+`generic_list.tsx`, 전용 화면은 `<domain>_manage.tsx`.

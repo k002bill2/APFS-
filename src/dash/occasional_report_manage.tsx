@@ -1,4 +1,4 @@
-/* 수시보고 — 관리형 리스트 페이지 (투자자산관리 > 사후보고관리 > 수시보고).
+/* 수시보고 확인 — 관리형 리스트 페이지 (투자자산관리 > 사후보고관리 > 수시보고 확인).
    출처: S1_04_수시보고.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
@@ -406,8 +406,8 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '제목' ? 42 : c.header === '자펀드' ? 28 : 14 }));
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '수시보고');
-    XLSX.writeFile(wb, '수시보고.xlsx');
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '수시보고 확인');
+    XLSX.writeFile(wb, '수시보고 확인.xlsx');
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -416,8 +416,8 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '사후보고관리', '수시보고']}
-      title="수시보고"
+      crumbs={['홈', '투자자산관리', '사후보고관리', '수시보고 확인']}
+      title="수시보고 확인"
       favRoute="occasional-report"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌는 항상 필터칩이다 — 행 선택(체크박스)을 없앤 2026-09-12 이후 selbar가 존재하지 않는다.
@@ -487,7 +487,7 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
             <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">수시보고 목록을 거르는 상세 필터</SheetDescription>
+            <SheetDescription className="sr-only">수시보고 확인 목록을 거르는 상세 필터</SheetDescription>
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>

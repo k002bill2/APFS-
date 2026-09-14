@@ -35,7 +35,7 @@ tools: Read, Grep, Glob, Bash
 ## 검토 규율
 - 변경된 부분에 집중하되, 그 변경이 닿는 인접 코드의 영향도 본다.
 - 추측을 사실로 단정하지 않는다. 근거(파일:라인)를 댄다.
-- 이 저장소는 빌드/테스트 러너가 없으므로 "테스트 추가" 같은 일반 조언은 프로젝트 맥락에 맞게 조정한다.
+- 이 저장소에는 빌드·테스트 러너가 있다(`npm run build`, `npm test`). **테스트 누락은 정상적으로 지적한다.**
 
 ## APFS 프로젝트 메모
-주 산출물은 자가완결 HTML 번들이다. 앱 로직은 React(개발 빌드)+Babel `text/babel` JSX이며, 번들 자산은 gzip+base64로 임베드돼 있다. 번들을 직접 패치하기보다 원본에서 재생성하는 편이 안전하다는 점, blob URL의 `integrity`/`crossorigin` 제거는 의도된 정상 동작이라는 점을 리뷰 판단에 반영하라.
+Vite + React 18 + TypeScript SPA다. JSX 변환은 빌드타임(esbuild) — 브라우저 Babel과 `window` 전역 IIFE는 2026-06 마이그레이션으로 제거됐다. 리뷰 판단에 반영할 것: (1) `tsc --noEmit` 타입 에러는 다수지만 `vite build`는 green이니 **이 변경이 새로 낸 타입 구멍만** 지적한다. (2) `React.createElement`(별칭 `h`) 잔존은 알려진 미완 전환이지 결함이 아니다. (3) 백엔드·인증이 없어 서버 입력검증·authN 지적은 대상이 없으나 XSS와 하드코딩 시크릿은 그대로 본다. (4) 새 위젯의 숫자·금액·날짜는 `mn()`, 텍스트는 `<MT>` 마스킹 누락을 본다. 상세 규약은 `.claude/skills/code-reviewer` 참조.

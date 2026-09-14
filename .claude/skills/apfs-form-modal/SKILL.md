@@ -66,7 +66,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 export const schema: PageSchema = {
   route: '투자기업정보(통합)', title: '투자기업정보(통합)', kind: 'form', entity: '투자기업',
   columns: [ /* 리스트 표시 컬럼(type: text|code|amount|date|status|gp …) */ ],
-  fields: [  /* 모달 양식 — 캡처 실측 순서대로 */
+  fields: [  /* 모달 양식 — 출처 실측 순서대로 */
     { key: 'gp',        label: '운용사',  control: 'readonly' },
     { key: 'baseDate',  label: '기준일',  control: 'date', required: true },
     { key: 'overseas',  label: '해외기업', control: 'radio', options: ['Y', 'N'] },
@@ -79,7 +79,7 @@ export const schema: PageSchema = {
   provenance: { capturedAt: '2026-06-29', sourceSystem: 'FFMS', captureFile: '…png' },
 };
 ```
-- `columns`(리스트 표시) ≠ `fields`(모달 입력) — 분리. `fields`는 **캡처 실측 순서**를 따른다(→[[apfs-capture-schema]]).
+- `columns`(리스트 표시) ≠ `fields`(모달 입력) — 분리. `fields`는 **출처 실측 순서**를 따른다(목업 HTML의 폼 순서 또는 캡처 순서, →[[apfs-capture-schema]]).
 - ⚠️ `kind:'form'`이어도 **`columns`·`provenance`는 `PageSchemaZ` 필수**(optional 아님) — 폼 페이지도 리스트 컬럼과 출처를 선언해야 zod 통과.
 - 전용 `email`/`tel` 컨트롤은 **없다** → `control: 'text'`로 두고(형식 검증 필요하면 별도). 없는 control을 발명하면 `PageSchemaZ.parse` 실패.
 - `route`/`title`이 라벨로 유일하면 route=라벨로 자동 해결. 새 스키마는 `schemas/index.ts`의 `ALL` 배열에 등록.
@@ -147,5 +147,5 @@ export const schema: PageSchema = {
 - 리스트 더블클릭 진입·그리드 본체: [[apfs-aggrid]]
 - 조립 SOP(목업→관리 페이지): [[apfs-manage-page]] · 단계 전이: [[apfs-stage-workflow]]
 - 페이지 바깥 양식: [[apfs-grid]]
-- 캡처→스키마 동결: [[apfs-capture-schema]]
+- 출처→스키마 동결: [[apfs-capture-schema]]
 - 색 토큰: [[color-tokens]] · 반응형: [[responsive-ui]]

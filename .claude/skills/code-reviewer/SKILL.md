@@ -49,8 +49,14 @@ description: 품질·보안·유지보수성 코드 리뷰. PR/변경/병합 전
 2. 추측이 아니라 근거(파일:라인)로 말한다.
 3. 결정/무시한 경고는 이유를 기록.
 
-## APFS 맥락
-- 주 산출물은 자가완결 HTML 번들. 앱 로직은 React(dev)+Babel JSX, 자산은 gzip+base64 임베드.
-- blob URL의 `integrity`/`crossorigin` 제거는 **의도된 정상 동작**(file:// null origin) — 보안 결함으로 오판하지 말 것.
-- 빌드/테스트 러너가 없으므로 "테스트 추가" 류 일반 조언은 프로젝트 현실에 맞게 조정.
-- 관련: 번들 편집 절차는 [[apfs-bundle]], UI/디자인 규약은 [[dashboard-ui]] 스킬 참조.
+## APFS 맥락 (2026-09-14 실측 갱신 — 이 절이 낡으면 리뷰 품질이 직접 깎인다)
+
+- **Vite + React 18 + TypeScript SPA.** JSX 변환은 빌드타임(esbuild). 브라우저 Babel·`window` 전역 IIFE·gzip+base64 자산 임베드는 2026-06 마이그레이션으로 **전부 제거**됐다.
+- **빌드·테스트 러너가 있다.** `npm run build`(vite, exit 0이어야 함) · `npm test`(vitest, 테스트 파일 7개). ⚠️ "러너가 없으니 테스트 조언은 접는다"는 **옛 서술이며 거짓**이다 — 테스트 누락은 정상적으로 지적한다.
+- **`tsc --noEmit`은 타입 에러를 다수 보고하지만 `vite build`는 green이다** (esbuild는 타입체크를 하지 않고 `tsconfig`도 `strict:false`). 기존 타입 에러의 존재 자체를 회귀로 보고하지 말고, **이 변경이 새로 낸 타입 구멍만** 지적한다.
+- **`React.createElement`(별칭 `h`) 잔존은 알려진 미완 전환이지 결함이 아니다.** `src/dash/*.tsx` 49개 중 6개만 남았다(`charts` `icons` `generic_list` `fund_stats` `apfs_contribution_manage` `fund_cash_forecast_manage`). "JSX로 바꿔라"는 그 파일을 이미 손대는 PR에서만 유효하다.
+- **백엔드·인증이 없다.** 데이터는 더미(`src/dash/data.ts`, `src/dash/schemas/*.ts`). 서버 입력검증·authN/authZ·세션·SQL 류 지적은 **대상이 없다**. 반면 XSS(`dangerouslySetInnerHTML`·`innerHTML`)와 하드코딩 시크릿은 그대로 본다.
+- **데이터 마스크 규약**: 새 위젯의 숫자·금액·날짜는 `mn(v)`, 텍스트는 `<MT>`로 감쌌는지 확인한다. 현재 `mask.tsx`의 `_on = false`라 pass-through지만, **누락은 재활성 시 평문 누출**이다. 표 헤더·단위·탭·StatusBadge·차트 축은 비마스킹이 정상.
+- **레거시 오프라인 HTML 번들은 삭제됐다**(커밋 `5fb2dfa`). 옛 예외 규칙(`blob URL의 integrity/crossorigin 제거는 정상`)은 **적용 대상이 사라졌다**. [[apfs-bundle]] 스킬도 이 리뷰 경로와 무관하다.
+
+관련 규약(중복 지적 금지 — 정본은 각 스킬): UI·디자인 [[dashboard-ui]] · 색 토큰 [[color-tokens]] · 반응형 [[responsive-ui]] · 접근성 [[web-a11y]] · 레이어 [[z-index]]
