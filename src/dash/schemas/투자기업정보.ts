@@ -1,0 +1,51 @@
+/* 투자기업정보 — 투자기업정보 > 투자기업정보.
+   S1_30 참조. 투자기업 마스터 정보(기업명/대표자/사업자번호/주소 등) 관리. 상세조회 포함. */
+import type { PageSchema } from './types';
+
+export const schema: PageSchema = {
+  route: '투자기업정보',
+  title: '투자기업정보',
+  kind: 'list',
+  entity: '투자기업',
+  columns: [
+    { key: 'companyName',    label: '기업명',            type: 'text',   align: 'left' },
+    { key: 'companyNameEn',  label: '기업명(영문)',      type: 'text',   align: 'left' },
+    { key: 'ceo1',           label: '대표자1',           type: 'text',   align: 'left' },
+    { key: 'ceo1Birth',      label: '대표자1 생년월일',  type: 'pii',    align: 'center' },
+    { key: 'bizNo',          label: '사업자번호',        type: 'pii',    align: 'center' },
+    { key: 'corpNo',         label: '법인등록번호',      type: 'pii',    align: 'center' },
+    { key: 'sicCode',        label: '표준산업분류코드',  type: 'code',   align: 'center' },
+    { key: 'address',        label: '주소',              type: 'text',   align: 'left' },
+    { key: 'tel',            label: 'TEL',               type: 'pii',    align: 'center' },
+    { key: 'establishDate',  label: '설립일자',          type: 'date',   align: 'center' },
+    { key: 'employees',      label: '종업원수',          type: 'number', align: 'right' },
+    { key: 'ventureType',    label: '벤처유형',          type: 'text',   align: 'center' },
+    { key: 'ventureExpiry',  label: '벤처기간',          type: 'text',   align: 'center' },
+    { key: 'settlementMonth', label: '결산월',           type: 'text',   align: 'center' },
+    { key: 'closeDate',      label: '폐업일자',          type: 'date',   align: 'center' },
+  ],
+  fields: [
+    { key: 'companyName',   label: '기업명',         control: 'text', required: true },
+    { key: 'companyNameEn', label: '기업명(영문)',   control: 'text' },
+    { key: 'ceo1',          label: '대표자1',        control: 'text', required: true },
+    { key: 'ceo1Birth',     label: '대표자1 생년월일', control: 'date', pii: true },
+    { key: 'bizNo',         label: '사업자번호',     control: 'text', pii: true },
+    { key: 'corpNo',        label: '법인등록번호',   control: 'text', pii: true },
+    { key: 'sicCode',       label: '표준산업분류코드', control: 'text' },
+    { key: 'address',       label: '주소',           control: 'text' },
+    { key: 'tel',           label: 'TEL',            control: 'text', pii: true },
+    { key: 'establishDate', label: '설립일자',       control: 'date' },
+    { key: 'employees',     label: '종업원수',       control: 'number' },
+    { key: 'ventureType',   label: '벤처유형',       control: 'select', options: ['벤처기업', '이노비즈', '메인비즈', '비해당'] },
+    { key: 'settlementMonth', label: '결산월',       control: 'select', options: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'] },
+  ],
+  filters: ['운용사', '자펀드', '투자기업'],
+  searchable: true,
+  hideMetrics: true,
+  hideCardView: true,
+  provenance: {
+    capturedAt: '2026-09-12',
+    sourceSystem: 'FFMS',
+    captureFile: '/Users/younghwankang/Downloads/통합/01_투자자산관리/S1_30_투자기업정보.html',
+  },
+};

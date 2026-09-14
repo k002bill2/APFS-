@@ -1,0 +1,36 @@
+import type { PageSchema } from './types';
+
+export const schema: PageSchema = {
+  route: '운용사 재무정보 조회',
+  title: '운용사 재무정보 조회',
+  kind: 'list',
+  entity: '재무정보',
+  columns: [
+    { key: 'no',            label: 'No',         type: 'number', align: 'center' },
+    { key: 'gp',            label: '운용사명',   type: 'gp',     align: 'left' },
+    { key: 'gpType',        label: 'GP구분',     type: 'text',   align: 'center' },
+    { key: 'baseYm',        label: '기준년월',   type: 'text',   align: 'center' },
+    { key: 'currentAssets', label: '유동자산',   type: 'amount', unit: '원', align: 'right' },
+    { key: 'nonCurrentAssets', label: '비유동자산', type: 'amount', unit: '원', align: 'right' },
+    { key: 'totalAssets',   label: '자산총계',   type: 'amount', unit: '원', align: 'right' },
+    { key: 'currentLiab',   label: '유동부채',   type: 'amount', unit: '원', align: 'right' },
+    { key: 'nonCurrentLiab', label: '비유동부채', type: 'amount', unit: '원', align: 'right' },
+    { key: 'totalLiab',     label: '부채총계',   type: 'amount', unit: '원', align: 'right' },
+    { key: 'capital',       label: '자본금',     type: 'amount', unit: '원', align: 'right' },
+    { key: 'totalEquity',   label: '자본총계',   type: 'amount', unit: '원', align: 'right' },
+    { key: 'sales',         label: '매출액',     type: 'amount', unit: '원', align: 'right' },
+    { key: 'cogs',          label: '매출원가',   type: 'amount', unit: '원', align: 'right' },
+    { key: 'sga',           label: '일반관리비', type: 'amount', unit: '원', align: 'right' },
+    { key: 'ordinaryProfit', label: '경상이익',  type: 'amount', unit: '원', align: 'right' },
+    { key: 'netProfit',     label: '당기순이익', type: 'amount', unit: '원', align: 'right' },
+  ],
+  fields: [],
+  filters: ['운용사', '기준년월'],
+  searchable: true,
+  hideCardView: true,
+  provenance: {
+    capturedAt: '2026-09-12',
+    sourceSystem: 'FFMS',
+    captureFile: '/Users/younghwankang/Downloads/통합/01_투자자산관리/S1_38_운용사_재무정보_조회.html',
+  },
+};

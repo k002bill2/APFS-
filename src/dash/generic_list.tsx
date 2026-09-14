@@ -12,7 +12,8 @@ import { resolveSchema } from './schemas';
 import { Cell, AttachChips, controlMinWidth } from './schemas/renderers';   // controlMinWidth = 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { resolveFilterField, YEAR_OPTIONS } from './schemas/filter_field';
 import type { FilterField } from './schemas/filter_field';
-import type { PageSchema } from './schemas/types';
+import type { PageSchema, DetailPopup } from './schemas/types';
+import { MonthlyReportModal } from './monthly_report_modal';   // 읽기전용 상세 보고서 팝업(컬럼 detail 옵트인 스키마만)
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';   // kebab 트리거 툴팁(Provider는 app.tsx 루트)
 import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘⏎ 등록·⌘P 인쇄·⌥D 내보내기)
@@ -411,6 +412,29 @@ function rowMatchesFilters(row: Row, schema: PageSchema, filterValues: Record<st
   return true;
 }
 
+/* 상세 팝업 레지스트리 — 스키마의 detail 키 → 팝업 컴포넌트. 스키마는 키만 선언하고 매핑은 여기가 갖는다.
+   팝업은 읽기전용이라 props는 onClose 하나다(실데이터 연동 시 row를 넘기도록 확장). */
+const DETAIL_MODALS: Record<DetailPopup, (p: { onClose: () => void }) => React.ReactElement> = {
+  monthlyReport: MonthlyReportModal,
+};
+/* 링크 셀 title(동작 힌트) — 값은 절대 넣지 않는다(마스크 경계) */
+const DETAIL_HINT: Record<DetailPopup, string> = { monthlyReport: '월간보고 상세 보기' };
+
+/* 셀 안 링크 — 값 클릭으로 상세 팝업 진입. occasional_report_manage.tsx의 LinkCell 복사 관례.
+   ⚠ `title`엔 동작 힌트만 담는다 — 값을 넣으면 마스크 ON일 때 툴팁으로 실데이터가 샌다(마스크 경계는 툴팁까지).
+   ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다.
+   외관: primary + 600, 평상시 밑줄 없음 / hover에만 밑줄(목업 `.linktxt`). */
+function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
+  return (
+    <button
+      type="button" title={hint} onClick={onClick}
+      className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
+      style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
+      <MT>{value}</MT>
+    </button>
+  );
+}
+
 export function GenericListPage({ route, onNav }: { route: string; onNav: (r: string) => void }) {
   const { title, crumbs } = findMenuContext(route);
   const schema = resolveSchema(route);
@@ -429,6 +453,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const view = schema.hideCardView ? "list" : viewState;
   const [showAll, setShowAll] = useState(false);   // 전체보기 — 페이지 크기를 전체 행 수로 키워 한 페이지에 모두 표시
   const [modal, setModal] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null);
+  /* 상세 보고서 팝업 — 컬럼이 detail을 선언한 스키마만(정기보고 등). 편집 모달과 별개 상태다:
+     둘은 서로 다른 진입(셀 링크 vs 더블클릭)이고 동시에 열리지 않는다. */
+  const [detail, setDetail] = useState<DetailPopup | null>(null);
+  const detailCol = schema.columns.find((c) => c.detail);
+  // 이 행에서 상세가 열리는가 — detailWhen이 있으면 값이 같은 행만(예: 보고구분 '월간보고')
+  const hasDetail = (row: Row) =>
+    !!detailCol && (detailCol.detailWhen == null || String((row as Record<string, unknown>)[detailCol.key] ?? "") === detailCol.detailWhen);
   /* 상단 kebab 가시성 — 뷰포트에서 벗어나면(스크롤) 푸터 kebab 폴백을 노출(골드 subfund_manage 동형) */
   const topMoreRef = useRef<HTMLSpanElement>(null);
   const [topMoreVisible, setTopMoreVisible] = useState(true);
@@ -514,9 +545,17 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         ...(stretch ? { flex: 1, minWidth: 200, suppressAutoSize: true } : { minWidth: 110, maxWidth: 240 }),   // stretch면 잔여폭 흡수, 아니면 긴 텍스트 상한 캡
         type: right ? "rightAligned" : undefined,
         cellStyle: { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any, ...(right ? { justifyContent: "flex-end" } : {}) },
-        // attachFrom 컬럼(제목 등)은 값 뒤에 첨부 확장자 칩을 덧붙인다 — 첨부 전용 컬럼을 만들지 않는 표현 규약.
-        // 값(텍스트)은 min-w-0 + ellipsis로 줄고, 칩은 shrink-0이라 긴 제목에도 살아남는다.
-        cellRenderer: c.attachFrom
+        /* 렌더러 분기 3갈래:
+           ① detail 옵트인 컬럼 — 값이 detailWhen과 같은 셀만 링크가 되고 나머지는 평상 셀이다
+              (정기보고: 보고구분 '월간보고'만 상세 보고서가 있고 반기·연간은 없다 — 원문 목업 동작)
+           ② attachFrom 컬럼(제목 등) — 값 뒤에 첨부 확장자 칩을 덧붙인다(첨부 전용 컬럼을 만들지 않는 표현 규약).
+              값(텍스트)은 min-w-0 + ellipsis로 줄고, 칩은 shrink-0이라 긴 제목에도 살아남는다.
+           ③ 그 외 — 공용 Cell(마스킹 내장) */
+        cellRenderer: c.detail
+          ? (p: ICellRendererParams<Row>) => (c.detailWhen == null || String(p.value ?? "") === c.detailWhen
+              ? <LinkCell value={String(p.value ?? "")} hint={DETAIL_HINT[c.detail!]} onClick={() => setDetail(c.detail!)} />
+              : <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} />)
+          : c.attachFrom
           ? (p: ICellRendererParams<Row>) => (
               <span className="inline-flex items-center gap-2 min-w-0 max-w-full">
                 <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
@@ -597,7 +636,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   }, []);
 
   /* 앱-스코프 단축키 — 등록 ⌘⏎(편집 가능 + 모달 닫힘일 때만)·인쇄 ⌘P·내보내기 ⌥D. 힌트는 kebab의 DropdownMenuShortcut */
-  useHotkey(HOTKEYS.register.combo, () => setModal({ mode: 'create' }), { enabled: editable && modal === null && !filterOpen && ctx === null });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ mode: 'create' }), { enabled: editable && modal === null && detail === null && !filterOpen && ctx === null });
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
@@ -618,6 +657,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     if (!row || e.rowPinned) return;
     const ev = e.event as MouseEvent;
     const items: CtxItem[] = [];
+    // 원문 목록의 '상세조회' 버튼 대체 진입 — 액션 컬럼을 새로 만들지 않고 컨텍스트 메뉴에 둔다
+    if (detailCol && hasDetail(row)) items.push({ label: '상세조회', icon: 'search', onSelect: () => setDetail(detailCol.detail!) });
     if (editable) items.push({ label: '수정', icon: 'file', onSelect: () => setModal({ mode: 'edit', row }) });
     items.push({ label: '행 복사', icon: 'layers', onSelect: () => copyRow(row) });
     items.push({ label: 'Excel 내보내기', icon: 'download', onSelect: exportExcel });
@@ -725,14 +766,21 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               onGridReady={onGridReady}
               onSelectionChanged={onSelectionChanged}
               onPaginationChanged={onPaginationChanged}
-              onRowDoubleClicked={editable ? (e) => e.data && setModal({ mode: "edit", row: e.data }) : undefined}
-              onCellKeyDown={editable ? (e: CellKeyDownEvent<Row>) => {
+              /* 상세 팝업이 열려 있으면 행 더블클릭은 무시한다 — 링크 셀 더블클릭 시 첫 클릭이 팝업을 열고
+                 두 번째 클릭이 오버레이에 먹혀 실측상 수정 모달은 안 열리지만(2026-09-12 확인), 그 방어는
+                 렌더 타이밍에 기대는 것이라 상태로 한 번 더 막는다(Codex 리뷰 P2). */
+              onRowDoubleClicked={editable ? (e) => { if (detail === null && e.data) setModal({ mode: "edit", row: e.data }); } : undefined}
+              onCellKeyDown={(e: CellKeyDownEvent<Row>) => {
                 // 관리 컬럼 제거 대체 — 키보드로 행에서 Enter 시 수정 모달(더블클릭과 동일). 선택 체크박스 컬럼은 Enter=선택 토글 유지.
                 const ke = e.event as KeyboardEvent | null;
                 if (!ke || ke.key !== "Enter" || !e.data) return;
-                if ((e.column?.getColId?.() ?? "").startsWith("ag-Grid")) return;
-                setModal({ mode: "edit", row: e.data });
-              } : undefined}
+                const colId = e.column?.getColId?.() ?? "";
+                if (colId.startsWith("ag-Grid")) return;
+                /* 링크 셀은 AG Grid의 Tab 순회가 셀 안 button에 닿지 않으므로 셀 Enter로 진입을 보장한다
+                   (occasional_report_manage.tsx onCellKeyDown과 동일 이유). 편집 모달보다 우선. */
+                if (detailCol && colId === detailCol.key && hasDetail(e.data)) { setDetail(detailCol.detail!); return; }
+                if (editable) setModal({ mode: "edit", row: e.data });
+              }}
               preventDefaultOnContextMenu
               onCellContextMenu={handleCellContextMenu}
               overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">표시할 항목이 없습니다</span>'}
@@ -774,6 +822,9 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           onClose={() => setModal(null)}
           onDelete={modal.row ? () => deleteOne(modal.row!.id) : undefined} />
       )}
+
+      {/* 읽기전용 상세 보고서 팝업 — 스키마가 detail을 선언한 컬럼에서만 열린다(그 외 페이지엔 없음) */}
+      {detail && React.createElement(DETAIL_MODALS[detail], { onClose: () => setDetail(null) })}
 
       <ListFilterDrawer
         open={filterOpen}

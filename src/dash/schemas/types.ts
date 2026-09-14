@@ -9,9 +9,17 @@ export type FieldControl = typeof FIELD_CONTROLS[number];
 
 export const TONE_VALUES = ['primary','success','warning','danger','info','cyan'] as const;
 
+// 읽기전용 상세 보고서 팝업 종류. 컬럼이 detail을 선언하면 그 셀 값이 링크가 되어 해당 팝업을 연다.
+// 팝업 컴포넌트 매핑은 소비처(generic_list.tsx)가 갖는다 — 스키마는 어떤 팝업인지만 선언한다.
+export const DETAIL_POPUPS = ['monthlyReport'] as const;
+export type DetailPopup = typeof DETAIL_POPUPS[number];
+
 // attachFrom: 이 컬럼의 값 뒤에 첨부파일 확장자 칩(PDF 등)을 붙인다. 값은 같은 행의 **필드 키**
 // (예: title 컬럼 + attachFrom:'attachment') — 첨부는 별도 컬럼을 만들지 않고 제목에 붙여 표현한다.
-export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; attachFrom?: string; }
+// detail/detailWhen: 이 컬럼 값을 클릭(또는 셀 Enter)하면 읽기전용 상세 팝업을 연다. detailWhen이 있으면
+// **값이 그것과 같은 행만** 링크가 되고 나머지는 평상 셀이다(예: 보고구분 '월간보고'만 상세가 있는 정기보고).
+// 선언이 없는 스키마는 종전과 동일하게 동작한다(opt-in).
+export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; }
 export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; }
 export interface KpiSpec { key: string; label: string; icon: string; color: string; from: 'sum'|'avg'|'rate'; column: string; }
 // 건수형 KPI — 금액 집계가 아닌 행 카운트. column+value 있으면 그 값과 일치하는 행 수, 없으면 전체 건수.
@@ -48,6 +56,7 @@ const ColumnZ = z.object({
   key: z.string(), label: z.string(), type: z.enum(CELL_TYPES),
   unit: z.string().optional(), align: z.enum(['left','right','center']).optional(), group: z.string().optional(),
   attachFrom: z.string().optional(),
+  detail: z.enum(DETAIL_POPUPS).optional(), detailWhen: z.string().optional(),
 });
 const FieldZ = z.object({
   key: z.string(), label: z.string(), control: z.enum(FIELD_CONTROLS),
