@@ -57,11 +57,11 @@ describe('programCatalog — 프로그램 관리 목록(목업 S0_105 PROGRAMS �
   it('연결 메뉴 경로는 상위 라벨을 › 로 잇고 마지막 조각이 프로그램명', () => {
     for (const p of programCatalog(rows)) { const seg = p.menuPath.split(' › '); expect(seg[seg.length - 1]).toBe(p.pname); }
   });
-  it('프로그램 관리 리프가 관리자 › 시스템 관리 아래 첫 항목이다(브리프 리프 순서)', () => {
+  it('프로그램관리 리프가 관리자 › 시스템 관리 아래 첫 항목이다(이미지 IA 리프 순서)', () => {
     const sys = rows.find((r) => r.name === '시스템 관리' && r.lvl === 2)!;
-    expect(childrenOf(rows, sys.id).map((r) => r.name)).toEqual(['프로그램 관리', '공통코드 관리', '메뉴 관리', '도움말 관리']);
-    const p = programCatalog(rows).find((x) => x.pname === '프로그램 관리')!;
-    expect(p.menuPath).toBe('관리자 › 시스템 관리 › 프로그램 관리');
+    expect(childrenOf(rows, sys.id).map((r) => r.name)).toEqual(['프로그램관리', '메뉴관리', '코드관리']);
+    const p = programCatalog(rows).find((x) => x.pname === '프로그램관리')!;
+    expect(p.menuPath).toBe('관리자 › 시스템 관리 › 프로그램관리');
   });
 });
 

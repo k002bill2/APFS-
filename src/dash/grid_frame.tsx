@@ -61,7 +61,7 @@ export interface GridFrameProps {
   /** 즐겨찾기 토글(★) 활성 — 현재 페이지의 라우트(onNav 인자와 동일 문자열).
       지정 시 카드헤더 타이틀 옆에 별 아이콘이 붙고, 클릭으로 MenuStore 'fav'에 on/off 된다. */
   favRoute?: string;
-  /** PageHeader 와 카드 사이의 페이지 컨텍스트 탭(예: 관리자 화면의 AdminTabs). 전역 Shell 을 건드리지 않고 화면군 안의 이동 탭을 얹는다. */
+  /** PageHeader와 카드 사이에 선택적으로 둘 페이지 컨텍스트 영역. 전역 Shell/LNB와 역할을 중복하지 않는다. */
   tabs?: React.ReactNode;
   /** 툴바 좌: 필터칩·선택 액션 */
   toolbarLeft?: React.ReactNode;

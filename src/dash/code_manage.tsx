@@ -41,7 +41,7 @@ import type { CodeGroup, CodeDetail } from './code_manage_data';
 import { groupSchema, detailSchema, upOption, upCodeOf, UP_NONE } from './code_manage_schemas';
 import { reseqSiblings, applyReseq } from './reseq';
 import { UseBadge } from './admin_shared';
-import { AdminTabs } from './admin_tabs';
+
 
 const { Button, IconBtn, FilterChip, EmptyState } = UI;
 
@@ -390,7 +390,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       crumbs={['홈', '관리자', '시스템 관리', '공통코드 관리']}
       title="공통코드 관리"
       favRoute="code-manage"
-      tabs={<AdminTabs route="code-manage" onNav={onNav} />}
+
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={<>
         <Icon name="filter" size={16} className="text-caption" />

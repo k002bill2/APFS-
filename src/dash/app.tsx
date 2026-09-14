@@ -34,6 +34,11 @@ import { CodeManage } from './code_manage';                                  // 
 import { MenuManage } from './menu_manage';                                  // 메뉴 관리(S0_105, 계층 트리)
 import { UserPermissionManage } from './user_permission_manage';             // 사용자 권한 관리(S0_102, 권한 매트릭스)
 import { ProgramManage } from './program_manage';                            // 프로그램 관리(S0_105 PROGRAMS 근거, 읽기 전용 목록)
+import { UserManage } from './user_manage';                                  // 사용자 관리(S0_101)
+import { UserInviteManage } from './user_invite_manage';                     // 사용자 초대(운용사)(S0_103)
+import { PermissionHistory } from './permission_history';                    // 권한 변경이력(S0_107)
+import { AuditLog } from './audit_log';                                      // 감사로그(S0_104)
+import { LoginDemo } from './login_demo';                                    // 로그인(S0_001, Shell 없는 UI 데모)
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -70,16 +75,26 @@ const ROUTE_ALIAS: Record<string, string> = {
   "메뉴 관리": "menu-manage", "메뉴관리": "menu-manage",
   "사용자 권한 관리": "user-permission-manage", "권한관리": "user-permission-manage",
   "프로그램 관리": "program-manage", "프로그램관리": "program-manage",
+  "사용자 관리": "user-manage", "사용자관리": "user-manage",
+  "사용자 초대(운용사)": "user-invite-gp",
+  "권한 변경이력": "permission-history",
+  "감사로그": "audit-log",
+  "로그인": "login",
   asset: "main", risk: "main", "gp-health": "main",
   accounting: "main", report: "main", "report-sutack": "main",
 };
 const aliasRoute = (r: string) => ROUTE_ALIAS[r] || r;
+// 메뉴 항목은 해시 URL로도 직접 열 수 있다. 기존 localStorage 복원은 해시가 없을 때만 보조한다.
+const hashRoute = () => {
+  try { return window.location.hash.replace(/^#\/?/, ''); } catch (e) { return ''; }
+};
 
 // MENU 트리에 없는 앱 전용 라우트(대시보드·데모·에디터·일정)의 한글 제목 — aria-live 통지용.
 // 스키마/메뉴 리프 라우트는 findMenuContext가 한글 label을 돌려주므로 여기서 제외.
 // (schedule은 MENU path에 없어 findMenuContext가 영문 'schedule'로 폴백 → 여기서 한글 지정)
 const APP_ROUTE_TITLES: Record<string, string> = {
   main: "메인 대시보드", designsystem: "디자인 시스템", editor: "문서 편집기", schedule: "일정 관리",
+  login: "로그인",
 };
 const routeTitleFor = (r: string) => APP_ROUTE_TITLES[r] || findMenuContext(r).title;
 
@@ -95,7 +110,7 @@ const ls = {
 function App() {
   const [theme, setTheme] = useState(() => ls.get("apfs.theme", "light"));
   // 삭제/개명된 route는 ROUTE_ALIAS로 승격(잔존 localStorage/방문기록 방어) — 안 하면 GenericListPage 폴백(영문 제네릭 표)
-  const [route, setRoute] = useState(() => aliasRoute(ls.get("apfs.route", "designsystem")));
+  const [route, setRoute] = useState(() => aliasRoute(hashRoute() || ls.get("apfs.route", "designsystem")));
   const [lnbOpen, setLnbOpen] = useState(() => ls.get("apfs.lnb", "1") === "1");
   const [wide, setWide] = useState(() => ls.get("apfs.width", "fixed") === "full");
   const [navStyle, setNavStyle] = useState(() => ls.get("apfs.navstyle", "classic"));
@@ -116,7 +131,21 @@ function App() {
     document.documentElement.style.background = "";
     ls.set("apfs.theme", theme);
   }, [theme]);
-  useEffect(() => ls.set("apfs.route", route), [route]);
+  useEffect(() => {
+    ls.set("apfs.route", route);
+    try {
+      const nextHash = `#/${route}`;
+      if (window.location.hash !== nextHash) window.history.replaceState(null, '', nextHash);
+    } catch (e) {}
+  }, [route]);
+  useEffect(() => {
+    const onHashChange = () => {
+      const next = hashRoute();
+      if (next) setRoute(aliasRoute(next));
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
   useEffect(() => { HistoryStore.push(route); }, [route]);   // 방문기록 적재(복원된 초기 라우트 포함)
   useEffect(() => {                                            // 라우트 전환마다 로딩 스켈레톤 노출
     const changed = mountedRef.current;                        // 초기 마운트 false, 이후 전환 true
@@ -171,11 +200,18 @@ function App() {
   else if (route === "menu-manage") page = <MenuManage onNav={onNav} />;
   else if (route === "user-permission-manage") page = <UserPermissionManage onNav={onNav} />;
   else if (route === "program-manage") page = <ProgramManage onNav={onNav} />;
+  else if (route === "user-manage") page = <UserManage onNav={onNav} />;
+  else if (route === "user-invite-gp") page = <UserInviteManage onNav={onNav} />;
+  else if (route === "permission-history") page = <PermissionHistory onNav={onNav} />;
+  else if (route === "audit-log") page = <AuditLog onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "editor") page = <EditorPage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;
+
+  // 로그인은 메뉴 Shell/LNB의 자식이 아닌 독립 데모 route다. 실제 인증·권한 판정은 수행하지 않는다.
+  if (route === "login") return <LoginDemo onNav={onNav} />;
 
   return (
     // reducedMotion="user": OS 저모션 선호 시 Motion의 transform/scale은 끄고 opacity는 유지.
