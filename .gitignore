@@ -34,8 +34,11 @@ apfs-design-handoff.zip
 .impeccable/
 
 # 타 에이전트 런타임용 스킬 미러 (.claude/skills/ 에서 생성 — 정본은 .claude/skills/)
-# ※ .agents/skills/apfs-dashboard-workflow/ 는 .claude 미러가 아닌 원본이라 이미 추적 중(계속 추적됨)
-.agents/skills/
+# ※ apfs-dashboard-workflow 는 .claude 미러가 아닌 원본이라 negation 으로 추적 유지한다.
+#    `.agents/skills/` (디렉터리 제외) 형태로 바꾸면 git 규칙상 내부 재포함이 불가능해져
+#    이 스킬에 새 파일을 추가할 때 조용히 무시된다 — `dir/*` + `!dir/keep/` 형태를 유지할 것.
+.agents/skills/*
+!.agents/skills/apfs-dashboard-workflow/
 
 # Codex 서브에이전트 정의 (로컬 하네스 산출물 — .codex/config.toml·hooks.json 은 추적 정본)
 .codex/agents/
