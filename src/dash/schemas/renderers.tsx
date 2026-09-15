@@ -4,6 +4,7 @@ import { mn, MT, useMask } from '../mask';
 import { parseFileNames, fileExtLabel } from '../fields/file_names';   // 첨부 CSV 계약 파서(DocumentsField와 SSOT 공유)
 import { glyphFor } from '../ui/attachment';   // 확장자 → 아이콘·색 매핑(모달 첨부목록과 SSOT 공유)
 import { DatePicker } from '../ui/date-picker';
+import { Switch } from '../ui/switch';
 import { Icon } from '../icons';
 import { renderKind } from './dispatch';
 import type { ColumnSpec, FieldSpec, StatusDomainEntry } from './types';
@@ -72,7 +73,10 @@ export function controlMinWidth(kind?: string): number {
   return kind === 'date' ? 120 : (kind === 'select' || kind === 'enum' || kind === 'year') ? 130 : kind === 'number' ? 180 : 240;
 }
 
-export function SchemaField({ field, value, onChange, invalid, fill }: { field: FieldSpec; value: string; onChange: (v: string) => void; invalid?: boolean; fill?: boolean }) {
+export function SchemaField({ field, value, onChange, invalid, fill: fillProp }: { field: FieldSpec; value: string; onChange: (v: string) => void; invalid?: boolean; fill?: boolean }) {
+  // long 필드(설명·비고·운용사명·펀드명 등)는 소비처가 fill 을 넘기지 않아도 항상 컨테이너를 꽉 채운다 —
+  // fit-content 폭 규칙이 긴 텍스트를 240px 하한에 묶어두던 문제(권한관리 모달 '설명') 해소.
+  const fill = fillProp || !!field.long;
   // fill=true: 컨테이너(테이블 셀 등)를 꽉 채운다(width:100%). 기본은 fit-content(RowFormModal 그리드 규격 유지).
   //   인라인 width는 CSS 클래스로 못 덮으므로 여기서 prop으로 스왑한다(select/date 래퍼까지 함께).
   // 필수 필드는 채움 여부와 무관하게 빨간 테두리로 상시 표식(라벨 '*'와 병행). readonly는 입력 대상이 아니라 제외.
@@ -83,7 +87,7 @@ export function SchemaField({ field, value, onChange, invalid, fill }: { field: 
   const [focused, setFocused] = React.useState(false);
   const fh = { onFocus: () => setFocused(true), onBlur: () => setFocused(false) };
   const base: React.CSSProperties = {
-    // ⚠️ fontFamily(longhand)로 패밀리만 상속 — `font: 'inherit'`(shorthand)는 font-size까지 리셋해 위의 fontSize:14를 부모값으로 덮어쓴다.
+    // ⚠️ fontFamily(longhand)로 패밀리만 상속 — `font: 'inherit'`(shorthand)는 font-size까지 리셋해 위의 fontSize:13.5를 부모값으로 덮어쓴다.
     // ⚠️ 높이 규격 34px(2026-09-09 사용자 DevTools 스펙) — DatePicker/PeriodPicker 버튼·radio와 일치시킨다.
     //    boxSizing:border-box + 명시 height:34가 하드 클램프로 이긴다: padding 7*2=14 + border 2 + lineHeight 20 = 36의 자연높이지만
     //    height:34가 콘텐츠(18px)를 클램프(20px 라인박스 1px 오버플로우는 무해). ⚠ 산술이 안 맞는다고 되돌리지 말 것 — 사용자 측정 스펙이 정본.
@@ -92,7 +96,7 @@ export function SchemaField({ field, value, onChange, invalid, fill }: { field: 
     // 폭: 컨테이너를 꽉 채우지 않고 내용 맞춤(fit-content). 하한은 타입별 minW(위), 넘치지 않게 max 100%.
     //    textarea는 아래에서 100%로 되돌린다(긴 입력 항목).
     // fill=true면 셀(컬럼)이 폭을 지배 → minWidth 하한(text 240 등)을 풀어(0) 고정폭 컬럼을 넘쳐 겹치지 않게 한다(Codex P2).
-    width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%', boxSizing: 'border-box', padding: '7px 11px', fontSize: 14, lineHeight: '20px', height: 34, minHeight: 34, fontFamily: 'inherit',
+    width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%', boxSizing: 'border-box', padding: '7px 11px', fontSize: 13.5, lineHeight: '20px', height: 34, minHeight: 34, fontFamily: 'inherit',
     border: `1px solid ${invalid || requiredMark ? 'var(--danger)' : 'var(--border-strong)'}`,
     borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
     transition: 'border-color .12s, box-shadow .12s',
@@ -119,11 +123,25 @@ export function SchemaField({ field, value, onChange, invalid, fill }: { field: 
     // DatePicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW=120)을 적용
     case 'date':     return <div style={{ width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%' }}><DatePicker value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
     case 'checkbox': return <input type="checkbox" checked={value === 'true'} onChange={(e) => onChange(String(e.target.checked))} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />;
+    // on/off 상태값 토글 — 사용여부·제공여부 등 '여/부' 2지선다의 표준 컨트롤(radio 대체, 2026-09-15).
+    // ⚠️ 값 계약은 문자열 그대로 유지: checked = value === options[0], 토글 시 options[0] | options[1] 을 emit 한다.
+    //    `use: v.use === '여'` 처럼 옵션 문자열을 읽는 소비처·필터가 다수라 'true'/'false' 로 바꾸면 무음으로 깨진다.
+    // 상태 텍스트를 옆에 함께 렌더 — 토글만 있으면 '여/부' 중 무엇이 켜진 상태인지 시각적으로 모호하다.
+    case 'switch': {
+      const [onOpt, offOpt] = field.options && field.options.length >= 2 ? field.options : ['여', '부'];
+      const checked = value === onOpt;
+      return (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, minHeight: 34 }}>
+          <Switch checked={checked} onCheckedChange={(c) => onChange(c ? onOpt : offOpt)} aria-label={field.label} aria-required={requiredMark || undefined} />
+          <span style={{ fontSize: 13.5, color: 'var(--foreground)' }}>{checked ? onOpt : offOpt}</span>
+        </div>
+      );
+    }
     // 라디오 — 옵션 가로 나열(Y/N, Y/N/해당없음 등). 네이티브 input + accentColor 토큰(라이트/다크 양립).
     case 'radio': return (
       <div role="radiogroup" aria-label={field.label} aria-required={requiredMark || undefined} aria-invalid={invalid || undefined} style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', minHeight: 34 }}>
         {(field.options || ['Y', 'N']).map((o) => (
-          <label key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14, color: 'var(--foreground)' }}>
+          <label key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13.5, color: 'var(--foreground)' }}>
             <input type="radio" name={field.key} value={o} checked={value === o} onChange={() => onChange(o)} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />
             {o}
           </label>

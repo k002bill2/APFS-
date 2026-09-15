@@ -4,7 +4,7 @@ import type { Tone } from '../components';
 export const CELL_TYPES = ['text','code','pii','amount','rate','date','status','gp','number'] as const;
 export type CellType = typeof CELL_TYPES[number];
 
-export const FIELD_CONTROLS = ['text','number','select','date','textarea','file','checkbox','readonly','radio','richtext','filepond','tags'] as const;
+export const FIELD_CONTROLS = ['text','number','select','date','textarea','file','checkbox','switch','readonly','radio','richtext','filepond','tags'] as const;
 export type FieldControl = typeof FIELD_CONTROLS[number];
 
 export const TONE_VALUES = ['primary','success','warning','danger','info','cyan'] as const;
@@ -23,7 +23,9 @@ export interface ColumnSpec { key: string; label: string; type: CellType; unit?:
 // note: 라벨 옆 ⚠검토필요 마커(목업 `.review` data-rec/data-dat 원문). RowFormModal이 Field 라벨에 ReviewMarker로 렌더한다.
 // 설계 메모라 마스킹·엑셀 대상이 아니며, 문구는 목업 원문 그대로(창작 금지 — apfs-grid "검토필요 마커").
 export interface ReviewNoteSpec { rec: string; dat: string; }
-export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; note?: ReviewNoteSpec; }
+// long: 긴 텍스트 필드(설명·비고·운용사명·펀드명·주소 등) 표식 — 모달에서 2단 전체 폭(sm:col-span-2) +
+//   컨트롤 width:100%(fit-content 240px 하한 해제)로 렌더한다. 짧은 코드/일자 필드와 구분하는 유일한 SSOT.
+export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; long?: boolean; note?: ReviewNoteSpec; }
 export interface KpiSpec { key: string; label: string; icon: string; color: string; from: 'sum'|'avg'|'rate'; column: string; }
 // 건수형 KPI — 금액 집계가 아닌 행 카운트. column+value 있으면 그 값과 일치하는 행 수, 없으면 전체 건수.
 export interface CountKpiSpec { label: string; icon: string; color: string; column?: string; value?: string; }
@@ -63,7 +65,7 @@ const ColumnZ = z.object({
 });
 const FieldZ = z.object({
   key: z.string(), label: z.string(), control: z.enum(FIELD_CONTROLS),
-  required: z.boolean().optional(), options: z.array(z.string()).optional(), pii: z.boolean().optional(),
+  required: z.boolean().optional(), options: z.array(z.string()).optional(), pii: z.boolean().optional(), long: z.boolean().optional(),
   note: z.object({ rec: z.string(), dat: z.string() }).optional(),
 });
 const KpiZ = z.object({ key: z.string(), label: z.string(), icon: z.string(), color: z.string(), from: z.enum(['sum','avg','rate']), column: z.string() });
