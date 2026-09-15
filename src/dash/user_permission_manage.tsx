@@ -2,7 +2,10 @@
    출처: S0_102_권한관리.html(AFIT 공통관리 KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스 없음(목업 원본)                 → 필터 칩·상세필터 드로어를 만들지 않는다(없는 필터 발명 금지, S1_09 관례).
+   - 검색박스 없음(목업 원본)                 → 원래는 필터를 두지 않았으나 **사용자 지시(2026-09-15 "상세필터 추가해줘")로
+       상세필터 드로어를 추가**했다. 항목은 그리드 컬럼에서만 파생(명칭·사용자 구분·사용여부·최종수정일) — 컬럼에 없는
+       조건은 여전히 발명하지 않는다(apfs-detail-filter). 주 필터 FilterChip 줄은 두지 않는다(행 5건 규모라 과하다):
+       적용값은 툴바 좌측 개별 칩으로만 보이고, 선택 행이 있으면 그 자리는 selbar 가 가져간다(메뉴 관리와 동일).
    - 권한 목록 그리드(No·명칭·사용자 구분·설명·최종수정·최종수정일·사용여부·사용자수) → AG Grid 단일 헤더(apfs-aggrid).
    - 행 선택 → [수정][복사][삭제] 활성(목업 gate)  → 라디오 단일선택 + 툴바 좌 selbar 컨텍스트 액션(apfs-stage-workflow 선택 SSOT).
        삭제는 **배정 사용자 0명**일 때만(목업) — 아니면 toast 로 사유를 알린다. 수정 진입 보조 경로 = 행 더블클릭·셀 Enter·우클릭 메뉴.
@@ -14,6 +17,7 @@
    ⚠ 실제 인가/RBAC 이 아니다 — 백엔드 없이 화면 로컬 더미 상태만 바꾼다(브리프). 목업의 설계 메모(.note)·GNB/LNB 는 이식하지 않는다. */
 import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky·마스크 헤더 바)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import type { CSSProperties } from 'react';
 import { format } from 'date-fns';
 import { UI } from './components';
 import { Icon } from './icons';
@@ -28,9 +32,12 @@ import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
+import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
+import { PeriodPicker } from './ui/period-picker';
+import { controlMinWidth } from './schemas/renderers';
 import { RowContextMenu } from './row_context_menu';
 import type { CtxItem, CtxMenuState } from './row_context_menu';
-import { buildMenuRows } from './admin_menu_tree';
+import { buildMenuRows, UTYPES } from './admin_menu_tree';
 import { UseBadge, UTypeBadge } from './admin_shared';
 import { UserPermissionModal } from './user_permission_modal';
 import type { PermRow, PermPatch, PermMode } from './user_permission_modal';
@@ -96,6 +103,37 @@ const EXPORT_COLS: XCol[] = [
   { header: '설명', get: (r) => r.desc }, { header: '최종수정', get: (r) => r.by }, { header: '최종수정일', get: (r) => r.at },
   { header: '사용여부', get: (r) => (r.use ? '여' : '부') }, { header: '사용자수', get: (r) => r.users },
 ];
+
+/* 드로어 입력 — 폭 fit-content + 타입별 하한(controlMinWidth SSOT). ⚠ font(단축) 먼저 → fontSize 뒤(키 순서로 14px 보존) */
+const inputStyle = (kind?: string): CSSProperties => ({
+  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,
+  border: '1px solid var(--input)', borderRadius: 8, background: 'var(--card)', color: 'var(--foreground)',
+});
+/* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 암묵 연결이 안 되고(ariaLabel 로 명명),
+   <label> 안 버튼 클릭이 라벨 활성화와 겹쳐 2회 토글되는 것을 막는다(apfs-detail-filter) */
+function DrawerField({ label, hint, plain, children }: { label: string; hint?: string; plain?: boolean; children: React.ReactNode }) {
+  const Wrap: any = plain ? 'div' : 'label';
+  return (
+    <Wrap className="block mb-4">
+      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
+        {label}{hint && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · {hint}</span>}
+      </span>
+      {children}
+    </Wrap>
+  );
+}
+function DrawerSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: readonly string[] }) {
+  // 래퍼도 fit-content — block 100% 래퍼면 절대배치 chevron 이 드로어 오른쪽 끝으로 떨어진다(형제 드로어와 동일)
+  return (
+    <div className="relative" style={{ width: 'fit-content', maxWidth: '100%' }}>
+      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputStyle('select'), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
+        <option value="">전체</option>
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+      <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
+    </div>
+  );
+}
 
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
   return (
@@ -185,6 +223,34 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const masked = useMask();
+
+  /* 상세필터 — SSOT=개별 state(빈 값=미적용). 항목은 전부 그리드 컬럼 파생(명칭·사용자 구분·사용여부·최종수정일) */
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [fName, setFName] = useState('');
+  const [fUtype, setFUtype] = useState('');
+  const [fUse, setFUse] = useState('');
+  const [fSince, setFSince] = useState('');            // 최종수정일 **이후**(≥) — 단일 컨트롤로 범위 하한만
+  const hasFilter = Boolean(fName.trim() || fUtype || fUse || fSince);
+  const firstPage = () => apiRef.current?.paginationGoToFirstPage();
+  const clearFilters = () => { setFName(''); setFUtype(''); setFUse(''); setFSince(''); firstPage(); };
+
+  /* 표시 행 — 값-필터는 전부 AND(텍스트=부분일치, 열거형=정확일치, 일자=이상). 그리드·엑셀·푸터가 같은 배열을 본다 */
+  const visible = useMemo(() => {
+    const kw = fName.trim().toLowerCase();
+    return rows.filter((r) => (!kw || r.name.toLowerCase().includes(kw))
+      && (!fUtype || r.utype === fUtype)
+      && (!fUse || (r.use ? '여' : '부') === fUse)
+      && (!fSince || r.at >= fSince));                 // 둘 다 yyyy-MM-dd 고정폭이라 문자열 비교가 곧 날짜 비교
+  }, [rows, fName, fUtype, fUse, fSince]);
+
+  /* 적용 중인 필터 = 항목별 개별 칩(값만 표시, 항목명은 × 의 aria-label 로 회수 — apfs-detail-filter) */
+  const chips: [string, string, () => void][] = [
+    ['명칭', fName.trim(), () => { setFName(''); firstPage(); }],
+    ['사용자 구분', fUtype, () => { setFUtype(''); firstPage(); }],
+    ['사용여부', fUse, () => { setFUse(''); firstPage(); }],
+    ['최종수정일', fSince && `≥ ${fSince}`, () => { setFSince(''); firstPage(); }],
+  ];
+
   // 앱-스코프 단축키: ⌘⏎=권한 등록(모달 열림 중엔 비활성), ⌘P=인쇄, ⌥D=내보내기
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null });
   useHotkey(HOTKEYS.print.combo, () => window.print());
@@ -264,12 +330,12 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
     setModal(null);
     toast.success('삭제되었습니다 (목업)');
   };
-  const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); clearFilters(); apiRef.current?.deselectAll(); toast.success('새로고침했습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더. 마스크 ON이면 숫자 0·텍스트 '' ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
-    const body = rows.map((r) => EXPORT_COLS.map((c) => { const v = c.get(r); return typeof v === 'number' ? (masked ? 0 : v) : masked ? '' : v; }));
+    const body = visible.map((r) => EXPORT_COLS.map((c) => { const v = c.get(r); return typeof v === 'number' ? (masked ? 0 : v) : masked ? '' : v; }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === 'No' ? 6 : c.header === '설명' ? 36 : 14 }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '권한관리');
@@ -298,17 +364,26 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
       ) : (
         <>
           <Icon name="shield-check" size={16} className="text-caption" />
-          <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>권한 {mn(String(rows.length))}건 · 행을 선택하면 수정·복사·삭제</span>
+          <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>권한 {mn(String(visible.length))}건 · 행을 선택하면 수정·복사·삭제</span>
+          {chips.filter(([, v]) => v).map(([label, value, clear]) => (
+            <span key={label} title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
+              <MT>{value}</MT>
+              <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex border-0 cursor-pointer p-0" style={{ background: 'transparent', color: 'inherit' }}>
+                <Icon name="x" size={13} stroke={2.4} />
+              </button>
+            </span>
+          ))}
         </>
       )}
       toolbarRight={<>
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* 등록이 있는 리스트라 combo(split) — 좌: 권한 등록 · 우: ⌄ 내보내기·인쇄. topMoreRef 는 combo 래퍼가 든다 */}
         <span ref={topMoreRef} className="inline-flex">
           <RegisterCombo label="권한 등록" onRegister={() => setModal({ kind: 'form', mode: 'create' })} onExport={exportExcel} />
         </span>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '개 중 ' + mn(String(Math.min(shown, rows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '개 중 ' + mn(String(Math.min(shown, visible.length))) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -326,7 +401,7 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
       <div>
         <AgGridReact<PermRow>
           theme={apfsTheme}
-          rowData={rows}
+          rowData={visible}
           columnDefs={columnDefs}
           getRowId={(p) => p.data.id}
           domLayout="autoHeight"
@@ -343,11 +418,41 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
           onRowDoubleClicked={onRowDoubleClicked}
           onCellKeyDown={onCellKeyDown}
           onCellContextMenu={handleCellContextMenu}
-          overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">등록된 권한이 없습니다.</span>'}
+          overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">' + (hasFilter ? '조건에 맞는 권한이 없습니다.' : '등록된 권한이 없습니다.') + '</span>'}
         />
       </div>
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
+
+      {/* ── 상세필터 드로어 — 목업 검색박스가 없어 항목 순서는 그리드 컬럼 순서(명칭·사용자 구분·사용여부·최종수정일) ── */}
+      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
+          <SheetHeader>
+            <SheetTitle>상세 필터</SheetTitle>
+            <SheetDescription className="sr-only">권한 목록을 거르는 상세 필터</SheetDescription>
+            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
+            <DrawerField label="명칭">
+              <input type="text" value={fName} onChange={(e) => { setFName(e.target.value); firstPage(); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }}
+                placeholder="권한 명칭 부분일치" style={inputStyle('text')} />
+            </DrawerField>
+            <DrawerField label="사용자 구분"><DrawerSelect value={fUtype} onChange={(v) => { setFUtype(v); firstPage(); }} options={UTYPES} /></DrawerField>
+            <DrawerField label="사용여부"><DrawerSelect value={fUse} onChange={(v) => { setFUse(v); firstPage(); }} options={['여', '부']} /></DrawerField>
+            {/* PeriodPicker 트리거는 w-full 이라 fit-content 래퍼로 감싸 폭 규칙(minW) 적용(apfs-datepicker "폭") */}
+            <DrawerField label="최종수정일" hint="선택일 이후" plain>
+              <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
+                <PeriodPicker mode="day" value={fSince} onChange={(v) => { setFSince(v); firstPage(); }} ariaLabel="최종수정일(선택일 이후)" />
+              </div>
+            </DrawerField>
+          </div>
+          <SheetFooter>
+            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       {/* ── 권한 설정 모달(등록/수정/복사) — 필드 + 메뉴별 기능 권한 매트릭스 ── */}
       {modal?.kind === 'form' && (modal.mode === 'create' || target) && (
