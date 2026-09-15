@@ -173,7 +173,9 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
         <TagsField value={value} onChange={onChange} options={field.options} required={requiredMark} label={field.label} />
       </React.Suspense>
     );
-    case 'readonly': return <div style={{ ...base, background: 'var(--muted)', color: 'var(--muted-foreground)' }}>{value || '—'}</div>;
+    // readonly: base의 height:34 하드 클램프와 짝이 되는 1줄 클립이 필수 — 없으면 긴 값(프로그램ID+프로그램명 등)이
+    //   2줄로 줄바꿈되며 박스 밖으로 흘러넘친다(입력 불가라 스크롤도 못 한다). 잘린 전체 값은 title로 노출.
+    case 'readonly': return <div title={value || undefined} style={{ ...base, background: 'var(--muted)', color: 'var(--muted-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value || '—'}</div>;
     default:         return <input value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...fs }} />;
   }
 }
