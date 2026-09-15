@@ -17,7 +17,7 @@ import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한
 import { GridFrame, KpiBadge } from './grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT. 그리드폭 채움은 컬럼 flex(numCol)
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, CellContextMenuEvent, ValueFormatterParams } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, CellContextMenuEvent, ValueFormatterParams, RowSelectionOptions } from 'ag-grid-community';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
@@ -45,6 +45,16 @@ const TOTAL_ROW: FundingRow = { y: '합 계', c0: 4987.3, c1: 4037, c2: 650, c3:
 // 매 렌더 새 배열을 넘기면 AG Grid가 pinned 행을 재생성(=행 애니메이션 재발) → 모듈 상수로 고정
 const PINNED_BOTTOM: FundingRow[] = [TOTAL_ROW];
 const PAGE_SIZE = 20;   // 5행 → 1페이지
+
+/* 행 선택 — 체크박스 열 없이 **행 클릭**으로 다건 선택(mod+클릭·Shift 범위는 AG Grid 기본 동작).
+   ⚠️ `enableClickSelection` 은 AG Grid 기본값이 **false** 다. 이게 없으면 checkboxes:false 와 맞물려
+   선택을 만들 수단이 아예 없어져 `selCount` 가 영원히 0 이 되고 선택삭제·플로팅 액션이 죽는다
+   (2026-09-15 실측으로 발견한 선행 버그 — 주석엔 "행 클릭으로 선택 유지"로 적혀 있었다).
+   ⚠️ **모듈 상수로 호이스팅**(→[[apfs-aggrid]] ⑦): 인라인 리터럴이면 렌더마다 새 객체라
+   컬럼이 재생성돼 폭이 되돌아간다. 선택이 살아난 뒤엔 선택마다 리렌더가 나므로 특히 중요하다. */
+const ROW_SELECTION: RowSelectionOptions<FundingRow> = {
+  mode: 'multiRow', checkboxes: false, headerCheckbox: false, enableClickSelection: true,
+};
 
 const CO = ['합계', '농특회계', '농안기금', 'FTA', '수산발전기금', '농금원'];
 
@@ -249,11 +259,9 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
      (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
-  /* ⚠️ 이 묶음은 **현재 도달 불가**다(2026-09-15 실측). 아래 그리드가
-     `rowSelection={{mode:'multiRow', checkboxes:false}}` 인데 `enableClickSelection`(AG Grid 기본 false)이
-     빠져 있어 체크박스도 행 클릭도 선택을 만들지 못한다 → `selCount` 는 항상 0.
-     그 줄 주석의 "행 클릭으로 선택 유지"가 구현되지 않은 선행 버그이며, 플로팅 바 배선과는 무관하다.
-     살리려면 `enableClickSelection: true` 를 켜는 결정이 필요하다(집계 현황표에 선택삭제를 되살리는 일). */
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
+     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다.
+     행 클릭 선택은 ROW_SELECTION(위) 의 `enableClickSelection` 이 켜 준다. */
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
@@ -333,7 +341,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
           pinnedBottomRowData={PINNED_BOTTOM}
           domLayout="autoHeight"
           defaultColDef={DEFAULT_COL_DEF}
-          rowSelection={{ mode: 'multiRow', checkboxes: false, headerCheckbox: false }}   // 체크박스 열 제거(행 클릭으로 선택 유지→선택삭제 보존)
+          rowSelection={ROW_SELECTION}   // 체크박스 열 없이 행 클릭 선택 — 모듈 상수(위 정의 주석 참조)
           pagination
           paginationPageSize={pageSize}
           suppressPaginationPanel

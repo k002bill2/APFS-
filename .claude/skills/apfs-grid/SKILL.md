@@ -184,9 +184,12 @@ const selActions = selected ? (            // 또는 selCount > 0 ?
 - **되돌리기 레버**: `grid_frame.tsx` 의 `const FLOATING_ACTIONS = true` → `false` 한 줄로 전 화면 무효.
 - 적용 완료(2026-09-15): `menu_manage` · `user_manage` · `subfund_manage` · `program_manage` · `user_permission_manage` · `user_invite_manage` · `investment_review_manage` · `generic_list`(스키마 주도 전 페이지) · `asset_funding`.
   `code_manage` 는 대상 아님 — 좌 그리드가 "우측 패널의 데이터 소스"라 해제 개념이 없고 툴바가 무조건 렌더다.
-  ⚠️ `asset_funding` 은 배선만 해 뒀고 **현재 도달 불가**다 — `rowSelection={{mode:'multiRow', checkboxes:false}}` 에
-  `enableClickSelection` 이 빠져 있어 체크박스도 행 클릭도 선택을 만들지 못한다(주석의 "행 클릭으로 선택 유지"가
-  구현되지 않은 선행 버그, 2026-09-15 확인). 선택을 살리려면 그 옵션을 켜야 한다 → [[apfs-aggrid]].
+  ⚠️ `asset_funding` 은 배선해도 처음엔 **도달 불가**였다 — `rowSelection={{mode:'multiRow', checkboxes:false}}` 에
+  `enableClickSelection`(AG Grid 기본 **false**)이 빠져 체크박스도 행 클릭도 선택을 만들지 못했다(주석엔
+  "행 클릭으로 선택 유지"로 적혀 있던 선행 버그). 2026-09-15 사용자 결정으로 그 옵션을 켰고, 같이 `rowSelection` 을
+  **모듈 상수로 호이스팅**했다 — 선택이 살아나면 선택마다 리렌더가 나므로 인라인 리터럴은 컬럼 폭을 되돌린다
+  (→[[apfs-aggrid]] ⑦). **교훈: `checkboxes:false` 로 체크박스 열을 지울 때 `enableClickSelection:true` 를 같이
+  켜지 않으면 선택 수단이 0이 된다** — "행 클릭으로 선택"은 기본 동작이 아니다.
 
 ### 프레임 쪽 구현 계약 (건드릴 때 반드시 읽을 것)
 - **body Portal 필수.** GridFrame 루트에 `animation: dashFade … both` 가 걸려 있어 종료 상태가 항등행렬로 굳고, 그 transform 이 (a) 새 쌓임맥락 (b) `fixed` 의 컨테이닝블록을 만든다. 포털 없이 `fixed` 를 쓰면 좌표가 뷰포트가 아니라 **카드 기준**이 되고 z 도 갇힌다(→[[z-index]] 규칙 3·5의 문서화된 버그와 동일 원인).
