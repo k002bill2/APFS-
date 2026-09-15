@@ -1,0 +1,598 @@
+<title>월간보고</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --danger:#E5484D;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;--danger:#F2696D;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F2696D;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:82ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .seg.sm button{height:30px;padding:0 13px;font-size:12.5px}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px;overflow-x:auto;min-width:0;scrollbar-width:thin}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;flex:none;white-space:nowrap}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;min-width:1120px;width:100%}
+  table.grid.auto{min-width:0}
+  table.grid th,table.grid td{padding:7px 10px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:right}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong)}
+  table.grid th.c,table.grid td.c{text-align:center}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  table.grid tfoot td{font-weight:800;background:var(--surface-3);border-top:2px solid var(--ink)}
+  table.grid tr.subtotal td{font-weight:700;background:var(--surface-2)}
+  table.grid td.muted{color:var(--ink-3)}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.b{background:var(--primary-weak);color:var(--primary)} .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.n{background:var(--grey-weak);color:var(--ink-3)} .tag.a{background:var(--amber-weak);color:var(--amber)}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:90;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  /* report view */
+  .backbar{display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+  .backbar .unit{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .backbar .unit .ul{font-size:12.5px;color:var(--ink-3)}
+  .rtitle{font-size:20px;font-weight:800;margin:10px 0 22px;padding-bottom:12px;border-bottom:2px solid var(--border-strong)}
+  .rsec{margin:0 0 28px}
+  .rsec-h{font-size:16px;font-weight:800;color:var(--ink);margin:0 0 12px;padding-left:10px;border-left:4px solid var(--primary)}
+  .rsub{margin:16px 0 8px;font-size:14px;font-weight:700;color:var(--ink-2)}
+  .fnote{margin:6px 2px 0;font-size:12px;color:var(--ink-3)}
+  .ovwline{margin:0 0 4px;font-size:13.5px;color:var(--ink)}
+  .foot-actions{display:flex;justify-content:center;gap:8px;margin-top:24px;padding-top:18px;border-top:1px solid var(--border)}
+  .note{margin-top:24px;font-size:13px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:8px;padding:14px 16px;line-height:1.7}
+  .note b{color:var(--ink-2)}
+  @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (max-width:900px){.lnb{display:none!important}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">시스템 S1 · 사후보고관리 · 정기보고 · 월간보고 · KRDS TO-BE</p>
+  <h1 class="doc-title">월간보고</h1>
+  <p class="doc-sub">정기보고 목록에서 "보고구분"의 월간보고서 태그 또는 "상세조회"를 클릭하면 열리는 개별 월간보고서 상세 화면(펀드개요·투자진행·미투자자산·수입/비용·누적분배 6개 섹션). 별도 메뉴(subtab/LNB) 항목이 아니라 정기보고 하위 상세 화면이라 정기보고를 클릭해 진입해야 함. 조회 전용이라 금액 단위전환 토글 제공. 사용자 제공 실제 화면 캡처(AJ-ISU경기도애그리푸드투자조합 2026.01.31 현재) 기반.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">모</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="S1_01_투자심의관리.html" role="menuitem" class="on"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="../02_조기경보/S2_46_메인화면.html" role="menuitem"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">투자자산관리시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="01_파일럿_공고관리/mockup/공고관리_목업_artifact.html">모태펀드</a>
+          <a href="#" class="on" aria-current="page">사후보고관리</a>
+          <a href="05_자펀드관리/mockup/자펀드관리_목업.html">자펀드</a>
+          <a href="S1_28_투심승인정보조회.html">통계</a>
+          <a href="S1_30_투자기업정보.html">투자기업</a>
+          <a href="S1_38_운용사_재무정보_조회.html">모니터링</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+      </div>
+      <div class="subtab" aria-label="사후보고관리 하위 메뉴">
+        <a href="S1_01_투자심의관리.html">투자심의관리</a>
+        <a href="S1_04_수시보고.html">수시보고</a>
+        <span class="on">정기보고</span>
+        <a href="S1_07_조합원총회.html">조합원총회</a>
+        <a href="S1_08_조합예상자금보고.html">조합예상자금보고</a>
+        <a href="S1_09_보고양식관리.html">보고양식관리</a>
+        <a href="S1_10_보고_업데이트정보.html">보고 업데이트정보</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">사후보고관리</div>
+          <nav aria-label="사후보고관리 메뉴">
+            <a href="S1_01_투자심의관리.html">투자심의관리</a>
+            <a href="S1_04_수시보고.html">수시보고</a>
+            <a href="#" class="on" aria-current="page">정기보고</a>
+            <a href="S1_07_조합원총회.html">조합원총회</a>
+            <a href="S1_08_조합예상자금보고.html">조합예상자금보고</a>
+            <a href="S1_09_보고양식관리.html">보고양식관리</a>
+            <a href="S1_10_보고_업데이트정보.html">보고 업데이트정보</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">사후보고관리 · 정기보고 · 월간보고</div>
+
+          <div class="backbar">
+            <a class="btn btn-sec btn-sm" href="S1_06_정기보고.html">‹ 이전</a>
+            <div class="unit">
+              <span class="ul">금액 단위</span>
+              <div class="seg sm" role="group" aria-label="금액 단위 전환">
+                <button data-u="won" aria-pressed="true">원</button>
+                <button data-u="mil" aria-pressed="false">백만원</button>
+                <button data-u="eok" aria-pressed="false">억원</button>
+              </div>
+            </div>
+          </div>
+
+          <h2 class="rtitle">AJ-ISU경기도애그리푸드투자조합 월간보고 (2026.01.31 현재)</h2>
+
+          <!-- 1. 펀드개요 -->
+          <section class="rsec">
+            <h3 class="rsec-h">1. 펀드개요</h3>
+            <p class="ovwline">가. 결성일 : 2018-07-30</p>
+            <p class="ovwline">나. 존속기간 : 2018-08-20 ~ 2026-08-19 (8년)</p>
+            <p class="ovwline">다. 결성액 : 100억원</p>
+            <div class="rsub">라. 조합구성</div>
+            <div class="scroller">
+              <table class="grid auto">
+                <caption class="visually-hidden">조합구성</caption>
+                <thead><tr><th class="c" scope="col">NO</th><th class="l" scope="col">조합원</th><th class="c" scope="col">출자금액</th><th class="c" scope="col">출자비율</th><th class="l" scope="col">비고</th></tr></thead>
+                <tbody>
+                  <tr><td class="c">1</td><td class="l">농식품투자모태조합</td><td>40 억원</td><td>40 %</td><td class="l">특별조합원</td></tr>
+                  <tr><td class="c">2</td><td class="l">이수창업투자</td><td>10 억원</td><td>10 %</td><td class="l">업무집행조합원</td></tr>
+                  <tr><td class="c">3</td><td class="l">엔비에이치(NBH)캐피탈 주식회사</td><td>10 억원</td><td>10 %</td><td class="l">업무집행조합원</td></tr>
+                  <tr><td class="c">4</td><td class="l">이수화학</td><td>10 억원</td><td>10 %</td><td class="l">유한책임조합원</td></tr>
+                  <tr><td class="c">5</td><td class="l">경기도청</td><td>30 억원</td><td>30 %</td><td class="l">유한책임조합원</td></tr>
+                </tbody>
+                <tfoot><tr><td class="c" colspan="2">합 계</td><td>100 억원</td><td>100 %</td><td class="l"></td></tr></tfoot>
+              </table>
+            </div>
+          </section>
+
+          <!-- 2. 투자 진행상황 -->
+          <section class="rsec">
+            <h3 class="rsec-h">2. 투자 진행상황</h3>
+
+            <div class="rsub">투자집행 업체현황</div>
+            <div class="scroller">
+              <table class="grid" style="min-width:1180px">
+                <caption class="visually-hidden">투자집행 업체현황 — 투자내역은 2단 헤더</caption>
+                <colgroup><col><col><col><col><col><col><col span="7"><col></colgroup>
+                <thead>
+                  <tr>
+                    <th class="c" rowspan="2" scope="col">NO</th>
+                    <th class="l" rowspan="2" scope="col">투자기업</th>
+                    <th class="c" rowspan="2" scope="col">대표자</th>
+                    <th class="c" rowspan="2" scope="col">소재지</th>
+                    <th class="l" rowspan="2" scope="col">제품</th>
+                    <th class="c" rowspan="2" scope="col">투자시점</th>
+                    <th class="c" colspan="7" scope="colgroup">투자내역</th>
+                    <th class="c" rowspan="2" scope="col">합계</th>
+                  </tr>
+                  <tr>
+                    <th class="c" scope="col">보통주</th><th class="c" scope="col">우선주</th><th class="c" scope="col">전환사채</th><th class="c" scope="col">신주인수권부사채</th><th class="c" scope="col">프로젝트</th><th class="c" scope="col">기타</th><th class="c" scope="col">합계</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="c">1</td><td class="l">(주)알피바이오</td><td class="c">김남기</td><td class="c">서울</td><td class="l">연질캡슐 제품</td><td class="c">2018-11-09</td>
+                    <td class="amt" data-won="999999676">999,999,676</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="999999676">999,999,676</td>
+                    <td class="amt" data-won="999999676">999,999,676</td>
+                  </tr>
+                  <tr>
+                    <td class="c">2</td><td class="l">비즈바이오</td><td class="c">문현철</td><td class="c">경기</td><td class="l">사료(DDFS,알팔파 펠렛 등)</td><td class="c">2018-12-20</td>
+                    <td class="amt" data-won="0">0</td><td class="amt" data-won="1999968000">1,999,968,000</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="1999968000">1,999,968,000</td>
+                    <td class="amt" data-won="1999968000">1,999,968,000</td>
+                  </tr>
+                  <tr>
+                    <td class="c">3</td><td class="l">(주)에이에스텍</td><td class="c">유종배</td><td class="c">경기</td><td class="l">의약품 원료 및 자외선 차단제</td><td class="c">2020-06-05</td>
+                    <td class="amt" data-won="0">0</td><td class="amt" data-won="999170900">999,170,900</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="999170900">999,170,900</td>
+                    <td class="amt" data-won="999170900">999,170,900</td>
+                  </tr>
+                  <tr>
+                    <td class="c">4</td><td class="l">(주)프레시지</td><td class="c">정중교</td><td class="c">경기</td><td class="l">밀키트(가정간편식) 제조 및 유통 플랫폼 운영</td><td class="c">2020-07-30</td>
+                    <td class="amt" data-won="0">0</td><td class="amt" data-won="1499957210">1,499,957,210</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="1499957210">1,499,957,210</td>
+                    <td class="amt" data-won="1499957210">1,499,957,210</td>
+                  </tr>
+                  <tr>
+                    <td class="c">5</td><td class="l">(주)요즘주방</td><td class="c">최영</td><td class="c">서울</td><td class="l">공유주방 운영 및 경영컨설팅</td><td class="c">2020-09-28</td>
+                    <td class="amt" data-won="0">0</td><td class="amt" data-won="499940000">499,940,000</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="499940000">499,940,000</td>
+                    <td class="amt" data-won="499940000">499,940,000</td>
+                  </tr>
+                  <tr>
+                    <td class="c">6</td><td class="l">(주)부일</td><td class="c">하태민</td><td class="c">경기</td><td class="l">수산물(새우, 활어 등) 수입, 제조, 유통</td><td class="c">2020-10-22</td>
+                    <td class="amt" data-won="0">0</td><td class="amt" data-won="597600000">597,600,000</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="597600000">597,600,000</td>
+                    <td class="amt" data-won="597600000">597,600,000</td>
+                  </tr>
+                  <tr>
+                    <td class="c">7</td><td class="l">(주)셀텍</td><td class="c">김영훈</td><td class="c">경기</td><td class="l"></td><td class="c">2020-10-28</td>
+                    <td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="500000000">500,000,000</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="500000000">500,000,000</td>
+                    <td class="amt" data-won="500000000">500,000,000</td>
+                  </tr>
+                  <tr>
+                    <td class="c">8</td><td class="l">(주)컬처히어로</td><td class="c">양준규</td><td class="c">경기</td><td class="l"></td><td class="c">2021-08-18</td>
+                    <td class="amt" data-won="0">0</td><td class="amt" data-won="1100000000">1,100,000,000</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="1100000000">1,100,000,000</td>
+                    <td class="amt" data-won="1100000000">1,100,000,000</td>
+                  </tr>
+                  <tr>
+                    <td class="c">9</td><td class="l">(주)조인앤조인</td><td class="c">진해수</td><td class="c">경기</td><td class="l">비건 및 저당 등의 완제품 및 식품 원료</td><td class="c">2021-08-18</td>
+                    <td class="amt" data-won="0">0</td><td class="amt" data-won="501683000">501,683,000</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="501683000">501,683,000</td>
+                    <td class="amt" data-won="501683000">501,683,000</td>
+                  </tr>
+                </tbody>
+                <tfoot><tr><td class="c" colspan="6">합계</td><td class="amt" data-won="999999676">999,999,676</td><td class="amt" data-won="7198319110">7,198,319,110</td><td class="amt" data-won="500000000">500,000,000</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="8698318786">8,698,318,786</td><td class="amt" data-won="8698318786">8,698,318,786</td></tr></tfoot>
+              </table>
+            </div>
+            <p class="fnote">※ 위 표에는 반드시 누적투자 전체를 기입할 것. (회수완료된 업체도 삭제불가)</p>
+
+            <div class="rsub">투자집행 업체 사후관리 등급</div>
+            <div class="scroller">
+              <table class="grid auto" style="min-width:820px">
+                <caption class="visually-hidden">투자집행 업체 사후관리 등급</caption>
+                <thead><tr><th class="c" scope="col">NO</th><th class="l" scope="col">투자기업</th><th class="c" scope="col">사후관리 등급</th><th class="l" scope="col">등급부여 근거</th><th class="l" scope="col">비고</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td class="c">1</td><td class="l">(주)프레시지</td><td class="c"><span class="tag g">A</span></td>
+                    <td class="l">●동사는 HMR 업계 1위로, 앵커에퀴티의 보통주 신주 2천억원 납입 이후 볼트온 전략을 통해 확장 중. 대학병원 임상결과에 기반한 건강 HMR(환자식, 건강식) 업체(국내 유일) ㈜닥터키친과의 주식 교환을 비롯하여 간편식 기업 ㈜허닭, 물류 회사인 라인물류, HMR 업계 2위인 테이스티나인과 M&amp;A 계약을 체결함으로써 HMR 시장을 석권할 계획임. ●22년 상반기 실적: 전년 상반기 대비 약 28% 상승한 1,043억원의 매출을 기록하며 지속 성장 중(21년 누적매출액: 약 1,889억원), 이는 밀키트 시장의 성장과 제품/채널 다각화를 통한 프레시지의 시장 내 Presence 확대에 기인. ●공장 운영 효율성 제고. 도급 계약 개선을 통한 인건비 절감 및 공장 자동화 투자 검토 중임. ●구매 비용 절감: 냉장육을 냉동육으로 전환 추진 중에 있으며, 축산 부위별 전문 업체와의 계약을 통한 원가 절감. 가격 인상 계획: 3분기 추가 판가 인상 고려중이며, 판가 및 출고가 밀착 관리를 통한 실질 가격 인상 효과 기대.</td>
+                    <td class="l">●투자 당시 2023년 말 코스닥 상장을 통한 Exit 계획이었으나, 앵커에퀴티로의 피인수와 BEP 달성 지연으로 인해 M&amp;A를 포함한 다양한 Exit 계획 하에 다소 연기 예상. ●아직까지 적자이나, 비약적인 매출 상승과 밀키트 내에서의 독보적인 시장 지배력, OEM 외에도 자체 브랜드, 외식사업 관련 IP 확보 전략 등이 시장에서 인정받고 있음. 이에 따라 성장성 또는 사업모델 특례 상장도 충분히 가능할 것으로 판단. ●또한 시장 내 지배적 위치에 따라, 다양한 식품 대기업에서도 M&amp;A 대상으로 고려 가능한 바, 전략적 M&amp;A를 통한 방식의 exit도 고려 가능.</td>
+                  </tr>
+                  <tr>
+                    <td class="c">2</td><td class="l">(주)컬처히어로</td><td class="c"><span class="tag g">A</span></td>
+                    <td class="l">●상반기 주요 실적 - 2분기 매출은 8.3억원으로 1분기(7.8억원)대비 6% 증가하며, 1월 2.3억원에서 5월 3.3억원으로 지속 증가세 - 단, 6월 매출은 비용 효율화를 위한 전략적 마케팅 비용 절감(1억원 =&gt; 3.3천만원, 78% 절감)으로 인한 일시적 하락 - 주요 지표 우상향으로 서비스 품질 개선 효과: DAU/MAU Stickness 11%→19%, 구매전환율 7.5%→12.4%, 이탈율 24%→4.5% ●하반기 전략 - 2022년 목표: GMV 109억원, 매출 44억원, App 다운 220만, 회원 113만, 전체 MAU 54만명, SNS 구독 350만명 목표 - 커머스: 상반기 구독떡볶이(4월), 곤약누들(7월) 출시완료, 하반기 통통까스(8월), 코인육수(9월), 줄리엔강달가슴살김(10월), 키친모먼트(11월) 등 전략 PB 출시 목표 및 MD팀 신규 셋업(4명) 완료 - 콘텐츠: [시나몬프로젝트]로 푸드라이프스타일 콘텐츠 시리즈 제작 및 OTT 등 제휴, LG 씽큐(4억원) 콘텐츠 제작 등 수익화 강화 - 서비스: [레시피 노트] 서비스 런칭으로 유저 참여율 증대(후기/팁/질문 등), 랩스타일크리에이터 활성화 지속 강화중 - 마케팅: [MBTI 소울푸드&amp;레시피 추천] 퀴즈 바이럴 런칭 1주일 5만명 참여, [월간식탁고사] 바이럴 준비 - 수출: 하반기 베트남 수출 본격 강화 목표(하나코미, 마켓씨아공 등 현지 파트너십 업체 협의) - 파트너십: 락키친/리빙 전략제휴 기획전 준비중, 카카오메이커스 입점 준비중</td>
+                    <td class="l">●브릿지 투자 유치 목표: 50~100억원(22년 4분기~23년 1분기) ●Exit 예상 시기: 2025년 경(IPO 상장 또는 푸드/키친/커머스 관련 대기업/유니콘 등 M&amp;A 목표)</td>
+                  </tr>
+                  <tr>
+                    <td class="c">3</td><td class="l">(주)조인앤조인</td><td class="c"><span class="tag g">A</span></td>
+                    <td class="l">●신규시장/고객사 확보 현황 - 일본 NTC 주식회사(종합상사) '널담 병아리콩 퍼핑 스낵' 추가 수출 발주 확정. ●국내 대형거래처 확보 - 그랜드워커힐 Amenity 입점 진행 중; 기존 Home Bar 물량이 소진되는 2023년 1월 동사 병아리콩 퍼핑 스낵 입점 예정(예상 초도물량 2천만원/월, 상시 주문 건 별도). 롯데마트 42개 지점 확보 및 확대 중. - 현대백화점 투홀 신규거래선 추가 및 초도물량 납품(기대매출 1천만원/월). - 삼성월스토리 기존 FS(급식, 간식 사업) 거래 확대(삼성전자 확대 중), FD(식자재, 일반유통사업) 신규 미팅 완료, 반제품, 소재 거래 FD와 협의 중, MOU 체결과 시 직접 투자 논의 중. ●신제품 개발/출시/Renewal관련 추진사항 - '비건유' 8월9일 생산 완료, 치즈, 버터 프로토타입 개발 완료. - TVP(대체육 제조를 위한 식물성 단백질 조직을 만들 수 있는 기술)을 보유하고 있는 유럽계 회사와 독점적 관계 협상 중임. 해당 기술 식품 공학적으로 활용하면 최고 품질의 비건육 개발이 가능할 것으로 판단됨. ●미국시장 진출관련 진행사항 - CES 2023 Central Plaza Booth 배정확정, 계약체결 완료. - 널담 브랜드 디저트 제품 아마존 계열 마트(홀푸즈마켓)에 납품 선적 완료 및 해상 운송 중(약 800만원)</td>
+                    <td class="l">●Exit 예상 시기: 2024년 경. ●2024년 실적을 바탕으로 상장(우회상장 포함)을 추진하여 회수하거나, 식품 대기업 계열 등으로의 M&amp;A를 통하여 회수 예정. ●금액: IRR 8.0%(만기/조기 상환) 이상 Exit 예정. ●IPO시 IRR 38.2%(예상).</td>
+                  </tr>
+                  <tr>
+                    <td class="c">4</td><td class="l">(주)요즘주방</td><td class="c"><span class="tag n">D</span></td>
+                    <td class="l">동사의 주요 BM인 공유주방의 사업성이 떨어져서 피봇을 검토중에 있음. 동사가 구축해 놓은 공유주방의 오프라인 거점에 정성식품이 거점형 주방을 입점시켜 반찬프렌차이즈 활성화로 피봇 모색. 정성식품 인수를 검토하던 중에 현재 채권시장의 어려움으로 인해 무산될 위기에 처해 있음.</td>
+                    <td class="l">정성식품 인수 여부 11월 11일 결정 예정</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="fnote">※ IPO 예정인 경우 예정일자, 잔존평가금액 기술.<br>※ 사후관리 C등급 이하는 Action Plan 별도 수시보고.</p>
+
+            <div class="rsub">&lt;등급분류기준&gt;</div>
+            <div class="scroller">
+              <table class="grid auto" style="min-width:520px">
+                <caption class="visually-hidden">등급분류기준</caption>
+                <thead><tr><th class="c" scope="col">등급</th><th class="l" scope="col">구분기준</th></tr></thead>
+                <tbody>
+                  <tr><td class="c"><span class="tag b">AA</span></td><td class="l">목표 투자수익율 조기 달성 예상<br>: 회사 경영 상태, 재무상태 및 미래현금흐름 등을 고려하여 투자원금 및 목표 투자수익을 조기 회수할 것으로 예상되는 경우</td></tr>
+                  <tr><td class="c"><span class="tag b">A</span></td><td class="l">목표 투자수익율 달성 예상<br>: 회사 경영 상태, 재무상태 및 미래현금흐름 등을 고려하여 투자원금 및 목표 투자수익을 회수할 것으로 예상되는 경우</td></tr>
+                  <tr><td class="c"><span class="tag g">B</span></td><td class="l">투자원금 회수 예상<br>: 투자원금 회수에 위험이 존재하지 않으나, 목표 투자수익율을 달성하지 못할 잠재적인 요인이 존재하는 경우<br><br><b>Action Plan</b><br>: 투자업체에 대한 Value-up 방안을 마련하여 목표 투자수익율을 달성할 수 있도록 집중사후관리 필요</td></tr>
+                  <tr><td class="c"><span class="tag a">C</span></td><td class="l">투자원금 회수에 위험이 존재<br>: 투자원금 손실을 초래할 수 있는 요인이 현재화되어 투자원금 회수에 상당한 위험이 발생할 것으로 예상되는 경우<br><br><b>Action Plan</b><br>: 투자원금을 회수하기 위한 관리방안 마련 및 구체적인 회수 시나리오 작성</td></tr>
+                  <tr><td class="c"><span class="tag n">D</span></td><td class="l">투자자산평가손실인식대상 및 인식<br>1) 투자원금의 손실 발생을 예상하나, 그 손실액을 확정할 수 없어, 장부상 감액손실을 인식하지 않은 경우<br>2) 부도, 영업 중단 등의 사유로 인해 장부상 투자자산감액평가손실액을 인식한 경우<br><br><b>Action Plan</b><br>: 투자원금 회수 시나리오 상의 단계별 진행상황 수시 체크</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="rsub">회수내역</div>
+            <div class="scroller">
+              <table class="grid" style="min-width:1360px">
+                <caption class="visually-hidden">회수내역</caption>
+                <thead>
+                  <tr>
+                    <th class="c" scope="col">NO</th><th class="l" scope="col">투자기업</th><th class="c" scope="col">투자시점</th><th class="c" scope="col">투자금액</th>
+                    <th class="c" scope="col">회수완료 여부</th><th class="c" scope="col">회수일자</th>
+                    <th class="c" scope="col">회수원금(A)</th><th class="c" scope="col">회수금액(B)</th><th class="c" scope="col">수익금액(B-A)</th><th class="c" scope="col">감액금액</th>
+                    <th class="c" scope="col">회수 상태</th><th class="l" scope="col">비고</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="c">1</td><td class="l" rowspan="2">(주)알피바이오</td><td class="c" rowspan="2">2018-11-09</td><td class="amt" data-won="999999676" rowspan="2">999,999,676</td>
+                    <td class="c" rowspan="2"><span class="tag g">O</span></td><td class="c">2022-09-29</td>
+                    <td class="amt" data-won="876782458">876,782,458</td><td class="amt" data-won="2101318750">2,101,318,750</td><td class="amt" data-won="1224536292">1,224,536,292</td><td class="amt" data-won="0">0</td>
+                    <td class="c muted">-</td><td class="l">KOSDAQ</td>
+                  </tr>
+                  <tr>
+                    <td class="c">2</td><td class="c">2022-10-17</td>
+                    <td class="amt" data-won="123217218">123,217,218</td><td class="amt" data-won="201926200">201,926,200</td><td class="amt" data-won="78708982">78,708,982</td><td class="amt" data-won="0">0</td>
+                    <td class="c">회수 완료</td><td class="l">KOSDAQ</td>
+                  </tr>
+                  <tr class="subtotal"><td class="c" colspan="3">소 계</td><td class="amt" data-won="999999676">999,999,676</td><td colspan="2"></td><td class="amt" data-won="999999676">999,999,676</td><td class="amt" data-won="2303244950">2,303,244,950</td><td class="amt" data-won="1303245274">1,303,245,274</td><td class="amt" data-won="0">0</td><td colspan="2"></td></tr>
+                  <tr>
+                    <td class="c">3</td><td class="l" rowspan="2">비즈바이오</td><td class="c" rowspan="2">2018-12-20</td><td class="amt" data-won="1999968000" rowspan="2">1,999,968,000</td>
+                    <td class="c" rowspan="2"><span class="tag g">O</span></td><td class="c">2024-03-29</td>
+                    <td class="amt" data-won="999984000">999,984,000</td><td class="amt" data-won="1293388432">1,293,388,432</td><td class="amt" data-won="293404432">293,404,432</td><td class="amt" data-won="0">0</td>
+                    <td class="c muted">-</td><td class="l">상환</td>
+                  </tr>
+                  <tr>
+                    <td class="c">4</td><td class="c">2024-06-28</td>
+                    <td class="amt" data-won="999984000">999,984,000</td><td class="amt" data-won="1309173935">1,309,173,935</td><td class="amt" data-won="309189935">309,189,935</td><td class="amt" data-won="0">0</td>
+                    <td class="c">회수 완료</td><td class="l">상환</td>
+                  </tr>
+                  <tr class="subtotal"><td class="c" colspan="3">소 계</td><td class="amt" data-won="1999968000">1,999,968,000</td><td colspan="2"></td><td class="amt" data-won="1999968000">1,999,968,000</td><td class="amt" data-won="2602562367">2,602,562,367</td><td class="amt" data-won="602594367">602,594,367</td><td class="amt" data-won="0">0</td><td colspan="2"></td></tr>
+                  <tr>
+                    <td class="c">5</td><td class="l" rowspan="20">(주)에이에스텍</td><td class="c" rowspan="20">2020-06-05</td><td class="amt" data-won="999170900" rowspan="20">999,170,900</td>
+                    <td class="c" rowspan="20"><span class="tag g">O</span></td><td class="c">2023-11-21</td>
+                    <td class="amt" data-won="432217622">432,217,622</td><td class="amt" data-won="2326075080">2,326,075,080</td><td class="amt" data-won="1893857458">1,893,857,458</td><td class="amt" data-won="0">0</td>
+                    <td class="c muted">-</td><td class="l">KOSDAQ</td>
+                  </tr>
+                  <tr><td class="c">6</td><td class="c">2024-01-03</td><td class="amt" data-won="2864451">2,864,451</td><td class="amt" data-won="20665600">20,665,600</td><td class="amt" data-won="17801149">17,801,149</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">7</td><td class="c">2024-01-04</td><td class="amt" data-won="4611186">4,611,186</td><td class="amt" data-won="32954700">32,954,700</td><td class="amt" data-won="28343514">28,343,514</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">8</td><td class="c">2024-01-05</td><td class="amt" data-won="8665933">8,665,933</td><td class="amt" data-won="61260550">61,260,550</td><td class="amt" data-won="52594617">52,594,617</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">9</td><td class="c">2024-01-08</td><td class="amt" data-won="92093074">92,093,074</td><td class="amt" data-won="657468550">657,468,550</td><td class="amt" data-won="565375476">565,375,476</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">10</td><td class="c">2024-01-10</td><td class="amt" data-won="3837010">3,837,010</td><td class="amt" data-won="28602300">28,602,300</td><td class="amt" data-won="24765290">24,765,290</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">11</td><td class="c">2024-01-11</td><td class="amt" data-won="49387590">49,387,590</td><td class="amt" data-won="397415500">397,415,500</td><td class="amt" data-won="348027910">348,027,910</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">12</td><td class="c">2024-03-04</td><td class="amt" data-won="31528318">31,528,318</td><td class="amt" data-won="202419200">202,419,200</td><td class="amt" data-won="170890882">170,890,882</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">13</td><td class="c">2024-03-07</td><td class="amt" data-won="4838600">4,838,600</td><td class="amt" data-won="30551350">30,551,350</td><td class="amt" data-won="25712750">25,712,750</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">14</td><td class="c">2024-03-08</td><td class="amt" data-won="31755732">31,755,732</td><td class="amt" data-won="203015850">203,015,850</td><td class="amt" data-won="171260118">171,260,118</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">15</td><td class="c">2024-04-01</td><td class="amt" data-won="4838600">4,838,600</td><td class="amt" data-won="30525000">30,525,000</td><td class="amt" data-won="25686400">25,686,400</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">16</td><td class="c">2024-04-03</td><td class="amt" data-won="24797825">24,797,825</td><td class="amt" data-won="157226400">157,226,400</td><td class="amt" data-won="132428575">132,428,575</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">17</td><td class="c">2024-04-04</td><td class="amt" data-won="32317009">32,317,009</td><td class="amt" data-won="211542300">211,542,300</td><td class="amt" data-won="179225291">179,225,291</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">18</td><td class="c">2024-04-08</td><td class="amt" data-won="40745851">40,745,851</td><td class="amt" data-won="269802550">269,802,550</td><td class="amt" data-won="229056699">229,056,699</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">19</td><td class="c">2024-05-09</td><td class="amt" data-won="40847461">40,847,461</td><td class="amt" data-won="272813450">272,813,450</td><td class="amt" data-won="231965989">231,965,989</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">20</td><td class="c">2024-05-10</td><td class="amt" data-won="56040665">56,040,665</td><td class="amt" data-won="388150950">388,150,950</td><td class="amt" data-won="332110285">332,110,285</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">21</td><td class="c">2024-05-14</td><td class="amt" data-won="9677200">9,677,200</td><td class="amt" data-won="70862500">70,862,500</td><td class="amt" data-won="61185300">61,185,300</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">22</td><td class="c">2024-05-23</td><td class="amt" data-won="28189683">28,189,683</td><td class="amt" data-won="230699799">230,699,799</td><td class="amt" data-won="202510116">202,510,116</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l">KOSDAQ</td></tr>
+                  <tr><td class="c">23</td><td class="c">2024-11-28</td><td class="amt" data-won="99199500">99,199,500</td><td class="amt" data-won="99199500">99,199,500</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="c muted">-</td><td class="l"></td></tr>
+                  <tr><td class="c">24</td><td class="c">2025-03-14</td><td class="amt" data-won="717590">717,590</td><td class="amt" data-won="3295392">3,295,392</td><td class="amt" data-won="2577802">2,577,802</td><td class="amt" data-won="0">0</td><td class="c">회수 완료</td><td class="l">KOSDAQ</td></tr>
+                  <tr class="subtotal"><td class="c" colspan="3">소 계</td><td class="amt" data-won="999170900">999,170,900</td><td colspan="2"></td><td class="amt" data-won="999170900">999,170,900</td><td class="amt" data-won="5694546521">5,694,546,521</td><td class="amt" data-won="4695375621">4,695,375,621</td><td class="amt" data-won="0">0</td><td colspan="2"></td></tr>
+                  <tr>
+                    <td class="c">25</td><td class="l">(주)요즘주방</td><td class="c">2020-09-28</td><td class="amt" data-won="499940000">499,940,000</td>
+                    <td class="c"><span class="tag n">X</span></td><td class="c">2022-12-30</td>
+                    <td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="499939000">499,939,000</td>
+                    <td class="c muted">-</td><td class="l"></td>
+                  </tr>
+                  <tr class="subtotal"><td class="c" colspan="3">소 계</td><td class="amt" data-won="499940000">499,940,000</td><td colspan="2"></td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="499939000">499,939,000</td><td colspan="2"></td></tr>
+                  <tr>
+                    <td class="c">26</td><td class="l">(주)부일</td><td class="c">2020-10-22</td><td class="amt" data-won="597600000">597,600,000</td>
+                    <td class="c"><span class="tag g">O</span></td><td class="c">2021-09-15</td>
+                    <td class="amt" data-won="597600000">597,600,000</td><td class="amt" data-won="688893633">688,893,633</td><td class="amt" data-won="91293633">91,293,633</td><td class="amt" data-won="0">0</td>
+                    <td class="c">회수 완료</td><td class="l">상환</td>
+                  </tr>
+                  <tr class="subtotal"><td class="c" colspan="3">소 계</td><td class="amt" data-won="597600000">597,600,000</td><td colspan="2"></td><td class="amt" data-won="597600000">597,600,000</td><td class="amt" data-won="688893633">688,893,633</td><td class="amt" data-won="91293633">91,293,633</td><td class="amt" data-won="0">0</td><td colspan="2"></td></tr>
+                  <tr>
+                    <td class="c">27</td><td class="l" rowspan="3">(주)셀텍</td><td class="c" rowspan="3">2020-10-28</td><td class="amt" data-won="500000000" rowspan="3">500,000,000</td>
+                    <td class="c" rowspan="3"><span class="tag n">X</span></td><td class="c">2021-12-31</td>
+                    <td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="499999000">499,999,000</td>
+                    <td class="c muted">-</td><td class="l">기타</td>
+                  </tr>
+                  <tr>
+                    <td class="c">28</td><td class="c">2022-12-22</td>
+                    <td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td><td class="amt" data-won="-138188416">-138,188,416</td>
+                    <td class="c">회수 완료</td><td class="l">기타</td>
+                  </tr>
+                  <tr>
+                    <td class="c">29</td><td class="c">2022-12-22</td>
+                    <td class="amt" data-won="138189416">138,189,416</td><td class="amt" data-won="138189416">138,189,416</td><td class="amt" data-won="0">0</td><td class="amt" data-won="0">0</td>
+                    <td class="c muted">-</td><td class="l">상환</td>
+                  </tr>
+                  <tr class="subtotal"><td class="c" colspan="3">소 계</td><td class="amt" data-won="500000000">500,000,000</td><td colspan="2"></td><td class="amt" data-won="138189416">138,189,416</td><td class="amt" data-won="138189416">138,189,416</td><td class="amt" data-won="0">0</td><td class="amt" data-won="361810584">361,810,584</td><td colspan="2"></td></tr>
+                </tbody>
+                <tfoot>
+                  <tr><td class="c" colspan="3">합 계</td><td class="amt" data-won="5596678576">5,596,678,576</td><td colspan="2"></td><td class="amt" data-won="4734927992">4,734,927,992</td><td class="amt" data-won="11427436887">11,427,436,887</td><td class="amt" data-won="6692508895">6,692,508,895</td><td class="amt" data-won="861749584">861,749,584</td><td colspan="2"></td></tr>
+                </tfoot>
+              </table>
+            </div>
+            <p class="fnote">※ 비고란에는 장외매각, 유가증권시장, 코스닥시장, NASDAQ, MOTHER 등 Exit 창구 표시.</p>
+
+            <div class="rsub">수시보고 내역</div>
+            <div class="scroller">
+              <table class="grid auto" style="min-width:680px">
+                <caption class="visually-hidden">수시보고 내역</caption>
+                <thead><tr><th class="c" scope="col">NO</th><th class="l" scope="col">투자기업</th><th class="c" scope="col">보고일자</th><th class="l" scope="col">수시보고 내역 요약</th></tr></thead>
+                <tbody>
+                  <tr><td class="c">1</td><td class="l" rowspan="2">(주)부일</td><td class="c">2020-11-02</td><td class="l">[부일]부속합의서 체결의 건</td></tr>
+                  <tr><td class="c">2</td><td class="c">2021-09-13</td><td class="l">특별상환권 행사의 건(부일)</td></tr>
+                  <tr><td class="c">3</td><td class="l">비즈바이오</td><td class="c">2024-07-12</td><td class="l">[비즈바이오] 전량 상환</td></tr>
+                  <tr><td class="c">4</td><td class="l" rowspan="3">(주)셀텍</td><td class="c">2020-11-13</td><td class="l">(주)셀텍 계약서 변경의 건</td></tr>
+                  <tr><td class="c">5</td><td class="c">2022-01-27</td><td class="l">[셀텍] 회생 개시 신청</td></tr>
+                  <tr><td class="c">6</td><td class="c">2023-01-03</td><td class="l">[셀텍]회생인가 결정으로 인한 회수</td></tr>
+                  <tr><td class="c">7</td><td class="l" rowspan="2">(주)알피바이오</td><td class="c">2022-09-29</td><td class="l">[알피바이오]금일 상장 및 일부 매도</td></tr>
+                  <tr><td class="c">8</td><td class="c">2022-10-17</td><td class="l">[알피바이오] 15,102주 매도</td></tr>
+                  <tr><td class="c">9</td><td class="l" rowspan="3">(주)에이에스텍</td><td class="c">2023-03-31</td><td class="l">[에이에스텍]계약 조건 변경의 건</td></tr>
+                  <tr><td class="c">10</td><td class="c">2023-11-28</td><td class="l">[에이에스텍]금일 상장 구주매출 거래발생</td></tr>
+                  <tr><td class="c">11</td><td class="c">2024-01-08</td><td class="l">[에이에스텍] 일부 매도</td></tr>
+                  <tr><td class="c">12</td><td class="l">(주)요즘주방</td><td class="c">2022-12-26</td><td class="l">[요즘주방] 투자금 감액의 건</td></tr>
+                  <tr><td class="c">13</td><td class="l">(주)인피닉</td><td class="c">2022-09-01</td><td class="l">[인피닉] 투자금 집행 중단의 건</td></tr>
+                  <tr><td class="c">14</td><td class="l">(주)프레시지</td><td class="c">2021-11-09</td><td class="l">[프레시지]우선주 보통주 전환의 건</td></tr>
+                  <tr><td class="c">15</td><td class="l" rowspan="3">운용사관련</td><td class="c">2018-12-03</td><td class="l">[AJ캐피탈파트너스] 주주현황</td></tr>
+                  <tr><td class="c">16</td><td class="c">2021-03-30</td><td class="l">대주주 변경 예정(2021.04.09)</td></tr>
+                  <tr><td class="c">17</td><td class="c">2021-04-16</td><td class="l">운용사 대주주 변경의 건</td></tr>
+                  <tr><td class="c">18</td><td class="l" rowspan="7">기타</td><td class="c">2019-08-07</td><td class="l">일반펀드매니저(참여인력) 변경의 건</td></tr>
+                  <tr><td class="c">19</td><td class="c">2019-10-04</td><td class="l">[AJ캐피탈파트너스] 대표이사 변경</td></tr>
+                  <tr><td class="c">20</td><td class="c">2021-04-05</td><td class="l">일반펀드매니저(참여인력) 변경의 건</td></tr>
+                  <tr><td class="c">21</td><td class="c">2021-06-04</td><td class="l">회사 주요사항 변경</td></tr>
+                  <tr><td class="c">22</td><td class="c">2021-10-20</td><td class="l">준법감시인 변경의 건</td></tr>
+                  <tr><td class="c">23</td><td class="c">2022-11-16</td><td class="l">[이수창업투자]대표이사 변경</td></tr>
+                  <tr><td class="c">24</td><td class="c">2023-01-20</td><td class="l">NBH캐피탈(주) 준법감시인 변경</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="fnote">※ 수시 보고한 내역을 업체별로 누적으로 요약.<br>※ 투자업체와 관련없는 보고의 경우 투자기업에 관련 제목 간단히 기술. (예: 대주주변경, 대표변경 등)</p>
+          </section>
+
+          <!-- 3. 미투자자산 운용현황 -->
+          <section class="rsec">
+            <h3 class="rsec-h">3. 미투자자산 운용현황</h3>
+            <div class="rsub">예금내역</div>
+            <div class="scroller">
+              <table class="grid auto" style="min-width:720px">
+                <caption class="visually-hidden">예금내역</caption>
+                <thead><tr><th class="c" scope="col">NO</th><th class="l" scope="col">계좌번호(기관)</th><th class="c" scope="col">예금액</th><th class="c" scope="col">만기일</th><th class="c" scope="col">이자율</th><th class="l" scope="col">비고</th></tr></thead>
+                <tbody>
+                  <tr><td class="c">1</td><td class="l">317-0014-7214-71 (NH농협은행)</td><td class="amt" data-won="154901256">154,901,256</td><td class="c">2040-12-31</td><td class="c">0.6 %</td><td class="l muted"></td></tr>
+                  <tr><td class="c">2</td><td class="l">002-11-252481 (신한투자증권)</td><td class="amt" data-won="1">1</td><td class="c muted">-</td><td class="c">0 %</td><td class="l muted"></td></tr>
+                </tbody>
+                <tfoot><tr><td class="c" colspan="2">합 계</td><td class="amt" data-won="154901257">154,901,257</td><td colspan="3"></td></tr></tfoot>
+              </table>
+            </div>
+          </section>
+
+          <!-- 4. 수입내역 -->
+          <section class="rsec">
+            <h3 class="rsec-h">4. 수입내역 (일자별 발생내역)</h3>
+            <div class="scroller">
+              <table class="grid auto" style="min-width:620px">
+                <caption class="visually-hidden">수입내역</caption>
+                <thead><tr><th class="c" scope="col">NO</th><th class="c" scope="col">일자</th><th class="c" scope="col">금액</th><th class="l" scope="col">내역</th></tr></thead>
+                <tbody>
+                  <tr><td class="c">1</td><td class="c">2018년</td><td class="amt" data-won="69019824">69,019,824</td><td class="l muted"></td></tr>
+                  <tr><td class="c">2</td><td class="c">2019년</td><td class="amt" data-won="117783989">117,783,989</td><td class="l muted"></td></tr>
+                  <tr><td class="c">3</td><td class="c">2020년</td><td class="amt" data-won="50374607">50,374,607</td><td class="l muted"></td></tr>
+                  <tr><td class="c">4</td><td class="c">2021년</td><td class="amt" data-won="101743843">101,743,843</td><td class="l muted"></td></tr>
+                  <tr><td class="c">5</td><td class="c">2022년</td><td class="amt" data-won="1457377991">1,457,377,991</td><td class="l muted"></td></tr>
+                  <tr><td class="c">6</td><td class="c">2023년</td><td class="amt" data-won="2073108512">2,073,108,512</td><td class="l muted"></td></tr>
+                  <tr><td class="c">7</td><td class="c">2024년</td><td class="amt" data-won="3415359684">3,415,359,684</td><td class="l muted"></td></tr>
+                  <tr><td class="c">8</td><td class="c">2025년</td><td class="amt" data-won="2854545">2,854,545</td><td class="l muted"></td></tr>
+                  <tr><td class="c">9</td><td class="c">2026-01-25</td><td class="amt" data-won="17832">17,832</td><td class="l">이자 입금</td></tr>
+                </tbody>
+                <tfoot><tr><td class="c" colspan="2">합 계</td><td class="amt" data-won="7287640827">7,287,640,827</td><td class="l"></td></tr></tfoot>
+              </table>
+            </div>
+          </section>
+
+          <!-- 5. 비용내역 -->
+          <section class="rsec">
+            <h3 class="rsec-h">5. 비용내역 (일자별 발생내역)</h3>
+            <div class="scroller">
+              <table class="grid auto" style="min-width:620px">
+                <caption class="visually-hidden">비용내역</caption>
+                <thead><tr><th class="c" scope="col">NO</th><th class="c" scope="col">일자</th><th class="c" scope="col">금액</th><th class="l" scope="col">내역</th></tr></thead>
+                <tbody>
+                  <tr><td class="c">1</td><td class="c">2018년</td><td class="amt" data-won="97658536">97,658,536</td><td class="l muted"></td></tr>
+                  <tr><td class="c">2</td><td class="c">2019년</td><td class="amt" data-won="201724005">201,724,005</td><td class="l muted"></td></tr>
+                  <tr><td class="c">3</td><td class="c">2020년</td><td class="amt" data-won="245409796">245,409,796</td><td class="l muted"></td></tr>
+                  <tr><td class="c">4</td><td class="c">2021년</td><td class="amt" data-won="762637583">762,637,583</td><td class="l muted"></td></tr>
+                  <tr><td class="c">5</td><td class="c">2022년</td><td class="amt" data-won="722008441">722,008,441</td><td class="l muted"></td></tr>
+                  <tr><td class="c">6</td><td class="c">2023년</td><td class="amt" data-won="247533908">247,533,908</td><td class="l muted"></td></tr>
+                  <tr><td class="c">7</td><td class="c">2024년</td><td class="amt" data-won="217985192">217,985,192</td><td class="l muted"></td></tr>
+                  <tr><td class="c">8</td><td class="c">2025년</td><td class="amt" data-won="83455075">83,455,075</td><td class="l muted"></td></tr>
+                  <tr><td class="c">9</td><td class="c">2026-01-30</td><td class="amt" data-won="6585677">6,585,677</td><td class="l">26년 1월 관리보수</td></tr>
+                </tbody>
+                <tfoot><tr><td class="c" colspan="2">합 계</td><td class="amt" data-won="2584998213">2,584,998,213</td><td class="l"></td></tr></tfoot>
+              </table>
+            </div>
+            <p class="fnote">※ 비용내역에는 투자금 집행금은 기재하지 않고 순수 비용(관리보수,감액 등 포함)만 기재.</p>
+          </section>
+
+          <!-- 6. 누적분배내역 -->
+          <section class="rsec">
+            <h3 class="rsec-h">6. 누적분배내역</h3>
+            <div class="scroller">
+              <table class="grid auto" style="min-width:860px">
+                <caption class="visually-hidden">누적분배내역</caption>
+                <thead><tr><th class="c" scope="col">NO</th><th class="c" scope="col">일자</th><th class="c" scope="col">분배원금</th><th class="c" scope="col">분배수익</th><th class="c" scope="col">분배총액</th><th class="c" scope="col">잔여원금</th></tr></thead>
+                <tbody>
+                  <tr><td class="c">1</td><td class="c">2022-11-07</td><td class="amt" data-won="3000000000">3,000,000,000</td><td class="amt" data-won="0">0</td><td class="amt" data-won="3000000000">3,000,000,000</td><td class="amt" data-won="7000000000">7,000,000,000</td></tr>
+                  <tr><td class="c">2</td><td class="c">2023-12-13</td><td class="amt" data-won="3000000000">3,000,000,000</td><td class="amt" data-won="0">0</td><td class="amt" data-won="3000000000">3,000,000,000</td><td class="amt" data-won="4000000000">4,000,000,000</td></tr>
+                  <tr><td class="c">3</td><td class="c">2024-08-30</td><td class="amt" data-won="1000000000">1,000,000,000</td><td class="amt" data-won="4530230393">4,530,230,393</td><td class="amt" data-won="5530230393">5,530,230,393</td><td class="amt" data-won="3000000000">3,000,000,000</td></tr>
+                </tbody>
+                <tfoot><tr><td class="c" colspan="2">합 계</td><td class="amt" data-won="7000000000">7,000,000,000</td><td class="amt" data-won="4530230393">4,530,230,393</td><td class="amt" data-won="11530230393">11,530,230,393</td><td class="l"></td></tr></tfoot>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <p class="note"><b>설계 메모:</b> 원래 S1_06(정기보고)에 목록↔상세 토글로 합쳐져 있던 상세 정기보고서(1~6 섹션)를 사용자 지시로 별도 화면(S1_06_01)으로 분리 — 실제 원문 시스템(FFMS)도 URL이 분리된 별도 페이지였음. 정기보고 목록의 "보고구분"(월간보고서 태그)·"상세조회"를 클릭하면 이 화면으로 이동(사용자 지시, 2026-08-31: "보고서" 파일명 열은 첨부파일명일 뿐이라 클릭 이동 제거, 대신 보고구분 태그에 링크 이동 부여). 별도 메뉴(subtab/LNB) 항목이 아니므로 이 화면의 subtab/LNB는 정기보고를 "on"으로 표시(사용자 지시로 8개 형제 화면 전체에서 "월간보고" 메뉴 항목 제거). 상세는 조회 전용이라 <b>금액 단위전환(원/백만원/억원)</b> 적용. 원문에 없는 행/코드/안내문구는 생성하지 않음. 도메인 정합 확인(회수 B-A=수익, 분배원금30억+잔여70억=결성100억) 필요.</p>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* ===== 금액 단위 전환 ===== */
+  function fmt(won,u){
+    if(u==='mil'){return (won/1e6).toLocaleString('ko-KR',{maximumFractionDigits:1});}
+    if(u==='eok'){return (won/1e8).toLocaleString('ko-KR',{maximumFractionDigits:2});}
+    return won.toLocaleString('ko-KR');
+  }
+  var unitBtns=document.querySelectorAll('.unit .seg button');
+  Array.prototype.forEach.call(unitBtns,function(btn){
+    btn.addEventListener('click',function(){
+      var u=btn.getAttribute('data-u');
+      Array.prototype.forEach.call(unitBtns,function(b){b.setAttribute('aria-pressed',b===btn)});
+      Array.prototype.forEach.call(document.querySelectorAll('.amt'),function(c){
+        var w=parseFloat(c.getAttribute('data-won'));if(isNaN(w))return;c.textContent=fmt(w,u);
+      });
+    });
+  });
+})();
+</script>

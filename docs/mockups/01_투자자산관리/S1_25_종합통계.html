@@ -1,0 +1,578 @@
+<title>종합통계</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;--danger:#E5484D;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;--danger:#F06369;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F06369;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:78ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .chipbtn{height:34px;padding:0 14px;border-radius:99px;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink-2);font-size:13px;font-weight:600}
+  .chipbtn[aria-pressed="true"]{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .seg.sm button{height:30px;padding:0 13px;font-size:12.5px}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px;overflow-x:auto;min-width:0;scrollbar-width:thin}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;flex:none;white-space:nowrap}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filtergrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 16px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;width:74px;text-align:right;white-space:nowrap}
+  .field select,.field input{flex:1;min-width:0}
+  .searchbtnrow{display:flex;justify-content:center;margin-top:14px}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .listbar{display:flex;align-items:center;gap:12px;margin:2px 0 8px;flex-wrap:wrap}
+  .listbar .cap{font-size:15px;font-weight:700}
+  .listbar .cap b{color:var(--primary)}
+  .listbar .acts{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .unitwrap{display:inline-flex;align-items:center;gap:6px}
+  .unitwrap .lab{font-size:12.5px;font-weight:700;color:var(--ink-2)}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;min-width:2560px;width:100%}
+  table.grid th,table.grid td{padding:7px 10px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:right}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong);position:sticky;top:0;z-index:2}
+  table.grid th.c,table.grid td.c{text-align:center}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  table.grid tfoot td{font-weight:800;background:var(--surface-3);border-top:2px solid var(--ink)}
+  table.grid tr.subtotal td{font-weight:700;background:var(--surface-2)}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.b{background:var(--primary-weak);color:var(--primary)} .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.n{background:var(--grey-weak);color:var(--ink-3)}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:90;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:900px){.filtergrid{grid-template-columns:repeat(2,1fr)}.lnb{display:none!important}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">시스템 S1 · 자펀드관리 · KRDS TO-BE</p>
+  <h1 class="doc-title">종합통계</h1>
+  <p class="doc-sub">연도·분야별 자펀드 결성/투자/회수 실적을 집계 조회하는 읽기전용 통계 화면. 투자건수·주목적(농식품/비농식품)·총계·회수실적·투자승수를 2단 헤더 그리드로 표시. 넓은 표는 가로 스크롤, 금액단위(원/백만원/억원) 전환.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">모</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="S1_01_투자심의관리.html" role="menuitem" class="on"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="../02_조기경보/S2_46_메인화면.html" role="menuitem"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">투자자산관리시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="01_파일럿_공고관리/mockup/공고관리_목업_artifact.html">모태펀드</a>
+          <a href="S1_01_투자심의관리.html">사후보고관리</a>
+          <a href="#" class="on" aria-current="page">자펀드</a>
+          <a href="S1_28_투심승인정보조회.html">통계</a>
+          <a href="S1_30_투자기업정보.html">투자기업</a>
+          <a href="S1_38_운용사_재무정보_조회.html">모니터링</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+      </div>
+      <div class="subtab" aria-label="자펀드관리 하위 메뉴">
+        <a href="05_자펀드관리/mockup/자펀드관리_목업.html">자펀드관리</a>
+        <a href="S1_14__운용사_출자배분관리.html">(운용사)출자배분관리</a>
+        <a href="S1_15_조합원정보등록.html">조합원정보등록</a>
+        <a href="S1_18_자펀드별조합원관리.html">자펀드별조합원관리</a>
+        <a href="S1_21__농금원_출자배분관리.html">(농금원)출자배분관리</a>
+        <a href="S1_24_투자실적_현황_자펀드_.html">투자실적 현황(자펀드)</a>
+        <span class="on">종합통계</span>
+        <a href="S1_26_자펀드수탁관리_실물검증_.html">자펀드수탁관리(실물검증)</a>
+        <a href="S1_27_자펀드수탁관리_확정_.html">자펀드수탁관리(확정)</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">자펀드관리</div>
+          <nav aria-label="자펀드관리 메뉴">
+            <a href="05_자펀드관리/mockup/자펀드관리_목업.html">자펀드관리</a>
+            <a href="S1_14__운용사_출자배분관리.html">(운용사)출자배분관리</a>
+            <a href="S1_15_조합원정보등록.html">조합원정보등록</a>
+            <a href="S1_18_자펀드별조합원관리.html">자펀드별조합원관리</a>
+            <a href="S1_21__농금원_출자배분관리.html">(농금원)출자배분관리</a>
+            <a href="S1_24_투자실적_현황_자펀드_.html">투자실적 현황(자펀드)</a>
+            <a href="#" class="on" aria-current="page">종합통계</a>
+            <a href="S1_26_자펀드수탁관리_실물검증_.html">자펀드수탁관리(실물검증)</a>
+            <a href="S1_27_자펀드수탁관리_확정_.html">자펀드수탁관리(확정)</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">자펀드관리 · 종합통계</div>
+          <div class="h1row"><h1>종합통계</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filtergrid">
+              <!-- 모펀드: 다중모펀드 옵션 ON 가정(단일=표시, 1개 초과 시 무조건 표시) --><div class="field" data-mf-visible="on"><label for="f-mf">모펀드</label><select id="f-mf"><option>농식품모태펀드</option><option>MOAF</option></select></div>
+              <div class="field"><label id="f-acc-lab">계정구분</label><div role="group" aria-labelledby="f-acc-lab" style="display:flex;gap:6px" id="f-acc"></div></div>
+              <div class="field"><label for="f-ybasis">연도기준<button type="button" class="review" data-rec="결성연도·선정연도 (조회기준 → 연도 컬럼 의미 변경)" data-dat="실값 '결성연도'만 확인 · '선정연도'는 §2.4 동적관계 근거 추론" aria-label="검토필요">!</button></label><select id="f-ybasis"><option value="결성" selected>결성연도</option><option value="선정">선정연도</option></select></div>
+              <div class="field"><label id="f-dbasis-lab">데이터기준</label><div role="group" aria-labelledby="f-dbasis-lab" style="display:flex;gap:6px" id="f-dbasis"></div></div>
+              <div class="field"><label for="f-date">기준일자</label><input type="date" id="f-date" value="2026-07-31" aria-label="기준일자"></div>
+            </div>
+            <div class="searchbtnrow"><button class="btn" id="search">조회</button></div>
+          </div>
+
+          <div class="listbar">
+            <div class="cap">총 <b id="cnt">3</b>건 <span style="font-size:12.5px;color:var(--ink-3);font-weight:500">· 기준일 2026-07-31</span></div>
+            <div class="acts">
+              <div class="unitwrap">
+                <span class="lab">금액단위</span>
+                <button type="button" class="review" data-rec="원·백만원·억원 (표준 단위전환 토글)" data-dat="CDTP:BU · 실값 '억원' · 그 외 옵션 미확인" aria-label="검토필요">!</button>
+                <div class="seg sm" role="group" aria-label="금액 표시 단위">
+                  <button data-u="원" aria-pressed="false">원</button>
+                  <button data-u="백만" aria-pressed="false">백만원</button>
+                  <button data-u="억" aria-pressed="true">억원</button>
+                </div>
+              </div>
+              <button class="btn btn-sec btn-sm" id="excel">엑셀</button>
+            </div>
+          </div>
+          <div class="scroller">
+            <table class="grid">
+              <caption class="visually-hidden">종합통계 목록 — 투자건수·농식품·비농식품·총계·회수실적·투자승수는 2단 헤더, 금액 단위는 억원 기준</caption>
+              <thead>
+                <tr>
+                  <th class="c" rowspan="2">NO</th>
+                  <th class="c" rowspan="2" id="th-year">결성연도</th>
+                  <th class="c" rowspan="2">분야</th>
+                  <th class="l" rowspan="2">조합</th>
+                  <th class="c" rowspan="2">결성액</th>
+                  <th class="c" rowspan="2">정부</th>
+                  <th class="c" rowspan="2">민간</th>
+                  <th class="c" rowspan="2">민간비율</th>
+                  <th class="c" colspan="5">투자건수(개)</th>
+                  <th class="c" colspan="3">농식품</th>
+                  <th class="c" colspan="3">비농식품</th>
+                  <th class="c" colspan="2">총계</th>
+                  <th class="c" colspan="4">회수실적</th>
+                  <th class="c" rowspan="2">출자사업연도<button type="button" class="review" data-rec="원문 그대로 표시" data-dat="사용자 제공 참고 화면 캡처가 이 열부터 오른쪽(출자사업연도~투자승수)은 화면 폭 밖이라 안 보임 — 1행(예시)만 있던 기존 값 유지, 나머지 136행은 확인 전까지 '-' 표시" aria-label="검토필요">!</button></th>
+                  <th class="c" rowspan="2">결성일</th>
+                  <th class="c" rowspan="2">등록일</th>
+                  <th class="c" rowspan="2">기준일</th>
+                  <th class="c" rowspan="2">경과년<br><span style="font-weight:500;font-size:11px">(등록일~기준일)</span></th>
+                  <th class="c" colspan="3">투자승수</th>
+                </tr>
+                <tr>
+                  <th class="c" scope="col">농식품</th><th class="c" scope="col">비농식품</th><th class="c" scope="col">소계</th><th class="c" scope="col">의무투자</th><th class="c" scope="col">규모이하</th>
+                  <th class="c" scope="col">투자금액</th><th class="c" scope="col">투자금액 대비</th><th class="c" scope="col">결성액 대비</th>
+                  <th class="c" scope="col">투자금액</th><th class="c" scope="col">투자금액 대비</th><th class="c" scope="col">결성액 대비</th>
+                  <th class="c" scope="col">투자금액</th><th class="c" scope="col">결성액대비<br>총투자율</th>
+                  <th class="c" scope="col">회수원금</th><th class="c" scope="col">회수수익</th><th class="c" scope="col">회수총액</th><th class="c" scope="col">감액금액<button type="button" class="review" data-rec="원문 그대로 표시" data-dat="참고 화면 캡처에서 감액금액 열도 화면 폭 밖이라 값 미확인 — 1행(예시) 제외 나머지는 '-' 표시" aria-label="검토필요">!</button></th>
+                  <th class="c" scope="col">농식품</th><th class="c" scope="col">비농식품</th><th class="c" scope="col">전체</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+              <tfoot id="foot"></tfoot>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+
+  /* nav toggle */
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* 데이터: 사용자 제공 실제 화면 캡처(2011~2026, 137건) 기반. 각 행은 [no,연도,분야,조합명,결성액,정부,농식품건수,비농식품건수,의무투자,규모이하,농식품투자금액,비농식품투자금액,회수원금,회수수익] — 민간/민간비율/소계/투자금액대비/결성액대비/회수총액 등은 항상 산식으로 도출(원문에도 이 값들은 기초값의 단순 합/비율이라 별도 오타 위험 없이 계산 가능).
+     열 중 "출자사업연도~투자승수"·"감액금액"은 캡처 화면 폭 밖이라 미확인(1행 예시만 유지, 나머지는 '-'). */
+  var RAW=[
+    [1,2011,'8대사업','현대동양농식품사모투자전문회사',320,157,4,0,4,3,250,0,250,77],
+    [2,2011,'농림수산일반','그린농림수산식품투자조합',200,90,5,4,9,4,130,45,175,103],
+    [3,2011,'농림축산','아주 Agrigento 1호 투자조합',200,100,7,2,9,4,140,38,178,331],
+    [4,2011,'식품','미시간글로벌 식품산업투자조합',250,100,11,0,11,10,179,0,81,7],
+    [5,2011,'농림축산','컴퍼니케이파트너스 농림축산투자조합',200,100,12,5,12,11,121,53,173,169],
+    [6,2011,'식품','나우농식품투자 펀드 1호',200,80,8,5,8,4,120,56,176,76],
+    [7,2011,'8대사업','미래에셋 애그로 프로젝트 투자조합',200,100,15,0,13,11,160,0,160,159],
+    [8,2011,'농림축산','나눔농축산전문투자조합1호',200,100,9,2,9,8,151,13,159,27],
+    [9,2011,'식품','솔리더스 글로벌농식품바이오 투자펀드 1호',170,80,10,3,9,7,108,35,142,221],
+    [10,2012,'식품','KDBC식품산업투자조합1호',160,80,7,2,6,6,102,35,137,72],
+    [11,2012,'소형프로젝트','이앤-농식품프로젝트투자조합',100,70,8,0,6,8,97,0,97,2],
+    [12,2012,'소형프로젝트','유큐아이피농림수산식품투자조합 제1호',100,70,7,0,7,7,86,0,61,33],
+    [13,2012,'식품','나우농식품 투자펀드2호',160,80,7,14,5,-1,96,46,142,63],
+    [14,2012,'농림축산','노투-미래에셋 애그로스타프로젝트 투자조합',160,80,11,4,10,10,102,28,130,165],
+    [15,2012,'농림축산','AKGI 애그로상생경제투자조합1호',160,80,7,1,7,7,97,32,31,5],
+    [16,2013,'소형프로젝트','솔리더스-고창 농식품프로젝트투자조합',100,70,8,0,8,8,81,0,81,-27],
+    [17,2013,'농림축산식품','메가농식품투자조합 1호',150,75,7,5,8,5,92,40,142,50],
+    [18,2013,'소형프로젝트','미시간글로벌식품산업투자조합2호',100,70,10,0,10,10,96,0,60,-4],
+    [19,2013,'농림축산식품','동양 농식품 2호 투자펀드',150,75,5,3,5,3,82,50,132,133],
+    [20,2013,'농림축산식품','세종 농식품바이오 투자조합1호',150,75,6,5,6,6,70,35,77,33],
+    [21,2013,'6차 산업화','옐앤에스농식품6차산업화투자조합',100,70,9,0,9,9,90,0,54,-15],
+    [22,2014,'R&D','세종농식품R&D사업화투자조합',100,70,9,0,8,0,80,0,65,45],
+    [23,2014,'AgroSeed','컴퍼니케이 애그로씨드투자조합',100,90,11,0,11,0,82,0,61,7],
+    [24,2014,'소형프로젝트','메가농축산성장투자조합2호',100,70,7,0,7,7,82,0,82,16],
+    [25,2014,'수출분야','AJ-세종 농식품 수출육성펀드',130,90,10,0,9,5,104,0,94,21],
+    [26,2014,'농림축산식품','현대Agro-Bio펀드1호',100,50,4,4,4,4,60,40,66,74],
+    [27,2014,'농림축산식품','나우농식품투자펀드3호',120,60,7,1,4,3,97,10,81,54],
+    [28,2014,'농림축산식품','SJ-농림축산식품투자조합1호',100,50,6,3,6,6,62,24,22,25],
+    [29,2014,'6차 산업화','센트럴생거진천농식품투자조합',100,70,12,0,12,12,84,0,35,4],
+    [30,2015,'농림축산식품','이앤 에이비에프 투자조합',290,140,7,5,8,7,176,95,271,44],
+    [31,2015,'수출분야','AJ 농식품 수출육성펀드 2호',100,70,7,0,7,3,80,0,80,20],
+    [32,2015,'농림축산식품','TWI농식품상생투자조합',200,100,9,5,10,10,110,59,132,69],
+    [33,2015,'6차 산업화','Eco-MGI 6차산업 전문 투자조합',100,70,6,1,6,0,65,15,45,17],
+    [34,2015,'소형프로젝트','SB프로젝트 투자조합',100,70,8,0,6,8,80,0,44,7],
+    [35,2015,'창업 아이디어','DTNI-AGRITECH투자조합',120,70,12,0,10,11,96,0,44,70],
+    [36,2015,'농림축산식품','유티씨그린바이오투자조합',240,120,9,2,9,9,177,30,135,246],
+    [37,2016,'농림축산식품','엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사',200,100,7,0,7,6,160,0,118,43],
+    [38,2016,'6차 산업화','블루6차산업화투자조합1호',100,70,0,0,0,0,0,0,0,0],
+    [39,2016,'스마트팜','CKD Smart Farm 1호 농식품투자조합',150,120,9,0,9,9,120,0,120,257],
+    [40,2016,'스마트팜','스마일게이트농식품1호펀드',200,160,5,0,5,4,160,0,91,-31],
+    [41,2016,'스마트팜','유큐아이피농식품투자조합제2호',150,120,7,0,7,7,100,0,44,202],
+    [42,2016,'수출분야','포스코농식품수출투자조합',100,70,9,0,5,1,95,0,95,77],
+    [43,2016,'농림축산식품','A&F미래성장투자조합',425,180,10,5,10,8,266,75,161,166],
+    [44,2016,'농림축산식품','지엠비-마이다스동아 농식품 투자펀드',330,180,5,4,5,4,202,70,222,112],
+    [45,2017,'농림축산식품','나우농식품투자펀드 4호',200,100,12,4,10,10,151,35,54,94],
+    [46,2017,'ABC분야','NHC-DTNI 농식품 ABC 투자조합1호',220,140,12,0,11,9,179,0,56,59],
+    [47,2017,'농림축산식품','KB 신농사직설 투자조합',200,100,7,2,7,6,120,40,113,38],
+    [48,2017,'6차 산업화','패스파인더 6차산업화 투자조합',100,70,6,0,6,6,80,0,47,87],
+    [49,2017,'ABC분야','마그나 ABC펀드',200,140,13,2,12,10,183,17,139,198],
+    [50,2017,'농림축산식품','시너지 농식품 밸류크리에이티브투자조합',100,50,6,2,6,6,60,13,36,167],
+    [51,2018,'농림축산식품','NHC-DTNI 농식품 일반 투자조합2호',200,90,13,0,11,8,170,0,23,3],
+    [52,2018,'농식품벤처','미시간글로벌식품산업투자조합3호',125,100,11,0,11,0,124,0,15,0],
+    [53,2018,'지역특성화(경기도)','AJ-ISU경기도애그리푸드투자조합',100,40,5,4,5,3,61,26,47,68],
+    [54,2018,'6차 산업화','럭키클러스터6 농식품 제1호 투자조합',100,70,7,4,7,6,68,28,29,31],
+    [55,2018,'세컨더리','나우농식품세컨더리투자펀드 1호',200,120,9,5,7,6,135,45,40,19],
+    [56,2019,'마이크로','빙그레농식품투자조합',63,50,9,2,8,7,43,10,5,2],
+    [57,2019,'ABC분야','현대Agro-Bio펀드2호',100,70,8,0,8,8,92,0,7,-1],
+    [58,2019,'마이크로','동훈 농식품벤처스타 1호 투자조합',63,50,9,2,9,8,42,9,10,13],
+    [59,2019,'농식품벤처','타임와이즈농식품벤처펀드',125,100,9,3,12,11,95,25,51,27],
+    [60,2019,'농림축산식품','유엔그린시너지투자조합',230,115,16,5,17,17,160,58,25,19],
+    [61,2019,'농림축산식품','엔에이치나우농식품1호 사모투자합자회사',400,115,14,1,14,11,240,100,28,35],
+    [62,2020,'농식품벤처','마그나 FRESH펀드',130,100,12,2,14,0,95,10,5,1],
+    [63,2020,'징검다리','농식품 스탭업 투자조합',220,150,11,0,10,7,177,0,10,10],
+    [64,2020,'마이크로','인라이트8호 애그테크플러스펀드',65,50,12,0,10,10,54,0,1,0],
+    [65,2020,'농림축산식품','엔에이치나우농식품2호 사모투자합자회사',600,150,12,4,12,9,366,120,16,20],
+    [66,2020,'영파머스','나이스앤영파머스투자조합',100,90,13,0,9,8,80,0,1,0],
+    [67,2020,'농식품벤처','엔에이치농식품벤처투자조합',130,100,10,0,10,10,110,0,30,-9],
+    [68,2020,'지역특성화(경북)','아이에스유(ISU)-힘내라경북애그리푸드투자조합',110,50,7,4,7,7,73,20,10,10],
+    [69,2020,'농림축산식품','롯데농식품테크펀드1호',152,50,19,3,19,18,113,14,13,4],
+    [70,2021,'농림축산식품','현대-GS리테일 Agro-Bio펀드3호',210,90,11,5,11,11,144,50,5,1],
+    [71,2021,'마이크로','빙그레농식품투자조합2호',65,52,12,0,8,8,59,0,0,0],
+    [72,2021,'농식품벤처','메가농식품벤처투자조합3호',125,100,10,1,11,11,105,10,12,5],
+    [73,2021,'영파머스','패스파인더 영파머스 투자조합',105,90,8,5,7,6,69,24,10,3],
+    [74,2021,'스마트농업','비엔케이 농식품투자조합 제3호',150,105,7,2,7,7,88,20,10,3],
+    [75,2021,'그린바이오','마그나 GREEN 펀드',150,90,9,4,9,9,90,37,0,0],
+    [76,2021,'농림축산식품','신세계윌니스투자조합',182,90,13,3,12,10,134,25,1,0],
+    [77,2021,'세컨더리','하이브리드 ESG 세컨더리펀드 제일호',520,120,12,23,16,10,124,360,115,152],
+    [78,2021,'농식품벤처','동훈 농식품벤처스타 2호 투자조합',100,80,6,0,6,3,80,0,25,6],
+    [79,2021,'창업보육','씨엔티테크 제13호 농식품 투자조합',71,50,38,2,36,36,57,4,1,0],
+    [80,2022,'마이크로','비하이농식품마이크로투자조합',65,52,8,2,8,8,44,10,5,1],
+    [81,2022,'농식품벤처','세종 농식품 벤처펀드',130,100,12,0,12,11,115,0,10,1],
+    [82,2022,'영파머스','엔에이치영파머스투자조합',105,90,7,2,5,4,79,17,0,0],
+    [83,2022,'농식품벤처','나우농식품투자펀드5호',140,100,7,0,6,3,113,0,0,0],
+    [84,2022,'징검다리','빌랑스 징검다리 농식품 투자조합',216,150,14,0,10,10,185,0,15,3],
+    [85,2022,'농림축산식품','마그나 FUTURE 펀드',300,150,11,2,11,10,211,39,0,0],
+    [86,2022,'마이크로','오라클프레쉬펀드',65,52,17,3,15,15,49,8,0,0],
+    [87,2022,'스마트농업','2022 원익 스마트 혁신 Agtech투자조합',210,140,11,4,9,9,150,53,42,18],
+    [88,2022,'그린바이오','패스파인더 그린바이오 투자조합',200,120,11,9,11,10,120,64,20,5],
+    [89,2022,'스마트농업','CKD Smart Farm 2호 농식품투자조합',200,140,10,1,9,9,134,23,10,10],
+    [90,2022,'농식품벤처','임팩트-이크럭스 농식품벤처투자조합',125,100,13,0,13,13,97,0,0,-10],
+    [91,2022,'마이크로','인라이트 애그테크플러스펀드 2호',65,52,12,0,9,0,54,0,5,1],
+    [92,2022,'농림축산식품','엔에이치나이스농식품투자조합1호',500,150,12,5,12,11,305,121,4,1],
+    [93,2022,'직접투자','농식품새싹키움매칭펀드',10,10,5,0,5,5,9,0,0,0],
+    [94,2022,'그린바이오','비엔케이 그린바이오 투자조합',200,120,8,2,8,0,125,30,20,139],
+    [95,2023,'농식품벤처','씨엔티농식품벤처펀드',125,100,7,0,7,7,88,0,3,5],
+    [96,2023,'직접투자','농식품혁신스타트업투자조합',30,30,4,0,4,4,23,0,0,0],
+    [97,2023,'영파머스','임팩트 청년농 혁신펀드',152,135,15,0,15,15,114,0,0,0],
+    [98,2023,'푸드테크','아이엠(iM) 농식품 푸드테크 벤처펀드',100,60,7,0,7,7,60,0,0,0],
+    [99,2023,'스마트농업','엔비에이치(NBH)-케이프 2023 K-Farm 투자조합',200,120,8,2,8,8,95,30,0,0],
+    [100,2023,'수출분야','프롤로그 농식품스케일업투자조합',210,140,10,0,10,8,130,0,0,0],
+    [101,2023,'마이크로','상주-어니스트 애그테크 투자조합',65,52,8,2,8,8,40,10,0,0],
+    [102,2023,'그린바이오','지티오 제이커브 그린바이오 투자조합',204,120,12,4,10,10,138,25,0,0],
+    [103,2023,'세컨더리','이크럭스-넥스트지 세컨더리투자조합',200,118,5,7,5,2,40,69,0,0],
+    [104,2023,'지역특성화(전북)','웰투시-NBH 전북애그리푸드 투자조합',120,60,4,1,4,4,35,20,0,0],
+    [105,2023,'농림축산식품','신세계웰니스투자조합 제2호',202,100,9,4,9,9,108,35,26,0],
+    [106,2023,'농림축산식품','타임-아이피 농식품 벤처펀드',200,100,4,7,6,6,76,41,6,1],
+    [107,2023,'농림축산식품','엑스퀘어드-푸른 그린펀드',200,100,10,5,10,10,120,38,0,0],
+    [108,2024,'세컨더리','에임하랑 농업혁신 세컨더리 투자조합',301,150,9,5,6,4,138,80,20,3],
+    [109,2024,'영파머스','CKD 청년성장농업 1호 농식품투자조합',100,80,6,0,6,6,49,0,0,0],
+    [110,2024,'그린바이오','나우농식품투자펀드6호',210,120,5,1,4,2,100,20,0,0],
+    [111,2024,'영파머스','동훈 농식품벤처스타 3호 투자조합',100,80,3,0,3,3,30,0,0,0],
+    [112,2024,'스마트농업','BNK-경남 스마트이노베이션 투자조합',200,120,5,0,5,5,75,0,0,0],
+    [113,2024,'푸드테크','롯데농식품테크펀드2호',210,120,6,0,6,6,75,0,0,0],
+    [114,2024,'농림축산식품','현대-파이오니어 농식품펀드1호',300,150,5,3,5,4,80,35,0,0],
+    [115,2024,'전통주','엑스퀘어드 케이엘 펀드',101,60,2,4,2,2,20,20,0,0],
+    [116,2024,'후속투자(Scale-up)','시너지 스케일업 농식품 투자조합',230,120,2,0,2,0,40,0,0,0],
+    [117,2024,'지역경제활성화(전남)','로이-KVI 전남혁신 투자조합',130,40,5,0,5,3,33,0,0,0],
+    [118,2024,'지역경제활성화(일반)','씨제이농식품지역발전펀드',110,50,4,0,4,2,52,0,0,0],
+    [119,2024,'반려동물','트리거-글로벌PEX투자조합',101,60,6,3,5,4,77,11,0,0],
+    [120,2024,'창업초기(Start-up)','엔에이치 소풍 청년 그로우 투자조합',80,56,2,0,2,2,16,0,0,0],
+    [121,2025,'미래혁신성장','비엔케이 농식품 투자조합 제4호',200,100,4,0,4,3,60,0,0,0],
+    [122,2025,'사업화(Step-up)','비하이농식품청년성장투자조합',100,70,5,0,5,4,25,0,0,0],
+    [123,2025,'창업초기(Start-up)','2025 농식품 오픈이노베이션 투자조합',80,56,6,0,6,6,19,0,0,0],
+    [124,2025,'사업화(Step-up)','인라이트 농식품 청년기업 성장펀드',121,70,2,0,2,2,11,0,0,0],
+    [125,2025,'후속투자(Scale-up)','마이다스동아-데일리 농식품 스케일업 펀드 1호',200,120,2,0,2,2,35,0,0,0],
+    [126,2025,'지역경제활성화(충남)','충남미래혁신기술투자조합',100,40,2,1,3,1,17,2,0,0],
+    [127,2025,'세컨더리','티에스 17호 세컨더리 투자조합',1230,180,1,6,7,0,50,203,0,0],
+    [128,2025,'민간제안','아이비케이씨-키로스 AI농식품투자조합',100,40,1,0,1,1,15,0,0,0],
+    [129,2025,'지역경제활성화(창업기획자)','리벤처스 농식품지역혁신 투자조합 1호',42,20,1,0,1,1,3,0,0,0],
+    [130,2025,'지역경제활성화(일반)','넥스트지 지방활성화 농식품 투자조합',105,50,2,0,2,2,30,0,0,0],
+    [131,2025,'농림축산식품','엔에이치마그나 농식품스케일업1호 펀드',500,150,2,0,2,2,60,0,0,0],
+    [132,2025,'미래혁신성장','엔에이치애그리퓨쳐 농식품 투자조합1호',200,110,2,1,3,2,40,10,0,0],
+    [133,2025,'스마트농업','스마트네이처투자조합1호',201,120,2,0,2,1,40,0,0,0],
+    [134,2026,'후속투자(Scale-up)','나우농식품투자펀드 7호',201,120,0,0,0,0,0,0,0,0],
+    [135,2026,'사업화(Step-up)','미트박스농식품청년기업성장펀드',100,60,0,0,0,0,0,0,0,0],
+    [136,2026,'사업화(Step-up)','패스파인더 농식품 청년창업 투자조합',100,60,0,0,0,0,0,0,0,0],
+    [137,2026,'창업초기(Start-up)','젠엑시스-씨엔티테크 농식품 투자조합',47,24,0,0,0,0,0,0,0,0]
+  ];
+  var DATA=RAW.map(function(a){
+    return {no:a[0],y:a[1],field:a[2],fund:a[3],form:a[4],gov:a[5],
+      cnt:{af:a[6],naf:a[7],duty:a[8],under:a[9]},
+      af:{inv:a[10]},naf:{inv:a[11]},rec:{prin:a[12],prof:a[13]}};
+  });
+  /* 연도별 소계 + 전체 총계: 원문 화면 캡처에 직접 표시된 값 그대로(도출 아님) */
+  var SUBTOTALS={
+    2011:{form:1940,gov:907,af:81,naf:21,duty:77,under:62,afinv:1359,nafinv:240,recPrin:1496,recProf:1171},
+    2012:{form:840,gov:460,af:47,naf:14,duty:44,under:43,afinv:579,nafinv:140,recPrin:597,recProf:339},
+    2013:{form:750,gov:435,af:45,naf:13,duty:46,under:41,afinv:511,nafinv:125,recPrin:546,recProf:170},
+    2014:{form:850,gov:550,af:66,naf:8,duty:62,under:56,afinv:650,nafinv:73,recPrin:505,recProf:246},
+    2015:{form:1150,gov:640,af:58,naf:13,duty:56,under:54,afinv:784,nafinv:198,recPrin:751,recProf:472},
+    2016:{form:1655,gov:1000,af:52,naf:9,duty:48,under:39,afinv:1103,nafinv:145,recPrin:850,recProf:827},
+    2017:{form:1020,gov:600,af:56,naf:10,duty:52,under:47,afinv:773,nafinv:105,recPrin:445,recProf:642},
+    2018:{form:725,gov:420,af:45,naf:13,duty:41,under:34,afinv:550,nafinv:99,recPrin:155,recProf:120},
+    2019:{form:981,gov:500,af:65,naf:13,duty:68,under:62,afinv:672,nafinv:202,recPrin:126,recProf:95},
+    2020:{form:1507,gov:740,af:96,naf:14,duty:91,under:83,afinv:1068,nafinv:173,recPrin:85,recProf:36},
+    2021:{form:1678,gov:867,af:126,naf:45,duty:123,under:111,afinv:950,nafinv:530,recPrin:185,recProf:169},
+    2022:{form:2531,gov:1526,af:158,naf:30,duty:144,under:138,afinv:1789,nafinv:365,recPrin:137,recProf:170},
+    2023:{form:2008,gov:1235,af:106,naf:29,duty:103,under:98,afinv:1067,nafinv:267,recPrin:36,recProf:2},
+    2024:{form:2173,gov:1206,af:58,naf:16,duty:53,under:43,afinv:798,nafinv:166,recPrin:20,recProf:3},
+    2025:{form:3179,gov:1126,af:32,naf:8,duty:30,under:26,afinv:405,nafinv:215,recPrin:0,recProf:0},
+    2026:{form:448,gov:264,af:0,naf:0,duty:0,under:0,afinv:0,nafinv:0,recPrin:0,recProf:0}
+  };
+  var GRAND={form:23435,gov:12476,af:1091,naf:256,duty:1038,under:937,afinv:13058,nafinv:3042,recPrin:5934,recProf:4463};
+
+  var unit='억'; /* 기본 억원 (원천 원단위=억원) */
+  function amtCell(eok){return '<td class="amt" data-eok="'+eok+'">'+fmt(eok)+'</td>';}
+  function fmt(eok){
+    if(eok===''||eok==null) return '-';
+    var n=Number(eok);
+    if(unit==='억') return n.toLocaleString('ko-KR',{maximumFractionDigits:2});
+    if(unit==='백만') return (n*100).toLocaleString('ko-KR');
+    return (n*100000000).toLocaleString('ko-KR');
+  }
+  function pctN(v){if(v==null||isNaN(v))return '-';var n=Math.round(v*10)/10;return n+' %';}
+  function pct(v){return (v===''||v==null)?'-':(v+' %');}
+
+  function calc(base){
+    var pri=base.form-base.gov, prir=base.form?pri/base.form*100:null;
+    var sub=base.af+base.naf;
+    var totinv=base.afinv+base.nafinv;
+    var afivr=totinv?base.afinv/totinv*100:null, affmr=base.form?base.afinv/base.form*100:null;
+    var nafivr=totinv?base.nafinv/totinv*100:null, naffmr=base.form?base.nafinv/base.form*100:null;
+    var tir=base.form?totinv/base.form*100:null;
+    var rectotal=base.recPrin+base.recProf;
+    return {pri:pri,prir:prir,sub:sub,totinv:totinv,afivr:afivr,affmr:affmr,nafivr:nafivr,naffmr:naffmr,tir:tir,rectotal:rectotal};
+  }
+
+  function rowHtml(r){
+    var c=calc({form:r.form,gov:r.gov,af:r.cnt.af,naf:r.cnt.naf,afinv:r.af.inv,nafinv:r.naf.inv,recPrin:r.rec.prin,recProf:r.rec.prof});
+    return '<tr>'+
+      '<td class="c">'+r.no+'</td>'+
+      '<td class="c">'+r.y+'</td>'+
+      '<td class="c">'+r.field+'</td>'+
+      '<td class="l">'+r.fund+'</td>'+
+      amtCell(r.form)+amtCell(r.gov)+amtCell(c.pri)+
+      '<td class="c">'+pctN(c.prir)+'</td>'+
+      '<td class="c">'+r.cnt.af+'</td><td class="c">'+r.cnt.naf+'</td><td class="c">'+c.sub+'</td><td class="c">'+r.cnt.duty+'</td><td class="c">'+r.cnt.under+'</td>'+
+      amtCell(r.af.inv)+'<td class="c">'+pctN(c.afivr)+'</td><td class="c">'+pctN(c.affmr)+'</td>'+
+      amtCell(r.naf.inv)+'<td class="c">'+pctN(c.nafivr)+'</td><td class="c">'+pctN(c.naffmr)+'</td>'+
+      amtCell(c.totinv)+'<td class="c">'+pctN(c.tir)+'</td>'+
+      amtCell(r.rec.prin)+amtCell(r.rec.prof)+amtCell(c.rectotal)+'<td class="c">-</td>'+
+      '<td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c">-</td>'+
+      '<td class="c">-</td><td class="c">-</td><td class="c">-</td>'+
+      '</tr>';
+  }
+  function subtotalHtml(y,s){
+    var c=calc({form:s.form,gov:s.gov,af:s.af,naf:s.naf,afinv:s.afinv,nafinv:s.nafinv,recPrin:s.recPrin,recProf:s.recProf});
+    return '<tr class="subtotal">'+
+      '<td class="c" colspan="3">'+y+' 소계</td><td class="l"></td>'+
+      amtCell(s.form)+amtCell(s.gov)+amtCell(c.pri)+
+      '<td class="c">'+pctN(c.prir)+'</td>'+
+      '<td class="c">'+s.af+'</td><td class="c">'+s.naf+'</td><td class="c">'+c.sub+'</td><td class="c">'+s.duty+'</td><td class="c">'+s.under+'</td>'+
+      amtCell(s.afinv)+'<td class="c">'+pctN(c.afivr)+'</td><td class="c">'+pctN(c.affmr)+'</td>'+
+      amtCell(s.nafinv)+'<td class="c">'+pctN(c.nafivr)+'</td><td class="c">'+pctN(c.naffmr)+'</td>'+
+      amtCell(c.totinv)+'<td class="c">'+pctN(c.tir)+'</td>'+
+      amtCell(s.recPrin)+amtCell(s.recProf)+amtCell(c.rectotal)+'<td class="c">-</td>'+
+      '<td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c">-</td>'+
+      '<td class="c">-</td><td class="c">-</td><td class="c">-</td>'+
+      '</tr>';
+  }
+
+  function render(){
+    var years=Object.keys(SUBTOTALS).map(Number).sort(function(a,b){return a-b});
+    var html='';
+    years.forEach(function(y){
+      DATA.filter(function(r){return r.y===y}).forEach(function(r){html+=rowHtml(r)});
+      html+=subtotalHtml(y,SUBTOTALS[y]);
+    });
+    $('rows').innerHTML=html;
+
+    var c=calc({form:GRAND.form,gov:GRAND.gov,af:GRAND.af,naf:GRAND.naf,afinv:GRAND.afinv,nafinv:GRAND.nafinv,recPrin:GRAND.recPrin,recProf:GRAND.recProf});
+    $('foot').innerHTML='<tr>'+
+      '<td class="c" colspan="3">총 계</td><td class="l"></td>'+
+      amtCell(GRAND.form)+amtCell(GRAND.gov)+amtCell(c.pri)+
+      '<td class="c">'+pctN(c.prir)+'</td>'+
+      '<td class="c">'+GRAND.af+'</td><td class="c">'+GRAND.naf+'</td><td class="c">'+c.sub+'</td><td class="c">'+GRAND.duty+'</td><td class="c">'+GRAND.under+'</td>'+
+      amtCell(GRAND.afinv)+'<td class="c">'+pctN(c.afivr)+'</td><td class="c">'+pctN(c.affmr)+'</td>'+
+      amtCell(GRAND.nafinv)+'<td class="c">'+pctN(c.nafivr)+'</td><td class="c">'+pctN(c.naffmr)+'</td>'+
+      amtCell(c.totinv)+'<td class="c">'+pctN(c.tir)+'</td>'+
+      amtCell(GRAND.recPrin)+amtCell(GRAND.recProf)+amtCell(c.rectotal)+'<td class="c">-</td>'+
+      '<td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c">-</td>'+
+      '<td class="c">-</td><td class="c">-</td><td class="c">-</td>'+
+      '</tr>';
+    $('cnt').textContent=DATA.length;
+  }
+  render();
+
+  /* 단위 전환 seg */
+  var useg=document.querySelector('.seg.sm');
+  useg.addEventListener('click',function(e){
+    var b=e.target.closest('button[data-u]');if(!b)return;
+    unit=b.getAttribute('data-u');
+    Array.prototype.forEach.call(useg.querySelectorAll('button[data-u]'),function(x){x.setAttribute('aria-pressed',x===b)});
+    Array.prototype.forEach.call(document.querySelectorAll('td.amt'),function(td){td.textContent=fmt(td.getAttribute('data-eok'))});
+  });
+
+  /* 연도기준 → 연도 컬럼 헤더 라벨 동적 변경 (§2.4) */
+  $('f-ybasis').addEventListener('change',function(){
+    $('th-year').textContent=($('f-ybasis').value==='선정')?'선정연도':'결성연도';
+  });
+
+  /* 조회 / 엑셀 */
+  /* 데이터기준 칩버튼(정기/수시와 동일 패턴) */
+  function chipGroup(id,opts,val){
+    var box=$(id); if(!box)return;
+    box.innerHTML=opts.map(function(o){return '<button type="button" class="chipbtn" data-v="'+o+'" aria-pressed="'+(o===val)+'">'+o+'</button>';}).join('');
+    box.addEventListener('click',function(e){
+      var b=e.target.closest('button[data-v]'); if(!b)return;
+      Array.prototype.forEach.call(box.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b)});
+    });
+  }
+  chipGroup('f-dbasis',['운용사보고','월말확정'],'운용사보고');
+
+  chipGroup('f-acc',['전체','농식품','수산'],'전체');
+  $('search').addEventListener('click',function(){toast('조회되었습니다 (목업)')});
+  $('excel').addEventListener('click',function(){toast('엑셀 다운로드 (목업)')});
+
+  /* 검토필요 마커 팝 */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true);document.removeEventListener('keydown',rKey,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  function rKey(e){if(e.key==='Escape')closeR()}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null; if(!m)return; e.preventDefault();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';p.setAttribute('role','dialog');
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+m.getAttribute('data-rec')+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+m.getAttribute('data-dat')+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true);document.addEventListener('keydown',rKey,true)},0);
+  });
+
+  /* toast */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+})();
+</script>

@@ -1,0 +1,308 @@
+<title>일일보고 조회</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --danger:#E5484D;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;--danger:#F2555A;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F2555A;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:82ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px;overflow-x:auto;min-width:0;scrollbar-width:thin}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;flex:none;white-space:nowrap}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+  .filtergrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 16px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;width:64px;text-align:right;white-space:nowrap}
+  .field select,.field input{flex:1;min-width:0}
+  .searchbtnrow{display:flex;justify-content:center;gap:8px;margin-top:14px}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  /* 읽기전용 상세(프로퍼티) 시트 */
+  .section-card{margin-bottom:20px}
+  .overview-card{border:1px solid var(--border);border-radius:var(--radius-lg,10px);background:var(--surface-2);padding:18px 20px;margin-bottom:20px}
+  .overview-card>.section-head{font-size:16px;padding-bottom:12px;margin-bottom:16px}
+  .overview-card .subsection{margin-bottom:16px}
+  .overview-card .subsection:last-child{margin-bottom:0}
+  .overview-card .subsection>.section-head{font-size:13px;font-weight:700;color:var(--ink-2);border-bottom:1px solid var(--border);padding-bottom:6px;margin:0 0 8px}
+  .section-head{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:var(--ink);margin:0 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border-strong)}
+  .section-head .dot{width:8px;height:8px;border-radius:2px;background:var(--primary);flex:none}
+  .propscroll{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+  table.prop{border-collapse:collapse;width:100%;min-width:640px}
+  table.prop th,table.prop td{border-bottom:1px solid var(--border);border-right:1px solid var(--border);padding:9px 12px;font-size:13px;text-align:left;vertical-align:top}
+  table.prop tr:last-child th,table.prop tr:last-child td{border-bottom:none}
+  table.prop th{background:var(--surface-2);color:var(--ink-2);font-weight:700;width:16%;white-space:nowrap}
+  table.prop td{color:var(--ink);width:34%;font-variant-numeric:tabular-nums}
+  table.prop td.empty{color:var(--ink-3)}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.b{background:var(--primary-weak);color:var(--primary)} .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.n{background:var(--grey-weak);color:var(--ink-3)}
+  .code-val{display:inline-flex;align-items:center;gap:5px}
+  .code-val .raw{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--surface-3);color:var(--ink-2);padding:0 6px;border-radius:4px;font-size:12px}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:90;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (max-width:900px){.filtergrid{grid-template-columns:repeat(2,1fr)}.lnb{display:none!important}table.prop,table.prop tbody,table.prop tr,table.prop th,table.prop td{display:block;width:auto}table.prop th{border-right:none}table.prop td{border-bottom:1px solid var(--border)}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">시스템 S5 · 일일보고 조회 · KRDS TO-BE</p>
+  <h1 class="doc-title">일일보고 조회</h1>
+  <p class="doc-sub">일일보고에 포함되는 투자기업개요를 조회하는 읽기전용 화면. 원천 데이터는 [타이틀]‘투자기업개요’ + [섹션1]그리드(기업 기본·소재지·사업자·기업유형/인증·상장/주식 항목, 전 항목 라벨) 단일 레코드로 구성 → 프로퍼티(상세) 시트로 표현. 조회 전용이므로 등록/수정 폼·입력은 없음.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">R</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="../01_투자자산관리/S1_01_투자심의관리.html" role="menuitem"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="../02_조기경보/S2_46_메인화면.html" role="menuitem"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="S5_116_업로드.html" role="menuitem" class="on"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">MOAF REPORT System</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="S5_116_업로드.html">업로드</a>
+          <a href="#" class="on" aria-current="page">일일보고 조회</a>
+          <a href="S5_118_월간보고_조회.html">월간보고 조회</a>
+          <a href="S5_119_반기보고_조회.html">반기보고 조회</a>
+          <a href="S5_120_실물검증_조회.html">실물검증</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+      </div>
+      <div class="subtab" aria-label="보고서 하위 메뉴">
+        <span class="on">일일보고 조회</span>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">보고서</div>
+          <nav aria-label="보고서 메뉴">
+            <a href="#" class="on" aria-current="page">일일보고 조회</a>
+            <a href="S5_118_월간보고_조회.html">월간보고 조회</a>
+            <a href="S5_119_반기보고_조회.html">반기보고 조회</a>
+            <a href="#" class="soon">보고서 업로드</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">보고서 · 일일보고 조회</div>
+          <div class="h1row"><h1>일일보고 조회</h1></div>
+
+          <!-- [타이틀] 투자기업개요 + [섹션1] 5개 하위 블록을 한 카드로 그룹핑 -->
+          <div class="overview-card">
+          <h2 class="section-head"><span class="dot"></span>투자기업개요</h2>
+
+          <!-- [섹션1] 기업 기본정보 -->
+          <div class="subsection">
+            <h3 class="section-head"><span class="dot"></span>기업 기본정보</h3>
+            <div class="propscroll">
+              <table class="prop">
+                <caption class="visually-hidden">투자기업개요 — 기업 기본정보</caption>
+                <tbody>
+                  <tr><th scope="row">No</th><td>1</td><th scope="row">운용사코드</th><td>APFSLIB</td></tr>
+                  <tr><th scope="row">기업코드</th><td>1000000005</td><th scope="row">회사영문이름</th><td class="empty">-</td></tr>
+                  <tr><th scope="row">대표자1</th><td>조규재</td><th scope="row">대표자2</th><td class="empty">-</td></tr>
+                  <tr><th scope="row">대표자1 주민번호(앞)</th><td class="empty">-</td><th scope="row">대표자1 주민번호(뒤)</th><td class="empty">-</td></tr>
+                  <tr><th scope="row">대표자2 주민번호(앞)</th><td class="empty">-</td><th scope="row">대표자2 주민번호(뒤)</th><td class="empty">-</td></tr>
+                  <tr><th scope="row">업체전화</th><td>010-3813-5721</td><th scope="row">업체FAX</th><td class="empty">-</td></tr>
+                  <tr><th scope="row">홈페이지</th><td class="empty">-</td><th scope="row"></th><td></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- [섹션1] 소재지 -->
+          <div class="subsection">
+            <h3 class="section-head"><span class="dot"></span>소재지</h3>
+            <div class="propscroll">
+              <table class="prop">
+                <caption class="visually-hidden">투자기업개요 — 소재지</caption>
+                <tbody>
+                  <tr><th scope="row">우편번호</th><td>39133</td><th scope="row">국가코드</th><td>KR</td></tr>
+                  <tr><th scope="row">주소1</th><td>경북 구미시 선산읍 북산8길 116-76</td><th scope="row">주소2</th><td>1층</td></tr>
+                  <tr><th scope="row">소재지구분<button type="button" class="review" data-rec="코드 → 지역명 매핑 필요(공통코드 미확인)" data-dat="원천 코드값: 36" aria-label="검토필요">!</button></th><td><span class="code-val"><span class="raw">36</span></span></td><th scope="row"></th><td></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- [섹션1] 사업자/설립 정보 -->
+          <div class="subsection">
+            <h3 class="section-head"><span class="dot"></span>사업자·설립 정보</h3>
+            <div class="propscroll">
+              <table class="prop">
+                <caption class="visually-hidden">투자기업개요 — 사업자·설립 정보</caption>
+                <tbody>
+                  <tr><th scope="row">사업자번호</th><td>345-87-00068</td><th scope="row">법인번호</th><td>176011-0173598</td></tr>
+                  <tr><th scope="row">설립일자</th><td>2015-03-06</td><th scope="row">결산월</th><td>12</td></tr>
+                  <tr><th scope="row">주요제품</th><td>유제품(요거트)</td><th scope="row">표준산업분류코드</th><td>10799</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- [섹션1] 기업유형·인증 -->
+          <div class="subsection">
+            <h3 class="section-head"><span class="dot"></span>기업유형·인증</h3>
+            <div class="propscroll">
+              <table class="prop">
+                <caption class="visually-hidden">투자기업개요 — 기업유형·인증</caption>
+                <tbody>
+                  <tr><th scope="row">기업구분<button type="button" class="review" data-rec="코드 → 기업구분명 매핑 필요(공통코드 미확인)" data-dat="원천 코드값: 4" aria-label="검토필요">!</button></th><td><span class="code-val"><span class="raw">4</span></span></td><th scope="row">벤처유형<button type="button" class="review" data-rec="코드 → 벤처유형명 매핑 필요(공통코드 미확인)" data-dat="원천 코드값: 5" aria-label="검토필요">!</button></th><td><span class="code-val"><span class="raw">5</span></span></td></tr>
+                  <tr><th scope="row">벤처기업확인번호</th><td class="empty">-</td><th scope="row">여성기업여부</th><td>N</td></tr>
+                  <tr><th scope="row">벤처기간 시작일</th><td class="empty">-</td><th scope="row">벤처기간 종료일</th><td class="empty">-</td></tr>
+                  <tr><th scope="row">기업유형 시작일자</th><td class="empty">-</td><th scope="row">기업유형 종료일자</th><td class="empty">-</td></tr>
+                  <tr><th scope="row">종업원 수</th><td>27</td><th scope="row">회계감사기관</th><td class="empty">-</td></tr>
+                  <tr><th scope="row">6차산업 인증일자</th><td class="empty">-</td><th scope="row"></th><td></td></tr>
+                  <tr><th scope="row">인증기간 시작일자</th><td class="empty">-</td><th scope="row">인증기간 종료일자</th><td class="empty">-</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- [섹션1] 상장·주식 정보 -->
+          <div class="subsection">
+            <h3 class="section-head"><span class="dot"></span>상장·주식 정보</h3>
+            <div class="propscroll">
+              <table class="prop">
+                <caption class="visually-hidden">투자기업개요 — 상장·주식 정보</caption>
+                <tbody>
+                  <tr><th scope="row">상장일</th><td class="empty">-</td><th scope="row">공모가</th><td class="empty">-</td></tr>
+                  <tr><th scope="row">부도일</th><td class="empty">-</td><th scope="row">폐업일자</th><td class="empty">-</td></tr>
+                  <tr><th scope="row">주식구분<button type="button" class="review" data-rec="코드 → 주식구분명 매핑 필요(공통코드 미확인)" data-dat="원천 코드값: 99" aria-label="검토필요">!</button></th><td><span class="code-val"><span class="raw">99</span></span></td><th scope="row"></th><td></td></tr>
+                  <tr><th scope="row">총발행주수(보통주)</th><td>0</td><th scope="row">주식액면가(보통주)</th><td>0</td></tr>
+                  <tr><th scope="row">총발행주수(우선주)</th><td>0</td><th scope="row">주식액면가(우선주)</th><td>0</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          </div>
+
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <p style="margin-top:24px;font-size:13px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:8px;padding:14px 16px;line-height:1.7">
+    <b style="color:var(--ink-2)">설계 메모:</b> 원천(S5_117)은 [타이틀]‘투자기업개요’ + [섹션1]그리드 단일 레코드(전 항목 라벨) → 읽기전용 <b style="color:var(--ink-2)">프로퍼티 상세 시트</b>로 구현. 항목이 많아 5개 논리 블록으로 시각 구분(데이터 가공 아님). 코드값(소재지구분 36·기업구분 4·벤처유형 5·주식구분 99)은 <b style="color:var(--ink-2)">원천 값 그대로</b> 표시하고 명칭 매핑 미확인분은 검토필요 마커. 설립일자(YYYYMMDD→YYYY-MM-DD)·사업자/법인번호는 표기만 정규화. 조회 전용 화면이라 금액 단위전환 토글·입력폼 미적용. 원천에 [검색] 영역 자체가 없어 검색조건/조회·인쇄 버튼을 추가하지 않고 그리드만 표시(사용자 지시, 2026-08-31).
+  </p>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* 검토필요 마커: 라벨 옆 클릭 → 추천 vs 데이터 */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null; if(!m)return; e.preventDefault();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+m.getAttribute('data-rec')+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+m.getAttribute('data-dat')+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true)},0);
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeR()});
+})();
+</script>

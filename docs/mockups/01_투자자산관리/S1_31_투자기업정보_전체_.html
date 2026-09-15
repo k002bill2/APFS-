@@ -1,0 +1,408 @@
+<title>투자기업정보(전체)</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;--danger:#E5484D;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;--danger:#F26E72;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F26E72;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:78ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .chipbtn{height:34px;padding:0 14px;border-radius:99px;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink-2);font-size:13px;font-weight:600}
+  .chipbtn[aria-pressed="true"]{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px;overflow-x:auto;min-width:0;scrollbar-width:thin}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;flex:none;white-space:nowrap}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filtergrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 16px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;width:70px;text-align:right;white-space:nowrap}
+  .field select,.field input{flex:1;min-width:0}
+  .field.wide{grid-column:span 2}
+  .searchbtnrow{display:flex;justify-content:center;margin-top:14px}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .gridbar{display:flex;justify-content:flex-end;margin-bottom:10px}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;min-width:6600px;width:100%}
+  table.grid th,table.grid td{padding:7px 10px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:right}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong);position:sticky;top:0;z-index:2}
+  table.grid th.c,table.grid td.c{text-align:center}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  table.grid td.muted{color:var(--ink-3)}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.b{background:var(--primary-weak);color:var(--primary)} .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.n{background:var(--grey-weak);color:var(--ink-3)}
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:90;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:900px){.lnb{display:none!important}.filtergrid{grid-template-columns:repeat(2,1fr)}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">시스템 S1 · 투자기업정보 · KRDS TO-BE</p>
+  <h1 class="doc-title">투자기업정보(전체)</h1>
+  <p class="doc-sub">자펀드가 투자한 투자기업의 기본정보·재무정보·투자/회수 내역을 한 그리드로 조회하는 읽기전용 화면. 검색조건은 모펀드·계정구분·자펀드(운용사+자펀드)·기준일자 4종. 컬럼이 많아 가로 스크롤로 표시한다.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">모</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="S1_01_투자심의관리.html" role="menuitem" class="on"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="../02_조기경보/S2_46_메인화면.html" role="menuitem"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">투자자산관리시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="01_파일럿_공고관리/mockup/공고관리_목업_artifact.html">모태펀드</a>
+          <a href="S1_01_투자심의관리.html">사후보고관리</a>
+          <a href="05_자펀드관리/mockup/자펀드관리_목업.html">자펀드</a>
+          <a href="S1_28_투심승인정보조회.html">통계</a>
+          <a href="#" class="on" aria-current="page">투자기업</a>
+          <a href="S1_38_운용사_재무정보_조회.html">모니터링</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+      </div>
+      <div class="subtab" aria-label="투자기업정보 하위 메뉴">
+        <a href="S1_30_투자기업정보.html">투자기업정보</a>
+        <span class="on">투자기업정보(전체)</span>
+        <a href="S1_32_투자기업_고용현황보고.html">투자기업 고용현황보고</a>
+        <a href="S1_33_전체_투자실적.html">전체 투자실적</a>
+        <a href="S1_34_투자실적_현황_투자기업_.html">투자실적 현황(투자기업)</a>
+        <a href="S1_35_투자금_회수현황.html">투자금 회수현황</a>
+        <a href="S1_36_투자_및_회수_상세정보.html">투자 및 회수 상세정보</a>
+        <a href="S1_37_운용사별_재무제표.html">운용사별 재무제표</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">투자기업정보</div>
+          <nav aria-label="투자기업정보 메뉴">
+            <a href="S1_30_투자기업정보.html">투자기업정보</a>
+            <a href="#" class="on" aria-current="page">투자기업정보(전체)</a>
+            <a href="S1_32_투자기업_고용현황보고.html">투자기업 고용현황보고</a>
+            <a href="S1_33_전체_투자실적.html">전체 투자실적</a>
+            <a href="S1_34_투자실적_현황_투자기업_.html">투자실적 현황(투자기업)</a>
+            <a href="S1_35_투자금_회수현황.html">투자금 회수현황</a>
+            <a href="S1_36_투자_및_회수_상세정보.html">투자 및 회수 상세정보</a>
+            <a href="S1_37_운용사별_재무제표.html">운용사별 재무제표</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">투자기업정보 · 투자기업정보(전체)</div>
+          <div class="h1row"><h1>투자기업정보(전체)</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filtergrid">
+              <div class="field"><label>모펀드</label><div style="height:36px;display:flex;align-items:center;padding:0 11px;border-radius:6px;background:var(--surface-3);color:var(--ink-2);font-size:13.5px;flex:1;min-width:0">농식품모태펀드</div></div>
+              <div class="field"><label for="f-gp">운용사</label><select id="f-gp" aria-label="운용사"><option>KB증권</option></select></div>
+              <div class="field"><label for="f-fund">자펀드</label><select id="f-fund" aria-label="자펀드"><option>(전체)</option></select></div>
+              <div class="field"><label id="f-acc-lab">계정구분</label><div role="group" aria-labelledby="f-acc-lab" style="display:flex;gap:6px" id="f-acc"></div></div>
+              <div class="field"><label for="f-date">기준일자</label><input type="date" id="f-date" value="2026-08-12" aria-label="기준일자"></div>
+            </div>
+            <div class="searchbtnrow"><button class="btn" id="search">조회</button></div>
+          </div>
+
+          <div class="gridbar"><button class="btn btn-sec btn-sm" id="excel">엑셀</button></div>
+          <div class="scroller">
+            <table class="grid">
+              <caption class="visually-hidden">투자기업정보(전체) 목록 — 기업 기본정보·재무정보·투자/회수 내역</caption>
+              <thead id="head"></thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* 컬럼 정의: label=헤더, a=정렬(c/l/기본우측), won=금액(단위전환), review={rec,dat} */
+  var COLS=[
+    {k:'no',label:'No',a:'c'},
+    {k:'cs',label:'조합성격',a:'c'},
+    {k:'mgr',label:'운용사',a:'l'},
+    {k:'fund',label:'자펀드',a:'l'},
+    {k:'comp',label:'투자기업',a:'l'},
+    {k:'compEn',label:'투자기업(영문)',a:'l'},
+    {k:'ceo1',label:'대표자1',a:'c'},
+    {k:'ceo1b',label:'대표자1 생년월일',a:'c'},
+    {k:'ceo1s',label:'대표자1 성별',a:'c'},
+    {k:'ceo2',label:'대표자2',a:'c'},
+    {k:'ceo2b',label:'대표자2 생년월일',a:'c'},
+    {k:'ceo2s',label:'대표자2 성별',a:'c'},
+    {k:'biz',label:'사업자번호',a:'c'},
+    {k:'corp',label:'법인번호',a:'c'},
+    {k:'sic',label:'표준산업분류코드',a:'c'},
+    {k:'sicNm',label:'표준산업분류코드명',a:'l'},
+    {k:'loc',label:'소재지',a:'c'},
+    {k:'zip',label:'우편번호',a:'c'},
+    {k:'addr',label:'주소',a:'l'},
+    {k:'addr2',label:'나머지주소',a:'l'},
+    {k:'tel',label:'업체전화',a:'c'},
+    {k:'fax',label:'업체FAX',a:'c'},
+    {k:'home',label:'홈페이지',a:'l'},
+    {k:'estd',label:'설립일자',a:'c'},
+    {k:'vcYn',label:'창업투자여부',a:'c'},
+    {k:'prod',label:'주요제품',a:'l'},
+    {k:'vType',label:'벤처유형',a:'c'},
+    {k:'vNo',label:'벤처기업확인번호',a:'c'},
+    {k:'vTerm',label:'벤처유형기간',a:'c'},
+    {k:'eType',label:'기업유형',a:'c'},
+    {k:'eTerm',label:'기업유형기간',a:'c'},
+    {k:'closeM',label:'결산월',a:'c'},
+    {k:'womanYn',label:'여성기업여부',a:'c'},
+    {k:'audit',label:'회계감사기관',a:'l'},
+    {k:'default',label:'부도일',a:'c'},
+    {k:'closeD',label:'폐업일자',a:'c'},
+    {k:'ipo',label:'상장일',a:'c'},
+    {k:'stkType',label:'주식구분',a:'c'},
+    {k:'comShr',label:'보통주 총발행주수'},
+    {k:'comPar',label:'보통주 주식액면가'},
+    {k:'prfShr',label:'우선주 총발행주수'},
+    {k:'prfPar',label:'우선주 주식액면가'},
+    {k:'firstInv',label:'최초투자 (전환)일자',a:'c'},
+    {k:'invA',label:'투자금액(A)',won:true},
+    {k:'recB',label:'회수원금(B)',won:true},
+    {k:'recProfit',label:'회수수익',won:true},
+    {k:'recTotal',label:'회수총액',won:true},
+    {k:'impair',label:'감액금액',won:true},
+    {k:'convC',label:'(전환금액)(C)',won:true},
+    {k:'invBal',label:'투자잔액(A+B+C)',won:true},
+    {k:'baseYm',label:'기준년월',a:'c'},
+    {k:'asset',label:'자산총계',won:true},
+    {k:'debt',label:'부채총계',won:true},
+    {k:'equity',label:'자본총계',won:true},
+    {k:'sales',label:'매출액',won:true},
+    {k:'opProfit',label:'영업이익',won:true},
+    {k:'netProfit',label:'당기순이익',won:true},
+    {k:'emp',label:'종업원수'}
+  ];
+
+  /* 실데이터 4건(원문 그대로, 2026-08-12 기준). 금액은 원 단위 정수. 없는 값/화면 밖 컬럼은 null → '-'. */
+  var DATA=[
+    {no:'1', cs:'8대사업', mgr:'KB증권(주)', fund:'현대동양농식품사모투자전문회사',
+    comp:'(주)진바이오텍', compEn:null, ceo1:'이찬호', ceo1b:'640405-1', ceo1s:'남자',
+    ceo2:null, ceo2b:null, ceo2s:null, biz:'307-81-14821', corp:null,
+    sic:'10801', sicNm:'배합 사료 제조업', loc:'충남', zip:'314831',
+    addr:'충청남도 공주시 계룡면', addr2:'진바이오텍', tel:'041-853-9961', fax:null,
+    home:'www.genebiotech.co.kr', estd:'2000-03-15', vcYn:'x',
+    prod:'기능성 펩타이드, 환경개선 생균제등', vType:null, vNo:null, vTerm:null,
+    eType:'벤처기업', eTerm:null, closeM:'12', womanYn:'x', audit:'신우회계법인',
+    default:null, closeD:null, ipo:'2006-04-28', stkType:'코스닥',
+    comShr:7903833, comPar:500, prfShr:0, prfPar:500, firstInv:'2011-10-25',
+    invA:5000000000, recB:5000000000, recProfit:2537708910, recTotal:7537708910,
+    impair:0, convC:0, invBal:0, baseYm:'201412',
+    asset:47342870212, debt:23922582644, equity:23420287568,
+    sales:51589120626, opProfit:1010942879, netProfit:146370672, emp:36},
+    {no:'2', cs:'8대사업', mgr:'KB증권(주)', fund:'현대동양농식품사모투자전문회사',
+    comp:'(주)선양', compEn:null, ceo1:'윤영옥', ceo1b:'491212-1', ceo1s:'남자',
+    ceo2:null, ceo2b:null, ceo2s:null, biz:'123-81-11041', corp:null,
+    sic:'18119', sicNm:'기타 인쇄업', loc:'울산', zip:'445843',
+    addr:'경기도 화성시 푸른들판로1153번길', addr2:'25', tel:null, fax:null,
+    home:null, estd:null, vcYn:'x', prod:null, vType:null, vNo:null, vTerm:null,
+    eType:null, eTerm:null, closeM:null, womanYn:'x', audit:null,
+    default:null, closeD:null, ipo:null, stkType:null,
+    comShr:null, comPar:null, prfShr:null, prfPar:null, firstInv:null,
+    invA:null, recB:null, recProfit:null, recTotal:null,
+    impair:null, convC:null, invBal:null, baseYm:null,
+    asset:null, debt:null, equity:null, sales:null, opProfit:null, netProfit:null, emp:null},
+    {no:'3', cs:'8대사업', mgr:'KB증권(주)', fund:'현대동양농식품사모투자전문회사',
+    comp:'(주)체리부로', compEn:null, ceo1:'김인식', ceo1b:'420413-1', ceo1s:'남자',
+    ceo2:null, ceo2b:null, ceo2s:null, biz:'301-81-12903', corp:'154311-0001997',
+    sic:'01231', sicNm:'양계업', loc:'경북', zip:'365822',
+    addr:'충청북도 진천군 생거진천로', addr2:'1770(중', tel:null, fax:null,
+    home:null, estd:null, vcYn:'x', prod:null, vType:null, vNo:null, vTerm:null,
+    eType:null, eTerm:null, closeM:null, womanYn:'x', audit:null,
+    default:null, closeD:null, ipo:null, stkType:null,
+    comShr:null, comPar:null, prfShr:null, prfPar:null, firstInv:null,
+    invA:null, recB:null, recProfit:null, recTotal:null,
+    impair:null, convC:null, invBal:null, baseYm:null,
+    asset:null, debt:null, equity:null, sales:null, opProfit:null, netProfit:null, emp:null},
+    {no:'4', cs:'8대사업', mgr:'KB증권(주)', fund:'현대동양농식품사모투자전문회사',
+    comp:'(주)코스온', compEn:null, ceo1:'이동건', ceo1b:'680127-1', ceo1s:'남자',
+    ceo2:null, ceo2b:null, ceo2s:null, biz:'106-81-84011', corp:'110111-1823289',
+    sic:'20423', sicNm:'화장품 제조업', loc:'경기', zip:'135736',
+    addr:'서울특별시 강남구 영동대로', addr2:'일동빌', tel:null, fax:null,
+    home:null, estd:null, vcYn:'x', prod:null, vType:null, vNo:null, vTerm:null,
+    eType:null, eTerm:null, closeM:null, womanYn:'x', audit:null,
+    default:null, closeD:null, ipo:null, stkType:null,
+    comShr:null, comPar:null, prfShr:null, prfPar:null, firstInv:null,
+    invA:null, recB:null, recProfit:null, recTotal:null,
+    impair:null, convC:null, invBal:null, baseYm:null,
+    asset:null, debt:null, equity:null, sales:null, opProfit:null, netProfit:null, emp:null}
+  ];
+
+  function grp(n){var v=Number(n);return v.toLocaleString('ko-KR')}
+  function fmtWon(n){
+    if(n===null||n===undefined||n==='') return '-';
+    return Number(n).toLocaleString('ko-KR');
+  }
+  function cellVal(row,c){
+    var raw=row[c.k];
+    if(raw===null||raw===undefined||raw===''){return {t:'-',muted:true};}
+    if(c.won){return {t:fmtWon(raw)};}
+    if(c.k==='baseYm'){var s=String(raw);return {t:s.length===6?s.slice(0,4)+'-'+s.slice(4):s};}
+    if(c.k==='closeM'){return {t:raw+'월'};}
+    if(c.k==='stkType'){return {t:'<span class="tag n">'+raw+'</span>',html:true};}
+    if(c.k==='eType'){return {t:'<span class="tag b">'+raw+'</span>',html:true};}
+    if(c.k==='comShr'||c.k==='comPar'||c.k==='prfShr'||c.k==='prfPar'||c.k==='emp'){return {t:grp(raw)};}
+    return {t:String(raw)};
+  }
+
+  /* thead */
+  $('head').innerHTML='<tr>'+COLS.map(function(c){
+    var cls=c.a?(' class="'+c.a+'"'):'';
+    var rv=c.review?('<button type="button" class="review" data-rec="'+c.review.rec+'" data-dat="'+c.review.dat+'" aria-label="검토필요">!</button>'):'';
+    return '<th'+cls+' scope="col">'+c.label+rv+'</th>';
+  }).join('')+'</tr>';
+
+  /* tbody */
+  function render(){
+    $('rows').innerHTML=DATA.map(function(row){
+      return '<tr>'+COLS.map(function(c){
+        var v=cellVal(row,c);
+        var cls=[];if(c.a)cls.push(c.a);if(v.muted)cls.push('muted');
+        var attr=c.won?(' data-won="1"'):'';
+        var clsAttr=cls.length?(' class="'+cls.join(' ')+'"'):'';
+        return '<td'+clsAttr+attr+'>'+v.t+'</td>';
+      }).join('')+'</tr>';
+    }).join('');
+  }
+  render();
+
+  /* 엑셀 / 조회 */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+  $('excel').addEventListener('click',function(){toast('엑셀로 내려받습니다 (목업)')});
+  function chipGroup(id,opts,val){
+    var box=$(id); if(!box)return;
+    box.innerHTML=opts.map(function(o){return '<button type="button" class="chipbtn" data-v="'+o+'" aria-pressed="'+(o===val)+'">'+o+'</button>';}).join('');
+    box.addEventListener('click',function(e){
+      var b=e.target.closest('button[data-v]'); if(!b)return;
+      Array.prototype.forEach.call(box.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b)});
+    });
+  }
+  chipGroup('f-acc',['전체','농식품','수산'],'전체');
+  $('search').addEventListener('click',function(){toast('조회되었습니다 (목업)')});
+
+  /* 검토필요 마커: 클릭 → 추천 vs 데이터 */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true);document.removeEventListener('keydown',rKey,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  function rKey(e){if(e.key==='Escape'){e.preventDefault();closeR()}}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null; if(!m)return; e.preventDefault();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';p.setAttribute('role','dialog');
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+m.getAttribute('data-rec')+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+m.getAttribute('data-dat')+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true);document.addEventListener('keydown',rKey,true)},0);
+  });
+})();
+</script>

@@ -1,0 +1,430 @@
+<title>조합원총회</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;--danger:#E5484D;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;--danger:#F2555A;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F2555A;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:78ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .chipbtn{height:34px;padding:0 14px;border-radius:99px;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink-2);font-size:13px;font-weight:600}
+  .chipbtn[aria-pressed="true"]{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px;overflow-x:auto;min-width:0;scrollbar-width:thin}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;flex:none;white-space:nowrap}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filtergrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 16px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;width:66px;text-align:right;white-space:nowrap}
+  .field.span2{grid-column:span 2}
+  .field select,.field input{flex:1;min-width:0}
+  .daterange{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+  .daterange input{flex:1;min-width:0}
+  .daterange .tilde{flex:none;color:var(--ink-3)}
+  .searchbtnrow{display:flex;justify-content:center;margin-top:14px}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .listbar{display:flex;align-items:center;margin:2px 0 8px}
+  .listbar .cap{font-size:15px;font-weight:700}
+  .listbar .cap b{color:var(--primary)}
+  .listbar .acts{margin-left:auto;display:flex;gap:8px}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;min-width:1360px;width:100%}
+  table.grid th,table.grid td{padding:8px 11px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:left}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong);position:sticky;top:0;z-index:2}
+  table.grid th.c,table.grid td.c{text-align:center}
+  table.grid tbody tr{cursor:pointer}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  table.grid tbody tr[aria-selected="true"] td{background:var(--primary-weak)}
+  table.grid td select{height:30px;font-size:12.5px;padding:0 6px}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.b{background:var(--primary-weak);color:var(--primary)} .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.n{background:var(--grey-weak);color:var(--ink-3)} .tag.a{background:var(--amber-weak);color:var(--amber)}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:90;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  /* modal */
+  .scrim{position:fixed;inset:0;background:rgba(16,24,40,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;animation:fade .15s ease}
+  .modal{width:820px;max-width:100%;max-height:90vh;overflow-y:auto;overflow-x:hidden;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);animation:pop .18s ease}
+  .modal-head{display:flex;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border)}
+  .modal-head h2{font-size:18px;font-weight:800;margin:0}
+  .icon-btn{margin-left:auto;width:34px;height:34px;border:none;background:none;color:var(--ink-3);font-size:22px;line-height:1;border-radius:6px}
+  .icon-btn:hover{background:var(--surface-3);color:var(--ink)}
+  .modal-body{padding:18px 22px}
+  .sec-title{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:800;color:var(--ink);margin:22px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--primary)}
+  .sec-title:first-child{margin-top:0}
+  .kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .kv .cell{display:grid;grid-template-columns:130px minmax(0,1fr);background:var(--surface)}
+  .kv .cell.full{grid-column:1 / -1}
+  .kv .cell .k{background:var(--surface-3);color:var(--ink-2);font-size:13px;font-weight:700;padding:9px 12px;display:flex;align-items:center}
+  .kv .cell .v{padding:9px 12px;font-size:13.5px;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis}
+  table.mini{border-collapse:collapse;width:100%;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  table.mini th,table.mini td{padding:8px 11px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);text-align:left}
+  table.mini thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center}
+  table.mini td.c,table.mini th.c{text-align:center}
+  table.mini .empty{text-align:center;color:var(--ink-3);padding:16px}
+  .filelist{display:flex;flex-direction:column;gap:6px}
+  .fileitem{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);font-size:13px}
+  .fileitem .badge-pdf{flex:none;padding:1px 6px;border-radius:4px;background:var(--danger);color:#fff;font-size:10px;font-weight:800}
+  .fileitem .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fileitem .meta{margin-left:auto;flex:none;color:var(--ink-3);font-size:12px}
+  .fileitem .dl{flex:none;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink-2);border-radius:6px;height:28px;padding:0 10px;font-size:12px;font-weight:700}
+  .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid var(--border);background:var(--surface-2);position:sticky;bottom:0}
+  .modal-foot .btn{height:40px}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  @media (max-width:900px){.filtergrid{grid-template-columns:repeat(2,1fr)}.field.span2{grid-column:span 2}.lnb{display:none!important}.kv{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">시스템 S1 · 사후보고관리 · KRDS TO-BE</p>
+  <h1 class="doc-title">조합원총회</h1>
+  <p class="doc-sub">자펀드(투자조합)의 조합원총회 사후보고를 검색·조회하는 화면. 목록 그리드에서 행을 선택하면 총회 상세(일반사항·보고안건·부의안건·첨부파일)를 팝업으로 조회한다. 읽기전용 조회 화면(등록/수정 폼 없음)으로 금액 단위전환 토글은 대상 아님.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">모</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="S1_01_투자심의관리.html" role="menuitem" class="on"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="../02_조기경보/S2_46_메인화면.html" role="menuitem"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">투자자산관리시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="01_파일럿_공고관리/mockup/공고관리_목업_artifact.html">모태펀드</a>
+          <a href="#" class="on" aria-current="page">사후보고관리</a>
+          <a href="05_자펀드관리/mockup/자펀드관리_목업.html">자펀드</a>
+          <a href="S1_28_투심승인정보조회.html">통계</a>
+          <a href="S1_30_투자기업정보.html">투자기업</a>
+          <a href="S1_38_운용사_재무정보_조회.html">모니터링</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+      </div>
+      <div class="subtab" aria-label="사후보고관리 하위 메뉴">
+        <a href="S1_01_투자심의관리.html">투자심의관리</a>
+        <a href="S1_04_수시보고.html">수시보고</a>
+        <a href="S1_06_정기보고.html">정기보고</a>
+        <span class="on">조합원총회</span>
+        <a href="S1_08_조합예상자금보고.html">조합예상자금보고</a>
+        <a href="S1_09_보고양식관리.html">보고양식관리</a>
+        <a href="S1_10_보고_업데이트정보.html">보고 업데이트정보</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">사후보고관리</div>
+          <nav aria-label="사후보고관리 메뉴">
+            <a href="S1_01_투자심의관리.html">투자심의관리</a>
+            <a href="S1_04_수시보고.html">수시보고</a>
+            <a href="S1_06_정기보고.html">정기보고</a>
+            <a href="#" class="on" aria-current="page">조합원총회</a>
+            <a href="S1_08_조합예상자금보고.html">조합예상자금보고</a>
+            <a href="S1_09_보고양식관리.html">보고양식관리</a>
+            <a href="S1_10_보고_업데이트정보.html">보고 업데이트정보</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">사후보고관리 · 조합원총회</div>
+          <div class="h1row"><h1>조합원총회</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filtergrid">
+              <!-- 모펀드: 다중모펀드 옵션 ON 가정(단일=표시, 1개 초과 시 무조건 표시) --><div class="field" data-mf-visible="on"><label for="f-mf">모펀드</label><select id="f-mf"><option>농식품모태펀드</option><option>MOAF</option></select></div>
+              <div class="field"><label for="f-gp">운용사</label><select id="f-gp"><option>전체</option><option>(주)넥스트지인베스트먼트</option></select></div>
+              <div class="field"><label for="f-fund">자펀드</label><select id="f-fund"><option>전체</option><option>넥스트지 지방활성화 농식품 투자조합</option></select></div>
+              <div class="field"><label id="f-acc-lab">계정구분</label><div role="group" aria-labelledby="f-acc-lab" style="display:flex;gap:6px" id="f-acc"></div></div>
+              <div class="field"><label for="f-mgr">담당자<button type="button" class="review" data-rec="담당심사역 목록(예: 이승재)" data-dat="실 담당자 목록 미확인 — 코드/명단 확인 필요" aria-label="검토필요">!</button></label><select id="f-mgr"><option>전체</option><option>이승재</option></select></div>
+              <div class="field"><label for="f-gt">총회구분</label><select id="f-gt"><option>전체</option><option>정기총회</option><option>임시총회</option><option>간담회</option><option>보고회</option><option>결성총회</option><option>해산총회</option><option>청산총회</option><option>기타</option></select></div>
+              <div class="field span2"><label for="f-d1">총회기간</label>
+                <span class="daterange"><input type="date" id="f-d1" value="2025-08-28" aria-label="총회기간 시작일"><span class="tilde">~</span><input type="date" id="f-d2" value="2026-08-28" aria-label="총회기간 종료일"></span></div>
+            </div>
+            <div class="searchbtnrow"><button class="btn" id="search">조회</button></div>
+          </div>
+
+          <div class="listbar">
+            <div class="cap">총 <b id="cnt">3</b>건</div>
+            <div class="acts">
+              <button class="btn btn-sec btn-sm" id="excel">엑셀</button>
+            </div>
+          </div>
+          <div class="scroller">
+            <table class="grid">
+              <caption class="visually-hidden">조합원총회 목록 — 행을 선택하면 상세 팝업이 열립니다</caption>
+              <thead>
+                <tr>
+                  <th class="c" style="width:44px">No</th>
+                  <th>운용사</th>
+                  <th>자펀드</th>
+                  <th class="c">보고상태</th>
+                  <th class="c">총회구분</th>
+                  <th class="c">총회일자</th>
+                  <th>제목</th>
+                  <th>안건</th>
+                  <th class="c">일정 확정여부</th>
+                  <th class="c">결과 확정여부</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  function statusTag(s){var c=(s==='결과')?'g':(s==='일정')?'b':'n';return '<span class="tag '+c+'">'+s+'</span>';}
+  function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function selCell(name,val){
+    var opts=['확정','미확정'];var h='<select aria-label="'+name+'" onclick="event.stopPropagation()">';
+    if(!val)h+='<option value="" selected></option>';
+    opts.forEach(function(o){h+='<option'+(o===val?' selected':'')+'>'+o+'</option>';});
+    return h+'</select>';
+  }
+  function resultCell(sch,val){
+    if(sch!=='확정')return '<span style="color:var(--ink-3)">-</span>';
+    return selCell('결과 확정여부',val);
+  }
+
+  // 실데이터 1건(넥스트지) + 도메인 정합 샘플 2건
+  var DATA=[
+    {no:1,gp:'(주)넥스트지인베스트먼트',fund:'넥스트지 지방활성화 농식품 투자조합',rst:'일정',gt:'임시총회',gdate:'2026-06-02',title:'2026년 제5회 임시조합원총회',agenda:'규약 변경 승인의 건',sch:'미확정',res:'',
+      detail:{
+        gen:{fund:'넥스트지 지방활성화 농식품 투자조합',gtype:'임시총회',gdt:'2026-06-02 10:00',mgr:'이승재',place:'주식회사 넥스트지인베스트먼트 대회의실',title:'2026년 제5회 임시조합원총회',resolform:'서면결의',shorten:'N',resolway:'서면결의'},
+        report:[],
+        motion:[{ord:'1',content:'규약 변경 승인의 건',way:'특별결의',moaf:'',result:''}],
+        files:[{name:'[공문][공문] 넥스트지 지방활성화 농식품 투자조합 임시조합원총회 소집 통보의 건_260519.PDF',reg:'2026-05-19 오후 1:53:58',mod:'2026-05-22 오전 9:34:55',up:'O'}]
+      }},
+    {no:2,gp:'아이엠엠인베스트먼트(주)',fund:'IMM 농식품 스마트투자조합',rst:'결과',gt:'정기총회',gdate:'2026-03-14',title:'2026년 제1기 정기조합원총회',agenda:'결산보고 승인의 건',sch:'확정',res:'확정',
+      detail:{
+        gen:{fund:'IMM 농식품 스마트투자조합',gtype:'정기총회',gdt:'2026-03-14 14:00',mgr:'이승재',place:'아이엠엠인베스트먼트 본사 회의실',title:'2026년 제1기 정기조합원총회',resolform:'현장결의',shorten:'N',resolway:'보통결의'},
+        report:[{ord:'1',content:'2025년 결산 및 운용현황 보고'}],
+        motion:[{ord:'1',content:'결산보고 승인의 건',way:'보통결의',moaf:'',result:'가결'}],
+        files:[]
+      }},
+    {no:3,gp:'한국투자파트너스(주)',fund:'한투 청년농식품투자조합',rst:'일정',gt:'임시총회',gdate:'2026-07-21',title:'2026년 제2회 임시조합원총회',agenda:'업무집행조합원 변경 승인의 건',sch:'미확정',res:'',
+      detail:{
+        gen:{fund:'한투 청년농식품투자조합',gtype:'임시총회',gdt:'2026-07-21 11:00',mgr:'이승재',place:'서면결의(현장 미개최)',title:'2026년 제2회 임시조합원총회',resolform:'서면결의',shorten:'Y',resolway:'서면결의'},
+        report:[],
+        motion:[{ord:'1',content:'업무집행조합원 변경 승인의 건',way:'특별결의',moaf:'',result:''}],
+        files:[]
+      }}
+  ];
+
+  $('rows').innerHTML=DATA.map(function(r){
+    return '<tr tabindex="0" data-no="'+r.no+'" role="button" aria-label="'+esc(r.title)+' 상세 열기">'+
+      '<td class="c">'+r.no+'</td>'+
+      '<td>'+esc(r.gp)+'</td>'+
+      '<td>'+esc(r.fund)+'</td>'+
+      '<td class="c">'+statusTag(r.rst)+'</td>'+
+      '<td class="c">'+esc(r.gt)+'</td>'+
+      '<td class="c">'+esc(r.gdate)+'</td>'+
+      '<td>'+esc(r.title)+'</td>'+
+      '<td>'+esc(r.agenda)+'</td>'+
+      '<td class="c">'+selCell('일정 확정여부',r.sch)+'</td>'+
+      '<td class="c">'+resultCell(r.sch,r.res)+'</td>'+
+      '</tr>';
+  }).join('');
+
+  // 행 클릭/키보드 → 상세 팝업
+  Array.prototype.forEach.call($('rows').querySelectorAll('tr'),function(tr){
+    tr.addEventListener('click',function(){openDetail(parseInt(tr.getAttribute('data-no'),10),tr)});
+    tr.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(parseInt(tr.getAttribute('data-no'),10),tr)}});
+  });
+
+  $('excel').addEventListener('click',function(){toast('엑셀 다운로드 (목업)')});
+  function chipGroup(id,opts,val){
+    var box=$(id); if(!box)return;
+    box.innerHTML=opts.map(function(o){return '<button type="button" class="chipbtn" data-v="'+o+'" aria-pressed="'+(o===val)+'">'+o+'</button>';}).join('');
+    box.addEventListener('click',function(e){
+      var b=e.target.closest('button[data-v]'); if(!b)return;
+      Array.prototype.forEach.call(box.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b)});
+    });
+  }
+  chipGroup('f-acc',['전체','농식품','수산'],'전체');
+  $('search').addEventListener('click',function(){toast('조회되었습니다 (목업)')});
+
+  /* 검토필요 마커 */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null; if(!m)return; e.preventDefault();e.stopPropagation();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+esc(m.getAttribute('data-rec'))+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+esc(m.getAttribute('data-dat'))+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true)},0);
+  });
+
+  /* scroll lock */
+  var lockN=0,savedPad='';
+  function lock(){if(lockN++===0){var sw=window.innerWidth-document.documentElement.clientWidth;savedPad=document.body.style.paddingRight;if(sw>0)document.body.style.paddingRight=sw+'px';document.body.style.overflow='hidden';}}
+  function unlock(){if(lockN>0&&--lockN===0){document.body.style.overflow='';document.body.style.paddingRight=savedPad;}}
+  /* toast */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+
+  /* 상세 팝업 (읽기전용) */
+  var scrim=null,lastFocus=null;
+  function trap(c){c.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();closeModal();return}if(e.key!=='Tab')return;var f=Array.prototype.filter.call(c.querySelectorAll('button,input,select,textarea,[tabindex]:not([tabindex="-1"])'),function(el){return !el.disabled&&el.offsetParent!==null});if(!f.length)return;var first=f[0],last=f[f.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}})}
+  function closeModal(){closeR();if(scrim){scrim.remove();scrim=null;unlock()}if(lastFocus&&lastFocus.focus)lastFocus.focus()}
+  function cell(k,v,full){return '<div class="cell'+(full?' full':'')+'"><div class="k">'+k+'</div><div class="v">'+(v?esc(v):'-')+'</div></div>';}
+
+  function buildGen(g){
+    return '<div class="kv">'+
+      cell('자펀드',g.fund,true)+
+      cell('총회종류',g.gtype)+cell('총회일시',g.gdt)+
+      cell('담당심사역',g.mgr)+cell('제목(총회명)',g.title)+
+      cell('총회장소',g.place,true)+
+      cell('결의형태',g.resolform)+cell('결의방법',g.resolway)+
+      cell('기간단축',g.shorten)+
+    '</div>';
+  }
+  function buildReport(list){
+    if(!list||!list.length)return '<table class="mini"><thead><tr><th class="c" style="width:90px">안건순서</th><th>보고안건</th></tr></thead><tbody><tr><td class="empty" colspan="2">등록된 보고안건 없음</td></tr></tbody></table>';
+    return '<table class="mini"><thead><tr><th class="c" style="width:90px">안건순서</th><th>보고안건</th></tr></thead><tbody>'+
+      list.map(function(x){return '<tr><td class="c">'+esc(x.ord)+'</td><td>'+esc(x.content)+'</td></tr>';}).join('')+'</tbody></table>';
+  }
+  function buildMotion(list){
+    var head='<table class="mini"><thead><tr><th class="c" style="width:80px">의안순서</th><th>안건내역</th><th class="c" style="width:120px">결의방법</th><th class="c" style="width:110px">MOAF의견</th><th class="c" style="width:90px">결과</th></tr></thead><tbody>';
+    if(!list||!list.length)return head+'<tr><td class="empty" colspan="5">등록된 부의안건 없음</td></tr></tbody></table>';
+    return head+list.map(function(x){return '<tr><td class="c">'+esc(x.ord)+'</td><td>'+esc(x.content)+'</td><td class="c">'+esc(x.way)+'</td><td class="c">'+(x.moaf?esc(x.moaf):'-')+'</td><td class="c">'+(x.result?esc(x.result):'-')+'</td></tr>';}).join('')+'</tbody></table>';
+  }
+  function buildFiles(list){
+    if(!list||!list.length)return '<div class="fileitem" style="color:var(--ink-3);justify-content:center">첨부파일 없음</div>';
+    return '<div class="filelist">'+list.map(function(f){
+      return '<div class="fileitem"><span class="badge-pdf">PDF</span><span class="nm">'+esc(f.name)+'</span>'+
+        '<span class="meta">등록 '+esc(f.reg)+' · 수정 '+esc(f.mod)+' · 업로드 '+esc(f.up)+'</span>'+
+        '<button type="button" class="dl">다운로드</button></div>';
+    }).join('')+'</div>';
+  }
+
+  function openDetail(no,tr){
+    var r=null;for(var i=0;i<DATA.length;i++){if(DATA[i].no===no){r=DATA[i];break;}}
+    if(!r)return;var d=r.detail;
+    lastFocus=tr||document.activeElement;
+    Array.prototype.forEach.call($('rows').querySelectorAll('tr'),function(t){t.removeAttribute('aria-selected')});
+    if(tr)tr.setAttribute('aria-selected','true');
+    scrim=document.createElement('div');scrim.className='scrim';
+    scrim.addEventListener('mousedown',function(e){if(e.target===scrim)closeModal()});
+    scrim.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="dt-t">'+
+      '<div class="modal-head"><h2 id="dt-t">조합원총회 상세</h2><button class="icon-btn" id="dt-x" aria-label="닫기">×</button></div>'+
+      '<div class="modal-body">'+
+        '<div class="sec-title">일반사항</div>'+buildGen(d.gen)+
+        '<div class="sec-title">보고안건</div>'+buildReport(d.report)+
+        '<div class="sec-title">부의안건</div>'+buildMotion(d.motion)+
+        '<div class="sec-title">첨부파일</div>'+buildFiles(d.files)+
+      '</div>'+
+      '<div class="modal-foot"><button class="btn btn-sec" id="dt-close">닫기</button></div>'+
+    '</div>';
+    lock();document.body.appendChild(scrim);
+    trap(scrim.querySelector('.modal'));
+    $('dt-x').addEventListener('click',closeModal);$('dt-close').addEventListener('click',closeModal);
+    setTimeout(function(){var el=scrim.querySelector('.icon-btn');if(el)el.focus()},0);
+  }
+})();
+</script>

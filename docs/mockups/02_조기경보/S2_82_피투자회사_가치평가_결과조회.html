@@ -1,0 +1,399 @@
+<title>피투자회사 가치평가 결과조회</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --danger:#E5484D;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;--danger:#F2686C;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F2686C;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:78ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .seg button{height:34px;padding:0 16px;border:none;background:transparent;color:var(--ink-2);font-size:13px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .admin-gear{margin-left:12px;padding:6px 12px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;font-size:13px;white-space:nowrap}
+  .admin-gear:hover{background:rgba(255,255,255,.12);color:#fff}
+  .admin-gear.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filtergrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 16px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;width:70px;text-align:right;white-space:nowrap}
+  .field select,.field input{flex:1;min-width:0}
+  .searchbtnrow{display:flex;justify-content:center;gap:8px;margin-top:14px}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .datefield{position:relative;display:flex;align-items:center;flex:1;min-width:0}
+  .datefield input{width:100%;padding-right:32px;cursor:pointer}
+  .datefield .cal{position:absolute;right:9px;width:17px;height:17px;color:var(--ink-3);pointer-events:none}
+  .pickpanel{position:fixed;z-index:80;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:8px;width:236px}
+  .pickpanel .yhead{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 8px;font-size:13px;font-weight:700;color:var(--ink-2)}
+  .pickpanel .ynav{width:26px;height:26px;border:none;background:transparent;border-radius:6px;color:var(--ink-2);font-size:16px;cursor:pointer}
+  .pickpanel .ynav:hover{background:var(--surface-3)}
+  .pickpanel .ygrid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+  .pickpanel .ygrid button{height:32px;border:none;background:transparent;border-radius:6px;font-size:13px;color:var(--ink);font-family:inherit;cursor:pointer}
+  .pickpanel .ygrid button:hover{background:var(--surface-3)}
+  .pickpanel .ygrid button[aria-selected="true"]{background:var(--primary);color:#fff;font-weight:700}
+  .sec-title{display:flex;align-items:center;gap:10px;margin:22px 0 8px}
+  .sec-title:first-of-type{margin-top:6px}
+  .sec-title h2{font-size:15.5px;font-weight:800;margin:0}
+  .sec-title .spacer{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .sec-title .ulab{font-size:12.5px;font-weight:700;color:var(--ink-3)}
+  .listbar{display:flex;align-items:center;margin:2px 0 8px}
+  .listbar .cap{font-size:14px;font-weight:700}
+  .listbar .cap b{color:var(--primary)}
+  .listbar .acts{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  .scroller.narrow{max-width:100%}
+  table.grid{border-collapse:collapse;width:100%}
+  table.grid.wide{min-width:2280px}
+  table.grid th,table.grid td{padding:7px 10px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:right}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong);position:sticky;top:0;z-index:2}
+  table.grid th.c,table.grid td.c{text-align:center}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  table.grid tfoot td{font-weight:800;background:var(--surface-3);border-top:2px solid var(--ink)}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.a{background:var(--ok-weak);color:var(--ok)} .tag.b{background:var(--primary-weak);color:var(--primary)} .tag.c{background:var(--amber-weak);color:var(--amber)} .tag.d{background:var(--grey-weak);color:var(--ink-3)}
+  .note{margin-top:24px;font-size:13px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:8px;padding:14px 16px;line-height:1.7}
+  .note b{color:var(--ink-2)}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:900px){.filtergrid{grid-template-columns:repeat(2,1fr)}.lnb{display:none!important}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">S2 · 가치평가 · KRDS TO-BE</p>
+  <h1 class="doc-title">피투자회사 가치평가 결과조회</h1>
+  <p class="doc-sub">자펀드(투자조합)가 투자한 피투자회사(투자기업)의 평가년월 기준 가치평가 결과를 조회하는 읽기전용 화면. 상단 집계 표(2단 헤더) + 하단 상세 그리드(가로 스크롤 대형 그리드). 조회 전용 금액 화면이라 금액 단위전환(원/백만원/억원)을 제공.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">조</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="../01_투자자산관리/S1_01_투자심의관리.html" role="menuitem"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="S2_46_메인화면.html" role="menuitem" class="on"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">조기경보시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="S2_46_메인화면.html">조기경보</a>
+          <a href="S2_64_투자기업정보_전체_.html">기업정보</a>
+          <a href="S2_70_운용사_정량지표_관리.html">기초정보</a>
+          <a href="S2_78_운용사_유형별_정량지표_변동.html">통계정보</a>
+          <a href="#" class="on" aria-current="page">가치평가</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+        <a href="S2_94_메뉴관리.html" class="admin-gear" aria-label="관리자 설정">⚙ 관리자</a>
+      </div>
+      <div class="subtab" aria-label="가치평가 하위 메뉴">
+        <a href="S2_80_모태펀드_가치평가_결과조회.html">모태펀드 가치평가 결과관리</a><a href="S2_81_투자조합_가치평가_결과조회.html">투자조합 가치평가 결과조회</a><span class="on">피투자회사 가치평가 결과조회</span><a href="S2_83_Portfolio_Report.html">Portfolio Report</a><a href="S2_84_자펀드_투자자산_및_거래내역_조회.html">자펀드 투자자산 및 거래내역 조회</a><a href="S2_85_예외사항_레포트.html">예외사항 레포트</a><a href="S2_86_평가시점_데이터_확인.html">평가시점 데이터 확인</a><a href="S2_87_투자기업별_계약별__IRR.html">투자기업별(계약별) IRR</a><a href="S2_89_자펀드별_IRR.html">자펀드별 IRR</a><a href="S2_91_투자기업별_IRR.html">투자기업별 IRR</a><a href="S2_93_가치평가_일정관리.html">가치평가 일정관리</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">가치평가</div>
+          <nav aria-label="가치평가 메뉴">
+            <a href="S2_80_모태펀드_가치평가_결과조회.html">모태펀드 가치평가 결과관리</a>
+            <a href="S2_81_투자조합_가치평가_결과조회.html">투자조합 가치평가 결과조회</a>
+            <a href="#" class="on" aria-current="page">피투자회사 가치평가 결과조회</a>
+            <a href="S2_83_Portfolio_Report.html">Portfolio Report</a>
+            <a href="S2_84_자펀드_투자자산_및_거래내역_조회.html">자펀드 투자자산 및 거래내역 조회</a>
+            <a href="S2_85_예외사항_레포트.html">예외사항 레포트</a>
+            <a href="S2_86_평가시점_데이터_확인.html">평가시점 데이터 확인</a>
+            <a href="S2_87_투자기업별_계약별__IRR.html">투자기업별(계약별) IRR</a>
+            
+            <a href="S2_89_자펀드별_IRR.html">자펀드별 IRR</a>
+            <a href="S2_91_투자기업별_IRR.html">투자기업별 IRR</a>
+            <a href="S2_93_가치평가_일정관리.html">가치평가 일정관리</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">가치평가 · 피투자회사 가치평가 결과조회</div>
+          <div class="h1row"><h1>피투자회사 가치평가 결과조회</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filtergrid">
+              <div class="field"><label for="f-fund">자펀드</label>
+                <select id="f-fund">
+                  <option>전체</option>
+                  <option>2022 원익 스마트 혁신 Agtech투자조합</option>
+                </select></div>
+              <div class="field"><label for="f-year">결성년도</label>
+                <span class="datefield"><input type="text" id="f-year" value="" placeholder="전체" readonly aria-label="결성년도(연도 선택)"><svg class="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg></span></div>
+              <div class="field"><label for="f-ym">평가년월</label>
+                <span class="datefield"><input type="text" id="f-ym" value="2025-12" readonly aria-label="평가년월(년월 선택)"><svg class="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg></span></div>
+              <div class="field" style="justify-content:flex-end;gap:8px">
+                <button class="btn" id="search">조회</button>
+                <button class="btn btn-sec" id="excel">엑셀</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="scroller narrow">
+            <table class="grid">
+              <caption class="visually-hidden">가치평가 결과 요약 — 상위 헤더 '내역' 아래 7개 집계 항목</caption>
+              <thead>
+                <tr><th class="c" colspan="7" scope="colgroup">내역</th></tr>
+                <tr>
+                  <th class="c" scope="col">자펀드수</th>
+                  <th class="c" scope="col">운용사수</th>
+                  <th class="c" scope="col">평가대상 자펀드수</th>
+                  <th class="c" scope="col">투자기업수</th>
+                  <th class="c" scope="col">평가대상기업수</th>
+                  <th class="c" scope="col">자펀드별 투자기업수</th>
+                  <th class="c" scope="col">자펀드별 평가대상기업수</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>159</td><td>159</td><td>110</td><td>892</td><td>528</td><td>1,274</td><td>816</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 섹션2~7 : 상세내역(가로 스크롤 대형 그리드) 데이터 -->
+          <div class="sec-title">
+            <div class="spacer">
+              <span class="ulab">금액 단위</span>
+              <div class="seg" role="group" aria-label="금액 단위 전환">
+                <button id="u-won" aria-pressed="true">원</button>
+                <button id="u-mil" aria-pressed="false">백만원</button>
+                <button id="u-eok" aria-pressed="false">억원</button>
+              </div>
+            </div>
+          </div>
+          <div class="listbar">
+            <div class="cap">총 <b id="cnt">5</b>건 <span style="font-weight:500;color:var(--ink-3)">· 평가년월 2025-12</span></div>
+          </div>
+          <div class="scroller">
+            <table class="grid wide">
+              <caption class="visually-hidden">피투자회사 가치평가 상세내역 — 평가년월 2025-12 기준</caption>
+              <thead>
+                <tr>
+                  <th class="c" scope="col">No</th>
+                  <th class="c" scope="col">평가년월</th>
+                  <th class="c" scope="col">결성년도</th>
+                  <th class="l" scope="col">자펀드</th>
+                  <th class="l" scope="col">GP명</th>
+                  <th class="l" scope="col">투자기업</th>
+                  <th class="c" scope="col">최초투자유형</th>
+                  <th class="c" scope="col">최초투자금액</th>
+                  <th class="c" scope="col">투자유형</th>
+                  <th class="c" scope="col">투자금액</th>
+                  <th class="c" scope="col">평가방법론</th>
+                  <th class="c" scope="col">옵션평가여부</th>
+                  <th class="c" scope="col">투자잔액</th>
+                  <th class="c" scope="col">평가금액</th>
+                  <th class="c" scope="col">누적회수총액</th>
+                  <th class="c" scope="col">운용성과</th>
+                  <th class="c" scope="col">누적Multiple</th>
+                  <th class="c" scope="col">관리등급</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+              <tfoot id="foot"></tfoot>
+            </table>
+          </div>
+
+          <p class="note"><b>설계 메모(2026-08-31, 사용자 지시로 타이틀 삭제 + 검토필요 마커 전부 제거):</b> <b>[섹션1]타이틀 "요약"·[섹션2]타이틀 "상세내역"</b> 두 항목을 화면·엑셀 양쪽에서 삭제(엑셀은 통합 시트 해당 행을 실제로 행 삭제 처리 — 통합 시트가 2행 줄어들며 이후 화면들의 행 번호가 전부 2행씩 당겨짐). 두 그리드(집계 표·상세 그리드) 자체는 그대로 유지, 제목 레이블만 제거. 화면의 검토필요 마커 5건(최초투자유형·투자유형·평가방법론·옵션평가여부·관리등급의 코드값 추정)을 사용자 지시로 전부 제거 — 엑셀 원문이 각 항목당 실값 1개만 제공하고 전체 코드셋은 정의돼 있지 않다는 한계는 이 메모로 갈음. 마커 제거 중 상세 그리드에 있던 <b>비교 데모 샘플 4건</b>(그린랩스·트릿지·에이슬립·리하베스트)이 원문에 없는 임의 생성 데이터였음을 발견해 제거 — 엑셀 확정 실데이터는 <b>(주)당근마켓</b> 1건뿐임. <br><br><b>[확인 필요]</b> <b>관리등급</b>이 운용사가 직접 보고(입력)하는 항목인지, 아니면 다른 조기경보 화면들처럼 시스템이 재무지표 등을 근거로 자동 산정하는 항목인지 원문에 명확하지 않음 — 산정 주체와 방식에 따라 이 화면이 조회 전용이어야 하는지, 입력/수정 기능이 필요한지가 달라지므로 확인 필요.</p>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+
+  /* nav toggle */
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* 상세내역 데이터 (금액=원 단위 숫자 저장 후 포맷). 엑셀 원문(통합 시트 2461-2477행) 확정 실데이터 1건만 반영.
+     이전에 있던 비교 데모 샘플 4건(그린랩스·트릿지·에이슬립·리하베스트)은 원문에 없는 임의 생성 데이터라 제거. */
+  function grade(g){var map={A:'a',B:'b',C:'c',D:'d'};return '<span class="tag '+(map[g]||'d')+'">'+g+'</span>';}
+  var DATA=[
+    {ym:'2025-12',fy:'2022년도',fund:'2022 원익 스마트 혁신 Agtech투자조합',gp:'원익투자파트너스(주)',co:'(주)당근마켓',ft0:'보통주',fa0:999960000,ft:'보통주',fa:999960000,mtd:'Milestones',opt:'-',bal:999960000,ev:999960000,rec:0,perf:999960000,g:'B'}
+  ];
+
+  /* 금액 단위 전환 (base=원) */
+  var unit='won';
+  function fmtAmt(v){
+    if(v===0) return '0';
+    if(unit==='won') return v.toLocaleString('ko-KR');
+    if(unit==='mil') return (v/1e6).toLocaleString('ko-KR',{minimumFractionDigits:1,maximumFractionDigits:1});
+    return (v/1e8).toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function mult(perf,inv){return inv? (perf/inv).toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2}):'-';}
+  function render(){
+    $('rows').innerHTML=DATA.map(function(r,i){
+      return '<tr>'+
+        '<td class="c">'+(i+1)+'</td>'+
+        '<td class="c">'+r.ym+'</td>'+
+        '<td class="c">'+r.fy+'</td>'+
+        '<td class="l">'+r.fund+'</td>'+
+        '<td class="l">'+r.gp+'</td>'+
+        '<td class="l">'+r.co+'</td>'+
+        '<td class="c">'+r.ft0+'</td>'+
+        '<td>'+fmtAmt(r.fa0)+'</td>'+
+        '<td class="c">'+r.ft+'</td>'+
+        '<td>'+fmtAmt(r.fa)+'</td>'+
+        '<td class="c">'+r.mtd+'</td>'+
+        '<td class="c">'+r.opt+'</td>'+
+        '<td>'+fmtAmt(r.bal)+'</td>'+
+        '<td>'+fmtAmt(r.ev)+'</td>'+
+        '<td>'+fmtAmt(r.rec)+'</td>'+
+        '<td>'+fmtAmt(r.perf)+'</td>'+
+        '<td class="c">'+mult(r.perf,r.fa)+'</td>'+
+        '<td class="c">'+grade(r.g)+'</td>'+
+      '</tr>';
+    }).join('');
+    var sum=function(k){return DATA.reduce(function(a,r){return a+r[k]},0)};
+    var tfa0=sum('fa0'),tfa=sum('fa'),tbal=sum('bal'),tev=sum('ev'),trec=sum('rec'),tperf=sum('perf');
+    $('foot').innerHTML='<tr>'+
+      '<td class="c" colspan="7">합계</td>'+
+      '<td>'+fmtAmt(tfa0)+'</td>'+
+      '<td class="c">-</td>'+
+      '<td>'+fmtAmt(tfa)+'</td>'+
+      '<td class="c">-</td><td class="c">-</td>'+
+      '<td>'+fmtAmt(tbal)+'</td>'+
+      '<td>'+fmtAmt(tev)+'</td>'+
+      '<td>'+fmtAmt(trec)+'</td>'+
+      '<td>'+fmtAmt(tperf)+'</td>'+
+      '<td class="c">'+mult(tperf,tfa)+'</td>'+
+      '<td class="c">-</td>'+
+    '</tr>';
+    $('cnt').textContent=DATA.length;
+  }
+  render();
+  function setUnit(u){unit=u;$('u-won').setAttribute('aria-pressed',u==='won');$('u-mil').setAttribute('aria-pressed',u==='mil');$('u-eok').setAttribute('aria-pressed',u==='eok');render();}
+  $('u-won').addEventListener('click',function(){setUnit('won')});
+  $('u-mil').addEventListener('click',function(){setUnit('mil')});
+  $('u-eok').addEventListener('click',function(){setUnit('eok')});
+
+  /* 연도 picker (결성년도) */
+  var CUR=(new Date()).getFullYear(), yp=null, yIn=null, yBase=CUR-5;
+  function closeY(){if(yp){yp.remove();yp=null;yIn=null;document.removeEventListener('mousedown',yOut,true);document.removeEventListener('keydown',yKey,true)}}
+  function yOut(e){if(yp&&!yp.contains(e.target)&&e.target!==yIn)closeY()}
+  function yKey(e){if(e.key==='Escape'){e.preventDefault();var i=yIn;closeY();if(i)i.focus()}}
+  function yCont(input){var s=yBase,e=yBase+11,h='<div class="yhead"><button type="button" class="ynav" data-n="-1" aria-label="이전">‹</button><span>'+s+' – '+e+'</span><button type="button" class="ynav" data-n="1" aria-label="다음">›</button></div><div class="ygrid">';for(var v=s;v<=e;v++){h+='<button type="button" data-y="'+v+'"'+(String(v)===String(input.value)?' aria-selected="true"':'')+'>'+v+'</button>';}return h+'</div>';}
+  function pos(p,input){var r=input.getBoundingClientRect();var top=r.bottom+4;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-4);p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px'}
+  function openY(input){if(yp&&yIn===input)return;closeY();closeM();yIn=input;yBase=input.value?parseInt(input.value,10)-5:CUR-5;var p=document.createElement('div');p.className='pickpanel';p.setAttribute('role','dialog');p.setAttribute('aria-label','연도 선택');p.innerHTML=yCont(input);document.body.appendChild(p);pos(p,input);p.addEventListener('mousedown',function(e){var n=e.target.closest('.ynav');if(n){e.preventDefault();yBase+=parseInt(n.getAttribute('data-n'),10)*12;p.innerHTML=yCont(input);pos(p,input);return;}var b=e.target.closest('button[data-y]');if(b){e.preventDefault();input.value=b.getAttribute('data-y');closeY();input.focus();}});yp=p;setTimeout(function(){document.addEventListener('mousedown',yOut,true);document.addEventListener('keydown',yKey,true)},0);}
+  $('f-year').addEventListener('click',function(){openY($('f-year'))});
+  $('f-year').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();openY($('f-year'))}});
+
+  /* 년월 picker (평가년월) */
+  var MN=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  var mp=null,mIn=null,mYear=CUR;
+  function closeM(){if(mp){mp.remove();mp=null;mIn=null;document.removeEventListener('mousedown',mOut,true);document.removeEventListener('keydown',mKey,true)}}
+  function mOut(e){if(mp&&!mp.contains(e.target)&&e.target!==mIn)closeM()}
+  function mKey(e){if(e.key==='Escape'){e.preventDefault();var i=mIn;closeM();if(i)i.focus()}}
+  function mCont(input){var selM=null;if(input.value&&/^\d{4}-\d{2}$/.test(input.value)){selM=parseInt(input.value.split('-')[1],10);}
+    var h='<div class="yhead"><button type="button" class="ynav" data-n="-1" aria-label="이전 해">‹</button><span>'+mYear+'년</span><button type="button" class="ynav" data-n="1" aria-label="다음 해">›</button></div><div class="ygrid">';
+    for(var m=1;m<=12;m++){var isSel=(selM===m && input.value.split('-')[0]==String(mYear));h+='<button type="button" data-m="'+m+'"'+(isSel?' aria-selected="true"':'')+'>'+MN[m-1]+'</button>';}
+    return h+'</div>';}
+  function openM(input){if(mp&&mIn===input)return;closeM();closeY();mIn=input;mYear=(input.value&&/^\d{4}/.test(input.value))?parseInt(input.value.slice(0,4),10):CUR;var p=document.createElement('div');p.className='pickpanel';p.setAttribute('role','dialog');p.setAttribute('aria-label','년월 선택');p.innerHTML=mCont(input);document.body.appendChild(p);pos(p,input);
+    p.addEventListener('mousedown',function(e){var n=e.target.closest('.ynav');if(n){e.preventDefault();mYear+=parseInt(n.getAttribute('data-n'),10);p.innerHTML=mCont(input);pos(p,input);return;}var b=e.target.closest('button[data-m]');if(b){e.preventDefault();var mm=('0'+b.getAttribute('data-m')).slice(-2);input.value=mYear+'-'+mm;closeM();input.focus();}});
+    mp=p;setTimeout(function(){document.addEventListener('mousedown',mOut,true);document.addEventListener('keydown',mKey,true)},0);}
+  $('f-ym').addEventListener('click',function(){openM($('f-ym'))});
+  $('f-ym').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();openM($('f-ym'))}});
+
+  /* toast */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+  $('search').addEventListener('click',function(){toast('조회되었습니다 (목업)')});
+  $('excel').addEventListener('click',function(){toast('엑셀 내려받기 (목업)')});
+})();
+</script>

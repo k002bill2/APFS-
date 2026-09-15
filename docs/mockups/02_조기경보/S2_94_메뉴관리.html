@@ -1,0 +1,461 @@
+<title>메뉴관리</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --danger:#E5484D;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;--danger:#F2686C;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F2686C;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:82ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .admin-gear{margin-left:12px;padding:6px 12px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;font-size:13px;white-space:nowrap}
+  .admin-gear:hover{background:rgba(255,255,255,.12);color:#fff}
+  .admin-gear.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  .h1row .acts{margin-left:auto;display:flex;gap:8px}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],textarea{border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  select,input[type=text]{height:36px}
+  textarea{padding:8px 10px;resize:vertical}
+  .btn{height:38px;padding:0 22px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 14px;font-size:13px}
+  .btn-danger{color:var(--danger);border-color:var(--border-strong)}
+  .btn-danger:hover{background:var(--amber-weak)}
+  /* master-detail */
+  .md{display:grid;grid-template-columns:minmax(340px,0.95fr) minmax(0,1.15fr);gap:20px;align-items:start}
+  .panel{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);overflow:hidden}
+  .panel-head{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+  .panel-head .cap{font-size:14.5px;font-weight:700}
+  .panel-head .cap b{color:var(--primary)}
+  .panel-head .acts{margin-left:auto;display:flex;gap:8px}
+  .panel-body{padding:16px}
+  .scroller{overflow-x:auto}
+  table.grid{border-collapse:collapse;width:100%;min-width:520px}
+  table.grid th,table.grid td{padding:8px 10px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:center}
+  table.grid th:last-child,table.grid td:last-child{border-right:none}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;border-bottom:1px solid var(--border-strong)}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid tbody tr{cursor:pointer}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  table.grid tbody tr[aria-selected="true"] td{background:var(--primary-weak)}
+  table.grid tbody tr[aria-selected="true"] td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
+  table.grid input[type=radio],table.grid input[type=checkbox]{accent-color:var(--primary);width:16px;height:16px}
+  table.grid input[type=text]{height:30px;width:100%;min-width:80px}
+  /* detail form */
+  .detailform{display:flex;flex-direction:column;gap:14px}
+  .frow{display:grid;grid-template-columns:110px minmax(0,1fr);align-items:center;gap:12px}
+  .frow.top{align-items:start}
+  .frow>label{justify-self:start;display:inline-flex;align-items:center}
+  .frow input,.frow select,.frow textarea{width:100%;min-width:0}
+  .frow .readonly{height:36px;display:flex;align-items:center;padding:0 11px;border-radius:var(--radius-sm);background:var(--surface-3);color:var(--ink-2);font-size:13.5px}
+  input[readonly]{background:var(--surface-3);color:var(--ink-2);cursor:not-allowed}
+  .radio-inline{display:flex;gap:16px;flex-wrap:wrap} .radio-inline label{display:inline-flex;align-items:center;gap:5px;font-weight:500;cursor:pointer;font-size:13.5px} .radio-inline input{accent-color:var(--primary)}
+  .req{color:var(--danger);margin-left:2px}
+  .modehint{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:5px;font-size:11.5px;font-weight:700}
+  .modehint.edit{background:var(--ok-weak);color:var(--ok)} .modehint.add{background:var(--primary-weak);color:var(--primary)}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.n{background:var(--grey-weak);color:var(--ink-3)}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:90;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  @media (max-width:900px){.md{grid-template-columns:1fr}.lnb{display:none!important}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">시스템 S2 · 관리자 · KRDS TO-BE</p>
+  <h1 class="doc-title">메뉴관리</h1>
+  <p class="doc-sub">시스템 메뉴 트리를 등록·수정하고 메뉴별 권한을 관리하는 관리자 화면. 좌측 <b>메뉴 목록</b>에서 행을 선택하면 우측 <b>메뉴 상세</b>가 채워지고(수정 모드, 코드 잠금), <b>추가</b> 시 신규 입력 모드(코드 편집·중복체크)로 전환된다. 하단 <b>권한</b> 그리드는 행추가·행삭제로 편집. CRUD 관리화면이라 금액 단위전환 토글은 규칙상 미적용.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">조</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="../01_투자자산관리/S1_01_투자심의관리.html" role="menuitem"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="S2_46_메인화면.html" role="menuitem" class="on"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">조기경보시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="S2_46_메인화면.html">조기경보</a>
+          <a href="S2_64_투자기업정보_전체_.html">기업정보</a>
+          <a href="S2_70_운용사_정량지표_관리.html">기초정보</a>
+          <a href="S2_78_운용사_유형별_정량지표_변동.html">통계정보</a>
+          <a href="S2_80_모태펀드_가치평가_결과조회.html">가치평가</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+        <a href="#" class="admin-gear on" aria-current="page" aria-label="관리자 설정">⚙ 관리자</a>
+      </div>
+      <div class="subtab" aria-label="관리자 하위 메뉴">
+        <span class="on">메뉴관리</span><a href="S2_95_사용자_권한_관리.html">사용자 권한 관리</a><a href="S2_96_공통코드관리.html">공통코드관리</a><a href="S2_97_도움말관리.html">도움말관리</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">관리자</div>
+          <nav aria-label="관리자 메뉴">
+            <a href="#" class="on" aria-current="page">메뉴관리</a>
+            <a href="S2_95_사용자_권한_관리.html">사용자 권한 관리</a>
+            <a href="S2_96_공통코드관리.html">공통코드관리</a>
+            <a href="S2_97_도움말관리.html">도움말관리</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">관리자 · 메뉴관리</div>
+          <div class="h1row">
+            <h1>메뉴관리</h1>
+            <span id="mode" class="modehint edit">수정 모드</span>
+            <div class="acts">
+              <button class="btn btn-sec" id="btn-search">조회</button>
+              <button class="btn btn-sec" id="btn-add">추가</button>
+              <button class="btn" id="btn-save">저장</button>
+            </div>
+          </div>
+
+          <div class="md">
+            <!-- 섹션1: 메뉴 목록 -->
+            <section class="panel" aria-labelledby="cap-list">
+              <div class="panel-head">
+                <span class="cap" id="cap-list">메뉴 목록 <b id="cnt">5</b>건</span>
+              </div>
+              <div class="panel-body">
+                <div class="scroller">
+                  <table class="grid" id="listtbl">
+                    <caption class="visually-hidden">메뉴 목록 — 행을 선택하면 우측 상세가 채워집니다</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col" style="width:44px"><span class="visually-hidden">선택</span></th>
+                        <th scope="col" style="width:48px">No</th>
+                        <th scope="col">코드</th>
+                        <th scope="col">상위코드</th>
+                        <th scope="col" class="l">메뉴명</th>
+                      </tr>
+                    </thead>
+                    <tbody id="listrows"></tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
+            <!-- 우측: 섹션2 상세 + 섹션3 권한 -->
+            <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+              <!-- 섹션2: 메뉴 상세 -->
+              <section class="panel" aria-labelledby="cap-detail">
+                <div class="panel-head"><span class="cap" id="cap-detail">메뉴 상세</span></div>
+                <div class="panel-body">
+                  <div class="detailform">
+                    <div class="frow">
+                      <label for="d-code">코드<span class="req">*</span></label>
+                      <input type="text" id="d-code" value="COIF009" readonly aria-describedby="d-code-help">
+                    </div>
+                    <div class="frow">
+                      <label for="d-up">상위메뉴<button type="button" class="review" data-rec="상위 최상위 메뉴 목록에서 선택 (기업정보·조기경보 등)" data-dat="데이터 실값 '기업정보'만 확인 · 선택 옵션 원장 미확인" aria-label="검토필요">!</button></label>
+                      <select id="d-up">
+                        <option value="">(최상위)</option>
+                        <option selected>기업정보</option>
+                        <option>조기경보</option>
+                      </select>
+                    </div>
+                    <div class="frow">
+                      <label for="d-name">메뉴명<span class="req">*</span></label>
+                      <input type="text" id="d-name" value="재무정보">
+                    </div>
+                    <div class="frow">
+                      <label>사용여부<button type="button" class="review" data-rec="사용 / 미사용 (Y·N)" data-dat="데이터 실값 '사용'만 확인 · '미사용' 라벨은 추론" aria-label="검토필요">!</button></label>
+                      <span class="radio-inline" role="radiogroup" aria-label="사용여부">
+                        <label><input type="radio" name="d-use" value="사용" checked>사용</label>
+                        <label><input type="radio" name="d-use" value="미사용">미사용</label>
+                      </span>
+                    </div>
+                    <div class="frow top">
+                      <label for="d-remark">비고</label>
+                      <textarea id="d-remark" rows="3" placeholder="비고 입력"></textarea>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- 섹션3: 권한 -->
+              <section class="panel" aria-labelledby="cap-auth">
+                <div class="panel-head">
+                  <span class="cap" id="cap-auth">권한<button type="button" class="review" data-rec="조회·등록·수정·삭제·출력 등 기능권한 코드(CDTP 참조)" data-dat="데이터 실값 '조회'(코드 1)만 확인 · 그 외 권한코드/이름 미확인" aria-label="검토필요">!</button></span>
+                  <div class="acts">
+                    <button class="btn btn-sec btn-sm" id="btn-rowadd">행추가</button>
+                    <button class="btn btn-sec btn-sm btn-danger" id="btn-rowdel">행삭제</button>
+                  </div>
+                </div>
+                <div class="panel-body">
+                  <div class="scroller">
+                    <table class="grid" id="authtbl">
+                      <caption class="visually-hidden">선택한 메뉴의 권한 목록 — 행추가·행삭제로 편집</caption>
+                      <thead>
+                        <tr>
+                          <th scope="col" style="width:44px"><span class="visually-hidden">행 선택</span></th>
+                          <th scope="col" style="width:48px">No</th>
+                          <th scope="col">메뉴코드</th>
+                          <th scope="col">코드</th>
+                          <th scope="col" class="l">이름</th>
+                          <th scope="col" style="width:72px">사용여부</th>
+                        </tr>
+                      </thead>
+                      <tbody id="authrows"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+
+  /* nav toggle */
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* 메뉴 목록 데이터 (데이터 샘플: EWRS/조기경보, COIF009/재무정보 실값 사용) */
+  var MENUS=[
+    {no:1,code:'COIF000',up:'-',name:'기업정보',use:'사용'},
+    {no:2,code:'COIF009',up:'COIF000',name:'재무정보',use:'사용'},
+    {no:3,code:'COIF010',up:'COIF000',name:'신용정보',use:'사용'},
+    {no:4,code:'EWRS',up:'-',name:'조기경보',use:'사용'},
+    {no:5,code:'EWRS01',up:'EWRS',name:'재무경보',use:'사용'}
+  ];
+  /* 권한: 데이터 실값 '조회'(코드 1)만 (없는 권한코드 생성 금지) */
+  var AUTH_COIF009=[{no:1,mcode:'COIF009',code:'1',name:'조회',use:true}];
+
+  var selIdx=1; /* 상세 초기 선택: COIF009 (데이터 상세 샘플) */
+
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+
+  function renderList(){
+    $('cnt').textContent=MENUS.length;
+    $('listrows').innerHTML=MENUS.map(function(r,i){
+      var sel=(i===selIdx);
+      return '<tr data-i="'+i+'" aria-selected="'+(sel?'true':'false')+'">'+
+        '<td><input type="radio" name="menusel" '+(sel?'checked':'')+' aria-label="'+esc(r.name)+' 선택"></td>'+
+        '<td>'+r.no+'</td>'+
+        '<td>'+esc(r.code)+'</td>'+
+        '<td>'+esc(r.up)+'</td>'+
+        '<td class="l">'+esc(r.name)+'</td></tr>';
+    }).join('');
+  }
+
+  function fillDetail(i){
+    var r=MENUS[i];
+    $('mode').textContent='수정 모드';$('mode').className='modehint edit';
+    $('d-code').value=r.code;$('d-code').readOnly=true;
+    $('d-name').value=r.name;
+    /* 상위메뉴 select: 코드→상위명 매핑 시도, 없으면 (최상위) */
+    var upName='';for(var k=0;k<MENUS.length;k++){if(MENUS[k].code===r.up)upName=MENUS[k].name}
+    var sel=$('d-up');sel.value='';for(var o=0;o<sel.options.length;o++){if(sel.options[o].text===upName){sel.selectedIndex=o;break}}
+    var uses=document.getElementsByName('d-use');for(var u=0;u<uses.length;u++){uses[u].checked=(uses[u].value===r.use)}
+    $('d-remark').value='';
+    renderAuth(r.code);
+  }
+
+  function renderAuth(code){
+    /* 데이터가 있는 COIF009만 실권한, 그 외는 빈 상태(없는 데이터 생성 안 함) */
+    var rows=(code==='COIF009')?AUTH_COIF009.slice():[];
+    $('authrows').innerHTML=rows.length?rows.map(authRow).join(''):
+      '<tr><td colspan="6" style="text-align:center;color:var(--ink-3);cursor:default">등록된 권한이 없습니다. [행추가]로 등록하세요.</td></tr>';
+  }
+  function authRow(r){
+    return '<tr>'+
+      '<td><input type="checkbox" class="rowsel" aria-label="행 선택"></td>'+
+      '<td>'+r.no+'</td>'+
+      '<td>'+esc(r.mcode)+'</td>'+
+      '<td>'+(r.editable?'<input type="text" value="'+esc(r.code||'')+'" aria-label="권한코드">':esc(r.code))+'</td>'+
+      '<td class="l">'+(r.editable?'<input type="text" value="'+esc(r.name||'')+'" aria-label="권한이름" style="text-align:left">':esc(r.name))+'</td>'+
+      '<td><input type="checkbox" '+(r.use?'checked':'')+' aria-label="사용여부"></td></tr>';
+  }
+
+  /* 목록 행 선택 (마우스/키보드) */
+  $('listrows').addEventListener('click',function(e){
+    var tr=e.target.closest('tr');if(!tr)return;selectRow(parseInt(tr.getAttribute('data-i'),10));
+  });
+  $('listrows').addEventListener('keydown',function(e){
+    var tr=document.activeElement.closest?document.activeElement.closest('tr'):null;
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+      e.preventDefault();var ni=selIdx+(e.key==='ArrowDown'?1:-1);
+      if(ni<0)ni=0;if(ni>MENUS.length-1)ni=MENUS.length-1;selectRow(ni);
+      var radios=$('listrows').querySelectorAll('input[type=radio]');if(radios[ni])radios[ni].focus();
+    }
+  });
+  function selectRow(i){
+    selIdx=i;
+    var trs=$('listrows').querySelectorAll('tr');
+    trs.forEach(function(t,ti){t.setAttribute('aria-selected',ti===i?'true':'false');var rd=t.querySelector('input[type=radio]');if(rd)rd.checked=(ti===i)});
+    fillDetail(i);
+  }
+
+  /* 추가: 신규 입력 모드 (PK 코드 편집·중복체크 대상) */
+  $('btn-add').addEventListener('click',function(){
+    selIdx=-1;
+    $('listrows').querySelectorAll('tr').forEach(function(t){t.setAttribute('aria-selected','false');var rd=t.querySelector('input[type=radio]');if(rd)rd.checked=false});
+    $('mode').textContent='신규 입력';$('mode').className='modehint add';
+    $('d-code').value='';$('d-code').readOnly=false;$('d-code').focus();
+    $('d-name').value='';$('d-up').selectedIndex=0;
+    var uses=document.getElementsByName('d-use');uses[0].checked=true;
+    $('d-remark').value='';
+    $('authrows').innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--ink-3);cursor:default">신규 메뉴 저장 후 권한을 등록할 수 있습니다.</td></tr>';
+    toast('신규 입력 모드 · 코드를 입력하세요');
+  });
+
+  $('btn-save').addEventListener('click',function(){
+    if(!$('d-code').value.trim()){toast('코드를 입력하세요');$('d-code').focus();return;}
+    if(!$('d-name').value.trim()){toast('메뉴명을 입력하세요');$('d-name').focus();return;}
+    toast('저장되었습니다 (목업)');
+  });
+  $('btn-search').addEventListener('click',function(){renderList();selectRow(selIdx<0?0:selIdx);toast('조회되었습니다 (목업)');});
+
+  /* 권한 행추가 / 행삭제 */
+  var newSeq=0;
+  $('btn-rowadd').addEventListener('click',function(){
+    if(selIdx<0){toast('메뉴 저장 후 권한을 추가할 수 있습니다');return;}
+    var body=$('authrows');
+    if(body.querySelector('td[colspan]'))body.innerHTML='';
+    var n=body.querySelectorAll('tr').length+1;
+    var mcode=$('d-code').value||'';
+    var tr=document.createElement('tbody');
+    tr.innerHTML=authRow({no:n,mcode:mcode,code:'',name:'',use:false,editable:true});
+    var row=tr.firstChild;body.appendChild(row);
+    var inp=row.querySelector('input[type=text]');if(inp)inp.focus();
+    newSeq++;
+  });
+  $('btn-rowdel').addEventListener('click',function(){
+    var body=$('authrows');var checked=body.querySelectorAll('tr .rowsel:checked');
+    if(!checked.length){toast('삭제할 행을 선택하세요');return;}
+    checked.forEach(function(c){var tr=c.closest('tr');if(tr)tr.remove()});
+    /* No 재정렬 */
+    body.querySelectorAll('tr').forEach(function(t,ix){var c=t.children[1];if(c)c.textContent=ix+1});
+    if(!body.querySelectorAll('tr').length)body.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--ink-3);cursor:default">등록된 권한이 없습니다. [행추가]로 등록하세요.</td></tr>';
+    toast('선택한 행이 삭제되었습니다');
+  });
+
+  /* 검토필요 마커 */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null; if(!m)return; e.preventDefault();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+m.getAttribute('data-rec')+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+m.getAttribute('data-dat')+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true)},0);
+  });
+
+  /* toast */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+
+  /* init */
+  renderList();fillDetail(selIdx);
+})();
+</script>

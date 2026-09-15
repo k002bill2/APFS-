@@ -1,0 +1,650 @@
+<title>수시보고</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --danger:#E5484D;--danger-weak:#FCEBEC;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;
+    --danger:#F2555A;--danger-weak:#3A1E20;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--danger-weak:#FCEBEC;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F2555A;--danger-weak:#3A1E20;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:78ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .chipbtn{height:34px;padding:0 14px;border-radius:99px;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink-2);font-size:13px;font-weight:600}
+  .chipbtn[aria-pressed="true"]{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px;overflow-x:auto;min-width:0;scrollbar-width:thin}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;flex:none;white-space:nowrap}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filtergrid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px 16px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;width:64px;text-align:right;white-space:nowrap}
+  .field select,.field input{flex:1;min-width:0}
+  .field.span2{grid-column:span 2}
+  .rangefield{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+  .rangefield input{flex:1;min-width:0}
+  .rangefield .tilde{flex:none;color:var(--ink-3)}
+  .searchbtnrow{display:flex;justify-content:center;margin-top:14px}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-pri{background:var(--primary);color:#fff}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .btn-xs{height:28px;padding:0 12px;font-size:12.5px;border-radius:5px}
+  .listbar{display:flex;align-items:center;margin:2px 0 8px}
+  .listbar .cap{font-size:15px;font-weight:700}
+  .listbar .cap b{color:var(--primary)}
+  .listbar .acts{margin-left:auto;display:flex;gap:8px}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;min-width:1120px;width:100%}
+  table.grid th,table.grid td{padding:9px 12px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:center}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong);position:sticky;top:0;z-index:2}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid td.title{max-width:340px;overflow:hidden;text-overflow:ellipsis}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.b{background:var(--primary-weak);color:var(--primary)} .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.n{background:var(--grey-weak);color:var(--ink-3)}
+  .linktxt{color:var(--primary);font-weight:600}
+  a.linktxt{text-decoration:none} a.linktxt:hover{text-decoration:underline}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:90;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  /* modal */
+  .scrim{position:fixed;inset:0;background:rgba(16,24,40,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;animation:fade .15s ease}
+  .scrim.stack2{z-index:60;background:rgba(16,24,40,.35)}
+  .modal{width:460px;max-width:100%;max-height:90vh;overflow-y:auto;overflow-x:hidden;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);animation:pop .18s ease}
+  .modal.gpmodal{width:1080px}
+  .modal.fundmodal{width:820px}
+  .modal.fundmodal.wide{width:960px}
+  .modal-head{display:flex;align-items:center;gap:8px;padding:18px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:3}
+  .modal-head h2{font-size:18px;font-weight:800;margin:0}
+  .modal-head .eb{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--primary);display:block;margin-bottom:2px}
+  .modal-head .sub{font-size:12.5px;color:var(--ink-3);font-weight:600}
+  .icon-btn{margin-left:auto;width:34px;height:34px;border:none;background:none;color:var(--ink-3);font-size:22px;line-height:1;border-radius:6px}
+  .icon-btn:hover{background:var(--surface-3);color:var(--ink)}
+  .modal-body{padding:18px 22px}
+  .infolist{display:flex;flex-direction:column;gap:10px;margin:0 0 6px}
+  .inforow{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;align-items:start;font-size:13.5px}
+  .inforow .k{color:var(--ink-3);font-weight:600}
+  .inforow .v{color:var(--ink);min-width:0;word-break:break-word}
+  .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid var(--border);background:var(--surface-2);position:sticky;bottom:0}
+  .modal-foot .btn{height:40px}
+  button.linktxt{border:none;background:none;padding:0;font:inherit;text-decoration:none;cursor:pointer}
+  button.linktxt:hover{text-decoration:underline}
+  /* 운용사/자펀드 명세 팝업(S1_02·S1_03 공통 팝업 내용을 그대로 이식) */
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)}
+  table.grid.tbl-s1{min-width:860px}
+  table.grid.tbl-s3{min-width:1500px}
+  .sec{margin-bottom:24px}
+  .sec>h3{font-size:15px;font-weight:800;margin:0 0 10px;padding-left:10px;border-left:3px solid var(--primary);display:flex;align-items:center}
+  .spec{width:100%;border-collapse:collapse;border:1px solid var(--border)}
+  .spec th,.spec td{border:1px solid var(--border);padding:8px 12px;font-size:13.5px;text-align:left;vertical-align:top;word-break:break-word}
+  .spec th{background:var(--surface-3);color:var(--ink-2);font-weight:700;width:148px;white-space:nowrap}
+  .spec td{color:var(--ink)}
+  .spec td.empty{color:var(--ink-3)}
+  .spec a{color:var(--primary);text-decoration:none} .spec a:hover{text-decoration:underline}
+  .unitbar{display:flex;align-items:center;gap:10px;justify-content:flex-end;margin:0 0 14px}
+  .unitbar .lab{font-size:12.5px;font-weight:700;color:var(--ink-2)}
+  .specsec{margin-bottom:24px}
+  .specsec:last-child{margin-bottom:0}
+  .specsec>h3{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:800;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--border-strong);color:var(--ink)}
+  .specsec>h3 .u{font-size:12px;font-weight:600;color:var(--ink-3);margin-left:auto}
+  .kvgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .kv{display:grid;grid-template-columns:160px minmax(0,1fr);background:var(--surface)}
+  .kv.full{grid-column:1 / -1}
+  .kv dt{margin:0;padding:9px 12px;background:var(--surface-2);font-size:12.5px;font-weight:700;color:var(--ink-2);display:flex;align-items:center}
+  .kv dd{margin:0;padding:9px 12px;font-size:13px;color:var(--ink);min-width:0;overflow-wrap:anywhere;display:flex;align-items:center}
+  .kv dd.num{justify-content:flex-end;font-variant-numeric:tabular-nums;font-weight:600}
+  .kv dd.empty{color:var(--ink-3)}
+  .filechip{display:inline-flex;align-items:center;gap:8px;padding:6px 11px;border:1px solid var(--border);border-radius:6px;background:var(--surface-2);font-size:12.5px;text-decoration:none;color:var(--ink)}
+  .filechip:hover{background:var(--surface-3)}
+  .badge-pdf{flex:none;padding:1px 6px;border-radius:4px;background:var(--danger);color:#fff;font-size:10px;font-weight:800}
+  /* 조합 운용현황 수시보고서 팝업(원 S1_05 화면 이식) */
+  .modal.rptmodal{width:1080px}
+  .rpt-head{text-align:center;margin:4px 0 20px}
+  .rpt-head h3{font-size:19px;font-weight:800;margin:0 0 16px;letter-spacing:-.01em}
+  .rpt-meta{display:block;text-align:left;font-size:13.5px;line-height:2}
+  .rpt-meta .mrow{display:flex;gap:2px;align-items:baseline}
+  .rpt-meta .mk{width:76px;font-weight:700;color:var(--ink-2);white-space:nowrap}
+  .rpt-meta .mc{width:12px;color:var(--ink-3)}
+  .rpt-meta .mv{color:var(--ink);font-weight:600}
+  .rpt-sign{font-size:13.5px;line-height:2;margin:18px 0 4px;display:flex;flex-wrap:wrap;gap:4px 28px}
+  .rpt-sign .mrow{display:flex;gap:2px;align-items:baseline}
+  .rpt-sign .mk{font-weight:700;color:var(--ink-2);white-space:nowrap}
+  .rpt-sign .mc{width:12px;color:var(--ink-3)}
+  .rpt-sign .mv{color:var(--ink);font-weight:600}
+  .sec-title{display:flex;align-items:center;font-size:15px;font-weight:800;margin:22px 0 10px;padding-left:10px;border-left:3px solid var(--primary)}
+  table.dgrid{border-collapse:collapse;width:100%;min-width:640px}
+  table.dgrid th,table.dgrid td{padding:9px 12px;font-size:13.5px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);text-align:left;vertical-align:top;word-break:keep-all}
+  table.dgrid th:last-child,table.dgrid td:last-child{border-right:none}
+  table.dgrid tr:last-child td{border-bottom:none}
+  table.dgrid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong)}
+  table.dgrid tbody th{background:var(--surface-2);color:var(--ink-2);font-weight:700;text-align:center;vertical-align:middle}
+  table.dgrid td.grp{background:var(--surface-2);font-weight:700;text-align:center;vertical-align:middle}
+  table.dgrid th.c,table.dgrid td.c{text-align:center;vertical-align:middle}
+  table.dgrid td.wide{white-space:normal;line-height:1.6}
+  table.fs{border-collapse:collapse;width:100%;min-width:420px}
+  table.fs th,table.fs td{padding:6px 12px;font-size:13px;border-bottom:1px solid var(--border)}
+  table.fs thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:left;border-bottom:1px solid var(--border-strong)}
+  table.fs thead th.r{text-align:right}
+  table.fs tbody th{text-align:left;font-weight:500;color:var(--ink)}
+  table.fs tbody td{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+  table.fs tr.grp th{background:var(--surface-3);font-weight:800;color:var(--ink);border-top:1px solid var(--border-strong)}
+  table.fs tr.tot th,table.fs tr.tot td{font-weight:800;background:var(--surface-2)}
+  table.fs tr.bold th{font-weight:700}
+  table.fs td.neg{color:var(--danger)}
+  table.fs .lv1 th{padding-left:16px} table.fs .lv2 th{padding-left:32px;color:var(--ink-2)} table.fs .lv3 th{padding-left:48px;color:var(--ink-3)}
+  .fstwo{display:grid;grid-template-columns:1fr;gap:20px}
+  @media (max-width:900px){.kvgrid{grid-template-columns:1fr}.kv{grid-template-columns:130px minmax(0,1fr)}}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:900px){.filtergrid{grid-template-columns:repeat(2,1fr)}.field.span2{grid-column:span 2}.lnb{display:none!important}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">S1 · 사후보고관리 · 수시보고 · KRDS TO-BE</p>
+  <h1 class="doc-title">수시보고</h1>
+  <p class="doc-sub">자펀드(투자조합)에서 발생한 수시 상황을 검색·조회하는 사후보고 관리 화면. 검색조건으로 목록을 필터링하고, 각 건에 대해 심사담당·리스크담당이 확인 처리한다. 조회 전용 목록(등록/수정 폼 없음).</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">모</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="S1_01_투자심의관리.html" role="menuitem" class="on"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="../02_조기경보/S2_46_메인화면.html" role="menuitem"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">투자자산관리시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="01_파일럿_공고관리/mockup/공고관리_목업_artifact.html">모태펀드</a>
+          <a href="#" class="on" aria-current="page">사후보고관리</a>
+          <a href="05_자펀드관리/mockup/자펀드관리_목업.html">자펀드</a>
+          <a href="S1_28_투심승인정보조회.html">통계</a>
+          <a href="S1_30_투자기업정보.html">투자기업</a>
+          <a href="S1_38_운용사_재무정보_조회.html">모니터링</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+      </div>
+      <div class="subtab" aria-label="보고서 하위 메뉴">
+        <a href="S1_01_투자심의관리.html">투자심의관리</a>
+        <span class="on">수시보고</span>
+        <a href="S1_06_정기보고.html">정기보고</a>
+        <a href="S1_07_조합원총회.html">조합원총회</a>
+        <a href="S1_08_조합예상자금보고.html">조합예상자금보고</a>
+        <a href="S1_09_보고양식관리.html">보고양식관리</a>
+        <a href="S1_10_보고_업데이트정보.html">보고 업데이트정보</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">사후보고관리</div>
+          <nav aria-label="사후보고관리 메뉴">
+            <a href="S1_01_투자심의관리.html">투자심의관리</a>
+            <a href="#" class="on" aria-current="page">수시보고</a>
+            <a href="S1_06_정기보고.html">정기보고</a>
+            <a href="S1_07_조합원총회.html">조합원총회</a>
+            <a href="S1_08_조합예상자금보고.html">조합예상자금보고</a>
+            <a href="S1_09_보고양식관리.html">보고양식관리</a>
+            <a href="S1_10_보고_업데이트정보.html">보고 업데이트정보</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">보고서 · 사후보고관리 · 수시보고</div>
+          <div class="h1row"><h1>수시보고</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filtergrid">
+              <!-- 모펀드: 다중모펀드 옵션 ON 가정(단일=표시, 1개 초과 시 무조건 표시) --><div class="field" data-mf-visible="on"><label for="f-mf">모펀드</label><select id="f-mf"><option>농식품모태펀드</option><option>MOAF</option></select></div>
+              <div class="field"><label for="f-fund">운용사</label><select id="f-fund"><option>전체</option></select></div>
+              <div class="field"><label for="f-fund2">자펀드</label><select id="f-fund2"><option>전체</option></select></div>
+              <div class="field"><label id="f-acc-lab">계정구분</label><div role="group" aria-labelledby="f-acc-lab" style="display:flex;gap:6px" id="f-acc"></div></div>
+              <div class="field"><label for="f-js">심사담당자<button type="button" class="review" data-rec="심사담당자 목록(공통코드/사용자)" data-dat="실 담당자 옵션값 미확인 — 없는 값 생성 안 함" aria-label="검토필요">!</button></label><select id="f-js"><option>전체</option></select></div>
+              <div class="field"><label for="f-rs">리스크담당자<button type="button" class="review" data-rec="리스크담당자 목록(공통코드/사용자)" data-dat="실 담당자 옵션값 미확인 — 없는 값 생성 안 함" aria-label="검토필요">!</button></label><select id="f-rs"><option>전체</option></select></div>
+              <div class="field"><label for="f-gb">구분<button type="button" class="review" data-rec="보고구분 등 (공통코드)" data-dat="실 옵션값 미확인 — 없는 값 생성 안 함" aria-label="검토필요">!</button></label><select id="f-gb"><option>전체</option></select></div>
+              <div class="field span2"><label>기간</label>
+                <span class="rangefield">
+                  <input type="date" id="f-from" value="2026-03-28" aria-label="조회기간 시작일">
+                  <span class="tilde">~</span>
+                  <input type="date" id="f-to" value="2026-05-28" aria-label="조회기간 종료일">
+                </span>
+              </div>
+            </div>
+            <div class="searchbtnrow"><button class="btn" id="search">조회</button></div>
+          </div>
+
+          <div class="listbar">
+            <div class="cap">총 <b id="cnt">5</b>건</div>
+            <div class="acts">
+              <button class="btn btn-sec btn-sm" id="excel">엑셀</button>
+            </div>
+          </div>
+          <div class="scroller">
+            <table class="grid">
+              <caption class="visually-hidden">수시보고 목록 — 보고일자·상황 발생일자·운용사·자펀드·제목 및 심사담당·리스크담당 확인 처리</caption>
+              <thead>
+                <tr>
+                  <th scope="col" style="width:52px">No</th>
+                  <th scope="col">보고일자</th>
+                  <th scope="col">상황 발생일자</th>
+                  <th scope="col" class="l">운용사</th>
+                  <th scope="col" class="l">자펀드</th>
+                  <th scope="col" class="l">제목</th>
+                  <th scope="col">심사담당<button type="button" class="review" data-rec="확인 후 확인자명만 표시(취소 불가)" data-dat="확인자명이 확인버튼을 누른 로그인 사용자인지, 별도 지정된 심사담당인지 원문 미정의(추론)" aria-label="검토필요">!</button></th>
+                  <th scope="col">리스크담당<button type="button" class="review" data-rec="확인 후 확인자명만 표시(취소 불가)" data-dat="확인자명이 확인버튼을 누른 로그인 사용자인지, 별도 지정된 리스크담당인지 원문 미정의(추론)" aria-label="검토필요">!</button></th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+
+  var DATA=[
+    {no:1,ind:'2026-08-11',occ:'2026-08-03',gp:'마그나인베스트먼트(주)',fn:'마그나 GREEN 펀드',title:'쿠엔즈버킷 조건부 합의서 및 주주간계약 체결 보고',js:false,rs:false,jsBy:null,rsBy:null},
+    {no:2,ind:'2026-04-02',occ:'2026-03-28',gp:'KB인베스트먼트',fn:'KB농식품1호투자조합',title:'투자기업 회생절차 개시 관련 수시보고',js:false,rs:false,jsBy:null,rsBy:null},
+    {no:3,ind:'2026-04-15',occ:'2026-04-10',gp:'IMM인베스트먼트',fn:'IMM 농식품 스마트투자조합',title:'핵심운용인력(대표펀드매니저) 변경 통지',js:true,rs:false,jsBy:'홍길동',rsBy:null},
+    {no:4,ind:'2026-05-06',occ:'2026-05-02',gp:'한국투자파트너스',fn:'한투 청년농식품투자조합',title:'출자자 지분 양수도 승인 요청',js:false,rs:false,jsBy:null,rsBy:null},
+    {no:5,ind:'2026-05-20',occ:'2026-05-18',gp:'유안타인베스트먼트',fn:'유안타 수산투자조합',title:'투자기업 소송 발생 보고',js:true,rs:true,jsBy:'홍길동',rsBy:'홍길동'},
+    {no:6,ind:'2026-05-27',occ:'2026-05-25',gp:'대성창업투자',fn:'대성 농식품벤처투자조합',title:'조합 결산 일정 지연 관련 보고',js:false,rs:false,jsBy:null,rsBy:null}
+  ];
+  function cell(r,kind){
+    var done=(kind==='js')?r.js:r.rs;
+    var by=(kind==='js')?r.jsBy:r.rsBy;
+    if(done)return '<span class="tag g">'+esc(by)+'</span>';
+    return '<button type="button" class="btn btn-sec btn-xs conf" data-no="'+r.no+'" data-kind="'+kind+'">확인</button>';
+  }
+  function render(){
+    $('rows').innerHTML=DATA.map(function(r){
+      return '<tr>'+
+        '<td>'+r.no+'</td>'+
+        '<td>'+r.ind+'</td>'+
+        '<td>'+r.occ+'</td>'+
+        '<td class="l"><button type="button" class="linktxt" id="gp-open-'+r.no+'">'+esc(r.gp)+'</button></td>'+
+        '<td class="l"><button type="button" class="linktxt" id="fund-open-'+r.no+'">'+esc(r.fn)+'</button></td>'+
+        '<td class="l title" title="'+esc(r.title)+'"><button type="button" class="linktxt" id="rpt-open-'+r.no+'">'+esc(r.title)+'</button></td>'+
+        '<td>'+cell(r,'js')+'</td>'+
+        '<td>'+cell(r,'rs')+'</td>'+
+      '</tr>';
+    }).join('');
+  }
+  render();
+
+  /* 검토필요 마커: 라벨 옆 클릭 → 추천 vs 데이터 */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null; if(!m)return; e.preventDefault();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+esc(m.getAttribute('data-rec'))+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+esc(m.getAttribute('data-dat'))+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true)},0);
+  });
+
+  /* scroll lock */
+  var lockN=0,savedPad='';
+  function lock(){if(lockN++===0){var sw=window.innerWidth-document.documentElement.clientWidth;savedPad=document.body.style.paddingRight;if(sw>0)document.body.style.paddingRight=sw+'px';document.body.style.overflow='hidden';}}
+  function unlock(){if(lockN>0&&--lockN===0){document.body.style.overflow='';document.body.style.paddingRight=savedPad;}}
+  /* toast */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+
+  /* 확인 처리 다이얼로그 (심사담당/리스크담당) */
+  var scrim=null,lastFocus=null;
+  function trap(c){c.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();closeModal();return}if(e.key!=='Tab')return;var f=Array.prototype.filter.call(c.querySelectorAll('button,input,select,textarea,[tabindex]:not([tabindex="-1"])'),function(el){return !el.disabled&&el.offsetParent!==null});if(!f.length)return;var first=f[0],last=f[f.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}})}
+  function closeModal(){closeR();if(scrim){scrim.remove();scrim=null;unlock()}if(lastFocus&&lastFocus.focus)lastFocus.focus()}
+  function openConfirm(no,kind){
+    var r=DATA.filter(function(x){return String(x.no)===String(no)})[0];if(!r)return;
+    var label=(kind==='js')?'심사담당':'리스크담당';
+    lastFocus=document.activeElement;
+    scrim=document.createElement('div');scrim.className='scrim';
+    scrim.addEventListener('mousedown',function(e){if(e.target===scrim)closeModal()});
+    scrim.innerHTML='<div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="cf-t" aria-describedby="cf-d">'+
+      '<div class="modal-head"><h2 id="cf-t">'+label+' 확인</h2><button class="icon-btn" id="cf-x" aria-label="닫기">×</button></div>'+
+      '<div class="modal-body">'+
+        '<p id="cf-d" style="margin:0 0 14px;font-size:13.5px;color:var(--ink-2)">아래 수시보고 건을 '+label+'이 확인 처리합니다.</p>'+
+        '<div class="infolist">'+
+          '<div class="inforow"><span class="k">상황 발생일자</span><span class="v">'+r.occ+'</span></div>'+
+          '<div class="inforow"><span class="k">운용사</span><span class="v">'+esc(r.gp)+'</span></div>'+
+          '<div class="inforow"><span class="k">자펀드</span><span class="v">'+esc(r.fn)+'</span></div>'+
+          '<div class="inforow"><span class="k">제목</span><span class="v">'+esc(r.title)+'</span></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="modal-foot"><button class="btn btn-sec" id="cf-cancel">취소</button><button class="btn btn-pri" id="cf-ok">확인</button></div>'+
+    '</div>';
+    lock();document.body.appendChild(scrim);
+    trap(scrim.querySelector('.modal'));
+    $('cf-x').addEventListener('click',closeModal);$('cf-cancel').addEventListener('click',closeModal);
+    $('cf-ok').addEventListener('click',function(){if(kind==='js'){r.js=true;r.jsBy='홍길동';}else{r.rs=true;r.rsBy='홍길동';}render();closeModal();toast(label+' 확인 처리되었습니다 (목업)')});
+    setTimeout(function(){var el=$('cf-ok');if(el)el.focus()},0);
+  }
+  /* ---------- 운용사 명세 / 자펀드 명세 팝업 (S1_02·S1_03 공통 팝업 내용 이식) ----------
+     사용자 지시(2026-08-28): 운용사·자펀드 클릭은 새 탭 이동이 아니라 이 화면(S1_04) 위에 뜨는 팝업이어야 함.
+     한계: S1_02·S1_03 모두 실데이터가 각 1건(인라이트벤처스(주) / 인라이트 농식품 청년기업 성장펀드)뿐이라,
+     어느 행의 운용사·자펀드를 클릭해도 항상 같은 회사/펀드가 표시됨(S1_01의 gp-link와 동일한 한계, 검토메모 참고). */
+  function fmtWon2(won){return Number(won).toLocaleString('ko-KR')}
+  function fmtUnit2(won,unit){if(unit==='원')return fmtWon2(won);var d=unit==='백만원'?1e6:1e8;return (won/d).toLocaleString('ko-KR',{maximumFractionDigits:2})}
+  function applyUnit2(scope,unit){
+    Array.prototype.forEach.call(scope.querySelectorAll('[data-won]'),function(el){
+      var w=Number(el.getAttribute('data-won'));el.textContent=fmtUnit2(w,unit);
+      if(el.tagName==='TD'||el.classList.contains('num')){el.classList.toggle('neg',w<0)}
+    });
+    Array.prototype.forEach.call(scope.querySelectorAll('.unit-txt'),function(el){el.textContent='(단위: '+unit+')'});
+    Array.prototype.forEach.call(scope.querySelectorAll('.seg[data-unitseg] button'),function(b){b.setAttribute('aria-pressed',b.getAttribute('data-u')===unit)});
+  }
+  function unitSeg2(){return '<div class="unitbar"><span class="lab">금액 단위</span><div class="seg" role="group" aria-label="금액 단위 전환" data-unitseg="1"><button type="button" data-u="원" aria-pressed="true">원</button><button type="button" data-u="백만원" aria-pressed="false">백만원</button><button type="button" data-u="억원" aria-pressed="false">억원</button></div></div>'}
+  function trap2(c,onEsc){c.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();onEsc();return}if(e.key!=='Tab')return;var f=Array.prototype.filter.call(c.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])'),function(el){return !el.disabled&&el.offsetParent!==null});if(!f.length)return;var first=f[0],last=f[f.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}})}
+  function openLayer(cls,html,stack){
+    var prevFocus=document.activeElement;
+    var scr=document.createElement('div');scr.className='scrim'+(stack?' stack2':'');
+    scr.innerHTML='<div class="modal '+cls+'" role="dialog" aria-modal="true">'+html+'</div>';
+    function close(){closeR();scr.remove();unlock();if(prevFocus&&prevFocus.focus)prevFocus.focus();}
+    scr.addEventListener('mousedown',function(e){if(e.target===scr)close()});
+    lock();document.body.appendChild(scr);
+    var m=scr.querySelector('.modal');
+    trap2(m,close);
+    var seg=m.querySelector('.seg[data-unitseg]');
+    if(seg)seg.addEventListener('click',function(e){var b=e.target.closest('button[data-u]');if(!b)return;applyUnit2(m,b.getAttribute('data-u'))});
+    setTimeout(function(){var el=m.querySelector('.icon-btn')||m.querySelector('button,a[href]');if(el)el.focus()},0);
+    return {modal:m,close:close};
+  }
+
+  /* 운용사 명세: S1_02와 동일 데이터(자펀드 현황·운용사 개요·재무정보 3섹션) */
+  function openGpModal(){
+    var s1='<div class="sec"><h3>자펀드 현황</h3><div class="scroller"><table class="grid tbl-s1">'+
+      '<caption class="visually-hidden">운용사가 운용 중인 자펀드 현황</caption>'+
+      '<thead><tr><th class="c">NO</th><th class="l">자펀드</th><th class="c">계정구분</th><th class="c">결성일자</th><th class="c">등록일자</th><th class="c">만기일자</th><th class="c">청산일자</th><th class="c">결성액</th><th class="c">모펀드약정액</th><th class="c">상태</th></tr></thead>'+
+      '<tbody><tr><td class="c">1</td><td class="l">인라이트8호 애그테크플러스펀드</td><td class="c">농식품</td><td class="c">2020-09-11</td><td class="c">2020-09-11</td><td class="c">2028-09-10</td><td class="c" style="color:var(--ink-3)">-</td><td data-won="6500000000">6,500,000,000</td><td data-won="5000000000">5,000,000,000</td><td class="c"><span class="tag g">운영중</span></td></tr></tbody>'+
+      '<tfoot><tr><td class="c" colspan="7">합계</td><td data-won="25100000000">25,100,000,000</td><td class="c">-</td><td class="c">-</td></tr></tfoot>'+
+      '</table></div></div>';
+    var s2='<div class="sec"><h3>운용사 개요</h3><table class="spec"><caption class="visually-hidden">운용사 개요</caption><tbody>'+
+      '<tr><th scope="row">운용사명</th><td>인라이트벤처스(주)</td><th scope="row">운용사종류</th><td>벤처투자회사</td></tr>'+
+      '<tr><th scope="row">대표자1</th><td>박문수</td><th scope="row">대표자2</th><td class="empty">-</td></tr>'+
+      '<tr><th scope="row">대표자1 메일</th><td>munavi@enlightvc.com</td><th scope="row">대표자2 메일</th><td class="empty">-</td></tr>'+
+      '<tr><th scope="row">사업자번호</th><td>575-81-00764</td><th scope="row">법인등록번호</th><td>170114-0011530</td></tr>'+
+      '<tr><th scope="row">홈페이지</th><td><a href="https://www.enlightvc.com" target="_blank" rel="noopener">www.enlightvc.com</a></td><th scope="row">지역구분</th><td>지방</td></tr>'+
+      '<tr><th scope="row">설립일자</th><td>2017-07-10</td><th scope="row">결산월</th><td>12 월</td></tr>'+
+      '<tr><th scope="row">본점 주소</th><td colspan="3">(41585) 대구광역시 북구 호암로 51 메이커스페이스동 206호(침산동, 대구삼성창조캠퍼스)</td></tr>'+
+      '</tbody></table></div>';
+    var s3='<div class="sec"><h3>재무정보</h3><div class="scroller"><table class="grid tbl-s3">'+
+      '<caption class="visually-hidden">재무정보</caption>'+
+      '<thead><tr><th class="c">기준년월</th><th class="c">유동자산</th><th class="c">비유동자산</th><th class="c">자산총계</th><th class="c">유동부채</th><th class="c">비유동부채</th><th class="c">부채총계</th><th class="c">자본금</th><th class="c">자본총계</th><th class="c">매출액</th><th class="c">매출원가</th><th class="c">일반관리비</th><th class="c">경상이익</th><th class="c">당기순이익</th></tr></thead>'+
+      '<tbody><tr><td class="c">2020-04</td><td data-won="2503372986">2,503,372,986</td><td data-won="811923290">811,923,290</td><td data-won="3315296276">3,315,296,276</td><td data-won="187236058">187,236,058</td><td data-won="980988084">980,988,084</td><td data-won="1168224142">1,168,224,142</td><td data-won="349000000">349,000,000</td><td data-won="2147072134">2,147,072,134</td><td data-won="1314563418">1,314,563,418</td><td data-won="772765299">772,765,299</td><td data-won="733204688">733,204,688</td><td data-won="-193116752" class="neg">-193,116,752</td><td data-won="540087936">540,087,936</td></tr></tbody>'+
+      '</table></div></div>';
+    var html='<div class="modal-head"><div><span class="eb">운용사 명세</span><h2>인라이트벤처스(주)</h2></div><button class="icon-btn" id="gp-x" aria-label="닫기">×</button></div>'+
+      '<div class="modal-body">'+unitSeg2()+s1+s2+s3+'</div>'+
+      '<div class="modal-foot"><button class="btn btn-sec" id="gp-close">닫기</button></div>';
+    var lyr=openLayer('gpmodal',html,false);
+    lyr.modal.querySelector('#gp-x').addEventListener('click',lyr.close);
+    lyr.modal.querySelector('#gp-close').addEventListener('click',lyr.close);
+  }
+
+  /* 자펀드 명세: S1_03과 동일 데이터(개요·재무정보 요약 + 재무제표 상세 중첩팝업) */
+  var FUND_OV=[
+    {l:'업무집행조합원1',v:'인라이트벤처스'},{l:'업무집행조합원2',v:null},
+    {l:'조합명',v:'인라이트 농식품 청년기업 성장펀드',full:true},
+    {l:'결성일',v:'2025-10-24'},{l:'등록일',v:'2025-11-07'},{l:'만기예정일',v:'2033-11-06'},{l:'청산예정일',v:null},
+    {l:'조합운영상태',v:'운영중'},{l:'조합고유번호',v:'890-80-03566'},
+    {l:'조합약정총액',won:12100000000},{l:'모태펀드약정액',won:7000000000},
+    {l:'조합납입총액',won:3630000000},{l:'모태펀드납입총액',won:2100000000},{l:'1좌당출자금액',won:1000000},
+    {l:'결산월',v:'12월'},{l:'조합구분',v:'농림수산식품투자조합'},{l:'조합성격',v:'사업화(Step-up)'},
+    {l:'계정구분',v:'농식품투자계정'},{l:'수탁기관',v:'농협'},{l:'납입방식',v:'분납'},{l:'존속기간',v:'8년'},{l:'기준수익률',v:'2%'},
+    {l:'관리보수',v:'조합 등록일~3년: 출자약정액의 연 2.5%, 3년 다음날~해산하는 날: 분기말 투자잔액의 연 2.5%',full:true},
+    {l:'성과보수',v:'기준수익률 초과수익의 20%',full:true},
+    {l:'GP담당자 1',v:'유동기'},{l:'GP담당자 EMAIL 1',v:null},{l:'모태펀드담당자',v:'차경식'},{l:'RISK관리담당자',v:'이성훈'}
+  ];
+  var FUND_FILES=[{l:'사업계획서',f:null},{l:'조합규약서',f:'인라이트 농식품 청년기업 성장펀드 규약_251024.pdf'},{l:'결성총회의사록',f:null}];
+  var FUND_BASEYM='2026-04';
+  var FUND_FIN_BS=[['자산총계',3526783806],['유동자산',3526783806],['농식품(수산)투자자산',0],['비유동자산',0],['부채총계',0],['유동부채',0],['비유동부채',0],['자본총계',3526783806],['자본-출자금',3630000000]];
+  var FUND_FIN_IS=[['영업수익',20101573],['영업비용',76675280],['영업이익',20101573],['법인세비용',0],['당기순이익',-56573707]];
+  var FUND_BS=[{l:'자산',g:1},{l:'유동자산',v:3526783806,lv:1,b:1},{l:'단기매매증권',v:0,lv:2},{l:'미수금',v:0,lv:2},{l:'농식품(수산)투자자산',v:0,lv:1,b:1},{l:'주목적투자자산',v:0,lv:2},{l:'비유동자산',v:0,lv:1,b:1},{l:'기타자산',v:0,lv:2},{l:'자산총계',v:3526783806,lv:1,t:1},{l:'부채',g:1},{l:'유동부채',v:0,lv:1,b:1},{l:'미지급배당금',v:0,lv:2},{l:'비유동부채',v:0,lv:1,b:1},{l:'기타부채',v:0,lv:2},{l:'부채총계',v:0,lv:1,t:1},{l:'자본',g:1},{l:'자본-출자금',v:3630000000,lv:1},{l:'이익잉여금',v:-103216194,lv:1},{l:'자본총계',v:3526783806,lv:1,t:1}];
+  var FUND_IS=[{l:'손익',g:1},{l:'영업수익',v:20101573,lv:1,b:1},{l:'기타영업수익',v:20101573,lv:2},{l:'영업비용',v:76675280,lv:1,b:1},{l:'관리보수',v:75625000,lv:2},{l:'판매비와관리비',v:1050280,lv:2},{l:'영업이익',v:20101573,lv:1,t:1},{l:'법인세차감전순이익',v:20101573,lv:1,b:1},{l:'당기순이익',v:-56573707,lv:1,t:1}];
+  function fundKv(){
+    var h='';
+    FUND_OV.forEach(function(o){
+      var dt='<dt>'+esc(o.l)+'</dt>',dd;
+      if(typeof o.won!=='undefined')dd='<dd class="num" data-won="'+o.won+'">'+fmtWon2(o.won)+'</dd>';
+      else if(o.v==null||o.v==='')dd='<dd class="empty">-</dd>';
+      else dd='<dd>'+esc(o.v)+'</dd>';
+      h+='<div class="kv'+(o.full?' full':'')+'">'+dt+dd+'</div>';
+    });
+    FUND_FILES.forEach(function(o){
+      var dd=o.f?('<dd><a class="filechip" href="#" onclick="return false"><span class="badge-pdf">PDF</span>'+esc(o.f)+'</a></dd>'):'<dd class="empty">미첨부</dd>';
+      h+='<div class="kv full"><dt>'+esc(o.l)+'</dt>'+dd+'</div>';
+    });
+    return '<dl class="kvgrid">'+h+'</dl>';
+  }
+  function fundFinGrid(){
+    var h='<div class="scroller"><table class="grid" style="min-width:0"><caption class="visually-hidden">재무정보 요약</caption>';
+    h+='<thead><tr><th class="c" rowspan="2" scope="col">기준년월</th><th class="c" colspan="9" scope="colgroup">대차대조표</th><th class="c" colspan="5" scope="colgroup">손익계산서</th></tr><tr>';
+    FUND_FIN_BS.forEach(function(c){h+='<th class="c" scope="col">'+esc(c[0])+'</th>'});
+    FUND_FIN_IS.forEach(function(c){h+='<th class="c" scope="col">'+esc(c[0])+'</th>'});
+    h+='</tr></thead><tbody><tr><td class="c">'+FUND_BASEYM+'</td>';
+    FUND_FIN_BS.forEach(function(c){h+='<td data-won="'+c[1]+'"'+(c[1]<0?' class="neg"':'')+'>'+fmtWon2(c[1])+'</td>'});
+    FUND_FIN_IS.forEach(function(c){h+='<td data-won="'+c[1]+'"'+(c[1]<0?' class="neg"':'')+'>'+fmtWon2(c[1])+'</td>'});
+    return h+'</tr></tbody></table></div>';
+  }
+  function fsTable2(rows){
+    var h='<table class="fs"><thead><tr><th scope="col">항목</th><th class="r" scope="col">금액</th></tr></thead><tbody>';
+    rows.forEach(function(r){
+      if(r.g){h+='<tr class="grp"><th scope="colgroup" colspan="2">'+esc(r.l)+'</th></tr>';return;}
+      var cls=(r.t?'tot':(r.b?'bold':'')),lvl=r.lv?(' lv'+r.lv):'';
+      h+='<tr class="'+cls+lvl+'"><th scope="row">'+esc(r.l)+'</th><td data-won="'+r.v+'"'+(r.v<0?' class="neg"':'')+'>'+fmtWon2(r.v)+'</td></tr>';
+    });
+    return h+'</tbody></table>';
+  }
+  function openFundFs(){
+    var html='<div class="modal-head"><div><h2>재무제표 상세</h2><div class="sub">기준년월 '+FUND_BASEYM+' · 인라이트 농식품 청년기업 성장펀드</div></div><button class="icon-btn" id="fs-x" aria-label="닫기">×</button></div>'+
+      '<div class="modal-body">'+unitSeg2()+'<div class="fstwo"><section class="specsec"><h3>대차대조표<span class="u unit-txt">(단위: 원)</span></h3>'+fsTable2(FUND_BS)+'</section><section class="specsec"><h3>손익계산서<span class="u unit-txt">(단위: 원)</span></h3>'+fsTable2(FUND_IS)+'</section></div></div>'+
+      '<div class="modal-foot"><button class="btn btn-sec" id="fs-close">닫기</button></div>';
+    var lyr=openLayer('fundmodal',html,true);
+    lyr.modal.querySelector('#fs-x').addEventListener('click',lyr.close);
+    lyr.modal.querySelector('#fs-close').addEventListener('click',lyr.close);
+  }
+  function openFundModal(){
+    var html='<div class="modal-head"><div><h2>자펀드 명세</h2><div class="sub">인라이트 농식품 청년기업 성장펀드</div></div><button class="icon-btn" id="sp-x" aria-label="닫기">×</button></div>'+
+      '<div class="modal-body">'+unitSeg2()+'<section class="specsec"><h3>자펀드 개요</h3>'+fundKv()+'</section><section class="specsec"><h3>재무정보<span class="u unit-txt">(기준년월 '+FUND_BASEYM+' · 단위: 원)</span></h3>'+fundFinGrid()+'</section></div>'+
+      '<div class="modal-foot"><button class="btn btn-pri" id="sp-fs">재무제표 상세</button><button class="btn btn-sec" id="sp-close">닫기</button></div>';
+    var lyr=openLayer('fundmodal wide',html,false);
+    lyr.modal.querySelector('#sp-x').addEventListener('click',lyr.close);
+    lyr.modal.querySelector('#sp-close').addEventListener('click',lyr.close);
+    lyr.modal.querySelector('#sp-fs').addEventListener('click',openFundFs);
+  }
+
+  /* 조합 운용현황 수시보고서 팝업(원 S1_05 화면 이식 — 사용자 지시 2026-09-02: 제목 클릭 시 새 탭 아니라 이 화면 위 모달로).
+     한계: 실 리포트 원문 데이터는 1번 행(마그나인베스트먼트(주)/마그나 GREEN 펀드/쿠엔즈버킷) 건 1건뿐이라,
+     운용사·자펀드 팝업과 동일하게 어느 행의 제목을 클릭해도 항상 같은 보고서 내용이 표시됨(원 S1_05 화면의 유일한 실데이터). */
+  var RPT_FILES=[
+    {name:'쿠엔즈버킷_조건부 합의서_20260803.pdf_(NEW)',t:'2026-08-11 오전 10:23:51'},
+    {name:'쿠엔즈버킷_주주간계약서_20260803.pdf_(NEW)',t:'2026-08-11 오전 10:23:51'}
+  ];
+  function rptCheckRows(){
+    return '<tr><td class="grp" rowspan="9">운용사관련</td><td class="grp" rowspan="3">경영진</td><td class="wide">운용사 대주주 또는 경영진 변동 (대표이사 변경 등)</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="wide">경영진, 대주주에 대한 제재, 피소 및 법령 판결 결과</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="wide">대주주에 대한 감사위원 비위행위관련(횡령, 부적절 언행 등) 발생</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="grp" rowspan="6">운용사</td><td class="wide">운용사에 대한 제재, 피소 및 법령 판결 결과</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="wide">펀드 준법감시인 변경</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="wide">본건 펀드 관련 규약, 법규 위반 사항 발생</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="wide">재무상황변경(증자, 감자, 부도, 파산, 회사청산, 개시결정 등)</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="wide">감사위원 비위행위관련(횡령, 부적절 언행 등) 발생</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="wide">신규펀드 및 추가결성 설립</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="grp" rowspan="6">조합운영관련</td><td class="grp" rowspan="3">운용 인력</td><td class="wide">대표펀드매니저에 대한 제재, 피소 및 법령 판결 결과</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="wide">대표펀드매니저, 핵심운용인력 타조합 참여 여부 결과사유 발생</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="wide">운용인력의 회사 등 변경</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="grp" rowspan="2">조합원</td><td class="wide">출자금 직접납입일 위반, 불응 발생</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="wide">관리보수 환입 이슈 발생</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="grp">투자집행</td><td class="wide">조합간 또는 조합원간 이해상충** 발생 가능성이 있을 경우</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="grp" rowspan="7">투자기업관련</td><td class="grp">법적분쟁</td><td class="wide">조합 또는 제3자와의 법적분쟁</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="grp" rowspan="2">계약</td><td class="wide">투자조건 변경</td><td class="c"><span class="tag b">Y</span></td></tr>'+
+    '<tr><td class="wide">투자계약위반 (투자금 사용용도 변경 등)</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="grp" rowspan="4">기업일반</td><td class="wide">합병, 분할, 영업양수도(매각), 결과 등</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="wide">상장, 상장폐지, 관리종목지정 등</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="wide">재무상황 변경(감자, 감액, 파산 등)</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="wide">투자금 회수 관련 보고(이자 수령 및 부분 회수 제외)</td><td class="c"><span class="tag n">N</span></td></tr>'+
+    '<tr><td class="grp">기타</td><td class="grp">기타</td><td class="wide">상기 사항 이외의 펀드 규약 등에 보고사항으로 명시된 사항 발생</td><td class="c"><span class="tag n">N</span></td></tr>';
+  }
+  function openReportModal(){
+    var html='<div class="modal-head"><div><span class="eb">조합 운용현황 수시보고서</span><h2>쿠엔즈버킷 조건부 합의서 및 주주간계약 체결 보고</h2></div><button class="icon-btn" id="rpt-x" aria-label="닫기">×</button></div>'+
+      '<div class="modal-body">'+
+        '<div class="rpt-head"><div class="rpt-meta">'+
+          '<div class="mrow"><span class="mk">상황발생</span><span class="mc">:</span><span class="mv">2026-08-03</span></div>'+
+          '<div class="mrow"><span class="mk">운&nbsp;&nbsp;용&nbsp;&nbsp;사</span><span class="mc">:</span><span class="mv">마그나인베스트먼트(주)</span></div>'+
+          '<div class="mrow"><span class="mk">자&nbsp;&nbsp;펀&nbsp;&nbsp;드</span><span class="mc">:</span><span class="mv">마그나 GREEN 펀드</span></div>'+
+          '<div class="mrow"><span class="mk">투자기업</span><span class="mc">:</span><span class="mv">(주)쿠엔즈버킷</span></div>'+
+        '</div></div>'+
+        '<h3 class="sec-title">가. 수시보고사항</h3>'+
+        '<div class="scroller"><table class="dgrid"><caption class="visually-hidden">수시보고사항 체크리스트 — 구분·항목·내용·Check</caption>'+
+          '<thead><tr><th class="c" style="width:120px">구분</th><th class="c" style="width:110px">항목</th><th class="c">내용</th><th class="c" style="width:70px">Check</th></tr></thead>'+
+          '<tbody>'+rptCheckRows()+'</tbody></table></div>'+
+        '<h3 class="sec-title">나. 수시보고사항에 대한 요약</h3>'+
+        '<div class="scroller"><table class="dgrid"><caption class="visually-hidden">수시보고사항 요약 — 제목 및 내용</caption><tbody>'+
+          '<tr><th scope="row" style="width:90px">제목</th><td class="wide">쿠엔즈버킷 조건부 합의서 및 주주간계약 체결 보고</td></tr>'+
+          '<tr><th scope="row">내용</th><td class="wide" style="white-space:pre-wrap;line-height:1.85">마그나 GREEN 펀드 기투자기업인 쿠엔즈버킷 20260730 진행된 수시보고 후속 보고의 건 입니다.\n\n1.투자내역\n2021.12.23, 상환전환우선주 신주 1,000,145,360원 투자 (2024.12.31, 전액상환)\n\n2.보고사유\n경영권 목적 지분변경 및 유상증자를 통한 신규 최대주주 유치 관련하여 조건부 합의서 및 주주간계약서를 체결함.\n\n3.계약 체결일: 2026.08.03\n\n4.주요 내용\n가) 기존조합의 경영권 목적 지분매각계획과 관련하여, 지분양수에 관한 조건부 합의서와 주주간계약서를 체결함.\n거래에 따라 기존 대주주 보유주식의 50%(MHD)이 약 2.5%의 유효기존의 상환우선주주에 참여하여 최대주주가 될 예정임.\n향후 대주주 변경 및 유상증자가 완료 시 결과보고를 추가로 진행할 예정임.</td></tr>'+
+        '</tbody></table></div>'+
+        '<div class="rpt-sign">'+
+          '<div class="mrow"><span class="mk">작성일자</span><span class="mc">:</span><span class="mv">2026-08-13</span></div>'+
+          '<div class="mrow"><span class="mk">대표펀드매니저</span><span class="mc">:</span><span class="mv">송진호</span></div>'+
+          '<div class="mrow"><span class="mk">준법감시인</span><span class="mc">:</span><span class="mv">정유숙</span></div>'+
+        '</div>'+
+        '<h3 class="sec-title">첨부파일</h3>'+
+        '<div class="scroller"><table class="dgrid"><caption class="visually-hidden">첨부파일 목록 — 첨부파일명·수정일시·업로드 여부</caption>'+
+          '<thead><tr><th class="c">첨부파일</th><th class="c" style="width:200px">수정일시</th><th class="c" style="width:130px">업로드 여부</th></tr></thead>'+
+          '<tbody>'+RPT_FILES.map(function(f){return '<tr><td class="wide">'+esc(f.name)+'</td><td class="c">'+esc(f.t)+'</td><td class="c">O</td></tr>';}).join('')+'</tbody>'+
+        '</table></div>'+
+      '</div>'+
+      '<div class="modal-foot"><button class="btn btn-sec" id="rpt-close">닫기</button></div>';
+    var lyr=openLayer('rptmodal',html,false);
+    lyr.modal.querySelector('#rpt-x').addEventListener('click',lyr.close);
+    lyr.modal.querySelector('#rpt-close').addEventListener('click',lyr.close);
+  }
+
+  $('rows').addEventListener('click',function(e){
+    var b=e.target.closest?e.target.closest('.conf'):null;
+    if(b){openConfirm(b.getAttribute('data-no'),b.getAttribute('data-kind'));return}
+    var gp=e.target.closest?e.target.closest('button[id^="gp-open-"]'):null;
+    if(gp){openGpModal();return}
+    var fn=e.target.closest?e.target.closest('button[id^="fund-open-"]'):null;
+    if(fn){openFundModal();return}
+    var rp=e.target.closest?e.target.closest('button[id^="rpt-open-"]'):null;
+    if(rp){openReportModal();return}
+  });
+
+  function chipGroup(id,opts,val){
+    var box=$(id); if(!box)return;
+    box.innerHTML=opts.map(function(o){return '<button type="button" class="chipbtn" data-v="'+o+'" aria-pressed="'+(o===val)+'">'+o+'</button>';}).join('');
+    box.addEventListener('click',function(e){
+      var b=e.target.closest('button[data-v]'); if(!b)return;
+      Array.prototype.forEach.call(box.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b)});
+    });
+  }
+  chipGroup('f-acc',['전체','농식품','수산'],'전체');
+  $('search').addEventListener('click',function(){toast('조회되었습니다 (목업)')});
+  $('excel').addEventListener('click',function(){toast('엑셀 다운로드 (목업)')});
+})();
+</script>

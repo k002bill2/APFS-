@@ -1,0 +1,306 @@
+<title>계좌정보조회</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;--danger:#E5484D;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;--danger:#F0656A;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F0656A;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:78ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .seg.sm button{height:30px;padding:0 13px;font-size:12.5px}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .admin-gear{margin-left:12px;padding:6px 12px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;font-size:13px;white-space:nowrap}
+  .admin-gear:hover{background:rgba(255,255,255,.12);color:#fff}
+  .admin-gear.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filterrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .searchbtnrow{display:flex;justify-content:center;margin-top:14px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;white-space:nowrap}
+  .daterange{display:flex;align-items:center;gap:8px}
+  .daterange .tilde{color:var(--ink-3)}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .listbar{display:flex;align-items:center;gap:12px;margin:2px 0 8px;flex-wrap:wrap}
+  .listbar .cap{font-size:15px;font-weight:700;display:flex;align-items:center}
+  .listbar .cap b{color:var(--primary)}
+  .listbar .acts{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .unit-lab{font-size:12.5px;font-weight:700;color:var(--ink-3)}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;min-width:1900px;width:100%}
+  table.grid th,table.grid td{padding:8px 10px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:right}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong);position:sticky;top:0;z-index:2}
+  table.grid th.c,table.grid td.c{text-align:center}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid td.mono{font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  table.grid tfoot td{font-weight:800;background:var(--surface-3);border-top:2px solid var(--ink)}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.b{background:var(--primary-weak);color:var(--primary)} .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.n{background:var(--grey-weak);color:var(--ink-3)}
+  .note{margin-top:24px;font-size:13px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:8px;padding:14px 16px;line-height:1.7}
+  .note b{color:var(--ink-2)}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:900px){.lnb{display:none!important}.filterrow{gap:10px}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">모태펀드 수탁 · 계좌정보조회 · KRDS TO-BE</p>
+  <h1 class="doc-title">계좌정보조회</h1>
+  <p class="doc-sub">모태펀드 수탁 계좌(예치자산)를 개시일 기간으로 조회하는 읽기전용 화면. 계좌번호·상품명·계좌구분·계정구분·계좌종류·이율·원본액·금융기관 등을 목록으로 표시한다. 금액(원본액)은 원/백만원/억원 단위 전환 가능, 넓은 표는 가로 스크롤.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">자</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="../01_투자자산관리/S1_01_투자심의관리.html" role="menuitem"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="../02_조기경보/S2_46_메인화면.html" role="menuitem"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="S3_98_실물자료_조회__월별_.html" role="menuitem" class="on"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">자산수탁시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="S3_98_실물자료_조회__월별_.html">자펀드 수탁</a>
+          <a href="#" class="on" aria-current="page">모태펀드 수탁</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+      </div>
+      <div class="subtab" aria-label="모태펀드 수탁 하위 메뉴">
+        <a href="S3_102_모태수탁공통코드.html">모태수탁공통코드</a><a href="S3_103_계좌정보관리.html">계좌정보관리</a><span class="on">계좌정보조회</span><a href="S3_105_입출금정보관리.html">입출금정보관리</a><a href="S3_106_입출금정보조회.html">입출금정보조회</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">모태펀드 수탁</div>
+          <nav aria-label="모태펀드 수탁 메뉴">
+            <a href="S3_102_모태수탁공통코드.html">모태수탁공통코드</a>
+            <a href="S3_103_계좌정보관리.html">계좌정보관리</a>
+            <a href="#" class="on" aria-current="page">계좌정보조회</a>
+            <a href="S3_105_입출금정보관리.html">입출금정보관리</a>
+            <a href="S3_106_입출금정보조회.html">입출금정보조회</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">모태펀드 수탁 · 계좌정보조회</div>
+          <div class="h1row"><h1>계좌정보조회</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filterrow">
+              <div class="field">
+                <label for="f-from">개시일</label>
+                <span class="daterange">
+                  <input type="date" id="f-from" value="2026-07-13" aria-label="개시일 시작">
+                  <span class="tilde" aria-hidden="true">~</span>
+                  <input type="date" id="f-to" value="2026-08-13" aria-label="개시일 종료">
+                </span>
+              </div>
+            </div>
+            <div class="searchbtnrow"><button class="btn" id="search">조회</button></div>
+          </div>
+
+          <div class="listbar">
+            <div class="cap">총 <b id="cnt">1</b>건</div>
+            <div class="acts">
+              <span class="unit-lab">금액 단위</span>
+              <div class="seg sm" role="group" aria-label="금액 단위 전환">
+                <button id="u-won" aria-pressed="true">원</button>
+                <button id="u-mil" aria-pressed="false">백만원</button>
+                <button id="u-eok" aria-pressed="false">억원</button>
+              </div>
+              <button class="btn btn-sec btn-sm" id="excel">엑셀</button>
+            </div>
+          </div>
+          <div class="scroller">
+            <table class="grid">
+              <caption class="visually-hidden">모태펀드 수탁 계좌 목록 — 개시일 기간 조회 결과. 원본액 단위는 상단 단위 전환에 따름.</caption>
+              <thead>
+                <tr>
+                  <th class="c" scope="col">No</th>
+                  <th class="l" scope="col">계좌번호</th>
+                  <th class="l" scope="col">상품명</th>
+                  <th class="c" scope="col">계좌구분코드</th>
+                  <th class="c" scope="col">계좌구분</th>
+                  <th class="c" scope="col">계정구분코드</th>
+                  <th class="c" scope="col">계정구분</th>
+                  <th class="c" scope="col">계좌종류코드</th>
+                  <th class="c" scope="col">계좌종류</th>
+                  <th class="c" scope="col">개시일</th>
+                  <th class="c" scope="col">종료일</th>
+                  <th class="c" scope="col">이율(%)</th>
+                  <th class="c" scope="col">원본액 (<span id="u-head">원</span>)</th>
+                  <th class="c" scope="col">금융기관코드</th>
+                  <th class="c" scope="col">금융기관명</th>
+                  <th class="c" scope="col">계정과목</th>
+                  <th class="l" scope="col">비고</th>
+                  <th class="c" scope="col">등록일자</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+
+          <p class="note"><b>설계 메모(2026-08-31):</b> 엑셀 원문 확정 실데이터는 계좌번호 1020020911969 1건뿐 — 이전에 있던 동일 코드(A2 미투자자산·A1 농식품투자계정·A1 정기예금·020 우리은행) 재사용 표시용 예시 2건은 원문에 없는 임의 생성 데이터라 제거하고 검토필요 마커도 해소. 그리드 하단 합계 행은 원문에 없는 항목이라 제거.</p>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+
+  /* 내비게이션 전환 */
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* 데이터: 엑셀 원문 확정 실데이터 1건만 존재(base=원 정수 저장 후 포맷).
+     이전엔 동일 코드를 재사용한 표시용 예시 2건이 더 있었으나 원문에 없는 임의 생성 데이터라 제거. */
+  var DATA=[
+    {no:1,acc:'1020020911969',pnm:'정기우리270713 농식품모태펀드(기본)',gcd:'A2',g:'미투자자산',jcd:'A1',j:'농식품투자계정',kcd:'A1',k:'정기예금',st:'2026-07-13',en:'2027-07-13',rate:'3.65',won:10000000000,fcd:'020',fnm:'우리은행',subj:'정기예금',memo:'',reg:'2026-07-14'}
+  ];
+
+  var UNIT='won'; /* won | mil | eok */
+  function fmtInt(n){return n.toLocaleString('en-US');}
+  function fmtAmt(won){
+    if(UNIT==='won')return fmtInt(won);
+    if(UNIT==='mil'){var m=won/1e6;return (Math.round(m*100)/100).toLocaleString('en-US');}
+    var e=won/1e8;return (Math.round(e*100)/100).toLocaleString('en-US');
+  }
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  function render(){
+    $('rows').innerHTML=DATA.map(function(r){
+      return '<tr>'+
+        '<td class="c">'+r.no+'</td>'+
+        '<td class="l mono">'+esc(r.acc)+'</td>'+
+        '<td class="l">'+esc(r.pnm)+'</td>'+
+        '<td class="c">'+esc(r.gcd)+'</td>'+
+        '<td class="c"><span class="tag n">'+esc(r.g)+'</span></td>'+
+        '<td class="c">'+esc(r.jcd)+'</td>'+
+        '<td class="c"><span class="tag b">'+esc(r.j)+'</span></td>'+
+        '<td class="c">'+esc(r.kcd)+'</td>'+
+        '<td class="c">'+esc(r.k)+'</td>'+
+        '<td class="c">'+esc(r.st)+'</td>'+
+        '<td class="c">'+esc(r.en)+'</td>'+
+        '<td>'+esc(r.rate)+'</td>'+
+        '<td class="mono">'+fmtAmt(r.won)+'</td>'+
+        '<td class="c">'+esc(r.fcd)+'</td>'+
+        '<td class="c">'+esc(r.fnm)+'</td>'+
+        '<td class="c">'+esc(r.subj)+'</td>'+
+        '<td class="l">'+(r.memo?esc(r.memo):'<span style="color:var(--ink-3)">-</span>')+'</td>'+
+        '<td class="c">'+esc(r.reg)+'</td>'+
+      '</tr>';
+    }).join('');
+    var labels={won:'원',mil:'백만원',eok:'억원'};
+    $('u-head').textContent=labels[UNIT];
+    $('cnt').textContent=DATA.length;
+  }
+  render();
+
+  /* 금액 단위 전환 */
+  function setUnit(u){UNIT=u;$('u-won').setAttribute('aria-pressed',u==='won');$('u-mil').setAttribute('aria-pressed',u==='mil');$('u-eok').setAttribute('aria-pressed',u==='eok');render();}
+  $('u-won').addEventListener('click',function(){setUnit('won')});
+  $('u-mil').addEventListener('click',function(){setUnit('mil')});
+  $('u-eok').addEventListener('click',function(){setUnit('eok')});
+
+  /* 조회 / 엑셀 (목업 피드백) */
+  $('search').addEventListener('click',function(){toast('조회되었습니다 (목업)')});
+  $('excel').addEventListener('click',function(){toast('엑셀 다운로드 (목업)')});
+
+  /* 토스트 */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+})();
+</script>

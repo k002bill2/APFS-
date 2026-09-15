@@ -1,0 +1,366 @@
+<title>투자금 회수현황</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;--danger:#E5484D;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;--danger:#FF6B6E;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#FF6B6E;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:82ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .chipbtn{height:34px;padding:0 14px;border-radius:99px;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink-2);font-size:13px;font-weight:600}
+  .chipbtn[aria-pressed="true"]{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .seg button{height:34px;padding:0 16px;border:none;background:transparent;color:var(--ink-2);font-size:13px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px;overflow-x:auto;min-width:0;scrollbar-width:thin}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;flex:none;white-space:nowrap}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filtergrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 16px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;width:64px;text-align:right;white-space:nowrap}
+  .field select,.field input{flex:1;min-width:0}
+  .field.wide{grid-column:span 3}
+  .field.wide .daterange{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+  .field.wide .daterange input{flex:1;min-width:0}
+  .field.wide .daterange .til{flex:none;color:var(--ink-3)}
+  .searchbtnrow{display:flex;justify-content:center;margin-top:14px}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .listbar{display:flex;align-items:center;gap:12px;margin:2px 0 8px;flex-wrap:wrap}
+  .listbar .cap{font-size:15px;font-weight:700}
+  .listbar .cap b{color:var(--primary)}
+  .listbar .unit{display:flex;align-items:center;gap:8px;margin-left:auto}
+  .listbar .unit .ul{font-size:12.5px;font-weight:700;color:var(--ink-3)}
+  .listbar .acts{display:flex;gap:8px}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;min-width:1060px;width:100%}
+  table.grid th,table.grid td{padding:8px 12px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:right}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong)}
+  table.grid th.c,table.grid td.c{text-align:center}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  table.grid tfoot td{font-weight:800;background:var(--surface-3);border-top:2px solid var(--ink)}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.b{background:var(--primary-weak);color:var(--primary)} .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.n{background:var(--grey-weak);color:var(--ink-3)}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:90;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:900px){.filtergrid{grid-template-columns:repeat(2,1fr)}.field.wide{grid-column:1/-1}.lnb{display:none!important}}
+</style>
+
+<!-- 데이터 정합성 메모(구조도 v1.3, 통합 시트): 1420~1426행(모펀드/자펀드계정/자펀드/조회기준/기준일자-범위/조회버튼)은
+     프로그램명이 "투자금 회수현황"으로 기재되어 있으나, 바로 위 1420행이 "투자 및 회수 상세정보" 타이틀이고 바로 아래
+     1427행부터 "투자 및 회수 상세정보"의 그리드가 이어져, 문맥상 그 화면의 검색영역이 프로그램명 오기재된 것으로 판단됨
+     (원본 오류로 추정 — xlsx 자체 정정은 별도 확인 필요). 본 목업은 올바르게 프로그램명이 매칭되는 1402~1419행만 반영했고,
+     해당 필드(자펀드/조회기준/기준일자 범위)는 제외함. → S1_36_투자_및_회수_상세정보.html 쪽 확인 대상.
+     2026-08-28: 사용자 제공 실 화면 캡처로 2010~2025년 16개 연도 전체 실데이터 확보, "구조도엔 2010년 표본 1건뿐"이라
+     붙여뒀던 검토필요 마커는 제거하고 전체 반영. 그리드 맨 끝 "합계" 컬럼은 캡처에 존재하지 않는 컬럼으로 확인되어 삭제.
+     "원단위"는 캡처상 검색조건(select)으로 보였으나, 다른 통계 화면들과 통일된 UX를 위해 목록 우측 상단 "금액단위"
+     토글(원/백만원/억원)로 유지하기로 확정(세션 내 확립된 배치 규칙). -->
+<div class="wrap">
+  <p class="doc-eyebrow">S1 · 투자기업정보 · KRDS TO-BE</p>
+  <h1 class="doc-title">투자금 회수현황</h1>
+  <p class="doc-sub">출자사업연도별 투자원금 대비 회수 실적(회수건수·회수원금·회수수익·회수총액·감액금액·회수비율)을 조회하는 읽기전용 현황 화면. 회수금액/회수건수는 2단 헤더 그리드. 금액 단위(원/백만원/억원)는 목록 우측 상단 토글로 전환. 넓은 표는 가로 스크롤. 2010~2025년 16개 연도 실데이터와 합계 행을 표시한다.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">모</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="S1_01_투자심의관리.html" role="menuitem" class="on"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="../02_조기경보/S2_46_메인화면.html" role="menuitem"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">투자자산관리시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="01_파일럿_공고관리/mockup/공고관리_목업_artifact.html">모태펀드</a>
+          <a href="S1_01_투자심의관리.html">사후보고관리</a>
+          <a href="05_자펀드관리/mockup/자펀드관리_목업.html">자펀드</a>
+          <a href="S1_28_투심승인정보조회.html">통계</a>
+          <a href="#" class="on" aria-current="page">투자기업</a>
+          <a href="S1_38_운용사_재무정보_조회.html">모니터링</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+      </div>
+      <div class="subtab" aria-label="투자기업정보 하위 메뉴">
+        <a href="S1_30_투자기업정보.html">투자기업정보</a>
+        <a href="S1_31_투자기업정보_전체_.html">투자기업정보(전체)</a>
+        <a href="S1_32_투자기업_고용현황보고.html">투자기업 고용현황보고</a>
+        <a href="S1_33_전체_투자실적.html">전체 투자실적</a>
+        <a href="S1_34_투자실적_현황_투자기업_.html">투자실적 현황(투자기업)</a>
+        <span class="on">투자금 회수현황</span>
+        <a href="S1_36_투자_및_회수_상세정보.html">투자 및 회수 상세정보</a>
+        <a href="S1_37_운용사별_재무제표.html">운용사별 재무제표</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">투자기업정보</div>
+          <nav aria-label="투자기업정보 메뉴">
+            <a href="S1_30_투자기업정보.html">투자기업정보</a>
+            <a href="S1_31_투자기업정보_전체_.html">투자기업정보(전체)</a>
+            <a href="S1_32_투자기업_고용현황보고.html">투자기업 고용현황보고</a>
+            <a href="S1_33_전체_투자실적.html">전체 투자실적</a>
+            <a href="S1_34_투자실적_현황_투자기업_.html">투자실적 현황(투자기업)</a>
+            <a href="#" class="on" aria-current="page">투자금 회수현황</a>
+            <a href="S1_36_투자_및_회수_상세정보.html">투자 및 회수 상세정보</a>
+            <a href="S1_37_운용사별_재무제표.html">운용사별 재무제표</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">투자기업정보 · 투자금 회수현황</div>
+          <div class="h1row"><h1>투자금 회수현황</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filtergrid">
+              <!-- 모펀드: 다중모펀드 옵션 ON 가정(단일=표시, 1개 초과 시 무조건 표시) --><div class="field" data-mf-visible="on"><label for="f-mf">모펀드</label><select id="f-mf"><option>농식품모태펀드</option><option>MOAF</option></select></div>
+              <div class="field"><label id="f-acc-lab">계정구분</label><div role="group" aria-labelledby="f-acc-lab" style="display:flex;gap:6px" id="f-acc"></div></div>
+              <div class="field"><label id="f-src-lab">데이터기준</label><div role="group" aria-labelledby="f-src-lab" style="display:flex;gap:6px" id="f-src"></div></div>
+              <div class="field"><label for="f-d1">기준일자</label><input type="date" id="f-d1" value="2026-07-31" aria-label="기준일자"></div>
+            </div>
+            <div class="searchbtnrow"><button class="btn" id="search">조회</button></div>
+          </div>
+
+          <div class="listbar">
+            <div class="cap">회수현황 <b id="cnt">16</b>개 연도</div>
+            <div class="unit">
+              <span class="ul">금액단위</span>
+              <div class="seg" role="group" aria-label="금액 단위">
+                <button type="button" id="u-won" data-u="원" aria-pressed="false">원</button>
+                <button type="button" id="u-mil" data-u="백만원" aria-pressed="false">백만원</button>
+                <button type="button" id="u-eok" data-u="억원" aria-pressed="true">억원</button>
+              </div>
+            </div>
+            <div class="acts">
+              <button class="btn btn-sec btn-sm" id="excel">엑셀</button>
+            </div>
+          </div>
+          <div class="scroller">
+            <table class="grid">
+              <caption class="visually-hidden">투자금 회수현황 — 회수건수·회수금액은 2단 헤더. 금액 단위: <span id="cap-unit">억원</span></caption>
+              <colgroup>
+                <col><col><col><col><col><col><col><col><col>
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="c" rowspan="2" scope="col">구분<br>(출자사업연도)</th>
+                  <th class="c" colspan="2" scope="colgroup">회수건수</th>
+                  <th class="c" rowspan="2" scope="col">투자원금</th>
+                  <th class="c" colspan="4" scope="colgroup">회수금액</th>
+                  <th class="c" rowspan="2" scope="col">회수비율(%)</th>
+                </tr>
+                <tr>
+                  <th class="c" scope="col">투자건수</th>
+                  <th class="c" scope="col">투자기업수</th>
+                  <th class="c" scope="col">회수원금</th>
+                  <th class="c" scope="col">회수수익</th>
+                  <th class="c" scope="col">회수총액</th>
+                  <th class="c" scope="col">감액금액</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+              <tfoot id="foot"></tfoot>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+
+  /* nav toggle */
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* 데이터: 사용자 제공 실 화면 캡처(2026-08-28, 기준일자 2026-07-31) 기준 2010~2025년 16개 연도 전체 + 합계 행.
+     단위=억원(캡처 표시 기준). 합계 행 값은 캡처에 표시된 값을 그대로 사용(연도별 단순 합산과 억원 단위 반올림으로
+     투자원금 등에서 ±1 오차가 있을 수 있으나 원문 그대로 반영, 임의 보정 안 함). */
+  var DATA=[
+    {y:'2010',cnt:41,comp:36,pr:943, rp:786,rf:523,rt:1309,dd:157,ratio:'138.89'},
+    {y:'2011',cnt:70,comp:62,pr:877, rp:829,rf:653,rt:1483,dd:30, ratio:'169.08'},
+    {y:'2012',cnt:68,comp:58,pr:873, rp:696,rf:368,rt:1064,dd:137,ratio:'121.89'},
+    {y:'2013',cnt:66,comp:51,pr:768, rp:669,rf:247,rt:915, dd:95, ratio:'119.07'},
+    {y:'2014',cnt:91,comp:78,pr:1159,rp:875,rf:313,rt:1188,dd:202,ratio:'102.54'},
+    {y:'2015',cnt:67,comp:58,pr:1003,rp:660,rf:486,rt:1146,dd:237,ratio:'114.31'},
+    {y:'2016',cnt:52,comp:43,pr:1262,rp:791,rf:805,rt:1596,dd:145,ratio:'126.54'},
+    {y:'2017',cnt:55,comp:44,pr:1010,rp:526,rf:660,rt:1186,dd:244,ratio:'117.43'},
+    {y:'2018',cnt:36,comp:33,pr:784, rp:192,rf:131,rt:322, dd:339,ratio:'41.09'},
+    {y:'2019',cnt:33,comp:29,pr:1174,rp:218,rf:124,rt:342, dd:346,ratio:'29.15'},
+    {y:'2020',cnt:32,comp:27,pr:1481,rp:117,rf:68, rt:185, dd:526,ratio:'12.47'},
+    {y:'2021',cnt:29,comp:27,pr:1699,rp:185,rf:171,rt:356, dd:186,ratio:'20.97'},
+    {y:'2022',cnt:14,comp:13,pr:2297,rp:137,rf:170,rt:307, dd:132,ratio:'13.35'},
+    {y:'2023',cnt:10,comp:8, pr:1395,rp:36, rf:2,  rt:38,  dd:77, ratio:'2.71'},
+    {y:'2024',cnt:8, comp:8, pr:1156,rp:20, rf:4,  rt:24,  dd:0,  ratio:'2.1'},
+    {y:'2025',cnt:0, comp:0, pr:699, rp:0,  rf:0,  rt:0,   dd:0,  ratio:'0'}
+  ];
+  var TOTAL={cnt:672,comp:575,pr:18579,rp:6737,rf:4724,rt:11461,dd:2851,ratio:'61.7'};
+
+  /* 금액 단위: base=억원. 억→백만원 ×100, 억→원 ×1e8 (정수). 목록 우측 상단 금액단위 토글로 전환 */
+  var curUnit='억원';
+  function unit(){return curUnit;}
+  function mul(){var u=unit();return u==='억원'?1:u==='백만원'?100:100000000;}
+  function amt(v){return (v*mul()).toLocaleString('ko-KR');}
+  function num(v){return v.toLocaleString('ko-KR');}
+
+  function render(){
+    $('rows').innerHTML=DATA.map(function(r){
+      return '<tr>'+
+        '<td class="c">'+r.y+'년</td>'+
+        '<td>'+num(r.cnt)+'</td><td>'+num(r.comp)+'</td>'+
+        '<td>'+amt(r.pr)+'</td>'+
+        '<td>'+amt(r.rp)+'</td><td>'+amt(r.rf)+'</td><td>'+amt(r.rt)+'</td><td>'+amt(r.dd)+'</td>'+
+        '<td>'+r.ratio+' %</td></tr>';
+    }).join('');
+    $('foot').innerHTML='<tr>'+
+      '<td class="c">합계</td>'+
+      '<td>'+num(TOTAL.cnt)+'</td><td>'+num(TOTAL.comp)+'</td>'+
+      '<td>'+amt(TOTAL.pr)+'</td>'+
+      '<td>'+amt(TOTAL.rp)+'</td><td>'+amt(TOTAL.rf)+'</td><td>'+amt(TOTAL.rt)+'</td><td>'+amt(TOTAL.dd)+'</td>'+
+      '<td>'+TOTAL.ratio+' %</td></tr>';
+    var cu=$('cap-unit');if(cu)cu.textContent=unit();
+  }
+  render();
+
+  /* 금액단위 토글 */
+  ['u-won','u-mil','u-eok'].forEach(function(id){
+    $(id).addEventListener('click',function(){
+      curUnit=this.getAttribute('data-u');
+      ['u-won','u-mil','u-eok'].forEach(function(x){$(x).setAttribute('aria-pressed',x===id)});
+      render();
+    });
+  });
+
+  /* 엑셀 (목업 토스트) */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+  $('excel').addEventListener('click',function(){toast('엑셀 다운로드 (목업)')});
+  /* 데이터기준 칩버튼(정기/수시와 동일 패턴) */
+  function chipGroup(id,opts,val){
+    var box=$(id); if(!box)return;
+    box.innerHTML=opts.map(function(o){return '<button type="button" class="chipbtn" data-v="'+o+'" aria-pressed="'+(o===val)+'">'+o+'</button>';}).join('');
+    box.addEventListener('click',function(e){
+      var b=e.target.closest('button[data-v]'); if(!b)return;
+      Array.prototype.forEach.call(box.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b)});
+    });
+  }
+  chipGroup('f-src',['운용사보고','월말확정'],'운용사보고');
+
+  chipGroup('f-acc',['전체','농식품','수산'],'전체');
+  $('search').addEventListener('click',function(){toast('조회되었습니다 (목업)')});
+
+  /* 검토필요 마커: 클릭 → 추천 vs 데이터 */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true);document.removeEventListener('keydown',rKey,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  function rKey(e){if(e.key==='Escape'){e.preventDefault();closeR()}}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null; if(!m)return; e.preventDefault();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';p.setAttribute('role','dialog');p.setAttribute('aria-label','검토필요 상세');
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+m.getAttribute('data-rec')+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+m.getAttribute('data-dat')+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true);document.addEventListener('keydown',rKey,true)},0);
+  });
+})();
+</script>
