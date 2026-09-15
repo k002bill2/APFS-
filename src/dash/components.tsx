@@ -155,14 +155,14 @@ function SegTabs({ options, value, onChange, size = "md" }: { options: any[]; va
 }
 
 /* ---- FilterChip ---- */
-function FilterChip({ active, children, onClick, dot }: { active?: boolean; children?: React.ReactNode; onClick?: () => void; dot?: string }) {
+function FilterChip({ active, children, onClick, dot, count }: { active?: boolean; children?: React.ReactNode; onClick?: () => void; dot?: string; count?: React.ReactNode }) {
   return (
     <button
       onClick={onClick}
       aria-pressed={!!active}
       className={cx("inline-flex items-center gap-1.5 cursor-pointer font-[inherit] rounded-lg px-[11px] py-[5px] text-[12.5px] font-semibold border transition-all duration-150",
         active ? "text-primary" : "border-border-strong text-muted-foreground bg-card")}
-      style={active ? { background: "color-mix(in srgb,var(--primary) 10%,transparent)", borderColor: "color-mix(in srgb,var(--primary) 28%,transparent)" } : undefined}>{dot && <span className="w-[7px] h-[7px] rounded-full" style={{ background: dot }} />}{children}</button>
+      style={active ? { background: "color-mix(in srgb,var(--primary) 10%,transparent)", borderColor: "color-mix(in srgb,var(--primary) 28%,transparent)" } : undefined}>{dot && <span className="w-[7px] h-[7px] rounded-full" style={{ background: dot }} />}{children}{count != null && <>{' '}<span className="tabular-nums" style={{ fontSize: 11.5, fontWeight: 700 }}>{count}</span></>}</button>
   );
 }
 

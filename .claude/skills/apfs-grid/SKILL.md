@@ -108,6 +108,10 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - typed 트랙은 플래그 없이 직접 제거한다 — `subfund_manage.tsx`가 `SegTabs`를 지우고 `const view = 'list'` 상수로 내린 형태가 정본.
   - 표현 전용 플래그 4종은 서로 독립: `hideKpis`(헤더 KPI 슬롯) · `hideMetrics`(금액 개념 전체) · `hideCardView`(푸터 뷰 토글) · `hideRowSelection`(행 선택 체크박스 컬럼).
 - **행 선택 체크박스 제거** — 다건 선택/선택삭제가 없는 단건 CRUD 화면은 `schema.hideRowSelection: true`(2026-09-12 자펀드 공고 정보관리). `generic_list.tsx`가 `rowSelection` prop 자체를 `undefined`로 넘겨 **선택 컬럼이 생성되지 않는다**(체크만 푸는 게 아니다). 선택이 없어지면 툴바의 `선택 삭제`/`선택 해제` 분기(`selCount > 0`)도 자동으로 도달 불가가 된다 — 수정은 행 더블클릭·Enter, 삭제는 우클릭 메뉴가 대체 경로다. ⚠️ `rowSelection` 객체는 **모듈 상수**여야 한다([[apfs-aggrid]] ⑦ — 인라인 리터럴은 렌더마다 컬럼 재생성 → 폭 되돌림).
+- **상태별 건수는 툴바 요약 문장이 아니라 필터 칩 안에.** `UI.FilterChip`의 `count` prop(라벨 뒤 11.5px 볼드 `tabular-nums`, **색은 칩 라벨과 동일 — 별도 `opacity`를 주지 않는다**)에 건수를 넘긴다 — 칩 = "이 상태를 몇 건 보게 되는지"를 누르기 전에 보여주는 곳이고, 툴바 우측 요약은 **총 건수 한 줄**(`기간 내 … N건`, `aria-live="polite"`)만 남긴다(2026-09-15 사용자 지시, `permission_history.tsx`·`audit_log.tsx`).
+  - ⚠️ **건수는 facet count로 센다** — 그 칩이 거는 필터**만 빼고** 나머지 필터를 적용한 모집단 기준. 화면에 이미 있는 `visible`(전 필터 적용)로 세면 칩 하나를 누른 순간 나머지 칩이 전부 `0`이 돼 비교 기능이 죽는다. 별도 `facet` memo를 하나 더 둔다(`전체` 칩 = `facet.length`).
+  - 건수는 행 데이터라 **`mn()` 경유**(마스크 ON에서 함께 가려짐). 칩 라벨은 축이므로 비마스킹.
+  - ⚠️ **건수를 `opacity`로 흐리게 하지 말 것** — 건수는 장식이 아니라 읽어야 하는 데이터고 11.5px는 WCAG "큰 텍스트"가 아니라 4.5:1이 필요하다. 실측(2026-09-15): `opacity .62` → 라이트 **2.58:1** · 다크 3.12~3.41:1 로 AA 미달. opacity를 지우면 라이트 4.96~5.60 · 다크 6.28~6.73 으로 통과한다. 위계는 **크기 차(12.5 → 11.5px)만으로** 낸다. 측정은 opacity를 배경과 합성한 실효색으로: 훅 없이 `getComputedStyle(span).opacity` 를 곱해 계산(→[[web-a11y]]).
 - **첨부파일은 컬럼을 만들지 않고 제목 뒤 칩으로** — `ColumnSpec.attachFrom: '<필드키>'`(예: `title` 컬럼 + `attachFrom:'attachment'`). `schemas/renderers.tsx`의 `AttachChips`가 CSV 값(`"a.pdf, b.xlsx"`)을 확장자 칩(아이콘+색은 `ui/attachment.tsx`의 `glyphFor` SSOT, 라벨은 회색)으로 렌더하고 4개째부터 `+N`으로 접는다. 마스크 경계: 확장자=유형 표식이라 비마스킹, 파일명 tooltip은 마스크 ON에서 제거.
 
 ## 관리형 리스트 툴바·타이틀 규약 (2026-09-11 subfund_manage에서 정립)
