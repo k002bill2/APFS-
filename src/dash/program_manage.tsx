@@ -29,6 +29,8 @@ import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescrip
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
+import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
+import { Info } from 'lucide-react';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
@@ -175,6 +177,32 @@ function RegisterCombo({ label, onRegister, onExport }: { label: string; onRegis
         <DropdownMenuContent align="end"><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
       </DropdownMenu>
     </span>
+  );
+}
+
+/* 삭제 불가 사유 — 툴바 인라인 캡션 대신 info 아이콘 + Popover.
+   툴바 가로폭을 문구가 잡아먹지 않도록(선택 해제 버튼이 밀렸다) 아이콘 한 칸으로 접고,
+   전체 사유(program_manage_model.deleteBlocker 와 같은 문구)는 팝오버에 둔다.
+   z-index/포털은 ui/popover 가 소유(z-popover + PortalContainer) — 여기서 z 를 다시 손대지 않는다. */
+function DeleteBlockedInfo() {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label="삭제할 수 없는 이유 보기"
+          className="inline-flex shrink-0 items-center justify-center rounded-full border-0 bg-transparent cursor-pointer text-caption opacity-80 transition-colors duration-tok-fast hover:text-[color:var(--warning-text)] hover:opacity-100 focus-visible:text-[color:var(--warning-text)] focus-visible:opacity-100 data-[state=open]:text-[color:var(--warning-text)] data-[state=open]:opacity-100"
+          /* 터치 타깃 ≥ 24px(responsive-ui #10) — 아이콘은 15px 그대로 두고 상자만 26px로 넓힌다 */
+          style={{ minWidth: 26, minHeight: 26, padding: 0, lineHeight: 0 }}><Info size={15} strokeWidth={2} aria-hidden /></button>
+      </PopoverTrigger>
+      <PopoverContent align="start" aria-label="삭제할 수 없는 이유"
+        className="max-w-[300px] px-[13px] py-[11px] text-[12.5px] leading-[1.6] text-muted-foreground">
+        <div className="mb-[5px] flex items-center gap-1.5 font-bold text-foreground">
+          <Icon name="alert-triangle" size={13} stroke={2.4} />삭제할 수 없습니다
+        </div>
+        메뉴에 연결된 프로그램은 삭제할 수 없습니다. 먼저 <b className="font-semibold text-foreground">메뉴관리</b>에서 이 프로그램의 연결(프로그램ID)을 해제한 뒤 삭제하세요.
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -329,7 +357,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
           <Button variant="outline" size="sm" leadingIcon="memo" onClick={() => setModal({ kind: 'help', id: selected.id })}>도움말</Button>
           {/* 삭제 — 연결 프로그램은 비활성 + 사유 캡션(목업 subAlert "삭제 불가"를 UI 로 표현) */}
           <Button variant="outline" size="sm" leadingIcon="trash" disabled={selected.linked} style={{ color: 'var(--danger)' }} onClick={() => requestDelete(selected)}>삭제</Button>
-          {selected.linked && <span className="text-caption" style={{ fontSize: 12 }}>메뉴에 연결된 프로그램은 삭제할 수 없습니다 — 메뉴관리에서 연결 해제 후</span>}
+          {selected.linked && <DeleteBlockedInfo />}
           <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
         </>
       ) : (
