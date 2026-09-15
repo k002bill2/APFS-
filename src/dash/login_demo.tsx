@@ -184,8 +184,8 @@ export function LoginDemo({ onNav }: LoginDemoProps) {
         )}
 
         <div className="mt-6 flex items-center justify-between gap-3 text-sm">
-          <button ref={resetTrigger} type="button" className="border-0 bg-transparent p-0 text-primary underline underline-offset-4" onClick={() => { setResetOpen(true); setResetMessage(''); }}>비밀번호 재설정 안내</button>
-          <button type="button" className="border-0 bg-transparent p-0 text-muted-foreground underline underline-offset-4" onClick={() => onNav?.('main')}>메인으로 돌아가기</button>
+          <button ref={resetTrigger} type="button" className="inline-flex items-center border-0 bg-transparent px-0 text-primary underline underline-offset-4" style={{ minHeight: 24 }} onClick={() => { setResetOpen(true); setResetMessage(''); }}>비밀번호 재설정 안내</button>
+          <button type="button" className="inline-flex items-center border-0 bg-transparent px-0 text-muted-foreground underline underline-offset-4" style={{ minHeight: 24 }} onClick={() => onNav?.('main')}>메인으로 돌아가기</button>
         </div>
         <p className="mt-5 mb-0 text-xs leading-5 text-muted-foreground">이 화면은 접근성 및 화면 흐름 검토용 로컬 UI 목업입니다.</p>
       </section>

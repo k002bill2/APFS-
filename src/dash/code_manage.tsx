@@ -396,7 +396,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
         {fText.trim() && (
           <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
             <MT>{`${SEARCH_FIELDS.find((f) => f.key === fField)?.label}: ${fText.trim()}`}</MT>
-            <button type="button" onClick={() => setFText('')} aria-label="검색어 필터 제거" className="inline-flex border-0 cursor-pointer p-0" style={{ background: 'transparent', color: 'inherit' }}>
+            <button type="button" onClick={() => setFText('')} aria-label="검색어 필터 제거" className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
               <Icon name="x" size={13} stroke={2.4} />
             </button>
           </span>
