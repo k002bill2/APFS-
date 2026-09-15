@@ -11,13 +11,15 @@ LABEL_DIFFS = [
     # (업무영역, 중분류, xlsx 라벨, 앱 라벨, 판정, 비고)
     ('투자자산관리', '조합관리', '자편드별조합원조회', '자펀드별조합원조회', '앱이 맞음',
      'xlsx 원본 오타(자**편**드). 앱은 `path:"fund-member"` 라 route 영향 없음'),
-    ('자펀드 보고', '운영기관정보', '공동GP펀드별 인력현황', '공통GP펀드별 인력현황', 'xlsx가 맞음',
-     '앱 오타(공**통**→공**동**). path 없음 = 라벨이 route 키'),
-    ('자펀드 보고', '운영기관정보', '운용사 재무정보', '운용사 재무보고', 'xlsx가 맞음',
-     '앱이 「보고」로 잘못 적음. path 없음 = 라벨이 route 키'),
-    ('조기경보', '가치평가', '예외사항레포트', '예외사항리포트', '판단 필요',
-     '스펙 기준이면 xlsx(`레포트`), 어문규범 기준이면 앱(`리포트`)이 맞다 — 선택 사항. '
-     'path 없음 = 라벨이 route 키'),
+]
+# 앱 쪽이 틀려서 이미 고친 것 — 기록을 남긴다(다시 지적당하지 않도록).
+RESOLVED = [
+    ('자펀드 보고', '운영기관정보', '공통GP펀드별 인력현황', '공동GP펀드별 인력현황',
+     '앱 오타(공**통**→공**동**)'),
+    ('자펀드 보고', '운영기관정보', '운용사 재무보고', '운용사 재무정보',
+     '앱이 「보고」로 잘못 적음'),
+    ('조기경보', '가치평가', '예외사항리포트', '예외사항레포트',
+     '구조도·목업 파일명(`S2_85_예외사항_레포트.html`)이 모두 「레포트」라 스펙에 맞춤'),
 ]
 
 
@@ -49,11 +51,31 @@ def render(xl, app):
     same = xlk & appk
     only_xl = xlk - appk
     only_app = appk - xlk
+    # 순서 검증: 집합 비교로는 재배열이 안 보인다. 중분류 등장 순서와
+    # 중분류별 리프 순서를 배열로 비교한다(LNB 렌더 순서가 배열 순서를 그대로 쓴다).
+    ren = {(a, c, p): x for a, c, x, p, _, _ in LABEL_DIFFS}
+
+    def _seq(rows, is_app):
+        d = {}
+        for r in rows:
+            area = AREA_MAP.get(r['area'], r['area']) if is_app else r['area']
+            if is_app and r['top_only']:
+                continue
+            leaf = ren.get((area, r['cat'], r['leaf']), r['leaf']) if is_app else r['leaf']
+            d.setdefault((area, r['cat']), []).append(leaf)
+        return d
+
+    sx, sa = _seq(xl, False), _seq(app, True)
+    common_cats = [k for k in sx if k in sa]
+    cat_order_ok = [k for k in sx if k in sa] == [k for k in sa if k in sx]
+    seq_bad = sum(1 for k in common_cats if sx[k] != sa[k])
+
     diff_xl = {(a, c, x) for a, c, x, _, _, _ in LABEL_DIFFS}
     diff_app = {(a, c, p) for a, c, _, p, _, _ in LABEL_DIFFS}
     struct_xl = sorted(only_xl - diff_xl)
     struct_app = sorted(only_app - diff_app)
     app_real = [r for r in app if not r['top_only']]
+    real_cat = len({(r['area'], r['cat']) for r in app_real})
 
     L = []
     w = L.append
@@ -79,12 +101,13 @@ def render(xl, app):
     w('### 검증 근거 (실행 결과)')
     w('')
     w('```')
-    w('xlsx 신규 리프: 원본셀 152  파싱 152   (as-is 128/128, 고아 0건)')
-    w('app  리프     : 137 (+대시보드 1) / 중분류 32 / 대분류 7')
-    w('위치+라벨 완전일치 133 · xlsx만 19 · 앱만 5')
-    w('  → 19 = 라벨불일치 4 + 블록 미반영 15(관리자(기존) 12 + 로그인 3)')
-    w('  → 5  = 라벨불일치 4 + 대시보드 1')
-    w('중분류 등장 순서 일치: True · 리프 순서 불일치 중분류: 0 / 32')
+    w(f'xlsx 신규 리프 {len(xl)} · 앱 리프 {len(app_real)} (+대시보드 1)'
+      f' / 중분류 {len({(r["area"], r["cat"]) for r in app_real})}'
+      f' / 대분류 {len({r["area"] for r in app_real})}')
+    w(f'위치+라벨 완전일치 {len(same)} · xlsx만 {len(only_xl)} · 앱만 {len(only_app)}')
+    w(f'  → {len(only_xl)} = 라벨불일치 {len(LABEL_DIFFS)} + 블록 미반영 {len(struct_xl)}')
+    w(f'  → {len(only_app)} = 라벨불일치 {len(LABEL_DIFFS)} + 앱 전용 {len(struct_app)}')
+    w(f'중분류 등장 순서 일치: {cat_order_ok} · 리프 순서 불일치 중분류: {seq_bad} / {len(common_cats)}')
     w('```')
     w('')
     w('## 1. 업무영역별 수량 대조')
@@ -117,6 +140,18 @@ def render(xl, app):
     for a, c, x, p, verdict, note in LABEL_DIFFS:
         w(f'| {a} > {c} | `{x}` | `{p}` | **{verdict}** | {note} |')
     w('')
+    w('')
+    w('### 이미 반영한 수정')
+    w('')
+    w('앱 쪽이 틀렸던 3건은 고쳤다. `CLAUDE.md` 규약대로 **`label` 만 구조표에 맞추고 '
+      '기존 nav 키는 `path:` 로 고정**했다 — 라벨이 곧 route 키라 그냥 바꾸면 '
+      '`localStorage` 에 저장된 route 와 북마크가 깨진다.')
+    w('')
+    w('| 업무영역 > 중분류 | 이전 (= 현 `path:`) | 현재 `label` | 근거 |')
+    w('|---|---|---|---|')
+    for a, c, before, after, why in RESOLVED:
+        w(f'| {a} > {c} | `{before}` | `{after}` | {why} |')
+    w('')
     w('> ⚠️ 라벨 수정 시 주의: 리프에 `path:` 가 없으면 **라벨이 곧 route 키**다'
       '(`leaf.path || leaf.label` 규약, `data.ts:104`). 다만 위 2~4행(`path` 없는 3건)은 `src/` 전체에서 `data.ts` '
       '외 등장이 없어 `schemas/` 에 등록된 route 가 아니다 — `_default.ts` 폴백 화면이라 '
@@ -144,7 +179,6 @@ def render(xl, app):
     w('')
     w('| 항목 | CLAUDE.md 기재 | 실측(`data.ts` HEAD) | 차이 |')
     w('|---|---:|---:|---:|')
-    real_cat = len({(r['area'], r['cat']) for r in app_real})
     w(f'| 대분류 | 7 (+대시보드) | {len({r["area"] for r in app_real})} (+대시보드) | 0 |')
     w(f'| 중분류 | 34 | {real_cat} | {real_cat - 34} |')
     w(f'| 리프 | 141 | {len(app_real)} | {len(app_real) - 141} |')
