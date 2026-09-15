@@ -68,6 +68,8 @@ const columnDefs: ColDef<UserRow>[] = [
   { field: 'roles', headerName: '권한', width: 170, minWidth: 120, maxWidth: 260, cellStyle: flexCenter, valueFormatter: (p) => (p.value ?? []).join(', '),
     cellRenderer: (p: any) => <span className="inline-flex items-center gap-1 flex-wrap">{(p.value ?? []).map((r: string) => <StatusBadge key={r} tone="info" label={r} size="md" dot={false} />)}</span> },
   { field: 'status', headerName: '상태', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={STATUS_TONE[p.value as UserStatus]} label={p.value} size="lg" dot={false} /> },
+  { field: 'pwExpired', headerName: '비밀번호', width: 100, maxWidth: 100, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '만료' : '정상'),
+    cellRenderer: (p: any) => (p.value ? <StatusBadge tone="warning" label="만료" size="md" dot={false} /> : <span style={{ color: 'var(--muted-foreground)' }}>정상</span>) },
   { field: 'last', headerName: '최근 접속일시', width: 150, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value && p.value !== '—' ? mn(p.value) : '—') },
 ];
 const ROW_SELECTION: RowSelectionOptions<UserRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
@@ -78,7 +80,7 @@ type XCol = { header: string; get: (r: UserRow) => string };
 const EXPORT_COLS: XCol[] = [
   { header: '성명', get: (r) => r.name }, { header: '로그인 아이디', get: (r) => r.lid }, { header: '이메일', get: (r) => r.email },
   { header: '구분', get: (r) => r.type }, { header: '소속유형', get: (r) => belong(r) }, { header: '소속', get: (r) => belongName(r) },
-  { header: '권한', get: (r) => r.roles.join(', ') }, { header: '상태', get: (r) => r.status }, { header: '최근 접속일시', get: (r) => r.last },
+  { header: '권한', get: (r) => r.roles.join(', ') }, { header: '상태', get: (r) => r.status }, { header: '비밀번호', get: (r) => (r.pwExpired ? '만료' : '정상') }, { header: '최근 접속일시', get: (r) => r.last },
 ];
 
 /* ── 메일 본문(목업 openMail·openOtpMail — 링크·인증정보는 마스킹) ── */
@@ -428,8 +430,10 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
       {/* ── 메일 미리보기(온보딩·OTP 재등록) — 실제 발송 없음 ── */}
       {modal?.kind === 'mail' && <MailPreviewDialog title={modal.title} mail={modal.mail} onClose={() => setModal(null)} />}
       {/* ── 확인(잠금 해제·만료 처리·OTP 재발급·담당자 교체) — Radix AlertDialog ── */}
+      {/* 닫힘 콜백이 onOk 가 띄운 후속 모달(메일 미리보기)을 덮어쓰지 않게 — AlertDialogAction 은 Radix 닫기
+          버튼이라 onOk 직후 onOpenChange(false) 가 따라온다. 확인 모달일 때만 비운다. */}
       {modal?.kind === 'confirm' && (
-        <AlertDialog open onOpenChange={(o) => { if (!o) setModal(null); }}>
+        <AlertDialog open onOpenChange={(o) => { if (!o) setModal((m) => (m?.kind === 'confirm' ? null : m)); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{modal.title}</AlertDialogTitle>

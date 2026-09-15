@@ -7,6 +7,11 @@ const by = (lid: string) => rows.find((u) => u.lid === lid)!;
 
 describe('gateFor — 상태·구분별 액션 게이팅(목업 gate)', () => {
   it('선택 없음 → 전부 닫힘', () => { expect(Object.values(gateFor(null)).every((v) => v === false)).toBe(true); });
+  it('이미 비밀번호 만료 처리된 활성 계정은 만료 버튼이 닫힌다(그리드 \'비밀번호\' 컬럼과 같은 상태)', () => {
+    const active = demoUsers().find((u) => u.status === '활성' && !u.pwExpired)!;
+    expect(gateFor(active).expire).toBe(true);
+    expect(gateFor({ ...active, pwExpired: true }).expire).toBe(false);
+  });
   it('온보딩대기 → 온보딩 메일 열림·OTP 재발급 닫힘', () => {
     const g = gateFor(by('nh.trust2'));
     expect(g.mail).toBe(true); expect(g.otp).toBe(false); expect(g.expire).toBe(false);

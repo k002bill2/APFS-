@@ -57,7 +57,7 @@ export function gateFor(u: UserRow | null | undefined): UserGate {
     mail: u.status === '온보딩대기',
     replace: (u.type === '수탁' || u.type === '부처') && u.status === '활성',
     unlock: u.status === '잠금',
-    expire: u.status === '활성',
+    expire: u.status === '활성' && !u.pwExpired,   // 이미 만료 처리된 계정은 닫는다(그리드 '비밀번호' 컬럼과 같은 상태를 본다)
     otp: u.status !== '온보딩대기',
   };
 }

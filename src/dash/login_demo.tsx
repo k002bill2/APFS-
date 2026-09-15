@@ -4,6 +4,7 @@
    `login_demo_model`의 순수 함수가 정하며, 이 파일은 그 상태를 그리기만 한다.
    결과를 정하는 것은 입력값이 아니라 화면 상단의 **시연 시나리오 선택**이다(목업 계정·코드 없음). */
 import { useState, useRef, useEffect, type FormEvent } from 'react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from './ui/dialog';
 import {
   initialLogin, verifyCredentials, verifyOtp, verifyPwChange, verifyReset,
   stepLabels, stepIndex, SCENARIOS, SCENARIO_LABELS, DEMO_SESSION, MAX_FAIL, PW_POLICY,
@@ -33,6 +34,7 @@ export function LoginDemo({ onNav }: LoginDemoProps) {
   /* 단계 전환 시 새 단계의 첫 입력으로 초점 이동(직접 만든 전환이라 Radix 처럼 자동 처리되지 않는다).
      최초 마운트는 건너뛴다 — 화면에 들어오기만 해도 초점을 빼앗지 않도록. */
   const firstField = useRef<HTMLInputElement>(null);
+  const resetTrigger = useRef<HTMLButtonElement>(null);   // 다이얼로그 닫힌 뒤 초점 복귀 대상(실측: Radix 자동 복귀가 body 로 떨어졌다)
   const mounted = useRef(false);
   useEffect(() => {
     if (mounted.current) firstField.current?.focus();
@@ -182,26 +184,32 @@ export function LoginDemo({ onNav }: LoginDemoProps) {
         )}
 
         <div className="mt-6 flex items-center justify-between gap-3 text-sm">
-          <button type="button" className="border-0 bg-transparent p-0 text-primary underline underline-offset-4" onClick={() => { setResetOpen(true); setResetMessage(''); }}>비밀번호 재설정 안내</button>
+          <button ref={resetTrigger} type="button" className="border-0 bg-transparent p-0 text-primary underline underline-offset-4" onClick={() => { setResetOpen(true); setResetMessage(''); }}>비밀번호 재설정 안내</button>
           <button type="button" className="border-0 bg-transparent p-0 text-muted-foreground underline underline-offset-4" onClick={() => onNav?.('main')}>메인으로 돌아가기</button>
         </div>
         <p className="mt-5 mb-0 text-xs leading-5 text-muted-foreground">이 화면은 접근성 및 화면 흐름 검토용 로컬 UI 목업입니다.</p>
       </section>
 
-      {resetOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-5" role="presentation">
-          <section role="dialog" aria-modal="true" aria-labelledby="reset-title" className="w-full max-w-[420px] rounded-xl border border-border bg-card shadow-lg" style={{ padding: 28 }}>
-            <h2 id="reset-title" className="m-0 text-lg font-bold">비밀번호 재설정 안내</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">본인 확인 정보를 입력하는 화면 흐름만 보여 줍니다. 실제 계정 조회·안내 발송은 하지 않습니다.</p>
+      {/* 재설정 안내 — 공용 Radix Dialog(초점 트랩·Esc·초점 복귀를 직접 구현하지 않기 위해).
+          직접 만든 오버레이는 aria-modal 만으로는 배경으로 Tab 이 새고 Esc 가 먹지 않는다. */}
+      <Dialog open={resetOpen} onOpenChange={(o) => { setResetOpen(o); if (!o) setResetMessage(''); }}>
+        <DialogContent className="max-w-[420px]" aria-describedby="reset-desc"
+          onCloseAutoFocus={(e) => { e.preventDefault(); resetTrigger.current?.focus(); }}>
+          <div style={{ padding: 28 }}>
+            <DialogTitle className="text-lg">비밀번호 재설정 안내</DialogTitle>
+            <DialogDescription id="reset-desc" className="mt-2 mb-4 block text-sm leading-6">본인 확인 정보를 입력하는 화면 흐름만 보여 줍니다. 실제 계정 조회·안내 발송은 하지 않습니다.</DialogDescription>
             <form noValidate onSubmit={requestReset} className="grid gap-4">
-              <div><label htmlFor="reset-name" className="mb-1.5 block text-sm font-semibold">성명</label><input id="reset-name" value={resetName} onChange={(e) => setResetName(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm" /></div>
-              <div><label htmlFor="reset-id" className="mb-1.5 block text-sm font-semibold">아이디</label><input id="reset-id" value={resetId} onChange={(e) => setResetId(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm" /></div>
+              <div><label htmlFor="reset-name" className="mb-1.5 block text-sm font-semibold">성명</label><input id="reset-name" value={resetName} onChange={(e) => setResetName(e.target.value)} className={INPUT} /></div>
+              <div><label htmlFor="reset-id" className="mb-1.5 block text-sm font-semibold">아이디</label><input id="reset-id" value={resetId} onChange={(e) => setResetId(e.target.value)} className={INPUT} /></div>
               {resetMessage && <p role="status" className="m-0 rounded-md bg-muted p-3 text-sm leading-5">{resetMessage}</p>}
-              <div className="flex justify-end gap-2"><button type="button" className="rounded-md border border-input bg-background px-3 py-2 text-sm font-semibold" onClick={() => setResetOpen(false)}>닫기</button><button type="submit" className="rounded-md border-0 bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">안내 확인</button></div>
+              <div className="flex justify-end gap-2">
+                <DialogClose asChild><button type="button" className="rounded-md border border-input bg-background px-3 py-2 text-sm font-semibold">닫기</button></DialogClose>
+                <button type="submit" className="rounded-md border-0 bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">안내 확인</button>
+              </div>
             </form>
-          </section>
-        </div>
-      )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
