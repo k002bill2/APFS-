@@ -349,21 +349,25 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
     ['사용여부', fUse, () => setFUse('')],
   ];
 
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
+     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+  const selActions = selected ? (
+    <>
+      <StatusBadge tone="info" label={`레벨 ${selected.lvl}`} size="lg" dot={false} />
+      <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'edit', id: selected.id })}>수정</Button>
+      {selected.lvl < 3 && <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create', preset: { lvl: (selected.lvl + 1) as MenuRow['lvl'], parentId: selected.id } })}>하위 메뉴 등록</Button>}
+      <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => requestDelete(selected)}>삭제</Button>
+      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+    </>
+  ) : null;
+
   return (
     <GridFrame
       crumbs={['홈', '관리자', '시스템 관리', '메뉴관리']}
       title="메뉴관리"
       favRoute="menu-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? (
-        <>
-          <StatusBadge tone="info" label={`레벨 ${selected.lvl}`} size="lg" dot={false} />
-          <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'edit', id: selected.id })}>수정</Button>
-          {selected.lvl < 3 && <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create', preset: { lvl: (selected.lvl + 1) as MenuRow['lvl'], parentId: selected.id } })}>하위 메뉴 등록</Button>}
-          <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => requestDelete(selected)}>삭제</Button>
-          <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
-        </>
-      ) : (
+      toolbarLeft={selected ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {UTYPE_CHIPS.map((u) => <FilterChip key={u || 'all'} active={fUtype === u} onClick={() => setFUtype(u)}>{u || '전체'}</FilterChip>)}
@@ -378,6 +382,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
           ))}
         </>
       )}
+      contextActions={selActions}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* 전체 펼치기/접기 — 평면(검색) 모드에서는 의미가 없어 비활성 */}
