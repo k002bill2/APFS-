@@ -91,18 +91,6 @@ export function programsOf(rows: readonly MenuRow[]): Program[] {
   return rows.filter((r) => r.pid).map((r) => ({ pid: r.pid, pname: r.pname }));
 }
 
-/** 프로그램 관리 목록 한 행 — 프로그램(리프) + 연결 메뉴 경로(대분류 › 중분류 › 리프) + 사용여부 */
-export interface ProgramEntry { leafId: string; pid: string; pname: string; menuPath: string; use: boolean }
-
-/** 프로그램 관리(program_manage) 데이터 소스 — `programsOf` 와 같은 집합·순서에 연결 메뉴 경로를 붙인다.
-    목업 S0_105 PROGRAMS 는 pid·pname 뿐이라 "연결 메뉴"는 리프의 상위 라벨을 ' › ' 로 이어 만든다. */
-export function programCatalog(rows: readonly MenuRow[]): ProgramEntry[] {
-  const pathOf = (r: MenuRow): string => {
-    const p = rowById(rows, r.parentId);
-    return p ? `${pathOf(p)} › ${r.name}` : r.name;
-  };
-  return rows.filter((r) => r.pid).map((r) => ({ leafId: r.id, pid: r.pid, pname: r.pname, menuPath: pathOf(r), use: r.use }));
-}
 
 /** 프로그램ID 유일 불변식 — `pid`를 이미 쓰는 **다른** 행(수정 중인 자기 자신 `excludeId` 제외). 빈 pid 는 충돌이 아니다.
     메뉴 등록/수정 모달이 저장 전에 검사한다(한 프로그램은 한 메뉴에만 — 아니면 프로그램 카탈로그에 같은 행이 두 번 생긴다). */
