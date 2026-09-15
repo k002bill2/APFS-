@@ -444,6 +444,19 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
 
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
+     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+  const selActions = selected ? (
+    /* 선택 행의 심사단계에 맞는 작업만 노출(공고관리 컨텍스트 액션 패턴). 취소 단계는 작업 없음 */
+    <>
+      {/* 단계 배지만 표시 — 자펀드명은 선택 행에서 이미 보이므로 생략(2026-09-08 결정) */}
+      <StatusBadge tone={STAGE_TONE[selected.stg]} label={selected.stg} size="lg" dot={false} />
+      {stageActs.map((a) => (
+        <Button key={a.label} variant={a.primary ? 'primary' : 'outline'} size="sm" onClick={a.run}>{a.label}</Button>
+      ))}
+      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+    </>
+  ) : null;
   return (
     <GridFrame
       crumbs={['홈', '투자자산관리', '자펀드 관리', '자펀드 관리']}
@@ -451,17 +464,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
       cardTitle="자펀드 관리"
       favRoute="subfund"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? (
-        /* 선택 행의 심사단계에 맞는 작업만 노출(공고관리 컨텍스트 액션 패턴). 취소 단계는 작업 없음 */
-        <>
-          {/* 단계 배지만 표시 — 자펀드명은 선택 행에서 이미 보이므로 생략(2026-09-08 결정) */}
-          <StatusBadge tone={STAGE_TONE[selected.stg]} label={selected.stg} size="lg" dot={false} />
-          {stageActs.map((a) => (
-            <Button key={a.label} variant={a.primary ? 'primary' : 'outline'} size="sm" onClick={a.run}>{a.label}</Button>
-          ))}
-          <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
-        </>
-      ) : (
+      toolbarLeft={selected ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['' as const, ...STAGES] as ('' | Stage)[]).map((s) => (
@@ -486,6 +489,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           ))}
         </>
       )}
+      contextActions={selActions}
       toolbarRight={<>
         {/* 금액 단위 표기 — 캡션(비마스킹). 카드헤더 sub 캡션을 없애면서 여기로 이동 */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>

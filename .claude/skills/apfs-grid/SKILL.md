@@ -42,7 +42,10 @@ interface GridFrameProps {
   favRoute?: string;         // 즐겨찾기 별(★) 토글 활성 — 현재 페이지 라우트(onNav 인자와 동일 문자열).
                              // 지정 시 카드헤더 타이틀 옆에 별 렌더, 클릭=MenuStore 'fav' on/off(제한 없음).
                              // 키 도메인=ALLMENU(key=라우트, MENU 평탄화) — 라우트가 메뉴에 없으면 별 미렌더.
-  toolbarLeft?: ReactNode;   // 툴바 좌: 필터칩·선택 액션·컨텍스트 설명
+  toolbarLeft?: ReactNode;   // 툴바 좌: 필터칩·컨텍스트 설명 (선택 액션은 toolbarLeft 가 아니라 contextActions 로)
+  contextActions?: ReactNode;// 선택 컨텍스트 액션 묶음(수정·삭제·선택 해제·단계 전이…).
+                             // 툴바 좌측에 렌더되다가 스크롤로 툴바가 가려지면 하단 플로팅 바로 **이동**한다.
+                             // → 아래 "선택 액션 플로팅 바" 절. 안 넘기면 동작 변화 0.
   toolbarRight?: ReactNode;  // 툴바 우: 새로고침·상세필터 등
   footerLeft?: ReactNode;    // 푸터 좌: 건수 등 요약
   footerCenter?: ReactNode;  // 푸터 중: 페이지네이션
@@ -156,6 +159,58 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - ⚠️ 트리거에 `.apfs-menu-trigger` 금지 — 그 클래스는 링을 끄고 `bg-card`로 초점을 대신 표시하는데 combo는 이미 카드 배경이라 단서가 사라진다(→ [[global-focus-overhaul-exception-surfaces]]). Tooltip은 `span`으로 감싸 `data-state` 충돌을 피한다(MoreMenu 동형).
   - kebab 항목은 `MoreMenuItems` 조각을 kebab과 combo가 **공유**한다(복제하면 단축키 힌트가 갈라진다).
 - **타이틀은 메뉴 리프와 일치.** `cardTitle`·`title`·`crumbs` 리프를 **`data.ts` 메뉴 리프 라벨 문자열 그대로**(띄어쓰기 포함) 맞춘다. `cardTitle`이 `title`과 같으면 생략 가능(H1=`cardTitle ?? title`). **"○○ 목록" 같은 임의 축약 금지**(2026-09-11 "자펀드 목록"→"자펀드 관리" 정정). 매트릭스/집계형이 문서 정식명칭을 카드 제목으로 쓰는 것(asset_funding "…현황표")은 예외.
+
+## 선택 액션 플로팅 바 (2026-09-15 사용자 지시, `contextActions` 슬롯 — 전 페이지 공통)
+
+긴 목록을 스크롤하면 상단 툴바가 화면 밖으로 나가 **선택한 행에 쓸 액션(수정·삭제·선택 해제·단계 전이)에 닿을 수 없다.** 그래서 GridFrame 이 그 묶음을 툴바 좌측 ↔ 떠 있는 바 사이로 옮긴다.
+
+### 소비처 계약 — 이것만 지키면 된다
+```tsx
+const selActions = selected ? (            // 또는 selCount > 0 ?
+  <>
+    <StatusBadge … />
+    <Button …>수정</Button><Button …>삭제</Button>
+    <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+  </>
+) : null;
+
+<GridFrame
+  toolbarLeft={selected ? null : (<>필터칩…</>)}   // ← 선택 시 **비운다**
+  contextActions={selActions}
+  … />
+```
+- **`toolbarLeft` 와 `contextActions` 에 같은 노드를 동시에 넘기지 않는다.** 두 곳에 렌더하면 화면 밖 원본이 탭 순서에 남아 키보드 초점이 **보이지 않는 버튼으로 뛴다**(Codex P2). GridFrame 은 둘 중 **한 곳에만** 렌더한다 — 복제가 아니라 이동이다. 검증: `수정` 버튼이 DOM 전체에 항상 **1개**.
+- `contextActions` 를 넘기지 않는 페이지는 동작이 전혀 바뀌지 않는다(IntersectionObserver 도 안 걸린다).
+- **되돌리기 레버**: `grid_frame.tsx` 의 `const FLOATING_ACTIONS = true` → `false` 한 줄로 전 화면 무효.
+- 적용 완료(2026-09-15): `menu_manage` · `user_manage` · `subfund_manage` · `program_manage` · `user_permission_manage` · `user_invite_manage` · `investment_review_manage` · `generic_list`(스키마 주도 전 페이지) · `asset_funding`.
+  `code_manage` 는 대상 아님 — 좌 그리드가 "우측 패널의 데이터 소스"라 해제 개념이 없고 툴바가 무조건 렌더다.
+  ⚠️ `asset_funding` 은 배선해도 처음엔 **도달 불가**였다 — `rowSelection={{mode:'multiRow', checkboxes:false}}` 에
+  `enableClickSelection`(AG Grid 기본 **false**)이 빠져 체크박스도 행 클릭도 선택을 만들지 못했다(주석엔
+  "행 클릭으로 선택 유지"로 적혀 있던 선행 버그). 2026-09-15 사용자 결정으로 그 옵션을 켰고, 같이 `rowSelection` 을
+  **모듈 상수로 호이스팅**했다 — 선택이 살아나면 선택마다 리렌더가 나므로 인라인 리터럴은 컬럼 폭을 되돌린다
+  (→[[apfs-aggrid]] ⑦). **교훈: `checkboxes:false` 로 체크박스 열을 지울 때 `enableClickSelection:true` 를 같이
+  켜지 않으면 선택 수단이 0이 된다** — "행 클릭으로 선택"은 기본 동작이 아니다.
+
+### 프레임 쪽 구현 계약 (건드릴 때 반드시 읽을 것)
+- **body Portal 필수.** GridFrame 루트에 `animation: dashFade … both` 가 걸려 있어 종료 상태가 항등행렬로 굳고, 그 transform 이 (a) 새 쌓임맥락 (b) `fixed` 의 컨테이닝블록을 만든다. 포털 없이 `fixed` 를 쓰면 좌표가 뷰포트가 아니라 **카드 기준**이 되고 z 도 갇힌다(→[[z-index]] 규칙 3·5의 문서화된 버그와 동일 원인).
+- **z = 55 (raw 정수, 토큰 아님).** 오버레이가 아니라 셸 chrome 계층(≤60) 소속 — sticky 푸터(20) 위, FAB(60) 아래, 모달(80)이 항상 덮는다.
+- **좌표는 전부 실측, 하드코딩 0.** CSS 변수(`--fab-left`/`--fab-top`)로 넘긴다 — inline `left` 로 주면 미디어쿼리를 inline 이 덮는다.
+  - `left` = **체크박스 열 왼쪽 경계**. `[col-id="ag-Grid-SelectionColumn"]` → 첫 `.ag-header-cell` → 프레임+18 3단 폴백. `--fab-left` 는 바의 **왼쪽 엣지**이므로 CSS 에 `translateX(-50%)` 를 두지 않는다(하나만 바꾸면 바가 폭의 절반만큼 밀린다).
+  - `top` = **선택된 행 바로 위**(`.ag-row-selected` 실측 − 바높이 − 8). 상단 clamp = 그리드 헤더 실측 하단+8, 하단 clamp = 뷰포트 하단−바높이−12 → 선택 행이 화면 밖이어도 조작 가능.
+  - 그리드 헤더 위치는 `top:58` 에 닿기 전까지 변하므로 **실측**한다. `gnb + 헤더높이` 고정값은 스크롤 도중 아직 보이는 헤더를 덮는다(Codex P2).
+- **표시/숨김은 이력(hysteresis) — 기준선이 둘이다.** 액션 호스트 안의 1px absolute 센티넬 2개(`top:0`, `top:50%`)를 IO(`rootMargin: -GNB높이`)로 본다.
+  - **표시 = 중앙(50%) 센티넬이 가려질 때.** 하단 기준이면 그 전에 "절반 이상 가려졌는데 바는 없는" 구간이 남는다.
+  - **숨김 = 상단 센티넬이 드러날 때.** 하단 기준으로 숨기면 올라올 때 바는 사라졌는데 버튼은 아직 GNB 뒤인 **조작 불가 구간**이 생긴다(Codex P2).
+  - 센티넬을 쓰는 이유: 툴바 전체를 보면 좁은 폭 2줄 감김에서 액션 줄만 숨어도 안 뜨고, 액션 호스트를 직접 보면 액션이 빠진 뒤 높이가 0으로 붕괴해 안 닫힌다. absolute 라 flex·gap·툴바 높이(48px)에 영향 0.
+- **초점 이월**: 이동으로 언마운트되는 버튼의 순번을 IO 콜백(**리렌더 전**이라 `activeElement` 가 아직 이동 전 버튼)에 적어 두고 `useLayoutEffect` 에서 같은 순번으로 복귀. `focus({preventScroll:true})` 필수 — 없으면 브라우저가 초점 요소를 보이게 스크롤해 사용자 스크롤과 싸운다.
+- ⚠️ **선택 변경 감지 = 의존성 배열 없는 `useLayoutEffect`(매 렌더 재측정) + 값 비교 가드.** `contextActions` 는 렌더마다 새 ReactNode 라 의존성으로 쓸 수 없다. 가드 없이 매 렌더 `setState({…})` 하면 **무한 루프**(→[[aggrid-onpaginationchanged-render-loop]] 와 동형) — `prev` 를 그대로 돌려 React 가 렌더를 건너뛰게 한다.
+- 프레임 위치 추적은 `ResizeObserver(root **+ 부모**)` + `window resize` + (바 표시 중) rAF 스크롤. 부모까지 봐야 하는 이유: 1280 캡 상태에서 LNB 를 접으면 **폭은 그대로인데 left 만 이동**해 root 관찰만으로는 안 울린다.
+
+### 검증 (브라우저 실측 필수 — 빌드 green 은 무의미)
+- 임계: 스크롤 y 를 10px 간격으로 **양방향** 훑어 "바가 있거나 버튼 절반 이상이 보인다" 불변식 위반 0건.
+- 탭스톱 1벌(`수정` 버튼 수 = 1) · 바 버튼 Enter 로 모달 개폐 · 초점 양방향 이월 · 왕복 2회 고착/깜빡임 없음.
+- `leftDelta = 바 left − 선택열 left = 0` · `border-radius: 12px` · LNB 접기/펼치기 추적 · 라이트/다크.
+- ⚠️ **콘텐츠가 창보다 짧으면 바가 뜰 수 없다** — 검증 실패로 오진하기 쉽다. 먼저 `document.scrollingElement.scrollHeight > innerHeight` 를 확인하고(메뉴관리는 "전체 펼치기"로 행을 늘린다), 페이지 스크롤러는 `window` 다(조상 전부 `overflow: visible`).
 
 ## 검토필요 마커(ⓘ) — 목업 설계메모 이식 (2026-09-12 사용자 지시, 정본)
 현행시스템 목업의 `.review`/`.rpop`(라벨 옆 마커 + 검토메모 팝오버)은 **이식한다**. 원문(현행시스템)이

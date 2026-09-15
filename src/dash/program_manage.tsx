@@ -380,24 +380,27 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
     ['도움말', fHelp && (fHelp === 'y' ? '도움말 있음' : '도움말 없음'), () => setFHelp('')],
   ];
 
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
+     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+  const selActions = selected ? (
+    <>
+      <StatusBadge tone={selected.linked ? 'info' : 'primary'} label={selected.linked ? '메뉴 연결' : '미연결'} size="lg" dot={false} />
+      <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: selected.id })}>수정</Button>
+      <Button variant="outline" size="sm" leadingIcon="memo" onClick={() => setModal({ kind: 'help', id: selected.id })}>도움말</Button>
+      {/* 삭제 — 연결 프로그램은 비활성 + 버튼 안 ⓘ(hover)로 사유 팝오버(목업 subAlert "삭제 불가"를 UI 로 표현) */}
+      {selected.linked
+        ? <DeleteBlockedButton />
+        : <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => requestDelete(selected)}>삭제</Button>}
+      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+    </>
+  ) : null;
   return (
     <GridFrame
       crumbs={['홈', '관리자', '시스템 관리', '프로그램관리']}
       title="프로그램관리"
       favRoute="program-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? (
-        <>
-          <StatusBadge tone={selected.linked ? 'info' : 'primary'} label={selected.linked ? '메뉴 연결' : '미연결'} size="lg" dot={false} />
-          <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: selected.id })}>수정</Button>
-          <Button variant="outline" size="sm" leadingIcon="memo" onClick={() => setModal({ kind: 'help', id: selected.id })}>도움말</Button>
-          {/* 삭제 — 연결 프로그램은 비활성 + 버튼 안 ⓘ(hover)로 사유 팝오버(목업 subAlert "삭제 불가"를 UI 로 표현) */}
-          {selected.linked
-            ? <DeleteBlockedButton />
-            : <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => requestDelete(selected)}>삭제</Button>}
-          <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
-        </>
-      ) : (
+      toolbarLeft={selected ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {USE_CHIPS.map(([v, l]) => <FilterChip key={v || 'all'} active={fUse === v} onClick={() => setFUse(v)}>{l}</FilterChip>)}
@@ -411,6 +414,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
           ))}
         </>
       )}
+      contextActions={selActions}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <span ref={topMoreRef} className="inline-flex">

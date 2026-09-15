@@ -48,8 +48,8 @@
       "skillName": "apfs-grid",
       "priority": "high",
       "enforcement": "suggest",
-      "keywords": ["그리드", "grid", "gridframe", "리스트 페이지", "테이블 페이지", "양식 통일", "프레임", "frame", "매트릭스", "matrix", "집계표", "공통 양식", "통일"],
-      "intentPatterns": ["(그리드|grid|리스트|list|테이블|table|매트릭스|matrix|양식|프레임|frame).*(통일|만들|작성|추가|컴포넌트|component|페이지|page)", "(통일|unify|공통).*(양식|그리드|grid|리스트|테이블)"]
+      "keywords": ["그리드", "grid", "gridframe", "리스트 페이지", "테이블 페이지", "양식 통일", "프레임", "frame", "매트릭스", "matrix", "집계표", "공통 양식", "통일", "플로팅 바", "floating bar", "선택 액션", "contextActions", "선택 해제", "액션 바", "스크롤 툴바"],
+      "intentPatterns": ["(그리드|grid|리스트|list|테이블|table|매트릭스|matrix|양식|프레임|frame).*(통일|만들|작성|추가|컴포넌트|component|페이지|page)", "(통일|unify|공통).*(양식|그리드|grid|리스트|테이블)", "(플로팅|floating|떠 ?있는).*(바|bar|액션|버튼)"]
     },
     {
       "skillName": "apfs-detail-filter",
