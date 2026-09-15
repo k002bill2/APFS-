@@ -60,7 +60,7 @@ const columnDefs: ColDef<UserRow>[] = [
   { field: 'name', headerName: '성명', width: 130, minWidth: 110, maxWidth: 200, cellStyle: flexCenter,
     cellRenderer: (p: any) => <span className="inline-flex items-center gap-1.5 min-w-0"><span className="font-semibold"><MT>{p.value}</MT></span>{p.data?.seed && <StatusBadge tone="success" label="시드" size="sm" dot={false} />}</span> },
   { field: 'lid', headerName: '로그인 아이디', width: 134, maxWidth: 160, cellStyle: { ...flexCenter, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 160, cellStyle: muted, cellRenderer: (p: any) => <MT>{p.value || '-'}</MT> },
+  { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 170, cellStyle: muted, cellRenderer: (p: any) => <MT>{p.value || '-'}</MT> },
   { field: 'type', headerName: '구분', width: 84, maxWidth: 84, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone="info" label={p.value} size="md" dot={false} /> },
   { headerName: '소속유형', width: 116, maxWidth: 116, cellStyle: flexMid, valueGetter: (p) => (p.data ? belong(p.data) : ''),
     cellRenderer: (p: any) => <StatusBadge tone={p.data?.type === '농금원' ? 'primary' : 'warning'} label={p.value} size="md" dot={false} /> },

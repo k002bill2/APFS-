@@ -59,8 +59,8 @@ const columnDefs: ColDef<InviteView>[] = [
   { field: 'active', headerName: '재직', width: 88, maxWidth: 88, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '재직' : '퇴사'),
     cellRenderer: (p: any) => <StatusBadge tone={p.value ? 'success' : 'danger'} label={p.value ? '재직' : '퇴사'} size="md" dot={false} /> },
   { field: 'state', headerName: '초대상태', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={INVITE_TONE[p.value as InviteState]} label={p.value} size="lg" dot={false} /> },
-  { field: 'invitedAt', headerName: '초대일시', width: 140, maxWidth: 140, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? mn(p.value) : '-') },
-  { field: 'expiresAt', headerName: `만료(${INVITE_TTL_HOURS}시간)`, width: 140, maxWidth: 140, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
+  { field: 'invitedAt', headerName: '초대일시', width: 156, maxWidth: 156, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? mn(p.value) : '-') },
+  { field: 'expiresAt', headerName: `만료(${INVITE_TTL_HOURS}시간)`, width: 156, maxWidth: 156, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
     valueFormatter: (p) => (p.data?.state === '초대발송' && p.value ? mn(p.value) : '-') },
 ];
 const ROW_SELECTION: RowSelectionOptions<InviteView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };

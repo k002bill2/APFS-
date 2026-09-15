@@ -88,7 +88,7 @@ const makeColumns = (toggle: (id: string) => void): ColDef<MenuView>[] => [
   { field: 'name', headerName: '메뉴명', flex: 1, width: 300, minWidth: 220, ...NOSORT, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.data ? <NameCell data={p.data} toggle={toggle} /> : null) },
   { field: 'code', headerName: '메뉴ID', width: 96, ...NOSORT, cellStyle: mono, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'en', headerName: '메뉴명(영문)', width: 170, maxWidth: 240, ...NOSORT, cellStyle: { ...flexCenter, color: 'var(--muted-foreground)' },
+  { field: 'en', headerName: '메뉴명(영문)', width: 240, maxWidth: 240, ...NOSORT, cellStyle: { ...flexCenter, color: 'var(--muted-foreground)' },
     cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
   { field: 'pid', headerName: '프로그램ID', width: 110, ...NOSORT, cellStyle: mono, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
   { field: 'pname', headerName: '프로그램명', width: 200, maxWidth: 280, ...NOSORT, cellStyle: flexCenter,

@@ -70,7 +70,7 @@ const GROUP_COLS: ColDef<GroupView>[] = [
 const DETAIL_COLS: ColDef<CodeDetail>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'code', headerName: '코드', width: 90, maxWidth: 120, cellStyle: flexMid, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
-  { field: 'name', headerName: '코드명', flex: 1, width: 180, minWidth: 130, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
+  { field: 'name', headerName: '코드명', flex: 1, width: 180, minWidth: 170, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'en', headerName: '코드명(영문)', width: 140, maxWidth: 200, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
   { field: 'ord', headerName: '정렬', width: 64, maxWidth: 64, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'rem', headerName: '비고', width: 170, maxWidth: 240, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
