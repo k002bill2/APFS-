@@ -1,0 +1,155 @@
+{
+  "meta": {
+    "project": "농림수산식품모태펀드 투자자산관리시스템 재구축",
+    "pilot": "공고관리 (Notice Management)",
+    "version": "1.1",
+    "sourceSystem": "농식품모태펀드관리시스템 (S1)",
+    "mainMenu": "모태펀드",
+    "program": "공고관리",
+    "sourceFile": "통합_화면_구조도_v1.2.xlsx",
+    "basis": "AS-IS 추출 + 1차 설계 반복 결정 반영 (TO-BE)",
+    "designTarget": "KRDS(정부 디자인시스템) 기반 모던 리디자인",
+    "adoptedDirection": "모던 필터형(1b) — 필터칩 + 행 클릭 선택 + 컨텍스트 액션 + 상태 태그",
+    "navigation": "GNB(상단 글로벌)·LNB(좌측 로컬) 사용자 옵션 전환형",
+    "screenCount": 3,
+    "itemCount": 32,
+    "columnLegend": {
+      "component": "AS-IS 원천 컴포넌트",
+      "dataType": "YYYY=연도, 숫자, 문자",
+      "options.codeRef": "공통코드(CDTP) 그룹 참조 — 실 옵션은 DB 공통코드 테이블",
+      "options.inline": "화면 하드코딩 정적 옵션",
+      "readOnly": "상위 검색조건에서 상속되어 표시만 되는 값",
+      "normalizedLabel": "통합 용어집 기준 권장 표준 라벨(TO-BE, 적용됨)"
+    }
+  },
+
+  "decisions": {
+    "note": "1차 설계 작업(엑셀→스펙→목업)에서 확정. 기존 별도 보완문서를 본 스펙에 통합.",
+    "items": [
+      { "topic": "채택 방향", "decision": "모던 필터형(1b) 채택. 전통 관리자형(1a)은 미채택.", "date": "2026-08-23" },
+      { "topic": "내비게이션", "decision": "GNB(상단)·LNB(좌측)를 사용자 옵션으로 전환 가능하게 구성.", "date": "2026-08-23" },
+      { "topic": "첨부파일", "decision": "드래그앤드롭 + '파일 선택' 버튼 병행. KWCAG 2.2 SC 2.5.7(드래그 대체수단) 충족 위해 버튼 fallback 필수.", "date": "2026-08-23" },
+      { "topic": "그리드 CRUD", "decision": "등록/수정/삭제 버튼화, 삭제는 확인 다이얼로그.", "date": "2026-08-23" },
+      { "topic": "폼 재사용", "decision": "등록/수정 팝업 = 단일 폼 create/edit 2모드.", "date": "2026-08-23" },
+      { "topic": "용어 표준화", "decision": "사업년도→사업연도, 계정→계정구분(모펀드 구성 계정: 농식품투자/수산투자. 자펀드 아님) 적용.", "date": "2026-08-23" },
+      { "topic": "그리드 솔루션", "decision": "IBSheet8 vs AG Grid 검토중 — 별도 문서(검토\\그리드솔루션_검토_IBSheet8_vs_AGGrid.md). 미확정.", "date": "2026-08-23" }
+    ]
+  },
+
+  "accessibility": {
+    "standard": "KWCAG 2.2 (웹접근성 인증 대비)",
+    "rules": [
+      "그리드 행 선택은 실제 라디오/포커스 가능 요소(키보드·스크린리더).",
+      "팝업: role=dialog, aria-modal=true, aria-labelledby, 포커스 트랩, ESC 닫기, 닫을 때 트리거로 포커스 복귀.",
+      "삭제 확인: role=alertdialog, 기본 포커스=취소.",
+      "첨부 드래그앤드롭에는 키보드 조작 가능한 '파일 선택' 버튼 병행(SC 2.5.7).",
+      "테이블: 시각적 숨김 caption + th scope=col. 토스트: role=status, aria-live=polite.",
+      "모달 오픈 시 배경 스크롤 잠금 + 스크롤바 폭 보정(레이아웃 시프트 방지).",
+      "명도대비 AA, :focus-visible 유지, prefers-reduced-motion 대응, 라이트/다크 양쪽."
+    ]
+  },
+
+  "componentStandards": {
+    "date": "날짜(년도·일자·분기·반기)는 기본 '날짜 선택기(picker)'. 셀렉트박스 금지. 유일 예외=조회(읽기전용) 표시는 포맷 라벨. 연도는 전체 범위(농금원 초기~현재).",
+    "attachment": "첨부=드래그앤드롭+파일선택 버튼(SC 2.5.7). 첨부 목록은 드롭존 밖 하단 별도 영역.",
+    "keyFields": "PK 필드는 등록 시 편집+중복체크, 수정 시 잠금(읽기전용)."
+  },
+
+  "codeRefs": {
+    "MF": {
+      "cdtp": "CDTP:MF", "group": "MF", "groupDesc": "거래처코드 (모펀드 구분 아님)",
+      "source": "공통코드 시트(그룹 정의) / 실 옵션은 DB 공통코드 테이블",
+      "actualValues": ["농업정책자금관리단", "수탁기관(농협)", "회계법인"],
+      "activeCode": "현재 A1만 사용",
+      "usedIn": "공고관리가 아닌 다른 화면(거래처 지정)에서 사용",
+      "note": "⚠️ MF는 모펀드 분류가 아니라 거래처코드. 공고관리 '모펀드' 필드를 MF에 연결한 것은 AS-IS 레거시 → TO-BE에서 정리 예정. 모펀드는 단일(농식품모태펀드) 고정."
+    }
+  },
+
+  "screens": [
+    {
+      "id": "notice-list",
+      "name": "공고관리 (목록)",
+      "type": "메인",
+      "purpose": "출자사업 계획공고를 연도·정기/수시로 조회하고, 목록에서 공고를 선택해 등록/수정/삭제한다.",
+      "layout": "모던 필터형(1b): 필터칩 + 행 클릭 선택 + 선택 시 컨텍스트 액션 노출",
+      "sections": [
+        { "role": "title", "label": "공고관리" },
+        {
+          "role": "search",
+          "label": "필터 영역",
+          "fields": [
+            { "key": "moFund", "label": "모펀드", "component": "필터칩(고정, 단일값)", "sampleData": "농식품모태펀드", "normalizedLabel": "모펀드(모태펀드)", "note": "단일 고정값. AS-IS의 CDTP:MF 연결은 거래처코드 레거시라 부적절 → TO-BE 정리" },
+            { "key": "bizYear", "label": "사업연도", "component": "날짜 선택기(연도 picker)", "dataType": "YYYY", "sampleData": "2026", "normalizedLabel": "사업연도", "note": "셀렉트박스 금지 — 날짜는 picker. 연도 전체 범위(농금원 초기~현재) 지원" },
+            { "key": "regularType", "label": "정기/수시", "component": "필터칩(전체/정기/수시)", "options": { "inline": ["전체", "정기", "수시"] } }
+          ]
+        },
+        {
+          "role": "grid",
+          "sectionNo": 1,
+          "label": "공고 목록 그리드",
+          "rowSelect": { "key": "select", "label": "행 클릭 선택", "component": "행 클릭/키보드(Enter·Space)", "note": "선택 시 수정/삭제 컨텍스트 액션 노출" },
+          "columns": [
+            { "key": "bizYear", "label": "사업연도", "component": "라벨", "sampleData": "2026" },
+            { "key": "regularType", "label": "정기/수시", "component": "상태 태그", "sampleData": "정기" },
+            { "key": "round", "label": "차수", "component": "라벨", "sampleData": "1" },
+            { "key": "account", "label": "계정구분", "component": "라벨", "sampleData": "농식품", "normalizedLabel": "계정구분", "note": "모펀드(농식품모태펀드) 구성 계정: 농식품투자계정/수산투자계정. 자펀드 아님" },
+            { "key": "title", "label": "제목", "component": "라벨", "sampleData": "농림수산식품모태펀드 2025년 정기 출자사업(농식품 계정) 계획 공고", "note": "첨부 있으면 PDF 칩 표시" }
+          ],
+          "actions": [
+            { "key": "create", "label": "공고문 등록", "component": "버튼(Primary)", "opensPopup": "notice-form", "mode": "create" },
+            { "key": "edit", "label": "수정", "component": "버튼(컨텍스트)", "opensPopup": "notice-form", "mode": "edit", "requiresRowSelect": true },
+            { "key": "delete", "label": "삭제", "component": "버튼(컨텍스트, danger)", "requiresRowSelect": true, "confirm": true }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "notice-form",
+      "name": "공고문 등록/수정 (단일 폼 2모드)",
+      "type": "팝업",
+      "modes": ["create", "edit"],
+      "purpose": "신규 공고문 작성(create) 또는 선택 공고 수정(edit). 동일 필드셋, 단일 컴포넌트 2모드.",
+      "sections": [
+        { "role": "title", "label": "공고문 등록 / 공고문 수정 (모드별)" },
+        {
+          "role": "input",
+          "label": "입력 폼",
+          "fields": [
+            { "key": "moFund", "label": "모펀드", "component": "단일이면 라벨(읽기전용) / 복수면 셀렉트박스", "isKey": true, "sampleData": "농식품모태펀드", "note": "현 시스템 단일(농식품모태펀드)→읽기전용 라벨. CDTP:MF(거래처코드) 연결은 레거시 → TO-BE 정리" },
+            { "key": "bizYear", "label": "사업연도", "component": "등록=날짜 선택기(연도 picker) / 수정=라벨(읽기전용)", "isKey": true, "dataType": "YYYY", "required": true, "normalizedLabel": "사업연도", "note": "날짜는 picker(셀렉트 금지). 연도 전체 범위 지원. 키값이라 수정 시 잠금, 등록 시 중복 체크" },
+            { "key": "regularType", "label": "정기/수시", "component": "셀렉트박스", "isKey": true, "options": { "inline": ["정기", "수시"] }, "note": "edit 시 행 값으로 프리셀렉트" },
+            { "key": "round", "label": "차수", "component": "인풋박스", "dataType": "숫자", "isKey": true, "required": true },
+            { "key": "fundAccount", "label": "계정구분", "component": "셀렉트박스", "isKey": true, "options": { "inline": ["농식품", "수산"] }, "note": "모펀드 구성 계정(농식품투자계정/수산투자계정). 자펀드 개념 아님. edit 시 프리셀렉트" },
+            { "key": "title", "label": "제목", "component": "인풋박스", "dataType": "문자", "required": true },
+            { "key": "content", "label": "공고내용", "component": "텍스트에어리어", "dataType": "문자" },
+            { "key": "attachment", "label": "첨부파일", "component": "드래그앤드롭 + 파일선택 버튼",
+              "accepts": "PDF, HWP, DOCX (최대 20MB)",
+              "a11y": "KWCAG 2.2 SC 2.5.7 — 드래그 대체수단(파일 선택 버튼) 필수. 숨김 file input + 라벨.",
+              "uiNote": "첨부된 파일 목록은 드롭존 '밖 하단 별도 영역'에 표시 — 액션(드롭존)과 상태(목록) 분리.",
+              "sampleData": "260202(붙임) '26년 정기 출자사업(농식품투자 계정) 계획 공고_홈페이지.pdf" }
+          ]
+        }
+      ],
+      "keyValidation": {
+        "primaryKey": ["모펀드", "사업연도", "정기/수시", "차수", "계정구분"],
+        "rule": "등록(create) 시 키 조합 중복 체크 필수. 키 필드는 수정(edit) 시 잠금(읽기전용)."
+      },
+      "footerActions": [
+        { "key": "close", "label": "닫기", "component": "버튼(Secondary)" },
+        { "key": "save", "label": "저장", "component": "버튼(Primary)" }
+      ]
+    }
+  ],
+
+  "designNotes": {
+    "adoptedDirection": "모던 필터형(1b) 확정. 전통 관리자형(1a)은 참고안으로 보관.",
+    "navigation": "GNB(상단 글로벌+서브탭) ↔ LNB(좌측 사이드바) 사용자 옵션 전환. 콘텐츠 영역은 공통.",
+    "attachment": "드래그앤드롭 dropzone + '파일 선택' 버튼 병행(드래그 대체수단). 파일 칩·삭제 지원.",
+    "componentReuse": "등록/수정 = 단일 '공고문 폼' create/edit 2모드.",
+    "krds": "KRDS 포인트블루(#256EF4) 계열 색·타이포·컴포넌트 매핑. 실제 색/타이포 토큰은 공식값 확정 필요(현재 근사).",
+    "normalization": "라벨은 통합 용어집 표준어 적용(사업연도, 계정구분). 원본 엑셀은 AS-IS 유지, 표준화는 TO-BE에서.",
+    "mockup": "D:\\Project\\APFS\\파일럿_공고관리\\mockup\\공고관리_목업_artifact.html (Artifact 발행)"
+  }
+}
