@@ -18,7 +18,7 @@ import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame } from './grid_frame';
-import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
+import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -52,7 +52,7 @@ const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 type InviteView = InviteRow & { orgn: string; state: InviteState; expiresAt: string };
 
 const columnDefs: ColDef<InviteView>[] = [
-  { headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
+  { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'orgn', headerName: '운용사', width: 160, minWidth: 130, maxWidth: 220, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'name', headerName: '성명', width: 110, maxWidth: 160, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
   { field: 'email', headerName: '이메일', width: 200, minWidth: 160, maxWidth: 260, cellStyle: muted, cellRenderer: (p: any) => <MT>{p.value}</MT> },
@@ -298,6 +298,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
           selectionColumnDef={SELECTION_COL}
           preventDefaultOnContextMenu
           onGridReady={onGridReady}
+          onModelUpdated={refreshNoColumn}
           onSelectionChanged={onSelectionChanged}
           onRowDataUpdated={onRowDataUpdated}
           onRowDoubleClicked={onRowDoubleClicked}

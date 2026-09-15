@@ -19,7 +19,7 @@ import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame } from './grid_frame';
-import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
+import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -56,7 +56,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 
 const columnDefs: ColDef<UserRow>[] = [
-  { headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
+  { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'name', headerName: '성명', width: 130, minWidth: 110, maxWidth: 200, cellStyle: flexCenter,
     cellRenderer: (p: any) => <span className="inline-flex items-center gap-1.5 min-w-0"><span className="font-semibold"><MT>{p.value}</MT></span>{p.data?.seed && <StatusBadge tone="success" label="시드" size="sm" dot={false} />}</span> },
   { field: 'lid', headerName: '로그인 아이디', width: 134, maxWidth: 160, cellStyle: { ...flexCenter, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
@@ -387,6 +387,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
           pagination paginationPageSize={pageSize} suppressPaginationPanel
           preventDefaultOnContextMenu
           onGridReady={onGridReady}
+          onModelUpdated={refreshNoColumn}
           onSelectionChanged={onSelectionChanged}
           onRowDataUpdated={onRowDataUpdated}
           onPaginationChanged={onPaginationChanged}

@@ -16,7 +16,7 @@ import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame } from './grid_frame';
-import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
+import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';
 import { PeriodPicker } from './ui/period-picker';
 import { AgGridReact } from 'ag-grid-react';
@@ -44,7 +44,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 
 const columnDefs: ColDef<AuditRow>[] = [
-  { headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
+  { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'ts', headerName: '일시', width: 170, maxWidth: 170, cellStyle: centerNum, sort: 'desc', valueFormatter: (p) => mn(p.value) },
   { field: 'actor', headerName: '행위자', width: 120, maxWidth: 140, cellStyle: { ...flexCenter, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'kind', headerName: '유형', width: 110, maxWidth: 120, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={KIND_TONE[p.value as AuditKind]} label={p.value} size="md" dot={false} /> },
@@ -285,6 +285,7 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
           selectionColumnDef={SELECTION_COL}
           preventDefaultOnContextMenu
           onGridReady={onGridReady}
+          onModelUpdated={refreshNoColumn}
           onSelectionChanged={onSelectionChanged}
           onRowDoubleClicked={onRowDoubleClicked}
           onCellKeyDown={onCellKeyDown}
