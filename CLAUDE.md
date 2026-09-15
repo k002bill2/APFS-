@@ -61,6 +61,39 @@ APFS/
 - `localStorage`에 테마(라이트/다크) 설정을 영속화합니다.
 - 배포: `main`에 push하면 Vercel이 `vite build` 후 `dist/`를 서빙합니다(자동 배포).
 
+## 브랜치 작업 = 워크트리 (공유 체크아웃은 `main` 고정)
+
+이 저장소는 **멀티세션 동시 작업 환경**이다. 공유 체크아웃(`APFS-`)에서 `git switch` 로 브랜치를
+갈아타면, 같은 디렉터리를 보는 다른 세션의 dev 서버(:5273 등)가 조용히 **다른 커밋의 소스**를
+서빙한다 → "고쳤는데 되살아났다"는 유령 버그. 실사례(2026-09-15): #170 이전에 분기한 브랜치가
+체크아웃돼 있어, 제거한 감사로그·권한 변경이력 행선택이 되살아난 것처럼 보였다.
+
+**규약: 공유 체크아웃은 `main` 에 두고, 브랜치 작업은 워크트리에서 한다.**
+
+| 명령 | 하는 일 |
+|------|---------|
+| `bash scripts/wt.sh new <branch>` | `.claude/worktrees/<branch>` 생성(base `origin/main`) + `node_modules` CoW 복제 + 포트 고정 배정 |
+| `bash scripts/wt.sh dev <branch>` | 배정된 포트로 dev 서버 실행 |
+| `bash scripts/wt.sh ls` / `rm <branch>` | 목록(브랜치·포트·dirty) / 제거(미커밋 변경 있으면 거부) |
+| `bash scripts/wt.sh setup <dir>` | `EnterWorktree` 도구로 만든 워크트리에 `node_modules`·포트만 배선 |
+
+- 워크트리는 **인덱스·HEAD 를 따로 갖고 `.git` 만 공유**하므로, 다른 세션의 `switch`/`reset`/`add`
+  경합에 면역이다(메모리 `multi-session-branch-is-batch-pr` 7·11·12·13번 사고가 원천 차단된다).
+- `node_modules` 는 APFS clonefile(`cp -c`) 복제 — 811M 기준 ~15초, **실디스크 증가 ~14MB**.
+  심볼릭 링크로 공유하지 않는 이유: `node_modules/.vite` 의존성 캐시가 브랜치 간에 섞인다.
+- 포트는 브랜치명 해시로 5300~5389에 **고정 배정**(배정표 `.claude/worktrees/.ports`) — 재생성해도
+  같은 포트라 북마크가 안 깨진다. `vite` 는 `strictPort` 라 충돌 시 조용히 옮겨가지 않고 실패한다.
+- **커밋/푸시는 세션을 그 워크트리로 옮기고 한다**(`EnterWorktree` 또는 워크트리에서 새 세션).
+  그러면 `block-main-write.sh` 가드가 워크트리 브랜치를 보므로 체이닝·서브셸 모두 자유롭다.
+- 공유 체크아웃(main)에서 워크트리에 쏠 때는 **메타문자 없는 단일 명령** `git -C <리터럴 경로> …`
+  형태만 통과한다. 이 한 가지가 가드의 유일한 예외다 — 변수(`-C "$WT"`)·`-C` 2회·`--git-dir`·
+  체이닝(`cd <wt> && …`)은 실행 디렉터리를 정적으로 확정할 수 없어 fail-closed 로 차단된다.
+  (임의의 셸 텍스트에서 각 git 쓰기의 실행 디렉터리를 복원하려는 시도는 끝이 없다 —
+  Codex 리뷰 8라운드 동안 `-C` 중복·파이프 좌측 cd·백그라운드 `&`·서브셸로 계속 뚫려서,
+  좁은 허용목록 + 나머지는 cwd 폴백으로 재설계했다.)
+- 보호 ref(main/master) 삭제 push 는 어느 디렉터리에서 쏘든 차단된다.
+- 가드를 수정하면 `bash scripts/block-main-write.test.sh` 를 돌린다(픽스처 자체 생성).
+
 ## 편집 시
 
 표준 React/TypeScript 편집입니다 — `src/dash/*.tsx`를 직접 수정하고 `npm run dev`로 확인합니다.
