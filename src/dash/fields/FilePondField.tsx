@@ -17,7 +17,8 @@ import './filepond.css';
 // 플러그인 등록은 모듈 스코프에서 1회(렌더 중 등록 금지 — 매 렌더 재등록 방지).
 registerPlugin(FilePondPluginFileValidateSize, FilePondPluginFileValidateType);
 
-// required: 필수 필드 상시 표식 — 드롭 패널 테두리만 danger(is-required, filepond.css).
+// required: 필수인데 아직 비었을 때의 표식 — 드롭 패널 테두리만 danger(is-required, filepond.css).
+//   호출자(DocumentsField)가 기존 첨부가 있으면 required=false 로 내려 이미 채운 필드의 빨간 테두리를 푼다.
 export function FilePondField({ onChange, required }: { value: string; onChange: (v: string) => void; required?: boolean }) {
   // ⚠️ 비제어(uncontrolled) — files prop을 React로 제어하지 않는다. FilePond가 내부 파일 목록을 단독 소유.
   //    제어 모드(files={state})에서 onupdatefiles가 넘기는 FilePondFile 객체를 그대로 files prop으로 되먹이면
