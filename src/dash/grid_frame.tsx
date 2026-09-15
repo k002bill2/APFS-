@@ -22,6 +22,19 @@ const FLOATING_ACTIONS = true;
    오버레이가 아니므로 토큰 스케일(75~90)을 쓰지 않는다(→ z-index 스킬 규칙 2). */
 const FLOATING_Z = 55;
 
+/* sticky GNB(shell.tsx `<header>` height:58, z50) 높이 — 하드코딩 금지, 실측. */
+const gnbHeight = () => Math.round(document.querySelector('header')?.getBoundingClientRect().height ?? 58);
+
+/* 바가 앉을 y = **그리드 헤더의 실측 하단** + 여백(헤더 바로 아래 = 행 체크박스 위).
+   ⚠️ `gnb + 헤더높이` 로 계산하면 안 된다 — 그리드 헤더는 top:58 에 닿기 전까지 sticky 가 아니라
+   아직 아래에 있어서, 고정값으로 두면 스크롤 도중 **아직 보이는 헤더를 바가 덮는다**(Codex P2).
+   실측이라 헤더가 붙는 동안 바도 따라 올라와 항상 헤더 아래에 도킹한다.
+   그리드가 없는 children(수제 표 등)은 GNB 아래로 폴백. */
+const barTopFor = (frame: HTMLElement | null) => {
+  const gh = frame?.querySelector('.ag-header')?.getBoundingClientRect();
+  return Math.round(gh ? gh.bottom + 8 : gnbHeight() + 10);
+};
+
 /* 카드헤더 즐겨찾기 토글(★) — 현재 페이지(route)를 MenuStore 'fav'에 on/off. 개수 제한 없음.
    route가 메뉴(ALLMENU, key=라우트)에 없으면 렌더하지 않는다(FAB에서 표시·딥링크 불가). */
 function FavStar({ route }: { route: string }) {
@@ -111,13 +124,13 @@ export function GridFrame({
      양방향 모두 안정적이다(빠진 뒤엔 더 위 = 더 확실히 숨음, 되돌아오면 더 아래 = 더 확실히 보임). */
   const sentinelRef = React.useRef<HTMLDivElement>(null);
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const footerRef = React.useRef<HTMLDivElement>(null);
   const [toolbarOut, setToolbarOut] = React.useState(false);
-  /* 바의 위치는 하드코딩하지 않고 프레임 실측으로 정한다.
+  /* 바의 위치는 하드코딩하지 않고 실측으로 정한다.
      - left: 뷰포트 중앙이 아니라 **프레임 카드 중앙** (LNB 폭만큼 왼쪽으로 치우치는 것 방지)
-     - bottom: sticky 푸터 높이 + 여백 (푸터의 건수·페이저를 덮지 않게)
-     둘 다 LNB 접기/펼치기처럼 window resize 없이 폭이 바뀌는 경우가 있어 ResizeObserver 로 추적한다. */
-  const [barPos, setBarPos] = React.useState<{ left: number; bottom: number } | null>(null);
+     - top: **그리드 헤더 실측 하단** + 8 = 헤더 바로 아래(행 체크박스 위).
+       헤더를 밀어내는 방식은 버려진 띠로 행이 비쳐 보여서 폐기했다.
+     left 는 LNB 접기/펼치기처럼 window resize 없이 폭이 바뀌는 경우가 있어 ResizeObserver 로 추적한다. */
+  const [barPos, setBarPos] = React.useState<{ left: number; top: number } | null>(null);
   const actionsHostRef = React.useRef<HTMLDivElement>(null);   // 툴바 쪽 액션 컨테이너
   const barRef = React.useRef<HTMLDivElement>(null);           // 플로팅 바
   /* 액션 묶음이 툴바↔바로 **이동**하면 포커스된 버튼이 언마운트돼 초점이 document 로 떨어진다.
@@ -129,10 +142,11 @@ export function GridFrame({
   React.useEffect(() => {
     const el = sentinelRef.current;
     if (!wantsFloating || !el || typeof IntersectionObserver === 'undefined') { setToolbarOut(false); return; }
-    /* sticky GNB(shell.tsx `<header>` height:58, z50)가 뷰포트 상단을 덮는다. 보정하지 않으면
-       툴바가 헤더 **뒤에 숨은 동안에도** isIntersecting=true 라, 액션이 안 보이는데 바도 안 뜨는
-       사각지대가 툴바 높이만큼 생긴다(Codex P2). 헤더 높이는 하드코딩하지 않고 실측한다. */
-    const headerH = Math.round(document.querySelector('header')?.getBoundingClientRect().height ?? 58);
+    /* sticky GNB 가 뷰포트 상단을 덮는다. 보정하지 않으면 툴바가 GNB **뒤에 숨은 동안에도**
+       isIntersecting=true 라, 액션이 안 보이는데 바도 안 뜨는 사각지대가 생긴다(Codex P2).
+       ⚠️ 여기에 그리드 헤더 높이를 더하면 안 된다 — 툴바는 그리드보다 위에 있어서 GNB 뒤로
+       먼저 들어가고, 그리드 헤더는 그 뒤에야 붙는다. 더하면 40px 일찍 발화한다(Codex P2). */
+    const headerH = gnbHeight();
     const io = new IntersectionObserver(([e]) => {
       /* 리렌더 전이라 activeElement 가 아직 이동 전 버튼이다 — 지금 순번을 적어 둔다. */
       const ae = document.activeElement as HTMLElement | null;
@@ -154,25 +168,39 @@ export function GridFrame({
     host?.querySelectorAll('button')[i]?.focus({ preventScroll: true });
   }, [toolbarOut]);
 
+
   React.useEffect(() => {
     const root = rootRef.current;
     if (!wantsFloating || !root) return;
     const measure = () => {
       const r = root.getBoundingClientRect();
-      const footerH = footerRef.current?.offsetHeight ?? 0;
-      setBarPos({ left: Math.round(r.left + r.width / 2), bottom: footerH + 14 });
+      setBarPos({ left: Math.round(r.left + r.width / 2), top: barTopFor(root) });
     };
     measure();
     /* ⚠️ root 만 관찰하면 안 된다 — 프레임이 maxWidth:1280 으로 캡된 데스크톱에서 LNB 를 접으면
        프레임 **폭은 1280 그대로인데 left 만 이동**해 ResizeObserver 가 울지 않고 바가 어긋난 채 남는다
        (Codex P2). 부모(<main>)는 그때 폭이 바뀌므로 부모까지 관찰하고, window resize 도 보탠다. */
     window.addEventListener('resize', measure);
-    if (typeof ResizeObserver === 'undefined') return () => window.removeEventListener('resize', measure);
+    /* 바가 떠 있는 동안만 스크롤 추적 — 그리드 헤더가 붙는 구간에서 top 이 계속 변한다.
+       rAF 로 합쳐 프레임당 1회만 실측한다. */
+    let raf = 0;
+    const onScroll = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; measure(); }); };
+    if (toolbarOut) window.addEventListener('scroll', onScroll, { passive: true });
+    if (typeof ResizeObserver === 'undefined') return () => {
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('scroll', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
     const ro = new ResizeObserver(measure);
     ro.observe(root);
     if (root.parentElement) ro.observe(root.parentElement);
-    return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
-  }, [wantsFloating, hasFooter]);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('scroll', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [wantsFloating, toolbarOut]);
   return (
     <div ref={rootRef} style={{ maxWidth: 1280, margin: '0 auto', animation: 'dashFade .3s var(--ease) both' }}>
       {/* PageHeader: 현 shell은 title/sub를 렌더하지 않으므로(crumbs·actions만) title/sub는 카드헤더가 직접 그린다.
@@ -218,7 +246,7 @@ export function GridFrame({
             background 불투명(스크롤되는 행이 비치지 않게) + 하단 모서리 라운딩(카드 overflow:hidden 제거 보완)
             + zIndex는 FAB(60)보다 낮게 둬 우하단 FAB 클릭성을 침범하지 않게 한다. */}
         {hasFooter && (
-          <div ref={footerRef} className="flex items-center justify-between flex-wrap gap-3" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', position: 'sticky', bottom: 0, zIndex: 20, background: 'var(--frame-bg)', borderBottomLeftRadius: 'var(--radius)', borderBottomRightRadius: 'var(--radius)' }}>
+          <div className="flex items-center justify-between flex-wrap gap-3" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', position: 'sticky', bottom: 0, zIndex: 20, background: 'var(--frame-bg)', borderBottomLeftRadius: 'var(--radius)', borderBottomRightRadius: 'var(--radius)' }}>
             <span className="flex items-center min-w-0 text-caption" style={{ fontSize: 12.5 }}>{footerLeft}</span>
             {footerCenter && <div className="flex items-center gap-1 flex-wrap">{footerCenter}</div>}
             <div className="flex items-center gap-1.5 flex-wrap">{footerRight}</div>
@@ -226,7 +254,7 @@ export function GridFrame({
         )}
       </Card>
 
-      {/* 플로팅 액션 바 — ⚠️ **반드시 body Portal**.
+      {/* 플로팅 액션 바(그리드 헤더 바로 아래 = 행 체크박스 위) — ⚠️ **반드시 body Portal**.
           이 컴포넌트 루트에 `animation: dashFade … both` 가 걸려 있어 종료 상태가 항등행렬로 굳고,
           그 transform 이 (a) 새 쌓임맥락 (b) fixed 의 컨테이닝블록을 만든다. 포털 없이 fixed 를 쓰면
           bottom 이 뷰포트가 아니라 카드 기준이 되고 z 도 그 맥락 안에 갇힌다(→ z-index 스킬 규칙 3·5). */}
@@ -237,7 +265,7 @@ export function GridFrame({
           className="apfs-floating-actions"
           /* 위치는 **CSS 변수**로 넘긴다 — inline `left` 로 주면 좁은 폭 미디어쿼리(left:12px; right:88px)를
              inline 이 덮어 좁은 화면 레이아웃이 깨진다. 변수는 미디어쿼리가 그대로 무시할 수 있다. */
-          style={{ zIndex: FLOATING_Z, ...(barPos ? { '--fab-left': barPos.left + 'px', '--fab-bottom': barPos.bottom + 'px' } as React.CSSProperties : null) }}>
+          style={{ zIndex: FLOATING_Z, ...(barPos ? { '--fab-left': barPos.left + 'px', '--fab-top': barPos.top + 'px' } as React.CSSProperties : null) }}>
           {contextActions}
         </div>,
         document.body,

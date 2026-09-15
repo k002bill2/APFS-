@@ -284,15 +284,13 @@ input::-webkit-credentials-auto-fill-button{visibility:hidden!important;display:
 /* 진행바(Progress) indeterminate — fill 폭 고정 + translateX 슬라이드(transform 컨벤션 준수, left/width 미사용). */
 @keyframes apfs-progress-indet{from{transform:translateX(-100%)}to{transform:translateX(340%)}}
 .apfs-progress-indet{animation:apfs-progress-indet 1.15s var(--ease) infinite;}
-/* 플로팅 액션 바 — 스크롤로 툴바가 화면 밖일 때 body Portal 로 뜨는 하단 중앙 pill.
-   z 는 소비처(grid_frame.tsx FLOATING_Z=55)가 inline 으로 준다 — 셸 chrome 계층(≤60) 소속.
-   미디어쿼리가 필요해 inline 이 아니라 이 파일에 둔다(좁은 폭에서 우하단 FAB 회피). */
-.apfs-floating-actions{position:fixed;bottom:var(--fab-bottom,18px);left:var(--fab-left,50%);transform:translateX(-50%);display:flex;align-items:center;gap:8px;max-width:calc(100vw - 32px);overflow-x:auto;padding:7px 12px;border-radius:999px;background:var(--card);border:1px solid var(--border-strong);box-shadow:0 10px 26px -8px rgba(0,0,0,.30),0 2px 6px -2px rgba(0,0,0,.16);animation:floatBarIn .18s var(--ease) both;}
-@keyframes floatBarIn{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
-/* 좁은 폭: 중앙정렬을 버리고 좌측에 붙이며 우측 88px 를 비워 FAB(right:24, z60) 과 겹치지 않게 한다.
-   FAB 스택 높이는 버튼 수에 따라 변하므로 "위로 올리기"가 아니라 "옆을 비우기"로 회피한다. */
-@media (max-width:640px){.apfs-floating-actions{left:12px;right:88px;transform:none;max-width:none;animation-name:floatBarInNarrow;}}
-@keyframes floatBarInNarrow{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+/* 플로팅 액션 바 — 스크롤로 툴바가 화면 밖일 때 body Portal 로 뜨는 pill.
+   위치는 **표 바로 위(sticky GNB 아래)** — 원래 툴바가 있던 자리라 버튼이 자리를 옮기지 않는 느낌을 준다.
+   좌표는 소비처(grid_frame.tsx)가 CSS 변수로 준다: --fab-top(헤더 높이 실측+여백), --fab-left(카드 중앙).
+   z 는 inline(FLOATING_Z=55) — 셸 chrome 계층(≤60) 소속. 위로 뜨므로 하단 푸터·우하단 FAB 와 무관하다. */
+.apfs-floating-actions{position:fixed;top:var(--fab-top,68px);left:var(--fab-left,50%);transform:translateX(-50%);display:flex;align-items:center;gap:8px;max-width:calc(100vw - 24px);overflow-x:auto;padding:7px 12px;border-radius:999px;background:var(--card);border:1px solid var(--border-strong);box-shadow:0 10px 26px -8px rgba(0,0,0,.30),0 2px 6px -2px rgba(0,0,0,.16);animation:floatBarIn .18s var(--ease) both;}
+/* 위에서 내려온다(아래에서 올라오던 진입 방향을 위치에 맞춰 반전) */
+@keyframes floatBarIn{from{opacity:0;transform:translateX(-50%) translateY(-10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;}}
 /* 저모션: indeterminate 바가 0% 프레임(off-screen)에 얼어 '빈 트랙'으로 읽히는 것 방지 → 정적 저opacity 전폭 표시. */
 @media (prefers-reduced-motion:reduce){.apfs-progress-indet{animation:none;transform:none;width:100%!important;opacity:.45;}}
