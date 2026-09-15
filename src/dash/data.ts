@@ -99,8 +99,11 @@ const NOTIFS = [
 
 // RBAC 역할 (3등급)
 // LNB — PRD 부록A 전체 메뉴 체계 (대분류→중분류→메뉴 3단계)
-/* LNB 메뉴 트리 — 현행시스템 메뉴 구조표(2026-09-14 캡처) 1:1 정본.
-   대분류 7(+대시보드 리프 1) / 중분류 34 / 리프 141.
+/* LNB 메뉴 트리 — 정본은 **신규(to-be) 메뉴 구성**이다: 프로젝트일정계획표 xlsx 의
+   「메뉴구성도」 시트(docs/source/, 추출본 docs/메뉴구성도_v0.2.md). 현행(as-is) 트리가 아니다.
+   대분류 7(+대시보드 리프 1) / 중분류 32 / 리프 137 (2026-09-15 실측).
+   정본과의 차이는 docs/메뉴대조표_xlsx_vs_APFS_DATA.md 참조 —
+   재생성: python3 scripts/menu-doc/gen_diff.py docs/메뉴대조표_xlsx_vs_APFS_DATA.md
    ⚠️ nav 키 규약: leaf.path || leaf.label (data.ts ALLMENU·shell flattenMenu·generic_list findMenuContext 공통).
    라벨이 구조표와 달라진 리프는 label만 구조표에 맞추고 기존 nav 키를 path:로 고정한다
    — 스키마 route(schemas/*.ts)와 app.tsx 분기 문자열은 손대지 않는다. */
