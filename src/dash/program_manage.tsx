@@ -2,7 +2,8 @@
    출처: S0_108_프로그램관리.html(AFIT 공통관리 KRDS TO-BE) → APFS 디자인시스템으로 변형. (구 읽기 전용 목록은 S0_108 원본 확보로 대체됨.)
 
    구성(목업 → 우리 규약):
-   - 검색박스(검색기준+검색어·도움말·사용여부) + 구분(브리프) → 주 필터 1개 = 도움말 FilterChip(전체/있음/없음, 툴바 좌)
+   - 검색박스(검색기준+검색어·도움말·사용여부) + 구분(브리프) → 주 필터 1개 = 사용여부 FilterChip(전체/사용 여/사용 부, 툴바 좌)
+     (2026-09-15 사용자 지시로 도움말↔사용여부 교대 — 도움말은 드로어로 내려갔다. 주 필터와 드로어 항목은 배타다: 같은 필터를 양쪽에 두지 않는다)
        + 상세필터 드로어(검색어·검색기준·구분(대분류)·사용여부). 검색어 opt-in(SEARCHABLE).
    - 그리드(No·프로그램ID·프로그램명·구분·사용여부·메뉴연결·최종수정일시·최종수정자·도움말·도움말 수정일시·도움말 수정자) → AG Grid, 내용 맞춤 + 내부 가로 스크롤.
    - 행 선택 → [수정][도움말][삭제](목업 gate) → 라디오 단일선택 + 툴바 좌 selbar. 더블클릭·Enter·우클릭 = 수정.
@@ -49,7 +50,7 @@ const { Button, IconBtn, StatusBadge, FilterChip } = UI;
 const SEARCHABLE = true;
 const PAGE_SIZE = 20;
 const SEARCH_FIELDS: { key: ProgramField; label: string }[] = [{ key: 'pid', label: '프로그램ID' }, { key: 'pname', label: '프로그램명' }];
-const HELP_CHIPS = [['', '전체'], ['y', '도움말 있음'], ['n', '도움말 없음']] as const;
+const USE_CHIPS = [['', '전체'], ['여', '사용 여'], ['부', '사용 부']] as const;
 const nowStamp = () => format(new Date(), 'yyyy-MM-dd HH:mm');
 const seedPrograms = () => demoPrograms(buildMenuRows());
 
@@ -258,7 +259,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const masked = useMask();
 
-  /* 필터 — 도움말은 툴바 칩, 나머지(검색어·검색기준·구분·사용여부)는 드로어 */
+  /* 필터 — 사용여부는 툴바 칩, 나머지(검색어·검색기준·구분·도움말)는 드로어 */
   const [filterOpen, setFilterOpen] = useState(false);
   const [fHelp, setFHelp] = useState<'' | 'y' | 'n'>('');
   const [fField, setFField] = useState<ProgramField>('pid');
@@ -376,7 +377,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   const chips: [string, string, () => void][] = [
     ['검색어', fText.trim() && `${SEARCH_FIELDS.find((f) => f.key === fField)?.label}: ${fText.trim()}`, () => setFText('')],
     ['구분', fGubun, () => setFGubun('')],
-    ['사용여부', fUse && `사용 ${fUse}`, () => setFUse('')],
+    ['도움말', fHelp && (fHelp === 'y' ? '도움말 있음' : '도움말 없음'), () => setFHelp('')],
   ];
 
   return (
@@ -399,7 +400,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
       ) : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
-          {HELP_CHIPS.map(([v, l]) => <FilterChip key={v || 'all'} active={fHelp === v} onClick={() => setFHelp(v)}>{l}</FilterChip>)}
+          {USE_CHIPS.map(([v, l]) => <FilterChip key={v || 'all'} active={fUse === v} onClick={() => setFUse(v)}>{l}</FilterChip>)}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               <MT>{value}</MT>
@@ -459,7 +460,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      {/* ── 상세필터 드로어 — 검색어(opt-in) · 검색기준 · 구분 · 사용여부(도움말은 툴바 칩) ── */}
+      {/* ── 상세필터 드로어 — 검색어(opt-in) · 검색기준 · 구분 · 도움말(사용여부는 툴바 칩) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -475,7 +476,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
             )}
             <DrawerField label="검색기준"><DrawerSelect value={fField} onChange={(v) => setFField(v as ProgramField)} options={SEARCH_FIELDS.map((f) => ({ value: f.key, label: f.label }))} all={null} /></DrawerField>
             <DrawerField label="구분"><DrawerSelect value={fGubun} onChange={setFGubun} options={gubuns.map((g) => ({ value: g, label: g }))} /></DrawerField>
-            <DrawerField label="사용여부"><DrawerSelect value={fUse} onChange={(v) => setFUse(v as '' | '여' | '부')} options={['여', '부'].map((v) => ({ value: v, label: v }))} /></DrawerField>
+            <DrawerField label="도움말"><DrawerSelect value={fHelp} onChange={(v) => setFHelp(v as '' | 'y' | 'n')} options={[{ value: 'y', label: '있음' }, { value: 'n', label: '없음' }]} /></DrawerField>
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
