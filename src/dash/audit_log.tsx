@@ -5,7 +5,7 @@
    - 검색박스(기간·결과·행위자·검색어) → 주 필터 1개 = 결과 FilterChip(툴바 좌) + 상세필터 드로어(검색어·기간(PeriodPicker day ×2)·유형·행위자).
        유형(접속·계정·권한변경·비정상 접근)은 브리프의 "접속·권한변경·비정상 접근 행" 구분 — 행위 문자열에서 파생(audit_log_model.kindOf).
    - 그리드(No·일시·행위자·유형·행위·대상·IP·결과) → AG Grid 단일 헤더, 결과 배지(정상 success·실패 warning·차단 danger).
-   - 행 상세(브리프) → 라디오 단일선택 + [상세] · 더블클릭/Enter → 읽기 전용 kv 다이얼로그. 목업은 선택 없음이었으나 상세 요구로 추가.
+   - 행 상세(브리프) → 더블클릭/Enter(또는 우클릭 메뉴 '상세') → 읽기 전용 kv 다이얼로그. 목업은 선택 없음이었으나 상세 요구로 추가.
    - 등록 없음 → 툴바 kebab 단독. 엑셀·인쇄 = kebab + 푸터 download + ⌥D(목업 '엑셀 다운로드'·'인쇄'는 반출 통제 문구만 — 실제 통제 없음).
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음.
    ⚠ 실제 접근 로그·보안 이벤트·정책 판정이 아니다 — 데모 행을 로컬로 조회만 한다(브리프). 실명 아님. */
@@ -54,7 +54,7 @@ const columnDefs: ColDef<AuditRow>[] = [
   { field: 'result', headerName: '결과', width: 92, maxWidth: 92, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={RESULT_TONE[p.value as AuditResult]} label={p.value} size="lg" dot={false} /> },
 ];
 // 조회 전용(audit-read-only) — 체크박스 열 없음. 선택으로 실행할 액션(일괄삭제·단계전이)이 없어
-// 체크박스를 만들지 않는다. 행 클릭 선택은 유지 → 툴바 '상세 보기'가 계속 동작.
+// 체크박스를 만들지 않는다. 행 클릭 선택은 유지(선택 배지·행 강조) → 상세는 더블클릭/Enter·우클릭 메뉴로 연다.
 const ROW_SELECTION: RowSelectionOptions<AuditRow> = { mode: 'singleRow', checkboxes: false, enableClickSelection: true };
 const RESULT_CHIPS = ['', ...AUDIT_RESULTS] as const;
 
@@ -243,7 +243,6 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
       toolbarLeft={selected ? (
         <>
           <StatusBadge tone={RESULT_TONE[selected.result]} label={selected.result} size="lg" dot={false} />
-          <Button variant="primary" size="sm" leadingIcon="eye" onClick={() => setDetailId(selected.id)}>상세</Button>
           <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
         </>
       ) : (

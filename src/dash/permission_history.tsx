@@ -5,7 +5,7 @@
    - 검색박스(기간·대상 사용자·변경유형·행위자·검색어 + [이번 달]) → 주 필터 1개 = 변경유형 FilterChip(툴바 좌)
        + 상세필터 드로어(검색어·기간(PeriodPicker day ×2)·대상 사용자·행위자). [이번 달] = 툴바 ghost 버튼. 기본 기간 = 이번 달(데모 고정 기준일).
    - 그리드(No·일시·변경유형·권한·변경 요약·적용 대상·행위자·발생프로그램) → AG Grid 단일 헤더. 변경 요약 셀 = 추가N·회수M 또는 전→후.
-   - 행 선택 → [상세 보기] · 더블클릭/Enter → 상세 다이얼로그(`PermissionHistoryDetailModal`, 읽기 전용 — 편집 액션 없음).
+   - 행 더블클릭/Enter(또는 우클릭 메뉴 '상세 보기') → 상세 다이얼로그(`PermissionHistoryDetailModal`, 읽기 전용 — 편집 액션 없음).
    - 등록 없음(조회 전용) → 툴바 kebab 단독. 엑셀 = kebab + 푸터 download + ⌥D. 툴바 좌 요약 캡션(기간 내 변경 N건 · 유형별).
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음.
    ⚠ 실제 감사 데이터·권한변경 수집이 아니다 — 데모 행을 로컬로 조회만 한다(브리프). 실명 아님. */
@@ -84,7 +84,7 @@ const columnDefs: ColDef<HistEntry>[] = [
   { field: 'src', headerName: '발생프로그램', width: 120, maxWidth: 130, cellStyle: { ...flexMid, color: 'var(--muted-foreground)' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
 ];
 // 조회 전용(audit-read-only) — 체크박스 열 없음. 선택으로 실행할 액션(일괄삭제·단계전이)이 없어
-// 체크박스를 만들지 않는다. 행 클릭 선택은 유지 → 툴바 '상세 보기'가 계속 동작.
+// 체크박스를 만들지 않는다. 행 클릭 선택은 유지(선택 배지·행 강조) → 상세는 더블클릭/Enter·우클릭 메뉴로 연다.
 const ROW_SELECTION: RowSelectionOptions<HistEntry> = { mode: 'singleRow', checkboxes: false, enableClickSelection: true };
 const TYPE_CHIPS = ['', ...CHANGE_TYPES] as const;
 
@@ -243,7 +243,6 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
       toolbarLeft={selected ? (
         <>
           <StatusBadge tone={CT_TONE[selected.ctype]} label={selected.ctype} size="lg" dot={false} />
-          <Button variant="primary" size="sm" leadingIcon="eye" onClick={() => setDetailId(selected.id)}>상세 보기</Button>
           <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
         </>
       ) : (
