@@ -180,22 +180,57 @@ function RegisterCombo({ label, onRegister, onExport }: { label: string; onRegis
   );
 }
 
-/* 삭제 불가 사유 — 툴바 인라인 캡션 대신 info 아이콘 + Popover.
-   툴바 가로폭을 문구가 잡아먹지 않도록(선택 해제 버튼이 밀렸다) 아이콘 한 칸으로 접고,
-   전체 사유(program_manage_model.deleteBlocker 와 같은 문구)는 팝오버에 둔다.
+/* 삭제 버튼 — 메뉴에 연결된 프로그램(linked)일 때의 "삭제 불가" 변형.
+   ⓘ 아이콘을 삭제 버튼 **안**에 항상 띄우고(사유가 있다는 사실 자체가 상시 단서),
+   마우스를 올리면 사유 팝오버가 열린다.
+
+   ⚠ disabled 버튼은 브라우저가 마우스 이벤트를 아예 발생시키지 않아 자신도 조상도 hover 를 못 받는다.
+     그래서 Button 에 pointerEvents:'none' 을 주고, hover·키보드·팝오버 트리거를 **바깥 span** 이 소유한다.
+     disabled 버튼은 초점도 못 받으므로 키보드 경로도 이 span(role=button, tabIndex 0)이 대신 연다.
+   여닫기 규약은 review_marker.tsx 와 동일(그쪽에서 실측으로 다듬은 패턴):
+     - 닫기는 140ms 유예 + 팝오버 콘텐츠도 같은 핸들러 → 트리거→콘텐츠로 포인터가 넘어가도 안 닫힌다
+     - 포인터 클릭은 **열기 전용**(토글 아님) — hover 로 이미 열린 걸 클릭이 곧바로 닫아버린다
+     - 초점 이동은 **키보드로 열었을 때만** — hover 로 열 때 초점을 뺏으면 작업 중 초점이 튄다
    z-index/포털은 ui/popover 가 소유(z-popover + PortalContainer) — 여기서 z 를 다시 손대지 않는다. */
-function DeleteBlockedInfo() {
+function DeleteBlockedButton() {
+  const [open, setOpen] = useState(false);
+  const closeTimer = useRef<number | undefined>(undefined);
+  const openNow = () => { window.clearTimeout(closeTimer.current); setOpen(true); };
+  const closeSoon = () => { window.clearTimeout(closeTimer.current); closeTimer.current = window.setTimeout(() => setOpen(false), 140); };
+  useEffect(() => () => window.clearTimeout(closeTimer.current), []);
+  const viaKeyboard = useRef(false);
+  const openByPointer = (e: React.SyntheticEvent) => { e.preventDefault(); viaKeyboard.current = false; openNow(); };
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    viaKeyboard.current = true;
+    window.clearTimeout(closeTimer.current);
+    setOpen((o) => !o);
+  };
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label="삭제할 수 없는 이유 보기"
-          className="inline-flex shrink-0 items-center justify-center rounded-full border-0 bg-transparent cursor-pointer text-caption opacity-80 transition-colors duration-tok-fast hover:text-[color:var(--warning-text)] hover:opacity-100 focus-visible:text-[color:var(--warning-text)] focus-visible:opacity-100 data-[state=open]:text-[color:var(--warning-text)] data-[state=open]:opacity-100"
-          /* 터치 타깃 ≥ 24px(responsive-ui #10) — 아이콘은 15px 그대로 두고 상자만 26px로 넓힌다 */
-          style={{ minWidth: 26, minHeight: 26, padding: 0, lineHeight: 0 }}><Info size={15} strokeWidth={2} aria-hidden /></button>
+        <span
+          role="button"
+          tabIndex={0}
+          aria-label="삭제 불가 — 이유 보기"
+          onClick={openByPointer}
+          onMouseEnter={() => { viaKeyboard.current = false; openNow(); }}
+          onMouseLeave={closeSoon}
+          onKeyDown={onKey}
+          className="group inline-flex rounded-[9px] cursor-help outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <Button variant="outline" size="sm" leadingIcon="trash" disabled style={{ color: 'var(--danger)', pointerEvents: 'none' }}>
+            삭제
+            <Info size={14} strokeWidth={2.2} aria-hidden
+              className="opacity-70 transition-opacity duration-tok-fast group-hover:opacity-100 group-data-[state=open]:opacity-100" />
+          </Button>
+        </span>
       </PopoverTrigger>
       <PopoverContent align="start" aria-label="삭제할 수 없는 이유"
+        onMouseEnter={openNow} onMouseLeave={closeSoon}
+        /* 키보드로 연 경우에만 Radix 의 초점 이동·복귀를 살린다(포인터로 열 땐 초점을 건드리지 않는다) */
+        onOpenAutoFocus={(e) => { if (!viaKeyboard.current) e.preventDefault(); }}
+        onCloseAutoFocus={(e) => { if (!viaKeyboard.current) e.preventDefault(); }}
         className="max-w-[300px] px-[13px] py-[11px] text-[12.5px] leading-[1.6] text-muted-foreground">
         <div className="mb-[5px] flex items-center gap-1.5 font-bold text-foreground">
           <Icon name="alert-triangle" size={13} stroke={2.4} />삭제할 수 없습니다
@@ -355,9 +390,10 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
           <StatusBadge tone={selected.linked ? 'info' : 'primary'} label={selected.linked ? '메뉴 연결' : '미연결'} size="lg" dot={false} />
           <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: selected.id })}>수정</Button>
           <Button variant="outline" size="sm" leadingIcon="memo" onClick={() => setModal({ kind: 'help', id: selected.id })}>도움말</Button>
-          {/* 삭제 — 연결 프로그램은 비활성 + 사유 캡션(목업 subAlert "삭제 불가"를 UI 로 표현) */}
-          <Button variant="outline" size="sm" leadingIcon="trash" disabled={selected.linked} style={{ color: 'var(--danger)' }} onClick={() => requestDelete(selected)}>삭제</Button>
-          {selected.linked && <DeleteBlockedInfo />}
+          {/* 삭제 — 연결 프로그램은 비활성 + 버튼 안 ⓘ(hover)로 사유 팝오버(목업 subAlert "삭제 불가"를 UI 로 표현) */}
+          {selected.linked
+            ? <DeleteBlockedButton />
+            : <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => requestDelete(selected)}>삭제</Button>}
           <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
         </>
       ) : (
