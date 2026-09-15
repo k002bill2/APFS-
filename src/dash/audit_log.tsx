@@ -53,8 +53,9 @@ const columnDefs: ColDef<AuditRow>[] = [
   { field: 'ip', headerName: 'IP', width: 122, maxWidth: 122, cellStyle: { ...muted, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'result', headerName: '결과', width: 92, maxWidth: 92, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={RESULT_TONE[p.value as AuditResult]} label={p.value} size="lg" dot={false} /> },
 ];
-const ROW_SELECTION: RowSelectionOptions<AuditRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
+// 조회 전용(audit-read-only) — 체크박스 열 없음. 선택으로 실행할 액션(일괄삭제·단계전이)이 없어
+// 체크박스를 만들지 않는다. 행 클릭 선택은 유지 → 툴바 '상세 보기'가 계속 동작.
+const ROW_SELECTION: RowSelectionOptions<AuditRow> = { mode: 'singleRow', checkboxes: false, enableClickSelection: true };
 const RESULT_CHIPS = ['', ...AUDIT_RESULTS] as const;
 
 type XCol = { header: string; get: (r: AuditRow) => string };
@@ -281,7 +282,6 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
           domLayout="autoHeight"
           defaultColDef={DEFAULT_COL_DEF}
           rowSelection={ROW_SELECTION}
-          selectionColumnDef={SELECTION_COL}
           preventDefaultOnContextMenu
           onGridReady={onGridReady}
           onModelUpdated={refreshNoColumn}

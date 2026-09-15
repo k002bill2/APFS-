@@ -83,8 +83,9 @@ const columnDefs: ColDef<HistEntry>[] = [
   { field: 'actor', headerName: '행위자', width: 108, maxWidth: 140, cellStyle: muted, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'src', headerName: '발생프로그램', width: 120, maxWidth: 130, cellStyle: { ...flexMid, color: 'var(--muted-foreground)' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
 ];
-const ROW_SELECTION: RowSelectionOptions<HistEntry> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
+// 조회 전용(audit-read-only) — 체크박스 열 없음. 선택으로 실행할 액션(일괄삭제·단계전이)이 없어
+// 체크박스를 만들지 않는다. 행 클릭 선택은 유지 → 툴바 '상세 보기'가 계속 동작.
+const ROW_SELECTION: RowSelectionOptions<HistEntry> = { mode: 'singleRow', checkboxes: false, enableClickSelection: true };
 const TYPE_CHIPS = ['', ...CHANGE_TYPES] as const;
 
 type XCol = { header: string; get: (r: HistEntry) => string };
@@ -285,7 +286,6 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
           domLayout="autoHeight"
           defaultColDef={DEFAULT_COL_DEF}
           rowSelection={ROW_SELECTION}
-          selectionColumnDef={SELECTION_COL}
           preventDefaultOnContextMenu
           onGridReady={onGridReady}
           onModelUpdated={refreshNoColumn}
