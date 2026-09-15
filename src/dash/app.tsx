@@ -39,6 +39,8 @@ import { UserInviteManage } from './user_invite_manage';                     // 
 import { PermissionHistory } from './permission_history';                    // 권한 변경이력(S0_107)
 import { AuditLog } from './audit_log';                                      // 감사로그(S0_104)
 import { LoginDemo } from './login_demo';                                    // 로그인(S0_001, Shell 없는 UI 데모)
+import { OnboardingIssue } from './onboarding_issue';                        // 발급 온보딩(S0_002, 동상)
+import { OnboardingInvite } from './onboarding_invite';                      // 초대 온보딩(S0_003, 동상)
 // 자펀드 전체 보고현황(S1_44) — 한 화면에 3개 표(투자심의·수시보고·조합원총회)라 PageSchema(columns 1벌)로 담기지 않는
 // 유일한 리프. 같은 대분류의 나머지 12개는 페이지 코드 0줄(스키마 주도 GenericListPage)로 남는다.
 import { AllReportStatus } from './all_report_status';
@@ -83,6 +85,8 @@ const ROUTE_ALIAS: Record<string, string> = {
   "권한 변경이력": "permission-history",
   "감사로그": "audit-log",
   "로그인": "login",
+  "발급온보딩": "onboarding-issue", "발급 온보딩": "onboarding-issue",
+  "초대온보딩": "onboarding-invite", "초대 온보딩": "onboarding-invite",
   asset: "main", risk: "main", "gp-health": "main",
   accounting: "main", report: "main", "report-sutack": "main",
 };
@@ -104,7 +108,7 @@ const hashRoute = () => {
 // (schedule은 MENU path에 없어 findMenuContext가 영문 'schedule'로 폴백 → 여기서 한글 지정)
 const APP_ROUTE_TITLES: Record<string, string> = {
   main: "메인 대시보드", designsystem: "디자인 시스템", editor: "문서 편집기", schedule: "일정 관리",
-  login: "로그인",
+  login: "로그인", "onboarding-issue": "발급 온보딩", "onboarding-invite": "초대 온보딩",
 };
 const routeTitleFor = (r: string) => APP_ROUTE_TITLES[r] || findMenuContext(r).title;
 
@@ -221,8 +225,11 @@ function App() {
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;
 
-  // 로그인은 메뉴 Shell/LNB의 자식이 아닌 독립 데모 route다. 실제 인증·권한 판정은 수행하지 않는다.
+  // 로그인·온보딩 3종은 메뉴 Shell/LNB의 자식이 아닌 독립 데모 route다(GNB/LNB 없이 단독 표시).
+  // 실제 인증·계정 활성화·권한 판정은 수행하지 않는다.
   if (route === "login") return <LoginDemo onNav={onNav} />;
+  if (route === "onboarding-issue") return <OnboardingIssue onNav={onNav} />;
+  if (route === "onboarding-invite") return <OnboardingInvite onNav={onNav} />;
 
   return (
     // reducedMotion="user": OS 저모션 선호 시 Motion의 transform/scale은 끄고 opacity는 유지.

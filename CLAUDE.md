@@ -30,6 +30,7 @@ APFS/
 │       ├── data.ts                              # APFS_DATA (메뉴/위젯/지표)
 │       ├── icons/charts/components/shell/designsystem/main_widgets/main(.tsx)
 │       ├── performance/risk/gp_health/accounting/schedule/report(.tsx)  # PRD 페이지
+│       ├── auth_model.ts + auth_shared.tsx + login_demo + onboarding_issue + onboarding_invite  # 인증 3화면(Shell 없음)
 │       ├── subfund_manage(.tsx) + subfund_form_modal + subfund_spec_modal + subfund_manage_schemas.ts  # 자펀드 정보관리(구 subfund.tsx 대체)
 │       ├── app.tsx                              # 앱 루트 (#root 마운트)
 │       └── tokens.css / assets/logo*.svg
@@ -49,6 +50,7 @@ APFS/
 - `designsystem.tsx` → 컬러 토큰·타이포·공통 컴포넌트 프리뷰
 - `main_widgets.tsx` + `main.tsx` → 메인 종합 대시보드 (공유 위젯 + 3개 레이아웃 시안)
 - PRD 페이지: `performance` `risk` `gp_health` `accounting` `schedule` `report`.tsx (각 `Pages.*` export)
+- 인증 화면 3종(Shell 없는 독립 라우트, 정본=claude.ai/design 캔버스 `APFS 로그인 프로토타입.dc.html`): `login_demo.tsx`(S0_001) · `onboarding_issue.tsx`(S0_002 발급) · `onboarding_invite.tsx`(S0_003 초대). 판정 로직은 `auth_model.ts`(+테스트), 공용 UI는 `auth_shared.tsx`. 관리자가 초대를 *보내는* `user_invite_manage.tsx`(S0_103)와는 별개 화면이다.
 - 자펀드 정보관리(route `subfund`): `subfund_manage.tsx`(`SubFundManage` export) + `subfund_form_modal`(결성조합 등록/수정) + `subfund_spec_modal`(읽기전용 명세 팝업) + `subfund_manage_schemas.ts`. 구 `subfund.tsx`(bespoke, `SubFund` export)는 2026-09-09 삭제됨.
 - `app.tsx` → 테마/라우트 상태, `#root`에 마운트
 
@@ -56,7 +58,7 @@ APFS/
 
 **메뉴**: `Shell`이 `APFS_DATA.MENU`를 그대로 렌더하며 모든 사용자에게 전 메뉴를 노출합니다. 메뉴의 정본은 **신규(to-be) 메뉴 구성** — 프로젝트일정계획표 xlsx의 「메뉴구성도」 시트(`docs/source/`)다. **현행(as-is) 트리가 아니다.** 3-레벨로 대분류 7(+대시보드) / 중분류 32 / 리프 137개(2026-09-15 실측). 정본은 시트이므로 리프를 임의로 추가·삭제하지 않는다. (구 RBAC 데모 — `role` 상태·역할 스위처·`ROLES` 정의는 2026-09-09 제거됨. 백엔드/인증이 없는 프로토타입이라 실제 접근통제가 아닌 데모 토글이었음. MENU item의 `roles:` 필드는 잔존하나 현재 미사용.)
 
-- 추출본 `docs/메뉴구성도_v0.2.md` — 시트 원문(신규 152리프 + 현행 128리프)을 md로 옮기고 화면 참조를 `docs/mockups/` 목업 HTML에 링크한 것. **앱이 구현한 137리프는 이 중 일부**다(로그인 3 · 관리자(기존) 12 미반영).
+- 추출본 `docs/메뉴구성도_v0.2.md` — 시트 원문(신규 152리프 + 현행 128리프)을 md로 옮기고 화면 참조를 `docs/mockups/` 목업 HTML에 링크한 것. **앱이 구현한 137리프는 이 중 일부**다(관리자(기존) 12 미반영). 로그인 대분류 3리프(로그인·발급온보딩·초대온보딩)는 `MENU` 트리에 없지만 **앱 전용 라우트로 구현돼 있다**(`#/login` · `#/onboarding-issue` · `#/onboarding-invite`) — LNB에는 노출되지 않는다.
 - 대조표 `docs/메뉴대조표_xlsx_vs_APFS_DATA.md` — 시트와 `MENU`의 차이. 현재 완전일치 136 / 라벨 불일치 1(xlsx 오타).
 - 두 문서는 **생성물**이다. 고칠 일이 생기면 md가 아니라 `scripts/menu-doc/`(README 참조)를 고치고 재생성한다.
 

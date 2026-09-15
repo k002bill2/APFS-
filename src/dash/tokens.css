@@ -125,6 +125,7 @@
   --radius:12px;
   --radius-lg:16px;
   --radius-sm:8px;
+  --radius-2xl:28px;   /* 대형 표면(인증 화면 카드). 디자인 캔버스 shape 램프의 2xl — --radius-lg(16)로 대체하면 12px 차이가 드러난다 */
   --shadow-sm:0 1px 2px rgba(20,40,28,.06),0 1px 1px rgba(20,40,28,.04);
   --shadow-md:0 4px 14px rgba(20,40,28,.08),0 1px 3px rgba(20,40,28,.05);
   --shadow-lg:0 12px 34px rgba(20,40,28,.14),0 4px 10px rgba(20,40,28,.07);
@@ -293,6 +294,11 @@ input::-webkit-credentials-auto-fill-button{visibility:hidden!important;display:
 .apfs-floating-actions{position:fixed;top:var(--fab-top,68px);left:var(--fab-left,18px);display:flex;align-items:center;gap:8px;max-width:calc(100vw - 24px);overflow-x:auto;padding:7px 12px;border-radius:12px;background:var(--card);border:1px solid var(--border-strong);box-shadow:0 10px 26px -8px rgba(0,0,0,.30),0 2px 6px -2px rgba(0,0,0,.16);animation:floatBarIn .18s var(--ease) both;}
 /* 위에서 내려온다(아래에서 올라오던 진입 방향을 위치에 맞춰 반전) */
 @keyframes floatBarIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+/* 인증 화면(로그인·온보딩) 진입 모션 — 디자인 캔버스의 fadeUp/toastIn.
+   이 화면들은 app.tsx 에서 MotionConfig 앞에 조기 반환되어 JS 모션 감축을 받지 못한다.
+   CSS 키프레임이라 아래 전역 저모션 규칙이 그대로 커버한다. */
+@keyframes apfsFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes apfsToastIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;}}
 /* 저모션: indeterminate 바가 0% 프레임(off-screen)에 얼어 '빈 트랙'으로 읽히는 것 방지 → 정적 저opacity 전폭 표시. */
 @media (prefers-reduced-motion:reduce){.apfs-progress-indet{animation:none;transform:none;width:100%!important;opacity:.45;}}

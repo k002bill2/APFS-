@@ -6,6 +6,7 @@ const P = {
   home:["M3 10.5 12 3l9 7.5","M5 9.5V21h14V9.5","M9.5 21v-6h5v6"],
   landmark:["M3 21h18","M5 21V10","M19 21V10","M9 21V10","M15 21V10","M2.5 10 12 3.5 21.5 10","M3 10h18"],
   "shield-alert":["M12 3 5 6v6c0 4 3 6.5 7 8 4-1.5 7-4 7-8V6l-7-3Z","M12 8.5v4","M12 15.5h.01"],
+  lock:["M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z","M7.5 11V7a4.5 4.5 0 0 1 9 0v4"],
   "shield-check":["M12 3 5 6v6c0 4 3 6.5 7 8 4-1.5 7-4 7-8V6l-7-3Z","M9 12l2 2 4-4"],
   building:["M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16","M15 9h3a2 2 0 0 1 2 2v10","M8 7h2","M8 11h2","M8 15h2","M3 21h18"],
   wallet:["M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v0","M3 7v10a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-3","M21 10h-5a2 2 0 0 0 0 4h5a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1Z"],
@@ -77,7 +78,7 @@ const MAP = {
   "collapse-v":["FoldVertical","MoveVertical"],
   grid:["LayoutGrid","Grid3x3","Grid"], star:["Star"],
   trash:["Trash2","Trash"],
-  eye:["Eye"], "eye-off":["EyeOff","EyeClosed"],
+  eye:["Eye"], "eye-off":["EyeOff","EyeClosed"], lock:["Lock"],
 };
 
 // Lucide IconNode 조회: [[tag, attrs, children?], ...]
