@@ -1,0 +1,79 @@
+{
+  "meta": {
+    "project": "농림수산식품모태펀드 투자자산관리시스템 재구축",
+    "screen": "모태펀드 조성 및 출자현황",
+    "version": "1.0",
+    "sourceSystem": "농식품모태펀드관리시스템 (S1)",
+    "mainMenu": "모태펀드",
+    "program": "모태펀드 조성 및 출자현황",
+    "sourceFile": "통합_화면_구조도_v1.2.xlsx (11행)",
+    "basis": "AS-IS 추출 + 표준 적용(TO-BE)",
+    "designTarget": "KRDS 기반, 공고관리와 동일 디자인시스템·GNB/LNB",
+    "screenType": "메인 (읽기전용 현황 조회)",
+    "hasFilter": false,
+    "note": "필터 없음. CRUD 없음. 계층(2단) 헤더 현황 그리드. 단위=억원."
+  },
+
+  "excelCorrections": [
+    { "cell": "통합 시트 H열 (프로그램=모태펀드 조성 및 출자현황 타이틀 행)", "from": "[섹션1]타이틀", "to": "타이틀", "reason": "섹션 제목이 아니라 화면(메뉴) 제목", "status": "반영완료(노란음영)" },
+    { "item": "수신발전기금 → 수산발전기금", "status": "반영완료(노란음영, J40) — 사용자 확인됨" }
+  ],
+
+  "appliedStandards": {
+    "naming": "재원 구분·연도 '구분' 등 공통코드 분류값 명명 규칙 준수",
+    "date": "날짜 표시는 라벨(조회 화면)이므로 picker 불필요 — 규칙상 조회 표시는 라벨 예외",
+    "layout": "요약(summary) 먼저 → 상세(표) 순서 (TO-BE 요약 타일)"
+  },
+
+  "sections": [
+    { "role": "title", "label": "모태펀드 조성 및 출자현황" },
+    {
+      "role": "summaryTiles",
+      "toBe": true,
+      "note": "AS-IS엔 없으나 현황 화면 관례상 요약 우선 노출(TO-BE 제안)",
+      "tiles": [
+        { "key": "totalRaised", "label": "총 조성액", "unit": "억원", "sample": "4,987.3" },
+        { "key": "totalInvested", "label": "총 출자액", "unit": "억원", "sample": "4,597" },
+        { "key": "fundCount", "label": "출자 조합수", "unit": "개", "sample": "49" }
+      ]
+    },
+    {
+      "role": "grid",
+      "sectionNo": 1,
+      "label": "조성·출자 현황 (연도별)",
+      "unit": "억원",
+      "headerLevels": 2,
+      "columns": {
+        "dimension": { "key": "gubun", "label": "구분", "meaning": "연도", "component": "라벨", "sample": "2010" },
+        "groups": [
+          { "group": "조성현황", "children": [
+            { "key": "sum", "label": "합계", "sample": "597.3" },
+            { "key": "nongteuk", "label": "농특회계", "sample": "507", "full": "농어촌구조개선특별회계" },
+            { "key": "nongan", "label": "농안기금", "sample": "90", "full": "농산물가격안정기금" },
+            { "key": "fta", "label": "FTA", "sample": "0", "full": "FTA이행지원기금" },
+            { "key": "susan", "label": "수산발전기금", "sample": "0", "note": "원본 '수신발전기금'=오타 추정" },
+            { "key": "nonggeum", "label": "농금원", "sample": "0.3", "full": "농업정책보험금융원 자체" }
+          ]},
+          { "group": "출자현황", "children": [
+            { "key": "combCount", "label": "조합수", "sample": "5" },
+            { "key": "investAmt", "label": "출자금액", "sample": "547" }
+          ]}
+        ]
+      },
+      "totalRow": { "label": "합계", "sample": "4,987.3" },
+      "component": "전부 라벨(읽기전용)"
+    }
+  ],
+
+  "dataEntity": {
+    "name": "연도별 조성·출자 현황",
+    "dimensions": ["연도(구분)"],
+    "measures": ["재원별 조성액(농특회계/농안기금/FTA/수산발전기금/농금원)", "조성 합계", "조합수", "출자금액"]
+  },
+
+  "openQuestions": [
+    "수신발전기금 = 수산발전기금 오타 여부",
+    "연도 범위/정렬(누계 표시 여부), 단위 표기(억원) 확정",
+    "TO-BE 요약 타일·차트 추가 여부"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "project": "농림수산식품모태펀드 투자자산관리시스템 재구축",
+    "screen": "연도별투자현황",
+    "version": "1.0",
+    "sourceSystem": "농식품모태펀드관리시스템 (S1)",
+    "mainMenu": "모태펀드",
+    "program": "연도별투자현황",
+    "sourceFile": "통합_화면_구조도_v1.2.xlsx (19행)",
+    "basis": "AS-IS 추출 + 표준 적용(TO-BE)",
+    "designTarget": "KRDS, 공고관리·조성출자현황과 동일 디자인시스템·GNB/LNB",
+    "screenType": "메인 (필터 + 읽기전용 현황 그리드)",
+    "excelClean": "타이틀·기준일(날짜 picker) 원본 정상 → 이 화면 엑셀 정정 없음"
+  },
+  "appliedStandards": {
+    "date": "기준일=년월 선택기(YYYY-MM picker). 원본이 이미 '날짜' 컴포넌트 → 규칙 부합",
+    "gubun": "계정구분(공통코드 분류값) 명명 규칙 준수",
+    "layout": "요약→상세는 선택적. 넓은 표는 가로 스크롤 컨테이너"
+  },
+  "sections": [
+    { "role": "title", "label": "연도별투자현황" },
+    {
+      "role": "search",
+      "fields": [
+        { "key": "asOf", "label": "기준월", "component": "년월 선택기(picker)", "dataType": "YYYY-MM", "sample": "2026-08", "note": "dataType가 YYYY-MM이므로 라벨=기준월(기준일 아님). 날짜=picker" },
+        { "key": "accountType", "label": "계정구분", "component": "셀렉트박스", "options": { "inline": ["전체", "농식품", "수산"] }, "sample": "전체", "note": "모펀드 구성 계정 필터" },
+        { "key": "basis", "label": "조회기준", "component": "라디오", "options": { "inline": ["선정년도", "결성년도"] }, "sample": "선정년도", "affectsGrid": "그리드 '선정년도' 컬럼 라벨·기준이 선택값(선정년도/결성년도)에 따라 동적 변경", "note": "집계 기준축(라디오). 엑셀엔 이 동적 관계 표현 불가 → 목업/설계에서 반영" },
+        { "key": "searchBtn", "label": "조회", "component": "버튼" }
+      ]
+    },
+    {
+      "role": "grid",
+      "sectionNo": 1,
+      "label": "연도별 투자현황",
+      "unit": "AS-IS 원(원). TO-BE 표기 백만원 권장(가독)",
+      "columns": [
+        { "key": "gubun", "label": "구분", "sample": "운영", "note": "운영/청산" },
+        { "key": "selYear", "label": "선정년도/결성년도(동적)", "sample": "2011", "note": "조회기준 라디오에 따라 헤더·기준 변경" },
+        { "key": "combCount", "label": "조합수", "sample": "1" },
+        { "key": "commitTotal", "label": "약정총액", "sample": "16,000,000,000" },
+        { "key": "moCommit", "label": "모태펀드약정액", "sample": "8,000,000,000" },
+        { "key": "paidA", "label": "납입총액(A)", "sample": "0" },
+        { "key": "moPaid", "label": "모태펀드납입액", "sample": "0" },
+        { "key": "cashB1", "label": "현금성자산(B1)", "sample": "269,835,381" },
+        { "key": "assetB2", "label": "투자자산잔액(B2)", "sample": "1,763,707,899" },
+        { "key": "distC", "label": "기배분액(C)", "sample": "0" },
+        { "key": "recover", "label": "회수금", "sample": "1,836,292,101" },
+        { "key": "profit", "label": "수익", "sample": "19,489,041" },
+        { "key": "multiple", "label": "투자배수", "formula": "(B1+B2+C)/A", "note": "A=0이면 산출 불가(-)" }
+      ],
+      "totalRow": true,
+      "component": "전부 라벨(읽기전용)",
+      "footnote": "안내문구는 비고-작성자(O열) 원문 사용(<br>로 줄바꿈): * 현금성자산=미투자자산의 금융상품 / * 결성년도 집계기준은 조합정보의 등록일 기준 Sorting / * 기배분액은 세전(수익배당(세후)+원천징수). 임의 문구 생성 금지."
+    }
+  ],
+  "openQuestions": ["금액 표기 단위(원 vs 백만원 vs 억원) 확정", "구분(운영/청산) 필터 여부", "투자배수 소수 자릿수"]
+}

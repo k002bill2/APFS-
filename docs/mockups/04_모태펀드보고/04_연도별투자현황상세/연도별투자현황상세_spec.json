@@ -1,0 +1,60 @@
+{
+  "meta": {
+    "project": "농림수산식품모태펀드 투자자산관리시스템 재구축",
+    "screen": "연도별투자현황상세",
+    "version": "1.0",
+    "sourceSystem": "농식품모태펀드관리시스템 (S1)",
+    "mainMenu": "모태펀드",
+    "program": "연도별투자현황상세",
+    "sourceFile": "통합_화면_구조도_v1.2.xlsx (20행)",
+    "basis": "AS-IS 추출 + 표준 적용(TO-BE)",
+    "screenType": "메인 (필터 + 읽기전용 자펀드 단위 상세 그리드)",
+    "note": "연도별투자현황의 상세판(자펀드별). 별도 화면."
+  },
+  "appliedStandards": {
+    "date": "기준일(YYYY-MM) → 라벨 '기준월' + 년월 picker",
+    "filterAffectsGrid": "조회기준(선정/결성년도) → 첫 컬럼 라벨·기준 동적 변경",
+    "filter": "조합구분(전체/운영조합/청산조합) → 행 필터",
+    "currencyUnit": "읽기전용 금액 조회 화면 → 원/백만원/억원 단위 전환 토글(CRUD 없음)"
+  },
+  "excelCorrections": [
+    { "item": "기준일(YYYY-MM)", "to": "기준월", "status": "라벨 규칙 적용(엑셀 원본 '기준일'은 확인 후 정정 대상)" }
+  ],
+  "sections": [
+    { "role": "title", "label": "연도별투자현황상세" },
+    {
+      "role": "search",
+      "fields": [
+        { "key": "asOf", "label": "기준월", "component": "년월 picker", "dataType": "YYYY-MM", "sample": "2026-08" },
+        { "key": "accountType", "label": "계정구분", "component": "셀렉트박스", "options": { "inline": ["전체", "농식품", "수산"] } },
+        { "key": "basis", "label": "조회기준", "component": "라디오", "options": { "inline": ["선정년도", "결성년도"] }, "affectsGrid": "첫 컬럼 라벨·기준 동적" },
+        { "key": "combType", "label": "조합구분", "component": "라디오", "options": { "inline": ["전체", "운영조합", "청산조합"] }, "affectsGrid": "행 필터(운영/청산)" },
+        { "key": "searchBtn", "label": "조회", "component": "버튼" }
+      ]
+    },
+    {
+      "role": "grid",
+      "sectionNo": 1,
+      "label": "연도별 투자현황 상세(자펀드별)",
+      "currencyUnitToggle": ["원", "백만원", "억원"],
+      "columns": [
+        { "key": "year", "label": "선정년도/결성년도(동적)", "sample": "2010" },
+        { "key": "round", "label": "차수", "sample": "1" },
+        { "key": "gp", "label": "운용사", "sample": "KB증권(주)" },
+        { "key": "fund", "label": "자펀드", "sample": "현대동양농식품사모투자전문회사" },
+        { "key": "commitTotal", "label": "약정총액", "money": true, "sample": "32,000,000,000" },
+        { "key": "moCommit", "label": "모태펀드약정액", "money": true, "sample": "15,700,000,000" },
+        { "key": "paidA", "label": "납입총액(A)", "money": true, "sample": "0" },
+        { "key": "moPaid", "label": "모태펀드납입액", "money": true, "sample": "0" },
+        { "key": "cashB1", "label": "현금성자산(B1)", "money": true, "sample": "0" },
+        { "key": "assetB2", "label": "투자자산잔액(B2)", "money": true, "sample": "0" },
+        { "key": "distC", "label": "기배분액(C)", "money": true, "sample": "30,272,493,937" },
+        { "key": "recover", "label": "회수금", "money": true, "sample": "24,999,988,000" },
+        { "key": "profit", "label": "수익", "money": true, "sample": "7,713,485,321" },
+        { "key": "multiple", "label": "투자배수", "formula": "(B1+B2+C)/A", "sample": "1.24", "note": "도메인 규칙: 배분(C)·회수·수익은 납입(A)이 있어야 성립 → A=0이면 C=0. A=0&분자>0(∞) 조합은 유효 데이터에 없음" }
+      ],
+      "component": "전부 라벨(읽기전용)"
+    }
+  ],
+  "openQuestions": ["금액 단위 기본값", "구분(운영/청산) 컬럼 표시 여부(AS-IS엔 없음)"]
+}

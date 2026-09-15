@@ -50,3 +50,7 @@ docs/skills-new-screen-architecture.html
 # 공유 체크아웃에서 브랜치를 갈아타면 동시 세션의 dev 서버가 다른 커밋의 소스를 서빙한다.
 # 브랜치 작업은 여기 워크트리에서 한다.
 .claude/worktrees/
+
+# Python bytecode (scripts/menu-doc 생성기)
+__pycache__/
+*.pyc
