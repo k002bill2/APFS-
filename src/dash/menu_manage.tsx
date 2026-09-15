@@ -75,10 +75,10 @@ function NameCell({ data, toggle }: { data: MenuView; toggle: (id: string) => vo
         <button type="button" aria-expanded={data.expanded} aria-label={`${data.name} 하위 메뉴 ${data.expanded ? '접기' : '펼치기'}`}
           onClickCapture={mark} onDoubleClickCapture={mark} onClick={() => toggle(data.id)}
           className="inline-flex items-center justify-center shrink-0 border-0 bg-transparent cursor-pointer text-muted-foreground rounded-[6px] transition-colors duration-tok-fast ease-ds hover:text-primary hover:bg-muted"
-          style={{ width: 22, height: 22, padding: 0 }}>
+          style={{ width: 24, height: 24, padding: 0 }}>
           <Icon name={data.expanded ? 'chevron-down' : 'chevron-right'} size={15} stroke={2.2} />
         </button>
-      ) : <span aria-hidden className="inline-block shrink-0" style={{ width: 22 }} />}
+      ) : <span aria-hidden className="inline-block shrink-0" style={{ width: 24 }} />}
       <span className={data.lvl === 1 ? 'font-semibold' : data.lvl === 2 ? 'font-medium' : ''} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><MT>{data.name}</MT></span>
     </span>
   );
@@ -371,7 +371,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               <MT>{value}</MT>
-              <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex border-0 cursor-pointer p-0" style={{ background: 'transparent', color: 'inherit' }}>
+              <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
             </span>
