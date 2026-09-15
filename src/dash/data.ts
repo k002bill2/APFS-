@@ -302,26 +302,23 @@ const MENU = [
     ]},
   ]},
 
+  // 관리자 IA(2026-09-14 사용자 이미지 정본 — AFIT 공통관리 S0_101~S0_108 LNB와 동일): 중분류 3 · 리프 8, 표시 순서 그대로.
+  // 구조표의 구 관리자 리프(외부연동·보안·게시판, 도움말 관리 등)는 이 이미지 IA로 대체됐다(브리프 dev/active/admin-pages-complete/BRIEF.md).
+  // 모든 리프는 typed 페이지(app.tsx 명시 분기) — GenericListPage 폴백 없음. 라벨은 원본 표기(띄어쓰기 없음: 권한관리·사용자관리·프로그램관리…).
   { id:"admin", label:"관리자", icon:"settings", roles:["admin"], children:[
+    { label:"사용자·권한 관리", sub:true, children:[
+      { label:"권한관리", path:"user-permission-manage" },          // S0_102
+      { label:"사용자관리", path:"user-manage" },                    // S0_101
+      { label:"사용자 초대(운용사)", path:"user-invite-gp" },        // S0_103
+    ]},
     { label:"시스템 관리", sub:true, children:[
-      // typed 페이지 전환(2026-09-14, S0_106·S0_105) — 라벨은 구조표 그대로, nav 키만 path 로 고정.
-      { label:"공통코드 관리", path:"code-manage" },{ label:"메뉴 관리", path:"menu-manage" },{ label:"도움말 관리" },
+      { label:"프로그램관리", path:"program-manage" },               // S0_108
+      { label:"메뉴관리", path:"menu-manage" },                      // S0_105
+      { label:"코드관리", path:"code-manage" },                      // S0_106
     ]},
-    { label:"사용자 관리", sub:true, children:[
-      { label:"사용자 관리" },{ label:"사용자 권한 관리", path:"user-permission-manage" },   // S0_102 typed 페이지
-    ]},
-    { label:"외부연동", sub:true, children:[
-      { label:"자펀드 코드관리(운용사ERP&수탁기관)" },
-      { label:"연계 모니터링(API)" },
-      { label:"자펀드 보고 양식관리(운용사ERP)" },
-    ]},
-    { label:"보안", sub:true, children:[
-      { label:"개인정보 접속관리" },
-      { label:"사용자별 권한조회" },
-      { label:"사용자별 로그조회" },
-    ]},
-    { label:"게시판", sub:true, children:[
-      { label:"게시판 관리" },
+    { label:"감사·기록", sub:true, children:[
+      { label:"권한 변경이력", path:"permission-history" },          // S0_107
+      { label:"감사로그", path:"audit-log" },                        // S0_104
     ]},
   ]},
 ];

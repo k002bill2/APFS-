@@ -386,8 +386,8 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
 
   return (
     <GridFrame
-      crumbs={['홈', '관리자', '시스템 관리', '공통코드 관리']}
-      title="공통코드 관리"
+      crumbs={['홈', '관리자', '시스템 관리', '코드관리']}
+      title="코드관리"
       favRoute="code-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={<>

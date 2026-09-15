@@ -351,8 +351,8 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
 
   return (
     <GridFrame
-      crumbs={['홈', '관리자', '시스템 관리', '메뉴 관리']}
-      title="메뉴 관리"
+      crumbs={['홈', '관리자', '시스템 관리', '메뉴관리']}
+      title="메뉴관리"
       favRoute="menu-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={selected ? (

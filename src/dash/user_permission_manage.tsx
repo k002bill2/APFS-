@@ -272,7 +272,7 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
     const body = rows.map((r) => EXPORT_COLS.map((c) => { const v = c.get(r); return typeof v === 'number' ? (masked ? 0 : v) : masked ? '' : v; }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === 'No' ? 6 : c.header === '설명' ? 36 : 14 }));
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '사용자 권한 관리');
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '권한관리');
     XLSX.writeFile(wb, '사용자권한관리.xlsx');
     toast.success('Excel로 내보냈습니다');
   };
@@ -282,8 +282,8 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
 
   return (
     <GridFrame
-      crumbs={['홈', '관리자', '사용자 관리', '사용자 권한 관리']}
-      title="사용자 권한 관리"
+      crumbs={['홈', '관리자', '사용자·권한 관리', '권한관리']}
+      title="권한관리"
       favRoute="user-permission-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={selected ? (
