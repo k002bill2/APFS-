@@ -22,7 +22,7 @@ import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame } from './grid_frame';
-import { apfsTheme, FIT_GRID_WIDTH, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
+import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -58,18 +58,19 @@ const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 
 type GroupView = CodeGroup & { upName: string; count: number };
 const GROUP_COLS: ColDef<GroupView>[] = [
-  { field: 'code', headerName: '코드구분', width: 100, minWidth: 84, maxWidth: 120, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
-  /* 코드구분명이 남는 폭을 흡수(maxWidth 없음 + FIT_GRID_WIDTH) */
-  { field: 'name', headerName: '코드구분명', width: 150, minWidth: 100, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'up', headerName: '상위코드구분', width: 126, minWidth: 118, maxWidth: 150, cellStyle: muted,
+  { field: 'code', headerName: '코드구분', width: 84, minWidth: 84, maxWidth: 120, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
+  /* 코드구분명이 남는 폭을 흡수(flex:1) */
+  { field: 'name', headerName: '코드구분명', flex: 1, width: 150, minWidth: 100, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
+  { field: 'up', headerName: '상위코드구분', width: 118, minWidth: 118, maxWidth: 150, cellStyle: muted,
     cellRenderer: (p: any) => (p.value ? <MT>{`${p.value} (${p.data.upName})`}</MT> : <span>-</span>) },
   { field: 'use', headerName: '사용여부', width: 90, minWidth: 90, maxWidth: 90, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} size="md" /> },
-];   // minWidth 합 392 ≤ 패널 폭(440-라디오 44) — FIT_GRID_WIDTH 축소가 헤더를 잘라먹지 않는 하한
-/* 우측 코드상세는 9컬럼이라 패널 폭(≈800px)을 넘는다 → 내용 맞춤(AUTO_SIZE_CONTENT) + 그리드 내부 가로 스크롤(apfs-aggrid "넓은 다열 테이블"). 긴 텍스트만 maxWidth 캡 */
+];   // 비-flex 폭 합 292 + 코드구분명 minWidth 100 = 392 ≤ 좌 패널 center 뷰포트(≈395)
+     // ⚠ flex 는 flex 컬럼만 늘리고 줄인다 — 나머지는 선언 width 고정이라 합이 넘으면 바로 가로 스크롤
+/* 우측 코드상세는 9컬럼이라 좁은 패널에서는 폭을 넘는다 → 코드명 flex:1 이 잉여를 흡수하고, minWidth 합을 넘으면 그리드 내부 가로 스크롤. 긴 텍스트만 maxWidth 캡 */
 const DETAIL_COLS: ColDef<CodeDetail>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'code', headerName: '코드', width: 90, maxWidth: 120, cellStyle: flexMid, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
-  { field: 'name', headerName: '코드명', width: 180, minWidth: 130, maxWidth: 320, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
+  { field: 'name', headerName: '코드명', flex: 1, width: 180, minWidth: 130, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'en', headerName: '코드명(영문)', width: 140, maxWidth: 200, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
   { field: 'ord', headerName: '정렬', width: 64, maxWidth: 64, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'rem', headerName: '비고', width: 170, maxWidth: 240, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
@@ -433,7 +434,6 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
             columnDefs={GROUP_COLS}
             getRowId={(p) => p.data.code}
             domLayout="autoHeight"
-            autoSizeStrategy={FIT_GRID_WIDTH}
             defaultColDef={DEFAULT_COL_DEF}
             rowSelection={GROUP_SELECTION}
             selectionColumnDef={SELECTION_COL}
@@ -467,7 +467,6 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
               columnDefs={DETAIL_COLS}
               getRowId={(p) => p.data.id}
               domLayout="autoHeight"
-              autoSizeStrategy={AUTO_SIZE_CONTENT}
               defaultColDef={DEFAULT_COL_DEF}
               rowSelection={DETAIL_SELECTION}
               selectionColumnDef={SELECTION_COL}

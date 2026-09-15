@@ -16,7 +16,7 @@ import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame } from './grid_frame';
-import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
+import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';
 import { PeriodPicker } from './ui/period-picker';
 import { AgGridReact } from 'ag-grid-react';
@@ -79,7 +79,7 @@ const columnDefs: ColDef<HistEntry>[] = [
   { field: 'ctype', headerName: '변경유형', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={CT_TONE[p.value as ChangeType]} label={p.value} size="lg" dot={false} /> },
   { field: 'preset', headerName: '권한', width: 130, minWidth: 110, maxWidth: 180, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
   { headerName: '변경 요약', width: 200, minWidth: 170, maxWidth: 260, cellStyle: flexCenter, valueGetter: (p) => (p.data ? summaryText(p.data) : ''), cellRenderer: (p: any) => (p.data ? <SummaryCell d={p.data} /> : null) },
-  { headerName: '적용 대상(동일 권한 보유)', width: 220, minWidth: 180, maxWidth: 300, cellStyle: flexCenter, valueGetter: (p) => (p.data?.holders ?? []).map((h) => h.name).join(', '), cellRenderer: (p: any) => (p.data ? <HoldersCell d={p.data} /> : null) },
+  { headerName: '적용 대상(동일 권한 보유)', flex: 1, width: 220, minWidth: 180, cellStyle: flexCenter, valueGetter: (p) => (p.data?.holders ?? []).map((h) => h.name).join(', '), cellRenderer: (p: any) => (p.data ? <HoldersCell d={p.data} /> : null) },
   { field: 'actor', headerName: '행위자', width: 120, maxWidth: 140, cellStyle: muted, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'src', headerName: '발생프로그램', width: 120, maxWidth: 130, cellStyle: { ...flexMid, color: 'var(--muted-foreground)' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
 ];
@@ -283,7 +283,6 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
           columnDefs={columnDefs}
           getRowId={(p) => p.data.id}
           domLayout="autoHeight"
-          autoSizeStrategy={AUTO_SIZE_CONTENT}
           defaultColDef={DEFAULT_COL_DEF}
           rowSelection={ROW_SELECTION}
           selectionColumnDef={SELECTION_COL}

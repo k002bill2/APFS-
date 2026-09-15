@@ -23,7 +23,7 @@ import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame } from './grid_frame';
-import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
+import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import { _stopPropagationForAgGrid } from 'ag-grid-community';
@@ -85,7 +85,7 @@ function NameCell({ data, toggle }: { data: MenuView; toggle: (id: string) => vo
 }
 
 const makeColumns = (toggle: (id: string) => void): ColDef<MenuView>[] => [
-  { field: 'name', headerName: '메뉴명', width: 300, minWidth: 220, maxWidth: 400, ...NOSORT, cellStyle: flexCenter,
+  { field: 'name', headerName: '메뉴명', flex: 1, width: 300, minWidth: 220, ...NOSORT, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.data ? <NameCell data={p.data} toggle={toggle} /> : null) },
   { field: 'code', headerName: '메뉴ID', width: 96, ...NOSORT, cellStyle: mono, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'en', headerName: '메뉴명(영문)', width: 170, maxWidth: 240, ...NOSORT, cellStyle: { ...flexCenter, color: 'var(--muted-foreground)' },
@@ -401,7 +401,6 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
           columnDefs={columnDefs}
           getRowId={(p) => p.data.id}
           domLayout="autoHeight"
-          autoSizeStrategy={AUTO_SIZE_CONTENT}
           defaultColDef={DEFAULT_COL_DEF}
           rowSelection={ROW_SELECTION}
           selectionColumnDef={SELECTION_COL}
