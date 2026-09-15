@@ -95,7 +95,7 @@ const columnDefs: ColDef<PermRow>[] = [
 ];
 /* 라디오 단일선택 — 모듈 상수(인라인 리터럴은 렌더마다 컬럼 재생성 → 폭 되돌림, apfs-aggrid ⑦) */
 const ROW_SELECTION: RowSelectionOptions<PermRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44 };
+const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 
 type XCol = { header: string; get: (r: PermRow) => string | number };
 const EXPORT_COLS: XCol[] = [

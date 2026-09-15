@@ -108,7 +108,7 @@ const makeColumns = (toggle: (id: string) => void): ColDef<MenuView>[] => [
   { field: 'use', headerName: '사용여부', width: 92, ...NOSORT, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} /> },
 ];
 const ROW_SELECTION: RowSelectionOptions<MenuView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44 };
+const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 
 type XCol = { header: string; get: (r: MenuView) => string | number };
 const EXPORT_COLS: XCol[] = [

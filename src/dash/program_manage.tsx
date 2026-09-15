@@ -79,7 +79,7 @@ const columnDefs: ColDef<ProgramRow>[] = [
   { field: 'helpBy', headerName: '도움말 수정자', width: 120, maxWidth: 130, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : dash) },
 ];
 const ROW_SELECTION: RowSelectionOptions<ProgramRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44 };
+const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 
 type XCol = { header: string; get: (r: ProgramRow) => string };
 const EXPORT_COLS: XCol[] = [

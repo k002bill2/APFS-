@@ -84,7 +84,7 @@ const columnDefs: ColDef<HistEntry>[] = [
   { field: 'src', headerName: '발생프로그램', width: 120, maxWidth: 130, cellStyle: { ...flexMid, color: 'var(--muted-foreground)' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
 ];
 const ROW_SELECTION: RowSelectionOptions<HistEntry> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44 };
+const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 const TYPE_CHIPS = ['', ...CHANGE_TYPES] as const;
 
 type XCol = { header: string; get: (r: HistEntry) => string };
