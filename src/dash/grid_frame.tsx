@@ -25,14 +25,27 @@ const FLOATING_Z = 55;
 /* sticky GNB(shell.tsx `<header>` height:58, z50) 높이 — 하드코딩 금지, 실측. */
 const gnbHeight = () => Math.round(document.querySelector('header')?.getBoundingClientRect().height ?? 58);
 
-/* 바가 앉을 y = **그리드 헤더의 실측 하단** + 여백(헤더 바로 아래 = 행 체크박스 위).
-   ⚠️ `gnb + 헤더높이` 로 계산하면 안 된다 — 그리드 헤더는 top:58 에 닿기 전까지 sticky 가 아니라
-   아직 아래에 있어서, 고정값으로 두면 스크롤 도중 **아직 보이는 헤더를 바가 덮는다**(Codex P2).
-   실측이라 헤더가 붙는 동안 바도 따라 올라와 항상 헤더 아래에 도킹한다.
+/* 바가 마운트되기 전 1프레임 동안만 쓰는 높이 추정치(실측 45px). */
+const BAR_H_FALLBACK = 45;
+
+/* 바가 앉을 y = **선택된 행 바로 위**(사용자 지시 2026-09-15). 액션이 대상 행에 붙어 다녀
+   "무엇을 대상으로 하는지"가 분명해진다. 선택 행은 페이지 state 라 GridFrame 은 알 수 없어
+   DOM(`.ag-row-selected`)으로 찾는다 — `.ag-header` 와 같은 수준의 국소 결합, 없으면 폴백.
+   (AG Grid 는 pinned/center 컨테이너에 같은 행을 쌍둥이로 그려 2개가 잡히지만 rect.top 은 동일.)
+
+   상·하 clamp 가 필요하다 — 선택 행이 화면 밖으로 나가도 바는 조작 가능해야 한다:
+   - 위: **그리드 헤더 실측 하단** + 8. `gnb + 헤더높이` 고정값으로 두면 안 된다 — 그리드 헤더는
+     top:58 에 닿기 전까지 sticky 가 아니라 아직 아래에 있어, 스크롤 도중 아직 보이는 헤더를
+     바가 덮는다(Codex P2). 실측이라 헤더가 붙는 동안 바도 따라 움직인다.
+   - 아래: 뷰포트 하단 − 바 높이 − 12.
    그리드가 없는 children(수제 표 등)은 GNB 아래로 폴백. */
-const barTopFor = (frame: HTMLElement | null) => {
+const barTopFor = (frame: HTMLElement | null, barH: number) => {
   const gh = frame?.querySelector('.ag-header')?.getBoundingClientRect();
-  return Math.round(gh ? gh.bottom + 8 : gnbHeight() + 10);
+  const minTop = Math.round(gh ? gh.bottom + 8 : gnbHeight() + 10);
+  const row = frame?.querySelector('.ag-row-selected')?.getBoundingClientRect();
+  if (!row) return minTop;
+  const maxTop = Math.round(window.innerHeight - barH - 12);
+  return Math.max(minTop, Math.min(maxTop, Math.round(row.top - barH - 8)));
 };
 
 /* 카드헤더 즐겨찾기 토글(★) — 현재 페이지(route)를 MenuStore 'fav'에 on/off. 개수 제한 없음.
@@ -127,8 +140,7 @@ export function GridFrame({
   const [toolbarOut, setToolbarOut] = React.useState(false);
   /* 바의 위치는 하드코딩하지 않고 실측으로 정한다.
      - left: 뷰포트 중앙이 아니라 **프레임 카드 중앙** (LNB 폭만큼 왼쪽으로 치우치는 것 방지)
-     - top: **그리드 헤더 실측 하단** + 8 = 헤더 바로 아래(행 체크박스 위).
-       헤더를 밀어내는 방식은 버려진 띠로 행이 비쳐 보여서 폐기했다.
+     - top: **선택된 행 바로 위**(위: 그리드 헤더 하단, 아래: 뷰포트 하단으로 clamp).
      left 는 LNB 접기/펼치기처럼 window resize 없이 폭이 바뀌는 경우가 있어 ResizeObserver 로 추적한다. */
   const [barPos, setBarPos] = React.useState<{ left: number; top: number } | null>(null);
   const actionsHostRef = React.useRef<HTMLDivElement>(null);   // 툴바 쪽 액션 컨테이너
@@ -169,13 +181,32 @@ export function GridFrame({
   }, [toolbarOut]);
 
 
+  const measureRef = React.useRef<(() => void) | null>(null);
+
+  /* **의존성 배열 없음 = 매 렌더 재측정.** 선택 행이 바뀌면(페이지 state) GridFrame 이 새
+     contextActions 로 리렌더되므로, 이것이 "선택이 다른 행으로 옮겨갔다"를 잡는 유일한 신호다
+     (contextActions 는 렌더마다 새 ReactNode 라 의존성으로 쓸 수 없고, DOM 클래스 변화를
+     MutationObserver 로 쫓는 것보다 가볍다). 비용은 렌더당 rect 읽기 2회.
+     무한 루프는 measure 의 값 비교 가드가 막는다. */
+  React.useLayoutEffect(() => {
+    if (wantsFloating && toolbarOut) measureRef.current?.();
+  });
   React.useEffect(() => {
     const root = rootRef.current;
     if (!wantsFloating || !root) return;
     const measure = () => {
       const r = root.getBoundingClientRect();
-      setBarPos({ left: Math.round(r.left + r.width / 2), top: barTopFor(root) });
+      /* 바 높이는 버튼 구성·폰트에 따라 달라 하드코딩하지 않는다. 마운트 첫 프레임엔 아직
+         0 이라 BAR_H_FALLBACK 을 쓰고, 아래 layout effect 가 실측값으로 곧바로 한 번 더 잰다. */
+      const barH = barRef.current?.offsetHeight || BAR_H_FALLBACK;
+      const left = Math.round(r.left + r.width / 2);
+      const top = barTopFor(root, barH);
+      /* ⚠️ **값 비교 가드 필수.** 아래 "매 렌더 재측정" effect 와 맞물려, 매번 새 객체를
+         set 하면 setState→렌더→effect→setState 무한 루프가 된다(이 저장소의 AG Grid
+         onPaginationChanged 루프와 동형). prev 를 그대로 돌려주면 React 가 렌더를 건너뛴다. */
+      setBarPos((prev) => (prev && prev.left === left && prev.top === top ? prev : { left, top }));
     };
+    measureRef.current = measure;
     measure();
     /* ⚠️ root 만 관찰하면 안 된다 — 프레임이 maxWidth:1280 으로 캡된 데스크톱에서 LNB 를 접으면
        프레임 **폭은 1280 그대로인데 left 만 이동**해 ResizeObserver 가 울지 않고 바가 어긋난 채 남는다
@@ -254,7 +285,7 @@ export function GridFrame({
         )}
       </Card>
 
-      {/* 플로팅 액션 바(그리드 헤더 바로 아래 = 행 체크박스 위) — ⚠️ **반드시 body Portal**.
+      {/* 플로팅 액션 바(선택된 행 바로 위에 붙어 따라다닌다) — ⚠️ **반드시 body Portal**.
           이 컴포넌트 루트에 `animation: dashFade … both` 가 걸려 있어 종료 상태가 항등행렬로 굳고,
           그 transform 이 (a) 새 쌓임맥락 (b) fixed 의 컨테이닝블록을 만든다. 포털 없이 fixed 를 쓰면
           bottom 이 뷰포트가 아니라 카드 기준이 되고 z 도 그 맥락 안에 갇힌다(→ z-index 스킬 규칙 3·5). */}
