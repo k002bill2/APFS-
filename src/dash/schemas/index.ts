@@ -32,6 +32,10 @@ import { schema as s운용사재무정보조회 } from './운용사_재무정보
 import { schema as s투자금실사보고 } from './투자금_실사보고';
 import { schema as s관리보수관리 } from './관리보수관리';
 import { schema as s전체보고현황 } from './전체_보고현황';
+// 2026-09-15 결선: DEFAULT_SCHEMA(영문 제네릭 5컬럼)로 떨어지던 3개 공백
+import { schema as s투자기업명세서통합 } from './투자기업명세서_통합';
+import { schema as s우수투자기업관리 } from './우수투자기업_관리';
+import { schema as s운용사명세서 } from './운용사_명세서';
 
 const ALL: PageSchema[] = [
   s연도별투자현황, s조합별월간보고현황, s자펀드공고정보관리, s투자기업정보통합, s사후관리기록관리, s투자성과포트폴리오,
@@ -41,6 +45,7 @@ const ALL: PageSchema[] = [
   s투심승인정보조회, s정기보고회수내역, s투자기업정보, s투자기업고용현황보고,
   s전체투자실적, s투자실적현황투자기업, s투자금회수현황, s투자및회수상세정보,
   s운용사별재무제표, s운용사재무정보조회, s투자금실사보고, s관리보수관리, s전체보고현황,
+  s투자기업명세서통합, s우수투자기업관리, s운용사명세서,
 ];
 
 export function buildRegistry(list: PageSchema[]): Record<string, PageSchema> {

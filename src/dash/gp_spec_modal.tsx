@@ -166,8 +166,12 @@ function FinTable({ unit }: { unit: Unit }) {
   );
 }
 
-export function GpSpecModal({ onClose }: { onClose: () => void }) {
+/* row는 **optional**이다 — 목록(운용사 명세서)에서 열 때 헤더의 대상명만 실제 행 값으로 바꾸고,
+   본문은 S1_02 원문 값을 유지한다(원문에 없는 값을 행에서 합성해 채우면 목업 충실도가 깨진다).
+   optional로 둬야 기존 `{ onClose }` 단독 호출부(occasional_report_manage.tsx)가 회귀 없이 산다. */
+export function GpSpecModal({ row, onClose }: { row?: Record<string, unknown>; onClose: () => void }) {
   const [unit, setUnit] = useState<Unit>('원');
+  const target = String(row?.gp ?? row?.name ?? GP_NAME);
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[880px] max-h-[88vh]">
@@ -175,7 +179,7 @@ export function GpSpecModal({ onClose }: { onClose: () => void }) {
           {/* 제목+대상명은 한 래퍼로 묶는다 — DialogHeader가 justify-between이라 안 묶으면 대상명이 우측 끝으로 밀린다 */}
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">운용사 명세</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0"><MT>{GP_NAME}</MT></DialogDescription>
+            <DialogDescription className="text-caption truncate min-w-0"><MT>{target}</MT></DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">

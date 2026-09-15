@@ -11,7 +11,7 @@ export const TONE_VALUES = ['primary','success','warning','danger','info','cyan'
 
 // 읽기전용 상세 보고서 팝업 종류. 컬럼이 detail을 선언하면 그 셀 값이 링크가 되어 해당 팝업을 연다.
 // 팝업 컴포넌트 매핑은 소비처(generic_list.tsx)가 갖는다 — 스키마는 어떤 팝업인지만 선언한다.
-export const DETAIL_POPUPS = ['monthlyReport'] as const;
+export const DETAIL_POPUPS = ['monthlyReport', 'gpSpec', 'companyProfile'] as const;
 export type DetailPopup = typeof DETAIL_POPUPS[number];
 
 // attachFrom: 이 컬럼의 값 뒤에 첨부파일 확장자 칩(PDF 등)을 붙인다. 값은 같은 행의 **필드 키**
@@ -19,7 +19,14 @@ export type DetailPopup = typeof DETAIL_POPUPS[number];
 // detail/detailWhen: 이 컬럼 값을 클릭(또는 셀 Enter)하면 읽기전용 상세 팝업을 연다. detailWhen이 있으면
 // **값이 그것과 같은 행만** 링크가 되고 나머지는 평상 셀이다(예: 보고구분 '월간보고'만 상세가 있는 정기보고).
 // 선언이 없는 스키마는 종전과 동일하게 동작한다(opt-in).
-export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; }
+// note: 컬럼 **헤더** 옆 ⚠검토필요 마커. 조회 전용 스키마(fields: [])는 RowFormModal이 없어 FieldSpec.note로
+//   목업의 `!` 마커를 실을 데가 없다 — 억지로 fields를 채우면 `editable = fields.length > 0`이 켜져
+//   조회 화면에 등록 버튼이 생긴다(generic_list.tsx:444). 그래서 컬럼에도 note를 둔다.
+// group: 2단 헤더의 상위 묶음 이름. **연속한** 컬럼이 같은 group이면 하나의 ColGroupDef로 접힌다
+//   (컬럼 수십 개를 단일 헤더로 늘어놓으면 판독 불가 — S1_31 58컬럼·S1_33 회수실적 4컬럼이 원문에서 2단이다).
+// pinned: 좌측 고정 열. 와이드 표에서 가로 스크롤 중에도 식별 컬럼(운용사·자펀드·투자기업)을 붙잡아 둔다.
+//   폭은 **고정이 아니라 하한**으로 둔다 — 400% 확대 시 고정 폭 pinned가 화면을 다 먹는다(A11Y 10).
+export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; pinned?: 'left'; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; note?: ReviewNoteSpec; }
 // note: 라벨 옆 ⚠검토필요 마커(목업 `.review` data-rec/data-dat 원문). RowFormModal이 Field 라벨에 ReviewMarker로 렌더한다.
 // 설계 메모라 마스킹·엑셀 대상이 아니며, 문구는 목업 원문 그대로(창작 금지 — apfs-grid "검토필요 마커").
 export interface ReviewNoteSpec { rec: string; dat: string; }
@@ -54,14 +61,21 @@ export interface PageSchema {
   // 푸터의 리스트 뷰|카드뷰 SegTabs를 숨기고 리스트 뷰로 고정한다(카드뷰가 의미 없는 엔티티).
   // 표현 전용 — hideKpis(헤더 KPI만)·hideMetrics(금액 개념 전체)와 독립.
   hideCardView?: boolean;
+  // 툴바 우측에 금액 단위 SegTabs(원/백만원/억원)를 노출한다. **opt-in** — 선언하지 않은 스키마는
+  // 종전 동작 그대로다(원 단위 원시값). 목업 8종이 갖고 있는 공통 기능의 공유 구현(§4.2).
+  // 환산 대상은 type:'amount' 컬럼뿐이며, 환산은 **셀 렌더·엑셀 경계에서만** 한다 —
+  // rows에 환산값을 써넣으면 KPI 합계·필터 비교값까지 같이 흔들린다.
+  unitToggle?: boolean;
   provenance: Provenance;
 }
 
 const ColumnZ = z.object({
   key: z.string(), label: z.string(), type: z.enum(CELL_TYPES),
   unit: z.string().optional(), align: z.enum(['left','right','center']).optional(), group: z.string().optional(),
+  pinned: z.literal('left').optional(),
   attachFrom: z.string().optional(),
   detail: z.enum(DETAIL_POPUPS).optional(), detailWhen: z.string().optional(),
+  note: z.object({ rec: z.string(), dat: z.string() }).optional(),
 });
 const FieldZ = z.object({
   key: z.string(), label: z.string(), control: z.enum(FIELD_CONTROLS),
@@ -83,6 +97,7 @@ export const PageSchemaZ = z.object({
   hideKpis: z.boolean().optional(),
   hideRowSelection: z.boolean().optional(),
   hideCardView: z.boolean().optional(),
+  unitToggle: z.boolean().optional(),
   provenance: ProvenanceZ,
 });
 

@@ -8,6 +8,8 @@ import { Switch } from '../ui/switch';
 import { Icon } from '../icons';
 import { renderKind } from './dispatch';
 import type { ColumnSpec, FieldSpec, StatusDomainEntry } from './types';
+import { formatUnit } from './unit';
+import type { Unit } from './unit';
 import type { Tone } from '../components';
 
 const { StatusBadge, ColorChip, DeltaBadge } = UI;
@@ -55,12 +57,18 @@ export function AttachChips({ value, max = 3 }: { value?: unknown; max?: number 
   );
 }
 
-export function Cell({ col, value, color, statusDomain }: { col: ColumnSpec; value: any; color?: string; statusDomain?: StatusDomainEntry[] }) {
+/* unit: 금액 단위 토글(schema.unitToggle)이 켜진 화면만 넘긴다. **type:'amount' 숫자 값에만** 적용 —
+   date/number(종업원수·주식수)까지 나누면 축이 무너진다. 환산은 여기(렌더 경계)에서만 하고
+   행 데이터는 원 단위 원본 그대로 둔다(KPI 합계·필터 비교값 보존). */
+export function Cell({ col, value, color, statusDomain, unit }: { col: ColumnSpec; value: any; color?: string; statusDomain?: StatusDomainEntry[]; unit?: Unit }) {
   switch (renderKind(col.type)) {
     case 'status':     return <StatusBadge tone={toneFor(String(value), statusDomain)} label={String(value)} size="sm" />;
     case 'rate':       return <DeltaBadge value={Number(value)} />;
     case 'gp':         return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><ColorChip icon="building" color={color || 'var(--chart-1)'} size={26} iconSize={14} /><MT>{String(value)}</MT></span>;
-    case 'numeric':    return <span className="tabular">{mn(typeof value === 'number' ? value.toLocaleString() : String(value))}</span>;
+    case 'numeric':
+      if (unit && col.type === 'amount' && typeof value === 'number')
+        return <span className="tabular">{mn(formatUnit(value, unit))}</span>;
+      return <span className="tabular">{mn(typeof value === 'number' ? value.toLocaleString() : String(value))}</span>;
     // maskedText (text/code/pii) + 미지 타입 → 항상 MT (평문 누출 차단)
     default:           return <MT>{String(value)}</MT>;
   }
