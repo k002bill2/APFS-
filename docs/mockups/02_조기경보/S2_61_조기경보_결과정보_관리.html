@@ -1,0 +1,436 @@
+<title>조기경보 결과정보 관리</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --danger:#E5484D;--danger-weak:#FBE9EA;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;
+    --danger:#F2555A;--danger-weak:#3A1A1C;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--danger-weak:#FBE9EA;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F2555A;--danger-weak:#3A1A1C;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:82ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .admin-gear{margin-left:12px;padding:6px 12px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;font-size:13px;white-space:nowrap}
+  .admin-gear:hover{background:rgba(255,255,255,.12);color:#fff}
+  .admin-gear.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:18px}
+  .searchrow{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;white-space:nowrap}
+  .btn{height:38px;padding:0 22px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .actbar{display:flex;align-items:center;gap:8px;margin-left:auto}
+  .datefield{position:relative;display:flex;align-items:center;min-width:0}
+  .datefield input{width:150px;padding-right:32px;cursor:pointer}
+  .datefield .cal{position:absolute;right:9px;width:17px;height:17px;color:var(--ink-3);pointer-events:none}
+  .ppanel{position:fixed;z-index:80;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:8px;width:236px}
+  .ppanel .phead{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 8px;font-size:13px;font-weight:700;color:var(--ink-2)}
+  .ppanel .pnav{width:26px;height:26px;border:none;background:transparent;border-radius:6px;color:var(--ink-2);font-size:16px;cursor:pointer}
+  .ppanel .pnav:hover{background:var(--surface-3)}
+  .ppanel .pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+  .ppanel .pgrid button{height:34px;border:none;background:transparent;border-radius:6px;font-size:13px;color:var(--ink);font-family:inherit;cursor:pointer}
+  .ppanel .pgrid button:hover{background:var(--surface-3)}
+  .ppanel .pgrid button[aria-selected="true"]{background:var(--primary);color:#fff;font-weight:700}
+  .sectitle{display:flex;align-items:center;gap:8px;margin:20px 0 8px;font-size:15.5px;font-weight:800;color:var(--ink)}
+  .sectitle::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--primary)}
+  .listbar{display:flex;align-items:center;margin:2px 0 8px}
+  .listbar .cap{font-size:13.5px;color:var(--ink-2)}
+  .listbar .cap b{color:var(--primary)}
+  .listbar .acts{margin-left:auto;display:flex;gap:8px}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;width:100%}
+  table.grid th,table.grid td{padding:9px 12px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:center}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong)}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid td:last-child,table.grid th:last-child{border-right:none}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  .tag{display:inline-block;padding:1px 9px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.b{background:var(--primary-weak);color:var(--primary)} .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.n{background:var(--grey-weak);color:var(--ink-3)} .tag.d{background:var(--danger-weak);color:var(--danger)}
+  .ts{color:var(--ink-3);font-size:12px;margin-left:6px}
+  .muted{color:var(--ink-3)}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:90;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  /* alert dialog */
+  .scrim{position:fixed;inset:0;background:rgba(16,24,40,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;animation:fade .15s ease}
+  .modal{width:440px;max-width:100%;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);animation:pop .18s ease}
+  .modal-head{display:flex;align-items:center;padding:18px 22px 6px}
+  .modal-head h2{font-size:17px;font-weight:800;margin:0}
+  .modal-body{padding:6px 22px 18px;font-size:14px;color:var(--ink-2);line-height:1.6}
+  .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid var(--border);background:var(--surface-2)}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  @media (max-width:900px){.lnb{display:none!important}.actbar{margin-left:0}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">시스템 S2 · 조기경보 · KRDS TO-BE</p>
+  <h1 class="doc-title">조기경보 결과정보 관리</h1>
+  <p class="doc-sub">기준년월별 조기경보 결과정보의 생성·확정·마감 상태를 관리하는 화면. 상단에서 기준월을 선택해 조회하고, 조기경보 생성 결과내역과 운용사 재무정보 보고현황을 두 개의 목록으로 확인한다. 워크플로 버튼(생성·확정·마감·마감해제)으로 결과정보의 상태를 전환한다.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">조</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="../01_투자자산관리/S1_01_투자심의관리.html" role="menuitem"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="S2_46_메인화면.html" role="menuitem" class="on"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">조기경보시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="#" class="on" aria-current="page">조기경보</a>
+          <a href="S2_64_투자기업정보_전체_.html">기업정보</a>
+          <a href="S2_70_운용사_정량지표_관리.html">기초정보</a>
+          <a href="S2_78_운용사_유형별_정량지표_변동.html">통계정보</a>
+          <a href="S2_80_모태펀드_가치평가_결과조회.html">가치평가</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+        <a href="S2_94_메뉴관리.html" class="admin-gear" aria-label="관리자 설정">⚙ 관리자</a>
+      </div>
+      <div class="subtab" aria-label="조기경보 하위 메뉴">
+        <a href="S2_46_메인화면.html">메인화면</a><a href="S2_47_운용사별_조기경보_조회.html">운용사별 조기경보 조회</a><a href="S2_49_자펀드별_조기경보_조회.html">자펀드별 조기경보 조회</a><a href="S2_51_조기경보_조회.html">조기경보 조회</a><a href="S2_53_법률_규약위반사항_관리.html">법률 규약위반사항 관리</a><a href="S2_55_주주변동관리.html">주주변동관리</a><a href="S2_57_소송관리.html">소송관리</a><a href="S2_59_운용인력변동관리.html">운용인력변동관리</a><span class="on">조기경보 결과정보 관리</span><a href="S2_63_조기경보_전월_데이터_비교_조회.html">조기경보 전월 데이터 비교 조회</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">조기경보</div>
+          <nav aria-label="조기경보 메뉴">
+            <a href="S2_46_메인화면.html">메인화면</a>
+            <a href="S2_47_운용사별_조기경보_조회.html">운용사별 조기경보 조회</a>
+            <a href="S2_49_자펀드별_조기경보_조회.html">자펀드별 조기경보 조회</a>
+            <a href="S2_51_조기경보_조회.html">조기경보 조회</a>
+            <a href="S2_53_법률_규약위반사항_관리.html">법률 규약위반사항 관리</a>
+            <a href="S2_55_주주변동관리.html">주주변동관리</a>
+            <a href="S2_57_소송관리.html">소송관리</a>
+            <a href="S2_59_운용인력변동관리.html">운용인력변동관리</a>
+            <a href="#" class="on" aria-current="page">조기경보 결과정보 관리</a>
+            <a href="S2_63_조기경보_전월_데이터_비교_조회.html">조기경보 전월 데이터 비교 조회</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">자펀드 · 조기경보 · 조기경보 결과정보 관리</div>
+          <div class="h1row"><h1>조기경보 결과정보 관리</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="searchrow">
+              <div class="field">
+                <label for="f-ym">기준년월</label>
+                <span class="datefield">
+                  <input type="text" id="f-ym" value="2026-07" readonly aria-label="기준년월 (연-월 선택)">
+                  <svg class="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg>
+                </span>
+              </div>
+              <button class="btn" id="btn-search">조회</button>
+              <div class="actbar">
+                <button class="btn btn-sec btn-sm" id="btn-make">생성</button>
+                <button class="btn btn-sec btn-sm" id="btn-confirm">확정</button>
+                <button class="btn btn-sec btn-sm" id="btn-close">마감</button>
+                <button class="btn btn-sec btn-sm" id="btn-reopen">마감해제</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 섹션1 -->
+          <div class="sectitle">조기경보 생성 결과내역</div>
+          <div class="listbar"><div class="cap">총 <b id="cnt1">1</b>건 · 기준년월 <b>2026-07</b></div></div>
+          <div class="scroller">
+            <table class="grid" id="grid1">
+              <caption class="visually-hidden">조기경보 생성 결과내역 목록</caption>
+              <thead>
+                <tr>
+                  <th scope="col" style="width:64px">순번</th>
+                  <th scope="col">기준년월</th>
+                  <th scope="col" class="l">생성정보</th>
+                  <th scope="col">생성여부</th>
+                  <th scope="col">수정여부</th>
+                  <th scope="col">확정여부</th>
+                  <th scope="col">마감여부</th>
+                </tr>
+              </thead>
+              <tbody id="rows1"></tbody>
+            </table>
+          </div>
+
+          <!-- 섹션2 -->
+          <div class="sectitle">운용사 재무정보 보고</div>
+          <div class="listbar">
+            <div class="cap">총 <b id="cnt2">1</b>건 · 기준년월 <b>2026-06</b></div>
+            <div class="acts">
+              <button class="btn btn-sec btn-sm" id="btn-grant-all">전체권한부여</button>
+              <button class="btn btn-sec btn-sm" id="btn-revoke-all">전체권한해제</button>
+            </div>
+          </div>
+          <div class="scroller">
+            <table class="grid" id="grid2">
+              <caption class="visually-hidden">운용사 재무정보 보고 현황 목록</caption>
+              <thead>
+                <tr>
+                  <th scope="col" style="width:64px">순번</th>
+                  <th scope="col">기준년월</th>
+                  <th scope="col" class="l">운용사</th>
+                  <th scope="col">보고여부</th>
+                  <th scope="col">정합성여부</th>
+                  <th scope="col">수정권한여부</th>
+                  <th scope="col">수정권한처리</th>
+                </tr>
+              </thead>
+              <tbody id="rows2"></tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <p class="note" style="margin-top:24px;font-size:13px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:8px;padding:14px 16px;line-height:1.7">
+    <b style="color:var(--ink-2)">설계 메모:</b> 기준년월 = <b style="color:var(--ink-2)">월 선택기(picker)</b>(YYYY-MM, 셀렉트 금지). 생성·확정·마감·마감해제는 결과정보 상태를 전환하는 워크플로 버튼(마감/마감해제는 확인 다이얼로그). 조회·상태관리 중심 화면으로 금액이 없어 <b style="color:var(--ink-2)">단위전환 토글 미적용</b>. 섹션2의 정합성여부(O)·수정권한여부(X)·수정권한처리(그리드 내 버튼, 클릭 시 "권한처리하시겠습니까?" 확인 다이얼로그)는 실데이터 확정으로 검토필요 마커 해소. 섹션2 타이틀 우측의 <b style="color:var(--ink-2)">전체권한부여·전체권한해제</b> 버튼은 섹션2 전체 대상에 대한 일괄 처리 버튼으로 신규 반영(확인 다이얼로그 동반). GNB는 <b style="color:var(--ink-2)">조기경보</b> 대메뉴로 확정 매핑. <b style="color:var(--ink-2)">[확인 필요]</b> "수정권한"의 정확한 의미와 범위가 원문에 명확히 정의돼 있지 않음 — 이 권한이 부여되면 운용사가 구체적으로 무엇을(어느 화면·어느 항목을) 수정할 수 있게 되는지, 한 번 부여된 권한이 특정 기간(해당 기준년월 한정)에만 유효한지 계속 유지되는지, 그리고 이 권한 처리가 다른 화면(예: 운용사 재무정보 등록/보고 화면)의 편집 가능 여부와 실제로 어떻게 연동되는지 확인 필요. <b style="color:var(--ink-2)">[확인 필요]</b> 섹션2(운용사 재무정보 보고현황)의 기준년월(2026-06)이 상단 검색조건·섹션1과 같은 기준년월(2026-07)인데도 <b style="color:var(--ink-2)">한 달 차이</b>로 표시됨 — 운용사 재무정보 보고가 원래 전월(-1월) 기준으로 집계되는 게 맞는지(메인화면의 "당월 보고여부(기준월)" 항목과 같은 의문), 아니면 단순 하드코딩 오류인지 확인 필요.
+  </p>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+
+  /* 내비게이션 토글 */
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* O/X 태그 */
+  function ox(v){if(v==='O')return '<span class="tag g">O</span>';if(v==='X')return '<span class="tag n">X</span>';return '<span class="muted">-</span>';}
+
+  /* 섹션1 데이터 */
+  var D1=[
+    {no:1,ym:'2026-07',info:'운용사지표결과정보',make:'O',makeTs:'2026-07-23 15:06:03',mod:'X',cfm:'O',cls:'X'}
+  ];
+  $('rows1').innerHTML=D1.map(function(r){
+    return '<tr>'+
+      '<td>'+r.no+'</td>'+
+      '<td>'+r.ym+'</td>'+
+      '<td class="l">'+r.info+'</td>'+
+      '<td>'+ox(r.make)+(r.makeTs?'<span class="ts">'+r.makeTs+'</span>':'')+'</td>'+
+      '<td>'+ox(r.mod)+'</td>'+
+      '<td>'+ox(r.cfm)+'</td>'+
+      '<td>'+ox(r.cls)+'</td>'+
+    '</tr>';
+  }).join('');
+  $('cnt1').textContent=D1.length;
+
+  /* 섹션2 데이터 */
+  var D2=[
+    {no:1,ym:'2026-06',gp:'(주)에코캐피탈',rep:'X',cons:'O',perm:'X',permAct:'수정권한처리'}
+  ];
+  $('rows2').innerHTML=D2.map(function(r){
+    return '<tr>'+
+      '<td>'+r.no+'</td>'+
+      '<td>'+r.ym+'</td>'+
+      '<td class="l">'+r.gp+'</td>'+
+      '<td>'+ox(r.rep)+'</td>'+
+      '<td>'+(r.cons==null?'<span class="muted">-</span>':ox(r.cons))+'</td>'+
+      '<td>'+(r.perm==null?'<span class="muted">-</span>':ox(r.perm))+'</td>'+
+      '<td>'+(r.permAct==null?'<span class="muted">-</span>':'<button type="button" class="btn btn-sec btn-sm" data-permno="'+r.no+'">'+r.permAct+'</button>')+'</td>'+
+    '</tr>';
+  }).join('');
+  $('cnt2').textContent=D2.length;
+  $('rows2').addEventListener('click',function(e){
+    var b=e.target.closest('button[data-permno]');if(!b)return;
+    confirmDlg('수정권한처리','권한처리하시겠습니까?','처리',function(){toast('권한처리 되었습니다 (목업)')});
+  });
+  $('btn-grant-all').addEventListener('click',function(){
+    confirmDlg('전체권한부여','운용사 재무정보 보고 대상 전체에 수정 권한을 일괄 부여하시겠습니까?','부여',function(){toast('전체권한부여 되었습니다 (목업)')});
+  });
+  $('btn-revoke-all').addEventListener('click',function(){
+    confirmDlg('전체권한해제','운용사 재무정보 보고 대상 전체의 수정 권한을 일괄 해제하시겠습니까?','해제',function(){toast('전체권한해제 되었습니다 (목업)')});
+  });
+
+  /* ==== 월 선택기(picker) : YYYY-MM ==== */
+  var CUR=(new Date()).getFullYear(), pp=null, pIn=null, pYear;
+  var MONTHS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  function closeP(){if(pp){pp.remove();pp=null;pIn=null;document.removeEventListener('mousedown',pOut,true);document.removeEventListener('keydown',pKey,true)}}
+  function pOut(e){if(pp&&!pp.contains(e.target)&&e.target!==pIn)closeP()}
+  function pKey(e){if(e.key==='Escape'){e.preventDefault();var i=pIn;closeP();if(i)i.focus()}}
+  function parseYM(v){var m=/^(\d{4})-(\d{2})$/.exec(v||'');return m?{y:parseInt(m[1],10),m:parseInt(m[2],10)}:{y:CUR,m:null}}
+  function pCont(input){
+    var cur=parseYM(input.value);
+    var h='<div class="phead"><button type="button" class="pnav" data-n="-1" aria-label="이전 연도">‹</button><span>'+pYear+'년</span><button type="button" class="pnav" data-n="1" aria-label="다음 연도">›</button></div><div class="pgrid">';
+    for(var i=1;i<=12;i++){
+      var sel=(cur.y===pYear&&cur.m===i);
+      h+='<button type="button" data-m="'+i+'"'+(sel?' aria-selected="true"':'')+'>'+MONTHS[i-1]+'</button>';
+    }
+    return h+'</div>';
+  }
+  function pPos(p,input){var r=input.getBoundingClientRect();var top=r.bottom+4;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-4);p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px'}
+  function openP(input){
+    if(pp&&pIn===input)return;closeP();pIn=input;
+    var cur=parseYM(input.value);pYear=cur.y||CUR;
+    var p=document.createElement('div');p.className='ppanel';p.setAttribute('role','dialog');p.setAttribute('aria-label','기준년월 선택');p.innerHTML=pCont(input);
+    document.body.appendChild(p);pPos(p,input);
+    p.addEventListener('mousedown',function(e){
+      var n=e.target.closest('.pnav');
+      if(n){e.preventDefault();pYear+=parseInt(n.getAttribute('data-n'),10);p.innerHTML=pCont(input);pPos(p,input);return;}
+      var b=e.target.closest('button[data-m]');
+      if(b){e.preventDefault();var mm=parseInt(b.getAttribute('data-m'),10);input.value=pYear+'-'+(mm<10?'0'+mm:mm);closeP();input.focus();}
+    });
+    pp=p;setTimeout(function(){document.addEventListener('mousedown',pOut,true);document.addEventListener('keydown',pKey,true)},0);
+  }
+  $('f-ym').addEventListener('click',function(){openP($('f-ym'))});
+  $('f-ym').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();openP($('f-ym'))}});
+
+  /* ==== 검토필요 마커 ==== */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null; if(!m)return; e.preventDefault();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+m.getAttribute('data-rec')+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+m.getAttribute('data-dat')+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true)},0);
+  });
+
+  /* ==== 스크롤 잠금 ==== */
+  var lockN=0,savedPad='';
+  function lock(){if(lockN++===0){var sw=window.innerWidth-document.documentElement.clientWidth;savedPad=document.body.style.paddingRight;if(sw>0)document.body.style.paddingRight=sw+'px';document.body.style.overflow='hidden';}}
+  function unlock(){if(lockN>0&&--lockN===0){document.body.style.overflow='';document.body.style.paddingRight=savedPad;}}
+
+  /* ==== 토스트 ==== */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+
+  /* ==== 확인 다이얼로그 (마감/마감해제) ==== */
+  var scrim=null,lastFocus=null;
+  function trap(c){c.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();closeDlg();return}if(e.key!=='Tab')return;var f=Array.prototype.filter.call(c.querySelectorAll('button,input,select,textarea,[tabindex]:not([tabindex="-1"])'),function(el){return !el.disabled&&el.offsetParent!==null});if(!f.length)return;var first=f[0],last=f[f.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}})}
+  function closeDlg(){closeR();closeP();if(scrim){scrim.remove();scrim=null;unlock()}if(lastFocus&&lastFocus.focus)lastFocus.focus()}
+  function confirmDlg(title,body,okLabel,onOk){
+    lastFocus=document.activeElement;
+    scrim=document.createElement('div');scrim.className='scrim';
+    scrim.addEventListener('mousedown',function(e){if(e.target===scrim)closeDlg()});
+    scrim.innerHTML='<div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="dlg-t" aria-describedby="dlg-b">'+
+      '<div class="modal-head"><h2 id="dlg-t">'+title+'</h2></div>'+
+      '<div class="modal-body" id="dlg-b">'+body+'</div>'+
+      '<div class="modal-foot"><button class="btn btn-sec" id="dlg-cancel">취소</button><button class="btn" id="dlg-ok">'+okLabel+'</button></div>'+
+    '</div>';
+    lock();document.body.appendChild(scrim);
+    trap(scrim.querySelector('.modal'));
+    $('dlg-cancel').addEventListener('click',closeDlg);
+    $('dlg-ok').addEventListener('click',function(){closeDlg();if(onOk)onOk();});
+    setTimeout(function(){$('dlg-cancel').focus()},0); /* 기본 포커스=취소 */
+  }
+
+  /* ==== 워크플로 버튼 ==== */
+  $('btn-search').addEventListener('click',function(){toast('기준년월 '+$('f-ym').value+' 조회 (목업)')});
+  /* 생성 확인 팝업 (엑셀 프로그램명 병합 반영 — S2_62 팝업 정의 그대로 이식) */
+  $('btn-make').addEventListener('click',function(){
+    confirmDlg('조기경보 결과정보 관리 - 생성 확인','생성하시겠습니까?'+
+      '<button type="button" class="review" data-rec="안내문구 원문 확정 필요 — 비고(O열) 원문 없음" data-dat="「생성하시겠습니까?」 (P열 실데이터 샘플)" aria-label="검토필요">!</button>',
+      '확인',function(){toast('생성되었습니다 (목업)')});
+  });
+  $('btn-confirm').addEventListener('click',function(){toast('결과정보를 확정했습니다 (목업)')});
+  $('btn-close').addEventListener('click',function(){
+    confirmDlg('마감 처리','기준년월 <b>'+$('f-ym').value+'</b>의 조기경보 결과정보를 마감하시겠습니까?<br>마감 후에는 수정이 제한됩니다.','마감',function(){toast('마감 처리되었습니다 (목업)')});
+  });
+  $('btn-reopen').addEventListener('click',function(){
+    confirmDlg('마감해제','기준년월 <b>'+$('f-ym').value+'</b>의 마감을 해제하시겠습니까?','마감해제',function(){toast('마감이 해제되었습니다 (목업)')});
+  });
+})();
+</script>

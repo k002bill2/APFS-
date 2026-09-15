@@ -1,0 +1,470 @@
+<title>투자실적 현황(투자기업)</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --danger:#E5484D;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;--danger:#F26D6D;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F26D6D;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:82ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .chipbtn{height:34px;padding:0 14px;border-radius:99px;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink-2);font-size:13px;font-weight:600}
+  .chipbtn[aria-pressed="true"]{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .seg button{height:34px;padding:0 16px;border:none;background:transparent;color:var(--ink-2);font-size:13px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px;overflow-x:auto;min-width:0;scrollbar-width:thin}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;flex:none;white-space:nowrap}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:220px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filtergrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 16px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;width:88px;text-align:right;white-space:nowrap}
+  .field select,.field input{flex:1;min-width:0}
+  .searchbtnrow{display:flex;justify-content:center;margin-top:14px}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .listbar{display:flex;align-items:center;gap:14px;margin:2px 0 8px;flex-wrap:wrap}
+  .listbar .cap{font-size:15px;font-weight:700}
+  .listbar .cap b{color:var(--primary)}
+  .listbar .acts{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .unitwrap{display:flex;align-items:center;gap:8px}
+  .unitwrap .lab{font-size:12.5px;font-weight:700;color:var(--ink-3)}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;width:100%;min-width:0}
+  table.grid th,table.grid td{padding:8px 12px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:right}
+  table.grid th:last-child,table.grid td:last-child{border-right:none}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong)}
+  table.grid th.c,table.grid td.c{text-align:center}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  table.grid tfoot td{font-weight:800;background:var(--surface-3);border-top:2px solid var(--ink)}
+  table.grid th.warn,table.grid td.warn{color:var(--danger)}
+  table.grid tr.tot td{font-weight:800;background:var(--ok-weak)}
+  .gridblock{display:none}
+  .gridblock.on{display:block}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:90;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (max-width:900px){.filtergrid{grid-template-columns:repeat(2,1fr)}.lnb{display:none!important}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">시스템 S1 · 투자기업정보 · KRDS TO-BE</p>
+  <h1 class="doc-title">투자실적 현황(투자기업)</h1>
+  <p class="doc-sub">투자기업의 투자실적을 검색조건에 따라 집계·조회하는 읽기전용 현황 화면. 검색조건은 모펀드·계정구분·연도기준·투자실적구분·건수기준·데이터기준·기준일자 7종. 투자실적구분(경영체매출액별·투자형태별·소재지별)에 따라 그리드 형태가 전환된다(2·3단 헤더). 읽기전용 금액 화면이라 금액단위 전환(원/백만원/억원) 토글을 제공한다.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">모</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="S1_01_투자심의관리.html" role="menuitem" class="on"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="../02_조기경보/S2_46_메인화면.html" role="menuitem"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">투자자산관리시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="01_파일럿_공고관리/mockup/공고관리_목업_artifact.html">모태펀드</a>
+          <a href="S1_01_투자심의관리.html">사후보고관리</a>
+          <a href="05_자펀드관리/mockup/자펀드관리_목업.html">자펀드</a>
+          <a href="S1_28_투심승인정보조회.html">통계</a>
+          <a href="#" class="on" aria-current="page">투자기업</a>
+          <a href="S1_38_운용사_재무정보_조회.html">모니터링</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+      </div>
+      <div class="subtab" aria-label="자펀드 하위 메뉴">
+        <a href="S1_30_투자기업정보.html">투자기업정보</a>
+        <a href="S1_31_투자기업정보_전체_.html">투자기업정보(전체)</a>
+        <a href="S1_32_투자기업_고용현황보고.html">투자기업 고용현황보고</a>
+        <a href="S1_33_전체_투자실적.html">전체 투자실적</a>
+        <span class="on">투자실적 현황(투자기업)</span>
+        <a href="S1_35_투자금_회수현황.html">투자금 회수현황</a>
+        <a href="S1_36_투자_및_회수_상세정보.html">투자 및 회수 상세정보</a>
+        <a href="S1_37_운용사별_재무제표.html">운용사별 재무제표</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">투자기업정보</div>
+          <nav aria-label="투자기업정보 메뉴">
+            <a href="S1_30_투자기업정보.html">투자기업정보</a>
+            <a href="S1_31_투자기업정보_전체_.html">투자기업정보(전체)</a>
+            <a href="S1_32_투자기업_고용현황보고.html">투자기업 고용현황보고</a>
+            <a href="S1_33_전체_투자실적.html">전체 투자실적</a>
+            <a href="#" class="on" aria-current="page">투자실적 현황(투자기업)</a>
+            <a href="S1_35_투자금_회수현황.html">투자금 회수현황</a>
+            <a href="S1_36_투자_및_회수_상세정보.html">투자 및 회수 상세정보</a>
+            <a href="S1_37_운용사별_재무제표.html">운용사별 재무제표</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">자펀드 · 투자기업정보 · 투자실적 현황(투자기업)</div>
+          <div class="h1row"><h1>투자실적 현황(투자기업)</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filtergrid">
+              <!-- 모펀드: 다중모펀드 옵션 ON 가정(단일=표시, 1개 초과 시 무조건 표시) --><div class="field" data-mf-visible="on"><label for="f-mf">모펀드</label><select id="f-mf"><option>농식품모태펀드</option><option>MOAF</option></select></div>
+              <div class="field"><label id="f-acc-lab">계정구분</label><div role="group" aria-labelledby="f-acc-lab" style="display:flex;gap:6px" id="f-acc"></div></div>
+              <div class="field"><label id="f-yb-lab">연도기준</label><div role="group" aria-labelledby="f-yb-lab" style="display:flex;gap:6px" id="f-yb"></div></div>
+              <div class="field"><label for="f-kind">투자실적구분</label><select id="f-kind"><option value="rev">경영체매출액별</option><option value="type">투자형태별</option><option value="loc">소재지별</option></select></div>
+              <div class="field"><label for="f-cnt">건수기준<button type="button" class="review" data-rec="투자건수 · 투자금액" data-dat="실데이터 '투자건수'만 존재. '투자금액' 옵션은 그리드 금액컬럼 근거 추론" aria-label="검토필요">!</button></label><select id="f-cnt"><option>투자건수</option><option>투자금액</option></select></div>
+              <div class="field"><label id="f-src-lab">데이터기준</label><div role="group" aria-labelledby="f-src-lab" style="display:flex;gap:6px" id="f-src"></div></div>
+              <div class="field"><label for="f-date">기준일자</label><input type="date" id="f-date" value="2026-07-31" aria-label="기준일자"></div>
+            </div>
+            <div class="searchbtnrow"><button class="btn" id="search">조회</button></div>
+          </div>
+
+          <div class="listbar">
+            <div class="cap" id="cap">경영체 매출액별 투자실적</div>
+            <div class="acts">
+              <div class="unitwrap">
+                <span class="lab">금액단위</span>
+                <div class="seg" role="group" aria-label="금액 단위 전환">
+                  <button type="button" data-unit="원" aria-pressed="false">원</button>
+                  <button type="button" data-unit="백만원" aria-pressed="false">백만원</button>
+                  <button type="button" data-unit="억원" aria-pressed="true">억원</button>
+                </div>
+              </div>
+              <button class="btn btn-sec btn-sm" id="excel">엑셀</button>
+            </div>
+          </div>
+
+          <!-- 경영체매출액별 -->
+          <div class="gridblock on" data-grid="rev">
+            <div class="scroller">
+              <table class="grid">
+                <caption class="visually-hidden">경영체 매출액별 투자실적 — 투자건수·투자금액 2개 블록, 블록별 연도(2010~2025)+합계</caption>
+                <thead>
+                  <tr>
+                    <th class="c" colspan="2" scope="colgroup">구분</th>
+                    <th class="c" scope="col">10억 미만</th>
+                    <th class="c" scope="col">30억 미만</th>
+                    <th class="c" scope="col">50억 미만</th>
+                    <th class="c" scope="col">100억 미만</th>
+                    <th class="c" scope="col">100억 이상</th>
+                    <th class="c warn" scope="col">미보고</th>
+                    <th class="c" scope="col">합계</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td class="l" rowspan="17">투자건수</td><td class="c">2010년</td><td>18</td><td>3</td><td>0</td><td>2</td><td>13</td><td>5</td><td>41</td></tr>
+                  <tr><td class="c">2011년</td><td>19</td><td>5</td><td>3</td><td>5</td><td>25</td><td>16</td><td>73</td></tr>
+                  <tr><td class="c">2012년</td><td>19</td><td>9</td><td>6</td><td>6</td><td>15</td><td>19</td><td>74</td></tr>
+                  <tr><td class="c">2013년</td><td>18</td><td>8</td><td>4</td><td>4</td><td>12</td><td>21</td><td>67</td></tr>
+                  <tr><td class="c">2014년</td><td>28</td><td>11</td><td>5</td><td>8</td><td>20</td><td>28</td><td>100</td></tr>
+                  <tr><td class="c">2015년</td><td>21</td><td>3</td><td>2</td><td>9</td><td>11</td><td>29</td><td>75</td></tr>
+                  <tr><td class="c">2016년</td><td>19</td><td>2</td><td>4</td><td>3</td><td>21</td><td>17</td><td>66</td></tr>
+                  <tr><td class="c">2017년</td><td>19</td><td>5</td><td>4</td><td>14</td><td>20</td><td>15</td><td>77</td></tr>
+                  <tr><td class="c">2018년</td><td>25</td><td>8</td><td>1</td><td>4</td><td>14</td><td>15</td><td>67</td></tr>
+                  <tr><td class="c">2019년</td><td>24</td><td>9</td><td>5</td><td>20</td><td>15</td><td>32</td><td>105</td></tr>
+                  <tr><td class="c">2020년</td><td>40</td><td>13</td><td>10</td><td>13</td><td>20</td><td>40</td><td>136</td></tr>
+                  <tr><td class="c">2021년</td><td>55</td><td>31</td><td>9</td><td>17</td><td>30</td><td>47</td><td>189</td></tr>
+                  <tr><td class="c">2022년</td><td>45</td><td>16</td><td>18</td><td>9</td><td>38</td><td>74</td><td>200</td></tr>
+                  <tr><td class="c">2023년</td><td>22</td><td>8</td><td>7</td><td>6</td><td>11</td><td>91</td><td>145</td></tr>
+                  <tr><td class="c">2024년</td><td>8</td><td>3</td><td>2</td><td>7</td><td>15</td><td>49</td><td>84</td></tr>
+                  <tr><td class="c">2025년</td><td>4</td><td>2</td><td>1</td><td>1</td><td>7</td><td>29</td><td>44</td></tr>
+                  <tr class="tot"><td class="c">합 계</td><td>384</td><td>136</td><td>81</td><td>128</td><td>287</td><td>527</td><td>1,543</td></tr>
+                  <tr><td class="l" rowspan="17">투자금액</td><td class="c">2010년</td><td data-eok="292">292</td><td data-eok="35">35</td><td data-eok="0">0</td><td data-eok="42">42</td><td data-eok="409">409</td><td data-eok="165">165</td><td data-eok="943">943</td></tr>
+                  <tr><td class="c">2011년</td><td data-eok="225">225</td><td data-eok="47">47</td><td data-eok="33">33</td><td data-eok="36">36</td><td data-eok="335">335</td><td data-eok="201">201</td><td data-eok="877">877</td></tr>
+                  <tr><td class="c">2012년</td><td data-eok="223">223</td><td data-eok="111">111</td><td data-eok="71">71</td><td data-eok="40">40</td><td data-eok="192">192</td><td data-eok="237">237</td><td data-eok="873">873</td></tr>
+                  <tr><td class="c">2013년</td><td data-eok="151">151</td><td data-eok="107">107</td><td data-eok="50">50</td><td data-eok="49">49</td><td data-eok="145">145</td><td data-eok="267">267</td><td data-eok="768">768</td></tr>
+                  <tr><td class="c">2014년</td><td data-eok="222">222</td><td data-eok="106">106</td><td data-eok="75">75</td><td data-eok="80">80</td><td data-eok="342">342</td><td data-eok="334">334</td><td data-eok="1159">1,159</td></tr>
+                  <tr><td class="c">2015년</td><td data-eok="250">250</td><td data-eok="29">29</td><td data-eok="26">26</td><td data-eok="119">119</td><td data-eok="169">169</td><td data-eok="410">410</td><td data-eok="1003">1,003</td></tr>
+                  <tr><td class="c">2016년</td><td data-eok="321">321</td><td data-eok="13">13</td><td data-eok="50">50</td><td data-eok="60">60</td><td data-eok="376">376</td><td data-eok="442">442</td><td data-eok="1262">1,262</td></tr>
+                  <tr><td class="c">2017년</td><td data-eok="170">170</td><td data-eok="85">85</td><td data-eok="37">37</td><td data-eok="180">180</td><td data-eok="363">363</td><td data-eok="176">176</td><td data-eok="1010">1,010</td></tr>
+                  <tr><td class="c">2018년</td><td data-eok="261">261</td><td data-eok="98">98</td><td data-eok="10">10</td><td data-eok="65">65</td><td data-eok="151">151</td><td data-eok="199">199</td><td data-eok="784">784</td></tr>
+                  <tr><td class="c">2019년</td><td data-eok="168">168</td><td data-eok="70">70</td><td data-eok="55">55</td><td data-eok="217">217</td><td data-eok="246">246</td><td data-eok="418">418</td><td data-eok="1174">1,174</td></tr>
+                  <tr><td class="c">2020년</td><td data-eok="264">264</td><td data-eok="104">104</td><td data-eok="126">126</td><td data-eok="167">167</td><td data-eok="352">352</td><td data-eok="469">469</td><td data-eok="1481">1,481</td></tr>
+                  <tr><td class="c">2021년</td><td data-eok="468">468</td><td data-eok="283">283</td><td data-eok="71">71</td><td data-eok="170">170</td><td data-eok="388">388</td><td data-eok="319">319</td><td data-eok="1699">1,699</td></tr>
+                  <tr><td class="c">2022년</td><td data-eok="420">420</td><td data-eok="182">182</td><td data-eok="213">213</td><td data-eok="121">121</td><td data-eok="613">613</td><td data-eok="748">748</td><td data-eok="2297">2,297</td></tr>
+                  <tr><td class="c">2023년</td><td data-eok="190">190</td><td data-eok="70">70</td><td data-eok="74">74</td><td data-eok="58">58</td><td data-eok="132">132</td><td data-eok="871">871</td><td data-eok="1395">1,395</td></tr>
+                  <tr><td class="c">2024년</td><td data-eok="92">92</td><td data-eok="35">35</td><td data-eok="25">25</td><td data-eok="89">89</td><td data-eok="272">272</td><td data-eok="642">642</td><td data-eok="1156">1,156</td></tr>
+                  <tr><td class="c">2025년</td><td data-eok="50">50</td><td data-eok="15">15</td><td data-eok="5">5</td><td data-eok="19">19</td><td data-eok="219">219</td><td data-eok="391">391</td><td data-eok="699">699</td></tr>
+                  <tr class="tot"><td class="c">합 계</td><td data-eok="1389">1,389</td><td data-eok="921">921</td><td data-eok="1512">1,512</td><td data-eok="4703">4,703</td><td data-eok="6288">6,288</td><td data-eok="3766">3,766<button type="button" class="review" data-rec="열 순서 재계산 필요 여부 확인" data-dat="위 16개 연도 행을 열별로 합산하면 10억미만=3,767·30억미만=1,390·50억미만=921·100억미만=1,512·100억이상=4,704·미보고=6,289(총합 18,580)로, 이 합계행 표시값과 정확히 한 칸씩 밀려 대응됨(예: 실제 10억미만 합계 3,767이 이 행엔 '미보고' 자리에 3,766으로 표기). 원문 캡처를 그대로 옮겼을 뿐 — 원 시스템 합계행 계산 로직 자체의 열 순서 오류인지 확인 필요" aria-label="검토필요">!</button></td><td data-eok="18579">18,579</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 투자형태별 -->
+          <div class="gridblock" data-grid="type">
+            <div class="scroller">
+              <table class="grid">
+                <caption class="visually-hidden">투자형태별 투자실적 — 투자건수·투자금액 2개 블록, 블록별 연도(2010~2025)+합계, 주식/채권 3단 헤더</caption>
+                <thead>
+                  <tr>
+                    <th class="c" colspan="2" rowspan="3" scope="colgroup">구분</th>
+                    <th class="c" colspan="3" scope="colgroup">주식</th>
+                    <th class="c" colspan="2" scope="colgroup">채권</th>
+                    <th class="c" rowspan="3" scope="col">프로젝트</th>
+                    <th class="c" rowspan="3" scope="col">합계</th>
+                  </tr>
+                  <tr>
+                    <th class="c" colspan="2" scope="colgroup">보통주</th>
+                    <th class="c" rowspan="2" scope="col">전환우선주</th>
+                    <th class="c" rowspan="2" scope="col">BW</th>
+                    <th class="c" rowspan="2" scope="col">CB</th>
+                  </tr>
+                  <tr>
+                    <th class="c" scope="col">신주</th>
+                    <th class="c" scope="col">구주</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td class="l" rowspan="17">투자건수</td><td class="c">2010년</td><td>0</td><td>6</td><td>13</td><td>6</td><td>6</td><td>19</td><td>50</td></tr>
+                  <tr><td class="c">2011년</td><td>6</td><td>12</td><td>21</td><td>9</td><td>17</td><td>19</td><td>84</td></tr>
+                  <tr><td class="c">2012년</td><td>3</td><td>8</td><td>28</td><td>5</td><td>32</td><td>13</td><td>89</td></tr>
+                  <tr><td class="c">2013년</td><td>2</td><td>4</td><td>26</td><td>2</td><td>23</td><td>19</td><td>76</td></tr>
+                  <tr><td class="c">2014년</td><td>2</td><td>10</td><td>30</td><td>4</td><td>38</td><td>24</td><td>108</td></tr>
+                  <tr><td class="c">2015년</td><td>1</td><td>6</td><td>38</td><td>0</td><td>28</td><td>10</td><td>83</td></tr>
+                  <tr><td class="c">2016년</td><td>4</td><td>8</td><td>32</td><td>1</td><td>23</td><td>2</td><td>70</td></tr>
+                  <tr><td class="c">2017년</td><td>3</td><td>10</td><td>53</td><td>5</td><td>14</td><td>0</td><td>85</td></tr>
+                  <tr><td class="c">2018년</td><td>2</td><td>8</td><td>45</td><td>2</td><td>15</td><td>1</td><td>73</td></tr>
+                  <tr><td class="c">2019년</td><td>3</td><td>7</td><td>89</td><td>0</td><td>13</td><td>0</td><td>112</td></tr>
+                  <tr><td class="c">2020년</td><td>3</td><td>5</td><td>120</td><td>0</td><td>12</td><td>1</td><td>141</td></tr>
+                  <tr><td class="c">2021년</td><td>11</td><td>20</td><td>145</td><td>0</td><td>18</td><td>0</td><td>194</td></tr>
+                  <tr><td class="c">2022년</td><td>14</td><td>19</td><td>149</td><td>0</td><td>27</td><td>0</td><td>209</td></tr>
+                  <tr><td class="c">2023년</td><td>4</td><td>10</td><td>105</td><td>0</td><td>32</td><td>1</td><td>152</td></tr>
+                  <tr><td class="c">2024년</td><td>1</td><td>5</td><td>59</td><td>0</td><td>23</td><td>0</td><td>88</td></tr>
+                  <tr><td class="c">2025년</td><td>0</td><td>3</td><td>38</td><td>0</td><td>7</td><td>0</td><td>48</td></tr>
+                  <tr class="tot"><td class="c">합 계</td><td>59</td><td>141</td><td>991</td><td>34</td><td>328</td><td>109</td><td>1,662</td></tr>
+                  <tr><td class="l" rowspan="17">투자금액</td><td class="c">2010년</td><td data-eok="0">0</td><td data-eok="113">113</td><td data-eok="235">235</td><td data-eok="190">190</td><td data-eok="138">138</td><td data-eok="266">266</td><td data-eok="943">943</td></tr>
+                  <tr><td class="c">2011년</td><td data-eok="68">68</td><td data-eok="80">80</td><td data-eok="210">210</td><td data-eok="94">94</td><td data-eok="184">184</td><td data-eok="241">241</td><td data-eok="877">877</td></tr>
+                  <tr><td class="c">2012년</td><td data-eok="29">29</td><td data-eok="45">45</td><td data-eok="256">256</td><td data-eok="48">48</td><td data-eok="337">337</td><td data-eok="148">148</td><td data-eok="863">863</td></tr>
+                  <tr><td class="c">2013년</td><td data-eok="22">22</td><td data-eok="25">25</td><td data-eok="255">255</td><td data-eok="18">18</td><td data-eok="280">280</td><td data-eok="169">169</td><td data-eok="768">768</td></tr>
+                  <tr><td class="c">2014년</td><td data-eok="17">17</td><td data-eok="68">68</td><td data-eok="361">361</td><td data-eok="58">58</td><td data-eok="419">419</td><td data-eok="237">237</td><td data-eok="1159">1,159</td></tr>
+                  <tr><td class="c">2015년</td><td data-eok="10">10</td><td data-eok="76">76</td><td data-eok="443">443</td><td data-eok="0">0</td><td data-eok="349">349</td><td data-eok="125">125</td><td data-eok="1003">1,003</td></tr>
+                  <tr><td class="c">2016년</td><td data-eok="105">105</td><td data-eok="81">81</td><td data-eok="495">495</td><td data-eok="8">8</td><td data-eok="524">524</td><td data-eok="50">50</td><td data-eok="1262">1,262</td></tr>
+                  <tr><td class="c">2017년</td><td data-eok="55">55</td><td data-eok="85">85</td><td data-eok="640">640</td><td data-eok="48">48</td><td data-eok="182">182</td><td data-eok="0">0</td><td data-eok="1010">1,010</td></tr>
+                  <tr><td class="c">2018년</td><td data-eok="15">15</td><td data-eok="75">75</td><td data-eok="496">496</td><td data-eok="12">12</td><td data-eok="182">182</td><td data-eok="5">5</td><td data-eok="784">784</td></tr>
+                  <tr><td class="c">2019년</td><td data-eok="20">20</td><td data-eok="25">25</td><td data-eok="985">985</td><td data-eok="0">0</td><td data-eok="145">145</td><td data-eok="0">0</td><td data-eok="1174">1,174</td></tr>
+                  <tr><td class="c">2020년</td><td data-eok="11">11</td><td data-eok="28">28</td><td data-eok="1347">1,347</td><td data-eok="0">0</td><td data-eok="92">92</td><td data-eok="3">3</td><td data-eok="1481">1,481</td></tr>
+                  <tr><td class="c">2021년</td><td data-eok="73">73</td><td data-eok="145">145</td><td data-eok="1050">1,050</td><td data-eok="0">0</td><td data-eok="207">207</td><td data-eok="0">0</td><td data-eok="1475">1,475</td></tr>
+                  <tr><td class="c">2022년</td><td data-eok="130">130</td><td data-eok="148">148</td><td data-eok="1680">1,680</td><td data-eok="0">0</td><td data-eok="339">339</td><td data-eok="0">0</td><td data-eok="2297">2,297</td></tr>
+                  <tr><td class="c">2023년</td><td data-eok="19">19</td><td data-eok="63">63</td><td data-eok="1057">1,057</td><td data-eok="0">0</td><td data-eok="253">253</td><td data-eok="3">3</td><td data-eok="1395">1,395</td></tr>
+                  <tr><td class="c">2024년</td><td data-eok="10">10</td><td data-eok="92">92</td><td data-eok="754">754</td><td data-eok="0">0</td><td data-eok="286">286</td><td data-eok="0">0</td><td data-eok="1141">1,141</td></tr>
+                  <tr><td class="c">2025년</td><td data-eok="0">0</td><td data-eok="89">89</td><td data-eok="496">496</td><td data-eok="0">0</td><td data-eok="89">89</td><td data-eok="0">0</td><td data-eok="674">674</td></tr>
+                  <tr class="tot"><td class="c">합 계</td><td data-eok="583">583</td><td data-eok="1237">1,237</td><td data-eok="10757">10,757</td><td data-eok="476">476</td><td data-eok="4005">4,005</td><td data-eok="1246">1,246</td><td data-eok="18305">18,305</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 소재지별 -->
+          <div class="gridblock" data-grid="loc">
+            <div class="scroller">
+              <table class="grid">
+                <caption class="visually-hidden">소재지별 투자실적 — 투자건수·투자금액 각 건수/비율 2단 헤더</caption>
+                <thead>
+                  <tr>
+                    <th class="c" rowspan="2">NO</th>
+                    <th class="c l" rowspan="2">소재지</th>
+                    <th class="c" colspan="2" scope="colgroup">투자건수</th>
+                    <th class="c" colspan="2" scope="colgroup">투자금액</th>
+                  </tr>
+                  <tr>
+                    <th class="c" scope="col">건수</th>
+                    <th class="c" scope="col">비율(%)</th>
+                    <th class="c" scope="col">금액</th>
+                    <th class="c" scope="col">비율(%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td class="c">1</td><td class="l">서울</td><td>533</td><td>34.5 %</td><td data-eok="6638">6,638</td><td>35.7 %</td></tr>
+                  <tr><td class="c">2</td><td class="l">인천</td><td>30</td><td>1.9 %</td><td data-eok="328">328</td><td>1.8 %</td></tr>
+                  <tr><td class="c">3</td><td class="l">부산</td><td>52</td><td>3.4 %</td><td data-eok="601">601</td><td>3.2 %</td></tr>
+                  <tr><td class="c">4</td><td class="l">대구</td><td>17</td><td>1.1 %</td><td data-eok="162">162</td><td>0.9 %</td></tr>
+                  <tr><td class="c">5</td><td class="l">대전</td><td>51</td><td>3.3 %</td><td data-eok="482">482</td><td>2.6 %</td></tr>
+                  <tr><td class="c">6</td><td class="l">세종</td><td>13</td><td>0.8 %</td><td data-eok="152">152</td><td>0.8 %</td></tr>
+                  <tr><td class="c">7</td><td class="l">광주</td><td>9</td><td>0.6 %</td><td data-eok="95">95</td><td>0.5 %</td></tr>
+                  <tr><td class="c">8</td><td class="l">울산</td><td>16</td><td>1 %</td><td data-eok="298">298</td><td>1.6 %</td></tr>
+                  <tr><td class="c">9</td><td class="l">경기</td><td>369</td><td>23.9 %</td><td data-eok="4530">4,530</td><td>24.4 %</td></tr>
+                  <tr><td class="c">10</td><td class="l">강원</td><td>47</td><td>3 %</td><td data-eok="515">515</td><td>2.8 %</td></tr>
+                  <tr><td class="c">11</td><td class="l">충남</td><td>31</td><td>2 %</td><td data-eok="427">427</td><td>2.3 %</td></tr>
+                  <tr><td class="c">12</td><td class="l">충북</td><td>79</td><td>5.1 %</td><td data-eok="970">970</td><td>5.2 %</td></tr>
+                  <tr><td class="c">13</td><td class="l">전북</td><td>49</td><td>3.2 %</td><td data-eok="428">428</td><td>2.3 %</td></tr>
+                  <tr><td class="c">14</td><td class="l">전남</td><td>39</td><td>2.5 %</td><td data-eok="455">455</td><td>2.4 %</td></tr>
+                  <tr><td class="c">15</td><td class="l">경북</td><td>71</td><td>4.6 %</td><td data-eok="779">779</td><td>4.2 %</td></tr>
+                  <tr><td class="c">16</td><td class="l">경남</td><td>75</td><td>4.9 %</td><td data-eok="902">902</td><td>4.9 %</td></tr>
+                  <tr><td class="c">17</td><td class="l">제주</td><td>31</td><td>2 %</td><td data-eok="397">397</td><td>2.1 %</td></tr>
+                  <tr><td class="c">18</td><td class="l warn">미보고</td><td>31</td><td>2 %</td><td data-eok="419">419</td><td>2.3 %</td></tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td class="c" colspan="2">합계</td>
+                    <td>1,543</td><td>100.0 %</td>
+                    <td data-eok="18579">18,579</td><td>100.0 %</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* toast */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+
+  /* 투자실적구분 → 그리드 전환 (필터가 그리드 표현을 바꾸는 동적 관계) */
+  var CAPS={rev:'경영체 매출액별 투자실적',type:'투자형태별 투자실적',loc:'소재지별 투자실적'};
+  function switchGrid(v){
+    Array.prototype.forEach.call(document.querySelectorAll('.gridblock'),function(b){b.classList.toggle('on',b.getAttribute('data-grid')===v)});
+    $('cap').textContent=CAPS[v]||'';
+  }
+  $('f-kind').addEventListener('change',function(){switchGrid(this.value)});
+  /* 연도기준·데이터기준 칩버튼(정기/수시와 동일 패턴) */
+  function chipGroup(id,opts,val){
+    var box=$(id); if(!box)return;
+    box.innerHTML=opts.map(function(o){return '<button type="button" class="chipbtn" data-v="'+o+'" aria-pressed="'+(o===val)+'">'+o+'</button>';}).join('');
+    box.addEventListener('click',function(e){
+      var b=e.target.closest('button[data-v]'); if(!b)return;
+      Array.prototype.forEach.call(box.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b)});
+    });
+  }
+  chipGroup('f-yb',['출자사업년도','결성연도','등록연도'],'출자사업년도');
+  chipGroup('f-src',['운용사보고','월말확정'],'운용사보고');
+
+  chipGroup('f-acc',['전체','농식품','수산'],'전체');
+  $('search').addEventListener('click',function(){switchGrid($('f-kind').value);toast('조회되었습니다 (목업)')});
+  $('excel').addEventListener('click',function(){toast('엑셀 다운로드 (목업)')});
+
+  /* 금액단위 전환 seg (원/백만원/억원) — 저장 base=억원 → 재포맷 */
+  var unitSeg=document.querySelector('.unitwrap .seg');
+  function fmtEok(eok,unit){var n=unit==='억원'?eok:unit==='백만원'?eok*100:eok*100000000;return n.toLocaleString('ko-KR');}
+  function applyUnit(unit){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-eok]'),function(td){
+      var eok=parseFloat(td.getAttribute('data-eok'));
+      var mk=td.querySelector('.review');
+      td.childNodes[0].nodeValue=fmtEok(eok,unit);
+      if(mk)td.appendChild(mk);
+    });
+  }
+  unitSeg.addEventListener('click',function(e){
+    var b=e.target.closest('button[data-unit]');if(!b)return;
+    Array.prototype.forEach.call(unitSeg.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b)});
+    applyUnit(b.getAttribute('data-unit'));
+  });
+
+  /* 검토필요 마커: 라벨 옆 클릭 → 추천 vs 데이터 */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null; if(!m)return; e.preventDefault();e.stopPropagation();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+m.getAttribute('data-rec')+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+m.getAttribute('data-dat')+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true)},0);
+  });
+  window.addEventListener('keydown',function(e){if(e.key==='Escape')closeR()});
+})();
+</script>

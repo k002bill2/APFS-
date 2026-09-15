@@ -1,0 +1,504 @@
+<title>운용사 정량지표 관리</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --danger:#E5484D;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;--danger:#F2555A;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F2555A;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:78ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .admin-gear{margin-left:12px;padding:6px 12px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;font-size:13px;white-space:nowrap}
+  .admin-gear:hover{background:rgba(255,255,255,.12);color:#fff}
+  .admin-gear.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date],input[type=number]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filtergrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 16px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;width:74px;text-align:right;white-space:nowrap}
+  .field select,.field input{flex:1;min-width:0}
+  .searchbtnrow{display:flex;justify-content:center;margin-top:14px}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-pri{background:var(--primary);color:#fff}
+  .btn-pri:hover{background:var(--primary-hover)}
+  .btn-danger{background:var(--danger);color:#fff}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .listbar{display:flex;align-items:center;margin:2px 0 8px}
+  .listbar .cap{font-size:15px;font-weight:700}
+  .listbar .cap b{color:var(--primary)}
+  .listbar .acts{margin-left:auto;display:flex;gap:8px}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;min-width:820px;width:100%}
+  table.grid th,table.grid td{padding:9px 12px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:center}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong);position:sticky;top:0;z-index:2}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid tbody tr{cursor:pointer}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.ok{background:var(--ok-weak);color:var(--ok)} .tag.warn{background:var(--amber-weak);color:var(--amber)} .tag.bad{background:rgba(229,72,77,.14);color:var(--danger)}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:90;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  /* modal */
+  .scrim{position:fixed;inset:0;background:rgba(16,24,40,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;animation:fade .15s ease}
+  .modal{width:560px;max-width:100%;max-height:90vh;overflow-y:auto;overflow-x:hidden;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);animation:pop .18s ease}
+  .modal.wide{width:860px}
+  .mfilter{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:12px 14px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px}
+  .mfilter label{flex:none}
+  .mfilter select{min-width:200px}
+  .mfilter .rowacts{margin-left:auto;display:flex;gap:8px}
+  table.mgrid{border-collapse:collapse;width:100%;min-width:640px}
+  table.mgrid th,table.mgrid td{padding:8px 10px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);text-align:center;white-space:nowrap}
+  table.mgrid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;border-bottom:1px solid var(--border-strong)}
+  table.mgrid td.l{text-align:left;font-weight:600;color:var(--ink)}
+  table.mgrid tbody tr:hover td{background:var(--surface-2)}
+  table.mgrid tbody tr.sel td{background:var(--primary-weak)}
+  table.mgrid input[type=text]{width:100%;min-width:0;height:32px;font-size:12.5px}
+  table.mgrid input[type=checkbox]{width:17px;height:17px;accent-color:var(--primary);cursor:pointer}
+  .modal-head{display:flex;align-items:center;gap:8px;padding:14px 22px;border-bottom:1px solid var(--border)}
+  .modal-head h2{font-size:18px;font-weight:800;margin:0}
+  .modal-head .btn{height:34px}
+  .modal-head .spacer{flex:1}
+  .help-btn{width:19px;height:19px;border-radius:50%;border:none;background:var(--surface-3);color:var(--ink-3);font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .help-btn:hover{background:var(--primary-weak);color:var(--primary)}
+  .icon-btn{margin-left:auto;width:34px;height:34px;border:none;background:none;color:var(--ink-3);font-size:22px;line-height:1;border-radius:6px}
+  .icon-btn:hover{background:var(--surface-3);color:var(--ink)}
+  .gridacts{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+  .modal-body{padding:18px 22px;display:grid;grid-template-columns:1fr;gap:12px}
+  .frow{display:grid;grid-template-columns:132px minmax(0,1fr);align-items:center;gap:10px}
+  .frow.top{align-items:start}
+  .frow>*{min-width:0}
+  .frow>label{justify-self:start;display:flex;align-items:center}
+  .modal-body select,.modal-body input,.modal-body textarea{width:100%;min-width:0;box-sizing:border-box}
+  textarea{border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:8px 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink);resize:vertical}
+  .req{color:var(--danger);margin-left:2px}
+  .readonly{height:36px;display:flex;align-items:center;padding:0 11px;border-radius:var(--radius-sm);background:var(--surface-3);color:var(--ink-2);font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hint{font-size:11.5px;color:var(--ink-3);margin:2px 0 0}
+  .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid var(--border);background:var(--surface-2);position:sticky;bottom:0}
+  .modal-foot .btn{height:40px}
+  .modal-foot .spread{margin-right:auto}
+  /* alert dialog */
+  .alertbox{width:400px}
+  .alertbox .modal-body{display:block;color:var(--ink-2);font-size:14px;line-height:1.6}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  @media (max-width:900px){.filtergrid{grid-template-columns:1fr}.lnb{display:none!important}}
+  .note{margin-top:24px;font-size:13px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:8px;padding:14px 16px;line-height:1.7}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">S2 · 기초정보 · KRDS TO-BE</p>
+  <h1 class="doc-title">운용사 정량지표 관리</h1>
+  <p class="doc-sub">운용사 유형별로 정량지표(자본충실도 등)의 정상·주의·경고 판정기준을 등록·조회·수정하는 기초정보 관리 화면. 운용사 유형으로 필터링, 그리드 행 클릭 시 해당 운용사구분의 수정 팝업이 열리고, [등록] 버튼으로 신규 기준 등록 팝업이 열린다. 등록/수정 팝업이 있는 관리화면이라 금액 단위전환 토글은 규칙상 미적용.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">조</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="../01_투자자산관리/S1_01_투자심의관리.html" role="menuitem"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="S2_46_메인화면.html" role="menuitem" class="on"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">조기경보시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="S2_46_메인화면.html">조기경보</a>
+          <a href="S2_64_투자기업정보_전체_.html">기업정보</a>
+          <a href="#" class="on" aria-current="page">기초정보</a>
+          <a href="S2_78_운용사_유형별_정량지표_변동.html">통계정보</a>
+          <a href="S2_80_모태펀드_가치평가_결과조회.html">가치평가</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+        <a href="S2_94_메뉴관리.html" class="admin-gear" aria-label="관리자 설정">⚙ 관리자</a>
+      </div>
+      <div class="subtab" aria-label="기초정보 하위 메뉴">
+        <span class="on">운용사 정량지표 관리</span><a href="S2_73_자펀드_정보_관리.html">자펀드 정보 관리</a><a href="S2_76_운용사_재무정보_비교조회.html">운용사 재무정보 비교조회</a><a href="S2_77_자펀드_수익률정보_비교조회.html">자펀드 수익률정보 비교조회</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">기초정보</div>
+          <nav aria-label="기초정보 메뉴">
+            <a href="#" class="on" aria-current="page">운용사 정량지표 관리</a>
+            <a href="S2_73_자펀드_정보_관리.html">자펀드 정보 관리</a>
+            <a href="S2_76_운용사_재무정보_비교조회.html">운용사 재무정보 비교조회</a>
+            <a href="S2_77_자펀드_수익률정보_비교조회.html">자펀드 수익률정보 비교조회</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">기초정보 · 운용사 정량지표 관리</div>
+          <div class="h1row"><h1>운용사 정량지표 관리</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filtergrid">
+              <div class="field">
+                <label for="f-type">운용사 유형</label>
+                <select id="f-type">
+                  <option>전체</option>
+                  <option>벤처투자회사</option>
+                  <option>증권회사</option>
+                  <option>여신전문금융회사</option>
+                  <option>자산운용사</option>
+                  <option>은행</option>
+                  <option>보험사</option>
+                </select>
+              </div>
+            </div>
+            <div class="searchbtnrow"><button class="btn" id="search">조회</button></div>
+          </div>
+
+          <div class="listbar">
+            <div class="cap">총 <b id="cnt">2</b>건</div>
+            <div class="acts">
+              <button class="btn btn-sm" id="reg">등록</button>
+            </div>
+          </div>
+          <div class="scroller">
+            <table class="grid" id="tbl">
+              <caption class="visually-hidden">운용사 정량지표 판정기준 목록 — 운용사구분·지표구분별 정상·주의·경고 기준. 행 클릭 시 수정 팝업</caption>
+              <thead>
+                <tr>
+                  <th class="c" scope="col">No</th>
+                  <th class="c" scope="col">운용사구분</th>
+                  <th class="c" scope="col">지표구분</th>
+                  <th class="c" scope="col">정상</th>
+                  <th class="c" scope="col">주의</th>
+                  <th class="c" scope="col">경고</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <p class="note"><b>설계 메모(2026-08-28, 사용자 제공 실제 화면 캡처 반영):</b> 사용자가 제공한 "운용사 정량지표 수정"(증권회사) 실제 화면 캡처를 근거로 지표구분 마스터·수정 팝업을 재확정.<br><br><b>지표구분 7종</b>(영업용순자본비율·유동성비율·자기자본이익률·총자산수익률·자본충실도·부채비율·수익성)으로 교체 — 기존 재사용하던 "부채비율(유동성비율)" 통합표기는 오류였고 실제로는 별개 지표(부채비율/유동성비율)이며, 총자산수익률·수익성은 이번에 처음 확인됨(S2_63 5종 표기와는 별개, 이 화면 계열만 교체). 목록은 사용중인 지표만 평탄화 표시: 벤처투자회사/자본충실도(기존 확정값) + 증권회사 사용중 4건(영업용순자본비율·유동성비율·자기자본이익률·총자산수익률, 캡처 화면 실값).<br><br><b>행 클릭 → 수정 팝업</b>은 해당 운용사구분의 지표 7종 전체 그리드를 로드(엑셀 G열: 운용사구분→수정 팝업 연결). 수정 팝업의 <b>운용사 유형</b>은 캡처 화면처럼 실제 동작하는 셀렉트박스로 전환(선택 시 그리드 갱신), 타이틀 옆 <b>도움말(?)</b> 아이콘 신규 반영(안내문구 미정으로 클릭 시 자리표시 토스트). 캡처 화면에 <b>선택 체크박스 컬럼이 없어</b> 행 클릭 하이라이트 후 행삭제하는 방식으로 변경(등록·수정 팝업 공통). 저장·닫기(타이틀 영역)·행추가/행삭제(하단 영역) 배치는 직전 턴 반영값 유지.<br><br><b>운용사 유형</b> 6종(벤처투자회사·증권회사·여신전문금융회사·자산운용사·은행·보험사)은 S2_71 등록 팝업 확정값 그대로.<br><br><b>입력항목</b>(체크박스) 용도는 원문에 라벨만 있어 검토필요 마커 유지. 증권회사 외 5개 유형은 원문 화면 미제공이라 등록 시 최초상태와 동일한 빈 값으로 표시(검토필요 아님).</p>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* 운용사 유형 = 원천 데이터 실값(6종, S2_71 등록 팝업과 동일 확정값) */
+  var MGRTYPES=['벤처투자회사','증권회사','여신전문금융회사','자산운용사','은행','보험사'];
+  /* 지표구분 마스터 7종 — 사용자 제공 실제 화면(운용사 정량지표 수정, 증권회사) 캡처 기준 확정(2026-08-28).
+     기존 "부채비율(유동성비율)" 통합표기는 오류 — 부채비율/유동성비율은 별개 지표, 총자산수익률·수익성 신규 확인 */
+  var INDICATORS=['영업용순자본비율','유동성비율','자기자본이익률','총자산수익률','자본충실도','부채비율','수익성'];
+
+  /* 운용사 유형별 지표 설정값 — 증권회사만 화면 캡처로 실데이터 확정, 그 외 유형은 원문 미제공 */
+  var EDIT_DATA={
+    '증권회사':[
+      {use:true, ind:'영업용순자본비율', ok:'400 이상', warn:'150 이상', bad:'150 미만', inp:true},
+      {use:true, ind:'유동성비율', ok:'100 이상', warn:'50 이상', bad:'50 미만', inp:true},
+      {use:true, ind:'자기자본이익률', ok:'-5 이상', warn:'-10 이상', bad:'-10 미만', inp:false},
+      {use:true, ind:'총자산수익률', ok:'-5 이상', warn:'-20 이상', bad:'-20 미만', inp:false},
+      {use:false, ind:'자본충실도', ok:'75 이상', warn:'50 이상', bad:'50 미만', inp:false},
+      {use:false, ind:'부채비율', ok:'50 이하', warn:'100 이하', bad:'100 초과', inp:false},
+      {use:false, ind:'수익성', ok:'-5 이상', warn:'-20 이상', bad:'-20 미만', inp:false}
+    ]
+  };
+  function metricsFor(type){
+    if(EDIT_DATA[type])return EDIT_DATA[type];
+    return INDICATORS.map(function(m){return {use:false,ind:m,ok:'',warn:'',bad:'',inp:false}});
+  }
+
+  /* 목록: 운용사구분별 "사용중"인 지표만 평탄화해 표시(벤처투자회사/자본충실도 단건 확정값 + 증권회사 화면 캡처 사용중 4건) */
+  var DATA=[{type:'벤처투자회사',ind:'자본충실도',ok:'75 이상',warn:'75 미만 50 이상',bad:'50 미만'}]
+    .concat(EDIT_DATA['증권회사'].filter(function(d){return d.use}).map(function(d){return {type:'증권회사',ind:d.ind,ok:d.ok,warn:d.warn,bad:d.bad}}));
+  function render(){
+    $('cnt').textContent=DATA.length;
+    $('rows').innerHTML=DATA.map(function(r,i){
+      return '<tr tabindex="0" data-i="'+i+'">'+
+        '<td class="c">'+(i+1)+'</td>'+
+        '<td class="l">'+r.type+'</td>'+
+        '<td class="l">'+r.ind+'</td>'+
+        '<td class="c"><span class="tag ok">'+r.ok+'</span></td>'+
+        '<td class="c"><span class="tag warn">'+r.warn+'</span></td>'+
+        '<td class="c"><span class="tag bad">'+r.bad+'</span></td>'+
+        '</tr>';
+    }).join('');
+  }
+  render();
+
+  /* 행 클릭 → 해당 운용사구분의 수정 팝업 (엑셀 G열: 운용사구분→수정 팝업 연결). 팝업은 해당 유형의 지표 전체 그리드를 로드 */
+  $('rows').addEventListener('click',function(e){
+    var tr=e.target.closest('tr');if(!tr)return;openEdit(DATA[+tr.getAttribute('data-i')].type);
+  });
+  $('rows').addEventListener('keydown',function(e){
+    if(e.key===' '||e.key==='Enter'){var tr=e.target.closest('tr');if(tr){e.preventDefault();openEdit(DATA[+tr.getAttribute('data-i')].type);}}
+  });
+
+  /* 검토필요 팝오버 */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null; if(!m)return; e.preventDefault();e.stopPropagation();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+m.getAttribute('data-rec')+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+m.getAttribute('data-dat')+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true)},0);
+  });
+
+  /* scroll lock */
+  var lockN=0,savedPad='';
+  function lock(){if(lockN++===0){var sw=window.innerWidth-document.documentElement.clientWidth;savedPad=document.body.style.paddingRight;if(sw>0)document.body.style.paddingRight=sw+'px';document.body.style.overflow='hidden';}}
+  function unlock(){if(lockN>0&&--lockN===0){document.body.style.overflow='';document.body.style.paddingRight=savedPad;}}
+  /* toast */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+
+  /* 등록/수정 단일 폼 2모드 */
+  var scrim=null,lastFocus=null;
+  function trap(c){c.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();closeModal();return}if(e.key!=='Tab')return;var f=Array.prototype.filter.call(c.querySelectorAll('button,input,select,textarea,[tabindex]:not([tabindex="-1"])'),function(el){return !el.disabled&&el.offsetParent!==null});if(!f.length)return;var first=f[0],last=f[f.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}})}
+  function closeModal(){closeR();if(scrim){scrim.remove();scrim=null;unlock()}if(lastFocus&&lastFocus.focus)lastFocus.focus()}
+
+  var TYPE_OPTS=MGRTYPES.map(function(t){return '<option>'+t+'</option>'}).join('');
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+
+  /* 기본행(원문 라벨 그대로: 지표구분·정상·주의·경고는 표시전용, 실입력은 입력항목 컬럼).
+     원문 화면에 선택 체크박스 컬럼이 없어(사용자 제공 캡처 확인) 행 클릭으로 선택(하이라이트)·행삭제 처리 */
+  function presetRow(ind,ok,warn,bad,inputType){
+    var okT=ok?esc(ok):'–',warnT=warn?esc(warn):'–',badT=bad?esc(bad):'–';
+    var inputCell=(inputType==='check')
+      ? '<td class="c"><input type="checkbox" aria-label="'+esc(ind)+' 입력항목"></td>'
+      : '<td><input type="text" aria-label="'+esc(ind)+' 입력항목"></td>';
+    return '<tr tabindex="0">'+
+      '<td class="c"><input type="checkbox"'+(ok?' checked':'')+' aria-label="'+esc(ind)+' 사용"></td>'+
+      '<td class="l">'+esc(ind)+'</td>'+
+      '<td class="l">'+okT+'</td>'+
+      '<td class="l">'+warnT+'</td>'+
+      '<td class="l">'+badT+'</td>'+
+      inputCell+
+    '</tr>';
+  }
+  /* EDIT_DATA 항목(use/ind/ok/warn/bad/inp) → 그리드 행 렌더(정상/주의/경고는 표시전용, 입력항목만 실입력) */
+  function dataRow(d){
+    var okT=d.ok?esc(d.ok):'–',warnT=d.warn?esc(d.warn):'–',badT=d.bad?esc(d.bad):'–';
+    return '<tr tabindex="0">'+
+      '<td class="c"><input type="checkbox" aria-label="'+esc(d.ind)+' 사용"'+(d.use?' checked':'')+'></td>'+
+      '<td class="l">'+esc(d.ind)+'</td>'+
+      '<td class="l">'+okT+'</td>'+
+      '<td class="l">'+warnT+'</td>'+
+      '<td class="l">'+badT+'</td>'+
+      '<td class="c"><input type="checkbox" aria-label="'+esc(d.ind)+' 입력항목"'+(d.inp?' checked':'')+'></td>'+
+    '</tr>';
+  }
+  /* 행추가로 생성되는 신규행(지표구분·기준을 라벨로 표시할 근거가 없어 직접입력 형태로 구성) */
+  function newRow(inputType){
+    var inputCell=(inputType==='check')
+      ? '<td class="c"><input type="checkbox" aria-label="신규 지표 입력항목"></td>'
+      : '<td><input type="text" aria-label="신규 지표 입력항목"></td>';
+    return '<tr tabindex="0">'+
+      '<td class="c"><input type="checkbox" aria-label="신규 지표 사용"></td>'+
+      '<td><input type="text" placeholder="지표구분" aria-label="신규 지표구분"></td>'+
+      '<td><input type="text" placeholder="예: 75 이상" aria-label="신규 지표 정상 기준"></td>'+
+      '<td><input type="text" placeholder="예: 50 이상" aria-label="신규 지표 주의 기준"></td>'+
+      '<td><input type="text" placeholder="예: 50 미만" aria-label="신규 지표 경고 기준"></td>'+
+      inputCell+
+    '</tr>';
+  }
+  function gridHead(){
+    return '<thead><tr>'+
+      '<th class="c" style="width:56px">사용</th><th class="l">지표구분</th><th class="c">정상</th><th class="c">주의</th><th class="c">경고</th>'+
+      '<th class="c" style="width:110px">입력항목<button type="button" class="review" data-rec="실측값 직접입력 대상 여부(추정)" data-dat="원문 라벨만 존재 · 용도/기본값 미정" aria-label="검토필요">!</button></th>'+
+    '</tr></thead>';
+  }
+  function wireGridActs(rowsId,addId,delId,inputType){
+    $(addId).addEventListener('click',function(){
+      var t=document.createElement('tbody');t.innerHTML=newRow(inputType);
+      $(rowsId).appendChild(t.firstChild);
+      var f=$(rowsId).lastElementChild.querySelector('input[type=text]');if(f)f.focus();
+    });
+    $(delId).addEventListener('click',function(){
+      var sel=$(rowsId).querySelectorAll('tr.sel');
+      if(!sel.length){toast('삭제할 행을 선택하세요');return;}
+      var n=sel.length;Array.prototype.forEach.call(sel,function(tr){tr.remove()});
+      toast(n+'개 행 삭제됨');
+    });
+    $(rowsId).addEventListener('click',function(e){
+      if(e.target.tagName==='INPUT')return;
+      var tr=e.target.closest('tr');if(tr)tr.classList.toggle('sel');
+    });
+    $(rowsId).addEventListener('keydown',function(e){
+      if(e.key!==' '&&e.key!=='Enter')return;
+      if(e.target.tagName==='INPUT')return;
+      var tr=e.target.closest('tr');if(tr){e.preventDefault();tr.classList.toggle('sel')}
+    });
+  }
+
+  /* 정량지표 등록 팝업(S2_71) — 운용사 유형별 지표(5종) 사용여부 일괄 등록, 정상/주의/경고는 표시전용, 입력항목(인풋박스)에 실입력, 행추가/행삭제로 지표 행 관리 */
+  function openReg(){
+    lastFocus=document.activeElement;
+    scrim=document.createElement('div');scrim.className='scrim';
+    scrim.addEventListener('mousedown',function(e){if(e.target===scrim)closeModal()});
+    scrim.innerHTML='<div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="rg-t">'+
+      '<div class="modal-head"><h2 id="rg-t">운용사 정량지표 등록</h2>'+
+        '<button type="button" class="help-btn" id="rg-help" aria-label="도움말">?</button>'+
+        '<span class="spacer"></span>'+
+        '<button class="btn btn-sec" id="rg-close">닫기</button><button class="btn btn-pri" id="rg-save">저장</button>'+
+      '</div>'+
+      '<div class="modal-body">'+
+        '<div class="mfilter"><label for="rg-type">운용사 유형</label><select id="rg-type">'+TYPE_OPTS+'</select></div>'+
+        '<div class="scroller"><table class="mgrid" id="rg-grid">'+
+          '<caption class="visually-hidden">운용사 정량지표 등록 — 지표별 사용여부·입력항목</caption>'+
+          gridHead()+
+          '<tbody id="rg-rows">'+INDICATORS.map(function(ind){return presetRow(ind,'','','','text')}).join('')+'</tbody>'+
+        '</table></div>'+
+        '<div class="gridacts"><button type="button" class="btn btn-sec btn-sm" id="rg-add">행추가</button><button type="button" class="btn btn-sec btn-sm" id="rg-del">행삭제</button></div>'+
+      '</div>'+
+    '</div>';
+    lock();document.body.appendChild(scrim);
+    trap(scrim.querySelector('.modal'));
+    $('rg-close').addEventListener('click',closeModal);
+    $('rg-save').addEventListener('click',function(){closeModal();toast('등록되었습니다 (목업)')});
+    $('rg-help').addEventListener('click',function(){toast('도움말 (목업)')});
+    wireGridActs('rg-rows','rg-add','rg-del','text');
+    setTimeout(function(){var el=$('rg-type');if(el)el.focus()},0);
+  }
+
+  /* 정량지표 수정 팝업(S2_72) — 그리드 행(운용사구분) 클릭 시 해당 유형의 지표 전체 그리드 로드(사용자 제공 실제 화면 캡처 기준, 2026-08-28).
+     운용사 유형은 캡처 화면처럼 실제 동작하는 셀렉트박스로 전환·선택 시 그리드 갱신. 정상/주의/경고는 표시전용, 입력항목(체크박스)만 실입력, 행추가·행삭제 */
+  function renderEditGrid(type){
+    $('em-rows').innerHTML=metricsFor(type).map(dataRow).join('');
+  }
+  function openEdit(preType){
+    lastFocus=document.activeElement;
+    scrim=document.createElement('div');scrim.className='scrim';
+    scrim.addEventListener('mousedown',function(e){if(e.target===scrim)closeModal()});
+    var typeOpts=MGRTYPES.map(function(t){return '<option'+(t===(preType||'증권회사')?' selected':'')+'>'+t+'</option>'}).join('');
+    scrim.innerHTML='<div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="em-t">'+
+      '<div class="modal-head"><h2 id="em-t">운용사 정량지표 수정</h2>'+
+        '<button type="button" class="help-btn" id="em-help" aria-label="도움말">?</button>'+
+        '<span class="spacer"></span>'+
+        '<button class="btn btn-sec" id="em-close">닫기</button><button class="btn btn-pri" id="em-save">저장</button>'+
+      '</div>'+
+      '<div class="modal-body">'+
+        '<div class="mfilter"><label for="em-type">운용사 유형</label><select id="em-type">'+typeOpts+'</select></div>'+
+        '<div class="scroller"><table class="mgrid" id="em-grid">'+
+          '<caption class="visually-hidden">운용사 정량지표 편집 그리드</caption>'+
+          gridHead()+
+          '<tbody id="em-rows"></tbody>'+
+        '</table></div>'+
+        '<div class="gridacts"><button type="button" class="btn btn-sec btn-sm" id="em-add">행추가</button><button type="button" class="btn btn-sec btn-sm" id="em-del">행삭제</button></div>'+
+      '</div>'+
+    '</div>';
+    lock();document.body.appendChild(scrim);
+    renderEditGrid(preType||'증권회사');
+    trap(scrim.querySelector('.modal'));
+    $('em-close').addEventListener('click',closeModal);
+    $('em-save').addEventListener('click',function(){closeModal();toast('수정되었습니다 (목업)')});
+    $('em-help').addEventListener('click',function(){toast('도움말 (목업)')});
+    $('em-type').addEventListener('change',function(){renderEditGrid(this.value)});
+    wireGridActs('em-rows','em-add','em-del','check');
+    setTimeout(function(){var el=$('em-type');if(el)el.focus()},0);
+  }
+
+  $('reg').addEventListener('click',openReg);
+  $('search').addEventListener('click',function(){toast('조회되었습니다 (목업)')});
+})();
+</script>

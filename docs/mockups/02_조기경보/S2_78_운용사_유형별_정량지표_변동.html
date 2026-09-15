@@ -1,0 +1,360 @@
+<title>운용사 유형별 정량지표 변동</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:82ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .admin-gear{margin-left:12px;padding:6px 12px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;font-size:13px;white-space:nowrap}
+  .admin-gear:hover{background:rgba(255,255,255,.12);color:#fff}
+  .admin-gear.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:18px}
+  .filterrow{display:flex;gap:22px 26px;flex-wrap:wrap;align-items:center}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;white-space:nowrap}
+  .field select{min-width:150px}
+  .searchbtnrow{display:flex;justify-content:center;margin-top:16px}
+  .btn{height:38px;padding:0 30px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .datefield{position:relative;display:inline-flex;align-items:center}
+  .datefield input{width:118px;padding-right:32px;cursor:pointer}
+  .datefield .cal{position:absolute;right:9px;width:17px;height:17px;color:var(--ink-3);pointer-events:none}
+  .rangesep{color:var(--ink-3);font-weight:700}
+  .yearpanel{position:fixed;z-index:80;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:8px;width:236px}
+  .yearpanel .yhead{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 8px;font-size:13px;font-weight:700;color:var(--ink-2)}
+  .yearpanel .ynav{width:26px;height:26px;border:none;background:transparent;border-radius:6px;color:var(--ink-2);font-size:16px;cursor:pointer}
+  .yearpanel .ynav:hover{background:var(--surface-3)}
+  .yearpanel .ygrid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+  .yearpanel .ygrid button{height:32px;border:none;background:transparent;border-radius:6px;font-size:13px;color:var(--ink);font-family:inherit;cursor:pointer}
+  .yearpanel .ygrid button:hover{background:var(--surface-3)}
+  .yearpanel .ygrid button[aria-selected="true"]{background:var(--primary);color:#fff;font-weight:700}
+  /* sections + KPI + chart */
+  .section{margin-top:24px}
+  .sec-head{display:flex;align-items:center;gap:6px;margin:0 0 14px;padding-bottom:9px;border-bottom:2px solid var(--border-strong)}
+  .sec-head h2{font-size:17px;font-weight:800;margin:0}
+  .kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+  .kpi{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px}
+  .kpi .kl{font-size:13px;color:var(--ink-2);font-weight:600;margin-bottom:8px;display:flex;align-items:center}
+  .kpi .kv{font-size:30px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .kpi .ku{font-size:15px;font-weight:600;color:var(--ink-3);margin-left:3px}
+  .chartcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px}
+  .charthead{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+  .legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+  .legend .lg{display:inline-flex;align-items:center;gap:7px}
+  .legend .dot{width:14px;height:3px;border-radius:2px;display:inline-block}
+  .legend b{font-variant-numeric:tabular-nums;color:var(--ink)}
+  .note{margin-top:24px;font-size:13px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:8px;padding:14px 16px;line-height:1.7}
+  .note b{color:var(--ink-2)}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (max-width:900px){.lnb{display:none!important}.kpi-row{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">S2 조기경보 · 통계정보 · KRDS TO-BE</p>
+  <h1 class="doc-title">운용사 유형별 정량지표 변동</h1>
+  <p class="doc-sub">선택한 운용사 유형의 정량지표(자본 건전성·수익성)를 조회 기간에 걸쳐 추이로 보여주는 읽기전용 통계 화면. 검색조건 3개(모펀드·운용사 유형·기간=기준월 범위) + 지표 섹션 2개(각 평균값 KPI + 라인차트). 금액이 아닌 비율 지표이므로 단위전환은 미적용.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span class="lab" style="margin-left:8px">테마</span>
+    <div class="seg" role="group" aria-label="테마">
+      <button id="th-light" aria-pressed="false">라이트</button>
+      <button id="th-dark" aria-pressed="false">다크</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">조</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="../01_투자자산관리/S1_01_투자심의관리.html" role="menuitem"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="S2_46_메인화면.html" role="menuitem" class="on"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">조기경보시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="S2_46_메인화면.html">조기경보</a>
+          <a href="S2_64_투자기업정보_전체_.html">기업정보</a>
+          <a href="S2_70_운용사_정량지표_관리.html">기초정보</a>
+          <a href="#" class="on" aria-current="page">통계정보</a>
+          <a href="S2_80_모태펀드_가치평가_결과조회.html">가치평가</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+        <a href="S2_94_메뉴관리.html" class="admin-gear" aria-label="관리자 설정">⚙ 관리자</a>
+      </div>
+      <div class="subtab" aria-label="통계정보 하위 메뉴">
+        <span class="on">운용사 유형별 정량지표 변동</span><a href="S2_79_종합등급_변동.html">종합등급 변동</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">통계정보</div>
+          <nav aria-label="통계정보 메뉴">
+            <a href="#" class="on" aria-current="page">운용사 유형별 정량지표 변동</a>
+            <a href="S2_79_종합등급_변동.html">종합등급 변동</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">조기경보 · 통계정보 · 운용사 유형별 정량지표 변동</div>
+          <div class="h1row"><h1>운용사 유형별 정량지표 변동</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filterrow">
+              <!-- 모펀드: 다중모펀드 옵션 ON 가정(단일=표시, 1개 초과 시 무조건 표시) -->
+              <div class="field" data-mf-visible="on">
+                <label for="f-mf">모펀드</label>
+                <select id="f-mf"><option>농식품모태펀드</option><option>MOAF</option></select>
+              </div>
+              <div class="field">
+                <label for="f-type">운용사 유형</label>
+                <select id="f-type"><option>전체</option><option selected>벤처투자회사</option></select>
+              </div>
+              <div class="field">
+                <label>기간</label>
+                <span class="datefield"><input type="text" id="f-from" value="2025-07" readonly aria-label="조회 시작 기준월"><svg class="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg></span>
+                <span class="rangesep">~</span>
+                <span class="datefield"><input type="text" id="f-to" value="2026-07" readonly aria-label="조회 종료 기준월"><svg class="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg></span>
+              </div>
+            </div>
+            <div class="searchbtnrow"><button class="btn" id="search">조회</button></div>
+          </div>
+
+          <div id="live" class="visually-hidden" aria-live="polite"></div>
+
+          <!-- [섹션1] 자본 건전성 지표 -->
+          <section class="section" aria-labelledby="s1-t">
+            <div class="sec-head"><h2 id="s1-t">자본 건전성 지표</h2></div>
+            <div class="kpi-row">
+              <div class="kpi"><div class="kl">자본충실도 평균</div><div><span class="kv">434.57</span><span class="ku">%</span></div></div>
+              <div class="kpi"><div class="kl">부채비율 평균</div><div><span class="kv">32.74</span><span class="ku">%</span></div></div>
+            </div>
+            <div class="chartcard">
+              <div class="charthead">자본충실도 / 부채비율 월별 추이</div>
+              <div id="chart1"></div>
+              <div class="legend" id="lg1"></div>
+            </div>
+          </section>
+
+          <!-- [섹션2] 수익성 지표 -->
+          <section class="section" aria-labelledby="s2-t">
+            <div class="sec-head"><h2 id="s2-t">수익성 지표</h2></div>
+            <div class="kpi-row">
+              <div class="kpi"><div class="kl">자기자본이익율 평균</div><div><span class="kv">12.8</span><span class="ku">%</span></div></div>
+              <div class="kpi"><div class="kl">총자산수익률 평균</div><div><span class="kv">3.73</span><span class="ku">%</span></div></div>
+            </div>
+            <div class="chartcard">
+              <div class="charthead">자기자본이익율 / 총자산수익률 월별 추이</div>
+              <div id="chart2"></div>
+              <div class="legend" id="lg2"></div>
+            </div>
+          </section>
+
+          <p class="note"><b>설계 메모(2026-08-31, 검토필요 마커 전부 제거):</b> S2 조기경보 · 통계정보 대메뉴의 읽기전용 조회 화면.<br><br><b>기간</b>은 표준에 따라 셀렉트박스가 아닌 <b>기준월(YYYY-MM) picker</b> 범위로 구현, 차트 x축 라벨도 월만 표기하던 것을 <b>YYYY.MM</b> 형식으로 변경. 지표가 <b>비율(%)</b>이라 금액 단위전환 토글은 규칙상 미적용, CRUD가 없어 첨부/등록·수정 팝업도 없음. 사용자 지시로 화면의 검토필요 마커를 전부 제거 — 마커가 짚던 사항은 이 메모로 갈음: 엑셀 원문(통합 시트 2362-2374행)에는 <b>평균값(자본충실도 434.57·부채비율 32.74·자기자본이익율 12.8·총자산수익률 3.73)만 제공</b>되고 월별 시계열 데이터·지표 단위·운용사 유형 전체 목록(벤처투자회사 외)은 근거가 없어, 차트의 월별 추이는 평균값 주변의 예시 곡선(추론)이고 단위는 %로 가정한 것임. 없는 코드/데이터는 새로 생성하지 않음.</p>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+
+  /* nav toggle */
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* theme toggle (default = system) */
+  function setTheme(t){document.documentElement.setAttribute('data-theme',t);$('th-light').setAttribute('aria-pressed',t==='light');$('th-dark').setAttribute('aria-pressed',t==='dark');setTimeout(render,0);}
+  $('th-light').addEventListener('click',function(){setTheme('light')});
+  $('th-dark').addEventListener('click',function(){setTheme('dark')});
+
+  /* ===== 기준월(YYYY-MM) picker ===== */
+  var CUR=(new Date()).getFullYear(), mp=null, mIn=null, mYear=CUR;
+  function closeM(){if(mp){mp.remove();mp=null;mIn=null;document.removeEventListener('mousedown',mOut,true);document.removeEventListener('keydown',mKey,true)}}
+  function mOut(e){if(mp&&!mp.contains(e.target)&&e.target!==mIn)closeM()}
+  function mKey(e){if(e.key==='Escape'){e.preventDefault();var i=mIn;closeM();if(i)i.focus()}}
+  function mCont(input){
+    var h='<div class="yhead"><button type="button" class="ynav" data-n="-1" aria-label="이전 해">&#8249;</button><span>'+mYear+'년</span><button type="button" class="ynav" data-n="1" aria-label="다음 해">&#8250;</button></div><div class="ygrid">';
+    for(var m=1;m<=12;m++){var mm=(m<10?'0':'')+m;var val=mYear+'-'+mm;h+='<button type="button" data-m="'+mm+'"'+(val===input.value?' aria-selected="true"':'')+'>'+m+'월</button>';}
+    return h+'</div>';
+  }
+  function mPos(p,input){var r=input.getBoundingClientRect();var top=r.bottom+4;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-4);p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px'}
+  function openM(input){
+    if(mp&&mIn===input){closeM();return;}
+    closeM();mIn=input;mYear=input.value?parseInt(input.value.split('-')[0],10):CUR;
+    var p=document.createElement('div');p.className='yearpanel';p.setAttribute('role','dialog');p.setAttribute('aria-label','기준월 선택');p.innerHTML=mCont(input);
+    document.body.appendChild(p);mPos(p,input);
+    p.addEventListener('mousedown',function(e){
+      var n=e.target.closest('.ynav');
+      if(n){e.preventDefault();mYear+=parseInt(n.getAttribute('data-n'),10);p.innerHTML=mCont(input);mPos(p,input);return;}
+      var b=e.target.closest('button[data-m]');
+      if(b){e.preventDefault();input.value=mYear+'-'+b.getAttribute('data-m');closeM();input.focus();}
+    });
+    mp=p;setTimeout(function(){document.addEventListener('mousedown',mOut,true);document.addEventListener('keydown',mKey,true)},0);
+  }
+  ['f-from','f-to'].forEach(function(id){
+    var el=$(id);
+    el.addEventListener('click',function(){openM(el)});
+    el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();openM(el)}});
+  });
+
+  /* ===== toast ===== */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+
+  /* ===== 월 라벨 (기간 범위에서 산출) — YYYY.MM 형식 ===== */
+  function months(from,to){
+    var a=from.split('-'),b=to.split('-'),y=+a[0],m=+a[1],ey=+b[0],em=+b[1],out=[];
+    while(y<ey||(y===ey&&m<=em)){out.push(y+'.'+('0'+m).slice(-2));if(++m>12){m=1;y++;}if(out.length>60)break;}
+    return out;
+  }
+
+  /* ===== 라인차트 (2계열, 계열별 독립 스케일 + 좌/우 축) ===== */
+  /* 월별 시계열은 예시(추론) — 평균값만 실데이터. 검토필요 마커로 표시됨. */
+  var CH1=[
+    {name:'자본충실도',avg:434.57,color:'var(--primary)',data:[420.1,428.4,415.2,440.6,451.3,438.0,430.5,445.9,425.7,436.2,442.8,448.1,434.6]},
+    {name:'부채비율',avg:32.74,color:'var(--ok)',data:[35.1,34.2,33.6,31.4,30.2,32.0,33.5,34.1,32.6,31.5,33.2,34.0,33.2]}
+  ];
+  var CH2=[
+    {name:'자기자본이익율',avg:12.8,color:'var(--primary)',data:[11.5,12.0,12.4,13.1,13.6,12.9,12.2,13.2,12.6,12.9,13.3,12.7,12.7]},
+    {name:'총자산수익률',avg:3.73,color:'var(--ok)',data:[3.40,3.52,3.61,3.92,4.03,3.80,3.58,3.72,3.75,3.81,3.86,3.70,3.65]}
+  ];
+
+  function drawChart(elId,series,labels){
+    var W=760,H=300,L=56,R=56,T=22,B=44;
+    var pw=W-L-R, ph=H-T-B, n=labels.length;
+    var step=n>9?2:1;
+    function X(i){return L+pw*(n>1?i/(n-1):0);}
+    function mkScale(d){var mn=Math.min.apply(null,d),mx=Math.max.apply(null,d);var pad=((mx-mn)||Math.abs(mx)||1)*0.22;mn-=pad;mx+=pad;return{mn:mn,mx:mx,Y:function(v){return T+ph*(1-(v-mn)/(mx-mn));}};}
+    var sc=series.map(function(s){return mkScale(s.data);});
+    var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+series[0].name+' 및 '+series[1].name+' 월별 추이 라인차트(예시)" style="width:100%;height:auto;display:block">';
+    for(var g=0;g<=4;g++){var gy=T+ph*g/4;s+='<line x1="'+L+'" y1="'+gy.toFixed(1)+'" x2="'+(W-R)+'" y2="'+gy.toFixed(1)+'" style="stroke:var(--border)" stroke-width="1"/>';
+      var vL=sc[0].mn+(sc[0].mx-sc[0].mn)*(1-g/4);
+      var vR=sc[1].mn+(sc[1].mx-sc[1].mn)*(1-g/4);
+      s+='<text x="'+(L-8)+'" y="'+(gy+3.5).toFixed(1)+'" text-anchor="end" style="fill:var(--primary);font-size:10.5px;font-variant-numeric:tabular-nums">'+vL.toFixed(0)+'</text>';
+      s+='<text x="'+(W-R+8)+'" y="'+(gy+3.5).toFixed(1)+'" text-anchor="start" style="fill:var(--ok);font-size:10.5px;font-variant-numeric:tabular-nums">'+vR.toFixed(1)+'</text>';
+    }
+    for(var i=0;i<n;i++){var lx=X(i);s+='<line x1="'+lx.toFixed(1)+'" y1="'+(T+ph)+'" x2="'+lx.toFixed(1)+'" y2="'+(T+ph+4)+'" style="stroke:var(--border-strong)"/>';
+      if(i%step===0)s+='<text x="'+lx.toFixed(1)+'" y="'+(T+ph+18)+'" text-anchor="middle" style="fill:var(--ink-3);font-size:10.5px">'+labels[i]+'</text>';}
+    series.forEach(function(se,k){
+      var pts=se.data.map(function(v,i){return X(i).toFixed(1)+','+sc[k].Y(v).toFixed(1);}).join(' ');
+      var ay=sc[k].Y(se.avg).toFixed(1);
+      s+='<line x1="'+L+'" y1="'+ay+'" x2="'+(W-R)+'" y2="'+ay+'" style="stroke:'+se.color+'" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"/>';
+      s+='<polyline points="'+pts+'" fill="none" style="stroke:'+se.color+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+      se.data.forEach(function(v,i){s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+sc[k].Y(v).toFixed(1)+'" r="2.6" style="fill:var(--surface);stroke:'+se.color+'" stroke-width="1.6"/>';});
+    });
+    s+='</svg>';
+    $(elId).innerHTML=s;
+  }
+  function drawLegend(elId,series){
+    $(elId).innerHTML=series.map(function(s){return '<span class="lg"><span class="dot" style="background:'+s.color+'"></span>'+s.name+' <span style="color:var(--ink-3)">· 평균</span> <b>'+s.avg+'%</b></span>';}).join('')+'<span class="lg" style="color:var(--ink-3)">좌축=파랑 계열 / 우축=청록 계열</span>';
+  }
+
+  function render(){
+    var lbl=months($('f-from').value,$('f-to').value);
+    drawChart('chart1',CH1,lbl);drawLegend('lg1',CH1);
+    drawChart('chart2',CH2,lbl);drawLegend('lg2',CH2);
+  }
+
+  $('search').addEventListener('click',function(){
+    render();
+    var t=$('f-type').value, p=$('f-from').value+' ~ '+$('f-to').value;
+    $('live').textContent='조회 완료 · 운용사 유형 '+t+' · 기간 '+p;
+    toast('조회되었습니다 (목업)');
+  });
+
+  window.addEventListener('resize',function(){if(mp)closeM();});
+  render();
+})();
+</script>

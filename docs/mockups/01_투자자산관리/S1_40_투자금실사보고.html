@@ -1,0 +1,400 @@
+<title>투자금실사보고</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --danger:#E5484D;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;--danger:#F2686C;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F2686C;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:82ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .chipbtn{height:34px;padding:0 14px;border-radius:99px;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink-2);font-size:13px;font-weight:600}
+  .chipbtn[aria-pressed="true"]{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px;overflow-x:auto;min-width:0;scrollbar-width:thin}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;flex:none;white-space:nowrap}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filtergrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 16px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;width:66px;text-align:right;white-space:nowrap}
+  .field select,.field input{flex:1;min-width:0}
+  .field.wide{grid-column:span 2}
+  .rangewrap{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+  .rangewrap .tilde{flex:none;color:var(--ink-3)}
+  .col-memo{min-width:200px;white-space:normal!important}
+  .searchbtnrow{display:flex;justify-content:center;margin-top:14px}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .listbar{display:flex;align-items:center;margin:2px 0 8px}
+  .listbar .cap{font-size:15px;font-weight:700}
+  .listbar .cap b{color:var(--primary)}
+  .listbar .acts{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;min-width:1720px;width:100%}
+  table.grid th,table.grid td{padding:7px 10px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:right}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong);position:sticky;top:0;z-index:2}
+  table.grid th.c,table.grid td.c{text-align:center}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.b{background:var(--primary-weak);color:var(--primary)} .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.n{background:var(--grey-weak);color:var(--ink-3)} .tag.a{background:var(--amber-weak);color:var(--amber)}
+  .filelink{display:inline-flex;align-items:center;gap:6px;color:var(--primary);text-decoration:none;font-weight:600}
+  .filelink:hover{text-decoration:underline}
+  .linktxt{color:var(--primary);font-weight:600}
+  .gridlnk-btn{border:none;background:none;color:var(--primary);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;text-decoration:underline;padding:0}
+  .gridlnk-btn:hover{color:var(--primary-hover)}
+  .badge-pdf{flex:none;padding:1px 6px;border-radius:4px;background:var(--danger);color:#fff;font-size:10px;font-weight:800}
+  /* 팝업(모달): 투자금실사보고서 체크리스트 조회 */
+  .scrim{position:fixed;inset:0;background:rgba(16,24,40,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;animation:fade .15s ease}
+  .modal{width:640px;max-width:100%;max-height:90vh;overflow-y:auto;overflow-x:hidden;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);animation:pop .18s ease}
+  .modal-head{display:flex;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border)}
+  .modal-head h2{font-size:18px;font-weight:800;margin:0}
+  .icon-btn{margin-left:auto;width:34px;height:34px;border:none;background:none;color:var(--ink-3);font-size:22px;line-height:1;border-radius:6px}
+  .icon-btn:hover{background:var(--surface-3);color:var(--ink)}
+  .modal-body{padding:20px 22px}
+  .secttl{font-size:13px;font-weight:800;color:var(--ink-2);letter-spacing:.02em;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--border-strong)}
+  .dl{display:grid;grid-template-columns:150px minmax(0,1fr);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .dl dt{background:var(--surface-2);color:var(--ink-2);font-size:13px;font-weight:700;padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center}
+  .dl dd{margin:0;padding:11px 14px;font-size:13.5px;color:var(--ink);border-bottom:1px solid var(--border);border-left:1px solid var(--border);min-width:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+  .dl dt:last-of-type,.dl dd:last-of-type{border-bottom:none}
+  .dl dd.empty{color:var(--ink-3)}
+  .doclink{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border:1px solid var(--border-strong);border-radius:6px;background:var(--surface);color:var(--primary);font-size:13.5px;font-weight:700;text-decoration:none}
+  .doclink:hover{background:var(--primary-weak)}
+  .doclink svg{width:16px;height:16px;flex:none}
+  .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid var(--border);background:var(--surface-2);position:sticky;bottom:0}
+  .modal-foot .btn{height:40px}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:90;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  @media (max-width:900px){.filtergrid{grid-template-columns:repeat(2,1fr)}.lnb{display:none!important}.dl{grid-template-columns:1fr}.dl dt{border-left:none}.dl dd{border-left:none}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">시스템 S1 · 모니터링 · KRDS TO-BE</p>
+  <h1 class="doc-title">투자금실사보고</h1>
+  <p class="doc-sub">자펀드(운용사)가 제출한 투자기업별 투자금 실사보고서를 모니터링하고 확정 처리하는 조회 화면. 검색조건은 모펀드·계정구분·담당자·자펀드(운용사+자펀드)·보고여부·투자기간 6종. 운용사·자펀드·투자기업·투자유형과 최초투자일·잔여일수·투자일·실사일·보고일, 보고서 파일을 목록으로 관리한다. 실사일자를 클릭하면 투자금실사보고서 체크리스트 조회 팝업이 뜬다(별도 메뉴 화면이 아니라 이 화면 위에 뜨는 팝업). 넓은 표는 가로 스크롤.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">모</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="S1_01_투자심의관리.html" role="menuitem" class="on"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="../02_조기경보/S2_46_메인화면.html" role="menuitem"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">투자자산관리시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="01_파일럿_공고관리/mockup/공고관리_목업_artifact.html">모태펀드</a>
+          <a href="S1_01_투자심의관리.html">사후보고관리</a>
+          <a href="05_자펀드관리/mockup/자펀드관리_목업.html">자펀드</a>
+          <a href="S1_28_투심승인정보조회.html">통계</a>
+          <a href="S1_30_투자기업정보.html">투자기업</a>
+          <a href="#" class="on" aria-current="page">모니터링</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+      </div>
+      <div class="subtab" aria-label="보고서 하위 메뉴">
+        <a href="S1_38_운용사_재무정보_조회.html">운용사 재무정보 조회</a>
+        <span class="on">투자금실사보고</span>
+        <a href="S1_42_사후관리기록.html">사후관리기록</a>
+        <a href="S1_43_관리보수관리.html">관리보수관리</a>
+        <a href="S1_44_전체_보고현황.html">전체 보고현황</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">모니터링</div>
+          <nav aria-label="모니터링 메뉴">
+            <a href="S1_38_운용사_재무정보_조회.html">운용사 재무정보 조회</a>
+            <a href="#" class="on" aria-current="page">투자금실사보고</a>
+            <a href="S1_42_사후관리기록.html">사후관리기록</a>
+            <a href="S1_43_관리보수관리.html">관리보수관리</a>
+            <a href="S1_44_전체_보고현황.html">전체 보고현황</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">보고서 · 모니터링 · 투자금실사보고</div>
+          <div class="h1row"><h1>투자금실사보고</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filtergrid">
+              <div class="field"><label>모펀드</label><div style="height:36px;display:flex;align-items:center;padding:0 11px;border-radius:6px;background:var(--surface-3);color:var(--ink-2);font-size:13.5px;flex:1;min-width:0">농식품모태펀드</div></div>
+              <div class="field"><label for="f-gp">운용사</label><select id="f-gp" aria-label="운용사"><option>원익투자파트너스</option></select></div>
+              <div class="field"><label for="f-fund">자펀드</label><select id="f-fund" aria-label="자펀드"><option>(전체)</option></select></div>
+              <div class="field"><label id="f-acc-lab">계정구분</label><div role="group" aria-labelledby="f-acc-lab" style="display:flex;gap:6px" id="f-acc"></div></div>
+              <div class="field"><label for="f-mgr2">담당자<button type="button" class="review" data-rec="담당자 마스터 목록 연동" data-dat="실데이터로는 '전체' 옵션만 확인 — 담당자 공통코드 없음(마스터 데이터), 실제 옵션 목록 확인 필요" aria-label="검토필요">!</button></label><select id="f-mgr2"><option>전체</option></select></div>
+              <div class="field"><label for="f-rpt">보고여부<button type="button" class="review" data-rec="보고완료 · 미보고 등" data-dat="실데이터로는 '전체' 옵션만 확인 — 그 외 옵션 목록 확인 필요" aria-label="검토필요">!</button></label><select id="f-rpt"><option>전체</option></select></div>
+              <div class="field wide"><label for="f-date1">투자기간</label>
+                <div class="rangewrap">
+                  <input type="date" id="f-date1" value="2024-08-12" aria-label="투자기간 시작">
+                  <span class="tilde">~</span>
+                  <input type="date" id="f-date2" value="2026-08-12" aria-label="투자기간 종료">
+                </div>
+              </div>
+            </div>
+            <div class="searchbtnrow"><button class="btn" id="search">조회</button></div>
+          </div>
+
+          <div class="listbar">
+            <div class="cap">총 <b id="cnt">3</b>건</div>
+            <div class="acts">
+              <button class="btn btn-sec btn-sm" id="excel">엑셀</button>
+            </div>
+          </div>
+          <div class="scroller">
+            <table class="grid">
+              <caption class="visually-hidden">투자금 실사보고 목록 — 운용사·자펀드·투자기업별 실사·보고 일정 및 확정여부</caption>
+              <thead>
+                <tr>
+                  <th class="c" scope="col">No</th>
+                  <th class="l" scope="col">운용사</th>
+                  <th class="l" scope="col">자펀드</th>
+                  <th class="l" scope="col">투자기업</th>
+                  <th class="c" scope="col">투자유형</th>
+                  <th class="c" scope="col">최초 투자일자</th>
+                  <th class="c" scope="col">잔여일수</th>
+                  <th class="c" scope="col">투자일자</th>
+                  <th class="c" scope="col">실사일자</th>
+                  <th class="c" scope="col">보고일자</th>
+                  <th class="l" scope="col">보고서</th>
+                  <th class="c" scope="col">수정일시</th>
+                  <th class="c" scope="col">확정여부</th>
+                  <th class="l col-memo" scope="col">비고</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function report(name){return name?'<a href="#" class="filelink" data-file="'+esc(name)+'"><span class="badge-pdf">PDF</span>'+esc(name)+'</a>':'<span style="color:var(--ink-3)">-</span>';}
+  function dash(v){return (v==null||v==='')?'<span style="color:var(--ink-3)">-</span>':esc(v);}
+
+  // 사용자 제공 실 화면 캡처(2026-08-28) 기준 7건 전량 반영 — 운용사=원익투자파트너스(주), 자펀드=2022 원익 스마트 혁신 Agtech투자조합.
+  // 수정일시·확정여부·비고 3개 컬럼은 캡처 밖(가로 스크롤 영역)이라 실값 미확인 — 전부 '-' 표시.
+  var DATA=[
+    {no:1,mgr:'원익투자파트너스(주)',fund:'2022 원익 스마트 혁신 Agtech투자조합',co:'(주)어비스컴퍼니',type:'CB',first:'2025-11-04',rem:'보고완료',inv:'2025-11-04',due:'2026-06-22',rpt:'2026-06-23',file:'어비스컴퍼니_투자금실사보고서.pdf',mod:null,cfm:null,memo:null},
+    {no:2,mgr:'원익투자파트너스(주)',fund:'2022 원익 스마트 혁신 Agtech투자조합',co:'(주)애즈위메이크',type:'우선주(신주)',first:'2025-05-29',rem:'보고완료',inv:'2025-05-29',due:'2026-05-29',rpt:'2026-06-22',file:'애즈위메이크_투자금실사보고서.pdf',mod:null,cfm:null,memo:null},
+    {no:3,mgr:'원익투자파트너스(주)',fund:'2022 원익 스마트 혁신 Agtech투자조합',co:'농업회사법인 삼진푸드(주)',type:'우선주(신주)',first:'2026-01-30',rem:'171일 전',inv:'',due:'',rpt:'',file:'',mod:null,cfm:null,memo:null},
+    {no:4,mgr:'원익투자파트너스(주)',fund:'2022 원익 스마트 혁신 Agtech투자조합',co:'(주)라피고',type:'우선주(신주)',first:'2025-09-26',rem:'45일 전',inv:'',due:'',rpt:'',file:'',mod:null,cfm:null,memo:null},
+    {no:5,mgr:'원익투자파트너스(주)',fund:'2022 원익 스마트 혁신 Agtech투자조합',co:'(주)당근마켓',type:'보통주(구주)',first:'2025-07-25',rem:'보고 대상 제외',inv:'',due:'X',rpt:'',file:'',mod:null,cfm:null,memo:null},
+    {no:6,mgr:'원익투자파트너스(주)',fund:'2022 원익 스마트 혁신 Agtech투자조합',co:'(주)로보스',type:'우선주(신주)',first:'2025-05-23',rem:'보고완료',inv:'2025-05-23',due:'2026-05-12',rpt:'2026-05-27',file:'로보스_투자금실사보고서.pdf',mod:null,cfm:null,memo:null},
+    {no:7,mgr:'원익투자파트너스(주)',fund:'2022 원익 스마트 혁신 Agtech투자조합',co:'인테이크(주)',type:'우선주(신주)',first:'2025-04-04',rem:'130일 초과',inv:'',due:'',rpt:'',file:'',mod:null,cfm:null,memo:null}
+  ];
+
+  function dueCell(r,idx){
+    if(/^\d{4}-\d{2}-\d{2}$/.test(r.due)) return '<button type="button" class="gridlnk-btn" data-idx="'+idx+'">'+r.due+'</button>';
+    return dash(r.due);
+  }
+
+  $('rows').innerHTML=DATA.map(function(r,i){
+    var remCell = r.rem==='보고완료' ? '<span class="tag n">보고완료</span>' : esc(r.rem);
+    return '<tr>'+
+      '<td class="c">'+r.no+'</td>'+
+      '<td class="l"><span class="linktxt">'+esc(r.mgr)+'</span></td>'+
+      '<td class="l">'+esc(r.fund)+'</td>'+
+      '<td class="l">'+esc(r.co)+'</td>'+
+      '<td class="c"><span class="tag b">'+esc(r.type)+'</span></td>'+
+      '<td class="c">'+dash(r.first)+'</td>'+
+      '<td class="c">'+remCell+'</td>'+
+      '<td class="c">'+dash(r.inv)+'</td>'+
+      '<td class="c">'+dueCell(r,i)+'</td>'+
+      '<td class="c">'+dash(r.rpt)+'</td>'+
+      '<td class="l">'+report(r.file)+'</td>'+
+      '<td class="c">'+dash(r.mod)+'</td>'+
+      '<td class="c">'+dash(r.cfm)+'</td>'+
+      '<td class="l col-memo">'+dash(r.memo)+'</td></tr>';
+  }).join('');
+  $('cnt').textContent=DATA.length;
+  // 보고서 링크
+  $('rows').addEventListener('click',function(e){
+    var a=e.target.closest?e.target.closest('.filelink'):null;
+    if(a){e.preventDefault();toast('보고서 열기: '+a.getAttribute('data-file')+' (목업)');}
+    var d=e.target.closest?e.target.closest('.gridlnk-btn'):null;
+    if(d){openChecklist(DATA[parseInt(d.getAttribute('data-idx'),10)]);}
+  });
+
+  function chipGroup(id,opts,val){
+    var box=$(id); if(!box)return;
+    box.innerHTML=opts.map(function(o){return '<button type="button" class="chipbtn" data-v="'+o+'" aria-pressed="'+(o===val)+'">'+o+'</button>';}).join('');
+    box.addEventListener('click',function(e){
+      var b=e.target.closest('button[data-v]'); if(!b)return;
+      Array.prototype.forEach.call(box.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b)});
+    });
+  }
+  chipGroup('f-acc',['전체','농식품','수산'],'전체');
+  $('search').addEventListener('click',function(){toast('조회되었습니다 ('+DATA.length+'건, 목업)')});
+  $('excel').addEventListener('click',function(){toast('엑셀 다운로드 (목업)')});
+  /* 검토필요 마커: 라벨 옆 클릭 → 추천 vs 데이터 */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null; if(!m)return; e.preventDefault();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+m.getAttribute('data-rec')+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+m.getAttribute('data-dat')+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true)},0);
+  });
+
+  /* toast */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+
+  /* scroll lock (스크롤바 폭 보정) */
+  var lockN=0,savedPad='';
+  function lock(){if(lockN++===0){var sw=window.innerWidth-document.documentElement.clientWidth;savedPad=document.body.style.paddingRight;if(sw>0)document.body.style.paddingRight=sw+'px';document.body.style.overflow='hidden';}}
+  function unlock(){if(lockN>0&&--lockN===0){document.body.style.overflow='';document.body.style.paddingRight=savedPad;}}
+
+  /* 투자금실사보고서 체크리스트 조회 팝업 — 원래 별도 서브메뉴 화면(S1_41)이었으나
+     사용자 지시로 독립 메뉴를 없애고 이 화면(S1_40)의 "실사일자" 클릭 팝업으로 흡수(2026-08-28). 배경은 이 화면 그대로 유지. */
+  var ckScrim=null,ckLastFocus=null;
+  var DOC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
+  function closeChecklist(){closeR();if(ckScrim){ckScrim.remove();ckScrim=null;unlock()}if(ckLastFocus&&ckLastFocus.focus)ckLastFocus.focus();document.removeEventListener('keydown',ckKey,true)}
+  function ckKey(e){if(e.key==='Escape'){e.preventDefault();closeChecklist()}}
+  function ckTrap(c){c.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();closeChecklist();return}if(e.key!=='Tab')return;var f=Array.prototype.filter.call(c.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])'),function(el){return !el.disabled&&el.offsetParent!==null});if(!f.length)return;var first=f[0],last=f[f.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}})}
+  function openChecklist(r){
+    ckLastFocus=document.activeElement;
+    ckScrim=document.createElement('div');ckScrim.className='scrim';
+    ckScrim.addEventListener('mousedown',function(e){if(e.target===ckScrim)closeChecklist()});
+    var docCell = r.file
+      ? '<a class="doclink" href="#" id="ck-doc" data-file="'+esc(r.file)+'">'+DOC+'<span>'+esc(r.file)+'</span></a>'
+      : '<span style="color:var(--ink-3)">- (체크리스트 없음)</span>';
+    ckScrim.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="ck-t">'+
+      '<div class="modal-head"><h2 id="ck-t">투자금실사보고서 체크리스트 조회</h2><button type="button" class="icon-btn" id="ck-x" aria-label="닫기">×</button></div>'+
+      '<div class="modal-body">'+
+        '<dl class="dl">'+
+          '<dt>투자조합명</dt><dd>'+esc(r.fund)+'</dd>'+
+          '<dt>투자기업</dt><dd>'+esc(r.co)+'</dd>'+
+          '<dt>투자일자</dt><dd>'+dash(r.inv)+'</dd>'+
+          '<dt>투자금액</dt><dd class="empty">-</dd>'+
+          '<dt>투자형태</dt><dd>'+esc(r.type)+'</dd>'+
+          '<dt>실사일</dt><dd>'+dash(r.due)+'</dd>'+
+          '<dt>실사회계법인</dt><dd class="empty">-</dd>'+
+          '<dt>체크리스트<button type="button" class="review" data-rec="첨부파일(PDF) 링크가 맞는 칸인지 확인" data-dat="원 구조도엔 이 항목명이 &#39;투자금실사보고서 체크리스트($변수)&#39;이고 실데이터는 &#39;나우농식품투자펀드6호-(주)와이유&#39; 같은 조합명-업체명 조합 문자열임 — 실제 첨부파일(PDF) 다운로드 링크인지, 단순 타이틀 텍스트인지 확인 필요. 현재는 S1_40의 실제 보고서 PDF 파일명을 재사용해 첨부파일 링크로 구현" aria-label="검토필요">!</button></dt><dd>'+docCell+'</dd>'+
+        '</dl>'+
+      '</div>'+
+      '<div class="modal-foot"><button class="btn btn-sec" id="ck-close">닫기</button></div>'+
+    '</div>';
+    lock();document.body.appendChild(ckScrim);
+    ckTrap(ckScrim.querySelector('.modal'));
+    $('ck-x').addEventListener('click',closeChecklist);
+    $('ck-close').addEventListener('click',closeChecklist);
+    var dc=document.getElementById('ck-doc');if(dc)dc.addEventListener('click',function(e){e.preventDefault();toast('보고서 열기: '+dc.getAttribute('data-file')+' (목업)')});
+    document.addEventListener('keydown',ckKey,true);
+    setTimeout(function(){var el=$('ck-x');if(el)el.focus()},0);
+  }
+})();
+</script>

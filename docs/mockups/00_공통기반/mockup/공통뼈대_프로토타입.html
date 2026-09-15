@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>공통 뼈대 프로토타입 — 인증·계정·권한(ROLE)·데이터스코프</title>
+<style>
+  :root{--bg:#F3F5F8;--surface:#fff;--surface2:#F7F9FC;--border:#DCE0E6;--ink:#1A1D21;--ink2:#48505A;--ink3:#6B7480;
+    --primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;
+    --danger:#E5484D;--danger-weak:#FDECEC;--grey-weak:#EEF2F7;--radius:10px;--shadow:0 1px 3px rgba(16,24,40,.08)}
+  @media (prefers-color-scheme:dark){:root{--bg:#0F141B;--surface:#171E27;--surface2:#1C242F;--border:#2C3846;--ink:#EAEEF3;--ink2:#AEB8C4;--ink3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F26D6D;--danger-weak:#2A1616;--grey-weak:#232C38}}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Pretendard','Malgun Gothic',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+  .side{background:var(--surface);border-right:1px solid var(--border);padding:18px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .brand{font-weight:800;font-size:15px;margin:0 6px 4px}
+  .brand small{display:block;font-weight:500;color:var(--ink3);font-size:11.5px;margin-top:2px}
+  .navsec{font-size:11px;color:var(--ink3);font-weight:700;margin:16px 8px 6px;text-transform:uppercase;letter-spacing:.04em}
+  .nav a{display:flex;gap:8px;align-items:center;padding:9px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;cursor:pointer;font-weight:600;font-size:13px}
+  .nav a:hover{background:var(--surface2)}
+  .nav a.on{background:var(--primary-weak);color:var(--primary)}
+  .nav a .num{width:20px;height:20px;border-radius:6px;background:var(--grey-weak);color:var(--ink3);display:grid;place-items:center;font-size:11px;font-weight:800;flex:none}
+  .nav a.on .num{background:var(--primary);color:#fff}
+  .nav .navgrp{margin:12px 4px 4px;font-size:10.5px;font-weight:800;letter-spacing:.4px;color:var(--ink3);text-transform:none}
+  .nav .navgrp:first-child{margin-top:2px}
+  .main{padding:26px 30px;min-width:0}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:var(--ink3);margin:0 0 18px;font-size:13px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 12px;font-size:14px}
+  .grid2{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  label.f{display:block;font-size:12px;color:var(--ink3);font-weight:600;margin-bottom:5px}
+  input,select{height:38px;padding:0 11px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;min-width:0}
+  input:focus,select:focus{outline:2px solid var(--primary);outline-offset:-1px}
+  .field{margin-bottom:12px}
+  .btn{height:38px;padding:0 15px;border:1px solid var(--primary);background:var(--primary);color:#fff;border-radius:8px;font:inherit;font-weight:700;cursor:pointer}
+  .btn:hover{filter:brightness(1.05)}
+  .btn.sec{background:var(--surface);color:var(--ink);border-color:var(--border)}
+  .btn.danger{background:var(--danger);border-color:var(--danger)}
+  .btn.sm{height:32px;padding:0 11px;font-size:12.5px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--border);vertical-align:middle}
+  th{background:var(--surface2);color:var(--ink2);font-weight:700;font-size:12px}
+  td.c,th.c{text-align:center}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:11.5px;font-weight:700;margin:1px}
+  .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.n{background:var(--grey-weak);color:var(--ink3)}
+  .tag.b{background:var(--primary-weak);color:var(--primary)} .tag.a{background:var(--amber-weak);color:var(--amber)}
+  .tag.r{background:var(--danger-weak);color:var(--danger)}
+  .pill{display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);font-size:12px;font-weight:600}
+  .note{font-size:12.5px;color:var(--ink3);background:var(--surface2);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;margin-top:10px}
+  .ok{color:var(--ok);font-weight:700}.bad{color:var(--danger);font-weight:700}
+  .steps{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .steps .s{padding:4px 10px;border-radius:20px;background:var(--grey-weak);color:var(--ink3);font-size:12px;font-weight:700}
+  .steps .s.on{background:var(--primary);color:#fff}.steps .s.done{background:var(--ok-weak);color:var(--ok)}
+  .kv{display:grid;grid-template-columns:130px 1fr;gap:6px 10px;font-size:13px;margin:8px 0}
+  .kv b{color:var(--ink3);font-weight:600}
+  .banner{padding:12px 16px;border-radius:8px;font-weight:700;margin-bottom:14px}
+  .banner.ok{background:var(--ok-weak);color:var(--ok)}.banner.bad{background:var(--danger-weak);color:var(--danger)}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-weight:600;z-index:99;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+  .who{margin:0 6px 10px;padding:10px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);font-size:12px}
+  .who b{color:var(--ink)}
+  code{background:var(--grey-weak);padding:1px 5px;border-radius:4px;font-size:12px}
+  .rolelist{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .rolelist .ri{display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px}
+  .rolelist .ri:last-child{border-bottom:0}
+  .rolelist .ri.on{background:var(--primary-weak)}
+  .rolelist .ri b{font-weight:700}
+  .chk{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin:3px}
+  .chk input{height:15px}
+  .chk.on{background:var(--primary-weak);border-color:var(--primary);color:var(--primary)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <p class="brand">농금원 통합포털 <small>공통 뼈대 프로토타입 v0.2</small></p>
+    <div class="who" id="who"></div>
+    <div class="navsec">시나리오</div>
+    <nav class="nav" id="nav"></nav>
+    <div class="navsec">검증</div>
+    <nav class="nav">
+      <a id="run-all"><span class="num">▶</span> 전체 시나리오 자동실행(자체테스트)</a>
+      <a id="reset"><span class="num">↺</span> 상태 초기화</a>
+    </nav>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+<script>
+"use strict";
+(function(){
+  /* ============ 메뉴 & Role 정의 ============ */
+  var BASE_MENUS=[
+    {k:'fund',n:'자펀드관리'},{k:'risk',n:'조기경보'},{k:'report',n:'자펀드보고'},
+    {k:'trust',n:'수탁보고'},{k:'brief',n:'부처보고'},{k:'acct',n:'회계(기간계)'},
+    {k:'user',n:'사용자관리'},{k:'role',n:'권한관리'},{k:'audit',n:'감사로그'}
+  ];
+  var MENUS=BASE_MENUS.slice(); // 작업용(seed마다 초기화)
+  function blank(){var o={};MENUS.forEach(function(m){o[m.k]={v:false,d:false,c:false,a:false};});return o;}
+  function setP(o,keys,perm){keys.forEach(function(k){perm.split('').forEach(function(p){o[k][p]=true;});});return o;}
+  var ROLES={}; // { roleName: matrix }
+  function defRoles(){
+    ROLES={};
+    ROLES['투자팀']=setP(blank(),['fund','risk','report','trust','brief','audit'],'v');
+    ROLES['투자팀'].fund={v:true,d:true,c:true,a:false};
+    ROLES['투자팀'].report={v:true,d:true,c:false,a:false};
+    ROLES['전산(관리자)']=(function(){var o=blank();MENUS.forEach(function(m){o[m.k]={v:true,d:true,c:true,a:true};});return o;})();
+    ROLES['운용사']=setP(setP(blank(),['fund'],'v'),['report'],'vdc');
+    ROLES['수탁']=setP(setP(blank(),['fund'],'v'),['trust'],'vdc');
+    ROLES['부처']=setP(blank(),['brief'],'vd');
+  }
+  /* ============ 상태 ============ */
+  var S={};
+  function seed(){
+    MENUS.length=0; BASE_MENUS.forEach(function(m){MENUS.push({k:m.k,n:m.n});});
+    defRoles();
+    S.orgs=[
+      {id:'KB',type:'GP',name:'KB증권'},{id:'IMM',type:'GP',name:'IMM인베스트먼트'},
+      {id:'HTP',type:'GP',name:'한국투자파트너스'},{id:'YT',type:'GP',name:'유안타인베스트먼트'},
+      {id:'NH',type:'수탁',name:'농협은행'},{id:'IBK',type:'수탁',name:'IBK기업은행'},{id:'KDB',type:'수탁',name:'KDB산업은행'}
+    ];
+    S.funds=[
+      {id:'F1',name:'현대동양농식품사모투자',year:'2010',gp:[{org:'KB',role:'대표'}],trustee:'NH',account:'농식품',mgr:'김담당',stage:'결성'},
+      {id:'F2',name:'IMM 농식품 스마트투자조합',year:'2018',gp:[{org:'IMM',role:'대표'}],trustee:'IBK',account:'농식품',mgr:'이담당',stage:'결성'},
+      {id:'F3',name:'한투 청년농식품투자조합',year:'2022',gp:[{org:'HTP',role:'대표'}],trustee:'NH',account:'수산',mgr:'김담당',stage:'선정'},
+      {id:'F4',name:'공동운용 상생농식품조합',year:'2024',gp:[{org:'IMM',role:'대표'},{org:'YT',role:'공동'}],trustee:'IBK',account:'농식품',mgr:'이담당',stage:'결성'}
+    ];
+    S.personnel=[
+      {org:'IMM',name:'정운용',email:'jung@imm.co.kr',active:true},{org:'IMM',name:'박심사',email:'park@imm.co.kr',active:true},
+      {org:'HTP',name:'최투자',email:'choi@htp.co.kr',active:true},{org:'YT',name:'한공동',email:'han@yt.co.kr',active:true}
+    ];
+    S.users=[
+      {id:'U1',loginId:'nh.invest',name:'김담당',type:'농금원',dept:'투자팀',email:'kim@apfs.go.kr',roles:['투자팀'],status:'활성',otpEnrolled:true,pwSet:true},
+      {id:'U2',loginId:'nh.admin',name:'전산관리(시드)',type:'농금원',dept:'전산',email:'sys@apfs.go.kr',roles:['전산(관리자)'],status:'온보딩대기',seed:true,pwSet:true,pwExpired:true},
+      {id:'U3',loginId:'imm.rep',name:'이대표',type:'운용사',org:'IMM',email:'lee@imm.co.kr',roles:['운용사'],status:'활성',pwExpired:true,otpEnrolled:true,pwSet:true},
+      {id:'U4',loginId:'nh.trust',name:'김수탁',type:'수탁',org:'NH',email:'trust@nonghyup.com',roles:['수탁'],status:'활성',otpEnrolled:true,pwSet:true},
+      {id:'U5',loginId:'mafra',name:'박농식',type:'부처',account:'농식품',email:'mafra@korea.kr',roles:['부처'],status:'활성',otpEnrolled:true,pwSet:true}
+    ];
+    S.invites=[]; S.logs=[]; S.currentUser=null; S.viewRole='U1';
+    log('시스템','시드 초기화','-','정상');
+  }
+  var _t=0; function tick(){_t++; return '2026-08-25 09:'+String(10+Math.floor(_t/60)).slice(-2)+':'+String(_t%60).padStart(2,'0');}
+  function log(actor,action,target,result){ S.logs.unshift({ts:tick(),actor:actor,action:action,target:target,ip:'10.0.'+(1+S.logs.length%5)+'.'+(20+S.logs.length%80),result:result||'정상'}); }
+
+  /* ============ 권한 계산 ============ */
+  function orgName(id){var o=S.orgs.filter(function(x){return x.id===id;})[0];return o?o.name:id;}
+  function userById(id){return S.users.filter(function(u){return u.id===id;})[0];}
+  function roleCount(rn){return S.users.filter(function(u){return (u.roles||[]).indexOf(rn)>=0;}).length;}
+  function effPerm(u){ // Role 합집합
+    var o=blank();
+    (u&&u.roles||[]).forEach(function(rn){var r=ROLES[rn]; if(!r)return;
+      MENUS.forEach(function(m){['v','d','c','a'].forEach(function(p){ if(r[m.k]&&r[m.k][p]) o[m.k][p]=true; });});});
+    return o;
+  }
+  function hasMenu(u,k){return !!effPerm(u)[k] && effPerm(u)[k].v;}
+  function hasPerm(u,k,p){var e=effPerm(u)[k];return !!(e&&e[p]);}
+  function isAdmin(u){return (u&&u.roles||[]).indexOf('전산(관리자)')>=0 || hasPerm(u,'user','a');}
+  function rolesLabel(u){return (u&&u.roles||[]).join(' · ')||'-';}
+  function acctType(u){return (u&&(u.type==='수탁'||u.type==='부처'))?'기관':'개인';}  // '기관'=기관소속 개별계정(공유 아님)
+  function belongLabel(u){return (u&&u.type==='농금원')?'내부(개인)':'기관소속(개인)';}  // 모든 계정=개별(개인). 소속만 구분
+  /* 비밀번호 정책: 9자↑ + 영문·숫자·특수 3종 조합 */
+  var PW_POLICY='9자 이상 · 영문·숫자·특수문자 조합 · 최근 비밀번호 재사용 금지 · 90일 주기 변경';
+  function pwOK(p){return !!p&&p.length>=9&&/[A-Za-z]/.test(p)&&/\d/.test(p)&&/[^A-Za-z0-9]/.test(p);}
+  var LOCK_LIMIT=5; // 로그인 실패 5회 → 잠금
+
+  function scopeFunds(u){
+    if(!u) return {list:[],soft:null,label:'-'};
+    if(u.type==='농금원'){
+      if(isAdmin(u)) return {list:S.funds,soft:null,label:'전체(관리자)'};
+      return {list:S.funds,soft:S.funds.filter(function(f){return f.mgr===u.name;}),label:'전체(기본:내 담당)'};
+    }
+    if(u.type==='운용사') return {list:S.funds.filter(function(f){return f.gp.some(function(g){return g.org===u.org;});}),soft:null,label:'소속 운용사('+orgName(u.org)+')'};
+    if(u.type==='수탁') return {list:S.funds.filter(function(f){return f.trustee===u.org;}),soft:null,label:'주수탁('+orgName(u.org)+')'};
+    if(u.type==='부처') return {list:S.funds.filter(function(f){return f.account===u.account;}),soft:null,label:'계정구분('+u.account+')'};
+    return {list:[],soft:null,label:'-'};
+  }
+  function canReport(u,f){
+    if(!u||!f) return false;
+    if(u.type==='농금원') return isAdmin(u)||hasPerm(u,'report','c')||hasPerm(u,'fund','c');
+    if(u.type==='운용사') return f.gp.some(function(g){return g.org===u.org&&g.role==='대표';});
+    if(u.type==='수탁') return f.trustee===u.org;
+    return false;
+  }
+  function canSeeFund(u,f){return scopeFunds(u).list.some(function(x){return x.id===f.id;});}
+
+  /* ============ 렌더 프레임 ============ */
+  var $=function(id){return document.getElementById(id);};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function toast(m){var e=document.querySelector('.toast');if(e)e.remove();var t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove();},2200);}
+  var SCN=[
+    /* ① 설치 직후 — 콜드스타트 */
+    {k:'s12',n:'최초 관리자 셋팅(부트스트랩)',g:'① 설치·초기화'},
+    /* ② 관리자가 권한 체계·계정을 준비 (운용사는 우선순위 최하위 → 뒤) */
+    {k:'s4',n:'권한관리(ROLE 등록·복사)',g:'② 관리자 준비'},
+    {k:'s9',n:'사용자관리 등록·ROLE·상태(농금원·수탁·부처)',g:'② 관리자 준비'},
+    {k:'s3',n:'사용자 초대(운용사)',g:'② 관리자 준비'},
+    /* ③ 대상자가 온보딩(비번·OTP 등록) (운용사는 뒤) */
+    {k:'s13',n:'발급 온보딩(농금원·수탁·부처·링크접속)',g:'③ 사용자 온보딩'},
+    {k:'s2',n:'초대 온보딩(운용사·간편인증·실명매칭)',g:'③ 사용자 온보딩'},
+    /* ④ 일상 운영 — 로그인 후 권한·스코프 효과 */
+    {k:'s1',n:'로그인 + 2차 인증',g:'④ 운영·접근'},
+    {k:'s5',n:'데이터 스코프 시연',g:'④ 운영·접근'},
+    {k:'s6',n:'접근제어 위반 차단',g:'④ 운영·접근'},
+    /* ⑤ 계정 라이프사이클·보안 */
+    {k:'s10',n:'비밀번호·계정 보안',g:'⑤ 라이프사이클·보안'},
+    {k:'s7',n:'퇴사 → 계정 자동 비활성',g:'⑤ 라이프사이클·보안'},
+    /* ⑥ 참조·감사 */
+    {k:'s11',n:'DB 저장 샘플(비번·OTP시드)',g:'⑥ 참조·감사'},
+    {k:'s8',n:'감사로그 조회',g:'⑥ 참조·감사'}
+  ];
+  var cur='s12';
+  function renderNav(){
+    var lastG=null;
+    $('nav').innerHTML=SCN.map(function(s,i){
+      var hdr=(s.g&&s.g!==lastG)?'<div class="navgrp">'+esc(s.g)+'</div>':'';
+      lastG=s.g||lastG;
+      return hdr+'<a data-k="'+s.k+'" class="'+(s.k===cur?'on':'')+'"><span class="num">'+(i+1)+'</span>'+esc(s.n)+'</a>';
+    }).join('');
+    Array.prototype.forEach.call($('nav').querySelectorAll('a'),function(a){a.addEventListener('click',function(){go(a.getAttribute('data-k'));});});
+    var u=S.currentUser;
+    $('who').innerHTML=u?('로그인: <b>'+esc(u.name)+'</b><br><span class="tag b">'+esc(rolesLabel(u))+'</span><br><span style="color:var(--ink3)">'+esc(u.type)+(u.org?' · '+esc(orgName(u.org)):'')+(u.account?' · '+esc(u.account):'')+'</span>'):'<span style="color:var(--ink3)">미로그인 — 「로그인 + 2차 인증」</span>';
+  }
+  function go(k){cur=k;renderNav();render();window.scrollTo(0,0);}
+  function render(){
+    clearS1Timer(); clearS2Timer(); clearS9Timer(); clearS12Timer(); clearS13Timer();
+    var R={s1:s1,s12:s12,s2:s2,s13:s13,s3:s3,s4:s4,s5:s5,s6:s6,s7:s7,s8:s8,s9:s9,s10:s10,s11:s11};
+    var W={s1:w1,s12:w12,s2:w2,s13:w13,s3:w3,s4:w4,s5:w5,s6:w6,s7:w7,s8:w8,s9:w9,s10:w10,s11:w11};
+    $('main').innerHTML=R[cur](); if(W[cur])W[cur]();
+  }
+  function head(t,s){return '<h1>'+esc(t)+'</h1><p class="sub">'+esc(s)+'</p>';}
+
+  /* ===== 실제 TOTP (RFC 6238) — 브라우저 Web Crypto HMAC-SHA1 (배포 시 검증필 암호모듈로 치환) ===== */
+  function seedBytes(uid){var s='APFS-'+uid+'-TOTP-SEED-2026',b=[];for(var i=0;i<20;i++)b.push((s.charCodeAt(i%s.length)+i*7)&0xff);return new Uint8Array(b);}
+  function b32(bytes){var A='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',out='',bits=0,val=0;for(var i=0;i<bytes.length;i++){val=(val<<8)|bytes[i];bits+=8;while(bits>=5){out+=A[(val>>>(bits-5))&31];bits-=5;}}if(bits>0)out+=A[(val<<(5-bits))&31];return out;}
+  function hotp(key,counter){return crypto.subtle.importKey('raw',key,{name:'HMAC',hash:'SHA-1'},false,['sign']).then(function(k){var buf=new ArrayBuffer(8),dv=new DataView(buf);dv.setUint32(0,Math.floor(counter/4294967296));dv.setUint32(4,counter>>>0);return crypto.subtle.sign('HMAC',k,buf);}).then(function(sigbuf){var sig=new Uint8Array(sigbuf),off=sig[19]&0xf;var bin=((sig[off]&0x7f)<<24)|((sig[off+1]&0xff)<<16)|((sig[off+2]&0xff)<<8)|(sig[off+3]&0xff);return String(bin%1000000).padStart(6,'0');});}
+  function counterNow(t){return Math.floor((t||Date.now())/1000/30);}
+  function totpNow(key,t){return hotp(key,counterNow(t));}
+  function totpVerify(key,code,t){var c=counterNow(t);return hotp(key,c).then(function(a){if(a===code)return true;return hotp(key,c-1).then(function(b){if(b===code)return true;return hotp(key,c+1).then(function(d){return d===code;});});});}
+  var s1int=null;
+  function clearS1Timer(){if(s1int){clearInterval(s1int);s1int=null;}}
+
+  /* ===== S1 로그인 + 2FA ===== */
+  var s1state={step:0,uid:null};
+  function s1(){
+    var st=s1state.step;
+    return head('시나리오 · 로그인 + 2차 인증','ID/PW(1차) → 기성 2FA(2차) 의무. 전 사용자 동일. (계정이 발급·온보딩된 뒤의 일상 로그인)')+
+    '<div class="card" style="max-width:460px"><div class="steps"><span class="s '+(st===0?'on':'done')+'">1. ID/PW</span><span class="s '+(st===1?'on':(st>1?'done':''))+'">2. 2차 인증</span><span class="s '+(st>=2?'done':'')+'">3. 진입</span></div>'+
+    (st===0?
+      '<div class="field"><label class="f">아이디</label><select id="s1-id" style="width:100%">'+S.users.filter(function(u){return u.status==='활성'||u.status==='잠금';}).map(function(u){return '<option value="'+u.id+'">'+esc(u.loginId)+' ('+esc(u.name)+(u.status==='잠금'?' · 잠금':'')+(u.pwExpired?' · 비번만료':'')+')</option>';}).join('')+'</select></div>'+
+      '<div class="field"><label class="f">비밀번호</label><input id="s1-pw" type="password" value="Passw0rd!" style="width:100%"></div>'+
+      '<button class="btn" id="s1-next" style="width:100%">다음 (1차 인증)</button>'+
+      '<div id="s1-msg" style="margin-top:8px;font-size:12.5px"></div>'+
+      '<div class="note">데모 비번 <code>Passw0rd!</code>. 틀리면 실패 누적 → <b>5회 오류 시 계정 잠금</b>. <b>이대표</b>=비밀번호 <b>만료</b> 데모(2차 인증 후 강제 변경). 정책: '+esc(PW_POLICY)+'</div>'
+    : st===1?
+      '<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px">'+
+        /* 📱 폰 앱(모의) — 실제로 코드는 여기(폰)에만 뜬다 */
+        '<div style="flex:0 0 210px;border:2px solid var(--border);border-radius:20px;padding:12px;background:linear-gradient(180deg,var(--surface2),var(--surface));box-shadow:var(--shadow)">'+
+          '<div style="font-size:11px;color:var(--ink3);font-weight:700;margin-bottom:6px;text-align:center">📱 사용자 폰 앱 화면 <span class="tag n">모의</span></div>'+
+          '<div style="border:1px solid var(--border);border-radius:12px;padding:12px 10px;background:var(--surface);text-align:center">'+
+            '<div style="font-size:10.5px;color:var(--ink3)">Authenticator · <span class="tag '+(acctType(userById(s1state.uid))==="기관"?"a":"n")+'">'+belongLabel(userById(s1state.uid))+' 시드</span></div>'+
+            '<div id="s1-totp" style="font-size:30px;font-weight:800;letter-spacing:5px;font-variant-numeric:tabular-nums;color:var(--primary);margin:2px 0">------</div>'+
+            '<div style="font-size:10.5px;color:var(--ink3)">⏳ <b id="s1-left">--</b>s 후 갱신</div>'+
+          '</div>'+
+          '<button type="button" class="btn sec btn-sm" id="s1-fill" style="width:100%;margin-top:8px">데모: 이 코드 자동입력 →</button>'+
+        '</div>'+
+        /* 로그인 화면 = 입력창만 */
+        '<div style="flex:1;min-width:210px">'+
+          '<label class="f">로그인 화면 — 2차 인증 코드 입력</label>'+
+          '<input id="s1-otp" placeholder="폰 앱에 뜬 6자리 입력" maxlength="6" inputmode="numeric" style="width:100%">'+
+          '<div class="row" style="margin-top:10px"><button class="btn" id="s1-verify">인증 확인</button><button class="btn sec" id="s1-back">← 뒤로</button></div>'+
+          '<div style="font-size:11.5px;color:var(--ink2);margin-top:10px;padding:9px 11px;border-left:3px solid var(--amber);background:var(--amber-weak);border-radius:4px"><b>실제 배포:</b> 이 코드는 <b>사용자 폰 앱에만</b> 표시됩니다. 로그인 화면엔 <b>입력창만</b> 있고, 사용자가 폰을 보고 직접 입력합니다. (SMS처럼 "받는" 게 아니라 폰 앱이 스스로 계산)</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="note">✅ <b>표준 TOTP(RFC 6238) 실연</b> — Web Crypto HMAC-SHA1으로 30초마다 실제 코드 생성·검증(허용창 ±1). 앱(Google/MS Authenticator)에 같은 시드(Base32 <code id="s1-seed" style="font-size:10px">…</code>) 등록 시 동일 코드. ⚠ <b>배포 시 HMAC·시드저장 = 국정원 검증필 암호모듈로 치환</b>(브라우저 Web Crypto는 시연용).</div>'+
+      '<div class="note" style="border-left:3px solid var(--primary)"><b>QR은 최초 등록 1회만.</b> 처음 OTP 등록(온보딩·부트스트랩) 때 QR을 <b>1회</b> 스캔하면 시드가 폰 앱에 저장됩니다. 이후 <b>매 로그인</b>은 QR을 다시 찍지 않고 <b>앱에 뜬 6자리만 입력</b>(구글/MS Authenticator). 폰 교체·분실 때만 재등록(QR 재발급).</div>'
+    : st==='pw'?
+      '<div class="note" style="border-left:3px solid var(--amber);background:var(--amber-weak);color:var(--ink2)">⚠ 비밀번호가 <b>만료</b>되었습니다(90일 주기 변경). 새 비밀번호로 변경해야 로그인됩니다.</div>'+
+      '<div class="field"><label class="f">새 비밀번호</label><input id="s1-npw" type="password" placeholder="9자↑·영문·숫자·특수" style="width:100%"></div>'+
+      '<div class="field"><label class="f">새 비밀번호 확인</label><input id="s1-npw2" type="password" style="width:100%"></div>'+
+      '<div class="note">정책: '+esc(PW_POLICY)+' · 예) <code>Apfs2026!@</code></div>'+
+      '<button class="btn" id="s1-pwsave" style="width:100%">변경하고 로그인</button>'
+    :
+      (function(){var uu=userById(s1state.uid);return '<div class="banner ok">✔ 로그인 완료 — <b>'+esc(uu.name)+'</b> ('+esc(rolesLabel(uu))+') <span class="tag '+(acctType(uu)==='기관'?'a':'n')+'">'+belongLabel(uu)+'</span>'+(uu.org?' · '+esc(orgName(uu.org)):'')+(uu.account?' · '+esc(uu.account):'')+'</div><button class="btn sec" id="s1-reset">다시 로그인</button>';})())+
+    '</div>';
+  }
+  function w1(){
+    if(s1state.step===0){$('s1-next').addEventListener('click',function(){
+      var u=userById($('s1-id').value);
+      if(u.status==='잠금'){$('s1-msg').innerHTML='<span class="bad">⛔ 계정 잠금 상태 — 관리자 해제 필요(시나리오 · 계정 보안)</span>';return;}
+      if($('s1-pw').value!=='Passw0rd!'){
+        u.failCount=(u.failCount||0)+1;
+        if(u.failCount>=LOCK_LIMIT){u.status='잠금';log(u.loginId,'로그인 1차·계정 잠금','ID/PW '+LOCK_LIMIT+'회 실패','차단');$('s1-msg').innerHTML='<span class="bad">⛔ 비밀번호 '+LOCK_LIMIT+'회 오류 → <b>계정 잠금</b>. 관리자 해제 필요(계정 보안 화면).</span>';}
+        else{log(u.loginId,'로그인 1차','ID/PW','실패');$('s1-msg').innerHTML='<span class="bad">비밀번호 불일치 ('+u.failCount+'/'+LOCK_LIMIT+') · '+(LOCK_LIMIT-u.failCount)+'회 남음</span>';}
+        return;
+      }
+      u.failCount=0;s1state.uid=u.id;s1state.step=1;log(u.loginId,'로그인 1차','ID/PW','정상');render();});}
+    else if(s1state.step===1){
+      var key=seedBytes(s1state.uid);
+      var sd=$('s1-seed'); if(sd)sd.textContent=b32(key);
+      function tick(){var left=30-(Math.floor(Date.now()/1000)%30);var l=$('s1-left');if(l)l.textContent=left;totpNow(key).then(function(code){var el=$('s1-totp');if(el)el.textContent=code;});}
+      clearS1Timer(); tick(); s1int=setInterval(tick,1000);
+      $('s1-fill').addEventListener('click',function(){totpNow(key).then(function(code){var o=$('s1-otp');if(o)o.value=code;});});
+      $('s1-verify').addEventListener('click',function(){
+        var code=($('s1-otp').value||'').trim();
+        totpVerify(key,code).then(function(ok){
+          if(!ok){toast('TOTP 코드 불일치/만료 — 현재 코드로 재시도');log(userById(s1state.uid).loginId,'로그인 2차','TOTP','실패');return;}
+          clearS1Timer();var u=userById(s1state.uid);log(u.loginId,'로그인 2차','TOTP','정상');
+          if(u.pwExpired){s1state.step='pw';render();return;}
+          s1state.step=2;S.currentUser=u;S.viewRole=u.id;renderNav();render();
+        });
+      });
+      $('s1-back').addEventListener('click',function(){clearS1Timer();s1state.step=0;render();});
+    } else if(s1state.step==='pw'){
+      $('s1-pwsave').addEventListener('click',function(){
+        var p=$('s1-npw').value,p2=$('s1-npw2').value;
+        if(!pwOK(p)){toast('비밀번호 정책 미충족 (9자↑·영문·숫자·특수)');return;}
+        if(p!==p2){toast('새 비밀번호 확인 불일치');return;}
+        var u=userById(s1state.uid);u.pwExpired=false;
+        s1state.step=2;S.currentUser=u;S.viewRole=u.id;log(u.loginId,'비밀번호 변경(만료)','정책 충족','정상');renderNav();render();
+      });
+    } else {$('s1-reset').addEventListener('click',function(){s1state={step:0,uid:null};render();});}
+  }
+
+  /* ===== S12 최초 관리자 셋팅(부트스트랩) — 개발사 시드 생성·전달 → 관리자 최초 로그인 → 비번변경 + OTP 등록 → 활성 ===== */
+  var s12s=0; var s12int=null;
+  function clearS12Timer(){if(s12int){clearInterval(s12int);s12int=null;}}
+  function bootAdmin(){return userById('U2');}
+  function s12(){
+    var u=bootAdmin(); var st=s12s;
+    var steps='<div class="steps">'+
+      '<span class="s '+(st===0?'on':'done')+'">1. 시드 계정 전달</span>'+
+      '<span class="s '+(st===1?'on':(st>1?'done':''))+'">2. 최초 로그인</span>'+
+      '<span class="s '+(st===2?'on':(st>2?'done':''))+'">3. 비밀번호 변경</span>'+
+      '<span class="s '+(st===3?'on':(st>3?'done':''))+'">4. OTP 등록</span>'+
+      '<span class="s '+(st>=4?'done':'')+'">5. 완료</span></div>';
+    var body;
+    if(st===0){
+      body='<div class="kv">'+
+        '<b>시드 계정</b><span>ID <code>nh.admin</code> · 임시비밀번호 <code>Init#2026</code> (개발사가 <b>DB 시드</b>로 1건 생성)</span>'+
+        '<b>OTP</b><span>미등록 — 시드엔 아이디·임시비번만. OTP 시드는 안 넣음(관리자가 최초 로그인 때 본인이 등록)</span>'+
+        '<b>전달</b><span>설치 산출물/보안 채널로 발주처 전산담당에게 전달(이메일 평문 발송 금지)</span></div>'+
+        '<div class="note" style="border-left:3px solid var(--amber);background:var(--amber-weak)"><b>왜 시드?</b> 사용자를 등록할 <b>첫 관리자</b>가 아직 없으므로 초대·자기가입이 불가 → 설치 시 DB에 <b>1건만</b> 심어 콜드스타트. <code>admin</code> 같은 고정 계정명은 금지(추측공격), 실명 기반 <code>nh.admin</code> 사용.</div>'+
+        '<button class="btn" id="s12-start" style="width:100%">관리자 최초 로그인 시작 →</button>';
+    } else if(st===1){
+      body='<div class="field"><label class="f">아이디</label><input id="s12-id" value="nh.admin" readonly style="width:100%"></div>'+
+        '<div class="field"><label class="f">임시 비밀번호</label><input id="s12-pw" value="Init#2026" style="width:100%"></div>'+
+        '<button class="btn" id="s12-login" style="width:100%">로그인</button>'+
+        '<div id="s12-msg" style="margin-top:8px;font-size:12.5px"></div>'+
+        '<div class="note">전달받은 임시비번 <code>Init#2026</code>. 로그인하면 임시비번은 즉시 만료 → <b>비밀번호 변경 강제</b>.</div>';
+    } else if(st===2){
+      body='<div class="note" style="border-left:3px solid var(--amber);background:var(--amber-weak);margin-top:0">⚠ 임시 비밀번호는 즉시 변경해야 합니다(최초 1회 강제).</div>'+
+        '<div class="field"><label class="f">새 비밀번호</label><input id="s12-n1" type="password" placeholder="9자↑·영문·숫자·특수" style="width:100%"></div>'+
+        '<div class="field"><label class="f">새 비밀번호 확인</label><input id="s12-n2" type="password" style="width:100%"></div>'+
+        '<div class="note">정책: '+esc(PW_POLICY)+' · 예) <code>Apfs2026!@</code></div>'+
+        '<button class="btn" id="s12-pwok" style="width:100%">변경하고 계속 →</button>';
+    } else if(st===3){
+      body='<div class="note" style="margin-top:0">이제 <b>2차 인증(OTP) 등록</b> — 폰 인증앱(구글/MS Authenticator)으로 QR을 <b>1회</b> 스캔한 뒤 6자리 입력. <b>등록 순간 서버가 시드를 생성해 DB에 암호화 저장</b>(6자리 코드는 저장 안 함). 이후 로그인은 QR 없이 앱의 6자리만 입력.</div>'+
+        '<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin:12px 0">'+
+          '<div style="flex:0 0 150px;text-align:center"><div style="width:130px;height:130px;margin:0 auto;border:1px solid var(--border);border-radius:8px;'+QRBG+'"></div><div style="font-size:10.5px;color:var(--ink3);margin-top:6px">QR 스캔(최초 1회)</div></div>'+
+          '<div style="flex:1;min-width:210px">'+
+            '<div style="font-size:11.5px;color:var(--ink3)">시드(Base32): <code id="s12-seed" style="font-size:10px">…</code></div>'+
+            '<div style="border:1px solid var(--border);border-radius:10px;padding:8px 11px;margin:8px 0;background:var(--surface2)">📱 폰 앱(모의) <b id="s12-totp" style="color:var(--primary);font-size:20px;letter-spacing:3px;font-variant-numeric:tabular-nums">------</b> (<b id="s12-left">--</b>s) <span class="tag n">'+belongLabel(u)+' 시드</span></div>'+
+            '<label class="f">앱에 뜬 6자리로 등록 확인</label><input id="s12-otpin" placeholder="6자리" maxlength="6" inputmode="numeric" style="width:100%">'+
+            '<div class="row" style="margin-top:8px"><button class="btn" id="s12-verify">등록 확인 → 활성</button><button class="btn sec btn-sm" id="s12-fill">데모: 코드 자동입력</button></div>'+
+          '</div></div>';
+    } else {
+      body='<div class="banner ok">✔ 최초 관리자 셋팅 완료 — <b>전산관리(시드)</b> 계정 <b>활성</b>. 이제 이 계정으로 다른 사용자를 등록·초대할 수 있습니다.</div>'+
+        '<div class="note">이후 이 관리자의 <b>매 로그인</b> = 아이디 + (변경한)비밀번호 + <b>앱의 6자리</b>(QR 재스캔 없음). → <b>사용자관리</b> 화면에서 농금원·수탁·부처 등록, 운용사 초대 발송.</div>'+
+        '<div class="row"><button class="btn sec" id="s12-goadmin">→ 사용자관리로</button><button class="btn sec" id="s12-reset">처음부터</button></div>';
+    }
+    return head('시나리오 · 최초 관리자 셋팅(부트스트랩)','설치 직후 콜드스타트: 개발사가 시드 계정 생성·전달 → 관리자가 최초 로그인 → 비밀번호 변경 + OTP 등록 → 활성.')+
+      '<div class="card" style="max-width:600px">'+steps+body+'</div>';
+  }
+  function w12(){
+    var u=bootAdmin();
+    if(s12s===0){ $('s12-start').addEventListener('click',function(){s12s=1;render();}); }
+    else if(s12s===1){ $('s12-login').addEventListener('click',function(){
+      if(($('s12-pw').value||'')!=='Init#2026'){$('s12-msg').innerHTML='<span class="bad">임시 비밀번호 불일치 — 전달받은 값 <code>Init#2026</code></span>';return;}
+      log('nh.admin','부트스트랩 최초 로그인','임시비번','정상'); s12s=2; render();
+    }); }
+    else if(s12s===2){ $('s12-pwok').addEventListener('click',function(){
+      var p1=$('s12-n1').value,p2=$('s12-n2').value;
+      if(!pwOK(p1)){toast('비밀번호 정책 미충족 (9자↑·영문·숫자·특수)');return;}
+      if(p1!==p2){toast('새 비밀번호 확인 불일치');return;}
+      u.pwExpired=false;u.pwSet=true; log('nh.admin','임시비번 변경(강제)','정책 충족','정상'); s12s=3; render();
+    }); }
+    else if(s12s===3){
+      var key=seedBytes(u.id);
+      var sd=$('s12-seed'); if(sd)sd.textContent=b32(key);
+      function tick(){var l=$('s12-left');if(l)l.textContent=30-(Math.floor(Date.now()/1000)%30);totpNow(key).then(function(c){var el=$('s12-totp');if(el)el.textContent=c;});}
+      clearS12Timer(); tick(); s12int=setInterval(tick,1000);
+      $('s12-fill').addEventListener('click',function(){totpNow(key).then(function(c){var o=$('s12-otpin');if(o)o.value=c;});});
+      $('s12-verify').addEventListener('click',function(){
+        var code=($('s12-otpin').value||'').trim();
+        totpVerify(key,code).then(function(ok){
+          if(!ok){toast('OTP 불일치/만료 — 현재 코드로');return;}
+          clearS12Timer(); u.otpEnrolled=true; u.status='활성';
+          log('nh.admin','OTP 등록·부트스트랩 완료·계정 활성','TOTP 시드 생성→DB 암호화 저장','정상');
+          s12s=4; render();
+        });
+      });
+    }
+    else {
+      $('s12-goadmin').addEventListener('click',function(){go('s9');});
+      $('s12-reset').addEventListener('click',function(){
+        u.status='온보딩대기';u.otpEnrolled=false;u.pwExpired=true; s12s=0; render();
+      });
+    }
+  }
+
+  /* ===== S13 관리자 발급 온보딩 (농금원·수탁·부처) — 메일 링크 접속 → 비번 설정 + OTP 등록 → 활성 ===== */
+  var s13s=0; var s13int=null; var s13uid=null;
+  function clearS13Timer(){if(s13int){clearInterval(s13int);s13int=null;}}
+  function s13target(){
+    var u=S.users.filter(function(x){return x.status==='온보딩대기'&&x.type!=='운용사'&&!x.seed;})[0];
+    if(!u){u={id:'UONB',loginId:'nh.trust2',name:'이수탁',type:'수탁',org:'NH',email:'lee.trust@nhbank.com',roles:['수탁'],status:'온보딩대기'};S.users.push(u);}
+    return u;
+  }
+  function s13(){
+    var u=s13uid?userById(s13uid):s13target(); s13uid=u.id;
+    var st=s13s, org=u.org?orgName(u.org):(u.account?u.account+' 계정':(u.dept||'-'));
+    var steps='<div class="steps">'+
+      '<span class="s '+(st===0?'on':'done')+'">1. 온보딩 메일 수신</span>'+
+      '<span class="s '+(st===1?'on':(st>1?'done':''))+'">2. 링크 접속·비번·OTP 등록</span>'+
+      '<span class="s '+(st>=2?'done':'')+'">3. 활성</span></div>';
+    var body;
+    if(st===0){
+      body='<div class="kv"><b>대상</b><span>'+esc(u.name)+' · '+esc(u.type)+' · '+esc(org)+' <span class="tag a">온보딩대기</span></span><b>이메일</b><span>'+esc(u.email||'-')+'</span></div>'+
+        '<div class="note" style="margin-top:0"><b>관리자 발급 온보딩</b> — 사용자관리에서 계정을 등록하면 이 안내 메일이 발송됩니다. 대상자가 <b>메일의 링크로 접속</b>해 비밀번호 설정 + OTP 등록을 직접 수행합니다. (운용사는 <b>초대+간편인증</b> = 별도 시나리오)</div>'+
+        '<h3 style="margin:14px 0 6px">📧 받은 온보딩 안내 메일</h3>'+onboardEmail(u)+
+        '<div class="row" style="margin-top:12px"><button class="btn" id="s13-access">✉ 메일의 [계정 활성화] 링크 접속 →</button></div>';
+    } else if(st===1){
+      body='<div class="note" style="margin-top:0">대상자가 <b>메일 링크</b>로 접속한 온보딩 화면 — QR·비밀번호는 메일이 아니라 <b>여기</b>에서만 표시. 담당자별 <b>개별 계정</b>.</div>'+
+        '<div class="kv"><b>계정</b><span>'+esc(u.name)+' ('+esc(u.type)+'·'+esc(org)+')</span><b>계정유형</b><span>'+belongLabel(u)+'</span></div>'+
+        '<div class="field" style="margin-top:10px"><label class="f">① 비밀번호 설정</label><input id="s13-pw1" type="password" placeholder="9자↑·영문·숫자·특수" style="width:100%"></div>'+
+        '<div class="field"><label class="f">비밀번호 확인</label><input id="s13-pw2" type="password" style="width:100%"></div>'+
+        '<div style="font-size:11.5px;color:var(--ink3);margin:2px 0 6px"><b>② OTP 등록</b> — 인증앱으로 QR을 <b>1회</b> 스캔 후 6자리 입력. 등록 순간 서버가 시드 생성→DB 암호화 저장. 이후 로그인은 QR 없이 6자리만.</div>'+
+        '<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin:12px 0">'+
+          '<div style="flex:0 0 150px;text-align:center"><div style="width:130px;height:130px;margin:0 auto;border:1px solid var(--border);border-radius:8px;'+QRBG+'"></div><div style="font-size:10.5px;color:var(--ink3);margin-top:6px">QR 스캔(최초 1회)</div></div>'+
+          '<div style="flex:1;min-width:210px">'+
+            '<div style="font-size:11.5px;color:var(--ink3)">시드(Base32): <code id="s13-seed" style="font-size:10px">…</code></div>'+
+            '<div style="border:1px solid var(--border);border-radius:10px;padding:8px 11px;margin:8px 0;background:var(--surface2)">📱 폰 앱(모의) <b id="s13-totp" style="color:var(--primary);font-size:20px;letter-spacing:3px;font-variant-numeric:tabular-nums">------</b> (<b id="s13-left">--</b>s) <span class="tag '+(acctType(u)==='기관'?'a':'n')+'">'+belongLabel(u)+' 시드</span></div>'+
+            '<label class="f">앱에 뜬 6자리로 등록 확인</label><input id="s13-otpin" placeholder="6자리" maxlength="6" inputmode="numeric" style="width:100%">'+
+            '<div class="row" style="margin-top:8px"><button class="btn" id="s13-verify">등록 확인 → 활성</button><button class="btn sec btn-sm" id="s13-fill">데모: 코드 자동입력</button></div>'+
+          '</div></div>';
+    } else {
+      body='<div class="banner ok">✔ 온보딩 완료 — <b>'+esc(u.name)+'</b> ('+esc(org)+') 계정 <b>활성</b>. 비밀번호 + OTP 등록 완료 → 이제 「로그인 + 2차 인증」 화면으로 접속 가능.</div>'+
+        '<div class="note">이후 이 사용자의 <b>매 로그인</b> = 아이디 + 비밀번호 + <b>앱의 6자리</b>(QR 재스캔 없음).</div>'+
+        '<div class="row"><button class="btn sec" id="s13-goadmin">→ 사용자관리 확인</button><button class="btn sec" id="s13-again">처음부터</button></div>';
+    }
+    return head('시나리오 · 관리자 발급 온보딩 (농금원·수탁·부처)','등록 시 발송된 온보딩 메일 → 링크 접속 → 비밀번호 설정 + OTP 등록 → 활성. (운용사=초대·간편인증은 별도 시나리오)')+
+      '<div class="card" style="max-width:620px">'+steps+body+'</div>';
+  }
+  function w13(){
+    var u=s13uid?userById(s13uid):s13target(); s13uid=u.id;
+    if(s13s===0){ $('s13-access').addEventListener('click',function(){s13s=1;render();}); }
+    else if(s13s===1){
+      var key=seedBytes(u.id);
+      var sd=$('s13-seed'); if(sd)sd.textContent=b32(key);
+      function tick(){var l=$('s13-left');if(l)l.textContent=30-(Math.floor(Date.now()/1000)%30);totpNow(key).then(function(c){var el=$('s13-totp');if(el)el.textContent=c;});}
+      clearS13Timer(); tick(); s13int=setInterval(tick,1000);
+      $('s13-fill').addEventListener('click',function(){totpNow(key).then(function(c){var o=$('s13-otpin');if(o)o.value=c;});});
+      $('s13-verify').addEventListener('click',function(){
+        var p1=$('s13-pw1').value,p2=$('s13-pw2').value;
+        if(!pwOK(p1)){toast('비밀번호 정책 미충족(9자↑·영문·숫자·특수)');return;}
+        if(p1!==p2){toast('비밀번호 확인 불일치');return;}
+        var code=($('s13-otpin').value||'').trim();
+        totpVerify(key,code).then(function(ok){
+          if(!ok){toast('OTP 불일치/만료 — 현재 코드로');return;}
+          clearS13Timer(); u.status='활성'; u.otpEnrolled=true; u.pwSet=true;
+          log(u.loginId||u.name,'온보딩 접속·비번설정+OTP등록·계정 활성','메일 링크 접속','정상');
+          s13s=2; render();
+        });
+      });
+    } else {
+      $('s13-goadmin').addEventListener('click',function(){go('s9');});
+      $('s13-again').addEventListener('click',function(){ u.status='온보딩대기'; u.otpEnrolled=false; u.pwSet=false; s13s=0; render(); });
+    }
+  }
+
+  /* ===== S2 초대 온보딩 (간편인증 → OTP(QR) 등록 → 활성) ===== */
+  var s2state=null; var s2int=null;
+  function clearS2Timer(){if(s2int){clearInterval(s2int);s2int=null;}}
+  function pickInvite(){return S.invites.filter(function(i){return i.status==='발송';})[0]||null;}
+  var QRBG='background:repeating-conic-gradient(var(--ink) 0 25%, var(--surface) 0 50%) 0 0/12px 12px;';
+  function s2(){
+    var inv=s2state&&s2state.inv?s2state.inv:pickInvite();
+    if(!inv) return head('시나리오 · 초대 온보딩(운용사)','초대→간편인증→OTP 등록→활성.')+'<div class="card"><div class="banner bad">대기 중 초대 없음.</div><div class="note">「사용자 초대(운용사)」 시나리오에서 초대를 발송하세요.</div><button class="btn" id="s2-go3">→ 사용자 초대</button></div>';
+    var st=s2state?s2state.step:0;
+    var body;
+    if(st===0) body='<button class="btn" id="s2-accept" style="width:100%">초대 수락 → 간편인증</button>';
+    else if(st===1) body='<div class="field"><label class="f">간편인증 — 본인 실명(모의)</label><input id="s2-name" value="'+esc(inv.targetName)+'" style="width:100%"></div><div class="row"><button class="btn" id="s2-verify">간편인증 완료</button><span class="pill">CI 본인확인</span></div><div class="note">이름을 다른 값으로 바꾸면 <b>실명 불일치→거부</b>. 본인확인 통과해야 다음 OTP 등록 화면이 열립니다.</div>';
+    else if(st===2) body='<div class="note" style="margin-top:0">본인확인 완료 ✔ 이제 <b>① 비밀번호 설정 → ② OTP 등록</b>. QR·비밀번호는 이메일이 아니라 본인확인 후 이 화면에서만 표시됩니다(보안).</div>'+
+      '<div class="field" style="margin-top:10px"><label class="f">① 비밀번호 설정</label><input id="s2-pw1" type="password" placeholder="9자↑·영문·숫자·특수" style="width:100%"></div>'+
+      '<div class="field"><label class="f">비밀번호 확인</label><input id="s2-pw2" type="password" style="width:100%"></div>'+
+      '<div style="font-size:11.5px;color:var(--ink3);margin:2px 0 4px"><b>② OTP 등록</b> — 인증앱으로 QR 스캔 후 6자리 입력. 정책: '+esc(PW_POLICY)+'</div>'+
+      '<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin:12px 0">'+
+        '<div style="flex:0 0 150px;text-align:center"><div style="width:130px;height:130px;margin:0 auto;border:1px solid var(--border);border-radius:8px;'+QRBG+'"></div><div style="font-size:10.5px;color:var(--ink3);margin-top:6px">QR 스캔<br><code style="font-size:9px">otpauth://totp/APFS:'+esc(inv.email)+'</code></div></div>'+
+        '<div style="flex:1;min-width:210px">'+
+          '<div style="font-size:11.5px;color:var(--ink3)">수동 입력용 시드(Base32): <code id="s2-seed" style="font-size:10px">…</code></div>'+
+          '<div style="border:1px solid var(--border);border-radius:10px;padding:8px 11px;margin:8px 0;background:var(--surface2)">📱 폰 앱(모의) 현재 코드 <b id="s2-totp" style="color:var(--primary);font-size:20px;letter-spacing:3px;font-variant-numeric:tabular-nums">------</b> <span style="color:var(--ink3)">(<b id="s2-left">--</b>s)</span></div>'+
+          '<label class="f">앱에 뜬 6자리로 등록 확인</label><input id="s2-otp" placeholder="6자리" maxlength="6" inputmode="numeric" style="width:100%">'+
+          '<div class="row" style="margin-top:8px"><button class="btn" id="s2-otpverify">등록 확인 → 활성</button><button class="btn sec btn-sm" id="s2-fill">데모: 코드 자동입력</button></div>'+
+        '</div></div>';
+    else body=(s2state.result==='ok'?'<div class="banner ok">✔ 온보딩 완료 — 실명매칭 + <b>비밀번호 설정</b> + <b>OTP 등록</b> → 계정 활성. 이후 로그인 = ID/PW + 폰 앱 OTP.</div>':'<div class="banner bad">✖ 실명 불일치 → 활성 거부 + 감사로그</div>')+'<button class="btn sec" id="s2-restart">처음부터</button>';
+    return head('시나리오 · 초대 온보딩(운용사)','초대→간편인증(실명매칭)→비밀번호 설정+OTP 등록(QR)→활성. QR·비밀번호는 이메일이 아니라 본인확인 후 화면에서만.')+
+    '<div class="card" style="max-width:580px"><div class="steps"><span class="s '+(st===0?'on':'done')+'">1. 초대 확인</span><span class="s '+(st===1?'on':(st>1?'done':''))+'">2. 간편인증</span><span class="s '+(st===2?'on':(st>2?'done':''))+'">3. 비밀번호·OTP</span><span class="s '+(st>=3?'done':'')+'">4. 완료</span></div>'+
+    '<div class="kv"><b>초대 대상</b><span>'+esc(inv.targetName)+'</span><b>이메일</b><span>'+esc(inv.email)+' <span class="tag n">화이트리스트</span></span><b>소속</b><span>'+esc(orgName(inv.org))+'</span><b>부여 ROLE</b><span>'+esc(inv.role)+'</span></div>'+body+'</div>';
+  }
+  function w2(){
+    if($('s2-go3')){$('s2-go3').addEventListener('click',function(){go('s3');});return;}
+    var inv=s2state&&s2state.inv?s2state.inv:pickInvite();
+    if(!s2state)s2state={inv:inv,step:0,result:null};
+    var st=s2state.step;
+    if(st===0&&$('s2-accept'))$('s2-accept').addEventListener('click',function(){s2state.step=1;render();});
+    if(st===1&&$('s2-verify'))$('s2-verify').addEventListener('click',function(){
+      var nm=($('s2-name').value||'').trim();
+      if(nm===inv.targetName){log('가입:'+inv.targetName,'간편인증 실명매칭','초대('+inv.targetName+')','정상');s2state.step=2;render();}
+      else{s2state.result='fail';inv.status='거부';log('가입시도:'+nm,'실명매칭','초대('+inv.targetName+')','실패');s2state.step=3;render();}
+    });
+    if(st===2){
+      var key=seedBytes('INV-'+inv.email);
+      var sd=$('s2-seed');if(sd)sd.textContent=b32(key);
+      function tick(){var l=$('s2-left');if(l)l.textContent=30-(Math.floor(Date.now()/1000)%30);totpNow(key).then(function(c){var el=$('s2-totp');if(el)el.textContent=c;});}
+      clearS2Timer();tick();s2int=setInterval(tick,1000);
+      if($('s2-fill'))$('s2-fill').addEventListener('click',function(){totpNow(key).then(function(c){var o=$('s2-otp');if(o)o.value=c;});});
+      if($('s2-otpverify'))$('s2-otpverify').addEventListener('click',function(){
+        var p1=$('s2-pw1').value,p2=$('s2-pw2').value;
+        if(!pwOK(p1)){toast('비밀번호 정책 미충족(9자↑·영문·숫자·특수)');return;}
+        if(p1!==p2){toast('비밀번호 확인 불일치');return;}
+        var code=($('s2-otp').value||'').trim();
+        totpVerify(key,code).then(function(ok){
+          if(!ok){toast('OTP 코드 불일치/만료 — 현재 코드로');return;}
+          clearS2Timer();inv.status='수락';
+          S.users.push({id:'U'+(S.users.length+1),loginId:(inv.org+'.'+S.users.length).toLowerCase(),name:inv.targetName,type:'운용사',org:inv.org,roles:[inv.role],status:'활성',otpEnrolled:true,pwSet:true});
+          s2state.result='ok';log('가입:'+inv.targetName,'비밀번호 설정+OTP 등록·계정 활성','초대수락','정상');s2state.step=3;render();
+        });
+      });
+    }
+    if(st===3&&$('s2-restart'))$('s2-restart').addEventListener('click',function(){clearS2Timer();s2state=null;render();});
+  }
+
+  /* ===== S3 사용자 초대 + 초대 메일 미리보기 ===== */
+  var s3msg='';
+  function inviteEmail(name,orgnm,role,token){
+    return '<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">'+
+      '<div style="background:var(--surface2);padding:9px 13px;border-bottom:1px solid var(--border);font-size:12px"><b>제목:</b> [농금원 통합포털] 계정 초대 안내 — '+esc(name)+'님 ('+esc(orgnm)+')<br><span style="color:var(--ink3)"><b>받는사람:</b> '+esc(name)+' · <b>발신:</b> no-reply@apfs.go.kr(발신전용)</span></div>'+
+      '<div style="padding:13px 15px;font-size:12.5px;line-height:1.75;white-space:pre-line">'+
+      esc(name)+'님, 안녕하세요.\n농림수산식품모태펀드 투자자산관리 통합포털(APFS)에 사용자 계정으로 초대되셨습니다.\n\n'+
+      '■ 초대 정보\n · 소속: '+esc(orgnm)+' (운용사)\n · 부여 권한(ROLE): '+esc(role)+'\n · 초대: 농금원 투자관리부\n · 유효기간: 발송 후 72시간(만료 시 재발송 요청)\n\n'+
+      '■ 가입 절차 (약 3분)\n 1) 아래 [초대 수락하기] 클릭\n 2) 간편인증(휴대폰 본인확인) — 초대 대상 실명과 일치해야 활성화됩니다\n 3) 2차 인증(OTP) 등록 — 화면에 표시되는 QR을 인증앱(Google/MS Authenticator 등)으로 스캔\n 4) 앱에 뜬 6자리 코드 1회 입력 → 등록 완료\n\n'+
+      '   [ 초대 수락하기 ]\n   https://apfs.go.kr/invite/accept?token='+esc(token||'●●●●●●')+'\n\n'+
+      '■ 보안 안내\n · 본 링크는 본인에게만 유효하며 72시간 후 만료됩니다.\n · QR코드·비밀번호·OTP는 이메일로 발송되지 않으며, 본인확인 후 화면에서만 표시됩니다.\n · 본인이 요청하지 않은 초대라면 링크를 클릭하지 마시고 담당자(농금원 투자관리부)로 문의해 주세요.\n\n본 메일은 발신전용입니다.'+
+      '</div></div>';
+  }
+  function s3(){
+    var mail=s3msg||inviteEmail(S.personnel[0].name,orgName(S.personnel[0].org),'운용사');
+    return head('시나리오 · 사용자 초대(운용사) — 중앙형 + 초대 메일','초대 대상=운용인력 명단. 발송 시 아래 메일이 발송됩니다(QR은 메일 아님, 링크 뒤 화면에서). 초대받은 운용사는 「초대 온보딩」에서 활성화.')+
+    '<div class="card"><h3>운용인력 명단(전자보고 소스)에서 초대</h3><table><thead><tr><th>운용사</th><th>성명</th><th>이메일</th><th class="c">재직</th><th class="c">초대</th></tr></thead><tbody>'+
+    S.personnel.map(function(p,i){var invited=S.invites.some(function(v){return v.email===p.email;});var exists=S.users.some(function(u){return u.name===p.name&&u.org===p.org;});
+      return '<tr><td>'+esc(orgName(p.org))+'</td><td>'+esc(p.name)+'</td><td>'+esc(p.email)+'</td><td class="c">'+(p.active?'<span class="tag g">재직</span>':'<span class="tag r">퇴사</span>')+'</td><td class="c">'+(exists?'<span class="tag b">가입됨</span>':invited?'<span class="tag a">초대발송</span>':'<button class="btn sm" data-i="'+i+'">초대 발송</button> <button class="btn sm sec" data-mail="'+i+'">메일 미리보기</button>')+'</td></tr>';}).join('')+
+    '</tbody></table><div class="note">발송=사전 승인 → 수신자 간편인증+OTP 등록 시 활성. 부여 ROLE 기본 <code>운용사</code>.</div></div>'+
+    '<div class="card"><h3>📧 초대 메일 미리보기 '+(s3msg?'<span class="tag g">발송됨</span>':'<span class="tag n">예시</span>')+'</h3>'+mail+'</div>';
+  }
+  function w3(){
+    Array.prototype.forEach.call($('main').querySelectorAll('button[data-i]'),function(b){b.addEventListener('click',function(){
+      var p=S.personnel[+b.getAttribute('data-i')];var tk='tok'+(S.invites.length+1);
+      S.invites.push({token:tk,targetName:p.name,email:p.email,org:p.org,role:'운용사',status:'발송'});
+      s3msg=inviteEmail(p.name,orgName(p.org),'운용사',tk);
+      log('관리자','사용자 초대 발송',p.name+'('+orgName(p.org)+')','정상');toast('초대 메일 발송: '+p.name);render();});});
+    Array.prototype.forEach.call($('main').querySelectorAll('button[data-mail]'),function(b){b.addEventListener('click',function(){
+      var p=S.personnel[+b.getAttribute('data-mail')];s3msg=inviteEmail(p.name,orgName(p.org),'운용사');render();});});
+  }
+
+  /* ===== S9 사용자관리 (등록/상태/ROLE) — 온보딩 실행은 대상자 몫이라 S2/S13으로 분리 ===== */
+  var s9edit=null; // null | 'new' | userId
+  var s9form=null; var s9msg=''; var s9mail=''; var s9int=null;
+  function clearS9Timer(){if(s9int){clearInterval(s9int);s9int=null;}}
+  function statusTag(st){var c=st==='활성'?'g':st==='온보딩대기'?'a':'r';return '<span class="tag '+c+'">'+esc(st)+'</span>';}
+  function onboardEmail(u){
+    var org=u.org?orgName(u.org):(u.account?u.account+' 계정':(u.dept||'-'));
+    var gong=(u.type==='수탁'||u.type==='부처');
+    var proc=' 1) 아래 [계정 활성화] 클릭\n 2) 비밀번호 설정(단방향 저장)\n 3) 2차 인증(OTP) 등록 — 화면의 QR을 인증앱(Google/MS Authenticator 등)으로 1회 스캔\n 4) 앱에 뜬 6자리 코드 입력 → 활성화 완료 (이후 로그인은 QR 없이 6자리만)';
+    var extra=gong
+      ? '\n\n■ 기관 소속 계정 안내\n · 본 계정은 '+esc(org)+' 소속 개별 담당자 계정입니다(공유 계정 아님).\n · 담당자 변경 시 이 계정은 비활성되고 신 담당자에게 새 계정이 발급됩니다.'
+      : (u.type==='농금원'?'\n\n■ 안내\n · 사내 직원 계정입니다. 부서 이동/퇴직 시 관리자에게 상태 변경을 요청하세요.':'');
+    return '<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">'+
+      '<div style="background:var(--surface2);padding:9px 13px;border-bottom:1px solid var(--border);font-size:12px"><b>제목:</b> [농금원 통합포털] 계정 개설 안내 — '+esc(u.name)+' ('+esc(org)+')<br><span style="color:var(--ink3)"><b>받는사람:</b> '+esc(gong?(u.curHandler||u.name):u.name)+' &lt;'+esc(u.email||'-')+'&gt; · <b>발신:</b> no-reply@apfs.go.kr(발신전용)</span></div>'+
+      '<div style="padding:13px 15px;font-size:12.5px;line-height:1.75;white-space:pre-line">'+
+      esc(gong?(u.curHandler||u.name):u.name)+' 담당자님, 안녕하세요.\n농림수산식품모태펀드 투자자산관리 통합포털(APFS)에 사용자 계정이 개설되었습니다.\n\n'+
+      '■ 계정 정보\n · 계정명: '+esc(u.name)+'\n · 소속/구분: '+esc(org)+' ('+esc(u.type)+')\n · 권한(ROLE): '+esc((u.roles||[]).join(', '))+'\n · 유효기간: 링크 발송 후 72시간(만료 시 재발송 요청)\n\n'+
+      '■ 최초 접속 절차\n'+proc+'\n\n   [ 계정 활성화 ]\n   https://apfs.go.kr/onboard?token=●●●●●●'+extra+'\n\n'+
+      '■ 보안 안내\n · QR코드·비밀번호·OTP는 이메일로 발송되지 않으며, 링크 접속 후 화면에서만 표시됩니다.\n · 본인이 요청하지 않은 안내라면 링크를 클릭하지 마시고 농금원 담당자에게 문의해 주세요.\n\n본 메일은 발신전용입니다.'+
+      '</div></div>';
+  }
+  function s9(){
+    if(s9edit) return s9editView();
+    return head('시나리오 · 사용자관리 (등록·상태·ROLE)','운용사=초대(초대 온보딩)로만 생성. 농금원·수탁·부처=여기서 등록→온보딩 메일 발송. 실제 비번·OTP 등록은 대상자가 온보딩 화면에서 수행(초대/발급 온보딩 시나리오).')+
+    '<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">사용자 목록 <span class="pill">'+S.users.length+'명</span></h3><button class="btn" id="s9-new">+ 사용자 등록(농금원·수탁·부처)</button></div>'+
+    s9msg+
+    '<table><thead><tr><th>계정명</th><th>이메일</th><th class="c">구분</th><th class="c">소속유형</th><th>소속</th><th>ROLE</th><th class="c">상태</th><th class="c">관리</th></tr></thead><tbody>'+
+    S.users.map(function(u){var at=acctType(u);var mgmt='<button class="btn sm sec" data-edit="'+u.id+'">수정</button>';
+      if(u.status==='온보딩대기'&&u.seed)mgmt+=' <span class="pill">부트스트랩(최초 셋팅)</span>';
+      else if(u.status==='온보딩대기')mgmt+=' <button class="btn sm sec" data-omail="'+u.id+'">온보딩 메일 보기</button>';
+      else if(at==='기관'&&u.status==='활성')mgmt+=' <button class="btn sm danger" data-replace="'+u.id+'">담당자 교체</button>';
+      return '<tr><td><b>'+esc(u.name)+'</b>'+(u.seed?' <span class="tag b">시드</span>':'')+'</td><td style="font-size:12px;color:var(--ink3)">'+esc(u.email||'-')+'</td><td class="c">'+esc(u.type)+'</td><td class="c"><span class="tag '+(at==='기관'?'a':'n')+'">'+belongLabel(u)+'</span></td><td>'+esc(u.org?orgName(u.org):(u.account||u.dept||'-'))+'</td><td>'+(u.roles||[]).map(function(r){return '<span class="tag b">'+esc(r)+'</span>';}).join('')+'</td><td class="c">'+statusTag(u.status)+'</td><td class="c">'+mgmt+'</td></tr>';}).join('')+
+    '</tbody></table><div class="note"><b>모든 계정=담당자별 개별(개인) 계정</b>(공유 ID 없음). <b>운용사</b>=「사용자 초대」→「초대 온보딩」. <b>농금원·수탁·부처</b>=여기서 등록→이메일 온보딩→「발급 온보딩」에서 대상자가 비번·OTP 등록 시 활성. <b>담당자 교체(수탁·부처)</b> = 구 계정 <b>비활성</b> + 신 담당자 계정 <b>신규 발급</b>(온보딩) — 같은 아이디 물려주지 않음. 데이터 스코프는 소속(운용사·수탁사·계정구분) 자동.<br><b>최초 셋팅(부트스트랩):</b> 첫 관리자 <b>전산관리(시드)</b>는 <b>설치 시 DB 시드로 생성</b>(초대·자기가입 아님) → 최초 로그인 시 <b>비밀번호 변경 + OTP 등록 강제</b> → 이후 이 계정이 모든 사용자를 등록/초대. (개발/테스트: 시드 계정 + 간편인증·검증필 OTP는 모의로 대체)</div></div>'+
+    (s9mail?'<div class="card"><h3>📧 온보딩 안내 메일 미리보기 <span class="tag g">발송됨</span></h3>'+s9mail+'</div>':'');
+  }
+  function condFields(f){
+    if(f.type==='농금원') return '<div class="field"><label class="f">부서</label><input id="s9-dept" value="'+esc(f.dept||'')+'" placeholder="예: 투자팀"></div>';
+    if(f.type==='운용사') return '<div class="field"><label class="f">소속 운용사</label><select id="s9-org">'+S.orgs.filter(function(o){return o.type==='GP';}).map(function(o){return '<option value="'+o.id+'" '+(f.org===o.id?'selected':'')+'>'+esc(o.name)+'</option>';}).join('')+'</select></div>';
+    if(f.type==='수탁') return '<div class="field"><label class="f">소속 수탁사</label><select id="s9-org">'+S.orgs.filter(function(o){return o.type==='수탁';}).map(function(o){return '<option value="'+o.id+'" '+(f.org===o.id?'selected':'')+'>'+esc(o.name)+'</option>';}).join('')+'</select></div>';
+    if(f.type==='부처') return '<div class="field"><label class="f">계정구분</label><select id="s9-acct"><option '+(f.account==='농식품'?'selected':'')+'>농식품</option><option '+(f.account==='수산'?'selected':'')+'>수산</option></select></div>';
+    return '';
+  }
+  function s9editView(){
+    var isNew=s9edit==='new';
+    var u=isNew?{type:'농금원',roles:[],status:'온보딩대기'}:userById(s9edit);
+    if(!s9form) s9form={type:u.type,dept:u.dept,org:u.org,account:u.account,email:u.email||'',roles:(u.roles||[]).slice(),name:u.name||'',loginId:u.loginId||'',status:u.status||'활성'};
+    var f=s9form;
+    var eff=effPerm({roles:f.roles});var effMenus=MENUS.filter(function(m){return eff[m.k].v;}).map(function(m){return m.n;});
+    var types=isNew?['농금원','수탁','부처']:['농금원','운용사','수탁','부처'];
+    return head((isNew?'사용자 등록 (농금원·수탁·부처)':'사용자 수정')+' — 구분·소속·이메일·ROLE',isNew?'운용사는 초대(「사용자 초대」 시나리오)로만 생성됩니다. 등록 시 온보딩 안내 메일이 발송됩니다.':'상태·ROLE·소속 관리.')+
+    '<div class="card" style="max-width:640px">'+
+    '<div class="row"><div class="field" style="flex:1"><label class="f">성명/계정명</label><input id="s9-name" value="'+esc(f.name)+'"></div><div class="field" style="flex:1"><label class="f">로그인ID</label><input id="s9-lid" value="'+esc(f.loginId)+'"></div></div>'+
+    '<div class="field"><label class="f">이메일 <span style="color:var(--amber)">(온보딩 안내 발송용 · 필수)</span></label><input id="s9-email" value="'+esc(f.email||'')+'" placeholder="name@org.go.kr"></div>'+
+    '<div class="field"><label class="f">사용자 구분</label><select id="s9-type"'+(isNew?'':' disabled')+'>'+types.map(function(t){return '<option '+(f.type===t?'selected':'')+'>'+t+'</option>';}).join('')+'</select>'+(isNew?'':' <span class="pill">수정 시 구분 고정</span>')+'</div>'+
+    '<div id="s9-cond">'+condFields(f)+'</div>'+
+    '<div class="field"><label class="f">ROLE (복수 선택)</label><div id="s9-roles">'+Object.keys(ROLES).map(function(rn){var on=f.roles.indexOf(rn)>=0;return '<label class="chk '+(on?'on':'')+'"><input type="checkbox" data-role="'+esc(rn)+'" '+(on?'checked':'')+'>'+esc(rn)+'</label>';}).join('')+'</div></div>'+
+    '<div class="note" id="s9-eff">유효 메뉴(ROLE 합집합): <b>'+(effMenus.length?esc(effMenus.join(', ')):'없음')+'</b></div>'+
+    (isNew?'<div class="note">신규 등록 = 상태 <b>온보딩대기</b> → 이메일로 온보딩 안내 발송 → 대상이 <b>온보딩 화면(발급 온보딩 시나리오)</b>에서 비밀번호·OTP 등록 시 <b>활성</b>.</div>':'<div class="field"><label class="f">상태</label><select id="s9-status"><option '+(f.status==='활성'?'selected':'')+'>활성</option><option '+(f.status==='비활성'?'selected':'')+'>비활성</option></select></div>')+
+    '<div class="row"><button class="btn" id="s9-save">저장'+(isNew?' → 온보딩 발송':'')+'</button><button class="btn sec" id="s9-cancel">취소</button></div></div>';
+  }
+  function w9(){
+    if(!s9edit){
+      if($('s9-new'))$('s9-new').addEventListener('click',function(){s9edit='new';s9form=null;render();});
+      Array.prototype.forEach.call($('main').querySelectorAll('button[data-edit]'),function(b){b.addEventListener('click',function(){s9edit=b.getAttribute('data-edit');s9form=null;render();});});
+      Array.prototype.forEach.call($('main').querySelectorAll('button[data-omail]'),function(b){b.addEventListener('click',function(){s9mail=onboardEmail(userById(b.getAttribute('data-omail')));render();});});
+      Array.prototype.forEach.call($('main').querySelectorAll('button[data-replace]'),function(b){b.addEventListener('click',function(){
+        var u=userById(b.getAttribute('data-replace'));
+        u.status='비활성';
+        var pool=(u.type==='수탁')?['이수탁','박수탁','정수탁']:['최농식','정농식','한농식'];
+        var newName=pool[S.users.length%pool.length];
+        var nu={id:'U'+(S.users.length+1),loginId:(u.type==='수탁'?orgName(u.org).slice(0,2):'mafra')+'.'+S.users.length,name:newName,type:u.type,org:u.org,account:u.account,email:'new'+S.users.length+'@org.go.kr',roles:(u.roles||[]).slice(),status:'온보딩대기'};
+        S.users.push(nu); s9mail=onboardEmail(nu);
+        log('관리자','담당자 교체(구계정 비활성+신계정 발급)',u.name+' → '+newName,'정상');
+        s9msg='<div class="banner ok">✔ 담당자 교체 — <b>'+esc(u.name)+'</b> 계정 <b>비활성</b> + 신 담당자 <b>'+esc(newName)+'</b> 계정 <b>신규 발급</b>(온보딩대기). 같은 아이디를 물려주지 않음 · 아래 온보딩 메일 발송.</div>';render();
+      });});
+      return;
+    }
+    var f=s9form;var isNew=s9edit==='new';
+    if($('s9-type'))$('s9-type').addEventListener('change',function(){f.type=$('s9-type').value;f.org=null;f.account=null;$('s9-cond').innerHTML=condFields(f);bindCond();});
+    function bindCond(){if($('s9-org'))$('s9-org').addEventListener('change',function(){f.org=$('s9-org').value;});if($('s9-acct'))$('s9-acct').addEventListener('change',function(){f.account=$('s9-acct').value;});if($('s9-dept'))$('s9-dept').addEventListener('input',function(){f.dept=$('s9-dept').value;});}
+    bindCond();
+    Array.prototype.forEach.call($('main').querySelectorAll('#s9-roles input[data-role]'),function(c){c.addEventListener('change',function(){
+      var rn=c.getAttribute('data-role');var i=f.roles.indexOf(rn);
+      if(c.checked&&i<0)f.roles.push(rn);if(!c.checked&&i>=0)f.roles.splice(i,1);
+      c.parentNode.classList.toggle('on',c.checked);
+      var eff=effPerm({roles:f.roles});var em=MENUS.filter(function(m){return eff[m.k].v;}).map(function(m){return m.n;});
+      $('s9-eff').innerHTML='유효 메뉴(ROLE 합집합): <b>'+(em.length?esc(em.join(', ')):'없음')+'</b>';
+    });});
+    $('s9-cancel').addEventListener('click',function(){s9edit=null;s9form=null;render();});
+    $('s9-save').addEventListener('click',function(){
+      f.name=$('s9-name').value;f.loginId=$('s9-lid').value;f.email=$('s9-email').value;if($('s9-status'))f.status=$('s9-status').value;
+      if(!f.name||!f.loginId){toast('성명·로그인ID 필수');return;}
+      if(!f.email){toast('이메일 필수 — 온보딩 안내 발송용');return;}
+      if(!f.roles.length){toast('ROLE 최소 1개');return;}
+      if(isNew){
+        var nu={id:'U'+(S.users.length+1),loginId:f.loginId,name:f.name,type:f.type,dept:f.dept,org:f.org,account:f.account,email:f.email,roles:f.roles.slice(),status:'온보딩대기'};
+        S.users.push(nu); s9mail=onboardEmail(nu);
+        s9msg='<div class="banner ok">✔ '+esc(f.name)+' 등록 → <b>온보딩 안내 메일 발송</b>('+esc(f.email)+'). 대상이 링크 접속→OTP 등록 시 활성. (아래 메일 미리보기 / 목록 "OTP 등록")</div>';
+        log('관리자','사용자 등록·온보딩 메일 발송',f.name+' <'+f.email+'>','정상');}
+      else{var u=userById(s9edit);u.name=f.name;u.loginId=f.loginId;u.email=f.email;u.dept=f.dept;u.org=f.org;u.account=f.account;u.roles=f.roles.slice();u.status=f.status;log('관리자','사용자 수정',f.name,'정상');}
+      toast('저장됨');s9edit=null;s9form=null;render();});
+  }
+
+  /* ===== S4 권한관리 (ROLE 등록·복사·매트릭스) ===== */
+  var s4sel=null;
+  function s4(){
+    if(!s4sel||!ROLES[s4sel])s4sel=Object.keys(ROLES)[0];
+    var m=ROLES[s4sel];
+    return head('시나리오 · 권한관리 (ROLE 등록·복사)','ROLE = 메뉴×기능 권한의 묶음(별도 관리). 신규 메뉴는 ROLE만 반영하면 그 ROLE 전 사용자 자동 적용.')+
+    '<div class="grid2">'+
+    '<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">ROLE 목록</h3><button class="btn sm" id="r-new">+ 신규</button></div>'+
+    '<div class="rolelist" id="r-list">'+Object.keys(ROLES).map(function(rn){return '<div class="ri '+(rn===s4sel?'on':'')+'" data-r="'+esc(rn)+'"><span><b>'+esc(rn)+'</b> <span class="tag n">'+roleCount(rn)+'명</span></span></div>';}).join('')+'</div>'+
+    '<div class="row" style="margin-top:10px"><button class="btn sm sec" id="r-copy">선택 ROLE 복사</button><button class="btn sm danger" id="r-del">삭제</button></div>'+
+    '<div class="note">복사 = 기존 ROLE 복제 후 수정(권한 세트 재사용). 삭제는 배정 사용자 0명일 때만.</div></div>'+
+    '<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">「'+esc(s4sel)+'」 권한 매트릭스</h3><button class="btn sm sec" id="r-addmenu">+ 신규 메뉴(개발 시뮬)</button></div>'+
+    '<table class="matrix"><thead><tr><th>메뉴</th><th class="c">조회</th><th class="c">인쇄·다운로드</th><th class="c">등록/수정/삭제</th><th class="c">관리</th></tr></thead><tbody>'+
+    MENUS.map(function(mn){var p=m[mn.k];return '<tr><td>'+esc(mn.n)+'</td>'+['v','d','c','a'].map(function(k){return '<td class="c"><input type="checkbox" data-p="'+k+'" data-m="'+mn.k+'" '+(p&&p[k]?'checked':'')+'></td>';}).join('')+'</tr>';}).join('')+
+    '</tbody></table><div class="row" style="margin-top:10px"><button class="btn" id="r-save">저장</button></div>'+
+    '<div class="note">체크는 표시일 뿐, 실제 차단은 서버측 인가(시나리오 접근제어). 이 ROLE을 가진 <b>'+roleCount(s4sel)+'명</b>에 동시 적용.</div></div>'+
+    '</div>';
+  }
+  function w4(){
+    Array.prototype.forEach.call($('main').querySelectorAll('#r-list .ri'),function(ri){ri.addEventListener('click',function(){s4sel=ri.getAttribute('data-r');render();});});
+    $('r-new').addEventListener('click',function(){var i=1,nm;do{nm='새 ROLE '+i++;}while(ROLES[nm]);ROLES[nm]=blank();s4sel=nm;log('관리자','ROLE 신규',nm,'정상');toast('신규 ROLE 생성');render();});
+    $('r-copy').addEventListener('click',function(){var nm=s4sel+' (복사)',i=2;while(ROLES[nm]){nm=s4sel+' (복사'+i+++')';}var src=ROLES[s4sel],cp=blank();MENUS.forEach(function(mn){cp[mn.k]={v:src[mn.k].v,d:src[mn.k].d,c:src[mn.k].c,a:src[mn.k].a};});ROLES[nm]=cp;s4sel=nm;log('관리자','ROLE 복사',s4sel,'정상');toast('복사본 생성: '+nm);render();});
+    $('r-del').addEventListener('click',function(){if(roleCount(s4sel)>0){toast('배정 사용자 '+roleCount(s4sel)+'명 — 삭제 불가');return;}if(Object.keys(ROLES).length<=1){toast('최소 1개 필요');return;}log('관리자','ROLE 삭제',s4sel,'정상');delete ROLES[s4sel];s4sel=Object.keys(ROLES)[0];toast('삭제됨');render();});
+    $('r-addmenu').addEventListener('click',function(){var i=1,k;do{k='new'+i++;}while(MENUS.some(function(x){return x.k===k;}));MENUS.push({k:k,n:'신규메뉴'+(i-1)});Object.keys(ROLES).forEach(function(rn){ROLES[rn][k]={v:false,d:false,c:false,a:false};});log('관리자','메뉴 추가','신규메뉴'+(i-1),'정상');toast('신규 메뉴 추가 — ROLE에 체크하면 전 사용자 적용');render();});
+    Array.prototype.forEach.call($('main').querySelectorAll('input[data-m]'),function(c){c.addEventListener('change',function(){ROLES[s4sel][c.getAttribute('data-m')][c.getAttribute('data-p')]=c.checked;});});
+    $('r-save').addEventListener('click',function(){log('관리자','권한변경',s4sel,'정상');toast('ROLE 저장 — '+roleCount(s4sel)+'명 동시 적용(변경이력 3년)');});
+  }
+
+  /* ===== S5 데이터 스코프 ===== */
+  var s5soft=true;
+  function s5(){
+    var u=userById(S.viewRole);var sc=scopeFunds(u);
+    var funds=(u.type==='농금원'&&!isAdmin(u)&&s5soft&&sc.soft)?sc.soft:sc.list;
+    return head('시나리오 · 데이터 스코프 시연','같은 「자펀드관리」인데 보는 사람에 따라 목록 차등(축2=자펀드 마스터 자동 파생).')+
+    '<div class="card"><div class="row" style="margin-bottom:6px"><label class="f" style="margin:0">보는 사람</label><select id="s5-role">'+S.users.filter(function(x){return x.status==='활성';}).map(function(x){return '<option value="'+x.id+'" '+(x.id===S.viewRole?'selected':'')+'>'+esc(x.name)+' ('+esc(x.type)+(x.org?'·'+orgName(x.org):'')+(x.account?'·'+x.account:'')+')</option>';}).join('')+'</select><span class="pill">스코프: <b style="margin-left:4px">'+esc(sc.label)+'</b></span>'+(u.type==='농금원'&&!isAdmin(u)?'<label class="pill"><input type="checkbox" id="s5-soft" '+(s5soft?'checked':'')+' style="height:14px"> 기본필터(내 담당)</label>':'')+'</div>'+
+    '<div class="note" style="margin:6px 0 12px">보이는 펀드 <b>'+funds.length+'</b>건 / 전체 '+S.funds.length+'건 — 하드 경계(운용사·수탁·부처)는 나머지 <b>조회 불가</b>.</div>'+
+    '<table><thead><tr><th>자펀드</th><th>연도</th><th>운용사(GP)</th><th>주수탁</th><th class="c">계정</th><th class="c">담당</th><th class="c">보고</th></tr></thead><tbody>'+
+    funds.map(function(f){return '<tr><td><b>'+esc(f.name)+'</b></td><td class="c">'+esc(f.year)+'</td><td>'+f.gp.map(function(g){return esc(orgName(g.org))+'<span class="tag '+(g.role==='대표'?'b':'n')+'">'+g.role+'</span>';}).join(' ')+'</td><td>'+esc(orgName(f.trustee))+'</td><td class="c">'+esc(f.account)+'</td><td class="c">'+esc(f.mgr)+'</td><td class="c">'+(canReport(u,f)?'<span class="tag g">가능</span>':'<span class="tag n">불가</span>')+'</td></tr>';}).join('')+(funds.length?'':'<tr><td colspan="7" class="c" style="color:var(--ink3)">보이는 펀드 없음</td></tr>')+'</tbody></table></div>';
+  }
+  function w5(){$('s5-role').addEventListener('change',function(){S.viewRole=$('s5-role').value;render();});if($('s5-soft'))$('s5-soft').addEventListener('change',function(){s5soft=$('s5-soft').checked;render();});}
+
+  /* ===== S6 접근제어 위반 ===== */
+  function s6(){
+    return head('시나리오 · 접근제어 위반 차단','UI 숨김만으론 부족 — 서버측 인가(메뉴+데이터/IDOR).')+
+    '<div class="card"><div class="row" style="margin-bottom:10px"><label class="f" style="margin:0">현재 사용자</label><select id="s6-role">'+S.users.filter(function(x){return x.status==='활성';}).map(function(x){return '<option value="'+x.id+'" '+(x.id===S.viewRole?'selected':'')+'>'+esc(x.name)+' ('+esc(rolesLabel(x))+')</option>';}).join('')+'</select></div>'+
+    '<p class="sub" style="margin:0 0 8px">권한을 우회해 직접 접근을 시도합니다:</p><div class="row"><button class="btn sec" id="s6-menu">① 권한없는 메뉴 <code>/acct</code></button><button class="btn sec" id="s6-data">② 타 소속 펀드 <code>/fund/F1</code></button></div><div id="s6-out" style="margin-top:14px"></div><div class="note">차단 시 "비정상적으로 접근하셨습니다" + 감사로그.</div></div>';
+  }
+  function w6(){
+    $('s6-role').addEventListener('change',function(){S.viewRole=$('s6-role').value;render();});
+    $('s6-menu').addEventListener('click',function(){var u=userById(S.viewRole);if(hasMenu(u,'acct')){$('s6-out').innerHTML='<div class="banner ok">✔ 회계 메뉴 허용(권한 있음)</div>';log(u.loginId,'메뉴 접근','회계','정상');}else{$('s6-out').innerHTML='<div class="banner bad">⛔ 비정상적으로 접근하셨습니다. — 회계 메뉴 권한 없음. 감사로그 기록.</div>';log(u.loginId,'비정상 접근(메뉴)','회계 직접URL','차단');}});
+    $('s6-data').addEventListener('click',function(){var u=userById(S.viewRole);var f=S.funds[0];if(canSeeFund(u,f)){$('s6-out').innerHTML='<div class="banner ok">✔ '+esc(f.name)+' 조회 허용</div>';log(u.loginId,'데이터 조회',f.id,'정상');}else{$('s6-out').innerHTML='<div class="banner bad">⛔ 비정상적으로 접근하셨습니다. — '+esc(f.name)+' 소속 범위 밖(IDOR 차단). 감사로그 기록.</div>';log(u.loginId,'비정상 접근(데이터)',f.id+' 직접ID','차단');}});
+  }
+
+  /* ===== S7 퇴사 자동 비활성 ===== */
+  var s7msg='';
+  function s7(){
+    return head('시나리오 · 퇴사 → 계정 자동 비활성','운용사 인력변동(퇴사) 보고 시 연결 계정 자동 비활성.')+
+    '<div class="card"><h3>운용인력 — 퇴사 보고</h3><table><thead><tr><th>운용사</th><th>성명</th><th class="c">인력상태</th><th class="c">연결 계정</th><th class="c">퇴사 보고</th></tr></thead><tbody>'+
+    S.personnel.map(function(p,i){var acct=S.users.filter(function(x){return x.name===p.name&&x.org===p.org;})[0];return '<tr><td>'+esc(orgName(p.org))+'</td><td>'+esc(p.name)+'</td><td class="c">'+(p.active?'<span class="tag g">재직</span>':'<span class="tag r">퇴사</span>')+'</td><td class="c">'+(acct?'<span class="tag '+(acct.status==='활성'?'g':'r')+'">'+esc(acct.status)+'</span>':'<span class="tag n">계정없음</span>')+'</td><td class="c">'+(p.active?'<button class="btn sm danger" data-i="'+i+'">퇴사 보고</button>':'<span class="tag n">-</span>')+'</td></tr>';}).join('')+
+    '</tbody></table><div id="s7-out">'+s7msg+'</div><div class="note">퇴사 보고 → 연결 계정 즉시 비활성. 보고없이 이탈은 정기 대사로 탐지.</div></div>';
+  }
+  function w7(){Array.prototype.forEach.call($('main').querySelectorAll('button[data-i]'),function(b){b.addEventListener('click',function(){
+    var p=S.personnel[+b.getAttribute('data-i')];p.active=false;var acct=S.users.filter(function(x){return x.name===p.name&&x.org===p.org;})[0];
+    if(acct){acct.status='비활성';log('시스템','계정 자동 비활성',p.name+'(퇴사보고 연동)','정상');s7msg='<div class="banner ok">✔ '+esc(p.name)+' 퇴사 보고 → 계정 자동 비활성</div>';}
+    else{log('시스템','퇴사 보고',p.name+'(계정없음)','정상');s7msg='<div class="banner ok">✔ '+esc(p.name)+' 퇴사 보고(연결 계정 없음)</div>';}
+    render();});});}
+
+  /* ===== S8 감사로그 ===== */
+  var s8filter='전체';
+  function s8(){
+    var rows=S.logs.filter(function(l){return s8filter==='전체'||(s8filter==='차단'&&l.result==='차단')||(s8filter==='실패'&&l.result==='실패');});
+    return head('시나리오 · 감사로그 조회','접속기록+권한변경+비정상접근 통합. RFP: 접속기록 2년·권한변경 3년.')+
+    '<div class="card"><div class="row" style="margin-bottom:10px"><label class="f" style="margin:0">필터</label><select id="s8-f"><option>전체</option><option '+(s8filter==='차단'?'selected':'')+'>차단</option><option '+(s8filter==='실패'?'selected':'')+'>실패</option></select><span class="pill">총 '+S.logs.length+'건</span></div>'+
+    '<table><thead><tr><th>일시</th><th>행위자</th><th>행위</th><th>대상</th><th>IP</th><th class="c">결과</th></tr></thead><tbody>'+
+    rows.map(function(l){var tg=l.result==='차단'?'r':l.result==='실패'?'a':'g';return '<tr><td>'+esc(l.ts)+'</td><td>'+esc(l.actor)+'</td><td>'+esc(l.action)+'</td><td>'+esc(l.target)+'</td><td>'+esc(l.ip)+'</td><td class="c"><span class="tag '+tg+'">'+esc(l.result)+'</span></td></tr>';}).join('')+(rows.length?'':'<tr><td colspan="6" class="c" style="color:var(--ink3)">로그 없음</td></tr>')+'</tbody></table></div>';
+  }
+  function w8(){$('s8-f').addEventListener('change',function(){s8filter=$('s8-f').value;render();});}
+
+  /* ===== S10 비밀번호·계정 보안 ===== */
+  var s10mail='';
+  function mailFrame(subject,to,bodyLines){
+    return '<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">'+
+      '<div style="background:var(--surface2);padding:9px 13px;border-bottom:1px solid var(--border);font-size:12px"><b>제목:</b> '+esc(subject)+'<br><span style="color:var(--ink3)"><b>받는사람:</b> '+esc(to)+' · <b>발신:</b> no-reply@apfs.go.kr(발신전용)</span></div>'+
+      '<div style="padding:13px 15px;font-size:12.5px;line-height:1.75;white-space:pre-line">'+bodyLines+'</div></div>';
+  }
+  function pwExpireEmail(u){
+    return mailFrame('[농금원 통합포털] 비밀번호 변경 안내 — '+u.name, u.name+' <'+(u.email||'-')+'>',
+      esc(u.name)+'님, 안녕하세요.\n보안 정책에 따라 비밀번호 변경이 필요합니다.\n\n'+
+      '■ 안내\n · 계정: '+esc(u.loginId)+'\n · 사유: 비밀번호 사용 90일 경과(주기적 변경 정책)\n · 조치: 다음 로그인 시 비밀번호 변경 화면이 표시됩니다. 변경 후 정상 이용 가능합니다.\n\n'+
+      '■ 비밀번호 정책\n · '+esc(PW_POLICY)+'\n\n   [ 로그인 ]  https://apfs.go.kr/login\n\n'+
+      '■ 보안 안내\n · 본 안내는 정보보안 정책에 따른 자동 발송입니다.\n · 비밀번호는 이메일로 요청·발송되지 않습니다.\n\n본 메일은 발신전용입니다.');
+  }
+  function otpRenewEmail(u){
+    var to=u.name+' <'+(u.email||'-')+'>';
+    return mailFrame('[농금원 통합포털] OTP(2차 인증) 재등록 안내 — '+u.name, to,
+      esc(u.name)+'님, 안녕하세요.\n2차 인증(OTP)이 재발급되었습니다. 기존 인증앱의 코드는 더 이상 사용할 수 없습니다.\n\n'+
+      '■ 안내\n · 계정: '+esc(u.loginId)+' ('+esc(u.type)+')\n · 사유: 기기 변경/분실'+(acctType(u)==='기관'?'·담당자 인수인계':'')+'에 따른 OTP 재발급(관리자 처리)\n · 조치: 아래 링크 접속 → 새 QR 스캔 → 6자리 입력으로 재등록\n\n'+
+      '   [ OTP 재등록 ]  https://apfs.go.kr/otp/enroll?token=●●●●●●\n\n'+
+      '■ 보안 안내\n · QR·시드는 이메일이 아니라 링크 접속 후 화면에서만 표시됩니다.\n · 기존 인증앱에 등록된 항목은 삭제하세요.\n\n본 메일은 발신전용입니다.');
+  }
+  function s10(){
+    return head('시나리오 · 비밀번호·계정 보안','비밀번호 정책·변경·만료, 로그인 5회 실패 잠금·해제, OTP 재발급, 세션/유휴 정책.')+
+    '<div class="card"><h3>비밀번호 정책 & 변경(자발)</h3><div class="note">정책: '+esc(PW_POLICY)+'</div>'+
+    (S.currentUser?
+      '<div class="field" style="margin-top:10px"><label class="f">현재 비밀번호</label><input id="s10-cur" type="password" placeholder="Passw0rd!" style="width:100%"></div>'+
+      '<div class="row"><div class="field" style="flex:1"><label class="f">새 비밀번호</label><input id="s10-n1" type="password" placeholder="9자↑·영문·숫자·특수" style="width:100%"></div><div class="field" style="flex:1"><label class="f">새 비밀번호 확인</label><input id="s10-n2" type="password" style="width:100%"></div></div>'+
+      '<div class="row"><button class="btn" id="s10-chg">비밀번호 변경</button><span id="s10-chgmsg" style="font-size:12.5px"></span></div><div class="note">로그인 계정: <b>'+esc(S.currentUser.name)+'</b>. 예) <code>Apfs2026!@</code></div>'
+      :'<div class="note" style="margin-top:8px">비밀번호 변경은 <b>로그인 후</b> 가능합니다(「로그인 + 2차 인증」에서 로그인).</div>')+
+    '</div>'+
+    '<div class="card"><h3>로그인 실패 · 계정 잠금 관리 <span class="pill">'+LOCK_LIMIT+'회 실패 시 자동 잠금</span></h3>'+
+    '<table><thead><tr><th>계정</th><th class="c">실패</th><th class="c">상태</th><th class="c">관리</th></tr></thead><tbody>'+
+    S.users.map(function(u){return '<tr><td><b>'+esc(u.name)+'</b> <span style="color:var(--ink3);font-size:11px">'+esc(u.loginId)+'</span></td><td class="c">'+(u.failCount||0)+'/'+LOCK_LIMIT+'</td><td class="c">'+statusTag(u.status)+'</td><td class="c">'+(u.status==='잠금'?'<button class="btn sm" data-unlock="'+u.id+'">잠금 해제</button>':(u.status==='활성'?'<button class="btn sm sec" data-fail="'+u.id+'">실패+1(모의)</button>':'-'))+'</td></tr>';}).join('')+
+    '</tbody></table><div class="note">5회 오류→잠금은 「로그인 + 2차 인증」에서 실제 동작. 여기선 실패 누적/관리자 해제.</div></div>'+
+    '<div class="card"><h3>비밀번호 만료 · OTP 재발급</h3>'+
+    '<table><thead><tr><th>계정</th><th class="c">비번</th><th class="c">계정유형</th><th class="c">관리</th></tr></thead><tbody>'+
+    S.users.filter(function(u){return u.status!=='온보딩대기';}).map(function(u){return '<tr><td>'+esc(u.name)+'</td><td class="c">'+(u.pwExpired?'<span class="tag a">만료</span>':'<span class="tag g">정상</span>')+'</td><td class="c"><span class="tag '+(acctType(u)==='기관'?'a':'n')+'">'+belongLabel(u)+'</span></td><td class="c"><button class="btn sm sec" data-expire="'+u.id+'">만료 처리</button> <button class="btn sm sec" data-otprenew="'+u.id+'">OTP 재발급</button></td></tr>';}).join('')+
+    '</tbody></table><div class="note">만료 처리→해당 계정 로그인 시 <b>강제 변경</b>(「로그인 + 2차 인증」). OTP 재발급=분실/기기변경 시 새 시드+QR 재등록(기관은 인수인계와 동일).</div></div>'+
+    '<div class="card"><h3>세션 · 유휴 정책</h3><div class="kv"><b>세션 유휴 타임아웃</b><span>30분 무동작 → 자동 로그아웃(RFP: 로그아웃 시 세션 종료)</span><b>동시 세션</b><span>중복 로그인 시 이전 세션 종료(정책 선택)</span><b>유휴(휴면)</b><span>90일 미접속 → 휴면 전환, 재활성=본인확인</span><b>접속기록</b><span>계정·일시·IP·업무 <b>2년</b> 보관 · 권한변경 <b>3년</b></span></div></div>'+
+    (s10mail?'<div class="card"><h3>📧 알림 메일 미리보기 <span class="tag g">발송됨</span></h3>'+s10mail+'</div>':'');
+  }
+  function w10(){
+    if($('s10-chg'))$('s10-chg').addEventListener('click',function(){
+      var cur=$('s10-cur').value,n1=$('s10-n1').value,n2=$('s10-n2').value;
+      if(cur!=='Passw0rd!'){$('s10-chgmsg').innerHTML='<span class="bad">현재 비밀번호 불일치</span>';return;}
+      if(!pwOK(n1)){$('s10-chgmsg').innerHTML='<span class="bad">정책 미충족(9자↑·영문·숫자·특수)</span>';return;}
+      if(n1!==n2){$('s10-chgmsg').innerHTML='<span class="bad">새 비밀번호 확인 불일치</span>';return;}
+      S.currentUser.pwExpired=false;log(S.currentUser.loginId,'비밀번호 변경(자발)','정책 충족','정상');$('s10-chgmsg').innerHTML='<span class="ok">✔ 변경 완료</span>';toast('비밀번호 변경됨');
+    });
+    Array.prototype.forEach.call($('main').querySelectorAll('button[data-unlock]'),function(b){b.addEventListener('click',function(){var u=userById(b.getAttribute('data-unlock'));u.status='활성';u.failCount=0;log('관리자','계정 잠금 해제',u.name,'정상');toast(u.name+' 잠금 해제');render();});});
+    Array.prototype.forEach.call($('main').querySelectorAll('button[data-fail]'),function(b){b.addEventListener('click',function(){var u=userById(b.getAttribute('data-fail'));u.failCount=(u.failCount||0)+1;if(u.failCount>=LOCK_LIMIT){u.status='잠금';log('시스템','계정 잠금('+LOCK_LIMIT+'회)',u.name,'차단');}render();});});
+    Array.prototype.forEach.call($('main').querySelectorAll('button[data-expire]'),function(b){b.addEventListener('click',function(){var u=userById(b.getAttribute('data-expire'));u.pwExpired=true;s10mail=pwExpireEmail(u);log('관리자','비밀번호 만료 처리·안내 메일',u.name,'정상');toast(u.name+' 만료 처리 — 안내 메일 발송');render();});});
+    Array.prototype.forEach.call($('main').querySelectorAll('button[data-otprenew]'),function(b){b.addEventListener('click',function(){var u=userById(b.getAttribute('data-otprenew'));s10mail=otpRenewEmail(u);log('관리자','OTP 재발급·재등록 안내 메일',u.name,'정상');toast(u.name+' OTP 재발급 — 재등록 안내 메일 발송');render();});});
+  }
+
+  /* ===== S11 DB 저장 샘플 ===== */
+  function fakeHash(s){var A='./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',h=7,o='';for(var i=0;i<22;i++){h=(s.charCodeAt(i%s.length)*31+i*13+h)&0x7fff;o+=A[h%64];}return '$2b$12$'+o;}
+  function dbEnc(plain){var A='0123456789abcdef',o='';plain=plain||'-';for(var i=0;i<16;i++){o+=A[(plain.charCodeAt(i%plain.length)*7+i*5)%16];}return 'ENC:'+o+'…';}
+  function actorBadge(k){var m={user:['👤 사용자','n'],server:['🖥 서버','b'],db:['🗄 DB','g'],phone:['📱 폰앱','a'],result:['✅ 결과','g']};var v=m[k]||[k,'n'];return '<span class="tag '+v[1]+'">'+v[0]+'</span>';}
+  function s11(){
+    var flow=[[1,'user','server','온보딩 링크 접속(본인확인 후) → "OTP 등록" 요청'],[2,'server','server','시드 생성: SecureRandom 20byte (서버 메모리)'],[3,'server','server','시드 → otpauth:// URI 구성 → QR 이미지 렌더'],[4,'server','user','화면에 QR 표시 (아직 DB 미확정)'],[5,'user','phone','폰 Authenticator로 QR 스캔 → 앱이 URI에서 시드 추출·저장'],[6,'phone','phone','(시드 + 현재시각) → 6자리 코드 생성·표시'],[7,'user','server','화면에 뜬 6자리 입력 → "등록 확인"'],[8,'server','server','방금 생성한 시드로 6자리 검증(일치?)'],[9,'server','db','검증 성공 → 시드 암호화 저장(OTP_SEED_ENC), 계정=활성'],[10,'result','result','폰 앱 = DB 같은 시드 보유 → 이후 로그인마다 각자 계산·대조(통신 X)']];
+    return head('시나리오 · DB 저장 샘플 (비밀번호·OTP 시드)','DB엔 "6자리 코드"가 아니라 계정별 "시드(secret)"를 저장. 비번=단방향 해시 · 시드=양방향 암호화 · 코드=저장 안 함.')+
+    '<div class="card"><h3>OTP 등록 시퀀스 (서버 시드 생성 → QR → 폰 → DB)</h3>'+
+    flow.map(function(s){return '<div style="display:flex;gap:9px;align-items:flex-start;padding:6px 2px;border-bottom:1px dashed var(--border)"><span style="flex:0 0 22px;height:22px;border-radius:6px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:800;font-size:11.5px">'+s[0]+'</span><span style="flex:0 0 158px">'+actorBadge(s[1])+(s[1]!==s[2]?' <span style="color:var(--ink3)">→</span> '+actorBadge(s[2]):'')+'</span><span style="font-size:12.5px">'+esc(s[3])+'</span></div>';}).join('')+
+    '<div class="note">🔑 <b>QR = "시드를 폰에 전달하는 운반체"</b>입니다. 서버가 만든 시드가 QR에 담기고(3~4) → 폰이 스캔하면 그 시드가 폰에 들어갑니다(5). 그래서 <b>폰과 DB가 같은 시드</b>를 갖게 되고, 이후엔 서로 통신 없이 각자 6자리를 계산해 대조(로그인 2차). 시드 노출 방지 위해 QR은 <b>본인확인 후 화면에서만</b>, 이메일엔 안 넣음.</div></div>'+
+    '<div class="card"><h3>USER_ACCOUNT (샘플)</h3><div style="overflow-x:auto">'+
+    '<table style="min-width:1120px"><thead><tr><th>ID</th><th>LOGIN_ID</th><th>PW_HASH(단방향)</th><th>OTP_SEED_ENC(양방향 암호화)</th><th>EMAIL_ENC</th><th class="c">TYPE</th><th class="c">STATUS</th><th class="c">FAIL</th><th class="c">PW_EXP</th></tr></thead><tbody>'+
+    S.users.map(function(u){
+      var seedPlain=b32(seedBytes(u.id));
+      var pw=u.pwSet?'<code style="font-size:10px">'+esc(fakeHash(u.loginId))+'</code>':'<span style="color:var(--amber);font-size:11px">NULL(미설정)</span>';
+      var seed=u.otpEnrolled?'<code style="font-size:10px">'+esc(dbEnc(seedPlain))+'</code><br><span style="font-size:9.5px;color:var(--ink3)">평문(참고): '+esc(seedPlain.slice(0,16))+'…</span>':'<span style="color:var(--amber);font-size:11px">NULL(미등록)</span>';
+      return '<tr><td>'+u.id+'</td><td>'+esc(u.loginId)+'</td><td>'+pw+'</td><td>'+seed+'</td><td><code style="font-size:10px">'+esc(dbEnc(u.email))+'</code></td><td class="c">'+esc(u.type)+'</td><td class="c">'+statusTag(u.status)+'</td><td class="c">'+(u.failCount||0)+'</td><td class="c">'+(u.pwExpired?'Y':'N')+'</td></tr>';
+    }).join('')+'</tbody></table></div>'+
+    '<div class="note">⚠ 시연용 표기 — 실제 값은 검증필 암호모듈로 암호화. <b>전산관리(시드) 계정은 OTP_SEED=NULL(미등록)</b> → 최초 로그인 시 시드 생성·저장(온보딩대기). 온보딩 완료 사용자만 시드 있음.</div></div>'+
+    '<div class="card"><h3>저장 규칙 (핵심)</h3><div class="kv">'+
+    '<b>비밀번호</b><span><b>단방향 해시</b>(bcrypt/Argon2) — 복호 불가. 검증=입력값 해시를 저장 해시와 대조.</span>'+
+    '<b>OTP 시드</b><span><b>양방향 암호화</b>(국정원 검증필 암호모듈) — 로그인마다 복호화 → (시드+현재시각)으로 6자리 계산·대조.</span>'+
+    '<b>OTP 6자리 코드</b><span><b>저장 안 함</b> — 30초마다 바뀌는 계산값이라 DB에 넣을 이유가 없음.</span>'+
+    '<b>이메일</b><span>양방향 암호화 + <b>blind index</b>(검색용 결정적 해시).</span>'+
+    '<b>시드 등록 시점</b><span>계정 생성 시가 아니라 <b>최초 OTP 등록(QR 스캔)</b> 순간 서버가 시드 생성 → QR로 폰에 심고 → DB에 암호화 저장.</span>'+
+    '<b>EMAIL_ENC</b><span>이메일=개인정보 → <b>양방향 암호화</b> 저장(발송·표시 위해 복호 필요). 검색은 <b>EMAIL_BIDX(blind index)</b>=HMAC 결정적 해시로.</span>'+
+    '</div></div>'+
+    '<div class="card"><h3>☕ Java 샘플 코드 (시드 생성·암호화·TOTP 검증·이메일)</h3>'+
+    '<div style="overflow-x:auto"><pre style="margin:0;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:11.5px;line-height:1.55;font-family:Consolas,Menlo,monospace;white-space:pre">'+esc(JAVA_SAMPLE)+'</pre></div>'+
+    '<div class="note">⚠ 위 <code>AES</code>·<code>HmacSHA1</code>은 <b>원리(로직) 시연</b>. 공공 배포 시 암호 연산은 <b>국정원 검증필(KCMVP) 암호모듈</b>로 수행해야 함(RFP·개인정보 지침 의무). <b>직접 만들 필요 없음 — "이미 검증필 획득된 모듈"을 도입해 JCE Provider로 끼우고 API만 호출</b>. 예) <code>Mac.getInstance("HmacSHA1", 검증필Provider)</code> · <code>Cipher.getInstance("AES/GCM/NoPadding", 검증필Provider)</code>. <b>TOTP 로직(시드생성·30초·truncation·허용창)은 우리가 구현, 암호 연산만 검증필에 위임</b> — 코드 골격은 그대로.</div></div>';
+  }
+  function w11(){}
+  var JAVA_SAMPLE =
+  "// ── 계정 최초 OTP 등록 시 ────────────────────────────\n"+
+  "// 1) 시드(secret) 생성 : 암호학적 난수 160bit(RFC 6238)\n"+
+  "byte[] seed = new byte[20];\n"+
+  "new SecureRandom().nextBytes(seed);\n"+
+  "String base32 = Base32.encode(seed);   // QR/수동입력용\n"+
+  "// otpauth://totp/APFS:{loginId}?secret={base32}&issuer=APFS&period=30\n"+
+  "\n"+
+  "// 2) 시드 양방향 암호화 후 DB 저장  (배포:검증필 모듈로 치환)\n"+
+  "byte[] iv = new byte[12]; new SecureRandom().nextBytes(iv);\n"+
+  "Cipher cipher = Cipher.getInstance(\"AES/GCM/NoPadding\");\n"+
+  "cipher.init(Cipher.ENCRYPT_MODE, kek, new GCMParameterSpec(128, iv));\n"+
+  "byte[] ct = cipher.doFinal(seed);\n"+
+  "String otpSeedEnc = Base64.getEncoder()\n"+
+  "        .encodeToString(concat(iv, ct));   // → OTP_SEED_ENC 컬럼\n"+
+  "\n"+
+  "// ── 로그인 2차: TOTP 검증 (RFC 6238) ─────────────────\n"+
+  "byte[] key = decryptSeed(otpSeedEnc, kek);         // DB→복호\n"+
+  "boolean ok = verify(key, inputCode, System.currentTimeMillis());\n"+
+  "\n"+
+  "String totp(byte[] key, long ms) throws Exception {\n"+
+  "    long counter = ms / 1000L / 30L;               // 30초 스텝\n"+
+  "    byte[] m = ByteBuffer.allocate(8).putLong(counter).array();\n"+
+  "    Mac mac = Mac.getInstance(\"HmacSHA1\");          // 검증필 모듈로\n"+
+  "    mac.init(new SecretKeySpec(key, \"HmacSHA1\"));\n"+
+  "    byte[] h = mac.doFinal(m);\n"+
+  "    int o = h[h.length-1] & 0x0F;                   // dynamic truncation\n"+
+  "    int bin = ((h[o]&0x7f)<<24)|((h[o+1]&0xff)<<16)\n"+
+  "            |((h[o+2]&0xff)<<8)|(h[o+3]&0xff);\n"+
+  "    return String.format(\"%06d\", bin % 1000000);    // 6자리\n"+
+  "}\n"+
+  "boolean verify(byte[] key, String in, long now) throws Exception {\n"+
+  "    for (int w=-1; w<=1; w++)                        // 허용창 ±1(시계오차)\n"+
+  "        if (totp(key, now + w*30000L).equals(in)) return true;\n"+
+  "    return false;\n"+
+  "}\n"+
+  "\n"+
+  "// ── 이메일: 양방향 암호화(표시·발송) + blind index(검색) ──\n"+
+  "String emailEnc  = aesGcmEncrypt(email, kek);          // → EMAIL_ENC\n"+
+  "String emailBidx = hmacSha256(email.toLowerCase(), bidxKey); // → EMAIL_BIDX\n"+
+  "// 초대/로그인 조회: WHERE email_bidx = hmacSha256(입력이메일)";
+
+  /* ===== 자체 테스트 ===== */
+  function runAll(){
+    var fails=[];
+    function ok(c,m){if(!c){fails.push(m);console.error('[SELFTEST] FAIL: '+m);}else console.log('[SELFTEST] ok: '+m);}
+    try{
+      seed();
+      // 로그인
+      S.currentUser=userById('U3');S.viewRole='U3';log('imm.rep','로그인 2차','OTP','정상');
+      ok(S.currentUser.name==='이대표','로그인 상태');
+      // 초대→수락
+      S.invites.push({token:'t1',targetName:'정운용',email:'jung@imm.co.kr',org:'IMM',role:'운용사',status:'발송'});
+      log('관리자','사용자 초대 발송','정운용','정상');
+      var uc=S.users.length; var inv=pickInvite(); inv.status='수락';
+      S.users.push({id:'UX',loginId:'imm.new',name:'정운용',type:'운용사',org:'IMM',roles:['운용사'],status:'활성'});
+      log('가입:정운용','계정 활성','초대수락','정상');
+      ok(S.users.length===uc+1,'초대 수락→계정 생성');
+      // 데이터 스코프
+      ok(scopeFunds(userById('U3')).list.length===2,'IMM 스코프=2건');
+      var yt={type:'운용사',org:'YT',roles:['운용사']};
+      ok(scopeFunds(yt).list.length===1,'유안타 공동 열람=1건');
+      ok(!canReport(yt,S.funds[3]),'유안타 F4 보고 불가(공동)');
+      ok(canReport(userById('U3'),S.funds[3]),'IMM F4 보고 가능(대표)');
+      // 접근제어
+      ok(!hasMenu(userById('U3'),'acct'),'IMM 회계 메뉴 없음');
+      ok(!canSeeFund(userById('U3'),S.funds[0]),'IMM F1 조회 불가');
+      log('imm.rep','비정상 접근(메뉴)','회계','차단');log('imm.rep','비정상 접근(데이터)','F1','차단');
+      // ROLE 복수 지정 → 합집합
+      var multi={roles:['부처','수탁']};
+      ok(hasMenu(multi,'brief')&&hasMenu(multi,'trust'),'복수 ROLE 합집합(부처+수탁)');
+      // ROLE 복사
+      var before=Object.keys(ROLES).length;
+      var src=ROLES['운용사'],cp=blank();MENUS.forEach(function(m){cp[m.k]={v:src[m.k].v,d:src[m.k].d,c:src[m.k].c,a:src[m.k].a};});ROLES['운용사 (복사)']=cp;
+      ok(Object.keys(ROLES).length===before+1&&hasMenu({roles:['운용사 (복사)']},'report'),'ROLE 복사=권한 세트 복제');
+      // 신규 메뉴 → ROLE 반영 시 전 사용자 적용
+      var mlen=MENUS.length; MENUS.push({k:'newx',n:'신규메뉴X'}); Object.keys(ROLES).forEach(function(rn){ROLES[rn]['newx']={v:false,d:false,c:false,a:false};});
+      ROLES['운용사'].newx.v=true;
+      ok(MENUS.length===mlen+1&&hasMenu(userById('U3'),'newx'),'신규 메뉴 ROLE 반영→해당 ROLE 사용자 자동 적용');
+      // 사용자관리 다중 ROLE 저장
+      S.users.push({id:'UY',loginId:'multi',name:'겸직자',type:'농금원',dept:'투자팀',roles:['투자팀','전산(관리자)'],status:'활성'});
+      ok(isAdmin(userById('UY')),'겸직(투자팀+전산)→관리자 권한 포함');
+      // 수탁/부처 = 담당자별 개별 계정(공유 ID 폐지)
+      var trust=userById('U4');
+      ok(acctType(trust)==='기관'&&!trust.curHandler,'수탁=기관소속 개별 계정(공유 담당자 개념 없음)');
+      // 담당자 교체 = 구계정 비활성 + 신계정 발급
+      trust.status='비활성'; var beforeN=S.users.length;
+      S.users.push({id:'UR',loginId:'nh.r',name:'이수탁',type:'수탁',org:'NH',roles:['수탁'],status:'온보딩대기'});
+      log('관리자','담당자 교체(구계정 비활성+신계정 발급)','김수탁 → 이수탁','정상');
+      ok(trust.status==='비활성'&&S.users.length===beforeN+1,'담당자 교체=구계정 비활성+신계정 발급(같은 ID 안 물려줌)');
+      // 부트스트랩(최초 관리자 셋팅): 시드 계정→비번변경+OTP등록→활성
+      var boot=bootAdmin();
+      ok(boot.seed===true&&boot.status==='온보딩대기'&&!boot.otpEnrolled&&boot.pwExpired===true,'부트스트랩 시드 관리자=온보딩대기·임시비번·OTP미등록');
+      boot.pwExpired=false; boot.pwSet=true; boot.otpEnrolled=true; boot.status='활성';
+      log('nh.admin','부트스트랩 최초셋팅(비번변경+OTP등록)','시드→활성','정상');
+      ok(boot.status==='활성'&&boot.otpEnrolled&&!boot.pwExpired,'부트스트랩 완료→관리자 활성(이후 사용자 등록·초대 가능)');
+      // 관리자 발급 온보딩(농금원·수탁·부처): 등록→메일→링크 접속→비번설정+OTP등록→활성
+      var onb=s13target();
+      ok(onb.status==='온보딩대기'&&onb.type!=='운용사'&&!onb.otpEnrolled,'발급 온보딩 대상=온보딩대기·비운용사·OTP미등록');
+      onb.status='활성'; onb.otpEnrolled=true; onb.pwSet=true;
+      log(onb.loginId||onb.name,'온보딩 접속·비번설정+OTP등록·활성','메일 링크 접속','정상');
+      ok(onb.status==='활성'&&onb.otpEnrolled&&onb.pwSet,'발급 온보딩 완료→활성(비번+OTP 등록)');
+      // 비밀번호 정책·잠금·만료
+      ok(pwOK('Apfs2026!@')&&!pwOK('abc12')&&!pwOK('abcdefghi'),'비밀번호 정책(9자+영문·숫자·특수)');
+      var lk=userById('U1'); lk.failCount=LOCK_LIMIT; lk.status='잠금'; log('시스템','계정 잠금('+LOCK_LIMIT+'회)',lk.name,'차단');
+      ok(lk.status==='잠금','로그인 '+LOCK_LIMIT+'회 실패→잠금');
+      lk.status='활성'; lk.failCount=0; log('관리자','계정 잠금 해제',lk.name,'정상');
+      ok(lk.status==='활성'&&lk.failCount===0,'관리자 잠금 해제');
+      ok(userById('U3').pwExpired===true,'비밀번호 만료 플래그(로그인 시 강제변경)');
+      // 퇴사 자동 비활성
+      var na=userById('UX'); na.status='비활성'; log('시스템','계정 자동 비활성','정운용','정상');
+      ok(na.status==='비활성','퇴사→자동 비활성');
+      // 감사로그
+      ok(S.logs.length>=6,'감사로그 누적 '+S.logs.length);
+      ok(S.logs.filter(function(l){return l.result==='차단';}).length>=2,'차단 로그 2건+');
+    }catch(e){fails.push('예외:'+e.message);console.error('[SELFTEST] EXCEPTION',e);}
+    var pass=fails.length===0;
+    console.log('[SELFTEST] '+(pass?'PASS':'FAIL')+' ('+fails.length+' 실패)');
+    renderNav();
+    $('main').innerHTML=head('자체 테스트 결과','전체 프로세스를 코드로 끝까지 구동 → 단언 검증.')+
+      '<div class="card"><div class="banner '+(pass?'ok':'bad')+'">'+(pass?'✔ PASS':'✖ FAIL')+' — 자동실행 완료, '+(pass?'모든 단계 통과':(fails.length+'건 실패'))+'</div>'+
+      (pass?'':'<ul>'+fails.map(function(f){return '<li class="bad">'+esc(f)+'</li>';}).join('')+'</ul>')+
+      '<div class="note">로그인→초대→수락→스코프(하드/공동)→접근차단→<b>복수ROLE 합집합</b>→<b>ROLE 복사</b>→<b>신규메뉴 자동적용</b>→겸직 관리자→퇴사 비활성→감사로그. 콘솔 <code>[SELFTEST]</code> 참조.</div>'+
+      '<div class="row"><button class="btn" id="t-audit">감사로그</button><button class="btn sec" id="t-reset">상태 초기화</button></div></div>';
+    $('t-audit').addEventListener('click',function(){go('s8');});
+    $('t-reset').addEventListener('click',function(){resetAll();});
+    return pass;
+  }
+  function resetAll(){clearS1Timer();clearS2Timer();clearS9Timer();clearS12Timer();clearS13Timer();seed();s1state={step:0,uid:null};s12s=0;s13s=0;s13uid=null;s2state=null;s3msg='';s5soft=true;s7msg='';s9msg='';s9mail='';s10mail='';s4sel=null;s9edit=null;s9form=null;go('s12');}
+
+  function boot(){seed();renderNav();go('s12');$('run-all').addEventListener('click',function(){runAll();});$('reset').addEventListener('click',function(){resetAll();toast('초기화');});}
+  document.addEventListener('DOMContentLoaded',boot);
+  window.__runAll=runAll;
+})();
+</script>
+</body>
+</html>

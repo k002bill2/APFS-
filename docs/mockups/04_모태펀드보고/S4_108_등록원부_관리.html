@@ -1,0 +1,668 @@
+<title>등록원부 관리</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --danger:#E5484D;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;--danger:#F26E71;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F26E71;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:82ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px;overflow-x:auto;min-width:0;scrollbar-width:thin}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;flex:none;white-space:nowrap}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date],input[type=number],textarea{border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  select,input[type=text],input[type=date],input[type=number]{height:36px}
+  textarea{padding:8px 10px;resize:vertical}
+  input[readonly]{background:var(--surface-3);color:var(--ink-2)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filtergrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 16px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;width:76px;text-align:right;white-space:nowrap}
+  .field select,.field input[type=text]{flex:1;min-width:0}
+  .searchbtnrow{display:flex;justify-content:center;margin-top:14px}
+  .btn{height:38px;padding:0 24px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 14px;font-size:13px}
+  .btn-xs{height:28px;padding:0 10px;font-size:12px;border-radius:5px}
+  .btn-danger{color:var(--danger);border-color:var(--border-strong);background:var(--surface)}
+  .btn-danger:hover{background:var(--amber-weak)}
+  .listbar{display:flex;align-items:center;margin:2px 0 8px;flex-wrap:wrap;gap:8px}
+  .listbar .cap{font-size:15px;font-weight:700}
+  .listbar .cap b{color:var(--primary)}
+  .listbar .acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .outwrap{position:relative}
+  .outmenu{position:absolute;top:calc(100% + 4px);left:0;z-index:60;width:210px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .outmenu-item{display:block;width:100%;text-align:left;padding:8px 10px;border:none;background:none;border-radius:6px;font-size:13px;font-family:inherit;color:var(--ink);cursor:pointer}
+  .outmenu-item:hover{background:var(--surface-3)}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;min-width:1560px;width:100%}
+  table.grid th,table.grid td{padding:8px 10px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:left}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong);position:sticky;top:0;z-index:2}
+  table.grid th.c,table.grid td.c{text-align:center}
+  table.grid th.r,table.grid td.r{text-align:right}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  table.grid tr.inact td{color:var(--ink-3)}
+  .btncell{display:flex;gap:5px;flex-wrap:nowrap}
+  .switch{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--ink-2)}
+  .switch input{accent-color:var(--primary)}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:120;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  /* modal */
+  .scrim{position:fixed;inset:0;background:rgba(16,24,40,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;animation:fade .15s ease}
+  .modal{width:760px;max-width:100%;max-height:90vh;overflow-y:auto;overflow-x:hidden;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);animation:pop .18s ease}
+  .modal.wmodal{width:940px}
+  .modal-head{display:flex;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:3}
+  .modal-head h2{font-size:18px;font-weight:800;margin:0}
+  .modal-head .pkbadge{margin-left:12px;font-size:12px;font-weight:700;padding:2px 9px;border-radius:5px;background:var(--primary-weak);color:var(--primary)}
+  .icon-btn{margin-left:auto;width:34px;height:34px;border:none;background:none;color:var(--ink-3);font-size:22px;line-height:1;border-radius:6px}
+  .icon-btn:hover{background:var(--surface-3);color:var(--ink)}
+  .modal-body{padding:18px 22px}
+  .modal-body.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px}
+  .frow{display:grid;grid-template-columns:120px minmax(0,1fr);align-items:center;gap:10px}
+  .frow.full{grid-column:1 / -1}
+  .frow.top{align-items:start}
+  .frow>*{min-width:0}
+  .frow>label{justify-self:start;display:flex;align-items:center}
+  .modal-body select,.modal-body input,.modal-body textarea{width:100%;min-width:0;box-sizing:border-box}
+  .req{color:var(--danger);margin-left:2px}
+  .flash-err{outline:2px solid var(--danger)!important;box-shadow:0 0 0 3px rgba(229,72,77,.25)!important}
+  .readonly{height:36px;display:flex;align-items:center;padding:0 11px;border-radius:var(--radius-sm);background:var(--surface-3);color:var(--ink-2);font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* section blocks in management modals */
+  .msec{border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px;background:var(--surface-2)}
+  .msec>h3{font-size:14px;font-weight:800;margin:0 0 12px;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .msec>h3 .sacts{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+  .msec>h4{font-size:13px;font-weight:700;margin:14px 0 8px;color:var(--ink-2);display:flex;align-items:center;gap:8px}
+  .msec>h4 .sacts{margin-left:auto;display:flex;gap:6px}
+  .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin-bottom:12px}
+  .daterange{display:flex;align-items:center;gap:8px}
+  .daterange span{color:var(--ink-3)}
+  .sactionrow{display:flex;justify-content:flex-end;margin:0 0 8px}
+  .mgridwrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+  table.mgrid{border-collapse:collapse;width:100%;min-width:520px}
+  table.mgrid th,table.mgrid td{padding:7px 9px;font-size:12.5px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+  table.mgrid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center}
+  table.mgrid td.c,table.mgrid th.c{text-align:center}
+  table.mgrid td.r,table.mgrid th.r{text-align:right}
+  table.mgrid tbody tr:hover td{background:var(--surface-2)}
+  .emptyrow td{text-align:center;color:var(--ink-3);padding:16px}
+  .ro-sec{margin-bottom:22px}
+  .ro-sec:last-child{margin-bottom:4px}
+  .ro-sec-t{font-size:13.5px;font-weight:800;color:var(--ink);margin:0 0 14px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+  .ro-row{display:grid;grid-template-columns:110px minmax(0,1fr);align-items:center;gap:10px;margin-bottom:12px}
+  .ro-row:last-child{margin-bottom:0}
+  .ro-row>label{justify-self:start;display:flex;align-items:center}
+  .ro-ctl{display:flex;align-items:center;gap:8px;min-width:0}
+  .w-sm{width:160px}
+  .unit{font-size:12.5px;color:var(--ink-3)}
+  .datefield{position:relative;display:flex;align-items:center;flex:1;min-width:0}
+  .datefield input{width:100%;padding-right:32px;cursor:pointer}
+  .datefield .cal{position:absolute;right:9px;width:17px;height:17px;color:var(--ink-3);pointer-events:none}
+  .inputwbtn{display:flex;gap:6px;min-width:0}
+  .iconbtn-sq{flex:none;width:36px;height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--ink-2);display:inline-flex;align-items:center;justify-content:center}
+  .iconbtn-sq:hover{background:var(--surface-3)}
+  .dropzone{border:2px dashed var(--border-strong);border-radius:10px;background:var(--surface-2);padding:22px 16px;text-align:center}
+  .dropzone.drag{border-color:var(--primary);background:var(--primary-weak)}
+  .dropzone p{margin:0 0 4px;font-size:13px;color:var(--ink-2)} .dropzone .or{font-size:12px;color:var(--ink-3);margin:0 0 8px}
+  .filelist{display:flex;flex-direction:column;gap:6px;margin-top:12px}.filelist:empty{display:none}
+  .fileitem{display:flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-size:12.5px}
+  .fileitem .x{margin-left:auto;border:none;background:none;color:var(--ink-3);font-size:16px;cursor:pointer}
+  .badge-file{flex:none;padding:1px 6px;border-radius:4px;background:var(--primary);color:#fff;font-size:10px;font-weight:800}
+  .radio-inline{display:flex;gap:14px;flex-wrap:wrap;align-items:center} .radio-inline label{display:inline-flex;align-items:center;gap:5px;font-weight:500;cursor:pointer;font-size:13.5px} .radio-inline input{accent-color:var(--primary)}
+  .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid var(--border);background:var(--surface-2);position:sticky;bottom:0;z-index:3}
+  .modal-foot .btn{height:40px}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  @media (max-width:900px){.filtergrid{grid-template-columns:1fr}.lnb{display:none!important}.modal-body.grid2,.formgrid{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">S4 · 등록원부 · KRDS TO-BE</p>
+  <h1 class="doc-title">등록원부 관리</h1>
+  <p class="doc-sub">조합(자펀드) 등록원부를 검색·조회하고, 등록원부 입력/수정·조합원 및 납입출자금 관리·전문인력 관리를 수행하는 관리 화면. 등록원부 입력 팝업은 항목별 변경 이력을 함께 관리(각 항목 + 변경/등록일자 이력 그리드). 편집 팝업이 있는 관리화면이라 금액 단위전환 토글은 규칙상 미적용.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">보</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="../01_투자자산관리/S1_01_투자심의관리.html" role="menuitem"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="../02_조기경보/S2_46_메인화면.html" role="menuitem"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem" class="on"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">모태펀드보고시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="03_연도별투자현황/mockup/연도별투자현황_목업.html">모태펀드</a>
+          <a href="#" class="on" aria-current="page">등록원부</a>
+          <a href="S4_111_사용자관리.html">관리자</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+      </div>
+      <div class="subtab" aria-label="자펀드 하위 메뉴">
+        <span class="on">등록원부 관리</span>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">등록원부</div>
+          <nav aria-label="등록원부 메뉴">
+            <a href="#" class="on" aria-current="page">등록원부 관리</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">자펀드 · 등록원부 · 등록원부관리</div>
+          <div class="h1row"><h1>등록원부관리</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filtergrid">
+              <div class="field"><label for="f-nm">명칭</label><input type="text" id="f-nm" placeholder="조합 명칭 검색"></div>
+              <div class="field"><label id="lb-inact">비활성원부</label>
+                <span class="radio-inline" role="radiogroup" aria-labelledby="lb-inact">
+                  <label><input type="radio" name="f-inact" checked>제외</label>
+                  <label><input type="radio" name="f-inact">포함</label>
+                </span>
+              </div>
+            </div>
+            <div class="searchbtnrow"><button class="btn" id="search">조회</button></div>
+          </div>
+
+          <div class="listbar">
+            <div class="cap">총 <b id="cnt">3</b>건</div>
+            <div class="acts">
+              <div class="outwrap">
+                <button type="button" class="btn btn-sec btn-sm" id="btn-output" aria-haspopup="true" aria-expanded="false">출력</button>
+                <div class="outmenu" id="outMenu" role="menu" aria-label="출력 선택" hidden>
+                  <button type="button" class="outmenu-item" id="out-reg" role="menuitem">등록원부 출력</button>
+                  <button type="button" class="outmenu-item" id="out-hist" role="menuitem">등록원부 발급이력 출력</button>
+                </div>
+              </div>
+              <button class="btn btn-sm" id="btn-new">등록원부입력</button>
+              <button class="btn btn-sec btn-sm" id="btn-upload">등록원부업로드</button>
+              <button type="button" class="review" data-rec="업로드 팝업 항목(드래그앤드롭·파일선택·파일목록·XLSX/CSV 최대 20MB) 구성 확인 필요" data-dat="엑셀엔 '등록원부업로드' 버튼 1줄만 존재하고 팝업 내부 항목을 정의한 행이 없음 — 팝업 UI는 임의 구성" aria-label="검토필요: 등록원부업로드 팝업 구성">!</button>
+              <button class="btn btn-sec btn-sm" id="excel">엑셀</button>
+            </div>
+          </div>
+          <div class="scroller">
+            <table class="grid">
+              <caption class="visually-hidden">등록원부 목록 — 등록번호·명칭·존속기간·출자약정총액·업무집행조합원·관리 버튼 및 활성상태. 등록원부 출력·발급이력 출력은 목록 상단 "출력" 버튼에서 선택</caption>
+              <thead>
+                <tr>
+                  <th class="c" scope="col">No</th>
+                  <th class="c" scope="col">등록번호</th>
+                  <th scope="col">명칭</th>
+                  <th class="c" scope="col">존속기간</th>
+                  <th class="r" scope="col">출자약정총액(원)</th>
+                  <th scope="col">업무집행조합원명</th>
+                  <th class="c" scope="col">관리</th>
+                  <th class="c" scope="col">활성상태</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  var CAL='<svg class="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg>';
+
+  /* ── 메인 그리드 데이터 (행1=원천 샘플, 행2·3=도메인 정합 샘플) ── */
+  var DATA=[
+    {no:1,regno:'2011-10',nm:'유니 수산식품 투자조합 1호',dur:'2011-12-26 ~ 2018-12-25',amt:'16,000,000,000',gp:'(주)유니창업투자',active:true},
+    {no:2,regno:'2012-05',nm:'농식품 벤처투자조합 2호',dur:'2012-06-01 ~ 2019-05-31',amt:'20,000,000,000',gp:'(주)케이벤처파트너스',active:true},
+    {no:3,regno:'2015-03',nm:'수산식품 성장투자조합',dur:'2015-04-01 ~ 2023-03-31',amt:'12,000,000,000',gp:'한국투자파트너스',active:false}
+  ];
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  function render(){
+    $('rows').innerHTML=DATA.map(function(r){
+      return '<tr'+(r.active?'':' class="inact"')+'>'+
+        '<td class="c">'+r.no+'</td>'+
+        '<td class="c">'+esc(r.regno)+'</td>'+
+        '<td>'+esc(r.nm)+'</td>'+
+        '<td class="c">'+esc(r.dur)+'</td>'+
+        '<td class="r">'+esc(r.amt)+'</td>'+
+        '<td>'+esc(r.gp)+'</td>'+
+        '<td class="c"><div class="btncell">'+
+          '<button class="btn btn-sec btn-xs js-edit" data-no="'+r.no+'">수정</button>'+
+          '<button class="btn btn-sec btn-xs js-members" data-no="'+r.no+'">조합원관리</button>'+
+          '<button class="btn btn-sec btn-xs js-experts" data-no="'+r.no+'">전문인력관리</button>'+
+        '</div></td>'+
+        '<td class="c"><label class="switch"><input type="checkbox" class="js-toggle" data-no="'+r.no+'"'+(r.active?' checked':'')+'><span>'+(r.active?'활성':'비활성')+'</span></label></td>'+
+      '</tr>';
+    }).join('');
+    $('cnt').textContent=DATA.length;
+  }
+  render();
+
+  /* ── 검토필요 마커 ── */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null; if(!m)return; e.preventDefault();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+m.getAttribute('data-rec')+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+m.getAttribute('data-dat')+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true)},0);
+  });
+
+  /* ── scroll lock / toast ── */
+  var lockN=0,savedPad='';
+  function lock(){if(lockN++===0){var sw=window.innerWidth-document.documentElement.clientWidth;savedPad=document.body.style.paddingRight;if(sw>0)document.body.style.paddingRight=sw+'px';document.body.style.overflow='hidden';}}
+  function unlock(){if(lockN>0&&--lockN===0){document.body.style.overflow='';document.body.style.paddingRight=savedPad;}}
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:130;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+
+  /* 목업 액션 버튼 공통 */
+  document.addEventListener('click',function(e){var b=e.target.closest?e.target.closest('.js-act'):null;if(b){e.preventDefault();toast(b.getAttribute('data-msg')||'처리되었습니다 (목업)')}});
+  /* 활성/비활성 토글 */
+  document.addEventListener('change',function(e){var c=e.target.closest?e.target.closest('.js-toggle'):null;if(!c)return;var no=+c.getAttribute('data-no');var row=DATA.filter(function(r){return r.no===no})[0];if(row){row.active=c.checked;render();toast(row.active?'등록원부를 활성화했습니다 (목업)':'등록원부를 비활성화했습니다 (목업)')}});
+
+  /* ── 공통 모달 인프라 ── */
+  var scrim=null,lastFocus=null;
+  function trap(c){c.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();closeModal();return}if(e.key!=='Tab')return;var f=Array.prototype.filter.call(c.querySelectorAll('button,input,select,textarea,[tabindex]:not([tabindex="-1"])'),function(el){return !el.disabled&&el.offsetParent!==null});if(!f.length)return;var first=f[0],last=f[f.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}})}
+  function closeModal(){closeR();if(scrim){scrim.remove();scrim=null;unlock()}if(lastFocus&&lastFocus.focus)lastFocus.focus()}
+  function openModal(o){
+    lastFocus=document.activeElement;
+    scrim=document.createElement('div');scrim.className='scrim';
+    scrim.addEventListener('mousedown',function(e){if(e.target===scrim)closeModal()});
+    scrim.innerHTML='<div class="modal'+(o.wide?' wmodal':'')+'" role="dialog" aria-modal="true" aria-labelledby="mdl-t">'+
+      '<div class="modal-head"><h2 id="mdl-t">'+o.title+'</h2>'+(o.badge?'<span class="pkbadge">'+o.badge+'</span>':'')+'<button class="icon-btn js-close" aria-label="닫기">×</button></div>'+
+      '<div class="modal-body'+(o.grid2?' grid2':'')+'">'+o.body+'</div>'+
+      '<div class="modal-foot">'+o.foot+'</div></div>';
+    lock();document.body.appendChild(scrim);
+    var m=scrim.querySelector('.modal');trap(m);
+    Array.prototype.forEach.call(scrim.querySelectorAll('.js-close'),function(b){b.addEventListener('click',closeModal)});
+    if(o.after)o.after(scrim);
+    setTimeout(function(){var el=scrim.querySelector('.modal-body input:not([readonly]),.modal-body select,.modal-body textarea,.modal-body button');if(el)el.focus()},0);
+  }
+  function frow(l,c){return '<div class="frow"><label>'+l+'</label>'+c+'</div>'}
+  function frowFull(l,c){return '<div class="frow full"><label>'+l+'</label>'+c+'</div>'}
+  function emptyG(cols,txt){return '<tr class="emptyrow"><td colspan="'+cols+'">'+(txt||'변경 이력이 없습니다.')+'</td></tr>'}
+  function rowActs(){return '<button type="button" class="btn btn-sec btn-xs js-act" data-msg="이력 수정 (목업)">수정</button> <button type="button" class="btn btn-danger btn-xs js-act" data-msg="이력 삭제 (목업)">삭제</button>'}
+
+  /* ── 팝업 A: 등록원부 입력/수정 (단일 폼 2모드, PK=등록번호) ── */
+  function histSec(key,title,inputHtml,gridHead,gridBody){
+    return '<div class="msec"><h3>'+title+'<span class="sacts"><button type="button" class="btn btn-sec btn-sm js-histadd" data-sec="'+key+'">추가</button></span></h3>'+
+      inputHtml+
+      '<div class="mgridwrap"><table class="mgrid"><thead><tr>'+gridHead+'</tr></thead><tbody id="hist-'+key+'">'+gridBody+'</tbody></table></div></div>';
+  }
+  function todayStr(){var dt=new Date();var p=function(n){return (n<10?'0':'')+n};return dt.getFullYear()+'-'+p(dt.getMonth()+1)+'-'+p(dt.getDate())}
+  function clearEmptyRow(tb){var e=tb.querySelector('tr.emptyrow');if(e)e.remove()}
+  function flashErr(input,msg){
+    toast(msg);
+    if(!input)return;
+    input.focus();
+    input.classList.add('flash-err');
+    setTimeout(function(){input.classList.remove('flash-err')},1200);
+  }
+  function addHistRow(sec){
+    var tb=$('hist-'+sec); if(!tb)return;
+    var t=todayStr(),tr='';
+    if(sec==='nm'){
+      var inp=$('f-ldg-nm'),v=inp.value.trim(); if(!v){flashErr(inp,'조합명칭을 입력하세요');return}
+      tr='<tr><td>'+esc(v)+'</td><td class="c">'+t+'</td><td class="c">'+t+'</td><td class="c">'+rowActs()+'</td></tr>';
+    }else if(sec==='dur'){
+      var i1=$('f-ldg-dur1'),i2=$('f-ldg-dur2'),s=i1.value,e2=i2.value;
+      if(!s){flashErr(i1,'존속기간 시작일을 입력하세요');return}
+      if(!e2){flashErr(i2,'존속기간 종료일을 입력하세요');return}
+      tr='<tr><td class="c">'+s+'</td><td class="c">'+e2+'</td><td class="c">'+t+'</td><td class="c">'+t+'</td><td class="c">'+rowActs()+'</td></tr>';
+    }else if(sec==='addr'){
+      var inp=$('f-ldg-addr'),v=inp.value.trim(); if(!v){flashErr(inp,'소재지를 입력하세요');return}
+      tr='<tr><td>'+esc(v)+'</td><td class="c">'+t+'</td><td class="c">'+t+'</td><td class="c">'+rowActs()+'</td></tr>';
+    }else if(sec==='amt'){
+      var inp=$('f-ldg-amt'),v=inp.value.trim(); if(!v){flashErr(inp,'출자약정총액을 입력하세요');return}
+      tr='<tr><td class="r">'+esc(v)+'</td><td class="c">'+t+'</td><td class="c">'+t+'</td><td class="c">'+rowActs()+'</td></tr>';
+    }else if(sec==='gpname'){
+      var inp=$('f-ldg-gpname'),v=inp.value.trim(); if(!v){flashErr(inp,'업무집행조합원 명칭을 입력하세요');return}
+      tr='<tr><td>'+esc(v)+'</td><td class="c">'+t+'</td><td class="c">'+t+'</td><td class="c">'+rowActs()+'</td></tr>';
+    }else if(sec==='gpaddr'){
+      var inp=$('f-ldg-gpaddr'),v=inp.value.trim(); if(!v){flashErr(inp,'업무집행조합원의 주소를 입력하세요');return}
+      tr='<tr><td>'+esc(v)+'</td><td class="c">'+t+'</td><td class="c">'+t+'</td><td class="c">'+rowActs()+'</td></tr>';
+    }
+    if(!tr)return;
+    clearEmptyRow(tb);
+    tb.insertAdjacentHTML('afterbegin',tr);
+    toast('변경 이력이 추가되었습니다 (목업)');
+  }
+  document.addEventListener('click',function(e){
+    var b=e.target.closest?e.target.closest('.js-histadd'):null; if(!b)return;
+    addHistRow(b.getAttribute('data-sec'));
+  });
+  function openLedger(mode,row){
+    var isEdit=(mode==='edit');
+    var d=row||{regno:'',nm:''};
+    var regnoField=isEdit
+      ? '<input type="text" value="'+esc(d.regno||'')+'" readonly aria-label="등록번호">'
+      : '<input type="text" placeholder="예: 2025-01" aria-label="등록번호">';
+    var body=
+      histSec('nm','조합 명칭 / 등록번호',
+        '<div class="formgrid">'+
+          frow('등록번호<span class="req">*</span>',regnoField)+
+          frow('조합명칭<span class="req">*</span>','<input type="text" id="f-ldg-nm" value="'+esc(d.nm||'')+'" placeholder="조합 명칭">')+
+        '</div>',
+        '<th>조합명</th><th class="c">변경일자</th><th class="c">등록일자</th><th class="c">관리</th>',
+        emptyG(4))+
+      histSec('dur','존속기간',
+        '<div class="formgrid"><div class="frow"><label>존속기간</label><div class="daterange"><input type="date" min="1900-01-01" max="2099-12-31" id="f-ldg-dur1" value="'+(isEdit?'2011-12-26':'')+'" aria-label="존속기간 시작일"><span>~</span><input type="date" min="1900-01-01" max="2099-12-31" id="f-ldg-dur2" value="'+(isEdit?'2018-12-25':'')+'" aria-label="존속기간 종료일"></div></div></div>',
+        '<th class="c">시작일</th><th class="c">종료일</th><th class="c">변경일자</th><th class="c">등록일자</th><th class="c">관리</th>',
+        emptyG(5))+
+      histSec('addr','소재지',
+        '<div class="formgrid"><div class="frow full"><label>소재지</label><span class="inputwbtn"><input type="text" id="f-ldg-addr" value="'+(isEdit?'서울특별시 강남구 역삼로 110 태양21빌딩 10층':'')+'" placeholder="주소 검색으로 입력"><button type="button" class="iconbtn-sq" id="f-ldg-addr-btn" aria-label="소재지 검색"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button></span></div></div>',
+        '<th>소재지</th><th class="c">변경일자</th><th class="c">등록일자</th><th class="c">관리</th>',
+        isEdit?('<tr><td>서울특별시 종로구 사직로 8길 24 경희궁의 아침 2단지 820호</td><td class="c">2015-10-01</td><td class="c">2015-10-06</td><td class="c">'+rowActs()+'</td></tr>'):emptyG(4))+
+      histSec('amt','출자약정총액',
+        '<div class="formgrid"><div class="frow"><label>출자약정총액</label><input type="text" id="f-ldg-amt" inputmode="numeric" value="'+(isEdit?'16,000,000,000':'')+'" placeholder="원" style="text-align:right"></div></div>',
+        '<th class="r">출자약정총액</th><th class="c">변경일자</th><th class="c">등록일자</th><th class="c">관리</th>',
+        emptyG(4))+
+      histSec('gpname','업무집행조합원 명칭',
+        '<div class="formgrid"><div class="frow full"><label>업무집행조합원 명칭</label><input type="text" id="f-ldg-gpname" value="'+(isEdit?'(주)유니창업투자':'')+'" placeholder="업무집행조합원 명칭"></div></div>',
+        '<th>업무집행조합원 명칭</th><th class="c">변경일자</th><th class="c">등록일자</th><th class="c">관리</th>',
+        emptyG(4))+
+      histSec('gpaddr','업무집행조합원의 주소',
+        '<div class="formgrid"><div class="frow full"><label>업무집행조합원의 주소</label><span class="inputwbtn"><input type="text" id="f-ldg-gpaddr" value="'+(isEdit?'서울특별시 강남구 역삼로 110 태양21빌딩 10층':'')+'" placeholder="주소 검색으로 입력"><button type="button" class="iconbtn-sq" id="f-ldg-gpaddr-btn" aria-label="업무집행조합원의 주소 검색"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button></span></div></div>',
+        '<th>업무집행조합원의 주소</th><th class="c">변경일자</th><th class="c">등록일자</th><th class="c">관리</th>',
+        isEdit?('<tr><td>서울특별시 종로구 사직로 8길 24 경희궁의 아침 2단지 820호</td><td class="c">2015-10-01</td><td class="c">2015-10-06</td><td class="c">'+rowActs()+'</td></tr>'):emptyG(4))+
+      '<div class="msec"><h3>출자 좌당 금액 / 최초등록</h3><div class="formgrid">'+
+        frow('출자1좌(座)의 금액','<input type="text" inputmode="numeric" value="'+(isEdit?'100,000,000':'')+'" placeholder="원" style="text-align:right">')+
+        frow('최초등록 연월일','<input type="date" min="1900-01-01" max="2099-12-31" value="'+(isEdit?'2011-12-26':'')+'" aria-label="최초등록 연월일">')+
+      '</div></div>';
+    openModal({
+      title:isEdit?'등록원부 수정':'등록원부 입력',
+      badge:isEdit?('등록번호 '+esc(d.regno)+' · 잠금'):'신규 · PK 편집',
+      wide:true,body:body,
+      foot:'<button class="btn btn-sec js-close">닫기</button><button class="btn js-save">저장</button>',
+      after:function(sc){
+        sc.querySelector('.js-save').addEventListener('click',function(){closeModal();toast('등록원부가 저장되었습니다 (목업)')});
+        var addrBtn=sc.querySelector('#f-ldg-addr-btn');
+        if(addrBtn)addrBtn.addEventListener('click',function(){toast('소재지(주소) 검색 팝업 (목업)')});
+        var gpAddrBtn=sc.querySelector('#f-ldg-gpaddr-btn');
+        if(gpAddrBtn)gpAddrBtn.addEventListener('click',function(){toast('업무집행조합원의 주소 검색 팝업 (목업)')});
+      }
+    });
+  }
+
+  /* ── 팝업 B: 조합원 및 납입출자금 관리 ── */
+  function openMembers(row){
+    var nm=row?row.nm:'';
+    var body=
+      '<div class="msec"><h3>조합원 및 납입출자금 관리'+
+        '<span class="sacts">'+
+          '<button type="button" class="btn btn-sec btn-sm js-act" data-msg="양도/양수 추가 (목업)">양도/양수 추가</button>'+
+          '<button type="button" class="btn btn-sec btn-sm js-act" data-msg="추가출자 등록 (목업)">추가출자</button>'+
+          '<button type="button" class="btn btn-sm js-act" data-msg="조합원 조회 (목업)">조회</button>'+
+        '</span></h3>'+
+        '<div class="mgridwrap"><table class="mgrid"><thead><tr>'+
+          '<th>명칭</th><th class="c">주민(사업자)등록번호</th><th class="c">조합원구분</th><th class="r">약정액</th><th class="r">출자좌수</th><th class="c">관리</th>'+
+        '</tr></thead><tbody>'+
+          '<tr><td>엘앤에스벤처캐피탈주식회사</td><td class="c">120-87-07123</td><td class="c">업무집행조합원</td><td class="r">1,600,000,000</td><td class="r">1,600</td><td class="c"><button type="button" class="btn btn-sec btn-xs js-act" data-msg="조합원 상세 (목업)">상세</button> <button type="button" class="btn btn-danger btn-xs js-act" data-msg="조합원 삭제 (목업)">삭제</button></td></tr>'+
+        '</tbody></table></div></div>'+
+      '<div class="msec"><h3>조합원 정보 상세'+
+        '<span class="sacts">'+
+          '<button type="button" class="btn btn-sec btn-sm js-act" data-msg="조합원 입력 초기화 (목업)">추가</button>'+
+          '<button type="button" class="btn btn-sm js-act" data-msg="조합원 정보 저장 (목업)">저장</button>'+
+        '</span></h3>'+
+        '<div class="formgrid">'+
+          frow('명칭','<input type="text" value="엘앤에스벤처캐피탈 주식회사">')+
+          '<div class="frow"><label>조합원구분</label><span class="radio-inline"><label><input type="radio" name="mb-gu" checked>업무집행조합원</label><label><input type="radio" name="mb-gu">유한책임조합원</label><label><input type="radio" name="mb-gu">특별조합원</label></span></div>'+
+          frow('주민(사업자)등록번호','<input type="text" value="120-87-07123">')+
+          frow('등록일자','<input type="date" min="1900-01-01" max="2099-12-31" aria-label="등록일자">')+
+          frow('약정액','<input type="text" inputmode="numeric" value="1,600,000,000" style="text-align:right">')+
+          frow('출자좌수','<input type="text" inputmode="numeric" value="1,600" style="text-align:right">')+
+        '</div></div>'+
+      '<div class="msec"><h3>납입출자금'+
+        '<span class="sacts"><button type="button" class="btn btn-sec btn-sm js-act" data-msg="납입출자금 이력 추가 (목업)">추가</button></span></h3>'+
+        '<div class="mgridwrap"><table class="mgrid"><thead><tr>'+
+          '<th class="c">등록일</th><th class="r">금회출자액</th><th>원인</th><th class="r">출자좌수</th><th class="r">출자누계</th><th class="c">관리</th>'+
+        '</tr></thead><tbody>'+
+          '<tr><td class="c">2012-07-27</td><td class="r">400,000,000</td><td>설립출자금 납입(2012.7.19)</td><td class="r">400</td><td class="r">400,000,000</td><td class="c">'+rowActs()+'</td></tr>'+
+        '</tbody></table></div></div>';
+    openModal({
+      title:'조합원 및 납입출자금 관리'+(nm?(' — '+nm):''),
+      wide:true,body:body,
+      foot:'<button class="btn btn-sec js-close">닫기</button>'
+    });
+  }
+
+  /* ── 팝업 C: 전문인력 관리 ── */
+  function openExperts(row){
+    var nm=row?row.nm:'';
+    var body=
+      '<div class="msec"><h3>전문인력 관리'+
+        '<span class="sacts"><button type="button" class="btn btn-sm js-act" data-msg="전문인력 조회 (목업)">조회</button></span></h3>'+
+        '<div class="mgridwrap"><table class="mgrid"><thead><tr>'+
+          '<th>명칭</th><th class="c">주민(사업자)등록번호</th><th class="c">전문인력구분</th><th class="c">담당시작일</th><th class="c">담당종료일</th><th class="c">관리</th>'+
+        '</tr></thead><tbody>'+
+          '<tr><td>박형철</td><td class="c">680722-1******</td><td class="c">대표전문인력</td><td class="c">2011-12-26</td><td class="c">2012-11-27</td><td class="c"><button type="button" class="btn btn-sec btn-xs js-act" data-msg="전문인력 상세 (목업)">상세</button> <button type="button" class="btn btn-danger btn-xs js-act" data-msg="전문인력 삭제 (목업)">삭제</button></td></tr>'+
+        '</tbody></table></div></div>'+
+      '<div class="msec"><h3>전문인력 상세 정보'+
+        '<span class="sacts">'+
+          '<button type="button" class="btn btn-sec btn-sm js-act" data-msg="전문인력 입력 초기화 (목업)">추가</button>'+
+          '<button type="button" class="btn btn-sm js-act" data-msg="전문인력 정보 저장 (목업)">저장</button>'+
+        '</span></h3>'+
+        '<div class="formgrid">'+
+          frow('성명','<input type="text" value="박형철">')+
+          '<div class="frow"><label>전문인력 구분</label><span class="radio-inline"><label><input type="radio" name="ex-gu" checked>대표전문인력</label><label><input type="radio" name="ex-gu">일반전문인력</label></span></div>'+
+          frow('주민(사업자)등록번호','<input type="text" value="680722-1******">')+
+          frow('등록일자','<input type="date" min="1900-01-01" max="2099-12-31" value="2011-12-26" aria-label="등록일자">')+
+          frow('담당시작일','<input type="date" min="1900-01-01" max="2099-12-31" value="2011-12-26" aria-label="담당시작일">')+
+          frow('담당종료일','<input type="date" min="1900-01-01" max="2099-12-31" value="2012-11-27" aria-label="담당종료일">')+
+          frowFull('원인','<input type="text" value="퇴사(2012.11.30)">')+
+        '</div>'+
+        '<h4>약력<span class="sacts"><button type="button" class="btn btn-sec btn-xs js-act" data-msg="약력 추가 (목업)">추가</button></span></h4>'+
+        '<div class="mgridwrap"><table class="mgrid"><thead><tr><th>약력</th><th class="c">시작일</th><th class="c">종료일</th><th class="c">관리</th></tr></thead><tbody>'+
+          '<tr><td>(주)유니창업투자 투자팀 이사</td><td class="c">2002.5</td><td class="c">2011.9</td><td class="c">'+rowActs()+'</td></tr>'+
+        '</tbody></table></div></div>'+
+      '<div class="msec"><h3>투자경력'+
+        '<span class="sacts"><button type="button" class="btn btn-sec btn-sm js-act" data-msg="투자경력 추가 (목업)">추가</button></span></h3>'+
+        '<div class="mgridwrap"><table class="mgrid"><thead><tr><th>투자경력</th><th class="c">시작일</th><th class="c">종료일</th><th class="c">관리</th></tr></thead><tbody>'+
+          '<tr><td>에어미디어 인수&amp;개발(CRC조합) 등 CRC투자</td><td class="c">2005</td><td class="c">2009</td><td class="c">'+rowActs()+'</td></tr>'+
+        '</tbody></table></div></div>';
+    openModal({
+      title:'전문인력 관리'+(nm?(' — '+nm):''),
+      wide:true,body:body,
+      foot:'<button class="btn btn-sec js-close">닫기</button>'
+    });
+  }
+
+  /* ── 팝업 D: 등록원부 업로드 (드래그앤드롭 + 파일선택 + 목록) ── */
+  function openUpload(){
+    var body=
+      '<div class="frow full top"><label>파일 업로드</label><div>'+
+        '<div class="dropzone" id="up-dz" aria-label="등록원부 파일 끌어다 놓기 영역">'+
+          '<p>여기로 파일을 끌어다 놓으세요</p><p class="or">또는</p>'+
+          '<button type="button" class="btn btn-sec btn-sm" id="up-btn">파일 선택</button>'+
+          '<input type="file" id="up-in" class="visually-hidden" multiple aria-label="등록원부 파일 선택">'+
+          '<p style="font-size:11.5px;color:var(--ink-3);margin:10px 0 0">XLSX, CSV · 최대 20MB</p>'+
+        '</div>'+
+        '<div id="up-list" class="filelist" aria-live="polite"></div>'+
+      '</div></div>';
+    openModal({
+      title:'등록원부 업로드',body:body,
+      foot:'<button class="btn btn-sec js-close">닫기</button><button class="btn js-upload">업로드</button>',
+      after:function(sc){
+        var dz=sc.querySelector('#up-dz'),input=sc.querySelector('#up-in'),list=sc.querySelector('#up-list');
+        function add(name){var it=document.createElement('div');it.className='fileitem';it.innerHTML='<span class="badge-file">FILE</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(name)+'</span><button class="x" type="button" aria-label="첨부파일 삭제">×</button>';it.querySelector('.x').addEventListener('click',function(){it.remove();toast('파일 제거됨')});list.appendChild(it);}
+        sc.querySelector('#up-btn').addEventListener('click',function(){input.click()});
+        input.addEventListener('change',function(){Array.prototype.forEach.call(input.files,function(f){add(f.name)})});
+        ['dragenter','dragover'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add('drag')})});
+        ['dragleave','dragend'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove('drag')})});
+        dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer&&e.dataTransfer.files)Array.prototype.forEach.call(e.dataTransfer.files,function(f){add(f.name)})});
+        sc.querySelector('.js-upload').addEventListener('click',function(){if(!list.children.length){toast('업로드할 파일을 선택하세요');return}closeModal();toast('등록원부 업로드 완료 (목업)')});
+      }
+    });
+  }
+
+  /* ── 팝업 E: 등록원부 출력 ── */
+  function openRegOut(row){
+    var body=
+      '<div class="ro-sec">'+
+        '<div class="ro-row"><label for="ro-date">발급일자</label>'+
+          '<div class="ro-ctl"><input type="date" min="1900-01-01" max="2099-12-31" id="ro-date" class="w-sm" value="2016-01-19">'+
+          '<button type="button" class="btn btn-sec btn-sm" id="ro-print">출력</button></div></div>'+
+      '</div>'+
+      '<div class="ro-sec">'+
+        '<h3 class="ro-sec-t">출력 페이지 수</h3>'+
+        '<div class="ro-row"><label for="ro-p1">명칭란</label><div class="ro-ctl"><input type="number" id="ro-p1" class="w-sm" value="0" min="0"><span class="unit">페이지</span></div></div>'+
+        '<div class="ro-row"><label for="ro-p2">조합원란</label><div class="ro-ctl"><input type="number" id="ro-p2" class="w-sm" value="0" min="0"><span class="unit">페이지</span></div></div>'+
+        '<div class="ro-row"><label for="ro-p3">전문인력란</label><div class="ro-ctl"><input type="number" id="ro-p3" class="w-sm" value="0" min="0"><span class="unit">페이지</span></div></div>'+
+      '</div>';
+    openModal({
+      title:'등록원부 출력'+(row?(' — '+esc(row.nm)):''),
+      body:body,
+      foot:'<button class="btn btn-sec js-close">닫기</button><button class="btn" id="ro-save">저장</button>',
+      after:function(sc){
+        sc.querySelector('#ro-print').addEventListener('click',function(){toast('등록원부를 출력합니다 (목업)')});
+        sc.querySelector('#ro-save').addEventListener('click',function(){closeModal();toast('저장되었습니다 (목업)')});
+      }
+    });
+  }
+
+  /* ── 팝업 F: 등록원부 발급이력 출력 ── */
+  function openRegHist(row){
+    var nm=row?('('+esc(row.regno)+') '+esc(row.nm)):'';
+    var HIST=[{no:1,date:'2016-01-19'}];
+    var rowsHtml=HIST.map(function(h){return '<tr><td class="c">'+h.no+'</td><td class="c">'+h.date+'</td></tr>'}).join('');
+    var body=
+      frow('조합명','<div class="readonly">'+nm+'</div>')+
+      '<div style="margin:14px 0 8px;font-size:13.5px;font-weight:600;color:var(--ink-2)">발급이력</div>'+
+      '<div class="mgridwrap"><table class="mgrid"><thead><tr><th class="c" style="width:64px">No</th><th class="c">발급일자</th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div>';
+    openModal({
+      title:'등록원부 발급이력 출력',
+      body:body,
+      foot:'<button class="btn btn-sec js-close">닫기</button><button class="btn" id="rh-print">출력</button>',
+      after:function(sc){
+        sc.querySelector('#rh-print').addEventListener('click',function(){closeModal();toast('선택한 발급이력을 출력합니다 (목업)')});
+      }
+    });
+  }
+
+  /* ── 버튼 배선 ── */
+  function rowOf(el){var no=+el.getAttribute('data-no');return DATA.filter(function(r){return r.no===no})[0]}
+  $('btn-new').addEventListener('click',function(){openLedger('new',null)});
+  $('btn-upload').addEventListener('click',openUpload);
+  $('excel').addEventListener('click',function(){toast('엑셀 다운로드 (목업)')});
+  $('search').addEventListener('click',function(){toast('조회되었습니다 (목업)')});
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    var eb=t.closest?t.closest('.js-edit'):null; if(eb){openLedger('edit',rowOf(eb));return}
+    var mb=t.closest?t.closest('.js-members'):null; if(mb){openMembers(rowOf(mb));return}
+    var xb=t.closest?t.closest('.js-experts'):null; if(xb){openExperts(rowOf(xb));return}
+  });
+
+  /* ── 출력 버튼: 등록원부 출력 / 발급이력 출력 선택 드롭다운 (사용자 지시, 2026-09-01: 행별 출력 열 제거 → 목록 상단 버튼 하나로 통합) ── */
+  var outBtn=$('btn-output'),outMenu=$('outMenu');
+  function closeOut(){outMenu.hidden=true;outBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',outOutside,true);document.removeEventListener('keydown',outKey,true)}
+  function openOut(){outMenu.hidden=false;outBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',outOutside,true);document.addEventListener('keydown',outKey,true)},0)}
+  function outOutside(e){if(!outMenu.contains(e.target)&&e.target!==outBtn)closeOut()}
+  function outKey(e){if(e.key==='Escape'){closeOut();outBtn.focus()}}
+  outBtn.addEventListener('click',function(){outMenu.hidden?openOut():closeOut()});
+  $('out-reg').addEventListener('click',function(){closeOut();openRegOut()});
+  $('out-hist').addEventListener('click',function(){closeOut();openRegHist()});
+})();
+</script>

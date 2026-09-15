@@ -1,0 +1,545 @@
+<title>조기경보 조회</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --danger:#E5484D;--danger-weak:#FCECEC;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;
+    --danger:#F2646A;--danger-weak:#3A1D1F;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--danger-weak:#FCECEC;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F2646A;--danger-weak:#3A1D1F;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:82ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .admin-gear{margin-left:12px;padding:6px 12px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;font-size:13px;white-space:nowrap}
+  .admin-gear:hover{background:rgba(255,255,255,.12);color:#fff}
+  .admin-gear.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filtergrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 16px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field.span2{grid-column:span 2}
+  .field label{flex:none;width:88px;text-align:right;white-space:nowrap}
+  .field select,.field input{flex:1;min-width:0}
+  .searchbtnrow{display:flex;justify-content:center;margin-top:14px}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .datefield{position:relative;display:flex;align-items:center;flex:1;min-width:0}
+  .datefield input{width:100%;padding-right:32px;cursor:pointer}
+  .datefield .cal{position:absolute;right:9px;width:17px;height:17px;color:var(--ink-3);pointer-events:none}
+  .rangesep{flex:none;color:var(--ink-3);font-weight:700}
+  .yearpanel{position:fixed;z-index:80;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:8px;width:236px}
+  .yearpanel .yhead{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 8px;font-size:13px;font-weight:700;color:var(--ink-2)}
+  .yearpanel .ynav{width:26px;height:26px;border:none;background:transparent;border-radius:6px;color:var(--ink-2);font-size:16px;cursor:pointer}
+  .yearpanel .ynav:hover{background:var(--surface-3)}
+  .monthpanel .mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+  .monthpanel .mgrid button{height:34px;border:none;background:transparent;border-radius:6px;font-size:13px;color:var(--ink);font-family:inherit;cursor:pointer}
+  .monthpanel .mgrid button:hover{background:var(--surface-3)}
+  .monthpanel .mgrid button[aria-selected="true"]{background:var(--primary);color:#fff;font-weight:700}
+  /* 등급 멀티셀렉트 */
+  .ms{position:relative;flex:1;min-width:0}
+  .ms-btn{width:100%;height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;background:var(--surface);color:var(--ink);font-size:13.5px;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .mspanel{position:fixed;z-index:80;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:6px;width:210px}
+  .mspanel label{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;font-weight:500;cursor:pointer;color:var(--ink);width:auto;text-align:left}
+  .mspanel label:hover{background:var(--surface-3)}
+  .mspanel input{accent-color:var(--primary)}
+  .listbar{display:flex;align-items:center;margin:2px 0 8px}
+  .listbar .cap{font-size:15px;font-weight:700}
+  .listbar .cap b{color:var(--primary)}
+  .listbar .acts{margin-left:auto;display:flex;gap:8px}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;min-width:820px;width:100%}
+  table.grid th,table.grid td{padding:9px 12px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:center}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong)}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid tbody tr:hover td{background:var(--surface-2)}
+  .tag{display:inline-block;padding:2px 10px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.amber{background:var(--amber-weak);color:var(--amber)} .tag.d{background:var(--danger-weak);color:var(--danger)}
+  .empty{padding:34px;text-align:center;color:var(--ink-3);font-size:13.5px}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1;flex:none}
+  .rpop{position:fixed;z-index:90;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  /* modal (차트) */
+  .scrim{position:fixed;inset:0;background:rgba(16,24,40,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;animation:fade .15s ease}
+  .modal{width:520px;max-width:100%;max-height:90vh;overflow-y:auto;overflow-x:hidden;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);animation:pop .18s ease}
+  .modal-head{display:flex;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border)}
+  .modal-head h2{font-size:18px;font-weight:800;margin:0}
+  .icon-btn{margin-left:auto;width:34px;height:34px;border:none;background:none;color:var(--ink-3);font-size:22px;line-height:1;border-radius:6px}
+  .icon-btn:hover{background:var(--surface-3);color:var(--ink)}
+  .modal-body{padding:20px 22px}
+  .modal.wide{width:980px}
+  .cfilter{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px}
+  .cfilter .fl{display:flex;align-items:center;gap:8px}
+  .cfilter .fl>label{flex:none;font-weight:700;color:var(--ink-2)}
+  .cfilter .tilde{color:var(--ink-3);font-weight:700}
+  .chartcard{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);padding:14px 16px 8px;margin-bottom:16px}
+  .chartcard .ctop{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .chartcard h3{font-size:15px;font-weight:800;margin:0}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-left:auto}
+  .legend .lg{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);font-weight:600}
+  .legend .sw{width:16px;height:3px;border-radius:2px;display:inline-block}
+  .legend .sw.dash{height:0;border-top:2px dashed currentColor}
+  .chartbox{width:100%;overflow-x:auto}
+  .chartbox svg{display:block;width:100%;min-width:640px;height:auto}
+  .chartbox svg text{fill:var(--ink-3);font-family:var(--font)}
+  .chartbox svg .axis{stroke:var(--border)}
+  .chartbox svg .grid{stroke:var(--border);stroke-dasharray:2 3}
+  .chart-cap{font-size:13px;color:var(--ink-3);margin:0 0 16px}
+  .chart-row{display:flex;align-items:center;gap:12px;margin:12px 0}
+  .chart-row .cl{width:40px;font-weight:700;font-size:13px}
+  .chart-bar{flex:1;height:24px;background:var(--surface-3);border-radius:5px;overflow:hidden}
+  .chart-bar i{display:block;height:100%;border-radius:5px}
+  .chart-row .cv{width:34px;text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+  .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid var(--border);background:var(--surface-2)}
+  .modal-foot .btn{height:40px}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  @media (max-width:900px){.filtergrid{grid-template-columns:repeat(2,1fr)}.field.span2{grid-column:span 2}.lnb{display:none!important}}
+  .note{margin-top:24px;font-size:13px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:8px;padding:14px 16px;line-height:1.7}
+  .note b{color:var(--ink-2)}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">시스템 S2 · 조기경보 · KRDS TO-BE</p>
+  <h1 class="doc-title">조기경보 조회</h1>
+  <p class="doc-sub">자펀드 기준으로 조기경보 종합등급(정상·주의·경고)을 운용사·자펀드·기간·등급 조건으로 조회하는 읽기전용 모니터링 화면. 그리드는 자펀드 행 단위로 운용사·자펀드 종합등급을 함께 표시합니다. 기간은 월 선택기(YYYY-MM) 범위, 등급은 멀티셀렉트.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">조</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="../01_투자자산관리/S1_01_투자심의관리.html" role="menuitem"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="S2_46_메인화면.html" role="menuitem" class="on"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">조기경보시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="#" class="on" aria-current="page">조기경보</a>
+          <a href="S2_64_투자기업정보_전체_.html">기업정보</a>
+          <a href="S2_70_운용사_정량지표_관리.html">기초정보</a>
+          <a href="S2_78_운용사_유형별_정량지표_변동.html">통계정보</a>
+          <a href="S2_80_모태펀드_가치평가_결과조회.html">가치평가</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+        <a href="S2_94_메뉴관리.html" class="admin-gear" aria-label="관리자 설정">⚙ 관리자</a>
+      </div>
+      <div class="subtab" aria-label="조기경보 하위 메뉴">
+        <a href="S2_46_메인화면.html">메인화면</a><a href="S2_47_운용사별_조기경보_조회.html">운용사별 조기경보 조회</a><a href="S2_49_자펀드별_조기경보_조회.html">자펀드별 조기경보 조회</a><span class="on">조기경보 조회</span><a href="S2_53_법률_규약위반사항_관리.html">법률 규약위반사항 관리</a><a href="S2_55_주주변동관리.html">주주변동관리</a><a href="S2_57_소송관리.html">소송관리</a><a href="S2_59_운용인력변동관리.html">운용인력변동관리</a><a href="S2_61_조기경보_결과정보_관리.html">조기경보 결과정보 관리</a><a href="S2_63_조기경보_전월_데이터_비교_조회.html">조기경보 전월 데이터 비교 조회</a>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">조기경보</div>
+          <nav aria-label="조기경보 메뉴">
+            <a href="S2_46_메인화면.html">메인화면</a>
+            <a href="S2_47_운용사별_조기경보_조회.html">운용사별 조기경보 조회</a>
+            <a href="S2_49_자펀드별_조기경보_조회.html">자펀드별 조기경보 조회</a>
+            <a href="#" class="on" aria-current="page">조기경보 조회</a>
+            <a href="S2_53_법률_규약위반사항_관리.html">법률 규약위반사항 관리</a>
+            <a href="S2_55_주주변동관리.html">주주변동관리</a>
+            <a href="S2_57_소송관리.html">소송관리</a>
+            <a href="S2_59_운용인력변동관리.html">운용인력변동관리</a>
+            <a href="S2_61_조기경보_결과정보_관리.html">조기경보 결과정보 관리</a>
+            <a href="S2_63_조기경보_전월_데이터_비교_조회.html">조기경보 전월 데이터 비교 조회</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">조기경보 · 조기경보 조회</div>
+          <div class="h1row"><h1>조기경보 조회</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filtergrid">
+              <div class="field">
+                <label for="f-gp">운용사</label>
+                <select id="f-gp"><option value="전체" selected>전체</option></select>
+              </div>
+              <div class="field">
+                <label for="f-fund">자펀드</label>
+                <select id="f-fund"><option value="전체" selected>전체</option></select>
+              </div>
+              <div class="field span2">
+                <label for="f-from">기간</label>
+                <span class="datefield"><input type="text" id="f-from" value="2026-07" readonly aria-label="기간 시작 (기준월)"><svg class="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg></span>
+                <span class="rangesep">~</span>
+                <span class="datefield"><input type="text" id="f-to" value="2026-07" readonly aria-label="기간 종료 (기준월)"><svg class="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg></span>
+              </div>
+              <div class="field">
+                <label for="ms-btn">등급</label>
+                <div class="ms" id="ms">
+                  <button type="button" class="ms-btn" id="ms-btn" aria-haspopup="listbox" aria-expanded="false">정상, 주의, 경고</button>
+                </div>
+              </div>
+            </div>
+            <div class="searchbtnrow"><button class="btn" id="search">조회</button></div>
+          </div>
+
+          <div class="listbar">
+            <div class="cap">총 <b id="cnt">0</b>건 <span id="viewlbl" style="font-size:12.5px;color:var(--ink-3);font-weight:500"></span></div>
+            <div class="acts">
+              <button class="btn btn-sec btn-sm" id="excel">엑셀</button>
+              <button class="btn btn-sec btn-sm" id="print">출력</button>
+              <button class="btn btn-sec btn-sm" id="chart">차트</button>
+            </div>
+          </div>
+          <div class="scroller">
+            <table class="grid">
+              <caption class="visually-hidden">조기경보 종합등급 목록 — 모펀드·기준년월·운용사·종합등급(운용사)·자펀드·종합등급(자펀드)</caption>
+              <thead id="ghead"></thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <p class="note"><b>설계 메모:</b> <b>사용자 지시(2026-09-03)</b>로 구분(운용사별/자펀드별) 토글 필터를 삭제하고 <b>자펀드 기준 고정</b>으로 변경 — 그리드는 항상 자펀드 행 단위(모펀드·기준년월·운용사·종합등급(운용사)·자펀드·종합등급(자펀드) 7열)로만 표시합니다. 기존 단일 "운용사/자펀드" 통합 검색조건도 <b>운용사·자펀드 2개 필드로 분리</b>(각각 독립 셀렉트, AND 조건으로 함께 필터링). <b>차트</b> 버튼은 자체 등급분포 막대그래프 대신 <b>"조기경보 조회 - 시계열 차트"(S2_52) 팝업</b>을 그대로 호출합니다 — 자펀드·운용사 종합등급의 월별 추이를 라인차트 2개로 보여주며, 팝업 내 검토필요 마커도 함께 해소했습니다.</p>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* ---- 샘플 데이터 (자펀드 단위) · 등급은 실 코드값(정상/주의/경고)만 ---- */
+  var DATA=[
+    {mf:'농식품모태펀드',ym:'2026-07',gp:'(주)유니창업투자',gpg:'주의',fn:'유니 수산식품 투자조합1호',fng:'경고'},
+    {mf:'농식품모태펀드',ym:'2026-07',gp:'(주)유니창업투자',gpg:'주의',fn:'유니 농식품 투자조합2호',fng:'주의'},
+    {mf:'농식품모태펀드',ym:'2026-07',gp:'한국투자파트너스',gpg:'정상',fn:'한투 청년농식품투자조합',fng:'정상'},
+    {mf:'농식품모태펀드',ym:'2026-07',gp:'한국투자파트너스',gpg:'정상',fn:'한투 수산벤처투자조합',fng:'주의'}
+  ];
+  var GRADES=['정상','주의','경고'];
+  var GRADE_TAG={'정상':'g','주의':'amber','경고':'d'};
+  var GRADE_BAR={'정상':'var(--ok)','주의':'var(--amber)','경고':'var(--danger)'};
+  function tag(g){return '<span class="tag '+(GRADE_TAG[g]||'n')+'">'+g+'</span>';}
+
+  /* 운용사/자펀드 셀렉트 옵션(각각 독립) */
+  function refreshTarget(){
+    var gpSel=$('f-gp'), fnSel=$('f-fund'), seenGp={}, seenFn={}, gpOpts=['전체'], fnOpts=['전체'];
+    DATA.forEach(function(r){
+      if(!seenGp[r.gp]){seenGp[r.gp]=1;gpOpts.push(r.gp);}
+      if(!seenFn[r.fn]){seenFn[r.fn]=1;fnOpts.push(r.fn);}
+    });
+    gpSel.innerHTML=gpOpts.map(function(o){return '<option value="'+o+'">'+o+'</option>';}).join('');
+    fnSel.innerHTML=fnOpts.map(function(o){return '<option value="'+o+'">'+o+'</option>';}).join('');
+  }
+
+  /* 등급 멀티셀렉트 상태 */
+  var gradeSel={'정상':true,'주의':true,'경고':true};
+  function gradeSummary(){var on=GRADES.filter(function(g){return gradeSel[g]});return on.length? on.join(', '):'선택 안함';}
+  function syncMsBtn(){$('ms-btn').textContent=gradeSummary();}
+
+  /* 그리드 렌더 (자펀드별 고정, 운용사/자펀드/등급 필터 반영) */
+  function render(){
+    var gp=$('f-gp').value, fn=$('f-fund').value, head=$('ghead'), body=$('rows');
+    var rows=DATA.filter(function(r){
+      return (gp==='전체'||r.gp===gp) && (fn==='전체'||r.fn===fn) && gradeSel[r.fng];
+    });
+    head.innerHTML='<tr><th class="c">No</th><th class="l">모펀드</th><th class="c">기준년월</th><th class="l">운용사</th><th class="c">종합등급(운용사)</th><th class="l">자펀드</th><th class="c">종합등급(자펀드)</th></tr>';
+    body.innerHTML=rows.length?rows.map(function(r,i){
+      return '<tr><td class="c">'+(i+1)+'</td><td class="l">'+r.mf+'</td><td class="c">'+r.ym+'</td><td class="l">'+r.gp+'</td><td class="c">'+tag(r.gpg)+'</td><td class="l">'+r.fn+'</td><td class="c">'+tag(r.fng)+'</td></tr>';
+    }).join(''):'<tr><td colspan="7" class="empty">조회 조건에 해당하는 자료가 없습니다.</td></tr>';
+    $('cnt').textContent=rows.length;
+    $('viewlbl').textContent='· '+$('f-from').value+' ~ '+$('f-to').value;
+    lastRows=rows;
+  }
+  var lastRows=[];
+
+  $('search').addEventListener('click',function(){render();toast('조회되었습니다');});
+  $('excel').addEventListener('click',function(){toast('엑셀 다운로드 (목업)');});
+  $('print').addEventListener('click',function(){toast('출력 미리보기 (목업)');});
+
+  /* ---------- 월 선택기 (기준월 · YYYY-MM) ---------- */
+  var CUR=(new Date()).getFullYear(), mp=null, mpIn=null, mpYear=CUR;
+  var MON=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  function closeMP(){if(mp){mp.remove();mp=null;mpIn=null;document.removeEventListener('mousedown',mpOut,true);document.removeEventListener('keydown',mpKey,true)}}
+  function mpOut(e){if(mp&&!mp.contains(e.target)&&e.target!==mpIn)closeMP()}
+  function mpKey(e){if(e.key==='Escape'){e.preventDefault();var i=mpIn;closeMP();if(i)i.focus()}}
+  function mpCont(input){
+    var selY=null,selM=null;if(/^\d{4}-\d{2}$/.test(input.value)){selY=parseInt(input.value.slice(0,4),10);selM=parseInt(input.value.slice(5,7),10);}
+    var h='<div class="yhead"><button type="button" class="ynav" data-n="-1" aria-label="이전 해">‹</button><span>'+mpYear+'년</span><button type="button" class="ynav" data-n="1" aria-label="다음 해">›</button></div><div class="mgrid">';
+    for(var m=1;m<=12;m++){var on=(selY===mpYear&&selM===m);h+='<button type="button" data-m="'+m+'"'+(on?' aria-selected="true"':'')+'>'+MON[m-1]+'</button>';}
+    return h+'</div>';
+  }
+  function mpPos(p,input){var r=input.getBoundingClientRect();var top=r.bottom+4;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-4);p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px'}
+  function openMP(input){if(mp&&mpIn===input){closeMP();return}closeMP();mpIn=input;mpYear=/^\d{4}/.test(input.value)?parseInt(input.value.slice(0,4),10):CUR;
+    var p=document.createElement('div');p.className='yearpanel monthpanel';p.setAttribute('role','dialog');p.setAttribute('aria-label','기준월 선택');p.innerHTML=mpCont(input);document.body.appendChild(p);mpPos(p,input);
+    p.addEventListener('mousedown',function(e){
+      var n=e.target.closest('.ynav');if(n){e.preventDefault();mpYear+=parseInt(n.getAttribute('data-n'),10);p.innerHTML=mpCont(input);mpPos(p,input);return;}
+      var b=e.target.closest('button[data-m]');if(b){e.preventDefault();var mm=('0'+b.getAttribute('data-m')).slice(-2);input.value=mpYear+'-'+mm;closeMP();input.focus();}
+    });
+    mp=p;setTimeout(function(){document.addEventListener('mousedown',mpOut,true);document.addEventListener('keydown',mpKey,true)},0);
+  }
+  ['f-from','f-to'].forEach(function(id){
+    $(id).addEventListener('click',function(){openMP($(id))});
+    $(id).addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();openMP($(id))}});
+  });
+
+  /* ---------- 등급 멀티셀렉트 드롭다운 ---------- */
+  var msp=null;
+  function closeMs(){if(msp){msp.remove();msp=null;$('ms-btn').setAttribute('aria-expanded','false');document.removeEventListener('mousedown',msOut,true);document.removeEventListener('keydown',msKey,true)}}
+  function msOut(e){if(msp&&!msp.contains(e.target)&&e.target!==$('ms-btn'))closeMs()}
+  function msKey(e){if(e.key==='Escape'){e.preventDefault();closeMs();$('ms-btn').focus()}}
+  function openMs(){if(msp){closeMs();return}
+    var p=document.createElement('div');p.className='mspanel';p.setAttribute('role','group');p.setAttribute('aria-label','등급 선택');
+    p.innerHTML=GRADES.map(function(g){return '<label><input type="checkbox" data-g="'+g+'"'+(gradeSel[g]?' checked':'')+'>'+g+'</label>';}).join('');
+    document.body.appendChild(p);
+    var r=$('ms-btn').getBoundingClientRect();var top=r.bottom+4;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-4);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';p.style.width=Math.max(r.width,150)+'px';
+    p.addEventListener('change',function(e){var c=e.target.closest('input[data-g]');if(!c)return;gradeSel[c.getAttribute('data-g')]=c.checked;syncMsBtn();});
+    msp=p;$('ms-btn').setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',msOut,true);document.addEventListener('keydown',msKey,true)},0);
+  }
+  $('ms-btn').addEventListener('click',openMs);
+
+  /* ---------- 검토필요 마커 ---------- */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null;if(!m)return;e.preventDefault();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+m.getAttribute('data-rec')+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+m.getAttribute('data-dat')+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true)},0);
+  });
+
+  /* ---------- scroll lock / toast ---------- */
+  var lockN=0,savedPad='';
+  function lock(){if(lockN++===0){var sw=window.innerWidth-document.documentElement.clientWidth;savedPad=document.body.style.paddingRight;if(sw>0)document.body.style.paddingRight=sw+'px';document.body.style.overflow='hidden';}}
+  function unlock(){if(lockN>0&&--lockN===0){document.body.style.overflow='';document.body.style.paddingRight=savedPad;}}
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+
+  /* ---------- 차트 모달 : '조기경보 조회 - 시계열 차트'(S2_52) 팝업 호출 ---------- */
+  var scrim=null,lastFocus=null;
+  function trap(c){c.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();closeModal();return}if(e.key!=='Tab')return;var f=Array.prototype.filter.call(c.querySelectorAll('button,input,select,textarea,[tabindex]:not([tabindex="-1"])'),function(el){return !el.disabled&&el.offsetParent!==null});if(!f.length)return;var first=f[0],last=f[f.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}})}
+  function closeModal(){closeR();closeMP();closeMs();if(scrim){scrim.remove();scrim=null;unlock()}if(lastFocus&&lastFocus.focus)lastFocus.focus()}
+
+  var TREND_CAL='<svg class="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg>';
+  var TREND_MONTHS=['2025-07','2025-08','2025-09','2025-10','2025-11','2025-12','2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07'];
+  function trendTotals(a,b,c){return a.map(function(v,i){return v+b[i]+c[i]});}
+  var TREND_FUND={
+    normal:[92,94,95,93,96,98,97,99,100,98,101,103,105],
+    caution:[14,13,12,15,13,11,12,10,11,13,12,11,10],
+    warn:[5,6,7,6,5,4,5,6,4,5,3,4,3]
+  };
+  TREND_FUND.total=trendTotals(TREND_FUND.normal,TREND_FUND.caution,TREND_FUND.warn);
+  var TREND_MGR={
+    normal:[44,45,45,46,47,47,48,48,49,49,50,50,51],
+    caution:[8,8,9,7,7,8,6,7,6,7,6,6,5],
+    warn:[3,3,2,3,2,2,3,2,2,2,2,1,2]
+  };
+  TREND_MGR.total=trendTotals(TREND_MGR.normal,TREND_MGR.caution,TREND_MGR.warn);
+  var TREND_SERIES_ALL=[
+    {key:'normal',name:'정상',color:'var(--ok)',dash:false},
+    {key:'caution',name:'주의',color:'var(--amber)',dash:false},
+    {key:'warn',name:'경고',color:'var(--danger)',dash:false},
+    {key:'total',name:'TOTAL',color:'var(--primary)',dash:true}
+  ];
+  var TREND_SERIES_WARN=[
+    {key:'caution',name:'주의',color:'var(--amber)',dash:false},
+    {key:'warn',name:'경고',color:'var(--danger)',dash:false}
+  ];
+  function trendNiceMax(m){if(m<=10)return 10;var step=m<=50?10:(m<=120?20:50);return Math.ceil(m/step)*step;}
+  function trendLineChart(data,series){
+    var W=920,H=260,L=50,R=16,T=14,B=34;
+    var pw=W-L-R, ph=H-T-B, n=TREND_MONTHS.length, step=pw/(n-1);
+    var max=0; series.forEach(function(s){data[s.key].forEach(function(v){if(v>max)max=v})});
+    var ymax=trendNiceMax(max);
+    function X(i){return L+step*i;}
+    function Y(v){return T+ph*(1-v/ymax);}
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="월별 등급 시계열 차트">';
+    for(var g=0;g<=4;g++){
+      var yy=T+ph*g/4; var val=Math.round(ymax*(1-g/4));
+      svg+='<line class="grid" x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'"/>';
+      svg+='<text x="'+(L-8)+'" y="'+(yy+4)+'" text-anchor="end" font-size="10">'+val+'</text>';
+    }
+    svg+='<line class="axis" x1="'+L+'" y1="'+(T+ph)+'" x2="'+(W-R)+'" y2="'+(T+ph)+'"/>';
+    svg+='<text x="12" y="'+(T+ph/2)+'" text-anchor="middle" font-size="10" font-weight="700" transform="rotate(-90 12 '+(T+ph/2)+')">건수</text>';
+    for(var i=0;i<n;i++){
+      var lab=TREND_MONTHS[i].slice(2).replace('-','.');
+      svg+='<text x="'+X(i)+'" y="'+(H-12)+'" text-anchor="middle" font-size="9.5">'+lab+'</text>';
+    }
+    series.forEach(function(s){
+      var pts=data[s.key].map(function(v,i){return X(i).toFixed(1)+','+Y(v).toFixed(1)}).join(' ');
+      svg+='<polyline fill="none" stroke="'+s.color+'" stroke-width="2" '+(s.dash?'stroke-dasharray="5 4" ':'')+'stroke-linejoin="round" stroke-linecap="round" points="'+pts+'"/>';
+      data[s.key].forEach(function(v,i){
+        svg+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(v).toFixed(1)+'" r="2.6" fill="'+s.color+'"><title>'+TREND_MONTHS[i]+' '+s.name+' '+v+'건</title></circle>';
+      });
+    });
+    svg+='</svg>';
+    return svg;
+  }
+  function trendLegendHtml(series){
+    return series.map(function(s){
+      return '<span class="lg"><span class="sw'+(s.dash?' dash':'')+'" style="'+(s.dash?'color:'+s.color:'background:'+s.color)+'"></span>'+s.name+'</span>';
+    }).join('');
+  }
+  function trendTableHtml(data,series,cap){
+    var h='<table class="visually-hidden"><caption>'+cap+'</caption><thead><tr><th scope="col">등급</th>';
+    TREND_MONTHS.forEach(function(m){h+='<th scope="col">'+m+'</th>'});
+    h+='</tr></thead><tbody>';
+    series.forEach(function(s){
+      h+='<tr><th scope="row">'+s.name+'</th>';
+      data[s.key].forEach(function(v){h+='<td>'+v+'</td>'});
+      h+='</tr>';
+    });
+    return h+'</tbody></table>';
+  }
+  var trendState='all';
+  function trendRender(){
+    var series=(trendState==='all')?TREND_SERIES_ALL:TREND_SERIES_WARN;
+    $('chart1').innerHTML=trendLineChart(TREND_FUND,series)+trendTableHtml(TREND_FUND,series,'자펀드 종합등급 월별 등급 건수');
+    $('chart2').innerHTML=trendLineChart(TREND_MGR,series)+trendTableHtml(TREND_MGR,series,'운용사 종합등급 월별 등급 건수');
+    $('lg1').innerHTML=trendLegendHtml(series);
+    $('lg2').innerHTML=trendLegendHtml(series);
+  }
+
+  function openChart(){
+    lastFocus=document.activeElement;
+    scrim=document.createElement('div');scrim.className='scrim';
+    scrim.addEventListener('mousedown',function(e){if(e.target===scrim)closeModal()});
+    scrim.innerHTML='<div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="cm-t">'+
+      '<div class="modal-head"><h2 id="cm-t">조기경보 조회 - 시계열 차트</h2><button class="icon-btn" id="cm-x" aria-label="닫기">×</button></div>'+
+      '<div class="modal-body">'+
+        '<div class="cfilter" role="search">'+
+          '<div class="fl"><label for="cm-from">기준년월</label>'+
+            '<span class="datefield"><input type="text" id="cm-from" value="2025-07" readonly aria-label="기준년월 시작">'+TREND_CAL+'</span>'+
+            '<span class="tilde">~</span>'+
+            '<span class="datefield"><input type="text" id="cm-to" value="2026-07" readonly aria-label="기준년월 종료">'+TREND_CAL+'</span>'+
+          '</div>'+
+          '<div class="seg" role="group" aria-label="등급 필터">'+
+            '<button type="button" id="cm-all" aria-pressed="true">전체</button>'+
+            '<button type="button" id="cm-warn" aria-pressed="false">주의/경고</button>'+
+          '</div>'+
+          '<button class="btn btn-sm" id="cm-search">조회</button>'+
+        '</div>'+
+        '<div class="chartcard">'+
+          '<div class="ctop"><h3>자펀드 종합등급</h3><div class="legend" id="lg1"></div></div>'+
+          '<div class="chartbox" id="chart1"></div>'+
+        '</div>'+
+        '<div class="chartcard">'+
+          '<div class="ctop"><h3>운용사 종합등급</h3><div class="legend" id="lg2"></div></div>'+
+          '<div class="chartbox" id="chart2"></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="modal-foot"><button class="btn btn-sec" id="cm-close">닫기</button></div>'+
+    '</div>';
+    lock();document.body.appendChild(scrim);
+    trap(scrim.querySelector('.modal'));
+    $('cm-x').addEventListener('click',closeModal);
+    $('cm-close').addEventListener('click',closeModal);
+    $('cm-search').addEventListener('click',function(){trendRender();toast('조회되었습니다 (목업)')});
+    function setTrendState(s){trendState=s;$('cm-all').setAttribute('aria-pressed',s==='all');$('cm-warn').setAttribute('aria-pressed',s==='warn');trendRender();}
+    $('cm-all').addEventListener('click',function(){setTrendState('all')});
+    $('cm-warn').addEventListener('click',function(){setTrendState('warn')});
+    ['cm-from','cm-to'].forEach(function(id){var el=$(id);el.addEventListener('click',function(){openMP(el)});el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();openMP(el)}});});
+    trendRender();
+    setTimeout(function(){$('cm-from').focus()},0);
+  }
+  $('chart').addEventListener('click',openChart);
+
+  /* init */
+  refreshTarget();syncMsBtn();render();
+})();
+</script>

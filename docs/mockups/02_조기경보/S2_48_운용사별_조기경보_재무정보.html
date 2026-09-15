@@ -1,0 +1,463 @@
+<title>운용사별 조기경보 재무정보</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --danger:#E5484D;--danger-weak:#FCE9EA;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;
+    --danger:#F2686C;--danger-weak:#3A1B1D;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--danger-weak:#FCE9EA;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F2686C;--danger-weak:#3A1B1D;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:82ch}
+  .opts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+  .opts .lab{font-size:13px;font-weight:700;color:var(--ink-2)}
+  .seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:99px;overflow:hidden}
+  .seg button{height:36px;padding:0 18px;border:none;background:transparent;color:var(--ink-2);font-size:13.5px;font-weight:700}
+  .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+  .seg.sm button{height:30px;padding:0 13px;font-size:12.5px}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .admin-gear{margin-left:12px;padding:6px 12px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;font-size:13px;white-space:nowrap}
+  .admin-gear:hover{background:rgba(255,255,255,.12);color:#fff}
+  .admin-gear.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .soon{opacity:.5;cursor:default;pointer-events:none}
+  .mid{display:flex;min-height:520px}
+  .lnb{width:230px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .app[data-nav="gnb"] .lnb{display:none}
+  .app[data-nav="lnb"] .subtab{display:none}
+  .app[data-nav="lnb"] .gnb-menu{display:none}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text],input[type=date]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filtergrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 16px}
+  .field{display:flex;align-items:center;gap:8px;min-width:0}
+  .field label{flex:none;width:72px;text-align:right;white-space:nowrap}
+  .field select,.field input{flex:1;min-width:0}
+  .searchbtnrow{display:flex;justify-content:center;margin-top:14px}
+  .btn{height:38px;padding:0 26px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:34px;padding:0 16px;font-size:13px}
+  .btn-link{height:auto;padding:4px 10px;background:var(--primary-weak);color:var(--primary);border:none;border-radius:6px;font-size:12.5px;font-weight:700}
+  .btn-link:hover{background:var(--primary);color:#fff}
+  .datefield{position:relative;display:flex;align-items:center;flex:1;min-width:0}
+  .datefield input{width:100%;padding-right:32px;cursor:pointer}
+  .datefield .cal{position:absolute;right:9px;width:17px;height:17px;color:var(--ink-3);pointer-events:none}
+  .pickpanel{position:fixed;z-index:80;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:8px;width:236px}
+  .pickpanel .phead{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 8px;font-size:13px;font-weight:700;color:var(--ink-2)}
+  .pickpanel .pnav{width:26px;height:26px;border:none;background:transparent;border-radius:6px;color:var(--ink-2);font-size:16px;cursor:pointer}
+  .pickpanel .pnav:hover{background:var(--surface-3)}
+  .pickpanel .pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+  .pickpanel .pgrid button{height:34px;border:none;background:transparent;border-radius:6px;font-size:13px;color:var(--ink);font-family:inherit;cursor:pointer}
+  .pickpanel .pgrid button:hover{background:var(--surface-3)}
+  .pickpanel .pgrid button[aria-selected="true"]{background:var(--primary);color:#fff;font-weight:700}
+  .listbar{display:flex;align-items:center;margin:2px 0 8px}
+  .listbar .cap{font-size:15px;font-weight:700}
+  .listbar .cap b{color:var(--primary)}
+  .listbar .acts{margin-left:auto;display:flex;gap:8px}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid{border-collapse:collapse;width:100%}
+  table.grid.wide{min-width:1040px}
+  table.grid th,table.grid td{padding:8px 12px;font-size:13px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:right}
+  table.grid thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong)}
+  table.grid th.c,table.grid td.c{text-align:center}
+  table.grid th.l,table.grid td.l{text-align:left}
+  table.grid tbody tr.pick{cursor:pointer}
+  table.grid tbody tr.pick:hover td{background:var(--surface-2)}
+  table.grid td.empty{text-align:center;color:var(--ink-3);padding:26px 12px}
+  .amt.neg,.v.neg{color:var(--danger)}
+  .tag{display:inline-block;padding:1px 8px;border-radius:5px;font-size:12px;font-weight:700}
+  .tag.b{background:var(--primary-weak);color:var(--primary)} .tag.g{background:var(--ok-weak);color:var(--ok)} .tag.n{background:var(--grey-weak);color:var(--ink-3)} .tag.d{background:var(--danger-weak);color:var(--danger)}
+  /* review marker */
+  .review{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border:none;background:var(--amber-weak);color:var(--amber);border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;line-height:1}
+  .rpop{position:fixed;z-index:120;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--ink-2);animation:pop .12s ease}
+  .rpop .rl{display:flex;gap:6px;margin:4px 0}
+  .rpop .k{flex:none;min-width:40px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:4px}
+  .rpop .k.rec{background:var(--primary-weak);color:var(--primary)} .rpop .k.dat{background:var(--surface-3);color:var(--ink-3)}
+  .rpop b{color:var(--ink)}
+  /* modal */
+  .scrim{position:fixed;inset:0;background:rgba(16,24,40,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;animation:fade .15s ease}
+  .modal{width:900px;max-width:100%;max-height:92vh;overflow-y:auto;overflow-x:hidden;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);animation:pop .18s ease}
+  .modal-head{display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:3}
+  .modal-head .htxt h2{font-size:18px;font-weight:800;margin:0 0 3px}
+  .modal-head .htxt .who2{font-size:13px;color:var(--ink-2);font-weight:600}
+  .modal-head .hbtns{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .icon-btn{width:34px;height:34px;border:none;background:none;color:var(--ink-3);font-size:22px;line-height:1;border-radius:6px}
+  .icon-btn:hover{background:var(--surface-3);color:var(--ink)}
+  .modal-body{padding:18px 22px 24px}
+  .unitbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:0 0 18px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px}
+  .unitbar .lab{font-size:12.5px;font-weight:700;color:var(--ink-2)}
+  .sec{margin:0 0 20px}
+  .sec-h{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:800;color:var(--ink);margin:0 0 10px;padding-bottom:6px;border-bottom:2px solid var(--primary)}
+  .subgrp{margin:0 0 14px}
+  .subgrp:last-child{margin-bottom:0}
+  .subgrp-h{font-size:12px;font-weight:700;color:var(--ink-3);margin:0 0 6px;text-transform:uppercase;letter-spacing:.03em}
+  .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .kvi{background:var(--surface);padding:10px 13px;display:flex;flex-direction:column;gap:3px;min-width:0}
+  .kvi .k{font-size:12px;color:var(--ink-3);font-weight:600}
+  .kvi .v{font-size:15.5px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis}
+  .kvi .v .u{font-size:11px;color:var(--ink-3);font-weight:600;margin-left:3px}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  @media (max-width:900px){.filtergrid{grid-template-columns:repeat(2,1fr)}.lnb{display:none!important}}
+  @media print{.wrap>*:not(.frame){display:none}.frame,.mid,.content{border:none;box-shadow:none}.scrim{position:static;background:none;padding:0}.modal{box-shadow:none;max-height:none;width:100%}.modal-head .hbtns{display:none}}
+  .note{margin-top:24px;font-size:13px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:8px;padding:14px 16px;line-height:1.7}
+  .note b{color:var(--ink-2)}
+</style>
+
+<div class="wrap">
+  <p class="doc-eyebrow">S2 · 조기경보 · 운용사별 조기경보 재무정보 (팝업)</p>
+  <h1 class="doc-title">운용사별 조기경보 재무정보</h1>
+  <p class="doc-sub">조기경보 대상 운용사(GP)의 재무·손익·정량지표와 기준년월별 추이, 지표등급 변경이력을 조회하는 <b>읽기전용 팝업</b>. 재무/손익/추이 금액은 원·백만원·억원 단위전환 지원(등록·수정 없는 조회 화면). 아래 목록에서 운용사를 선택하면 팝업이 열립니다.</p>
+
+  <div class="opts">
+    <span class="lab">내비게이션 방식</span>
+    <div class="seg" role="group" aria-label="내비게이션 방식">
+      <button id="nav-gnb" aria-pressed="true">GNB 상단형</button>
+      <button id="nav-lnb" aria-pressed="false">LNB 좌측형</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">동일 디자인시스템</span>
+  </div>
+
+  <div class="frame">
+    <div class="app" data-nav="gnb" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">조</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="../01_투자자산관리/S1_01_투자심의관리.html" role="menuitem"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="S2_46_메인화면.html" role="menuitem" class="on"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">조기경보시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="#" class="on" aria-current="page">조기경보</a>
+          <a href="S2_64_투자기업정보_전체_.html">기업정보</a>
+          <a href="S2_70_운용사_정량지표_관리.html">기초정보</a>
+          <a href="S2_78_운용사_유형별_정량지표_변동.html">통계정보</a>
+          <a href="S2_80_모태펀드_가치평가_결과조회.html">가치평가</a>
+        </nav>
+        <span class="who">관리자 · 농업정책보험금융원</span>
+        <a href="S2_94_메뉴관리.html" class="admin-gear" aria-label="관리자 설정">⚙ 관리자</a>
+      </div>
+      <div class="subtab" aria-label="조기경보 하위 메뉴">
+        <a href="S2_47_운용사별_조기경보_조회.html">운용사별 조기경보 조회</a><span class="on">운용사별 조기경보 재무정보 (팝업)</span>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">조기경보</div>
+          <nav aria-label="조기경보 메뉴">
+            <a href="S2_47_운용사별_조기경보_조회.html">← 운용사별 조기경보 조회</a>
+            <a href="#" class="on" aria-current="page">운용사별 조기경보 재무정보</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">조기경보 · 운용사별 조기경보 재무정보</div>
+          <div class="h1row"><h1>조기경보 대상 운용사</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filtergrid">
+              <div class="field"><label for="f-mgr">운용사명</label>
+                <select id="f-mgr"><option>전체</option><option selected>(유)동문파트너스 (벤처투자회사)</option></select></div>
+              <div class="field"><label for="f-ym">기준년월</label>
+                <span class="datefield"><input type="text" id="f-ym" value="2024-12" readonly aria-label="기준년월(월 선택)"><svg class="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg></span></div>
+              <div class="field"><label for="f-type">운용사구분</label>
+                <button type="button" class="review" data-rec="벤처투자회사·유한회사·신기술금융 등" data-dat="CDTP 미확인 · 실데이터 '벤처투자회사'만 존재" aria-label="검토필요">!</button>
+                <select id="f-type"><option>전체</option><option>벤처투자회사</option></select></div>
+            </div>
+            <div class="searchbtnrow"><button class="btn" id="search">조회</button></div>
+          </div>
+
+          <div class="listbar">
+            <div class="cap">총 <b>1</b>건</div>
+            <div class="acts"><button class="btn btn-sec btn-sm" id="excel-list">엑셀</button></div>
+          </div>
+          <div class="scroller">
+            <table class="grid">
+              <caption class="visually-hidden">조기경보 대상 운용사 목록 — 행 선택 시 재무정보 팝업</caption>
+              <thead>
+                <tr>
+                  <th class="c" style="width:56px">No</th>
+                  <th class="l">운용사명</th>
+                  <th class="c" style="width:110px">운용사구분</th>
+                  <th class="c" style="width:100px">기준년월</th>
+                  <th class="c" style="width:120px">재무정보</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="pick" tabindex="0" id="row1">
+                  <td class="c">1</td>
+                  <td class="l">(유)동문파트너스 (벤처투자회사)</td>
+                  <td class="c">벤처투자회사</td>
+                  <td class="c">2024-12</td>
+                  <td class="c"><button type="button" class="btn-link" id="open-pop">재무정보 조회</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <p class="note"><b>설계 메모:</b> 이 화면은 독립 메뉴 항목이 아니라 <b>팝업 화면</b>(구조도 화면유형=팝업, 확정)입니다 — "운용사별 조기경보 조회"의 4개 그리드(벤처투자회사·증권회사·여신전문금융회사·은행) 행을 클릭(또는 Enter/Space)하면 뜹니다. 그래서 GNB/LNB/서브탭 메뉴 목록에서는 빠지고, 여기서는 "운용사별 조기경보 조회"로 돌아가는 링크만 남겼습니다. 엑셀 통합 시트에는 트리거 쪽(운용사별 조기경보 조회의 4개 [섹션N]타이틀 행) 기능별명칭(G열)에 이 화면명을 연결해 반영했습니다.</p>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  $('nav-gnb').addEventListener('click',function(){setNav('gnb')});
+  $('nav-lnb').addEventListener('click',function(){setNav('lnb')});
+  function setNav(m){$('app').setAttribute('data-nav',m);$('nav-gnb').setAttribute('aria-pressed',m==='gnb');$('nav-lnb').setAttribute('aria-pressed',m==='lnb')}
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+
+  /* ===== 검토필요 마커 (공용) ===== */
+  var rpop=null;
+  function closeR(){if(rpop){rpop.remove();rpop=null;document.removeEventListener('mousedown',rOut,true)}}
+  function rOut(e){if(rpop&&!rpop.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('review')))closeR()}
+  document.addEventListener('click',function(e){
+    var m=e.target.closest?e.target.closest('.review'):null; if(!m)return; e.preventDefault();e.stopPropagation();
+    if(rpop){closeR();return;}
+    var p=document.createElement('div');p.className='rpop';
+    p.innerHTML='<div style="font-weight:700;color:var(--ink);margin-bottom:5px">⚠ 검토필요</div>'+
+      '<div class="rl"><span class="k rec">추천</span><span>'+m.getAttribute('data-rec')+'</span></div>'+
+      '<div class="rl"><span class="k dat">데이터</span><span>'+m.getAttribute('data-dat')+'</span></div>';
+    document.body.appendChild(p);
+    var r=m.getBoundingClientRect();var top=r.bottom+6;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-6);
+    p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px';
+    rpop=p;setTimeout(function(){document.addEventListener('mousedown',rOut,true)},0);
+  });
+
+  /* ===== 기준년월 = 월 picker ===== */
+  var mp=null,mIn=null,mYear=2024;
+  function closeM(){if(mp){mp.remove();mp=null;mIn=null;document.removeEventListener('mousedown',mOut,true);document.removeEventListener('keydown',mKey,true)}}
+  function mOut(e){if(mp&&!mp.contains(e.target)&&e.target!==mIn)closeM()}
+  function mKey(e){if(e.key==='Escape'){e.preventDefault();var i=mIn;closeM();if(i)i.focus()}}
+  function mCont(input){var sel=input.value.split('-'),sy=sel[0],sm=parseInt(sel[1],10);
+    var h='<div class="phead"><button type="button" class="pnav" data-n="-1" aria-label="이전 해">‹</button><span>'+mYear+'년</span><button type="button" class="pnav" data-n="1" aria-label="다음 해">›</button></div><div class="pgrid">';
+    for(var v=1;v<=12;v++){var isSel=(String(mYear)===sy&&v===sm);h+='<button type="button" data-m="'+v+'"'+(isSel?' aria-selected="true"':'')+'>'+v+'월</button>';}
+    return h+'</div>';}
+  function mPos(p,input){var r=input.getBoundingClientRect();var top=r.bottom+4;if(top+p.offsetHeight>window.innerHeight-8)top=Math.max(8,r.top-p.offsetHeight-4);p.style.top=top+'px';p.style.left=Math.min(r.left,window.innerWidth-p.offsetWidth-8)+'px'}
+  function openM(input){if(mp&&mIn===input)return;closeM();mIn=input;mYear=input.value?parseInt(input.value.split('-')[0],10):(new Date()).getFullYear();
+    var p=document.createElement('div');p.className='pickpanel';p.setAttribute('role','dialog');p.setAttribute('aria-label','기준년월 선택');p.innerHTML=mCont(input);document.body.appendChild(p);mPos(p,input);
+    p.addEventListener('mousedown',function(e){
+      var n=e.target.closest('.pnav');if(n){e.preventDefault();mYear+=parseInt(n.getAttribute('data-n'),10);p.innerHTML=mCont(input);mPos(p,input);return;}
+      var b=e.target.closest('button[data-m]');if(b){e.preventDefault();var mm=('0'+b.getAttribute('data-m')).slice(-2);input.value=mYear+'-'+mm;closeM();input.focus();}
+    });
+    mp=p;setTimeout(function(){document.addEventListener('mousedown',mOut,true);document.addEventListener('keydown',mKey,true)},0);}
+  $('f-ym').addEventListener('click',function(){openM($('f-ym'))});
+  $('f-ym').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();openM($('f-ym'))}});
+
+  /* ===== scroll lock / toast ===== */
+  var lockN=0,savedPad='';
+  function lock(){if(lockN++===0){var sw=window.innerWidth-document.documentElement.clientWidth;savedPad=document.body.style.paddingRight;if(sw>0)document.body.style.paddingRight=sw+'px';document.body.style.overflow='hidden';}}
+  function unlock(){if(lockN>0&&--lockN===0){document.body.style.overflow='';document.body.style.paddingRight=savedPad;}}
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:130;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)';document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+
+  /* ===== 재무정보 데이터 (base = 원) — 자산/부채/자본 3분할 ===== */
+  var FIN_ASSET=[{k:'유동자산',v:900125478},{k:'자산총계',v:3065370755}];
+  var FIN_DEBT=[{k:'유동부채',v:387763257},{k:'부채총계',v:387763257}];
+  var FIN_CAPITAL=[
+    {k:'자본금',v:100000000},{k:'자본잉여금',v:0},{k:'이익잉여금',v:2298206548},
+    {k:'자본조정',v:0},{k:'자본총계',v:2677607498}
+  ];
+  var PROFIT=[
+    {k:'매출액',v:0},{k:'영업이익',v:-59765440},{k:'당기순이익',v:-59964734}
+  ];
+  var RATIO=[
+    {k:'자본충실도',v:'2,677.61'},{k:'부채비율',v:'14.48'},
+    {k:'총자산수익률',v:'-1.11'},{k:'자기자본이익률',v:'-1.15'}
+  ];
+  var TREND=[
+    {ym:'2024-12',ni:725759455,bse:2112747248,ese:2798906703,bta:2658672413,eta:2951863032,tc:2798906703}
+  ];
+
+  function commaWon(n){return n.toLocaleString('ko-KR');}
+  function fmtAmt(base,unit){
+    var n=Number(base);if(isNaN(n))return String(base);
+    if(unit==='won')return n.toLocaleString('ko-KR');
+    if(unit==='mm')return (n/1e6).toLocaleString('ko-KR',{minimumFractionDigits:1,maximumFractionDigits:1});
+    return (n/1e8).toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  var UNITLABEL={won:'원',mm:'백만원',eok:'억원'};
+  function applyUnit(root,unit){
+    root.querySelectorAll('.amt').forEach(function(el){
+      var b=el.getAttribute('data-base');el.textContent=fmtAmt(b,unit);
+      el.classList.toggle('neg',Number(b)<0);
+    });
+    var us=root.querySelectorAll('.uword');for(var i=0;i<us.length;i++)us[i].textContent=UNITLABEL[unit];
+  }
+
+  function kvBlock(arr,amount){
+    return '<div class="kv">'+arr.map(function(it){
+      if(amount){
+        return '<div class="kvi"><span class="k">'+it.k+'</span><span class="v"><span class="amt" data-base="'+it.v+'">'+commaWon(it.v)+'</span><span class="u uword">원</span></span></div>';
+      }
+      return '<div class="kvi"><span class="k">'+it.k+'</span><span class="v'+(String(it.v).indexOf('-')===0?' neg':'')+'">'+it.v+'</span></div>';
+    }).join('')+'</div>';
+  }
+
+  /* ===== 팝업 ===== */
+  var scrim=null,lastFocus=null;
+  function trap(c){c.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();closeModal();return}if(e.key!=='Tab')return;var f=Array.prototype.filter.call(c.querySelectorAll('button,input,select,textarea,[tabindex]:not([tabindex="-1"])'),function(el){return !el.disabled&&el.offsetParent!==null});if(!f.length)return;var first=f[0],last=f[f.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}})}
+  function closeModal(){closeR();closeM();if(scrim){scrim.remove();scrim=null;unlock()}if(lastFocus&&lastFocus.focus)lastFocus.focus()}
+
+  function openPop(){
+    lastFocus=document.activeElement;
+    scrim=document.createElement('div');scrim.className='scrim';
+    scrim.addEventListener('mousedown',function(e){if(e.target===scrim)closeModal()});
+
+    var trendRows=TREND.map(function(t){
+      return '<tr><td class="c">'+t.ym+'</td>'+
+        '<td class="amt" data-base="'+t.ni+'">'+commaWon(t.ni)+'</td>'+
+        '<td class="amt" data-base="'+t.bse+'">'+commaWon(t.bse)+'</td>'+
+        '<td class="amt" data-base="'+t.ese+'">'+commaWon(t.ese)+'</td>'+
+        '<td class="amt" data-base="'+t.bta+'">'+commaWon(t.bta)+'</td>'+
+        '<td class="amt" data-base="'+t.eta+'">'+commaWon(t.eta)+'</td>'+
+        '<td class="amt" data-base="'+t.tc+'">'+commaWon(t.tc)+'</td></tr>';
+    }).join('');
+
+    scrim.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="pm-t">'+
+      '<div class="modal-head">'+
+        '<div class="htxt"><h2 id="pm-t">운용사별 조기경보 재무정보</h2>'+
+          '<div class="who2">운용사명 : (유)동문파트너스 (벤처투자회사) · 기준년월 2024-12</div></div>'+
+        '<div class="hbtns">'+
+          '<button type="button" class="btn btn-sec btn-sm" id="pm-excel">엑셀</button>'+
+          '<button type="button" class="btn btn-sec btn-sm" id="pm-print">출력</button>'+
+          '<button class="icon-btn" id="pm-x" aria-label="닫기">×</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="modal-body" id="pm-body">'+
+        '<div class="unitbar"><span class="lab">금액 단위</span>'+
+          '<div class="seg sm" role="group" aria-label="금액 단위 전환">'+
+            '<button type="button" data-u="won" aria-pressed="true">원</button>'+
+            '<button type="button" data-u="mm" aria-pressed="false">백만원</button>'+
+            '<button type="button" data-u="eok" aria-pressed="false">억원</button>'+
+          '</div>'+
+          '<button type="button" class="review" data-rec="표시금액 base=원 가정" data-dat="원문에 단위 명시 없음(콤마 숫자)" aria-label="검토필요">!</button>'+
+        '</div>'+
+
+        '<div class="sec"><h3 class="sec-h">재무정보</h3>'+
+          '<div class="subgrp"><h4 class="subgrp-h">자산</h4>'+kvBlock(FIN_ASSET,true)+'</div>'+
+          '<div class="subgrp"><h4 class="subgrp-h">부채</h4>'+kvBlock(FIN_DEBT,true)+'</div>'+
+          '<div class="subgrp"><h4 class="subgrp-h">자본</h4>'+kvBlock(FIN_CAPITAL,true)+'</div>'+
+        '</div>'+
+
+        '<div class="sec"><h3 class="sec-h">손익정보</h3>'+kvBlock(PROFIT,true)+'</div>'+
+
+        '<div class="sec"><h3 class="sec-h">정량지표'+
+          '<button type="button" class="review" data-rec="부채비율·수익률=% / 자본충실도=배·백만원 추정" data-dat="원문에 단위 표기 없음 — 값만 제공" aria-label="검토필요">!</button>'+
+          '</h3>'+kvBlock(RATIO,false)+'</div>'+
+
+        '<div class="sec"><h3 class="sec-h">기준년월별 추이</h3>'+
+          '<div class="scroller"><table class="grid wide"><caption class="visually-hidden">기준년월별 추이</caption>'+
+            '<thead><tr><th class="c">기준년월</th><th class="c">당기순이익</th><th class="c">기초자기자본</th><th class="c">기말자기자본</th><th class="c">기초자산총계</th><th class="c">기말자산총계</th><th class="c">자본총계</th></tr></thead>'+
+            '<tbody>'+trendRows+'</tbody></table></div>'+
+          '<div style="font-size:11.5px;color:var(--ink-3);margin-top:5px">단위 : <span class="uword">원</span></div></div>'+
+
+        '<div class="sec"><h3 class="sec-h">지표등급 변경정보</h3>'+
+          '<div class="scroller"><table class="grid"><caption class="visually-hidden">지표등급 변경정보 — 등급은 변경 전/후 2단 헤더</caption>'+
+            '<colgroup><col><col><col><col><col></colgroup>'+
+            '<thead>'+
+              '<tr><th class="c" rowspan="2" scope="col">변경일자</th><th class="c" rowspan="2" scope="col">정량지표</th>'+
+                '<th class="c" colspan="2" scope="colgroup">등급'+
+                  '<button type="button" class="review" data-rec="등급코드(예: A/B/C/D) — CDTP 미확인" data-dat="데이터 없음(null)" aria-label="검토필요">!</button>'+
+                '</th>'+
+                '<th class="c" rowspan="2" scope="col">변경사유</th></tr>'+
+              '<tr><th class="c" scope="col">변경 전</th><th class="c" scope="col">변경 후</th></tr>'+
+            '</thead>'+
+            '<tbody><tr><td class="empty" colspan="5">조회된 등급 변경 내역이 없습니다.</td></tr></tbody>'+
+          '</table></div></div>'+
+
+      '</div>'+
+      '<div style="height:6px"></div>'+
+    '</div>';
+
+    lock();document.body.appendChild(scrim);
+    var modal=scrim.querySelector('.modal');
+    trap(modal);
+    var body=$('pm-body');
+    $('pm-x').addEventListener('click',closeModal);
+    $('pm-excel').addEventListener('click',function(){toast('엑셀 다운로드 (목업)')});
+    $('pm-print').addEventListener('click',function(){window.print()});
+    /* 단위 전환 */
+    var segBtns=body.querySelectorAll('.unitbar .seg button');
+    segBtns.forEach(function(b){b.addEventListener('click',function(){
+      segBtns.forEach(function(x){x.setAttribute('aria-pressed',x===b)});
+      applyUnit(body,b.getAttribute('data-u'));
+    })});
+    setTimeout(function(){$('pm-x').focus()},0);
+  }
+
+  $('open-pop').addEventListener('click',function(e){e.stopPropagation();openPop()});
+  $('row1').addEventListener('click',openPop);
+  $('row1').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openPop()}});
+  $('search').addEventListener('click',function(){toast('조회되었습니다 (목업)')});
+  $('excel-list').addEventListener('click',function(){toast('엑셀 다운로드 (목업)')});
+})();
+</script>

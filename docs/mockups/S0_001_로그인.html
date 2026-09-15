@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>로그인 — 에이핏(AFIT)</title>
+<style>
+/* ═══ APFS 디자인 토큰 (디자인_작업_가이드 §1) ═══ */
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --surface-2:#F7F9FC; --surface-3:#EEF2F7;
+  --border:#DCE0E6; --border-strong:#C3CAD3;
+  --ink:#1A1D21; --ink-2:#48505A; --ink-3:#6B7480;
+  --primary:#256EF4; --primary-hover:#1E5AD6; --primary-weak:#EAF1FE;
+  --ok:#0E7C86; --ok-weak:#E2F3F4;
+  --amber:#B45309; --amber-weak:#FBF0E1;
+  --danger:#E5484D; --danger-weak:#FDECEC;
+  --navy:#16233F;
+  --radius:8px; --radius-sm:6px; --radius-lg:12px;
+  --shadow:0 1px 3px rgba(16,24,40,.08);
+  --shadow-lg:0 12px 40px rgba(16,24,40,.22);
+  --ring:0 0 0 3px rgba(37,110,244,.35);
+  --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=light]){
+    --bg:#0F141B; --surface:#171E27; --surface-2:#1C242F; --surface-3:#232C38;
+    --border:#2C3846; --border-strong:#3A4757;
+    --ink:#EAEEF3; --ink-2:#AEB8C4; --ink-3:#7E8996;
+    --primary:#5B94FF; --primary-hover:#7AA8FF; --primary-weak:#16233B;
+    --ok:#3FB8C2; --ok-weak:#123033;
+    --amber:#E7A24A; --amber-weak:#2A2113;
+    --danger:#F26D6D; --danger-weak:#2A1616;
+    --navy:#0D1526;
+    --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-lg:0 12px 40px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme=dark]{
+  --bg:#0F141B; --surface:#171E27; --surface-2:#1C242F; --surface-3:#232C38;
+  --border:#2C3846; --border-strong:#3A4757;
+  --ink:#EAEEF3; --ink-2:#AEB8C4; --ink-3:#7E8996;
+  --primary:#5B94FF; --primary-hover:#7AA8FF; --primary-weak:#16233B;
+  --ok:#3FB8C2; --ok-weak:#123033;
+  --amber:#E7A24A; --amber-weak:#2A2113;
+  --danger:#F26D6D; --danger-weak:#2A1616;
+  --navy:#0D1526;
+  --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-lg:0 12px 40px rgba(0,0,0,.55);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5}
+table{font-variant-numeric:tabular-nums}
+code{background:var(--surface-3);padding:1px 6px;border-radius:4px;font-size:12.5px}
+a{color:var(--primary)}
+
+/* ═══ 레이아웃 골격 (§2) ═══ */
+.wrap{max-width:1300px;margin:0 auto;padding:14px 16px 40px}
+.opts{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin:0 0 10px;font-size:12.5px;color:var(--ink-3)}
+.opts .seg{display:inline-flex;border:1px solid var(--border);border-radius:20px;overflow:hidden;background:var(--surface)}
+.opts .seg button{border:0;background:transparent;color:var(--ink-3);font:inherit;font-size:12px;font-weight:600;padding:5px 12px;cursor:pointer}
+.opts .seg button.on{background:var(--primary);color:#fff}
+.frame{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow);background:var(--surface)}
+
+/* topbar */
+.topbar{display:flex;align-items:center;gap:18px;background:var(--navy);color:#fff;padding:0 18px;height:52px;position:relative}
+.sysmark{display:flex;align-items:center;gap:9px;cursor:pointer;border-radius:8px;padding:6px 8px;margin-left:-8px}
+.sysmark:hover{background:rgba(255,255,255,.08)}
+.sysmark .mk{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#4C86F5 50%,#9DBEF9 50%);flex:none}
+.sysmark b{font-size:15px;letter-spacing:-.01em;white-space:nowrap}
+.sysmark small{color:#9FB0CC;font-weight:500;white-space:nowrap}
+.brandtxt{display:flex;flex-direction:column;line-height:1.18}
+.brandtxt small{font-size:11px}
+.gnb-menu{display:flex;gap:2px;height:100%}
+.app[data-nav=lnb] .gnb-menu{display:none}
+.gnb-menu a{display:flex;align-items:center;padding:0 15px;color:#C9D4E6;text-decoration:none;font-weight:600;font-size:14px;border-bottom:3px solid transparent;border-top:3px solid transparent}
+.gnb-menu a:hover{color:#fff}
+.gnb-menu a.on{color:#fff;border-bottom-color:var(--primary)}
+.who{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12.5px;color:#C9D4E6;white-space:nowrap}
+.who b{color:#fff}
+.who .wtag{background:rgba(255,255,255,.12);border-radius:12px;padding:2px 9px;font-size:11.5px}
+.who button{border:1px solid rgba(255,255,255,.25);background:transparent;color:#C9D4E6;border-radius:6px;font:inherit;font-size:11.5px;padding:3px 9px;cursor:pointer}
+.who button:hover{color:#fff;border-color:rgba(255,255,255,.5)}
+
+/* 시스템 전환 메뉴 */
+.sysmenu{position:absolute;top:50px;left:10px;z-index:60;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);min-width:230px;padding:6px;display:none}
+.sysmenu.open{display:block}
+.sysmenu a{display:flex;gap:10px;align-items:center;padding:9px 11px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:13.5px;font-weight:600}
+.sysmenu a:hover{background:var(--surface-2)}
+.sysmenu a.cur{background:var(--primary-weak);color:var(--primary)}
+.sysmenu .dot{width:8px;height:8px;border-radius:50%;background:var(--border-strong);flex:none}
+.sysmenu a.cur .dot{background:var(--primary)}
+.sysmenu .divider{height:1px;background:var(--border);margin:5px 4px}
+
+/* subtab */
+.subtab{display:flex;gap:2px;background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px}
+.app[data-nav=lnb] .subtab{display:none}
+.subtab a{padding:11px 14px;color:var(--ink-3);text-decoration:none;font-size:13.5px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px}
+.subtab a:hover{color:var(--ink)}
+.subtab a.on{color:var(--primary);border-bottom-color:var(--primary)}
+
+/* mid / lnb / content */
+.mid{display:flex;min-height:640px;background:var(--bg)}
+.lnb{width:216px;flex:none;background:var(--surface);border-right:1px solid var(--border);padding:14px 10px;display:none}
+.app[data-nav=lnb] .lnb{display:block}
+.lnb .lnb-title{font-size:12px;font-weight:700;color:var(--ink-3);margin:2px 8px 8px;letter-spacing:.03em}
+.lnb a{display:block;padding:9px 12px;border-radius:8px;color:var(--ink-2);text-decoration:none;font-size:13.5px;font-weight:600;margin-bottom:2px}
+.lnb a:hover{background:var(--surface-2)}
+.lnb a.on{background:var(--primary-weak);color:var(--primary)}
+.content{flex:1;min-width:0;padding:18px 20px 30px}
+.pagehead{display:flex;align-items:baseline;gap:10px;margin:2px 0 14px}
+.pagehead h1{font-size:19px;margin:0;letter-spacing:-.01em}
+.pagehead .desc{font-size:12.5px;color:var(--ink-3)}
+
+/* ═══ 버튼 (§3) ═══ */
+.btn,.btn-sec,.btn-danger{height:36px;padding:0 14px;border-radius:var(--radius-sm);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn{border:1px solid var(--primary);background:var(--primary);color:#fff}
+.btn:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+.btn-sec{border:1px solid var(--border-strong);background:var(--surface);color:var(--ink)}
+.btn-sec:hover{background:var(--surface-2)}
+.btn-danger{border:1px solid var(--border-strong);background:var(--surface);color:var(--danger)}
+.btn-danger:hover{background:var(--danger-weak);border-color:var(--danger)}
+.btn-sm{height:36px;padding:0 12px;font-size:12.5px}
+.btn-xs{height:36px;padding:0 9px;font-size:11.5px;font-weight:600}
+.btn[disabled],.btn-sec[disabled],.btn-danger[disabled]{opacity:.45;pointer-events:none}
+
+/* ═══ 검색박스 / 필터 ═══ */
+.searchbox{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px 12px;margin-bottom:14px;box-shadow:var(--shadow)}
+.filtergrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 22px}
+.field{display:flex;align-items:center;gap:10px;min-width:0}
+.field>label{flex:none;min-width:56px;width:76px;text-align:right;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.field>.ctrl{flex:1;min-width:0;display:flex;gap:6px;align-items:center}
+.search-foot{display:flex;justify-content:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)}
+.search-foot .btn,.search-foot .btn-sec{min-width:96px}
+
+/* ═══ 리스트바 / 그리드 ═══ */
+.listbar{display:flex;align-items:center;gap:10px;margin:0 0 8px}
+.listbar .total{font-size:13px;color:var(--ink-2)}
+.listbar .total b{color:var(--primary)}
+.listbar .acts{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.gridwrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:auto;box-shadow:var(--shadow);max-height:560px}
+table.grid{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+table.grid thead th{position:sticky;top:0;z-index:5;background:var(--surface-2);color:var(--ink-2);font-size:12px;font-weight:700;text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+table.grid th.c,table.grid td.c{text-align:center}
+table.grid th.r,table.grid td.r{text-align:right}
+table.grid th.no{width:44px;text-align:center}
+table.grid td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.grid tbody tr{cursor:pointer}
+table.grid tbody tr:hover{background:var(--surface-2)}
+table.grid tbody tr.sel{background:var(--primary-weak);box-shadow:inset 3px 0 0 var(--primary)}
+table.grid tbody tr.nosel{cursor:default}
+table.grid tbody tr.nosel:hover{background:transparent}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable::after{content:'↕';margin-left:5px;color:var(--border-strong);font-size:10px}
+th.sortable[aria-sort=ascending]::after{content:'↑';color:var(--primary)}
+th.sortable[aria-sort=descending]::after{content:'↓';color:var(--primary)}
+.empty-row td{color:var(--ink-3);text-align:center;padding:26px 0;cursor:default}
+/* 모달 내부 보조 그리드 */
+.mgridwrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-sm)}
+table.mgrid{width:100%;border-collapse:collapse;font-size:12.5px}
+table.mgrid th{background:var(--surface-2);color:var(--ink-2);font-size:11.5px;font-weight:700;text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+table.mgrid td{padding:6px 10px;border-bottom:1px solid var(--border)}
+table.mgrid tr:last-child td{border-bottom:0}
+table.mgrid th.c,table.mgrid td.c{text-align:center}
+
+/* ═══ 폼 필드 ═══ */
+input,select,textarea{height:36px;padding:0 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px;min-width:0}
+textarea{height:auto;padding:8px 10px;resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--primary)}
+input[readonly]{background:var(--surface-3);color:var(--ink-2)}
+input::placeholder{color:var(--ink-3)}
+.frow{display:grid;grid-template-columns:120px 1fr;gap:8px 12px;align-items:center;margin-bottom:10px}
+.frow>label{font-size:12.5px;font-weight:600;color:var(--ink-2);text-align:right}
+.frow .req::after{content:' *';color:var(--danger)}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 26px}
+.radio-inline{display:flex;gap:14px;align-items:center;height:36px}
+.radio-inline label{display:flex;gap:5px;align-items:center;font-size:13.5px;cursor:pointer}
+.hint{font-size:12px;color:var(--ink-3);margin-top:3px}
+.note{font-size:12.5px;color:var(--ink-2);background:var(--surface-2);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin:10px 0}
+.chkgrp{display:flex;gap:6px;flex-wrap:wrap}
+.chk{display:inline-flex;gap:6px;align-items:center;padding:6px 11px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;background:var(--surface)}
+.chk input{height:14px;margin:0}
+.chk.on{background:var(--primary-weak);border-color:var(--primary);color:var(--primary)}
+
+/* ═══ 모달 ═══ */
+.scrim{position:fixed;inset:0;background:rgba(10,16,28,.5);z-index:100;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
+.scrim.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:760px;max-width:100%;display:flex;flex-direction:column;max-height:calc(100vh - 80px)}
+.modal.wmodal{width:1280px}
+.modal.smodal{width:420px}
+.modal-head{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:10px;padding:15px 20px;border-bottom:1px solid var(--border);background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.modal-head h2{font-size:16px;margin:0;flex:1}
+.modal-head .x{border:0;background:transparent;color:var(--ink-3);font-size:20px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:6px}
+.modal-head .x:hover{background:var(--surface-2);color:var(--ink)}
+.modal-body{padding:18px 20px;overflow-y:auto}
+.modal-foot{position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:8px;padding:13px 20px;border-top:1px solid var(--border);background:var(--surface);border-radius:0 0 var(--radius-lg) var(--radius-lg)}
+.modal-foot .left{margin-right:auto;display:flex;gap:8px}
+/* 모달 위 소형 서브다이얼로그 (.addrpick 패턴) */
+.addrpick{position:fixed;z-index:130;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:360px;max-width:92vw;padding:16px;display:none}
+.addrpick.open{display:block}
+.addrpick h3{margin:0 0 10px;font-size:14px}
+
+/* ═══ 배지 / 상태 ═══ */
+.dbadge{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:12px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.dbadge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.dbadge.ok{background:var(--ok-weak);color:var(--ok)}
+.dbadge.amber{background:var(--amber-weak);color:var(--amber)}
+.dbadge.grey{background:var(--surface-3);color:var(--ink-3)}
+.dbadge.danger{background:var(--danger-weak);color:var(--danger)}
+.dbadge.blue{background:var(--primary-weak);color:var(--primary)}
+.kind-badge{display:inline-block;padding:1px 8px;border-radius:5px;font-size:11px;font-weight:700}
+.kind-badge.base{background:var(--ok-weak);color:var(--ok)}
+.kind-badge.chg{background:var(--primary-weak);color:var(--primary)}
+.hist-locked{font-size:11px;color:var(--ink-3);border:1px solid var(--border);border-radius:5px;padding:1px 7px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-weight:600;font-size:13.5px;z-index:200;box-shadow:var(--shadow-lg)}
+
+/* ═══ ⚠ 검토 마커 ═══ */
+.mk-warn{display:inline-flex;align-items:center;gap:4px;background:var(--amber-weak);color:var(--amber);border:1px dashed var(--amber);border-radius:5px;padding:0 7px;font-size:11.5px;font-weight:700;cursor:pointer;height:20px;vertical-align:middle}
+.mk-pop{position:fixed;z-index:150;width:330px;max-width:90vw;background:var(--surface);border:1px solid var(--amber);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:13px 15px;font-size:12.5px;display:none}
+.mk-pop.open{display:block}
+.mk-pop h4{margin:0 0 7px;font-size:12.5px;color:var(--amber)}
+.mk-pop .row{display:grid;grid-template-columns:52px 1fr;gap:4px 8px;margin-bottom:4px}
+.mk-pop .row b{color:var(--ink-3);font-weight:600;font-size:11.5px}
+
+/* ═══ 인증(로그인·온보딩) 독립 페이지 ═══ */
+.authwrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:34px 16px;background:
+  radial-gradient(900px 420px at 70% -10%, var(--primary-weak), transparent 60%), var(--bg)}
+.authcard{width:440px;max-width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);overflow:hidden}
+.authcard.wide{width:620px}
+.authhead{background:var(--navy);color:#fff;padding:20px 24px;display:flex;gap:11px;align-items:center}
+.authhead .mk{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#4C86F5 50%,#9DBEF9 50%);flex:none}
+.authhead b{font-size:17px;display:block}
+.authhead small{color:#9FB0CC;font-size:12px}
+.authbody{padding:22px 24px 24px}
+.authfoot{padding:0 24px 20px;font-size:12px;color:var(--ink-3);display:flex;gap:12px;justify-content:center}
+.authfoot a{color:var(--ink-3)}
+.steps{display:flex;gap:6px;margin:0 0 16px;flex-wrap:wrap}
+.steps .s{padding:4px 11px;border-radius:20px;background:var(--surface-3);color:var(--ink-3);font-size:12px;font-weight:700}
+.steps .s.on{background:var(--primary);color:#fff}
+.steps .s.done{background:var(--ok-weak);color:var(--ok)}
+.banner{padding:12px 15px;border-radius:var(--radius-sm);font-weight:700;font-size:13.5px;margin-bottom:14px}
+.banner.ok{background:var(--ok-weak);color:var(--ok)}
+.banner.bad{background:var(--danger-weak);color:var(--danger)}
+.banner.warn{background:var(--amber-weak);color:var(--amber)}
+.kv{display:grid;grid-template-columns:96px 1fr;gap:6px 12px;font-size:13px;margin:10px 0}
+.kv b{color:var(--ink-3);font-weight:600}
+.otpbox{border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin:10px 0;background:var(--surface-2);display:flex;align-items:center;gap:10px;font-size:12.5px;flex-wrap:wrap}
+.otpbox .code{color:var(--primary);font-size:22px;font-weight:800;letter-spacing:4px}
+.qr{width:124px;height:124px;border:1px solid var(--border);border-radius:8px;flex:none;
+  background:repeating-conic-gradient(var(--ink) 0 25%, var(--surface) 0 50%) 0 0/12px 12px}
+.demofill{border:1px dashed var(--border-strong);background:var(--surface-2);color:var(--ink-2);border-radius:var(--radius-sm);font:inherit;font-size:12px;font-weight:600;height:28px;padding:0 10px;cursor:pointer}
+.demofill:hover{background:var(--surface-3)}
+
+/* ═══ 브레드크럼 ═══ */
+.crumb{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--ink-3);margin-left:auto}
+.crumb .home::before{content:'⌂ ';}
+.crumb .sep{color:var(--border-strong)}
+.crumb .cur{color:var(--ink-2);font-weight:600}
+
+/* ═══ 토글 스위치 ═══ */
+.switch{position:relative;display:inline-block;width:44px;height:24px;flex:none}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.switch .track{position:absolute;inset:0;background:var(--border-strong);border-radius:20px;transition:.15s}
+.switch .track::before{content:'';position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.switch input:checked+.track{background:var(--primary)}
+.switch input:checked+.track::before{transform:translateX(20px)}
+.switch input:focus-visible+.track{box-shadow:var(--ring)}
+
+/* ═══ 권한 트리 매트릭스(권한 설정) ═══ */
+.permtree-wrap{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:auto;max-height:min(52vh,440px)}
+table.permtree{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}
+table.permtree thead th{position:sticky;top:0;z-index:5;background:var(--surface-3);color:var(--ink-2);font-size:11.5px;font-weight:700;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap;text-align:left}
+table.permtree thead th.c{text-align:center}
+table.permtree td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.permtree td.c{text-align:center}
+table.permtree td.pt-dae{background:var(--surface-2);font-weight:700;border-right:1px solid var(--border);white-space:nowrap;border-bottom:0}
+table.permtree td.pt-mid{background:var(--surface);font-weight:600;color:var(--ink-2);border-right:1px solid var(--border);white-space:nowrap;border-bottom:0}
+table.permtree td.pid{color:var(--ink-3);font-family:Consolas,Menlo,monospace;font-size:11.5px}
+table.permtree tr.grp-dae>td{border-top:2px solid var(--border-strong)}
+table.permtree tr.grp-mid>td{border-top:1px solid var(--border)}
+table.permtree tbody tr:hover td:not(.pt-dae):not(.pt-mid){background:var(--surface-2)}
+table.permtree .lbl{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+table.permtree input[type=checkbox]{width:16px;height:16px;margin:0;cursor:pointer}
+.colchk{display:inline-flex;gap:5px;align-items:center;cursor:pointer;font-weight:700}
+.reqmark::after{content:' *';color:var(--danger)}
+.inp-req{border-color:var(--danger)!important}
+
+/* ═══ 메뉴관리 트리 그리드 ═══ */
+.tvexp{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border:1px solid var(--border-strong);border-radius:4px;background:var(--surface);color:var(--ink-2);font-size:12px;line-height:1;cursor:pointer;margin-right:6px;vertical-align:middle;user-select:none}
+.tvexp:hover{background:var(--surface-2);border-color:var(--primary);color:var(--primary)}
+.tvexp.ph{border-color:transparent;background:transparent;cursor:default}
+.tvexp.ph:hover{background:transparent}
+table.grid td .mname{display:inline-flex;align-items:center}
+table.grid tr.lvl1 td:nth-child(2){font-weight:700}
+table.grid tr.lvl2 td:nth-child(2){font-weight:600;color:var(--ink-2)}
+table.grid tr.lvl3 td:nth-child(2){color:var(--ink-2)}
+
+@media (max-width:900px){
+  .filtergrid{grid-template-columns:1fr}
+  .formgrid{grid-template-columns:1fr}
+  .gnb-menu a{padding:0 9px;font-size:13px}
+}
+
+/* ═══ AG-Grid Community 테마 정렬 (디자인 토큰과 일치) ═══ */
+.apfsgrid{width:100%;height:520px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.apfsgrid.ah{height:auto}
+.ag-theme-quartz,.ag-theme-quartz-dark{
+  --ag-font-family:inherit; --ag-font-size:13px;
+  --ag-background-color:var(--surface);
+  --ag-header-background-color:var(--surface-2);
+  --ag-odd-row-background-color:var(--surface);
+  --ag-header-foreground-color:var(--ink-2);
+  --ag-foreground-color:var(--ink);
+  --ag-border-color:var(--border);
+  --ag-row-border-color:var(--border);
+  --ag-header-column-separator-display:none;
+  --ag-borders:none; --ag-borders-critical:none; --ag-wrapper-border-radius:0;
+  --ag-row-hover-color:var(--surface-2);
+  --ag-selected-row-background-color:var(--primary-weak);
+  --ag-range-selection-background-color:var(--primary-weak);
+  --ag-input-focus-border-color:var(--primary);
+  --ag-checkbox-checked-color:var(--primary);
+  --ag-header-height:42px; --ag-row-height:40px;
+  --ag-cell-horizontal-padding:12px;
+  --ag-header-column-resize-handle-display:none;
+}
+.apfsgrid .ag-header-cell-text{font-size:12px;font-weight:700}
+.apfsgrid .ag-cell{display:flex;align-items:center;line-height:1.4}
+.apfsgrid .ag-cell.ag-c,.apfsgrid .ag-header-cell.ag-c .ag-header-cell-label{justify-content:center}
+.apfsgrid .ag-header-cell.ag-c .ag-header-cell-label{text-align:center}
+.apfsgrid .ag-cell.ag-r,.apfsgrid .ag-header-cell.ag-r .ag-header-cell-label{justify-content:flex-end}
+.apfsgrid .ag-row-selected .ag-cell{font-weight:inherit}
+.apfsgrid .ag-cell b{font-weight:700}
+/* 트리(메뉴관리) 펼침 토글 */
+.apfsgrid .tvexp{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border:1px solid var(--border-strong);border-radius:4px;font-size:12px;line-height:1;color:var(--ink-2);background:var(--surface);cursor:pointer;flex:none;margin-right:6px;user-select:none}
+.apfsgrid .tvexp.ph{border-color:transparent;background:transparent;cursor:default}
+.apfsgrid .mname{display:inline-flex;align-items:center}
+.apfsgrid .kind-badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;line-height:1.6;margin-right:3px}
+.apfsgrid .kind-badge.base{background:var(--surface-3);color:var(--ink-2)}
+.apfsgrid .kind-badge.chg{background:var(--primary-weak);color:var(--primary)}
+
+/* ═══ 도움말 편집 폼(프로그램관리) ═══ */
+.hp-fld{margin-bottom:12px}
+.hp-lbl{font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.hp-sub{font-weight:400;color:var(--ink-3);font-size:11.5px;margin-left:4px}
+.hp-sec{font-size:12.5px;font-weight:700;color:var(--ink);border-bottom:1px solid var(--border);padding-bottom:6px;margin:8px 0 8px}
+.btn-dash{border:1px dashed var(--border-strong);background:transparent;color:var(--primary);border-radius:6px;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.btn-dash:hover{background:var(--surface-2)}
+/* 공용 삭제 미니버튼 */
+.chipx{flex:none;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--danger,#d33);cursor:pointer;font-weight:700;width:28px;height:28px;line-height:1;font-size:15px}
+.chipx:hover{background:var(--danger-weak)}
+/* 이미지 칩 + 추가 타일 */
+.hp-imgchip{width:132px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);display:flex;flex-direction:column;gap:6px;position:relative;padding:8px}
+.hp-imgbox{height:74px;border-radius:6px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-size:26px}
+.hp-imgchip .cap input{width:100%;font-size:11.5px}
+.hp-imgchip .chipx{position:absolute;top:5px;right:5px;width:22px;height:22px;font-size:13px;background:rgba(255,255,255,.85)}
+.hp-imgadd{width:132px;min-height:110px;border:1.5px dashed var(--border-strong);border-radius:8px;background:transparent;color:var(--primary);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:inherit}
+.hp-imgadd span{font-size:24px;line-height:1}
+.hp-imgadd small{font-size:11.5px;font-weight:700}
+.hp-imgadd:hover{background:var(--surface-2)}
+/* 첨부파일 드롭존 + 칩 */
+.hp-drop{border:2px dashed var(--border-strong);border-radius:10px;background:var(--surface-2);padding:20px 16px;text-align:center;cursor:pointer;transition:background .12s,border-color .12s}
+.hp-drop:hover{background:var(--surface-3)}
+.hp-drop:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.hp-drop.drag{border-color:var(--primary);background:var(--primary-weak)}
+.hp-drop .ic{font-size:26px;color:var(--primary);line-height:1}
+.hp-drop .t1{font-size:13px;font-weight:600;color:var(--ink);margin-top:6px}
+.hp-drop .t1 .lnk{color:var(--primary);text-decoration:underline}
+.hp-drop .t2{font-size:11.5px;color:var(--ink-3);margin-top:3px}
+.hp-fileempty{font-size:12px;color:var(--ink-3);padding:6px 2px}
+.hp-filechip{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface-2);font-size:12.5px;margin-bottom:6px}
+.hp-filechip .ic{flex:none}
+.hp-filechip .fname{flex:1;font-size:12.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hp-filechip .fsize{flex:none;font-size:11px;color:var(--ink-3)}
+/* 항목/절차 행 */
+.hp-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.hp-row .k{flex:0 0 200px;font-size:12.5px}
+.hp-row .v{flex:1;font-size:12.5px}
+.hp-row .stepno{flex:none;width:24px;height:24px;border-radius:50%;background:var(--primary-weak);color:var(--primary);font-weight:700;font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+/* FAQ */
+.hp-faq{border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px}
+.hp-faq .qhead{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.hp-faq .qno{flex:none;font-weight:700;color:var(--primary);font-size:12.5px;min-width:26px}
+.hp-faq .q{flex:1;font-size:12.5px}
+.hp-faq .a{width:100%;font-size:12.5px;resize:vertical}
+
+</style>
+</head>
+<body>
+<div class="authwrap">
+<div class="authcard">
+<div class="authhead"><span class="mk"></span><span><b>에이핏(AFIT)</b><small>농림수산식품모태펀드 투자자산관리시스템</small></span></div>
+<div class="authbody" id="body"></div>
+
+<div class="authfoot"><a href="#" id="lnk-reset">비밀번호 재설정(간편인증)</a><span>·</span><a href="S0_002_발급온보딩.html">최초 접속(온보딩) 안내</a></div>
+<div class="scrim" id="m-reset"><div class="modal smodal" role="dialog" aria-modal="true" aria-label="비밀번호 재설정">
+  <div class="modal-head"><h2>비밀번호 재설정</h2><button class="x" aria-label="닫기">×</button></div>
+  <div class="modal-body" id="reset-body"></div>
+  <div class="modal-foot"><button class="btn-sec" data-close>닫기</button><button class="btn" id="r-go">간편인증 진행</button></div>
+</div></div>
+</div>
+<div style="margin-top:14px;font-size:12px;color:var(--ink-3)">본 화면은 설계 검토용 목업입니다 · 데모 데이터(실명 아님)</div>
+</div>
+<script>
+/* ═══ APFS 공통 스크립트 (디자인_작업_가이드 §2~§4) ═══ */
+"use strict";
+window.APFS=(function(){
+  var $=function(s,el){return (el||document).querySelector(s);};
+  var $$=function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s));};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+  /* ── 테마 / 내비 토글 ── */
+  function initOpts(){
+    var seg=$('#nav-seg'); var app=$('.app');
+    if(seg&&app){ $$('button',seg).forEach(function(b){ b.addEventListener('click',function(){
+      $$('button',seg).forEach(function(x){x.classList.toggle('on',x===b);});
+      app.setAttribute('data-nav',b.getAttribute('data-v'));
+    });});}
+    var th=$('#theme-seg');
+    if(th){ $$('button',th).forEach(function(b){ b.addEventListener('click',function(){
+      $$('button',th).forEach(function(x){x.classList.toggle('on',x===b);});
+      var v=b.getAttribute('data-v');
+      if(v==='auto')document.documentElement.removeAttribute('data-theme');
+      else document.documentElement.setAttribute('data-theme',v);
+      refreshGridThemes();
+    });});}
+  }
+
+  /* ── 시스템 전환 메뉴 ── */
+  function initSysmenu(){
+    var mk=$('.sysmark'), menu=$('.sysmenu');
+    if(!mk||!menu)return;
+    mk.addEventListener('click',function(e){e.stopPropagation();menu.classList.toggle('open');});
+    document.addEventListener('click',function(){menu.classList.remove('open');});
+    menu.addEventListener('click',function(e){e.stopPropagation();});
+  }
+
+  /* ── 토스트 ── */
+  var toastT=null;
+  function toast(msg){
+    var e=$('.toast'); if(e)e.remove(); if(toastT)clearTimeout(toastT);
+    var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=msg;
+    document.body.appendChild(t); toastT=setTimeout(function(){t.remove();},2400);
+  }
+
+  /* ── 모달 (포커스 트랩 · ESC/스크림 닫기 · 스크롤 락 + 패딩 보정) ── */
+  var openStack=[];
+  function lock(){ if(openStack.length===1){ var sw=window.innerWidth-document.documentElement.clientWidth;
+    document.body.style.paddingRight=sw>0?sw+'px':''; document.body.style.overflow='hidden'; } }
+  function unlock(){ if(openStack.length===0){ document.body.style.overflow=''; document.body.style.paddingRight=''; } }
+  function openModal(id){
+    var sc=$('#'+id); if(!sc)return;
+    sc.classList.add('open'); openStack.push(id); lock();
+    var f=$$('button,input,select,textarea,a[href]',sc).filter(function(el){return !el.disabled&&el.offsetParent!==null;});
+    if(f.length)f[0].focus();
+    sc.__trap=function(e){
+      if(e.key==='Escape'){e.stopPropagation();closeModal(id);}
+      if(e.key==='Tab'){
+        var fs=$$('button,input,select,textarea,a[href]',sc).filter(function(el){return !el.disabled&&el.offsetParent!==null;});
+        if(!fs.length)return;
+        var first=fs[0],last=fs[fs.length-1];
+        if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+        else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+      }
+    };
+    sc.addEventListener('keydown',sc.__trap);
+  }
+  function closeModal(id){
+    var sc=$('#'+id); if(!sc)return;
+    sc.classList.remove('open');
+    var i=openStack.indexOf(id); if(i>=0)openStack.splice(i,1);
+    if(sc.__trap){sc.removeEventListener('keydown',sc.__trap);sc.__trap=null;}
+    unlock();
+  }
+  function wireModal(id,onClose){
+    var sc=$('#'+id); if(!sc)return;
+    sc.addEventListener('mousedown',function(e){ if(e.target===sc){closeModal(id); if(onClose)onClose();} });
+    $$('.x,[data-close]',sc).forEach(function(b){ b.addEventListener('click',function(){closeModal(id); if(onClose)onClose();}); });
+  }
+
+  /* ── 모달 위 소형 확인 (.addrpick 패턴 — openSubDialog/subConfirm) ── */
+  function openSubDialog(html,anchor,onOk){
+    var box=$('#addrpick'); if(!box){box=document.createElement('div');box.id='addrpick';box.className='addrpick';document.body.appendChild(box);}
+    box.innerHTML=html+'<div style="display:flex;justify-content:flex-end;gap:6px;margin-top:12px">'+
+      '<button class="btn-sec btn-sm" data-sub-cancel>취소</button><button class="btn btn-sm" data-sub-ok>확인</button></div>';
+    var r=anchor&&anchor.getBoundingClientRect?anchor.getBoundingClientRect():{left:innerWidth/2-180,bottom:innerHeight/2-80};
+    box.style.left=Math.max(8,Math.min(innerWidth-370,r.left))+'px';
+    box.style.top=Math.min(innerHeight-220,r.bottom+8)+'px';
+    box.classList.add('open');
+    $('[data-sub-cancel]',box).onclick=function(){box.classList.remove('open');};
+    $('[data-sub-ok]',box).onclick=function(){ if(onOk&&onOk(box)===false)return; box.classList.remove('open');};
+    var f=$('input,select',box); if(f)f.focus();
+  }
+  function subConfirm(msg,anchor,onOk){ openSubDialog('<h3>확인</h3><div style="font-size:13px;color:var(--ink-2)">'+esc(msg)+'</div>',anchor,onOk); }
+  /* 경고(확인 단일 버튼) — anchor 근처에 표시, 줄바꿈 지원 */
+  function subAlert(msg,anchor){
+    var box=$('#addrpick'); if(!box){box=document.createElement('div');box.id='addrpick';box.className='addrpick';document.body.appendChild(box);}
+    box.innerHTML='<h3 style="color:var(--danger,#d33)">⚠ 삭제 불가</h3><div style="font-size:13px;color:var(--ink-2);line-height:1.5">'+esc(msg).replace(/\n/g,'<br>')+'</div>'+
+      '<div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-sm" data-sub-ok>확인</button></div>';
+    var r=anchor&&anchor.getBoundingClientRect?anchor.getBoundingClientRect():{left:innerWidth/2-180,bottom:innerHeight/2-80};
+    box.style.left=Math.max(8,Math.min(innerWidth-370,r.left))+'px';
+    box.style.top=Math.min(innerHeight-220,r.bottom+8)+'px';
+    box.classList.add('open');
+    $('[data-sub-ok]',box).onclick=function(){box.classList.remove('open');};
+  }
+
+  /* ── 숫자 자동 콤마 (전역, 예외 .js-rrn-front) ── */
+  document.addEventListener('input',function(e){
+    var el=e.target;
+    if(!(el instanceof HTMLInputElement))return;
+    if(el.getAttribute('inputmode')!=='numeric')return;
+    if(el.classList.contains('js-rrn-front'))return;
+    var raw=el.value.replace(/[^\d]/g,'');
+    el.value=raw?Number(raw).toLocaleString('ko-KR'):'';
+  });
+
+  /* ── 정렬 가능 그리드 헤더 ── */
+  function initSortable(table,getVal,onSorted){
+    $$('th.sortable',table).forEach(function(th){
+      th.addEventListener('click',function(){
+        var cur=th.getAttribute('aria-sort');
+        $$('th.sortable',table).forEach(function(x){x.removeAttribute('aria-sort');});
+        var dir=cur==='ascending'?'descending':'ascending';
+        th.setAttribute('aria-sort',dir);
+        onSorted(th.getAttribute('data-key'),dir==='ascending'?1:-1);
+      });
+    });
+  }
+
+  /* ── 행 선택 게이팅 (§4) ── */
+  function bindRowSelect(tbody,onSelect){
+    tbody.addEventListener('click',function(e){
+      var tr=e.target.closest('tr');
+      if(!tr||tr.classList.contains('nosel')||tr.classList.contains('empty-row'))return;
+      var was=tr.classList.contains('sel');
+      $$('tr',tbody).forEach(function(x){x.classList.remove('sel');});
+      if(!was)tr.classList.add('sel');
+      onSelect(was?null:tr);
+    });
+  }
+
+  /* ── ⚠ 검토 마커 (추천 vs 데이터) ── */
+  function initMarkers(){
+    var pop=document.createElement('div'); pop.className='mk-pop'; document.body.appendChild(pop);
+    document.addEventListener('click',function(e){
+      var mk=e.target.closest('.mk-warn');
+      if(!mk){pop.classList.remove('open');return;}
+      e.stopPropagation();
+      pop.innerHTML='<h4>⚠ 검토 필요 — '+esc(mk.getAttribute('data-title')||'추론값')+'</h4>'+
+        '<div class="row"><b>추천</b><span>'+esc(mk.getAttribute('data-rec')||'-')+'</span></div>'+
+        '<div class="row"><b>데이터</b><span>'+esc(mk.getAttribute('data-src')||'근거 없음 — 발주처 확정 필요')+'</span></div>';
+      var r=mk.getBoundingClientRect();
+      pop.style.left=Math.max(8,Math.min(innerWidth-345,r.left))+'px';
+      pop.style.top=(r.bottom+7)+'px';
+      pop.classList.add('open');
+    });
+  }
+
+  /* ── TOTP(RFC 6238) 모의 — 배포 시 검증필(KCMVP) 암호모듈로 치환 ── */
+  function seedBytes(uid){var s='APFS-'+uid+'-TOTP-SEED-2026',b=[];for(var i=0;i<20;i++)b.push((s.charCodeAt(i%s.length)+i*7)&0xff);return new Uint8Array(b);}
+  function b32(bytes){var A='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',out='',bits=0,val=0;for(var i=0;i<bytes.length;i++){val=(val<<8)|bytes[i];bits+=8;while(bits>=5){out+=A[(val>>>(bits-5))&31];bits-=5;}}if(bits>0)out+=A[(val<<(5-bits))&31];return out;}
+  function hotp(key,counter){return crypto.subtle.importKey('raw',key,{name:'HMAC',hash:'SHA-1'},false,['sign']).then(function(k){var buf=new ArrayBuffer(8),dv=new DataView(buf);dv.setUint32(0,Math.floor(counter/4294967296));dv.setUint32(4,counter>>>0);return crypto.subtle.sign('HMAC',k,buf);}).then(function(sig){var s=new Uint8Array(sig),o=s[19]&0xf;var bin=((s[o]&0x7f)<<24)|((s[o+1]&0xff)<<16)|((s[o+2]&0xff)<<8)|(s[o+3]&0xff);return String(bin%1000000).padStart(6,'0');});}
+  function cnow(t){return Math.floor((t||Date.now())/1000/30);}
+  function totpNow(key){return hotp(key,cnow());}
+  function totpVerify(key,code){var c=cnow();return hotp(key,c).then(function(a){if(a===code)return true;return hotp(key,c-1).then(function(b){if(b===code)return true;return hotp(key,c+1).then(function(d){return d===code;});});});}
+  /* OTP 라이브 박스 렌더: codeEl에 30초 회전 코드, leftEl에 잔여초 */
+  function liveTotp(key,codeEl,leftEl){
+    function tick(){ if(leftEl)leftEl.textContent=String(30-(Math.floor(Date.now()/1000)%30));
+      totpNow(key).then(function(c){ if(codeEl)codeEl.textContent=c; }); }
+    tick(); return setInterval(tick,1000);
+  }
+
+  /* ── 비밀번호 정책 ── */
+  var PW_POLICY='9자 이상 · 영문·숫자·특수문자 조합 · 최근 비밀번호 재사용 금지 · 90일 주기 변경';
+  function pwOK(p){return !!p&&p.length>=9&&/[A-Za-z]/.test(p)&&/\d/.test(p)&&/[^A-Za-z0-9]/.test(p);}
+
+  /* ── 데모 데이터 (공통뼈대 설계서 v0.2 기준 · 실명 아님) ── */
+  var ORGS=[{id:'KB',t:'GP',n:'KB증권'},{id:'IMM',t:'GP',n:'IMM인베스트먼트'},{id:'HTP',t:'GP',n:'한국투자파트너스'},{id:'YT',t:'GP',n:'유안타인베스트먼트'},
+            {id:'NH',t:'수탁',n:'농협은행'},{id:'IBK',t:'수탁',n:'IBK기업은행'},{id:'KDB',t:'수탁',n:'KDB산업은행'}];
+  function orgName(id){var o=ORGS.filter(function(x){return x.id===id;})[0];return o?o.n:(id||'-');}
+  var MENUS=[{k:'fund',n:'자펀드관리'},{k:'risk',n:'조기경보'},{k:'report',n:'자펀드보고'},{k:'trust',n:'수탁보고'},
+             {k:'brief',n:'부처보고'},{k:'acct',n:'회계(기간계)'},{k:'user',n:'사용자관리'},{k:'role',n:'권한관리'},{k:'audit',n:'감사로그'}];
+  function blankPerm(){var o={};MENUS.forEach(function(m){o[m.k]={v:false,d:false,c:false,a:false};});return o;}
+  var ROLES={
+    '투자팀':(function(){var o=blankPerm();['fund','risk','report','trust','brief','audit'].forEach(function(k){o[k].v=true;});o.fund={v:true,d:true,c:true,a:false};o.report.d=true;return o;})(),
+    '전산(관리자)':(function(){var o=blankPerm();MENUS.forEach(function(m){o[m.k]={v:true,d:true,c:true,a:true};});return o;})(),
+    '운용사':(function(){var o=blankPerm();o.fund.v=true;o.report={v:true,d:true,c:true,a:false};return o;})(),
+    '수탁':(function(){var o=blankPerm();o.fund.v=true;o.trust={v:true,d:true,c:true,a:false};return o;})(),
+    '부처':(function(){var o=blankPerm();o.brief={v:true,d:true,c:false,a:false};return o;})()
+  };
+  var USERS=[
+    {id:'U1',lid:'nh.invest',name:'김담당',type:'농금원',dept:'투자팀',email:'kim@apfs.go.kr',roles:['투자팀'],status:'활성',last:'2026-09-12 17:41',fail:0},
+    {id:'U2',lid:'nh.admin',name:'전산관리',type:'농금원',dept:'전산',email:'sys@apfs.go.kr',roles:['전산(관리자)'],status:'활성',last:'2026-09-13 09:02',fail:0,seed:true},
+    {id:'U3',lid:'imm.rep',name:'이대표',type:'운용사',org:'IMM',email:'lee@imm.co.kr',roles:['운용사'],status:'활성',last:'2026-09-11 10:22',fail:0,pwExpired:true},
+    {id:'U4',lid:'nh.trust',name:'김수탁',type:'수탁',org:'NH',email:'trust@nonghyup.com',roles:['수탁'],status:'활성',last:'2026-09-10 15:03',fail:0},
+    {id:'U5',lid:'mafra',name:'박농식',type:'부처',account:'농식품',email:'mafra@korea.kr',roles:['부처'],status:'활성',last:'2026-09-09 09:15',fail:0},
+    {id:'U6',lid:'mof',name:'최수산',type:'부처',account:'수산',email:'mof@korea.kr',roles:['부처'],status:'잠금',last:'2026-08-28 11:47',fail:5},
+    {id:'U7',lid:'nh.trust2',name:'이수탁',type:'수탁',org:'NH',email:'lee.trust@nhbank.com',roles:['수탁'],status:'온보딩대기',last:'—',fail:0},
+    {id:'U8',lid:'imm.6',name:'정운용',type:'운용사',org:'IMM',email:'jung@imm.co.kr',roles:['운용사'],status:'비활성',last:'2026-08-25 09:10',fail:0,note:'퇴사 보고 연동 비활성'}
+  ];
+  var PERSONNEL=[
+    {org:'IMM',name:'박심사',email:'park@imm.co.kr',active:true,invited:false,joined:false},
+    {org:'HTP',name:'최투자',email:'choi@htp.co.kr',active:true,invited:false,joined:false},
+    {org:'YT',name:'한공동',email:'han@yt.co.kr',active:true,invited:true,joined:false},
+    {org:'KB',name:'서운용',email:'seo@kbsec.com',active:true,invited:false,joined:true},
+    {org:'IMM',name:'정운용',email:'jung@imm.co.kr',active:false,invited:false,joined:true}
+  ];
+  var LOGS=[
+    ['2026-09-13 09:02:11','nh.admin','로그인 2차','TOTP','10.0.1.20','정상'],
+    ['2026-09-13 09:02:03','nh.admin','로그인 1차','ID/PW','10.0.1.20','정상'],
+    ['2026-09-12 17:44:29','nh.admin','권한변경','ROLE 투자팀 (인쇄·다운로드 추가)','10.0.1.20','정상'],
+    ['2026-09-12 17:41:02','nh.invest','로그인 2차','TOTP','10.0.2.31','정상'],
+    ['2026-09-12 14:20:45','imm.rep','비정상 접근(데이터)','F1 직접ID (IDOR 차단)','10.0.3.77','차단'],
+    ['2026-09-12 14:20:12','imm.rep','비정상 접근(메뉴)','회계 직접URL','10.0.3.77','차단'],
+    ['2026-09-11 10:22:38','imm.rep','로그인 2차','TOTP','10.0.3.77','정상'],
+    ['2026-09-11 09:58:01','mof','계정 잠금(5회)','ID/PW 5회 실패','10.0.4.15','차단'],
+    ['2026-09-11 09:57:10','mof','로그인 1차','ID/PW','10.0.4.15','실패'],
+    ['2026-09-10 15:03:22','nh.trust','로그인 2차','TOTP','10.0.5.24','정상'],
+    ['2026-09-10 11:30:00','nh.admin','사용자 등록·온보딩 메일 발송','이수탁 <lee.trust@nhbank.com>','10.0.1.20','정상'],
+    ['2026-09-09 09:15:44','mafra','로그인 2차','TOTP','10.0.4.28','정상'],
+    ['2026-09-08 16:02:19','nh.admin','OTP 재발급·재등록 안내 메일','김수탁','10.0.1.20','정상'],
+    ['2026-08-25 09:10:13','시스템','계정 자동 비활성','정운용 (퇴사보고 연동)','10.0.3.32','정상']
+  ];
+  function statusBadge(st){
+    var m={'활성':'ok','온보딩대기':'amber','잠금':'danger','비활성':'grey','정지':'grey','휴면':'grey'};
+    return '<span class="dbadge '+(m[st]||'grey')+'">'+esc(st)+'</span>';
+  }
+  function belong(u){return u.type==='농금원'?'내부(개인)':'기관소속(개인)';}
+  function belongName(u){return u.org?orgName(u.org):(u.account?u.account+' 계정':(u.dept||'-'));}
+
+  /* ── 메뉴 트리 (제안서 기능구성도 1.2 · 권한관리·메뉴관리 공용) ── */
+  function mk(names){return names.map(function(n){return {n:n,id:'-'};});}
+  var MENU_TREE=[
+   {dae:'공통',mids:[
+     {mid:'-',items:mk(['운용사명세서','운용인력명세서','조합명세서','투자기업명세서','프로젝트명세서','파일BOX'])}
+   ]},
+   {dae:'투자자산관리',mids:[
+     {mid:'모태펀드관리',items:mk(['자펀드공고정보관리','모태펀드조성및출자현황'])},
+     {mid:'조합관리',items:mk(['자펀드정보관리','조합원정보조회','자펀드별조합원조회'])},
+     {mid:'사후보고관리',items:mk(['투심보고확정및승인','투심보고통계','내부투자심의구성관리','체크리스트관리','수시보고확인','정기보고','조합원총회','조합예상자금요청보고'])},
+     {mid:'자펀드관리',items:mk(['출자/분배조회(자펀드)','출자/분배조회(농금원)','자펀드투자실적현황','자펀드수탁관리','종합통계(확정)'])},
+     {mid:'투자기업정보',items:mk(['투자기업정보(통합)','투자기업명세서(통합)','투자기업고용현황(통합)','전체투자실적','투자실적현황(투자기업)','투자금회수현황','우수투자기업관리'])},
+     {mid:'운용사모니터링',items:mk(['운용사명세서','운용사재무정보조회','투자금실사보고조회','사후관리기록관리','관리보수/성과보수조회','자펀드전체보고현황'])}
+   ]},
+   {dae:'조기경보',mids:[
+     {mid:'조기경보',items:mk(['조기경보관리','운용사별조기경보조회','자펀드별조기경보조회','법률/규약위반사항관리','운용사주주변동관리','운용사소송관리','운용인력변동관리','조기경보결과정보관리','조기경보전월비교조회'])},
+     {mid:'기업정보',items:mk(['투자기업정보(NICE평가정보)','투자기업신용정보조회'])},
+     {mid:'자펀드정보',items:mk(['운용사정량지표관리','운용사유형별정량지표변동조회','운용사재무정보비교조회','자펀드수익률정보비교조회','자펀드종합등급변동조회'])},
+     {mid:'가치평가',items:mk(['모태펀드가치평가결과조회','투자조합가치평가결과조회','피투자회사가치평가결과조회','자펀드투자자산및거래내역조회','예외사항레포트','평가시점데이터확인','Portfolio Report','투자기업별(계약별) IRR','투자기업별IRR','자펀드별IRR'])}
+   ]},
+   {dae:'자펀드보고',mids:[
+     {mid:'운영기관정보',items:mk(['운용사별공통코드정보','운용사정보','운용사인력현황','공동GP펀드별인력현황','운용사계정과목','운용사재무정보','운용사정량지표보고내역'])},
+     {mid:'조합정보',items:mk(['조합정보','조합원정보','조합투자운용인력','조합월별/반기별보고현황','조합재무현황','조합계좌현황','조합Call요청일정및보고','조합출자/분배현황','조합원총회','조합관리보수및성과보수내역','조합수시보고내역','조합유가증권투자현황(상장주식)'])},
+     {mid:'투자자산',items:mk(['투자기업정보','투자기업고용현황(반기별)','투자기업재무정보','투자기업주주명부','투자자금실사보고','프로젝트정보','투자기업투심현황','투자약정정보','투자거래정보','월간보고조회'])}
+   ]},
+   {dae:'회계',mids:[
+     {mid:'자금관리',items:mk(['계좌관리','계좌잔액','자금일보','출자금현황정보관리'])},
+     {mid:'농식품경영체',items:mk(['경영체정보조회','IR정보조회'])},
+     {mid:'설정',items:mk(['휴일관리','회계거래처관리'])}
+   ]},
+   {dae:'부처보고',mids:[
+     {mid:'모태펀드',items:mk(['연도별투자현황'])},
+     {mid:'등록원부',items:mk(['등록원부관리'])}
+   ]},
+   {dae:'수탁보고',mids:[
+     {mid:'자펀드수탁',items:mk(['실물자료관리(업로드)','실물검증비교조회','유가증권관리(업로드)','유가증권비교조회','공통코드조회','자펀드코드조회'])},
+     {mid:'모태펀드수탁',items:mk(['모태수탁공통코드','계좌정보관리','계좌정보비교조회','입출금정보관리','입출금정보비교조회'])}
+   ]},
+   {dae:'관리자',mids:[
+     {mid:'시스템관리',items:mk(['프로그램관리','메뉴관리','공통코드관리'])},
+     {mid:'사용자관리',items:mk(['권한관리','사용자관리','사용자초대(운용사)'])},
+     {mid:'외부연동',items:mk(['자펀드코드관리(운용사ERP&수탁기관)','연계모니터링(API)','자펀드보고양식관리(운용사ERP)'])},
+     {mid:'보안',items:mk(['개인정보접속관리','사용자별권한조회','감사로그'])},
+     {mid:'게시판',items:mk(['게시판관리'])}
+   ]}
+  ];
+
+  /* ── AG-Grid Community 래퍼 ── */
+  var AG_KO={noRowsToShow:'표시할 데이터가 없습니다.',loadingOoo:'불러오는 중...',blanks:'(빈값)',page:'페이지',to:'~',of:'/',next:'다음',last:'마지막',first:'처음',previous:'이전'};
+  function agTheme(){var t=document.documentElement.getAttribute('data-theme');var dark=t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches);return dark?'ag-theme-quartz-dark':'ag-theme-quartz';}
+  function refreshGridThemes(){$$('.apfsgrid').forEach(function(el){el.classList.remove('ag-theme-quartz','ag-theme-quartz-dark');el.classList.add(agTheme());});}
+  function mkGrid(el,cfg){
+    if(typeof el==='string')el=document.getElementById(el);
+    el.classList.add('apfsgrid'); el.classList.add(agTheme());
+    if(cfg.autoHeight)el.classList.add('ah');
+    var api;
+    var opts={
+      columnDefs:cfg.columnDefs, rowData:cfg.rowData||[],
+      defaultColDef:Object.assign({sortable:true,resizable:true,suppressHeaderMenuButton:true,suppressMovable:true},cfg.defaultColDef||{}),
+      suppressCellFocus:true, animateRows:false, headerHeight:42, rowHeight:40,
+      localeText:AG_KO, overlayNoRowsTemplate:cfg.noRows||'조회 결과가 없습니다.',
+      onGridReady:function(){ if(cfg.onReady)cfg.onReady(api); }
+    };
+    if(cfg.autoHeight)opts.domLayout='autoHeight';
+    if(cfg.select==='none'){ opts.suppressRowClickSelection=true; }
+    else {
+      opts.rowSelection=cfg.select==='multiple'?'multiple':'single';
+      if(cfg.suppressRowClickSelection)opts.suppressRowClickSelection=true;
+      opts.onSelectionChanged=function(){ if(cfg.onSelect){var r=api.getSelectedRows();cfg.onSelect(r.length?r[0]:null);} };
+    }
+    if(cfg.onCellClicked)opts.onCellClicked=cfg.onCellClicked;
+    if(cfg.getRowClass)opts.getRowClass=cfg.getRowClass;
+    if(cfg.gridOptions)Object.assign(opts,cfg.gridOptions);
+    api=agGrid.createGrid(el,opts); el.__api=api; return api;
+  }
+  function gridSetRows(el,rows){if(typeof el==='string')el=document.getElementById(el);if(el&&el.__api)el.__api.setGridOption('rowData',rows||[]);}
+  function gridNoCol(){return {headerName:'No',width:62,valueGetter:function(p){return p.node.rowIndex+1;},sortable:false,cellClass:'ag-c',headerClass:'ag-c'};}
+  /* dbadge 셀렌더 팩토리 — map: 값→클래스 */
+  function badgeCell(map){return function(p){var v=p.value==null?'':p.value;var cls=(map&&map[v])||'grey';return '<span class="dbadge '+cls+'">'+esc(v)+'</span>';};}
+
+  /* ── 정렬 자동 재배치 (같은 레벨/그룹 내 정렬번호 충돌 시 이후 자동 +1) ── */
+  function reseqSiblings(siblings,moved,newOrd){
+    var rest=siblings.filter(function(s){return s!==moved;}).sort(function(a,b){return (a.ord||0)-(b.ord||0);});
+    var pos=Math.max(0,Math.min(rest.length,(newOrd|0)-1));
+    rest.splice(pos,0,moved);
+    rest.forEach(function(s,i){s.ord=i+1;});
+    return moved.ord;
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){initOpts();initSysmenu();initMarkers();});
+  return {$: $,$$: $$,esc:esc,toast:toast,openModal:openModal,closeModal:closeModal,wireModal:wireModal,
+    openSubDialog:openSubDialog,subConfirm:subConfirm,subAlert:subAlert,initSortable:initSortable,bindRowSelect:bindRowSelect,
+    seedBytes:seedBytes,b32:b32,totpNow:totpNow,totpVerify:totpVerify,liveTotp:liveTotp,
+    PW_POLICY:PW_POLICY,pwOK:pwOK,
+    ORGS:ORGS,orgName:orgName,MENUS:MENUS,ROLES:ROLES,blankPerm:blankPerm,USERS:USERS,PERSONNEL:PERSONNEL,LOGS:LOGS,
+    statusBadge:statusBadge,belong:belong,belongName:belongName,MENU_TREE:MENU_TREE,
+    mkGrid:mkGrid,gridSetRows:gridSetRows,refreshGridThemes:refreshGridThemes,agTheme:agTheme,gridNoCol:gridNoCol,badgeCell:badgeCell,reseqSiblings:reseqSiblings};
+})();
+
+</script>
+<script>
+
+(function(){
+var A=APFS,$=A.$;
+var st={step:0,user:null,timer:null};
+var DEMO_PW='Passw0rd!';
+function stepsHtml(){
+  function c(i,on){return '<span class="s '+(st.step===i?'on':(st.step>i?'done':''))+'">'+on+'</span>';}
+  var pw=st.user&&st.user.pwExpired&&st.step>=2?c(2,'3. 비밀번호 변경')+c(3,'4. 완료'):c(2,'3. 완료');
+  return '<div class="steps">'+c(0,'1. 아이디·비밀번호')+c(1,'2. 2차 인증(OTP)')+pw+'</div>';
+}
+function render(){
+  if(st.timer){clearInterval(st.timer);st.timer=null;}
+  var h=stepsHtml();
+  if(st.step===0){
+    h+='<div class="frow"><label class="req">아이디</label><input id="f-id" placeholder="로그인 아이디" autocomplete="username"></div>'+
+       '<div class="frow"><label class="req">비밀번호</label><input id="f-pw" type="password" placeholder="비밀번호" autocomplete="current-password"></div>'+
+       '<div id="msg"></div>'+
+       '<button class="btn" id="go" style="width:100%;height:42px;margin-top:6px">로그인</button>'+
+       '<div class="note">정책: '+A.esc(A.PW_POLICY)+' <span class="mk-warn" data-title="비밀번호·잠금 수치" data-rec="9자 이상 · 90일 주기 · 5회 실패 잠금 · 세션 30분 (개인정보 안전성 확보조치 기준 참고 제안값)" data-src="RFP 수치 미규정 — 발주처 보안규정 기준 확정 필요">⚠ 제안값</span><br>'+
+       '로그인 5회 실패 시 계정이 잠기며, 관리자 해제가 필요합니다.</div>'+
+       '<div class="note" style="border-style:solid">데모 계정 — 비밀번호는 모두 <code>Passw0rd!</code><br>'+
+       '<code>nh.admin</code> 전산관리(정상) · <code>imm.rep</code> 이대표(비밀번호 만료) · <code>mof</code> 최수산(잠금) · <code>nh.invest</code> 김담당(정상)</div>';
+  } else if(st.step===1){
+    h+='<div class="banner ok" style="margin-bottom:12px">1차 인증 통과 — <b>'+A.esc(st.user.name)+'</b> 님</div>'+
+       '<div class="otpbox"><span>📱 사용자 폰 인증앱(모의)</span><span class="code" id="live">------</span><span>⏳ <b id="left">--</b>s 후 갱신</span>'+
+       '<button class="demofill" id="fill" type="button">데모: 이 코드 자동입력</button></div>'+
+       '<div class="frow"><label class="req">인증 코드</label><input id="f-otp" maxlength="6" inputmode="numeric" class="js-rrn-front" placeholder="앱에 표시된 6자리" autocomplete="one-time-code"></div>'+
+       '<div id="msg"></div>'+
+       '<div style="display:flex;gap:8px;margin-top:6px"><button class="btn" id="go" style="flex:1;height:42px">인증 확인</button><button class="btn-sec" id="back" style="height:42px">← 뒤로</button></div>'+
+       '<div class="note">표준 TOTP(RFC 6238) — 30초 회전 · 허용창 ±1. 당초 범용 인증앱(Google/MS OTP)으로 구현하려 했으나, <b>국내 OTP 솔루션 조사 및 견적</b>을 발주처(농금원)에 요청해 검토한 뒤 방식을 확정할 예정입니다(정보화팀 협의). 배포 시 HMAC 연산·시드 저장은 <b>국정원 검증필(KCMVP) 암호모듈</b>로 수행합니다.</div>';
+  } else if(st.step===2&&st.user.pwExpired){
+    h+='<div class="banner warn">비밀번호 사용 90일 경과 — 변경 후 이용할 수 있습니다.</div>'+
+       '<div class="frow"><label class="req">현재 비밀번호</label><input id="f-cur" type="password"></div>'+
+       '<div class="frow"><label class="req">새 비밀번호</label><input id="f-n1" type="password" placeholder="9자 이상 · 영문·숫자·특수문자"></div>'+
+       '<div class="frow"><label class="req">새 비밀번호 확인</label><input id="f-n2" type="password"></div>'+
+       '<div id="msg"></div>'+
+       '<button class="btn" id="go" style="width:100%;height:42px;margin-top:6px">변경하고 로그인</button>'+
+       '<div class="note">정책: '+A.esc(A.PW_POLICY)+' · 예) <code>Apfs2026!@</code></div>';
+  } else {
+    h+='<div class="banner ok">✔ 로그인 완료 — <b>'+A.esc(st.user.name)+'</b> ('+A.esc(st.user.roles.join(' · '))+') · '+A.esc(A.belong(st.user))+'</div>'+
+       '<div class="kv"><b>소속</b><span>'+A.esc(st.user.type)+' · '+A.esc(A.belongName(st.user))+'</span><b>최근 접속</b><span>'+A.esc(st.user.last)+'</span></div>'+
+       '<a class="btn" href="S0_101_사용자관리.html" style="width:100%;height:42px;text-decoration:none;margin-top:4px">공통관리 화면으로 이동</a>'+
+       '<button class="btn-sec" id="reset" style="width:100%;height:38px;margin-top:8px">처음으로 (다시 로그인)</button>';
+  }
+  $('#body').innerHTML=h; wire();
+}
+function wire(){
+  var go=$('#go');
+  if(st.step===0&&go){
+    go.addEventListener('click',function(){
+      /* 검증: 화면 필드 순서(위→아래) */
+      var id=($('#f-id').value||'').trim(), pw=$('#f-pw').value||'';
+      if(!id){$('#msg').innerHTML='<div class="banner bad">아이디를 입력해 주세요.</div>';$('#f-id').focus();return;}
+      if(!pw){$('#msg').innerHTML='<div class="banner bad">비밀번호를 입력해 주세요.</div>';$('#f-pw').focus();return;}
+      var u=A.USERS.filter(function(x){return x.lid===id;})[0];
+      if(!u){$('#msg').innerHTML='<div class="banner bad">등록되지 않은 아이디입니다.</div>';return;}
+      if(u.status==='잠금'){$('#msg').innerHTML='<div class="banner bad">⛔ 계정 잠금 상태입니다 — 관리자에게 해제를 요청해 주세요.</div>';return;}
+      if(u.status!=='활성'){$('#msg').innerHTML='<div class="banner bad">사용할 수 없는 계정 상태입니다 ('+A.esc(u.status)+').</div>';return;}
+      if(pw!==DEMO_PW){
+        u.fail=(u.fail||0)+1;
+        if(u.fail>=5){u.status='잠금';$('#msg').innerHTML='<div class="banner bad">⛔ 비밀번호 5회 오류 — 계정이 잠겼습니다. 관리자 해제가 필요합니다.</div>';}
+        else $('#msg').innerHTML='<div class="banner bad">비밀번호가 일치하지 않습니다 ('+u.fail+'/5) · '+(5-u.fail)+'회 남음</div>';
+        return;
+      }
+      u.fail=0; st.user=u; st.step=1; render();
+    });
+    $('#f-pw').addEventListener('keydown',function(e){if(e.key==='Enter')go.click();});
+  }
+  if(st.step===1){
+    var key=A.seedBytes(st.user.id);
+    st.timer=A.liveTotp(key,$('#live'),$('#left'));
+    $('#fill').addEventListener('click',function(){A.totpNow(key).then(function(c){$('#f-otp').value=c;});});
+    $('#back').addEventListener('click',function(){st.step=0;st.user=null;render();});
+    go.addEventListener('click',function(){
+      var code=($('#f-otp').value||'').trim();
+      if(!code){$('#msg').innerHTML='<div class="banner bad">인증 코드를 입력해 주세요.</div>';$('#f-otp').focus();return;}
+      A.totpVerify(key,code).then(function(ok){
+        if(!ok){$('#msg').innerHTML='<div class="banner bad">코드가 일치하지 않거나 만료되었습니다 — 현재 코드로 다시 시도해 주세요.</div>';return;}
+        st.step=2; render();
+      });
+    });
+  }
+  if(st.step===2&&st.user&&st.user.pwExpired&&go){
+    go.addEventListener('click',function(){
+      /* 검증: 위→아래 */
+      if(($('#f-cur').value||'')!==DEMO_PW){$('#msg').innerHTML='<div class="banner bad">현재 비밀번호가 일치하지 않습니다.</div>';$('#f-cur').focus();return;}
+      if(!A.pwOK($('#f-n1').value)){$('#msg').innerHTML='<div class="banner bad">새 비밀번호가 정책을 충족하지 않습니다 (9자 이상 · 영문·숫자·특수문자).</div>';$('#f-n1').focus();return;}
+      if($('#f-n1').value!==$('#f-n2').value){$('#msg').innerHTML='<div class="banner bad">새 비밀번호 확인이 일치하지 않습니다.</div>';$('#f-n2').focus();return;}
+      st.user.pwExpired=false; st.step=3; render(); A.toast('비밀번호가 변경되었습니다.');
+    });
+  }
+  if($('#reset'))$('#reset').addEventListener('click',function(){st={step:0,user:null,timer:null};render();});
+}
+document.addEventListener('DOMContentLoaded',function(){
+  render();
+  /* 비밀번호 재설정(간편인증) 모달 */
+  A.wireModal('m-reset');
+  document.body.addEventListener('click',function(e){
+    if(e.target&&e.target.id==='lnk-reset'){e.preventDefault();$('#reset-body').innerHTML=
+      '<p style="margin:0 0 10px;font-size:13.5px;color:var(--ink-2)">간편인증(휴대폰 본인확인)을 거쳐 비밀번호를 재설정합니다. 본인확인이 완료되면 임시 비밀번호가 발급됩니다.</p>'+
+      '<div class="frow"><label class="req">성명</label><input id="r-name" placeholder="실명"></div>'+
+      '<div class="frow"><label class="req">아이디</label><input id="r-id" placeholder="로그인 아이디"></div>'+
+      '<div id="r-msg"></div>';
+      A.openModal('m-reset');}
+    if(e.target&&e.target.id==='r-go'){
+      var nm=($('#r-name').value||'').trim();
+      if(!nm){$('#r-msg').innerHTML='<div class="banner bad">성명을 입력해 주세요.</div>';$('#r-name').focus();return;}
+      if(!($('#r-id').value||'').trim()){$('#r-msg').innerHTML='<div class="banner bad">아이디를 입력해 주세요.</div>';$('#r-id').focus();return;}
+      $('#r-msg').innerHTML='<div class="banner ok">✔ 간편인증 완료(모의) — 등록된 이메일로 임시 비밀번호를 발송했습니다. 로그인 후 즉시 변경됩니다.</div>';
+    }
+  });
+});
+})();
+</script>
+</body>
+</html>
