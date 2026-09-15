@@ -176,6 +176,29 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
 - **엑셀**: 2단 헤더 병합·리프 키를 손으로 적지 말고 `flattenForExcel(columnDefs)`(골드 로컬 헬퍼, `ColGroupDef` 순회 → `head1/head2/keys/merges`)로 **columnDefs에서 자동 산출**. 마스크 시 숫자 0·텍스트 ''.
 - 읽기전용 명세는 [[apfs-spec-popup]]. (카드뷰 토글 규약은 2026-09-11 폐기 — 리스트 뷰 단일 표현.)
 
+## master-detail 좌 그리드 = 라디오 (2026-09-15 `code_manage.tsx` 실측)
+좌(master)에서 고른 행이 우(detail) 그리드의 내용을 정하는 화면은, 좌측이 **"여러 건을 고르는 체크박스"가 아니라 "우측이 무엇을 보여줄지 정하는 라디오"**다. 빈 선택은 유효한 상태가 아니라 우측이 갈 곳을 잃은 상태다.
+
+- **해제를 막는다.** `onSelectionChanged`에서 선택이 0건이면 직전 선택을 되돌린다. 종전 `if (code) {…}` 가드만 두면 해제 시 **아무 일도 안 해서** `curCode`가 남고, "체크는 꺼졌는데 수정·삭제 버튼은 그대로"인 모순이 보인다.
+- ⚠️ **되돌리기를 그 이벤트 안에서 즉시 하면 안 된다.** 다른 행을 클릭하면 AG Grid는 `'이전 행 해제'(0건)` → `'새 행 선택'` 순으로 `selectionChanged`를 **두 번** 쏜다. 첫 발화만 보고 되살리면 전환 도중을 해제로 오인해 이전 행이 부활하고 새 행까지 선택돼 2건이 된다. **배치가 끝난 뒤(`queueMicrotask`) 여전히 0건일 때만** 되돌린다 = 진짜 해제.
+```tsx
+const onGroupSelection = useCallback((e: SelectionChangedEvent<Row>) => {
+  const code = e.api.getSelectedRows()[0]?.code;
+  if (code) { setCurCode(code); setSelDetail(null); return; }
+  queueMicrotask(() => {                       // 전환 중간 발화와 진짜 해제를 가르는 지점
+    if (e.api.isDestroyed?.()) return;
+    if (e.api.getSelectedRows().length === 0) syncRadio(e.api);   // 직전 선택 복원
+  });
+}, [syncRadio]);
+// syncRadio: curRef.current 의 rowNode 를 찾아 !isSelected() 면 setSelected(true, true).
+// ready / rowDataUpdated 에도 같이 물려 초기 자동선택·필터 후 재마운트를 되맞춘다.
+```
+
+## ⚠️ 선택 건수를 DOM 으로 세지 말 것 (오탐 함정, 2026-09-15 실측)
+`.ag-row-selected`를 `querySelectorAll`로 세면 **한 행이 2건으로 잡힌다** — AG Grid가 체크박스(선택) 열을 `.ag-pinned-left-cols-container`에, 나머지를 `.ag-center-cols-container`에 **따로 렌더**하므로 같은 행의 조각이 양쪽에 하나씩 존재한다. 이걸 모르면 멀쩡한 단일선택을 "중복 선택 버그"로 오진하고 없는 버그를 고치게 된다.
+- 세는 법: `new Set([...els].map(r => r.getAttribute('row-id'))).size` — 또는 애초에 DOM 대신 `api.getSelectedRows().length`.
+- 같은 이유로 "선택된 행의 셀 텍스트"를 집을 때도 pinned 쪽 조각이 먼저 잡혀 **빈 문자열**이 나온다(`.ag-center-cols-container` 안에서 찾을 것).
+
 ## 마스킹 ("축은 두고 데이터는 가린다")
 - 마스크 API(SSOT): `import { mn, MT, useMask } from './mask';`. **`MASK_ON` 같은 상수 export는 없다** — 화면 표시는 `mn()`/`<MT>`가, 분기 판단은 훅 `const masked = useMask();`가 담당. 전역 토글은 `mask.tsx`의 `_on` 한 줄(현재 `true`).
 - 숫자 셀: `valueFormatter: numFmt` — `mn()` 내장(자동 마스킹). 텍스트 셀: cellRenderer에서 `<MT>{value}</MT>`.

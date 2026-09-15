@@ -114,6 +114,20 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - ⚠️ **건수를 `opacity`로 흐리게 하지 말 것** — 건수는 장식이 아니라 읽어야 하는 데이터고 11.5px는 WCAG "큰 텍스트"가 아니라 4.5:1이 필요하다. 실측(2026-09-15): `opacity .62` → 라이트 **2.58:1** · 다크 3.12~3.41:1 로 AA 미달. opacity를 지우면 라이트 4.96~5.60 · 다크 6.28~6.73 으로 통과한다. 위계는 **크기 차(12.5 → 11.5px)만으로** 낸다. 측정은 opacity를 배경과 합성한 실효색으로: 훅 없이 `getComputedStyle(span).opacity` 를 곱해 계산(→[[web-a11y]]).
 - **첨부파일은 컬럼을 만들지 않고 제목 뒤 칩으로** — `ColumnSpec.attachFrom: '<필드키>'`(예: `title` 컬럼 + `attachFrom:'attachment'`). `schemas/renderers.tsx`의 `AttachChips`가 CSV 값(`"a.pdf, b.xlsx"`)을 확장자 칩(아이콘+색은 `ui/attachment.tsx`의 `glyphFor` SSOT, 라벨은 회색)으로 렌더하고 4개째부터 `+N`으로 접는다. 마스크 경계: 확장자=유형 표식이라 비마스킹, 파일명 tooltip은 마스크 ON에서 제거.
 
+## master-detail 2단 레이아웃 (2026-09-15 `code_manage.tsx`에서 정립)
+좌(master) 목록에서 고른 행이 우(detail) 그리드를 채우는 화면의 바깥 골격.
+
+```tsx
+<div className="grid grid-cols-1 gap-3 lg:grid-cols-[440px_minmax(0,1fr)]">
+  <section aria-label="…목록" className="min-w-0">   {/* 구분선 없음 — 여백이 구분자 */}
+  <section aria-label="…목록" className="min-w-0">
+```
+- **두 그리드 사이는 `gap-3`(12px).** 맞붙여 두면 우측 표가 좌측 표의 연장처럼 읽힌다. `gap-5`(20px)는 과하다는 사용자 판단 — 12px가 정본.
+- **여백이 구분자다 → 선을 함께 두지 않는다.** 종전의 세로 구분선(`lg:border-r`)·적층 시 가로선(`border-t lg:border-t-0`)은 제거했다. 선+여백 이중 분리는 과하고, 각 패널이 이미 자체 `PaneBar`(하단 테두리)와 그리드 테두리로 경계를 가진다.
+- **각 `<section>`에 `min-w-0` 필수** — 없으면 그리드 아이템 기본 `min-width:auto`가 내용 폭에 눌려 AG Grid 내부 가로 스크롤이 죽고 레이아웃이 비어져 나온다.
+- 좁은 화면은 `grid-cols-1`로 세로 적층(→[[responsive-ui]]). `gap-3`이 가로·세로 양쪽에 걸리므로 적층 간격도 함께 해결된다.
+- 좌 그리드의 **선택 규약(해제 불가 = 라디오)**과 선택 건수 오탐 함정은 → [[apfs-aggrid]].
+
 ## 관리형 리스트 툴바·타이틀 규약 (2026-09-11 subfund_manage에서 정립)
 리스트형(CRUD) 페이지 한정. 매트릭스/집계형은 위 골든(`headerActions` primary 내보내기)을 그대로 둔다.
 
