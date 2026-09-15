@@ -28,6 +28,18 @@ const gnbHeight = () => Math.round(document.querySelector('header')?.getBounding
 /* 바가 마운트되기 전 1프레임 동안만 쓰는 높이 추정치(실측 45px). */
 const BAR_H_FALLBACK = 45;
 
+/* 바의 **왼쪽 엣지** x = 체크박스(행선택) 열의 왼쪽 경계(2026-09-15 사용자 지시 — 가운데 정렬 폐기).
+   AG Grid 의 선택 열은 `col-id="ag-Grid-SelectionColumn"`(pinned-left, 폭 44px)이고 그 왼쪽 경계는
+   그리드 왼쪽과 같다. querySelector 는 헤더 셀을 먼저 집지만 본문 셀과 left 가 동일하다.
+   선택 열이 없는 화면(`hideRowSelection`·조회 전용)도 있어 폴백을 3단으로 둔다:
+   선택 열 → 첫 헤더 셀(=그리드 왼쪽) → 프레임 좌측 + 카드 좌우 패딩(18px). */
+const barLeftFor = (frame: HTMLElement | null) => {
+  const col = frame?.querySelector('[col-id="ag-Grid-SelectionColumn"]') ?? frame?.querySelector('.ag-header-cell');
+  if (col) return Math.round(col.getBoundingClientRect().left);
+  const r = frame?.getBoundingClientRect();
+  return Math.round(r ? r.left + 18 : 18);
+};
+
 /* 바가 앉을 y = **선택된 행 바로 위**(사용자 지시 2026-09-15). 액션이 대상 행에 붙어 다녀
    "무엇을 대상으로 하는지"가 분명해진다. 선택 행은 페이지 state 라 GridFrame 은 알 수 없어
    DOM(`.ag-row-selected`)으로 찾는다 — `.ag-header` 와 같은 수준의 국소 결합, 없으면 폴백.
@@ -138,9 +150,10 @@ export function GridFrame({
   const sentinelRef = React.useRef<HTMLDivElement>(null);
   const rootRef = React.useRef<HTMLDivElement>(null);
   const [toolbarOut, setToolbarOut] = React.useState(false);
-  /* 바의 위치는 하드코딩하지 않고 실측으로 정한다.
-     - left: 뷰포트 중앙이 아니라 **프레임 카드 중앙** (LNB 폭만큼 왼쪽으로 치우치는 것 방지)
-     - top: **선택된 행 바로 위**(위: 그리드 헤더 하단, 아래: 뷰포트 하단으로 clamp).
+  /* 바의 위치는 하드코딩하지 않고 실측으로 정한다. `left` 는 바의 **왼쪽 엣지**다(중앙 아님 —
+     CSS 쪽 translateX(-50%) 도 함께 제거했다).
+     - left: **체크박스 열 왼쪽 경계** (→ barLeftFor)
+     - top: **선택된 행 바로 위**(위: 그리드 헤더 하단, 아래: 뷰포트 하단으로 clamp) (→ barTopFor)
      left 는 LNB 접기/펼치기처럼 window resize 없이 폭이 바뀌는 경우가 있어 ResizeObserver 로 추적한다. */
   const [barPos, setBarPos] = React.useState<{ left: number; top: number } | null>(null);
   const actionsHostRef = React.useRef<HTMLDivElement>(null);   // 툴바 쪽 액션 컨테이너
@@ -195,11 +208,10 @@ export function GridFrame({
     const root = rootRef.current;
     if (!wantsFloating || !root) return;
     const measure = () => {
-      const r = root.getBoundingClientRect();
       /* 바 높이는 버튼 구성·폰트에 따라 달라 하드코딩하지 않는다. 마운트 첫 프레임엔 아직
          0 이라 BAR_H_FALLBACK 을 쓰고, 아래 layout effect 가 실측값으로 곧바로 한 번 더 잰다. */
       const barH = barRef.current?.offsetHeight || BAR_H_FALLBACK;
-      const left = Math.round(r.left + r.width / 2);
+      const left = barLeftFor(root);
       const top = barTopFor(root, barH);
       /* ⚠️ **값 비교 가드 필수.** 아래 "매 렌더 재측정" effect 와 맞물려, 매번 새 객체를
          set 하면 setState→렌더→effect→setState 무한 루프가 된다(이 저장소의 AG Grid
