@@ -20,7 +20,7 @@ import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid
 import { controlMinWidth } from './schemas/renderers';
 import { PeriodPicker } from './ui/period-picker';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
+import type { ColDef, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
@@ -53,9 +53,9 @@ const columnDefs: ColDef<AuditRow>[] = [
   { field: 'ip', headerName: 'IP', width: 122, maxWidth: 122, cellStyle: { ...muted, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'result', headerName: '결과', width: 92, maxWidth: 92, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={RESULT_TONE[p.value as AuditResult]} label={p.value} size="lg" dot={false} /> },
 ];
-// 조회 전용(audit-read-only) — 체크박스 열 없음. 선택으로 실행할 액션(일괄삭제·단계전이)이 없어
-// 체크박스를 만들지 않는다. 행 클릭 선택은 유지(선택 배지·행 강조) → 상세는 더블클릭/Enter·우클릭 메뉴로 연다.
-const ROW_SELECTION: RowSelectionOptions<AuditRow> = { mode: 'singleRow', checkboxes: false, enableClickSelection: true };
+// 조회 전용(audit-read-only) — 행 선택 자체를 두지 않는다(체크박스도, 클릭 선택도).
+// 선택으로 실행할 액션(일괄삭제·단계전이·선택 행 편집)이 없어 선택은 죽은 상태값이었다.
+// 상세 진입은 더블클릭 / Enter / 우클릭 메뉴 3경로로 충분하다.
 const RESULT_CHIPS = ['', ...AUDIT_RESULTS] as const;
 
 type XCol = { header: string; get: (r: AuditRow) => string };
@@ -163,8 +163,6 @@ function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void
    메인 컴포넌트
 ────────────────────────────── */
 export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
-  const apiRef = useRef<GridApi<AuditRow> | null>(null);
-  const [selId, setSelId] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const topMoreRef = useRef<HTMLSpanElement>(null);
   const [topMoreVisible, setTopMoreVisible] = useState(true);
@@ -192,10 +190,11 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
   }, []);
 
   const visible = useMemo(() => filterLogs(DEMO, { from: fFrom, to: fTo, result: fResult, kind: fKind, actor: fActor, kw: fText }), [fFrom, fTo, fResult, fKind, fActor, fText]);
-  const counts = useMemo(() => resultCounts(visible), [visible]);
-
-  const onGridReady = useCallback((e: GridReadyEvent<AuditRow>) => { apiRef.current = e.api; }, []);
-  const onSelectionChanged = useCallback((e: SelectionChangedEvent<AuditRow>) => { setSelId(e.api.getSelectedRows()[0]?.id ?? null); }, []);
+  /* 결과 칩의 건수는 "결과만 빼고" 나머지 필터를 적용한 모집단 기준(facet count).
+     visible 로 세면 한 칩을 누른 순간 나머지 칩이 전부 0이 된다. */
+  const facet = useMemo(() => filterLogs(DEMO, { from: fFrom, to: fTo, kind: fKind, actor: fActor, kw: fText }), [fFrom, fTo, fKind, fActor, fText]);
+  const counts = useMemo(() => resultCounts(facet), [facet]);
+  const chipCount = (r: string) => mn(String(r ? counts[r as AuditResult] ?? 0 : facet.length));
   const onRowDoubleClicked = useCallback((e: RowDoubleClickedEvent<AuditRow>) => { if (e.data && !e.rowPinned) setDetailId(e.data.id); }, []);
   const onCellKeyDown = useCallback((e: CellKeyDownEvent<AuditRow>) => {
     if ((e.event as KeyboardEvent | null)?.key !== 'Enter' || !e.data) return;
@@ -213,9 +212,8 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
     setCtx({ x: ev.clientX, y: ev.clientY, items });
   };
 
-  const selected = selId ? visible.find((r) => r.id === selId) ?? null : null;
   const detail = detailId ? DEMO.find((r) => r.id === detailId) ?? null : null;
-  const refresh = () => { apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { clearFilters(); toast.success('새로고침했습니다'); };
 
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
@@ -240,15 +238,10 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
       title="감사로그"
       favRoute="audit-log"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? (
-        <>
-          <StatusBadge tone={RESULT_TONE[selected.result]} label={selected.result} size="lg" dot={false} />
-          <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
-        </>
-      ) : (
+      toolbarLeft={(
         <>
           <Icon name="filter" size={16} className="text-caption" />
-          {RESULT_CHIPS.map((r) => <FilterChip key={r || 'all'} active={fResult === r} onClick={() => setFResult(r)}>{r || '전체'}</FilterChip>)}
+          {RESULT_CHIPS.map((r) => <FilterChip key={r || 'all'} active={fResult === r} onClick={() => setFResult(r)} count={chipCount(r)}>{r || '전체'}</FilterChip>)}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               <MT>{value}</MT>
@@ -260,7 +253,7 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
         </>
       )}
       toolbarRight={<>
-        <span className="text-caption" style={{ fontSize: 12 }} aria-live="polite">정상 {mn(String(counts['정상']))} · 실패 {mn(String(counts['실패']))} · 차단 {mn(String(counts['차단']))}</span>
+        <span className="text-caption" style={{ fontSize: 12 }} aria-live="polite">기간 내 로그 <b className="text-foreground">{mn(String(visible.length))}</b>건</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
         <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>
@@ -280,11 +273,8 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
           getRowId={(p) => p.data.id}
           domLayout="autoHeight"
           defaultColDef={DEFAULT_COL_DEF}
-          rowSelection={ROW_SELECTION}
           preventDefaultOnContextMenu
-          onGridReady={onGridReady}
           onModelUpdated={refreshNoColumn}
-          onSelectionChanged={onSelectionChanged}
           onRowDoubleClicked={onRowDoubleClicked}
           onCellKeyDown={onCellKeyDown}
           onCellContextMenu={handleCellContextMenu}
