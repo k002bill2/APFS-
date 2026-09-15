@@ -1,215 +1,229 @@
-/* 로그인 데모 — S0_001 기반의 Shell 없는 UI 목업.
-   실제 인증, OTP/TOTP, 계정 잠금, 비밀번호 변경·재설정, 이메일 발송은 수행하지 않는다.
-   단계 흐름(아이디·비밀번호 → 2차 인증 → (만료 시) 비밀번호 변경 → 완료)과 결과는 전부
-   `login_demo_model`의 순수 함수가 정하며, 이 파일은 그 상태를 그리기만 한다.
-   결과를 정하는 것은 입력값이 아니라 화면 상단의 **시연 시나리오 선택**이다(목업 계정·코드 없음). */
-import { useState, useRef, useEffect, type FormEvent } from 'react';
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from './ui/dialog';
+/* 로그인(S0_001) — Shell 없는 단독 화면. 정본은 claude.ai/design 캔버스 `APFS 로그인 프로토타입.dc.html`의 로그인 플로우.
+   4단계(아이디·비밀번호 → 2차 인증(OTP) → (만료 시) 비밀번호 변경 → 완료)를 좌측 단계 레일과 함께 보여준다.
+
+   ⚠ 실제 인증·TOTP 검증·계정 잠금은 수행하지 않는다. 모든 판정은 `auth_model`의 순수 함수가 하고
+   이 파일은 그 결과를 그리기만 한다. 화면에 보이는 데모 계정·OTP 코드는 시연용 스캐폴딩이다. */
+import React, { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import {
-  initialLogin, verifyCredentials, verifyOtp, verifyPwChange, verifyReset,
-  stepLabels, stepIndex, SCENARIOS, SCENARIO_LABELS, DEMO_SESSION, MAX_FAIL, PW_POLICY,
-  type LoginState, type Scenario, type Verdict,
-} from './login_demo_model';
+  AuthLayout, SplitCard, Field, PrimaryBtn, SecondaryBtn, DonePanel, DemoNote,
+  OtpCode, Toast, Logo, useDemoOtp, useToast, T, FADE_UP,
+} from './auth_shared';
+import {
+  railSteps, LOGIN_RAIL, verifyCredentials, verifyOtp, verifyPwChange, hasError,
+  verifyReset, DEMO_ID, DEMO_PW, LOCK_LIMIT, PW_POLICY_HINT, type PwChangeErrors,
+} from './auth_model';
 
-type LoginDemoProps = { onNav?: (route: string) => void };
+const NO_PW_ERR: PwChangeErrors = { cur: null, next: null, confirm: null };
 
-const INPUT = 'w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary';
-const PRIMARY_BTN = 'rounded-md border-0 bg-primary px-4 py-2.5 font-semibold text-primary-foreground';
-const GHOST_BTN = 'rounded-md border border-input bg-background px-4 py-2.5 text-sm font-semibold';
-
-export function LoginDemo({ onNav }: LoginDemoProps) {
-  const [login, setLogin] = useState<LoginState>(() => initialLogin());
+export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
+  const [step, setStep] = useState(1);
+  const [pwExpired, setPwExpired] = useState(true);   // 캔버스 props `pwExpired` — 90일 경과 시나리오 토글
   const [id, setId] = useState('');
-  const [password, setPassword] = useState('');
-  const [otp, setOtp] = useState('');
+  const [pw, setPw] = useState('');
+  const [fails, setFails] = useState(0);
+  const [locked, setLocked] = useState(false);
+  // 어느 입력에 오류를 붙일지까지 모델이 정한다 — 빈 아이디를 비밀번호 오류로 알리면 고칠 곳을 못 찾는다.
+  const [credErr, setCredErr] = useState<{ field: 'id' | 'pw'; msg: string } | null>(null);
+  const [otpIn, setOtpIn] = useState('');
+  const [otpErr, setOtpErr] = useState<string | null>(null);
   const [cur, setCur] = useState('');
-  const [n1, setN1] = useState('');
-  const [n2, setN2] = useState('');
-  const [err, setErr] = useState<Verdict | null>(null);           // 모델이 돌려준 마지막 실패 판정(필드 오류 또는 배너)
+  const [p1, setP1] = useState('');
+  const [p2, setP2] = useState('');
+  const [pwErr, setPwErr] = useState<PwChangeErrors>(NO_PW_ERR);
+  const { code, prevCode, secs, display } = useDemoOtp();
+  const { toast, pop } = useToast();
+  /* 비밀번호 재설정 안내 — BRIEF 수용 기준이 요구하는 모달. 캔버스는 죽은 링크였으나
+     기존 로컬 구현의 모달 흐름을 유지한다(기능 회귀 방지). 실제 계정 조회·발송은 하지 않는다. */
   const [resetOpen, setResetOpen] = useState(false);
   const [resetName, setResetName] = useState('');
   const [resetId, setResetId] = useState('');
-  const [resetMessage, setResetMessage] = useState('');
+  const [resetMsg, setResetMsg] = useState('');
+  const resetTrigger = useRef<HTMLButtonElement>(null);   // 닫힌 뒤 초점 복귀 대상
+  /* 열려 있을 때만 마운트한다 — open={false} 로 상주시키면 종료 애니메이션이 끝나지 않아
+     닫힌 노드가 DOM 에 계속 남고 초점이 body 에 머문다(실측). 앱의 다른 모달(user_form_modal 등)도
+     부모가 조건부로 마운트하는 같은 패턴이며, 그래야 노드가 정리되고 초점이 트리거로 돌아온다.
+     아래 focus() 는 그 복귀가 늦을 때의 보조다 — 최종 초점은 실측으로 트리거 버튼에 안착한다. */
+  const closeReset = () => {
+    setResetOpen(false); setResetMsg('');
+    requestAnimationFrame(() => resetTrigger.current?.focus());
+  };
 
-  /* 단계 전환 시 새 단계의 첫 입력으로 초점 이동(직접 만든 전환이라 Radix 처럼 자동 처리되지 않는다).
-     최초 마운트는 건너뛴다 — 화면에 들어오기만 해도 초점을 빼앗지 않도록. */
+  /* 단계 전환은 직접 만든 것이라 초점이 따라오지 않는다 — 새 단계의 첫 입력으로 옮긴다.
+     최초 마운트는 건너뛴다(화면에 들어오기만 해도 초점을 빼앗지 않도록). */
   const firstField = useRef<HTMLInputElement>(null);
-  const resetTrigger = useRef<HTMLButtonElement>(null);   // 다이얼로그 닫힌 뒤 초점 복귀 대상(실측: Radix 자동 복귀가 body 로 떨어졌다)
   const mounted = useRef(false);
   useEffect(() => {
     if (mounted.current) firstField.current?.focus();
     mounted.current = true;
-  }, [login.step]);
+  }, [step]);
 
-  const steps = stepLabels(login.scenario);
-  const current = stepIndex(login.scenario, login.step);
-  const fieldErr = (f: Verdict['field']): string | undefined => (err && !err.ok && err.field === f ? err.msg : undefined);
-  const banner = err && !err.ok && !err.field ? err : null;
-
-  const restart = (scenario: Scenario = login.scenario) => {
-    setLogin(initialLogin(scenario));
-    setPassword(''); setOtp(''); setCur(''); setN1(''); setN2(''); setErr(null);
-  };
-
-  const apply = ({ verdict, next }: { verdict: Verdict; next: LoginState }) => {
-    setLogin(next);
-    setErr(verdict.ok ? null : verdict);
-  };
-
-  const submitCredentials = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); apply(verifyCredentials(login, id, password)); };
-  const submitOtp = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); apply(verifyOtp(login, otp)); };
-  const submitPwChange = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); apply(verifyPwChange(login, cur, n1, n2)); };
-
-  const requestReset = (e: FormEvent<HTMLFormElement>) => {
+  const submit1 = (e: FormEvent) => {
     e.preventDefault();
-    const verdict = verifyReset(resetName, resetId);
-    setResetMessage(verdict.ok
-      ? '재설정 안내를 확인하는 데모 상태입니다. 실제 안내 발송이나 비밀번호 변경은 수행하지 않습니다.'
-      : verdict.msg ?? '입력값을 확인해 주세요.');
+    if (locked) return;
+    const r = verifyCredentials(id, pw, fails);
+    if (r.ok) { setStep(2); setCredErr(null); setOtpIn(''); pop('1차 인증이 완료되었습니다'); return; }
+    setFails(r.fails); setLocked(r.locked);
+    setCredErr(r.field && r.error ? { field: r.field, msg: r.error } : null);
+    if (r.locked) pop(`로그인 ${LOCK_LIMIT}회 실패 — 계정이 잠겼습니다`, true);
+  };
+
+  const submit2 = (e: FormEvent) => {
+    e.preventDefault();
+    const err = verifyOtp(otpIn, code, prevCode);
+    setOtpErr(err);
+    if (!err) { setStep(pwExpired ? 3 : 4); pop('OTP 인증이 완료되었습니다'); }
+  };
+
+  const submit3 = (e: FormEvent) => {
+    e.preventDefault();
+    const errs = verifyPwChange(cur, p1, p2, pw);
+    setPwErr(errs);
+    if (!hasError(errs)) { setStep(4); pop('비밀번호가 변경되었습니다'); }
+  };
+
+  const restart = () => {
+    setStep(1); setId(''); setPw(''); setFails(0); setLocked(false); setCredErr(null);
+    setOtpIn(''); setOtpErr(null); setCur(''); setP1(''); setP2(''); setPwErr(NO_PW_ERR);
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-5 py-10" style={{ background: 'var(--background, #f3f5f8)', color: 'var(--foreground, #1a1d21)' }}>
-      <section aria-labelledby="login-title" className="w-full max-w-[440px] rounded-xl border border-border bg-card shadow-sm" style={{ padding: 32 }}>
-        <p className="m-0 mb-2 text-sm font-semibold text-primary">AFIT</p>
-        <h1 id="login-title" className="m-0 text-2xl font-bold tracking-tight">로그인</h1>
-        <p className="mt-2 mb-6 text-sm text-muted-foreground">투자자산관리 서비스를 이용하려면 로그인해 주세요.</p>
+    <AuthLayout route="login" onNav={onNav}>
+      <SplitCard
+        steps={railSteps(LOGIN_RAIL(pwExpired, step), step)}
+        railHead={<>
+          <Logo />
+          <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '10px 0 32px' }}>
+            에이핏(AFIT) · 농림수산식품모태펀드<br />투자자산관리시스템
+          </p>
+        </>}
+        railFoot={<>세션 30분 · 비밀번호 90일 주기<br />{LOCK_LIMIT}회 실패 시 계정 잠금</>}>
 
-        <ol aria-label="로그인 단계" className="m-0 mb-6 flex list-none flex-wrap gap-x-3 gap-y-1 p-0 text-xs">
-          {steps.map((s, i) => (
-            <li key={s.key} aria-current={s.key === login.step ? 'step' : undefined}
-              className={s.key === login.step ? 'font-bold text-primary' : i < current ? 'text-foreground' : 'text-muted-foreground'}>
-              {i < current ? `✓ ${s.label}` : s.label}
-            </li>
-          ))}
-        </ol>
-
-        {banner && (
-          <p role="alert" className={`m-0 mb-5 rounded-md p-3 text-sm leading-5 ${banner.tone === 'warning' ? 'bg-muted' : 'bg-danger-soft'}`}>{banner.msg}</p>
-        )}
-
-        {login.step === 'credentials' && (
-          <>
-            <fieldset className="m-0 mb-5 rounded-lg border border-border p-3">
-              <legend className="px-1 text-xs font-semibold text-muted-foreground">시연 시나리오 (목업 — 실제 인증이 아니라 이 선택이 결과를 정합니다)</legend>
-              <div className="flex flex-wrap gap-x-4 gap-y-2">
-                {SCENARIOS.map((s) => (
-                  <label key={s} className="flex items-center gap-1.5 text-sm">
-                    <input type="radio" name="login-scenario" value={s} checked={login.scenario === s} onChange={() => restart(s)} />
-                    <span>{SCENARIO_LABELS[s]}</span>
-                  </label>
-                ))}
+        {step === 1 && (
+          <div style={{ animation: FADE_UP }}>
+            <h1 style={T.title3}>아이디·비밀번호</h1>
+            <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '6px 0 22px' }}>에이핏(AFIT) 계정으로 로그인해 주세요.</p>
+            {locked && (
+              <p role="alert" style={{
+                ...T.caption1, lineHeight: 1.6, marginBottom: 18, padding: '14px 18px', fontWeight: 600,
+                background: 'var(--danger-soft)', border: '1px solid color-mix(in srgb, var(--danger-text) 35%, transparent)',
+                borderRadius: 'var(--radius-lg)', color: 'var(--danger-text)',
+              }}>로그인 {LOCK_LIMIT}회 실패로 계정이 잠겼습니다.<br /><span style={{ fontWeight: 400 }}>시스템 관리자(정보화팀)의 잠금 해제가 필요합니다.</span></p>
+            )}
+            <form noValidate onSubmit={submit1} className="flex flex-col gap-4">
+              <Field id="login-id" label="아이디" icon="user" placeholder="로그인 아이디" autoComplete="username"
+                value={id} onChange={setId} disabled={locked} inputRef={firstField}
+                error={credErr?.field === 'id' ? credErr.msg : null} />
+              <Field id="login-pw" label="비밀번호" type="password" icon="lock" placeholder="비밀번호" autoComplete="current-password"
+                value={pw} onChange={setPw} disabled={locked}
+                error={credErr?.field === 'pw' ? credErr.msg : null} />
+              <div className="flex items-center justify-between gap-3 flex-wrap" style={{ marginTop: 2 }}>
+                <label className="flex items-center gap-2 cursor-pointer" style={{ ...T.body3, minHeight: 24 }}>
+                  <input type="checkbox" defaultChecked style={{ width: 16, height: 16, accentColor: 'var(--primary)' }} />
+                  아이디 저장
+                </label>
+                <button ref={resetTrigger} type="button" onClick={() => { setResetOpen(true); setResetMsg(''); }}
+                  className="border-0 bg-transparent p-0 cursor-pointer underline underline-offset-4"
+                  style={{ ...T.body3, minHeight: 24, color: 'var(--accent)' }}>비밀번호 재설정(간편인증)</button>
               </div>
-            </fieldset>
-
-            <form noValidate onSubmit={submitCredentials} className="grid gap-5">
-              <div>
-                <label htmlFor="login-id" className="mb-2 block text-sm font-semibold">아이디</label>
-                <input ref={firstField} id="login-id" name="id" autoComplete="username" value={id} onChange={(e) => setId(e.target.value)}
-                  aria-invalid={Boolean(fieldErr('id'))} aria-describedby={fieldErr('id') ? 'login-id-error' : undefined} className={INPUT} />
-                {fieldErr('id') && <p id="login-id-error" className="mt-1.5 mb-0 text-sm text-destructive">{fieldErr('id')}</p>}
-              </div>
-              <div>
-                <label htmlFor="login-password" className="mb-2 block text-sm font-semibold">비밀번호</label>
-                <input id="login-password" name="password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)}
-                  aria-invalid={Boolean(fieldErr('pw'))} aria-describedby={fieldErr('pw') ? 'login-password-error' : undefined} className={INPUT} />
-                {fieldErr('pw') && <p id="login-password-error" className="mt-1.5 mb-0 text-sm text-destructive">{fieldErr('pw')}</p>}
-              </div>
-              <p className="m-0 text-xs leading-5 text-muted-foreground">비밀번호 {MAX_FAIL}회 오류 시 계정이 잠깁니다(안내 문구 — 목업은 강제하지 않습니다).</p>
-              <button type="submit" className={PRIMARY_BTN}>로그인</button>
+              <PrimaryBtn type="submit" full disabled={locked}>로그인</PrimaryBtn>
             </form>
-          </>
-        )}
-
-        {login.step === 'otp' && (
-          <form noValidate onSubmit={submitOtp} className="grid gap-5">
-            <p className="m-0 text-sm leading-6 text-muted-foreground">등록된 인증 앱의 6자리 코드를 입력해 주세요. 목업은 <b>형식만</b> 확인하며 실제 코드 검증은 하지 않습니다.</p>
-            <div>
-              <label htmlFor="login-otp" className="mb-2 block text-sm font-semibold">인증 코드</label>
-              <input ref={firstField} id="login-otp" name="otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value)}
-                aria-invalid={Boolean(fieldErr('otp'))} aria-describedby={fieldErr('otp') ? 'login-otp-error' : undefined} className={INPUT} />
-              {fieldErr('otp') && <p id="login-otp-error" className="mt-1.5 mb-0 text-sm text-destructive">{fieldErr('otp')}</p>}
-            </div>
-            <div className="flex gap-2">
-              <button type="button" className={GHOST_BTN} onClick={() => restart()}>처음부터</button>
-              <button type="submit" className={`${PRIMARY_BTN} flex-1`}>확인</button>
-            </div>
-          </form>
-        )}
-
-        {login.step === 'pwchange' && (
-          <form noValidate onSubmit={submitPwChange} className="grid gap-5">
-            <p className="m-0 text-sm leading-6 text-muted-foreground">비밀번호 사용 기간이 만료됐습니다. 새 비밀번호로 변경해 주세요.</p>
-            <p className="m-0 rounded-md bg-muted p-3 text-xs leading-5">정책 안내: {PW_POLICY} <span className="text-muted-foreground">(목업 — 강제하지 않습니다)</span></p>
-            <div>
-              <label htmlFor="pw-cur" className="mb-2 block text-sm font-semibold">현재 비밀번호</label>
-              <input ref={firstField} id="pw-cur" type="password" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)}
-                aria-invalid={Boolean(fieldErr('cur'))} aria-describedby={fieldErr('cur') ? 'pw-cur-error' : undefined} className={INPUT} />
-              {fieldErr('cur') && <p id="pw-cur-error" className="mt-1.5 mb-0 text-sm text-destructive">{fieldErr('cur')}</p>}
-            </div>
-            <div>
-              <label htmlFor="pw-n1" className="mb-2 block text-sm font-semibold">새 비밀번호</label>
-              <input id="pw-n1" type="password" autoComplete="new-password" value={n1} onChange={(e) => setN1(e.target.value)}
-                aria-invalid={Boolean(fieldErr('n1'))} aria-describedby={fieldErr('n1') ? 'pw-n1-error' : undefined} className={INPUT} />
-              {fieldErr('n1') && <p id="pw-n1-error" className="mt-1.5 mb-0 text-sm text-destructive">{fieldErr('n1')}</p>}
-            </div>
-            <div>
-              <label htmlFor="pw-n2" className="mb-2 block text-sm font-semibold">새 비밀번호 확인</label>
-              <input id="pw-n2" type="password" autoComplete="new-password" value={n2} onChange={(e) => setN2(e.target.value)}
-                aria-invalid={Boolean(fieldErr('n2'))} aria-describedby={fieldErr('n2') ? 'pw-n2-error' : undefined} className={INPUT} />
-              {fieldErr('n2') && <p id="pw-n2-error" className="mt-1.5 mb-0 text-sm text-destructive">{fieldErr('n2')}</p>}
-            </div>
-            <div className="flex gap-2">
-              <button type="button" className={GHOST_BTN} onClick={() => restart()}>처음부터</button>
-              <button type="submit" className={`${PRIMARY_BTN} flex-1`}>변경하고 계속</button>
-            </div>
-          </form>
-        )}
-
-        {login.step === 'done' && (
-          <div role="status" className="rounded-lg border border-[color:var(--success,#0e7c86)] bg-[color:var(--success-weak,#e2f3f4)] p-5">
-            <h2 className="m-0 text-base font-bold">목업 로그인 완료</h2>
-            <p className="mt-2 mb-4 text-sm leading-6">입력 형식과 단계 흐름만 확인한 UI 데모입니다. 실제 인증·권한 확인은 수행하지 않았습니다.</p>
-            <dl className="m-0 mb-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-              <dt className="font-semibold">사용자</dt><dd className="m-0">{DEMO_SESSION.name}</dd>
-              <dt className="font-semibold">소속</dt><dd className="m-0">{DEMO_SESSION.belong}</dd>
-              <dt className="font-semibold">권한</dt><dd className="m-0">{DEMO_SESSION.roles.join(', ')}</dd>
-              <dt className="font-semibold">최근 접속</dt><dd className="m-0">{DEMO_SESSION.last}</dd>
-            </dl>
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => onNav?.('main')} className={`${PRIMARY_BTN} flex-1`}>메인으로 이동</button>
-              <button type="button" onClick={() => restart()} className={GHOST_BTN}>다시 시연</button>
-            </div>
+            <DemoNote>
+              아이디 <b style={{ color: 'var(--foreground)' }}>{DEMO_ID}</b> · 비밀번호 <b style={{ color: 'var(--foreground)' }}>{DEMO_PW}</b> 로만 통과하는 UI 목업입니다.
+              {' '}(실패 {fails}/{LOCK_LIMIT}{locked ? ' · 잠금 상태' : ''})
+              <label className="flex items-center gap-2 cursor-pointer" style={{ marginTop: 8, minHeight: 24 }}>
+                <input type="checkbox" checked={pwExpired} onChange={(e) => setPwExpired(e.target.checked)}
+                  style={{ width: 16, height: 16, accentColor: 'var(--primary)' }} />
+                비밀번호 90일 경과 시나리오(3단계 노출)
+              </label>
+            </DemoNote>
           </div>
         )}
 
-        <div className="mt-6 flex items-center justify-between gap-3 text-sm">
-          <button ref={resetTrigger} type="button" className="inline-flex items-center border-0 bg-transparent px-0 text-primary underline underline-offset-4" style={{ minHeight: 24 }} onClick={() => { setResetOpen(true); setResetMessage(''); }}>비밀번호 재설정 안내</button>
-          <button type="button" className="inline-flex items-center border-0 bg-transparent px-0 text-muted-foreground underline underline-offset-4" style={{ minHeight: 24 }} onClick={() => onNav?.('main')}>메인으로 돌아가기</button>
-        </div>
-        <p className="mt-5 mb-0 text-xs leading-5 text-muted-foreground">이 화면은 접근성 및 화면 흐름 검토용 로컬 UI 목업입니다.</p>
-      </section>
+        {step === 2 && (
+          <div className="flex flex-col flex-1" style={{ animation: FADE_UP }}>
+            <h1 style={T.title3}>2차 인증(OTP)</h1>
+            <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '6px 0 22px' }}>휴대폰 인증앱에 표시된 6자리 코드를 입력해 주세요.</p>
+            <div className="flex items-center justify-between flex-wrap gap-2" style={{
+              background: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+              padding: '14px 18px', marginBottom: 20,
+            }}>
+              <span style={{ ...T.body3, color: 'var(--muted-foreground)' }}>인증앱 코드</span>
+              <OtpCode display={display} secs={secs} />
+            </div>
+            <form noValidate onSubmit={submit2} className="flex flex-col gap-4">
+              <Field id="login-otp" label="인증 코드" icon="lock" placeholder="앱에 표시된 6자리" autoComplete="one-time-code"
+                inputMode="numeric" maxLength={7} value={otpIn} onChange={setOtpIn} error={otpErr} inputRef={firstField} />
+              <div className="flex gap-2.5">
+                <PrimaryBtn type="submit" full style={{ flex: 1 }}>인증 확인</PrimaryBtn>
+                <SecondaryBtn onClick={() => { setStep(1); setOtpErr(null); }} style={{ flex: '0 0 96px' }}>뒤로</SecondaryBtn>
+              </div>
+            </form>
+            <DemoNote>위 「인증앱 코드」가 정답입니다 — 실제 인증앱 대신 화면에 표시하는 시연용 코드입니다.</DemoNote>
+            <p style={{ ...T.caption1, margin: 'auto 0 0', paddingTop: 24, color: 'var(--muted-foreground)', lineHeight: 1.7 }}>
+              표준 TOTP(RFC 6238) · 30초 회전 · 허용창 ±1<br />코드가 맞지 않으면 기기 시간 동기화를 확인해 주세요.
+            </p>
+          </div>
+        )}
 
-      {/* 재설정 안내 — 공용 Radix Dialog(초점 트랩·Esc·초점 복귀를 직접 구현하지 않기 위해).
+        {step === 3 && (
+          <div style={{ animation: FADE_UP }}>
+            <h1 style={T.title3}>비밀번호 변경</h1>
+            <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '6px 0 22px' }}>비밀번호 사용 90일이 경과했어요. 변경 후 이용할 수 있습니다.</p>
+            <form noValidate onSubmit={submit3} className="flex flex-col gap-4">
+              <Field id="pw-cur" label="현재 비밀번호" type="password" icon="lock" placeholder="현재 비밀번호" autoComplete="current-password"
+                value={cur} onChange={setCur} error={pwErr.cur} inputRef={firstField} />
+              <Field id="pw-new" label="새 비밀번호" type="password" icon="lock" placeholder="9자 이상, 영문·숫자·특수문자" autoComplete="new-password"
+                value={p1} onChange={setP1} error={pwErr.next} help={PW_POLICY_HINT} />
+              <Field id="pw-confirm" label="새 비밀번호 확인" type="password" icon="lock" placeholder="새 비밀번호 다시 입력" autoComplete="new-password"
+                value={p2} onChange={setP2} error={pwErr.confirm} />
+              <PrimaryBtn type="submit" full>변경하고 계속</PrimaryBtn>
+            </form>
+          </div>
+        )}
+
+        {step === 4 && (
+          <DonePanel
+            title="로그인 완료"
+            desc="김담당 님, 에이핏(AFIT)에 안전하게 접속했습니다."
+            rows={[
+              { k: '계정', v: `${DEMO_ID} (농금원 · 관리자)`, strong: true },
+              { k: '2차 인증', v: 'TOTP 인증 완료' },
+              { k: '비밀번호', v: pwExpired ? '오늘 변경됨 (다음 변경 90일 후)' : '90일 미경과 — 변경 생략' },
+              { k: '세션', v: '30분 (무활동 시 자동 종료)' },
+            ]}
+            actions={<>
+              <PrimaryBtn onClick={() => onNav?.('main')} style={{ minWidth: 160 }}>포털 홈으로</PrimaryBtn>
+              <SecondaryBtn onClick={restart} style={{ minWidth: 160 }}>처음부터 다시</SecondaryBtn>
+            </>} />
+        )}
+      </SplitCard>
+      <Toast toast={toast} />
+
+      {/* 공용 Radix Dialog — 초점 트랩·Esc·초점 복귀를 직접 구현하지 않기 위해.
           직접 만든 오버레이는 aria-modal 만으로는 배경으로 Tab 이 새고 Esc 가 먹지 않는다. */}
-      <Dialog open={resetOpen} onOpenChange={(o) => { setResetOpen(o); if (!o) setResetMessage(''); }}>
-        <DialogContent className="max-w-[420px]" aria-describedby="reset-desc"
-          onCloseAutoFocus={(e) => { e.preventDefault(); resetTrigger.current?.focus(); }}>
+      {resetOpen && (
+      <Dialog open onOpenChange={(o) => { if (!o) closeReset(); }}>
+        <DialogContent className="max-w-[420px]" aria-describedby="reset-desc">
           <div style={{ padding: 28 }}>
-            <DialogTitle className="text-lg">비밀번호 재설정 안내</DialogTitle>
-            <DialogDescription id="reset-desc" className="mt-2 mb-4 block text-sm leading-6">본인 확인 정보를 입력하는 화면 흐름만 보여 줍니다. 실제 계정 조회·안내 발송은 하지 않습니다.</DialogDescription>
-            <form noValidate onSubmit={requestReset} className="grid gap-4">
-              <div><label htmlFor="reset-name" className="mb-1.5 block text-sm font-semibold">성명</label><input id="reset-name" value={resetName} onChange={(e) => setResetName(e.target.value)} className={INPUT} /></div>
-              <div><label htmlFor="reset-id" className="mb-1.5 block text-sm font-semibold">아이디</label><input id="reset-id" value={resetId} onChange={(e) => setResetId(e.target.value)} className={INPUT} /></div>
-              {resetMessage && <p role="status" className="m-0 rounded-md bg-muted p-3 text-sm leading-5">{resetMessage}</p>}
+            <DialogTitle style={T.title3}>비밀번호 재설정 안내</DialogTitle>
+            <DialogDescription id="reset-desc" style={{ ...T.body3, display: 'block', margin: '8px 0 18px', color: 'var(--muted-foreground)' }}>
+              본인 확인 정보를 입력하는 화면 흐름만 보여 줍니다. 실제 계정 조회·안내 발송은 하지 않습니다.
+            </DialogDescription>
+            <form noValidate onSubmit={(e) => { e.preventDefault(); setResetMsg(verifyReset(resetName, resetId) ?? '재설정 안내를 확인하는 데모 상태입니다. 실제 발송은 하지 않습니다.'); }}
+              className="flex flex-col gap-4">
+              <Field id="reset-name" label="성명" icon="user" placeholder="성명" value={resetName} onChange={setResetName} />
+              <Field id="reset-id" label="아이디" icon="user" placeholder="로그인 아이디" value={resetId} onChange={setResetId} />
+              {resetMsg && <p role="status" style={{ ...T.caption1, background: 'var(--muted)', borderRadius: 'var(--radius)', padding: '11px 14px', lineHeight: 1.6 }}>{resetMsg}</p>}
               <div className="flex justify-end gap-2">
-                <DialogClose asChild><button type="button" className="rounded-md border border-input bg-background px-3 py-2 text-sm font-semibold">닫기</button></DialogClose>
-                <button type="submit" className="rounded-md border-0 bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">안내 확인</button>
+                <button type="button" onClick={closeReset} className="cursor-pointer" style={{ minHeight: 40, padding: '0 16px', borderRadius: 'var(--radius)', background: 'var(--card)', border: '1px solid var(--border-strong)', color: 'var(--foreground)', font: '700 13.5px var(--font-sans)' }}>닫기</button>
+                <button type="submit" className="cursor-pointer border-0" style={{ minHeight: 40, padding: '0 16px', borderRadius: 'var(--radius)', background: 'var(--primary)', color: 'var(--primary-foreground)', font: '700 13.5px var(--font-sans)' }}>안내 확인</button>
               </div>
             </form>
           </div>
         </DialogContent>
       </Dialog>
-    </main>
+      )}
+    </AuthLayout>
   );
 }
