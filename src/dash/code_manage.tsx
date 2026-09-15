@@ -230,8 +230,19 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
   const onGroupRowDataUpdated = useCallback((e: { api: GridApi<GroupView> }) => syncGroupRadio(e.api), [syncGroupRadio]);
   const onGroupSelection = useCallback((e: SelectionChangedEvent<GroupView>) => {
     const code = e.api.getSelectedRows()[0]?.code;
-    if (code) { setCurCode(code); setSelDetail(null); }
-  }, []);
+    if (code) { setCurCode(code); setSelDetail(null); return; }
+    // 해제는 허용하지 않는다 — 좌 그리드는 "여러 건을 고르는 체크박스"가 아니라 **우 패널이 무엇을 보여줄지 정하는 라디오**다.
+    // 빈 선택은 우측이 갈 곳을 잃은 상태이고, 종전엔 `if (code)` 가드에 막혀 curCode 가 남은 채 체크만 풀려
+    // "체크는 꺼졌는데 수정·삭제 버튼은 그대로"인 모순이 보였다(2026-09-15 사용자 지적).
+    // ⚠️ 되돌리기를 **이 이벤트 안에서 즉시** 하면 안 된다 — 다른 행을 클릭하면 AG Grid 가
+    //    '이전 행 해제'(0건) → '새 행 선택' 순으로 selectionChanged 를 두 번 쏜다. 첫 발화만 보고 되살리면
+    //    전환 도중을 해제로 오인해 이전 행이 부활하고 새 행까지 선택돼 **2건이 동시에 선택**된다(실측).
+    //    배치가 끝난 뒤(microtask) 여전히 0건일 때만 되돌린다 = 진짜 해제.
+    queueMicrotask(() => {
+      if (e.api.isDestroyed?.()) return;
+      if (e.api.getSelectedRows().length === 0) syncGroupRadio(e.api);
+    });
+  }, [syncGroupRadio]);
   const onGroupDouble = useCallback((e: RowDoubleClickedEvent<GroupView>) => { if (e.data) setModal({ kind: 'group', mode: 'edit', code: e.data.code }); }, []);
   const onGroupKey = useCallback((e: CellKeyDownEvent<GroupView>) => {
     if ((e.event as KeyboardEvent | null)?.key !== 'Enter' || !e.data) return;
@@ -417,9 +428,11 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
         {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
       </>}>
 
-      {/* master-detail 2단 — lg 이상 좌 440px 고정·우 잔여, 미만은 세로 적층(responsive-ui 체크 3). 각 패널은 min-w-0 로 그리드 내부 스크롤을 보존 */}
-      <div className="grid grid-cols-1 lg:grid-cols-[440px_minmax(0,1fr)]">
-        <section aria-label="코드구분 목록" className="min-w-0 lg:border-r border-border">
+      {/* master-detail 2단 — lg 이상 좌 440px 고정·우 잔여, 미만은 세로 적층(responsive-ui 체크 3). 각 패널은 min-w-0 로 그리드 내부 스크롤을 보존
+          두 그리드는 gap-3(12px) 여백으로 갈라둔다(2026-09-15 사용자 지시 — 20px 는 과했다) — 종전엔 맞붙어 우측 표가 좌측 표의 연장처럼 읽혔다.
+          여백이 구분자 역할을 하므로 세로 구분선(lg:border-r)·적층 시 가로선(border-t)은 함께 걷어낸다(선+여백 이중 분리는 과하다). */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[440px_minmax(0,1fr)]">
+        <section aria-label="코드구분 목록" className="min-w-0">
           <PaneBar title="코드구분 " count={groupViews.length}>
             {curG && (
               <>
@@ -448,7 +461,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
           />
         </section>
 
-        <section aria-label="코드상세 목록" className="min-w-0 border-t lg:border-t-0 border-border">
+        <section aria-label="코드상세 목록" className="min-w-0">
           <PaneBar title={curG ? <>「<MT>{curG.name}</MT>」 코드상세 </> : '코드상세 '} count={curDetails.length}>
             {/* 코드 등록은 코드구분 선택 전에는 disabled(목업 rg-new) — 선택하면 즉시 활성 */}
             <Button variant="outline" size="sm" leadingIcon="plus" disabled={!curG} onClick={() => setModal({ kind: 'detail', mode: 'create' })}>코드 등록</Button>
