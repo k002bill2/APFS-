@@ -45,3 +45,8 @@ apfs-design-handoff.zip
 
 # 스킬 안내도 HTML (세션 산출물 — 저장소 미추적)
 docs/skills-new-screen-architecture.html
+
+# git worktree 격리 작업공간 (EnterWorktree 도구 · scripts/wt.sh — 로컬 전용)
+# 공유 체크아웃에서 브랜치를 갈아타면 동시 세션의 dev 서버가 다른 커밋의 소스를 서빙한다.
+# 브랜치 작업은 여기 워크트리에서 한다.
+.claude/worktrees/
