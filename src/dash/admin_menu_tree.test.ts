@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { APFS_DATA } from './data';
-import { buildMenuRows, childrenOf, hasChildren, programsOf, programCatalog, pidTakenBy, utypeLabel } from './admin_menu_tree';
+import { buildMenuRows, childrenOf, hasChildren, programsOf, pidTakenBy, utypeLabel } from './admin_menu_tree';
 
 const rows = buildMenuRows();
 
@@ -37,6 +37,11 @@ describe('buildMenuRows — LNB MENU 평탄화 불변식', () => {
   it('단축번호는 프로그램ID가 있는 행에만 있다', () => {
     for (const r of rows) if (r.short) expect(r.pid).not.toBe('');
   });
+  it('미사용(use:false) 리프가 존재한다 — 사용여부 필터가 no-op 이 아니다', () => {
+    const unused = rows.filter((r) => !r.use);
+    expect(unused.length).toBeGreaterThanOrEqual(3);          // DEMO_UNUSED 키가 어긋나면 0건이 되어 여기서 잡힌다
+    for (const r of unused) expect(r.pid).not.toBe('');       // 미사용 표본은 리프(프로그램)
+  });
   it('호출마다 새 배열(호출자 state가 서로 오염되지 않는다)', () => {
     const again = buildMenuRows();
     expect(again).not.toBe(rows);
@@ -47,22 +52,6 @@ describe('buildMenuRows — LNB MENU 평탄화 불변식', () => {
 describe('utypeLabel', () => {
   it('빈 배열은 공통', () => { expect(utypeLabel([])).toBe('공통'); });
   it('복수는 쉼표 연결', () => { expect(utypeLabel(['농금원', '수탁'])).toBe('농금원, 수탁'); });
-});
-
-describe('programCatalog — 프로그램 관리 목록(목업 S0_105 PROGRAMS 근거)', () => {
-  it('항목 수 = 프로그램ID가 있는 리프 수(PROGRAMS 와 동일 집합·순서)', () => {
-    const cat = programCatalog(rows);
-    expect(cat.map((p) => p.pid)).toEqual(programsOf(rows).map((p) => p.pid));
-  });
-  it('연결 메뉴 경로는 상위 라벨을 › 로 잇고 마지막 조각이 프로그램명', () => {
-    for (const p of programCatalog(rows)) { const seg = p.menuPath.split(' › '); expect(seg[seg.length - 1]).toBe(p.pname); }
-  });
-  it('프로그램 관리 리프가 관리자 › 시스템 관리 아래 첫 항목이다(브리프 리프 순서)', () => {
-    const sys = rows.find((r) => r.name === '시스템 관리' && r.lvl === 2)!;
-    expect(childrenOf(rows, sys.id).map((r) => r.name)).toEqual(['프로그램 관리', '공통코드 관리', '메뉴 관리', '도움말 관리']);
-    const p = programCatalog(rows).find((x) => x.pname === '프로그램 관리')!;
-    expect(p.menuPath).toBe('관리자 › 시스템 관리 › 프로그램 관리');
-  });
 });
 
 describe('pidTakenBy — 프로그램ID 유일 불변식(메뉴 수정 모달 검증 근거)', () => {

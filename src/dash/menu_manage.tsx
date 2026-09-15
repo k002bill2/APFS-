@@ -41,7 +41,6 @@ import { buildMenuRows, childrenOf, hasChildren, programsOf, rowById, utypeLabel
 import type { MenuRow, UType } from './admin_menu_tree';
 import { reseqSiblings, applyReseq } from './reseq';
 import { UseBadge } from './admin_shared';
-import { AdminTabs } from './admin_tabs';
 import { MenuFormModal } from './menu_form_modal';
 import type { MenuPatch, MenuPreset } from './menu_form_modal';
 
@@ -355,7 +354,6 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
       crumbs={['홈', '관리자', '시스템 관리', '메뉴 관리']}
       title="메뉴 관리"
       favRoute="menu-manage"
-      tabs={<AdminTabs route="menu-manage" onNav={onNav} />}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={selected ? (
         <>

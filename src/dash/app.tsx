@@ -33,7 +33,6 @@ import { CustodyConfirmManage } from './custody_confirm_manage';           // �
 import { CodeManage } from './code_manage';                                  // 공통코드 관리(S0_106, master-detail)
 import { MenuManage } from './menu_manage';                                  // 메뉴 관리(S0_105, 계층 트리)
 import { UserPermissionManage } from './user_permission_manage';             // 사용자 권한 관리(S0_102, 권한 매트릭스)
-import { ProgramManage } from './program_manage';                            // 프로그램 관리(S0_105 PROGRAMS 근거, 읽기 전용 목록)
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -69,7 +68,6 @@ const ROUTE_ALIAS: Record<string, string> = {
   "공통코드 관리": "code-manage", "코드관리": "code-manage",
   "메뉴 관리": "menu-manage", "메뉴관리": "menu-manage",
   "사용자 권한 관리": "user-permission-manage", "권한관리": "user-permission-manage",
-  "프로그램 관리": "program-manage", "프로그램관리": "program-manage",
   asset: "main", risk: "main", "gp-health": "main",
   accounting: "main", report: "main", "report-sutack": "main",
 };
@@ -170,7 +168,6 @@ function App() {
   else if (route === "code-manage") page = <CodeManage onNav={onNav} />;
   else if (route === "menu-manage") page = <MenuManage onNav={onNav} />;
   else if (route === "user-permission-manage") page = <UserPermissionManage onNav={onNav} />;
-  else if (route === "program-manage") page = <ProgramManage onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "editor") page = <EditorPage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가

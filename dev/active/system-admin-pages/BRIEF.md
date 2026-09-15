@@ -42,6 +42,7 @@
 - 원본 DATA의 대표 코드구분·상세값을 APFS 더미 데이터로 이식하되, 과도한 원본 전체 덤프는 피하고 화면 밀도를 유지한다.
 
 ## 사용자 추가 지시 — 시스템관리 탭 구조 (이미지 기준)
+> ⚠️ **철회됨 (2026-09-14 후속 지시: "메뉴를 이렇게 탭으로 할 필요 없어. 원래대로 해줘")** — 아래 탭 요구는 더 이상 유효하지 않다. 탭 바는 제거됐고 관리 화면 이동은 LNB 단일 경로다. 이 절은 이력으로만 남긴다(§구현 메모 3 참조).
 - 기존 APFS 전역 Shell/GNB는 유지하되, 이 4개 관리 route의 본문 상단에 이미지와 같은 **관리 컨텍스트 탭 바**를 둔다. 브랜드/전역 헤더를 페이지 내부에서 중복 렌더하지 않는다.
 - 1차 탭: `사용자 권한 관리` | `시스템관리`.
   - `user-permission-manage`에서 `사용자 권한 관리`가 활성 상태여야 한다.
@@ -87,13 +88,11 @@
 
 인계 시점 차단 4건과 그 처리:
 1. `npm run build` 실패 — `code_manage.tsx` 머리 주석의 `lg-*/rg-*` 안 `*/`가 블록 주석을 조기 종료. 문구를 `lg-·rg- 접두 버튼`으로 바꿔 해결(로직 무변경).
-2. `program_manage.tsx` 부재 — 신규. 데이터는 `admin_menu_tree.programCatalog`(LNB 정본 리프 = 목업 S0_105 `PROGRAMS`)만 사용. 목록·검색(프로그램ID·프로그램명 부분일치 = 목업 프로그램 검색 팝업)·사용여부 칩·엑셀·페이지네이션 20. **CRUD 없음**(근거 없음).
-3. 공용 탭 바 부재 — `admin_tabs_model.ts`(순수 모델·테스트 7건) + `admin_tabs.tsx`(UI). `GridFrame`에 `tabs` 슬롯 1개 추가(PageHeader 아래·카드 위). 4 페이지 모두 `tabs={<AdminTabs route=… onNav={onNav} />}`.
-4. `data.ts`/`app.tsx` program-manage 누락 — 리프 `프로그램 관리`(path `program-manage`)를 `시스템 관리` 첫 항목으로 추가(구조표에 없던 리프 — 이 브리프의 사용자 지시가 근거), 순서 프로그램→공통코드→메뉴→도움말. app.tsx import·route 분기·별칭(`프로그램 관리`·`프로그램관리`).
+2. ~~`program_manage.tsx` 부재 — 신규.~~ **철회(2026-09-14 사용자 지시 "되돌려")** — 탭 철회로 근거가 사라져 페이지·`programCatalog`/`ProgramEntry`·테스트 4건까지 삭제. 참고 이력: 데이터는 `admin_menu_tree.programCatalog`(LNB 정본 리프 = 목업 S0_105 `PROGRAMS`)만 사용. 목록·검색(프로그램ID·프로그램명 부분일치 = 목업 프로그램 검색 팝업)·사용여부 칩·엑셀·페이지네이션 20. **CRUD 없음**(근거 없음).
+3. ~~공용 탭 바 부재 — `admin_tabs_model.ts` + `admin_tabs.tsx`, `GridFrame` `tabs` 슬롯~~ **철회(2026-09-14 사용자 지시 "메뉴를 탭으로 할 필요 없어, 원래대로")** — 탭 모듈 3파일 삭제, 4 페이지 배선·`GridFrame.tabs` 슬롯 원복. 관리 화면 간 이동은 LNB(관리자 > 시스템 관리/사용자 관리) 단일 경로.
+4. ~~`data.ts`/`app.tsx` program-manage 누락~~ **철회(2026-09-14)** — 리프·별칭·route 분기 원복. 구조표 정본 리프 141개로 복귀. 참고 이력: 리프 `프로그램 관리`(path `program-manage`)를 `시스템 관리` 첫 항목으로 추가(구조표에 없던 리프 — 이 브리프의 사용자 지시가 근거), 순서 프로그램→공통코드→메뉴→도움말. app.tsx import·route 분기·별칭(`프로그램 관리`·`프로그램관리`).
 
 결정·가정:
-- "APFS primary blue" = `--primary` 토큰(라이트 #5A5FE8 / 다크 #818CF8). FilterChip·SegTabs 활성색과 같은 토큰이라 화면군 안 일관성이 유지된다. 별도 `--accent`(#2563EB) 링크 블루를 원하면 `admin_tabs.tsx`의 `TAB_ON` 클래스 두 개(`text-primary border-primary`)만 바꾸면 된다.
-- 탭은 라우트 이동이므로 `role=tablist`가 아니라 `<nav aria-label>` + `aria-current="page"`.
-- `프로그램 관리` 리프 추가로 `admin_menu_tree`의 관리자 프로그램ID 일련이 1 밀렸다(데모 값). 권한 매트릭스 행 143 = 리프 142 + 1.
+- ~~`프로그램 관리` 리프 추가로 프로그램ID 일련이 1 밀렸다. 권한 매트릭스 행 143 = 리프 142 + 1.~~ **철회 후 원복(2026-09-14)** — 리프 141개 기준으로 되돌아갔다(카운트는 `APFS_DATA.ALLMENU`에서 파생이라 테스트 하드코딩 없음).
 
 검증 증거(2026-09-14): `git diff --check` 0 · `vite build` ✓ · `vitest` 12 files / 105 tests 통과 · Aside(포트 5310) 4 route × 라이트/다크: 제목·그리드 행수(program 20/페이지, menu 8 대분류, code 19+14, permission 5)·탭 활성(`aria-current`, primary 텍스트 + 2px 밑줄)·pageerror/console error 0 · 탭 클릭 5회 전이 route/제목 동기 · 권한 수정 모달 매트릭스 143행·indeterminate 135·전체 선택 572/572 · 코드 HOMECD 선택 시 우측 18행.
