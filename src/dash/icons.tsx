@@ -71,6 +71,10 @@ const MAP = {
   maximize:["Maximize2","Maximize"], minimize:["Minimize2","Minimize"],
   "expand-h":["UnfoldHorizontal","MoveHorizontal","StretchHorizontal"],
   "collapse-h":["FoldHorizontal","MoveHorizontal"],
+  // 세로판(트리 행 접기/펼치기용) — 가로판을 CSS 로 90도 돌리지 않고 lucide 세로 아이콘을 쓴다.
+  //   회전은 스트로크 끝단·픽셀 스냅이 미세하게 틀어지고, 행이 세로로 쌓이는 트리 의미와도 세로판이 맞다.
+  "expand-v":["UnfoldVertical","MoveVertical","StretchVertical"],
+  "collapse-v":["FoldVertical","MoveVertical"],
   grid:["LayoutGrid","Grid3x3","Grid"], star:["Star"],
   trash:["Trash2","Trash"],
   eye:["Eye"], "eye-off":["EyeOff","EyeClosed"],

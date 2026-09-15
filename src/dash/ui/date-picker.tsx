@@ -54,8 +54,9 @@ export function DatePicker({ value, onChange, invalid, required, disabled, place
             'flex h-[34px] box-border w-full items-center justify-between gap-2 rounded-[9px] border bg-card px-[11px] py-[7px] text-left text-sm text-foreground transition-colors',
             'focus-visible:outline-none',
             'disabled:cursor-not-allowed disabled:opacity-60',
-            // invalid/required는 focus 중에도 danger 테두리 유지(검증 단서 소실 방지, Codex P2). border-ring는 정상 분기에만.
-            invalid || required ? 'border-danger' : 'border-border-strong focus-visible:border-ring',
+            // invalid/미입력 필수는 focus 중에도 danger 테두리 유지(검증 단서 소실 방지, Codex P2). border-ring는 정상 분기에만.
+            // ⚠ 테두리는 **상태**(아직 비었다)를 따른다 — 날짜를 고르면 즉시 풀린다. '필수'라는 속성은 aria-required 가 계속 알린다.
+            invalid || (required && !value) ? 'border-danger' : 'border-border-strong focus-visible:border-ring',
           )}
         >
           <span className={cn('tabular-nums', !selected && 'text-muted-foreground')}>

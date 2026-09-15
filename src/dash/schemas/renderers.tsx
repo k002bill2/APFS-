@@ -79,8 +79,12 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
   const fill = fillProp || !!field.long;
   // fill=true: 컨테이너(테이블 셀 등)를 꽉 채운다(width:100%). 기본은 fit-content(RowFormModal 그리드 규격 유지).
   //   인라인 width는 CSS 클래스로 못 덮으므로 여기서 prop으로 스왑한다(select/date 래퍼까지 함께).
-  // 필수 필드는 채움 여부와 무관하게 빨간 테두리로 상시 표식(라벨 '*'와 병행). readonly는 입력 대상이 아니라 제외.
+  // 필수 표식은 두 갈래다 — 섞지 말 것(2026-09-15 사용자 지적: "값을 넣었는데 왜 아직 빨간 테두리냐").
+  //   · requiredMark = **속성**(이 필드는 필수다). 라벨 '*'·aria-required 가 담당하며 값과 무관하게 유지된다.
+  //   · requiredEmpty = **상태**(필수인데 아직 비었다). 빨간 테두리·danger 글로우는 이쪽만 따른다 → 채우면 즉시 풀린다.
+  // readonly 는 입력 대상이 아니라 둘 다 제외.
   const requiredMark = !!field.required && field.control !== 'readonly';
+  const requiredEmpty = requiredMark && !String(value ?? '').trim();
   const minW = controlMinWidth(field.control);
   // focus: 별도 링을 덧그리지 않고 기존 인라인 border 색만 --ring로 바꾸고 은은한 box-shadow 글로우(2026-09-10 사용자 요청).
   //   인라인 border는 CSS :focus-visible로 못 덮으므로(명시도) 여기서 상태로 스왑한다. 전역 규칙과 톤 일치.
@@ -97,15 +101,15 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
     //    textarea는 아래에서 100%로 되돌린다(긴 입력 항목).
     // fill=true면 셀(컬럼)이 폭을 지배 → minWidth 하한(text 240 등)을 풀어(0) 고정폭 컬럼을 넘쳐 겹치지 않게 한다(Codex P2).
     width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%', boxSizing: 'border-box', padding: '7px 11px', fontSize: 13.5, lineHeight: '20px', height: 34, minHeight: 34, fontFamily: 'inherit',
-    border: `1px solid ${invalid || requiredMark ? 'var(--danger)' : 'var(--border-strong)'}`,
+    border: `1px solid ${invalid || requiredEmpty ? 'var(--danger)' : 'var(--border-strong)'}`,
     borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
     transition: 'border-color .12s, box-shadow .12s',
   };
   // ...base 뒤에 병합 — borderColor longhand가 base의 border shorthand 색을 이긴다(삽입 순서).
-  // ⚠ invalid/required는 focus 중에도 danger 테두리를 유지한다(검증 단서 소실 방지, Codex P2). 그땐 테두리를 --ring로 스왑하지 않고
-  //   글로우만 danger 색으로 맞춘다(정상 필드는 --ring 테두리+글로우).
+  // ⚠ invalid/미입력 필수는 focus 중에도 danger 테두리를 유지한다(검증 단서 소실 방지, Codex P2). 그땐 테두리를 --ring로 스왑하지 않고
+  //   글로우만 danger 색으로 맞춘다(정상 필드·이미 채운 필수는 --ring 테두리+글로우).
   const fs: React.CSSProperties = !focused ? {}
-    : (invalid || requiredMark)
+    : (invalid || requiredEmpty)
       ? { boxShadow: '0 0 0 3px color-mix(in srgb,var(--danger) 22%,transparent)' }
       : { borderColor: 'var(--ring)', boxShadow: '0 0 0 3px color-mix(in srgb,var(--ring) 22%,transparent)' };
   switch (field.control) {

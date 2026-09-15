@@ -1522,7 +1522,7 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
   );
 }
 
-// required: 필수 필드 상시 표식 — 컨테이너 테두리만 danger(is-required). aria-required로 접근성 표기.
+// required: 필수 필드. 컨테이너 danger 테두리(is-required)는 **빈 문서일 때만** 붙고 내용을 넣으면 풀린다. aria-required 는 값과 무관하게 유지.
 // A4 210mm = 793.7px (CSS mm=96/25.4px 고정)
 const A4_WIDTH = '210mm';
 
@@ -1584,7 +1584,8 @@ export function RichTextField({ value, onChange, label, required, pageWidth }: {
     // 전체화면 중에만 포털 컨테이너를 루트로 지정 → body 포털 오버레이(드롭다운·다이얼로그·컨텍스트 메뉴)가
     // top layer(=전체화면 서브트리) 안에서 보이게 한다. 비전체화면이면 null → Radix 기본(body).
     <PortalContainerContext.Provider value={isFs ? rootRef.current : null}>
-      <div ref={rootRef} className={'apfs-richtext apfs-richtext__root' + (required ? ' is-required' : '')}>
+      {/* is-required(danger 테두리)는 **빈 문서일 때만** — 내용을 넣으면 풀린다. 값 계약상 진짜 빈 문서는 ''로 방출된다. */}
+      <div ref={rootRef} className={'apfs-richtext apfs-richtext__root' + (required && !String(value ?? '').trim() ? ' is-required' : '')}>
         <Plate editor={editor} onChange={handleChange} readOnly={mode === 'viewing'}>
           <Toolbar
             pMode={pMode} setPMode={setPMode} pUrl={pUrl} setPUrl={setPUrl} rootRef={rootRef} savedSel={savedSel}

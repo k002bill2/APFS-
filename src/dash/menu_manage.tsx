@@ -381,7 +381,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* 전체 펼치기/접기 — 평면(검색) 모드에서는 의미가 없어 비활성 */}
-        <Button variant="ghost" size="sm" leadingIcon={allExpanded ? 'collapse-h' : 'expand-h'} disabled={searching} onClick={toggleAll}>{allExpanded ? '전체 접기' : '전체 펼치기'}</Button>
+        <Button variant="ghost" size="sm" leadingIcon={allExpanded ? 'collapse-v' : 'expand-v'} disabled={searching} onClick={toggleAll}>{allExpanded ? '전체 접기' : '전체 펼치기'}</Button>
         <span ref={topMoreRef} className="inline-flex">
           <RegisterCombo label="메뉴 등록" onRegister={() => setModal({ kind: 'create' })} onExport={exportExcel} />
         </span>
