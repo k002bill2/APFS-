@@ -346,22 +346,25 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
   const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
 
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
+     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+  const selActions = selected ? (
+    /* 선택 행 컨텍스트 액션(목업 gate: 수정·복사·삭제). 대상명 캡션은 두지 않는다(선택 행에서 이미 보임) */
+    <>
+      <UTypeBadge value={selected.utype} />
+      <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: selected.id })}>수정</Button>
+      <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'form', mode: 'copy', id: selected.id })}>복사</Button>
+      <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => requestDelete(selected)}>삭제</Button>
+      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+    </>
+  ) : null;
   return (
     <GridFrame
       crumbs={['홈', '관리자', '사용자·권한 관리', '권한관리']}
       title="권한관리"
       favRoute="user-permission-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? (
-        /* 선택 행 컨텍스트 액션(목업 gate: 수정·복사·삭제). 대상명 캡션은 두지 않는다(선택 행에서 이미 보임) */
-        <>
-          <UTypeBadge value={selected.utype} />
-          <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: selected.id })}>수정</Button>
-          <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'form', mode: 'copy', id: selected.id })}>복사</Button>
-          <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => requestDelete(selected)}>삭제</Button>
-          <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
-        </>
-      ) : (
+      toolbarLeft={selected ? null : (
         <>
           <Icon name="shield-check" size={16} className="text-caption" />
           <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>권한 {mn(String(visible.length))}건 · 행을 선택하면 수정·복사·삭제</span>
@@ -375,6 +378,7 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
           ))}
         </>
       )}
+      contextActions={selActions}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* 등록이 있는 리스트라 combo(split) — 좌: 권한 등록 · 우: ⌄ 내보내기·인쇄. topMoreRef 는 combo 래퍼가 든다 */}

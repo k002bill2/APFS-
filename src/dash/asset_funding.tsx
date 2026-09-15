@@ -247,6 +247,20 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
   const totalForCount = page.rowCount;
 
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
+     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+  /* ⚠️ 이 묶음은 **현재 도달 불가**다(2026-09-15 실측). 아래 그리드가
+     `rowSelection={{mode:'multiRow', checkboxes:false}}` 인데 `enableClickSelection`(AG Grid 기본 false)이
+     빠져 있어 체크박스도 행 클릭도 선택을 만들지 못한다 → `selCount` 는 항상 0.
+     그 줄 주석의 "행 클릭으로 선택 유지"가 구현되지 않은 선행 버그이며, 플로팅 바 배선과는 무관하다.
+     살리려면 `enableClickSelection: true` 를 켜는 결정이 필요하다(집계 현황표에 선택삭제를 되살리는 일). */
+  const selActions = selCount > 0 ? (
+    <>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={deleteSelected}>선택 삭제</Button>
+      <Button variant="ghost" size="sm" onClick={clearSel}>선택 해제</Button>
+    </>
+  ) : null;
   return (
     <GridFrame
       crumbs={['홈', '투자자산관리', '모태펀드관리', '모태펀드 조성 및 출자현황']}
@@ -259,13 +273,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
         <KpiBadge icon="wallet" color="var(--accent)" label="누적 출자금액" value={mn(fmt(toUnit(TOTAL_ROW.u1, unit))) + ' ' + unit} valueSize={14} />
         <KpiBadge icon="layers" color="var(--chart-1)" label="누적 조합수" value={mn(fmt(TOTAL_ROW.u0)) + ' 개'} valueSize={14} />
       </>}
-      toolbarLeft={selCount > 0 ? (
-        <>
-          <span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
-          <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={deleteSelected}>선택 삭제</Button>
-          <Button variant="ghost" size="sm" onClick={clearSel}>선택 해제</Button>
-        </>
-      ) : (
+      toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {filterActive ? (
@@ -290,6 +298,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
           )}
         </>
       )}
+      contextActions={selActions}
       toolbarRight={<>
         {/* 금액 단위 전환 — 캡션 + 세그먼트(원/백만원/억원). 조합수는 항상 개(변환 제외)라 캡션에 명시. */}
         <span className="text-caption" style={{ fontSize: 12.5 }}>{'단위: ' + unit + ' · 조합수(개)'}</span>

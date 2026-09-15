@@ -243,22 +243,25 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
     ['검색어', fText.trim(), () => setFText('')],
   ];
 
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
+     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+  const selActions = selected ? (
+    <>
+      <StatusBadge tone={INVITE_TONE[selected.state]} label={selected.state} size="lg" dot={false} />
+      {gate.send && <Button variant="primary" size="sm" leadingIcon="bell" onClick={() => askSend(selected, false)}>초대 발송</Button>}
+      {gate.resend && <Button variant="primary" size="sm" leadingIcon="refresh" onClick={() => askSend(selected, true)}>재발송</Button>}
+      <Button variant="outline" size="sm" leadingIcon="eye" onClick={() => openPreview(selected.id)}>메일 미리보기</Button>
+      {gate.cancel && <Button variant="outline" size="sm" leadingIcon="x" style={{ color: 'var(--danger)' }} onClick={() => askCancel(selected)}>초대 취소</Button>}
+      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+    </>
+  ) : null;
   return (
     <GridFrame
       crumbs={['홈', '관리자', '사용자·권한 관리', '사용자 초대(운용사)']}
       title="사용자 초대(운용사)"
       favRoute="user-invite-gp"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? (
-        <>
-          <StatusBadge tone={INVITE_TONE[selected.state]} label={selected.state} size="lg" dot={false} />
-          {gate.send && <Button variant="primary" size="sm" leadingIcon="bell" onClick={() => askSend(selected, false)}>초대 발송</Button>}
-          {gate.resend && <Button variant="primary" size="sm" leadingIcon="refresh" onClick={() => askSend(selected, true)}>재발송</Button>}
-          <Button variant="outline" size="sm" leadingIcon="eye" onClick={() => openPreview(selected.id)}>메일 미리보기</Button>
-          {gate.cancel && <Button variant="outline" size="sm" leadingIcon="x" style={{ color: 'var(--danger)' }} onClick={() => askCancel(selected)}>초대 취소</Button>}
-          <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
-        </>
-      ) : (
+      toolbarLeft={selected ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {STATE_CHIPS.map((s) => <FilterChip key={s || 'all'} active={fState === s} onClick={() => setFState(s)}>{s || '전체'}</FilterChip>)}
@@ -272,6 +275,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
           ))}
         </>
       )}
+      contextActions={selActions}
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>초대 소스 = 운용사 전자보고 운용인력 명단 · 초대 = 사전 승인</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>

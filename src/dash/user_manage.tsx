@@ -320,25 +320,28 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
     ['검색어', fText.trim(), () => setFText('')],
   ];
 
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
+     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+  const selActions = selected ? (
+    /* 선택 행 컨텍스트 액션 — 게이트가 연 것만(목업 gate). 대상명 캡션은 두지 않는다 */
+    <>
+      <StatusBadge tone={STATUS_TONE[selected.status]} label={selected.status} size="lg" dot={false} />
+      <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: selected.id })}>수정</Button>
+      {gate.mail && <Button variant="outline" size="sm" leadingIcon="bell" onClick={() => openMail(`온보딩 안내 메일 미리보기 — ${selected.name}`, onboardMail(selected))}>온보딩 메일</Button>}
+      {gate.replace && <Button variant="outline" size="sm" leadingIcon="users" onClick={() => askReplace(selected)}>담당자 교체</Button>}
+      {gate.unlock && <Button variant="outline" size="sm" leadingIcon="check-circle" onClick={() => askUnlock(selected)}>잠금 해제</Button>}
+      {gate.expire && <Button variant="outline" size="sm" leadingIcon="clock" onClick={() => askExpire(selected)}>비밀번호 만료 처리</Button>}
+      {gate.otp && <Button variant="outline" size="sm" leadingIcon="refresh" onClick={() => askOtp(selected)}>OTP 재발급</Button>}
+      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+    </>
+  ) : null;
   return (
     <GridFrame
       crumbs={['홈', '관리자', '사용자·권한 관리', '사용자관리']}
       title="사용자관리"
       favRoute="user-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? (
-        /* 선택 행 컨텍스트 액션 — 게이트가 연 것만(목업 gate). 대상명 캡션은 두지 않는다 */
-        <>
-          <StatusBadge tone={STATUS_TONE[selected.status]} label={selected.status} size="lg" dot={false} />
-          <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: selected.id })}>수정</Button>
-          {gate.mail && <Button variant="outline" size="sm" leadingIcon="bell" onClick={() => openMail(`온보딩 안내 메일 미리보기 — ${selected.name}`, onboardMail(selected))}>온보딩 메일</Button>}
-          {gate.replace && <Button variant="outline" size="sm" leadingIcon="users" onClick={() => askReplace(selected)}>담당자 교체</Button>}
-          {gate.unlock && <Button variant="outline" size="sm" leadingIcon="check-circle" onClick={() => askUnlock(selected)}>잠금 해제</Button>}
-          {gate.expire && <Button variant="outline" size="sm" leadingIcon="clock" onClick={() => askExpire(selected)}>비밀번호 만료 처리</Button>}
-          {gate.otp && <Button variant="outline" size="sm" leadingIcon="refresh" onClick={() => askOtp(selected)}>OTP 재발급</Button>}
-          <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
-        </>
-      ) : (
+      toolbarLeft={selected ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {STATUS_CHIPS.map((s) => <FilterChip key={s || 'all'} active={fStatus === s} onClick={() => setFStatus(s)}>{s || '전체'}</FilterChip>)}
@@ -352,6 +355,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
           ))}
         </>
       )}
+      contextActions={selActions}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <span ref={topMoreRef} className="inline-flex">

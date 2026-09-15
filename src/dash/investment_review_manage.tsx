@@ -383,6 +383,33 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
   const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
 
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
+     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+  const selActions = selected ? (
+    <>
+      {/* 확정여부 배지 + (확정 시)결과 배지 — 상태 표시. 전이는 아래 액션 버튼 */}
+      <StatusBadge tone={CONFIRM_TONE[selected.confirm]} label={selected.confirm} size="lg" dot={false} />
+      {selected.confirm === '확정' && <StatusBadge tone={RES_TONE[selected.res || '미결'] ?? 'info'} label={selected.res || '미결'} size="lg" dot={false} />}
+      {/* 파생 단계별 전이 액션 */}
+      {stage === 'pending' && <>
+        <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'confirmSchedule' })}>투심일정 확정</Button>
+        <Button variant="outline" size="sm" onClick={cancelReview}>투심위 취소</Button>
+      </>}
+      {stage === 'confirmed' && <>
+        <ResultMenu options={['가결', '부결', '조건부', '보류']} onPick={setResult} />
+        <Button variant="outline" size="sm" onClick={unconfirm}>확정 해제</Button>
+      </>}
+      {stage === 'held' && <ResultMenu options={['가결', '부결', '조건부']} onPick={setResult} />}
+      {stage === 'approved' && <Button variant="outline" size="sm" onClick={revokeApproval}>승인 취소</Button>}
+      {/* 투자준법감시내역 CRUD — 별개 엔티티. 상태별 1버튼 + 삭제(있을 때만) */}
+      <Button variant="outline" size="sm" leadingIcon={selected.compliance ? 'shield' : 'plus'}
+        onClick={() => setModal({ kind: selected.compliance ? 'complianceEdit' : 'complianceReg' })}>
+        {selected.compliance ? '준법감시 수정' : '준법감시 등록'}
+      </Button>
+      {selected.compliance && <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => setModal({ kind: 'complianceDelete' })}>준법감시 삭제</Button>}
+      <Button variant="ghost" size="sm" onClick={clearSelection}>선택 해제</Button>
+    </>
+  ) : null;
   return (
     <GridFrame
       crumbs={['홈', '투자자산관리', '사후보고관리', '투심보고 확정 및 승인']}
@@ -390,31 +417,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       cardTitle="투심보고 확정 및 승인"
       favRoute="investment-review"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? (
-        <>
-          {/* 확정여부 배지 + (확정 시)결과 배지 — 상태 표시. 전이는 아래 액션 버튼 */}
-          <StatusBadge tone={CONFIRM_TONE[selected.confirm]} label={selected.confirm} size="lg" dot={false} />
-          {selected.confirm === '확정' && <StatusBadge tone={RES_TONE[selected.res || '미결'] ?? 'info'} label={selected.res || '미결'} size="lg" dot={false} />}
-          {/* 파생 단계별 전이 액션 */}
-          {stage === 'pending' && <>
-            <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'confirmSchedule' })}>투심일정 확정</Button>
-            <Button variant="outline" size="sm" onClick={cancelReview}>투심위 취소</Button>
-          </>}
-          {stage === 'confirmed' && <>
-            <ResultMenu options={['가결', '부결', '조건부', '보류']} onPick={setResult} />
-            <Button variant="outline" size="sm" onClick={unconfirm}>확정 해제</Button>
-          </>}
-          {stage === 'held' && <ResultMenu options={['가결', '부결', '조건부']} onPick={setResult} />}
-          {stage === 'approved' && <Button variant="outline" size="sm" onClick={revokeApproval}>승인 취소</Button>}
-          {/* 투자준법감시내역 CRUD — 별개 엔티티. 상태별 1버튼 + 삭제(있을 때만) */}
-          <Button variant="outline" size="sm" leadingIcon={selected.compliance ? 'shield' : 'plus'}
-            onClick={() => setModal({ kind: selected.compliance ? 'complianceEdit' : 'complianceReg' })}>
-            {selected.compliance ? '준법감시 수정' : '준법감시 등록'}
-          </Button>
-          {selected.compliance && <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => setModal({ kind: 'complianceDelete' })}>준법감시 삭제</Button>}
-          <Button variant="ghost" size="sm" onClick={clearSelection}>선택 해제</Button>
-        </>
-      ) : (
+      toolbarLeft={selected ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['' as const, '일정' as const, '결과' as const]).map((s) => (
@@ -435,6 +438,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
           ))}
         </>
       )}
+      contextActions={selActions}
       toolbarRight={<>
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>

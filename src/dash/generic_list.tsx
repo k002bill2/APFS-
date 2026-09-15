@@ -672,6 +672,15 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const shown = view === "list" ? Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize)) : filtered.length;
   const totalForCount = view === "list" ? page.rowCount : filtered.length;
 
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
+     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+  const selActions = selCount > 0 ? (
+    <>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger)" }} onClick={bulkDelete}>선택 삭제</Button>
+      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+    </>
+  ) : null;
   return (
     <GridFrame
       crumbs={crumbs}
@@ -685,19 +694,14 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         <KpiBadge icon="wallet" color="var(--accent)" label="합계 금액"
           value={"₩" + mn(Math.round(sumAmount / 100).toLocaleString()) + "억"} />
       </>)}
-      toolbarLeft={selCount > 0 ? (
-        <>
-          <span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
-          <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger)" }} onClick={bulkDelete}>선택 삭제</Button>
-          <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
-        </>
-      ) : (
+      toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {chipItems.map((c) => <FilterPill key={c.label} label={c.label} value={c.value} onRemove={() => removeFilter(c.label)} />)}
           {chipItems.length === 0 && <span className="text-caption" style={{ fontSize: 12.5 }}>필터 없음</span>}
         </>
       )}
+      contextActions={selActions}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* 등록이 있으면 combo(split) 버튼 — 좌: 1차 액션(등록) · 우: ⌄ 보조 액션(내보내기·인쇄).
