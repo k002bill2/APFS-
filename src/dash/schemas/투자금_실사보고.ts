@@ -22,7 +22,7 @@ export const schema: PageSchema = {
     { key: 'note',            label: '비고',        type: 'text',   align: 'left' },
   ],
   fields: [
-    { key: 'investee',     label: '투자기업',  control: 'text', required: true },
+    { key: 'investee',     label: '투자기업',  control: 'text', long: true, required: true },
     { key: 'investType',   label: '투자유형',  control: 'select', options: ['주식', '전환사채', 'BW', '기타'] },
     { key: 'dueDiligDate', label: '실사일자',  control: 'date', required: true },
     { key: 'reportDate',   label: '보고일자',  control: 'date', required: true },

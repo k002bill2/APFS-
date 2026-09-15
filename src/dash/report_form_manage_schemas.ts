@@ -23,8 +23,8 @@ export const FORM_SCHEMA: PageSchema = parsePageSchema({
   route: '보고양식관리/양식', title: '양식 등록', kind: 'form', entity: '보고양식',
   columns: REP_COLUMNS,
   fields: [
-    { key: 'title', label: '제목', control: 'text', required: true },
-    { key: 'desc', label: '설명', control: 'text' },
+    { key: 'title', label: '제목', control: 'text', long: true, required: true },
+    { key: 'desc', label: '설명', control: 'text', long: true },
     { key: 'file', label: '첨부파일', control: 'filepond' },
   ],
   provenance: PROVENANCE,

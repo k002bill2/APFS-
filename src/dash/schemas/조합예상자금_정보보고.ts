@@ -22,8 +22,8 @@ export const schema: PageSchema = {
     { key: 'updatedAt',      label: '수정일시',        type: 'date',   align: 'center' },
   ],
   fields: [
-    { key: 'gp',           label: '운용사',          control: 'text' },
-    { key: 'subFund',      label: '자펀드',          control: 'text' },
+    { key: 'gp',           label: '운용사',          control: 'text', long: true },
+    { key: 'subFund',      label: '자펀드',          control: 'text', long: true },
     { key: 'accountType',  label: '계정구분',        control: 'select', options: ['농식품', '수산', '산림', '농어촌'] },
     { key: 'nextMonthReq', label: '다음월 자금요청 예상금액',   control: 'number' },
     { key: 'afterNextReq', label: '다다음월 자금요청 예상금액', control: 'number' },

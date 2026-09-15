@@ -50,7 +50,7 @@ export const CREATE_SCHEMA: PageSchema = parsePageSchema({
     { key: 'mtype', label: '조합원유형', control: 'select', options: [...TYPE_OPTS], required: true },
     { key: 'cls', label: '조합원구분', control: 'select', options: [...CLS_OPTS], required: true },
     { key: 'c1', label: AMOUNT_LABEL, control: 'number', required: true },
-    { key: 'memo', label: '비고', control: 'text' },
+    { key: 'memo', label: '비고', control: 'text', long: true },
   ],
   provenance: PROVENANCE,
 });
@@ -65,7 +65,7 @@ export const EDIT_SCHEMA: PageSchema = parsePageSchema({
     { key: 'mtype', label: '조합원유형', control: 'select', options: [...TYPE_OPTS], required: true },
     { key: 'cls', label: '조합원구분', control: 'select', options: [...CLS_OPTS], required: true },
     { key: 'c1', label: AMOUNT_LABEL, control: 'number', required: true },
-    { key: 'memo', label: '비고', control: 'text' },
+    { key: 'memo', label: '비고', control: 'text', long: true },
   ],
   provenance: PROVENANCE,
 });

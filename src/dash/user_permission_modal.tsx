@@ -44,8 +44,8 @@ export type PermMode = 'create' | 'edit' | 'copy';
 const F: Record<string, FieldSpec> = {
   name: { key: 'name', label: '명칭', control: 'text', required: true },
   utype: { key: 'utype', label: '사용자 구분', control: 'select', options: [...UTYPES], required: true },
-  desc: { key: 'desc', label: '설명', control: 'text', required: true },
-  use: { key: 'use', label: '사용여부', control: 'radio', options: ['여', '부'] },
+  desc: { key: 'desc', label: '설명', control: 'text', long: true, required: true },
+  use: { key: 'use', label: '사용여부', control: 'switch', options: ['여', '부'] },
 };
 
 /* RowFormModal `Field` 규격 로컬 복제(공유 export 아님). radio 는 plain div(암묵 연결이 첫 라디오만 가리킴). */

@@ -18,8 +18,8 @@ export const schema: PageSchema = {
     { key: 'fundStatus', label: '조합상태', type: 'status', align: 'center' },
   ],
   fields: [
-    { key: 'gp',         label: '운용사',   control: 'text' },
-    { key: 'subFund',    label: '자펀드',   control: 'text' },
+    { key: 'gp',         label: '운용사',   control: 'text', long: true },
+    { key: 'subFund',    label: '자펀드',   control: 'text', long: true },
     { key: 'reportYm',   label: '보고년월', control: 'text', required: true },
     { key: 'reportType', label: '보고구분', control: 'select', required: true, options: ['월간보고', '반기보고', '연간보고'] },
     { key: 'reportFile', label: '보고서',   control: 'file' },

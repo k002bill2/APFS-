@@ -59,7 +59,7 @@ const F: Record<string, FieldSpec> = {
   name: { key: 'name', label: '조합원명', control: 'text', required: true },
   ptype: { key: 'ptype', label: '개인/법인', control: 'radio', options: ['개인', '법인'] },
   region: { key: 'region', label: '국내/해외', control: 'radio', options: ['국내', '해외'] },
-  addr: { key: 'addr', label: '주소', control: 'text' },
+  addr: { key: 'addr', label: '주소', control: 'text', long: true },
   tel: { key: 'tel', label: '전화번호', control: 'text' },
   memo: { key: 'memo', label: '비고', control: 'textarea' },
 };

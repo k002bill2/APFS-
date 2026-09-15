@@ -81,7 +81,15 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
 }) {
   const [vals, setVals] = useState<Record<string, string>>(() => {
     const seed: Record<string, string> = {};
-    for (const f of schema.fields) seed[f.key] = initial ? String((initial as any)[f.key] ?? '') : ((f.control === 'select' || f.control === 'radio') ? (f.options?.[0] ?? '') : '');
+    // 옵션형 컨트롤(select·radio·switch)은 첫 옵션을 기본값으로 시드한다.
+    // ⚠️ 등록 모드에 `initial`(선택 행에서 온 부분 프리필)이 오는 화면이 있어 — 그 키가 없으면 값이 ''가 되는데,
+    //    switch 는 off/on 둘 중 하나로만 그려져 **빈 값이 '아니오'로 위장**된다(라디오는 미선택이 보였다).
+    //    그래서 create 모드에서 값이 비면 옵션형은 첫 옵션으로 되메운다. edit 모드는 저장된 ''를 보존한다(무단 변경 금지).
+    const optionish = (f: any) => f.control === 'select' || f.control === 'radio' || f.control === 'switch';
+    for (const f of schema.fields) {
+      const seeded = initial ? String((initial as any)[f.key] ?? '') : '';
+      seed[f.key] = (!seeded && optionish(f) && (!initial || mode === 'create')) ? (f.options?.[0] ?? '') : seeded;
+    }
     return seed;
   });
   // 항목 수가 많으면(>6) 2단 wide 레이아웃으로 자동 적응. 적으면 기존 1단(좁은) 모달.
@@ -122,19 +130,20 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
           </DialogDescription>
         </DialogHeader>
 
-        {/* 폼 — wide(항목 多)면 2단 그리드(좁은 화면은 1단으로 적층), textarea/file은 전체 폭 차지 */}
+        {/* 폼 — wide(항목 多)면 2단 그리드(좁은 화면은 1단으로 적층), textarea/file/long 은 전체 폭 차지 */}
         <div className="overflow-y-auto p-[46px]">
           <div className={wide ? "grid grid-cols-1 sm:grid-cols-2 gap-x-5" : ""}>
             {schema.fields.map((f) => {
               // richtext/filepond/tags = 내부에 자체 버튼/combobox를 품은 복합 컨트롤 → <label> 래핑 금지(Field plain).
               const complex = f.control === "richtext" || f.control === "filepond" || f.control === "file" || f.control === "tags";
-              const span2 = wide && (f.control === "textarea" || f.control === "file" || complex);
+              // long(설명·비고·운용사명·펀드명 등 긴 텍스트)도 전체 폭 — SchemaField 가 폭 100% 를 함께 켠다(field.long).
+              const span2 = wide && (f.control === "textarea" || f.control === "file" || complex || !!f.long);
               return (
                 <Field
                   key={f.key}
                   label={f.label + (f.required ? ' *' : '')}
                   className={span2 ? "sm:col-span-2" : undefined}
-                  plain={complex || f.control === "radio"}
+                  plain={complex || f.control === "radio" || f.control === "switch"}
                   note={f.note}
                   errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
                   <SchemaField

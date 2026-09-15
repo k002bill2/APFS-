@@ -40,7 +40,9 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-modal flex w-full max-w-lg [translate:-50%_-50%] flex-col overflow-hidden rounded-card-lg border border-border bg-card shadow-lg focus:outline-none data-[state=open]:animate-dialog-in data-[state=closed]:animate-dialog-out',
+        // text-[13.5px]: 모달 본문 기본 폰트 규격(2026-09-15 사용자 결정) — 앱 기본 14px 보다 한 단계 작다.
+        // 상속값이라 자체 fontSize 를 가진 자식(제목 text-xl·라벨 12px·SchemaField 13.5)은 그대로 이긴다.
+        'fixed left-1/2 top-1/2 z-modal flex w-full max-w-lg [translate:-50%_-50%] flex-col overflow-hidden rounded-card-lg border border-border bg-card text-[13.5px] shadow-lg focus:outline-none data-[state=open]:animate-dialog-in data-[state=closed]:animate-dialog-out',
         className,
       )}
       {...props}
