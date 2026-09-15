@@ -1,6 +1,10 @@
-/* 전체 보고현황 — 모니터링 > 전체 보고현황.
-   S1_44 참조. 투심현황/수시보고/정기보고 3개 섹션으로 구성된 복합 화면.
-   스키마 트랙에서는 투심현황(주요 섹션)을 기본 리스트로 표현. */
+/* 전체 보고현황 — 투자자산관리 > 운용사 모니터링 > 자펀드 전체 보고현황.
+   S1_44 참조. 원문은 한 화면에 투자심의/수시보고/조합원총회 3개 표를 쌓는 복합 화면이다.
+
+   ⚠ 이 스키마는 더 이상 화면을 그리지 않는다(2026-09-15) — `columns`가 한 벌뿐이라 3표를 담지 못해
+   전용 페이지 `all_report_status.tsx`가 SegTabs로 전환하며 렌더한다(app.tsx가 GenericListPage 앞에서 분기).
+   그래도 이 파일은 **삭제하지 않는다**: 라우트 레지스트리(resolveSchema)·출처(provenance) 기록의 정본이고,
+   아래 컬럼 13개는 `all_report_status_model.ts`가 투자심의 탭의 컬럼으로 그대로 가져다 쓴다(복사본 금지). */
 import type { PageSchema } from './types';
 
 export const schema: PageSchema = {

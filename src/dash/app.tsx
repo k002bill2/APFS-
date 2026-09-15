@@ -39,6 +39,9 @@ import { UserInviteManage } from './user_invite_manage';                     // 
 import { PermissionHistory } from './permission_history';                    // 권한 변경이력(S0_107)
 import { AuditLog } from './audit_log';                                      // 감사로그(S0_104)
 import { LoginDemo } from './login_demo';                                    // 로그인(S0_001, Shell 없는 UI 데모)
+// 자펀드 전체 보고현황(S1_44) — 한 화면에 3개 표(투자심의·수시보고·조합원총회)라 PageSchema(columns 1벌)로 담기지 않는
+// 유일한 리프. 같은 대분류의 나머지 12개는 페이지 코드 0줄(스키마 주도 GenericListPage)로 남는다.
+import { AllReportStatus } from './all_report_status';
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -213,6 +216,7 @@ function App() {
   else if (route === "audit-log") page = <AuditLog onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "editor") page = <EditorPage onNav={onNav} />;
+  else if (route === "전체 보고현황") page = <AllReportStatus onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;
