@@ -86,7 +86,14 @@ const ROUTE_ALIAS: Record<string, string> = {
 const aliasRoute = (r: string) => ROUTE_ALIAS[r] || r;
 // 메뉴 항목은 해시 URL로도 직접 열 수 있다. 기존 localStorage 복원은 해시가 없을 때만 보조한다.
 const hashRoute = () => {
-  try { return window.location.hash.replace(/^#\/?/, ''); } catch (e) { return ''; }
+  try {
+    const raw = window.location.hash.replace(/^#\/?/, '');
+    // 브라우저는 한글 해시를 퍼센트 인코딩해 노출한다(`#/권한관리` → `#/%EA%B6%8C...`).
+    // 디코드하지 않으면 ROUTE_ALIAS·MENU 어느 것과도 매칭되지 않아 화면이 폴백으로 떨어지고,
+    // 그 인코딩 문자열이 localStorage(apfs.route)에 저장돼 해시 없는 다음 방문까지 오염된다.
+    // NFC 정규화는 외부에서 복사된 NFD 한글 URL 방어(메뉴 label 은 NFC).
+    try { return decodeURIComponent(raw).normalize('NFC'); } catch (e) { return raw; }   // 잘못된 % 시퀀스는 원문 유지
+  } catch (e) { return ''; }
 };
 
 // MENU 트리에 없는 앱 전용 라우트(대시보드·데모·에디터·일정)의 한글 제목 — aria-live 통지용.
