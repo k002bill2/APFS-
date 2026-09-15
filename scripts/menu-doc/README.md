@@ -11,12 +11,13 @@ python3 scripts/menu-doc/gen_diff.py docs/메뉴대조표_xlsx_vs_APFS_DATA.md
 ```
 
 생성 후 `git diff` 가 비어 있으면 입력이 안 바뀐 것이다(재현 가능함을 이 방식으로 확인한다).
+입력이 모두 저장소 안에 있으므로 클론 직후 바로 재생성할 수 있다 — 외부 파일에 의존하지 않는다.
 
 ## 입력
 
 | 입력 | 위치 | 비고 |
 |---|---|---|
-| 메뉴구성도 원본 | `~/Downloads/APFS-2026-120-PP01_프로젝트일정계획표_메뉴매칭_v0.2.xlsx` | **저장소에 없음**(사외 산출물). `APFS_MENU_XLSX` 로 경로 지정 가능 |
+| 메뉴구성도 원본 | `docs/source/APFS-2026-120-PP01_프로젝트일정계획표_메뉴매칭_v0.2.xlsx` | 저장소 보관. 새 버전 시험 시 `APFS_MENU_XLSX` 로 덮어쓴다 |
 | 목업 HTML | `docs/mockups/` | 저장소 추적 대상. 링크 대상이자 해석 인덱스 |
 | 앱 메뉴 | `src/dash/data.ts` 의 `MENU` | `extract_app_menu.mjs` 가 리터럴만 잘라 평가 |
 | 화면 구조도 | `docs/mockups/통합_화면_구조도_v1.5.xlsx` | 별칭(`ALIAS`) 판단의 근거 |

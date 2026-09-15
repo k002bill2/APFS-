@@ -4,13 +4,15 @@ import os
 import sys
 import unicodedata as U
 from xlsx import load
-from resolver import (ASIS_SYS, DOC_DIR, ROOT, SRC_ROOT, SYS_DIR, build_index,
-                      build_tobe_index, resolve, split_matches)
+from resolver import (ASIS_SYS, DOC_DIR, REPO, ROOT, SRC_ROOT, SYS_DIR,
+                      build_index, build_tobe_index, resolve, split_matches)
 
-# 원본 xlsx 는 저장소에 없다(사외 산출물). 경로는 환경변수로 덮어쓸 수 있다.
+# 원본 xlsx 는 저장소가 함께 보관한다(외부 파일에 의존하지 않고 재생성 가능).
+# 새 버전을 시험할 때만 환경변수로 덮어쓴다.
 XLSX = os.environ.get(
     'APFS_MENU_XLSX',
-    os.path.expanduser('~/Downloads/APFS-2026-120-PP01_프로젝트일정계획표_메뉴매칭_v0.2.xlsx'))
+    os.path.join(REPO, 'docs/source',
+                 'APFS-2026-120-PP01_프로젝트일정계획표_메뉴매칭_v0.2.xlsx'))
 SHEET = 'xl/worksheets/sheet6.xml'
 TAGS = ('기존', '신규')
 codes = {}
