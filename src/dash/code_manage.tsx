@@ -22,7 +22,7 @@ import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame } from './grid_frame';
-import { apfsTheme, FIT_GRID_WIDTH, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
+import { apfsTheme, FIT_GRID_WIDTH, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -67,7 +67,7 @@ const GROUP_COLS: ColDef<GroupView>[] = [
 ];   // minWidth 합 392 ≤ 패널 폭(440-라디오 44) — FIT_GRID_WIDTH 축소가 헤더를 잘라먹지 않는 하한
 /* 우측 코드상세는 9컬럼이라 패널 폭(≈800px)을 넘는다 → 내용 맞춤(AUTO_SIZE_CONTENT) + 그리드 내부 가로 스크롤(apfs-aggrid "넓은 다열 테이블"). 긴 텍스트만 maxWidth 캡 */
 const DETAIL_COLS: ColDef<CodeDetail>[] = [
-  { headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
+  { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'code', headerName: '코드', width: 90, maxWidth: 120, cellStyle: flexMid, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
   { field: 'name', headerName: '코드명', width: 180, minWidth: 130, maxWidth: 320, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'en', headerName: '코드명(영문)', width: 140, maxWidth: 200, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
@@ -473,6 +473,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
               selectionColumnDef={SELECTION_COL}
               preventDefaultOnContextMenu
               onGridReady={onDetailReady}
+              onModelUpdated={refreshNoColumn}
               onRowDataUpdated={onDetailRowDataUpdated}
               onSelectionChanged={onDetailSelection}
               onRowDoubleClicked={onDetailDouble}

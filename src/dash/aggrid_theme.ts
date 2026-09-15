@@ -10,7 +10,7 @@
      이 모듈을 import하는 모든 그리드가 등록을 공유한다.
    - ⚠️ 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지 — Theming API와 충돌. */
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
-import type { ValueFormatterParams, CellStyle, AutoSizeStrategy } from 'ag-grid-community';
+import type { ValueFormatterParams, CellStyle, AutoSizeStrategy, GridApi } from 'ag-grid-community';
 import { mn } from './mask';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -72,3 +72,21 @@ export const numStyle = (strong?: boolean) => (p: { value: unknown; node: { rowP
   fontWeight: strong || p.node.rowPinned ? 700 : 500,
   color: p.value === 0 ? 'var(--muted-foreground)' : 'var(--foreground)',
 });
+
+/* ── 순번(No) 컬럼 — rowIndex 파생 값의 stale 방어 ─────────────────────────
+   No 컬럼은 `valueGetter: (p) => p.node.rowIndex + 1` 로 만드는데, 이 값은 **행 데이터의 일부가 아니다**.
+   이 그리드들은 선택 유지를 위해 `getRowId` 를 주므로, 정렬·필터로 모델이 재정렬돼도 AG Grid 는 같은 행
+   노드를 재사용하고 rowIndex 가 바뀐 것을 모른 채 셀을 다시 계산하지 않는다 → 낡은 번호가 남는다.
+   2026-09-15 Red-Green 실측(프로그램관리, row-index 와 셀 값을 짝지어 측정):
+   - 필터로 20→4건 좁히면 화면에 `1,4,8,13` (좁히기 전 번호가 그대로) ← 가장 눈에 띄는 증상
+   - 정렬하면 재배치된 행 1건이 낡은 번호 유지(`row-index 19` 가 `9`)
+   - 페이지 이동·필터 해제는 정상 — rowIndex 가 모델 전체 기준 절대값이라 2페이지 `21..40` 이 맞다.
+   ⚠ 측정 주의: `querySelectorAll` 의 DOM 순서는 화면 순서가 아니다(AG Grid 는 행을 transform 으로 배치).
+     반드시 `row-index` 속성과 값을 짝지어 비교할 것 — DOM 순서로 읽으면 정상인 상태도 뒤섞여 보인다.
+
+   규약: No 컬럼에 `colId: NO_COL_ID` 를 주고 그리드에 `onModelUpdated={refreshNoColumn}` 을 건다.
+   `refreshCells` 는 모델을 바꾸지 않으므로 onModelUpdated 가 재발화하지 않는다(렌더 루프 없음). */
+export const NO_COL_ID = 'no';
+export const refreshNoColumn = (e: { api: GridApi }): void => {
+  e.api.refreshCells({ columns: [NO_COL_ID], force: true });
+};
