@@ -19,7 +19,7 @@ export const schema: PageSchema = {
     { key: 'netProfit',    label: '당기순이익', type: 'amount', unit: '원', align: 'right' },
   ],
   fields: [
-    { key: 'investee',    label: '투자기업', control: 'text', required: true },
+    { key: 'investee',    label: '투자기업', control: 'text', long: true, required: true },
     { key: 'baseYm',      label: '기준년월', control: 'text', required: true },
     { key: 'totalAssets', label: '자산총계', control: 'number' },
     { key: 'totalLiab',   label: '부채총계', control: 'number' },

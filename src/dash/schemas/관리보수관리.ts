@@ -16,8 +16,8 @@ export const schema: PageSchema = {
     { key: 'isConfirmed', label: '확정여부', type: 'status', align: 'center' },
   ],
   fields: [
-    { key: 'gp',         label: '운용사',   control: 'text' },
-    { key: 'subFund',    label: '자펀드',   control: 'text' },
+    { key: 'gp',         label: '운용사',   control: 'text', long: true },
+    { key: 'subFund',    label: '자펀드',   control: 'text', long: true },
     { key: 'reportType', label: '보고구분', control: 'select', required: true, options: ['월간', '반기', '연간'] },
     { key: 'payDate',    label: '지급일자', control: 'date', required: true },
     { key: 'payType',    label: '지급구분', control: 'select', required: true, options: ['선지급', '후지급', '기타'] },

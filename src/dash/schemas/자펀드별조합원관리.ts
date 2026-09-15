@@ -21,8 +21,8 @@ export const schema: PageSchema = {
     { key: 'hasTx',           label: '출자배분 거래유무', type: 'status', align: 'center' },
   ],
   fields: [
-    { key: 'gp',             label: '운용사',   control: 'text' },
-    { key: 'subFund',        label: '자펀드',   control: 'text' },
+    { key: 'gp',             label: '운용사',   control: 'text', long: true },
+    { key: 'subFund',        label: '자펀드',   control: 'text', long: true },
     { key: 'member',         label: '조합원',   control: 'text', required: true },
     { key: 'memberType',     label: '조합원구분', control: 'select', options: ['일반', '전략적 투자자', '정책금융'] },
     { key: 'memberCategory', label: '조합원유형', control: 'select', options: ['농금원', '농협', '민간LP', '기타'] },

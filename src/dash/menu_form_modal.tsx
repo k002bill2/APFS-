@@ -38,7 +38,7 @@ const F: Record<string, FieldSpec> = {
   shortRo: { key: 'short', label: '단축번호', control: 'readonly' },
   lvl: { key: 'lvl', label: '메뉴 레벨', control: 'select', options: ['1', '2', '3'], required: true },
   ord: { key: 'ord', label: '정렬', control: 'number', required: true },
-  use: { key: 'use', label: '사용여부', control: 'radio', options: ['여', '부'] },
+  use: { key: 'use', label: '사용여부', control: 'switch', options: ['여', '부'] },
 };
 
 /* RowFormModal `Field` 규격 로컬 복제(공유 export 아님). plain=<div> 래퍼(버튼을 품은 복합 컨트롤·radio·checkbox 그룹). */

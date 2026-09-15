@@ -28,7 +28,7 @@ export const schema: PageSchema = {
     // 캡처 충실: 대분류/유형/전달형태는 '전체'를 첫 옵션(=기본 선택)으로 둔다(현행 화면 그대로).
     // 참고: 등록 폼에서 '전체'가 그대로 저장될 수 있어, 구체 카테고리 강제가 필요하면 '선택하세요' 플레이스홀더 도입 가능.
     { key: 'majorCat',     label: '대분류',      control: 'select', required: true, options: ['전체', '정기보고', '수시보고', '현장점검', '시정요구', '기타'] },
-    { key: 'subFund',      label: '자펀드',      control: 'text' },
+    { key: 'subFund',      label: '자펀드',      control: 'text', long: true },
     { key: 'investee',     label: '피투자업체',  control: 'text' },
     { key: 'recordDate',   label: '해당일자',    control: 'date', required: true },
     { key: 'recordType',   label: '유형',        control: 'select', required: true, options: ['전체', '경영현황', '재무점검', '투자약정 이행', '회수계획', '리스크 점검'] },

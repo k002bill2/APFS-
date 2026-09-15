@@ -25,8 +25,8 @@ export const schema: PageSchema = {
     { key: 'custodyMatch',  label: '수탁일치여부', type: 'status', align: 'center' },
   ],
   fields: [
-    { key: 'gp',       label: '운용사',   control: 'text' },
-    { key: 'subFund',  label: '자펀드',   control: 'text' },
+    { key: 'gp',       label: '운용사',   control: 'text', long: true },
+    { key: 'subFund',  label: '자펀드',   control: 'text', long: true },
     { key: 'divType',  label: '구분',     control: 'select', options: ['원금배분', '수익배분', '성과보수', '원천징수', '기타'] },
     { key: 'baseDate', label: '기준일자', control: 'date', required: true },
     { key: 'moeDiv',   label: '모태펀드 배분액', control: 'number' },

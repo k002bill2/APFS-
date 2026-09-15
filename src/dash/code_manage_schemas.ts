@@ -29,8 +29,8 @@ export function groupSchema(mode: 'create' | 'edit', groups: readonly CodeGroup[
       { key: 'code', label: '코드구분', control: mode === 'edit' ? 'readonly' : 'text', required: mode === 'create' },
       { key: 'name', label: '코드구분명', control: 'text', required: true },
       { key: 'up', label: '상위코드구분', control: 'select', options: [UP_NONE, ...groups.filter((g) => g.code !== exclude).map(upOption)] },
-      { key: 'rem', label: '비고', control: 'text' },
-      { key: 'use', label: '사용여부', control: 'radio', options: [...USE_OPTIONS] },
+      { key: 'rem', label: '비고', control: 'text', long: true },
+      { key: 'use', label: '사용여부', control: 'switch', options: [...USE_OPTIONS] },
     ],
     provenance: PROVENANCE,
   });
@@ -47,8 +47,8 @@ export function detailSchema(mode: 'create' | 'edit'): PageSchema {
       { key: 'name', label: '코드명', control: 'text', required: true },
       { key: 'en', label: '코드명(영문)', control: 'text' },
       { key: 'ord', label: '정렬', control: 'number', required: true },
-      { key: 'rem', label: '비고', control: 'text' },
-      { key: 'use', label: '사용여부', control: 'radio', options: [...USE_OPTIONS] },
+      { key: 'rem', label: '비고', control: 'text', long: true },
+      { key: 'use', label: '사용여부', control: 'switch', options: [...USE_OPTIONS] },
     ],
     provenance: PROVENANCE,
   });

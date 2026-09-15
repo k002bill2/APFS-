@@ -13,7 +13,7 @@ export const schema: PageSchema = {
     { key: 'updatedAt', label: '수정일', type: 'date',   align: 'center' },
   ],
   fields: [
-    { key: 'title',   label: '양식제목', control: 'text', required: true },
+    { key: 'title',   label: '양식제목', control: 'text', long: true, required: true },
     { key: 'desc',    label: '설명',    control: 'textarea' },
     { key: 'file',    label: '파일',    control: 'filepond' },
   ],

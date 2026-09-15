@@ -31,8 +31,8 @@ export const schema: PageSchema = {
     { key: 'balance',       label: '보유잔액',    type: 'amount', unit: '원', align: 'right' },
   ],
   fields: [
-    { key: 'gp',          label: '운용사',   control: 'text' },
-    { key: 'subFund',     label: '자펀드',   control: 'text' },
+    { key: 'gp',          label: '운용사',   control: 'text', long: true },
+    { key: 'subFund',     label: '자펀드',   control: 'text', long: true },
     { key: 'txType',      label: '거래구분', control: 'select', options: ['납입', '배분', '기타'] },
     { key: 'txDate',      label: '거래일자', control: 'date', required: true },
     { key: 'paidAmt',     label: '납입금액', control: 'number' },

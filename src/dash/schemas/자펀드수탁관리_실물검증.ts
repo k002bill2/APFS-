@@ -22,7 +22,7 @@ export const schema: PageSchema = {
     { key: 'verifyDate',  label: '날짜',     type: 'date',   align: 'center' },
   ],
   fields: [
-    { key: 'subFund',     label: '자펀드',   control: 'text' },
+    { key: 'subFund',     label: '자펀드',   control: 'text', long: true },
     { key: 'custodian',   label: '수탁기관', control: 'text' },
     { key: 'memo',        label: '메모',     control: 'textarea' },
   ],

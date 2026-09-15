@@ -17,7 +17,7 @@ import type { HelpDoc, ProgramRow } from './program_manage_model';
 const { Button, IconBtn } = UI;
 
 const F: Record<string, FieldSpec> = {
-  on: { key: 'on', label: '도움말 제공', control: 'radio', options: ['여', '부'] },
+  on: { key: 'on', label: '도움말 제공', control: 'switch', options: ['여', '부'] },
   overview: { key: 'overview', label: '화면 개요', control: 'textarea', required: true },
   notes: { key: 'notes', label: '유의사항', control: 'textarea' },
 };

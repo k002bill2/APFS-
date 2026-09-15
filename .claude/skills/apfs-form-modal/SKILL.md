@@ -1,6 +1,6 @@
 ---
 name: apfs-form-modal
-description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 입력 14px·토큰만. 정본 예시는 "투자기업정보(통합)"(schemas/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/select/textarea 입력·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
+description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, on/off 값은 switch, 모달 기본 폰트 13.5px·토큰만. 정본 예시는 "투자기업정보(통합)"(schemas/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
 ---
 
 # apfs-form-modal Skill
@@ -32,18 +32,24 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
    flex items-center gap-2 text-lg font-bold border-b-2 border-border pb-2 mb-3
    ```
    (form의 `<legend>`는 `w-full`을 앞에 붙여 밑줄이 폭 전체를 덮게 한다.)
-4. **타이포 위계**: 모달 제목 `text-xl`(20) > 본문 섹션 제목 `text-lg`(18)·`font-bold` > 본문/입력 14 > 라벨·부제 12~13. ⚠ `preflight:false`+body base 폰트 없음이라 **bare heading은 UA 기본(h3≈18.7px)으로 튄다** → 인라인 `style={{fontSize}}` magic number 금지, Tailwind `text-*` 유틸로만 고정.
+4. **타이포 위계**: 모달 제목 `text-xl`(20) > 본문 섹션 제목 `text-lg`(18)·`font-bold` > 본문/입력 **13.5**(2026-09-15 하향, 종전 14) > 라벨·부제 12~13. ⚠ `preflight:false`+body base 폰트 없음이라 **bare heading은 UA 기본(h3≈18.7px)으로 튄다** → 인라인 `style={{fontSize}}` magic number 금지, Tailwind `text-*` 유틸로만 고정.
 
 ## 핵심 계약 (CRITICAL)
 1. **새 컨트롤은 `FIELD_CONTROLS`(types.ts)에 먼저 추가.** 컨트롤 종류는 `FIELD_CONTROLS` 배열이 **타입+zod enum을 동시 공급(SSOT)**. 배열에 없는 control을 스키마에 쓰면 `PageSchemaZ.parse`가 실패해 **스키마 테스트·빌드가 깨진다**. 추가 순서: ① `FIELD_CONTROLS`에 문자열 추가 → ② `SchemaField`(renderers.tsx)에 `case` 추가 → ③ 스키마에서 사용.
 2. **2단 적응은 자동.** `RowFormModal`이 `schema.fields.length > 6`이면 `max-w-[880px]` + `grid grid-cols-1 sm:grid-cols-2`(좁은 화면은 1단 적층)로, 6개 이하면 `max-w-[460px]` 단일 컬럼으로 **자동 렌더**. 호출자가 폭을 지정하지 않는다.
-3. **`textarea`/`file`은 전체 폭.** 2단 모드에서 이 컨트롤은 `sm:col-span-2`로 한 줄 전체를 차지한다(긴 입력 잘림 방지) — `RowFormModal`이 자동 처리.
-4. **seed 기본값.** 초기값은 `initial`(수정) 또는 빈 문자열(등록). 단 **`select`·`radio`는 첫 옵션**(`f.options?.[0]`)을 기본값으로 시드한다.
-5. **입력 폰트 14px.** 폼 컨트롤은 `renderers.tsx`의 `base` 스타일에서 **14px(프로젝트 표준)**. 16px 아님(→[[responsive-ui]]). 색·테두리·배경은 토큰만(→[[color-tokens]]).
+3. **`textarea`/`file`, 그리고 `long: true` 필드는 전체 폭.** 2단 모드에서 이 셋은 `sm:col-span-2`로 한 줄 전체를 차지한다(긴 입력 잘림 방지) — `RowFormModal`이 자동 처리.
+   - **`long: true` = 긴 텍스트 필드 표식(2026-09-15 사용자 결정).** **설명·비고·운용사(명)·자펀드/조합명/펀드명·기업명/투자기업·주소·제목·사업내용** 류는 `FieldSpec`에 `long: true`를 단다. 그러면 ① `RowFormModal`이 `sm:col-span-2`(한 줄 전체) ② `SchemaField`가 `fill`을 자동 ON(→ `width:100% minWidth:0`)한다.
+   - ⚠️ **`span2`만으로는 안 늘어난다 — 컨트롤 폭이 진범.** 셀을 2단으로 넓혀도 `base`의 `width:'fit-content' minWidth:240`(규칙 7)이 입력을 240px에 묶는다. 권한관리 모달 '설명'이 이미 `sm:col-span-2`인데도 짧게 보이던 원인이 이것 → 반드시 **`long`(=fill)** 로 폭까지 함께 푼다.
+   - ⚠️ **전용(bespoke) 모달은 `span2` 가 자동이 아니다.** `RowFormModal` 밖에서 `SchemaField` 를 직접 부르는 모달(`user_permission_modal`·`member_info_form_modal` 등)은 `long` 이 폭(`fill`)만 켜준다 — 한 줄 전체를 쓰려면 래퍼 `<Field className="sm:col-span-2">` 를 **직접** 붙인다.
+   - 짧은 코드·일자·금액·구분값에는 달지 않는다(`long`을 남발하면 2단 그리드가 1단으로 무너진다).
+4. **seed 기본값.** 초기값은 `initial`(수정) 또는 빈 문자열(등록). 단 **`select`·`radio`·`switch`는 첫 옵션**(`f.options?.[0]`)을 기본값으로 시드한다. ⚠ `switch`를 시드 목록에서 빠뜨리면 등록 모드가 `''`를 저장해 그리드 배지가 빈칸으로 렌더된다.
+   - ⚠️ **등록 모드에 부분 프리필 `initial` 이 오는 화면 주의(2026-09-15 실측).** 워크플로우형 화면은 `mode="create"` 에도 선택 행에서 온 `initial`(운용사·자펀드만 채워짐)을 넘긴다 — 그러면 나머지 키가 `''` 로 시드되는데 **`switch` 는 off/on 둘로만 그려져 빈 값이 '아니오'로 위장**한다(radio 는 미선택이 눈에 보였다). `RowFormModal` 이 **create 모드에서 값이 비면 옵션형을 첫 옵션으로 되메운다**. edit 모드는 저장된 `''` 를 보존한다(무단 변경 금지) — 그 경우 switch 표시가 실제 값보다 단정적일 수 있음을 감안할 것.
+5. **모달 기본 폰트 13.5px(2026-09-15 사용자 결정 — 종전 14px에서 하향).** 두 곳이 짝이다: ① `ui/dialog.tsx` `DialogContent`의 `text-[13.5px]`(모달 본문 상속 기본값) ② `renderers.tsx` `base`의 `fontSize: 13.5`(폼 컨트롤·radio 라벨·switch 상태 텍스트). 16px 아님(→[[responsive-ui]]). 색·테두리·배경은 토큰만(→[[color-tokens]]).
+   - 자체 `fontSize`를 가진 자식(모달 제목 `text-xl`·섹션 `text-lg`·라벨 12)은 상속을 이기므로 위계(규칙 4 타이포)는 그대로다.
    - ⚠️ **단축 속성 `font` 금지 — 패밀리는 `fontFamily`(longhand)로만 상속.** `base`에서 `fontSize: 14` **뒤에** `font: 'inherit'`를 쓰면 안 된다. `font`은 `font-style/variant/weight/`**`size`**`/line-height/family`를 한꺼번에 지정하는 shorthand라, 인라인 스타일이 키 순서대로 적용되며 **뒤에 온 `font:'inherit'`가 앞의 `fontSize:14`를 부모 상속값(모달=16px)으로 되돌린다** → 네이티브 `select/input`이 16px로 렌더(라벨 14px보다 큼). 패밀리(Pretendard)만 상속하려면 **`fontFamily: 'inherit'`**(longhand)를 써서 `fontSize:14`를 보존하라. 검증: 모달 열고 `getComputedStyle(select).fontSize === '14px'`.
 6. **필수값·삭제.** 필수는 `field.required`(미입력 시 첫 누락 필드에 인라인 에러). 삭제는 edit 모드에서 ghost→`삭제 확인`(danger) 2단계.
-7. **컨트롤 폭 = fit-content + 타입별 minWidth(2026-09-09 사용자 확정, 이전 일률 220 폐기).** `renderers.tsx` `base`가 `width:'fit-content', minWidth:minW, maxWidth:'100%'` — 셀을 꽉 채우지 않고, 하한만 타입별로 차등. `minW`는 필드 위에서 `field.control`로 분기: **date 120**(짧은 고정포맷 YYYY-MM-DD) · **select 130**(이름만이면 fit-content로 더 좁아짐) · **number 180**(금액 자리수) · **text/기본 240**(GP명·조합명 등 명칭은 길게). **textarea만 `width:'100%'`**(긴 입력), `date`는 `DatePicker` 트리거가 `w-full`이라 같은 `minW`(=120) `fit-content` 래퍼 `<div>`로 감싼다. `maxWidth:'100%'`는 전 타입 공통(필드/셀 초과 방지 — 이것만 유지가 사용자 요구). 폭을 다시 일률값으로 되돌리지 말 것.
-   - **셀 채움 탈출구 `SchemaField fill` prop(2026-09-11 PR #132).** 반복행 테이블처럼 컨트롤이 **셀(컬럼) 폭을 꽉 채워야** 할 때만 `<SchemaField fill … />`. 이건 일률값 원복이 아니라 **컨텍스트가 폭을 지배할 때의 opt-in**이다 — `fill`이면 `width:'100%'` **그리고** `minWidth:0`(input·`date` 래퍼 둘 다), `select` 래퍼는 `display:'block' width:'100%'`. ⚠ `width:100%`만 주고 `minWidth`(text 240 등)를 남기면 **240min이 100%를 이겨** 200px 고정 컬럼을 넘쳐 옆 셀 위로 겹친다(Codex P2). 기본(prop 미전달)은 그대로 `fit-content`라 RowFormModal 그리드는 무영향. `date`는 `fill`이면 fit-content 래퍼도 `width:100% minWidth:0`로 같이 분기.
+7. **컨트롤 폭 = fit-content + 타입별 minWidth(2026-09-09 사용자 확정, 이전 일률 220 폐기).** `renderers.tsx` `base`가 `width:'fit-content', minWidth:minW, maxWidth:'100%'` — 셀을 꽉 채우지 않고, 하한만 타입별로 차등. `minW`는 필드 위에서 `field.control`로 분기: **date 120**(짧은 고정포맷 YYYY-MM-DD) · **select 130**(이름만이면 fit-content로 더 좁아짐) · **number 180**(금액 자리수) · **text/기본 240**(GP명·조합명 등 명칭은 길게). **`textarea` 와 `long:true` 필드만 `width:'100%'`**(긴 입력 — `long` 은 `SchemaField` 안에서 `fill` 을 자동 ON 해 같은 경로를 탄다), `date`는 `DatePicker` 트리거가 `w-full`이라 같은 `minW`(=120) `fit-content` 래퍼 `<div>`로 감싼다. `maxWidth:'100%'`는 전 타입 공통(필드/셀 초과 방지 — 이것만 유지가 사용자 요구). 폭을 다시 일률값으로 되돌리지 말 것.
+   - **셀 채움 탈출구 `SchemaField fill` prop(2026-09-11 PR #132).** 반복행 테이블처럼 컨트롤이 **셀(컬럼) 폭을 꽉 채워야** 할 때만 `<SchemaField fill … />`. (스키마 쪽 스위치는 `long:true` — `fill = fillProp || field.long` 으로 합류한다.) 이건 일률값 원복이 아니라 **컨텍스트가 폭을 지배할 때의 opt-in**이다 — `fill`이면 `width:'100%'` **그리고** `minWidth:0`(input·`date` 래퍼 둘 다), `select` 래퍼는 `display:'block' width:'100%'`. ⚠ `width:100%`만 주고 `minWidth`(text 240 등)를 남기면 **240min이 100%를 이겨** 200px 고정 컬럼을 넘쳐 옆 셀 위로 겹친다(Codex P2). 기본(prop 미전달)은 그대로 `fit-content`라 RowFormModal 그리드는 무영향. `date`는 `fill`이면 fit-content 래퍼도 `width:100% minWidth:0`로 같이 분기.
 8. **배열은 라벨 위·컨트롤 아래(세로 적층) 고정.** ⚠ 안티패턴: 라벨 좌·컨트롤 우 inline 배열 — 2026-09-08 시안 후 **사용자 원복**. 다시 제안하지 말 것(폭만 fit-content로 줄이는 것이 결정).
 
 ## 컨트롤 종류 (FIELD_CONTROLS — types.ts SSOT)
@@ -53,11 +59,16 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 | `number` | `<input type=number>` | 숫자 |
 | `date` | shadcn Radix `DatePicker`(달력+Popover) | 네이티브 input 아님 — 값 계약 `'YYYY-MM-DD'`·KST 함정 →[[apfs-datepicker]] |
 | `select` | `<select>`+`options` | 첫 옵션 시드 |
-| `radio` | 가로 라디오(`accentColor`)+`options` | Y/N, Y/N/해당없음 등. 첫 옵션 시드 |
+| `radio` | 가로 라디오(`accentColor`)+`options` | **분류형 2지 이상**(개인/법인, 신주/구주, Y/N/해당없음). 첫 옵션 시드 |
+| `switch` | shadcn Radix `Switch`(ui/switch.tsx) + 상태 텍스트 | **on/off 상태값 전용**(사용여부·도움말 제공 등 '여'/'부'). 첫 옵션 시드. 값 계약은 **문자열 그대로** — `checked = value === options[0]`, 토글 시 `options[0] | options[1]` emit |
 | `checkbox` | `<input type=checkbox>` | 'true'/'false' 문자열 |
 | `textarea` | `<textarea rows=4>` | 2단 시 전체 폭 |
 | `file` | **`filepond`과 동일** → `DocumentsField`(통일 드롭존) | 2단 시 전체 폭. 날것 `<input type=file>` 아님 — `renderers`에서 `case 'file'`→`filepond` fall-through(2026-09-09 파일존 통일). 신규 스키마는 `filepond`를 직접 쓸 것 |
 | `readonly` | muted `<div>` | 운용사·자펀드 등 상위 고정값 |
+
+> **switch vs radio — 무엇을 쓰나(2026-09-15).** `switch`는 **상태 하나를 켜고 끄는 것**(사용여부·도움말 제공·공개여부 등 '여'/'부'), `radio`는 **서로 배타적인 분류를 고르는 것**(개인/법인, 신주/구주, 국내/해외, Y/N/해당없음). 옵션이 3개 이상이면 무조건 radio. 기존 화면의 **2지선다 on/off radio 는 전부 switch 로 전환됐다** — '여/부'(권한관리·메뉴관리·코드관리·프로그램관리·프로그램 도움말)와 '예/아니오'·'Y/N'(투심보고 확정 및 승인 5건, 투자기업정보(통합) 4건). 남은 radio 는 분류형(개인/법인·국내/해외·신주/구주·계정구분·선정결과)과 3지(`예/아니오/해당없음`, `Y/N/해당없음`)뿐이다.
+> ⚠️ **값 계약을 boolean 으로 바꾸지 말 것.** `use: v.use === '여'`처럼 **옵션 문자열을 그대로 읽는 소비처·상세필터**가 다수라, switch 가 `'true'/'false'`를 emit 하면 저장·필터가 **무음으로** 깨진다. radio 와 동일하게 `options[0]`/`options[1]` 문자열을 주고받는다.
+> ⚠️ 라벨 래퍼는 `plain`(=`<div>`) — `<label>`로 감싸지 않는다. Radix Switch 는 `<button role=switch>`라 접근名은 `SchemaField`가 `aria-label={field.label}`로 준다. 토글 옆 **상태 텍스트('여'/'부')를 함께 렌더**한다(토글만으로는 어느 쪽이 켜진 상태인지 모호).
 
 > ⚠️ **무거운 외부 컨트롤** `richtext`(**Plate/platejs v53**, 2026-07-05 Tiptap에서 교체)·`filepond`(react-filepond): 4단계 배선(`FIELD_CONTROLS`→`src/dash/fields/`→lazy `SchemaField`→`span2`)과 **무음실패 함정**(FilePond 비제어·에디터 툴바 mousedown preventDefault·값=Slate JSON 문자열·빈 문서는 `api.isEmpty()`→`''`로 required false-pass 해소)은 메모리 `[[heavy-form-controls-richtext-filepond]]` + `src/dash/fields/RichTextField.tsx` 참조.
 
@@ -106,7 +117,10 @@ export const schema: PageSchema = {
 
 ## 검증
 - `npm test`(zod 스키마 테스트 — 새 control은 `FIELD_CONTROLS`에 있어야 통과) + `npm run build`(exit 0).
-- 브라우저: 항목>6 → 880px 2단(400px에서 1단 적층 확인), textarea 전체폭, radio 첫 옵션 기본, 필수 미입력 에러, 삭제 2단계. 라이트/다크(→[[responsive-ui]]).
+- 브라우저: 항목>6 → 880px 2단(400px에서 1단 적층 확인), textarea/`long` 전체폭, radio·switch 첫 옵션 기본, 필수 미입력 에러, 삭제 2단계. 라이트/다크(→[[responsive-ui]]).
+- `long` 검증은 **span 이 아니라 실측 폭**으로: 모달 열고 `getComputedStyle(input).width` 가 셀 폭과 같은지(240px 로 묶여 있지 않은지) 확인.
+- `switch` 검증은 **왕복으로**: 등록 → 토글 → 저장 → 그리드 배지가 '여'/'부'로 뜨는지 + 상세필터 '사용여부'가 그 행을 걸러내는지(문자열 계약이 깨지면 여기서 드러난다).
+- 폰트: `getComputedStyle(select).fontSize === '13.5px'`.
 
 ## 확장: 섹션형·반복행 모달 (flat 스키마를 초과할 때)
 `RowFormModal`은 **flat 필드 배열**만 렌더한다. 다음 중 하나라도 있으면 스키마에 억지로 넣지 말고 **전용 섹션형 모달**로 escalate:

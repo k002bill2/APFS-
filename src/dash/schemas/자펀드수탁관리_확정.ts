@@ -18,7 +18,7 @@ export const schema: PageSchema = {
     { key: 'totalBalance',  label: '잔액(합계)', type: 'amount', unit: '원', align: 'right' },
   ],
   fields: [
-    { key: 'subFund',    label: '자펀드',   control: 'text' },
+    { key: 'subFund',    label: '자펀드',   control: 'text', long: true },
     { key: 'confirmed',  label: '확정여부', control: 'select', options: ['미확정', '확정'] },
   ],
   filters: [],

@@ -15,7 +15,7 @@ export function programSchema(mode: 'create' | 'edit'): PageSchema {
     fields: [
       { key: 'pid', label: '프로그램ID', control: mode === 'edit' ? 'readonly' : 'text', required: mode === 'create' },
       { key: 'pname', label: '프로그램명', control: 'text', required: true },
-      { key: 'use', label: '사용여부', control: 'radio', options: [...USE_OPTIONS] },
+      { key: 'use', label: '사용여부', control: 'switch', options: [...USE_OPTIONS] },
     ],
     provenance: PROVENANCE,
   });
