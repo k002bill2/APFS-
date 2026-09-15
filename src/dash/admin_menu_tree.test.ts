@@ -37,6 +37,11 @@ describe('buildMenuRows — LNB MENU 평탄화 불변식', () => {
   it('단축번호는 프로그램ID가 있는 행에만 있다', () => {
     for (const r of rows) if (r.short) expect(r.pid).not.toBe('');
   });
+  it('미사용(use:false) 리프가 존재한다 — 사용여부 필터가 no-op 이 아니다', () => {
+    const unused = rows.filter((r) => !r.use);
+    expect(unused.length).toBeGreaterThanOrEqual(3);          // DEMO_UNUSED 키가 어긋나면 0건이 되어 여기서 잡힌다
+    for (const r of unused) expect(r.pid).not.toBe('');       // 미사용 표본은 리프(프로그램)
+  });
   it('호출마다 새 배열(호출자 state가 서로 오염되지 않는다)', () => {
     const again = buildMenuRows();
     expect(again).not.toBe(rows);

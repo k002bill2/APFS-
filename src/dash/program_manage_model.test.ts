@@ -24,7 +24,11 @@ describe('demoPrograms — LNB 정본 리프 + 임시 1건', () => {
 describe('filterPrograms / gubunOptions', () => {
   it('도움말 있음/없음·사용여부·구분·검색기준', () => {
     expect(filterPrograms(rows, { help: 'y' }).length).toBe(4);
-    expect(filterPrograms(rows, { use: '부' }).map((r) => r.pid)).toEqual(['CO9001']);
+    // 미사용('부') = LNB 정본의 DEMO_UNUSED 파생분(admin_menu_tree) + 미연결 임시 1건(CO9001).
+    // 정확한 개수는 메뉴 시드에 딸린 값이라 고정하지 않고, 불변식(전부 use=false)과 임시 1건 포함만 검사한다.
+    const unused = filterPrograms(rows, { use: '부' });
+    expect(unused.every((r) => !r.use)).toBe(true);
+    expect(unused.map((r) => r.pid)).toContain('CO9001');
     expect(filterPrograms(rows, { gubun: '관리자' }).every((r) => r.gubun === '관리자')).toBe(true);
     expect(filterPrograms(rows, { field: 'pname', kw: '임시' }).length).toBe(1);
     expect(filterPrograms(rows, { field: 'pid', kw: 'co9001' }).length).toBe(1);

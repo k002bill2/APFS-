@@ -32,7 +32,6 @@ import { RowContextMenu } from './row_context_menu';
 import type { CtxItem, CtxMenuState } from './row_context_menu';
 import { buildMenuRows } from './admin_menu_tree';
 import { UseBadge, UTypeBadge } from './admin_shared';
-
 import { UserPermissionModal } from './user_permission_modal';
 import type { PermRow, PermPatch, PermMode } from './user_permission_modal';
 import { matrixRows, grant, PERM_KEYS, permNameTaken } from './user_permission_model';
@@ -286,7 +285,6 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
       crumbs={['홈', '관리자', '사용자 관리', '사용자 권한 관리']}
       title="사용자 권한 관리"
       favRoute="user-permission-manage"
-
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={selected ? (
         /* 선택 행 컨텍스트 액션(목업 gate: 수정·복사·삭제). 대상명 캡션은 두지 않는다(선택 행에서 이미 보임) */
