@@ -80,7 +80,7 @@ const DETAIL_COLS: ColDef<CodeDetail>[] = [
 /* 좌 그리드: 클릭 선택만(선택 해제 없음 — 우측 데이터 소스가 사라지지 않게). 우 그리드: 일반 단일 선택 */
 const GROUP_SELECTION: RowSelectionOptions<GroupView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: 'enableSelection' };
 const DETAIL_SELECTION: RowSelectionOptions<CodeDetail> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44 };
+const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 
 const inputStyle = (kind?: string): CSSProperties => ({
   width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,

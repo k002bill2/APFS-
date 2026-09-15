@@ -54,7 +54,7 @@ const columnDefs: ColDef<AuditRow>[] = [
   { field: 'result', headerName: '결과', width: 92, maxWidth: 92, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={RESULT_TONE[p.value as AuditResult]} label={p.value} size="lg" dot={false} /> },
 ];
 const ROW_SELECTION: RowSelectionOptions<AuditRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44 };
+const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 const RESULT_CHIPS = ['', ...AUDIT_RESULTS] as const;
 
 type XCol = { header: string; get: (r: AuditRow) => string };

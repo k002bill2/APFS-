@@ -73,7 +73,7 @@ const columnDefs: ColDef<UserRow>[] = [
   { field: 'last', headerName: '최근 접속일시', width: 150, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value && p.value !== '—' ? mn(p.value) : '—') },
 ];
 const ROW_SELECTION: RowSelectionOptions<UserRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44 };
+const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 const STATUS_CHIPS = ['', ...USER_STATUSES] as const;
 
 type XCol = { header: string; get: (r: UserRow) => string };

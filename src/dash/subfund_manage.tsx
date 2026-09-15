@@ -530,7 +530,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           autoSizeStrategy={AUTO_SIZE_CONTENT}   // 컬럼 폭=내용 폭(잘림 방지). 긴 텍스트 컬럼은 maxWidth 캡
           defaultColDef={DEFAULT_COL_DEF}
           rowSelection={{ mode: 'singleRow', checkboxes: true, enableClickSelection: true }}
-          selectionColumnDef={{ pinned: 'left', width: 44 }}   // 라디오 선택 열을 맨 앞 고정(목업 1열 '선택(라디오)')
+          selectionColumnDef={{ pinned: 'left', width: 44, maxWidth: 44 }}   // 라디오 선택 열을 맨 앞 고정(목업 1열 '선택(라디오)')
           pagination paginationPageSize={pageSize} suppressPaginationPanel
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}

@@ -64,7 +64,7 @@ const columnDefs: ColDef<InviteView>[] = [
     valueFormatter: (p) => (p.data?.state === '초대발송' && p.value ? mn(p.value) : '-') },
 ];
 const ROW_SELECTION: RowSelectionOptions<InviteView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44 };
+const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 const STATE_CHIPS = ['', ...INVITE_STATES] as const;
 
 type XCol = { header: string; get: (r: InviteView) => string };
