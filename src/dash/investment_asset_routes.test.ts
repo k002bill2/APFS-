@@ -1,15 +1,25 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { APFS_DATA } from './data';
-import { resolveSchema } from './schemas';
+import { resolveSchema, ALL_SCHEMAS } from './schemas';
+import { resolveFilterField } from './schemas/filter_field';
+import { REPORT_TABS } from './all_report_status_model';
+import { SOURCE_COUNTS as PROFILE_COUNTS, PROVENANCE as PROFILE_PROV, formatProfileUnit } from './company_profile_data';
+import { SOURCE_COUNTS as STATS_COUNTS, SALES_SCALE_ROWS, INVEST_TYPE_ROWS, REGION_ROWS, PROVENANCE as STATS_PROV } from './investee_invest_stats_model';
+import { RECOVERY_MODES, SOURCE_COUNTS as RECOVERY_COUNTS, recoverySummary, PROVENANCE as RECOVERY_PROV, DETAIL_ROWS_IR, DETAIL_ROWS_ALL, formatRecoveryUnit } from './invest_recovery_detail_model';
+import { PROVENANCE as REPORT_PROV } from './all_report_status_model';
 
-/* 투자자산관리 > 투자기업정보(7) · 운용사 모니터링(6) · 자펀드 관리(6) 라우트 결선 불변식.
+/* 투자자산관리 > 투자기업정보(7) · 운용사 모니터링(6) · 자펀드 관리(6) 라우트 결선 + **출처 충실성** 불변식.
    (사용자 이미지 정본 2026-09-15 — 대분류 3 / 리프 19)
 
-   ⚠ 이 파일의 핵심은 **라우트 키를 MENU에서 파생**한다는 것이다. 테스트에도 스키마에도 리터럴을
+   ⚠ 이 파일의 핵심 ①: **라우트 키를 MENU에서 파생**한다. 테스트에도 스키마에도 리터럴을
    손으로 적으면 양쪽이 똑같이 NFD여도 통과하면서, NFC로 정규화하는 실제 내비게이션
    (app.tsx hashRoute → normalize('NFC'))만 조용히 DEFAULT_SCHEMA로 떨어진다.
    MENU label(NFC)에서 파생한 뒤 기대 리터럴과 대조해 양방향을 모두 막는다.
+
+   ⚠ 이 파일의 핵심 ②: **라우트 → 어느 목업(S1_NN)이 출처인가**를 못 박는다. 파일 존재만 보면
+   S1_35/S1_02 같은 "있긴 있는 다른 화면"으로 바꿔치기해도 통과한다(2026-09-15 실제 사고).
+   기대 S1 번호 표 + 파일 존재 + provenance 경로가 저장소 상대경로인지를 함께 본다.
 
    나머지 한 축: route 키 규약은 `leaf.path || leaf.label` 이다
    (data.ts ALLMENU · shell flattenMenu · generic_list findMenuContext 공통). */
@@ -21,23 +31,31 @@ const groupOf = (label: string) => asset.children!.find((g) => g.label === label
 const routesOf = (label: string) => groupOf(label).children!.map((l) => l.path || l.label);
 const labelsOf = (label: string) => groupOf(label).children!.map((l) => l.label);
 
-/* 기대값: [메뉴 라벨, 라우트 키]. 라우트 키는 DESIGN_RECOMMENDATION §1 표의 코드 리터럴이다. */
-const 투자기업정보: [string, string][] = [
-  ['투자기업정보(통합)', '투자기업정보(통합)'],
-  ['투자기업명세서(통합)', '투자기업명세서(통합)'],
-  ['투자기업고용현황(통합)', '투자기업 고용현황보고'],
-  ['전체 투자실적', '전체 투자실적'],
-  ['투자실적현황(투자기업)', '투자실적 현황(투자기업)'],
-  ['투자금 회수현황', '투자금 회수현황'],
-  ['우수투자기업 관리', '우수투자기업 관리'],
+const MOCKUP_DIR = 'docs/mockups/01_투자자산관리';
+
+/* 기대값: [메뉴 라벨, 라우트 키, 출처 목업 파일 | null(원천 없음), 렌더 경로].
+   출처 파일은 docs/메뉴구성도_v0.2.md 의 `현 시스템 매칭` 열이 정본이다(생성물이므로 임의 수정 금지).
+   render: 'schema' = 스키마 주도 GenericListPage / 'typed' = app.tsx 가 전용 페이지로 분기. */
+type Leaf = [label: string, route: string, source: string | null, render: 'schema' | 'typed'];
+
+const 투자기업정보: Leaf[] = [
+  /* ⚠ 스키마 출처가 목업이 아닌 유일한 리프. 아래 `투자기업정보(통합) 예외` 테스트 참조 —
+     화면(S1_30)과 등록/수정 양식(clipboard 캡처)의 출처가 서로 다르다. */
+  ['투자기업정보(통합)',    '투자기업정보(통합)',      null,                                  'typed'],
+  ['투자기업명세서(통합)',  '투자기업명세서(통합)',    'S1_31_투자기업정보_전체_.html',       'schema'],
+  ['투자기업고용현황(통합)', '투자기업 고용현황보고',   'S1_32_투자기업_고용현황보고.html',     'schema'],
+  ['전체 투자실적',         '전체 투자실적',           'S1_33_전체_투자실적.html',            'schema'],
+  ['투자실적현황(투자기업)', '투자실적 현황(투자기업)', 'S1_34_투자실적_현황_투자기업_.html',   'typed'],
+  ['투자금 회수현황',       '투자금 회수현황',         'S1_36_투자_및_회수_상세정보.html',     'typed'],
+  ['우수투자기업 관리',     '우수투자기업 관리',       null,                                  'schema'],
 ];
-const 운용사모니터링: [string, string][] = [
-  ['운용사 명세서', '운용사 명세서'],
-  ['운용사 재무정보 조회', '운용사 재무정보 조회'],
-  ['투자금 실사보고 조회', '투자금 실사보고'],
-  ['사후관리기록 관리', '사후관리기록 관리'],
-  ['관리보수/성과보수 조회', '관리보수관리'],
-  ['자펀드 전체 보고현황', '전체 보고현황'],
+const 운용사모니터링: Leaf[] = [
+  ['운용사 명세서',          '운용사 명세서',        'S1_37_운용사별_재무제표.html',        'schema'],
+  ['운용사 재무정보 조회',   '운용사 재무정보 조회', 'S1_38_운용사_재무정보_조회.html',     'schema'],
+  ['투자금 실사보고 조회',   '투자금 실사보고',      'S1_40_투자금실사보고.html',           'schema'],
+  ['사후관리기록 관리',      '사후관리기록 관리',    'S1_42_사후관리기록.html',             'schema'],
+  ['관리보수/성과보수 조회', '관리보수관리',         'S1_43_관리보수관리.html',             'schema'],
+  ['자펀드 전체 보고현황',   '전체 보고현황',        'S1_44_전체_보고현황.html',            'typed'],
 ];
 /* 자펀드 관리 6리프 — 이미 전용 React 페이지다. 이번 작업의 회귀 가드(재구현 금지). */
 const 자펀드관리: [string, string][] = [
@@ -49,7 +67,11 @@ const 자펀드관리: [string, string][] = [
   ['종합통계(확정)', 'fund-stats'],
 ];
 
-const SCHEMA_ROUTES = [...투자기업정보, ...운용사모니터링].map(([, r]) => r);
+const ALL_LEAVES = [...투자기업정보, ...운용사모니터링];
+const SCHEMA_ROUTES = ALL_LEAVES.map(([, r]) => r);
+/* 출처가 **명시적으로 배제된** 목업. 같은 이름의 다른 화면으로 조용히 바꿔치기되는 것을 막는다
+   (docs/메뉴구성도_v0.2.md:46 이 S1_35 불일치를 이미 기록해 뒀다). */
+const FORBIDDEN_SOURCES = ['S1_35_투자금_회수현황.html', 'S1_02_운용사_명세.html'];
 
 describe('메뉴 IA — 라벨·순서 보존', () => {
   it('투자기업정보 7리프의 라벨·순서가 이미지 정본과 같다', () => {
@@ -75,45 +97,501 @@ describe('메뉴 IA — 라벨·순서 보존', () => {
 describe('라우트 → 스키마 결선 (DEFAULT_SCHEMA 폴백 금지)', () => {
   /* DEFAULT_SCHEMA 는 영문 제네릭 5컬럼(항목명·금액·변동률·상태·추이)이다. 한글 업무 화면이
      여기로 떨어지면 에러 없이 "깨진 화면"만 보인다 — provenance.sourceSystem 이 유일한 신호다.
-     ⚠ captureFile 로 판정하지 않는다: 우수투자기업 관리는 원천이 없어 captureFile:'' 이 정상이고
-     sourceSystem:'NEW' 로 신규임을 기록한다. */
+     전용 페이지로 그리는 4리프도 스키마는 레지스트리에 남겨 둔다(등록부 + provenance 기록). */
   it.each(SCHEMA_ROUTES)('%s 는 전용 스키마로 해석된다', (route) => {
     const s = resolveSchema(route);
     expect(s.provenance.sourceSystem, `${route} → ${s.provenance.sourceSystem}`).not.toBe('DEFAULT');
     expect(s.route).toBe(route);
     expect(s.columns.length).toBeGreaterThan(0);
   });
+});
 
-  /* provenance 추적성 — 어느 목업에서 왔는지 스키마가 스스로 기록한다.
-     예외는 원천이 없는 신규 화면 하나뿐이며, 그때는 가짜 파일명 대신 sourceSystem:'NEW'를 쓴다
-     (없는 출처를 지어내지 않는다 — DESIGN_RECOMMENDATION §5.7). */
-  it('13개 스키마는 출처(captureFile)를 갖거나, 원천 없음을 NEW로 명시한다', () => {
-    for (const route of SCHEMA_ROUTES) {
+describe('출처(provenance) 충실성 — 어느 목업에서 왔는가', () => {
+  /* 원천이 없는 신규 화면은 가짜 파일명 대신 sourceSystem:'NEW' + captureFile:'' 로 기록한다. */
+  it('우수투자기업 관리는 원천 없음을 NEW 로 명시하고 행 0건이다', () => {
+    const s = resolveSchema('우수투자기업 관리');
+    expect(s.provenance.sourceSystem).toBe('NEW');
+    expect(s.provenance.captureFile).toBe('');
+    // sample:[] (빈 배열) = "원천에 행이 0건". 미선언이면 generic_list 가 합성 더미를 만든다.
+    expect(s.sample, '빈 배열이어야 빈 표로 그려진다').toEqual([]);
+  });
+
+  const sourced = ALL_LEAVES.filter((l): l is [string, string, string, Leaf[3]] => l[2] !== null);
+
+  it.each(sourced.map(([label, route, file]) => [route, file, label] as const))(
+    '%s 의 출처는 %s 다',
+    (route, file) => {
       const p = resolveSchema(route).provenance;
-      if (p.sourceSystem === 'NEW') expect(p.captureFile, route).toBe('');
-      else expect(p.captureFile.length, route).toBeGreaterThan(0);
-      expect(resolveSchema(route).title.length, route).toBeGreaterThan(0);
-    }
+      // ① 기대한 바로 그 목업인가 — 파일 존재만 보면 S1_35/S1_02 바꿔치기를 못 잡는다(둘 다 존재한다).
+      expect(p.captureFile, `${route} 의 출처가 기대 목업과 다르다`).toBe(`${MOCKUP_DIR}/${file}`);
+      // ② 저장소 상대경로인가 — /Users/... 절대경로는 다른 기기에서 검증이 불가능하다.
+      expect(p.captureFile.startsWith('/'), `${route}: 절대경로 금지`).toBe(false);
+      // ③ 실제로 있는 파일인가.
+      expect(existsSync(p.captureFile), `${route}: ${p.captureFile} 없음`).toBe(true);
+    },
+  );
+
+  /* 화면을 전용 페이지가 그리는 4리프 — 출처는 그 데이터 모듈의 PROVENANCE 가 기록한다.
+     스키마 provenance 만 보면 이 4리프의 출처 바꿔치기를 놓친다. */
+  it.each([
+    ['투자기업정보(통합)',      PROFILE_PROV,  'S1_30_투자기업정보.html'],
+    ['투자실적 현황(투자기업)', STATS_PROV,    'S1_34_투자실적_현황_투자기업_.html'],
+    ['투자금 회수현황',         RECOVERY_PROV, 'S1_36_투자_및_회수_상세정보.html'],
+    ['전체 보고현황',           REPORT_PROV,   'S1_44_전체_보고현황.html'],
+  ] as const)('%s 전용 페이지의 데이터 모듈 출처는 %#2$s 다', (route, prov, file) => {
+    expect(prov.captureFile, route).toBe(`${MOCKUP_DIR}/${file}`);
+    expect(existsSync(prov.captureFile), `${route}: ${prov.captureFile} 없음`).toBe(true);
+  });
+
+  /* 투자기업정보(통합) 예외 — 한 라우트에 출처가 둘이다. 화면은 S1_30(위 테스트), 등록/수정
+     21필드는 현행시스템 양식 clipboard 캡처. 스키마 provenance 를 S1_30 으로 고쳐 적으면
+     그 21필드의 진짜 출처가 지워진다(출처 위조). 그래서 서로 다른 값인 것이 정상이다. */
+  it('투자기업정보(통합) 스키마는 등록/수정 양식 캡처 출처를 그대로 보존한다', () => {
+    const p = resolveSchema('투자기업정보(통합)').provenance;
+    expect(p.sourceSystem).toBe('FFMS');
+    expect(p.captureFile).toBe('clipboard-2026-06-29-154620.png');
+    expect(resolveSchema('투자기업정보(통합)').fields.length).toBe(21);
+  });
+
+  it('명시적으로 배제된 목업(S1_35 · S1_02)을 출처로 쓰는 라우트가 없다', () => {
+    const files = [
+      ...SCHEMA_ROUTES.map((r) => [r, resolveSchema(r).provenance.captureFile] as const),
+      ['투자기업정보(통합) 모델', PROFILE_PROV.captureFile] as const,
+      ['투자실적현황 모델', STATS_PROV.captureFile] as const,
+      ['투자금 회수현황 모델', RECOVERY_PROV.captureFile] as const,
+      ['전체 보고현황 모델', REPORT_PROV.captureFile] as const,
+    ];
+    for (const [where, f] of files)
+      for (const bad of FORBIDDEN_SOURCES)
+        expect(f.includes(bad), `${where} 가 ${bad} 를 출처로 쓰고 있다`).toBe(false);
+  });
+});
+
+describe('원문 행 충실성 — 합성 더미 금지', () => {
+  /* 스키마 주도 9리프: sample(원문 리터럴 행)이 반드시 있어야 한다. 없으면 generic_list.makeRows 가
+     결정적 더미 20행을 만들고, 그 20행이 실데이터처럼 보인다. */
+  const schemaLeaves = ALL_LEAVES.filter(([, , , render]) => render === 'schema');
+
+  it.each(schemaLeaves.map(([, route]) => route))('%s 는 원문 리터럴 sample 을 갖는다', (route) => {
+    expect(resolveSchema(route).sample, `${route}: sample 미선언 = 합성 더미 20행`).toBeDefined();
+  });
+
+  /* 행 수 — 원문 실측치. 늘어나면 창작 행이 끼었다는 뜻이고, 줄어들면 원문을 잃은 것이다. */
+  it.each([
+    ['투자기업명세서(통합)', 4],
+    ['투자기업 고용현황보고', 3],
+    ['전체 투자실적', 1],
+    ['운용사 명세서', 22],
+    ['운용사 재무정보 조회', 2],
+    ['투자금 실사보고', 7],
+    ['사후관리기록 관리', 3],
+    ['관리보수관리', 1],
+    ['우수투자기업 관리', 0],
+  ] as const)('%s 의 행 수는 원문 그대로 %i건이다', (route, n) => {
+    expect(resolveSchema(route).sample!.length).toBe(n);
+  });
+
+  /* 샘플 값 지점검 — 키 remap 이 어긋나면 셀이 조용히 빈칸이 된다(에러 없음).
+     "행 수는 맞는데 값이 비어 있는" 상태를 잡으려면 실제 값을 봐야 한다. */
+  it('고용현황 1행은 S1_32 원문 값 그대로다', () => {
+    const r = resolveSchema('투자기업 고용현황보고').sample![0];
+    expect(r.investee).toBe('(주)그린팜테크');
+    expect(r.salesAmt).toBe(12_500_000_000);
+    expect(r.totalEmployees).toBe(85);
+    expect(r.youthEmployees).toBe(32);
+    expect(r.isUploaded).toBe('완료');
+  });
+  it('운용사 명세서는 S1_37(운용사별 재무제표) 원문 값이다 — S1_02 운용사 명세가 아니다', () => {
+    const s = resolveSchema('운용사 명세서');
+    expect(s.columns.map((c) => c.label)).toContain('투자기업');   // S1_02 에는 없는 축
+    const r = s.sample![0];
+    expect(r.gp).toBe('KB증권(주)');
+    expect(r.investee).toBe('(주)선양');
+    expect(r.baseYm).toBe('2012-12');
+    expect(r.totalAssets).toBe(17_792_580_021);
+  });
+  it('전체 투자실적은 회수실적 4컬럼(2단 헤더)을 보존한다', () => {
+    const s = resolveSchema('전체 투자실적');
+    const recovery = s.columns.filter((c) => c.group === '회수실적').map((c) => c.label);
+    expect(recovery).toEqual(['회수원금', '회수수익', '회수총액', '감액금액']);
+    const r = s.sample![0];
+    expect(r.investee).toBe('(주)진바이오텍');
+    expect(r.recoverTotal).toBe(7_500_000_000);
+    /* 원문이 null + ⚠검토필요 인 2컬럼 — 비율을 계산해 채우지 않는다. 표시는 원문과 같이 `-`.
+       ⚠ type 은 'rate' 가 아니라 'text' 다: 'rate' 면 Cell 이 DeltaBadge 로 보내
+       `Number('')===0` 이 되어 **값이 없는데 "0" 하락 배지**가 뜬다(2026-09-16 Codex 5R P2). */
+    expect(r.agriInvestRatio).toBe('-');
+    expect(r.fundInvestRatio).toBe('-');
+    for (const k of ['agriInvestRatio', 'fundInvestRatio'])
+      expect(s.columns.find((c) => c.key === k)!.type, k).toBe('text');
+    expect(s.columns.find((c) => c.key === 'agriInvestRatio')!.note!.dat).toContain('임의 생성 안 함');
+  });
+  it('사후관리기록은 S1_42 원문 값·코드 도메인을 쓴다', () => {
+    const s = resolveSchema('사후관리기록 관리');
+    expect(s.fields.find((f) => f.key === 'majorCat')!.options).toEqual(['일반 사후관리', '제재조치']);
+    expect(s.fields.find((f) => f.key === 'deliveryType')!.options).toEqual(['회의', '공문']);
+    expect(s.sample![1].recordType).toBe('투자비율위반');
+  });
+  it('투자금 실사보고의 잔여일수는 숫자가 아니라 원문 상태 문구다', () => {
+    const s = resolveSchema('투자금 실사보고');
+    expect(s.columns.find((c) => c.key === 'remainDays')!.type).toBe('text');
+    expect(s.sample!.map((r) => r.remainDays)).toContain('보고 대상 제외');
+  });
+  it('관리보수관리 1행은 S1_43 원문 값 그대로다', () => {
+    const r = resolveSchema('관리보수관리').sample![0];
+    expect(r.gp).toBe('제이비인베스트먼트(주)');
+    expect(r.amount).toBe(191_482_240);
+    expect(r.isConfirmed).toBe('미확정');
   });
 });
 
 describe('전용 페이지 분기 (app.tsx)', () => {
   const app = readFileSync(new URL('./app.tsx', import.meta.url), 'utf8');
+  /* 분기 리터럴은 MENU 에서 파생한다 — app.tsx 와 테스트가 **둘 다** NFD 면 하드코딩 비교는
+     통과하면서 런타임(NFC 정규화)만 DEFAULT_SCHEMA 로 떨어진다(이 파일 머리말 ⚠①). */
+  const routeOf = (label: string) => {
+    const all = [...groupOf('투자기업정보').children!, ...groupOf('운용사 모니터링').children!];
+    return (all.find((l) => l.label === label)!.path || label).normalize('NFC');
+  };
 
   it('자펀드 관리 6리프의 기존 전용 route 분기가 유지된다', () => {
     for (const [, route] of 자펀드관리) expect(app, route).toContain(`route === "${route}"`);
   });
 
-  /* 자펀드 전체 보고현황만 전용 컴포넌트가 정당하다 — S1_44 원문이 한 화면에 3개 표
-     (투심 / 수시보고 / 조합원총회)를 갖고, PageSchema 는 단일 columns 배열이라 담지 못한다.
-     나머지 12개는 페이지 코드 0줄(스키마만)이 목표다. */
-  it('전체 보고현황은 전용 페이지(SegTabs 3표)로 분기된다', () => {
-    expect(app).toContain('route === "전체 보고현황"');
-    expect(app).toContain('AllReportStatus');
+  /* 전용 컴포넌트가 정당한 4리프 — 원문이 한 화면에 여러 표/여러 조회기준을 담아
+     PageSchema(columns 1벌)로 표현되지 않는 화면들이다. */
+  it.each([
+    ['자펀드 전체 보고현황', 'AllReportStatus'],
+    ['투자기업정보(통합)', 'InvesteeProfile'],
+    ['투자실적현황(투자기업)', 'InvesteeInvestStats'],
+    ['투자금 회수현황', 'InvestRecoveryDetail'],
+  ] as const)('%s 는 전용 페이지 %s 로 분기된다', (label, component) => {
+    const route = routeOf(label);
+    expect(app, route).toContain(`route === "${route}"`);
+    expect(app).toContain(component);
   });
 
-  it('투자기업정보·운용사 모니터링의 나머지 12개는 전용 분기를 만들지 않는다(GenericListPage 스키마 경로)', () => {
-    for (const route of SCHEMA_ROUTES.filter((r) => r !== '전체 보고현황'))
+  it('나머지 9리프는 전용 분기를 만들지 않는다(GenericListPage 스키마 경로)', () => {
+    const typed = new Set(ALL_LEAVES.filter(([, , , r]) => r === 'typed').map(([, route]) => route));
+    for (const route of SCHEMA_ROUTES.filter((r) => !typed.has(r)))
       expect(app, route).not.toContain(`route === "${route}"`);
+  });
+});
+
+describe('전용 페이지의 원문 섹션·행 수', () => {
+  it('S1_44 전체 보고현황은 원문 6개 표를 모두 싣는다', () => {
+    expect(REPORT_TABS.length).toBe(6);
+    expect(REPORT_TABS.map((t) => t.label)).toEqual(
+      ['투자심의', '수시보고', '조합원총회', '관리보수', '운용사 출자배분', '농금원 출자배분']);
+  });
+  it('S1_44 각 표의 행 수는 원문 그대로다(관리보수는 "조회된 데이터가 없습니다" → 0건)', () => {
+    const byKey = Object.fromEntries(REPORT_TABS.map((t) => [t.key, t]));
+    expect(byKey.review.rows.length).toBe(1);
+    expect(byKey.occasional.rows.length).toBe(1);
+    expect(byKey.meeting.rows.length).toBe(1);
+    expect(byKey.mgmtFee.rows.length).toBe(0);
+    expect(byKey.gpContribution.rows.length).toBe(12);
+    expect(byKey.apfsContribution.rows.length).toBe(1);
+  });
+  it('S1_44 운용사 출자배분은 2단 헤더와 소계·합계 2줄을 보존한다', () => {
+    const t = REPORT_TABS.find((x) => x.key === 'gpContribution')!;
+    expect([...new Set(t.columns.map((c) => c.group).filter(Boolean))]).toEqual(['기타조합원', '모태펀드']);
+    expect(t.pinnedBottom!.map((r) => r.no)).toEqual(['소계', '합계']);
+    // rowspan 으로 병합돼 있던 식별 컬럼이 행마다 다시 펼쳐졌는지 — 비어 있으면 2행부터 빈칸이다.
+    expect(t.rows[11].gp).toBe('KB증권(주)');
+    expect(t.rows[11].commitTotal).toBe(32_000_000_000);
+  });
+
+  it('S1_30 투자기업정보(통합)은 3섹션을 원문 건수 그대로 싣는다', () => {
+    // 원문 `<th scope="row">` 는 34개지만 마지막 하나는 여성기업여부 행의 **빈 채움 셀**이라 항목이 아니다.
+    expect(PROFILE_COUNTS).toEqual({ overview: 33, financial: 2, shareholder: 4 });
+  });
+
+  it('S1_34 투자실적현황은 집계표 3장을 원문 행 수 그대로 싣는다', () => {
+    // 블록 2개(투자건수·투자금액) × (연도 16 + 합계 1) = 34
+    expect(STATS_COUNTS.salesScale).toBe(34);
+    expect(STATS_COUNTS.investType).toBe(34);
+    expect(STATS_COUNTS.region).toBe(19);   // 소재지 18 + 합계
+    expect(SALES_SCALE_ROWS[0]).toMatchObject({ block: '투자건수', label: '2010년' });
+    expect(SALES_SCALE_ROWS[0].values).toEqual([18, 3, 0, 2, 13, 5, 41]);
+    expect(REGION_ROWS[0]).toMatchObject({ no: 1, region: '서울' });
+    expect(REGION_ROWS[0].values).toEqual([533, '34.5 %', 6638, '35.7 %']);
+  });
+  it('S1_34 합계 행의 ⚠검토필요 문구는 원문 그대로다(열 밀림을 재계산해 고치지 않는다)', () => {
+    const noted = SALES_SCALE_ROWS.filter((r) => r.note);
+    expect(noted.length).toBe(1);
+    expect(noted[0].note!.rec).toBe('열 순서 재계산 필요 여부 확인');
+    expect(noted[0].note!.dat).toContain('한 칸씩 밀려 대응됨');
+  });
+
+  it('S1_36 투자금 회수현황은 조회기준 2모드를 각각 원문 컬럼·행 수로 싣는다', () => {
+    expect(RECOVERY_MODES.map((m) => m.label)).toEqual(['투자및회수', '전체거래']);
+    expect(RECOVERY_COUNTS).toEqual({ ir: 21, all: 24 });
+    expect(RECOVERY_MODES[0].columns.length).toBe(14);
+    expect(RECOVERY_MODES[1].columns.length).toBe(13);
+    // 모드마다 컬럼이 다르다는 것이 전용 페이지의 존재 이유다.
+    expect(RECOVERY_MODES[0].columns.map((c) => c.key)).toContain('ccode');
+    expect(RECOVERY_MODES[1].columns.map((c) => c.key)).toContain('shares');
+  });
+  it('S1_36 합계 4줄은 원문 renderFoot() 값과 같다(항상 투자및회수 기준)', () => {
+    const s = recoverySummary();
+    expect(s.map((x) => x.label)).toEqual(['투자', '회수', '수익', '회수총액']);
+    expect(s[0].prin).toBe(16_000_123_464);
+    expect(s[1].prin).toBe(11_764_603_464);
+    expect(s[1].prof).toBe(4_297_866_647);
+    expect(s[3].prin).toBe(11_764_603_464);
+    expect(s[3].prof).toBe(4_297_866_647);
+  });
+});
+
+describe('스키마 레지스트리 — 고아(도달 불가) 누적 방지', () => {
+  /* 레지스트리에는 있는데 MENU 어느 리프도 가리키지 않는 스키마 = 화면에서 도달 불가한 고아다.
+     방치하면 원문이 갈릴 때 어느 쪽이 정본인지 알 수 없게 된다 — 실제로 `투자및회수상세정보` 가
+     S1_36 을 출처로 적은 채 `투자금 회수현황`(같은 S1_36)과 나란히 남아 있었고 컬럼은 서로 달랐다.
+
+     ⚠ 현재 고아는 **19건**이다(`투자및회수상세정보` 삭제 후 — 삭제 전엔 20건). 대부분은 현행(as-is) 화면 이름으로
+     만들어졌다가 to-be 리프가 전용 페이지(`path:`)로 가면서 도달 불가가 된 레거시다
+     (예: `정기보고` 스키마 vs 리프 `정기보고 → path:"regular-report"`).
+     **이번 변경의 범위가 아니라 전수 정리는 하지 않았다.** 대신 "더 늘지 않는다"만 못 박는다 —
+     새 고아를 만들면 이 테스트가 깨지고, 해결책은 상한을 올리는 것이 아니라
+     ① MENU 에 연결하거나 ② 삭제하는 것이다. */
+  const ORPHAN_BASELINE = 19;
+
+  const menuKeys = (() => {
+    const keys = new Set<string>();
+    const walk = (nodes: MenuNode[]) => {
+      for (const n of nodes) {
+        if (n.children) walk(n.children);
+        else keys.add((n.path || n.label).normalize('NFC'));
+      }
+    };
+    walk(APFS_DATA.MENU as MenuNode[]);
+    return keys;
+  })();
+  const orphans = ALL_SCHEMAS.map((s) => s.route).filter((r) => !menuKeys.has(r.normalize('NFC'))).sort();
+
+  it(`MENU 에 연결되지 않은 스키마가 ${ORPHAN_BASELINE}건을 넘지 않는다(레거시 기준선 — 늘리지 말 것)`, () => {
+    expect(orphans.length, `고아 목록: ${orphans.join(' · ')}`).toBeLessThanOrEqual(ORPHAN_BASELINE);
+  });
+
+  it('삭제된 `투자및회수상세정보` 가 되살아나지 않는다(도달 불가 + S1_36 출처 중복)', () => {
+    expect(ALL_SCHEMAS.some((s) => s.route === '투자및회수상세정보')).toBe(false);
+  });
+
+  it('이번 작업의 13리프는 하나도 고아가 아니다', () => {
+    for (const route of SCHEMA_ROUTES) expect(orphans, route).not.toContain(route);
+  });
+});
+
+describe('S1_36 — 커밋된 행이 목업 파일 안에 실재하는가', () => {
+  /* 사용자 지목 원본(`~/Downloads/통합 2/…/S1_36_…html`)과 저장소 사본은 바이트 동일이다
+     (md5 d5d9d0f6…, 2026-09-16 확인). 그 파일을 테스트가 **직접 읽어** 커밋된 값이 실제로
+     원문에 있는 문자열인지 본다 — 행 수만 세는 가드는 값이 바뀌어도 통과한다.
+     목업이 갱신되면 이 테스트가 깨지고, 그때 해야 할 일은 기대값 수정이 아니라 **재파싱**이다. */
+  const html = readFileSync(RECOVERY_PROV.captureFile, 'utf8');
+
+  it('목업 파일이 provenance 경로에 있고 두 데이터 배열을 갖는다', () => {
+    expect(html).toContain('var DATA_IR=');
+    expect(html).toContain('var DATA_ALL=');
+  });
+
+  it('투자및회수 21행의 약정번호·거래일자·거래원금이 모두 원문에 있다', () => {
+    for (const r of DETAIL_ROWS_IR) {
+      expect(html, `약정번호 ${r.ag}`).toContain(String(r.ag));
+      expect(html, `거래일자 ${r.tdate}`).toContain(String(r.tdate));
+      expect(html, `거래원금 ${r.prin}`).toContain(String(r.prin));
+    }
+  });
+
+  it('전체거래 전용 3행(전환·주식변동)의 판독 확신도 메모가 원문 문구 그대로다', () => {
+    const noted = DETAIL_ROWS_ALL.filter((r) => r.rv);
+    expect(noted.length).toBe(3);
+    for (const r of noted) {
+      expect(String(r.rv)).toContain('이미지 판독 확신도 낮음');
+      expect(html, `rv: ${r.rv}`).toContain(String(r.rv));
+    }
+  });
+
+  it('두 모드의 컬럼 라벨이 원문 COLS_IR/COLS_ALL 헤더 문자열과 일치한다', () => {
+    for (const m of RECOVERY_MODES)
+      for (const c of m.columns) expect(html, `${m.label} 헤더 ${c.label}`).toContain(`'${c.label}'`);
+  });
+});
+
+describe('상세필터 라벨 — 표를 조용히 0건으로 만드는 tag 폴백 금지', () => {
+  /* `resolveFilterField` 3단계: 라벨이 fields/columns 어디에도 없고 년도·일자·구분 휴리스틱에도
+     안 걸리면 **kind:'tag'** 로 떨어진다. 그러면 `rowMatchesFilters` 가 그 라벨을 `row.category`
+     와 대조하는데, 업무 화면의 category 는 엔티티명(예: '실사보고')이라 **절대 일치하지 않는다**
+     → 사용자가 필터를 켜는 순간 표가 에러 없이 0건이 된다(2026-09-16 Codex 지적으로 발견).
+
+     ⚠ 레거시 4건은 이번 범위 밖이라 고치지 않았다. 기준선으로 고정해 **더 늘지 않게만** 막는다 —
+     새로 추가하면 이 테스트가 깨지고, 해결책은 목록에 넣는 것이 아니라 **컬럼/필드 라벨과
+     정확히 같은 라벨을 쓰거나 그 필터를 빼는 것**이다. */
+  const LEGACY_TAG_FILTERS = ['조합원총회', '(운용사)출자배분관리', '조합원정보등록', '투자기업정보'];
+
+  const offenders = ALL_SCHEMAS
+    .map((sc) => [sc.route, (sc.filters ?? []).filter((l) => {
+      const f = resolveFilterField(l, sc);
+      return f.kind === 'tag' && !f.columnKey;
+    })] as const)
+    .filter(([, bad]) => bad.length > 0);
+
+  it('tag 로 떨어지는 필터를 가진 스키마는 레거시 4건뿐이다', () => {
+    const routes = offenders.map(([r]) => r).sort();
+    expect(routes, offenders.map(([r, b]) => `${r}: ${b.join('·')}`).join(' | ')).toEqual([...LEGACY_TAG_FILTERS].sort());
+  });
+
+  it('이번 작업의 13리프에는 하나도 없다', () => {
+    for (const route of SCHEMA_ROUTES) {
+      const sc = resolveSchema(route);
+      for (const l of sc.filters ?? []) {
+        const f = resolveFilterField(l, sc);
+        expect(f.kind === 'tag' && !f.columnKey, `${route} 의 필터 '${l}' 가 표를 0건으로 만든다`).toBe(false);
+      }
+    }
+  });
+});
+
+describe('ColumnSpec 선언이 실제로 ColDef 에 전달되는가', () => {
+  /* `group`·`note`·`pinned` 는 types.ts 가 선언만 해 두고 매퍼가 흘려버리면 **에러 없이 무시된다**
+     (2026-09-15 group/note, 2026-09-16 pinned — 셋 다 실제로 그 상태였다).
+     매퍼 소스에 전달 코드가 있는지 문자열로 확인한다 — 렌더 테스트 없이 잡을 수 있는 최소 가드. */
+  it.each([
+    ['generic_list.tsx', ['noteHeader', 'c.pinned', 'foldGroups']],
+    ['all_report_status.tsx', ['c.pinned', 'foldGroups']],
+    ['invest_recovery_detail.tsx', ['c.pinned']],
+  ] as const)('%s 가 %s 를 ColDef 로 넘긴다', (file, needles) => {
+    const src = readFileSync(new URL('./' + file, import.meta.url), 'utf8');
+    for (const n of needles) expect(src, `${file}: ${n} 미전달`).toContain(n);
+  });
+
+  it('S1_31 은 단일 헤더다 — group 을 선언하지 않는다(원문 colspan 0건)', () => {
+    expect(resolveSchema('투자기업명세서(통합)').columns.some((c) => c.group)).toBe(false);
+  });
+
+  it('2단 헤더를 선언한 스키마는 원문이 실제로 2단인 것뿐이다', () => {
+    const grouped = ALL_SCHEMAS.filter((sc) => sc.columns.some((c) => c.group)).map((sc) => sc.route).sort();
+    // 전체 투자실적 = 회수실적 4컬럼 · 투자실적 현황(투자기업) = 소재지별 표 2단 헤더
+    expect(grouped).toEqual(['전체 투자실적', '투자실적 현황(투자기업)']);
+  });
+});
+
+describe('마스크 경계 — 축은 두고 데이터는 가린다', () => {
+  /* CLAUDE.md 데이터 마스크 규약: 표 헤더·탭·단위·차트 축은 가리지 않는다. 축까지 가리면
+     "어느 지역/어느 연도 숫자인가"를 잃어 표와 엑셀이 통째로 판독 불가가 된다
+     (2026-09-16 Codex 지적 — 소재지별 표의 행 축이 그 상태였다). */
+  const stats = readFileSync(new URL('./investee_invest_stats.tsx', import.meta.url), 'utf8');
+
+  it('소재지·연도 행 축을 MT 로 감싸지 않는다', () => {
+    expect(stats).not.toContain('<MT>{r.region}</MT>');
+    expect(stats).not.toContain('<MT>{r.label}</MT>');
+  });
+
+  it('엑셀 본문도 축(NO·소재지·연도)은 남기고 값만 가린다', () => {
+    // 축까지 일괄 마스킹하던 형태(`[r.no, r.region, ...r.values].map(... masked ...)`)가 없어야 한다
+    expect(stats).not.toContain('[r.no, r.region, ...r.values].map');
+    expect(stats).toContain('masked ?');
+  });
+
+  it('값 셀은 여전히 mn() 을 거친다(마스크 재활성 시 가려지도록)', () => {
+    expect(stats).toContain('mn(String(fmtVal(');
+  });
+});
+
+describe('S1_34 — 원문이 배선한 동작만 구현한다', () => {
+  /* 원문 스크립트 실측(2026-09-16):
+     · `투자실적구분` → `.gridblock` 토글이 있다 → 우리도 표를 전환한다.
+     · `건수기준` → **전환 로직이 없다**. 두 블록(투자건수·투자금액)은 항상 함께 그려진다.
+       한때 이 컨트롤로 블록을 하나만 남겼는데 보고서 절반을 숨기는 창작 동작이었다(Codex 3라운드 P1).
+     · `계정구분·연도기준·데이터기준` → select 에 option 0개 → 컨트롤을 만들지 않는다.
+     · 금액단위 원/백만원/억원 → `fmtEok` 로 억원 base 를 환산한다 → 토글을 둔다. */
+  const stats = readFileSync(new URL('./investee_invest_stats.tsx', import.meta.url), 'utf8');
+
+  it('건수기준으로 블록을 걸러내지 않는다(두 블록 모두 렌더)', () => {
+    expect(stats).not.toContain("filter((r) => r.block === block)");
+    expect(stats).not.toMatch(/const BLOCKS\s*=/);
+  });
+
+  it('금액단위 토글과 원문 환산식(억원 base)을 갖는다', () => {
+    expect(stats).toContain("STAT_UNITS");
+    expect(stats).toContain("eok * 100");     // 백만원
+    expect(stats).toContain("eok * 1e8");     // 원
+  });
+
+  it('두 블록의 행이 모델에 모두 살아 있다(각 17행)', () => {
+    for (const rows of [SALES_SCALE_ROWS, INVEST_TYPE_ROWS]) {
+      expect(rows.filter((r) => r.block === '투자건수').length).toBe(17);
+      expect(rows.filter((r) => r.block === '투자금액').length).toBe(17);
+    }
+  });
+});
+
+describe('금액 단위 — 선언이 화면까지 닿는가 · 화면별 표기 규칙', () => {
+  /* `unitToggle` 도 group·note·pinned 와 같은 부류였다: 스키마가 선언해도 GenericListPage 가
+     읽지 않아 금액이 원 원시값으로 굳어 있었다(2026-09-16 Codex 4R P1). */
+  const gl = readFileSync(new URL('./generic_list.tsx', import.meta.url), 'utf8');
+
+  it('GenericListPage 가 schema.unitToggle 을 실제로 소비한다', () => {
+    expect(gl).toContain('schema.unitToggle');
+    expect(gl).toContain('amountHeader(');   // 헤더에 선택 단위 표기
+    expect(gl).toContain('toUnit(');         // 엑셀이 선택 단위를 따른다
+  });
+
+  it('unitToggle 을 선언한 스키마는 금액 컬럼을 실제로 갖는다(빈 토글 금지)', () => {
+    for (const sc of ALL_SCHEMAS.filter((x) => x.unitToggle))
+      expect(sc.columns.some((c) => c.type === 'amount'), `${sc.route}: 금액 컬럼 없이 unitToggle`).toBe(true);
+  });
+
+  /* S1_36 은 공용 formatUnit(백만원 2자리)이 아니라 **원문 applyUnit** 을 따른다:
+     원 0자리 · 백만원 1자리 · 억원 2자리 (`nf(w/1e6,1)` · `nf(w/1e8,2)`). */
+  it('S1_36 금액 표기 자릿수가 원문과 같다', () => {
+    expect(formatRecoveryUnit(1_000_008_000, '원')).toBe('1,000,008,000');
+    expect(formatRecoveryUnit(1_000_008_000, '백만원')).toBe('1,000.0');   // 공용 formatUnit 이면 1,000.01
+    expect(formatRecoveryUnit(1_000_008_000, '억원')).toBe('10.00');
+  });
+});
+
+describe('원문 tfoot 합계 — 필터가 켜지면 내린다', () => {
+  /* 소계·합계는 **캡처한 리터럴**이라 부분집합으로 재계산할 수 없다(합계 행 약정총액은 12행의
+     합이 아니라 조합 약정액이다). 필터가 켜지면 내리고 푸터에 사유를 적는다.
+     ⚠ 판정은 **필터 상태**여야 한다 — 행 수 비교로 하면 필터가 전 행과 일치할 때(선택지가
+     하나뿐인 운용사 등) 플래그가 꺼져 전체 기준 합계가 남는다(2026-09-16 Codex 6R P2). */
+  const src = readFileSync(new URL('./all_report_status.tsx', import.meta.url), 'utf8');
+
+  it('행 수 비교로 판정하지 않는다', () => {
+    expect(src).not.toContain('visible.length !== tab.rows.length');
+  });
+  it('필터 상태 5종으로 판정한다', () => {
+    const m = src.match(/const filtered = ([^;]+);/);
+    expect(m, 'filtered 파생값을 찾지 못했다').toBeTruthy();
+    for (const k of ['fGp', 'fSubFund', 'fFrom', 'fTo', 'fText']) expect(m![1], k).toContain(k);
+  });
+  it('엑셀도 같은 규칙을 따른다(전체 기준 합계를 붙이지 않는다)', () => {
+    expect(src).toContain('...(pinnedBottom ?? [])');
+  });
+});
+
+describe('화면별 금액 표기 규칙 — 목업이 정본이다', () => {
+  /* 저장 base(원)는 공유하지만 **자릿수는 목업마다 다르다**. 공용 formatUnit(2자리)을 모든 화면에
+     쓰면 원문과 값이 달라진다(2026-09-16 Codex 4R·7R). 화면별 포맷터의 자릿수를 못 박는다. */
+  it('S1_30 기업개요: 백만원 정수 · 억원 1자리 (원문 fmt(n,u))', () => {
+    expect(formatProfileUnit(17_792_580_021, '백만원')).toBe('17,793');
+    expect(formatProfileUnit(17_792_580_021, '억원')).toBe('177.9');
+    expect(formatProfileUnit(17_792_580_021, '원')).toBe('17,792,580,021');
+  });
+
+  it('S1_36 투자금 회수현황: 백만원 1자리 · 억원 2자리 (원문 applyUnit)', () => {
+    expect(formatRecoveryUnit(17_792_580_021, '백만원')).toBe('17,792.6');
+    expect(formatRecoveryUnit(17_792_580_021, '억원')).toBe('177.93');
+  });
+
+  it('두 규칙이 서로 다르다 — 하나로 합치면 한쪽이 원문과 어긋난다', () => {
+    expect(formatProfileUnit(17_792_580_021, '억원')).not.toBe(formatRecoveryUnit(17_792_580_021, '억원'));
+  });
+
+  it('엑셀 숫자서식이 값의 실제 자릿수를 따른다(고정 1자리 금지)', () => {
+    const gl = readFileSync(new URL('./generic_list.tsx', import.meta.url), 'utf8');
+    expect(gl).not.toContain("Number.isInteger(v) ? '#,##0' : '#,##0.0'");
+    expect(gl).toContain("'0'.repeat(");
   });
 });

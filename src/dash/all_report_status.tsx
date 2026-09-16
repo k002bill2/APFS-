@@ -1,12 +1,17 @@
-/* 자펀드 전체 보고현황 — 조회 전용 3표 화면 (투자자산관리 > 운용사 모니터링, route `전체 보고현황`).
+/* 자펀드 전체 보고현황 — 조회 전용 6표 화면 (투자자산관리 > 운용사 모니터링, route `전체 보고현황`).
    출처: S1_44_전체_보고현황.html → APFS 디자인시스템(GridFrame + AG Grid)으로 변형.
 
    왜 전용 페이지인가: 원문이 한 화면에 여러 표를 쌓는데 `PageSchema`는 `columns`가 하나뿐이라 담지 못한다.
    나머지 12개 리프는 페이지 코드 0줄(스키마 주도 GenericListPage)이 목표고, 이 화면만 예외다
-   (DESIGN_RECOMMENDATION §5.13 권고(a) — "전체"라는 이름으로 1/3만 보여주면 제목이 거짓이 된다).
+   ("전체"라는 이름으로 원문의 일부만 보여주면 제목이 거짓이 된다 — 2026-09-15 정정 이력은
+    dev/active/investment-asset-menu-pages/BRIEF.md 의 "2026-09-15 정정" 절 참조).
 
    구성(목업 → 우리 규약):
-   - 표 3개를 세로로 쌓지 않고 **툴바 SegTabs**(투자심의 | 수시보고 | 조합원총회)로 전환. 전환은 aria-live로 통지.
+   - 표 6개를 세로로 쌓지 않고 **툴바 SegTabs**(투자심의 | 수시보고 | 조합원총회 | 관리보수 |
+     운용사 출자배분 | 농금원 출자배분)로 전환. 전환은 aria-live로 통지. 원문 표를 하나라도 빼면
+     화면 이름 `전체 보고현황`이 거짓이 되므로 6개를 모두 싣는다(2026-09-15 정정).
+   - 원문이 2단 헤더인 표(운용사 출자배분: 기타조합원·모태펀드)는 ColumnSpec.group → ColGroupDef로 접는다.
+   - 원문 tfoot의 소계·합계는 데이터 행이 아니라 `pinnedBottomRowData`로 하단 고정한다.
    - 검색박스(모펀드·운용사·자펀드·계정구분·기준일자) → 운용사/자펀드 필터칩 + 상세필터 드로어(검색어·기간).
        `모펀드`는 원문에서 읽기전용 단일값(농식품모태펀드)이라 컨트롤이 아니라 툴바 캡션으로 둔다.
        `계정구분`은 원문 select에 `전체` 외 옵션이 없어(값 도메인 미정) 컨트롤을 만들지 않는다 — 없는 값을 지어내지 않는다.
@@ -23,12 +28,13 @@ import { mn, MT, useMask } from './mask';
 import { GridFrame } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { Cell, controlMinWidth } from './schemas/renderers';
+import { foldGroups } from './grid_header_note';   // 2단 그룹헤더 접기 SSOT(GenericListPage 와 공유)
 import { UNITS, DEFAULT_UNIT, formatUnit, amountHeader } from './schemas/unit';
 import type { Unit } from './schemas/unit';
 import type { ColumnSpec } from './schemas/types';
 import { PeriodPicker } from './ui/period-picker';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ICellRendererParams, CellStyle } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, ICellRendererParams, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';
@@ -48,8 +54,10 @@ const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular
    마스킹(mn/MT)·StatusBadge·운용사 ColorChip·금액 단위 환산이 전부 그 안에 있다(중복 구현 금지). */
 function toColDef(c: ColumnSpec, tab: ReportTab, unit: Unit): ColDef<ReportRow> {
   if (c.key === 'no')
-    return { colId: NO_COL_ID, headerName: c.label, width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false,
-             valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 };
+    /* No 는 축(순번)이라 마스킹하지 않는다. 정렬·필터로 순서가 바뀌어도 1..n 이 되도록 rowIndex 로 매기되,
+       **하단 고정 행(소계·합계)은 예외** — 그쪽 rowIndex 는 0,1 로 다시 시작하므로 원문 라벨을 그대로 쓴다. */
+    return { colId: NO_COL_ID, headerName: c.label, width: 68, maxWidth: 68, cellStyle: centerNum, sortable: false,
+             valueGetter: (p) => (p.node?.rowPinned ? String(p.data?.no ?? '') : (p.node?.rowIndex ?? 0) + 1) };
   const right = c.align === 'right';
   const amount = c.type === 'amount';
   return {
@@ -59,6 +67,7 @@ function toColDef(c: ColumnSpec, tab: ReportTab, unit: Unit): ColDef<ReportRow> 
     ...(c.key === 'title' || c.key === 'agenda'
       ? { flex: 1, minWidth: 200, suppressAutoSize: true }   // 긴 텍스트가 잔여폭 흡수
       : { minWidth: 110, maxWidth: 260 }),
+    ...(c.pinned ? { pinned: c.pinned } : {}),   // 와이드 표에서 식별 컬럼을 붙잡아 둔다
     type: right ? 'rightAligned' : undefined,
     cellStyle: { display: 'flex', alignItems: 'center', textAlign: (c.align || 'left') as any, ...(right ? { justifyContent: 'flex-end' } : {}) },
     cellRenderer: (p: ICellRendererParams<ReportRow>) => (
@@ -66,6 +75,13 @@ function toColDef(c: ColumnSpec, tab: ReportTab, unit: Unit): ColDef<ReportRow> 
     ),
   };
 }
+
+/* ColumnSpec[] → AG Grid 정의. **연속한** 같은 group 은 하나의 ColGroupDef 로 접는다 —
+   접기 규칙은 `grid_header_note.foldGroups` 가 정본이다(GenericListPage 와 공유, 복사 금지).
+   원문 S1_44 운용사 출자배분표의 `기타조합원`·`모태펀드` 2단 헤더가 이 경로로 복원된다 —
+   평평하게 늘어놓으면 원금배분/합계 컬럼이 어느 쪽 것인지 사라진다. */
+const toColumnDefs = (tab: ReportTab, unit: Unit): (ColDef<ReportRow> | ColGroupDef<ReportRow>)[] =>
+  foldGroups(tab.columns.map((c) => toColDef(c, tab, unit)), tab.columns);
 
 const inputStyle = (kind?: string): CSSProperties => ({
   width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,
@@ -160,13 +176,26 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
   const subFundOptions = useMemo(() => distinctValues(tab, 'subFund'), [tab]);
   const chipCount = (gp: string) => mn(String(gp ? facet.filter((r) => String(r.gp) === gp).length : facet.length));
 
+  /* 원문 tfoot(소계·합계)은 **캡처한 리터럴**이지 우리가 계산한 값이 아니다 —
+     `합계` 행의 약정총액(32,000,000,000)은 12행의 합이 아니라 조합 약정액이라 필터링된
+     부분집합으로는 재계산 자체가 불가능하다. 그래서 필터가 걸리면 **다시 계산하지 않고 내린다**:
+     남겨 두면 12행 전체 기준 값이 걸러진 표 아래 붙어 "이 표의 합계"로 읽힌다(2026-09-16 Codex P1).
+     화면에는 왜 사라졌는지 캡션으로 알린다. */
+  /* ⚠ 판정은 **필터 상태**지 행 수 비교가 아니다(2026-09-16 Codex 6R P2).
+     보이는 행 수와 전체 행 수를 비교하면, 선택지가 하나뿐인 운용사를 고르는 것처럼
+     필터가 전 행과 일치할 때 플래그가 꺼져 전체 기준 합계가 "걸러진 표의 합계"로 남는다.
+     값이 우연히 같더라도 사용자에게는 필터가 켜진 화면이므로, 상태로 판정한다
+     (invest_recovery_detail 의 `filterOn` 과 같은 규약). */
+  const filtered = fGp !== '' || fSubFund !== '' || fFrom !== '' || fTo !== '' || fText.trim() !== '';
+  const pinnedBottom = filtered ? undefined : tab.pinnedBottom;
+
   const hasAmount = tab.columns.some((c) => c.type === 'amount');
-  const columnDefs = useMemo<ColDef<ReportRow>[]>(() => tab.columns.map((c) => toColDef(c, tab, unit)), [tab, unit]);
+  const columnDefs = useMemo(() => toColumnDefs(tab, unit), [tab, unit]);
 
   const exportExcel = useCallback(() => {
     const cols = tab.columns.filter((c) => c.key !== 'no');
     const head = cols.map((c) => (c.type === 'amount' ? amountHeader(c.label, unit) : c.label));
-    const body = visible.map((r) => cols.map((c) => {
+    const body = [...visible, ...(pinnedBottom ?? [])].map((r) => cols.map((c) => {
       if (masked) return '';   // 마스크 ON이면 엑셀에도 값을 내보내지 않는다(마스크 경계 = 엑셀까지)
       const v = r[c.key];
       // 우측정렬 금액만 숫자 셀 — 화면에 보이는 단위를 그대로 따른다(헤더가 단위를 명시한다)
@@ -177,7 +206,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, tab.sheet);
     XLSX.writeFile(wb, `자펀드 전체 보고현황_${tab.label}.xlsx`);
     toast.success(`${tab.label} 표를 Excel로 내보냈습니다`);
-  }, [tab, visible, unit, masked]);
+  }, [tab, visible, unit, masked, pinnedBottom]);
 
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
@@ -234,14 +263,17 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
         <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>
       </>}
-      footerLeft={<span>{`모펀드 ${MOTHER_FUND} · ${tab.label} 총 ` + mn(String(tab.rows.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중'}</span>}
+      footerLeft={<span>
+        {`모펀드 ${MOTHER_FUND} · ${tab.label} 총 ` + mn(String(tab.rows.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중'}
+        {tab.pinnedBottom && filtered && ' · 필터 적용 중이라 원문 소계·합계는 숨김(전체 기준 값이라 부분집합에 맞지 않음)'}
+      </span>}
       footerRight={<>
         <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
         <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
         {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
       </>}>
 
-      {/* 탭마다 컬럼 수가 달라 전환 시 높이가 튄다 — 최소 높이로 점프를 막는다(§5.13 반응형) */}
+      {/* 탭마다 컬럼 수가 달라 전환 시 높이가 튄다 — 최소 높이로 점프를 막는다(responsive-ui) */}
       <div style={{ minHeight: 320 }}>
         <AgGridReact<ReportRow>
           key={tab.key}   /* 탭 전환 = 완전 리마운트. 이전 표의 정렬·컬럼 폭이 새 표에 남지 않게 한다 */
@@ -251,6 +283,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
           getRowId={(p) => p.data.id}
           domLayout="autoHeight"
           defaultColDef={DEFAULT_COL_DEF}
+          pinnedBottomRowData={pinnedBottom as ReportRow[] | undefined}
           onModelUpdated={refreshNoColumn}
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 결과가 없습니다. 기간·조건을 변경해 주세요.</span>'}
         />

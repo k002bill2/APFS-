@@ -12,7 +12,7 @@ import { formatUnit } from './unit';
 import type { Unit } from './unit';
 import type { Tone } from '../components';
 
-const { StatusBadge, ColorChip, DeltaBadge } = UI;
+const { StatusBadge, DeltaBadge } = UI;
 
 // 무거운 에디터/업로더는 코드 스플리팅 — 모달이 열려 해당 컨트롤이 렌더될 때만 로드.
 const RichTextField = React.lazy(() => import('../fields/RichTextField').then((m) => ({ default: m.RichTextField })));
@@ -64,7 +64,10 @@ export function Cell({ col, value, color, statusDomain, unit }: { col: ColumnSpe
   switch (renderKind(col.type)) {
     case 'status':     return <StatusBadge tone={toneFor(String(value), statusDomain)} label={String(value)} size="sm" />;
     case 'rate':       return <DeltaBadge value={Number(value)} />;
-    case 'gp':         return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><ColorChip icon="building" color={color || 'var(--chart-1)'} size={26} iconSize={14} /><MT>{String(value)}</MT></span>;
+    /* 운용사(gp): 이름 앞 아이콘 칩 제거(2026-09-16 사용자 지시). 표 전반에서 같은 건물 아이콘이
+       모든 행에 반복돼 정보가 없었고, 좁은 폭에서 이름을 밀어냈다. 렌더는 마스킹 텍스트와 같다 —
+       `type:'gp'` 자체는 남긴다(스키마 의미 표식이고 정렬·필터 해석에 쓰인다). */
+    case 'gp':         return <MT>{String(value)}</MT>;
     case 'numeric':
       if (unit && col.type === 'amount' && typeof value === 'number')
         return <span className="tabular">{mn(formatUnit(value, unit))}</span>;

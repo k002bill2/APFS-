@@ -4,10 +4,13 @@
    `~/Downloads/통합 2` 전체에 대응 목업 HTML이 없다(2026-09-15 확인). 그래서
    `provenance.sourceSystem = 'NEW'` · `captureFile = ''` 로 **원천 없음을 스키마에 기록**한다
    — 그럴듯한 파일명을 적으면 이후 누구도 이 화면이 창작물임을 알 수 없게 된다.
+   (근거 이력: dev/active/investment-asset-menu-pages/BRIEF.md "2026-09-15 정정" 절)
 
-   같은 이유로 `sample`(리터럴 행)을 쓰지 않는다. `sample` 은 "목업의 실제 값"이라는 의미를 갖는
-   슬롯이라(types.ts SampleRow 주석), 원천 없는 화면에 넣으면 합성 더미가 실데이터로 읽힌다.
-   행은 generic_list 의 makeRows 결정적 더미가 만든다.
+   같은 이유로 `sample: []`(빈 배열)을 선언한다 — **행이 0건임을 명시**하는 자리다.
+   슬롯을 비워 두면(sample 미선언) generic_list.makeRows 가 결정적 더미 20행을 합성하고,
+   원천 없는 신규 화면에 "우수투자기업 20개사"라는 없는 실적이 표로 뜬다.
+   빈 배열이면 그리드가 "표시할 항목이 없습니다" 빈 상태로 그려지고 KPI 건수도 전부 0건이다.
+   (판정은 길이가 아니라 **존재** — generic_list.makeRows 의 `schema.sample ?? null` 주석 참조.)
 
    ── 명시적 가정(확정 아님 · 발주처 확인 필요) ──
    A1 "우수투자기업"은 성과 우수 기업을 선정·관리하는 내부 제도다.
@@ -71,6 +74,8 @@ export const schema: PageSchema = {
   searchable: true,
   hideCardView: true,
   unitToggle: true,
+  // 원천 없음 = 행 0건. 위 주석 참조 — 빈 배열이 SSOT 다.
+  sample: [],
   provenance: {
     capturedAt: '',
     sourceSystem: 'NEW',   // 원천 없음 — 신규 제안 화면(위 주석 참조). 가짜 출처를 적지 않는다.
