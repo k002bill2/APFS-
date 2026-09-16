@@ -141,7 +141,7 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
         {step === 1 && (
           <div style={{ animation: FADE_UP }}>
             {/* 로그인 ↔ 비밀번호 재설정. 2차 인증이 시작된 뒤(2단계~)에는 노출하지 않는다. */}
-            <div style={{ marginBottom: 18 }}>
+            <div style={{ marginBottom: 30 }}>
               <UI.SegTabs value={mode} onChange={switchMode}
                 options={[
                   { value: 'login', label: '로그인' },
