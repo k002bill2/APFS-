@@ -10,7 +10,7 @@ import {
   OtpCode, Toast, Logo, InfoHint, useDemoOtp, useToast, T, FADE_UP,
 } from './auth_shared';
 import {
-  railSteps, LOGIN_RAIL, RESET_RAIL, SIMPLE_AUTH_RAIL, AUTH_PROVIDERS,
+  railSteps, LOGIN_RAIL, RESET_RAIL, SIMPLE_AUTH_RAIL,
   verifyCredentials, verifyOtp, verifyPwChange, verifySimpleAuth, hasError, OTP_PERIOD,
   verifyReset, DEMO_ID, LOCK_LIMIT, PW_POLICY_HINT, type PwChangeErrors,
 } from './auth_model';
@@ -58,7 +58,7 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
   useEffect(() => {
     if (mounted.current) firstField.current?.focus();
     mounted.current = true;
-  }, [step]);
+  }, [step, mode]);
 
   const submit1 = (e: FormEvent) => {
     e.preventDefault();
@@ -97,7 +97,7 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
     e.preventDefault();
     const err = verifySimpleAuth(saName, saBirth, saPhone);
     setSaErr(err);
-    if (!err) { setSaStep(2); pop('통합인증창을 열었습니다'); }
+    if (!err) { setSaStep(2); pop('간편인증을 요청했습니다'); }
   };
 
   const resetSimpleAuth = () => { setSaStep(1); setSaErr(null); };
@@ -125,8 +125,16 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
             : railSteps(RESET_RAIL, resetDone ? 2 : 1)}
         railHead={<>
           <Logo />
-          <p style={{ ...T.body3, font: '600 13px/20px var(--font-sans)', color: 'var(--muted-foreground)', margin: '10px 0 clamp(14px,3.5vw,32px)' }}>
-            농림수산식품모태펀드 투자자산관리시스템
+          {/* 모바일은 한 줄(크기 차를 좁혀 나란히), md 이상은 2단 위계로 쌓는다.
+              크기는 className 으로 — 인라인 font 단축속성을 쓰면 반응형 크기를 덮어쓴다.
+              한 문장이라 사이에 공백을 남겨 스크린리더가 "…모태펀드 투자자산관리시스템"으로 이어 읽게 한다. */}
+          <p className="flex flex-wrap items-baseline gap-x-1.5 md:block" style={{ margin: '10px 0 clamp(14px,3.5vw,32px)' }}>
+            <span className="text-[13px] leading-[19px] md:leading-5 md:block" style={{
+              fontFamily: 'var(--font-sans)', fontWeight: 600, letterSpacing: '0.006em', color: 'var(--muted-foreground)',
+            }}>농림수산식품모태펀드</span>{' '}
+            <span className="text-[15px] leading-[21px] md:text-[23px] md:leading-[31px] md:block" style={{
+              fontFamily: 'var(--font-sans)', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--foreground)',
+            }}>투자자산관리시스템</span>
           </p>
         </>}>
 
@@ -191,7 +199,7 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
                       </p>
                       <form noValidate onSubmit={submitReset} className="flex flex-col gap-4">
                         <Field required id="reset-name" label="성명" icon="user" placeholder="성명" autoComplete="name"
-                          value={resetName} onChange={setResetName} />
+                          value={resetName} onChange={setResetName} inputRef={firstField} />
                         <Field required id="reset-id" label="아이디" icon="user" placeholder="로그인 아이디" autoComplete="username"
                           value={resetId} onChange={setResetId} />
                         {resetErr && <FormError>{resetErr}</FormError>}
@@ -203,12 +211,12 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
                   <>
                     <h1 style={T.title3}>간편인증</h1>
                     <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '6px 0 22px' }}>
-                      아래 정보를 확인한 뒤 통합인증창이 열립니다. 인증서 선택과 앱 인증은 인증창에서 진행하며,
+                      입력한 정보로 통합인증창에 인증을 요청합니다. 인증서 선택과 앱 인증은 인증창에서 진행하며,
                       별도 프로그램·앱 설치는 필요하지 않습니다.
                     </p>
                     <form noValidate onSubmit={requestSimpleAuth} className="flex flex-col gap-4">
                       <Field required id="sa-name" label="이름" icon="user" placeholder="실명" autoComplete="name"
-                        value={saName} onChange={setSaName} />
+                        value={saName} onChange={setSaName} inputRef={firstField} />
                       <Field required id="sa-birth" label="생년월일" icon="calendar" placeholder="YYYYMMDD"
                         inputMode="numeric" maxLength={10} autoComplete="bday" value={saBirth} onChange={setSaBirth} />
                       <Field required id="sa-phone" label="휴대폰번호" icon="smartphone" placeholder="010-0000-0000"
@@ -221,8 +229,7 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
                   <>
                     <h1 style={T.title3}>통합인증창 인증</h1>
                     <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '6px 0 20px' }}>
-                      열린 통합인증창에서 인증서 선택 → 인증정보 입력 → 인증앱 확인을 마쳐 주세요.
-                      인증이 끝나면 결과가 이 화면으로 전달됩니다.
+                      통합인증창에서 인증서를 고르고 인증앱 확인을 마치면 결과가 이 화면으로 전달됩니다.
                     </p>
                     <div style={{
                       background: 'var(--muted)', border: '1px solid var(--border)',
@@ -230,7 +237,7 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
                     }}>
                       <p style={{ ...T.body3, margin: 0 }}>{saName} · {saPhone}</p>
                       <p style={{ ...T.caption1, marginTop: 6, color: 'var(--muted-foreground)', lineHeight: 1.6 }}>
-                        요청은 3분간 유효합니다. 인증창이 보이지 않으면 브라우저의 팝업 차단을 해제한 뒤 다시 요청해 주세요.
+                        인증 모듈 연동 전이라 화면 흐름만 이어집니다. 연동 후에는 인증창의 결과 콜백이 다음 단계를 대신합니다.
                       </p>
                     </div>
                     <div className="flex gap-2.5">
@@ -244,12 +251,12 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
                   <DonePanel
                     compact
                     title="인증결과 확인"
-                    desc="통합인증창에서 본인확인이 끝나 임시 비밀번호를 발급했습니다."
+                    desc="본인확인이 끝나면 임시 비밀번호가 발급됩니다."
                     rows={[
                       { k: '인증 방식', v: '간편인증(통합인증창)', strong: true },
                       { k: '이름', v: saName },
                       { k: '휴대폰', v: saPhone },
-                      { k: '임시 비밀번호', v: '휴대폰 문자로 발송 — 로그인 후 즉시 변경' },
+                      { k: '임시 비밀번호', v: '본인확인 후 발급 — 로그인 후 즉시 변경' },
                     ]}
                     actions={<PrimaryBtn onClick={() => switchMode('login')} style={{ minWidth: 180 }}>로그인 화면으로</PrimaryBtn>} />
                 )}

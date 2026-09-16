@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   verifyCredentials, verifyOtp, verifyPwChange, verifyRegister, verifyRealName,
   railSteps, LOGIN_RAIL, ISSUE_RAIL, RESET_RAIL, SIMPLE_AUTH_RAIL,
-  verifyReset, verifySimpleAuth, AUTH_PROVIDERS, hasError,
+  verifyReset, verifySimpleAuth, hasError,
   DEMO_ID, DEMO_PW, DEMO_REAL_NAME, LOCK_LIMIT, MSG, PW_RE,
 } from './auth_model';
 
@@ -189,17 +189,24 @@ describe('간편인증 — 외부 통합인증창 연동', () => {
   it('이름이 비면 이름부터 알린다 — 화면 필드 순서대로', () => {
     expect(verifySimpleAuth('  ', '', '')).toBe(MSG.nameRequired);
   });
-  it('생년월일이 8자리가 아니거나 없는 월·일이면 거부', () => {
+  it('생년월일이 8자리가 아니면 거부', () => {
     expect(verifySimpleAuth('김담당', '850302', '01012345678')).toBe(MSG.birthInvalid);
+  });
+  it('없는 월은 거부', () => {
     expect(verifySimpleAuth('김담당', '19851302', '01012345678')).toBe(MSG.birthInvalid);
+    expect(verifySimpleAuth('김담당', '19850002', '01012345678')).toBe(MSG.birthInvalid);
+  });
+  it('달에 없는 날짜는 거부 — 2월 31일·4월 31일·평년 2월 29일', () => {
+    expect(verifySimpleAuth('김담당', '20250231', '01012345678')).toBe(MSG.birthInvalid);
+    expect(verifySimpleAuth('김담당', '20250431', '01012345678')).toBe(MSG.birthInvalid);
+    expect(verifySimpleAuth('김담당', '20250229', '01012345678')).toBe(MSG.birthInvalid);
+  });
+  it('윤년 2월 29일은 통과', () => {
+    expect(verifySimpleAuth('김담당', '20240229', '01012345678')).toBeNull();
   });
   it('이동전화 대역이 아니거나 자릿수가 모자라면 거부', () => {
     expect(verifySimpleAuth('김담당', '19850302', '0212345678')).toBe(MSG.phoneInvalid);
     expect(verifySimpleAuth('김담당', '19850302', '010123456')).toBe(MSG.phoneInvalid);
-  });
-  it('통합인증창이 제공하는 인증수단 12종을 안내용으로 들고 있다', () => {
-    expect(AUTH_PROVIDERS).toHaveLength(12);
-    expect(AUTH_PROVIDERS).toContain('통신사 PASS');
   });
   it('앱 레일은 3단계 — 가운데 인증 단계는 외부 모듈이 처리한다', () => {
     expect(railSteps(SIMPLE_AUTH_RAIL, 1).map((x) => x.title))

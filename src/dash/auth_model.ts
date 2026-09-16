@@ -39,7 +39,7 @@ export const MSG = {
   locked: '계정이 잠겼습니다. 관리자에게 문의해 주세요.',
   nameMismatch: '초대 대상과 실명이 일치하지 않습니다.',
   nameRequired: '이름을 입력해 주세요.',
-  birthInvalid: '생년월일 8자리를 입력해 주세요. (예: 19850302)',
+  birthInvalid: '생년월일을 8자리로 정확히 입력해 주세요. (예: 19850302)',
   phoneInvalid: '휴대폰번호를 정확히 입력해 주세요. (예: 01012345678)',
 } as const;
 
@@ -169,13 +169,14 @@ export function verifyReset(name: string, id: string): string | null {
   return null;
 }
 
-/** 통합인증창이 제공하는 인증수단(서비스소개서 2026 p.11·p.12). 앱은 이 목록을 '안내'로만 쓴다 —
-    실제 선택·인증정보 입력은 NexBe Sign 통합인증창이 자기 화면에서 처리한다(p.7 연동 구조). */
-export const AUTH_PROVIDERS = [
-  '카카오톡', '네이버', '토스', '통신사 PASS',
-  'KB국민', '신한은행', '하나은행', 'NH농협',
-  '우리인증서', 'IBK기업', '금융인증서', '뱅크샐러드',
-] as const;
+/** YYYYMMDD 8자리가 실제로 존재하는 날짜인지. 월·일 범위만 보면 20250231·20250431 이 통과한다.
+    Date 는 넘친 일자를 다음 달로 굴리므로(2025-02-31 → 2025-03-03) 되읽어 같은 값인지 확인한다. */
+function isRealDate(yyyymmdd: string): boolean {
+  const y = Number(yyyymmdd.slice(0, 4)), m = Number(yyyymmdd.slice(4, 6)), d = Number(yyyymmdd.slice(6, 8));
+  if (m < 1 || m > 12 || d < 1) return false;
+  const dt = new Date(y, m - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+}
 
 /** 간편인증 요청 정보 — 앱이 받아 통합인증창 호출에 넘기는 값(이름·생년월일·휴대폰번호).
     인증서 선택과 앱 인증은 통합인증창이 처리하므로 여기서는 형식만 본다.
@@ -184,8 +185,7 @@ export function verifySimpleAuth(name: string, birth: string, phone: string): st
   if (!name.trim()) return MSG.nameRequired;
   const b = birth.replace(/\D/g, '');
   if (b.length !== 8) return MSG.birthInvalid;
-  const mm = Number(b.slice(4, 6)), dd = Number(b.slice(6, 8));
-  if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return MSG.birthInvalid;
+  if (!isRealDate(b)) return MSG.birthInvalid;
   // 010~019 이동전화 대역, 국번 7~8자리.
   if (!/^01[0-9]\d{7,8}$/.test(phone.replace(/\D/g, ''))) return MSG.phoneInvalid;
   return null;
