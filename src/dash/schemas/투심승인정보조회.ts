@@ -11,7 +11,8 @@ export const schema: PageSchema = {
     { key: 'subFund',      label: '자펀드',     type: 'text',   align: 'left' },
     { key: 'investee',     label: '투자기업',   type: 'text',   align: 'left' },
     { key: 'paymentDue',   label: '투자금 납입 예정일', type: 'date', align: 'center' },
-    { key: 'investAmt',    label: '투자금액(원)', type: 'amount', unit: '원', align: 'right' },
+    // 라벨에 단위를 박으면 헤더가 `투자금액(원) (원)` 이 된다 — 단위는 unit 이 소유한다
+    { key: 'investAmt',    label: '투자금액', type: 'amount', unit: '원', align: 'right' },
     { key: 'ceobirthDate', label: '대표이사 생년월일', type: 'pii', align: 'center' },
     { key: 'isVenture',    label: '벤처인증여부', type: 'status', align: 'center' },
     { key: 'isWoman',      label: '여성기업여부', type: 'status', align: 'center' },

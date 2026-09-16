@@ -16,7 +16,10 @@ import type { PageSchema, DetailPopup } from './schemas/types';
 import { MonthlyReportModal } from './monthly_report_modal';   // 읽기전용 상세 보고서 팝업(컬럼 detail 옵트인 스키마만)
 import { GpSpecModal } from './gp_spec_modal';                 // 운용사 명세(S1_02) — 운용사 명세서 목록의 행 상세
 import { CompanyProfileModal } from './company_profile_modal'; // 투자기업 기업개요(S1_30) — 투자기업정보(통합)의 행 상세
+import { MgmtFeeDetailModal } from './mgmt_fee_detail_modal';   // 관리보수보고 상세조회(S1_43) — 지급일자 링크
+import { DueDiligChecklistModal } from './due_dilig_checklist_modal'; // 투자금실사보고서 체크리스트(S1_40) — 실사일자 링크
 import { noteHeader, foldGroups } from './grid_header_note';   // 컬럼 헤더 옆 ⚠검토필요 마커 + 2단 그룹헤더(ColumnSpec note/group 소비처)
+import { linksDetail } from './schemas/detail_link';   // detail 링크 술어 정본(소비처 3곳 공유)
 import { UNITS, DEFAULT_UNIT, isUnit, toUnit, amountHeader } from './schemas/unit';
 import type { Unit } from './schemas/unit';
 import type { ColumnSpec } from './schemas/types';
@@ -433,17 +436,24 @@ function rowMatchesFilters(row: Row, schema: PageSchema, filterValues: Record<st
 }
 
 /* 상세 팝업 레지스트리 — 스키마의 detail 키 → 팝업 컴포넌트. 스키마는 키만 선언하고 매핑은 여기가 갖는다.
-   팝업은 읽기전용이라 props는 onClose 하나다(실데이터 연동 시 row를 넘기도록 확장). */
-const DETAIL_MODALS: Record<DetailPopup, (p: { onClose: () => void }) => React.ReactElement> = {
+   팝업은 읽기전용이지만 **누른 행**을 받는다 — S1_43 산출내역·S1_40 체크리스트는 행마다 값이 다르다.
+   ⚠ `row` 를 안 넘기던 종전 코드 탓에 CompanyProfileModal 의 `row?` prop 이 한 번도 소비되지 않아
+     어느 행을 눌러도 헤더 대상명이 폴백 상수로 굳어 있었다(선언이 소비처까지 닿지 않는 그 부류).
+   타입 파라미터는 반변이라 `{ onClose }` 만 받는 기존 팝업도 그대로 할당된다 — 무수정으로 남겨 둔다. */
+const DETAIL_MODALS: Record<DetailPopup, (p: { onClose: () => void; row: Row }) => React.ReactElement> = {
   monthlyReport: MonthlyReportModal,
   gpSpec: GpSpecModal,
   companyProfile: CompanyProfileModal,
+  mgmtFeeDetail: MgmtFeeDetailModal,
+  dueDiligChecklist: DueDiligChecklistModal,
 };
 /* 링크 셀 title(동작 힌트) — 값은 절대 넣지 않는다(마스크 경계) */
 const DETAIL_HINT: Record<DetailPopup, string> = {
   monthlyReport: '월간보고 상세 보기',
   gpSpec: '운용사 명세 보기',
   companyProfile: '투자기업 기업개요 보기',
+  mgmtFeeDetail: '관리보수보고 상세조회',
+  dueDiligChecklist: '투자금실사보고서 체크리스트 조회',
 };
 
 /* 셀 안 링크 — 값 클릭으로 상세 팝업 진입. occasional_report_manage.tsx의 LinkCell 복사 관례.
@@ -481,11 +491,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const [modal, setModal] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null);
   /* 상세 보고서 팝업 — 컬럼이 detail을 선언한 스키마만(정기보고 등). 편집 모달과 별개 상태다:
      둘은 서로 다른 진입(셀 링크 vs 더블클릭)이고 동시에 열리지 않는다. */
-  const [detail, setDetail] = useState<DetailPopup | null>(null);
+  const [detail, setDetail] = useState<{ kind: DetailPopup; row: Row } | null>(null);
   const detailCol = schema.columns.find((c) => c.detail);
-  // 이 행에서 상세가 열리는가 — detailWhen이 있으면 값이 같은 행만(예: 보고구분 '월간보고')
-  const hasDetail = (row: Row) =>
-    !!detailCol && (detailCol.detailWhen == null || String((row as Record<string, unknown>)[detailCol.key] ?? "") === detailCol.detailWhen);
+  /* 이 행에서 상세가 열리는가 — 판정 정본은 schemas/detail_link.ts 의 linksDetail 하나다.
+     소비처가 셋(셀 렌더러·셀 Enter·우클릭 상세조회)이라 종전처럼 술어를 복제하면
+     "링크는 보이는데 Enter 는 안 먹는다"가 에러 없이 생긴다. */
+  const hasDetail = (row: Row) => linksDetail(detailCol, (row as Record<string, unknown>)[detailCol?.key ?? '']);
+  const openDetail = (row: Row) => { if (detailCol?.detail) setDetail({ kind: detailCol.detail, row }); };
   /* 상단 kebab 가시성 — 뷰포트에서 벗어나면(스크롤) 푸터 kebab 폴백을 노출(골드 subfund_manage 동형) */
   const topMoreRef = useRef<HTMLSpanElement>(null);
   const [topMoreVisible, setTopMoreVisible] = useState(true);
@@ -595,8 +607,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               값(텍스트)은 min-w-0 + ellipsis로 줄고, 칩은 shrink-0이라 긴 제목에도 살아남는다.
            ③ 그 외 — 공용 Cell(마스킹 내장) */
         cellRenderer: c.detail
-          ? (p: ICellRendererParams<Row>) => (c.detailWhen == null || String(p.value ?? "") === c.detailWhen
-              ? <LinkCell value={String(p.value ?? "")} hint={DETAIL_HINT[c.detail!]} onClick={() => setDetail(c.detail!)} />
+          ? (p: ICellRendererParams<Row>) => (linksDetail(c, p.value)
+              ? <LinkCell value={String(p.value ?? "")} hint={DETAIL_HINT[c.detail!]} onClick={() => { if (p.data) setDetail({ kind: c.detail!, row: p.data }); }} />
               : <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} unit={unitOn ? unit : undefined} />)
           : c.attachFrom
           ? (p: ICellRendererParams<Row>) => (
@@ -712,7 +724,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     const ev = e.event as MouseEvent;
     const items: CtxItem[] = [];
     // 원문 목록의 '상세조회' 버튼 대체 진입 — 액션 컬럼을 새로 만들지 않고 컨텍스트 메뉴에 둔다
-    if (detailCol && hasDetail(row)) items.push({ label: '상세조회', icon: 'search', onSelect: () => setDetail(detailCol.detail!) });
+    if (hasDetail(row)) items.push({ label: '상세조회', icon: 'search', onSelect: () => openDetail(row) });
     if (editable) items.push({ label: '수정', icon: 'file', onSelect: () => setModal({ mode: 'edit', row }) });
     items.push({ label: '행 복사', icon: 'layers', onSelect: () => copyRow(row) });
     items.push({ label: 'Excel 내보내기', icon: 'download', onSelect: exportExcel });
@@ -840,7 +852,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                 if (colId.startsWith("ag-Grid")) return;
                 /* 링크 셀은 AG Grid의 Tab 순회가 셀 안 button에 닿지 않으므로 셀 Enter로 진입을 보장한다
                    (occasional_report_manage.tsx onCellKeyDown과 동일 이유). 편집 모달보다 우선. */
-                if (detailCol && colId === detailCol.key && hasDetail(e.data)) { setDetail(detailCol.detail!); return; }
+                if (detailCol && colId === detailCol.key && hasDetail(e.data)) { openDetail(e.data); return; }
                 if (editable) setModal({ mode: "edit", row: e.data });
               }}
               preventDefaultOnContextMenu
@@ -886,7 +898,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       )}
 
       {/* 읽기전용 상세 보고서 팝업 — 스키마가 detail을 선언한 컬럼에서만 열린다(그 외 페이지엔 없음) */}
-      {detail && React.createElement(DETAIL_MODALS[detail], { onClose: () => setDetail(null) })}
+      {detail && React.createElement(DETAIL_MODALS[detail.kind], { onClose: () => setDetail(null), row: detail.row })}
 
       <ListFilterDrawer
         open={filterOpen}

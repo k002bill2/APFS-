@@ -11,13 +11,16 @@ export const TONE_VALUES = ['primary','success','warning','danger','info','cyan'
 
 // 읽기전용 상세 보고서 팝업 종류. 컬럼이 detail을 선언하면 그 셀 값이 링크가 되어 해당 팝업을 연다.
 // 팝업 컴포넌트 매핑은 소비처(generic_list.tsx)가 갖는다 — 스키마는 어떤 팝업인지만 선언한다.
-export const DETAIL_POPUPS = ['monthlyReport', 'gpSpec', 'companyProfile'] as const;
+export const DETAIL_POPUPS = ['monthlyReport', 'gpSpec', 'companyProfile', 'mgmtFeeDetail', 'dueDiligChecklist'] as const;
 export type DetailPopup = typeof DETAIL_POPUPS[number];
 
 // attachFrom: 이 컬럼의 값 뒤에 첨부파일 확장자 칩(PDF 등)을 붙인다. 값은 같은 행의 **필드 키**
 // (예: title 컬럼 + attachFrom:'attachment') — 첨부는 별도 컬럼을 만들지 않고 제목에 붙여 표현한다.
-// detail/detailWhen: 이 컬럼 값을 클릭(또는 셀 Enter)하면 읽기전용 상세 팝업을 연다. detailWhen이 있으면
-// **값이 그것과 같은 행만** 링크가 되고 나머지는 평상 셀이다(예: 보고구분 '월간보고'만 상세가 있는 정기보고).
+// detail/detailWhen/detailPattern: 이 컬럼 값을 클릭(또는 셀 Enter)하면 읽기전용 상세 팝업을 연다.
+// detailWhen이 있으면 **값이 그것과 같은 행만** 링크가 되고 나머지는 평상 셀이다(예: 보고구분 '월간보고'만
+//   상세가 있는 정기보고). detailPattern은 같은 판정을 **값의 형식**으로 한다(정규식 source 문자열) —
+//   S1_40 실사일자는 원문이 `/^\d{4}-\d{2}-\d{2}$/` 를 통과한 행만 버튼으로 만들고 ''·'X'는 평상 셀이라
+//   동등비교로 표현할 수 없다. 판정 정본은 schemas/detail_link.ts 의 linksDetail 하나다(소비처 3곳 공유).
 // 선언이 없는 스키마는 종전과 동일하게 동작한다(opt-in).
 // note: 컬럼 **헤더** 옆 ⚠검토필요 마커. 조회 전용 스키마(fields: [])는 RowFormModal이 없어 FieldSpec.note로
 //   목업의 `!` 마커를 실을 데가 없다 — 억지로 fields를 채우면 `editable = fields.length > 0`이 켜져
@@ -28,7 +31,7 @@ export type DetailPopup = typeof DETAIL_POPUPS[number];
 //   폭은 **고정이 아니라 하한**으로 둔다 — 400% 확대 시 고정 폭 pinned가 화면을 다 먹는다(A11Y 10).
 // multiline: 줄바꿈이 든 본문 셀(사후관리 내용 등)을 `white-space: pre-line` 으로 편다.
 //   기본 셀은 nowrap+ellipsis 라 여러 줄 원문이 한 줄로 잘려 내용을 잃는다(원문 `.content-cell`).
-export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; pinned?: 'left'; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; note?: ReviewNoteSpec; multiline?: boolean; }
+export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; pinned?: 'left'; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; detailPattern?: string; note?: ReviewNoteSpec; multiline?: boolean; }
 // note: 라벨 옆 ⚠검토필요 마커(목업 `.review` data-rec/data-dat 원문). RowFormModal이 Field 라벨에 ReviewMarker로 렌더한다.
 // 설계 메모라 마스킹·엑셀 대상이 아니며, 문구는 목업 원문 그대로(창작 금지 — apfs-grid "검토필요 마커").
 export interface ReviewNoteSpec { rec: string; dat: string; }
@@ -80,6 +83,11 @@ const ColumnZ = z.object({
   pinned: z.literal('left').optional(),
   attachFrom: z.string().optional(),
   detail: z.enum(DETAIL_POPUPS).optional(), detailWhen: z.string().optional(),
+  /* 잘못된 정규식은 **파싱 시점에** 잡는다 — 렌더 중 new RegExp 가 throw 하면 화면이 통째로 백지가 된다. */
+  detailPattern: z.string().optional().refine(
+    (src) => { if (src == null) return true; try { new RegExp(src); return true; } catch { return false; } },
+    { message: 'detailPattern must be a valid RegExp source' },
+  ),
   note: z.object({ rec: z.string(), dat: z.string() }).optional(),
   multiline: z.boolean().optional(),
 });

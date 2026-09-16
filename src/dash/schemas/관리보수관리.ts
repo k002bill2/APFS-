@@ -7,13 +7,16 @@
    no:1(제이비인베스트먼트) 1건뿐이라, 다른 19건은 근거 없는 추정 데이터가 되므로" 제외.
    그 판단을 그대로 승계한다 — 표를 채우려고 행을 만들지 않는다.
 
-   미구현(창작 아님) 2건:
-   ① 지급일자 클릭 → `관리보수보고 상세조회` 팝업(산출내역: 기간 2025-01-01~2025-12-31 ·
-      기준금액 8,509,289,613 · 일수 365).
-   ② `확정여부` **셀 내 select**(미확정 ↔ 확정). 원문의 핵심 액션인데 GenericListPage 에
+   ✅ 지급일자 클릭 → `관리보수보고 상세조회` 팝업 구현(2026-09-16). `detail: 'mgmtFeeDetail'`.
+      팝업 전용 값(기간 2025-01-01~2025-12-31 · 기준금액 8,509,289,613 · 일수 365)은 목록 컬럼이
+      아니라서 `mgmt_fee_detail_model.ts` 가 갖는다 — sample 에 넣으면 레지스트리 불변식
+      (sample 키 ⊆ columns ∪ fields)이 깨진다.
+
+   미구현(창작 아님) 1건:
+   ① `확정여부` **셀 내 select**(미확정 ↔ 확정). 원문의 핵심 액션인데 GenericListPage 에
       인라인 셀 편집 기능이 없다. `fields` 를 채워 되살릴 수 있는 것이 **아니다** — fields 는
       등록/수정 모달을 켜므로 원문에 없는 `등록` 버튼이 생긴다(이전 버전이 그 상태였다).
-      인라인 확정 컨트롤은 별도 기능이라 이번 범위 밖으로 남긴다(2026-09-16 Codex 4R P1). 팝업이 생기면 그때 원문 값을 싣는다.
+      인라인 확정 컨트롤은 별도 기능이라 이번 범위 밖으로 남긴다(2026-09-16 Codex 4R P1).
    원문이 "확정 여부를 다루는 관리 화면이므로 금액 단위전환 토글은 규칙상 미적용"이라 unitToggle 도 두지 않는다. */
 import type { PageSchema } from './types';
 
@@ -27,9 +30,13 @@ export const schema: PageSchema = {
     { key: 'gp',         label: '운용사',   type: 'gp',     align: 'left' },
     { key: 'subFund',    label: '자펀드',   type: 'text',   align: 'left' },
     { key: 'reportType', label: '보고구분', type: 'text',   align: 'center' },
-    { key: 'payDate',    label: '지급일자', type: 'date',   align: 'center' },
+    /* 원문 `.paylink` — 지급일자 클릭 시 `관리보수보고 상세조회` 팝업. detailWhen/detailPattern 이
+       없으므로 모든 행이 링크다(원문도 전 행이 버튼). 산출내역 값은 mgmt_fee_detail_model.ts. */
+    { key: 'payDate',    label: '지급일자', type: 'date',   align: 'center', detail: 'mgmtFeeDetail' },
     { key: 'payType',    label: '지급구분', type: 'text',   align: 'center' },
-    { key: 'amount',     label: '금액(원)', type: 'amount', unit: '원', align: 'right' },
+    /* ⚠ 라벨에 단위를 박지 않는다 — generic_list 가 `c.unit` 을 헤더에 덧붙이므로
+       label:'금액(원)' + unit:'원' 이면 헤더가 `금액(원) (원)` 이 된다(2026-09-16 런타임 실측). */
+    { key: 'amount',     label: '금액',     type: 'amount', unit: '원', align: 'right' },
     { key: 'isConfirmed', label: '확정여부', type: 'status', align: 'center' },
   ],
   fields: [],
