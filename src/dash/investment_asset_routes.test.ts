@@ -722,3 +722,60 @@ describe('S1_40 투자금실사보고서 체크리스트 팝업 — 원문 대�
     expect((s.sample ?? []).every((r) => r.isConfirmed === '-')).toBe(true);
   });
 });
+
+
+describe('inlineSelect(셀 안 select) — 선언이 화면까지 닿는가', () => {
+  /* group·note·pinned·unitToggle·CompanyProfileModal.row 에 이어 **여섯 번째** 같은 부류가 되지 않도록
+     소비처를 못박는다: 스키마가 선언해도 GenericListPage 가 읽지 않으면 조용히 평상 셀로 남는다. */
+  const gl = readFileSync(new URL('./generic_list.tsx', import.meta.url), 'utf8');
+  const html = readFileSync('docs/mockups/01_투자자산관리/S1_43_관리보수관리.html', 'utf8');
+
+  it('GenericListPage 가 c.inlineSelect 를 렌더러 분기로 소비한다', () => {
+    expect(gl).toContain('c.inlineSelect');
+    expect(gl).toContain('InlineSelectCell');
+  });
+
+  it('값 변경이 rows(SSOT)에 반영된다 — 그리드 node 만 고치지 않는다', () => {
+    expect(gl).toContain('const setCellValue');
+    expect(gl).toContain('setRows((prev) => prev.map((r) => (r.id === id');
+  });
+
+  /* 마우스 없이 값을 바꿀 수 있어야 한다: 셀 Enter 로 select 에 초점을 넣고,
+     초점이 들어간 뒤에는 그리드가 ↑↓ 를 가로채지 않는다. 둘 중 하나만 있으면 키보드로 조작 불가다. */
+  it('키보드 경로 2단이 모두 배선돼 있다 (Enter 진입 · 키 가로채기 해제)', () => {
+    expect(gl).toContain("querySelector?.('select')?.focus()");
+    expect(gl).toContain('suppressKeyboardEvent');
+    expect(gl).toContain("tagName === 'SELECT'");
+  });
+
+  it('관리보수관리 확정여부가 원문 옵션 2종을 원문 순서로 갖는다', () => {
+    const col = resolveSchema('관리보수관리').columns.find((c) => c.key === 'isConfirmed');
+    expect(col?.inlineSelect).toEqual(['확정', '미확정']);
+    // 원문 option 순서: 확정 먼저, 미확정 다음
+    expect(html).toContain("<option'+(r.cfm==='확정'?' selected':'')+'>확정</option><option'+(r.cfm==='미확정'?' selected':'')+'>미확정</option>");
+    expect(html).toContain("DATA[+s.getAttribute('data-cfm')].cfm=s.value");
+  });
+
+  /* 원문은 배지(cfmTag)를 **정의만 하고 쓰지 않는다** — select 가 그 자리를 차지한다.
+     둘 다 그리면 같은 값이 한 셀에 두 번 나온다. */
+  it('원문은 확정여부 셀에 배지를 그리지 않는다(select 가 대체)', () => {
+    expect(html).toContain('function cfmTag(s)');          // 정의는 있고
+    expect(html).not.toContain('cfmTag(r.cfm)');           // 호출은 없다
+  });
+
+  it('inlineSelect 선언 컬럼의 값 도메인이 sample 행과 맞는다', () => {
+    for (const sc of ALL_SCHEMAS) {
+      for (const c of sc.columns) {
+        if (!c.inlineSelect) continue;
+        for (const r of sc.sample ?? [])
+          expect(c.inlineSelect, `${sc.route}.${c.key} 행 값 '${r[c.key]}'`).toContain(String(r[c.key]));
+      }
+    }
+  });
+
+  /* fields 를 채우면 `editable` 이 켜져 원문에 없는 등록 버튼이 생긴다 — inlineSelect 를 쓴 이유 그 자체다. */
+  it('inlineSelect 를 쓰는 화면은 fields 가 비어 있다(등록 버튼 금지)', () => {
+    for (const sc of ALL_SCHEMAS.filter((x) => x.columns.some((c) => c.inlineSelect)))
+      expect(sc.fields, `${sc.route}: inlineSelect 화면에 fields`).toHaveLength(0);
+  });
+});

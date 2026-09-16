@@ -29,9 +29,14 @@ export type DetailPopup = typeof DETAIL_POPUPS[number];
 //   (컬럼 수십 개를 단일 헤더로 늘어놓으면 판독 불가 — S1_31 58컬럼·S1_33 회수실적 4컬럼이 원문에서 2단이다).
 // pinned: 좌측 고정 열. 와이드 표에서 가로 스크롤 중에도 식별 컬럼(운용사·자펀드·투자기업)을 붙잡아 둔다.
 //   폭은 **고정이 아니라 하한**으로 둔다 — 400% 확대 시 고정 폭 pinned가 화면을 다 먹는다(A11Y 10).
+// inlineSelect: **셀 안에서 값을 바꾸는 select**. 원문이 "조회 화면인데 이 컬럼 하나만 편집"인 경우다
+//   (S1_43 관리보수관리의 확정여부 미확정↔확정 — `<select class="cellsel" data-cfm>`).
+//   `fields` 로는 대신할 수 없다 — fields 는 `editable = fields.length > 0` 을 켜서 원문에 없는
+//   `등록` 버튼과 등록/수정 모달을 함께 만든다(generic_list.tsx). 그래서 컬럼 수준 계약을 둔다.
+//   선언하면 그 셀은 StatusBadge/Cell 대신 select 만 그린다(원문도 `cfmTag()` 를 정의해 놓고 쓰지 않는다).
 // multiline: 줄바꿈이 든 본문 셀(사후관리 내용 등)을 `white-space: pre-line` 으로 편다.
 //   기본 셀은 nowrap+ellipsis 라 여러 줄 원문이 한 줄로 잘려 내용을 잃는다(원문 `.content-cell`).
-export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; pinned?: 'left'; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; detailPattern?: string; note?: ReviewNoteSpec; multiline?: boolean; }
+export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; pinned?: 'left'; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; detailPattern?: string; inlineSelect?: string[]; note?: ReviewNoteSpec; multiline?: boolean; }
 // note: 라벨 옆 ⚠검토필요 마커(목업 `.review` data-rec/data-dat 원문). RowFormModal이 Field 라벨에 ReviewMarker로 렌더한다.
 // 설계 메모라 마스킹·엑셀 대상이 아니며, 문구는 목업 원문 그대로(창작 금지 — apfs-grid "검토필요 마커").
 export interface ReviewNoteSpec { rec: string; dat: string; }
@@ -90,6 +95,8 @@ const ColumnZ = z.object({
   ),
   note: z.object({ rec: z.string(), dat: z.string() }).optional(),
   multiline: z.boolean().optional(),
+  // 선택지가 2개 미만이면 고를 것이 없다 — 선언 실수를 파싱 시점에 잡는다
+  inlineSelect: z.array(z.string()).min(2).optional(),
 });
 const FieldZ = z.object({
   key: z.string(), label: z.string(), control: z.enum(FIELD_CONTROLS),

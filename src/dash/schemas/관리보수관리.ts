@@ -12,11 +12,10 @@
       아니라서 `mgmt_fee_detail_model.ts` 가 갖는다 — sample 에 넣으면 레지스트리 불변식
       (sample 키 ⊆ columns ∪ fields)이 깨진다.
 
-   미구현(창작 아님) 1건:
-   ① `확정여부` **셀 내 select**(미확정 ↔ 확정). 원문의 핵심 액션인데 GenericListPage 에
-      인라인 셀 편집 기능이 없다. `fields` 를 채워 되살릴 수 있는 것이 **아니다** — fields 는
-      등록/수정 모달을 켜므로 원문에 없는 `등록` 버튼이 생긴다(이전 버전이 그 상태였다).
-      인라인 확정 컨트롤은 별도 기능이라 이번 범위 밖으로 남긴다(2026-09-16 Codex 4R P1).
+   ✅ `확정여부` 셀 내 select 구현(2026-09-16). `ColumnSpec.inlineSelect`.
+      `fields` 로는 못 한다 — fields 는 `editable = fields.length > 0` 을 켜서 원문에 없는 `등록`
+      버튼과 등록/수정 모달을 함께 만든다(이전 버전이 그 상태였다). 그래서 컬럼 수준 계약을 뒀다.
+      원문 옵션 순서(확정 → 미확정)와 변경 시 데이터 갱신(`DATA[i].cfm = s.value`)을 그대로 옮겼다.
    원문이 "확정 여부를 다루는 관리 화면이므로 금액 단위전환 토글은 규칙상 미적용"이라 unitToggle 도 두지 않는다. */
 import type { PageSchema } from './types';
 
@@ -37,7 +36,10 @@ export const schema: PageSchema = {
     /* ⚠ 라벨에 단위를 박지 않는다 — generic_list 가 `c.unit` 을 헤더에 덧붙이므로
        label:'금액(원)' + unit:'원' 이면 헤더가 `금액(원) (원)` 이 된다(2026-09-16 런타임 실측). */
     { key: 'amount',     label: '금액',     type: 'amount', unit: '원', align: 'right' },
-    { key: 'isConfirmed', label: '확정여부', type: 'status', align: 'center' },
+    /* 원문 `<select class="cellsel" data-cfm>` — 이 화면의 핵심 액션이다(조회 화면인데 이 컬럼만 편집).
+       원문은 StatusBadge 격인 `cfmTag()` 를 정의해 놓고 **쓰지 않는다** — 셀에 select 만 그린다.
+       type:'status' 는 남겨 둔다: 필터 도메인(statusDomain)이 그 값을 쓰고, 렌더는 inlineSelect 가 이긴다. */
+    { key: 'isConfirmed', label: '확정여부', type: 'status', align: 'center', inlineSelect: ['확정', '미확정'] },
   ],
   fields: [],
   /* `지급기간`은 행에 대응 필드가 없어 tag 로 떨어져 표를 0건으로 만든다(2026-09-16 Codex 지적).
