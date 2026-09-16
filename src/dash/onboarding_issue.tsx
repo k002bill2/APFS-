@@ -4,7 +4,7 @@
    ⚠ 실제 계정 활성화·OTP 등록·메일 링크 검증은 수행하지 않는다. 판정은 `auth_model`의 순수 함수가 한다. */
 import React, { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
-  AuthLayout, SplitCard, Field, PrimaryBtn, SecondaryBtn, DonePanel, DemoNote,
+  AuthLayout, AuthFoot, SplitCard, Field, PrimaryBtn, SecondaryBtn, DonePanel,
   Callout, KvGrid, Pill, OtpRegisterBlock, Toast, Logo, useDemoOtp, useToast, T, FADE_UP,
 } from './auth_shared';
 import { railSteps, ISSUE_RAIL, verifyRegister, hasError, PW_POLICY_HINT, type RegisterErrors } from './auth_model';
@@ -39,12 +39,12 @@ export function OnboardingIssue({ onNav }: { onNav?: (route: string) => void }) 
   const restart = () => { setStep(1); setPw(''); setConfirm(''); setOtpIn(''); setErrs(NO_ERR); };
 
   return (
-    <AuthLayout route="onboarding-issue" onNav={onNav}>
+    <AuthLayout>
       <SplitCard
         steps={railSteps(ISSUE_RAIL, step)}
         railHead={<>
           <Logo />
-          <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '10px 0 32px' }}>
+          <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '10px 0 clamp(14px,3.5vw,32px)' }}>
             계정 활성화(발급 온보딩)<br />계정 활성화까지 3단계
           </p>
         </>}
@@ -74,16 +74,15 @@ export function OnboardingIssue({ onNav }: { onNav?: (route: string) => void }) 
             <h1 style={T.title3}>비밀번호·OTP 등록</h1>
             <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '6px 0 22px' }}>비밀번호를 설정하고 인증앱(OTP)을 등록해 주세요.</p>
             <form noValidate onSubmit={submit2} className="flex flex-col gap-4">
-              <Field id="issue-pw" label="새 비밀번호" type="password" icon="lock" placeholder="9자 이상, 영문·숫자·특수문자" autoComplete="new-password"
+              <Field required id="issue-pw" label="새 비밀번호" type="password" icon="lock" placeholder="9자 이상, 영문·숫자·특수문자" autoComplete="new-password"
                 value={pw} onChange={setPw} error={errs.pw} help={PW_POLICY_HINT} inputRef={firstField} />
-              <Field id="issue-pw2" label="비밀번호 확인" type="password" icon="lock" placeholder="다시 입력" autoComplete="new-password"
+              <Field required id="issue-pw2" label="비밀번호 확인" type="password" icon="lock" placeholder="다시 입력" autoComplete="new-password"
                 value={confirm} onChange={setConfirm} error={errs.confirm} />
               <OtpRegisterBlock seed={SEED} display={display} secs={secs} />
-              <Field id="issue-otp" label="등록 확인 코드" icon="lock" placeholder="앱에 표시된 6자리" autoComplete="one-time-code"
+              <Field required id="issue-otp" label="등록 확인 코드" icon="lock" placeholder="앱에 표시된 6자리" autoComplete="one-time-code"
                 inputMode="numeric" maxLength={7} value={otpIn} onChange={setOtpIn} error={errs.otp} />
               <PrimaryBtn type="submit" full>등록 완료 → 계정 활성</PrimaryBtn>
             </form>
-            <DemoNote>위 「현재 앱 코드」가 등록 확인 코드의 정답입니다 — 실제 인증앱 대신 화면에 표시하는 시연용 코드입니다.</DemoNote>
           </div>
         )}
 
@@ -102,6 +101,10 @@ export function OnboardingIssue({ onNav }: { onNav?: (route: string) => void }) 
             </>} />
         )}
       </SplitCard>
+      <AuthFoot onNav={onNav} links={[
+        { label: '로그인 화면', route: 'login' },
+        { label: '초대 온보딩(운용사)', route: 'onboarding-invite' },
+      ]} />
       <Toast toast={toast} />
     </AuthLayout>
   );

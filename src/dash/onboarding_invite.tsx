@@ -6,7 +6,7 @@
    실제 간편인증(CI 실명매칭)·계정 생성·감사로그 기록은 수행하지 않는다. */
 import React, { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
-  AuthLayout, Field, PrimaryBtn, SecondaryBtn, DonePanel, DemoNote, Callout,
+  AuthLayout, AuthFoot, Field, PrimaryBtn, SecondaryBtn, DonePanel, Callout,
   KvGrid, Pill, OtpRegisterBlock, Toast, Logo, useDemoOtp, useToast, T, FADE_UP, FADE_UP_CARD,
 } from './auth_shared';
 import {
@@ -91,13 +91,13 @@ export function OnboardingInvite({ onNav }: { onNav?: (route: string) => void })
   const restart = () => { setStep(1); setName(''); setNameErr(null); setPw(''); setConfirm(''); setOtpIn(''); setErrs(NO_ERR); };
 
   return (
-    <AuthLayout route="onboarding-invite" onNav={onNav}>
+    <AuthLayout>
       <div className="w-full overflow-hidden" style={{ maxWidth: 500, background: 'var(--card)', borderRadius: 'var(--radius-2xl)', boxShadow: 'var(--shadow-md)', animation: FADE_UP_CARD }}>
         {/* 고정 브랜드 표면 — 적응형 --primary 가 아니라 --brand-solid 를 써야 다크에서도 흰 글자 대비가 유지된다 */}
         <header className="box-border" style={{ background: 'var(--brand-solid)', color: 'var(--on-brand-solid)', padding: '32px 32px 28px' }}>
           <Logo white />
           <h1 style={{ font: '700 24px/1.3 var(--font-sans)', letterSpacing: '-0.02em', margin: '18px 0 4px' }}>
-            {step === 4 ? `${INVITEE.name} 님, 환영합니다` : `${INVITEE.name} 님, 에이핏(AFIT)에 초대되었습니다`}
+            {step === 4 ? `${INVITEE.name} 님, 환영합니다` : `${INVITEE.name} 님, 계정에 초대되었습니다`}
           </h1>
           <p style={{ font: '400 13.5px/1.6 var(--font-sans)', margin: 0, color: 'color-mix(in srgb, var(--on-brand-solid) 78%, transparent)' }}>
             농금원 투자관리부 · 초대 유효기간 72시간
@@ -129,12 +129,11 @@ export function OnboardingInvite({ onNav }: { onNav?: (route: string) => void })
                 간편인증 실명(CI)이 초대 대상 <b style={{ color: 'var(--foreground)' }}>{INVITEE.name}</b>와 일치해야 다음 단계가 열립니다.
               </p>
               <form noValidate onSubmit={submit2} className="flex flex-col gap-4">
-                <Field id="invite-name" label="본인 실명" icon="user" placeholder="실명 입력" autoComplete="name"
+                <Field required id="invite-name" label="본인 실명" icon="user" placeholder="실명 입력" autoComplete="name"
                   value={name} onChange={setName} error={nameErr} inputRef={firstField} />
                 <PrimaryBtn type="submit" full>간편인증 진행</PrimaryBtn>
               </form>
               <p style={{ ...T.caption1, margin: '16px 0 0', color: 'var(--muted-foreground)' }}>실명 불일치 시 초대가 거부되고 감사로그에 기록됩니다.</p>
-              <DemoNote>초대 대상 실명 <b style={{ color: 'var(--foreground)' }}>{INVITEE.name}</b>을 입력해야 통과하는 UI 목업입니다.</DemoNote>
             </div>
           )}
 
@@ -142,16 +141,15 @@ export function OnboardingInvite({ onNav }: { onNav?: (route: string) => void })
             <div style={{ animation: FADE_UP }}>
               <h2 style={{ ...T.body2, fontWeight: 700, marginBottom: 14 }}>비밀번호·OTP 등록</h2>
               <form noValidate onSubmit={submit3} className="flex flex-col gap-4">
-                <Field id="invite-pw" label="새 비밀번호" type="password" icon="lock" placeholder="9자 이상, 영문·숫자·특수문자" autoComplete="new-password"
+                <Field required id="invite-pw" label="새 비밀번호" type="password" icon="lock" placeholder="9자 이상, 영문·숫자·특수문자" autoComplete="new-password"
                   value={pw} onChange={setPw} error={errs.pw} help={PW_POLICY_HINT} inputRef={firstField} />
-                <Field id="invite-pw2" label="비밀번호 확인" type="password" icon="lock" placeholder="다시 입력" autoComplete="new-password"
+                <Field required id="invite-pw2" label="비밀번호 확인" type="password" icon="lock" placeholder="다시 입력" autoComplete="new-password"
                   value={confirm} onChange={setConfirm} error={errs.confirm} />
                 <OtpRegisterBlock seed={SEED} display={display} secs={secs} />
-                <Field id="invite-otp" label="등록 확인 코드" icon="lock" placeholder="앱에 표시된 6자리" autoComplete="one-time-code"
+                <Field required id="invite-otp" label="등록 확인 코드" icon="lock" placeholder="앱에 표시된 6자리" autoComplete="one-time-code"
                   inputMode="numeric" maxLength={7} value={otpIn} onChange={setOtpIn} error={errs.otp} />
                 <PrimaryBtn type="submit" full>등록 완료</PrimaryBtn>
               </form>
-              <DemoNote>위 「현재 앱 코드」가 등록 확인 코드의 정답입니다 — 실제 인증앱 대신 화면에 표시하는 시연용 코드입니다.</DemoNote>
             </div>
           )}
 
@@ -160,7 +158,7 @@ export function OnboardingInvite({ onNav }: { onNav?: (route: string) => void })
               compact
               titleAs="h2"
               title="온보딩 완료"
-              desc={<>{INVITEE.name} 님의 운용사 계정이 생성되었습니다.<br />이제 로그인해 에이핏(AFIT)을 이용할 수 있어요.</>}
+              desc={<>{INVITEE.name} 님의 운용사 계정이 생성되었습니다.<br />이제 로그인해 이용할 수 있어요.</>}
               rows={[
                 { k: '계정', v: INVITEE.email, strong: true },
                 { k: '실명매칭', v: '간편인증 일치 확인' },
@@ -174,6 +172,10 @@ export function OnboardingInvite({ onNav }: { onNav?: (route: string) => void })
           )}
         </div>
       </div>
+      <AuthFoot onNav={onNav} links={[
+        { label: '로그인 화면', route: 'login' },
+        { label: '발급 온보딩', route: 'onboarding-issue' },
+      ]} />
       <Toast toast={toast} />
     </AuthLayout>
   );
