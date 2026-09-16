@@ -16,7 +16,10 @@ import type { PageSchema, DetailPopup } from './schemas/types';
 import { MonthlyReportModal } from './monthly_report_modal';   // 읽기전용 상세 보고서 팝업(컬럼 detail 옵트인 스키마만)
 import { GpSpecModal } from './gp_spec_modal';                 // 운용사 명세(S1_02) — 운용사 명세서 목록의 행 상세
 import { CompanyProfileModal } from './company_profile_modal'; // 투자기업 기업개요(S1_30) — 투자기업정보(통합)의 행 상세
+import { MgmtFeeDetailModal } from './mgmt_fee_detail_modal';   // 관리보수보고 상세조회(S1_43) — 지급일자 링크
+import { DueDiligChecklistModal } from './due_dilig_checklist_modal'; // 투자금실사보고서 체크리스트(S1_40) — 실사일자 링크
 import { noteHeader, foldGroups } from './grid_header_note';   // 컬럼 헤더 옆 ⚠검토필요 마커 + 2단 그룹헤더(ColumnSpec note/group 소비처)
+import { linksDetail } from './schemas/detail_link';   // detail 링크 술어 정본(소비처 3곳 공유)
 import { UNITS, DEFAULT_UNIT, isUnit, toUnit, amountHeader } from './schemas/unit';
 import type { Unit } from './schemas/unit';
 import type { ColumnSpec } from './schemas/types';
@@ -28,7 +31,7 @@ import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescrip
 import { DatePicker } from './ui/date-picker';
 import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode, CellContextMenuEvent, CellKeyDownEvent } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode, CellContextMenuEvent, CellKeyDownEvent, SuppressKeyboardEventParams } from 'ag-grid-community';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 행선택)·내용폭 자동화 SSOT
 import './aggrid_shared.css';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
@@ -433,17 +436,24 @@ function rowMatchesFilters(row: Row, schema: PageSchema, filterValues: Record<st
 }
 
 /* 상세 팝업 레지스트리 — 스키마의 detail 키 → 팝업 컴포넌트. 스키마는 키만 선언하고 매핑은 여기가 갖는다.
-   팝업은 읽기전용이라 props는 onClose 하나다(실데이터 연동 시 row를 넘기도록 확장). */
-const DETAIL_MODALS: Record<DetailPopup, (p: { onClose: () => void }) => React.ReactElement> = {
+   팝업은 읽기전용이지만 **누른 행**을 받는다 — S1_43 산출내역·S1_40 체크리스트는 행마다 값이 다르다.
+   ⚠ `row` 를 안 넘기던 종전 코드 탓에 CompanyProfileModal 의 `row?` prop 이 한 번도 소비되지 않아
+     어느 행을 눌러도 헤더 대상명이 폴백 상수로 굳어 있었다(선언이 소비처까지 닿지 않는 그 부류).
+   타입 파라미터는 반변이라 `{ onClose }` 만 받는 기존 팝업도 그대로 할당된다 — 무수정으로 남겨 둔다. */
+const DETAIL_MODALS: Record<DetailPopup, (p: { onClose: () => void; row: Row }) => React.ReactElement> = {
   monthlyReport: MonthlyReportModal,
   gpSpec: GpSpecModal,
   companyProfile: CompanyProfileModal,
+  mgmtFeeDetail: MgmtFeeDetailModal,
+  dueDiligChecklist: DueDiligChecklistModal,
 };
 /* 링크 셀 title(동작 힌트) — 값은 절대 넣지 않는다(마스크 경계) */
 const DETAIL_HINT: Record<DetailPopup, string> = {
   monthlyReport: '월간보고 상세 보기',
   gpSpec: '운용사 명세 보기',
   companyProfile: '투자기업 기업개요 보기',
+  mgmtFeeDetail: '관리보수보고 상세조회',
+  dueDiligChecklist: '투자금실사보고서 체크리스트 조회',
 };
 
 /* 셀 안 링크 — 값 클릭으로 상세 팝업 진입. occasional_report_manage.tsx의 LinkCell 복사 관례.
@@ -458,6 +468,33 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
       style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
       <MT>{value}</MT>
     </button>
+  );
+}
+
+/* 셀 안 select — `ColumnSpec.inlineSelect` 선언 컬럼. 원문 S1_43 `<select class="cellsel" data-cfm>` 이식.
+   왜 셀 편집인가: 원문은 등록 폼이 없는 **조회 화면**인데 이 컬럼 하나만 바꾼다. `fields` 를 채우면
+   `editable` 이 켜져 원문에 없는 `등록` 버튼이 생기므로(generic_list `editable = fields.length > 0`)
+   컬럼 수준 계약으로 푼다. 원문도 StatusBadge 격인 `cfmTag()` 를 정의만 해 두고 쓰지 않는다 —
+   이 셀은 select 만 그린다(배지와 함께 그리면 같은 값이 두 번 나온다).
+
+   ⚠ 값은 마스킹하지 않는다. select 의 표시값은 **선택 상태**이고 가리면 무엇이 선택됐는지 알 수 없어
+     컨트롤이 무의미해진다(StatusBadge 를 안 가리는 것과 같은 이유 — "축은 두고 데이터는 가린다").
+   ⚠ 폰트는 inline 으로 준다 — preflight:false 라 select 가 UA 기본(13.3px Arial)으로 튄다.
+   ⚠ Chrome UA 때문에 height 만으로는 안 맞는다 — lineHeight 를 함께 준다([[form-control-height-38-line-height-trap]]). */
+function InlineSelectCell({ value, options, label, onChange }: {
+  value: string; options: string[]; label: string; onChange: (v: string) => void;
+}) {
+  return (
+    <select
+      value={options.includes(value) ? value : options[0]}
+      aria-label={label + ' 선택'}
+      onChange={(e) => onChange(e.target.value)}
+      /* 셀 클릭이 행 선택·컨텍스트로 새지 않도록 컨트롤 안에서 멈춘다 */
+      onClick={(e) => e.stopPropagation()}
+      className="rounded-tok-sm border border-border-strong bg-card text-foreground"
+      style={{ font: 'inherit', fontSize: 12.5, height: 30, lineHeight: '20px', padding: '0 8px', maxWidth: '100%' }}>
+      {options.map((o) => <option key={o} value={o}>{o}</option>)}
+    </select>
   );
 }
 
@@ -481,11 +518,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const [modal, setModal] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null);
   /* 상세 보고서 팝업 — 컬럼이 detail을 선언한 스키마만(정기보고 등). 편집 모달과 별개 상태다:
      둘은 서로 다른 진입(셀 링크 vs 더블클릭)이고 동시에 열리지 않는다. */
-  const [detail, setDetail] = useState<DetailPopup | null>(null);
+  const [detail, setDetail] = useState<{ kind: DetailPopup; row: Row } | null>(null);
   const detailCol = schema.columns.find((c) => c.detail);
-  // 이 행에서 상세가 열리는가 — detailWhen이 있으면 값이 같은 행만(예: 보고구분 '월간보고')
-  const hasDetail = (row: Row) =>
-    !!detailCol && (detailCol.detailWhen == null || String((row as Record<string, unknown>)[detailCol.key] ?? "") === detailCol.detailWhen);
+  /* 이 행에서 상세가 열리는가 — 판정 정본은 schemas/detail_link.ts 의 linksDetail 하나다.
+     소비처가 셋(셀 렌더러·셀 Enter·우클릭 상세조회)이라 종전처럼 술어를 복제하면
+     "링크는 보이는데 Enter 는 안 먹는다"가 에러 없이 생긴다. */
+  const hasDetail = (row: Row) => linksDetail(detailCol, (row as Record<string, unknown>)[detailCol?.key ?? '']);
+  const openDetail = (row: Row) => { if (detailCol?.detail) setDetail({ kind: detailCol.detail, row }); };
   /* 상단 kebab 가시성 — 뷰포트에서 벗어나면(스크롤) 푸터 kebab 폴백을 노출(골드 subfund_manage 동형) */
   const topMoreRef = useRef<HTMLSpanElement>(null);
   const [topMoreVisible, setTopMoreVisible] = useState(true);
@@ -580,6 +619,9 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         field: c.key as any,   // 스키마 동적 키 — Row 정적 타입 밖
         headerName: unitOn && c.type === 'amount' ? amountHeader(c.label, unit) : c.label + (c.unit ? ` (${c.unit})` : ""),
         ...noteHeader<Row>(c.note),   // 목업 `!` 마커 — 선언(ColumnSpec.note)만 있고 안 그려지던 자리
+        /* 셀 안 select 가 초점을 가진 동안에는 그리드가 키를 가로채지 않는다 —
+           안 막으면 ↑↓ 가 옵션 변경 대신 셀 이동이 되어 마우스 없이는 값을 못 바꾼다. */
+        ...(c.inlineSelect ? { suppressKeyboardEvent: (p: SuppressKeyboardEventParams<Row>) => (p.event.target as HTMLElement | null)?.tagName === 'SELECT' } : {}),
         ...(c.pinned ? { pinned: c.pinned } : {}),   // 좌측 고정 — 같은 이유로 안 넘어가던 자리
         ...(stretch ? { flex: 1, minWidth: 200, suppressAutoSize: true } : { minWidth: 110, maxWidth: 240 }),   // stretch면 잔여폭 흡수, 아니면 긴 텍스트 상한 캡
         type: right ? "rightAligned" : undefined,
@@ -588,16 +630,23 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           // 여러 줄 원문(사후관리 내용 등) — 기본 nowrap+ellipsis 면 5줄이 한 줄로 잘린다(원문 .content-cell)
           ? { display: "flex", alignItems: "flex-start", textAlign: (c.align || "left") as any, whiteSpace: "pre-line", lineHeight: 1.5, paddingTop: 8, paddingBottom: 8 }
           : { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any, ...(right ? { justifyContent: "flex-end" } : {}) },
-        /* 렌더러 분기 3갈래:
+        /* 렌더러 분기 4갈래:
            ① detail 옵트인 컬럼 — 값이 detailWhen과 같은 셀만 링크가 되고 나머지는 평상 셀이다
               (정기보고: 보고구분 '월간보고'만 상세 보고서가 있고 반기·연간은 없다 — 원문 목업 동작)
            ② attachFrom 컬럼(제목 등) — 값 뒤에 첨부 확장자 칩을 덧붙인다(첨부 전용 컬럼을 만들지 않는 표현 규약).
               값(텍스트)은 min-w-0 + ellipsis로 줄고, 칩은 shrink-0이라 긴 제목에도 살아남는다.
-           ③ 그 외 — 공용 Cell(마스킹 내장) */
+           ③ inlineSelect 컬럼 — 셀 안 select(S1_43 확정여부). 값을 바꾸면 rows 가 바뀐다.
+           ④ 그 외 — 공용 Cell(마스킹 내장) */
         cellRenderer: c.detail
-          ? (p: ICellRendererParams<Row>) => (c.detailWhen == null || String(p.value ?? "") === c.detailWhen
-              ? <LinkCell value={String(p.value ?? "")} hint={DETAIL_HINT[c.detail!]} onClick={() => setDetail(c.detail!)} />
+          ? (p: ICellRendererParams<Row>) => (linksDetail(c, p.value)
+              ? <LinkCell value={String(p.value ?? "")} hint={DETAIL_HINT[c.detail!]} onClick={() => { if (p.data) setDetail({ kind: c.detail!, row: p.data }); }} />
               : <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} unit={unitOn ? unit : undefined} />)
+          : c.inlineSelect
+          ? (p: ICellRendererParams<Row>) => (
+              <InlineSelectCell
+                value={String(p.value ?? '')} options={c.inlineSelect!} label={c.label}
+                onChange={(v) => { if (p.data) setCellValue(p.data.id, c.key, v); }} />
+            )
           : c.attachFrom
           ? (p: ICellRendererParams<Row>) => (
               <span className="inline-flex items-center gap-2 min-w-0 max-w-full">
@@ -615,6 +664,14 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     // 연속 그룹을 ColGroupDef 로 접는다. group 이 없는 스키마는 이 호출이 그대로 통과시킨다.
     return foldGroups(cols, schema.columns);
   }, [schema, editable, unitOn, unit]);
+
+  /* 셀 안 select 의 값 변경(ColumnSpec.inlineSelect) — 원문 `DATA[i].cfm = s.value` 에 대응.
+     rows 가 SSOT 라 여기에 써야 필터·건수·엑셀이 같이 따라온다(그리드 node 만 고치면 React 쪽이 낡는다).
+     ⚠ 함수형 갱신만 쓴다 — columnDefs useMemo 의 deps 에 rows 가 없어 렌더러 클로저가 첫 렌더에 묶인다.
+       rows 를 직접 읽으면 낡은 배열을 덮어써 이전 변경이 되돌아간다. */
+  const setCellValue = useCallback((id: string, key: string, value: string) => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [key]: value } : r)));
+  }, []);
 
   // CRUD
   const save = (row: Row) => {
@@ -712,7 +769,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     const ev = e.event as MouseEvent;
     const items: CtxItem[] = [];
     // 원문 목록의 '상세조회' 버튼 대체 진입 — 액션 컬럼을 새로 만들지 않고 컨텍스트 메뉴에 둔다
-    if (detailCol && hasDetail(row)) items.push({ label: '상세조회', icon: 'search', onSelect: () => setDetail(detailCol.detail!) });
+    if (hasDetail(row)) items.push({ label: '상세조회', icon: 'search', onSelect: () => openDetail(row) });
     if (editable) items.push({ label: '수정', icon: 'file', onSelect: () => setModal({ mode: 'edit', row }) });
     items.push({ label: '행 복사', icon: 'layers', onSelect: () => copyRow(row) });
     items.push({ label: 'Excel 내보내기', icon: 'download', onSelect: exportExcel });
@@ -840,7 +897,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                 if (colId.startsWith("ag-Grid")) return;
                 /* 링크 셀은 AG Grid의 Tab 순회가 셀 안 button에 닿지 않으므로 셀 Enter로 진입을 보장한다
                    (occasional_report_manage.tsx onCellKeyDown과 동일 이유). 편집 모달보다 우선. */
-                if (detailCol && colId === detailCol.key && hasDetail(e.data)) { setDetail(detailCol.detail!); return; }
+                if (detailCol && colId === detailCol.key && hasDetail(e.data)) { openDetail(e.data); return; }
+                /* 셀 안 select 도 Tab 순회가 닿지 않는다(LinkCell 과 같은 이유) — 셀 Enter 로 초점을 넣어준다.
+                   넣고 나면 suppressKeyboardEvent 가 ↑↓·Enter 를 select 에 맡긴다. */
+                if (schema.columns.some((c) => c.key === colId && c.inlineSelect)) {
+                  (ke.target as HTMLElement | null)?.querySelector?.('select')?.focus();
+                  return;
+                }
                 if (editable) setModal({ mode: "edit", row: e.data });
               }}
               preventDefaultOnContextMenu
@@ -886,7 +949,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       )}
 
       {/* 읽기전용 상세 보고서 팝업 — 스키마가 detail을 선언한 컬럼에서만 열린다(그 외 페이지엔 없음) */}
-      {detail && React.createElement(DETAIL_MODALS[detail], { onClose: () => setDetail(null) })}
+      {detail && React.createElement(DETAIL_MODALS[detail.kind], { onClose: () => setDetail(null), row: detail.row })}
 
       <ListFilterDrawer
         open={filterOpen}

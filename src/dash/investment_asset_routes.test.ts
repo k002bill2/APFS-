@@ -8,6 +8,7 @@ import { SOURCE_COUNTS as PROFILE_COUNTS, PROVENANCE as PROFILE_PROV, formatProf
 import { SOURCE_COUNTS as STATS_COUNTS, SALES_SCALE_ROWS, INVEST_TYPE_ROWS, REGION_ROWS, PROVENANCE as STATS_PROV } from './investee_invest_stats_model';
 import { RECOVERY_MODES, SOURCE_COUNTS as RECOVERY_COUNTS, recoverySummary, PROVENANCE as RECOVERY_PROV, DETAIL_ROWS_IR, DETAIL_ROWS_ALL, formatRecoveryUnit } from './invest_recovery_detail_model';
 import { PROVENANCE as REPORT_PROV } from './all_report_status_model';
+import { RATE, PCT_LABEL, FORMULA, CALC_BY_NO, BASE_NOTE, baseAmount } from './mgmt_fee_detail_model';
 
 /* 투자자산관리 > 투자기업정보(7) · 운용사 모니터링(6) · 자펀드 관리(6) 라우트 결선 + **출처 충실성** 불변식.
    (사용자 이미지 정본 2026-09-15 — 대분류 3 / 리프 19)
@@ -593,5 +594,188 @@ describe('화면별 금액 표기 규칙 — 목업이 정본이다', () => {
     const gl = readFileSync(new URL('./generic_list.tsx', import.meta.url), 'utf8');
     expect(gl).not.toContain("Number.isInteger(v) ? '#,##0' : '#,##0.0'");
     expect(gl).toContain("'0'.repeat(");
+  });
+});
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   상세 팝업 2종(S1_43 관리보수보고 상세조회 · S1_40 체크리스트 조회) — 원문 대조
+   ───────────────────────────────────────────────────────────────────────── */
+describe('S1_43 관리보수보고 상세조회 팝업 — 원문 대조', () => {
+  const html = readFileSync('docs/mockups/01_투자자산관리/S1_43_관리보수관리.html', 'utf8');
+
+  it('상수가 원문 그대로다 (RATE · 보수율 표기 · 산식)', () => {
+    expect(html).toContain('var RATE=0.025');
+    expect(RATE).toBe(0.025);
+    expect(PCT_LABEL).toBe('2.5%');
+    // 원문 formula 는 pctStr 을 끼워 만든다 — 결과 문자열이 원문 조각과 일치하는지 본다
+    expect(FORMULA).toBe('투자잔액(분기말잔액)*2.5%*일수/365');
+    expect(html).toContain("var formula='투자잔액(분기말잔액)*'+pctStr+'*일수/365'");
+  });
+
+  it('산출내역 값이 원문 DATA 안에 실재한다', () => {
+    const calc = CALC_BY_NO['1'];
+    expect(calc).toBeDefined();
+    expect(html).toContain("span:'2025-01-01~2025-12-31'");
+    expect(html).toContain('days:365');
+    expect(html).toContain('base:8509289613');
+    expect(html).toContain('baseConfirmed:true');
+    expect(calc.span).toBe('2025-01-01~2025-12-31');
+    expect(calc.days).toBe(365);
+    expect(calc.base).toBe(8509289613);
+    expect(calc.baseConfirmed).toBe(true);
+  });
+
+  /* ⚠ 이 팝업에서 가장 조용히 틀릴 수 있는 곳. baseConfirmed 를 뒤집으면 역산값 7,659,289,600 이
+     **경고 없이** 기준금액으로 표시된다 — 목업 주석이 정확히 그 불일치를 경고하고 있다. */
+  it('기준금액은 실캡처 값이고 역산값이 아니다', () => {
+    const amount = 191482240;                       // 원문 DATA no:1 의 amt
+    expect(html).toContain('amt:191482240');
+    expect(baseAmount(CALC_BY_NO['1'], amount)).toBe(8509289613);
+    expect(Math.round(amount / RATE)).toBe(7659289600);   // 역산값 — 쓰이면 안 된다
+    expect(baseAmount(CALC_BY_NO['1'], amount)).not.toBe(7659289600);
+  });
+
+  it('baseConfirmed 가 false 면 역산값으로 떨어진다(원문 분기 보존)', () => {
+    const unconfirmed = { ...CALC_BY_NO['1'], baseConfirmed: false };
+    expect(baseAmount(unconfirmed, 191482240)).toBe(7659289600);
+  });
+
+  it('⚠검토필요 마커 문구가 원문 축자다', () => {
+    expect(html).toContain(BASE_NOTE.rec);
+    expect(html).toContain(BASE_NOTE.dat);
+  });
+
+  it('팝업 kv 9항목 라벨이 원문 dl 순서와 같다', () => {
+    const modal = readFileSync(new URL('./mgmt_fee_detail_modal.tsx', import.meta.url), 'utf8');
+    for (const l of ['운용사', '자펀드', '보고구분', '지급구분', '지급일자', '금액', '지출내역', '산출내역', '삭감내역']) {
+      // 원문 dt 는 class 를 가질 수 있다(`<dt class="row-b">삭감내역</dt>`)
+      expect(html, `원문 dt ${l}`).toMatch(new RegExp('<dt[^>]*>' + l + '</dt>'));
+      expect(modal, `팝업 kv ${l}`).toContain("l: '" + l + "'");
+    }
+  });
+
+  it('산출내역 표 7개 헤더가 원문 그대로다', () => {
+    const modal = readFileSync(new URL('./mgmt_fee_detail_modal.tsx', import.meta.url), 'utf8');
+    for (const h of ['기준', '일자', '기준금액', '일수', '보수율', '관리보수금액', '계산산식']) {
+      expect(modal, `헤더 ${h}`).toContain('>' + h);
+    }
+  });
+
+  /* 목업 주석이 못박은 규칙: "확정 여부를 다루는 관리 화면이므로 금액 단위전환 토글은 규칙상 미적용" */
+  it('관리보수관리는 단위 토글이 없다(원문 규칙)', () => {
+    expect(resolveSchema('관리보수관리').unitToggle).toBeUndefined();
+  });
+});
+
+describe('S1_40 투자금실사보고서 체크리스트 팝업 — 원문 대조', () => {
+  const html = readFileSync('docs/mockups/01_투자자산관리/S1_40_투자금실사보고.html', 'utf8');
+  const modal = readFileSync(new URL('./due_dilig_checklist_modal.tsx', import.meta.url), 'utf8');
+
+  it('원문에 openChecklist 와 날짜 형식 링크 조건이 있다', () => {
+    expect(html).toContain('function openChecklist(r)');
+    expect(html).toContain('if(/^\\d{4}-\\d{2}-\\d{2}$/.test(r.due))');
+  });
+
+  it('팝업 kv 8항목 라벨이 원문 dl 순서와 같다', () => {
+    for (const l of ['투자조합명', '투자기업', '투자일자', '투자금액', '투자형태', '실사일', '실사회계법인']) {
+      expect(html, `원문 dt ${l}`).toContain('<dt>' + l + '</dt>');
+      expect(modal, `팝업 kv ${l}`).toContain("l: '" + l + "'");
+    }
+    expect(html).toContain('<dt>체크리스트<button');   // 체크리스트만 dt 안에 ⚠마커가 붙는다
+    expect(modal).toContain("l: '체크리스트'");
+  });
+
+  it('체크리스트 없는 행의 표기가 원문 그대로다', () => {
+    expect(html).toContain('- (체크리스트 없음)');
+    expect(modal).toContain('- (체크리스트 없음)');
+  });
+
+  /* 원문은 `투자금액`·`실사회계법인` 을 `dd.empty` 리터럴 `-` 로 둔다 — 행에서 값을 끌어오면 창작이다.
+     (스키마에 그 두 컬럼 자체가 없다는 사실로 이중 확인한다) */
+  it('투자금액·실사회계법인은 목록 컬럼이 아니고 팝업에서 리터럴 -다', () => {
+    expect(html).toContain('<dt>투자금액</dt><dd class="empty">-</dd>');
+    expect(html).toContain('<dt>실사회계법인</dt><dd class="empty">-</dd>');
+    const keys = resolveSchema('투자금 실사보고').columns.map((c) => c.key);
+    expect(keys).not.toContain('investAmount');
+    expect(keys).not.toContain('auditFirm');
+  });
+
+  /* ⚠ 여기서 갈린다. 원문 **설명문**(doc-sub)은 "모니터링하고 확정 처리하는 조회 화면"이라 적지만,
+     목업 자체는 그 액션을 **구현하지 않았다**: 확정 컨트롤도 핸들러도 없고, 281행이 확정여부 값을
+     "캡처 밖 실값 미확인 — 전부 '-' 표시"로 못박는다. 즉 업무 의도에는 있으나 **무엇을 어떤 UI로
+     어떤 값으로** 그릴지가 원천에 없다 → 만들면 창작이다.
+     판별자는 S1_43 과의 구조 대조다: S1_43 은 확정 select(`data-cfm`)를 실제로 갖고 S1_40 은 없다. */
+  it('확정 처리 UI 가 목업에 구현돼 있지 않다 (S1_43 과 대조)', () => {
+    expect(html).toContain('확정 처리하는 조회 화면');                 // 설명문에는 있다
+    expect(html).toContain("수정일시·확정여부·비고 3개 컬럼은 캡처 밖"); // 그러나 값은 캡처 밖
+    expect(html).not.toContain('data-cfm');                          // 확정 컨트롤 없음
+    expect(html).not.toContain('cellsel');
+    expect(html.match(/cfm:null/g) ?? []).toHaveLength(7);           // 7행 전부 확정여부 null
+    const s43 = readFileSync('docs/mockups/01_투자자산관리/S1_43_관리보수관리.html', 'utf8');
+    expect(s43).toContain('data-cfm');                               // 대조군: S1_43 은 갖고 있다
+  });
+
+  it('확정 액션이 화면에도 없다', () => {
+    const s = resolveSchema('투자금 실사보고');
+    expect(s.fields).toHaveLength(0);                     // fields 가 있으면 등록/수정 모달이 켜진다
+    expect((s.sample ?? []).every((r) => r.isConfirmed === '-')).toBe(true);
+  });
+});
+
+
+describe('inlineSelect(셀 안 select) — 선언이 화면까지 닿는가', () => {
+  /* group·note·pinned·unitToggle·CompanyProfileModal.row 에 이어 **여섯 번째** 같은 부류가 되지 않도록
+     소비처를 못박는다: 스키마가 선언해도 GenericListPage 가 읽지 않으면 조용히 평상 셀로 남는다. */
+  const gl = readFileSync(new URL('./generic_list.tsx', import.meta.url), 'utf8');
+  const html = readFileSync('docs/mockups/01_투자자산관리/S1_43_관리보수관리.html', 'utf8');
+
+  it('GenericListPage 가 c.inlineSelect 를 렌더러 분기로 소비한다', () => {
+    expect(gl).toContain('c.inlineSelect');
+    expect(gl).toContain('InlineSelectCell');
+  });
+
+  it('값 변경이 rows(SSOT)에 반영된다 — 그리드 node 만 고치지 않는다', () => {
+    expect(gl).toContain('const setCellValue');
+    expect(gl).toContain('setRows((prev) => prev.map((r) => (r.id === id');
+  });
+
+  /* 마우스 없이 값을 바꿀 수 있어야 한다: 셀 Enter 로 select 에 초점을 넣고,
+     초점이 들어간 뒤에는 그리드가 ↑↓ 를 가로채지 않는다. 둘 중 하나만 있으면 키보드로 조작 불가다. */
+  it('키보드 경로 2단이 모두 배선돼 있다 (Enter 진입 · 키 가로채기 해제)', () => {
+    expect(gl).toContain("querySelector?.('select')?.focus()");
+    expect(gl).toContain('suppressKeyboardEvent');
+    expect(gl).toContain("tagName === 'SELECT'");
+  });
+
+  it('관리보수관리 확정여부가 원문 옵션 2종을 원문 순서로 갖는다', () => {
+    const col = resolveSchema('관리보수관리').columns.find((c) => c.key === 'isConfirmed');
+    expect(col?.inlineSelect).toEqual(['확정', '미확정']);
+    // 원문 option 순서: 확정 먼저, 미확정 다음
+    expect(html).toContain("<option'+(r.cfm==='확정'?' selected':'')+'>확정</option><option'+(r.cfm==='미확정'?' selected':'')+'>미확정</option>");
+    expect(html).toContain("DATA[+s.getAttribute('data-cfm')].cfm=s.value");
+  });
+
+  /* 원문은 배지(cfmTag)를 **정의만 하고 쓰지 않는다** — select 가 그 자리를 차지한다.
+     둘 다 그리면 같은 값이 한 셀에 두 번 나온다. */
+  it('원문은 확정여부 셀에 배지를 그리지 않는다(select 가 대체)', () => {
+    expect(html).toContain('function cfmTag(s)');          // 정의는 있고
+    expect(html).not.toContain('cfmTag(r.cfm)');           // 호출은 없다
+  });
+
+  it('inlineSelect 선언 컬럼의 값 도메인이 sample 행과 맞는다', () => {
+    for (const sc of ALL_SCHEMAS) {
+      for (const c of sc.columns) {
+        if (!c.inlineSelect) continue;
+        for (const r of sc.sample ?? [])
+          expect(c.inlineSelect, `${sc.route}.${c.key} 행 값 '${r[c.key]}'`).toContain(String(r[c.key]));
+      }
+    }
+  });
+
+  /* fields 를 채우면 `editable` 이 켜져 원문에 없는 등록 버튼이 생긴다 — inlineSelect 를 쓴 이유 그 자체다. */
+  it('inlineSelect 를 쓰는 화면은 fields 가 비어 있다(등록 버튼 금지)', () => {
+    for (const sc of ALL_SCHEMAS.filter((x) => x.columns.some((c) => c.inlineSelect)))
+      expect(sc.fields, `${sc.route}: inlineSelect 화면에 fields`).toHaveLength(0);
   });
 });
