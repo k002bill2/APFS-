@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   verifyCredentials, verifyOtp, verifyPwChange, verifyRegister, verifyRealName,
-  railSteps, LOGIN_RAIL, ISSUE_RAIL, hasError,
+  railSteps, LOGIN_RAIL, ISSUE_RAIL, RESET_RAIL, SIMPLE_AUTH_RAIL,
+  verifyReset, verifySimpleAuth, AUTH_PROVIDERS, hasError,
   DEMO_ID, DEMO_PW, DEMO_REAL_NAME, LOCK_LIMIT, MSG, PW_RE,
 } from './auth_model';
 
@@ -163,5 +164,52 @@ describe('TOTP 허용창 ±1 — 직전 코드도 받는다 (Codex R2 P2)', () =
   });
   it('등록 확인 코드도 같은 허용창을 쓴다', () => {
     expect(verifyRegister('Apfs!2026', 'Apfs!2026', '111 111', '222222', '111111').otp).toBeNull();
+  });
+});
+
+describe('verifyReset — 계정 정보 확인', () => {
+  it('성명·아이디가 모두 있으면 통과', () => {
+    expect(verifyReset('김담당', 'kim.admin')).toBeNull();
+  });
+  it('성명이 비면 성명부터 알린다 — 화면 필드 순서대로', () => {
+    expect(verifyReset('  ', '')).toBe(MSG.nameRequired);
+  });
+  it('아이디가 비면 아이디를 알린다', () => {
+    expect(verifyReset('김담당', '   ')).toBe(MSG.idRequired);
+  });
+});
+
+describe('간편인증 — 외부 통합인증창 연동', () => {
+  it('이름·생년월일·휴대폰이 모두 맞으면 통합인증창을 호출할 수 있다', () => {
+    expect(verifySimpleAuth('김담당', '19850302', '01012345678')).toBeNull();
+  });
+  it('하이픈이 섞인 입력도 받는다 — 화면 placeholder 가 010-0000-0000 형식이다', () => {
+    expect(verifySimpleAuth('김담당', '1985-03-02', '010-1234-5678')).toBeNull();
+  });
+  it('이름이 비면 이름부터 알린다 — 화면 필드 순서대로', () => {
+    expect(verifySimpleAuth('  ', '', '')).toBe(MSG.nameRequired);
+  });
+  it('생년월일이 8자리가 아니거나 없는 월·일이면 거부', () => {
+    expect(verifySimpleAuth('김담당', '850302', '01012345678')).toBe(MSG.birthInvalid);
+    expect(verifySimpleAuth('김담당', '19851302', '01012345678')).toBe(MSG.birthInvalid);
+  });
+  it('이동전화 대역이 아니거나 자릿수가 모자라면 거부', () => {
+    expect(verifySimpleAuth('김담당', '19850302', '0212345678')).toBe(MSG.phoneInvalid);
+    expect(verifySimpleAuth('김담당', '19850302', '010123456')).toBe(MSG.phoneInvalid);
+  });
+  it('통합인증창이 제공하는 인증수단 12종을 안내용으로 들고 있다', () => {
+    expect(AUTH_PROVIDERS).toHaveLength(12);
+    expect(AUTH_PROVIDERS).toContain('통신사 PASS');
+  });
+  it('앱 레일은 3단계 — 가운데 인증 단계는 외부 모듈이 처리한다', () => {
+    expect(railSteps(SIMPLE_AUTH_RAIL, 1).map((x) => x.title))
+      .toEqual(['간편인증 요청', '통합인증창 인증', '인증결과 확인']);
+  });
+  it('요청 단계에서는 뒤 두 단계가 아직 예정 상태', () => {
+    expect(railSteps(SIMPLE_AUTH_RAIL, 1).map((x) => x.status)).toEqual(['current', 'todo', 'todo']);
+  });
+  it('두 재설정 경로의 레일 길이가 서로 다르다 — 2단계 vs 3단계', () => {
+    expect(railSteps(RESET_RAIL, 1)).toHaveLength(2);
+    expect(railSteps(SIMPLE_AUTH_RAIL, 3).map((x) => x.status)).toEqual(['done', 'done', 'current']);
   });
 });

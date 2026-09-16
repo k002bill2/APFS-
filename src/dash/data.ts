@@ -305,7 +305,7 @@ const MENU = [
     ]},
   ]},
 
-  // 관리자 IA(2026-09-14 사용자 이미지 정본 — AFIT 공통관리 S0_101~S0_108 LNB와 동일): 중분류 3 · 리프 8, 표시 순서 그대로.
+  // 관리자 IA(2026-09-14 사용자 이미지 정본 — 공통관리 S0_101~S0_108 LNB와 동일): 중분류 3 · 리프 8, 표시 순서 그대로.
   // 구조표의 구 관리자 리프(외부연동·보안·게시판, 도움말 관리 등)는 이 이미지 IA로 대체됐다(브리프 dev/active/admin-pages-complete/BRIEF.md).
   // 모든 리프는 typed 페이지(app.tsx 명시 분기) — GenericListPage 폴백 없음. 라벨은 원본 표기(띄어쓰기 없음: 권한관리·사용자관리·프로그램관리…).
   { id:"admin", label:"관리자", icon:"settings", roles:["admin"], children:[

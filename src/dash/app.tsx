@@ -29,7 +29,7 @@ import { FundInvestStatus } from './fund_invest_status';                   // �
 import { FundStats } from './fund_stats';                                  // 종합통계(S1_25)
 import { CustodyVerifyManage } from './custody_verify_manage';             // 자펀드수탁관리(실물검증)(S1_26)
 import { CustodyConfirmManage } from './custody_confirm_manage';           // 자펀드수탁관리(확정)(S1_27)
-// 관리자 3리프(2026-09-14 typed 페이지 전환, AFIT 공통관리 S0_106·S0_105·S0_102). 동상 — GenericListPage 폴백 앞 분기
+// 관리자 3리프(2026-09-14 typed 페이지 전환, 공통관리 S0_106·S0_105·S0_102). 동상 — GenericListPage 폴백 앞 분기
 import { CodeManage } from './code_manage';                                  // 공통코드 관리(S0_106, master-detail)
 import { MenuManage } from './menu_manage';                                  // 메뉴 관리(S0_105, 계층 트리)
 import { UserPermissionManage } from './user_permission_manage';             // 사용자 권한 관리(S0_102, 권한 매트릭스)

@@ -31,6 +31,7 @@ const P = {
   moon:["M20 14a8 8 0 1 1-9.5-10.8A6.5 6.5 0 0 0 20 14Z"],
   x:["M6 6l12 12","M18 6 6 18"],
   check:["M5 12.5l4.5 4.5L19 7"],
+  info:["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z","M12 16v-4","M12 8h.01"],
   "check-circle":["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z","M8.5 12.2l2.4 2.4 4.6-4.8"],
   // memo: 접힌 모서리 스티키노트 + 본문 줄. lucide StickyNote는 20px에서 모서리 fold가
   // 깨져 보여 file-check와 동일하게 MAP 미등록으로 자체 P 경로를 강제 사용.
@@ -62,7 +63,7 @@ const MAP = {
   // MAP 미등록으로 자체 P 경로(문서+중앙 체크, `file` 계열과 일관)를 강제 사용.
   chart:["ChartLine","LineChart","TrendingUp"], "chart-bar":["ChartColumn","BarChart3","BarChart"],
   settings:["Settings"], target:["Target"], trending:["TrendingUp"], "trending-down":["TrendingDown"],
-  calendar:["Calendar"], bell:["Bell"], search:["Search"], menu:["Menu"], "panel-left":["PanelLeft"],
+  calendar:["Calendar"], smartphone:["Smartphone"], bell:["Bell"], search:["Search"], menu:["Menu"], "panel-left":["PanelLeft"],
   "chevron-right":["ChevronRight"], "chevron-down":["ChevronDown"], "chevron-left":["ChevronLeft"],
   more:["MoreHorizontal","Ellipsis"], sun:["Sun"], moon:["Moon"], x:["X"], check:["Check"],
   "check-circle":["CircleCheckBig","CheckCircle2","CircleCheck"], download:["Download"], upload:["Upload"],
@@ -79,6 +80,7 @@ const MAP = {
   grid:["LayoutGrid","Grid3x3","Grid"], star:["Star"],
   trash:["Trash2","Trash"],
   eye:["Eye"], "eye-off":["EyeOff","EyeClosed"], lock:["Lock"],
+  info:["Info"],
 };
 
 // Lucide IconNode 조회: [[tag, attrs, children?], ...]
