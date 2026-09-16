@@ -18,8 +18,11 @@
 <style>
   html{background:var(--bg);}
   #root{min-height:100vh;background:var(--bg);}
-  /* 전체 너비 토글 — 페이지 컨테이너의 고정 max-width 해제 */
-  html[data-width="full"] main > div{max-width:none!important;}
+  /* 전체 너비 토글 — 페이지 컨테이너의 고정 max-width 해제.
+     ⚠ 반드시 Shell 의 <main class="dash-main"> 로 한정한다. `main > div` 로 두면 Shell 없는
+     인증 화면(auth_shared.tsx 의 AuthLayout)도 <main> 직계 div 라 카드의 max-width:840px 가
+     !important 로 날아가 카드만 화면 폭까지 늘어난다(아래 <nav> AuthFoot 은 안 걸려 어긋남). */
+  html[data-width="full"] main.dash-main > div{max-width:none!important;}
   /* 버튼·인풋이 색을 명시하지 않으면 본문색(=다크모드 대응 토큰)을 상속하도록 강제.
      일부 버튼이 UA 기본 검정(rgb(0,0,0))을 쓰던 다크모드 검은 글자 버그를 차단. */
   button,input,select,textarea{color:inherit;}
