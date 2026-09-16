@@ -11,7 +11,7 @@ import { parsePageSchema } from './schemas/types';
 import type { PageSchema } from './schemas/types';
 import type { CodeGroup } from './code_manage_data';
 
-const PROVENANCE = { capturedAt: '2026-09-14', sourceSystem: 'AFIT 공통관리(S0) · KRDS TO-BE', captureFile: 'S0_106_코드관리.html' };
+const PROVENANCE = { capturedAt: '2026-09-14', sourceSystem: '공통관리(S0) · KRDS TO-BE', captureFile: 'S0_106_코드관리.html' };
 
 /** 상위코드구분 select 옵션 표기 — 목업 `fillUp`: '없음' + `CODE (명칭)`. 값→코드 복원은 `upCodeOf`. */
 export const UP_NONE = '없음';

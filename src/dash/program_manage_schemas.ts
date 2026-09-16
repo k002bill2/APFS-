@@ -4,7 +4,7 @@
 import { parsePageSchema } from './schemas/types';
 import type { PageSchema } from './schemas/types';
 
-const PROVENANCE = { capturedAt: '2026-09-14', sourceSystem: 'AFIT 공통관리(S0) · KRDS TO-BE', captureFile: 'S0_108_프로그램관리.html' };
+const PROVENANCE = { capturedAt: '2026-09-14', sourceSystem: '공통관리(S0) · KRDS TO-BE', captureFile: 'S0_108_프로그램관리.html' };
 export const USE_OPTIONS = ['여', '부'] as const;
 
 /** 프로그램 등록/수정 — 3필드(≤6 → 460px 1단) */
