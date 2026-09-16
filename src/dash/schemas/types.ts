@@ -26,7 +26,9 @@ export type DetailPopup = typeof DETAIL_POPUPS[number];
 //   (컬럼 수십 개를 단일 헤더로 늘어놓으면 판독 불가 — S1_31 58컬럼·S1_33 회수실적 4컬럼이 원문에서 2단이다).
 // pinned: 좌측 고정 열. 와이드 표에서 가로 스크롤 중에도 식별 컬럼(운용사·자펀드·투자기업)을 붙잡아 둔다.
 //   폭은 **고정이 아니라 하한**으로 둔다 — 400% 확대 시 고정 폭 pinned가 화면을 다 먹는다(A11Y 10).
-export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; pinned?: 'left'; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; note?: ReviewNoteSpec; }
+// multiline: 줄바꿈이 든 본문 셀(사후관리 내용 등)을 `white-space: pre-line` 으로 편다.
+//   기본 셀은 nowrap+ellipsis 라 여러 줄 원문이 한 줄로 잘려 내용을 잃는다(원문 `.content-cell`).
+export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; pinned?: 'left'; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; note?: ReviewNoteSpec; multiline?: boolean; }
 // note: 라벨 옆 ⚠검토필요 마커(목업 `.review` data-rec/data-dat 원문). RowFormModal이 Field 라벨에 ReviewMarker로 렌더한다.
 // 설계 메모라 마스킹·엑셀 대상이 아니며, 문구는 목업 원문 그대로(창작 금지 — apfs-grid "검토필요 마커").
 export interface ReviewNoteSpec { rec: string; dat: string; }
@@ -66,6 +68,9 @@ export interface PageSchema {
   // 환산 대상은 type:'amount' 컬럼뿐이며, 환산은 **셀 렌더·엑셀 경계에서만** 한다 —
   // rows에 환산값을 써넣으면 KPI 합계·필터 비교값까지 같이 흔들린다.
   unitToggle?: boolean;
+  // 토글의 **초기 선택값**. 목업마다 다르다(S1_33 은 `var unit='억원'`으로 시작한다) —
+  // 미지정이면 unit.ts 의 DEFAULT_UNIT('원'). 저장 단위(원)와는 다른 축이다: 표시 기본값일 뿐.
+  defaultUnit?: string;
   provenance: Provenance;
 }
 
@@ -76,6 +81,7 @@ const ColumnZ = z.object({
   attachFrom: z.string().optional(),
   detail: z.enum(DETAIL_POPUPS).optional(), detailWhen: z.string().optional(),
   note: z.object({ rec: z.string(), dat: z.string() }).optional(),
+  multiline: z.boolean().optional(),
 });
 const FieldZ = z.object({
   key: z.string(), label: z.string(), control: z.enum(FIELD_CONTROLS),
@@ -98,6 +104,7 @@ export const PageSchemaZ = z.object({
   hideRowSelection: z.boolean().optional(),
   hideCardView: z.boolean().optional(),
   unitToggle: z.boolean().optional(),
+  defaultUnit: z.string().optional(),
   provenance: ProvenanceZ,
 });
 

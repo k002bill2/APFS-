@@ -1,3 +1,9 @@
+/* 운용사 재무정보 조회 — 투자자산관리 > 운용사 모니터링 > 운용사 재무정보 조회.
+   출처: docs/mockups/01_투자자산관리/S1_38_운용사_재무정보_조회.html (2026-09-15 파싱 실측)
+
+   원문 `DATA` 2건(NH투자증권·농협은행, 2026-01)을 그대로 싣는다. `No` 는 원문에 데이터 필드가
+   없고 렌더 시 인덱스로 붙으므로 sample 에서도 1부터 부여한다.
+   조회 전용이라 fields 는 비운다(원문에 등록/수정 폼 없음). */
 import type { PageSchema } from './types';
 
 export const schema: PageSchema = {
@@ -25,12 +31,24 @@ export const schema: PageSchema = {
     { key: 'netProfit',     label: '당기순이익', type: 'amount', unit: '원', align: 'right' },
   ],
   fields: [],
-  filters: ['운용사', '기준년월'],
+  /* ⚠ 라벨은 **컬럼 라벨과 정확히 같아야** 행 필터가 성립한다. '운용사'는 이 화면의 컬럼
+     라벨이 '운용사명'이라 매칭에 실패해 tag 로 떨어지고, rowMatchesFilters 가 row.category 와
+     대조해 표가 조용히 0건이 된다(filter_field.ts resolveFilterField 3단계). */
+  filters: ['운용사명', 'GP구분', '기준년월'],
   searchable: true,
   hideCardView: true,
+  // 조회 전용 — 선택으로 실행할 액션이 없어 체크박스 컬럼을 두지 않는다(apfs-grid hideRowSelection).
+  hideRowSelection: true,
+  hideKpis: true,
+  hideMetrics: true,
+  unitToggle: true,
+  sample: [
+    { no: 1, gp: 'NH투자증권', gpType: '증권회사', baseYm: '2026-01', currentAssets: 2644195000000, nonCurrentAssets: 79024930000000, totalAssets: 81669125000000, currentLiab: 11946785000000, nonCurrentLiab: 60596193000000, totalLiab: 72542978000000, capital: 1943851000000, totalEquity: 9126147000000, sales: 2930572000000, cogs: 960201000000, sga: 906334000000, ordinaryProfit: 968385000000, netProfit: 748144000000 },
+    { no: 2, gp: '농협은행', gpType: '은행', baseYm: '2026-01', currentAssets: 32113041000000, nonCurrentAssets: 416769614000000, totalAssets: 448882655000000, currentLiab: 340863906000000, nonCurrentLiab: 81789985000000, totalLiab: 422653891000000, capital: 2423567000000, totalEquity: 26228764000000, sales: 17491329000000, cogs: 12145119000000, sga: 2851443000000, ordinaryProfit: 2125463000000, netProfit: 1565023000000 },
+  ],
   provenance: {
-    capturedAt: '2026-09-12',
+    capturedAt: '2026-09-15',
     sourceSystem: 'FFMS',
-    captureFile: '/Users/younghwankang/Downloads/통합/01_투자자산관리/S1_38_운용사_재무정보_조회.html',
+    captureFile: 'docs/mockups/01_투자자산관리/S1_38_운용사_재무정보_조회.html',
   },
 };

@@ -1,7 +1,8 @@
 /* 전체 보고현황 — 투자자산관리 > 운용사 모니터링 > 자펀드 전체 보고현황.
-   S1_44 참조. 원문은 한 화면에 투자심의/수시보고/조합원총회 3개 표를 쌓는 복합 화면이다.
+   출처: docs/mockups/01_투자자산관리/S1_44_전체_보고현황.html — 원문은 한 화면에 표 **6개**
+   (투자심의·수시보고·조합원총회·관리보수관리·(운용사)출자배분관리·(농금원)출자배분관리)를 쌓는다.
 
-   ⚠ 이 스키마는 더 이상 화면을 그리지 않는다(2026-09-15) — `columns`가 한 벌뿐이라 3표를 담지 못해
+   ⚠ 이 스키마는 더 이상 화면을 그리지 않는다(2026-09-15) — `columns`가 한 벌뿐이라 6표를 담지 못해
    전용 페이지 `all_report_status.tsx`가 SegTabs로 전환하며 렌더한다(app.tsx가 GenericListPage 앞에서 분기).
    그래도 이 파일은 **삭제하지 않는다**: 라우트 레지스트리(resolveSchema)·출처(provenance) 기록의 정본이고,
    아래 컬럼 13개는 `all_report_status_model.ts`가 투자심의 탭의 컬럼으로 그대로 가져다 쓴다(복사본 금지). */
@@ -38,8 +39,8 @@ export const schema: PageSchema = {
   searchable: true,
   hideCardView: true,
   provenance: {
-    capturedAt: '2026-09-12',
+    capturedAt: '2026-09-15',
     sourceSystem: 'FFMS',
-    captureFile: '/Users/younghwankang/Downloads/통합/01_투자자산관리/S1_44_전체_보고현황.html',
+    captureFile: 'docs/mockups/01_투자자산관리/S1_44_전체_보고현황.html',
   },
 };

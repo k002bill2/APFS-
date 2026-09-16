@@ -16,8 +16,8 @@ import type { PageSchema, DetailPopup } from './schemas/types';
 import { MonthlyReportModal } from './monthly_report_modal';   // 읽기전용 상세 보고서 팝업(컬럼 detail 옵트인 스키마만)
 import { GpSpecModal } from './gp_spec_modal';                 // 운용사 명세(S1_02) — 운용사 명세서 목록의 행 상세
 import { CompanyProfileModal } from './company_profile_modal'; // 투자기업 기업개요(S1_30) — 투자기업정보(통합)의 행 상세
-import { ReviewMarker } from './review_marker';                // 컬럼 헤더 옆 ⚠검토필요 마커(목업 원문 메모)
-import { UNITS, DEFAULT_UNIT, formatUnit, amountHeader } from './schemas/unit';
+import { noteHeader, foldGroups } from './grid_header_note';   // 컬럼 헤더 옆 ⚠검토필요 마커 + 2단 그룹헤더(ColumnSpec note/group 소비처)
+import { UNITS, DEFAULT_UNIT, isUnit, toUnit, amountHeader } from './schemas/unit';
 import type { Unit } from './schemas/unit';
 import type { ColumnSpec } from './schemas/types';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
@@ -78,8 +78,11 @@ const DOC_SEED = [
 ];
 
 function makeRows(schema: PageSchema, n: number): Row[] {
-  // 리터럴 샘플 우선 — 목업/캡처의 실제 행을 그대로 표시(합성 더미 대체). 개수=샘플 길이.
-  const sample = schema.sample?.length ? schema.sample : null;
+  /* 리터럴 샘플 우선 — 목업/캡처의 실제 행을 그대로 표시(합성 더미 대체). 개수=샘플 길이.
+     ⚠ 판정은 **존재**지 길이가 아니다. `sample: []`(원천에 행이 0건 — 예: 신규 화면, 목업이
+     "조회된 데이터가 없습니다"인 표)은 빈 표로 그려야 한다. `?.length` 로 보면 빈 배열이
+     falsy 라 조용히 합성 더미 n건으로 되돌아가, 없는 데이터가 실적처럼 보인다. */
+  const sample = schema.sample ?? null;
   const count = sample ? sample.length : n;
   return Array.from({ length: count }, (_, i) => {
     const k = i % 5;
@@ -94,11 +97,22 @@ function makeRows(schema: PageSchema, n: number): Row[] {
       status: (schema.statusDomain?.[i % (schema.statusDomain.length || 1)]?.label) ?? ROW_STATUS[i % 5],
       trend: [3, 5, 4, 7, 6].map((v, j) => v + ((i + j * 2) % 4)),
     };
-    // 샘플 행: 리터럴 값이 base 기본값을 덮어쓴다(id/icon/color는 base 유지). 합성 시드 건너뜀.
-    // 카드뷰·KPI가 읽는 name/category도 실제 값으로 진실화(합성 "항목명 001"·가짜 금액 방지).
+    /* 샘플 행: 원문 값만 싣는다. base 에서 물려받는 것은 **표현용**(id·icon·color·trend)뿐이고
+       amount·change·status·name 같은 합성 시드는 물려받지 않는다 — `{...base, ...s}` 로 두면
+       원문에 없는 금액이 남아 카드뷰 금액과 헤더 KPI 합계(sumAmount)에 실적처럼 올라간다.
+       원문이 그 키를 주면(예: 관리보수 amount) 아래 전개에서 그 값이 들어온다. */
     if (sample) {
       const s = sample[i];
-      return { ...base, ...s, name: String(s.name ?? s.title ?? base.name), category: String(s.category ?? schema.entity) } as Row;
+      return {
+        id: base.id, icon: base.icon, color: base.color, trend: base.trend,
+        ...s,
+        // Row 계약상 number/string 이 보장돼야 하는 5개만 뒤에서 정규화한다(원문에 없으면 0/'').
+        amount: Number(s.amount ?? 0) || 0,
+        change: Number(s.change ?? 0) || 0,
+        status: String(s.status ?? ''),
+        name: String(s.name ?? s.title ?? ''),
+        category: String(s.category ?? schema.entity),
+      } as Row;
     }
     const extra: Record<string, unknown> = {};
     for (const c of schema.columns) {
@@ -422,9 +436,15 @@ function rowMatchesFilters(row: Row, schema: PageSchema, filterValues: Record<st
    팝업은 읽기전용이라 props는 onClose 하나다(실데이터 연동 시 row를 넘기도록 확장). */
 const DETAIL_MODALS: Record<DetailPopup, (p: { onClose: () => void }) => React.ReactElement> = {
   monthlyReport: MonthlyReportModal,
+  gpSpec: GpSpecModal,
+  companyProfile: CompanyProfileModal,
 };
 /* 링크 셀 title(동작 힌트) — 값은 절대 넣지 않는다(마스크 경계) */
-const DETAIL_HINT: Record<DetailPopup, string> = { monthlyReport: '월간보고 상세 보기' };
+const DETAIL_HINT: Record<DetailPopup, string> = {
+  monthlyReport: '월간보고 상세 보기',
+  gpSpec: '운용사 명세 보기',
+  companyProfile: '투자기업 기업개요 보기',
+};
 
 /* 셀 안 링크 — 값 클릭으로 상세 팝업 진입. occasional_report_manage.tsx의 LinkCell 복사 관례.
    ⚠ `title`엔 동작 힌트만 담는다 — 값을 넣으면 마스크 ON일 때 툴팁으로 실데이터가 샌다(마스크 경계는 툴팁까지).
@@ -470,6 +490,12 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const topMoreRef = useRef<HTMLSpanElement>(null);
   const [topMoreVisible, setTopMoreVisible] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
+  /* 금액 단위 토글 — `schema.unitToggle` 이 선언돼 있어도 **소비처가 없어** 화면에 안 나오고
+     금액이 원 원시값으로 굳어 있었다(2026-09-16 Codex 4R P1). group·note·pinned 와 같은 부류다.
+     환산은 **셀 렌더·엑셀 경계에서만** 한다 — rows 에 환산값을 써넣으면 KPI 합계·필터 비교값까지 흔들린다. */
+  const [unit, setUnit] = useState<Unit>(isUnit(schema.defaultUnit ?? '') ? (schema.defaultUnit as Unit) : DEFAULT_UNIT);
+  // 토글은 금액 컬럼이 실제로 있을 때만 의미가 있다(선언만 있고 금액이 없으면 빈 컨트롤이 된다).
+  const unitOn = !!schema.unitToggle && schema.columns.some((c) => c.type === 'amount');
   const [ctx, setCtx] = useState<CtxMenuState>(null);   // 우클릭 컨텍스트 메뉴 좌표·항목(null=닫힘)
 
   // 활성 필터로 행을 실제 필터링 → KPI·카드뷰·건수는 이 결과 기준
@@ -485,6 +511,10 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const applyFilters = (next: Record<string, string>) => { setFilterValues(next); apiRef.current?.paginationGoToFirstPage(); };
   const removeFilter = (label: string) => { const n = { ...filterValues }; delete n[label]; applyFilters(n); };
 
+  /* 제네릭 금액·변동률 KPI(총액/평균 변동률)는 makeRows 의 **합성 시드**를 집계한 값이다.
+     리터럴 샘플(원문 행)을 쓰는 화면에는 그 시드가 없으므로 배지를 아예 내린다 —
+     0원·0%를 띄우면 "실적이 0"이라는 다른 거짓말이 된다. countKpis(건수형)는 실제 행을 세므로 무관. */
+  const genericMetrics = !schema.sample;
   // 파생 KPI (필터 결과 기준)
   const sumAmount = filtered.reduce((s, r) => s + r.amount, 0);
   const avgChange = filtered.length ? filtered.reduce((s, r) => s + r.change, 0) / filtered.length : 0;
@@ -517,7 +547,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   // ── 스키마 주도 컬럼 정의 ──
   // 특수 컬럼(name=2줄 · trend=스파크라인)만 전용 cellRenderer, 그 외는 Cell 재사용(마스킹 내장).
   // 마지막 '관리' 컬럼은 editable일 때만 — 더블클릭 수정과 동일하게 수정 모달을 연다.
-  const columnDefs = useMemo<ColDef<Row>[]>(() => {
+  const columnDefs = useMemo<(ColDef<Row> | ColGroupDef<Row>)[]>(() => {
     // 남는 그리드 폭을 채울 stretch 컬럼 = 주 식별/텍스트 컬럼(마지막 left-text, 또는 name).
     // 이 컬럼만 flex로 잔여폭 흡수 + autoSize 제외(fitCellContents가 폭을 고정하지 않도록) → 우측 빈 공간 제거.
     const textCols = schema.columns.filter((c) => (c.type === "text" || c.key === "name") && c.align !== "right" && c.key !== "trend");
@@ -547,10 +577,17 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       }
       const right = c.align === "right";
       return {
-        field: c.key as any, headerName: c.label + (c.unit ? ` (${c.unit})` : ""),   // 스키마 동적 키 — Row 정적 타입 밖
+        field: c.key as any,   // 스키마 동적 키 — Row 정적 타입 밖
+        headerName: unitOn && c.type === 'amount' ? amountHeader(c.label, unit) : c.label + (c.unit ? ` (${c.unit})` : ""),
+        ...noteHeader<Row>(c.note),   // 목업 `!` 마커 — 선언(ColumnSpec.note)만 있고 안 그려지던 자리
+        ...(c.pinned ? { pinned: c.pinned } : {}),   // 좌측 고정 — 같은 이유로 안 넘어가던 자리
         ...(stretch ? { flex: 1, minWidth: 200, suppressAutoSize: true } : { minWidth: 110, maxWidth: 240 }),   // stretch면 잔여폭 흡수, 아니면 긴 텍스트 상한 캡
         type: right ? "rightAligned" : undefined,
-        cellStyle: { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any, ...(right ? { justifyContent: "flex-end" } : {}) },
+        ...(c.multiline ? { autoHeight: true, wrapText: true, minWidth: 260, maxWidth: 360 } : {}),
+        cellStyle: c.multiline
+          // 여러 줄 원문(사후관리 내용 등) — 기본 nowrap+ellipsis 면 5줄이 한 줄로 잘린다(원문 .content-cell)
+          ? { display: "flex", alignItems: "flex-start", textAlign: (c.align || "left") as any, whiteSpace: "pre-line", lineHeight: 1.5, paddingTop: 8, paddingBottom: 8 }
+          : { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any, ...(right ? { justifyContent: "flex-end" } : {}) },
         /* 렌더러 분기 3갈래:
            ① detail 옵트인 컬럼 — 값이 detailWhen과 같은 셀만 링크가 되고 나머지는 평상 셀이다
               (정기보고: 보고구분 '월간보고'만 상세 보고서가 있고 반기·연간은 없다 — 원문 목업 동작)
@@ -560,22 +597,24 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         cellRenderer: c.detail
           ? (p: ICellRendererParams<Row>) => (c.detailWhen == null || String(p.value ?? "") === c.detailWhen
               ? <LinkCell value={String(p.value ?? "")} hint={DETAIL_HINT[c.detail!]} onClick={() => setDetail(c.detail!)} />
-              : <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} />)
+              : <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} unit={unitOn ? unit : undefined} />)
           : c.attachFrom
           ? (p: ICellRendererParams<Row>) => (
               <span className="inline-flex items-center gap-2 min-w-0 max-w-full">
                 <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                  <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} />
+                  <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} unit={unitOn ? unit : undefined} />
                 </span>
                 <AttachChips value={(p.data as Record<string, unknown> | undefined)?.[c.attachFrom!]} />
               </span>
             )
-          : (p: ICellRendererParams<Row>) => <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} />,
+          : (p: ICellRendererParams<Row>) => <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} unit={unitOn ? unit : undefined} />,
       };
     });
     // '관리' 액션 컬럼 제거(2026-09-11) — 행 더블클릭(onRowDoubleClicked)이 수정 모달을 열어 기능 대체.
-    return cols;
-  }, [schema, editable]);
+    // 2단 헤더: ColumnSpec.group 이 선언된 스키마(투자기업명세서 58컬럼·전체 투자실적 회수실적 4컬럼)는
+    // 연속 그룹을 ColGroupDef 로 접는다. group 이 없는 스키마는 이 호출이 그대로 통과시킨다.
+    return foldGroups(cols, schema.columns);
+  }, [schema, editable, unitOn, unit]);
 
   // CRUD
   const save = (row: Row) => {
@@ -608,20 +647,29 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const exportExcel = () => {
     const cols = schema.columns.filter((c) => c.key !== 'trend');
     const cell = (v: any) => mn(typeof v === 'number' ? v.toLocaleString() : String(v ?? ''));
-    const zFmt = (v: number) => (Number.isInteger(v) ? '#,##0' : '#,##0.0');
+    /* 숫자서식은 **그 값의 실제 소수 자릿수**를 따른다 — 고정 '#,##0.0' 으로 두면 단위 환산으로
+       생긴 2자리 값(억원 12.35)이 엑셀에서 12.4 로 반올림돼 화면과 파일이 달라진다
+       (2026-09-16 Codex 7R P2). toUnit 은 최대 2자리를 만든다. */
+    const zFmt = (v: number) => {
+      const d = (String(v).split('.')[1] ?? '').length;
+      return d === 0 ? '#,##0' : `#,##0.${'0'.repeat(Math.min(d, 2))}`;
+    };
     const isNum = (c: typeof cols[number], v: any) => c.align === 'right' && typeof v === 'number';   // 우측정렬 숫자 컬럼만
-    const header = cols.map((c) => c.label + (c.unit ? ` (${c.unit})` : ''));
+    // 내보내기는 **화면에 보이는 단위**를 따른다(unit.ts 엑셀 계약). 헤더에 단위를 적지 않으면
+    // 1/10⁸ 값이 의미 불명이 되므로 금액 컬럼 헤더는 amountHeader 를 거친다.
+    const conv = (c: typeof cols[number], v: number) => (unitOn && c.type === 'amount' ? toUnit(v, unit) : v);
+    const header = cols.map((c) => (unitOn && c.type === 'amount' ? amountHeader(c.label, unit) : c.label + (c.unit ? ` (${c.unit})` : '')));
     const body = filtered.map((r) => cols.map((c) => {
       const v = (r as any)[c.key];
-      return isNum(c, v) ? (masked ? 0 : v) : cell(v);
+      return isNum(c, v) ? (masked ? 0 : conv(c, v)) : cell(v);
     }));
     const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
     // 숫자 셀에 화면 포맷과 일치하는 숫자서식(z) 부여 (행: 헤더 다음=1부터)
     filtered.forEach((r, i) => cols.forEach((c, j) => {
-      const v = (r as any)[c.key];
-      if (!isNum(c, v)) return;
+      const raw = (r as any)[c.key];
+      if (!isNum(c, raw)) return;
       const addr = XLSX.utils.encode_cell({ r: i + 1, c: j });
-      if (ws[addr]) ws[addr].z = zFmt(v);
+      if (ws[addr]) ws[addr].z = zFmt(conv(c, raw));
     }));
     ws['!cols'] = cols.map((c) => ({ wch: c.key === 'name' ? 22 : 16 }));
     const wb = XLSX.utils.book_new();
@@ -693,7 +741,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       title={title}
       favRoute={route}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav("main")}>메인으로</Button>}
-      kpis={schema.hideKpis ? undefined : countKpiNodes ? <>{countKpiNodes}</> : schema.hideMetrics ? undefined : (<>
+      kpis={schema.hideKpis ? undefined : countKpiNodes ? <>{countKpiNodes}</> : (schema.hideMetrics || !genericMetrics) ? undefined : (<>
         <KpiBadge icon="trending" color="var(--chart-1)" label="평균 변동률"
           value={mn((avgUp ? "+" : "-") + Math.abs(avgChange).toFixed(1)) + "%"}
           valueColor={avgUp ? "var(--success-text)" : "var(--danger-text)"} />
@@ -709,6 +757,10 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       )}
       contextActions={selActions}
       toolbarRight={<>
+        {unitOn && <>
+          <span className="text-caption" style={{ fontSize: 12 }}>금액 단위</span>
+          <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />
+        </>}
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* 등록이 있으면 combo(split) 버튼 — 좌: 1차 액션(등록) · 우: ⌄ 보조 액션(내보내기·인쇄).
             라벨은 도메인 액션명 그대로(스키마 entity — '공고 등록' 등), "등록"으로 줄이지 않는다.
@@ -809,7 +861,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                     <div className="text-muted-foreground" style={{ fontSize: 12 }}><MT>{r.category}</MT></div>
                   </div>
                 </div>
-                {!schema.hideMetrics && (
+                {!schema.hideMetrics && genericMetrics && (
                   <>
                     <div className="flex items-center justify-between">
                       <span className="tabular font-bold" style={{ fontSize: 15 }}>{mn(r.amount.toLocaleString())}</span>

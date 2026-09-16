@@ -1,6 +1,15 @@
-/* 투자기업정보(통합) — 투자기업정보 > 투자기업정보(통합).
-   현행시스템 투자기업 등록/수정 양식 캡처(clipboard) 실측 매핑. 등록/수정 모달은
-   항목 수(21)가 많아 RowFormModal이 2단 wide로 자동 렌더한다. */
+/* 투자기업정보(통합) — 투자자산관리 > 투자기업정보 > 투자기업정보(통합).
+
+   ⚠ 이 스키마는 더 이상 화면을 그리지 않는다(2026-09-15). 정본 매칭표가 지목하는 원문은
+   `S1_30_투자기업정보.html` 인데, 그건 **목록이 아니라 기업 1건의 상세**(기업개요 kv +
+   재무제표 + 주주명부)라 PageSchema(columns 한 벌)로 담기지 않는다 →
+   전용 페이지 `investee_profile.tsx` 가 렌더한다(데이터 SSOT: `company_profile_data.ts`).
+   이 파일은 라우트 레지스트리(없으면 resolveSchema 가 DEFAULT_SCHEMA 로 떨어진다)로 남는다.
+
+   ⚠ provenance 를 S1_30 으로 고쳐 적지 않는다. 아래 21개 등록/수정 필드는 S1_30 이 아니라
+   **현행시스템 등록/수정 양식 캡처(clipboard-2026-06-29)** 에서 나왔다 — 출처가 서로 다르므로
+   각자 자기 출처를 기록한다(화면 하나 = 출처 하나가 아니다).
+   등록/수정 모달은 항목 수(21)가 많아 RowFormModal이 2단 wide로 자동 렌더한다. */
 import type { PageSchema } from './types';
 
 export const schema: PageSchema = {
