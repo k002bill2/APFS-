@@ -10,7 +10,7 @@ export const PW_RE = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{9,}$/;
 export const PW_POLICY_HINT = '9자 이상 · 90일 주기 · 최근 사용 비밀번호 재사용 불가';
 
 export const LOCK_LIMIT = 5;
-export const OTP_PERIOD = 30;          // 초. 표준 TOTP(RFC 6238) 회전 주기
+export const OTP_PERIOD = 120;         // 초. 표준 TOTP 는 30초지만, 화면 시연 중 코드가 자주 바뀌지 않도록 늘렸다
 
 /* 시연용 가짜 계정 — 실제 자격증명 아님.
 
@@ -38,6 +38,9 @@ export const MSG = {
   pwRequired: '비밀번호를 입력해 주세요.',
   locked: '계정이 잠겼습니다. 관리자에게 문의해 주세요.',
   nameMismatch: '초대 대상과 실명이 일치하지 않습니다.',
+  nameRequired: '이름을 입력해 주세요.',
+  birthInvalid: '생년월일 8자리를 입력해 주세요. (예: 19850302)',
+  phoneInvalid: '휴대폰번호를 정확히 입력해 주세요. (예: 01012345678)',
 } as const;
 
 /* ---------- 단계 레일 ---------- */
@@ -158,13 +161,49 @@ export function verifyRealName(input: string): string | null {
   return input.trim() === DEMO_REAL_NAME ? null : MSG.nameMismatch;
 }
 
-/** 비밀번호 재설정 안내 — 본인 확인 입력의 형식만 본다. 실제 계정 조회는 하지 않는다.
-    통과하면 null, 아니면 안내 메시지. */
+/** 비밀번호 재발급 안내 메일을 받기 위한 간단 정보(성명·아이디) — 입력 형식만 본다.
+    통합인증창(외부 모듈)이 처리하는 간편인증과는 다른 경로다 — 이쪽은 본인확인이 아니다. */
 export function verifyReset(name: string, id: string): string | null {
-  if (!name.trim()) return '성명을 입력해 주세요.';
-  if (!id.trim()) return '아이디를 입력해 주세요.';
+  if (!name.trim()) return MSG.nameRequired;
+  if (!id.trim()) return MSG.idRequired;
   return null;
 }
+
+/** 통합인증창이 제공하는 인증수단(서비스소개서 2026 p.11·p.12). 앱은 이 목록을 '안내'로만 쓴다 —
+    실제 선택·인증정보 입력은 NexBe Sign 통합인증창이 자기 화면에서 처리한다(p.7 연동 구조). */
+export const AUTH_PROVIDERS = [
+  '카카오톡', '네이버', '토스', '통신사 PASS',
+  'KB국민', '신한은행', '하나은행', 'NH농협',
+  '우리인증서', 'IBK기업', '금융인증서', '뱅크샐러드',
+] as const;
+
+/** 간편인증 요청 정보 — 앱이 받아 통합인증창 호출에 넘기는 값(이름·생년월일·휴대폰번호).
+    인증서 선택과 앱 인증은 통합인증창이 처리하므로 여기서는 형식만 본다.
+    하이픈·공백은 입력 편의로 허용하고 걷어낸다. */
+export function verifySimpleAuth(name: string, birth: string, phone: string): string | null {
+  if (!name.trim()) return MSG.nameRequired;
+  const b = birth.replace(/\D/g, '');
+  if (b.length !== 8) return MSG.birthInvalid;
+  const mm = Number(b.slice(4, 6)), dd = Number(b.slice(6, 8));
+  if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return MSG.birthInvalid;
+  // 010~019 이동전화 대역, 국번 7~8자리.
+  if (!/^01[0-9]\d{7,8}$/.test(phone.replace(/\D/g, ''))) return MSG.phoneInvalid;
+  return null;
+}
+
+/** 재설정 — 메일 재발급 탭의 좌측 레일. 간단 정보를 받아 안내 메일을 보내는 2단계. */
+export const RESET_RAIL: readonly RailDef[] = [
+  { title: '간단 정보 입력', capTodo: '성명·아이디로 계정 확인', capDone: '계정 확인 완료' },
+  { title: '재발급 메일 발송', capTodo: '등록된 이메일로 안내 발송', capDone: '발송 완료' },
+];
+
+/** 재설정 — 간편인증 탭의 좌측 레일. 가운데 단계는 외부 모듈(통합인증창)이 처리하므로
+    앱이 그리는 화면은 앞뒤 두 단계뿐이다. */
+export const SIMPLE_AUTH_RAIL: readonly RailDef[] = [
+  { title: '간편인증 요청', capTodo: '이름·생년월일·휴대폰번호 입력', capDone: '요청 완료' },
+  { title: '통합인증창 인증', capTodo: '인증서 선택 후 앱에서 인증', capDone: '인증 완료' },
+  { title: '인증결과 확인', capTodo: '결과 수신 후 임시 비밀번호 발급', capDone: '발급 완료' },
+];
 
 /** 오류 맵에 하나라도 메시지가 있으면 true. */
 export function hasError(errors: Record<string, string | null>): boolean {
