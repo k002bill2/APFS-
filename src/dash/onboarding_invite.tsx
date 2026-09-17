@@ -20,38 +20,31 @@ const INVITEE = { name: DEMO_REAL_NAME, email: 'park@imm.co.kr', org: 'IMM인베
 
 const DONE_LINE = 'color-mix(in srgb, var(--success-text) 35%, transparent)';
 
-/** 4단계 점 진행표시 — 레일 대신 쓰는 좁은 카드용 표시. 텍스트 캡션이 실제 상태를 알린다. */
+/** 4단계 점 진행표시 — 점과 캡션을 같은 열에 세로로 묶어 위치를 일치시킨다(좁은 카드용).
+    연결선은 각 열 내부에 절대배치해 다음 점까지 정확히 잇는다. */
 function DotSteps({ step }: { step: number }) {
+  const last = INVITE_LABELS.length - 1;
   return (
-    <>
-      <div aria-hidden="true" className="flex items-center gap-2" style={{ marginBottom: 14 }}>
-        {INVITE_LABELS.map((label, i) => {
-          const n = i + 1, done = n < step, cur = n === step;
-          return (
-            <React.Fragment key={label}>
-              <span style={{
-                width: 8, height: 8, borderRadius: '50%', flex: 'none',
-                background: done ? 'var(--success-text)' : cur ? 'var(--primary)' : 'var(--border-strong)',
-                boxShadow: cur ? '0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent)' : 'none',
-              }} />
-              {i < INVITE_LABELS.length - 1 && <span style={{ flex: 1, height: 2, background: done ? DONE_LINE : 'var(--border)' }} />}
-            </React.Fragment>
-          );
-        })}
-      </div>
-      <ol className="flex flex-wrap gap-x-1 list-none m-0 p-0" style={{ ...T.caption1, color: 'var(--muted-foreground)', marginBottom: 20 }} aria-label="진행 단계">
-        {INVITE_LABELS.map((label, i) => {
-          const n = i + 1;
-          return (
-            <li key={label} aria-current={n === step ? 'step' : undefined}
-              style={n === step ? { fontWeight: 700, color: 'var(--primary)' } : n < step ? { color: 'var(--success-text)' } : undefined}>
-              <span className="sr-only">{n < step ? '완료: ' : n === step ? '진행 중: ' : '예정: '}</span>
-              {n} {label}{i < INVITE_LABELS.length - 1 ? <span aria-hidden="true">{' → '}</span> : null}
-            </li>
-          );
-        })}
-      </ol>
-    </>
+    <ol className="flex list-none m-0 p-0" style={{ ...T.caption1, color: 'var(--muted-foreground)', marginBottom: 20 }} aria-label="진행 단계">
+      {INVITE_LABELS.map((label, i) => {
+        const n = i + 1, done = n < step, cur = n === step;
+        return (
+          <li key={label} aria-current={cur ? 'step' : undefined}
+            className="relative flex flex-col" style={{ flex: i === last ? '0 0 auto' : '1 1 auto', minWidth: 0, paddingRight: i === last ? 0 : 14 }}>
+            <span aria-hidden="true" style={{
+              width: 8, height: 8, borderRadius: '50%', flex: 'none',
+              background: done ? 'var(--success-text)' : cur ? 'var(--primary)' : 'var(--border-strong)',
+              boxShadow: cur ? '0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent)' : 'none',
+            }} />
+            {i < last && <span aria-hidden="true" style={{ position: 'absolute', left: 14, right: 6, top: 3, height: 2, background: done ? DONE_LINE : 'var(--border)' }} />}
+            <span style={{ marginTop: 10, ...(cur ? { fontWeight: 700, color: 'var(--primary)' } : done ? { color: 'var(--success-text)' } : null) }}>
+              <span className="sr-only">{done ? '완료: ' : cur ? '진행 중: ' : '예정: '}</span>
+              {n} {label}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -100,7 +93,7 @@ export function OnboardingInvite({ onNav }: { onNav?: (route: string) => void })
             {step === 4 ? `${INVITEE.name} 님, 환영합니다` : `${INVITEE.name} 님, 계정에 초대되었습니다`}
           </h1>
           <p style={{ font: '400 13.5px/1.6 var(--font-sans)', margin: 0, color: 'color-mix(in srgb, var(--on-brand-solid) 78%, transparent)' }}>
-            농금원 투자관리부 · 초대 유효기간 72시간
+            {step === 4 ? '농금원 투자관리부 · 운용사 계정 생성 완료' : '농금원 투자관리부 · 초대 유효기간 72시간'}
           </p>
         </header>
 
