@@ -4,6 +4,7 @@ import { mn, MT, useMask } from '../mask';
 import { parseFileNames, fileExtLabel } from '../fields/file_names';   // 첨부 CSV 계약 파서(DocumentsField와 SSOT 공유)
 import { glyphFor } from '../ui/attachment';   // 확장자 → 아이콘·색 매핑(모달 첨부목록과 SSOT 공유)
 import { DatePicker } from '../ui/date-picker';
+import { PeriodPicker } from '../ui/period-picker';   // 연도 선택(control:'year') — 일자선택과 같은 폭·팝오버 계약
 import { Switch } from '../ui/switch';
 import { Icon } from '../icons';
 import { renderKind } from './dispatch';
@@ -137,6 +138,9 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(네이티브 input과 동일 계약).
     // DatePicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW=120)을 적용
     case 'date':     return <div style={{ width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%' }}><DatePicker value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
+    // 연도선택 — PeriodPicker 연도 그리드(네이티브 select·숫자 input 나열 금지, →[[apfs-datepicker]]).
+    // 값은 'YYYY' 문자열(사업연도·회계연도). 트리거가 w-full이라 date와 같은 fit-content 래퍼(minW=130)를 쓴다.
+    case 'year':     return <div style={{ width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%' }}><PeriodPicker mode="year" value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
     case 'checkbox': return <input type="checkbox" checked={value === 'true'} onChange={(e) => onChange(String(e.target.checked))} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />;
     // on/off 상태값 토글 — 사용여부·제공여부 등 '여/부' 2지선다의 표준 컨트롤(radio 대체, 2026-09-15).
     // ⚠️ 값 계약은 문자열 그대로 유지: checked = value === options[0], 토글 시 options[0] | options[1] 을 emit 한다.

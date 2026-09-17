@@ -58,6 +58,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 | `text` | `<input type=text>` | 기본 |
 | `number` | `<input type=number>` | 숫자 |
 | `date` | shadcn Radix `DatePicker`(달력+Popover) | 네이티브 input 아님 — 값 계약 `'YYYY-MM-DD'`·KST 함정 →[[apfs-datepicker]] |
+| `year` | `PeriodPicker mode='year'`(연도 그리드+Popover) | **사업연도·회계연도는 `number` 가 아니라 이것**(2026-09-17). 값 계약 `'YYYY'` 문자열, 표시는 `2026년`. 컬럼은 `type:'text'` 그대로 — 저장값이 곧 셀 값이다. →[[apfs-datepicker]] |
 | `select` | `<select>`+`options` | 첫 옵션 시드 |
 | `radio` | 가로 라디오(`accentColor`)+`options` | **분류형 2지 이상**(개인/법인, 신주/구주, Y/N/해당없음). 첫 옵션 시드 |
 | `switch` | shadcn Radix `Switch`(ui/switch.tsx) + 상태 텍스트 | **on/off 상태값 전용**(사용여부·도움말 제공 등 '여'/'부'). 첫 옵션 시드. 값 계약은 **문자열 그대로** — `checked = value === options[0]`, 토글 시 `options[0] | options[1]` emit |

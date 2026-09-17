@@ -9,7 +9,7 @@ description: APFS 대시보드 일자선택 규약 — 네이티브 <input type=
 APFS는 네이티브 `<input type="date">`를 쓰지 않는다. 전 화면 일자선택은 **shadcn Radix Calendar + Popover** 조합인 `DatePicker`로 통일돼 있다(PR `feat/shadcn-radix-datepicker`, 2026-06-30).
 
 - **정본 컴포넌트**: `src/dash/ui/date-picker.tsx`(`DatePicker`) + `calendar.tsx` + `popover.tsx`.
-- **소비처는 단 2곳** — 모든 `control:'date'`/`kind:'date'`/`type:'date'` 메타가 이 둘로 수렴:
+- **`DatePicker`(일자) 소비처는 단 2곳** — 모든 `control:'date'`/`kind:'date'`/`type:'date'` 메타가 이 둘로 수렴(연도 선택은 아래 PeriodPicker 절):
   - `schemas/renderers.tsx` `SchemaField` `case 'date'` (폼 모달 — →[[apfs-form-modal]])
   - `generic_list.tsx` 필터 드로어 `kind === 'date'` (상세 필터 — →[[apfs-detail-filter]])
 - **의존성**: `react-day-picker@10.0.1` · `date-fns@4.4.0` · `@radix-ui/react-popover@1.1.17`.
@@ -55,6 +55,7 @@ shadcn `new-york` 소스는 **Tailwind v4 문법**이다. 이 프로젝트는 **
 - **값 계약(문자열, 빈 문자열=미선택)**: `day 'YYYY-MM-DD'` · `month 'YYYY-MM'` · `quarter 'YYYY-Qn'` · `half 'YYYY-Hn'` · `year 'YYYY'`. 표시는 `formatPeriod(mode, v)`로 한글(`2026년 2분기`·`2026년 하반기`)이지만 **저장/필터 비교는 값 문자열**로.
 - 동작: 같은 값 재클릭 = 해제(DatePicker와 동일한 유일 clear 수단), 선택/해제 모두 팝오버 닫힘. 연도 그리드는 12년 페이지(12의 배수 정렬) ‹ ›, 월/분기/반기는 연도 ‹ ›. `yearRange`(기본 2000~2035)로 범위 제한.
 - 접근성: 트리거는 `<button>` → **`ariaLabel` 필수**(감싸는 `<label>`로 명명되지 않음). 그리드는 `role=listbox/option` + `aria-selected`. 소비처 라벨 래퍼는 `<label>` 대신 `<div>`(**`DrawerField plain`**) — `<label>` 안 버튼은 라벨 활성화와 겹쳐 2회 토글된다.
+  - 📌 **단, 폼 모달(`generic_list_modal.tsx` `Field`)에서는 재현되지 않는다** — 2026-09-17 실측(trusted `page.mouse.click` 으로 ① 트리거 버튼 직접 ② 라벨 텍스트 각각 클릭, 둘 다 옵션 12개 열린 채 유지). 브라우저는 `<label>` 안 컨트롤을 직접 클릭하면 위임을 재전송하지 않는다. `control:'date'`(DatePicker) 도 같은 `<label>` 구조로 운영 중이라 `year` 만 `plain` 으로 빼면 오히려 불일치다. **Codex 리뷰가 이 문장을 근거로 P1 을 다시 지적하면, 코드를 고치기 전에 같은 계측을 먼저 돌릴 것**(→[[apfs-aggrid]] 의 "React 위임 핸들러 정렬" 항목과 같은 성격).
 - Popover는 non-modal(위 #5). Sheet(드로어)·Dialog 안에서 검증됨.
 - **🔴 폭 = 소비처가 `fit-content` 래퍼로 감싼다(w-full 트리거 계약)**: PeriodPicker/DatePicker 트리거 `<button>`은 **`w-full`(width:100%)** 이라 "부모가 정한 폭을 채운다". 그대로 `DrawerField plain`(=`block` 100%)·그리드 셀에 넣으면 **컨테이너 전체 폭(드로어 ≈368px)으로 늘어난다**(2026-09-09 subfund 상세필터 사업연도·기준일자 회귀 — PR #118의 `inputStyle` 폭 정합은 PeriodPicker 미경유라 놓침). 반드시 `<div style={{ width:'fit-content', minWidth: controlMinWidth(kind), maxWidth:'100%' }}>`로 감싼다 — `kind`는 year→`'year'`(130)·day→`'date'`(120). 형제 소비처 `renderers.tsx`(폼 모달 `case 'date'`)·`generic_list.tsx`(필터 드로어 `kind==='date'`)가 정본 패턴. `DrawerSelect`가 래퍼 없이 멀쩡한 건 `<select>`엔 고유 콘텐츠 폭이 있고 자신도 `fit-content`이기 때문(버튼엔 그게 없다).
   - **래퍼를 프리미티브(`period-picker.tsx`/`date-picker.tsx`)에 넣지 마라**: `controlMinWidth`는 `schemas/renderers.tsx` 소유이고 그 파일이 `ui/date-picker`를 import → 프리미티브가 역참조하면 **import 사이클/레이어 역전**. "소비처가 감싼다"는 습관이 아니라 의존성 방향의 결과다. 트리거 `w-full`은 의도된 계약(소비처가 폭을 정함)이라 프리미티브에서 바꾸지 않는다.
@@ -66,6 +67,7 @@ import { controlMinWidth } from './schemas/renderers';   // 폭 하한 SSOT(fit-
 <DrawerField label="기준일자" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day"  value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" /></div></DrawerField>
 <div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}><PeriodPicker mode="quarter" value={q} onChange={setQ} ariaLabel="분기" /></div>   // 'YYYY-Qn'
 ```
+- **폼 모달 소비처(2026-09-17 신설)**: `schemas/renderers.tsx` `case 'year'` — 스키마가 `control:'year'` 를 선언하면 `SchemaField` 가 `PeriodPicker mode='year'` 를 렌더한다(`case 'date'` 와 같은 fit-content 래퍼, `minW=130`). 첫 적용은 `schemas/자펀드_공고_정보관리.ts` 의 사업연도(구 `control:'number'`). 값 계약 `'YYYY'`.
 - 골드 소비처: `src/dash/subfund_manage.tsx` 상세필터(사업연도=year, 기준일자=day, **둘 다 fit-content 래퍼로 감쌈**). 검증: 연도 그리드 열림 → 2018 클릭 → 트리거 `2018년`·필터 행 수 감소·칩 `사업연도:2018년`; day는 달력(rdp) 렌더. **트리거 폭 ≈130(year)/≈120(day)** — 드로어 전체 폭(≈368) 아님.
 
 ## 범위/필터 작성 시 (날짜 2개로 기간)

@@ -18,7 +18,8 @@ export const schema: PageSchema = {
   fields: [
     // 다중모펀드 옵션 ON 가정(목업) → 읽기전용에서 선택형으로 전환
     { key: 'moeFund',    label: '모펀드',    control: 'select', options: ['농식품모태펀드', 'MOAF'] },
-    { key: 'bizYear',    label: '사업연도',  control: 'number' },
+    // 사업연도는 숫자 입력이 아니라 연도 picker(2026-09-17 사용자 결정) — 값 계약 'YYYY' 문자열은 그대로.
+    { key: 'bizYear',    label: '사업연도',  control: 'year' },
     { key: 'periodType', label: '정기/수시', control: 'select', options: ['정기', '수시'] },
     { key: 'seqNo',      label: '차수',      control: 'number' },
     // 계정구분 = 모펀드(농식품모태펀드) 구성 계정. 목업 기준 농식품투자·수산투자
