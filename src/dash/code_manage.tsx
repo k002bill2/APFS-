@@ -6,7 +6,7 @@
    - 좌 코드구분 목록 ⟷ 우 선택 코드구분의 코드상세(master-detail) → GridFrame 하나 안에 2단 그리드(lg 이상 좌 440px / 우 잔여, 좁으면 세로 적층).
        각 패널은 자체 헤더 바(제목·건수·패널 액션)와 AG Grid 를 갖는다. 좌 선택(라디오)이 우측 데이터 소스를 정한다.
        우측은 코드구분 미선택이면 **empty state**(목업 overlay '좌측에서 코드구분을 선택해 주세요.')를 그리드 대신 그린다.
-   - 그룹/상세 각각 등록·수정·삭제(목업 lg-·rg- 접두 버튼)  → 툴바 RegisterCombo(코드구분 등록, ⌘⏎) + 패널 바 액션(수정·삭제·코드 등록).
+   - 그룹/상세 각각 등록·수정·삭제(목업 lg-·rg- 접두 버튼)  → 툴바 등록 버튼(코드구분 등록, ⌘⏎) + 패널 바 액션(수정·삭제·코드 등록).
        삭제 게이트: 코드상세가 있는 코드구분은 삭제 불가(toast). 확인은 AlertDialog. 보조 경로 = 행 더블클릭·셀 Enter·우클릭 메뉴.
    - 모달 2종(코드구분 5필드 / 코드상세 7필드)  → RowFormModal + 팩토리 스키마(code_manage_schemas.ts). 수정 시 키 필드 readonly.
        중복 검증(코드구분·그룹 내 코드)은 onSave 에서 — 중복이면 toast 로 알리고 모달을 닫지 않는다(목업 '이미 존재하는 …').
@@ -21,15 +21,13 @@ import { format } from 'date-fns';
 import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
-import { controlMinWidth } from './schemas/renderers';
+import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';
-import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
@@ -83,76 +81,12 @@ const GROUP_SELECTION: RowSelectionOptions<GroupView> = { mode: 'singleRow', che
 const DETAIL_SELECTION: RowSelectionOptions<CodeDetail> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
 const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 
-const inputStyle = (kind?: string): CSSProperties => ({
-  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,
-  border: '1px solid var(--input)', borderRadius: 8, background: 'var(--card)', color: 'var(--foreground)',
-});
 function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
       {children}
     </label>
-  );
-}
-
-function MoreMenuItems({ onExport }: { onExport: () => void }) {
-  return (
-    <>
-      <DropdownMenuItem onSelect={onExport}>
-        <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
-        <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => window.print()}>
-        <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
-        <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-    </>
-  );
-}
-/* kebab(···) — 푸터 폴백 전용(툴바는 RegisterCombo ⌄). 로컬 복사본(apfs-grid) */
-function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
-  return (
-    <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <DropdownMenuTrigger aria-label="더보기"
-              className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
-              style={{ width: size, height: size }}>
-              <Icon name="more" size={20} stroke={2} />
-            </DropdownMenuTrigger>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>더보기</TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-function RegisterCombo({ label, onRegister, onExport }: { label: string; onRegister: () => void; onExport: () => void }) {
-  return (
-    <span className="inline-flex items-stretch rounded-[9px] border border-border-strong bg-card">
-      <button type="button" onClick={onRegister}
-        className="inline-flex items-center gap-[7px] rounded-l-[9px] border-0 bg-transparent px-[11px] py-1.5 font-[inherit] text-[12.5px] font-semibold text-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary">
-        <Icon name="plus" size={14} stroke={2.2} />{label}
-      </button>
-      <span aria-hidden className="w-px self-stretch bg-border-strong" />
-      <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <DropdownMenuTrigger aria-label="더보기"
-                className="inline-flex h-full items-center justify-center rounded-r-[9px] border-0 bg-transparent px-2 text-muted-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary data-[state=open]:text-primary">
-                <Icon name="chevron-down" size={14} stroke={2.2} />
-              </DropdownMenuTrigger>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>더보기</TooltipContent>
-        </Tooltip>
-        <DropdownMenuContent align="end"><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-      </DropdownMenu>
-    </span>
   );
 }
 
@@ -184,8 +118,6 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
   const [details, setDetails] = useState<Record<string, CodeDetail[]>>(() => demoDetails());
   const [curCode, setCurCode] = useState<string | null>(() => demoGroups()[0]?.code ?? null);   // 목업: 첫 코드구분 자동 선택
   const [selDetail, setSelDetail] = useState<string | null>(null);
-  const topMoreRef = useRef<HTMLSpanElement>(null);
-  const [topMoreVisible, setTopMoreVisible] = useState(true);
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const masked = useMask();
@@ -200,14 +132,6 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'group', mode: 'create' }), { enabled: modal === null });
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') { setTopMoreVisible(false); return; }
-    const el = topMoreRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   const curG = curCode ? groups.find((g) => g.code === curCode) ?? null : null;
   const groupViews = useMemo<GroupView[]>(() => {
@@ -416,17 +340,11 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       </>}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <span ref={topMoreRef} className="inline-flex">
-          <RegisterCombo label="코드구분 등록" onRegister={() => setModal({ kind: 'group', mode: 'create' })} onExport={exportExcel} />
-        </span>
+        <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'group', mode: 'create' })}>코드구분 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
       footerLeft={<span>{'코드구분 ' + mn(String(groupViews.length)) + '개 표시 중 (전체 ' + mn(String(groups.length)) + '개) · 코드상세 ' + mn(String(totalDetails)) + '건'}</span>}
-      footerRight={<>
-        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
-        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
-      </>}>
+      footerRight={<FooterActions onExport={exportExcel} />}>
 
       {/* master-detail 2단 — lg 이상 좌 440px 고정·우 잔여, 미만은 세로 적층(responsive-ui 체크 3). 각 패널은 min-w-0 로 그리드 내부 스크롤을 보존
           두 그리드는 gap-3(12px) 여백으로 갈라둔다(2026-09-15 사용자 지시 — 20px 는 과했다) — 종전엔 맞붙어 우측 표가 좌측 표의 연장처럼 읽혔다.

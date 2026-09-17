@@ -61,5 +61,5 @@ Windows Chromium은 `Alt+D`(주소창)·`Alt+E`(메뉴) 등 일부 단축키를 
 - `useHotkey`의 `useEffect` deps는 `[enabled, combo.mod, combo.shift, combo.key]`로 **`combo.alt`가 빠져 있다**. `HOTKEYS`가 `const`(정적)라 현재는 무해하지만, **동적으로 바뀌는 alt 콤보를 넘기면** 리스너가 갱신되지 않아 깨진다. 동적 콤보가 필요해지면 deps에 `combo.alt` 추가.
 
 ## 관련 스킬
-- 메뉴 항목 자체(kebab DropdownMenu 구조·항목 순서)는 → `apfs-form-modal`/각 페이지 스킬. 이 스킬은 **키 바인딩·힌트 레지스트리**만 담당.
+- ⚠️ **kebab(⋯)은 2026-09-17 전 화면에서 폐기됐다** — 내보내기·인쇄는 푸터 `FooterActions` 아이콘이 항시 노출한다(→[[apfs-grid]]). 바인딩(⌥D·⌘P)은 그대로지만 `DropdownMenuShortcut` 힌트 표면이 사라져 **세 단축키 모두 화면 힌트가 없다**. 이 스킬은 **키 바인딩·힌트 레지스트리**만 담당.
 - 리스트 페이지 툴바 골격 → `apfs-grid`.

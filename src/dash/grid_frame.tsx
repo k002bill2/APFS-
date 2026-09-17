@@ -12,7 +12,27 @@ import { Icon } from './icons';
 import { APFS_DATA, MenuStore, useMenuSel } from './data';
 
 const { PageHeader } = Shell;
-const { Card, ColorChip } = UI;
+const { Card, ColorChip, IconBtn } = UI;
+
+/* ===== 푸터 액션 4종 — 전 페이지 공통(2026-09-17 사용자 결정) =====
+   순서 고정: 전체보기(⛶) · 새 창(⧉) · 내보내기(⤓) · 인쇄(🖨). **항시 노출**이며 kebab(⋯) 은 폐기됐다
+   (종전엔 내보내기·인쇄가 툴바 kebab / 등록 combo ⌄ / 푸터 폴백 kebab 안에 숨어 있었다).
+   - `onToggleAll` 을 넘기지 않는 화면(페이지네이션 없는 집계·매트릭스표)은 전체보기 버튼이 빠져 3개만 렌더된다.
+   - 페이지마다 복사하지 말고 이 컴포넌트를 쓴다 — 아이콘 순서·라벨·크기가 갈라지지 않게 하는 SSOT.
+   - 단축키(⌥D 내보내기 · ⌘P 인쇄)는 페이지의 `useHotkey` 가 그대로 소유한다(여기서 바인딩하지 않는다). */
+export function FooterActions({ onExport, onPrint, showAll, onToggleAll, size = 32 }: {
+  onExport?: () => void; onPrint?: () => void; showAll?: boolean; onToggleAll?: () => void; size?: number;
+}) {
+  return (
+    <>
+      {onToggleAll && <IconBtn icon="maximize" label="전체보기" size={size} active={showAll} pressed={showAll} onClick={onToggleAll} />}
+      <IconBtn icon="external" label="새 창" size={size} onClick={() => window.open(location.href, '_blank')} />
+      {onExport && <IconBtn icon="download" label="내보내기" size={size} onClick={onExport} />}
+      <IconBtn icon="printer" label="인쇄" size={size} onClick={onPrint ?? (() => window.print())} />
+    </>
+  );
+}
+
 
 /* 플로팅 액션 바 전역 스위치(복구 레버) — false 로 바꾸면 전 화면에서 바가 사라지고
    `contextActions` 는 툴바에만 렌더되고 플로팅 바는 뜨지 않는다. IntersectionObserver 도 걸리지 않는다. */

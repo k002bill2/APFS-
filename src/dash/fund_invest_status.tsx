@@ -35,14 +35,12 @@ import type { CSSProperties } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
 import { mn, useMask } from './mask';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
-import { controlMinWidth } from './schemas/renderers';
+import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, ValueFormatterParams, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
-import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { PeriodPicker } from './ui/period-picker';
 import { toast } from './ui/sonner';
@@ -371,11 +369,6 @@ function flattenForExcel(defs: StatColDefs, unitOf: (key: string) => string | nu
 /* ──────────────────────────────
    드로어·페이저·kebab (골드 로컬 복사 — 공유 export 아님)
 ────────────────────────────── */
-const inputStyle = (kind?: string): CSSProperties => ({
-  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box',
-  padding: '9px 11px', fontFamily: 'inherit', fontSize: 14,
-  border: '1px solid var(--input)', borderRadius: 8, background: 'var(--card)', color: 'var(--foreground)',
-});
 
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
   return (
@@ -410,36 +403,6 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
   );
 }
 
-/* kebab(···) 더보기 — 내보내기(Excel)·인쇄. 목업에 전역 등록이 없어 kebab 단독(apfs-grid 툴바 규약) */
-function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
-  return (
-    <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <DropdownMenuTrigger aria-label="더보기"
-              className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
-              style={{ width: size, height: size }}>
-              <Icon name="more" size={20} stroke={2} />
-            </DropdownMenuTrigger>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>더보기</TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent>
-        <DropdownMenuItem onSelect={onExport}>
-          <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
-          <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => window.print()}>
-          <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
-          <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -449,8 +412,6 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: CROSS_ROWS[DEFAULT_VIEW as CrossView].length });
-  const topMoreRef = useRef<HTMLSpanElement>(null);
-  const [topMoreVisible, setTopMoreVisible] = useState(true);
   const masked = useMask();
 
   /* 상세필터 — 투자실적구분(=view)만 표시를 바꾸고 나머지 5종은 noop(상단 '한계') */
@@ -478,16 +439,6 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
 
   /* 단위 변경 → 금액 셀(context.unit 참조) 재포맷. 본문 + pinned 합계행 + 구분 캡션 모두 */
   useEffect(() => { apiRef.current?.refreshCells({ force: true }); }, [unit]);
-  useEffect(() => {
-    // 미지원 가드는 `if (!el) return`과 분리한다 — 합치면 초기값 true가 굳어 푸터 폴백 kebab이 영영
-    // 안 뜨고 내보내기·인쇄 접근이 끊긴다(apfs-grid 푸터 골드 양식).
-    if (typeof IntersectionObserver === 'undefined') { setTopMoreVisible(false); return; }
-    const el = topMoreRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   /* 새로고침 — 원천이 정적 상수라 재조회할 원본이 없다. 표시만 다시 그리고 알린다(가짜 데이터 갱신 금지) */
   const refresh = () => { apiRef.current?.refreshCells({ force: true }); toast.success('새로고침했습니다'); };
@@ -548,7 +499,6 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
         <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
-        <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>
       </>}
       footerLeft={<span>{'총 ' + mn(String(rows.length)) + '개 중 ' + mn(String(Math.min(shown, rows.length))) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
@@ -558,12 +508,7 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
           <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => apiRef.current?.paginationGoToNextPage()} />
         </>
       ) : undefined}
-      footerRight={<>
-        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
-        <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} pressed={showAll} onClick={() => setShowAll((v) => !v)} />
-        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
-      </>}>
+      footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}>
 
       {/* AG Grid 본체 — 뷰 전환은 key로 **리마운트**(autoSizeStrategy 1회 적용 함정 회피, 상단 '한계') */}
       <div>

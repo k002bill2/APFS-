@@ -85,6 +85,22 @@ export function controlMinWidth(kind?: string): number {
   return kind === 'date' ? 120 : (kind === 'select' || kind === 'enum' || kind === 'year') ? 130 : kind === 'number' ? 180 : 240;
 }
 
+/* 폼 컨트롤 박스 규격(높이 34px) — 등록/수정 모달(SchemaField base)과 상세필터 드로어가 **공유하는 SSOT**.
+   ⚠️ 이 값을 페이지로 복사하지 말 것: 24개 드로어가 각자 복제한 결과 9px 패딩·14px 폰트로 굳어
+   모달(34px)보다 6px 높아졌다(2026-09-17 사용자 지적). 높이를 바꾸려면 여기 한 곳만 바꾼다.
+   ⚠️ fontFamily(longhand)만 상속 — `font:'inherit'`(단축)은 fontSize·lineHeight 를 함께 리셋해 34px 클램프를 깬다.
+   높이 산술이 안 맞아 보이는 이유·UA 함정은 아래 base 주석 참조. */
+export const CONTROL_BOX: React.CSSProperties = {
+  boxSizing: 'border-box', padding: '7px 11px', fontSize: 13.5, lineHeight: '20px', height: 34, minHeight: 34, fontFamily: 'inherit',
+};
+
+/* 상세필터 드로어 입력 — 폭은 fit-content(하한 = 타입별 controlMinWidth SSOT), 박스는 CONTROL_BOX(모달과 동일 34px).
+   테두리·반경·색도 모달 base 와 같은 토큰을 쓴다. 페이지별 로컬 복제 금지(→[[apfs-detail-filter]]). */
+export const drawerInputStyle = (kind?: string): React.CSSProperties => ({
+  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', ...CONTROL_BOX,
+  border: '1px solid var(--border-strong)', borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
+});
+
 export function SchemaField({ field, value, onChange, invalid, fill: fillProp }: { field: FieldSpec; value: string; onChange: (v: string) => void; invalid?: boolean; fill?: boolean }) {
   // long 필드(설명·비고·운용사명·펀드명 등)는 소비처가 fill 을 넘기지 않아도 항상 컨테이너를 꽉 채운다 —
   // fit-content 폭 규칙이 긴 텍스트를 240px 하한에 묶어두던 문제(권한관리 모달 '설명') 해소.
@@ -112,7 +128,7 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
     // 폭: 컨테이너를 꽉 채우지 않고 내용 맞춤(fit-content). 하한은 타입별 minW(위), 넘치지 않게 max 100%.
     //    textarea는 아래에서 100%로 되돌린다(긴 입력 항목).
     // fill=true면 셀(컬럼)이 폭을 지배 → minWidth 하한(text 240 등)을 풀어(0) 고정폭 컬럼을 넘쳐 겹치지 않게 한다(Codex P2).
-    width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%', boxSizing: 'border-box', padding: '7px 11px', fontSize: 13.5, lineHeight: '20px', height: 34, minHeight: 34, fontFamily: 'inherit',
+    width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%', ...CONTROL_BOX,   // 박스 규격(34px)은 드로어와 공유하는 CONTROL_BOX 가 SSOT
     border: `1px solid ${invalid || requiredEmpty ? 'var(--danger)' : 'var(--border-strong)'}`,
     borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
     transition: 'border-color .12s, box-shadow .12s',

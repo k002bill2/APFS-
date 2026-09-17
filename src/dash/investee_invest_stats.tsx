@@ -18,7 +18,7 @@
    ⚠ 표가 넓어 가로 스크롤은 **각 표의 래퍼 안에만** 둔다(페이지 전체가 가로로 밀리지 않게). */
 import { useState, useMemo, useCallback } from 'react';
 import { UI } from './components';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { mn, useMask } from './mask';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
@@ -191,10 +191,9 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
         <span className="text-caption" style={{ fontSize: 12 }}>금액 단위</span>
         <SegTabs size="sm" options={STAT_UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as StatUnit)} />
         <IconBtn icon="download" label="내보내기 (Excel)" size={34} onClick={exportExcel} />
-        <IconBtn icon="file" label="인쇄" size={34} onClick={() => window.print()} />
       </>}
       footerLeft={<span>{`모펀드 농식품모태펀드 · 매출액별 ${SOURCE_COUNTS.salesScale}행 · 투자형태별 ${SOURCE_COUNTS.investType}행 · 소재지별 ${SOURCE_COUNTS.region}행 (원문 그대로)`}</span>}
-      footerRight={<IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />}>
+      footerRight={<FooterActions />}>
       <div style={{ padding: '4px 2px 8px', minHeight: 320 }}>
         {view === 'salesScale' && (
           <Section title="경영체 매출액별 투자실적" caption={`투자건수·투자금액 2개 블록 · 연도(2010~2025)+합계 · 금액 단위: ${unit}`}>
