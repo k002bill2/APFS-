@@ -1,6 +1,6 @@
 ---
 name: apfs-aggrid
-description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규약 — 공유 테마 apfsTheme, 2단 그룹헤더(ColGroupDef)·pinned 합계행·회색 행선택·외부필터(Community)·더블클릭 수정·Excel(SheetJS) 내보내기·셀 마스킹. 정본 예시는 "모태펀드 조성·출자 현황표"(asset_funding.tsx). AgGridReact·컬럼정의·pinned행·합계행·정렬·엑셀 내보내기·셀 렌더러 작업 시 사용(바깥 양식 골격은 apfs-grid). Use when building or editing the AgGridReact table body itself (columns, theme, pinned rows, sorting, excel export, cell rendering).
+description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규약 — 공유 테마 apfsTheme, 2단 그룹헤더(ColGroupDef)·pinned 합계행·행 선택(단일/다중선택·클릭 누적선택 2옵션 한 벌)·외부필터(Community)·더블클릭 수정·Excel(SheetJS) 내보내기·셀 마스킹. 정본 예시는 "모태펀드 조성·출자 현황표"(asset_funding.tsx). AgGridReact·컬럼정의·pinned행·합계행·정렬·엑셀 내보내기·셀 렌더러 작업 시 사용(바깥 양식 골격은 apfs-grid). Use when building or editing the AgGridReact table body itself (columns, theme, pinned rows, sorting, excel export, cell rendering).
 ---
 
 # apfs-aggrid Skill
@@ -8,7 +8,8 @@ description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규
 ## 컨텍스트
 `apfs-grid`(GridFrame)는 페이지의 **바깥 양식**(헤더·KPI·툴바·푸터)을 소유한다. 이 스킬은 그 안에 들어가는 **AG Grid 본체**(`AgGridReact` — 컬럼·테마·고정행·선택·필터·내보내기)를 소유한다. "양식은 apfs-grid, 알맹이는 apfs-aggrid."
 
-- **정본 예시(골드 레퍼런스)**: `src/dash/asset_funding.tsx` — "모태펀드 조성·출자 현황표". 2단 그룹헤더 + pinned 합계행 + 정렬·행선택·등록·상세필터(External Filter)·페이지네이션·Excel·뷰토글을 모두 포함한 완성형.
+- **정본 예시(골드 레퍼런스)**: `src/dash/asset_funding.tsx` — "모태펀드 조성·출자 현황표". 2단 그룹헤더 + pinned 합계행 + flex 컬럼폭 + 정렬·상세필터(External Filter)·페이지네이션·Excel·우클릭 메뉴의 완성형.
+  ⚠️ **선택·CRUD 툴바의 정본은 여기가 아니다** — 이 화면은 2026-09-17 결정으로 `rowSelection` 자체가 없다(아래 "행 선택" 절). 선택·다중선택·선택 액션 툴바를 베낄 때는 `src/dash/generic_list.tsx` 를 본다.
 - **공유 인프라(SSOT)**: `src/dash/aggrid_theme.ts`(`apfsTheme`·`fmt`·`numFmt`·`numStyle`·모듈등록), `src/dash/aggrid_shared.css`(합계행 버그 보정).
 - 버전: AG Grid Community **v35.3.1**(v33+ Theming API). 다른 정본 트랙: 리스트형은 `generic_list.tsx`(스키마 주도).
 
@@ -19,7 +20,7 @@ description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규
 4. **pinned 합계행은 참조가 안정해야 한다(매 렌더 인라인 `[total]` 금지).** `pinnedBottomRowData`에 매 렌더 **새 배열**을 넘기면 AG Grid가 고정행을 재생성해 **행 애니메이션이 매번 재발**한다. 데이터 가변성에 따라 갈라라:
    - **정적 데이터** → 모듈 스코프 상수: `const PINNED_BOTTOM = [TOTAL_ROW];`
    - **가변 행(삭제·추가로 합계 재계산 필요)** → `const pinned = useMemo(() => [computeTotal(rows)], [rows]);` — 렌더 간 참조 안정 + 데이터 변할 때만 새 배열.
-   - ⚠️ 골드 예시 `asset_funding.tsx`는 삭제/등록을 지원하면서도 `PINNED_BOTTOM=[TOTAL_ROW]`(하드코딩 합계)를 쓴다 → **행 변경 후 합계가 stale**(프로토타입 더미라 미수정). 실데이터·가변 행이면 반드시 `useMemo` 재계산 쪽을 따를 것.
+   - ⚠️ 골드 예시 `asset_funding.tsx`는 우클릭 행 삭제를 지원하면서도 `PINNED_BOTTOM=[TOTAL_ROW]`(하드코딩 합계)를 쓴다 → **행 변경 후 합계가 stale**(프로토타입 더미라 미수정). 실데이터·가변 행이면 반드시 `useMemo` 재계산 쪽을 따를 것.
 5. **합계행 버그 보정 CSS.** `import './aggrid_shared.css'` 필수 — 안 하면 floating(합계)행이 `opacity:0` stuck으로 **안 보인다**(`!important`라 getRowStyle로 못 고침, CSS로만). 합계행 강조 틴트도 여기서 공유.
 6. **객체 prop은 전부 참조가 안정해야 한다 — 인라인 `{{…}}` 금지. 특히 `defaultColDef`·`autoSizeStrategy`.**
    인라인 리터럴은 렌더마다 새 객체가 되고, AG Grid는 그때 컬럼을 재생성하면서 폭을 **`colDef.width`(선언 폭)로 되돌린다.**
@@ -89,7 +90,7 @@ const CONFIRM_HEADER: Record<Role, ReturnType<typeof reviewInnerHeader>> = {
   domLayout="autoHeight"
   autoSizeStrategy={AUTO_SIZE_CONTENT}       // ⑦ 공용 상수 (FIT_GRID_WIDTH도 동일 — 인라인 리터럴 금지)
   defaultColDef={DEFAULT_COL_DEF}            // ⑦ 공용 상수 (aggrid_theme.ts) — 인라인 `{{…}}` 금지
-  rowSelection={ROW_SELECTION}               // ⑦ 모듈 상수로 호이스팅
+  rowSelection={ROW_SELECTION}               // ⑦ 모듈 상수로 호이스팅 (multiRow면 클릭 누적선택 2옵션 한 벌 — "체크박스" 절)
   pagination paginationPageSize={PAGE_SIZE} suppressPaginationPanel   // 페이저는 GridFrame 푸터에서 커스텀
   isExternalFilterPresent={isExternalFilterPresent}                   // 상세필터(Community)
   doesExternalFilterPass={doesExternalFilterPass}
@@ -103,7 +104,7 @@ const CONFIRM_HEADER: Record<Role, ReturnType<typeof reviewInnerHeader>> = {
 | 동작 | 방법 |
 |------|------|
 | 정렬 | `defaultColDef.sortable: true` (헤더 클릭) |
-| 행 선택→삭제 | `rowSelection` multiRow, `api.getSelectedRows()`로 삭제 후 `deselectAll()` |
+| 행 선택→삭제(다건) | `rowSelection` multiRow + `enableClickSelection`·`enableSelectionWithoutKeys` **한 벌**, `api.getSelectedRows()`로 삭제 후 `deselectAll()`. 정본 `generic_list.tsx` |
 | 페이지네이션 | `pagination`+`suppressPaginationPanel` 후 `paginationGoToPage` 등으로 GridFrame 푸터에 커스텀 페이저 |
 | 상세필터 | **External Filter**(Community): `isExternalFilterPresent`/`doesExternalFilterPass` + 값 변경 시 `apiRef.current?.onFilterChanged()`. 드로어 UI·필터칩은 →[[apfs-detail-filter]] |
 | 수정 진입 | `onRowDoubleClicked` → 스키마 모달(→[[apfs-form-modal]]) |
@@ -169,7 +170,28 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
 - **행 높이는 테마 기본(42px)** — `rowHeight` 오버라이드 금지(골드와 간격 통일).
 - **체크박스는 "선택이 액션을 만들 때"만 만든다(기본값 아님).** 체크로 실행할 것이 있는 화면 — 다건 선택삭제, 단계 전이(→[[apfs-stage-workflow]]), 선택 행 편집 — 만 `checkboxes:true`. **조회 전용(감사·이력·집계)처럼 선택이 아무 것도 못 하는 화면은 `checkboxes:false`** 로 두고 `selectionColumnDef`도 **지운다**(체크박스가 꺼지면 선택 컬럼 자체가 생성되지 않아 죽은 설정이 된다). 선례: `risk_manage.tsx`.
   - ⚠️ **`checkboxes:false` 로 체크박스 열을 지우면서 선택은 남기려면 `enableClickSelection:true` 를 반드시 같이 켠다.** AG Grid 기본값이 **false** 라 둘 다 없으면 선택을 만들 수단이 0이 되고, `selCount`/`selected` 가 영원히 비어 선택삭제·단계전이·플로팅 액션이 **조용히** 죽는다. "행 클릭으로 선택"은 기본 동작이 아니다. 실사고: `asset_funding.tsx` 가 `{mode:'multiRow', checkboxes:false}` 만 두고 주석엔 "행 클릭으로 선택 유지"라 적혀 있어 선택삭제 툴바 분기가 도달 불가로 방치됐다(2026-09-15 플로팅 바 확장 중 실측 발견 → `enableClickSelection:true` 로 복구, `rowSelection` 도 모듈 상수로 호이스팅).
+    **후일담(2026-09-17)**: 사용자가 "체크박스가 없는데 저 액션 필요없다"고 판정해 이 화면은 선택을 **통째로 걷어냈다** — `rowSelection`·`onSelectionChanged`·`selCount`·선택 툴바가 한 벌로 사라지고 조회전용 열(`audit_log`·`permission_history`)에 합류했다. 위 함정 자체는 여전히 유효하니 남겨 둔다.
   - 화면에 액션이 있어도 **더블클릭·Enter·우클릭 메뉴로 이미 닿는 단일 액션(상세 보기 등)뿐**이라면 체크박스 값이 없다 — 만들지 않는다. "체크했는데 아무 일도 안 일어남"은 그 자체로 UI 결함이다.
+  - **다중선택(중복선택) 그리드는 클릭 누적선택을 켠다 — 두 옵션이 한 벌이다(2026-09-17 사용자 결정).**
+    `mode:'multiRow'` 로 갈 화면은 **반드시** 아래 두 개를 같이 준다. 체크박스 칸(폭 44px)을 정확히 겨냥하지 않고
+    행 본문 아무 데나 눌러도 체크되게 하는 것이 목적이다.
+    ```tsx
+    const ROW_SELECTION = { mode: 'multiRow', checkboxes: true, headerCheckbox: true,
+      enableClickSelection: true,        // 클릭을 선택 수단으로 연다(AG Grid 기본 false)
+      enableSelectionWithoutKeys: true,  // ⌘/Shift 없이도 **누적 토글** (구 rowMultiSelectWithClick)
+    } as const;
+    ```
+    ⚠️ **`enableClickSelection` 만 켜면 안 된다.** 그 상태의 클릭은 "기존 선택을 전부 버리고 이 행만"이라
+    체크박스로 고른 3건이 본문 클릭 한 번에 1건으로 **줄어든다**. `enableSelectionWithoutKeys` 가 그 클릭을
+    누적 토글로 바꾼다. 실측(2026-09-17, generic_list): 본문 클릭 1건 → 다른 행 클릭 2건 → 첫 행 재클릭 1건,
+    더블클릭 수정 모달은 그대로 열림(클릭 선택이 더블클릭을 가로채지 않는다).
+  - **단일선택이 필요한 화면은 multiRow 로 올리지 않는다.** 판별 기준은 하나 — **그 액션이 N건에 의미가 있나.**
+    - `singleRow` 유지: 단계 전이(→[[apfs-stage-workflow]] — 승인/반려는 한 건씩), master-detail 라디오
+      (→ 아래 절 — 좌측 1건이 우측 내용을 정한다), 선택 행 **수정**(모달은 한 건만 연다).
+      현행 11개 bespoke 페이지가 전부 여기 속한다(`subfund_manage`·`program_manage`·`user_manage`·`code_manage` …).
+    - `multiRow`: **선택 삭제처럼 N건에 그대로 적용되는 액션**이 있는 화면. 현행 정본은 `generic_list.tsx` 하나다.
+  - **수정 버튼은 단건 체크일 때만**(`editable && selCount === 1`). 다건 선택에 수정 모달은 의미가 없다 —
+    다건이면 `선택 삭제`·`선택 해제`만 남는다(정본: `generic_list.tsx` `selActions`).
   - **조회 전용 화면은 `rowSelection` 자체를 두지 않는다**(2026-09-15 사용자 지시 — 체크박스만 끄는 것보다 한 단계 더). 선택이 만들 액션이 없으면 `mode:'singleRow', enableClickSelection:true`도 지운다: 함께 `onSelectionChanged`·선택 state(`selId`)·`selected`·툴바의 `선택 해제` 버튼/선택 배지 분기·`refresh()`의 `deselectAll()`·`apiRef`(다른 용도가 없으면)까지 **한 벌로 사라진다**. `refreshNoColumn`은 자기 이벤트의 `e.api`를 쓰므로 `apiRef`에 의존하지 않는다. 상세 진입은 **더블클릭 / Enter / 우클릭 메뉴** 3경로로 이미 충분하고, 회색 행 강조가 없어지는 것이 "선택 기능 없음"과 일치한다. 선례: `audit_log.tsx`·`permission_history.tsx`.
   - 스키마 주도(`generic_list.tsx`) 페이지는 이 규약을 `schema.hideRowSelection: true` 로 표현한다(→[[apfs-grid]]) — bespoke 페이지만 `rowSelection`을 직접 만진다.
 - **라디오 단일선택(체크박스가 필요한 경우)**: `rowSelection={{mode:'singleRow',checkboxes:true,enableClickSelection:true}}` + `selectionColumnDef={{pinned:'left',width:44}}` + `getRowId`. 선택 SSOT는 React state(→[[apfs-stage-workflow]] 규약 9).

@@ -148,7 +148,11 @@ function makeRows(schema: PageSchema, n: number): Row[] {
    인라인 리터럴로 두면 렌더마다 새 객체가 되어 AG Grid가 컬럼을 재생성하고 폭을 선언값으로 되돌린다
    (aggrid_theme.ts DEFAULT_COL_DEF 주석의 실측 사례와 동일 원인).
    schema.hideRowSelection이면 이 prop 자체를 undefined로 넘겨 선택 컬럼을 없앤다(체크 해제가 아니라 컬럼 제거). */
-const ROW_SELECTION = { mode: "multiRow", checkboxes: true, headerCheckbox: true } as const;
+/* 행 본문 클릭으로도 체크된다(2026-09-17 사용자 결정) — 체크박스 칸을 정확히 겨냥하지 않아도 되게.
+   두 옵션이 **한 벌**이다: `enableClickSelection` 이 클릭을 선택 수단으로 열고(기본 false),
+   `enableSelectionWithoutKeys` 가 ⌘/Shift 없이도 **누적 토글**이 되게 한다. 후자가 없으면 클릭이
+   기존 체크를 전부 지우고 그 행만 남겨, 체크박스로 고른 다건이 본문 클릭 한 번에 날아간다. */
+const ROW_SELECTION = { mode: "multiRow", checkboxes: true, headerCheckbox: true, enableClickSelection: true, enableSelectionWithoutKeys: true } as const;
 
 let SEQ = 500;
 const nextId = () => "R" + (++SEQ);
@@ -688,6 +692,14 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     setModal(null);
     toast.success("항목이 삭제되었습니다");
   };
+  /* 선택 행 수정 — 체크 1건일 때만 노출되는 툴바 액션(2026-09-17). 더블클릭·Enter·우클릭 '수정'과
+     같은 모달을 연다(대체가 아니라 추가 진입점). 선택 행은 bulkDelete와 동일하게 클릭 시점에 읽는다 —
+     selCount만 state로 두고 행 자체는 그리드가 SSOT다. detail 팝업이 떠 있으면 무시(더블클릭 경로와 동형). */
+  const editSelected = () => {
+    const sel = apiRef.current?.getSelectedRows() ?? [];
+    if (sel.length !== 1 || detail !== null) return;
+    setModal({ mode: "edit", row: sel[0] });
+  };
   const bulkDelete = () => {
     const sel = apiRef.current?.getSelectedRows() ?? [];
     if (!sel.length) return;
@@ -788,6 +800,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
+      {/* 단건 체크일 때만 '수정' — 다건 선택에 수정 모달은 의미가 없다(bespoke user_manage·subfund_manage 규약과 동형) */}
+      {editable && selCount === 1 && <Button variant="primary" size="sm" leadingIcon="file" onClick={editSelected}>수정</Button>}
       <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger)" }} onClick={bulkDelete}>선택 삭제</Button>
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>

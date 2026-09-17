@@ -2,7 +2,7 @@
    조성출자현황_목업.html(KRDS TO-BE) 기준: 연도별 조성현황(기금 소스별) + 출자현황 집계 매트릭스.
    2단 중첩 헤더 + pinned 합계행. AG Grid Community + 공통 양식 GridFrame(apfs-grid 스킬).
 
-   기능: 정렬 · 행 선택→선택삭제 · 상세필터(Sheet→External Filter, L12 Community)
+   기능: 정렬 · 우클릭 행 메뉴(복사/삭제) · 상세필터(Sheet→External Filter, L12 Community)
         · 페이지네이션 · Excel(.xlsx, SheetJS) 내보내기 · 리스트/카드 뷰 토글.
      → 드로어 UI는 ui/sheet 프리미티브 재사용.
 
@@ -17,7 +17,7 @@ import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한
 import { GridFrame, KpiBadge } from './grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT. 그리드폭 채움은 컬럼 flex(numCol)
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, CellContextMenuEvent, ValueFormatterParams, RowSelectionOptions } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, IRowNode, CellContextMenuEvent, ValueFormatterParams } from 'ag-grid-community';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
@@ -46,15 +46,9 @@ const TOTAL_ROW: FundingRow = { y: '합 계', c0: 4987.3, c1: 4037, c2: 650, c3:
 const PINNED_BOTTOM: FundingRow[] = [TOTAL_ROW];
 const PAGE_SIZE = 20;   // 5행 → 1페이지
 
-/* 행 선택 — 체크박스 열 없이 **행 클릭**으로 다건 선택(mod+클릭·Shift 범위는 AG Grid 기본 동작).
-   ⚠️ `enableClickSelection` 은 AG Grid 기본값이 **false** 다. 이게 없으면 checkboxes:false 와 맞물려
-   선택을 만들 수단이 아예 없어져 `selCount` 가 영원히 0 이 되고 선택삭제·플로팅 액션이 죽는다
-   (2026-09-15 실측으로 발견한 선행 버그 — 주석엔 "행 클릭으로 선택 유지"로 적혀 있었다).
-   ⚠️ **모듈 상수로 호이스팅**(→[[apfs-aggrid]] ⑦): 인라인 리터럴이면 렌더마다 새 객체라
-   컬럼이 재생성돼 폭이 되돌아간다. 선택이 살아난 뒤엔 선택마다 리렌더가 나므로 특히 중요하다. */
-const ROW_SELECTION: RowSelectionOptions<FundingRow> = {
-  mode: 'multiRow', checkboxes: false, headerCheckbox: false, enableClickSelection: true,
-};
+/* 행 선택 UI 없음(2026-09-17 사용자 결정) — 체크박스 열이 없는 화면에서 "N건 선택됨/선택 삭제"
+   툴바만 뜨는 것이 군더더기라 `rowSelection` prop 자체를 넘기지 않는다(스키마 화면의
+   [[apfs-grid]] `hideRowSelection` 과 같은 계약). 행 삭제·복사는 우클릭 컨텍스트 메뉴로 유지. */
 
 const CO = ['합계', '농특회계', '농안기금', 'FTA', '수산발전기금', '농금원'];
 
@@ -135,7 +129,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<FundingRow> | null>(null);
   const [rows, setRows] = useState<FundingRow[]>(ROWS);   // 삭제/등록/새로고침 위해 가변
-  const [selCount, setSelCount] = useState(0);
   const [showAll, setShowAll] = useState(false);          // 전체보기 — 페이지 크기를 전체 행 수로 키워 한 페이지에 모두 표시
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: ROWS.length });
   const [unit, setUnit] = useState<Unit>('억원');           // 금액 단위(원/백만원/억원) — 조합수(개)는 불변
@@ -155,7 +148,6 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   const masked = useMask();   // 마스크 ON이면 Excel 숫자 셀 값을 0으로(실값 비노출) — 표시 모양은 z 서식이 담당
 
   const onGridReady = useCallback((e: GridReadyEvent<FundingRow>) => { apiRef.current = e.api; }, []);
-  const onSelectionChanged = useCallback((e: SelectionChangedEvent<FundingRow>) => { setSelCount(e.api.getSelectedRows().length); }, []);
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
     setPage({ current: api.paginationGetCurrentPage(), total: api.paginationGetTotalPages(), rowCount: api.paginationGetRowCount() });
@@ -178,20 +170,10 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
     return true;
   }, [matchText, fYear, fMin]);
 
-  const refresh = () => { setRows([...ROWS]); apiRef.current?.deselectAll(); toast.success('새로고침했습니다'); };
-  const clearSel = () => apiRef.current?.deselectAll();
-  const deleteSelected = () => {
-    const sel = apiRef.current?.getSelectedRows() ?? [];
-    if (!sel.length) return;
-    const ys = new Set(sel.map((r) => r.y));
-    setRows((prev) => prev.filter((r) => !ys.has(r.y)));
-    apiRef.current?.deselectAll();
-    toast.success(`${sel.length}개 항목을 삭제했습니다`);
-  };
+  const refresh = () => { setRows([...ROWS]); toast.success('새로고침했습니다'); };
   // 단일 행 삭제 — 우클릭 컨텍스트 메뉴용(y가 행 식별자). 합계행은 호출부에서 제외.
   const deleteOne = (y: string) => {
     setRows((prev) => prev.filter((r) => r.y !== y));
-    apiRef.current?.deselectAll();
     toast.success('항목을 삭제했습니다');
   };
   // 행 복사 — 구분(축)은 실값 유지, 숫자 값만 mn(fmt())로 마스킹(엑셀 내보내기와 동일 계약). TSV로 클립보드에.
@@ -257,18 +239,6 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
   const totalForCount = page.rowCount;
 
-  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
-     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
-  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
-     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다.
-     행 클릭 선택은 ROW_SELECTION(위) 의 `enableClickSelection` 이 켜 준다. */
-  const selActions = selCount > 0 ? (
-    <>
-      <span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
-      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={deleteSelected}>선택 삭제</Button>
-      <Button variant="ghost" size="sm" onClick={clearSel}>선택 해제</Button>
-    </>
-  ) : null;
   return (
     <GridFrame
       crumbs={['홈', '투자자산관리', '모태펀드관리', '모태펀드 조성 및 출자현황']}
@@ -281,7 +251,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
         <KpiBadge icon="wallet" color="var(--accent)" label="누적 출자금액" value={mn(fmt(toUnit(TOTAL_ROW.u1, unit))) + ' ' + unit} valueSize={14} />
         <KpiBadge icon="layers" color="var(--chart-1)" label="누적 조합수" value={mn(fmt(TOTAL_ROW.u0)) + ' 개'} valueSize={14} />
       </>}
-      toolbarLeft={selCount > 0 ? null : (
+      toolbarLeft={(
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {filterActive ? (
@@ -302,11 +272,10 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
               ))}
             </span>
           ) : (
-            <span className="text-caption" style={{ fontSize: 12.5 }}>행 선택→삭제 · 헤더=정렬 · 상세필터 · kebab=내보내기/인쇄</span>
+            <span className="text-caption" style={{ fontSize: 12.5 }}>우클릭=행 메뉴 · 헤더=정렬 · 상세필터 · kebab=내보내기/인쇄</span>
           )}
         </>
       )}
-      contextActions={selActions}
       toolbarRight={<>
         {/* 금액 단위 전환 — 캡션 + 세그먼트(원/백만원/억원). 조합수는 항상 개(변환 제외)라 캡션에 명시. */}
         <span className="text-caption" style={{ fontSize: 12.5 }}>{'단위: ' + unit + ' · 조합수(개)'}</span>
@@ -341,14 +310,12 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
           pinnedBottomRowData={PINNED_BOTTOM}
           domLayout="autoHeight"
           defaultColDef={DEFAULT_COL_DEF}
-          rowSelection={ROW_SELECTION}   // 체크박스 열 없이 행 클릭 선택 — 모듈 상수(위 정의 주석 참조)
           pagination
           paginationPageSize={pageSize}
           suppressPaginationPanel
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}
           onGridReady={onGridReady}
-          onSelectionChanged={onSelectionChanged}
           onPaginationChanged={onPaginationChanged}
           preventDefaultOnContextMenu
           onCellContextMenu={handleCellContextMenu}
