@@ -6,7 +6,7 @@
    실제 간편인증(CI 실명매칭)·계정 생성·감사로그 기록은 수행하지 않는다. */
 import React, { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
-  AuthLayout, AuthFoot, Field, PrimaryBtn, SecondaryBtn, DonePanel, Callout,
+  AuthLayout, Field, PrimaryBtn, SecondaryBtn, DonePanel, Callout,
   KvGrid, Pill, OtpRegisterBlock, Toast, Logo, useDemoOtp, useToast, T, FADE_UP, FADE_UP_CARD,
 } from './auth_shared';
 import {
@@ -116,7 +116,7 @@ export function OnboardingInvite({ onNav }: { onNav?: (route: string) => void })
               ]} />
               <Callout>운용사 사용자는 농금원 보유 운용인력 명단으로만 초대되며, 초대는 사전 승인을 의미합니다.</Callout>
               <div style={{ marginTop: 20 }}>
-                <PrimaryBtn full onClick={() => { setStep(2); pop('초대를 수락했습니다 — 간편인증을 진행하세요'); }}>초대 수락 → 간편인증</PrimaryBtn>
+                <PrimaryBtn full onClick={() => { setStep(2); pop('초대를 수락했습니다 — 간편인증을 진행하세요'); }}>초대수락</PrimaryBtn>
               </div>
               <p style={{ ...T.caption1, textAlign: 'center', margin: '16px 0 0', color: 'var(--muted-foreground)' }}>본인이 아니면 이 초대를 무시해 주세요. 72시간 후 자동 만료됩니다.</p>
             </div>
@@ -172,10 +172,6 @@ export function OnboardingInvite({ onNav }: { onNav?: (route: string) => void })
           )}
         </div>
       </div>
-      <AuthFoot onNav={onNav} links={[
-        { label: '로그인 화면', route: 'login' },
-        { label: '발급 온보딩', route: 'onboarding-issue' },
-      ]} />
       <Toast toast={toast} />
     </AuthLayout>
   );
