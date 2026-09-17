@@ -47,8 +47,8 @@ const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
 const THEME_FALLBACK = {
   // tokens.css :root / .dark 의 현재 값과 짝. 토큰을 못 읽는 환경(SSR·테스트)에서만 쓰인다.
-  light: { card: '#FFFFFF', foreground: '#1A2620', primary: '#5A5FE8', primaryFg: '#FFFFFF', outline: '#E2E6E0' },
-  dark: { card: '#181D17', foreground: '#E6EBE2', primary: '#818CF8', primaryFg: '#10142E', outline: '#39403A' },
+  light: { card: '#FFFFFF', foreground: '#1A2620', primary: '#5A5FE8', outline: '#E2E6E0' },
+  dark: { card: '#181D17', foreground: '#E6EBE2', primary: '#818CF8', outline: '#39403A' },
 };
 
 /* getComputedStyle 은 선행 공백을 붙여 돌려준다("  #FFFFFF") → trim 후 hex 형식을 검증하고,
@@ -100,14 +100,18 @@ function buildEmbedTheme() {
   const f = isDarkTheme() ? THEME_FALLBACK.dark : THEME_FALLBACK.light;
   const card = readHexToken('--card', f.card);
   const primary = readHexToken('--primary', f.primary);
+  const fg = readHexToken('--foreground', f.foreground);
   const borderRaw = readTokenRaw('--border-strong');
   return {
     bgColor: card,
     pageBgColor: card,
     contentBgColor: card,
-    searchBgColor: primary,
-    textColor: readHexToken('--foreground', f.foreground),
-    queryTextColor: readHexToken('--primary-foreground', f.primaryFg),
+    // 검색 입력창은 **무채색**이다(2026-09-18 사용자 결정). 브랜드색으로 칠하면 임베드 상단만
+    // 튀어 폼 모달 위에 얹힌 팝업이 별개 제품처럼 읽힌다 — 본문과 같은 표면색을 쓰고 글자도 기본색으로.
+    // (우편번호·강조 텍스트의 --primary 는 남긴다: 그건 장식이 아니라 검색 결과의 식별 신호다.)
+    searchBgColor: card,
+    textColor: fg,
+    queryTextColor: fg,
     postcodeTextColor: primary,
     emphTextColor: primary,
     // 현재 --border-strong 은 rgba 라 hex 검증을 못 통과 → 카드색 위에 알파를 합성한다.
