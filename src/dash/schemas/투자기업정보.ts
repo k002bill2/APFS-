@@ -32,7 +32,7 @@ export const schema: PageSchema = {
     { key: 'bizNo',         label: '사업자번호',     control: 'text', pii: true },
     { key: 'corpNo',        label: '법인등록번호',   control: 'text', pii: true },
     { key: 'sicCode',       label: '표준산업분류코드', control: 'text' },
-    { key: 'address',       label: '주소',           control: 'text', long: true },
+    { key: 'address',       label: '주소',           control: 'address', long: true },
     { key: 'tel',           label: 'TEL',            control: 'text', pii: true },
     { key: 'establishDate', label: '설립일자',       control: 'date' },
     { key: 'employees',     label: '종업원수',       control: 'number' },

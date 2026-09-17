@@ -16,7 +16,7 @@ export const schema: PageSchema = {
   fields: [
     { key: 'member',   label: '조합원',          control: 'text', required: true },
     { key: 'bizNo',    label: '사업자번호/주민번호', control: 'text', pii: true },
-    { key: 'address',  label: '주소',            control: 'text', long: true },
+    { key: 'address',  label: '주소',            control: 'address', long: true },
     { key: 'tel',      label: '전화번호',        control: 'text', pii: true },
     { key: 'note',     label: '비고',            control: 'textarea' },
   ],

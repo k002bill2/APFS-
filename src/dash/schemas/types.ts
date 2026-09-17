@@ -5,7 +5,9 @@ export const CELL_TYPES = ['text','code','pii','amount','rate','date','status','
 export type CellType = typeof CELL_TYPES[number];
 
 // 'year' = 연도 선택(PeriodPicker mode='year'). 값 계약은 'YYYY' 문자열 — 'date'(=YYYY-MM-DD)와 다른 축이다.
-export const FIELD_CONTROLS = ['text','number','select','date','year','textarea','file','checkbox','switch','readonly','radio','richtext','filepond','tags'] as const;
+// 'address' = 우편번호 검색 + 주소 입력(fields/AddressField). 값 계약은 단일 문자열 '(12345) 서울특별시 …'
+//   — 파싱/직렬화 SSOT는 fields/address_value.ts. 별도 상세주소 필드를 두지 않고 본문 뒤에 이어 쓴다.
+export const FIELD_CONTROLS = ['text','number','select','date','year','textarea','file','checkbox','switch','readonly','radio','richtext','filepond','tags','address'] as const;
 export type FieldControl = typeof FIELD_CONTROLS[number];
 
 export const TONE_VALUES = ['primary','success','warning','danger','info','cyan'] as const;

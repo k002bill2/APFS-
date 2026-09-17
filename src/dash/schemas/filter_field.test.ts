@@ -52,6 +52,11 @@ describe('resolveFilterField — 필터 라벨 → 컨트롤 타입 도출', () 
     expect(ff.columnKey).toBe('moeFund');
   });
 
+  it("address 컨트롤 → text 필터로 격하 (주소는 열거형이 아니다)", () => {
+    const withAddr = { ...gongo, fields: [{ key: 'address', label: '주소', control: 'address' as const, long: true }] };
+    expect(resolveFilterField('주소', withAddr).kind).toBe('text');
+  });
+
   it('빈 옵션 select 필드 → text 격하 (빈 <select> 금지)', () => {
     const emptySelect = { ...gongo, fields: [{ key: 'x', label: '빈셀렉트', control: 'select' as const, options: [] }] };
     expect(resolveFilterField('빈셀렉트', emptySelect).kind).toBe('text');
