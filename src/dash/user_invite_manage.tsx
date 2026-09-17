@@ -17,15 +17,13 @@ import { format } from 'date-fns';
 import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
-import { controlMinWidth } from './schemas/renderers';
+import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';
-import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
@@ -81,10 +79,6 @@ function inviteMail(r: InviteView): MailSpec {
   };
 }
 
-const inputStyle = (kind?: string): CSSProperties => ({
-  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,
-  border: '1px solid var(--input)', borderRadius: 8, background: 'var(--card)', color: 'var(--foreground)',
-});
 function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block mb-4">
@@ -104,41 +98,6 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
     </div>
   );
 }
-function MoreMenuItems({ onExport }: { onExport: () => void }) {
-  return (
-    <>
-      <DropdownMenuItem onSelect={onExport}>
-        <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
-        <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => window.print()}>
-        <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
-        <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-    </>
-  );
-}
-/* kebab(···) — 등록이 없는 리스트라 툴바 단독 + 푸터 폴백(apfs-grid). 로컬 복사본 */
-function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
-  return (
-    <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <DropdownMenuTrigger aria-label="더보기"
-              className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
-              style={{ width: size, height: size }}>
-              <Icon name="more" size={20} stroke={2} />
-            </DropdownMenuTrigger>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>더보기</TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -150,8 +109,6 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<InviteView> | null>(null);
   const [rows, setRows] = useState<InviteRow[]>(() => demoPersonnel());
   const [selId, setSelId] = useState<string | null>(null);
-  const topMoreRef = useRef<HTMLSpanElement>(null);
-  const [topMoreVisible, setTopMoreVisible] = useState(true);
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const masked = useMask();
@@ -165,14 +122,6 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
 
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') { setTopMoreVisible(false); return; }
-    const el = topMoreRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   const visible = useMemo<InviteView[]>(() => filterInvites(rows, { org: fOrg, active: fActive, state: fState, kw: fText })
     .map((r) => ({ ...r, orgn: orgName(r.org), state: inviteState(r), expiresAt: inviteExpiresAt(r.invitedAt) })), [rows, fOrg, fActive, fState, fText]);
@@ -280,14 +229,9 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
         <span className="text-caption" style={{ fontSize: 12 }}>초대 소스 = 운용사 전자보고 운용인력 명단 · 초대 = 사전 승인</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
-        <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>
       </>}
       footerLeft={<span>{'총 ' + mn(String(rows.length)) + '명 중 ' + mn(String(visible.length)) + '명 표시 중'}</span>}
-      footerRight={<>
-        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
-        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
-      </>}>
+      footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div>
         <AgGridReact<InviteView>

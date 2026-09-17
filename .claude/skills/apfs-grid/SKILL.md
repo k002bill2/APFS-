@@ -8,7 +8,7 @@ description: APFS 대시보드 리스트/그리드/매트릭스 페이지의 공
 ## 컨텍스트
 APFS 대시보드의 리스트/그리드/매트릭스 페이지는 **테이블 본체는 제각각**(리스트=체크박스·CRUD·페이지네이션, 매트릭스=2단헤더·합계행·조회전용)이지만 **바깥 양식은 동일**해야 한다. `GridFrame`이 그 양식 골격을 SSOT로 소유하고, 테이블 내용은 `children`으로 주입받는다. "양식은 강제(통일), 내용은 자유"가 원칙.
 
-- 정본 컴포넌트: `src/dash/grid_frame.tsx` (`GridFrame`, `KpiBadge`)
+- 정본 컴포넌트: `src/dash/grid_frame.tsx` (`GridFrame`, `KpiBadge`, `FooterActions`)
 - 첫 실증: `src/dash/asset_funding.tsx` (매트릭스형)
 - 양식 출처(SSOT): `generic_list.tsx`의 인라인 양식을 GridFrame이 흡수 — 신규/마이그레이션 모두 이 프레임을 쓴다.
 
@@ -36,7 +36,7 @@ interface GridFrameProps {
   crumbs: string[];          // PageHeader 브레드크럼 (필수)
   title: string;             // 페이지 제목 (필수) — 카드헤더 <h3>로 렌더(cardTitle 미지정 시)
   sub?: string;              // 카드헤더 타이틀 아래 캡션으로 렌더 (단위 범례 등). 비마스킹
-  headerActions?: ReactNode; // PageHeader 우측 액션. 매트릭스/집계형은 primary 내보내기를 여기 둔다(asset_funding). 관리형 리스트는 내보내기를 툴바 kebab에 두므로 여기엔 보통 '메인으로'만 → 아래 "관리형 리스트 툴바·타이틀 규약"
+  headerActions?: ReactNode; // PageHeader 우측 액션. 내보내기는 푸터 FooterActions 가 담당하므로 여기엔 보통 '메인으로'만 → 아래 "관리형 리스트 툴바·타이틀 규약"
   cardTitle?: string;        // 카드헤더 타이틀 (미지정 시 title 재사용)
   kpis?: ReactNode;          // 카드헤더 우측 KPI 배지군 (KpiBadge 나열)
   favRoute?: string;         // 즐겨찾기 별(★) 토글 활성 — 현재 페이지 라우트(onNav 인자와 동일 문자열).
@@ -49,7 +49,7 @@ interface GridFrameProps {
   toolbarRight?: ReactNode;  // 툴바 우: 새로고침·상세필터 등
   footerLeft?: ReactNode;    // 푸터 좌: 건수 등 요약
   footerCenter?: ReactNode;  // 푸터 중: 페이지네이션
-  footerRight?: ReactNode;   // 푸터 우: 뷰 토글·다운로드 등
+  footerRight?: ReactNode;   // 푸터 우: **<FooterActions/> 하나**(전체보기·새 창·내보내기·인쇄 4종 SSOT)
   children: ReactNode;       // 테이블 본체
 }
 
@@ -105,7 +105,13 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - 같은 함정이 `<p>`·`<ul>`·`<h1~h6>` 전반에 적용된다 — 이 저장소에서 시맨틱 태그를 새로 쓸 때는 `margin: 0`을 기본 반사로 붙인다(아래 `sub` 캡션이 `margin:'2px 0 0'`을 명시한 이유).
   - 툴바 행은 `padding: '6px 18px'`로 더 촘촘하다(의도된 위계 — 타이틀이 더 여유 있게). 타이틀 행만 바꿀 때 툴바를 따라 올리지 않는다.
 - **`sub` 캡션은 쓰지 않는다.** 화면 설명 문구는 제거 대상(사용자 결정). 단위 표기는 **`toolbarRight` 맨 앞에 12px caption** `단위: 원`(비마스킹)으로.
-- **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `page.total>1`일 때만 페이저(`IconBtn chevron-left/right` + `PageBtn`) · `footerRight` = `IconBtn download / maximize(전체보기) / external(새 창)` + 상단 kebab이 화면 밖일 때만 `!topMoreVisible && <MoreMenu size={32}>` 폴백(정적 `IconBtn more`는 onClick 없는 죽은 버튼이라 폐기 — `subfund_manage.tsx`·`generic_list.tsx` 둘 다 폴백형). ⚠️ 관찰 effect의 미지원 가드는 **`setTopMoreVisible(false)` 후 return**이어야 한다 — 그냥 `return`하면 초기값 `true`가 굳어 푸터 kebab이 영원히 안 뜨고 내보내기·인쇄 접근이 끊긴다(`if (!el) return`과 분리해 쓸 것). `PageBtn`은 골드(`asset_funding.tsx`·`subfund_manage.tsx`)에 **로컬 복사**돼 있는 헬퍼다 — 공유 export 아님, 골드에서 복사.
+- **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `page.total>1`일 때만 페이저(`IconBtn chevron-left/right` + `PageBtn`) · `footerRight` = **`<FooterActions …/>` 하나**(`grid_frame.tsx` export).
+  - **푸터 액션 4종은 항시 노출이며 순서가 고정이다(2026-09-17 사용자 결정): 전체보기(⛶) · 새 창(⧉) · 내보내기(⤓) · 인쇄(🖨).** 페이지가 직접 `IconBtn`을 나열하지 않는다 — `footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}` 한 줄.
+  - `onToggleAll`을 안 넘기면 전체보기가 빠져 3개만 렌더된다 — **페이저가 없는 화면**(집계·매트릭스·master-detail 등 현재 10개)이 그 경우다. `onExport`를 안 넘기면 내보내기도 빠진다(투자기업정보(통합)·투자실적 현황(투자기업)).
+  - ⛔ **kebab(⋯)은 전 화면에서 폐기됐다(2026-09-17).** 툴바 독립 kebab · 등록 combo의 `⌄` 절반 · 푸터 폴백 kebab(`!topMoreVisible && <MoreMenu>`) 셋 다 삭제했고, 그 안에 있던 내보내기·인쇄가 푸터 아이콘으로 항시 노출된다. `MoreMenu`/`MoreMenuItems`/`RegisterCombo`/`PoCMoreMenu` 로컬 복사본 39개와 `topMoreRef`/`topMoreVisible`/IntersectionObserver 폴백 배선(26파일)도 함께 제거됐다 — **다시 만들지 말 것.**
+  - 툴바에 인쇄 `IconBtn`을 따로 두지 않는다(푸터와 중복 — investee_profile·investee_invest_stats에서 실제 2개가 됐다).
+  - 단축키(⌥D 내보내기 · ⌘P 인쇄)는 그대로다 — 페이지의 `useHotkey` 소유이며 kebab 제거와 무관하다. 다만 힌트를 보여주던 `DropdownMenuShortcut`이 사라졌으므로 화면 힌트는 없다.
+  - `PageBtn`은 골드(`asset_funding.tsx`·`subfund_manage.tsx`)에 **로컬 복사**돼 있는 헬퍼다 — 공유 export 아님, 골드에서 복사.
 - ⛔ **카드뷰(리스트 뷰|카드뷰 토글)는 폐기됐다(2026-09-11 사용자 결정).** 신규 페이지에 뷰 토글 `SegTabs`·`view` state·카드 렌더 분기를 **만들지 않는다** — 리스트 뷰 단일 표현이다. 전용 스킬 `apfs-card-view`도 같은 날 삭제됐다.
   - 스키마 트랙은 `schema.hideCardView: true`로 끈다(`generic_list.tsx`가 푸터 `SegTabs`를 렌더하지 않고 `view`를 `"list"` 파생값으로 고정). 기존 카드 렌더 코드는 아직 남아 있으나 도달 불가다.
   - typed 트랙은 플래그 없이 직접 제거한다 — `subfund_manage.tsx`가 `SegTabs`를 지우고 `const view = 'list'` 상수로 내린 형태가 정본.
@@ -136,30 +142,15 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 ## 관리형 리스트 툴바·타이틀 규약 (2026-09-11 subfund_manage에서 정립)
 리스트형(CRUD) 페이지 한정. 매트릭스/집계형은 위 골든(`headerActions` primary 내보내기)을 그대로 둔다.
 
-- 🔀 **1차 액션(등록)의 유무가 툴바 형태를 결정한다(2026-09-11 사용자 결정 — 최종).** 둘 중 하나이며 중간 형태는 없다:
+- 🔀 **툴바 형태는 하나다(2026-09-17 사용자 결정 — combo 폐기).** 1차 액션(등록)이 있으면 **단독 outline 버튼**, 없으면 아무것도 두지 않는다. 보조 액션(내보내기·인쇄)은 툴바가 아니라 **푸터 `FooterActions`**가 항시 노출한다.
   ```
-  등록 O:  단위: 원 │ ▣ 상세필터 │ [ ＋ 등록 │ ⌄ ] │ ⟳ 새로고침        ← combo(split) 버튼
-           caption    ghost        RegisterCombo      IconBtn            (툴바 독립 kebab 없음)
-
-  등록 X:  단위: 원 │ ▣ 상세필터 │ ⟳ 새로고침 │ ⋯ kebab                 ← 종전 그대로
-           caption    ghost        IconBtn      MoreMenu
+  등록 O:  단위: 원 │ ▣ 상세필터 │ ＋ <도메인 액션명> 등록 │ ⟳ 새로고침
+  등록 X:  단위: 원 │ ▣ 상세필터 │ ⟳ 새로고침
   ```
-  - **등록이 있으면 combo 하나로 합친다** — 좌 절반 = 등록 즉시 실행 · 우 절반 `⌄` = 보조 액션 메뉴(내보내기·인쇄). 툴바에 독립 kebab을 **따로 두지 않는다**(항목이 combo 안으로 들어가 중복이 된다). **등록 버튼만 단독으로 두는 이전 형태(`＋ 등록` + `⋯ kebab` 분리)는 폐기**다.
-  - **등록이 없으면 합칠 1차 액션이 없으므로 kebab(⋯) 단독** — 종전 `MoreMenu` 그대로.
-  - 어느 쪽이든 **푸터 폴백 kebab은 유지**(`!topMoreVisible && <MoreMenu size={32}>`) — 스크롤로 툴바가 사라져도 내보내기·인쇄 접근이 끊기지 않는다.
-  - 스키마 트랙은 **자동 분기**다 — `generic_list.tsx`가 `editable = schema.fields.length > 0` 하나로 고르며 켜고 끄는 플래그는 없다(`registerMenu` 플래그는 도입 당일 폐기 — 규약이 `editable`로 결정되어 존재 이유가 사라졌다). typed 트랙도 같은 규약이며 `RegisterCombo`를 로컬 복사해 만든다(`MoreMenu`·`PageBtn`과 동일한 복사 규약).
-    ✅ **전 트랙 전환 완료(2026-09-11)**: 스키마 트랙 `generic_list.tsx`(등록 4화면) + typed `subfund_manage.tsx`(`제안서접수 등록`). typed 화면의 `MoreMenu`는 이제 **푸터 폴백 전용**이다(툴바에선 뜨지 않는다). `asset_funding.tsx`는 등록이 없는 매트릭스형이라 kebab(`PoCMoreMenu`) 단독 — 규약대로다.
-  - 등록 라벨은 도메인 액션명 그대로(`제안서접수 등록`·`공고 등록`), "등록"으로 줄이지 않는다. combo 좌 절반의 외관은 종전 `Button variant="outline" size="sm"`과 동일(`px-[11px] py-1.5 text-[12.5px]` / `bg-card` / `border-border-strong`) — 주변 보조 액션이 ghost·아이콘이라 outline 하나로 위계가 선다(primary는 과함).
-- **kebab에 남는 것은 내보내기(Excel)·인쇄뿐.** **내보내기용 독립 "엑셀" 버튼을 `toolbarRight`에 따로 두지 않는다**(kebab 항목으로 흡수). 내보내기 진입점은 **kebab 항목 + 푸터 `IconBtn download` + 단축키 `⌥D`** 세 곳 — 중복 아님(위 39행 "한 곳에만"은 *툴바 독립 버튼*을 두지 말라는 뜻).
-- **kebab 항목엔 단축키 힌트(`DropdownMenuShortcut`) 동반**: 내보내기 `HOTKEYS.export`(⌥D)·인쇄 `HOTKEYS.print`(⌘P). ⚠️ **등록 ⌘⏎(`HOTKEYS.register`)는 바인딩만 살아 있고 화면 힌트가 없다** — `Button`은 `forwardRef`/rest props가 없어 Radix `Tooltip asChild` 트리거로 못 쓰고 `title`도 안 먹기 때문(→ [[ui-button-not-radix-aschild-trigger]] 함정). 힌트를 살리려면 Button `children`에 `<span>{HOTKEYS.register.hint}</span>`를 덧붙이는 방법뿐. 단축키 시스템·mod/⌥ 2티어·Windows 함정은 → [[apfs-hotkeys]] (여기서 표 복제 금지, 링크만).
-- **`MoreMenu`는 공유 컴포넌트가 아니다** — `generic_list.tsx`·`asset_funding.tsx`(`PoCMoreMenu`)·`subfund_manage.tsx`가 각자 **로컬 복사본**(`PageBtn`과 동일 방식, 공유 export 아님). 골드는 `subfund_manage.tsx`(Tooltip 래핑·`DropdownMenuShortcut`·`onExport/size` props — `onRegister`는 등록 승격으로 제거됨). 상단 `toolbarRight`의 `topMoreRef` + 화면 밖일 때 푸터 폴백 `!topMoreVisible && <MoreMenu>` 쌍으로 스크롤 중 접근 유지(등록은 툴바 버튼 + ⌘⏎로 접근하므로 폴백 대상이 아니다). 신규 페이지는 골드에서 복사하고 `onExport` 등 필요한 prop을 배선한다.
-- ✅ **스키마 주도 트랙 반영 완료(2026-09-11)**: `generic_list.tsx`도 같은 규약이다 — `editable`이면 combo(`<RegisterCombo label={schema.entity + ' 등록'} …>`, 라벨=스키마 `entity` 기반 도메인 액션명)·아니면 kebab 단독, 메뉴 항목은 내보내기·인쇄만(+`DropdownMenuShortcut` 힌트·Tooltip 래핑·`size` prop). `topMoreRef`+IntersectionObserver 푸터 폴백, 핫키 3종(⌘⏎ 등록은 `enabled: editable && modal === null`), `IconBtn refresh` 라벨 `새로고침`, 푸터의 죽은 `IconBtn more`는 `MoreMenu` 폴백으로 교체까지 골드와 동형. `fields`가 없는 스키마(연도별투자현황·조합별 월간보고 현황)는 `editable=false`라 등록 버튼이 뜨지 않는다.
-- **`RegisterCombo` 구현 함정 4건**(정본: `generic_list.tsx`):
-  - ⚠️ `topMoreRef`는 **실제로 렌더되는 쪽**(combo 래퍼 또는 kebab)이 들고 있어야 한다 — ref가 비면 관찰 effect가 `if (!el) return`으로 빠져 `topMoreVisible`이 true로 굳고 푸터 폴백이 영원히 안 뜬다(내보내기·인쇄 접근 단절).
-  - ⚠️ combo를 `UI.Button`으로 만들 수 없다 — Radix `asChild` 트리거 불가([[ui-button-not-radix-aschild-trigger]])에 더해 `motion` hover scale이 좌·우 절반에 따로 걸려 이음매가 어긋난다. 컨테이너 + plain `<button>`으로 outline 외관을 재현한다.
-  - ⚠️ 컨테이너에 `overflow-hidden` 금지 — 전역 `:focus-visible` box-shadow 링(`tokens.css`)이 잘려 키보드 초점 단서가 사라진다. 대신 좌/우 절반에 `rounded-l-[9px]`·`rounded-r-[9px]`를 직접 준다.
-  - ⚠️ 트리거에 `.apfs-menu-trigger` 금지 — 그 클래스는 링을 끄고 `bg-card`로 초점을 대신 표시하는데 combo는 이미 카드 배경이라 단서가 사라진다(→ [[global-focus-overhaul-exception-surfaces]]). Tooltip은 `span`으로 감싸 `data-state` 충돌을 피한다(MoreMenu 동형).
-  - kebab 항목은 `MoreMenuItems` 조각을 kebab과 combo가 **공유**한다(복제하면 단축키 힌트가 갈라진다).
+  - 등록 버튼 = `<Button variant="outline" size="sm" leadingIcon="plus" onClick={…}>{라벨}</Button>`. 라벨은 도메인 액션명 그대로(`제안서접수 등록`·`공고 등록`), "등록"으로 줄이지 않는다. 스키마 트랙은 `editable = schema.fields.length > 0` 으로 자동 분기(`generic_list.tsx`).
+  - ⛔ **폐기된 형태 2종 — 되돌리지 말 것**: ① `RegisterCombo`(등록+`⌄` split 버튼, 2026-09-11~09-17) ② 툴바 kebab 단독. 둘 다 보조 액션을 숨기는 구조였고, 그 항목이 이제 푸터에 상시 노출된다.
+  - 복원이 필요해질 때만 참조할 combo 구현 함정 4건(모두 실제로 밟았던 버그): `topMoreRef`는 실제 렌더되는 쪽이 들어야 함 · `UI.Button`으로 split을 만들 수 없음([[ui-button-not-radix-aschild-trigger]]) · 컨테이너 `overflow-hidden` 금지(focus 링 잘림) · 트리거에 `.apfs-menu-trigger` 금지([[global-focus-overhaul-exception-surfaces]]).
+- **내보내기 진입점은 푸터 아이콘 + ⌥D 두 곳.** 툴바에 독립 "엑셀" 버튼을 두지 않는다(종전 규약 유지 — 그 자리는 이제 kebab이 아니라 푸터다).
 - **타이틀은 메뉴 리프와 일치.** `cardTitle`·`title`·`crumbs` 리프를 **`data.ts` 메뉴 리프 라벨 문자열 그대로**(띄어쓰기 포함) 맞춘다. `cardTitle`이 `title`과 같으면 생략 가능(H1=`cardTitle ?? title`). **"○○ 목록" 같은 임의 축약 금지**(2026-09-11 "자펀드 목록"→"자펀드 관리" 정정). 매트릭스/집계형이 문서 정식명칭을 카드 제목으로 쓰는 것(asset_funding "…현황표")은 예외.
 
 ## 선택 액션 플로팅 바 (2026-09-15 사용자 지시, `contextActions` 슬롯 — 전 페이지 공통)

@@ -12,7 +12,7 @@
    - 권한 설정 모달(명칭·사용자 구분·설명·사용여부 + 메뉴별 기능 권한 매트릭스) → 전용 `UserPermissionModal`
        (flat 스키마 밖 — 매트릭스). 등록/수정/복사 3모드, 복사는 명칭 뒤 ' (복사)' + 사용자수 0.
    - 매트릭스 메뉴 트리 = LNB 정본(`admin_menu_tree.ts`) — 목업 "제안서 기능구성도" 대신 현행 메뉴 구조표.
-   - 엑셀(목업 없음이지만 리스트 공통 규약) → RegisterCombo ⌄ 항목 + 푸터 download + ⌥D. 마스크 ON이면 텍스트 ''·숫자 0.
+   - 엑셀(목업 없음이지만 리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 마스크 ON이면 텍스트 ''·숫자 0.
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · ⚠검토필요 마커 없음(목업 원문 0건).
    ⚠ 실제 인가/RBAC 이 아니다 — 백엔드 없이 화면 로컬 더미 상태만 바꾼다(브리프). 목업의 설계 메모(.note)·GNB/LNB 는 이식하지 않는다. */
 import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky·마스크 헤더 바)
@@ -22,19 +22,17 @@ import { format } from 'date-fns';
 import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';
-import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { PeriodPicker } from './ui/period-picker';
-import { controlMinWidth } from './schemas/renderers';
+import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
 import { RowContextMenu } from './row_context_menu';
 import type { CtxItem, CtxMenuState } from './row_context_menu';
 import { buildMenuRows, UTYPES } from './admin_menu_tree';
@@ -104,11 +102,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '사용여부', get: (r) => (r.use ? '여' : '부') }, { header: '사용자수', get: (r) => r.users },
 ];
 
-/* 드로어 입력 — 폭 fit-content + 타입별 하한(controlMinWidth SSOT). ⚠ font(단축) 먼저 → fontSize 뒤(키 순서로 14px 보존) */
-const inputStyle = (kind?: string): CSSProperties => ({
-  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,
-  border: '1px solid var(--input)', borderRadius: 8, background: 'var(--card)', color: 'var(--foreground)',
-});
 /* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 암묵 연결이 안 되고(ariaLabel 로 명명),
    <label> 안 버튼 클릭이 라벨 활성화와 겹쳐 2회 토글되는 것을 막는다(apfs-detail-filter) */
 function DrawerField({ label, hint, plain, children }: { label: string; hint?: string; plain?: boolean; children: React.ReactNode }) {
@@ -143,70 +136,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-/* 보조 액션 항목(내보내기·인쇄) — 푸터 폴백 kebab과 툴바 combo가 **같은 조각**을 공유한다 */
-function MoreMenuItems({ onExport }: { onExport: () => void }) {
-  return (
-    <>
-      <DropdownMenuItem onSelect={onExport}>
-        <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
-        <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => window.print()}>
-        <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
-        <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-    </>
-  );
-}
-
-/* kebab(···) — **푸터 폴백 전용**(등록이 있는 리스트의 툴바에는 RegisterCombo ⌄가 같은 항목을 제공, apfs-grid) */
-function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
-  return (
-    <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <DropdownMenuTrigger aria-label="더보기"
-              className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
-              style={{ width: size, height: size }}>
-              <Icon name="more" size={20} stroke={2} />
-            </DropdownMenuTrigger>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>더보기</TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-/* 등록 combo(split) 버튼 — generic_list.tsx/subfund_manage.tsx 로컬 복사본(공유 export 아님). 함정 근거는 apfs-grid 스킬. */
-function RegisterCombo({ label, onRegister, onExport }: { label: string; onRegister: () => void; onExport: () => void }) {
-  return (
-    <span className="inline-flex items-stretch rounded-[9px] border border-border-strong bg-card">
-      <button type="button" onClick={onRegister}
-        className="inline-flex items-center gap-[7px] rounded-l-[9px] border-0 bg-transparent px-[11px] py-1.5 font-[inherit] text-[12.5px] font-semibold text-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary">
-        <Icon name="plus" size={14} stroke={2.2} />{label}
-      </button>
-      <span aria-hidden className="w-px self-stretch bg-border-strong" />
-      <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <DropdownMenuTrigger aria-label="더보기"
-                className="inline-flex h-full items-center justify-center rounded-r-[9px] border-0 bg-transparent px-2 text-muted-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary data-[state=open]:text-primary">
-                <Icon name="chevron-down" size={14} stroke={2.2} />
-              </DropdownMenuTrigger>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>더보기</TooltipContent>
-        </Tooltip>
-        <DropdownMenuContent align="end"><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-      </DropdownMenu>
-    </span>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -218,8 +147,6 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
   const [selId, setSelId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
-  const topMoreRef = useRef<HTMLSpanElement>(null);
-  const [topMoreVisible, setTopMoreVisible] = useState(true);
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const masked = useMask();
@@ -256,15 +183,6 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
-  useEffect(() => {
-    // 미지원 가드는 `if (!el) return`과 분리 — 합치면 초기값 true가 굳어 푸터 폴백 kebab이 영영 안 뜬다(apfs-grid)
-    if (typeof IntersectionObserver === 'undefined') { setTopMoreVisible(false); return; }
-    const el = topMoreRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   /* 선택 SSOT = React state(selId). 그리드 라디오는 선택 변경 이벤트로 동기화, 신규 등록 후엔 onRowDataUpdated 로 되맞춘다 */
   const selIdRef = useRef<string | null>(null); selIdRef.current = selId;
@@ -381,10 +299,7 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
       contextActions={selActions}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        {/* 등록이 있는 리스트라 combo(split) — 좌: 권한 등록 · 우: ⌄ 내보내기·인쇄. topMoreRef 는 combo 래퍼가 든다 */}
-        <span ref={topMoreRef} className="inline-flex">
-          <RegisterCombo label="권한 등록" onRegister={() => setModal({ kind: 'form', mode: 'create' })} onExport={exportExcel} />
-        </span>
+        <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>권한 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
       footerLeft={<span>{'총 ' + mn(String(rows.length)) + '개 중 ' + mn(String(Math.min(shown, visible.length))) + '개 항목 표시 중'}</span>}
@@ -395,12 +310,7 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
           <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => apiRef.current?.paginationGoToNextPage()} />
         </>
       ) : undefined}
-      footerRight={<>
-        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
-        <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} pressed={showAll} onClick={() => setShowAll((v) => !v)} />
-        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
-      </>}>
+      footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}>
 
       <div>
         <AgGridReact<PermRow>

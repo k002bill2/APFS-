@@ -72,6 +72,7 @@ const MAP = {
   user:["User"], plus:["Plus"], filter:["Filter"], external:["ExternalLink"], refresh:["RefreshCw"],
   "arrow-right":["ArrowRight"], clock:["Clock"], layers:["Layers","Layers3"],
   maximize:["Maximize2","Maximize"], minimize:["Minimize2","Minimize"],
+  printer:["Printer"],   // 푸터 인쇄 액션(FooterActions) — kebab 인쇄 항목을 대체(2026-09-17)
   "expand-h":["UnfoldHorizontal","MoveHorizontal","StretchHorizontal"],
   "collapse-h":["FoldHorizontal","MoveHorizontal"],
   // 세로판(트리 행 접기/펼치기용) — 가로판을 CSS 로 90도 돌리지 않고 lucide 세로 아이콘을 쓴다.

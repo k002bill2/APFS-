@@ -4,14 +4,14 @@
    구성(목업 → 우리 규약):
    - 검색박스(검색기준+검색어·도움말·사용여부) + 구분(브리프) → 주 필터 1개 = 사용여부 FilterChip(전체/사용 여/사용 부, 툴바 좌)
      (2026-09-15 사용자 지시로 도움말↔사용여부 교대 — 도움말은 드로어로 내려갔다. 주 필터와 드로어 항목은 배타다: 같은 필터를 양쪽에 두지 않는다)
-       + 상세필터 드로어(검색어·검색기준·구분(대분류)·사용여부). 검색어 opt-in(SEARCHABLE).
+       + 상세필터 드로어(검색기준+검색어 한 줄·구분(대분류)·도움말). 검색어 opt-in(SEARCHABLE).
    - 그리드(No·프로그램ID·프로그램명·구분·사용여부·메뉴연결·최종수정일시·최종수정자·도움말·도움말 수정일시·도움말 수정자) → AG Grid, 내용 맞춤 + 내부 가로 스크롤.
    - 행 선택 → [수정][도움말][삭제](목업 gate) → 라디오 단일선택 + 툴바 좌 selbar. 더블클릭·Enter·우클릭 = 수정.
        삭제 게이트: **메뉴에 연결된 프로그램(linked)은 삭제 불가**(목업 subAlert 문구를 toast 로) — 미연결 임시 프로그램만 AlertDialog 확인 후 삭제.
    - 프로그램 등록/수정(프로그램ID*·프로그램명*·사용여부) → RowFormModal + 팩토리 스키마(program_manage_schemas). 등록 = 미연결(linked:false).
    - 도움말 편집(개요·캡처·항목·절차·FAQ·유의사항·첨부) → 전용 `ProgramHelpModal`. 저장 시 도움말 수정자·일시 갱신.
    - 데이터 = LNB 정본(`admin_menu_tree.programCatalog`) 파생(`program_manage_model.demoPrograms`) — 메뉴관리·권한 매트릭스와 같은 소스.
-   - 엑셀(리스트 공통 규약) → RegisterCombo ⌄ + 푸터 download + ⌥D. 마스크 ON이면 텍스트 ''.
+   - 엑셀(리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 마스크 ON이면 텍스트 ''.
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · 페이지네이션 20건.
    ⚠ 백엔드 없음 — 등록·수정·삭제·도움말 저장은 화면 로컬 상태만 바꾼다. 실제 LNB·메뉴 연결은 바뀌지 않는다. */
 import './aggrid_shared.css';
@@ -21,15 +21,13 @@ import { format } from 'date-fns';
 import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
-import { controlMinWidth } from './schemas/renderers';
+import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';
-import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
 import { Info } from 'lucide-react';
 import { toast } from './ui/sonner';
@@ -91,10 +89,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '도움말', get: (r) => (r.help ? '있음' : '없음') }, { header: '도움말 수정일시', get: (r) => r.helpAt }, { header: '도움말 수정자', get: (r) => r.helpBy },
 ];
 
-const inputStyle = (kind?: string): CSSProperties => ({
-  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,
-  border: '1px solid var(--input)', borderRadius: 8, background: 'var(--card)', color: 'var(--foreground)',
-});
 function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block mb-4">
@@ -103,10 +97,10 @@ function DrawerField({ label, children }: { label: string; children: React.React
     </label>
   );
 }
-function DrawerSelect({ value, onChange, options, all = '전체' }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; all?: string | null }) {
+function DrawerSelect({ value, onChange, options, all = '전체', ariaLabel }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; all?: string | null; ariaLabel?: string }) {
   return (
     <div className="relative" style={{ width: 'fit-content', maxWidth: '100%' }}>
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputStyle('select'), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
+      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={ariaLabel} style={{ ...inputStyle('select'), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
         {all != null && <option value="">{all}</option>}
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
@@ -121,66 +115,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
       style={{ minWidth: 30, height: 30, padding: '0 8px', borderRadius: 8, border: '1px solid ' + (active ? 'var(--primary)' : 'var(--border)'), background: active ? 'var(--primary)' : 'transparent', color: active ? 'var(--primary-foreground)' : 'var(--foreground)', fontSize: 12.5 }}>{n}</button>
   );
 }
-function MoreMenuItems({ onExport }: { onExport: () => void }) {
-  return (
-    <>
-      <DropdownMenuItem onSelect={onExport}>
-        <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
-        <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => window.print()}>
-        <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
-        <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-    </>
-  );
-}
-/* kebab(···) — 푸터 폴백 전용(툴바는 RegisterCombo ⌄). 로컬 복사본(apfs-grid) */
-function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
-  return (
-    <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <DropdownMenuTrigger aria-label="더보기"
-              className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
-              style={{ width: size, height: size }}>
-              <Icon name="more" size={20} stroke={2} />
-            </DropdownMenuTrigger>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>더보기</TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-function RegisterCombo({ label, onRegister, onExport }: { label: string; onRegister: () => void; onExport: () => void }) {
-  return (
-    <span className="inline-flex items-stretch rounded-[9px] border border-border-strong bg-card">
-      <button type="button" onClick={onRegister}
-        className="inline-flex items-center gap-[7px] rounded-l-[9px] border-0 bg-transparent px-[11px] py-1.5 font-[inherit] text-[12.5px] font-semibold text-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary">
-        <Icon name="plus" size={14} stroke={2.2} />{label}
-      </button>
-      <span aria-hidden className="w-px self-stretch bg-border-strong" />
-      <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <DropdownMenuTrigger aria-label="더보기"
-                className="inline-flex h-full items-center justify-center rounded-r-[9px] border-0 bg-transparent px-2 text-muted-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary data-[state=open]:text-primary">
-                <Icon name="chevron-down" size={14} stroke={2.2} />
-              </DropdownMenuTrigger>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>더보기</TooltipContent>
-        </Tooltip>
-        <DropdownMenuContent align="end"><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-      </DropdownMenu>
-    </span>
-  );
-}
-
 /* 삭제 버튼 — 메뉴에 연결된 프로그램(linked)일 때의 "삭제 불가" 변형.
    ⓘ 아이콘을 삭제 버튼 **안**에 항상 띄우고(사유가 있다는 사실 자체가 상시 단서),
    마우스를 올리면 사유 팝오버가 열린다.
@@ -253,8 +187,6 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   const [selId, setSelId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
-  const topMoreRef = useRef<HTMLSpanElement>(null);
-  const [topMoreVisible, setTopMoreVisible] = useState(true);
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const masked = useMask();
@@ -271,14 +203,6 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null });
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') { setTopMoreVisible(false); return; }
-    const el = topMoreRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   const gubuns = useMemo(() => gubunOptions(rows), [rows]);
   const visible = useMemo(() => filterPrograms(rows, { field: fField, kw: fText, help: fHelp, use: fUse, gubun: fGubun }), [rows, fField, fText, fHelp, fUse, fGubun]);
@@ -417,9 +341,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
       contextActions={selActions}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <span ref={topMoreRef} className="inline-flex">
-          <RegisterCombo label="프로그램 등록" onRegister={() => setModal({ kind: 'form', mode: 'create' })} onExport={exportExcel} />
-        </span>
+        <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>프로그램 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
       footerLeft={<span>{'총 ' + mn(String(rows.length)) + '개 프로그램 중 ' + mn(String(visible.length)) + '개 · ' + mn(String(Math.min(shown, visible.length))) + '개 표시 중 · 도움말은 프로그램 단위로 관리'}</span>}
@@ -430,12 +352,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
           <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => apiRef.current?.paginationGoToNextPage()} />
         </>
       ) : undefined}
-      footerRight={<>
-        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
-        <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} pressed={showAll} onClick={() => setShowAll((v) => !v)} />
-        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
-      </>}>
+      footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}>
 
       <div>
         <AgGridReact<ProgramRow>
@@ -464,7 +381,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      {/* ── 상세필터 드로어 — 검색어(opt-in) · 검색기준 · 구분 · 도움말(사용여부는 툴바 칩) ── */}
+      {/* ── 상세필터 드로어 — 검색기준+검색어 한 줄(opt-in) · 구분 · 도움말(사용여부는 툴바 칩) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -473,12 +390,18 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
+            {/* 검색기준(라벨 좌) + 기준 select + 검색어 input 을 한 줄로 — 목업 검색박스와 동일 배열.
+                <label> 은 컨트롤 하나만 소유하므로 <div> 래퍼 + 각 컨트롤 aria-label 로 접근명을 준다. */}
             {SEARCHABLE && (
-              <DrawerField label="검색어">
-                <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="검색기준 항목에서 부분일치" style={inputStyle('text')} />
-              </DrawerField>
+              <div className="flex items-center mb-4" style={{ gap: 8 }}>
+                <span className="shrink-0 font-semibold text-muted-foreground" style={{ fontSize: 14 }}>검색기준</span>
+                <div className="shrink-0">
+                  <DrawerSelect value={fField} onChange={(v) => setFField(v as ProgramField)} options={SEARCH_FIELDS.map((f) => ({ value: f.key, label: f.label }))} all={null} ariaLabel="검색기준" />
+                </div>
+                <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }}
+                  aria-label="검색어" placeholder="검색어" style={{ ...inputStyle('text'), width: 'auto', minWidth: 96, flex: 1 }} />
+              </div>
             )}
-            <DrawerField label="검색기준"><DrawerSelect value={fField} onChange={(v) => setFField(v as ProgramField)} options={SEARCH_FIELDS.map((f) => ({ value: f.key, label: f.label }))} all={null} /></DrawerField>
             <DrawerField label="구분"><DrawerSelect value={fGubun} onChange={setFGubun} options={gubuns.map((g) => ({ value: g, label: g }))} /></DrawerField>
             <DrawerField label="도움말"><DrawerSelect value={fHelp} onChange={(v) => setFHelp(v as '' | 'y' | 'n')} options={[{ value: 'y', label: '있음' }, { value: 'n', label: '없음' }]} /></DrawerField>
           </div>

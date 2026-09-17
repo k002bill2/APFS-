@@ -16,7 +16,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { UI } from './components';
 import { mn, useMask } from './mask';
 import { Icon } from './icons';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, refreshNoColumn } from './aggrid_theme';
 import { Cell } from './schemas/renderers';
 import { PeriodPicker } from './ui/period-picker';
@@ -175,10 +175,7 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
         {`모펀드 ${MOTHER_FUND} · 투자및회수 ${SOURCE_COUNTS.ir}건 / 전체거래 ${SOURCE_COUNTS.all}건 (원문 그대로)`}
         {filterOn && ` · 필터 적용 중 — 합계 4줄도 걸러진 행 기준`}
       </span>}
-      footerRight={<>
-        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
-        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-      </>}>
+      footerRight={<FooterActions onExport={exportExcel} />}>
 
       {/* 모드마다 컬럼 수가 달라 전환 시 높이가 튄다 — 최소 높이로 점프를 막는다 */}
       <div style={{ minHeight: 320 }}>

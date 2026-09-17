@@ -6,7 +6,7 @@
    - 목록 그리드(No·양식제목·설명·Download) → AG Grid 단일 헤더(apfs-aggrid). 합계행 없음(금액 없는 엔티티).
    - 행 클릭 선택 → [등록][수정][삭제] 노출(목업) → **선택 UI 없이** APFS 단건 CRUD 관례로 치환(2026-09-12 자펀드 공고
        정보관리 사용자 결정 "다건 선택/선택삭제가 없는 단건 CRUD 화면은 선택 UI가 군더더기" — apfs-grid `hideRowSelection` 절):
-         등록 = 툴바 RegisterCombo(1차 액션 상시 노출, ⌘⏎) · 수정 = 행 더블클릭·셀 Enter·우클릭 메뉴 ·
+         등록 = 툴바 등록 버튼(1차 액션 상시 노출, ⌘⏎) · 수정 = 행 더블클릭·셀 Enter·우클릭 메뉴 ·
          삭제 = 우클릭 메뉴(→ AlertDialog 확인) 또는 수정 모달 안 2단계 삭제.
    - 등록/수정 단일 폼 2모드(제목*·설명·첨부 드롭존) → RowFormModal + 로컬 `FORM_SCHEMA`(report_form_manage_schemas.ts),
        제목은 `title` prop으로 '양식 등록'/'양식 수정'(목업 h2 그대로).
@@ -14,7 +14,7 @@
    - Download 열(행별 양식 파일 내려받기) → 셀 안 `Button outline sm`. 백엔드가 없어 toast로 응답(목업도 toast).
        ⚠ 이 열 때문에 typed 트랙이다 — 스키마 트랙(GenericListPage)은 첨부를 제목 뒤 확장자 칩으로만 그려 행별
          다운로드 액션을 표현할 수 없고, 공유 generic_list.tsx를 고치면 기존 스키마 페이지 동작이 바뀐다.
-   - 엑셀(목업 없음이지만 리스트 공통 규약) → RegisterCombo ⌄ 항목 + 푸터 download + ⌥D. 마스크 ON이면 텍스트 ''.
+   - 엑셀(목업 없음이지만 리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 마스크 ON이면 텍스트 ''.
    - KPI 배지 행 미포함(사용자 결정) · 카드뷰 없음 · 명세 팝업 없음 · ⚠검토필요 마커 없음(목업 원문에 0건).
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
 import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky·마스크 헤더 바 — 합계행은 없지만 전 그리드 공통)
@@ -22,13 +22,11 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, FIT_GRID_WIDTH, DEFAULT_COL_DEF } from './aggrid_theme';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle } from 'ag-grid-community';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';
-import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
@@ -104,71 +102,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-/* 보조 액션 항목(내보내기·인쇄) — 푸터 폴백 kebab과 툴바 combo가 **같은 조각**을 공유한다(복제하면 힌트가 갈라짐) */
-function MoreMenuItems({ onExport }: { onExport: () => void }) {
-  return (
-    <>
-      <DropdownMenuItem onSelect={onExport}>
-        <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
-        <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => window.print()}>
-        <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
-        <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-    </>
-  );
-}
-
-/* kebab(···) — **푸터 폴백 전용**. 등록이 있는 리스트의 툴바에는 RegisterCombo ⌄가 같은 항목을 제공한다(apfs-grid 규약) */
-function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
-  return (
-    <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <DropdownMenuTrigger aria-label="더보기"
-              className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
-              style={{ width: size, height: size }}>
-              <Icon name="more" size={20} stroke={2} />
-            </DropdownMenuTrigger>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>더보기</TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-/* 등록 combo(split) 버튼 — 좌: 1차 액션 즉시 실행 · 우: ⌄ 보조 메뉴. generic_list.tsx/subfund_manage.tsx 로컬 복사본(공유 export 아님).
-   UI.Button을 못 쓰는 이유(forwardRef 없음·motion scale 이음매)와 overflow-hidden/.apfs-menu-trigger 금지 근거는 apfs-grid 스킬. */
-function RegisterCombo({ label, onRegister, onExport }: { label: string; onRegister: () => void; onExport: () => void }) {
-  return (
-    <span className="inline-flex items-stretch rounded-[9px] border border-border-strong bg-card">
-      <button type="button" onClick={onRegister}
-        className="inline-flex items-center gap-[7px] rounded-l-[9px] border-0 bg-transparent px-[11px] py-1.5 font-[inherit] text-[12.5px] font-semibold text-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary">
-        <Icon name="plus" size={14} stroke={2.2} />{label}
-      </button>
-      <span aria-hidden className="w-px self-stretch bg-border-strong" />
-      <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <DropdownMenuTrigger aria-label="더보기"
-                className="inline-flex h-full items-center justify-center rounded-r-[9px] border-0 bg-transparent px-2 text-muted-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary data-[state=open]:text-primary">
-                <Icon name="chevron-down" size={14} stroke={2.2} />
-              </DropdownMenuTrigger>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>더보기</TooltipContent>
-        </Tooltip>
-        <DropdownMenuContent align="end"><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-      </DropdownMenu>
-    </span>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -179,8 +112,6 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
   const [rows, setRows] = useState<ReportFormRow[]>(DEMO);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
-  const topMoreRef = useRef<HTMLSpanElement>(null);
-  const [topMoreVisible, setTopMoreVisible] = useState(true);
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const masked = useMask();
@@ -197,15 +128,6 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
-  useEffect(() => {
-    // 미지원 가드는 `if (!el) return`과 분리한다 — 합치면 초기값 true가 굳어 푸터 폴백 kebab이 영영 안 뜬다(apfs-grid)
-    if (typeof IntersectionObserver === 'undefined') { setTopMoreVisible(false); return; }
-    const el = topMoreRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   const onGridReady = useCallback((e: GridReadyEvent<ReportFormRow>) => { apiRef.current = e.api; }, []);
   const onPaginationChanged = useCallback(() => {
@@ -293,11 +215,7 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
         <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>보고양식 {mn(String(rows.length))}건</span>
       </>}
       toolbarRight={<>
-        {/* 등록이 있는 리스트라 combo(split) 버튼 — 좌: 보고양식 등록 · 우: ⌄ 내보내기·인쇄(apfs-grid 규약). 툴바 독립 kebab은 두지 않는다.
-            ⚠️ topMoreRef는 combo 래퍼가 들고 있어야 한다 — ref가 비면 푸터 폴백이 영원히 안 뜬다 */}
-        <span ref={topMoreRef} className="inline-flex">
-          <RegisterCombo label="보고양식 등록" onRegister={() => setModal({ kind: 'create' })} onExport={exportExcel} />
-        </span>
+        <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>보고양식 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
       footerLeft={<span>{'총 ' + mn(String(rows.length)) + '개 중 ' + mn(String(Math.min(shown, rows.length))) + '개 항목 표시 중'}</span>}
@@ -308,12 +226,7 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
           <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => apiRef.current?.paginationGoToNextPage()} />
         </>
       ) : undefined}
-      footerRight={<>
-        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
-        <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} pressed={showAll} onClick={() => setShowAll((v) => !v)} />
-        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
-      </>}>
+      footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}>
 
       <div>
         <AgGridReact<ReportFormRow>

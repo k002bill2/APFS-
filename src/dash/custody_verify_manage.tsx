@@ -35,15 +35,13 @@ import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
-import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
+import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, ValueFormatterParams, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';
-import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { PeriodPicker } from './ui/period-picker';
@@ -289,10 +287,6 @@ const WIDE_KEYS = new Set(['fn', 'gpCorp', 'cuCorp', 'gpItem', 'cuItem', 'gpAcct
 /* ──────────────────────────────
    페이지 로컬 프리미티브(골드 복사 — 공유 export 아님)
 ────────────────────────────── */
-const inputStyle = (kind?: string): CSSProperties => ({
-  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', fontFamily: 'inherit', fontSize: 14,
-  border: '1px solid var(--input)', borderRadius: 8, background: 'var(--card)', color: 'var(--foreground)',
-});
 
 /* 드로어 필드 래퍼 — noop=행 컬럼 미연동 필터(캡션으로 no-op 신호, apfs-detail-filter 규약).
    plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 */
@@ -316,37 +310,6 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
       </select>
       <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
     </div>
-  );
-}
-
-/* kebab(···) 더보기 — 내보내기(Excel)·인쇄. 등록(1차 액션)이 없는 화면이라 combo 없이 kebab 단독(apfs-grid 툴바 규약) */
-function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
-  return (
-    <DropdownMenu>
-      {/* Tooltip/Dropdown 트리거를 같은 노드에 합성하면 Radix가 data-state를 서로 덮어쓴다 → span으로 분리 */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <DropdownMenuTrigger aria-label="더보기"
-              className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
-              style={{ width: size, height: size }}>
-              <Icon name="more" size={20} stroke={2} />
-            </DropdownMenuTrigger>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>더보기</TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent>
-        <DropdownMenuItem onSelect={onExport}>
-          <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
-          <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => window.print()}>
-          <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
-          <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 
@@ -381,8 +344,6 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
   const [trade, setTrade] = useState<NonInvestTradeRow[]>(TRADE_DEMO);
   const [nonInvest, setNonInvest] = useState<NonInvestRow[]>(NONINVEST_DEMO);
   const [modal, setModal] = useState<ModalState>(null);
-  const topMoreRef = useRef<HTMLSpanElement>(null);
-  const [topMoreVisible, setTopMoreVisible] = useState(true);
   const masked = useMask();
 
   useHotkey(HOTKEYS.print.combo, () => window.print());
@@ -405,16 +366,6 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
     [invest, trade, nonInvest],
   );
 
-  useEffect(() => {
-    // 미지원 가드는 `if (!el) return`과 분리한다 — 합치면 초기값 true가 굳어 푸터 폴백 kebab이 영영
-    // 안 뜨고 내보내기·인쇄 접근이 끊긴다(apfs-grid 푸터 골드 양식).
-    if (typeof IntersectionObserver === 'undefined') { setTopMoreVisible(false); return; }
-    const el = topMoreRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   /* 컬럼 정의 — openMemo(안정)만 캡처하므로 deps는 [openMemo]. 매 렌더 새 배열이면 그리드가 컬럼을
      재생성하며 폭이 선언값으로 되돌아간다(apfs-aggrid 계약6). */
@@ -512,17 +463,10 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
-        {/* topMoreRef는 실제 렌더되는 kebab이 든다 — 비면 관찰 effect가 early return해 푸터 폴백이 영영 안 뜬다 */}
-        <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>
       </>}
       /* 푸터 좌 = 섹션별 건수(페이지네이션이 없어 '총 N개 중 M개' 형식이 성립하지 않는다) */
       footerLeft={<span>{'투자자산 ' + mn(String(investRows.length)) + '건 · 미투자자산 거래 ' + mn(String(tradeRows.length)) + '건 · 미투자자산 ' + mn(String(nonInvestRows.length)) + '건'}</span>}
-      footerRight={<>
-        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
-        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        {/* 상단 kebab이 화면 밖일 때만 노출(스크롤 중 내보내기·인쇄 접근 유지) */}
-        {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
-      </>}>
+      footerRight={<FooterActions onExport={exportExcel} />}>
 
       {/* ── ① 투자자산 ── */}
       <SectionHead n="1" title="투자자산" cap="운용사 장부 ↔ 수탁기관 보관내역 대사" />

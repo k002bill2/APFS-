@@ -47,7 +47,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 - 적용 시 `setPage(1)` 리셋. 드로어는 draft 사본을 편집하고 적용 때 부모에 반영, 열릴 때 `applied`로 재동기화.
 
 ## 규약 체크리스트 (CRITICAL — 모르면 재발하는 함정)
-- [ ] **입력 16px + 키 순서**: `font:"inherit"` 먼저, `fontSize:16` **뒤**. (React 인라인은 키 순서대로 직렬화 → `font` 단축속성이 뒤에 오면 font-size를 리셋해 16px이 죽고 iOS 줌 부활.)
+- [ ] **컨트롤 박스 = 등록 모달과 동일(34px) — 페이지 로컬 복제 금지**: 드로어 입력은 `renderers.tsx`의 **`drawerInputStyle(kind)`** 를 import 해 쓴다(`import { drawerInputStyle as inputStyle } from './schemas/renderers'`). 높이 토큰은 모달 `base`와 공유하는 **`CONTROL_BOX`** 한 곳이 SSOT(`padding:'7px 11px' · fontSize:13.5 · lineHeight:'20px' · height/minHeight:34`). ⚠ 페이지마다 `const inputStyle = …` 로 복사하면 드리프트한다 — 실제로 24개 드로어가 `9px/14px`(≈40px)로 굳어 모달보다 6px 높아졌다(2026-09-17 사용자 지적 → 공용 export로 통합). 패밀리는 **`fontFamily`** 로만 상속(단축 `font`는 `fontSize`·`lineHeight`까지 리셋해 34px 클램프를 깬다).
 - [ ] **columnKey 불변식**: columnKey는 **행에 그 키가 실제로 시드될 때만** 부여(`filter_field.ts`의 `seeded`/`colKey` 가드). 시드 경로는 둘 — ① `schema.columns`(makeRows 합성) ② `schema.sample`(목업 리터럴 행은 컬럼이 아닌 필드 키도 싣는다, 2026-09-12). 어느 쪽에도 없으면 침묵 0건 대신 no-op+캡션으로 안전 격하된다 — 가드를 우회해 직접 columnKey를 주지 말 것. ⚠️ sample 경로는 **`sample` 있는 스키마에만** 성립한다(현재 자펀드 공고 1종) — sample 없는 스키마의 field-only 키는 종전대로 격하.
 - [ ] **빈 `<select>` 금지**: options/statusDomain이 비면 enum 대신 **text로 격하**(선택지 없는 드롭다운 = 고장처럼 보임).
 - [ ] **columnKey 없는 값-필터**: `· 데이터 연동 후 적용` 캡션으로 no-op을 사용자에게 신호(무신호 무효 필터 금지).
@@ -66,13 +66,15 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 - 상태 SSOT는 `useState` N개 + `clearFilters`(초기화 버튼·전체 해제 공유). `passes`는 `useCallback`, 변경 시 `apiRef.current?.onFilterChanged()`(External Filter).
 
 ## 정본 코드 (로직은 여기, 스킬은 규약만)
+- `src/dash/schemas/renderers.tsx` — **`CONTROL_BOX`**(모달·드로어 공유 34px 박스) + **`drawerInputStyle`**(드로어 입력 스타일 SSOT) + `controlMinWidth`(폭 하한)
 - `src/dash/schemas/filter_field.ts` — `resolveFilterField` + YEAR_OPTIONS + degrade 가드
 - `src/dash/generic_list.tsx` — `DrawerFilterControl` · `ListFilterDrawer` · `rowMatchesFilters` · `makeRows` 시드 · `FilterPill`
 - `src/dash/schemas/filter_field.test.ts` — 타입 도출·degrade·columnKey 불변식 회귀 가드
 
 ## 검증
 1. `npm test`(resolver) + `npm run build` exit 0.
-2. 브라우저: 데모(자펀드 공고)에서 년도+열거형 선택 → **표 행 수가 실제로 감소**(호출 분리 측정 — React state flush). 16px·캡션·칩 확인.
+2. 브라우저: 데모(자펀드 공고)에서 년도+열거형 선택 → **표 행 수가 실제로 감소**(호출 분리 측정 — React state flush). 캡션·칩 확인.
+   - **높이는 산술이 아니라 실측**: 드로어를 열고 `getComputedStyle(el).height` 가 select·input·PeriodPicker/DatePicker 버튼 **모두 `34px`** 인지 본다(등록 모달의 같은 컨트롤과 대조). 2026-09-17 실측: program-manage·subfund 드로어 전 컨트롤 34px.
 3. 라이트/다크 대비 + [[responsive-ui]] 체크(드로어 92vw, 페이지 가로스크롤 없음).
 
 ## 참조

@@ -15,16 +15,14 @@ import type { CSSProperties } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
-import { controlMinWidth } from './schemas/renderers';
+import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
 import { PeriodPicker } from './ui/period-picker';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';
-import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { RowContextMenu } from './row_context_menu';
@@ -95,10 +93,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '행위자', get: (r) => r.actor }, { header: '발생프로그램', get: (r) => r.src }, { header: 'IP', get: (r) => r.ip }, { header: '사유', get: (r) => r.reason },
 ];
 
-const inputStyle = (kind?: string): CSSProperties => ({
-  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,
-  border: '1px solid var(--input)', borderRadius: 8, background: 'var(--card)', color: 'var(--foreground)',
-});
 /* plain=<div> 래퍼 — PeriodPicker(버튼 트리거)는 <label> 안에서 2회 토글되므로(apfs-datepicker) */
 function DrawerField({ label, children, plain }: { label: string; children: React.ReactNode; plain?: boolean }) {
   const Wrap: any = plain ? 'div' : 'label';
@@ -122,47 +116,11 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
 }
 const dayWrap: CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
 
-function MoreMenuItems({ onExport }: { onExport: () => void }) {
-  return (
-    <>
-      <DropdownMenuItem onSelect={onExport}>
-        <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
-        <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => window.print()}>
-        <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
-        <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-    </>
-  );
-}
-function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
-  return (
-    <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <DropdownMenuTrigger aria-label="더보기"
-              className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
-              style={{ width: size, height: size }}>
-              <Icon name="more" size={20} stroke={2} />
-            </DropdownMenuTrigger>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>더보기</TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
 export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
   const [detailId, setDetailId] = useState<string | null>(null);
-  const topMoreRef = useRef<HTMLSpanElement>(null);
-  const [topMoreVisible, setTopMoreVisible] = useState(true);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const masked = useMask();
 
@@ -180,14 +138,6 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
 
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') { setTopMoreVisible(false); return; }
-    const el = topMoreRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   const visible = useMemo(() => filterHistory(DEMO, { from: fFrom, to: fTo, user: fUser, type: fType, actor: fActor, kw: fText }), [fFrom, fTo, fUser, fType, fActor, fText]);
   /* 유형 칩의 건수는 "유형만 빼고" 나머지 필터를 적용한 모집단 기준(facet count).
@@ -264,14 +214,9 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="ghost" size="sm" leadingIcon="calendar" onClick={thisMonth}>이번 달</Button>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
-        <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>
       </>}
       footerLeft={<span>{'총 ' + mn(String(DEMO.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중 · 권한변경 이력 3년 보관(목업)'}</span>}
-      footerRight={<>
-        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
-        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
-      </>}>
+      footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div>
         <AgGridReact<HistEntry>

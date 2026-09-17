@@ -39,15 +39,13 @@ import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, numFmt, numStyle } from './aggrid_theme';
-import { controlMinWidth } from './schemas/renderers';
+import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, ValueFormatterParams } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';
-import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
@@ -242,11 +240,6 @@ const FILTER_NOTES: Record<'mgr', ReviewNote> = {
   mgr: { rec: '담당자 목록(사용자 마스터 연동)', dat: '실 담당자 옵션 데이터 미확인' },
 };
 
-const inputStyle = (kind?: string): React.CSSProperties => ({
-  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', fontFamily: 'inherit', fontSize: 14,
-  border: '1px solid var(--input)', borderRadius: 8, background: 'var(--card)', color: 'var(--foreground)',
-});
-
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined}
@@ -278,36 +271,6 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
   );
 }
 
-/* kebab(···) 더보기 — 내보내기(Excel)·인쇄. 목업엔 전역 신규 등록이 없어 kebab 단독(apfs-grid 툴바 규약) */
-function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
-  return (
-    <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <DropdownMenuTrigger aria-label="더보기"
-              className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
-              style={{ width: size, height: size }}>
-              <Icon name="more" size={20} stroke={2} />
-            </DropdownMenuTrigger>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>더보기</TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent>
-        <DropdownMenuItem onSelect={onExport}>
-          <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
-          <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => window.print()}>
-          <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
-          <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 type ModalState = null | { kind: 'detail'; id: string };
 
 /* ──────────────────────────────
@@ -319,8 +282,6 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
   const [modal, setModal] = useState<ModalState>(null);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
-  const topMoreRef = useRef<HTMLSpanElement>(null);
-  const [topMoreVisible, setTopMoreVisible] = useState(true);
   const masked = useMask();
 
   /* deps []: setModal은 안정(useState 세터) — 매 렌더 새 배열이면 그리드가 컬럼을 재생성하며 폭이 되돌아간다 */
@@ -352,16 +313,6 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
   }, [fGp, fFn, fGb, fFrom, fTo]);
   const filterActive = Boolean(fGp || fFn || fGb || fFrom || fTo);
   useEffect(() => { apiRef.current?.onFilterChanged(); }, [passes]);
-  useEffect(() => {
-    // 미지원 가드는 `if (!el) return`과 분리한다 — 합치면 초기값 true가 굳어 푸터 폴백 kebab이 영영
-    // 안 뜨고 내보내기·인쇄 접근이 끊긴다(apfs-grid 푸터 골드 양식).
-    if (typeof IntersectionObserver === 'undefined') { setTopMoreVisible(false); return; }
-    const el = topMoreRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<GpContribRow>) => (node.data ? passes(node.data) : true), [passes]);
 
@@ -450,7 +401,6 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
-        <span ref={topMoreRef} className="inline-flex"><MoreMenu onExport={exportExcel} /></span>
       </>}
       footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
@@ -460,12 +410,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
           <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => apiRef.current?.paginationGoToNextPage()} />
         </>
       ) : undefined}
-      footerRight={<>
-        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
-        <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} pressed={showAll} onClick={() => setShowAll((v) => !v)} />
-        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
-      </>}>
+      footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}>
 
       <div>
         <AgGridReact<GpContribRow>

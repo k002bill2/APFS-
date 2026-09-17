@@ -11,7 +11,7 @@
    - 등록/수정 모달(레벨↔상위메뉴 연동·프로그램 검색·단축번호 중복확인) → 전용 `MenuFormModal`(flat 스키마 밖).
        저장 시 같은 부모 안 정렬을 `reseqSiblings` 로 자동 재조정(목업 "저장되었습니다 · 정렬 자동 조정").
    - 메뉴 데이터 = LNB 정본(`admin_menu_tree.ts`) — 목업 "제안서 기능구성도" 대신 현행 메뉴 구조표. 권한 매트릭스와 동일 데이터.
-   - 엑셀(리스트 공통 규약) → RegisterCombo ⌄ + 푸터 download + ⌥D. 표시 중인 행(트리 순서)을 내보낸다. 마스크 ON이면 텍스트 ''·숫자 0.
+   - 엑셀(리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 표시 중인 행(트리 순서)을 내보낸다. 마스크 ON이면 텍스트 ''·숫자 0.
    - 정렬(헤더 클릭)은 끈다 — 계층 순서가 곧 의미라 컬럼 정렬이 트리를 깨뜨린다(목업 defaultColDef sortable:false).
    - 페이지네이션 없음 — 트리에서 자식이 다음 페이지로 넘어가면 계층이 끊긴다. 긴 목록은 sticky 헤더(aggrid_shared.css)가 받친다.
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · ⚠검토필요 마커 없음(목업 원문 0건).
@@ -22,16 +22,14 @@ import type { CSSProperties } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
-import { controlMinWidth } from './schemas/renderers';
+import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import { _stopPropagationForAgGrid } from 'ag-grid-community';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';
-import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
@@ -118,11 +116,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '사용자 구분', get: (r) => utypeLabel(r.utypes) }, { header: '사용여부', get: (r) => (r.use ? '여' : '부') },
 ];
 
-/* 드로어 입력 — 폭 fit-content + 타입별 하한(controlMinWidth SSOT). ⚠ font(단축) 먼저 → fontSize 뒤(키 순서로 14px 보존) */
-const inputStyle = (kind?: string): CSSProperties => ({
-  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,
-  border: '1px solid var(--input)', borderRadius: 8, background: 'var(--card)', color: 'var(--foreground)',
-});
 function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block mb-4">
@@ -143,66 +136,6 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
   );
 }
 
-function MoreMenuItems({ onExport }: { onExport: () => void }) {
-  return (
-    <>
-      <DropdownMenuItem onSelect={onExport}>
-        <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
-        <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => window.print()}>
-        <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
-        <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-    </>
-  );
-}
-/* kebab(···) — 푸터 폴백 전용(툴바는 RegisterCombo ⌄). 로컬 복사본(apfs-grid) */
-function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
-  return (
-    <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <DropdownMenuTrigger aria-label="더보기"
-              className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
-              style={{ width: size, height: size }}>
-              <Icon name="more" size={20} stroke={2} />
-            </DropdownMenuTrigger>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>더보기</TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-function RegisterCombo({ label, onRegister, onExport }: { label: string; onRegister: () => void; onExport: () => void }) {
-  return (
-    <span className="inline-flex items-stretch rounded-[9px] border border-border-strong bg-card">
-      <button type="button" onClick={onRegister}
-        className="inline-flex items-center gap-[7px] rounded-l-[9px] border-0 bg-transparent px-[11px] py-1.5 font-[inherit] text-[12.5px] font-semibold text-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary">
-        <Icon name="plus" size={14} stroke={2.2} />{label}
-      </button>
-      <span aria-hidden className="w-px self-stretch bg-border-strong" />
-      <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <DropdownMenuTrigger aria-label="더보기"
-                className="inline-flex h-full items-center justify-center rounded-r-[9px] border-0 bg-transparent px-2 text-muted-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary data-[state=open]:text-primary">
-                <Icon name="chevron-down" size={14} stroke={2.2} />
-              </DropdownMenuTrigger>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>더보기</TooltipContent>
-        </Tooltip>
-        <DropdownMenuContent align="end"><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-      </DropdownMenu>
-    </span>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -213,8 +146,6 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   const [rows, setRows] = useState<MenuRow[]>(() => buildMenuRows());
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
   const [selId, setSelId] = useState<string | null>(null);
-  const topMoreRef = useRef<HTMLSpanElement>(null);
-  const [topMoreVisible, setTopMoreVisible] = useState(true);
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const masked = useMask();
@@ -232,14 +163,6 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null });
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') { setTopMoreVisible(false); return; }
-    const el = topMoreRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   const programs = useMemo(() => programsOf(rows), [rows]);
   const match = useCallback((r: MenuRow) => {
@@ -387,17 +310,11 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* 전체 펼치기/접기 — 평면(검색) 모드에서는 의미가 없어 비활성 */}
         <Button variant="ghost" size="sm" leadingIcon={allExpanded ? 'collapse-v' : 'expand-v'} disabled={searching} onClick={toggleAll}>{allExpanded ? '전체 접기' : '전체 펼치기'}</Button>
-        <span ref={topMoreRef} className="inline-flex">
-          <RegisterCombo label="메뉴 등록" onRegister={() => setModal({ kind: 'create' })} onExport={exportExcel} />
-        </span>
+        <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>메뉴 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
       footerLeft={<span>{'총 ' + mn(String(rows.length)) + '개 메뉴 중 ' + mn(String(visible.length)) + '개 표시 중' + (searching ? ' · 검색 결과(평면)' : '')}</span>}
-      footerRight={<>
-        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
-        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
-      </>}>
+      footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div>
         <AgGridReact<MenuView>

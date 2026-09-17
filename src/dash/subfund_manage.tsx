@@ -20,15 +20,13 @@ import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
-import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝) — 형제 드로어(asset_funding·generic_list)와 동일
+import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝) — 형제 드로어(asset_funding·generic_list)와 동일
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';   // kebab 더보기(asset_funding 동형)
 import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘⏎ 제안서접수 등록·⌘P 인쇄)
-import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';   // kebab 트리거 툴팁(Provider는 app.tsx 루트)
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { RowFormModal } from './generic_list_modal';
@@ -149,13 +147,6 @@ function flattenForExcel(defs: (ColDef<SubFundRow> | ColGroupDef<SubFundRow>)[])
   return { head1, head2, keys, merges };
 }
 
-/* 드로어 입력 — 폭은 fit-content(내용 맞춤), 하한은 타입별 controlMinWidth SSOT(형제 드로어 asset_funding·generic_list와 동일). 색은 토큰.
-   ⚠️ font(단축) 먼저 → fontSize(명시) 뒤: 키 순서로 fontSize가 이김(패밀리만 상속). kind는 controlMinWidth 계약(text/select/number/date). */
-const inputStyle = (kind?: string): CSSProperties => ({
-  width: 'fit-content', minWidth: controlMinWidth(kind), maxWidth: '100%', boxSizing: 'border-box', padding: '9px 11px', font: 'inherit', fontSize: 14,
-  border: '1px solid var(--input)', borderRadius: 8, background: 'var(--card)', color: 'var(--foreground)',
-});
-
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined}
@@ -196,90 +187,6 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
   );
 }
 
-/* kebab(···) 더보기 — 내보내기(Excel)·인쇄. 독립 '엑셀' 버튼은 두지 않는다(내보내기 항목으로 흡수).
-   ⚠️ 이 화면의 툴바에는 이 kebab이 뜨지 않는다 — 등록이 있는 리스트는 RegisterCombo의 ⌄로 같은 항목을
-   제공하는 것이 규약(2026-09-11 사용자 결정, apfs-grid). 여기 MoreMenu는 **푸터 폴백 전용**이다.
-   트리거는 Tooltip으로 감싼다(TooltipProvider는 app.tsx 루트). */
-function MoreMenu({ onExport, size = 34 }: { onExport: () => void; size?: number }) {
-  return (
-    <DropdownMenu>
-      {/* Tooltip/Dropdown 트리거를 같은 노드에 합성하면 Radix가 data-state를 서로 덮어써(Codex P2),
-          kebab의 data-[state=open] 열림 스타일이 죽는다 → span을 끼워 data-state 노드를 분리한다.
-          onFocus가 버블링하므로 span을 TooltipTrigger로 써도 안쪽 버튼 포커스에 툴팁이 정상 노출된다. */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <DropdownMenuTrigger
-              aria-label="더보기"
-              className="inline-flex items-center justify-center rounded-card-sm bg-transparent border-0 text-muted-foreground transition-colors hover:text-primary data-[state=open]:bg-card data-[state=open]:text-primary"
-              style={{ width: size, height: size }}>
-              <Icon name="more" size={20} stroke={2} />
-            </DropdownMenuTrigger>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>더보기</TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-/* 보조 액션 항목(내보내기·인쇄) — 푸터 폴백 kebab과 툴바 combo가 **같은 조각**을 공유한다.
-   양쪽에 복제하면 라벨·단축키 힌트가 갈라지므로 여기 한 곳만 고친다. */
-function MoreMenuItems({ onExport }: { onExport: () => void }) {
-  return (
-    <>
-      <DropdownMenuItem onSelect={onExport}>
-        <Icon name="download" size={17} className="shrink-0 text-muted-foreground" />내보내기 (Excel)
-        <DropdownMenuShortcut>{HOTKEYS.export.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => window.print()}>
-        <Icon name="file" size={17} className="shrink-0 text-muted-foreground" />인쇄
-        <DropdownMenuShortcut>{HOTKEYS.print.hint}</DropdownMenuShortcut>
-      </DropdownMenuItem>
-    </>
-  );
-}
-
-/* ===== 등록 combo(split) 버튼 — 등록이 있는 관리형 리스트의 툴바 기본 형태(apfs-grid 규약) =====
-   좌: 1차 액션(등록) 즉시 실행 · 우: ⌄ 보조 액션 메뉴(내보내기·인쇄) — 툴바 독립 kebab을 흡수한다.
-   generic_list.tsx의 로컬 복사본(MoreMenu·PageBtn과 동일한 복사 규약 — 공유 export 아님).
-   외관은 Button variant="outline" size="sm"을 손수 재현한다. UI.Button을 쓸 수 없는 이유 2가지:
-   ① forwardRef/…rest가 없어 Radix asChild 트리거가 되지 않는다(무음으로 안 열림),
-   ② motion whileHover scale이 좌·우 절반에 따로 걸려 hover 시 이음매가 어긋난다.
-   ⚠️ 컨테이너에 overflow-hidden 금지(전역 :focus-visible 링이 잘림), 트리거에 .apfs-menu-trigger 금지
-   (그 클래스는 링을 끄고 bg-card로 초점을 대신 표시하는데 combo는 이미 카드 배경이라 단서가 사라진다). */
-function RegisterCombo({ label, onRegister, onExport }: { label: string; onRegister: () => void; onExport: () => void }) {
-  return (
-    <span className="inline-flex items-stretch rounded-[9px] border border-border-strong bg-card">
-      <button
-        type="button"
-        onClick={onRegister}
-        className="inline-flex items-center gap-[7px] rounded-l-[9px] border-0 bg-transparent px-[11px] py-1.5 font-[inherit] text-[12.5px] font-semibold text-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary">
-        <Icon name="plus" size={14} stroke={2.2} />{label}
-      </button>
-      {/* 두 절반의 경계선 — 컨테이너 테두리와 같은 토큰(장식이라 aria-hidden) */}
-      <span aria-hidden className="w-px self-stretch bg-border-strong" />
-      <DropdownMenu>
-        {/* Tooltip/Dropdown 트리거를 같은 노드에 합성하면 Radix가 data-state를 서로 덮어쓴다 → span으로 분리 */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <DropdownMenuTrigger
-                aria-label="더보기"
-                className="inline-flex h-full items-center justify-center rounded-r-[9px] border-0 bg-transparent px-2 text-muted-foreground cursor-pointer transition-colors duration-tok-fast ease-ds hover:text-primary data-[state=open]:text-primary">
-                <Icon name="chevron-down" size={14} stroke={2.2} />
-              </DropdownMenuTrigger>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>더보기</TooltipContent>
-        </Tooltip>
-        <DropdownMenuContent align="end"><MoreMenuItems onExport={onExport} /></DropdownMenuContent>
-      </DropdownMenu>
-    </span>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -296,8 +203,6 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   /* 상단 kebab이 스크롤로 화면 밖에 나가면 푸터 kebab을 대신 노출(IntersectionObserver, root=뷰포트).
      툴바는 sticky가 아니라 스크롤로 사라지고 푸터는 sticky bottom이라 항상 보이므로 성립(grid_frame 구조) */
-  const topMoreRef = useRef<HTMLSpanElement>(null);
-  const [topMoreVisible, setTopMoreVisible] = useState(true);
   const [modal, setModal] = useState<ModalState>(null);
   // 앱-스코프 단축키: ⌘⏎=제안서접수 등록(모달 열림 중엔 비활성 → 이중 열림 방지), ⌘P=인쇄.
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'apply' }), { enabled: modal === null });
@@ -333,16 +238,6 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   }, [fStage, fText, fFund, fType, fYear, fRt, fSt]);
   const filterActive = Boolean(fStage || fText || fFund || fType || fYear || fRt || fSt);
   useEffect(() => { apiRef.current?.onFilterChanged(); }, [passes]);
-  /* 상단 kebab 가시성 관찰 — 뷰포트에서 벗어나면(스크롤로 위로 사라짐) 푸터 kebab 노출 */
-  useEffect(() => {
-    const el = topMoreRef.current;
-    // 미지원 환경에선 관찰이 불가능하므로 폴백을 상시 노출(true로 두면 푸터 kebab이 영원히 안 떠 내보내기·인쇄 접근이 끊긴다)
-    if (typeof IntersectionObserver === 'undefined') { setTopMoreVisible(false); return; }
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setTopMoreVisible(e.isIntersecting), { root: null, threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<SubFundRow>) => (node.data ? passes(node.data) : true), [passes]);
 
@@ -494,13 +389,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
         {/* 금액 단위 표기 — 캡션(비마스킹). 카드헤더 sub 캡션을 없애면서 여기로 이동 */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        {/* 등록이 있는 리스트라 combo(split) 버튼 — 좌: 제안서접수 등록 · 우: ⌄ 내보내기·인쇄(apfs-grid 규약).
-            툴바 독립 kebab은 두지 않는다(항목이 combo 안으로 들어가 중복이 된다). 단축키 ⌘⏎는 그대로.
-            ⚠️ topMoreRef는 combo 래퍼가 들고 있어야 한다 — ref가 비면 관찰 effect가 early return해
-            topMoreVisible이 true로 굳고 푸터 폴백이 영원히 안 뜬다(내보내기·인쇄 접근 단절). */}
-        <span ref={topMoreRef} className="inline-flex">
-          <RegisterCombo label="제안서접수 등록" onRegister={() => setModal({ kind: 'apply' })} onExport={exportExcel} />
-        </span>
+        <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'apply' })}>제안서접수 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
       footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
@@ -511,15 +400,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => apiRef.current?.paginationGoToNextPage()} />
         </>
       ) : undefined}
-      footerRight={<>
-        <IconBtn icon="download" label="다운로드" size={32} onClick={exportExcel} />
-        {view === 'list' && (
-          <IconBtn icon="maximize" label="전체보기" size={32} active={showAll} pressed={showAll} onClick={() => setShowAll((v) => !v)} />
-        )}
-        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />
-        {/* 상단 kebab이 화면 밖일 때만 노출(스크롤 시 내보내기/인쇄 접근 유지). 등록은 툴바 버튼 + ⌘⏎로 접근 */}
-        {!topMoreVisible && <MoreMenu size={32} onExport={exportExcel} />}
-      </>}>
+      footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}>
 
       {view === 'list' ? (
       /* AG Grid 본체 — 2단 그룹헤더 + pinned 합계 + 라디오 단일선택 + External Filter. 가로는 AG Grid 내부 스크롤 */

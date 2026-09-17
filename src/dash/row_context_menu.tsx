@@ -34,8 +34,12 @@ function CtxMenuButton({ item, onClose }: { item: Exclude<CtxItem, 'sep'>; onClo
       onClick={() => { item.onSelect(); onClose(); }}
       onMouseEnter={setActive}
       onFocus={setActive}
-      className={"relative isolate flex items-center gap-2.5 w-full rounded-card-sm px-2.5 py-2 text-[14px] text-left cursor-pointer select-none border-0 bg-transparent" + (active ? "" : " z-[1]")}
-      style={{ font: 'inherit', color: item.danger ? 'var(--danger)' : undefined }}
+      className={"relative isolate flex items-center gap-2.5 w-full rounded-card-sm px-2.5 py-2 text-left cursor-pointer select-none border-0 bg-transparent" + (active ? "" : " z-[1]")}
+      /* 타이포는 kebab 메뉴(DropdownMenuItem)와 동일: 13.5px/600.
+         ⚠️ preflight:false라 button은 폰트를 상속하지 않아 `font:'inherit'`가 필요한데, 이 단축 속성이
+         className의 text-[..]를 덮어쓴다(인라인 > 클래스). 그래서 크기·굵기는 단축 **뒤에** 명시한다
+         — 키 순서로 뒤가 이긴다(inputStyle 규약과 동일). */
+      style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, color: item.danger ? 'var(--danger)' : undefined }}
     >
       <ItemHighlight id={id} danger={item.danger} />
       {item.icon && (
@@ -111,10 +115,10 @@ export function RowContextMenu({ state, onClose }: { state: CtxMenuState; onClos
 
   if (!state) return null;
 
-  // 뷰포트 밖 넘침 방지 — 대략적 높이로 우/하단 가장자리에서 좌표를 당긴다(항목34px+구분선9px+패딩12).
+  // 뷰포트 밖 넘침 방지 — 대략적 높이로 우/하단 가장자리에서 좌표를 당긴다(항목32px+구분선9px+패딩12).
   const rows = state.items.filter((it) => it !== 'sep').length;
   const seps = state.items.length - rows;
-  const estH = rows * 34 + seps * 9 + 12;
+  const estH = rows * 32 + seps * 9 + 12;
   const left = Math.max(8, Math.min(state.x, window.innerWidth - MENU_W - 8));
   const top = Math.max(8, Math.min(state.y, window.innerHeight - estH - 8));
 

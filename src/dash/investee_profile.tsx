@@ -14,7 +14,7 @@
    provenance 기록이다(그 21필드는 S1_30 이 아니라 별도 캡처가 출처다 — 출처를 바꿔 적지 않는다). */
 import { useState } from 'react';
 import { UI } from './components';
-import { GridFrame } from './grid_frame';
+import { GridFrame, FooterActions } from './grid_frame';
 import { CompanyProfileBody } from './company_profile_model';
 import { SOURCE_COUNTS, CO_NAME } from './company_profile_data';
 import { UNITS, DEFAULT_UNIT } from './schemas/unit';
@@ -60,14 +60,13 @@ export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>금액 단위</span>
         <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />
-        <IconBtn icon="file" label="인쇄" size={34} onClick={() => window.print()} />
       </>}
       footerLeft={(
         <span>
           {`기업개요 ${SOURCE_COUNTS.overview}항목 · 재무제표 ${SOURCE_COUNTS.financial}건 · 주주명부 ${SOURCE_COUNTS.shareholder}건 (원문 그대로)`}
         </span>
       )}
-      footerRight={<IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} />}>
+      footerRight={<FooterActions />}>
       {/* 원문이 세 표를 세로로 쌓는 상세 화면이라 탭으로 나누지 않는다 — 한 기업의 단면을 한 번에 본다 */}
       <div style={{ padding: '4px 2px 8px' }}>
         <CompanyProfileBody unit={unit} />
