@@ -32,6 +32,7 @@ const P = {
   x:["M6 6l12 12","M18 6 6 18"],
   check:["M5 12.5l4.5 4.5L19 7"],
   info:["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z","M12 16v-4","M12 8h.01"],
+  "help-circle":["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z","M9.6 9.5a2.5 2.5 0 0 1 4.8.8c0 1.7-2.4 2.2-2.4 3.7","M12 17h.01"],
   "check-circle":["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z","M8.5 12.2l2.4 2.4 4.6-4.8"],
   // memo: 접힌 모서리 스티키노트 + 본문 줄. lucide StickyNote는 20px에서 모서리 fold가
   // 깨져 보여 file-check와 동일하게 MAP 미등록으로 자체 P 경로를 강제 사용.
@@ -80,7 +81,7 @@ const MAP = {
   grid:["LayoutGrid","Grid3x3","Grid"], star:["Star"],
   trash:["Trash2","Trash"],
   eye:["Eye"], "eye-off":["EyeOff","EyeClosed"], lock:["Lock"],
-  info:["Info"],
+  info:["Info"], "help-circle":["CircleQuestionMark","CircleHelp","HelpCircle"],
 };
 
 // Lucide IconNode 조회: [[tag, attrs, children?], ...]

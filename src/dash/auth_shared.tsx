@@ -374,10 +374,12 @@ export function OtpRegisterBlock({ seed, display, secs }: { seed: string; displa
   return (
     <div className="flex flex-wrap gap-3.5 items-start" style={{ background: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px 16px' }}>
       <div aria-hidden="true" className="flex items-center justify-center shrink-0" style={{ width: 84, height: 84, border: '1.5px dashed var(--border-strong)', borderRadius: 'var(--radius)', background: 'var(--card)', ...T.caption1, color: 'var(--muted-foreground)' }}>QR 코드</div>
-      <div style={{ ...T.caption1, flex: '1 1 220px', color: 'var(--muted-foreground)', lineHeight: 1.7 }}>
-        인증앱으로 QR을 스캔하거나 시드(Base32)를 수동 입력<br />
-        <code style={{ fontSize: 11, background: 'var(--card)', border: '1px solid var(--border)', padding: '2px 6px', borderRadius: 4 }}>{seed}</code><br />
-        현재 앱 코드: <OtpCode display={display} secs={secs} inline />
+      {/* QR(84px) 높이만큼 늘린 세로 컬럼 — 코드 줄만 marginTop:auto 로 바닥에 붙여
+          시드 들여쓰기는 그대로 둔 채 세로 위치만 QR 박스 하단선에 맞춘다. */}
+      <div className="self-stretch flex flex-col" style={{ ...T.caption1, flex: '1 1 220px', color: 'var(--muted-foreground)', lineHeight: 1.7 }}>
+        <div>인증앱으로 QR을 스캔하거나 설정 키를 수동 입력</div>
+        <div><code style={{ fontSize: 13, background: 'var(--card)', border: '1px solid var(--border)', padding: '2px 6px', borderRadius: 4 }}>{seed}</code></div>
+        <div style={{ marginTop: 'auto' }}>현재 앱 코드: <OtpCode display={display} secs={secs} inline /></div>
       </div>
     </div>
   );
@@ -389,7 +391,8 @@ export function OtpCode({ display, secs, inline }: { display: string; secs: numb
   const urgent = secs <= Math.max(5, Math.round(OTP_PERIOD / 10));
   return (
     <>
-      <b style={{ fontFamily: 'ui-monospace,Menlo,monospace', color: 'var(--foreground)', ...(inline ? {} : { font: '700 24px/1 ui-monospace,Menlo,monospace', letterSpacing: '.18em' }) }}>{display}</b>
+      {/* inline 은 caption(13px) 문단 안에 섞이므로 코드만 키워 눈에 띄게 한다 — 상속 크기로는 읽기 어렵다. */}
+      <b style={{ fontFamily: 'ui-monospace,Menlo,monospace', color: 'var(--foreground)', ...(inline ? { fontSize: 17, letterSpacing: '.1em' } : { font: '700 24px/1 ui-monospace,Menlo,monospace', letterSpacing: '.18em' }) }}>{display}</b>
       {inline ? ' · ' : null}
       <span style={{ ...T.caption1, display: inline ? 'inline' : undefined, color: urgent ? 'var(--danger-text)' : 'var(--muted-foreground)', fontWeight: urgent ? 600 : 500 }}>{secs}초 후 갱신</span>
     </>

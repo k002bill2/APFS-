@@ -4,9 +4,10 @@
    ⚠ 실제 계정 활성화·OTP 등록·메일 링크 검증은 수행하지 않는다. 판정은 `auth_model`의 순수 함수가 한다. */
 import React, { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
-  AuthLayout, AuthFoot, SplitCard, Field, PrimaryBtn, SecondaryBtn, DonePanel,
+  AuthLayout, SplitCard, Field, PrimaryBtn, SecondaryBtn, DonePanel,
   Callout, KvGrid, Pill, OtpRegisterBlock, Toast, Logo, useDemoOtp, useToast, T, FADE_UP,
 } from './auth_shared';
+import { Icon } from './icons';
 import { railSteps, ISSUE_RAIL, verifyRegister, hasError, PW_POLICY_HINT, type RegisterErrors } from './auth_model';
 
 const NO_ERR: RegisterErrors = { pw: null, confirm: null, otp: null };
@@ -44,11 +45,14 @@ export function OnboardingIssue({ onNav }: { onNav?: (route: string) => void }) 
         steps={railSteps(ISSUE_RAIL, step)}
         railHead={<>
           <Logo />
-          <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '10px 0 clamp(14px,3.5vw,32px)' }}>
-            계정 활성화(발급 온보딩)<br />계정 활성화까지 3단계
-          </p>
+          {/* 크기는 className 으로 — 인라인 font 단축속성(T.*)을 쓰면 반응형 크기를 덮어쓴다.
+              스케일은 로그인 화면 railHead 의 큰 줄과 동일하게 맞춘다. */}
+          <p className="text-[15px] leading-[21px] md:text-[23px] md:leading-[31px]" style={{
+            fontFamily: 'var(--font-sans)', fontWeight: 700, letterSpacing: '-0.01em',
+            color: 'var(--foreground)', margin: '10px 0 clamp(14px,3.5vw,32px)',
+          }}>계정 활성화(발급 온보딩)</p>
         </>}
-        railFoot={<>담당자 변경 시 계정 비활성<br />공유 계정 사용 금지</>}>
+      >
 
         {step === 1 && (
           <div className="flex flex-col flex-1" style={{ animation: FADE_UP }}>
@@ -63,9 +67,12 @@ export function OnboardingIssue({ onNav }: { onNav?: (route: string) => void }) 
             ]} />
             <Callout>담당자 변경 시 이 계정은 비활성되고 새 담당자 계정이 발급됩니다.</Callout>
             <div style={{ marginTop: 20 }}>
-              <PrimaryBtn full onClick={() => { setStep(2); pop('본인 확인 완료 — 등록을 진행하세요'); }}>본인 확인, 활성화 진행</PrimaryBtn>
+              <PrimaryBtn full onClick={() => { setStep(2); pop('본인 확인 완료 — 등록을 진행하세요'); }}>본인 확인</PrimaryBtn>
             </div>
-            <p style={{ ...T.caption1, margin: 'auto 0 0', paddingTop: 24, color: 'var(--muted-foreground)' }}>정보가 다르면 시스템 관리자(정보화팀)에게 문의해 주세요.</p>
+            <p style={{ ...T.caption1, display: 'flex', alignItems: 'flex-start', gap: 6, margin: 'auto 0 0', paddingTop: 24, color: 'var(--muted-foreground)' }}>
+              <Icon name="help-circle" size={14} style={{ marginTop: 2 }} />
+              <span>정보가 다르면 시스템 관리자(정보화팀)에게 문의해 주세요.</span>
+            </p>
           </div>
         )}
 
@@ -81,7 +88,7 @@ export function OnboardingIssue({ onNav }: { onNav?: (route: string) => void }) 
               <OtpRegisterBlock seed={SEED} display={display} secs={secs} />
               <Field required id="issue-otp" label="등록 확인 코드" icon="lock" placeholder="앱에 표시된 6자리" autoComplete="one-time-code"
                 inputMode="numeric" maxLength={7} value={otpIn} onChange={setOtpIn} error={errs.otp} />
-              <PrimaryBtn type="submit" full>등록 완료 → 계정 활성</PrimaryBtn>
+              <PrimaryBtn type="submit" full>등록 완료</PrimaryBtn>
             </form>
           </div>
         )}
@@ -101,10 +108,6 @@ export function OnboardingIssue({ onNav }: { onNav?: (route: string) => void }) 
             </>} />
         )}
       </SplitCard>
-      <AuthFoot onNav={onNav} links={[
-        { label: '로그인 화면', route: 'login' },
-        { label: '초대 온보딩(운용사)', route: 'onboarding-invite' },
-      ]} />
       <Toast toast={toast} />
     </AuthLayout>
   );

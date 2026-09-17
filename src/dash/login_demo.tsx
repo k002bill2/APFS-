@@ -6,7 +6,7 @@
 import React, { useEffect, useRef, useState, type FormEvent } from 'react';
 import { UI } from './components';
 import {
-  AuthLayout, AuthFoot, SplitCard, Field, FormError, PrimaryBtn, SecondaryBtn, DonePanel,
+  AuthLayout, SplitCard, Field, FormError, PrimaryBtn, SecondaryBtn, DonePanel,
   OtpCode, Toast, Logo, InfoHint, useDemoOtp, useToast, T, FADE_UP,
 } from './auth_shared';
 import {
@@ -320,7 +320,6 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
             </>} />
         )}
       </SplitCard>
-      <AuthFoot onNav={onNav} links={[{ label: '최초 접속(온보딩) 안내', route: 'onboarding-issue' }]} />
       <Toast toast={toast} />
 
     </AuthLayout>
