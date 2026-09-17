@@ -59,7 +59,7 @@ const F: Record<string, FieldSpec> = {
   name: { key: 'name', label: '조합원명', control: 'text', required: true },
   ptype: { key: 'ptype', label: '개인/법인', control: 'radio', options: ['개인', '법인'] },
   region: { key: 'region', label: '국내/해외', control: 'radio', options: ['국내', '해외'] },
-  addr: { key: 'addr', label: '주소', control: 'text', long: true },
+  addr: { key: 'addr', label: '주소', control: 'address', long: true },
   tel: { key: 'tel', label: '전화번호', control: 'text' },
   memo: { key: 'memo', label: '비고', control: 'textarea' },
 };
@@ -192,7 +192,8 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
               )}
             </Field>
 
-            <Field label="주소" className="sm:col-span-2">
+            {/* plain: AddressField 는 검색 버튼을 품은 복합 컨트롤 → <label> 암묵 연결 금지(하이재킹 방지) */}
+            <Field label="주소" className="sm:col-span-2" plain>
               <SchemaField field={F.addr} value={v.addr} onChange={(x) => set('addr', x)} />
             </Field>
 

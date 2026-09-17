@@ -8,7 +8,7 @@ import { PeriodPicker } from '../ui/period-picker';   // 연도 선택(control:'
 import { Switch } from '../ui/switch';
 import { Icon } from '../icons';
 import { renderKind } from './dispatch';
-import type { ColumnSpec, FieldSpec, StatusDomainEntry } from './types';
+import type { ColumnSpec, FieldControl, FieldSpec, StatusDomainEntry } from './types';
 import { formatUnit } from './unit';
 import type { Unit } from './unit';
 import type { Tone } from '../components';
@@ -21,6 +21,9 @@ const RichTextField = React.lazy(() => import('../fields/RichTextField').then((m
 const DocumentsField = React.lazy(() => import('../fields/DocumentsField').then((m) => ({ default: m.DocumentsField })));
 // tags 컨트롤은 TagsField(Plate SelectEditor 멀티 태그 입력)로 렌더 — 값은 JSON 배열 문자열.
 const TagsField = React.lazy(() => import('../fields/TagsField').then((m) => ({ default: m.TagsField })));
+// address 컨트롤은 AddressField(우편번호 검색 다이얼로그 + 주소 입력)로 렌더 — 값은 '(12345) 주소' 단일 문자열.
+// ⚠ 이 import 는 반드시 동적(lazy)이어야 한다: AddressField 가 CONTROL_BOX 를 되가져가므로 정적이면 순환이 된다.
+const AddressField = React.lazy(() => import('../fields/AddressField').then((m) => ({ default: m.AddressField })));
 
 // status tone을 스키마의 statusDomain에서 해결(모달 의존 제거 → 순환 차단).
 function toneFor(label: string, domain?: StatusDomainEntry[]): Tone {
@@ -101,6 +104,30 @@ export const drawerInputStyle = (kind?: string): React.CSSProperties => ({
   border: '1px solid var(--border-strong)', borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)',
 });
 
+/* 복합 컨트롤 = 내부에 자체 버튼/툴바/콤보박스를 품은 컨트롤. 폼 래퍼가 이것들을 `<label>` 로 감싸면
+   라벨의 암묵 연결이 **라벨 가능한 첫 자손**(에디터 툴바의 B 버튼·첨부 찾아보기·주소 검색 버튼)을 가로채
+   라벨 클릭·hover 가 그 버튼을 눌러 버린다(richtext 에서 실제로 발생 → generic_list_modal.tsx 상단 주석).
+   판정을 폼 래퍼마다 리터럴로 복제하면 컨트롤이 늘 때마다 한 곳씩 빠진다 → 여기를 SSOT 로 둔다. */
+export const COMPLEX_CONTROLS: readonly FieldControl[] = ['richtext', 'filepond', 'file', 'tags', 'address'];
+export function isComplexControl(control: FieldControl): boolean {
+  return COMPLEX_CONTROLS.includes(control);
+}
+
+/* 폼 컨트롤 focus 표현 SSOT — 아래 SchemaField 와 AddressField(fields/AddressField.tsx)가 공유한다.
+   별도 outline 링을 덧그리지 않고 인라인 border 색을 --ring 으로 스왑 + 은은한 글로우(2026-09-10 사용자 요청).
+   ⚠ invalid/미입력 필수는 focus 중에도 danger 테두리를 유지한다(검증 단서 소실 방지) — 그땐 글로우만 danger 색. */
+export function controlFocusStyle(focused: boolean, danger: boolean): React.CSSProperties {
+  // ⚠ 비포커스에서 **빈 객체를 돌려주면 테두리색이 영구 강등된다**(2026-09-17 실측).
+  //   소비처는 `border` **단축**으로 색을 넣고 focus 때 `borderColor` **longhand** 를 덧씌우는데,
+  //   blur 시 React 의 스타일 diff 가 사라진 키를 `style.borderColor=''` 로 지운다 → 단축은 값이
+  //   그대로라 다시 적용되지 않아 border-*-color 가 캐스케이드로 떨어진다(--border-strong → --border).
+  //   그래서 비포커스에도 쉬는 색을 **명시**해 longhand 가 항상 존재하게 한다.
+  if (!focused) return { borderColor: danger ? 'var(--danger)' : 'var(--border-strong)' };
+  return danger
+    ? { boxShadow: '0 0 0 3px color-mix(in srgb,var(--danger) 22%,transparent)' }
+    : { borderColor: 'var(--ring)', boxShadow: '0 0 0 3px color-mix(in srgb,var(--ring) 22%,transparent)' };
+}
+
 export function SchemaField({ field, value, onChange, invalid, fill: fillProp }: { field: FieldSpec; value: string; onChange: (v: string) => void; invalid?: boolean; fill?: boolean }) {
   // long 필드(설명·비고·운용사명·펀드명 등)는 소비처가 fill 을 넘기지 않아도 항상 컨테이너를 꽉 채운다 —
   // fit-content 폭 규칙이 긴 텍스트를 240px 하한에 묶어두던 문제(권한관리 모달 '설명') 해소.
@@ -136,10 +163,7 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
   // ...base 뒤에 병합 — borderColor longhand가 base의 border shorthand 색을 이긴다(삽입 순서).
   // ⚠ invalid/미입력 필수는 focus 중에도 danger 테두리를 유지한다(검증 단서 소실 방지, Codex P2). 그땐 테두리를 --ring로 스왑하지 않고
   //   글로우만 danger 색으로 맞춘다(정상 필드·이미 채운 필수는 --ring 테두리+글로우).
-  const fs: React.CSSProperties = !focused ? {}
-    : (invalid || requiredEmpty)
-      ? { boxShadow: '0 0 0 3px color-mix(in srgb,var(--danger) 22%,transparent)' }
-      : { borderColor: 'var(--ring)', boxShadow: '0 0 0 3px color-mix(in srgb,var(--ring) 22%,transparent)' };
+  const fs = controlFocusStyle(focused, !!invalid || requiredEmpty);
   switch (field.control) {
     case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical', ...fs }} />;
     // select: native 화살표는 Chrome UA가 오른쪽 경계에 고정해 padding으로 못 움직임 → appearance:none로 제거하고 lucide chevron을 오버레이(토큰색·다크대응).
@@ -206,6 +230,13 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
     );
     // readonly: base의 height:34 하드 클램프와 짝이 되는 1줄 클립이 필수 — 없으면 긴 값(프로그램ID+프로그램명 등)이
     //   2줄로 줄바꿈되며 박스 밖으로 흘러넘친다(입력 불가라 스크롤도 못 한다). 잘린 전체 값은 title로 노출.
+    // 우편번호 검색 + 주소 입력 — lazy 로드. 값=단일 문자열 '(12345) 주소'(fields/address_value.ts 계약).
+    // ⚠ generic_list_modal 의 complex(=<label> 래핑 금지) 목록에 'address' 가 포함돼야 한다(검색 버튼 하이재킹 방지).
+    case 'address': return (
+      <React.Suspense fallback={<div style={{ ...base, width: '100%', color: 'var(--muted-foreground)' }}>주소 입력 불러오는 중…</div>}>
+        <AddressField value={value} onChange={onChange} required={requiredMark} label={field.label} invalid={invalid} fill={fill} />
+      </React.Suspense>
+    );
     case 'readonly': return <div title={value || undefined} style={{ ...base, background: 'var(--muted)', color: 'var(--muted-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value || '—'}</div>;
     default:         return <input value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...fs }} />;
   }

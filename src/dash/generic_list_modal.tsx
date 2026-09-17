@@ -3,7 +3,8 @@
 import React from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
-import { SchemaField } from './schemas/renderers';
+import { SchemaField, isComplexControl } from './schemas/renderers';
+import { isAddressEmpty } from './fields/address_value';
 import type { PageSchema } from './schemas/types';
 import { buildRow } from './schemas/build_row';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
@@ -104,7 +105,11 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
   };
 
   const submit = () => {
-    const req = schema.fields.find((f) => f.required && !String(vals[f.key] ?? '').trim());
+    // 빈 값 판정은 컨트롤의 **값 계약**을 따른다 — address 는 우편번호만 든 "(06236) " 가
+    // 원시 trim 으로는 채워진 것처럼 보여 본문 없는 주소가 통과한다(richtext 빈 문서와 같은 계열).
+    const isEmpty = (f: typeof schema.fields[number]) =>
+      f.control === 'address' ? isAddressEmpty(vals[f.key]) : !String(vals[f.key] ?? '').trim();
+    const req = schema.fields.find((f) => f.required && isEmpty(f));
     if (req) { setErrKey(req.key); return; }
     // 문서 총량 가드 — base64 인라인 이미지 누적으로 저장값이 과대해지는 것 방지.
     const totalChars = Object.values(vals).reduce((s, v) => s + (v?.length || 0), 0);
@@ -135,7 +140,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
           <div className={wide ? "grid grid-cols-1 sm:grid-cols-2 gap-x-5" : ""}>
             {schema.fields.map((f) => {
               // richtext/filepond/tags = 내부에 자체 버튼/combobox를 품은 복합 컨트롤 → <label> 래핑 금지(Field plain).
-              const complex = f.control === "richtext" || f.control === "filepond" || f.control === "file" || f.control === "tags";
+              const complex = isComplexControl(f.control);   // 판정 SSOT = schemas/renderers.tsx COMPLEX_CONTROLS
               // long(설명·비고·운용사명·펀드명 등 긴 텍스트)도 전체 폭 — SchemaField 가 폭 100% 를 함께 켠다(field.long).
               const span2 = wide && (f.control === "textarea" || f.control === "file" || complex || !!f.long);
               return (
