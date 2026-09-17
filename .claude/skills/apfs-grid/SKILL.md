@@ -110,7 +110,9 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - 스키마 트랙은 `schema.hideCardView: true`로 끈다(`generic_list.tsx`가 푸터 `SegTabs`를 렌더하지 않고 `view`를 `"list"` 파생값으로 고정). 기존 카드 렌더 코드는 아직 남아 있으나 도달 불가다.
   - typed 트랙은 플래그 없이 직접 제거한다 — `subfund_manage.tsx`가 `SegTabs`를 지우고 `const view = 'list'` 상수로 내린 형태가 정본.
   - 표현 전용 플래그 4종은 서로 독립: `hideKpis`(헤더 KPI 슬롯) · `hideMetrics`(금액 개념 전체) · `hideCardView`(푸터 뷰 토글) · `hideRowSelection`(행 선택 체크박스 컬럼).
-- **행 선택 체크박스 제거** — 다건 선택/선택삭제가 없는 단건 CRUD 화면은 `schema.hideRowSelection: true`(2026-09-12 자펀드 공고 정보관리). `generic_list.tsx`가 `rowSelection` prop 자체를 `undefined`로 넘겨 **선택 컬럼이 생성되지 않는다**(체크만 푸는 게 아니다). 선택이 없어지면 툴바의 `선택 삭제`/`선택 해제` 분기(`selCount > 0`)도 자동으로 도달 불가가 된다 — 수정은 행 더블클릭·Enter, 삭제는 우클릭 메뉴가 대체 경로다. ⚠️ `rowSelection` 객체는 **모듈 상수**여야 한다([[apfs-aggrid]] ⑦ — 인라인 리터럴은 렌더마다 컬럼 재생성 → 폭 되돌림).
+- **행 선택 체크박스 제거** — 다건 선택/선택삭제가 없는 조회 전용 화면은 `schema.hideRowSelection: true`(현행 예시 `schemas/전체_투자실적.ts`).
+  ⚠️ 이 절이 오래 인용해 온 "2026-09-12 자펀드 공고 정보관리" 사례는 **2026-09-17 사용자 결정으로 뒤집혔다** — 그 화면은 체크박스를 되살리고 툴바에서 수정·삭제를 실행한다. 단건 CRUD라는 이유만으로 선택을 끄지 않는다는 뜻이고, 판별 기준은 [[apfs-aggrid]] "체크박스" 절(=선택이 액션을 만드는가)이다.
+  다중선택(중복선택) 그리드의 클릭 누적선택 규약(`enableClickSelection`+`enableSelectionWithoutKeys` 한 벌)도 → [[apfs-aggrid]]. `generic_list.tsx`가 `rowSelection` prop 자체를 `undefined`로 넘겨 **선택 컬럼이 생성되지 않는다**(체크만 푸는 게 아니다). 선택이 없어지면 툴바의 `선택 삭제`/`선택 해제` 분기(`selCount > 0`)도 자동으로 도달 불가가 된다 — 수정은 행 더블클릭·Enter, 삭제는 우클릭 메뉴가 대체 경로다. ⚠️ `rowSelection` 객체는 **모듈 상수**여야 한다([[apfs-aggrid]] ⑦ — 인라인 리터럴은 렌더마다 컬럼 재생성 → 폭 되돌림).
 - **상태별 건수는 툴바 요약 문장이 아니라 필터 칩 안에.** `UI.FilterChip`의 `count` prop(라벨 뒤 11.5px 볼드 `tabular-nums`, **색은 칩 라벨과 동일 — 별도 `opacity`를 주지 않는다**)에 건수를 넘긴다 — 칩 = "이 상태를 몇 건 보게 되는지"를 누르기 전에 보여주는 곳이고, 툴바 우측 요약은 **총 건수 한 줄**(`기간 내 … N건`, `aria-live="polite"`)만 남긴다(2026-09-15 사용자 지시, `permission_history.tsx`·`audit_log.tsx`).
   - ⚠️ **건수는 facet count로 센다** — 그 칩이 거는 필터**만 빼고** 나머지 필터를 적용한 모집단 기준. 화면에 이미 있는 `visible`(전 필터 적용)로 세면 칩 하나를 누른 순간 나머지 칩이 전부 `0`이 돼 비교 기능이 죽는다. 별도 `facet` memo를 하나 더 둔다(`전체` 칩 = `facet.length`).
   - 건수는 행 데이터라 **`mn()` 경유**(마스크 ON에서 함께 가려짐). 칩 라벨은 축이므로 비마스킹.
@@ -182,7 +184,7 @@ const selActions = selected ? (            // 또는 selCount > 0 ?
 - **`toolbarLeft` 와 `contextActions` 에 같은 노드를 동시에 넘기지 않는다.** 두 곳에 렌더하면 화면 밖 원본이 탭 순서에 남아 키보드 초점이 **보이지 않는 버튼으로 뛴다**(Codex P2). GridFrame 은 둘 중 **한 곳에만** 렌더한다 — 복제가 아니라 이동이다. 검증: `수정` 버튼이 DOM 전체에 항상 **1개**.
 - `contextActions` 를 넘기지 않는 페이지는 동작이 전혀 바뀌지 않는다(IntersectionObserver 도 안 걸린다).
 - **되돌리기 레버**: `grid_frame.tsx` 의 `const FLOATING_ACTIONS = true` → `false` 한 줄로 전 화면 무효.
-- 적용 완료(2026-09-15): `menu_manage` · `user_manage` · `subfund_manage` · `program_manage` · `user_permission_manage` · `user_invite_manage` · `investment_review_manage` · `generic_list`(스키마 주도 전 페이지) · `asset_funding`.
+- 적용 완료(2026-09-15): `menu_manage` · `user_manage` · `subfund_manage` · `program_manage` · `user_permission_manage` · `user_invite_manage` · `investment_review_manage` · `generic_list`(스키마 주도 전 페이지) · ~~`asset_funding`~~(2026-09-17 선택 제거로 이탈).
   `code_manage` 는 대상 아님 — 좌 그리드가 "우측 패널의 데이터 소스"라 해제 개념이 없고 툴바가 무조건 렌더다.
   ⚠️ `asset_funding` 은 배선해도 처음엔 **도달 불가**였다 — `rowSelection={{mode:'multiRow', checkboxes:false}}` 에
   `enableClickSelection`(AG Grid 기본 **false**)이 빠져 체크박스도 행 클릭도 선택을 만들지 못했다(주석엔
@@ -190,6 +192,8 @@ const selActions = selected ? (            // 또는 selCount > 0 ?
   **모듈 상수로 호이스팅**했다 — 선택이 살아나면 선택마다 리렌더가 나므로 인라인 리터럴은 컬럼 폭을 되돌린다
   (→[[apfs-aggrid]] ⑦). **교훈: `checkboxes:false` 로 체크박스 열을 지울 때 `enableClickSelection:true` 를 같이
   켜지 않으면 선택 수단이 0이 된다** — "행 클릭으로 선택"은 기본 동작이 아니다.
+  **후일담(2026-09-17)**: `asset_funding` 은 결국 선택을 통째로 걷어냈다(체크박스 없는 화면의 선택 툴바는 군더더기 —
+  사용자 판정). 이 화면은 더 이상 `contextActions` 소비처가 아니다.
 
 ### 프레임 쪽 구현 계약 (건드릴 때 반드시 읽을 것)
 - **body Portal 필수.** GridFrame 루트에 `animation: dashFade … both` 가 걸려 있어 종료 상태가 항등행렬로 굳고, 그 transform 이 (a) 새 쌓임맥락 (b) `fixed` 의 컨테이닝블록을 만든다. 포털 없이 `fixed` 를 쓰면 좌표가 뷰포트가 아니라 **카드 기준**이 되고 z 도 갇힌다(→[[z-index]] 규칙 3·5의 문서화된 버그와 동일 원인).
