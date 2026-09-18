@@ -162,7 +162,7 @@ export function PermissionHistoryDetailModal({ entry, onClose }: { entry: HistEn
 
           <div className="flex items-start bg-muted rounded-[8px]" style={{ gap: 10, padding: '12px 16px' }}>
             <Icon name="info" size={16} className="text-caption shrink-0" style={{ marginTop: 2 }} />
-            <p className="m-0 text-muted-foreground" style={{ fontSize: 12.5, lineHeight: 1.6 }}>권한은 권한 단위로 적용되므로 위 보유자 전원에게 반영됩니다. 이 변경은 {d.src} 화면에서 수행되어 이력으로 자동 기록된 것으로 가정한 데모입니다(실명 아님 · 3년 보관).</p>
+            <p className="m-0 text-muted-foreground" style={{ fontSize: 12.5, lineHeight: 1.6 }}>권한은 권한 단위로 적용되므로 위 보유자 전원에게 반영됩니다.</p>
           </div>
         </div>
 

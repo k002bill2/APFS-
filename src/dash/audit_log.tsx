@@ -45,7 +45,7 @@ const columnDefs: ColDef<AuditRow>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'ts', headerName: '일시', width: 176, maxWidth: 176, cellStyle: centerNum, sort: 'desc', valueFormatter: (p) => mn(p.value) },
   { field: 'actor', headerName: '행위자', width: 120, maxWidth: 140, cellStyle: { ...flexCenter, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'kind', headerName: '유형', width: 110, maxWidth: 120, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={KIND_TONE[p.value as AuditKind]} label={p.value} size="md" dot={false} /> },
+  { field: 'kind', headerName: '유형', width: 110, maxWidth: 120, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={KIND_TONE[p.value as AuditKind]} label={p.value} size="lg" dot={false} /> },
   { field: 'action', headerName: '행위', width: 200, minWidth: 150, maxWidth: 260, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'target', headerName: '대상', flex: 1, width: 240, minWidth: 180, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'ip', headerName: 'IP', width: 122, maxWidth: 122, cellStyle: { ...muted, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
@@ -109,7 +109,6 @@ function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void
               </div>
             ))}
           </dl>
-          <p className="text-caption m-0 mt-3" style={{ fontSize: 12, lineHeight: 1.5 }}>조회 전용 데모 행입니다 — 실제 보안 이벤트 여부·후속 조치(관제 연계·계정 잠금)는 이 화면이 판정하지 않습니다.</p>
         </div>
         <DialogFooter className="px-[46px]">
           <div />
@@ -204,11 +203,10 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
         </>
       )}
       toolbarRight={<>
-        <span className="text-caption" style={{ fontSize: 12 }} aria-live="polite">기간 내 로그 <b className="text-foreground">{mn(String(visible.length))}</b>건</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(DEMO.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중 · 접속기록 2년 · 권한변경 3년 보관(목업 문구)'}</span>}
+      footerLeft={<span>{'총 ' + mn(String(DEMO.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div>

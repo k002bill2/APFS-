@@ -49,7 +49,7 @@ function SummaryCell({ d }: { d: HistEntry }) {
   if (d.items && d.items.length) {
     const add = cntAdd(d), rev = cntRev(d);
     return (
-      <span className="inline-flex items-center gap-1.5 font-bold" style={{ fontSize: 12.5 }}>
+      <span className="inline-flex items-center gap-1.5 font-bold" style={{ fontSize: 13.5 }}>
         {add > 0 && <span style={{ color: 'var(--success-text)' }}>추가 {mn(String(add))}</span>}
         {add > 0 && rev > 0 && <span className="text-caption">·</span>}
         {rev > 0 && <span style={{ color: 'var(--danger-text)' }}>회수 {mn(String(rev))}</span>}
@@ -57,7 +57,7 @@ function SummaryCell({ d }: { d: HistEntry }) {
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5" style={{ fontSize: 12.5 }}>
+    <span className="inline-flex items-center gap-1.5" style={{ fontSize: 13.5 }}>
       <span style={{ color: 'var(--danger-text)', textDecoration: 'line-through', opacity: .85 }}><MT>{d.before ?? '-'}</MT></span>
       <span className="text-caption" aria-hidden>→</span>
       <b style={{ color: 'var(--success-text)' }}><MT>{d.after ?? '-'}</MT></b>
@@ -68,7 +68,7 @@ function HoldersCell({ d }: { d: HistEntry }) {
   const h = d.holders;
   if (!h.length) return <span className="text-caption">0명</span>;
   const names = h.slice(0, 2).map((x) => x.name).join(', ');
-  return <span className="inline-flex items-center gap-1.5 min-w-0"><b>{mn(String(h.length))}명</b><span className="text-caption truncate" style={{ fontSize: 11.5 }}><MT>{names + (h.length > 2 ? ` 외 ${h.length - 2}명` : '')}</MT></span></span>;
+  return <span className="inline-flex items-center gap-1.5 min-w-0"><b>{mn(String(h.length))}명</b><span className="text-caption truncate" style={{ fontSize: 12.5 }}><MT>{names + (h.length > 2 ? ` 외 ${h.length - 2}명` : '')}</MT></span></span>;
 }
 
 const columnDefs: ColDef<HistEntry>[] = [
@@ -200,7 +200,7 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span aria-live="polite">{'총 ' + mn(String(DEMO.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중 · 권한변경 이력 3년 보관(목업)'}</span>}
+      footerLeft={<span aria-live="polite">{'총 ' + mn(String(DEMO.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div>
