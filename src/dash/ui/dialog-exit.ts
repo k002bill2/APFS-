@@ -37,8 +37,16 @@ export type DialogHandle = { close: () => void };
 
 export function useDeferredClose(open: boolean | undefined, onOpenChange?: (o: boolean) => void) {
   const [inner, setInner] = React.useState(!!open);
+  /* 렌더 본문에서 동기 갱신한다 — effect 에서만 갱신하면 부모가 open=false 로 재렌더한 뒤에도 잠깐 true 가
+     남아, 그 사이 돌아온 복원이 "아직 열려 있다"고 오판해 모달을 다시 열었다(2026-09-18 알림센터 2번 닫힘). */
   const openRef = React.useRef(!!open);
+  openRef.current = !!open;
   const mounted = React.useRef(true);
+  /* close() 로 시작한 닫힘이 진행 중인지. finish 는 이 플래그가 선 동안 한 번만 실행된다 — 폴백 타이머와
+     뒤늦게 도착한 animationend 가 finish 를 두 번 불러 부모 통지·복원이 겹치던 것을 막는다. */
+  const closing = React.useRef(false);
+  /* finish 가 세우고, 다음 커밋의 effect 가 소비하는 "내부 상태 복원 예약". */
+  const restorePending = React.useRef(false);
   const timer = React.useRef<number | undefined>(undefined);
   /* onOpenChange 를 ref 로 들고 있어야 finish/close 가 재생성되지 않는다 — 소비처 대부분이
      인라인 화살표 함수를 넘겨 매 렌더 새 참조가 되기 때문. */
@@ -64,9 +72,20 @@ export function useDeferredClose(open: boolean | undefined, onOpenChange?: (o: b
   /* 제어형 소비처: 부모 open 을 그대로 따라간다. 하드코딩(true) 소비처에선 값이 안 변해 재실행되지 않고,
      그래서 닫는 중(inner=false)에 다시 열리지 않는다. */
   React.useEffect(() => {
-    openRef.current = !!open;
     setInner(!!open);
   }, [open]);
+
+  /* 복원은 rAF 가 아니라 "finish 이후 첫 커밋" 에서 한다. 이 시점의 openRef 는 그 커밋의 실제 prop 이다:
+     - 제어형(open={state}): 부모가 onOpenChange(false) 로 false 를 내려보낸 커밋 → 복원값 false → 닫힌 채 유지.
+     - 재사용(모달 A→B, open 은 계속 true): 부모가 B 를 그리는 커밋 → 복원값 true → inner=false 로 굳지 않는다.
+     - 하드코딩(open 리터럴 true): 부모가 언마운트 → 커밋 없음 → 복원 없음(정상 경로).
+     이전 rAF 방식은 부모 커밋과 순서가 보장되지 않아, 폴백 타이머가 먼저 finish 를 부른 경우 stale true 를 읽고
+     제어형 모달을 다시 열었다 닫았다. */
+  React.useEffect(() => {
+    if (!restorePending.current) return;
+    restorePending.current = false;
+    setInner(openRef.current);
+  });
 
   const finish = React.useCallback(() => {
     if (timer.current) {
@@ -75,19 +94,19 @@ export function useDeferredClose(open: boolean | undefined, onOpenChange?: (o: b
     }
     detach.current?.();
     detach.current = null;
+    /* close() 없이 부모가 직접 open=false 로 닫은 경로(Radix Presence 가 언마운트)나, 폴백 타이머가 이미
+       finish 를 끝낸 뒤 도착한 animationend 는 여기서 멈춘다 — 부모 통지·복원을 반복하지 않는다. */
+    if (!closing.current) return;
+    closing.current = false;
     if (!mounted.current) return;
+    restorePending.current = true;
     changeRef.current?.(false);
-    /* 부모가 언마운트하는 정상 경로에선 이 rAF 가 mounted 가드에 걸려 버려진다.
-       부모가 살아있는 재사용 경로(모달 A→B 로 교체돼 open 이 계속 true)에서만 내부 상태를 되살려
-       inner=false 로 굳어 모달이 안 보이는 사태를 막는다. */
-    requestAnimationFrame(() => {
-      if (mounted.current) setInner(openRef.current);
-    });
   }, []);
 
   /** 닫기 시작 — 내부만 닫아 exit 애니메이션을 재생시킨다. 부모 통지는 finish 로 미룬다. */
   const close = React.useCallback(() => {
     if (lockRef.current) return;   // 저장 대기 중 — 닫기 무시(SaveButton 잠금)
+    closing.current = true;
     setInner(false);
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(finish, EXIT_FALLBACK_MS);
