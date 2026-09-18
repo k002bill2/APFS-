@@ -120,6 +120,22 @@
       "enforcement": "suggest",
       "keywords": ["단축키", "hotkey", "hot key", "shortcut", "키보드 단축키", "키바인딩", "키 바인딩", "keybinding", "key binding", "useHotkey", "HOTKEYS", "DropdownMenuShortcut", "명령 팔레트", "command palette", "커맨드 팔레트", "⌘", "⌥", "cmd", "ctrl", "alt", "meta", "modifier", "accelerator"],
       "intentPatterns": ["(단축키|hotkey|shortcut|키바인딩|key ?binding).*(추가|변경|바꾸|만들|정의|충돌|정리|스킬|add|change|edit|make|define|conflict)", "(⌘|⌥|cmd|ctrl|alt|meta).*(키|key|조합|combo|충돌|conflict|바꾸|change)", "(단축키|shortcut).*(맥|mac|윈도우|windows|플랫폼|platform)"]
+    },
+    {
+      "skillName": "transitions-dev",
+      "priority": "medium",
+      "enforcement": "suggest",
+      "_comment": "모션 '의도' 어휘만. modal/dropdown/tooltip/toggle/checkbox/accordion/toast 같은 표면 명사는 넣지 않는다 — apfs-form-modal·dashboard-ui 프롬프트마다 공발화하고, 그 표면들은 프로젝트 소유자(Radix+tailwindcss-animate·sonner·Skeleton)가 있어 이 스킬 범위 밖이다(SKILL.md 'APFS 적용 규약' 참조).",
+      "keywords": ["transition", "트랜지션", "transitions reveal", "transitions review", "transitions apply", "transitions refine", "animation", "animate", "애니메이션", "모션", "motion", "motion tokens", "모션 토큰", "stagger", "스태거", "shake", "흔들", "shimmer", "시머", "pop-in", "팝인", "easing", "이징", "duration", "cubic-bezier", "keyframes", "success check", "체크 애니메이션", "streaming text", "스트리밍 텍스트", "thinking state", "spinning counter", "카운터 애니메이션", "card tilt", "틸트", "reveal text", "텍스트 리빌"],
+      "intentPatterns": ["(추가|넣|만들|적용|add|make|apply).*(transition|트랜지션|animation|애니메이션|모션|motion)", "transitions (reveal|review|apply|refine)"]
+    },
+    {
+      "skillName": "transitions-polish",
+      "priority": "medium",
+      "enforcement": "suggest",
+      "_comment": "기존 모션 '튠업' 어휘만. transitions-dev 와 일부 겹치는 키워드는 의도(둘 다 추천되어야 폴리시 트랙이 선택된다). 이 저장소의 '모션 토큰'은 --dur-*/--ease 다 — SKILL.md 'APFS 적용 규약' 참조.",
+      "keywords": ["transitions polish", "transitions review", "polish", "폴리시", "refine the motion", "모션 다듬", "모션 튠", "timing feels off", "타이밍이", "too slow", "too fast", "너무 느려", "너무 빨라", "tighten the durations", "fix the stagger", "align to the motion tokens", "audit the motion", "모션 감사", "scan for ad-hoc transitions", "tokenize my animations", "open close timing", "hover in out", "hover-out", "호버 아웃", "easing", "이징", "duration", "stagger", "스태거", "모션 토큰", "motion tokens"],
+      "intentPatterns": ["(polish|refine|tune|다듬|튠|정리|감사|audit).*(motion|모션|animation|애니메이션|transition|트랜지션|timing|타이밍|easing|이징|duration)"]
     }
   ]
 }
