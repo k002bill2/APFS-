@@ -9,7 +9,7 @@ import React from 'react';
 import { UI } from './components';
 import { SchemaField, isComplexControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { OPT_AG, OPT_FG, OPT_FC, OPT_PT, OPT_FS, OPT_TC } from './subfund_manage_schemas';
 import type { SubFundRow } from './subfund_manage';
 // 첨부 셀 카드 — DocumentsField(filepond 통일 드롭존)와 동일 표시 프리미티브로, 슬롯 구조는 유지하고 셀만 온-시스템 카드로.
@@ -111,8 +111,10 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
   };
   const yLabel = `${row.y}년 ${row.rt}${row.ch ? row.ch + '차' : ''}`;
 
+  const dlgRef = React.useRef<DialogHandle>(null);
+
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[880px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="px-[46px]">
           <DialogTitle>결성조합 수정</DialogTitle>
@@ -243,7 +245,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
         <DialogFooter className="px-[46px]">
           <div />
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>취소</Button>
+            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>취소</Button>
             <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
           </div>
         </DialogFooter>

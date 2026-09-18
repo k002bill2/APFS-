@@ -12,7 +12,7 @@ import React, { useState } from 'react';
 import { UI } from './components';
 import { mn, MT } from './mask';
 import { fmt } from './aggrid_theme';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { toast } from './ui/sonner';
 import type { SubFundRow } from './subfund_manage';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
@@ -229,8 +229,9 @@ function FsDetailModal({ fn, unit: initUnit, onClose }: { fn: string; unit: Unit
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '재무제표'); XLSX.writeFile(wb, `재무제표_${BASEYM}.xlsx`);
     toast.success('재무제표 엑셀을 내려받았습니다');
   };
+  const dlgRef = React.useRef<DialogHandle>(null);
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[720px] max-h-[88vh]">
         <DialogHeader className="px-[46px]">
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
@@ -247,7 +248,7 @@ function FsDetailModal({ fn, unit: initUnit, onClose }: { fn: string; unit: Unit
           <div />
           <div className="flex gap-2">
             <Button variant="outline" size="sm" leadingIcon="download" onClick={excel}>엑셀</Button>
-            <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
           </div>
         </DialogFooter>
       </DialogContent>
@@ -271,9 +272,10 @@ export function SubFundSpecModal({ row, onClose }: { row: SubFundRow; onClose: (
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '자펀드 명세'); XLSX.writeFile(wb, `자펀드명세_${row.fn}.xlsx`);
     toast.success('자펀드 명세 엑셀을 내려받았습니다');
   };
+  const dlgRef = React.useRef<DialogHandle>(null);
   return (
     <>
-      <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
         {/* 중첩 팝업이 열려 있을 때는 바깥 클릭이 부모까지 닫지 않도록 차단 */}
         <DialogContent className="max-w-[880px] max-h-[88vh]" onInteractOutside={(e) => { if (fsOpen) e.preventDefault(); }}>
           <DialogHeader className="px-[46px]">
@@ -292,7 +294,7 @@ export function SubFundSpecModal({ row, onClose }: { row: SubFundRow; onClose: (
             <div className="flex gap-2">
               <Button variant="primary" size="sm" leadingIcon="file" onClick={() => setFsOpen(true)}>재무제표 상세</Button>
               <Button variant="outline" size="sm" leadingIcon="download" onClick={excel}>엑셀</Button>
-              <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+              <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
             </div>
           </DialogFooter>
         </DialogContent>

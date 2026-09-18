@@ -341,7 +341,6 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
   const confirmTarget = modal?.kind === 'confirm' ? rows.find((r) => r.id === modal.id) ?? null : null;
   const doConfirm = (role: Role, id: string) => {
     patchRow(id, role === 'js' ? { jsBy: CONFIRMER } : { rsBy: CONFIRMER });
-    setModal(null);
     toast.success(`${ROLE_LABEL[role]} 확인 처리되었습니다`);
   };
 
@@ -479,7 +478,7 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
               ))}
             </dl>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setModal(null)}>취소</AlertDialogCancel>
+              <AlertDialogCancel>취소</AlertDialogCancel>
               <AlertDialogAction onClick={() => doConfirm(modal.role, modal.id)}>확인</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

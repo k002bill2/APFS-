@@ -7,7 +7,7 @@ import { SchemaField, isComplexControl } from './schemas/renderers';
 import { isAddressEmpty } from './fields/address_value';
 import type { PageSchema } from './schemas/types';
 import { buildRow } from './schemas/build_row';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { ReviewMarker } from './review_marker';
 import type { ReviewNoteSpec } from './schemas/types';
 
@@ -121,8 +121,10 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
     onSave(buildRow(vals, initial, schema));
   };
 
+  const dlgRef = React.useRef<DialogHandle>(null);
+
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       {/* 바깥 클릭으로는 안 닫힘 — 폼 작성 중 오터치 유실 방지 + 에디터 드롭다운을 닫으려는 바깥 클릭이
           모달까지 닫는 문제 차단. 닫기는 X·취소·저장·Escape로만. 드롭다운/팝오버는 자체 Radix 레이어라
           바깥 클릭 dismiss가 그대로 동작한다(최상위 레이어부터 닫힘). */}
@@ -178,7 +180,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>취소</Button>
+            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>취소</Button>
             <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
           </div>
         </DialogFooter>

@@ -16,7 +16,7 @@ import { UI } from './components';
 import { MT } from './mask';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { toast } from './ui/sonner';
 import { UTYPES, hasChildren, pidTakenBy } from './admin_menu_tree';
 import type { MenuRow, MenuLevel, Program, UType } from './admin_menu_tree';
@@ -71,8 +71,9 @@ function ProgramSearchDialog({ programs, onPick, onClose }: { programs: readonly
   };
   const th: React.CSSProperties = { position: 'sticky', top: 0, background: 'var(--grid-header)', color: 'var(--muted-foreground)', fontSize: 12, fontWeight: 700, textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid var(--border)' };
   const td: React.CSSProperties = { padding: '6px 10px', borderBottom: '1px solid var(--border)', fontSize: 13 };
+  const dlgRef = React.useRef<DialogHandle>(null);
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[640px] max-h-[80vh]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="px-[46px]">
           <DialogTitle>프로그램 검색</DialogTitle>
@@ -107,7 +108,7 @@ function ProgramSearchDialog({ programs, onPick, onClose }: { programs: readonly
         <DialogFooter className="px-[46px]">
           <div />
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
             <Button variant="primary" size="sm" leadingIcon="check" onClick={confirm}>확인</Button>
           </div>
         </DialogFooter>
@@ -183,8 +184,10 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
   const title = mode === 'create' ? '메뉴 등록' : '메뉴 수정';
   const err = (k: string, msg: string) => (errKey === k ? msg : undefined);
 
+  const dlgRef = React.useRef<DialogHandle>(null);
+
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[880px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="px-[46px]">
           <DialogTitle>{title}</DialogTitle>
@@ -269,7 +272,7 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
             <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
           </div>
         </DialogFooter>

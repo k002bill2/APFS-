@@ -13,7 +13,7 @@ import React, { useState } from 'react';
 import { UI } from './components';
 import { mn, MT } from './mask';
 import { fmt } from './aggrid_theme';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 
 const { Button, SegTabs, StatusBadge } = UI;
 
@@ -172,8 +172,9 @@ function FinTable({ unit }: { unit: Unit }) {
 export function GpSpecModal({ row, onClose }: { row?: Record<string, unknown>; onClose: () => void }) {
   const [unit, setUnit] = useState<Unit>('원');
   const target = String(row?.gp ?? row?.name ?? GP_NAME);
+  const dlgRef = React.useRef<DialogHandle>(null);
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[880px] max-h-[88vh]">
         <DialogHeader className="px-[46px]">
           {/* 제목+대상명은 한 래퍼로 묶는다 — DialogHeader가 justify-between이라 안 묶으면 대상명이 우측 끝으로 밀린다 */}
@@ -190,7 +191,7 @@ export function GpSpecModal({ row, onClose }: { row?: Record<string, unknown>; o
         </div>
         <DialogFooter className="px-[46px]">
           <div />
-          <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+          <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

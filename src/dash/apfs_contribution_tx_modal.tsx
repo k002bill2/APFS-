@@ -27,7 +27,7 @@
 import React from 'react';
 import { UI } from './components';
 import { mn, MT } from './mask';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { Icon } from './icons';
 import { toast } from './ui/sonner';
 import type { TxGroup, TxMember } from './apfs_contribution_manage';
@@ -219,8 +219,10 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
     onSave(next);
   };
 
+  const dlgRef = React.useRef<DialogHandle>(null);
+
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[1100px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="px-[46px]">
           {/* 제목+대상명은 한 래퍼로 묶는다 — DialogHeader가 justify-between이라 안 묶으면 대상명이 우측 끝으로 밀린다 */}
@@ -294,7 +296,7 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
         <DialogFooter className="px-[46px]">
           <div />
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
             <Button variant="primary" size="sm" onClick={save}>저장</Button>
           </div>
         </DialogFooter>
@@ -349,8 +351,10 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
   /* 저장 — 이 팝업의 데이터는 목록 그리드와 연결돼 있지 않다(별 자펀드). 닫고 알림만 낸다 */
   const save = () => { toast.success('저장되었습니다 (목업)'); onClose(); };
 
+  const dlgRef = React.useRef<DialogHandle>(null);
+
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[1100px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="px-[46px]">
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
@@ -424,7 +428,7 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
         <DialogFooter className="px-[46px]">
           <div />
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
             <Button variant="primary" size="sm" onClick={save}>저장</Button>
           </div>
         </DialogFooter>

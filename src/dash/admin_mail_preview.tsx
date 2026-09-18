@@ -3,7 +3,7 @@
    본문·수신자는 동적 텍스트라 `MT` 마스킹, 발신 주소·설명 캡션은 고정 문구라 비마스킹. */
 import { UI } from './components';
 import { MT } from './mask';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 
 const { Button, StatusBadge } = UI;
 
@@ -17,8 +17,9 @@ export function MailPreviewDialog({ title, mail, onClose, action }: {
   onClose: () => void;
   action?: { label: string; onClick: () => void };
 }) {
+  const dlgRef = React.useRef<DialogHandle>(null);
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[720px] max-h-[88vh]">
         <DialogHeader className="px-[46px]">
           <DialogTitle>{title}</DialogTitle>
@@ -40,7 +41,7 @@ export function MailPreviewDialog({ title, mail, onClose, action }: {
         <DialogFooter className="px-[46px]">
           <div />
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
             {action && <Button variant="primary" size="sm" leadingIcon="check" onClick={action.onClick}>{action.label}</Button>}
           </div>
         </DialogFooter>

@@ -242,7 +242,6 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
   };
   const doDelete = (id: string) => {
     setRows((prev) => prev.filter((r) => r.id !== id));
-    setModal(null);
     toast.success('삭제되었습니다 (목업)');
   };
 
@@ -357,7 +356,7 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setModal(null)}>취소</AlertDialogCancel>
+              <AlertDialogCancel>취소</AlertDialogCancel>
               <AlertDialogAction onClick={() => doDelete(target.id)} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

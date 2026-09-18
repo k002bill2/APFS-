@@ -3,8 +3,26 @@
 import * as React from 'react';
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 import { cn } from '@/lib/utils';
+import { DialogExitProvider, useDeferredClose, useExitEnd, makeExitEndHandler, type DialogHandle } from './dialog-exit';
 
-const AlertDialog = AlertDialogPrimitive.Root;
+/* ⚠ 그냥 AlertDialogPrimitive.Root 가 아니다 — Dialog 와 같은 이유로 닫힘 애니메이션을 살리려고
+   내부 open 상태를 들고 exit 종료 뒤에 부모 onOpenChange(false) 를 호출한다(dialog-exit.ts 참조).
+   AlertDialogAction/Cancel 은 Radix 닫기 버튼이라 이 경로를 그대로 탄다 — 소비처 수정이 필요 없다.
+   단, Cancel 에 onClick={() => setModal(null)} 같은 직접 언마운트를 붙이면 애니메이션이 다시 죽는다. */
+const AlertDialog = React.forwardRef<DialogHandle, React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Root>>(
+  ({ open, onOpenChange, children, ...props }, ref) => {
+    const { inner, finish, close, rootOpenChange } = useDeferredClose(open, onOpenChange);
+    React.useImperativeHandle(ref, () => ({ close }), [close]);
+    return (
+      <DialogExitProvider value={finish}>
+        <AlertDialogPrimitive.Root open={inner} onOpenChange={rootOpenChange} {...props}>
+          {children}
+        </AlertDialogPrimitive.Root>
+      </DialogExitProvider>
+    );
+  },
+);
+AlertDialog.displayName = 'AlertDialog';
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 const AlertDialogPortal = AlertDialogPrimitive.Portal;
 
@@ -23,16 +41,18 @@ AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, ...props }, ref) => (
+>(({ className, onAnimationEnd, ...props }, ref) => (
   <AlertDialogPortal>
     <AlertDialogOverlay />
     <AlertDialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-modal flex w-full max-w-[420px] -translate-x-1/2 -translate-y-1/2 flex-col gap-2 rounded-card-lg border border-border bg-card p-[22px] shadow-lg focus:outline-none',
-        'duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+        // ⚠ 중앙정렬은 CSS translate 프로퍼티 — animate-dialog-in 의 3D 플립이 transform 을 점유하므로 -translate-x-1/2 금지(Dialog 와 동일 규약).
+        'fixed left-1/2 top-1/2 z-modal flex w-full max-w-[420px] [translate:-50%_-50%] flex-col gap-2 rounded-card-lg border border-border bg-card p-[22px] shadow-lg focus:outline-none',
+        'data-[state=open]:animate-dialog-in data-[state=closed]:animate-dialog-out',
         className,
       )}
+      onAnimationEnd={makeExitEndHandler(useExitEnd(), onAnimationEnd)}
       {...props}
     />
   </AlertDialogPortal>

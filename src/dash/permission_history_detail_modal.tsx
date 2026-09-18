@@ -3,7 +3,7 @@
    편집 액션 없음(조회 전용). 라벨 배열은 한글 kv 가로 규약(apfs-form-modal). 동적 텍스트는 MT 마스킹. */
 import { UI } from './components';
 import { MT } from './mask';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { CT_TONE, cntAdd, cntRev } from './permission_history_model';
 import type { HistEntry, HistItem, ItemAction } from './permission_history_model';
 
@@ -43,8 +43,9 @@ function ItemList({ items, action }: { items: HistItem[]; action: ItemAction }) 
 
 export function PermissionHistoryDetailModal({ entry, onClose }: { entry: HistEntry; onClose: () => void }) {
   const d = entry;
+  const dlgRef = React.useRef<DialogHandle>(null);
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[640px] max-h-[88vh]">
         <DialogHeader className="px-[46px]">
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
@@ -94,7 +95,7 @@ export function PermissionHistoryDetailModal({ entry, onClose }: { entry: HistEn
         </div>
         <DialogFooter className="px-[46px]">
           <div />
-          <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+          <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
