@@ -32,3 +32,28 @@
 - `publishConfig.types` 경로는 `dist/types/ds/index.d.ts` — 배럴 위치를 옮기면 함께.
 - Pretendard는 jsdelivr 원격 로드 — 오프라인/차단 환경에서 폴백 폰트로 렌더.
 - 캔버스(`APFS 로그인 프로토타입.dc.html`)는 이 동기로 바뀌지 않는다 — 디자인 에이전트가 DS Checkbox를 쓸 수 있게 될 뿐.
+
+## 프리뷰 팬아웃(2026-09-19, 7배치 136개)에서 접은 학습
+### 전역 수정으로 해소된 것
+- **border 유틸 무음 소실(블로커였음)**: `index.html` 인라인 `*,::before,::after{border-width:0;border-style:solid;border-color:var(--border)}` 와 `button,input,select,textarea{color:inherit}` 가 컴파일 CSS 에 없다(Vite 산출물 밖). preflight off 라 `.border*` 유틸이 no-op 이 되고 `<input>` 은 UA 검은 테두리가 남는다. **buildCmd 가 두 줄을 app.css 뒤에 append** 한다 — 이 줄을 빼면 카드·다이얼로그·outline 버튼 테두리가 전부 사라진다. (durable 대안: `src/styles/tailwind.css` `@layer base` 로 이관 — 앱 소스 수정이라 미적용.)
+- **`cardMode: single` 의 대표 스토리는 알파벳순 첫 export** (esbuild `__export` 정렬 + 템플릿 `for…in`). 소스 첫 export 를 보이려면 `overrides.<Name>.primaryStory` 필수 — single 75개 전부 지정했다. cardMode/primaryStory 는 등급 키에서 제외라(sync-hashes.mjs) 바꿔도 등급 carry.
+- 오버레이 패밀리 하위 파트(Dialog·AlertDialog·Sheet·Dropdown/Context/Command·Popover·HoverCard·Tooltip·NavigationMenu)도 `cardMode: single` — 이름 정확 매칭이라 부모만 걸면 파트 카드에 모달이 겹친다. NavigationMenu 계열 viewport 높이 ≥380 필수(720x400). CommandDialog 720x520. DatePicker·PeriodPicker 는 열림을 외부에서 강제할 수 없어(내부 useState) `column` 으로 상태 셀을 모두 노출.
+
+### 프리뷰 작성 함정(다음 작성자용)
+- `lucide-react` 는 프리뷰에서 그대로 import 가능(esbuild nodePaths). `Icon`(src/dash/icons.tsx)은 배럴에 없다 → 인라인 SVG 또는 lucide.
+- `IconBtn` 은 `label` 이 있으면 내부 Tooltip → **TooltipProvider 없이 렌더하면 셀이 빈 화면**인데 capture 는 0 error 로 보고(`.cache/review/<Name>.json` pageErrs 에만 남음). 아이콘버튼 조합은 TooltipProvider 로 감쌀 것.
+- `Sheet` 는 `DialogPrimitive.Root` 그대로(deferred-close 래퍼 아님) — ref 없음. `CommandDialog` 도 forwardRef 아님.
+- `ContextMenu` 는 `open` prop 으로 열어도 앵커가 없어 좌상단에 붙는다 → 트리거에 `contextmenu` MouseEvent 디스패치.
+- 모달 메뉴가 열리면 `react-remove-scroll` 이 body 패딩을 0 으로 → 여백은 스토리 루트가 소유. `.ds-single`/`.ds-cell` 의 `translateZ(0)` 때문에 `position:fixed` 컨테이닝 블록이 셀이 된다.
+- `ScrollArea` 는 `type="always"` 여야 캡처에 썸이 보인다. `Calendar` 한국어는 `locale` 대신 `formatters` 로, 캡처 결정성은 `defaultMonth`+`today` 고정.
+- `Card reveal`(whileInView)·CountUp·sonner 토스트는 정적 캡처와 상성이 나쁘다: reveal 은 셀에서 제외, CountUp 은 중간값 허용, Toaster 는 셀 1개 + `duration: Infinity`.
+- `?story=` 캡처는 좌상단 배치 — `side="top"` 툴팁은 래퍼 paddingTop 48~56, 배지가 박스 밖으로 나오는 IconBtn 은 gap 20.
+- JIT 미생성 유틸 예: `w-80` `min-h-[200px]` `grid-cols-4` — 무음 실패. conventions.md 의 목록만 신뢰.
+- 재캡처는 소스 해시가 바뀌면 grade.json 을 지운다 → 순서 고정: rebuild → capture → 시트 판독 → grade 기록.
+- Fact-Forcing Gate 는 명령 텍스트의 낱말(예: Tailwind 말줄임 유틸 이름, `rm`)을 파괴적으로 오탐 — 파이썬 문자열 결합으로 우회.
+
+### 제품 결함 후보(동기 범위 밖 — 별도 이슈로)
+- `src/dash/ui/accordion.tsx` AccordionTrigger 에 `bg-transparent` 누락 → 실제 앱에서도 UA 회색 버튼 배경(AttachmentAction 에는 있음).
+- `src/dash/tokens.css` `[role="menu"]:focus-visible{box-shadow:none}` 이 키보드로 연 메뉴의 `shadow-lg` 엘리베이션까지 지운다(Radix 가 Content 로 포커스 이동 → Chrome 이 focus-visible 승격).
+- `UI.Button variant="outline"` 은 컴파일 CSS 순서상 `.border-transparent` 가 `.border-border-strong` 뒤에 와서 테두리가 안 보인다(리셋 복구 후에도 동일). 임의값 `[border-color:var(--border-strong)]` 로 고칠 수 있음.
+- CLAUDE.md 의 `--primary:#0E963B`(forest green) 서술은 낡았다 — tokens.css 정본은 `#5A5FE8`(인디고).

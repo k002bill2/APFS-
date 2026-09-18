@@ -5,7 +5,7 @@
   "shape": "package",
   "srcDir": "src/ds",
   "tsconfig": "tsconfig.json",
-  "buildCmd": "npm run build && mkdir -p .design-sync/.cache && cp dist/assets/index-*.css .design-sync/.cache/app.css && npx tsc -p .design-sync/tsconfig.types.json",
+  "buildCmd": "npm run build && mkdir -p .design-sync/.cache && cp dist/assets/index-*.css .design-sync/.cache/app.css && printf '%s\\n' 'button,input,select,textarea{color:inherit}' '*,::before,::after{border-width:0;border-style:solid;border-color:var(--border)}' >> .design-sync/.cache/app.css && npx tsc -p .design-sync/tsconfig.types.json",
   "cssEntry": ".design-sync/.cache/app.css",
   "componentSrcMap": {
     "Accordion": "src/dash/ui/accordion.tsx",
@@ -148,59 +148,69 @@
   "overrides": {
     "Dialog": {
       "cardMode": "single",
-      "viewport": "640x480"
+      "viewport": "640x480",
+      "primaryStory": "FormDialog"
     },
     "AlertDialog": {
       "cardMode": "single",
-      "viewport": "640x420"
+      "viewport": "640x420",
+      "primaryStory": "DeleteConfirm"
     },
     "Sheet": {
       "cardMode": "single",
-      "viewport": "720x480"
+      "viewport": "720x480",
+      "primaryStory": "DetailPanel"
     },
     "Popover": {
       "cardMode": "single",
-      "viewport": "480x360"
+      "viewport": "480x360",
+      "primaryStory": "FundSummaryPopover"
     },
     "HoverCard": {
       "cardMode": "single",
-      "viewport": "480x360"
+      "viewport": "480x360",
+      "primaryStory": "GpHoverCard"
     },
     "Tooltip": {
       "cardMode": "single",
-      "viewport": "420x240"
+      "viewport": "420x240",
+      "primaryStory": "IconButtonTooltip"
     },
     "DropdownMenu": {
       "cardMode": "single",
-      "viewport": "480x420"
+      "viewport": "480x420",
+      "primaryStory": "RowActionsMenu"
     },
     "ContextMenu": {
       "cardMode": "single",
-      "viewport": "480x420"
+      "viewport": "480x420",
+      "primaryStory": "GridRowContextMenu"
     },
     "Command": {
       "cardMode": "single",
-      "viewport": "560x420"
+      "viewport": "560x420",
+      "primaryStory": "MenuPalette"
     },
     "NavigationMenu": {
       "cardMode": "single",
-      "viewport": "720x360"
+      "viewport": "720x400",
+      "primaryStory": "OpenFlyout"
     },
     "DatePicker": {
-      "cardMode": "single",
-      "viewport": "480x420"
+      "cardMode": "column"
     },
     "PeriodPicker": {
-      "cardMode": "single",
-      "viewport": "480x420"
+      "cardMode": "column"
     },
     "Calendar": {
       "cardMode": "single",
-      "viewport": "420x400"
+      "viewport": "420x400",
+      "primaryStory": "BaseDateCalendar"
     },
     "Toaster": {
       "cardMode": "single",
-      "viewport": "560x300"
+      "viewport": "560x300",
+      "primaryStory": "Toasts"
     },
     "Accordion": {
       "cardMode": "column"
@@ -219,7 +229,8 @@
     },
     "CommandDialog": {
       "cardMode": "single",
-      "viewport": "560x420"
+      "viewport": "720x520",
+      "primaryStory": "PaletteDialog"
     },
     "InputGroup": {
       "cardMode": "column"
@@ -231,6 +242,361 @@
       "cardMode": "column"
     },
     "AttachmentGroup": {
+      "cardMode": "column"
+    },
+    "DialogTrigger": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "TriggerOpensDialog"
+    },
+    "DialogPortal": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "PortalEscapesCard"
+    },
+    "DialogClose": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "CloseInFooter"
+    },
+    "DialogOverlay": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "OverlayScrim"
+    },
+    "DialogContent": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "WideFormContent"
+    },
+    "DialogHeader": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "HeaderWithBadge"
+    },
+    "DialogFooter": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "FooterActions"
+    },
+    "DialogTitle": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "TitleInHeader"
+    },
+    "DialogDescription": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "DescriptionUnderTitle"
+    },
+    "AlertDialogTrigger": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "TriggerOpensConfirm"
+    },
+    "AlertDialogPortal": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "PortalEscapesCard"
+    },
+    "AlertDialogOverlay": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "OverlayScrim"
+    },
+    "AlertDialogContent": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "ContentDefault"
+    },
+    "AlertDialogHeader": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "HeaderStacked"
+    },
+    "AlertDialogFooter": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "FooterCancelAction"
+    },
+    "AlertDialogTitle": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "TitleQuestion"
+    },
+    "AlertDialogDescription": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "DescriptionImpact"
+    },
+    "AlertDialogAction": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "DestructiveAction"
+    },
+    "AlertDialogCancel": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "CancelDefault"
+    },
+    "SheetTrigger": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "TriggerOpensDrawer"
+    },
+    "SheetClose": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "CloseInFooter"
+    },
+    "SheetPortal": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "PortalEscapesCard"
+    },
+    "SheetOverlay": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "OverlayScrim"
+    },
+    "SheetContent": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "RightFilterDrawer"
+    },
+    "SheetHeader": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "HeaderWithBadge"
+    },
+    "SheetFooter": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "FooterResetApply"
+    },
+    "SheetTitle": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "TitleInHeader"
+    },
+    "SheetDescription": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "DescriptionUnderTitle"
+    },
+    "DropdownMenuTrigger": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "ToolbarTrigger"
+    },
+    "DropdownMenuGroup": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "GroupedActions"
+    },
+    "DropdownMenuRadioGroup": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "AmountUnitRadioGroup"
+    },
+    "DropdownMenuContent": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "MenuSurface"
+    },
+    "DropdownMenuItem": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "ActionItems"
+    },
+    "DropdownMenuRadioItem": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "SortRadioItems"
+    },
+    "DropdownMenuLabel": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "LabeledSections"
+    },
+    "DropdownMenuSeparator": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "SeparatedActionGroups"
+    },
+    "DropdownMenuShortcut": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "ShortcutHints"
+    },
+    "ContextMenuTrigger": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "GridAreaTrigger"
+    },
+    "ContextMenuGroup": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "GroupedRowActions"
+    },
+    "ContextMenuContent": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "RowMenuSurface"
+    },
+    "ContextMenuItem": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "RowActionItems"
+    },
+    "ContextMenuSeparator": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "SeparatedRowActions"
+    },
+    "ContextMenuLabel": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "LabeledRowMenu"
+    },
+    "CommandInput": {
+      "cardMode": "single",
+      "viewport": "560x420",
+      "primaryStory": "PaletteSearchInput"
+    },
+    "CommandList": {
+      "cardMode": "single",
+      "viewport": "560x420",
+      "primaryStory": "PaletteResultList"
+    },
+    "CommandEmpty": {
+      "cardMode": "single",
+      "viewport": "560x420",
+      "primaryStory": "NoResults"
+    },
+    "CommandGroup": {
+      "cardMode": "single",
+      "viewport": "560x420",
+      "primaryStory": "GroupedResults"
+    },
+    "CommandItem": {
+      "cardMode": "single",
+      "viewport": "560x420",
+      "primaryStory": "ResultItems"
+    },
+    "CommandSeparator": {
+      "cardMode": "single",
+      "viewport": "560x420",
+      "primaryStory": "SeparatedGroups"
+    },
+    "NavigationMenuList": {
+      "cardMode": "single",
+      "viewport": "720x400",
+      "primaryStory": "VerticalList"
+    },
+    "NavigationMenuItem": {
+      "cardMode": "single",
+      "viewport": "720x400",
+      "primaryStory": "TriggerAndLinkItems"
+    },
+    "NavigationMenuTrigger": {
+      "cardMode": "single",
+      "viewport": "720x400",
+      "primaryStory": "TriggerStates"
+    },
+    "NavigationMenuContent": {
+      "cardMode": "single",
+      "viewport": "720x400",
+      "primaryStory": "FlyoutPanel"
+    },
+    "NavigationMenuLink": {
+      "cardMode": "single",
+      "viewport": "720x400",
+      "primaryStory": "PanelLinks"
+    },
+    "PopoverTrigger": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "TriggerAsChild"
+    },
+    "PopoverAnchor": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "AnchoredToField"
+    },
+    "PopoverContent": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "ContentSurface"
+    },
+    "HoverCardTrigger": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "TriggerInTableCell"
+    },
+    "HoverCardContent": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "ContentSurface"
+    },
+    "TooltipTrigger": {
+      "cardMode": "single",
+      "viewport": "420x240",
+      "primaryStory": "TriggerAsChildIconButton"
+    },
+    "TooltipContent": {
+      "cardMode": "single",
+      "viewport": "420x240",
+      "primaryStory": "ContentSides"
+    },
+    "TooltipProvider": {
+      "cardMode": "single",
+      "viewport": "420x240",
+      "primaryStory": "ProviderWithToolbar"
+    },
+    "Attachment": {
+      "cardMode": "column"
+    },
+    "AttachmentAction": {
+      "cardMode": "column"
+    },
+    "AttachmentActions": {
+      "cardMode": "column"
+    },
+    "AttachmentContent": {
+      "cardMode": "column"
+    },
+    "AttachmentDescription": {
+      "cardMode": "column"
+    },
+    "AttachmentMedia": {
+      "cardMode": "column"
+    },
+    "AttachmentTitle": {
+      "cardMode": "column"
+    },
+    "InputGroupAddon": {
+      "cardMode": "column"
+    },
+    "InputGroupButton": {
+      "cardMode": "column"
+    },
+    "InputGroupInput": {
+      "cardMode": "column"
+    },
+    "InputGroupText": {
+      "cardMode": "column"
+    },
+    "InputGroupTextarea": {
+      "cardMode": "column"
+    },
+    "ItemContent": {
+      "cardMode": "column"
+    },
+    "ScrollBar": {
+      "cardMode": "column"
+    },
+    "Spinner": {
       "cardMode": "column"
     }
   },
