@@ -33,7 +33,8 @@ const RadioGroupItem = React.forwardRef<
     <RadioGroupPrimitive.Item
       ref={ref}
       className={cn(
-        'peer inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-full border-[1.5px] border-border-strong bg-card transition-colors',
+        // p-0: preflight 이 꺼져 있어 <button> UA 패딩(1px 6px)이 살아 있으면 내부 폭이 5px 이 돼 선택 점이 6×10 으로 눌린다(2026-09-18 실측)
+        'peer inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-full border-[1.5px] border-border-strong bg-card p-0 transition-colors',
         'data-[state=checked]:border-brand-blue',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className,
@@ -44,7 +45,7 @@ const RadioGroupItem = React.forwardRef<
       {/* 선택 점 — scale 은 transform 이라 app.tsx MotionConfig reducedMotion="user" 가 저모션에서 자동으로 끈다. */}
       <RadioGroupPrimitive.Indicator asChild>
         <motion.span
-          className="block h-2.5 w-2.5 rounded-full bg-brand-blue"
+          className="block h-2.5 w-2.5 shrink-0 rounded-full bg-brand-blue"
           initial={self.current ? { scale: 0 } : false}
           animate={{ scale: 1 }}
           transition={spring.control}

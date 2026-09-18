@@ -26,7 +26,8 @@ const Checkbox = React.forwardRef<
       ref={ref}
       checked={checked}
       className={cn(
-        'peer inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-[6px] border-[1.5px] border-border-strong bg-card transition-colors',
+        // p-0: preflight 이 꺼져 있어 <button> UA 패딩(1px 6px)이 살아 있다 — 내부 폭 5px 로 표식이 눌리는 것 방지(radio-group.tsx 동일)
+        'peer inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-[6px] border-[1.5px] border-border-strong bg-card p-0 transition-colors',
         'data-[state=checked]:border-brand-blue data-[state=checked]:bg-brand-blue data-[state=checked]:text-[color:var(--on-brand-solid)]',
         'data-[state=indeterminate]:border-brand-blue data-[state=indeterminate]:bg-brand-blue data-[state=indeterminate]:text-[color:var(--on-brand-solid)]',
         'disabled:cursor-not-allowed disabled:opacity-50',
@@ -40,7 +41,7 @@ const Checkbox = React.forwardRef<
           scale는 transform이라 app.tsx의 MotionConfig reducedMotion="user"가 저모션에서 자동으로 끈다. */}
       <CheckboxPrimitive.Indicator asChild>
         <motion.span
-          className="flex items-center justify-center text-current"
+          className="flex shrink-0 items-center justify-center text-current"
           initial={self.current ? { scale: 0 } : false}
           animate={{ scale: 1 }}
           transition={spring.control}>
