@@ -2,11 +2,11 @@
    출처: S0_107_권한변경이력.html(공통관리 KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(기간·대상 사용자·변경유형·행위자·검색어 + [이번 달]) → 주 필터 1개 = 변경유형 FilterChip(툴바 좌)
-       + 상세필터 드로어(검색어·기간(PeriodPicker day ×2)·대상 사용자·행위자). [이번 달] = 툴바 ghost 버튼. 기본 기간 = 이번 달(데모 고정 기준일).
+   - 검색박스(기간·대상 사용자·변경유형·행위자·검색어 + [이번 달]) → 전 항목이 상세필터 드로어
+       (검색어·기간(PeriodPicker day ×2)·대상 사용자·변경유형·행위자). 툴바 좌는 적용 칩만. [이번 달] = 툴바 ghost 버튼. 기본 기간 = 이번 달(월초~월말, 데모 고정 기준일 기준).
    - 그리드(No·일시·변경유형·권한·변경 요약·적용 대상·행위자·발생프로그램) → AG Grid 단일 헤더. 변경 요약 셀 = 추가N·회수M 또는 전→후.
    - 행 더블클릭/Enter(또는 우클릭 메뉴 '상세 보기') → 상세 다이얼로그(`PermissionHistoryDetailModal`, 읽기 전용 — 편집 액션 없음).
-   - 등록 없음(조회 전용) → 툴바 kebab 단독. 엑셀 = kebab + 푸터 download + ⌥D. 툴바 좌 요약 캡션(기간 내 변경 N건 · 유형별).
+   - 등록 없음(조회 전용) → 툴바 kebab 단독. 엑셀 = kebab + 푸터 download + ⌥D. 표시 건수 요약은 푸터 좌(aria-live).
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음.
    ⚠ 실제 감사 데이터·권한변경 수집이 아니다 — 데모 행을 로컬로 조회만 한다(브리프). 실명 아님. */
 import './aggrid_shared.css';
@@ -31,7 +31,7 @@ import { demoHistory, filterHistory, summaryText, cntAdd, cntRev, usersOf, month
 import type { HistEntry, ChangeType } from './permission_history_model';
 import { PermissionHistoryDetailModal } from './permission_history_detail_modal';
 
-const { Button, IconBtn, StatusBadge, FilterChip } = UI;
+const { Button, IconBtn, StatusBadge } = UI;
 
 const SEARCHABLE = true;
 const DEMO: HistEntry[] = demoHistory();          // 정적 데모(조회 전용)
@@ -84,8 +84,6 @@ const columnDefs: ColDef<HistEntry>[] = [
 // 조회 전용(audit-read-only) — 행 선택 자체를 두지 않는다(체크박스도, 클릭 선택도).
 // 선택으로 실행할 액션(일괄삭제·단계전이·선택 행 편집)이 없어 선택은 죽은 상태값이었다.
 // 상세 진입은 더블클릭 / Enter / 우클릭 메뉴 3경로로 충분하다.
-const TYPE_CHIPS = ['', ...CHANGE_TYPES] as const;
-
 type XCol = { header: string; get: (r: HistEntry) => string };
 const EXPORT_COLS: XCol[] = [
   { header: '일시', get: (r) => r.ts }, { header: '변경유형', get: (r) => r.ctype }, { header: '권한', get: (r) => r.preset },
@@ -124,9 +122,9 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const masked = useMask();
 
-  /* 필터 — 변경유형은 툴바 칩, 나머지는 드로어. 기본 기간 = 이번 달(데모 고정 기준일) */
+  /* 필터 — 전 항목이 상세필터 드로어(툴바 좌는 적용 칩만). 기본 기간 = 이번 달(데모 고정 기준일) */
   const [filterOpen, setFilterOpen] = useState(false);
-  const [fType, setFType] = useState<typeof TYPE_CHIPS[number]>('');
+  const [fType, setFType] = useState<ChangeType | ''>('');
   const [[from0, to0]] = useState(() => monthRange());
   const [fFrom, setFFrom] = useState(from0);
   const [fTo, setFTo] = useState(to0);
@@ -140,15 +138,6 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   const visible = useMemo(() => filterHistory(DEMO, { from: fFrom, to: fTo, user: fUser, type: fType, actor: fActor, kw: fText }), [fFrom, fTo, fUser, fType, fActor, fText]);
-  /* 유형 칩의 건수는 "유형만 빼고" 나머지 필터를 적용한 모집단 기준(facet count).
-     visible 로 세면 한 칩을 누른 순간 나머지 칩이 전부 0이 된다. */
-  const facet = useMemo(() => filterHistory(DEMO, { from: fFrom, to: fTo, user: fUser, actor: fActor, kw: fText }), [fFrom, fTo, fUser, fActor, fText]);
-  const typeCount = useMemo(() => {
-    const m = new Map<string, number>();
-    facet.forEach((r) => m.set(r.ctype, (m.get(r.ctype) ?? 0) + 1));
-    return m;
-  }, [facet]);
-  const chipCount = (t: string) => mn(String(t ? typeCount.get(t) ?? 0 : facet.length));
   const onRowDoubleClicked = useCallback((e: RowDoubleClickedEvent<HistEntry>) => { if (e.data && !e.rowPinned) setDetailId(e.data.id); }, []);
   const onCellKeyDown = useCallback((e: CellKeyDownEvent<HistEntry>) => {
     if ((e.event as KeyboardEvent | null)?.key !== 'Enter' || !e.data) return;
@@ -182,6 +171,7 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
   const chips: [string, string, () => void][] = [
     ['기간', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }],
     ['대상 사용자', fUser, () => setFUser('')],
+    ['변경유형', fType, () => setFType('')],
     ['행위자', fActor.trim(), () => setFActor('')],
     ['검색어', fText.trim(), () => setFText('')],
   ];
@@ -194,8 +184,7 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={(
         <>
-          <Icon name="filter" size={16} className="text-caption" />
-          {TYPE_CHIPS.map((t) => <FilterChip key={t || 'all'} active={fType === t} onClick={() => setFType(t)} count={chipCount(t)}>{t || '전체'}</FilterChip>)}
+          {chips.some(([, v]) => v) && <Icon name="filter" size={16} className="text-caption" />}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               <MT>{value}</MT>
@@ -207,15 +196,11 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
         </>
       )}
       toolbarRight={<>
-        {/* 요약(목업 #summary) — aria-live 로 필터 결과 통지 */}
-        <span className="text-caption" style={{ fontSize: 12 }} aria-live="polite">
-          기간 내 변경 <b className="text-foreground">{mn(String(visible.length))}</b>건
-        </span>
         <Button variant="ghost" size="sm" leadingIcon="calendar" onClick={thisMonth}>이번 달</Button>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(DEMO.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중 · 권한변경 이력 3년 보관(목업)'}</span>}
+      footerLeft={<span aria-live="polite">{'총 ' + mn(String(DEMO.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중 · 권한변경 이력 3년 보관(목업)'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div>
@@ -237,7 +222,7 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      {/* ── 상세필터 드로어 — 검색어(opt-in) · 기간 · 대상 사용자 · 행위자(변경유형은 툴바 칩) ── */}
+      {/* ── 상세필터 드로어 — 검색어(opt-in) · 기간 · 대상 사용자 · 변경유형 · 행위자 ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -259,6 +244,7 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
               </div>
             </DrawerField>
             <DrawerField label="대상 사용자"><DrawerSelect value={fUser} onChange={setFUser} options={USER_OPTIONS.map((u) => ({ value: u, label: u }))} /></DrawerField>
+            <DrawerField label="변경유형"><DrawerSelect value={fType} onChange={(v) => setFType(v as ChangeType | '')} options={CHANGE_TYPES.map((t) => ({ value: t, label: t }))} /></DrawerField>
             <DrawerField label="행위자"><input type="text" value={fActor} onChange={(e) => setFActor(e.target.value)} placeholder="행위 수행자" style={inputStyle('text')} /></DrawerField>
           </div>
           <SheetFooter>

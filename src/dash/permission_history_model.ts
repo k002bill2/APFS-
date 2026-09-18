@@ -79,8 +79,12 @@ export function usersOf(rows: readonly HistEntry[]): string[] {
 }
 
 /** 이번 달 범위 — 기준일의 1일 ~ 기준일('YYYY-MM-DD') */
+/** 이번 달 = 월초~월말(목업은 기준일까지였으나, 기준일이 곧 기본값이라 [이번 달] 클릭이 no-op 이었다 — 2026-09-18) */
 export function monthRange(today: string = DEMO_TODAY): [string, string] {
-  return [`${today.slice(0, 7)}-01`, today];
+  const ym = today.slice(0, 7);
+  const [y, m] = ym.split('-').map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();   // m 은 1-based → day 0 = 그 달 말일
+  return [`${ym}-01`, `${ym}-${String(last).padStart(2, '0')}`];
 }
 
 export interface HistFilter { from?: string; to?: string; user?: string; type?: string; actor?: string; kw?: string }

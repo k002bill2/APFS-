@@ -22,7 +22,13 @@ describe('요약 — 추가/회수 건수·전이 문자열', () => {
 });
 
 describe('filterHistory / summaryCounts / usersOf / monthRange', () => {
-  it('이번 달(고정 기준일) 범위', () => { expect(monthRange()).toEqual(['2026-09-01', DEMO_TODAY]); expect(monthRange('2026-03-05')).toEqual(['2026-03-01', '2026-03-05']); });
+  it('이번 달(고정 기준일) 범위 = 월초~월말', () => {
+    expect(monthRange()).toEqual(['2026-09-01', '2026-09-30']);
+    expect(monthRange('2026-03-05')).toEqual(['2026-03-01', '2026-03-31']);
+    expect(monthRange('2026-02-10')).toEqual(['2026-02-01', '2026-02-28']);   // 평년
+    expect(monthRange('2028-02-10')).toEqual(['2028-02-01', '2028-02-29']);   // 윤년
+    expect(DEMO_TODAY).toBe('2026-09-13');                                     // 기준일 자체는 그대로
+  });
   it('기간 필터는 빈 경계를 열어 둔다', () => {
     expect(filterHistory(rows, { from: '2026-09-01' }).length).toBe(10);
     expect(filterHistory(rows, { to: '2026-08-31' }).length).toBe(3);
