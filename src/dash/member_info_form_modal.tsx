@@ -16,7 +16,7 @@ import { UI } from './components';
 import { MT } from './mask';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { ReviewMarker } from './review_marker';
 import type { ReviewNote } from './review_marker';
 import { toast } from './ui/sonner';
@@ -137,8 +137,10 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
 
   const title = mode === 'create' ? '조합원정보 등록' : '조합원정보 수정';
 
+  const dlgRef = React.useRef<DialogHandle>(null);
+
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       {/* 바깥 클릭으로는 안 닫힘 — 폼 작성 중 오터치 유실 방지(RowFormModal 동형) */}
       <DialogContent className="max-w-[880px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="px-[46px]">
@@ -217,7 +219,7 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
             <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
           </div>
         </DialogFooter>

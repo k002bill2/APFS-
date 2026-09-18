@@ -21,7 +21,7 @@ import { UI } from './components';
 import { mn, MT } from './mask';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { toast } from './ui/sonner';
 import type { VerifyMemo } from './custody_verify_manage';
 
@@ -116,8 +116,10 @@ export function CustodyMemoModal({ ctx, history, baseDate, onSave, onClose }: {
     { l: '투자기업', v: ctx.corp },
   ];
 
+  const dlgRef = React.useRef<DialogHandle>(null);
+
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       {/* 바깥 클릭으로 닫히지 않는다 — 작성 중 오터치 유실 방지(RowFormModal과 동일 계약) */}
       <DialogContent className="max-w-[640px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="px-[46px]">
@@ -168,7 +170,7 @@ export function CustodyMemoModal({ ctx, history, baseDate, onSave, onClose }: {
         <DialogFooter className="px-[46px]">
           <div />
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
             <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
           </div>
         </DialogFooter>

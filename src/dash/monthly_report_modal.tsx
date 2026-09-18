@@ -20,7 +20,7 @@ import { UI } from './components';
 import type { Tone } from './components';
 import { mn, MT } from './mask';
 import { fmt } from './aggrid_theme';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import {
   RPT_META, MEMBERS, MEMBERS_TOTAL, INVEST, INVEST_TOTAL, GRADES, GRADE_CRITERIA,
   RECOVERY, RECOVERY_TOTAL, OCC_NOTES, DEPOSITS, DEPOSITS_TOTAL,
@@ -393,8 +393,9 @@ function DistribTable({ unit }: { unit: Unit }) {
 export function MonthlyReportModal({ onClose }: { onClose: () => void }) {
   const [unit, setUnit] = useState<Unit>('원');
   const un = `(단위: ${unit})`;
+  const dlgRef = React.useRef<DialogHandle>(null);
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[1100px] max-h-[88vh]">
         <DialogHeader className="px-[46px]">
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
@@ -445,7 +446,7 @@ export function MonthlyReportModal({ onClose }: { onClose: () => void }) {
         </div>
         <DialogFooter className="px-[46px]">
           <div />
-          <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+          <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

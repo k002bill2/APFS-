@@ -22,7 +22,7 @@ import { PeriodPicker } from './ui/period-picker';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
@@ -90,8 +90,9 @@ function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void
     ['일시', <MT>{row.ts}</MT>], ['행위자', <MT>{row.actor}</MT>], ['유형', <StatusBadge tone={KIND_TONE[row.kind]} label={row.kind} size="md" dot={false} />],
     ['행위', <MT>{row.action}</MT>], ['대상', <MT>{row.target}</MT>], ['IP', <MT>{row.ip}</MT>], ['결과', <StatusBadge tone={RESULT_TONE[row.result]} label={row.result} size="md" dot={false} />],
   ];
+  const dlgRef = React.useRef<DialogHandle>(null);
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[560px] max-h-[88vh]">
         <DialogHeader className="px-[46px]">
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
@@ -112,7 +113,7 @@ function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void
         </div>
         <DialogFooter className="px-[46px]">
           <div />
-          <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+          <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

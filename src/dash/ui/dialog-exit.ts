@@ -35,12 +35,16 @@ export function useDeferredClose(open: boolean | undefined, onOpenChange?: (o: b
      인라인 화살표 함수를 넘겨 매 렌더 새 참조가 되기 때문. */
   const changeRef = React.useRef(onOpenChange);
   changeRef.current = onOpenChange;
+  /** exit 재생 중 걸어둔 document 리스너 해제기. finish/언마운트 시 반드시 호출. */
+  const detach = React.useRef<(() => void) | null>(null);
 
   React.useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
       if (timer.current) window.clearTimeout(timer.current);
+      detach.current?.();
+      detach.current = null;
     };
   }, []);
 
@@ -56,6 +60,8 @@ export function useDeferredClose(open: boolean | undefined, onOpenChange?: (o: b
       window.clearTimeout(timer.current);
       timer.current = undefined;
     }
+    detach.current?.();
+    detach.current = null;
     if (!mounted.current) return;
     changeRef.current?.(false);
     /* 부모가 언마운트하는 정상 경로에선 이 rAF 가 mounted 가드에 걸려 버려진다.
@@ -71,6 +77,18 @@ export function useDeferredClose(open: boolean | undefined, onOpenChange?: (o: b
     setInner(false);
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(finish, EXIT_FALLBACK_MS);
+    /* exit 재생(≈280ms) 중 사용자가 다음 동작을 하면 지연을 즉시 끝낸다.
+       안 그러면 그 사이 모달을 다시 연 경우, 뒤늦게 도착한 onOpenChange(false) 가 방금 연
+       모달을 닫아버린다(소비처의 open 이 리터럴 true 라 재오픈을 감지할 방법이 없다).
+       pointerdown 은 click 보다 먼저 오므로, 재오픈 클릭이 처리되기 전에 정리가 끝난다. */
+    const flush = () => finish();
+    detach.current?.();
+    document.addEventListener('pointerdown', flush, true);
+    document.addEventListener('keydown', flush, true);
+    detach.current = () => {
+      document.removeEventListener('pointerdown', flush, true);
+      document.removeEventListener('keydown', flush, true);
+    };
   }, [finish]);
 
   const rootOpenChange = React.useCallback(

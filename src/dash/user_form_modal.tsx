@@ -10,7 +10,7 @@ import React from 'react';
 import { UI } from './components';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import type { UType } from './admin_menu_tree';
 import { ROLE_NAMES, effectiveMenus, orgsOf } from './admin_demo_data';
 import type { RoleName } from './admin_demo_data';
@@ -91,8 +91,10 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
   const eff = effectiveMenus(v.roles);
   const title = mode === 'create' ? '사용자 등록 (농금원·수탁·부처)' : `사용자 수정 — ${initial?.name ?? ''}`;
 
+  const dlgRef = React.useRef<DialogHandle>(null);
+
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[880px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="px-[46px]">
           <DialogTitle>{title}</DialogTitle>
@@ -162,7 +164,7 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
         <DialogFooter className="px-[46px]">
           <div />
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>취소</Button>
+            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>취소</Button>
             <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>{mode === 'create' ? '저장 → 온보딩 메일 (목업)' : '저장'}</Button>
           </div>
         </DialogFooter>

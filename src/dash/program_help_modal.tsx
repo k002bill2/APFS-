@@ -9,7 +9,7 @@ import { UI } from './components';
 import { MT } from './mask';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { DocumentsField } from './fields/DocumentsField';
 import { normalizeHelpDoc, helpDocError } from './program_manage_model';
 import type { HelpDoc, ProgramRow } from './program_manage_model';
@@ -68,8 +68,10 @@ export function ProgramHelpModal({ program, onSave, onClose }: {
   };
   const delBtn = (onClick: () => void, label: string) => <IconBtn icon="trash" label={label} size={34} onClick={onClick} />;
 
+  const dlgRef = React.useRef<DialogHandle>(null);
+
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[880px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="px-[46px]">
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
@@ -151,7 +153,7 @@ export function ProgramHelpModal({ program, onSave, onClose }: {
         <DialogFooter className="px-[46px]">
           <div />
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
             <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
           </div>
         </DialogFooter>

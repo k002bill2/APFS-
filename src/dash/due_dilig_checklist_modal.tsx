@@ -20,7 +20,7 @@
 import React from 'react';
 import { UI } from './components';
 import { mn, MT } from './mask';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { ReviewMarker } from './review_marker';
 import type { ReviewNote } from './review_marker';
 import { glyphFor } from './ui/attachment';
@@ -69,8 +69,9 @@ function DocCell({ file }: { file: string }) {
 
 export function DueDiligChecklistModal({ row, onClose }: { row: Record<string, unknown>; onClose: () => void }) {
   const items = buildItems(row);
+  const dlgRef = React.useRef<DialogHandle>(null);
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[720px] max-h-[88vh]">
         <DialogHeader className="px-[46px]">
           {/* 제목+대상명은 한 래퍼로 — DialogHeader가 justify-between이라 안 묶으면 대상명이 우측 끝으로 밀린다 */}
@@ -95,7 +96,7 @@ export function DueDiligChecklistModal({ row, onClose }: { row: Record<string, u
         </div>
         <DialogFooter className="px-[46px]">
           <div />
-          <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+          <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

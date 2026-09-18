@@ -26,7 +26,7 @@ import React, { useState } from 'react';
 import { UI } from './components';
 import { mn, MT, useMask } from './mask';
 import { fmt } from './aggrid_theme';   // 숫자 표기 SSOT(정수=콤마) — 자체 포매터 재구현 금지
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import type { MemberRow } from './member_info_manage';   // ⚠ type-only — 값 import는 런타임 순환(manage→detail→manage)
@@ -217,8 +217,10 @@ export function MemberInfoDetailModal({ row, onClose }: { row: MemberRow; onClos
     toast.success('Excel로 내보냈습니다');
   };
 
+  const dlgRef = React.useRef<DialogHandle>(null);
+
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[1020px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="px-[46px]">
           {/* 제목+대상명은 한 래퍼로 묶는다 — DialogHeader가 justify-between이라 안 묶으면 대상명이 우측 끝으로 밀린다 */}
@@ -235,7 +237,7 @@ export function MemberInfoDetailModal({ row, onClose }: { row: MemberRow; onClos
         <DialogFooter className="px-[46px]">
           <div />
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>닫기</Button>
+            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
             <Button variant="outline" size="sm" leadingIcon="download" onClick={excel}>엑셀</Button>
           </div>
         </DialogFooter>
