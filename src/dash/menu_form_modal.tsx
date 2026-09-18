@@ -18,6 +18,7 @@ import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { Checkbox } from './ui/checkbox';   // 복수 선택 체크 그룹 = DS 체크박스(htmlFor 명시 연결, 래핑 금지)
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';   // 프로그램 검색 결과 1건 선택 = DS 라디오
 import { toast } from './ui/sonner';
 import { UTYPES, hasChildren, pidTakenBy } from './admin_menu_tree';
 import type { MenuRow, MenuLevel, Program, UType } from './admin_menu_tree';
@@ -85,8 +86,9 @@ function ProgramSearchDialog({ programs, onPick, onClose }: { programs: readonly
             <Field label="프로그램ID"><SchemaField field={{ key: 'qid', label: '프로그램ID', control: 'text' }} value={qid} onChange={setQid} /></Field>
             <Field label="프로그램명"><SchemaField field={{ key: 'qname', label: '프로그램명', control: 'text' }} value={qname} onChange={setQname} /></Field>
           </div>
-          {/* 결과 표 — 라디오로 1건 선택(키보드 화살표 이동은 네이티브). 행 클릭도 선택 */}
-          <div className="rounded-[9px] border border-border overflow-auto" style={{ maxHeight: 320 }} role="group" aria-label="프로그램 검색 결과">
+          {/* 결과 표 — DS 라디오로 1건 선택(방향키 이동은 Radix RadioGroup). 행 클릭도 선택.
+              RadioGroup Root 가 표 컨테이너를 감싸 role=radiogroup 이 되고, 각 행의 Item 이 한 그룹으로 묶인다. */}
+          <RadioGroup value={pick || undefined} onValueChange={setPick} aria-label="프로그램 검색 결과" className="block rounded-[9px] border border-border overflow-auto" style={{ maxHeight: 320 }}>
             <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
               <colgroup><col style={{ width: 40 }} /><col style={{ width: 150 }} /><col /></colgroup>
               <thead><tr><th style={th}><span className="sr-only">선택</span></th><th style={th}>프로그램ID</th><th style={th}>프로그램명</th></tr></thead>
@@ -95,7 +97,7 @@ function ProgramSearchDialog({ programs, onPick, onClose }: { programs: readonly
                 {list.map((p) => (
                   <tr key={p.pid} onClick={() => setPick(p.pid)} className="cursor-pointer" style={pick === p.pid ? { background: 'var(--row-selected)' } : undefined}>
                     <td style={{ ...td, textAlign: 'center' }}>
-                      <input type="radio" name="pg-pick" value={p.pid} checked={pick === p.pid} onChange={() => setPick(p.pid)} aria-label={`${p.pid} ${p.pname}`} style={{ accentColor: 'var(--primary)', width: 16, height: 16, margin: 0 }} />
+                      <RadioGroupItem value={p.pid} aria-label={`${p.pid} ${p.pname}`} className="align-middle" />
                     </td>
                     <td style={{ ...td, fontVariantNumeric: 'tabular-nums' }}><MT>{p.pid}</MT></td>
                     <td style={{ ...td, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><MT>{p.pname}</MT></td>
@@ -103,7 +105,7 @@ function ProgramSearchDialog({ programs, onPick, onClose }: { programs: readonly
                 ))}
               </tbody>
             </table>
-          </div>
+          </RadioGroup>
           <p className="text-caption m-0 mt-2" style={{ fontSize: 12, lineHeight: 1.5 }}>프로그램ID가 있는 메뉴(실제 프로그램)만 단축번호를 설정할 수 있습니다. 행을 선택하고 [확인]을 누르세요.</p>
         </div>
         <DialogFooter className="px-[46px]">
