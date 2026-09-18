@@ -24,7 +24,7 @@ import { UTYPES } from './admin_menu_tree';
 import { PERM_KEYS, PERM_LABELS, matrixRows, setCells, triOf, countOn, cellOf, permNameTaken } from './user_permission_model';
 import type { PermKey, PermMap, Tri, MatrixRow } from './user_permission_model';
 
-const { Button } = UI;
+const { Button, SaveButton } = UI;
 
 export interface PermRow {
   id: string; no: number;
@@ -197,7 +197,7 @@ export function UserPermissionModal({ mode, initial, menuRows, existing, onSave,
     if (permNameTaken(existing, v.name, mode === 'edit' ? initial?.id : undefined)) { setErrKey('nameDup'); return; }   // 명칭 유일(Codex P1)
     if (!v.utype) { setErrKey('utype'); return; }
     if (!v.desc.trim()) { setErrKey('desc'); return; }
-    onSave({ name: v.name.trim(), utype: v.utype as UType, desc: v.desc.trim(), use: v.use === '여', perms });
+    return () => onSave({ name: v.name.trim(), utype: v.utype as UType, desc: v.desc.trim(), use: v.use === '여', perms });
   };
 
   const on = countOn(perms, allIds);
@@ -249,7 +249,7 @@ export function UserPermissionModal({ mode, initial, menuRows, existing, onSave,
           <div />
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
-            <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
+            <SaveButton onSubmit={submit} />
           </div>
         </DialogFooter>
       </DialogContent>

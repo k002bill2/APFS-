@@ -1,6 +1,7 @@
 /* 디자인 시스템 미리보기 — 컬러 토큰 · 타이포 · 공통 컴포넌트 (라이트/다크 공용) */
 import React from 'react';
 import { UI } from './components';
+import { toast } from './ui/sonner';
 import { Charts } from './charts';
 import { GalleryCharts } from './gallery_charts';
 import { APFS_DATA } from './data';
@@ -18,7 +19,7 @@ import { Checkbox } from './ui/checkbox';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 
-const { ColorChip, StatusBadge, StatCard, ChartCard, Button, IconBtn, FilterChip, SegTabs, DeltaBadge, Card, Progress } = UI;
+const { ColorChip, StatusBadge, StatCard, ChartCard, Button, SaveButton, IconBtn, FilterChip, SegTabs, DeltaBadge, Card, Progress } = UI;
 const { Sparkline, Donut, LineTrend, GroupedBars, ComposedBars, Gauge, HBars, Treemap } = Charts;
 const { ColumnTrack, ProgressRing, DualSeries, PieLabeled, UsageSegments } = GalleryCharts;
 const D = APFS_DATA;
@@ -272,8 +273,9 @@ function DesignSystem() {
               <Button variant="primary" loading>저장 중</Button>
               <Button variant="outline" disabled>비활성</Button>
               <Button variant="ghost" loading>불러오는 중</Button>
+              <SaveButton size="md" onSubmit={() => () => toast.success('저장되었습니다 (데모)')}>저장 (눌러보기)</SaveButton>
             </div>
-            <p className="t-caption m-0">loading은 포커스를 유지한 채 aria-busy로 알리고 클릭만 차단합니다. disabled만 실제 비활성.</p>
+            <p className="t-caption m-0">loading은 포커스를 유지한 채 aria-busy로 알리고 클릭만 차단합니다. disabled만 실제 비활성. 폼 모달의 저장 버튼은 <code>UI.SaveButton</code>이 이 상태를 자동 적용합니다(검증 통과 → 저장 중 → commit).</p>
           </Card>
         </div>
       </Section>

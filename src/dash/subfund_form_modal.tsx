@@ -17,7 +17,7 @@ import { RefreshCw, X as XIcon } from 'lucide-react';
 import { Attachment, AttachmentGroup, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentActions, AttachmentAction } from './ui/attachment';
 
 const { useState, useRef } = React;
-const { Button, IconBtn } = UI;
+const { Button, SaveButton, IconBtn } = UI;
 
 const OPT_MONTH = Array.from({ length: 12 }, (_, i) => `${i + 1}월`);
 const GP_KINDS = ['대표GP', '공동GP'];
@@ -101,7 +101,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
     // 민간 몫(c3/v3)은 총액−모태로 파생 — 총액·모태만 고치면 그리드/엑셀 합계가 어긋나므로 함께 갱신
     const c1 = numOr(v.c1, row.c1), c2 = numOr(v.c2, row.c2), v1 = numOr(v.v1, row.v1), v2 = numOr(v.v2, row.v2);
     const minus = (a: number | null, b: number | null) => (a == null ? null : a - (b ?? 0));
-    onSave({
+    return () => onSave({
       fn: v.fn || row.fn, gp1: gp1 || '-', gp2,
       fd: dateOr(v.fd, row.fd), rd: dateOr(v.rd, row.rd), mat: dateOr(v.mat, row.mat), liq: dateOr(v.liq, row.liq), st: v.st || row.st,
       c1, c2, c3: minus(c1, c2), v1, v2, v3: minus(v1, v2),
@@ -245,7 +245,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
           <div />
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>취소</Button>
-            <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
+            <SaveButton onSubmit={submit} />
           </div>
         </DialogFooter>
       </DialogContent>

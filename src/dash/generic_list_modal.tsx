@@ -12,7 +12,7 @@ import { ReviewMarker } from './review_marker';
 import type { ReviewNoteSpec } from './schemas/types';
 
 const { useState } = React;
-const { Button } = UI;
+const { Button, SaveButton } = UI;
 
 export type Row = {
   id: string;
@@ -118,7 +118,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
       return;
     }
     setDocErr('');
-    onSave(buildRow(vals, initial, schema));
+    return () => onSave(buildRow(vals, initial, schema));
   };
 
   const dlgRef = React.useRef<DialogHandle>(null);
@@ -181,7 +181,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>취소</Button>
-            <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
+            <SaveButton onSubmit={submit} />
           </div>
         </DialogFooter>
       </DialogContent>

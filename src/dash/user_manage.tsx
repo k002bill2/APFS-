@@ -59,15 +59,15 @@ const columnDefs: ColDef<UserRow>[] = [
     cellRenderer: (p: any) => <span className="inline-flex items-center gap-1.5 min-w-0"><span className="font-semibold"><MT>{p.value}</MT></span>{p.data?.seed && <StatusBadge tone="success" label="시드" size="sm" dot={false} />}</span> },
   { field: 'lid', headerName: '로그인 아이디', width: 134, maxWidth: 160, cellStyle: { ...flexCenter, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 170, cellStyle: muted, cellRenderer: (p: any) => <MT>{p.value || '-'}</MT> },
-  { field: 'type', headerName: '구분', width: 84, maxWidth: 84, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone="info" label={p.value} size="md" dot={false} /> },
+  { field: 'type', headerName: '구분', width: 84, maxWidth: 84, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone="info" label={p.value} size="lg" dot={false} /> },
   { headerName: '소속유형', width: 116, maxWidth: 116, cellStyle: flexMid, valueGetter: (p) => (p.data ? belong(p.data) : ''),
-    cellRenderer: (p: any) => <StatusBadge tone={p.data?.type === '농금원' ? 'primary' : 'warning'} label={p.value} size="md" dot={false} /> },
+    cellRenderer: (p: any) => <StatusBadge tone={p.data?.type === '농금원' ? 'primary' : 'warning'} label={p.value} size="lg" dot={false} /> },
   { headerName: '소속', width: 150, minWidth: 110, maxWidth: 220, cellStyle: flexCenter, valueGetter: (p) => (p.data ? belongName(p.data) : ''), cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'roles', headerName: '권한', width: 170, minWidth: 120, maxWidth: 260, cellStyle: flexCenter, valueFormatter: (p) => (p.value ?? []).join(', '),
-    cellRenderer: (p: any) => <span className="inline-flex items-center gap-1 flex-wrap">{(p.value ?? []).map((r: string) => <StatusBadge key={r} tone="info" label={r} size="md" dot={false} />)}</span> },
+    cellRenderer: (p: any) => <span className="inline-flex items-center gap-1 flex-wrap">{(p.value ?? []).map((r: string) => <StatusBadge key={r} tone="info" label={r} size="lg" dot={false} />)}</span> },
   { field: 'status', headerName: '상태', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={STATUS_TONE[p.value as UserStatus]} label={p.value} size="lg" dot={false} /> },
   { field: 'pwExpired', headerName: '비밀번호', width: 100, maxWidth: 100, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '만료' : '정상'),
-    cellRenderer: (p: any) => (p.value ? <StatusBadge tone="warning" label="만료" size="md" dot={false} /> : <span style={{ color: 'var(--muted-foreground)' }}>정상</span>) },
+    cellRenderer: (p: any) => (p.value ? <StatusBadge tone="warning" label="만료" size="lg" dot={false} /> : <span style={{ color: 'var(--muted-foreground)' }}>정상</span>) },
   { field: 'last', headerName: '최근 접속일시', width: 170, maxWidth: 170, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value && p.value !== '—' ? mn(p.value) : '—') },
 ];
 const ROW_SELECTION: RowSelectionOptions<UserRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
@@ -284,7 +284,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>사용자 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '명 중 ' + mn(String(visible.length)) + '명 · ' + mn(String(Math.min(shown, visible.length))) + '명 표시 중 · 모든 계정 = 담당자별 개별 계정'}</span>}
+      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '명 중 ' + mn(String(visible.length)) + '명 · ' + mn(String(Math.min(shown, visible.length))) + '명 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
