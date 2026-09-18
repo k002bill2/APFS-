@@ -359,7 +359,6 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
             <DrawerField label="검색기준"><DrawerSelect value={fField as string} onChange={(v) => setFField(v as keyof MenuRow)} options={SEARCH_FIELDS.map((f) => ({ value: f.key as string, label: f.label }))} all={null} /></DrawerField>
             <DrawerField label="레벨"><DrawerSelect value={fLvl} onChange={setFLvl} options={['1', '2', '3'].map((v) => ({ value: v, label: v }))} /></DrawerField>
             <DrawerField label="사용여부"><DrawerSelect value={fUse} onChange={setFUse} options={['여', '부'].map((v) => ({ value: v, label: v }))} /></DrawerField>
-            <p className="text-caption m-0" style={{ fontSize: 12, lineHeight: 1.5 }}>필터가 걸리면 계층 대신 검색 결과를 평면으로 표시합니다.</p>
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>

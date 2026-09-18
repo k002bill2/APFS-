@@ -8,7 +8,7 @@
    ⚠ 한계(gp_spec_modal과 동형): S1_30 원문 실데이터가 (주)선양 1건뿐이라 어느 행을 눌러도 같은
      기업이 표시된다. `row`를 받아 **헤더의 대상명만** 실제 행 값으로 바꾸고, 본문은 원문 값을
      보존한다 — 원문에 없는 값을 행에서 합성해 채우면 목업 충실도가 깨진다. */
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { UI } from './components';
 import { MT } from './mask';
 import type { Unit } from './schemas/unit';
@@ -22,7 +22,7 @@ const { Button } = UI;
 export function CompanyProfileModal({ row, onClose }: { row?: Record<string, unknown>; onClose: () => void }) {
   const [unit, setUnit] = useState<Unit>('원');
   const target = String(row?.investee ?? row?.company ?? row?.name ?? CO_NAME);
-  const dlgRef = React.useRef<DialogHandle>(null);
+  const dlgRef = useRef<DialogHandle>(null);
   return (
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[880px] max-h-[88vh]">

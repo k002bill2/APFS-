@@ -1,6 +1,7 @@
 /* 권한 변경이력 — 상세 다이얼로그(읽기 전용, audit-read-only). 출처: S0_107 `openDetail`.
    kv(일시·변경유형·권한) → 변경 블록(항목형: 추가/회수 목록 · 전이형: 변경 전 → 후 비교 카드) → 적용 대상(동일 권한 보유자) → 행위자·발생프로그램·IP·사유.
    편집 액션 없음(조회 전용). 라벨 배열은 한글 kv 가로 규약(apfs-form-modal). 동적 텍스트는 MT 마스킹. */
+import { useRef, type ReactNode } from 'react';
 import { UI } from './components';
 import { MT } from './mask';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
@@ -9,7 +10,7 @@ import type { HistEntry, HistItem, ItemAction } from './permission_history_model
 
 const { Button, StatusBadge } = UI;
 
-function Kv({ items }: { items: [label: string, value: React.ReactNode][] }) {
+function Kv({ items }: { items: [label: string, value: ReactNode][] }) {
   return (
     <dl className="grid m-0 border border-border rounded-[8px] overflow-hidden" style={{ gridTemplateColumns: '110px minmax(0,1fr)', fontSize: 13 }}>
       {items.map(([l, v]) => (
@@ -43,7 +44,7 @@ function ItemList({ items, action }: { items: HistItem[]; action: ItemAction }) 
 
 export function PermissionHistoryDetailModal({ entry, onClose }: { entry: HistEntry; onClose: () => void }) {
   const d = entry;
-  const dlgRef = React.useRef<DialogHandle>(null);
+  const dlgRef = useRef<DialogHandle>(null);
   return (
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[640px] max-h-[88vh]">
