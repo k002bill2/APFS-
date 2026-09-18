@@ -117,3 +117,27 @@ export function makeExitEndHandler<T extends HTMLElement>(
     if (e.target === e.currentTarget && e.animationName === EXIT_ANIMATION) onExitEnd?.();
   };
 }
+
+/** 개발 모드 전용 규약 검사 — `<Dialog open …>`(하드코딩) 인데 ref 가 없으면 경고.
+
+    이 앱은 모달 대부분이 open 을 리터럴 true 로 두고 부모가 언마운트해서 닫는다. 그 패턴에서
+    모달 자체의 취소/닫기 버튼이 onClose 를 직접 부르면 부모가 즉시 언마운트해 exit 애니메이션이
+    다시 사라진다 — ref={dlgRef} + dlgRef.current?.close() 로 닫아야 한다.
+    타입으로는 강제할 수 없어(ref 는 선택) 런타임 경고로 규약을 지킨다.
+
+    판별: "마운트 시점에 이미 open" 이 하드코딩 패턴의 지문이다. 제어형 소비처(open={state})는
+    보통 false 로 마운트됐다가 나중에 열리므로 걸리지 않는다. */
+export function useHardcodedOpenWarning(open: boolean | undefined, ref: React.Ref<DialogHandle> | null | undefined) {
+  React.useEffect(() => {
+    const dev = typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV;
+    if (!dev || open !== true || ref != null) return;
+    console.warn(
+      '[Dialog] open 이 하드코딩(true)인데 ref 가 없습니다. 이 모달의 취소/닫기 버튼이 onClose 를 ' +
+        '직접 호출하면 부모가 즉시 언마운트해 닫힘 애니메이션이 재생되지 않습니다.\n' +
+        '  고치는 법: const dlgRef = React.useRef<DialogHandle>(null);\n' +
+        '            <Dialog ref={dlgRef} open …>  ·  onClick={() => dlgRef.current?.close()}\n' +
+        '  (X·ESC·바깥클릭만으로 닫는 모달이면 무시해도 됩니다.)',
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+}
