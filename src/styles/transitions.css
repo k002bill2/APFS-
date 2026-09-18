@@ -1,0 +1,63 @@
+/* transitions.dev 레시피 모음 — "소유자 없는 모션" 전용.
+   원문: .claude/skills/transitions-dev/NN-*.md (APFS 적용 규약이 원문보다 우선).
+   튜너블은 :root 가 아니라 각 레시피의 루트 클래스에 스코프한다(규약 2절 — tokens.css 에 두 번째 토큰 스케일을 붓지 않는다). */
+
+/* ── 10 success check (10-success-check.md) ─────────────────────────────
+   소비처: auth_shared.tsx DonePanel(온보딩·로그인 완료 화면의 큰 체크). appear 전용 — hide 는 언마운트.
+   원문 대비 의도적 변경 2가지(규약 3절):
+   ① `forwards` 제거 — 열림 끝 프레임에 filter/transform 이 영구 고정되면 GPU 레이어가 남는다.
+      대신 [data-state="in"] 의 정지 스타일(opacity 1, filter/transform 없음)로 자연 착지한다.
+   ② stroke-draw 는 delay(80ms) 동안 from 프레임을 유지해야 하므로 `backwards` 만 준다(끝 상태=정지 스타일 0).
+   500ms 는 --dur-slow(280ms) 와 용도가 다른 강조 순간이라 리터럴 유지(규약 2절 — 용도가 맞을 때만 --dur-* 배선).
+   --check-path-len 은 DonePanel 이 mount 시 path.getTotalLength() 로 채운다(원문 "Dynamic" 방식). 폴백 21 = lucide check 실측 근사. */
+.t-success-check {
+  --check-opacity-dur: 500ms;
+  --check-rotate-dur: 500ms;
+  --check-rotate-from: 80deg;
+  --check-bob-dur: 500ms;
+  --check-y-amount: 40px;
+  --check-blur-dur: 500ms;
+  --check-blur-from: 10px;
+  --check-path-dur: 500ms;
+  --check-path-delay: 80ms;
+  --check-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --check-ease-opacity: cubic-bezier(0.22, 1, 0.36, 1);
+  --check-ease-rotate: cubic-bezier(0.22, 1, 0.36, 1);
+  --check-ease-bob: cubic-bezier(0.34, 1.35, 0.64, 1);
+  --check-ease-path: cubic-bezier(0.22, 1, 0.36, 1);
+
+  display: inline-block;
+  transform-origin: center;
+  opacity: 0;
+  will-change: transform, opacity, filter;
+}
+.t-success-check svg { display: block; overflow: visible; }
+.t-success-check svg path {
+  stroke-dasharray: var(--check-path-len, 21);
+  stroke-dashoffset: var(--check-path-len, 21);
+}
+
+.t-success-check[data-state="in"] {
+  opacity: 1;
+  animation:
+    t-check-fade   var(--check-opacity-dur) var(--check-ease-opacity),
+    t-check-rotate var(--check-rotate-dur)  var(--check-ease-rotate),
+    t-check-blur   var(--check-blur-dur)    var(--check-ease-out),
+    t-check-bob    var(--check-bob-dur)     var(--check-ease-bob);
+}
+.t-success-check[data-state="in"] svg path {
+  stroke-dashoffset: 0;
+  animation: t-check-draw var(--check-path-dur) var(--check-ease-path) var(--check-path-delay, 0ms) backwards;
+}
+
+@keyframes t-check-fade   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes t-check-rotate { from { transform: rotate(var(--check-rotate-from)); } to { transform: rotate(0deg); } }
+@keyframes t-check-blur   { from { filter: blur(var(--check-blur-from)); } to { filter: blur(0); } }
+@keyframes t-check-bob    { from { translate: 0 var(--check-y-amount); } to { translate: 0 0; } }
+@keyframes t-check-draw   { from { stroke-dashoffset: var(--check-path-len, 21); } to { stroke-dashoffset: 0; } }
+
+/* 저모션 가드 — 원문 그대로 유지(규약 3절: 전역 규칙은 animation-duration 만 0 으로 만들고 transition 은 못 막는다). */
+@media (prefers-reduced-motion: reduce) {
+  .t-success-check { animation: none !important; opacity: 1; }
+  .t-success-check svg path { animation: none !important; stroke-dashoffset: 0 !important; }
+}

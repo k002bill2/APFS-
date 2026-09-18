@@ -4,7 +4,7 @@
      --fill-normal → --muted · --surface-elevated → --card · #00BF40/#00A538 → --success-text · #D62B2B → --danger-text
    캔버스가 브랜드 파랑 위에 흰 글자를 얹는 자리(초대 헤더)는 적응형 --primary 가 아니라 고정 --brand-solid 를 쓴다
    — 다크에서 --primary 는 밝은 인디고라 흰 글자 대비가 깨진다. */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { Icon } from './icons';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './ui/tooltip';
 import logoUrl from './assets/logo.svg';
@@ -356,10 +356,22 @@ export function DonePanel({ title, desc, rows, actions, compact, titleAs: H = 'h
   titleAs?: 'h1' | 'h2';
 }) {
   const size = compact ? 56 : 64;
+  /* 성공 체크 등장 모션(transitions.dev 10 success-check, src/styles/transitions.css).
+     mount 시 실제 path 길이를 재서 --check-path-len 에 넣는다 — 아이콘 소스(lucide/자체)가 바뀌어도 stroke-draw 가 정확히 끝까지 그려진다.
+     첫 paint 전에 값이 있어야 하므로 useLayoutEffect. data-state 는 mount 부터 "in" — 삽입과 동시에 keyframe 이 돈다(cold-load "out" 은 재생 리플레이 용도라 여기선 불필요). */
+  const checkRef = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const el = checkRef.current; const path = el?.querySelector('svg path');
+    if (el && path instanceof SVGPathElement) el.style.setProperty('--check-path-len', String(Math.ceil(path.getTotalLength()) + 1));
+  }, []);
   return (
     <div className="flex flex-col items-center text-center flex-1 justify-center" style={{ minHeight: compact ? undefined : 440, padding: compact ? '8px 0' : undefined, animation: FADE_UP }}>
       <span aria-hidden="true" className="flex items-center justify-center" style={{ width: size, height: size, borderRadius: '50%', background: 'var(--success-soft)', marginBottom: compact ? 16 : 20 }}>
-        <Icon name="check" size={compact ? 26 : 30} stroke={2.6} style={{ color: 'var(--success-text)' }} />
+        {/* onAnimationEnd: 등장이 끝나면 will-change 를 풀어 아이콘 래퍼가 합성 레이어로 상주하지 않게 한다(규약 3절 취지). 4개 레인이 동시에 끝나 여러 번 불려도 무해. */}
+        <span ref={checkRef} className="t-success-check" data-state="in"
+          onAnimationEnd={(e) => { if (e.target === e.currentTarget) e.currentTarget.style.willChange = 'auto'; }}>
+          <Icon name="check" size={compact ? 26 : 30} stroke={2.6} style={{ color: 'var(--success-text)' }} />
+        </span>
       </span>
       <H style={compact ? T.title3 : T.title2}>{title}</H>
       <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: compact ? '6px 0 20px' : '8px 0 26px' }}>{desc}</p>
