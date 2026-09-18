@@ -9,8 +9,10 @@
    매트릭스 체크 규약(목업 `refreshChecks` 그대로, 모델은 user_permission_model.ts):
    - 셀 = 리프×기능 1개. 행 체크 = 그 리프 4기능 전체. 중/대메뉴 체크 = 하위 리프 전체×4기능.
      열 머리글 체크 = 전 리프의 그 기능. 좌상단 = 전체.
-   - 집계 체크박스는 전부/일부/없음 3상태 — 일부는 네이티브 `indeterminate`(SR 에 mixed 로 읽힘, 시각은 대시).
-     일부(indeterminate) 상태를 클릭하면 브라우저가 checked=true 로 바꾸므로 "전체 켜기"가 된다(목업 동일).
+   - 집계 체크박스는 전부/일부/없음 3상태 — 일부는 DS `Checkbox` 의 `checked='indeterminate'`(SR 에 mixed, 시각은 대시).
+     일부(indeterminate) 상태를 클릭하면 Radix 가 checked=true 로 올리므로 "전체 켜기"가 된다(목업 동일).
+   - 셀·집계 체크는 전부 DS `Checkbox`(ui/checkbox.tsx) — 폼 모달의 '여/부' 체크와 같은 룩(2026-09-18, #202 후속).
+     Radix Root 는 `<button>` 이라 `<label>` 로 **감싸지 않고** `htmlFor`/`id` 로 명시 연결한다(암묵 연결은 클릭 2회 발화).
    - 대/중메뉴 셀은 `rowSpan` 으로 묶는다(목업은 첫 행에만 라벨을 찍고 나머지는 빈 셀 — 표 구조상 rowSpan 이 정확).
    ⚠ 실제 인가가 아니다 — 백엔드/RBAC 없이 행 로컬 상태의 `perms` 만 바뀐다(브리프). */
 import React from 'react';
@@ -19,6 +21,7 @@ import { MT } from './mask';
 import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
+import { Checkbox } from './ui/checkbox';   // 매트릭스 셀·집계 체크 = DS 체크박스(3상태)
 import type { MenuRow, UType } from './admin_menu_tree';
 import { UTYPES } from './admin_menu_tree';
 import { PERM_KEYS, PERM_LABELS, matrixRows, setCells, triOf, countOn, cellOf, permNameTaken } from './user_permission_model';
@@ -61,19 +64,21 @@ function Field({ label, children, errMsg, className, plain }: { label: string; c
   );
 }
 
-/* 3상태 체크박스 — 네이티브 input + indeterminate(ref). accentColor 토큰(라이트/다크 양립). 접근名은 aria-label 로 명시. */
-function TriCheck({ tri, onChange, label }: { tri: Tri; onChange: (on: boolean) => void; label: string }) {
+/* 3상태 체크박스 — DS Checkbox(Radix) + indeterminate. 접근名은 aria-label 로 명시(가시 라벨이 있어도 "무엇의 전체"인지 남긴다).
+   `id` 를 주면 옆 텍스트를 `<label htmlFor>` 로 연결할 수 있다(래핑 금지 — 파일 머리 규약). */
+function TriCheck({ tri, onChange, label, id }: { tri: Tri; onChange: (on: boolean) => void; label: string; id?: string }) {
   return (
-    <input
-      type="checkbox"
-      checked={tri === 'all'}
-      ref={(el) => { if (el) el.indeterminate = tri === 'some'; }}
-      onChange={(e) => onChange(e.target.checked)}
+    <Checkbox
+      id={id}
+      checked={tri === 'all' ? true : tri === 'some' ? 'indeterminate' : false}
+      onCheckedChange={(c) => onChange(c === true)}
       aria-label={label}
-      style={{ accentColor: 'var(--primary)', width: 16, height: 16, margin: 0, cursor: 'pointer', verticalAlign: 'middle' }}
+      className="align-middle"
     />
   );
 }
+/* 집계 체크 옆 가시 라벨 — TriCheck 의 id 와 htmlFor 로 명시 연결(클릭 면적 확보). */
+const cellLabel: React.CSSProperties = { cursor: 'pointer', userSelect: 'none' };
 
 /* ── 매트릭스 — 대/중 그룹은 트리 순서로 1회 계산(rows 가 바뀌지 않는 한 고정) ── */
 type MidGroup = { midId: string; mid: string; leaves: MatrixRow[] };
@@ -98,6 +103,7 @@ const tdC: React.CSSProperties = { ...td, textAlign: 'center' };
 const tdGroup: React.CSSProperties = { ...td, verticalAlign: 'top', background: 'color-mix(in srgb, var(--muted) 45%, transparent)', borderRight: '1px solid var(--border)', whiteSpace: 'nowrap' };
 
 function PermMatrix({ rows, perms, onChange }: { rows: MatrixRow[]; perms: PermMap; onChange: (next: PermMap) => void }) {
+  const uid = React.useId();   // 집계 체크 id 접두(htmlFor 연결용) — 모달이 겹쳐도 충돌하지 않는다
   const groups = React.useMemo(() => groupMatrix(rows), [rows]);
   const allIds = React.useMemo(() => rows.map((r) => r.leafId), [rows]);
   const set = (ids: readonly string[], keys: readonly PermKey[], on: boolean) => onChange(setCells(perms, ids, keys, on));
@@ -116,11 +122,11 @@ function PermMatrix({ rows, perms, onChange }: { rows: MatrixRow[]; perms: PermM
           <th style={th}>대메뉴</th><th style={th}>중메뉴</th><th style={th}>소메뉴</th><th style={th}>프로그램ID</th>
           {PERM_KEYS.map((k) => (
             <th key={k} style={thC}>
-              {/* 열 머리글 체크 = 해당 기능 전체(목업 colchk) — 라벨과 체크를 한 label 로 묶어 클릭 면적 확보 */}
-              <label className="inline-flex items-center gap-1.5 cursor-pointer">
-                <TriCheck tri={triOf(perms, allIds, [k])} onChange={(on) => set(allIds, [k], on)} label={`${PERM_LABELS[k]} 전체`} />
-                <span>{PERM_LABELS[k]}</span>
-              </label>
+              {/* 열 머리글 체크 = 해당 기능 전체(목업 colchk) — 라벨은 htmlFor 명시 연결(클릭 면적 확보, 래핑 금지) */}
+              <span className="inline-flex items-center gap-1.5">
+                <TriCheck id={`${uid}-col-${k}`} tri={triOf(perms, allIds, [k])} onChange={(on) => set(allIds, [k], on)} label={`${PERM_LABELS[k]} 전체`} />
+                <label htmlFor={`${uid}-col-${k}`} style={cellLabel}>{PERM_LABELS[k]}</label>
+              </span>
             </th>
           ))}
         </tr>
@@ -134,19 +140,19 @@ function PermMatrix({ rows, perms, onChange }: { rows: MatrixRow[]; perms: PermM
               <td style={tdC}><TriCheck tri={triOf(perms, [leaf.leafId], PERM_KEYS)} onChange={(on) => set([leaf.leafId], PERM_KEYS, on)} label={`${leaf.name} 전체 기능`} /></td>
               {mi === 0 && li === 0 && (
                 <td rowSpan={d.leafIds.length} style={tdGroup}>
-                  <label className="inline-flex items-center gap-[7px] cursor-pointer">
-                    <TriCheck tri={triOf(perms, d.leafIds, PERM_KEYS)} onChange={(on) => set(d.leafIds, PERM_KEYS, on)} label={`대메뉴 ${d.dae} 전체`} />
-                    {groupLabel(d.dae)}
-                  </label>
+                  <span className="inline-flex items-center gap-[7px]">
+                    <TriCheck id={`${uid}-dae-${d.daeId}`} tri={triOf(perms, d.leafIds, PERM_KEYS)} onChange={(on) => set(d.leafIds, PERM_KEYS, on)} label={`대메뉴 ${d.dae} 전체`} />
+                    <label htmlFor={`${uid}-dae-${d.daeId}`} style={cellLabel}>{groupLabel(d.dae)}</label>
+                  </span>
                 </td>
               )}
               {li === 0 && (
                 <td rowSpan={m.leaves.length} style={tdGroup}>
                   {m.mid === '-' ? <span className="text-muted-foreground">-</span> : (
-                    <label className="inline-flex items-center gap-[7px] cursor-pointer">
-                      <TriCheck tri={triOf(perms, midIds, PERM_KEYS)} onChange={(on) => set(midIds, PERM_KEYS, on)} label={`중메뉴 ${m.mid} 전체`} />
-                      {groupLabel(m.mid)}
-                    </label>
+                    <span className="inline-flex items-center gap-[7px]">
+                      <TriCheck id={`${uid}-mid-${m.midId}`} tri={triOf(perms, midIds, PERM_KEYS)} onChange={(on) => set(midIds, PERM_KEYS, on)} label={`중메뉴 ${m.mid} 전체`} />
+                      <label htmlFor={`${uid}-mid-${m.midId}`} style={cellLabel}>{groupLabel(m.mid)}</label>
+                    </span>
                   )}
                 </td>
               )}

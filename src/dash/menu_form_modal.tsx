@@ -17,6 +17,7 @@ import { MT } from './mask';
 import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
+import { Checkbox } from './ui/checkbox';   // 복수 선택 체크 그룹 = DS 체크박스(htmlFor 명시 연결, 래핑 금지)
 import { toast } from './ui/sonner';
 import { UTYPES, hasChildren, pidTakenBy } from './admin_menu_tree';
 import type { MenuRow, MenuLevel, Program, UType } from './admin_menu_tree';
@@ -165,6 +166,7 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
     if (!s) { toast.error('단축번호를 입력해 주세요.'); return; }
     toast[shortDup(s) ? 'error' : 'success'](shortDup(s) ? '이미 사용 중인 단축번호입니다.' : '사용 가능한 단축번호입니다.');
   };
+  const uid = React.useId();   // 체크 그룹 id 접두(htmlFor 명시 연결용)
   const toggleUtype = (u: UType) => set('utypes', v.utypes.includes(u) ? v.utypes.filter((x) => x !== u) : [...v.utypes, u]);
 
   const submit = () => {
@@ -249,10 +251,10 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
             <Field label="사용자 구분" plain hint="이 메뉴를 노출할 사용자 유형입니다(복수 선택 가능). 미선택 시 전체 공통 메뉴로 취급합니다.">
               <div role="group" aria-label="사용자 구분" className="flex items-center gap-4 flex-wrap" style={{ minHeight: 34 }}>
                 {UTYPES.map((u) => (
-                  <label key={u} className="inline-flex items-center gap-1.5 cursor-pointer" style={{ fontSize: 14 }}>
-                    <input type="checkbox" checked={v.utypes.includes(u)} onChange={() => toggleUtype(u)} style={{ accentColor: 'var(--primary)', width: 16, height: 16, margin: 0 }} />
-                    {u}
-                  </label>
+                  <span key={u} className="inline-flex items-center gap-1.5" style={{ fontSize: 14 }}>
+                    <Checkbox id={`${uid}-utype-${u}`} checked={v.utypes.includes(u)} onCheckedChange={() => toggleUtype(u)} aria-label={`사용자 구분 ${u}`} />
+                    <label htmlFor={`${uid}-utype-${u}`} style={{ cursor: 'pointer', userSelect: 'none' }}>{u}</label>
+                  </span>
                 ))}
               </div>
             </Field>
