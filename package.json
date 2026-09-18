@@ -96,5 +96,8 @@
     "typescript": "^5",
     "vite": "^5",
     "vitest": "^2.1.9"
+  },
+  "publishConfig": {
+    "types": "dist/types/ds/index.d.ts"
   }
 }
