@@ -56,6 +56,20 @@ export const apfsTheme = themeQuartz.withParams({
   // 리사이즈 핸들 표시선(기본 30% 높이 회색 바)을 숨김 — headerColumnBorder(full-height)와 겹쳐
   // 짧은 중첩선으로 보이던 것 제거. 드래그 리사이즈 기능은 유지(핸들 영역은 그대로, 선만 투명).
   headerColumnResizeHandleColor: 'transparent',
+  // 행선택 체크박스 룩 = DS Checkbox(ui/checkbox.tsx)와 통일(2026-09-18 사용자 결정 "모두 통일"):
+  //   미체크 border-strong/card, 체크·일부 brand-blue 배경 + on-brand-solid 표식, 1.5px 테두리, 둥근 모서리.
+  //   크기는 iconSize(16) 가 정하므로 그대로 둔다(20px 로 올리면 정렬·메뉴 아이콘까지 커진다). DS 의 scale-pop 은 테마로 못 넣는다.
+  //   accentColor 는 포커스링·정렬표시용으로 남고, 체크박스 색은 아래 파라미터가 우선한다.
+  checkboxBorderRadius: 5,
+  checkboxBorderWidth: 1.5,
+  checkboxUncheckedBackgroundColor: 'var(--card)',
+  checkboxUncheckedBorderColor: 'var(--border-strong)',
+  checkboxCheckedBackgroundColor: 'var(--brand-blue)',
+  checkboxCheckedBorderColor: 'var(--brand-blue)',
+  checkboxCheckedShapeColor: 'var(--on-brand-solid)',
+  checkboxIndeterminateBackgroundColor: 'var(--brand-blue)',
+  checkboxIndeterminateBorderColor: 'var(--brand-blue)',
+  checkboxIndeterminateShapeColor: 'var(--on-brand-solid)',
 });
 
 /* 정수=천단위 콤마, 소수=1자리 — 프로젝트 공통 숫자 표기 */

@@ -5,6 +5,7 @@
    이 파일은 그 결과를 그리기만 한다. 화면에 보이는 데모 계정·OTP 코드는 시연용 스캐폴딩이다. */
 import React, { useEffect, useRef, useState, type FormEvent } from 'react';
 import { UI } from './components';
+import { Checkbox } from './ui/checkbox';   // 아이디 저장 = DS 체크박스(전 화면 통일, 2026-09-18). Radix <button> 이라 <label> 래핑 금지 → htmlFor
 import {
   AuthLayout, SplitCard, Field, FormError, PrimaryBtn, SecondaryBtn, DonePanel,
   OtpCode, Toast, Logo, InfoHint, useDemoOtp, useToast, T, FADE_UP,
@@ -168,10 +169,10 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
                   <Field required id="login-pw" label="비밀번호" type="password" icon="lock" placeholder="비밀번호" autoComplete="current-password"
                     value={pw} onChange={setPw} disabled={locked}
                     error={credErr?.field === 'pw' ? credErr.msg : null} />
-                  <label className="flex items-center gap-2 cursor-pointer" style={{ ...T.body3, minHeight: 24, marginTop: 2 }}>
-                    <input type="checkbox" defaultChecked style={{ width: 16, height: 16, accentColor: 'var(--primary)' }} />
-                    아이디 저장
-                  </label>
+                  <div className="flex items-center gap-2" style={{ ...T.body3, minHeight: 24, marginTop: 2 }}>
+                    <Checkbox id="login-remember" defaultChecked aria-label="아이디 저장" />
+                    <label htmlFor="login-remember" style={{ cursor: 'pointer', userSelect: 'none' }}>아이디 저장</label>
+                  </div>
                   <PrimaryBtn type="submit" full disabled={locked}>로그인</PrimaryBtn>
                 </form>
               </>
