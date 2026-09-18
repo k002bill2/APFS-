@@ -54,3 +54,8 @@ docs/skills-new-screen-architecture.html
 # Python bytecode (scripts/menu-doc 생성기)
 __pycache__/
 *.pyc
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
