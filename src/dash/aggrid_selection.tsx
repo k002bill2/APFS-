@@ -9,7 +9,8 @@
    - 셀: rowNode 의 'rowSelected' 이벤트를 구독해 체크 상태를 따라간다. 클릭 → node.setSelected(). singleRow 면 AG Grid 가
      다른 행을 알아서 푼다.
    - 헤더(multiRow 만): 전체/일부/없음 3상태(indeterminate). 클릭 → 전부 켜기/끄기(api.selectAll/deselectAll **'filtered'**). singleRow 는 빈 헤더.
-     소비처 rowSelection 은 `headerCheckbox:false` + `selectAll:'filtered'` 로 둔다 — 내장 SelectAllFeature(헤더 셀 Space) 와 의미를 맞춘다.
+     소비처 rowSelection 은 `headerCheckbox:false`(내장 SelectAllFeature 를 끔 → 전체선택 경로는 DS 헤더 하나) + `selectAll:'filtered'`
+     (남는 select-all 경로 기본값도 DS 헤더와 같은 범위로 못 박음). 대가: 헤더 **셀**에 포커스한 Space 는 무동작(버튼으로 Tab 하면 정상).
      ⚠ 푸터 `getSelectedRows().length` 는 필터 밖 선택까지 세므로 "N건 선택 + 헤더 미체크" 가 가능하다(의도).
    - 내장 체크박스(.ag-selection-checkbox > ag-checkbox)·헤더 select-all 은 CSS 로 숨긴다(aggrid_selection.css).
    - ⚠ 이중 토글 방지: AG Grid 의 행클릭 선택(onRowClick)은 클래스가 아니라 **이벤트 플래그**(`_stopPropagationForAgGrid`,
