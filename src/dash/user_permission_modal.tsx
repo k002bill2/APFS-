@@ -107,9 +107,7 @@ function PermMatrix({ rows, perms, onChange }: { rows: MatrixRow[]; perms: PermM
   const groups = React.useMemo(() => groupMatrix(rows), [rows]);
   const allIds = React.useMemo(() => rows.map((r) => r.leafId), [rows]);
   const set = (ids: readonly string[], keys: readonly PermKey[], on: boolean) => onChange(setCells(perms, ids, keys, on));
-  const groupLabel = (name: string) => (
-    <span className="inline-flex items-center gap-[7px]"><span className="font-semibold">{name}</span></span>
-  );
+  const groupLabel = (name: string) => <span className="font-semibold">{name}</span>;   // 부모 span 이 gap 을 갖는다 — 겹 래퍼 금지
   return (
     <table className="w-full border-collapse" style={{ minWidth: 760, tableLayout: 'fixed', fontVariantNumeric: 'tabular-nums' }}>
       <colgroup>

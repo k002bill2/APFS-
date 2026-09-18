@@ -3,7 +3,7 @@
      on/off 2지선다('여/부')는 Switch, 독립 복수 선택은 Checkbox — 근거 namethatui.com/web/switch-checkbox-radio.
    - 시각: 미선택 border-strong/bg-card 원, 선택 brand-blue 테두리 + brand-blue 점(체크박스와 같은 역할색).
      선택 점은 Indicator 마운트 시 scale-pop(spring.control) — 체크박스 표식과 같은 이펙트.
-     마운트 시점에 이미 선택돼 있던 점은 pop 을 건너뛴다(initial=false, 폼이 열릴 때 튀지 않게).
+     직접 조작한 Item 만 pop 한다(마운트 시 이미 선택된 점은 튀지 않는다).
    - 포커스: shadcn ring 미사용 → 전역 outline
    - 키보드: Radix 가 role=radiogroup/radio + 방향키 이동·Space 선택 제공.
    - Item 은 `<button role=radio>` 라 `<label>` 로 **감싸지 말 것**(암묵 연결이 클릭 2회 발화) — 가시 라벨은 `htmlFor`/`id` 명시 연결. */
@@ -25,8 +25,10 @@ const RadioGroupItem = React.forwardRef<
   React.ElementRef<typeof RadioGroupPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
 >(({ className, ...props }, ref) => {
-  const mounted = React.useRef(false);
-  React.useEffect(() => { mounted.current = true; }, []);
+  /* 선택 점 pop 은 이 Item 을 직접 조작했을 때만(마운트 시 이미 선택된 점·프로그램 재선택 등은 pop 없음).
+     Radix 는 방향키 선택도 Item.click() 으로 처리하므로 onClick 플래그 하나로 마우스·키보드 모두 덮인다. */
+  const self = React.useRef(false);
+  React.useEffect(() => { self.current = false; });
   return (
     <RadioGroupPrimitive.Item
       ref={ref}
@@ -37,12 +39,13 @@ const RadioGroupItem = React.forwardRef<
         className,
       )}
       {...props}
+      onClick={(e) => { self.current = true; props.onClick?.(e); }}
     >
       {/* 선택 점 — scale 은 transform 이라 app.tsx MotionConfig reducedMotion="user" 가 저모션에서 자동으로 끈다. */}
       <RadioGroupPrimitive.Indicator asChild>
         <motion.span
           className="block h-2.5 w-2.5 rounded-full bg-brand-blue"
-          initial={mounted.current ? { scale: 0 } : false}
+          initial={self.current ? { scale: 0 } : false}
           animate={{ scale: 1 }}
           transition={spring.control}
         />

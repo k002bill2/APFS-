@@ -88,7 +88,7 @@ function ProgramSearchDialog({ programs, onPick, onClose }: { programs: readonly
           </div>
           {/* 결과 표 — DS 라디오로 1건 선택(방향키 이동은 Radix RadioGroup). 행 클릭도 선택.
               RadioGroup Root 가 표 컨테이너를 감싸 role=radiogroup 이 되고, 각 행의 Item 이 한 그룹으로 묶인다. */}
-          <RadioGroup value={pick || undefined} onValueChange={setPick} aria-label="프로그램 검색 결과" className="block rounded-[9px] border border-border overflow-auto" style={{ maxHeight: 320 }}>
+          <RadioGroup value={pick} onValueChange={setPick} aria-label="프로그램 검색 결과" className="block rounded-[9px] border border-border overflow-auto" style={{ maxHeight: 320 }}>
             <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
               <colgroup><col style={{ width: 40 }} /><col style={{ width: 150 }} /><col /></colgroup>
               <thead><tr><th style={th}><span className="sr-only">선택</span></th><th style={th}>프로그램ID</th><th style={th}>프로그램명</th></tr></thead>
@@ -252,10 +252,10 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
             {/* 사용자 구분 — 복수 선택 체크박스 그룹(목업 chkgrp). 미선택 = 전체 공통 메뉴 */}
             <Field label="사용자 구분" plain hint="이 메뉴를 노출할 사용자 유형입니다(복수 선택 가능). 미선택 시 전체 공통 메뉴로 취급합니다.">
               <div role="group" aria-label="사용자 구분" className="flex items-center gap-4 flex-wrap" style={{ minHeight: 34 }}>
-                {UTYPES.map((u) => (
+                {UTYPES.map((u, i) => (
                   <span key={u} className="inline-flex items-center gap-1.5" style={{ fontSize: 14 }}>
-                    <Checkbox id={`${uid}-utype-${u}`} checked={v.utypes.includes(u)} onCheckedChange={() => toggleUtype(u)} aria-label={`사용자 구분 ${u}`} />
-                    <label htmlFor={`${uid}-utype-${u}`} style={{ cursor: 'pointer', userSelect: 'none' }}>{u}</label>
+                    <Checkbox id={`${uid}-utype-${i}`} checked={v.utypes.includes(u)} onCheckedChange={() => toggleUtype(u)} aria-label={`사용자 구분 ${u}`} />
+                    <label htmlFor={`${uid}-utype-${i}`} style={{ cursor: 'pointer', userSelect: 'none' }}>{u}</label>
                   </span>
                 ))}
               </div>

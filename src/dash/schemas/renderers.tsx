@@ -249,11 +249,11 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
     //   Item 은 <button role=radio> 라 <label> 로 감싸지 않고 htmlFor/id 명시 연결(래핑은 클릭 2회 발화).
     //   값 계약은 옵션 문자열 그대로(onValueChange 가 option 을 그대로 준다).
     case 'radio': return (
-      <RadioGroup value={value || undefined} onValueChange={onChange} aria-label={field.label} aria-required={requiredMark || undefined} aria-invalid={invalid || undefined} style={{ minHeight: 34 }}>
-        {(field.options || ['Y', 'N']).map((o) => (
+      <RadioGroup value={value} onValueChange={onChange} aria-label={field.label} aria-required={requiredMark || undefined} aria-invalid={invalid || undefined} style={{ minHeight: 34 }}>
+        {(field.options || ['Y', 'N']).map((o, i) => (
           <span key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <RadioGroupItem id={`${uid}-r-${o}`} value={o} aria-label={`${field.label} ${o}`} />
-            <label htmlFor={`${uid}-r-${o}`} style={{ fontSize: 13.5, color: 'var(--foreground)', cursor: 'pointer', userSelect: 'none' }}>{o}</label>
+            <RadioGroupItem id={`${uid}-r-${i}`} value={o} aria-label={`${field.label} ${o}`} />
+            <label htmlFor={`${uid}-r-${i}`} style={{ fontSize: 13.5, color: 'var(--foreground)', cursor: 'pointer', userSelect: 'none' }}>{o}</label>
           </span>
         ))}
       </RadioGroup>

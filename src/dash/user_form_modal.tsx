@@ -146,10 +146,10 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
             {/* 권한(복수) — 체크박스 그룹 + 유효 메뉴 힌트(aria-live) */}
             <Field label="권한 (복수) *" plain className="sm:col-span-2" errMsg={errKey === 'roles' ? '권한을 1개 이상 선택하세요.' : undefined}>
               <div role="group" aria-label="권한" className="flex items-center gap-4 flex-wrap" style={{ minHeight: 34 }}>
-                {ROLE_NAMES.map((r) => (
+                {ROLE_NAMES.map((r, i) => (
                   <span key={r} className="inline-flex items-center gap-1.5" style={{ fontSize: 14 }}>
-                    <Checkbox id={`${uid}-role-${r}`} checked={v.roles.includes(r)} onCheckedChange={() => toggleRole(r)} aria-label={`권한 ${r}`} />
-                    <label htmlFor={`${uid}-role-${r}`} style={{ cursor: 'pointer', userSelect: 'none' }}>{r}</label>
+                    <Checkbox id={`${uid}-role-${i}`} checked={v.roles.includes(r)} onCheckedChange={() => toggleRole(r)} aria-label={`권한 ${r}`} />
+                    <label htmlFor={`${uid}-role-${i}`} style={{ cursor: 'pointer', userSelect: 'none' }}>{r}</label>
                   </span>
                 ))}
               </div>

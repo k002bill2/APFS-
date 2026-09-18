@@ -16,10 +16,11 @@ const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
 >(({ className, checked, ...props }, ref) => {
-  /* 마운트 시점에 이미 켜져 있던 표식은 scale-pop 을 건너뛴다(initial=false).
-     권한 매트릭스처럼 체크 수백 개가 한 번에 열리면 전부 동시에 튀어 글리치로 읽힌다 — 사용자 토글로 켜질 때만 pop. */
-  const mounted = React.useRef(false);
-  React.useEffect(() => { mounted.current = true; }, []);
+  /* 표식 pop 은 **이 컨트롤을 직접 조작했을 때만**. 마운트 시 이미 켜진 표식, 집계 토글("전체 선택"·열 머리글)로
+     한꺼번에 켜지는 리프 수백 개는 pop 하지 않는다(동시에 튀면 글리치). Radix onClick 이 onCheckedChange 보다 먼저
+     발화하므로 여기서 플래그를 세우고, 다음 커밋(checked 변화) 후 effect 에서 내린다. 키보드 Space 도 click 으로 온다. */
+  const self = React.useRef(false);
+  React.useEffect(() => { self.current = false; }, [checked]);
   return (
     <CheckboxPrimitive.Root
       ref={ref}
@@ -32,6 +33,7 @@ const Checkbox = React.forwardRef<
         className,
       )}
       {...props}
+      onClick={(e) => { self.current = true; props.onClick?.(e); }}
     >
       {/* 체크/일부 시 Indicator 마운트 → scale-pop enter(spring.control). 해제 시 Radix 즉시 언마운트(현행 동일, exit 애니 없음 = §4 회귀 회피).
           checked↔indeterminate 전환은 Indicator 가 유지된 채 아이콘만 바뀐다(리마운트 없음).
@@ -39,7 +41,7 @@ const Checkbox = React.forwardRef<
       <CheckboxPrimitive.Indicator asChild>
         <motion.span
           className="flex items-center justify-center text-current"
-          initial={mounted.current ? { scale: 0 } : false}
+          initial={self.current ? { scale: 0 } : false}
           animate={{ scale: 1 }}
           transition={spring.control}>
           {checked === 'indeterminate'
