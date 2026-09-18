@@ -32,6 +32,7 @@ import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생�
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode, CellContextMenuEvent, CellKeyDownEvent, SuppressKeyboardEventParams } from 'ag-grid-community';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 행선택)·내용폭 자동화 SSOT
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import './aggrid_shared.css';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
@@ -766,6 +767,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               rowHeight={44}
               defaultColDef={DEFAULT_COL_DEF}
               rowSelection={schema.hideRowSelection ? undefined : ROW_SELECTION}
+              selectionColumnDef={SELECTION_COL}   // 선택 컬럼 = DS Checkbox(셀+3상태 헤더)
               pagination
               paginationPageSize={pageSize}
               paginationPageSizeSelector={false}

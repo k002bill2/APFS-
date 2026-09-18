@@ -20,7 +20,7 @@ const Checkbox = React.forwardRef<
      한꺼번에 켜지는 리프 수백 개는 pop 하지 않는다(동시에 튀면 글리치). Radix onClick 이 onCheckedChange 보다 먼저
      발화하므로 여기서 플래그를 세우고, 다음 커밋(checked 변화) 후 effect 에서 내린다. 키보드 Space 도 click 으로 온다. */
   const self = React.useRef(false);
-  React.useEffect(() => { self.current = false; }, [checked]);
+  React.useEffect(() => { self.current = false; });   // deps 없음 — 비제어(defaultChecked) 소비처에선 checked 가 늘 undefined 라 [checked] 로는 리셋이 안 된다
   return (
     <CheckboxPrimitive.Root
       ref={ref}

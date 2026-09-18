@@ -20,6 +20,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -71,7 +72,6 @@ const columnDefs: ColDef<UserRow>[] = [
   { field: 'last', headerName: '최근 접속일시', width: 170, maxWidth: 170, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value && p.value !== '—' ? mn(p.value) : '—') },
 ];
 const ROW_SELECTION: RowSelectionOptions<UserRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 const STATUS_CHIPS = ['', ...USER_STATUSES] as const;
 
 type XCol = { header: string; get: (r: UserRow) => string };

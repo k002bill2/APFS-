@@ -2,7 +2,9 @@
    4단계(아이디·비밀번호 → 2차 인증(OTP) → (만료 시) 비밀번호 변경 → 완료)를 좌측 단계 레일과 함께 보여준다.
 
    ⚠ 실제 인증·TOTP 검증·계정 잠금은 수행하지 않는다. 모든 판정은 `auth_model`의 순수 함수가 하고
-   이 파일은 그 결과를 그리기만 한다. 화면에 보이는 데모 계정·OTP 코드는 시연용 스캐폴딩이다. */
+   이 파일은 그 결과를 그리기만 한다. 화면에 보이는 데모 계정·OTP 코드는 시연용 스캐폴딩이다.
+   ⚠ 정본과의 차이(2026-09-18): "아이디 저장" 체크는 DS `Checkbox`(ui/checkbox.tsx)로 코드에서 **먼저** 바꿨다(전 화면 통일).
+     캔버스는 아직 네이티브 체크박스다 — 캔버스에서 재이식할 때 이 체크만은 DS 컴포넌트를 유지하고, 캔버스도 함께 갱신할 것. */
 import React, { useEffect, useRef, useState, type FormEvent } from 'react';
 import { UI } from './components';
 import { Checkbox } from './ui/checkbox';   // 아이디 저장 = DS 체크박스(전 화면 통일, 2026-09-18). Radix <button> 이라 <label> 래핑 금지 → htmlFor

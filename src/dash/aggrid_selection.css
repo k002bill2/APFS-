@@ -1,0 +1,11 @@
+/* ── AG Grid 선택 컬럼 = DS Checkbox 보정(aggrid_selection.tsx 전용) ──
+   내장 체크박스(.ag-selection-checkbox 안의 ag-checkbox 위젯)는 숨기고 우리 래퍼(.apfs-ds-select)만 보인다. */
+/* 내장 위젯 숨김: 셀의 ag-checkbox, 헤더의 select-all(headerComponent 를 줘도 SelectAllFeature 가 따로 붙인다) */
+.apfs-ds-select-cell .ag-selection-checkbox,
+.apfs-ds-select-cell .ag-header-select-all { display: none !important; }
+/* 컬럼 폭 44 에서 20px 박스가 좌우 패딩(16px×2)에 잘려 클릭이 셀로 떨어진다 → 패딩 제거 + 중앙 정렬 */
+.apfs-ds-select-cell.ag-cell,
+.apfs-ds-select-cell.ag-header-cell { padding-left: 0 !important; padding-right: 0 !important; }
+.apfs-ds-select-cell .ag-cell-wrapper,
+.apfs-ds-select-cell .ag-header-cell-comp-wrapper { width: 100%; justify-content: center; }
+.apfs-ds-select { display: inline-flex; align-items: center; justify-content: center; margin: 0 !important; }

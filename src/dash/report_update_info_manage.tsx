@@ -35,6 +35,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle, RowSelectionOptions, SelectionColumnDef } from 'ag-grid-community';
@@ -195,7 +196,6 @@ const ROW_SELECTION: RowSelectionOptions<ReportUpdateRow> = {
   mode: 'singleRow', checkboxes: true, enableClickSelection: true,
   isRowSelectable: (n) => !n.rowPinned,
 };
-const SELECTION_COL: SelectionColumnDef = { pinned: 'left', width: 44 };
 
 /* 엑셀 텍스트 컬럼(승인금액 제외) — 화면 컬럼과 1:1(화면=엑셀 불변식). 순서가 목업 헤더와 같다 */
 const EXCEL_TEXT: { header: string; get: (r: ReportUpdateRow) => string }[] = [

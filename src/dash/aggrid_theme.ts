@@ -4,8 +4,10 @@
    핵심:
    - 시맨틱 파라미터만 토큰 바인딩 → 라이트/다크 자동 추종(파생 크롬은 derive).
    - 행선택 배경은 accentColor가 아니라 **selectedRowBackgroundColor**로 격리한다.
-     accentColor를 바꾸면 체크박스·포커스링·정렬표시까지 물들기 때문. 회색은
+     accentColor를 바꾸면 포커스링·정렬표시까지 물들기 때문. 회색은
      tokens.css의 --row-selected(브랜드색 비종속 중립 회색) 한 곳에서 제어.
+   - 행선택 **체크박스는 테마가 그리지 않는다** — `aggrid_selection.tsx` 의 `SELECTION_COL`(DS Checkbox 셀/헤더 렌더러)이
+     그린다(2026-09-18). 내장 ag-checkbox 는 CSS 로 숨기므로 checkbox* 테마 파라미터는 두지 않는다.
    - v33+ 필수: AllCommunityModule을 import 시 1회 등록(미등록 시 런타임 blank grid).
      이 모듈을 import하는 모든 그리드가 등록을 공유한다.
    - ⚠️ 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지 — Theming API와 충돌. */
@@ -40,7 +42,7 @@ export const DEFAULT_COL_DEF = { sortable: true, resizable: true, suppressHeader
 export const apfsTheme = themeQuartz.withParams({
   backgroundColor: 'var(--card)',
   foregroundColor: 'var(--foreground)',
-  accentColor: 'var(--primary)',                 // 체크박스/포커스링/정렬표시 — 브랜드색 유지
+  accentColor: 'var(--primary)',                 // 포커스링/정렬표시 — 브랜드색 유지(체크박스는 aggrid_selection.tsx 가 그린다)
   borderColor: 'var(--border)',
   selectedRowBackgroundColor: 'var(--row-selected)',  // 행선택 = 회색(토큰). accentColor와 분리
   fontFamily: 'inherit',
@@ -56,20 +58,6 @@ export const apfsTheme = themeQuartz.withParams({
   // 리사이즈 핸들 표시선(기본 30% 높이 회색 바)을 숨김 — headerColumnBorder(full-height)와 겹쳐
   // 짧은 중첩선으로 보이던 것 제거. 드래그 리사이즈 기능은 유지(핸들 영역은 그대로, 선만 투명).
   headerColumnResizeHandleColor: 'transparent',
-  // 행선택 체크박스 룩 = DS Checkbox(ui/checkbox.tsx)와 통일(2026-09-18 사용자 결정 "모두 통일"):
-  //   미체크 border-strong/card, 체크·일부 brand-blue 배경 + on-brand-solid 표식, 1.5px 테두리, 둥근 모서리.
-  //   크기는 iconSize(16) 가 정하므로 그대로 둔다(20px 로 올리면 정렬·메뉴 아이콘까지 커진다). DS 의 scale-pop 은 테마로 못 넣는다.
-  //   accentColor 는 포커스링·정렬표시용으로 남고, 체크박스 색은 아래 파라미터가 우선한다.
-  checkboxBorderRadius: 5,
-  checkboxBorderWidth: 1.5,
-  checkboxUncheckedBackgroundColor: 'var(--card)',
-  checkboxUncheckedBorderColor: 'var(--border-strong)',
-  checkboxCheckedBackgroundColor: 'var(--brand-blue)',
-  checkboxCheckedBorderColor: 'var(--brand-blue)',
-  checkboxCheckedShapeColor: 'var(--on-brand-solid)',
-  checkboxIndeterminateBackgroundColor: 'var(--brand-blue)',
-  checkboxIndeterminateBorderColor: 'var(--brand-blue)',
-  checkboxIndeterminateShapeColor: 'var(--on-brand-solid)',
 });
 
 /* 정수=천단위 콤마, 소수=1자리 — 프로젝트 공통 숫자 표기 */

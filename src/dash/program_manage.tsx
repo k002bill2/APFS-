@@ -23,6 +23,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -80,7 +81,6 @@ const columnDefs: ColDef<ProgramRow>[] = [
   { field: 'helpBy', headerName: '도움말 수정자', width: 120, maxWidth: 130, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : dash) },
 ];
 const ROW_SELECTION: RowSelectionOptions<ProgramRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 
 type XCol = { header: string; get: (r: ProgramRow) => string };
 const EXPORT_COLS: XCol[] = [

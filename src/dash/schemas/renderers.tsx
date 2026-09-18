@@ -233,14 +233,15 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
     // ⚠️ 값 계약은 문자열 그대로 유지: checked = value === options[0], 토글 시 options[0] | options[1] 을 emit 한다.
     //    `use: v.use === '여'` 처럼 옵션 문자열을 읽는 소비처·필터가 다수라 'true'/'false' 로 바꾸면 무음으로 깨진다.
     // 상태 텍스트를 옆에 함께 렌더 — 토글만 있으면 '여/부' 중 무엇이 켜진 상태인지 시각적으로 모호하다.
-    // 접근名은 "필드명 + 현재값"(예: "사용여부 여") — 가시 텍스트가 접근名에 포함돼야 한다(WCAG 2.5.3).
+    // 접근名은 **필드명 고정**(예: "사용여부") — 이름은 식별, 상태는 aria-checked 가 담당(APG). 이름을 상태와 함께 바꾸면
+    //   SR 이 토글마다 이름을 재낭독하고 "사용여부 여, 스위치, 켜짐"처럼 중복된다(독립 리뷰 지적). 옆 상태 텍스트는 htmlFor 클릭 면적용.
     case 'switch': {
       const [onOpt, offOpt] = field.options && field.options.length >= 2 ? field.options : ['여', '부'];
       const checked = value === onOpt;
       const stateText = checked ? onOpt : offOpt;
       return (
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, minHeight: 34 }}>
-          <Switch id={`${uid}-sw`} checked={checked} onCheckedChange={(c) => onChange(c ? onOpt : offOpt)} aria-label={`${field.label} ${stateText}`} aria-required={requiredMark || undefined} aria-invalid={invalid || undefined} />
+          <Switch id={`${uid}-sw`} checked={checked} onCheckedChange={(c) => onChange(c ? onOpt : offOpt)} aria-label={field.label} aria-required={requiredMark || undefined} aria-invalid={invalid || undefined} />
           <label htmlFor={`${uid}-sw`} style={{ fontSize: 13.5, color: 'var(--foreground)', cursor: 'pointer', userSelect: 'none' }}>{stateText}</label>
         </div>
       );

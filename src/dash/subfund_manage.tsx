@@ -22,6 +22,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝) — 형제 드로어(asset_funding·generic_list)와 동일
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
@@ -415,7 +416,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           autoSizeStrategy={AUTO_SIZE_CONTENT}   // 컬럼 폭=내용 폭(잘림 방지). 긴 텍스트 컬럼은 maxWidth 캡
           defaultColDef={DEFAULT_COL_DEF}
           rowSelection={{ mode: 'singleRow', checkboxes: true, enableClickSelection: true }}
-          selectionColumnDef={{ pinned: 'left', width: 44, maxWidth: 44 }}   // 라디오 선택 열을 맨 앞 고정(목업 1열 '선택(라디오)')
+          selectionColumnDef={SELECTION_COL}   // 라디오 선택 열을 맨 앞 고정(목업 1열 '선택(라디오)')
           pagination paginationPageSize={pageSize} suppressPaginationPanel
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}

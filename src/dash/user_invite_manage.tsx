@@ -19,6 +19,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -62,7 +63,6 @@ const columnDefs: ColDef<InviteView>[] = [
     valueFormatter: (p) => (p.data?.state === '초대발송' && p.value ? mn(p.value) : '-') },
 ];
 const ROW_SELECTION: RowSelectionOptions<InviteView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 const STATE_CHIPS = ['', ...INVITE_STATES] as const;
 
 type XCol = { header: string; get: (r: InviteView) => string };
