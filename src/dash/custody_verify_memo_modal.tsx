@@ -25,7 +25,7 @@ import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogD
 import { toast } from './ui/sonner';
 import type { VerifyMemo } from './custody_verify_manage';
 
-const { Button } = UI;
+const { Button, SaveButton } = UI;
 
 /** 팝업 헤더의 검증 대상 — 목업 `.memo-btn`의 data-fund/data-gubun/data-corp 3값 그대로. */
 export interface CustodyMemoCtx {
@@ -106,8 +106,7 @@ export function CustodyMemoModal({ ctx, history, baseDate, onSave, onClose }: {
     if (!date.trim()) { setErrKey('date'); return; }
     if (!content.trim()) { setErrKey('content'); return; }
     setErrKey('');
-    onSave({ date, content: content.trim() });
-    toast.success('저장되었습니다 (목업)');
+    return () => { onSave({ date, content: content.trim() }); toast.success('저장되었습니다 (목업)'); };
   };
 
   const kv: KvItem[] = [
@@ -171,7 +170,7 @@ export function CustodyMemoModal({ ctx, history, baseDate, onSave, onClose }: {
           <div />
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
-            <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
+            <SaveButton onSubmit={submit} />
           </div>
         </DialogFooter>
       </DialogContent>

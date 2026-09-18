@@ -14,7 +14,7 @@ import { DocumentsField } from './fields/DocumentsField';
 import { normalizeHelpDoc, helpDocError } from './program_manage_model';
 import type { HelpDoc, ProgramRow } from './program_manage_model';
 
-const { Button, IconBtn } = UI;
+const { Button, SaveButton, IconBtn } = UI;
 
 const F: Record<string, FieldSpec> = {
   on: { key: 'on', label: '도움말 제공', control: 'switch', options: ['여', '부'] },
@@ -64,7 +64,7 @@ export function ProgramHelpModal({ program, onSave, onClose }: {
     const doc = normalizeHelpDoc(d);
     const e = helpDocError(on === '여', doc);
     if (e) { setErr(e); return; }
-    onSave(on === '여', doc);
+    return () => onSave(on === '여', doc);
   };
   const delBtn = (onClick: () => void, label: string) => <IconBtn icon="trash" label={label} size={34} onClick={onClick} />;
 
@@ -154,7 +154,7 @@ export function ProgramHelpModal({ program, onSave, onClose }: {
           <div />
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
-            <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
+            <SaveButton onSubmit={submit} />
           </div>
         </DialogFooter>
       </DialogContent>

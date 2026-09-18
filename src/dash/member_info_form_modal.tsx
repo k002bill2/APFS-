@@ -22,7 +22,7 @@ import type { ReviewNote } from './review_marker';
 import { toast } from './ui/sonner';
 import type { MemberRow } from './member_info_manage';
 
-const { Button } = UI;
+const { Button, SaveButton } = UI;
 
 /* 모펀드 옵션 — 목업 검색박스·등록폼의 select 2종 그대로.
    ⚠ 페이지(member_info_manage)가 이 상수를 import 한다 — 반대 방향(모달이 페이지 값을 import)이면
@@ -128,11 +128,13 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
     if (!v.name.trim()) { setErrKey('name'); return; }
     // 수정 모드의 번호는 readonly(식별자 잠금)라 검사 대상이 아니다 — 빈 값이면 영구히 저장 불가가 된다.
     if (mode === 'create' && !v.biz.trim()) { setErrKey('biz'); return; }
-    onSave({
-      mf: v.mf, name: v.name.trim(), ptype: v.ptype, region: v.region,
-      biz: v.biz.trim(), addr: v.addr.trim(), tel: v.tel.trim(), memo: v.memo.trim(),
-    });
-    toast.success(mode === 'create' ? '등록되었습니다 (목업)' : '수정되었습니다 (목업)');
+    return () => {
+      onSave({
+        mf: v.mf, name: v.name.trim(), ptype: v.ptype, region: v.region,
+        biz: v.biz.trim(), addr: v.addr.trim(), tel: v.tel.trim(), memo: v.memo.trim(),
+      });
+      toast.success(mode === 'create' ? '등록되었습니다 (목업)' : '수정되었습니다 (목업)');
+    };
   };
 
   const title = mode === 'create' ? '조합원정보 등록' : '조합원정보 수정';
@@ -220,7 +222,7 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
-            <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
+            <SaveButton onSubmit={submit} />
           </div>
         </DialogFooter>
       </DialogContent>

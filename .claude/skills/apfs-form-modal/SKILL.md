@@ -33,6 +33,15 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
    ```
    (form의 `<legend>`는 `w-full`을 앞에 붙여 밑줄이 폭 전체를 덮게 한다.)
 4. **타이포 위계**: 모달 제목 `text-xl`(20) > 본문 섹션 제목 `text-lg`(18)·`font-bold` > 본문/입력 **13.5**(2026-09-15 하향, 종전 14) > 라벨·부제 12~13. ⚠ `preflight:false`+body base 폰트 없음이라 **bare heading은 UA 기본(h3≈18.7px)으로 튄다** → 인라인 `style={{fontSize}}` magic number 금지, Tailwind `text-*` 유틸로만 고정.
+6. **푸터 저장 버튼 = `UI.SaveButton` (2026-09-18).** 디자인시스템 "Button 상태"의 loading(저장 중·스피너·`aria-busy`)을 모달마다 배선하지 않고 **자동 적용**한다. `<Button leadingIcon="check" onClick={submit}>저장</Button>`을 직접 쓰지 말 것. 계약: **`submit`은 검증 실패 시 `return;`(undefined → 스피너 없이 즉시 오류), 성공 시 commit 함수를 반환**한다. commit 안에 `onSave(...)`와 뒤따르는 `toast`를 모두 넣는다.
+   ```tsx
+   const submit = () => {
+     if (!v.name.trim()) { setErrKey('name'); return; }        // 검증 실패 → undefined
+     return () => { onSave({ ... }); toast.success('저장되었습니다 (목업)'); };   // 성공 → commit 함수
+   };
+   <DialogFooter className="px-[46px]">…<SaveButton onSubmit={submit} /></DialogFooter>
+   ```
+   동작: 클릭 → 검증 → "저장 중"(`SAVE_DEMO_MS`=400ms, `components.tsx` 상수 하나로 조절) → commit. 백엔드가 없어 저장이 동기라 지연은 데모용 흉내다. loading 중 `disabled`를 주지 않는다(포커스 유지 — `UI.Button` 규약). **저장 중에는 다이얼로그 닫기가 잠긴다**(`useDialogLock` — 취소·X·Esc 무시, 본문 `aria-busy`+pointer 차단). 사용자가 누른 저장은 유실되지 않는다. ⚠ 처음 시도한 "닫기 시작 시 commit 폐기"는 exit 애니메이션(≈280ms)과 400ms 지연이 경합해 취소해도 저장되는 실측 결함 + 무음 유실 UX라 폐기했다. ⚠ **submit이 성공 경로에서 closure 반환을 잊으면 무음 no-op**(타입으로 못 잡음) → 검증 항목: 저장 클릭 시 스피너가 떠야 한다. 적용처: 폼 모달 10종(`generic_list_modal`·`user_form_modal`·`user_permission_modal`·`member_info_form_modal`·`custody_verify_memo_modal`·`menu_form_modal`·`program_help_modal`·`subfund_form_modal`·`apfs_contribution_tx_modal`의 Dist/Invest) + 디자인시스템 3-2-1 라이브 데모. 전수 조사는 `grep -rn ">저장</Button>" src/dash`(leadingIcon 유무 무관).
 
 ## 핵심 계약 (CRITICAL)
 1. **새 컨트롤은 `FIELD_CONTROLS`(types.ts)에 먼저 추가.** 컨트롤 종류는 `FIELD_CONTROLS` 배열이 **타입+zod enum을 동시 공급(SSOT)**. 배열에 없는 control을 스키마에 쓰면 `PageSchemaZ.parse`가 실패해 **스키마 테스트·빌드가 깨진다**. 추가 순서: ① `FIELD_CONTROLS`에 문자열 추가 → ② `SchemaField`(renderers.tsx)에 `case` 추가 → ③ 스키마에서 사용.

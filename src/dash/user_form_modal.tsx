@@ -17,7 +17,7 @@ import type { RoleName } from './admin_demo_data';
 import { lidTaken } from './user_manage_model';
 import type { UserRow, UserStatus, AccountKind } from './user_manage_model';
 
-const { Button } = UI;
+const { Button, SaveButton } = UI;
 
 export type UserPatch = Pick<UserRow, 'name' | 'lid' | 'email' | 'type' | 'dept' | 'org' | 'account' | 'roles' | 'status'>;
 const NEW_TYPES: UType[] = ['농금원', '수탁', '부처'];
@@ -82,7 +82,7 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
     if (v.type === '농금원' && !v.dept.trim()) { setErrKey('dept'); return; }
     if (!v.roles.length) { setErrKey('roles'); return; }
     const org = orgs.length ? (orgs.find((o) => o.name === orgValue)?.id ?? orgs[0].id) : undefined;
-    onSave({
+    return () => onSave({
       name, lid: mode === 'create' ? lid : (initial?.lid ?? lid), email, type: v.type,
       dept: v.type === '농금원' ? v.dept.trim() : undefined, org, account: v.type === '부처' ? v.account : undefined,
       roles: [...v.roles], status: mode === 'create' ? '온보딩대기' : v.status,
@@ -160,7 +160,7 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
           <div />
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>취소</Button>
-            <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
+            <SaveButton onSubmit={submit} />
           </div>
         </DialogFooter>
       </DialogContent>
