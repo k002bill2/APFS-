@@ -7,7 +7,7 @@
 import React, { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   AuthLayout, Field, PrimaryBtn, SecondaryBtn, DonePanel, Callout,
-  KvGrid, Pill, OtpRegisterBlock, Toast, Logo, useDemoOtp, useToast, T, FADE_UP, FADE_UP_CARD,
+  KvGrid, Pill, OtpRegisterBlock, Toast, Logo, useDemoOtp, useToast, T, StepPage, useStepDir, FADE_UP_CARD,
 } from './auth_shared';
 import {
   INVITE_LABELS, verifyRealName, verifyRegister, hasError,
@@ -50,6 +50,7 @@ function DotSteps({ step }: { step: number }) {
 
 export function OnboardingInvite({ onNav }: { onNav?: (route: string) => void }) {
   const [step, setStep] = useState(1);
+  const dir = useStepDir(step);
   const [name, setName] = useState('');
   const [nameErr, setNameErr] = useState<string | null>(null);
   const [pw, setPw] = useState('');
@@ -101,7 +102,7 @@ export function OnboardingInvite({ onNav }: { onNav?: (route: string) => void })
           <DotSteps step={step} />
 
           {step === 1 && (
-            <div style={{ animation: FADE_UP }}>
+            <StepPage dir={dir}>
               <KvGrid labelWidth={90} style={{ marginBottom: 18 }} rows={[
                 { k: '이메일', v: <>{INVITEE.email} <Pill tone="info">화이트리스트</Pill></> },
                 { k: '소속', v: INVITEE.org },
@@ -112,11 +113,11 @@ export function OnboardingInvite({ onNav }: { onNav?: (route: string) => void })
                 <PrimaryBtn full onClick={() => { setStep(2); pop('초대를 수락했습니다 — 간편인증을 진행하세요'); }}>초대수락</PrimaryBtn>
               </div>
               <p style={{ ...T.caption1, textAlign: 'center', margin: '16px 0 0', color: 'var(--muted-foreground)' }}>본인이 아니면 이 초대를 무시해 주세요. 72시간 후 자동 만료됩니다.</p>
-            </div>
+            </StepPage>
           )}
 
           {step === 2 && (
-            <div style={{ animation: FADE_UP }}>
+            <StepPage dir={dir}>
               <h2 style={{ ...T.body2, fontWeight: 700, marginBottom: 4 }}>간편인증으로 본인을 확인합니다</h2>
               <p style={{ ...T.body3, color: 'var(--muted-foreground)', marginBottom: 16 }}>
                 간편인증 실명(CI)이 초대 대상 <b style={{ color: 'var(--foreground)' }}>{INVITEE.name}</b>와 일치해야 다음 단계가 열립니다.
@@ -127,11 +128,11 @@ export function OnboardingInvite({ onNav }: { onNav?: (route: string) => void })
                 <PrimaryBtn type="submit" full>간편인증 진행</PrimaryBtn>
               </form>
               <p style={{ ...T.caption1, margin: '16px 0 0', color: 'var(--muted-foreground)' }}>실명 불일치 시 초대가 거부되고 감사로그에 기록됩니다.</p>
-            </div>
+            </StepPage>
           )}
 
           {step === 3 && (
-            <div style={{ animation: FADE_UP }}>
+            <StepPage dir={dir}>
               <h2 style={{ ...T.body2, fontWeight: 700, marginBottom: 14 }}>비밀번호·OTP 등록</h2>
               <form noValidate onSubmit={submit3} className="flex flex-col gap-4">
                 <Field required id="invite-pw" label="새 비밀번호" type="password" icon="lock" placeholder="9자 이상, 영문·숫자·특수문자" autoComplete="new-password"
@@ -143,7 +144,7 @@ export function OnboardingInvite({ onNav }: { onNav?: (route: string) => void })
                   inputMode="numeric" maxLength={7} value={otpIn} onChange={setOtpIn} error={errs.otp} />
                 <PrimaryBtn type="submit" full>등록 완료</PrimaryBtn>
               </form>
-            </div>
+            </StepPage>
           )}
 
           {step === 4 && (

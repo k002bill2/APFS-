@@ -744,7 +744,7 @@ function Gnb({ theme, onToggleTheme, onToggleLnb, wide, onToggleWide, notifs, on
           activeClassName="text-primary border-transparent"
           activeStyle={{ background: "color-mix(in srgb, var(--primary) 12%, transparent)" }}
           size={32} iconSize={18} /></span><IconBtn
-          icon={theme === "dark" ? "sun" : "moon"}
+          icon="moon" altIcon="sun" swapped={theme === "dark"}
           onClick={onToggleTheme}
           label="라이트/다크"
           size={32} iconSize={18} /><IconBtn icon="bell" onClick={onOpenNotif} label="알림" badge={unread} size={32} iconSize={18} /></div><UserMenu onUserModal={onUserModal} /></header>

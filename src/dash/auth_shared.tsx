@@ -4,8 +4,9 @@
      --fill-normal → --muted · --surface-elevated → --card · #00BF40/#00A538 → --success-text · #D62B2B → --danger-text
    캔버스가 브랜드 파랑 위에 흰 글자를 얹는 자리(초대 헤더)는 적응형 --primary 가 아니라 고정 --brand-solid 를 쓴다
    — 다크에서 --primary 는 밝은 인디고라 흰 글자 대비가 깨진다. */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { Icon } from './icons';
+import { UI } from './components';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './ui/tooltip';
 import logoUrl from './assets/logo.svg';
 import logoWhiteUrl from './assets/logo_white.svg';
@@ -22,7 +23,24 @@ export const T = {
 } satisfies Record<string, React.CSSProperties>;
 
 /* 캔버스의 진입 모션. 저모션 선호 시 tokens.css 의 전역 규칙이 지속시간을 0 으로 만든다. */
+/** @deprecated 단계 컨테이너는 StepPage(transitions.dev 08 page side-by-side)로 — 카드 마운트에는 FADE_UP_CARD 를 쓴다. */
 export const FADE_UP = 'apfsFadeUp .28s cubic-bezier(0.4,0,0.2,1)';
+
+/** 단계 번호가 커지면 'fwd'(오른쪽에서 진입), 작아지면 'back'(왼쪽에서). 첫 렌더는 fwd. */
+export function useStepDir(step: number): 'fwd' | 'back' {
+  const prev = useRef(step);
+  const dir: 'fwd' | 'back' = step < prev.current ? 'back' : 'fwd';
+  useEffect(() => { prev.current = step; }, [step]);
+  return dir;
+}
+/** 조건부 마운트되는 단계 컨테이너 — 마운트 시 방향성 슬라이드(src/styles/transitions.css .t-page). */
+export function StepPage({ dir = 'fwd', className, children, style }: { dir?: 'fwd' | 'back'; className?: string; children: React.ReactNode; style?: React.CSSProperties }) {
+  /* 방향은 마운트 시점에 고정한다 — useStepDir 은 step 이 같아지면 'fwd' 를 돌려주므로, 슬라이드 재생 중(280ms)
+     부모가 재렌더되면(예: 로그인 화면의 OTP 1초 tick) data-dir 이 back→fwd 로 바뀌어 --t-page-from-x 가 뒤집힌다.
+     CSS 변수는 실행 중 keyframe 에도 매 프레임 재해석되므로 latch 가 필요하다(code-reviewer 지적). */
+  const [mountDir] = useState(dir);
+  return <div className={className ? `t-page ${className}` : 't-page'} data-dir={mountDir} style={style}>{children}</div>;
+}
 export const FADE_UP_CARD = 'apfsFadeUp .3s cubic-bezier(0.4,0,0.2,1)';
 
 export const CARD_MAX = 840;
@@ -52,29 +70,47 @@ export function useDemoOtp() {
 export type ToastState = { msg: string; error: boolean } | null;
 
 /** 2.6초 뒤 자동으로 사라지는 안내. 언마운트·연속 호출 시 이전 타이머를 정리한다. */
+/* 토스트 모션(transitions.dev 22 toast, src/styles/transitions.css .t-toast). 표시 2600ms 뒤 hiding 단계(닫힘 전이 --dur)를
+   거쳐 언마운트한다 — 바로 null 로 지우면 닫힘 애니메이션이 생략된다. pop 이 겹치면 hiding 을 취소하고 새 메시지로 갈아탄다. */
+/** .t-toast 닫힘 전이(--dur=180ms) + 여유. transitions.css 의 --toast-close 와 같은 토큰을 본다. */
+const TOAST_CLOSE_MS = 260;
 export function useToast() {
   const [toast, setToast] = useState<ToastState>(null);
+  const [hiding, setHiding] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>();
-  useEffect(() => () => clearTimeout(timer.current), []);
+  const timer2 = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => { clearTimeout(timer.current); clearTimeout(timer2.current); }, []);
   const pop = (msg: string, error = false) => {
-    clearTimeout(timer.current);
+    clearTimeout(timer.current); clearTimeout(timer2.current);
+    setHiding(false);
     setToast({ msg, error });
-    timer.current = setTimeout(() => setToast(null), 2600);
+    timer.current = setTimeout(() => {
+      setHiding(true);
+      timer2.current = setTimeout(() => { setToast(null); setHiding(false); }, TOAST_CLOSE_MS);
+    }, 2600);
   };
-  return { toast, pop };
+  return { toast: toast ? { ...toast, hiding } : null, pop };
 }
 
 /* 필드 오류가 role="alert" 로 이미 알려지므로 토스트는 polite — 한 번의 제출에 두 번 읽히지 않게 한다. */
-export function Toast({ toast }: { toast: ToastState }) {
+export function Toast({ toast }: { toast: (NonNullable<ToastState> & { hiding?: boolean }) | null }) {
+  /* 마운트 다음 프레임에 is-open — transition 기반 레시피라 닫힌 상태로 먼저 그려져야 열림 전이가 잡힌다. */
+  const [open, setOpen] = useState(false);
+  const key = toast ? toast.msg + (toast.error ? '!' : '') : '';
+  useEffect(() => {
+    if (!toast) { setOpen(false); return; }
+    const id = requestAnimationFrame(() => setOpen(true));
+    return () => cancelAnimationFrame(id);
+  }, [key, !!toast]);
   return (
     <div aria-live="polite" aria-atomic="true">
       {toast && (
-        <div style={{
-          position: 'fixed', left: '50%', bottom: 34, transform: 'translateX(-50%)', zIndex: 50,
+        <div className={`t-toast${open && !toast.hiding ? ' is-open' : ''}${toast.hiding ? ' is-hiding' : ''}`} style={{
+          /* 가운데 정렬은 CSS translate 프로퍼티 — .t-toast 가 transform 을 점유한다 */
+          position: 'fixed', left: '50%', bottom: 34, translate: '-50% 0', zIndex: 50,
           background: toast.error ? 'var(--danger-text)' : 'var(--foreground)',
           color: 'var(--bg)', font: '500 14px var(--font-sans)', padding: '12px 22px',
           borderRadius: 24, boxShadow: 'var(--shadow-lg)', maxWidth: 'calc(100vw - 32px)', textAlign: 'center',
-          animation: 'apfsToastIn .24s cubic-bezier(0.4,0,0.2,1)',
         }}>{toast.msg}</div>
       )}
     </div>
@@ -356,16 +392,31 @@ export function DonePanel({ title, desc, rows, actions, compact, titleAs: H = 'h
   titleAs?: 'h1' | 'h2';
 }) {
   const size = compact ? 56 : 64;
+  /* 성공 체크 등장 모션(transitions.dev 10 success-check, src/styles/transitions.css).
+     mount 시 실제 path 길이를 재서 --check-path-len 에 넣는다 — 아이콘 소스(lucide/자체)가 바뀌어도 stroke-draw 가 정확히 끝까지 그려진다.
+     첫 paint 전에 값이 있어야 하므로 useLayoutEffect. data-state 는 mount 부터 "in" — 삽입과 동시에 keyframe 이 돈다(cold-load "out" 은 재생 리플레이 용도라 여기선 불필요). */
+  const checkRef = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const el = checkRef.current; const path = el?.querySelector('svg path');
+    if (el && path instanceof SVGPathElement) el.style.setProperty('--check-path-len', String(Math.ceil(path.getTotalLength()) + 1));
+  }, []);
   return (
-    <div className="flex flex-col items-center text-center flex-1 justify-center" style={{ minHeight: compact ? undefined : 440, padding: compact ? '8px 0' : undefined, animation: FADE_UP }}>
+    /* 입장 모션: 성공 체크(10) + 제목·부제·요약·액션 순차 등장(18 texts-reveal). 루트 슬라이드(08)는 겹치므로 쓰지 않는다. */
+    <UI.TextsReveal className="flex flex-col items-center text-center flex-1 justify-center" style={{ minHeight: compact ? undefined : 440, padding: compact ? '8px 0' : undefined }}>
       <span aria-hidden="true" className="flex items-center justify-center" style={{ width: size, height: size, borderRadius: '50%', background: 'var(--success-soft)', marginBottom: compact ? 16 : 20 }}>
-        <Icon name="check" size={compact ? 26 : 30} stroke={2.6} style={{ color: 'var(--success-text)' }} />
+        {/* onAnimationEnd: 등장이 끝나면 will-change 를 풀어 아이콘 래퍼가 합성 레이어로 상주하지 않게 한다(규약 3절 취지). 4개 레인이 동시에 끝나 여러 번 불려도 무해. */}
+        <span ref={checkRef} className="t-success-check" data-state="in"
+          onAnimationEnd={(e) => { if (e.target === e.currentTarget) e.currentTarget.style.willChange = 'auto'; }}>
+          <Icon name="check" size={compact ? 26 : 30} stroke={2.6} style={{ color: 'var(--success-text)' }} />
+        </span>
       </span>
-      <H style={compact ? T.title3 : T.title2}>{title}</H>
-      <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: compact ? '6px 0 20px' : '8px 0 26px' }}>{desc}</p>
-      <KvGrid rows={rows} labelWidth={compact ? 90 : 110} style={{ width: '100%', maxWidth: compact ? undefined : 380, textAlign: 'left', marginBottom: compact ? 22 : 26 }} />
-      <div className="flex flex-wrap justify-center gap-2.5">{actions}</div>
-    </div>
+      <H className="t-stagger-line t-stagger-line--1" style={compact ? T.title3 : T.title2}>{title}</H>
+      <p className="t-stagger-line t-stagger-line--2" style={{ ...T.body3, color: 'var(--muted-foreground)', margin: compact ? '6px 0 20px' : '8px 0 26px' }}>{desc}</p>
+      <div className="t-stagger-line t-stagger-line--3" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <KvGrid rows={rows} labelWidth={compact ? 90 : 110} style={{ width: '100%', maxWidth: compact ? undefined : 380, textAlign: 'left', marginBottom: compact ? 22 : 26 }} />
+      </div>
+      <div className="t-stagger-line t-stagger-line--4"><div className="flex flex-wrap justify-center gap-2.5">{actions}</div></div>
+    </UI.TextsReveal>
   );
 }
 

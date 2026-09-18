@@ -7,7 +7,7 @@ import { APFS_DATA, MenuStore, useMenuSel } from './data';
 import { mn, MT, useMask } from './mask';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 
-const { ColorChip, StatusBadge, StatCard, ChartCard, Card, Button, FilterChip, SegTabs, CountPill } = UI;
+const { ColorChip, StatusBadge, StatCard, ChartCard, Card, Button, FilterChip, SegTabs, CountPill, PopNumber } = UI;
 const { ComposedBars, GroupedBars, Donut, Treemap, LineTrend, HBars, Gauge, Sparkline } = Charts;
 const D = APFS_DATA;
 const ALLMENU = D.ALLMENU;
@@ -142,7 +142,7 @@ function MiniKpis({ vertical }: { vertical?: boolean }) {
           borderRadius: 12, padding: "13px 15px",
         }}><div className="min-w-0"><div
             className="t-label truncate"
-            style={{ textTransform: "none" }}><MT>{m.label}</MT></div><div className="flex mt-1" style={{ alignItems: "baseline", gap: 3 }}><span className="t-display tabular" style={{ fontSize: 24 }}>{mn(m.value)}</span><span
+            style={{ textTransform: "none" }}><MT>{m.label}</MT></div><div className="flex mt-1" style={{ alignItems: "baseline", gap: 3 }}><span className="t-display tabular" style={{ fontSize: 24 }}><PopNumber value={mn(m.value)} /></span><span
               className="font-semibold text-muted-foreground"
               style={{ fontSize: 12 }}>{m.unit}</span></div></div><ColorChip
           icon={m.tone === "success" ? "check-circle" : "file"}

@@ -38,7 +38,7 @@ import type { CtxItem, CtxMenuState } from './row_context_menu';
 import { GridFrame, KpiBadge, FooterActions } from './grid_frame';   // 공통 양식 셸 + KPI 배지(apfs-grid 스킬 SSOT)
 
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
-const { Button, StatusBadge, IconBtn, ColorChip, SegTabs, DeltaBadge } = UI;
+const { Button, StatusBadge, IconBtn, ColorChip, SegTabs, DeltaBadge, ClearableInput } = UI;
 const D = APFS_DATA;
 
 /* MENU 트리 노드 형태 — data.ts의 MENU는 선언 타입 없는 이질적 리터럴 배열이라
@@ -287,7 +287,7 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
           {schema.searchable && (
             <label className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>{SEARCH_LABEL}</span>
-              <input type="text" value={applied[SEARCH_LABEL] ?? ""} onChange={(e) => setVal(SEARCH_LABEL, e.target.value)} onKeyDown={closeOnEnter} placeholder="검색어 입력" style={drawerInputStyle("text")} />
+              <ClearableInput type="text" value={applied[SEARCH_LABEL] ?? ""} onValueChange={(v) => setVal(SEARCH_LABEL, v)} onKeyDown={closeOnEnter} placeholder="검색어 입력" clearLabel="검색어 지우기" style={drawerInputStyle("text")} />
             </label>
           )}
           {filters.length === 0 && !schema.searchable ? (

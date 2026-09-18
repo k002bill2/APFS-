@@ -109,7 +109,7 @@ export function KpiBadge({ icon, color, label, value, valueColor, valueSize }: {
       <ColorChip icon={icon} color={color} size={30} iconSize={16} />
       <div className="flex flex-col" style={{ gap: 1, lineHeight: 1.2 }}>
         <span className="font-semibold text-caption" style={{ fontSize: 11 }}><MT>{label}</MT></span>
-        <span className="tabular font-extrabold" style={{ fontSize: valueSize ?? 14, color: valueColor || "var(--foreground)" }}>{value}</span>
+        <span className="tabular font-extrabold" style={{ fontSize: valueSize ?? 14, color: valueColor || "var(--foreground)" }}><UI.PopNumber value={value} /></span>
       </div>
     </div>
   );

@@ -40,7 +40,7 @@ import { groupSchema, detailSchema, upOption, upCodeOf, UP_NONE } from './code_m
 import { reseqSiblings, applyReseq } from './reseq';
 import { UseBadge } from './admin_shared';
 
-const { Button, IconBtn, FilterChip, EmptyState } = UI;
+const { Button, IconBtn, FilterChip, EmptyState, ClearableInput } = UI;
 
 const SEARCHABLE = true;
 const SEARCH_FIELDS: { key: 'code' | 'name'; label: string }[] = [{ key: 'code', label: '코드구분' }, { key: 'name', label: '코드구분명' }];
@@ -429,7 +429,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             {SEARCHABLE && (
               <DrawerField label="검색어">
-                <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="검색기준 항목에서 부분일치" style={inputStyle('text')} />
+                <ClearableInput type="text" value={fText} onValueChange={setFText} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="검색기준 항목에서 부분일치" clearLabel="검색어 지우기" style={inputStyle('text')} />
               </DrawerField>
             )}
             <DrawerField label="검색기준">

@@ -5,7 +5,7 @@
 import React, { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   AuthLayout, SplitCard, Field, PrimaryBtn, SecondaryBtn, DonePanel,
-  Callout, KvGrid, Pill, OtpRegisterBlock, Toast, Logo, useDemoOtp, useToast, T, FADE_UP,
+  Callout, KvGrid, Pill, OtpRegisterBlock, Toast, Logo, useDemoOtp, useToast, T, StepPage, useStepDir,
 } from './auth_shared';
 import { Icon } from './icons';
 import { railSteps, ISSUE_RAIL, verifyRegister, hasError, PW_POLICY_HINT, type RegisterErrors } from './auth_model';
@@ -16,6 +16,7 @@ const TARGET = { name: '이수탁', org: 'NH농협은행 (수탁기관)', role: 
 
 export function OnboardingIssue({ onNav }: { onNav?: (route: string) => void }) {
   const [step, setStep] = useState(1);
+  const dir = useStepDir(step);
   const [pw, setPw] = useState('');
   const [confirm, setConfirm] = useState('');
   const [otpIn, setOtpIn] = useState('');
@@ -55,7 +56,7 @@ export function OnboardingIssue({ onNav }: { onNav?: (route: string) => void }) 
       >
 
         {step === 1 && (
-          <div className="flex flex-col flex-1" style={{ animation: FADE_UP }}>
+          <StepPage dir={dir} className="flex flex-col flex-1">
             <h1 style={T.title3}>계정 정보를 확인해 주세요</h1>
             <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '6px 0 22px' }}>관리자가 발급한 계정입니다. 아래 정보가 본인과 일치하면 활성화를 진행하세요.</p>
             <KvGrid style={{ marginBottom: 20, padding: '20px 24px' }} rows={[
@@ -73,11 +74,11 @@ export function OnboardingIssue({ onNav }: { onNav?: (route: string) => void }) 
               <Icon name="help-circle" size={14} style={{ marginTop: 2 }} />
               <span>정보가 다르면 시스템 관리자(정보화팀)에게 문의해 주세요.</span>
             </p>
-          </div>
+          </StepPage>
         )}
 
         {step === 2 && (
-          <div style={{ animation: FADE_UP }}>
+          <StepPage dir={dir}>
             <h1 style={T.title3}>비밀번호·OTP 등록</h1>
             <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '6px 0 22px' }}>비밀번호를 설정하고 인증앱(OTP)을 등록해 주세요.</p>
             <form noValidate onSubmit={submit2} className="flex flex-col gap-4">
@@ -90,7 +91,7 @@ export function OnboardingIssue({ onNav }: { onNav?: (route: string) => void }) 
                 inputMode="numeric" maxLength={7} value={otpIn} onChange={setOtpIn} error={errs.otp} />
               <PrimaryBtn type="submit" full>등록 완료</PrimaryBtn>
             </form>
-          </div>
+          </StepPage>
         )}
 
         {step === 3 && (

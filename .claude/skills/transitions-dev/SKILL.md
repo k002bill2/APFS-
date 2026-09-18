@@ -37,6 +37,7 @@ APFS의 열림·닫힘 표면은 이미 소유자와 확정 규약이 있다. �
 - **열림 끝 프레임에 `filter`/3D `transform`을 남기지 말 것**(`forwards` 금지, `to`는 `filter:none`) — 텍스트가 흐려진다(2026-09-08 실측). 닫힘만 `forwards`.
 - **`prefers-reduced-motion` 가드는 반드시 유지** — 전역 규칙(`tokens.css`)은 `animation-duration`만 0으로 만들고 **`transition`은 못 막는다**. 레시피의 저모션 블록이 유일한 안전장치다. 키프레임 로더(28~31)는 0% 프레임이 화면 밖이면 "멈춤"으로 오독되니 **저모션 폴백 프레임을 함께 정의**한다.
 - 클릭 press는 `motion-safe:active:scale-[.97]`(motion-safe 없이 `active:scale` 단독 금지).
+- **`.t-*` 접두사 충돌 주의** — 프로젝트 타이포 클래스가 이미 `.t-caption`·`.t-label`·`.t-body`·`.t-display`·`.t-h1/h2`·`.t-cardtitle`을 쓴다(`tokens.css`). 레시피의 `.t-input`·`.t-badge`·`.t-icon`·`.t-check`·`.t-toast`처럼 일반적인 이름은 장래 충돌 여지가 있으니, 붙여넣기 전 `grep -rn "\.t-<이름>" src/` 로 빈 이름인지 확인하고 겹치면 레시피 쪽을 `.t-<이름>-tx`로 바꾼다(프로젝트 클래스는 손대지 않는다).
 
 ### 4. 색·테마
 레시피가 들고 있는 색(`--shimmer-*`, `--tt-*`, `--clear-*` 등)은 hex 리터럴을 쓰지 말고 `tokens.css` 토큰(`var(--primary)`, `var(--muted)`, `var(--danger)` …)으로 바꾼다. 다크모드 셀렉터는 원문 `html[data-theme="dark"]`가 아니라 **`.dark`** 클래스다(`darkMode:'class'`). 적응형/고정 전경 분기는 [[color-tokens]].
