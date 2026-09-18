@@ -64,6 +64,7 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
     mounted.current = true;
   }, [step, mode]);
 
+  const [attempt, setAttempt] = useState(0);   // 제출 횟수 — 같은 오류로 재제출해도 필드 shake 가 다시 재생되게(Field shakeKey)
   const submit1 = (e: FormEvent) => {
     e.preventDefault();
     if (locked) return;
@@ -71,6 +72,7 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
     if (r.ok) { setStep(2); setCredErr(null); setOtpIn(''); pop('1차 인증이 완료되었습니다'); return; }
     setFails(r.fails); setLocked(r.locked);
     setCredErr(r.field && r.error ? { field: r.field, msg: r.error } : null);
+    setAttempt((n) => n + 1);
     if (r.locked) pop(`로그인 ${LOCK_LIMIT}회 실패 — 계정이 잠겼습니다`, true);
   };
 
@@ -166,10 +168,10 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
                   }}>로그인 {LOCK_LIMIT}회 실패로 계정이 잠겼습니다.<br /><span style={{ fontWeight: 400 }}>시스템 관리자(정보화팀)의 잠금 해제가 필요합니다.</span></p>
                 )}
                 <form noValidate onSubmit={submit1} className="flex flex-col gap-4">
-                  <Field required id="login-id" label="아이디" icon="user" placeholder="로그인 아이디" autoComplete="username"
+                  <Field required id="login-id" shakeKey={attempt} label="아이디" icon="user" placeholder="로그인 아이디" autoComplete="username"
                     value={id} onChange={setId} disabled={locked} inputRef={firstField}
                     error={credErr?.field === 'id' ? credErr.msg : null} />
-                  <Field required id="login-pw" label="비밀번호" type="password" icon="lock" placeholder="비밀번호" autoComplete="current-password"
+                  <Field required id="login-pw" shakeKey={attempt} label="비밀번호" type="password" icon="lock" placeholder="비밀번호" autoComplete="current-password"
                     value={pw} onChange={setPw} disabled={locked}
                     error={credErr?.field === 'pw' ? credErr.msg : null} />
                   <div className="flex items-center gap-2" style={{ ...T.body3, minHeight: 24, marginTop: 2 }}>
