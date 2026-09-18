@@ -8,4 +8,8 @@
 .apfs-ds-select-cell.ag-header-cell { padding-left: 0 !important; padding-right: 0 !important; }
 .apfs-ds-select-cell .ag-cell-wrapper,
 .apfs-ds-select-cell .ag-header-cell-comp-wrapper { width: 100%; justify-content: center; }
+/* 실제 렌더러 컨테이너는 .ag-cell-value(block, flex:1) 라 위 규칙만으론 좌측에 붙는다(실측 offset 1px) → 값 래퍼 자체를 flex 중앙으로 */
+.apfs-ds-select-cell .ag-cell-wrapper { height: 100%; }
+.apfs-ds-select-cell .ag-cell-value { display: flex; align-items: center; justify-content: center; height: 100%; }   /* 세로 중앙 — 래퍼가 내용 높이만 가져 박스가 행 상단(y=1px)에 붙던 것 수정 */
+.apfs-ds-select-cell .ag-header-cell-comp-wrapper > * { display: flex; justify-content: center; width: 100%; }
 .apfs-ds-select { display: inline-flex; align-items: center; justify-content: center; margin: 0 !important; }
