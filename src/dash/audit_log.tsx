@@ -11,7 +11,7 @@
    ⚠ 실제 접근 로그·보안 이벤트·정책 판정이 아니다 — 데모 행을 로컬로 조회만 한다(브리프). 실명 아님. */
 import './aggrid_shared.css';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
@@ -62,7 +62,7 @@ const EXPORT_COLS: XCol[] = [
   { header: '행위', get: (r) => r.action }, { header: '대상', get: (r) => r.target }, { header: 'IP', get: (r) => r.ip }, { header: '결과', get: (r) => r.result },
 ];
 
-function DrawerField({ label, children, plain }: { label: string; children: React.ReactNode; plain?: boolean }) {
+function DrawerField({ label, children, plain }: { label: string; children: ReactNode; plain?: boolean }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
@@ -86,11 +86,11 @@ const dayWrap: CSSProperties = { width: 'fit-content', minWidth: controlMinWidth
 
 /* 행 상세 — 읽기 전용 kv(한글 가로 배열 규약) */
 function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void }) {
-  const items: [string, React.ReactNode][] = [
+  const items: [string, ReactNode][] = [
     ['일시', <MT>{row.ts}</MT>], ['행위자', <MT>{row.actor}</MT>], ['유형', <StatusBadge tone={KIND_TONE[row.kind]} label={row.kind} size="md" dot={false} />],
     ['행위', <MT>{row.action}</MT>], ['대상', <MT>{row.target}</MT>], ['IP', <MT>{row.ip}</MT>], ['결과', <StatusBadge tone={RESULT_TONE[row.result]} label={row.result} size="md" dot={false} />],
   ];
-  const dlgRef = React.useRef<DialogHandle>(null);
+  const dlgRef = useRef<DialogHandle>(null);
   return (
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[560px] max-h-[88vh]">

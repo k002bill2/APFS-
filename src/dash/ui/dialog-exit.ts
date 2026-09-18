@@ -134,7 +134,7 @@ export function useHardcodedOpenWarning(open: boolean | undefined, ref: React.Re
     console.warn(
       '[Dialog] open 이 하드코딩(true)인데 ref 가 없습니다. 이 모달의 취소/닫기 버튼이 onClose 를 ' +
         '직접 호출하면 부모가 즉시 언마운트해 닫힘 애니메이션이 재생되지 않습니다.\n' +
-        '  고치는 법: const dlgRef = React.useRef<DialogHandle>(null);\n' +
+        "  고치는 법: import { useRef } from 'react';  ·  const dlgRef = useRef<DialogHandle>(null);\n" +
         '            <Dialog ref={dlgRef} open …>  ·  onClick={() => dlgRef.current?.close()}\n' +
         '  (X·ESC·바깥클릭만으로 닫는 모달이면 무시해도 됩니다.)',
     );
