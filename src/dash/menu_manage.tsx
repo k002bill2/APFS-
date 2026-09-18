@@ -195,6 +195,10 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   const onGridReady = useCallback((e: GridReadyEvent<MenuView>) => { apiRef.current = e.api; }, []);
   const onSelectionChanged = useCallback((e: SelectionChangedEvent<MenuView>) => { setSelId(e.api.getSelectedRows()[0]?.id ?? null); }, []);
   const onRowDataUpdated = useCallback((e: { api: GridApi<MenuView> }) => {
+    /* 펼침 화살표는 셀 '값'(name)이 아니라 data 파생(expanded)이라, getRowId 기반 immutable 갱신에서는
+       값 비교 리프레시를 건너뛰어 화살표·aria-expanded 가 얼어붙는다 → 메뉴명 컬럼만 강제 리프레시.
+       refreshCells 는 모델을 바꾸지 않으므로 onRowDataUpdated 가 재발화하지 않는다(렌더 루프 없음). */
+    e.api.refreshCells({ columns: ['name'], force: true });
     const id = selIdRef.current; if (!id) return;
     const node = e.api.getRowNode(id); if (node && !node.isSelected()) node.setSelected(true, true);
   }, []);
