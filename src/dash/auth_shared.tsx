@@ -224,6 +224,8 @@ function StepRail({ steps }: { steps: RailStep[] }) {
 type FieldProps = {
   id: string; label: string; value: string; onChange: (v: string) => void;
   type?: string; icon?: string; placeholder?: string; error?: string | null; help?: string;
+  /** 같은 오류 문구로 재제출돼도 shake 를 다시 재생하려면 제출마다 바뀌는 값을 넘긴다(예: 시도 횟수). */
+  shakeKey?: number;
   disabled?: boolean; autoComplete?: string; inputMode?: 'numeric'; maxLength?: number;
   inputRef?: React.Ref<HTMLInputElement>;
   /** 필수 입력. 라벨에 * 를 붙이고 aria-required 로도 알린다(목업 S0_001 의 label.req 규약). */
@@ -239,6 +241,18 @@ export function Field(p: FieldProps) {
   // 비밀번호 표시 토글. 필드마다 독립 상태라 한 칸을 열어도 다른 칸은 가려진 채로 둔다.
   const isPw = (p.type ?? 'text') === 'password';
   const [reveal, setReveal] = useState(false);
+  /* 오류 shake(transitions.dev 12, src/styles/transitions.css .t-input). error 가 생기거나 문구가 바뀌거나 shakeKey 가 바뀔 때마다 재생.
+     리플레이는 React 상태만으로: 'reset'(클래스 제거) 커밋 → useLayoutEffect 에서 reflow → 'on'(클래스 재부여) — 한 프레임 안에서
+     스타일이 한 번 계산되므로 keyframe 이 처음부터 다시 돈다. 명령형 classList 토글은 상태와 어긋나 재생이 빠지는 일이 있어 쓰지 않는다.
+     끝나면 'idle' 로 내려 will-change 를 해제한다. */
+  const shakeRef = useRef<HTMLDivElement>(null);
+  const [shake, setShake] = useState<'idle' | 'reset' | 'on'>('idle');
+  useEffect(() => { if (p.error) setShake('reset'); }, [p.error, p.shakeKey]);
+  useLayoutEffect(() => {
+    if (shake !== 'reset') return;
+    void shakeRef.current?.offsetWidth;
+    setShake('on');
+  }, [shake]);
   return (
     <div>
       <div className="flex items-center gap-1.5" style={{ marginBottom: 6 }}>
@@ -249,7 +263,8 @@ export function Field(p: FieldProps) {
         </label>
         {p.labelExtra}
       </div>
-      <div className="relative">
+      <div ref={shakeRef} className={shake === 'on' ? 't-input is-shaking relative' : 't-input relative'}
+        onAnimationEnd={(e) => { if (e.target === e.currentTarget && e.animationName === 't-input-shake') setShake('idle'); }}>
         {p.icon && <Icon name={p.icon} size={17} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />}
         <input id={p.id} type={isPw && reveal ? 'text' : (p.type ?? 'text')} value={p.value} disabled={p.disabled}
           placeholder={p.placeholder} autoComplete={p.autoComplete} inputMode={p.inputMode} maxLength={p.maxLength}
@@ -262,6 +277,7 @@ export function Field(p: FieldProps) {
             height: 48, padding: `0 ${isPw ? 44 : 14}px 0 ${p.icon ? 38 : 14}px`,
             borderRadius: 'var(--radius)', border: `1px solid ${p.error ? 'var(--danger-text)' : 'var(--input)'}`,
             background: 'var(--bg)', color: 'var(--foreground)', font: '400 14px var(--font-sans)',
+            transition: 'border-color var(--dur-fast) var(--ease)',   /* 12 error shake: 테두리 색 트윈(레시피 .t-input 규칙을 테두리 소유자인 input 에) */
           }} />
         {isPw && (
           /* 라벨을 상태에 따라 바꾼다 — aria-pressed 를 같이 주면 "숨기기, 눌림"처럼 이중으로 읽힌다. */
@@ -274,7 +290,7 @@ export function Field(p: FieldProps) {
         )}
       </div>
       {p.error
-        ? <p id={`${p.id}-error`} role="alert" style={{ ...T.caption1, marginTop: 6, color: 'var(--danger-text)' }}>{p.error}</p>
+        ? <p id={`${p.id}-error`} role="alert" className="t-error-msg" style={{ ...T.caption1, marginTop: 6, color: 'var(--danger-text)' }}>{p.error}</p>
         : p.help ? <p id={`${p.id}-help`} style={{ ...T.caption1, marginTop: 6, color: 'var(--muted-foreground)' }}>{p.help}</p> : null}
     </div>
   );

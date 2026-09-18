@@ -327,3 +327,36 @@
 /* 클리어 중엔 placeholder 를 숨기고, 미러가 사라진 뒤 나타나게(원문의 가짜 placeholder 페이드인 근사) */
 .t-clear > input::placeholder { transition: opacity var(--dur) var(--ease); }
 .t-clear.is-clearing > input::placeholder { opacity: 0; }
+
+/* ── 12 error state shake (12-error-state-shake.md) — 인증 화면 필드 검증 오류 ─────────
+   소비처: auth_shared.tsx Field(로그인·온보딩 필드 18곳 공유). error prop 이 생기거나 바뀔 때 .t-input(입력+아이콘+토글을
+   감싼 래퍼)이 4구간 shake 를 재생하고, 오류 메시지는 마운트 시 페이드인한다. 원문 대비 의도적 변경:
+   ① 자동 되돌림(--revert-hold 3000ms 뒤 오류 해제)은 쓰지 않는다 — 오류는 부모 상태가 소유하고 사용자가 고칠 때 사라진다.
+   ② 메시지는 조건부 마운트라 원문의 .t-input-wrap.is-error opacity transition 대신 마운트 keyframe 으로 페이드인(--dur-slow).
+      그래서 원문 마크업의 .t-input-wrap / .is-error 클래스는 쓰지 않는다.
+   ③ will-change 는 .is-shaking 동안만. 구간 duration 80/60/80/60 은 원문 리터럴(--dur-* 와 용도 불일치). */
+.t-input {
+  --shake-distance: 6px;
+  --shake-overshoot: 4px;
+  --shake-dur-a: 80ms;
+  --shake-dur-b: 60ms;
+  --shake-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.t-input.is-shaking {
+  will-change: transform;
+  animation: t-input-shake calc(var(--shake-dur-a) * 2 + var(--shake-dur-b) * 2) linear;
+}
+/* %-stop 은 누적 duration 비율(A,A,B,B = 80,80,60,60 = 280ms): 28.57 / 57.14 / 78.57 / 100. 구간 길이를 바꾸면 재계산. */
+@keyframes t-input-shake {
+  0%      { transform: translateX(0);                                 animation-timing-function: var(--shake-ease); }
+  28.57%  { transform: translateX(var(--shake-distance));             animation-timing-function: var(--shake-ease); }
+  57.14%  { transform: translateX(calc(var(--shake-distance) * -1)); animation-timing-function: var(--shake-ease); }
+  78.57%  { transform: translateX(var(--shake-overshoot));            animation-timing-function: var(--shake-ease); }
+  100%    { transform: translateX(0); }
+}
+.t-error-msg { animation: t-error-in var(--dur-slow) ease-out; }
+@keyframes t-error-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .t-input { animation: none !important; transform: none !important; }
+  .t-error-msg { animation: none !important; }
+}
