@@ -29,8 +29,9 @@ const AlertDialogContent = React.forwardRef<
     <AlertDialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-modal flex w-full max-w-[420px] -translate-x-1/2 -translate-y-1/2 flex-col gap-2 rounded-card-lg border border-border bg-card p-[22px] shadow-lg focus:outline-none',
-        'duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+        // ⚠ 중앙정렬은 CSS translate 프로퍼티 — animate-dialog-in 의 3D 플립이 transform 을 점유하므로 -translate-x-1/2 금지(Dialog 와 동일 규약).
+        'fixed left-1/2 top-1/2 z-modal flex w-full max-w-[420px] [translate:-50%_-50%] flex-col gap-2 rounded-card-lg border border-border bg-card p-[22px] shadow-lg focus:outline-none',
+        'data-[state=open]:animate-dialog-in data-[state=closed]:animate-dialog-out',
         className,
       )}
       {...props}
