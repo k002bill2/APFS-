@@ -284,7 +284,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>사용자 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '명 중 ' + mn(String(visible.length)) + '명 · ' + mn(String(Math.min(shown, visible.length))) + '명 표시 중 · 모든 계정 = 담당자별 개별 계정'}</span>}
+      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '명 중 ' + mn(String(visible.length)) + '명 · ' + mn(String(Math.min(shown, visible.length))) + '명 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
