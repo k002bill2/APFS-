@@ -152,18 +152,13 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
               <span className="text-caption block mt-1" style={{ fontSize: 11.5 }} aria-live="polite">유효 메뉴(권한 합집합): <b className="text-foreground">{eff.length ? eff.join(', ') : '없음'}</b></span>
             </Field>
           </div>
-          <p className="text-caption m-0 mt-1" style={{ fontSize: 12, lineHeight: 1.5 }}>
-            {mode === 'create'
-              ? '신규 등록 = 상태 온보딩대기 → 온보딩 안내 메일(미리보기) → 대상자가 비밀번호·OTP를 등록하면 활성. 화면 시연용 프로토타입이며 실제 계정 발급·메일 발송은 하지 않습니다.'
-              : '화면 시연용 프로토타입 — 저장은 화면 로컬 상태만 바꿉니다(실제 계정·권한 적용 없음).'}
-          </p>
         </div>
 
         <DialogFooter className="px-[46px]">
           <div />
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={onClose}>취소</Button>
-            <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>{mode === 'create' ? '저장 → 온보딩 메일 (목업)' : '저장'}</Button>
+            <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
           </div>
         </DialogFooter>
       </DialogContent>

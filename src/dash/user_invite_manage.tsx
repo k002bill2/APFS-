@@ -226,7 +226,6 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
       )}
       contextActions={selActions}
       toolbarRight={<>
-        <span className="text-caption" style={{ fontSize: 12 }}>초대 소스 = 운용사 전자보고 운용인력 명단 · 초대 = 사전 승인</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
