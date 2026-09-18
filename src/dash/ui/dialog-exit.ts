@@ -17,6 +17,13 @@ export const EXIT_FALLBACK_MS = 450;
 export const EXIT_ANIMATION = 'dialog-out';
 
 const ExitEndContext = React.createContext<(() => void) | null>(null);
+/** 닫기 시작(exit 재생 중) 여부. 저장 대기 같은 "닫히면 무효" 작업이 언마운트(exit 뒤)가 아니라
+    닫기 요청 시점에 즉시 취소할 수 있게 한다 — SaveButton 이 구독. 다이얼로그 밖에서는 항상 false. */
+const ClosingContext = React.createContext<boolean>(false);
+export const DialogClosingProvider = ClosingContext.Provider;
+export function useDialogClosing() {
+  return React.useContext(ClosingContext);
+}
 export const DialogExitProvider = ExitEndContext.Provider;
 /** Content 가 자신의 exit 애니메이션 종료를 루트에 알리는 통로. 중첩 모달은 가장 안쪽 루트에 붙는다. */
 export function useExitEnd() {

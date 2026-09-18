@@ -10,7 +10,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortalContainer } from './portal-container';
-import { DialogExitProvider, useDeferredClose, useExitEnd, makeExitEndHandler, useHardcodedOpenWarning, type DialogHandle } from './dialog-exit';
+import { DialogExitProvider, DialogClosingProvider, useDeferredClose, useExitEnd, makeExitEndHandler, useHardcodedOpenWarning, type DialogHandle } from './dialog-exit';
 
 /* ⚠ 그냥 DialogPrimitive.Root 가 아니다 — 닫힘 애니메이션을 살리려고 내부 open 상태를 들고
    exit 종료 뒤에 부모 onOpenChange(false) 를 호출한다. 근거·전체 맥락은 dialog-exit.ts 주석.
@@ -21,11 +21,13 @@ const Dialog = React.forwardRef<DialogHandle, React.ComponentPropsWithoutRef<typ
     React.useImperativeHandle(ref, () => ({ close }), [close]);
     useHardcodedOpenWarning(open, ref);
     return (
+      <DialogClosingProvider value={!inner}>
       <DialogExitProvider value={finish}>
         <DialogPrimitive.Root open={inner} onOpenChange={rootOpenChange} {...props}>
           {children}
         </DialogPrimitive.Root>
       </DialogExitProvider>
+      </DialogClosingProvider>
     );
   },
 );

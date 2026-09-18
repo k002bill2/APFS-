@@ -21,7 +21,7 @@ import { toast } from './ui/sonner';
 import { UTYPES, hasChildren, pidTakenBy } from './admin_menu_tree';
 import type { MenuRow, MenuLevel, Program, UType } from './admin_menu_tree';
 
-const { Button } = UI;
+const { Button, SaveButton } = UI;
 
 /** 부모가 받는 저장값 — id/ord 재배치는 부모 책임. `ord`는 사용자가 입력한 희망 정렬번호. */
 export type MenuPatch = Pick<MenuRow, 'code' | 'name' | 'en' | 'pid' | 'pname' | 'short' | 'lvl' | 'parentId' | 'utypes' | 'use'> & { ord: number };
@@ -178,7 +178,7 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
     const short = v.pid ? v.short.replace(/[^\d]/g, '') : '';
     if (short && shortDup(short)) { setErrKey('shortDup'); return; }
     if (v.pid && pidTakenBy(rows, v.pid, initial?.id)) { setErrKey('pidDup'); return; }   // 한 프로그램은 한 메뉴에만
-    onSave({ code, name, en: v.en.trim(), pid: v.pid, pname: v.pname, short, lvl: Number(v.lvl) as MenuLevel, parentId: isTop ? null : v.parentId, ord: Number(ord), utypes: [...v.utypes], use: v.use === '여' });
+    return () => onSave({ code, name, en: v.en.trim(), pid: v.pid, pname: v.pname, short, lvl: Number(v.lvl) as MenuLevel, parentId: isTop ? null : v.parentId, ord: Number(ord), utypes: [...v.utypes], use: v.use === '여' });
   };
 
   const title = mode === 'create' ? '메뉴 등록' : '메뉴 수정';
@@ -273,7 +273,7 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
-            <Button variant="primary" size="sm" leadingIcon="check" onClick={submit}>저장</Button>
+            <SaveButton onSubmit={submit} />
           </div>
         </DialogFooter>
       </DialogContent>

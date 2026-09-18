@@ -10,6 +10,7 @@ import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import { Progress } from './ui/progress';
 import { spring, tween, revealVariants } from './motion/presets';
 import { CountUp } from './motion/count-up';
+import { useDialogClosing } from './ui/dialog-exit';
 
 const { Sparkline } = Charts;
 const cx = (...a: any[]) => a.filter(Boolean).join(" ");
@@ -193,6 +194,31 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
   );
 }
 
+/* ---- SaveButton ---- */
+/* 폼 모달 저장 버튼 — 디자인시스템 "Button 상태"의 loading(저장 중)을 모달마다 배선하지 않고 자동 적용한다(apfs-form-modal).
+   계약: onSubmit()은 검증 실패 시 undefined(스피너 없이 즉시 오류 표시), 성공 시 commit 함수를 반환한다.
+   클릭 → 검증 → 저장 중(SAVE_DEMO_MS) → commit. 백엔드가 없어 저장이 동기라 지연은 데모용 흉내다 — 상수 하나로 조절.
+   loading 중 disabled 는 쓰지 않는다(포커스 유지 — Button 규약). 취소·Esc 로 닫기가 시작되면(useDialogClosing)
+   대기 중 commit 을 즉시 버린다 — 언마운트에만 기대면 exit 애니메이션(≈280ms) 뒤라 지연과 경합한다(2026-09-18 실측). */
+export const SAVE_DEMO_MS = 400;
+export type SubmitResult = (() => void) | void | false | undefined;
+function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', delay = SAVE_DEMO_MS, variant = 'primary', size = 'sm', leadingIcon = 'check', style }: { onSubmit: () => SubmitResult; children?: React.ReactNode; busyLabel?: React.ReactNode; delay?: number; variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent'; size?: Size; leadingIcon?: string; style?: React.CSSProperties }) {
+  const [saving, setSaving] = React.useState(false);
+  const timer = React.useRef<number | null>(null);
+  const closing = useDialogClosing();
+  const cancel = () => { if (timer.current != null) { window.clearTimeout(timer.current); timer.current = null; } };
+  React.useEffect(() => () => cancel(), []);
+  React.useEffect(() => { if (closing && timer.current != null) { cancel(); setSaving(false); } }, [closing]);
+  const click = () => {
+    if (saving) return;
+    const commit = onSubmit();
+    if (typeof commit !== 'function') return;
+    setSaving(true);
+    timer.current = window.setTimeout(() => { timer.current = null; setSaving(false); commit(); }, delay);
+  };
+  return <Button variant={variant} size={size} leadingIcon={leadingIcon} loading={saving} onClick={click} style={style}>{saving ? busyLabel : children}</Button>;
+}
+
 /* ---- IconBtn ---- */
 function IconBtn({ icon, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed }: { icon: string; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean }) {
   const btn = (
@@ -239,4 +265,4 @@ function CountPill({ count, urgent }: { count?: number; urgent?: boolean }) {
   );
 }
 
-export const UI = { ColorChip, StatusBadge, DeltaBadge, StatCard, Card, ChartCard, SegTabs, FilterChip, Button, IconBtn, EmptyState, CountPill, Progress, toneVar };
+export const UI = { ColorChip, StatusBadge, DeltaBadge, StatCard, Card, ChartCard, SegTabs, FilterChip, Button, SaveButton, IconBtn, EmptyState, CountPill, Progress, toneVar };

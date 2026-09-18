@@ -3,7 +3,7 @@
 import * as React from 'react';
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 import { cn } from '@/lib/utils';
-import { DialogExitProvider, useDeferredClose, useExitEnd, makeExitEndHandler, type DialogHandle } from './dialog-exit';
+import { DialogExitProvider, DialogClosingProvider, useDeferredClose, useExitEnd, makeExitEndHandler, type DialogHandle } from './dialog-exit';
 
 /* ⚠ 그냥 AlertDialogPrimitive.Root 가 아니다 — Dialog 와 같은 이유로 닫힘 애니메이션을 살리려고
    내부 open 상태를 들고 exit 종료 뒤에 부모 onOpenChange(false) 를 호출한다(dialog-exit.ts 참조).
@@ -14,11 +14,13 @@ const AlertDialog = React.forwardRef<DialogHandle, React.ComponentPropsWithoutRe
     const { inner, finish, close, rootOpenChange } = useDeferredClose(open, onOpenChange);
     React.useImperativeHandle(ref, () => ({ close }), [close]);
     return (
+      <DialogClosingProvider value={!inner}>
       <DialogExitProvider value={finish}>
         <AlertDialogPrimitive.Root open={inner} onOpenChange={rootOpenChange} {...props}>
           {children}
         </AlertDialogPrimitive.Root>
       </DialogExitProvider>
+      </DialogClosingProvider>
     );
   },
 );
