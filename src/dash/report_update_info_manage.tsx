@@ -190,8 +190,9 @@ const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
 ];
 
 /* 라디오 단일선택 — 목업 1열 '선택(라디오)'. 객체 prop 은 모듈 상수로 호이스팅(apfs-aggrid 계약 6).
-   `isRowSelectable` 은 belt-and-braces 다 — AG Grid 자체가 pinned 행의 선택 컨트롤을 렌더하지 않고
-   (`isIncludeControl`) 선택도 막지만(`isRowSelectionBlocked`), 합계행 비선택을 코드로 명시해 둔다. */
+   `isRowSelectable` 은 belt-and-braces 다 — 선택 컨트롤은 이제 우리 렌더러(`aggrid_selection.tsx` SELECTION_COL)가 그리며
+   pinned·`selectable:false` 행엔 null 을 그리고, AG Grid 도 pinned 선택을 막지만(`isRowSelectionBlocked`), 합계행 비선택을
+   코드로 명시해 둔다(2026-09-18 갱신). */
 const ROW_SELECTION: RowSelectionOptions<ReportUpdateRow> = {
   mode: 'singleRow', checkboxes: true, enableClickSelection: true,
   isRowSelectable: (n) => !n.rowPinned,
