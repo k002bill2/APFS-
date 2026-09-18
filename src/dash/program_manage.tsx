@@ -380,7 +380,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      {/* ── 상세필터 드로어 — 검색기준+검색어 한 줄(opt-in) · 구분 · 도움말(사용여부는 툴바 칩) ── */}
+      {/* ── 상세필터 드로어 — 검색기준(opt-in, 라벨 위 + select·검색어 한 줄) · 구분 · 도움말(사용여부는 툴바 칩) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -389,16 +389,18 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* 검색기준(라벨 좌) + 기준 select + 검색어 input 을 한 줄로 — 목업 검색박스와 동일 배열.
+            {/* 검색기준(라벨 위) 아래로 기준 select + 검색어 input 을 한 줄에 — 목업 검색박스와 같은 배열.
                 <label> 은 컨트롤 하나만 소유하므로 <div> 래퍼 + 각 컨트롤 aria-label 로 접근명을 준다. */}
             {SEARCHABLE && (
-              <div className="flex items-center mb-4" style={{ gap: 8 }}>
-                <span className="shrink-0 font-semibold text-muted-foreground" style={{ fontSize: 14 }}>검색기준</span>
-                <div className="shrink-0">
-                  <DrawerSelect value={fField} onChange={(v) => setFField(v as ProgramField)} options={SEARCH_FIELDS.map((f) => ({ value: f.key, label: f.label }))} all={null} ariaLabel="검색기준" />
+              <div className="block mb-4">
+                <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>검색기준</span>
+                <div className="flex items-center" style={{ gap: 8 }}>
+                  <div className="shrink-0">
+                    <DrawerSelect value={fField} onChange={(v) => setFField(v as ProgramField)} options={SEARCH_FIELDS.map((f) => ({ value: f.key, label: f.label }))} all={null} ariaLabel="검색기준" />
+                  </div>
+                  <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }}
+                    aria-label="검색어" placeholder="검색어" style={{ ...inputStyle('text'), width: 'auto', minWidth: 96, flex: 1 }} />
                 </div>
-                <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }}
-                  aria-label="검색어" placeholder="검색어" style={{ ...inputStyle('text'), width: 'auto', minWidth: 96, flex: 1 }} />
               </div>
             )}
             <DrawerField label="구분"><DrawerSelect value={fGubun} onChange={setFGubun} options={gubuns.map((g) => ({ value: g, label: g }))} /></DrawerField>
