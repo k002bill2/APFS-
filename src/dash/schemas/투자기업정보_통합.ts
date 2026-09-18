@@ -37,7 +37,10 @@ export const schema: PageSchema = {
     { key: 'mandatoryInvest',  label: '의무투자 (신주·우선주)',    control: 'switch', options: ['Y', 'N'] },
     { key: 'belowScaleInvest', label: '일정규모이하투자 (신주·우선주)', control: 'radio', options: ['Y', 'N', '해당없음'] },
     { key: 'agriBiz',          label: '농식품경영체 여부',         control: 'switch', options: ['Y', 'N'] },
-    { key: 'followOn',         label: '후속투자여부',             control: 'checkbox' },
+    // 형제 Y/N 필드(overseas·mandatoryInvest·agriBiz)와 같은 'switch' 로 통일(2026-09-18).
+    //   구 'checkbox' 는 값 계약이 'true'/'false' 라, 셋이 똑같은 체크박스로 보이는데 저장값 형태만 달랐다
+    //   (게다가 등록 모드 첫옵션 시드가 옵션형에만 걸려 followOn 만 '' 로 저장됐다).
+    { key: 'followOn',         label: '후속투자여부',             control: 'switch', options: ['Y', 'N'] },
     { key: 'compliance',       label: '컴플라이언스의견',         control: 'select', options: ['적정', '조건부 적정', '부적정', '해당없음'] },
     { key: 'remark',           label: '비고',                     control: 'textarea' },
     { key: 'bizField',         label: '사업분야',                 control: 'select', options: ['전체', '정보통신', '바이오·헬스', '농식품 가공', '스마트팜', '식품제조', '유통·물류', '기타'] },

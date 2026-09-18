@@ -3,7 +3,7 @@
 import React from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
-import { SchemaField, isComplexControl } from './schemas/renderers';
+import { SchemaField, isComplexControl, isPlainWrapControl } from './schemas/renderers';
 import { isAddressEmpty } from './fields/address_value';
 import type { PageSchema } from './schemas/types';
 import { buildRow } from './schemas/build_row';
@@ -150,7 +150,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
                   key={f.key}
                   label={f.label + (f.required ? ' *' : '')}
                   className={span2 ? "sm:col-span-2" : undefined}
-                  plain={complex || f.control === "radio" || f.control === "switch"}
+                  plain={isPlainWrapControl(f.control)}
                   note={f.note}
                   errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
                   <SchemaField

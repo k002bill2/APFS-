@@ -16,7 +16,7 @@
 import React from 'react';
 import { UI } from './components';
 import { MT } from './mask';
-import { SchemaField } from './schemas/renderers';
+import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import type { MenuRow, UType } from './admin_menu_tree';
@@ -225,7 +225,7 @@ export function UserPermissionModal({ mode, initial, menuRows, existing, onSave,
             <Field label="설명 *" className="sm:col-span-2" errMsg={errKey === 'desc' ? '설명을(를) 입력하세요.' : undefined}>
               <SchemaField field={F.desc} value={v.desc} onChange={(x) => set('desc', x)} invalid={errKey === 'desc'} />
             </Field>
-            <Field label="사용여부" plain>
+            <Field label="사용여부" plain={isPlainWrapControl(F.use.control)}>
               <SchemaField field={F.use} value={v.use} onChange={(x) => set('use', x)} />
             </Field>
           </div>

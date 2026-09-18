@@ -7,7 +7,7 @@
    ⚠ 백엔드 없음 — 첨부는 파일명만 보관, 드래그앤드롭은 미구현(파일 선택 버튼만). apfs-form-modal 스킬 "escalation" 절 참조. */
 import React from 'react';
 import { UI } from './components';
-import { SchemaField, isComplexControl } from './schemas/renderers';
+import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { OPT_AG, OPT_FG, OPT_FC, OPT_PT, OPT_FS, OPT_TC } from './subfund_manage_schemas';
@@ -48,9 +48,8 @@ function Section({ title, children, single }: { title: string; children: React.R
 }
 /* 단일 필드 — SchemaField 재사용(라벨은 RowFormModal Field와 동일 규격). full=2단에서 전체 폭 */
 function F({ spec, value, onChange, full }: { spec: FieldSpec; value: string; onChange: (v: string) => void; full?: boolean }) {
-  // radio·switch 는 <label> 로 감싸지 않는다 — 암묵 연결이 라디오 첫 항목만 가리키고, switch 는 Radix <button> 이라 접근名을 자체 aria-label 로 받는다.
-  // 복합 컨트롤(richtext·filepond·file·tags·address)도 같은 이유로 제외한다 — 라벨이 내부 버튼을 가로챈다(판정 SSOT = renderers COMPLEX_CONTROLS).
-  const Wrap: any = spec.control === 'radio' || spec.control === 'switch' || isComplexControl(spec.control) ? 'div' : 'label';
+  // radio·switch·checkbox·복합 컨트롤은 <label> 로 감싸지 않는다 — 판정 SSOT = renderers.isPlainWrapControl(사유는 그쪽 주석).
+  const Wrap: any = isPlainWrapControl(spec.control) ? 'div' : 'label';
   return (
     <Wrap className={`block mb-3.5 ${full ? 'sm:col-span-2' : ''}`}>
       <span className="font-semibold text-caption block" style={{ fontSize: 12, marginBottom: 5 }}>{spec.label}{spec.required ? ' *' : ''}</span>

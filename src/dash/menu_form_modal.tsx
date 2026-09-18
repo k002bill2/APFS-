@@ -14,7 +14,7 @@
 import React from 'react';
 import { UI } from './components';
 import { MT } from './mask';
-import { SchemaField } from './schemas/renderers';
+import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { toast } from './ui/sonner';
@@ -257,7 +257,7 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
               </div>
             </Field>
 
-            <Field label="사용여부" plain>
+            <Field label="사용여부" plain={isPlainWrapControl(F.use.control)}>
               <SchemaField field={F.use} value={v.use} onChange={(x) => set('use', x as V['use'])} />
             </Field>
           </div>

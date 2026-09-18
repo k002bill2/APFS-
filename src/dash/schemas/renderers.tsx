@@ -5,7 +5,7 @@ import { parseFileNames, fileExtLabel } from '../fields/file_names';   // 첨부
 import { glyphFor } from '../ui/attachment';   // 확장자 → 아이콘·색 매핑(모달 첨부목록과 SSOT 공유)
 import { DatePicker } from '../ui/date-picker';
 import { PeriodPicker } from '../ui/period-picker';   // 연도 선택(control:'year') — 일자선택과 같은 폭·팝오버 계약
-import { Switch } from '../ui/switch';
+import { Checkbox } from '../ui/checkbox';   // 저장 대기형 폼의 on/off 값 = 체크박스(→ case 'switch' 주석)
 import { Icon } from '../icons';
 import { renderKind } from './dispatch';
 import type { ColumnSpec, FieldControl, FieldSpec, StatusDomainEntry } from './types';
@@ -113,6 +113,43 @@ export function isComplexControl(control: FieldControl): boolean {
   return COMPLEX_CONTROLS.includes(control);
 }
 
+/* `<label>` 로 감싸면 안 되는 컨트롤 전부 = 복합 컨트롤 + 자체 접근名/명시 연결을 쓰는 단일 컨트롤.
+   · radio      — 암묵 연결이 그룹의 **첫 항목만** 가리켜 라벨 클릭이 엉뚱한 옵션을 고른다.
+   · switch/checkbox — Radix 구현체가 `<button>` 이라 `<label>` 암묵 연결이 클릭을 한 번 더 발화시킨다
+                       (가시 라벨은 렌더러가 htmlFor/id 로 **명시** 연결한다).
+   판정을 폼 래퍼마다 리터럴로 복제하면 컨트롤이 늘 때 한 곳씩 빠지므로 여기를 SSOT 로 둔다
+   (소비처: generic_list_modal Field plain, subfund_form_modal F Wrap). */
+export function isPlainWrapControl(control: FieldControl): boolean {
+  return isComplexControl(control) || control === 'radio' || control === 'switch' || control === 'checkbox';
+}
+
+/* 체크박스 필드 — DS Checkbox + 클릭 가능한 가시 라벨(htmlFor/id 명시 연결).
+   control 'switch'(여/부 문자열 계약)와 'checkbox'('true'/'false' 계약)가 값 계약만 달리해 공유한다. */
+function CheckField({ id, checked, onToggle, text, label, required, invalid }: {
+  id: string; checked: boolean; onToggle: (next: boolean) => void;
+  text?: string; label: string; required?: boolean; invalid?: boolean;
+}) {
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 34 }}>
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={(c) => onToggle(c === true)}
+        /* 접근名 = "필드명 + 가시 텍스트"(예: "사용여부 여").
+           · `<label htmlFor>` 단독에 맡기면 접근名이 값('여')뿐이라 무슨 항목인지 알 수 없고,
+             `label[for]` → `<button role=checkbox>` 연결은 UA 별로 편차가 있어 비어 버릴 수 있다.
+           · 반대로 field.label 단독도 안 된다 — 가시 텍스트 '여'가 접근名에 없으면 WCAG 2.5.3(Label in Name) 위반. */
+        aria-label={text ? `${label} ${text}` : label}
+        aria-required={required || undefined}
+        aria-invalid={invalid || undefined}
+      />
+      {text ? (
+        <label htmlFor={id} style={{ fontSize: 13.5, color: 'var(--foreground)', cursor: 'pointer', userSelect: 'none' }}>{text}</label>
+      ) : null}
+    </div>
+  );
+}
+
 /* 폼 컨트롤 focus 표현 SSOT — 아래 SchemaField 와 AddressField(fields/AddressField.tsx)가 공유한다.
    별도 outline 링을 덧그리지 않고 인라인 border 색을 --ring 으로 스왑 + 은은한 글로우(2026-09-10 사용자 요청).
    ⚠ invalid/미입력 필수는 focus 중에도 danger 테두리를 유지한다(검증 단서 소실 방지) — 그땐 글로우만 danger 색. */
@@ -145,6 +182,8 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
   //   인라인 border는 CSS :focus-visible로 못 덮으므로(명시도) 여기서 상태로 스왑한다. 전역 규칙과 톤 일치.
   const [focused, setFocused] = React.useState(false);
   const fh = { onFocus: () => setFocused(true), onBlur: () => setFocused(false) };
+  // 체크박스 계열의 가시 라벨 명시 연결용 id — 같은 field.key 가 여러 모달에 동시에 뜰 수 있어 useId 로 고유화한다.
+  const uid = React.useId();
   const base: React.CSSProperties = {
     // ⚠️ fontFamily(longhand)로 패밀리만 상속 — `font: 'inherit'`(shorthand)는 font-size까지 리셋해 위의 fontSize:13.5를 부모값으로 덮어쓴다.
     // ⚠️ 높이 규격 34px(2026-09-09 사용자 DevTools 스펙) — DatePicker/PeriodPicker 버튼·radio와 일치시킨다.
@@ -181,20 +220,25 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
     // 연도선택 — PeriodPicker 연도 그리드(네이티브 select·숫자 input 나열 금지, →[[apfs-datepicker]]).
     // 값은 'YYYY' 문자열(사업연도·회계연도). 트리거가 w-full이라 date와 같은 fit-content 래퍼(minW=130)를 쓴다.
     case 'year':     return <div style={{ width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%' }}><PeriodPicker mode="year" value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
-    case 'checkbox': return <input type="checkbox" checked={value === 'true'} onChange={(e) => onChange(String(e.target.checked))} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />;
-    // on/off 상태값 토글 — 사용여부·제공여부 등 '여/부' 2지선다의 표준 컨트롤(radio 대체, 2026-09-15).
+    // 독립 체크값('true'/'false' 계약) — 가시 라벨은 모달이 위에 렌더하므로 여기선 접근名만 aria-label 로 준다.
+    // ⚠ 신규 스키마는 이 토큰 대신 `control:'switch' + options`를 쓴다(현재 사용처 0). 이유:
+    //   ① 값 계약이 'true'/'false' 라 형제 Y/N 필드와 나란히 두면 똑같아 보이는데 저장 형태만 다르다,
+    //   ② 옵션이 없어 클릭 가능한 가시 라벨을 붙일 수 없고(히트 영역이 20px 상자뿐),
+    //   ③ RowFormModal 의 첫옵션 시드(optionish)가 옵션형에만 걸려 등록 시 ''로 저장된다.
+    case 'checkbox': return <CheckField id={`${uid}-chk`} checked={value === 'true'} onToggle={(c) => onChange(String(c))} label={field.label} required={requiredMark} invalid={invalid} />;
+    // '여/부'·'Y/N' 2지선다 — **체크박스**로 그린다(2026-09-18). 스키마 토큰만 'switch' 로 남겨둔 의도적 별칭이다.
+    //   근거(namethatui.com/web/switch-checkbox-radio): switch 는 "바꾸면 **즉시 반영**"되는 설정을 뜻하고,
+    //   checkbox 는 "Save 를 기다려도 되는 독립 폼 값"을 뜻한다. 이 필드들은 전부 저장 버튼이 있는 RowFormModal
+    //   안에 있으므로 checkbox 가 맞다. (구 구현은 Switch — 2026-09-15 에 radio 를 대체하며 도입했다.)
+    //   스키마 16곳을 'checkbox' 로 고치지 않는 이유: 값 계약이 다르다('여'/'부' vs 'true'/'false').
     // ⚠️ 값 계약은 문자열 그대로 유지: checked = value === options[0], 토글 시 options[0] | options[1] 을 emit 한다.
     //    `use: v.use === '여'` 처럼 옵션 문자열을 읽는 소비처·필터가 다수라 'true'/'false' 로 바꾸면 무음으로 깨진다.
-    // 상태 텍스트를 옆에 함께 렌더 — 토글만 있으면 '여/부' 중 무엇이 켜진 상태인지 시각적으로 모호하다.
+    // 라벨 텍스트는 **고정**(= 긍정 옵션)이다. 상태는 체크 표식이 말한다 — 체크=여, 해제=부.
+    //    (구 Switch 는 켜짐/꺼짐이 모호해 상태 텍스트를 여↔부로 바꿔 보조했다. 체크박스는 표식이 명확해 불필요하다.)
     case 'switch': {
       const [onOpt, offOpt] = field.options && field.options.length >= 2 ? field.options : ['여', '부'];
       const checked = value === onOpt;
-      return (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, minHeight: 34 }}>
-          <Switch checked={checked} onCheckedChange={(c) => onChange(c ? onOpt : offOpt)} aria-label={field.label} aria-required={requiredMark || undefined} />
-          <span style={{ fontSize: 13.5, color: 'var(--foreground)' }}>{checked ? onOpt : offOpt}</span>
-        </div>
-      );
+      return <CheckField id={`${uid}-sw`} checked={checked} onToggle={(c) => onChange(c ? onOpt : offOpt)} text={onOpt} label={field.label} required={requiredMark} invalid={invalid} />;
     }
     // 라디오 — 옵션 가로 나열(Y/N, Y/N/해당없음 등). 네이티브 input + accentColor 토큰(라이트/다크 양립).
     case 'radio': return (
