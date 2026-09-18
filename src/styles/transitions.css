@@ -61,3 +61,269 @@
   .t-success-check { animation: none !important; opacity: 1; }
   .t-success-check svg path { animation: none !important; stroke-dashoffset: 0 !important; }
 }
+
+/* ── 08 page side-by-side (08-page-side-by-side.md) — 인증 화면 단계 전환 ─────────
+   소비처: auth_shared.tsx StepPage(로그인·발급/초대 온보딩의 step 컨테이너, DonePanel 루트).
+   원문은 두 페이지를 absolute 로 겹쳐 두고 data-page 로 토글하지만, 인증 카드는 단계를 조건부 마운트하고
+   높이가 내용에 따르므로 그 모델을 쓸 수 없다 → 원문이 허용하는 "--page-exit-enabled: 0"(나가는 쪽 없음)
+   변형으로, 들어오는 단계만 방향성 슬라이드(앞으로=오른쪽에서, 뒤로=왼쪽에서)한다. 구 FADE_UP(위→아래 8px)을 대체.
+   duration 은 기존 FADE_UP 이 280ms 였고 페이지급 표면이라 --dur-slow 배선(규약 2절 용도 일치). blur 는 enter 전용. */
+.t-page {
+  --page-slide-dur: var(--dur-slow);
+  --page-fade-dur: var(--dur-slow);
+  --page-slide-distance: 8px;
+  --page-blur: 3px;
+  --page-slide-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --page-fade-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-page-from-x: var(--page-slide-distance);
+  animation: t-page-in var(--page-slide-dur) var(--page-slide-ease);
+}
+.t-page[data-dir="back"] { --t-page-from-x: calc(var(--page-slide-distance) * -1); }
+@keyframes t-page-in {
+  from { opacity: 0; transform: translateX(var(--t-page-from-x)); filter: blur(var(--page-blur)); }
+  to   { opacity: 1; transform: translateX(0); filter: none; }   /* 규약 3절: 끝 프레임은 정지 스타일과 같게(none) */
+}
+@media (prefers-reduced-motion: reduce) {
+  .t-page { animation: none !important; }
+}
+
+/* ── 09 icon swap (09-icon-swap.md) — 같은 슬롯의 두 아이콘 크로스페이드 ────────────
+   소비처: components.tsx IconBtn(altIcon/swapped) → shell.tsx 테마 토글(moon↔sun). 원문 그대로(transition 기반,
+   fill 없음). 두 아이콘이 항상 DOM 에 있고 data-state 로 어느 쪽이 보이는지 정한다. duration 250ms "icon swap" 은
+   --dur(180ms) 용도와 일치해 배선. */
+.t-icon-swap {
+  --icon-swap-dur: var(--dur);
+  --icon-swap-blur: 2px;
+  --icon-swap-start-scale: 0.25;
+  --icon-swap-ease: ease-in-out;
+  position: relative;
+  display: inline-grid;
+}
+.t-icon-swap .t-icon {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  transition:
+    opacity   var(--icon-swap-dur) var(--icon-swap-ease),
+    filter    var(--icon-swap-dur) var(--icon-swap-ease),
+    transform var(--icon-swap-dur) var(--icon-swap-ease);
+  will-change: opacity, filter, transform;
+}
+.t-icon-swap[data-state="a"] .t-icon[data-icon="a"],
+.t-icon-swap[data-state="b"] .t-icon[data-icon="b"] {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+.t-icon-swap[data-state="a"] .t-icon[data-icon="b"],
+.t-icon-swap[data-state="b"] .t-icon[data-icon="a"] {
+  opacity: 0;
+  filter: blur(var(--icon-swap-blur));
+  transform: scale(var(--icon-swap-start-scale));
+}
+@media (prefers-reduced-motion: reduce) {
+  .t-icon-swap .t-icon { transition: none !important; }
+}
+
+/* ── 02 number pop-in (02-number-pop-in.md) — 숫자 갱신 시 자릿수별 재진입 ─────────
+   소비처: components.tsx PopNumber → grid_frame.tsx KpiBadge 값, main_widgets.tsx MiniKpis 값.
+   원문 대비 의도적 변경(규약 3절): `both` → `backwards`(stagger 지연 동안 from 유지, 끝나면 정지 스타일로 착지해
+   filter/transform 잔류 없음). will-change 는 .is-animating 동안만 — PopNumber 가 마지막 자릿수 animationend 에서
+   클래스를 내려 합성 레이어를 해제한다. 500ms 는 강조 순간이라 리터럴 유지. */
+@keyframes t-digit-pop-in {
+  0%   { transform: translate(calc(var(--digit-distance) * var(--digit-dir-x)), calc(var(--digit-distance) * var(--digit-dir-y))); opacity: 0; filter: blur(var(--digit-blur)); }
+  100% { transform: translate(0, 0); opacity: 1; filter: none; }
+}
+.t-digit-group {
+  --digit-dur: 500ms;
+  --digit-distance: 8px;
+  --digit-stagger: 70ms;
+  --digit-blur: 2px;
+  --digit-ease: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --digit-dir-x: 0;
+  --digit-dir-y: 1;
+  display: inline-flex;
+  align-items: baseline;
+}
+.t-digit { display: inline-block; white-space: pre; }
+.t-digit-group.is-animating .t-digit {
+  will-change: transform, opacity, filter;
+  animation: t-digit-pop-in var(--digit-dur) var(--digit-ease) backwards;
+}
+.t-digit-group.is-animating .t-digit[data-stagger="1"] { animation-delay: var(--digit-stagger); }
+.t-digit-group.is-animating .t-digit[data-stagger="2"] { animation-delay: calc(var(--digit-stagger) * 2); }
+@media (prefers-reduced-motion: reduce) {
+  /* 저모션에선 animationend 가 오지 않아 PopNumber 가 .is-animating 을 못 내린다 → will-change 도 여기서 함께 끈다. */
+  .t-digit-group .t-digit { animation: none !important; will-change: auto !important; }
+}
+
+/* ── 22 toast (22-toast.md) — 인증 화면 자체 토스트(Shell 없음, sonner 미탑재) ─────────
+   소비처: auth_shared.tsx Toast/useToast. Shell 안 화면의 토스트 소유자는 sonner 이므로 이 블록은 인증 3화면 전용.
+   열림은 느리게(350→--dur-slow) 닫힘은 빠르게(250→--dur)의 비대칭은 원문 그대로. 원문 대비 의도적 변경(규약 3절):
+   닫힘 레인에서 blur 를 뺀다(.is-hiding 은 opacity/transform 만 전이, filter:none) — blur 는 합성 불가라 닫힘 프레임을 떨군다.
+   가운데 정렬은 transform 이 아니라 CSS translate 프로퍼티로(레시피가 transform 을 점유). */
+.t-toast {
+  --toast-open: var(--dur-slow);
+  --toast-close: var(--dur);
+  --toast-distance: 16px;
+  --toast-blur: 2px;
+  --toast-scale: 0.97;
+  --toast-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  opacity: 0;
+  transform: translateY(var(--toast-distance)) scale(var(--toast-scale));
+  filter: blur(var(--toast-blur));
+  will-change: transform, opacity, filter;
+  transition:
+    opacity var(--toast-close) var(--toast-ease),
+    transform var(--toast-close) var(--toast-ease),
+    filter var(--toast-close) var(--toast-ease);
+}
+.t-toast.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: none;   /* 정지 상태는 none — 규약 6절 검증식(filter==='none') */
+  transition:
+    opacity var(--toast-open) var(--toast-ease),
+    transform var(--toast-open) var(--toast-ease),
+    filter var(--toast-open) var(--toast-ease);
+}
+.t-toast.is-hiding {
+  opacity: 0;
+  transform: translateY(var(--toast-distance)) scale(var(--toast-scale));
+  filter: none;
+  transition:
+    opacity var(--toast-close) var(--toast-ease),
+    transform var(--toast-close) var(--toast-ease);
+}
+@media (prefers-reduced-motion: reduce) {
+  .t-toast { transition: none !important; }
+}
+
+/* ── 04 text states swap (04-text-states-swap.md) — 제자리 텍스트 교체 ─────────────
+   소비처: components.tsx TextSwap → user_permission_modal.tsx "N / M 선택" 캡션. 3단계(exit → 텍스트 교체+enter-start → rest)는
+   TextSwap 이 React 상태로 돈다(규약 5절). 150ms "text swap" 은 --dur-fast(120ms) 용도와 일치해 배선. 원문 그대로. */
+.t-text-swap {
+  --text-swap-dur: var(--dur-fast);
+  --text-swap-translate-y: 4px;
+  --text-swap-blur: 2px;
+  --text-swap-ease: ease-in-out;
+  display: inline-block;
+  transform: translateY(0);
+  filter: none;   /* 정지 상태는 none(none↔blur 는 보간된다) */
+  opacity: 1;
+  transition:
+    transform var(--text-swap-dur) var(--text-swap-ease),
+    filter    var(--text-swap-dur) var(--text-swap-ease),
+    opacity   var(--text-swap-dur) var(--text-swap-ease);
+}
+.t-text-swap.is-exit, .t-text-swap.is-enter-start { will-change: transform, filter, opacity; }   /* 전이 중에만 힌트 — 정지 후 레이어 상주 방지 */
+.t-text-swap.is-exit {
+  transform: translateY(calc(var(--text-swap-translate-y) * -1));
+  filter: blur(var(--text-swap-blur));
+  opacity: 0;
+}
+.t-text-swap.is-enter-start {
+  transform: translateY(var(--text-swap-translate-y));
+  filter: blur(var(--text-swap-blur));
+  opacity: 0;
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .t-text-swap { transition: none !important; }
+}
+
+/* ── 18 texts reveal (18-texts-reveal.md) — 제목·부제·요약·액션의 순차 등장 ───────────
+   소비처: components.tsx TextsReveal → auth_shared.tsx DonePanel(제목·부제·KvGrid·액션 4줄). 원문의 --1/--2 두 줄을
+   4줄로 확장(레시피 안내대로 transition-delay: stagger × (N-1)). 총 stagger 120ms < 300ms(polish 규칙). 500ms 는 강조라 리터럴.
+   exit(.is-hiding)은 소비처가 언마운트로 닫아 쓰지 않지만 원문 그대로 둔다. */
+.t-stagger {
+  --stagger-dur: 500ms;
+  --stagger-distance: 12px;
+  --stagger-stagger: 40ms;
+  --stagger-blur: 3px;
+  --stagger-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.t-stagger-line {
+  display: block;
+  opacity: 0;
+  transform: translateY(var(--stagger-distance));
+  filter: blur(var(--stagger-blur));
+  transition:
+    opacity   var(--stagger-dur) var(--stagger-ease),
+    transform var(--stagger-dur) var(--stagger-ease),
+    filter    var(--stagger-dur) var(--stagger-ease);
+}
+.t-stagger:not(.is-shown) .t-stagger-line { will-change: transform, opacity, filter; }   /* 등장 전·전이 시작 시점만 힌트 */
+.t-stagger-line--2 { transition-delay: var(--stagger-stagger); }
+.t-stagger-line--3 { transition-delay: calc(var(--stagger-stagger) * 2); }
+.t-stagger-line--4 { transition-delay: calc(var(--stagger-stagger) * 3); }
+.t-stagger.is-shown .t-stagger-line {
+  opacity: 1;
+  transform: translateY(0);
+  filter: none;   /* 정지 상태는 none */
+}
+.t-stagger.is-hiding .t-stagger-line {
+  opacity: 0;
+  transform: translateY(0);
+  filter: blur(0);
+  transition:
+    opacity 200ms ease,
+    transform 0s linear,
+    filter 0s linear;
+  transition-delay: 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .t-stagger-line { transition: none !important; }
+}
+
+/* ── 13 input clear with dissolve (13-input-clear-dissolve.md) — 검색어 × 클리어 ─────
+   소비처: components.tsx ClearableInput → 상세필터 드로어 검색어 4곳(generic_list·subfund_manage·menu_manage·code_manage).
+   원문은 미러+가짜 placeholder+단어별 radial-gradient 글로우(프레임별 JS 148줄, 다크에서 mix-blend-mode 반전 필요)인데
+   여기서는 핵심 레인인 "옛 값이 위로 날아가며 흐려져 사라짐"(미러 fly-out)만 이식하고 글로우·가짜 placeholder 레인은 생략한다.
+   빈 상태의 placeholder 는 input 자체 placeholder 가 그대로 나타난다. 400ms "input clear" 는 --dur-slow 용도라 배선.
+   × 버튼은 값이 있을 때만 보이고(has-value) 포커스 가능. */
+.t-clear {
+  --clear-out-dur: var(--dur-slow);
+  --clear-out-fly: 12px;
+  --clear-out-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --clear-blur: 2px;
+  position: relative;
+  display: block;           /* 폭은 소비처 style 의 width/minWidth/maxWidth 를 ClearableInput 이 래퍼로 옮겨 준다 */
+}
+.t-clear > input { display: block; width: 100%; padding-right: 34px !important; }
+.t-clear-mirror {
+  position: absolute; inset: 0;
+  display: flex; align-items: center;
+  pointer-events: none;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: inherit;
+  white-space: nowrap; overflow: hidden;
+  opacity: 0;
+  will-change: transform, opacity, filter;
+}
+.t-clear.is-clearing:not(.has-value) > input { color: transparent; caret-color: transparent; }   /* 클리어 중 새로 타이핑하면 바로 보이게 */
+.t-clear.is-clearing .t-clear-mirror {
+  animation: t-clear-out var(--clear-out-dur) var(--clear-out-ease);
+}
+@keyframes t-clear-out {
+  from { opacity: 1; transform: translateY(0); filter: none; }
+  to   { opacity: 0; transform: translateY(calc(var(--clear-out-fly) * -1)); filter: blur(var(--clear-blur)); }
+}
+.t-clear-btn {
+  position: absolute; right: 6px; top: 50%; translate: 0 -50%;
+  width: 24px; height: 24px; border-radius: 7px; border: 0; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; color: var(--caption); cursor: pointer;
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+.t-clear.has-value .t-clear-btn { opacity: 1; pointer-events: auto; }
+.t-clear-btn:hover { background: var(--muted); color: var(--foreground); }
+@media (prefers-reduced-motion: reduce) {
+  .t-clear .t-clear-mirror { animation: none !important; }
+  .t-clear-btn { transition: none !important; }
+}
+/* 클리어 중엔 placeholder 를 숨기고, 미러가 사라진 뒤 나타나게(원문의 가짜 placeholder 페이드인 근사) */
+.t-clear > input::placeholder { transition: opacity var(--dur) var(--ease); }
+.t-clear.is-clearing > input::placeholder { opacity: 0; }

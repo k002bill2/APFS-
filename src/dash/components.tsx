@@ -222,7 +222,7 @@ function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', d
 }
 
 /* ---- IconBtn ---- */
-function IconBtn({ icon, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed }: { icon: string; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean }) {
+function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean }) {
   const btn = (
     // hover/press는 Motion spring(색 전환은 CSS 유지). scale은 저모션 시 MotionConfig가 자동 비활성.
     <motion.button
@@ -236,7 +236,10 @@ function IconBtn({ icon, onClick, label, badge, active, size = 38, iconSize = 16
       transition={spring.control}
       className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border transition-colors duration-tok-fast ease-ds",
         active ? (activeClassName || "bg-card text-primary border-ring") : "bg-transparent text-muted-foreground border-transparent")}
-      style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}><Icon name={icon} size={iconSize} stroke={2} />{badge > 0 && <span
+      style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}>{altIcon
+        /* 아이콘 스왑(transitions.dev 09, src/styles/transitions.css .t-icon-swap): 두 아이콘을 같은 슬롯에 두고 swapped 로 교차 페이드. 테마 토글 등 상태 아이콘용. */
+        ? <span className="t-icon-swap" data-state={swapped ? "b" : "a"} aria-hidden="true"><span className="t-icon" data-icon="a"><Icon name={icon} size={iconSize} stroke={2} /></span><span className="t-icon" data-icon="b"><Icon name={altIcon} size={iconSize} stroke={2} /></span></span>
+        : <Icon name={icon} size={iconSize} stroke={2} />}{badge > 0 && <span
         className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-[color:var(--destructive-foreground)] text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</motion.button>
   );
   if (!label) return btn;
@@ -245,6 +248,101 @@ function IconBtn({ icon, onClick, label, badge, active, size = 38, iconSize = 16
       <TooltipTrigger asChild>{btn}</TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>
     </Tooltip>
+  );
+}
+
+/* ---- PopNumber ---- */
+/* 숫자 팝인(transitions.dev 02 number pop-in, src/styles/transitions.css .t-digit-group).
+   value 가 바뀔 때마다 자릿수를 분해해 재진입 애니메이션을 재생한다(마지막 두 자리는 stagger).
+   key 를 올려 그룹을 통째로 다시 마운트하므로 원문의 "remove class → reflow → add class" 리플레이 트릭이 필요 없다.
+   끝나면 .is-animating 을 내려 will-change(합성 레이어)를 해제한다. 문자열/숫자만 분해하고 그 외 노드는 그대로 렌더. */
+function PopNumber({ value, className, style }: { value: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+  const text = typeof value === "string" || typeof value === "number" ? String(value) : null;
+  const [gen, setGen] = React.useState(0);
+  const [animating, setAnimating] = React.useState(true);
+  const first = React.useRef(true);
+  /* useLayoutEffect: 값이 바뀐 커밋이 "새 숫자·애니메이션 없음" 상태로 한 프레임 먼저 페인트된 뒤 리마운트되면
+     숫자가 한 번 깜빡인다(비-discrete 갱신 경로). paint 전에 key 를 올려 처음부터 시작 프레임으로 그린다. */
+  React.useLayoutEffect(() => {
+    if (first.current) { first.current = false; return; }
+    setGen((g) => g + 1); setAnimating(true);
+  }, [text]);
+  if (text === null) return <>{value}</>;
+  const chars = Array.from(text);
+  /* 마지막 자릿수(data-stagger="2")가 항상 가장 늦게 끝나므로 그 animationend 에서만 내린다. 빈 문자열은 span 이 없어
+     animationend 가 오지 않으니 처음부터 is-animating 을 붙이지 않는다. */
+  return (
+    <span key={gen} className={cx("t-digit-group", animating && chars.length > 0 && "is-animating", className)} style={style}
+      onAnimationEnd={(e) => { if ((e.target as HTMLElement).dataset?.stagger === "2") setAnimating(false); }}>
+      {/* 자릿수 span 은 시각 전용 — SR 이 글자를 따로 읽지 않도록 숨기고 전체 문자열을 sr-only 로 한 번에 제공([[web-a11y]]) */}
+      {chars.map((ch, i) => <span key={i} className="t-digit" aria-hidden="true" data-stagger={i === chars.length - 2 ? "1" : i === chars.length - 1 ? "2" : undefined}>{ch}</span>)}
+      <span className="sr-only">{text}</span>
+    </span>
+  );
+}
+
+/* ---- TextSwap ---- */
+/* 제자리 텍스트 교체(transitions.dev 04 text-states-swap, .t-text-swap). 원문 3단계를 React 상태로:
+   text 가 바뀌면 exit(위로 4px+blur) → --text-swap-dur 뒤 새 텍스트를 enter-start(아래 4px, transition 없음)로 그리고
+   reflow 후 rest 로 전이. 카운트 캡션처럼 "값만 바뀌는 짧은 텍스트"용. 접근성 라이브리전은 소비처의 바깥 span 이 맡는다. */
+function TextSwap({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
+  const [shown, setShown] = React.useState(text);
+  const [phase, setPhase] = React.useState<"rest" | "exit" | "enter">("rest");
+  const ref = React.useRef<HTMLSpanElement>(null);
+  React.useEffect(() => {
+    /* A→B→A 왕복(exit 타이머가 끝나기 전 원래 값으로 복귀)이면 phase 가 "exit"(opacity 0)에 고착된다 → 정지로 되돌린다. */
+    if (text === shown) { setPhase((p) => (p === "rest" ? p : "rest")); return; }
+    setPhase("exit");
+    const dur = parseFloat(ref.current ? getComputedStyle(ref.current).getPropertyValue("--text-swap-dur") : "") || 150;
+    const id = window.setTimeout(() => { setShown(text); setPhase("enter"); }, dur);
+    return () => window.clearTimeout(id);
+  }, [text, shown]);
+  React.useLayoutEffect(() => {
+    if (phase !== "enter") return;
+    void ref.current?.offsetHeight; // enter-start 스타일을 한 번 계산시켜야 다음 클래스 제거가 transition 으로 잡힌다
+    setPhase("rest");
+  }, [phase]);
+  return <span ref={ref} className={cx("t-text-swap", phase === "exit" && "is-exit", phase === "enter" && "is-enter-start", className)} style={style}>{shown}</span>;
+}
+
+/* ---- TextsReveal ---- */
+/* 순차 등장(transitions.dev 18 texts-reveal, .t-stagger). 자식이 `t-stagger-line t-stagger-line--N`(N=1~4) 클래스를 달면
+   마운트 다음 프레임에 is-shown 이 붙어 위→아래로 40ms 간격 리빌. 닫힘은 언마운트. */
+function TextsReveal({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+  const [shown, setShown] = React.useState(false);
+  React.useEffect(() => { const id = requestAnimationFrame(() => setShown(true)); return () => cancelAnimationFrame(id); }, []);
+  return <div className={cx("t-stagger", shown && "is-shown", className)} style={style}>{children}</div>;
+}
+
+/* ---- ClearableInput ---- */
+/* × 클리어 입력(transitions.dev 13 input-clear-dissolve, .t-clear). 값이 있으면 우측에 × 가 나타나고, 누르면 옛 값의 미러가
+   위로 12px 날아가며 흐려져 사라진다(글로우 레인은 생략 — transitions.css 주석). 제어형: value + onValueChange(string).
+   미러는 input 과 같은 style 을 받아 글자 위치를 맞춘다(배경·테두리는 CSS 가 !important 로 투명 처리). */
+function ClearableInput({ value, onValueChange, className, style, clearLabel = "입력 지우기", ...rest }:
+  Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> & { value: string; onValueChange: (v: string) => void; clearLabel?: string }) {
+  const [clearing, setClearing] = React.useState<string | null>(null);
+  const wrapRef = React.useRef<HTMLSpanElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const timer = React.useRef<number | undefined>(undefined);
+  React.useEffect(() => () => window.clearTimeout(timer.current), []);
+  const clear = () => {
+    if (!value) return;
+    setClearing(value);
+    onValueChange("");
+    const dur = parseFloat(wrapRef.current ? getComputedStyle(wrapRef.current).getPropertyValue("--clear-out-dur") : "") || 280;
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setClearing(null), dur);
+    inputRef.current?.focus();
+  };
+  /* 소비처 style 의 폭(width/minWidth/maxWidth — 예: drawerInputStyle 의 fit-content+minWidth 240)은 래퍼가 받고 input 은 래퍼를
+     100% 채운다. 인라인 width 가 input 에 남으면 absolute × 버튼이 래퍼 오른쪽 끝(드로어 끝)으로 떨어진다 — DrawerSelect 와 같은 함정. */
+  const { width, minWidth, maxWidth, ...innerStyle } = style ?? {};
+  return (
+    <span ref={wrapRef} className={cx("t-clear", value && "has-value", clearing !== null && "is-clearing", className)} style={{ width, minWidth, maxWidth }}>
+      <input ref={inputRef} {...rest} value={value} onChange={(e) => onValueChange(e.target.value)} style={innerStyle} />
+      {clearing !== null && <span className="t-clear-mirror" aria-hidden="true" style={innerStyle}>{clearing}</span>}
+      <button type="button" className="t-clear-btn" aria-label={clearLabel} tabIndex={value ? 0 : -1} aria-hidden={!value} onClick={clear}><Icon name="x" size={14} stroke={2.2} /></button>
+    </span>
   );
 }
 
@@ -267,4 +365,4 @@ function CountPill({ count, urgent }: { count?: number; urgent?: boolean }) {
   );
 }
 
-export const UI = { ColorChip, StatusBadge, DeltaBadge, StatCard, Card, ChartCard, SegTabs, FilterChip, Button, SaveButton, IconBtn, EmptyState, CountPill, Progress, toneVar };
+export const UI = { ColorChip, StatusBadge, DeltaBadge, StatCard, Card, ChartCard, SegTabs, FilterChip, Button, SaveButton, IconBtn, EmptyState, CountPill, Progress, PopNumber, TextSwap, TextsReveal, ClearableInput, toneVar };

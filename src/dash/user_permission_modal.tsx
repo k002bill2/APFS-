@@ -24,7 +24,7 @@ import { UTYPES } from './admin_menu_tree';
 import { PERM_KEYS, PERM_LABELS, matrixRows, setCells, triOf, countOn, cellOf, permNameTaken } from './user_permission_model';
 import type { PermKey, PermMap, Tri, MatrixRow } from './user_permission_model';
 
-const { Button, SaveButton } = UI;
+const { Button, SaveButton, TextSwap } = UI;
 
 export interface PermRow {
   id: string; no: number;
@@ -234,7 +234,7 @@ export function UserPermissionModal({ mode, initial, menuRows, existing, onSave,
           <fieldset className="border-0 p-0 m-0 mt-2">
             <legend className="w-full flex items-center justify-between gap-2 text-lg font-bold border-b-2 border-border pb-2 mb-3">
               <span>메뉴별 기능 권한</span>
-              <span className="text-caption font-semibold" style={{ fontSize: 12 }} aria-live="polite">{on.toLocaleString()} / {total.toLocaleString()} 선택</span>
+              <span className="text-caption font-semibold" style={{ fontSize: 12 }} aria-live="polite"><TextSwap text={`${on.toLocaleString()} / ${total.toLocaleString()} 선택`} /></span>
             </legend>
             <div className="overflow-x-auto rounded-[9px] border border-border">
               <PermMatrix rows={rows} perms={perms} onChange={setPerms} />

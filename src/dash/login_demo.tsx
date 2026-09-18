@@ -7,7 +7,7 @@ import React, { useEffect, useRef, useState, type FormEvent } from 'react';
 import { UI } from './components';
 import {
   AuthLayout, SplitCard, Field, FormError, PrimaryBtn, SecondaryBtn, DonePanel,
-  OtpCode, Toast, Logo, InfoHint, useDemoOtp, useToast, T, FADE_UP,
+  OtpCode, Toast, Logo, InfoHint, useDemoOtp, useToast, T, StepPage, useStepDir,
 } from './auth_shared';
 import {
   railSteps, LOGIN_RAIL, RESET_RAIL, SIMPLE_AUTH_RAIL,
@@ -19,6 +19,7 @@ const NO_PW_ERR: PwChangeErrors = { cur: null, next: null, confirm: null };
 
 export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
   const [step, setStep] = useState(1);
+  const dir = useStepDir(step);
   // 실제 시스템에서는 서버가 내려주는 값. 데모 토글을 걷어낸 뒤로는 항상 경과 상태라 3단계가 늘 표시된다.
   const [pwExpired] = useState(true);
   const [id, setId] = useState('');
@@ -139,7 +140,7 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
         </>}>
 
         {step === 1 && (
-          <div style={{ animation: FADE_UP }}>
+          <StepPage dir={dir}>
             {/* 로그인 ↔ 비밀번호 재설정. 2차 인증이 시작된 뒤(2단계~)에는 노출하지 않는다. */}
             <div style={{ marginBottom: 30 }}>
               <UI.SegTabs value={mode} onChange={switchMode}
@@ -262,11 +263,11 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
                 )}
               </>
             )}
-          </div>
+          </StepPage>
         )}
 
         {step === 2 && (
-          <div className="flex flex-col flex-1" style={{ animation: FADE_UP }}>
+          <StepPage dir={dir} className="flex flex-col flex-1">
             <h1 style={T.title3}>2차 인증(OTP)</h1>
             <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '6px 0 22px' }}>휴대폰 인증앱에 표시된 6자리 코드를 입력해 주세요.</p>
             <div className="flex items-center justify-between flex-wrap gap-2" style={{
@@ -285,11 +286,11 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
                 <SecondaryBtn onClick={() => { setStep(1); setOtpErr(null); }} style={{ flex: '0 0 96px' }}>뒤로</SecondaryBtn>
               </div>
             </form>
-          </div>
+          </StepPage>
         )}
 
         {step === 3 && (
-          <div style={{ animation: FADE_UP }}>
+          <StepPage dir={dir}>
             <h1 style={T.title3}>비밀번호 변경</h1>
             <p style={{ ...T.body3, color: 'var(--muted-foreground)', margin: '6px 0 22px' }}>비밀번호 사용 90일이 경과했어요. 변경 후 이용할 수 있습니다.</p>
             <form noValidate onSubmit={submit3} className="flex flex-col gap-4">
@@ -301,7 +302,7 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
                 value={p2} onChange={setP2} error={pwErr.confirm} />
               <PrimaryBtn type="submit" full>변경하고 계속</PrimaryBtn>
             </form>
-          </div>
+          </StepPage>
         )}
 
         {step === 4 && (
