@@ -32,6 +32,7 @@ import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생�
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode, CellContextMenuEvent, CellKeyDownEvent, SuppressKeyboardEventParams } from 'ag-grid-community';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 행선택)·내용폭 자동화 SSOT
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import './aggrid_shared.css';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
@@ -151,7 +152,7 @@ function makeRows(schema: PageSchema, n: number): Row[] {
    두 옵션이 **한 벌**이다: `enableClickSelection` 이 클릭을 선택 수단으로 열고(기본 false),
    `enableSelectionWithoutKeys` 가 ⌘/Shift 없이도 **누적 토글**이 되게 한다. 후자가 없으면 클릭이
    기존 체크를 전부 지우고 그 행만 남겨, 체크박스로 고른 다건이 본문 클릭 한 번에 날아간다. */
-const ROW_SELECTION = { mode: "multiRow", checkboxes: true, headerCheckbox: true, enableClickSelection: true, enableSelectionWithoutKeys: true } as const;
+const ROW_SELECTION = { mode: "multiRow", checkboxes: true, headerCheckbox: false, selectAll: "filtered", enableClickSelection: true, enableSelectionWithoutKeys: true } as const;   // 헤더 전체선택은 SELECTION_COL 의 DS 헤더가 그린다(내장 SelectAllFeature 끔) · selectAll 범위는 DS 헤더와 동일하게 filtered
 
 let SEQ = 500;
 const nextId = () => "R" + (++SEQ);
@@ -766,6 +767,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               rowHeight={44}
               defaultColDef={DEFAULT_COL_DEF}
               rowSelection={schema.hideRowSelection ? undefined : ROW_SELECTION}
+              selectionColumnDef={SELECTION_COL}   // 선택 컬럼 = DS Checkbox(셀+3상태 헤더)
               pagination
               paginationPageSize={pageSize}
               paginationPageSizeSelector={false}

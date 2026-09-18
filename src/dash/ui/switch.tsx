@@ -1,10 +1,8 @@
 /* shadcn/ui Switch — Radix 기반. APFS 규약:
-   - 용도: **바꾸는 즉시 반영되는** 설정 토글(테마·알림 on/off 등)에만 쓴다.
-     · 저장 버튼을 기다리는 폼 값(사용여부·제공여부 등 '여'/'부')은 **checkbox** 다 — schemas/renderers.tsx case 'switch' 주석 참조.
-       (스키마 토큰 control:'switch' 는 남아 있지만 렌더러가 Checkbox 로 그린다. 2026-09-18)
-     · 상호배타 '분류' 선택(개인/법인, 신주/구주, Y/N/해당없음)은 radio.
-     근거: switch=즉시 반영 / checkbox=Save 대기 가능 / radio=이름 묶인 배타 그룹
-     (namethatui.com/web/switch-checkbox-radio).
+   - 용도: on/off **2지선다 값** 토글 — 폼 모달의 사용여부·제공여부('여'/'부', 'Y'/'N')와 즉시 반영형 설정(테마·알림) 모두.
+     · 2026-09-18 오전 namethatui(switch=즉시 반영 / checkbox=Save 대기) 의미 규약으로 폼 값을 체크박스로 바꿨다가,
+       같은 날 오후 사용자 결정("스위치는 체크로 하지 말고 원복")으로 **스위치 렌더 원복**. 화면 인터랙션 통일이 의미 규약보다 우선.
+     · 독립 복수 선택(사용자 구분·권한 체크 그룹, 권한 매트릭스)은 checkbox, 상호배타 '분류'(개인/법인, Y/N/해당없음)는 radio(ui/radio-group.tsx).
    - 시각: off = muted 트랙 + border-strong, on = primary 트랙. 엄지(thumb)는 흰 원.
    - 포커스: shadcn ring 미사용 → 전역 outline(checkbox.tsx 동일 규약)
    - 키보드: Radix 가 role=switch + Space/Enter 토글 제공. 접근名은 소비처(SchemaField)가 aria-label 로 부여. */

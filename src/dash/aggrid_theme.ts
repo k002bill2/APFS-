@@ -4,8 +4,10 @@
    핵심:
    - 시맨틱 파라미터만 토큰 바인딩 → 라이트/다크 자동 추종(파생 크롬은 derive).
    - 행선택 배경은 accentColor가 아니라 **selectedRowBackgroundColor**로 격리한다.
-     accentColor를 바꾸면 체크박스·포커스링·정렬표시까지 물들기 때문. 회색은
+     accentColor를 바꾸면 포커스링·정렬표시까지 물들기 때문. 회색은
      tokens.css의 --row-selected(브랜드색 비종속 중립 회색) 한 곳에서 제어.
+   - 행선택 **체크박스는 테마가 그리지 않는다** — `aggrid_selection.tsx` 의 `SELECTION_COL`(DS Checkbox 셀/헤더 렌더러)이
+     그린다(2026-09-18). 내장 ag-checkbox 는 CSS 로 숨기므로 checkbox* 테마 파라미터는 두지 않는다.
    - v33+ 필수: AllCommunityModule을 import 시 1회 등록(미등록 시 런타임 blank grid).
      이 모듈을 import하는 모든 그리드가 등록을 공유한다.
    - ⚠️ 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지 — Theming API와 충돌. */
@@ -40,7 +42,7 @@ export const DEFAULT_COL_DEF = { sortable: true, resizable: true, suppressHeader
 export const apfsTheme = themeQuartz.withParams({
   backgroundColor: 'var(--card)',
   foregroundColor: 'var(--foreground)',
-  accentColor: 'var(--primary)',                 // 체크박스/포커스링/정렬표시 — 브랜드색 유지
+  accentColor: 'var(--primary)',                 // 포커스링/정렬표시 — 브랜드색 유지(체크박스는 aggrid_selection.tsx 가 그린다)
   borderColor: 'var(--border)',
   selectedRowBackgroundColor: 'var(--row-selected)',  // 행선택 = 회색(토큰). accentColor와 분리
   fontFamily: 'inherit',

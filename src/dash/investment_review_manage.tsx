@@ -24,6 +24,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
@@ -419,7 +420,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
             autoSizeStrategy={AUTO_SIZE_CONTENT}
             defaultColDef={DEFAULT_COL_DEF}
             rowSelection={{ mode: 'singleRow', checkboxes: true, enableClickSelection: true }}
-            selectionColumnDef={{ pinned: 'left', width: 44, maxWidth: 44 }}
+            selectionColumnDef={SELECTION_COL}
             pagination paginationPageSize={pageSize} suppressPaginationPanel
             isExternalFilterPresent={isExternalFilterPresent}
             doesExternalFilterPass={doesExternalFilterPass}

@@ -17,6 +17,8 @@ import { MT } from './mask';
 import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
+import { Checkbox } from './ui/checkbox';   // 복수 선택 체크 그룹 = DS 체크박스(htmlFor 명시 연결, 래핑 금지)
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';   // 프로그램 검색 결과 1건 선택 = DS 라디오
 import { toast } from './ui/sonner';
 import { UTYPES, hasChildren, pidTakenBy } from './admin_menu_tree';
 import type { MenuRow, MenuLevel, Program, UType } from './admin_menu_tree';
@@ -84,17 +86,24 @@ function ProgramSearchDialog({ programs, onPick, onClose }: { programs: readonly
             <Field label="프로그램ID"><SchemaField field={{ key: 'qid', label: '프로그램ID', control: 'text' }} value={qid} onChange={setQid} /></Field>
             <Field label="프로그램명"><SchemaField field={{ key: 'qname', label: '프로그램명', control: 'text' }} value={qname} onChange={setQname} /></Field>
           </div>
-          {/* 결과 표 — 라디오로 1건 선택(키보드 화살표 이동은 네이티브). 행 클릭도 선택 */}
-          <div className="rounded-[9px] border border-border overflow-auto" style={{ maxHeight: 320 }} role="group" aria-label="프로그램 검색 결과">
+          {/* 결과 표 — DS 라디오로 1건 선택(방향키 이동은 Radix RadioGroup). 행 클릭도 선택.
+              RadioGroup Root 가 표 컨테이너를 감싸 role=radiogroup 이 되고, 각 행의 Item 이 한 그룹으로 묶인다. */}
+          <RadioGroup value={pick} onValueChange={setPick} aria-label="프로그램 검색 결과" className="block rounded-[9px] border border-border overflow-auto" style={{ maxHeight: 320 }}>
             <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
               <colgroup><col style={{ width: 40 }} /><col style={{ width: 150 }} /><col /></colgroup>
               <thead><tr><th style={th}><span className="sr-only">선택</span></th><th style={th}>프로그램ID</th><th style={th}>프로그램명</th></tr></thead>
               <tbody>
                 {list.length === 0 && <tr><td colSpan={3} style={{ ...td, textAlign: 'center', color: 'var(--muted-foreground)', padding: '26px 0' }}>검색 결과가 없습니다.</td></tr>}
                 {list.map((p) => (
-                  <tr key={p.pid} onClick={() => setPick(p.pid)} className="cursor-pointer" style={pick === p.pid ? { background: 'var(--row-selected)' } : undefined}>
+                  /* 행 클릭 = 그 행의 라디오를 클릭한 것으로 위임 — setPick 직접 호출은 Item onClick 을 건너뛰어 선택 점 pop 이 안 튄다
+                     (radio-group.tsx 의 self 플래그). 라디오 자체 클릭은 tr 로 버블되므로 재클릭하지 않는다(이미 선택된 Item 재클릭은 플래그만 남긴다). */
+                  <tr key={p.pid} className="cursor-pointer" style={pick === p.pid ? { background: 'var(--row-selected)' } : undefined}
+                    onClick={(e) => {
+                      if ((e.target as Element).closest('button[role=radio]')) return;
+                      e.currentTarget.querySelector<HTMLButtonElement>('button[role=radio]')?.click();
+                    }}>
                     <td style={{ ...td, textAlign: 'center' }}>
-                      <input type="radio" name="pg-pick" value={p.pid} checked={pick === p.pid} onChange={() => setPick(p.pid)} aria-label={`${p.pid} ${p.pname}`} style={{ accentColor: 'var(--primary)', width: 16, height: 16, margin: 0 }} />
+                      <RadioGroupItem value={p.pid} aria-label={`${p.pid} ${p.pname}`} className="align-middle" />
                     </td>
                     <td style={{ ...td, fontVariantNumeric: 'tabular-nums' }}><MT>{p.pid}</MT></td>
                     <td style={{ ...td, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><MT>{p.pname}</MT></td>
@@ -102,7 +111,7 @@ function ProgramSearchDialog({ programs, onPick, onClose }: { programs: readonly
                 ))}
               </tbody>
             </table>
-          </div>
+          </RadioGroup>
           <p className="text-caption m-0 mt-2" style={{ fontSize: 12, lineHeight: 1.5 }}>프로그램ID가 있는 메뉴(실제 프로그램)만 단축번호를 설정할 수 있습니다. 행을 선택하고 [확인]을 누르세요.</p>
         </div>
         <DialogFooter className="px-[46px]">
@@ -165,6 +174,7 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
     if (!s) { toast.error('단축번호를 입력해 주세요.'); return; }
     toast[shortDup(s) ? 'error' : 'success'](shortDup(s) ? '이미 사용 중인 단축번호입니다.' : '사용 가능한 단축번호입니다.');
   };
+  const uid = React.useId();   // 체크 그룹 id 접두(htmlFor 명시 연결용)
   const toggleUtype = (u: UType) => set('utypes', v.utypes.includes(u) ? v.utypes.filter((x) => x !== u) : [...v.utypes, u]);
 
   const submit = () => {
@@ -248,11 +258,11 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
             {/* 사용자 구분 — 복수 선택 체크박스 그룹(목업 chkgrp). 미선택 = 전체 공통 메뉴 */}
             <Field label="사용자 구분" plain hint="이 메뉴를 노출할 사용자 유형입니다(복수 선택 가능). 미선택 시 전체 공통 메뉴로 취급합니다.">
               <div role="group" aria-label="사용자 구분" className="flex items-center gap-4 flex-wrap" style={{ minHeight: 34 }}>
-                {UTYPES.map((u) => (
-                  <label key={u} className="inline-flex items-center gap-1.5 cursor-pointer" style={{ fontSize: 14 }}>
-                    <input type="checkbox" checked={v.utypes.includes(u)} onChange={() => toggleUtype(u)} style={{ accentColor: 'var(--primary)', width: 16, height: 16, margin: 0 }} />
-                    {u}
-                  </label>
+                {UTYPES.map((u, i) => (
+                  <span key={u} className="inline-flex items-center gap-1.5" style={{ fontSize: 14 }}>
+                    <Checkbox id={`${uid}-utype-${i}`} checked={v.utypes.includes(u)} onCheckedChange={() => toggleUtype(u)} aria-label={`사용자 구분 ${u}`} />
+                    <label htmlFor={`${uid}-utype-${i}`} style={{ cursor: 'pointer', userSelect: 'none' }}>{u}</label>
+                  </span>
                 ))}
               </div>
             </Field>

@@ -24,6 +24,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import { _stopPropagationForAgGrid } from 'ag-grid-community';
@@ -106,7 +107,6 @@ const makeColumns = (toggle: (id: string) => void): ColDef<MenuView>[] => [
   { field: 'use', headerName: '사용여부', width: 92, ...NOSORT, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} /> },
 ];
 const ROW_SELECTION: RowSelectionOptions<MenuView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 
 type XCol = { header: string; get: (r: MenuView) => string | number };
 const EXPORT_COLS: XCol[] = [

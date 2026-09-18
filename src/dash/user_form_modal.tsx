@@ -11,6 +11,7 @@ import { UI } from './components';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
+import { Checkbox } from './ui/checkbox';   // 권한(복수) 체크 그룹 = DS 체크박스(htmlFor 명시 연결, 래핑 금지)
 import type { UType } from './admin_menu_tree';
 import { ROLE_NAMES, effectiveMenus, orgsOf } from './admin_demo_data';
 import type { RoleName } from './admin_demo_data';
@@ -62,6 +63,7 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
   const set = <K extends keyof V>(k: K, val: V[K]) => { setV((p) => ({ ...p, [k]: val })); if (errKey === k || errKey === `${String(k)}Dup`) setErrKey(''); };
   /* 사용자구분 변경 → 조건부 값 초기화(목업 e-type change) */
   const setType = (t: string) => { setV((p) => ({ ...p, type: t as UType, dept: '', org: '', account: '농식품' })); setErrKey(''); };
+  const uid = React.useId();   // 체크 그룹 id 접두(htmlFor 명시 연결용)
   const toggleRole = (r: RoleName) => { set('roles', v.roles.includes(r) ? v.roles.filter((x) => x !== r) : [...v.roles, r]); };
 
   /* 조건부 소속 — 운용사·수탁은 기관 select(값=기관명, 저장 시 id 로 환원) */
@@ -144,11 +146,11 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
             {/* 권한(복수) — 체크박스 그룹 + 유효 메뉴 힌트(aria-live) */}
             <Field label="권한 (복수) *" plain className="sm:col-span-2" errMsg={errKey === 'roles' ? '권한을 1개 이상 선택하세요.' : undefined}>
               <div role="group" aria-label="권한" className="flex items-center gap-4 flex-wrap" style={{ minHeight: 34 }}>
-                {ROLE_NAMES.map((r) => (
-                  <label key={r} className="inline-flex items-center gap-1.5 cursor-pointer" style={{ fontSize: 14 }}>
-                    <input type="checkbox" checked={v.roles.includes(r)} onChange={() => toggleRole(r)} style={{ accentColor: 'var(--primary)', width: 16, height: 16, margin: 0 }} />
-                    {r}
-                  </label>
+                {ROLE_NAMES.map((r, i) => (
+                  <span key={r} className="inline-flex items-center gap-1.5" style={{ fontSize: 14 }}>
+                    <Checkbox id={`${uid}-role-${i}`} checked={v.roles.includes(r)} onCheckedChange={() => toggleRole(r)} aria-label={`권한 ${r}`} />
+                    <label htmlFor={`${uid}-role-${i}`} style={{ cursor: 'pointer', userSelect: 'none' }}>{r}</label>
+                  </span>
                 ))}
               </div>
               <span className="text-caption block mt-1" style={{ fontSize: 11.5 }} aria-live="polite">유효 메뉴(권한 합집합): <b className="text-foreground">{eff.length ? eff.join(', ') : '없음'}</b></span>

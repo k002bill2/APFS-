@@ -35,6 +35,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle, RowSelectionOptions, SelectionColumnDef } from 'ag-grid-community';
@@ -189,13 +190,13 @@ const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
 ];
 
 /* 라디오 단일선택 — 목업 1열 '선택(라디오)'. 객체 prop 은 모듈 상수로 호이스팅(apfs-aggrid 계약 6).
-   `isRowSelectable` 은 belt-and-braces 다 — AG Grid 자체가 pinned 행의 선택 컨트롤을 렌더하지 않고
-   (`isIncludeControl`) 선택도 막지만(`isRowSelectionBlocked`), 합계행 비선택을 코드로 명시해 둔다. */
+   `isRowSelectable` 은 belt-and-braces 다 — 선택 컨트롤은 이제 우리 렌더러(`aggrid_selection.tsx` SELECTION_COL)가 그리며
+   pinned·`selectable:false` 행엔 null 을 그리고, AG Grid 도 pinned 선택을 막지만(`isRowSelectionBlocked`), 합계행 비선택을
+   코드로 명시해 둔다(2026-09-18 갱신). */
 const ROW_SELECTION: RowSelectionOptions<ReportUpdateRow> = {
   mode: 'singleRow', checkboxes: true, enableClickSelection: true,
   isRowSelectable: (n) => !n.rowPinned,
 };
-const SELECTION_COL: SelectionColumnDef = { pinned: 'left', width: 44 };
 
 /* 엑셀 텍스트 컬럼(승인금액 제외) — 화면 컬럼과 1:1(화면=엑셀 불변식). 순서가 목업 헤더와 같다 */
 const EXCEL_TEXT: { header: string; get: (r: ReportUpdateRow) => string }[] = [

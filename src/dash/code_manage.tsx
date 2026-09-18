@@ -23,6 +23,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -79,7 +80,6 @@ const DETAIL_COLS: ColDef<CodeDetail>[] = [
 /* 좌 그리드: 클릭 선택만(선택 해제 없음 — 우측 데이터 소스가 사라지지 않게). 우 그리드: 일반 단일 선택 */
 const GROUP_SELECTION: RowSelectionOptions<GroupView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: 'enableSelection' };
 const DETAIL_SELECTION: RowSelectionOptions<CodeDetail> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
-const SELECTION_COL = { pinned: 'left' as const, width: 44, maxWidth: 44 };
 
 function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
