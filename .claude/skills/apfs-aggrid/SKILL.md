@@ -17,7 +17,6 @@ description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규
 1. **모듈 1회 등록.** `aggrid_theme.ts`가 `ModuleRegistry.registerModules([AllCommunityModule])`를 1회 수행한다. 새 그리드는 **반드시 `aggrid_theme.ts`에서 `apfsTheme`를 import**(=등록 공유). 직접 등록 추가 금지. 미등록 시 런타임 **빈 그리드**.
 2. **레거시 CSS import 금지.** `ag-grid.css`·`ag-theme-*.css`를 import하지 말 것 — v33+ Theming API와 충돌. 테마는 오직 `theme={apfsTheme}` prop.
 3. **회색 행선택은 `selectedRowBackgroundColor`로 격리.** `apfsTheme`가 `selectedRowBackgroundColor: var(--row-selected)`(중립 회색 토큰)로 칠한다. **`accentColor`(포커스링·정렬표시)는 건드리지 말 것** — 바꾸면 선택색이 그 크롬까지 물든다.
-4. **행선택 체크박스 = DS `Checkbox`(2026-09-18 사용자 결정 "모두 통일").** `selectionColumnDef` 는 페이지마다 리터럴을 쓰지 않고 **`aggrid_selection.tsx` 의 `SELECTION_COL`** 한 상수를 넘긴다(`pinned:'left'·width 44` + DS 체크박스 셀 렌더러 + multiRow 3상태 헤더). `rowSelection` 은 그대로 둔다(`checkboxes:true` 가 선택 컬럼을 만들고, 내장 ag-checkbox 는 `aggrid_selection.css` 가 숨긴다). 테마 `checkbox*` 파라미터로 색만 맞추는 방식은 크기(iconSize 16)·표식 pop 이 달라 폐기했다. ⚠ 이중 토글 방지는 클래스가 아니라 AG Grid 이벤트 플래그(`_stopPropagationForAgGrid`, 래퍼에 **네이티브** click/dblclick 리스너) — React onClick 에서 세우면 행 리스너가 먼저 지나가 늦다.
 4. **pinned 합계행은 참조가 안정해야 한다(매 렌더 인라인 `[total]` 금지).** `pinnedBottomRowData`에 매 렌더 **새 배열**을 넘기면 AG Grid가 고정행을 재생성해 **행 애니메이션이 매번 재발**한다. 데이터 가변성에 따라 갈라라:
    - **정적 데이터** → 모듈 스코프 상수: `const PINNED_BOTTOM = [TOTAL_ROW];`
    - **가변 행(삭제·추가로 합계 재계산 필요)** → `const pinned = useMemo(() => [computeTotal(rows)], [rows]);` — 렌더 간 참조 안정 + 데이터 변할 때만 새 배열.
@@ -35,6 +34,8 @@ description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규
      `useState` 세터는 안정하므로 deps `[]`가 성립한다. **`columnDefs`만 고정하고 `defaultColDef`를 인라인으로 두면 소용없다.**
    - 검증: 폭을 재고 → 필터 칩 클릭 → 다시 재서 **같은 값**인지 확인(빌드 green으로는 절대 안 잡힌다).
 7. **가로 스크롤은 children 책임이지만 AG Grid는 내부 스크롤을 가진다.** `domLayout="autoHeight"`를 쓰면 세로는 콘텐츠에 맞고 가로는 AG Grid 자체 뷰포트가 스크롤한다. 수제 `<table>`을 쓸 때만 `overflow-x-auto`+`min-width` 래퍼가 필요(→[[apfs-grid]] 계약1). 토큰만 사용(하드코딩 hex 금지, →[[color-tokens]]).
+8. **행선택 체크박스 = DS `Checkbox`(2026-09-18 사용자 결정 "모두 통일").** `selectionColumnDef` 는 페이지마다 리터럴을 쓰지 않고 **`aggrid_selection.tsx` 의 `SELECTION_COL`** 한 상수를 넘긴다(`pinned:'left'·width 44` + DS 체크박스 셀 렌더러 + multiRow 3상태 헤더). `rowSelection` 은 그대로 둔다(`checkboxes:true` 가 선택 컬럼을 만들고, 내장 ag-checkbox 는 `aggrid_selection.css` 가 숨긴다). 테마 `checkbox*` 파라미터로 색만 맞추는 방식은 크기(iconSize 16)·표식 pop 이 달라 폐기했다. ⚠ 이중 토글 방지는 클래스가 아니라 AG Grid 이벤트 플래그(`_stopPropagationForAgGrid`, 래퍼에 **네이티브** click/dblclick 리스너) — React onClick 에서 세우면 행 리스너가 먼저 지나가 늦다.
+   `main-internal` export 는 **semver 비보장** — 모듈 로드 시 `typeof` 어서션으로 사라지면 시끄럽게 실패한다(조용한 no-op 방지). multiRow 소비처는 `headerCheckbox:false` + `selectAll:'filtered'`(DS 헤더와 범위 일치, 내장 SelectAllFeature 끔). pinned 합계행·`selectable:false` 행은 렌더러가 `null` 을 그린다(내장 동작과 동일).
 
 ## 컬럼 정의 (정본 패턴)
 ```tsx
@@ -195,7 +196,7 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     다건이면 `선택 삭제`·`선택 해제`만 남는다(정본: `generic_list.tsx` `selActions`).
   - **조회 전용 화면은 `rowSelection` 자체를 두지 않는다**(2026-09-15 사용자 지시 — 체크박스만 끄는 것보다 한 단계 더). 선택이 만들 액션이 없으면 `mode:'singleRow', enableClickSelection:true`도 지운다: 함께 `onSelectionChanged`·선택 state(`selId`)·`selected`·툴바의 `선택 해제` 버튼/선택 배지 분기·`refresh()`의 `deselectAll()`·`apiRef`(다른 용도가 없으면)까지 **한 벌로 사라진다**. `refreshNoColumn`은 자기 이벤트의 `e.api`를 쓰므로 `apiRef`에 의존하지 않는다. 상세 진입은 **더블클릭 / Enter / 우클릭 메뉴** 3경로로 이미 충분하고, 회색 행 강조가 없어지는 것이 "선택 기능 없음"과 일치한다. 선례: `audit_log.tsx`·`permission_history.tsx`.
   - 스키마 주도(`generic_list.tsx`) 페이지는 이 규약을 `schema.hideRowSelection: true` 로 표현한다(→[[apfs-grid]]) — bespoke 페이지만 `rowSelection`을 직접 만진다.
-- **라디오 단일선택(체크박스가 필요한 경우)**: `rowSelection={{mode:'singleRow',checkboxes:true,enableClickSelection:true}}` + `selectionColumnDef={SELECTION_COL}`(`aggrid_selection.tsx`, 핵심 규약 4) + `getRowId`. 선택 SSOT는 React state(→[[apfs-stage-workflow]] 규약 9).
+- **라디오 단일선택(체크박스가 필요한 경우)**: `rowSelection={{mode:'singleRow',checkboxes:true,enableClickSelection:true}}` + `selectionColumnDef={SELECTION_COL}`(`aggrid_selection.tsx`, 핵심 규약 8) + `getRowId`. 선택 SSOT는 React state(→[[apfs-stage-workflow]] 규약 9).
 - **단계/상태 배지 셀**: `StatusBadge size="lg" dot={false}`(13px, 앞 점 없음 — 배지가 촘촘히 반복되는 열).
 - **엑셀**: 2단 헤더 병합·리프 키를 손으로 적지 말고 `flattenForExcel(columnDefs)`(골드 로컬 헬퍼, `ColGroupDef` 순회 → `head1/head2/keys/merges`)로 **columnDefs에서 자동 산출**. 마스크 시 숫자 0·텍스트 ''.
 - 읽기전용 명세는 [[apfs-spec-popup]]. (카드뷰 토글 규약은 2026-09-11 폐기 — 리스트 뷰 단일 표현.)

@@ -8,7 +8,9 @@
    동작:
    - 셀: rowNode 의 'rowSelected' 이벤트를 구독해 체크 상태를 따라간다. 클릭 → node.setSelected(). singleRow 면 AG Grid 가
      다른 행을 알아서 푼다.
-   - 헤더(multiRow 만): 전체/일부/없음 3상태(indeterminate). 클릭 → 전부 켜기/끄기(api.selectAll/deselectAll). singleRow 는 빈 헤더.
+   - 헤더(multiRow 만): 전체/일부/없음 3상태(indeterminate). 클릭 → 전부 켜기/끄기(api.selectAll/deselectAll **'filtered'**). singleRow 는 빈 헤더.
+     소비처 rowSelection 은 `headerCheckbox:false` + `selectAll:'filtered'` 로 둔다 — 내장 SelectAllFeature(헤더 셀 Space) 와 의미를 맞춘다.
+     ⚠ 푸터 `getSelectedRows().length` 는 필터 밖 선택까지 세므로 "N건 선택 + 헤더 미체크" 가 가능하다(의도).
    - 내장 체크박스(.ag-selection-checkbox > ag-checkbox)·헤더 select-all 은 CSS 로 숨긴다(aggrid_selection.css).
    - ⚠ 이중 토글 방지: AG Grid 의 행클릭 선택(onRowClick)은 클래스가 아니라 **이벤트 플래그**(`_stopPropagationForAgGrid`,
      내장 체크박스도 같은 방식)로 건너뛴다. 래퍼 div 에 **네이티브** click/dblclick 리스너로 플래그를 세운다 — 네이티브라야
@@ -17,9 +19,13 @@
    - 크기: 셀 높이 44 에 20px 박스. 컬럼 폭 44(pinned left)는 기존 SELECTION_COL 값 그대로. */
 import React from 'react';
 import { _stopPropagationForAgGrid } from 'ag-grid-community';
-import type { SelectionColumnDef, ICellRendererParams, IHeaderParams, RowNode, GridApi } from 'ag-grid-community';
+import type { SelectionColumnDef, ICellRendererParams, IHeaderParams, GridApi } from 'ag-grid-community';
 import { Checkbox } from './ui/checkbox';
 import './aggrid_selection.css';
+
+/* ⚠ `_stopPropagationForAgGrid` 는 main-internal(semver 비보장) export 다. 업그레이드로 사라지면
+   addEventListener('click', undefined) 가 예외 없이 no-op 이 돼 이중 토글이 **조용히** 돌아온다 → 시끄럽게 실패시킨다. */
+if (typeof _stopPropagationForAgGrid !== 'function') throw new Error('ag-grid-community 내부 API _stopPropagationForAgGrid 가 사라졌다 — aggrid_selection.tsx 의 이중 토글 가드를 재설계할 것(apfs-aggrid 계약 참조)');
 
 /* 래퍼에 AG Grid 전파 차단 플래그를 세우는 네이티브 리스너(위 주석). dblclick 도 막아 더블클릭=수정 모달이 열리지 않게 한다. */
 function useAgGridClickGuard() {
@@ -33,7 +39,10 @@ function useAgGridClickGuard() {
   return ref;
 }
 
-function SelectCell({ node, api }: ICellRendererParams) {
+function SelectCell({ node }: ICellRendererParams) {
+  // pinned 합계행·선택 불가 행에는 그리지 않는다 — pinned 노드는 선택 모델 밖이라 setSelected 가 무시돼 "죽은 체크"가 된다
+  // (내장 체크박스는 AG Grid 가 애초에 안 그렸다. 훅 순서 유지를 위해 계산만 먼저, return 은 훅 뒤).
+  const dead = !!node.rowPinned || node.selectable === false;
   const guard = useAgGridClickGuard();
   const [sel, setSel] = React.useState<boolean>(!!node.isSelected());
   React.useEffect(() => {
@@ -42,16 +51,12 @@ function SelectCell({ node, api }: ICellRendererParams) {
     node.addEventListener('rowSelected', h);
     return () => node.removeEventListener('rowSelected', h);
   }, [node]);
-  // 행 라벨: 첫 표시 컬럼 값(있으면) — SR 에 "행 선택" 만 반복되지 않게. 없으면 rowIndex.
-  const label = React.useMemo(() => {
-    const cols = api.getAllDisplayedColumns().filter((c) => c.getColId() !== 'ag-Grid-SelectionColumn');
-    const first = cols[0];
-    const v = first ? api.getCellValue({ rowNode: node as RowNode, colKey: first, useFormatter: true }) : null;
-    return v != null && String(v) !== '' ? `행 선택 ${String(v)}` : `행 선택 ${(node.rowIndex ?? 0) + 1}`;
-  }, [api, node]);
+  if (dead) return null;
+  // 접근名은 고정 "행 선택" — 행 식별은 AG Grid 의 행/셀 컨텍스트 낭독에 맡긴다. 첫 컬럼 값을 넣으면 화면은 <MT>/mn() 마스크를
+  // 통과하는데 접근名은 통과하지 않아 마스크 ON 시 SR 이 인명·코드를 읽는다(독립 리뷰 지적).
   return (
     <div ref={guard} className="apfs-ds-select">
-      <Checkbox checked={sel} onCheckedChange={(c) => node.setSelected(c === true)} aria-label={label} />
+      <Checkbox checked={sel} onCheckedChange={(c) => node.setSelected(c === true)} aria-label="행 선택" />
     </div>
   );
 }
@@ -59,22 +64,24 @@ function SelectCell({ node, api }: ICellRendererParams) {
 type Tri = boolean | 'indeterminate';
 function triOf(api: GridApi): Tri {
   let total = 0; let on = 0;
-  api.forEachNodeAfterFilter((n) => { if (!n.group) { total++; if (n.isSelected()) on++; } });
+  api.forEachNodeAfterFilter((n) => { if (!n.group && n.selectable !== false) { total++; if (n.isSelected()) on++; } });   // 선택 불가 행은 분모에서 제외(없으면 헤더가 일부 상태에 고착)
   return total > 0 && on === total ? true : on > 0 ? 'indeterminate' : false;
 }
 
 function SelectHeader({ api }: IHeaderParams) {
   const guard = useAgGridClickGuard();
-  const multi = (() => { const rs = api.getGridOption('rowSelection'); return typeof rs === 'object' && rs?.mode === 'multiRow'; })();
+  const isMulti = () => { const rs = api.getGridOption('rowSelection'); return typeof rs === 'object' && rs?.mode === 'multiRow'; };
+  const [multi, setMulti] = React.useState<boolean>(isMulti);
   const [tri, setTri] = React.useState<Tri>(() => triOf(api));
   React.useEffect(() => {
-    if (!multi) return;
-    const h = () => setTri(triOf(api));
+    const h = () => { setMulti(isMulti()); setTri(triOf(api)); };
     h();
     api.addEventListener('selectionChanged', h);
     api.addEventListener('modelUpdated', h);
+    // ⚠ rowSelection 을 런타임에 바꾸는 화면이 생기면 재판정 경로가 필요하다('gridOptionsChanged' 는 공개 이벤트 union 밖).
+    //   오늘은 전 소비처가 모듈 상수를 쓰고, generic_list 의 hideRowSelection 은 컬럼 자체를 만들었다 없애 헤더가 재생성된다.
     return () => { api.removeEventListener('selectionChanged', h); api.removeEventListener('modelUpdated', h); };
-  }, [api, multi]);
+  }, [api]);
   if (!multi) return null;
   return (
     <div ref={guard} className="apfs-ds-select">
