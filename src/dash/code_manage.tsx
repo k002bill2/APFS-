@@ -248,11 +248,10 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
     if (modal?.kind !== 'delGroup') return;
     const code = modal.code;
     const blocker = groupDeleteBlocker(groups, details, code);
-    if (blocker) { setModal(null); toast.error(`${blocker}가 있어 삭제할 수 없습니다.`); return; }
+    if (blocker) { toast.error(`${blocker}가 있어 삭제할 수 없습니다.`); return; }
     setGroups((prev) => prev.filter((g) => g.code !== code));
     setDetails((prev) => { const n = { ...prev }; delete n[code]; return n; });
     if (curCode === code) { setCurCode(null); setSelDetail(null); }
-    setModal(null);
     toast.success('삭제되었습니다 (목업)');
   };
   /* ── CRUD(코드상세) — 그룹 안 중복 검사 + 정렬 재배치 ── */
@@ -283,7 +282,6 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
     const id = modal.id, g = curG.code;
     setDetails((prev) => ({ ...prev, [g]: (prev[g] ?? []).filter((d) => d.id !== id) }));
     if (selDetail === id) setSelDetail(null);
-    setModal(null);
     toast.success('삭제되었습니다 (목업)');
   };
   const refresh = () => {
@@ -475,7 +473,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setModal(null)}>취소</AlertDialogCancel>
+              <AlertDialogCancel>취소</AlertDialogCancel>
               <AlertDialogAction onClick={doDelGroup} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -492,7 +490,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setModal(null)}>취소</AlertDialogCancel>
+              <AlertDialogCancel>취소</AlertDialogCancel>
               <AlertDialogAction onClick={doDelDetail} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

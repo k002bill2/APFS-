@@ -3,8 +3,26 @@
 import * as React from 'react';
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 import { cn } from '@/lib/utils';
+import { DialogExitProvider, useDeferredClose, useExitEnd, makeExitEndHandler, type DialogHandle } from './dialog-exit';
 
-const AlertDialog = AlertDialogPrimitive.Root;
+/* ⚠ 그냥 AlertDialogPrimitive.Root 가 아니다 — Dialog 와 같은 이유로 닫힘 애니메이션을 살리려고
+   내부 open 상태를 들고 exit 종료 뒤에 부모 onOpenChange(false) 를 호출한다(dialog-exit.ts 참조).
+   AlertDialogAction/Cancel 은 Radix 닫기 버튼이라 이 경로를 그대로 탄다 — 소비처 수정이 필요 없다.
+   단, Cancel 에 onClick={() => setModal(null)} 같은 직접 언마운트를 붙이면 애니메이션이 다시 죽는다. */
+const AlertDialog = React.forwardRef<DialogHandle, React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Root>>(
+  ({ open, onOpenChange, children, ...props }, ref) => {
+    const { inner, finish, close, rootOpenChange } = useDeferredClose(open, onOpenChange);
+    React.useImperativeHandle(ref, () => ({ close }), [close]);
+    return (
+      <DialogExitProvider value={finish}>
+        <AlertDialogPrimitive.Root open={inner} onOpenChange={rootOpenChange} {...props}>
+          {children}
+        </AlertDialogPrimitive.Root>
+      </DialogExitProvider>
+    );
+  },
+);
+AlertDialog.displayName = 'AlertDialog';
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 const AlertDialogPortal = AlertDialogPrimitive.Portal;
 
@@ -23,7 +41,7 @@ AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, ...props }, ref) => (
+>(({ className, onAnimationEnd, ...props }, ref) => (
   <AlertDialogPortal>
     <AlertDialogOverlay />
     <AlertDialogPrimitive.Content
@@ -34,6 +52,7 @@ const AlertDialogContent = React.forwardRef<
         'data-[state=open]:animate-dialog-in data-[state=closed]:animate-dialog-out',
         className,
       )}
+      onAnimationEnd={makeExitEndHandler(useExitEnd(), onAnimationEnd)}
       {...props}
     />
   </AlertDialogPortal>

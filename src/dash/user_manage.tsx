@@ -176,10 +176,10 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
   const patchRow = (id: string, fn: (u: UserRow) => UserRow) => setRows((prev) => prev.map((r) => (r.id === id ? fn(r) : r)));
   const openMail = (title: string, mail: MailSpec) => setModal({ kind: 'mail', title, mail });
   const askUnlock = (u: UserRow) => setModal({ kind: 'confirm', title: '잠금 해제', desc: `${u.name} 계정의 잠금을 해제할까요? (실패 횟수 초기화)`, okLabel: '잠금 해제', onOk: () => {
-    patchRow(u.id, unlockUser); setModal(null); toast.success(`${u.name} 잠금 해제 — 감사로그에 기록됩니다 (목업)`);
+    patchRow(u.id, unlockUser); toast.success(`${u.name} 잠금 해제 — 감사로그에 기록됩니다 (목업)`);
   } });
   const askExpire = (u: UserRow) => setModal({ kind: 'confirm', title: '비밀번호 만료 처리', desc: `${u.name} 계정을 비밀번호 만료 처리할까요? 다음 로그인 시 변경을 안내합니다.`, okLabel: '만료 처리', onOk: () => {
-    patchRow(u.id, (r) => ({ ...r, pwExpired: true })); setModal(null); toast.success(`${u.name} 만료 처리 — 안내 메일 발송 (목업)`);
+    patchRow(u.id, (r) => ({ ...r, pwExpired: true })); toast.success(`${u.name} 만료 처리 — 안내 메일 발송 (목업)`);
   } });
   const askOtp = (u: UserRow) => setModal({ kind: 'confirm', title: 'OTP 재발급', desc: `${u.name} 계정의 OTP를 재발급할까요? 기존 앱 등록은 무효화되고 재등록 안내 메일을 미리봅니다.`, okLabel: '재발급', onOk: () => {
     openMail(`OTP 재등록 안내 메일 미리보기 — ${u.name}`, otpMail(u)); toast.success('OTP 재발급 — 재등록 안내 메일 (목업)');
@@ -360,7 +360,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
               <AlertDialogDescription>{modal.desc}<br />화면 시연용 프로토타입 — 실제 계정·인증 상태는 바뀌지 않습니다.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setModal(null)}>취소</AlertDialogCancel>
+              <AlertDialogCancel>취소</AlertDialogCancel>
               <AlertDialogAction onClick={modal.onOk}>{modal.okLabel}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

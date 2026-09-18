@@ -275,10 +275,9 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   };
   const doDelete = () => {
     if (modal?.kind !== 'delete' || !target) return;
-    if (deleteBlocker(target)) { setModal(null); toast.error(deleteBlocker(target)!); return; }
+    if (deleteBlocker(target)) { toast.error(deleteBlocker(target)!); return; }
     setRows((prev) => prev.filter((r) => r.id !== target.id));
     if (selId === target.id) setSelId(null);
-    setModal(null);
     toast.success('삭제되었습니다 (목업)');
   };
   const refresh = () => { setRows(seedPrograms()); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
@@ -432,7 +431,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setModal(null)}>취소</AlertDialogCancel>
+              <AlertDialogCancel>취소</AlertDialogCancel>
               <AlertDialogAction onClick={doDelete} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -287,7 +287,6 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
   const confirmSchedule = () => {   // AlertDialog '확정' 확인 후
     if (!selected) return;
     patchRow(selected.id, { confirm: '확정', res: '미결' });
-    setModal(null);
     toast.success('투심일정이 확정되었습니다');
   };
   const setResult = (v: Result) => { if (selected) { patchRow(selected.id, { res: v }); toast.success(`투심결과가 '${v}'(으)로 반영되었습니다`); } };
@@ -330,7 +329,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
     setModal(null);
     toast.success(isNew ? '투자준법감시내역이 등록되었습니다' : '수정되었습니다');
   };
-  const deleteCompliance = () => { if (selected) { patchRow(selected.id, { compliance: null }); setModal(null); toast.success('삭제되었습니다'); } };
+  const deleteCompliance = () => { if (selected) { patchRow(selected.id, { compliance: null }); toast.success('삭제되었습니다'); } };
   const complianceInitial = selected
     ? { ...(selected.compliance ?? {}), gp: selected.gp, fn: selected.fn, ...(selected.compliance ? {} : { co: selected.co, baseDate: today() }) }
     : undefined;
@@ -479,7 +478,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
               <AlertDialogDescription>투심일정을 확정하시겠습니까? 확정 후 투심결과 승인여부를 입력할 수 있습니다.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setModal(null)}>취소</AlertDialogCancel>
+              <AlertDialogCancel>취소</AlertDialogCancel>
               <AlertDialogAction onClick={confirmSchedule}>확정</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -495,7 +494,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
               <AlertDialogDescription><b className="text-foreground"><MT>{selected.co}</MT></b> · <MT>{selected.fn}</MT> 건의 투자준법감시내역을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setModal(null)}>취소</AlertDialogCancel>
+              <AlertDialogCancel>취소</AlertDialogCancel>
               <AlertDialogAction onClick={deleteCompliance} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

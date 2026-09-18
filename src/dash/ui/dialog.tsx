@@ -10,8 +10,25 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortalContainer } from './portal-container';
+import { DialogExitProvider, useDeferredClose, useExitEnd, makeExitEndHandler, type DialogHandle } from './dialog-exit';
 
-const Dialog = DialogPrimitive.Root;
+/* ⚠ 그냥 DialogPrimitive.Root 가 아니다 — 닫힘 애니메이션을 살리려고 내부 open 상태를 들고
+   exit 종료 뒤에 부모 onOpenChange(false) 를 호출한다. 근거·전체 맥락은 dialog-exit.ts 주석.
+   모달 자체 버튼(취소·저장)으로 닫을 때는 ref.current.close() 를 쓴다(onClose 직접 호출은 애니메이션 없음). */
+const Dialog = React.forwardRef<DialogHandle, React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>>(
+  ({ open, onOpenChange, children, ...props }, ref) => {
+    const { inner, finish, close, rootOpenChange } = useDeferredClose(open, onOpenChange);
+    React.useImperativeHandle(ref, () => ({ close }), [close]);
+    return (
+      <DialogExitProvider value={finish}>
+        <DialogPrimitive.Root open={inner} onOpenChange={rootOpenChange} {...props}>
+          {children}
+        </DialogPrimitive.Root>
+      </DialogExitProvider>
+    );
+  },
+);
+Dialog.displayName = 'Dialog';
 const DialogTrigger = DialogPrimitive.Trigger;
 const DialogPortal = DialogPrimitive.Portal;
 const DialogClose = DialogPrimitive.Close;
@@ -34,7 +51,7 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { hideClose?: boolean }
->(({ className, children, hideClose, ...props }, ref) => (
+>(({ className, children, hideClose, onAnimationEnd, ...props }, ref) => (
   <DialogPortal container={usePortalContainer()}>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -45,6 +62,7 @@ const DialogContent = React.forwardRef<
         'fixed left-1/2 top-1/2 z-modal flex w-full max-w-lg [translate:-50%_-50%] flex-col overflow-hidden rounded-card-lg border border-border bg-card text-[13.5px] shadow-lg focus:outline-none data-[state=open]:animate-dialog-in data-[state=closed]:animate-dialog-out',
         className,
       )}
+      onAnimationEnd={makeExitEndHandler(useExitEnd(), onAnimationEnd)}
       {...props}
     >
       {children}
@@ -97,3 +115,4 @@ export {
   DialogTitle,
   DialogDescription,
 };
+export type { DialogHandle };
