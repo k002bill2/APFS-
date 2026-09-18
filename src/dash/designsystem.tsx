@@ -16,6 +16,7 @@ import { Search } from 'lucide-react';
 import { Icon } from './icons';
 import { CountUp } from './motion/count-up';
 import { Checkbox } from './ui/checkbox';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';   // 체크박스와 한 패밀리(배타 선택) — 선택 점 scale-pop 프리뷰
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 
@@ -91,13 +92,14 @@ function RichTextPreview() {
   );
 }
 
-/* 모션 인터랙션 프리뷰 — Animate UI(Motion) 도입분(카운트업·탭 슬라이드·버튼 spring·체크박스·reveal).
+/* 모션 인터랙션 프리뷰 — Animate UI(Motion) 도입분(카운트업·탭 슬라이드·버튼 spring·체크박스·라디오·reveal).
    상태를 쓰므로 별도 컴포넌트로 분리(TagsPreview/RichTextPreview 관례). 저모션은 app.tsx 루트
    <MotionConfig reducedMotion="user">가 transform/scale을 끄고 opacity만 남긴다(여기서 게이트 불필요). */
 function MotionPreview() {
   const [seg, setSeg] = useState("월");
   const [replay, setReplay] = useState(0);
   const [chk, setChk] = useState<Record<string, boolean>>({ a: true, b: false });
+  const [radio, setRadio] = useState("신주");
   return (
     <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(340px,100%),1fr))" }}>
       <Card className="flex flex-col gap-3">
@@ -141,6 +143,20 @@ function MotionPreview() {
             </div>
           ))}
         </div>
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <div className="t-label" style={{ textTransform: "none" }}>라디오 scale-pop (RadioGroup)</div>
+        {/* Item 은 <button role=radio> — <label> 로 감싸면 클릭 2회 발화하므로 htmlFor/id 명시 연결(radio-group.tsx 규약) */}
+        <RadioGroup value={radio} onValueChange={setRadio} aria-label="라디오 미리보기">
+          {["신주", "구주", "해당없음"].map((o, i) => (
+            <span key={o} className="inline-flex items-center gap-2">
+              <RadioGroupItem id={`mp-radio-${i}`} value={o} aria-label={`라디오 미리보기 ${o}`} />
+              <label htmlFor={`mp-radio-${i}`} className="t-caption cursor-pointer select-none">{o}</label>
+            </span>
+          ))}
+        </RadioGroup>
+        <p className="t-caption m-0">선택 점이 spring으로 팝 — <strong>직접 조작한 항목만</strong>(마운트 시 이미 선택된 점·프로그램 재선택은 정적). 방향키 이동도 Radix가 <code>item.click()</code>으로 처리해 똑같이 팝. 배타 선택은 라디오, on/off '여/부'는 Switch, 독립 복수 선택은 체크박스.</p>
       </Card>
 
       <Card reveal className="flex flex-col gap-2" style={{ gridColumn: "1 / -1" }}>
