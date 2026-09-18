@@ -10,24 +10,25 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortalContainer } from './portal-container';
-import { DialogExitProvider, DialogClosingProvider, useDeferredClose, useExitEnd, makeExitEndHandler, useHardcodedOpenWarning, type DialogHandle } from './dialog-exit';
+import { DialogExitProvider, DialogLockProvider, useDeferredClose, useExitEnd, useDialogLock, makeExitEndHandler, useHardcodedOpenWarning, type DialogHandle } from './dialog-exit';
 
 /* ⚠ 그냥 DialogPrimitive.Root 가 아니다 — 닫힘 애니메이션을 살리려고 내부 open 상태를 들고
    exit 종료 뒤에 부모 onOpenChange(false) 를 호출한다. 근거·전체 맥락은 dialog-exit.ts 주석.
    모달 자체 버튼(취소·저장)으로 닫을 때는 ref.current.close() 를 쓴다(onClose 직접 호출은 애니메이션 없음). */
 const Dialog = React.forwardRef<DialogHandle, React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>>(
   ({ open, onOpenChange, children, ...props }, ref) => {
-    const { inner, finish, close, rootOpenChange } = useDeferredClose(open, onOpenChange);
+    const { inner, finish, close, rootOpenChange, locked, setLocked } = useDeferredClose(open, onOpenChange);
+    const lock = React.useMemo(() => ({ locked, setLocked }), [locked, setLocked]);
     React.useImperativeHandle(ref, () => ({ close }), [close]);
     useHardcodedOpenWarning(open, ref);
     return (
-      <DialogClosingProvider value={!inner}>
+      <DialogLockProvider value={lock}>
       <DialogExitProvider value={finish}>
         <DialogPrimitive.Root open={inner} onOpenChange={rootOpenChange} {...props}>
           {children}
         </DialogPrimitive.Root>
       </DialogExitProvider>
-      </DialogClosingProvider>
+      </DialogLockProvider>
     );
   },
 );
@@ -54,11 +55,16 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { hideClose?: boolean }
->(({ className, children, hideClose, onAnimationEnd, ...props }, ref) => (
+>(({ className, children, hideClose, onAnimationEnd, style, ...props }, ref) => {
+  /* 저장 대기(SaveButton 잠금) 중: 스크린리더에 busy 알림 + 본문 포인터 차단(취소·X·필드 클릭 무효). 키보드 입력은 남는다. */
+  const busy = !!useDialogLock()?.locked;
+  return (
   <DialogPortal container={usePortalContainer()}>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
+      aria-busy={busy || undefined}
+      style={busy ? { ...style, pointerEvents: 'none' } : style}
       className={cn(
         // text-[13.5px]: 모달 본문 기본 폰트 규격(2026-09-15 사용자 결정) — 앱 기본 14px 보다 한 단계 작다.
         // 상속값이라 자체 fontSize 를 가진 자식(제목 text-xl·라벨 12px·SchemaField 13.5)은 그대로 이긴다.
@@ -79,7 +85,8 @@ const DialogContent = React.forwardRef<
       )}
     </DialogPrimitive.Content>
   </DialogPortal>
-));
+  );
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

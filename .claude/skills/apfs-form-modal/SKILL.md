@@ -41,7 +41,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
    };
    <DialogFooter className="px-[46px]">…<SaveButton onSubmit={submit} /></DialogFooter>
    ```
-   동작: 클릭 → 검증 → "저장 중"(`SAVE_DEMO_MS`=400ms, `components.tsx` 상수 하나로 조절) → commit. 백엔드가 없어 저장이 동기라 지연은 데모용 흉내다. loading 중 `disabled`를 주지 않는다(포커스 유지 — `UI.Button` 규약). 취소·Esc로 **닫기가 시작되는 즉시** 대기 중 commit은 버려진다(`useDialogClosing` 구독 — 언마운트는 exit 애니메이션 뒤라 지연과 경합하므로 쓰지 않는다). 취소/삭제 버튼을 저장 중 비활성화하진 않는다(닫기 폐기로 충분). 적용처: 폼 모달 8종(`generic_list_modal`·`user_form_modal`·`user_permission_modal`·`member_info_form_modal`·`custody_verify_memo_modal`·`menu_form_modal`·`program_help_modal`·`subfund_form_modal`) + 디자인시스템 3-2-1 라이브 데모.
+   동작: 클릭 → 검증 → "저장 중"(`SAVE_DEMO_MS`=400ms, `components.tsx` 상수 하나로 조절) → commit. 백엔드가 없어 저장이 동기라 지연은 데모용 흉내다. loading 중 `disabled`를 주지 않는다(포커스 유지 — `UI.Button` 규약). **저장 중에는 다이얼로그 닫기가 잠긴다**(`useDialogLock` — 취소·X·Esc 무시, 본문 `aria-busy`+pointer 차단). 사용자가 누른 저장은 유실되지 않는다. ⚠ 처음 시도한 "닫기 시작 시 commit 폐기"는 exit 애니메이션(≈280ms)과 400ms 지연이 경합해 취소해도 저장되는 실측 결함 + 무음 유실 UX라 폐기했다. ⚠ **submit이 성공 경로에서 closure 반환을 잊으면 무음 no-op**(타입으로 못 잡음) → 검증 항목: 저장 클릭 시 스피너가 떠야 한다. 적용처: 폼 모달 10종(`generic_list_modal`·`user_form_modal`·`user_permission_modal`·`member_info_form_modal`·`custody_verify_memo_modal`·`menu_form_modal`·`program_help_modal`·`subfund_form_modal`·`apfs_contribution_tx_modal`의 Dist/Invest) + 디자인시스템 3-2-1 라이브 데모. 전수 조사는 `grep -rn ">저장</Button>" src/dash`(leadingIcon 유무 무관).
 
 ## 핵심 계약 (CRITICAL)
 1. **새 컨트롤은 `FIELD_CONTROLS`(types.ts)에 먼저 추가.** 컨트롤 종류는 `FIELD_CONTROLS` 배열이 **타입+zod enum을 동시 공급(SSOT)**. 배열에 없는 control을 스키마에 쓰면 `PageSchemaZ.parse`가 실패해 **스키마 테스트·빌드가 깨진다**. 추가 순서: ① `FIELD_CONTROLS`에 문자열 추가 → ② `SchemaField`(renderers.tsx)에 `case` 추가 → ③ 스키마에서 사용.

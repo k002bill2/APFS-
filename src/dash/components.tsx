@@ -10,7 +10,7 @@ import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import { Progress } from './ui/progress';
 import { spring, tween, revealVariants } from './motion/presets';
 import { CountUp } from './motion/count-up';
-import { useDialogClosing } from './ui/dialog-exit';
+import { useDialogLock } from './ui/dialog-exit';
 
 const { Sparkline } = Charts;
 const cx = (...a: any[]) => a.filter(Boolean).join(" ");
@@ -198,23 +198,25 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
 /* 폼 모달 저장 버튼 — 디자인시스템 "Button 상태"의 loading(저장 중)을 모달마다 배선하지 않고 자동 적용한다(apfs-form-modal).
    계약: onSubmit()은 검증 실패 시 undefined(스피너 없이 즉시 오류 표시), 성공 시 commit 함수를 반환한다.
    클릭 → 검증 → 저장 중(SAVE_DEMO_MS) → commit. 백엔드가 없어 저장이 동기라 지연은 데모용 흉내다 — 상수 하나로 조절.
-   loading 중 disabled 는 쓰지 않는다(포커스 유지 — Button 규약). 취소·Esc 로 닫기가 시작되면(useDialogClosing)
-   대기 중 commit 을 즉시 버린다 — 언마운트에만 기대면 exit 애니메이션(≈280ms) 뒤라 지연과 경합한다(2026-09-18 실측). */
+   loading 중 disabled 는 쓰지 않는다(포커스 유지 — Button 규약). 저장 중에는 다이얼로그 닫기를 잠근다(useDialogLock):
+   취소·X·Esc 가 무시되고 본문은 aria-busy+pointer 차단 — 사용자가 누른 저장이 무음으로 유실되는 경로를 없앤다.
+   (언마운트 시 폐기 방식은 exit 애니메이션 ≈280ms 와 400ms 지연이 경합해 취소해도 저장되던 실측 결함이 있었다.)
+   ⚠ submit 이 성공 경로에서 closure 반환을 잊으면 무음 no-op 이다(타입으로 못 잡음) — 검증 항목: 저장 클릭 시 스피너가 떠야 한다. */
 export const SAVE_DEMO_MS = 400;
-export type SubmitResult = (() => void) | void | false | undefined;
+export type SubmitResult = (() => void) | void;
 function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', delay = SAVE_DEMO_MS, variant = 'primary', size = 'sm', leadingIcon = 'check', style }: { onSubmit: () => SubmitResult; children?: React.ReactNode; busyLabel?: React.ReactNode; delay?: number; variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent'; size?: Size; leadingIcon?: string; style?: React.CSSProperties }) {
   const [saving, setSaving] = React.useState(false);
   const timer = React.useRef<number | null>(null);
-  const closing = useDialogClosing();
-  const cancel = () => { if (timer.current != null) { window.clearTimeout(timer.current); timer.current = null; } };
-  React.useEffect(() => () => cancel(), []);
-  React.useEffect(() => { if (closing && timer.current != null) { cancel(); setSaving(false); } }, [closing]);
+  const lock = useDialogLock();
+  const lockRef = React.useRef(lock); lockRef.current = lock;
+  React.useEffect(() => () => { if (timer.current != null) window.clearTimeout(timer.current); lockRef.current?.setLocked(false); }, []);
   const click = () => {
     if (saving) return;
     const commit = onSubmit();
     if (typeof commit !== 'function') return;
     setSaving(true);
-    timer.current = window.setTimeout(() => { timer.current = null; setSaving(false); commit(); }, delay);
+    lock?.setLocked(true);
+    timer.current = window.setTimeout(() => { timer.current = null; setSaving(false); lockRef.current?.setLocked(false); commit(); }, delay);
   };
   return <Button variant={variant} size={size} leadingIcon={leadingIcon} loading={saving} onClick={click} style={style}>{saving ? busyLabel : children}</Button>;
 }

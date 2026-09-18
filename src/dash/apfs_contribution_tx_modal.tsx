@@ -32,7 +32,7 @@ import { Icon } from './icons';
 import { toast } from './ui/sonner';
 import type { TxGroup, TxMember } from './apfs_contribution_manage';
 
-const { Button, StatusBadge } = UI;
+const { Button, SaveButton, StatusBadge } = UI;
 const { useState, useMemo } = React;
 
 /* ──────────────────────────────
@@ -216,7 +216,7 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
       chk: editable ? fromSel(drafts[i].chk) : m.chk,
       memo: drafts[i].memo,
     }));
-    onSave(next);
+    return () => onSave(next);
   };
 
   const dlgRef = React.useRef<DialogHandle>(null);
@@ -297,7 +297,7 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
           <div />
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
-            <Button variant="primary" size="sm" onClick={save}>저장</Button>
+            <SaveButton onSubmit={save} />
           </div>
         </DialogFooter>
       </DialogContent>
@@ -349,7 +349,7 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
   ];
 
   /* 저장 — 이 팝업의 데이터는 목록 그리드와 연결돼 있지 않다(별 자펀드). 닫고 알림만 낸다 */
-  const save = () => { toast.success('저장되었습니다 (목업)'); onClose(); };
+  const save = () => () => { toast.success('저장되었습니다 (목업)'); onClose(); };
 
   const dlgRef = React.useRef<DialogHandle>(null);
 
@@ -429,7 +429,7 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
           <div />
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
-            <Button variant="primary" size="sm" onClick={save}>저장</Button>
+            <SaveButton onSubmit={save} />
           </div>
         </DialogFooter>
       </DialogContent>

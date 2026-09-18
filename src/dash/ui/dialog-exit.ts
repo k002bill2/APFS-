@@ -17,12 +17,14 @@ export const EXIT_FALLBACK_MS = 450;
 export const EXIT_ANIMATION = 'dialog-out';
 
 const ExitEndContext = React.createContext<(() => void) | null>(null);
-/** 닫기 시작(exit 재생 중) 여부. 저장 대기 같은 "닫히면 무효" 작업이 언마운트(exit 뒤)가 아니라
-    닫기 요청 시점에 즉시 취소할 수 있게 한다 — SaveButton 이 구독. 다이얼로그 밖에서는 항상 false. */
-const ClosingContext = React.createContext<boolean>(false);
-export const DialogClosingProvider = ClosingContext.Provider;
-export function useDialogClosing() {
-  return React.useContext(ClosingContext);
+/** 닫기 잠금 — 저장 대기(SaveButton "저장 중") 동안 취소·X·Esc 를 무시해 사용자가 누른 저장이 무음으로
+    유실되지 않게 한다. close()/rootOpenChange(false) 가 lockRef 를 보고 되돌아간다(overlay 클릭은 소비처가
+    이미 preventDefault). Content 는 locked 로 aria-busy + pointer-events 차단. 다이얼로그 밖에서는 null. */
+export type DialogLock = { locked: boolean; setLocked: (b: boolean) => void };
+const LockContext = React.createContext<DialogLock | null>(null);
+export const DialogLockProvider = LockContext.Provider;
+export function useDialogLock() {
+  return React.useContext(LockContext);
 }
 export const DialogExitProvider = ExitEndContext.Provider;
 /** Content 가 자신의 exit 애니메이션 종료를 루트에 알리는 통로. 중첩 모달은 가장 안쪽 루트에 붙는다. */
@@ -44,6 +46,10 @@ export function useDeferredClose(open: boolean | undefined, onOpenChange?: (o: b
   changeRef.current = onOpenChange;
   /** exit 재생 중 걸어둔 document 리스너 해제기. finish/언마운트 시 반드시 호출. */
   const detach = React.useRef<(() => void) | null>(null);
+  /* 닫기 잠금 — ref 는 close() 의 동기 판정용, state 는 Content 렌더(aria-busy)용. 둘을 함께 바꾼다. */
+  const lockRef = React.useRef(false);
+  const [locked, setLockedState] = React.useState(false);
+  const setLocked = React.useCallback((b: boolean) => { lockRef.current = b; setLockedState(b); }, []);
 
   React.useEffect(() => {
     mounted.current = true;
@@ -81,6 +87,7 @@ export function useDeferredClose(open: boolean | undefined, onOpenChange?: (o: b
 
   /** 닫기 시작 — 내부만 닫아 exit 애니메이션을 재생시킨다. 부모 통지는 finish 로 미룬다. */
   const close = React.useCallback(() => {
+    if (lockRef.current) return;   // 저장 대기 중 — 닫기 무시(SaveButton 잠금)
     setInner(false);
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(finish, EXIT_FALLBACK_MS);
@@ -110,7 +117,7 @@ export function useDeferredClose(open: boolean | undefined, onOpenChange?: (o: b
     [close],
   );
 
-  return { inner, finish, close, rootOpenChange };
+  return { inner, finish, close, rootOpenChange, locked, setLocked };
 }
 
 /** Content 의 onAnimationEnd 핸들러 — 소비처가 넘긴 핸들러를 먼저 돌리고 exit 종료만 걸러낸다. */
