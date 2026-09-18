@@ -1,6 +1,6 @@
 ---
 name: apfs-form-modal
-description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, on/off 값은 switch, 모달 기본 폰트 13.5px·토큰만. 정본 예시는 "투자기업정보(통합)"(schemas/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
+description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, 저장 대기형 '여/부' 값은 control:'switch' 토큰이되 **체크박스로 렌더**, 모달 기본 폰트 13.5px·토큰만. 정본 예시는 "투자기업정보(통합)"(schemas/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
 ---
 
 # apfs-form-modal Skill
@@ -62,20 +62,27 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 | `year` | `PeriodPicker mode='year'`(연도 그리드+Popover) | **사업연도·회계연도는 `number` 가 아니라 이것**(2026-09-17). 값 계약 `'YYYY'` 문자열, 표시는 `2026년`. 컬럼은 `type:'text'` 그대로 — 저장값이 곧 셀 값이다. →[[apfs-datepicker]] |
 | `select` | `<select>`+`options` | 첫 옵션 시드 |
 | `radio` | 가로 라디오(`accentColor`)+`options` | **분류형 2지 이상**(개인/법인, 신주/구주, Y/N/해당없음). 첫 옵션 시드 |
-| `switch` | shadcn Radix `Switch`(ui/switch.tsx) + 상태 텍스트 | **on/off 상태값 전용**(사용여부·도움말 제공 등 '여'/'부'). 첫 옵션 시드. 값 계약은 **문자열 그대로** — `checked = value === options[0]`, 토글 시 `options[0] | options[1]` emit |
-| `checkbox` | `<input type=checkbox>` | 'true'/'false' 문자열 |
+| `switch` | shadcn Radix **`Checkbox`**(ui/checkbox.tsx) + 고정 라벨(=`options[0]`) | **저장 대기형 2지선다**(사용여부·도움말 제공 '여'/'부', 'Y'/'N', '예'/'아니오'). ⚠ 토큰 이름만 `switch` 고 **그려지는 건 체크박스**다(2026-09-18, 아래 박스). 첫 옵션 시드. 값 계약은 **문자열 그대로** — `checked = value === options[0]`, 토글 시 `options[0] \| options[1]` emit |
+| `checkbox` | 〃(같은 `Checkbox`, 가시 라벨 없음) | 'true'/'false' 문자열. **신규 스키마에서 쓰지 말 것**(사용처 0, 2026-09-18) — 옵션이 없어 클릭 라벨을 못 붙이고 첫옵션 시드도 안 걸린다. `switch` + `options` 를 쓴다 |
 | `textarea` | `<textarea rows=4>` | 2단 시 전체 폭 |
 | `file` | **`filepond`과 동일** → `DocumentsField`(통일 드롭존) | 2단 시 전체 폭. 날것 `<input type=file>` 아님 — `renderers`에서 `case 'file'`→`filepond` fall-through(2026-09-09 파일존 통일). 신규 스키마는 `filepond`를 직접 쓸 것 |
 | `address` | `AddressField`(우편번호 readonly + 「주소 검색」 + 본문 input) | 카카오(다음) 우편번호 임베드를 **중첩 다이얼로그**로 연다. 값 계약 = **단일 문자열** `'(12345) 서울특별시 …'`, 파싱/직렬화 SSOT `fields/address_value.ts`. lazy 로드 · **복합 컨트롤(plain 래핑 필수)** · 2단 시 전체 폭(`long:true`) |
 | `readonly` | muted `<div>` | 운용사·자펀드 등 상위 고정값 |
 
-> **switch vs radio — 무엇을 쓰나(2026-09-15).** `switch`는 **상태 하나를 켜고 끄는 것**(사용여부·도움말 제공·공개여부 등 '여'/'부'), `radio`는 **서로 배타적인 분류를 고르는 것**(개인/법인, 신주/구주, 국내/해외, Y/N/해당없음). 옵션이 3개 이상이면 무조건 radio. 기존 화면의 **2지선다 on/off radio 는 전부 switch 로 전환됐다** — '여/부'(권한관리·메뉴관리·코드관리·프로그램관리·프로그램 도움말)와 '예/아니오'·'Y/N'(투심보고 확정 및 승인 5건, 투자기업정보(통합) 4건). 남은 radio 는 분류형(개인/법인·국내/해외·신주/구주·계정구분·선정결과)과 3지(`예/아니오/해당없음`, `Y/N/해당없음`)뿐이다.
-> ⚠️ **값 계약을 boolean 으로 바꾸지 말 것.** `use: v.use === '여'`처럼 **옵션 문자열을 그대로 읽는 소비처·상세필터**가 다수라, switch 가 `'true'/'false'`를 emit 하면 저장·필터가 **무음으로** 깨진다. radio 와 동일하게 `options[0]`/`options[1]` 문자열을 주고받는다.
-> ⚠️ 라벨 래퍼는 `plain`(=`<div>`) — `<label>`로 감싸지 않는다. Radix Switch 는 `<button role=switch>`라 접근名은 `SchemaField`가 `aria-label={field.label}`로 준다. 토글 옆 **상태 텍스트('여'/'부')를 함께 렌더**한다(토글만으로는 어느 쪽이 켜진 상태인지 모호).
+> **checkbox vs switch vs radio — 무엇을 쓰나(2026-09-18 개정).** 판정 기준은 *모양*이 아니라 **효과 시점**이다:
+> · **checkbox** = 저장 버튼을 기다려도 되는 **독립 폼 값**. 폼 모달 안의 '여/부'·'Y/N'·'예/아니오'는 **전부 여기다**.
+> · **switch** = 바꾸는 **즉시 반영**되는 설정(테마·알림 토글 등). 폼 모달 안에는 없다.
+> · **radio** = 이름으로 묶인 배타 그룹 — 하나를 고르면 나머지가 풀린다(개인/법인, 신주/구주, Y/N/해당없음). 옵션 3개 이상이면 무조건 radio.
+> (근거: namethatui.com/web/switch-checkbox-radio. 2026-09-15 에 2지선다 radio → switch 로 한 차례 전환했었고, 2026-09-18 에 그 switch 들을 **체크박스 렌더**로 되잡았다.)
+>
+> ⚠️ **스키마 토큰은 `'switch'` 그대로 둔다.** 렌더러(`renderers.tsx` `case 'switch'`)만 `Checkbox` 를 그린다. 토큰을 `'checkbox'` 로 바꾸면 **값 계약이 뒤바뀐다**(`'여'/'부'` → `'true'/'false'`). 의도적 별칭이다.
+> ⚠️ **값 계약을 boolean 으로 바꾸지 말 것.** `use: v.use === '여'`처럼 **옵션 문자열을 그대로 읽는 소비처·상세필터**가 다수라, `'true'/'false'`를 emit 하면 저장·필터가 **무음으로** 깨진다. radio 와 동일하게 `options[0]`/`options[1]` 문자열을 주고받는다.
+> ⚠️ 라벨 래퍼는 `plain`(=`<div>`) — `<label>`로 감싸지 않는다. Radix Checkbox 는 `<button role=checkbox>`라 `<label>` 암묵 연결이 **클릭을 두 번 발화**시킨다. 가시 라벨은 렌더러가 `htmlFor`/`id` 로 **명시** 연결한다. 판정 SSOT 는 `renderers.tsx` **`isPlainWrapControl()`** — 폼 래퍼가 리터럴로 열거하지 말 것.
+> ⚠️ 옆 텍스트는 **고정**(=`options[0]`, 예: '여')이고 상태는 체크 표식이 말한다. 구 Switch 처럼 여↔부로 **바뀌지 않는다**. 접근名은 `aria-label={`${field.label} ${options[0]}`}` (예: "사용여부 여") — 값만 주면 무슨 항목인지 알 수 없고, 필드명만 주면 가시 텍스트가 접근名에 없어 WCAG 2.5.3 위반이다.
 
 > ⚠️ **`address`(react-daum-postcode) 함정 5종(2026-09-17).** ① 패키지 정식 이름은 **`KakaoPostcodeEmbed`**(`DaumPostcodeEmbed`는 deprecated 별칭), `width`/`height`는 **prop이 아니다**(크기는 `style`로만), `autoClose` 기본값 true면 선택 즉시 wrapper가 통째로 사라진다 → `autoClose={false}`. ② **props는 마운트 시 1회만 반영**(`componentDidUpdate` 없음) → 테마 변경은 언마운트/리마운트로만. ③ 임베드는 `postcode.map.kakao.com` **크로스오리진 iframe**이라 (a) CSS 변수가 넘어가지 않아 `theme`에 **hex만** 넘겨야 하고(`getComputedStyle`로 토큰을 읽어 주입, rgba 토큰은 카드색 위에 합성), (b) `focusInput` 기본값(true)이면 포커스가 iframe 안으로 들어가 **Radix Escape 닫기가 먹통** → `focusInput={false}`. ④ 임베드에는 **`onError` prop이 없다** — CDN 실패는 `errorMessage` 노드로만 드러나므로 수기 입력 안내를 넣고 본문 input은 항상 편집 가능하게 둔다(폐쇄망). ⑤ 필수 검증은 원시 `trim()`이 아니라 **`isAddressEmpty()`** 로 — `'(06236) '`가 trim 후에도 비어 있지 않아 본문 없는 주소가 통과한다(richtext 빈 문서 false-pass와 같은 계열). 재검색 시 상세주소 보존(`detailTail`)은 **토큰 경계**가 필수 — 문자 접두만 보면 "테헤란로 12"가 "테헤란로 123"의 접두라 주소가 조용히 뒤바뀐다.
 >
-> ⚠️ **복합 컨트롤 판정은 `renderers.tsx`의 `COMPLEX_CONTROLS`/`isComplexControl()` 가 SSOT.** 폼 래퍼(`generic_list_modal`·`subfund_form_modal` 등)가 각자 리터럴로 열거하면 컨트롤이 늘 때마다 한 곳씩 빠져 `<label>` 하이재킹이 재발한다.
+> ⚠️ **`<label>` 래핑 금지 판정은 `renderers.tsx`의 `isPlainWrapControl()` 가 SSOT**(복합 컨트롤 = `COMPLEX_CONTROLS`/`isComplexControl()`, 여기에 radio·switch·checkbox 가 더해진다). 폼 래퍼(`generic_list_modal`·`subfund_form_modal`·`user_permission_modal`·`menu_form_modal`·`program_help_modal`)가 각자 리터럴로 열거하면 컨트롤이 늘 때마다 한 곳씩 빠져 `<label>` 하이재킹이 재발한다.
 
 > ⚠️ **무거운 외부 컨트롤** `richtext`(**Plate/platejs v53**, 2026-07-05 Tiptap에서 교체)·`filepond`(react-filepond): 4단계 배선(`FIELD_CONTROLS`→`src/dash/fields/`→lazy `SchemaField`→`span2`)과 **무음실패 함정**(FilePond 비제어·에디터 툴바 mousedown preventDefault·값=Slate JSON 문자열·빈 문서는 `api.isEmpty()`→`''`로 required false-pass 해소)은 메모리 `[[heavy-form-controls-richtext-filepond]]` + `src/dash/fields/RichTextField.tsx` 참조.
 
@@ -127,6 +134,7 @@ export const schema: PageSchema = {
 - 브라우저: 항목>6 → 880px 2단(400px에서 1단 적층 확인), textarea/`long` 전체폭, radio·switch 첫 옵션 기본, 필수 미입력 에러, 삭제 2단계. 라이트/다크(→[[responsive-ui]]).
 - `long` 검증은 **span 이 아니라 실측 폭**으로: 모달 열고 `getComputedStyle(input).width` 가 셀 폭과 같은지(240px 로 묶여 있지 않은지) 확인.
 - `switch` 검증은 **왕복으로**: 등록 → 토글 → 저장 → 그리드 배지가 '여'/'부'로 뜨는지 + 상세필터 '사용여부'가 그 행을 걸러내는지(문자열 계약이 깨지면 여기서 드러난다).
+- 체크박스 라벨 검증 2종: ① 라벨 텍스트 클릭이 **정확히 1회** 발화하는지(`addEventListener('click')` 카운터 — 암묵 `<label>` 래핑이면 2가 된다), ② `getByRole('checkbox', { name: '사용여부 여' })` 로 접근名이 **필드명+값** 둘 다 잡히는지.
 - 폰트: `getComputedStyle(select).fontSize === '13.5px'`.
 
 ## 확장: 섹션형·반복행 모달 (flat 스키마를 초과할 때)
