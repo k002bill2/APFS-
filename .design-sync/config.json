@@ -237,5 +237,6 @@
   "tokensGlob": "src/dash/tokens.css",
   "guidelinesGlob": [
     ".design-sync/guidelines/**/*.md"
-  ]
+  ],
+  "readmeHeader": ".design-sync/conventions.md"
 }
