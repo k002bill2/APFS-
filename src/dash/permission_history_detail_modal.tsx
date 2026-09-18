@@ -58,7 +58,8 @@ function PathCrumb({ path, revoked }: { path: string; revoked?: boolean }) {
   );
 }
 
-/* 카드 외곽선 = 역할색 2px(라이트/다크 적응형 토큰만) — 추가 --primary · 회수 --danger · 적용 대상 --accent.
+/* 카드 외곽선 = 역할색 2px(라이트/다크 적응형 토큰만) — 추가 --primary · 회수 --danger · 적용 대상 --secondary(틸;
+   --accent 는 --primary 인디고와 색상환이 가까워 구분이 약했다).
    색은 외곽선에만 쓰고 채움·글자는 무채색 유지(사용자 결정 2026-09-18). 2px 인 이유: 소수점 굵기는 DPR 1에서 1px로 스냅됨. 헤더 구분선은 기본 --border. */
 const outline = (token: string) => `2px solid color-mix(in srgb, var(${token}) 65%, transparent)`;
 function ItemCard({ title, items, revoked }: { title: string; items: HistItem[]; revoked?: boolean }) {
@@ -139,7 +140,7 @@ export function PermissionHistoryDetailModal({ entry, onClose }: { entry: HistEn
           )}
 
           <Section title={<>적용 대상 {d.holders.length}명</>} aside="동일 권한 보유자 전원에게 적용됩니다">
-            <div className="rounded-[10px] overflow-hidden" style={{ border: outline('--accent') }}>
+            <div className="rounded-[10px] overflow-hidden" style={{ border: outline('--secondary') }}>
               {d.holders.length
                 ? d.holders.map((h, k) => <HolderRow key={k} h={h} last={k === d.holders.length - 1} />)
                 : <div className="text-caption" style={ROW}>적용 대상 없음(보유자 0명)</div>}
