@@ -204,11 +204,10 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
         </>
       )}
       toolbarRight={<>
-        <span className="text-caption" style={{ fontSize: 12 }} aria-live="polite">기간 내 로그 <b className="text-foreground">{mn(String(visible.length))}</b>건</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(DEMO.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중 · 접속기록 2년 · 권한변경 3년 보관(목업 문구)'}</span>}
+      footerLeft={<span>{'총 ' + mn(String(DEMO.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div>
