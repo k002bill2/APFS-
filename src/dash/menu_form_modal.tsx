@@ -95,7 +95,13 @@ function ProgramSearchDialog({ programs, onPick, onClose }: { programs: readonly
               <tbody>
                 {list.length === 0 && <tr><td colSpan={3} style={{ ...td, textAlign: 'center', color: 'var(--muted-foreground)', padding: '26px 0' }}>검색 결과가 없습니다.</td></tr>}
                 {list.map((p) => (
-                  <tr key={p.pid} onClick={() => setPick(p.pid)} className="cursor-pointer" style={pick === p.pid ? { background: 'var(--row-selected)' } : undefined}>
+                  /* 행 클릭 = 그 행의 라디오를 클릭한 것으로 위임 — setPick 직접 호출은 Item onClick 을 건너뛰어 선택 점 pop 이 안 튄다
+                     (radio-group.tsx 의 self 플래그). 라디오 자체 클릭은 tr 로 버블되므로 재클릭하지 않는다(이미 선택된 Item 재클릭은 플래그만 남긴다). */
+                  <tr key={p.pid} className="cursor-pointer" style={pick === p.pid ? { background: 'var(--row-selected)' } : undefined}
+                    onClick={(e) => {
+                      if ((e.target as Element).closest('button[role=radio]')) return;
+                      e.currentTarget.querySelector<HTMLButtonElement>('button[role=radio]')?.click();
+                    }}>
                     <td style={{ ...td, textAlign: 'center' }}>
                       <RadioGroupItem value={p.pid} aria-label={`${p.pid} ${p.pname}`} className="align-middle" />
                     </td>
