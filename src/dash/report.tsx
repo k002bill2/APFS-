@@ -386,7 +386,7 @@ function Report({ onNav }) {
   return (
     <div
       className="max-w-[1320px] mx-auto"
-      style={{ animation: "dashFade .35s var(--ease) both" }}><PageHeader
+      style={{ animation: "dashFade var(--dur-slow) var(--ease) both" }}><PageHeader
         crumbs={["홈", "부처보고", "보고 관리"]}
         title="부처보고·수탁보고"
         sub="보고서 제출, 수탁 데이터 검증, 등록원부 관리 — 2026-06-16 기준"

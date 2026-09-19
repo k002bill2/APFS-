@@ -57,7 +57,7 @@ function EditorPage({ onNav }: { onNav?: (route: string) => void }) {
   return (
     <div
       className="apfs-editor-page max-w-[1180px] mx-auto"
-      style={{ animation: 'dashFade .35s var(--ease) both' }}><PageHeader
+      style={{ animation: 'dashFade var(--dur-slow) var(--ease) both' }}><PageHeader
         crumbs={['홈', '문서 에디터']}
         title="문서 에디터"
         sub="Plate 리치 텍스트 에디터 — 모달 없이 전체 화면 편집"

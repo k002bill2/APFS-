@@ -173,7 +173,7 @@ function DesignSystem() {
   const indTotal = D.INDUSTRY.reduce((s: number, d: any) => s + d.value, 0);
   const indPct = D.INDUSTRY.slice(0, 5).map((d: any) => ({ name: d.name, value: Math.round((d.value / indTotal) * 100), color: d.color }));
   return (
-    <div style={{ maxWidth: 1180, animation: "dashFade .4s var(--ease) both" }}><div
+    <div style={{ maxWidth: 1180, animation: "dashFade var(--dur-slow) var(--ease) both" }}><div
         className="flex items-center gap-3 mb-6"
         style={{ padding: "18px 22px", borderRadius: 16, background: "linear-gradient(110deg,color-mix(in srgb,var(--primary) 14%,var(--card)),color-mix(in srgb,var(--brand-cyan) 10%,var(--card)))", border: "1px solid var(--border)" }}><ColorChip icon="layers" color="var(--primary)" size={46} iconSize={24} /><div><div className="t-h2" style={{ fontSize: 17 }}>디자인 시스템 미리보기</div><p
             className="t-body text-muted-foreground"

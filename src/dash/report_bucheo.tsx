@@ -169,7 +169,7 @@ function ReportBucheo({ onNav }: { onNav?: (route: string) => void }) {
   return (
     <div
       className="max-w-[1320px] mx-auto"
-      style={{ animation: "dashFade .35s var(--ease) both" }}><PageHeader
+      style={{ animation: "dashFade var(--dur-slow) var(--ease) both" }}><PageHeader
         crumbs={["홈", "부처보고", "모태펀드"]}
         title="모태펀드"
         sub="보고서 제출 및 승인 관리 — 2026-06-16 기준"

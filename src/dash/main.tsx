@@ -179,7 +179,7 @@ function Main({ onNav, navStyle, onNavStyle }: { onNav: any; navStyle?: string; 
               borderRadius: 7, padding: "5px 10px", fontSize: 11.5,
               background: navStyle === val ? "color-mix(in srgb,var(--foreground) 9%,var(--card))" : "transparent",
               color: navStyle === val ? "var(--foreground)" : "var(--caption)", transition: "all .15s",
-            }}><Icon name={icon} size={15} />{label}</button>)}</div></div>}</div>{variant !== "B" && <QuickTasksBar onNav={onNav} />}<div key={variant} style={{ animation: "dashFade .35s var(--ease) both" }}><V s={s} onNav={onNav} /></div></div>
+            }}><Icon name={icon} size={15} />{label}</button>)}</div></div>}</div>{variant !== "B" && <QuickTasksBar onNav={onNav} />}<div key={variant} style={{ animation: "dashFade var(--dur-slow) var(--ease) both" }}><V s={s} onNav={onNav} /></div></div>
   );
 }
 
