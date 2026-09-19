@@ -58,7 +58,8 @@
 
 /* 저모션 가드 — 원문 그대로 유지(규약 3절: 전역 규칙은 animation-duration 만 0 으로 만들고 transition 은 못 막는다). */
 @media (prefers-reduced-motion: reduce) {
-  .t-success-check { animation: none !important; opacity: 1; }
+  /* animation:none 이면 animationend 가 오지 않아 DonePanel 의 will-change 해제(onAnimationEnd)가 실행되지 않는다 → 여기서 함께 끈다. */
+  .t-success-check { animation: none !important; opacity: 1; will-change: auto !important; }
   .t-success-check svg path { animation: none !important; stroke-dashoffset: 0 !important; }
 }
 
@@ -229,6 +230,9 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .t-text-swap { transition: none !important; }
+  /* TextSwap 은 저모션이면 exit/enter 단계를 건너뛰지만(components.tsx), 전이 도중 설정이 바뀌는 경우까지 막는 이중 가드 —
+     단계 클래스가 남아도 숨김·힌트가 적용되지 않게 한다. */
+  .t-text-swap.is-exit, .t-text-swap.is-enter-start { transform: none !important; filter: none !important; opacity: 1 !important; will-change: auto !important; }
 }
 
 /* ── 18 texts reveal (18-texts-reveal.md) — 제목·부제·요약·액션의 순차 등장 ───────────
@@ -357,6 +361,7 @@
 .t-error-msg { animation: t-error-in var(--dur-slow) ease-out; }
 @keyframes t-error-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
-  .t-input { animation: none !important; transform: none !important; }
+  /* .is-shaking 의 will-change 는 Field 가 animationend 에서 내리는데 저모션에선 이벤트가 없어 상주한다 → 함께 끈다. */
+  .t-input { animation: none !important; transform: none !important; will-change: auto !important; }
   .t-error-msg { animation: none !important; }
 }
