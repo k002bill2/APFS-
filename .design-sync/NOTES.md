@@ -21,7 +21,7 @@
 - 아이콘 prop은 문자열 이름(`src/dash/icons.tsx` 키): check plus download refresh bell settings landmark target shield-alert trending inbox trash search 등.
 
 ## Known render warns (재동기 시 새 경고와 대조)
-- `[FONT_MISSING] "Apple SD Gothic Neo"` — 폰트 스택의 macOS 시스템 폴백. 번들할 수 없고 할 필요 없음(Pretendard가 1순위, jsdelivr 원격 @font-face).
+- `[FONT_MISSING] "Apple SD Gothic Neo"` — 폰트 스택의 macOS 시스템 폴백. 번들할 수 없고 할 필요 없음(Pretendard가 1순위, jsdelivr 원격 @font-face). **사용자 수용 2026-09-19("두어도 돼") — 시스템 폰트 폴백으로 확정, extraFonts 불필요.**
 - `[FONT_DANGLING] katex_*` — app.css에 딸려온 Plate 수식 플러그인 폰트. DS 컴포넌트는 쓰지 않는다.
 - `[RENDER_THIN] PopNumber` — 숫자 하나짜리 컴포넌트라 본질적으로 얇다.
 - CountUp을 품은 셀(StatCard 등)은 1s 카운트업 **중간값이 캡처**된다 — 제품 카드는 라이브 렌더라 최종값 표시. 등급은 구성 기준.
