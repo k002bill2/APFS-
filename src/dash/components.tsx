@@ -171,11 +171,13 @@ function FilterChip({ active, children, onClick, dot, count }: { active?: boolea
 function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, children, onClick, style, loading, disabled }: { variant?: "primary" | "secondary" | "outline" | "ghost" | "accent"; size?: Size; leadingIcon?: string; trailingIcon?: string; children?: React.ReactNode; onClick?: (e?: any) => void; style?: React.CSSProperties; loading?: boolean; disabled?: boolean }) {
   const sizeCls = size === "sm" ? "px-[11px] py-1.5 text-[12.5px]" : size === "lg" ? "px-5 py-[11px] text-[13.5px]" : "px-[15px] py-2 text-[13.5px]";
   const variantCls = {
-    primary: "bg-primary text-primary-foreground",
-    secondary: "text-[color:var(--on-brand-solid)] bg-[var(--brand-gray)]",
+    // 변형마다 border-color 유틸을 하나만 둔다 — 베이스 border-transparent + 변형 border-border-strong 처럼 둘을 겹치면
+    // 컴파일 CSS 순서(.border-transparent 가 .border-border-strong 뒤)에 따라 outline 테두리가 무음으로 사라진다.
+    primary: "bg-primary text-primary-foreground border-transparent",
+    secondary: "text-[color:var(--on-brand-solid)] bg-[var(--brand-gray)] border-transparent",
     outline: "bg-card text-foreground border-border-strong",
-    ghost: "bg-transparent text-muted-foreground",
-    accent: "bg-accent text-accent-foreground",
+    ghost: "bg-transparent text-muted-foreground border-transparent",
+    accent: "bg-accent text-accent-foreground border-transparent",
   }[variant];
   const iconSize = size === "sm" ? 14 : 16;
   return (
@@ -189,7 +191,7 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
       whileHover={disabled || loading ? undefined : { scale: 1.03 }}
       whileTap={disabled || loading ? undefined : { scale: 0.97 }}
       transition={spring.control}
-      className={cx("ui-btn ui-" + variant, "inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border border-transparent transition-colors duration-tok-fast ease-ds disabled:opacity-60 disabled:cursor-not-allowed", loading && "cursor-wait", sizeCls, variantCls)}
+      className={cx("ui-btn ui-" + variant, "inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border transition-colors duration-tok-fast ease-ds disabled:opacity-60 disabled:cursor-not-allowed", loading && "cursor-wait", sizeCls, variantCls)}
       style={style}>{loading ? <Icon name="loader" size={iconSize} stroke={2.2} className="animate-spin" /> : leadingIcon && <Icon name={leadingIcon} size={iconSize} stroke={2.2} />}{children}{trailingIcon && <Icon name={trailingIcon} size={iconSize} stroke={2.2} />}</motion.button>
   );
 }

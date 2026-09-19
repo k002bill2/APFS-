@@ -113,9 +113,9 @@ APFS/
 
 ## 디자인 토큰 / 브랜드
 
-- 도메인 톤: **숲(forest green)**. 브랜드 블루/시안은 강조·링크·차트 보조.
+- 도메인 톤: **인디고**(2026-09 팔레트 개편, 정본은 `src/dash/tokens.css`). 옛 숲(forest green) 톤은 `tweaks_app.tsx`의 ocean/harvest 무드처럼 대체 테마에만 남아 있다. 블루/시안은 강조·링크·차트 보조.
 - 지정 브랜드 색: `#0058A8` `#00AAE5` `#2D7846` `#7BB93C` `#58585B`
-- 역할색(라이트): `--primary:#0E963B`, `--secondary/cyan:#1DCDA7`, `--accent/ring:#0158A8`
+- 역할색(라이트): `--primary:#5A5FE8`, `--secondary/cyan:#32D1AF`, `--accent/ring:#2563EB` (다크는 tokens.css `.dark` 블록)
 - 폰트: Pretendard (`--font-sans`)
 - 라이트/다크 테마 모두 지원, CSS 변수 토큰 기반.
 

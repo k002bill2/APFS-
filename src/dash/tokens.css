@@ -251,7 +251,10 @@ input::-webkit-credentials-auto-fill-button{visibility:hidden!important;display:
    [role="menu"] 컨테이너도 포함: Radix가 포인터 열기 시 Content(role="menu")로 focus를 옮기는데,
    직후 아무 키나 누르면 Chrome이 이 컨테이너를 focus-visible로 승격 → 팝오버 카드 전체에 링이 그려진다.
    초점 지표는 하이라이트된 menuitem이 담당(APG 메뉴 패턴)하므로 컨테이너 자신의 링은 끈다. */
-[role="menu"]:focus-visible,[role="menuitem"]:focus-visible,[role="menuitemcheckbox"]:focus-visible,[role="menuitemradio"]:focus-visible{box-shadow:none;}
+[role="menuitem"]:focus-visible,[role="menuitemcheckbox"]:focus-visible,[role="menuitemradio"]:focus-visible{box-shadow:none;}
+/* 컨테이너는 none 이 아니라 Tailwind 그림자 체인으로 되돌린다 — none 으로 두면 키보드로 연 메뉴의 shadow-lg 엘리베이션까지 사라진다
+   (--tw-shadow 는 .shadow-lg 가 요소에 정의; 미정의 표면은 폴백 0 0 #0000 로 링만 꺼진다). */
+[role="menu"]:focus-visible{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow,0 0 #0000);}
 /* kebab(더보기) 메뉴 트리거: 열림/hover(bg-card+text-primary)와 focus-visible 배경으로 초점을 표시하므로
    전역 box-shadow 글로우는 제거. 배경 하이라이트가 남아 키보드 초점 가시성은 유지. */
 .apfs-menu-trigger:focus-visible{box-shadow:none;}
