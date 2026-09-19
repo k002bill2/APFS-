@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "noCheck": true,
+    "skipLibCheck": true,
+    "noEmit": false,
+    "outDir": "../dist/types",
+    "rootDir": "../src",
+    "isolatedModules": false
+  },
+  "files": [
+    "../src/ds/index.tsx"
+  ],
+  "include": []
+}

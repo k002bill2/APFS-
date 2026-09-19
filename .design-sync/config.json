@@ -1,0 +1,608 @@
+{
+  "projectId": "709895f7-436c-49cd-8113-09fa8a455665",
+  "pkg": "apfs-dashboard-offline",
+  "globalName": "APFS",
+  "shape": "package",
+  "srcDir": "src/ds",
+  "tsconfig": "tsconfig.json",
+  "buildCmd": "npm run build && mkdir -p .design-sync/.cache && cp dist/assets/index-*.css .design-sync/.cache/app.css && printf '%s\\n' 'button,input,select,textarea{color:inherit}' '*,::before,::after{border-width:0;border-style:solid;border-color:var(--border)}' >> .design-sync/.cache/app.css && npx tsc -p .design-sync/tsconfig.types.json",
+  "cssEntry": ".design-sync/.cache/app.css",
+  "componentSrcMap": {
+    "Accordion": "src/dash/ui/accordion.tsx",
+    "AccordionItem": "src/dash/ui/accordion.tsx",
+    "AccordionTrigger": "src/dash/ui/accordion.tsx",
+    "AccordionContent": "src/dash/ui/accordion.tsx",
+    "Alert": "src/dash/ui/alert.tsx",
+    "AlertTitle": "src/dash/ui/alert.tsx",
+    "AlertDescription": "src/dash/ui/alert.tsx",
+    "Calendar": "src/dash/ui/calendar.tsx",
+    "CalendarDayButton": "src/dash/ui/calendar.tsx",
+    "Checkbox": "src/dash/ui/checkbox.tsx",
+    "DatePicker": "src/dash/ui/date-picker.tsx",
+    "PeriodPicker": "src/dash/ui/period-picker.tsx",
+    "HoverCard": "src/dash/ui/hover-card.tsx",
+    "HoverCardTrigger": "src/dash/ui/hover-card.tsx",
+    "HoverCardContent": "src/dash/ui/hover-card.tsx",
+    "Popover": "src/dash/ui/popover.tsx",
+    "PopoverTrigger": "src/dash/ui/popover.tsx",
+    "PopoverAnchor": "src/dash/ui/popover.tsx",
+    "PopoverContent": "src/dash/ui/popover.tsx",
+    "Progress": "src/dash/ui/progress.tsx",
+    "RadioGroup": "src/dash/ui/radio-group.tsx",
+    "RadioGroupItem": "src/dash/ui/radio-group.tsx",
+    "ScrollArea": "src/dash/ui/scroll-area.tsx",
+    "ScrollBar": "src/dash/ui/scroll-area.tsx",
+    "Sheet": "src/dash/ui/sheet.tsx",
+    "SheetTrigger": "src/dash/ui/sheet.tsx",
+    "SheetClose": "src/dash/ui/sheet.tsx",
+    "SheetPortal": "src/dash/ui/sheet.tsx",
+    "SheetOverlay": "src/dash/ui/sheet.tsx",
+    "SheetContent": "src/dash/ui/sheet.tsx",
+    "SheetHeader": "src/dash/ui/sheet.tsx",
+    "SheetFooter": "src/dash/ui/sheet.tsx",
+    "SheetTitle": "src/dash/ui/sheet.tsx",
+    "SheetDescription": "src/dash/ui/sheet.tsx",
+    "Skeleton": "src/dash/ui/skeleton.tsx",
+    "PageSkeleton": "src/dash/ui/skeleton.tsx",
+    "Toaster": "src/dash/ui/sonner.tsx",
+    "Spinner": "src/dash/ui/spinner.tsx",
+    "Switch": "src/dash/ui/switch.tsx",
+    "Tooltip": "src/dash/ui/tooltip.tsx",
+    "TooltipTrigger": "src/dash/ui/tooltip.tsx",
+    "TooltipContent": "src/dash/ui/tooltip.tsx",
+    "TooltipProvider": "src/dash/ui/tooltip.tsx",
+    "ColorChip": "src/dash/components.tsx",
+    "StatusBadge": "src/dash/components.tsx",
+    "DeltaBadge": "src/dash/components.tsx",
+    "StatCard": "src/dash/components.tsx",
+    "Card": "src/dash/components.tsx",
+    "ChartCard": "src/dash/components.tsx",
+    "SegTabs": "src/dash/components.tsx",
+    "FilterChip": "src/dash/components.tsx",
+    "Button": "src/dash/components.tsx",
+    "SaveButton": "src/dash/components.tsx",
+    "IconBtn": "src/dash/components.tsx",
+    "EmptyState": "src/dash/components.tsx",
+    "CountPill": "src/dash/components.tsx",
+    "PopNumber": "src/dash/components.tsx",
+    "TextSwap": "src/dash/components.tsx",
+    "TextsReveal": "src/dash/components.tsx",
+    "ClearableInput": "src/dash/components.tsx",
+    "AlertDialog": "src/dash/ui/alert-dialog.tsx",
+    "AlertDialogTrigger": "src/dash/ui/alert-dialog.tsx",
+    "AlertDialogPortal": "src/dash/ui/alert-dialog.tsx",
+    "AlertDialogOverlay": "src/dash/ui/alert-dialog.tsx",
+    "AlertDialogContent": "src/dash/ui/alert-dialog.tsx",
+    "AlertDialogHeader": "src/dash/ui/alert-dialog.tsx",
+    "AlertDialogFooter": "src/dash/ui/alert-dialog.tsx",
+    "AlertDialogTitle": "src/dash/ui/alert-dialog.tsx",
+    "AlertDialogDescription": "src/dash/ui/alert-dialog.tsx",
+    "AlertDialogAction": "src/dash/ui/alert-dialog.tsx",
+    "AlertDialogCancel": "src/dash/ui/alert-dialog.tsx",
+    "Command": "src/dash/ui/command.tsx",
+    "CommandDialog": "src/dash/ui/command.tsx",
+    "CommandInput": "src/dash/ui/command.tsx",
+    "CommandList": "src/dash/ui/command.tsx",
+    "CommandEmpty": "src/dash/ui/command.tsx",
+    "CommandGroup": "src/dash/ui/command.tsx",
+    "CommandItem": "src/dash/ui/command.tsx",
+    "CommandSeparator": "src/dash/ui/command.tsx",
+    "ContextMenu": "src/dash/ui/context-menu.tsx",
+    "ContextMenuTrigger": "src/dash/ui/context-menu.tsx",
+    "ContextMenuGroup": "src/dash/ui/context-menu.tsx",
+    "ContextMenuContent": "src/dash/ui/context-menu.tsx",
+    "ContextMenuItem": "src/dash/ui/context-menu.tsx",
+    "ContextMenuSeparator": "src/dash/ui/context-menu.tsx",
+    "ContextMenuLabel": "src/dash/ui/context-menu.tsx",
+    "Dialog": "src/dash/ui/dialog.tsx",
+    "DialogTrigger": "src/dash/ui/dialog.tsx",
+    "DialogPortal": "src/dash/ui/dialog.tsx",
+    "DialogClose": "src/dash/ui/dialog.tsx",
+    "DialogOverlay": "src/dash/ui/dialog.tsx",
+    "DialogContent": "src/dash/ui/dialog.tsx",
+    "DialogHeader": "src/dash/ui/dialog.tsx",
+    "DialogFooter": "src/dash/ui/dialog.tsx",
+    "DialogTitle": "src/dash/ui/dialog.tsx",
+    "DialogDescription": "src/dash/ui/dialog.tsx",
+    "DropdownMenu": "src/dash/ui/dropdown-menu.tsx",
+    "DropdownMenuTrigger": "src/dash/ui/dropdown-menu.tsx",
+    "DropdownMenuGroup": "src/dash/ui/dropdown-menu.tsx",
+    "DropdownMenuRadioGroup": "src/dash/ui/dropdown-menu.tsx",
+    "DropdownMenuContent": "src/dash/ui/dropdown-menu.tsx",
+    "DropdownMenuItem": "src/dash/ui/dropdown-menu.tsx",
+    "DropdownMenuRadioItem": "src/dash/ui/dropdown-menu.tsx",
+    "DropdownMenuLabel": "src/dash/ui/dropdown-menu.tsx",
+    "DropdownMenuSeparator": "src/dash/ui/dropdown-menu.tsx",
+    "DropdownMenuShortcut": "src/dash/ui/dropdown-menu.tsx",
+    "InputGroup": "src/dash/ui/input-group.tsx",
+    "InputGroupInput": "src/dash/ui/input-group.tsx",
+    "InputGroupTextarea": "src/dash/ui/input-group.tsx",
+    "InputGroupAddon": "src/dash/ui/input-group.tsx",
+    "InputGroupText": "src/dash/ui/input-group.tsx",
+    "InputGroupButton": "src/dash/ui/input-group.tsx",
+    "Item": "src/dash/ui/item.tsx",
+    "ItemGroup": "src/dash/ui/item.tsx",
+    "ItemSeparator": "src/dash/ui/item.tsx",
+    "ItemHeader": "src/dash/ui/item.tsx",
+    "ItemFooter": "src/dash/ui/item.tsx",
+    "ItemMedia": "src/dash/ui/item.tsx",
+    "ItemContent": "src/dash/ui/item.tsx",
+    "ItemTitle": "src/dash/ui/item.tsx",
+    "ItemDescription": "src/dash/ui/item.tsx",
+    "ItemActions": "src/dash/ui/item.tsx",
+    "NavigationMenu": "src/dash/ui/navigation-menu.tsx",
+    "NavigationMenuList": "src/dash/ui/navigation-menu.tsx",
+    "NavigationMenuItem": "src/dash/ui/navigation-menu.tsx",
+    "NavigationMenuTrigger": "src/dash/ui/navigation-menu.tsx",
+    "NavigationMenuContent": "src/dash/ui/navigation-menu.tsx",
+    "NavigationMenuLink": "src/dash/ui/navigation-menu.tsx",
+    "Attachment": "src/dash/ui/attachment.tsx",
+    "AttachmentGroup": "src/dash/ui/attachment.tsx",
+    "AttachmentMedia": "src/dash/ui/attachment.tsx",
+    "AttachmentContent": "src/dash/ui/attachment.tsx",
+    "AttachmentTitle": "src/dash/ui/attachment.tsx",
+    "AttachmentDescription": "src/dash/ui/attachment.tsx",
+    "AttachmentActions": "src/dash/ui/attachment.tsx",
+    "AttachmentAction": "src/dash/ui/attachment.tsx"
+  },
+  "overrides": {
+    "Dialog": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "FormDialog"
+    },
+    "AlertDialog": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "DeleteConfirm"
+    },
+    "Sheet": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "DetailPanel"
+    },
+    "Popover": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "FundSummaryPopover"
+    },
+    "HoverCard": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "GpHoverCard"
+    },
+    "Tooltip": {
+      "cardMode": "single",
+      "viewport": "420x240",
+      "primaryStory": "IconButtonTooltip"
+    },
+    "DropdownMenu": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "RowActionsMenu"
+    },
+    "ContextMenu": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "GridRowContextMenu"
+    },
+    "Command": {
+      "cardMode": "single",
+      "viewport": "560x420",
+      "primaryStory": "MenuPalette"
+    },
+    "NavigationMenu": {
+      "cardMode": "single",
+      "viewport": "720x400",
+      "primaryStory": "OpenFlyout"
+    },
+    "DatePicker": {
+      "cardMode": "column"
+    },
+    "PeriodPicker": {
+      "cardMode": "column"
+    },
+    "Calendar": {
+      "cardMode": "single",
+      "viewport": "420x400",
+      "primaryStory": "BaseDateCalendar"
+    },
+    "Toaster": {
+      "cardMode": "single",
+      "viewport": "560x300",
+      "primaryStory": "Toasts"
+    },
+    "Accordion": {
+      "cardMode": "column"
+    },
+    "ScrollArea": {
+      "cardMode": "column"
+    },
+    "PageSkeleton": {
+      "cardMode": "column"
+    },
+    "ChartCard": {
+      "cardMode": "column"
+    },
+    "StatCard": {
+      "cardMode": "column"
+    },
+    "CommandDialog": {
+      "cardMode": "single",
+      "viewport": "720x520",
+      "primaryStory": "PaletteDialog"
+    },
+    "InputGroup": {
+      "cardMode": "column"
+    },
+    "Item": {
+      "cardMode": "column"
+    },
+    "ItemGroup": {
+      "cardMode": "column"
+    },
+    "AttachmentGroup": {
+      "cardMode": "column"
+    },
+    "DialogTrigger": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "TriggerOpensDialog"
+    },
+    "DialogPortal": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "PortalEscapesCard"
+    },
+    "DialogClose": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "CloseInFooter"
+    },
+    "DialogOverlay": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "OverlayScrim"
+    },
+    "DialogContent": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "WideFormContent"
+    },
+    "DialogHeader": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "HeaderWithBadge"
+    },
+    "DialogFooter": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "FooterActions"
+    },
+    "DialogTitle": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "TitleInHeader"
+    },
+    "DialogDescription": {
+      "cardMode": "single",
+      "viewport": "640x480",
+      "primaryStory": "DescriptionUnderTitle"
+    },
+    "AlertDialogTrigger": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "TriggerOpensConfirm"
+    },
+    "AlertDialogPortal": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "PortalEscapesCard"
+    },
+    "AlertDialogOverlay": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "OverlayScrim"
+    },
+    "AlertDialogContent": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "ContentDefault"
+    },
+    "AlertDialogHeader": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "HeaderStacked"
+    },
+    "AlertDialogFooter": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "FooterCancelAction"
+    },
+    "AlertDialogTitle": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "TitleQuestion"
+    },
+    "AlertDialogDescription": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "DescriptionImpact"
+    },
+    "AlertDialogAction": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "DestructiveAction"
+    },
+    "AlertDialogCancel": {
+      "cardMode": "single",
+      "viewport": "640x420",
+      "primaryStory": "CancelDefault"
+    },
+    "SheetTrigger": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "TriggerOpensDrawer"
+    },
+    "SheetClose": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "CloseInFooter"
+    },
+    "SheetPortal": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "PortalEscapesCard"
+    },
+    "SheetOverlay": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "OverlayScrim"
+    },
+    "SheetContent": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "RightFilterDrawer"
+    },
+    "SheetHeader": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "HeaderWithBadge"
+    },
+    "SheetFooter": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "FooterResetApply"
+    },
+    "SheetTitle": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "TitleInHeader"
+    },
+    "SheetDescription": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "DescriptionUnderTitle"
+    },
+    "DropdownMenuTrigger": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "ToolbarTrigger"
+    },
+    "DropdownMenuGroup": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "GroupedActions"
+    },
+    "DropdownMenuRadioGroup": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "AmountUnitRadioGroup"
+    },
+    "DropdownMenuContent": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "MenuSurface"
+    },
+    "DropdownMenuItem": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "ActionItems"
+    },
+    "DropdownMenuRadioItem": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "SortRadioItems"
+    },
+    "DropdownMenuLabel": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "LabeledSections"
+    },
+    "DropdownMenuSeparator": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "SeparatedActionGroups"
+    },
+    "DropdownMenuShortcut": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "ShortcutHints"
+    },
+    "ContextMenuTrigger": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "GridAreaTrigger"
+    },
+    "ContextMenuGroup": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "GroupedRowActions"
+    },
+    "ContextMenuContent": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "RowMenuSurface"
+    },
+    "ContextMenuItem": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "RowActionItems"
+    },
+    "ContextMenuSeparator": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "SeparatedRowActions"
+    },
+    "ContextMenuLabel": {
+      "cardMode": "single",
+      "viewport": "480x420",
+      "primaryStory": "LabeledRowMenu"
+    },
+    "CommandInput": {
+      "cardMode": "single",
+      "viewport": "560x420",
+      "primaryStory": "PaletteSearchInput"
+    },
+    "CommandList": {
+      "cardMode": "single",
+      "viewport": "560x420",
+      "primaryStory": "PaletteResultList"
+    },
+    "CommandEmpty": {
+      "cardMode": "single",
+      "viewport": "560x420",
+      "primaryStory": "NoResults"
+    },
+    "CommandGroup": {
+      "cardMode": "single",
+      "viewport": "560x420",
+      "primaryStory": "GroupedResults"
+    },
+    "CommandItem": {
+      "cardMode": "single",
+      "viewport": "560x420",
+      "primaryStory": "ResultItems"
+    },
+    "CommandSeparator": {
+      "cardMode": "single",
+      "viewport": "560x420",
+      "primaryStory": "SeparatedGroups"
+    },
+    "NavigationMenuList": {
+      "cardMode": "single",
+      "viewport": "720x400",
+      "primaryStory": "VerticalList"
+    },
+    "NavigationMenuItem": {
+      "cardMode": "single",
+      "viewport": "720x400",
+      "primaryStory": "TriggerAndLinkItems"
+    },
+    "NavigationMenuTrigger": {
+      "cardMode": "single",
+      "viewport": "720x400",
+      "primaryStory": "TriggerStates"
+    },
+    "NavigationMenuContent": {
+      "cardMode": "single",
+      "viewport": "720x400",
+      "primaryStory": "FlyoutPanel"
+    },
+    "NavigationMenuLink": {
+      "cardMode": "single",
+      "viewport": "720x400",
+      "primaryStory": "PanelLinks"
+    },
+    "PopoverTrigger": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "TriggerAsChild"
+    },
+    "PopoverAnchor": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "AnchoredToField"
+    },
+    "PopoverContent": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "ContentSurface"
+    },
+    "HoverCardTrigger": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "TriggerInTableCell"
+    },
+    "HoverCardContent": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "ContentSurface"
+    },
+    "TooltipTrigger": {
+      "cardMode": "single",
+      "viewport": "420x240",
+      "primaryStory": "TriggerAsChildIconButton"
+    },
+    "TooltipContent": {
+      "cardMode": "single",
+      "viewport": "420x240",
+      "primaryStory": "ContentSides"
+    },
+    "TooltipProvider": {
+      "cardMode": "single",
+      "viewport": "420x240",
+      "primaryStory": "ProviderWithToolbar"
+    },
+    "Attachment": {
+      "cardMode": "column"
+    },
+    "AttachmentAction": {
+      "cardMode": "column"
+    },
+    "AttachmentActions": {
+      "cardMode": "column"
+    },
+    "AttachmentContent": {
+      "cardMode": "column"
+    },
+    "AttachmentDescription": {
+      "cardMode": "column"
+    },
+    "AttachmentMedia": {
+      "cardMode": "column"
+    },
+    "AttachmentTitle": {
+      "cardMode": "column"
+    },
+    "InputGroupAddon": {
+      "cardMode": "column"
+    },
+    "InputGroupButton": {
+      "cardMode": "column"
+    },
+    "InputGroupInput": {
+      "cardMode": "column"
+    },
+    "InputGroupText": {
+      "cardMode": "column"
+    },
+    "InputGroupTextarea": {
+      "cardMode": "column"
+    },
+    "ItemContent": {
+      "cardMode": "column"
+    },
+    "ScrollBar": {
+      "cardMode": "column"
+    },
+    "Spinner": {
+      "cardMode": "column"
+    }
+  },
+  "tokensGlob": "src/dash/tokens.css",
+  "guidelinesGlob": [
+    ".design-sync/guidelines/**/*.md"
+  ],
+  "readmeHeader": ".design-sync/conventions.md"
+}
