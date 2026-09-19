@@ -294,6 +294,9 @@ function TextSwap({ text, className, style }: { text: string; className?: string
   React.useEffect(() => {
     /* A→B→A 왕복(exit 타이머가 끝나기 전 원래 값으로 복귀)이면 phase 가 "exit"(opacity 0)에 고착된다 → 정지로 되돌린다. */
     if (text === shown) { setPhase((p) => (p === "rest" ? p : "rest")); return; }
+    /* 저모션(prefers-reduced-motion)이면 exit 단계·타이머 없이 즉시 교체한다 — CSS 가드는 transition 만 끄고 .is-exit 의 opacity:0 은
+       남아, 그대로 두면 캡션이 --text-swap-dur 동안 사라졌다 나타난다(Codex 사후 리뷰 P2). */
+    if (typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches) { setShown(text); setPhase("rest"); return; }
     setPhase("exit");
     const dur = parseFloat(ref.current ? getComputedStyle(ref.current).getPropertyValue("--text-swap-dur") : "") || 150;
     const id = window.setTimeout(() => { setShown(text); setPhase("enter"); }, dur);
