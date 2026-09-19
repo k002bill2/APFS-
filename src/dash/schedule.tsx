@@ -94,7 +94,7 @@ function ScheduleCard({ item, onAdd }) {
   return (
     <div
       className="flex items-center gap-3 rounded-card border border-border bg-card px-4 py-3 shadow-sm hover:shadow-md transition-shadow"
-      style={{ animation: "dashFade .35s var(--ease) both" }}><div
+      style={{ animation: "dashFade var(--dur-slow) var(--ease) both" }}><div
         className="shrink-0 flex flex-col items-center justify-center rounded-[9px] w-14 h-14"
         style={{
           background: toneVar(tone)[1],
@@ -140,7 +140,7 @@ function CalendarView({ items }) {
   for (let i = 1; i <= daysInMonth; i++) cells.push(i);
 
   return (
-    <div style={{ animation: "dashFade .35s var(--ease) both" }}><div className="flex items-center justify-between mb-3"><span className="text-[15px] font-bold text-foreground">2026년 6월</span><div className="flex items-center gap-1"><IconBtn icon="chevron-left" label="이전 달" size={30} /><IconBtn icon="chevron-right" label="다음 달" size={30} /></div></div><div className="grid grid-cols-7 mb-1">{DAYS_KR.map((d, i) => <div
+    <div style={{ animation: "dashFade var(--dur-slow) var(--ease) both" }}><div className="flex items-center justify-between mb-3"><span className="text-[15px] font-bold text-foreground">2026년 6월</span><div className="flex items-center gap-1"><IconBtn icon="chevron-left" label="이전 달" size={30} /><IconBtn icon="chevron-right" label="다음 달" size={30} /></div></div><div className="grid grid-cols-7 mb-1">{DAYS_KR.map((d, i) => <div
           key={d}
           className="text-center text-[11px] font-bold py-1"
           style={{ color: i === 0 ? "var(--danger-text)" : i === 6 ? "var(--accent)" : "var(--muted-foreground)" }}>{d}</div>)}</div><div className="grid grid-cols-7 gap-1">{cells.map((day, i) => {
@@ -170,7 +170,7 @@ function CalendarView({ items }) {
         })}</div>{/* 선택 날짜 일정 목록 */
       selectedDate && selectedItems.length > 0 && <div
         className="mt-4 pt-4 border-t border-border"
-        style={{ animation: "dashFade .25s var(--ease) both" }}><div className="text-[13px] font-bold mb-2 text-foreground">{`6월 ${selectedDate}일 일정`}</div><div className="flex flex-col gap-2">{selectedItems.map((item, i) => <div
+        style={{ animation: "dashFade var(--dur) var(--ease) both" }}><div className="text-[13px] font-bold mb-2 text-foreground">{`6월 ${selectedDate}일 일정`}</div><div className="flex flex-col gap-2">{selectedItems.map((item, i) => <div
             key={i}
             className="flex items-center gap-2.5 rounded-[8px] px-3 py-2 border border-border"
             style={{ background: toneVar(ddayTone(item))[1] }}><ColorChip
@@ -199,7 +199,7 @@ function TimelineView({ items }) {
   return (
     <div
       className="flex flex-col gap-0"
-      style={{ animation: "dashFade .35s var(--ease) both" }}>{grouped.map(([date, entries], gi: number) => <div key={date} className="flex gap-0"><div className="flex flex-col items-center mr-3" style={{ width: 32 }}><div
+      style={{ animation: "dashFade var(--dur-slow) var(--ease) both" }}>{grouped.map(([date, entries], gi: number) => <div key={date} className="flex gap-0"><div className="flex flex-col items-center mr-3" style={{ width: 32 }}><div
             className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-[11px] bg-muted text-muted-foreground border-2 border-border">{mn(fmtDate(date).split("(")[0])}</div>{gi < grouped.length - 1 && <div
             className="flex-1 w-px bg-border my-1"
             style={{ minHeight: 16 }} />}</div><div className="flex-1 pb-4"><div
@@ -331,7 +331,7 @@ function Schedule({ onNav }) {
   return (
     <div
       className="max-w-[1320px] mx-auto"
-      style={{ animation: "dashFade .35s var(--ease) both" }}><PageHeader
+      style={{ animation: "dashFade var(--dur-slow) var(--ease) both" }}><PageHeader
         crumbs={["홈", "일정·알림 센터"]}
         title="일정 · 알림 센터"
         sub="마감 임박·보고·실사·가치평가 일정 통합 뷰 — 2026-06-16 기준"

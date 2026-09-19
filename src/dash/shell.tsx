@@ -89,13 +89,13 @@ function MenuChildren({ m, route, expanded, setExpanded, onNav }) {
               className="w-full flex items-center justify-between gap-1.5 cursor-pointer py-1 px-2.5 text-foreground"
               style={{
                 border: "none", font: "inherit", fontWeight: 700, borderRadius: 6,
-                background: "transparent", fontSize: 13, transition: "background .15s",
+                background: "transparent", fontSize: 13, transition: "background var(--dur-fast)",
               }}><span
                 className="whitespace-nowrap overflow-hidden text-left"
                 style={{ textOverflow: "ellipsis" }}>{c.label}</span><div className="flex items-center gap-1.5 shrink-0">{showDots && subCount > 0 && <NewDot urgent={m.urgent} />}<Icon
                   name="chevron-down"
                   size={12}
-                  style={{ transform: subOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform .15s", opacity: .5 }} /></div></button>{subOpen && <div className="mb-0.5 pl-3.5">{c.children.map((leaf, j) => {
+                  style={{ transform: subOpen ? "rotate(0)" : "rotate(-90deg)", transition: "transform var(--dur)", opacity: .5 }} /></div></button>{subOpen && <div className="mb-0.5 pl-3.5">{c.children.map((leaf, j) => {
                 const leafActive = (leaf.path || leaf.label) === route && !!owner[subKey];
                 return (<button
                   key={j}
@@ -108,7 +108,7 @@ function MenuChildren({ m, route, expanded, setExpanded, onNav }) {
                     border: "none", font: "inherit", fontWeight: leafActive ? 700 : 500,
                     borderRadius: 6, paddingTop: 5, paddingBottom: 5, fontSize: 13,
                     color: leafActive ? "var(--primary)" : "var(--muted-foreground)",
-                    background: leafActive ? primaryBg : "transparent", transition: "background .15s",
+                    background: leafActive ? primaryBg : "transparent", transition: "background var(--dur-fast)",
                   }}><span
                     className="whitespace-nowrap overflow-hidden text-left"
                     style={{ textOverflow: "ellipsis" }}>{leaf.label}</span>{showDots && leaf.badge > 0 && <NewDot urgent={m.urgent} />}</button>);
@@ -127,7 +127,7 @@ function MenuChildren({ m, route, expanded, setExpanded, onNav }) {
           style={{
             border: "none", font: "inherit", fontWeight: cActive ? 700 : 500, borderRadius: 7, fontSize: 13,
             color: cActive ? "var(--primary)" : "var(--muted-foreground)",
-            background: cActive ? primaryBg : "transparent", transition: "background .15s",
+            background: cActive ? primaryBg : "transparent", transition: "background var(--dur-fast)",
           }}><span
             className="whitespace-nowrap overflow-hidden text-left"
             style={{ textOverflow: "ellipsis" }}>{c.label}</span>{showDots && c.badge > 0 && <NewDot urgent={m.urgent} />}</button>
@@ -147,7 +147,7 @@ function LnbFlyItem({ m, count, isActive, route, expanded, setExpanded, onNav })
   const btnStyle: React.CSSProperties = {
     gap: 11, border: "none", font: "inherit", borderRadius: 9, padding: "10px", justifyContent: "center",
     background: isActive ? "color-mix(in srgb,var(--primary) 12%,transparent)" : "transparent",
-    color: isActive ? "var(--primary)" : "var(--foreground)", fontWeight: isActive ? 700 : 500, transition: "background .15s",
+    color: isActive ? "var(--primary)" : "var(--foreground)", fontWeight: isActive ? 700 : 500, transition: "background var(--dur-fast)",
   };
   if (!m.children) {
     return (
@@ -215,7 +215,7 @@ function LnbTree({ menu, open, route, expanded, setExpanded, onNav }) {
                 gap: 11, border: "none", font: "inherit", borderRadius: 9, padding: open ? "9px 10px" : "10px", justifyContent: open ? "flex-start" : "center",
                 background: isActive ? "color-mix(in srgb,var(--primary) 12%,transparent)" : "transparent",
                 color: isActive ? "var(--primary)" : "var(--foreground)", fontWeight: isActive ? 700 : 500, fontSize: 13.5,
-                transition: "background .15s",
+                transition: "background var(--dur-fast)",
               }}><Icon name={m.icon} size={20} stroke={isActive ? 2.3 : 2} />{open && <span className="flex-1 text-left whitespace-nowrap">{m.label}</span>}{open && (m as any).isNew && <span className="font-extrabold text-accent" style={{ fontSize: 9.5 }}>NEW</span>}{count > 0 && (open
                 ? <span style={{ width: 7, height: 7, borderRadius: 99, flexShrink: 0, background: m.urgent ? "var(--danger)" : "var(--primary)" }} />
                 : <span
@@ -620,7 +620,7 @@ function FavoritesFab({ onNav }) {
       {open && <>
         <div onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: -1 }} />
         <MenuHighlightProvider>
-        <div role="menu" aria-label="즐겨찾기" className="bg-card shadow-lg p-2" style={{ width: 244, border: "1px solid var(--border)", borderRadius: 14, animation: "dashFade .16s var(--ease) both" }}>
+        <div role="menu" aria-label="즐겨찾기" className="bg-card shadow-lg p-2" style={{ width: 244, border: "1px solid var(--border)", borderRadius: 14, animation: "dashFade var(--dur) var(--ease) both" }}>
           <div className="flex items-center gap-1.5 pt-1.5 px-2 pb-2">
             <Icon name="star" size={14} style={{ color: "var(--warning)" }} />
             <span className="font-bold" style={{ fontSize: 12.5 }}>즐겨찾기</span>
@@ -631,7 +631,7 @@ function FavoritesFab({ onNav }) {
               onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "var(--foreground)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--caption)"; }}
               className="ml-auto shrink-0 cursor-pointer flex items-center justify-center"
-              style={{ width: 26, height: 26, borderRadius: 7, border: "none", background: "transparent", color: "var(--caption)", transition: "background .15s,color .15s" }}>
+              style={{ width: 26, height: 26, borderRadius: 7, border: "none", background: "transparent", color: "var(--caption)", transition: "background var(--dur-fast),color var(--dur-fast)" }}>
               <Icon name="settings" size={15} />
             </button>
           </div>
@@ -887,7 +887,7 @@ function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: stri
               onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "var(--foreground)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--caption)"; }}
               className="ml-auto shrink-0 cursor-pointer inline-flex items-center gap-1"
-              style={{ borderRadius: 7, border: "none", background: "transparent", color: "var(--caption)", font: "inherit", fontWeight: 600, fontSize: 11.5, padding: "4px 7px", transition: "background .15s,color .15s" }}>
+              style={{ borderRadius: 7, border: "none", background: "transparent", color: "var(--caption)", font: "inherit", fontWeight: 600, fontSize: 11.5, padding: "4px 7px", transition: "background var(--dur-fast),color var(--dur-fast)" }}>
               <Icon name="trash" size={12} />지우기
             </button>}
           </div>
@@ -945,7 +945,7 @@ function AppShell(props) {
         onNav={navClose}
         onUserModal={setUserModal} /><div className="grid flex-1 items-start" style={{
           gridTemplateColumns: mobile ? "minmax(0,1fr)" : rail ? "64px minmax(0,1fr)" : `${lnbOpen ? 260 : 66}px minmax(0,1fr)`,
-          ...(mobile || rail ? {} : { transition: "grid-template-columns .22s var(--ease)" }),
+          ...(mobile || rail ? {} : { transition: "grid-template-columns var(--dur-slow) var(--ease)" }),
         }}>{rail
           ? <RailNav route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />
           : <Lnb open={mobile ? true : lnbOpen} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />}<NavContext.Provider value={{ onNav: navClose, route }}><main

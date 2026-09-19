@@ -293,7 +293,7 @@ export function GridFrame({
     };
   }, [wantsFloating, toolbarOut]);
   return (
-    <div ref={rootRef} style={{ maxWidth: 1280, margin: '0 auto', animation: 'dashFade .3s var(--ease) both' }}>
+    <div ref={rootRef} style={{ maxWidth: 1280, margin: '0 auto', animation: 'dashFade var(--dur-slow) var(--ease) both' }}>
       {/* PageHeader: 현 shell은 title/sub를 렌더하지 않으므로(crumbs·actions만) title/sub는 카드헤더가 직접 그린다.
           title은 forward-compat용으로 계속 넘기되 라이브 제목은 카드 <h3> — 향후 shell이 title 렌더를 복원하면 중복 주의 */}
       <PageHeader crumbs={crumbs} title={title} actions={headerActions} />
