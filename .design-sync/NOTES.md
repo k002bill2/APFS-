@@ -53,6 +53,7 @@
 - Fact-Forcing Gate 는 명령 텍스트의 낱말(예: Tailwind 말줄임 유틸 이름, `rm`)을 파괴적으로 오탐 — 파이썬 문자열 결합으로 우회.
 
 ### 제품 결함 후보(동기 범위 밖 — 별도 이슈로)
+> **2026-09-19 반영됨** — 아래 4건 모두 `fix/ds-defects` PR 로 고쳤다(Button 은 변형별 border-color 유틸 1개로 재배치, 메뉴 컨테이너는 Tailwind 그림자 체인 복원). 재동기 시 새 결함이 나오면 이 절에 이어서 적는다.
 - `src/dash/ui/accordion.tsx` AccordionTrigger 에 `bg-transparent` 누락 → 실제 앱에서도 UA 회색 버튼 배경(AttachmentAction 에는 있음).
 - `src/dash/tokens.css` `[role="menu"]:focus-visible{box-shadow:none}` 이 키보드로 연 메뉴의 `shadow-lg` 엘리베이션까지 지운다(Radix 가 Content 로 포커스 이동 → Chrome 이 focus-visible 승격).
 - `UI.Button variant="outline"` 은 컴파일 CSS 순서상 `.border-transparent` 가 `.border-border-strong` 뒤에 와서 테두리가 안 보인다(리셋 복구 후에도 동일). 임의값 `[border-color:var(--border-strong)]` 로 고칠 수 있음.
