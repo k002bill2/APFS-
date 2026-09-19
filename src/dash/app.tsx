@@ -234,9 +234,13 @@ function App() {
 
   // 로그인·온보딩 3종은 메뉴 Shell/LNB의 자식이 아닌 독립 데모 route다(GNB/LNB 없이 단독 표시).
   // 실제 인증·계정 활성화·권한 판정은 수행하지 않는다.
-  if (route === "login") return <LoginDemo onNav={onNav} />;
-  if (route === "onboarding-issue") return <OnboardingIssue onNav={onNav} />;
-  if (route === "onboarding-invite") return <OnboardingInvite onNav={onNav} />;
+  // Shell 밖이라도 MotionConfig 는 감싼다 — ui/checkbox·radio-group 의 scale 팝은 JS 구동 Motion 이라
+  // tokens.css 의 prefers-reduced-motion 차단이 닿지 않고, 이 래퍼가 유일한 저모션 관문이다(Codex 리뷰 2026-09-19).
+  const authPage =
+    route === "login" ? <LoginDemo onNav={onNav} /> :
+    route === "onboarding-issue" ? <OnboardingIssue onNav={onNav} /> :
+    route === "onboarding-invite" ? <OnboardingInvite onNav={onNav} /> : null;
+  if (authPage) return <MotionConfig reducedMotion="user">{authPage}</MotionConfig>;
 
   return (
     // reducedMotion="user": OS 저모션 선호 시 Motion의 transform/scale은 끄고 opacity는 유지.
