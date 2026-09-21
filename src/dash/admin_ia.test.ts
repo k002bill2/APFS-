@@ -32,7 +32,8 @@ describe('관리자 메뉴 IA(이미지 정본)', () => {
     const routes = EXPECTED.flatMap(([, leaves]) => leaves.map(([, path]) => path));
     for (const route of routes) expect(app).toContain(`route === "${route}"`);
     expect(app).toContain('route === "login"');
-    // 분기 형태(if-return / 삼항)에 묶지 않는다 — #218이 저모션 MotionConfig 래핑을 위해 삼항으로 바꾸며 깨진 전례.
-    expect(app).toContain('<LoginDemo onNav={onNav} />');
+    // login 조건과 LoginDemo 렌더가 한 분기로 묶여 있어야 한다(둘을 따로 찾으면 죽은 코드도 통과 — Codex P2).
+    // 분기 형태는 if-return / 삼항 둘 다 허용 — #218이 저모션 MotionConfig 래핑을 위해 삼항으로 바꾸며 깨진 전례.
+    expect(app).toMatch(/route === "login"\)?\s*(?:\?|return)\s*<LoginDemo onNav=\{onNav\} \/>/);
   });
 });
