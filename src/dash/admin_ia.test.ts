@@ -34,6 +34,7 @@ describe('관리자 메뉴 IA(이미지 정본)', () => {
     expect(app).toContain('route === "login"');
     // login 조건과 LoginDemo 렌더가 한 분기로 묶여 있어야 한다(둘을 따로 찾으면 죽은 코드도 통과 — Codex P2).
     // 분기 형태는 if-return / 삼항 둘 다 허용 — #218이 저모션 MotionConfig 래핑을 위해 삼항으로 바꾸며 깨진 전례.
-    expect(app).toMatch(/route === "login"\)?\s*(?:\?|return)\s*<LoginDemo onNav=\{onNav\} \/>/);
+    // 허용 형태: `? <X/>` · `) return <X/>` · `) { return (<X/>` — 중괄호·괄호 return 도 통과(Codex P2 2차).
+    expect(app).toMatch(/route === "login"\)?\s*\{?\s*(?:\?|return)\s*\(?\s*<LoginDemo onNav=\{onNav\} \/>/);
   });
 });
