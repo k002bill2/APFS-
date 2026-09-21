@@ -66,7 +66,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 - 상태 SSOT는 `useState` N개 + `clearFilters`(초기화 버튼·전체 해제 공유). `passes`는 `useCallback`, 변경 시 `apiRef.current?.onFilterChanged()`(External Filter).
 
 ## 정본 코드 (로직은 여기, 스킬은 규약만)
-- `src/dash/schemas/renderers.tsx` — **`CONTROL_BOX`**(모달·드로어 공유 34px 박스) + **`drawerInputStyle`**(드로어 입력 스타일 SSOT) + `controlMinWidth`(폭 하한)
+- `src/dash/schemas/renderers.tsx` — **`CONTROL_BOX`**(모달·드로어 공유 34px 박스) + **`drawerInputStyle`**(드로어 입력 스타일 SSOT) + `controlMinWidth`(폭 하한) + **`CONTROL_BTN`**(입력 옆 동거 버튼을 34px에 맞추는 `UI.Button style`, →[[apfs-form-modal]])
 - `src/dash/schemas/filter_field.ts` — `resolveFilterField` + YEAR_OPTIONS + degrade 가드
 - `src/dash/generic_list.tsx` — `DrawerFilterControl` · `ListFilterDrawer` · `rowMatchesFilters` · `makeRows` 시드 · `FilterPill`
 - `src/dash/schemas/filter_field.test.ts` — 타입 도출·degrade·columnKey 불변식 회귀 가드

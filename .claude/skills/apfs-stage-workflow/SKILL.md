@@ -59,7 +59,7 @@ toolbarLeft={selected
 - 전이 후 `deselectAll()` → 사용자가 다음 액션을 위해 다시 선택해야 함. 유지할 것.
 - 액션 버튼을 행마다 셀에 그리기 → 35컬럼 가로스크롤에서 안 보임 + 단계별 분기 중복. 툴바 1곳.
 - 단계 문자열을 여러 곳에 하드코딩 → `Stage` 유니온 + 액션 맵 SSOT.
-- **드롭다운형 액션 버튼(예: `투심결과 입력 ▾`)을 `<DropdownMenuTrigger asChild><Button>`으로 감싸기** → `UI.Button`은 `...rest`/`forwardRef`가 없어 Radix `onPointerDown`·ref가 유실돼 **메뉴가 안 열린다**(2026-09-11 실측). `DropdownMenuTrigger`에 스타일을 **직접** 얹되, 옆 selbar 버튼과 높이를 맞추려면 **`UI.Button size="sm"`의 유틸 클래스를 그대로 복제**(`ui-btn ui-<variant> inline-flex items-center justify-center gap-[7px] font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border border-transparent transition-colors duration-tok-fast ease-ds px-[11px] py-1.5 text-[12.5px]` + variant 색). **고정 `height` 금지** — 높이는 padding+line-height(sm=29px)에서 나오므로 `height:34`류를 주면 옆 버튼과 어긋난다. 아이콘 `size={14}`.
+- **드롭다운형 액션 버튼(예: `투심결과 입력 ▾`)을 `<DropdownMenuTrigger asChild><Button>`으로 감싸기** → `UI.Button`은 `...rest`/`forwardRef`가 없어 Radix `onPointerDown`·ref가 유실돼 **메뉴가 안 열린다**(2026-09-11 실측). `DropdownMenuTrigger`에 스타일을 **직접** 얹되, 옆 selbar 버튼과 높이를 맞추려면 **`UI.Button size="sm"`의 유틸 클래스를 그대로 복제**(`ui-btn ui-<variant> inline-flex items-center justify-center gap-[7px] font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border border-transparent transition-colors duration-tok-fast ease-ds px-[11px] py-1.5 text-[12.5px]` + variant 색). **고정 `height` 금지** — 높이는 padding+line-height(sm=29px)에서 나오므로 `height:34`류를 주면 옆 버튼과 어긋난다. 아이콘 `size={14}`. (반대 경우 주의: **입력 컨트롤과 한 줄에 놓이는** 모달 안 동거 버튼은 29px가 틀린 쪽이라 `CONTROL_BTN`으로 34px에 맞춘다 →[[apfs-form-modal]] 규칙 5. 기준은 "옆에 무엇이 있나" — 툴바 sm 버튼끼리는 29, 입력 옆은 34.)
 
 ## 검증 (aside repl)
 ```js

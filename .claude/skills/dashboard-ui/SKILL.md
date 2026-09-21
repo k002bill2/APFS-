@@ -41,6 +41,7 @@ APFS = 농림수산식품모태펀드 투자자산관리시스템 **대시보드
 ## 인터랙션 · 모션 (전역 공통 — 새로 만들지 말고 재사용)
 버튼 로딩/비활성·진행 표시·클릭 피드백은 이미 공통 프리미티브가 있다. **페이지마다 스피너·진행바를 새로 만들지 말 것**(라이브러리 도입도 불필요 — PR #104에서 "라이브러리 0"으로 확립).
 - **로딩/비활성 버튼**: `UI.Button`의 `loading`(스피너 + `aria-busy`, 포커스 유지·클릭 자동 차단)·`disabled`(진짜 비활성) prop. 예: `<Button loading>저장 중</Button>`. ⚠️ 로딩을 `disabled` 속성으로 막지 말 것(포커스 유실) — `loading`이 처리.
+- **`UI.Button` 높이는 고정값이 아니라 padding+`line-height:normal`에서 나온다** — 실측 `sm` 29px · `md` ≈33px · `lg` ≈39px(Pretendard). `className`을 받지 않으므로 높이를 바꾸려면 `style`뿐. **입력 컨트롤(34px, `CONTROL_BOX`)과 한 줄에 놓이는 버튼**(프로그램 검색·중복확인·주소 검색·파일 선택)은 `renderers.tsx`의 `CONTROL_BTN`을 `style`로 스프레드해 34px에 맞춘다(2026-09-21 PR #219) — 리터럴 `height:34` 복사 금지. 툴바·푸터의 sm 버튼은 29px 그대로(→[[apfs-form-modal]] 규칙 5, [[apfs-stage-workflow]]).
 - **진행 표시**: `UI.Progress`(`src/dash/ui/progress.tsx`) — `value`(0~100)면 determinate, 생략하면 indeterminate. `label`로 접근名 지정. 예: `<Progress value={64} label="집행률" />`.
 - **클릭 press 피드백**: `Button`/`IconBtn`은 `motion-safe:active:scale` 내장. 새 클릭 타깃엔 `motion-safe:active:scale-[.97]`을 쓴다 — 전역 reduced-motion 규칙은 transition을 못 막으므로 `active:scale` 단독(motion-safe 없이) 사용 금지.
 - **아이콘 버튼(IconBtn) 규격**: 박스 `size`(기본 38px = 클릭 타깃)와 **글리프 16px 고정**은 분리 — `components.tsx`의 `IconBtn`이 내부 `<Icon size={16}>`로 렌더(2026-09-09 20→16 축소). 툴바·GNB·카드헤더 아이콘 버튼이 이 SSOT를 공유하므로 글리프 크기를 개별 지정하지 말 것. 클릭 타깃만 줄이려면 `size` prop(박스)을 조정.
