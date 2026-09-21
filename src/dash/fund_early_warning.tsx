@@ -414,7 +414,7 @@ export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
 
       {/* apfs-grid-min: autoHeight 그리드의 AG Grid 기본 최소 본문높이(150px)를 48px 로 낮춘다.
           행이 1개뿐이라 그대로 두면 표 아래에 100px 넘는 빈 공간이 남는다(규칙·근거는 aggrid_shared.css). */}
-      <div className="apfs-grid-min" style={{ padding: '4px 2px 8px' }}>
+      <div className="apfs-grid-min">
         <AgGridReact<FundEwRow>
           theme={apfsTheme}
           rowData={ROWS}
