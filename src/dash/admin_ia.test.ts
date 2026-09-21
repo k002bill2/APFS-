@@ -31,7 +31,8 @@ describe('관리자 메뉴 IA(이미지 정본)', () => {
     const app = readFileSync(new URL('./app.tsx', import.meta.url), 'utf8');
     const routes = EXPECTED.flatMap(([, leaves]) => leaves.map(([, path]) => path));
     for (const route of routes) expect(app).toContain(`route === "${route}"`);
-    expect(app).toContain('route === "login"');
-    expect(app).toContain('return <LoginDemo onNav={onNav} />');
+    // login 분기가 LoginDemo 를 그린다 — 컴포넌트를 분기 조건에 묶어 단언한다(#218 이후 early return 이 아니라
+    // MotionConfig 로 감싸는 3항 체인 형태. LoginDemo 가 다른 곳에 남고 분기만 바뀌는 회귀를 잡으려면 분기와 함께 봐야 한다).
+    expect(app).toContain('route === "login" ? <LoginDemo onNav={onNav} />');
   });
 });
