@@ -11,12 +11,17 @@
    제어형 소비처는 부모 open 을 그대로 미러링하므로 동작이 바뀌지 않는다. */
 import * as React from 'react';
 
-/** animationend 가 유실될 때(탭 백그라운드 전환 등) 부모가 영영 안 닫히는 것 방지. --dur-slow(280ms) + 여유. */
+/** animationend 가 유실될 때(탭 백그라운드 전환 등) 부모가 영영 안 닫히는 것 방지. --dur-slow(280ms) + 여유.
+    두 단계로 쓴다 — ① close() 시점부터 "exit 가 시작되기까지" 의 가드, ② animationstart 가 오면 그 시점부터
+    다시 잰다. 기준점을 닫기 요청이 아니라 애니메이션 시작에 두는 이유: 닫기 순간 정체(scroll-lock 해제·큰
+    알림센터 언마운트)로 exit 가 늦게 시작하면 요청 기준 450ms 가 animationend 보다 먼저 와서 하드코딩 소비처의
+    부모가 애니메이션 도중 언마운트했다(2026-09-18 실측, 2026-09-21 기준점 이동). */
 export const EXIT_FALLBACK_MS = 450;
 /** tailwind.config.js 의 닫힘 키프레임 이름. Dialog·AlertDialog 가 공유한다. */
 export const EXIT_ANIMATION = 'dialog-out';
 
 const ExitEndContext = React.createContext<(() => void) | null>(null);
+const ExitStartContext = React.createContext<(() => void) | null>(null);
 /** 닫기 잠금 — 저장 대기(SaveButton "저장 중") 동안 취소·X·Esc 를 무시해 사용자가 누른 저장이 무음으로
     유실되지 않게 한다. close()/rootOpenChange(false) 가 lockRef 를 보고 되돌아간다(overlay 클릭은 소비처가
     이미 preventDefault). Content 는 locked 로 aria-busy + pointer-events 차단. 다이얼로그 밖에서는 null. */
@@ -27,6 +32,11 @@ export function useDialogLock() {
   return React.useContext(LockContext);
 }
 export const DialogExitProvider = ExitEndContext.Provider;
+export const DialogExitStartProvider = ExitStartContext.Provider;
+/** Content 가 자신의 exit 애니메이션 시작을 루트에 알리는 통로 — 폴백 타이머의 기준점을 여기로 옮긴다. */
+export function useExitStart() {
+  return React.useContext(ExitStartContext);
+}
 /** Content 가 자신의 exit 애니메이션 종료를 루트에 알리는 통로. 중첩 모달은 가장 안쪽 루트에 붙는다. */
 export function useExitEnd() {
   return React.useContext(ExitEndContext);
@@ -113,12 +123,23 @@ export function useDeferredClose(open: boolean | undefined, onOpenChange?: (o: b
     changeRef.current?.(false);
   }, []);
 
+  /** Content 의 dialog-out 이 실제로 시작됐다 — 폴백 타이머를 지금부터 다시 잰다(같은 timer ref 를 재사용해야
+      finish·재오픈 취소 경로가 그대로 지운다). close() 없이 부모가 직접 open=false 로 닫은 경로(closing=false)
+      나 flush 가 이미 끝낸 뒤 늦게 시작한 exit 는 무시한다. */
+  const onExitStart = React.useCallback(() => {
+    if (!closing.current) return;
+    if (timer.current) window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(finish, EXIT_FALLBACK_MS);
+  }, [finish]);
+
   /** 닫기 시작 — 내부만 닫아 exit 애니메이션을 재생시킨다. 부모 통지는 finish 로 미룬다. */
   const close = React.useCallback(() => {
     if (lockRef.current) return;   // 저장 대기 중 — 닫기 무시(SaveButton 잠금)
     closing.current = true;
     setInner(false);
     if (timer.current) window.clearTimeout(timer.current);
+    /* 1단계 가드: exit 가 아예 시작되지 않는 경우(animation:none 오버라이드·Content 미마운트)만 잡는다.
+       정상 경로에서는 onExitStart 가 이 타이머를 애니메이션 시작 시점으로 다시 건다. */
     timer.current = window.setTimeout(finish, EXIT_FALLBACK_MS);
     /* exit 재생(≈280ms) 중 사용자가 다음 동작을 하면 지연을 즉시 끝낸다.
        안 그러면 그 사이 모달을 다시 연 경우, 뒤늦게 도착한 onOpenChange(false) 가 방금 연
@@ -146,7 +167,19 @@ export function useDeferredClose(open: boolean | undefined, onOpenChange?: (o: b
     [close],
   );
 
-  return { inner, finish, close, rootOpenChange, locked, setLocked };
+  return { inner, finish, onExitStart, close, rootOpenChange, locked, setLocked };
+}
+
+/** Content 의 onAnimationStart 핸들러 — exit 시작만 걸러 루트에 알린다. 가드는 makeExitEndHandler 와 같다
+    (중첩 모달의 dialog-out 이 바깥 Content 로 버블링해 바깥 타이머를 다시 세우는 것 차단). */
+export function makeExitStartHandler<T extends HTMLElement>(
+  onExitStart: (() => void) | null,
+  userHandler?: React.AnimationEventHandler<T>,
+) {
+  return (e: React.AnimationEvent<T>) => {
+    userHandler?.(e);
+    if (e.target === e.currentTarget && e.animationName === EXIT_ANIMATION) onExitStart?.();
+  };
 }
 
 /** Content 의 onAnimationEnd 핸들러 — 소비처가 넘긴 핸들러를 먼저 돌리고 exit 종료만 걸러낸다. */

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 import { cn } from '@/lib/utils';
-import { DialogExitProvider, DialogLockProvider, useDeferredClose, useExitEnd, makeExitEndHandler, type DialogHandle } from './dialog-exit';
+import { DialogExitProvider, DialogExitStartProvider, DialogLockProvider, useDeferredClose, useExitEnd, useExitStart, makeExitEndHandler, makeExitStartHandler, type DialogHandle } from './dialog-exit';
 
 /* ⚠ 그냥 AlertDialogPrimitive.Root 가 아니다 — Dialog 와 같은 이유로 닫힘 애니메이션을 살리려고
    내부 open 상태를 들고 exit 종료 뒤에 부모 onOpenChange(false) 를 호출한다(dialog-exit.ts 참조).
@@ -11,15 +11,17 @@ import { DialogExitProvider, DialogLockProvider, useDeferredClose, useExitEnd, m
    단, Cancel 에 onClick={() => setModal(null)} 같은 직접 언마운트를 붙이면 애니메이션이 다시 죽는다. */
 const AlertDialog = React.forwardRef<DialogHandle, React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Root>>(
   ({ open, onOpenChange, children, ...props }, ref) => {
-    const { inner, finish, close, rootOpenChange, locked, setLocked } = useDeferredClose(open, onOpenChange);
+    const { inner, finish, onExitStart, close, rootOpenChange, locked, setLocked } = useDeferredClose(open, onOpenChange);
     const lock = React.useMemo(() => ({ locked, setLocked }), [locked, setLocked]);
     React.useImperativeHandle(ref, () => ({ close }), [close]);
     return (
       <DialogLockProvider value={lock}>
       <DialogExitProvider value={finish}>
+      <DialogExitStartProvider value={onExitStart}>
         <AlertDialogPrimitive.Root open={inner} onOpenChange={rootOpenChange} {...props}>
           {children}
         </AlertDialogPrimitive.Root>
+      </DialogExitStartProvider>
       </DialogExitProvider>
       </DialogLockProvider>
     );
@@ -44,7 +46,7 @@ AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, onAnimationEnd, ...props }, ref) => (
+>(({ className, onAnimationStart, onAnimationEnd, ...props }, ref) => (
   <AlertDialogPortal>
     <AlertDialogOverlay />
     <AlertDialogPrimitive.Content
@@ -55,6 +57,7 @@ const AlertDialogContent = React.forwardRef<
         'data-[state=open]:animate-dialog-in data-[state=closed]:animate-dialog-out',
         className,
       )}
+      onAnimationStart={makeExitStartHandler(useExitStart(), onAnimationStart)}
       onAnimationEnd={makeExitEndHandler(useExitEnd(), onAnimationEnd)}
       {...props}
     />
