@@ -70,8 +70,18 @@ export function useDeferredClose(open: boolean | undefined, onOpenChange?: (o: b
   }, []);
 
   /* 제어형 소비처: 부모 open 을 그대로 따라간다. 하드코딩(true) 소비처에선 값이 안 변해 재실행되지 않고,
-     그래서 닫는 중(inner=false)에 다시 열리지 않는다. */
+     그래서 닫는 중(inner=false)에 다시 열리지 않는다.
+     닫는 중(closing) 에 부모가 open=true 로 되돌리면 대기 중인 닫힘을 취소한다 — 그대로 두면 폴백 타이머·
+     animationend 가 뒤늦게 finish 를 불러 onOpenChange(false) 로 방금 다시 연 모달을 닫는다(pointerdown/keydown
+     없이 프로그램적으로 재오픈되는 경로는 flush 리스너가 못 잡는다. Codex 리뷰 2026-09-19). finish 는 부르지
+     않는다 — 부르면 그 통지가 바로 문제의 닫힘이다. restorePending 은 finish 안에서만 서므로 건드릴 것 없다. */
   React.useEffect(() => {
+    if (open && closing.current) {
+      closing.current = false;
+      if (timer.current) { window.clearTimeout(timer.current); timer.current = undefined; }
+      detach.current?.();
+      detach.current = null;
+    }
     setInner(!!open);
   }, [open]);
 
