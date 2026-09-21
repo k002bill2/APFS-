@@ -10,23 +10,25 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortalContainer } from './portal-container';
-import { DialogExitProvider, DialogLockProvider, useDeferredClose, useExitEnd, useDialogLock, makeExitEndHandler, useHardcodedOpenWarning, type DialogHandle } from './dialog-exit';
+import { DialogExitProvider, DialogExitStartProvider, DialogLockProvider, useDeferredClose, useExitEnd, useExitStart, useDialogLock, makeExitEndHandler, makeExitStartHandler, useHardcodedOpenWarning, type DialogHandle } from './dialog-exit';
 
 /* ⚠ 그냥 DialogPrimitive.Root 가 아니다 — 닫힘 애니메이션을 살리려고 내부 open 상태를 들고
    exit 종료 뒤에 부모 onOpenChange(false) 를 호출한다. 근거·전체 맥락은 dialog-exit.ts 주석.
    모달 자체 버튼(취소·저장)으로 닫을 때는 ref.current.close() 를 쓴다(onClose 직접 호출은 애니메이션 없음). */
 const Dialog = React.forwardRef<DialogHandle, React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>>(
   ({ open, onOpenChange, children, ...props }, ref) => {
-    const { inner, finish, close, rootOpenChange, locked, setLocked } = useDeferredClose(open, onOpenChange);
+    const { inner, finish, onExitStart, close, rootOpenChange, locked, setLocked } = useDeferredClose(open, onOpenChange);
     const lock = React.useMemo(() => ({ locked, setLocked }), [locked, setLocked]);
     React.useImperativeHandle(ref, () => ({ close }), [close]);
     useHardcodedOpenWarning(open, ref);
     return (
       <DialogLockProvider value={lock}>
       <DialogExitProvider value={finish}>
+      <DialogExitStartProvider value={onExitStart}>
         <DialogPrimitive.Root open={inner} onOpenChange={rootOpenChange} {...props}>
           {children}
         </DialogPrimitive.Root>
+      </DialogExitStartProvider>
       </DialogExitProvider>
       </DialogLockProvider>
     );
@@ -55,7 +57,7 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { hideClose?: boolean }
->(({ className, children, hideClose, onAnimationEnd, style, ...props }, ref) => {
+>(({ className, children, hideClose, onAnimationStart, onAnimationEnd, style, ...props }, ref) => {
   /* 저장 대기(SaveButton 잠금) 중: 스크린리더에 busy 알림 + 본문 포인터 차단(취소·X·필드 클릭 무효). 키보드 입력은 남는다. */
   const busy = !!useDialogLock()?.locked;
   return (
@@ -71,6 +73,7 @@ const DialogContent = React.forwardRef<
         'fixed left-1/2 top-1/2 z-modal flex w-full max-w-lg [translate:-50%_-50%] flex-col overflow-hidden rounded-card-lg border border-border bg-card text-[13.5px] shadow-lg focus:outline-none data-[state=open]:animate-dialog-in data-[state=closed]:animate-dialog-out',
         className,
       )}
+      onAnimationStart={makeExitStartHandler(useExitStart(), onAnimationStart)}
       onAnimationEnd={makeExitEndHandler(useExitEnd(), onAnimationEnd)}
       {...props}
     >
