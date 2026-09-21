@@ -14,7 +14,7 @@
 import React from 'react';
 import { UI } from './components';
 import { MT } from './mask';
-import { SchemaField, isPlainWrapControl } from './schemas/renderers';
+import { SchemaField, isPlainWrapControl, CONTROL_BTN } from './schemas/renderers';   // CONTROL_BTN = 입력 옆 동거 버튼 34px 정합
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { Checkbox } from './ui/checkbox';   // 복수 선택 체크 그룹 = DS 체크박스(htmlFor 명시 연결, 래핑 금지)
@@ -222,8 +222,8 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
                 <div style={{ minWidth: 0, flex: '1 1 160px' }}>
                   <SchemaField field={F.pid} value={v.pid ? `${v.pid} · ${v.pname}` : ''} onChange={() => undefined} fill />
                 </div>
-                <Button variant="outline" size="sm" leadingIcon="search" disabled={isTop} onClick={() => setPgOpen(true)}>프로그램 검색</Button>
-                {v.pid && <Button variant="ghost" size="sm" onClick={() => { setV((p) => ({ ...p, pid: '', pname: '', short: '' })); if (errKey === 'pidDup') setErrKey(''); }}>해제</Button>}
+                <Button variant="outline" size="sm" leadingIcon="search" disabled={isTop} style={CONTROL_BTN} onClick={() => setPgOpen(true)}>프로그램 검색</Button>
+                {v.pid && <Button variant="ghost" size="sm" style={CONTROL_BTN} onClick={() => { setV((p) => ({ ...p, pid: '', pname: '', short: '' })); if (errKey === 'pidDup') setErrKey(''); }}>해제</Button>}
               </div>
             </Field>
 
@@ -235,7 +235,7 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
                     ? <SchemaField field={F.short} value={v.short} onChange={(x) => { set('short', x.replace(/[^\d]/g, '')); if (errKey === 'shortDup') setErrKey(''); }} invalid={errKey === 'shortDup'} fill />
                     : <SchemaField field={F.shortRo} value="" onChange={() => undefined} fill />}
                 </div>
-                <Button variant="outline" size="sm" disabled={!v.pid} onClick={checkShort}>중복확인</Button>
+                <Button variant="outline" size="sm" disabled={!v.pid} style={CONTROL_BTN} onClick={checkShort}>중복확인</Button>
               </div>
             </Field>
 
