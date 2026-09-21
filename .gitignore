@@ -10,6 +10,11 @@ dist/
 # Playwright MCP 테스트 산출물 (스크린샷·콘솔로그·스냅샷)
 .playwright-mcp/
 
+# 런타임 검증 산출물 (라이트/다크 스크린샷·검증 덤프)
+# apfs-manage-page 스킬 §4 가 `./artifacts/` 를 세션 스크린샷 경로로 지정하므로
+# 화면 작업마다 PNG 가 쌓인다 — 전부 일회성 증거물이라 추적하지 않는다.
+artifacts/
+
 # claude.ai/design 동기화 export (원본 SSOT는 claude.ai/design)
 docs/apfs-dashboard/
 
