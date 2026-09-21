@@ -99,6 +99,14 @@ export const CONTROL_BOX: React.CSSProperties = {
   boxSizing: 'border-box', padding: '7px 11px', fontSize: 13.5, lineHeight: '20px', height: 34, minHeight: 34, fontFamily: 'inherit',
 };
 
+/* 컨트롤 옆 동거 버튼(프로그램 검색·중복확인·해제 등) — `UI.Button size="sm"`은 line-height:normal이라 29px로
+   34px 컨트롤보다 5px 낮다(2026-09-21 사용자 지적). 입력과 한 줄에 놓는 버튼은 이 스타일을 `style`로 스프레드해
+   높이·라인박스를 CONTROL_BOX 에서 파생시킨다(값 복사 금지 — CONTROL_BOX 가 바뀌면 같이 움직인다).
+   ⚠ 전역 `sm` 규격은 건드리지 않는다: 툴바·푸터의 sm 버튼은 컨트롤과 나란히 놓이지 않는다. */
+export const CONTROL_BTN: React.CSSProperties = {
+  height: CONTROL_BOX.height, minHeight: CONTROL_BOX.minHeight, lineHeight: CONTROL_BOX.lineHeight, paddingTop: 0, paddingBottom: 0,
+};
+
 /* 상세필터 드로어 입력 — 폭은 fit-content(하한 = 타입별 controlMinWidth SSOT), 박스는 CONTROL_BOX(모달과 동일 34px).
    테두리·반경·색도 모달 base 와 같은 토큰을 쓴다. 페이지별 로컬 복제 금지(→[[apfs-detail-filter]]). */
 export const drawerInputStyle = (kind?: string): React.CSSProperties => ({
