@@ -7,7 +7,7 @@ import { UI } from './components';
 import { APFS_DATA, HistoryStore } from './data';
 import { DesignSystem } from './designsystem';
 import { Main } from './main';
-import { RiskManage } from './risk_manage';
+import { EarlyWarningManage } from './early_warning_manage';   // 조기경보 관리(관리형 리스트, S2_51). 구 risk_manage.tsx(FR-5.6 운영 콘솔)는 미라우팅
 import { Schedule } from './schedule';
 import { SubFundManage } from './subfund_manage';   // 자펀드관리(관리형 리스트, 구조도 v1.4). 구 subfund.tsx(FR-5.3 대시보드)는 미라우팅
 import { Pages as ReportBucheoPages } from './report_bucheo';
@@ -195,7 +195,7 @@ function App() {
   let page;
   if (route === "designsystem") page = <DesignSystem />;
   else if (route === "main") page = <Main onNav={onNav} navStyle={navStyle} onNavStyle={setNavStyle} />;
-  else if (route === "risk-manage") page = <RiskManage onNav={onNav} />;
+  else if (route === "risk-manage") page = <EarlyWarningManage onNav={onNav} />;
   else if (route === "schedule") page = <Schedule onNav={onNav} />;
   else if (route === "subfund") page = <SubFundManage onNav={onNav} />;
   else if (route === "asset-funding") page = <AssetFunding onNav={onNav} />;
