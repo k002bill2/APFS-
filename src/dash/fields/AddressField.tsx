@@ -17,7 +17,7 @@
 import React from 'react';
 
 import { UI } from '../components';
-import { CONTROL_BOX, CONTROL_BTN, controlFocusStyle, controlMinWidth } from '../schemas/renderers';
+import { CONTROL_BOX, controlFocusStyle, controlMinWidth } from '../schemas/renderers';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { detailTail, formatAddress, isAddressEmpty, parseAddress } from './address_value';
 
@@ -216,8 +216,8 @@ export function AddressField({
           })}
         />
         {/* 아이콘만 있는 버튼 금지 — 텍스트 라벨이 접근名을 겸한다.
-            CONTROL_BTN: UI.Button sm 의 자연 높이는 29px 라 34px 입력칸과 어긋난다 → 동거 버튼 공용 스타일(renderers SSOT). */}
-        <Button variant="outline" size="sm" leadingIcon="search" style={CONTROL_BTN} onClick={openSearch}>
+            style height 34: UI.Button sm 의 자연 높이는 29~31px 라 입력칸과 어긋난다(subfund_form_modal 선례). */}
+        <Button variant="outline" size="sm" leadingIcon="search" style={{ height: CONTROL_BOX.height }} onClick={openSearch}>
           {/* 필드가 여럿인 폼에서 버튼 이름이 전부 '주소 검색'으로 겹치지 않게 라벨을 앞에 숨겨 붙인다
               (UI.Button 은 rest props 를 전달하지 않아 aria-label 을 못 받는다 →[[ui-button-not-radix-aschild-trigger]]). */}
           {label && label !== '주소' && <span className="sr-only">{label} </span>}

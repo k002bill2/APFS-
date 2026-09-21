@@ -7,7 +7,7 @@
    ⚠ 백엔드 없음 — 첨부는 파일명만 보관, 드래그앤드롭은 미구현(파일 선택 버튼만). apfs-form-modal 스킬 "escalation" 절 참조. */
 import React from 'react';
 import { UI } from './components';
-import { SchemaField, isPlainWrapControl, CONTROL_BTN } from './schemas/renderers';   // CONTROL_BTN = 입력 옆 동거 버튼 34px 정합
+import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { OPT_AG, OPT_FG, OPT_FC, OPT_PT, OPT_FS, OPT_TC } from './subfund_manage_schemas';
@@ -231,7 +231,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
                           </Attachment>
                         </AttachmentGroup>
                       ) : (
-                        <Button variant="outline" size="sm" leadingIcon="upload" style={CONTROL_BTN} onClick={() => pickFile(i)}>파일 선택</Button>
+                        <Button variant="outline" size="sm" leadingIcon="upload" style={{ height: 34 }} onClick={() => pickFile(i)}>파일 선택</Button>
                       )}
                     </td>
                   </tr>))}</tbody>

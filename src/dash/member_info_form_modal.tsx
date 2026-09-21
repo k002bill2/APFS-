@@ -14,7 +14,7 @@
 import React from 'react';
 import { UI } from './components';
 import { MT } from './mask';
-import { SchemaField, CONTROL_BTN } from './schemas/renderers';   // CONTROL_BTN = 입력 옆 중복확인 버튼 34px 정합
+import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { ReviewMarker } from './review_marker';
@@ -186,7 +186,7 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
                     onFocus={() => setBizFocus(true)} onBlur={() => setBizFocus(false)}
                     style={{ ...boxStyle({ danger: true, focused: bizFocus }), flex: 1, minWidth: 0, width: 'auto' }} />
                   {/* 백엔드가 없어 중복확인은 toast로만 회신한다(목업 동일) */}
-                  <Button variant="outline" size="sm" style={CONTROL_BTN} onClick={() => toast('사용 가능한 번호입니다 (목업)')}>중복확인</Button>
+                  <Button variant="outline" size="sm" onClick={() => toast('사용 가능한 번호입니다 (목업)')}>중복확인</Button>
                 </div>
               ) : (
                 <div className="flex items-center gap-[7px]" style={boxStyle({ muted: true })}>
