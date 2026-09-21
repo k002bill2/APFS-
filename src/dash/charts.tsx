@@ -422,4 +422,108 @@ function GroupedBars({ data, height = 240, ariaLabel }: { data: any[]; height?: 
   );
 }
 
-export const Charts = { Sparkline, Donut, ComposedBars, GroupedBars, LineTrend, Treemap, HBars, Gauge, useMeasure, fmtEok };
+/* ===================== MultiLineTrend (다중 시리즈 라인 — 월별 추이) =====================
+   `LineTrend`는 **단일 시리즈**(color 1개 + 수평 임계선)라 "정상·주의·경고 + TOTAL 점선"처럼
+   N개 시리즈를 담지 못한다. 그 빈자리를 채우는 프리미티브 — 페이지 안에 SVG를 직접 그리지 않기 위함.
+   - `series` = `{key,name,color,dash?}[]` · 값 = `data[key][i]` · x축 라벨 = `labels[i]`
+   - 범례는 **호출부 책임**(main_widgets의 Legend 관례) — 이 프리미티브는 그리지 않는다.
+   - 포인트 툴팁은 SVG `<title>`(네이티브, hover state 없음).
+   - `tableCaption`을 주면 차트의 접근가능 대체 표현으로 **시각적 숨김 데이터 표**를 함께 렌더한다.
+   - `fullLabels`(선택) = 툴팁·숨김표에 쓸 **완전형 라벨**(예: 축 `25.07` ↔ 접근성 `2025-07`).
+     미전달 시 `labels`로 폴백한다 — 시각 축은 좁으니 축약하되 비시각 표현은 모호하면 안 된다.
+   - 좁은 폭에서는 x라벨이 겹치므로 `minWidth`(기본 640) 아래로는 svg를 줄이지 않고 래퍼가 가로 스크롤한다.
+   마스크 경계: 축(눈금 숫자·월 라벨·범례·캡션)은 비마스킹, **값(툴팁·숨김표 셀)은 `mn()`**. */
+export type TrendSeries = { key: string; name: string; color: string; dash?: boolean };
+
+/* 축 상한 — 4분할 그리드와 눈금이 정수로 떨어지게 올림(10/20/50 단위). */
+const trendNiceMax = (v: number) => {
+  if (v <= 10) return 10;
+  const step = v <= 50 ? 10 : v <= 120 ? 20 : 50;
+  return Math.ceil(v / step) * step;
+};
+
+/* 렌더 범위 계산 — **공유 프리미티브라 호출부의 길이 불일치를 방어한다**(Codex 리뷰 P2).
+   좌표는 `labels.length` 기준으로 잡히므로 데이터가 라벨보다 길면 점이 플롯 밖으로 나가고
+   `<title>`/숨김표의 라벨이 `undefined`가 된다 → **가장 짧은 쪽으로 clamp**하고,
+   `ymax`도 **clamp된 구간만** 보고 잡는다(잘려나갈 값이 축을 부풀리지 않게).
+   n===0(빈 라벨·빈 데이터·빈 시리즈)이면 축조차 그리지 않고, n===1은 0-division 없이 점 1개를 그린다.
+   ⚠ export는 단위 테스트(`charts_trend.test.ts`)용 — 컴포넌트 밖 소비처를 만들지 말 것. */
+export function trendPlotRange(labels: string[], data: Record<string, number[]>, series: TrendSeries[]): { n: number; ymax: number } {
+  if (!labels?.length || !series?.length) return { n: 0, ymax: trendNiceMax(0) };
+  let n = labels.length;
+  for (const s of series) n = Math.min(n, (data?.[s.key] || []).length);
+  if (n <= 0) return { n: 0, ymax: trendNiceMax(0) };
+  let max = 0;
+  for (const s of series) {
+    const vs = data[s.key] || [];
+    for (let i = 0; i < n; i++) { const v = vs[i]; if (typeof v === "number" && v > max) max = v; }
+  }
+  return { n, ymax: trendNiceMax(max) };
+}
+
+function MultiLineTrend({ labels, fullLabels, data, series, height = 260, unit = "", yLabel, ariaLabel, tableCaption, seriesHeader = "구분", minWidth = 640 }: {
+  labels: string[];
+  fullLabels?: string[];
+  data: Record<string, number[]>;
+  series: TrendSeries[];
+  height?: number; unit?: string; yLabel?: string; ariaLabel?: string;
+  tableCaption?: string; seriesHeader?: string; minWidth?: number;
+}) {
+  const [ref, W] = useMeasure();
+  const w = Math.max(W || minWidth, minWidth);
+  const m = { t: 14, r: 16, b: 34, l: 50 };
+  const iw = w - m.l - m.r, ih = height - m.t - m.b;
+  const { n, ymax } = trendPlotRange(labels, data, series);
+  /* 비시각 표현(툴팁·숨김표)은 완전형 라벨 우선 — 없으면 축 라벨로 폴백 */
+  const labelAt = (i: number) => fullLabels?.[i] ?? labels[i] ?? "";
+  // n===1이면 분모 0 → 가운데 한 점으로 떨어뜨린다(구간 하나짜리 조회도 깨지지 않게)
+  const x = (i: number) => m.l + (n > 1 ? (i / (n - 1)) * iw : iw / 2);
+  const y = (v: number) => m.t + ih - (v / ymax) * ih;
+  return (
+    <div ref={ref} className="w-full overflow-x-auto">{W > 0 && n > 0 && <svg width={w} height={height} className="block" role={ariaLabel ? "img" : undefined} aria-label={ariaLabel}>{[0, 1, 2, 3, 4].map((g) => {
+          const yy = m.t + (ih * g) / 4, tick = Math.round(ymax * (1 - g / 4));
+          return (
+            <g key={g}><line x1={m.l} x2={m.l + iw} y1={yy} y2={yy} stroke="var(--chart-grid)" strokeDasharray="2 3" /><text
+                x={m.l - 8}
+                y={yy + 4}
+                textAnchor="end"
+                className="tabular"
+                style={{ fontSize: 10, fill: "var(--caption)" }}>{tick.toLocaleString()}</text></g>
+          );
+        })}<line x1={m.l} x2={m.l + iw} y1={m.t + ih} y2={m.t + ih} stroke="var(--border)" />{yLabel && <text
+          x={12}
+          y={m.t + ih / 2}
+          textAnchor="middle"
+          transform={`rotate(-90 12 ${m.t + ih / 2})`}
+          className="font-bold"
+          style={{ fontSize: 10, fill: "var(--caption)" }}>{yLabel}</text>}{labels.slice(0, n).map((lab, i) => <text
+          key={"x" + i}
+          x={x(i)}
+          y={height - 12}
+          textAnchor="middle"
+          style={{ fontSize: 9.5, fill: "var(--caption)" }}>{lab}</text>)}{series.map((s) => {
+          const vs = (data[s.key] || []).slice(0, n);
+          return (
+            <g key={s.key}><polyline
+                fill="none"
+                stroke={s.color}
+                strokeWidth={2}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                strokeDasharray={s.dash ? "5 4" : undefined}
+                points={vs.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ")} />{vs.map((v, i) => <circle
+                key={i}
+                cx={x(i).toFixed(1)}
+                cy={y(v).toFixed(1)}
+                r={2.6}
+                fill={s.color}><title>{labelAt(i) + " " + s.name + " " + mn(v) + unit}</title></circle>)}</g>
+          );
+        })}</svg>}{tableCaption && n > 0 && (
+        <table className="sr-only"><caption>{tableCaption}</caption><thead><tr><th scope="col">{seriesHeader}</th>{Array.from({ length: n }, (_, i) => <th key={i} scope="col">{labelAt(i)}</th>)}</tr></thead><tbody>{series.map((s) => (
+              <tr key={s.key}><th scope="row">{s.name}</th>{(data[s.key] || []).slice(0, n).map((v, i) => <td key={i}>{mn(v)}</td>)}</tr>
+            ))}</tbody></table>
+      )}</div>
+  );
+}
+
+export const Charts = { Sparkline, Donut, ComposedBars, GroupedBars, LineTrend, MultiLineTrend, Treemap, HBars, Gauge, useMeasure, fmtEok };
