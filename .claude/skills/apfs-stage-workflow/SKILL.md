@@ -11,7 +11,7 @@ description: APFS 리스트 화면의 "행 선택 → 그 행의 단계(심사�
 
 ## 핵심 규약 (CRITICAL)
 1. **전이는 오직 컨텍스트 액션으로.** 단계 셀(`StatusBadge` cellRenderer)에 onClick을 달지 않는다. 더블클릭 수정 진입도 단계 전이엔 쓰지 않는다.
-2. **단일 선택 + 안정 id.** (단계 전이 = 선택이 만드는 액션이므로 이 화면류는 체크박스를 둔다 — 일반 규약은 [[apfs-aggrid]]) `rowSelection={{mode:'singleRow',checkboxes:true,enableClickSelection:true}}` + `getRowId={(p)=>p.data.id}`. 전이로 `rowData`가 바뀌어도 선택이 유지돼 **새 단계의 액션이 자동으로 갱신**된다(선택 해제하지 말 것).
+2. **단일 선택 + 안정 id.** (단계 전이 = 선택이 만드는 액션이므로 이 화면류는 체크박스를 둔다 — 일반 규약은 [[apfs-aggrid]]) 모듈 상수 `ROW_SELECTION = {mode:'singleRow',checkboxes:true,enableClickSelection:false}`(선택은 체크박스로만 — 행 본문 클릭 선택 없음, 2026-09-22) + `getRowId={(p)=>p.data.id}`. 전이로 `rowData`가 바뀌어도 선택이 유지돼 **새 단계의 액션이 자동으로 갱신**된다(선택 해제하지 말 것).
 3. **액션 맵은 단계별 배열 하나로.** primary는 단계당 **1개**(주 전이), 나머지 outline. 액션 라벨은 업무 동사("선정조합 등록"·"결성 확정"·"신청취소"). 말단 단계(취소)는 빈 배열 — **안내 캡션 없음**(2026-09-08 사용자 결정으로 제거).
 4. **툴바 좌 슬롯은 경합한다**: `selected ? <selbar> : <필터칩>`. selbar = 단계 배지(`size="lg" dot={false}`) + 전이 액션 버튼들 + (**opt-in**) 공통 조회(`명세`, 단계 무관) + `선택 해제`. **명세 버튼은 고정이 아니라 opt-in**(2026-09-11 결정) — 명세 팝업을 포함한 페이지만 넣고, 아니면 생략. **대상명(자펀드명)은 넣지 않는다** — 선택 행에서 이미 보임(2026-09-08 결정).
 5. **전이 = 불변 patch + toast.** `patchRow(id, {stg, ...부수효과})`. 부수효과는 도메인 정합(예: 취소→조합상태 '-', 결성 확정→결성일=오늘·운영중).

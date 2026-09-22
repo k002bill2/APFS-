@@ -25,7 +25,7 @@ import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } 
 import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝) — 형제 드로어(asset_funding·generic_list)와 동일
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle, RowSelectionOptions } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘⏎ 제안서접수 등록·⌘P 인쇄)
 import { toast } from './ui/sonner';
@@ -81,6 +81,8 @@ function computeTotal(rows: SubFundRow[]): SubFundRow {
   return t as SubFundRow;
 }
 const PAGE_SIZE = 20;
+/* 라디오 단일선택 — 체크박스로만 on/off(행 본문 클릭 선택 해제, 2026-09-22 사용자 결정). 모듈 상수로 호이스팅(apfs-aggrid 계약 6 — 인라인 리터럴은 렌더마다 컬럼 재생성→폭 되돌림). */
+const ROW_SELECTION: RowSelectionOptions<SubFundRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };
 const today = () => format(new Date(), 'yyyy-MM-dd');   // 로컬 달력일 — toISOString은 KST 00~09시에 전날(apfs-datepicker 계약)
 
 /* ──────────────────────────────
@@ -415,7 +417,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           domLayout="autoHeight"
           autoSizeStrategy={AUTO_SIZE_CONTENT}   // 컬럼 폭=내용 폭(잘림 방지). 긴 텍스트 컬럼은 maxWidth 캡
           defaultColDef={DEFAULT_COL_DEF}
-          rowSelection={{ mode: 'singleRow', checkboxes: true, enableClickSelection: true }}
+          rowSelection={ROW_SELECTION}
           selectionColumnDef={SELECTION_COL}   // 라디오 선택 열을 맨 앞 고정(목업 1열 '선택(라디오)')
           pagination paginationPageSize={pageSize} suppressPaginationPanel
           isExternalFilterPresent={isExternalFilterPresent}

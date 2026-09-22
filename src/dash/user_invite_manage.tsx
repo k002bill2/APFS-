@@ -62,7 +62,7 @@ const columnDefs: ColDef<InviteView>[] = [
   { field: 'expiresAt', headerName: `만료(${INVITE_TTL_HOURS}시간)`, width: 156, maxWidth: 156, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
     valueFormatter: (p) => (p.data?.state === '초대발송' && p.value ? mn(p.value) : '-') },
 ];
-const ROW_SELECTION: RowSelectionOptions<InviteView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
+const ROW_SELECTION: RowSelectionOptions<InviteView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };   // 행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22 사용자 결정, apfs-aggrid "체크박스" 절)
 const STATE_CHIPS = ['', ...INVITE_STATES] as const;
 
 type XCol = { header: string; get: (r: InviteView) => string };

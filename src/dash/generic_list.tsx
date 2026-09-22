@@ -149,11 +149,11 @@ function makeRows(schema: PageSchema, n: number): Row[] {
    인라인 리터럴로 두면 렌더마다 새 객체가 되어 AG Grid가 컬럼을 재생성하고 폭을 선언값으로 되돌린다
    (aggrid_theme.ts DEFAULT_COL_DEF 주석의 실측 사례와 동일 원인).
    schema.hideRowSelection이면 이 prop 자체를 undefined로 넘겨 선택 컬럼을 없앤다(체크 해제가 아니라 컬럼 제거). */
-/* 행 본문 클릭으로도 체크된다(2026-09-17 사용자 결정) — 체크박스 칸을 정확히 겨냥하지 않아도 되게.
-   두 옵션이 **한 벌**이다: `enableClickSelection` 이 클릭을 선택 수단으로 열고(기본 false),
-   `enableSelectionWithoutKeys` 가 ⌘/Shift 없이도 **누적 토글**이 되게 한다. 후자가 없으면 클릭이
-   기존 체크를 전부 지우고 그 행만 남겨, 체크박스로 고른 다건이 본문 클릭 한 번에 날아간다. */
-const ROW_SELECTION = { mode: "multiRow", checkboxes: true, headerCheckbox: false, selectAll: "filtered", enableClickSelection: true, enableSelectionWithoutKeys: true } as const;   // 헤더 전체선택은 SELECTION_COL 의 DS 헤더가 그린다(내장 SelectAllFeature 끔) · selectAll 범위는 DS 헤더와 동일하게 filtered
+/* 선택은 **체크박스로만** on/off 한다(2026-09-22 사용자 결정 — 09-17 의 "행 본문 클릭 누적선택" 을 뒤집음).
+   행 본문 클릭은 선택을 만들지도 풀지도 않는다(`enableClickSelection:false` 명시 — AG Grid 기본값과 같지만
+   과거 이 키 누락이 "선택 수단 0" 사고로 오독된 이력이 있어 의도를 적어 둔다). 더블클릭=수정 모달, 우클릭=컨텍스트 메뉴는 그대로.
+   `enableSelectionWithoutKeys` 는 클릭 선택 전용 옵션이라 같이 뺀다(체크박스 클릭은 원래 누적 토글). */
+const ROW_SELECTION = { mode: "multiRow", checkboxes: true, headerCheckbox: false, selectAll: "filtered", enableClickSelection: false } as const;   // 헤더 전체선택은 SELECTION_COL 의 DS 헤더가 그린다(내장 SelectAllFeature 끔) · selectAll 범위는 DS 헤더와 동일하게 filtered
 
 let SEQ = 500;
 const nextId = () => "R" + (++SEQ);

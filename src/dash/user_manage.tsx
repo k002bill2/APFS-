@@ -71,7 +71,7 @@ const columnDefs: ColDef<UserRow>[] = [
     cellRenderer: (p: any) => (p.value ? <StatusBadge tone="warning" label="만료" size="lg" dot={false} /> : <span style={{ color: 'var(--muted-foreground)' }}>정상</span>) },
   { field: 'last', headerName: '최근 접속일시', width: 170, maxWidth: 170, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value && p.value !== '—' ? mn(p.value) : '—') },
 ];
-const ROW_SELECTION: RowSelectionOptions<UserRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
+const ROW_SELECTION: RowSelectionOptions<UserRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };   // 행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22 사용자 결정, apfs-aggrid "체크박스" 절)
 const STATUS_CHIPS = ['', ...USER_STATUSES] as const;
 
 type XCol = { header: string; get: (r: UserRow) => string };

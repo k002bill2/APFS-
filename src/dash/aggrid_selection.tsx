@@ -4,7 +4,8 @@
        그려 폼 모달·권한 매트릭스와 완전히 같은 룩/이펙트를 낸다. 선택 상태의 정본은 그대로 AG Grid(rowNode.isSelected).
 
    사용: <AgGridReact rowSelection={…checkboxes:true…} selectionColumnDef={SELECTION_COL} …/>
-         rowSelection 은 손대지 않는다(singleRow/multiRow·enableClickSelection 규약 →[[apfs-aggrid]]).
+         rowSelection 은 손대지 않는다(singleRow/multiRow 규약 →[[apfs-aggrid]]). 전 소비처가 `enableClickSelection:false`
+         — 선택은 이 컬럼의 체크박스로만 on/off 한다(2026-09-22 사용자 결정).
    동작:
    - 셀: rowNode 의 'rowSelected' 이벤트를 구독해 체크 상태를 따라간다. 클릭 → node.setSelected(). singleRow 면 AG Grid 가
      다른 행을 알아서 푼다.
@@ -13,10 +14,12 @@
      (남는 select-all 경로 기본값도 DS 헤더와 같은 범위로 못 박음). 대가: 헤더 **셀**에 포커스한 Space 는 무동작(버튼으로 Tab 하면 정상).
      ⚠ 푸터 `getSelectedRows().length` 는 필터 밖 선택까지 세므로 "N건 선택 + 헤더 미체크" 가 가능하다(의도).
    - 내장 체크박스(.ag-selection-checkbox > ag-checkbox)·헤더 select-all 은 CSS 로 숨긴다(aggrid_selection.css).
-   - ⚠ 이중 토글 방지: AG Grid 의 행클릭 선택(onRowClick)은 클래스가 아니라 **이벤트 플래그**(`_stopPropagationForAgGrid`,
+   - ⚠ 이중 토글 방지(현재는 방어선): AG Grid 의 행클릭 선택(onRowClick)은 클래스가 아니라 **이벤트 플래그**(`_stopPropagationForAgGrid`,
      내장 체크박스도 같은 방식)로 건너뛴다. 래퍼 div 에 **네이티브** click/dblclick 리스너로 플래그를 세운다 — 네이티브라야
      행(row) 리스너보다 먼저 돌고, DOM 전파는 막지 않으므로 React 루트의 Radix onClick 은 그대로 받는다.
      (React onClick 에서 세우면 이미 행 리스너가 지나간 뒤라 늦다 — 실측: 체크→행클릭 재토글로 즉시 원복.)
+     2026-09-22 부터 전 소비처가 `enableClickSelection:false` 라 click 쪽 플래그는 실효가 없지만, **dblclick 플래그는 여전히 필수**
+     (체크박스 더블클릭이 행 dblclick=수정 모달로 새지 않게)이고, 어느 화면이 클릭 선택을 다시 켜도 이중 토글이 돌아오지 않게 둘 다 유지한다.
    - 크기: 셀 높이 44 에 20px 박스. 컬럼 폭 44(pinned left)는 기존 SELECTION_COL 값 그대로. */
 import React from 'react';
 import { _stopPropagationForAgGrid } from 'ag-grid-community';

@@ -7,7 +7,7 @@ import { UI } from './components';
 import { Charts } from './charts';
 import { mn, MT } from './mask';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ICellRendererParams, RowClickedEvent } from 'ag-grid-community';
+import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 행선택) SSOT
 import './aggrid_shared.css';
 
@@ -192,7 +192,6 @@ const WORK_COLS: ColDef[] = [
 function RiskManage({ onNav }: { onNav: (r: string) => void }) {
   const [tab, setTab] = useState("전체");
   const [activeTypes, setActiveTypes] = useState<Record<string, boolean>>({});
-  const [selectedRow, setSelectedRow] = useState<string | null>(null);
 
   const toggleType = (id: string) => setActiveTypes((p) => ({ ...p, [id]: !p[id] }));
   const anyTypeActive = Object.values(activeTypes).some(Boolean);
@@ -277,8 +276,6 @@ function RiskManage({ onNav }: { onNav: (r: string) => void }) {
             domLayout="autoHeight"
             rowHeight={56}
             defaultColDef={DEFAULT_COL_DEF}
-            rowSelection={{ mode: "singleRow", checkboxes: false, enableClickSelection: true }}
-            onRowClicked={(e: RowClickedEvent) => setSelectedRow(e.data?.id ?? null)}
             overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 처리 항목이 없습니다</span>'}
           />
 
