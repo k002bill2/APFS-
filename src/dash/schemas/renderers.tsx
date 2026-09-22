@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group';   // 'radio' —
 import { Icon } from '../icons';
 import { renderKind } from './dispatch';
 import type { ColumnSpec, FieldControl, FieldSpec, StatusDomainEntry } from './types';
+import { resolveChoiceControl } from './types';   // select↔radio 는 옵션 개수가 정한다(≤3 radio) — 규칙 본문은 types.ts
 import { formatUnit } from './unit';
 import type { Unit } from './unit';
 import type { Tone } from '../components';
@@ -121,7 +122,10 @@ export function isComplexControl(control: FieldControl): boolean {
                        (가시 라벨은 렌더러가 htmlFor/id 로 **명시** 연결한다).
    판정을 폼 래퍼마다 리터럴로 복제하면 컨트롤이 늘 때 한 곳씩 빠지므로 여기를 SSOT 로 둔다
    (소비처: generic_list_modal Field plain, subfund_form_modal F Wrap). */
-export function isPlainWrapControl(control: FieldControl): boolean {
+export function isPlainWrapControl(spec: FieldSpec | FieldControl): boolean {
+  // ⚠️ FieldSpec 을 넘겨라 — `control:'select'` 로 선언됐어도 옵션 ≤3 이면 radio 로 그려지므로(resolveChoiceControl)
+  //   선언 토큰만 보면 <label> 로 감싸져 라벨 클릭이 첫 옵션을 고르는 하이재킹이 재발한다. 토큰 인자는 고정 컨트롤 전용.
+  const control = typeof spec === 'string' ? spec : resolveChoiceControl(spec);
   return isComplexControl(control) || control === 'radio' || control === 'switch' || control === 'checkbox';
 }
 
@@ -179,7 +183,9 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
   // readonly 는 입력 대상이 아니라 둘 다 제외.
   const requiredMark = !!field.required && field.control !== 'readonly';
   const requiredEmpty = requiredMark && !String(value ?? '').trim();
-  const minW = controlMinWidth(field.control);
+  // 실제로 그릴 컨트롤 — select/radio 는 옵션 개수로 치환된다(≤3 radio · ≥4 select, lookup 은 제외). 규칙 SSOT = types.ts resolveChoiceControl.
+  const control = resolveChoiceControl(field);
+  const minW = controlMinWidth(control);
   // focus: 별도 링을 덧그리지 않고 기존 인라인 border 색만 --ring로 바꾸고 은은한 box-shadow 글로우(2026-09-10 사용자 요청).
   //   인라인 border는 CSS :focus-visible로 못 덮으므로(명시도) 여기서 상태로 스왑한다. 전역 규칙과 톤 일치.
   const [focused, setFocused] = React.useState(false);
@@ -205,7 +211,7 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
   // ⚠ invalid/미입력 필수는 focus 중에도 danger 테두리를 유지한다(검증 단서 소실 방지, Codex P2). 그땐 테두리를 --ring로 스왑하지 않고
   //   글로우만 danger 색으로 맞춘다(정상 필드·이미 채운 필수는 --ring 테두리+글로우).
   const fs = controlFocusStyle(focused, !!invalid || requiredEmpty);
-  switch (field.control) {
+  switch (control) {
     case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} placeholder={field.placeholder} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical', ...fs }} />;
     // select: native 화살표는 Chrome UA가 오른쪽 경계에 고정해 padding으로 못 움직임 → appearance:none로 제거하고 lucide chevron을 오버레이(토큰색·다크대응).
     //   아이콘은 pointer-events:none라 클릭이 select로 통과. 오른쪽 간격 = 아이콘 right(12px). paddingRight 34는 옵션 텍스트가 chevron과 겹치지 않게 확보.
@@ -252,11 +258,13 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
     // 라디오 — 옵션 가로 나열(Y/N, Y/N/해당없음 등). DS RadioGroup(Radix) — 선택 점 scale-pop, 체크박스·스위치와 같은 역할색.
     //   Item 은 <button role=radio> 라 <label> 로 감싸지 않고 htmlFor/id 명시 연결(래핑은 클릭 2회 발화).
     //   값 계약은 옵션 문자열 그대로(onValueChange 가 option 을 그대로 준다).
+    //   검증 단서: invalid/필수 미선택이면 각 원의 테두리를 danger 로(입력 컨트롤의 빨간 테두리와 같은 역할). 옵션 개수 규칙으로
+    //   select 가 radio 로 바뀌어도 필수 오류 표시가 사라지지 않게(2026-09-22 Codex P2). 선택하면 requiredEmpty 가 풀려 즉시 복귀.
     case 'radio': return (
       <RadioGroup value={value} onValueChange={onChange} aria-label={field.label} aria-required={requiredMark || undefined} aria-invalid={invalid || undefined} style={{ minHeight: 34 }}>
         {(field.options || ['Y', 'N']).map((o, i) => (
           <span key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <RadioGroupItem id={`${uid}-r-${i}`} value={o} aria-label={`${field.label} ${o}`} />
+            <RadioGroupItem id={`${uid}-r-${i}`} value={o} aria-label={`${field.label} ${o}`} style={invalid || requiredEmpty ? { borderColor: 'var(--danger)' } : undefined} />
             <label htmlFor={`${uid}-r-${i}`} style={{ fontSize: 13.5, color: 'var(--foreground)', cursor: 'pointer', userSelect: 'none' }}>{o}</label>
           </span>
         ))}

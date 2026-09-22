@@ -1,6 +1,6 @@
 ---
 name: apfs-form-modal
-description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 배타 선택은 radio(DS RadioGroup), 복수 선택·매트릭스는 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 정본 예시는 "투자기업정보(통합)"(schemas/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
+description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 옵션 선택은 개수가 컨트롤을 정한다(옵션 ≤3 → DS RadioGroup, ≥4 → select, 마스터 목록은 lookup:true 로 select 고정 — 렌더 시 resolveChoiceControl 자동 치환), 복수 선택·매트릭스는 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 정본 예시는 "투자기업정보(통합)"(schemas/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
 ---
 
 # apfs-form-modal Skill
@@ -70,8 +70,8 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 | `number` | `<input type=number>` | 숫자 |
 | `date` | shadcn Radix `DatePicker`(달력+Popover) | 네이티브 input 아님 — 값 계약 `'YYYY-MM-DD'`·KST 함정 →[[apfs-datepicker]] |
 | `year` | `PeriodPicker mode='year'`(연도 그리드+Popover) | **사업연도·회계연도는 `number` 가 아니라 이것**(2026-09-17). 값 계약 `'YYYY'` 문자열, 표시는 `2026년`. 컬럼은 `type:'text'` 그대로 — 저장값이 곧 셀 값이다. →[[apfs-datepicker]] |
-| `select` | `<select>`+`options` | 첫 옵션 시드 |
-| `radio` | DS **`RadioGroup`/`RadioGroupItem`**(ui/radio-group.tsx, 선택 점 scale-pop)+`options` | **분류형 2지 이상**(개인/법인, 신주/구주, Y/N/해당없음). 첫 옵션 시드. Item 은 `<button role=radio>` — `<label>` 래핑 금지, `htmlFor`/`id` 명시 연결 |
+| `select` | `<select>`+`options` — **옵션 ≥4 일 때만**. ≤3 이면 렌더 시 `radio` 로 자동 치환(아래 박스) | 첫 옵션 시드. 마스터 목록(운용사·자펀드·상위메뉴·소속기관·담당자)은 `lookup:true` 로 개수 무관 select 고정 |
+| `radio` | DS **`RadioGroup`/`RadioGroupItem`**(ui/radio-group.tsx, 선택 점 scale-pop)+`options` — **옵션 ≤3 일 때**. ≥4 이면 렌더 시 `select` 로 자동 치환 | **분류형 2·3지**(개인/법인, 신주/구주, Y/N/해당없음). 첫 옵션 시드. Item 은 `<button role=radio>` — `<label>` 래핑 금지, `htmlFor`/`id` 명시 연결 |
 | `switch` | shadcn Radix **`Switch`**(ui/switch.tsx) + 상태 텍스트(켜짐=`options[0]`, 꺼짐=`options[1]`, `htmlFor` 라벨) | **on/off 2지선다**(사용여부·도움말 제공 '여'/'부', 'Y'/'N', '예'/'아니오'). 첫 옵션 시드. 값 계약은 **문자열 그대로** — `checked = value === options[0]`, 토글 시 `options[0] \| options[1]` emit. (2026-09-18 오전 체크박스 렌더로 바꿨다가 같은 날 오후 **스위치로 원복** — 아래 박스) |
 | `checkbox` | DS `Checkbox`(ui/checkbox.tsx, 가시 라벨 없음) | 'true'/'false' 문자열. **신규 스키마에서 쓰지 말 것**(사용처 0, 2026-09-18) — 옵션이 없어 클릭 라벨을 못 붙이고 첫옵션 시드도 안 걸린다. on/off 값은 `switch` + `options` 를 쓴다 |
 | `textarea` | `<textarea rows=4>` | 2단 시 전체 폭 |
@@ -82,8 +82,14 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 > **checkbox vs switch vs radio — 무엇을 쓰나(2026-09-18 재개정, 사용자 결정).** 모두 DS 컴포넌트(Radix)이며 표식 이펙트(scale-pop / 엄지 슬라이드)가 한 패밀리다:
 > · **switch** = on/off **2지선다 값**('여/부'·'Y/N'·'예/아니오'). 폼 모달 안이든 즉시 반영 설정이든 동일. 옆 텍스트는 현재 상태(여↔부)로 바뀐다.
 > · **checkbox** = **독립 복수 선택**(사용자 구분·권한 체크 그룹, 권한 매트릭스 셀/집계). 스키마 토큰 `checkbox`('true'/'false')는 신규 사용 금지.
-> · **radio** = 이름으로 묶인 배타 그룹 — 하나를 고르면 나머지가 풀린다(개인/법인, 신주/구주, Y/N/해당없음, 검색 결과 1건 선택). 옵션 3개 이상이면 무조건 radio.
+> · **radio** = 이름으로 묶인 배타 그룹 — 하나를 고르면 나머지가 풀린다(개인/법인, 신주/구주, Y/N/해당없음, 검색 결과 1건 선택). **radio 냐 select 냐는 옵션 개수가 정한다** — 아래 박스.
 > (연혁: 2026-09-15 2지선다 radio → switch. 2026-09-18 오전 namethatui 의미 규약(switch=즉시 반영 / checkbox=Save 대기)으로 switch → 체크박스 렌더 전환. **같은 날 오후 사용자 지시 "스위치는 체크로 하지 말고 원복"으로 Switch 렌더 복귀** — 화면 인터랙션 통일이 의미 규약보다 우선. 매트릭스·체크 그룹의 DS Checkbox 통일과 radio 의 DS 전환은 유지.)
+>
+> **select ↔ radio 는 옵션 개수가 정한다(2026-09-22 사용자 결정, 09-18 의 "3개 이상이면 무조건 radio" 를 뒤집음).** 등록/수정 모달 전 페이지 공통.
+> · 옵션 **≤3** → DS `RadioGroup`(한눈에 비교, 클릭 1회) · 옵션 **≥4** → `<select>`(나열하면 폼이 길어진다). 경계 상수 `RADIO_MAX_OPTIONS = 3`(types.ts).
+> · **선언은 그대로 두고 렌더 시점에 치환**한다 — SSOT `schemas/types.ts` `resolveChoiceControl(field)`, 소비처 `SchemaField`(렌더 분기·minWidth) + `isPlainWrapControl(spec)`. 스키마의 `control:'select'` 를 `radio` 로 고쳐 쓰지 말 것: 상세필터(`filter_field.ts` `control === 'select'`)와 bespoke 시드(`f.control === 'select'`)가 그 필드를 열거형으로 못 알아본다. 그래서 상세필터 드로어는 3지 필드도 계속 드롭다운이다 — 이 규칙은 **모달 안** 컨트롤 규칙이다.
+> · 예외 ① **`lookup:true`** = 옵션이 고정 도메인이 아니라 마스터 데이터 목록(운용사·자펀드·상위메뉴·소속기관·담당자·상위코드구분). 더미가 1~2건이라 라디오로 그려지면 실서비스와 어긋나므로 개수 무관 select 고정. 빈 선택지 `''` 를 첫 옵션으로 두는 목록(위반 `자펀드`)도 여기 — radio 는 빈 라벨을 못 그린다. ② **`switch`**(여/부·Y/N on/off)는 2옵션이지만 이 규칙 밖 — 09-18 사용자 결정(Switch 유지)이 우선한다.
+> · `isPlainWrapControl` 에는 **FieldSpec 을 넘겨라**(토큰이 아니라). select 로 선언된 3지 필드가 radio 로 그려질 때 토큰만 보면 `<label>` 로 감싸져 라벨 클릭이 첫 옵션을 고른다. 자기 `Field` 래퍼를 가진 바스포크 모달(`user_form_modal`·`member_info_form_modal` 등)은 **옵션형 필드마다** `plain={isPlainWrapControl(spec)}` 를 붙인다 — `plain` 리터럴을 radio 선언에만 손으로 달아 두면 select 선언 2·3지가 라디오로 바뀔 때 빠진다(2026-09-22 Codex P1). 점검: `SchemaField` 를 쓰는 파일 중 `isPlainWrapControl` 0건인 파일이 없어야 한다.
 >
 > ⚠️ **값 계약을 boolean 으로 바꾸지 말 것.** `use: v.use === '여'`처럼 **옵션 문자열을 그대로 읽는 소비처·상세필터**가 다수라, `'true'/'false'`를 emit 하면 저장·필터가 **무음으로** 깨진다. radio 와 동일하게 `options[0]`/`options[1]` 문자열을 주고받는다.
 > ⚠️ 라벨 래퍼는 `plain`(=`<div>`) — `<label>`로 감싸지 않는다. Radix Checkbox 는 `<button role=checkbox>`라 `<label>` 암묵 연결이 **클릭을 두 번 발화**시킨다. 가시 라벨은 렌더러가 `htmlFor`/`id` 로 **명시** 연결한다. 판정 SSOT 는 `renderers.tsx` **`isPlainWrapControl()`** — 폼 래퍼가 리터럴로 열거하지 말 것.
@@ -104,8 +110,9 @@ export const schema: PageSchema = {
   fields: [  /* 모달 양식 — 출처 실측 순서대로 */
     { key: 'gp',        label: '운용사',  control: 'readonly' },
     { key: 'baseDate',  label: '기준일',  control: 'date', required: true },
-    { key: 'overseas',  label: '해외기업', control: 'radio', options: ['Y', 'N'] },
-    { key: 'compliance',label: '컴플라이언스의견', control: 'select', options: ['적정','조건부 적정','부적정','해당없음'] },
+    { key: 'overseas',  label: '해외기업', control: 'radio', options: ['Y', 'N'] },                       // ≤3 → radio
+    { key: 'compliance',label: '컴플라이언스의견', control: 'select', options: ['적정','조건부 적정','부적정','해당없음'] },  // ≥4 → select
+    { key: 'gp2',       label: '공동운용사', control: 'select', options: GP_LIST, lookup: true },     // 마스터 목록 — 개수 무관 select
     { key: 'remark',    label: '비고',    control: 'textarea' },
     /* … */
   ],
@@ -116,6 +123,7 @@ export const schema: PageSchema = {
 ```
 - `columns`(리스트 표시) ≠ `fields`(모달 입력) — 분리. `fields`는 **출처 실측 순서**를 따른다(목업 HTML의 폼 순서 또는 캡처 순서, →[[apfs-capture-schema]]).
 - ⚠️ `kind:'form'`이어도 **`columns`·`provenance`는 `PageSchemaZ` 필수**(optional 아님) — 폼 페이지도 리스트 컬럼과 출처를 선언해야 zod 통과.
+- 옵션 선택 필드는 `select`/`radio` 어느 쪽으로 선언해도 **렌더는 옵션 개수가 정한다**(≤3 radio · ≥4 select). 선언은 의도(열거형)를 읽히게 개수에 맞춰 쓰되, 마스터 목록은 `lookup:true` 를 붙인다(위 박스).
 - 전용 `email`/`tel` 컨트롤은 **없다** → `control: 'text'`로 두고(형식 검증 필요하면 별도). 없는 control을 발명하면 `PageSchemaZ.parse` 실패.
 - `route`/`title`이 라벨로 유일하면 route=라벨로 자동 해결. 새 스키마는 `schemas/index.ts`의 `ALL` 배열에 등록.
 
@@ -142,6 +150,7 @@ export const schema: PageSchema = {
 ## 검증
 - `npm test`(zod 스키마 테스트 — 새 control은 `FIELD_CONTROLS`에 있어야 통과) + `npm run build`(exit 0).
 - 브라우저: 항목>6 → 880px 2단(400px에서 1단 적층 확인), textarea/`long` 전체폭, radio·switch 첫 옵션 기본, 필수 미입력 에러, 삭제 2단계. 라이트/다크(→[[responsive-ui]]).
+- 옵션 개수 규칙: 모달 열고 `button[role=radio]` 그룹의 항목 수가 **≤3** 이고 `select` 의 `option` 수가 **≥4** 인지(`lookup` 필드 제외). 3지 필드가 `<select>` 로 남아 있으면 `SchemaField` 를 우회한 바스포크 렌더다. 단위 테스트는 `schemas/types.test.ts` `resolveChoiceControl`.
 - `long` 검증은 **span 이 아니라 실측 폭**으로: 모달 열고 `getComputedStyle(input).width` 가 셀 폭과 같은지(240px 로 묶여 있지 않은지) 확인.
 - `switch` 검증은 **왕복으로**: 등록 → 토글 → 저장 → 그리드 배지가 '여'/'부'로 뜨는지 + 상세필터 '사용여부'가 그 행을 걸러내는지(문자열 계약이 깨지면 여기서 드러난다).
 - 체크박스 라벨 검증 2종: ① 라벨 텍스트 클릭이 **정확히 1회** 발화하는지(`addEventListener('click')` 카운터 — 암묵 `<label>` 래핑이면 2가 된다), ② `getByRole('checkbox', { name: '사용여부 여' })` 로 접근名이 **필드명+값** 둘 다 잡히는지.

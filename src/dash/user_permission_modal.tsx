@@ -229,7 +229,7 @@ export function UserPermissionModal({ mode, initial, menuRows, existing, onSave,
             <Field label="설명 *" className="sm:col-span-2" errMsg={errKey === 'desc' ? '설명을(를) 입력하세요.' : undefined}>
               <SchemaField field={F.desc} value={v.desc} onChange={(x) => set('desc', x)} invalid={errKey === 'desc'} />
             </Field>
-            <Field label="사용여부" plain={isPlainWrapControl(F.use.control)}>
+            <Field label="사용여부" plain={isPlainWrapControl(F.use)}>
               <SchemaField field={F.use} value={v.use} onChange={(x) => set('use', x)} />
             </Field>
           </div>

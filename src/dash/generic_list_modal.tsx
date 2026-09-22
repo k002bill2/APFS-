@@ -150,7 +150,7 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
                   key={f.key}
                   label={f.label + (f.required ? ' *' : '')}
                   className={span2 ? "sm:col-span-2" : undefined}
-                  plain={isPlainWrapControl(f.control)}
+                  plain={isPlainWrapControl(f)}
                   note={f.note}
                   errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
                   <SchemaField

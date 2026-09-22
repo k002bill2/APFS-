@@ -14,7 +14,7 @@
 import React from 'react';
 import { UI } from './components';
 import { MT } from './mask';
-import { SchemaField } from './schemas/renderers';
+import { SchemaField, isPlainWrapControl } from './schemas/renderers';   // isPlainWrapControl(spec): 모펀드(2지)는 radio 로 그려져 <label> 래핑 금지
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { ReviewMarker } from './review_marker';
@@ -153,7 +153,7 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
         {/* 항목 8개(>6) → 2단 wide 그리드. 좁은 화면은 1단 적층(RowFormModal 규격 동일) */}
         <div className="overflow-y-auto p-[46px]">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5">
-            <Field label="모펀드">
+            <Field label="모펀드" plain={isPlainWrapControl(F.mf)}>
               <SchemaField field={F.mf} value={v.mf} onChange={(x) => set('mf', x)} />
             </Field>
 

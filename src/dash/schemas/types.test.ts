@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { parsePageSchema } from './types';
+import { parsePageSchema, resolveChoiceControl, RADIO_MAX_OPTIONS } from './types';
+import type { FieldSpec } from './types';
 
 const valid = {
   route: '연도별투자현황', title: '연도별 투자현황', kind: 'list', entity: '모태펀드',
@@ -50,5 +51,35 @@ describe('FieldSpec.note(검토필요 메모)', () => {
   });
   it('note는 rec·dat 둘 다 있어야 한다', () => {
     expect(() => parsePageSchema({ ...valid, fields: [{ key: 'mem', label: '조합원', control: 'text', note: { rec: 'x' } }] })).toThrow();
+  });
+});
+
+// select ↔ radio 는 옵션 개수가 정한다(2026-09-22 사용자 결정): ≤3 radio · ≥4 select. 선언은 그대로 두고 렌더 시점에 치환.
+describe('resolveChoiceControl', () => {
+  const f = (control: FieldSpec['control'], options?: string[], extra: Partial<FieldSpec> = {}): FieldSpec =>
+    ({ key: 'k', label: 'K', control, options, ...extra });
+  it('옵션 2·3개 select 는 radio 로', () => {
+    expect(resolveChoiceControl(f('select', ['A', 'B']))).toBe('radio');
+    expect(resolveChoiceControl(f('select', ['A', 'B', 'C']))).toBe('radio');
+  });
+  it('옵션 4개 이상은 select — radio 로 선언했어도', () => {
+    expect(resolveChoiceControl(f('select', ['A', 'B', 'C', 'D']))).toBe('select');
+    expect(resolveChoiceControl(f('radio', ['A', 'B', 'C', 'D', 'E']))).toBe('select');
+  });
+  it('경계 = RADIO_MAX_OPTIONS(3)', () => {
+    expect(RADIO_MAX_OPTIONS).toBe(3);
+  });
+  it('lookup(마스터 목록)은 개수 무관 select', () => {
+    expect(resolveChoiceControl(f('select', ['에쓰비'], { lookup: true }))).toBe('select');
+  });
+  it('options 없는 select/radio 와 다른 컨트롤은 선언 그대로', () => {
+    expect(resolveChoiceControl(f('radio'))).toBe('radio');
+    expect(resolveChoiceControl(f('select'))).toBe('select');
+    expect(resolveChoiceControl(f('switch', ['여', '부']))).toBe('switch');
+    expect(resolveChoiceControl(f('text'))).toBe('text');
+  });
+  it('lookup 표식은 parsePageSchema 왕복에서 살아남는다', () => {
+    const parsed = parsePageSchema({ ...valid, fields: [{ key: 'gp', label: '운용사', control: 'select', options: ['A'], lookup: true }] });
+    expect(parsed.fields[0].lookup).toBe(true);
   });
 });

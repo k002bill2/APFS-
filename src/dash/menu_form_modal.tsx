@@ -164,7 +164,7 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
   }, [rows, v.lvl, isTop, initial?.id]);
   /* 상위메뉴 select — 옵션은 이름, 값은 id. 동명이 있을 수 있어 `이름 (메뉴ID)` 로 표기 */
   const parentLabel = (r: MenuRow) => `${r.name} (${r.code})`;
-  const parentField: FieldSpec = React.useMemo(() => ({ key: 'parentId', label: '상위메뉴', control: 'select', options: ['선택해 주세요', ...parentCandidates.map(parentLabel)], required: !isTop && !!v.lvl }), [parentCandidates, isTop, v.lvl]);
+  const parentField: FieldSpec = React.useMemo(() => ({ key: 'parentId', label: '상위메뉴', control: 'select', options: ['선택해 주세요', ...parentCandidates.map(parentLabel)], required: !isTop && !!v.lvl, lookup: true }), [parentCandidates, isTop, v.lvl]);
   const parentValue = parentCandidates.find((r) => r.id === v.parentId);
   const setParent = (label: string) => { const r = parentCandidates.find((x) => parentLabel(x) === label); set('parentId', r?.id ?? ''); };
 
@@ -239,10 +239,13 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
               </div>
             </Field>
 
-            <Field label="메뉴 레벨 *" errMsg={err('lvl', '메뉴 레벨을(를) 선택하세요.')} hint={lvlLocked ? '하위 메뉴가 있어 레벨을 바꿀 수 없습니다.' : undefined}>
+            {/* 메뉴 레벨 = 3지 → 옵션 개수 규칙으로 DS 라디오(resolveChoiceControl). 라디오는 미선택('')이 그대로 보이므로
+                select 시절의 '선택해 주세요' 플레이스홀더 옵션을 앞에 붙이지 않는다(붙이면 4옵션이 돼 select 로 되돌아간다).
+                plain: 라디오는 <label> 로 감싸면 라벨 클릭이 첫 항목을 고른다 — 판정 SSOT isPlainWrapControl(spec). */}
+            <Field label="메뉴 레벨 *" plain={!lvlLocked && isPlainWrapControl(F.lvl)} errMsg={err('lvl', '메뉴 레벨을(를) 선택하세요.')} hint={lvlLocked ? '하위 메뉴가 있어 레벨을 바꿀 수 없습니다.' : undefined}>
               {lvlLocked
                 ? <SchemaField field={{ key: 'lvl', label: '메뉴 레벨', control: 'readonly' }} value={v.lvl} onChange={() => undefined} />
-                : <SchemaField field={{ ...F.lvl, options: ['선택해 주세요', ...F.lvl.options!] }} value={v.lvl || '선택해 주세요'} onChange={(x) => setLvl(x === '선택해 주세요' ? '' : x)} invalid={errKey === 'lvl'} />}
+                : <SchemaField field={F.lvl} value={v.lvl} onChange={setLvl} invalid={errKey === 'lvl'} />}
             </Field>
             <Field label={isTop ? '상위메뉴' : '상위메뉴 *'} errMsg={err('parentId', '상위메뉴를 선택하세요.')}
               hint={isTop ? '대분류(레벨1)는 상위메뉴가 없습니다.' : !v.lvl ? '메뉴 레벨을 먼저 선택하세요.' : undefined}>
@@ -267,7 +270,7 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
               </div>
             </Field>
 
-            <Field label="사용여부" plain={isPlainWrapControl(F.use.control)}>
+            <Field label="사용여부" plain={isPlainWrapControl(F.use)}>
               <SchemaField field={F.use} value={v.use} onChange={(x) => set('use', x as V['use'])} />
             </Field>
           </div>

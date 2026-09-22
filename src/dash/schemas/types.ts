@@ -50,7 +50,22 @@ export interface ReviewNoteSpec { rec: string; dat: string; }
 //   컨트롤 width:100%(fit-content 240px 하한 해제)로 렌더한다. 짧은 코드/일자 필드와 구분하는 유일한 SSOT.
 // placeholder: 비어 있을 때 입력칸에 보이는 힌트(text/number/textarea 에만 적용 — 나머지 컨트롤은 무시).
 //   목업 원문이 placeholder 를 지정한 필드를 그대로 옮길 때 쓴다(2026-09-22 추가). 미지정이면 종전과 동일.
-export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; long?: boolean; placeholder?: string; note?: ReviewNoteSpec; }
+// lookup: options 가 고정 도메인이 아니라 **마스터 데이터 목록**(운용사·자펀드·상위메뉴·소속기관·담당자)임을 표식.
+//   아래 resolveChoiceControl 의 개수 규칙(≤3 → radio)에서 제외돼 더미 1~2건이어도 항상 select 로 그린다(2026-09-22).
+export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; long?: boolean; placeholder?: string; note?: ReviewNoteSpec; lookup?: boolean; }
+
+/* 옵션 선택 컨트롤 결정 규칙(2026-09-22 사용자 결정) — 등록/수정 모달의 **select ↔ radio 는 옵션 개수가 정한다**.
+   · 옵션 ≤ RADIO_MAX_OPTIONS(3) → DS RadioGroup(한눈에 비교, 클릭 1회)
+   · 옵션 ≥ 4                     → <select>(나열하면 폼이 길어진다)
+   스키마의 `control:'select'|'radio'` 선언은 그대로 두고 **렌더 시점에 여기서 치환**한다 — 선언을 radio 로 바꾸면
+   상세필터(filter_field.ts `control === 'select'`)·bespoke 시드(`f.control === 'select'`)가 그 필드를 열거형으로
+   못 알아본다. 예외: `lookup:true`(마스터 목록 — 개수 무관 select), `switch`(여/부 on/off — 09-18 결정, 이 규칙 밖).
+   소비처: renderers.tsx SchemaField(렌더 분기·minWidth) + isPlainWrapControl(<label> 래핑 판정). */
+export const RADIO_MAX_OPTIONS = 3;
+export function resolveChoiceControl(f: FieldSpec): FieldControl {
+  if ((f.control !== 'select' && f.control !== 'radio') || f.lookup || !Array.isArray(f.options)) return f.control;
+  return f.options.length <= RADIO_MAX_OPTIONS ? 'radio' : 'select';
+}
 export interface KpiSpec { key: string; label: string; icon: string; color: string; from: 'sum'|'avg'|'rate'; column: string; }
 // 건수형 KPI — 금액 집계가 아닌 행 카운트. column+value 있으면 그 값과 일치하는 행 수, 없으면 전체 건수.
 export interface CountKpiSpec { label: string; icon: string; color: string; column?: string; value?: string; }
@@ -111,6 +126,7 @@ const FieldZ = z.object({
   required: z.boolean().optional(), options: z.array(z.string()).optional(), pii: z.boolean().optional(), long: z.boolean().optional(),
   placeholder: z.string().optional(),
   note: z.object({ rec: z.string(), dat: z.string() }).optional(),
+  lookup: z.boolean().optional(),   // z.object 는 미지 키를 버리므로 parsePageSchema 왕복에서 표식이 사라지지 않게 명시
 });
 const KpiZ = z.object({ key: z.string(), label: z.string(), icon: z.string(), color: z.string(), from: z.enum(['sum','avg','rate']), column: z.string() });
 const ProvenanceZ = z.object({ capturedAt: z.string(), sourceSystem: z.string(), captureFile: z.string(), sourceUrl: z.string().optional() });

@@ -40,7 +40,7 @@ export const SHAREHOLDER_SCHEMA: PageSchema = parsePageSchema({
     { key: 'ym', label: '등록년월', control: 'month' },
     /* 변동일자 = 그리드의 `주주변동일자`(목업 DATA 키 `cd`) — 새 컬럼이 아니다. */
     { key: 'cd', label: '변동일자', control: 'date' },
-    { key: 'gp', label: '운용사', control: 'select', options: OPT_GP },
+    { key: 'gp', label: '운용사', control: 'select', options: OPT_GP, lookup: true },
     { key: 'vt', label: '변동구분', control: 'select', options: OPT_VT },
     { key: 'cont', label: '변동내역', control: 'textarea', long: true, placeholder: '변동 내역 입력' },
     /* 변동사유는 **그리드 컬럼이 아니다**(목업 thead 8컬럼에 없다) — 행 상태로만 보존한다. */

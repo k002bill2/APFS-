@@ -82,7 +82,7 @@ export function ProgramHelpModal({ program, onSave, onClose }: {
 
         <div className="overflow-y-auto p-[46px]">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5">
-            <Field label="도움말 제공" plain={isPlainWrapControl(F.on.control)} hint="여 = 사용자 화면 툴팁·도움말 페이지로 노출">
+            <Field label="도움말 제공" plain={isPlainWrapControl(F.on)} hint="여 = 사용자 화면 툴팁·도움말 페이지로 노출">
               <SchemaField field={F.on} value={on} onChange={(x) => { setOn(x as '여' | '부'); setErr(null); }} />
             </Field>
           </div>

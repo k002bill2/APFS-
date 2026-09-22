@@ -44,7 +44,7 @@ export const LITIGATION_SCHEMA: PageSchema = parsePageSchema({
     /* 목업 `<input id="rm-ym" readonly>` + openM(월 그리드 픽커) = 월 선택.
        우리 대응물은 control:'month'(PeriodPicker mode='month', 값 'YYYY-MM') — 손입력이 아니라 선택이다. */
     { key: 'ym', label: '등록년월', control: 'month', required: true },
-    { key: 'mgr', label: '운용사', control: 'select', options: OPT_GP, required: true },
+    { key: 'mgr', label: '운용사', control: 'select', options: OPT_GP, required: true, lookup: true },
     { key: 'sdate', label: '소송일자', control: 'date', required: true },
     { key: 'conf', label: '확정구분', control: 'radio', options: OPT_CONF, required: true },
     { key: 'detail', label: '소송내용', control: 'textarea', long: true, placeholder: '소송 내용을 입력하세요', required: true },

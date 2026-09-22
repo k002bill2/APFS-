@@ -27,6 +27,7 @@ description: 현행시스템 목업 HTML(+`*_spec.json`) 또는 화면 캡처에
    - 상단 조회 컨트롤 → `filters`
    - 표 컬럼 → `columns[]`: type 매핑(금액→amount, 비율/변동→rate, 날짜→date, 상태/등급→status(+statusDomain), 운용사/기관→gp, **영숫자 코드/ID→code**, **주민번호/계좌→pii**, 그 외→text), `unit`/`align`/중첩이면 `group`
    - 입력 컨트롤 → `fields[]`: control 매핑(textarea/file/select(+options)/date/checkbox/readonly)
+     - 목업 `<select>`/라디오는 **옵션 개수로 선언**한다 — ≤3 이면 `radio`, ≥4 면 `select`(렌더는 어차피 `resolveChoiceControl` 이 개수로 치환한다, →[[apfs-form-modal]] 박스). 옵션이 마스터 목록(운용사·자펀드·담당자 등)이면 `lookup:true`.
    - 1~2행 → 샘플 인지용. 목업의 **실제 행을 그대로 노출**해야 하면 `sample: SampleRow[]`(키=column/field key)로 저장(부재 시 런타임 합성 더미)
    - **KPI 행 후보** → 카드헤더 KPI 배지 후보를 **추출만** 해 둔다(전체 건수 + 도메인별 2지표 후보, 예: 계정구분 농식품/수산). ⚠️ 스키마에 바로 넣지 말 것 — 포함 여부는 2.5단계 HITL에서 결정한다. 규약은 [[apfs-grid]] "KPI 배지 행".
 2.5. **HITL — KPI 배지 행 포함 여부(필수)**: 동결(3단계) 전에 `AskUserQuestion`으로 카드헤더 KPI 배지 행을 넣을지 묻는다. 헤더="KPI 배지", 질문="이 페이지 카드헤더에 KPI 배지 행을 넣을까요?", 옵션(2단계 추출 후보를 실제 값으로 채워 제시):

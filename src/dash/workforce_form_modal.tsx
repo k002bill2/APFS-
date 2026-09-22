@@ -123,7 +123,7 @@ export function WorkforceFormModal({ initial, onSave, onClose }: {
                   key={f.key}
                   label={f.label + (f.required ? ' *' : '')}
                   className={span2 ? 'sm:col-span-2' : undefined}
-                  plain={isPlainWrapControl(f.control)}
+                  plain={isPlainWrapControl(f)}
                   errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
                   <SchemaField field={f} value={v[f.key] ?? ''} onChange={(x) => set(f.key, x)} invalid={errKey === f.key} />
                 </Field>

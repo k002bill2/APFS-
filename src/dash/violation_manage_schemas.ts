@@ -55,13 +55,13 @@ export const VIOLATION_SCHEMA: PageSchema = parsePageSchema({
     { key: 'ym', label: '등록년월', control: 'month', required: true },
     { key: 'org', label: '적발기관', control: 'select', options: OPT_ORG, required: true },
     { key: 'law', label: '법령/규약위반', control: 'select', options: OPT_LAW, required: true },
-    { key: 'gp', label: '운용사', control: 'select', options: OPT_GP, required: true },
+    { key: 'gp', label: '운용사', control: 'select', options: OPT_GP, required: true, lookup: true },
     /* 자펀드는 **조건부 필수**(FUND_REQUIRED_WHEN) — 정적 required 로 선언하지 않는다.
        법령 위반이면 운용사까지만 필수이므로 여기서 true 로 박으면 저장이 막힌다.
        ⚠ 첫 옵션이 **빈 값**이어야 한다(목업 DATA 1·3행처럼 자펀드 없는 법령 위반이 정상 상태다).
          빈 선택지가 없으면 값이 ''인 행을 수정으로 열 때 네이티브 <select> 가 목록에 없는 ''를 못 그려
          **첫 옵션(에쓰비…)을 선택된 것처럼 표시**하는데 실제 state 는 '' 이라 화면과 값이 어긋난다. */
-    { key: 'fund', label: '자펀드', control: 'select', options: ['', ...OPT_FUND] },
+    { key: 'fund', label: '자펀드', control: 'select', options: ['', ...OPT_FUND], lookup: true },
     { key: 'disc', label: '공시여부', control: 'select', options: OPT_DISC },
     { key: 'rep', label: '대표자', control: 'text', placeholder: '대표자명' },
     { key: 'chk', label: '점검구분', control: 'text', placeholder: '점검구분' },

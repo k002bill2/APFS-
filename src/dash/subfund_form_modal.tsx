@@ -49,7 +49,7 @@ function Section({ title, children, single }: { title: string; children: React.R
 /* 단일 필드 — SchemaField 재사용(라벨은 RowFormModal Field와 동일 규격). full=2단에서 전체 폭 */
 function F({ spec, value, onChange, full }: { spec: FieldSpec; value: string; onChange: (v: string) => void; full?: boolean }) {
   // radio·switch·checkbox·복합 컨트롤은 <label> 로 감싸지 않는다 — 판정 SSOT = renderers.isPlainWrapControl(사유는 그쪽 주석).
-  const Wrap: any = isPlainWrapControl(spec.control) ? 'div' : 'label';
+  const Wrap: any = isPlainWrapControl(spec) ? 'div' : 'label';
   return (
     <Wrap className={`block mb-3.5 ${full ? 'sm:col-span-2' : ''}`}>
       <span className="font-semibold text-caption block" style={{ fontSize: 12, marginBottom: 5 }}>{spec.label}{spec.required ? ' *' : ''}</span>

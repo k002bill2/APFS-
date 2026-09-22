@@ -28,7 +28,7 @@ export function groupSchema(mode: 'create' | 'edit', groups: readonly CodeGroup[
     fields: [
       { key: 'code', label: '코드구분', control: mode === 'edit' ? 'readonly' : 'text', required: mode === 'create' },
       { key: 'name', label: '코드구분명', control: 'text', required: true },
-      { key: 'up', label: '상위코드구분', control: 'select', options: [UP_NONE, ...groups.filter((g) => g.code !== exclude).map(upOption)] },
+      { key: 'up', label: '상위코드구분', control: 'select', options: [UP_NONE, ...groups.filter((g) => g.code !== exclude).map(upOption)], lookup: true },
       { key: 'rem', label: '비고', control: 'text', long: true },
       { key: 'use', label: '사용여부', control: 'switch', options: [...USE_OPTIONS] },
     ],

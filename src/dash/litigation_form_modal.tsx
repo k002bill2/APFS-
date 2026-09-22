@@ -114,7 +114,7 @@ export function LitigationFormModal({ mode, initial, title, onSave, onClose }: {
             <Field
               key={f.key}
               label={f.label + (f.required ? ' *' : '')}
-              plain={isPlainWrapControl(f.control)}
+              plain={isPlainWrapControl(f)}
               errMsg={errKey === f.key ? `${f.label}을(를) 입력하세요.` : undefined}>
               <SchemaField field={f} value={v[f.key] ?? ''} onChange={(x) => set(f.key, x)} invalid={errKey === f.key} />
             </Field>
@@ -181,7 +181,7 @@ export function LitigationReleaseModal({ count, onSave, onClose }: {
               <Field
                 key={f.key}
                 label={f.label + (f.required ? ' *' : '')}
-                plain={isPlainWrapControl(f.control)}
+                plain={isPlainWrapControl(f)}
                 errMsg={showErr ? `${f.label}을(를) 입력하세요.` : undefined}>
                 <SchemaField
                   field={f}

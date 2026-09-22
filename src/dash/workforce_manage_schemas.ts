@@ -53,8 +53,8 @@ export const WORKFORCE_SCHEMA: PageSchema = parsePageSchema({
        우리 대응물은 control:'month'(PeriodPicker mode='month', 값 'YYYY-MM') — 손입력이 아니라 선택이다. */
     { key: 'ym', label: '등록년월', control: 'month', required: true },
     { key: 'hr', label: '인력구분', control: 'select', options: OPT_HR, required: true },
-    { key: 'mgr', label: '운용사', control: 'select', options: OPT_GP, required: true },
-    { key: 'fund', label: '자펀드', control: 'select', options: OPT_FUND, required: true },
+    { key: 'mgr', label: '운용사', control: 'select', options: OPT_GP, required: true, lookup: true },
+    { key: 'fund', label: '자펀드', control: 'select', options: OPT_FUND, required: true, lookup: true },
     { key: 'cdate', label: '운용인력변동일자', control: 'date' },
     { key: 'backdate', label: '복귀일자', control: 'date' },
     { key: 'detail', label: '운용인력변동내용', control: 'textarea', long: true, placeholder: '운용인력 변동 내용을 입력하세요' },

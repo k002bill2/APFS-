@@ -76,7 +76,7 @@ export const SELECT_SCHEMA: PageSchema = parsePageSchema({
     { key: 'c1', label: '조합약정총액(원)', control: 'number' },
     { key: 'c2', label: '모태펀드출자약정액(원)', control: 'number' },
     { key: 'gpCommit', label: 'GP출자약정액(원)', control: 'number' },
-    { key: 'manager', label: '자펀드담당자', control: 'select', options: OPT_MANAGER },
+    { key: 'manager', label: '자펀드담당자', control: 'select', options: OPT_MANAGER, lookup: true },
     { key: 'ctype', label: '조합구분', control: 'select', options: OPT_FG },
     { key: 'cs', label: '조합성격', control: 'select', options: OPT_FC },
     { key: 'ag', label: '계정구분', control: 'select', options: OPT_AG },

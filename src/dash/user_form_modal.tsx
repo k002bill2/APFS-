@@ -8,7 +8,7 @@
    ⚠ 백엔드 없음 — 저장은 부모(user_manage)의 로컬 행 상태만 바꾼다. 실제 계정 발급·메일 발송 없음. */
 import React from 'react';
 import { UI } from './components';
-import { SchemaField } from './schemas/renderers';
+import { SchemaField, isPlainWrapControl } from './schemas/renderers';   // isPlainWrapControl(spec): 옵션 ≤3 select 는 radio 로 그려져 <label> 래핑 금지
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { Checkbox } from './ui/checkbox';   // 권한(복수) 체크 그룹 = DS 체크박스(htmlFor 명시 연결, 래핑 금지)
@@ -68,7 +68,7 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
 
   /* 조건부 소속 — 운용사·수탁은 기관 select(값=기관명, 저장 시 id 로 환원) */
   const orgs = v.type === '운용사' ? orgsOf('GP') : v.type === '수탁' ? orgsOf('수탁') : [];
-  const orgField: FieldSpec = React.useMemo(() => ({ key: 'org', label: v.type === '운용사' ? '소속 운용사' : '소속 수탁사', control: 'select', options: orgs.map((o) => o.name), required: true }), [v.type, orgs]);
+  const orgField: FieldSpec = React.useMemo(() => ({ key: 'org', label: v.type === '운용사' ? '소속 운용사' : '소속 수탁사', control: 'select', options: orgs.map((o) => o.name), required: true, lookup: true }), [v.type, orgs]);
   const orgValue = orgs.find((o) => o.id === v.org)?.name ?? orgs[0]?.name ?? '';
   const typeField: FieldSpec = React.useMemo(() => ({ key: 'type', label: '사용자구분', control: 'select', options: mode === 'create' ? NEW_TYPES : ALL_TYPES, required: true }), [mode]);
   const statusField: FieldSpec = React.useMemo(() => ({ key: 'status', label: '상태', control: 'select', options: ['활성', '비활성', ...(v.status === '잠금' || v.status === '온보딩대기' ? [v.status] : [])] }), [v.status]);
@@ -115,7 +115,8 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
             <Field label="이메일 *" hint="온보딩 안내 발송용 · 회사 이메일 우선" errMsg={errKey === 'email' ? '이메일을 입력하세요 — 온보딩 안내 발송에 필요합니다.' : undefined}>
               <SchemaField field={F.email} value={v.email} onChange={(x) => set('email', x)} invalid={errKey === 'email'} />
             </Field>
-            <Field label="사용자구분 *" hint={mode === 'create' ? '운용사 사용자는 「사용자 초대(운용사)」로만 생성됩니다.' : undefined}>
+            {/* create 는 3지(radio) → plain, edit 는 readonly → label 그대로. 판정은 spec 으로(옵션 개수 규칙). */}
+            <Field label="사용자구분 *" plain={mode === 'create' && isPlainWrapControl(typeField)} hint={mode === 'create' ? '운용사 사용자는 「사용자 초대(운용사)」로만 생성됩니다.' : undefined}>
               {mode === 'create'
                 ? <SchemaField field={typeField} value={v.type} onChange={setType} />
                 : <SchemaField field={F.typeRo} value={v.type} onChange={() => {}} />}
@@ -128,7 +129,7 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
               </Field>
             )}
             {(v.type === '운용사' || v.type === '수탁') && (
-              <Field label={`${orgField.label} *`}>
+              <Field label={`${orgField.label} *`} plain={isPlainWrapControl(orgField)}>
                 <SchemaField field={orgField} value={orgValue} onChange={(name) => set('org', orgs.find((o) => o.name === name)?.id ?? '')} />
               </Field>
             )}
@@ -138,7 +139,7 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
               </Field>
             )}
             {mode === 'edit' && (
-              <Field label="상태">
+              <Field label="상태" plain={isPlainWrapControl(statusField)}>
                 <SchemaField field={statusField} value={v.status} onChange={(x) => set('status', x as UserStatus)} />
               </Field>
             )}
