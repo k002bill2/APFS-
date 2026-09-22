@@ -24,7 +24,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
-import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
 import { useHotkey, HOTKEYS } from './use-hotkey';
@@ -93,7 +93,9 @@ const columnDefs: ColDef<PermRow>[] = [
     valueFormatter: (p) => mn(String(p.value)) },
 ];
 /* 라디오 단일선택 — 모듈 상수(인라인 리터럴은 렌더마다 컬럼 재생성 → 폭 되돌림, apfs-aggrid ⑦) */
-const ROW_SELECTION: RowSelectionOptions<PermRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };   // 행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22 사용자 결정, apfs-aggrid "체크박스" 절)
+/* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
+   행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */
+const ROW_SELECTION: RowSelectionOptions<PermRow> = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
 
 type XCol = { header: string; get: (r: PermRow) => string | number };
 const EXPORT_COLS: XCol[] = [
@@ -139,12 +141,16 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
-type ModalState = null | { kind: 'form'; mode: PermMode; id?: string } | { kind: 'delete'; id: string };
+type ModalState = null | { kind: 'form'; mode: PermMode; id?: string }
+  | { kind: 'delete'; ids: string[]; blocked: number };   // 다건 삭제 — ids=지울 행, blocked=게이트에 막혀 제외된 건수
 
 export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<PermRow> | null>(null);
   const [rows, setRows] = useState<PermRow[]>(DEMO);
-  const [selId, setSelId] = useState<string | null>(null);
+  /* 선택 SSOT — 체크된 행 id 배열. selId(첫 행)·selCount 는 파생이라 둘이 어긋날 수 없다(Codex 리뷰 2026-09-23) */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selId = selIds[0] ?? null;      // 단일 액션 대상(선택 1건일 때만 쓴다)
+  const selCount = selIds.length;       // 단일/다건 분기의 SSOT
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
@@ -185,12 +191,15 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
 
 
   /* 선택 SSOT = React state(selId). 그리드 라디오는 선택 변경 이벤트로 동기화, 신규 등록 후엔 onRowDataUpdated 로 되맞춘다 */
-  const selIdRef = useRef<string | null>(null); selIdRef.current = selId;
+  /* 선택 SSOT = selIds(배열). multiRow 라 복원도 **선택 전체**를 되돌린다 — 첫 id 만 되살리면 clearSelection 이
+     나머지 체크를 지워 사용자가 아무것도 안 했는데 다건 선택이 1건으로 줄어든다(Codex 리뷰 2026-09-23). */
+  const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
   const onGridReady = useCallback((e: GridReadyEvent<PermRow>) => { apiRef.current = e.api; }, []);
-  const onSelectionChanged = useCallback((e: SelectionChangedEvent<PermRow>) => { setSelId(e.api.getSelectedRows()[0]?.id ?? null); }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<PermRow>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
   const onRowDataUpdated = useCallback((e: { api: GridApi<PermRow> }) => {
-    const id = selIdRef.current; if (!id) return;
-    const node = e.api.getRowNode(id); if (node && !node.isSelected()) node.setSelected(true, true);
+    restoreSelection(e.api, selIdsRef.current);
   }, []);
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
@@ -203,14 +212,23 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
     setModal({ kind: 'form', mode: 'edit', id: e.data.id });
   }, []);
 
-  const selected = selId ? rows.find((r) => r.id === selId) ?? null : null;
-  const target = modal && modal.id ? rows.find((r) => r.id === modal.id) ?? null : null;
+  /* 단일 대상 액션은 **정확히 1건** 체크일 때만 — 다건 선택에 단건 모달·전이는 의미가 없다(2026-09-23) */
+  const single = selCount === 1 && selId ? rows.find((r) => r.id === selId) ?? null : null;
+  const target = modal?.kind === 'form' && modal.id ? rows.find((r) => r.id === modal.id) ?? null : null;   // 폼 모달 대상(삭제는 modal.ids 가 든다)
 
   /* 삭제 게이트(목업): 배정 사용자 0명일 때만. 아니면 사유를 toast 로 */
-  const requestDelete = (r: PermRow) => {
-    if (r.users > 0) { toast.error(`배정 사용자 ${r.users}명 — 삭제할 수 없습니다.`); return; }
-    setModal({ kind: 'delete', id: r.id });
+  /* 다건 삭제 — 게이트는 **요청 시점에 한 번** 평가하고 통과한 행만 지운다(막힌 건수는 사유 toast).
+     확인 시점에 다시 재면 같은 배치 안의 행끼리 삭제 순서에 결과가 달라진다. */
+  const requestDeleteRows = (targets: PermRow[]) => {
+    if (!targets.length) return;
+    const ok = targets.filter((r) => r.users === 0);
+    const blocked = targets.length - ok.length;
+    if (!ok.length) { toast.error(targets.length === 1 ? `배정 사용자 ${targets[0].users}명 — 삭제할 수 없습니다.` : '배정 사용자가 있어 삭제할 수 없습니다.'); return; }
+    if (blocked) toast.error(`배정 사용자가 있는 ${blocked}건은 삭제 대상에서 제외됩니다.`);
+    setModal({ kind: 'delete', ids: ok.map((r) => r.id), blocked });
   };
+  const requestDelete = (r: PermRow) => requestDeleteRows([r]);
+  const deleteSelected = () => requestDeleteRows(apiRef.current?.getSelectedRows() ?? []);
   const handleCellContextMenu = (e: CellContextMenuEvent<PermRow>) => {
     (e.event as MouseEvent | undefined)?.preventDefault();
     const row = e.data;
@@ -236,16 +254,17 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
       const nextNo = rows.reduce((m, r) => Math.max(m, r.no), 0) + 1;
       const row: PermRow = { id: crypto.randomUUID(), no: nextNo, ...patch, by: 'admin', at: today(), users: 0 };
       setRows((prev) => [...prev, row]);
-      setSelId(row.id);   // 새 행에 선택을 두면 후속 액션(수정·복사)이 바로 보인다(apfs-stage-workflow 규약 9)
+      setSelIds([row.id]);   // 새 행에 선택을 두면 후속 액션(수정·복사)이 바로 보인다(apfs-stage-workflow 규약 9)
     }
     setModal(null);
     toast.success('권한이 저장되었습니다 · 권한변경 이력 3년 보관 (목업)');
   };
   const doDelete = () => {
-    if (!target) return;
-    setRows((prev) => prev.filter((r) => r.id !== target.id).map((r, i) => ({ ...r, no: i + 1 })));   // 목업: 삭제 후 No 재번호
-    if (selId === target.id) setSelId(null);
-    toast.success('삭제되었습니다 (목업)');
+    if (modal?.kind !== 'delete') return;
+    const ids = new Set(modal.ids);
+    setRows((prev) => prev.filter((r) => !ids.has(r.id)).map((r, i) => ({ ...r, no: i + 1 })));   // 목업: 삭제 후 No 재번호
+    apiRef.current?.deselectAll(); setSelIds([]);
+    toast.success(`${ids.size}건 삭제되었습니다 (목업)`);
   };
   const refresh = () => { setRows([...DEMO]); clearFilters(); apiRef.current?.deselectAll(); toast.success('새로고침했습니다'); };
 
@@ -265,13 +284,16 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
      (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
-  const selActions = selected ? (
-    /* 선택 행 컨텍스트 액션(목업 gate: 수정·복사·삭제). 대상명 캡션은 두지 않는다(선택 행에서 이미 보임) */
+  const selActions = selCount > 0 ? (
+    /* 선택 행 컨텍스트 액션(목업 gate: 수정·복사·삭제). 단건 전용은 single 블록 안, 삭제는 다건 공통 */
     <>
-      <UTypeBadge value={selected.utype} />
-      <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: selected.id })}>수정</Button>
-      <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'form', mode: 'copy', id: selected.id })}>복사</Button>
-      <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => requestDelete(selected)}>삭제</Button>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      {single && <>
+        <UTypeBadge value={single.utype} />
+        <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: single.id })}>수정</Button>
+        <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'form', mode: 'copy', id: single.id })}>복사</Button>
+      </>}
+      <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={deleteSelected}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;
@@ -281,7 +303,7 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
       title="권한관리"
       favRoute="user-permission-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? null : (
+      toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="shield-check" size={16} className="text-caption" />
           <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>권한 {mn(String(visible.length))}건 · 행을 선택하면 수정·복사·삭제</span>
@@ -373,13 +395,16 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
       )}
 
       {/* ── 삭제 확인(배정 사용자 0명 전제) — Radix AlertDialog(Cancel 기본 포커스 내장) ── */}
-      {modal?.kind === 'delete' && target && (
+      {modal?.kind === 'delete' && (
         <AlertDialog open onOpenChange={(o) => { if (!o) setModal(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>권한 삭제</AlertDialogTitle>
               <AlertDialogDescription>
-                「<b className="text-foreground"><MT>{target.name}</MT></b>」 권한을 삭제할까요?
+                {modal.ids.length === 1
+                  ? <>「<b className="text-foreground"><MT>{(rows.find((r) => r.id === modal.ids[0])?.name ?? "")}</MT></b>」 권한을 삭제할까요?</>
+                  : <>선택한 <b className="text-foreground">{mn(String(modal.ids.length))}건</b>의 권한을 삭제할까요?</>}
+                {modal.blocked > 0 && <><br />배정 사용자가 있는 {mn(String(modal.blocked))}건은 제외됩니다.</>}
                 <br />메뉴별 기능 권한 설정이 함께 삭제되며 복구할 수 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>

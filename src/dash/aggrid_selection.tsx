@@ -95,6 +95,25 @@ function SelectHeader({ api }: IHeaderParams) {
 }
 
 /* 공용 선택 컬럼 정의 — 소비처는 이 상수를 그대로 넘긴다(폭·고정·렌더러 SSOT). */
+/* 선택 복원 — rowData 가 바뀐 뒤(등록·수정·필터) 체크를 되돌린다. **multiRow 전용 계약**.
+   ⚠ 첫 id 만 `node.setSelected(true, true)` 로 되살리면 두 번째 인자(clearSelection)가 나머지 체크를 지워,
+     사용자가 아무것도 안 했는데 다건 선택이 1건으로 줄고 이어지는 벌크 삭제 대상이 바뀐다(Codex 리뷰 2026-09-23).
+   그래서 ① 저장된 id 집합 밖의 선택을 풀고 ② 살아남은 id 를 additive(`setSelected(true)`)로 다시 켠다.
+   행이 사라졌으면(삭제됨) 조용히 건너뛴다 — 호출자는 `getSelectedRows()` 로 다시 동기화된다.
+   master-detail 좌 그리드처럼 **라디오(singleRow)** 는 이 헬퍼를 쓰지 않는다(해제 금지 로직이 따로 있다). */
+export function restoreSelection(api: GridApi, ids: readonly string[]): void {
+  if (!ids.length) return;
+  const keep = new Set(ids);
+  for (const node of api.getSelectedNodes()) {
+    const id = node.id;
+    if (id != null && !keep.has(id)) node.setSelected(false);
+  }
+  for (const id of ids) {
+    const node = api.getRowNode(id);
+    if (node && !node.isSelected()) node.setSelected(true);
+  }
+}
+
 export const SELECTION_COL: SelectionColumnDef = {
   pinned: 'left',
   width: 44,

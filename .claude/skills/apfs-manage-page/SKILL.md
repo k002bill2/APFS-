@@ -23,7 +23,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | **KPI 배지 행(옵션·HITL)** | 기본 미포함. SOP(3절) 5단계 HITL로 포함 여부를 물어 "포함" 시에만 3배지(전체 건수 + 도메인별 2지표). typed=`kpis` 직접(미포함=`kpis` 미전달), 스키마=`schema.countKpis`(미포함=`hideKpis:true`). 금액 개념 자체가 없으면 `hideMetrics:true` 병행 | [[apfs-grid]] "KPI 배지 행" |
 | 검색박스(인라인 N개 필터) | **주 필터 1개=툴바 `FilterChip`**(예: 심사단계) + 나머지=**상세필터 드로어(Sheet)**, 검색어는 **기본 OFF opt-in**(필요한 페이지만 `searchable`/`SEARCHABLE`로 켜고, 켜질 때만 최상단 — 자동 추가 금지), 컬럼 미연동 필터는 `· 데이터 연동 후 적용` 캡션 | [[apfs-detail-filter]] |
 | 2단 헤더 그리드 + tfoot 합계 | AG Grid `ColGroupDef`(`marryChildren`) + `pinnedBottomRowData=useMemo([computeTotal(filteredRows)])` | [[apfs-aggrid]] |
-| 행 라디오 단일선택 | 모듈 상수 `ROW_SELECTION = {mode:'singleRow',checkboxes:true,enableClickSelection:false}`(선택은 **체크박스로만** — 행 본문 클릭 선택 없음, 2026-09-22) + `selectionColumnDef={SELECTION_COL}` + `getRowId` 안정 id. ⚠ **선택이 액션(선택삭제·단계전이·행 편집)을 만들 때만** — 조회 전용이면 `rowSelection` 자체를 두지 않는다(`checkboxes:false` 중간 구성 없음) | [[apfs-aggrid]] |
+| 행 다중선택(기본) | 모듈 상수 `ROW_SELECTION = {mode:'multiRow',checkboxes:true,headerCheckbox:false,selectAll:'filtered',enableClickSelection:false}`(선택은 **체크박스로만** — 행 본문 클릭 선택 없음, 2026-09-22) + `selectionColumnDef={SELECTION_COL}` + `getRowId` 안정 id. **단일 대상 액션은 `selCount===1` 게이트, 삭제는 게이트 필터형 벌크**(2026-09-23 사용자 결정 — 종전 라디오 단일선택은 폐기). ⚠ **선택이 액션(삭제·단계전이·행 편집)을 만들 때만** — 조회 전용이면 `rowSelection` 자체를 두지 않는다. 라디오는 master-detail 좌 그리드 예외뿐 | [[apfs-aggrid]] |
 | 심사단계 셀 + 단계별 작업 버튼 + 전이 | **[[apfs-stage-workflow]]** (신규 패턴) | 이 조립표 |
 | 편집 팝업(flat ≤ 25필드) | `kind:'form'` PageSchema + `RowFormModal`(단계별 제목은 `title` prop) | [[apfs-form-modal]] |
 | 편집 팝업(섹션·반복행·첨부표) | 전용 섹션형 모달 — `SchemaField` 재사용 | [[apfs-form-modal]] "확장: 섹션형·반복행" |

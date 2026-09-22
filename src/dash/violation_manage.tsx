@@ -429,7 +429,9 @@ export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
-      <Button variant="primary" size="sm" leadingIcon="file" onClick={openEdit}>수정</Button>
+      {/* 수정은 **단건 체크일 때만** — 다건 선택에 수정 모달은 의미가 없다(2026-09-23 사용자 결정, 전 리스트 공통).
+          openEdit 안의 1건 가드는 방어로 남긴다(우클릭·단축키 등 다른 진입 경로). */}
+      {selCount === 1 && <Button variant="primary" size="sm" leadingIcon="file" onClick={openEdit}>수정</Button>}
       <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={openDelete}>삭제</Button>
       <Button variant="outline" size="sm" leadingIcon="check" onClick={openRelease}>해제등록</Button>
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
