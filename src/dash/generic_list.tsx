@@ -700,7 +700,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       <span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
       {/* 단건 체크일 때만 '수정' — 다건 선택에 수정 모달은 의미가 없다(bespoke user_manage·subfund_manage 규약과 동형) */}
       {editable && selCount === 1 && <Button variant="primary" size="sm" leadingIcon="file" onClick={editSelected}>수정</Button>}
-      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger)" }} onClick={bulkDelete}>선택 삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger)" }} onClick={bulkDelete}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;
