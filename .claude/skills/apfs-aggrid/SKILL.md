@@ -194,9 +194,9 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     - `singleRow` 유지: 단계 전이(→[[apfs-stage-workflow]] — 승인/반려는 한 건씩), master-detail 라디오
       (→ 아래 절 — 좌측 1건이 우측 내용을 정한다), 선택 행 **수정**(모달은 한 건만 연다).
       현행 11개 bespoke 페이지가 전부 여기 속한다(`subfund_manage`·`program_manage`·`user_manage`·`code_manage` …).
-    - `multiRow`: **선택 삭제처럼 N건에 그대로 적용되는 액션**이 있는 화면. 현행 정본은 `generic_list.tsx` 하나다.
+    - `multiRow`: **다건 삭제처럼 N건에 그대로 적용되는 액션**이 있는 화면. 현행 정본은 `generic_list.tsx` 하나다.
   - **수정 버튼은 단건 체크일 때만**(`editable && selCount === 1`). 다건 선택에 수정 모달은 의미가 없다 —
-    다건이면 `선택 삭제`·`선택 해제`만 남는다(정본: `generic_list.tsx` `selActions`).
+    다건이면 `삭제`·`선택 해제`만 남는다(정본: `generic_list.tsx` `selActions`). 선택 툴바의 삭제 버튼 라벨은 **`삭제`**다 — `선택 삭제` 아님(2026-09-22 사용자 결정, 재제안 금지). 건수는 앞의 `N건 선택됨`이 이미 말하므로 라벨에 "선택"을 반복하지 않는다.
   - **조회 전용 화면은 `rowSelection` 자체를 두지 않는다**(2026-09-15 사용자 지시 — 체크박스만 끄는 것보다 한 단계 더). 선택이 만들 액션이 없으면 `rowSelection` prop 을 통째로 지운다(`checkboxes:false` 로 남기지 않는다): 함께 `onSelectionChanged`·선택 state(`selId`)·`selected`·툴바의 `선택 해제` 버튼/선택 배지 분기·`refresh()`의 `deselectAll()`·`apiRef`(다른 용도가 없으면)까지 **한 벌로 사라진다**. `refreshNoColumn`은 자기 이벤트의 `e.api`를 쓰므로 `apiRef`에 의존하지 않는다. 상세 진입은 **더블클릭 / Enter / 우클릭 메뉴** 3경로로 이미 충분하고, 회색 행 강조가 없어지는 것이 "선택 기능 없음"과 일치한다. 선례: `audit_log.tsx`·`permission_history.tsx`.
   - 스키마 주도(`generic_list.tsx`) 페이지는 이 규약을 `schema.hideRowSelection: true` 로 표현한다(→[[apfs-grid]]) — bespoke 페이지만 `rowSelection`을 직접 만진다.
 - **라디오 단일선택(체크박스가 필요한 경우)**: 모듈 상수 `ROW_SELECTION = {mode:'singleRow',checkboxes:true,enableClickSelection:false}` + `selectionColumnDef={SELECTION_COL}`(`aggrid_selection.tsx`, 핵심 규약 8) + `getRowId`. 선택 SSOT는 React state(→[[apfs-stage-workflow]] 규약 9).
