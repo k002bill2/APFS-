@@ -85,7 +85,7 @@ const PAGE_SIZE = 20;
 const ACCTS: Acct[] = ['농식품', '수산'];
 
 /* 상태 배지 톤 — 목업 `.tag` 클래스 대응(tgt: b/n, att: g/a) */
-const TGT_TONE: Record<'O' | 'X', Tone> = { O: 'primary', X: 'info' };
+const TGT_TONE: Record<'O' | 'X', Tone> = { O: 'primary', X: 'muted' };   /* X=대상아님 → 목업 .tag n(중립) = muted */
 const ATT_TONE: Record<'보고' | '미보고', Tone> = { 보고: 'success', 미보고: 'warning' };
 
 /* ──────────────────────────────
