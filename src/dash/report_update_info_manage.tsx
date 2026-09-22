@@ -13,11 +13,12 @@
    - 목록 그리드(11컬럼)        → AG Grid 단일 헤더(apfs-aggrid) + **pinned 합계행**(목업 tfoot).
        목업 tfoot 은 colspan 7 '합계' · 합계금액 · colspan 3 '-' 인데 AG Grid 엔 colspan 이 없으므로
        구분 셀에 '합계', 텍스트 셀(운용사·자펀드·투자기업) 빈 값, 나머지 '-' 로 나눠 실었다.
-   - 행 선택(라디오)            → 목업 "행 선택은 실제 라디오" 그대로 단일선택. 초기 선택 = 1행(목업 `sel:1`).
-       ⚠ **선택은 표시 전용이다** — 읽기전용 모니터링 화면이라 전이·편집 액션이 하나도 없다.
-         그래서 툴바 좌는 항상 필터 칩이며 **selbar 를 만들지 않는다**: `apfs-stage-workflow` 의
-         "전이는 선택 후 컨텍스트 액션으로"(규약 1)·selbar 규약(4)은 액션이 없는 이 화면에 적용되지 않는다.
-         선택 SSOT 는 규약 9 그대로 React `selId` 이고 그리드가 따라간다(onGridReady·onRowDataUpdated 복원).
+   - 행 선택                    → **없다**(2026-09-23 사용자 지시로 제거). 읽기전용 모니터링 화면이라 전이·편집·삭제
+         액션이 하나도 없고, 선택이 만들 액션이 없으면 `rowSelection` 자체를 두지 않는 것이 규약이다
+         (→[[apfs-aggrid]] "조회 전용"·선례 `audit_log`·`permission_history`). 종전엔 목업의
+         "행 선택은 실제 라디오"를 따라 표시 전용 싱글 선택(초기 `sel:1`)을 뒀지만, 체크해도 아무 일이
+         일어나지 않아 그 자체가 UI 결함이었다. 상세 진입 경로도 원래 없다(더블클릭·우클릭 메뉴 미배선).
+         툴바 좌는 예전처럼 항상 필터 칩이다.
    - KPI 배지 행                → 미포함(`kpis` 미전달). 카드뷰·명세 팝업·등록/수정/삭제도 없음(읽기전용).
    - 엑셀                       → SheetJS(단일 헤더, 승인금액은 선택 단위 숫자 셀, 마스크 시 실값 비노출)
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
@@ -35,10 +36,9 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
-import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle, RowSelectionOptions, SelectionColumnDef } from 'ag-grid-community';
+import type { ColDef, GridApi, GridReadyEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
@@ -77,7 +77,6 @@ const DEMO: ReportUpdateRow[] = [
   { id: 'ru-4', gb: '정기', gp: '한국투자파트너스', fd: '한투 청년농식품투자조합', co: '애그리넷', stat: '부결', sdt: '2026-03-11', amt: 1_500_000_000, pdt: '-', ftype: '투자심의보고서', reg: '2026-03-11 11:18' },
 ];
 /* 초기 선택 행 — 목업 `sel:1`(1행). 선택 SSOT 는 React state 이고 그리드가 따라간다 */
-const INIT_SEL = 'ru-1';
 const PAGE_SIZE = 20;
 const TOTAL_ID = '__total';
 
@@ -189,15 +188,6 @@ const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
   dateCol('reg', '등록/변경일시', 156),
 ];
 
-/* 라디오 단일선택 — 목업 1열 '선택(라디오)'. 객체 prop 은 모듈 상수로 호이스팅(apfs-aggrid 계약 6).
-   `isRowSelectable` 은 belt-and-braces 다 — 선택 컨트롤은 이제 우리 렌더러(`aggrid_selection.tsx` SELECTION_COL)가 그리며
-   pinned·`selectable:false` 행엔 null 을 그리고, AG Grid 도 pinned 선택을 막지만(`isRowSelectionBlocked`), 합계행 비선택을
-   코드로 명시해 둔다(2026-09-18 갱신). */
-const ROW_SELECTION: RowSelectionOptions<ReportUpdateRow> = {
-  mode: 'singleRow', checkboxes: true, enableClickSelection: false,   // 행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22)
-  isRowSelectable: (n) => !n.rowPinned,
-};
-
 /* 엑셀 텍스트 컬럼(승인금액 제외) — 화면 컬럼과 1:1(화면=엑셀 불변식). 순서가 목업 헤더와 같다 */
 const EXCEL_TEXT: { header: string; get: (r: ReportUpdateRow) => string }[] = [
   { header: '구분', get: (r) => r.gb },
@@ -257,7 +247,6 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [unit, setUnit] = useState<Unit>('원');             // 금액 단위 — 목업 기본값 '원'
-  const [selId, setSelId] = useState<string | null>(INIT_SEL);   // 선택 SSOT(표시 전용). 초기=목업 sel:1
   const masked = useMask();
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
@@ -285,19 +274,8 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
   /* pinned 합계행 — 필터 결과에 따라 합계가 변하므로 useMemo 재계산(참조 안정 + stale 방지, apfs-aggrid 계약 4) */
   const pinnedBottom = useMemo(() => [computeTotal(filteredRows)], [filteredRows]);
 
-  /* 선택 SSOT=React state, 그리드는 따라간다(apfs-stage-workflow 규약 9).
-     ① onGridReady — 재마운트 복원 ② onRowDataUpdated — rowData 반영 후에야 노드가 생기는 경로
-        (초기 선택 'ru-1'·새로고침이 여기서 잡힌다). 둘 다 있어야 "state 는 선택, 라디오는 빈" 불일치가 없다. */
-  const selIdRef = useRef<string | null>(null); selIdRef.current = selId;
-  const onGridReady = useCallback((e: GridReadyEvent<ReportUpdateRow>) => {
-    apiRef.current = e.api;
-    const id = selIdRef.current; if (id) e.api.getRowNode(id)?.setSelected(true, true);
-  }, []);
-  const onSelectionChanged = useCallback((e: SelectionChangedEvent<ReportUpdateRow>) => { setSelId(e.api.getSelectedRows()[0]?.id ?? null); }, []);
-  const onRowDataUpdated = useCallback((e: { api: GridApi<ReportUpdateRow> }) => {
-    const id = selIdRef.current; if (!id) return;
-    const node = e.api.getRowNode(id); if (node && !node.isSelected()) node.setSelected(true, true);
-  }, []);
+  /* apiRef 는 선택이 아니라 **페이저·외부필터·단위 리프레시** 때문에 남는다(선택 제거와 무관) */
+  const onGridReady = useCallback((e: GridReadyEvent<ReportUpdateRow>) => { apiRef.current = e.api; }, []);
   /* 값 비교 가드 — 매 호출 새 객체 setState는 렌더 루프 유발(aggrid-onpaginationchanged-render-loop) */
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
@@ -305,7 +283,7 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
     setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
   }, []);
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); setSelId(INIT_SEL); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더 + 합계행. 승인금액은 **선택 단위로 환산한 숫자 셀**(t:'n' + z 서식)이라
        Excel 이 화면처럼 우측 정렬하고 합계도 계산된다. 마스크 ON이면 숫자 0·텍스트 ''(실값 비노출).
@@ -382,14 +360,10 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
           domLayout="autoHeight"
           autoSizeStrategy={AUTO_SIZE_CONTENT}   // 컬럼 폭=내용 폭(잘림 방지). 긴 텍스트 컬럼은 maxWidth 캡
           defaultColDef={DEFAULT_COL_DEF}
-          rowSelection={ROW_SELECTION}
-          selectionColumnDef={SELECTION_COL}
           pagination paginationPageSize={pageSize} suppressPaginationPanel
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}
           onGridReady={onGridReady}
-          onSelectionChanged={onSelectionChanged}
-          onRowDataUpdated={onRowDataUpdated}
           onPaginationChanged={onPaginationChanged}
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 보고 업데이트 건이 없습니다.</span>'}
         />
