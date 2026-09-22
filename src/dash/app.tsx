@@ -8,6 +8,8 @@ import { APFS_DATA, HistoryStore } from './data';
 import { DesignSystem } from './designsystem';
 import { Main } from './main';
 import { EarlyWarningManage } from './early_warning_manage';   // 조기경보 관리(관리형 리스트, S2_51). 구 risk_manage.tsx(FR-5.6 운영 콘솔)는 미라우팅
+import { ViolationManage } from './violation_manage';   // 법률/규약위반사항 관리(관리형 리스트, S2_53 + 등록화면 S2_54 를 팝업으로 흡수)
+import { ShareholderManage } from './shareholder_manage';   // 운용사 주주변동관리(관리형 리스트, S2_55 + 등록화면 S2_56 을 팝업으로 흡수)
 import { Schedule } from './schedule';
 import { SubFundManage } from './subfund_manage';   // 자펀드관리(관리형 리스트, 구조도 v1.4). 구 subfund.tsx(FR-5.3 대시보드)는 미라우팅
 import { Pages as ReportBucheoPages } from './report_bucheo';
@@ -228,6 +230,8 @@ function App() {
   else if (route === "투자기업정보(통합)") page = <InvesteeProfile onNav={onNav} />;
   else if (route === "투자실적 현황(투자기업)") page = <InvesteeInvestStats onNav={onNav} />;
   else if (route === "투자금 회수현황") page = <InvestRecoveryDetail onNav={onNav} />;
+  else if (route === "법률/규약위반사항 관리") page = <ViolationManage onNav={onNav} />;
+  else if (route === "운용사 주주변동관리") page = <ShareholderManage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;

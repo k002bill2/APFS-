@@ -28,6 +28,7 @@ import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(
 import { toast } from './ui/sonner';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { DatePicker } from './ui/date-picker';
+import { PeriodPicker } from './ui/period-picker';   // 월 선택 필터(kind:'month') — 값 'YYYY-MM'
 import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode, CellContextMenuEvent, CellKeyDownEvent, SuppressKeyboardEventParams } from 'ag-grid-community';
@@ -234,6 +235,9 @@ function DrawerFilterControl({ ff, value, onChange, onEnter }: { ff: FilterField
   } else if (ff.kind === "date") {
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(정확일치 필터 계약). DatePicker 트리거는 w-full이라 fit-content 래퍼로 폭 규칙 적용.
     control = <div style={{ width: "fit-content", minWidth: controlMinWidth("date"), maxWidth: "100%" }}><DatePicker value={value} onChange={onChange} ariaLabel={ff.label} /></div>;
+  } else if (ff.kind === "month") {
+    // 월선택 — PeriodPicker 월 그리드. 값은 'YYYY-MM' 문자열(정확일치 필터 계약 — rowMatchesFilters). 트리거가 w-full이라 date와 같은 fit-content 래퍼(minW=130).
+    control = <div style={{ width: "fit-content", minWidth: controlMinWidth("month"), maxWidth: "100%" }}><PeriodPicker mode="month" value={value} onChange={onChange} ariaLabel={ff.label} /></div>;
   } else if (ff.kind === "number") {
     control = <input type="number" value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} placeholder="값 입력" style={drawerInputStyle("number")} />;
   } else {
@@ -317,8 +321,8 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
 }
 
 /* 활성 필터(filterValues)로 행 1건의 통과 여부 판정.
-   값-필터(year/enum/date/number/text)는 모두 AND, 카테고리 태그끼리는 합집합(OR).
-   text/number는 부분일치(includes), 그 외(year/enum/date)는 정확일치. columnKey 미해결 필터는 무시(칩만). */
+   값-필터(year/month/enum/date/number/text)는 모두 AND, 카테고리 태그끼리는 합집합(OR).
+   text/number는 부분일치(includes), 그 외(year/month/enum/date)는 정확일치. columnKey 미해결 필터는 무시(칩만). */
 function rowMatchesFilters(row: Row, schema: PageSchema, filterValues: Record<string, string>): boolean {
   const active = Object.entries(filterValues).filter(([, v]) => v !== "");
   if (active.length === 0) return true;
