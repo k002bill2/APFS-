@@ -194,7 +194,7 @@ const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
    pinned·`selectable:false` 행엔 null 을 그리고, AG Grid 도 pinned 선택을 막지만(`isRowSelectionBlocked`), 합계행 비선택을
    코드로 명시해 둔다(2026-09-18 갱신). */
 const ROW_SELECTION: RowSelectionOptions<ReportUpdateRow> = {
-  mode: 'singleRow', checkboxes: true, enableClickSelection: true,
+  mode: 'singleRow', checkboxes: true, enableClickSelection: false,   // 행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22)
   isRowSelectable: (n) => !n.rowPinned,
 };
 

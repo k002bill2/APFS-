@@ -106,7 +106,7 @@ const makeColumns = (toggle: (id: string) => void): ColDef<MenuView>[] => [
     } },
   { field: 'use', headerName: '사용여부', width: 92, ...NOSORT, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} /> },
 ];
-const ROW_SELECTION: RowSelectionOptions<MenuView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
+const ROW_SELECTION: RowSelectionOptions<MenuView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };   // 행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22 사용자 결정, apfs-aggrid "체크박스" 절)
 
 type XCol = { header: string; get: (r: MenuView) => string | number };
 const EXPORT_COLS: XCol[] = [

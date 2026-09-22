@@ -77,9 +77,10 @@ const DETAIL_COLS: ColDef<CodeDetail>[] = [
   { field: 'by', headerName: '최종수정자', width: 100, maxWidth: 120, cellStyle: muted, cellRenderer: (p: any) => <MT>{p.value}</MT> },
   { field: 'at', headerName: '최종수정일시', width: 140, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => mn(p.value) },
 ];
-/* 좌 그리드: 클릭 선택만(선택 해제 없음 — 우측 데이터 소스가 사라지지 않게). 우 그리드: 일반 단일 선택 */
-const GROUP_SELECTION: RowSelectionOptions<GroupView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: 'enableSelection' };
-const DETAIL_SELECTION: RowSelectionOptions<CodeDetail> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
+/* 좌·우 모두 체크박스로만 선택(행 본문 클릭 선택 해제 — 2026-09-22 사용자 결정). 좌 그리드의 "해제 금지"는
+   enableClickSelection:'enableSelection' 이 아니라 onGroupSelection 의 queueMicrotask 복원이 담당한다(apfs-aggrid master-detail 절). */
+const GROUP_SELECTION: RowSelectionOptions<GroupView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };
+const DETAIL_SELECTION: RowSelectionOptions<CodeDetail> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };
 
 function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
   return (

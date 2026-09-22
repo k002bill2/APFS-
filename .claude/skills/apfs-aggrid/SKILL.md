@@ -1,6 +1,6 @@
 ---
 name: apfs-aggrid
-description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규약 — 공유 테마 apfsTheme, 2단 그룹헤더(ColGroupDef)·pinned 합계행·행 선택(단일/다중선택·클릭 누적선택 2옵션 한 벌)·외부필터(Community)·더블클릭 수정·Excel(SheetJS) 내보내기·셀 마스킹. 정본 예시는 "모태펀드 조성·출자 현황표"(asset_funding.tsx). AgGridReact·컬럼정의·pinned행·합계행·정렬·엑셀 내보내기·셀 렌더러 작업 시 사용(바깥 양식 골격은 apfs-grid). Use when building or editing the AgGridReact table body itself (columns, theme, pinned rows, sorting, excel export, cell rendering).
+description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규약 — 공유 테마 apfsTheme, 2단 그룹헤더(ColGroupDef)·pinned 합계행·행 선택(단일/다중선택 — 체크박스로만 on/off, 행 본문 클릭 선택 없음)·외부필터(Community)·더블클릭 수정·Excel(SheetJS) 내보내기·셀 마스킹. 정본 예시는 "모태펀드 조성·출자 현황표"(asset_funding.tsx). AgGridReact·컬럼정의·pinned행·합계행·정렬·엑셀 내보내기·셀 렌더러 작업 시 사용(바깥 양식 골격은 apfs-grid). Use when building or editing the AgGridReact table body itself (columns, theme, pinned rows, sorting, excel export, cell rendering).
 ---
 
 # apfs-aggrid Skill
@@ -92,7 +92,7 @@ const CONFIRM_HEADER: Record<Role, ReturnType<typeof reviewInnerHeader>> = {
   domLayout="autoHeight"
   autoSizeStrategy={AUTO_SIZE_CONTENT}       // ⑦ 공용 상수 (FIT_GRID_WIDTH도 동일 — 인라인 리터럴 금지)
   defaultColDef={DEFAULT_COL_DEF}            // ⑦ 공용 상수 (aggrid_theme.ts) — 인라인 `{{…}}` 금지
-  rowSelection={ROW_SELECTION}               // ⑦ 모듈 상수로 호이스팅 (multiRow면 클릭 누적선택 2옵션 한 벌 — "체크박스" 절)
+  rowSelection={ROW_SELECTION}               // ⑦ 모듈 상수로 호이스팅. 항상 `enableClickSelection:false` — 선택은 체크박스로만("체크박스" 절)
   pagination paginationPageSize={PAGE_SIZE} suppressPaginationPanel   // 페이저는 GridFrame 푸터에서 커스텀
   isExternalFilterPresent={isExternalFilterPresent}                   // 상세필터(Community)
   doesExternalFilterPass={doesExternalFilterPass}
@@ -106,7 +106,7 @@ const CONFIRM_HEADER: Record<Role, ReturnType<typeof reviewInnerHeader>> = {
 | 동작 | 방법 |
 |------|------|
 | 정렬 | `defaultColDef.sortable: true` (헤더 클릭) |
-| 행 선택→삭제(다건) | `rowSelection` multiRow + `enableClickSelection`·`enableSelectionWithoutKeys` **한 벌**, `api.getSelectedRows()`로 삭제 후 `deselectAll()`. 정본 `generic_list.tsx` |
+| 행 선택→삭제(다건) | `rowSelection` multiRow(`checkboxes:true`, `enableClickSelection:false` — 체크박스로만 고른다), `api.getSelectedRows()`로 삭제 후 `deselectAll()`. 정본 `generic_list.tsx` |
 | 페이지네이션 | `pagination`+`suppressPaginationPanel` 후 `paginationGoToPage` 등으로 GridFrame 푸터에 커스텀 페이저 |
 | 상세필터 | **External Filter**(Community): `isExternalFilterPresent`/`doesExternalFilterPass` + 값 변경 시 `apiRef.current?.onFilterChanged()`. 드로어 UI·필터칩은 →[[apfs-detail-filter]] |
 | 수정 진입 | `onRowDoubleClicked` → 스키마 모달(→[[apfs-form-modal]]) |
@@ -170,23 +170,26 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     - ✗ `autoSizeStrategy={fitGridWidth}`는 쓰지 말 것: `domLayout="autoHeight"`+지연 레이아웃에서 **생성 시점 폭에 1회만** 맞춰 빈 공간이 남는다(2026-09-11 asset_funding 실측 gap 455px). flex를 쓴다.
   - 검증: 잘린 셀 0 — `[...document.querySelectorAll('.ag-cell')].filter(c=>c.scrollWidth>c.clientWidth+1).length===0`. **빈 공간 0**은 `.ag-center-cols-container` 폭이 아니라(pinned 컬럼 제외돼 항상 pinned폭만큼 작게 나옴) **헤더셀 폭 합 ≈ `.ag-root-wrapper` 폭**으로 본다: `Math.abs([...document.querySelectorAll('.ag-header-cell')].reduce((s,h)=>s+h.getBoundingClientRect().width,0) - document.querySelector('.ag-root-wrapper').getBoundingClientRect().width) < 4`.
 - **행 높이는 테마 기본(42px)** — `rowHeight` 오버라이드 금지(골드와 간격 통일).
-- **체크박스는 "선택이 액션을 만들 때"만 만든다(기본값 아님).** 체크로 실행할 것이 있는 화면 — 다건 선택삭제, 단계 전이(→[[apfs-stage-workflow]]), 선택 행 편집 — 만 `checkboxes:true`. **조회 전용(감사·이력·집계)처럼 선택이 아무 것도 못 하는 화면은 `checkboxes:false`** 로 두고 `selectionColumnDef`도 **지운다**(체크박스가 꺼지면 선택 컬럼 자체가 생성되지 않아 죽은 설정이 된다). 선례: `risk_manage.tsx`.
-  - ⚠️ **`checkboxes:false` 로 체크박스 열을 지우면서 선택은 남기려면 `enableClickSelection:true` 를 반드시 같이 켠다.** AG Grid 기본값이 **false** 라 둘 다 없으면 선택을 만들 수단이 0이 되고, `selCount`/`selected` 가 영원히 비어 선택삭제·단계전이·플로팅 액션이 **조용히** 죽는다. "행 클릭으로 선택"은 기본 동작이 아니다. 실사고: `asset_funding.tsx` 가 `{mode:'multiRow', checkboxes:false}` 만 두고 주석엔 "행 클릭으로 선택 유지"라 적혀 있어 선택삭제 툴바 분기가 도달 불가로 방치됐다(2026-09-15 플로팅 바 확장 중 실측 발견 → `enableClickSelection:true` 로 복구, `rowSelection` 도 모듈 상수로 호이스팅).
-    **후일담(2026-09-17)**: 사용자가 "체크박스가 없는데 저 액션 필요없다"고 판정해 이 화면은 선택을 **통째로 걷어냈다** — `rowSelection`·`onSelectionChanged`·`selCount`·선택 툴바가 한 벌로 사라지고 조회전용 열(`audit_log`·`permission_history`)에 합류했다. 위 함정 자체는 여전히 유효하니 남겨 둔다.
-  - 화면에 액션이 있어도 **더블클릭·Enter·우클릭 메뉴로 이미 닿는 단일 액션(상세 보기 등)뿐**이라면 체크박스 값이 없다 — 만들지 않는다. "체크했는데 아무 일도 안 일어남"은 그 자체로 UI 결함이다.
-  - **다중선택(중복선택) 그리드는 클릭 누적선택을 켠다 — 두 옵션이 한 벌이다(2026-09-17 사용자 결정).**
-    `mode:'multiRow'` 로 갈 화면은 **반드시** 아래 두 개를 같이 준다. 체크박스 칸(폭 44px)을 정확히 겨냥하지 않고
-    행 본문 아무 데나 눌러도 체크되게 하는 것이 목적이다.
+- **체크박스는 "선택이 액션을 만들 때"만 만든다(기본값 아님).** 체크로 실행할 것이 있는 화면 — 다건 선택삭제, 단계 전이(→[[apfs-stage-workflow]]), 선택 행 편집 — 만 `checkboxes:true`. **조회 전용(감사·이력·집계)처럼 선택이 아무 것도 못 하는 화면은 `rowSelection` 자체를 두지 않는다**(아래 "조회 전용" 항목). `checkboxes:false` 로 체크박스만 끄고 선택을 남기는 중간 구성은 **없다** — 2026-09-22 부터 선택 수단이 체크박스뿐이라, 체크박스 없는 선택은 만들 수도 풀 수도 없는 죽은 선택이다(구 선례 `risk_manage.tsx` 는 같은 날 `rowSelection`·`onRowClicked`·write-only 였던 `selectedRow` state 를 한 벌로 걷어냈다).
+  - **선택은 체크박스로만 on/off 한다 — 행 본문 클릭은 선택을 만들지도 풀지도 않는다(2026-09-22 사용자 결정).**
+    모든 `rowSelection` 에 `enableClickSelection: false` 를 **명시**한다(AG Grid 기본값과 같지만, 아래 실사고처럼 "키 누락"이
+    "선택 수단 0" 사고로 오독된 이력이 있어 의도를 적는다). `enableSelectionWithoutKeys` 는 클릭 선택 전용 옵션이라 함께 뺀다.
+    singleRow(라디오)·multiRow 공통이고, `code_manage` 좌 그리드의 `'enableSelection'` 변형도 `false` 로 내렸다(해제 금지는
+    이미 `queueMicrotask` 복원이 담당 — "master-detail" 절). 행 본문 클릭에 남는 동작은 **포커스 이동뿐**이고, 더블클릭=수정 모달·
+    우클릭=컨텍스트 메뉴는 그대로다. 체크박스 셀의 `_stopPropagationForAgGrid` 가드(핵심 계약 8)는 click 쪽 실효가 없어졌지만
+    dblclick 쪽(체크박스 더블클릭 → 수정 모달 누수 방지)이 살아 있어 **둘 다 유지**한다.
     ```tsx
-    const ROW_SELECTION = { mode: 'multiRow', checkboxes: true, headerCheckbox: true,
-      enableClickSelection: true,        // 클릭을 선택 수단으로 연다(AG Grid 기본 false)
-      enableSelectionWithoutKeys: true,  // ⌘/Shift 없이도 **누적 토글** (구 rowMultiSelectWithClick)
-    } as const;
+    const ROW_SELECTION = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered',
+      enableClickSelection: false,       // 행 본문 클릭 선택 없음 — 체크박스로만 (2026-09-22)
+    } as const;                          // singleRow 도 동일: { mode:'singleRow', checkboxes:true, enableClickSelection:false }
     ```
-    ⚠️ **`enableClickSelection` 만 켜면 안 된다.** 그 상태의 클릭은 "기존 선택을 전부 버리고 이 행만"이라
-    체크박스로 고른 3건이 본문 클릭 한 번에 1건으로 **줄어든다**. `enableSelectionWithoutKeys` 가 그 클릭을
-    누적 토글로 바꾼다. 실측(2026-09-17, generic_list): 본문 클릭 1건 → 다른 행 클릭 2건 → 첫 행 재클릭 1건,
-    더블클릭 수정 모달은 그대로 열림(클릭 선택이 더블클릭을 가로채지 않는다).
+    - **역사(뒤집힌 결정들 — 다시 켜자는 제안이 오면 이 순서를 먼저 보일 것)**: 2026-09-15 `asset_funding.tsx` 가
+      `{mode:'multiRow', checkboxes:false}` 만 두고 주석엔 "행 클릭으로 선택 유지"라 적혀 있어 선택삭제 툴바가 도달 불가로 방치됐다
+      (`enableClickSelection` 기본 false) → 그 옵션을 켜 복구. 09-17 사용자가 "체크박스가 없는데 저 액션 필요없다"고 판정해
+      그 화면은 선택을 통째로 걷어냈고, 같은 날 multiRow 정본(`generic_list`)에는 "체크박스 칸 44px 을 겨냥하지 않아도 되게"
+      `enableClickSelection`+`enableSelectionWithoutKeys` 한 벌을 켰다(전자만 켜면 본문 클릭이 기존 체크를 전부 대체해 3건→1건).
+      **09-22 사용자가 이를 뒤집어 전 페이지 체크박스 전용으로 통일** — 본문 클릭이 선택을 바꾸는 것이 오히려 오조작이었다.
+  - 화면에 액션이 있어도 **더블클릭·Enter·우클릭 메뉴로 이미 닿는 단일 액션(상세 보기 등)뿐**이라면 체크박스 값이 없다 — 만들지 않는다. "체크했는데 아무 일도 안 일어남"은 그 자체로 UI 결함이다.
   - **단일선택이 필요한 화면은 multiRow 로 올리지 않는다.** 판별 기준은 하나 — **그 액션이 N건에 의미가 있나.**
     - `singleRow` 유지: 단계 전이(→[[apfs-stage-workflow]] — 승인/반려는 한 건씩), master-detail 라디오
       (→ 아래 절 — 좌측 1건이 우측 내용을 정한다), 선택 행 **수정**(모달은 한 건만 연다).
@@ -194,9 +197,9 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     - `multiRow`: **선택 삭제처럼 N건에 그대로 적용되는 액션**이 있는 화면. 현행 정본은 `generic_list.tsx` 하나다.
   - **수정 버튼은 단건 체크일 때만**(`editable && selCount === 1`). 다건 선택에 수정 모달은 의미가 없다 —
     다건이면 `선택 삭제`·`선택 해제`만 남는다(정본: `generic_list.tsx` `selActions`).
-  - **조회 전용 화면은 `rowSelection` 자체를 두지 않는다**(2026-09-15 사용자 지시 — 체크박스만 끄는 것보다 한 단계 더). 선택이 만들 액션이 없으면 `mode:'singleRow', enableClickSelection:true`도 지운다: 함께 `onSelectionChanged`·선택 state(`selId`)·`selected`·툴바의 `선택 해제` 버튼/선택 배지 분기·`refresh()`의 `deselectAll()`·`apiRef`(다른 용도가 없으면)까지 **한 벌로 사라진다**. `refreshNoColumn`은 자기 이벤트의 `e.api`를 쓰므로 `apiRef`에 의존하지 않는다. 상세 진입은 **더블클릭 / Enter / 우클릭 메뉴** 3경로로 이미 충분하고, 회색 행 강조가 없어지는 것이 "선택 기능 없음"과 일치한다. 선례: `audit_log.tsx`·`permission_history.tsx`.
+  - **조회 전용 화면은 `rowSelection` 자체를 두지 않는다**(2026-09-15 사용자 지시 — 체크박스만 끄는 것보다 한 단계 더). 선택이 만들 액션이 없으면 `rowSelection` prop 을 통째로 지운다(`checkboxes:false` 로 남기지 않는다): 함께 `onSelectionChanged`·선택 state(`selId`)·`selected`·툴바의 `선택 해제` 버튼/선택 배지 분기·`refresh()`의 `deselectAll()`·`apiRef`(다른 용도가 없으면)까지 **한 벌로 사라진다**. `refreshNoColumn`은 자기 이벤트의 `e.api`를 쓰므로 `apiRef`에 의존하지 않는다. 상세 진입은 **더블클릭 / Enter / 우클릭 메뉴** 3경로로 이미 충분하고, 회색 행 강조가 없어지는 것이 "선택 기능 없음"과 일치한다. 선례: `audit_log.tsx`·`permission_history.tsx`.
   - 스키마 주도(`generic_list.tsx`) 페이지는 이 규약을 `schema.hideRowSelection: true` 로 표현한다(→[[apfs-grid]]) — bespoke 페이지만 `rowSelection`을 직접 만진다.
-- **라디오 단일선택(체크박스가 필요한 경우)**: `rowSelection={{mode:'singleRow',checkboxes:true,enableClickSelection:true}}` + `selectionColumnDef={SELECTION_COL}`(`aggrid_selection.tsx`, 핵심 규약 8) + `getRowId`. 선택 SSOT는 React state(→[[apfs-stage-workflow]] 규약 9).
+- **라디오 단일선택(체크박스가 필요한 경우)**: 모듈 상수 `ROW_SELECTION = {mode:'singleRow',checkboxes:true,enableClickSelection:false}` + `selectionColumnDef={SELECTION_COL}`(`aggrid_selection.tsx`, 핵심 규약 8) + `getRowId`. 선택 SSOT는 React state(→[[apfs-stage-workflow]] 규약 9).
 - **단계/상태 배지 셀**: `StatusBadge size="lg" dot={false}`(13px, 앞 점 없음 — 배지가 촘촘히 반복되는 열).
 - **엑셀**: 2단 헤더 병합·리프 키를 손으로 적지 말고 `flattenForExcel(columnDefs)`(골드 로컬 헬퍼, `ColGroupDef` 순회 → `head1/head2/keys/merges`)로 **columnDefs에서 자동 산출**. 마스크 시 숫자 0·텍스트 ''.
 - 읽기전용 명세는 [[apfs-spec-popup]]. (카드뷰 토글 규약은 2026-09-11 폐기 — 리스트 뷰 단일 표현.)
@@ -233,6 +236,10 @@ const onGroupSelection = useCallback((e: SelectionChangedEvent<Row>) => {
 ## 검증
 - `npm run build`(exit 0) + `npm test`(스키마 zod 26개 green) + 기존 그리드(generic_list 등) 무변경 회귀.
 - 브라우저: 라이트/다크 + 1280/768/400px — 빈 그리드 아님, 합계행 보임, 회색 행선택(틴트는 `.ag-row-selected::before` 오버레이에서 확인), 가로 오버플로 없음(→[[responsive-ui]] 프로토콜).
+- **행 선택(체크박스 전용) 회귀 5종**(2026-09-22 실측, aside repl): ① 본문 클릭 → 선택 0 유지 ② 체크박스 클릭 → 1, 다시 → 0 ③ multiRow 3건 체크 후 본문 클릭 → 3 유지 ④ 본문 더블클릭 → 수정 모달 열림 / 체크박스 더블클릭 → 모달 **안** 열림·선택 원복 ⑤ master 라디오(`code_manage`)의 체크된 행을 다시 눌러도 선택 복원, 본문 클릭은 무반응.
+  - 키보드: 포커스된 본문 셀에서 **Space 는 여전히 선택을 토글**한다 — AG Grid 는 `source==='rowClicked'` 만 `enableClickSelection` 으로 막고 `spaceKey` 는 통과시킨다(`inferNodeSelections`). 접근성 경로 그대로.
+  - ⚠️ 자동화 함정: aside/Playwright `keyboard.press(' ')`·`type(' ')` 는 `key:""`·`code:"Space"` 로 도착해 AG Grid(`event.key===' '`)가 무시한다 → **오탐 0건**. 키보드 검증은 `activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:' ',code:'Space',bubbles:true}))` 로. 체크박스 클릭도 aside `locator.click()` 은 "checked 가 안 바뀌면 throw"(라디오 복원 케이스에서 터진다) → `page.mouse.click(중심좌표)` 로.
+  - 선택 건수는 `new Set(row-id)` 로 센다(아래 "DOM 으로 세지 말 것"). `page.goto` 로 같은 해시 URL 재진입은 리로드가 아니라 열려 있던 모달이 남는다 — 케이스 사이에 Escape 를 넣는다.
 
 ## 참조
 - 바깥 양식(GridFrame): [[apfs-grid]] — `import { GridFrame, KpiBadge } from './grid_frame';`. props: `crumbs·title·cardTitle·kpis·toolbarLeft/Right·footerLeft/Center/Right`(toolbar/pager prop을 발명하지 말 것).

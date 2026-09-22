@@ -93,7 +93,7 @@ const columnDefs: ColDef<PermRow>[] = [
     valueFormatter: (p) => mn(String(p.value)) },
 ];
 /* 라디오 단일선택 — 모듈 상수(인라인 리터럴은 렌더마다 컬럼 재생성 → 폭 되돌림, apfs-aggrid ⑦) */
-const ROW_SELECTION: RowSelectionOptions<PermRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: true };
+const ROW_SELECTION: RowSelectionOptions<PermRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };   // 행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22 사용자 결정, apfs-aggrid "체크박스" 절)
 
 type XCol = { header: string; get: (r: PermRow) => string | number };
 const EXPORT_COLS: XCol[] = [

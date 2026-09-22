@@ -118,7 +118,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - 표현 전용 플래그 4종은 서로 독립: `hideKpis`(헤더 KPI 슬롯) · `hideMetrics`(금액 개념 전체) · `hideCardView`(푸터 뷰 토글) · `hideRowSelection`(행 선택 체크박스 컬럼).
 - **행 선택 체크박스 제거** — 다건 선택/선택삭제가 없는 조회 전용 화면은 `schema.hideRowSelection: true`(현행 예시 `schemas/전체_투자실적.ts`).
   ⚠️ 이 절이 오래 인용해 온 "2026-09-12 자펀드 공고 정보관리" 사례는 **2026-09-17 사용자 결정으로 뒤집혔다** — 그 화면은 체크박스를 되살리고 툴바에서 수정·삭제를 실행한다. 단건 CRUD라는 이유만으로 선택을 끄지 않는다는 뜻이고, 판별 기준은 [[apfs-aggrid]] "체크박스" 절(=선택이 액션을 만드는가)이다.
-  다중선택(중복선택) 그리드의 클릭 누적선택 규약(`enableClickSelection`+`enableSelectionWithoutKeys` 한 벌)도 → [[apfs-aggrid]]. `generic_list.tsx`가 `rowSelection` prop 자체를 `undefined`로 넘겨 **선택 컬럼이 생성되지 않는다**(체크만 푸는 게 아니다). 선택이 없어지면 툴바의 `선택 삭제`/`선택 해제` 분기(`selCount > 0`)도 자동으로 도달 불가가 된다 — 수정은 행 더블클릭·Enter, 삭제는 우클릭 메뉴가 대체 경로다. ⚠️ `rowSelection` 객체는 **모듈 상수**여야 한다([[apfs-aggrid]] ⑦ — 인라인 리터럴은 렌더마다 컬럼 재생성 → 폭 되돌림).
+  선택은 **체크박스로만** on/off 한다 — 행 본문 클릭 선택은 전 페이지에서 해제됐다(2026-09-22 사용자 결정, 09-17 의 클릭 누적선택 규약을 뒤집음. 규약·역사는 → [[apfs-aggrid]] "체크박스" 절). `generic_list.tsx`가 `rowSelection` prop 자체를 `undefined`로 넘겨 **선택 컬럼이 생성되지 않는다**(체크만 푸는 게 아니다). 선택이 없어지면 툴바의 `선택 삭제`/`선택 해제` 분기(`selCount > 0`)도 자동으로 도달 불가가 된다 — 수정은 행 더블클릭·Enter, 삭제는 우클릭 메뉴가 대체 경로다. ⚠️ `rowSelection` 객체는 **모듈 상수**여야 한다([[apfs-aggrid]] ⑦ — 인라인 리터럴은 렌더마다 컬럼 재생성 → 폭 되돌림).
 - **상태별 건수는 툴바 요약 문장이 아니라 필터 칩 안에.** `UI.FilterChip`의 `count` prop(라벨 뒤 11.5px 볼드 `tabular-nums`, **색은 칩 라벨과 동일 — 별도 `opacity`를 주지 않는다**)에 건수를 넘긴다 — 칩 = "이 상태를 몇 건 보게 되는지"를 누르기 전에 보여주는 곳이고, 툴바 우측 요약은 **총 건수 한 줄**(`기간 내 … N건`, `aria-live="polite"`)만 남긴다(2026-09-15 사용자 지시, `permission_history.tsx`·`audit_log.tsx`).
   - ⚠️ **건수는 facet count로 센다** — 그 칩이 거는 필터**만 빼고** 나머지 필터를 적용한 모집단 기준. 화면에 이미 있는 `visible`(전 필터 적용)로 세면 칩 하나를 누른 순간 나머지 칩이 전부 `0`이 돼 비교 기능이 죽는다. 별도 `facet` memo를 하나 더 둔다(`전체` 칩 = `facet.length`).
   - 건수는 행 데이터라 **`mn()` 경유**(마스크 ON에서 함께 가려짐). 칩 라벨은 축이므로 비마스킹.
@@ -183,6 +183,7 @@ const selActions = selected ? (            // 또는 selCount > 0 ?
   **모듈 상수로 호이스팅**했다 — 선택이 살아나면 선택마다 리렌더가 나므로 인라인 리터럴은 컬럼 폭을 되돌린다
   (→[[apfs-aggrid]] ⑦). **교훈: `checkboxes:false` 로 체크박스 열을 지울 때 `enableClickSelection:true` 를 같이
   켜지 않으면 선택 수단이 0이 된다** — "행 클릭으로 선택"은 기본 동작이 아니다.
+  ⚠️ 이 교훈은 2026-09-22 부터 **역사로만 유효**하다 — 행 본문 클릭 선택이 전 페이지에서 해제돼 `checkboxes:false`+선택 구성 자체가 없어졌다(선택이 필요하면 체크박스, 아니면 `rowSelection` 제거. →[[apfs-aggrid]]).
   **후일담(2026-09-17)**: `asset_funding` 은 결국 선택을 통째로 걷어냈다(체크박스 없는 화면의 선택 툴바는 군더더기 —
   사용자 판정). 이 화면은 더 이상 `contextActions` 소비처가 아니다.
 
