@@ -95,3 +95,18 @@
         본문 셀과 규칙을 따로 둔다. 둘 다 색만 투명으로 만들고 폭은 유지한다(레이아웃 불변). */
 .ag-cell.ag-column-last { border-right-color: transparent; }
 .ag-header-cell.ag-column-last::after { border-right-color: transparent; }
+
+/* ── autoHeight 그리드의 최소 본문 높이 축소 (opt-in: .apfs-grid-min) ──
+   증상: 행이 1~2개뿐인 autoHeight 그리드 아래에 100px 넘는 빈 공간이 남는다
+        (운용사별 조기경보 조회는 그리드 4장 × 1행이라 합계 400px 이상이 죽은 여백이었다).
+   원인: AG Grid 자체 구조 CSS `.ag-layout-auto-height & .ag-center-cols-viewport { min-height: 150px }`.
+        "행이 0이어도 no-rows 오버레이가 들어갈 자리를 남긴다"는 의도라 행이 많은 그리드에선 보이지 않는다.
+   수정: **이 클래스를 단 그리드에서만** 48px 로 낮춘다. 0 으로 지우면 안 된다 — 필터로 0행이 되면
+        본문 높이가 0 으로 붕괴해 no-rows/no-matching-rows 오버레이가 사라진다.
+   왜 48px 인가(2026-09-21 실측): 오버레이 텍스트 16px · 행 높이 42px 둘 다를 6px 여유로 담는다.
+        44px 도 동작하지만 폰트 메트릭이 조금만 달라져도 잘린다.
+   왜 !important: AG Grid v33+ 가 구조 CSS 를 그리드 마운트 시점에 <style>로 주입해 번들 CSS보다 뒤에 온다.
+   ⚠️ opt-in 이라 클래스를 달지 않은 기존 그리드는 동작이 전혀 바뀌지 않는다. */
+.apfs-grid-min .ag-layout-auto-height .ag-center-cols-viewport {
+  min-height: 48px !important;
+}
