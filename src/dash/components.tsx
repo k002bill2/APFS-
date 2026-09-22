@@ -16,7 +16,7 @@ const { Sparkline } = Charts;
 const cx = (...a: any[]) => a.filter(Boolean).join(" ");
 
 /* 공유 타입 — 다른 모듈은 `import type { Tone, Size } from './components'` */
-export type Tone = "primary" | "success" | "warning" | "danger" | "info" | "cyan";
+export type Tone = "primary" | "success" | "warning" | "danger" | "info" | "cyan" | "muted";
 export type Size = "sm" | "md" | "lg";
 type ToneLike = Tone | string;
 
@@ -27,6 +27,7 @@ const toneVar = (t?: ToneLike): string[] => ({
   danger:  ["var(--danger-text)", "var(--danger-soft)"],
   info:    ["var(--info-text)", "var(--info-soft)"],
   cyan:    ["var(--cyan)", "color-mix(in srgb,var(--cyan) 14%,transparent)"],
+  muted:   ["var(--muted-foreground)", "var(--muted)"],   /* 중립(비활성·대상아님·N) — 경보 아님. 라이트 5.0:1 / 다크 6.1:1 (AA) */
 }[t] || ["var(--primary)", "color-mix(in srgb,var(--primary) 12%,transparent)"]);
 
 /* ---- ColorChip ---- */

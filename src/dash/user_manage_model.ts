@@ -45,8 +45,8 @@ export const belong = (u: Pick<UserRow, 'type'>): string => (u.type === '농금�
 export const belongName = (u: Pick<UserRow, 'org' | 'account' | 'dept'>): string =>
   u.org ? orgName(u.org) : u.account ? `${u.account} 계정` : (u.dept || '-');
 
-export type StatusTone = 'success' | 'warning' | 'danger' | 'info' | 'primary';
-export const STATUS_TONE: Readonly<Record<UserStatus, StatusTone>> = Object.freeze({ '활성': 'success', '온보딩대기': 'warning', '잠금': 'danger', '비활성': 'info' });
+export type StatusTone = 'success' | 'warning' | 'danger' | 'info' | 'primary' | 'muted';
+export const STATUS_TONE: Readonly<Record<UserStatus, StatusTone>> = Object.freeze({ '활성': 'success', '온보딩대기': 'warning', '잠금': 'danger', '비활성': 'muted' });
 
 /* 행 선택 게이팅(목업 gate) — 상태·구분에 따라 열리는 액션 */
 export interface UserGate { edit: boolean; mail: boolean; replace: boolean; unlock: boolean; expire: boolean; otp: boolean }
