@@ -87,7 +87,7 @@ export function Cell({ col, value, color, statusDomain, unit }: { col: ColumnSpe
    RowFormModal(SchemaField)·상세필터 드로어(asset_funding inputStyle·generic_list drawerInputStyle)가 모두 import해 숫자 복붙을 없앤다.
    date=짧은 고정포맷(YYYY-MM-DD) 120 · select/enum/year=이름만이면 fit-content로 더 좁아짐 130 · number=금액 자릿수 180 · text/기본=이름/명칭 길게 240. */
 export function controlMinWidth(kind?: string): number {
-  return kind === 'date' ? 120 : (kind === 'select' || kind === 'enum' || kind === 'year') ? 130 : kind === 'number' ? 180 : 240;
+  return kind === 'date' ? 120 : (kind === 'select' || kind === 'enum' || kind === 'year' || kind === 'month') ? 130 : kind === 'number' ? 180 : 240;
 }
 
 /* 폼 컨트롤 박스 규격(높이 34px) — 등록/수정 모달(SchemaField base)과 상세필터 드로어가 **공유하는 SSOT**.
@@ -206,7 +206,7 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
   //   글로우만 danger 색으로 맞춘다(정상 필드·이미 채운 필수는 --ring 테두리+글로우).
   const fs = controlFocusStyle(focused, !!invalid || requiredEmpty);
   switch (field.control) {
-    case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical', ...fs }} />;
+    case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} placeholder={field.placeholder} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical', ...fs }} />;
     // select: native 화살표는 Chrome UA가 오른쪽 경계에 고정해 padding으로 못 움직임 → appearance:none로 제거하고 lucide chevron을 오버레이(토큰색·다크대응).
     //   아이콘은 pointer-events:none라 클릭이 select로 통과. 오른쪽 간격 = 아이콘 right(12px). paddingRight 34는 옵션 텍스트가 chevron과 겹치지 않게 확보.
     case 'select':   return (
@@ -215,13 +215,16 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
         <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--muted-foreground)' }} />
       </div>
     );
-    case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...fs }} />;
+    case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...fs }} />;
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(네이티브 input과 동일 계약).
     // DatePicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW=120)을 적용
     case 'date':     return <div style={{ width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%' }}><DatePicker value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
     // 연도선택 — PeriodPicker 연도 그리드(네이티브 select·숫자 input 나열 금지, →[[apfs-datepicker]]).
     // 값은 'YYYY' 문자열(사업연도·회계연도). 트리거가 w-full이라 date와 같은 fit-content 래퍼(minW=130)를 쓴다.
     case 'year':     return <div style={{ width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%' }}><PeriodPicker mode="year" value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
+    // 월선택 — PeriodPicker 월 그리드. 값은 'YYYY-MM' 문자열(기준년월·등록년월). year 와 동일한 fit-content 래퍼(minW=130).
+    // field.placeholder 는 넘기지 않는다 — 위 date/year 와 같은 기존 패턴이다(픽커 트리거는 자체 기본 문구를 쓴다).
+    case 'month':    return <div style={{ width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%' }}><PeriodPicker mode="month" value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
     // 독립 체크값('true'/'false' 계약) — 가시 라벨은 모달이 위에 렌더하므로 여기선 접근名만 aria-label 로 준다.
     // ⚠ 신규 스키마는 이 토큰 대신 `control:'switch' + options`를 쓴다(현재 사용처 0). 이유:
     //   ① 값 계약이 'true'/'false' 라 형제 Y/N 필드와 나란히 두면 똑같아 보이는데 저장 형태만 다르다,
@@ -290,6 +293,6 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
       </React.Suspense>
     );
     case 'readonly': return <div title={value || undefined} style={{ ...base, background: 'var(--muted)', color: 'var(--muted-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value || '—'}</div>;
-    default:         return <input value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...fs }} />;
+    default:         return <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...fs }} />;
   }
 }

@@ -5,9 +5,12 @@ export const CELL_TYPES = ['text','code','pii','amount','rate','date','status','
 export type CellType = typeof CELL_TYPES[number];
 
 // 'year' = 연도 선택(PeriodPicker mode='year'). 값 계약은 'YYYY' 문자열 — 'date'(=YYYY-MM-DD)와 다른 축이다.
+// 'month' = 월 선택(PeriodPicker mode='month'). 값 계약은 'YYYY-MM' 문자열 — 기준년월·등록년월처럼
+//   원문이 월 단위인 필드용(2026-09-22 추가). 'date'로 두면 일자까지 강요해 행의 'YYYY-MM' 컬럼과 어긋나고,
+//   'text'로 두면 달력 없이 손입력이 된다. 드로어 쪽 월 선택(early_warning_manage)과 같은 PeriodPicker를 쓴다.
 // 'address' = 우편번호 검색 + 주소 입력(fields/AddressField). 값 계약은 단일 문자열 '(12345) 서울특별시 …'
 //   — 파싱/직렬화 SSOT는 fields/address_value.ts. 별도 상세주소 필드를 두지 않고 본문 뒤에 이어 쓴다.
-export const FIELD_CONTROLS = ['text','number','select','date','year','textarea','file','checkbox','switch','readonly','radio','richtext','filepond','tags','address'] as const;
+export const FIELD_CONTROLS = ['text','number','select','date','year','month','textarea','file','checkbox','switch','readonly','radio','richtext','filepond','tags','address'] as const;
 export type FieldControl = typeof FIELD_CONTROLS[number];
 
 export const TONE_VALUES = ['primary','success','warning','danger','info','cyan'] as const;
@@ -45,7 +48,9 @@ export interface ColumnSpec { key: string; label: string; type: CellType; unit?:
 export interface ReviewNoteSpec { rec: string; dat: string; }
 // long: 긴 텍스트 필드(설명·비고·운용사명·펀드명·주소 등) 표식 — 모달에서 2단 전체 폭(sm:col-span-2) +
 //   컨트롤 width:100%(fit-content 240px 하한 해제)로 렌더한다. 짧은 코드/일자 필드와 구분하는 유일한 SSOT.
-export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; long?: boolean; note?: ReviewNoteSpec; }
+// placeholder: 비어 있을 때 입력칸에 보이는 힌트(text/number/textarea 에만 적용 — 나머지 컨트롤은 무시).
+//   목업 원문이 placeholder 를 지정한 필드를 그대로 옮길 때 쓴다(2026-09-22 추가). 미지정이면 종전과 동일.
+export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; long?: boolean; placeholder?: string; note?: ReviewNoteSpec; }
 export interface KpiSpec { key: string; label: string; icon: string; color: string; from: 'sum'|'avg'|'rate'; column: string; }
 // 건수형 KPI — 금액 집계가 아닌 행 카운트. column+value 있으면 그 값과 일치하는 행 수, 없으면 전체 건수.
 export interface CountKpiSpec { label: string; icon: string; color: string; column?: string; value?: string; }
@@ -104,6 +109,7 @@ const ColumnZ = z.object({
 const FieldZ = z.object({
   key: z.string(), label: z.string(), control: z.enum(FIELD_CONTROLS),
   required: z.boolean().optional(), options: z.array(z.string()).optional(), pii: z.boolean().optional(), long: z.boolean().optional(),
+  placeholder: z.string().optional(),
   note: z.object({ rec: z.string(), dat: z.string() }).optional(),
 });
 const KpiZ = z.object({ key: z.string(), label: z.string(), icon: z.string(), color: z.string(), from: z.enum(['sum','avg','rate']), column: z.string() });

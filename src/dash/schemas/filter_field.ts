@@ -3,7 +3,7 @@
    상세 필터 드로어의 컨트롤(year/enum/date/number/text/tag)과 행 필터 키를 결정한다. */
 import type { PageSchema } from './types';
 
-export type FilterKind = 'year' | 'enum' | 'date' | 'number' | 'text' | 'tag';
+export type FilterKind = 'year' | 'month' | 'enum' | 'date' | 'number' | 'text' | 'tag';
 
 export interface FilterField {
   label: string;        // 필터 라벨 (== schema.filters 항목)
@@ -40,6 +40,10 @@ export function resolveFilterField(label: string, schema: PageSchema): FilterFie
       return opts.length ? { label, kind: 'enum', options: opts, columnKey: key } : { label, kind: 'text', options: [], columnKey: key };
     }
     if (field.control === 'date') return { label, kind: 'date', options: [], columnKey: key };
+    /* 월 선택(값 'YYYY-MM') — date 와 같이 **선언된 control 이 라벨 휴리스틱을 이긴다**.
+       이 분기가 없으면 라벨에 '년도/연도'가 없는 월 필드(예: '기준년월')가 isYearLabel 도 못 넘어
+       자유 텍스트로 조용히 격하된다(FIELD_CONTROLS 에 'month' 를 추가하며 남은 구멍, 2026-09-22). */
+    if (field.control === 'month') return { label, kind: 'month', options: [], columnKey: key };
     if (isYearLabel(label)) return year(label, key);
     if (field.control === 'number') return { label, kind: 'number', options: [], columnKey: key };
     return { label, kind: 'text', options: [], columnKey: key };

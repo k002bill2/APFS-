@@ -57,6 +57,14 @@ describe('resolveFilterField — 필터 라벨 → 컨트롤 타입 도출', () 
     expect(resolveFilterField('주소', withAddr).kind).toBe('text');
   });
 
+  it("month 컨트롤 → month 필터 (년도 라벨 휴리스틱이 없어도 텍스트로 격하되지 않는다)", () => {
+    // '기준년월'에는 '년도/연도'가 없어 isYearLabel을 못 넘긴다 — control:'month' 분기가 없으면 자유 텍스트로 격하됐다.
+    const withMonth = { ...gongo, fields: [{ key: 'baseYm', label: '기준년월', control: 'month' as const }] };
+    const ff = resolveFilterField('기준년월', withMonth);
+    expect(ff.kind).toBe('month');
+    expect(ff.options).toEqual([]);
+  });
+
   it('빈 옵션 select 필드 → text 격하 (빈 <select> 금지)', () => {
     const emptySelect = { ...gongo, fields: [{ key: 'x', label: '빈셀렉트', control: 'select' as const, options: [] }] };
     expect(resolveFilterField('빈셀렉트', emptySelect).kind).toBe('text');
