@@ -20,7 +20,8 @@
    - 목업 [엑셀] → 툴바가 아니라 푸터 `FooterActions` 내보내기 + `⌥D`(apfs-grid 푸터 골드 양식).
    - 목록 그리드 → AG Grid **단일 헤더 8컬럼**(목업 thead 순서 그대로). **2단 그룹헤더 없음**,
      **합계행 없음**(전 컬럼이 문자/날짜라 가산 개념이 없다 → pinnedBottomRowData 자체를 두지 않는다).
-   - `구분` 셀 → `StatusBadge size="lg" dot={false}`. 등록=info · 해제=success(형제 화면과 동일 매핑).
+   - `구분` 셀 → `StatusBadge size="lg" dot={false}`. 등록=info · 해제=muted(형제 화면과 동일 매핑,
+     2026-09-22 사용자 결정 — 중립은 `muted`).
      목업 `변동구분`도 태그(`tag a`)로 칠하지만 배지 컬럼은 `구분` 하나뿐이다 — 평문 텍스트로 렌더한다.
    - KPI 배지 행 → **미포함**(사용자 결정) → `kpis` prop 을 아예 넘기지 않는다.
    - ⚠검토필요 마커 → **구현하지 않는다**(사용자 결정 · ReviewMarker 를 import 하지 않는다).
@@ -67,7 +68,7 @@ const SEARCHABLE = false;
 ────────────────────────────── */
 /** 그리드 `구분` — 목업 `g`. 주주변동 등록 상태 ↔ 해제 상태. */
 export type ShareholderKind = '등록' | '해제';
-const KIND_TONE: Record<ShareholderKind, Tone> = { 등록: 'info', 해제: 'success' };
+const KIND_TONE: Record<ShareholderKind, Tone> = { 등록: 'info', 해제: 'muted' };
 
 export interface ShareholderRow {
   id: string; no: number;
