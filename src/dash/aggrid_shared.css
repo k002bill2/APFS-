@@ -77,3 +77,21 @@
   /* MT와 동일 펄스(.28↔.12). reduced-motion은 tokens.css 전역 규칙이 무력화. */
   animation: apfs-mask-pulse 2s cubic-bezier(.4,0,.6,1) infinite;
 }
+
+/* ── 표의 바깥 가장자리는 선 없이 "열어 둔다"(2026-09-22 사용자 지시) ──
+   규약: 맨 왼쪽 컬럼에 왼쪽 선이 없듯, 맨 오른쪽 컬럼에도 오른쪽 선이 없어야 한다.
+        세로선은 컬럼 **사이**를 가르는 것이지 표를 감싸는 테두리가 아니다(테두리는 카드가 소유).
+
+   증상: 컬럼 폭 합이 프레임을 넘어 **가로 스크롤이 생기는 그리드**에서만, 끝까지 스크롤하면
+        마지막 컬럼 오른쪽에 선이 남아 표가 닫힌 것처럼 보였다(2026-09-22 실측: 법률/규약위반사항
+        관리 = 선 있음 / 폭을 채우는 주주변동·자펀드공고 = 선 없음). 좌우 비대칭이라 더 눈에 띈다.
+
+   왜 `:last-child` 가 아니라 `.ag-column-last` 인가: **컬럼 가상화** 때문에 DOM 의 마지막 셀은
+        스크롤 위치에 따라 바뀌는 "지금 그려진 것 중 마지막"이다. 중간까지 스크롤한 상태에서
+        `:last-child` 를 지우면 표 한가운데 선이 사라진다. `.ag-column-last` 는 AG Grid 가
+        **진짜 마지막 컬럼**에만 붙이므로 가상화와 무관하게 안전하다(헤더·본문 셀 양쪽에 붙는다).
+
+   헤더는 `border-right` 가 아니라 `::after` 바로 선을 그린다(`--ag-header-column-border`) — 그래서
+        본문 셀과 규칙을 따로 둔다. 둘 다 색만 투명으로 만들고 폭은 유지한다(레이아웃 불변). */
+.ag-cell.ag-column-last { border-right-color: transparent; }
+.ag-header-cell.ag-column-last::after { border-right-color: transparent; }
