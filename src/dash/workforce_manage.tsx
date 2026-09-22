@@ -185,13 +185,15 @@ const EXPORT_COLS: XCol[] = [
 ];
 
 /* 행 선택 — 해제등록이 N건에 그대로 적용되는 액션이라 multiRow(apfs-aggrid "체크박스" 절 · 목업 `chk-all`).
-   multiRow 는 클릭 누적선택 2옵션이 한 벌이다: enableClickSelection 만 켜면 본문 클릭이 기존 선택을 버리고,
-   둘 다 없으면 셀 클릭으로는 **선택 자체가 안 된다**(AG Grid 기본 false).
+   선택은 **체크박스로만** on/off 한다(2026-09-22 사용자 결정, #230 — 09-17 의 "행 본문 클릭 누적선택" 을 뒤집음).
+   행 본문 클릭은 선택을 만들지도 풀지도 않는다(`enableClickSelection:false` 명시 — AG Grid 기본값과 같지만
+   과거 이 키 누락이 "선택 수단 0" 사고로 오독된 이력이 있어 의도를 적어 둔다). 더블클릭=수정 모달, 우클릭=컨텍스트 메뉴는 그대로.
+   `enableSelectionWithoutKeys` 는 클릭 선택 전용 옵션이라 같이 뺀다(체크박스 클릭은 원래 누적 토글).
    헤더 전체선택은 SELECTION_COL 의 DS 헤더가 그리므로 내장 SelectAllFeature 는 끄고(headerCheckbox:false)
    범위를 'filtered' 로 못 박아 DS 헤더와 일치시킨다. 모듈 상수(렌더마다 새 객체면 컬럼 폭이 되돌아간다). */
 const ROW_SELECTION = {
   mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered',
-  enableClickSelection: true, enableSelectionWithoutKeys: true,
+  enableClickSelection: false,       // 행 본문 클릭 선택 없음 — 체크박스로만 (2026-09-22)
 } as const;
 
 /* ⚠ `overlayNoRowsTemplate` 은 **rowData 자체가 빈** 경우에만 쓰인다. 필터로 0행이 되면 AG Grid 가
