@@ -246,6 +246,13 @@ input::-webkit-credentials-auto-fill-button{visibility:hidden!important;display:
    전역 :focus-visible는 unlayered라 Tailwind 유틸(@layer utilities)로 못 덮어
    여기 unlayered·고특이도 규칙으로만 제압된다. */
 [data-slot="input-group"] [data-slot="input-group-control"]:focus-visible{outline:none;box-shadow:none;}
+/* 명령 팔레트(⌘K, cmdk) 검색 입력: 다이얼로그가 열리며 자동 초점되는 유일한 포커스 가능 요소이고
+   첫 항목이 항상 하이라이트(data-selected)되므로 입력 자체의 전역 글로우는 중복·과함 → 제거(2026-09-22 사용자 요청).
+   초점 가시성(WCAG 2.4.7)은 캐럿 + 모달 오버레이(다이얼로그 밖은 전부 비활성) + 하이라이트 항목이 유지.
+   결과 없음 상태엔 하이라이트가 없어 캐럿만 남는다(Codex 리뷰 P2) — 링 제거 요청이 명시적이라 유지, 필요 시 래퍼
+   [cmdk-input-wrapper]:focus-within 하단 보더로 대체 가능. Tailwind outline-none 은 box-shadow 를 못 끄므로
+   여기 언레이어·특이도 0,2,0 규칙으로만 제압된다. */
+[cmdk-input]:focus-visible{outline:none;box-shadow:none;}
 /* 메뉴 항목: 초점 표시는 배경 하이라이트(bg-accent-surface)가 담당하므로 전역 box-shadow 글로우는 중복·과함 → 제거.
    (dropdown/context/row 컨텍스트 메뉴 공통. 배경 하이라이트가 남아 WCAG 2.4.7 초점 가시성은 유지.)
    [role="menu"] 컨테이너도 포함: Radix가 포인터 열기 시 Content(role="menu")로 focus를 옮기는데,
