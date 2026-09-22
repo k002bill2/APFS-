@@ -62,7 +62,7 @@ const moneyFmt = (p: ValueFormatterParams): string => {
 
 const numCol = (field: string, header: string, opts?: { strong?: boolean; count?: boolean }): ColDef<FundingRow> => ({
   // flex:1 — 컬럼을 그리드(프레임) 폭에 맞춰 균등 분배(우측 빈 공간 제거), 리사이즈에도 자동 재분배. minWidth는 하한(좁으면 가로 스크롤).
-  field: field as keyof FundingRow, headerName: header, flex: 1, minWidth: 92,
+  field: field as keyof FundingRow, headerName: header, flex: 1, minWidth: 92, width: 92,   // width=flex 전 초기폭(apfs-aggrid ⑨)
   // 금액=단위 반영(moneyFmt), 조합수=개수(numFmt, 단위 무관)
   valueFormatter: opts?.count ? numFmt : moneyFmt, cellStyle: numStyle(opts?.strong) as any, type: 'rightAligned',
 });

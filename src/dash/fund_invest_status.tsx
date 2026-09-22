@@ -246,7 +246,7 @@ const metricFmt = (p: ValueFormatterParams): string =>
 
 /* 크로스탭 리프 — 컬럼 합이 프레임보다 좁은 매트릭스라 autoSizeStrategy 없이 flex로 폭을 채운다 */
 const crossLeaf = (field: string, header: string, strong?: boolean): ColDef<StatRow> => ({
-  field: field as any, headerName: header, flex: 1, minWidth: 92,
+  field: field as any, headerName: header, flex: 1, minWidth: 92, width: 92,   // width=flex 전 초기폭(apfs-aggrid ⑨)
   valueFormatter: crossFmt, cellStyle: numStyle(strong) as any, type: 'rightAligned',
 });
 /* 연도별 건수 리프 */

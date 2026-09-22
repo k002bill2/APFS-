@@ -148,14 +148,14 @@ function ActionCell(p: any) {
 }
 
 const bucheoColumns: ColDef<MinistryRow>[] = [
-  { field: "name", headerName: "보고서명", flex: 2, minWidth: 200, cellRenderer: NameCell },
-  { field: "type", headerName: "보고유형", flex: 1, minWidth: 96, cellRenderer: TypeCell },
-  { field: "org", headerName: "보고기관", flex: 1, minWidth: 96, cellRenderer: PlainCell },
-  { field: "date", headerName: "보고일", flex: 1, minWidth: 112,
+  { field: "name", headerName: "보고서명", flex: 2, minWidth: 200, width: 200, cellRenderer: NameCell },
+  { field: "type", headerName: "보고유형", flex: 1, minWidth: 96, width: 96, cellRenderer: TypeCell },
+  { field: "org", headerName: "보고기관", flex: 1, minWidth: 96, width: 96, cellRenderer: PlainCell },
+  { field: "date", headerName: "보고일", flex: 1, minWidth: 112, width: 112,
     valueFormatter: (p) => (p.value == null ? "" : mn(p.value)),
     cellStyle: { color: "var(--muted-foreground)", fontSize: "12.5px", fontVariantNumeric: "tabular-nums" } },
-  { field: "status", headerName: "상태", flex: 1, minWidth: 100, cellRenderer: StatusCell },
-  { field: "manager", headerName: "담당자", flex: 1, minWidth: 96, cellRenderer: PlainCell },
+  { field: "status", headerName: "상태", flex: 1, minWidth: 100, width: 100, cellRenderer: StatusCell },
+  { field: "manager", headerName: "담당자", flex: 1, minWidth: 96, width: 96, cellRenderer: PlainCell },
   { headerName: "액션", width: 104, minWidth: 92, sortable: false, resizable: false, type: "rightAligned", cellRenderer: ActionCell },
 ];
 

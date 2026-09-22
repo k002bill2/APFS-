@@ -107,6 +107,8 @@ const PAGE_SIZE = 20;
      고정폭 유지: `No`(연번) · `구분`(배지 1종 폭) — flex 없이 width 로 둔다.
    ⚠ 좌측 고정은 No 만 — 다른 컬럼에 pinned 를 주면 목업 순서가 깨진다.
    모듈 스코프 상수다(렌더마다 새 배열이면 AG Grid 가 헤더를 remount 하고 폭을 되돌린다 — apfs-aggrid ⑦).
+   ⚠ flex 컬럼에도 `width: minWidth` 필수 — flex 적용 전 기본폭 200px 초기 레이아웃 뒤 AG Grid 35.3.1 이 넘침 0인데도
+     하단 가로 스크롤 띠를 남기는 일이 있다(수정 전 10회 중 3회 → 수정 후 0/20 실측·내부 원인 미확정, litigation_manage 주석·apfs-aggrid ⑨).
 ────────────────────────────── */
 const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
@@ -122,10 +124,10 @@ const kindCell = (p: { value: ShareholderKind }) => <StatusBadge tone={KIND_TONE
 const dateFmt = (p: { value?: string }) => (p.value ? mn(p.value) : '-');
 
 const txt = (field: keyof ShareholderRow, headerName: string, flex: number, minWidth: number, center?: boolean): ColDef<ShareholderRow> => ({
-  field, headerName, flex, minWidth, cellStyle: center ? flexMid : flexCenter, cellRenderer: textCell,
+  field, headerName, flex, minWidth, width: minWidth, cellStyle: center ? flexMid : flexCenter, cellRenderer: textCell,
 });
 const date = (field: keyof ShareholderRow, headerName: string, flex: number, minWidth: number): ColDef<ShareholderRow> => ({
-  field, headerName, flex, minWidth, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: dateFmt,
+  field, headerName, flex, minWidth, width: minWidth, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: dateFmt,
 });
 
 /* 변동내역 툴팁 — 긴 문장이 잘렸을 때 전체를 보게 한다.
@@ -141,7 +143,7 @@ const contTooltip = (p: { value?: string }): string | null => (
 
 const COLUMNS: ColDef<ShareholderRow>[] = [
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
-  { field: 'ym', headerName: '기준년월', flex: 0.7, minWidth: 96, cellStyle: centerNum, valueFormatter: dateFmt },
+  { field: 'ym', headerName: '기준년월', flex: 0.7, minWidth: 96, width: 96, cellStyle: centerNum, valueFormatter: dateFmt },
   { field: 'g', headerName: '구분', width: 96, minWidth: 96, cellStyle: flexMid, cellRenderer: kindCell },
   txt('gp', '운용사', 1.6, 168),
   txt('vt', '변동구분', 0.9, 106, true),

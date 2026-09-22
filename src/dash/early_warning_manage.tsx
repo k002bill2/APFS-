@@ -151,12 +151,12 @@ const gradeCell = (p: { value: EarlyWarningGrade }) => <StatusBadge tone={GRADE_
 
 const COLUMNS: ColDef<EarlyWarningRow>[] = [
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
-  { field: 'mf', headerName: '모펀드', flex: 1, minWidth: 150, cellStyle: flexCenter, cellRenderer: textCell },
+  { field: 'mf', headerName: '모펀드', flex: 1, minWidth: 150, width: 150, cellStyle: flexCenter, cellRenderer: textCell },
   /* 기준년월 — 날짜성 값이라 mn()(축이 아니라 행 데이터) */
   { field: 'ym', headerName: '기준년월', width: 110, minWidth: 110, cellStyle: centerNum, valueFormatter: (p) => mn(p.value) },
-  { field: 'gp', headerName: '운용사', flex: 1.3, minWidth: 180, cellStyle: flexCenter, cellRenderer: textCell },
+  { field: 'gp', headerName: '운용사', flex: 1.3, minWidth: 180, width: 180, cellStyle: flexCenter, cellRenderer: textCell },
   { field: 'gpg', headerName: '종합등급(운용사)', width: 150, minWidth: 150, cellStyle: flexMid, cellRenderer: gradeCell },
-  { field: 'fn', headerName: '자펀드', flex: 1.8, minWidth: 220, cellStyle: flexCenter, cellRenderer: textCell },
+  { field: 'fn', headerName: '자펀드', flex: 1.8, minWidth: 220, width: 220, cellStyle: flexCenter, cellRenderer: textCell },
   { field: 'fng', headerName: '종합등급(자펀드)', width: 150, minWidth: 150, cellStyle: flexMid, cellRenderer: gradeCell },
 ];
 
