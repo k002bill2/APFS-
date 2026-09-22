@@ -135,7 +135,7 @@ const mark = (field: keyof CustodyConfirmRow, header: string, width = 100): ColD
 
 /* 텍스트 열 — flex로 잉여 폭을 흡수하므로 셀 내부는 min-w-0 + truncate(말줄임) */
 const txt = (field: keyof CustodyConfirmRow, header: string, minWidth: number): ColDef<CustodyConfirmRow> => ({
-  field, headerName: header, flex: 1, minWidth, cellStyle: flexCenter,
+  field, headerName: header, flex: 1, minWidth, width: minWidth, cellStyle: flexCenter,   // width=flex 전 초기폭(apfs-aggrid ⑨)
   cellRenderer: (p: any) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span>,
 });
 

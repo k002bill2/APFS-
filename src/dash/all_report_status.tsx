@@ -63,7 +63,7 @@ function toColDef(c: ColumnSpec, tab: ReportTab, unit: Unit): ColDef<ReportRow> 
     // 금액 헤더는 컬럼 원문 단위(c.unit) 대신 **선택 단위**를 적는다 — 둘을 같이 적으면 "투자금액(원) (억원)"이 된다.
     headerName: amount ? amountHeader(c.label, unit) : c.label + (c.unit ? ` (${c.unit})` : ''),
     ...(c.key === 'title' || c.key === 'agenda'
-      ? { flex: 1, minWidth: 200, suppressAutoSize: true }   // 긴 텍스트가 잔여폭 흡수
+      ? { flex: 1, minWidth: 200, width: 200, suppressAutoSize: true }   // 긴 텍스트가 잔여폭 흡수. width=초기폭(apfs-aggrid ⑨)
       : { minWidth: 110, maxWidth: 260 }),
     ...(c.pinned ? { pinned: c.pinned } : {}),   // 와이드 표에서 식별 컬럼을 붙잡아 둔다
     type: right ? 'rightAligned' : undefined,

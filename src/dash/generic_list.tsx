@@ -508,7 +508,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       if (c.key === "name") {
         return {
           field: "name", headerName: c.label,
-          ...(stretch ? { flex: 1, minWidth: 200, suppressAutoSize: true } : { width: 240, minWidth: 180, maxWidth: 360 }),   // stretch면 잔여폭 흡수, 아니면 골드 subfund_manage 폭 규칙
+          ...(stretch ? { flex: 1, minWidth: 200, width: 200, suppressAutoSize: true } : { width: 240, minWidth: 180, maxWidth: 360 }),   // stretch면 잔여폭 흡수, 아니면 골드 subfund_manage 폭 규칙
           cellStyle: { display: "flex", flexDirection: "column", justifyContent: "center" },
           cellRenderer: (p: ICellRendererParams<Row>) => (
             <div className="min-w-0" style={{ lineHeight: 1.25 }}>
@@ -535,7 +535,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
            안 막으면 ↑↓ 가 옵션 변경 대신 셀 이동이 되어 마우스 없이는 값을 못 바꾼다. */
         ...(c.inlineSelect ? { suppressKeyboardEvent: (p: SuppressKeyboardEventParams<Row>) => (p.event.target as HTMLElement | null)?.tagName === 'SELECT' } : {}),
         ...(c.pinned ? { pinned: c.pinned } : {}),   // 좌측 고정 — 같은 이유로 안 넘어가던 자리
-        ...(stretch ? { flex: 1, minWidth: 200, suppressAutoSize: true } : { minWidth: 110, maxWidth: 240 }),   // stretch면 잔여폭 흡수, 아니면 긴 텍스트 상한 캡
+        ...(stretch ? { flex: 1, minWidth: 200, width: 200, suppressAutoSize: true } : { minWidth: 110, maxWidth: 240 }),   // stretch면 잔여폭 흡수, 아니면 긴 텍스트 상한 캡
         type: right ? "rightAligned" : undefined,
         ...(c.multiline ? { autoHeight: true, wrapText: true, minWidth: 260, maxWidth: 360 } : {}),
         cellStyle: c.multiline

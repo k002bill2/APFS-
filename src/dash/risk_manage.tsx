@@ -169,8 +169,8 @@ function ManagerCell(p: ICellRendererParams) {
 }
 
 const WORK_COLS: ColDef[] = [
-  { headerName: "운용사", field: "gp", flex: 1.6, minWidth: 180, cellStyle: vCenter, cellRenderer: GpCell },
-  { headerName: "경보 유형", field: "type", flex: 2, minWidth: 190, cellStyle: vCenter, cellRenderer: TypeCell },
+  { headerName: "운용사", field: "gp", flex: 1.6, minWidth: 180, width: 180, cellStyle: vCenter, cellRenderer: GpCell },
+  { headerName: "경보 유형", field: "type", flex: 2, minWidth: 190, width: 190, cellStyle: vCenter, cellRenderer: TypeCell },
   { headerName: "등급", field: "grade", width: 84, cellStyle: vCenter, cellRenderer: (p: ICellRendererParams) => <StatusBadge tone={p.data.gradeTone} label={p.data.grade} size="md" /> },
   { headerName: "접수일", field: "received", width: 112, cellStyle: { ...vCenter, fontVariantNumeric: "tabular-nums", color: "var(--muted-foreground)", fontSize: 13 }, valueFormatter: (p: any) => mn(p.value) },
   { headerName: "처리기한", field: "due", width: 108, cellStyle: vCenter, cellRenderer: (p: ICellRendererParams) => <DueBadge dday={p.data.dday} date={p.data.due} /> },
