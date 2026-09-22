@@ -14,9 +14,10 @@
    - 목업 [엑셀] → 툴바가 아니라 푸터 `FooterActions` 내보내기 + `⌥D`(apfs-grid 푸터 골드 양식).
    - 목록 그리드 → AG Grid **단일 헤더 15컬럼**(목업 thead 순서 그대로). **2단 그룹헤더 없음**,
      **합계행 없음**(전 컬럼이 문자/날짜라 가산 개념이 없다 → pinnedBottomRowData 자체를 두지 않는다).
-   - `구분` 셀 → `StatusBadge size="lg" dot={false}`. 등록=info · 해제=success.
-     (목업 `gbTag` 는 해제를 회색 `n` 으로 칠하지만, 우리 톤 팔레트에서 회색은 '비활성'을 뜻해
-      "시정 완료로 해제됨"이라는 종료 상태를 success 로 읽는다.)
+   - `구분` 셀 → `StatusBadge size="lg" dot={false}`. 등록=info · 해제=muted.
+     (목업 `gbTag` 와 같은 중립 회색. 2026-09-22 사용자 결정 — 이전에는 "시정 완료로 해제됨"이라는
+      종료 상태를 success 로 읽었으나, #228 이 중립 톤 `muted` 를 신설해 "더는 경보 아님"을
+      중립으로 표현할 수 있게 됐다. dashboard-ui 규약 "중립은 muted" 와 정렬된다.)
    - KPI 배지 행 → **미포함**(사용자 결정) → `kpis` prop 을 아예 넘기지 않는다.
    - ⚠검토필요 마커 → **구현하지 않는다**(사용자 결정). 목업 설계메모도 "검토필요 마커 제거"라고 적고,
      실제로 `class="review"` 출현이 0회다(CSS/JS 는 공통 보일러플레이트).
@@ -65,7 +66,7 @@ const SEARCHABLE = false;
 ────────────────────────────── */
 /** 그리드 `구분` — 목업 `gb`. 위반 등록 상태 ↔ 시정 후 해제 상태. */
 export type ViolationKind = '등록' | '해제';
-const KIND_TONE: Record<ViolationKind, Tone> = { 등록: 'info', 해제: 'success' };
+const KIND_TONE: Record<ViolationKind, Tone> = { 등록: 'info', 해제: 'muted' };
 
 export interface ViolationRow {
   id: string; no: number;
