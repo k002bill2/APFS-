@@ -25,6 +25,13 @@ export function toUnit(won: number, unit: Unit): number {
   return Math.round((won / UNIT_DIV[unit]) * 100) / 100;
 }
 
+/** 선택 단위로 입력된 숫자 → 원 단위 정수(toUnit 의 역). 편집 셀이 화면 단위로 받은 값을 저장할 때 쓴다.
+    숫자가 아니면 0 — 편집기 빈 입력·비숫자를 0원으로 본다. */
+export function fromUnit(v: unknown, unit: Unit): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.round(n * UNIT_DIV[unit]) : 0;
+}
+
 /** 표시 문자열 — 마스킹은 호출부(mn)가 담당한다. 여기서는 서식만 만든다. */
 export function formatUnit(won: number, unit: Unit): string {
   const v = toUnit(won, unit);

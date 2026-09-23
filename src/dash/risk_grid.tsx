@@ -21,7 +21,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { reviewInnerHeader } from './review_marker';
-import { formatUnit } from './schemas/unit';
+import { formatUnit, toUnit, fromUnit } from './schemas/unit';
 import type { Unit } from './schemas/unit';
 import type { ColMeta, ColKind, TableMeta, Row, Cell, ReviewNoteMeta } from './risk_table_meta';
 import { groupRuns, computeTotal } from './risk_table_meta';
@@ -98,7 +98,8 @@ function LinkCell({ p, label }: { p: ICellRendererParams<Row>; label: string }) 
 
 function renderer(c: ColMeta, unit: Unit | null, linkLabel: string) {
   return (p: ICellRendererParams<Row>) => {
-    const v = p.value as Cell;
+    // 편집 셀은 valueGetter 가 선택 단위 숫자를 주므로(편집기 초기값용) 원 단위 저장값을 직접 읽는다
+    const v = (c.editable ? p.data?.[c.key] : p.value) as Cell;
     const pinned = !!p.node.rowPinned;
     if (pinned && v === '') return null;                      // 합계행 colspan 영역
     if (c.link && !pinned) return <LinkCell p={p} label={linkLabel} />;
@@ -143,7 +144,9 @@ function leafDef(c: ColMeta, rows: readonly Row[], unit: Unit | null, linkLabel:
       editable: (p) => !p.node.rowPinned,
       singleClickEdit: true,
       cellEditor: 'agNumberCellEditor',
-      valueParser: (p) => { const n = Number(p.newValue); return Number.isFinite(n) ? n : 0; },
+      // 편집기는 화면 단위로 보여주고 받는다 → 저장은 원 단위(unit.ts 저장 계약)로 되돌린다
+      valueGetter: (p) => { const w = p.data?.[c.key]; return typeof w === 'number' ? toUnit(w, unit ?? '원') : w; },
+      valueParser: (p) => fromUnit(p.newValue, unit ?? '원'),
     } as Partial<ColDef<Row>> : {}),
     ...(c.note ? {
       headerComponentParams: { innerHeaderComponent: noteHeader(c.note) },
