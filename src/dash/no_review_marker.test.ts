@@ -1,6 +1,6 @@
 /* 검토필요 마커 제거 가드(2026-09-24 사용자 결정 — ⚠검토필요 마커는 전부 삭제하고 새로 만들지 않는다).
    review_marker.tsx(ReviewMarker · reviewInnerHeader · ReviewNote)와 rec/dat 메모 데이터가 src 어디에도
-   남지 않아야 한다. ⚠ 실데이터 칸 키 `note`('비고')와 NewScreenNotice(신규 화면 배너)는 대상이 아니다. */
+   남지 않아야 한다. ⚠ 실데이터 칸 키 `note`('비고')는 대상이 아니다. */
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import { join } from 'node:path';

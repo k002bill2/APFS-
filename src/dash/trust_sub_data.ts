@@ -78,7 +78,6 @@ export const PHYSICAL_TABLE: TableMeta = {
    원천 목업이 없다. 형제 화면 S3_98(실물자료 조회(월별))의 검색조건·업로드 박스·목록 컬럼을 **그대로 준용**하고,
    원문 근거가 없는 추정이다. 행은 만들지 않는다(빈 상태). */
 export const SECURITIES_PROVENANCE = NEW_PROVENANCE;
-export const NEW_SCREEN_CAPTION = '신규 화면 — 현행 목업 없음(업무 정의 확인 필요)';
 export const SECURITIES_TABLE: TableMeta = {
   id: 'securities', cols: PHYSICAL_COLS.map((c) => ({ ...c })), rows: [],
 };
@@ -183,12 +182,12 @@ export const FUND_CODE_ORGS = ['농협중앙회'] as const;
 export const FUND_CODE_TABLE: TableMeta = {
   id: 'fundCode',
   cols: [
-    { key: 'no', label: 'NO', kind: 'number', align: 'center', width: 64 },
+    { key: 'no', label: 'NO', kind: 'number', align: 'center', width: 64, flex: 0 },
     { key: 'nm', label: '조합이름', kind: 'text', width: 260 },
     { key: 'code', label: '수탁기관조합코드', kind: 'center', width: 200 },
     /* 원문 셀 체크박스 → 표시 전용 Y/N 배지(편집은 선택 바 [수정] 모달 — 2026-09-23 관리형 규약) */
-    { key: 'sub', label: '자조합수탁', kind: 'badge', tones: { Y: 'success', N: 'muted' }, width: 110 },
-    { key: 'mo', label: '모태수탁', kind: 'badge', tones: { Y: 'success', N: 'muted' }, width: 110 },
+    { key: 'sub', label: '자조합수탁', kind: 'badge', tones: { Y: 'success', N: 'muted' }, width: 110, flex: 0 },
+    { key: 'mo', label: '모태수탁', kind: 'badge', tones: { Y: 'success', N: 'muted' }, width: 110, flex: 0 },
   ],
   rows: [
     { id: 'fc-1', no: 1, nm: '와이앤아처 로컬 리노베이션 투자조합', code: 'CAZ00001', sub: 'Y', mo: 'Y' },
