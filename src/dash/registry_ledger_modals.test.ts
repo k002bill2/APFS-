@@ -4,7 +4,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { initialLedger, MiniTable } from './registry_ledger_modals';
+import { initialLedger, MiniTable, Section } from './registry_ledger_modals';
 
 afterEach(() => cleanup());
 
@@ -30,5 +30,14 @@ describe('MiniTable — 행이 바뀌면 선택을 비운다', () => {
     rerender(React.createElement(MiniTable, { ...props, rows: [['NEW', 'd'], ['A', 'd'], ['B', 'd']] }));
     expect(screen.queryByText('1건 선택됨')).toBeNull();
     expect(onDelete).not.toHaveBeenCalled();
+  });
+});
+
+describe('Section — 섹션 버튼은 제목 바로 옆 좌측(2026-09-24 사용자 결정)', () => {
+  it('버튼 묶음을 우측 끝으로 밀지 않는다(ml-auto 금지)', () => {
+    render(React.createElement(Section, { title: '소재지', actions: React.createElement('button', null, '추가'), children: 'body' }));
+    const wrap = screen.getByRole('button', { name: '추가' }).parentElement!;
+    expect(wrap.className).not.toMatch(/ml-auto|justify-between/);
+    expect(wrap.previousElementSibling?.textContent).toBe('소재지');
   });
 });

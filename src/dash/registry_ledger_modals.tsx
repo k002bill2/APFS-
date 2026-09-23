@@ -59,13 +59,14 @@ function Modal({ title, target, badge, wide, onClose, footer, children, dlgRef }
   );
 }
 
-/** 원문 `.msec` — 제목(h3) + 우측 섹션 버튼(`.sacts`) + 본문 */
-function Section({ title, actions, children }: { title: string; actions?: React.ReactNode; children: React.ReactNode }) {
+/** 원문 `.msec` — 제목(h3) + 섹션 버튼(`.sacts`) + 본문. 섹션 버튼은 원문의 우측 끝이 아니라
+    **제목 바로 옆 좌측**(2026-09-24 사용자 결정 — apfs-form-modal "섹션 버튼 정렬") */
+export function Section({ title, actions, children }: { title: string; actions?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section style={{ marginBottom: 26 }}>
       <div className="flex items-center gap-2 border-b-2 border-border" style={{ paddingBottom: 8, marginBottom: 12 }}>
         <h3 className="m-0 font-bold" style={{ fontSize: 16 }}>{title}</h3>
-        {actions && <div className="ml-auto flex items-center gap-1.5">{actions}</div>}
+        {actions && <div className="flex items-center gap-1.5">{actions}</div>}
       </div>
       {children}
     </section>
