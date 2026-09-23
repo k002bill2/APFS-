@@ -4,9 +4,14 @@
 
    ⚠ 실제 파일 처리·전송을 하지 않는다(브리프 규칙 5) — 파일 **이름만** 페이지 state 로 들고, 업로드/확인은 페이지가 토스트로 끝낸다.
    드롭존 본체 = 프로젝트 통일 파일존 `DocumentsField`(FilePond, 2026-09-09 파일존 통일 · apfs-form-modal `file` 규약).
-   자체 `<input type=file>` 드롭존을 만들지 않는다. 이 래퍼는 페이지의 `string[]` 계약만 DocumentsField 의 CSV 계약에 잇는다. */
+   자체 `<input type=file>` 드롭존을 만들지 않는다. 이 래퍼는 페이지의 `string[]` 계약만 DocumentsField 의 CSV 계약에 잇는다.
+
+   업로드 진입 규약(2026-09-24 사용자 결정): 드롭존을 카드 본문에 펼쳐 두지 않는다 — 툴바 [업로드] 버튼 → `UploadModal`
+   (파일명 드롭존 + [닫기]/[확인]). 계좌정보 관리(S3_103) 패턴이 정본이다. */
 import { useEffect, useId, useRef, useState } from 'react';
 import { toast } from './ui/sonner';
+import { UI } from './components';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
 import { DocumentsField } from './fields/DocumentsField';
 import { parseFileNames } from './fields/file_names';
 
@@ -55,5 +60,52 @@ export function UploadDropzone({ files, onChange, multiple, hint, label, removed
       {/* preflight:false — <p> UA 마진 제거 */}
       {hint && <p id={hintId} className="m-0 text-caption" style={{ fontSize: 11.5, marginTop: 6 }}>{hint}</p>}
     </div>
+  );
+}
+
+export interface UploadModalProps {
+  /** 모달 제목(`계좌정보 업로드`) */
+  title: string;
+  /** 드롭존 접근名 */
+  label: string;
+  hint?: string;
+  maxSize?: string;
+  removedMsg?: string;
+  /** 파일 없이 [확인] 토스트 */
+  emptyMsg: string;
+  /** 완료 토스트 — 파일 이름이 필요한 화면은 함수로 */
+  doneMsg: string | ((files: string[]) => string);
+  onClose: () => void;
+}
+
+/** 툴바 [업로드] → 업로드 모달(파일명 드롭존 + [확인]). 파일 처리·전송은 하지 않는다(브리프 규칙 5) */
+export function UploadModal({ title, label, hint, maxSize, removedMsg, emptyMsg, doneMsg, onClose }: UploadModalProps) {
+  const dlgRef = useRef<DialogHandle>(null);
+  const [files, setFiles] = useState<string[]>([]);
+  const confirm = () => {
+    if (!files.length) { toast(emptyMsg); return; }
+    toast.success(typeof doneMsg === 'function' ? doneMsg(files) : doneMsg);
+    dlgRef.current?.close();
+  };
+  return (
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-[560px] max-h-[90vh]">
+        <DialogHeader className="px-[46px]">
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription className="sr-only">{label} 업로드</DialogDescription>
+        </DialogHeader>
+        <div className="overflow-y-auto" style={{ padding: '24px 46px' }}>
+          <span className="font-semibold text-caption block" style={{ fontSize: 12, marginBottom: 6 }}>파일명</span>
+          <UploadDropzone files={files} onChange={setFiles} hint={hint} maxSize={maxSize} label={label} removedMsg={removedMsg} />
+        </div>
+        <DialogFooter className="px-[46px]">
+          <div />
+          <div className="flex gap-2">
+            <UI.Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</UI.Button>
+            <UI.Button variant="primary" size="sm" onClick={confirm}>확인</UI.Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

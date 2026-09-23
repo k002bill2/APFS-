@@ -452,7 +452,7 @@ describe('화면별 도메인 규칙', () => {
   it('업로드 용량 제한 = 원문 명시 화면만(S3_98·유가증권·S4_108 20MB) · 계좌/입출금은 무제한', () => {
     const r = (f: string) => read(new URL(`./${f}`, import.meta.url).pathname);
     expect(r('trust_upload.tsx')).not.toMatch(/maxSize = '/);
-    expect(r('trust_physical_upload.tsx')).toMatch(/<UploadDropzone [^>]*maxSize="20MB"/);
+    expect(r('trust_physical_upload.tsx')).toMatch(/<UploadModal [^>]*maxSize="20MB"/);
     expect(r('registry_ledger_modals.tsx')).toMatch(/<UploadDropzone [^>]*maxSize="20MB"/);
     expect(r('trust_upload_forms.tsx')).not.toMatch(/maxSize/);
   });
@@ -491,6 +491,14 @@ describe('관리형 선택 바 규약', () => {
     expect(s).toMatch(/table: CASHFLOW_TABLE/);
     expect(s).toMatch(/\{cfg\.entity\} 등록<\/Button>/);
     expect(s).toMatch(/>업로드<\/Button>/);
+  });
+  it('업로드 = 툴바 [업로드] → 공용 UploadModal(계좌정보 관리 패턴) — 본문에 드롭존을 펼치지 않는다', () => {
+    for (const f of ['trust_physical_upload.tsx', 'trust_upload_forms.tsx']) {
+      const s = src(f);
+      expect(s, f).toMatch(/leadingIcon="upload" onClick=\{\(\) => setModal\(\{ kind: 'upload' \}\)\}>업로드<\/Button>/);
+      expect(s, f).toMatch(/<UploadModal /);
+      expect(s, f).not.toMatch(/<UploadDropzone /);
+    }
   });
   it('폼 → 행 변환: 숫자·금액은 Number, 빈 값은 null(0 으로 바꾸지 않는다)', () => {
     expect(rowPatch(CASHFLOW_TABLE, { prin: '3,000', pl: '', memo: ' 적요 ', dt: '2026-07-13' }))

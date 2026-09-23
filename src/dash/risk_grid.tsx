@@ -131,7 +131,7 @@ function leafDef(c: ColMeta, rows: readonly Row[], unit: Unit | null, linkLabel:
     colId: c.key,
     field: c.key,
     headerName: c.label,
-    flex: 1, minWidth: w, width: w,
+    flex: c.flex ?? 1, minWidth: w, width: w,
     pinned: c.pinned ? 'left' : undefined,
     cellStyle: c.strong ? STRONG_STYLE[align] : ALIGN_STYLE[align],
     headerClass: align === 'right' ? 'ag-right-aligned-header' : undefined,
