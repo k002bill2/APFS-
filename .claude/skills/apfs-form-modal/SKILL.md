@@ -159,6 +159,7 @@ export const schema: PageSchema = {
   - **셀 스타일**: `thStyle`/`tdStyle`은 **좌 0·우 8**(컬럼 간격), 마지막 컬럼은 `thLast`/`tdLast`(우 0) → 첫/마지막 컬럼이 컨테이너 좌우 끝에 정렬. **헤더 밑줄 없음**(th `borderBottom` 제거) — th 13px bold caption `padding:'6px 0 12px'`, td `padding:'4px 0'`.
   - **행 컨트롤은 전부 `<SchemaField fill … />`**(위 계약7 fill 참조 — 셀 채움+겹침 방지). 삭제 셀 `{...tdLast, textAlign:'center'}` + `IconBtn icon="trash" size={34}`.
   - **섹션 간격**: `Section`의 `<fieldset>`는 `mb-7`(섹션 사이 여백).
+  - **행 추가(`＋ 추가`) 버튼은 좌측(2026-09-24 사용자 지시).** 표 위 캡션 줄 맨 앞 또는 섹션 제목 바로 옆에 둔다 — `ml-auto`·`justify-end`로 우측 끝에 밀지 않는다. 행삭제·선택 건수 캡션은 그 뒤에 이어 붙인다. 섹션 헤더에 우측 액션(조회·저장)이 따로 있는 헬퍼는 `add` 슬롯(제목 옆)과 `actions` 슬롯(우측)을 분리한다(`registry_ledger_modals.tsx` `Section`).
   - **첨부 카드 = 1줄·34px**: `Attachment size="sm" className="h-[34px] py-0"` + `AttachmentMedia className="size-6"`(36→24) + `AttachmentTitle`만(설명줄 `AttachmentDescription` 없음) → 날짜 입력 등 폼 컨트롤과 **높이 34px 정합**. 단일 카드도 `AttachmentGroup`(role=list) 유지(위 ⑤).
 - `RowFormModal`에 **`title?: string`** prop이 있다(2026-09-08) — 같은 flat 스키마를 단계별 다른 제목으로 열 때 사용(→[[apfs-stage-workflow]]).
 
