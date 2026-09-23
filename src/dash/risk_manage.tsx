@@ -122,7 +122,7 @@ function DueBadge({ dday, date }: { dday: string; date: string }) {
   return (
     <div className="flex flex-col" style={{ lineHeight: 1.2 }}>
       <span className="font-extrabold tabular text-[13px]" style={{ color }}>{done ? "완료" : overdue ? "지연" : String(dday)}</span>
-      <span className="t-caption text-[11px] tabular">{String(date.slice(5).replace("-", "/"))}</span>
+      <span className="t-caption text-[11px] tabular">{date.slice(5).replace("-", "/")}</span>
     </div>
   );
 }
@@ -255,7 +255,7 @@ function RiskManage({ onNav }: { onNav: (r: string) => void }) {
             <ColorChip icon="inbox" color="var(--primary)" size={34} iconSize={18} />
             <div>
               <div className="t-cardtitle">처리 워크리스트</div>
-              <div className="t-caption mt-px"><span className="text-primary font-bold">{String(filtered.length + "건")}</span> 표시 중 (전체 {String(WORKITEMS.length)}건)</div>
+              <div className="t-caption mt-px"><span className="text-primary font-bold">{(filtered.length + "건")}</span> 표시 중 (전체 {String(WORKITEMS.length)}건)</div>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -279,7 +279,7 @@ function RiskManage({ onNav }: { onNav: (r: string) => void }) {
           />
 
           <div className="flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 py-3.5 border-t border-border">
-            <span className="t-caption">총 <b className="text-foreground">{String(WORKITEMS.length + "건")}</b> 중 {String(filtered.length + "건 표시")}</span>
+            <span className="t-caption">총 <b className="text-foreground">{(WORKITEMS.length + "건")}</b> 중 {(filtered.length + "건 표시")}</span>
             <div className="flex items-center gap-1.5">
               <IconBtn icon="chevron-left" label="이전" size={32} />
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[13px] font-bold text-primary" style={{ background: "color-mix(in srgb,var(--primary) 12%,transparent)" }}>1</span>

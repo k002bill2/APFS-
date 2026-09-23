@@ -93,13 +93,13 @@ function InvestTable() {
           {INV_ROWS.map((r) => (
             <tr key={r.gpName}>
               <td className={TD} style={CELL}>{r.gpName}</td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.gpShares))}</td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.principal))}</td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.reduce))}</td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.gpBal))}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.gpShares)}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.principal)}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.reduce)}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.gpBal)}</td>
               <td className={TD} style={{ ...CELL, ...GRP }}>{r.tsName}</td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.tsShares))}</td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.tsBal))}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.tsShares)}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.tsBal)}</td>
               <td className={`${TD} text-center`} style={{ ...CELL, ...GRP }}><MatchTag label={r.mShares} /></td>
               <td className={`${TD} text-center`} style={CELL}><MatchTag label={r.mBal} /></td>
             </tr>
@@ -109,7 +109,7 @@ function InvestTable() {
         <tfoot>
           <tr className="bg-muted font-bold">
             <td className={TD} style={FOOT}>합계</td>
-            <td className={`${TD} text-right tabular`} style={FOOT}>{String(fmt(INV_TOTAL_SHARES))}</td>
+            <td className={`${TD} text-right tabular`} style={FOOT}>{fmt(INV_TOTAL_SHARES)}</td>
             <td className={`${TD} text-center`} colSpan={8} style={FOOT}>-</td>
           </tr>
         </tfoot>
@@ -176,9 +176,9 @@ function NonInvestTable() {
           {NI_ROWS.map((r) => (
             <tr key={r.gpAcct}>
               <td className={TD} style={{ ...CELL, overflowWrap: 'anywhere' }}>{r.gpAcct}</td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.gpBal))}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.gpBal)}</td>
               <td className={TD} style={{ ...CELL, ...GRP, overflowWrap: 'anywhere' }}>{r.tsAcct}</td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.tsBal))}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.tsBal)}</td>
               <td className={`${TD} text-center`} style={{ ...CELL, ...GRP }}><MatchTag label={r.mBal} /></td>
             </tr>
           ))}
@@ -186,7 +186,7 @@ function NonInvestTable() {
         <tfoot>
           <tr className="bg-muted font-bold">
             <td className={TD} style={FOOT}>합계</td>
-            <td className={`${TD} text-right tabular`} style={FOOT}>{String(fmt(NI_TOTAL_BAL))}</td>
+            <td className={`${TD} text-right tabular`} style={FOOT}>{fmt(NI_TOTAL_BAL)}</td>
             <td className={`${TD} text-center`} colSpan={3} style={FOOT}>-</td>
           </tr>
         </tfoot>

@@ -48,7 +48,7 @@ const CELL: React.CSSProperties = { padding: '7px 9px' };
 const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)' };
 const DT_STYLE: React.CSSProperties = { padding: '8px 12px', fontSize: 13 };
 
-type KvItem = { l: string; v: string; plain?: boolean };
+type KvItem = { l: string; v: string };
 
 /* kv 그리드 — 골드는 `grid-cols-1 sm:grid-cols-2`지만 여기는 **1열 고정**이다:
    이 팝업은 640px(골드 명세 팝업은 880px)이라 2열로 나누면 본문 폭 ≈548px ÷ 2 − 라벨 150px = 값 칸이 124px로
@@ -62,7 +62,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
           <dd className={`m-0 flex items-center min-w-0 ${o.v ? '' : 'text-caption'}`}
             style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
             {/* 값 없음은 '-' */}
-            {!o.v ? '-' : o.plain ? o.v : <>{o.v}</>}
+            {!o.v ? '-' : o.v}
           </dd>
         </div>
       ))}
@@ -109,7 +109,7 @@ export function CustodyMemoModal({ ctx, history, baseDate, onSave, onClose }: {
 
   const kv: KvItem[] = [
     { l: '조합명', v: ctx.fund },
-    { l: '구분', v: ctx.gubun, plain: true },
+    { l: '구분', v: ctx.gubun },
     { l: '투자기업', v: ctx.corp },
   ];
 

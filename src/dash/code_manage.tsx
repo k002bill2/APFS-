@@ -58,9 +58,9 @@ type GroupView = CodeGroup & { upName: string; count: number };
 const GROUP_COLS: ColDef<GroupView>[] = [
   { field: 'code', headerName: '코드구분', width: 84, minWidth: 84, maxWidth: 120, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
   /* 코드구분명이 남는 폭을 흡수(flex:1) */
-  { field: 'name', headerName: '코드구분명', flex: 1, width: 150, minWidth: 100, cellStyle: flexCenter, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'name', headerName: '코드구분명', flex: 1, width: 150, minWidth: 100, cellStyle: flexCenter, cellRenderer: (p: any) => p.value },
   { field: 'up', headerName: '상위코드구분', width: 118, minWidth: 118, maxWidth: 150, cellStyle: muted,
-    cellRenderer: (p: any) => (p.value ? <>{`${p.value} (${p.data.upName})`}</> : <span>-</span>) },
+    cellRenderer: (p: any) => (p.value ? `${p.value} (${p.data.upName})` : <span>-</span>) },
   { field: 'use', headerName: '사용여부', width: 90, minWidth: 90, maxWidth: 90, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} size="md" /> },
 ];   // 비-flex 폭 합 292 + 코드구분명 minWidth 100 = 392 ≤ 좌 패널 center 뷰포트(≈395)
      // ⚠ flex 는 flex 컬럼만 늘리고 줄인다 — 나머지는 선언 width 고정이라 합이 넘으면 바로 가로 스크롤
@@ -68,12 +68,12 @@ const GROUP_COLS: ColDef<GroupView>[] = [
 const DETAIL_COLS: ColDef<CodeDetail>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'code', headerName: '코드', width: 90, maxWidth: 120, cellStyle: flexMid, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
-  { field: 'name', headerName: '코드명', flex: 1, width: 180, minWidth: 170, cellStyle: flexCenter, cellRenderer: (p: any) => <>{p.value}</> },
-  { field: 'en', headerName: '코드명(영문)', width: 140, maxWidth: 200, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <span>-</span>) },
+  { field: 'name', headerName: '코드명', flex: 1, width: 180, minWidth: 170, cellStyle: flexCenter, cellRenderer: (p: any) => p.value },
+  { field: 'en', headerName: '코드명(영문)', width: 140, maxWidth: 200, cellStyle: muted, cellRenderer: (p: any) => (p.value ? p.value : <span>-</span>) },
   { field: 'ord', headerName: '정렬', width: 64, maxWidth: 64, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
-  { field: 'rem', headerName: '비고', width: 170, maxWidth: 240, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <span>-</span>) },
+  { field: 'rem', headerName: '비고', width: 170, maxWidth: 240, cellStyle: muted, cellRenderer: (p: any) => (p.value ? p.value : <span>-</span>) },
   { field: 'use', headerName: '사용여부', width: 88, maxWidth: 88, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} size="md" /> },
-  { field: 'by', headerName: '최종수정자', width: 100, maxWidth: 120, cellStyle: muted, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'by', headerName: '최종수정자', width: 100, maxWidth: 120, cellStyle: muted, cellRenderer: (p: any) => p.value },
   { field: 'at', headerName: '최종수정일시', width: 140, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => String(p.value) },
 ];
 /* 좌·우 모두 체크박스로만 선택(행 본문 클릭 선택 해제 — 2026-09-22 사용자 결정). 좌 그리드의 "해제 금지"는

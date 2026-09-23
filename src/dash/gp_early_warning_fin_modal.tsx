@@ -183,17 +183,15 @@ export function GpEarlyWarningFinModal({ gp, kind, ym, onClose }: { gp: string; 
      한쪽만 넣으면 "화면엔 보이는데 엑셀엔 없는" 누락이 난다(apfs-spec-popup 규약 6).
      금액은 단위 무관 **원 단위 원값**(골드 subfund_spec_modal 동형). */
   const excel = () => {
-    const num = (v: number) => (v);
-    const txt = (v: string) => (v);
     const rows: (string | number)[][] = [
-      ['운용사명', txt(gp)], ['운용사구분', txt(kind)],
-      ...(ym ? [['기준년월', txt(ym)]] : []),          // 기준년월 미선택이면 행 자체를 뺀다(형제 팝업과 동형)
+      ['운용사명', gp], ['운용사구분', kind],
+      ...(ym ? [['기준년월', ym]] : []),          // 기준년월 미선택이면 행 자체를 뺀다(형제 팝업과 동형)
       [],
-      ['재무정보', '금액(원)'], ...FIN.map(([l, v]) => [l, num(v)]), [],
-      ['손익정보', '금액(원)'], ...PROFIT.map(([l, v]) => [l, num(v)]), [],
-      ['정량지표', '값'], ...RATIO.map(([l, v]) => [l, txt(v)]), [],
+      ['재무정보', '금액(원)'], ...FIN.map(([l, v]) => [l, v]), [],
+      ['손익정보', '금액(원)'], ...PROFIT.map(([l, v]) => [l, v]), [],
+      ['정량지표', '값'], ...RATIO.map(([l, v]) => [l, v]), [],
       ['기준년월별 추이(단위: 원)'], TREND_HEAD,
-      ...TREND.map((t) => [txt(t.ym), ...t.v.map(num)]), [],
+      ...TREND.map((t) => [t.ym, ...t.v]), [],
       ['지표등급 변경정보'], ['변경일자', '정량지표', '등급(변경 전)', '등급(변경 후)', '변경사유'],
       ['조회된 등급 변경 내역이 없습니다.'],
     ];

@@ -48,7 +48,7 @@ function KvGrid({ items }: { items: OvItem[] }) {
         <React.Fragment key={it.l}>
           <div className="bg-muted px-2.5 py-[7px] text-[11.5px] font-bold text-muted-foreground">{it.l}</div>
           <div className="bg-card px-2.5 py-[7px] text-[12px] text-foreground min-w-0 break-words" style={it.full ? { gridColumn: 'span 3' } : undefined}>
-            {it.v == null ? <span className="text-muted-foreground">-</span> : <>{it.v}</>}
+            {it.v == null ? <span className="text-muted-foreground">-</span> : it.v}
           </div>
         </React.Fragment>
       ))}
@@ -116,12 +116,12 @@ function ShareTable({ unit }: { unit: Unit }) {
               <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(r.date)}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.totalCapital, unit)}</td>
               {/* 주수는 금액이 아니다 — 단위 토글 대상에서 제외(축이 무너지지 않도록) */}
-              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{String(fmt(r.totalShares))}</td>
+              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{fmt(r.totalShares)}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.comCapital, unit)}</td>
-              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{String(fmt(r.comShares))}</td>
+              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{fmt(r.comShares)}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.comPar, unit)}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.prfCapital, unit)}</td>
-              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{String(fmt(r.prfShares))}</td>
+              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{fmt(r.prfShares)}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.prfPar, unit)}</td>
             </tr>
           ))}

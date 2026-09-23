@@ -126,7 +126,7 @@ export function FundEarlyWarningYieldModal({ fund, ym, onClose }: { fund: string
           <div className="grid gap-2.5 mb-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}>
             <Kpi label="자펀드수익률">
               <span className="tabular font-bold" style={{ fontSize: 24, color: RATE_SAMPLE < 0 ? 'var(--danger-text)' : 'var(--foreground)' }}>
-                {String(rateText(RATE_SAMPLE))}
+                {rateText(RATE_SAMPLE)}
               </span>
               <span className="font-semibold text-caption" style={{ fontSize: 13 }}>%</span>
             </Kpi>

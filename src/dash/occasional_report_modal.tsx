@@ -123,7 +123,7 @@ function MetaList({ items }: { items: [string, string, boolean][] }) {
         <React.Fragment key={k}>
           <dt className="m-0 font-bold text-muted-foreground" style={{ minWidth: 92 }}>{k}</dt>
           <dd className="m-0 text-caption">:</dd>
-          <dd className="m-0 min-w-0" style={{ overflowWrap: 'anywhere' }}>{isDate ? String(v) : <>{v}</>}</dd>
+          <dd className="m-0 min-w-0" style={{ overflowWrap: 'anywhere' }}>{isDate ? String(v) : v}</dd>
         </React.Fragment>
       ))}
     </dl>
@@ -138,7 +138,7 @@ function MetaInline({ items }: { items: [string, string, boolean][] }) {
         <div key={k} className="flex items-baseline gap-1.5">
           <dt className="m-0 font-bold text-muted-foreground">{k}</dt>
           <dd className="m-0 text-caption">:</dd>
-          <dd className="m-0">{isDate ? String(v) : <>{v}</>}</dd>
+          <dd className="m-0">{isDate ? String(v) : v}</dd>
         </div>
       ))}
     </dl>

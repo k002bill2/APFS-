@@ -236,7 +236,7 @@ const txt = (field: keyof DistRow, header: string, width: number, maxWidth?: num
 /** 가운데 정렬 분류 텍스트(계정구분·상세구분) */
 const ctr = (field: keyof DistRow, header: string, width: number): ColDef<DistRow> => ({
   field, headerName: header, width, sortable: false, cellStyle: flexMid,
-  cellRenderer: (p: any) => (p.value == null ? null : <>{p.value}</>),
+  cellRenderer: (p: any) => (p.value == null ? null : p.value),
 });
 /** 날짜 열 */
 const dt = (field: keyof DistRow, header: string, width: number): ColDef<DistRow> => ({
@@ -530,7 +530,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
             ['기준일자 종료', fTo, () => setFTo(''), false],
           ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isText]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {isText ? <>{value}</> : String(value)}
+              {isText ? value : String(value)}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>

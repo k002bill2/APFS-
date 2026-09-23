@@ -135,7 +135,7 @@ export function MiniTable({ heads, rows, act, label, right = [], empty = '변경
                   <Checkbox checked={sel.includes(ri)} onCheckedChange={(c) => toggle(ri, c === true)} aria-label={`${label} ${ri + 1}번 행 선택`} />
                 </td>
                 {r.map((v, i) => <td key={i} className={`border border-border ${align(i)} ${right.includes(i) ? 'tabular-nums' : ''}`} style={cell}>
-                  {/^[\d,.\-]+$/.test(v) ? String(v) : <>{v}</>}
+                  {/^[\d,.\-]+$/.test(v) ? String(v) : v}
                 </td>)}
               </tr>
             ))}

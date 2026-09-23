@@ -47,7 +47,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.kind === 'empty' ? 'text-caption' : ''}`}
             style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
-            {o.kind === 'empty' ? '-' : o.kind === 'num' ? String(o.v) : o.kind === 'plain' ? o.v : <>{o.v}</>}
+            {o.kind === 'empty' ? '-' : o.kind === 'num' ? String(o.v) : o.v}
           </dd>
         </div>
       ))}
@@ -100,10 +100,10 @@ function CalcTable({ row }: { row: Record<string, unknown> }) {
           <tr>
             <td className={`${TD} text-center`} style={CELL}><>투자잔액</></td>
             <td className={`${TD} text-center tabular`} style={CELL}>{String(calc.span)}</td>
-            <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(base))}</td>
+            <td className={`${TD} text-right tabular`} style={CELL}>{fmt(base)}</td>
             <td className={`${TD} text-center tabular`} style={CELL}>{String(calc.days)}</td>
             <td className={`${TD} text-center tabular`} style={CELL}>{PCT_LABEL}</td>
-            <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(amount))}</td>
+            <td className={`${TD} text-right tabular`} style={CELL}>{fmt(amount)}</td>
             <td className={TD} style={CELL}>{FORMULA}</td>
           </tr>
         </tbody>

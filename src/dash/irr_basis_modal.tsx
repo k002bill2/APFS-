@@ -50,7 +50,7 @@ export function IrrBasisModal({ basis, onClose }: { basis: IrrBasis; onClose: ()
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">{basis.title}</DialogTitle>
             <DialogDescription className="text-caption truncate min-w-0">
-              {basis.heading ? <>{basis.heading}</> : 'IRR 산정 근거 현금흐름 내역'}
+              {basis.heading ? basis.heading : 'IRR 산정 근거 현금흐름 내역'}
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -96,8 +96,8 @@ export function IrrBasisModal({ basis, onClose }: { basis: IrrBasis; onClose: ()
                           style={{ ...CELL, color: neg ? 'var(--danger-text)' : undefined }}>
                           {v == null ? <span className="text-muted-foreground">-</span>
                             : c.kind === 'badge' ? <StatusBadge tone={c.tones?.[String(v)] ?? 'muted'} label={String(v)} size="lg" dot={false} />
-                            : c.kind === 'text' || c.kind === 'center' ? <>{String(v)}</>
-                            : String(displayText(c, v, unit))}
+                            : c.kind === 'text' || c.kind === 'center' ? String(v)
+                            : displayText(c, v, unit)}
                         </td>
                       );
                     })}

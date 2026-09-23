@@ -58,11 +58,11 @@ function toColDef(c: ColumnSpec, unit: Unit): ColDef<RecoveryRow> {
         if (c.key === 'gp') return <span className="font-bold">합계</span>;
         if (c.key === 'tname') return <span className="font-bold">{String(p.value ?? '')}</span>;
         if (!amount) return null;
-        return p.value == null ? null : <span className="font-bold tabular">{String(formatRecoveryUnit(Number(p.value), unit))}</span>;
+        return p.value == null ? null : <span className="font-bold tabular">{formatRecoveryUnit(Number(p.value), unit)}</span>;
       }
       /* 금액 셀은 공용 Cell(=formatUnit, 백만원 2자리)을 쓰지 않는다 — 이 화면의 표기 규칙은
          원문 applyUnit(백만원 1자리)이다. 나머지 타입은 그대로 Cell 에 맡긴다(배지 내장). */
-      if (amount) return <span className="tabular">{p.value == null ? '' : String(formatRecoveryUnit(Number(p.value), unit))}</span>;
+      if (amount) return <span className="tabular">{p.value == null ? '' : formatRecoveryUnit(Number(p.value), unit)}</span>;
       return (
         <span className="inline-flex items-center gap-0.5 min-w-0">
           <Cell col={c} value={p.value} statusDomain={RECOVERY_TONES} unit={unit} />

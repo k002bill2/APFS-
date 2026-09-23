@@ -133,7 +133,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof OccReportRow, header: string, width: number, center?: boolean): ColDef<OccReportRow> => ({
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => <>{p.value}</>,
+  cellRenderer: (p: any) => p.value,
 });
 /* maxWidth = width — `fitGridWidth`가 남는 폭을 이 컬럼에 주지 못하게 막아, 잉여가 제목으로만 흘러가게 한다 */
 const date = (field: keyof OccReportRow, header: string, width = 128): ColDef<OccReportRow> => ({
@@ -150,7 +150,7 @@ const confirmCol = (field: 'jsBy' | 'rsBy', header: string, role: Role,
                     onConfirm: (role: Role, id: string) => void): ColDef<OccReportRow> => ({
   field, headerName: header, width: 146, maxWidth: 146, cellStyle: flexMid, sortable: true,
   cellRenderer: (p: any) => (p.value
-    ? <StatusBadge tone="success" label={<>{p.value}</>} size="lg" dot={false} />
+    ? <StatusBadge tone="success" label={p.value} size="lg" dot={false} />
     : <Button variant="outline" size="sm" onClick={() => onConfirm(role, p.data.id)}>확인</Button>),
 });
 

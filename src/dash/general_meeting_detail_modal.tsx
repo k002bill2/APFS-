@@ -61,7 +61,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.v ? '' : 'text-caption'}`}
             style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
-            {!o.v ? '-' : o.date ? String(o.v) : <>{o.v}</>}
+            {!o.v ? '-' : o.date ? String(o.v) : o.v}
           </dd>
         </div>
       ))}
@@ -124,8 +124,8 @@ function MotionTable({ list }: { list: MeetingDetail['motion'] }) {
               <td className={`${TD} text-center tabular`} style={CELL}>{String(x.ord)}</td>
               <td className={TD} style={CELL}>{x.content}</td>
               <td className={`${TD} text-center`} style={CELL}>{x.way}</td>
-              <td className={`${TD} text-center ${x.moaf ? '' : 'text-caption'}`} style={CELL}>{x.moaf ? <>{x.moaf}</> : '-'}</td>
-              <td className={`${TD} text-center ${x.result ? '' : 'text-caption'}`} style={CELL}>{x.result ? <>{x.result}</> : '-'}</td>
+              <td className={`${TD} text-center ${x.moaf ? '' : 'text-caption'}`} style={CELL}>{x.moaf ? x.moaf : '-'}</td>
+              <td className={`${TD} text-center ${x.result ? '' : 'text-caption'}`} style={CELL}>{x.result ? x.result : '-'}</td>
             </tr>
           ))}
         </tbody>

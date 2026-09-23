@@ -116,7 +116,7 @@ function renderer(c: ColMeta, unit: Unit | null, linkLabel: string, custom?: (ro
           : undefined;
         return (
           <span className="tabular-nums" style={{ color: color ?? (zero ? 'var(--muted-foreground)' : undefined), ...box }}>
-            {String(displayText(c, v, unit, digits))}
+            {displayText(c, v, unit, digits)}
           </span>
         );
       }

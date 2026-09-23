@@ -181,7 +181,7 @@ function MiniBars({ data, color }: { data: number[]; color: string }) {
 function FilterPill({ label, value, onRemove }: { label: string; value?: string; onRemove: () => void }) {
   return (
     <span title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: "5px 8px 5px 11px", borderRadius: 9, fontSize: 12.5, background: "color-mix(in srgb, var(--primary) 10%, transparent)" }}>
-      {value ? <>{value}</> : <span>{label}</span>}
+      {value ? value : <span>{label}</span>}
       <button onClick={onRemove} aria-label={label + " 필터 제거"} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: "transparent", color: "inherit", minWidth: 24, minHeight: 24, padding: 0, margin: "-5px -4px -5px 0" }}>
         <Icon name="x" size={13} stroke={2.4} />
       </button>
@@ -705,7 +705,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       title={title}
       favRoute={route}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav("main")}>메인으로</Button>}
-      kpis={schema.hideKpis ? undefined : countKpiNodes ? <>{countKpiNodes}</> : (schema.hideMetrics || !genericMetrics) ? undefined : (<>
+      kpis={schema.hideKpis ? undefined : countKpiNodes ? countKpiNodes : (schema.hideMetrics || !genericMetrics) ? undefined : (<>
         <KpiBadge icon="trending" color="var(--chart-1)" label="평균 변동률"
           value={String((avgUp ? "+" : "-") + Math.abs(avgChange).toFixed(1)) + "%"}
           valueColor={avgUp ? "var(--success-text)" : "var(--danger-text)"} />
@@ -818,7 +818,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                 {!schema.hideMetrics && genericMetrics && (
                   <>
                     <div className="flex items-center justify-between">
-                      <span className="tabular font-bold" style={{ fontSize: 15 }}>{String(r.amount.toLocaleString())}</span>
+                      <span className="tabular font-bold" style={{ fontSize: 15 }}>{r.amount.toLocaleString()}</span>
                       <DeltaBadge value={r.change} />
                     </div>
                     <StatusBadge tone={statusTone(r.status)} label={r.status} size="sm" />

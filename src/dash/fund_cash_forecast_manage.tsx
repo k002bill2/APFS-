@@ -132,7 +132,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof CashForecastRow, header: string, width: number, center?: boolean): ColDef<CashForecastRow> => ({
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <>{p.value}</>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : p.value),
 });
 /* 일시 — 합계행은 '-'(목업 tfoot), 값 없음도 '-'. */
 const date = (field: keyof CashForecastRow, header: string, width = 128): ColDef<CashForecastRow> => ({

@@ -457,8 +457,8 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
      ⚠ `구분`(스코프)은 칩이 없다 — 행을 거르지 않는 modifier 라 끌 것이 없다(위 filterActive 주석 참조).
        대상 칩의 aria-label 은 드로어 라벨과 같은 `운용사/자펀드` 로 고정한다(스코프가 바뀌어도 안정적). */
   const chips = ([
-    { key: '검색어', on: !!fText, value: <>{fText}</>, clear: () => setFText('') },
-    { key: '운용사/자펀드', on: !!fTarget, value: <>{fTarget}</>, clear: () => setFTarget('') },
+    { key: '검색어', on: !!fText, value: fText, clear: () => setFText('') },
+    { key: '운용사/자펀드', on: !!fTarget, value: fTarget, clear: () => setFTarget('') },
     { key: '기간', on: !!(fFrom || fTo), value: `${fFrom ? String(fFrom) : ''} ~ ${fTo ? String(fTo) : ''}`, clear: () => { setFFrom(''); setFTo(''); } },
   ] as { key: string; on: boolean; value: React.ReactNode; clear: () => void }[]).filter((c) => c.on);
 

@@ -76,7 +76,7 @@ export function DueDiligChecklistModal({ row, onClose }: { row: Record<string, u
                   {o.l}
                 </dt>
                 <dd className={`m-0 flex items-center min-w-0 ${isBlank(o.v) && !o.node ? 'text-caption' : ''}`} style={DD_STYLE}>
-                  {o.node ? o.node : isBlank(o.v) ? '-' : o.numeric ? String(o.v) : <>{o.v}</>}
+                  {o.node ? o.node : isBlank(o.v) ? '-' : o.numeric ? String(o.v) : o.v}
                 </dd>
               </div>
             ))}

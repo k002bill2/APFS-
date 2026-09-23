@@ -125,7 +125,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof MeetingRow, header: string, width: number, maxWidth: number, minWidth: number, center?: boolean): ColDef<MeetingRow> => ({
   field, headerName: header, width, maxWidth, minWidth, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => <>{p.value}</>,
+  cellRenderer: (p: any) => p.value,
 });
 
 /* 고정폭(내용 맞춤 불필요·헤더 라벨 폭이 하한) */
@@ -388,7 +388,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
             ['총회기간 종료', fTo, () => setFTo(''), true],
           ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isDate]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {isDate ? String(value) : <>{value}</>}
+              {isDate ? String(value) : value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>

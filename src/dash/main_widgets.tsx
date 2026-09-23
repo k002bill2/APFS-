@@ -115,7 +115,7 @@ function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }: { span?: nu
             style={{
               border: "none", font: "inherit",
               padding: "11px 6px", borderBottom: i < list.length - 1 ? "1px solid var(--border)" : "none", background: "transparent",
-            }}><div className="text-center shrink-0" style={{ width: 46 }}><div className="font-extrabold" style={{ fontSize: 13, color: ddayColor(s.tone) }}>{String(s.dday)}</div><div className="t-caption" style={{ fontSize: 10 }}>{String(s.date.slice(5).replace("-", "/"))}</div></div><div className="bg-border" style={{ width: 1, alignSelf: "stretch" }} /><div className="flex-1 min-w-0"><div
+            }}><div className="text-center shrink-0" style={{ width: 46 }}><div className="font-extrabold" style={{ fontSize: 13, color: ddayColor(s.tone) }}>{String(s.dday)}</div><div className="t-caption" style={{ fontSize: 10 }}>{s.date.slice(5).replace("-", "/")}</div></div><div className="bg-border" style={{ width: 1, alignSelf: "stretch" }} /><div className="flex-1 min-w-0"><div
                 className="font-semibold truncate" style={{ fontSize: 13 }}>{s.title}</div><div className="flex items-center" style={{ gap: 7, marginTop: 3 }}>{<StatusBadge tone={s.tone} label={s.kind} size="sm" />}<span className="t-caption">{s.to}</span></div></div><Icon
               name="chevron-right"
               size={16}

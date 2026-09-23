@@ -50,7 +50,7 @@ export function CountUp({ value, duration = 1 }: { value: any; duration?: number
   }, [animate_ok, inView, reduce, target, duration, mvRaw]);
 
   // 애니메이션 대상이 아니면(복합·비수치) 정적 표시 그대로
-  if (!animate_ok) return <>{String(value)}</>;
+  if (!animate_ok) return String(value);
 
   return (
     <span ref={ref}>

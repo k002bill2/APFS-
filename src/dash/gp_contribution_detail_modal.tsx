@@ -65,7 +65,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
           </dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.v ? '' : 'text-caption'}`}
             style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
-            {!o.v ? '-' : o.numeric ? String(o.v) : <>{o.v}</>}
+            {!o.v ? '-' : o.numeric ? String(o.v) : o.v}
           </dd>
         </div>
       ))}

@@ -58,7 +58,7 @@ const CELL: React.CSSProperties = { padding: '6px 8px' };
 const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)' };
 const DT_STYLE: React.CSSProperties = { padding: '8px 12px', fontSize: 13 };
 
-type KvItem = { l: string; v: string; numeric?: boolean; raw?: boolean };
+type KvItem = { l: string; v: string };
 
 function KvGrid({ items }: { items: KvItem[] }) {
   return (
@@ -67,7 +67,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
         <div key={o.l} className="grid bg-card" style={KV_COLS}>
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.v ? '' : 'text-caption'}`} style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
-            {!o.v ? '-' : o.raw ? o.v : o.numeric ? String(o.v) : <>{o.v}</>}
+            {!o.v ? '-' : o.v}
           </dd>
         </div>
       ))}
@@ -196,8 +196,8 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
   const kv: KvItem[] = [
     { l: '운용사', v: group.un },
     { l: '자펀드', v: group.fn },
-    { l: '거래구분', v: `${group.tx} / ${group.dtx}`, raw: true },
-    { l: '거래일자', v: group.td, numeric: true },
+    { l: '거래구분', v: `${group.tx} / ${group.dtx}` },
+    { l: '거래일자', v: group.td },
   ];
 
   const save = () => {
@@ -251,7 +251,7 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
                       <td className={`${TD} text-center tabular`} style={CELL}>{i + 1}</td>
                       <td className={TD} style={CELL}>{m.mem}</td>
                       <td className={`${TD} text-center`} style={CELL}><GradeChip v={m.mg} /></td>
-                      <td className={`${TD} text-right tabular`} style={CELL}>{String(toFmt(m.mc))}</td>
+                      <td className={`${TD} text-right tabular`} style={CELL}>{toFmt(m.mc)}</td>
                       {AMOUNT_FIELDS.map((k) => (
                         <td key={k} className={TD} style={CELL}>
                           <AmountInput value={drafts[i][k]} onChange={set(i, k)} ariaLabel={`${m.mem} ${DIST_HEADERS[k]}`} />
@@ -337,8 +337,8 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
   const kv: KvItem[] = [
     { l: '운용사', v: INVEST_GROUP.gp },
     { l: '자펀드', v: INVEST_GROUP.fund },
-    { l: '거래구분', v: `${INVEST_GROUP.tx} / ${INVEST_GROUP.dtx}`, raw: true },
-    { l: '거래일자', v: INVEST_GROUP.td, numeric: true },
+    { l: '거래구분', v: `${INVEST_GROUP.tx} / ${INVEST_GROUP.dtx}` },
+    { l: '거래일자', v: INVEST_GROUP.td },
   ];
 
   /* 저장 — 이 팝업의 데이터는 목록 그리드와 연결돼 있지 않다(별 자펀드). 닫고 알림만 낸다 */
@@ -384,13 +384,13 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
                       <td className={TD} style={CELL}>{`${m.mem} (${m.id})`}</td>
                       <td className={`${TD} text-center`} style={CELL}><GradeChip v={m.mg} /></td>
                       <td className={`${TD} text-center`} style={CELL}>{m.mtype}</td>
-                      <td className={`${TD} text-right tabular`} style={CELL}>{String(toFmt(m.commit))}</td>
+                      <td className={`${TD} text-right tabular`} style={CELL}>{toFmt(m.commit)}</td>
                       <td className={`${TD} text-center tabular`} style={CELL}>{String(m.cpct)}</td>
                       <td className={TD} style={CELL}>
                         <AmountInput value={drafts[i].pay} onChange={set(i, 'pay')} ariaLabel={`${m.mem} 납입금액`} />
                       </td>
                       <td className={`${TD} text-center tabular`} style={CELL}>{String(m.ppct)}</td>
-                      <td className={`${TD} text-right tabular`} style={CELL}>{m.custody == null ? dash : String(toFmt(m.custody))}</td>
+                      <td className={`${TD} text-right tabular`} style={CELL}>{m.custody == null ? dash : toFmt(m.custody)}</td>
                       <td className={`${TD} text-center`} style={CELL}>
                         {m.chk == null ? dash
                           : <SelectInput value={drafts[i].chk} onChange={set(i, 'chk')} options={INVEST_CHK_OPTIONS} ariaLabel={`${m.mem} 데이터확인`} />}
@@ -405,7 +405,7 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
                 <tfoot>
                   <tr className="bg-muted font-bold">
                     <td className={`${TD} text-center`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }} colSpan={4}>합계</td>
-                    <td className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{String(toFmt(sumCommit))}</td>
+                    <td className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{toFmt(sumCommit)}</td>
                     <td className={`${TD} text-center text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
                     <td className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{toFmt(sumPay)}</td>
                     <td className={`${TD} text-center text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
