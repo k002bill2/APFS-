@@ -452,6 +452,15 @@ describe('화면별 도메인 규칙', () => {
     }
     expect(checked).toBeGreaterThan(0);
   });
+  it('업로드 드롭존 = 통일 파일존 DocumentsField(FilePond) — 자체 <input type=file> 금지(apfs-form-modal file 규약)', () => {
+    const src = read(new URL('./trust_upload.tsx', import.meta.url).pathname);
+    expect(src).toMatch(/import \{ DocumentsField \} from '\.\/fields\/DocumentsField'/);
+    expect(src).toMatch(/<DocumentsField /);
+    expect(src).not.toMatch(/type="file"|onDrop=/);
+    for (const f of ['trust_physical_upload.tsx', 'trust_upload_forms.tsx', 'registry_ledger_modals.tsx']) {
+      expect(read(new URL(`./${f}`, import.meta.url).pathname), f).not.toMatch(/type="file"/);
+    }
+  });
   it('등록원부 비활성원부 칩 = 적용 전 숨김(첫 화면 3행인데 제외 칩이 보이면 오해)', () => {
     const kit = read(new URL('./risk_page_kit.tsx', import.meta.url).pathname);
     expect(kit).toMatch(/filters\.filter\(\(f\) => f\.value && f\.chip !== false\)/);
