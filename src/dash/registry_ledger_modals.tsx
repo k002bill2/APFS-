@@ -288,7 +288,7 @@ export function LedgerUploadModal({ onClose }: { onClose: () => void }) {
     <Modal dlgRef={dlgRef} onClose={onClose} title="등록원부 업로드"
       footer={<><Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button><Button variant="primary" size="sm" leadingIcon="upload" onClick={upload}>업로드</Button></>}>
       <span className="font-semibold text-caption block" style={{ fontSize: 12, marginBottom: 6 }}>파일 업로드</span>
-      <UploadDropzone files={files} onChange={setFiles} multiple hint="XLSX, CSV · 최대 20MB" label="등록원부 파일" />
+      <UploadDropzone files={files} onChange={setFiles} multiple hint="XLSX, CSV · 최대 20MB" maxSize="20MB" label="등록원부 파일" />
     </Modal>
   );
 }

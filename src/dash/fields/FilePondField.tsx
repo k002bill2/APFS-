@@ -19,8 +19,8 @@ registerPlugin(FilePondPluginFileValidateSize, FilePondPluginFileValidateType);
 
 // required: 필수인데 아직 비었을 때의 표식 — 드롭 패널 테두리만 danger(is-required, filepond.css).
 //   호출자(DocumentsField)가 기존 첨부가 있으면 required=false 로 내려 이미 채운 필드의 빨간 테두리를 푼다.
-// multiple·maxSize: 기본값(여러 파일 · 10MB)은 기존 스키마 폼과 동일 — 업로드 화면(trust_upload)만 원문 규격(한 파일 · 20MB)으로 좁힌다.
-export function FilePondField({ onChange, required, multiple = true, maxSize = '10MB' }: { value: string; onChange: (v: string) => void; required?: boolean; multiple?: boolean; maxSize?: string }) {
+// multiple·maxSize: 기본값(여러 파일 · 10MB)은 기존 스키마 폼과 동일 — 업로드 화면(trust_upload)만 원문 규격으로 바꾼다. maxSize=null = 용량 제한 없음.
+export function FilePondField({ onChange, required, multiple = true, maxSize = '10MB' }: { value: string; onChange: (v: string) => void; required?: boolean; multiple?: boolean; maxSize?: string | null }) {
   // ⚠️ 비제어(uncontrolled) — files prop을 React로 제어하지 않는다. FilePond가 내부 파일 목록을 단독 소유.
   //    제어 모드(files={state})에서 onupdatefiles가 넘기는 FilePondFile 객체를 그대로 files prop으로 되먹이면
   //    react-filepond가 이를 유효한 파일 소스로 인식하지 못해 내부 상태를 비운다(DOM엔 항목이 보이나 getFiles()=0
@@ -35,7 +35,7 @@ export function FilePondField({ onChange, required, multiple = true, maxSize = '
       maxTotalFileSize={maxSize}
       credits={false}
       name="files"
-      labelIdle={`파일을 끌어다 놓거나 <span class="filepond--label-action">찾아보기</span> · 총 ${maxSize}`}
+      labelIdle={`파일을 끌어다 놓거나 <span class="filepond--label-action">찾아보기</span>${maxSize ? ` · 총 ${maxSize}` : ''}`}
       labelMaxFileSizeExceeded="파일 용량이 너무 큽니다"
       labelMaxFileSize="최대 파일 크기는 {filesize} 입니다"
       labelMaxTotalFileSizeExceeded="전체 첨부 용량을 초과했습니다"

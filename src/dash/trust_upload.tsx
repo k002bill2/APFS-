@@ -22,16 +22,19 @@ export interface UploadDropzoneProps {
   label: string;
   /** 파일 제거 토스트(원문 문구 — '선택 파일 제거됨' / '파일 제거됨') */
   removedMsg?: string;
-  /** 용량 상한(FilePond 검증). 원문 5곳 모두 20MB */
+  /** 용량 상한(FilePond 검증) — 원문이 명시한 화면만(S3_98·유가증권·S4_108 = '20MB'). 미지정 = 제한 없음(S3_103·S3_105 원문 무제한) */
   maxSize?: string;
 }
 
 const same = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((v, i) => v === b[i]);
 
-export function UploadDropzone({ files, onChange, multiple, hint, label, removedMsg = '파일 제거됨', maxSize = '20MB' }: UploadDropzoneProps) {
+export function UploadDropzone({ files, onChange, multiple, hint, label, removedMsg = '파일 제거됨', maxSize }: UploadDropzoneProps) {
   /* FilePond 는 비제어 — 페이지가 files 를 비우면(확인·초기화) key 를 바꿔 다시 마운트해 드롭존도 비운다 */
   const [gen, setGen] = useState(0);
   const emitted = useRef<string[]>([]);
+  /* 비교 기준은 ref 의 최신 files — 콜백이 옛 렌더의 files 를 쥐고 있어도 빈 선택이 페이지로 전파되게(Codex P1) */
+  const filesRef = useRef(files);
+  filesRef.current = files;
   useEffect(() => {
     if (files.length === 0 && emitted.current.length > 0) { emitted.current = []; setGen((g) => g + 1); }
   }, [files]);
@@ -40,14 +43,14 @@ export function UploadDropzone({ files, onChange, multiple, hint, label, removed
     const names = parseFileNames(csv);
     const prev = emitted.current;
     emitted.current = names;
-    if (same(names, files)) return;
+    if (same(names, filesRef.current)) return;
     if (names.length < prev.length) toast(removedMsg);
     onChange(names);
   };
 
   return (
     <div>
-      <DocumentsField key={gen} value="" onChange={change} label={label} multiple={!!multiple} maxSize={maxSize} />
+      <DocumentsField key={gen} value="" onChange={change} label={label} multiple={!!multiple} maxSize={maxSize ?? null} />
       {/* preflight:false — <p> UA 마진 제거 */}
       {hint && <p className="m-0 text-caption" style={{ fontSize: 11.5, marginTop: 6 }}>{hint}</p>}
     </div>

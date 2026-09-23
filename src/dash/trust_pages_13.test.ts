@@ -461,6 +461,13 @@ describe('화면별 도메인 규칙', () => {
       expect(read(new URL(`./${f}`, import.meta.url).pathname), f).not.toMatch(/type="file"/);
     }
   });
+  it('업로드 용량 제한 = 원문 명시 화면만(S3_98·유가증권·S4_108 20MB) · 계좌/입출금은 무제한', () => {
+    const r = (f: string) => read(new URL(`./${f}`, import.meta.url).pathname);
+    expect(r('trust_upload.tsx')).not.toMatch(/maxSize = '/);
+    expect(r('trust_physical_upload.tsx')).toMatch(/<UploadDropzone [^>]*maxSize="20MB"/);
+    expect(r('registry_ledger_modals.tsx')).toMatch(/<UploadDropzone [^>]*maxSize="20MB"/);
+    expect(r('trust_upload_forms.tsx')).not.toMatch(/maxSize/);
+  });
   it('등록원부 비활성원부 칩 = 적용 전 숨김(첫 화면 3행인데 제외 칩이 보이면 오해)', () => {
     const kit = read(new URL('./risk_page_kit.tsx', import.meta.url).pathname);
     expect(kit).toMatch(/filters\.filter\(\(f\) => f\.value && f\.chip !== false\)/);

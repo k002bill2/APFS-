@@ -136,7 +136,7 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
         cap={<>{cfg.uploadNote && <ReviewMarker rec={cfg.uploadNote.rec} dat={cfg.uploadNote.dat} label={cfg.uploadTitle} />}파일명 = 파일 선택</>}
         actions={<Button variant="outline" size="sm" leadingIcon="upload" onClick={upload}>업로드</Button>} />
       <div style={{ padding: '0 18px 16px' }}>
-        <UploadDropzone files={files} onChange={setFiles} hint={HINT} label={cfg.fileLabel} removedMsg="선택 파일 제거됨" />
+        <UploadDropzone files={files} onChange={setFiles} hint={HINT} maxSize="20MB" label={cfg.fileLabel} removedMsg="선택 파일 제거됨" />
       </div>
       <ReadGrid table={cfg.table} rows={shown} ariaLabel={cfg.label} selectable onSelect={onSelect} selectionCol={LABELED_SELECTION_COL} apiRef={apiRef} />
       {confirmDel && <DeleteDialog title={cfg.deleteTitle} count={sel.length} onConfirm={remove} onClose={() => setConfirmDel(false)} />}

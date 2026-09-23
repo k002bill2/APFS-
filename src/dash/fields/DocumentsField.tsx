@@ -19,7 +19,7 @@ import {
 // 파일명 파서·확장자 라벨은 리스트 셀의 첨부 칩과 공유(SSOT) — file_names.ts
 import { parseFileNames, fileExtLabel } from './file_names';
 
-export function DocumentsField({ value, onChange, required, label, multiple, maxSize }: { value: string; onChange: (v: string) => void; required?: boolean; label?: string; multiple?: boolean; maxSize?: string }) {
+export function DocumentsField({ value, onChange, required, label, multiple, maxSize }: { value: string; onChange: (v: string) => void; required?: boolean; label?: string; multiple?: boolean; maxSize?: string | null }) {
   // 초기 value(수정 진입 시의 기존 첨부)를 1회만 캡처 — 이후 내부 상태가 단독 소유.
   const initialRef = React.useRef(value);
   const [existing, setExisting] = React.useState<string[]>(() => parseFileNames(initialRef.current));
