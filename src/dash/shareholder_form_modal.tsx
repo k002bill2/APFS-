@@ -1,6 +1,7 @@
-/* 운용사 주주변동관리 — 팝업 2종 (주주변동 등록 / 주주변동 해제등록)
-   출처: S2_55 목업의 `openReg()` · `openRelease()`(= S2_56 등록화면 팝업 정의 이식). 삭제 확인은 없다
-   (목업 툴바에 [삭제]가 없다 — 형제 화면 S2_53 과 다른 지점이다).
+/* 운용사 주주변동관리 — 팝업 3종 (주주변동 등록·수정 / 주주변동 해제등록 / 삭제 확인)
+   출처: S2_55 목업의 `openReg()` · `openRelease()`(= S2_56 등록화면 팝업 정의 이식).
+   수정·삭제는 selbar 에 둔다 — 목업엔 없지만 2026-09-23 사용자 결정(형제 4화면 버튼 구성 통일).
+   수정은 1건일 때만, 삭제는 구분 무관. 수정 모드·삭제 확인은 형제 litigation_form_modal 배선 그대로다.
 
    ⚠ 왜 RowFormModal(스키마 주도 공용 모달)이 아니라 전용 모달인가 — 조건부 필수 때문이 아니다
      (이 화면엔 조건부 필수가 없다). **값 계약**이 맞지 않는다:
@@ -27,6 +28,7 @@ import { UI } from './components';
 import { mn } from './mask';
 import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
 import { toast } from './ui/sonner';
 import { SHAREHOLDER_SCHEMA, RELEASE_SCHEMA } from './shareholder_manage_schemas';
 
@@ -54,25 +56,30 @@ function Field({ label, children, errMsg, plain }: { label: string; children: Re
 const today = () => format(new Date(), 'yyyy-MM-dd');   // 로컬 달력일 — toISOString 은 KST 00~09시에 전날
 
 /* ──────────────────────────────
-   ① 주주변동 등록 — 목업 `openReg()`
+   ① 주주변동 등록 / 수정 — 목업 `openReg()`(수정은 2026-09-23 사용자 결정으로 추가 · 같은 폼 공유)
    ⚠ 목업에 필수(`*`) 표기가 한 항목도 없다 → 저장 검증도 없다(스키마 required 를 그대로 따른다).
 ────────────────────────────── */
-export function ShareholderFormModal({ initial, onSave, onClose }: {
+export function ShareholderFormModal({ mode = 'create', initial, title, onSave, onClose }: {
+  /** 등록/수정 — 생략 시 등록(기존 호출 동작 유지). */
+  mode?: 'create' | 'edit';
   initial?: Partial<ShareholderFormValues>;
+  /** 제목 오버라이드 — 생략 시 스키마 title(등록). 수정은 호출부가 넘긴다(형제 litigation 동형). */
+  title?: string;
   onSave: (values: ShareholderFormValues) => void;
   onClose: () => void;
 }) {
-  /* 초기값 시드 — RowFormModal 과 동일 규칙: initial 값 우선, 비어 있는 select 는 첫 옵션
+  /* 초기값 시드 — RowFormModal 과 동일 규칙: initial 값 우선, 등록 모드에서 비어 있는 select 는 첫 옵션
      (옵션형이 ''로 저장되면 그리드 셀이 빈칸으로 렌더된다 — apfs-form-modal 계약4).
-     이 모달은 **등록 전용**이라 edit 분기가 없다(목업 툴바에 [수정]이 없다). */
+     수정 모드는 행 값을 그대로 둔다(빈 select 를 첫 옵션으로 바꿔치지 않는다 — 형제 litigation seedValues 동형). */
   const [v, setV] = React.useState<ShareholderFormValues>(() => {
     const seed: ShareholderFormValues = {};
     for (const f of SHAREHOLDER_SCHEMA.fields) {
       const from = initial ? String(initial[f.key] ?? '') : '';
-      seed[f.key] = (!from && f.control === 'select') ? (f.options?.[0] ?? '') : from;
+      seed[f.key] = (!from && f.control === 'select' && mode === 'create') ? (f.options?.[0] ?? '') : from;
     }
     return seed;
   });
+  const heading = title ?? SHAREHOLDER_SCHEMA.title;
   const [errKey, setErrKey] = React.useState('');
   const set = (k: string, val: string) => {
     setV((p) => ({ ...p, [k]: val }));
@@ -86,7 +93,7 @@ export function ShareholderFormModal({ initial, onSave, onClose }: {
     if (miss) { setErrKey(miss.key); return; }
     return () => {
       onSave({ ...v });
-      toast.success('저장되었습니다 (목업)');
+      toast.success(mode === 'create' ? '저장되었습니다 (목업)' : '수정되었습니다 (목업)');
     };
   };
 
@@ -98,8 +105,8 @@ export function ShareholderFormModal({ initial, onSave, onClose }: {
           항목 6개(≤6) → RowFormModal 의 좁은 모달 규격(max-w-[460px] · 1단). */}
       <DialogContent className="max-w-[460px] max-h-[86vh]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="px-[46px]">
-          <DialogTitle>{SHAREHOLDER_SCHEMA.title}</DialogTitle>
-          <DialogDescription className="sr-only">{SHAREHOLDER_SCHEMA.title} 양식</DialogDescription>
+          <DialogTitle>{heading}</DialogTitle>
+          <DialogDescription className="sr-only">{heading} 양식</DialogDescription>
         </DialogHeader>
 
         <div className="overflow-y-auto p-[46px]">
@@ -114,7 +121,7 @@ export function ShareholderFormModal({ initial, onSave, onClose }: {
           ))}
         </div>
 
-        {/* 푸터 — 목업 modal-foot 구성(닫기·저장) */}
+        {/* 푸터 — 목업 modal-foot 구성(닫기·저장). 삭제는 목록 selbar 가 소유한다(형제 litigation 동형) */}
         <DialogFooter className="px-[46px]">
           <div />
           <div className="flex gap-2">
@@ -197,5 +204,31 @@ export function ShareholderReleaseModal({ count, onSave, onClose }: {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ──────────────────────────────
+   ③ 삭제 확인 — 목업엔 없다(2026-09-23 사용자 결정으로 추가). 형제 `LitigationDeleteDialog` 규격·문구 그대로.
+────────────────────────────── */
+export function ShareholderDeleteDialog({ count, onConfirm, onClose }: {
+  count: number;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <AlertDialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>주주변동 삭제</AlertDialogTitle>
+          <AlertDialogDescription>
+            선택한 <b className="text-foreground">{mn(String(count))}건</b>을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>취소</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
