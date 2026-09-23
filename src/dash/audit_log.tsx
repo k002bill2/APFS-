@@ -189,7 +189,7 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
       toolbarLeft={(
         <>
           <Icon name="filter" size={16} className="text-caption" />
-          {RESULT_CHIPS.map((r) => <FilterChip key={r || 'all'} active={fResult === r} onClick={() => setFResult(r)} count={chipCount(r)}>{r || '전체'}</FilterChip>)}
+          {RESULT_CHIPS.map((r) => <FilterChip key={r || 'all'} active={fResult === r} onClick={() => setFResult(r)} count={chipCount(r)}>{r || '결과: 전체'}</FilterChip>)}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               {value}

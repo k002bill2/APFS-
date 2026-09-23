@@ -184,7 +184,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
           {/* 보고 구분 = 3개 표 전환. 표가 바뀌면 컬럼·건수·필터 도메인이 함께 바뀐다. */}
           <SegTabs options={REPORT_TABS.map((t) => ({ value: t.key, label: t.label }))} value={tabKey} onChange={onTab} />
           <Icon name="filter" size={16} className="text-caption" />
-          <FilterChip active={fGp === ''} onClick={() => setFGp('')} count={chipCount('')}>전체</FilterChip>
+          <FilterChip active={fGp === ''} onClick={() => setFGp('')} count={chipCount('')}>운용사: 전체</FilterChip>
           {gpOptions.map((g) => (
             <FilterChip key={g} active={fGp === g} onClick={() => setFGp(g)} count={chipCount(g)}>{g}</FilterChip>
           ))}

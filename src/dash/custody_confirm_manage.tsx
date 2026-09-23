@@ -375,7 +375,7 @@ export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void })
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['', '확정', '미확정'] as ('' | ConfirmState)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fConfirm === s} onClick={() => setFConfirm(s)}>{s || '전체'}</FilterChip>
+            <FilterChip key={s || 'all'} active={fConfirm === s} onClick={() => setFConfirm(s)}>{s || '확정여부: 전체'}</FilterChip>
           ))}
           {fBaseDate !== BASE_DATE && (
             <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>

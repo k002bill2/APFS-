@@ -319,7 +319,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
           <Icon name="filter" size={16} className="text-caption" />
           {/* `전체` 칩 — 3칩 모두 ON일 때 활성이고, 누르면 3개를 한 번에 켠다(0행 상태의 복구 경로를 겸한다).
               멱등이라 이미 전부 켜진 상태에서 눌러도 무해. count는 세 facet의 합(상수 금지). */}
-          <FilterChip active={allGradesOn} onClick={() => setGrades(ALL_GRADES_ON)} count={String(gradeTotal)}>전체</FilterChip>
+          <FilterChip active={allGradesOn} onClick={() => setGrades(ALL_GRADES_ON)} count={String(gradeTotal)}>등급: 전체</FilterChip>
           {/* ⚠ `전체`가 활성이면 등급 칩은 **비활성으로 보인다** — 상태(`grades`)는 3개 다 true지만
               참조처럼 "활성 칩은 하나"로 읽히게 표시만 분리한다(파일 상단 '절충' 참조). */}
           {GRADES.map((g) => (

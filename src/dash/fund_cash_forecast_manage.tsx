@@ -331,7 +331,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['', ...ACCTS] as ('' | Acct)[]).map((a) => (
-            <FilterChip key={a || 'all'} active={fAcct === a} onClick={() => setFAcct(a)}>{a || '전체'}</FilterChip>
+            <FilterChip key={a || 'all'} active={fAcct === a} onClick={() => setFAcct(a)}>{a || '계정구분: 전체'}</FilterChip>
           ))}
           {([
             ['운용사', fGp, () => setFGp('')],

@@ -297,7 +297,7 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['', '승인', '보류', '부결'] as ('' | ReviewStatus)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fStat === s} onClick={() => setFStat(s)}>{s || '전체'}</FilterChip>
+            <FilterChip key={s || 'all'} active={fStat === s} onClick={() => setFStat(s)}>{s || '투심상태: 전체'}</FilterChip>
           ))}
         </>
       )}

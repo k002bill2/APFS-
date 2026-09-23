@@ -377,7 +377,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['', '일정', '결과'] as ('' | MeetingStatus)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fRst === s} onClick={() => setFRst(s)}>{s || '전체'}</FilterChip>
+            <FilterChip key={s || 'all'} active={fRst === s} onClick={() => setFRst(s)}>{s || '보고상태: 전체'}</FilterChip>
           ))}
           {([
             ['운용사', fGp, () => setFGp(''), false],

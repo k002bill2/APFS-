@@ -277,7 +277,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
       toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
-          {STATUS_CHIPS.map((s) => <FilterChip key={s || 'all'} active={fStatus === s} onClick={() => setFStatus(s)}>{s || '전체'}</FilterChip>)}
+          {STATUS_CHIPS.map((s) => <FilterChip key={s || 'all'} active={fStatus === s} onClick={() => setFStatus(s)}>{s || '상태: 전체'}</FilterChip>)}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               {value}

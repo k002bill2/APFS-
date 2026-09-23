@@ -337,7 +337,7 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['', '월간보고서', '반기보고서'] as ('' | ReportKind)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fRt === s} onClick={() => setFRt(s)}>{s || '전체'}</FilterChip>
+            <FilterChip key={s || 'all'} active={fRt === s} onClick={() => setFRt(s)}>{s || '보고구분: 전체'}</FilterChip>
           ))}
           {/* 값만 표시(접두사 없음) + × */}
           {([
