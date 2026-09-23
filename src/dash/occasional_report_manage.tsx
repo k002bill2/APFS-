@@ -33,6 +33,8 @@ import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
 import { GridFrame, FooterActions } from './grid_frame';
+import { LeafTabBody } from './leaf_tabs';   // 리프 탭 묶음(opt-in)
+import type { LeafTabsSlot } from './leaf_tabs';
 import { apfsTheme, FIT_GRID_WIDTH, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
@@ -238,7 +240,8 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
 /* 확인 모달은 **대상 행 id를 직접 싣는다** — 행 선택(체크박스)이 없어 `selected`가 존재하지 않는다 */
 type ModalState = null | { kind: 'confirm'; role: Role; id: string } | { kind: 'report' } | { kind: 'gpSpec' } | { kind: 'fundSpec' };
 
-export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void }) {
+/* tabs(opt-in) — 메뉴 리프가 원문 화면 2개를 탭으로 묶을 때(leaf_tabs.tsx). 미지정이면 종전 화면 그대로 */
+export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) => void; tabs?: LeafTabsSlot }) {
   const apiRef = useRef<GridApi<OccReportRow> | null>(null);
   const [rows, setRows] = useState<OccReportRow[]>(DEMO);
   const [showAll, setShowAll] = useState(false);
@@ -336,9 +339,9 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '사후보고관리', '수시보고 확인']}
-      title="수시보고 확인"
-      favRoute="occasional-report"
+      crumbs={tabs?.crumbs ?? ['홈', '투자자산관리', '사후보고관리', '수시보고 확인']}
+      title={tabs?.label ?? "수시보고 확인"}
+      favRoute={tabs?.route ?? "occasional-report"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌는 항상 필터칩이다 — 행 선택(체크박스)을 없앤 2026-09-12 이후 selbar가 존재하지 않는다.
          확인 전이는 셀 [확인] 버튼, 조회 팝업은 셀 링크가 각각 가져갔다(목업 S1_04 원본 구조). */
@@ -377,6 +380,7 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
       ) : undefined}
       footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}>
 
+      <LeafTabBody slot={tabs}>
       <div>
         <AgGridReact<OccReportRow>
           theme={apfsTheme}
@@ -395,6 +399,7 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 수시보고 건이 없습니다.</span>'}
         />
       </div>
+      </LeafTabBody>
 
       {/* ── 상세필터 드로어 — 검색어는 미사용(OFF). 컬럼 미연동 필터는 caption으로 no-op(apfs-detail-filter) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>

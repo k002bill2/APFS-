@@ -17,9 +17,11 @@ import { GpSpecModal } from './gp_spec_modal';                 // 운용사 명�
 import { CompanyProfileModal } from './company_profile_modal'; // 투자기업 기업개요(S1_30) — 투자기업정보(통합)의 행 상세
 import { MgmtFeeDetailModal } from './mgmt_fee_detail_modal';   // 관리보수보고 상세조회(S1_43) — 지급일자 링크
 import { DueDiligChecklistModal } from './due_dilig_checklist_modal'; // 투자금실사보고서 체크리스트(S1_40) — 실사일자 링크
+import { GpRatioDetailModal } from './gp_ratio_detail_modal';       // 운용사정량지표상세(재무건정성비율)(S1_38) — 기준년월 링크
 import { foldGroups } from './grid_header_note';   // 2단 그룹헤더(ColumnSpec group 소비처)
 import { linksDetail } from './schemas/detail_link';   // detail 링크 술어 정본(소비처 3곳 공유)
-import { UNITS, DEFAULT_UNIT, isUnit, toUnit, amountHeader } from './schemas/unit';
+import { UNITS, DEFAULT_UNIT, isUnit, toUnit, amountHeader, formatUnit } from './schemas/unit';
+import { computeSchemaTotal } from './schemas/totals';   // 합계 행(schema.totals opt-in) 계산 정본
 import type { Unit } from './schemas/unit';
 import type { ColumnSpec } from './schemas/types';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
@@ -359,6 +361,7 @@ const DETAIL_MODALS: Record<DetailPopup, (p: { onClose: () => void; row: Row }) 
   companyProfile: CompanyProfileModal,
   mgmtFeeDetail: MgmtFeeDetailModal,
   dueDiligChecklist: DueDiligChecklistModal,
+  gpRatioDetail: GpRatioDetailModal,
 };
 /* 링크 셀 title(동작 힌트) — 값은 절대 넣지 않는다 */
 const DETAIL_HINT: Record<DetailPopup, string> = {
@@ -367,6 +370,7 @@ const DETAIL_HINT: Record<DetailPopup, string> = {
   companyProfile: '투자기업 기업개요 보기',
   mgmtFeeDetail: '관리보수보고 상세조회',
   dueDiligChecklist: '투자금실사보고서 체크리스트 조회',
+  gpRatioDetail: '운용사정량지표상세(재무건정성비율) 보기',
 };
 
 /* 셀 안 링크 — 값 클릭으로 상세 팝업 진입. occasional_report_manage.tsx의 LinkCell 복사 관례.
@@ -382,6 +386,23 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
       {value}
     </button>
   );
+}
+
+/* 합계(pinned bottom) 행 셀 — `schema.totals` 선언 스키마만 그 행이 있다(schemas/totals.ts).
+   데이터 행 렌더러(링크·셀 select·첨부 칩·상태 배지)를 합계 행에 쓰지 않는다 — 합계의 '-' 가 배지로,
+   라벨이 링크로 그려진다. 빈 값('') = 원문 colspan 라벨 영역 → 빈 셀. 금액은 데이터 행과 같은 단위 환산 경로. */
+function TotalCell({ col, value, unit }: { col: ColumnSpec; value: unknown; unit?: Unit }) {
+  if (value === '' || value == null) return null;
+  if (value === '-') return <span className="text-muted-foreground">-</span>;
+  if (typeof value === 'number') {
+    return <span className="tabular font-bold">{unit && col.type === 'amount' ? formatUnit(value, unit) : value.toLocaleString()}</span>;
+  }
+  return <span className="font-bold">{String(value)}</span>;
+}
+
+/* 렌더러 래퍼 — 합계(pinned) 행은 TotalCell, 데이터 행은 원래 렌더러. 합계 행이 없는 스키마엔 분기가 닿지 않는다 */
+function pinnedAware(col: ColumnSpec, unit: Unit | undefined, render: (p: ICellRendererParams<Row>) => React.ReactNode) {
+  return (p: ICellRendererParams<Row>) => (p.node.rowPinned ? <TotalCell col={col} value={p.value} unit={unit} /> : render(p));
 }
 
 /* 셀 안 select — `ColumnSpec.inlineSelect` 선언 컬럼. 원문 S1_43 `<select class="cellsel" data-cfm>` 이식.
@@ -447,7 +468,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
   // 활성 필터로 행을 실제 필터링 → KPI·카드뷰·건수는 이 결과 기준
   // (그리드 리스트뷰는 external filter로 동일 술어를 적용 — 페이지네이션은 그리드가 소유).
-  const filtered = rows.filter((r) => rowMatchesFilters(r, schema, filterValues));
+  const filtered = useMemo(() => rows.filter((r) => rowMatchesFilters(r, schema, filterValues)), [rows, schema, filterValues]);
+  /* 합계 행 — schema.totals 를 선언한 스키마만(미선언 = undefined → pinned 행 없음, 종전 동작).
+     필터 결과 기준으로 다시 계산한다(원문 tfoot = 표시 행의 합). 인라인 배열 금지(apfs-manage-page 함정) — useMemo 로 참조 고정 */
+  const pinnedBottom = useMemo(() => {
+    const t = computeSchemaTotal(schema, filtered as unknown as Record<string, unknown>[]);
+    return t ? [t as unknown as Row] : undefined;
+  }, [schema, filtered]);
   // 칩: filterValues에서 파생 (값-필터는 "라벨: 값", 카테고리 태그는 값 없이 라벨만)
   // 검색어(예약 라벨)는 휴리스틱이 tag로 오판하므로 값-칩으로 강제
   const chipItems = Object.entries(filterValues).map(([label, value]) => ({
@@ -544,7 +571,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               값(텍스트)은 min-w-0 + ellipsis로 줄고, 칩은 shrink-0이라 긴 제목에도 살아남는다.
            ③ inlineSelect 컬럼 — 셀 안 select(S1_43 확정여부). 값을 바꾸면 rows 가 바뀐다.
            ④ 그 외 — 공용 Cell */
-        cellRenderer: c.detail
+        cellRenderer: pinnedAware(c, unitOn ? unit : undefined, c.detail
           ? (p: ICellRendererParams<Row>) => (linksDetail(c, p.value)
               ? <LinkCell value={String(p.value ?? "")} hint={DETAIL_HINT[c.detail!]} onClick={() => { if (p.data) setDetail({ kind: c.detail!, row: p.data }); }} />
               : <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} unit={unitOn ? unit : undefined} />)
@@ -563,7 +590,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                 <AttachChips value={(p.data as Record<string, unknown> | undefined)?.[c.attachFrom!]} />
               </span>
             )
-          : (p: ICellRendererParams<Row>) => <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} unit={unitOn ? unit : undefined} />,
+          : (p: ICellRendererParams<Row>) => <Cell col={c} value={p.value} color={p.data?.color} statusDomain={schema.statusDomain} unit={unitOn ? unit : undefined} />),
       };
     });
     // '관리' 액션 컬럼 제거(2026-09-11) — 행 더블클릭(onRowDoubleClicked)이 수정 모달을 열어 기능 대체.
@@ -631,13 +658,15 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     // 1/10⁸ 값이 의미 불명이 되므로 금액 컬럼 헤더는 amountHeader 를 거친다.
     const conv = (c: typeof cols[number], v: number) => (unitOn && c.type === 'amount' ? toUnit(v, unit) : v);
     const header = cols.map((c) => (unitOn && c.type === 'amount' ? amountHeader(c.label, unit) : c.label + (c.unit ? ` (${c.unit})` : '')));
-    const body = filtered.map((r) => cols.map((c) => {
+    // 합계 행(schema.totals opt-in)은 화면처럼 마지막 줄에 붙인다(화면=엑셀 불변식). 미선언이면 종전 그대로
+    const src: Row[] = pinnedBottom ? [...filtered, ...pinnedBottom] : filtered;
+    const body = src.map((r) => cols.map((c) => {
       const v = (r as any)[c.key];
       return isNum(c, v) ? (conv(c, v)) : cell(v);
     }));
     const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
     // 숫자 셀에 화면 포맷과 일치하는 숫자서식(z) 부여 (행: 헤더 다음=1부터)
-    filtered.forEach((r, i) => cols.forEach((c, j) => {
+    src.forEach((r, i) => cols.forEach((c, j) => {
       const raw = (r as any)[c.key];
       if (!isNum(c, raw)) return;
       const addr = XLSX.utils.encode_cell({ r: i + 1, c: j });
@@ -761,6 +790,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               rowData={rows}
               columnDefs={columnDefs}
               getRowId={(p) => p.data.id}
+              pinnedBottomRowData={pinnedBottom}   // schema.totals opt-in — 미선언이면 undefined(합계 행 없음)
               domLayout="autoHeight"
               autoSizeStrategy={AUTO_SIZE_CONTENT}   // 컬럼 폭=내용 폭(첫 렌더 1회). columnDefs flex 제거가 전제. 골드 subfund_manage와 동일
               rowHeight={44}
@@ -779,11 +809,11 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               /* 상세 팝업이 열려 있으면 행 더블클릭은 무시한다 — 링크 셀 더블클릭 시 첫 클릭이 팝업을 열고
                  두 번째 클릭이 오버레이에 먹혀 실측상 수정 모달은 안 열리지만(2026-09-12 확인), 그 방어는
                  렌더 타이밍에 기대는 것이라 상태로 한 번 더 막는다(Codex 리뷰 P2). */
-              onRowDoubleClicked={editable ? (e) => { if (detail === null && e.data) setModal({ mode: "edit", row: e.data }); } : undefined}
+              onRowDoubleClicked={editable ? (e) => { if (detail === null && e.data && !e.rowPinned) setModal({ mode: "edit", row: e.data }); } : undefined}
               onCellKeyDown={(e: CellKeyDownEvent<Row>) => {
                 // 관리 컬럼 제거 대체 — 키보드로 행에서 Enter 시 수정 모달(더블클릭과 동일). 선택 체크박스 컬럼은 Enter=선택 토글 유지.
                 const ke = e.event as KeyboardEvent | null;
-                if (!ke || ke.key !== "Enter" || !e.data) return;
+                if (!ke || ke.key !== "Enter" || !e.data || e.rowPinned) return;   // 합계 행은 수정·상세 대상이 아니다
                 const colId = e.column?.getColId?.() ?? "";
                 if (colId.startsWith("ag-Grid")) return;
                 /* 링크 셀은 AG Grid의 Tab 순회가 셀 안 button에 닿지 않으므로 셀 Enter로 진입을 보장한다

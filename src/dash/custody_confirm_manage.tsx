@@ -28,6 +28,8 @@ import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
 import { GridFrame, FooterActions } from './grid_frame';
+import { LeafTabBody } from './leaf_tabs';   // 리프 탭 묶음(opt-in)
+import type { LeafTabsSlot } from './leaf_tabs';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
@@ -284,7 +286,8 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
 /* 상세 팝업은 **대상 행 id를 직접 싣는다** — 행 선택(체크박스)이 없어 `selected`가 존재하지 않는다 */
 type ModalState = null | { kind: 'detail'; id: string };
 
-export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void }) {
+/* tabs(opt-in) — 메뉴 리프가 원문 화면 2개를 탭으로 묶을 때(leaf_tabs.tsx). 미지정이면 종전 화면 그대로 */
+export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => void; tabs?: LeafTabsSlot }) {
   const apiRef = useRef<GridApi<CustodyConfirmRow> | null>(null);
   const [rows, setRows] = useState<CustodyConfirmRow[]>(DEMO);
   const [showAll, setShowAll] = useState(false);
@@ -365,9 +368,9 @@ export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void })
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '자펀드 관리', '자펀드수탁관리(확정)']}
-      title="자펀드수탁관리(확정)"
-      favRoute="custody-confirm"
+      crumbs={tabs?.crumbs ?? ['홈', '투자자산관리', '자펀드 관리', '자펀드수탁관리(확정)']}
+      title={tabs?.label ?? "자펀드수탁관리(확정)"}
+      favRoute={tabs?.route ?? "custody-confirm"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌는 항상 필터칩이다 — 행 선택이 없어 selbar가 존재하지 않는다(조회 전용 화면).
          기준일자 칩은 **목업 기본값과 다를 때만** 띄운다(기본값이 상시 칩으로 남으면 시끄럽다). */
@@ -402,6 +405,7 @@ export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void })
       ) : undefined}
       footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}>
 
+      <LeafTabBody slot={tabs}>
       <div>
         <AgGridReact<CustodyConfirmRow>
           theme={apfsTheme}
@@ -420,6 +424,7 @@ export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void })
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 대사 건이 없습니다.</span>'}
         />
       </div>
+      </LeafTabBody>
 
       {/* ── 상세필터 드로어 — 검색어는 미사용(OFF). 목업 검색박스는 기준일자 단일이고, 확정여부는 우리가 더한 파생 필터다 ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>

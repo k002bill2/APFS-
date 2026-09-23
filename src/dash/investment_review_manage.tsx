@@ -34,14 +34,15 @@ import { RowFormModal } from './generic_list_modal';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
 import { PeriodPicker } from './ui/period-picker';
 import { COMPLIANCE_SCHEMA } from './investment_review_manage_schemas';
+import { INV_REVIEW_ROWS } from './investment_review_data';
+import type { Confirm, Result, InvReviewRow } from './investment_review_data';
+export type { Confirm, Result, InvReviewRow } from './investment_review_data';
 
 const { Button, IconBtn, StatusBadge, FilterChip } = UI;
 
 /* ──────────────────────────────
    도메인 타입 · 상태 도메인
 ────────────────────────────── */
-export type Confirm = '미확정' | '확정' | '투심위취소';
-export type Result = '' | '미결' | '가결' | '부결' | '조건부' | '승인취소' | '보류';
 const CONFIRM_TONE: Record<Confirm, Tone> = { 미확정: 'info', 확정: 'primary', 투심위취소: 'warning' };
 const RES_TONE: Record<string, Tone> = { 미결: 'info', 가결: 'success', 부결: 'danger', 조건부: 'cyan', 보류: 'warning', 승인취소: 'warning' };
 const ST_TONE: Record<string, Tone> = { 일정: 'info', 결과: 'success' };
@@ -61,27 +62,11 @@ const stageOf = (r: InvReviewRow): Stage => {
   return 'confirmed';
 };
 
-export interface InvReviewRow {
-  id: string; no: number;
-  gp: string; fn: string; co: string;
-  dt: string; inv: number | null; ty: string; ob: string; sm: string; ag: string;
-  confirm: Confirm; appr: number | null; pay: string; res: Result;
-  compliance?: Record<string, unknown> | null;   // 투자준법감시내역(백엔드 없음 — 폼값 보관). 있으면 수정/삭제 노출
-}
 /* 명세(읽기전용 상세) 팝업은 opt-in — 이 페이지 미포함(2026-09-11 사용자 결정). 포함 시 detail 구조·데이터를
    행에 다시 실어 InvReviewSpecModal을 재생성한다(apfs-spec-popup). 지금은 그리드에 안 쓰이므로 두지 않는다. */
 
-/* 데모 데이터 — 파생 단계 전부 포함(미확정·확정미결·가결·부결·투심위취소). 금액 N/A=null(문자 '-' 아님), 텍스트 N/A='-'. 단위=원 */
-const N = null;
-const DEMO: InvReviewRow[] = [
-  { id: 'ir-1', no: 1, gp: '인라이트벤처스(주)', fn: '인라이트 농식품 청년기업 성장펀드', co: '(주)엔테로바이옴', dt: '2026-06-02', inv: 800_050_960, ty: '신주-우선주', ob: '-', sm: '-', ag: '-', confirm: '미확정', appr: 800_050_960, pay: '2026-06-05', res: '' },
-  { id: 'ir-2', no: 2, gp: '어니스트벤처스(주)', fn: '상주-어니스트 애그테크 투자조합', co: '(주)에스티리테일', dt: '2026-06-10', inv: 500_000_000, ty: '전환사채', ob: 'Y', sm: 'Y', ag: 'Y', confirm: '미확정', appr: 500_000_000, pay: '2026-06-15', res: '',
-    compliance: { gp: '어니스트벤처스(주)', fn: '상주-어니스트 애그테크 투자조합', baseDate: '2026-06-10', co: '(주)에스티리테일', bizno: '342-88-02365', overseas: '아니오', founded: '2022-03-02', fdiv: '식품관련산업', fcon: '기타 과실·채소 가공 및 저장 처리업', iv: 'CB', ns: '신주', ivDate: '', sale: '', mm: '일반기업', venture: '아니오', region: '경북', ob: '예', sm: '예', agf: '예', follow: '아니오', opinion: '적격', remark: '' } },
-  { id: 'ir-3', no: 3, gp: '엔비에이치(NBH)캐피탈 주식회사', fn: '웰투시-NBH 전북애그리푸드 투자조합', co: '주식회사 팡세', dt: '2026-06-18', inv: 1_200_000_000, ty: '신주-우선주', ob: 'Y', sm: 'Y', ag: 'Y', confirm: '확정', appr: 1_150_000_000, pay: '2026-06-24', res: '미결' },
-  { id: 'ir-4', no: 4, gp: '인라이트벤처스(주)', fn: '인라이트 농식품 청년기업 성장펀드', co: '(주)그린바이오텍', dt: '2026-05-15', inv: 300_000_000, ty: 'RCPS', ob: 'Y', sm: '-', ag: 'Y', confirm: '확정', appr: 300_000_000, pay: '2026-05-20', res: '가결' },
-  { id: 'ir-5', no: 5, gp: '어니스트벤처스(주)', fn: '상주-어니스트 애그테크 투자조합', co: '(주)블루오션푸드', dt: '2026-04-22', inv: 200_000_000, ty: '전환사채', ob: '-', sm: '-', ag: '-', confirm: '확정', appr: N, pay: '-', res: '부결' },
-  { id: 'ir-6', no: 6, gp: '엔비에이치(NBH)캐피탈 주식회사', fn: '웰투시-NBH 전북애그리푸드 투자조합', co: '(주)팜스토리', dt: '2026-03-30', inv: 150_000_000, ty: '보통주', ob: '-', sm: '-', ag: '-', confirm: '투심위취소', appr: N, pay: '-', res: '' },
-];
+/* 목록 행 = 원문 S1_01 `var DATA` 3건(investment_review_data.ts — 합성 행 없음). 새로고침은 이 원본으로 되돌린다 */
+const DEMO: InvReviewRow[] = [...INV_REVIEW_ROWS];
 
 /* 합계 대상(가산 가능한 금액만) — 투자금액·승인금액 */
 const SUM_KEYS = ['inv', 'appr'] as const;

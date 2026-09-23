@@ -33,6 +33,8 @@ import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
 import { GridFrame, FooterActions } from './grid_frame';
+import { LeafTabBody } from './leaf_tabs';   // 리프 탭 묶음(opt-in)
+import type { LeafTabsSlot } from './leaf_tabs';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { AgGridReact } from 'ag-grid-react';
@@ -327,7 +329,8 @@ function prependMemo<T extends MemoRow>(rows: T[], id: string, memo: VerifyMemo)
   return rows.map((r) => (r.id === id ? { ...r, memos: [memo, ...r.memos] } : r));
 }
 
-export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) {
+/* tabs(opt-in) — 메뉴 리프가 원문 화면 2개를 탭으로 묶을 때(leaf_tabs.tsx). 미지정이면 종전 화면 그대로 */
+export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => void; tabs?: LeafTabsSlot }) {
   const [invest, setInvest] = useState<InvestAssetRow[]>(INVEST_DEMO);
   const [trade, setTrade] = useState<NonInvestTradeRow[]>(TRADE_DEMO);
   const [nonInvest, setNonInvest] = useState<NonInvestRow[]>(NONINVEST_DEMO);
@@ -425,9 +428,9 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '자펀드 관리', '자펀드 수탁관리']}
-      title="자펀드 수탁관리"
-      favRoute="custody-verify"
+      crumbs={tabs?.crumbs ?? ['홈', '투자자산관리', '자펀드 관리', '자펀드 수탁관리']}
+      title={tabs?.label ?? "자펀드 수탁관리"}
+      favRoute={tabs?.route ?? "custody-verify"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 적용 중인 드로어 값 칩. 주 필터(FilterChip 그룹)는 없다 — 목업 검색박스가 자펀드·기준일 2개뿐이고
          자펀드는 값이 하나라 칩 그룹으로 펼칠 축이 아니다. 행 선택이 없어 selbar도 없다. */
@@ -455,6 +458,7 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
       footerLeft={<span>{'투자자산 ' + String(investRows.length) + '건 · 미투자자산 거래 ' + String(tradeRows.length) + '건 · 미투자자산 ' + String(nonInvestRows.length) + '건'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
+      <LeafTabBody slot={tabs}>
       {/* ── ① 투자자산 ── */}
       <SectionHead n="1" title="투자자산" cap="운용사 장부 ↔ 수탁기관 보관내역 대사" />
       <div>
@@ -499,6 +503,7 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
           overlayNoRowsTemplate={NO_ROWS}
         />
       </div>
+      </LeafTabBody>
 
       {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(자펀드·기준일). 검색어는 미사용(OFF) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>

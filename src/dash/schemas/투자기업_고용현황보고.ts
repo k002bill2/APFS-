@@ -2,7 +2,9 @@
    출처: docs/mockups/01_투자자산관리/S1_32_투자기업_고용현황보고.html (2026-09-15 파싱 실측)
 
    원문 3행을 그대로 싣는다. 원문 tfoot 의 `합계`(총고용 155 · 청년 62)는 행이 아니라 집계라
-   sample 에 넣지 않는다 — 넣으면 건수가 4건이 되고 합계가 데이터로 위조된다. */
+   sample 에 넣지 않는다 — 넣으면 건수가 4건이 되고 합계가 데이터로 위조된다.
+   대신 `totals`(opt-in)로 pinned 합계 행을 그린다(S1_32:255-263): `합계`(colspan 7 = No~기준년월) ·
+   매출액 = 원문 `TOTAL_SALES`(DATA sales 합) · 총고용·청년고용 = 원문 리터럴 155·62(= 3행 합) · 끝 3칸 `-`. */
 import type { PageSchema } from './types';
 
 export const schema: PageSchema = {
@@ -40,6 +42,10 @@ export const schema: PageSchema = {
     { label: '미완료', tone: 'danger' },
   ],
   hideCardView: true,
+  totals: {
+    label: '합계',
+    rules: { salesAmt: 'sum', totalEmployees: 'sum', youthEmployees: 'sum', attachment: 'dash', updatedAt: 'dash', isUploaded: 'dash' },
+  },
   sample: [
     { no: 1, gp: 'NH투자증권', subFund: 'NH농식품밸류업투자조합', bizNo: '214-88-12345', firstInvestDate: '2024-03-15', investee: '(주)그린팜테크', baseYm: '2026-06', salesAmt: 12500000000, totalEmployees: 85, youthEmployees: 32, attachment: '고용현황_그린팜_202606.xlsx', updatedAt: '2026-07-10 14:22', isUploaded: '완료' },
     { no: 2, gp: 'NH투자증권', subFund: 'NH농식품밸류업투자조합', bizNo: '305-81-54321', firstInvestDate: '2023-11-20', investee: '(주)오션프레시', baseYm: '2026-06', salesAmt: 8300000000, totalEmployees: 47, youthEmployees: 19, attachment: '고용현황_오션_202606.xlsx', updatedAt: '2026-07-09 10:05', isUploaded: '완료' },

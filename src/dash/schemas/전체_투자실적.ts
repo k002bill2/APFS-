@@ -10,9 +10,12 @@
    `농식품 투자비중`·`결성액대비 투자비율`은 원문에서 값이 null 이다.
    비율을 계산해 채우지 않는다: 원문 자신이 "원문 데이터 값 없음(null) — 임의 생성 안 함"이라고 적어 둔 자리다.
 
-   ── 싣지 않은 것 ──
-   원문 tfoot 의 `합계 1건` 행. 행이 아니라 집계라 `sample`(데이터 행)에 섞으면 건수가 2건이 된다.
-   합계는 표에서 파생 가능하므로 데이터로 위조하지 않는다. */
+   ── 합계 행 ──
+   원문 tfoot 의 `합계 1건` 행은 행이 아니라 집계라 `sample`(데이터 행)에 섞지 않는다(섞으면 건수가 2건).
+   대신 `totals`(opt-in)로 pinned 합계 행을 그린다(S1_33:257-270): `합계 {n}건`(colspan 5 = No~등록일자) ·
+   결성액·투자금액·회수 4칸·(전환금액)·투자잔액 = 합산(원문 data-base 리터럴 = 1행 값) ·
+   투자업체~투자건 No(colspan 7)·비율 2칸·투자기간·여부 6칸~경영형태(colspan 9) = `-` ·
+   연번 = 행 수 + 1(원문 캡션: "연번은 소계·합계 행을 포함해 전체 행을 순서대로 매긴 일련번호" → 1건이면 2). */
 import type { PageSchema } from './types';
 
 export const schema: PageSchema = {
@@ -79,6 +82,19 @@ export const schema: PageSchema = {
   // 원문이 `var unit='억원'`으로 시작한다(S1_33:319). 원으로 열면 결성액이 32,000,000,000 으로
   // 보여 첫 화면부터 원문과 다르다.
   defaultUnit: '억원',
+  totals: {
+    label: '합계 {n}건',
+    rules: {
+      fundAmount: 'sum',
+      investee: 'dash', bizSector: 'dash', bizContent: 'dash', investMethod: 'dash', reviewDate: 'dash', firstInvestDate: 'dash', investSeqNo: 'dash',
+      investAmt: 'sum',
+      agriInvestRatio: 'dash', fundInvestRatio: 'dash', investPeriod: 'dash',
+      recoverPrincipal: 'sum', recoverProfit: 'sum', recoverTotal: 'sum', writedown: 'sum', convertedAmt: 'sum', investBalance: 'sum',
+      isFullRecovered: 'dash', isAgri: 'dash', isVenture: 'dash', isMandatory: 'dash', isBelowScale: 'dash', isStartupInvest: 'dash',
+      foundDate: 'dash', location: 'dash', mgmtType: 'dash',
+      seqNo: 'nextSeq',
+    },
+  },
   sample: [
     { no: 1, year: '2010', sector: '8대사업', fundName: '현대동양농식품사모투자전문회사', registeredAt: '2011-04-04', fundAmount: 32000000000, investee: '(주)진바이오텍', bizSector: '축산관련산업', bizContent: '동물사료 원료 생산(동물자원과학 R&D)', investMethod: 'BW', reviewDate: '2011-10-13', firstInvestDate: '2011-10-25', investSeqNo: '1', investAmt: 5000000000, agriInvestRatio: '-', fundInvestRatio: '-', investPeriod: '4년', recoverPrincipal: 5000000000, recoverProfit: 2500000000, recoverTotal: 7500000000, writedown: 0, convertedAmt: 0, investBalance: 0, isFullRecovered: 'O', isAgri: 'Y', isVenture: 'N', isMandatory: 'Y', isBelowScale: 'Y', isStartupInvest: 'X', foundDate: '2000-03-15', location: '충남', mgmtType: '일반기업', seqNo: 1 },
   ],
