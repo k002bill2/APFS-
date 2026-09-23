@@ -40,8 +40,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 
 const { Button, IconBtn, StatusBadge, FilterChip, SegTabs } = UI;
 
@@ -222,12 +220,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 }
 
 /* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 */
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -244,10 +242,6 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
     </div>
   );
 }
-
-/* 상세필터 ⚠검토필요 메모 — 목업 `S1_08_조합예상자금보고.html` 담당자 필드의 data-rec/data-dat 원문 그대로(1건).
-   설계 메모라 마스킹·엑셀 대상이 아니다. */
-const MGR_NOTE: ReviewNote = { rec: '담당자 코드/명 목록', dat: '원천 데이터에 옵션·CDTP 없음 — 실 담당자 목록 미확인' };
 
 /* ──────────────────────────────
    메인 컴포넌트
@@ -409,7 +403,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             {/* 계정구분은 툴바 칩과 같은 state를 공유한다(한 필터·두 진입점) */}
             <DrawerField label="계정구분"><DrawerSelect value={fAcct} onChange={(v) => setFAcct(v as '' | Acct)} options={ACCTS} /></DrawerField>
-            <DrawerField label="담당자" noop note={MGR_NOTE}><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
+            <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
             {/* 기준년월 = PeriodPicker month('YYYY-MM'). 트리거가 w-full이라 fit-content 래퍼 필수(apfs-datepicker 폭 규칙) */}
             <DrawerField label="기준년월" plain noop>
               <div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}>

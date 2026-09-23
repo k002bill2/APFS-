@@ -31,7 +31,6 @@ export interface FilterDef {
   /** 행 필터 키 — 이 컬럼(또는 시드된 행 키)을 가진 표에만 적용 */
   key?: string;
   mode?: 'eq' | 'prefix';
-  note?: FilterSpec['note'];
 }
 
 export interface TablesPageConfig {
@@ -81,7 +80,7 @@ export function TablesPage({ cfg, onNav }: { cfg: TablesPageConfig; onNav?: (r: 
 
   const filters: FilterSpec[] = cfg.filters.map((f) => ({
     label: f.label, kind: f.kind, value: vals[f.label] ?? '', options: f.options, allLabel: f.allLabel,
-    onChange: (v: string) => setVals((p) => ({ ...p, [f.label]: v })), noop: !live(f), note: f.note,
+    onChange: (v: string) => setVals((p) => ({ ...p, [f.label]: v })), noop: !live(f),
   }));
 
   /* 푸터 — 조회 기준(첫 날짜형 조건) + 표별 건수 */

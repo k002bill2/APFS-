@@ -39,10 +39,8 @@ export const schema: PageSchema = {
     // 원문 값 null + ⚠검토필요 — 문구는 목업 data-rec/data-dat 원문 그대로.
     /* type 은 'text' 다 — 'rate' 로 두면 Cell 이 DeltaBadge 로 보내 `Number('')===0` 이 되어
        **값이 없는데 "0" 하락 배지**가 뜬다(원문은 `-`). 원문에 값 자체가 없으므로 비율 서식을 쓰지 않는다. */
-    { key: 'agriInvestRatio', label: '농식품 투자비중', type: 'text', align: 'right',
-      note: { rec: '농식품 투자금액 ÷ 전체 투자금액 (산출식 확인 필요)', dat: '원문 데이터 값 없음(null) — 임의 생성 안 함' } },
-    { key: 'fundInvestRatio', label: '결성액대비 투자비율', type: 'text', align: 'right',
-      note: { rec: '투자금액 ÷ 결성액 (예: 50/320=15.6%)', dat: '원문 데이터 값 없음(null) — 임의 생성 안 함' } },
+    { key: 'agriInvestRatio', label: '농식품 투자비중', type: 'text', align: 'right' },
+    { key: 'fundInvestRatio', label: '결성액대비 투자비율', type: 'text', align: 'right' },
     { key: 'investPeriod',    label: '투자기간',    type: 'text',   align: 'center' },
     // ── 회수실적 (원문 2단 헤더) ──
     { key: 'recoverPrincipal', label: '회수원금',   type: 'amount', unit: '원', align: 'right', group: '회수실적' },

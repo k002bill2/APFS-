@@ -144,7 +144,7 @@ export const CREDIT: TableMeta = {
     { key: 'gn', label: '신용등급명', kind: 'text' },
     { key: 'gk', label: '신용등급구분', kind: 'center' },
     { key: 'fd', label: '자펀드', kind: 'text', width: 220 },
-    { key: 'cri', label: 'CRI기준일자', kind: 'date', width: 140, note: { rec: 'CRI 산정 기준일', dat: '원본 데이터 값 없음(비움)' } },
+    { key: 'cri', label: 'CRI기준일자', kind: 'date', width: 140 },
     { key: 'crib', label: 'CRI배치기준일자', kind: 'date' },
   ],
   /* 1행 cri 는 원문 `cri:''`(값 없음, 화면 `-`) → null */

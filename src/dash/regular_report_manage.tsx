@@ -30,8 +30,7 @@
    - '보고서' 열은 첨부파일명 표시 전용이다(목업 설계메모: "클릭 이동 없음") → 링크가 아니다.
    - 확정여부 컬럼에 `suppressKeyboardEvent`를 **브리프 명세 외로 1건 추가**했다: React 18은 합성 이벤트를
      루트 컨테이너에서 디스패치하므로 `onKeyDown`의 `stopPropagation`이 AG Grid의 셀 **네이티브** 리스너보다
-     늦다. 그대로 두면 select에 초점이 있을 때 ↑↓가 값 변경 대신 셀 이동으로 가로채여 키보드로 값을 못 바꾼다.
-     헤더 Tab을 `suppressHeaderKeyboardEvent`로 빼는 것과 같은 탈출구다(런타임 확인 필요 항목).
+     늦다. 그대로 두면 select에 초점이 있을 때 ↑↓가 값 변경 대신 셀 이동으로 가로채여 키보드로 값을 못 바꾼다. (런타임 확인 필요 항목).
    - 행 폭: 10컬럼 + 긴 조합명이라 `fitGridWidth`에서 텍스트 컬럼은 ellipsis로 잘린다(컬럼 리사이즈로 보완).
      마스크 경계 때문에 `tooltipField`는 두지 않는다(툴팁으로 실값이 샌다). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
@@ -48,8 +47,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker, reviewInnerHeader } from './review_marker';
-import type { ReviewNote } from './review_marker';
 
 const { Button, IconBtn, StatusBadge, FilterChip } = UI;
 
@@ -114,16 +111,7 @@ const openDetail = () => toast('월간보고 상세는 별도 화면(S1_06_01)�
 const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
-
-/* ⚠검토필요 메모 — 목업 `S1_06_정기보고.html`의 `data-rec`/`data-dat` 원문 그대로(3건).
-   설계 메모라 마스킹·엑셀 대상이 아니다. */
-const CONFIRM_NOTE: ReviewNote = { rec: '확정 · 미확정', dat: "comp=셀렉트박스 · 샘플엔 '확정'만 · '미확정'은 추론" };
-const FILTER_NOTES: Record<'mgr' | 'rt', ReviewNote> = {
-  mgr: { rec: '담당자 목록(사용자 마스터 연동)', dat: '원천에 옵션·샘플 값 없음 — 실 목록 미확인' },
-  rt: { rec: '월간보고서 외 반기/연간 등', dat: "원천 옵션 미기재 · 샘플 데이터엔 '월간보고서'만 존재" },
-};
 /* 모듈 스코프에 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid가 헤더를 통째로 remount한다 */
-const CONFIRM_HEADER = reviewInnerHeader(CONFIRM_NOTE);
 
 /* 텍스트 셀(운용사·자펀드) — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다 */
 const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
@@ -186,12 +174,8 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void):
       : <span style={{ color: 'var(--muted-foreground)' }}>보고 내역이 없습니다.</span>) },
   { field: 'updatedAt', headerName: '수정일시', width: 180,
     cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: mnFmt },
-  /* 확정여부 — 헤더에 ⚠마커(목업 원문). 셀은 보고 내역이 있는 행만 select. */
+  /* 확정여부 — 셀은 보고 내역이 있는 행만 select. */
   { field: 'confirmed', headerName: '확정여부', width: 120, cellStyle: flexMid,
-    headerComponentParams: { innerHeaderComponent: CONFIRM_HEADER },
-    /* Tab을 AG Grid 헤더 내비게이션에서 빼 브라우저 기본 순서로 넘긴다 — 안 하면 헤더 안의 ⚠마커 버튼에
-       키보드로 도달할 수 없다(AG Grid가 Tab을 가로채 다음 헤더 셀로 이동). */
-    suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab',
     /* 셀 안 select에 초점이 있을 때는 AG Grid 키 처리를 전부 끈다 — ↑↓가 값 변경 대신 셀 이동으로
        가로채이는 것을 막는다(합성 이벤트 stopPropagation으로는 못 막는다, 파일 상단 '한계'). */
     suppressKeyboardEvent: (p) => (p.event.target as HTMLElement | null)?.tagName === 'SELECT',
@@ -229,12 +213,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: React.ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -422,12 +406,12 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
             {/* 담당자 — 원천에 옵션·샘플 값이 없어 옵션을 생성하지 않는다(빈 목록 = '전체'만) */}
-            <DrawerField label="담당자" noop note={FILTER_NOTES.mgr}><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
+            <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
             {/* 기준년월 — 월(YYYY-MM) 범위. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}
             <DrawerField label="기준년월 시작" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}><PeriodPicker mode="month" value={fFrom} onChange={setFFrom} ariaLabel="기준년월 시작" /></div></DrawerField>
             <DrawerField label="기준년월 종료" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}><PeriodPicker mode="month" value={fTo} onChange={setFTo} ariaLabel="기준년월 종료" /></div></DrawerField>
             {/* 보고구분 — 툴바 칩과 같은 state 공유(옵션은 행에서 파생) */}
-            <DrawerField label="보고구분" note={FILTER_NOTES.rt}><DrawerSelect value={fRt} onChange={(v) => setFRt(v as '' | ReportKind)} options={rtOptions} /></DrawerField>
+            <DrawerField label="보고구분"><DrawerSelect value={fRt} onChange={(v) => setFRt(v as '' | ReportKind)} options={rtOptions} /></DrawerField>
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>

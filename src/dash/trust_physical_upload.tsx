@@ -16,20 +16,19 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { UI } from './components';
 import { toast } from './ui/sonner';
-import { ReviewMarker } from './review_marker';
 import { RiskPage } from './risk_page_kit';
 import type { FilterSpec } from './risk_page_kit';
 import { ReadGrid, SectionHead } from './risk_grid';
 import { LABELED_SELECTION_COL } from './aggrid_selection';
 import { exportTables } from './risk_excel';
-import type { TableMeta, Row, ReviewNoteMeta } from './risk_table_meta';
+import type { TableMeta, Row } from './risk_table_meta';
 import { UploadDropzone } from './trust_upload';
 import { NewScreenNotice } from './trust_table_pages';
 import { useRowSelection, SelBar, DeleteDialog, RowEditModal, formFromRow, rowPatch } from './trust_manage_kit';
-import { PHYSICAL_FORM, TRUST_FORM_NOTE, displayCode } from './trust_manage_schemas';
+import { PHYSICAL_FORM, displayCode } from './trust_manage_schemas';
 import {
-  PHYSICAL_TABLE, SECURITIES_TABLE, SECURITIES_NOTE, BIG_OPTIONS, MID_OPTIONS, optionCode,
-  GP_NOTE, UNION_NOTE, GP_PLACEHOLDER, PHYSICAL_BASE_YM,
+  PHYSICAL_TABLE, SECURITIES_TABLE, BIG_OPTIONS, MID_OPTIONS, optionCode,
+  GP_PLACEHOLDER, PHYSICAL_BASE_YM,
 } from './trust_sub_data';
 
 const { Button } = UI;
@@ -39,8 +38,6 @@ interface UploadPageConfig {
   table: TableMeta;
   /** 업로드 박스 제목(원문 `.uploadhd .t`) */
   uploadTitle: string;
-  /** 업로드 박스 제목 옆 검토필요(신규 화면의 추정 제목) */
-  uploadNote?: ReviewNoteMeta;
   /** 드롭존 접근名 */
   fileLabel: string;
   /** 삭제 확인 제목(원문 `실물자료 삭제`) */
@@ -71,8 +68,8 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
     (!ym || r.ym === ym) && (!big || r.bigCode === optionCode(big)) && (!mid || r.midCode === optionCode(mid))), [rows, ym, big, mid]);
 
   const filters: FilterSpec[] = [
-    { label: '운용사', kind: 'select', value: gp, onChange: setGp, options: [], allLabel: GP_PLACEHOLDER, note: GP_NOTE, noop: true },
-    { label: '조합', kind: 'select', value: union, onChange: setUnion, options: [], note: UNION_NOTE, noop: true },
+    { label: '운용사', kind: 'select', value: gp, onChange: setGp, options: [], allLabel: GP_PLACEHOLDER, noop: true },
+    { label: '조합', kind: 'select', value: union, onChange: setUnion, options: [], noop: true },
     { label: '기준월', kind: 'month', value: ym, onChange: setYm },
     { label: '대분류', kind: 'select', value: big, onChange: setBig, options: BIG_OPTIONS },
     { label: '중분류', kind: 'select', value: mid, onChange: setMid, options: MID_OPTIONS },
@@ -110,7 +107,6 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
     single: single && (
       <span className="inline-flex items-center gap-1">
         <Button variant="primary" size="sm" leadingIcon="file" onClick={() => openEdit(single)}>수정</Button>
-        <ReviewMarker rec={TRUST_FORM_NOTE.rec} dat={TRUST_FORM_NOTE.dat} label="수정" />
       </span>
     ),
   });
@@ -123,7 +119,7 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
       {cfg.isNew && <NewScreenNotice sibling="실물자료 조회(월별)(S3_98)" />}
       {/* 원문 `.uploadbox` — 제목 · 캡션 · [업로드] + 드롭존 */}
       <SectionHead title={cfg.uploadTitle}
-        cap={<>{cfg.uploadNote && <ReviewMarker rec={cfg.uploadNote.rec} dat={cfg.uploadNote.dat} label={cfg.uploadTitle} />}파일명 = 파일 선택</>}
+        cap={<>파일명 = 파일 선택</>}
         actions={<Button variant="outline" size="sm" leadingIcon="upload" onClick={upload}>업로드</Button>} />
       <div style={{ padding: '0 18px 16px' }}>
         <UploadDropzone files={files} onChange={setFiles} hint={HINT} maxSize="20MB" label={cfg.fileLabel} removedMsg="선택 파일 제거됨" />
@@ -145,8 +141,7 @@ const PHYSICAL: UploadPageConfig = {
 /* 신규 — 형제 S3_98 준용. 제목·삭제 문구는 형제의 '실물자료' 를 '유가증권' 으로 바꾼 추정이라 제목에 검토필요를 단다.
    기준월 기본값은 형제 화면의 데이터 시점이라 가져오지 않는다(빈 값). */
 const SECURITIES: UploadPageConfig = {
-  label: '유가증권관리(업로드)', table: SECURITIES_TABLE, uploadTitle: '유가증권 업로드', uploadNote: SECURITIES_NOTE,
-  fileLabel: '유가증권 파일', deleteTitle: '유가증권 삭제', entity: '유가증권', baseYm: '', isNew: true,
+  label: '유가증권관리(업로드)', table: SECURITIES_TABLE, uploadTitle: '유가증권 업로드', fileLabel: '유가증권 파일', deleteTitle: '유가증권 삭제', entity: '유가증권', baseYm: '', isNew: true,
 };
 
 /** 실물자료관리(업로드) — S3_98 */

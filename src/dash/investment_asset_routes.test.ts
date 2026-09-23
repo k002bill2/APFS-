@@ -8,7 +8,7 @@ import { SOURCE_COUNTS as PROFILE_COUNTS, PROVENANCE as PROFILE_PROV, formatProf
 import { SOURCE_COUNTS as STATS_COUNTS, SALES_SCALE_ROWS, INVEST_TYPE_ROWS, REGION_ROWS, PROVENANCE as STATS_PROV } from './investee_invest_stats_model';
 import { RECOVERY_MODES, SOURCE_COUNTS as RECOVERY_COUNTS, recoverySummary, PROVENANCE as RECOVERY_PROV, DETAIL_ROWS_IR, DETAIL_ROWS_ALL, formatRecoveryUnit } from './invest_recovery_detail_model';
 import { PROVENANCE as REPORT_PROV } from './all_report_status_model';
-import { RATE, PCT_LABEL, FORMULA, CALC_BY_NO, BASE_NOTE, baseAmount } from './mgmt_fee_detail_model';
+import { RATE, PCT_LABEL, FORMULA, CALC_BY_NO, baseAmount } from './mgmt_fee_detail_model';
 
 /* 투자자산관리 > 투자기업정보(7) · 운용사 모니터링(6) · 자펀드 관리(6) 라우트 결선 + **출처 충실성** 불변식.
    (사용자 이미지 정본 2026-09-15 — 대분류 3 / 리프 19)
@@ -218,14 +218,13 @@ describe('원문 행 충실성 — 합성 더미 금지', () => {
     const r = s.sample![0];
     expect(r.investee).toBe('(주)진바이오텍');
     expect(r.recoverTotal).toBe(7_500_000_000);
-    /* 원문이 null + ⚠검토필요 인 2컬럼 — 비율을 계산해 채우지 않는다. 표시는 원문과 같이 `-`.
+    /* 원문이 null 인 2컬럼 — 비율을 계산해 채우지 않는다. 표시는 원문과 같이 `-`.
        ⚠ type 은 'rate' 가 아니라 'text' 다: 'rate' 면 Cell 이 DeltaBadge 로 보내
        `Number('')===0` 이 되어 **값이 없는데 "0" 하락 배지**가 뜬다(2026-09-16 Codex 5R P2). */
     expect(r.agriInvestRatio).toBe('-');
     expect(r.fundInvestRatio).toBe('-');
     for (const k of ['agriInvestRatio', 'fundInvestRatio'])
       expect(s.columns.find((c) => c.key === k)!.type, k).toBe('text');
-    expect(s.columns.find((c) => c.key === 'agriInvestRatio')!.note!.dat).toContain('임의 생성 안 함');
   });
   it('사후관리기록은 S1_42 원문 값·코드 도메인을 쓴다', () => {
     const s = resolveSchema('사후관리기록 관리');
@@ -318,13 +317,6 @@ describe('전용 페이지의 원문 섹션·행 수', () => {
     expect(REGION_ROWS[0]).toMatchObject({ no: 1, region: '서울' });
     expect(REGION_ROWS[0].values).toEqual([533, '34.5 %', 6638, '35.7 %']);
   });
-  it('S1_34 합계 행의 ⚠검토필요 문구는 원문 그대로다(열 밀림을 재계산해 고치지 않는다)', () => {
-    const noted = SALES_SCALE_ROWS.filter((r) => r.note);
-    expect(noted.length).toBe(1);
-    expect(noted[0].note!.rec).toBe('열 순서 재계산 필요 여부 확인');
-    expect(noted[0].note!.dat).toContain('한 칸씩 밀려 대응됨');
-  });
-
   it('S1_36 투자금 회수현황은 조회기준 2모드를 각각 원문 컬럼·행 수로 싣는다', () => {
     expect(RECOVERY_MODES.map((m) => m.label)).toEqual(['투자및회수', '전체거래']);
     expect(RECOVERY_COUNTS).toEqual({ ir: 21, all: 24 });
@@ -404,15 +396,6 @@ describe('S1_36 — 커밋된 행이 목업 파일 안에 실재하는가', () =
     }
   });
 
-  it('전체거래 전용 3행(전환·주식변동)의 판독 확신도 메모가 원문 문구 그대로다', () => {
-    const noted = DETAIL_ROWS_ALL.filter((r) => r.rv);
-    expect(noted.length).toBe(3);
-    for (const r of noted) {
-      expect(String(r.rv)).toContain('이미지 판독 확신도 낮음');
-      expect(html, `rv: ${r.rv}`).toContain(String(r.rv));
-    }
-  });
-
   it('두 모드의 컬럼 라벨이 원문 COLS_IR/COLS_ALL 헤더 문자열과 일치한다', () => {
     for (const m of RECOVERY_MODES)
       for (const c of m.columns) expect(html, `${m.label} 헤더 ${c.label}`).toContain(`'${c.label}'`);
@@ -458,7 +441,7 @@ describe('ColumnSpec 선언이 실제로 ColDef 에 전달되는가', () => {
      (2026-09-15 group/note, 2026-09-16 pinned — 셋 다 실제로 그 상태였다).
      매퍼 소스에 전달 코드가 있는지 문자열로 확인한다 — 렌더 테스트 없이 잡을 수 있는 최소 가드. */
   it.each([
-    ['generic_list.tsx', ['noteHeader', 'c.pinned', 'foldGroups']],
+    ['generic_list.tsx', ['c.pinned', 'foldGroups']],
     ['all_report_status.tsx', ['c.pinned', 'foldGroups']],
     ['invest_recovery_detail.tsx', ['c.pinned']],
   ] as const)('%s 가 %s 를 ColDef 로 넘긴다', (file, needles) => {
@@ -616,11 +599,6 @@ describe('S1_43 관리보수보고 상세조회 팝업 — 원문 대조', () =>
   it('baseConfirmed 가 false 면 역산값으로 떨어진다(원문 분기 보존)', () => {
     const unconfirmed = { ...CALC_BY_NO['1'], baseConfirmed: false };
     expect(baseAmount(unconfirmed, 191482240)).toBe(7659289600);
-  });
-
-  it('⚠검토필요 마커 문구가 원문 축자다', () => {
-    expect(html).toContain(BASE_NOTE.rec);
-    expect(html).toContain(BASE_NOTE.dat);
   });
 
   it('팝업 kv 9항목 라벨이 원문 dl 순서와 같다', () => {

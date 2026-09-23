@@ -17,7 +17,7 @@ import { GpSpecModal } from './gp_spec_modal';                 // 운용사 명�
 import { CompanyProfileModal } from './company_profile_modal'; // 투자기업 기업개요(S1_30) — 투자기업정보(통합)의 행 상세
 import { MgmtFeeDetailModal } from './mgmt_fee_detail_modal';   // 관리보수보고 상세조회(S1_43) — 지급일자 링크
 import { DueDiligChecklistModal } from './due_dilig_checklist_modal'; // 투자금실사보고서 체크리스트(S1_40) — 실사일자 링크
-import { noteHeader, foldGroups } from './grid_header_note';   // 컬럼 헤더 옆 ⚠검토필요 마커 + 2단 그룹헤더(ColumnSpec note/group 소비처)
+import { foldGroups } from './grid_header_note';   // 컬럼 헤더 옆 ⚠검토필요 마커 + 2단 그룹헤더(ColumnSpec note/group 소비처)
 import { linksDetail } from './schemas/detail_link';   // detail 링크 술어 정본(소비처 3곳 공유)
 import { UNITS, DEFAULT_UNIT, isUnit, toUnit, amountHeader } from './schemas/unit';
 import type { Unit } from './schemas/unit';
@@ -529,7 +529,6 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       return {
         field: c.key as any,   // 스키마 동적 키 — Row 정적 타입 밖
         headerName: unitOn && c.type === 'amount' ? amountHeader(c.label, unit) : c.label + (c.unit ? ` (${c.unit})` : ""),
-        ...noteHeader<Row>(c.note),   // 목업 `!` 마커 — 선언(ColumnSpec.note)만 있고 안 그려지던 자리
         /* 셀 안 select 가 초점을 가진 동안에는 그리드가 키를 가로채지 않는다 —
            안 막으면 ↑↓ 가 옵션 변경 대신 셀 이동이 되어 마우스 없이는 값을 못 바꾼다. */
         ...(c.inlineSelect ? { suppressKeyboardEvent: (p: SuppressKeyboardEventParams<Row>) => (p.event.target as HTMLElement | null)?.tagName === 'SELECT' } : {}),

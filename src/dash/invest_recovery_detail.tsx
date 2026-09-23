@@ -9,7 +9,6 @@
    - 원문 tfoot 4줄(투자/회수/수익/회수총액) → AG Grid `pinnedBottomRowData`.
      데이터 행이 아니라 집계라 rows 에 섞지 않는다(건수·정렬·필터에 끼어든다).
    - 금액 단위(원|백만원|억원) 토글 → `schemas/unit.ts` 공유 SSOT.
-   - 원문 확신도 메모(`rv`)가 달린 행은 거래명 옆에 ⚠검토필요 마커로 노출한다.
    - 조회 전용 — 등록/수정 없음. 행 선택도 없다(선택으로 실행할 액션이 없다). */
 import './aggrid_shared.css';
 import { useState, useMemo, useCallback } from 'react';
@@ -19,7 +18,6 @@ import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, refreshNoColumn } from './aggrid_theme';
 import { Cell } from './schemas/renderers';
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker } from './review_marker';
 import { UNITS, DEFAULT_UNIT, amountHeader } from './schemas/unit';
 import type { Unit } from './schemas/unit';
 import type { ColumnSpec } from './schemas/types';
@@ -62,18 +60,12 @@ function toColDef(c: ColumnSpec, unit: Unit): ColDef<RecoveryRow> {
         if (!amount) return null;
         return p.value == null ? null : <span className="font-bold tabular">{String(formatRecoveryUnit(Number(p.value), unit))}</span>;
       }
-      const rv = c.key === 'tname' ? p.data?.rv : undefined;
       /* 금액 셀은 공용 Cell(=formatUnit, 백만원 2자리)을 쓰지 않는다 — 이 화면의 표기 규칙은
          원문 applyUnit(백만원 1자리)이다. 나머지 타입은 그대로 Cell 에 맡긴다(마스킹·배지 내장). */
       if (amount) return <span className="tabular">{p.value == null ? '' : String(formatRecoveryUnit(Number(p.value), unit))}</span>;
       return (
         <span className="inline-flex items-center gap-0.5 min-w-0">
           <Cell col={c} value={p.value} statusDomain={RECOVERY_TONES} unit={unit} />
-          {/* ⚠ apfs-grid 규약은 마커를 "라벨에만, 셀 값엔 붙이지 않는다"이지만 **여기는 원문 예외**다 —
-              S1_36 원문 자신이 거래명 셀 안에 붙인다(`if(c.k==='tname'&&r.rv)content+=rev('원본 캡처 값',r.rv)`).
-              행마다가 아니라 확신도 낮은 3행에만 붙고, 컬럼 전체가 아니라 그 행의 값이 대상이라 헤더로 올릴 수 없다.
-              rec 문구도 원문 리터럴 그대로 쓴다(창작 금지). */}
-          {rv && <ReviewMarker rec="원본 캡처 값" dat={String(rv)} label={String(p.value ?? '거래명')} />}
         </span>
       );
     },

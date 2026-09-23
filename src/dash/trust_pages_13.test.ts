@@ -9,10 +9,10 @@ import { tableSheet } from './risk_excel';
 import { rowPatch } from './trust_manage_rows';
 import { PHYSICAL_FORM, FUND_CODE_FORM, ACCOUNT_FORM, CASHFLOW_FORM, BIG_DISPLAY, MID_DISPLAY, displayCode } from './trust_manage_schemas';
 import {
-  PHYSICAL_TABLE, PHYSICAL_PROVENANCE, BIG_LABEL, MID_LABEL, BIG_OPTIONS, MID_OPTIONS, optionCode, GP_NOTE, UNION_NOTE, GP_PLACEHOLDER,
+  PHYSICAL_TABLE, PHYSICAL_PROVENANCE, BIG_LABEL, MID_LABEL, BIG_OPTIONS, MID_OPTIONS, optionCode, GP_PLACEHOLDER,
   SECURITIES_TABLE, SECURITIES_PROVENANCE, VERIFY_TABLES, VERIFY_PROVENANCE, VERIFY_INVEST_TOTAL, VERIFY_FUND,
   SECURITIES_COMPARE, SECURITIES_COMPARE_PROVENANCE, CODE_TABLE, CODE_PROVENANCE, CODE_GROUPS, CODE_DEFAULT,
-  FUND_CODE_TABLE, FUND_CODE_PROVENANCE, FUND_CODE_SAVE_NOTE, FUND_CODE_ORGS,
+  FUND_CODE_TABLE, FUND_CODE_PROVENANCE, FUND_CODE_ORGS,
 } from './trust_sub_data';
 import {
   MOTHER_CODE_TABLE, MOTHER_CODE_PROVENANCE, MOTHER_CODE_GROUPS, MOTHER_CODE_DEFAULT, ACCOUNT_UPLOAD_PROVENANCE, CASHFLOW_UPLOAD_PROVENANCE,
@@ -20,7 +20,7 @@ import {
 } from './trust_mother_data';
 import {
   YEARLY_PROVENANCE, YEARLY_TABLES, YEARLY_TOTALS_LIT, YEARLY_FOOTNOTES, YEARLY_BASE_YM, BASES, COMB_TYPES, ACCOUNT_TYPES, DETAIL_ROWS, DETAIL_EMPTY,
-  detailTable, detailRows, LEDGER_TABLE, LEDGER_PROVENANCE, LEDGER_UPLOAD_NOTE, INACTIVE_OPTIONS, HIST_SECTIONS, HIST_REQUIRED,
+  detailTable, detailRows, LEDGER_TABLE, LEDGER_PROVENANCE, INACTIVE_OPTIONS, HIST_SECTIONS, HIST_REQUIRED,
   MEMBER_ROWS, PAYMENT_ROWS, EXPERT_ROWS, CAREER_ROWS, INVEST_CAREER_ROWS, MEMBER_FORM, EXPERT_FORM, PRINT_DATE, ISSUE_HISTORY, ledgerRows, ledgerShown, ledgerPatch,
 } from './brief_data';
 
@@ -64,7 +64,6 @@ function scriptLiteral<T>(html: string, name: string): T {
   // eslint-disable-next-line no-new-func
   return new Function('N', `return ${m![1]};`)(null) as T;
 }
-const noteAttr = (n: { rec: string; dat: string }) => `data-rec="${n.rec}" data-dat="${n.dat}"`;
 /** 화면 표시 문자열(원문 표기와 같은 서식) */
 const shown = (v: unknown) => (v == null ? '-' : typeof v === 'number' ? v.toLocaleString('en-US') : String(v));
 
@@ -322,7 +321,7 @@ describe('합계 행 — 표마다 원문 규칙대로', () => {
   });
 });
 
-/* ─────────────── 검색조건 · 검토필요 마커 · 도메인 규칙 ─────────────── */
+/* ─────────────── 검색조건 · 도메인 규칙 ─────────────── */
 describe('검색조건 — 원문 옵션·기본값', () => {
   it('실물자료: 대분류 8 · 중분류 15 옵션 = 원문 <option> 표기, 운용사 placeholder', () => {
     const html = read(T('S3_98_실물자료_조회__월별_.html'));
@@ -357,21 +356,6 @@ describe('검색조건 — 원문 옵션·기본값', () => {
   });
   it('입출금정보관리 드롭존 안내 = 원문 #dzHint', () => {
     expect(read(T('S3_105_입출금정보관리.html'))).toContain(`id="dzHint">${CASHFLOW_UPLOAD_HINT}</p>`);
-  });
-});
-
-describe('⚠검토필요 마커 — 원문 4건 이식 + 신규 화면 전 컬럼', () => {
-  it('원문 마커 4건(운용사 · 조합 · 저장 · 등록원부업로드) 문구 그대로', () => {
-    const phys = read(T('S3_98_실물자료_조회__월별_.html'));
-    expect(phys).toContain(noteAttr(GP_NOTE));
-    expect(phys).toContain(noteAttr(UNION_NOTE));
-    expect(read(T('S3_99_조합코드_관리.html'))).toContain(noteAttr(FUND_CODE_SAVE_NOTE));
-    expect(read(B('S4_108_등록원부_관리.html'))).toContain(noteAttr(LEDGER_UPLOAD_NOTE));
-    const total = LEAVES.flatMap(([, , f]) => f).reduce((n, f) => n + (read(f).match(/class="review"/g) ?? []).length, 0);
-    expect(total).toBe(4);
-  });
-  it('신규 2리프: 모든 컬럼이 추정 표시(⚠)를 단다', () => {
-    for (const t of [SECURITIES_TABLE, SECURITIES_COMPARE]) expect(t.cols.every((c) => !!c.note), t.id).toBe(true);
   });
 });
 

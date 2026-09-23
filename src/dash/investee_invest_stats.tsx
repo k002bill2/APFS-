@@ -21,7 +21,6 @@ import { UI } from './components';
 import { GridFrame, FooterActions } from './grid_frame';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
-import { ReviewMarker } from './review_marker';
 import {
   SALES_SCALE_HEADERS, INVEST_TYPE_HEADERS, INVEST_TYPE_GROUPS, REGION_GROUPS,
   SALES_SCALE_ROWS, INVEST_TYPE_ROWS, REGION_ROWS, SOURCE_COUNTS,
@@ -48,10 +47,6 @@ const VIEWS = [
   { key: 'region',     label: '소재지별' },
 ] as const;
 type ViewKey = typeof VIEWS[number]['key'];
-/* 원문 `건수기준` 옆 ⚠마커 — data-rec/data-dat 원문 그대로(창작 금지).
-   컨트롤 자체는 만들지 않는다(원문이 동작을 배선하지 않는다 — 위 ⚠ 참조). 대신 두 블록을
-   함께 그리는 표의 `구분` 헤더 옆에 메모만 남겨, 원문이 남긴 설계 의문을 화면에서 볼 수 있게 한다. */
-const BLOCK_NOTE = { rec: '투자건수 · 투자금액', dat: "실데이터 '투자건수'만 존재. '투자금액' 옵션은 그리드 금액컬럼 근거 추론" };
 
 /* 원문 금액단위 토글 — 저장 base 가 **억원**이다(`fmtEok`). unit.ts(base=원)와 다른 축이라 여기 둔다. */
 const STAT_UNITS = ['원', '백만원', '억원'] as const;
@@ -86,7 +81,7 @@ function BlockMatrix({ rows, headers, head, unit }: { rows: MatrixRow[]; headers
             <tr key={r.block + r.label}>
               {first && <th scope="rowgroup" rowSpan={span} className={TH} style={PAD}>{r.block}</th>}
               <th scope="row" className={`${TD} text-center ${total ? 'font-bold bg-muted' : ''}`} style={PAD}>
-                {r.label}{r.note && <ReviewMarker {...r.note} label={`${r.block} ${r.label}`} />}
+                {r.label}
               </th>
               {r.values.map((v, i) => (
                 <td key={headers[i]} className={`${TD} text-right tabular ${total ? 'font-bold bg-muted' : ''}`} style={PAD}>
@@ -199,7 +194,7 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
               head={(
                 <tr>
                   <th scope="col" colSpan={2} className={TH} style={PAD}>
-                    구분<ReviewMarker {...BLOCK_NOTE} label="건수기준" />
+                    구분
                   </th>
                   {SALES_SCALE_HEADERS.map((h) => <th key={h} scope="col" className={TH} style={PAD}>{h}</th>)}
                 </tr>
@@ -213,7 +208,7 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
               head={(<>
                 <tr>
                   <th scope="col" colSpan={2} rowSpan={3} className={TH} style={PAD}>
-                    구분<ReviewMarker {...BLOCK_NOTE} label="건수기준" />
+                    구분
                   </th>
                   <th scope="colgroup" colSpan={INVEST_TYPE_GROUPS[0].span} className={TH} style={PAD}>{INVEST_TYPE_GROUPS[0].label}</th>
                   <th scope="colgroup" colSpan={INVEST_TYPE_GROUPS[1].span} className={TH} style={PAD}>{INVEST_TYPE_GROUPS[1].label}</th>

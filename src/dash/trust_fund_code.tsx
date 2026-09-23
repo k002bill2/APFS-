@@ -13,7 +13,6 @@
 import React, { useCallback, useState } from 'react';
 import { UI } from './components';
 import { toast } from './ui/sonner';
-import { ReviewMarker } from './review_marker';
 import { RiskPage } from './risk_page_kit';
 import type { FilterSpec } from './risk_page_kit';
 import { ReadGrid } from './risk_grid';
@@ -21,7 +20,7 @@ import { exportTables } from './risk_excel';
 import type { Row } from './risk_table_meta';
 import { FUND_CODE_TABLE, FUND_CODE_ORGS } from './trust_sub_data';
 import { useRowSelection, SelBar, DeleteDialog, RowEditModal, formFromRow, rowPatch } from './trust_manage_kit';
-import { FUND_CODE_FORM, TRUST_FORM_NOTE } from './trust_manage_schemas';
+import { FUND_CODE_FORM } from './trust_manage_schemas';
 
 const { Button } = UI;
 const LABEL = '자펀드코드 조회';
@@ -63,7 +62,6 @@ export function TrustFundCode({ onNav }: { onNav?: (r: string) => void }) {
     single: single && (
       <span className="inline-flex items-center gap-1">
         <Button variant="primary" size="sm" leadingIcon="file" onClick={() => openEdit(single)}>수정</Button>
-        <ReviewMarker rec={TRUST_FORM_NOTE.rec} dat={TRUST_FORM_NOTE.dat} label="수정" />
       </span>
     ),
   });

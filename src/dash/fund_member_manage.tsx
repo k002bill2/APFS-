@@ -50,8 +50,6 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, 
 import { RowFormModal } from './generic_list_modal';
 import { RowContextMenu } from './row_context_menu';
 import type { CtxItem, CtxMenuState } from './row_context_menu';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { CREATE_SCHEMA, EDIT_SCHEMA, CLS_OPTS, TYPE_OPTS } from './fund_member_manage_schemas';
 
 const { Button, IconBtn, StatusBadge, FilterChip } = UI;
@@ -107,12 +105,6 @@ function computeTotal(rows: FundMemberRow[]): FundMemberRow {
 }
 
 const PAGE_SIZE = 20;
-
-/* ⚠검토필요 메모 — 목업 `data-rec`/`data-dat` 원문 그대로(1건, 검색 영역). 설계 메모라 마스킹·엑셀 대상이 아니다.
-   등록 팝업 조합원 라벨의 나머지 1건은 `fund_member_manage_schemas.ts`의 FieldSpec.note가 소유한다. */
-const FILTER_NOTES: Record<'gp', ReviewNote> = {
-  gp: { rec: '실 운용사(GP) 목록 연동', dat: "실데이터 'KB증권' 1건만 관측 · 그 외 옵션 예시" },
-};
 
 /* ──────────────────────────────
    컬럼 정의 — 목업 thead 순서 그대로(단일 헤더 13컬럼):
@@ -202,11 +194,11 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 }
 
 /* 드로어 필드 래퍼 — noop=컬럼 미연동 필터(캡션으로 no-op 신호), note=⚠검토필요 마커(apfs-detail-filter) */
-function DrawerField({ label, noop, note, children }: { label: string; noop?: boolean; note?: ReviewNote; children: React.ReactNode }) {
+function DrawerField({ label, noop, children }: { label: string; noop?: boolean; children: React.ReactNode }) {
   return (
     <label className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </label>
@@ -449,7 +441,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             {/* 운용사 — 옵션은 행 파생(관측 1건). 목업의 예시 옵션은 옮기지 않고 ⚠마커로 근거를 남긴다 */}
-            <DrawerField label="운용사" note={FILTER_NOTES.gp}><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
+            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             {/* 계정구분 — 툴바 FilterChip과 같은 state 공유(목업은 칩 그룹, 드로어에선 select로 표현) */}
             <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={(v) => setFAcc(v as '' | Acc)} options={ACC_OPTS} /></DrawerField>

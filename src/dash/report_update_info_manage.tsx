@@ -42,8 +42,6 @@ import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescrip
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
-import { ReviewMarker, reviewInnerHeader } from './review_marker';
-import type { ReviewNote } from './review_marker';
 
 const { Button, IconBtn, StatusBadge, FilterChip, SegTabs } = UI;
 
@@ -114,23 +112,6 @@ function computeTotal(rows: ReportUpdateRow[]): ReportUpdateRow {
   t.amt = rows.reduce((a, r) => a + (r.amt ?? 0), 0);
   return t as ReportUpdateRow;
 }
-
-/* ──────────────────────────────
-   ⚠검토필요 메모 — 목업 `S1_10_보고_업데이트정보.html` 의 data-rec/data-dat 원문 그대로(4건).
-   설계 메모라 마스킹·엑셀 대상이 아니다.
-────────────────────────────── */
-const NOTE_RT: ReviewNote = { rec: '보고구분 공통코드 옵션 목록', dat: "실데이터 '투자심의관리' 1건만 확인 · 그 외 옵션 미확인" };
-const NOTE_GB: ReviewNote = { rec: '구분 공통코드값', dat: '원본 샘플값 없음 · 표시값은 도메인 추론(정기/수시)' };
-const NOTE_STAT: ReviewNote = { rec: '투심상태 공통코드값(승인/부결/보류 등)', dat: '원본 샘플값 없음 · 표시값은 도메인 추론' };
-const NOTE_FTYPE: ReviewNote = { rec: '파일구분 공통코드값', dat: '원본 샘플값 없음 · 표시값은 도메인 추론' };
-/* 모듈 스코프에 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid 가 헤더를 통째로 remount 한다 */
-const HEADER_GB = reviewInnerHeader(NOTE_GB);
-const HEADER_STAT = reviewInnerHeader(NOTE_STAT);
-const HEADER_FTYPE = reviewInnerHeader(NOTE_FTYPE);
-/* Tab 을 AG Grid 헤더 내비게이션에서 빼 브라우저 기본 순서로 넘긴다 — 안 하면 헤더 안의 ⚠마커에
-   키보드로 도달할 수 없다(AG Grid 가 Tab 을 가로채 다음 헤더 셀로 이동). 마커 3개 컬럼 전부에 건다. */
-const passTab = (p: { event: KeyboardEvent }) => p.event.key === 'Tab';
-
 /* ──────────────────────────────
    컬럼 정의 — 목업 `<thead>` 순서 그대로(단일 헤더):
      [선택 라디오] · 구분 · 운용사 · 자펀드 · 투자기업 · 투심상태 · 투심일자 · 승인금액 ·
@@ -138,7 +119,6 @@ const passTab = (p: { event: KeyboardEvent }) => p.event.key === 'Tab';
    ⚠ 셀 클로저(버튼·링크)가 없는 화면이라 컬럼 배열을 **모듈 스코프 상수**로 둔다 — 렌더 간 참조가
      완전히 고정되고(useMemo([]) 보다 강함) 골드 `subfund_manage.tsx` 와 같은 형태다(apfs-aggrid 계약 6).
    ⚠ pinned 는 선택 컬럼만 — 다른 컬럼에 pinned 를 주면 목업 순서가 깨진다.
-   ⚠ 마커를 단 컬럼(구분·투심상태·파일구분)은 헤더가 길어지므로 width/maxWidth 를 함께 올렸다.
 ────────────────────────────── */
 const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
@@ -162,17 +142,13 @@ const dateCol = (field: keyof ReportUpdateRow, header: string, width: number, mu
 
 const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
   /* 구분(⚠) — 합계행에서 '합계' 라벨을 맡는다(목업 tfoot 의 colspan 7 구간 대표). 공통코드값이라 비마스킹 */
-  /* ⚠ 마커 컬럼 3개는 minWidth=width=maxWidth로 고정한다 — `AUTO_SIZE_CONTENT`(fitCellContents)는 React 커스텀
-     inner 헤더(마커)를 첫 측정에 포함하지 못해 배지 폭(투심상태 95px)으로 눌러 헤더 텍스트가 잘렸다(2026-09-12 코디네이터 실측). */
   { field: 'gb', headerName: '구분', width: 96, minWidth: 96, maxWidth: 96, cellStyle: centerNum,
-    headerComponentParams: { innerHeaderComponent: HEADER_GB }, suppressHeaderKeyboardEvent: passTab,
     valueFormatter: (p) => (p.node?.rowPinned ? '합계' : p.value) },
   txt('gp', '운용사', 180, 220),
   txt('fd', '자펀드', 240, 300),
   txt('co', '투자기업', 160, 200),
   /* 투심상태(⚠) — 배지는 상태 표시 전용(클릭 전이 없음). 합계행은 배지 대신 '-' */
   { field: 'stat', headerName: '투심상태', width: 136, minWidth: 136, maxWidth: 136, cellStyle: flexMid,
-    headerComponentParams: { innerHeaderComponent: HEADER_STAT }, suppressHeaderKeyboardEvent: passTab,
     cellRenderer: (p: any) => (p.node.rowPinned ? '-' : <StatusBadge tone={STAT_TONE[p.value as ReviewStatus]} label={p.value} size="lg" dot={false} />) },
   dateCol('sdt', '투심일자', 124),
   /* 승인금액 — 단위는 context 에서(moneyFmt). 합계행은 numStyle 이 자동으로 굵게 처리 */
@@ -182,7 +158,6 @@ const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
   dateCol('pdt', '투자금납입 예정일', 150, false),
   /* 파일구분(⚠) — 공통코드값이라 비마스킹. 합계행 '-' */
   { field: 'ftype', headerName: '파일구분', width: 156, minWidth: 156, maxWidth: 156, cellStyle: centerNum,
-    headerComponentParams: { innerHeaderComponent: HEADER_FTYPE }, suppressHeaderKeyboardEvent: passTab,
     valueFormatter: (p) => (p.node?.rowPinned ? '-' : p.value) },
   dateCol('reg', '등록/변경일시', 156),
 ];
@@ -215,11 +190,11 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, note, children }: { label: string; noop?: boolean; note?: ReviewNote; children: React.ReactNode }) {
+function DrawerField({ label, noop, children }: { label: string; noop?: boolean; children: React.ReactNode }) {
   return (
     <label className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </label>
@@ -378,7 +353,7 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             {/* 보고구분 — 목업 유일 옵션('투자심의관리')만 둔다. 없는 옵션을 생성하지 않는다(검토필요 메모) */}
-            <DrawerField label="보고구분" noop note={NOTE_RT}><DrawerSelect value={fRt} onChange={setFRt} options={['투자심의관리']} /></DrawerField>
+            <DrawerField label="보고구분" noop><DrawerSelect value={fRt} onChange={setFRt} options={['투자심의관리']} /></DrawerField>
             <DrawerField label="투심상태"><DrawerSelect value={fStat} onChange={(v) => setFStat(v as '' | ReviewStatus)} options={['승인', '보류', '부결']} /></DrawerField>
           </div>
           <SheetFooter>

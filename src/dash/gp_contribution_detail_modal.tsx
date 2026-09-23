@@ -21,8 +21,6 @@ import React from 'react';
 import { UI } from './components';
 import { fmt } from './aggrid_theme';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import type { GpContribRow } from './gp_contribution_manage';
 
 const { Button } = UI;
@@ -43,12 +41,9 @@ const CELL: React.CSSProperties = { padding: '7px 9px' };
 const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)' };
 const DT_STYLE: React.CSSProperties = { padding: '8px 12px', fontSize: 13 };
 
-/* ⚠검토필요 메모 — 목업 `S1_14__운용사_출자배분관리.html`의 `data-rec`/`data-dat` 원문 그대로 */
-const UPLOAD_NOTE: ReviewNote = { rec: 'Y/N(업로드 상태)', dat: '원문 데이터값 없음 — 상태 미확정, 임의 값 생성 안 함' };
-
 /* kv 항목 — `numeric`(날짜·금액)이면 mn(숫자 마스킹), 아니면 <MT>. 값 없음은 '-'(muted).
    `note`는 라벨(dt) 옆 ⚠마커 — 값(dd)이 아니라 라벨에만 붙인다(apfs-grid "검토필요 마커" 규약). */
-type KvItem = { l: string; v: string; full?: boolean; numeric?: boolean; note?: ReviewNote };
+type KvItem = { l: string; v: string; full?: boolean; numeric?: boolean; };
 
 /* 기본정보 — 목업 kv 5항목 순서 그대로. '농식품부 등록일'은 원문 '-' */
 const buildBasic = (r: GpContribRow): KvItem[] => [
@@ -60,7 +55,7 @@ const buildBasic = (r: GpContribRow): KvItem[] => [
 ];
 
 /* 첨부파일 — 목업은 업로드 UI를 제거하고(설계메모 2026-09-04) 읽기전용 '업로드 여부'만 남겼다 */
-const FILE_ITEMS: KvItem[] = [{ l: '업로드 여부', v: '', note: UPLOAD_NOTE, full: true }];
+const FILE_ITEMS: KvItem[] = [{ l: '업로드 여부', v: '', full: true }];
 
 function KvGrid({ items }: { items: KvItem[] }) {
   return (
@@ -68,7 +63,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
       {items.map((o) => (
         <div key={o.l} className={`grid bg-card ${o.full ? 'sm:col-span-2' : ''}`} style={KV_COLS}>
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>
-            {o.l}{o.note && <ReviewMarker {...o.note} label={o.l} />}
+            {o.l}
           </dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.v ? '' : 'text-caption'}`}
             style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>

@@ -6,7 +6,7 @@ import type { TableMeta, Provenance } from './risk_table_meta';
 import { headerSequence, computeTotal, MOCKUP_DIR } from './risk_table_meta';
 import { excelHeads } from './risk_excel';
 import { NICE_TABS, CREDIT_TABS, NICE_PROVENANCE, CREDIT_PROVENANCE } from './risk_corp_info_data';
-import { QUANT_LIST, QUANT_PROVENANCE, INDICATORS, MGR_TYPES, metricsFor, INPUT_NOTE, TREND_SECTIONS, TREND_PROVENANCE, monthLabels, TREND_FROM, TREND_TO, trendPointsInRange,
+import { QUANT_LIST, QUANT_PROVENANCE, INDICATORS, MGR_TYPES, metricsFor, TREND_SECTIONS, TREND_PROVENANCE, monthLabels, TREND_FROM, TREND_TO, trendPointsInRange,
   RETURN_TABLE, RETURN_PROVENANCE, FUND_GRADE, MGR_GRADE, GRADE_PROVENANCE } from './risk_subfund_info_data';
 import { MF_SUMMARY, MF_DETAIL, MF_PROVENANCE, mfTotal, FUND_VAL, FUND_VAL_PROVENANCE, INVESTEE_SUMMARY, INVESTEE_DETAIL, INVESTEE_VAL_PROVENANCE,
   ASSET_BALANCE, ASSET_TX, ASSET_TX_PROVENANCE, EXC_TABLES, EXC_PROVENANCE, PORTFOLIO_TABLES, PORTFOLIO_PROVENANCE } from './risk_valuation_data';
@@ -297,7 +297,6 @@ describe('화면별 도메인 규칙', () => {
     for (const i of INDICATORS) expect(html).toContain(`'${i}'`);
     expect(metricsFor('증권회사').filter((d) => d.use).length).toBe(4);
     expect(metricsFor('은행').every((d) => !d.use && d.ok === '')).toBe(true);
-    expect(html).toContain(`data-rec="${INPUT_NOTE.rec}" data-dat="${INPUT_NOTE.dat}"`);
   });
   it('정량지표 변동: 월 라벨 13개(원문 기본 기간) = 시계열 점 수', () => {
     const labels = monthLabels(TREND_FROM, TREND_TO);
@@ -312,13 +311,6 @@ describe('화면별 도메인 규칙', () => {
     expect(trendPointsInRange('2025-09', '2025-10')).toEqual([2, 3]);            // 2025.09·2025.10 = 3·4번째 점
     expect(trendPointsInRange('2026-07', '')).toEqual([12]);
     expect(trendPointsInRange('2024-01', '2024-12')).toEqual([]);              // 원천 값 없는 기간 = 빈 차트
-  });
-  it('검토필요 마커 원문 이식 — CRI기준일자 · 자펀드별 IRR 2건', () => {
-    const cri = CREDIT_TABS[0].table.cols.find((c) => c.key === 'cri')!.note!;
-    expect(read(MOCK('S2_69_신용등급.html'))).toContain(`data-rec="${cri.rec}" data-dat="${cri.dat}"`);
-    const html = read(MOCK('S2_89_자펀드별_IRR.html'));
-    for (const c of IRR_FUND.cols.filter((c) => c.note)) expect(html, c.label).toContain(`data-rec="${c.note!.rec}" data-dat="${c.note!.dat}"`);
-    expect(IRR_FUND.cols.filter((c) => c.note).map((c) => c.label)).toEqual(['미투자자산', 'IRR']);
   });
   it('IRR 근거 팝업 제목 = 원문 팝업 제목', () => {
     expect(read(MOCK('S2_87_투자기업별_계약별__IRR.html'))).toContain(`<h2 id="irrpop-t">${IRR_CONTRACT_BASIS.title}</h2>`);

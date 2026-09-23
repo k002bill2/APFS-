@@ -46,8 +46,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker, reviewInnerHeader } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { RAW, SUBTOTALS, GRAND } from './fund_stats_data';
 import type { RawRow, StatBase } from './fund_stats_data';
 
@@ -170,32 +168,6 @@ const DEFAULT_YEAR_BASIS: YearBasis = '결성연도';
 interface GridCtx { unit: Unit; yearBasis: YearBasis }
 
 /* ──────────────────────────────
-   ⚠검토필요 메모 4건 — 목업 `S1_25_종합통계.html`의 data-rec/data-dat 원문 그대로(창작·합치기 금지)
-────────────────────────────── */
-const YBASIS_NOTE: ReviewNote = {
-  rec: '결성연도·선정연도 (조회기준 → 연도 컬럼 의미 변경)',
-  dat: "실값 '결성연도'만 확인 · '선정연도'는 §2.4 동적관계 근거 추론",
-};
-const UNIT_NOTE: ReviewNote = {
-  rec: '원·백만원·억원 (표준 단위전환 토글)',
-  dat: "CDTP:BU · 실값 '억원' · 그 외 옵션 미확인",
-};
-const YBIZ_NOTE: ReviewNote = {
-  rec: '원문 그대로 표시',
-  dat: "사용자 제공 참고 화면 캡처가 이 열부터 오른쪽(출자사업연도~투자승수)은 화면 폭 밖이라 안 보임 — 1행(예시)만 있던 기존 값 유지, 나머지 136행은 확인 전까지 '-' 표시",
-};
-const CUT_NOTE: ReviewNote = {
-  rec: '원문 그대로 표시',
-  dat: "참고 화면 캡처에서 감액금액 열도 화면 폭 밖이라 값 미확인 — 1행(예시) 제외 나머지는 '-' 표시",
-};
-/* 모듈 스코프에 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid가 헤더를 통째로 remount한다 */
-const YBIZ_HEADER = reviewInnerHeader(YBIZ_NOTE);
-const CUT_HEADER = reviewInnerHeader(CUT_NOTE);
-/* Tab을 AG Grid 헤더 내비게이션에서 빼 브라우저 기본 순서로 넘긴다 —
-   안 하면 헤더 안의 ⚠마커에 키보드로 도달할 수 없다(AG Grid가 Tab을 가로채 다음 헤더 셀로 이동). */
-const tabToBrowser = (p: { event: KeyboardEvent }) => p.event.key === 'Tab';
-
-/* ──────────────────────────────
    컬럼 정의 — 목업 `<thead>` 구조 그대로(리프 33개, 2단 그룹 6개).
    ⚠ 전 컬럼 `sortable:false` — 행 순서(연도 오름차순 + 각 해 끝의 소계)가 의미라 정렬하면 소계가 흩어진다.
 ────────────────────────────── */
@@ -263,10 +235,8 @@ const columnDefs: (ColDef<StatRow> | ColGroupDef<StatRow>)[] = [
     children: [amt('totInv', '투자금액'), pct('tir', '결성액대비 총투자율', 144)] },
   { headerName: '회수실적', headerClass: 'apfs-grp-a', marryChildren: true,
     children: [amt('recPrin', '회수원금'), amt('recProf', '회수수익'), amt('recTotal', '회수총액'),
-      { ...dash('recCut', '감액금액', 116),
-        headerComponentParams: { innerHeaderComponent: CUT_HEADER }, suppressHeaderKeyboardEvent: tabToBrowser }] },
-  { ...dash('ybiz', '출자사업연도', 132),
-    headerComponentParams: { innerHeaderComponent: YBIZ_HEADER }, suppressHeaderKeyboardEvent: tabToBrowser },
+      dash('recCut', '감액금액', 116)] },
+  dash('ybiz', '출자사업연도', 132),
   dash('fd', '결성일', 112), dash('rd', '등록일', 112), dash('bd', '기준일', 112),
   /* 목업 헤더의 보조 줄 `(등록일~기준일)`은 한 줄 headerName으로 합친다(AG Grid 헤더는 단일 텍스트) */
   dash('elapsed', '경과년(등록일~기준일)', 160),
@@ -324,12 +294,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 }
 
 /* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 */
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -439,7 +409,7 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
       toolbarRight={<>
         {/* 금액 단위 전환(목업 목록바 `.unitwrap`) — 캡션 + ⚠마커 + 세그먼트. 단위 문자열은 축이라 비마스킹 */}
         <span className="text-caption font-semibold inline-flex items-center" style={{ fontSize: 12, marginRight: 6 }}>
-          {'단위: ' + unit}<ReviewMarker {...UNIT_NOTE} label="금액단위" />
+          {'단위: ' + unit}
         </span>
         <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
@@ -490,7 +460,7 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
             {/* 목업은 전체/농식품/수산 칩 그룹 — DrawerSelect의 첫 옵션 '전체'가 같은 역할을 한다 */}
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcct} onChange={setFAcct} options={['농식품', '수산']} /></DrawerField>
             {/* 연도기준은 툴바 칩과 같은 state를 공유한다(한 항목·두 진입점) */}
-            <DrawerField label="연도기준" note={YBASIS_NOTE}>
+            <DrawerField label="연도기준">
               <DrawerSelect value={yearBasis} onChange={(v) => setYearBasis(v as YearBasis)} options={YEAR_BASES} noAll />
             </DrawerField>
             <DrawerField label="데이터기준" noop><DrawerSelect value={fDbasis} onChange={setFDbasis} options={['운용사보고', '월말확정']} /></DrawerField>

@@ -48,8 +48,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { GpContributionDetailModal } from './gp_contribution_detail_modal';
 
 const { Button, IconBtn, StatusBadge, FilterChip } = UI;
@@ -233,12 +231,6 @@ function flattenForExcel(defs: (ColDef<GpContribRow> | ColGroupDef<GpContribRow>
   return { head1, head2, keys, merges };
 }
 
-/* ⚠검토필요 메모 — 목업 `S1_14__운용사_출자배분관리.html`의 `data-rec`/`data-dat` 원문 그대로.
-   설계 메모라 마스킹·엑셀 대상이 아니다(나머지 1건은 상세 팝업 파일). */
-const FILTER_NOTES: Record<'mgr', ReviewNote> = {
-  mgr: { rec: '담당자 목록(사용자 마스터 연동)', dat: '실 담당자 옵션 데이터 미확인' },
-};
-
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined}
@@ -247,12 +239,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: React.ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -445,7 +437,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
             <DrawerField label="자펀드"><DrawerSelect value={fFn} onChange={setFFn} options={fnOptions} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
             {/* 담당자 — 원문에 옵션·샘플 값이 없어 옵션을 생성하지 않는다(빈 목록 = '전체'만) */}
-            <DrawerField label="담당자" noop note={FILTER_NOTES.mgr}><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
+            <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
             {/* 출자/배분 — 툴바 칩과 같은 state 공유(옵션은 행에서 파생) */}
             <DrawerField label="출자/배분"><DrawerSelect value={fGb} onChange={(v) => setFGb(v as '' | Gb)} options={gbOptions} /></DrawerField>
             {/* 기준일자 — 일(YYYY-MM-DD) 범위. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}

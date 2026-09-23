@@ -28,9 +28,6 @@ export type ColKind = 'text' | 'center' | 'date' | 'amount' | 'number' | 'badge'
     함수 = 파생값(누적Multiple 처럼 합계끼리 나눈 값) · 미지정 = 빈 칸(원문 colspan 영역). */
 export type TotalRule = 'sum' | 'dash' | ((rows: readonly Row[]) => Cell);
 
-/** ⚠검토필요 메모 — 목업 `.review` 의 data-rec/data-dat 원문 그대로(창작 금지). */
-export interface ReviewNoteMeta { rec: string; dat: string }
-
 export interface ColMeta {
   key: string;
   label: string;
@@ -58,7 +55,6 @@ export interface ColMeta {
   /** 최소 폭(px). 미지정이면 kind 기본값 */
   width?: number;
   total?: TotalRule;
-  note?: ReviewNoteMeta;
   /** 원문이 행 값을 저장하지 않고 렌더 때 계산하는 칸(누적Multiple = 운용성과÷투자금액, 투자잔액 = 총투자−회수).
       값은 같은 식으로 계산해 싣는다 — 출처 충실성 테스트는 이 칸을 원문 리터럴과 대조하지 않는다 */
   derived?: boolean;

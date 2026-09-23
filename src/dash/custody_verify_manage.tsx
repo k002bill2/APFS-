@@ -44,8 +44,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { CustodyMemoModal } from './custody_verify_memo_modal';
 import type { CustodyMemoCtx } from './custody_verify_memo_modal';
 
@@ -98,12 +96,6 @@ const NONINVEST_DEMO: NonInvestRow[] = [];
    이 값은 **행을 거르지 않고**(기준일은 noop) 메모 팝업의 `기준일자` 시드로만 쓰이므로 예외로 유지한다.
    비워두면 팝업이 빈 날짜로 열려 저장이 막힌다. */
 const BASE_DATE = '2026-04-30';
-
-/* ⚠검토필요 메모 — 목업 236행 `data-rec`/`data-dat` 원문 그대로. 설계 메모라 마스킹·엑셀 대상이 아니다. */
-const FUND_NOTE: ReviewNote = {
-  rec: '조회 UX상 자펀드·기준일 필터 제공',
-  dat: '원문에 [검색] 영역 없음 — 섹션 그리드만 정의됨(조회조건은 추론)',
-};
 
 /* ──────────────────────────────
    컬럼 정의 — 목업 헤더 순서·집합 그대로(2단 그룹: 운용사·수탁기관·일치여부·메모)
@@ -289,12 +281,12 @@ const WIDE_KEYS = new Set(['fn', 'gpCorp', 'cuCorp', 'gpItem', 'cuItem', 'gpAcct
 
 /* 드로어 필드 래퍼 — noop=행 컬럼 미연동 필터(캡션으로 no-op 신호, apfs-detail-filter 규약).
    plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 */
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: React.ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -520,7 +512,7 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="자펀드" note={FUND_NOTE}><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
+            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             {/* 기준일 — 행에 기준일 컬럼이 없어 no-op. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel */}
             <DrawerField label="기준일" noop plain>
               <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>

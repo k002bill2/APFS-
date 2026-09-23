@@ -166,11 +166,6 @@ export function ledgerRows(rows: readonly Row[], name: string, inactive: string)
 export function ledgerShown(rows: readonly Row[], name: string, inactive: string, applied: boolean): Row[] {
   return applied ? ledgerRows(rows, name, inactive) : [...rows];
 }
-/** 원문 업로드 버튼 옆 검토필요 마커(문구 그대로) */
-export const LEDGER_UPLOAD_NOTE = {
-  rec: '업로드 팝업 항목(드래그앤드롭·파일선택·파일목록·XLSX/CSV 최대 20MB) 구성 확인 필요',
-  dat: "엑셀엔 '등록원부업로드' 버튼 1줄만 존재하고 팝업 내부 항목을 정의한 행이 없음 — 팝업 UI는 임의 구성",
-} as const;
 
 /* ═══════════════ 등록원부관리 — 팝업 원문 ═══════════════ */
 /** 팝업 A(입력/수정) 이력 섹션 6개 — 원문 histSec(key, 제목, 입력칸, 이력 그리드 헤더). 수정 모드 기본값·기존 이력은 원문 리터럴 */

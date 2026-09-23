@@ -22,8 +22,7 @@ import React from 'react';
 import { UI } from './components';
 import { fmt } from './aggrid_theme';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
-import { ReviewMarker } from './review_marker';
-import { PCT_LABEL, FORMULA, CALC_BY_NO, BASE_NOTE, baseAmount } from './mgmt_fee_detail_model';
+import { PCT_LABEL, FORMULA, CALC_BY_NO, baseAmount } from './mgmt_fee_detail_model';
 
 const { Button } = UI;
 
@@ -96,7 +95,7 @@ function CalcTable({ row }: { row: Record<string, unknown> }) {
             <th scope="col" className={TH} style={{ ...CELL, width: 88 }}>기준</th>
             <th scope="col" className={TH} style={{ ...CELL, width: 180 }}>일자</th>
             <th scope="col" className={TH} style={{ ...CELL, width: 150 }}>
-              <span className="inline-flex items-center gap-1">기준금액{!calc.baseConfirmed && <ReviewMarker {...BASE_NOTE} label="기준금액" />}</span>
+              <span className="inline-flex items-center gap-1">기준금액</span>
             </th>
             <th scope="col" className={TH} style={{ ...CELL, width: 68 }}>일수</th>
             <th scope="col" className={TH} style={{ ...CELL, width: 74 }}>보수율</th>

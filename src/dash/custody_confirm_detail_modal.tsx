@@ -22,18 +22,9 @@ import React from 'react';
 import { UI } from './components';
 import { fmt } from './aggrid_theme';   // 숫자 표기 SSOT(정수=콤마) — 자체 포매터 재구현 금지
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import type { CustodyConfirmRow } from './custody_confirm_manage';
 
 const { Button, StatusBadge } = UI;
-
-/* ⚠검토필요 메모 — 목업 `S1_27_자펀드수탁관리_확정_.html`의 `data-rec`/`data-dat` 원문 그대로(전수 1건).
-   설계 메모라 마스킹·엑셀 대상이 아니다. */
-const DETAIL_NOTE: ReviewNote = {
-  rec: '선택 자펀드별 대사 상세(투자기업·보유주수·원금·감액금액 등)',
-  dat: '화면 캡처엔 요약 그리드까지만 있고 상세 팝업 데이터는 없음 — 아래 3개 섹션은 원 구조도(엑셀) 상세 예시 1건을 그대로 표시, 이 자펀드 고유 값 아님',
-};
 
 /* ── 프리미티브(골드 복사 — 공유 export 아님) ── */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -220,7 +211,6 @@ export function CustodyConfirmDetailModal({ row, baseDate, onClose }: { row: Cus
             <DialogDescription className="m-0 text-caption truncate min-w-0">
               {row.gp} · {row.fn} · 기준일자 {String(baseDate)}
             </DialogDescription>
-            <span className="shrink-0 inline-flex"><ReviewMarker {...DETAIL_NOTE} label="대사 상세" /></span>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">

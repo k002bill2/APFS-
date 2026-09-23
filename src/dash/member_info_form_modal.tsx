@@ -16,8 +16,6 @@ import { UI } from './components';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { toast } from './ui/sonner';
 import type { MemberRow } from './member_info_manage';
 
@@ -29,10 +27,6 @@ const { Button, SaveButton } = UI;
 export const MF_OPTIONS = ['농식품모태펀드', 'MOAF'];
 
 /* 목업 `rev('수정 시 …','PK 지정 원문 …')` 원문 그대로. 설계 메모라 마스킹·엑셀 대상이 아니다. */
-const BIZ_NOTE: ReviewNote = {
-  rec: '수정 시 식별자로 잠금(중복확인은 등록 시)',
-  dat: 'PK 지정 원문 미확인 — 표준 §2.2 적용',
-};
 
 type Patch = Omit<MemberRow, 'id' | 'no'>;
 
@@ -66,11 +60,11 @@ const F: Record<string, FieldSpec> = {
 /* RowFormModal `Field` 규격 복제(공유 export가 아니라 로컬 복사 — generic_list_modal.tsx 참조).
    note가 있으면 라벨 옆 ⚠마커. plain=true면 <label> 대신 <div>(복합 컨트롤·radio는 암묵 연결이 어긋난다). */
 const labelStyle: React.CSSProperties = { fontSize: 12, marginBottom: 5 };
-function Field({ label, children, errMsg, className, plain, note }: { label: string; children: React.ReactNode; errMsg?: string; className?: string; plain?: boolean; note?: ReviewNote }) {
+function Field({ label, children, errMsg, className, plain }: { label: string; children: React.ReactNode; errMsg?: string; className?: string; plain?: boolean; }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className={`block mb-3.5 ${className ?? ''}`}>
-      <span className="font-semibold text-caption block" style={labelStyle}>{label}{note && <ReviewMarker {...note} label={label} />}</span>
+      <span className="font-semibold text-caption block" style={labelStyle}>{label}</span>
       {children}
       {errMsg && <span role="alert" className="text-danger block mt-1" style={{ fontSize: 11.5 }}>{errMsg}</span>}
     </Wrap>
@@ -172,7 +166,7 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
                 ⚠ plain div 래퍼다 — 등록 모드는 <label> 안에 버튼이 함께 들어가 라벨 클릭이 엉뚱한 컨트롤을
                   활성화할 수 있고(web-a11y 함정 B), 수정 모드의 값 상자는 labelable 요소가 아니다.
                   대신 입력이 자체 aria-label을 갖는다. */}
-            <Field label={`${bizLabel} *`} plain note={mode === 'edit' ? BIZ_NOTE : undefined}
+            <Field label={`${bizLabel} *`} plain
               errMsg={errKey === 'biz' ? '사업자번호/주민번호을(를) 입력하세요.' : undefined}>
               {mode === 'create' ? (
                 <div className="flex items-center gap-2">

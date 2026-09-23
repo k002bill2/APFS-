@@ -13,13 +13,9 @@
 
    ⚠ 단위: ①②의 `투자금액` 블록과 ③의 `금액`은 원문이 이미 **억원**이다(2010년 943 = 943억).
      `schemas/unit.ts` 저장 단위 계약(원 정수)이 아니므로 금액 단위 토글을 붙이지 않는다 —
-     붙이면 943을 다시 1e8로 나눠 0.00으로 만든다.
-   ⚠ ①의 합 계 행에는 원문이 ⚠검토필요 마커를 달아 뒀다(열이 한 칸 밀려 보임). 값도 문구도
-     원문 그대로 옮기고 재계산하지 않는다 — 원 시스템 산출 로직 확인이 발주처 몫이다. */
-import type { ReviewNote } from './review_marker';
-
+     붙이면 943을 다시 1e8로 나눠 0.00으로 만든다. */
 /** 블록형 매트릭스 행 — `block`(투자건수/투자금액)이 원문 rowspan 셀, `label`이 연도 또는 `합 계`. */
-export interface MatrixRow { block: string; label: string; values: (number | string)[]; note?: ReviewNote }
+export interface MatrixRow { block: string; label: string; values: (number | string)[] }
 /** 소재지별 행 — values = [투자건수, 건수비율, 투자금액, 금액비율]. 비율은 원문 표기 문자열 그대로. */
 export interface RegionRow { no: number | string; region: string; values: (number | string)[] }
 
@@ -74,7 +70,7 @@ export const SALES_SCALE_ROWS: MatrixRow[] = [
   { block: '투자금액', label: '2023년', values: [190, 70, 74, 58, 132, 871, 1395] },
   { block: '투자금액', label: '2024년', values: [92, 35, 25, 89, 272, 642, 1156] },
   { block: '투자금액', label: '2025년', values: [50, 15, 5, 19, 219, 391, 699] },
-  { block: '투자금액', label: '합 계', values: [1389, 921, 1512, 4703, 6288, 3766, 18579], note: { rec: '열 순서 재계산 필요 여부 확인', dat: '위 16개 연도 행을 열별로 합산하면 10억미만=3,767·30억미만=1,390·50억미만=921·100억미만=1,512·100억이상=4,704·미보고=6,289(총합 18,580)로, 이 합계행 표시값과 정확히 한 칸씩 밀려 대응됨(예: 실제 10억미만 합계 3,767이 이 행엔 \'미보고\' 자리에 3,766으로 표기). 원문 캡처를 그대로 옮겼을 뿐 — 원 시스템 합계행 계산 로직 자체의 열 순서 오류인지 확인 필요' } },
+  { block: '투자금액', label: '합 계', values: [1389, 921, 1512, 4703, 6288, 3766, 18579] },
 ];
 export const INVEST_TYPE_ROWS: MatrixRow[] = [
   { block: '투자건수', label: '2010년', values: [0, 6, 13, 6, 6, 19, 50] },

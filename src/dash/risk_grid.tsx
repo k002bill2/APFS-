@@ -20,10 +20,9 @@ import { UI } from './components';
 import { Icon } from './icons';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { reviewInnerHeader } from './review_marker';
 import { toUnit, fromUnit } from './schemas/unit';
 import type { Unit } from './schemas/unit';
-import type { ColMeta, ColKind, TableMeta, Row, Cell, ReviewNoteMeta } from './risk_table_meta';
+import type { ColMeta, ColKind, TableMeta, Row, Cell } from './risk_table_meta';
 import { groupRuns, computeTotal, amountText } from './risk_table_meta';
 
 const { StatusBadge } = UI;
@@ -59,22 +58,14 @@ export function displayText(c: ColMeta, v: Cell, unit: Unit | null, digits?: Uni
 }
 
 function minWidthOf(c: ColMeta, rows: readonly Row[], unit: Unit | null, digits?: UnitDigits): number {
-  /* 좌우 패딩 + 정렬 아이콘 자리 (+ ⚠검토필요 마커 자리 — 마커 단 헤더는 길어진다, apfs-aggrid "마커 컬럼 폭") */
-  const head = textWidth(c.label, 13.5) + 44 + (c.note ? 26 : 0);
+  /* 좌우 패딩 + 정렬 아이콘 자리 */
+  const head = textWidth(c.label, 13.5) + 44;
   const body = Math.max(0, ...rows.map((r) => textWidth(displayText(c, r[c.key], unit, digits)) + (c.kind === 'badge' ? 50 : c.link ? 58 : 38)));
   /* c.width 는 하한(원문이 넓게 잡은 칸) — 내용이 더 길면 내용이 이긴다(잘림 금지). 상한 420 = 긴 주소·조합명 캡 */
   return Math.round(Math.min(420, Math.max(c.width ?? 0, KIND_MIN[c.kind], head, body)));
 }
 
 const Dash = () => <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
-
-/* ⚠검토필요 헤더 — 렌더마다 새 컴포넌트 타입이면 AG Grid 가 헤더를 remount 한다 → 메모 문구 키로 모듈 캐시 */
-const NOTE_HEADERS = new Map<string, ReturnType<typeof reviewInnerHeader>>();
-const noteHeader = (n: ReviewNoteMeta) => {
-  const k = `${n.rec}\u0000${n.dat}`;
-  if (!NOTE_HEADERS.has(k)) NOTE_HEADERS.set(k, reviewInnerHeader(n));
-  return NOTE_HEADERS.get(k)!;
-};
 
 /* 팝업 트리거 셀 — fund_early_warning.tsx YieldCell 과 같은 계약:
    탭 스톱은 `.ag-cell` 하나(자식에 tabIndex/role 금지), ARIA 는 포커스를 받는 gridcell 에 useEffect 로 싣는다. */
@@ -156,14 +147,10 @@ function leafDef(c: ColMeta, rows: readonly Row[], unit: Unit | null, linkLabel:
       valueParser: (p) => fromUnit(p.newValue, unit ?? '원'),
     } as Partial<ColDef<Row>> : {}),
     /* 조작 칸(입력칸·체크박스·스위치·행 버튼) — Tab 을 그리드 셀 이동이 아니라 브라우저 기본 이동에 맡겨
-       셀 안 컨트롤에 키보드로 닿게 한다(검토필요 헤더 suppressHeaderKeyboardEvent 와 같은 해법).
+       셀 안 컨트롤에 키보드로 닿게 한다.
        셀 안 입력칸에서는 모든 키를 입력칸에 준다 — 안 그러면 방향키·Home/End 가 그리드 셀 이동이 돼 포커스를 뺏는다
        (React onKeyDown 의 stopPropagation 은 그리드의 네이티브 리스너보다 늦어 막지 못한다 — 2026-09-23 실측) */
     ...(custom?.[c.key] ? { suppressKeyboardEvent: (p) => p.event.key === 'Tab' || (p.event.target as HTMLElement | null)?.tagName === 'INPUT' } as Partial<ColDef<Row>> : {}),
-    ...(c.note ? {
-      headerComponentParams: { innerHeaderComponent: noteHeader(c.note) },
-      suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab',
-    } as Partial<ColDef<Row>> : {}),
   };
 }
 

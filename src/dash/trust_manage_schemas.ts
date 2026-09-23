@@ -8,14 +8,7 @@
      import 시점에 zod 검증한다(형제 shareholder_manage_schemas 와 동형). */
 import { parsePageSchema } from './schemas/types';
 import type { PageSchema } from './schemas/types';
-import type { ReviewNoteMeta } from './risk_table_meta';
 import { BIG_LABEL, MID_LABEL } from './trust_sub_data';
-
-/** 폼 항목 검토필요 — 원문에 없는 등록/수정 폼 */
-export const TRUST_FORM_NOTE: ReviewNoteMeta = {
-  rec: '등록/수정 팝업 항목 정의 확인 필요',
-  dat: '원문에 등록/수정 팝업이 없음 — 목록 컬럼을 그대로 폼 항목으로 옮긴 추정(2026-09-23 관리형 선택 바 규약)',
-};
 
 const prov = (captureFile: string) => ({ capturedAt: '2026-09-23', sourceSystem: 'FFMS(S3) 자산수탁 KRDS TO-BE', captureFile });
 

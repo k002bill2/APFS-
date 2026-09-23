@@ -52,8 +52,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { DistTxModal, InvestTxModal } from './apfs_contribution_tx_modal';
 
 const { Button, IconBtn, StatusBadge, FilterChip, SegTabs } = UI;
@@ -358,13 +356,6 @@ function flattenForExcel(defs: ColDef<DistRow>[], unit: Unit) {
   return { head, keys };
 }
 
-/* ⚠검토필요 메모 2건 — 목업 `S1_21__농금원_출자배분관리.html`의 `data-rec`/`data-dat` 원문 그대로.
-   설계 메모라 마스킹·엑셀 대상이 아니다. */
-const FILTER_NOTES: Record<'un' | 'fn', ReviewNote> = {
-  un: { rec: '운용사 마스터 전체 목록 선택', dat: '실 옵션 목록 미확인 — 데이터 샘플값(미시간벤처캐피탈주식회사)만 표시' },
-  fn: { rec: '선택 운용사의 자펀드 목록', dat: '실 옵션 목록 미확인 — 데이터 샘플값(미시간글로벌식품산업투자조합2호)만 표시' },
-};
-
 /* ──────────────────────────────
    로컬 헬퍼 — 골드(gp_contribution_manage·fund_stats)에서 복사. 공유 export 아님
 ────────────────────────────── */
@@ -378,12 +369,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 }
 
 /* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 */
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -602,8 +593,8 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
-            <DrawerField label="운용사" note={FILTER_NOTES.un}><DrawerSelect value={fUn} onChange={setFUn} options={unOptions} /></DrawerField>
-            <DrawerField label="자펀드" note={FILTER_NOTES.fn}><DrawerSelect value={fFn} onChange={setFFn} options={fnOptions} /></DrawerField>
+            <DrawerField label="운용사"><DrawerSelect value={fUn} onChange={setFUn} options={unOptions} /></DrawerField>
+            <DrawerField label="자펀드"><DrawerSelect value={fFn} onChange={setFFn} options={fnOptions} /></DrawerField>
             {/* 목업은 전체/농식품/수산 칩 그룹 — DrawerSelect의 첫 옵션 '전체'가 같은 역할을 한다 */}
             <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
             {/* 조회기준은 툴바 칩과 같은 state를 공유한다(한 항목·두 진입점). 늘 하나가 잡혀 있어 '전체' 빈 값이 없다 */}

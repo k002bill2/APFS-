@@ -23,13 +23,12 @@ import { UI } from './components';
 import { Icon } from './icons';
 import { toast } from './ui/sonner';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu';
-import { ReviewMarker } from './review_marker';
 import { RiskPage } from './risk_page_kit';
 import type { FilterSpec } from './risk_page_kit';
 import { ReadGrid } from './risk_grid';
 import { exportTables } from './risk_excel';
 import type { Row } from './risk_table_meta';
-import { LEDGER_TABLE, INACTIVE_OPTIONS, LEDGER_UPLOAD_NOTE, ledgerShown } from './brief_data';
+import { LEDGER_TABLE, INACTIVE_OPTIONS, ledgerShown } from './brief_data';
 import { useRowSelection, SelBar, DeleteDialog, nextRow } from './trust_manage_kit';
 import { LedgerFormModal, MembersModal, ExpertsModal, LedgerUploadModal, LedgerPrintModal, LedgerIssueHistoryModal } from './registry_ledger_modals';
 
@@ -130,7 +129,6 @@ export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void })
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'ledger', mode: 'new' })}>등록원부입력</Button>
         <span className="inline-flex items-center gap-1">
           <Button variant="outline" size="sm" leadingIcon="upload" onClick={() => setModal({ kind: 'upload' })}>등록원부업로드</Button>
-          <ReviewMarker rec={LEDGER_UPLOAD_NOTE.rec} dat={LEDGER_UPLOAD_NOTE.dat} label="등록원부업로드" />
         </span>
       </>}
       footerLeft={<span>{applied && <>{name ? <>{name} · </> : ''}비활성원부 {inactive} · </>}총 {String(shown.length)}건</span>}

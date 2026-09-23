@@ -18,8 +18,7 @@ import { Checkbox } from './ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
 import { toast } from './ui/sonner';
 import { drawerInputStyle } from './schemas/renderers';
-import { ReviewMarker } from './review_marker';
-import { MGR_TYPES, INDICATORS, metricsFor, INPUT_NOTE } from './risk_subfund_info_data';
+import { MGR_TYPES, INDICATORS, metricsFor } from './risk_subfund_info_data';
 
 const { Button, IconBtn } = UI;
 
@@ -113,7 +112,7 @@ export function GpQuantIndicatorModal({ mode, preType, onClose }: { mode: QuantM
                   <th scope="col" className={TH} style={CELL}>주의</th>
                   <th scope="col" className={TH} style={CELL}>경고</th>
                   <th scope="col" className={TH} style={{ ...CELL, width: mode === 'create' ? 150 : 118 }}>
-                    <span className="inline-flex items-center">입력항목<ReviewMarker {...INPUT_NOTE} label="입력항목" /></span>
+                    <span className="inline-flex items-center">입력항목</span>
                   </th>
                 </tr>
               </thead>

@@ -10,7 +10,6 @@ import React, { useCallback, useRef, useState } from 'react';
 import { UI } from './components';
 import { toast } from './ui/sonner';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
-import { ReviewMarker } from './review_marker';
 import { RiskPage } from './risk_page_kit';
 import { ReadGrid } from './risk_grid';
 import { exportTables } from './risk_excel';
@@ -18,7 +17,7 @@ import type { TableMeta, Row } from './risk_table_meta';
 import type { PageSchema } from './schemas/types';
 import { UploadDropzone } from './trust_upload';
 import { useRowSelection, SelBar, DeleteDialog, RowEditModal, formFromRow, rowPatch, nextRow } from './trust_manage_kit';
-import { ACCOUNT_FORM, CASHFLOW_FORM, TRUST_FORM_NOTE } from './trust_manage_schemas';
+import { ACCOUNT_FORM, CASHFLOW_FORM } from './trust_manage_schemas';
 import { ACCOUNT_TABLE, CASHFLOW_TABLE, CASHFLOW_UPLOAD_HINT } from './trust_mother_data';
 
 const { Button } = UI;
@@ -109,7 +108,6 @@ function ManageListPage({ cfg, onNav }: { cfg: ManageConfig; onNav?: (r: string)
         {/* 등록 = 툴바 독립 버튼(도메인 액션명) — 폼이 원문에 없어 검토필요를 단다 */}
         <span className="inline-flex items-center gap-1">
           <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>{cfg.entity} 등록</Button>
-          <ReviewMarker rec={TRUST_FORM_NOTE.rec} dat={TRUST_FORM_NOTE.dat} label={`${cfg.entity} 등록`} />
         </span>
         <Button variant="outline" size="sm" leadingIcon="upload" onClick={() => setModal({ kind: 'upload' })}>업로드</Button>
       </>}

@@ -33,8 +33,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { GeneralMeetingDetailModal } from './general_meeting_detail_modal';
 
 const { Button, IconBtn, StatusBadge, FilterChip } = UI;
@@ -109,12 +107,6 @@ const DEMO: MeetingRow[] = [
 ];
 
 const PAGE_SIZE = 20;
-
-/* ⚠검토필요 메모 — 목업 `S1_07_조합원총회.html`의 `data-rec`/`data-dat` 원문 그대로(전수 1건: 검색 '담당자').
-   설계 메모라 마스킹·엑셀 대상이 아니다. */
-const FILTER_NOTES: Record<'mgr', ReviewNote> = {
-  mgr: { rec: '담당심사역 목록(예: 이승재)', dat: '실 담당자 목록 미확인 — 코드/명단 확인 필요' },
-};
 
 /* 폭 관련 그리드 prop(`autoSizeStrategy`·`defaultColDef`)은 `aggrid_theme.ts`의 공용 상수를 쓴다 —
    인라인 리터럴 금지 이유(렌더마다 새 객체 → 폭이 선언값으로 되돌아감)는 그 파일 주석이 정본. */
@@ -257,12 +249,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: React.ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -456,7 +448,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            <DrawerField label="담당자" note={FILTER_NOTES.mgr}><DrawerSelect value={fMgr} onChange={setFMgr} options={mgrOptions} /></DrawerField>
+            <DrawerField label="담당자"><DrawerSelect value={fMgr} onChange={setFMgr} options={mgrOptions} /></DrawerField>
             <DrawerField label="총회구분"><DrawerSelect value={fGt} onChange={setFGt} options={GT_OPTIONS} /></DrawerField>
             <DrawerField label="보고상태"><DrawerSelect value={fRst} onChange={(v) => setFRst(v as '' | MeetingStatus)} options={['일정', '결과']} /></DrawerField>
             {/* PeriodPicker 트리거는 w-full이라 fit-content 래퍼로 감싼다(apfs-datepicker "폭" 규칙) */}

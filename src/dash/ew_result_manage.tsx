@@ -44,8 +44,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { EwConfirmDialog } from './ew_result_dialogs';
 import { prevYm } from './ew_result_model';   // 섹션2 기준년월 = 전월(순수함수 — 유닛 테스트 대상)
 
@@ -83,13 +81,6 @@ const REPORT_DEMO: Record<string, GpReportRow[]> = {
 
 /* 기준년월 기본값 — 목업 `#f-ym` value */
 const BASE_YM = '2026-07';
-
-/* ⚠검토필요 메모 — 설계 메모라 마스킹·엑셀 대상이 아니다.
-   MAKE_NOTE = 목업 425행 `data-rec`/`data-dat` 원문 그대로. */
-const MAKE_NOTE: ReviewNote = {
-  rec: '안내문구 원문 확정 필요 — 비고(O열) 원문 없음',
-  dat: '「생성하시겠습니까?」 (P열 실데이터 샘플)',
-};
 
 /* ──────────────────────────────
    컬럼 정의 — 목업 thead 순서·집합 그대로(단일 헤더 7컬럼 × 2)
@@ -278,7 +269,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
     const ymB = <b className="text-foreground">{String('ym' in modal ? modal.ym : '')}</b>;   // close·reopen 만 사용
     switch (modal.kind) {
       case 'make': return { title: '조기경보 결과정보 관리 - 생성 확인', ok: '확인',
-        body: <span className="inline-flex items-center">생성하시겠습니까?<ReviewMarker {...MAKE_NOTE} label="생성 확인 안내문구" /></span> };
+        body: <span className="inline-flex items-center">생성하시겠습니까?</span> };
       case 'close': return { title: '마감 처리', ok: '마감',
         body: <>기준년월 {ymB}의 조기경보 결과정보를 마감하시겠습니까?<br />마감 후에는 수정이 제한됩니다.</> };
       case 'reopen': return { title: '마감해제', ok: '마감해제', body: <>기준년월 {ymB}의 마감을 해제하시겠습니까?</> };
