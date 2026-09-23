@@ -136,8 +136,8 @@ export function LitigationFormModal({ mode, initial, title, onSave, onClose }: {
 
 /* ──────────────────────────────
    ② 소송 해제등록 — **원문 미정의 → 형제 S2_55 `openRelease()` 규격 차용**
-   ⚠ `구분`(등록/해제) 게이트를 두지 않는다 — 목업 `$('release')` 도 이미 '해제'인 행을 막지 않고,
-     원문에 그 도메인 규칙이 없으므로 임의로 만들지 않는다(프로토타입이라 그대로 둔다).
+   ⚠ 해제등록은 `구분`='등록' 행에만 — 선택에 '해제' 행이 있으면 버튼 숨김 + openRelease 가드 +
+     commitRelease 는 '등록' 행만 전이(2026-09-23 사용자 결정, 목업은 막지 않았음 · litigation_manage.tsx).
 ────────────────────────────── */
 export function LitigationReleaseModal({ count, onSave, onClose }: {
   /** 선택 건수 — 읽기전용 표시값(입력 대상 아님) */

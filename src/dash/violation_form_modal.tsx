@@ -142,8 +142,8 @@ export function ViolationFormModal({ mode, initial, title, onSave, onClose }: {
 
 /* ──────────────────────────────
    ② 위반사항 해제등록 — 목업 `openRelease()`
-   ⚠ 목업에 `구분`(등록/해제) 게이트가 없다 — 이미 해제된 행을 골라도 막지 않는다.
-     원문에 그 도메인 규칙이 없으므로 임의로 만들지 않는다(프로토타입이라 그대로 둔다).
+   ⚠ 해제등록은 `구분`='등록' 행에만 — 선택에 '해제' 행이 있으면 버튼 숨김 + openRelease 가드 +
+     commitRelease 는 '등록' 행만 전이(2026-09-23 사용자 결정, 목업은 막지 않았음 · violation_manage.tsx).
 ────────────────────────────── */
 const today = () => format(new Date(), 'yyyy-MM-dd');   // 로컬 달력일 — toISOString 은 KST 00~09시에 전날
 
