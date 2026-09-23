@@ -12,6 +12,7 @@ import { ViolationManage } from './violation_manage';   // 법률/규약위반�
 import { ShareholderManage } from './shareholder_manage';   // 운용사 주주변동관리(관리형 리스트, S2_55 + 등록화면 S2_56 을 팝업으로 흡수)
 import { LitigationManage } from './litigation_manage';   // 운용사 소송관리(관리형 리스트, S2_57 + 등록화면 S2_58 을 팝업으로 흡수)
 import { WorkforceManage } from './workforce_manage';   // 운용인력 변동관리(관리형 리스트, S2_59 + 등록화면 S2_60 을 팝업으로 흡수)
+import { EwResultManage } from './ew_result_manage';   // 조기경보 결과정보 관리(섹션 2개 적층 + 생성·확정·마감 워크플로, S2_61 + 생성확인 S2_62)
 import { Schedule } from './schedule';
 import { SubFundManage } from './subfund_manage';   // 자펀드관리(관리형 리스트, 구조도 v1.4). 구 subfund.tsx(FR-5.3 대시보드)는 미라우팅
 import { Pages as ReportBucheoPages } from './report_bucheo';
@@ -238,6 +239,7 @@ function App() {
   else if (route === "운용사 주주변동관리") page = <ShareholderManage onNav={onNav} />;
   else if (route === "운용사 소송관리") page = <LitigationManage onNav={onNav} />;
   else if (route === "운용인력 변동관리") page = <WorkforceManage onNav={onNav} />;
+  else if (route === "조기경보 결과정보 관리") page = <EwResultManage onNav={onNav} />;
   else if (route === "운용사별 조기경보 조회") page = <GpEarlyWarning onNav={onNav} />;
   else if (route === "자펀드별 조기경보 조회") page = <FundEarlyWarning onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
