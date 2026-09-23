@@ -105,7 +105,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - 툴바 행은 `padding: '6px 18px'`로 더 촘촘하다(의도된 위계 — 타이틀이 더 여유 있게). 타이틀 행만 바꿀 때 툴바를 따라 올리지 않는다.
 - **`sub` 캡션은 쓰지 않는다.** 화면 설명 문구는 제거 대상(사용자 결정). 단위 표기는 **`toolbarRight` 맨 앞에 12px caption** `단위: 원`으로.
 - **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `page.total>1`일 때만 페이저(`IconBtn chevron-left/right` + `PageBtn`) · `footerRight` = **`<FooterActions …/>` 하나**(`grid_frame.tsx` export).
-  - **푸터 액션 4종은 항시 노출이며 순서가 고정이다(2026-09-17 사용자 결정): 전체보기(⛶) · 새 창(⧉) · 내보내기(⤓) · 인쇄(🖨).** 페이지가 직접 `IconBtn`을 나열하지 않는다 — `footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}` 한 줄.
+  - **푸터 액션 4종은 항시 노출이며 순서가 고정이다(2026-09-17 사용자 결정): 전체보기(⛶) · 새 창(⧉) · 내보내기(⤓) · 인쇄(🖨).** 인쇄는 화면 전용 출력물이 있으면 `printItems` 로 `[🖨 │ ⌄]` combo 가 된다(아래 ✅ ②). 페이지가 직접 `IconBtn`을 나열하지 않는다 — `footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}` 한 줄.
   - `onToggleAll`을 안 넘기면 전체보기가 빠져 3개만 렌더된다 — **페이저가 없는 화면**(집계·매트릭스·master-detail 등 현재 10개)이 그 경우다. `onExport`를 안 넘기면 내보내기도 빠진다(투자기업정보(통합)·투자실적 현황(투자기업)).
   - ⛔ **kebab(⋯)은 전 화면에서 폐기됐다(2026-09-17).** 툴바 독립 kebab · 등록 combo의 `⌄` 절반 · 푸터 폴백 kebab(`!topMoreVisible && <MoreMenu>`) 셋 다 삭제했고, 그 안에 있던 내보내기·인쇄가 푸터 아이콘으로 항시 노출된다. `MoreMenu`/`MoreMenuItems`/`RegisterCombo`/`PoCMoreMenu` 로컬 복사본 39개와 `topMoreRef`/`topMoreVisible`/IntersectionObserver 폴백 배선(26파일)도 함께 제거됐다 — **다시 만들지 말 것.**
   - 툴바에 인쇄 `IconBtn`을 따로 두지 않는다(푸터와 중복 — investee_profile·investee_invest_stats에서 실제 2개가 됐다).
@@ -145,13 +145,17 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 ## 관리형 리스트 툴바·타이틀 규약 (2026-09-11 subfund_manage에서 정립)
 리스트형(CRUD) 페이지 한정. 매트릭스/집계형은 위 골든(`headerActions` primary 내보내기)을 그대로 둔다.
 
-- 🔀 **툴바 형태는 하나다(2026-09-17 사용자 결정 — combo 폐기).** 1차 액션(등록)이 있으면 **단독 outline 버튼**, 없으면 아무것도 두지 않는다. 보조 액션(내보내기·인쇄)은 툴바가 아니라 **푸터 `FooterActions`**가 항시 노출한다.
+- 🔀 **툴바 형태는 하나다(2026-09-17 사용자 결정 — combo 폐기, 단 2026-09-24 허용 예외 2종은 아래 ✅).** 1차 액션(등록)이 있으면 **단독 outline 버튼**, 없으면 아무것도 두지 않는다. 보조 액션(내보내기·인쇄)은 툴바가 아니라 **푸터 `FooterActions`**가 항시 노출한다.
   ```
   등록 O:  단위: 원 │ ▣ 상세필터 │ ＋ <도메인 액션명> 등록 │ ⟳ 새로고침
   등록 X:  단위: 원 │ ▣ 상세필터 │ ⟳ 새로고침
   ```
   - 등록 버튼 = `<Button variant="outline" size="sm" leadingIcon="plus" onClick={…}>{라벨}</Button>`. 라벨은 도메인 액션명 그대로(`제안서접수 등록`·`공고 등록`), "등록"으로 줄이지 않는다. 스키마 트랙은 `editable = schema.fields.length > 0` 으로 자동 분기(`generic_list.tsx`).
   - ⛔ **폐기된 형태 2종 — 되돌리지 말 것**: ① `RegisterCombo`(등록+`⌄` split 버튼, 2026-09-11~09-17) ② 툴바 kebab 단독. 둘 다 보조 액션을 숨기는 구조였고, 그 항목이 이제 푸터에 상시 노출된다.
+  - ✅ **허용되는 combo = 공용 `SplitButton`(`ui/split-button.tsx`) 2가지뿐 (2026-09-24 사용자 결정, 등록원부관리).** 위 폐기는 "보조 액션(내보내기·인쇄)을 `⌄` 안에 숨기는" combo 에 대한 것이다 — 아래 둘은 보조 액션을 숨기지 않으므로 허용:
+    ① **툴바 — 같은 1차 액션의 대체 경로 묶음**: `[+ 등록원부입력 │ ⌄ 등록원부업로드]`(본체 = 가장 잦은 경로 1클릭, `⌄` = 일괄 업로드 등). 서로 다른 성격의 액션(등록+내보내기 등)을 섞지 않는다. 등록+업로드 조합은 `trust_upload_forms.tsx` `RegisterCombo`(= SplitButton 래퍼, [[apfs-manage-page]] 파일 업로드 행)도 같은 부품이다.
+    ② **푸터 인쇄 combo — 화면 전용 출력물**: `FooterActions`/`RiskPage` 에 `printItems` 를 넘기면 인쇄 아이콘이 `[🖨 │ ⌄]`(`SplitButton iconOnly`)가 된다. 본체 = 화면 인쇄(⌘P), `⌄` = 원문 목록바 `[출력▾]` 항목(등록원부 출력·발급이력 출력). **툴바에 별도 `[출력▾]` 을 두지 않는다.**
+    - 새 combo 를 페이지에서 손으로 만들지 말 것 — 아래 함정 4건을 `SplitButton` 이 이미 피한다(가운데 구분선은 inline box-shadow 가 아닌 border, 래퍼 `overflow-hidden` 없음 → focus 링 보존 — 2026-09-24 두 번 다시 밟아 실측 확인).
   - 복원이 필요해질 때만 참조할 combo 구현 함정 4건(모두 실제로 밟았던 버그): `topMoreRef`는 실제 렌더되는 쪽이 들어야 함 · `UI.Button`으로 split을 만들 수 없음([[ui-button-not-radix-aschild-trigger]]) · 컨테이너 `overflow-hidden` 금지(focus 링 잘림) · 트리거에 `.apfs-menu-trigger` 금지([[global-focus-overhaul-exception-surfaces]]).
 - **내보내기 진입점은 푸터 아이콘 + ⌥D 두 곳.** 툴바에 독립 "엑셀" 버튼을 두지 않는다(종전 규약 유지 — 그 자리는 이제 kebab이 아니라 푸터다).
 - **타이틀은 메뉴 리프와 일치.** `cardTitle`·`title`·`crumbs` 리프를 **`data.ts` 메뉴 리프 라벨 문자열 그대로**(띄어쓰기 포함) 맞춘다. `cardTitle`이 `title`과 같으면 생략 가능(H1=`cardTitle ?? title`). **"○○ 목록" 같은 임의 축약 금지**(2026-09-11 "자펀드 목록"→"자펀드 관리" 정정). 매트릭스/집계형이 문서 정식명칭을 카드 제목으로 쓰는 것(asset_funding "…현황표")은 예외.

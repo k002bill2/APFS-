@@ -501,7 +501,8 @@ describe('관리형 선택 바 규약', () => {
   });
   it('계좌정보·입출금 관리 = 등록 콤보 버튼(▾ 메뉴에 ○○ 업로드) — 독립 [업로드] 버튼 없음', () => {
     const s = src('trust_upload_forms.tsx');
-    expect(s).toMatch(/<DropdownMenuItem onSelect=\{onUpload\}>.*\{entity\} 업로드<\/DropdownMenuItem>/);
+    /* 콤보 구현 = 공용 SplitButton — ▾ 항목이 '○○ 업로드' → onUpload 인지만 본다 */
+    expect(s).toMatch(/<SplitButton [^>]*items=\{\[\{ label: `\$\{entity\} 업로드`, icon: 'upload', onSelect: onUpload \}\]\}/);
     expect(s).not.toMatch(/>업로드<\/Button>/);
   });
   it('폼 → 행 변환: 숫자·금액은 Number, 빈 값은 null(0 으로 바꾸지 않는다)', () => {
