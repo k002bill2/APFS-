@@ -218,7 +218,8 @@ export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세
   }, [onRowOpen]);
   const onCellValueChanged = useCallback((e: CellValueChangedEvent<Row>) => {
     if (!onEdit || !e.data || !e.colDef.field) return;
-    onEdit(e.data, e.colDef.field, Number(e.newValue) || 0);
+    // e.newValue 는 저장 후 valueGetter 로 다시 읽은 **화면 단위** 값이다 — 원 단위 저장값(data)을 넘긴다
+    onEdit(e.data, e.colDef.field, Number(e.data[e.colDef.field]) || 0);
   }, [onEdit]);
 
   return (
