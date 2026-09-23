@@ -1,8 +1,8 @@
 import type { CellType } from './types';
 
-export type RenderKind = 'status' | 'rate' | 'gp' | 'numeric' | 'maskedText';
+export type RenderKind = 'status' | 'rate' | 'gp' | 'numeric' | 'text';
 
-// CellType → 렌더 분류 단일 진실. 텍스트/코드/pii/미지는 항상 maskedText로 수렴(fail-safe).
+// CellType → 렌더 분류 단일 진실. 텍스트/코드/pii/미지는 항상 text 로 수렴(fail-safe).
 export function renderKind(type: CellType): RenderKind {
   switch (type) {
     case 'status': return 'status';
@@ -14,6 +14,6 @@ export function renderKind(type: CellType): RenderKind {
     case 'text':
     case 'code':
     case 'pii':
-    default:       return 'maskedText';
+    default:       return 'text';
   }
 }
