@@ -19,7 +19,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
-import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -62,7 +62,9 @@ const columnDefs: ColDef<InviteView>[] = [
   { field: 'expiresAt', headerName: `만료(${INVITE_TTL_HOURS}시간)`, width: 156, maxWidth: 156, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
     valueFormatter: (p) => (p.data?.state === '초대발송' && p.value ? mn(p.value) : '-') },
 ];
-const ROW_SELECTION: RowSelectionOptions<InviteView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };   // 행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22 사용자 결정, apfs-aggrid "체크박스" 절)
+/* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
+   행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */
+const ROW_SELECTION: RowSelectionOptions<InviteView> = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
 const STATE_CHIPS = ['', ...INVITE_STATES] as const;
 
 type XCol = { header: string; get: (r: InviteView) => string };
@@ -108,7 +110,10 @@ type ModalState = null
 export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<InviteView> | null>(null);
   const [rows, setRows] = useState<InviteRow[]>(() => demoPersonnel());
-  const [selId, setSelId] = useState<string | null>(null);
+  /* 선택 SSOT — 체크된 행 id 배열. selId(첫 행)·selCount 는 파생이라 둘이 어긋날 수 없다(Codex 리뷰 2026-09-23) */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selId = selIds[0] ?? null;      // 단일 액션 대상(선택 1건일 때만 쓴다)
+  const selCount = selIds.length;       // 단일/다건 분기의 SSOT
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const masked = useMask();
@@ -126,12 +131,15 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
   const visible = useMemo<InviteView[]>(() => filterInvites(rows, { org: fOrg, active: fActive, state: fState, kw: fText })
     .map((r) => ({ ...r, orgn: orgName(r.org), state: inviteState(r), expiresAt: inviteExpiresAt(r.invitedAt) })), [rows, fOrg, fActive, fState, fText]);
 
-  const selIdRef = useRef<string | null>(null); selIdRef.current = selId;
+  /* 선택 SSOT = selIds(배열). multiRow 라 복원도 **선택 전체**를 되돌린다 — 첫 id 만 되살리면 clearSelection 이
+     나머지 체크를 지워 사용자가 아무것도 안 했는데 다건 선택이 1건으로 줄어든다(Codex 리뷰 2026-09-23). */
+  const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
   const onGridReady = useCallback((e: GridReadyEvent<InviteView>) => { apiRef.current = e.api; }, []);
-  const onSelectionChanged = useCallback((e: SelectionChangedEvent<InviteView>) => { setSelId(e.api.getSelectedRows()[0]?.id ?? null); }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<InviteView>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
   const onRowDataUpdated = useCallback((e: { api: GridApi<InviteView> }) => {
-    const id = selIdRef.current; if (!id) return;
-    const node = e.api.getRowNode(id); if (node && !node.isSelected()) node.setSelected(true, true);
+    restoreSelection(e.api, selIdsRef.current);
   }, []);
   const openPreview = useCallback((id: string) => setModal({ kind: 'mail', id }), []);
   const onRowDoubleClicked = useCallback((e: RowDoubleClickedEvent<InviteView>) => { if (e.data && !e.rowPinned) openPreview(e.data.id); }, [openPreview]);
@@ -140,8 +148,9 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
     openPreview(e.data.id);
   }, [openPreview]);
 
-  const selected = selId ? visible.find((r) => r.id === selId) ?? null : null;
-  const gate = inviteGate(selected);
+  /* 단일 대상 액션은 **정확히 1건** 체크일 때만 — 다건 선택에 단건 모달·전이는 의미가 없다(2026-09-23) */
+  const single = selCount === 1 && selId ? visible.find((r) => r.id === selId) ?? null : null;
+  const gate = inviteGate(single);
   const previewRow = modal?.kind === 'mail' ? visible.find((r) => r.id === modal.id) ?? null : null;
 
   /* ── 전이(목업 doSend + 브리프 재발송·취소) — 확인 → 로컬 상태 → toast ── */
@@ -194,13 +203,16 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
      (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
-  const selActions = selected ? (
+  const selActions = selCount > 0 ? (
     <>
-      <StatusBadge tone={INVITE_TONE[selected.state]} label={selected.state} size="lg" dot={false} />
-      {gate.send && <Button variant="primary" size="sm" leadingIcon="bell" onClick={() => askSend(selected, false)}>초대 발송</Button>}
-      {gate.resend && <Button variant="primary" size="sm" leadingIcon="refresh" onClick={() => askSend(selected, true)}>재발송</Button>}
-      <Button variant="outline" size="sm" leadingIcon="eye" onClick={() => openPreview(selected.id)}>메일 미리보기</Button>
-      {gate.cancel && <Button variant="outline" size="sm" leadingIcon="x" style={{ color: 'var(--danger)' }} onClick={() => askCancel(selected)}>초대 취소</Button>}
+      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      {single && <>
+      <StatusBadge tone={INVITE_TONE[single.state]} label={single.state} size="lg" dot={false} />
+      {gate.send && <Button variant="primary" size="sm" leadingIcon="bell" onClick={() => askSend(single, false)}>초대 발송</Button>}
+      {gate.resend && <Button variant="primary" size="sm" leadingIcon="refresh" onClick={() => askSend(single, true)}>재발송</Button>}
+      <Button variant="outline" size="sm" leadingIcon="eye" onClick={() => openPreview(single.id)}>메일 미리보기</Button>
+      {gate.cancel && <Button variant="outline" size="sm" leadingIcon="x" style={{ color: 'var(--danger)' }} onClick={() => askCancel(single)}>초대 취소</Button>}
+      </>}
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;
@@ -210,7 +222,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
       title="사용자 초대(운용사)"
       favRoute="user-invite-gp"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? null : (
+      toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {STATE_CHIPS.map((s) => <FilterChip key={s || 'all'} active={fState === s} onClick={() => setFState(s)}>{s || '전체'}</FilterChip>)}

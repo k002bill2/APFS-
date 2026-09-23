@@ -24,7 +24,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
-import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import { _stopPropagationForAgGrid } from 'ag-grid-community';
@@ -106,7 +106,9 @@ const makeColumns = (toggle: (id: string) => void): ColDef<MenuView>[] => [
     } },
   { field: 'use', headerName: '사용여부', width: 92, ...NOSORT, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} /> },
 ];
-const ROW_SELECTION: RowSelectionOptions<MenuView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };   // 행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22 사용자 결정, apfs-aggrid "체크박스" 절)
+/* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출하고,
+   삭제는 게이트를 통과한 행만 지운다. 행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */
+const ROW_SELECTION: RowSelectionOptions<MenuView> = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
 
 type XCol = { header: string; get: (r: MenuView) => string | number };
 const EXPORT_COLS: XCol[] = [
@@ -139,13 +141,17 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
-type ModalState = null | { kind: 'create'; preset?: MenuPreset } | { kind: 'edit'; id: string } | { kind: 'delete'; id: string };
+type ModalState = null | { kind: 'create'; preset?: MenuPreset } | { kind: 'edit'; id: string }
+  | { kind: 'delete'; ids: string[]; blocked: number };   // 다건 삭제 — ids=지울 행, blocked=게이트에 막혀 제외된 건수
 
 export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<MenuView> | null>(null);
   const [rows, setRows] = useState<MenuRow[]>(() => buildMenuRows());
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
-  const [selId, setSelId] = useState<string | null>(null);
+  /* 선택 SSOT — 체크된 행 id 배열. selId(첫 행)·selCount 는 파생이라 둘이 어긋날 수 없다(Codex 리뷰 2026-09-23) */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selId = selIds[0] ?? null;      // 단일 액션 대상(선택 1건일 때만 쓴다)
+  const selCount = selIds.length;       // 단일/다건 분기의 SSOT
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const masked = useMask();
@@ -191,16 +197,19 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   const toggleAll = () => setExpanded(allExpanded ? new Set() : new Set(parentIds));
 
   /* 선택 SSOT = selId. 새로 만든 행은 onRowDataUpdated 에서 라디오를 되맞춘다 */
-  const selIdRef = useRef<string | null>(null); selIdRef.current = selId;
+  /* 선택 SSOT = selIds(배열). multiRow 라 복원도 **선택 전체**를 되돌린다 — 첫 id 만 되살리면 clearSelection 이
+     나머지 체크를 지워 사용자가 아무것도 안 했는데 다건 선택이 1건으로 줄어든다(Codex 리뷰 2026-09-23). */
+  const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
   const onGridReady = useCallback((e: GridReadyEvent<MenuView>) => { apiRef.current = e.api; }, []);
-  const onSelectionChanged = useCallback((e: SelectionChangedEvent<MenuView>) => { setSelId(e.api.getSelectedRows()[0]?.id ?? null); }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<MenuView>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
   const onRowDataUpdated = useCallback((e: { api: GridApi<MenuView> }) => {
     /* 펼침 화살표는 셀 '값'(name)이 아니라 data 파생(expanded)이라, getRowId 기반 immutable 갱신에서는
        값 비교 리프레시를 건너뛰어 화살표·aria-expanded 가 얼어붙는다 → 메뉴명 컬럼만 강제 리프레시.
        refreshCells 는 모델을 바꾸지 않으므로 onRowDataUpdated 가 재발화하지 않는다(렌더 루프 없음). */
     e.api.refreshCells({ columns: ['name'], force: true });
-    const id = selIdRef.current; if (!id) return;
-    const node = e.api.getRowNode(id); if (node && !node.isSelected()) node.setSelected(true, true);
+    restoreSelection(e.api, selIdsRef.current);
   }, []);
   const onRowDoubleClicked = useCallback((e: RowDoubleClickedEvent<MenuView>) => { if (e.data && !e.rowPinned) setModal({ kind: 'edit', id: e.data.id }); }, []);
   /* Enter — 메뉴명 셀의 부모 행은 펼침 토글(트리 활성화), 그 외는 수정(키보드로 펼침·수정 모두 도달) */
@@ -210,13 +219,22 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
     setModal({ kind: 'edit', id: e.data.id });
   }, [toggle]);
 
-  const selected = selId ? rows.find((r) => r.id === selId) ?? null : null;
-  const target = modal && modal.kind !== 'create' ? rows.find((r) => r.id === modal.id) ?? null : null;
+  /* 단일 대상 액션은 **정확히 1건** 체크일 때만 — 다건 선택에 수정·하위등록 모달은 의미가 없다(2026-09-23). */
+  const single = selCount === 1 && selId ? rows.find((r) => r.id === selId) ?? null : null;
+  const target = modal?.kind === 'edit' ? rows.find((r) => r.id === modal.id) ?? null : null;   // 수정 모달 대상(삭제는 modal.ids 가 든다)
 
-  const requestDelete = (r: MenuRow) => {
-    if (hasChildren(rows, r.id)) { toast.error('하위 메뉴가 있어 삭제할 수 없습니다.'); return; }
-    setModal({ kind: 'delete', id: r.id });
+  /* 삭제 게이트(목업): 하위 메뉴가 있으면 불가. 다건이면 **게이트를 통과한 행만** 지우고 막힌 건수는 사유 toast.
+     게이트는 **요청 시점에 한 번** 평가한다 — 확인 시점에 다시 재면 부모·자식을 함께 고른 경우 삭제 순서에 결과가 달라진다. */
+  const requestDeleteRows = (targets: MenuRow[]) => {
+    if (!targets.length) return;
+    const ok = targets.filter((r) => !hasChildren(rows, r.id));
+    const blocked = targets.length - ok.length;
+    if (!ok.length) { toast.error('하위 메뉴가 있어 삭제할 수 없습니다.'); return; }
+    if (blocked) toast.error(`하위 메뉴가 있는 ${blocked}건은 삭제 대상에서 제외됩니다.`);
+    setModal({ kind: 'delete', ids: ok.map((r) => r.id), blocked });
   };
+  const requestDelete = (r: MenuRow) => requestDeleteRows([r]);
+  const deleteSelected = () => requestDeleteRows(apiRef.current?.getSelectedRows() ?? []);
   const handleCellContextMenu = (e: CellContextMenuEvent<MenuView>) => {
     (e.event as MouseEvent | undefined)?.preventDefault();
     const row = e.data;
@@ -245,16 +263,17 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
       const next = [...rows, row];
       setRows(applyReseq(next, reseqSiblings(childrenOf(next, patch.parentId), row.id, patch.ord)));
       if (patch.parentId) setExpanded((prev) => new Set([...prev, patch.parentId!]));   // 목업: 부모를 펼쳐 새 행을 보여준다
-      setSelId(row.id);
+      setSelIds([row.id]);
     }
     setModal(null);
     toast.success('저장되었습니다 · 정렬 자동 조정 (목업)');
   };
   const doDelete = () => {
-    if (!target) return;
-    setRows((prev) => prev.filter((r) => r.id !== target.id));
-    if (selId === target.id) setSelId(null);
-    toast.success('삭제되었습니다 (목업)');
+    if (!modal || modal.kind !== 'delete') return;
+    const ids = new Set(modal.ids);
+    setRows((prev) => prev.filter((r) => !ids.has(r.id)));
+    apiRef.current?.deselectAll(); setSelIds([]);
+    toast.success(`${ids.size}건 삭제되었습니다 (목업)`);
   };
   const refresh = () => { setRows(buildMenuRows()); setExpanded(new Set()); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
@@ -277,12 +296,13 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
      (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
-  const selActions = selected ? (
+  const selActions = selCount > 0 ? (
     <>
-      <StatusBadge tone="info" label={`레벨 ${selected.lvl}`} size="lg" dot={false} />
-      <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'edit', id: selected.id })}>수정</Button>
-      {selected.lvl < 3 && <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create', preset: { lvl: (selected.lvl + 1) as MenuRow['lvl'], parentId: selected.id } })}>하위 메뉴 등록</Button>}
-      <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => requestDelete(selected)}>삭제</Button>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      {single && <StatusBadge tone="info" label={`레벨 ${single.lvl}`} size="lg" dot={false} />}
+      {single && <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'edit', id: single.id })}>수정</Button>}
+      {single && single.lvl < 3 && <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create', preset: { lvl: (single.lvl + 1) as MenuRow['lvl'], parentId: single.id } })}>하위 메뉴 등록</Button>}
+      <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={deleteSelected}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;
@@ -293,7 +313,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
       title="메뉴관리"
       favRoute="menu-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? null : (
+      toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {UTYPE_CHIPS.map((u) => <FilterChip key={u || 'all'} active={fUtype === u} onClick={() => setFUtype(u)}>{u || '전체'}</FilterChip>)}
@@ -377,13 +397,16 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
       )}
 
       {/* ── 삭제 확인(하위 메뉴 없음 전제) ── */}
-      {modal?.kind === 'delete' && target && (
+      {modal?.kind === 'delete' && (
         <AlertDialog open onOpenChange={(o) => { if (!o) setModal(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>메뉴 삭제</AlertDialogTitle>
               <AlertDialogDescription>
-                「<b className="text-foreground"><MT>{target.name}</MT></b>」 메뉴를 삭제할까요?
+                {modal.ids.length === 1
+                  ? <>「<b className="text-foreground"><MT>{rows.find((r) => r.id === modal.ids[0])?.name ?? ''}</MT></b>」 메뉴를 삭제할까요?</>
+                  : <>선택한 <b className="text-foreground">{mn(String(modal.ids.length))}건</b>의 메뉴를 삭제할까요?</>}
+                {modal.blocked > 0 && <><br />하위 메뉴가 있는 {mn(String(modal.blocked))}건은 제외됩니다.</>}
                 <br />삭제 후에는 복구할 수 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>

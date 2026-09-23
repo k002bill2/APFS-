@@ -22,7 +22,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
-import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝) — 형제 드로어(asset_funding·generic_list)와 동일
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -82,7 +82,9 @@ function computeTotal(rows: SubFundRow[]): SubFundRow {
 }
 const PAGE_SIZE = 20;
 /* 라디오 단일선택 — 체크박스로만 on/off(행 본문 클릭 선택 해제, 2026-09-22 사용자 결정). 모듈 상수로 호이스팅(apfs-aggrid 계약 6 — 인라인 리터럴은 렌더마다 컬럼 재생성→폭 되돌림). */
-const ROW_SELECTION: RowSelectionOptions<SubFundRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };
+/* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
+   행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */
+const ROW_SELECTION: RowSelectionOptions<SubFundRow> = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
 const today = () => format(new Date(), 'yyyy-MM-dd');   // 로컬 달력일 — toISOString은 KST 00~09시에 전날(apfs-datepicker 계약)
 
 /* ──────────────────────────────
@@ -198,7 +200,10 @@ type ModalState = null | { kind: 'apply' } | { kind: 'select'; target: Stage } |
 export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<SubFundRow> | null>(null);
   const [rows, setRows] = useState<SubFundRow[]>(DEMO);
-  const [selId, setSelId] = useState<string | null>(null);
+  /* 선택 SSOT — 체크된 행 id 배열. selId(첫 행)·selCount 는 파생이라 둘이 어긋날 수 없다(Codex 리뷰 2026-09-23) */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selId = selIds[0] ?? null;      // 단일 액션 대상(선택 1건일 때만 쓴다)
+  const selCount = selIds.length;       // 단일/다건 분기의 SSOT
   // 카드뷰 미사용(2026-09-11 사용자 결정) — 푸터 SegTabs를 제거하고 리스트 뷰로 고정.
   // 되살리려면 이 줄을 useState('list')로 되돌리고 footerRight에 SegTabs를 복원하면 된다(카드 렌더 분기는 그대로 남아 있다).
   const view = 'list';
@@ -250,16 +255,19 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   const formedFunds = useMemo(() => rows.filter((r) => r.stg === '결성').map((r) => r.fn), [rows]);   // 자펀드 필터=결성 행만(결성돼야 자펀드 등재)
 
   // 카드뷰→리스트 뷰 복귀 시 그리드가 재마운트되므로, 카드에서 고른 선택(selId)을 그리드 선택으로 되돌려 심사단계 액션이 이어지게 한다
-  const selIdRef = useRef<string | null>(null); selIdRef.current = selId;
+  /* 선택 SSOT = selIds(배열). multiRow 라 복원도 **선택 전체**를 되돌린다 — 첫 id 만 되살리면 clearSelection 이
+     나머지 체크를 지워 사용자가 아무것도 안 했는데 다건 선택이 1건으로 줄어든다(Codex 리뷰 2026-09-23). */
+  const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
   const onGridReady = useCallback((e: GridReadyEvent<SubFundRow>) => {
     apiRef.current = e.api;
-    const id = selIdRef.current; if (id) e.api.getRowNode(id)?.setSelected(true);
+    restoreSelection(e.api, selIdsRef.current);
   }, []);
-  const onSelectionChanged = useCallback((e: SelectionChangedEvent<SubFundRow>) => { setSelId(e.api.getSelectedRows()[0]?.id ?? null); }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<SubFundRow>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
   // 신규 등록(선두 삽입)처럼 React 쪽에서 selId를 먼저 정한 경우, 행이 그리드에 반영된 뒤 라디오 선택을 맞춘다(툴바-라디오 불일치 방지)
   const onRowDataUpdated = useCallback((e: { api: GridApi<SubFundRow> }) => {
-    const id = selIdRef.current; if (!id) return;
-    const node = e.api.getRowNode(id); if (node && !node.isSelected()) node.setSelected(true, true);
+    restoreSelection(e.api, selIdsRef.current);
   }, []);
   /* 값 비교 가드 — 매 호출 새 객체 setState는 렌더 루프 유발(aggrid-onpaginationchanged-render-loop) */
   const onPaginationChanged = useCallback(() => {
@@ -268,27 +276,28 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
     setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
   }, []);
 
-  const selected = selId ? rows.find((r) => r.id === selId) ?? null : null;
+  /* 단일 대상 액션은 **정확히 1건** 체크일 때만 — 다건 선택에 단건 모달·전이는 의미가 없다(2026-09-23) */
+  const single = selCount === 1 && selId ? rows.find((r) => r.id === selId) ?? null : null;
   const patchRow = (id: string, patch: Partial<SubFundRow>) => setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
   /* ── 심사단계 워크플로우: 단계 전이는 오직 컨텍스트 액션으로 ── */
   const toStage = (ns: Stage, msg: string) => {
-    if (!selected) return;
-    patchRow(selected.id, { stg: ns, ...(ns === '취소' ? { st: '-', liq: '-' } : {}) });
+    if (!single) return;
+    patchRow(single.id, { stg: ns, ...(ns === '취소' ? { st: '-', liq: '-' } : {}) });
     toast.success(msg);
   };
   const confirmFormation = () => {
-    if (!selected) return;
-    patchRow(selected.id, { stg: '결성', fd: today(), st: '운영중' });
+    if (!single) return;
+    patchRow(single.id, { stg: '결성', fd: today(), st: '운영중' });
     toast.success('결성 확정 — 운용중으로 전환되었습니다');
   };
   type Act = { label: string; primary?: boolean; run: () => void };
-  const stageActs: Act[] = !selected ? [] : ({
+  const stageActs: Act[] = !single ? [] : ({
     신청: [{ label: '선정조합 등록', primary: true, run: () => setModal({ kind: 'select', target: '선정' }) }, { label: '신청취소', run: () => toStage('취소', '신청이 취소되었습니다') }],
     선정: [{ label: '결성 확정', primary: true, run: confirmFormation }, { label: '수정', run: () => setModal({ kind: 'select', target: '선정' }) }, { label: '선정취소', run: () => toStage('취소', '선정이 취소되었습니다') }],
     결성: [{ label: '수정', run: () => setModal({ kind: 'formEdit' }) }],
     취소: [],
-  } as Record<Stage, Act[]>)[selected.stg];
+  } as Record<Stage, Act[]>)[single.stg];
 
   const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
@@ -325,33 +334,36 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
       attach: f.attach || '' };   // 첨부파일명 보존(Codex P2) — DocumentsField가 vals.attach로 직렬화한 이름을 행에 실음
     setRows((prev) => [row, ...prev]);
     setModal(null);
-    setSelId(row.id);
+    setSelIds([row.id]);
     toast.success('제안서접수 등록되었습니다 — 심사단계 신청');
   };
   const saveSelect = (f: any, target: Stage) => {   // 선정조합 등록/수정 → 선택 행 갱신 + 단계 전이
-    if (!selected) return;
-    const was = selected.stg;
-    const c1 = numOr(f.c1, selected.c1), c2 = numOr(f.c2, selected.c2);
-    patchRow(selected.id, { stg: target, gp1: f.gp1 || selected.gp1, fn: f.fn || selected.fn, ctype: f.ctype || selected.ctype, cs: f.cs || selected.cs,
-      dur: numOr(f.dur, selected.dur), rate: numOr(f.rate, selected.rate), c1, c2, c3: c1 != null && c2 != null ? c1 - c2 : selected.c3, v1: c1, v2: c2, v3: c1 != null && c2 != null ? c1 - c2 : selected.v3 });
+    if (!single) return;
+    const was = single.stg;
+    const c1 = numOr(f.c1, single.c1), c2 = numOr(f.c2, single.c2);
+    patchRow(single.id, { stg: target, gp1: f.gp1 || single.gp1, fn: f.fn || single.fn, ctype: f.ctype || single.ctype, cs: f.cs || single.cs,
+      dur: numOr(f.dur, single.dur), rate: numOr(f.rate, single.rate), c1, c2, c3: c1 != null && c2 != null ? c1 - c2 : single.c3, v1: c1, v2: c2, v3: c1 != null && c2 != null ? c1 - c2 : single.v3 });
     setModal(null);
     toast.success(was === '신청' ? '선정조합으로 등록되었습니다 — 심사단계 선정' : '수정되었습니다');
   };
-  const selectInitial = selected ? { id: selected.id, y: selected.y, gp1: selected.gp1 === '-' ? '' : selected.gp1, fn: selected.fn, c1: selected.c1 ?? '', c2: selected.c2 ?? '', dur: selected.dur ?? '', rate: selected.rate ?? '', ctype: selected.ctype === '-' ? '' : selected.ctype, cs: selected.cs === '-' ? '' : selected.cs, my: selected.stg === '결성' ? '결성' : selected.stg === '취소' ? '취소' : '미결성', selDate: today() } : undefined;
+  const selectInitial = single ? { id: single.id, y: single.y, gp1: single.gp1 === '-' ? '' : single.gp1, fn: single.fn, c1: single.c1 ?? '', c2: single.c2 ?? '', dur: single.dur ?? '', rate: single.rate ?? '', ctype: single.ctype === '-' ? '' : single.ctype, cs: single.cs === '-' ? '' : single.cs, my: single.stg === '결성' ? '결성' : single.stg === '취소' ? '취소' : '미결성', selDate: today() } : undefined;
 
   const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
      (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
-  const selActions = selected ? (
+  const selActions = selCount > 0 ? (
     /* 선택 행의 심사단계에 맞는 작업만 노출(공고관리 컨텍스트 액션 패턴). 취소 단계는 작업 없음 */
     <>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      {single && <>
       {/* 단계 배지만 표시 — 자펀드명은 선택 행에서 이미 보이므로 생략(2026-09-08 결정) */}
-      <StatusBadge tone={STAGE_TONE[selected.stg]} label={selected.stg} size="lg" dot={false} />
+      <StatusBadge tone={STAGE_TONE[single.stg]} label={single.stg} size="lg" dot={false} />
       {stageActs.map((a) => (
         <Button key={a.label} variant={a.primary ? 'primary' : 'outline'} size="sm" onClick={a.run}>{a.label}</Button>
       ))}
+      </>}
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;
@@ -362,7 +374,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
       cardTitle="자펀드 관리"
       favRoute="subfund"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? null : (
+      toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['' as const, ...STAGES] as ('' | Stage)[]).map((s) => (
@@ -434,7 +446,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
         <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))', padding: 18 }}>
           {filteredRows.length === 0 && <span className="text-muted-foreground" style={{ fontSize: 13, padding: '24px 0' }}>조건에 맞는 자펀드가 없습니다.</span>}
           {filteredRows.map((r) => (
-            <button key={r.id} type="button" onClick={() => setSelId(r.id)} aria-pressed={selId === r.id}
+            <button key={r.id} type="button" onClick={() => setSelIds([r.id])} aria-pressed={selId === r.id}
               className="border bg-card flex flex-col gap-3 p-3.5 text-left cursor-pointer motion-safe:active:scale-[.98]"
               style={{ borderRadius: 12, borderColor: selId === r.id ? 'var(--primary)' : 'var(--border)', fontFamily: 'inherit', color: 'inherit' }}>
               <div className="flex items-center gap-2.5">
@@ -499,15 +511,15 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           initial={{ applyDate: today(), y: String(new Date().getFullYear()) } as any}
           onSave={saveApply} onClose={() => setModal(null)} />
       )}
-      {modal?.kind === 'select' && selected && (
+      {modal?.kind === 'select' && single && (
         <RowFormModal mode="edit" schema={SELECT_SCHEMA} initial={selectInitial as any}
-          title={selected.stg === '신청' ? '선정조합 등록' : '선정조합 정보 수정'}
+          title={single.stg === '신청' ? '선정조합 등록' : '선정조합 정보 수정'}
           onSave={(f) => saveSelect(f, modal.target)} onClose={() => setModal(null)} />
       )}
-      {modal?.kind === 'formEdit' && selected && (
+      {modal?.kind === 'formEdit' && single && (
         /* 결성조합 수정 — 섹션·반복행·첨부표가 있어 flat RowFormModal 대신 섹션형 전용 모달 */
-        <SubFundFormEditModal row={selected}
-          onSave={(patch) => { patchRow(selected.id, patch); setModal(null); toast.success('수정되었습니다'); }}
+        <SubFundFormEditModal row={single}
+          onSave={(patch) => { patchRow(single.id, patch); setModal(null); toast.success('수정되었습니다'); }}
           onClose={() => setModal(null)} />
       )}
     </GridFrame>

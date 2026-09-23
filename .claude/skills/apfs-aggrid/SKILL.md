@@ -195,16 +195,42 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
       `enableClickSelection`+`enableSelectionWithoutKeys` 한 벌을 켰다(전자만 켜면 본문 클릭이 기존 체크를 전부 대체해 3건→1건).
       **09-22 사용자가 이를 뒤집어 전 페이지 체크박스 전용으로 통일** — 본문 클릭이 선택을 바꾸는 것이 오히려 오조작이었다.
   - 화면에 액션이 있어도 **더블클릭·Enter·우클릭 메뉴로 이미 닿는 단일 액션(상세 보기 등)뿐**이라면 체크박스 값이 없다 — 만들지 않는다. "체크했는데 아무 일도 안 일어남"은 그 자체로 UI 결함이다.
-  - **단일선택이 필요한 화면은 multiRow 로 올리지 않는다.** 판별 기준은 하나 — **그 액션이 N건에 의미가 있나.**
-    - `singleRow` 유지: 단계 전이(→[[apfs-stage-workflow]] — 승인/반려는 한 건씩), master-detail 라디오
-      (→ 아래 절 — 좌측 1건이 우측 내용을 정한다), 선택 행 **수정**(모달은 한 건만 연다).
-      현행 11개 bespoke 페이지가 전부 여기 속한다(`subfund_manage`·`program_manage`·`user_manage`·`code_manage` …).
-    - `multiRow`: **다건 삭제처럼 N건에 그대로 적용되는 액션**이 있는 화면. 현행 정본은 `generic_list.tsx` 하나다.
-  - **수정 버튼은 단건 체크일 때만**(`editable && selCount === 1`). 다건 선택에 수정 모달은 의미가 없다 —
-    다건이면 `삭제`·`선택 해제`만 남는다(정본: `generic_list.tsx` `selActions`). 선택 툴바의 삭제 버튼 라벨은 **`삭제`**다 — `선택 삭제` 아님(2026-09-22 사용자 결정, 재제안 금지). 건수는 앞의 `N건 선택됨`이 이미 말하므로 라벨에 "선택"을 반복하지 않는다.
+  - **선택이 있는 화면은 `multiRow` 가 기본이다(2026-09-23 사용자 결정 — 전 리스트 공통).** 체크박스는 중복 체크가 되고,
+    **단일 대상 액션은 정확히 1건일 때만 노출**한다. 종전의 "단일선택 화면은 multiRow 로 올리지 않는다"는 폐기됐다(아래 역사).
+    ```tsx
+    const ROW_SELECTION = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered',
+      enableClickSelection: false } as const;                      // 모듈 상수(⑦)
+    const [selCount, setSelCount] = useState(0);                   // 단일/다건 분기의 SSOT
+    const single = selCount === 1 && selId ? rows.find((r) => r.id === selId) ?? null : null;
+    ```
+    - **단일 대상 액션 = `single` 게이트**: 수정·복사·도움말·단계 전이·메일 발송·별개 엔티티 CRUD 등 *한 건에만 뜻이 있는* 모든 버튼과 그 옆 StatusBadge. `{single && <>…</>}` 로 통째 감싼다.
+    - **다건 액션 = 바깥**: 삭제·해제등록처럼 N건에 그대로 적용되는 것. `선택 해제`는 항상.
+    - `selActions` 의 첫 자식은 **언제나** `<span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>`, 분기는 `selCount > 0`(툴바도 `toolbarLeft={selCount > 0 ? null : …}`).
+      ⚠ `generic_list.tsx` 만 이 건수를 `mn()` 없이 쓴다(드리프트, 무해) — bespoke 는 `mn()` 쪽으로 통일한다.
+  - **다건 삭제는 게이트 필터형이다.** 행마다 삭제 게이트가 있는 화면(하위 메뉴 없을 때만·메뉴 미연결만·배정 사용자 0명만)에서:
+    ```tsx
+    const requestDeleteRows = (targets: Row[]) => {
+      const ok = targets.filter(passesGate); const blocked = targets.length - ok.length;
+      if (!ok.length) { toast.error(사유); return; }               // 전부 막히면 다이얼로그를 열지 않는다(단건 동작 유지)
+      if (blocked) toast.error(`…한 ${blocked}건은 삭제 대상에서 제외됩니다.`);
+      setModal({ kind: 'delete', ids: ok.map((r) => r.id), blocked });
+    };
+    const deleteSelected = () => requestDeleteRows(apiRef.current?.getSelectedRows() ?? []);
+    ```
+    - ⚠ **게이트는 요청 시점에 한 번만 평가한다** — 확인 시점에 다시 재면 같은 배치 안의 행끼리(부모·자식) 삭제 순서에 결과가 달라진다. `doDelete` 는 `modal.ids` 를 그대로 지우고 `deselectAll()`+`setSelId(null)`+`setSelCount(0)`.
+    - 모달은 `{ kind: 'delete'; ids: string[]; blocked: number }` — 단건 경로(우클릭·폼 모달 `onDelete`)도 `[row.id]` 로 넣는다. 다이얼로그 본문은 `ids.length===1` 이면 대상명, 아니면 `선택한 N건`, `blocked > 0` 이면 제외 안내를 덧붙인다.
+    - ⚠ `target` 파생이 `modal.id` 를 읽고 있었다면 **삭제 kind 를 빼고** 좁힌다(`modal?.kind === 'edit'` 등) — 안 그러면 유니온 narrowing 이 깨진다.
+  - **예외 2종(그대로 `singleRow`)**: ① master-detail **좌** 그리드(라디오 — 우측이 무엇을 보여줄지 정하는 데이터 소스라 2건이 성립하지 않는다, 아래 절) ② 조회 전용(애초에 `rowSelection` 없음).
+    `code_manage` 는 좌=singleRow·우=multiRow 로 **한 화면 안에 둘이 공존**한다.
+  - 선택 툴바의 삭제 버튼 라벨은 **`삭제`**다 — `선택 삭제` 아님(2026-09-22 사용자 결정, 재제안 금지). 건수는 앞의 `N건 선택됨`이 이미 말하므로 라벨에 "선택"을 반복하지 않는다.
+  - **역사(뒤집힌 결정 — 되돌리자는 제안이 오면 이 순서를 보일 것)**: 2026-09-08~09-22 는 "단일선택이 필요한 화면은 multiRow 로 올리지 않는다"였고 bespoke 11개가 전부 `singleRow` 였다(판별 기준 = 그 액션이 N건에 의미가 있나). **09-23 사용자가 뒤집었다** — 기준이 "액션이 N건에 의미가 있나"에서 "**체크는 항상 여러 건 되고, 버튼이 상황에 맞춰 사라진다**"로 바뀌었다. 전환 대상 10 그리드: `menu`·`program`·`user`·`user_permission`·`user_invite`·`subfund`·`investment_review`·`code_manage`(우) + 이미 multiRow 였던 `litigation`·`violation` 의 수정 버튼 게이팅.
   - **조회 전용 화면은 `rowSelection` 자체를 두지 않는다**(2026-09-15 사용자 지시 — 체크박스만 끄는 것보다 한 단계 더). 선택이 만들 액션이 없으면 `rowSelection` prop 을 통째로 지운다(`checkboxes:false` 로 남기지 않는다): 함께 `onSelectionChanged`·선택 state(`selId`)·`selected`·툴바의 `선택 해제` 버튼/선택 배지 분기·`refresh()`의 `deselectAll()`·`apiRef`(다른 용도가 없으면)까지 **한 벌로 사라진다**. `refreshNoColumn`은 자기 이벤트의 `e.api`를 쓰므로 `apiRef`에 의존하지 않는다. 상세 진입은 **더블클릭 / Enter / 우클릭 메뉴** 3경로로 이미 충분하고, 회색 행 강조가 없어지는 것이 "선택 기능 없음"과 일치한다. 선례: `audit_log.tsx`·`permission_history.tsx`.
   - 스키마 주도(`generic_list.tsx`) 페이지는 이 규약을 `schema.hideRowSelection: true` 로 표현한다(→[[apfs-grid]]) — bespoke 페이지만 `rowSelection`을 직접 만진다.
-- **라디오 단일선택(체크박스가 필요한 경우)**: 모듈 상수 `ROW_SELECTION = {mode:'singleRow',checkboxes:true,enableClickSelection:false}` + `selectionColumnDef={SELECTION_COL}`(`aggrid_selection.tsx`, 핵심 규약 8) + `getRowId`. 선택 SSOT는 React state(→[[apfs-stage-workflow]] 규약 9).
+- **선택 배선(공통)**: `selectionColumnDef={SELECTION_COL}`(`aggrid_selection.tsx`, 핵심 규약 8) + `getRowId`. 선택 SSOT는 React state(→[[apfs-stage-workflow]] 규약 9). `mode` 는 위 규약대로 **기본 multiRow**, 라디오(`singleRow`)는 master-detail 좌 그리드 예외뿐이다.
+  ⚠ **multiRow 의 선택 복원은 공유 헬퍼 `restoreSelection(api, ids)`**(`aggrid_selection.tsx`) 하나로만 한다. 저장된 id 집합 밖의 선택을 풀고 살아남은 id 를 additive 로 켠다.
+    - ✗ `node.setSelected(true, true)` 로 **첫 id 만** 되살리면 두 번째 인자(clearSelection)가 나머지 체크를 지워, 사용자가 아무것도 안 했는데 다건 선택이 1건으로 줄고 이어지는 벌크 삭제 대상이 바뀐다(Codex 리뷰 2026-09-23 — 실측으로 확인·수정).
+    - ✗ `setSelected(true)` 만으로 단일 복원하면 반대로 기존 체크에 **더해져** 2건이 된다. 둘 다 틀리므로 헬퍼를 쓴다.
+    - **선택 상태는 `selIds: string[]` 하나로 든다** — `selId = selIds[0] ?? null`, `selCount = selIds.length` 는 파생. id 와 카운트를 별도 state 로 두면 한쪽만 비우는 경로가 생긴다(`code_manage` 가 코드구분 전환 때 실제로 그랬다: 선택 0인데 선택 바가 떠 있고 벌크 삭제가 조용히 no-op).
 - **단계/상태 배지 셀**: `StatusBadge size="lg" dot={false}`(13px, 앞 점 없음 — 배지가 촘촘히 반복되는 열).
 - **엑셀**: 2단 헤더 병합·리프 키를 손으로 적지 말고 `flattenForExcel(columnDefs)`(골드 로컬 헬퍼, `ColGroupDef` 순회 → `head1/head2/keys/merges`)로 **columnDefs에서 자동 산출**. 마스크 시 숫자 0·텍스트 ''.
 - 읽기전용 명세는 [[apfs-spec-popup]]. (카드뷰 토글 규약은 2026-09-11 폐기 — 리스트 뷰 단일 표현.)
@@ -241,6 +267,8 @@ const onGroupSelection = useCallback((e: SelectionChangedEvent<Row>) => {
 ## 검증
 - `npm run build`(exit 0) + `npm test`(스키마 zod 26개 green) + 기존 그리드(generic_list 등) 무변경 회귀.
 - 브라우저: 라이트/다크 + 1280/768/400px — 빈 그리드 아님, 합계행 보임, 회색 행선택(틴트는 `.ag-row-selected::before` 오버레이에서 확인), 가로 오버플로 없음(→[[responsive-ui]] 프로토콜).
+- **다중 선택 회귀 3종**(2026-09-23 실측): ① 1건 체크 → 단일 액션(수정·복사·단계 전이) 보임 ② 2건 이상 → 단일 액션 사라지고 `N건 선택됨`·다건 액션(삭제)·`선택 해제`만 ③ 게이트형 벌크 삭제 — 통과 행만 지워지고 막힌 건수는 toast(전부 막히면 다이얼로그 자체가 안 열린다). 선택 건수는 `new Set(row-id)` 로 센다.
+  ⚠ master-detail 화면은 좌·우 그리드의 체크박스가 **같은 셀렉터에 함께 잡힌다** — `section[aria-label]` 으로 쪽을 먼저 좁히지 않으면 좌측 라디오를 누르고 "multiRow 가 안 먹는다"고 오진한다(2026-09-23 실제 오탐).
 - **행 선택(체크박스 전용) 회귀 5종**(2026-09-22 실측, aside repl): ① 본문 클릭 → 선택 0 유지 ② 체크박스 클릭 → 1, 다시 → 0 ③ multiRow 3건 체크 후 본문 클릭 → 3 유지 ④ 본문 더블클릭 → 수정 모달 열림 / 체크박스 더블클릭 → 모달 **안** 열림·선택 원복 ⑤ master 라디오(`code_manage`)의 체크된 행을 다시 눌러도 선택 복원, 본문 클릭은 무반응.
   - 키보드: 포커스된 본문 셀에서 **Space 는 여전히 선택을 토글**한다 — AG Grid 는 `source==='rowClicked'` 만 `enableClickSelection` 으로 막고 `spaceKey` 는 통과시킨다(`inferNodeSelections`). 접근성 경로 그대로.
   - ⚠️ 자동화 함정: aside/Playwright `keyboard.press(' ')`·`type(' ')` 는 `key:""`·`code:"Space"` 로 도착해 AG Grid(`event.key===' '`)가 무시한다 → **오탐 0건**. 키보드 검증은 `activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:' ',code:'Space',bubbles:true}))` 로. 체크박스 클릭도 aside `locator.click()` 은 "checked 가 안 바뀌면 throw"(라디오 복원 케이스에서 터진다) → `page.mouse.click(중심좌표)` 로.

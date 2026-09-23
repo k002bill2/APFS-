@@ -23,7 +23,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
-import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -80,7 +80,9 @@ const DETAIL_COLS: ColDef<CodeDetail>[] = [
 /* 좌·우 모두 체크박스로만 선택(행 본문 클릭 선택 해제 — 2026-09-22 사용자 결정). 좌 그리드의 "해제 금지"는
    enableClickSelection:'enableSelection' 이 아니라 onGroupSelection 의 queueMicrotask 복원이 담당한다(apfs-aggrid master-detail 절). */
 const GROUP_SELECTION: RowSelectionOptions<GroupView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };
-const DETAIL_SELECTION: RowSelectionOptions<CodeDetail> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };
+/* 우측 코드상세는 일반 리스트 — 다중 선택이 기본(2026-09-23). 단일 액션(수정)은 1건일 때만, 삭제는 다건.
+   ⚠ 좌측 GROUP_SELECTION 은 그대로 singleRow(라디오) — 우측 패널이 무엇을 보여줄지 정하는 데이터 소스라 2건 이상이 성립하지 않는다. */
+const DETAIL_SELECTION: RowSelectionOptions<CodeDetail> = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
 
 function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -110,7 +112,7 @@ type ModalState = null
   | { kind: 'group'; mode: 'create' | 'edit'; code?: string }
   | { kind: 'detail'; mode: 'create' | 'edit'; id?: string }
   | { kind: 'delGroup'; code: string }
-  | { kind: 'delDetail'; id: string };
+  | { kind: 'delDetail'; ids: string[] };
 
 export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
   const lApi = useRef<GridApi<GroupView> | null>(null);
@@ -118,7 +120,12 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
   const [groups, setGroups] = useState<CodeGroup[]>(() => demoGroups());
   const [details, setDetails] = useState<Record<string, CodeDetail[]>>(() => demoDetails());
   const [curCode, setCurCode] = useState<string | null>(() => demoGroups()[0]?.code ?? null);   // 목업: 첫 코드구분 자동 선택
-  const [selDetail, setSelDetail] = useState<string | null>(null);
+  /* 코드상세 선택 SSOT — 체크된 id 배열. selDetail·selDCount 는 파생이라 둘이 어긋날 수 없다.
+     ⚠ 종전처럼 id 와 카운트를 따로 두면 코드구분을 바꿀 때 id 만 비우고 카운트가 남아, 선택이 0인데
+       선택 바가 떠 있고 벌크 삭제가 조용히 아무 것도 안 지운다(Codex 리뷰 2026-09-23). */
+  const [selDIds, setSelDIds] = useState<string[]>([]);
+  const selDetail = selDIds[0] ?? null;
+  const selDCount = selDIds.length;
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const masked = useMask();
@@ -143,7 +150,8 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
   }, [groups, details, fUse, fField, fText]);
   const curDetails = useMemo(() => (curG ? [...(details[curG.code] ?? [])].sort((a, b) => a.ord - b.ord) : []), [details, curG]);
   const totalDetails = useMemo(() => Object.values(details).reduce((a, l) => a + l.length, 0), [details]);
-  const selD = selDetail && curG ? curDetails.find((d) => d.id === selDetail) ?? null : null;
+  /* 단일 대상 액션(수정)은 **정확히 1건** 체크일 때만 — 다건 선택에 수정 모달은 의미가 없다(2026-09-23) */
+  const selD = selDCount === 1 && selDetail && curG ? curDetails.find((d) => d.id === selDetail) ?? null : null;
 
   /* 좌 그리드 — 선택 SSOT = curCode. 초기 자동 선택·필터 후 재마운트에 대비해 ready/rowDataUpdated 에서 라디오를 되맞춘다 */
   const curRef = useRef<string | null>(null); curRef.current = curCode;
@@ -155,7 +163,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
   const onGroupRowDataUpdated = useCallback((e: { api: GridApi<GroupView> }) => syncGroupRadio(e.api), [syncGroupRadio]);
   const onGroupSelection = useCallback((e: SelectionChangedEvent<GroupView>) => {
     const code = e.api.getSelectedRows()[0]?.code;
-    if (code) { setCurCode(code); setSelDetail(null); return; }
+    if (code) { setCurCode(code); setSelDIds([]); return; }
     // 해제는 허용하지 않는다 — 좌 그리드는 "여러 건을 고르는 체크박스"가 아니라 **우 패널이 무엇을 보여줄지 정하는 라디오**다.
     // 빈 선택은 우측이 갈 곳을 잃은 상태이고, 종전엔 `if (code)` 가드에 막혀 curCode 가 남은 채 체크만 풀려
     // "체크는 꺼졌는데 수정·삭제 버튼은 그대로"인 모순이 보였다(2026-09-15 사용자 지적).
@@ -174,12 +182,11 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
     setModal({ kind: 'group', mode: 'edit', code: e.data.code });
   }, []);
   /* 우 그리드 */
-  const selDRef = useRef<string | null>(null); selDRef.current = selDetail;
+  const selDRef = useRef<readonly string[]>([]); selDRef.current = selDIds;
   const onDetailReady = useCallback((e: GridReadyEvent<CodeDetail>) => { rApi.current = e.api; }, []);
-  const onDetailSelection = useCallback((e: SelectionChangedEvent<CodeDetail>) => { setSelDetail(e.api.getSelectedRows()[0]?.id ?? null); }, []);
+  const onDetailSelection = useCallback((e: SelectionChangedEvent<CodeDetail>) => { setSelDIds(e.api.getSelectedRows().map((d) => d.id)); }, []);
   const onDetailRowDataUpdated = useCallback((e: { api: GridApi<CodeDetail> }) => {
-    const id = selDRef.current; if (!id) return;
-    const node = e.api.getRowNode(id); if (node && !node.isSelected()) node.setSelected(true, true);
+    restoreSelection(e.api, selDRef.current);
   }, []);
   const onDetailDouble = useCallback((e: RowDoubleClickedEvent<CodeDetail>) => { if (e.data) setModal({ kind: 'detail', mode: 'edit', id: e.data.id }); }, []);
   const onDetailKey = useCallback((e: CellKeyDownEvent<CodeDetail>) => {
@@ -199,7 +206,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
     const g = e.data; if (!g) return;
     const ev = e.event as MouseEvent;
     const items: CtxItem[] = [
-      { label: '코드상세 보기', icon: 'eye', onSelect: () => { setCurCode(g.code); setSelDetail(null); } },
+      { label: '코드상세 보기', icon: 'eye', onSelect: () => { setCurCode(g.code); setSelDIds([]); } },
       { label: '수정', icon: 'file', onSelect: () => setModal({ kind: 'group', mode: 'edit', code: g.code }) },
       { label: 'Excel 내보내기', icon: 'download', onSelect: exportExcel },
       'sep',
@@ -215,7 +222,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       { label: '수정', icon: 'file', onSelect: () => setModal({ kind: 'detail', mode: 'edit', id: d.id }) },
       { label: 'Excel 내보내기', icon: 'download', onSelect: exportExcel },
       'sep',
-      { label: '삭제', icon: 'trash', danger: true, onSelect: () => setModal({ kind: 'delDetail', id: d.id }) },
+      { label: '삭제', icon: 'trash', danger: true, onSelect: () => setModal({ kind: 'delDetail', ids: [d.id] }) },
     ];
     setCtx({ x: ev.clientX, y: ev.clientY, items });
   };
@@ -240,7 +247,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       if (groups.some((g) => g.code === code)) { toast.error('이미 존재하는 코드구분입니다.'); return; }
       setGroups((prev) => [...prev, { id: code, code, name, up, rem, use }]);
       setDetails((prev) => ({ ...prev, [code]: prev[code] ?? [] }));
-      setCurCode(code); setSelDetail(null);
+      setCurCode(code); setSelDIds([]);
     }
     setModal(null);
     toast.success('저장되었습니다 (목업)');
@@ -252,7 +259,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
     if (blocker) { toast.error(`${blocker}가 있어 삭제할 수 없습니다.`); return; }
     setGroups((prev) => prev.filter((g) => g.code !== code));
     setDetails((prev) => { const n = { ...prev }; delete n[code]; return n; });
-    if (curCode === code) { setCurCode(null); setSelDetail(null); }
+    if (curCode === code) { setCurCode(null); setSelDIds([]); }
     toast.success('삭제되었습니다 (목업)');
   };
   /* ── CRUD(코드상세) — 그룹 안 중복 검사 + 정렬 재배치 ── */
@@ -274,19 +281,19 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
     }
     const reseqed = applyReseq(next, reseqSiblings(next, movedId, ord));
     setDetails((prev) => ({ ...prev, [g]: reseqed }));
-    setSelDetail(movedId);
+    setSelDIds([movedId]);
     setModal(null);
     toast.success('저장되었습니다 · 정렬 자동 조정 (목업)');
   };
   const doDelDetail = () => {
     if (modal?.kind !== 'delDetail' || !curG) return;
-    const id = modal.id, g = curG.code;
-    setDetails((prev) => ({ ...prev, [g]: (prev[g] ?? []).filter((d) => d.id !== id) }));
-    if (selDetail === id) setSelDetail(null);
-    toast.success('삭제되었습니다 (목업)');
+    const ids = new Set(modal.ids), g = curG.code;
+    setDetails((prev) => ({ ...prev, [g]: (prev[g] ?? []).filter((d) => !ids.has(d.id)) }));
+    rApi.current?.deselectAll(); setSelDIds([]);
+    toast.success(`${ids.size}건 삭제되었습니다 (목업)`);
   };
   const refresh = () => {
-    const gs = demoGroups(); setGroups(gs); setDetails(demoDetails()); setCurCode(gs[0]?.code ?? null); setSelDetail(null); clearFilters();
+    const gs = demoGroups(); setGroups(gs); setDetails(demoDetails()); setCurCode(gs[0]?.code ?? null); setSelDIds([]); clearFilters();
     toast.success('새로고침했습니다');
   };
 
@@ -382,10 +389,12 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
           <PaneBar title={curG ? <>「<MT>{curG.name}</MT>」 코드상세 </> : '코드상세 '} count={curDetails.length}>
             {/* 코드 등록은 코드구분 선택 전에는 disabled(목업 rg-new) — 선택하면 즉시 활성 */}
             <Button variant="outline" size="sm" leadingIcon="plus" disabled={!curG} onClick={() => setModal({ kind: 'detail', mode: 'create' })}>코드 등록</Button>
-            {selD && (
+            {selDCount > 0 && (
               <>
-                <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'detail', mode: 'edit', id: selD.id })}>수정</Button>
-                <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => setModal({ kind: 'delDetail', id: selD.id })}>삭제</Button>
+                <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selDCount))}건 선택됨</span>
+                {selD && <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'detail', mode: 'edit', id: selD.id })}>수정</Button>}
+                <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }}
+                  onClick={() => { const ids = (rApi.current?.getSelectedRows() ?? []).map((d) => d.id); if (ids.length) setModal({ kind: 'delDetail', ids }); }}>삭제</Button>
               </>
             )}
           </PaneBar>
@@ -459,7 +468,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       {detailModal && dSchema && curG && (detailModal.mode === 'create' || editDetail) && (
         <RowFormModal mode={detailModal.mode} schema={dSchema} title={dSchema.title} initial={detailInitial as any}
           onSave={saveDetail} onClose={() => setModal(null)}
-          onDelete={editDetail ? () => setModal({ kind: 'delDetail', id: editDetail.id }) : undefined} />
+          onDelete={editDetail ? () => setModal({ kind: 'delDetail', ids: [editDetail.id] }) : undefined} />
       )}
 
       {/* ── 삭제 확인 2종 ── */}
@@ -486,7 +495,9 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
             <AlertDialogHeader>
               <AlertDialogTitle>코드 삭제</AlertDialogTitle>
               <AlertDialogDescription>
-                코드 「<b className="text-foreground"><MT>{(() => { const d = curDetails.find((x) => x.id === modal.id); return d ? `${d.code} ${d.name}` : modal.id; })()}</MT></b>」 을 삭제할까요?
+                {modal.ids.length === 1
+                  ? <>코드 「<b className="text-foreground"><MT>{(() => { const d = curDetails.find((x) => x.id === modal.ids[0]); return d ? `${d.code} ${d.name}` : modal.ids[0]; })()}</MT></b>」 을 삭제할까요?</>
+                  : <>선택한 <b className="text-foreground">{mn(String(modal.ids.length))}건</b>의 코드를 삭제할까요?</>}
                 <br />삭제 후에는 복구할 수 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>

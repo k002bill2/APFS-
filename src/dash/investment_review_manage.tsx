@@ -24,7 +24,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
-import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -97,7 +97,9 @@ function computeTotal(rows: InvReviewRow[]): InvReviewRow {
 }
 const PAGE_SIZE = 20;
 /* 라디오 단일선택 — 체크박스로만 on/off(행 본문 클릭 선택 해제, 2026-09-22 사용자 결정). 모듈 상수로 호이스팅(apfs-aggrid 계약 6 — 인라인 리터럴은 렌더마다 컬럼 재생성→폭 되돌림). */
-const ROW_SELECTION: RowSelectionOptions<InvReviewRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };
+/* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
+   행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */
+const ROW_SELECTION: RowSelectionOptions<InvReviewRow> = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
 const today = () => format(new Date(), 'yyyy-MM-dd');   // 로컬 달력일(toISOString은 KST 00~09시 전날, apfs-datepicker 계약)
 
 /* ──────────────────────────────
@@ -227,7 +229,10 @@ type ModalState = null | { kind: 'complianceReg' } | { kind: 'complianceEdit' } 
 export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<InvReviewRow> | null>(null);
   const [rows, setRows] = useState<InvReviewRow[]>(DEMO);
-  const [selId, setSelId] = useState<string | null>(null);
+  /* 선택 SSOT — 체크된 행 id 배열. selId(첫 행)·selCount 는 파생이라 둘이 어긋날 수 없다(Codex 리뷰 2026-09-23) */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selId = selIds[0] ?? null;      // 단일 액션 대상(선택 1건일 때만 쓴다)
+  const selCount = selIds.length;       // 단일/다건 분기의 SSOT
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
@@ -265,15 +270,18 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
   const gpOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.gp))), [rows]);
   const fundOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.fn))), [rows]);
 
-  const selIdRef = useRef<string | null>(null); selIdRef.current = selId;
+  /* 선택 SSOT = selIds(배열). multiRow 라 복원도 **선택 전체**를 되돌린다 — 첫 id 만 되살리면 clearSelection 이
+     나머지 체크를 지워 사용자가 아무것도 안 했는데 다건 선택이 1건으로 줄어든다(Codex 리뷰 2026-09-23). */
+  const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
   const onGridReady = useCallback((e: GridReadyEvent<InvReviewRow>) => {
     apiRef.current = e.api;
-    const id = selIdRef.current; if (id) e.api.getRowNode(id)?.setSelected(true);
+    restoreSelection(e.api, selIdsRef.current);
   }, []);
-  const onSelectionChanged = useCallback((e: SelectionChangedEvent<InvReviewRow>) => { setSelId(e.api.getSelectedRows()[0]?.id ?? null); }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<InvReviewRow>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
   const onRowDataUpdated = useCallback((e: { api: GridApi<InvReviewRow> }) => {
-    const id = selIdRef.current; if (!id) return;
-    const node = e.api.getRowNode(id); if (node && !node.isSelected()) node.setSelected(true, true);
+    restoreSelection(e.api, selIdsRef.current);
   }, []);
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
@@ -281,26 +289,27 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
     setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
   }, []);
 
-  const selected = selId ? rows.find((r) => r.id === selId) ?? null : null;
+  /* 단일 대상 액션은 **정확히 1건** 체크일 때만 — 다건 선택에 단건 모달·전이는 의미가 없다(2026-09-23) */
+  const single = selCount === 1 && selId ? rows.find((r) => r.id === selId) ?? null : null;
   const patchRow = (id: string, patch: Partial<InvReviewRow>) => setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
   /* ── 심사단계 워크플로우: 전이는 오직 컨텍스트 액션으로(apfs-stage-workflow) ── */
-  const stage = selected ? stageOf(selected) : null;
-  const setConfirm = (v: Confirm) => { if (selected) patchRow(selected.id, { confirm: v, ...(v !== '확정' ? { res: '' as Result } : {}) }); };
+  const stage = single ? stageOf(single) : null;
+  const setConfirm = (v: Confirm) => { if (single) patchRow(single.id, { confirm: v, ...(v !== '확정' ? { res: '' as Result } : {}) }); };
   const confirmSchedule = () => {   // AlertDialog '확정' 확인 후
-    if (!selected) return;
-    patchRow(selected.id, { confirm: '확정', res: '미결' });
+    if (!single) return;
+    patchRow(single.id, { confirm: '확정', res: '미결' });
     toast.success('투심일정이 확정되었습니다');
   };
-  const setResult = (v: Result) => { if (selected) { patchRow(selected.id, { res: v }); toast.success(`투심결과가 '${v}'(으)로 반영되었습니다`); } };
-  const cancelReview = () => { if (selected) { patchRow(selected.id, { confirm: '투심위취소', res: '' }); toast.success('투심위가 취소되었습니다'); } };
-  const revokeApproval = () => { if (selected) { patchRow(selected.id, { res: '승인취소' }); toast.success('승인이 취소되었습니다'); } };
-  const unconfirm = () => { if (selected) { setConfirm('미확정'); toast.success('확정이 해제되었습니다'); } };
+  const setResult = (v: Result) => { if (single) { patchRow(single.id, { res: v }); toast.success(`투심결과가 '${v}'(으)로 반영되었습니다`); } };
+  const cancelReview = () => { if (single) { patchRow(single.id, { confirm: '투심위취소', res: '' }); toast.success('투심위가 취소되었습니다'); } };
+  const revokeApproval = () => { if (single) { patchRow(single.id, { res: '승인취소' }); toast.success('승인이 취소되었습니다'); } };
+  const unconfirm = () => { if (single) { setConfirm('미확정'); toast.success('확정이 해제되었습니다'); } };
 
   /* 선택 해제 — React selId가 SSOT(stage-workflow 규약 9). 카드뷰에선 그리드가 unmount라 apiRef가 stale →
      deselectAll만으론 onSelectionChanged가 안 깨워져 selId가 남는다(Codex P2). selId를 직접 비우고 그리드는 따라오게 한다. */
-  const clearSelection = () => { setSelId(null); apiRef.current?.deselectAll(); };
-  const refresh = () => { setRows([...DEMO]); setSelId(null); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
+  const clearSelection = () => { setSelIds([]); apiRef.current?.deselectAll(); };
+  const refresh = () => { setRows([...DEMO]); setSelIds([]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더, 합계행 재현. 마스크 ON이면 숫자 0·텍스트 비노출 ── */
   const exportExcel = () => {
@@ -326,15 +335,15 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
 
   /* ── 준법감시내역 저장(등록/수정 공용) ── */
   const saveCompliance = (rec: any) => {
-    if (!selected) return;
-    const isNew = !selected.compliance;
-    patchRow(selected.id, { compliance: rec });
+    if (!single) return;
+    const isNew = !single.compliance;
+    patchRow(single.id, { compliance: rec });
     setModal(null);
     toast.success(isNew ? '투자준법감시내역이 등록되었습니다' : '수정되었습니다');
   };
-  const deleteCompliance = () => { if (selected) { patchRow(selected.id, { compliance: null }); toast.success('삭제되었습니다'); } };
-  const complianceInitial = selected
-    ? { ...(selected.compliance ?? {}), gp: selected.gp, fn: selected.fn, ...(selected.compliance ? {} : { co: selected.co, baseDate: today() }) }
+  const deleteCompliance = () => { if (single) { patchRow(single.id, { compliance: null }); toast.success('삭제되었습니다'); } };
+  const complianceInitial = single
+    ? { ...(single.compliance ?? {}), gp: single.gp, fn: single.fn, ...(single.compliance ? {} : { co: single.co, baseDate: today() }) }
     : undefined;
 
   const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
@@ -342,11 +351,13 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
      (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
-  const selActions = selected ? (
+  const selActions = selCount > 0 ? (
     <>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      {single && <>
       {/* 확정여부 배지 + (확정 시)결과 배지 — 상태 표시. 전이는 아래 액션 버튼 */}
-      <StatusBadge tone={CONFIRM_TONE[selected.confirm]} label={selected.confirm} size="lg" dot={false} />
-      {selected.confirm === '확정' && <StatusBadge tone={RES_TONE[selected.res || '미결'] ?? 'info'} label={selected.res || '미결'} size="lg" dot={false} />}
+      <StatusBadge tone={CONFIRM_TONE[single.confirm]} label={single.confirm} size="lg" dot={false} />
+      {single.confirm === '확정' && <StatusBadge tone={RES_TONE[single.res || '미결'] ?? 'info'} label={single.res || '미결'} size="lg" dot={false} />}
       {/* 파생 단계별 전이 액션 */}
       {stage === 'pending' && <>
         <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'confirmSchedule' })}>투심일정 확정</Button>
@@ -359,11 +370,12 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       {stage === 'held' && <ResultMenu options={['가결', '부결', '조건부']} onPick={setResult} />}
       {stage === 'approved' && <Button variant="outline" size="sm" onClick={revokeApproval}>승인 취소</Button>}
       {/* 투자준법감시내역 CRUD — 별개 엔티티. 상태별 1버튼 + 삭제(있을 때만) */}
-      <Button variant="outline" size="sm" leadingIcon={selected.compliance ? 'shield' : 'plus'}
-        onClick={() => setModal({ kind: selected.compliance ? 'complianceEdit' : 'complianceReg' })}>
-        {selected.compliance ? '준법감시 수정' : '준법감시 등록'}
+      <Button variant="outline" size="sm" leadingIcon={single.compliance ? 'shield' : 'plus'}
+        onClick={() => setModal({ kind: single.compliance ? 'complianceEdit' : 'complianceReg' })}>
+        {single.compliance ? '준법감시 수정' : '준법감시 등록'}
       </Button>
-      {selected.compliance && <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => setModal({ kind: 'complianceDelete' })}>준법감시 삭제</Button>}
+      {single.compliance && <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => setModal({ kind: 'complianceDelete' })}>준법감시 삭제</Button>}
+      </>}
       <Button variant="ghost" size="sm" onClick={clearSelection}>선택 해제</Button>
     </>
   ) : null;
@@ -374,7 +386,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       cardTitle="투심보고 확정 및 승인"
       favRoute="investment-review"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? null : (
+      toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['' as const, '일정' as const, '결과' as const]).map((s) => (
@@ -463,17 +475,17 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       </Sheet>
 
       {/* ── 투자준법감시내역 등록/수정 — 스키마 주도(apfs-form-modal). 제목은 상태별 title ── */}
-      {modal?.kind === 'complianceReg' && selected && (
+      {modal?.kind === 'complianceReg' && single && (
         <RowFormModal mode="create" schema={COMPLIANCE_SCHEMA} title="투자준법감시내역 등록"
           initial={complianceInitial as any} onSave={saveCompliance} onClose={() => setModal(null)} />
       )}
-      {modal?.kind === 'complianceEdit' && selected && (
+      {modal?.kind === 'complianceEdit' && single && (
         <RowFormModal mode="edit" schema={COMPLIANCE_SCHEMA} title="투자준법감시내역 수정"
           initial={complianceInitial as any} onSave={saveCompliance} onClose={() => setModal(null)} />
       )}
 
       {/* ── 투심일정 확정 확인(목업 클라이언트 회신 명시 UX — toast로 격하 금지) ── */}
-      {modal?.kind === 'confirmSchedule' && selected && (
+      {modal?.kind === 'confirmSchedule' && single && (
         <AlertDialog open onOpenChange={(o) => { if (!o) setModal(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -489,12 +501,12 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       )}
 
       {/* ── 준법감시내역 삭제 확인 ── */}
-      {modal?.kind === 'complianceDelete' && selected && (
+      {modal?.kind === 'complianceDelete' && single && (
         <AlertDialog open onOpenChange={(o) => { if (!o) setModal(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>투자준법감시내역 삭제</AlertDialogTitle>
-              <AlertDialogDescription><b className="text-foreground"><MT>{selected.co}</MT></b> · <MT>{selected.fn}</MT> 건의 투자준법감시내역을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.</AlertDialogDescription>
+              <AlertDialogDescription><b className="text-foreground"><MT>{single.co}</MT></b> · <MT>{single.fn}</MT> 건의 투자준법감시내역을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>

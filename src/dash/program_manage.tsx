@@ -23,7 +23,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
-import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -80,7 +80,9 @@ const columnDefs: ColDef<ProgramRow>[] = [
   { field: 'helpAt', headerName: '도움말 수정일시', width: 150, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? mn(p.value) : '-') },
   { field: 'helpBy', headerName: '도움말 수정자', width: 120, maxWidth: 130, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : dash) },
 ];
-const ROW_SELECTION: RowSelectionOptions<ProgramRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };   // 행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22 사용자 결정, apfs-aggrid "체크박스" 절)
+/* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
+   행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */
+const ROW_SELECTION: RowSelectionOptions<ProgramRow> = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
 
 type XCol = { header: string; get: (r: ProgramRow) => string };
 const EXPORT_COLS: XCol[] = [
@@ -179,12 +181,16 @@ function DeleteBlockedButton() {
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
-type ModalState = null | { kind: 'form'; mode: 'create' | 'edit'; id?: string } | { kind: 'help'; id: string } | { kind: 'delete'; id: string };
+type ModalState = null | { kind: 'form'; mode: 'create' | 'edit'; id?: string } | { kind: 'help'; id: string }
+  | { kind: 'delete'; ids: string[]; blocked: number };   // 다건 삭제 — ids=지울 행, blocked=게이트에 막혀 제외된 건수
 
 export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<ProgramRow> | null>(null);
   const [rows, setRows] = useState<ProgramRow[]>(seedPrograms);
-  const [selId, setSelId] = useState<string | null>(null);
+  /* 선택 SSOT — 체크된 행 id 배열. selId(첫 행)·selCount 는 파생이라 둘이 어긋날 수 없다(Codex 리뷰 2026-09-23) */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selId = selIds[0] ?? null;      // 단일 액션 대상(선택 1건일 때만 쓴다)
+  const selCount = selIds.length;       // 단일/다건 분기의 SSOT
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [modal, setModal] = useState<ModalState>(null);
@@ -207,12 +213,15 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   const gubuns = useMemo(() => gubunOptions(rows), [rows]);
   const visible = useMemo(() => filterPrograms(rows, { field: fField, kw: fText, help: fHelp, use: fUse, gubun: fGubun }), [rows, fField, fText, fHelp, fUse, fGubun]);
 
-  const selIdRef = useRef<string | null>(null); selIdRef.current = selId;
+  /* 선택 SSOT = selIds(배열). multiRow 라 복원도 **선택 전체**를 되돌린다 — 첫 id 만 되살리면 clearSelection 이
+     나머지 체크를 지워 사용자가 아무것도 안 했는데 다건 선택이 1건으로 줄어든다(Codex 리뷰 2026-09-23). */
+  const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
   const onGridReady = useCallback((e: GridReadyEvent<ProgramRow>) => { apiRef.current = e.api; }, []);
-  const onSelectionChanged = useCallback((e: SelectionChangedEvent<ProgramRow>) => { setSelId(e.api.getSelectedRows()[0]?.id ?? null); }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<ProgramRow>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
   const onRowDataUpdated = useCallback((e: { api: GridApi<ProgramRow> }) => {
-    const id = selIdRef.current; if (!id) return;
-    const node = e.api.getRowNode(id); if (node && !node.isSelected()) node.setSelected(true, true);
+    restoreSelection(e.api, selIdsRef.current);
   }, []);
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
@@ -225,15 +234,23 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
     setModal({ kind: 'form', mode: 'edit', id: e.data.id });
   }, []);
 
-  const selected = selId ? rows.find((r) => r.id === selId) ?? null : null;
-  const target = modal && modal.kind !== 'form' ? rows.find((r) => r.id === modal.id) ?? null : modal?.kind === 'form' && modal.id ? rows.find((r) => r.id === modal.id) ?? null : null;
+  /* 단일 대상 액션은 **정확히 1건** 체크일 때만 — 다건 선택에 단건 모달·전이는 의미가 없다(2026-09-23) */
+  const single = selCount === 1 && selId ? rows.find((r) => r.id === selId) ?? null : null;
+  const target = modal?.kind === 'help' || (modal?.kind === 'form' && modal.id) ? rows.find((r) => r.id === (modal as { id?: string }).id) ?? null : null;   // 도움말·폼 대상(삭제는 modal.ids 가 든다)
 
   /* 삭제 게이트(목업): 메뉴 연결 프로그램은 불가 — 사유 toast. 미연결만 확인 다이얼로그 */
-  const requestDelete = (r: ProgramRow) => {
-    const blocker = deleteBlocker(r);
-    if (blocker) { toast.error(blocker); return; }
-    setModal({ kind: 'delete', id: r.id });
+  /* 다건 삭제 — 게이트는 **요청 시점에 한 번** 평가하고 통과한 행만 지운다(막힌 건수는 사유 toast).
+     확인 시점에 다시 재면 같은 배치 안의 행끼리 삭제 순서에 결과가 달라진다. */
+  const requestDeleteRows = (targets: ProgramRow[]) => {
+    if (!targets.length) return;
+    const ok = targets.filter((r) => !deleteBlocker(r));
+    const blocked = targets.length - ok.length;
+    if (!ok.length) { toast.error(deleteBlocker(targets[0]) ?? '삭제할 수 없습니다.'); return; }
+    if (blocked) toast.error(`메뉴에 연결된 ${blocked}건은 삭제 대상에서 제외됩니다.`);
+    setModal({ kind: 'delete', ids: ok.map((r) => r.id), blocked });
   };
+  const requestDelete = (r: ProgramRow) => requestDeleteRows([r]);
+  const deleteSelected = () => requestDeleteRows(apiRef.current?.getSelectedRows() ?? []);
   const handleCellContextMenu = (e: CellContextMenuEvent<ProgramRow>) => {
     (e.event as MouseEvent | undefined)?.preventDefault();
     const row = e.data;
@@ -261,7 +278,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
       if (programPidTaken(rows, pid)) { toast.error('이미 존재하는 프로그램ID입니다.'); return; }
       const row: ProgramRow = { id: `tmp-${crypto.randomUUID()}`, pid, pname, gubun: '', menuPath: '', use, linked: false, help: false, helpDoc: emptyHelpDoc(), helpBy: '', helpAt: '', by: '전산관리', at };
       setRows((prev) => [...prev, row]);
-      setSelId(row.id);
+      setSelIds([row.id]);
     }
     setModal(null);
     toast.success('저장되었습니다 (목업)');
@@ -274,11 +291,11 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('도움말이 저장되었습니다 (목업)');
   };
   const doDelete = () => {
-    if (modal?.kind !== 'delete' || !target) return;
-    if (deleteBlocker(target)) { toast.error(deleteBlocker(target)!); return; }
-    setRows((prev) => prev.filter((r) => r.id !== target.id));
-    if (selId === target.id) setSelId(null);
-    toast.success('삭제되었습니다 (목업)');
+    if (modal?.kind !== 'delete') return;
+    const ids = new Set(modal.ids);
+    setRows((prev) => prev.filter((r) => !ids.has(r.id)));
+    apiRef.current?.deselectAll(); setSelIds([]);
+    toast.success(`${ids.size}건 삭제되었습니다 (목업)`);
   };
   const refresh = () => { setRows(seedPrograms()); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
@@ -305,15 +322,19 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
      (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
-  const selActions = selected ? (
+  const selActions = selCount > 0 ? (
     <>
-      <StatusBadge tone={selected.linked ? 'info' : 'primary'} label={selected.linked ? '메뉴 연결' : '미연결'} size="lg" dot={false} />
-      <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: selected.id })}>수정</Button>
-      <Button variant="outline" size="sm" leadingIcon="memo" onClick={() => setModal({ kind: 'help', id: selected.id })}>도움말</Button>
-      {/* 삭제 — 연결 프로그램은 비활성 + 버튼 안 ⓘ(hover)로 사유 팝오버(목업 subAlert "삭제 불가"를 UI 로 표현) */}
-      {selected.linked
+      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      {single && <>
+        <StatusBadge tone={single.linked ? 'info' : 'primary'} label={single.linked ? '메뉴 연결' : '미연결'} size="lg" dot={false} />
+        <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: single.id })}>수정</Button>
+        <Button variant="outline" size="sm" leadingIcon="memo" onClick={() => setModal({ kind: 'help', id: single.id })}>도움말</Button>
+      </>}
+      {/* 삭제 — 단건이 연결 프로그램이면 비활성 + 버튼 안 ⓘ(hover)로 사유 팝오버(목업 subAlert "삭제 불가").
+          다건이면 게이트 필터형 벌크 삭제(연결된 건은 제외하고 사유 toast). */}
+      {single?.linked
         ? <DeleteBlockedButton />
-        : <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => requestDelete(selected)}>삭제</Button>}
+        : <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={deleteSelected}>삭제</Button>}
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;
@@ -323,7 +344,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
       title="프로그램관리"
       favRoute="program-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? null : (
+      toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {USE_CHIPS.map(([v, l]) => <FilterChip key={v || 'all'} active={fUse === v} onClick={() => setFUse(v)}>{l}</FilterChip>)}
@@ -422,13 +443,16 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
       {/* ── 도움말 편집 ── */}
       {modal?.kind === 'help' && target && <ProgramHelpModal program={target} onSave={saveHelp} onClose={() => setModal(null)} />}
       {/* ── 삭제 확인(미연결 프로그램 전제) ── */}
-      {modal?.kind === 'delete' && target && (
+      {modal?.kind === 'delete' && (
         <AlertDialog open onOpenChange={(o) => { if (!o) setModal(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>프로그램 삭제</AlertDialogTitle>
               <AlertDialogDescription>
-                프로그램 「<b className="text-foreground"><MT>{`${target.pid} ${target.pname}`}</MT></b>」 을 삭제할까요?
+                {modal.ids.length === 1
+                  ? <>프로그램 「<b className="text-foreground"><MT>{`${rows.find((r) => r.id === modal.ids[0])?.pid ?? ""} ${rows.find((r) => r.id === modal.ids[0])?.pname ?? ""}`}</MT></b>」 을 삭제할까요?</>
+                  : <>선택한 <b className="text-foreground">{mn(String(modal.ids.length))}건</b>의 프로그램을 삭제할까요?</>}
+                {modal.blocked > 0 && <><br />메뉴에 연결된 {mn(String(modal.blocked))}건은 제외됩니다.</>}
                 <br />삭제 후에는 복구할 수 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>

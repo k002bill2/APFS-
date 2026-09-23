@@ -20,7 +20,7 @@ import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
-import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -71,7 +71,9 @@ const columnDefs: ColDef<UserRow>[] = [
     cellRenderer: (p: any) => (p.value ? <StatusBadge tone="warning" label="만료" size="lg" dot={false} /> : <span style={{ color: 'var(--muted-foreground)' }}>정상</span>) },
   { field: 'last', headerName: '최근 접속일시', width: 170, maxWidth: 170, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value && p.value !== '—' ? mn(p.value) : '—') },
 ];
-const ROW_SELECTION: RowSelectionOptions<UserRow> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };   // 행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22 사용자 결정, apfs-aggrid "체크박스" 절)
+/* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
+   행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */
+const ROW_SELECTION: RowSelectionOptions<UserRow> = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
 const STATUS_CHIPS = ['', ...USER_STATUSES] as const;
 
 type XCol = { header: string; get: (r: UserRow) => string };
@@ -128,7 +130,10 @@ type ModalState = null
 export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<UserRow> | null>(null);
   const [rows, setRows] = useState<UserRow[]>(() => demoUsers());
-  const [selId, setSelId] = useState<string | null>(null);
+  /* 선택 SSOT — 체크된 행 id 배열. selId(첫 행)·selCount 는 파생이라 둘이 어긋날 수 없다(Codex 리뷰 2026-09-23) */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selId = selIds[0] ?? null;      // 단일 액션 대상(선택 1건일 때만 쓴다)
+  const selCount = selIds.length;       // 단일/다건 분기의 SSOT
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [modal, setModal] = useState<ModalState>(null);
@@ -150,12 +155,15 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
   const visible = useMemo(() => filterUsers(rows, { type: fType, status: fStatus, org: fOrg, kw: fText }), [rows, fType, fStatus, fOrg, fText]);
 
   /* 선택 SSOT = selId. 새로 만든 행은 onRowDataUpdated 에서 라디오를 되맞춘다 */
-  const selIdRef = useRef<string | null>(null); selIdRef.current = selId;
+  /* 선택 SSOT = selIds(배열). multiRow 라 복원도 **선택 전체**를 되돌린다 — 첫 id 만 되살리면 clearSelection 이
+     나머지 체크를 지워 사용자가 아무것도 안 했는데 다건 선택이 1건으로 줄어든다(Codex 리뷰 2026-09-23). */
+  const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
   const onGridReady = useCallback((e: GridReadyEvent<UserRow>) => { apiRef.current = e.api; }, []);
-  const onSelectionChanged = useCallback((e: SelectionChangedEvent<UserRow>) => { setSelId(e.api.getSelectedRows()[0]?.id ?? null); }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<UserRow>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
   const onRowDataUpdated = useCallback((e: { api: GridApi<UserRow> }) => {
-    const id = selIdRef.current; if (!id) return;
-    const node = e.api.getRowNode(id); if (node && !node.isSelected()) node.setSelected(true, true);
+    restoreSelection(e.api, selIdsRef.current);
   }, []);
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
@@ -168,8 +176,9 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
     setModal({ kind: 'form', mode: 'edit', id: e.data.id });
   }, []);
 
-  const selected = selId ? rows.find((r) => r.id === selId) ?? null : null;
-  const gate = gateFor(selected);
+  /* 단일 대상 액션은 **정확히 1건** 체크일 때만 — 다건 선택에 단건 모달·전이는 의미가 없다(2026-09-23) */
+  const single = selCount === 1 && selId ? rows.find((r) => r.id === selId) ?? null : null;
+  const gate = gateFor(single);
   const target = modal?.kind === 'form' && modal.id ? rows.find((r) => r.id === modal.id) ?? null : null;
 
   /* ── 액션(목업) — 확인 다이얼로그 → 로컬 전이 → toast(목업 회신 문구) ── */
@@ -187,7 +196,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
   const askReplace = (u: UserRow) => setModal({ kind: 'confirm', title: '담당자 교체', desc: `담당자를 교체할까요? ${u.name} 계정은 비활성되고, 신 담당자 계정이 신규 발급(온보딩대기)됩니다. 같은 아이디를 물려주지 않습니다.`, okLabel: '교체', onOk: () => {
     const { retired, created } = replaceUser(rows, u);
     setRows((prev) => [...prev.map((r) => (r.id === u.id ? retired : r)), created]);
-    setSelId(created.id);
+    setSelIds([created.id]);
     openMail(`온보딩 안내 메일 미리보기 — ${created.name}`, onboardMail(created));
     toast.success(`담당자 교체 — ${u.name} 비활성 + 신규 계정 발급(온보딩대기) (목업)`);
   } });
@@ -217,7 +226,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
     } else {
       const row: UserRow = { id: nextUserId(rows), ...patch, last: '—', fail: 0 };
       setRows((prev) => [...prev, row]);
-      setSelId(row.id);
+      setSelIds([row.id]);
       openMail(`온보딩 안내 메일 미리보기 — ${row.name}`, onboardMail(row));
       toast.success(`${row.name} 등록 — 온보딩 안내 메일 (목업)`);
     }
@@ -245,16 +254,19 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
      (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
-  const selActions = selected ? (
+  const selActions = selCount > 0 ? (
     /* 선택 행 컨텍스트 액션 — 게이트가 연 것만(목업 gate). 대상명 캡션은 두지 않는다 */
     <>
-      <StatusBadge tone={STATUS_TONE[selected.status]} label={selected.status} size="lg" dot={false} />
-      <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: selected.id })}>수정</Button>
-      {gate.mail && <Button variant="outline" size="sm" leadingIcon="bell" onClick={() => openMail(`온보딩 안내 메일 미리보기 — ${selected.name}`, onboardMail(selected))}>온보딩 메일</Button>}
-      {gate.replace && <Button variant="outline" size="sm" leadingIcon="users" onClick={() => askReplace(selected)}>담당자 교체</Button>}
-      {gate.unlock && <Button variant="outline" size="sm" leadingIcon="check-circle" onClick={() => askUnlock(selected)}>잠금 해제</Button>}
-      {gate.expire && <Button variant="outline" size="sm" leadingIcon="clock" onClick={() => askExpire(selected)}>비밀번호 만료 처리</Button>}
-      {gate.otp && <Button variant="outline" size="sm" leadingIcon="refresh" onClick={() => askOtp(selected)}>OTP 재발급</Button>}
+      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      {single && <>
+      <StatusBadge tone={STATUS_TONE[single.status]} label={single.status} size="lg" dot={false} />
+      <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: single.id })}>수정</Button>
+      {gate.mail && <Button variant="outline" size="sm" leadingIcon="bell" onClick={() => openMail(`온보딩 안내 메일 미리보기 — ${single.name}`, onboardMail(single))}>온보딩 메일</Button>}
+      {gate.replace && <Button variant="outline" size="sm" leadingIcon="users" onClick={() => askReplace(single)}>담당자 교체</Button>}
+      {gate.unlock && <Button variant="outline" size="sm" leadingIcon="check-circle" onClick={() => askUnlock(single)}>잠금 해제</Button>}
+      {gate.expire && <Button variant="outline" size="sm" leadingIcon="clock" onClick={() => askExpire(single)}>비밀번호 만료 처리</Button>}
+      {gate.otp && <Button variant="outline" size="sm" leadingIcon="refresh" onClick={() => askOtp(single)}>OTP 재발급</Button>}
+      </>}
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;
@@ -264,7 +276,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
       title="사용자관리"
       favRoute="user-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selected ? null : (
+      toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {STATUS_CHIPS.map((s) => <FilterChip key={s || 'all'} active={fStatus === s} onClick={() => setFStatus(s)}>{s || '전체'}</FilterChip>)}
