@@ -457,6 +457,7 @@ describe('화면별 도메인 규칙', () => {
     expect(src).toMatch(/import \{ DocumentsField \} from '\.\/fields\/DocumentsField'/);
     expect(src).toMatch(/<DocumentsField /);
     expect(src).not.toMatch(/type="file"|onDrop=/);
+    expect(src).toMatch(/describedBy=\{hint \? hintId : undefined\}/);   // 보조 문구 = 드롭존 접근 설명(aria-describedby)
     for (const f of ['trust_physical_upload.tsx', 'trust_upload_forms.tsx', 'registry_ledger_modals.tsx']) {
       expect(read(new URL(`./${f}`, import.meta.url).pathname), f).not.toMatch(/type="file"/);
     }

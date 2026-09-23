@@ -5,7 +5,7 @@
    ⚠ 실제 파일 처리·전송을 하지 않는다(브리프 규칙 5) — 파일 **이름만** 페이지 state 로 들고, 업로드/확인은 페이지가 토스트로 끝낸다.
    드롭존 본체 = 프로젝트 통일 파일존 `DocumentsField`(FilePond, 2026-09-09 파일존 통일 · apfs-form-modal `file` 규약).
    자체 `<input type=file>` 드롭존을 만들지 않는다. 이 래퍼는 페이지의 `string[]` 계약만 DocumentsField 의 CSV 계약에 잇는다. */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { toast } from './ui/sonner';
 import { DocumentsField } from './fields/DocumentsField';
 import { parseFileNames } from './fields/file_names';
@@ -29,6 +29,7 @@ export interface UploadDropzoneProps {
 const same = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((v, i) => v === b[i]);
 
 export function UploadDropzone({ files, onChange, multiple, hint, label, removedMsg = '파일 제거됨', maxSize }: UploadDropzoneProps) {
+  const hintId = useId();
   /* FilePond 는 비제어 — 페이지가 files 를 비우면(확인·초기화) key 를 바꿔 다시 마운트해 드롭존도 비운다 */
   const [gen, setGen] = useState(0);
   const emitted = useRef<string[]>([]);
@@ -50,9 +51,9 @@ export function UploadDropzone({ files, onChange, multiple, hint, label, removed
 
   return (
     <div>
-      <DocumentsField key={gen} value="" onChange={change} label={label} multiple={!!multiple} maxSize={maxSize ?? null} />
+      <DocumentsField key={gen} value="" onChange={change} label={label} multiple={!!multiple} maxSize={maxSize ?? null} describedBy={hint ? hintId : undefined} />
       {/* preflight:false — <p> UA 마진 제거 */}
-      {hint && <p className="m-0 text-caption" style={{ fontSize: 11.5, marginTop: 6 }}>{hint}</p>}
+      {hint && <p id={hintId} className="m-0 text-caption" style={{ fontSize: 11.5, marginTop: 6 }}>{hint}</p>}
     </div>
   );
 }
