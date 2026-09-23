@@ -17,29 +17,17 @@
    그래서 화면에 그리지 않는 분류 키(grp)를 행에 싣고 TablesPage 의 "시드된 키" 필터로 원문 동작을 그대로 재현한다.
    계좌정보 비교조회도 같은 이유(스키마 필터엔 기간·기본값이 없다 — 원문은 개시일 2026-07-13 ~ 2026-08-13)로 여기 둔다. */
 import React from 'react';
-import { UI } from './components';
 import { TablesPage } from './risk_tables_page';
 import type { TablesPageConfig } from './risk_tables_page';
 import { VERIFY_TABLES, VERIFY_FUND, VERIFY_BASE_YM, SECURITIES_COMPARE, CODE_TABLE, CODE_GROUPS, CODE_DEFAULT } from './trust_sub_data';
 import { MOTHER_CODE_TABLE, MOTHER_CODE_GROUPS, MOTHER_CODE_DEFAULT, ACCOUNT_TABLE, ACCOUNT_RANGE, CASHFLOW_TABLE, CASHFLOW_RANGE } from './trust_mother_data';
 
-const { StatusBadge } = UI;
 type P = { onNav?: (r: string) => void };
 const SYSTEM = '수탁보고';
 
-/** 원문 툴바 머리 줄 — `대사 결과` + 태그 `운용사 · 수탁기관 대사` */
-function VerifyIntro() {
-  return (
-    <div className="flex items-center gap-2" style={{ padding: '12px 18px 0' }}>
-      <span className="font-bold" style={{ fontSize: 14 }}>대사 결과</span>
-      <StatusBadge tone="success" label="운용사 · 수탁기관 대사" size="sm" dot={false} />
-    </div>
-  );
-}
-
 const VERIFY: TablesPageConfig = {
   system: SYSTEM, group: '자펀드 수탁', label: '실물검증비교조회', route: '실물검증비교조회',
-  tables: VERIFY_TABLES, unit: true, intro: <VerifyIntro />,
+  tables: VERIFY_TABLES, unit: true,
   filters: [
     /* 원문 자펀드 select 옵션 1개('전체' 없음) — 조회 대상 파라미터(행에 자펀드 칸 없음) */
     { label: '자펀드', kind: 'select', def: VERIFY_FUND, options: [VERIFY_FUND], allLabel: null },

@@ -489,16 +489,20 @@ describe('관리형 선택 바 규약', () => {
     const s = src('trust_upload_forms.tsx');
     expect(s).toMatch(/table: ACCOUNT_TABLE/);
     expect(s).toMatch(/table: CASHFLOW_TABLE/);
-    expect(s).toMatch(/\{cfg\.entity\} 등록<\/Button>/);
-    expect(s).toMatch(/>업로드<\/Button>/);
+    expect(s).toMatch(/<RegisterCombo entity=\{cfg\.entity\}/);
   });
-  it('업로드 = 툴바 [업로드] → 공용 UploadModal(계좌정보 관리 패턴) — 본문에 드롭존을 펼치지 않는다', () => {
+  it('업로드 = 툴바 진입(버튼·등록 콤보 메뉴) → 공용 UploadModal — 본문에 드롭존을 펼치지 않는다', () => {
     for (const f of ['trust_physical_upload.tsx', 'trust_upload_forms.tsx']) {
       const s = src(f);
-      expect(s, f).toMatch(/leadingIcon="upload" onClick=\{\(\) => setModal\(\{ kind: 'upload' \}\)\}>업로드<\/Button>/);
       expect(s, f).toMatch(/<UploadModal /);
       expect(s, f).not.toMatch(/<UploadDropzone /);
     }
+    expect(src('trust_physical_upload.tsx')).toMatch(/leadingIcon="upload" onClick=\{\(\) => setModal\(\{ kind: 'upload' \}\)\}>업로드<\/Button>/);
+  });
+  it('계좌정보·입출금 관리 = 등록 콤보 버튼(▾ 메뉴에 ○○ 업로드) — 독립 [업로드] 버튼 없음', () => {
+    const s = src('trust_upload_forms.tsx');
+    expect(s).toMatch(/<DropdownMenuItem onSelect=\{onUpload\}>.*\{entity\} 업로드<\/DropdownMenuItem>/);
+    expect(s).not.toMatch(/>업로드<\/Button>/);
   });
   it('폼 → 행 변환: 숫자·금액은 Number, 빈 값은 null(0 으로 바꾸지 않는다)', () => {
     expect(rowPatch(CASHFLOW_TABLE, { prin: '3,000', pl: '', memo: ' 적요 ', dt: '2026-07-13' }))
