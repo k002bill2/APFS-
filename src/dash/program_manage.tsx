@@ -20,7 +20,6 @@ import type { CSSProperties } from 'react';
 import { format } from 'date-fns';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -65,20 +64,20 @@ const dash = <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
 
 const columnDefs: ColDef<ProgramRow>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
-  { field: 'pid', headerName: '프로그램ID', width: 120, maxWidth: 140, cellStyle: mono, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
-  { field: 'pname', headerName: '프로그램명', width: 220, minWidth: 160, maxWidth: 320, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
-  { field: 'gubun', headerName: '구분', width: 120, maxWidth: 140, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : dash) },
+  { field: 'pid', headerName: '프로그램ID', width: 120, maxWidth: 140, cellStyle: mono, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
+  { field: 'pname', headerName: '프로그램명', width: 220, minWidth: 160, maxWidth: 320, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
+  { field: 'gubun', headerName: '구분', width: 120, maxWidth: 140, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <>{p.value}</> : dash) },
   { field: 'use', headerName: '사용여부', width: 92, maxWidth: 92, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} size="md" /> },
   { field: 'linked', headerName: '메뉴연결', width: 100, maxWidth: 100, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '연결' : '미연결'),
     cellRenderer: (p: any) => <StatusBadge tone={p.value ? 'info' : 'primary'} label={p.value ? '연결' : '미연결'} size="md" dot={false} /> },
   { field: 'menuPath', headerName: '연결 메뉴', width: 260, minWidth: 180, maxWidth: 360, cellStyle: muted,
-    cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : dash) },
-  { field: 'at', headerName: '최종수정일시', width: 150, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => mn(p.value) },
-  { field: 'by', headerName: '최종수정자', width: 110, maxWidth: 120, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : dash) },
+    cellRenderer: (p: any) => (p.value ? <>{p.value}</> : dash) },
+  { field: 'at', headerName: '최종수정일시', width: 150, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => String(p.value) },
+  { field: 'by', headerName: '최종수정자', width: 110, maxWidth: 120, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <>{p.value}</> : dash) },
   { field: 'help', headerName: '도움말', width: 92, maxWidth: 92, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '있음' : '없음'),
     cellRenderer: (p: any) => (p.value ? <StatusBadge tone="success" label="있음" size="md" dot={false} /> : dash) },
-  { field: 'helpAt', headerName: '도움말 수정일시', width: 150, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? mn(p.value) : '-') },
-  { field: 'helpBy', headerName: '도움말 수정자', width: 120, maxWidth: 130, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : dash) },
+  { field: 'helpAt', headerName: '도움말 수정일시', width: 150, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? String(p.value) : '-') },
+  { field: 'helpBy', headerName: '도움말 수정자', width: 120, maxWidth: 130, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <>{p.value}</> : dash) },
 ];
 /* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
    행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */
@@ -195,7 +194,6 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
-  const masked = useMask();
 
   /* 필터 — 사용여부는 툴바 칩, 나머지(검색어·검색기준·구분·도움말)는 드로어 */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -301,7 +299,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
-    const body = visible.map((r) => EXPORT_COLS.map((c) => (masked ? '' : c.get(r))));
+    const body = visible.map((r) => EXPORT_COLS.map((c) => (c.get(r))));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '프로그램명' || c.header === '연결 메뉴' ? 34 : 14 }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '프로그램관리');
@@ -324,7 +322,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
      (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
   const selActions = selCount > 0 ? (
     <>
-      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <>
         <StatusBadge tone={single.linked ? 'info' : 'primary'} label={single.linked ? '메뉴 연결' : '미연결'} size="lg" dot={false} />
         <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: single.id })}>수정</Button>
@@ -350,7 +348,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
           {USE_CHIPS.map(([v, l]) => <FilterChip key={v || 'all'} active={fUse === v} onClick={() => setFUse(v)}>{l}</FilterChip>)}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -364,7 +362,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>프로그램 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '개 프로그램 중 ' + mn(String(visible.length)) + '개 · ' + mn(String(Math.min(shown, visible.length))) + '개 표시 중 · 도움말은 프로그램 단위로 관리'}</span>}
+      footerLeft={<span>{'총 ' + String(rows.length) + '개 프로그램 중 ' + String(visible.length) + '개 · ' + String(Math.min(shown, visible.length)) + '개 표시 중 · 도움말은 프로그램 단위로 관리'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -450,9 +448,9 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
               <AlertDialogTitle>프로그램 삭제</AlertDialogTitle>
               <AlertDialogDescription>
                 {modal.ids.length === 1
-                  ? <>프로그램 「<b className="text-foreground"><MT>{`${rows.find((r) => r.id === modal.ids[0])?.pid ?? ""} ${rows.find((r) => r.id === modal.ids[0])?.pname ?? ""}`}</MT></b>」 을 삭제할까요?</>
-                  : <>선택한 <b className="text-foreground">{mn(String(modal.ids.length))}건</b>의 프로그램을 삭제할까요?</>}
-                {modal.blocked > 0 && <><br />메뉴에 연결된 {mn(String(modal.blocked))}건은 제외됩니다.</>}
+                  ? <>프로그램 「<b className="text-foreground">{`${rows.find((r) => r.id === modal.ids[0])?.pid ?? ""} ${rows.find((r) => r.id === modal.ids[0])?.pname ?? ""}`}</b>」 을 삭제할까요?</>
+                  : <>선택한 <b className="text-foreground">{String(modal.ids.length)}건</b>의 프로그램을 삭제할까요?</>}
+                {modal.blocked > 0 && <><br />메뉴에 연결된 {String(modal.blocked)}건은 제외됩니다.</>}
                 <br />삭제 후에는 복구할 수 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>

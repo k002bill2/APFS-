@@ -18,7 +18,6 @@
 import React, { useState } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
-import { mn, MT, useMask } from './mask';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
@@ -36,7 +35,7 @@ const UNIT_MAX_DIGITS: Record<Unit, number> = { 원: 0, 백만원: 2, 억원: 4 
 /* null → '-' (목업 `fmtAmt2` 의 첫 줄). **나눗셈 전에** 판정한다 — null/1e6 은 0 이 된다. */
 function money(won: number | null, unit: Unit): string {
   if (won == null) return '-';
-  return mn((won / UNIT_DIV[unit]).toLocaleString(undefined, { maximumFractionDigits: UNIT_MAX_DIGITS[unit] }));
+  return String((won / UNIT_DIV[unit]).toLocaleString(undefined, { maximumFractionDigits: UNIT_MAX_DIGITS[unit] }));
 }
 
 /* ── 표본 데이터 — 목업 `RATE_SAMPLE`/`GRADE_SAMPLE`/`AMT_SAMPLE` 값 그대로(base = 원) ──
@@ -80,15 +79,14 @@ function Kpi({ label, children }: { label: string; children: React.ReactNode }) 
 ────────────────────────────── */
 export function FundEarlyWarningYieldModal({ fund, ym, onClose }: { fund: string; ym: string; onClose: () => void }) {
   const [unit, setUnit] = useState<Unit>('원');   // 목업 기본값 = 저장 base
-  const masked = useMask();
   const dlgRef = React.useRef<DialogHandle>(null);
 
   /* 엑셀 — 화면이 그리는 소스 **전부**를 직렬화한다(대상 자펀드·수익률·등급·금액 지표 6행).
      한쪽만 넣으면 "화면엔 보이는데 엑셀엔 없는" 누락이 난다(apfs-spec-popup 규약 6).
      금액은 단위 무관 **원 단위 원값**(골드 subfund_spec_modal 동형). 마스크 ON이면 숫자 0 · 텍스트 ''. */
   const excel = () => {
-    const num = (v: number) => (masked ? 0 : v);
-    const txt = (v: string) => (masked ? '' : v);
+    const num = (v: number) => (v);
+    const txt = (v: string) => (v);
     const rows: (string | number)[][] = [
       ['자펀드명', txt(fund)],
       ...(ym ? [['기준년월', txt(ym)]] : []),          // 기준년월 미선택이면 행 자체를 빼다
@@ -114,7 +112,7 @@ export function FundEarlyWarningYieldModal({ fund, ym, onClose }: { fund: string
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">자펀드별 조기경보 상세조회 - 자펀드수익률</DialogTitle>
             <DialogDescription className="text-caption truncate min-w-0">
-              자펀드명 : <MT>{fund}</MT>
+              자펀드명 : {fund}
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -130,7 +128,7 @@ export function FundEarlyWarningYieldModal({ fund, ym, onClose }: { fund: string
           <div className="grid gap-2.5 mb-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}>
             <Kpi label="자펀드수익률">
               <span className="tabular font-bold" style={{ fontSize: 24, color: RATE_SAMPLE < 0 ? 'var(--danger-text)' : 'var(--foreground)' }}>
-                {mn(rateText(RATE_SAMPLE))}
+                {String(rateText(RATE_SAMPLE))}
               </span>
               <span className="font-semibold text-caption" style={{ fontSize: 13 }}>%</span>
             </Kpi>

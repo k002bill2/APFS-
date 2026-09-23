@@ -28,7 +28,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -136,7 +135,7 @@ const mark = (field: keyof CustodyConfirmRow, header: string, width = 100): ColD
 /* 텍스트 열 — flex로 잉여 폭을 흡수하므로 셀 내부는 min-w-0 + truncate(말줄임) */
 const txt = (field: keyof CustodyConfirmRow, header: string, minWidth: number): ColDef<CustodyConfirmRow> => ({
   field, headerName: header, flex: 1, minWidth, width: minWidth, cellStyle: flexCenter,   // width=flex 전 초기폭(apfs-aggrid ⑨)
-  cellRenderer: (p: any) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span>,
+  cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span>,
 });
 
 /* 셀 내 링크 — 클릭 시 상세 팝업(목업은 `.linkbtn` 버튼 셀이 진입점이다).
@@ -295,7 +294,6 @@ export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void })
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
-  const masked = useMask();
 
   /* 행 패치 — 항상 새 객체를 만들어 DEMO 원본을 건드리지 않는다(immutability) */
   const patchRow = useCallback((id: string, patch: Partial<CustodyConfirmRow>) => {
@@ -349,8 +347,8 @@ export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void })
     const { heads, keys, merges } = flattenForExcel(columnDefs);
     const body = filteredRows.map((r) => keys.map((k) => {
       const v = (r as any)[k];
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : String(v ?? '');
+      if (typeof v === 'number') return v;
+      return String(v ?? '');
     }));
     const ws = XLSX.utils.aoa_to_sheet([...heads, ...body]);
     /* No는 유일한 숫자 컬럼 — 숫자 셀 서식(화면 우측정렬과 같은 모양) */
@@ -385,7 +383,7 @@ export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void })
           ))}
           {fBaseDate !== BASE_DATE && (
             <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {mn(fBaseDate)}
+              {String(fBaseDate)}
               <button type="button" onClick={() => setFBaseDate(BASE_DATE)} aria-label="기준일자 필터 제거" className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -398,7 +396,7 @@ export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void })
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

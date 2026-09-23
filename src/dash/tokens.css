@@ -290,8 +290,6 @@ input::-webkit-credentials-auto-fill-button{visibility:hidden!important;display:
 /* 마스크 스켈레톤 펄스 — mask.tsx MT / AG Grid 헤더 placeholder 전용.
    코어 animate-pulse는 중간 opacity .5로 '밝아진다'. 마스크 바는 기저 .28로 은은히 떠 있어야 하므로
    중간에 .12로 '어두워지는' 범위로 돈다(밝아지며 튀는 것 방지). reduced-motion은 아래 전역 규칙이 무력화. */
-@keyframes apfs-mask-pulse{0%,100%{opacity:.28}50%{opacity:.12}}
-.apfs-mask-pulse{animation:apfs-mask-pulse 2s cubic-bezier(.4,0,.6,1) infinite;}
 /* 진행바(Progress) indeterminate — fill 폭 고정 + translateX 슬라이드(transform 컨벤션 준수, left/width 미사용). */
 @keyframes apfs-progress-indet{from{transform:translateX(-100%)}to{transform:translateX(340%)}}
 .apfs-progress-indet{animation:apfs-progress-indet 1.15s var(--ease) infinite;}

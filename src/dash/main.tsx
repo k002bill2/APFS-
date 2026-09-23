@@ -6,7 +6,6 @@ import { Charts } from './charts';
 import { MainWidgets } from './main_widgets';
 import { Shell } from './shell';
 import { APFS_DATA } from './data';
-import { mn, MT } from './mask';
 
 const { useState } = React;
 const { StatCard, ChartCard, Card, Button, ColorChip, StatusBadge, DeltaBadge } = UI;
@@ -40,11 +39,11 @@ function HeroAUM({ onNav }) {
         className="absolute inset-0 pointer-events-none"
         style={{ background: "radial-gradient(120% 140% at 100% 0%,rgba(255,255,255,.14),transparent 55%)" }} /><div className="hero-main relative"><div
           className="flex items-center gap-2 font-semibold"
-          style={{ opacity: .9, fontSize: 12.5 }}><Icon name="landmark" size={16} /><MT>총 운용자산 (AUM)</MT><span style={{ fontSize: 10.5, opacity: .7 }}><MT>{aum.fr}</MT></span></div><div className="flex items-baseline gap-1.5 mt-2"><span
+          style={{ opacity: .9, fontSize: 12.5 }}><Icon name="landmark" size={16} /><>총 운용자산 (AUM)</><span style={{ fontSize: 10.5, opacity: .7 }}>{aum.fr}</span></div><div className="flex items-baseline gap-1.5 mt-2"><span
             className="tabular font-extrabold"
-            style={{ fontSize: 46, letterSpacing: "-.02em", lineHeight: 1 }}>{mn(aum.value)}</span><span className="font-semibold" style={{ fontSize: 18, opacity: .85 }}>{aum.unit}</span></div><div className="flex items-center gap-3 mt-3"><span
+            style={{ fontSize: 46, letterSpacing: "-.02em", lineHeight: 1 }}>{String(aum.value)}</span><span className="font-semibold" style={{ fontSize: 18, opacity: .85 }}>{aum.unit}</span></div><div className="flex items-center gap-3 mt-3"><span
             className="inline-flex items-center font-bold"
-            style={{ gap: 5, background: "rgba(255,255,255,.18)", borderRadius: 8, padding: "4px 9px", fontSize: 12.5 }}><Icon name="trending" size={14} />{mn("+3.2% 전월 대비")}</span><div style={{ width: 120, opacity: .95 }}><Sparkline data={aum.trend} color="var(--on-gradient-sky)" id="hero" height={34} area={false} /></div></div><div className="flex gap-2" style={{ marginTop: 18 }}><Button
+            style={{ gap: 5, background: "rgba(255,255,255,.18)", borderRadius: 8, padding: "4px 9px", fontSize: 12.5 }}><Icon name="trending" size={14} />{"+3.2% 전월 대비"}</span><div style={{ width: 120, opacity: .95 }}><Sparkline data={aum.trend} color="var(--on-gradient-sky)" id="hero" height={34} area={false} /></div></div><div className="flex gap-2" style={{ marginTop: 18 }}><Button
             variant="outline"
             size="sm"
             style={{ background: "rgba(255,255,255,.16)", color: "var(--on-brand-solid)", borderColor: "rgba(255,255,255,.3)" }}
@@ -55,7 +54,7 @@ function HeroAUM({ onNav }) {
             trailingIcon="arrow-right"
             onClick={() => onNav("투자 성과·포트폴리오")}>성과 상세</Button></div></div><div
         className="relative text-center"
-        style={{ borderLeft: "1px solid rgba(255,255,255,.18)", paddingLeft: 18 }}><div className="font-semibold mb-0.5" style={{ fontSize: 12.5, opacity: .9 }}>모태펀드 집행률</div><GaugeLight value={78} /><div className="mt-0.5" style={{ fontSize: 11.5, opacity: .8 }}>{mn("목표 80% · 잔여 2%p")}</div></div><div
+        style={{ borderLeft: "1px solid rgba(255,255,255,.18)", paddingLeft: 18 }}><div className="font-semibold mb-0.5" style={{ fontSize: 12.5, opacity: .9 }}>모태펀드 집행률</div><GaugeLight value={78} /><div className="mt-0.5" style={{ fontSize: 11.5, opacity: .8 }}>{"목표 80% · 잔여 2%p"}</div></div><div
         className="relative flex flex-col gap-3"><HeroStat
           icon="trending"
           label="전체 평균 IRR"
@@ -96,7 +95,7 @@ function GaugeLight({ value }) {
         x={65}
         y={64}
         textAnchor="middle"
-        style={{ fontSize: 26, fontWeight: 800, fill: "var(--on-brand-solid)" }}>{mn(value + "%")}</text></svg>
+        style={{ fontSize: 26, fontWeight: 800, fill: "var(--on-brand-solid)" }}>{String(value + "%")}</text></svg>
   );
 }
 function HeroStat({ icon, label, value, unit, delta, danger, onNav }: { icon: string; label?: React.ReactNode; value?: React.ReactNode; unit?: string; delta?: React.ReactNode; danger?: boolean; onNav?: () => void }) {
@@ -112,9 +111,9 @@ function HeroStat({ icon, label, value, unit, delta, danger, onNav }: { icon: st
         background: "rgba(255,255,255,.12)", borderRadius: 12,
       }}><span
         className="inline-flex items-center justify-center shrink-0"
-        style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,.18)" }}><Icon name={icon} size={19} /></span><div className="flex-1"><div className="font-semibold" style={{ fontSize: 11.5, opacity: .9 }}><MT>{label}</MT></div><div className="flex items-baseline gap-1"><span className="tabular font-extrabold" style={{ fontSize: 24 }}>{mn(value)}</span><span style={{ fontSize: 12, opacity: .85 }}>{unit}</span><span
+        style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,.18)" }}><Icon name={icon} size={19} /></span><div className="flex-1"><div className="font-semibold" style={{ fontSize: 11.5, opacity: .9 }}>{label}</div><div className="flex items-baseline gap-1"><span className="tabular font-extrabold" style={{ fontSize: 24 }}>{String(value)}</span><span style={{ fontSize: 12, opacity: .85 }}>{unit}</span><span
             className="font-bold ml-1"
-            style={{ fontSize: 11.5, color: danger ? "var(--on-gradient-danger)" : "var(--on-gradient-mint)" }}>{mn(delta)}</span></div></div></Tag>
+            style={{ fontSize: 11.5, color: danger ? "var(--on-gradient-danger)" : "var(--on-gradient-mint)" }}>{String(delta)}</span></div></div></Tag>
   );
 }
 
@@ -131,7 +130,7 @@ function StatusBar() {
       style={{ borderRadius: 12 }}>{D.STATUS_DONUT.map((st) => <div
         key={st.key}
         className="py-2 px-3"
-        style={{ flex: st.value, minWidth: 70, background: `color-mix(in srgb,${st.color} 13%,transparent)`, borderRadius: 8 }}><div className="flex items-center gap-1.5"><span style={{ width: 8, height: 8, borderRadius: 99, background: st.color }} /><span className="font-bold" style={{ fontSize: 11.5, color: st.color }}><MT>{st.name}</MT></span></div><div className="flex items-baseline gap-1 mt-0.5"><span className="tabular font-extrabold" style={{ fontSize: 20 }}>{mn(st.value)}</span><span className="t-caption">{mn(((st.value / total) * 100).toFixed(0) + "%")}</span></div></div>)}</div>
+        style={{ flex: st.value, minWidth: 70, background: `color-mix(in srgb,${st.color} 13%,transparent)`, borderRadius: 8 }}><div className="flex items-center gap-1.5"><span style={{ width: 8, height: 8, borderRadius: 99, background: st.color }} /><span className="font-bold" style={{ fontSize: 11.5, color: st.color }}>{st.name}</span></div><div className="flex items-baseline gap-1 mt-0.5"><span className="tabular font-extrabold" style={{ fontSize: 20 }}>{String(st.value)}</span><span className="t-caption">{String(((st.value / total) * 100).toFixed(0) + "%")}</span></div></div>)}</div>
   );
 }
 function VariantC({ s, onNav }) {

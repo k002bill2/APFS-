@@ -66,7 +66,6 @@ import { format } from 'date-fns';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -147,11 +146,11 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 /* 텍스트 N/A 는 '-'(숫자 N/A 의 null 규약과 다른 축 — 이 화면엔 숫자 컬럼이 없다).
    flex 셀은 AG Grid 기본 ellipsis 가 안 먹으므로 내부 span 에 truncate 를 준다. */
 const textCell = (p: { value?: string }) => (p.value
-  ? <span className="min-w-0 truncate"><MT>{p.value}</MT></span>
+  ? <span className="min-w-0 truncate">{p.value}</span>
   : <span className="text-muted-foreground">-</span>);
 const kindCell = (p: { value: WorkforceKind }) => <StatusBadge tone={KIND_TONE[p.value]} label={p.value} size="lg" dot={false} />;
 /* 날짜 셀 — 행 데이터(축이 아니다)라 mn(). 빈 값·null 은 '-' */
-const dateFmt = (p: { value?: string | null }) => (p.value ? mn(p.value) : '-');
+const dateFmt = (p: { value?: string | null }) => (p.value ? String(p.value) : '-');
 
 const txt = (field: keyof WorkforceRow, headerName: string, flex: number, minWidth: number, center?: boolean): ColDef<WorkforceRow> => ({
   field, headerName, flex, minWidth, width: minWidth, cellStyle: center ? flexMid : flexCenter, cellRenderer: textCell,
@@ -287,7 +286,6 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
-  const masked = useMask();
 
   /* 앱-스코프 단축키. 모달이 떠 있는 동안에는 등록(이중 열림)·내보내기(모달 위 다운로드)를 막는다.
      `print` 는 UI 표면이 없는 골격 단축키다(형제 전 화면 공통). */
@@ -417,7 +415,7 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
     setRows((prev) => prev.filter((r) => !ids.has(r.id)));
     apiRef.current?.deselectAll();
     setModal(null);
-    toast.success(`${mn(String(ids.size))}건 삭제되었습니다`);
+    toast.success(`${String(ids.size)}건 삭제되었습니다`);
   };
   /* 해제등록 — 목업은 토스트만 띄우지만 우리는 상태를 들고 있으므로 실제로 전이시킨다.
      해제일자는 **오늘**이다(목업 원문 "해제일자는 오늘 날짜로 기록됩니다" — 입력받지 않는다).
@@ -430,7 +428,7 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
     const rdate = today();
     setRows((prev) => prev.map((r) => (ids.has(r.id) && r.gubun === '등록' ? { ...r, gubun: '해제' as WorkforceKind, rdate } : r)));
     setModal(null);
-    toast.success(`${mn(String(n))}건 해제등록 되었습니다`);
+    toast.success(`${String(n)}건 해제등록 되었습니다`);
   };
 
   const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
@@ -440,8 +438,8 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
       const v = c.get(r);
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : v;
+      if (typeof v === 'number') return v;
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '자펀드' ? 30 : c.header === '운용사' ? 22 : c.header === 'No' ? 6 : 14 }));
@@ -461,9 +459,9 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
      ⚠ `구분`(스코프)은 칩이 없다 — 행을 거르지 않는 modifier 라 끌 것이 없다(위 filterActive 주석 참조).
        대상 칩의 aria-label 은 드로어 라벨과 같은 `운용사/자펀드` 로 고정한다(스코프가 바뀌어도 안정적). */
   const chips = ([
-    { key: '검색어', on: !!fText, value: <MT>{fText}</MT>, clear: () => setFText('') },
-    { key: '운용사/자펀드', on: !!fTarget, value: <MT>{fTarget}</MT>, clear: () => setFTarget('') },
-    { key: '기간', on: !!(fFrom || fTo), value: `${fFrom ? mn(fFrom) : ''} ~ ${fTo ? mn(fTo) : ''}`, clear: () => { setFFrom(''); setFTo(''); } },
+    { key: '검색어', on: !!fText, value: <>{fText}</>, clear: () => setFText('') },
+    { key: '운용사/자펀드', on: !!fTarget, value: <>{fTarget}</>, clear: () => setFTarget('') },
+    { key: '기간', on: !!(fFrom || fTo), value: `${fFrom ? String(fFrom) : ''} ~ ${fTo ? String(fTo) : ''}`, clear: () => { setFFrom(''); setFTo(''); } },
   ] as { key: string; on: boolean; value: React.ReactNode; clear: () => void }[]).filter((c) => c.on);
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다.
@@ -472,7 +470,7 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
      수정·삭제는 목업엔 없지만 2026-09-23 사용자 결정(형제 4화면 버튼 구성 통일). */
   const selActions = selCount > 0 ? (
     <>
-      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {/* 수정은 **단건 체크일 때만**(2026-09-23 사용자 결정). openEdit 안의 1건 가드는 방어로 남긴다. */}
       {selCount === 1 && <Button variant="primary" size="sm" leadingIcon="file" onClick={openEdit}>수정</Button>}
       {/* 삭제는 구분(등록/해제)과 무관하게 항상 노출 */}
@@ -509,7 +507,7 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={openCreate}>운용인력변동 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

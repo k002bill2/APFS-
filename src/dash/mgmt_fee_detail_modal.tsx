@@ -20,7 +20,6 @@
      가려진 채로도 드러난 채로도 보이게 된다. */
 import React from 'react';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { fmt } from './aggrid_theme';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { ReviewMarker } from './review_marker';
@@ -55,7 +54,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.kind === 'empty' ? 'text-caption' : ''}`}
             style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
-            {o.kind === 'empty' ? '-' : o.kind === 'num' ? mn(o.v) : o.kind === 'plain' ? o.v : <MT>{o.v}</MT>}
+            {o.kind === 'empty' ? '-' : o.kind === 'num' ? String(o.v) : o.kind === 'plain' ? o.v : <>{o.v}</>}
           </dd>
         </div>
       ))}
@@ -107,12 +106,12 @@ function CalcTable({ row }: { row: Record<string, unknown> }) {
         </thead>
         <tbody>
           <tr>
-            <td className={`${TD} text-center`} style={CELL}><MT>투자잔액</MT></td>
-            <td className={`${TD} text-center tabular`} style={CELL}>{mn(calc.span)}</td>
-            <td className={`${TD} text-right tabular`} style={CELL}>{mn(fmt(base))}</td>
-            <td className={`${TD} text-center tabular`} style={CELL}>{mn(String(calc.days))}</td>
+            <td className={`${TD} text-center`} style={CELL}><>투자잔액</></td>
+            <td className={`${TD} text-center tabular`} style={CELL}>{String(calc.span)}</td>
+            <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(base))}</td>
+            <td className={`${TD} text-center tabular`} style={CELL}>{String(calc.days)}</td>
             <td className={`${TD} text-center tabular`} style={CELL}>{PCT_LABEL}</td>
-            <td className={`${TD} text-right tabular`} style={CELL}>{mn(fmt(amount))}</td>
+            <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(amount))}</td>
             <td className={TD} style={CELL}>{FORMULA}</td>
           </tr>
         </tbody>
@@ -131,7 +130,7 @@ export function MgmtFeeDetailModal({ row, onClose }: { row: Record<string, unkno
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">관리보수보고 상세조회</DialogTitle>
             <DialogDescription className="text-caption truncate min-w-0">
-              <MT>{String(row.subFund ?? '')}</MT> · {mn(String(row.payDate ?? ''))}
+              {String(row.subFund ?? '')} · {String(row.payDate ?? '')}
             </DialogDescription>
           </div>
         </DialogHeader>

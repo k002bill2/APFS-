@@ -6,7 +6,6 @@
    ⚠ 백엔드 없음 — 저장은 부모(program_manage)의 로컬 행 상태만 바꾼다. 이미지·파일은 이름만 보관(업로드 없음). */
 import React from 'react';
 import { UI } from './components';
-import { MT } from './mask';
 import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
@@ -76,7 +75,7 @@ export function ProgramHelpModal({ program, onSave, onClose }: {
         <DialogHeader className="px-[46px]">
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">도움말 편집</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0"><MT>{`${program.pid} · ${program.pname}`}</MT></DialogDescription>
+            <DialogDescription className="text-caption truncate min-w-0">{`${program.pid} · ${program.pname}`}</DialogDescription>
           </div>
         </DialogHeader>
 

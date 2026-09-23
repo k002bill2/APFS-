@@ -34,7 +34,6 @@ import type { CSSProperties } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
@@ -117,7 +116,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 /* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수·마스킹)에 null 가드만 얇게 덧씌운다(재구현 아님) */
 const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p));
 /* 텍스트 셀 — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다 */
-const textCell = (p: { value: string }) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span>;
+const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
 const dashCell = <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
 
 const MATCH_TONE: Record<'일치' | '불일치', Tone> = { 일치: 'success', 불일치: 'danger' };
@@ -159,10 +158,10 @@ function memoGroup<T extends MemoRow>(sec: SectionKey, secLabel: string, openMem
     children: [
       { colId: 'memoDate', headerName: '날짜', width: 112, cellStyle: centerNum,
         valueGetter: (p) => p.data?.memos[0]?.date ?? null,
-        valueFormatter: (p) => (p.value == null ? '-' : mn(p.value)) },
+        valueFormatter: (p) => (p.value == null ? '-' : String(p.value)) },
       { colId: 'memoContent', headerName: '내용', width: 170, maxWidth: 320, cellStyle: flexCenter,
         valueGetter: (p) => p.data?.memos[0]?.content ?? null,
-        cellRenderer: (p: { value: string | null }) => (p.value == null ? dashCell : <span className="min-w-0 truncate"><MT>{p.value}</MT></span>) },
+        cellRenderer: (p: { value: string | null }) => (p.value == null ? dashCell : <span className="min-w-0 truncate">{p.value}</span>) },
       /* 등록 — 액션 컬럼(정렬·엑셀 제외). UI.Button은 aria-label을 받지 않으므로 접근名은 sr-only로 보강한다
          ("투자자산 1행 메모"). 행 번호는 축이라 비마스킹. */
       { colId: MEMO_ACTION_COL, headerName: '등록', width: 96, sortable: false, cellStyle: flexMid,
@@ -344,7 +343,6 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
   const [trade, setTrade] = useState<NonInvestTradeRow[]>(TRADE_DEMO);
   const [nonInvest, setNonInvest] = useState<NonInvestRow[]>(NONINVEST_DEMO);
   const [modal, setModal] = useState<ModalState>(null);
-  const masked = useMask();
 
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
@@ -417,8 +415,8 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
       const body = rows.map((r) => keys.map((k) => {
         if (k === 'no') return r.no;                        // 순번=축(비마스킹)
         const v = exportValue(r, k);
-        if (numKeys.has(k)) return v == null ? '' : masked ? 0 : v;
-        return masked ? '' : (v ?? '');
+        if (numKeys.has(k)) return v == null ? '' : v;
+        return (v ?? '');
       }));
       const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body]);
       rows.forEach((r, i) => keys.forEach((k, j) => {
@@ -450,7 +448,7 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
           {/* 값만 표시(항목명 접두사 없음) + × — 텍스트 값이라 <MT>. 기준일은 no-op이라 칩을 만들지 않는다 */}
           {fFund && (
             <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{fFund}</MT>
+              {fFund}
               <button type="button" onClick={() => setFFund('')} aria-label="자펀드 필터 제거" className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -465,7 +463,7 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
       /* 푸터 좌 = 섹션별 건수(페이지네이션이 없어 '총 N개 중 M개' 형식이 성립하지 않는다) */
-      footerLeft={<span>{'투자자산 ' + mn(String(investRows.length)) + '건 · 미투자자산 거래 ' + mn(String(tradeRows.length)) + '건 · 미투자자산 ' + mn(String(nonInvestRows.length)) + '건'}</span>}
+      footerLeft={<span>{'투자자산 ' + String(investRows.length) + '건 · 미투자자산 거래 ' + String(tradeRows.length) + '건 · 미투자자산 ' + String(nonInvestRows.length) + '건'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       {/* ── ① 투자자산 ── */}

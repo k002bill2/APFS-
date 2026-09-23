@@ -19,7 +19,6 @@
    (mask-boundary-includes-excel-and-filename). */
 import React from 'react';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { ReviewMarker } from './review_marker';
 import type { ReviewNote } from './review_marker';
@@ -62,7 +61,7 @@ function DocCell({ file }: { file: string }) {
   return (
     <span className="inline-flex items-center gap-2 min-w-0">
       <Icon size={16} className={`${cls} shrink-0`} aria-hidden />
-      <span className="min-w-0"><MT>{file}</MT></span>
+      <span className="min-w-0">{file}</span>
     </span>
   );
 }
@@ -77,7 +76,7 @@ export function DueDiligChecklistModal({ row, onClose }: { row: Record<string, u
           {/* 제목+대상명은 한 래퍼로 — DialogHeader가 justify-between이라 안 묶으면 대상명이 우측 끝으로 밀린다 */}
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">투자금실사보고서 체크리스트 조회</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0"><MT>{String(row.investee ?? '')}</MT></DialogDescription>
+            <DialogDescription className="text-caption truncate min-w-0">{String(row.investee ?? '')}</DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">
@@ -88,7 +87,7 @@ export function DueDiligChecklistModal({ row, onClose }: { row: Record<string, u
                   {o.l}{o.note && <ReviewMarker {...o.note} label={o.l} />}
                 </dt>
                 <dd className={`m-0 flex items-center min-w-0 ${isBlank(o.v) && !o.node ? 'text-caption' : ''}`} style={DD_STYLE}>
-                  {o.node ? o.node : isBlank(o.v) ? '-' : o.numeric ? mn(o.v) : <MT>{o.v}</MT>}
+                  {o.node ? o.node : isBlank(o.v) ? '-' : o.numeric ? String(o.v) : <>{o.v}</>}
                 </dd>
               </div>
             ))}

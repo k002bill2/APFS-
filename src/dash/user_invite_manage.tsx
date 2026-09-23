@@ -16,7 +16,6 @@ import type { CSSProperties } from 'react';
 import { format } from 'date-fns';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -52,15 +51,15 @@ type InviteView = InviteRow & { orgn: string; state: InviteState; expiresAt: str
 
 const columnDefs: ColDef<InviteView>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
-  { field: 'orgn', headerName: '운용사', width: 160, minWidth: 130, maxWidth: 220, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'name', headerName: '성명', width: 110, maxWidth: 160, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
-  { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 160, cellStyle: muted, cellRenderer: (p: any) => <MT>{p.value}</MT> },
+  { field: 'orgn', headerName: '운용사', width: 160, minWidth: 130, maxWidth: 220, cellStyle: flexCenter, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'name', headerName: '성명', width: 110, maxWidth: 160, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
+  { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 160, cellStyle: muted, cellRenderer: (p: any) => <>{p.value}</> },
   { field: 'active', headerName: '재직', width: 88, maxWidth: 88, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '재직' : '퇴사'),
     cellRenderer: (p: any) => <StatusBadge tone={p.value ? 'success' : 'danger'} label={p.value ? '재직' : '퇴사'} size="md" dot={false} /> },
   { field: 'state', headerName: '초대상태', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={INVITE_TONE[p.value as InviteState]} label={p.value} size="lg" dot={false} /> },
-  { field: 'invitedAt', headerName: '초대일시', width: 156, maxWidth: 156, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? mn(p.value) : '-') },
+  { field: 'invitedAt', headerName: '초대일시', width: 156, maxWidth: 156, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? String(p.value) : '-') },
   { field: 'expiresAt', headerName: `만료(${INVITE_TTL_HOURS}시간)`, width: 156, maxWidth: 156, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
-    valueFormatter: (p) => (p.data?.state === '초대발송' && p.value ? mn(p.value) : '-') },
+    valueFormatter: (p) => (p.data?.state === '초대발송' && p.value ? String(p.value) : '-') },
 ];
 /* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
    행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */
@@ -116,7 +115,6 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
   const selCount = selIds.length;       // 단일/다건 분기의 SSOT
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
-  const masked = useMask();
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [fState, setFState] = useState<typeof STATE_CHIPS[number]>('');
@@ -187,7 +185,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
-    const body = visible.map((r) => EXPORT_COLS.map((c) => (masked ? '' : c.get(r))));
+    const body = visible.map((r) => EXPORT_COLS.map((c) => (c.get(r))));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '이메일' || c.header === '운용사' ? 26 : 14 }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '사용자 초대');
@@ -205,7 +203,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
      (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
   const selActions = selCount > 0 ? (
     <>
-      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <>
       <StatusBadge tone={INVITE_TONE[single.state]} label={single.state} size="lg" dot={false} />
       {gate.send && <Button variant="primary" size="sm" leadingIcon="bell" onClick={() => askSend(single, false)}>초대 발송</Button>}
@@ -228,7 +226,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
           {STATE_CHIPS.map((s) => <FilterChip key={s || 'all'} active={fState === s} onClick={() => setFState(s)}>{s || '전체'}</FilterChip>)}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -241,7 +239,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '명 중 ' + mn(String(visible.length)) + '명 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(rows.length) + '명 중 ' + String(visible.length) + '명 표시 중'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div>

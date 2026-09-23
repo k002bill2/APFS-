@@ -14,7 +14,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -50,17 +49,17 @@ function SummaryCell({ d }: { d: HistEntry }) {
     const add = cntAdd(d), rev = cntRev(d);
     return (
       <span className="inline-flex items-center gap-1.5 font-bold" style={{ fontSize: 13.5 }}>
-        {add > 0 && <span style={{ color: 'var(--success-text)' }}>추가 {mn(String(add))}</span>}
+        {add > 0 && <span style={{ color: 'var(--success-text)' }}>추가 {String(add)}</span>}
         {add > 0 && rev > 0 && <span className="text-caption">·</span>}
-        {rev > 0 && <span style={{ color: 'var(--danger-text)' }}>회수 {mn(String(rev))}</span>}
+        {rev > 0 && <span style={{ color: 'var(--danger-text)' }}>회수 {String(rev)}</span>}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1.5" style={{ fontSize: 13.5 }}>
-      <span style={{ color: 'var(--danger-text)', textDecoration: 'line-through', opacity: .85 }}><MT>{d.before ?? '-'}</MT></span>
+      <span style={{ color: 'var(--danger-text)', textDecoration: 'line-through', opacity: .85 }}>{d.before ?? '-'}</span>
       <span className="text-caption" aria-hidden>→</span>
-      <b style={{ color: 'var(--success-text)' }}><MT>{d.after ?? '-'}</MT></b>
+      <b style={{ color: 'var(--success-text)' }}>{d.after ?? '-'}</b>
     </span>
   );
 }
@@ -68,18 +67,18 @@ function HoldersCell({ d }: { d: HistEntry }) {
   const h = d.holders;
   if (!h.length) return <span className="text-caption">0명</span>;
   const names = h.slice(0, 2).map((x) => x.name).join(', ');
-  return <span className="inline-flex items-center gap-1.5 min-w-0"><b>{mn(String(h.length))}명</b><span className="text-caption truncate" style={{ fontSize: 12.5 }}><MT>{names + (h.length > 2 ? ` 외 ${h.length - 2}명` : '')}</MT></span></span>;
+  return <span className="inline-flex items-center gap-1.5 min-w-0"><b>{String(h.length)}명</b><span className="text-caption truncate" style={{ fontSize: 12.5 }}>{names + (h.length > 2 ? ` 외 ${h.length - 2}명` : '')}</span></span>;
 }
 
 const columnDefs: ColDef<HistEntry>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
-  { field: 'ts', headerName: '일시', width: 176, maxWidth: 176, cellStyle: { ...centerNum }, valueFormatter: (p) => mn(p.value) },
+  { field: 'ts', headerName: '일시', width: 176, maxWidth: 176, cellStyle: { ...centerNum }, valueFormatter: (p) => String(p.value) },
   { field: 'ctype', headerName: '변경유형', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={CT_TONE[p.value as ChangeType]} label={p.value} size="lg" dot={false} /> },
-  { field: 'preset', headerName: '권한', width: 130, minWidth: 110, maxWidth: 180, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
+  { field: 'preset', headerName: '권한', width: 130, minWidth: 110, maxWidth: 180, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
   { headerName: '변경 요약', width: 200, minWidth: 170, maxWidth: 260, cellStyle: flexCenter, valueGetter: (p) => (p.data ? summaryText(p.data) : ''), cellRenderer: (p: any) => (p.data ? <SummaryCell d={p.data} /> : null) },
   { headerName: '적용 대상(동일 권한 보유)', flex: 1, width: 220, minWidth: 180, cellStyle: flexCenter, valueGetter: (p) => (p.data?.holders ?? []).map((h) => h.name).join(', '), cellRenderer: (p: any) => (p.data ? <HoldersCell d={p.data} /> : null) },
-  { field: 'actor', headerName: '행위자', width: 108, maxWidth: 140, cellStyle: muted, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'src', headerName: '발생프로그램', width: 120, maxWidth: 130, cellStyle: { ...flexMid, color: 'var(--muted-foreground)' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
+  { field: 'actor', headerName: '행위자', width: 108, maxWidth: 140, cellStyle: muted, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'src', headerName: '발생프로그램', width: 120, maxWidth: 130, cellStyle: { ...flexMid, color: 'var(--muted-foreground)' }, cellRenderer: (p: any) => <>{p.value}</> },
 ];
 // 조회 전용(audit-read-only) — 행 선택 자체를 두지 않는다(체크박스도, 클릭 선택도).
 // 선택으로 실행할 액션(일괄삭제·단계전이·선택 행 편집)이 없어 선택은 죽은 상태값이었다.
@@ -120,7 +119,6 @@ const dayWrap: CSSProperties = { width: 'fit-content', minWidth: controlMinWidth
 export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
-  const masked = useMask();
 
   /* 필터 — 전 항목이 상세필터 드로어(툴바 좌는 적용 칩만). 기본 기간 = 이번 달(데모 고정 기준일) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -160,7 +158,7 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
 
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
-    const body = visible.map((r) => EXPORT_COLS.map((c) => (masked ? '' : c.get(r))));
+    const body = visible.map((r) => EXPORT_COLS.map((c) => (c.get(r))));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '사유' || c.header === '적용 대상' ? 30 : 16 }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '권한 변경이력');
@@ -187,7 +185,7 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
           {chips.some(([, v]) => v) && <Icon name="filter" size={16} className="text-caption" />}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -200,7 +198,7 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span aria-live="polite">{'총 ' + mn(String(DEMO.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중'}</span>}
+      footerLeft={<span aria-live="polite">{'총 ' + String(DEMO.length) + '건 중 ' + String(visible.length) + '건 표시 중'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div>

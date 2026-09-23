@@ -11,7 +11,6 @@ import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 �
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, useMask } from './mask';
 import { GridFrame, KpiBadge, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT. 그리드폭 채움은 컬럼 flex(numCol)
 import { AgGridReact } from 'ag-grid-react';
@@ -57,7 +56,7 @@ const toUnit = (eok: number, unit: Unit): number => unit === '원' ? eok * 1e8 :
 const moneyFmt = (p: ValueFormatterParams): string => {
   if (p.value == null) return '';
   const unit = (p.context as { unit?: Unit } | undefined)?.unit ?? '억원';
-  return mn(fmt(toUnit(p.value as number, unit)));
+  return String(fmt(toUnit(p.value as number, unit)));
 };
 
 const numCol = (field: string, header: string, opts?: { strong?: boolean; count?: boolean }): ColDef<FundingRow> => ({
@@ -103,7 +102,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   useHotkey(HOTKEYS.print.combo, () => window.print());
   const [ctx, setCtx] = useState<CtxMenuState>(null);   // 우클릭 컨텍스트 메뉴 좌표·항목(null=닫힘)
 
-  const masked = useMask();   // 마스크 ON이면 Excel 숫자 셀 값을 0으로(실값 비노출) — 표시 모양은 z 서식이 담당
+     // 마스크 ON이면 Excel 숫자 셀 값을 0으로(실값 비노출) — 표시 모양은 z 서식이 담당
 
   const onGridReady = useCallback((e: GridReadyEvent<FundingRow>) => { apiRef.current = e.api; }, []);
   const onPaginationChanged = useCallback(() => {
@@ -122,7 +121,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   };
   // 행 복사 — 구분(축)은 실값 유지, 숫자 값만 mn(fmt())로 마스킹(엑셀 내보내기와 동일 계약). TSV로 클립보드에.
   const copyRow = (row: FundingRow) => {
-    const nums = (['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'u0', 'u1'] as const).map((k) => mn(fmt(row[k])));
+    const nums = (['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'u0', 'u1'] as const).map((k) => String(fmt(row[k])));
     navigator.clipboard?.writeText([row.y, ...nums].join('\t')).then(
       () => toast.success('행을 복사했습니다'),
       () => toast.error('복사에 실패했습니다'));
@@ -151,7 +150,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
     const numKeys = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'u0', 'u1'] as const;   // 헤더 순: 합계·농특회계·농안기금·FTA·수산발전기금·농금원 / 조합수·출자금액
     const isMoney = (k: string) => k !== 'u0';   // u0=조합수(개)만 단위 변환 제외, 나머지는 금액
     const cellVal = (r: FundingRow, k: (typeof numKeys)[number]) =>
-      masked ? 0 : isMoney(k) ? toUnit(r[k] as number, unit) : (r[k] as number);   // 화면과 동일: 금액은 선택 단위로, 조합수는 개수 그대로
+      isMoney(k) ? toUnit(r[k] as number, unit) : (r[k] as number);   // 화면과 동일: 금액은 선택 단위로, 조합수는 개수 그대로
     const head1 = ['구분', `조성현황(${unit})`, '', '', '', '', '', '출자현황', ''];   // 단위를 헤더에 명시(스타일 불가 → 텍스트로)
     const head2 = ['', ...CO, '조합수(개)', `출자금액(${unit})`];   // CO = ['합계','농특회계','농안기금','FTA','수산발전기금','농금원']
     const dataSrc = [...rows, TOTAL_ROW];             // 본문 + pinned 합계행(화면과 동일)
@@ -189,9 +188,9 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
       favRoute="asset-funding"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       kpis={<>
-        <KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={mn(fmt(toUnit(TOTAL_ROW.c0, unit))) + ' ' + unit} valueSize={14} />
-        <KpiBadge icon="wallet" color="var(--accent)" label="누적 출자금액" value={mn(fmt(toUnit(TOTAL_ROW.u1, unit))) + ' ' + unit} valueSize={14} />
-        <KpiBadge icon="layers" color="var(--chart-1)" label="누적 조합수" value={mn(fmt(TOTAL_ROW.u0)) + ' 개'} valueSize={14} />
+        <KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={String(fmt(toUnit(TOTAL_ROW.c0, unit))) + ' ' + unit} valueSize={14} />
+        <KpiBadge icon="wallet" color="var(--accent)" label="누적 출자금액" value={String(fmt(toUnit(TOTAL_ROW.u1, unit))) + ' ' + unit} valueSize={14} />
+        <KpiBadge icon="layers" color="var(--chart-1)" label="누적 조합수" value={String(fmt(TOTAL_ROW.u0)) + ' 개'} valueSize={14} />
       </>}
       toolbarRight={<>
         {/* 금액 단위 전환 — 캡션 + 세그먼트(원/백만원/억원). 조합수는 항상 개(변환 제외)라 캡션에 명시. */}
@@ -199,7 +198,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
         <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(totalForCount)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(totalForCount) + '개 중 ' + String(shown) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

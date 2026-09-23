@@ -21,7 +21,6 @@ import { format } from 'date-fns';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -112,11 +111,11 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof InvReviewRow, header: string, width: number, center?: boolean): ColDef<InvReviewRow> => ({
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <MT>{p.value}</MT>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : <>{p.value}</>),
 });
 const date = (field: keyof InvReviewRow, header: string, width = 128): ColDef<InvReviewRow> => ({
   field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
-  valueFormatter: (p) => (p.node?.rowPinned ? '' : mn(p.value)),
+  valueFormatter: (p) => (p.node?.rowPinned ? '' : String(p.value)),
 });
 const amt = (field: keyof InvReviewRow, header: string, strong?: boolean, width = 150): ColDef<InvReviewRow> => ({
   field, headerName: header, width, type: 'rightAligned', valueFormatter: nullFmt, cellStyle: numStyle(strong) as any,
@@ -136,7 +135,7 @@ const columnDefs: ColDef<InvReviewRow>[] = [
   { field: 'no', headerName: 'No', width: 68, pinned: 'left', cellStyle: centerNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '합 계' : String(p.value)) },
   { ...txt('gp', '운용사', 180), maxWidth: 240, pinned: 'left' },
-  { ...txt('fn', '자펀드', 220), maxWidth: 320, pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold"><MT>{p.value}</MT></span>) },
+  { ...txt('fn', '자펀드', 220), maxWidth: 320, pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold">{p.value}</span>) },
   { ...txt('co', '투자기업', 160), maxWidth: 240 },
   { colId: 'st', headerName: '투심상태', width: 96, cellStyle: flexMid, sortable: true,
     valueGetter: (p) => (p.data ? stOf(p.data) : ''),
@@ -238,7 +237,6 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
   const [modal, setModal] = useState<ModalState>(null);
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  const masked = useMask();
 
   /* 필터 — 투심상태(일정/결과)는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -318,8 +316,8 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
     const body = src.map((r, i) => EXPORT_COLS.map((c) => {
       if (c.header === 'No') return i === src.length - 1 ? '합 계' : r.no;
       const v = c.get(r);
-      if (c.num) return v == null ? '' : masked ? 0 : v;
-      return masked ? '' : (v ?? '');
+      if (c.num) return v == null ? '' : v;
+      return (v ?? '');
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     src.forEach((r, i) => EXPORT_COLS.forEach((c, j) => {
@@ -353,7 +351,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
      (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
   const selActions = selCount > 0 ? (
     <>
-      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <>
       {/* 확정여부 배지 + (확정 시)결과 배지 — 상태 표시. 전이는 아래 액션 버튼 */}
       <StatusBadge tone={CONFIRM_TONE[single.confirm]} label={single.confirm} size="lg" dot={false} />
@@ -399,7 +397,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
             ['종료일', fTo, () => setFTo('')],
           ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -413,7 +411,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -506,7 +504,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>투자준법감시내역 삭제</AlertDialogTitle>
-              <AlertDialogDescription><b className="text-foreground"><MT>{single.co}</MT></b> · <MT>{single.fn}</MT> 건의 투자준법감시내역을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.</AlertDialogDescription>
+              <AlertDialogDescription><b className="text-foreground">{single.co}</b> · {single.fn} 건의 투자준법감시내역을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>

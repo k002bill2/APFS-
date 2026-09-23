@@ -435,7 +435,7 @@ describe('화면별 도메인 규칙', () => {
     expect(note).toEqual([...YEARLY_FOOTNOTES]);
   });
   it('등록원부 엑셀: 헤더 = 표 선언 순서(조작 칸 없음)', () => {
-    const ws = tableSheet(LEDGER_TABLE, LEDGER_TABLE.rows, null, false);
+    const ws = tableSheet(LEDGER_TABLE, LEDGER_TABLE.rows, null);
     const head = (XLSX.utils.sheet_to_json(ws, { header: 1 }) as string[][])[0];
     expect(head).toEqual(LEDGER_TABLE.cols.map((c) => c.label));
   });
@@ -443,7 +443,7 @@ describe('화면별 도메인 규칙', () => {
     const tables = [...Object.values(YEARLY_TABLES), ...BASES.map((b) => ({ ...detailTable(b), rows: detailRows(b, COMB_TYPES[0]) })), ...VERIFY_TABLES, CASHFLOW_TABLE];
     let checked = 0;
     for (const t of tables) for (const unit of ['백만원', '억원'] as const) {
-      const ws = tableSheet(t, t.rows, unit, false);
+      const ws = tableSheet(t, t.rows, unit);
       const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' }) as string[][];
       const heads = t.cols.some((c) => c.group) ? 2 : 1;
       const cols = t.cols.filter((c) => !c.noExport);

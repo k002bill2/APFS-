@@ -10,7 +10,6 @@
       다른 화면에서 명세 팝업이 필요해지면 이 골격을 재사용/재생성한다. 현재 import 하는 소비처는 없다. */
 import React, { useState } from 'react';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { fmt } from './aggrid_theme';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { toast } from './ui/sonner';
@@ -27,7 +26,7 @@ const BASEYM = '2026-04';
 function money(won: number | null, unit: Unit): string {
   if (won == null) return '-';
   const v = won / UNIT_DIV[unit];
-  return mn(unit === '원' ? fmt(won) : v.toLocaleString(undefined, { maximumFractionDigits: 2 }));
+  return String(unit === '원' ? fmt(won) : v.toLocaleString(undefined, { maximumFractionDigits: 2 }));
 }
 const dash = (s: string | null | undefined) => (s == null || s === '' || s === '-' ? null : s);
 
@@ -146,7 +145,7 @@ function KvGrid({ items, unit }: { items: OvItem[]; unit: Unit }) {
             <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
             <dd className={`m-0 flex items-center min-w-0 ${isMoney ? 'justify-end tabular font-semibold' : ''} ${empty ? 'text-caption' : ''}`}
               style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
-              {empty ? '-' : isMoney ? money(o.won!, unit) : <MT>{o.v}</MT>}
+              {empty ? '-' : isMoney ? money(o.won!, unit) : <>{o.v}</>}
             </dd>
           </div>
         );
@@ -158,7 +157,7 @@ function KvGrid({ items, unit }: { items: OvItem[]; unit: Unit }) {
             {f.f ? (
               <a href="#" onClick={(e) => e.preventDefault()} className="inline-flex items-center gap-2 border border-border bg-muted no-underline" style={{ padding: '5px 10px', borderRadius: 6, fontSize: 13, color: 'inherit' }}>
                 <span className="font-extrabold" style={{ padding: '1px 6px', borderRadius: 4, background: 'var(--danger)', color: 'var(--destructive-foreground)', fontSize: 10 }}>PDF</span>
-                <MT>{f.f}</MT>
+                {f.f}
               </a>
             ) : '미첨부'}
           </dd>
@@ -236,7 +235,7 @@ function FsDetailModal({ fn, unit: initUnit, onClose }: { fn: string; unit: Unit
         <DialogHeader className="px-[46px]">
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">재무제표 상세</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0">기준년월 {BASEYM} · <MT>{fn}</MT></DialogDescription>
+            <DialogDescription className="text-caption truncate min-w-0">기준년월 {BASEYM} · {fn}</DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">
@@ -281,7 +280,7 @@ export function SubFundSpecModal({ row, onClose }: { row: SubFundRow; onClose: (
           <DialogHeader className="px-[46px]">
             <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
               <DialogTitle className="shrink-0">자펀드 명세</DialogTitle>
-              <DialogDescription className="text-caption truncate min-w-0"><MT>{row.fn}</MT></DialogDescription>
+              <DialogDescription className="text-caption truncate min-w-0">{row.fn}</DialogDescription>
             </div>
           </DialogHeader>
           <div className="overflow-y-auto p-[46px]">

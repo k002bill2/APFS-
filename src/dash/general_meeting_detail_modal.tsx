@@ -16,7 +16,6 @@
    kv dt/dd 폰트는 골드(`subfund_spec_modal.tsx` 13/14 = apfs-spec-popup 규약 8 "값 14 / 라벨 13")를 따른다. */
 import React from 'react';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { toast } from './ui/sonner';
 import type { MeetingRow, MeetingDetail } from './general_meeting_manage';
@@ -62,7 +61,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.v ? '' : 'text-caption'}`}
             style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
-            {!o.v ? '-' : o.date ? mn(o.v) : <MT>{o.v}</MT>}
+            {!o.v ? '-' : o.date ? String(o.v) : <>{o.v}</>}
           </dd>
         </div>
       ))}
@@ -94,8 +93,8 @@ function ReportTable({ list }: { list: MeetingDetail['report'] }) {
         <tbody>
           {list.length === 0 ? <EmptyRow span={2} msg="등록된 보고안건 없음" /> : list.map((x) => (
             <tr key={x.ord}>
-              <td className={`${TD} text-center tabular`} style={CELL}>{mn(x.ord)}</td>
-              <td className={TD} style={CELL}><MT>{x.content}</MT></td>
+              <td className={`${TD} text-center tabular`} style={CELL}>{String(x.ord)}</td>
+              <td className={TD} style={CELL}>{x.content}</td>
             </tr>
           ))}
         </tbody>
@@ -122,11 +121,11 @@ function MotionTable({ list }: { list: MeetingDetail['motion'] }) {
         <tbody>
           {list.length === 0 ? <EmptyRow span={5} msg="등록된 부의안건 없음" /> : list.map((x) => (
             <tr key={x.ord}>
-              <td className={`${TD} text-center tabular`} style={CELL}>{mn(x.ord)}</td>
-              <td className={TD} style={CELL}><MT>{x.content}</MT></td>
-              <td className={`${TD} text-center`} style={CELL}><MT>{x.way}</MT></td>
-              <td className={`${TD} text-center ${x.moaf ? '' : 'text-caption'}`} style={CELL}>{x.moaf ? <MT>{x.moaf}</MT> : '-'}</td>
-              <td className={`${TD} text-center ${x.result ? '' : 'text-caption'}`} style={CELL}>{x.result ? <MT>{x.result}</MT> : '-'}</td>
+              <td className={`${TD} text-center tabular`} style={CELL}>{String(x.ord)}</td>
+              <td className={TD} style={CELL}>{x.content}</td>
+              <td className={`${TD} text-center`} style={CELL}>{x.way}</td>
+              <td className={`${TD} text-center ${x.moaf ? '' : 'text-caption'}`} style={CELL}>{x.moaf ? <>{x.moaf}</> : '-'}</td>
+              <td className={`${TD} text-center ${x.result ? '' : 'text-caption'}`} style={CELL}>{x.result ? <>{x.result}</> : '-'}</td>
             </tr>
           ))}
         </tbody>
@@ -156,14 +155,14 @@ function FileTable({ list }: { list: MeetingDetail['files'] }) {
         <tbody>
           {list.length === 0 ? <EmptyRow span={5} msg="첨부파일 없음" /> : list.map((f) => (
             <tr key={f.name}>
-              <td className={TD} style={{ ...CELL, overflowWrap: 'anywhere' }}><MT>{f.name}</MT></td>
-              <td className={`${TD} text-center tabular`} style={CELL}>{mn(f.reg)}</td>
-              <td className={`${TD} text-center tabular`} style={CELL}>{mn(f.mod)}</td>
+              <td className={TD} style={{ ...CELL, overflowWrap: 'anywhere' }}>{f.name}</td>
+              <td className={`${TD} text-center tabular`} style={CELL}>{String(f.reg)}</td>
+              <td className={`${TD} text-center tabular`} style={CELL}>{String(f.mod)}</td>
               {/* 업로드 여부는 O/X 표식(상태)이라 비마스킹 — "축은 두고 데이터는 가린다" */}
               <td className={`${TD} text-center`} style={CELL}>{f.up || '-'}</td>
               <td className={`${TD} text-center`} style={CELL}>
                 <Button variant="outline" size="sm" leadingIcon="download" onClick={() => toast('다운로드 (목업)')}>
-                  <span className="sr-only"><MT>{f.name}</MT> </span>다운로드
+                  <span className="sr-only">{f.name} </span>다운로드
                 </Button>
               </td>
             </tr>
@@ -184,7 +183,7 @@ export function GeneralMeetingDetailModal({ row, onClose }: { row: MeetingRow; o
           {/* 제목+대상명은 한 래퍼로 묶는다 — DialogHeader가 justify-between이라 안 묶으면 대상명이 우측 끝으로 밀린다 */}
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">조합원총회 상세</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0"><MT>{row.title}</MT></DialogDescription>
+            <DialogDescription className="text-caption truncate min-w-0">{row.title}</DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">

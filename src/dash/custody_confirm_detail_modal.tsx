@@ -20,7 +20,6 @@
    `general_meeting_detail_modal.tsx` 복사 관례. ⚠검토필요 마커 1건 이식. */
 import React from 'react';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { fmt } from './aggrid_theme';   // 숫자 표기 SSOT(정수=콤마) — 자체 포매터 재구현 금지
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { ReviewMarker } from './review_marker';
@@ -103,14 +102,14 @@ function InvestTable() {
         <tbody>
           {INV_ROWS.map((r) => (
             <tr key={r.gpName}>
-              <td className={TD} style={CELL}><MT>{r.gpName}</MT></td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{mn(fmt(r.gpShares))}</td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{mn(fmt(r.principal))}</td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{mn(fmt(r.reduce))}</td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{mn(fmt(r.gpBal))}</td>
-              <td className={TD} style={{ ...CELL, ...GRP }}><MT>{r.tsName}</MT></td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{mn(fmt(r.tsShares))}</td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{mn(fmt(r.tsBal))}</td>
+              <td className={TD} style={CELL}>{r.gpName}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.gpShares))}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.principal))}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.reduce))}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.gpBal))}</td>
+              <td className={TD} style={{ ...CELL, ...GRP }}>{r.tsName}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.tsShares))}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.tsBal))}</td>
               <td className={`${TD} text-center`} style={{ ...CELL, ...GRP }}><MatchTag label={r.mShares} /></td>
               <td className={`${TD} text-center`} style={CELL}><MatchTag label={r.mBal} /></td>
             </tr>
@@ -120,7 +119,7 @@ function InvestTable() {
         <tfoot>
           <tr className="bg-muted font-bold">
             <td className={TD} style={FOOT}>합계</td>
-            <td className={`${TD} text-right tabular`} style={FOOT}>{mn(fmt(INV_TOTAL_SHARES))}</td>
+            <td className={`${TD} text-right tabular`} style={FOOT}>{String(fmt(INV_TOTAL_SHARES))}</td>
             <td className={`${TD} text-center`} colSpan={8} style={FOOT}>-</td>
           </tr>
         </tfoot>
@@ -186,10 +185,10 @@ function NonInvestTable() {
         <tbody>
           {NI_ROWS.map((r) => (
             <tr key={r.gpAcct}>
-              <td className={TD} style={{ ...CELL, overflowWrap: 'anywhere' }}><MT>{r.gpAcct}</MT></td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{mn(fmt(r.gpBal))}</td>
-              <td className={TD} style={{ ...CELL, ...GRP, overflowWrap: 'anywhere' }}><MT>{r.tsAcct}</MT></td>
-              <td className={`${TD} text-right tabular`} style={CELL}>{mn(fmt(r.tsBal))}</td>
+              <td className={TD} style={{ ...CELL, overflowWrap: 'anywhere' }}>{r.gpAcct}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.gpBal))}</td>
+              <td className={TD} style={{ ...CELL, ...GRP, overflowWrap: 'anywhere' }}>{r.tsAcct}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{String(fmt(r.tsBal))}</td>
               <td className={`${TD} text-center`} style={{ ...CELL, ...GRP }}><MatchTag label={r.mBal} /></td>
             </tr>
           ))}
@@ -197,7 +196,7 @@ function NonInvestTable() {
         <tfoot>
           <tr className="bg-muted font-bold">
             <td className={TD} style={FOOT}>합계</td>
-            <td className={`${TD} text-right tabular`} style={FOOT}>{mn(fmt(NI_TOTAL_BAL))}</td>
+            <td className={`${TD} text-right tabular`} style={FOOT}>{String(fmt(NI_TOTAL_BAL))}</td>
             <td className={`${TD} text-center`} colSpan={3} style={FOOT}>-</td>
           </tr>
         </tfoot>
@@ -219,7 +218,7 @@ export function CustodyConfirmDetailModal({ row, baseDate, onClose }: { row: Cus
             <DialogTitle className="shrink-0">자펀드수탁관리(확정) 상세</DialogTitle>
             {/* Radix Description은 <p> — preflight:false라 UA 기본 마진이 살아 있어 m-0을 명시한다(공용 dialog.tsx는 불변) */}
             <DialogDescription className="m-0 text-caption truncate min-w-0">
-              <MT>{row.gp}</MT> · <MT>{row.fn}</MT> · 기준일자 {mn(baseDate)}
+              {row.gp} · {row.fn} · 기준일자 {String(baseDate)}
             </DialogDescription>
             <span className="shrink-0 inline-flex"><ReviewMarker {...DETAIL_NOTE} label="대사 상세" /></span>
           </div>

@@ -7,7 +7,6 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Shell } from './shell';
 import { UI } from './components';
-import { MT } from './mask';
 import { Icon } from './icons';
 import { APFS_DATA, MenuStore, useMenuSel } from './data';
 
@@ -108,7 +107,7 @@ export function KpiBadge({ icon, color, label, value, valueColor, valueSize }: {
     <div className="flex items-center gap-2.5 py-2 px-3.5 bg-card" style={{ border: "1px solid var(--border)", borderRadius: 12 }}>
       <ColorChip icon={icon} color={color} size={30} iconSize={16} />
       <div className="flex flex-col" style={{ gap: 1, lineHeight: 1.2 }}>
-        <span className="font-semibold text-caption" style={{ fontSize: 11 }}><MT>{label}</MT></span>
+        <span className="font-semibold text-caption" style={{ fontSize: 11 }}>{label}</span>
         <span className="tabular font-extrabold" style={{ fontSize: valueSize ?? 14, color: valueColor || "var(--foreground)" }}><UI.PopNumber value={value} /></span>
       </div>
     </div>

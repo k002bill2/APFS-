@@ -33,7 +33,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마·포매터 SSOT
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
@@ -211,15 +210,15 @@ const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p))
 const moneyFmt = (p: ValueFormatterParams): string => {
   if (p.value == null) return '-';
   const unit = (p.context as GridCtx | undefined)?.unit ?? DEFAULT_UNIT;
-  return mn(unitText(p.value as number, unit));
+  return String(unitText(p.value as number, unit));
 };
 /* 비율 셀 — 목업 pctN. 단위 토글과 무관(항상 %) */
-const pctFmt = (p: ValueFormatterParams): string => mn(pctN(p.value as number | null));
+const pctFmt = (p: ValueFormatterParams): string => String(pctN(p.value as number | null));
 
 /* 텍스트 — 소계·총계 행은 값이 null이라 빈 칸(목업 tr.subtotal / tfoot의 빈 td) */
 const txt = (field: keyof StatRow, header: string, width: number, center?: boolean): ColDef<StatRow> => ({
   field, headerName: header, width, sortable: false, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => (p.value == null ? null : <MT>{p.value}</MT>),
+  cellRenderer: (p: any) => (p.value == null ? null : <>{p.value}</>),
 });
 /* 금액(억원 저장) — 우측정렬. numStyle()은 셀마다 호출되는 함수(0=muted, pinned 총계행 자동 bold) */
 const amt = (field: keyof StatRow, header: string, width = 116): ColDef<StatRow> => ({
@@ -361,7 +360,6 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
   const [yearBasis, setYearBasis] = useState<YearBasis>(DEFAULT_YEAR_BASIS);
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  const masked = useMask();
 
   /* 상세필터 — 4종 전부 행 컬럼과 미연동(noop)이라 값은 상태로만 남고 행을 거르지 않는다.
      실제로 거르는 필터가 없어 External Filter를 배선하지 않았다(상단 한계 주석 참조). */
@@ -398,10 +396,10 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
       const v = (r as any)[k];
       if (v == null) return '';                                   // 미확인 열·소계의 빈 칸 → 화면 '-'를 빈 셀로
       if (k === 'no' || k === 'ylabel') return v;                 // 순번·연도(소계/총계 라벨)는 축이라 비마스킹
-      if (MONEY.has(k)) return masked ? 0 : toUnit(v as number, unit);
-      if (COUNT.has(k)) return masked ? 0 : (v as number);
-      if (PCT.has(k)) return masked ? '' : pctN(v as number);     // 비율은 화면 문자열 그대로
-      return masked ? '' : v;
+      if (MONEY.has(k)) return toUnit(v as number, unit);
+      if (COUNT.has(k)) return (v as number);
+      if (PCT.has(k)) return pctN(v as number);     // 비율은 화면 문자열 그대로
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body]);
     /* 숫자 셀 서식 — 금액은 단위별, 건수는 정수. 빈 셀은 건너뛴다 */
@@ -447,7 +445,7 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(ROWS.length)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(ROWS.length) + '개 중 ' + String(shown) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

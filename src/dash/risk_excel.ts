@@ -43,7 +43,7 @@ const decimals = (v: number) => (String(v).split('.')[1] ?? '').length;
 const zFmt = (v: number, minDp = 0) => { const n = Math.max(Math.min(decimals(v), 2), minDp); return n === 0 ? '#,##0' : `#,##0.${'0'.repeat(n)}`; };
 
 /** lead = 표 위에 먼저 쓸 행(팝업 맥락 kv 등). 있으면 한 줄 비우고 표를 이어 쓴다 */
-export function tableSheet(full: TableMeta, rows: readonly Row[], unit: Unit | null, masked: boolean, lead: (string | number)[][] = []): XLSX.WorkSheet {
+export function tableSheet(full: TableMeta, rows: readonly Row[], unit: Unit | null, lead: (string | number)[][] = []): XLSX.WorkSheet {
   const table = full.cols.some((c) => c.noExport) ? { ...full, cols: full.cols.filter((c) => !c.noExport) } : full;
   const { heads, merges: m0 } = excelHeads(table, unit);
   const off = lead.length ? lead.length + 1 : 0;
@@ -57,11 +57,9 @@ export function tableSheet(full: TableMeta, rows: readonly Row[], unit: Unit | n
     const isTotal = r === total;
     if (v == null) return '-';
     if (typeof v === 'number') {
-      if (masked) return 0;
       if (c.kind === 'amount' && unit) return dg ? Number((v / UNIT_DIV[unit]).toFixed(dg.max)) : toUnit(v, unit);
       return c.fixed != null ? Number(v.toFixed(c.fixed)) : v;
     }
-    if (masked && !isTotal && c.kind !== 'badge') return '';
     return v;
   }));
   const ws = XLSX.utils.aoa_to_sheet([...lead, ...(off ? [[]] : []), ...heads, ...body]);
@@ -78,8 +76,8 @@ export function tableSheet(full: TableMeta, rows: readonly Row[], unit: Unit | n
 /** 시트명 — Excel 금지 문자(: \ / ? * [ ]) 제거 + 31자 제한 */
 const sheetName = (s: string) => s.replace(/[:\\/?*[\]]/g, ' ').slice(0, 31);
 
-export function exportTables(fileName: string, sheets: { name: string; table: TableMeta; rows?: readonly Row[] }[], unit: Unit | null, masked: boolean): void {
+export function exportTables(fileName: string, sheets: { name: string; table: TableMeta; rows?: readonly Row[] }[], unit: Unit | null): void {
   const wb = XLSX.utils.book_new();
-  for (const s of sheets) XLSX.utils.book_append_sheet(wb, tableSheet(s.table, s.rows ?? s.table.rows, unit, masked), sheetName(s.name));
+  for (const s of sheets) XLSX.utils.book_append_sheet(wb, tableSheet(s.table, s.rows ?? s.table.rows, unit), sheetName(s.name));
   XLSX.writeFile(wb, `${fileName}.xlsx`);
 }

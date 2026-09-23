@@ -3,7 +3,6 @@
    본문·수신자는 동적 텍스트라 `MT` 마스킹, 발신 주소·설명 캡션은 고정 문구라 비마스킹. */
 import { useRef } from 'react';
 import { UI } from './components';
-import { MT } from './mask';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 
 const { Button, StatusBadge } = UI;
@@ -30,12 +29,12 @@ export function MailPreviewDialog({ title, mail, onClose, action }: {
           <div className="rounded-[10px] border border-border overflow-hidden">
             <div className="bg-muted" style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 12.5 }}>
               <div className="flex items-center gap-2 flex-wrap">
-                <span><b>제목:</b> <MT>{mail.subject}</MT></span>
+                <span><b>제목:</b> {mail.subject}</span>
                 {mail.stamp && <StatusBadge tone={mail.stamp === '발송됨' ? 'success' : 'info'} label={mail.stamp} size="sm" dot={false} />}
               </div>
-              <div className="text-caption" style={{ marginTop: 4 }}><b>받는사람:</b> <MT>{mail.to}</MT> · <b>발신:</b> {MAIL_FROM}</div>
+              <div className="text-caption" style={{ marginTop: 4 }}><b>받는사람:</b> {mail.to} · <b>발신:</b> {MAIL_FROM}</div>
             </div>
-            <div style={{ padding: '14px 16px', fontSize: 12.5, lineHeight: 1.75, whiteSpace: 'pre-line' }}><MT>{mail.body}</MT></div>
+            <div style={{ padding: '14px 16px', fontSize: 12.5, lineHeight: 1.75, whiteSpace: 'pre-line' }}>{mail.body}</div>
           </div>
           <p className="text-caption m-0 mt-3" style={{ fontSize: 12, lineHeight: 1.5 }}>실제로 발송되지 않는 시연용 미리보기입니다(목업). QR·비밀번호·OTP·링크 토큰은 표시하지 않습니다.</p>
         </div>

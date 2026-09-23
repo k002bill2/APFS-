@@ -13,7 +13,6 @@
    - ⚠️ 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지 — Theming API와 충돌. */
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
 import type { ValueFormatterParams, CellStyle, AutoSizeStrategy, GridApi } from 'ag-grid-community';
-import { mn } from './mask';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -65,7 +64,7 @@ export const fmt = (n: number): string =>
   Number.isInteger(n) ? n.toLocaleString() : n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 /* 숫자 셀 valueFormatter — mn() 마스킹 통합("축은 두고 데이터는 가린다") */
-export const numFmt = (p: ValueFormatterParams): string => (p.value == null ? '' : mn(fmt(p.value as number)));
+export const numFmt = (p: ValueFormatterParams): string => (p.value == null ? '' : String(fmt(p.value as number)));
 
 /* 0=muted, 강조/합계행=bold. 색은 var(--token) → 다크 자동추종 */
 export const numStyle = (strong?: boolean) => (p: { value: unknown; node: { rowPinned?: string | null } }): CellStyle => ({

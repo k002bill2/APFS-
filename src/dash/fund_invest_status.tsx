@@ -34,7 +34,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import type { CSSProperties } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -232,13 +231,13 @@ const ctxUnit = (p: ValueFormatterParams): Unit => (p.context as { unit?: Unit }
 const nullFmt = (p: ValueFormatterParams): string => (p.value == null ? '-' : numFmt(p));
 /* 금액 셀 — grid context.unit로 환산 후 마스킹. 단위가 바뀌면 refreshCells({force:true})로 재적용 */
 const moneyFmt = (p: ValueFormatterParams): string =>
-  (p.value == null ? '-' : mn(amtText(p.value as number, ctxUnit(p))));
+  (p.value == null ? '-' : String(amtText(p.value as number, ctxUnit(p))));
 /* 크로스탭 셀 — 같은 컬럼에 건수 행/금액 행이 섞이므로 행의 metric으로 분기(목업 crossTable 동형) */
 const crossFmt = (p: ValueFormatterParams): string => {
   if (p.value == null) return '-';
   return p.data?.metric === '투자금액'
-    ? mn(amtText(p.value as number, ctxUnit(p)))
-    : mn(fmt(p.value as number));
+    ? String(amtText(p.value as number, ctxUnit(p)))
+    : String(fmt(p.value as number));
 };
 /* 구분 셀(크로스탭) — 축이라 비마스킹. 목업의 `투자금액<br>(억원)` 보조표기를 한 줄 캡션으로 */
 const metricFmt = (p: ValueFormatterParams): string =>
@@ -412,7 +411,6 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: CROSS_ROWS[DEFAULT_VIEW as CrossView].length });
-  const masked = useMask();
 
   /* 상세필터 — 투자실적구분(=view)만 표시를 바꾸고 나머지 5종은 noop(상단 '한계') */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -458,7 +456,7 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
       const raw = (r as any)[k];
       if (raw == null) return { v: '' };
       const money = isYearView ? YEAR_MONEY.has(k) : (r as CrossRow).metric === '투자금액';
-      return { v: masked ? 0 : money ? toUnit(raw as number, unit) : (raw as number), z: money ? Z_BY_UNIT[unit] : Z_COUNT };
+      return { v: money ? toUnit(raw as number, unit) : (raw as number), z: money ? Z_BY_UNIT[unit] : Z_COUNT };
     };
     const cells = src.map((r) => keys.map((k) => cell(r, k)));
     const ws = XLSX.utils.aoa_to_sheet([...head, ...cells.map((row) => row.map((x) => x.v))]);
@@ -500,7 +498,7 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '개 중 ' + mn(String(Math.min(shown, rows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(rows.length) + '개 중 ' + String(Math.min(shown, rows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

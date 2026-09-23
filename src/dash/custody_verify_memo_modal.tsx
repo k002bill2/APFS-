@@ -18,7 +18,6 @@
    - ⚠검토필요 마커는 이 팝업에 없다 — 목업 `.review`는 검색영역 1건뿐이고 팝업 템플릿엔 없다. */
 import React from 'react';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
@@ -64,7 +63,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
           <dd className={`m-0 flex items-center min-w-0 ${o.v ? '' : 'text-caption'}`}
             style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
             {/* plain=분류 축(구분)은 비마스킹, 나머지 텍스트는 <MT>. 값 없음은 '-' */}
-            {!o.v ? '-' : o.plain ? o.v : <MT>{o.v}</MT>}
+            {!o.v ? '-' : o.plain ? o.v : <>{o.v}</>}
           </dd>
         </div>
       ))}
@@ -146,8 +145,8 @@ export function CustodyMemoModal({ ctx, history, baseDate, onSave, onClose }: {
                     </tr>
                   ) : history.map((h, i) => (
                     <tr key={h.date + '-' + i}>
-                      <td className={`${TD} text-center tabular`} style={CELL}>{mn(h.date)}</td>
-                      <td className={TD} style={{ ...CELL, overflowWrap: 'anywhere' }}><MT>{h.content}</MT></td>
+                      <td className={`${TD} text-center tabular`} style={CELL}>{String(h.date)}</td>
+                      <td className={TD} style={{ ...CELL, overflowWrap: 'anywhere' }}>{h.content}</td>
                     </tr>
                   ))}
                 </tbody>

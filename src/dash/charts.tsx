@@ -1,6 +1,5 @@
 /* SVG 차트 프리미티브 — Recharts 동일 스펙(가로 그리드, 토큰색, 둥근 막대, 단일 진입 애니메이션). */
 import React from 'react';
-import { mn, MT } from './mask';
 
 const { useRef, useState, useLayoutEffect, useEffect } = React;
 
@@ -123,7 +122,7 @@ function Donut({ data, height = 220, thickness = 26, centerLabel, centerValue, o
           y={cy - 6}
           textAnchor="middle"
           style={{ fontSize: 26, fill: "var(--foreground)" }}
-          className="tabular font-extrabold">{centerValue ?? mn(total)}</text><text
+          className="tabular font-extrabold">{centerValue ?? String(total)}</text><text
           x={cx}
           y={cy + 15}
           textAnchor="middle"
@@ -208,7 +207,7 @@ function ComposedBars({ data, height = 280, ariaLabel }: { data: any[]; height?:
           strokeWidth={2.5} />)}</svg>}{hi !== null && <Tip
         x={linePts[hi][0]}
         y={Math.min(yAmt(data[hi].actual), linePts[hi][1])}
-        show={true}><div>{data[hi].name}</div><div style={{ color: "color-mix(in srgb,var(--bg) 70%,var(--chart-1))" }}>실적 {mn(fmtEokU(data[hi].actual))} · 집행률 {mn(data[hi].rate)}%</div></Tip>}</div>
+        show={true}><div>{data[hi].name}</div><div style={{ color: "color-mix(in srgb,var(--bg) 70%,var(--chart-1))" }}>실적 {String(fmtEokU(data[hi].actual))} · 집행률 {String(data[hi].rate)}%</div></Tip>}</div>
   );
 }
 
@@ -270,7 +269,7 @@ function LineTrend({ data, threshold, height = 220, color = "var(--chart-1)", ar
           x={x(i * 2)}
           y={height - 6}
           textAnchor="middle"
-          style={{ fontSize: 10, fill: "var(--caption)" }}>{d.name}</text>)}</svg>}{hi !== null && <Tip x={pts[hi][0]} y={pts[hi][1]} show={true}>{data[hi].name + " · 지수 " + mn(data[hi].v)}</Tip>}</div>
+          style={{ fontSize: 10, fill: "var(--caption)" }}>{d.name}</text>)}</svg>}{hi !== null && <Tip x={pts[hi][0]} y={pts[hi][1]} show={true}>{data[hi].name + " · 지수 " + String(data[hi].v)}</Tip>}</div>
   );
 }
 
@@ -338,12 +337,12 @@ function Treemap({ data, height = 240, onCell }: { data: any[]; height?: number;
               transition: "box-shadow .15s",
             }}>{big && <div
               className="font-bold"
-              style={{ fontSize: 11.5, lineHeight: 1.25, textShadow: "0 1px 2px rgba(0,0,0,.25)" }}><MT>{c.name}</MT></div>}{big && <div style={{ textShadow: "0 1px 2px rgba(0,0,0,.25)" }}><span className="tabular font-extrabold" style={{ fontSize: 15 }}>{mn(pct)}</span><span style={{ fontSize: 10, opacity: .9 }}>%</span></div>}</div>
+              style={{ fontSize: 11.5, lineHeight: 1.25, textShadow: "0 1px 2px rgba(0,0,0,.25)" }}>{c.name}</div>}{big && <div style={{ textShadow: "0 1px 2px rgba(0,0,0,.25)" }}><span className="tabular font-extrabold" style={{ fontSize: 15 }}>{String(pct)}</span><span style={{ fontSize: 10, opacity: .9 }}>%</span></div>}</div>
         );
       })}{hi !== null && <Tip
         x={cells[hi].x + cells[hi].w / 2}
         y={cells[hi].y + cells[hi].h / 2}
-        show={true}><><MT>{cells[hi].name}</MT>{" · " + mn(cells[hi].value.toLocaleString() + "억원")}</></Tip>}</div>
+        show={true}><>{cells[hi].name}{" · " + String(cells[hi].value.toLocaleString() + "억원")}</></Tip>}</div>
   );
 }
 
@@ -361,13 +360,13 @@ function HBars({ data, height = 220, unit = "%" }: { data: any[]; height?: numbe
           className="flex items-center gap-2"
           style={{ height: rowH }}><div
             className="truncate font-semibold text-foreground"
-            style={{ width: labelW, fontSize: 12.5 }}><MT>{d.name}</MT></div><div
+            style={{ width: labelW, fontSize: 12.5 }}>{d.name}</div><div
             className="flex-1 bg-muted overflow-hidden"
             style={{ height: 16, borderRadius: 5 }}><div
               className="h-full"
               style={{ width: (d.value / max) * 100 + "%", background: d.color || "var(--chart-1)", borderRadius: 5, transformOrigin: "left", animation: "growbar .5s var(--ease) both", animationDelay: i * 50 + "ms" }} /></div><div
             className="tabular text-right font-bold"
-            style={{ width: valW, fontSize: 13 }}>{mn(d.value + unit)}</div></div>)}</div>
+            style={{ width: valW, fontSize: 13 }}>{String(d.value + unit)}</div></div>)}</div>
   );
 }
 
@@ -398,7 +397,7 @@ function Gauge({ value, max = 100, label, height = 150, color = "var(--primary)"
           y={cy - 6}
           textAnchor="middle"
           style={{ fontSize: 28, fill: "var(--foreground)" }}
-          className="tabular font-extrabold">{mn(value + (max === 100 ? "%" : ""))}</text>{label && <text
+          className="tabular font-extrabold">{String(value + (max === 100 ? "%" : ""))}</text>{label && <text
           x={cx}
           y={cy + 12}
           textAnchor="middle"
@@ -418,7 +417,7 @@ function GroupedBars({ data, height = 240, ariaLabel }: { data: any[]; height?: 
   const yAmt = (v) => m.t + ih - (v / maxAmt) * ih;
   const ticks = [0, .25, .5, .75, 1].map((t) => t * maxAmt);
   return (
-    <div ref={ref} className="relative w-full" style={{ height }}>{W > 0 && <svg width={W} height={height} role={ariaLabel ? "img" : undefined} aria-label={ariaLabel}>{ticks.map((t, i) => <g key={i}><line x1={m.l} x2={m.l + iw} y1={yAmt(t)} y2={yAmt(t)} stroke="var(--chart-grid)" strokeDasharray="3 3" /><text x={m.l - 8} y={yAmt(t) + 4} textAnchor="end" style={{ fontSize: 10.5, fill: "var(--caption)" }} className="tabular">{t.toLocaleString()}</text></g>)}{data.map((d, i) => { const x = m.l + band * i + band / 2; const active = hi === i; return <g key={i} onMouseEnter={() => setHi(i)} onMouseLeave={() => setHi(null)}><rect x={m.l + band * i} y={m.t} width={band} height={ih} fill={active ? "var(--muted)" : "transparent"} opacity={.6} /><rect x={x - bw - 2} y={yAmt(d.plan)} width={bw} height={ih - (yAmt(d.plan) - m.t)} rx={5} fill="var(--chart-grid)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + "ms" }} /><rect x={x + 2} y={yAmt(d.actual)} width={bw} height={ih - (yAmt(d.actual) - m.t)} rx={5} fill="var(--chart-2)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + 80 + "ms" }} /><text x={x} y={m.t + ih + 18} textAnchor="middle" className="font-semibold" style={{ fontSize: 11.5, fill: "var(--muted-foreground)" }}>{d.name}</text></g>; })}</svg>}{hi !== null && <Tip x={m.l + band * hi + band / 2} y={yAmt(Math.max(data[hi].plan, data[hi].actual))} show={true}><div>{data[hi].name}</div><div style={{ color: "color-mix(in srgb,var(--bg) 70%,var(--chart-2))" }}>실적 {mn(fmtEokU(data[hi].actual))}</div></Tip>}</div>
+    <div ref={ref} className="relative w-full" style={{ height }}>{W > 0 && <svg width={W} height={height} role={ariaLabel ? "img" : undefined} aria-label={ariaLabel}>{ticks.map((t, i) => <g key={i}><line x1={m.l} x2={m.l + iw} y1={yAmt(t)} y2={yAmt(t)} stroke="var(--chart-grid)" strokeDasharray="3 3" /><text x={m.l - 8} y={yAmt(t) + 4} textAnchor="end" style={{ fontSize: 10.5, fill: "var(--caption)" }} className="tabular">{t.toLocaleString()}</text></g>)}{data.map((d, i) => { const x = m.l + band * i + band / 2; const active = hi === i; return <g key={i} onMouseEnter={() => setHi(i)} onMouseLeave={() => setHi(null)}><rect x={m.l + band * i} y={m.t} width={band} height={ih} fill={active ? "var(--muted)" : "transparent"} opacity={.6} /><rect x={x - bw - 2} y={yAmt(d.plan)} width={bw} height={ih - (yAmt(d.plan) - m.t)} rx={5} fill="var(--chart-grid)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + "ms" }} /><rect x={x + 2} y={yAmt(d.actual)} width={bw} height={ih - (yAmt(d.actual) - m.t)} rx={5} fill="var(--chart-2)" style={{ transformOrigin: `0 ${m.t + ih}px`, animation: "growbar .5s var(--ease) both", animationDelay: i * 60 + 80 + "ms" }} /><text x={x} y={m.t + ih + 18} textAnchor="middle" className="font-semibold" style={{ fontSize: 11.5, fill: "var(--muted-foreground)" }}>{d.name}</text></g>; })}</svg>}{hi !== null && <Tip x={m.l + band * hi + band / 2} y={yAmt(Math.max(data[hi].plan, data[hi].actual))} show={true}><div>{data[hi].name}</div><div style={{ color: "color-mix(in srgb,var(--bg) 70%,var(--chart-2))" }}>실적 {String(fmtEokU(data[hi].actual))}</div></Tip>}</div>
   );
 }
 
@@ -516,11 +515,11 @@ function MultiLineTrend({ labels, fullLabels, data, series, height = 260, unit =
                 cx={x(i).toFixed(1)}
                 cy={y(v).toFixed(1)}
                 r={2.6}
-                fill={s.color}><title>{labelAt(i) + " " + s.name + " " + mn(v) + unit}</title></circle>)}</g>
+                fill={s.color}><title>{labelAt(i) + " " + s.name + " " + String(v) + unit}</title></circle>)}</g>
           );
         })}</svg>}{tableCaption && n > 0 && (
         <table className="sr-only"><caption>{tableCaption}</caption><thead><tr><th scope="col">{seriesHeader}</th>{Array.from({ length: n }, (_, i) => <th key={i} scope="col">{labelAt(i)}</th>)}</tr></thead><tbody>{series.map((s) => (
-              <tr key={s.key}><th scope="row">{s.name}</th>{(data[s.key] || []).slice(0, n).map((v, i) => <td key={i}>{mn(v)}</td>)}</tr>
+              <tr key={s.key}><th scope="row">{s.name}</th>{(data[s.key] || []).slice(0, n).map((v, i) => <td key={i}>{String(v)}</td>)}</tr>
             ))}</tbody></table>
       )}</div>
   );

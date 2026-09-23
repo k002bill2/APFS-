@@ -17,7 +17,6 @@ import type { CSSProperties } from 'react';
 import { format } from 'date-fns';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -57,19 +56,19 @@ const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 const columnDefs: ColDef<UserRow>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'name', headerName: '성명', width: 130, minWidth: 110, maxWidth: 200, cellStyle: flexCenter,
-    cellRenderer: (p: any) => <span className="inline-flex items-center gap-1.5 min-w-0"><span className="font-semibold"><MT>{p.value}</MT></span>{p.data?.seed && <StatusBadge tone="success" label="시드" size="sm" dot={false} />}</span> },
-  { field: 'lid', headerName: '로그인 아이디', width: 134, maxWidth: 160, cellStyle: { ...flexCenter, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 170, cellStyle: muted, cellRenderer: (p: any) => <MT>{p.value || '-'}</MT> },
+    cellRenderer: (p: any) => <span className="inline-flex items-center gap-1.5 min-w-0"><span className="font-semibold">{p.value}</span>{p.data?.seed && <StatusBadge tone="success" label="시드" size="sm" dot={false} />}</span> },
+  { field: 'lid', headerName: '로그인 아이디', width: 134, maxWidth: 160, cellStyle: { ...flexCenter, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 170, cellStyle: muted, cellRenderer: (p: any) => <>{p.value || '-'}</> },
   { field: 'type', headerName: '구분', width: 84, maxWidth: 84, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone="info" label={p.value} size="lg" dot={false} /> },
   { headerName: '소속유형', width: 116, maxWidth: 116, cellStyle: flexMid, valueGetter: (p) => (p.data ? belong(p.data) : ''),
     cellRenderer: (p: any) => <StatusBadge tone={p.data?.type === '농금원' ? 'primary' : 'warning'} label={p.value} size="lg" dot={false} /> },
-  { headerName: '소속', width: 150, minWidth: 110, maxWidth: 220, cellStyle: flexCenter, valueGetter: (p) => (p.data ? belongName(p.data) : ''), cellRenderer: (p: any) => <MT>{p.value}</MT> },
+  { headerName: '소속', width: 150, minWidth: 110, maxWidth: 220, cellStyle: flexCenter, valueGetter: (p) => (p.data ? belongName(p.data) : ''), cellRenderer: (p: any) => <>{p.value}</> },
   { field: 'roles', headerName: '권한', width: 170, minWidth: 120, maxWidth: 260, cellStyle: flexCenter, valueFormatter: (p) => (p.value ?? []).join(', '),
     cellRenderer: (p: any) => <span className="inline-flex items-center gap-1 flex-wrap">{(p.value ?? []).map((r: string) => <StatusBadge key={r} tone="info" label={r} size="lg" dot={false} />)}</span> },
   { field: 'status', headerName: '상태', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={STATUS_TONE[p.value as UserStatus]} label={p.value} size="lg" dot={false} /> },
   { field: 'pwExpired', headerName: '비밀번호', width: 100, maxWidth: 100, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '만료' : '정상'),
     cellRenderer: (p: any) => (p.value ? <StatusBadge tone="warning" label="만료" size="lg" dot={false} /> : <span style={{ color: 'var(--muted-foreground)' }}>정상</span>) },
-  { field: 'last', headerName: '최근 접속일시', width: 170, maxWidth: 170, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value && p.value !== '—' ? mn(p.value) : '—') },
+  { field: 'last', headerName: '최근 접속일시', width: 170, maxWidth: 170, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value && p.value !== '—' ? String(p.value) : '—') },
 ];
 /* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
    행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */
@@ -138,7 +137,6 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
-  const masked = useMask();
 
   /* 필터 — 상태는 툴바 칩, 나머지는 드로어(목업 검색박스 순서: 사용자구분·상태·소속기관·검색어) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -236,7 +234,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
   /* ── Excel — 표시 중인 행. 마스크 ON이면 텍스트 '' ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
-    const body = visible.map((r) => EXPORT_COLS.map((c) => (masked ? '' : c.get(r))));
+    const body = visible.map((r) => EXPORT_COLS.map((c) => (c.get(r))));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '이메일' || c.header === '권한' ? 28 : 14 }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '사용자관리');
@@ -257,7 +255,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
   const selActions = selCount > 0 ? (
     /* 선택 행 컨텍스트 액션 — 게이트가 연 것만(목업 gate). 대상명 캡션은 두지 않는다 */
     <>
-      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <>
       <StatusBadge tone={STATUS_TONE[single.status]} label={single.status} size="lg" dot={false} />
       <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: single.id })}>수정</Button>
@@ -282,7 +280,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
           {STATUS_CHIPS.map((s) => <FilterChip key={s || 'all'} active={fStatus === s} onClick={() => setFStatus(s)}>{s || '전체'}</FilterChip>)}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -296,7 +294,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>사용자 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '명 중 ' + mn(String(visible.length)) + '명 · ' + mn(String(Math.min(shown, visible.length))) + '명 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(rows.length) + '명 중 ' + String(visible.length) + '명 · ' + String(Math.min(shown, visible.length)) + '명 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

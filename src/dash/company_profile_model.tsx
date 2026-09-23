@@ -11,7 +11,6 @@
    행을 늘리지 않는다: 원문 실데이터가 (주)선양 1건뿐이고, 채우려고 만든 행은 전부 위조다. */
 import React from 'react';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { fmt } from './aggrid_theme';
 import { UNITS } from './schemas/unit';
 import type { Unit } from './schemas/unit';
@@ -22,7 +21,7 @@ const { SegTabs } = UI;
 
 /* 금액 → 단위 환산 문자열(마스킹 포함). null은 '-' */
 const money = (won: number | null, unit: Unit): string =>
-  won == null ? '-' : mn(formatProfileUnit(won, unit));
+  won == null ? '-' : String(formatProfileUnit(won, unit));
 
 /* ── 프리미티브(gp_spec_modal 복사) ── */
 const TH = 'border border-border bg-muted text-[11.5px] font-bold text-muted-foreground whitespace-nowrap';
@@ -49,7 +48,7 @@ function KvGrid({ items }: { items: OvItem[] }) {
         <React.Fragment key={it.l}>
           <div className="bg-muted px-2.5 py-[7px] text-[11.5px] font-bold text-muted-foreground">{it.l}</div>
           <div className="bg-card px-2.5 py-[7px] text-[12px] text-foreground min-w-0 break-words" style={it.full ? { gridColumn: 'span 3' } : undefined}>
-            {it.v == null ? <span className="text-muted-foreground">-</span> : <MT>{it.v}</MT>}
+            {it.v == null ? <span className="text-muted-foreground">-</span> : <>{it.v}</>}
           </div>
         </React.Fragment>
       ))}
@@ -72,15 +71,15 @@ function FinTable({ unit }: { unit: Unit }) {
           {FIN_ROWS.map((r) => (
             <tr key={r.no}>
               <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{r.no}</td>
-              <td className={TD} style={{ padding: '7px 8px' }}><MT>{r.gp}</MT></td>
-              <td className={TD} style={{ padding: '7px 8px' }}><MT>{r.fund}</MT></td>
-              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{mn(r.ym)}</td>
+              <td className={TD} style={{ padding: '7px 8px' }}>{r.gp}</td>
+              <td className={TD} style={{ padding: '7px 8px' }}>{r.fund}</td>
+              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(r.ym)}</td>
               {r.amounts.map((v, i) => (
                 // 음수(적자)는 색 단독으로 알리지 않는다 — 값 자체에 '-' 부호가 남아 텍스트로도 읽힌다(A11Y 원칙 2)
                 <td key={FIN_AMT_HEADERS[i]} className={`${TD} text-right tabular`}
                   style={{ padding: '7px 8px', ...(v < 0 ? { color: 'var(--danger-text)' } : {}) }}>{money(v, unit)}</td>
               ))}
-              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{mn(String(r.emp))}</td>
+              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(r.emp)}</td>
             </tr>
           ))}
         </tbody>
@@ -112,17 +111,17 @@ function ShareTable({ unit }: { unit: Unit }) {
           {SHARE_ROWS.map((r) => (
             <tr key={r.no}>
               <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{r.no}</td>
-              <td className={TD} style={{ padding: '7px 8px' }}><MT>{r.gp}</MT></td>
-              <td className={TD} style={{ padding: '7px 8px' }}><MT>{r.fund}</MT></td>
-              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{mn(r.date)}</td>
+              <td className={TD} style={{ padding: '7px 8px' }}>{r.gp}</td>
+              <td className={TD} style={{ padding: '7px 8px' }}>{r.fund}</td>
+              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(r.date)}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.totalCapital, unit)}</td>
               {/* 주수는 금액이 아니다 — 단위 토글 대상에서 제외(축이 무너지지 않도록) */}
-              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{mn(fmt(r.totalShares))}</td>
+              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{String(fmt(r.totalShares))}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.comCapital, unit)}</td>
-              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{mn(fmt(r.comShares))}</td>
+              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{String(fmt(r.comShares))}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.comPar, unit)}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.prfCapital, unit)}</td>
-              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{mn(fmt(r.prfShares))}</td>
+              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{String(fmt(r.prfShares))}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.prfPar, unit)}</td>
             </tr>
           ))}

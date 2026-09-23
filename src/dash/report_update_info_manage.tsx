@@ -33,7 +33,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
 import { drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
@@ -105,7 +104,7 @@ const unitText = (won: number, unit: Unit): string => {
 const moneyFmt = (p: ValueFormatterParams<ReportUpdateRow>): string => {
   if (p.value == null) return '-';
   const unit = (p.context as { unit?: Unit } | undefined)?.unit ?? '원';
-  return mn(unitText(p.value as number, unit));
+  return String(unitText(p.value as number, unit));
 };
 
 /* pinned 합계행 — 금액만 합산(목업 tfoot). 나머지 셀은 포매터/렌더러가 `rowPinned` 로 처리한다.
@@ -148,7 +147,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 /* 텍스트 컬럼(운용사·자펀드·투자기업) — 인명/기관명이라 <MT> 마스킹. 합계행은 빈 칸(목업 tfoot 병합 구간) */
 const txt = (field: keyof ReportUpdateRow, header: string, width: number, maxWidth: number): ColDef<ReportUpdateRow> => ({
   field, headerName: header, width, maxWidth, cellStyle: flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <MT>{p.value}</MT>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : <>{p.value}</>),
 });
 /* 날짜/일시 — mn() 마스킹. 합계행 '-'(목업 tfoot colspan 3 '-'). muted 는 일자 컬럼만.
    ⚠ 골드 `occasional_report_manage` 의 date() 는 `maxWidth: width` 를 걸지만 그건 `FIT_GRID_WIDTH`
@@ -158,7 +157,7 @@ const txt = (field: keyof ReportUpdateRow, header: string, width: number, maxWid
 const dateCol = (field: keyof ReportUpdateRow, header: string, width: number, muted = true): ColDef<ReportUpdateRow> => ({
   field, headerName: header, width,
   cellStyle: muted ? { ...centerNum, color: 'var(--muted-foreground)' } : centerNum,
-  valueFormatter: (p) => (p.node?.rowPinned ? '-' : mn(p.value)),
+  valueFormatter: (p) => (p.node?.rowPinned ? '-' : String(p.value)),
 });
 
 const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
@@ -247,7 +246,6 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [unit, setUnit] = useState<Unit>('원');             // 금액 단위 — 목업 기본값 '원'
-  const masked = useMask();
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
@@ -292,11 +290,11 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
     const amtHeader = `승인금액(${unit})`;
     const head = [...EXCEL_TEXT.map((c) => c.header), amtHeader, ...EXCEL_TAIL.map((c) => c.header)];
     const zFmt = unit === '억원' ? '#,##0.00' : '#,##0';
-    const amtOf = (r: ReportUpdateRow) => (masked ? 0 : toUnit(r.amt, unit));
+    const amtOf = (r: ReportUpdateRow) => (toUnit(r.amt, unit));
     const body = filteredRows.map((r) => [
-      ...EXCEL_TEXT.map((c) => (masked ? '' : c.get(r))),
+      ...EXCEL_TEXT.map((c) => (c.get(r))),
       amtOf(r),
-      ...EXCEL_TAIL.map((c) => (masked ? '' : c.get(r))),
+      ...EXCEL_TAIL.map((c) => (c.get(r))),
     ]);
     const total = pinnedBottom[0];
     const totalRow: (string | number)[] = ['합계', '', '', '', '', '', amtOf(total), '', '', ''];
@@ -338,7 +336,7 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

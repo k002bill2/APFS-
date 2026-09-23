@@ -12,7 +12,6 @@
      key 가 없거나 어떤 표에도 그 컬럼이 없으면 `· 데이터 연동 후 적용`(조회 기준 컨텍스트 — 푸터·칩에만 싣는다).
    - 엑셀 = 화면의 표 전부(표 N장 → 시트 N장), 화면 단위·필터 결과 그대로(risk_excel.ts). */
 import React, { useMemo, useState } from 'react';
-import { mn, useMask } from './mask';
 import { toast } from './ui/sonner';
 import { DEFAULT_UNIT } from './schemas/unit';
 import type { Unit } from './schemas/unit';
@@ -67,7 +66,6 @@ const matches = (f: FilterDef, v: string, r: Row) => {
 const hasKey = (t: TableMeta, k: string) => t.cols.some((c) => c.key === k) || t.rows.some((r) => r[k] !== undefined);
 
 export function TablesPage({ cfg, onNav }: { cfg: TablesPageConfig; onNav?: (r: string) => void }) {
-  const masked = useMask();
   const init = () => Object.fromEntries(cfg.filters.map((f) => [f.label, f.def]));
   const [vals, setVals] = useState<Record<string, string>>(init);
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
@@ -89,14 +87,14 @@ export function TablesPage({ cfg, onNav }: { cfg: TablesPageConfig; onNav?: (r: 
   /* 푸터 — 조회 기준(첫 날짜형 조건) + 표별 건수 */
   const when = cfg.filters.find((f) => f.kind === 'day' || f.kind === 'month' || f.kind === 'year' || f.kind === 'dayRange');
   const whenVal = when ? (when.kind === 'dayRange' ? splitRange(vals[when.label] ?? '').join(' ~ ') : vals[when.label]) : '';
-  const whenText = when && vals[when.label] ? `${when.label} ${mn(whenVal)} · ` : '';
+  const whenText = when && vals[when.label] ? `${when.label} ${String(whenVal)} · ` : '';
   const counts = cfg.tables.length === 1
-    ? `총 ${mn(String(filtered[0].length))}건`
-    : cfg.tables.map((t, i) => `${t.title ?? `표 ${i + 1}`} ${mn(String(filtered[i].length))}건`).join(' · ');
+    ? `총 ${String(filtered[0].length)}건`
+    : cfg.tables.map((t, i) => `${t.title ?? `표 ${i + 1}`} ${String(filtered[i].length)}건`).join(' · ');
 
   const unitOrNull = cfg.unit ? unit : null;
   const exportExcel = () => {
-    exportTables(cfg.label, cfg.tables.map((t, i) => ({ name: t.title ?? `표 ${i + 1}`, table: t, rows: filtered[i] })), unitOrNull, masked);
+    exportTables(cfg.label, cfg.tables.map((t, i) => ({ name: t.title ?? `표 ${i + 1}`, table: t, rows: filtered[i] })), unitOrNull);
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -113,7 +111,7 @@ export function TablesPage({ cfg, onNav }: { cfg: TablesPageConfig; onNav?: (r: 
         <React.Fragment key={t.id}>
           {/* 원문 섹션 제목이 있으면 섹션 헤더, 없으면(원문이 제목을 지운 표) 구분선만 */}
           {cfg.tables.length > 1 && (t.title
-            ? <SectionHead n={cfg.numbered ? i + 1 : undefined} title={t.title} cap={<>총 {mn(String(filtered[i].length))}건</>} />
+            ? <SectionHead n={cfg.numbered ? i + 1 : undefined} title={t.title} cap={<>총 {String(filtered[i].length)}건</>} />
             : i > 0 && <div aria-hidden style={{ height: 16, borderTop: '1px solid var(--border)' }} />)}
           <ReadGrid table={t} rows={filtered[i]} unit={unitOrNull} ariaLabel={t.title ?? cfg.label} />
         </React.Fragment>

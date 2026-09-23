@@ -31,11 +31,10 @@
      설계 메모라 스캐폴딩이 아니다. 목업 원문 5건 전부 옮겼다: 검색 3건(심사담당자·리스크담당자·구분) +
      확인 컬럼 2건(심사담당·리스크담당). 공용 `review_marker.tsx`, 규약은 apfs-grid 스킬. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, FIT_GRID_WIDTH, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -139,12 +138,12 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof OccReportRow, header: string, width: number, center?: boolean): ColDef<OccReportRow> => ({
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => <MT>{p.value}</MT>,
+  cellRenderer: (p: any) => <>{p.value}</>,
 });
 /* maxWidth = width — `fitGridWidth`가 남는 폭을 이 컬럼에 주지 못하게 막아, 잉여가 제목으로만 흘러가게 한다 */
 const date = (field: keyof OccReportRow, header: string, width = 128): ColDef<OccReportRow> => ({
   field, headerName: header, width, maxWidth: width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
-  valueFormatter: (p) => mn(p.value),
+  valueFormatter: (p) => String(p.value),
 });
 /* ⚠검토필요 메모 — 목업 `S1_04_수시보고.html`의 `data-rec`/`data-dat` 원문 그대로(5건).
    확인 컬럼 2건은 담당 명칭만 다르다(심사담당 / 리스크담당) — 원문이 그렇게 갈라져 있으므로 합치지 않는다.
@@ -177,7 +176,7 @@ const confirmCol = (field: 'jsBy' | 'rsBy', header: string, role: Role,
      ⚠마커 버튼에 키보드로 도달할 수 없다(AG Grid가 Tab을 가로채 다음 헤더 셀로 이동, 2026-09-12 실측). */
   suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab',
   cellRenderer: (p: any) => (p.value
-    ? <StatusBadge tone="success" label={<MT>{p.value}</MT>} size="lg" dot={false} />
+    ? <StatusBadge tone="success" label={<>{p.value}</>} size="lg" dot={false} />
     : <Button variant="outline" size="sm" onClick={() => onConfirm(role, p.data.id)}>확인</Button>),
 });
 
@@ -194,7 +193,7 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
       type="button" title={hint} onClick={onClick}
       className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
       style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      <MT>{value}</MT>
+      {value}
     </button>
   );
 }
@@ -280,7 +279,6 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
   ), []);
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  const masked = useMask();
 
   /* 필터 — 확인상태는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -351,8 +349,8 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
       const v = c.get(r);
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : v;
+      if (typeof v === 'number') return v;
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '제목' ? 42 : c.header === '자펀드' ? 28 : 14 }));
@@ -385,7 +383,7 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
             ['종료일', fTo, () => setFTo('')],
           ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -397,7 +395,7 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -470,7 +468,7 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
             {/* 대상 요약 4행 — 목업 원본과 동일(상황 발생일자·운용사·자펀드·제목).
                 제목을 설명 문장에 묻지 않는다(2026-09-12 사용자 지적) — 목록의 한 행이다. */}
             <dl className="m-0 grid gap-y-1.5" style={{ gridTemplateColumns: 'max-content minmax(0,1fr)', columnGap: 14, fontSize: 13.5 }}>
-              {([['상황 발생일자', mn(confirmTarget.occ)], ['운용사', <MT key="gp">{confirmTarget.gp}</MT>], ['자펀드', <MT key="fn">{confirmTarget.fn}</MT>], ['제목', <MT key="ti">{confirmTarget.title}</MT>]] as [string, React.ReactNode][]).map(([k, v]) => (
+              {([['상황 발생일자', String(confirmTarget.occ)], ['운용사', <React.Fragment key="gp">{confirmTarget.gp}</React.Fragment>], ['자펀드', <React.Fragment key="fn">{confirmTarget.fn}</React.Fragment>], ['제목', <React.Fragment key="ti">{confirmTarget.title}</React.Fragment>]] as [string, React.ReactNode][]).map(([k, v]) => (
                 <div key={k} className="contents">
                   <dt className="m-0 font-semibold text-muted-foreground">{k}</dt>
                   <dd className="m-0 min-w-0" style={{ overflowWrap: 'anywhere' }}>{v}</dd>

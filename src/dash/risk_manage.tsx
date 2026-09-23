@@ -5,7 +5,6 @@ import React from 'react';
 import { Shell } from './shell';
 import { UI } from './components';
 import { Charts } from './charts';
-import { mn, MT } from './mask';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 행선택) SSOT
@@ -95,12 +94,12 @@ function KpiCard({ kpi }: { kpi: any }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <ColorChip icon={kpi.icon} color={kpi.accent} size={32} iconSize={17} />
-          <span className="t-label truncate"><MT>{kpi.label}</MT></span>
+          <span className="t-label truncate">{kpi.label}</span>
         </div>
         <div className="shrink-0 w-[70px]"><Sparkline data={kpi.trend} color={kpi.accent} id={kpi.id} height={32} /></div>
       </div>
       <div className="flex items-baseline gap-1.5">
-        <span className="t-display tabular" style={{ fontSize: 26, letterSpacing: "-.01em", color: kpi.accent }}>{mn(kpi.value)}</span>
+        <span className="t-display tabular" style={{ fontSize: 26, letterSpacing: "-.01em", color: kpi.accent }}>{String(kpi.value)}</span>
         <span className="text-[12.5px] font-semibold text-muted-foreground">{kpi.unit}</span>
       </div>
       <DeltaBadge value={kpi.delta} label={kpi.deltaLabel} invert={kpi.invert} />
@@ -122,8 +121,8 @@ function DueBadge({ dday, date }: { dday: string; date: string }) {
     : "var(--muted-foreground)";
   return (
     <div className="flex flex-col" style={{ lineHeight: 1.2 }}>
-      <span className="font-extrabold tabular text-[13px]" style={{ color }}>{done ? "완료" : overdue ? "지연" : mn(dday)}</span>
-      <span className="t-caption text-[11px] tabular">{mn(date.slice(5).replace("-", "/"))}</span>
+      <span className="font-extrabold tabular text-[13px]" style={{ color }}>{done ? "완료" : overdue ? "지연" : String(dday)}</span>
+      <span className="t-caption text-[11px] tabular">{String(date.slice(5).replace("-", "/"))}</span>
     </div>
   );
 }
@@ -141,10 +140,10 @@ function GpCell(p: ICellRendererParams) {
   const r = p.data; if (!r) return null;
   return (
     <div className="flex items-center gap-2.5">
-      <span className="inline-flex items-center justify-center w-8 h-8 rounded-[8px] text-[color:var(--on-chart-fill)] text-[11px] font-bold shrink-0" style={{ background: r.gpColor }}><MT>{r.gpCode}</MT></span>
+      <span className="inline-flex items-center justify-center w-8 h-8 rounded-[8px] text-[color:var(--on-chart-fill)] text-[11px] font-bold shrink-0" style={{ background: r.gpColor }}>{r.gpCode}</span>
       <div className="min-w-0">
-        <div className="text-[13.5px] font-semibold text-foreground"><MT>{r.gp}</MT></div>
-        <div className="t-caption text-[11px]"><MT>{r.id}</MT></div>
+        <div className="text-[13.5px] font-semibold text-foreground">{r.gp}</div>
+        <div className="t-caption text-[11px]">{r.id}</div>
       </div>
     </div>
   );
@@ -153,8 +152,8 @@ function TypeCell(p: ICellRendererParams) {
   const r = p.data; if (!r) return null;
   return (
     <div className="min-w-0">
-      <div className="text-[13px] font-semibold text-foreground"><MT>{r.type}</MT></div>
-      <div className="t-caption text-[11px] mt-0.5 truncate"><MT>{r.desc}</MT></div>
+      <div className="text-[13px] font-semibold text-foreground">{r.type}</div>
+      <div className="t-caption text-[11px] mt-0.5 truncate">{r.desc}</div>
     </div>
   );
 }
@@ -162,8 +161,8 @@ function ManagerCell(p: ICellRendererParams) {
   const r = p.data; if (!r) return null;
   return (
     <div className="flex items-center gap-1.5">
-      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-[10px] font-bold shrink-0 bg-muted-foreground"><MT>{r.manager[0]}</MT></span>
-      <span className="text-[13px] font-medium text-foreground"><MT>{r.manager}</MT></span>
+      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-[10px] font-bold shrink-0 bg-muted-foreground">{r.manager[0]}</span>
+      <span className="text-[13px] font-medium text-foreground">{r.manager}</span>
     </div>
   );
 }
@@ -172,7 +171,7 @@ const WORK_COLS: ColDef[] = [
   { headerName: "운용사", field: "gp", flex: 1.6, minWidth: 180, width: 180, cellStyle: vCenter, cellRenderer: GpCell },
   { headerName: "경보 유형", field: "type", flex: 2, minWidth: 190, width: 190, cellStyle: vCenter, cellRenderer: TypeCell },
   { headerName: "등급", field: "grade", width: 84, cellStyle: vCenter, cellRenderer: (p: ICellRendererParams) => <StatusBadge tone={p.data.gradeTone} label={p.data.grade} size="md" /> },
-  { headerName: "접수일", field: "received", width: 112, cellStyle: { ...vCenter, fontVariantNumeric: "tabular-nums", color: "var(--muted-foreground)", fontSize: 13 }, valueFormatter: (p: any) => mn(p.value) },
+  { headerName: "접수일", field: "received", width: 112, cellStyle: { ...vCenter, fontVariantNumeric: "tabular-nums", color: "var(--muted-foreground)", fontSize: 13 }, valueFormatter: (p: any) => String(p.value) },
   { headerName: "처리기한", field: "due", width: 108, cellStyle: vCenter, cellRenderer: (p: ICellRendererParams) => <DueBadge dday={p.data.dday} date={p.data.due} /> },
   { headerName: "처리 상태", field: "status", width: 112, cellStyle: vCenter, cellRenderer: (p: ICellRendererParams) => <StatusBadge tone={statusToneOf(p.data.status)} label={p.data.status} size="md" /> },
   { headerName: "담당자", field: "manager", width: 132, cellStyle: vCenter, cellRenderer: ManagerCell },
@@ -256,12 +255,12 @@ function RiskManage({ onNav }: { onNav: (r: string) => void }) {
             <ColorChip icon="inbox" color="var(--primary)" size={34} iconSize={18} />
             <div>
               <div className="t-cardtitle">처리 워크리스트</div>
-              <div className="t-caption mt-px"><span className="text-primary font-bold">{mn(filtered.length + "건")}</span> 표시 중 (전체 {mn(WORKITEMS.length)}건)</div>
+              <div className="t-caption mt-px"><span className="text-primary font-bold">{String(filtered.length + "건")}</span> 표시 중 (전체 {String(WORKITEMS.length)}건)</div>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <StatusBadge tone="danger"  label={"처리대기 " + mn(countOf("처리대기")) + "건"} />
-            <StatusBadge tone="warning" label={"처리중 " + mn(countOf("처리중")) + "건"} />
+            <StatusBadge tone="danger"  label={"처리대기 " + String(countOf("처리대기")) + "건"} />
+            <StatusBadge tone="warning" label={"처리중 " + String(countOf("처리중")) + "건"} />
             <IconBtn icon="refresh" label="새로고침" size={34} />
             <IconBtn icon="download" label="내보내기" size={34} />
           </div>
@@ -280,7 +279,7 @@ function RiskManage({ onNav }: { onNav: (r: string) => void }) {
           />
 
           <div className="flex items-center justify-between gap-4 flex-wrap px-5 sm:px-6 py-3.5 border-t border-border">
-            <span className="t-caption">총 <b className="text-foreground">{mn(WORKITEMS.length + "건")}</b> 중 {mn(filtered.length + "건 표시")}</span>
+            <span className="t-caption">총 <b className="text-foreground">{String(WORKITEMS.length + "건")}</b> 중 {String(filtered.length + "건 표시")}</span>
             <div className="flex items-center gap-1.5">
               <IconBtn icon="chevron-left" label="이전" size={32} />
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[13px] font-bold text-primary" style={{ background: "color-mix(in srgb,var(--primary) 12%,transparent)" }}>1</span>

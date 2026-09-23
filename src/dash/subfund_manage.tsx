@@ -19,7 +19,6 @@ import type { CSSProperties } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
 import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -99,11 +98,11 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof SubFundRow, header: string, width: number, center?: boolean): ColDef<SubFundRow> => ({
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <MT>{p.value}</MT>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : <>{p.value}</>),
 });
 const date = (field: keyof SubFundRow, header: string, width = 112): ColDef<SubFundRow> => ({
   field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
-  valueFormatter: (p) => (p.node?.rowPinned ? '' : mn(p.value)),
+  valueFormatter: (p) => (p.node?.rowPinned ? '' : String(p.value)),
 });
 const amt = (field: keyof SubFundRow, header: string, strong?: boolean, width = 150): ColDef<SubFundRow> => ({
   field, headerName: header, width, type: 'rightAligned', valueFormatter: nullFmt, cellStyle: numStyle(strong) as any,
@@ -117,7 +116,7 @@ const columnDefs: (ColDef<SubFundRow> | ColGroupDef<SubFundRow>)[] = [
     valueFormatter: (p) => (p.node?.rowPinned ? '합 계' : String(p.value)) },
   { field: 'stg', headerName: '심사단계', width: 96, pinned: 'left', cellStyle: flexMid, sortable: true,
     cellRenderer: (p: any) => (p.node.rowPinned ? null : <StatusBadge tone={STAGE_TONE[p.value as Stage]} label={p.value} size="lg" dot={false} />) },
-  { ...txt('fn', '자펀드', 240), maxWidth: 360, pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold"><MT>{p.value}</MT></span>) },
+  { ...txt('fn', '자펀드', 240), maxWidth: 360, pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold">{p.value}</span>) },
   num('y', '사업연도', 92), txt('rt', '정기/수시', 88, true), num('ch', '차수', 70),
   txt('ctype', '조합유형', 150, true), txt('cg', '조합구분', 96, true), txt('cs', '조합성격', 120, true),
   { ...txt('gp1', '업무집행조합원1', 150), maxWidth: 240 }, { ...txt('gp2', '업무집행조합원2', 150), maxWidth: 240 },
@@ -216,7 +215,6 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'apply' }), { enabled: modal === null });
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  const masked = useMask();
 
   /* 필터 — 심사단계는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -308,8 +306,8 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
     const body = src.map((r, i) => keys.map((k) => {
       const v = (r as any)[k];
       if (k === 'no') return i === src.length - 1 ? '합 계' : v;
-      if (NUM_KEYS.has(k)) return v == null ? '' : masked ? 0 : v;
-      return masked ? '' : (v ?? '');
+      if (NUM_KEYS.has(k)) return v == null ? '' : v;
+      return (v ?? '');
     }));
     const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body]);
     src.forEach((r, i) => keys.forEach((k, j) => {
@@ -356,7 +354,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   const selActions = selCount > 0 ? (
     /* 선택 행의 심사단계에 맞는 작업만 노출(공고관리 컨텍스트 액션 패턴). 취소 단계는 작업 없음 */
     <>
-      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <>
       {/* 단계 배지만 표시 — 자펀드명은 선택 행에서 이미 보이므로 생략(2026-09-08 결정) */}
       <StatusBadge tone={STAGE_TONE[single.stg]} label={single.stg} size="lg" dot={false} />
@@ -391,7 +389,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               {/* 값만 표시(항목명 접두사 없음 — 2026-09-08 결정). 항목명은 × 버튼 aria-label에만 남긴다 */}
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -407,7 +405,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'apply' })}>제안서접수 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={view === 'list' && page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -452,8 +450,8 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
               <div className="flex items-center gap-2.5">
                 <ColorChip icon="layers" color="var(--primary)" size={34} iconSize={16} />
                 <div className="min-w-0 flex-1">
-                  <div className="font-semibold truncate" style={{ fontSize: 14 }}><MT>{r.fn}</MT></div>
-                  <div className="text-muted-foreground truncate" style={{ fontSize: 12 }}><MT>{r.gp1}</MT> · {r.y}년</div>
+                  <div className="font-semibold truncate" style={{ fontSize: 14 }}>{r.fn}</div>
+                  <div className="text-muted-foreground truncate" style={{ fontSize: 12 }}>{r.gp1} · {r.y}년</div>
                 </div>
                 <StatusBadge tone={STAGE_TONE[r.stg]} label={r.stg} size="lg" dot={false} />
               </div>
@@ -461,7 +459,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
                 {([['약정총액', r.c1], ['납입총액', r.p1], ['분배액', r.dist]] as [string, number | null][]).map(([label, v]) => (
                   <div key={label} className="flex items-center justify-between gap-2">
                     <span className="text-caption shrink-0" style={{ fontSize: 12 }}>{label}</span>
-                    <span className="tabular" style={{ fontSize: 13, fontWeight: 500, color: v == null || v === 0 ? 'var(--muted-foreground)' : 'var(--foreground)' }}>{v == null ? '-' : mn(fmt(v))}</span>
+                    <span className="tabular" style={{ fontSize: 13, fontWeight: 500, color: v == null || v === 0 ? 'var(--muted-foreground)' : 'var(--foreground)' }}>{v == null ? '-' : String(fmt(v))}</span>
                   </div>
                 ))}
               </div>

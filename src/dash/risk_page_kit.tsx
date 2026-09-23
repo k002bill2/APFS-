@@ -8,7 +8,6 @@
 import React, { useRef, useState } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { MT } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 드로어 컨트롤 34px SSOT
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
@@ -159,7 +158,7 @@ function AppliedChip({ f }: { f: FilterSpec }) {
   return (
     <span title={f.label} className="inline-flex items-center gap-1.5 font-semibold text-primary"
       style={{ padding: clearable ? '5px 8px 5px 11px' : '5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-      <MT>{shown}</MT>
+      {shown}
       {clearable && (
         <button type="button" onClick={() => f.onChange('')} aria-label={`${f.label} 필터 제거`}
           className="inline-flex items-center justify-center border-0 cursor-pointer"

@@ -38,7 +38,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, numFmt, numStyle } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -155,7 +154,7 @@ const cmtFmt = (p: ValueFormatterParams) => (pinnedId(p) === SUB_ID ? '' : nullF
 /* 텍스트 셀 — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다 */
 const txt = (field: keyof GpContribRow, header: string, width: number, maxWidth: number): ColDef<GpContribRow> => ({
   field, headerName: header, width, maxWidth, cellStyle: flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="min-w-0 truncate"><MT>{p.value}</MT></span>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="min-w-0 truncate">{p.value}</span>),
 });
 const amt = (field: keyof GpContribRow, header: string, strong?: boolean, width = 150): ColDef<GpContribRow> => ({
   field, headerName: header, width, type: 'rightAligned', valueFormatter: nullFmt, cellStyle: numStyle(strong) as any,
@@ -177,7 +176,7 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
       type="button" title={hint} onClick={onClick}
       className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer tabular"
       style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      {mn(value)}
+      {String(value)}
     </button>
   );
 }
@@ -282,7 +281,6 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
   const [modal, setModal] = useState<ModalState>(null);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
-  const masked = useMask();
 
   /* deps []: setModal은 안정(useState 세터) — 매 렌더 새 배열이면 그리드가 컬럼을 재생성하며 폭이 되돌아간다 */
   const openDetail = useCallback((id: string) => setModal({ kind: 'detail', id }), []);
@@ -349,8 +347,8 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
     const body = src.map((r) => keys.map((k) => {
       const v = (r as any)[k];
       if (k === 'no') return r.id === SUB_ID ? '소 계' : r.id === TOT_ID ? '합 계' : v;
-      if (NUM_KEYS.has(k)) return v == null ? '' : masked ? 0 : v;
-      return masked ? '' : (v ?? '');
+      if (NUM_KEYS.has(k)) return v == null ? '' : v;
+      return (v ?? '');
     }));
     const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body]);
     src.forEach((r, i) => keys.forEach((k, j) => {
@@ -389,7 +387,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
             ['기준일자 종료', fTo, () => setFTo(''), false],
           ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isText]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {isText ? <MT>{value}</MT> : mn(value)}
+              {isText ? <>{value}</> : String(value)}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -402,7 +400,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

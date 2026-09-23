@@ -73,7 +73,7 @@ describe('isDiff — 음영 대상', () => {
 
 describe('buildAoa — 엑셀 셀 값', () => {
   it('헤더 + 6행, 빈칸·[object Object] 없음', () => {
-    const aoa = buildAoa(visibleRows(ROWS, G_ALL, C_ALL), false);
+    const aoa = buildAoa(visibleRows(ROWS, G_ALL, C_ALL));
     expect(aoa[0]).toEqual(EXCEL_HEAD);
     expect(aoa.length).toBe(7);
     for (const row of aoa.slice(1)) {
@@ -86,9 +86,5 @@ describe('buildAoa — 엑셀 셀 값', () => {
     expect(aoa[2]).toEqual([2, '운용사 조기경보', '농식품투자조합', '자본충실도', '▲ 악화', '(유)그린농식품투자 경고', '(유)그린농식품투자 주의']);
     expect(aoa[4].slice(4)).toEqual(['신규', '(유)케이팜파트너스 주의', '–']);
     expect(aoa[5].slice(4)).toEqual(['해소', '–', '(유)와프인베스트먼트 정상']);
-  });
-  it('마스크 ON → 텍스트는 비우고 변동·등급은 유지', () => {
-    const aoa = buildAoa(visibleRows(ROWS, G_ALL, C_ALL), true);
-    expect(aoa[2]).toEqual([0, '', '', '', '▲ 악화', '경고', '주의']);
   });
 });

@@ -19,7 +19,6 @@
    ⚠검토필요 마커 1건 이식: 업로드 여부(목업 첨부파일 섹션). 설계 메모라 마스킹·엑셀 대상이 아니다. */
 import React from 'react';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { fmt } from './aggrid_theme';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { ReviewMarker } from './review_marker';
@@ -73,7 +72,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
           </dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.v ? '' : 'text-caption'}`}
             style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
-            {!o.v ? '-' : o.numeric ? mn(o.v) : <MT>{o.v}</MT>}
+            {!o.v ? '-' : o.numeric ? String(o.v) : <>{o.v}</>}
           </dd>
         </div>
       ))}
@@ -84,7 +83,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
 /* 상세정보 — 조합원별 납입 상세(목업 `table.mini`). 값은 선택 행에서 파생(파일 상단 '한계').
    ⚠ No는 축(순번)이라 마스킹하지 않는다 — "축은 두고 데이터는 가린다". */
 function DetailTable({ row }: { row: GpContribRow }) {
-  const money = (v: number) => mn(fmt(v));
+  const money = (v: number) => String(fmt(v));
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse" style={{ fontSize: 13.5, minWidth: 520 }}>
@@ -101,7 +100,7 @@ function DetailTable({ row }: { row: GpContribRow }) {
         <tbody>
           <tr>
             <td className={`${TD} text-center tabular`} style={CELL}>1</td>
-            <td className={TD} style={CELL}><MT>농식품모태펀드</MT></td>
+            <td className={TD} style={CELL}><>농식품모태펀드</></td>
             <td className={`${TD} text-right tabular`} style={CELL}>{money(row.payM)}</td>
             <td className={`${TD} text-right tabular`} style={CELL}>{money(row.payM)}</td>
             <td className={`${TD} text-caption`} style={CELL}>-</td>
@@ -130,7 +129,7 @@ export function GpContributionDetailModal({ row, onClose }: { row: GpContribRow;
           {/* 제목+대상명은 한 래퍼로 묶는다 — DialogHeader가 justify-between이라 안 묶으면 대상명이 우측 끝으로 밀린다 */}
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">일자별출자배분관리</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0"><MT>{row.fn}</MT> · {mn(row.bd)}</DialogDescription>
+            <DialogDescription className="text-caption truncate min-w-0">{row.fn} · {String(row.bd)}</DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">

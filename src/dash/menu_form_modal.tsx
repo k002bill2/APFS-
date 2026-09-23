@@ -13,7 +13,6 @@
    ⚠ 백엔드가 없어 저장은 부모(menu_manage)의 로컬 행 상태만 바꾼다. 정렬 재배치는 부모가 reseqSiblings 로 수행. */
 import React from 'react';
 import { UI } from './components';
-import { MT } from './mask';
 import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
@@ -105,8 +104,8 @@ function ProgramSearchDialog({ programs, onPick, onClose }: { programs: readonly
                     <td style={{ ...td, textAlign: 'center' }}>
                       <RadioGroupItem value={p.pid} aria-label={`${p.pid} ${p.pname}`} className="align-middle" />
                     </td>
-                    <td style={{ ...td, fontVariantNumeric: 'tabular-nums' }}><MT>{p.pid}</MT></td>
-                    <td style={{ ...td, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><MT>{p.pname}</MT></td>
+                    <td style={{ ...td, fontVariantNumeric: 'tabular-nums' }}>{p.pid}</td>
+                    <td style={{ ...td, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.pname}</td>
                   </tr>
                 ))}
               </tbody>

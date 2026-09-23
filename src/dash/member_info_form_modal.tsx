@@ -13,7 +13,6 @@
    ⚠ 자물쇠 글리프(🔒)는 공용 `Icon` 레지스트리에 없어 텍스트 `수정불가`만 남긴다(브리프 지시). */
 import React from 'react';
 import { UI } from './components';
-import { MT } from './mask';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
@@ -190,7 +189,7 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
                 </div>
               ) : (
                 <div className="flex items-center gap-[7px]" style={boxStyle({ muted: true })}>
-                  <span className="min-w-0 truncate">{v.biz ? <MT>{v.biz}</MT> : '-'}</span>
+                  <span className="min-w-0 truncate">{v.biz ? <>{v.biz}</> : '-'}</span>
                   <span className="shrink-0 text-caption" style={{ fontSize: 11 }}>수정불가</span>
                 </div>
               )}

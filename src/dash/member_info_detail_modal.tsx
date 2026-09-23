@@ -24,7 +24,6 @@
    ⚠검토필요 마커 0건(목업 이 팝업엔 `data-rec`/`data-dat` 없음 — 이 화면의 1건은 수정 모달 식별번호 라벨). */
 import React, { useState } from 'react';
 import { UI } from './components';
-import { mn, MT, useMask } from './mask';
 import { fmt } from './aggrid_theme';   // 숫자 표기 SSOT(정수=콤마) — 자체 포매터 재구현 금지
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { toast } from './ui/sonner';
@@ -41,7 +40,7 @@ const UNIT_DIV: Record<Unit, number> = { 원: 1, 백만원: 1e6, 억원: 1e8 };
 function money(won: number | null, unit: Unit): string {
   if (won == null) return '-';
   const v = won / UNIT_DIV[unit];
-  return mn(unit === '원' ? fmt(won) : v.toLocaleString(undefined, { maximumFractionDigits: 2 }));
+  return String(unit === '원' ? fmt(won) : v.toLocaleString(undefined, { maximumFractionDigits: 2 }));
 }
 
 /* ── 프리미티브(골드 복사 — 공유 export 아님) ── */
@@ -139,7 +138,7 @@ function KvValue({ item }: { item: KvItem }) {
   if (item.badge === 'muted') {
     return <span className="inline-flex items-center rounded-[7px] px-[9px] py-[3px] text-xs font-bold bg-muted text-muted-foreground">{item.v}</span>;
   }
-  return <MT>{item.v}</MT>;
+  return <>{item.v}</>;
 }
 
 /* ── 거래내역 표 ── */
@@ -159,8 +158,8 @@ function TxTable({ unit }: { unit: Unit }) {
             <tr key={r.sub}>
               {/* 거래구분은 분류 배지(목업 `tag b`) — 비마스킹 */}
               <td className={`${TD} text-center`} style={CELL}><StatusBadge tone="info" label={r.kind} size="md" dot={false} /></td>
-              <td className={`${TD} text-center`} style={CELL}><MT>{r.sub}</MT></td>
-              <td className={`${TD} text-center tabular`} style={CELL}>{mn(r.date)}</td>
+              <td className={`${TD} text-center`} style={CELL}>{r.sub}</td>
+              <td className={`${TD} text-center tabular`} style={CELL}>{String(r.date)}</td>
               {r.vals.map((v, i) => (
                 <td key={TX_HEAD[i + 3]} className={`${TD} tabular ${v == null ? 'text-center text-caption' : 'text-right'}`} style={CELL}>
                   {money(v, unit)}
@@ -193,21 +192,20 @@ function TxTable({ unit }: { unit: Unit }) {
 
 export function MemberInfoDetailModal({ row, onClose }: { row: MemberRow; onClose: () => void }) {
   const [unit, setUnit] = useState<Unit>('원');
-  const masked = useMask();
   const kv = buildKv(row);
 
   /* Excel(.xlsx) — kv 7행 + 빈 줄 + 거래내역 헤더/본문 2행/소계/합계.
      화면이 그리는 배열(kv·TX_ROWS·FOOT_ROWS) 그대로 직렬화한다(화면=엑셀 불변식).
      숫자는 **원 단위 고정**(표시 단위와 무관, 파일 상단 '한계'). 마스크 ON이면 숫자 0·텍스트 ''. */
   const excel = () => {
-    const num = (v: number | null) => (v == null ? (masked ? '' : '-') : masked ? 0 : v);
-    const txt = (v: string) => (masked ? '' : v);
+    const num = (v: number | null) => (v == null ? ('-') : v);
+    const txt = (v: string) => (v);
     const aoa: (string | number)[][] = [
-      ...kv.map((o) => [o.l, o.won != null ? (masked ? 0 : o.won) : txt(o.v ?? '')]),
+      ...kv.map((o) => [o.l, o.won != null ? (o.won) : txt(o.v ?? '')]),
       [],
       TX_HEAD,
       ...TX_ROWS.map((r) => [txt(r.kind), txt(r.sub), txt(r.date), ...r.vals.map(num)]),
-      ...FOOT_ROWS.map((f) => [f.l, '', '', ...f.vals.map((v) => (masked ? 0 : v))]),
+      ...FOOT_ROWS.map((f) => [f.l, '', '', ...f.vals.map((v) => (v))]),
     ];
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols'] = TX_HEAD.map((_, i) => ({ wch: i < 3 ? 16 : 18 }));
@@ -227,7 +225,7 @@ export function MemberInfoDetailModal({ row, onClose }: { row: MemberRow; onClos
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">조합원정보 상세조회</DialogTitle>
             {/* Radix Description은 <p> — preflight:false라 UA 기본 마진이 살아 있어 m-0을 명시한다(공용 dialog.tsx는 불변) */}
-            <DialogDescription className="m-0 text-caption truncate min-w-0"><MT>{row.name}</MT></DialogDescription>
+            <DialogDescription className="m-0 text-caption truncate min-w-0">{row.name}</DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">

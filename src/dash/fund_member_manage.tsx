@@ -37,7 +37,6 @@ import './aggrid_shared.css';   // 합계(floating)행 opacity:0 stuck 버그 �
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, numFmt, numStyle } from './aggrid_theme';
 import { drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -134,11 +133,11 @@ const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p))
    합계행은 값이 없으므로 null(목업 tfoot의 병합 셀 자리). */
 const txt = (field: keyof FundMemberRow, header: string, width: number, center?: boolean): ColDef<FundMemberRow> => ({
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="min-w-0 truncate"><MT>{p.value}</MT></span>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="min-w-0 truncate">{p.value}</span>),
 });
 const date = (field: keyof FundMemberRow, header: string, width = 112): ColDef<FundMemberRow> => ({
   field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
-  valueFormatter: (p) => (p.node?.rowPinned ? '' : mn(p.value)),
+  valueFormatter: (p) => (p.node?.rowPinned ? '' : String(p.value)),
 });
 const amt = (field: keyof FundMemberRow, header: string, strong?: boolean, width = 158): ColDef<FundMemberRow> => ({
   field, headerName: header, width, type: 'rightAligned', valueFormatter: nullFmt, cellStyle: numStyle(strong) as any,
@@ -162,7 +161,7 @@ const columnDefs: ColDef<FundMemberRow>[] = [
   amt('formed', '결성액'),
   /* 조합원 = 이 화면의 주 엔티티라 굵게(목업도 좌측정렬 본문 열) */
   { ...txt('mem', '조합원', 180),
-    cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="min-w-0 truncate font-semibold"><MT>{p.value}</MT></span>) },
+    cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="min-w-0 truncate font-semibold">{p.value}</span>) },
   txt('cls', '조합원구분', 110, true),
   { field: 'mtype', headerName: '조합원유형', width: 120, cellStyle: flexMid,
     cellRenderer: (p: any) => (p.node.rowPinned ? null : <TypeChip value={p.value} />) },
@@ -172,7 +171,7 @@ const columnDefs: ColDef<FundMemberRow>[] = [
   { ...txt('memo', '비고', 170),
     cellRenderer: (p: any) => (p.node.rowPinned ? null
       : p.value === '-' ? <span style={{ color: 'var(--muted-foreground)' }}>-</span>
-      : <span className="min-w-0 truncate"><MT>{p.value}</MT></span>) },
+      : <span className="min-w-0 truncate">{p.value}</span>) },
   txt('deal', '출자배분 거래유무', 140, true),
 ];
 
@@ -241,7 +240,6 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
-  const masked = useMask();
 
   // 앱-스코프 단축키: ⌘⏎=조합원 등록(모달 열림 중엔 비활성 → 이중 열림 방지), ⌘P=인쇄, ⌥D=내보내기
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null });
@@ -353,8 +351,8 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
     const body = src.map((r, i) => EXPORT_COLS.map((c) => {
       const v = (r as any)[c.key];
       if (c.key === 'no') return i === src.length - 1 ? '합 계' : v;
-      if (c.num) return v == null ? '' : masked ? 0 : v;
-      return masked ? '' : (v ?? '');
+      if (c.num) return v == null ? '' : v;
+      return (v ?? '');
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     src.forEach((r, i) => EXPORT_COLS.forEach((c, j) => {
@@ -390,7 +388,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
             ['자펀드', fFund, () => setFFund('')],
           ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -405,7 +403,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>조합원 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -488,7 +486,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
             <AlertDialogHeader>
               <AlertDialogTitle>조합원 삭제</AlertDialogTitle>
               <AlertDialogDescription>
-                <b className="text-foreground"><MT>{target.mem}</MT></b> 조합원을 삭제하시겠습니까?
+                <b className="text-foreground">{target.mem}</b> 조합원을 삭제하시겠습니까?
                 <br />삭제 후에는 복구할 수 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>

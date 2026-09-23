@@ -14,7 +14,6 @@
 import './aggrid_shared.css';
 import { useState, useMemo, useCallback } from 'react';
 import { UI } from './components';
-import { mn, useMask } from './mask';
 import { Icon } from './icons';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, refreshNoColumn } from './aggrid_theme';
@@ -61,12 +60,12 @@ function toColDef(c: ColumnSpec, unit: Unit): ColDef<RecoveryRow> {
         if (c.key === 'gp') return <span className="font-bold">합계</span>;
         if (c.key === 'tname') return <span className="font-bold">{String(p.value ?? '')}</span>;
         if (!amount) return null;
-        return p.value == null ? null : <span className="font-bold tabular">{mn(formatRecoveryUnit(Number(p.value), unit))}</span>;
+        return p.value == null ? null : <span className="font-bold tabular">{String(formatRecoveryUnit(Number(p.value), unit))}</span>;
       }
       const rv = c.key === 'tname' ? p.data?.rv : undefined;
       /* 금액 셀은 공용 Cell(=formatUnit, 백만원 2자리)을 쓰지 않는다 — 이 화면의 표기 규칙은
          원문 applyUnit(백만원 1자리)이다. 나머지 타입은 그대로 Cell 에 맡긴다(마스킹·배지 내장). */
-      if (amount) return <span className="tabular">{p.value == null ? '' : mn(formatRecoveryUnit(Number(p.value), unit))}</span>;
+      if (amount) return <span className="tabular">{p.value == null ? '' : String(formatRecoveryUnit(Number(p.value), unit))}</span>;
       return (
         <span className="inline-flex items-center gap-0.5 min-w-0">
           <Cell col={c} value={p.value} statusDomain={RECOVERY_TONES} unit={unit} />
@@ -84,7 +83,6 @@ function toColDef(c: ColumnSpec, unit: Unit): ColDef<RecoveryRow> {
 export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void }) {
   const [modeKey, setModeKey] = useState<RecoveryMode['key']>(RECOVERY_MODES[0].key);
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
-  const masked = useMask();
 
   /* 원문 검색조건(운용사·자펀드·기준일자 범위)을 복원한다 — 2026-09-16 Codex 지적.
      `계정구분`은 원문 select 에 `전체` 외 옵션이 없어(값 도메인 미정) 컨트롤을 만들지 않고,
@@ -120,7 +118,7 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
     const cols = mode.columns;
     const head = cols.map((c) => (c.type === 'amount' ? amountHeader(c.label, unit) : c.label));
     const body = [...rows, ...pinned].map((r) => cols.map((c) => {
-      if (masked) return '';   // 마스크 ON이면 엑셀에도 값을 내보내지 않는다(마스크 경계 = 엑셀까지)
+         // 마스크 ON이면 엑셀에도 값을 내보내지 않는다(마스크 경계 = 엑셀까지)
       const v = r[c.key];
       return c.type === 'amount' && typeof v === 'number' ? Number(formatRecoveryUnit(v, unit).replace(/,/g, '')) : String(v ?? '');
     }));
@@ -129,7 +127,7 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, mode.sheet);
     XLSX.writeFile(wb, `투자금 회수현황_${mode.label}.xlsx`);
     toast.success(`${mode.label} 표를 Excel로 내보냈습니다`);
-  }, [mode, rows, unit, masked, pinned]);
+  }, [mode, rows, unit, pinned]);
 
   return (
     <GridFrame
@@ -144,15 +142,15 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
           <SegTabs options={RECOVERY_MODES.map((m) => ({ value: m.key, label: m.label }))} value={modeKey}
             onChange={(v: string) => setModeKey(v as RecoveryMode['key'])} />
           <Icon name="filter" size={16} className="text-caption" />
-          <FilterChip active={fGp === ''} onClick={() => setFGp('')} count={mn(String(mode.rows.length))}>전체</FilterChip>
+          <FilterChip active={fGp === ''} onClick={() => setFGp('')} count={String(mode.rows.length)}>전체</FilterChip>
           {gpOptions.map((g) => (
             <FilterChip key={g} active={fGp === g} onClick={() => setFGp(g)}
-              count={mn(String(mode.rows.filter((r) => String(r.gp) === g).length))}>{g}</FilterChip>
+              count={String(mode.rows.filter((r) => String(r.gp) === g).length)}>{g}</FilterChip>
           ))}
         </>
       )}
       toolbarRight={<>
-        <span className="text-caption" style={{ fontSize: 12 }} aria-live="polite">{mode.label} <b className="text-foreground">{mn(String(rows.length))}</b>건</span>
+        <span className="text-caption" style={{ fontSize: 12 }} aria-live="polite">{mode.label} <b className="text-foreground">{String(rows.length)}</b>건</span>
         <label className="inline-flex items-center gap-1.5 text-caption" style={{ fontSize: 12 }}>
           자펀드
           <select value={fFund} onChange={(e) => setFFund(e.target.value)} aria-label="자펀드 필터"

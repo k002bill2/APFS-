@@ -26,7 +26,6 @@
    ⚠검토필요 마커 0건(이 파일 범위의 목업 원문에 `data-rec`/`data-dat` 없음 — 2건은 모두 검색박스라 목록 파일). */
 import React from 'react';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { Icon } from './icons';
 import { toast } from './ui/sonner';
@@ -72,7 +71,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
         <div key={o.l} className="grid bg-card" style={KV_COLS}>
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.v ? '' : 'text-caption'}`} style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
-            {!o.v ? '-' : o.raw ? o.v : o.numeric ? mn(o.v) : <MT>{o.v}</MT>}
+            {!o.v ? '-' : o.raw ? o.v : o.numeric ? String(o.v) : <>{o.v}</>}
           </dd>
         </div>
       ))}
@@ -228,7 +227,7 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
           {/* 제목+대상명은 한 래퍼로 묶는다 — DialogHeader가 justify-between이라 안 묶으면 대상명이 우측 끝으로 밀린다 */}
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">{title}</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0"><MT>{group.fn}</MT> · {mn(group.td)}</DialogDescription>
+            <DialogDescription className="text-caption truncate min-w-0">{group.fn} · {String(group.td)}</DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">
@@ -256,9 +255,9 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
                     <tr key={m.mem + i}>
                       {/* NO는 축(순번)이라 마스킹하지 않는다 */}
                       <td className={`${TD} text-center tabular`} style={CELL}>{i + 1}</td>
-                      <td className={TD} style={CELL}><MT>{m.mem}</MT></td>
+                      <td className={TD} style={CELL}>{m.mem}</td>
                       <td className={`${TD} text-center`} style={CELL}><GradeChip v={m.mg} /></td>
-                      <td className={`${TD} text-right tabular`} style={CELL}>{mn(toFmt(m.mc))}</td>
+                      <td className={`${TD} text-right tabular`} style={CELL}>{String(toFmt(m.mc))}</td>
                       {AMOUNT_FIELDS.map((k) => (
                         <td key={k} className={TD} style={CELL}>
                           <AmountInput value={drafts[i][k]} onChange={set(i, k)} ariaLabel={`${m.mem} ${DIST_HEADERS[k]}`} />
@@ -359,7 +358,7 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
         <DialogHeader className="px-[46px]">
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">출자거래 수정</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0"><MT>{INVEST_GROUP.fund}</MT> · {mn(INVEST_GROUP.td)}</DialogDescription>
+            <DialogDescription className="text-caption truncate min-w-0">{INVEST_GROUP.fund} · {String(INVEST_GROUP.td)}</DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">
@@ -388,16 +387,16 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
                     <tr key={m.id}>
                       <td className={`${TD} text-center tabular`} style={CELL}>{i + 1}</td>
                       {/* 조합원명 + 사업자번호 — 둘 다 식별 정보라 <MT> */}
-                      <td className={TD} style={CELL}><MT>{`${m.mem} (${m.id})`}</MT></td>
+                      <td className={TD} style={CELL}>{`${m.mem} (${m.id})`}</td>
                       <td className={`${TD} text-center`} style={CELL}><GradeChip v={m.mg} /></td>
-                      <td className={`${TD} text-center`} style={CELL}><MT>{m.mtype}</MT></td>
-                      <td className={`${TD} text-right tabular`} style={CELL}>{mn(toFmt(m.commit))}</td>
-                      <td className={`${TD} text-center tabular`} style={CELL}>{mn(String(m.cpct))}</td>
+                      <td className={`${TD} text-center`} style={CELL}>{m.mtype}</td>
+                      <td className={`${TD} text-right tabular`} style={CELL}>{String(toFmt(m.commit))}</td>
+                      <td className={`${TD} text-center tabular`} style={CELL}>{String(m.cpct)}</td>
                       <td className={TD} style={CELL}>
                         <AmountInput value={drafts[i].pay} onChange={set(i, 'pay')} ariaLabel={`${m.mem} 납입금액`} />
                       </td>
-                      <td className={`${TD} text-center tabular`} style={CELL}>{mn(String(m.ppct))}</td>
-                      <td className={`${TD} text-right tabular`} style={CELL}>{m.custody == null ? dash : mn(toFmt(m.custody))}</td>
+                      <td className={`${TD} text-center tabular`} style={CELL}>{String(m.ppct)}</td>
+                      <td className={`${TD} text-right tabular`} style={CELL}>{m.custody == null ? dash : String(toFmt(m.custody))}</td>
                       <td className={`${TD} text-center`} style={CELL}>
                         {m.chk == null ? dash
                           : <SelectInput value={drafts[i].chk} onChange={set(i, 'chk')} options={INVEST_CHK_OPTIONS} ariaLabel={`${m.mem} 데이터확인`} />}
@@ -412,7 +411,7 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
                 <tfoot>
                   <tr className="bg-muted font-bold">
                     <td className={`${TD} text-center`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }} colSpan={4}>합계</td>
-                    <td className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{mn(toFmt(sumCommit))}</td>
+                    <td className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{String(toFmt(sumCommit))}</td>
                     <td className={`${TD} text-center text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
                     <td className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{toFmt(sumPay)}</td>
                     <td className={`${TD} text-center text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>

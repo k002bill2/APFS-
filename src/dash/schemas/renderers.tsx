@@ -1,6 +1,5 @@
 import React from 'react';
 import { UI } from '../components';
-import { mn, MT, useMask } from '../mask';
 import { parseFileNames, fileExtLabel } from '../fields/file_names';   // 첨부 CSV 계약 파서(DocumentsField와 SSOT 공유)
 import { glyphFor } from '../ui/attachment';   // 확장자 → 아이콘·색 매핑(모달 첨부목록과 SSOT 공유)
 import { DatePicker } from '../ui/date-picker';
@@ -37,13 +36,12 @@ function toneFor(label: string, domain?: StatusDomainEntry[]): Tone {
    마스크 경계: 확장자는 **유형 표식**(StatusBadge·단위와 동류)이라 가리지 않는다. 반면 파일명은 데이터이므로
    마스크 ON에서는 tooltip(title)을 떼어 평문 누출을 막는다(마스크 경계 = 엑셀·파일명·툴팁까지). */
 export function AttachChips({ value, max = 3 }: { value?: unknown; max?: number }) {
-  const masked = useMask();
   const names = parseFileNames(typeof value === 'string' ? value : '');
   if (names.length === 0) return null;
   const shown = names.slice(0, max);
   return (
     // shrink-0: 제목 셀은 flex 컨테이너(잔여폭 흡수)라 이게 없으면 긴 제목이 칩을 먼저 찌그러뜨린다.
-    <span className="inline-flex items-center gap-1 shrink-0" title={masked ? undefined : names.join(', ')}>
+    <span className="inline-flex items-center gap-1 shrink-0" title={names.join(', ')}>
       {shown.map((n, i) => {
         // 아이콘·색은 파일 종류 신호(pdf=빨강·xlsx=초록…), 라벨은 회색 유지 — 칩이 상태 배지처럼 읽히지 않게.
         const { Icon: FileGlyph, cls } = glyphFor(n);
@@ -73,13 +71,13 @@ export function Cell({ col, value, color, statusDomain, unit }: { col: ColumnSpe
     /* 운용사(gp): 이름 앞 아이콘 칩 제거(2026-09-16 사용자 지시). 표 전반에서 같은 건물 아이콘이
        모든 행에 반복돼 정보가 없었고, 좁은 폭에서 이름을 밀어냈다. 렌더는 마스킹 텍스트와 같다 —
        `type:'gp'` 자체는 남긴다(스키마 의미 표식이고 정렬·필터 해석에 쓰인다). */
-    case 'gp':         return <MT>{String(value)}</MT>;
+    case 'gp':         return <>{String(value)}</>;
     case 'numeric':
       if (unit && col.type === 'amount' && typeof value === 'number')
-        return <span className="tabular">{mn(formatUnit(value, unit))}</span>;
-      return <span className="tabular">{mn(typeof value === 'number' ? value.toLocaleString() : String(value))}</span>;
+        return <span className="tabular">{String(formatUnit(value, unit))}</span>;
+      return <span className="tabular">{String(typeof value === 'number' ? value.toLocaleString() : String(value))}</span>;
     // maskedText (text/code/pii) + 미지 타입 → 항상 MT (평문 누출 차단)
-    default:           return <MT>{String(value)}</MT>;
+    default:           return <>{String(value)}</>;
   }
 }
 

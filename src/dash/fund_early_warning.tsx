@@ -31,7 +31,6 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 드로어 컨트롤 34px SSOT — 페이지 로컬 복제 금지
@@ -181,7 +180,7 @@ const gradeCol = (field: keyof FundEwRow, header: string, width: number): ColDef
 /* 텍스트 리프 — 행 데이터라 <MT> 마스킹(표 헤더는 축이라 비마스킹) */
 const txtCol = (field: keyof FundEwRow, header: string, width: number, center?: boolean): ColDef<FundEwRow> => ({
   field, headerName: header, width, minWidth: width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span>,
+  cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span>,
 });
 
 const COLUMNS: (ColDef<FundEwRow> | ColGroupDef<FundEwRow>)[] = [
@@ -279,7 +278,7 @@ function AppliedChip({ label, value, onClear }: { label: string; value: string; 
   return (
     <span className="inline-flex items-center gap-1.5 font-semibold text-primary"
       style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-      <MT>{value}</MT>
+      {value}
       <button type="button" onClick={onClear} aria-label={`${label} 필터 제거`}
         className="inline-flex items-center justify-center border-0 cursor-pointer"
         style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
@@ -308,7 +307,6 @@ const NO_ROWS_LOCALE = {
 export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<FundEwRow> | null>(null);
   const [modalRow, setModalRow] = useState<FundEwRow | null>(null);
-  const masked = useMask();
 
   /* 필터 — 모펀드·자펀드는 행 필터, 기준년월은 조회 기준 컨텍스트(행을 거르지 않음) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -364,8 +362,8 @@ export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
     const body = visible.map((r) => keys.map((k) => {
       const v = (r as any)[k];
       if (v == null) return '';
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : String(v);
+      if (typeof v === 'number') return v;
+      return String(v);
     }));
     const ws = XLSX.utils.aoa_to_sheet([...heads, ...body]);
     ws['!merges'] = merges;
@@ -408,7 +406,7 @@ export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
       /* 페이저 없음(1행) → footerCenter 미전달, FooterActions 에 onToggleAll 미전달(버튼 3개) */
       /* 기준년월은 선택했을 때만 앞에 붙인다(미선택이면 '총 N건'으로 시작) — 목업 툴바 `총 N건` 이식 */
       footerLeft={(
-        <span>{(fYm ? `기준년월 ${mn(fYm)} · ` : '') + '총 ' + mn(String(visible.length)) + '건'}</span>
+        <span>{(fYm ? `기준년월 ${String(fYm)} · ` : '') + '총 ' + String(visible.length) + '건'}</span>
       )}
       footerRight={<FooterActions onExport={exportExcel} />}>
 

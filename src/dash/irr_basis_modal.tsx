@@ -11,7 +11,6 @@
    - 엑셀 = 화면 소스 전부(맥락 kv + 현금흐름 표), 화면 단위 그대로. 마스크 ON 이면 숫자 0 · 텍스트 ''. */
 import React, { useRef, useState } from 'react';
 import { UI } from './components';
-import { mn, MT, useMask } from './mask';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
@@ -30,17 +29,16 @@ const ALIGN = { text: 'text-left', center: 'text-center', date: 'text-center', a
 
 export function IrrBasisModal({ basis, onClose }: { basis: IrrBasis; onClose: () => void }) {
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
-  const masked = useMask();
   const dlgRef = useRef<DialogHandle>(null);
   const { table } = basis;
 
   const excel = () => {
     const lead: (string | number)[][] = [
-      ...(basis.heading ? [['자펀드', masked ? '' : basis.heading]] : []),
-      ...(basis.ctx ?? []).map((c) => [c.label, masked ? '' : c.value]),
+      ...(basis.heading ? [['자펀드', basis.heading]] : []),
+      ...(basis.ctx ?? []).map((c) => [c.label, c.value]),
     ];
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, tableSheet(table, table.rows, unit, masked, lead), 'IRR 근거');
+    XLSX.utils.book_append_sheet(wb, tableSheet(table, table.rows, unit, lead), 'IRR 근거');
     XLSX.writeFile(wb, `${basis.title}.xlsx`);
     toast.success('IRR 근거 엑셀을 내려받았습니다');
   };
@@ -52,7 +50,7 @@ export function IrrBasisModal({ basis, onClose }: { basis: IrrBasis; onClose: ()
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">{basis.title}</DialogTitle>
             <DialogDescription className="text-caption truncate min-w-0">
-              {basis.heading ? <MT>{basis.heading}</MT> : 'IRR 산정 근거 현금흐름 내역'}
+              {basis.heading ? <>{basis.heading}</> : 'IRR 산정 근거 현금흐름 내역'}
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -64,7 +62,7 @@ export function IrrBasisModal({ basis, onClose }: { basis: IrrBasis; onClose: ()
               {basis.ctx.map((c) => (
                 <div key={c.label} className="bg-card flex items-center gap-3" style={{ padding: '9px 12px' }}>
                   <dt className="text-caption font-semibold shrink-0" style={{ fontSize: 12.5 }}>{c.label}</dt>
-                  <dd className="font-semibold min-w-0 truncate" style={{ margin: 0, fontSize: 14 }}><MT>{c.value}</MT></dd>
+                  <dd className="font-semibold min-w-0 truncate" style={{ margin: 0, fontSize: 14 }}>{c.value}</dd>
                 </div>
               ))}
             </dl>
@@ -98,8 +96,8 @@ export function IrrBasisModal({ basis, onClose }: { basis: IrrBasis; onClose: ()
                           style={{ ...CELL, color: neg ? 'var(--danger-text)' : undefined }}>
                           {v == null ? <span className="text-muted-foreground">-</span>
                             : c.kind === 'badge' ? <StatusBadge tone={c.tones?.[String(v)] ?? 'muted'} label={String(v)} size="lg" dot={false} />
-                            : c.kind === 'text' || c.kind === 'center' ? <MT>{String(v)}</MT>
-                            : mn(displayText(c, v, unit))}
+                            : c.kind === 'text' || c.kind === 'center' ? <>{String(v)}</>
+                            : String(displayText(c, v, unit))}
                         </td>
                       );
                     })}

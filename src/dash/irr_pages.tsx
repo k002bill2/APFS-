@@ -14,7 +14,6 @@
    - 팝업이 열린 동안 ⌥D 는 끈다(팝업은 자체 엑셀 버튼 — 배경 목록을 내려받지 않게).
    - 조회 전용 — 행 선택·KPI 배지 행·카드뷰 없음. `조회` 버튼 없음(즉시 반영). */
 import React, { useCallback, useMemo, useState } from 'react';
-import { mn, useMask } from './mask';
 import { toast } from './ui/sonner';
 import { DEFAULT_UNIT } from './schemas/unit';
 import type { Unit } from './schemas/unit';
@@ -46,7 +45,6 @@ interface IrrConfig {
 }
 
 function IrrPage({ cfg, onNav }: { cfg: IrrConfig; onNav?: (r: string) => void }) {
-  const masked = useMask();
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
   const [fund, setFund] = useState(cfg.defaultFund);
   const [co, setCo] = useState('');
@@ -67,14 +65,14 @@ function IrrPage({ cfg, onNav }: { cfg: IrrConfig; onNav?: (r: string) => void }
   ];
 
   const exportExcel = () => {
-    exportTables(cfg.label, [{ name: cfg.label, table: cfg.table, rows }], unit, masked);
+    exportTables(cfg.label, [{ name: cfg.label, table: cfg.table, rows }], unit);
     toast.success('Excel로 내보냈습니다');
   };
 
   return (
     <RiskPage group="가치평가" label={cfg.label} route={cfg.route} onNav={onNav}
       filters={filters} onReset={reset} unit={unit} onUnit={setUnit}
-      footerLeft={<span>{`${ym ? `평가년월 ${mn(ym)} · ` : ''}총 ${mn(String(rows.length))}건`}</span>}
+      footerLeft={<span>{`${ym ? `평가년월 ${String(ym)} · ` : ''}총 ${String(rows.length)}건`}</span>}
       onExport={exportExcel} exportEnabled={!open}>
       <ReadGrid table={cfg.table} rows={rows} unit={unit} onLink={onLink} linkLabel={cfg.basis.title} ariaLabel={cfg.label} />
       {open && <IrrBasisModal basis={cfg.basis} onClose={() => setOpen(false)} />}

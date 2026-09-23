@@ -18,7 +18,6 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, CellStyle, CellClickedEvent, CellKeyDownEvent, CellValueChangedEvent, ICellRendererParams, GetRowIdParams, RowDoubleClickedEvent, GridApi, GridReadyEvent, SelectionChangedEvent, SelectionColumnDef, RowDataUpdatedEvent } from 'ag-grid-community';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { reviewInnerHeader } from './review_marker';
@@ -82,19 +81,18 @@ const noteHeader = (n: ReviewNoteMeta) => {
 function LinkCell({ p, label }: { p: ICellRendererParams<Row>; label: string }) {
   const cell = p.eGridCell;
   const v = p.value as Cell;
-  const masked = useMask();
   useEffect(() => {
     if (!cell || v == null) return;
     cell.setAttribute('aria-haspopup', 'dialog');
     /* 마스크 ON 이면 접근名에 실값을 싣지 않는다 — <MT> 가 화면만 가리고 aria-label 로 새는 것을 막는다 */
-    cell.setAttribute('aria-label', `${masked ? '' : `${String(v)} — `}${label} 팝업 열기 (클릭 또는 Enter)`);
+    cell.setAttribute('aria-label', `${`${String(v)} — `}${label} 팝업 열기 (클릭 또는 Enter)`);
     return () => { cell.removeAttribute('aria-haspopup'); cell.removeAttribute('aria-label'); };
-  }, [cell, v, label, masked]);
+  }, [cell, v, label]);
   if (v == null) return <Dash />;
   return (
     <span title={`${label} (클릭 또는 Enter)`} className="inline-flex items-center gap-1 min-w-0 font-semibold"
       style={{ cursor: 'pointer', color: 'var(--primary)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
-      <span className="min-w-0 truncate"><MT>{String(v)}</MT></span>
+      <span className="min-w-0 truncate">{String(v)}</span>
       <Icon name="external" size={13} stroke={2.2} className="shrink-0" />
     </span>
   );
@@ -121,7 +119,7 @@ function renderer(c: ColMeta, unit: Unit | null, linkLabel: string, custom?: (ro
         return <StatusBadge tone={c.tones?.[String(v)] ?? c.tone ?? 'muted'} label={String(v)} size="lg" dot={false} />;
       case 'text':
       case 'center':
-        return <span className="min-w-0 truncate"><MT>{String(v)}</MT></span>;
+        return <span className="min-w-0 truncate">{String(v)}</span>;
       default: {
         const zero = v === 0;
         const box = c.editable && !pinned
@@ -129,7 +127,7 @@ function renderer(c: ColMeta, unit: Unit | null, linkLabel: string, custom?: (ro
           : undefined;
         return (
           <span className="tabular-nums" style={{ color: color ?? (zero ? 'var(--muted-foreground)' : undefined), ...box }}>
-            {mn(displayText(c, v, unit, digits))}
+            {String(displayText(c, v, unit, digits))}
           </span>
         );
       }

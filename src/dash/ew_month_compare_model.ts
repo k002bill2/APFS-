@@ -91,24 +91,24 @@ export function visibleRows(rows: EwCompareRow[], gradeOn: Record<Grade, boolean
 
 /* 당월/전월 셀 텍스트 — `운용사명 등급`, 대상 아님이면 `–`(목업 `cell()`·`gradeTag()` 의 빈 표기).
    마스크 ON 이면 운용사명(행 데이터)은 비우고 등급(상태 표식)만 남긴다. */
-export function sideText(gp: string, g: Grade | '', masked: boolean): string {
+export function sideText(gp: string, g: Grade | ''): string {
   if (!g) return '–';
-  return masked ? g : `${gp} ${g}`;
+  return `${gp} ${g}`;
 }
 
 export const EXCEL_HEAD = ['No', '구분', '모펀드', '항목', '등급', '당월', '전월'];
 
 /* 엑셀 AOA — 헤더 1행 + 본문. 모든 셀이 문자열/숫자(객체 금지). 마스크 ON 이면 텍스트 '' · 숫자 0
    (단 변동·등급은 축/상태라 그대로 둔다). */
-export function buildAoa(rows: NumberedRow[], masked: boolean): (string | number)[][] {
+export function buildAoa(rows: NumberedRow[]): (string | number)[][] {
   const body = rows.map((r) => [
-    masked ? 0 : r.no,
-    masked ? '' : r.gu,
-    masked ? '' : r.mf,
-    masked ? '' : r.it,
+    r.no,
+    r.gu,
+    r.mf,
+    r.it,
     chgLabel(r.cur, r.prev),
-    sideText(r.gp, r.cur, masked),
-    sideText(r.gp, r.prev, masked),
+    sideText(r.gp, r.cur),
+    sideText(r.gp, r.prev),
   ]);
   return [EXCEL_HEAD, ...body];
 }

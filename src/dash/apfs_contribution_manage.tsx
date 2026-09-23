@@ -40,7 +40,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, numStyle } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -221,7 +220,7 @@ const dash = <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
 const moneyFmt = (p: ValueFormatterParams): string => {
   if (p.value == null) return '-';
   const unit = (p.context as { unit?: Unit } | undefined)?.unit ?? DEFAULT_UNIT;
-  return mn(unitText(p.value as number, unit));
+  return String(unitText(p.value as number, unit));
 };
 /** 목업 소계행의 `colspan=13`에 덮이는 금액 열(결성액·약정금액·약정총액)은 '-'가 아니라 **빈 칸**이다 */
 const moneyBlankFmt = (p: ValueFormatterParams): string => (p.value == null ? '' : moneyFmt(p));
@@ -236,17 +235,17 @@ const moneyStyle = (strong?: boolean) => (p: { value: unknown; node: { rowPinned
 /** 텍스트 열 — 소계·합계 행은 값이 null이라 빈 칸(목업 colspan 자리) */
 const txt = (field: keyof DistRow, header: string, width: number, maxWidth?: number): ColDef<DistRow> => ({
   field, headerName: header, width, maxWidth, sortable: false, cellStyle: flexCenter,
-  cellRenderer: (p: any) => (p.value == null ? null : <span className="min-w-0 truncate"><MT>{p.value}</MT></span>),
+  cellRenderer: (p: any) => (p.value == null ? null : <span className="min-w-0 truncate">{p.value}</span>),
 });
 /** 가운데 정렬 분류 텍스트(계정구분·상세구분) — 분류 라벨이지만 값이라 <MT> 유지 */
 const ctr = (field: keyof DistRow, header: string, width: number): ColDef<DistRow> => ({
   field, headerName: header, width, sortable: false, cellStyle: flexMid,
-  cellRenderer: (p: any) => (p.value == null ? null : <MT>{p.value}</MT>),
+  cellRenderer: (p: any) => (p.value == null ? null : <>{p.value}</>),
 });
 /** 날짜 열 — 날짜는 `mn()`으로 마스킹(텍스트 <MT> 아님) */
 const dt = (field: keyof DistRow, header: string, width: number): ColDef<DistRow> => ({
   field, headerName: header, width, sortable: false, cellStyle: centerNum,
-  valueFormatter: (p) => (p.value == null ? '' : mn(String(p.value))),
+  valueFormatter: (p) => (p.value == null ? '' : String(p.value)),
 });
 const amt = (field: keyof DistRow, header: string, strong?: boolean, width = 148): ColDef<DistRow> => ({
   field, headerName: header, width, sortable: false, type: 'rightAligned',
@@ -259,7 +258,7 @@ const amtBlank = (field: keyof DistRow, header: string, width = 148): ColDef<Dis
 /** 값 없으면 '-'인 텍스트 열(감액여부·비고) — 조합원 행의 ''도 '-'다(목업 `dash()`) */
 const dashTxt = (field: keyof DistRow, header: string, width: number, maxWidth?: number): ColDef<DistRow> => ({
   field, headerName: header, width, maxWidth, sortable: false, cellStyle: flexCenter,
-  cellRenderer: (p: any) => (p.value ? <span className="min-w-0 truncate"><MT>{p.value}</MT></span> : dash),
+  cellRenderer: (p: any) => (p.value ? <span className="min-w-0 truncate">{p.value}</span> : dash),
 });
 
 /* 중립 회색 칩(목업 `.tag.n`) — Tone에 중립 톤이 없어 직접 만든다.
@@ -278,7 +277,7 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
       type="button" title={hint} onClick={onClick}
       className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer tabular"
       style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      {mn(value)}
+      {String(value)}
     </button>
   );
 }
@@ -415,7 +414,6 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
-  const masked = useMask();
 
   /* 필터 — 조회기준은 툴바 칩 + 드로어가 **같은 state를 공유**한다(표시가 갈라지지 않게) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -502,8 +500,8 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
       /* NO는 축이라 비마스킹 — 소계·합계는 화면과 같은 라벨 */
       if (k === 'no') return r.id === '__grand' ? '합 계' : v == null ? '소 계' : v;
       if (v == null) return '';
-      if (MONEY.has(k)) return masked ? 0 : toUnit(v as number, unit);
-      return masked ? '' : v;
+      if (MONEY.has(k)) return toUnit(v as number, unit);
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     src.forEach((r, i) => keys.forEach((k, j) => {
@@ -545,7 +543,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
             ['기준일자 종료', fTo, () => setFTo(''), false],
           ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isText]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {isText ? <MT>{value}</MT> : mn(value)}
+              {isText ? <>{value}</> : String(value)}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -561,7 +559,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
       footerLeft={<span>{/* 총계는 그리드 표시행(조합원+소계) 기준 — shown이 같은 행 집합의 페이지 슬라이스라 분모·분자를 맞춘다 */
-        '총 ' + mn(String(displayRows.length)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}</span>}
+        '총 ' + String(displayRows.length) + '개 중 ' + String(shown) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

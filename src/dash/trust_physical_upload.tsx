@@ -15,7 +15,6 @@
    - 원문 스캐폴딩·설계메모는 옮기지 않는다. KPI 배지 행·카드뷰 없음. */
 import React, { useCallback, useMemo, useState } from 'react';
 import { UI } from './components';
-import { mn, useMask } from './mask';
 import { toast } from './ui/sonner';
 import { ReviewMarker } from './review_marker';
 import { RiskPage } from './risk_page_kit';
@@ -57,7 +56,6 @@ interface UploadPageConfig {
 const HINT = 'PDF, HWP, DOCX, XLSX, ZIP · 최대 20MB';
 
 function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: string) => void }) {
-  const masked = useMask();
   const [rows, setRows] = useState<Row[]>(cfg.table.rows);
   const [files, setFiles] = useState<string[]>([]);
   const [gp, setGp] = useState('');
@@ -102,7 +100,7 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
     toast.success('삭제되었습니다 (목업)');
   };
   const exportExcel = () => {
-    exportTables(cfg.label, [{ name: cfg.label, table: cfg.table, rows: shown }], null, masked);
+    exportTables(cfg.label, [{ name: cfg.label, table: cfg.table, rows: shown }], null);
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -120,7 +118,7 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
   return (
     <RiskPage system="수탁보고" group="자펀드 수탁" label={cfg.label} route={cfg.label} onNav={onNav}
       filters={filters} onReset={reset} contextActions={selActions}
-      footerLeft={<span>{`${ym ? `기준월 ${mn(ym)} · ` : ''}총 ${mn(String(shown.length))}건`}</span>}
+      footerLeft={<span>{`${ym ? `기준월 ${String(ym)} · ` : ''}총 ${String(shown.length)}건`}</span>}
       onExport={exportExcel} exportEnabled={!modal}>
       {cfg.isNew && <NewScreenNotice sibling="실물자료 조회(월별)(S3_98)" />}
       {/* 원문 `.uploadbox` — 제목 · 캡션 · [업로드] + 드롭존 */}

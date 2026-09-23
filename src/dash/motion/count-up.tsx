@@ -9,7 +9,6 @@
    - 화면 진입 시 1회만(useInView once). 저모션이면 즉시 최종값. */
 import React from 'react';
 import { useMotionValue, useTransform, useInView, useReducedMotion, animate, motion } from 'motion/react';
-import { mn, useMask } from '../mask';
 
 const { useEffect, useRef } = React;
 
@@ -18,7 +17,6 @@ function groupThousands(intPart: string): string {
 }
 
 export function CountUp({ value, duration = 1 }: { value: any; duration?: number }) {
-  const masked = useMask();
   const reduce = useReducedMotion();
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: '0px 0px -10% 0px' });
@@ -42,7 +40,7 @@ export function CountUp({ value, duration = 1 }: { value: any; duration?: number
     return dp != null ? `${intOut}.${dp}` : intOut;
   });
 
-  const animate_ok = !masked && single != null && Number.isFinite(target);
+  const animate_ok = single != null && Number.isFinite(target);
 
   useEffect(() => {
     if (!animate_ok) return;
@@ -53,7 +51,7 @@ export function CountUp({ value, duration = 1 }: { value: any; duration?: number
   }, [animate_ok, inView, reduce, target, duration, mvRaw]);
 
   // 애니메이션 대상이 아니면(마스크 ON·복합·비수치) 정적 mn() 그대로
-  if (!animate_ok) return <>{mn(value)}</>;
+  if (!animate_ok) return <>{String(value)}</>;
 
   return (
     <span ref={ref}>

@@ -28,7 +28,6 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, numStyle } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 드로어 컨트롤 34px SSOT — 페이지 로컬 복제 금지
@@ -140,10 +139,10 @@ const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
    166.5·124.8 로 바뀐다. 출처 값의 자릿수를 보존해야 하므로 이 화면은 2자리 상한 포매터를 쓴다.
    마스킹(mn)·null 가드는 공유 포매터와 동일 계약. */
 const ratioFmt = (p: ValueFormatterParams): string =>
-  p.value == null ? '-' : mn(Number(p.value).toLocaleString(undefined, { maximumFractionDigits: 2 }));
+  p.value == null ? '-' : String(Number(p.value).toLocaleString(undefined, { maximumFractionDigits: 2 }));
 /* 건수 포매터 — 정수 콤마. null 은 '-' */
 const countFmt = (p: ValueFormatterParams): string =>
-  p.value == null ? '-' : mn(Number(p.value).toLocaleString());
+  p.value == null ? '-' : String(Number(p.value).toLocaleString());
 
 /* 등급 셀 — 상태 표식이라 마스킹하지 않는다("축은 두고 데이터는 가린다"). 값이 없으면 빈 셀. */
 function GradeCell({ v }: { v: Grade | null }) {
@@ -165,7 +164,7 @@ const gradeCol = (field: keyof GpEwRow, header = '등급'): ColDef<GpEwRow> => (
 /* 텍스트 리프 — 행 데이터라 <MT> 마스킹(섹션 제목은 축이라 비마스킹) */
 const txtCol = (field: keyof GpEwRow, header: string, width: number): ColDef<GpEwRow> => ({
   field, headerName: header, width, minWidth: width, cellStyle: flexCenter,
-  cellRenderer: (p: any) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span>,
+  cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span>,
 });
 
 function makeColumnDefs(label1: string, label2: string): (ColDef<GpEwRow> | ColGroupDef<GpEwRow>)[] {
@@ -265,7 +264,7 @@ function AppliedChip({ label, value, onClear }: { label: string; value: string; 
   return (
     <span className="inline-flex items-center gap-1.5 font-semibold text-primary"
       style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-      <MT>{value}</MT>
+      {value}
       <button type="button" onClick={onClear} aria-label={`${label} 필터 제거`}
         className="inline-flex items-center justify-center border-0 cursor-pointer"
         style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
@@ -293,7 +292,6 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
   /* 그리드 4개의 API — 구분(kind)을 키로 보관하고 필터 변경 시 전부 onFilterChanged() 한다 */
   const apisRef = useRef<Partial<Record<GpKind, GridApi<GpEwRow>>>>({});
   const [modalRow, setModalRow] = useState<GpEwRow | null>(null);
-  const masked = useMask();
 
   /* 필터 — 모펀드·운용사는 행 필터, 기준년월은 조회 기준 컨텍스트(행을 거르지 않음) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -349,8 +347,8 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
       const body = visible[s.kind].map((r) => keys.map((k) => {
         const v = (r as any)[k];
         if (v == null) return '';
-        if (typeof v === 'number') return masked ? 0 : v;
-        return masked ? '' : String(v);
+        if (typeof v === 'number') return v;
+        return String(v);
       }));
       const ws = XLSX.utils.aoa_to_sheet([...heads, ...body]);
       /* 숫자 리프에 화면과 같은 숫자서식(정수=콤마 / 소수=2자리 상한) */
@@ -399,8 +397,8 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
       /* 페이저 없음(그리드당 1행) → footerCenter 미전달, FooterActions 에 onToggleAll 미전달(버튼 3개) */
       /* 기준년월은 선택했을 때만 앞에 붙인다(미선택이면 '총 N건 · …'로 시작) */
       footerLeft={(
-        <span>{(fYm ? `기준년월 ${mn(fYm)} · ` : '') + '총 ' + mn(String(totalShown)) + '건 · '
-          + SECTIONS.map((s) => `${s.kind} ${mn(String(visible[s.kind].length))}`).join(' · ')}</span>
+        <span>{(fYm ? `기준년월 ${String(fYm)} · ` : '') + '총 ' + String(totalShown) + '건 · '
+          + SECTIONS.map((s) => `${s.kind} ${String(visible[s.kind].length)}`).join(' · ')}</span>
       )}
       footerRight={<FooterActions onExport={exportExcel} />}>
 

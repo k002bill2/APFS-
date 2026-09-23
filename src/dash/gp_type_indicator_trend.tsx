@@ -13,7 +13,6 @@
      모펀드·운용사 유형은 원천 값이 한 벌뿐이라 `· 데이터 연동 후 적용`. 평균 카드는 원문 확정값이라 기간과 무관하게 고정.
    - 비율(%) 지표라 금액 단위 토글·엑셀이 없다(원문도 없음). 표·행 선택 없음. */
 import React, { useState } from 'react';
-import { mn } from './mask';
 import { Charts } from './charts';
 import { RiskPage } from './risk_page_kit';
 import type { FilterSpec } from './risk_page_kit';
@@ -36,7 +35,7 @@ function IndicatorPanel({ s, idx }: { s: TrendSeries; idx: number[] }) {
         <h5 className="font-bold m-0" style={{ fontSize: 14 }}>{s.name} 월별 추이</h5>
         <div className="inline-flex items-baseline gap-1.5">
           <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>{s.name} 평균</span>
-          <span className="tabular-nums font-extrabold" style={{ fontSize: 22 }}>{mn(String(s.avg))}</span>
+          <span className="tabular-nums font-extrabold" style={{ fontSize: 22 }}>{String(s.avg)}</span>
           <span className="text-caption font-semibold" style={{ fontSize: 13 }}>%</span>
         </div>
       </div>
@@ -47,7 +46,7 @@ function IndicatorPanel({ s, idx }: { s: TrendSeries; idx: number[] }) {
             labels={labels.map((l) => l.slice(2))} fullLabels={labels} data={{ v: idx.map((i) => s.data[i]) }}
             series={[{ key: 'v', name: s.name, color: s.color }]}
             height={220} unit="%" minWidth={380}
-            ariaLabel={`${s.name} 월별 추이 라인차트(원문 예시값), 평균 ${mn(String(s.avg))}%`}
+            ariaLabel={`${s.name} 월별 추이 라인차트(원문 예시값), 평균 ${String(s.avg)}%`}
             tableCaption={`${s.name} 월별 값(%)`} seriesHeader="지표" />}
     </div>
   );
@@ -71,7 +70,7 @@ export function GpTypeIndicatorTrend({ onNav }: { onNav?: (r: string) => void })
   return (
     <RiskPage group="자펀드정보" label={LABEL} route={LABEL} onNav={onNav}
       filters={filters} onReset={reset}
-      footerLeft={<span>{`운용사 유형 ${type || '전체'} · 기간 ${from ? mn(from) : '-'} ~ ${to ? mn(to) : '-'} · ${mn(String(idx.length))}개월 · 월별 값은 원문 예시(평균만 확정값)`}</span>}>
+      footerLeft={<span>{`운용사 유형 ${type || '전체'} · 기간 ${from ? String(from) : '-'} ~ ${to ? String(to) : '-'} · ${String(idx.length)}개월 · 월별 값은 원문 예시(평균만 확정값)`}</span>}>
       {TREND_SECTIONS.map((sec, i) => (
         <section key={sec.id} aria-labelledby={`trend-${sec.id}`}>
           <SectionHead n={i + 1} title={sec.title} cap={sec.chartTitle} />

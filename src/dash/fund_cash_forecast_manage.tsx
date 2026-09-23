@@ -30,7 +30,6 @@ import type { CSSProperties, ReactNode } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마·포매터 SSOT
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
@@ -111,7 +110,7 @@ const Z_BY_UNIT: Record<Unit, string> = { 원: '#,##0', 백만원: '#,##0.0', �
 const moneyFmt = (p: ValueFormatterParams): string => {
   if (p.value == null) return '-';
   const unit = (p.context as { unit?: Unit } | undefined)?.unit ?? DEFAULT_UNIT;
-  return mn(unitText(p.value as number, unit));
+  return String(unitText(p.value as number, unit));
 };
 
 /* ──────────────────────────────
@@ -138,12 +137,12 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof CashForecastRow, header: string, width: number, center?: boolean): ColDef<CashForecastRow> => ({
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <MT>{p.value}</MT>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : <>{p.value}</>),
 });
 /* 일시 — 합계행은 '-'(목업 tfoot), 값 없음도 '-'. 숫자 문자열이라 mn() 마스킹 */
 const date = (field: keyof CashForecastRow, header: string, width = 128): ColDef<CashForecastRow> => ({
   field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
-  valueFormatter: (p) => (p.node?.rowPinned ? '-' : p.value == null ? '-' : mn(p.value)),
+  valueFormatter: (p) => (p.node?.rowPinned ? '-' : p.value == null ? '-' : String(p.value)),
 });
 /* 금액 — 우측정렬 + 단위 반영 포매터. numStyle()은 셀마다 호출되는 함수(0=muted, 합계행 자동 bold) */
 const amt = (field: keyof CashForecastRow, header: string, width = 150): ColDef<CashForecastRow> => ({
@@ -261,7 +260,6 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  const masked = useMask();
 
   /* 필터 — 계정구분은 툴바 칩(드로어 select와 state 공유), 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -310,8 +308,8 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
     const body = src.map((r, i) => keys.map((k) => {
       const v = (r as any)[k];
       if (k === 'no') return i === src.length - 1 ? '합계' : v;   // No는 행 번호(축)라 마스킹 대상 아님
-      if (MONEY.has(k)) return v == null ? '' : masked ? 0 : toUnit(v as number, unit);
-      return masked ? '' : (v ?? '');
+      if (MONEY.has(k)) return v == null ? '' : toUnit(v as number, unit);
+      return (v ?? '');
     }));
     const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body]);
     /* 금액 셀에 단위별 숫자서식 — null(빈 셀)은 건너뛴다 */
@@ -349,7 +347,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
             ['자펀드', fFund, () => setFFund('')],
           ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -364,7 +362,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

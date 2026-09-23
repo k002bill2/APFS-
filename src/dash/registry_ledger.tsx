@@ -21,7 +21,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { toast } from './ui/sonner';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu';
 import { ReviewMarker } from './review_marker';
@@ -61,7 +60,6 @@ function OutputMenu({ onPick }: { onPick: (k: 'print' | 'history') => void }) {
 }
 
 export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void }) {
-  const masked = useMask();
   const [rows, setRows] = useState<Row[]>(LEDGER_TABLE.rows);
   const [name, setName] = useState('');
   const [inactive, setInactive] = useState<string>(INACTIVE_OPTIONS[0]);
@@ -119,7 +117,7 @@ export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void })
     { label: '비활성원부', kind: 'radio', value: inactive, onChange: changeInactive, options: INACTIVE_OPTIONS, chip: applied },
   ];
   const exportExcel = () => {
-    exportTables(LABEL, [{ name: LABEL, table: LEDGER_TABLE, rows: shown }], null, masked);
+    exportTables(LABEL, [{ name: LABEL, table: LEDGER_TABLE, rows: shown }], null);
     toast.success('Excel로 내보냈습니다');
   };
   const close = () => setModal(null);
@@ -135,7 +133,7 @@ export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void })
           <ReviewMarker rec={LEDGER_UPLOAD_NOTE.rec} dat={LEDGER_UPLOAD_NOTE.dat} label="등록원부업로드" />
         </span>
       </>}
-      footerLeft={<span>{applied && <>{name ? <><MT>{name}</MT> · </> : ''}비활성원부 {inactive} · </>}총 {mn(String(shown.length))}건</span>}
+      footerLeft={<span>{applied && <>{name ? <>{name} · </> : ''}비활성원부 {inactive} · </>}총 {String(shown.length)}건</span>}
       onExport={exportExcel} exportEnabled={!modal}>
       <ReadGrid table={LEDGER_TABLE} rows={shown} ariaLabel={LABEL} selectable onSelect={onSelect} selectedIds={selIds} apiRef={apiRef} onRowOpen={openEdit} />
       {modal?.kind === 'delete' && <DeleteDialog title="등록원부 삭제" count={sel.length} onConfirm={remove} onClose={() => setModal(null)} />}

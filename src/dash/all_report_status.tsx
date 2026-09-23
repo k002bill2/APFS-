@@ -24,7 +24,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { Cell, controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -115,7 +114,6 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
   const [fFrom, setFFrom] = useState('');
   const [fTo, setFTo] = useState('');
   const [fText, setFText] = useState('');
-  const masked = useMask();
 
   const tab = findTab(tabKey);
   const clearFilters = () => { setFGp(''); setFSubFund(''); setFFrom(''); setFTo(''); setFText(''); };
@@ -132,7 +130,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
     [tab, fSubFund, fFrom, fTo, fText]);
   const gpOptions = useMemo(() => distinctValues(tab, 'gp'), [tab]);
   const subFundOptions = useMemo(() => distinctValues(tab, 'subFund'), [tab]);
-  const chipCount = (gp: string) => mn(String(gp ? facet.filter((r) => String(r.gp) === gp).length : facet.length));
+  const chipCount = (gp: string) => String(gp ? facet.filter((r) => String(r.gp) === gp).length : facet.length);
 
   /* 원문 tfoot(소계·합계)은 **캡처한 리터럴**이지 우리가 계산한 값이 아니다 —
      `합계` 행의 약정총액(32,000,000,000)은 12행의 합이 아니라 조합 약정액이라 필터링된
@@ -154,7 +152,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
     const cols = tab.columns.filter((c) => c.key !== 'no');
     const head = cols.map((c) => (c.type === 'amount' ? amountHeader(c.label, unit) : c.label));
     const body = [...visible, ...(pinnedBottom ?? [])].map((r) => cols.map((c) => {
-      if (masked) return '';   // 마스크 ON이면 엑셀에도 값을 내보내지 않는다(마스크 경계 = 엑셀까지)
+         // 마스크 ON이면 엑셀에도 값을 내보내지 않는다(마스크 경계 = 엑셀까지)
       const v = r[c.key];
       // 우측정렬 금액만 숫자 셀 — 화면에 보이는 단위를 그대로 따른다(헤더가 단위를 명시한다)
       return c.type === 'amount' && typeof v === 'number' ? Number(formatUnit(v, unit).replace(/,/g, '')) : String(v ?? '');
@@ -164,7 +162,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, tab.sheet);
     XLSX.writeFile(wb, `자펀드 전체 보고현황_${tab.label}.xlsx`);
     toast.success(`${tab.label} 표를 Excel로 내보냈습니다`);
-  }, [tab, visible, unit, masked, pinnedBottom]);
+  }, [tab, visible, unit, pinnedBottom]);
 
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
@@ -193,7 +191,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
           ))}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -203,7 +201,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
       )}
       toolbarRight={<>
         {/* 표가 바뀌었음을 스크린리더에 알린다 — SegTabs는 시각적으로만 바뀌고 표는 통째로 교체된다 */}
-        <span className="text-caption" style={{ fontSize: 12 }} aria-live="polite">{tab.label} <b className="text-foreground">{mn(String(visible.length))}</b>건</span>
+        <span className="text-caption" style={{ fontSize: 12 }} aria-live="polite">{tab.label} <b className="text-foreground">{String(visible.length)}</b>건</span>
         {hasAmount && <>
           <span className="text-caption" style={{ fontSize: 12 }}>금액 단위</span>
           <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />
@@ -212,7 +210,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
       footerLeft={<span>
-        {`모펀드 ${MOTHER_FUND} · ${tab.label} 총 ` + mn(String(tab.rows.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중'}
+        {`모펀드 ${MOTHER_FUND} · ${tab.label} 총 ` + String(tab.rows.length) + '건 중 ' + String(visible.length) + '건 표시 중'}
         {tab.pinnedBottom && filtered && ' · 필터 적용 중이라 원문 소계·합계는 숨김(전체 기준 값이라 부분집합에 맞지 않음)'}
       </span>}
       footerRight={<FooterActions onExport={exportExcel} />}>

@@ -9,7 +9,6 @@
    - 검색박스(모펀드 · 기준년도) → 상세필터 드로어. 표가 원문 고정 5개 연도(2021~2025)라 두 조건 모두 `· 데이터 연동 후 적용`.
    - 엑셀 = 표 2장 → 시트 2장(푸터 내보내기 + ⌥D). 금액이 없어 단위 토글 없음. 행 선택 없음. */
 import React, { useState } from 'react';
-import { mn, useMask } from './mask';
 import { toast } from './ui/sonner';
 import { RiskPage } from './risk_page_kit';
 import type { FilterSpec } from './risk_page_kit';
@@ -25,7 +24,7 @@ const REST = 'var(--border-strong)';
 function GradeDonut({ year, pct }: { year: number; pct: number }) {
   const r = 26, c = 2 * Math.PI * r, seg = (c * pct) / 100;
   /* 접근名·툴팁도 행 데이터 — 마스크 ON 이면 mn() 으로 가린다(화면 숫자만 가리고 aria 로 새지 않게) */
-  const p = mn(String(pct)), rest = mn(String(100 - pct));
+  const p = String(pct), rest = String(100 - pct);
   return (
     <figure className="flex flex-col items-center gap-1 m-0">
       <svg width={72} height={72} viewBox="0 0 72 72" role="img" aria-label={`${year}년 정상 ${p}%, 그 외(주의·경고) ${rest}%`}>
@@ -35,11 +34,11 @@ function GradeDonut({ year, pct }: { year: number; pct: number }) {
           strokeDasharray={`0 1 ${Math.max(0, seg - 2).toFixed(2)} ${c.toFixed(2)}`} />
         <circle cx={36} cy={36} r={r} fill="none" stroke={REST} strokeWidth={10} transform="rotate(-90 36 36)"
           strokeDasharray={`0 ${(seg + 1).toFixed(2)} ${Math.max(0, c - seg - 2).toFixed(2)} ${c.toFixed(2)}`} />
-        <text x={36} y={40} textAnchor="middle" className="tabular-nums font-extrabold" style={{ fontSize: 15, fill: 'var(--foreground)' }}>{mn(String(pct))}</text>
+        <text x={36} y={40} textAnchor="middle" className="tabular-nums font-extrabold" style={{ fontSize: 15, fill: 'var(--foreground)' }}>{String(pct)}</text>
       </svg>
       <figcaption className="text-center" style={{ fontSize: 12 }}>
         <div className="font-bold">{year}</div>
-        <div className="text-caption">정상 {mn(String(pct))}</div>
+        <div className="text-caption">정상 {String(pct)}</div>
       </figcaption>
     </figure>
   );
@@ -69,7 +68,6 @@ function GradeSection({ n, table }: { n: number; table: TableMeta }) {
 }
 
 export function SubfundGradeTrend({ onNav }: { onNav?: (r: string) => void }) {
-  const masked = useMask();
   const [mf, setMf] = useState<string>(MF_OPTIONS[0]);
   const [year, setYear] = useState(GRADE_BASE_YEAR);
   const reset = () => { setMf(MF_OPTIONS[0]); setYear(GRADE_BASE_YEAR); };
@@ -79,14 +77,14 @@ export function SubfundGradeTrend({ onNav }: { onNav?: (r: string) => void }) {
     { label: '기준년도', kind: 'year', value: year, onChange: setYear, noop: true },
   ];
   const exportExcel = () => {
-    exportTables(LABEL, [{ name: FUND_GRADE.title!, table: FUND_GRADE }, { name: MGR_GRADE.title!, table: MGR_GRADE }], null, masked);
+    exportTables(LABEL, [{ name: FUND_GRADE.title!, table: FUND_GRADE }, { name: MGR_GRADE.title!, table: MGR_GRADE }], null);
     toast.success('Excel로 내보냈습니다');
   };
 
   return (
     <RiskPage group="자펀드정보" label={LABEL} route={LABEL} onNav={onNav}
       filters={filters} onReset={reset}
-      footerLeft={<span>{`기준년도 ${year ? mn(year) : '-'} · ${GRADE_YEARS[0]}~${GRADE_YEARS[GRADE_YEARS.length - 1]}년 등급별 값`}</span>}
+      footerLeft={<span>{`기준년도 ${year ? String(year) : '-'} · ${GRADE_YEARS[0]}~${GRADE_YEARS[GRADE_YEARS.length - 1]}년 등급별 값`}</span>}
       onExport={exportExcel}>
       <GradeSection n={1} table={FUND_GRADE} />
       <GradeSection n={2} table={MGR_GRADE} />

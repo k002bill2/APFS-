@@ -38,7 +38,6 @@ import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 �
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -127,9 +126,9 @@ const FILTER_NOTES: Record<'mgr' | 'rt', ReviewNote> = {
 const CONFIRM_HEADER = reviewInnerHeader(CONFIRM_NOTE);
 
 /* 텍스트 셀(운용사·자펀드) — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다 */
-const textCell = (p: { value: string }) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span>;
+const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
 /* 날짜성/라벨 값은 mn() — ⚠ null 가드가 **mn보다 먼저**다(mn(null)은 문자열 'null'이 된다) */
-const mnFmt = (p: { value: unknown }) => (p.value == null ? '' : mn(p.value));
+const mnFmt = (p: { value: unknown }) => (p.value == null ? '' : String(p.value));
 
 /* 확정여부 셀 — 목업 `.gsel` 네이티브 select. 보고 내역이 있는 행만 렌더된다.
    ⚠ 높이 30px: `lineHeight`와 `minHeight`를 함께 줘야 Chrome UA 메트릭에서 어긋나지 않는다.
@@ -183,7 +182,7 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void):
      ⚠ 첨부파일명 표시 전용(클릭 이동 없음). 불릿 `• `은 장식이라 비마스킹, 파일명은 <MT>. */
   { field: 'file', headerName: '보고서', width: 180, minWidth: 150, maxWidth: 520, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value
-      ? <span className="min-w-0 truncate">{'• '}<MT>{p.value}</MT></span>
+      ? <span className="min-w-0 truncate">{'• '}{p.value}</span>
       : <span style={{ color: 'var(--muted-foreground)' }}>보고 내역이 없습니다.</span>) },
   { field: 'updatedAt', headerName: '수정일시', width: 180,
     cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: mnFmt },
@@ -261,7 +260,6 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
   const [rows, setRows] = useState<RegularReportRow[]>(DEMO);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
-  const masked = useMask();
 
   /* 행 패치 — 확정여부 select가 쓴다. useCallback + 함수형 업데이트로 **안정**해야 한다
      (컬럼 정의를 deps []로 고정하므로 불안정 함수를 캡처하면 낡은 값을 붙든다). */
@@ -334,8 +332,8 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
       const v = c.get(r);
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : v;
+      if (typeof v === 'number') return v;
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '보고서' ? 54 : c.header === '자펀드' || c.header === '운용사' ? 26 : c.header === '수정일시' ? 22 : 12 }));
@@ -368,7 +366,7 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
             ['기준년월 종료', fTo, () => setFTo(''), false],
           ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isText]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {isText ? <MT>{value}</MT> : mn(value)}
+              {isText ? <>{value}</> : String(value)}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -380,7 +378,7 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

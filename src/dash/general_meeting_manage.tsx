@@ -23,7 +23,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -136,7 +135,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof MeetingRow, header: string, width: number, maxWidth: number, minWidth: number, center?: boolean): ColDef<MeetingRow> => ({
   field, headerName: header, width, maxWidth, minWidth, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => <MT>{p.value}</MT>,
+  cellRenderer: (p: any) => <>{p.value}</>,
 });
 
 /* 고정폭(내용 맞춤 불필요·헤더 라벨 폭이 하한) */
@@ -152,7 +151,7 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
       type="button" title={hint} onClick={onClick}
       className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
       style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      <MT>{value}</MT>
+      {value}
     </button>
   );
 }
@@ -210,7 +209,7 @@ const makeColumns = (
     cellRenderer: (p: any) => <StatusBadge tone={STATUS_TONE[p.value as MeetingStatus]} label={p.value} size="lg" dot={false} /> },
   txt('gt', '총회구분', 100, 100, 100, true),
   { field: 'gdate', headerName: '총회일자', ...fixed(112), cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
-    valueFormatter: (p) => mn(p.value) },
+    valueFormatter: (p) => String(p.value) },
   /* 제목 — 링크 셀. 내용 맞춤(AUTO_SIZE_CONTENT)이라 흡수 컬럼 장치는 없고, 긴 총회명은 420 상한에서 truncate. */
   { field: 'title', headerName: '제목', width: 210, minWidth: 180, maxWidth: 420, cellStyle: flexCenter,
     cellRenderer: (p: any) => <LinkCell value={p.value} hint="총회 상세 보기" onClick={() => p.data && openDetail(p.data.id)} /> },
@@ -293,7 +292,6 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
-  const masked = useMask();
 
   /* 행 패치 — 항상 새 객체를 만들어 DEMO 원본을 건드리지 않는다(immutability) */
   const patchRow = useCallback((id: string, patch: Partial<MeetingRow>) => {
@@ -366,8 +364,8 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
       const v = c.get(r);
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : v;
+      if (typeof v === 'number') return v;
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '제목' || c.header === '안건' ? 32 : c.header === '자펀드' || c.header === '운용사' ? 26 : 14 }));
@@ -401,7 +399,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
             ['총회기간 종료', fTo, () => setFTo(''), true],
           ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isDate]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {isDate ? mn(value) : <MT>{value}</MT>}
+              {isDate ? String(value) : <>{value}</>}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -413,7 +411,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

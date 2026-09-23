@@ -4,7 +4,6 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Icon } from './icons';
 import { Charts } from './charts';
-import { mn, MT, useMask } from './mask';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import { Progress } from './ui/progress';
@@ -54,27 +53,25 @@ function StatusBadge({ tone = "success", label, icon, size = "md", dot = true }:
 
 /* ---- DeltaBadge ---- */
 function DeltaBadge({ value, label, invert }: { value: any; label?: React.ReactNode; invert?: boolean }) {
-  useMask();
   const good = invert ? value < 0 : value > 0;
   const c = good ? "var(--success-text)" : "var(--danger-text)";   /* 델타 숫자=텍스트라 a11y -text 토큰(칠 아님) */
   const up = value > 0;
   return (
     <span
       className="inline-flex items-center gap-1 text-[12.5px] font-bold"
-      style={{ color: c }}><Icon name={up ? "trending" : "trending-down"} size={14} stroke={2.5} /><span className="tabular">{(up ? "+" : "") + mn(value)}</span>{label && <span className="text-caption font-medium text-[11.5px]"><MT>{label}</MT></span>}</span>
+      style={{ color: c }}><Icon name={up ? "trending" : "trending-down"} size={14} stroke={2.5} /><span className="tabular">{(up ? "+" : "") + String(value)}</span>{label && <span className="text-caption font-medium text-[11.5px]">{label}</span>}</span>
   );
 }
 
 /* ---- StatCard ---- */
 function StatCard({ kpi, onClick, emphasis }: { kpi: any; onClick?: () => void; emphasis?: boolean }) {
-  useMask();
   const c = kpi.accent;
   return (
     <button
       onClick={onClick}
       className={cx("stat-card relative text-left w-full flex flex-col gap-2.5 overflow-hidden",
         "rounded-card border border-border bg-card px-[18px] py-4 font-[inherit] text-[inherit] transition-shadow duration-200",
-        emphasis ? "shadow-md" : "shadow-sm", onClick ? "cursor-pointer" : "cursor-default")}><div className="flex items-center justify-between gap-2"><div className="flex items-center gap-[9px] min-w-0"><ColorChip icon={kpi.icon} color={c} size={32} iconSize={18} /><span className="t-label whitespace-nowrap overflow-hidden text-ellipsis"><MT>{kpi.label}</MT></span></div>{kpi.fr && <span className="t-caption text-[10px] opacity-80 whitespace-nowrap"><MT>{kpi.fr}</MT></span>}</div><div className="flex items-end gap-2"><div className="flex-1 min-w-0"><div className="flex items-baseline gap-1 whitespace-nowrap"><span
+        emphasis ? "shadow-md" : "shadow-sm", onClick ? "cursor-pointer" : "cursor-default")}><div className="flex items-center justify-between gap-2"><div className="flex items-center gap-[9px] min-w-0"><ColorChip icon={kpi.icon} color={c} size={32} iconSize={18} /><span className="t-label whitespace-nowrap overflow-hidden text-ellipsis">{kpi.label}</span></div>{kpi.fr && <span className="t-caption text-[10px] opacity-80 whitespace-nowrap">{kpi.fr}</span>}</div><div className="flex items-end gap-2"><div className="flex-1 min-w-0"><div className="flex items-baseline gap-1 whitespace-nowrap"><span
               className="t-display tabular"
               style={{ fontSize: emphasis ? 24 : 22, letterSpacing: "-.01em" }}><CountUp value={kpi.value} /></span><span className="text-[12.5px] font-semibold text-muted-foreground">{kpi.unit}</span></div><div className="mt-[5px]"><DeltaBadge value={kpi.delta} label={kpi.deltaLabel} invert={kpi.invertDelta} /></div></div><div className="w-[78px] shrink-0"><Sparkline data={kpi.trend} color={c} id={kpi.id} height={38} /></div></div>{kpi.progress != null && <div className="h-[5px] rounded-full bg-muted overflow-hidden mt-0.5"><div
           className="h-full rounded-full"
@@ -111,7 +108,7 @@ function ChartCard({ title, sub, icon, accent = "var(--primary)", right, childre
     <Root
       className={cx(span && "dcol-" + span, "flex flex-col rounded-card border border-border bg-card shadow-sm min-w-0 overflow-hidden")}
       {...(reveal ? revealProps : {})}><header
-        className="flex items-center justify-between gap-3 px-[18px] py-[14px] border-b border-border"><div className="flex items-center gap-2.5 min-w-0"><ColorChip icon={icon} color={accent} size={34} iconSize={18} /><div className="min-w-0"><div className="t-cardtitle whitespace-nowrap overflow-hidden text-ellipsis"><MT>{title}</MT></div>{sub && <div className="t-caption mt-px"><MT>{sub}</MT></div>}</div></div>{right && <div className="flex items-center gap-1.5 shrink-0">{right}</div>}</header><div className="p-[18px] flex-1" style={{ minHeight: minH }}>{children}</div>{footer && <div
+        className="flex items-center justify-between gap-3 px-[18px] py-[14px] border-b border-border"><div className="flex items-center gap-2.5 min-w-0"><ColorChip icon={icon} color={accent} size={34} iconSize={18} /><div className="min-w-0"><div className="t-cardtitle whitespace-nowrap overflow-hidden text-ellipsis">{title}</div>{sub && <div className="t-caption mt-px">{sub}</div>}</div></div>{right && <div className="flex items-center gap-1.5 shrink-0">{right}</div>}</header><div className="p-[18px] flex-1" style={{ minHeight: minH }}>{children}</div>{footer && <div
         className="px-[18px] py-2.5 border-t border-border"
         style={{ background: "color-mix(in srgb,var(--muted) 55%,transparent)" }}>{footer}</div>}</Root>
   );

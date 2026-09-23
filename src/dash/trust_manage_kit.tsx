@@ -11,7 +11,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import type { GridApi } from 'ag-grid-community';
 import { UI } from './components';
-import { mn } from './mask';
 import { toast } from './ui/sonner';
 import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { PageSchema } from './schemas/types';
@@ -45,7 +44,7 @@ export function SelBar({ count, single, bulk, onDelete, onClear }: {
   if (count === 0) return null;
   return (
     <>
-      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(count))}건 선택됨</span>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(count)}건 선택됨</span>
       {count === 1 && single}
       {bulk}
       {onDelete && <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={onDelete}>삭제</Button>}
@@ -62,7 +61,7 @@ export function DeleteDialog({ title, count, onConfirm, onClose }: { title: stri
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>
-            선택한 <b className="text-foreground">{mn(String(count))}건</b>을 삭제하시겠습니까? 삭제된 자료는 복구할 수 없습니다.
+            선택한 <b className="text-foreground">{String(count)}건</b>을 삭제하시겠습니까? 삭제된 자료는 복구할 수 없습니다.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

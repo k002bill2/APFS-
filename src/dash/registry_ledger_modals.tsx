@@ -12,7 +12,6 @@
 import React, { useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { toast } from './ui/sonner';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
 import { SchemaField, isPlainWrapControl } from './schemas/renderers';
@@ -48,7 +47,7 @@ function Modal({ title, target, badge, wide, onClose, footer, children, dlgRef }
       <DialogContent className={`${wide ? 'max-w-[960px]' : 'max-w-[560px]'} max-h-[90vh]`}>
         <DialogHeader className="px-[46px]">
           <div className="flex flex-1 items-center gap-2.5 min-w-0 pr-8">
-            <DialogTitle className="min-w-0 truncate">{title}{target && <> — <MT>{target}</MT></>}</DialogTitle>
+            <DialogTitle className="min-w-0 truncate">{title}{target && <> — {target}</>}</DialogTitle>
             {badge && <span className="shrink-0 font-bold" style={{ fontSize: 11.5, padding: '3px 9px', borderRadius: 99, background: 'var(--muted)', color: 'var(--muted-foreground)' }}>{badge}</span>}
           </div>
           <DialogDescription className="sr-only">{title}</DialogDescription>
@@ -134,7 +133,7 @@ function MiniTable({ heads, rows, act, label, right = [], empty = '변경 이력
                   <Checkbox checked={sel.includes(ri)} onCheckedChange={(c) => toggle(ri, c === true)} aria-label={`${label} ${ri + 1}번 행 선택`} />
                 </td>
                 {r.map((v, i) => <td key={i} className={`border border-border ${align(i)} ${right.includes(i) ? 'tabular-nums' : ''}`} style={cell}>
-                  {/^[\d,.\-]+$/.test(v) ? mn(v) : <MT>{v}</MT>}
+                  {/^[\d,.\-]+$/.test(v) ? String(v) : <>{v}</>}
                 </td>)}
               </tr>
             ))}
@@ -212,7 +211,7 @@ export function LedgerFormModal({ mode, row, onSave, onClose }: { mode: 'new' | 
 
   return (
     <Modal dlgRef={dlgRef} wide onClose={onClose} title={edit ? '등록원부 수정' : '등록원부 입력'}
-      badge={edit ? <>등록번호 <MT>{v.regno}</MT> · 잠금</> : '신규 · PK 편집'}
+      badge={edit ? <>등록번호 {v.regno} · 잠금</> : '신규 · PK 편집'}
       footer={<><Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button><Button variant="primary" size="sm" onClick={save}>저장</Button></>}>
       {HIST_SECTIONS.map((s) => (
         <Section key={s.key} title={s.title} actions={<Button variant="outline" size="sm" leadingIcon="plus" onClick={() => addHist(s)}>추가</Button>}>
@@ -377,7 +376,7 @@ export function LedgerIssueHistoryModal({ onClose }: { onClose: () => void }) {
           <th scope="col" className="border border-border bg-[color:var(--grid-header)] font-bold text-center" style={cell}>발급일자</th>
         </tr></thead>
         <tbody>{ISSUE_HISTORY.map((h) => (
-          <tr key={h.no}><td className="border border-border text-center" style={cell}>{h.no}</td><td className="border border-border text-center" style={cell}>{mn(h.date)}</td></tr>
+          <tr key={h.no}><td className="border border-border text-center" style={cell}>{h.no}</td><td className="border border-border text-center" style={cell}>{String(h.date)}</td></tr>
         ))}</tbody>
       </table>
     </Modal>

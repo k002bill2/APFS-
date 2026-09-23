@@ -19,7 +19,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { UI } from './components';
 import { GridFrame, FooterActions } from './grid_frame';
-import { mn, useMask } from './mask';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { ReviewMarker } from './review_marker';
@@ -91,7 +90,7 @@ function BlockMatrix({ rows, headers, head, unit }: { rows: MatrixRow[]; headers
               </th>
               {r.values.map((v, i) => (
                 <td key={headers[i]} className={`${TD} text-right tabular ${total ? 'font-bold bg-muted' : ''}`} style={PAD}>
-                  {mn(String(fmtVal(v, r.block === '투자금액', unit)))}
+                  {String(fmtVal(v, r.block === '투자금액', unit))}
                 </td>
               ))}
             </tr>
@@ -132,7 +131,7 @@ function RegionTable({ rows, unit }: { rows: RegionRow[]; unit: StatUnit }) {
               {/* values = [투자건수, 건수비율, 투자금액, 금액비율] — 인덱스 2만 금액이라 환산 대상이다 */}
               {r.values.map((v, i) => (
                 <td key={i} className={`${TD} text-right tabular ${total ? 'font-bold bg-muted' : ''}`} style={PAD}>
-                  {mn(String(fmtVal(v, i === 2, unit)))}
+                  {String(fmtVal(v, i === 2, unit))}
                 </td>
               ))}
             </tr>
@@ -146,7 +145,6 @@ function RegionTable({ rows, unit }: { rows: RegionRow[]; unit: StatUnit }) {
 export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) {
   const [view, setView] = useState<ViewKey>(VIEWS[0].key);
   const [unit, setUnit] = useState<StatUnit>('억원');   // 원문 기본값 = 저장 base
-  const masked = useMask();
 
   const isMatrix = view !== 'region';
   // 두 블록(투자건수·투자금액)은 **함께** 그린다 — 원문이 그렇고, 하나만 남기면 보고서 절반이 사라진다.
@@ -161,14 +159,14 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
       ? ['구분', '연도', ...headers]
       : ['NO', '소재지', ...REGION_GROUPS.flatMap((g) => g.children.map((c) => `${g.label} ${c}`))];
     const body = isMatrix
-      ? rows.map((r) => [r.block, r.label, ...r.values.map((v) => (masked ? '' : fmtVal(v, r.block === '투자금액', unit)))])
-      : REGION_ROWS.map((r) => [r.no, r.region, ...r.values.map((v, i) => (masked ? '' : fmtVal(v, i === 2, unit)))]);
+      ? rows.map((r) => [r.block, r.label, ...r.values.map((v) => (fmtVal(v, r.block === '투자금액', unit)))])
+      : REGION_ROWS.map((r) => [r.no, r.region, ...r.values.map((v, i) => (fmtVal(v, i === 2, unit)))]);
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, meta.label);
     XLSX.writeFile(wb, `투자실적현황(투자기업)_${meta.label}_${unit}.xlsx`);
     toast.success(`${meta.label} 표를 Excel로 내보냈습니다 (단위: ${unit})`);
-  }, [isMatrix, headers, rows, meta, unit, masked]);
+  }, [isMatrix, headers, rows, meta, unit]);
 
   return (
     <GridFrame

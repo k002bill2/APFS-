@@ -41,7 +41,6 @@ import { format } from 'date-fns';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -118,11 +117,11 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 /* 텍스트 N/A 는 '-'(숫자 N/A 의 null 규약과 다른 축 — 이 화면엔 숫자 컬럼이 없다).
    flex 셀은 AG Grid 기본 ellipsis 가 안 먹으므로 내부 span 에 truncate 를 준다. */
 const textCell = (p: { value?: string }) => (p.value
-  ? <span className="min-w-0 truncate"><MT>{p.value}</MT></span>
+  ? <span className="min-w-0 truncate">{p.value}</span>
   : <span className="text-muted-foreground">-</span>);
 const kindCell = (p: { value: ShareholderKind }) => <StatusBadge tone={KIND_TONE[p.value]} label={p.value} size="lg" dot={false} />;
 /* 날짜 셀 — 행 데이터(축이 아니다)라 mn(). 빈 값은 '-' */
-const dateFmt = (p: { value?: string }) => (p.value ? mn(p.value) : '-');
+const dateFmt = (p: { value?: string }) => (p.value ? String(p.value) : '-');
 
 const txt = (field: keyof ShareholderRow, headerName: string, flex: number, minWidth: number, center?: boolean): ColDef<ShareholderRow> => ({
   field, headerName, flex, minWidth, width: minWidth, cellStyle: center ? flexMid : flexCenter, cellRenderer: textCell,
@@ -131,16 +130,8 @@ const date = (field: keyof ShareholderRow, headerName: string, flex: number, min
   field, headerName, flex, minWidth, width: minWidth, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: dateFmt,
 });
 
-/* 변동내역 툴팁 — 긴 문장이 잘렸을 때 전체를 보게 한다.
-   ⚠ `tooltipField` 를 그대로 쓰지 않는다: 툴팁은 `<MT>` 를 우회해 **마스크 ON 에서 실값이 샌다**
-     (이 저장소의 명시 규약 — apfs_contribution_manage·fund_member_manage·member_info_manage 등 7개 파일 주석).
-     mask.tsx 가 `_on` 을 `documentElement.dataset.mask` 로 투영해 두므로(SSOT 투영) 그 값을 보고
-     마스크 ON 이면 툴팁 자체를 비운다. 현재 마스크는 OFF 라 실동작은 tooltipField 와 동일하다. */
-const contTooltip = (p: { value?: string }): string | null => (
-  /* ⚠ 마스크 ON 은 `''` 가 아니라 **null** 을 돌려준다 — 빈 문자열은 AG Grid 버전에 따라
-     '빈 툴팁 상자'로 렌더될 수 있고, null 만이 명확한 억제 신호다. */
-  (typeof document !== 'undefined' && document.documentElement.dataset.mask === 'on') ? null : (p.value || null)
-);
+/* 변동내역 툴팁 — 긴 문장이 잘렸을 때 전체를 보게 한다. 빈 값은 null(빈 툴팁 상자 방지) */
+const contTooltip = (p: { value?: string }): string | null => p.value || null;
 
 const COLUMNS: ColDef<ShareholderRow>[] = [
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
@@ -252,7 +243,6 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
-  const masked = useMask();
 
   /* 앱-스코프 단축키. 모달이 떠 있는 동안에는 등록(이중 열림)·내보내기(모달 위 다운로드)를 막는다. */
   useHotkey(HOTKEYS.register.combo, () => openCreate(), { enabled: modal === null });
@@ -362,7 +352,7 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
     setRows((prev) => prev.filter((r) => !ids.has(r.id)));
     apiRef.current?.deselectAll();
     setModal(null);
-    toast.success(`${mn(String(ids.size))}건 삭제되었습니다`);
+    toast.success(`${String(ids.size)}건 삭제되었습니다`);
   };
   /* 해제등록 — 목업은 토스트만 띄우지만 우리는 상태를 들고 있으므로 실제로 전이시킨다(파일 상단 '한계' 참조).
      불변 갱신(map + 스프레드) — 원본 배열·행 객체를 mutate 하지 않는다. */
@@ -380,8 +370,8 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
       const v = c.get(r);
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : v;
+      if (typeof v === 'number') return v;
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '변동내역' ? 36 : c.header === '운용사' ? 26 : c.header === 'No' ? 6 : 14 }));
@@ -399,9 +389,9 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
   /* 적용 필터 칩 — 항목별 개별 칩, **값만 표시**(항목명 접두사 없음) + ×. 값은 <MT>·날짜는 mn().
      기간은 한쪽만 채워도 칩이 뜬다(빈 쪽은 열린 경계로 표시). */
   const chips = ([
-    { key: '검색어', on: !!fText, value: <MT>{fText}</MT>, clear: () => setFText('') },
-    { key: '운용사', on: !!fGp, value: <MT>{fGp}</MT>, clear: () => setFGp('') },
-    { key: '기간', on: !!(fFrom || fTo), value: `${fFrom ? mn(fFrom) : ''} ~ ${fTo ? mn(fTo) : ''}`, clear: () => { setFFrom(''); setFTo(''); } },
+    { key: '검색어', on: !!fText, value: <>{fText}</>, clear: () => setFText('') },
+    { key: '운용사', on: !!fGp, value: <>{fGp}</>, clear: () => setFGp('') },
+    { key: '기간', on: !!(fFrom || fTo), value: `${fFrom ? String(fFrom) : ''} ~ ${fTo ? String(fTo) : ''}`, clear: () => { setFFrom(''); setFTo(''); } },
   ] as { key: string; on: boolean; value: React.ReactNode; clear: () => void }[]).filter((c) => c.on);
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다.
@@ -410,7 +400,7 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
      수정·삭제는 목업엔 없지만 2026-09-23 사용자 결정(형제 4화면 버튼 구성 통일). */
   const selActions = selCount > 0 ? (
     <>
-      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {/* 수정은 **단건 체크일 때만**(2026-09-23 사용자 결정). openEdit 안의 1건 가드는 방어로 남긴다. */}
       {selCount === 1 && <Button variant="primary" size="sm" leadingIcon="file" onClick={openEdit}>수정</Button>}
       {/* 삭제는 구분(등록/해제)과 무관하게 항상 노출 */}
@@ -447,7 +437,7 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={openCreate}>주주변동 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

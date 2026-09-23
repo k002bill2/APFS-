@@ -20,7 +20,6 @@ import type { CSSProperties } from 'react';
 import { format } from 'date-fns';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -57,25 +56,25 @@ const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 
 type GroupView = CodeGroup & { upName: string; count: number };
 const GROUP_COLS: ColDef<GroupView>[] = [
-  { field: 'code', headerName: '코드구분', width: 84, minWidth: 84, maxWidth: 120, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
+  { field: 'code', headerName: '코드구분', width: 84, minWidth: 84, maxWidth: 120, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
   /* 코드구분명이 남는 폭을 흡수(flex:1) */
-  { field: 'name', headerName: '코드구분명', flex: 1, width: 150, minWidth: 100, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
+  { field: 'name', headerName: '코드구분명', flex: 1, width: 150, minWidth: 100, cellStyle: flexCenter, cellRenderer: (p: any) => <>{p.value}</> },
   { field: 'up', headerName: '상위코드구분', width: 118, minWidth: 118, maxWidth: 150, cellStyle: muted,
-    cellRenderer: (p: any) => (p.value ? <MT>{`${p.value} (${p.data.upName})`}</MT> : <span>-</span>) },
+    cellRenderer: (p: any) => (p.value ? <>{`${p.value} (${p.data.upName})`}</> : <span>-</span>) },
   { field: 'use', headerName: '사용여부', width: 90, minWidth: 90, maxWidth: 90, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} size="md" /> },
 ];   // 비-flex 폭 합 292 + 코드구분명 minWidth 100 = 392 ≤ 좌 패널 center 뷰포트(≈395)
      // ⚠ flex 는 flex 컬럼만 늘리고 줄인다 — 나머지는 선언 width 고정이라 합이 넘으면 바로 가로 스크롤
 /* 우측 코드상세는 9컬럼이라 좁은 패널에서는 폭을 넘는다 → 코드명 flex:1 이 잉여를 흡수하고, minWidth 합을 넘으면 그리드 내부 가로 스크롤. 긴 텍스트만 maxWidth 캡 */
 const DETAIL_COLS: ColDef<CodeDetail>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
-  { field: 'code', headerName: '코드', width: 90, maxWidth: 120, cellStyle: flexMid, cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
-  { field: 'name', headerName: '코드명', flex: 1, width: 180, minWidth: 170, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'en', headerName: '코드명(영문)', width: 140, maxWidth: 200, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
+  { field: 'code', headerName: '코드', width: 90, maxWidth: 120, cellStyle: flexMid, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
+  { field: 'name', headerName: '코드명', flex: 1, width: 180, minWidth: 170, cellStyle: flexCenter, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'en', headerName: '코드명(영문)', width: 140, maxWidth: 200, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <span>-</span>) },
   { field: 'ord', headerName: '정렬', width: 64, maxWidth: 64, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
-  { field: 'rem', headerName: '비고', width: 170, maxWidth: 240, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
+  { field: 'rem', headerName: '비고', width: 170, maxWidth: 240, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <span>-</span>) },
   { field: 'use', headerName: '사용여부', width: 88, maxWidth: 88, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} size="md" /> },
-  { field: 'by', headerName: '최종수정자', width: 100, maxWidth: 120, cellStyle: muted, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'at', headerName: '최종수정일시', width: 140, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => mn(p.value) },
+  { field: 'by', headerName: '최종수정자', width: 100, maxWidth: 120, cellStyle: muted, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'at', headerName: '최종수정일시', width: 140, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => String(p.value) },
 ];
 /* 좌·우 모두 체크박스로만 선택(행 본문 클릭 선택 해제 — 2026-09-22 사용자 결정). 좌 그리드의 "해제 금지"는
    enableClickSelection:'enableSelection' 이 아니라 onGroupSelection 의 queueMicrotask 복원이 담당한다(apfs-aggrid master-detail 절). */
@@ -98,7 +97,7 @@ function PaneBar({ title, count, children }: { title: React.ReactNode; count: nu
   return (
     <div className="flex items-center justify-between flex-wrap gap-2" style={{ padding: '8px 18px', borderBottom: '1px solid var(--border)', minHeight: 46 }}>
       <h4 className="flex items-center gap-1.5 font-semibold m-0" style={{ fontSize: 13.5 }}>
-        {title}<span className="text-primary tabular">{mn(String(count))}</span>
+        {title}<span className="text-primary tabular">{String(count)}</span>
       </h4>
       <div className="flex items-center gap-1.5 flex-wrap">{children}</div>
     </div>
@@ -128,7 +127,6 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
   const selDCount = selDIds.length;
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
-  const masked = useMask();
 
   /* 필터(코드구분 목록) — 사용여부는 툴바 칩, 검색어·검색기준은 드로어 */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -299,7 +297,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
 
   /* ── Excel — 시트 2장(코드구분 전체 · 선택 코드구분의 코드상세). 마스크 ON이면 텍스트 ''·숫자 0 ── */
   const exportExcel = () => {
-    const t = (v: string) => (masked ? '' : v), n = (v: number) => (masked ? 0 : v);
+    const t = (v: string) => (v), n = (v: number) => (v);
     const ws1 = XLSX.utils.aoa_to_sheet([
       ['코드구분', '코드구분명', '상위코드구분', '비고', '사용여부'],
       ...groups.map((g) => [t(g.code), t(g.name), t(g.up), t(g.rem), g.use ? '여' : '부']),
@@ -337,7 +335,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
         {(['', '여', '부'] as const).map((u) => <FilterChip key={u || 'all'} active={fUse === u} onClick={() => setFUse(u)}>{u ? `사용 ${u}` : '전체'}</FilterChip>)}
         {fText.trim() && (
           <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-            <MT>{`${SEARCH_FIELDS.find((f) => f.key === fField)?.label}: ${fText.trim()}`}</MT>
+            {`${SEARCH_FIELDS.find((f) => f.key === fField)?.label}: ${fText.trim()}`}
             <button type="button" onClick={() => setFText('')} aria-label="검색어 필터 제거" className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
               <Icon name="x" size={13} stroke={2.4} />
             </button>
@@ -349,7 +347,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'group', mode: 'create' })}>코드구분 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'코드구분 ' + mn(String(groupViews.length)) + '개 표시 중 (전체 ' + mn(String(groups.length)) + '개) · 코드상세 ' + mn(String(totalDetails)) + '건'}</span>}
+      footerLeft={<span>{'코드구분 ' + String(groupViews.length) + '개 표시 중 (전체 ' + String(groups.length) + '개) · 코드상세 ' + String(totalDetails) + '건'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       {/* master-detail 2단 — lg 이상 좌 440px 고정·우 잔여, 미만은 세로 적층(responsive-ui 체크 3). 각 패널은 min-w-0 로 그리드 내부 스크롤을 보존
@@ -386,12 +384,12 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
         </section>
 
         <section aria-label="코드상세 목록" className="min-w-0">
-          <PaneBar title={curG ? <>「<MT>{curG.name}</MT>」 코드상세 </> : '코드상세 '} count={curDetails.length}>
+          <PaneBar title={curG ? <>「{curG.name}」 코드상세 </> : '코드상세 '} count={curDetails.length}>
             {/* 코드 등록은 코드구분 선택 전에는 disabled(목업 rg-new) — 선택하면 즉시 활성 */}
             <Button variant="outline" size="sm" leadingIcon="plus" disabled={!curG} onClick={() => setModal({ kind: 'detail', mode: 'create' })}>코드 등록</Button>
             {selDCount > 0 && (
               <>
-                <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selDCount))}건 선택됨</span>
+                <span className="font-semibold" style={{ fontSize: 13 }}>{String(selDCount)}건 선택됨</span>
                 {selD && <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'detail', mode: 'edit', id: selD.id })}>수정</Button>}
                 <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }}
                   onClick={() => { const ids = (rApi.current?.getSelectedRows() ?? []).map((d) => d.id); if (ids.length) setModal({ kind: 'delDetail', ids }); }}>삭제</Button>
@@ -478,7 +476,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
             <AlertDialogHeader>
               <AlertDialogTitle>코드구분 삭제</AlertDialogTitle>
               <AlertDialogDescription>
-                「<b className="text-foreground"><MT>{groups.find((g) => g.code === modal.code)?.name ?? modal.code}</MT></b>」 코드구분을 삭제할까요?
+                「<b className="text-foreground">{groups.find((g) => g.code === modal.code)?.name ?? modal.code}</b>」 코드구분을 삭제할까요?
                 <br />삭제 후에는 복구할 수 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -496,8 +494,8 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
               <AlertDialogTitle>코드 삭제</AlertDialogTitle>
               <AlertDialogDescription>
                 {modal.ids.length === 1
-                  ? <>코드 「<b className="text-foreground"><MT>{(() => { const d = curDetails.find((x) => x.id === modal.ids[0]); return d ? `${d.code} ${d.name}` : modal.ids[0]; })()}</MT></b>」 을 삭제할까요?</>
-                  : <>선택한 <b className="text-foreground">{mn(String(modal.ids.length))}건</b>의 코드를 삭제할까요?</>}
+                  ? <>코드 「<b className="text-foreground">{(() => { const d = curDetails.find((x) => x.id === modal.ids[0]); return d ? `${d.code} ${d.name}` : modal.ids[0]; })()}</b>」 을 삭제할까요?</>
+                  : <>선택한 <b className="text-foreground">{String(modal.ids.length)}건</b>의 코드를 삭제할까요?</>}
                 <br />삭제 후에는 복구할 수 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>

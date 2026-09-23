@@ -8,7 +8,6 @@
    - KPI 배지 행 미포함(기본값 — 형제 수탁보고 화면과 같다) · 카드뷰·명세 팝업 없음 · 엑셀은 푸터 내보내기(⌥D). */
 import React, { useCallback, useRef, useState } from 'react';
 import { UI } from './components';
-import { mn, useMask } from './mask';
 import { toast } from './ui/sonner';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
 import { ReviewMarker } from './review_marker';
@@ -73,7 +72,6 @@ function UploadModal({ cfg, onClose }: { cfg: ManageConfig; onClose: () => void 
 type Modal = null | { kind: 'create' } | { kind: 'edit'; id: string } | { kind: 'delete' } | { kind: 'upload' };
 
 function ManageListPage({ cfg, onNav }: { cfg: ManageConfig; onNav?: (r: string) => void }) {
-  const masked = useMask();
   const [rows, setRows] = useState<Row[]>(cfg.table.rows);
   const { apiRef, selIds, onSelect, clear } = useRowSelection();
   const [modal, setModal] = useState<Modal>(null);
@@ -94,7 +92,7 @@ function ManageListPage({ cfg, onNav }: { cfg: ManageConfig; onNav?: (r: string)
     toast.success('삭제되었습니다 (목업)');
   };
   const exportExcel = () => {
-    exportTables(cfg.label, [{ name: cfg.label, table: cfg.table, rows }], null, masked);
+    exportTables(cfg.label, [{ name: cfg.label, table: cfg.table, rows }], null);
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -115,7 +113,7 @@ function ManageListPage({ cfg, onNav }: { cfg: ManageConfig; onNav?: (r: string)
         </span>
         <Button variant="outline" size="sm" leadingIcon="upload" onClick={() => setModal({ kind: 'upload' })}>업로드</Button>
       </>}
-      footerLeft={<span>총 {mn(String(rows.length))}건</span>}
+      footerLeft={<span>총 {String(rows.length)}건</span>}
       onExport={exportExcel} exportEnabled={!modal}>
       <ReadGrid table={cfg.table} rows={rows} ariaLabel={cfg.label} selectable onSelect={onSelect} selectedIds={selIds} apiRef={apiRef} onRowOpen={openEdit} />
       {(modal?.kind === 'create' || editRow) && (

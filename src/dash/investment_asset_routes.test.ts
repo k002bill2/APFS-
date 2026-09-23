@@ -476,29 +476,6 @@ describe('ColumnSpec 선언이 실제로 ColDef 에 전달되는가', () => {
     expect(grouped).toEqual(['전체 투자실적', '투자실적 현황(투자기업)']);
   });
 });
-
-describe('마스크 경계 — 축은 두고 데이터는 가린다', () => {
-  /* CLAUDE.md 데이터 마스크 규약: 표 헤더·탭·단위·차트 축은 가리지 않는다. 축까지 가리면
-     "어느 지역/어느 연도 숫자인가"를 잃어 표와 엑셀이 통째로 판독 불가가 된다
-     (2026-09-16 Codex 지적 — 소재지별 표의 행 축이 그 상태였다). */
-  const stats = readFileSync(new URL('./investee_invest_stats.tsx', import.meta.url), 'utf8');
-
-  it('소재지·연도 행 축을 MT 로 감싸지 않는다', () => {
-    expect(stats).not.toContain('<MT>{r.region}</MT>');
-    expect(stats).not.toContain('<MT>{r.label}</MT>');
-  });
-
-  it('엑셀 본문도 축(NO·소재지·연도)은 남기고 값만 가린다', () => {
-    // 축까지 일괄 마스킹하던 형태(`[r.no, r.region, ...r.values].map(... masked ...)`)가 없어야 한다
-    expect(stats).not.toContain('[r.no, r.region, ...r.values].map');
-    expect(stats).toContain('masked ?');
-  });
-
-  it('값 셀은 여전히 mn() 을 거친다(마스크 재활성 시 가려지도록)', () => {
-    expect(stats).toContain('mn(String(fmtVal(');
-  });
-});
-
 describe('S1_34 — 원문이 배선한 동작만 구현한다', () => {
   /* 원문 스크립트 실측(2026-09-16):
      · `투자실적구분` → `.gridblock` 토글이 있다 → 우리도 표를 전환한다.

@@ -12,7 +12,6 @@
    - 원문 [조회] 는 즉시 반영이라 두지 않는다. 엑셀은 푸터 내보내기(⌥D). */
 import React, { useCallback, useState } from 'react';
 import { UI } from './components';
-import { mn, MT, useMask } from './mask';
 import { toast } from './ui/sonner';
 import { ReviewMarker } from './review_marker';
 import { RiskPage } from './risk_page_kit';
@@ -28,7 +27,6 @@ const { Button } = UI;
 const LABEL = '자펀드코드 조회';
 
 export function TrustFundCode({ onNav }: { onNav?: (r: string) => void }) {
-  const masked = useMask();
   const [rows, setRows] = useState<Row[]>(FUND_CODE_TABLE.rows);
   const [org, setOrg] = useState<string>(FUND_CODE_ORGS[0]);
   const { apiRef, selIds, onSelect, clear } = useRowSelection();
@@ -55,7 +53,7 @@ export function TrustFundCode({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('삭제되었습니다 (목업)');
   };
   const exportExcel = () => {
-    exportTables(LABEL, [{ name: LABEL, table: FUND_CODE_TABLE, rows }], null, masked);
+    exportTables(LABEL, [{ name: LABEL, table: FUND_CODE_TABLE, rows }], null);
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -73,7 +71,7 @@ export function TrustFundCode({ onNav }: { onNav?: (r: string) => void }) {
   return (
     <RiskPage system="수탁보고" group="자펀드 수탁" label={LABEL} route={LABEL} onNav={onNav}
       filters={filters} onReset={reset} contextActions={selActions}
-      footerLeft={<span>수탁기관 <MT>{org}</MT> · 총 {mn(String(rows.length))}건</span>}
+      footerLeft={<span>수탁기관 {org} · 총 {String(rows.length)}건</span>}
       onExport={exportExcel} exportEnabled={!modal}>
       <ReadGrid table={FUND_CODE_TABLE} rows={rows} ariaLabel={LABEL} selectable onSelect={onSelect} selectedIds={selIds} apiRef={apiRef} onRowOpen={openEdit} />
       {modal?.kind === 'delete' && <DeleteDialog title="자펀드코드 삭제" count={selIds.length} onConfirm={remove} onClose={() => setModal(null)} />}

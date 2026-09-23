@@ -11,7 +11,6 @@
    - 금액 단위 토글(원/백만원/억원) · 엑셀 = 표 2장 → 시트 2장. 원문 `조회` 버튼은 두지 않는다(즉시 반영). */
 import React, { useCallback, useMemo, useState } from 'react';
 import { UI } from './components';
-import { mn, useMask } from './mask';
 import { toast } from './ui/sonner';
 import { DEFAULT_UNIT } from './schemas/unit';
 import type { Unit } from './schemas/unit';
@@ -28,7 +27,6 @@ type Inputs = { uninv: number; oa: number; ol: number };
 const INIT: Inputs = { uninv: Number(MF_SUMMARY_ROW.uninv), oa: Number(MF_SUMMARY_ROW.oa), ol: Number(MF_SUMMARY_ROW.ol) };
 
 export function MotherFundValuation({ onNav }: { onNav?: (r: string) => void }) {
-  const masked = useMask();
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
   const [ym, setYm] = useState(EVAL_BASE_YM);
   const [inputs, setInputs] = useState<Inputs>(INIT);
@@ -47,7 +45,7 @@ export function MotherFundValuation({ onNav }: { onNav?: (r: string) => void }) 
     exportTables(LABEL, [
       { name: MF_SUMMARY.title!, table: MF_SUMMARY, rows: summaryRows },
       { name: MF_DETAIL.title!, table: MF_DETAIL, rows: detailRows },
-    ], unit, masked);
+    ], unit);
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -55,11 +53,11 @@ export function MotherFundValuation({ onNav }: { onNav?: (r: string) => void }) 
     <RiskPage group="가치평가" label={LABEL} route={LABEL} onNav={onNav}
       filters={filters} onReset={reset} unit={unit} onUnit={setUnit}
       actions={<Button variant="outline" size="sm" leadingIcon="check" onClick={save}>저장</Button>}
-      footerLeft={<span>{`${ym ? `평가년월 ${mn(ym)} · ` : ''}가치평가 상세내역 ${mn(String(detailRows.length))}건`}</span>}
+      footerLeft={<span>{`${ym ? `평가년월 ${String(ym)} · ` : ''}가치평가 상세내역 ${String(detailRows.length)}건`}</span>}
       onExport={exportExcel}>
       <SectionHead title={MF_SUMMARY.title!} cap="미투자자산·기타자산·기타부채는 셀을 눌러 입력" />
       <ReadGrid table={MF_SUMMARY} rows={summaryRows} unit={unit} onEdit={onEdit} ariaLabel={MF_SUMMARY.title} />
-      <SectionHead title={MF_DETAIL.title!} cap={<>총 {mn(String(detailRows.length))}건</>} />
+      <SectionHead title={MF_DETAIL.title!} cap={<>총 {String(detailRows.length)}건</>} />
       <ReadGrid table={MF_DETAIL} rows={detailRows} unit={unit} ariaLabel={MF_DETAIL.title} />
     </RiskPage>
   );

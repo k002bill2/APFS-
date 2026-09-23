@@ -35,7 +35,6 @@
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정 + autoHeight sticky 헤더(공유)
 import React, { useState, useCallback, useMemo } from 'react';
 import { UI } from './components';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
@@ -108,9 +107,9 @@ const oxBadge = (v: OX | null | undefined) =>
   (v == null ? dashCell : <StatusBadge tone={OX_TONE[v]} label={v} size="lg" dot={false} />);
 const oxCell = (p: { value: OX | null }) => oxBadge(p.value);
 /* 텍스트 셀 — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate */
-const textCell = (p: { value: string }) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span>;
+const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
 /* 기준년월 — 행 데이터라 mn() */
-const ymFmt = (p: { value?: string | null }) => (p.value ? mn(p.value) : '-');
+const ymFmt = (p: { value?: string | null }) => (p.value ? String(p.value) : '-');
 
 /* 생성여부 셀 — 배지 + 생성일시. 값은 `make|makeTs` 결합 문자열(valueGetter) — 셀 값이 두 필드를 모두 반영해야
    (데이터 연동 후) 일시만 바뀌어도 AG Grid 델타 갱신이 셀을 다시 그린다. */
@@ -120,7 +119,7 @@ const makeCell = (p: { value: string }) => {
   return (
     <span className="inline-flex items-center gap-1.5 min-w-0">
       {oxBadge((make || null) as OX | null)}
-      {ts && <span className="truncate" style={{ fontSize: 12, color: 'var(--muted-foreground)', fontVariantNumeric: 'tabular-nums' }}>{mn(ts)}</span>}
+      {ts && <span className="truncate" style={{ fontSize: 12, color: 'var(--muted-foreground)', fontVariantNumeric: 'tabular-nums' }}>{String(ts)}</span>}
     </span>
   );
 };
@@ -170,30 +169,30 @@ function makeReportCols(openPerm: OpenPerm): ColDef<GpReportRow>[] {
    Excel — 섹션별 시트 2개(단일 헤더). O/X 는 화면에서도 가리지 않는 배지라 마스크 대상이 아니다.
    생성일시는 화면에선 생성여부 셀 안에 붙어 있지만 엑셀에선 **별도 열**로 푼다(한 셀에 섞으면 정렬·필터 불가).
 ────────────────────────────── */
-type XCol<T> = { header: string; get: (r: T) => string | number | null; masked?: boolean; wide?: boolean };
+type XCol<T> = { header: string; get: (r: T) => string | number | null; wide?: boolean };
 const RESULT_X: XCol<EwResultRow>[] = [
   { header: '순번', get: (r) => r.no },
-  { header: '기준년월', get: (r) => r.ym, masked: true },
-  { header: '생성정보', get: (r) => r.info, masked: true, wide: true },
+  { header: '기준년월', get: (r) => r.ym },
+  { header: '생성정보', get: (r) => r.info, wide: true },
   { header: '생성여부', get: (r) => r.make },
-  { header: '생성일시', get: (r) => r.makeTs, masked: true, wide: true },
+  { header: '생성일시', get: (r) => r.makeTs, wide: true },
   { header: '수정여부', get: (r) => r.mod },
   { header: '확정여부', get: (r) => r.cfm },
   { header: '마감여부', get: (r) => r.cls },
 ];
 const REPORT_X: XCol<GpReportRow>[] = [
   { header: '순번', get: (r) => r.no },
-  { header: '기준년월', get: (r) => r.ym, masked: true },
-  { header: '운용사', get: (r) => r.gp, masked: true, wide: true },
+  { header: '기준년월', get: (r) => r.ym },
+  { header: '운용사', get: (r) => r.gp, wide: true },
   { header: '보고여부', get: (r) => r.rep },
   { header: '정합성여부', get: (r) => r.cons },
   { header: '수정권한여부', get: (r) => r.perm },
 ];
-function toSheet<T>(cols: XCol<T>[], rows: T[], masked: boolean): XLSX.WorkSheet {
+function toSheet<T>(cols: XCol<T>[], rows: T[]): XLSX.WorkSheet {
   const body = rows.map((r) => cols.map((c) => {
     const v = c.get(r);
     if (v == null) return '-';
-    return c.masked && masked ? '' : v;
+    return v;
   }));
   const ws = XLSX.utils.aoa_to_sheet([cols.map((c) => c.header), ...body]);
   ws['!cols'] = cols.map((c) => ({ wch: c.wide ? 24 : 12 }));
@@ -240,7 +239,6 @@ const DONE_TOAST: Record<NonNullable<ModalState>['kind'], string> = {
 export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
   const [ym, setYm] = useState(BASE_YM);
   const [modal, setModal] = useState<ModalState>(null);
-  const masked = useMask();
 
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null });
@@ -268,8 +266,8 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
   /* ── Excel(.xlsx) — 워크북 1개 + 섹션 시트 2개. 마스크 ON이면 텍스트·일시 비노출(O/X·순번은 유지) ── */
   const exportExcel = () => {
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, toSheet(RESULT_X, resultRows, masked), '생성결과내역');
-    XLSX.utils.book_append_sheet(wb, toSheet(REPORT_X, reportRows, masked), '재무정보보고');
+    XLSX.utils.book_append_sheet(wb, toSheet(RESULT_X, resultRows), '생성결과내역');
+    XLSX.utils.book_append_sheet(wb, toSheet(REPORT_X, reportRows), '재무정보보고');
     XLSX.writeFile(wb, '조기경보 결과정보 관리.xlsx');
     toast.success('Excel로 내보냈습니다');
   };
@@ -277,7 +275,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
   /* 다이얼로그 문구 — 목업 confirmDlg 호출 원문 그대로 */
   const dialog = (() => {
     if (!modal) return null;
-    const ymB = <b className="text-foreground">{mn('ym' in modal ? modal.ym : '')}</b>;   // close·reopen 만 사용
+    const ymB = <b className="text-foreground">{String('ym' in modal ? modal.ym : '')}</b>;   // close·reopen 만 사용
     switch (modal.kind) {
       case 'make': return { title: '조기경보 결과정보 관리 - 생성 확인', ok: '확인',
         body: <span className="inline-flex items-center">생성하시겠습니까?<ReviewMarker {...MAKE_NOTE} label="생성 확인 안내문구" /></span> };
@@ -317,12 +315,12 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
       /* 푸터 좌 = 섹션별 건수(페이지네이션이 없어 '총 N개 중 M개' 형식이 성립하지 않는다) */
-      footerLeft={<span>{'생성 결과내역 ' + mn(String(resultRows.length)) + '건 · 운용사 재무정보 보고 ' + mn(String(reportRows.length)) + '건'}</span>}
+      footerLeft={<span>{'생성 결과내역 ' + String(resultRows.length) + '건 · 운용사 재무정보 보고 ' + String(reportRows.length) + '건'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       {/* ── ① 조기경보 생성 결과내역 (선택 월) ── */}
       <SectionHead n="1" title="조기경보 생성 결과내역"
-        cap={<>총 {mn(String(resultRows.length))}건 · 기준년월 {mn(ym)}</>} />
+        cap={<>총 {String(resultRows.length)}건 · 기준년월 {String(ym)}</>} />
       <div>
         <AgGridReact<EwResultRow>
           theme={apfsTheme}
@@ -337,7 +335,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
 
       {/* ── ② 운용사 재무정보 보고 (선택 월의 전월) ── */}
       <SectionHead n="2" title="운용사 재무정보 보고"
-        cap={<>총 {mn(String(reportRows.length))}건 · 기준년월 {reportYm ? mn(reportYm) : '-'}</>}
+        cap={<>총 {String(reportRows.length)}건 · 기준년월 {reportYm ? String(reportYm) : '-'}</>}
         actions={<>
           <Button variant="outline" size="sm" disabled={noReport} onClick={() => setModal({ kind: 'grantAll' })}>전체권한부여</Button>
           <Button variant="outline" size="sm" disabled={noReport} onClick={() => setModal({ kind: 'revokeAll' })}>전체권한해제</Button>

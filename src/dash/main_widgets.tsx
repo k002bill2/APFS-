@@ -4,7 +4,6 @@ import { Icon } from './icons';
 import { UI } from './components';
 import { Charts } from './charts';
 import { APFS_DATA, MenuStore, useMenuSel } from './data';
-import { mn, MT, useMask } from './mask';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 
 const { ColorChip, StatusBadge, StatCard, ChartCard, Card, Button, FilterChip, SegTabs, CountPill, PopNumber } = UI;
@@ -31,7 +30,7 @@ function ExecChart({ period, setPeriod, fund, setFund, span }) {
       reveal={true}
       right={<><SegTabs options={["분기", "연"]} value={period} onChange={setPeriod} size="sm" /><MoreBtn /></>}
       footer={<div
-        className="flex items-center gap-4 flex-wrap"><Legend color="var(--chart-grid)" label={<MT>계획</MT>} /><Legend color="var(--chart-1)" label={<MT>실적</MT>} /><Legend color="var(--chart-3)" label={<MT>집행률 %</MT>} line={true} /><span className="flex gap-1.5" style={{ marginLeft: "auto" }}>{funds.map((f) => <FilterChip key={f} active={fund === f} onClick={() => setFund(f)}><MT>{f}</MT></FilterChip>)}</span></div>}><ComposedBars data={data} height={270} /></ChartCard>
+        className="flex items-center gap-4 flex-wrap"><Legend color="var(--chart-grid)" label={<>계획</>} /><Legend color="var(--chart-1)" label={<>실적</>} /><Legend color="var(--chart-3)" label={<>집행률 %</>} line={true} /><span className="flex gap-1.5" style={{ marginLeft: "auto" }}>{funds.map((f) => <FilterChip key={f} active={fund === f} onClick={() => setFund(f)}>{f}</FilterChip>)}</span></div>}><ComposedBars data={data} height={270} /></ChartCard>
   );
 }
 function Legend({ color, label, line }: { color?: string; label?: React.ReactNode; line?: boolean }) {
@@ -44,7 +43,6 @@ function Legend({ color, label, line }: { color?: string; label?: React.ReactNod
 
 /* 상태 분포 도넛 */
 function StatusDonut({ active, setActive, onNav, span, height = 200 }) {
-  useMask();
   const total = D.STATUS_DONUT.reduce((s, d) => s + d.value, 0);
   return (
     <ChartCard
@@ -58,7 +56,7 @@ function StatusDonut({ active, setActive, onNav, span, height = 200 }) {
         data={D.STATUS_DONUT}
         height={height}
         centerLabel="총 대상"
-        centerValue={mn(total)}
+        centerValue={String(total)}
         activeKey={active}
         onSlice={(s) => { setActive(active === s.key ? null : s.key); }} /><div
         className="flex flex-col mt-3"
@@ -69,7 +67,7 @@ function StatusDonut({ active, setActive, onNav, span, height = 200 }) {
           style={{
             gap: 9, border: "none", font: "inherit",
             background: active === s.key ? "var(--muted)" : "transparent", borderRadius: 8, padding: "6px 9px",
-          }}><span style={{ width: 9, height: 9, borderRadius: 99, background: s.color }} /><span className="flex-1 font-semibold" style={{ fontSize: 13 }}><MT>{s.name}</MT></span><span className="tabular font-bold" style={{ fontSize: 13 }}>{mn(s.value)}</span><span className="t-caption text-right" style={{ width: 42 }}>{mn(((s.value / total) * 100).toFixed(0)) + "%"}</span></button>)}{active && <button
+          }}><span style={{ width: 9, height: 9, borderRadius: 99, background: s.color }} /><span className="flex-1 font-semibold" style={{ fontSize: 13 }}>{s.name}</span><span className="tabular font-bold" style={{ fontSize: 13 }}>{String(s.value)}</span><span className="t-caption text-right" style={{ width: 42 }}>{String(((s.value / total) * 100).toFixed(0)) + "%"}</span></button>)}{active && <button
           onClick={() => onNav("risk")}
           className="mt-1 cursor-pointer flex items-center justify-center gap-1.5 text-primary p-2"
           style={{ border: "none", font: "inherit", fontWeight: 700, background: "color-mix(in srgb,var(--primary) 11%,transparent)", borderRadius: 8, fontSize: 12.5 }}>{"조기경보 대시보드에서 ‘" + D.STATUS_DONUT.find((x) => x.key === active).name + "’ 보기"}<Icon name="arrow-right" size={15} /></button>}</div></ChartCard>
@@ -92,7 +90,6 @@ function IndustryCard({ span, onNav, height = 240 }) {
 
 /* 다가오는 일정/알림 */
 function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }: { span?: number | string; onNav?: (r: string) => void; rows?: number; scroll?: boolean; maxH?: number }) {
-  const masked = useMask();
   const list = scroll ? D.SCHEDULE : D.SCHEDULE.slice(0, rows);
   const ddayColor = (t) => (t === "danger" ? "var(--danger-text)" : t === "warning" ? "var(--warning-text)" : "var(--accent)");   /* D-day=텍스트라 a11y -text 토큰 */
   return (
@@ -118,8 +115,8 @@ function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }: { span?: nu
             style={{
               border: "none", font: "inherit",
               padding: "11px 6px", borderBottom: i < list.length - 1 ? "1px solid var(--border)" : "none", background: "transparent",
-            }}><div className="text-center shrink-0" style={{ width: 46 }}><div className="font-extrabold" style={{ fontSize: 13, color: ddayColor(s.tone) }}>{mn(s.dday)}</div><div className="t-caption" style={{ fontSize: 10 }}>{mn(s.date.slice(5).replace("-", "/"))}</div></div><div className="bg-border" style={{ width: 1, alignSelf: "stretch" }} /><div className="flex-1 min-w-0"><div
-                className="font-semibold truncate" style={{ fontSize: 13 }}><MT>{s.title}</MT></div><div className="flex items-center" style={{ gap: 7, marginTop: 3 }}>{masked ? <MT w={s.kind.length * 14 + 20} /> : <StatusBadge tone={s.tone} label={s.kind} size="sm" />}<span className="t-caption"><MT>{s.to}</MT></span></div></div><Icon
+            }}><div className="text-center shrink-0" style={{ width: 46 }}><div className="font-extrabold" style={{ fontSize: 13, color: ddayColor(s.tone) }}>{String(s.dday)}</div><div className="t-caption" style={{ fontSize: 10 }}>{String(s.date.slice(5).replace("-", "/"))}</div></div><div className="bg-border" style={{ width: 1, alignSelf: "stretch" }} /><div className="flex-1 min-w-0"><div
+                className="font-semibold truncate" style={{ fontSize: 13 }}>{s.title}</div><div className="flex items-center" style={{ gap: 7, marginTop: 3 }}>{<StatusBadge tone={s.tone} label={s.kind} size="sm" />}<span className="t-caption">{s.to}</span></div></div><Icon
               name="chevron-right"
               size={16}
               style={{ color: "var(--caption)", flex: "0 0 auto" }} /></button>)}{scroll && <div
@@ -130,7 +127,6 @@ function ScheduleCard({ span, onNav, rows = 5, scroll, maxH = 392 }: { span?: nu
 
 /* 보조 KPI 미니카드 */
 function MiniKpis({ vertical }: { vertical?: boolean }) {
-  useMask();
   const toneC = { warning: "var(--warning)", danger: "var(--danger)", success: "var(--success)" };
   return (
     <div
@@ -142,7 +138,7 @@ function MiniKpis({ vertical }: { vertical?: boolean }) {
           borderRadius: 12, padding: "13px 15px",
         }}><div className="min-w-0"><div
             className="t-label truncate"
-            style={{ textTransform: "none" }}><MT>{m.label}</MT></div><div className="flex mt-1" style={{ alignItems: "baseline", gap: 3 }}><span className="t-display tabular" style={{ fontSize: 24 }}><PopNumber value={mn(m.value)} /></span><span
+            style={{ textTransform: "none" }}>{m.label}</div><div className="flex mt-1" style={{ alignItems: "baseline", gap: 3 }}><span className="t-display tabular" style={{ fontSize: 24 }}><PopNumber value={String(m.value)} /></span><span
               className="font-semibold text-muted-foreground"
               style={{ fontSize: 12 }}>{m.unit}</span></div></div><ColorChip
           icon={m.tone === "success" ? "check-circle" : "file"}
@@ -165,7 +161,7 @@ function ShortcutCard({ s, onNav }) {
         borderRadius: 14, transition: "transform .18s,box-shadow .18s",
       }}><div
         className="flex items-center justify-between"><ColorChip icon={s.icon} color={c} size={40} iconSize={21} /><Icon name="arrow-right" size={17} style={{ color: "var(--caption)" }} /></div><div><div className="font-bold" style={{ fontSize: 14.5 }}>{s.title}</div><div className="t-caption" style={{ marginTop: 3, lineHeight: 1.4 }}>{s.desc}</div></div><div
-        className="flex items-center" style={{ gap: 7, marginTop: "auto" }}><span className="font-extrabold" style={{ fontSize: 12.5, color: c }}><MT>{s.metric}</MT></span></div></button>
+        className="flex items-center" style={{ gap: 7, marginTop: "auto" }}><span className="font-extrabold" style={{ fontSize: 12.5, color: c }}>{s.metric}</span></div></button>
   );
 }
 function ShortcutGrid({ onNav, cols = 5 }) {
@@ -261,7 +257,7 @@ function QuickBadge({ q }: { q: any }) {
   return (
     <span
       className="bg-danger font-extrabold inline-flex items-center justify-center shrink-0"
-      style={{ minWidth: 18, height: 18, padding: "0 6px", borderRadius: 99, color: "var(--destructive-foreground)", fontSize: 10 }}>{mn(q.badge > 99 ? "99+" : String(q.badge))}</span>
+      style={{ minWidth: 18, height: 18, padding: "0 6px", borderRadius: 99, color: "var(--destructive-foreground)", fontSize: 10 }}>{String(q.badge > 99 ? "99+" : String(q.badge))}</span>
   );
 }
 

@@ -5,7 +5,6 @@ import React from 'react';
 import { Icon } from './icons';
 import { UI } from './components';
 import { APFS_DATA } from './data';
-import { mn, MT, useMask } from './mask';
 import { RowFormModal, statusTone } from './generic_list_modal';
 import type { Row } from './generic_list_modal';
 import { resolveSchema } from './schemas';
@@ -182,7 +181,7 @@ function MiniBars({ data, color }: { data: number[]; color: string }) {
 function FilterPill({ label, value, onRemove }: { label: string; value?: string; onRemove: () => void }) {
   return (
     <span title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: "5px 8px 5px 11px", borderRadius: 9, fontSize: 12.5, background: "color-mix(in srgb, var(--primary) 10%, transparent)" }}>
-      {value ? <MT>{value}</MT> : <span>{label}</span>}
+      {value ? <>{value}</> : <span>{label}</span>}
       <button onClick={onRemove} aria-label={label + " 필터 제거"} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: "transparent", color: "inherit", minWidth: 24, minHeight: 24, padding: 0, margin: "-5px -4px -5px 0" }}>
         <Icon name="x" size={13} stroke={2.4} />
       </button>
@@ -380,7 +379,7 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
       type="button" title={hint} onClick={onClick}
       className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
       style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      <MT>{value}</MT>
+      {value}
     </button>
   );
 }
@@ -418,7 +417,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   /* editable = 등록 가능 스키마(fields 보유). 툴바 규약의 분기 하나를 이것이 결정한다(2026-09-11 사용자 결정):
      등록이 있으면 combo(split) 버튼 하나로 합치고, 등록이 없으면 종전처럼 kebab(⋯) 단독. */
   const editable = schema.fields.length > 0;
-  const masked = useMask();   // Excel 우측정렬 숫자 셀의 마스킹 시 값을 0으로(실값 비노출)
+     // Excel 우측정렬 숫자 셀의 마스킹 시 값을 0으로(실값 비노출)
   const apiRef = useRef<GridApi<Row> | null>(null);
   const [rows, setRows] = useState<Row[]>(() => makeRows(schema, 23));
   const [selCount, setSelCount] = useState(0);   // AG Grid 선택 행 수(수제 Set 선택 대체)
@@ -475,7 +474,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     const n = k.column && k.value != null
       ? filtered.filter((r) => String((r as Record<string, unknown>)[k.column!]) === k.value).length
       : filtered.length;
-    return <KpiBadge key={k.label} icon={k.icon} color={k.color} label={k.label} value={mn(String(n)) + " 건"} />;
+    return <KpiBadge key={k.label} icon={k.icon} color={k.color} label={k.label} value={String(n) + " 건"} />;
   });
 
   // ── AG Grid 연결 ──
@@ -512,8 +511,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           cellStyle: { display: "flex", flexDirection: "column", justifyContent: "center" },
           cellRenderer: (p: ICellRendererParams<Row>) => (
             <div className="min-w-0" style={{ lineHeight: 1.25 }}>
-              <div className="font-semibold" style={{ fontSize: 13.5 }}><MT>{p.data?.name}</MT></div>
-              <div className="text-muted-foreground" style={{ fontSize: 12 }}><MT>{p.data?.category}</MT></div>
+              <div className="font-semibold" style={{ fontSize: 13.5 }}>{p.data?.name}</div>
+              <div className="text-muted-foreground" style={{ fontSize: 12 }}>{p.data?.category}</div>
             </div>
           ),
         };
@@ -523,7 +522,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           field: "trend", headerName: c.label, width: 120, minWidth: 120, sortable: false,   // 스파크라인 — 내용폭 측정이 좁으니 하한 고정
           cellDataType: false,   // 값은 number[](스파크라인) — 커스텀 렌더러라 타입 추론 불필요(AG Grid warning #48 억제)
           cellStyle: { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any },
-          cellRenderer: (p: ICellRendererParams<Row>) => <MT w={40}><MiniBars data={(p.value as number[]) || []} color={p.data?.color || "var(--chart-1)"} /></MT>,
+          cellRenderer: (p: ICellRendererParams<Row>) => <><MiniBars data={(p.value as number[]) || []} color={p.data?.color || "var(--chart-1)"} /></>,
         };
       }
       const right = c.align === "right";
@@ -623,7 +622,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   // ※ Excel은 center 정렬을 스타일 없이 못 내므로(커뮤니티 xlsx 한계) center 숫자 컬럼은 텍스트(좌측) 유지가 최선.
   const exportExcel = () => {
     const cols = schema.columns.filter((c) => c.key !== 'trend');
-    const cell = (v: any) => mn(typeof v === 'number' ? v.toLocaleString() : String(v ?? ''));
+    const cell = (v: any) => String(typeof v === 'number' ? v.toLocaleString() : String(v ?? ''));
     /* 숫자서식은 **그 값의 실제 소수 자릿수**를 따른다 — 고정 '#,##0.0' 으로 두면 단위 환산으로
        생긴 2자리 값(억원 12.35)이 엑셀에서 12.4 로 반올림돼 화면과 파일이 달라진다
        (2026-09-16 Codex 7R P2). toUnit 은 최대 2자리를 만든다. */
@@ -638,7 +637,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     const header = cols.map((c) => (unitOn && c.type === 'amount' ? amountHeader(c.label, unit) : c.label + (c.unit ? ` (${c.unit})` : '')));
     const body = filtered.map((r) => cols.map((c) => {
       const v = (r as any)[c.key];
-      return isNum(c, v) ? (masked ? 0 : conv(c, v)) : cell(v);
+      return isNum(c, v) ? (conv(c, v)) : cell(v);
     }));
     const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
     // 숫자 셀에 화면 포맷과 일치하는 숫자서식(z) 부여 (행: 헤더 다음=1부터)
@@ -664,7 +663,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   // 행 복사 — 스키마 컬럼(스파크라인 trend 제외)을 TSV로. 마스크 ON이면 mn()으로 실값 비노출(엑셀과 동일 계약).
   const copyRow = (row: Row) => {
     const line = schema.columns.filter((c) => c.key !== 'trend')
-      .map((c) => mn(String((row as any)[c.key] ?? ''))).join('\t');
+      .map((c) => String((row as any)[c.key] ?? '')).join('\t');
     navigator.clipboard?.writeText(line).then(
       () => toast.success('행을 복사했습니다'),
       () => toast.error('복사에 실패했습니다'));
@@ -712,10 +711,10 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav("main")}>메인으로</Button>}
       kpis={schema.hideKpis ? undefined : countKpiNodes ? <>{countKpiNodes}</> : (schema.hideMetrics || !genericMetrics) ? undefined : (<>
         <KpiBadge icon="trending" color="var(--chart-1)" label="평균 변동률"
-          value={mn((avgUp ? "+" : "-") + Math.abs(avgChange).toFixed(1)) + "%"}
+          value={String((avgUp ? "+" : "-") + Math.abs(avgChange).toFixed(1)) + "%"}
           valueColor={avgUp ? "var(--success-text)" : "var(--danger-text)"} />
         <KpiBadge icon="wallet" color="var(--accent)" label="합계 금액"
-          value={"₩" + mn(Math.round(sumAmount / 100).toLocaleString()) + "억"} />
+          value={"₩" + String(Math.round(sumAmount / 100).toLocaleString()) + "억"} />
       </>)}
       toolbarLeft={selCount > 0 ? null : (
         <>
@@ -738,7 +737,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         )}
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); }} />
       </>}
-      footerLeft={'총 ' + mn(String(totalForCount)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}
+      footerLeft={'총 ' + String(totalForCount) + '개 중 ' + String(shown) + '개 항목 표시 중'}
       footerCenter={view === "list" && page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -816,14 +815,14 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                 <div className="flex items-center gap-2.5">
                   <ColorChip icon={r.icon} color={r.color} size={36} iconSize={18} />
                   <div className="min-w-0">
-                    <div className="font-semibold" style={{ fontSize: 13.5 }}><MT>{r.name}</MT></div>
-                    <div className="text-muted-foreground" style={{ fontSize: 12 }}><MT>{r.category}</MT></div>
+                    <div className="font-semibold" style={{ fontSize: 13.5 }}>{r.name}</div>
+                    <div className="text-muted-foreground" style={{ fontSize: 12 }}>{r.category}</div>
                   </div>
                 </div>
                 {!schema.hideMetrics && genericMetrics && (
                   <>
                     <div className="flex items-center justify-between">
-                      <span className="tabular font-bold" style={{ fontSize: 15 }}>{mn(r.amount.toLocaleString())}</span>
+                      <span className="tabular font-bold" style={{ fontSize: 15 }}>{String(r.amount.toLocaleString())}</span>
                       <DeltaBadge value={r.change} />
                     </div>
                     <StatusBadge tone={statusTone(r.status)} label={r.status} size="sm" />
