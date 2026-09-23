@@ -137,7 +137,7 @@ export const LEDGER_TABLE: TableMeta = {
     { key: 'gp', label: '업무집행조합원명', kind: 'text', width: 170 },
     /* 원문 `관리` 칸(행 버튼 3개)·활성상태 스위치는 옮기지 않는다 — 수정·조합원관리·전문인력관리·활성화/비활성화는
        체크박스 선택 → 선택 바(2026-09-23 관리형 규약). 활성상태는 표시 전용 배지 */
-    { key: 'active', label: '활성상태', kind: 'badge', tones: { 활성: 'success', 비활성: 'muted' }, width: 120 },
+    { key: 'active', label: '활성상태', kind: 'badge', tones: { 활성: 'success', 비활성: 'muted' } },   // compact — 내용폭(원문 120 하한 제거)
   ],
   rows: [
     { id: 'lg-1', no: 1, regno: '2011-10', nm: '유니 수산식품 투자조합 1호', dur: '2011-12-26 ~ 2018-12-25', amt: 16000000000, gp: '(주)유니창업투자', active: '활성' },

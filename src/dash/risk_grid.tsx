@@ -10,6 +10,8 @@
 
    폭 전략: 모든 리프가 `flex:1 + minWidth + width:minWidth`(apfs-aggrid ⑨). minWidth 는 헤더·값 글자폭 추정치 —
    열 합이 프레임보다 좁으면 flex 가 채우고(빈 거터 0), 넓으면 minWidth 하한에서 가로 스크롤이 생긴다(잘림 없음).
+   단 **compact 컬럼(No·순번·상태 배지)은 flex 에서 빼고 내용폭 고정**(apfs-aggrid ⑩) — 남는 폭은 텍스트·금액 칸만 나눈다.
+   전 리프가 compact 면 flex 를 유지한다(우측 빈 거터 방지).
    ⚠ AG Grid v35 Theming API: 레거시 CSS import 금지. 객체 prop 은 전부 참조 안정(계약 ⑥⑦). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 보정 + autoHeight sticky 헤더(공유)
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -56,12 +58,19 @@ export function displayText(c: ColMeta, v: Cell, unit: Unit | null, digits?: Uni
   return v.toLocaleString();
 }
 
+/** 내용폭 고정 컬럼 — 순번·상태 배지처럼 값이 짧고 길이가 고정인 칸.
+    c.flex 를 명시하면 그것이 이긴다(0 = 고정, ≥1 = 남는 폭 흡수). 미지정이면 No·순번 라벨·badge 자동 판정 */
+const COMPACT_LABELS = new Set(['No', 'NO', '순번', '번호']);
+export const isCompactCol = (c: ColMeta) => (c.flex != null ? c.flex === 0 : COMPACT_LABELS.has(c.label) || c.kind === 'badge');
+
 function minWidthOf(c: ColMeta, rows: readonly Row[], unit: Unit | null, digits?: UnitDigits): number {
   /* 좌우 패딩 + 정렬 아이콘 자리 */
   const head = textWidth(c.label, 13.5) + 44;
   const body = Math.max(0, ...rows.map((r) => textWidth(displayText(c, r[c.key], unit, digits)) + (c.kind === 'badge' ? 50 : c.link ? 58 : 38)));
-  /* c.width 는 하한(원문이 넓게 잡은 칸) — 내용이 더 길면 내용이 이긴다(잘림 금지). 상한 420 = 긴 주소·조합명 캡 */
-  return Math.round(Math.min(420, Math.max(c.width ?? 0, KIND_MIN[c.kind], head, body)));
+  /* c.width 는 하한(원문이 넓게 잡은 칸) — 내용이 더 길면 내용이 이긴다(잘림 금지). 상한 420 = 긴 주소·조합명 캡.
+     compact(No·배지)는 종류 하한(KIND_MIN)을 쓰지 않는다 — 숫자 84 하한이 No 칸을 넓힌다(apfs-aggrid ⑩) */
+  const kindMin = isCompactCol(c) ? 0 : KIND_MIN[c.kind];
+  return Math.round(Math.min(420, Math.max(c.width ?? 0, kindMin, head, body)));
 }
 
 const Dash = () => <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
@@ -124,14 +133,14 @@ function renderer(c: ColMeta, unit: Unit | null, linkLabel: string, custom?: (ro
   };
 }
 
-function leafDef(c: ColMeta, rows: readonly Row[], unit: Unit | null, linkLabel: string, custom?: CellRenderers, digits?: UnitDigits): ColDef<Row> {
+function leafDef(c: ColMeta, rows: readonly Row[], unit: Unit | null, linkLabel: string, custom?: CellRenderers, digits?: UnitDigits, fixed = false): ColDef<Row> {
   const align = c.align ?? KIND_ALIGN[c.kind];
   const w = minWidthOf(c, rows, unit, digits);
   return {
     colId: c.key,
     field: c.key,
     headerName: c.label,
-    flex: c.flex ?? 1, minWidth: w, width: w,
+    ...(fixed ? { minWidth: w, width: w, maxWidth: w } : { flex: c.flex || 1, minWidth: w, width: w }),
     pinned: c.pinned ? 'left' : undefined,
     cellStyle: c.strong ? STRONG_STYLE[align] : ALIGN_STYLE[align],
     headerClass: align === 'right' ? 'ag-right-aligned-header' : undefined,
@@ -155,9 +164,11 @@ function leafDef(c: ColMeta, rows: readonly Row[], unit: Unit | null, linkLabel:
 /** TableMeta → ColDef/ColGroupDef. 연속 같은 group 은 한 ColGroupDef(marryChildren)로 접는다.
     호출부는 `useMemo(..., [table, unit])` 로 참조를 고정한다(렌더마다 새 배열 = 폭 되돌림). */
 export function buildColumnDefs(table: TableMeta, rows: readonly Row[], unit: Unit | null, linkLabel = '상세', custom?: CellRenderers): (ColDef<Row> | ColGroupDef<Row>)[] {
+  const anyFlex = table.cols.some((c) => !isCompactCol(c));
+  const leaf = (c: ColMeta) => leafDef(c, rows, unit, linkLabel, custom, table.unitDigits, anyFlex && isCompactCol(c));
   return groupRuns(table.cols).map((run) => (run.group
-    ? { headerName: run.group, marryChildren: true, children: run.cols.map((c) => leafDef(c, rows, unit, linkLabel, custom, table.unitDigits)) }
-    : leafDef(run.cols[0], rows, unit, linkLabel, custom, table.unitDigits)));
+    ? { headerName: run.group, marryChildren: true, children: run.cols.map(leaf) }
+    : leaf(run.cols[0])));
 }
 
 const getRowId = (p: GetRowIdParams<Row>) => p.data.id;

@@ -9,6 +9,7 @@ import React, { useRef, useState } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
 import { GridFrame, FooterActions } from './grid_frame';
+import type { SplitButtonItem } from './ui/split-button';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 드로어 컨트롤 34px SSOT
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { PeriodPicker } from './ui/period-picker';
@@ -258,6 +259,8 @@ export interface RiskPageProps {
   actions?: React.ReactNode;
   footerLeft: React.ReactNode;
   onExport?: () => void;
+  /** 푸터 인쇄 combo 의 ▾ 메뉴(화면 전용 출력물). 없으면 인쇄는 단일 아이콘 */
+  printItems?: SplitButtonItem[];
   /** 팝업이 열린 동안 ⌥D 를 끈다(팝업은 자체 엑셀 버튼 — 배경 그리드를 내려받지 않게) */
   exportEnabled?: boolean;
   /** 행 선택 액션 묶음(selbar). 있으면 툴바 좌측 적용 칩 대신 이것을 GridFrame contextActions 로 넘긴다 */
@@ -265,7 +268,7 @@ export interface RiskPageProps {
   children: React.ReactNode;
 }
 
-export function RiskPage({ system = '조기경보', group, label, route, onNav, filters = [], onReset, unit, onUnit, unitNote, unitCaption, actions, footerLeft, onExport, exportEnabled = true, contextActions, children }: RiskPageProps) {
+export function RiskPage({ system = '조기경보', group, label, route, onNav, filters = [], onReset, unit, onUnit, unitNote, unitCaption, actions, footerLeft, onExport, printItems, exportEnabled = true, contextActions, children }: RiskPageProps) {
   const [open, setOpen] = useState(false);
   useHotkey(HOTKEYS.export.combo, () => onExport?.(), { enabled: !!onExport && exportEnabled });
   useHotkey(HOTKEYS.print.combo, () => window.print());
@@ -286,7 +289,7 @@ export function RiskPage({ system = '조기경보', group, label, route, onNav, 
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
       footerLeft={footerLeft}
-      footerRight={<FooterActions onExport={onExport} />}>
+      footerRight={<FooterActions onExport={onExport} printItems={printItems} />}>
       {children}
       {filters.length > 0 && <FilterDrawer open={open} onOpenChange={setOpen} filters={filters} onReset={onReset} title={label} />}
     </GridFrame>
