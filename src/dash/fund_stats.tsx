@@ -186,7 +186,7 @@ const pctFmt = (p: ValueFormatterParams): string => String(pctN(p.value as numbe
 /* 텍스트 — 소계·총계 행은 값이 null이라 빈 칸(목업 tr.subtotal / tfoot의 빈 td) */
 const txt = (field: keyof StatRow, header: string, width: number, center?: boolean): ColDef<StatRow> => ({
   field, headerName: header, width, sortable: false, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => (p.value == null ? null : <>{p.value}</>),
+  cellRenderer: (p: any) => (p.value == null ? null : p.value),
 });
 /* 금액(억원 저장) — 우측정렬. numStyle()은 셀마다 호출되는 함수(0=muted, pinned 총계행 자동 bold) */
 const amt = (field: keyof StatRow, header: string, width = 116): ColDef<StatRow> => ({

@@ -107,7 +107,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof InvReviewRow, header: string, width: number, center?: boolean): ColDef<InvReviewRow> => ({
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <>{p.value}</>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : p.value),
 });
 const date = (field: keyof InvReviewRow, header: string, width = 128): ColDef<InvReviewRow> => ({
   field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },

@@ -96,8 +96,8 @@ export function PermissionHistoryDetailModal({ entry, onClose }: { entry: HistEn
   const revoked = items.filter((i) => i.action === '회수');
   const dlgRef = useRef<DialogHandle>(null);
   const meta: [string, ReactNode][] = [
-    ['행위자', <>{d.actor}</>],
-    ['발생프로그램', <>{d.src}</>],
+    ['행위자', d.actor],
+    ['발생프로그램', d.src],
     ['IP', <span style={{ fontVariantNumeric: 'tabular-nums' }}>{d.ip}</span>],
   ];
   return (

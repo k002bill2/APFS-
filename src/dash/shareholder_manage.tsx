@@ -388,8 +388,8 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
   /* 적용 필터 칩 — 항목별 개별 칩, **값만 표시**(항목명 접두사 없음) + ×.
      기간은 한쪽만 채워도 칩이 뜬다(빈 쪽은 열린 경계로 표시). */
   const chips = ([
-    { key: '검색어', on: !!fText, value: <>{fText}</>, clear: () => setFText('') },
-    { key: '운용사', on: !!fGp, value: <>{fGp}</>, clear: () => setFGp('') },
+    { key: '검색어', on: !!fText, value: fText, clear: () => setFText('') },
+    { key: '운용사', on: !!fGp, value: fGp, clear: () => setFGp('') },
     { key: '기간', on: !!(fFrom || fTo), value: `${fFrom ? String(fFrom) : ''} ~ ${fTo ? String(fTo) : ''}`, clear: () => { setFFrom(''); setFTo(''); } },
   ] as { key: string; on: boolean; value: React.ReactNode; clear: () => void }[]).filter((c) => c.on);
 

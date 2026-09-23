@@ -109,9 +109,9 @@ const makeColumns = (onDetail: (r: MemberRow) => void): ColDef<MemberRow>[] => [
   { field: 'addr', headerName: '주소', width: 320, minWidth: 280, cellStyle: flexCenter,
     cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span> },
   { field: 'tel', headerName: '전화번호', ...fixed(130), cellStyle: flexMid,
-    cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <Dash />) },
+    cellRenderer: (p: any) => (p.value ? p.value : <Dash />) },
   { field: 'memo', headerName: '비고', ...fixed(160), cellStyle: flexCenter,
-    cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <Dash />) },
+    cellRenderer: (p: any) => (p.value ? p.value : <Dash />) },
   /* 액션 컬럼 — 값이 아니라 정렬 대상이 아니다. field가 없으므로 colId 명시 */
   { colId: 'detail', headerName: '상세조회', ...fixed(120), sortable: false, cellStyle: flexMid,
     cellRenderer: (p: any) => (p.data ? <DetailCell row={p.data} onDetail={onDetail} /> : null) },

@@ -125,7 +125,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof MeetingRow, header: string, width: number, maxWidth: number, minWidth: number, center?: boolean): ColDef<MeetingRow> => ({
   field, headerName: header, width, maxWidth, minWidth, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => <>{p.value}</>,
+  cellRenderer: (p: any) => p.value,
 });
 
 /* 고정폭(내용 맞춤 불필요·헤더 라벨 폭이 하한) */

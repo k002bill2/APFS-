@@ -75,10 +75,10 @@ function DownloadCell({ row, onDownload }: { row: ReportFormRow; onDownload: (r:
 const makeColumns = (onDownload: (r: ReportFormRow) => void): ColDef<ReportFormRow>[] => [
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'title', headerName: '양식제목', width: 340, minWidth: 240, maxWidth: 520, cellStyle: flexCenter,
-    cellRenderer: (p: any) => <>{p.value}</> },
+    cellRenderer: (p: any) => p.value },
   /* 설명이 남는 폭을 흡수한다 — maxWidth 없는 유일한 컬럼 + `FIT_GRID_WIDTH`(수시보고 '제목' 컬럼과 같은 기법) */
   { field: 'desc', headerName: '설명', width: 320, minWidth: 200, cellStyle: flexCenter,
-    cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <span style={{ color: 'var(--muted-foreground)' }}>-</span>) },
+    cellRenderer: (p: any) => (p.value ? p.value : <span style={{ color: 'var(--muted-foreground)' }}>-</span>) },
   /* 액션 컬럼 — 정렬 대상이 아니다. 헤더명은 목업 원문 'Download' 그대로 */
   { field: 'file', headerName: 'Download', width: 132, maxWidth: 132, sortable: false, cellStyle: flexMid,
     cellRenderer: (p: any) => (p.data ? <DownloadCell row={p.data} onDownload={onDownload} /> : null) },

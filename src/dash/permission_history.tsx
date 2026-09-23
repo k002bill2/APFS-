@@ -77,8 +77,8 @@ const columnDefs: ColDef<HistEntry>[] = [
   { field: 'preset', headerName: '권한', width: 130, minWidth: 110, maxWidth: 180, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
   { headerName: '변경 요약', width: 200, minWidth: 170, maxWidth: 260, cellStyle: flexCenter, valueGetter: (p) => (p.data ? summaryText(p.data) : ''), cellRenderer: (p: any) => (p.data ? <SummaryCell d={p.data} /> : null) },
   { headerName: '적용 대상(동일 권한 보유)', flex: 1, width: 220, minWidth: 180, cellStyle: flexCenter, valueGetter: (p) => (p.data?.holders ?? []).map((h) => h.name).join(', '), cellRenderer: (p: any) => (p.data ? <HoldersCell d={p.data} /> : null) },
-  { field: 'actor', headerName: '행위자', width: 108, maxWidth: 140, cellStyle: muted, cellRenderer: (p: any) => <>{p.value}</> },
-  { field: 'src', headerName: '발생프로그램', width: 120, maxWidth: 130, cellStyle: { ...flexMid, color: 'var(--muted-foreground)' }, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'actor', headerName: '행위자', width: 108, maxWidth: 140, cellStyle: muted, cellRenderer: (p: any) => p.value },
+  { field: 'src', headerName: '발생프로그램', width: 120, maxWidth: 130, cellStyle: { ...flexMid, color: 'var(--muted-foreground)' }, cellRenderer: (p: any) => p.value },
 ];
 // 조회 전용(audit-read-only) — 행 선택 자체를 두지 않는다(체크박스도, 클릭 선택도).
 // 선택으로 실행할 액션(일괄삭제·단계전이·선택 행 편집)이 없어 선택은 죽은 상태값이었다.

@@ -705,7 +705,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       title={title}
       favRoute={route}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav("main")}>메인으로</Button>}
-      kpis={schema.hideKpis ? undefined : countKpiNodes ? <>{countKpiNodes}</> : (schema.hideMetrics || !genericMetrics) ? undefined : (<>
+      kpis={schema.hideKpis ? undefined : countKpiNodes ? countKpiNodes : (schema.hideMetrics || !genericMetrics) ? undefined : (<>
         <KpiBadge icon="trending" color="var(--chart-1)" label="평균 변동률"
           value={String((avgUp ? "+" : "-") + Math.abs(avgChange).toFixed(1)) + "%"}
           valueColor={avgUp ? "var(--success-text)" : "var(--danger-text)"} />

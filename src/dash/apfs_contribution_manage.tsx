@@ -236,7 +236,7 @@ const txt = (field: keyof DistRow, header: string, width: number, maxWidth?: num
 /** 가운데 정렬 분류 텍스트(계정구분·상세구분) */
 const ctr = (field: keyof DistRow, header: string, width: number): ColDef<DistRow> => ({
   field, headerName: header, width, sortable: false, cellStyle: flexMid,
-  cellRenderer: (p: any) => (p.value == null ? null : <>{p.value}</>),
+  cellRenderer: (p: any) => (p.value == null ? null : p.value),
 });
 /** 날짜 열 */
 const dt = (field: keyof DistRow, header: string, width: number): ColDef<DistRow> => ({

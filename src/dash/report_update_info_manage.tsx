@@ -125,7 +125,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 /* 텍스트 컬럼(운용사·자펀드·투자기업) — 합계행은 빈 칸(목업 tfoot 병합 구간) */
 const txt = (field: keyof ReportUpdateRow, header: string, width: number, maxWidth: number): ColDef<ReportUpdateRow> => ({
   field, headerName: header, width, maxWidth, cellStyle: flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <>{p.value}</>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : p.value),
 });
 /* 날짜/일시 — 합계행 '-'(목업 tfoot colspan 3 '-'). muted 는 일자 컬럼만.
    ⚠ 골드 `occasional_report_manage` 의 date() 는 `maxWidth: width` 를 걸지만 그건 `FIT_GRID_WIDTH`

@@ -66,18 +66,18 @@ const columnDefs: ColDef<ProgramRow>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'pid', headerName: '프로그램ID', width: 120, maxWidth: 140, cellStyle: mono, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
   { field: 'pname', headerName: '프로그램명', width: 220, minWidth: 160, maxWidth: 320, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
-  { field: 'gubun', headerName: '구분', width: 120, maxWidth: 140, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <>{p.value}</> : dash) },
+  { field: 'gubun', headerName: '구분', width: 120, maxWidth: 140, cellStyle: muted, cellRenderer: (p: any) => (p.value ? p.value : dash) },
   { field: 'use', headerName: '사용여부', width: 92, maxWidth: 92, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} size="md" /> },
   { field: 'linked', headerName: '메뉴연결', width: 100, maxWidth: 100, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '연결' : '미연결'),
     cellRenderer: (p: any) => <StatusBadge tone={p.value ? 'info' : 'primary'} label={p.value ? '연결' : '미연결'} size="md" dot={false} /> },
   { field: 'menuPath', headerName: '연결 메뉴', width: 260, minWidth: 180, maxWidth: 360, cellStyle: muted,
-    cellRenderer: (p: any) => (p.value ? <>{p.value}</> : dash) },
+    cellRenderer: (p: any) => (p.value ? p.value : dash) },
   { field: 'at', headerName: '최종수정일시', width: 150, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => String(p.value) },
-  { field: 'by', headerName: '최종수정자', width: 110, maxWidth: 120, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <>{p.value}</> : dash) },
+  { field: 'by', headerName: '최종수정자', width: 110, maxWidth: 120, cellStyle: muted, cellRenderer: (p: any) => (p.value ? p.value : dash) },
   { field: 'help', headerName: '도움말', width: 92, maxWidth: 92, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '있음' : '없음'),
     cellRenderer: (p: any) => (p.value ? <StatusBadge tone="success" label="있음" size="md" dot={false} /> : dash) },
   { field: 'helpAt', headerName: '도움말 수정일시', width: 150, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? String(p.value) : '-') },
-  { field: 'helpBy', headerName: '도움말 수정자', width: 120, maxWidth: 130, cellStyle: muted, cellRenderer: (p: any) => (p.value ? <>{p.value}</> : dash) },
+  { field: 'helpBy', headerName: '도움말 수정자', width: 120, maxWidth: 130, cellStyle: muted, cellRenderer: (p: any) => (p.value ? p.value : dash) },
 ];
 /* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
    행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */

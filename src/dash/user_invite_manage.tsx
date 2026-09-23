@@ -51,9 +51,9 @@ type InviteView = InviteRow & { orgn: string; state: InviteState; expiresAt: str
 
 const columnDefs: ColDef<InviteView>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
-  { field: 'orgn', headerName: '운용사', width: 160, minWidth: 130, maxWidth: 220, cellStyle: flexCenter, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'orgn', headerName: '운용사', width: 160, minWidth: 130, maxWidth: 220, cellStyle: flexCenter, cellRenderer: (p: any) => p.value },
   { field: 'name', headerName: '성명', width: 110, maxWidth: 160, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
-  { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 160, cellStyle: muted, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 160, cellStyle: muted, cellRenderer: (p: any) => p.value },
   { field: 'active', headerName: '재직', width: 88, maxWidth: 88, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '재직' : '퇴사'),
     cellRenderer: (p: any) => <StatusBadge tone={p.value ? 'success' : 'danger'} label={p.value ? '재직' : '퇴사'} size="md" dot={false} /> },
   { field: 'state', headerName: '초대상태', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={INVITE_TONE[p.value as InviteState]} label={p.value} size="lg" dot={false} /> },

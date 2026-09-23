@@ -330,8 +330,8 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
               ⚠ 기준년월은 행을 거르지 않는 조회 기준이라 값이 늘 있다 → **기본값과 다를 때만** 칩을 띄우고,
                 ×는 '제거'가 아니라 **기본값 복귀**다(aria-label도 그렇게 말한다). */}
           {([
-            { key: '운용사', on: !!fGp, value: <>{fGp}</>, aria: '운용사 필터 제거', clear: () => setFGp('') },
-            { key: '자펀드', on: !!fFund, value: <>{fFund}</>, aria: '자펀드 필터 제거', clear: () => setFFund('') },
+            { key: '운용사', on: !!fGp, value: fGp, aria: '운용사 필터 제거', clear: () => setFGp('') },
+            { key: '자펀드', on: !!fFund, value: fFund, aria: '자펀드 필터 제거', clear: () => setFFund('') },
             { key: '기준년월', on: periodChanged, value: String(fFrom) + ' ~ ' + String(fTo), aria: '기준년월 기본값으로', clear: () => { setFFrom(BASE_FROM); setFTo(BASE_TO); } },
           ] as { key: string; on: boolean; value: React.ReactNode; aria: string; clear: () => void }[]).filter((c) => c.on).map((c) => (
             <span key={c.key} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>

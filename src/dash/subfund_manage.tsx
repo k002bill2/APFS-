@@ -94,7 +94,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof SubFundRow, header: string, width: number, center?: boolean): ColDef<SubFundRow> => ({
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <>{p.value}</>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : p.value),
 });
 const date = (field: keyof SubFundRow, header: string, width = 112): ColDef<SubFundRow> => ({
   field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
