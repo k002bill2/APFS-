@@ -72,7 +72,8 @@ function triOf(api: GridApi): Tri {
   return total > 0 && on === total ? true : on > 0 ? 'indeterminate' : false;
 }
 
-function SelectHeader({ api }: IHeaderParams) {
+/* label = 헤더 시각 텍스트(옵트인, LABELED_SELECTION_COL) — 기본 SELECTION_COL 은 넘기지 않아 체크박스만 그린다 */
+function SelectHeader({ api, label }: IHeaderParams & { label?: string }) {
   const guard = useAgGridClickGuard();
   const isMulti = () => { const rs = api.getGridOption('rowSelection'); return typeof rs === 'object' && rs?.mode === 'multiRow'; };
   const [multi, setMulti] = React.useState<boolean>(isMulti);
@@ -86,12 +87,13 @@ function SelectHeader({ api }: IHeaderParams) {
     //   오늘은 전 소비처가 모듈 상수를 쓰고, generic_list 의 hideRowSelection 은 컬럼 자체를 만들었다 없애 헤더가 재생성된다.
     return () => { api.removeEventListener('selectionChanged', h); api.removeEventListener('modelUpdated', h); };
   }, [api]);
-  if (!multi) return null;
-  return (
+  if (!multi) return label ? <span>{label}</span> : null;
+  const box = (
     <div ref={guard} className="apfs-ds-select">
       <Checkbox checked={tri} onCheckedChange={(c) => (c === true ? api.selectAll('filtered') : api.deselectAll('filtered'))} aria-label="전체 행 선택" />
     </div>
   );
+  return label ? <span className="inline-flex items-center" style={{ gap: 6 }}>{box}<span>{label}</span></span> : box;
 }
 
 /* 공용 선택 컬럼 정의 — 소비처는 이 상수를 그대로 넘긴다(폭·고정·렌더러 SSOT). */
@@ -122,4 +124,15 @@ export const SELECTION_COL: SelectionColumnDef = {
   headerComponent: SelectHeader,
   cellClass: 'apfs-ds-select-cell',
   headerClass: 'apfs-ds-select-cell',
+};
+
+/* 헤더에 '선택' 텍스트를 함께 그리는 변형 — 원문 목록 첫 `<th>선택</th>` 를 옮기는 화면만 쓴다(수탁 업로드 2리프).
+   폭 44 로는 20px 박스 + 한글 2자가 잘려 72 로 넓힌다. 모듈 상수(렌더마다 새 객체면 컬럼 폭이 되돌아간다). */
+export const SELECTION_HEADER_LABEL = '선택';
+export const LABELED_SELECTION_COL: SelectionColumnDef = {
+  ...SELECTION_COL,
+  width: 72,
+  maxWidth: 72,
+  headerName: SELECTION_HEADER_LABEL,
+  headerComponentParams: { label: SELECTION_HEADER_LABEL },
 };

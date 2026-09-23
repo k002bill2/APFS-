@@ -19,7 +19,7 @@ import {
 // 파일명 파서·확장자 라벨은 리스트 셀의 첨부 칩과 공유(SSOT) — file_names.ts
 import { parseFileNames, fileExtLabel } from './file_names';
 
-export function DocumentsField({ value, onChange, required, label }: { value: string; onChange: (v: string) => void; required?: boolean; label?: string }) {
+export function DocumentsField({ value, onChange, required, label, multiple, maxSize, describedBy }: { value: string; onChange: (v: string) => void; required?: boolean; label?: string; multiple?: boolean; maxSize?: string | null; describedBy?: string }) {
   // 초기 value(수정 진입 시의 기존 첨부)를 1회만 캡처 — 이후 내부 상태가 단독 소유.
   const initialRef = React.useRef(value);
   const [existing, setExisting] = React.useState<string[]>(() => parseFileNames(initialRef.current));
@@ -35,7 +35,7 @@ export function DocumentsField({ value, onChange, required, label }: { value: st
   return (
     // 복합 컨트롤(첨부목록+FilePond)이라 Field는 <div>로 래핑(<label> 암묵연결 금지) → 보이는 라벨 span이
     // orphan이 됨. role="group"+aria-label로 이 영역에 접근名을 직접 부여한다(bare div의 aria-label은 SR 무시).
-    <div className="flex flex-col gap-2.5" role="group" aria-label={label} aria-required={required || undefined}>
+    <div className="flex flex-col gap-2.5" role="group" aria-label={label} aria-describedby={describedBy} aria-required={required || undefined}>
       {existing.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <div className="text-[12px] font-semibold text-muted-foreground">기존 첨부파일 ({existing.length})</div>
@@ -63,7 +63,7 @@ export function DocumentsField({ value, onChange, required, label }: { value: st
         </div>
       )}
       {/* 신규 추가 — FilePond. 기존 첨부가 있으면 required 표식은 이미 충족이므로 해제 */}
-      <FilePondField value="" onChange={(v) => setAdded(parseFileNames(v))} required={required && existing.length === 0} />
+      <FilePondField value="" onChange={(v) => setAdded(parseFileNames(v))} required={required && existing.length === 0} multiple={multiple} maxSize={maxSize} />
     </div>
   );
 }

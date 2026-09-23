@@ -7,7 +7,7 @@
    - 금액은 **화면에 보이는 단위**로 쓴다(schemas/unit.ts 엑셀 계약) — 그래서 금액 헤더에 단위를 붙인다(`amountHeader`).
    - 마스크 ON 이면 숫자 0 · 텍스트 '' (실값 비노출). 배지(상태 표식)·헤더·합계 라벨은 화면에서도 가리지 않으므로 그대로 둔다. */
 import * as XLSX from 'xlsx';
-import { toUnit, amountHeader } from './schemas/unit';
+import { toUnit, amountHeader, UNIT_DIV } from './schemas/unit';
 import type { Unit } from './schemas/unit';
 import type { TableMeta, Row, ColMeta } from './risk_table_meta';
 import { groupRuns, computeTotal } from './risk_table_meta';
@@ -39,21 +39,26 @@ export function excelHeads(table: TableMeta, unit: Unit | null): { heads: string
 }
 
 const decimals = (v: number) => (String(v).split('.')[1] ?? '').length;
-const zFmt = (v: number) => (decimals(v) === 0 ? '#,##0' : `#,##0.${'0'.repeat(Math.min(decimals(v), 2))}`);
+/* minDp = 표가 선언한 단위별 최소 소수 자릿수(unitDigits.min) — 화면이 17.0 이면 엑셀도 17.0 */
+const zFmt = (v: number, minDp = 0) => { const n = Math.max(Math.min(decimals(v), 2), minDp); return n === 0 ? '#,##0' : `#,##0.${'0'.repeat(n)}`; };
 
 /** lead = 표 위에 먼저 쓸 행(팝업 맥락 kv 등). 있으면 한 줄 비우고 표를 이어 쓴다 */
-export function tableSheet(table: TableMeta, rows: readonly Row[], unit: Unit | null, masked: boolean, lead: (string | number)[][] = []): XLSX.WorkSheet {
+export function tableSheet(full: TableMeta, rows: readonly Row[], unit: Unit | null, masked: boolean, lead: (string | number)[][] = []): XLSX.WorkSheet {
+  const table = full.cols.some((c) => c.noExport) ? { ...full, cols: full.cols.filter((c) => !c.noExport) } : full;
   const { heads, merges: m0 } = excelHeads(table, unit);
   const off = lead.length ? lead.length + 1 : 0;
   const merges = m0.map((m) => ({ s: { r: m.s.r + off, c: m.s.c }, e: { r: m.e.r + off, c: m.e.c } }));
   const total = computeTotal({ ...table, rows: [...rows] });
+  /* 표가 단위별 소수 자릿수를 선언했으면 화면(amountText)과 같은 자릿수로 쓴다 — 없으면 공용 toUnit(Codex P2: 화면 17.6 / 엑셀 17.64) */
+  const dg = unit ? table.unitDigits?.[unit] : undefined;
+  const minDp = table.cols.map((c) => (c.kind === 'amount' && dg ? dg.min : 0));
   const body = [...rows, ...(total ? [total] : [])].map((r) => table.cols.map((c) => {
     const v = r[c.key];
     const isTotal = r === total;
     if (v == null) return '-';
     if (typeof v === 'number') {
       if (masked) return 0;
-      if (c.kind === 'amount' && unit) return toUnit(v, unit);
+      if (c.kind === 'amount' && unit) return dg ? Number((v / UNIT_DIV[unit]).toFixed(dg.max)) : toUnit(v, unit);
       return c.fixed != null ? Number(v.toFixed(c.fixed)) : v;
     }
     if (masked && !isTotal && c.kind !== 'badge') return '';
@@ -64,7 +69,7 @@ export function tableSheet(table: TableMeta, rows: readonly Row[], unit: Unit | 
   body.forEach((row, i) => row.forEach((v, j) => {
     if (typeof v !== 'number') return;
     const a = XLSX.utils.encode_cell({ r: off + heads.length + i, c: j });
-    if (ws[a]) ws[a].z = zFmt(v);
+    if (ws[a]) ws[a].z = zFmt(v, minDp[j]);
   }));
   ws['!cols'] = table.cols.map((c) => ({ wch: c.kind === 'text' ? 26 : c.kind === 'amount' ? 18 : 14 }));
   return ws;

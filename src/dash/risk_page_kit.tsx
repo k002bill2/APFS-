@@ -17,6 +17,9 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import { UNITS } from './schemas/unit';
 import type { Unit } from './schemas/unit';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { ReviewMarker } from './review_marker';
+import type { ReviewNoteMeta } from './risk_table_meta';
 
 const { Button, IconBtn, SegTabs } = UI;
 
@@ -25,7 +28,8 @@ const { Button, IconBtn, SegTabs } = UI;
 ────────────────────────────── */
 export interface FilterSpec {
   label: string;
-  kind: 'select' | 'day' | 'month' | 'year';
+  /** radio = 배타 선택(원문 라디오 — '전체' 칩 해제 없음) · text = 부분일치 입력 · dayRange = 'YYYY-MM-DD~YYYY-MM-DD'(한쪽 비면 열린 경계) */
+  kind: 'select' | 'day' | 'month' | 'year' | 'radio' | 'text' | 'dayRange';
   value: string;
   onChange: (v: string) => void;
   /** select 선택지(원문 옵션 — '전체' 제외) */
@@ -34,15 +38,26 @@ export interface FilterSpec {
   allLabel?: string | null;
   /** 행 컬럼과 연동되지 않는 조회 조건 — 드로어에 `· 데이터 연동 후 적용` 캡션(무신호 무효 필터 금지) */
   noop?: boolean;
+  /** 라벨 옆 ⚠검토필요 마커(목업 검색필드 `.review` 원문) */
+  note?: ReviewNoteMeta;
+  /** text 입력 placeholder(원문 그대로) */
+  placeholder?: string;
+  /** false = 적용 칩 숨김 — 기본값이 있으나 아직 적용 전인 조건(값은 드로어에 그대로 보인다) */
+  chip?: boolean;
 }
 
+/** dayRange 값 'from~to' ↔ [from, to] */
+export const splitRange = (v: string): [string, string] => { const [a = '', b = ''] = v.split('~'); return [a, b]; };
+export const joinRange = (a: string, b: string): string => (a || b ? `${a}~${b}` : '');
+
 /* 드로어 필드 — plain=true 면 <label> 대신 <div>(PeriodPicker 트리거는 <button> 이라 라벨 이중 토글 방지) */
-function DrawerField({ label, plain, noop, children }: { label: string; plain?: boolean; noop?: boolean; children: React.ReactNode }) {
+function DrawerField({ label, plain, noop, note, children }: { label: string; plain?: boolean; noop?: boolean; note?: ReviewNoteMeta; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
+      <span className="flex items-center gap-1 font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
         {label}
+        {note && <ReviewMarker rec={note.rec} dat={note.dat} label={label} />}
         {noop && <span className="font-normal" style={{ fontSize: 12, marginLeft: 6 }}>· 데이터 연동 후 적용</span>}
       </span>
       {children}
@@ -64,12 +79,49 @@ function DrawerSelect({ f }: { f: FilterSpec }) {
   );
 }
 
+/* 배타 선택 — DS RadioGroup. Item 은 <button role=radio> 라 <label> 로 감싸지 않고 htmlFor 로 잇는다(ui/radio-group.tsx 규약) */
+function DrawerRadio({ f }: { f: FilterSpec }) {
+  const base = `flt-${f.label.replace(/\s+/g, '')}`;
+  return (
+    <RadioGroup value={f.value} onValueChange={f.onChange} aria-label={f.label}>
+      {(f.options ?? []).map((o, i) => (
+        <span key={o} className="inline-flex items-center gap-1.5">
+          <RadioGroupItem id={`${base}-${i}`} value={o} />
+          <label htmlFor={`${base}-${i}`} className="cursor-pointer" style={{ fontSize: 14 }}>{o}</label>
+        </span>
+      ))}
+    </RadioGroup>
+  );
+}
+
+const dayWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
+
 function FilterControl({ f }: { f: FilterSpec }) {
-  if (f.kind === 'select') return <DrawerField label={f.label} noop={f.noop}><DrawerSelect f={f} /></DrawerField>;
+  if (f.kind === 'select') return <DrawerField label={f.label} noop={f.noop} note={f.note}><DrawerSelect f={f} /></DrawerField>;
+  if (f.kind === 'radio') return <DrawerField label={f.label} plain noop={f.noop} note={f.note}><DrawerRadio f={f} /></DrawerField>;
+  if (f.kind === 'text') {
+    return (
+      <DrawerField label={f.label} noop={f.noop} note={f.note}>
+        <input type="text" value={f.value} onChange={(e) => f.onChange(e.target.value)} placeholder={f.placeholder} style={inputStyle('text')} />
+      </DrawerField>
+    );
+  }
+  if (f.kind === 'dayRange') {
+    const [a, b] = splitRange(f.value);
+    return (
+      <DrawerField label={f.label} plain noop={f.noop} note={f.note}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div style={dayWrap}><PeriodPicker mode="day" value={a} onChange={(v) => f.onChange(joinRange(v || '', b))} ariaLabel={`${f.label} 시작`} /></div>
+          <span className="text-caption">~</span>
+          <div style={dayWrap}><PeriodPicker mode="day" value={b} onChange={(v) => f.onChange(joinRange(a, v || ''))} ariaLabel={`${f.label} 종료`} /></div>
+        </div>
+      </DrawerField>
+    );
+  }
   /* 연도·월·일 = PeriodPicker(apfs-datepicker). 트리거가 w-full 이라 fit-content 래퍼 필수("폭" 규칙) */
   const minW = controlMinWidth(f.kind === 'day' ? 'date' : f.kind);
   return (
-    <DrawerField label={f.label} plain noop={f.noop}>
+    <DrawerField label={f.label} plain noop={f.noop} note={f.note}>
       <div style={{ width: 'fit-content', minWidth: minW, maxWidth: '100%' }}>
         <PeriodPicker mode={f.kind} value={f.value} onChange={(v) => f.onChange(v || '')} ariaLabel={f.label} />
       </div>
@@ -102,11 +154,12 @@ export function FilterDrawer({ open, onOpenChange, filters, onReset, title }: {
 
 /* 적용 칩 — 항목별 개별 칩, **값만** 표시(항목명은 title·aria-label 로 회수). 빈 선택지가 없는 항목(구분)은 해제 × 없음 */
 function AppliedChip({ f }: { f: FilterSpec }) {
-  const clearable = f.allLabel !== null;
+  const clearable = f.allLabel !== null && f.kind !== 'radio';
+  const shown = f.kind === 'dayRange' ? splitRange(f.value).join(' ~ ') : f.value;
   return (
     <span title={f.label} className="inline-flex items-center gap-1.5 font-semibold text-primary"
       style={{ padding: clearable ? '5px 8px 5px 11px' : '5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-      <MT>{f.value}</MT>
+      <MT>{shown}</MT>
       {clearable && (
         <button type="button" onClick={() => f.onChange('')} aria-label={`${f.label} 필터 제거`}
           className="inline-flex items-center justify-center border-0 cursor-pointer"
@@ -119,7 +172,7 @@ function AppliedChip({ f }: { f: FilterSpec }) {
 }
 
 export function AppliedChips({ filters }: { filters: FilterSpec[] }) {
-  const on = filters.filter((f) => f.value);
+  const on = filters.filter((f) => f.value && f.chip !== false);
   return (
     <>
       <Icon name="filter" size={16} className="text-caption" />
@@ -189,8 +242,10 @@ export function TabPanel({ idBase, value, children }: { idBase: string; value: s
    페이지 골격 — GridFrame + 필터 드로어 + 단축키
 ────────────────────────────── */
 export interface RiskPageProps {
+  /** 메뉴 대분류(브레드크럼). 미지정 = 조기경보(이 부품을 처음 만든 화면군) */
+  system?: string;
   /** 메뉴 중분류(브레드크럼) */
-  group: '기업정보' | '자펀드정보' | '가치평가';
+  group: string;
   /** 메뉴 리프 라벨 = 카드 제목(apfs-grid "타이틀은 메뉴 리프와 일치") */
   label: string;
   /** route 키(즐겨찾기 별) */
@@ -211,21 +266,24 @@ export interface RiskPageProps {
   onExport?: () => void;
   /** 팝업이 열린 동안 ⌥D 를 끈다(팝업은 자체 엑셀 버튼 — 배경 그리드를 내려받지 않게) */
   exportEnabled?: boolean;
+  /** 행 선택 액션 묶음(selbar). 있으면 툴바 좌측 적용 칩 대신 이것을 GridFrame contextActions 로 넘긴다 */
+  contextActions?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function RiskPage({ group, label, route, onNav, filters = [], onReset, unit, onUnit, unitNote, unitCaption, actions, footerLeft, onExport, exportEnabled = true, children }: RiskPageProps) {
+export function RiskPage({ system = '조기경보', group, label, route, onNav, filters = [], onReset, unit, onUnit, unitNote, unitCaption, actions, footerLeft, onExport, exportEnabled = true, contextActions, children }: RiskPageProps) {
   const [open, setOpen] = useState(false);
   useHotkey(HOTKEYS.export.combo, () => onExport?.(), { enabled: !!onExport && exportEnabled });
   useHotkey(HOTKEYS.print.combo, () => window.print());
   const refresh = () => { onReset(); toast.success('새로고침했습니다'); };
   return (
     <GridFrame
-      crumbs={['홈', '조기경보', group, label]}
+      crumbs={['홈', system, group, label]}
       title={label}
       favRoute={route}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={filters.length > 0 ? <AppliedChips filters={filters} /> : undefined}
+      toolbarLeft={!contextActions && filters.length > 0 ? <AppliedChips filters={filters} /> : undefined}
+      contextActions={contextActions || undefined}
       toolbarRight={<>
         {unitCaption && <span className="text-caption" style={{ fontSize: 12 }}>{unitCaption}</span>}
         {unit && onUnit && <UnitToggle unit={unit} onChange={onUnit} note={unitNote} />}

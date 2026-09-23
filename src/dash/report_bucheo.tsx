@@ -1,197 +1,89 @@
-/* 부처보고 전용 페이지 — FR-5.8
-   APFS 인디고/블루 토큰 + Tailwind 유틸리티. */
-import React from 'react';
-import { Icon } from './icons';
-import { Shell } from './shell';
-import { UI } from './components';
-import { APFS_DATA } from './data';
-import { mn, MT } from './mask';
-import './aggrid_shared.css';
-import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
-import { AgGridReact } from 'ag-grid-react';
-import type { ColDef } from 'ag-grid-community';
+/* 부처보고 > 모태펀드 > 연도별투자현황(route report-bucheo) — 원문 03_연도별투자현황 + 04_연도별투자현황상세 목업.
 
-const { PageHeader } = Shell;
-const {
-  ColorChip, StatusBadge, Card, Button, IconBtn, CountPill, toneVar,
-} = UI;
-const cx = (...a: any[]) => a.filter(Boolean).join(" ");
+   2026-09-23 교체 이력: 이 파일의 이전 본문은 FR-5.8 로 만든 "보고서 목록"(보고서명·보고유형·보고기관·승인 스텝퍼·KPI 카드) 더미
+   화면이었다 — 원본 목업과 컬럼·행·합계·검색조건이 하나도 겹치지 않고, 행 5건이 원문에 없는 합성 데이터였다(브리프 규칙 2 위반).
+   "차이만 보강"하면 곧 전부 교체라 본문을 원문대로 다시 썼다. 파일·`Pages.ReportBucheo` export·app.tsx route 는 그대로 둔다.
 
-/* ─────────────────────────────────────────────
-   로컬 더미 데이터
-─────────────────────────────────────────────── */
+   목업 → 우리 규약
+   - 메뉴 리프가 하나(연도별투자현황)라 상세 목업(04)을 **탭 2**로 통합한다(탭 라벨 = 원문 h1). 두 목업의 연도가 서로 대응하지
+     않아(상세 2010·2012·2013·2015 ↔ 요약 2011~2014) 행 드릴다운으로 잇지 않는다.
+   - 검색박스 → 상세필터 드로어: 기준월(원문 2026-08) · 계정구분(전체/농식품/수산) · 조회기준(선정년도/결성년도 라디오) +
+     상세 탭만 조합구분(전체/운영조합/청산조합 라디오). 기준월·계정구분은 행에 대응 칸이 없어 조회 조건(`· 데이터 연동 후 적용`).
+   - 조회기준 → 요약 탭은 원문처럼 **데이터셋 자체가 바뀌고**(DATA_SEL ↔ DATA_FORM) 연도 컬럼 헤더가 선택값이 된다.
+     상세 탭은 같은 행의 선정/결성 연도 칸만 바뀐다. 조합구분은 운영/청산 행 필터 + No 재부여(원문 render).
+   - 금액 단위 토글: 요약 기본 백만원 · 상세 기본 억원(원문 초기값) — 탭별로 따로 기억한다.
+   - 합계행(요약만): 조합수·금액은 합산, 연도는 '-', 투자배수 = (ΣB1+ΣB2+ΣC)/ΣA(원문 tfoot 1.63).
+   - 원문 `.foot-note` 3줄은 화면 안내문이라 표 아래에 둔다(설계 메모 `.note` 는 옮기지 않는다).
+   - 원문 [조회] 는 즉시 반영이라 두지 않는다. 엑셀은 푸터 내보내기(⌥D) — 활성 탭 표 그대로. KPI·카드뷰·행 선택 없음. */
+import React, { useMemo, useState } from 'react';
+import { mn, useMask } from './mask';
+import { toast } from './ui/sonner';
+import type { Unit } from './schemas/unit';
+import { RiskPage, TabBar, TabPanel } from './risk_page_kit';
+import type { FilterSpec } from './risk_page_kit';
+import { ReadGrid } from './risk_grid';
+import { exportTables } from './risk_excel';
+import {
+  YEARLY_BASE_YM, ACCOUNT_TYPES, BASES, COMB_TYPES, YEARLY_FOOTNOTES, YEARLY_TABLES, detailTable, detailRows,
+} from './brief_data';
+import type { Basis } from './brief_data';
 
-const MINISTRY_REPORTS = [
-  {
-    id: "MR01", name: "2분기 운용현황 보고", type: "정기", org: "농식품부",
-    date: "2026-06-18", status: "접수", manager: "김재현", action: "접수",
-  },
-  {
-    id: "MR02", name: "투자기업 육성실적 보고", type: "정기", org: "농금원",
-    date: "2026-07-10", status: "작성중", manager: "이미나", action: "작성",
-  },
-  {
-    id: "MR03", name: "모태펀드 집행실적 보고", type: "정기", org: "농식품부",
-    date: "2026-06-29", status: "승인대기", manager: "김재현", action: "보기",
-  },
-  {
-    id: "MR04", name: "수시보고 — 운용사 조기경보 처리결과", type: "수시", org: "농금원",
-    date: "2026-06-12", status: "확정", manager: "박수진", action: "조회",
-  },
-  {
-    id: "MR05", name: "1분기 확정 보고", type: "정기", org: "농식품부",
-    date: "2026-04-15", status: "확정(Lock)", manager: "시스템", action: "-",
-  },
-];
+const LABEL = '연도별투자현황';
+const TABS = [
+  { id: 'yearly', label: '연도별투자현황' },
+  { id: 'detail', label: '연도별투자현황상세' },
+] as const;
+type TabId = typeof TABS[number]['id'];
+/** 원문 초기 단위 — 요약 `var UNIT='백만원'` · 상세 `var unit='억원'` */
+const DEFAULT_UNITS: Record<TabId, Unit> = { yearly: '백만원', detail: '억원' };
 
-/* ─────────────────────────────────────────────
-   헬퍼: 상태 → tone
-─────────────────────────────────────────────── */
-function reportTone(status: string) {
-  if (status === "작성중") return "info";
-  if (status === "접수") return "warning";
-  if (status === "승인대기") return "warning";
-  if (status === "확정") return "success";
-  if (status === "확정(Lock)") return "cyan";
-  return "info";
-}
-
-/* ─────────────────────────────────────────────
-   4단계 승인 스텝퍼
-─────────────────────────────────────────────── */
-const STEPS = ["작성", "접수", "승인", "확정"];
-
-function Stepper({ activeStep }: { activeStep: number }) {
-  return (
-    <div className="flex items-center gap-0" aria-label="보고 승인 단계">{STEPS.map((label, i) => {
-        const done = i < activeStep;
-        const active = i === activeStep;
-        const [color] = toneVar(active ? "primary" : done ? "success" : "info");
-        return (
-          <React.Fragment key={label}><div className="flex flex-col items-center gap-1" aria-current={active ? "step" : undefined}><div
-                className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[12px] font-bold transition-all"
-                style={{
-                  background: done
-                    ? "color-mix(in srgb,var(--success) 15%,transparent)"
-                    : active
-                      ? "color-mix(in srgb,var(--primary) 15%,transparent)"
-                      : "var(--muted)",
-                  color: done ? "var(--success)" : active ? "var(--primary)" : "var(--muted-foreground)",
-                  border: active ? "2px solid var(--primary)" : done ? "2px solid var(--success)" : "2px solid var(--border)",
-                }}>{done
-                  ? <Icon name="check" size={14} stroke={2.5} />
-                  : <span>{i + 1}</span>}</div><span
-                className="text-[11px] font-semibold whitespace-nowrap"
-                style={{
-                  color: active ? "var(--primary)" : done ? "var(--success)" : "var(--muted-foreground)",
-                }}>{label}{done && <span className="sr-only"> 완료</span>}{active && <span className="sr-only"> 현재 단계</span>}</span></div>{i < STEPS.length - 1 && <div
-              className="flex-1 h-[2px] mx-2 rounded-full"
-              style={{
-                minWidth: 32,
-                background: done
-                  ? "var(--success)"
-                  : "var(--border)",
-              }} />}</React.Fragment>
-        );
-      })}</div>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   KPI 카드
-─────────────────────────────────────────────── */
-function KpiBox({ icon, label, value, sub, tone }: { icon?: string; label?: React.ReactNode; value?: React.ReactNode; sub?: React.ReactNode; tone?: string }) {
-  const [c, softBg] = toneVar(tone || "primary");
-  return (
-    <div
-      className="rounded-card border border-border bg-card px-5 py-4 shadow-sm flex items-center gap-4"><div
-        className="inline-flex items-center justify-center shrink-0 rounded-[12px]"
-        style={{ width: 44, height: 44, background: softBg, color: c }}><Icon name={icon} size={22} stroke={2} /></div><div className="min-w-0 flex-1"><div className="t-label text-[11.5px] mb-0.5"><MT>{label}</MT></div><div
-          className="text-[22px] font-extrabold tabular leading-tight text-foreground">{mn(value)}</div>{sub && <div className="t-caption text-[11.5px] mt-0.5"><MT>{sub}</MT></div>}</div></div>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   AG Grid — 보고서 목록 표 (수제 <table> 대체)
-   "축은 두고 데이터는 가린다": 헤더·유형 pill·StatusBadge는 비마스킹,
-   보고서명·기관·담당자는 <MT>, 보고일은 mn(). 조회전용(선택·페이지네이션 없음).
-   액션 버튼은 원본과 동일하게 onClick 없음(시각 동형 유지).
-─────────────────────────────────────────────── */
-type MinistryRow = typeof MINISTRY_REPORTS[number];
-
-function NameCell(p: any) {
-  return <div className="text-[13.5px] font-semibold text-foreground"><MT>{p.value}</MT></div>;
-}
-function PlainCell(p: any) {
-  return <span className="text-[13px] font-semibold text-foreground"><MT>{p.value}</MT></span>;
-}
-function TypeCell(p: any) {
-  const susi = p.value === "수시";
-  return (
-    <span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold" style={{
-      background: susi ? "color-mix(in srgb,var(--warning) 14%,transparent)" : "color-mix(in srgb,var(--info) 14%,transparent)",
-      color: susi ? "var(--warning-text)" : "var(--info-text)",
-    }}>{p.value}</span>
-  );
-}
-function StatusCell(p: any) {
-  const r = p.data as MinistryRow | undefined;
-  if (!r) return null;
-  return <StatusBadge tone={reportTone(r.status)} label={r.status} size="sm" />;
-}
-function ActionCell(p: any) {
-  const r = p.data as MinistryRow | undefined;
-  if (!r) return null;
-  return r.action === "-"
-    ? <span className="t-caption text-[12px]">—</span>
-    : <Button variant={r.action === "작성" ? "primary" : "outline"} size="sm">{r.action}</Button>;
-}
-
-const bucheoColumns: ColDef<MinistryRow>[] = [
-  { field: "name", headerName: "보고서명", flex: 2, minWidth: 200, width: 200, cellRenderer: NameCell },
-  { field: "type", headerName: "보고유형", flex: 1, minWidth: 96, width: 96, cellRenderer: TypeCell },
-  { field: "org", headerName: "보고기관", flex: 1, minWidth: 96, width: 96, cellRenderer: PlainCell },
-  { field: "date", headerName: "보고일", flex: 1, minWidth: 112, width: 112,
-    valueFormatter: (p) => (p.value == null ? "" : mn(p.value)),
-    cellStyle: { color: "var(--muted-foreground)", fontSize: "12.5px", fontVariantNumeric: "tabular-nums" } },
-  { field: "status", headerName: "상태", flex: 1, minWidth: 100, width: 100, cellRenderer: StatusCell },
-  { field: "manager", headerName: "담당자", flex: 1, minWidth: 96, width: 96, cellRenderer: PlainCell },
-  { headerName: "액션", width: 104, minWidth: 92, sortable: false, resizable: false, type: "rightAligned", cellRenderer: ActionCell },
-];
-
-/* ─────────────────────────────────────────────
-   메인 컴포넌트: ReportBucheo
-─────────────────────────────────────────────── */
 function ReportBucheo({ onNav }: { onNav?: (route: string) => void }) {
-  // 현재 승인 단계: 접수 단계(index 1) 활성화
-  const activeStep = 1;
+  const masked = useMask();
+  const [tab, setTab] = useState<TabId>('yearly');
+  const [ym, setYm] = useState(YEARLY_BASE_YM);
+  const [acc, setAcc] = useState('');
+  const [basis, setBasis] = useState<Basis>('선정년도');
+  const [comb, setComb] = useState<string>(COMB_TYPES[0]);
+  const [units, setUnits] = useState<Record<TabId, Unit>>(DEFAULT_UNITS);
+  const unit = units[tab];
+
+  const reset = () => { setYm(YEARLY_BASE_YM); setAcc(''); setBasis('선정년도'); setComb(COMB_TYPES[0]); setUnits(DEFAULT_UNITS); };
+
+  const detail = useMemo(() => detailTable(basis), [basis]);
+  const table = tab === 'yearly' ? YEARLY_TABLES[basis] : detail;
+  const rows = useMemo(() => (tab === 'yearly' ? YEARLY_TABLES[basis].rows : detailRows(basis, comb)), [tab, basis, comb]);
+
+  const filters: FilterSpec[] = [
+    { label: '기준월', kind: 'month', value: ym, onChange: setYm, noop: true },
+    { label: '계정구분', kind: 'select', value: acc, onChange: setAcc, options: ACCOUNT_TYPES, noop: true },
+    { label: '조회기준', kind: 'radio', value: basis, onChange: (v) => setBasis(v as Basis), options: BASES },
+    ...(tab === 'detail' ? [{ label: '조합구분', kind: 'radio', value: comb, onChange: setComb, options: COMB_TYPES } as FilterSpec] : []),
+  ];
+
+  const tabLabel = TABS.find((t) => t.id === tab)!.label;
+  const exportExcel = () => {
+    exportTables(`${LABEL}_${tabLabel}`, [{ name: tabLabel, table, rows }], unit, masked);
+    toast.success('Excel로 내보냈습니다');
+  };
 
   return (
-    <div
-      className="max-w-[1320px] mx-auto"
-      style={{ animation: "dashFade var(--dur-slow) var(--ease) both" }}><PageHeader
-        crumbs={["홈", "부처보고", "모태펀드"]}
-        title="모태펀드"
-        sub="보고서 제출 및 승인 관리 — 2026-06-16 기준"
-        actions={<><Button variant="primary" size="sm" leadingIcon="download">전체 내보내기</Button></>} /><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2.5 mb-4"><KpiBox
-          icon="file"
-          tone="primary"
-          label="이번 분기 보고서"
-          value="4건"
-          sub="제출완료 3 / 미제출 1" /><KpiBox
-          icon="check-circle"
-          tone="success"
-          label="확정 보고서"
-          value="2건"
-          sub="1분기 확정 포함" /><KpiBox
-          icon="clock"
-          tone="warning"
-          label="승인 대기"
-          value="1건"
-          sub="모태펀드 집행실적 보고" /></div><div className="flex flex-col gap-4"><div
-          className="rounded-card border border-border bg-card px-6 py-5 shadow-sm flex items-center gap-2"><div className="flex-1 flex items-center gap-4"><ColorChip icon="file" color="var(--primary)" size={32} iconSize={17} /><div><div className="text-[14px] font-bold text-foreground">보고 승인 흐름</div><div className="t-caption text-[11.5px]">2분기 운용현황 보고 현재 진행 단계</div></div></div><div className="flex items-center gap-2 shrink-0"><Stepper activeStep={activeStep} /></div></div><div
-          className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
-            className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold m-0">보고서 목록</h3><CountPill count={MINISTRY_REPORTS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">신규 보고 등록</Button><IconBtn icon="download" label="내보내기" size={34} /></div></div><div><AgGridReact<MinistryRow> theme={apfsTheme} rowData={MINISTRY_REPORTS} columnDefs={bucheoColumns} domLayout="autoHeight" rowHeight={48} defaultColDef={DEFAULT_COL_DEF} /></div></div></div></div>
+    <RiskPage system="부처보고" group="모태펀드" label={LABEL} route="report-bucheo" onNav={onNav}
+      filters={filters} onReset={reset}
+      unit={unit} onUnit={(u) => setUnits((p) => ({ ...p, [tab]: u }))}
+      unitNote={tab === 'yearly' ? '조합수(개) · 투자배수(배)' : '투자배수(배)'}
+      footerLeft={<span>기준월 {mn(ym || '-')} · {tabLabel} 총 {mn(String(rows.length))}건</span>}
+      onExport={exportExcel}>
+      <TabBar tabs={TABS.map((t) => ({ id: t.id, label: t.label }))} value={tab} onChange={(id) => setTab(id as TabId)} idBase="yearly-invest" label={LABEL} />
+      <TabPanel idBase="yearly-invest" value={tab}>
+        <ReadGrid key={`${tab}-${basis}`} table={table} rows={rows} unit={unit} ariaLabel={tabLabel} />
+        {tab === 'yearly' && (
+          /* 원문 `.foot-note` — <p> UA 마진 제거(preflight:false) */
+          <p className="m-0 text-caption" style={{ padding: '12px 18px 16px', fontSize: 12.5, lineHeight: 1.7 }}>
+            {YEARLY_FOOTNOTES.map((t, i) => <React.Fragment key={t}>{i > 0 && <br />}{t}</React.Fragment>)}
+          </p>
+        )}
+      </TabPanel>
+    </RiskPage>
   );
 }
 

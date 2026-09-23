@@ -11,6 +11,8 @@
    - 원문에 값이 없는 칸은 `null` 이다(화면 표시는 `-`). 원문이 문자열로 적은 값('미보고'·'해당없음'·'-')은 그대로 둔다 —
      숫자로 바꾸거나 0 으로 채우지 않는다(창작 금지). */
 import type { Tone } from './components';
+import { formatUnit, UNIT_DIV } from './schemas/unit';
+import type { Unit } from './schemas/unit';
 
 export type Cell = string | number | null;
 /** 표 한 행. `id` 는 AG Grid getRowId 용 안정 키(원문 값이 아니다 — 화면·엑셀에 나오지 않는다). */
@@ -60,6 +62,8 @@ export interface ColMeta {
   /** 원문이 행 값을 저장하지 않고 렌더 때 계산하는 칸(누적Multiple = 운용성과÷투자금액, 투자잔액 = 총투자−회수).
       값은 같은 식으로 계산해 싣는다 — 출처 충실성 테스트는 이 칸을 원문 리터럴과 대조하지 않는다 */
   derived?: boolean;
+  /** 엑셀에서 뺀다 — 값이 아니라 조작 UI 만 있는 칸(원문 `관리` 버튼 묶음). 화면·헤더 대조에는 남는다 */
+  noExport?: boolean;
 }
 
 export interface TableMeta {
@@ -73,6 +77,9 @@ export interface TableMeta {
   totalLabel?: string;
   /** 0행일 때 문구 — 원문 그대로 */
   empty?: string;
+  /** 금액 칸의 단위별 소수 자릿수(화면 표시) — 원문이 공용 규칙(백만원·억원 최대 2자리)과 다르게 적은 표만 선언한다
+      (연도별투자현황: 억원 최대 1자리 · 상세 억원 항상 1자리). 저장값·엑셀 숫자는 그대로다 */
+  unitDigits?: Partial<Record<'원' | '백만원' | '억원', { min: number; max: number }>>;
 }
 
 /** 출처 — 화면을 그린 목업 파일(저장소 상대경로). 통합 화면은 여러 개다. */
@@ -135,3 +142,10 @@ export const ratioOf = (numKey: string, denKey: string, digits = 2) => (rows: re
   const d = rows.reduce((a, r) => a + num(r[denKey]), 0);
   return d ? (n / d).toFixed(digits) : '-';
 };
+
+/** 금액 표시 문자열(마스킹 전) — 표가 단위별 소수 자릿수를 선언했으면 그대로, 아니면 공용 formatUnit(schemas/unit.ts) */
+export function amountText(won: number, unit: Unit, digits?: TableMeta['unitDigits']): string {
+  const d = digits?.[unit];
+  if (!d) return formatUnit(won, unit);
+  return (won / UNIT_DIV[unit]).toLocaleString('en-US', { minimumFractionDigits: d.min, maximumFractionDigits: d.max });
+}
