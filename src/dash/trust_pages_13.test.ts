@@ -19,7 +19,7 @@ import {
 import {
   YEARLY_PROVENANCE, YEARLY_TABLES, YEARLY_TOTALS_LIT, YEARLY_FOOTNOTES, YEARLY_BASE_YM, BASES, COMB_TYPES, ACCOUNT_TYPES, DETAIL_ROWS, DETAIL_EMPTY,
   detailTable, detailRows, LEDGER_TABLE, LEDGER_PROVENANCE, LEDGER_UPLOAD_NOTE, INACTIVE_OPTIONS, HIST_SECTIONS, HIST_REQUIRED,
-  MEMBER_ROWS, PAYMENT_ROWS, EXPERT_ROWS, CAREER_ROWS, INVEST_CAREER_ROWS, MEMBER_FORM, EXPERT_FORM, PRINT_DATE, ISSUE_HISTORY, ledgerRows,
+  MEMBER_ROWS, PAYMENT_ROWS, EXPERT_ROWS, CAREER_ROWS, INVEST_CAREER_ROWS, MEMBER_FORM, EXPERT_FORM, PRINT_DATE, ISSUE_HISTORY, ledgerRows, ledgerShown,
 } from './brief_data';
 
 /* 부처보고(2) · 수탁보고(11) = 13리프 — 라우트 결선 + **원본 목업 대비 출처 충실성**(risk_pages_17.test.ts 방식).
@@ -377,6 +377,30 @@ describe('화면별 도메인 규칙', () => {
     expect(ledgerRows(LEDGER_TABLE.rows, '', '제외').map((r) => r.regno)).toEqual(['2011-10', '2012-05']);
     expect(ledgerRows(LEDGER_TABLE.rows, '', '포함')).toHaveLength(3);
     expect(ledgerRows(LEDGER_TABLE.rows, '수산', '포함').map((r) => r.regno)).toEqual(['2011-10', '2015-03']);
+  });
+  it('등록원부 첫 화면 = 원문 DATA 행 수(3) — 기본 \'제외\'는 조건 변경 전엔 미적용, 변경 후엔 비활성 제외', () => {
+    const src = scriptLiteral<unknown[]>(read(B('S4_108_등록원부_관리.html')), 'DATA');
+    const initial = ledgerShown(LEDGER_TABLE.rows, '', INACTIVE_OPTIONS[0], false);
+    expect(initial).toHaveLength(src.length);
+    expect(initial).toHaveLength(3);
+    expect(ledgerShown(LEDGER_TABLE.rows, '', INACTIVE_OPTIONS[0], true).map((r) => r.regno)).toEqual(['2011-10', '2012-05']);
+    expect(ledgerShown(LEDGER_TABLE.rows, '', '포함', true)).toHaveLength(3);
+  });
+  it('실물자료 선택 컬럼 헤더 = 원문 첫 `<th>선택</th>` (옵트인 — 공용 SELECTION_COL 은 그대로)', () => {
+    /* aggrid_selection.tsx 는 UI(@/ 별칭) 를 끌어와 node 환경에서 import 할 수 없다 — 소스 텍스트로 대조한다 */
+    const [table] = mainTables(read(T('S3_98_실물자료_조회__월별_.html')));
+    const sel = read(new URL('./aggrid_selection.tsx', import.meta.url).pathname);
+    const label = sel.match(/export const SELECTION_HEADER_LABEL = '([^']+)';/)?.[1];
+    expect(label).toBe(thTexts(table)[0]);
+    expect(label).toBe('선택');
+    const base = sel.match(/export const SELECTION_COL: SelectionColumnDef = \{([\s\S]*?)\n\};/)?.[1] ?? '';
+    expect(base).toContain('width: 44');
+    expect(base).not.toMatch(/headerName|headerComponentParams/);
+    const labeled = sel.match(/export const LABELED_SELECTION_COL: SelectionColumnDef = \{([\s\S]*?)\n\};/)?.[1] ?? '';
+    expect(labeled).toContain('headerName: SELECTION_HEADER_LABEL');
+    expect(labeled).toContain('headerComponentParams: { label: SELECTION_HEADER_LABEL }');
+    const page = read(new URL('./trust_physical_upload.tsx', import.meta.url).pathname);
+    expect(page).toContain('selectionCol={LABELED_SELECTION_COL}');
   });
   it('연도별 상세 조합구분: 운영조합 → 운영 행만 + No 재부여 · 결성년도 → 연도 칸 yf', () => {
     const r = detailRows('결성년도', '운영조합');

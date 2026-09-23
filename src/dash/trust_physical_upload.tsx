@@ -10,7 +10,7 @@
    - 목록바 [수정]·[삭제] → 행 선택 selbar(GridFrame contextActions). 수정은 1건일 때만(원문은 토스트뿐 — 그대로),
      삭제는 선택 N건 확인 다이얼로그(기본 포커스 = 취소, 원문과 같다) → 선택 행 제거.
      ⚠ 원문 삭제는 존재하지 않는 `r.no` 로 거르는 버그가 있어 실제로 지워지지 않는다 — 버그는 옮기지 않고 선택 행 id 로 지운다.
-   - 목록 헤더 `선택` 칸 = AG Grid 선택 컬럼(DS Checkbox). 원문 [조회]·[엑셀] 은 즉시 반영·푸터 내보내기(⌥D)로 대체.
+   - 목록 헤더 `선택` 칸 = AG Grid 선택 컬럼(DS Checkbox) + 헤더 텍스트 '선택'(LABELED_SELECTION_COL — 전체선택 체크박스 옆). 원문 [조회]·[엑셀] 은 즉시 반영·푸터 내보내기(⌥D)로 대체.
    - 원문 스캐폴딩·설계메모는 옮기지 않는다. KPI 배지 행·카드뷰 없음. */
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import type { GridApi } from 'ag-grid-community';
@@ -22,6 +22,7 @@ import { ReviewMarker } from './review_marker';
 import { RiskPage } from './risk_page_kit';
 import type { FilterSpec } from './risk_page_kit';
 import { ReadGrid, SectionHead } from './risk_grid';
+import { LABELED_SELECTION_COL } from './aggrid_selection';
 import { exportTables } from './risk_excel';
 import type { TableMeta, Row, ReviewNoteMeta } from './risk_table_meta';
 import { UploadDropzone } from './trust_upload';
@@ -137,7 +138,7 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
       <div style={{ padding: '0 18px 16px' }}>
         <UploadDropzone files={files} onChange={setFiles} hint={HINT} label={cfg.fileLabel} removedMsg="선택 파일 제거됨" />
       </div>
-      <ReadGrid table={cfg.table} rows={shown} ariaLabel={cfg.label} selectable onSelect={onSelect} apiRef={apiRef} />
+      <ReadGrid table={cfg.table} rows={shown} ariaLabel={cfg.label} selectable onSelect={onSelect} selectionCol={LABELED_SELECTION_COL} apiRef={apiRef} />
       {confirmDel && <DeleteDialog title={cfg.deleteTitle} count={sel.length} onConfirm={remove} onClose={() => setConfirmDel(false)} />}
     </RiskPage>
   );

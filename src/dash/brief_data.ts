@@ -152,6 +152,11 @@ export function ledgerRows(rows: readonly Row[], name: string, inactive: string)
   const q = name.trim();
   return rows.filter((r) => (!q || String(r.nm).includes(q)) && (inactive === '포함' || r.active !== '비활성'));
 }
+/** 화면 표시 행 — 조건 미적용(첫 화면·초기화)이면 원문처럼 전 행, 사용자가 조건을 바꾼 뒤에만 ledgerRows 로 거른다
+    (원문 [조회]는 토스트뿐이라 기본 '제외'가 첫 화면에 적용되지 않는다) */
+export function ledgerShown(rows: readonly Row[], name: string, inactive: string, applied: boolean): Row[] {
+  return applied ? ledgerRows(rows, name, inactive) : [...rows];
+}
 /** 원문 업로드 버튼 옆 검토필요 마커(문구 그대로) */
 export const LEDGER_UPLOAD_NOTE = {
   rec: '업로드 팝업 항목(드래그앤드롭·파일선택·파일목록·XLSX/CSV 최대 20MB) 구성 확인 필요',

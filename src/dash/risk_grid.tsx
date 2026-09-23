@@ -15,7 +15,7 @@
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 보정 + autoHeight sticky 헤더(공유)
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ColGroupDef, CellStyle, CellClickedEvent, CellKeyDownEvent, CellValueChangedEvent, ICellRendererParams, GetRowIdParams, RowDoubleClickedEvent, GridApi, GridReadyEvent, SelectionChangedEvent } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, CellStyle, CellClickedEvent, CellKeyDownEvent, CellValueChangedEvent, ICellRendererParams, GetRowIdParams, RowDoubleClickedEvent, GridApi, GridReadyEvent, SelectionChangedEvent, SelectionColumnDef } from 'ag-grid-community';
 import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
@@ -204,13 +204,15 @@ export interface ReadGridProps {
   /** 행 다중선택(체크박스). 선택 행은 onSelect 로 올린다 */
   selectable?: boolean;
   onSelect?: (rows: Row[]) => void;
+  /** 선택 컬럼 정의(미지정 = SELECTION_COL). 헤더 텍스트가 필요한 화면만 LABELED_SELECTION_COL 등 모듈 상수를 넘긴다 */
+  selectionCol?: SelectionColumnDef;
   /** 그리드 API(선택 해제 등) — 페이지가 ref 로 받는다 */
   apiRef?: React.MutableRefObject<GridApi<Row> | null>;
   /** 칸 전용 렌더러(열 키별). 참조 안정(useMemo) 필수 — 바뀌면 컬럼 정의가 다시 만들어진다 */
   cellRenderers?: CellRenderers;
 }
 
-export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세', onEdit, onRowOpen, ariaLabel, selectable, onSelect, apiRef, cellRenderers }: ReadGridProps) {
+export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세', onEdit, onRowOpen, ariaLabel, selectable, onSelect, selectionCol = SELECTION_COL, apiRef, cellRenderers }: ReadGridProps) {
   const data = rows ?? table.rows;
   const columnDefs = useMemo(() => buildColumnDefs(table, table.rows, unit, linkLabel, cellRenderers), [table, unit, linkLabel, cellRenderers]);
   const pinned = useMemo(() => {
@@ -266,7 +268,7 @@ export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세
         onRowDoubleClicked={onRowOpen ? onRowDoubleClicked : undefined}
         onCellValueChanged={onEdit ? onCellValueChanged : undefined}
         rowSelection={selectable ? ROW_SELECTION : undefined}
-        selectionColumnDef={selectable ? SELECTION_COL : undefined}
+        selectionColumnDef={selectable ? selectionCol : undefined}
         onSelectionChanged={selectable ? onSelectionChanged : undefined}
         onGridReady={apiRef ? onGridReady : undefined}
         stopEditingWhenCellsLoseFocus
