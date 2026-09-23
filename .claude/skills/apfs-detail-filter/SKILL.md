@@ -52,7 +52,6 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 - [ ] **빈 `<select>` 금지**: options/statusDomain이 비면 enum 대신 **text로 격하**(선택지 없는 드롭다운 = 고장처럼 보임).
 - [ ] **columnKey 없는 값-필터**: `· 데이터 연동 후 적용` 캡션으로 no-op을 사용자에게 신호(무신호 무효 필터 금지).
 - [ ] **시드 정합**: `makeRows`가 컬럼에 도메인값을 심어야 value 필터가 매칭됨 — 년도라벨→YEAR_OPTIONS 순환, select 필드 옵션→options 순환. **tag는 예외**: `row.category`로 매칭되는데 이는 schema가 아니라 `generic_list.tsx`의 하드코딩 `ROW_CATS`에서 시드된다 → 새 tag 라벨이 `ROW_CATS`에 없으면 토글 선택 시 **표가 통째로 비워진다**(value의 안전 no-op과 다른 비대칭). 새 tag 필터는 `ROW_CATS`에 같은 라벨을 추가하거나 `ROW_CATS` 중 하나와 정확일치시킬 것.
-- [ ] **마스크 규약**: 칩은 라벨(평문 UI) + 값(`<MT>` 마스킹). 행 셀은 `Cell`이 마스킹. 단위·헤더·축은 비마스킹.
 - [ ] **토큰·테마**: 색은 `var(--...)`만(하드코딩 hex 금지 — 다크 양립). 태그 토글에 `aria-pressed={checked}`.
 
 ## typed 페이지 트랙 (2026-09-08 — 골드 `subfund_manage.tsx`, 스키마 `GenericListPage`가 아닌 전용 페이지)
@@ -60,7 +59,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 - **드로어 항목 = 목업 검색박스의 항목·순서 그대로**(자펀드관리: 모펀드·자펀드·계정구분·자펀드구분·사업연도·정기/수시·심사담당자·리스크담당자·심사단계·조합상태·기준일자). ⚠ 검색어는 **기본 OFF opt-in**(위 "예약 라벨 `검색어`" 절 — 상시 아님). 필요한 페이지만 `searchable`/`SEARCHABLE`로 켜고, 켜질 때만 최상단 고정. 행 컬럼과 미연동인 항목은 상태만 두고 `passes`에 넣지 않으며 `DrawerField noop`으로 `· 데이터 연동 후 적용` 캡션.
 - **연도/일자 컨트롤 = `PeriodPicker`**(사업연도 `mode="year"`, 기준일자 `mode="day"`) — 연도 `<select>`·네이티브 date 금지(→[[apfs-datepicker]] PeriodPicker 절). 버튼 트리거는 `DrawerField plain`(`<div>` 래퍼, `<label>` 이중 토글 방지) + `ariaLabel`.
   - ⚠️ **폭**: PeriodPicker/DatePicker 트리거는 `w-full`이라 `DrawerField plain`(block 100%)에 **바로 넣으면 드로어 전체 폭으로 늘어난다**(2026-09-09 회귀). 반드시 `<div style={{ width:'fit-content', minWidth: controlMinWidth(year|date), maxWidth:'100%' }}>`로 감싼다 — 네이티브 `DrawerSelect`(자체 fit-content)와 달리 버튼엔 고유 콘텐츠 폭이 없다. 폭 계약 정본은 →[[apfs-datepicker]] "폭" 규칙.
-- **적용 칩은 항목별 개별 칩**(합쳐서 `A · B · C` 한 칩 금지). 각 칩 = **값만 표시**(항목명 접두사 없음, 2026-09-08 결정) + `×`(`aria-label="<항목> 필터 제거"`, 해당 필터만 해제). no-op 항목은 칩을 만들지 않는다. 값은 `<MT>` 마스킹.
+- **적용 칩은 항목별 개별 칩**(합쳐서 `A · B · C` 한 칩 금지). 각 칩 = **값만 표시**(항목명 접두사 없음, 2026-09-08 결정) + `×`(`aria-label="<항목> 필터 제거"`, 해당 필터만 해제). no-op 항목은 칩을 만들지 않는다.
   - ✅ **전 트랙 통일(2026-09-09)**: `generic_list.tsx` `FilterPill`·`asset_funding.tsx` 자체 칩 모두 **값만 표시**로 맞췄다(구 `라벨: 값`/합친 한 칩 폐기). 항목명은 `title`(호버)+`aria-label`로 회수. **"값만"은 항목명 제거지 연산자 제거가 아니다** — `출자금액 ≥ 800`은 `≥ 800`으로 남긴다. 태그형(value 없음)은 라벨이 곧 값 토큰이라 라벨을 표시.
 - 주 필터 1개(심사단계)는 툴바 `FilterChip`(전체+단계들)로 노출, 선택 행이 있으면 툴바 좌 슬롯이 selbar로 바뀐다(→[[apfs-stage-workflow]]).
 - 상태 SSOT는 `useState` N개 + `clearFilters`(초기화 버튼·전체 해제 공유). `passes`는 `useCallback`, 변경 시 `apiRef.current?.onFilterChanged()`(External Filter).
@@ -78,8 +77,6 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 3. 라이트/다크 대비 + [[responsive-ui]] 체크(드로어 92vw, 페이지 가로스크롤 없음).
 
 ## 참조
-- 원문 미정의 항목 라벨에 다는 검토필요 마커(ⓘ): 페이지별 로컬 `DrawerField`에 `note?: ReviewNote` prop을 더해
-  라벨 `<span>` 안에 `<ReviewMarker {...note} label={label} />`를 렌더한다. 실증 3화면(수시보고 3건·투자심의 3건·자펀드관리 2건),
-  문구는 목업 원문 전수 이식. 규약·함정(트리거가 span 인 이유, hover·포커스 규칙)은 [[apfs-grid]] "검토필요 마커" 절.
+- 2026-09-24: 검토필요 마커(ReviewMarker·note 필드·*_NOTE)는 전부 삭제됐다. 목업의 `.review`/`.rpop` 은 이식하지 않는다(2026-09-12 '이식' 규약 폐기). 드로어 필드 라벨에 마커를 달지 않는다.
 
 - 페이지 골격/툴바 슬롯: [[apfs-grid]] · UI 토큰: [[dashboard-ui]] · 반응형: [[responsive-ui]] · 필터 라벨 출처: [[apfs-capture-schema]]

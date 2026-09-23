@@ -21,7 +21,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
    <DialogHeader className="px-[46px]">
      <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
        <DialogTitle className="shrink-0">자펀드 명세</DialogTitle>
-       <DialogDescription className="text-caption truncate min-w-0"><MT>{대상명}</MT></DialogDescription>
+       <DialogDescription className="text-caption truncate min-w-0">{대상명}</DialogDescription>
      </div>
    </DialogHeader>
    ```
@@ -170,7 +170,7 @@ export const schema: PageSchema = {
 | **한글** | **가로** — 라벨 좌 · 값 우 (현재 방식, 기본) | 셀 `grid-template-columns: 150px minmax(0,1fr)`, 라벨 `bg-muted` 12.5px bold `text-muted-foreground` `padding 8px 12px`, 값 13px, 금액 `justify-end tabular font-semibold`, 값 없음 `-`(`text-caption`) |
 | **영문** | **세로** — 라벨 위 · 값 아래 | 셀 `flex-col` `padding 8px 12px` `gap 3px`, 라벨 **배경 없음** 11.5px 600 `var(--caption)`, 값 13.5px, 금액 좌측 tabular. 이유: `Scheduled Liquidation Date`류가 150px 칸에서 2줄로 접혀 행 높이가 들쭉날쭉해짐 |
 
-- 두 배열 모두 **공통 유지**: `<dl>` 2열 그리드(`grid-cols-1 sm:grid-cols-2`) + `gap-px bg-border border border-border rounded 8` 테두리 셀, 긴 항목(조합명·관리보수·성과보수·첨부 슬롯)은 `sm:col-span-2` 전체폭, 텍스트 값은 `<MT>`·금액은 `mn()` 마스킹, 첨부는 `PDF` 배지 칩 / `미첨부`.
+- 두 배열 모두 **공통 유지**: `<dl>` 2열 그리드(`grid-cols-1 sm:grid-cols-2`) + `gap-px bg-border border border-border rounded 8` 테두리 셀, 긴 항목(조합명·관리보수·성과보수·첨부 슬롯)은 `sm:col-span-2` 전체폭, 첨부는 `PDF` 배지 칩 / `미첨부`.
 - **분기 방법**: 호출자가 프롭을 넘기지 말고 라벨에서 결정한다 — `const stacked = !/[가-힣]/.test(items[0].l);` (한글 라벨 하나라도 있으면 가로). 현재 코드는 한글 전용이라 `stacked` 분기가 **아직 없음** — 영문 로케일 도입 시 `KvGrid`에 이 한 줄과 아래 세로 셀 클래스를 추가한다:
   ```tsx
   // stacked(영문): 라벨 위·값 아래. 검증된 스타일(2026-09-08 샘플)

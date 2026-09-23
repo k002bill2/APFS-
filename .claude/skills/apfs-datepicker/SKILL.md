@@ -15,7 +15,7 @@ APFS는 네이티브 `<input type="date">`를 쓰지 않는다. 전 화면 일�
 - **의존성**: `react-day-picker@10.0.1` · `date-fns@4.4.0` · `@radix-ui/react-popover@1.1.17`.
 
 ## 핵심 계약 (CRITICAL)
-1. **값 계약 = `'YYYY-MM-DD'` 문자열**(빈 문자열 = 미선택). `DatePicker`의 `value`/`onChange`는 **반드시 `string`** 시그니처를 보존하라 — 필터 정확일치(`rv === value`)·zod·Excel 내보내기·데이터 마스크가 모두 이 포맷에 의존한다. `Date` 객체를 흘리지 마라.
+1. **값 계약 = `'YYYY-MM-DD'` 문자열**(빈 문자열 = 미선택). `DatePicker`의 `value`/`onChange`는 **반드시 `string`** 시그니처를 보존하라 — 필터 정확일치(`rv === value`)·zod·Excel 내보내기가 모두 이 포맷에 의존한다. `Date` 객체를 흘리지 마라.
 2. **🔴 타임존(KST)**: `toISOString()` **절대 금지**(KST에서 하루 빠진다 — off-by-one). 로컬 자정 `Date` ↔ 문자열 변환은 date-fns `format(d, 'yyyy-MM-dd')`(로컬)·`parseISO('YYYY-MM-DD')`(로컬 자정)로만. **검증: 15일 클릭 → `2026-06-15`(14 아님).**
 3. **트리거 accname**: 트리거가 `<button>`이라 감싸는 `<label>`로 명명되지 않는다(accname 규칙: label은 input류만 암묵 연결). 네이티브 input이 받던 필드명을 보존하려면 소비처가 **`ariaLabel` prop으로 필드 라벨을 넘긴다**(`field.label`/`ff.label`).
 4. **Popover 부유**: Popover는 body 포털 + `z-popover`(85) > `z-modal`(80)이라 Dialog(폼 모달)·Sheet(필터 드로어) **양쪽 안에서 오버레이 위로 정상 부유**한다. 임의 z 숫자로 추월하지 마라(→[[z-index]] · 비포털 트랩 [[lnb-flyout-stacking-trap]]).
