@@ -3,6 +3,7 @@ import { resolveFilterField, YEAR_OPTIONS } from './filter_field';
 import { schema as gongo } from './자펀드_공고_정보관리';
 import { schema as yearInv } from './연도별투자현황';
 import { DEFAULT_SCHEMA } from './_default';
+import { ALL_SCHEMAS } from './index';
 
 describe('resolveFilterField — 필터 라벨 → 컨트롤 타입 도출', () => {
   it('select 필드 → enum + 필드 options + columnKey', () => {
@@ -28,6 +29,19 @@ describe('resolveFilterField — 필터 라벨 → 컨트롤 타입 도출', () 
   it('도메인 없는 enum성 라벨 → text degrade (빈 select 금지)', () => {
     expect(resolveFilterField('계정구분', yearInv).kind).toBe('text');
     expect(resolveFilterField('조회기준', yearInv).kind).toBe('text');
+  });
+
+  /* 2026-09-23 S2_86 평가시점 데이터 확인: 원문 검색조건 `평가년월` 은 행 컬럼이 없는 조회 기준이다.
+     종전엔 3단계 휴리스틱에서 tag 로 떨어져 켜는 순간 표가 통째로 비워졌다(tag = row.category 매칭).
+     '…년월' 라벨은 월 선택 no-op(칩+캡션)으로 격하한다 — tag 로 떨어지던 라벨만 바뀐다. */
+  it('무매칭 "…년월" 라벨 → month, columnKey 없음(tag 로 떨어져 표가 비워지지 않는다)', () => {
+    const ff = resolveFilterField('평가년월', yearInv);
+    expect(ff.kind).toBe('month');
+    expect(ff.columnKey).toBeUndefined();
+  });
+
+  it('무매칭 "기준년월" 은 종전대로 text(구분·기준 enum 휴리스틱이 먼저 — 기존 스키마 회귀 없음)', () => {
+    expect(resolveFilterField('기준년월', yearInv).kind).toBe('text');
   });
 
   it('카테고리 태그(값 도메인 없음) → tag (on/off 토글)', () => {
@@ -69,4 +83,12 @@ describe('resolveFilterField — 필터 라벨 → 컨트롤 타입 도출', () 
     const emptySelect = { ...gongo, fields: [{ key: 'x', label: '빈셀렉트', control: 'select' as const, options: [] }] };
     expect(resolveFilterField('빈셀렉트', emptySelect).kind).toBe('text');
   });
+});
+
+/* 레지스트리 전수 — '…년월' 필터 라벨이 tag 로 떨어지는 스키마가 없어야 한다(tag = 켜면 표 증발). */
+describe('레지스트리 전수 — 년월 필터는 tag 가 아니다', () => {
+  it.each(ALL_SCHEMAS.flatMap((s) => (s.filters ?? []).filter((f) => /년월$/.test(f)).map((f) => [s.route, f, s] as const)))(
+    '%s · %s', (_r, label, s) => {
+      expect(resolveFilterField(label, s).kind).not.toBe('tag');
+    });
 });

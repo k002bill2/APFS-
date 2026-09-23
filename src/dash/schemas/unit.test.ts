@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { UNITS, UNIT_DIV, DEFAULT_UNIT, isUnit, toUnit, formatUnit, amountHeader } from './unit';
+import { UNITS, UNIT_DIV, DEFAULT_UNIT, isUnit, toUnit, fromUnit, formatUnit, amountHeader } from './unit';
 
 describe('금액 단위 전환(원/백만원/억원)', () => {
   it('목업 토글 순서·값 도메인과 같다', () => {
@@ -40,4 +40,14 @@ describe('금액 단위 전환(원/백만원/억원)', () => {
     expect(isUnit('억원')).toBe(true);
     expect(isUnit('천원')).toBe(false);
   });
+});
+
+/* 편집 셀 저장 계약 — 화면 단위 입력을 원 단위로 되돌린다.
+   회귀: 억원 화면에서 10 을 입력하면 10원이 저장돼 합계가 틀어졌다(risk_grid 편집 셀, Codex P1). */
+describe('fromUnit — 화면 단위 입력 → 원', () => {
+  it('억원 입력 10 → 10억원', () => expect(fromUnit('10', '억원')).toBe(1_000_000_000));
+  it('백만원 소수 입력도 원 정수', () => expect(fromUnit('1.1', '백만원')).toBe(1_100_000));
+  it('원은 그대로', () => expect(fromUnit(123, '원')).toBe(123));
+  it('toUnit 과 왕복한다', () => expect(fromUnit(toUnit(250_000_000, '억원'), '억원')).toBe(250_000_000));
+  it('비숫자는 0', () => expect(fromUnit('abc', '억원')).toBe(0));
 });

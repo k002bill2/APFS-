@@ -65,5 +65,8 @@ export function resolveFilterField(label: string, schema: PageSchema): FilterFie
   if (isYearLabel(label)) return year(label);
   if (isDateLabel(label)) return { label, kind: 'date', options: [] };
   if (isEnumLabel(label)) return { label, kind: 'text', options: [] }; // 도메인 미상 → 빈 select 대신 text
+  // '…년월'(평가년월 등) — 행 컬럼 없는 조회 기준 월. tag 로 두면 켜는 순간 표가 비워지므로 월 선택 no-op(칩+캡션).
+  // enum 휴리스틱 **뒤**에 둔다: '기준년월'(기준 포함)은 종전대로 text — tag 로 떨어지던 라벨만 바뀐다(2026-09-23).
+  if (/년월$/.test(label)) return { label, kind: 'month', options: [] };
   return { label, kind: 'tag', options: [] }; // 순수 카테고리 태그 → on/off
 }
