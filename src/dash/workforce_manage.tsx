@@ -20,10 +20,11 @@
        실화면에서 의미가 없다. 시작·종료 둘 다 빈 값으로 시작하고, 빈 쪽은 무제한 경계다(형제 3화면 동일).
    - 목업 [조회] 버튼 → 만들지 않는다(백엔드가 없어 필터가 즉시 반영된다 — 형제 골드 동일 판단).
    - 목업 [등록] → 툴바 독립 버튼 `운용인력변동 등록`(상세필터 오른쪽·새로고침 왼쪽) + `⌘⏎`.
-   - 목업 [해제등록] → **행 선택 selbar**(GridFrame contextActions). selbar 의 도메인 액션은 이것 하나다
+   - 목업 [해제등록] → **행 선택 selbar**(GridFrame contextActions)
      (`선택 해제`는 도메인 액션이 아니라 전 화면 공통 어포던스라 함께 둔다 — 형제 8화면 동일).
-   - **수정·삭제는 없다**(2026-09-22 사용자 결정 — 목업 리스트바 액션이 등록/해제등록/엑셀 3개뿐이다).
-     edit 모드·DeleteDialog·onRowDoubleClicked 배선을 만들지 않는다. 형제 litigation 에서 딸려오지 않게 주의.
+   - 수정·삭제는 selbar 에 둔다 — 목업엔 없지만 2026-09-23 사용자 결정(형제 4화면 버튼 구성 통일).
+     수정은 1건일 때만, 삭제는 구분 무관. 배선은 형제 litigation_manage 그대로다
+     (2026-09-22 의 "수정·삭제 없음" 결정을 대체한다).
    - 목업 [엑셀] → 툴바가 아니라 푸터 `FooterActions` 내보내기 + `⌥D`(apfs-grid 푸터 골드 양식).
    - 목록 그리드 → AG Grid **단일 헤더 8컬럼**(목업 thead 순서 그대로). **2단 그룹헤더 없음**,
      **합계행 없음**(전 컬럼이 문자/날짜라 가산 개념이 없다 → pinnedBottomRowData 자체를 두지 않는다).
@@ -77,7 +78,7 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
-import { WorkforceFormModal, WorkforceReleaseDialog } from './workforce_form_modal';
+import { WorkforceFormModal, WorkforceReleaseDialog, WorkforceDeleteDialog } from './workforce_form_modal';
 import type { WorkforceFormValues } from './workforce_form_modal';
 import { OPT_GP, OPT_FUND } from './workforce_manage_schemas';
 
@@ -186,7 +187,7 @@ const EXPORT_COLS: XCol[] = [
   { header: '해제일자', get: (r) => r.rdate ?? '' },
 ];
 
-/* 행 선택 — 해제등록이 N건에 그대로 적용되는 액션이라 multiRow(apfs-aggrid "체크박스" 절 · 목업 `chk-all`).
+/* 행 선택 — 삭제·해제등록이 N건에 그대로 적용되는 액션이라 multiRow(apfs-aggrid "체크박스" 절 · 목업 `chk-all`).
    선택은 **체크박스로만** on/off 한다(2026-09-22 사용자 결정, #230 — 09-17 의 "행 본문 클릭 누적선택" 을 뒤집음).
    행 본문 클릭은 선택을 만들지도 풀지도 않는다(`enableClickSelection:false` 명시 — AG Grid 기본값과 같지만
    과거 이 키 누락이 "선택 수단 0" 사고로 오독된 이력이 있어 의도를 적어 둔다). 더블클릭=수정 모달, 우클릭=컨텍스트 메뉴는 그대로.
@@ -252,6 +253,11 @@ const EXPORT_SHEET = '운용인력변동관리';
 /* 등록 모드는 등록년월(필수)을 이번 달로 미리 채운다 — 목업도 `<input id="rg-ym" value="2026-07">` 로 프리필한다.
    ⚠ 클릭 시점에 계산한다(모듈 상수로 두면 오래 열린 탭이 달을 넘겨도 낡은 값). toISOString 금지(KST off-by-one). */
 const CREATE_INITIAL = (): Record<string, string> => ({ ym: format(new Date(), 'yyyy-MM') });
+/* 행 → 등록/수정 폼 초기값. 폼 필드 키만 골라 넘긴다(id·no·gubun·rdate 는 폼이 다루지 않는 행 메타).
+   ⚠ 행을 통째로 캐스팅해 넘기지 않는다 — 스키마에 없는 키가 섞이면 저장 시 조용히 되돌아올 수 있다. */
+const formInitial = (r: WorkforceRow): Record<string, string> => ({
+  ym: r.ym, hr: r.hr, mgr: r.mgr, fund: r.fund, cdate: r.cdate, backdate: r.backdate ?? '', detail: r.detail ?? '',
+});
 const today = () => format(new Date(), 'yyyy-MM-dd');   // 로컬 달력일 — toISOString 은 KST 00~09시에 전날
 
 /* 상세필터 `구분` 의 값 도메인. **그리드 컬럼 `구분`(등록/해제)과 라벨만 같고 값 도메인이 전혀 다르다.** */
@@ -266,8 +272,9 @@ const SCOPE_VALUES: WorkforceScope[] = ['운용사', '자펀드'];
 ────────────────────────────── */
 type ModalState =
   | null
-  | { kind: 'form' }
-  | { kind: 'release'; ids: string[] };
+  | { kind: 'form'; mode: 'create' | 'edit'; row?: WorkforceRow }
+  | { kind: 'release'; ids: string[] }
+  | { kind: 'delete'; ids: string[] };
 
 export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<WorkforceRow> | null>(null);
@@ -337,7 +344,7 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
   const passesRef = useRef(passes);
   passesRef.current = passes;
 
-  /* 신규 등록 행은 선두 삽입 후 선택을 그 행으로 옮긴다 — 다음 액션(해제등록)이 바로 보인다.
+  /* 신규 등록 행은 선두 삽입 후 선택을 그 행으로 옮긴다 — 다음 액션(수정·삭제·해제등록)이 바로 보인다.
      그리드 체크박스는 rowData 반영 뒤에야 노드가 생기므로 onRowDataUpdated 에서 맞춘다. */
   const pendingSelect = useRef<string | null>(null);
   const onGridReady = useCallback((e: GridReadyEvent<WorkforceRow>) => { apiRef.current = e.api; }, []);
@@ -348,7 +355,7 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
     pendingSelect.current = null;   // 1회성 — 남겨 두면 이후 모든 행 변경이 선택을 되돌린다
     /* ⚠ 필터로 **화면에 없는** 행은 선택하지 않는다. AG Grid 는 외부 필터에 걸린 행도 노드를 유지하므로
        무조건 setSelected 하면 그리드엔 보이지 않는데 selbar 만 "1건 선택됨"으로 떠서
-       해제등록이 보이지 않는 행에 걸린다(등록 변동일자 vs 과거 기간 필터).
+       수정·삭제·해제등록이 보이지 않는 행에 걸린다(등록 변동일자 vs 과거 기간 필터).
        대신 필터를 풀어 주지도 않는다 — 사용자가 건 필터를 뺏는 쪽이 더 놀랍다. */
     const node = e.api.getRowNode(id);
     if (!node?.data || !passesRef.current(node.data)) return;
@@ -362,9 +369,20 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
     setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
   }, []);
 
-  /* ── 액션(목업 툴바 등록 · 해제등록) — 수정·삭제는 없다 ── */
+  /* ── 액션(목업 툴바 등록 · 해제등록 + 2026-09-23 사용자 결정 수정·삭제) ── */
   const selectedRows = () => apiRef.current?.getSelectedRows() ?? [];
-  const openCreate = () => setModal({ kind: 'form' });
+  const openCreate = () => setModal({ kind: 'form', mode: 'create' });
+  const openEdit = () => {
+    const sel = selectedRows();
+    /* 1건이 아니면 토스트로 되돌린다(형제 litigation 동형 — 버튼은 1건일 때만 보이지만 방어 가드로 남긴다) */
+    if (sel.length !== 1) { toast('수정할 운용인력변동을 1건만 선택하세요'); return; }
+    setModal({ kind: 'form', mode: 'edit', row: sel[0] });
+  };
+  const openDelete = () => {
+    const ids = selectedRows().map((r) => r.id);
+    if (!ids.length) return;
+    setModal({ kind: 'delete', ids });
+  };
   const openRelease = () => {
     const sel = selectedRows();
     if (!sel.length) return;
@@ -374,19 +392,32 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
     setModal({ kind: 'release', ids });
   };
 
-  /* ── 저장/해제 커밋 ── */
+  /* ── 저장/삭제/해제 커밋 ── */
   const saveForm = (v: WorkforceFormValues) => {
     if (modal?.kind !== 'form') return;
-    const nextNo = rows.reduce((m, r) => Math.max(m, r.no), 0) + 1;
     /* backdate/detail 은 그리드 컬럼이 없지만 행에 싣는다 — 입력값이 조용히 증발하지 않도록(파일 헤더). */
-    const row: WorkforceRow = {
-      id: crypto.randomUUID(), no: nextNo, gubun: '등록', rdate: null,
+    const patch = {
       ym: v.ym ?? '', hr: v.hr ?? '', mgr: v.mgr ?? '', fund: v.fund ?? '',
       cdate: v.cdate ?? '', backdate: v.backdate ?? '', detail: v.detail ?? '',
     };
-    pendingSelect.current = row.id;
-    setRows((prev) => [row, ...prev]);
+    if (modal.mode === 'edit' && modal.row) {
+      const id = modal.row.id;
+      setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    } else {
+      const nextNo = rows.reduce((m, r) => Math.max(m, r.no), 0) + 1;
+      const row: WorkforceRow = { id: crypto.randomUUID(), no: nextNo, gubun: '등록', rdate: null, ...patch };
+      pendingSelect.current = row.id;
+      setRows((prev) => [row, ...prev]);
+    }
     setModal(null);
+  };
+  const commitDelete = () => {
+    if (modal?.kind !== 'delete') return;
+    const ids = new Set(modal.ids);
+    setRows((prev) => prev.filter((r) => !ids.has(r.id)));
+    apiRef.current?.deselectAll();
+    setModal(null);
+    toast.success(`${mn(String(ids.size))}건 삭제되었습니다`);
   };
   /* 해제등록 — 목업은 토스트만 띄우지만 우리는 상태를 들고 있으므로 실제로 전이시킨다.
      해제일자는 **오늘**이다(목업 원문 "해제일자는 오늘 날짜로 기록됩니다" — 입력받지 않는다).
@@ -438,10 +469,14 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다.
      그래서 선택 시 toolbarLeft 는 비운다(둘 다 넘기면 탭 스톱이 2벌 된다).
      ⚠ selbar 에 대상명·취소 안내 캡션을 넣지 않는다(apfs-manage-page 5절).
-     ⚠ 도메인 액션은 `해제등록` 하나뿐 — 수정·삭제 버튼을 만들지 않는다(목업에 없다). */
+     수정·삭제는 목업엔 없지만 2026-09-23 사용자 결정(형제 4화면 버튼 구성 통일). */
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      {/* 수정은 **단건 체크일 때만**(2026-09-23 사용자 결정). openEdit 안의 1건 가드는 방어로 남긴다. */}
+      {selCount === 1 && <Button variant="primary" size="sm" leadingIcon="file" onClick={openEdit}>수정</Button>}
+      {/* 삭제는 구분(등록/해제)과 무관하게 항상 노출 */}
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={openDelete}>삭제</Button>
       {/* 이미 해제된 행은 다시 해제등록할 수 없다 — 2026-09-23 사용자 결정 */}
       {!selHasReleased && <Button variant="outline" size="sm" leadingIcon="check" onClick={openRelease}>해제등록</Button>}
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
@@ -548,12 +583,20 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
         </SheetContent>
       </Sheet>
 
-      {/* ── 팝업 2종 — 등록(목업 openReg) · 해제등록 확인(목업 openRelease · alertdialog) ── */}
+      {/* ── 팝업 3종 — 등록/수정(목업 openReg) · 해제등록 확인(목업 openRelease · alertdialog) · 삭제 확인(2026-09-23 사용자 결정) ── */}
       {modal?.kind === 'form' && (
-        <WorkforceFormModal initial={CREATE_INITIAL()} onSave={saveForm} onClose={() => setModal(null)} />
+        <WorkforceFormModal
+          mode={modal.mode}
+          initial={modal.mode === 'edit' && modal.row ? formInitial(modal.row) : CREATE_INITIAL()}
+          title={modal.mode === 'create' ? '운용인력변동 등록' : '운용인력변동 수정'}
+          onSave={saveForm}
+          onClose={() => setModal(null)} />
       )}
       {modal?.kind === 'release' && (
         <WorkforceReleaseDialog count={modal.ids.length} onConfirm={commitRelease} onClose={() => setModal(null)} />
+      )}
+      {modal?.kind === 'delete' && (
+        <WorkforceDeleteDialog count={modal.ids.length} onConfirm={commitDelete} onClose={() => setModal(null)} />
       )}
     </GridFrame>
   );

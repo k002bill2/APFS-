@@ -1,9 +1,8 @@
-/* 운용인력 변동관리 — 팝업 2종 (등록 폼 / 해제등록 확인)
+/* 운용인력 변동관리 — 팝업 3종 (등록·수정 폼 / 해제등록 확인 / 삭제 확인)
    출처: S2_59 목업의 `openReg()` · `openRelease()`(= S2_60 등록화면 팝업 정의를 흡수한 것 — 항목 7개 일치).
 
-   ⚠ 수정·삭제 팝업은 **만들지 않는다** — 목업 리스트바 액션이 `등록`·`해제등록`·`엑셀` 3개뿐이고
-     수정/삭제가 없다(2026-09-22 사용자 결정). 형제 litigation 의 `openDelete()`/edit 모드를
-     이식하지 않는다.
+   수정·삭제는 selbar 에 둔다 — 목업엔 없지만 2026-09-23 사용자 결정(형제 4화면 버튼 구성 통일).
+   수정은 1건일 때만, 삭제는 구분 무관. 수정 모드·삭제 확인은 형제 litigation_form_modal 배선 그대로다.
 
    ⚠ 왜 RowFormModal(스키마 주도 공용 모달)이 아니라 전용 모달인가 — **값 계약**이 맞지 않는다
      (형제 litigation_form_modal 헤더와 동일한 ①②③):
@@ -62,26 +61,30 @@ function Field({ label, children, errMsg, className, plain }: { label: string; c
 /* 초기값 시드 — RowFormModal 과 동일 규칙: initial 값 우선, 등록 모드에서 비어 있는 select 는 첫 옵션.
    (옵션형이 ''로 저장되면 그리드 셀이 빈칸으로 렌더된다 — apfs-form-modal 계약4)
    이 폼에 radio·switch 는 없으므로 select 만 다룬다(목업 openReg 에 radio 가 없다). */
-function seedValues(fields: FieldSpec[], initial?: Partial<WorkforceFormValues>): WorkforceFormValues {
+function seedValues(fields: FieldSpec[], mode: 'create' | 'edit', initial?: Partial<WorkforceFormValues>): WorkforceFormValues {
   const seed: WorkforceFormValues = {};
   for (const f of fields) {
     const from = initial ? String(initial[f.key] ?? '') : '';
-    seed[f.key] = (!from && f.control === 'select') ? (f.options?.[0] ?? '') : from;
+    seed[f.key] = (!from && f.control === 'select' && mode === 'create') ? (f.options?.[0] ?? '') : from;
   }
   return seed;
 }
 
 /* ──────────────────────────────
-   ① 운용인력변동 등록 — 목업 `openReg()`
-   ⚠ 등록 전용이다(수정 모드 없음 — 목업에 수정 액션이 없다).
+   ① 운용인력변동 등록 / 수정 — 목업 `openReg()`(수정은 2026-09-23 사용자 결정으로 추가 · 같은 폼 공유)
    ⚠ required 는 앞 4항목만 — 스키마 required 를 그대로 검증한다(빼거나 더하지 않는다).
 ────────────────────────────── */
-export function WorkforceFormModal({ initial, onSave, onClose }: {
+export function WorkforceFormModal({ mode = 'create', initial, title, onSave, onClose }: {
+  /** 등록/수정 — 생략 시 등록(기존 호출 동작 유지). */
+  mode?: 'create' | 'edit';
   initial?: Partial<WorkforceFormValues>;
+  /** 제목 오버라이드 — 생략 시 스키마 title(등록). 수정은 호출부가 넘긴다(형제 litigation 동형). */
+  title?: string;
   onSave: (values: WorkforceFormValues) => void;
   onClose: () => void;
 }) {
-  const [v, setV] = React.useState<WorkforceFormValues>(() => seedValues(WORKFORCE_SCHEMA.fields, initial));
+  const [v, setV] = React.useState<WorkforceFormValues>(() => seedValues(WORKFORCE_SCHEMA.fields, mode, initial));
+  const heading = title ?? WORKFORCE_SCHEMA.title;
   const [errKey, setErrKey] = React.useState('');
   const set = (k: string, val: string) => {
     setV((p) => ({ ...p, [k]: val }));
@@ -93,7 +96,7 @@ export function WorkforceFormModal({ initial, onSave, onClose }: {
     if (miss) { setErrKey(miss.key); return; }
     return () => {
       onSave({ ...v });
-      toast.success('등록되었습니다 (목업)');
+      toast.success(mode === 'create' ? '등록되었습니다 (목업)' : '수정되었습니다 (목업)');
     };
   };
 
@@ -108,8 +111,8 @@ export function WorkforceFormModal({ initial, onSave, onClose }: {
       {/* 바깥 클릭으로는 안 닫힘 — 폼 작성 중 오터치 유실 방지(RowFormModal 동형) */}
       <DialogContent className={wide ? 'max-w-[880px] max-h-[88vh]' : 'max-w-[460px] max-h-[86vh]'} onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="px-[46px]">
-          <DialogTitle>{WORKFORCE_SCHEMA.title}</DialogTitle>
-          <DialogDescription className="sr-only">{WORKFORCE_SCHEMA.title} 양식</DialogDescription>
+          <DialogTitle>{heading}</DialogTitle>
+          <DialogDescription className="sr-only">{heading} 양식</DialogDescription>
         </DialogHeader>
 
         <div className="overflow-y-auto p-[46px]">
@@ -132,7 +135,7 @@ export function WorkforceFormModal({ initial, onSave, onClose }: {
           </div>
         </div>
 
-        {/* 푸터 — 목업 modal-foot 구성(닫기·저장). 삭제 버튼은 없다(목업에 삭제 액션 자체가 없다) */}
+        {/* 푸터 — 목업 modal-foot 구성(닫기·저장). 삭제는 목록 selbar 가 소유한다(형제 litigation 동형) */}
         <DialogFooter className="px-[46px]">
           <div />
           <div className="flex gap-2">
@@ -175,6 +178,32 @@ export function WorkforceReleaseDialog({ count, onConfirm, onClose }: {
         <AlertDialogFooter>
           <AlertDialogCancel>취소</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>해제등록</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+/* ──────────────────────────────
+   ③ 삭제 확인 — 목업엔 없다(2026-09-23 사용자 결정으로 추가). 형제 `LitigationDeleteDialog` 규격·문구 그대로.
+────────────────────────────── */
+export function WorkforceDeleteDialog({ count, onConfirm, onClose }: {
+  count: number;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <AlertDialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>운용인력변동 삭제</AlertDialogTitle>
+          <AlertDialogDescription>
+            선택한 <b className="text-foreground">{mn(String(count))}건</b>을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>취소</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

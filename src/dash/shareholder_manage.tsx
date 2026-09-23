@@ -1,7 +1,7 @@
 /* 운용사 주주변동관리 — 관리형 리스트 페이지 (조기경보 > 조기경보 > 운용사 주주변동관리).
    출처: S2_55_주주변동관리.html(KRDS TO-BE) + 등록화면 S2_56(팝업으로 흡수) → APFS 디자인시스템으로 변형.
    형제 골드: `violation_manage.tsx`(S2_53 법률/규약위반사항 관리) — 같은 대분류·같은 골격의 **더 단순한 버전**이다
-   (컬럼 8 vs 15 · 액션 2 vs 4). 규약 판단이 갈리면 그 파일을 따른다.
+   (컬럼 8 vs 15). 규약 판단이 갈리면 그 파일을 따른다.
 
    ⚠ 메뉴 라벨과 목업 제목이 다르다 — 목업 h1 은 "주주변동관리" 지만 우리 메뉴 리프(data.ts)는
      **"운용사 주주변동관리"** 다. title·cardTitle·favRoute·crumbs 리프는 전부 **메뉴 라벨**을 쓴다
@@ -15,8 +15,9 @@
        시점이라 실화면에서 의미가 없다. 시작·종료 둘 다 빈 값으로 시작하고, 빈 쪽은 무제한 경계다.
    - 목업 [조회] 버튼 → 만들지 않는다(백엔드가 없어 필터가 즉시 반영된다 — 형제 골드 동일 판단).
    - 목업 [등록] → 툴바 독립 버튼 `주주변동 등록`(상세필터 오른쪽·새로고침 왼쪽) + `⌘⏎`.
-   - 목업 [해제등록] → **행 선택 selbar**(GridFrame contextActions). ⚠ 목업 툴바에 [수정]·[삭제]가
-     **없으므로 만들지 않는다**(형제 화면엔 있었지만 이 원문엔 없다).
+   - 목업 [해제등록] → **행 선택 selbar**(GridFrame contextActions).
+   - 수정·삭제는 selbar 에 둔다 — 목업엔 없지만 2026-09-23 사용자 결정(형제 4화면 버튼 구성 통일).
+     수정은 1건일 때만, 삭제는 구분 무관. 배선은 형제 litigation_manage 그대로다.
    - 목업 [엑셀] → 툴바가 아니라 푸터 `FooterActions` 내보내기 + `⌥D`(apfs-grid 푸터 골드 양식).
    - 목록 그리드 → AG Grid **단일 헤더 8컬럼**(목업 thead 순서 그대로). **2단 그룹헤더 없음**,
      **합계행 없음**(전 컬럼이 문자/날짜라 가산 개념이 없다 → pinnedBottomRowData 자체를 두지 않는다).
@@ -52,7 +53,7 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
-import { ShareholderFormModal, ShareholderReleaseModal } from './shareholder_form_modal';
+import { ShareholderFormModal, ShareholderReleaseModal, ShareholderDeleteDialog } from './shareholder_form_modal';
 import type { ShareholderFormValues } from './shareholder_form_modal';
 import { OPT_GP } from './shareholder_manage_schemas';
 
@@ -166,7 +167,7 @@ const EXPORT_COLS: XCol[] = [
   { header: '해제일자', get: (r) => r.rd },
 ];
 
-/* 행 선택 — 해제등록이 N건에 그대로 적용되는 액션이라 multiRow(apfs-aggrid "체크박스" 절).
+/* 행 선택 — 삭제·해제등록이 N건에 그대로 적용되는 액션이라 multiRow(apfs-aggrid "체크박스" 절).
    선택은 체크박스로만 on/off 한다(행 본문 클릭 선택 없음 — 2026-09-22 사용자 결정, enableClickSelection:false 명시).
    헤더 전체선택은 SELECTION_COL 의 DS 헤더가 그리므로 내장 SelectAllFeature 는 끄고(headerCheckbox:false)
    범위를 'filtered' 로 못 박아 DS 헤더와 일치시킨다. 모듈 상수(렌더마다 새 객체면 컬럼 폭이 되돌아간다). */
@@ -222,6 +223,11 @@ const dayWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMi
 const EXPORT_BASENAME = '운용사 주주변동관리';
 const EXPORT_SHEET = '주주변동관리';
 
+/* 행 → 등록/수정 폼 초기값. 폼 필드 키만 골라 넘긴다(id·no·g·rd 는 폼이 다루지 않는 행 메타).
+   ⚠ 행을 통째로 캐스팅해 넘기지 않는다 — 스키마에 없는 키가 섞이면 저장 시 조용히 되돌아올 수 있다. */
+const formInitial = (r: ShareholderRow): Record<string, string> => ({
+  ym: r.ym, cd: r.cd, gp: r.gp, vt: r.vt, cont: r.cont, reason: r.reason,
+});
 /* 등록 모드는 등록년월을 이번 달로 미리 채운다 — 목업도 `<input id="rm-ym" value="2026-07">` 로 프리필한다.
    ⚠ 클릭 시점에 계산한다(모듈 상수로 두면 오래 열린 탭이 달을 넘겨도 낡은 값). toISOString 금지(KST off-by-one). */
 const CREATE_INITIAL = (): Record<string, string> => ({ ym: format(new Date(), 'yyyy-MM') });
@@ -231,8 +237,9 @@ const CREATE_INITIAL = (): Record<string, string> => ({ ym: format(new Date(), '
 ────────────────────────────── */
 type ModalState =
   | null
-  | { kind: 'form' }
-  | { kind: 'release'; ids: string[] };
+  | { kind: 'form'; mode: 'create' | 'edit'; row?: ShareholderRow }
+  | { kind: 'release'; ids: string[] }
+  | { kind: 'delete'; ids: string[] };
 
 export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<ShareholderRow> | null>(null);
@@ -284,7 +291,7 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
   const passesRef = useRef(passes);
   passesRef.current = passes;
 
-  /* 신규 등록 행은 선두 삽입 후 선택을 그 행으로 옮긴다 — 다음 액션(해제등록)이 바로 보인다.
+  /* 신규 등록 행은 선두 삽입 후 선택을 그 행으로 옮긴다 — 다음 액션(수정·삭제·해제등록)이 바로 보인다.
      그리드 체크박스는 rowData 반영 뒤에야 노드가 생기므로 onRowDataUpdated 에서 맞춘다. */
   const pendingSelect = useRef<string | null>(null);
   const onGridReady = useCallback((e: GridReadyEvent<ShareholderRow>) => { apiRef.current = e.api; }, []);
@@ -295,7 +302,7 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
     pendingSelect.current = null;   // 1회성 — 남겨 두면 이후 모든 행 변경이 선택을 되돌린다
     /* ⚠ 필터로 **화면에 없는** 행은 선택하지 않는다. AG Grid 는 외부 필터에 걸린 행도 노드를 유지하므로
        무조건 setSelected 하면 그리드엔 보이지 않는데 selbar 만 "1건 선택됨"으로 떠서
-       해제등록이 보이지 않는 행에 걸린다(등록년월 기본값=이번 달 vs 과거 기간 필터).
+       수정·삭제·해제등록이 보이지 않는 행에 걸린다(등록년월 기본값=이번 달 vs 과거 기간 필터).
        대신 필터를 풀어 주지도 않는다 — 사용자가 건 필터를 뺏는 쪽이 더 놀랍다. */
     const node = e.api.getRowNode(id);
     if (!node?.data || !passesRef.current(node.data)) return;
@@ -309,9 +316,20 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
     setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
   }, []);
 
-  /* ── 액션(목업 툴바 등록 · 해제등록). 수정·삭제는 목업에 없다 ── */
+  /* ── 액션(목업 툴바 등록 · 해제등록 + 2026-09-23 사용자 결정 수정·삭제) ── */
   const selectedRows = () => apiRef.current?.getSelectedRows() ?? [];
-  const openCreate = () => setModal({ kind: 'form' });
+  const openCreate = () => setModal({ kind: 'form', mode: 'create' });
+  const openEdit = () => {
+    const sel = selectedRows();
+    /* 1건이 아니면 토스트로 되돌린다(형제 litigation 동형 — 버튼은 1건일 때만 보이지만 방어 가드로 남긴다) */
+    if (sel.length !== 1) { toast('수정할 주주변동을 1건만 선택하세요'); return; }
+    setModal({ kind: 'form', mode: 'edit', row: sel[0] });
+  };
+  const openDelete = () => {
+    const ids = selectedRows().map((r) => r.id);
+    if (!ids.length) return;
+    setModal({ kind: 'delete', ids });
+  };
   const openRelease = () => {
     const sel = selectedRows();
     if (!sel.length) return;
@@ -321,16 +339,30 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
     setModal({ kind: 'release', ids });
   };
 
-  /* ── 저장/해제 커밋 ── */
+  /* ── 저장/삭제/해제 커밋 ── */
   const saveForm = (v: ShareholderFormValues) => {
-    const nextNo = rows.reduce((m, r) => Math.max(m, r.no), 0) + 1;
-    const row: ShareholderRow = {
-      id: crypto.randomUUID(), no: nextNo, g: '등록', rd: '',
+    if (modal?.kind !== 'form') return;
+    const patch = {
       ym: v.ym ?? '', cd: v.cd ?? '', gp: v.gp ?? '', vt: v.vt ?? '', cont: v.cont ?? '', reason: v.reason ?? '',
     };
-    pendingSelect.current = row.id;
-    setRows((prev) => [row, ...prev]);
+    if (modal.mode === 'edit' && modal.row) {
+      const id = modal.row.id;
+      setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    } else {
+      const nextNo = rows.reduce((m, r) => Math.max(m, r.no), 0) + 1;
+      const row: ShareholderRow = { id: crypto.randomUUID(), no: nextNo, g: '등록', rd: '', ...patch };
+      pendingSelect.current = row.id;
+      setRows((prev) => [row, ...prev]);
+    }
     setModal(null);
+  };
+  const commitDelete = () => {
+    if (modal?.kind !== 'delete') return;
+    const ids = new Set(modal.ids);
+    setRows((prev) => prev.filter((r) => !ids.has(r.id)));
+    apiRef.current?.deselectAll();
+    setModal(null);
+    toast.success(`${mn(String(ids.size))}건 삭제되었습니다`);
   };
   /* 해제등록 — 목업은 토스트만 띄우지만 우리는 상태를 들고 있으므로 실제로 전이시킨다(파일 상단 '한계' 참조).
      불변 갱신(map + 스프레드) — 원본 배열·행 객체를 mutate 하지 않는다. */
@@ -375,10 +407,14 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다.
      그래서 선택 시 toolbarLeft 는 비운다(둘 다 넘기면 탭 스톱이 2벌 된다).
      ⚠ selbar 에 대상명·취소 안내 캡션을 넣지 않는다(apfs-manage-page 5절).
-     ⚠ 수정·삭제 액션을 만들지 않는다 — 목업 툴바에 없다. */
+     수정·삭제는 목업엔 없지만 2026-09-23 사용자 결정(형제 4화면 버튼 구성 통일). */
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      {/* 수정은 **단건 체크일 때만**(2026-09-23 사용자 결정). openEdit 안의 1건 가드는 방어로 남긴다. */}
+      {selCount === 1 && <Button variant="primary" size="sm" leadingIcon="file" onClick={openEdit}>수정</Button>}
+      {/* 삭제는 구분(등록/해제)과 무관하게 항상 노출 */}
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={openDelete}>삭제</Button>
       {/* 이미 해제된 행은 다시 해제등록할 수 없다 — 2026-09-23 사용자 결정 */}
       {!selHasReleased && <Button variant="outline" size="sm" leadingIcon="check" onClick={openRelease}>해제등록</Button>}
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
@@ -476,12 +512,20 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
         </SheetContent>
       </Sheet>
 
-      {/* ── 팝업 2종 — 등록(목업 openReg) · 해제등록(openRelease). 삭제 확인은 목업에 없다 ── */}
+      {/* ── 팝업 3종 — 등록/수정(목업 openReg) · 해제등록(openRelease) · 삭제 확인(2026-09-23 사용자 결정) ── */}
       {modal?.kind === 'form' && (
-        <ShareholderFormModal initial={CREATE_INITIAL()} onSave={saveForm} onClose={() => setModal(null)} />
+        <ShareholderFormModal
+          mode={modal.mode}
+          initial={modal.mode === 'edit' && modal.row ? formInitial(modal.row) : CREATE_INITIAL()}
+          title={modal.mode === 'create' ? '주주변동 등록' : '주주변동 수정'}
+          onSave={saveForm}
+          onClose={() => setModal(null)} />
       )}
       {modal?.kind === 'release' && (
         <ShareholderReleaseModal count={modal.ids.length} onSave={commitRelease} onClose={() => setModal(null)} />
+      )}
+      {modal?.kind === 'delete' && (
+        <ShareholderDeleteDialog count={modal.ids.length} onConfirm={commitDelete} onClose={() => setModal(null)} />
       )}
     </GridFrame>
   );
