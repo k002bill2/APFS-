@@ -99,7 +99,7 @@ export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void })
 
   const filters: FilterSpec[] = [
     { label: '명칭', kind: 'text', value: name, onChange: changeName, placeholder: '조합 명칭 검색' },
-    { label: '비활성원부', kind: 'radio', value: inactive, onChange: changeInactive, options: INACTIVE_OPTIONS },
+    { label: '비활성원부', kind: 'radio', value: inactive, onChange: changeInactive, options: INACTIVE_OPTIONS, chip: applied },
   ];
   const exportExcel = () => {
     exportTables(LABEL, [{ name: LABEL, table: LEDGER_TABLE, rows: shown }], null, masked);

@@ -436,4 +436,25 @@ describe('화면별 도메인 규칙', () => {
     const head = (XLSX.utils.sheet_to_json(ws, { header: 1 }) as string[][])[0];
     expect(head).toEqual(LEDGER_TABLE.cols.filter((c) => c.key !== 'mgmt').map((c) => c.label));
   });
+  it('엑셀 금액 = 화면 금액(표 선언 unitDigits 자릿수) — 화면 17.6 이면 엑셀도 17.6', () => {
+    const tables = [...Object.values(YEARLY_TABLES), ...BASES.map((b) => ({ ...detailTable(b), rows: detailRows(b, COMB_TYPES[0]) })), ...VERIFY_TABLES, CASHFLOW_TABLE];
+    let checked = 0;
+    for (const t of tables) for (const unit of ['백만원', '억원'] as const) {
+      const ws = tableSheet(t, t.rows, unit, false);
+      const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' }) as string[][];
+      const heads = t.cols.some((c) => c.group) ? 2 : 1;
+      const cols = t.cols.filter((c) => !c.noExport);
+      t.rows.forEach((r, i) => cols.forEach((c, j) => {
+        if (c.kind !== 'amount' || typeof r[c.key] !== 'number') return;
+        expect(aoa[heads + i][j], `${t.id} ${unit} ${c.key}`).toBe(amountText(r[c.key] as number, unit, t.unitDigits));
+        checked++;
+      }));
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+  it('등록원부 비활성원부 칩 = 적용 전 숨김(첫 화면 3행인데 제외 칩이 보이면 오해)', () => {
+    const kit = read(new URL('./risk_page_kit.tsx', import.meta.url).pathname);
+    expect(kit).toMatch(/filters\.filter\(\(f\) => f\.value && f\.chip !== false\)/);
+    expect(read(new URL('./registry_ledger.tsx', import.meta.url).pathname)).toMatch(/options: INACTIVE_OPTIONS, chip: applied/);
+  });
 });

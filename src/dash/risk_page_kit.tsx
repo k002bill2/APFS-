@@ -42,6 +42,8 @@ export interface FilterSpec {
   note?: ReviewNoteMeta;
   /** text 입력 placeholder(원문 그대로) */
   placeholder?: string;
+  /** false = 적용 칩 숨김 — 기본값이 있으나 아직 적용 전인 조건(값은 드로어에 그대로 보인다) */
+  chip?: boolean;
 }
 
 /** dayRange 값 'from~to' ↔ [from, to] */
@@ -170,7 +172,7 @@ function AppliedChip({ f }: { f: FilterSpec }) {
 }
 
 export function AppliedChips({ filters }: { filters: FilterSpec[] }) {
-  const on = filters.filter((f) => f.value);
+  const on = filters.filter((f) => f.value && f.chip !== false);
   return (
     <>
       <Icon name="filter" size={16} className="text-caption" />
