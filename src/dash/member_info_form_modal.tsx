@@ -9,16 +9,12 @@
 
    필드 순서 = 목업 modal-body의 row() 호출 순서:
      모펀드 · 조합원명* · 개인/법인 · 국내/해외 · 사업자번호/주민번호* · 주소(full) · 전화번호 · 비고(full)
-   ⚠검토필요 마커 1건 — 수정 모드 식별번호 라벨(목업 `rev(...)` 원문 그대로, 창작·합치기 없음).
    ⚠ 자물쇠 글리프(🔒)는 공용 `Icon` 레지스트리에 없어 텍스트 `수정불가`만 남긴다(브리프 지시). */
 import React from 'react';
 import { UI } from './components';
-import { MT } from './mask';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { toast } from './ui/sonner';
 import type { MemberRow } from './member_info_manage';
 
@@ -28,12 +24,6 @@ const { Button, SaveButton } = UI;
    ⚠ 페이지(member_info_manage)가 이 상수를 import 한다 — 반대 방향(모달이 페이지 값을 import)이면
      페이지→모달 컴포넌트 import와 맞물려 값 순환 참조가 된다(타입 import는 erase 되어 무해). */
 export const MF_OPTIONS = ['농식품모태펀드', 'MOAF'];
-
-/* 목업 `rev('수정 시 …','PK 지정 원문 …')` 원문 그대로. 설계 메모라 마스킹·엑셀 대상이 아니다. */
-const BIZ_NOTE: ReviewNote = {
-  rec: '수정 시 식별자로 잠금(중복확인은 등록 시)',
-  dat: 'PK 지정 원문 미확인 — 표준 §2.2 적용',
-};
 
 type Patch = Omit<MemberRow, 'id' | 'no'>;
 
@@ -65,13 +55,13 @@ const F: Record<string, FieldSpec> = {
 };
 
 /* RowFormModal `Field` 규격 복제(공유 export가 아니라 로컬 복사 — generic_list_modal.tsx 참조).
-   note가 있으면 라벨 옆 ⚠마커. plain=true면 <label> 대신 <div>(복합 컨트롤·radio는 암묵 연결이 어긋난다). */
+   plain=true면 <label> 대신 <div>(복합 컨트롤·radio는 암묵 연결이 어긋난다). */
 const labelStyle: React.CSSProperties = { fontSize: 12, marginBottom: 5 };
-function Field({ label, children, errMsg, className, plain, note }: { label: string; children: React.ReactNode; errMsg?: string; className?: string; plain?: boolean; note?: ReviewNote }) {
+function Field({ label, children, errMsg, className, plain }: { label: string; children: React.ReactNode; errMsg?: string; className?: string; plain?: boolean; }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className={`block mb-3.5 ${className ?? ''}`}>
-      <span className="font-semibold text-caption block" style={labelStyle}>{label}{note && <ReviewMarker {...note} label={label} />}</span>
+      <span className="font-semibold text-caption block" style={labelStyle}>{label}</span>
       {children}
       {errMsg && <span role="alert" className="text-danger block mt-1" style={{ fontSize: 11.5 }}>{errMsg}</span>}
     </Wrap>
@@ -169,11 +159,11 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
               <SchemaField field={F.region} value={v.region} onChange={(x) => set('region', x as MemberRow['region'])} />
             </Field>
 
-            {/* 사업자번호/주민번호 — 등록: 입력 + 중복확인 / 수정: 식별자 잠금(readonly) + ⚠검토필요 마커.
+            {/* 사업자번호/주민번호 — 등록: 입력 + 중복확인 / 수정: 식별자 잠금(readonly).
                 ⚠ plain div 래퍼다 — 등록 모드는 <label> 안에 버튼이 함께 들어가 라벨 클릭이 엉뚱한 컨트롤을
                   활성화할 수 있고(web-a11y 함정 B), 수정 모드의 값 상자는 labelable 요소가 아니다.
                   대신 입력이 자체 aria-label을 갖는다. */}
-            <Field label={`${bizLabel} *`} plain note={mode === 'edit' ? BIZ_NOTE : undefined}
+            <Field label={`${bizLabel} *`} plain
               errMsg={errKey === 'biz' ? '사업자번호/주민번호을(를) 입력하세요.' : undefined}>
               {mode === 'create' ? (
                 <div className="flex items-center gap-2">
@@ -190,7 +180,7 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
                 </div>
               ) : (
                 <div className="flex items-center gap-[7px]" style={boxStyle({ muted: true })}>
-                  <span className="min-w-0 truncate">{v.biz ? <MT>{v.biz}</MT> : '-'}</span>
+                  <span className="min-w-0 truncate">{v.biz ? <>{v.biz}</> : '-'}</span>
                   <span className="shrink-0 text-caption" style={{ fontSize: 11 }}>수정불가</span>
                 </div>
               )}

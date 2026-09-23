@@ -17,7 +17,6 @@
    ⚠ 실제 인가가 아니다 — 백엔드/RBAC 없이 행 로컬 상태의 `perms` 만 바뀐다(브리프). */
 import React from 'react';
 import { UI } from './components';
-import { MT } from './mask';
 import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
@@ -155,7 +154,7 @@ function PermMatrix({ rows, perms, onChange }: { rows: MatrixRow[]; perms: PermM
                 </td>
               )}
               <td style={{ ...td, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={leaf.name}>{leaf.name}</td>
-              <td style={{ ...td, color: 'var(--muted-foreground)', fontSize: 12 }}><MT>{leaf.pid}</MT></td>
+              <td style={{ ...td, color: 'var(--muted-foreground)', fontSize: 12 }}>{leaf.pid}</td>
               {PERM_KEYS.map((k) => (
                 <td key={k} style={tdC}>
                   <TriCheck tri={c[k] ? 'all' : 'none'} onChange={(on) => set([leaf.leafId], [k], on)} label={`${leaf.name} ${PERM_LABELS[k]}`} />

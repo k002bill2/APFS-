@@ -9,7 +9,7 @@
        ⚠ 기준일자는 **일(YYYY-MM-DD) 범위**다 → `PeriodPicker mode="day"` 2개. 목업 기본값
          `2000-01-01 ~ 2026-08-12`은 **적용하지 않는다**(빈 문자열 = 열린 경계, apfs-datepicker 함정).
        ⚠ 행 컬럼과 미연동인 항목(모펀드·계정구분·담당자)은 `noop` 캡션만 두고 `passes`에 넣지 않는다.
-         담당자는 원문에 옵션·샘플 값이 없어 옵션을 **지어내지 않는다**(빈 목록 + 검토필요 마커).
+         담당자는 원문에 옵션·샘플 값이 없어 옵션을 **지어내지 않는다**(빈 목록).
    - 목록 그리드 → AG Grid **2단 그룹헤더**(기타조합원 배분·모태펀드 배분 각 5열, `marryChildren`) +
      **pinned 합계 2행**(목업 tfoot 소계·합계 둘 다). 행 선택·등록·워크플로우 없음 → selbar도 없다.
    - 기준일자 셀 → **링크(LinkCell)**: 클릭·Enter로 `일자별출자배분관리` 상세 팝업
@@ -17,9 +17,8 @@
      (골드 `general_meeting_manage.tsx` 동형 — 행 클릭은 행 선택과 충돌하고 어느 셀이 진입점인지 보이지 않는다).
    - KPI 배지 행 → **미포함**. 카드뷰 토글·`sub` 캡션·명세 팝업·금액 단위 토글도 없다
      (단위 토글은 목업 설계메모 [확인 필요]가 미확정이라 원문 상태 유지 — 툴바엔 `단위: 원` 캡션만).
-   - 엑셀 → SheetJS(2단 헤더 병합 · 본문 + 소계 + 합계 · 마스크 시 실값 비노출)
+   - 엑셀 → SheetJS(2단 헤더 병합 · 본문 + 소계 + 합계)
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **전수 이식**했다 — 목업 원문 2건: 검색 1건(담당자) + 상세 팝업 1건(업로드 여부, 모달 파일).
 
    한계·가정(결정 기록)
    - **rowspan 미재현**: 목업은 운용사·자펀드·약정총액·모태펀드 약정액을 `rowspan=12`로 1회만 표시하지만
@@ -30,15 +29,13 @@
    - 배지 톤은 목업이 출자·배분을 같은 `tag b`로 칠하지만, 우리는 **출자=info · 배분=primary**로 갈랐다
      (같은 색이면 열 전체가 한 덩어리로 보여 구분 컬럼의 의미가 사라진다. 문구·값은 원문 그대로).
    - **담당자 필터의 의미**(출자자(LP) 측인지 운용사(GP) 측인지)는 목업 설계메모 [개발자 확인 필요]로 남아 있다 →
-     옵션 없이 검토필요 마커만 단다.
-   - 배분 5열은 엑셀 flatten이 `colDef.field`를 쓰므로 목업 배열 `o`/`m`을 **개별 키(o0..o4·m0..m4)**로 펼쳤다.
-   - 마스크 경계 때문에 `tooltipField`는 두지 않는다(툴팁으로 실값이 샌다). */
+     옵션을 두지 않는다.
+   - 배분 5열은 엑셀 flatten이 `colDef.field`를 쓰므로 목업 배열 `o`/`m`을 **개별 키(o0..o4·m0..m4)**로 펼쳤다. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, numFmt, numStyle } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -49,8 +46,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { GpContributionDetailModal } from './gp_contribution_detail_modal';
 
 const { Button, IconBtn, StatusBadge, FilterChip } = UI;
@@ -147,7 +142,7 @@ const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-/* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수·마스킹)에 null 가드만 얇게 덧씌운다(재구현 아님) */
+/* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수)에 null 가드만 얇게 덧씌운다(재구현 아님) */
 const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p));
 /* 약정액 2열 — 소계행은 목업 tfoot의 `colspan=7`에 덮여 값이 없다(공란). 합계행만 값을 갖는다 */
 const cmtFmt = (p: ValueFormatterParams) => (pinnedId(p) === SUB_ID ? '' : nullFmt(p));
@@ -155,7 +150,7 @@ const cmtFmt = (p: ValueFormatterParams) => (pinnedId(p) === SUB_ID ? '' : nullF
 /* 텍스트 셀 — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다 */
 const txt = (field: keyof GpContribRow, header: string, width: number, maxWidth: number): ColDef<GpContribRow> => ({
   field, headerName: header, width, maxWidth, cellStyle: flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="min-w-0 truncate"><MT>{p.value}</MT></span>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="min-w-0 truncate">{p.value}</span>),
 });
 const amt = (field: keyof GpContribRow, header: string, strong?: boolean, width = 150): ColDef<GpContribRow> => ({
   field, headerName: header, width, type: 'rightAligned', valueFormatter: nullFmt, cellStyle: numStyle(strong) as any,
@@ -168,8 +163,7 @@ const GB_TONE: Record<Gb, Tone> = { 출자: 'info', 배분: 'primary' };
 const MATCH_TONE: Record<Match, Tone> = { 일치: 'success', 불일치: 'warning' };
 
 /* 기준일자 셀 링크 — 클릭 시 상세 팝업(골드 `general_meeting_manage.tsx` LinkCell 복사).
-   ⚠ `title`엔 동작 힌트만 담는다 — 값을 넣으면 마스크 ON일 때 툴팁으로 실데이터가 샌다.
-   ⚠ 값이 날짜라 `<MT>`가 아니라 `mn()`으로 마스킹한다(마스크 규약: 날짜·숫자는 mn).
+   ⚠ `title`엔 동작 힌트만 담는다.
    ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다. */
 function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
   return (
@@ -177,13 +171,13 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
       type="button" title={hint} onClick={onClick}
       className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer tabular"
       style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      {mn(value)}
+      {String(value)}
     </button>
   );
 }
 
 const makeColumns = (openDetail: (id: string) => void): (ColDef<GpContribRow> | ColGroupDef<GpContribRow>)[] => [
-  /* No는 축(순번)이라 마스킹하지 않는다. 합계 2행은 목업 tfoot 라벨('소계'/'합계')을 그 자리에 쓴다 */
+  /* 합계 2행은 목업 tfoot 라벨('소계'/'합계')을 그 자리에 쓴다 */
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum,
     valueFormatter: (p) => { const id = pinnedId(p); return id === SUB_ID ? '소 계' : id === TOT_ID ? '합 계' : String(p.value); } },
   txt('gp', '운용사', 170, 200),
@@ -234,12 +228,6 @@ function flattenForExcel(defs: (ColDef<GpContribRow> | ColGroupDef<GpContribRow>
   return { head1, head2, keys, merges };
 }
 
-/* ⚠검토필요 메모 — 목업 `S1_14__운용사_출자배분관리.html`의 `data-rec`/`data-dat` 원문 그대로.
-   설계 메모라 마스킹·엑셀 대상이 아니다(나머지 1건은 상세 팝업 파일). */
-const FILTER_NOTES: Record<'mgr', ReviewNote> = {
-  mgr: { rec: '담당자 목록(사용자 마스터 연동)', dat: '실 담당자 옵션 데이터 미확인' },
-};
-
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined}
@@ -248,12 +236,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: React.ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -282,7 +270,6 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
   const [modal, setModal] = useState<ModalState>(null);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
-  const masked = useMask();
 
   /* deps []: setModal은 안정(useState 세터) — 매 렌더 새 배열이면 그리드가 컬럼을 재생성하며 폭이 되돌아간다 */
   const openDetail = useCallback((id: string) => setModal({ kind: 'detail', id }), []);
@@ -342,15 +329,15 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 2단 헤더 병합 + 본문 + 소계 + 합계(화면=엑셀 불변식). 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 2단 헤더 병합 + 본문 + 소계 + 합계(화면=엑셀 불변식) ── */
   const exportExcel = () => {
     const { head1, head2, keys, merges } = flattenForExcel(columnDefs);
     const src = [...filteredRows, ...pinnedBottom];
     const body = src.map((r) => keys.map((k) => {
       const v = (r as any)[k];
       if (k === 'no') return r.id === SUB_ID ? '소 계' : r.id === TOT_ID ? '합 계' : v;
-      if (NUM_KEYS.has(k)) return v == null ? '' : masked ? 0 : v;
-      return masked ? '' : (v ?? '');
+      if (NUM_KEYS.has(k)) return v == null ? '' : v;
+      return (v ?? '');
     }));
     const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body]);
     src.forEach((r, i) => keys.forEach((k, j) => {
@@ -381,7 +368,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
           {(['', '출자', '배분'] as ('' | Gb)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fGb === s} onClick={() => setFGb(s)}>{s || '전체'}</FilterChip>
           ))}
-          {/* 값만 표시(접두사 없음) + × — 운용사·자펀드는 텍스트라 <MT>, 기준일자는 날짜성이라 mn() */}
+          {/* 값만 표시(접두사 없음) + × */}
           {([
             ['운용사', fGp, () => setFGp(''), true],
             ['자펀드', fFn, () => setFFn(''), true],
@@ -389,7 +376,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
             ['기준일자 종료', fTo, () => setFTo(''), false],
           ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isText]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {isText ? <MT>{value}</MT> : mn(value)}
+              {isText ? <>{value}</> : String(value)}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -402,7 +389,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -447,7 +434,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
             <DrawerField label="자펀드"><DrawerSelect value={fFn} onChange={setFFn} options={fnOptions} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
             {/* 담당자 — 원문에 옵션·샘플 값이 없어 옵션을 생성하지 않는다(빈 목록 = '전체'만) */}
-            <DrawerField label="담당자" noop note={FILTER_NOTES.mgr}><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
+            <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
             {/* 출자/배분 — 툴바 칩과 같은 state 공유(옵션은 행에서 파생) */}
             <DrawerField label="출자/배분"><DrawerSelect value={fGb} onChange={(v) => setFGb(v as '' | Gb)} options={gbOptions} /></DrawerField>
             {/* 기준일자 — 일(YYYY-MM-DD) 범위. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}

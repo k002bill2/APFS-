@@ -11,17 +11,16 @@
    - 등록/수정 모달(레벨↔상위메뉴 연동·프로그램 검색·단축번호 중복확인) → 전용 `MenuFormModal`(flat 스키마 밖).
        저장 시 같은 부모 안 정렬을 `reseqSiblings` 로 자동 재조정(목업 "저장되었습니다 · 정렬 자동 조정").
    - 메뉴 데이터 = LNB 정본(`admin_menu_tree.ts`) — 목업 "제안서 기능구성도" 대신 현행 메뉴 구조표. 권한 매트릭스와 동일 데이터.
-   - 엑셀(리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 표시 중인 행(트리 순서)을 내보낸다. 마스크 ON이면 텍스트 ''·숫자 0.
+   - 엑셀(리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 표시 중인 행(트리 순서)을 내보낸다.
    - 정렬(헤더 클릭)은 끈다 — 계층 순서가 곧 의미라 컬럼 정렬이 트리를 깨뜨린다(목업 defaultColDef sortable:false).
    - 페이지네이션 없음 — 트리에서 자식이 다음 페이지로 넘어가면 계층이 끊긴다. 긴 목록은 sticky 헤더(aggrid_shared.css)가 받친다.
-   - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · ⚠검토필요 마커 없음(목업 원문 0건).
+   - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음.
    ⚠ 백엔드가 없어 여기서의 등록·수정·삭제는 화면 로컬 상태만 바꾸며 실제 LNB 를 바꾸지 않는다(UI 프로토타입). */
 import './aggrid_shared.css';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -78,7 +77,7 @@ function NameCell({ data, toggle }: { data: MenuView; toggle: (id: string) => vo
           <Icon name={data.expanded ? 'chevron-down' : 'chevron-right'} size={15} stroke={2.2} />
         </button>
       ) : <span aria-hidden className="inline-block shrink-0" style={{ width: 24 }} />}
-      <span className={data.lvl === 1 ? 'font-semibold' : data.lvl === 2 ? 'font-medium' : ''} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><MT>{data.name}</MT></span>
+      <span className={data.lvl === 1 ? 'font-semibold' : data.lvl === 2 ? 'font-medium' : ''} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.name}</span>
     </span>
   );
 }
@@ -86,16 +85,16 @@ function NameCell({ data, toggle }: { data: MenuView; toggle: (id: string) => vo
 const makeColumns = (toggle: (id: string) => void): ColDef<MenuView>[] => [
   { field: 'name', headerName: '메뉴명', flex: 1, width: 300, minWidth: 220, ...NOSORT, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.data ? <NameCell data={p.data} toggle={toggle} /> : null) },
-  { field: 'code', headerName: '메뉴ID', width: 96, ...NOSORT, cellStyle: mono, cellRenderer: (p: any) => <MT>{p.value}</MT> },
+  { field: 'code', headerName: '메뉴ID', width: 96, ...NOSORT, cellStyle: mono, cellRenderer: (p: any) => <>{p.value}</> },
   { field: 'en', headerName: '메뉴명(영문)', width: 240, maxWidth: 240, ...NOSORT, cellStyle: { ...flexCenter, color: 'var(--muted-foreground)' },
-    cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
-  { field: 'pid', headerName: '프로그램ID', width: 110, ...NOSORT, cellStyle: mono, cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
+    cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <span>-</span>) },
+  { field: 'pid', headerName: '프로그램ID', width: 110, ...NOSORT, cellStyle: mono, cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <span>-</span>) },
   { field: 'pname', headerName: '프로그램명', width: 200, maxWidth: 280, ...NOSORT, cellStyle: flexCenter,
-    cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span style={{ color: 'var(--muted-foreground)' }}>-</span>) },
-  { field: 'short', headerName: '단축번호', width: 92, ...NOSORT, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? mn(p.value) : '-') },
+    cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <span style={{ color: 'var(--muted-foreground)' }}>-</span>) },
+  { field: 'short', headerName: '단축번호', width: 92, ...NOSORT, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? String(p.value) : '-') },
   { field: 'lvl', headerName: '레벨', width: 68, ...NOSORT, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'parentName', headerName: '상위메뉴', width: 150, maxWidth: 220, ...NOSORT, cellStyle: { ...flexCenter, color: 'var(--muted-foreground)' },
-    cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span>-</span>) },
+    cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <span>-</span>) },
   { field: 'ord', headerName: '정렬', width: 68, ...NOSORT, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'utypes', headerName: '사용자 구분', width: 150, maxWidth: 220, ...NOSORT, cellStyle: flexCenter,
     valueFormatter: (p) => utypeLabel(p.value ?? []),
@@ -154,7 +153,6 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   const selCount = selIds.length;       // 단일/다건 분기의 SSOT
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
-  const masked = useMask();
 
   /* 필터 — 사용자 구분은 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -277,10 +275,10 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   };
   const refresh = () => { setRows(buildMenuRows()); setExpanded(new Set()); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel — 표시 중인 행(트리/평면 순서 그대로). 마스크 ON이면 텍스트 ''·숫자 0 ── */
+  /* ── Excel — 표시 중인 행(트리/평면 순서 그대로) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
-    const body = visible.map((r) => EXPORT_COLS.map((c) => { const v = c.get(r); return typeof v === 'number' ? (masked ? 0 : v) : masked ? '' : v; }));
+    const body = visible.map((r) => EXPORT_COLS.map((c) => { const v = c.get(r); return typeof v === 'number' ? (v) : v; }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '메뉴명' || c.header === '프로그램명' ? 30 : 12 }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '메뉴 관리');
@@ -298,7 +296,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
      (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
   const selActions = selCount > 0 ? (
     <>
-      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <StatusBadge tone="info" label={`레벨 ${single.lvl}`} size="lg" dot={false} />}
       {single && <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'edit', id: single.id })}>수정</Button>}
       {single && single.lvl < 3 && <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create', preset: { lvl: (single.lvl + 1) as MenuRow['lvl'], parentId: single.id } })}>하위 메뉴 등록</Button>}
@@ -320,7 +318,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
           {/* 적용 중인 상세필터 — 항목별 개별 칩(값만 표시, 항목명은 × aria-label) */}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -336,7 +334,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>메뉴 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '개 메뉴 중 ' + mn(String(visible.length)) + '개 표시 중' + (searching ? ' · 검색 결과(평면)' : '')}</span>}
+      footerLeft={<span>{'총 ' + String(rows.length) + '개 메뉴 중 ' + String(visible.length) + '개 표시 중' + (searching ? ' · 검색 결과(평면)' : '')}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div>
@@ -404,9 +402,9 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
               <AlertDialogTitle>메뉴 삭제</AlertDialogTitle>
               <AlertDialogDescription>
                 {modal.ids.length === 1
-                  ? <>「<b className="text-foreground"><MT>{rows.find((r) => r.id === modal.ids[0])?.name ?? ''}</MT></b>」 메뉴를 삭제할까요?</>
-                  : <>선택한 <b className="text-foreground">{mn(String(modal.ids.length))}건</b>의 메뉴를 삭제할까요?</>}
-                {modal.blocked > 0 && <><br />하위 메뉴가 있는 {mn(String(modal.blocked))}건은 제외됩니다.</>}
+                  ? <>「<b className="text-foreground">{rows.find((r) => r.id === modal.ids[0])?.name ?? ''}</b>」 메뉴를 삭제할까요?</>
+                  : <>선택한 <b className="text-foreground">{String(modal.ids.length)}건</b>의 메뉴를 삭제할까요?</>}
+                {modal.blocked > 0 && <><br />하위 메뉴가 있는 {String(modal.blocked)}건은 제외됩니다.</>}
                 <br />삭제 후에는 복구할 수 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>

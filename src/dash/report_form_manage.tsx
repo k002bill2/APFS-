@@ -14,14 +14,13 @@
    - Download 열(행별 양식 파일 내려받기) → 셀 안 `Button outline sm`. 백엔드가 없어 toast로 응답(목업도 toast).
        ⚠ 이 열 때문에 typed 트랙이다 — 스키마 트랙(GenericListPage)은 첨부를 제목 뒤 확장자 칩으로만 그려 행별
          다운로드 액션을 표현할 수 없고, 공유 generic_list.tsx를 고치면 기존 스키마 페이지 동작이 바뀐다.
-   - 엑셀(목업 없음이지만 리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 마스크 ON이면 텍스트 ''.
-   - KPI 배지 행 미포함(사용자 결정) · 카드뷰 없음 · 명세 팝업 없음 · ⚠검토필요 마커 없음(목업 원문에 0건).
+   - 엑셀(목업 없음이지만 리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D.
+   - KPI 배지 행 미포함(사용자 결정) · 카드뷰 없음 · 명세 팝업 없음.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
-import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky·마스크 헤더 바 — 합계행은 없지만 전 그리드 공통)
+import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky — 합계행은 없지만 전 그리드 공통)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, FIT_GRID_WIDTH, DEFAULT_COL_DEF } from './aggrid_theme';
 import { AgGridReact } from 'ag-grid-react';
@@ -63,12 +62,12 @@ const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-/* Download 셀 — 셀 안 버튼. 라벨 '다운로드'는 액션이라 비마스킹, 대상 파일명은 sr-only로 덧붙여 행마다 접근名을 구분한다
+/* Download 셀 — 셀 안 버튼. 라벨 '다운로드'에 대상 파일명을 sr-only로 덧붙여 행마다 접근名을 구분한다
    (UI.Button은 rest props가 없어 aria-label을 못 받는다 → children으로 접근名 보강). */
 function DownloadCell({ row, onDownload }: { row: ReportFormRow; onDownload: (r: ReportFormRow) => void }) {
   return (
     <Button variant="outline" size="sm" leadingIcon="download" onClick={() => onDownload(row)}>
-      다운로드<span className="sr-only"> — <MT>{row.title}</MT></span>
+      다운로드<span className="sr-only"> — {row.title}</span>
     </Button>
   );
 }
@@ -76,10 +75,10 @@ function DownloadCell({ row, onDownload }: { row: ReportFormRow; onDownload: (r:
 const makeColumns = (onDownload: (r: ReportFormRow) => void): ColDef<ReportFormRow>[] => [
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'title', headerName: '양식제목', width: 340, minWidth: 240, maxWidth: 520, cellStyle: flexCenter,
-    cellRenderer: (p: any) => <MT>{p.value}</MT> },
+    cellRenderer: (p: any) => <>{p.value}</> },
   /* 설명이 남는 폭을 흡수한다 — maxWidth 없는 유일한 컬럼 + `FIT_GRID_WIDTH`(수시보고 '제목' 컬럼과 같은 기법) */
   { field: 'desc', headerName: '설명', width: 320, minWidth: 200, cellStyle: flexCenter,
-    cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <span style={{ color: 'var(--muted-foreground)' }}>-</span>) },
+    cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <span style={{ color: 'var(--muted-foreground)' }}>-</span>) },
   /* 액션 컬럼 — 정렬 대상이 아니다. 헤더명은 목업 원문 'Download' 그대로 */
   { field: 'file', headerName: 'Download', width: 132, maxWidth: 132, sortable: false, cellStyle: flexMid,
     cellRenderer: (p: any) => (p.data ? <DownloadCell row={p.data} onDownload={onDownload} /> : null) },
@@ -114,12 +113,8 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
-  const masked = useMask();
-  /* 다운로드 toast가 파일명을 노출하므로 마스크 경계(파일명도 데이터)를 지킨다 — 컬럼 콜백은 deps []로 고정되어
-     마스크 상태를 ref로 읽는다(클로저 stale 방지) */
-  const maskedRef = useRef(masked); maskedRef.current = masked;
   const download = useCallback((r: ReportFormRow) => {
-    toast.success(maskedRef.current ? '양식 파일을 내려받습니다 (목업)' : `다운로드: ${r.file} (목업)`);
+    toast.success(`다운로드: ${r.file} (목업)`);
   }, []);
   /* download는 useCallback(deps [])로 안정 → 컬럼 정의 고정(매 렌더 새 배열이면 그리드가 컬럼을 재생성) */
   const columnDefs = useMemo(() => makeColumns(download), [download]);
@@ -184,13 +179,13 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { setRows([...DEMO]); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더. 마스크 ON이면 숫자 0·텍스트 ''(파일명 포함 — 마스크 경계는 엑셀·파일명까지) ── */
+  /* ── Excel(.xlsx) — 단일 헤더 ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = rows.map((r) => EXPORT_COLS.map((c) => {
       const v = c.get(r);
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : v;
+      if (typeof v === 'number') return v;
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === 'No' ? 6 : c.header === '양식제목' ? 40 : 36 }));
@@ -211,13 +206,13 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
       /* 툴바 좌 — 검색박스가 없는 화면이라 필터 칩이 없다. 건수 컨텍스트만(매트릭스형 asset_funding의 컨텍스트 설명 관례) */
       toolbarLeft={<>
         <Icon name="file" size={16} className="text-caption" />
-        <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>보고양식 {mn(String(rows.length))}건</span>
+        <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>보고양식 {String(rows.length)}건</span>
       </>}
       toolbarRight={<>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>보고양식 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '개 중 ' + mn(String(Math.min(shown, rows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(rows.length) + '개 중 ' + String(Math.min(shown, rows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -268,7 +263,7 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
             <AlertDialogHeader>
               <AlertDialogTitle>양식 삭제</AlertDialogTitle>
               <AlertDialogDescription>
-                선택한 보고양식 <b className="text-foreground"><MT>{target.title}</MT></b> 을(를) 삭제하시겠습니까?
+                선택한 보고양식 <b className="text-foreground">{target.title}</b> 을(를) 삭제하시겠습니까?
                 <br />삭제 후에는 복구할 수 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>

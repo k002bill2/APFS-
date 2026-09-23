@@ -7,9 +7,8 @@
    원문을 줄이면 화면이 "비슷해 보이는 다른 표"가 된다 — 원문 헤더 순서 그대로 전부 싣는다.
 
    ── 값 없음(null) 2컬럼 ──
-   `농식품 투자비중`·`결성액대비 투자비율`은 원문에서 값이 null 이고 ⚠검토필요 마커가 붙어 있다.
-   마커 문구는 목업 원문 그대로 옮긴다(types.ts ReviewNoteSpec — 창작 금지). 비율을 계산해 채우지
-   않는다: 원문 자신이 "원문 데이터 값 없음(null) — 임의 생성 안 함"이라고 적어 둔 자리다.
+   `농식품 투자비중`·`결성액대비 투자비율`은 원문에서 값이 null 이다.
+   비율을 계산해 채우지 않는다: 원문 자신이 "원문 데이터 값 없음(null) — 임의 생성 안 함"이라고 적어 둔 자리다.
 
    ── 싣지 않은 것 ──
    원문 tfoot 의 `합계 1건` 행. 행이 아니라 집계라 `sample`(데이터 행)에 섞으면 건수가 2건이 된다.
@@ -36,13 +35,11 @@ export const schema: PageSchema = {
     { key: 'firstInvestDate', label: '최초 투자일자', type: 'date', align: 'center' },
     { key: 'investSeqNo',     label: '투자건 No',   type: 'text',   align: 'center' },
     { key: 'investAmt',       label: '투자금액',    type: 'amount', unit: '원', align: 'right' },
-    // 원문 값 null + ⚠검토필요 — 문구는 목업 data-rec/data-dat 원문 그대로.
+    // 원문 값 null.
     /* type 은 'text' 다 — 'rate' 로 두면 Cell 이 DeltaBadge 로 보내 `Number('')===0` 이 되어
        **값이 없는데 "0" 하락 배지**가 뜬다(원문은 `-`). 원문에 값 자체가 없으므로 비율 서식을 쓰지 않는다. */
-    { key: 'agriInvestRatio', label: '농식품 투자비중', type: 'text', align: 'right',
-      note: { rec: '농식품 투자금액 ÷ 전체 투자금액 (산출식 확인 필요)', dat: '원문 데이터 값 없음(null) — 임의 생성 안 함' } },
-    { key: 'fundInvestRatio', label: '결성액대비 투자비율', type: 'text', align: 'right',
-      note: { rec: '투자금액 ÷ 결성액 (예: 50/320=15.6%)', dat: '원문 데이터 값 없음(null) — 임의 생성 안 함' } },
+    { key: 'agriInvestRatio', label: '농식품 투자비중', type: 'text', align: 'right' },
+    { key: 'fundInvestRatio', label: '결성액대비 투자비율', type: 'text', align: 'right' },
     { key: 'investPeriod',    label: '투자기간',    type: 'text',   align: 'center' },
     // ── 회수실적 (원문 2단 헤더) ──
     { key: 'recoverPrincipal', label: '회수원금',   type: 'amount', unit: '원', align: 'right', group: '회수실적' },

@@ -1,6 +1,6 @@
 /* APFS DatePicker — shadcn Radix Calendar + Popover 조합의 제어 컴포넌트.
    네이티브 <input type="date">를 전 화면에서 대체한다. ⚠️ 값 계약을 반드시 유지:
-   - value/onChange는 'YYYY-MM-DD' 문자열(빈 문자열=미선택). 필터 정확일치·zod·Excel·마스크가 이 포맷에 의존.
+   - value/onChange는 'YYYY-MM-DD' 문자열(빈 문자열=미선택). 필터 정확일치·zod·Excel이 이 포맷에 의존.
    - 🔴 타임존: 로컬 자정 Date ↔ 문자열 변환에 toISOString() 절대 금지(KST에서 하루 빠짐).
      date-fns format(d,'yyyy-MM-dd')(로컬)·parseISO('YYYY-MM-DD')(로컬 자정)로만 변환.
    - 트리거 버튼은 기존 14px 폼 컨트롤(border-strong/bg-card/radius 9/h 34 box-border)을 시각적으로 그대로 모사. */

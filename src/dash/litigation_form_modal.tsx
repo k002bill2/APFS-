@@ -24,7 +24,6 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { UI } from './components';
-import { mn } from './mask';
 import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
@@ -151,14 +150,13 @@ export function LitigationReleaseModal({ count, onSave, onClose }: {
   const [err, setErr] = React.useState(false);
   const setDate = (val: string) => { setRdate(val); if (err) setErr(false); };
 
-  /* 선택 건수는 행 데이터(건수)라 mn() 경유 — 단위('건 선택됨')는 축이라 비마스킹 */
-  const targetText = mn(String(count)) + '건 선택됨';
+  const targetText = String(count) + '건 선택됨';
 
   const submit = () => {
     if (!rdate.trim()) { setErr(true); return; }
     return () => {
       onSave({ rdate });
-      toast.success(`${mn(String(count))}건 해제등록 되었습니다`);
+      toast.success(`${String(count)}건 해제등록 되었습니다`);
     };
   };
 
@@ -220,7 +218,7 @@ export function LitigationDeleteDialog({ count, onConfirm, onClose }: {
         <AlertDialogHeader>
           <AlertDialogTitle>소송 삭제</AlertDialogTitle>
           <AlertDialogDescription>
-            선택한 <b className="text-foreground">{mn(String(count))}건</b>을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.
+            선택한 <b className="text-foreground">{String(count)}건</b>을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

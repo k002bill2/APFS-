@@ -19,10 +19,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import { UI } from './components';
 import { GridFrame, FooterActions } from './grid_frame';
-import { mn, useMask } from './mask';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
-import { ReviewMarker } from './review_marker';
 import {
   SALES_SCALE_HEADERS, INVEST_TYPE_HEADERS, INVEST_TYPE_GROUPS, REGION_GROUPS,
   SALES_SCALE_ROWS, INVEST_TYPE_ROWS, REGION_ROWS, SOURCE_COUNTS,
@@ -49,10 +47,6 @@ const VIEWS = [
   { key: 'region',     label: '소재지별' },
 ] as const;
 type ViewKey = typeof VIEWS[number]['key'];
-/* 원문 `건수기준` 옆 ⚠마커 — data-rec/data-dat 원문 그대로(창작 금지).
-   컨트롤 자체는 만들지 않는다(원문이 동작을 배선하지 않는다 — 위 ⚠ 참조). 대신 두 블록을
-   함께 그리는 표의 `구분` 헤더 옆에 메모만 남겨, 원문이 남긴 설계 의문을 화면에서 볼 수 있게 한다. */
-const BLOCK_NOTE = { rec: '투자건수 · 투자금액', dat: "실데이터 '투자건수'만 존재. '투자금액' 옵션은 그리드 금액컬럼 근거 추론" };
 
 /* 원문 금액단위 토글 — 저장 base 가 **억원**이다(`fmtEok`). unit.ts(base=원)와 다른 축이라 여기 둔다. */
 const STAT_UNITS = ['원', '백만원', '억원'] as const;
@@ -87,11 +81,11 @@ function BlockMatrix({ rows, headers, head, unit }: { rows: MatrixRow[]; headers
             <tr key={r.block + r.label}>
               {first && <th scope="rowgroup" rowSpan={span} className={TH} style={PAD}>{r.block}</th>}
               <th scope="row" className={`${TD} text-center ${total ? 'font-bold bg-muted' : ''}`} style={PAD}>
-                {r.label}{r.note && <ReviewMarker {...r.note} label={`${r.block} ${r.label}`} />}
+                {r.label}
               </th>
               {r.values.map((v, i) => (
                 <td key={headers[i]} className={`${TD} text-right tabular ${total ? 'font-bold bg-muted' : ''}`} style={PAD}>
-                  {mn(String(fmtVal(v, r.block === '투자금액', unit)))}
+                  {String(fmtVal(v, r.block === '투자금액', unit))}
                 </td>
               ))}
             </tr>
@@ -124,15 +118,12 @@ function RegionTable({ rows, unit }: { rows: RegionRow[]; unit: StatUnit }) {
                 ? <th scope="row" colSpan={2} className={`${TD} text-center font-bold bg-muted`} style={PAD}>합계</th>
                 : (<>
                     <td className={`${TD} text-center tabular`} style={PAD}>{r.no}</td>
-                    {/* 소재지는 행 축이다 — 차트 축·표 헤더와 같은 부류라 마스킹하지 않는다
-                        (CLAUDE.md 데이터 마스크 규약: "축은 두고 데이터는 가린다"). 가리면 어느 지역
-                        숫자인지 알 수 없어 표 자체가 판독 불가가 된다(2026-09-16 Codex 지적). */}
                     <th scope="row" className={`${TD} text-left font-normal`} style={PAD}>{r.region}</th>
                   </>)}
               {/* values = [투자건수, 건수비율, 투자금액, 금액비율] — 인덱스 2만 금액이라 환산 대상이다 */}
               {r.values.map((v, i) => (
                 <td key={i} className={`${TD} text-right tabular ${total ? 'font-bold bg-muted' : ''}`} style={PAD}>
-                  {mn(String(fmtVal(v, i === 2, unit)))}
+                  {String(fmtVal(v, i === 2, unit))}
                 </td>
               ))}
             </tr>
@@ -146,7 +137,6 @@ function RegionTable({ rows, unit }: { rows: RegionRow[]; unit: StatUnit }) {
 export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) {
   const [view, setView] = useState<ViewKey>(VIEWS[0].key);
   const [unit, setUnit] = useState<StatUnit>('억원');   // 원문 기본값 = 저장 base
-  const masked = useMask();
 
   const isMatrix = view !== 'region';
   // 두 블록(투자건수·투자금액)은 **함께** 그린다 — 원문이 그렇고, 하나만 남기면 보고서 절반이 사라진다.
@@ -154,21 +144,20 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
   const headers = view === 'salesScale' ? SALES_SCALE_HEADERS : INVEST_TYPE_HEADERS;
   const meta = VIEWS.find((v) => v.key === view)!;
 
-  /* 엑셀 — 원문 툴바의 `엑셀` 액션. 화면에 보이는 표를 **현재 단위 그대로** 내보낸다.
-     마스크 경계는 엑셀까지 같되 **축(연도·NO·소재지)은 남긴다**(축까지 비우면 빈 격자가 된다). */
+  /* 엑셀 — 원문 툴바의 `엑셀` 액션. 화면에 보이는 표를 **현재 단위 그대로** 내보낸다. */
   const exportExcel = useCallback(() => {
     const head = isMatrix
       ? ['구분', '연도', ...headers]
       : ['NO', '소재지', ...REGION_GROUPS.flatMap((g) => g.children.map((c) => `${g.label} ${c}`))];
     const body = isMatrix
-      ? rows.map((r) => [r.block, r.label, ...r.values.map((v) => (masked ? '' : fmtVal(v, r.block === '투자금액', unit)))])
-      : REGION_ROWS.map((r) => [r.no, r.region, ...r.values.map((v, i) => (masked ? '' : fmtVal(v, i === 2, unit)))]);
+      ? rows.map((r) => [r.block, r.label, ...r.values.map((v) => (fmtVal(v, r.block === '투자금액', unit)))])
+      : REGION_ROWS.map((r) => [r.no, r.region, ...r.values.map((v, i) => (fmtVal(v, i === 2, unit)))]);
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, meta.label);
     XLSX.writeFile(wb, `투자실적현황(투자기업)_${meta.label}_${unit}.xlsx`);
     toast.success(`${meta.label} 표를 Excel로 내보냈습니다 (단위: ${unit})`);
-  }, [isMatrix, headers, rows, meta, unit, masked]);
+  }, [isMatrix, headers, rows, meta, unit]);
 
   return (
     <GridFrame
@@ -201,7 +190,7 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
               head={(
                 <tr>
                   <th scope="col" colSpan={2} className={TH} style={PAD}>
-                    구분<ReviewMarker {...BLOCK_NOTE} label="건수기준" />
+                    구분
                   </th>
                   {SALES_SCALE_HEADERS.map((h) => <th key={h} scope="col" className={TH} style={PAD}>{h}</th>)}
                 </tr>
@@ -215,7 +204,7 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
               head={(<>
                 <tr>
                   <th scope="col" colSpan={2} rowSpan={3} className={TH} style={PAD}>
-                    구분<ReviewMarker {...BLOCK_NOTE} label="건수기준" />
+                    구분
                   </th>
                   <th scope="colgroup" colSpan={INVEST_TYPE_GROUPS[0].span} className={TH} style={PAD}>{INVEST_TYPE_GROUPS[0].label}</th>
                   <th scope="colgroup" colSpan={INVEST_TYPE_GROUPS[1].span} className={TH} style={PAD}>{INVEST_TYPE_GROUPS[1].label}</th>

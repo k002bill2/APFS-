@@ -9,7 +9,7 @@
        (행 `confirm` 값에서 파생 — 수시보고 '확인상태' 파생 칩과 같은 관례). 드로어 select와 state를 공유한다.
    - 3단 헤더 목록 그리드          → AG Grid 중첩 `ColGroupDef`(일치여부 > 투자자산/미투자자산 거래/미투자자산 > 리프),
        `marryChildren`. 합계행 없음·행 선택 없음 — 가산 가능한 금액 컬럼이 없고 목업에도 체크박스/라디오가 없다.
-   - 마크 셀(O/X/-)                 → `StatusBadge`(O=success · X=danger) + 회색 칩('-'). 상태 표식이라 비마스킹.
+   - 마크 셀(O/X/-)                 → `StatusBadge`(O=success · X=danger) + 회색 칩('-').
    - 상세보기 셀                    → 셀 링크(+ 셀 Enter) → 읽기전용 `CustodyConfirmDetailModal`.
        ⚠ **행 더블클릭으로는 열지 않는다** — 링크가 진입점인데 더블클릭까지 걸면 링크를 두 번 누른 순간
          엉뚱한 팝업이 뜬다(골드 `general_meeting_manage.tsx`와 동일 결정).
@@ -21,14 +21,12 @@
    한계·가정:
    - 목록은 **실 화면 캡처 24건 발췌**(전체 약 152건) — 목업이 명시한 범위 그대로이고 나머지를 창작하지 않는다.
    - 확정여부 변경은 로컬 state(`patchRow` 불변 갱신)로만 반영된다(백엔드 없음).
-   - 상세 팝업은 원 구조도 예시 1건 고정 — 자펀드 고유 값이 아니다(팝업 헤더의 ⚠검토필요 마커가 이 사실을 싣는다).
-   ⚠검토필요 마커 1건(상세 팝업 헤더)은 `custody_confirm_detail_modal.tsx`에 이식했다. */
+   - 상세 팝업은 원 구조도 예시 1건 고정 — 자펀드 고유 값이 아니다. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -119,8 +117,7 @@ const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 마크 셀 — O/X는 StatusBadge, '-'는 회색 칩(Tone에 중립 톤이 없어 직접 만든다).
-   기하(padding·radius·13px)는 StatusBadge size="lg"와 동일하게 맞춘다(O/X와 섞여 반복되는 열이라 어긋나면 눈에 띈다).
-   상태 표식이라 마스킹하지 않는다("축은 두고 데이터는 가린다"). */
+   기하(padding·radius·13px)는 StatusBadge size="lg"와 동일하게 맞춘다(O/X와 섞여 반복되는 열이라 어긋나면 눈에 띈다). */
 function MarkCell({ v }: { v: Mark }) {
   if (v !== 'O' && v !== 'X') {
     return <span className="inline-flex items-center rounded-[7px] bg-muted px-[10px] py-[4px] text-[13px] font-bold leading-tight text-muted-foreground">{v}</span>;
@@ -136,15 +133,13 @@ const mark = (field: keyof CustodyConfirmRow, header: string, width = 100): ColD
 /* 텍스트 열 — flex로 잉여 폭을 흡수하므로 셀 내부는 min-w-0 + truncate(말줄임) */
 const txt = (field: keyof CustodyConfirmRow, header: string, minWidth: number): ColDef<CustodyConfirmRow> => ({
   field, headerName: header, flex: 1, minWidth, width: minWidth, cellStyle: flexCenter,   // width=flex 전 초기폭(apfs-aggrid ⑨)
-  cellRenderer: (p: any) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span>,
+  cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span>,
 });
 
 /* 셀 내 링크 — 클릭 시 상세 팝업(목업은 `.linkbtn` 버튼 셀이 진입점이다).
    ⚠ 색은 **목업 그대로 상태에 따라 갈린다**(`.linkbtn`=danger / `.linkbtn.ok`=ok) — 색이 곧 정보라 단일 링크색으로
       통일하지 않는다. 텍스트 색이므로 `-text` 토큰을 쓴다(color-tokens 규약).
-   ⚠ 링크 텍스트(일치/불일치)는 **상태 표식이라 `<MT>`로 가리지 않는다** — 가리면 버튼의 유일한 텍스트가 사라져
-      접근名까지 없어진다. 마스킹 경계는 "축은 두고 데이터는 가린다".
-   ⚠ `title`엔 동작 힌트만 담는다 — 값을 넣으면 마스크 ON일 때 툴팁으로 실데이터가 샌다.
+   ⚠ `title`엔 동작 힌트만 담는다.
    ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다. */
 function LinkCell({ value, color, hint, onClick }: { value: string; color: string; hint: string; onClick: () => void }) {
   return (
@@ -189,7 +184,7 @@ const makeColumns = (
   openDetail: (id: string) => void,
   patchRow: (id: string, patch: Partial<CustodyConfirmRow>) => void,
 ): (ColDef<CustodyConfirmRow> | ColGroupDef<CustodyConfirmRow>)[] => [
-  /* No는 축(순번)이라 마스킹하지 않는다(골드 동형). 행에 저장된 값이라 정렬해도 번호가 다시 매겨지지 않는다 */
+  /* No는 행에 저장된 값이라 정렬해도 번호가 다시 매겨지지 않는다 */
   { field: 'no', headerName: 'No', width: 68, minWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   txt('gp', '운용사', 170),
   txt('fn', '자펀드', 220),
@@ -295,7 +290,6 @@ export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void })
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
-  const masked = useMask();
 
   /* 행 패치 — 항상 새 객체를 만들어 DEMO 원본을 건드리지 않는다(immutability) */
   const patchRow = useCallback((id: string, patch: Partial<CustodyConfirmRow>) => {
@@ -344,13 +338,13 @@ export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void })
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 3단 헤더(병합 자동 산출). 합계행 없음. 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 3단 헤더(병합 자동 산출). 합계행 없음 ── */
   const exportExcel = () => {
     const { heads, keys, merges } = flattenForExcel(columnDefs);
     const body = filteredRows.map((r) => keys.map((k) => {
       const v = (r as any)[k];
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : String(v ?? '');
+      if (typeof v === 'number') return v;
+      return String(v ?? '');
     }));
     const ws = XLSX.utils.aoa_to_sheet([...heads, ...body]);
     /* No는 유일한 숫자 컬럼 — 숫자 셀 서식(화면 우측정렬과 같은 모양) */
@@ -385,7 +379,7 @@ export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void })
           ))}
           {fBaseDate !== BASE_DATE && (
             <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {mn(fBaseDate)}
+              {String(fBaseDate)}
               <button type="button" onClick={() => setFBaseDate(BASE_DATE)} aria-label="기준일자 필터 제거" className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -398,7 +392,7 @@ export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void })
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

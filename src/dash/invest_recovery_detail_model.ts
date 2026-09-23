@@ -23,15 +23,11 @@
    ── 하단 합계 4줄 ──
    원문은 투자/회수/수익/회수총액 4줄을 tfoot 에 둔다. **두 모드 모두 DATA_IR 로 계산**한다 —
    원문 주석 그대로: "전체거래엔 전환사채전환·무상증자 등 순현금흐름이 아닌 행이 섞여있어,
-   산술 검증이 끝난 투자및회수 데이터로 항상 계산". 이 규칙을 바꾸지 않는다.
-
-   ── 판독 확신도 ──
-   전체거래 3행(전환사채전환 ±, 무상증자)에는 원문이 확신도 메모를 달아 뒀다(`rv`). 행을 빼지
-   않고 메모를 그대로 실어 화면에서 확인할 수 있게 한다. */
+   산술 검증이 끝난 투자및회수 데이터로 항상 계산". 이 규칙을 바꾸지 않는다. */
 import type { ColumnSpec } from './schemas/types';
 import { schema as 투자금회수현황Schema } from './schemas/투자금_회수현황';
 
-export type RecoveryRow = Record<string, string | number> & { id: string; rv?: string };
+export type RecoveryRow = Record<string, string | number> & { id: string };
 
 /** 원문 COLS_IR — 조회기준 `투자및회수`. **스키마가 정본**이라 그대로 가져온다(복사 금지). */
 export const COLUMNS_IR: readonly ColumnSpec[] = 투자금회수현황Schema.columns;
@@ -78,9 +74,9 @@ export const DETAIL_ROWS_IR: RecoveryRow[] = [
 ];
 export const DETAIL_ROWS_ALL: RecoveryRow[] = [
   { id: 'all-1', gp: 'NH투자증권', fund: '엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사', yr: '2015', acc: '농식품', co: '(주)제농', biz: '', ag: 'I201600011', itype: 'CB', tdate: '2016-11-07', tname: '투자', tgb: '투자', ccode: '', prin: 3_000_000_000, prof: 0, shares: 0 },
-  { id: 'all-2', gp: 'NH투자증권', fund: '엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사', yr: '2015', acc: '농식품', co: '(주)제농', biz: '', ag: 'I201600011', itype: 'CB', tdate: '2018-11-06', tname: '전환사채전환(-)', tgb: '전환거래', ccode: '', prin: 1_300_000_000, prof: 0, shares: 0, rv: '전환사채전환(-) 행 — 거래일자/거래원금 이미지 판독 확신도 낮음, 원본 재확인 필요' },
-  { id: 'all-3', gp: 'NH투자증권', fund: '엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사', yr: '2015', acc: '농식품', co: '(주)제농', biz: '', ag: 'I201600012', itype: '보통주(신주)', tdate: '2018-11-06', tname: '전환사채전환(+)', tgb: '전환거래', ccode: '', prin: 1_300_000_000, prof: 0, shares: 6_500, rv: '전환사채전환(+) 행 — 거래원금/거래주수 이미지 판독 확신도 낮음, 원본 재확인 필요' },
-  { id: 'all-4', gp: 'NH투자증권', fund: '엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사', yr: '2015', acc: '농식품', co: '(주)제농', biz: '', ag: 'I201600012', itype: '보통주(신주)', tdate: '2023-05-11', tname: '무상증자', tgb: '주식변동', ccode: '', prin: 0, prof: 0, shares: 188_500, rv: '무상증자 행 — 거래주수 이미지 판독 확신도 낮음, 원본 재확인 필요' },
+  { id: 'all-2', gp: 'NH투자증권', fund: '엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사', yr: '2015', acc: '농식품', co: '(주)제농', biz: '', ag: 'I201600011', itype: 'CB', tdate: '2018-11-06', tname: '전환사채전환(-)', tgb: '전환거래', ccode: '', prin: 1_300_000_000, prof: 0, shares: 0 },
+  { id: 'all-3', gp: 'NH투자증권', fund: '엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사', yr: '2015', acc: '농식품', co: '(주)제농', biz: '', ag: 'I201600012', itype: '보통주(신주)', tdate: '2018-11-06', tname: '전환사채전환(+)', tgb: '전환거래', ccode: '', prin: 1_300_000_000, prof: 0, shares: 6_500 },
+  { id: 'all-4', gp: 'NH투자증권', fund: '엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사', yr: '2015', acc: '농식품', co: '(주)제농', biz: '', ag: 'I201600012', itype: '보통주(신주)', tdate: '2023-05-11', tname: '무상증자', tgb: '주식변동', ccode: '', prin: 0, prof: 0, shares: 188_500 },
   { id: 'all-5', gp: 'NH투자증권', fund: '엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사', yr: '2015', acc: '농식품', co: '(주)윈플러스', biz: '', ag: 'I201700011', itype: '우선주(신주)', tdate: '2017-03-09', tname: '투자', tgb: '투자', ccode: '', prin: 1_000_000_000, prof: 0, shares: 200_000 },
   { id: 'all-6', gp: 'NH투자증권', fund: '엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사', yr: '2015', acc: '농식품', co: '(주)윈플러스', biz: '', ag: 'I201700011', itype: '우선주(신주)', tdate: '2018-03-27', tname: '청산', tgb: '회수', ccode: '', prin: 1_000_000_000, prof: 200_000_000, shares: 200_000 },
   { id: 'all-7', gp: 'NH투자증권', fund: '엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사', yr: '2015', acc: '농식품', co: '농업회사법인(주)행복한농장', biz: '', ag: 'I201700021', itype: 'CB', tdate: '2017-11-28', tname: '투자', tgb: '투자', ccode: '', prin: 1_000_000_000, prof: 0, shares: 0 },

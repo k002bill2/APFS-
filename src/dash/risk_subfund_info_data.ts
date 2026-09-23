@@ -35,9 +35,6 @@ export function metricsFor(type: string): IndicatorSetting[] {
   return EDIT_DATA[type] ?? INDICATORS.map((ind) => ({ use: false, ind, ok: '', warn: '', bad: '', inp: false }));
 }
 
-/** 팝업 헤더 `입력항목` 의 ⚠검토필요 메모 — 원문 `gridHead()` data-rec/data-dat 그대로 */
-export const INPUT_NOTE = { rec: '실측값 직접입력 대상 여부(추정)', dat: '원문 라벨만 존재 · 용도/기본값 미정' };
-
 /* 목록 = 운용사구분별 "사용중" 지표 평탄화 — 원문 `DATA`(벤처투자회사/자본충실도 단건 + 증권회사 사용중 4건) */
 const quantRows: Row[] = [
   { type: '벤처투자회사', ind: '자본충실도', ok: '75 이상', warn: '75 미만 50 이상', bad: '50 미만' },

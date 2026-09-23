@@ -8,7 +8,6 @@
 import React, { useRef, useState } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { MT } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 드로어 컨트롤 34px SSOT
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
@@ -18,8 +17,6 @@ import { toast } from './ui/sonner';
 import { UNITS } from './schemas/unit';
 import type { Unit } from './schemas/unit';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNoteMeta } from './risk_table_meta';
 
 const { Button, IconBtn, SegTabs } = UI;
 
@@ -38,8 +35,6 @@ export interface FilterSpec {
   allLabel?: string | null;
   /** 행 컬럼과 연동되지 않는 조회 조건 — 드로어에 `· 데이터 연동 후 적용` 캡션(무신호 무효 필터 금지) */
   noop?: boolean;
-  /** 라벨 옆 ⚠검토필요 마커(목업 검색필드 `.review` 원문) */
-  note?: ReviewNoteMeta;
   /** text 입력 placeholder(원문 그대로) */
   placeholder?: string;
   /** false = 적용 칩 숨김 — 기본값이 있으나 아직 적용 전인 조건(값은 드로어에 그대로 보인다) */
@@ -51,13 +46,12 @@ export const splitRange = (v: string): [string, string] => { const [a = '', b = 
 export const joinRange = (a: string, b: string): string => (a || b ? `${a}~${b}` : '');
 
 /* 드로어 필드 — plain=true 면 <label> 대신 <div>(PeriodPicker 트리거는 <button> 이라 라벨 이중 토글 방지) */
-function DrawerField({ label, plain, noop, note, children }: { label: string; plain?: boolean; noop?: boolean; note?: ReviewNoteMeta; children: React.ReactNode }) {
+function DrawerField({ label, plain, noop, children }: { label: string; plain?: boolean; noop?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="flex items-center gap-1 font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
         {label}
-        {note && <ReviewMarker rec={note.rec} dat={note.dat} label={label} />}
         {noop && <span className="font-normal" style={{ fontSize: 12, marginLeft: 6 }}>· 데이터 연동 후 적용</span>}
       </span>
       {children}
@@ -97,11 +91,11 @@ function DrawerRadio({ f }: { f: FilterSpec }) {
 const dayWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
 
 function FilterControl({ f }: { f: FilterSpec }) {
-  if (f.kind === 'select') return <DrawerField label={f.label} noop={f.noop} note={f.note}><DrawerSelect f={f} /></DrawerField>;
-  if (f.kind === 'radio') return <DrawerField label={f.label} plain noop={f.noop} note={f.note}><DrawerRadio f={f} /></DrawerField>;
+  if (f.kind === 'select') return <DrawerField label={f.label} noop={f.noop}><DrawerSelect f={f} /></DrawerField>;
+  if (f.kind === 'radio') return <DrawerField label={f.label} plain noop={f.noop}><DrawerRadio f={f} /></DrawerField>;
   if (f.kind === 'text') {
     return (
-      <DrawerField label={f.label} noop={f.noop} note={f.note}>
+      <DrawerField label={f.label} noop={f.noop}>
         <input type="text" value={f.value} onChange={(e) => f.onChange(e.target.value)} placeholder={f.placeholder} style={inputStyle('text')} />
       </DrawerField>
     );
@@ -109,7 +103,7 @@ function FilterControl({ f }: { f: FilterSpec }) {
   if (f.kind === 'dayRange') {
     const [a, b] = splitRange(f.value);
     return (
-      <DrawerField label={f.label} plain noop={f.noop} note={f.note}>
+      <DrawerField label={f.label} plain noop={f.noop}>
         <div className="flex items-center gap-2 flex-wrap">
           <div style={dayWrap}><PeriodPicker mode="day" value={a} onChange={(v) => f.onChange(joinRange(v || '', b))} ariaLabel={`${f.label} 시작`} /></div>
           <span className="text-caption">~</span>
@@ -121,7 +115,7 @@ function FilterControl({ f }: { f: FilterSpec }) {
   /* 연도·월·일 = PeriodPicker(apfs-datepicker). 트리거가 w-full 이라 fit-content 래퍼 필수("폭" 규칙) */
   const minW = controlMinWidth(f.kind === 'day' ? 'date' : f.kind);
   return (
-    <DrawerField label={f.label} plain noop={f.noop} note={f.note}>
+    <DrawerField label={f.label} plain noop={f.noop}>
       <div style={{ width: 'fit-content', minWidth: minW, maxWidth: '100%' }}>
         <PeriodPicker mode={f.kind} value={f.value} onChange={(v) => f.onChange(v || '')} ariaLabel={f.label} />
       </div>
@@ -159,7 +153,7 @@ function AppliedChip({ f }: { f: FilterSpec }) {
   return (
     <span title={f.label} className="inline-flex items-center gap-1.5 font-semibold text-primary"
       style={{ padding: clearable ? '5px 8px 5px 11px' : '5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-      <MT>{shown}</MT>
+      {shown}
       {clearable && (
         <button type="button" onClick={() => f.onChange('')} aria-label={`${f.label} 필터 제거`}
           className="inline-flex items-center justify-center border-0 cursor-pointer"

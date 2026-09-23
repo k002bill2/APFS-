@@ -11,7 +11,6 @@
      당월/전월 = `운용사명 + 등급 배지`, 대상이 아니면 `–`. 당월≠전월 행은 두 셀에 음영(목업 `td.diff`).
    - KPI 배지 행 없음(사용자 결정) · 행 선택 없음 · 합계행 없음 · 페이지네이션 없음 · 팝업 없음.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·하단 설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다.
-   검토필요 마커는 본문에 `.review` 요소가 0개(목업 JS 는 죽은 코드)라 구현하지 않는다.
 
    한계·가정:
    - 행 데이터는 목업 `DATA` 6행이 전부다(→ `ew_month_compare_model.ts`). 운용사 창작 금지.
@@ -28,7 +27,6 @@ import React, { useState, useMemo } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';
@@ -76,12 +74,12 @@ const diffStyle = (p: CellClassParams<NumberedRow>): CellStyle => (
   p.data && isDiff(p.data) ? { ...flexCenter, background: 'var(--info-soft)' } : flexCenter
 );
 
-/* 당월/전월 셀 — 운용사명(행 데이터 → <MT>) + 등급 배지(상태 표식 → 비마스킹). 대상 아님이면 `–`. */
+/* 당월/전월 셀 — 운용사명 + 등급 배지. 대상 아님이면 `–`. */
 function SideCell({ gp, g }: { gp: string; g: Grade | '' }) {
   if (!g) return <span className="text-muted-foreground">–</span>;
   return (
     <span className="inline-flex items-center gap-2 min-w-0">
-      <span className="min-w-0 truncate"><MT>{gp}</MT></span>
+      <span className="min-w-0 truncate">{gp}</span>
       <StatusBadge tone={GRADE_TONE[g]} label={g} size="lg" dot={false} />
     </span>
   );
@@ -89,12 +87,12 @@ function SideCell({ gp, g }: { gp: string; g: Grade | '' }) {
 
 const txtCol = (field: keyof NumberedRow, header: string, width: number, opts: Partial<ColDef<NumberedRow>> = {}): ColDef<NumberedRow> => ({
   field, headerName: header, width, minWidth: width, cellStyle: flexCenter,
-  cellRenderer: (p: any) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span>,
+  cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span>,
   ...opts,
 });
 
 const COLUMNS: ColDef<NumberedRow>[] = [
-  /* No 는 순번(축)이라 마스킹하지 않는다 — 필터 후 1..N 으로 다시 매긴 값 */
+  /* No 는 필터 후 1..N 으로 다시 매긴 값 */
   { field: 'no', headerName: 'No', width: 64, minWidth: 64, pinned: 'left', type: 'rightAligned',
     cellStyle: { textAlign: 'right', fontVariantNumeric: 'tabular-nums' } as CellStyle,
     valueFormatter: (p) => (p.value == null ? '' : String(p.value)) },
@@ -106,10 +104,10 @@ const COLUMNS: ColDef<NumberedRow>[] = [
     valueGetter: (p) => (p.data ? chgLabel(p.data.cur, p.data.prev) : ''),
     cellRenderer: (p: any) => (p.value ? <StatusBadge tone={CHG_TONE[p.value] ?? 'muted'} label={p.value} size="lg" dot={false} /> : null) },
   { colId: 'cur', headerName: '당월', width: 230, minWidth: 230, flex: 1, cellStyle: diffStyle,
-    valueGetter: (p) => (p.data ? sideText(p.data.gp, p.data.cur, false) : ''),
+    valueGetter: (p) => (p.data ? sideText(p.data.gp, p.data.cur) : ''),
     cellRenderer: (p: any) => (p.data ? <SideCell gp={p.data.gp} g={p.data.cur} /> : null) },
   { colId: 'prev', headerName: '전월', width: 230, minWidth: 230, flex: 1, cellStyle: diffStyle,
-    valueGetter: (p) => (p.data ? sideText(p.data.gp, p.data.prev, false) : ''),
+    valueGetter: (p) => (p.data ? sideText(p.data.gp, p.data.prev) : ''),
     cellRenderer: (p: any) => (p.data ? <SideCell gp={p.data.gp} g={p.data.prev} /> : null) },
 ];
 
@@ -143,13 +141,12 @@ function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: b
   );
 }
 
-/* 적용 필터 칩 — 값만 표시 + × 제거(aria-label 에 항목명). 행 데이터 값은 <MT>, 등급·변동 같은
-   상태 카테고리는 축이라 `plain` 으로 비마스킹. */
+/* 적용 필터 칩 — 값만 표시 + × 제거(aria-label 에 항목명). */
 function AppliedChip({ label, value, onClear, plain }: { label: string; value: string; onClear: () => void; plain?: boolean }) {
   return (
     <span className="inline-flex items-center gap-1.5 font-semibold text-primary"
       style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-      {plain ? value : <MT>{value}</MT>}
+      {plain ? value : <>{value}</>}
       <button type="button" onClick={onClear} aria-label={`${label} 필터 제거`}
         className="inline-flex items-center justify-center border-0 cursor-pointer"
         style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
@@ -171,7 +168,6 @@ const NO_ROWS_LOCALE = {
    메인 컴포넌트
 ────────────────────────────── */
 export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
-  const masked = useMask();
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [fYm, setFYm] = useState('');   // 기본값 없음 — 미선택 상태로 시작(사용자 결정)
@@ -191,7 +187,7 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
   /* ── Excel(.xlsx) — 시트 1장 · 단일 헤더. 본문 = 화면과 같은 visible(화면=엑셀 불변식).
      등급/당월/전월은 텍스트(`▲ 악화`·`운용사 등급`·`–`)로 나간다. ── */
   const exportExcel = () => {
-    const ws = XLSX.utils.aoa_to_sheet(buildAoa(visible, masked));
+    const ws = XLSX.utils.aoa_to_sheet(buildAoa(visible));
     ws['!cols'] = [{ wch: 5 }, { wch: 16 }, { wch: 16 }, { wch: 24 }, { wch: 10 }, { wch: 28 }, { wch: 28 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, '조기경보 전월 비교');
@@ -229,7 +225,7 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
       </>}
       /* 목업 캡션 `총 N건 · 기준 X vs 전월 Y` — 기준년월은 선택했을 때만 앞에 붙인다(골드 푸터 캡션 위치) */
       footerLeft={(
-        <span>{(fYm ? `기준 ${mn(fYm)} vs 전월 ${mn(prevYm)} · ` : '') + '총 ' + mn(String(visible.length)) + '건'}</span>
+        <span>{(fYm ? `기준 ${String(fYm)} vs 전월 ${String(prevYm)} · ` : '') + '총 ' + String(visible.length) + '건'}</span>
       )}
       footerRight={<FooterActions onExport={exportExcel} />}>
 

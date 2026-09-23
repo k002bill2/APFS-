@@ -1,6 +1,6 @@
 /* APFS PeriodPicker — 기간 단위별 선택기(표준). 일별은 기존 DatePicker(달력)에 그대로 위임하고,
    연도·월·분기·반기는 같은 트리거(38px 폼 컨트롤 모사) + Popover 안 버튼 그리드로 고른다.
-   값 계약(문자열, 빈 문자열=미선택 — 필터 정확일치·zod·Excel·마스크가 의존):
+   값 계약(문자열, 빈 문자열=미선택 — 필터 정확일치·zod·Excel이 의존):
      day 'YYYY-MM-DD' · month 'YYYY-MM' · quarter 'YYYY-Qn' · half 'YYYY-Hn' · year 'YYYY'
    규약은 apfs-datepicker 스킬 "PeriodPicker" 절. Popover는 DatePicker와 같이 non-modal(모달/드로어 안 2-click 회귀 방지). */
 import * as React from 'react';

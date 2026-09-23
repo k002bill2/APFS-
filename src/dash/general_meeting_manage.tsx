@@ -5,8 +5,7 @@
    - 검색박스(모펀드·운용사·자펀드·계정구분·담당자·총회구분·총회기간)
        → 보고상태 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter)
        ⚠ 목업 기본 총회기간(2025-08-28~2026-08-28)은 데모값이라 이식하지 않는다(초기값 '' = 미적용).
-       ⚠ 담당자는 행 컬럼이 아니라 상세(`detail.gen.mgr`)에 있다 — 그 값으로 실제 필터링하되
-         ⚠검토필요 마커를 붙여 "실 담당자 목록 미확인"을 화면에 남긴다(목업 원문 1건).
+       ⚠ 담당자는 행 컬럼이 아니라 상세(`detail.gen.mgr`)에 있다 — 그 값으로 실제 필터링한다.
    - 목록 그리드                → AG Grid 단일 헤더(apfs-aggrid). **합계행 없음·행 선택 없음** — 금액 컬럼이
        없는 조회 화면이고 목업에도 체크박스/라디오가 없다.
    - 확정여부 2열              → **셀 안 네이티브 `<select>`**(목업 `selCell`/`resultCell` 그대로).
@@ -15,15 +14,13 @@
        ⚠ **행 더블클릭으로는 열지 않는다** — 링크가 진입점인데 더블클릭까지 걸면 링크를 두 번 누른 순간
          엉뚱한 팝업이 뜬다(골드 `occasional_report_manage.tsx`와 동일 결정). 진입은 링크 + Enter 단일.
    - KPI 배지 행                → 미포함(브리프 확정). 금액 개념이 없어 건수 지표뿐이다.
-   - 엑셀                       → SheetJS(단일 헤더, 마스크 시 실값 비노출)
-   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **이식한다**(apfs-grid 규약) — 목업 원문 1건(검색 '담당자')을 그대로 옮겼다. */
+   - 엑셀                       → SheetJS(단일 헤더)
+   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -34,8 +31,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { GeneralMeetingDetailModal } from './general_meeting_detail_modal';
 
 const { Button, IconBtn, StatusBadge, FilterChip } = UI;
@@ -111,12 +106,6 @@ const DEMO: MeetingRow[] = [
 
 const PAGE_SIZE = 20;
 
-/* ⚠검토필요 메모 — 목업 `S1_07_조합원총회.html`의 `data-rec`/`data-dat` 원문 그대로(전수 1건: 검색 '담당자').
-   설계 메모라 마스킹·엑셀 대상이 아니다. */
-const FILTER_NOTES: Record<'mgr', ReviewNote> = {
-  mgr: { rec: '담당심사역 목록(예: 이승재)', dat: '실 담당자 목록 미확인 — 코드/명단 확인 필요' },
-};
-
 /* 폭 관련 그리드 prop(`autoSizeStrategy`·`defaultColDef`)은 `aggrid_theme.ts`의 공용 상수를 쓴다 —
    인라인 리터럴 금지 이유(렌더마다 새 객체 → 폭이 선언값으로 되돌아감)는 그 파일 주석이 정본. */
 
@@ -136,14 +125,13 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof MeetingRow, header: string, width: number, maxWidth: number, minWidth: number, center?: boolean): ColDef<MeetingRow> => ({
   field, headerName: header, width, maxWidth, minWidth, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => <MT>{p.value}</MT>,
+  cellRenderer: (p: any) => <>{p.value}</>,
 });
 
 /* 고정폭(내용 맞춤 불필요·헤더 라벨 폭이 하한) */
 const fixed = (width: number) => ({ width, maxWidth: width, minWidth: width });
 
 /* 셀 내 링크 — 클릭 시 상세 팝업(목업은 행 전체 클릭이지만, 우리 규약은 셀 링크가 진입점이다).
-   ⚠ `title`엔 동작 힌트만 담는다 — 값을 넣으면 마스크 ON일 때 툴팁으로 실데이터가 샌다.
    ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다.
    외관은 목업 `.linktxt` 그대로: primary 색 + font-weight 600, 평상시 밑줄 없음 / hover에만 밑줄. */
 function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
@@ -152,7 +140,7 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
       type="button" title={hint} onClick={onClick}
       className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
       style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      <MT>{value}</MT>
+      {value}
     </button>
   );
 }
@@ -201,7 +189,7 @@ const makeColumns = (
   openDetail: (id: string) => void,
   patchRow: (id: string, patch: Partial<MeetingRow>) => void,
 ): ColDef<MeetingRow>[] => [
-  /* No는 축(순번)이라 마스킹하지 않는다(골드 동형) */
+  /* No는 순번(골드 동형) */
   { field: 'no', headerName: 'No', ...fixed(68), pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   /* 운용사·자펀드는 명세 팝업이 없어 링크가 아니다(브리프) — 텍스트 + maxWidth 캡 */
   txt('gp', '운용사', 160, 240, 120),
@@ -210,7 +198,7 @@ const makeColumns = (
     cellRenderer: (p: any) => <StatusBadge tone={STATUS_TONE[p.value as MeetingStatus]} label={p.value} size="lg" dot={false} /> },
   txt('gt', '총회구분', 100, 100, 100, true),
   { field: 'gdate', headerName: '총회일자', ...fixed(112), cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
-    valueFormatter: (p) => mn(p.value) },
+    valueFormatter: (p) => String(p.value) },
   /* 제목 — 링크 셀. 내용 맞춤(AUTO_SIZE_CONTENT)이라 흡수 컬럼 장치는 없고, 긴 총회명은 420 상한에서 truncate. */
   { field: 'title', headerName: '제목', width: 210, minWidth: 180, maxWidth: 420, cellStyle: flexCenter,
     cellRenderer: (p: any) => <LinkCell value={p.value} hint="총회 상세 보기" onClick={() => p.data && openDetail(p.data.id)} /> },
@@ -258,12 +246,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: React.ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -293,7 +281,6 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
-  const masked = useMask();
 
   /* 행 패치 — 항상 새 객체를 만들어 DEMO 원본을 건드리지 않는다(immutability) */
   const patchRow = useCallback((id: string, patch: Partial<MeetingRow>) => {
@@ -361,13 +348,13 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음). 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
       const v = c.get(r);
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : v;
+      if (typeof v === 'number') return v;
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '제목' || c.header === '안건' ? 32 : c.header === '자펀드' || c.header === '운용사' ? 26 : 14 }));
@@ -401,7 +388,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
             ['총회기간 종료', fTo, () => setFTo(''), true],
           ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isDate]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {isDate ? mn(value) : <MT>{value}</MT>}
+              {isDate ? String(value) : <>{value}</>}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -413,7 +400,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -452,13 +439,13 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             {/* 목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·총회구분·총회기간.
-                그리드 컬럼과 미연동인 항목(모펀드·계정구분)은 noop 캡션. 담당자는 행 상세값으로 실제 필터링하되
-                원문 미정의라 ⚠마커. 보고상태는 툴바 칩과 state를 공유한다. 기간은 PeriodPicker day 2개 */}
+                그리드 컬럼과 미연동인 항목(모펀드·계정구분)은 noop 캡션. 담당자는 행 상세값으로 실제 필터링한다.
+                보고상태는 툴바 칩과 state를 공유한다. 기간은 PeriodPicker day 2개 */}
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            <DrawerField label="담당자" note={FILTER_NOTES.mgr}><DrawerSelect value={fMgr} onChange={setFMgr} options={mgrOptions} /></DrawerField>
+            <DrawerField label="담당자"><DrawerSelect value={fMgr} onChange={setFMgr} options={mgrOptions} /></DrawerField>
             <DrawerField label="총회구분"><DrawerSelect value={fGt} onChange={setFGt} options={GT_OPTIONS} /></DrawerField>
             <DrawerField label="보고상태"><DrawerSelect value={fRst} onChange={(v) => setFRst(v as '' | MeetingStatus)} options={['일정', '결과']} /></DrawerField>
             {/* PeriodPicker 트리거는 w-full이라 fit-content 래퍼로 감싼다(apfs-datepicker "폭" 규칙) */}

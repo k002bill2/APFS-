@@ -30,7 +30,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 사업연도/기준일자 | 드로어·모달 모두 **`PeriodPicker`**(`mode="year"` / `"day"`, `DrawerField plain`) — 연도 `<select>`·네이티브 date 금지 | [[apfs-datepicker]] "PeriodPicker" |
 | 적용 필터 칩 | 항목별 개별 칩, **값만**(접두사 없음) + × aria-label에 항목명 | [[apfs-detail-filter]] "typed 페이지 트랙" |
 | 신규 등록(1차 액션) | **툴바 독립 버튼** `Button variant="outline" size="sm" leadingIcon="plus"` — `toolbarRight`에서 **상세필터 오른쪽·새로고침 왼쪽**. **kebab 항목으로 넣지 않는다**(2026-09-11 사용자 결정으로 이전 "등록도 kebab 안" 규약을 뒤집음 — 진입 빈도 높은데 2클릭). 라벨은 도메인 액션명 그대로(`제안서접수 등록`), "등록"으로 축약 금지. 단축키 `⌘⏎`(`HOTKEYS.register`)는 유지되나 **화면 힌트는 없다**(Button이 Tooltip asChild 불가) | 툴바 순서=[[apfs-grid]] "관리형 리스트 툴바·타이틀 규약" · 모달=[[apfs-form-modal]] · 단축키=[[apfs-hotkeys]] |
-| 엑셀 | SheetJS — 병합/리프 컬럼을 **columnDefs에서 자동 산출**(`flattenForExcel`), 마스크 시 숫자 0·텍스트 ''. **진입=푸터 `FooterActions` 내보내기 아이콘**(툴바 독립 "엑셀" 버튼·kebab 항목 둘 다 금지 — kebab은 2026-09-17 폐기) + 단축키 `⌥D`(`HOTKEYS.export`) | [[apfs-aggrid]] · 툴바/푸터=[[apfs-grid]] · 단축키=[[apfs-hotkeys]] |
+| 엑셀 | SheetJS — 병합/리프 컬럼을 **columnDefs에서 자동 산출**(`flattenForExcel`). **진입=푸터 `FooterActions` 내보내기 아이콘**(툴바 독립 "엑셀" 버튼·kebab 항목 둘 다 금지 — kebab은 2026-09-17 폐기) + 단축키 `⌥D`(`HOTKEYS.export`) | [[apfs-aggrid]] · 툴바/푸터=[[apfs-grid]] · 단축키=[[apfs-hotkeys]] |
 | 프레임 외관·푸터 | `--frame-bg`(테두리·그림자 없음), `sub` 미사용, 단위 캡션은 `toolbarRight`, 푸터 골드(건수·페이저·뷰 토글·아이콘) | [[apfs-grid]] "프레임 외관 규약" |
 | 리스트 ↔ 카드뷰 | **폐기(2026-09-11 사용자 결정)** — 만들지 않는다. 푸터에 뷰 토글 `SegTabs`를 두지 않고, `view` state·카드 분기도 넣지 않는다(리스트 뷰 단일 표현) | — |
 | 읽기전용 명세 팝업 | **opt-in(기본 미포함)** — 목업/사용자가 요구할 때만 포함. 포함 시 진입=`명세` 버튼 + 더블클릭(단위 토글·kv·재무요약). **미포함이면 selbar에 `명세` 버튼·`onRowDoubleClicked` 배선을 넣지 않는다**(자동 고정 금지) | **[[apfs-spec-popup]]** |
@@ -39,7 +39,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 
 ## 2. 목업에서 **버리는 것** (프로토타입 스캐폴딩 — 셸이 소유)
 GNB/LNB 전환 토글(`.opts`) · 상단바/출처시스템 메뉴/서브탭/LNB(`.topbar .sysmenu .subtab .lnb`) · 설계 메모(`.note`). **이식 대상은 검색필드·목록바·그리드·팝업·워크플로우 JS(STAGE_ACT)뿐.**
-  ⚠ 예외: **⚠검토필요 마커(`.review .rpop`)는 이식한다**(2026-09-12 사용자 지시로 규약 반전) — 규약·컴포넌트는 [[apfs-grid]]의 "검토필요 마커" 절, AG Grid 헤더 배선은 [[apfs-aggrid]].
+  2026-09-24: 검토필요 마커(ReviewMarker·note 필드·*_NOTE)는 전부 삭제됐다. 목업의 `.review`/`.rpop` 은 이식하지 않는다(2026-09-12 '이식' 규약 폐기).
 
 ## 3. SOP
 1. **읽기**: 목업 HTML 전체 + 형제 `*_spec.json`(필드·컬럼·codeRef 정본). 하단 `<script>`의 DATA/STAGE_ACT/팝업 row()가 실제 명세다.

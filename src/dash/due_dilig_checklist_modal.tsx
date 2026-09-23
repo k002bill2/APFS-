@@ -13,25 +13,13 @@
 
    구성(목업 → 우리 규약): `.modal` → Radix Dialog · `dl.dl` → KvGrid(골드 복사) · 푸터 `닫기` 하나.
    원문의 `.doclink` 는 클릭 시 토스트만 띄우는 목업 링크라, 우리는 **다운로드 동작 없는 파일 칩**으로
-   옮긴다 — 열리지 않는 링크를 만들면 죽은 버튼이 된다.
-
-   마스크 경계: 확장자 아이콘·색(유형 표식)은 비마스킹, **파일명은 데이터라 MT** 로 가린다
-   (mask-boundary-includes-excel-and-filename). */
+   옮긴다 — 열리지 않는 링크를 만들면 죽은 버튼이 된다. */
 import React from 'react';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { glyphFor } from './ui/attachment';
 
 const { Button } = UI;
-
-/* ⚠검토필요 마커 — 원문 `체크리스트` dt 의 data-rec/data-dat 축자(창작 금지) */
-const CHECKLIST_NOTE: ReviewNote = {
-  rec: '첨부파일(PDF) 링크가 맞는 칸인지 확인',
-  dat: "원 구조도엔 이 항목명이 '투자금실사보고서 체크리스트($변수)'이고 실데이터는 '나우농식품투자펀드6호-(주)와이유' 같은 조합명-업체명 조합 문자열임 — 실제 첨부파일(PDF) 다운로드 링크인지, 단순 타이틀 텍스트인지 확인 필요. 현재는 S1_40의 실제 보고서 PDF 파일명을 재사용해 첨부파일 링크로 구현",
-};
 
 const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)' };
 const DT_STYLE: React.CSSProperties = { padding: '8px 12px', fontSize: 13 };
@@ -40,7 +28,7 @@ const DD_STYLE: React.CSSProperties = { padding: '8px 12px', fontSize: 14, overf
 /* 값 없음의 원문 표기는 빈칸이 아니라 `-` 다(원문 `dash()`). 스키마 sample 도 이미 `-` 로 정규화돼 있다. */
 const isBlank = (v: string) => v === '' || v === '-';
 
-type KvItem = { l: string; v: string; numeric?: boolean; note?: ReviewNote; node?: React.ReactNode };
+type KvItem = { l: string; v: string; numeric?: boolean; node?: React.ReactNode };
 
 /* 원문 `dl.dl` 8항목 — 라벨·순서 그대로. 투자금액·실사회계법인은 원문 리터럴 `-`(`dd.empty`). */
 const buildItems = (r: Record<string, unknown>): KvItem[] => [
@@ -51,7 +39,7 @@ const buildItems = (r: Record<string, unknown>): KvItem[] => [
   { l: '투자형태',     v: String(r.investType ?? '') },
   { l: '실사일',       v: String(r.dueDiligDate ?? ''), numeric: true },
   { l: '실사회계법인', v: '' },
-  { l: '체크리스트',   v: String(r.reportFile ?? ''), note: CHECKLIST_NOTE, node: <DocCell file={String(r.reportFile ?? '')} /> },
+  { l: '체크리스트',   v: String(r.reportFile ?? ''), node: <DocCell file={String(r.reportFile ?? '')} /> },
 ];
 
 /* 원문 `docCell` — 파일이 있으면 문서 아이콘 + 파일명, 없으면 `- (체크리스트 없음)`.
@@ -62,7 +50,7 @@ function DocCell({ file }: { file: string }) {
   return (
     <span className="inline-flex items-center gap-2 min-w-0">
       <Icon size={16} className={`${cls} shrink-0`} aria-hidden />
-      <span className="min-w-0"><MT>{file}</MT></span>
+      <span className="min-w-0">{file}</span>
     </span>
   );
 }
@@ -77,7 +65,7 @@ export function DueDiligChecklistModal({ row, onClose }: { row: Record<string, u
           {/* 제목+대상명은 한 래퍼로 — DialogHeader가 justify-between이라 안 묶으면 대상명이 우측 끝으로 밀린다 */}
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">투자금실사보고서 체크리스트 조회</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0"><MT>{String(row.investee ?? '')}</MT></DialogDescription>
+            <DialogDescription className="text-caption truncate min-w-0">{String(row.investee ?? '')}</DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">
@@ -85,10 +73,10 @@ export function DueDiligChecklistModal({ row, onClose }: { row: Record<string, u
             {items.map((o) => (
               <div key={o.l} className="grid bg-card" style={KV_COLS}>
                 <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>
-                  {o.l}{o.note && <ReviewMarker {...o.note} label={o.l} />}
+                  {o.l}
                 </dt>
                 <dd className={`m-0 flex items-center min-w-0 ${isBlank(o.v) && !o.node ? 'text-caption' : ''}`} style={DD_STYLE}>
-                  {o.node ? o.node : isBlank(o.v) ? '-' : o.numeric ? mn(o.v) : <MT>{o.v}</MT>}
+                  {o.node ? o.node : isBlank(o.v) ? '-' : o.numeric ? String(o.v) : <>{o.v}</>}
                 </dd>
               </div>
             ))}

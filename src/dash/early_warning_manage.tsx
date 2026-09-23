@@ -43,8 +43,6 @@
        출력은 푸터 인쇄 아이콘(`window.print()`)이 흡수한다(apfs-grid 푸터 골드 양식, kebab 폐기).
    - KPI 배지 행 → **미포함**(사용자 결정) → `kpis` prop을 아예 넘기지 않는다.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **이식 대상이 없다** — 목업에 `class="review"` 출현 0회이고, 설계메모가
-     "팝업 내 검토필요 마커도 함께 해소했습니다"라고 명시한다(CSS/JS는 공통 보일러플레이트).
 
    한계·가정(결정 기록)
    - 더미 21행: 목업 DATA 4행(유니·한투)은 **값까지 그대로** 옮기고, 페이저·건수가 의미를 갖도록
@@ -61,7 +59,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -146,14 +143,14 @@ const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 텍스트 셀 — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다 */
-const textCell = (p: { value: string }) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span>;
+const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
 const gradeCell = (p: { value: EarlyWarningGrade }) => <StatusBadge tone={GRADE_TONE[p.value]} label={p.value} size="lg" dot={false} />;
 
 const COLUMNS: ColDef<EarlyWarningRow>[] = [
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'mf', headerName: '모펀드', flex: 1, minWidth: 150, width: 150, cellStyle: flexCenter, cellRenderer: textCell },
-  /* 기준년월 — 날짜성 값이라 mn()(축이 아니라 행 데이터) */
-  { field: 'ym', headerName: '기준년월', width: 110, minWidth: 110, cellStyle: centerNum, valueFormatter: (p) => mn(p.value) },
+  /* 기준년월 — 날짜성 값(행 데이터) */
+  { field: 'ym', headerName: '기준년월', width: 110, minWidth: 110, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'gp', headerName: '운용사', flex: 1.3, minWidth: 180, width: 180, cellStyle: flexCenter, cellRenderer: textCell },
   { field: 'gpg', headerName: '종합등급(운용사)', width: 150, minWidth: 150, cellStyle: flexMid, cellRenderer: gradeCell },
   { field: 'fn', headerName: '자펀드', flex: 1.8, minWidth: 220, width: 220, cellStyle: flexCenter, cellRenderer: textCell },
@@ -228,7 +225,6 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [chartOpen, setChartOpen] = useState(false);
-  const masked = useMask();
 
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
@@ -288,13 +284,13 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음). 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
       const v = c.get(r);
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : v;
+      if (typeof v === 'number') return v;
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '자펀드' ? 34 : c.header === '운용사' || c.header === '모펀드' ? 22 : c.header === 'No' ? 6 : 16 }));
@@ -323,21 +319,20 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
           <Icon name="filter" size={16} className="text-caption" />
           {/* `전체` 칩 — 3칩 모두 ON일 때 활성이고, 누르면 3개를 한 번에 켠다(0행 상태의 복구 경로를 겸한다).
               멱등이라 이미 전부 켜진 상태에서 눌러도 무해. count는 세 facet의 합(상수 금지). */}
-          <FilterChip active={allGradesOn} onClick={() => setGrades(ALL_GRADES_ON)} count={mn(String(gradeTotal))}>전체</FilterChip>
+          <FilterChip active={allGradesOn} onClick={() => setGrades(ALL_GRADES_ON)} count={String(gradeTotal)}>전체</FilterChip>
           {/* ⚠ `전체`가 활성이면 등급 칩은 **비활성으로 보인다** — 상태(`grades`)는 3개 다 true지만
               참조처럼 "활성 칩은 하나"로 읽히게 표시만 분리한다(파일 상단 '절충' 참조). */}
           {GRADES.map((g) => (
             <FilterChip key={g} active={!allGradesOn && grades[g]} onClick={() => toggleGrade(g)}
-              count={mn(String(gradeFacet[g]))}>{g}</FilterChip>
+              count={String(gradeFacet[g])}>{g}</FilterChip>
           ))}
           {/* 적용 필터 칩 — 값만 표시(접두사 없음) + ×.
-              운용사·자펀드는 텍스트라 `<MT>`, 기준년월은 날짜성이라 `mn()`(마스크 규약).
               ⚠ 기준년월은 행을 거르지 않는 조회 기준이라 값이 늘 있다 → **기본값과 다를 때만** 칩을 띄우고,
                 ×는 '제거'가 아니라 **기본값 복귀**다(aria-label도 그렇게 말한다). */}
           {([
-            { key: '운용사', on: !!fGp, value: <MT>{fGp}</MT>, aria: '운용사 필터 제거', clear: () => setFGp('') },
-            { key: '자펀드', on: !!fFund, value: <MT>{fFund}</MT>, aria: '자펀드 필터 제거', clear: () => setFFund('') },
-            { key: '기준년월', on: periodChanged, value: mn(fFrom) + ' ~ ' + mn(fTo), aria: '기준년월 기본값으로', clear: () => { setFFrom(BASE_FROM); setFTo(BASE_TO); } },
+            { key: '운용사', on: !!fGp, value: <>{fGp}</>, aria: '운용사 필터 제거', clear: () => setFGp('') },
+            { key: '자펀드', on: !!fFund, value: <>{fFund}</>, aria: '자펀드 필터 제거', clear: () => setFFund('') },
+            { key: '기준년월', on: periodChanged, value: String(fFrom) + ' ~ ' + String(fTo), aria: '기준년월 기본값으로', clear: () => { setFFrom(BASE_FROM); setFTo(BASE_TO); } },
           ] as { key: string; on: boolean; value: React.ReactNode; aria: string; clear: () => void }[]).filter((c) => c.on).map((c) => (
             <span key={c.key} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               {c.value}
@@ -353,7 +348,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

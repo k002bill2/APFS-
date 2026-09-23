@@ -10,34 +10,35 @@
        푸터의 조건 표기(명칭·비활성원부)도 적용 중일 때만 붙인다 — 미적용인데 '제외'라 쓰면 비활성 행과 모순된다.
    - 목록바 [출력▾](등록원부 출력 · 등록원부 발급이력 출력) · [등록원부입력] · [등록원부업로드]+검토필요 → 툴바 액션(상세필터 오른쪽).
      출력 트리거는 UI.Button 이 Radix asChild 를 못 받아(forwardRef 없음) 트리거에 Button 스타일을 직접 얹는다.
-     원문 [엑셀] → 푸터 내보내기(⌥D). 엑셀에서 '관리'(버튼 묶음) 칸은 뺀다.
-   - 행 관리 버튼 3개(수정 · 조합원관리 · 전문인력관리) → 각 팝업. 활성상태 스위치 → 행 state 즉시 전이 + 원문 토스트.
-     행 선택 없음(원문도 선택 체크박스가 없다 — 액션은 행 버튼이 가진다).
-   - 원문 비활성 행 흐림(`tr.inact`)은 스위치 라벨 '비활성'이 같은 정보를 준다 — 행 전체 투명도는 대비를 깎아 두지 않는다. */
+     원문 [엑셀] → 푸터 내보내기(⌥D).
+   - 원문 행 관리 버튼 3개·활성상태 스위치는 **행 안에 옮기지 않는다**(2026-09-23 사용자 결정 — 관리형 선택 바 규약,
+     원문 배치를 따르지 않는다). 체크박스 선택 → 선택 바:
+       [수정]·[조합원관리]·[전문인력관리] = 1건일 때만(한 조합에만 뜻이 있는 팝업) ·
+       [활성화]/[비활성화] = N건(선택에 해당 상태 행이 있을 때만 노출 — #244 해제등록 게이팅 동형, 원문 토스트 문구) ·
+       [삭제] · [선택 해제]. 행 더블클릭/Enter = 수정. 활성상태 칸은 표시 전용 배지(셀 클릭으로 상태를 바꾸지 않는다).
+     삭제는 원문에 없다 — 관리형 선택 바 공통 구성(형제 4화면 통일)으로 둔다.
+   - 원문 비활성 행 흐림(`tr.inact`)은 활성상태 배지가 같은 정보를 준다 — 행 전체 투명도는 대비를 깎아 두지 않는다. */
 import React, { useCallback, useMemo, useState } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { toast } from './ui/sonner';
-import { Switch } from './ui/switch';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu';
-import { ReviewMarker } from './review_marker';
 import { RiskPage } from './risk_page_kit';
 import type { FilterSpec } from './risk_page_kit';
 import { ReadGrid } from './risk_grid';
-import type { CellRenderers } from './risk_grid';
 import { exportTables } from './risk_excel';
 import type { Row } from './risk_table_meta';
-import { LEDGER_TABLE, INACTIVE_OPTIONS, LEDGER_UPLOAD_NOTE, ledgerShown } from './brief_data';
+import { LEDGER_TABLE, INACTIVE_OPTIONS, ledgerShown } from './brief_data';
+import { useRowSelection, SelBar, DeleteDialog, nextRow } from './trust_manage_kit';
 import { LedgerFormModal, MembersModal, ExpertsModal, LedgerUploadModal, LedgerPrintModal, LedgerIssueHistoryModal } from './registry_ledger_modals';
 
 const { Button } = UI;
 const LABEL = '등록원부관리';
 
 type Modal = null
-  | { kind: 'ledger'; mode: 'new' | 'edit'; row?: Row }
+  | { kind: 'ledger'; mode: 'new' | 'edit'; id?: string }
   | { kind: 'members' | 'experts'; row: Row }
-  | { kind: 'upload' | 'print' | 'history' };
+  | { kind: 'upload' | 'print' | 'history' | 'delete' };
 
 /* 출력 드롭다운 — 트리거 className 은 UI.Button size="sm" variant="outline" 과 같은 규격(investment_review_manage ResultMenu 선례) */
 function OutputMenu({ onPick }: { onPick: (k: 'print' | 'history') => void }) {
@@ -58,7 +59,6 @@ function OutputMenu({ onPick }: { onPick: (k: 'print' | 'history') => void }) {
 }
 
 export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void }) {
-  const masked = useMask();
   const [rows, setRows] = useState<Row[]>(LEDGER_TABLE.rows);
   const [name, setName] = useState('');
   const [inactive, setInactive] = useState<string>(INACTIVE_OPTIONS[0]);
@@ -71,57 +71,71 @@ export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void })
   const changeName = (v: string) => { setName(v); setApplied(true); };
   const changeInactive = (v: string) => { setInactive(v); setApplied(true); };
 
-  const toggle = useCallback((id: string, on: boolean) => {
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, active: on ? '활성' : '비활성' } : r)));
-    toast.success(on ? '등록원부를 활성화했습니다 (목업)' : '등록원부를 비활성화했습니다 (목업)');
-  }, []);
+  const { apiRef, selIds, onSelect, clear } = useRowSelection();
+  const sel = useMemo(() => rows.filter((r) => selIds.includes(r.id)), [rows, selIds]);
+  const single = sel.length === 1 ? sel[0] : undefined;
 
-  /* 참조 안정 필수 — 바뀌면 ReadGrid 컬럼 정의가 다시 만들어진다 */
-  const renderers = useMemo<CellRenderers>(() => ({
-    mgmt: (r) => (
-      <span className="inline-flex gap-1">
-        <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'ledger', mode: 'edit', row: r })}>수정</Button>
-        <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'members', row: r })}>조합원관리</Button>
-        <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'experts', row: r })}>전문인력관리</Button>
-      </span>
-    ),
-    active: (r) => {
-      const on = r.active === '활성';
-      const id = `ledger-active-${r.id}`;
-      return (
-        <span className="inline-flex items-center gap-2">
-          <Switch id={id} checked={on} onCheckedChange={(c) => toggle(r.id, c)} aria-label={`${masked ? `${String(r.no)}번 행` : String(r.nm)} 활성상태`} />
-          <label htmlFor={id} className="cursor-pointer" style={{ fontSize: 13, color: on ? 'var(--foreground)' : 'var(--muted-foreground)' }}>{on ? '활성' : '비활성'}</label>
-        </span>
-      );
-    },
-  }), [toggle, masked]);
+  /* 활성/비활성 전이 — 선택 N건 중 상태가 바뀌는 행만(원문 토스트 문구) */
+  const setActive = (on: boolean) => {
+    const ids = new Set(sel.filter((r) => (r.active === '활성') !== on).map((r) => r.id));
+    setRows((prev) => prev.map((r) => (ids.has(r.id) ? { ...r, active: on ? '활성' : '비활성' } : r)));
+    toast.success(on ? '등록원부를 활성화했습니다 (목업)' : '등록원부를 비활성화했습니다 (목업)');
+  };
+  const remove = () => {
+    const ids = new Set(selIds);
+    setRows((prev) => prev.filter((r) => !ids.has(r.id)));
+    clear();
+    setModal(null);
+    toast.success('삭제되었습니다 (목업)');
+  };
+  /* 행 더블클릭·Enter = 수정(참조 안정: ReadGrid onRowOpen 계약) */
+  const openEdit = useCallback((r: Row) => setModal({ kind: 'ledger', mode: 'edit', id: r.id }), []);
+  /* 모달은 id 만 들고 행은 매번 rows 에서 찾는다(불변 교체 후 옛 객체 방지) */
+  const ledgerRow = modal?.kind === 'ledger' && modal.id ? rows.find((r) => r.id === modal.id) : undefined;
+  const saveLedger = (patch: Partial<Row>) => {
+    if (ledgerRow) { setRows((prev) => prev.map((r) => (r.id === ledgerRow.id ? { ...r, ...patch } : r))); return; }
+    const { id, no } = nextRow(rows, 'lg');
+    setRows((prev) => [{ ...patch, id, no, active: '활성' } as Row, ...prev]);   // 신규는 선두 · 활성
+  };
+
+  const selActions = SelBar({
+    count: sel.length, onClear: clear, onDelete: () => setModal({ kind: 'delete' }),
+    single: single && <>
+      <Button variant="primary" size="sm" leadingIcon="file" onClick={() => openEdit(single)}>수정</Button>
+      <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'members', row: single })}>조합원관리</Button>
+      <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'experts', row: single })}>전문인력관리</Button>
+    </>,
+    bulk: <>
+      {sel.some((r) => r.active !== '활성') && <Button variant="outline" size="sm" leadingIcon="check" onClick={() => setActive(true)}>활성화</Button>}
+      {sel.some((r) => r.active === '활성') && <Button variant="outline" size="sm" onClick={() => setActive(false)}>비활성화</Button>}
+    </>,
+  });
 
   const filters: FilterSpec[] = [
     { label: '명칭', kind: 'text', value: name, onChange: changeName, placeholder: '조합 명칭 검색' },
     { label: '비활성원부', kind: 'radio', value: inactive, onChange: changeInactive, options: INACTIVE_OPTIONS, chip: applied },
   ];
   const exportExcel = () => {
-    exportTables(LABEL, [{ name: LABEL, table: LEDGER_TABLE, rows: shown }], null, masked);
+    exportTables(LABEL, [{ name: LABEL, table: LEDGER_TABLE, rows: shown }], null);
     toast.success('Excel로 내보냈습니다');
   };
   const close = () => setModal(null);
 
   return (
     <RiskPage system="부처보고" group="등록원부" label={LABEL} route={LABEL} onNav={onNav}
-      filters={filters} onReset={reset}
+      filters={filters} onReset={reset} contextActions={selActions}
       actions={<>
         <OutputMenu onPick={(k) => setModal({ kind: k })} />
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'ledger', mode: 'new' })}>등록원부입력</Button>
         <span className="inline-flex items-center gap-1">
           <Button variant="outline" size="sm" leadingIcon="upload" onClick={() => setModal({ kind: 'upload' })}>등록원부업로드</Button>
-          <ReviewMarker rec={LEDGER_UPLOAD_NOTE.rec} dat={LEDGER_UPLOAD_NOTE.dat} label="등록원부업로드" />
         </span>
       </>}
-      footerLeft={<span>{applied && <>{name ? <><MT>{name}</MT> · </> : ''}비활성원부 {inactive} · </>}총 {mn(String(shown.length))}건</span>}
+      footerLeft={<span>{applied && <>{name ? <>{name} · </> : ''}비활성원부 {inactive} · </>}총 {String(shown.length)}건</span>}
       onExport={exportExcel} exportEnabled={!modal}>
-      <ReadGrid table={LEDGER_TABLE} rows={shown} ariaLabel={LABEL} cellRenderers={renderers} />
-      {modal?.kind === 'ledger' && <LedgerFormModal mode={modal.mode} row={modal.row} onClose={close} />}
+      <ReadGrid table={LEDGER_TABLE} rows={shown} ariaLabel={LABEL} selectable onSelect={onSelect} selectedIds={selIds} apiRef={apiRef} onRowOpen={openEdit} />
+      {modal?.kind === 'delete' && <DeleteDialog title="등록원부 삭제" count={sel.length} onConfirm={remove} onClose={() => setModal(null)} />}
+      {modal?.kind === 'ledger' && <LedgerFormModal mode={modal.mode} row={ledgerRow} onSave={saveLedger} onClose={close} />}
       {modal?.kind === 'members' && <MembersModal row={modal.row} onClose={close} />}
       {modal?.kind === 'experts' && <ExpertsModal row={modal.row} onClose={close} />}
       {modal?.kind === 'upload' && <LedgerUploadModal onClose={close} />}

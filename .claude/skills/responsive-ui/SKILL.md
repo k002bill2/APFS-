@@ -67,5 +67,5 @@ console.log({ vw, scrollW: document.documentElement.scrollWidth, hits });
 
 ## 참조
 - UI/디자인 시스템 전반: [[dashboard-ui]]
-- 마스크 규약(`mn`/`MT`)·토큰: `CLAUDE.md`, `tokens.css`
+- 토큰: `CLAUDE.md`, `tokens.css`
 - 정본 패턴 예: `generic_list.tsx`(테이블/카드행/그리드), `generic_list_modal.tsx`(모달), `shell.tsx`(GNB clamp·플라이아웃 maxHeight)

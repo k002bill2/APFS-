@@ -6,13 +6,12 @@
                            → 연도기준은 **툴바 주 필터 FilterChip**(결성연도·선정연도, '전체' 없음),
                              나머지는 상세필터 드로어(Sheet, apfs-detail-filter). 항목 순서는 목업 그대로.
                              검색어 입력은 목업에 없으므로 만들지 않는다.
-   - 목록바(금액단위 seg)  → 툴바 우측 `단위: {unit}` 캡션 + ⚠마커 + SegTabs(원/백만원/억원, **기본 억원** = 목업 기본값).
+   - 목록바(금액단위 seg)  → 툴바 우측 `단위: {unit}` 캡션 + SegTabs(원/백만원/억원, **기본 억원** = 목업 기본값).
                              데이터는 억원 저장 → 그리드 `context={{unit}}` + 단위 변경 시 `refreshCells({force:true})`.
    - 2단 헤더 33열 그리드  → AG Grid `ColGroupDef`(marryChildren). **연도별 소계는 본문 인라인 행**(목업 tr.subtotal),
                              전체 총계는 pinned bottom(목업 tfoot). 소계·총계는 원문 표시값 그대로(재계산 아님).
    - 엑셀                  → SheetJS. 2단 헤더 병합·리프 키는 `flattenForExcel(columnDefs, …)`로 columnDefs에서
                              자동 산출하고, 금액은 선택 단위로 환산한 숫자 셀(t:'n' + z 서식)로 쓴다.
-                             마스크 ON이면 숫자 0·텍스트 ''(화면 밖 출력은 valueFormatter를 안 거침).
    - KPI 배지 행 · 카드뷰 · 명세 팝업 · 행 선택 · 등록 → **없음**(목업에 없는 조회 전용 화면).
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
 
@@ -24,16 +23,12 @@
    - 출자사업연도·결성일·등록일·기준일·경과년·투자승수 3열·감액금액은 원문 캡처 화면 폭 밖이라 미확인 →
      목업 `rowHtml`/`subtotalHtml`/tfoot과 같이 **전 행 '-'**(값 창작 금지).
    - 정렬은 전 컬럼 비활성이다 — 행 순서(연도 오름차순 + 각 해 끝의 소계)가 의미를 갖는 표라 정렬하면 소계가 흩어진다.
-   - 페이지네이션은 표시행(행 137 + 소계 16 = 153) 기준이라 20행 × 8페이지이고, 푸터 건수는 데이터 행 137만 센다.
-   ⚠검토필요 마커 4건 이식(목업 원문 그대로): 연도기준(드로어 라벨) · 금액단위(툴바 캡션) ·
-     출자사업연도(그리드 헤더) · 감액금액(그리드 헤더). 설계 메모라 마스킹·엑셀 대상이 아니다.
-   공용 `review_marker.tsx`, 규약은 apfs-grid 스킬. */
+   - 페이지네이션은 표시행(행 137 + 소계 16 = 153) 기준이라 20행 × 8페이지이고, 푸터 건수는 데이터 행 137만 센다. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유) — 없으면 총계행이 안 보인다
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마·포매터 SSOT
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
@@ -47,8 +42,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker, reviewInnerHeader } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { RAW, SUBTOTALS, GRAND } from './fund_stats_data';
 import type { RawRow, StatBase } from './fund_stats_data';
 
@@ -171,32 +164,6 @@ const DEFAULT_YEAR_BASIS: YearBasis = '결성연도';
 interface GridCtx { unit: Unit; yearBasis: YearBasis }
 
 /* ──────────────────────────────
-   ⚠검토필요 메모 4건 — 목업 `S1_25_종합통계.html`의 data-rec/data-dat 원문 그대로(창작·합치기 금지)
-────────────────────────────── */
-const YBASIS_NOTE: ReviewNote = {
-  rec: '결성연도·선정연도 (조회기준 → 연도 컬럼 의미 변경)',
-  dat: "실값 '결성연도'만 확인 · '선정연도'는 §2.4 동적관계 근거 추론",
-};
-const UNIT_NOTE: ReviewNote = {
-  rec: '원·백만원·억원 (표준 단위전환 토글)',
-  dat: "CDTP:BU · 실값 '억원' · 그 외 옵션 미확인",
-};
-const YBIZ_NOTE: ReviewNote = {
-  rec: '원문 그대로 표시',
-  dat: "사용자 제공 참고 화면 캡처가 이 열부터 오른쪽(출자사업연도~투자승수)은 화면 폭 밖이라 안 보임 — 1행(예시)만 있던 기존 값 유지, 나머지 136행은 확인 전까지 '-' 표시",
-};
-const CUT_NOTE: ReviewNote = {
-  rec: '원문 그대로 표시',
-  dat: "참고 화면 캡처에서 감액금액 열도 화면 폭 밖이라 값 미확인 — 1행(예시) 제외 나머지는 '-' 표시",
-};
-/* 모듈 스코프에 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid가 헤더를 통째로 remount한다 */
-const YBIZ_HEADER = reviewInnerHeader(YBIZ_NOTE);
-const CUT_HEADER = reviewInnerHeader(CUT_NOTE);
-/* Tab을 AG Grid 헤더 내비게이션에서 빼 브라우저 기본 순서로 넘긴다 —
-   안 하면 헤더 안의 ⚠마커에 키보드로 도달할 수 없다(AG Grid가 Tab을 가로채 다음 헤더 셀로 이동). */
-const tabToBrowser = (p: { event: KeyboardEvent }) => p.event.key === 'Tab';
-
-/* ──────────────────────────────
    컬럼 정의 — 목업 `<thead>` 구조 그대로(리프 33개, 2단 그룹 6개).
    ⚠ 전 컬럼 `sortable:false` — 행 순서(연도 오름차순 + 각 해 끝의 소계)가 의미라 정렬하면 소계가 흩어진다.
 ────────────────────────────── */
@@ -205,21 +172,21 @@ const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-/* 숫자 N/A(null) → '-' : 공유 numFmt(콤마·소수·마스킹)에 null 가드만 얇게 덧씌운다(재구현 아님) */
+/* 숫자 N/A(null) → '-' : 공유 numFmt(콤마·소수)에 null 가드만 얇게 덧씌운다(재구현 아님) */
 const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p));
-/* 금액 셀 — grid context.unit로 환산 후 마스킹. 단위가 바뀌면 refreshCells({force:true})로 재적용 */
+/* 금액 셀 — grid context.unit로 환산한다. 단위가 바뀌면 refreshCells({force:true})로 재적용 */
 const moneyFmt = (p: ValueFormatterParams): string => {
   if (p.value == null) return '-';
   const unit = (p.context as GridCtx | undefined)?.unit ?? DEFAULT_UNIT;
-  return mn(unitText(p.value as number, unit));
+  return String(unitText(p.value as number, unit));
 };
 /* 비율 셀 — 목업 pctN. 단위 토글과 무관(항상 %) */
-const pctFmt = (p: ValueFormatterParams): string => mn(pctN(p.value as number | null));
+const pctFmt = (p: ValueFormatterParams): string => String(pctN(p.value as number | null));
 
 /* 텍스트 — 소계·총계 행은 값이 null이라 빈 칸(목업 tr.subtotal / tfoot의 빈 td) */
 const txt = (field: keyof StatRow, header: string, width: number, center?: boolean): ColDef<StatRow> => ({
   field, headerName: header, width, sortable: false, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => (p.value == null ? null : <MT>{p.value}</MT>),
+  cellRenderer: (p: any) => (p.value == null ? null : <>{p.value}</>),
 });
 /* 금액(억원 저장) — 우측정렬. numStyle()은 셀마다 호출되는 함수(0=muted, pinned 총계행 자동 bold) */
 const amt = (field: keyof StatRow, header: string, width = 116): ColDef<StatRow> => ({
@@ -240,13 +207,12 @@ const dash = (field: keyof StatRow, header: string, width = 104): ColDef<StatRow
 });
 
 const columnDefs: (ColDef<StatRow> | ColGroupDef<StatRow>)[] = [
-  /* NO — 순번은 축이라 비마스킹. 소계·총계 행은 목업에서 NO~분야가 가로 병합된 한 칸이라 비운다
+  /* NO — 소계·총계 행은 목업에서 NO~분야가 가로 병합된 한 칸이라 비운다
      (AG Grid엔 가로 병합이 없어 '2011 소계'/'총 계' 라벨을 연도 컬럼에 싣는다). */
   { field: 'no', headerName: 'NO', width: 72, maxWidth: 72, pinned: 'left', sortable: false, cellStyle: centerNum,
     valueFormatter: (p) => (p.value == null ? '' : String(p.value)) },
   /* 연도 — 헤더 라벨이 연도기준(결성/선정)을 따른다. headerName을 state로 갈아끼워 컬럼을 재생성하면
-     폭이 선언값으로 되돌아가므로(apfs-aggrid 계약6) headerValueGetter + refreshHeader()로만 바꾼다.
-     값(연도·'2011 소계'·'총 계')은 행을 묶는 축이라 비마스킹(apfs-grid 계약3). */
+     폭이 선언값으로 되돌아가므로(apfs-aggrid 계약6) headerValueGetter + refreshHeader()로만 바꾼다. */
   { field: 'ylabel', headerName: DEFAULT_YEAR_BASIS, width: 110, pinned: 'left', sortable: false, cellStyle: centerNum,
     headerValueGetter: (p: HeaderValueGetterParams<StatRow>) => (p.context as GridCtx | undefined)?.yearBasis ?? DEFAULT_YEAR_BASIS,
     valueFormatter: (p) => String(p.value) },
@@ -264,10 +230,8 @@ const columnDefs: (ColDef<StatRow> | ColGroupDef<StatRow>)[] = [
     children: [amt('totInv', '투자금액'), pct('tir', '결성액대비 총투자율', 144)] },
   { headerName: '회수실적', headerClass: 'apfs-grp-a', marryChildren: true,
     children: [amt('recPrin', '회수원금'), amt('recProf', '회수수익'), amt('recTotal', '회수총액'),
-      { ...dash('recCut', '감액금액', 116),
-        headerComponentParams: { innerHeaderComponent: CUT_HEADER }, suppressHeaderKeyboardEvent: tabToBrowser }] },
-  { ...dash('ybiz', '출자사업연도', 132),
-    headerComponentParams: { innerHeaderComponent: YBIZ_HEADER }, suppressHeaderKeyboardEvent: tabToBrowser },
+      dash('recCut', '감액금액', 116)] },
+  dash('ybiz', '출자사업연도', 132),
   dash('fd', '결성일', 112), dash('rd', '등록일', 112), dash('bd', '기준일', 112),
   /* 목업 헤더의 보조 줄 `(등록일~기준일)`은 한 줄 headerName으로 합친다(AG Grid 헤더는 단일 텍스트) */
   dash('elapsed', '경과년(등록일~기준일)', 160),
@@ -325,12 +289,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 }
 
 /* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 */
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -361,7 +325,6 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
   const [yearBasis, setYearBasis] = useState<YearBasis>(DEFAULT_YEAR_BASIS);
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  const masked = useMask();
 
   /* 상세필터 — 4종 전부 행 컬럼과 미연동(noop)이라 값은 상태로만 남고 행을 거르지 않는다.
      실제로 거르는 필터가 없어 External Filter를 배선하지 않았다(상단 한계 주석 참조). */
@@ -389,19 +352,18 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 2단 헤더 병합 + 표시행(행+소계) + 총계, 선택 단위 환산.
-        마스크 ON이면 숫자 0·텍스트 ''(화면 밖 출력은 valueFormatter를 안 거친다). ── */
+  /* ── Excel(.xlsx) — 2단 헤더 병합 + 표시행(행+소계) + 총계, 선택 단위 환산. ── */
   const exportExcel = () => {
     const { head1, head2, keys, merges } = flattenForExcel(columnDefs, yearBasis, unit);
     const src = [...DISPLAY_ROWS, GRAND_ROW];   // 화면 렌더 소스와 같은 배열 구성(화면=엑셀 불변식)
     const body = src.map((r) => keys.map((k) => {
       const v = (r as any)[k];
       if (v == null) return '';                                   // 미확인 열·소계의 빈 칸 → 화면 '-'를 빈 셀로
-      if (k === 'no' || k === 'ylabel') return v;                 // 순번·연도(소계/총계 라벨)는 축이라 비마스킹
-      if (MONEY.has(k)) return masked ? 0 : toUnit(v as number, unit);
-      if (COUNT.has(k)) return masked ? 0 : (v as number);
-      if (PCT.has(k)) return masked ? '' : pctN(v as number);     // 비율은 화면 문자열 그대로
-      return masked ? '' : v;
+      if (k === 'no' || k === 'ylabel') return v;                 // 순번·연도(소계/총계 라벨)는 원값 그대로
+      if (MONEY.has(k)) return toUnit(v as number, unit);
+      if (COUNT.has(k)) return (v as number);
+      if (PCT.has(k)) return pctN(v as number);     // 비율은 화면 문자열 그대로
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body]);
     /* 숫자 셀 서식 — 금액은 단위별, 건수는 정수. 빈 셀은 건너뛴다 */
@@ -439,15 +401,15 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
         </>
       )}
       toolbarRight={<>
-        {/* 금액 단위 전환(목업 목록바 `.unitwrap`) — 캡션 + ⚠마커 + 세그먼트. 단위 문자열은 축이라 비마스킹 */}
+        {/* 금액 단위 전환(목업 목록바 `.unitwrap`) — 캡션 + 세그먼트 */}
         <span className="text-caption font-semibold inline-flex items-center" style={{ fontSize: 12, marginRight: 6 }}>
-          {'단위: ' + unit}<ReviewMarker {...UNIT_NOTE} label="금액단위" />
+          {'단위: ' + unit}
         </span>
         <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(ROWS.length)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(ROWS.length) + '개 중 ' + String(shown) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -492,7 +454,7 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
             {/* 목업은 전체/농식품/수산 칩 그룹 — DrawerSelect의 첫 옵션 '전체'가 같은 역할을 한다 */}
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcct} onChange={setFAcct} options={['농식품', '수산']} /></DrawerField>
             {/* 연도기준은 툴바 칩과 같은 state를 공유한다(한 항목·두 진입점) */}
-            <DrawerField label="연도기준" note={YBASIS_NOTE}>
+            <DrawerField label="연도기준">
               <DrawerSelect value={yearBasis} onChange={(v) => setYearBasis(v as YearBasis)} options={YEAR_BASES} noAll />
             </DrawerField>
             <DrawerField label="데이터기준" noop><DrawerSelect value={fDbasis} onChange={setFDbasis} options={['운용사보고', '월말확정']} /></DrawerField>

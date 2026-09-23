@@ -135,16 +135,25 @@ export const LEDGER_TABLE: TableMeta = {
     { key: 'dur', label: '존속기간', kind: 'center', width: 210 },
     { key: 'amt', label: '출자약정총액(원)', kind: 'number' },   // 라벨에 단위가 박혀 있고 단위 토글이 없다 — amount 면 엑셀 헤더가 '(원) (원)' 이 된다
     { key: 'gp', label: '업무집행조합원명', kind: 'text', width: 170 },
-    /* 원문 행 버튼 3개(수정·조합원관리·전문인력관리) — 값이 없는 조작 칸이라 엑셀에서 뺀다 */
-    { key: 'mgmt', label: '관리', kind: 'center', width: 300, noExport: true },
-    { key: 'active', label: '활성상태', kind: 'center', width: 120 },
+    /* 원문 `관리` 칸(행 버튼 3개)·활성상태 스위치는 옮기지 않는다 — 수정·조합원관리·전문인력관리·활성화/비활성화는
+       체크박스 선택 → 선택 바(2026-09-23 관리형 규약). 활성상태는 표시 전용 배지 */
+    { key: 'active', label: '활성상태', kind: 'badge', tones: { 활성: 'success', 비활성: 'muted' }, width: 120 },
   ],
   rows: [
-    { id: 'lg-1', no: 1, regno: '2011-10', nm: '유니 수산식품 투자조합 1호', dur: '2011-12-26 ~ 2018-12-25', amt: 16000000000, gp: '(주)유니창업투자', mgmt: null, active: '활성' },
-    { id: 'lg-2', no: 2, regno: '2012-05', nm: '농식품 벤처투자조합 2호', dur: '2012-06-01 ~ 2019-05-31', amt: 20000000000, gp: '(주)케이벤처파트너스', mgmt: null, active: '활성' },
-    { id: 'lg-3', no: 3, regno: '2015-03', nm: '수산식품 성장투자조합', dur: '2015-04-01 ~ 2023-03-31', amt: 12000000000, gp: '한국투자파트너스', mgmt: null, active: '비활성' },
+    { id: 'lg-1', no: 1, regno: '2011-10', nm: '유니 수산식품 투자조합 1호', dur: '2011-12-26 ~ 2018-12-25', amt: 16000000000, gp: '(주)유니창업투자', active: '활성' },
+    { id: 'lg-2', no: 2, regno: '2012-05', nm: '농식품 벤처투자조합 2호', dur: '2012-06-01 ~ 2019-05-31', amt: 20000000000, gp: '(주)케이벤처파트너스', active: '활성' },
+    { id: 'lg-3', no: 3, regno: '2015-03', nm: '수산식품 성장투자조합', dur: '2015-04-01 ~ 2023-03-31', amt: 12000000000, gp: '한국투자파트너스', active: '비활성' },
   ],
 };
+/** 폼 값 → 목록 행 조각(등록번호·명칭·존속기간·출자약정총액·업무집행조합원명) */
+export function ledgerPatch(v: Record<string, string>): Partial<Row> {
+  const n = Number(v.amt.replace(/,/g, ''));
+  return {
+    regno: v.regno.trim(), nm: v.nm.trim(), dur: v.dur1 || v.dur2 ? `${v.dur1} ~ ${v.dur2}` : null,
+    amt: v.amt.trim() && Number.isFinite(n) ? n : null, gp: v.gpname.trim() || null,
+  };
+}
+
 /** 원문 비활성원부 라디오(기본 '제외') */
 export const INACTIVE_OPTIONS = ['제외', '포함'] as const;
 /** 검색조건 적용 — 명칭 부분일치 · 비활성원부 '제외' 면 활성상태 '비활성' 행을 숨긴다 */
@@ -157,11 +166,6 @@ export function ledgerRows(rows: readonly Row[], name: string, inactive: string)
 export function ledgerShown(rows: readonly Row[], name: string, inactive: string, applied: boolean): Row[] {
   return applied ? ledgerRows(rows, name, inactive) : [...rows];
 }
-/** 원문 업로드 버튼 옆 검토필요 마커(문구 그대로) */
-export const LEDGER_UPLOAD_NOTE = {
-  rec: '업로드 팝업 항목(드래그앤드롭·파일선택·파일목록·XLSX/CSV 최대 20MB) 구성 확인 필요',
-  dat: "엑셀엔 '등록원부업로드' 버튼 1줄만 존재하고 팝업 내부 항목을 정의한 행이 없음 — 팝업 UI는 임의 구성",
-} as const;
 
 /* ═══════════════ 등록원부관리 — 팝업 원문 ═══════════════ */
 /** 팝업 A(입력/수정) 이력 섹션 6개 — 원문 histSec(key, 제목, 입력칸, 이력 그리드 헤더). 수정 모드 기본값·기존 이력은 원문 리터럴 */

@@ -8,7 +8,7 @@
                            → 계정구분 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter).
                              검색어는 OFF(목업에 없음). 항목 순서는 목업 그대로.
        ⚠ 담당자는 목업이 `data-dat="원천 데이터에 옵션·CDTP 없음 — 실 담당자 목록 미확인"`으로 못 박아
-         옵션을 지어내지 않는다(options=[] + ⚠검토필요 마커, noop).
+         옵션을 지어내지 않는다(options=[], noop).
        ⚠ 기준년월은 행에 기준년월 필드가 없어 **noop**(상태만, `· 데이터 연동 후 적용` 캡션).
          초기값은 ''이다 — 목업의 `value="2026-05"`는 데모 표시값이라 필터 기본값으로 승격하지 않는다.
    - 목록바(단위 전환)     → 툴바 우측 `단위` 캡션 + SegTabs(원/백만원/억원, **기본 원** = 목업 기본값).
@@ -19,18 +19,14 @@
                              나머지 텍스트/일시/배지 칸은 rowPinned 분기로 비운다('-').
    - 엑셀                  → SheetJS. 2단 헤더 병합·리프 키는 `flattenForExcel(columnDefs, unit)`로 columnDefs에서
                              자동 산출하고, 금액은 **선택 단위로 환산한 숫자 셀**(t:'n' + 단위별 z 서식)로 쓴다.
-                             마스크 ON이면 숫자 0·텍스트 ''(화면 밖 출력은 valueFormatter를 안 거침).
    - KPI 배지 행 · 카드뷰 · 명세 팝업 · 행 선택 · 등록 → **없음**(목업에 없는 조회 전용 화면).
-   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **이식한다**(2026-09-12 사용자 지시) — 목업 원문 1건(담당자)을 상세필터 라벨 옆에 그대로 싣는다.
-   공용 `review_marker.tsx`, 규약은 apfs-grid 스킬. */
+   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유) — 없으면 합계행이 안 보인다
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마·포매터 SSOT
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
@@ -41,8 +37,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 
 const { Button, IconBtn, StatusBadge, FilterChip, SegTabs } = UI;
 
@@ -106,12 +100,12 @@ const unitText = (won: number, unit: Unit): string =>
 /* 엑셀 숫자서식 — 화면 소수 자릿수와 일치(정수 판정이 아니라 **단위**가 기준) */
 const Z_BY_UNIT: Record<Unit, string> = { 원: '#,##0', 백만원: '#,##0.0', 억원: '#,##0.00' };
 
-/* 금액 셀 포매터 — grid context.unit로 환산 후 마스킹(numFmt 동형, 단위만 반영).
+/* 금액 셀 포매터 — grid context.unit로 환산(numFmt 동형, 단위만 반영).
    단위가 바뀌면 `refreshCells({force:true})`로 재적용한다(본문 + pinned 합계행). */
 const moneyFmt = (p: ValueFormatterParams): string => {
   if (p.value == null) return '-';
   const unit = (p.context as { unit?: Unit } | undefined)?.unit ?? DEFAULT_UNIT;
-  return mn(unitText(p.value as number, unit));
+  return String(unitText(p.value as number, unit));
 };
 
 /* ──────────────────────────────
@@ -138,12 +132,12 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof CashForecastRow, header: string, width: number, center?: boolean): ColDef<CashForecastRow> => ({
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <MT>{p.value}</MT>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : <>{p.value}</>),
 });
-/* 일시 — 합계행은 '-'(목업 tfoot), 값 없음도 '-'. 숫자 문자열이라 mn() 마스킹 */
+/* 일시 — 합계행은 '-'(목업 tfoot), 값 없음도 '-'. */
 const date = (field: keyof CashForecastRow, header: string, width = 128): ColDef<CashForecastRow> => ({
   field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
-  valueFormatter: (p) => (p.node?.rowPinned ? '-' : p.value == null ? '-' : mn(p.value)),
+  valueFormatter: (p) => (p.node?.rowPinned ? '-' : p.value == null ? '-' : String(p.value)),
 });
 /* 금액 — 우측정렬 + 단위 반영 포매터. numStyle()은 셀마다 호출되는 함수(0=muted, 합계행 자동 bold) */
 const amt = (field: keyof CashForecastRow, header: string, width = 150): ColDef<CashForecastRow> => ({
@@ -223,12 +217,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 }
 
 /* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 */
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -246,10 +240,6 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
   );
 }
 
-/* 상세필터 ⚠검토필요 메모 — 목업 `S1_08_조합예상자금보고.html` 담당자 필드의 data-rec/data-dat 원문 그대로(1건).
-   설계 메모라 마스킹·엑셀 대상이 아니다. */
-const MGR_NOTE: ReviewNote = { rec: '담당자 코드/명 목록', dat: '원천 데이터에 옵션·CDTP 없음 — 실 담당자 목록 미확인' };
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -261,7 +251,6 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  const masked = useMask();
 
   /* 필터 — 계정구분은 툴바 칩(드로어 select와 state 공유), 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -303,15 +292,15 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 2단 헤더 병합 + 합계행 + 선택 단위 환산. 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 2단 헤더 병합 + 합계행 + 선택 단위 환산 ── */
   const exportExcel = () => {
     const { head1, head2, keys, merges } = flattenForExcel(columnDefs, unit);
     const src = [...filteredRows, pinnedBottom[0]];
     const body = src.map((r, i) => keys.map((k) => {
       const v = (r as any)[k];
-      if (k === 'no') return i === src.length - 1 ? '합계' : v;   // No는 행 번호(축)라 마스킹 대상 아님
-      if (MONEY.has(k)) return v == null ? '' : masked ? 0 : toUnit(v as number, unit);
-      return masked ? '' : (v ?? '');
+      if (k === 'no') return i === src.length - 1 ? '합계' : v;
+      if (MONEY.has(k)) return v == null ? '' : toUnit(v as number, unit);
+      return (v ?? '');
     }));
     const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body]);
     /* 금액 셀에 단위별 숫자서식 — null(빈 셀)은 건너뛴다 */
@@ -349,7 +338,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
             ['자펀드', fFund, () => setFFund('')],
           ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -364,7 +353,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -411,7 +400,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             {/* 계정구분은 툴바 칩과 같은 state를 공유한다(한 필터·두 진입점) */}
             <DrawerField label="계정구분"><DrawerSelect value={fAcct} onChange={(v) => setFAcct(v as '' | Acct)} options={ACCTS} /></DrawerField>
-            <DrawerField label="담당자" noop note={MGR_NOTE}><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
+            <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
             {/* 기준년월 = PeriodPicker month('YYYY-MM'). 트리거가 w-full이라 fit-content 래퍼 필수(apfs-datepicker 폭 규칙) */}
             <DrawerField label="기준년월" plain noop>
               <div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}>

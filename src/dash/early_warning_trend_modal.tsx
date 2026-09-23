@@ -26,8 +26,6 @@
        [조회]를 toast-only 재렌더로 되돌리면 된다(≈5줄).
    - 데이터는 목업 `TREND_FUND`/`TREND_MGR` 원문 그대로이고 `total`은 세 값의 합(목업 `trendTotals`)이다.
      실데이터 연동 대상 — 값을 창작하지 않았다.
-   - 목업 팝업의 ⚠검토필요 마커는 `class="review"` 출현 0회(설계메모: "팝업 내 검토필요 마커도 함께 해소")라
-     이식 대상이 없다.
    - 오버레이 애니메이션은 공용 `dialog.tsx`(tailwindcss-animate)를 그대로 쓴다 — Radix 오버레이를
      Motion `AnimatePresence`로 감싸면 exit가 발화하지 않는다(프로젝트 사고 이력). */
 import React from 'react';

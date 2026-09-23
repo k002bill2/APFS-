@@ -25,17 +25,13 @@
          더블클릭도 함께 뺀 이유: 링크가 진입점이면 운용사 링크를 두 번 눌렀을 때 행 더블클릭이 보고서를
          띄워 엉뚱한 팝업으로 바뀐다. 셀 링크는 **조회 전용**이며 단계 전이는 여전히 툴바에만 있다.
    - KPI 배지 행                → 미포함(2026-09-12 HITL 결정). 금액 개념이 없어 건수 지표뿐이었다.
-   - 엑셀                       → SheetJS(단일 헤더, 마스크 시 실값 비노출)
-   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **이식한다**(2026-09-12 사용자 지시) — 원문 미정의 지점을 화면에서 바로 보여주는
-     설계 메모라 스캐폴딩이 아니다. 목업 원문 5건 전부 옮겼다: 검색 3건(심사담당자·리스크담당자·구분) +
-     확인 컬럼 2건(심사담당·리스크담당). 공용 `review_marker.tsx`, 규약은 apfs-grid 스킬. */
+   - 엑셀                       → SheetJS(단일 헤더)
+   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, FIT_GRID_WIDTH, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -47,8 +43,6 @@ import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker, reviewInnerHeader } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { OccasionalReportModal } from './occasional_report_modal';
 import { GpSpecModal } from './gp_spec_modal';
 import { SubFundSpecModal } from './subfund_spec_modal';
@@ -139,52 +133,29 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof OccReportRow, header: string, width: number, center?: boolean): ColDef<OccReportRow> => ({
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => <MT>{p.value}</MT>,
+  cellRenderer: (p: any) => <>{p.value}</>,
 });
 /* maxWidth = width — `fitGridWidth`가 남는 폭을 이 컬럼에 주지 못하게 막아, 잉여가 제목으로만 흘러가게 한다 */
 const date = (field: keyof OccReportRow, header: string, width = 128): ColDef<OccReportRow> => ({
   field, headerName: header, width, maxWidth: width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
-  valueFormatter: (p) => mn(p.value),
-});
-/* ⚠검토필요 메모 — 목업 `S1_04_수시보고.html`의 `data-rec`/`data-dat` 원문 그대로(5건).
-   확인 컬럼 2건은 담당 명칭만 다르다(심사담당 / 리스크담당) — 원문이 그렇게 갈라져 있으므로 합치지 않는다.
-   설계 메모라 마스킹·엑셀 대상이 아니다. */
-const CONFIRM_NOTE = (role: Role): ReviewNote => ({
-  rec: '확인 후 확인자명만 표시(취소 불가)',
-  dat: `확인자명이 확인버튼을 누른 로그인 사용자인지, 별도 지정된 ${ROLE_LABEL[role]}인지 원문 미정의(추론)`,
+  valueFormatter: (p) => String(p.value),
 });
 /* 모듈 스코프에 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid가 헤더를 통째로 remount한다 */
-const CONFIRM_HEADER: Record<Role, ReturnType<typeof reviewInnerHeader>> = {
-  js: reviewInnerHeader(CONFIRM_NOTE('js')),
-  rs: reviewInnerHeader(CONFIRM_NOTE('rs')),
-};
 /* 검색(상세필터) 메모 3건 — 원문 라벨: 심사담당자 · 리스크담당자 · 구분 */
-const FILTER_NOTES: Record<'js' | 'rs' | 'kind', ReviewNote> = {
-  js:   { rec: '심사담당자 목록(공통코드/사용자)', dat: '실 담당자 옵션값 미확인 — 없는 값 생성 안 함' },
-  rs:   { rec: '리스크담당자 목록(공통코드/사용자)', dat: '실 담당자 옵션값 미확인 — 없는 값 생성 안 함' },
-  kind: { rec: '보고구분 등 (공통코드)', dat: '실 옵션값 미확인 — 없는 값 생성 안 함' },
-};
 
 /* 확인 컬럼 — 미확인이면 셀 안 [확인] 버튼, 확인되면 확인자명 배지(목업 S1_04 `cell()` 그대로).
    2026-09-12 사용자 지시로 툴바 컨텍스트 액션을 대체한다 — 행 선택(체크박스)이 없어졌으므로
-   전이를 실을 곳이 셀뿐이다(apfs-stage-workflow 규약 1의 이 화면 한정 예외).
-   확인자명은 인명 데이터라 <MT> 마스킹, '확인' 라벨은 액션이라 비마스킹. */
+   전이를 실을 곳이 셀뿐이다(apfs-stage-workflow 규약 1의 이 화면 한정 예외). */
 const confirmCol = (field: 'jsBy' | 'rsBy', header: string, role: Role,
                     onConfirm: (role: Role, id: string) => void): ColDef<OccReportRow> => ({
   field, headerName: header, width: 146, maxWidth: 146, cellStyle: flexMid, sortable: true,
-  headerComponentParams: { innerHeaderComponent: CONFIRM_HEADER[role] },
-  /* Tab을 AG Grid 헤더 내비게이션에서 빼 브라우저 기본 순서로 넘긴다 — 안 하면 헤더 안의
-     ⚠마커 버튼에 키보드로 도달할 수 없다(AG Grid가 Tab을 가로채 다음 헤더 셀로 이동, 2026-09-12 실측). */
-  suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab',
   cellRenderer: (p: any) => (p.value
-    ? <StatusBadge tone="success" label={<MT>{p.value}</MT>} size="lg" dot={false} />
+    ? <StatusBadge tone="success" label={<>{p.value}</>} size="lg" dot={false} />
     : <Button variant="outline" size="sm" onClick={() => onConfirm(role, p.data.id)}>확인</Button>),
 });
 
 /* 셀 내 링크 — 클릭 시 해당 명세/보고서 팝업(목업 S1_04의 셀 링크 동작 그대로).
    2026-09-12 사용자 지시로 툴바 조회 버튼 3종을 대체한다.
-   ⚠ `title`엔 동작 힌트만 담는다 — 값을 넣으면 마스크 ON일 때 툴팁으로 실데이터가 샌다
-     (마스크 경계는 툴팁·엑셀까지). 같은 이유로 제목 컬럼의 `tooltipField`도 두지 않는다.
    ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다.
    외관은 목업 `.linktxt` 그대로: primary 색 + font-weight 600, **평상시 밑줄 없음 / hover에만 밑줄**
    (2026-09-12 사용자 지시 "밑줄 삭제" = 목업 원본 `text-decoration:none`과 일치). */
@@ -194,7 +165,7 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
       type="button" title={hint} onClick={onClick}
       className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
       style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      <MT>{value}</MT>
+      {value}
     </button>
   );
 }
@@ -238,12 +209,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: React.ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -280,7 +251,6 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
   ), []);
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  const masked = useMask();
 
   /* 필터 — 확인상태는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -346,13 +316,13 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음). 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
       const v = c.get(r);
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : v;
+      if (typeof v === 'number') return v;
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '제목' ? 42 : c.header === '자펀드' ? 28 : 14 }));
@@ -385,7 +355,7 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
             ['종료일', fTo, () => setFTo('')],
           ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -397,7 +367,7 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -442,9 +412,9 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            <DrawerField label="심사담당자" noop note={FILTER_NOTES.js}><DrawerSelect value={fJs} onChange={setFJs} options={jsNames} /></DrawerField>
-            <DrawerField label="리스크담당자" noop note={FILTER_NOTES.rs}><DrawerSelect value={fRs} onChange={setFRs} options={rsNames} /></DrawerField>
-            <DrawerField label="구분" noop note={FILTER_NOTES.kind}><DrawerSelect value={fKind} onChange={setFKind} options={[]} /></DrawerField>
+            <DrawerField label="심사담당자" noop><DrawerSelect value={fJs} onChange={setFJs} options={jsNames} /></DrawerField>
+            <DrawerField label="리스크담당자" noop><DrawerSelect value={fRs} onChange={setFRs} options={rsNames} /></DrawerField>
+            <DrawerField label="구분" noop><DrawerSelect value={fKind} onChange={setFKind} options={[]} /></DrawerField>
             <DrawerField label="확인상태"><DrawerSelect value={fStage} onChange={(v) => setFStage(v as '' | Stage)} options={['미확인', '일부확인', '확인완료']} /></DrawerField>
             <DrawerField label="기간 시작 (보고일자)" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="조회기간 시작일" /></div></DrawerField>
             <DrawerField label="기간 종료 (보고일자)" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="조회기간 종료일" /></div></DrawerField>
@@ -470,7 +440,7 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
             {/* 대상 요약 4행 — 목업 원본과 동일(상황 발생일자·운용사·자펀드·제목).
                 제목을 설명 문장에 묻지 않는다(2026-09-12 사용자 지적) — 목록의 한 행이다. */}
             <dl className="m-0 grid gap-y-1.5" style={{ gridTemplateColumns: 'max-content minmax(0,1fr)', columnGap: 14, fontSize: 13.5 }}>
-              {([['상황 발생일자', mn(confirmTarget.occ)], ['운용사', <MT key="gp">{confirmTarget.gp}</MT>], ['자펀드', <MT key="fn">{confirmTarget.fn}</MT>], ['제목', <MT key="ti">{confirmTarget.title}</MT>]] as [string, React.ReactNode][]).map(([k, v]) => (
+              {([['상황 발생일자', String(confirmTarget.occ)], ['운용사', <React.Fragment key="gp">{confirmTarget.gp}</React.Fragment>], ['자펀드', <React.Fragment key="fn">{confirmTarget.fn}</React.Fragment>], ['제목', <React.Fragment key="ti">{confirmTarget.title}</React.Fragment>]] as [string, React.ReactNode][]).map(([k, v]) => (
                 <div key={k} className="contents">
                   <dt className="m-0 font-semibold text-muted-foreground">{k}</dt>
                   <dd className="m-0 min-w-0" style={{ overflowWrap: 'anywhere' }}>{v}</dd>

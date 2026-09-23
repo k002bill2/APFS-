@@ -13,8 +13,7 @@
      ⚠ 목업 설계메모는 "단일 클릭"이라 적었으나 **앱 규약(더블클릭 진입)으로 뒤집었다**(2026-09-21 사용자 결정).
    - KPI 배지 행 없음 · 행 선택 없음 · 합계행 없음 · 페이지네이션 없음(그리드당 1행, 비율·등급이라 합계 무의미).
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·하단 설계메모/[확인 필요] 블록은 프로토타입 스캐폴딩이라
-   이식하지 않는다(셸이 소유). ⚠검토필요 마커는 **구현하지 않는다**(2026-09-21 사용자 지시 —
-   "이 i 들은 구현하지마"). 원문 미정의 사항은 재무정보 팝업 파일의 주석에 남겼다.
+   이식하지 않는다(셸이 소유). 원문 미정의 사항은 재무정보 팝업 파일의 주석에 남겼다.
 
    한계·가정:
    - 행 데이터는 목업 실측 4행(구분당 1행)이 전부다 — 없는 운용사를 창작하지 않는다.
@@ -28,7 +27,6 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, numStyle } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 드로어 컨트롤 34px SSOT — 페이지 로컬 복제 금지
@@ -138,14 +136,14 @@ const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 
 /* 비율·점수 포매터 — 공유 `numFmt`(=fmt)는 비정수를 **소수 1자리로 반올림**해 목업 값 166.53·124.82 가
    166.5·124.8 로 바뀐다. 출처 값의 자릿수를 보존해야 하므로 이 화면은 2자리 상한 포매터를 쓴다.
-   마스킹(mn)·null 가드는 공유 포매터와 동일 계약. */
+   null 가드는 공유 포매터와 동일 계약. */
 const ratioFmt = (p: ValueFormatterParams): string =>
-  p.value == null ? '-' : mn(Number(p.value).toLocaleString(undefined, { maximumFractionDigits: 2 }));
+  p.value == null ? '-' : String(Number(p.value).toLocaleString(undefined, { maximumFractionDigits: 2 }));
 /* 건수 포매터 — 정수 콤마. null 은 '-' */
 const countFmt = (p: ValueFormatterParams): string =>
-  p.value == null ? '-' : mn(Number(p.value).toLocaleString());
+  p.value == null ? '-' : String(Number(p.value).toLocaleString());
 
-/* 등급 셀 — 상태 표식이라 마스킹하지 않는다("축은 두고 데이터는 가린다"). 값이 없으면 빈 셀. */
+/* 등급 셀 — 상태 표식. 값이 없으면 빈 셀. */
 function GradeCell({ v }: { v: Grade | null }) {
   if (!v) return null;
   return <StatusBadge tone={GRADE_TONE[v]} label={v} size="lg" dot={false} />;
@@ -162,15 +160,15 @@ const gradeCol = (field: keyof GpEwRow, header = '등급'): ColDef<GpEwRow> => (
   field, headerName: header, width: 84, minWidth: 84, cellStyle: flexMid,
   cellRenderer: (p: any) => <GradeCell v={(p.value ?? null) as Grade | null} />,
 });
-/* 텍스트 리프 — 행 데이터라 <MT> 마스킹(섹션 제목은 축이라 비마스킹) */
+/* 텍스트 리프 */
 const txtCol = (field: keyof GpEwRow, header: string, width: number): ColDef<GpEwRow> => ({
   field, headerName: header, width, minWidth: width, cellStyle: flexCenter,
-  cellRenderer: (p: any) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span>,
+  cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span>,
 });
 
 function makeColumnDefs(label1: string, label2: string): (ColDef<GpEwRow> | ColGroupDef<GpEwRow>)[] {
   return [
-    /* No 는 순번(축)이라 마스킹하지 않는다 — 행에 저장된 값이라 정렬해도 번호가 다시 매겨지지 않는다 */
+    /* No 는 순번 — 행에 저장된 값이라 정렬해도 번호가 다시 매겨지지 않는다 */
     { field: 'no', headerName: 'No', width: 64, minWidth: 64, pinned: 'left', type: 'rightAligned',
       cellStyle: { textAlign: 'right', fontVariantNumeric: 'tabular-nums' } as CellStyle,
       valueFormatter: (p) => (p.value == null ? '' : String(p.value)) },
@@ -259,13 +257,13 @@ function DrawerSelect({ value, onChange, options, ariaLabel }: { value: string; 
   );
 }
 
-/* 적용 필터 칩 — 값만 표시(항목명 접두사 없음) + × 제거. 값은 행 데이터라 <MT> 마스킹.
+/* 적용 필터 칩 — 값만 표시(항목명 접두사 없음) + × 제거.
    기하는 custody_confirm_manage 의 기준일자 칩과 동일. */
 function AppliedChip({ label, value, onClear }: { label: string; value: string; onClear: () => void }) {
   return (
     <span className="inline-flex items-center gap-1.5 font-semibold text-primary"
       style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-      <MT>{value}</MT>
+      {value}
       <button type="button" onClick={onClear} aria-label={`${label} 필터 제거`}
         className="inline-flex items-center justify-center border-0 cursor-pointer"
         style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
@@ -293,7 +291,6 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
   /* 그리드 4개의 API — 구분(kind)을 키로 보관하고 필터 변경 시 전부 onFilterChanged() 한다 */
   const apisRef = useRef<Partial<Record<GpKind, GridApi<GpEwRow>>>>({});
   const [modalRow, setModalRow] = useState<GpEwRow | null>(null);
-  const masked = useMask();
 
   /* 필터 — 모펀드·운용사는 행 필터, 기준년월은 조회 기준 컨텍스트(행을 거르지 않음) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -339,8 +336,7 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
   const refresh = () => { clearFilters(); toast.success('새로고침했습니다'); };
 
   /* ── Excel(.xlsx) — **시트 4장**(시트명 = 운용사구분). 2단 헤더 병합·리프 키는 columnDefs 에서 자동 산출.
-     본문은 **화면과 같은 필터 결과**(visible)를 쓴다 — 화면=엑셀 불변식(apfs-spec-popup 규약 6).
-     마스크 ON이면 숫자 0 · 텍스트 ''(실값 비노출). ── */
+     본문은 **화면과 같은 필터 결과**(visible)를 쓴다 — 화면=엑셀 불변식(apfs-spec-popup 규약 6). ── */
   const exportExcel = () => {
     const wb = XLSX.utils.book_new();
     SECTIONS.forEach((s) => {
@@ -349,8 +345,8 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
       const body = visible[s.kind].map((r) => keys.map((k) => {
         const v = (r as any)[k];
         if (v == null) return '';
-        if (typeof v === 'number') return masked ? 0 : v;
-        return masked ? '' : String(v);
+        if (typeof v === 'number') return v;
+        return String(v);
       }));
       const ws = XLSX.utils.aoa_to_sheet([...heads, ...body]);
       /* 숫자 리프에 화면과 같은 숫자서식(정수=콤마 / 소수=2자리 상한) */
@@ -399,15 +395,15 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
       /* 페이저 없음(그리드당 1행) → footerCenter 미전달, FooterActions 에 onToggleAll 미전달(버튼 3개) */
       /* 기준년월은 선택했을 때만 앞에 붙인다(미선택이면 '총 N건 · …'로 시작) */
       footerLeft={(
-        <span>{(fYm ? `기준년월 ${mn(fYm)} · ` : '') + '총 ' + mn(String(totalShown)) + '건 · '
-          + SECTIONS.map((s) => `${s.kind} ${mn(String(visible[s.kind].length))}`).join(' · ')}</span>
+        <span>{(fYm ? `기준년월 ${String(fYm)} · ` : '') + '총 ' + String(totalShown) + '건 · '
+          + SECTIONS.map((s) => `${s.kind} ${String(visible[s.kind].length)}`).join(' · ')}</span>
       )}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div style={{ padding: '4px 2px 8px' }}>
         {SECTIONS.map((s) => (
           <section key={s.kind} className="mb-8 last:mb-0" aria-label={`${s.kind} 조기경보`}>
-            {/* preflight:false 라 h3/p 에 UA 기본 마진이 살아 있다 → margin 명시. 섹션 제목·캡션은 축이라 비마스킹 */}
+            {/* preflight:false 라 h3/p 에 UA 기본 마진이 살아 있다 → margin 명시 */}
             <h3 className="flex items-center gap-2 text-[13.5px] font-bold text-foreground" style={{ margin: '0 0 3px' }}>
               <span className="inline-flex items-center justify-center tabular"
                 style={{ width: 20, height: 20, borderRadius: 6, background: 'var(--muted)', color: 'var(--muted-foreground)', fontSize: 11.5, fontWeight: 800 }}>{s.no}</span>

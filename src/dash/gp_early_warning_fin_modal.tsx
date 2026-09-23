@@ -9,7 +9,6 @@
    - 섹션 ③정량지표                  → kv 그리드(금액 아님 — 원문 문자열 그대로, 단위 변환 대상 아님)
    - 섹션 ④기준년월별 추이           → 가로 스크롤 표 7열 + 하단 `단위 : {선택단위}` 캡션
    - 섹션 ⑤지표등급 변경정보         → 2단 헤더 표(변경일자·정량지표 rowSpan / 등급 colSpan 2 / 변경사유 rowSpan), 본문 빈 상태
-   - ⚠검토필요 마커 3건              → 목업 `data-rec`/`data-dat` 원문 그대로 전수 이식(단위바·정량지표·등급)
 
    ⚠ 팝업 값은 **구조 시연용 표본**이다 — 목업이 원문에서 확인된 유일한 표본((유)동문파트너스)을 모든 행에
      재사용한다고 명시했다. 행마다 달라지는 실데이터가 아니며, 신규 데이터를 창작하지 않는다.
@@ -18,7 +17,6 @@
      항목·동작(엑셀 다운로드 / 인쇄 / 닫기)은 목업과 같다. */
 import React, { useState } from 'react';
 import { UI } from './components';
-import { mn, MT, useMask } from './mask';
 import { fmt } from './aggrid_theme';   // 숫자 표기 SSOT(정수=콤마) — 자체 포매터 재구현 금지
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
 import { toast } from './ui/sonner';
@@ -36,14 +34,12 @@ const UNIT_DIGITS: Record<Unit, number> = { 원: 0, 백만원: 1, 억원: 2 };
    null/1e6 은 0 이라 백만원·억원에서 조용히 `0` 으로 찍히고, 원 단위에선 `fmt(null)` 이 던진다. */
 function money(won: number | null, unit: Unit): string {
   if (won == null) return '-';
-  if (unit === '원') return mn(fmt(won));
+  if (unit === '원') return String(fmt(won));
   const d = UNIT_DIGITS[unit];
-  return mn((won / UNIT_DIV[unit]).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d }));
+  return String((won / UNIT_DIV[unit]).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d }));
 }
 
-/* 목업 `.review[data-rec][data-dat]` ⚠검토필요 마커 3건(금액 단위·정량지표·등급)은
-   **이식하지 않는다** — 2026-09-21 사용자 지시("이 i 들은 구현하지마").
-   원문 미정의 사항 자체는 남아 있다: 표시금액 base=원 가정 · 정량지표 단위 미표기 ·
+/* 원문 미정의 사항(금액 단위·정량지표·등급): 표시금액 base=원 가정 · 정량지표 단위 미표기 ·
    등급코드 CDTP 미확인. 화면에 띄우지 않을 뿐이라 실개발 전 확인은 여전히 필요하다. */
 
 /* ── 표본 데이터 — 목업 `FIN`/`PROFIT`/`RATIO`/`TREND` 값 그대로(base = 원) ── */
@@ -83,7 +79,6 @@ const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)
 const DT_STYLE: React.CSSProperties = { padding: '8px 12px', fontSize: 13 };
 const negStyle = (neg: boolean): React.CSSProperties | undefined => (neg ? { color: 'var(--danger-text)' } : undefined);
 
-/* kv 그리드 — 라벨(dt)은 비마스킹(축), 값(dd)은 `mn()`/`<MT>` 마스킹. 단위 낱말은 축이라 비마스킹. */
 function KvGrid({ items, unit }: { items: [string, number][]; unit: Unit }) {
   return (
     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border border border-border overflow-hidden m-0" style={{ borderRadius: 8 }}>
@@ -108,7 +103,7 @@ function RatioGrid({ items }: { items: [string, string][] }) {
         <div key={l} className="grid bg-card" style={KV_COLS}>
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{l}</dt>
           <dd className="m-0 flex items-center justify-end min-w-0 tabular font-semibold"
-            style={{ padding: '8px 12px', fontSize: 14, ...negStyle(v.startsWith('-')) }}>{mn(v)}</dd>
+            style={{ padding: '8px 12px', fontSize: 14, ...negStyle(v.startsWith('-')) }}>{String(v)}</dd>
         </div>
       ))}
     </dl>
@@ -132,8 +127,7 @@ function TrendTable({ unit }: { unit: Unit }) {
           <tbody>
             {TREND.map((t) => (
               <tr key={t.ym}>
-                {/* 기준년월은 축(행 식별자)이지만 날짜 데이터라 mn() 경유 — 헤더는 비마스킹 */}
-                <td className={`${TD} text-center`} style={CELL}>{mn(t.ym)}</td>
+                <td className={`${TD} text-center`} style={CELL}>{String(t.ym)}</td>
                 {t.v.map((v, i) => (
                   <td key={TREND_HEAD[i + 1]} className={`${TD} text-right tabular`} style={{ ...CELL, ...negStyle(v < 0) }}>{money(v, unit)}</td>
                 ))}
@@ -183,15 +177,14 @@ function GradeChangeTable() {
 ────────────────────────────── */
 export function GpEarlyWarningFinModal({ gp, kind, ym, onClose }: { gp: string; kind: string; ym: string; onClose: () => void }) {
   const [unit, setUnit] = useState<Unit>('원');   // 목업 기본값 = 저장 base
-  const masked = useMask();
   const dlgRef = React.useRef<DialogHandle>(null);
 
   /* 엑셀 — 화면이 그리는 소스 **전부**를 직렬화한다(재무정보·손익정보·정량지표·추이·등급변경).
      한쪽만 넣으면 "화면엔 보이는데 엑셀엔 없는" 누락이 난다(apfs-spec-popup 규약 6).
-     금액은 단위 무관 **원 단위 원값**(골드 subfund_spec_modal 동형). 마스크 ON이면 숫자 0 · 텍스트 ''. */
+     금액은 단위 무관 **원 단위 원값**(골드 subfund_spec_modal 동형). */
   const excel = () => {
-    const num = (v: number) => (masked ? 0 : v);
-    const txt = (v: string) => (masked ? '' : v);
+    const num = (v: number) => (v);
+    const txt = (v: string) => (v);
     const rows: (string | number)[][] = [
       ['운용사명', txt(gp)], ['운용사구분', txt(kind)],
       ...(ym ? [['기준년월', txt(ym)]] : []),          // 기준년월 미선택이면 행 자체를 뺀다(형제 팝업과 동형)
@@ -221,14 +214,13 @@ export function GpEarlyWarningFinModal({ gp, kind, ym, onClose }: { gp: string; 
             <DialogTitle className="shrink-0">운용사별 조기경보 재무정보</DialogTitle>
             <DialogDescription className="text-caption truncate min-w-0">
               {/* 기준년월은 미선택('')일 수 있다 — 그때는 부제에서 통째로 뺀다("기준년월 " 만 남으면 고장처럼 보인다) */}
-              {/* 운용사구분도 행 데이터라 마스킹한다 — 괄호는 축이라 마스킹 밖에 둔다(그리드 `txtCol('kind')` 와 동형) */}
-              운용사명 : <MT>{gp}</MT> (<MT>{kind}</MT>){ym ? <> · 기준년월 {mn(ym)}</> : null}
+              운용사명 : {gp} ({kind}){ym ? <> · 기준년월 {String(ym)}</> : null}
             </DialogDescription>
           </div>
         </DialogHeader>
 
         <div className="overflow-y-auto p-[46px]">
-          {/* 단위바 — 목업 `.unitbar`(라벨 + seg + ⚠마커) */}
+          {/* 단위바 — 목업 `.unitbar`(라벨 + seg) */}
           <div className="flex items-center justify-end gap-2 mb-3">
             <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>금액 단위</span>
             <SegTabs size="sm" value={unit} onChange={(v: string) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />

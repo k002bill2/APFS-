@@ -8,7 +8,7 @@
    - `.sec-h 거래내역` + `.acts` → `Section actions`에 `UnitSeg`(원/백만원/억원, 기본 원 — 목업 `dt-unit-seg` 동형)
    - `table.detgrid` 11열 + tfoot → 수제 표(TH/TD/CELL 헬퍼 복사) + 소계·합계 2행
    - `.modal-foot 닫기·엑셀`      → 푸터 `닫기`(outline) · `엑셀`(outline, download). 목업은 toast 목업이지만
-                                    우리는 실제 SheetJS 내보내기(관리 페이지 엑셀과 동일 규약, 마스크 게이트 포함)
+                                    우리는 실제 SheetJS 내보내기(관리 페이지 엑셀과 동일 규약)
    목업의 스크림·포커스 트랩·scroll lock은 Radix Dialog가 소유하므로 이식하지 않는다.
 
    한계·가정(결정 기록)
@@ -20,11 +20,9 @@
    - ⚠ 목업 tfoot 소계·합계의 **보유잔액이 0**이다(본문 마지막 행 100,000,000과 불일치). 합계 계산식 오류로
      보이지만 **출처 값을 그대로 둔다**(`custody_confirm_detail_modal.tsx` 선례 — 실데이터 연동 시 계산식 확인 항목).
    - 배분 관련 값은 목업이 전부 '-'(납입만 발생) — `null`로 두고 '-'(muted)로 표시한다.
-   - 엑셀은 **단위 토글과 무관하게 원 단위 숫자**로 직렬화한다(브리프 지시). 화면 단위는 표시 전용.
-   ⚠검토필요 마커 0건(목업 이 팝업엔 `data-rec`/`data-dat` 없음 — 이 화면의 1건은 수정 모달 식별번호 라벨). */
+   - 엑셀은 **단위 토글과 무관하게 원 단위 숫자**로 직렬화한다(브리프 지시). 화면 단위는 표시 전용. */
 import React, { useState } from 'react';
 import { UI } from './components';
-import { mn, MT, useMask } from './mask';
 import { fmt } from './aggrid_theme';   // 숫자 표기 SSOT(정수=콤마) — 자체 포매터 재구현 금지
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { toast } from './ui/sonner';
@@ -37,11 +35,11 @@ const { Button, StatusBadge, SegTabs } = UI;
 type Unit = '원' | '백만원' | '억원';
 const UNIT_DIV: Record<Unit, number> = { 원: 1, 백만원: 1e6, 억원: 1e8 };
 
-/* 금액 → 단위 환산 문자열(마스킹 포함). 억/백만은 소수 2자리까지. null='-' */
+/* 금액 → 단위 환산 문자열. 억/백만은 소수 2자리까지. null='-' */
 function money(won: number | null, unit: Unit): string {
   if (won == null) return '-';
   const v = won / UNIT_DIV[unit];
-  return mn(unit === '원' ? fmt(won) : v.toLocaleString(undefined, { maximumFractionDigits: 2 }));
+  return String(unit === '원' ? fmt(won) : v.toLocaleString(undefined, { maximumFractionDigits: 2 }));
 }
 
 /* ── 프리미티브(골드 복사 — 공유 export 아님) ── */
@@ -132,14 +130,14 @@ function KvGrid({ items, unit }: { items: KvItem[]; unit: Unit }) {
   );
 }
 
-/* kv 값 — 배지(계정구분·조합원구분)는 분류 표식이라 비마스킹("축은 두고 데이터는 가린다").
+/* kv 값 — 배지(계정구분·조합원구분)는 분류 표식.
    ⚠ 'LP'는 중립 톤이라 StatusBadge에 대응 tone이 없다 → 같은 기하(md)의 muted 칩을 직접 만든다. */
 function KvValue({ item }: { item: KvItem }) {
   if (item.badge === 'info') return <StatusBadge tone="info" label={item.v} size="md" dot={false} />;
   if (item.badge === 'muted') {
     return <span className="inline-flex items-center rounded-[7px] px-[9px] py-[3px] text-xs font-bold bg-muted text-muted-foreground">{item.v}</span>;
   }
-  return <MT>{item.v}</MT>;
+  return <>{item.v}</>;
 }
 
 /* ── 거래내역 표 ── */
@@ -157,10 +155,10 @@ function TxTable({ unit }: { unit: Unit }) {
         <tbody>
           {TX_ROWS.map((r) => (
             <tr key={r.sub}>
-              {/* 거래구분은 분류 배지(목업 `tag b`) — 비마스킹 */}
+              {/* 거래구분은 분류 배지(목업 `tag b`) */}
               <td className={`${TD} text-center`} style={CELL}><StatusBadge tone="info" label={r.kind} size="md" dot={false} /></td>
-              <td className={`${TD} text-center`} style={CELL}><MT>{r.sub}</MT></td>
-              <td className={`${TD} text-center tabular`} style={CELL}>{mn(r.date)}</td>
+              <td className={`${TD} text-center`} style={CELL}>{r.sub}</td>
+              <td className={`${TD} text-center tabular`} style={CELL}>{String(r.date)}</td>
               {r.vals.map((v, i) => (
                 <td key={TX_HEAD[i + 3]} className={`${TD} tabular ${v == null ? 'text-center text-caption' : 'text-right'}`} style={CELL}>
                   {money(v, unit)}
@@ -193,21 +191,20 @@ function TxTable({ unit }: { unit: Unit }) {
 
 export function MemberInfoDetailModal({ row, onClose }: { row: MemberRow; onClose: () => void }) {
   const [unit, setUnit] = useState<Unit>('원');
-  const masked = useMask();
   const kv = buildKv(row);
 
   /* Excel(.xlsx) — kv 7행 + 빈 줄 + 거래내역 헤더/본문 2행/소계/합계.
      화면이 그리는 배열(kv·TX_ROWS·FOOT_ROWS) 그대로 직렬화한다(화면=엑셀 불변식).
-     숫자는 **원 단위 고정**(표시 단위와 무관, 파일 상단 '한계'). 마스크 ON이면 숫자 0·텍스트 ''. */
+     숫자는 **원 단위 고정**(표시 단위와 무관, 파일 상단 '한계'). */
   const excel = () => {
-    const num = (v: number | null) => (v == null ? (masked ? '' : '-') : masked ? 0 : v);
-    const txt = (v: string) => (masked ? '' : v);
+    const num = (v: number | null) => (v == null ? ('-') : v);
+    const txt = (v: string) => (v);
     const aoa: (string | number)[][] = [
-      ...kv.map((o) => [o.l, o.won != null ? (masked ? 0 : o.won) : txt(o.v ?? '')]),
+      ...kv.map((o) => [o.l, o.won != null ? (o.won) : txt(o.v ?? '')]),
       [],
       TX_HEAD,
       ...TX_ROWS.map((r) => [txt(r.kind), txt(r.sub), txt(r.date), ...r.vals.map(num)]),
-      ...FOOT_ROWS.map((f) => [f.l, '', '', ...f.vals.map((v) => (masked ? 0 : v))]),
+      ...FOOT_ROWS.map((f) => [f.l, '', '', ...f.vals.map((v) => (v))]),
     ];
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols'] = TX_HEAD.map((_, i) => ({ wch: i < 3 ? 16 : 18 }));
@@ -227,7 +224,7 @@ export function MemberInfoDetailModal({ row, onClose }: { row: MemberRow; onClos
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">조합원정보 상세조회</DialogTitle>
             {/* Radix Description은 <p> — preflight:false라 UA 기본 마진이 살아 있어 m-0을 명시한다(공용 dialog.tsx는 불변) */}
-            <DialogDescription className="m-0 text-caption truncate min-w-0"><MT>{row.name}</MT></DialogDescription>
+            <DialogDescription className="m-0 text-caption truncate min-w-0">{row.name}</DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">

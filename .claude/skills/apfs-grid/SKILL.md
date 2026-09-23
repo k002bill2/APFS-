@@ -35,7 +35,7 @@ APFS 대시보드의 리스트/그리드/매트릭스 페이지는 **테이블 �
 interface GridFrameProps {
   crumbs: string[];          // PageHeader 브레드크럼 (필수)
   title: string;             // 페이지 제목 (필수) — 카드헤더 <h3>로 렌더(cardTitle 미지정 시)
-  sub?: string;              // 카드헤더 타이틀 아래 캡션으로 렌더 (단위 범례 등). 비마스킹
+  sub?: string;              // 카드헤더 타이틀 아래 캡션으로 렌더 (단위 범례 등)
   headerActions?: ReactNode; // PageHeader 우측 액션. 내보내기는 푸터 FooterActions 가 담당하므로 여기엔 보통 '메인으로'만 → 아래 "관리형 리스트 툴바·타이틀 규약"
   cardTitle?: string;        // 카드헤더 타이틀 (미지정 시 title 재사용)
   kpis?: ReactNode;          // 카드헤더 우측 KPI 배지군 (KpiBadge 나열)
@@ -65,11 +65,10 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
    </div>
    ```
 2. **토큰만 사용.** 색/테두리/배경은 `var(--…)`·`color-mix`만. 하드코딩 hex 금지(다크 깨짐). 프레임 자체가 토큰 기반이라 라이트/다크 자동 양립.
-3. **마스킹.** `KpiBadge`는 라벨을 `<MT>`로 마스킹(generic_list verbatim) — 값은 호출자가 이미 `mn()` 처리해 넘긴다(단위 문자열은 비마스킹). 표 헤더·단위·탭·축(연도 등)·StatusBadge는 비마스킹("축은 두고 데이터는 가린다").
-4. **반응형.** 모든 슬롯 행에 `flexWrap` 내장. 호출자는 슬롯 내부 묶음에도 좁을 때 적층되도록 둘 것. 입력이 있으면 폰트 ≥16px(responsive-ui).
+3. **반응형.** 모든 슬롯 행에 `flexWrap` 내장. 호출자는 슬롯 내부 묶음에도 좁을 때 적층되도록 둘 것. 입력이 있으면 폰트 ≥16px(responsive-ui).
 
 ## KPI 배지 행 (옵션 — 생성 스킬 HITL 결정, 기본 미포함)
-카드헤더 우측 KPI 배지 행(`kpis` 슬롯)은 **옵션**이다(2026-09-11 규약 변경 — 이전 "기본 포함"에서 뒤집음). 페이지를 새로 생성할 때 [[apfs-capture-schema]]·[[apfs-manage-page]] SOP가 **HITL(`AskUserQuestion`)로 포함 여부를 먼저 묻고**, 사용자가 "포함"을 고른 경우에만 배지를 만든다. **기본값 = 미포함.** 포함 시 구성 = **전체 건수 + 도메인별 2지표**(3배지). 값은 호출자가 `mn()` 처리해 넘기고, 라벨은 `KpiBadge`가 `<MT>` 마스킹.
+카드헤더 우측 KPI 배지 행(`kpis` 슬롯)은 **옵션**이다(2026-09-11 규약 변경 — 이전 "기본 포함"에서 뒤집음). 페이지를 새로 생성할 때 [[apfs-capture-schema]]·[[apfs-manage-page]] SOP가 **HITL(`AskUserQuestion`)로 포함 여부를 먼저 묻고**, 사용자가 "포함"을 고른 경우에만 배지를 만든다. **기본값 = 미포함.** 포함 시 구성 = **전체 건수 + 도메인별 2지표**(3배지).
 - **typed 페이지**(subfund_manage 등): 포함이면 `kpis={<><KpiBadge …/>…</>}`로 값을 직접 계산해 나열, 미포함이면 `kpis`를 넘기지 않는다(`GridFrame`이 `{kpis && …}`라 영역째 사라짐).
 - **스키마 페이지**(GenericListPage/PageSchema):
   - 포함이면 `schema.countKpis`로 **선언만** 하면 자동 렌더되고 **필터 결과에 반응**한다(제네릭 금액 KPI를 대체).
@@ -90,10 +89,10 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   title="모태펀드 조성 및 출자현황"
   cardTitle="모태펀드 조성·출자 현황표"   // 매트릭스/집계형 예외: 문서 정식명칭을 카드 제목으로(리스트형은 메뉴 리프와 일치)
   headerActions={<><Button variant="outline" leadingIcon="chevron-left" onClick={()=>onNav('main')}>메인으로</Button><Button variant="primary" leadingIcon="download">내보내기</Button></>}
-  kpis={<><KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={mn(fmt(t)) + ' 억원'} /> …</>}  // ⚠ 옵션: HITL "포함" 선택 시에만 전달(미포함이면 kpis 생략) — "KPI 배지 행" 절 참조
+  kpis={<><KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={fmt(t) + ' 억원'} /> …</>}  // ⚠ 옵션: HITL "포함" 선택 시에만 전달(미포함이면 kpis 생략) — "KPI 배지 행" 절 참조
   toolbarLeft={<><Icon name="file" size={16} /><span>… 집계</span></>}
   toolbarRight={<IconBtn icon="refresh" label="새로고침" size={34} />}
-  footerLeft={<span>{'2010 ~ 2025년 · 총 ' + mn('16') + '개 연도'}</span>}>
+  footerLeft={<span>{'2010 ~ 2025년 · 총 16개 연도'}</span>}>
   <div className="overflow-x-auto"><table className="w-full border-collapse min-w-[880px]">…</table></div>
 </GridFrame>
 ```
@@ -104,7 +103,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - ⚠️ **`<h3>`에 `margin: 0`이 반드시 필요하다.** `tailwind.config.js`가 `corePlugins:{preflight:false}`라 브라우저 UA 기본 `h3{margin-block:1em}`이 살아 있고, `fontSize:20`이면 **위아래 20px씩 40px의 유령 마진**이 붙어 같은 패딩에도 행이 76px로 부푼다. `flex items-center`는 flex 아이템의 마진을 흡수하지 않으므로 정렬로는 해결되지 않는다. 정본: `<h3 className="font-bold" style={{ fontSize: 20, margin: 0, lineHeight: 1.4 }}>`.
   - 같은 함정이 `<p>`·`<ul>`·`<h1~h6>` 전반에 적용된다 — 이 저장소에서 시맨틱 태그를 새로 쓸 때는 `margin: 0`을 기본 반사로 붙인다(아래 `sub` 캡션이 `margin:'2px 0 0'`을 명시한 이유).
   - 툴바 행은 `padding: '6px 18px'`로 더 촘촘하다(의도된 위계 — 타이틀이 더 여유 있게). 타이틀 행만 바꿀 때 툴바를 따라 올리지 않는다.
-- **`sub` 캡션은 쓰지 않는다.** 화면 설명 문구는 제거 대상(사용자 결정). 단위 표기는 **`toolbarRight` 맨 앞에 12px caption** `단위: 원`(비마스킹)으로.
+- **`sub` 캡션은 쓰지 않는다.** 화면 설명 문구는 제거 대상(사용자 결정). 단위 표기는 **`toolbarRight` 맨 앞에 12px caption** `단위: 원`으로.
 - **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `page.total>1`일 때만 페이저(`IconBtn chevron-left/right` + `PageBtn`) · `footerRight` = **`<FooterActions …/>` 하나**(`grid_frame.tsx` export).
   - **푸터 액션 4종은 항시 노출이며 순서가 고정이다(2026-09-17 사용자 결정): 전체보기(⛶) · 새 창(⧉) · 내보내기(⤓) · 인쇄(🖨).** 페이지가 직접 `IconBtn`을 나열하지 않는다 — `footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}` 한 줄.
   - `onToggleAll`을 안 넘기면 전체보기가 빠져 3개만 렌더된다 — **페이저가 없는 화면**(집계·매트릭스·master-detail 등 현재 10개)이 그 경우다. `onExport`를 안 넘기면 내보내기도 빠진다(투자기업정보(통합)·투자실적 현황(투자기업)).
@@ -121,9 +120,8 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   선택은 **체크박스로만** on/off 한다 — 행 본문 클릭 선택은 전 페이지에서 해제됐다(2026-09-22 사용자 결정, 09-17 의 클릭 누적선택 규약을 뒤집음. 규약·역사는 → [[apfs-aggrid]] "체크박스" 절). `generic_list.tsx`가 `rowSelection` prop 자체를 `undefined`로 넘겨 **선택 컬럼이 생성되지 않는다**(체크만 푸는 게 아니다). 선택이 없어지면 툴바의 `삭제`/`선택 해제` 분기(`selCount > 0`)도 자동으로 도달 불가가 된다 — 수정은 행 더블클릭·Enter, 삭제는 우클릭 메뉴가 대체 경로다. ⚠️ `rowSelection` 객체는 **모듈 상수**여야 한다([[apfs-aggrid]] ⑦ — 인라인 리터럴은 렌더마다 컬럼 재생성 → 폭 되돌림).
 - **상태별 건수는 툴바 요약 문장이 아니라 필터 칩 안에.** `UI.FilterChip`의 `count` prop(라벨 뒤 11.5px 볼드 `tabular-nums`, **색은 칩 라벨과 동일 — 별도 `opacity`를 주지 않는다**)에 건수를 넘긴다 — 칩 = "이 상태를 몇 건 보게 되는지"를 누르기 전에 보여주는 곳이고, 툴바 우측 요약은 **총 건수 한 줄**(`기간 내 … N건`, `aria-live="polite"`)만 남긴다(2026-09-15 사용자 지시, `permission_history.tsx`·`audit_log.tsx`).
   - ⚠️ **건수는 facet count로 센다** — 그 칩이 거는 필터**만 빼고** 나머지 필터를 적용한 모집단 기준. 화면에 이미 있는 `visible`(전 필터 적용)로 세면 칩 하나를 누른 순간 나머지 칩이 전부 `0`이 돼 비교 기능이 죽는다. 별도 `facet` memo를 하나 더 둔다(`전체` 칩 = `facet.length`).
-  - 건수는 행 데이터라 **`mn()` 경유**(마스크 ON에서 함께 가려짐). 칩 라벨은 축이므로 비마스킹.
   - ⚠️ **건수를 `opacity`로 흐리게 하지 말 것** — 건수는 장식이 아니라 읽어야 하는 데이터고 11.5px는 WCAG "큰 텍스트"가 아니라 4.5:1이 필요하다. 실측(2026-09-15): `opacity .62` → 라이트 **2.58:1** · 다크 3.12~3.41:1 로 AA 미달. opacity를 지우면 라이트 4.96~5.60 · 다크 6.28~6.73 으로 통과한다. 위계는 **크기 차(12.5 → 11.5px)만으로** 낸다. 측정은 opacity를 배경과 합성한 실효색으로: 훅 없이 `getComputedStyle(span).opacity` 를 곱해 계산(→[[web-a11y]]).
-- **첨부파일은 컬럼을 만들지 않고 제목 뒤 칩으로** — `ColumnSpec.attachFrom: '<필드키>'`(예: `title` 컬럼 + `attachFrom:'attachment'`). `schemas/renderers.tsx`의 `AttachChips`가 CSV 값(`"a.pdf, b.xlsx"`)을 확장자 칩(아이콘+색은 `ui/attachment.tsx`의 `glyphFor` SSOT, 라벨은 회색)으로 렌더하고 4개째부터 `+N`으로 접는다. 마스크 경계: 확장자=유형 표식이라 비마스킹, 파일명 tooltip은 마스크 ON에서 제거.
+- **첨부파일은 컬럼을 만들지 않고 제목 뒤 칩으로** — `ColumnSpec.attachFrom: '<필드키>'`(예: `title` 컬럼 + `attachFrom:'attachment'`). `schemas/renderers.tsx`의 `AttachChips`가 CSV 값(`"a.pdf, b.xlsx"`)을 확장자 칩(아이콘+색은 `ui/attachment.tsx`의 `glyphFor` SSOT, 라벨은 회색)으로 렌더하고 4개째부터 `+N`으로 접는다.
 
 ## master-detail 2단 레이아웃 (2026-09-15 `code_manage.tsx`에서 정립)
 좌(master) 목록에서 고른 행이 우(detail) 그리드를 채우는 화면의 바깥 골격.
@@ -208,69 +206,8 @@ const selActions = selected ? (            // 또는 selCount > 0 ?
 - `leftDelta = 바 left − 선택열 left = 0` · `border-radius: 12px` · LNB 접기/펼치기 추적 · 라이트/다크.
 - ⚠️ **콘텐츠가 창보다 짧으면 바가 뜰 수 없다** — 검증 실패로 오진하기 쉽다. 먼저 `document.scrollingElement.scrollHeight > innerHeight` 를 확인하고(메뉴관리는 "전체 펼치기"로 행을 늘린다), 페이지 스크롤러는 `window` 다(조상 전부 `overflow: visible`).
 
-## 검토필요 마커(ⓘ) — 목업 설계메모 이식 (2026-09-12 사용자 지시, 정본)
-현행시스템 목업의 `.review`/`.rpop`(라벨 옆 마커 + 검토메모 팝오버)은 **이식한다**. 원문(현행시스템)이
-정의하지 않아 우리가 추론한 지점을 화면에서 바로 짚어주는 설계 메모라, GNB/LNB 토글·출처시스템 메뉴 같은
-프로토타입 스캐폴딩과 성격이 다르다(이전 규약 "이식하지 않는다"는 **폐기**).
-
-- 정본 컴포넌트: `src/dash/review_marker.tsx` — `ReviewMarker({ rec, dat, label })` · `reviewInnerHeader(note)` · `type ReviewNote`
-- 실증 3화면: `occasional_report_manage.tsx`(헤더 2 + 필터 3) · `investment_review_manage.tsx`(필터 3) · `subfund_manage.tsx`(필터 2)
-```tsx
-// 1) 라벨 옆 아무데나
-<span>심사담당<ReviewMarker rec="…" dat="…" label="심사담당" /></span>
-
-// 2) 상세필터 드로어 — 페이지별 로컬 DrawerField 에 note prop 을 더한다(3화면 동형)
-function DrawerField({ label, noop, plain, note, children }: { …; note?: ReviewNote }) { …
-  <span className="block …">{label}{note && <ReviewMarker {...note} label={label} />}{noop && …}</span> }
-<DrawerField label="심사담당자" noop note={FILTER_NOTES.js}>…</DrawerField>
-
-// 3) AG Grid 헤더 — innerHeaderComponent(정렬·메뉴 기본동작 보존) → [[apfs-aggrid]]
-const CONFIRM_HEADER: Record<Role, ReturnType<typeof reviewInnerHeader>> = {   // 모듈 스코프 고정(렌더마다 새 타입이면 헤더 remount)
-  js: reviewInnerHeader(CONFIRM_NOTE('js')), rs: reviewInnerHeader(CONFIRM_NOTE('rs')),
-};
-headerComponentParams: { innerHeaderComponent: CONFIRM_HEADER[role] },
-suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab',
-```
-
-### 내용 — 원문에서 전수로 옮긴다
-- **2줄 고정**: `추천`(우리가 택한 동작) · `데이터`(원문 미정의/추론 사유). 목업 문구 그대로, 창작 금지.
-- 목업 위치 `~/Downloads/통합/<영역>/<화면>.html`(예: `01_투자자산관리/S1_04_수시보고.html`), 마커는 `button.review[data-rec][data-dat]`.
-  ```bash
-  grep -o 'class="review"[^>]*' '<목업.html>'     # rec/dat 원문 추출 (마지막 1건은 JS 템플릿이라 제외)
-  ```
-- **전수 이식**: 마커는 검색(필터) 영역과 그리드 헤더 **양쪽에** 흩어져 있다 — 한쪽만 보면 빠진다(2026-09-12 필터 3건 누락 실사고).
-- 문구가 갈리면 합치지 않는다 — S1_04 확인 컬럼 2건은 담당 명칭만 다르다(심사담당/리스크담당). 역할 인자를 받는 팩토리로 만든다.
-- 출처 목업이 없으면 다른 화면 메모를 **차용하지 말고** 사용자에게 원문을 요청한다(차용본은 실제로 오기였다).
-
-### 붙는 위치·마스크 경계
-- **라벨에만**(헤더명·필드 라벨·섹션 제목). 셀 값·행 데이터엔 붙이지 않는다 — 행마다 반복되면 표가 죽는다.
-- 드로어에서는 라벨 암묵 연결(`label.control`)이 **select 로 유지**되는지 확인(트리거가 span 인 이유 — 아래 a11y). 팝오버 z-popover(85) > Sheet(80).
-- **마스크·엑셀 대상 아님**: 설계 메모지 행 데이터가 아니다 → `mn()`/`<MT>` 감싸지 않고 `EXPORT_COLS`에도 없다.
-
-### 외관 (2026-09-12 사용자가 시안 8종 중 선택)
-- **무채색 info 원**: lucide `Info`(14px, strokeWidth 2), 칠·테두리 없음, 기본 `text-muted-foreground` + `opacity-80`.
-  **hover · focus-visible · `data-[state=open]`에서 `--warning-text`로 강조**(`transition-colors duration-tok-fast`).
-  포인터 타깃은 `padding:3px`로 20px 확보(시각 크기 14px 유지).
-- 폐기된 시안: soft 배경 + `!` 글리프(안 띔) · 솔리드 amber 칠 + `TriangleAlert`(촌스러움). 되돌리지 말 것.
-- ⚠ 마커는 "여기 메모가 있다"는 **부차 신호**다 — 라벨보다 시선을 끌면 표가 시끄러워진다. 기본은 조용, hover에서만 색.
-- 팝오버 안 칩 2종은 대비 실측으로 골랐다(10.5px 볼드 = AA 4.5):
-  - `추천` = `toneVar('info')` — `toneVar('primary')`(초록 12% 혼합)는 라이트 **4.2:1로 미달**이었다 → info쌍은 5.29(라이트)/4.76(다크).
-  - `데이터` 배경에 `var(--muted)` 금지(다크에서 팝오버 표면과 동색) → `color-mix(in srgb,var(--muted-foreground) 16%,transparent)` = 4.51/4.73.
-
-### 상호작용
-- **hover로 열린다**(포인터가 트리거→팝오버로 넘어가는 사이 **140ms 유예**, 팝오버 위에서는 유지 — 팝오버에도 같은 enter/leave 핸들러).
-- **클릭은 열기 전용**(토글 아님) — hover로 이미 열린 것을 클릭 토글이 곧바로 닫아버린다. 닫기는 포인터 이탈·Escape·바깥클릭.
-- **키보드 Enter/Space는 토글**, Escape로 닫힘.
-- **포커스는 키보드로 열었을 때만 움직인다** — `onOpenAutoFocus`/`onCloseAutoFocus` 둘 다 비키보드 경로에서 `preventDefault`.
-  닫힘까지 막아야 한다: 안 막으면 hover가 닫힐 때 Radix가 초점을 트리거로 되돌려 **입력 중이던 컨트롤에서 포커스를 뺏는다**.
-
-### a11y·트리거 구현 (함정 3중)
-- 트리거는 **`<span role="button" tabIndex={0}>`이지 `<button>`이 아니다** — `<button>`은 labelable 이라 `<label>` 안에서 라벨을 가로챈다(select가 접근名을 잃음).
-- span 은 키보드로 click 이 생기지 않으므로 **Enter·Space를 직접 토글**(그래서 제어형 Popover). Space는 `preventDefault`로 스크롤도 막는다.
-- 클릭·mousedown 둘 다 `preventDefault` — 크롬은 `<label>` 안 클릭을 **mousedown 시점에** 연결 컨트롤로 포커스 전달한다. 기본동작을 막으면
-  Radix 자체 토글이 건너뛰어지니 상태는 우리가 뒤집고, 마커 포커스는 `focus()`로 직접 준다.
-- 접근名: 트리거 `aria-label="<라벨> 검토필요 메모 보기"`, 팝오버(`role=dialog`) `aria-label="<라벨> 검토필요 메모"`.
-- ⚠ 검증 시 `locator.click()`이 드로어에서 엉뚱한 대상(select)을 치는 일이 있다 — `boundingBox()` + `page.mouse.click(cx,cy)` 좌표 클릭으로 확인.
+## 검토필요 마커 — 폐기 (2026-09-24)
+2026-09-24: 검토필요 마커(ReviewMarker·note 필드·*_NOTE)는 전부 삭제됐다. 목업의 `.review`/`.rpop` 은 이식하지 않는다(2026-09-12 '이식' 규약 폐기).
 
 ## 검증
 `npm run build`(exit 0) + `npm test`(스키마 zod) + 브라우저 라이트/다크·1280/768/400 시각 확인(responsive-ui 프로토콜) + 기존 페이지(generic_list 등) 무변경 회귀.

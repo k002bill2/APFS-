@@ -15,7 +15,6 @@
    - 수탁데이터 확인검토 셀 → '일치' 배지 / '확인'+배분이면 [확인] 버튼(배분거래등록 팝업) / 그 외 배지·'-'.
    - KPI 배지 행 · 카드뷰 · 명세 팝업 · 행 선택 · 등록 → **없음**(목업에 없는 조회 전용 화면).
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **전수 이식**했다 — 목업 원문 2건: 검색박스의 운용사·자펀드.
 
    한계·가정(결정 기록)
    - **rowspan 미재현**: 목업은 운용사·자펀드·계정구분·등록일·결성액·약정총액·거래구분·상세구분·거래일자·
@@ -33,14 +32,12 @@
    - **배분거래등록(확인 버튼)은 현재 데이터로 도달할 수 없다** — `chk==='확인'`은 그룹2(출자)에만 있어
      배지로 렌더된다. 목업 조건(배분 + 확인)을 그대로 구현만 해 두고 도달용 데이터를 지어내지 않는다.
    - **수탁데이터 확인검토의 빈칸 기준은 원문 미정의**(목업 설계메모 [확인 필요]) — 값 그대로 '-'로 표시한다.
-   - 출자거래 수정 팝업 데이터는 목록과 다른 자펀드(목업 `INVEST_GROUP`)다 — 모달 파일 주석 참조.
-   - 마스크 경계 때문에 `tooltipField`는 두지 않는다(툴팁으로 실값이 샌다). */
+   - 출자거래 수정 팝업 데이터는 목록과 다른 자펀드(목업 `INVEST_GROUP`)다 — 모달 파일 주석 참조. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유) — 없으면 합계행이 안 보인다
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, numStyle } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -53,8 +50,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { DistTxModal, InvestTxModal } from './apfs_contribution_tx_modal';
 
 const { Button, IconBtn, StatusBadge, FilterChip, SegTabs } = UI;
@@ -217,11 +212,11 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const dash = <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
 
-/** 금액 셀 — context.unit로 환산 후 마스킹. 값 없음은 '-'(목업 `money()`) */
+/** 금액 셀 — context.unit로 환산. 값 없음은 '-'(목업 `money()`) */
 const moneyFmt = (p: ValueFormatterParams): string => {
   if (p.value == null) return '-';
   const unit = (p.context as { unit?: Unit } | undefined)?.unit ?? DEFAULT_UNIT;
-  return mn(unitText(p.value as number, unit));
+  return String(unitText(p.value as number, unit));
 };
 /** 목업 소계행의 `colspan=13`에 덮이는 금액 열(결성액·약정금액·약정총액)은 '-'가 아니라 **빈 칸**이다 */
 const moneyBlankFmt = (p: ValueFormatterParams): string => (p.value == null ? '' : moneyFmt(p));
@@ -236,17 +231,17 @@ const moneyStyle = (strong?: boolean) => (p: { value: unknown; node: { rowPinned
 /** 텍스트 열 — 소계·합계 행은 값이 null이라 빈 칸(목업 colspan 자리) */
 const txt = (field: keyof DistRow, header: string, width: number, maxWidth?: number): ColDef<DistRow> => ({
   field, headerName: header, width, maxWidth, sortable: false, cellStyle: flexCenter,
-  cellRenderer: (p: any) => (p.value == null ? null : <span className="min-w-0 truncate"><MT>{p.value}</MT></span>),
+  cellRenderer: (p: any) => (p.value == null ? null : <span className="min-w-0 truncate">{p.value}</span>),
 });
-/** 가운데 정렬 분류 텍스트(계정구분·상세구분) — 분류 라벨이지만 값이라 <MT> 유지 */
+/** 가운데 정렬 분류 텍스트(계정구분·상세구분) */
 const ctr = (field: keyof DistRow, header: string, width: number): ColDef<DistRow> => ({
   field, headerName: header, width, sortable: false, cellStyle: flexMid,
-  cellRenderer: (p: any) => (p.value == null ? null : <MT>{p.value}</MT>),
+  cellRenderer: (p: any) => (p.value == null ? null : <>{p.value}</>),
 });
-/** 날짜 열 — 날짜는 `mn()`으로 마스킹(텍스트 <MT> 아님) */
+/** 날짜 열 */
 const dt = (field: keyof DistRow, header: string, width: number): ColDef<DistRow> => ({
   field, headerName: header, width, sortable: false, cellStyle: centerNum,
-  valueFormatter: (p) => (p.value == null ? '' : mn(String(p.value))),
+  valueFormatter: (p) => (p.value == null ? '' : String(p.value)),
 });
 const amt = (field: keyof DistRow, header: string, strong?: boolean, width = 148): ColDef<DistRow> => ({
   field, headerName: header, width, sortable: false, type: 'rightAligned',
@@ -259,18 +254,17 @@ const amtBlank = (field: keyof DistRow, header: string, width = 148): ColDef<Dis
 /** 값 없으면 '-'인 텍스트 열(감액여부·비고) — 조합원 행의 ''도 '-'다(목업 `dash()`) */
 const dashTxt = (field: keyof DistRow, header: string, width: number, maxWidth?: number): ColDef<DistRow> => ({
   field, headerName: header, width, maxWidth, sortable: false, cellStyle: flexCenter,
-  cellRenderer: (p: any) => (p.value ? <span className="min-w-0 truncate"><MT>{p.value}</MT></span> : dash),
+  cellRenderer: (p: any) => (p.value ? <span className="min-w-0 truncate">{p.value}</span> : dash),
 });
 
 /* 중립 회색 칩(목업 `.tag.n`) — Tone에 중립 톤이 없어 직접 만든다.
-   기하는 StatusBadge size="lg"와 동일. 분류 표식이라 마스킹하지 않는다("축은 두고 데이터는 가린다") */
+   기하는 StatusBadge size="lg"와 동일. */
 function NeutralChip({ v }: { v: string }) {
   return <span className="inline-flex items-center rounded-[7px] bg-muted px-[10px] py-[4px] text-[13px] font-bold leading-tight text-muted-foreground">{v}</span>;
 }
 
 /* 거래일자 셀 링크 — 클릭 시 편집 팝업(골드 `general_meeting_manage.tsx` LinkCell 복사).
-   ⚠ `title`엔 동작 힌트만 담는다 — 값을 넣으면 마스크 ON일 때 툴팁으로 실데이터가 샌다.
-   ⚠ 값이 날짜라 `<MT>`가 아니라 `mn()`으로 마스킹한다.
+   ⚠ `title`엔 동작 힌트만 담는다.
    ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다. */
 function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
   return (
@@ -278,7 +272,7 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
       type="button" title={hint} onClick={onClick}
       className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer tabular"
       style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      {mn(value)}
+      {String(value)}
     </button>
   );
 }
@@ -298,7 +292,7 @@ function ChkCell({ v, tx, onRegister }: { v: Chk; tx: Tx | null; onRegister: () 
 interface CellActions { openTx: (gi: number, mode: 'register' | 'edit') => void }
 
 const makeColumns = (act: CellActions): ColDef<DistRow>[] => [
-  /* NO는 축(순번)이라 마스킹하지 않는다. 소계·합계 행은 목업 라벨을 그 자리에 쓴다 */
+  /* 소계·합계 행은 목업 라벨을 그 자리에 쓴다 */
   { field: 'no', headerName: 'NO', width: 72, maxWidth: 72, pinned: 'left', sortable: false, cellStyle: centerNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '합 계' : p.value == null ? '소 계' : String(p.value)) },
   txt('un', '운용사', 190, 230),
@@ -359,13 +353,6 @@ function flattenForExcel(defs: ColDef<DistRow>[], unit: Unit) {
   return { head, keys };
 }
 
-/* ⚠검토필요 메모 2건 — 목업 `S1_21__농금원_출자배분관리.html`의 `data-rec`/`data-dat` 원문 그대로.
-   설계 메모라 마스킹·엑셀 대상이 아니다. */
-const FILTER_NOTES: Record<'un' | 'fn', ReviewNote> = {
-  un: { rec: '운용사 마스터 전체 목록 선택', dat: '실 옵션 목록 미확인 — 데이터 샘플값(미시간벤처캐피탈주식회사)만 표시' },
-  fn: { rec: '선택 운용사의 자펀드 목록', dat: '실 옵션 목록 미확인 — 데이터 샘플값(미시간글로벌식품산업투자조합2호)만 표시' },
-};
-
 /* ──────────────────────────────
    로컬 헬퍼 — 골드(gp_contribution_manage·fund_stats)에서 복사. 공유 export 아님
 ────────────────────────────── */
@@ -379,12 +366,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 }
 
 /* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 */
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -415,7 +402,6 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
-  const masked = useMask();
 
   /* 필터 — 조회기준은 툴바 칩 + 드로어가 **같은 state를 공유**한다(표시가 갈라지지 않게) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -492,18 +478,17 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
     toast.success('저장되었습니다 (목업)');
   };
 
-  /* ── Excel(.xlsx) — 단일 헤더 28열 + 표시행(조합원+소계) + 합계, 선택 단위 환산.
-        마스크 ON이면 숫자 0·텍스트 ''(화면 밖 출력은 valueFormatter를 안 거친다). ── */
+  /* ── Excel(.xlsx) — 단일 헤더 28열 + 표시행(조합원+소계) + 합계, 선택 단위 환산. ── */
   const exportExcel = () => {
     const { head, keys } = flattenForExcel(columnDefs, unit);
     const src = [...displayRows, ...pinnedBottom];   // 화면 렌더 소스와 같은 구성(화면=엑셀 불변식)
     const body = src.map((r) => keys.map((k) => {
       const v = (r as any)[k];
-      /* NO는 축이라 비마스킹 — 소계·합계는 화면과 같은 라벨 */
+      /* NO — 소계·합계는 화면과 같은 라벨 */
       if (k === 'no') return r.id === '__grand' ? '합 계' : v == null ? '소 계' : v;
       if (v == null) return '';
-      if (MONEY.has(k)) return masked ? 0 : toUnit(v as number, unit);
-      return masked ? '' : v;
+      if (MONEY.has(k)) return toUnit(v as number, unit);
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     src.forEach((r, i) => keys.forEach((k, j) => {
@@ -536,7 +521,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
           {BASES.map((b) => (
             <FilterChip key={b} active={basis === b} onClick={() => setBasis(b)}>{b}</FilterChip>
           ))}
-          {/* 값만 표시(접두사 없음) + × — 텍스트는 <MT>, 날짜는 mn() */}
+          {/* 값만 표시(접두사 없음) + × */}
           {([
             ['운용사', fUn, () => setFUn(''), true],
             ['자펀드', fFn, () => setFFn(''), true],
@@ -545,7 +530,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
             ['기준일자 종료', fTo, () => setFTo(''), false],
           ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isText]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {isText ? <MT>{value}</MT> : mn(value)}
+              {isText ? <>{value}</> : String(value)}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -554,14 +539,14 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
         </>
       )}
       toolbarRight={<>
-        {/* 금액 단위 전환(목업 목록바 `.seg.sm`) — 캡션 + 세그먼트. 단위 문자열은 축이라 비마스킹 */}
+        {/* 금액 단위 전환(목업 목록바 `.seg.sm`) — 캡션 + 세그먼트 */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>{'단위: ' + unit}</span>
         <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
       footerLeft={<span>{/* 총계는 그리드 표시행(조합원+소계) 기준 — shown이 같은 행 집합의 페이지 슬라이스라 분모·분자를 맞춘다 */
-        '총 ' + mn(String(displayRows.length)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}</span>}
+        '총 ' + String(displayRows.length) + '개 중 ' + String(shown) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -604,8 +589,8 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
-            <DrawerField label="운용사" note={FILTER_NOTES.un}><DrawerSelect value={fUn} onChange={setFUn} options={unOptions} /></DrawerField>
-            <DrawerField label="자펀드" note={FILTER_NOTES.fn}><DrawerSelect value={fFn} onChange={setFFn} options={fnOptions} /></DrawerField>
+            <DrawerField label="운용사"><DrawerSelect value={fUn} onChange={setFUn} options={unOptions} /></DrawerField>
+            <DrawerField label="자펀드"><DrawerSelect value={fFn} onChange={setFFn} options={fnOptions} /></DrawerField>
             {/* 목업은 전체/농식품/수산 칩 그룹 — DrawerSelect의 첫 옵션 '전체'가 같은 역할을 한다 */}
             <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
             {/* 조회기준은 툴바 칩과 같은 state를 공유한다(한 항목·두 진입점). 늘 하나가 잡혀 있어 '전체' 빈 값이 없다 */}

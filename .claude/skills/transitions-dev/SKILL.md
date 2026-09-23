@@ -18,7 +18,7 @@ APFS의 열림·닫힘 표면은 이미 소유자와 확정 규약이 있다. �
 | 06 modal · 07 panel reveal(드로어일 때) | Radix `ui/dialog`·`alert-dialog`·`sheet`, `dialog-in/out` 키프레임(`tailwind.config.js`), `ui/dialog-exit.ts` | **적용 금지**. 메모리 `dialog-flip-animation-contract` |
 | 21 accordion | Radix `ui/accordion` + `accordion-down/up` | **적용 금지** |
 | 22 toast · 32 banner stacking | `sonner`(`ui/sonner.tsx`) | **적용 금지** |
-| 14 skeleton reveal | `ui/skeleton.tsx` — 로딩=`PageSkeleton` / 상시 마스크=펄스바 2원화 | **적용 금지**(메모리 `skeleton-two-tier-adoption`) |
+| 14 skeleton reveal | `ui/skeleton.tsx` — 로딩=`PageSkeleton` | **적용 금지**(메모리 `skeleton-two-tier-adoption`) |
 | 25 checkbox · 27 toggle | Radix `ui/checkbox`·`ui/switch`; 저장 대기형 '여/부'는 **체크박스**로 렌더(의미 규약, PR #202) | **적용 금지** — 컨트롤 교체·모션 추가 모두 |
 | 16 tabs sliding | `UI.SegTabs`(`components.tsx`) — 이미 Motion `layoutId` 슬라이딩 표시자를 가짐 | **적용 금지**. 탭 모션 변경은 SegTabs 한 곳에서 |
 | 03 notification badge | LNB 조기경보 점 `NewDot`(숫자 아닌 **빨간 점**, `showDots=risk` 게이트) | 점 의미는 유지하고 등장 모션만 참고 가능 |

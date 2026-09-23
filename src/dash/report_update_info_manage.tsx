@@ -20,20 +20,17 @@
          일어나지 않아 그 자체가 UI 결함이었다. 상세 진입 경로도 원래 없다(더블클릭·우클릭 메뉴 미배선).
          툴바 좌는 예전처럼 항상 필터 칩이다.
    - KPI 배지 행                → 미포함(`kpis` 미전달). 카드뷰·명세 팝업·등록/수정/삭제도 없음(읽기전용).
-   - 엑셀                       → SheetJS(단일 헤더, 승인금액은 선택 단위 숫자 셀, 마스크 시 실값 비노출)
+   - 엑셀                       → SheetJS(단일 헤더, 승인금액은 선택 단위 숫자 셀)
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **이식한다**(2026-09-12 사용자 지시) — 목업 원문 4건 전부 옮겼다:
-     검색 1건(보고구분) + 그리드 헤더 3건(구분·투심상태·파일구분). 공용 `review_marker.tsx`, 규약은 apfs-grid.
 
    한계(목업 원문 범위):
-   - 구분·투심상태·파일구분은 원본에 샘플값이 없어 표시값이 도메인 추론이다(헤더 마커로 명시).
+   - 구분·투심상태·파일구분은 원본에 샘플값이 없어 표시값이 도메인 추론이다.
    - 투자금납입 예정일의 '-' 는 목업 문자 그대로다(텍스트 N/A). 숫자 N/A 는 null→'-'. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유) — 없으면 합계행이 안 보인다
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, fmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
 import { drawerInputStyle as inputStyle } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
@@ -43,8 +40,6 @@ import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescrip
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
-import { ReviewMarker, reviewInnerHeader } from './review_marker';
-import type { ReviewNote } from './review_marker';
 
 const { Button, IconBtn, StatusBadge, FilterChip, SegTabs } = UI;
 
@@ -105,7 +100,7 @@ const unitText = (won: number, unit: Unit): string => {
 const moneyFmt = (p: ValueFormatterParams<ReportUpdateRow>): string => {
   if (p.value == null) return '-';
   const unit = (p.context as { unit?: Unit } | undefined)?.unit ?? '원';
-  return mn(unitText(p.value as number, unit));
+  return String(unitText(p.value as number, unit));
 };
 
 /* pinned 합계행 — 금액만 합산(목업 tfoot). 나머지 셀은 포매터/렌더러가 `rowPinned` 로 처리한다.
@@ -115,23 +110,6 @@ function computeTotal(rows: ReportUpdateRow[]): ReportUpdateRow {
   t.amt = rows.reduce((a, r) => a + (r.amt ?? 0), 0);
   return t as ReportUpdateRow;
 }
-
-/* ──────────────────────────────
-   ⚠검토필요 메모 — 목업 `S1_10_보고_업데이트정보.html` 의 data-rec/data-dat 원문 그대로(4건).
-   설계 메모라 마스킹·엑셀 대상이 아니다.
-────────────────────────────── */
-const NOTE_RT: ReviewNote = { rec: '보고구분 공통코드 옵션 목록', dat: "실데이터 '투자심의관리' 1건만 확인 · 그 외 옵션 미확인" };
-const NOTE_GB: ReviewNote = { rec: '구분 공통코드값', dat: '원본 샘플값 없음 · 표시값은 도메인 추론(정기/수시)' };
-const NOTE_STAT: ReviewNote = { rec: '투심상태 공통코드값(승인/부결/보류 등)', dat: '원본 샘플값 없음 · 표시값은 도메인 추론' };
-const NOTE_FTYPE: ReviewNote = { rec: '파일구분 공통코드값', dat: '원본 샘플값 없음 · 표시값은 도메인 추론' };
-/* 모듈 스코프에 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid 가 헤더를 통째로 remount 한다 */
-const HEADER_GB = reviewInnerHeader(NOTE_GB);
-const HEADER_STAT = reviewInnerHeader(NOTE_STAT);
-const HEADER_FTYPE = reviewInnerHeader(NOTE_FTYPE);
-/* Tab 을 AG Grid 헤더 내비게이션에서 빼 브라우저 기본 순서로 넘긴다 — 안 하면 헤더 안의 ⚠마커에
-   키보드로 도달할 수 없다(AG Grid 가 Tab 을 가로채 다음 헤더 셀로 이동). 마커 3개 컬럼 전부에 건다. */
-const passTab = (p: { event: KeyboardEvent }) => p.event.key === 'Tab';
-
 /* ──────────────────────────────
    컬럼 정의 — 목업 `<thead>` 순서 그대로(단일 헤더):
      [선택 라디오] · 구분 · 운용사 · 자펀드 · 투자기업 · 투심상태 · 투심일자 · 승인금액 ·
@@ -139,18 +117,17 @@ const passTab = (p: { event: KeyboardEvent }) => p.event.key === 'Tab';
    ⚠ 셀 클로저(버튼·링크)가 없는 화면이라 컬럼 배열을 **모듈 스코프 상수**로 둔다 — 렌더 간 참조가
      완전히 고정되고(useMemo([]) 보다 강함) 골드 `subfund_manage.tsx` 와 같은 형태다(apfs-aggrid 계약 6).
    ⚠ pinned 는 선택 컬럼만 — 다른 컬럼에 pinned 를 주면 목업 순서가 깨진다.
-   ⚠ 마커를 단 컬럼(구분·투심상태·파일구분)은 헤더가 길어지므로 width/maxWidth 를 함께 올렸다.
 ────────────────────────────── */
 const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-/* 텍스트 컬럼(운용사·자펀드·투자기업) — 인명/기관명이라 <MT> 마스킹. 합계행은 빈 칸(목업 tfoot 병합 구간) */
+/* 텍스트 컬럼(운용사·자펀드·투자기업) — 합계행은 빈 칸(목업 tfoot 병합 구간) */
 const txt = (field: keyof ReportUpdateRow, header: string, width: number, maxWidth: number): ColDef<ReportUpdateRow> => ({
   field, headerName: header, width, maxWidth, cellStyle: flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <MT>{p.value}</MT>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : <>{p.value}</>),
 });
-/* 날짜/일시 — mn() 마스킹. 합계행 '-'(목업 tfoot colspan 3 '-'). muted 는 일자 컬럼만.
+/* 날짜/일시 — 합계행 '-'(목업 tfoot colspan 3 '-'). muted 는 일자 컬럼만.
    ⚠ 골드 `occasional_report_manage` 의 date() 는 `maxWidth: width` 를 걸지만 그건 `FIT_GRID_WIDTH`
      전용 장치다(잉여 폭을 제목 컬럼으로만 흘리려고 성장을 막는 것). 이 화면은 `AUTO_SIZE_CONTENT` 이고
      컬럼 합이 프레임(1280)보다 넓어 흡수할 잉여가 없으므로 cap 을 두지 않는다 —
@@ -158,22 +135,18 @@ const txt = (field: keyof ReportUpdateRow, header: string, width: number, maxWid
 const dateCol = (field: keyof ReportUpdateRow, header: string, width: number, muted = true): ColDef<ReportUpdateRow> => ({
   field, headerName: header, width,
   cellStyle: muted ? { ...centerNum, color: 'var(--muted-foreground)' } : centerNum,
-  valueFormatter: (p) => (p.node?.rowPinned ? '-' : mn(p.value)),
+  valueFormatter: (p) => (p.node?.rowPinned ? '-' : String(p.value)),
 });
 
 const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
-  /* 구분(⚠) — 합계행에서 '합계' 라벨을 맡는다(목업 tfoot 의 colspan 7 구간 대표). 공통코드값이라 비마스킹 */
-  /* ⚠ 마커 컬럼 3개는 minWidth=width=maxWidth로 고정한다 — `AUTO_SIZE_CONTENT`(fitCellContents)는 React 커스텀
-     inner 헤더(마커)를 첫 측정에 포함하지 못해 배지 폭(투심상태 95px)으로 눌러 헤더 텍스트가 잘렸다(2026-09-12 코디네이터 실측). */
+  /* 구분 — 합계행에서 '합계' 라벨을 맡는다(목업 tfoot 의 colspan 7 구간 대표) */
   { field: 'gb', headerName: '구분', width: 96, minWidth: 96, maxWidth: 96, cellStyle: centerNum,
-    headerComponentParams: { innerHeaderComponent: HEADER_GB }, suppressHeaderKeyboardEvent: passTab,
     valueFormatter: (p) => (p.node?.rowPinned ? '합계' : p.value) },
   txt('gp', '운용사', 180, 220),
   txt('fd', '자펀드', 240, 300),
   txt('co', '투자기업', 160, 200),
-  /* 투심상태(⚠) — 배지는 상태 표시 전용(클릭 전이 없음). 합계행은 배지 대신 '-' */
+  /* 투심상태 — 배지는 상태 표시 전용(클릭 전이 없음). 합계행은 배지 대신 '-' */
   { field: 'stat', headerName: '투심상태', width: 136, minWidth: 136, maxWidth: 136, cellStyle: flexMid,
-    headerComponentParams: { innerHeaderComponent: HEADER_STAT }, suppressHeaderKeyboardEvent: passTab,
     cellRenderer: (p: any) => (p.node.rowPinned ? '-' : <StatusBadge tone={STAT_TONE[p.value as ReviewStatus]} label={p.value} size="lg" dot={false} />) },
   dateCol('sdt', '투심일자', 124),
   /* 승인금액 — 단위는 context 에서(moneyFmt). 합계행은 numStyle 이 자동으로 굵게 처리 */
@@ -181,9 +154,8 @@ const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
     valueFormatter: moneyFmt, cellStyle: numStyle() as any },
   /* 투자금납입 예정일 — 목업 '-' 문자 그대로(텍스트 N/A). 일자 muted 는 주지 않는다(목업 본문색) */
   dateCol('pdt', '투자금납입 예정일', 150, false),
-  /* 파일구분(⚠) — 공통코드값이라 비마스킹. 합계행 '-' */
+  /* 파일구분 — 합계행 '-' */
   { field: 'ftype', headerName: '파일구분', width: 156, minWidth: 156, maxWidth: 156, cellStyle: centerNum,
-    headerComponentParams: { innerHeaderComponent: HEADER_FTYPE }, suppressHeaderKeyboardEvent: passTab,
     valueFormatter: (p) => (p.node?.rowPinned ? '-' : p.value) },
   dateCol('reg', '등록/변경일시', 156),
 ];
@@ -216,11 +188,11 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, note, children }: { label: string; noop?: boolean; note?: ReviewNote; children: React.ReactNode }) {
+function DrawerField({ label, noop, children }: { label: string; noop?: boolean; children: React.ReactNode }) {
   return (
     <label className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </label>
@@ -247,7 +219,6 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [unit, setUnit] = useState<Unit>('원');             // 금액 단위 — 목업 기본값 '원'
-  const masked = useMask();
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
@@ -286,17 +257,16 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더 + 합계행. 승인금액은 **선택 단위로 환산한 숫자 셀**(t:'n' + z 서식)이라
-       Excel 이 화면처럼 우측 정렬하고 합계도 계산된다. 마스크 ON이면 숫자 0·텍스트 ''(실값 비노출).
-       합계행 라벨('합계')은 구조 라벨이라 마스크 대상이 아니다(골드 subfund_manage 동형). ── */
+       Excel 이 화면처럼 우측 정렬하고 합계도 계산된다. ── */
   const exportExcel = () => {
     const amtHeader = `승인금액(${unit})`;
     const head = [...EXCEL_TEXT.map((c) => c.header), amtHeader, ...EXCEL_TAIL.map((c) => c.header)];
     const zFmt = unit === '억원' ? '#,##0.00' : '#,##0';
-    const amtOf = (r: ReportUpdateRow) => (masked ? 0 : toUnit(r.amt, unit));
+    const amtOf = (r: ReportUpdateRow) => (toUnit(r.amt, unit));
     const body = filteredRows.map((r) => [
-      ...EXCEL_TEXT.map((c) => (masked ? '' : c.get(r))),
+      ...EXCEL_TEXT.map((c) => (c.get(r))),
       amtOf(r),
-      ...EXCEL_TAIL.map((c) => (masked ? '' : c.get(r))),
+      ...EXCEL_TAIL.map((c) => (c.get(r))),
     ]);
     const total = pinnedBottom[0];
     const totalRow: (string | number)[] = ['합계', '', '', '', '', '', amtOf(total), '', '', ''];
@@ -332,13 +302,13 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
         </>
       )}
       toolbarRight={<>
-        {/* 금액 단위 전환 — 목업 listbar 의 '금액단위 원/백만원/억원'. 캡션·단위는 비마스킹(축) */}
+        {/* 금액 단위 전환 — 목업 listbar 의 '금액단위 원/백만원/억원' */}
         <span className="text-caption font-semibold" style={{ fontSize: 12, marginRight: 6 }}>금액단위</span>
         <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -380,7 +350,7 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             {/* 보고구분 — 목업 유일 옵션('투자심의관리')만 둔다. 없는 옵션을 생성하지 않는다(검토필요 메모) */}
-            <DrawerField label="보고구분" noop note={NOTE_RT}><DrawerSelect value={fRt} onChange={setFRt} options={['투자심의관리']} /></DrawerField>
+            <DrawerField label="보고구분" noop><DrawerSelect value={fRt} onChange={setFRt} options={['투자심의관리']} /></DrawerField>
             <DrawerField label="투심상태"><DrawerSelect value={fStat} onChange={(v) => setFStat(v as '' | ReviewStatus)} options={['승인', '보류', '부결']} /></DrawerField>
           </div>
           <SheetFooter>

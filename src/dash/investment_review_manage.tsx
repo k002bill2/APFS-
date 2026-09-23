@@ -11,17 +11,14 @@
        파생 단계: 미확정 → 확정(AlertDialog 확인) → 미결 → 가결/부결/조건부/보류, 미확정→투심위취소, 가결/조건부→승인취소.
    - 투자준법감시내역 CRUD    → 별개 엔티티. [준법감시 등록|수정] 1버튼(상태별) + [삭제](있을 때만). RowFormModal(apfs-form-modal)
    - 상세(명세) 팝업          → opt-in(기본 미포함, 2026-09-11 사용자 결정 "필요할 때 생성"). 필요 시 apfs-spec-popup 규약으로 재생성
-   - 엑셀                     → SheetJS(단일 헤더, 마스크 시 실값 비노출)
-   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **이식한다**(2026-09-12 사용자 지시). 목업 `S1_01_투자심의관리.html` 원문 3건
-     (운용사·자펀드·담당자)을 그대로 옮겼다. 공용 `review_marker.tsx`, 규약은 apfs-grid 스킬. */
+   - 엑셀                     → SheetJS(단일 헤더)
+   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -36,8 +33,6 @@ import * as XLSX from 'xlsx';
 import { RowFormModal } from './generic_list_modal';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { COMPLIANCE_SCHEMA } from './investment_review_manage_schemas';
 
 const { Button, IconBtn, StatusBadge, FilterChip } = UI;
@@ -112,11 +107,11 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 const txt = (field: keyof InvReviewRow, header: string, width: number, center?: boolean): ColDef<InvReviewRow> => ({
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : <MT>{p.value}</MT>),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : <>{p.value}</>),
 });
 const date = (field: keyof InvReviewRow, header: string, width = 128): ColDef<InvReviewRow> => ({
   field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
-  valueFormatter: (p) => (p.node?.rowPinned ? '' : mn(p.value)),
+  valueFormatter: (p) => (p.node?.rowPinned ? '' : String(p.value)),
 });
 const amt = (field: keyof InvReviewRow, header: string, strong?: boolean, width = 150): ColDef<InvReviewRow> => ({
   field, headerName: header, width, type: 'rightAligned', valueFormatter: nullFmt, cellStyle: numStyle(strong) as any,
@@ -136,7 +131,7 @@ const columnDefs: ColDef<InvReviewRow>[] = [
   { field: 'no', headerName: 'No', width: 68, pinned: 'left', cellStyle: centerNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '합 계' : String(p.value)) },
   { ...txt('gp', '운용사', 180), maxWidth: 240, pinned: 'left' },
-  { ...txt('fn', '자펀드', 220), maxWidth: 320, pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold"><MT>{p.value}</MT></span>) },
+  { ...txt('fn', '자펀드', 220), maxWidth: 320, pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold">{p.value}</span>) },
   { ...txt('co', '투자기업', 160), maxWidth: 240 },
   { colId: 'st', headerName: '투심상태', width: 96, cellStyle: flexMid, sortable: true,
     valueGetter: (p) => (p.data ? stOf(p.data) : ''),
@@ -171,19 +166,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-/* 상세필터 ⚠검토필요 메모 — 목업 `S1_01_투자심의관리.html` 원문 3건 그대로 */
-const FILTER_NOTES: Record<'gp' | 'fund' | 'mgr', ReviewNote> = {
-  gp:   { rec: '운용사(GP) 목록', dat: '투심 목록 실데이터 3건으로 동기화' },
-  fund: { rec: '자펀드(조합) 목록', dat: '투심 목록 실데이터 3건으로 동기화 · 원본 검색영역에 자펀드 셀렉트 2회 중복 → 1개로 정리' },
-  mgr:  { rec: '담당자 목록(사용자 마스터 연동)', dat: '자펀드관리 화면의 담당자 예시(양한솔·이성훈)로 동기화 — 전체 담당자 마스터 연동은 여전히 필요' },
-};
-
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: React.ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -238,7 +226,6 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
   const [modal, setModal] = useState<ModalState>(null);
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  const masked = useMask();
 
   /* 필터 — 투심상태(일정/결과)는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -311,15 +298,15 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
   const clearSelection = () => { setSelIds([]); apiRef.current?.deselectAll(); };
   const refresh = () => { setRows([...DEMO]); setSelIds([]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더, 합계행 재현. 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 단일 헤더, 합계행 재현 ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const src = [...filteredRows, pinnedBottom[0]];
     const body = src.map((r, i) => EXPORT_COLS.map((c) => {
       if (c.header === 'No') return i === src.length - 1 ? '합 계' : r.no;
       const v = c.get(r);
-      if (c.num) return v == null ? '' : masked ? 0 : v;
-      return masked ? '' : (v ?? '');
+      if (c.num) return v == null ? '' : v;
+      return (v ?? '');
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     src.forEach((r, i) => EXPORT_COLS.forEach((c, j) => {
@@ -353,7 +340,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
      (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
   const selActions = selCount > 0 ? (
     <>
-      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <>
       {/* 확정여부 배지 + (확정 시)결과 배지 — 상태 표시. 전이는 아래 액션 버튼 */}
       <StatusBadge tone={CONFIRM_TONE[single.confirm]} label={single.confirm} size="lg" dot={false} />
@@ -399,7 +386,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
             ['종료일', fTo, () => setFTo('')],
           ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -413,7 +400,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -459,10 +446,10 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
                 목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·투자심의상태·투자심의기간.
                 그리드 컬럼과 미연동인 항목(모펀드·계정구분·담당자)은 noop 캡션. 기간은 PeriodPicker day 2개(apfs-datepicker) */}
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
-            <DrawerField label="운용사" note={FILTER_NOTES.gp}><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
-            <DrawerField label="자펀드" note={FILTER_NOTES.fund}><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
+            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
+            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAg} onChange={setFAg} options={['농식품', '수산']} /></DrawerField>
-            <DrawerField label="담당자" noop note={FILTER_NOTES.mgr}><DrawerSelect value={fMgr} onChange={setFMgr} options={['양한솔', '이성훈']} /></DrawerField>
+            <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={['양한솔', '이성훈']} /></DrawerField>
             <DrawerField label="투자심의상태"><DrawerSelect value={fState} onChange={(v) => setFState(v as '' | '일정' | '결과')} options={['일정', '결과']} /></DrawerField>
             <DrawerField label="투자심의기간 시작" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="투자심의기간 시작일" /></div></DrawerField>
             <DrawerField label="투자심의기간 종료" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="투자심의기간 종료일" /></div></DrawerField>
@@ -506,7 +493,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>투자준법감시내역 삭제</AlertDialogTitle>
-              <AlertDialogDescription><b className="text-foreground"><MT>{single.co}</MT></b> · <MT>{single.fn}</MT> 건의 투자준법감시내역을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.</AlertDialogDescription>
+              <AlertDialogDescription><b className="text-foreground">{single.co}</b> · {single.fn} 건의 투자준법감시내역을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>

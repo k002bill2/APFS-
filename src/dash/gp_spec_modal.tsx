@@ -11,7 +11,6 @@
       계산으로 고쳐 쓰지 않고 원문 값을 보존한다. */
 import React, { useState } from 'react';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { fmt } from './aggrid_theme';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 
@@ -20,11 +19,11 @@ const { Button, SegTabs, StatusBadge } = UI;
 type Unit = '원' | '백만원' | '억원';
 const UNIT_DIV: Record<Unit, number> = { 원: 1, 백만원: 1e6, 억원: 1e8 };
 
-/* 금액 → 단위 환산 문자열(마스킹 포함). 억/백만은 소수 2자리까지 */
+/* 금액 → 단위 환산 문자열. 억/백만은 소수 2자리까지 */
 function money(won: number | null, unit: Unit): string {
   if (won == null) return '-';
   const v = won / UNIT_DIV[unit];
-  return mn(unit === '원' ? fmt(won) : v.toLocaleString(undefined, { maximumFractionDigits: 2 }));
+  return String(unit === '원' ? fmt(won) : v.toLocaleString(undefined, { maximumFractionDigits: 2 }));
 }
 
 /* ── 출처 데이터(S1_02 원문) ── */
@@ -87,7 +86,7 @@ function KvGrid({ items }: { items: OvItem[] }) {
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.v == null ? 'text-caption' : ''}`}
             style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
-            {o.v == null ? '-' : <MT>{o.v}</MT>}
+            {o.v == null ? '-' : <>{o.v}</>}
           </dd>
         </div>
       ))}
@@ -115,13 +114,13 @@ function FundTable({ unit }: { unit: Unit }) {
         <tbody>
           {GP_FUNDS.map((f) => (
             <tr key={f.no}>
-              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{mn(String(f.no))}</td>
-              <td className={TD} style={{ padding: '7px 8px', whiteSpace: 'normal' }}><MT>{f.fn}</MT></td>
-              <td className={`${TD} text-center`} style={{ padding: '7px 8px' }}><MT>{f.acc}</MT></td>
-              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{mn(f.fd)}</td>
-              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{mn(f.rd)}</td>
-              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{mn(f.mat)}</td>
-              <td className={`${TD} text-center text-caption`} style={{ padding: '7px 8px' }}>{f.liq ? mn(f.liq) : '-'}</td>
+              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(f.no)}</td>
+              <td className={TD} style={{ padding: '7px 8px', whiteSpace: 'normal' }}>{f.fn}</td>
+              <td className={`${TD} text-center`} style={{ padding: '7px 8px' }}>{f.acc}</td>
+              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(f.fd)}</td>
+              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(f.rd)}</td>
+              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(f.mat)}</td>
+              <td className={`${TD} text-center text-caption`} style={{ padding: '7px 8px' }}>{f.liq ? String(f.liq) : '-'}</td>
               <td className={`${TD} text-right tabular font-semibold`} style={{ padding: '7px 8px' }}>{money(f.amt, unit)}</td>
               <td className={`${TD} text-right tabular font-semibold`} style={{ padding: '7px 8px' }}>{money(f.moa, unit)}</td>
               <td className={`${TD} text-center`} style={{ padding: '7px 8px' }}><StatusBadge tone="success" label={f.st} size="sm" dot={false} /></td>
@@ -155,7 +154,7 @@ function FinTable({ unit }: { unit: Unit }) {
         </thead>
         <tbody>
           <tr>
-            <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{mn(GP_BASEYM)}</td>
+            <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(GP_BASEYM)}</td>
             {GP_FIN.map(([l, v]) => (
               <td key={l} className={`${TD} text-right tabular`} style={{ padding: '7px 8px', ...negStyle(v) }}>{money(v, unit)}</td>
             ))}
@@ -180,14 +179,14 @@ export function GpSpecModal({ row, onClose }: { row?: Record<string, unknown>; o
           {/* 제목+대상명은 한 래퍼로 묶는다 — DialogHeader가 justify-between이라 안 묶으면 대상명이 우측 끝으로 밀린다 */}
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">운용사 명세</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0"><MT>{target}</MT></DialogDescription>
+            <DialogDescription className="text-caption truncate min-w-0">{target}</DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">
           <UnitSeg unit={unit} onChange={setUnit} />
           <Section title="자펀드 현황" unitNote={`(단위: ${unit})`}><FundTable unit={unit} /></Section>
           <Section title="운용사 개요"><KvGrid items={GP_OVERVIEW} /></Section>
-          <Section title="재무정보" unitNote={`(기준년월 ${mn(GP_BASEYM)} · 단위: ${unit})`}><FinTable unit={unit} /></Section>
+          <Section title="재무정보" unitNote={`(기준년월 ${String(GP_BASEYM)} · 단위: ${unit})`}><FinTable unit={unit} /></Section>
         </div>
         <DialogFooter className="px-[46px]">
           <div />

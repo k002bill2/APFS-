@@ -4,7 +4,7 @@
    원문 구조(두 팝업 공통, 설계메모 "수정 팝업 구조로 통일")
    - 제목 + 도움말(?) — 안내문구 미정이라 원문도 자리표시 토스트만 띄운다
    - 운용사 유형 select(6종). 수정 팝업은 선택 시 그 유형의 지표 7종 그리드를 다시 불러온다(원문 renderEditGrid)
-   - 편집 그리드: 사용(체크) · 지표구분 · 정상 · 주의 · 경고(표시 전용, 빈 값 '–') · 입력항목(⚠검토필요 헤더)
+   - 편집 그리드: 사용(체크) · 지표구분 · 정상 · 주의 · 경고(표시 전용, 빈 값 '–') · 입력항목
      입력항목 컴포넌트는 **등록=텍스트 입력 / 수정=체크박스** — 원문이 "의도된 차이"라 못박았다(구조 통일 대상 아님)
    - 행추가(지표구분·기준을 직접 입력하는 새 행) · 행삭제(선택 행). 원문 캡처에 선택 체크박스 열이 없어
      **행 클릭으로 선택(하이라이트)** 후 행삭제한다 — 그대로 옮긴다(행 안의 입력·체크 클릭은 선택을 바꾸지 않는다).
@@ -18,8 +18,7 @@ import { Checkbox } from './ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
 import { toast } from './ui/sonner';
 import { drawerInputStyle } from './schemas/renderers';
-import { ReviewMarker } from './review_marker';
-import { MGR_TYPES, INDICATORS, metricsFor, INPUT_NOTE } from './risk_subfund_info_data';
+import { MGR_TYPES, INDICATORS, metricsFor } from './risk_subfund_info_data';
 
 const { Button, IconBtn } = UI;
 
@@ -113,7 +112,7 @@ export function GpQuantIndicatorModal({ mode, preType, onClose }: { mode: QuantM
                   <th scope="col" className={TH} style={CELL}>주의</th>
                   <th scope="col" className={TH} style={CELL}>경고</th>
                   <th scope="col" className={TH} style={{ ...CELL, width: mode === 'create' ? 150 : 118 }}>
-                    <span className="inline-flex items-center">입력항목<ReviewMarker {...INPUT_NOTE} label="입력항목" /></span>
+                    <span className="inline-flex items-center">입력항목</span>
                   </th>
                 </tr>
               </thead>

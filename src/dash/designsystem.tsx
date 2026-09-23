@@ -112,7 +112,7 @@ function MotionPreview() {
           <div className="flex items-baseline gap-2"><span className="t-display tabular" style={{ fontSize: 24 }}><CountUp value="94.2%" /></span><span className="t-caption">소수·단위 보존</span></div>
           <div className="flex items-baseline gap-2"><span className="t-display tabular" style={{ fontSize: 24 }}><CountUp value="2조 3,840억원" /></span><span className="t-caption">복합(숫자 2개+) → 정적 폴백</span></div>
         </div>
-        <p className="t-caption m-0">화면 진입 시 1회(useInView once). 마스크 ON·복합·비수치는 굴리지 않고 정적 표시(중간 프레임 오포맷 방지).</p>
+        <p className="t-caption m-0">화면 진입 시 1회(useInView once). 복합·비수치는 굴리지 않고 정적 표시(중간 프레임 오포맷 방지).</p>
       </Card>
 
       <Card className="flex flex-col gap-3">

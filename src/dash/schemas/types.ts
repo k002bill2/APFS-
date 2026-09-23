@@ -28,9 +28,6 @@ export type DetailPopup = typeof DETAIL_POPUPS[number];
 //   S1_40 실사일자는 원문이 `/^\d{4}-\d{2}-\d{2}$/` 를 통과한 행만 버튼으로 만들고 ''·'X'는 평상 셀이라
 //   동등비교로 표현할 수 없다. 판정 정본은 schemas/detail_link.ts 의 linksDetail 하나다(소비처 3곳 공유).
 // 선언이 없는 스키마는 종전과 동일하게 동작한다(opt-in).
-// note: 컬럼 **헤더** 옆 ⚠검토필요 마커. 조회 전용 스키마(fields: [])는 RowFormModal이 없어 FieldSpec.note로
-//   목업의 `!` 마커를 실을 데가 없다 — 억지로 fields를 채우면 `editable = fields.length > 0`이 켜져
-//   조회 화면에 등록 버튼이 생긴다(generic_list.tsx:444). 그래서 컬럼에도 note를 둔다.
 // group: 2단 헤더의 상위 묶음 이름. **연속한** 컬럼이 같은 group이면 하나의 ColGroupDef로 접힌다
 //   (컬럼 수십 개를 단일 헤더로 늘어놓으면 판독 불가 — S1_31 58컬럼·S1_33 회수실적 4컬럼이 원문에서 2단이다).
 // pinned: 좌측 고정 열. 와이드 표에서 가로 스크롤 중에도 식별 컬럼(운용사·자펀드·투자기업)을 붙잡아 둔다.
@@ -42,15 +39,12 @@ export type DetailPopup = typeof DETAIL_POPUPS[number];
 //   선언하면 그 셀은 StatusBadge/Cell 대신 select 만 그린다(원문도 `cfmTag()` 를 정의해 놓고 쓰지 않는다).
 // multiline: 줄바꿈이 든 본문 셀(사후관리 내용 등)을 `white-space: pre-line` 으로 편다.
 //   기본 셀은 nowrap+ellipsis 라 여러 줄 원문이 한 줄로 잘려 내용을 잃는다(원문 `.content-cell`).
-export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; pinned?: 'left'; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; detailPattern?: string; inlineSelect?: string[]; note?: ReviewNoteSpec; multiline?: boolean; }
-// note: 라벨 옆 ⚠검토필요 마커(목업 `.review` data-rec/data-dat 원문). RowFormModal이 Field 라벨에 ReviewMarker로 렌더한다.
-// 설계 메모라 마스킹·엑셀 대상이 아니며, 문구는 목업 원문 그대로(창작 금지 — apfs-grid "검토필요 마커").
-export interface ReviewNoteSpec { rec: string; dat: string; }
+export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; pinned?: 'left'; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; detailPattern?: string; inlineSelect?: string[]; multiline?: boolean; }
 // long: 긴 텍스트 필드(설명·비고·운용사명·펀드명·주소 등) 표식 — 모달에서 2단 전체 폭(sm:col-span-2) +
 //   컨트롤 width:100%(fit-content 240px 하한 해제)로 렌더한다. 짧은 코드/일자 필드와 구분하는 유일한 SSOT.
 // placeholder: 비어 있을 때 입력칸에 보이는 힌트(text/number/textarea 에만 적용 — 나머지 컨트롤은 무시).
 //   목업 원문이 placeholder 를 지정한 필드를 그대로 옮길 때 쓴다(2026-09-22 추가). 미지정이면 종전과 동일.
-export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; long?: boolean; placeholder?: string; note?: ReviewNoteSpec; }
+export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; long?: boolean; placeholder?: string; }
 export interface KpiSpec { key: string; label: string; icon: string; color: string; from: 'sum'|'avg'|'rate'; column: string; }
 // 건수형 KPI — 금액 집계가 아닌 행 카운트. column+value 있으면 그 값과 일치하는 행 수, 없으면 전체 건수.
 export interface CountKpiSpec { label: string; icon: string; color: string; column?: string; value?: string; }
@@ -101,7 +95,6 @@ const ColumnZ = z.object({
     (src) => { if (src == null) return true; try { new RegExp(src); return true; } catch { return false; } },
     { message: 'detailPattern must be a valid RegExp source' },
   ),
-  note: z.object({ rec: z.string(), dat: z.string() }).optional(),
   multiline: z.boolean().optional(),
   // 선택지가 2개 미만이면 고를 것이 없다 — 선언 실수를 파싱 시점에 잡는다
   inlineSelect: z.array(z.string()).min(2).optional(),
@@ -110,7 +103,6 @@ const FieldZ = z.object({
   key: z.string(), label: z.string(), control: z.enum(FIELD_CONTROLS),
   required: z.boolean().optional(), options: z.array(z.string()).optional(), pii: z.boolean().optional(), long: z.boolean().optional(),
   placeholder: z.string().optional(),
-  note: z.object({ rec: z.string(), dat: z.string() }).optional(),
 });
 const KpiZ = z.object({ key: z.string(), label: z.string(), icon: z.string(), color: z.string(), from: z.enum(['sum','avg','rate']), column: z.string() });
 const ProvenanceZ = z.object({ capturedAt: z.string(), sourceSystem: z.string(), captureFile: z.string(), sourceUrl: z.string().optional() });

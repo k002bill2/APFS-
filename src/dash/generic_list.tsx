@@ -5,7 +5,6 @@ import React from 'react';
 import { Icon } from './icons';
 import { UI } from './components';
 import { APFS_DATA } from './data';
-import { mn, MT, useMask } from './mask';
 import { RowFormModal, statusTone } from './generic_list_modal';
 import type { Row } from './generic_list_modal';
 import { resolveSchema } from './schemas';
@@ -18,7 +17,7 @@ import { GpSpecModal } from './gp_spec_modal';                 // 운용사 명�
 import { CompanyProfileModal } from './company_profile_modal'; // 투자기업 기업개요(S1_30) — 투자기업정보(통합)의 행 상세
 import { MgmtFeeDetailModal } from './mgmt_fee_detail_modal';   // 관리보수보고 상세조회(S1_43) — 지급일자 링크
 import { DueDiligChecklistModal } from './due_dilig_checklist_modal'; // 투자금실사보고서 체크리스트(S1_40) — 실사일자 링크
-import { noteHeader, foldGroups } from './grid_header_note';   // 컬럼 헤더 옆 ⚠검토필요 마커 + 2단 그룹헤더(ColumnSpec note/group 소비처)
+import { foldGroups } from './grid_header_note';   // 2단 그룹헤더(ColumnSpec group 소비처)
 import { linksDetail } from './schemas/detail_link';   // detail 링크 술어 정본(소비처 3곳 공유)
 import { UNITS, DEFAULT_UNIT, isUnit, toUnit, amountHeader } from './schemas/unit';
 import type { Unit } from './schemas/unit';
@@ -178,11 +177,11 @@ function MiniBars({ data, color }: { data: number[]; color: string }) {
 /* KpiBadge는 grid_frame.tsx(GridFrame SSOT)에서 import — 인라인 정의 제거(apfs-grid 양식 이관) */
 
 /* 제거 가능한 필터 칩 — 값만 표시(항목명 접두사 없음, 2026-09-09 통일: typed 페이지 골드 규약과 일치).
-   항목명은 title(호버)·aria-label로 회수해 의미 손실을 상쇄한다. 값은 데이터→MT 마스킹. 태그형(value 없음)은 라벨=값 토큰이라 라벨을 그대로 표시. */
+   항목명은 title(호버)·aria-label로 회수해 의미 손실을 상쇄한다. 태그형(value 없음)은 라벨=값 토큰이라 라벨을 그대로 표시. */
 function FilterPill({ label, value, onRemove }: { label: string; value?: string; onRemove: () => void }) {
   return (
     <span title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: "5px 8px 5px 11px", borderRadius: 9, fontSize: 12.5, background: "color-mix(in srgb, var(--primary) 10%, transparent)" }}>
-      {value ? <MT>{value}</MT> : <span>{label}</span>}
+      {value ? <>{value}</> : <span>{label}</span>}
       <button onClick={onRemove} aria-label={label + " 필터 제거"} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: "transparent", color: "inherit", minWidth: 24, minHeight: 24, padding: 0, margin: "-5px -4px -5px 0" }}>
         <Icon name="x" size={13} stroke={2.4} />
       </button>
@@ -361,7 +360,7 @@ const DETAIL_MODALS: Record<DetailPopup, (p: { onClose: () => void; row: Row }) 
   mgmtFeeDetail: MgmtFeeDetailModal,
   dueDiligChecklist: DueDiligChecklistModal,
 };
-/* 링크 셀 title(동작 힌트) — 값은 절대 넣지 않는다(마스크 경계) */
+/* 링크 셀 title(동작 힌트) — 값은 절대 넣지 않는다 */
 const DETAIL_HINT: Record<DetailPopup, string> = {
   monthlyReport: '월간보고 상세 보기',
   gpSpec: '운용사 명세 보기',
@@ -371,7 +370,7 @@ const DETAIL_HINT: Record<DetailPopup, string> = {
 };
 
 /* 셀 안 링크 — 값 클릭으로 상세 팝업 진입. occasional_report_manage.tsx의 LinkCell 복사 관례.
-   ⚠ `title`엔 동작 힌트만 담는다 — 값을 넣으면 마스크 ON일 때 툴팁으로 실데이터가 샌다(마스크 경계는 툴팁까지).
+   ⚠ `title`엔 동작 힌트만 담는다.
    ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다.
    외관: primary + 600, 평상시 밑줄 없음 / hover에만 밑줄(목업 `.linktxt`). */
 function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
@@ -380,7 +379,7 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
       type="button" title={hint} onClick={onClick}
       className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
       style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      <MT>{value}</MT>
+      {value}
     </button>
   );
 }
@@ -391,8 +390,6 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
    컬럼 수준 계약으로 푼다. 원문도 StatusBadge 격인 `cfmTag()` 를 정의만 해 두고 쓰지 않는다 —
    이 셀은 select 만 그린다(배지와 함께 그리면 같은 값이 두 번 나온다).
 
-   ⚠ 값은 마스킹하지 않는다. select 의 표시값은 **선택 상태**이고 가리면 무엇이 선택됐는지 알 수 없어
-     컨트롤이 무의미해진다(StatusBadge 를 안 가리는 것과 같은 이유 — "축은 두고 데이터는 가린다").
    ⚠ 폰트는 inline 으로 준다 — preflight:false 라 select 가 UA 기본(13.3px Arial)으로 튄다.
    ⚠ Chrome UA 때문에 height 만으로는 안 맞는다 — lineHeight 를 함께 준다([[form-control-height-38-line-height-trap]]). */
 function InlineSelectCell({ value, options, label, onChange }: {
@@ -418,7 +415,6 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   /* editable = 등록 가능 스키마(fields 보유). 툴바 규약의 분기 하나를 이것이 결정한다(2026-09-11 사용자 결정):
      등록이 있으면 combo(split) 버튼 하나로 합치고, 등록이 없으면 종전처럼 kebab(⋯) 단독. */
   const editable = schema.fields.length > 0;
-  const masked = useMask();   // Excel 우측정렬 숫자 셀의 마스킹 시 값을 0으로(실값 비노출)
   const apiRef = useRef<GridApi<Row> | null>(null);
   const [rows, setRows] = useState<Row[]>(() => makeRows(schema, 23));
   const [selCount, setSelCount] = useState(0);   // AG Grid 선택 행 수(수제 Set 선택 대체)
@@ -475,7 +471,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     const n = k.column && k.value != null
       ? filtered.filter((r) => String((r as Record<string, unknown>)[k.column!]) === k.value).length
       : filtered.length;
-    return <KpiBadge key={k.label} icon={k.icon} color={k.color} label={k.label} value={mn(String(n)) + " 건"} />;
+    return <KpiBadge key={k.label} icon={k.icon} color={k.color} label={k.label} value={String(n) + " 건"} />;
   });
 
   // ── AG Grid 연결 ──
@@ -496,7 +492,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     [schema, filterValues]);
 
   // ── 스키마 주도 컬럼 정의 ──
-  // 특수 컬럼(name=2줄 · trend=스파크라인)만 전용 cellRenderer, 그 외는 Cell 재사용(마스킹 내장).
+  // 특수 컬럼(name=2줄 · trend=스파크라인)만 전용 cellRenderer, 그 외는 Cell 재사용.
   // 마지막 '관리' 컬럼은 editable일 때만 — 더블클릭 수정과 동일하게 수정 모달을 연다.
   const columnDefs = useMemo<(ColDef<Row> | ColGroupDef<Row>)[]>(() => {
     // 남는 그리드 폭을 채울 stretch 컬럼 = 주 식별/텍스트 컬럼(마지막 left-text, 또는 name).
@@ -512,8 +508,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           cellStyle: { display: "flex", flexDirection: "column", justifyContent: "center" },
           cellRenderer: (p: ICellRendererParams<Row>) => (
             <div className="min-w-0" style={{ lineHeight: 1.25 }}>
-              <div className="font-semibold" style={{ fontSize: 13.5 }}><MT>{p.data?.name}</MT></div>
-              <div className="text-muted-foreground" style={{ fontSize: 12 }}><MT>{p.data?.category}</MT></div>
+              <div className="font-semibold" style={{ fontSize: 13.5 }}>{p.data?.name}</div>
+              <div className="text-muted-foreground" style={{ fontSize: 12 }}>{p.data?.category}</div>
             </div>
           ),
         };
@@ -523,14 +519,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           field: "trend", headerName: c.label, width: 120, minWidth: 120, sortable: false,   // 스파크라인 — 내용폭 측정이 좁으니 하한 고정
           cellDataType: false,   // 값은 number[](스파크라인) — 커스텀 렌더러라 타입 추론 불필요(AG Grid warning #48 억제)
           cellStyle: { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any },
-          cellRenderer: (p: ICellRendererParams<Row>) => <MT w={40}><MiniBars data={(p.value as number[]) || []} color={p.data?.color || "var(--chart-1)"} /></MT>,
+          cellRenderer: (p: ICellRendererParams<Row>) => <><MiniBars data={(p.value as number[]) || []} color={p.data?.color || "var(--chart-1)"} /></>,
         };
       }
       const right = c.align === "right";
       return {
         field: c.key as any,   // 스키마 동적 키 — Row 정적 타입 밖
         headerName: unitOn && c.type === 'amount' ? amountHeader(c.label, unit) : c.label + (c.unit ? ` (${c.unit})` : ""),
-        ...noteHeader<Row>(c.note),   // 목업 `!` 마커 — 선언(ColumnSpec.note)만 있고 안 그려지던 자리
         /* 셀 안 select 가 초점을 가진 동안에는 그리드가 키를 가로채지 않는다 —
            안 막으면 ↑↓ 가 옵션 변경 대신 셀 이동이 되어 마우스 없이는 값을 못 바꾼다. */
         ...(c.inlineSelect ? { suppressKeyboardEvent: (p: SuppressKeyboardEventParams<Row>) => (p.event.target as HTMLElement | null)?.tagName === 'SELECT' } : {}),
@@ -548,7 +543,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
            ② attachFrom 컬럼(제목 등) — 값 뒤에 첨부 확장자 칩을 덧붙인다(첨부 전용 컬럼을 만들지 않는 표현 규약).
               값(텍스트)은 min-w-0 + ellipsis로 줄고, 칩은 shrink-0이라 긴 제목에도 살아남는다.
            ③ inlineSelect 컬럼 — 셀 안 select(S1_43 확정여부). 값을 바꾸면 rows 가 바뀐다.
-           ④ 그 외 — 공용 Cell(마스킹 내장) */
+           ④ 그 외 — 공용 Cell */
         cellRenderer: c.detail
           ? (p: ICellRendererParams<Row>) => (linksDetail(c, p.value)
               ? <LinkCell value={String(p.value ?? "")} hint={DETAIL_HINT[c.detail!]} onClick={() => { if (p.data) setDetail({ kind: c.detail!, row: p.data }); }} />
@@ -619,11 +614,11 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
   // Excel(.xlsx) 내보내기 — SheetJS. 스키마 컬럼을 동적 추출(스파크라인 trend는 값 없음 → 제외), 현재 필터(filtered) 반영.
   // 화면 우측정렬(align:'right') 숫자 컬럼만 숫자 셀(t:'n'+z)로 기록 → Excel 자동 우측정렬·실데이터 연동 시 계산 가능.
-  // 그 외(text/code/date/status·center 정렬)는 화면처럼 텍스트 셀(좌측). 마스크 ON이면 숫자 셀 값을 0으로 비노출.
+  // 그 외(text/code/date/status·center 정렬)는 화면처럼 텍스트 셀(좌측).
   // ※ Excel은 center 정렬을 스타일 없이 못 내므로(커뮤니티 xlsx 한계) center 숫자 컬럼은 텍스트(좌측) 유지가 최선.
   const exportExcel = () => {
     const cols = schema.columns.filter((c) => c.key !== 'trend');
-    const cell = (v: any) => mn(typeof v === 'number' ? v.toLocaleString() : String(v ?? ''));
+    const cell = (v: any) => String(typeof v === 'number' ? v.toLocaleString() : String(v ?? ''));
     /* 숫자서식은 **그 값의 실제 소수 자릿수**를 따른다 — 고정 '#,##0.0' 으로 두면 단위 환산으로
        생긴 2자리 값(억원 12.35)이 엑셀에서 12.4 로 반올림돼 화면과 파일이 달라진다
        (2026-09-16 Codex 7R P2). toUnit 은 최대 2자리를 만든다. */
@@ -638,7 +633,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     const header = cols.map((c) => (unitOn && c.type === 'amount' ? amountHeader(c.label, unit) : c.label + (c.unit ? ` (${c.unit})` : '')));
     const body = filtered.map((r) => cols.map((c) => {
       const v = (r as any)[c.key];
-      return isNum(c, v) ? (masked ? 0 : conv(c, v)) : cell(v);
+      return isNum(c, v) ? (conv(c, v)) : cell(v);
     }));
     const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
     // 숫자 셀에 화면 포맷과 일치하는 숫자서식(z) 부여 (행: 헤더 다음=1부터)
@@ -661,10 +656,10 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
-  // 행 복사 — 스키마 컬럼(스파크라인 trend 제외)을 TSV로. 마스크 ON이면 mn()으로 실값 비노출(엑셀과 동일 계약).
+  // 행 복사 — 스키마 컬럼(스파크라인 trend 제외)을 TSV로.
   const copyRow = (row: Row) => {
     const line = schema.columns.filter((c) => c.key !== 'trend')
-      .map((c) => mn(String((row as any)[c.key] ?? ''))).join('\t');
+      .map((c) => String((row as any)[c.key] ?? '')).join('\t');
     navigator.clipboard?.writeText(line).then(
       () => toast.success('행을 복사했습니다'),
       () => toast.error('복사에 실패했습니다'));
@@ -712,10 +707,10 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav("main")}>메인으로</Button>}
       kpis={schema.hideKpis ? undefined : countKpiNodes ? <>{countKpiNodes}</> : (schema.hideMetrics || !genericMetrics) ? undefined : (<>
         <KpiBadge icon="trending" color="var(--chart-1)" label="평균 변동률"
-          value={mn((avgUp ? "+" : "-") + Math.abs(avgChange).toFixed(1)) + "%"}
+          value={String((avgUp ? "+" : "-") + Math.abs(avgChange).toFixed(1)) + "%"}
           valueColor={avgUp ? "var(--success-text)" : "var(--danger-text)"} />
         <KpiBadge icon="wallet" color="var(--accent)" label="합계 금액"
-          value={"₩" + mn(Math.round(sumAmount / 100).toLocaleString()) + "억"} />
+          value={"₩" + String(Math.round(sumAmount / 100).toLocaleString()) + "억"} />
       </>)}
       toolbarLeft={selCount > 0 ? null : (
         <>
@@ -738,7 +733,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         )}
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); }} />
       </>}
-      footerLeft={'총 ' + mn(String(totalForCount)) + '개 중 ' + mn(String(shown)) + '개 항목 표시 중'}
+      footerLeft={'총 ' + String(totalForCount) + '개 중 ' + String(shown) + '개 항목 표시 중'}
       footerCenter={view === "list" && page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -816,14 +811,14 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                 <div className="flex items-center gap-2.5">
                   <ColorChip icon={r.icon} color={r.color} size={36} iconSize={18} />
                   <div className="min-w-0">
-                    <div className="font-semibold" style={{ fontSize: 13.5 }}><MT>{r.name}</MT></div>
-                    <div className="text-muted-foreground" style={{ fontSize: 12 }}><MT>{r.category}</MT></div>
+                    <div className="font-semibold" style={{ fontSize: 13.5 }}>{r.name}</div>
+                    <div className="text-muted-foreground" style={{ fontSize: 12 }}>{r.category}</div>
                   </div>
                 </div>
                 {!schema.hideMetrics && genericMetrics && (
                   <>
                     <div className="flex items-center justify-between">
-                      <span className="tabular font-bold" style={{ fontSize: 15 }}>{mn(r.amount.toLocaleString())}</span>
+                      <span className="tabular font-bold" style={{ fontSize: 15 }}>{String(r.amount.toLocaleString())}</span>
                       <DeltaBadge value={r.change} />
                     </div>
                     <StatusBadge tone={statusTone(r.status)} label={r.status} size="sm" />

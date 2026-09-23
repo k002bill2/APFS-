@@ -3,11 +3,10 @@
    헤더(제목+권한 칩+메타 한 줄) → 요약 스트립(변경유형·권한·변경 건수) → 변경된 메뉴 권한(추가/회수 카드)
    → 적용 대상(동일 권한 보유자) → 처리 정보(2열 라벨/값) → 안내 카드. 편집 액션 없음(조회 전용).
    무채색 규약(사용자 결정) — 캔버스의 초록/빨강 헤더·태그·+/− 아이콘은 쓰지 않는다. 추가/회수는 카드 제목 글자로,
-   회수된 리프는 취소선으로 구분한다. 색이 남는 곳은 목록 화면과 같은 변경유형 StatusBadge 하나뿐. 동적 텍스트는 MT 마스킹. */
+   회수된 리프는 취소선으로 구분한다. 색이 남는 곳은 목록 화면과 같은 변경유형 StatusBadge 하나뿐. */
 import { useRef, type ReactNode, type CSSProperties } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { MT } from './mask';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { CT_TONE, cntAdd, cntRev } from './permission_history_model';
 import type { HistEntry, HistItem, Holder } from './permission_history_model';
@@ -51,9 +50,9 @@ function PathCrumb({ path, revoked }: { path: string; revoked?: boolean }) {
   return (
     <span className="min-w-0 text-muted-foreground" style={{ fontSize: FS, lineHeight: 1.45 }}>
       {segs.slice(0, -1).map((s, i) => (
-        <span key={i}><MT>{s}</MT><span className="text-caption" aria-hidden style={{ margin: '0 5px' }}>›</span></span>
+        <span key={i}>{s}<span className="text-caption" aria-hidden style={{ margin: '0 5px' }}>›</span></span>
       ))}
-      <span className={'font-semibold text-foreground' + (revoked ? ' line-through' : '')} style={revoked ? { textDecorationColor: 'var(--caption)' } : undefined}><MT>{leaf}</MT></span>
+      <span className={'font-semibold text-foreground' + (revoked ? ' line-through' : '')} style={revoked ? { textDecorationColor: 'var(--caption)' } : undefined}>{leaf}</span>
     </span>
   );
 }
@@ -83,9 +82,9 @@ function ItemCard({ title, items, revoked }: { title: string; items: HistItem[];
 function HolderRow({ h, last }: { h: Holder; last: boolean }) {
   return (
     <div className="flex items-center" style={{ ...ROW, gap: 12, borderBottom: last ? undefined : DIVIDER }}>
-      <span className="inline-flex items-center justify-center shrink-0 rounded-full bg-muted text-muted-foreground font-bold" style={{ width: 28, height: 28, fontSize: 12 }} aria-hidden><MT>{h.name.slice(0, 1)}</MT></span>
-      <span className="font-semibold text-foreground"><MT>{h.name}</MT></span>
-      <span className="ml-auto text-muted-foreground text-right" style={{ fontSize: 13 }}><MT>{h.org}</MT></span>
+      <span className="inline-flex items-center justify-center shrink-0 rounded-full bg-muted text-muted-foreground font-bold" style={{ width: 28, height: 28, fontSize: 12 }} aria-hidden>{h.name.slice(0, 1)}</span>
+      <span className="font-semibold text-foreground">{h.name}</span>
+      <span className="ml-auto text-muted-foreground text-right" style={{ fontSize: 13 }}>{h.org}</span>
     </div>
   );
 }
@@ -97,9 +96,9 @@ export function PermissionHistoryDetailModal({ entry, onClose }: { entry: HistEn
   const revoked = items.filter((i) => i.action === '회수');
   const dlgRef = useRef<DialogHandle>(null);
   const meta: [string, ReactNode][] = [
-    ['행위자', <MT>{d.actor}</MT>],
-    ['발생프로그램', <MT>{d.src}</MT>],
-    ['IP', <span style={{ fontVariantNumeric: 'tabular-nums' }}><MT>{d.ip}</MT></span>],
+    ['행위자', <>{d.actor}</>],
+    ['발생프로그램', <>{d.src}</>],
+    ['IP', <span style={{ fontVariantNumeric: 'tabular-nums' }}>{d.ip}</span>],
   ];
   return (
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -108,9 +107,9 @@ export function PermissionHistoryDetailModal({ entry, onClose }: { entry: HistEn
           <div className="flex flex-col flex-1 min-w-0 pr-8" style={{ gap: 4 }}>
             <div className="flex items-center flex-wrap" style={{ gap: 10 }}>
               <DialogTitle className="shrink-0">권한 변경 상세</DialogTitle>
-              <Chip><MT>{d.preset}</MT></Chip>
+              <Chip>{d.preset}</Chip>
             </div>
-            <DialogDescription className="m-0 text-muted-foreground" style={{ fontSize: 13 }}><MT>{d.ts}</MT> · <MT>{d.actor}</MT> 수행</DialogDescription>
+            <DialogDescription className="m-0 text-muted-foreground" style={{ fontSize: 13 }}>{d.ts} · {d.actor} 수행</DialogDescription>
           </div>
         </DialogHeader>
 
@@ -118,15 +117,15 @@ export function PermissionHistoryDetailModal({ entry, onClose }: { entry: HistEn
           {/* 요약 스트립 — 한눈에 볼 3가지 */}
           <div className="grid bg-muted rounded-[10px]" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', padding: '14px 18px', gap: '12px 16px' }}>
             <Stat label="변경유형"><StatusBadge tone={CT_TONE[d.ctype]} label={d.ctype} size="md" dot={false} /></Stat>
-            <Stat label="권한"><MT>{d.preset}</MT></Stat>
+            <Stat label="권한">{d.preset}</Stat>
             {items.length ? (
               <Stat label="변경 건수">총 {items.length}건 <span className="font-normal text-muted-foreground">· 추가 {cntAdd(d)} · 회수 {cntRev(d)}</span></Stat>
             ) : (
               /* 전이형 — 이전 값은 취소선, 새 값은 굵게(화살표·색 없이) */
               <Stat label="변경 전 · 후">
                 <span className="inline-flex items-baseline flex-wrap" style={{ gap: 8 }}>
-                  <span className="font-normal text-muted-foreground line-through" style={{ textDecorationColor: 'var(--caption)' }}><MT>{d.before ?? '-'}</MT></span>
-                  <MT>{d.after ?? '-'}</MT>
+                  <span className="font-normal text-muted-foreground line-through" style={{ textDecorationColor: 'var(--caption)' }}>{d.before ?? '-'}</span>
+                  {d.after ?? '-'}
                 </span>
               </Stat>
             )}
@@ -155,7 +154,7 @@ export function PermissionHistoryDetailModal({ entry, onClose }: { entry: HistEn
                 </div>
               ))}
               <div className="grid" style={{ gridTemplateColumns: '92px minmax(0,1fr)', gap: 8, gridColumn: '1 / -1' }}>
-                <span className="text-muted-foreground">사유</span><span className="text-foreground min-w-0" style={{ lineHeight: 1.5 }}><MT>{d.reason || '-'}</MT></span>
+                <span className="text-muted-foreground">사유</span><span className="text-foreground min-w-0" style={{ lineHeight: 1.5 }}>{d.reason || '-'}</span>
               </div>
             </div>
           </Section>

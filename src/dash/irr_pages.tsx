@@ -1,7 +1,7 @@
 /* 조기경보 > 가치평가 > IRR 3리프 — 목록(금액 단위 토글) + 셀 클릭 근거 팝업.
    - 투자기업별(계약별) IRR = S2_87 (합계행) + 근거 S2_88 (투자기업 셀)
    - 투자기업별 IRR         = S2_91 (합계행) + 근거 S2_92 (투자기업 셀)
-   - 자펀드별 IRR           = S2_89          + 근거 S2_90 (자펀드 셀) · ⚠검토필요 헤더 2건(미투자자산·IRR)
+   - 자펀드별 IRR           = S2_89          + 근거 S2_90 (자펀드 셀)
    세 화면이 같은 골격(검색 → 단위 → 표 1장 → 셀 팝업)이라 한 컴포넌트를 설정으로 나눠 쓴다.
    데이터는 risk_irr_data.ts(원문 파싱 실측) SSOT.
 
@@ -14,7 +14,6 @@
    - 팝업이 열린 동안 ⌥D 는 끈다(팝업은 자체 엑셀 버튼 — 배경 목록을 내려받지 않게).
    - 조회 전용 — 행 선택·KPI 배지 행·카드뷰 없음. `조회` 버튼 없음(즉시 반영). */
 import React, { useCallback, useMemo, useState } from 'react';
-import { mn, useMask } from './mask';
 import { toast } from './ui/sonner';
 import { DEFAULT_UNIT } from './schemas/unit';
 import type { Unit } from './schemas/unit';
@@ -46,7 +45,6 @@ interface IrrConfig {
 }
 
 function IrrPage({ cfg, onNav }: { cfg: IrrConfig; onNav?: (r: string) => void }) {
-  const masked = useMask();
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
   const [fund, setFund] = useState(cfg.defaultFund);
   const [co, setCo] = useState('');
@@ -67,14 +65,14 @@ function IrrPage({ cfg, onNav }: { cfg: IrrConfig; onNav?: (r: string) => void }
   ];
 
   const exportExcel = () => {
-    exportTables(cfg.label, [{ name: cfg.label, table: cfg.table, rows }], unit, masked);
+    exportTables(cfg.label, [{ name: cfg.label, table: cfg.table, rows }], unit);
     toast.success('Excel로 내보냈습니다');
   };
 
   return (
     <RiskPage group="가치평가" label={cfg.label} route={cfg.route} onNav={onNav}
       filters={filters} onReset={reset} unit={unit} onUnit={setUnit}
-      footerLeft={<span>{`${ym ? `평가년월 ${mn(ym)} · ` : ''}총 ${mn(String(rows.length))}건`}</span>}
+      footerLeft={<span>{`${ym ? `평가년월 ${String(ym)} · ` : ''}총 ${String(rows.length)}건`}</span>}
       onExport={exportExcel} exportEnabled={!open}>
       <ReadGrid table={cfg.table} rows={rows} unit={unit} onLink={onLink} linkLabel={cfg.basis.title} ariaLabel={cfg.label} />
       {open && <IrrBasisModal basis={cfg.basis} onClose={() => setOpen(false)} />}

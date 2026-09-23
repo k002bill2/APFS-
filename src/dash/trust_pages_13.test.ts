@@ -6,11 +6,13 @@ import { resolveSchema } from './schemas';
 import type { TableMeta, Provenance, Row } from './risk_table_meta';
 import { headerSequence, computeTotal, amountText } from './risk_table_meta';
 import { tableSheet } from './risk_excel';
+import { rowPatch } from './trust_manage_rows';
+import { PHYSICAL_FORM, FUND_CODE_FORM, ACCOUNT_FORM, CASHFLOW_FORM, BIG_DISPLAY, MID_DISPLAY, displayCode } from './trust_manage_schemas';
 import {
-  PHYSICAL_TABLE, PHYSICAL_PROVENANCE, BIG_LABEL, MID_LABEL, BIG_OPTIONS, MID_OPTIONS, optionCode, GP_NOTE, UNION_NOTE, GP_PLACEHOLDER,
+  PHYSICAL_TABLE, PHYSICAL_PROVENANCE, BIG_LABEL, MID_LABEL, BIG_OPTIONS, MID_OPTIONS, optionCode, GP_PLACEHOLDER,
   SECURITIES_TABLE, SECURITIES_PROVENANCE, VERIFY_TABLES, VERIFY_PROVENANCE, VERIFY_INVEST_TOTAL, VERIFY_FUND,
   SECURITIES_COMPARE, SECURITIES_COMPARE_PROVENANCE, CODE_TABLE, CODE_PROVENANCE, CODE_GROUPS, CODE_DEFAULT,
-  FUND_CODE_TABLE, FUND_CODE_PROVENANCE, FUND_CODE_SAVE_NOTE, FUND_CODE_ORGS,
+  FUND_CODE_TABLE, FUND_CODE_PROVENANCE, FUND_CODE_ORGS,
 } from './trust_sub_data';
 import {
   MOTHER_CODE_TABLE, MOTHER_CODE_PROVENANCE, MOTHER_CODE_GROUPS, MOTHER_CODE_DEFAULT, ACCOUNT_UPLOAD_PROVENANCE, CASHFLOW_UPLOAD_PROVENANCE,
@@ -18,8 +20,8 @@ import {
 } from './trust_mother_data';
 import {
   YEARLY_PROVENANCE, YEARLY_TABLES, YEARLY_TOTALS_LIT, YEARLY_FOOTNOTES, YEARLY_BASE_YM, BASES, COMB_TYPES, ACCOUNT_TYPES, DETAIL_ROWS, DETAIL_EMPTY,
-  detailTable, detailRows, LEDGER_TABLE, LEDGER_PROVENANCE, LEDGER_UPLOAD_NOTE, INACTIVE_OPTIONS, HIST_SECTIONS, HIST_REQUIRED,
-  MEMBER_ROWS, PAYMENT_ROWS, EXPERT_ROWS, CAREER_ROWS, INVEST_CAREER_ROWS, MEMBER_FORM, EXPERT_FORM, PRINT_DATE, ISSUE_HISTORY, ledgerRows, ledgerShown,
+  detailTable, detailRows, LEDGER_TABLE, LEDGER_PROVENANCE, INACTIVE_OPTIONS, HIST_SECTIONS, HIST_REQUIRED,
+  MEMBER_ROWS, PAYMENT_ROWS, EXPERT_ROWS, CAREER_ROWS, INVEST_CAREER_ROWS, MEMBER_FORM, EXPERT_FORM, PRINT_DATE, ISSUE_HISTORY, ledgerRows, ledgerShown, ledgerPatch,
 } from './brief_data';
 
 /* 부처보고(2) · 수탁보고(11) = 13리프 — 라우트 결선 + **원본 목업 대비 출처 충실성**(risk_pages_17.test.ts 방식).
@@ -62,7 +64,6 @@ function scriptLiteral<T>(html: string, name: string): T {
   // eslint-disable-next-line no-new-func
   return new Function('N', `return ${m![1]};`)(null) as T;
 }
-const noteAttr = (n: { rec: string; dat: string }) => `data-rec="${n.rec}" data-dat="${n.dat}"`;
 /** 화면 표시 문자열(원문 표기와 같은 서식) */
 const shown = (v: unknown) => (v == null ? '-' : typeof v === 'number' ? v.toLocaleString('en-US') : String(v));
 
@@ -136,7 +137,8 @@ describe('원본 대비 헤더', () => {
     ['조합코드', T('S3_99_조합코드_관리.html'), FUND_CODE_TABLE, 0],
     ['모태수탁공통코드', T('S3_102_모태수탁공통코드.html'), MOTHER_CODE_TABLE, 0],
     ['입출금정보', T('S3_106_입출금정보조회.html'), CASHFLOW_TABLE, 0],
-    ['등록원부', B('S4_108_등록원부_관리.html'), LEDGER_TABLE, 0],
+    /* 원문 `관리`(행 버튼 묶음) 칸은 의도적으로 뺀다 — 행 액션은 선택 바가 가진다(2026-09-23 관리형 규약) */
+    ['등록원부', B('S4_108_등록원부_관리.html'), LEDGER_TABLE, 0, (xs) => xs.filter((x) => x !== '관리')],
     /* 연도 컬럼 헤더는 조회기준 라디오 값(원문 기본 선정년도) */
     ['연도별 투자현황', B('03_연도별투자현황/mockup/연도별투자현황_목업.html'), YEARLY_TABLES['선정년도'], 0],
     ['연도별 투자현황 상세', B('04_연도별투자현황상세/mockup/연도별투자현황상세_목업.html'), detailTable('선정년도'), 0],
@@ -319,7 +321,7 @@ describe('합계 행 — 표마다 원문 규칙대로', () => {
   });
 });
 
-/* ─────────────── 검색조건 · 검토필요 마커 · 도메인 규칙 ─────────────── */
+/* ─────────────── 검색조건 · 도메인 규칙 ─────────────── */
 describe('검색조건 — 원문 옵션·기본값', () => {
   it('실물자료: 대분류 8 · 중분류 15 옵션 = 원문 <option> 표기, 운용사 placeholder', () => {
     const html = read(T('S3_98_실물자료_조회__월별_.html'));
@@ -354,21 +356,6 @@ describe('검색조건 — 원문 옵션·기본값', () => {
   });
   it('입출금정보관리 드롭존 안내 = 원문 #dzHint', () => {
     expect(read(T('S3_105_입출금정보관리.html'))).toContain(`id="dzHint">${CASHFLOW_UPLOAD_HINT}</p>`);
-  });
-});
-
-describe('⚠검토필요 마커 — 원문 4건 이식 + 신규 화면 전 컬럼', () => {
-  it('원문 마커 4건(운용사 · 조합 · 저장 · 등록원부업로드) 문구 그대로', () => {
-    const phys = read(T('S3_98_실물자료_조회__월별_.html'));
-    expect(phys).toContain(noteAttr(GP_NOTE));
-    expect(phys).toContain(noteAttr(UNION_NOTE));
-    expect(read(T('S3_99_조합코드_관리.html'))).toContain(noteAttr(FUND_CODE_SAVE_NOTE));
-    expect(read(B('S4_108_등록원부_관리.html'))).toContain(noteAttr(LEDGER_UPLOAD_NOTE));
-    const total = LEAVES.flatMap(([, , f]) => f).reduce((n, f) => n + (read(f).match(/class="review"/g) ?? []).length, 0);
-    expect(total).toBe(4);
-  });
-  it('신규 2리프: 모든 컬럼이 추정 표시(⚠)를 단다', () => {
-    for (const t of [SECURITIES_TABLE, SECURITIES_COMPARE]) expect(t.cols.every((c) => !!c.note), t.id).toBe(true);
   });
 });
 
@@ -431,16 +418,16 @@ describe('화면별 도메인 규칙', () => {
     const note = html.match(/<p class="foot-note" id="notice">([\s\S]*?)<\/p>/)![1].split('<br>');
     expect(note).toEqual([...YEARLY_FOOTNOTES]);
   });
-  it('등록원부 엑셀: 조작 칸(관리)은 빼고 나머지 헤더는 원문 순서', () => {
-    const ws = tableSheet(LEDGER_TABLE, LEDGER_TABLE.rows, null, false);
+  it('등록원부 엑셀: 헤더 = 표 선언 순서(조작 칸 없음)', () => {
+    const ws = tableSheet(LEDGER_TABLE, LEDGER_TABLE.rows, null);
     const head = (XLSX.utils.sheet_to_json(ws, { header: 1 }) as string[][])[0];
-    expect(head).toEqual(LEDGER_TABLE.cols.filter((c) => c.key !== 'mgmt').map((c) => c.label));
+    expect(head).toEqual(LEDGER_TABLE.cols.map((c) => c.label));
   });
   it('엑셀 금액 = 화면 금액(표 선언 unitDigits 자릿수) — 화면 17.6 이면 엑셀도 17.6', () => {
     const tables = [...Object.values(YEARLY_TABLES), ...BASES.map((b) => ({ ...detailTable(b), rows: detailRows(b, COMB_TYPES[0]) })), ...VERIFY_TABLES, CASHFLOW_TABLE];
     let checked = 0;
     for (const t of tables) for (const unit of ['백만원', '억원'] as const) {
-      const ws = tableSheet(t, t.rows, unit, false);
+      const ws = tableSheet(t, t.rows, unit);
       const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' }) as string[][];
       const heads = t.cols.some((c) => c.group) ? 2 : 1;
       const cols = t.cols.filter((c) => !c.noExport);
@@ -473,5 +460,76 @@ describe('화면별 도메인 규칙', () => {
     const kit = read(new URL('./risk_page_kit.tsx', import.meta.url).pathname);
     expect(kit).toMatch(/filters\.filter\(\(f\) => f\.value && f\.chip !== false\)/);
     expect(read(new URL('./registry_ledger.tsx', import.meta.url).pathname)).toMatch(/options: INACTIVE_OPTIONS, chip: applied/);
+  });
+});
+
+/* 관리형 화면 규약(2026-09-23 사용자 결정) — 체크박스 선택 → 선택 바. 목업의 행 버튼·셀 스위치/입력칸 배치를 옮기지 않는다 */
+describe('관리형 선택 바 규약', () => {
+  const MANAGE = ['registry_ledger.tsx', 'trust_fund_code.tsx', 'trust_physical_upload.tsx', 'trust_upload_forms.tsx'];
+  const src = (f: string) => read(new URL(`./${f}`, import.meta.url).pathname);
+  it.each(MANAGE)('%s: 체크박스 선택 + 선택 바 + 더블클릭 수정, 셀 안 조작 UI 없음', (f) => {
+    const s = src(f);
+    expect(s).toMatch(/<ReadGrid [^>]*\bselectable\b/);
+    expect(s).toMatch(/<ReadGrid [^>]*onRowOpen=\{openEdit\}/);
+    expect(s).toMatch(/<ReadGrid [^>]*selectedIds=\{selIds\}/);   // rowData 변경 후 선택 복원(restoreSelection)
+    expect(s).toMatch(/contextActions=\{selActions\}/);
+    expect(s).toMatch(/SelBar\(\{/);
+    expect(s).not.toMatch(/cellRenderers=|<Switch|<Checkbox|<input/);
+  });
+  it('등록원부: 관리 칸 없음 · 활성상태 = 배지 · 선택 바에 단건 3종 + 활성화/비활성화', () => {
+    expect(LEDGER_TABLE.cols.map((c) => c.key)).not.toContain('mgmt');
+    expect(LEDGER_TABLE.cols.find((c) => c.key === 'active')?.kind).toBe('badge');
+    const s = src('registry_ledger.tsx');
+    for (const label of ['수정', '조합원관리', '전문인력관리', '활성화', '비활성화']) expect(s, label).toContain(`>${label}</Button>`);
+  });
+  it('자펀드코드: Y/N = 표시 전용 배지', () => {
+    for (const k of ['sub', 'mo']) expect(FUND_CODE_TABLE.cols.find((c) => c.key === k)?.kind, k).toBe('badge');
+  });
+  it('계좌정보·입출금 관리 = 목록(형제 비교조회 표) + 등록·업로드 툴바', () => {
+    const s = src('trust_upload_forms.tsx');
+    expect(s).toMatch(/table: ACCOUNT_TABLE/);
+    expect(s).toMatch(/table: CASHFLOW_TABLE/);
+    expect(s).toMatch(/\{cfg\.entity\} 등록<\/Button>/);
+    expect(s).toMatch(/>업로드<\/Button>/);
+  });
+  it('폼 → 행 변환: 숫자·금액은 Number, 빈 값은 null(0 으로 바꾸지 않는다)', () => {
+    expect(rowPatch(CASHFLOW_TABLE, { prin: '3,000', pl: '', memo: ' 적요 ', dt: '2026-07-13' }))
+      .toEqual({ prin: 3000, pl: null, memo: '적요', dt: '2026-07-13' });
+  });
+  it('실물자료 폼 분류 옵션 = 행 표시 형식(코드 (한글명)) · 숨은 코드 재계산', () => {
+    for (const r of PHYSICAL_TABLE.rows) {
+      expect(BIG_DISPLAY).toContain(r.big);
+      expect(MID_DISPLAY).toContain(r.mid);
+      expect(displayCode(String(r.big))).toBe(r.bigCode);
+      expect(displayCode(String(r.mid))).toBe(r.midCode);
+    }
+  });
+  it('폼 항목 = 목록 컬럼(창작 항목 없음 · No 제외)', () => {
+    const cases: [TableMeta, { fields: { key: string }[] }][] = [[PHYSICAL_TABLE, PHYSICAL_FORM], [FUND_CODE_TABLE, FUND_CODE_FORM], [ACCOUNT_TABLE, ACCOUNT_FORM], [CASHFLOW_TABLE, CASHFLOW_FORM]];
+    for (const [t, f] of cases) {
+      const cols = new Set(t.cols.map((c) => c.key));
+      for (const x of f.fields) expect(cols.has(x.key), `${t.id}.${x.key}`).toBe(true);
+    }
+  });
+});
+
+describe('등록원부 저장 → 목록 반영 · 팝업 안 표 선택 규약', () => {
+  it('폼 값 → 행 조각: 존속기간 결합 · 금액 숫자 · 빈 값 null', () => {
+    expect(ledgerPatch({ regno: ' 2026-01 ', nm: '신규조합', dur1: '2026-01-01', dur2: '2033-12-31', amt: '5,000,000,000', gpname: '(주)테스트' }))
+      .toEqual({ regno: '2026-01', nm: '신규조합', dur: '2026-01-01 ~ 2033-12-31', amt: 5000000000, gp: '(주)테스트' });
+    expect(ledgerPatch({ regno: 'x', nm: 'y', dur1: '', dur2: '', amt: '', gpname: '' })).toEqual({ regno: 'x', nm: 'y', dur: null, amt: null, gp: null });
+  });
+  it('등록원부 목록: 저장이 행을 교체/선두 추가한다(모달은 id 만 든다)', () => {
+    const s = read(new URL('./registry_ledger.tsx', import.meta.url).pathname);
+    expect(s).toMatch(/onSave=\{saveLedger\}/);
+    expect(s).toMatch(/kind: 'ledger'; mode: 'new' \| 'edit'; id\?: string/);
+  });
+  it('팝업 안 표: 행 버튼 없음 — 체크박스 + 표 위 선택 바', () => {
+    const s = read(new URL('./registry_ledger_modals.tsx', import.meta.url).pathname);
+    const mini = s.slice(s.indexOf('function MiniTable('), s.indexOf('A — 등록원부 입력/수정'));
+    expect(mini).toMatch(/<Checkbox /);
+    expect(mini).toMatch(/건 선택됨/);
+    expect(mini).not.toMatch(/<td[^>]*>\s*<span className="inline-flex gap-1">/);
+    expect(s.match(/<MiniTable /g)?.length).toBe((s.match(/<MiniTable [^>]*onDelete=/g) ?? []).length);
   });
 });

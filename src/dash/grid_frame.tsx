@@ -7,7 +7,6 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Shell } from './shell';
 import { UI } from './components';
-import { MT } from './mask';
 import { Icon } from './icons';
 import { APFS_DATA, MenuStore, useMenuSel } from './data';
 
@@ -101,14 +100,14 @@ function FavStar({ route }: { route: string }) {
   );
 }
 
-/* 헤더 우측 KPI 배지 — generic_list.tsx에서 verbatim 추출(라벨 MT 마스킹 포함).
-   value는 호출자가 이미 mn() 처리해 넘기는 ReactNode(숫자/단위), 라벨은 MT(원본 동일). */
+/* 헤더 우측 KPI 배지 — generic_list.tsx에서 verbatim 추출.
+   value는 호출자가 넘기는 ReactNode(숫자/단위). */
 export function KpiBadge({ icon, color, label, value, valueColor, valueSize }: { icon: string; color: string; label: string; value: React.ReactNode; valueColor?: string; valueSize?: number }) {
   return (
     <div className="flex items-center gap-2.5 py-2 px-3.5 bg-card" style={{ border: "1px solid var(--border)", borderRadius: 12 }}>
       <ColorChip icon={icon} color={color} size={30} iconSize={16} />
       <div className="flex flex-col" style={{ gap: 1, lineHeight: 1.2 }}>
-        <span className="font-semibold text-caption" style={{ fontSize: 11 }}><MT>{label}</MT></span>
+        <span className="font-semibold text-caption" style={{ fontSize: 11 }}>{label}</span>
         <span className="tabular font-extrabold" style={{ fontSize: valueSize ?? 14, color: valueColor || "var(--foreground)" }}><UI.PopNumber value={value} /></span>
       </div>
     </div>

@@ -19,7 +19,6 @@ import { CompanyProfileBody } from './company_profile_model';
 import { SOURCE_COUNTS, CO_NAME } from './company_profile_data';
 import { UNITS, DEFAULT_UNIT } from './schemas/unit';
 import type { Unit } from './schemas/unit';
-import { MT } from './mask';
 
 const { Button, SegTabs, IconBtn } = UI;
 
@@ -51,7 +50,7 @@ export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
               {label}
               <span className="inline-flex items-center rounded-[7px] bg-muted text-foreground"
                 style={{ padding: '4px 9px', fontSize: 12, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                <MT>{value}</MT>
+                {value}
               </span>
             </span>
           ))}

@@ -16,7 +16,6 @@
    - 원문 `.foot-note` 3줄은 화면 안내문이라 표 아래에 둔다(설계 메모 `.note` 는 옮기지 않는다).
    - 원문 [조회] 는 즉시 반영이라 두지 않는다. 엑셀은 푸터 내보내기(⌥D) — 활성 탭 표 그대로. KPI·카드뷰·행 선택 없음. */
 import React, { useMemo, useState } from 'react';
-import { mn, useMask } from './mask';
 import { toast } from './ui/sonner';
 import type { Unit } from './schemas/unit';
 import { RiskPage, TabBar, TabPanel } from './risk_page_kit';
@@ -38,7 +37,6 @@ type TabId = typeof TABS[number]['id'];
 const DEFAULT_UNITS: Record<TabId, Unit> = { yearly: '백만원', detail: '억원' };
 
 function ReportBucheo({ onNav }: { onNav?: (route: string) => void }) {
-  const masked = useMask();
   const [tab, setTab] = useState<TabId>('yearly');
   const [ym, setYm] = useState(YEARLY_BASE_YM);
   const [acc, setAcc] = useState('');
@@ -62,7 +60,7 @@ function ReportBucheo({ onNav }: { onNav?: (route: string) => void }) {
 
   const tabLabel = TABS.find((t) => t.id === tab)!.label;
   const exportExcel = () => {
-    exportTables(`${LABEL}_${tabLabel}`, [{ name: tabLabel, table, rows }], unit, masked);
+    exportTables(`${LABEL}_${tabLabel}`, [{ name: tabLabel, table, rows }], unit);
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -71,7 +69,7 @@ function ReportBucheo({ onNav }: { onNav?: (route: string) => void }) {
       filters={filters} onReset={reset}
       unit={unit} onUnit={(u) => setUnits((p) => ({ ...p, [tab]: u }))}
       unitNote={tab === 'yearly' ? '조합수(개) · 투자배수(배)' : '투자배수(배)'}
-      footerLeft={<span>기준월 {mn(ym || '-')} · {tabLabel} 총 {mn(String(rows.length))}건</span>}
+      footerLeft={<span>기준월 {String(ym || '-')} · {tabLabel} 총 {String(rows.length)}건</span>}
       onExport={exportExcel}>
       <TabBar tabs={TABS.map((t) => ({ id: t.id, label: t.label }))} value={tab} onChange={(id) => setTab(id as TabId)} idBase="yearly-invest" label={LABEL} />
       <TabPanel idBase="yearly-invest" value={tab}>

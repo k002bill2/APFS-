@@ -8,7 +8,7 @@
    출처: docs/mockups/03_자산수탁/*.html 의 `<tbody>`·`<script> DATA/LISTS` 를 2026-09-23 파싱 실측으로 옮겼다.
    값·순서·개수를 바꾸지 않는다(원문이 "데모 행"이라 적은 행도 원문 DATA 에 있는 한 그대로 싣는다 — 합성 금지는
    makeRows 식 생성에 대한 것이다). 원문에 행이 없으면 원문 빈 상태 문구로 둔다. */
-import type { TableMeta, Provenance, Row, ColMeta, ReviewNoteMeta } from './risk_table_meta';
+import type { TableMeta, Provenance, Row, ColMeta } from './risk_table_meta';
 import type { Tone } from './components';
 
 export const TRUST_DIR = 'docs/mockups/03_자산수탁';
@@ -42,10 +42,6 @@ export const BIG_OPTIONS = Object.entries(BIG_LABEL).map(([k, v]) => `[${k}] ${v
 export const MID_OPTIONS = Object.entries(MID_LABEL).map(([k, v]) => `[${k}] ${v}`);
 /** '[B] 채권' → 'B' */
 export const optionCode = (opt: string): string => opt.match(/^\[(\w+)\]/)?.[1] ?? '';
-
-/** 원문 검색필드 검토필요 마커 2건(문구 그대로) */
-export const GP_NOTE: ReviewNoteMeta = { rec: '운용사(GP) 명 목록', dat: '원문 opts 없음 · 실 목록 미확인' };
-export const UNION_NOTE: ReviewNoteMeta = { rec: '조합명 목록 (운용사 선택에 종속)', dat: '원문 opts 없음 · 실 목록 미확인' };
 /** 원문 운용사 select 의 유일한 옵션(빈 값) 표기 */
 export const GP_PLACEHOLDER = '------ G.P ------';
 export const PHYSICAL_BASE_YM = '2026-07';
@@ -80,16 +76,11 @@ export const PHYSICAL_TABLE: TableMeta = {
 
 /* ═══════════════ 신규 — 유가증권관리(업로드) ═══════════════
    원천 목업이 없다. 형제 화면 S3_98(실물자료 조회(월별))의 검색조건·업로드 박스·목록 컬럼을 **그대로 준용**하고,
-   원문 근거가 없는 추정이므로 모든 컬럼에 ⚠검토필요 마커를 단다. 행은 만들지 않는다(빈 상태). */
+   원문 근거가 없는 추정이다. 행은 만들지 않는다(빈 상태). */
 export const SECURITIES_PROVENANCE = NEW_PROVENANCE;
 export const NEW_SCREEN_CAPTION = '신규 화면 — 현행 목업 없음(업무 정의 확인 필요)';
-const newNote = (sibling: string): ReviewNoteMeta => ({
-  rec: '유가증권 화면 항목 정의 확인 필요',
-  dat: `현행 목업 없음 — 형제 화면 ${sibling} 항목을 준용한 추정`,
-});
-export const SECURITIES_NOTE = newNote('실물자료 조회(월별) S3_98');
 export const SECURITIES_TABLE: TableMeta = {
-  id: 'securities', cols: PHYSICAL_COLS.map((c) => ({ ...c, note: SECURITIES_NOTE })), rows: [],
+  id: 'securities', cols: PHYSICAL_COLS.map((c) => ({ ...c })), rows: [],
 };
 
 /* ═══════════════ S3_101 실물검증 조회 → 실물검증비교조회 ═══════════════ */
@@ -157,13 +148,12 @@ export const VERIFY_UNINV: TableMeta = {
 export const VERIFY_TABLES: TableMeta[] = [VERIFY_INVEST, VERIFY_UNINV_TX, VERIFY_UNINV];
 
 /* ═══════════════ 신규 — 유가증권비교조회 ═══════════════
-   원천 목업이 없다. 형제 S3_101 섹션1(투자자산: 운용사·수탁기관·일치여부 2단 헤더)의 컬럼을 그대로 준용한 표 1장,
-   모든 컬럼에 ⚠검토필요 마커. 섹션 제목·합계·행은 만들지 않는다(원문 근거 없음). */
+   원천 목업이 없다. 형제 S3_101 섹션1(투자자산: 운용사·수탁기관·일치여부 2단 헤더)의 컬럼을 그대로 준용한 표 1장.
+   섹션 제목·합계·행은 만들지 않는다(원문 근거 없음). */
 export const SECURITIES_COMPARE_PROVENANCE = NEW_PROVENANCE;
-export const SECURITIES_COMPARE_NOTE = newNote('실물검증 조회 S3_101(투자자산)');
 export const SECURITIES_COMPARE: TableMeta = {
   id: 'securitiesCompare', unitDigits: VERIFY_DIGITS,
-  cols: VERIFY_INVEST_COLS.map(({ total: _t, ...c }) => ({ ...c, note: SECURITIES_COMPARE_NOTE })),
+  cols: VERIFY_INVEST_COLS.map(({ total: _t, ...c }) => ({ ...c })),
   rows: [],
 };
 
@@ -188,8 +178,6 @@ export const CODE_TABLE: TableMeta = {
 /* ═══════════════ S3_99 조합코드 관리 → 자펀드코드 조회 ═══════════════ */
 export const FUND_CODE_PROVENANCE = prov('S3_99_조합코드_관리.html');
 export const FUND_CODE_ORGS = ['농협중앙회'] as const;
-/** 원문 저장 버튼 옆 검토필요 마커(문구 그대로) */
-export const FUND_CODE_SAVE_NOTE: ReviewNoteMeta = { rec: '저장 버튼 (편집형 그리드 저장 동작)', dat: '원문 [하단] 영역 없음 — 편집 그리드 저장을 위해 추론 배치' };
 /** 원문 DATA 4행("1행은 원본 실데이터, 이하 데모 행" — 원문 주석 그대로, 4행 모두 원문 리터럴).
     자조합수탁·모태수탁은 원문 boolean(체크박스) → 'Y'/'N'(Cell 계약 — 엑셀에도 그대로 나간다) */
 export const FUND_CODE_TABLE: TableMeta = {
@@ -198,8 +186,9 @@ export const FUND_CODE_TABLE: TableMeta = {
     { key: 'no', label: 'NO', kind: 'number', align: 'center', width: 64 },
     { key: 'nm', label: '조합이름', kind: 'text', width: 260 },
     { key: 'code', label: '수탁기관조합코드', kind: 'center', width: 200 },
-    { key: 'sub', label: '자조합수탁', kind: 'center', width: 110 },
-    { key: 'mo', label: '모태수탁', kind: 'center', width: 110 },
+    /* 원문 셀 체크박스 → 표시 전용 Y/N 배지(편집은 선택 바 [수정] 모달 — 2026-09-23 관리형 규약) */
+    { key: 'sub', label: '자조합수탁', kind: 'badge', tones: { Y: 'success', N: 'muted' }, width: 110 },
+    { key: 'mo', label: '모태수탁', kind: 'badge', tones: { Y: 'success', N: 'muted' }, width: 110 },
   ],
   rows: [
     { id: 'fc-1', no: 1, nm: '와이앤아처 로컬 리노베이션 투자조합', code: 'CAZ00001', sub: 'Y', mo: 'Y' },

@@ -14,7 +14,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -43,12 +42,12 @@ const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 
 const columnDefs: ColDef<AuditRow>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
-  { field: 'ts', headerName: '일시', width: 176, maxWidth: 176, cellStyle: centerNum, sort: 'desc', valueFormatter: (p) => mn(p.value) },
-  { field: 'actor', headerName: '행위자', width: 120, maxWidth: 140, cellStyle: { ...flexCenter, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
+  { field: 'ts', headerName: '일시', width: 176, maxWidth: 176, cellStyle: centerNum, sort: 'desc', valueFormatter: (p) => String(p.value) },
+  { field: 'actor', headerName: '행위자', width: 120, maxWidth: 140, cellStyle: { ...flexCenter, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <>{p.value}</> },
   { field: 'kind', headerName: '유형', width: 110, maxWidth: 120, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={KIND_TONE[p.value as AuditKind]} label={p.value} size="lg" dot={false} /> },
-  { field: 'action', headerName: '행위', width: 200, minWidth: 150, maxWidth: 260, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'target', headerName: '대상', flex: 1, width: 240, minWidth: 180, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'ip', headerName: 'IP', width: 122, maxWidth: 122, cellStyle: { ...muted, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <MT>{p.value}</MT> },
+  { field: 'action', headerName: '행위', width: 200, minWidth: 150, maxWidth: 260, cellStyle: flexCenter, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'target', headerName: '대상', flex: 1, width: 240, minWidth: 180, cellStyle: flexCenter, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'ip', headerName: 'IP', width: 122, maxWidth: 122, cellStyle: { ...muted, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => <>{p.value}</> },
   { field: 'result', headerName: '결과', width: 92, maxWidth: 92, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={RESULT_TONE[p.value as AuditResult]} label={p.value} size="lg" dot={false} /> },
 ];
 // 조회 전용(audit-read-only) — 행 선택 자체를 두지 않는다(체크박스도, 클릭 선택도).
@@ -87,8 +86,8 @@ const dayWrap: CSSProperties = { width: 'fit-content', minWidth: controlMinWidth
 /* 행 상세 — 읽기 전용 kv(한글 가로 배열 규약) */
 function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void }) {
   const items: [string, ReactNode][] = [
-    ['일시', <MT>{row.ts}</MT>], ['행위자', <MT>{row.actor}</MT>], ['유형', <StatusBadge tone={KIND_TONE[row.kind]} label={row.kind} size="md" dot={false} />],
-    ['행위', <MT>{row.action}</MT>], ['대상', <MT>{row.target}</MT>], ['IP', <MT>{row.ip}</MT>], ['결과', <StatusBadge tone={RESULT_TONE[row.result]} label={row.result} size="md" dot={false} />],
+    ['일시', <>{row.ts}</>], ['행위자', <>{row.actor}</>], ['유형', <StatusBadge tone={KIND_TONE[row.kind]} label={row.kind} size="md" dot={false} />],
+    ['행위', <>{row.action}</>], ['대상', <>{row.target}</>], ['IP', <>{row.ip}</>], ['결과', <StatusBadge tone={RESULT_TONE[row.result]} label={row.result} size="md" dot={false} />],
   ];
   const dlgRef = useRef<DialogHandle>(null);
   return (
@@ -97,7 +96,7 @@ function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void
         <DialogHeader className="px-[46px]">
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">감사로그 상세</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0"><MT>{row.action}</MT></DialogDescription>
+            <DialogDescription className="text-caption truncate min-w-0">{row.action}</DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">
@@ -125,7 +124,6 @@ function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void
 export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
-  const masked = useMask();
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [fResult, setFResult] = useState<typeof RESULT_CHIPS[number]>('');
@@ -144,7 +142,7 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
      visible 로 세면 한 칩을 누른 순간 나머지 칩이 전부 0이 된다. */
   const facet = useMemo(() => filterLogs(DEMO, { from: fFrom, to: fTo, kind: fKind, actor: fActor, kw: fText }), [fFrom, fTo, fKind, fActor, fText]);
   const counts = useMemo(() => resultCounts(facet), [facet]);
-  const chipCount = (r: string) => mn(String(r ? counts[r as AuditResult] ?? 0 : facet.length));
+  const chipCount = (r: string) => String(r ? counts[r as AuditResult] ?? 0 : facet.length);
   const onRowDoubleClicked = useCallback((e: RowDoubleClickedEvent<AuditRow>) => { if (e.data && !e.rowPinned) setDetailId(e.data.id); }, []);
   const onCellKeyDown = useCallback((e: CellKeyDownEvent<AuditRow>) => {
     if ((e.event as KeyboardEvent | null)?.key !== 'Enter' || !e.data) return;
@@ -167,7 +165,7 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
 
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
-    const body = visible.map((r) => EXPORT_COLS.map((c) => (masked ? '' : c.get(r))));
+    const body = visible.map((r) => EXPORT_COLS.map((c) => (c.get(r))));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '대상' || c.header === '행위' ? 30 : 16 }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '감사로그');
@@ -194,7 +192,7 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
           {RESULT_CHIPS.map((r) => <FilterChip key={r || 'all'} active={fResult === r} onClick={() => setFResult(r)} count={chipCount(r)}>{r || '전체'}</FilterChip>)}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -206,7 +204,7 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(DEMO.length)) + '건 중 ' + mn(String(visible.length)) + '건 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(DEMO.length) + '건 중 ' + String(visible.length) + '건 표시 중'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div>

@@ -1,6 +1,6 @@
 ---
 name: apfs-aggrid
-description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규약 — 공유 테마 apfsTheme, 2단 그룹헤더(ColGroupDef)·pinned 합계행·행 선택(단일/다중선택 — 체크박스로만 on/off, 행 본문 클릭 선택 없음)·외부필터(Community)·더블클릭 수정·Excel(SheetJS) 내보내기·셀 마스킹. 정본 예시는 "모태펀드 조성·출자 현황표"(asset_funding.tsx). AgGridReact·컬럼정의·pinned행·합계행·정렬·엑셀 내보내기·셀 렌더러 작업 시 사용(바깥 양식 골격은 apfs-grid). Use when building or editing the AgGridReact table body itself (columns, theme, pinned rows, sorting, excel export, cell rendering).
+description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규약 — 공유 테마 apfsTheme, 2단 그룹헤더(ColGroupDef)·pinned 합계행·행 선택(단일/다중선택 — 체크박스로만 on/off, 행 본문 클릭 선택 없음)·외부필터(Community)·더블클릭 수정·Excel(SheetJS) 내보내기. 정본 예시는 "모태펀드 조성·출자 현황표"(asset_funding.tsx). AgGridReact·컬럼정의·pinned행·합계행·정렬·엑셀 내보내기·셀 렌더러 작업 시 사용(바깥 양식 골격은 apfs-grid). Use when building or editing the AgGridReact table body itself (columns, theme, pinned rows, sorting, excel export, cell rendering).
 ---
 
 # apfs-aggrid Skill
@@ -60,33 +60,11 @@ const columnDefs: (ColDef<Row> | ColGroupDef<Row>)[] = [
 ```
 - **2단 헤더**: `ColGroupDef` + `children` + `marryChildren: true`(그룹 열 묶음 유지). 그룹 라벨 `headerClass`(예: `apfs-grp-co`/`apfs-grp-in`)는 **현재 CSS 규칙이 없는 placeholder 훅**(=시각 효과 없음). 톤 분리가 필요하면 `aggrid_shared.css`에 `.apfs-grp-*` 규칙을 직접 추가하라.
 - **첫 열 고정**: 구분/연도 등 행 식별 열은 `pinned: 'left'`.
-- **숫자 셀**: `valueFormatter: numFmt`(마스킹·콤마·소수 내장 — 공유 `fmt`는 정수=콤마/비정수=소수1자리, **자체 포매터 재구현 금지**), `cellStyle: numStyle(strong)`, `type: 'rightAligned'`. ⚠️ `numStyle(strong)`은 **셀마다 호출되는 함수를 반환**한다(정적 스타일 객체 아님) — 0=muted·pinned/strong=bold·tabular-nums 자동.
-
-### 헤더에 ⚠검토필요 마커 달기 (2026-09-12 `occasional_report_manage`에서 정립)
-규약 정본은 [[apfs-grid]]("검토필요 마커") — 여기엔 **AG Grid 배선 함정**만 둔다.
-```tsx
-import { reviewInnerHeader } from './review_marker';
-// 모듈 스코프에서 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid 가 헤더를 통째로 remount 한다.
-// 원문 문구가 역할별로 다르면(S1_04: 심사담당/리스크담당) 하나로 합치지 말고 갈라 만든다.
-const CONFIRM_HEADER: Record<Role, ReturnType<typeof reviewInnerHeader>> = {
-  js: reviewInnerHeader(CONFIRM_NOTE('js')), rs: reviewInnerHeader(CONFIRM_NOTE('rs')),
-};
-{ field: 'jsBy', headerName: '심사담당', width: 146, maxWidth: 146, sortable: true,
-  headerComponentParams: { innerHeaderComponent: CONFIRM_HEADER[role] },      // headerName 은 그대로 SSOT(params.displayName)
-  suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab' }                 // 키보드 도달용
-```
-- **`headerComponent`가 아니라 `headerComponentParams.innerHeaderComponent`** — 전자로 갈아끼우면 정렬 화살표·메뉴를 직접 다시 만들어야 한다.
-- 📌 "React 위임 핸들러는 AG Grid 네이티브 리스너보다 늦어 정렬이 걸린다"는 지적이 Codex 리뷰에서 반복해 나오지만,
-  **실측으로는 재현되지 않는다**(2026-09-12, 클릭 3연타·Enter·Space 각각에서 `aria-sort='none'` 유지, 정렬된 헤더 0개,
-  행 순서 문자열 동일). 다시 지적받으면 코드를 고치기 전에 같은 계측(행 순서 before/after)을 먼저 돌릴 것.
-- ⚠️ 마커 클릭이 헤더로 버블링되면 **정렬이 걸린다** → 트리거 버튼에서 `click`·`pointerdown`·`mousedown`을 `stopPropagation`(`ReviewMarker`에 내장). 헤더 라벨 클릭 정렬은 그대로 살아 있어야 한다(둘 다 실측할 것).
-- ⚠️ **Tab이 마커에 닿지 않는다** — AG Grid가 Tab을 가로채 다음 헤더 셀로 옮긴다(2026-09-12 실측). `suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab'`로 브라우저 기본 순서에 돌려주면 헤더 → 마커 → 다음 마커 → 그리드 본문 순으로 흐른다.
-- ⚠️ 마커를 단 컬럼은 헤더가 길어진다 — `width`/`maxWidth`가 같은 값으로 고정된 컬럼이면 **둘 다** 올린다(124→146). 남는 폭 흡수 컬럼(`maxWidth` 없는 컬럼)이 여전히 잉여를 먹는지 확인.
-- ⚠️ **마스크 ON이면 헤더 스켈레톤 바가 마커를 덮는다** — `aggrid_shared.css`가 `:root[data-mask=on] .ag-header-cell-text::after`로
-  텍스트 노드 전폭에 절대배치 바를 그리는데, innerHeader 마커도 그 안에 산다. 마커는 데이터가 아니라 항상 보여야 하므로
-  트리거에 `position:relative; z-index:1`(`ReviewMarker`에 내장). 검증은 `mask.tsx`의 `_on=true`로 실제 토글해 볼 것 —
-  DOM에서 `data-mask` 속성만 바꾸면 규칙이 잡히지 않아 오탐이 난다(2026-09-12 실측).
+- **숫자 셀**: `valueFormatter: numFmt`(콤마·소수 내장 — 공유 `fmt`는 정수=콤마/비정수=소수1자리, **자체 포매터 재구현 금지**), `cellStyle: numStyle(strong)`, `type: 'rightAligned'`. ⚠️ `numStyle(strong)`은 **셀마다 호출되는 함수를 반환**한다(정적 스타일 객체 아님) — 0=muted·pinned/strong=bold·tabular-nums 자동.
 - AG Grid의 React 커스텀 헤더는 **첫 페인트보다 늦게 붙는다** — 로드 직후 스냅샷하면 헤더 텍스트가 빈 문자열로 보인다(2026-09-12 오탐). 검증 스크립트는 2초 이상 대기 후 질의.
+
+### 검토필요 마커 — 폐기 (2026-09-24)
+2026-09-24: 검토필요 마커(ReviewMarker·note 필드·*_NOTE)는 전부 삭제됐다. 목업의 `.review`/`.rpop` 은 이식하지 않는다(2026-09-12 '이식' 규약 폐기).
 
 ## 그리드 본체 (정본 props)
 ```tsx
@@ -137,15 +115,14 @@ const handleCellContextMenu = (e: CellContextMenuEvent<Row>) => {
 // 렌더: <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 ```
 - **필수 가드**: `e.rowPinned`로 pinned 행 제외. `preventDefaultOnContextMenu`(Community grid옵션)가 브라우저 기본 메뉴를 억제(헤더·빈영역도 억제됨 — 허용 범위).
-- ⚠️ **행 복사는 마스크 ON시 `mn()`으로 실값 비노출**(Excel 내보내기와 동일 계약 — `valueFormatter`를 안 거치는 화면 밖 출력이라 직접 마스킹, 안 그러면 데이터 무결성 위반). 세부·함정은 →[[aggrid-community-context-menu]] 메모리.
+- 세부·함정은 →[[aggrid-community-context-menu]] 메모리.
 
 ## Excel(.xlsx) 내보내기 — SheetJS (community)
-AG Grid Community엔 Excel export가 없어 `xlsx`(SheetJS **@0.18.5**, **쓰기 전용** — `XLSX.read` 미사용 → 알려진 파싱 CVE 비해당)로 직접 생성한다. 화면 2단 헤더(병합 `!merges`)·합계행을 재현하고, **우측정렬 숫자 컬럼은 실제 숫자 셀(`t:'n'` + 숫자서식 `z`)** 로 써서 Excel이 화면과 같게 자동 우측정렬한다(커뮤니티 xlsx는 정렬 '스타일'을 못 쓴다 → 숫자 셀로 정렬을 얻음). **마스크 ON이면 값을 `0`으로 기록**(실값 비노출, 표시 모양은 `z` 서식이 담당). 최소 골격:
+AG Grid Community엔 Excel export가 없어 `xlsx`(SheetJS **@0.18.5**, **쓰기 전용** — `XLSX.read` 미사용 → 알려진 파싱 CVE 비해당)로 직접 생성한다. 화면 2단 헤더(병합 `!merges`)·합계행을 재현하고, **우측정렬 숫자 컬럼은 실제 숫자 셀(`t:'n'` + 숫자서식 `z`)** 로 써서 Excel이 화면과 같게 자동 우측정렬한다(커뮤니티 xlsx는 정렬 '스타일'을 못 쓴다 → 숫자 셀로 정렬을 얻음). 최소 골격:
 ```tsx
-const masked = useMask();                       // ← 마스크 분기(필수). MASK_ON 상수 없음
 const head1 = ['지역구분','출자현황','','회수현황',''];   // 그룹행
 const head2 = ['','건수','금액','건수','금액'];           // 세부행
-const body  = [...rows, TOTAL_ROW].map(r => [r.region, ...numKeys.map(k => masked ? 0 : r[k])]);
+const body  = [...rows, TOTAL_ROW].map(r => [r.region, ...numKeys.map(k => r[k])]);
 const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body]);
 numKeys.forEach((k,j) => body.forEach((_,i) => {     // 숫자 셀에 z 서식
   const a = XLSX.utils.encode_cell({ r: i+2, c: j+1 }); if (ws[a]) ws[a].z = '#,##0';
@@ -205,8 +182,7 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     ```
     - **단일 대상 액션 = `single` 게이트**: 수정·복사·도움말·단계 전이·메일 발송·별개 엔티티 CRUD 등 *한 건에만 뜻이 있는* 모든 버튼과 그 옆 StatusBadge. `{single && <>…</>}` 로 통째 감싼다.
     - **다건 액션 = 바깥**: 삭제·해제등록처럼 N건에 그대로 적용되는 것. `선택 해제`는 항상.
-    - `selActions` 의 첫 자식은 **언제나** `<span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>`, 분기는 `selCount > 0`(툴바도 `toolbarLeft={selCount > 0 ? null : …}`).
-      ⚠ `generic_list.tsx` 만 이 건수를 `mn()` 없이 쓴다(드리프트, 무해) — bespoke 는 `mn()` 쪽으로 통일한다.
+    - `selActions` 의 첫 자식은 **언제나** `<span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>`, 분기는 `selCount > 0`(툴바도 `toolbarLeft={selCount > 0 ? null : …}`).
   - **다건 삭제는 게이트 필터형이다.** 행마다 삭제 게이트가 있는 화면(하위 메뉴 없을 때만·메뉴 미연결만·배정 사용자 0명만)에서:
     ```tsx
     const requestDeleteRows = (targets: Row[]) => {
@@ -234,7 +210,7 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     - ✗ `setSelected(true)` 만으로 단일 복원하면 반대로 기존 체크에 **더해져** 2건이 된다. 둘 다 틀리므로 헬퍼를 쓴다.
     - **선택 상태는 `selIds: string[]` 하나로 든다** — `selId = selIds[0] ?? null`, `selCount = selIds.length` 는 파생. id 와 카운트를 별도 state 로 두면 한쪽만 비우는 경로가 생긴다(`code_manage` 가 코드구분 전환 때 실제로 그랬다: 선택 0인데 선택 바가 떠 있고 벌크 삭제가 조용히 no-op).
 - **단계/상태 배지 셀**: `StatusBadge size="lg" dot={false}`(13px, 앞 점 없음 — 배지가 촘촘히 반복되는 열).
-- **엑셀**: 2단 헤더 병합·리프 키를 손으로 적지 말고 `flattenForExcel(columnDefs)`(골드 로컬 헬퍼, `ColGroupDef` 순회 → `head1/head2/keys/merges`)로 **columnDefs에서 자동 산출**. 마스크 시 숫자 0·텍스트 ''.
+- **엑셀**: 2단 헤더 병합·리프 키를 손으로 적지 말고 `flattenForExcel(columnDefs)`(골드 로컬 헬퍼, `ColGroupDef` 순회 → `head1/head2/keys/merges`)로 **columnDefs에서 자동 산출**.
 - 읽기전용 명세는 [[apfs-spec-popup]]. (카드뷰 토글 규약은 2026-09-11 폐기 — 리스트 뷰 단일 표현.)
 
 ## master-detail 좌 그리드 = 라디오 (2026-09-15 `code_manage.tsx` 실측)
@@ -259,12 +235,6 @@ const onGroupSelection = useCallback((e: SelectionChangedEvent<Row>) => {
 `.ag-row-selected`를 `querySelectorAll`로 세면 **한 행이 2건으로 잡힌다** — AG Grid가 체크박스(선택) 열을 `.ag-pinned-left-cols-container`에, 나머지를 `.ag-center-cols-container`에 **따로 렌더**하므로 같은 행의 조각이 양쪽에 하나씩 존재한다. 이걸 모르면 멀쩡한 단일선택을 "중복 선택 버그"로 오진하고 없는 버그를 고치게 된다.
 - 세는 법: `new Set([...els].map(r => r.getAttribute('row-id'))).size` — 또는 애초에 DOM 대신 `api.getSelectedRows().length`.
 - 같은 이유로 "선택된 행의 셀 텍스트"를 집을 때도 pinned 쪽 조각이 먼저 잡혀 **빈 문자열**이 나온다(`.ag-center-cols-container` 안에서 찾을 것).
-
-## 마스킹 ("축은 두고 데이터는 가린다")
-- 마스크 API(SSOT): `import { mn, MT, useMask } from './mask';`. **`MASK_ON` 같은 상수 export는 없다** — 화면 표시는 `mn()`/`<MT>`가, 분기 판단은 훅 `const masked = useMask();`가 담당. 전역 토글은 `mask.tsx`의 `_on` 한 줄(현재 `true`).
-- 숫자 셀: `valueFormatter: numFmt` — `mn()` 내장(자동 마스킹). 텍스트 셀: cellRenderer에서 `<MT>{value}</MT>`.
-- **비마스킹**: 헤더·그룹명·단위·StatusBadge·축(연도 등)·KPI 라벨은 가리지 않는다.
-- ⚠️ **Excel 등 화면 밖 출력은 `valueFormatter`를 안 거치므로 직접 마스킹**해야 한다(아래) — 안 그러면 마스크 ON인데도 파일에 실값이 새어나간다(데이터 무결성 위반).
 
 ## 검증
 - `npm run build`(exit 0) + `npm test`(스키마 zod 26개 green) + 기존 그리드(generic_list 등) 무변경 회귀.

@@ -9,7 +9,7 @@
          목업 기본값 `2026-04 ~ 2026-04`은 **적용하지 않는다** — 9행 중 1행만 남아 첫 화면이 빈약해진다.
          빈 문자열 = 열린 경계(apfs-datepicker 함정).
        ⚠ 행 컬럼과 미연동인 항목(모펀드·계정구분·담당자)은 `noop` 캡션만 두고 `passes`에 넣지 않는다.
-         담당자는 원천에 옵션·샘플 값이 없어 옵션을 **지어내지 않는다**(빈 목록 + 검토필요 마커).
+         담당자는 원천에 옵션·샘플 값이 없어 옵션을 **지어내지 않는다**(빈 목록).
    - 목록 그리드 → AG Grid 단일 헤더(apfs-aggrid). **합계행 없음**(금액 컬럼이 없는 엔티티) ·
      **행 선택 없음**(다건 액션이 없는 조회 화면) → selbar도 없다.
    - 확정여부 → **셀 안 네이티브 `<select>`**(목업 `.gsel` 그대로, 행별 aria-label 동일).
@@ -18,10 +18,8 @@
        → 목업은 별도 화면 `S1_06_01_월간보고.html`로 이동하지만 **그 화면은 이번 변환 범위 밖**이라
          이동 대상이 없다. 가짜 상세 모달을 만들지 않고 toast로 한계를 알린다(아래 '한계').
    - KPI 배지 행 → **미포함**(사용자 결정). 카드뷰 토글·`sub` 캡션·명세 팝업도 없다.
-   - 엑셀 → SheetJS(단일 헤더 · 액션 컬럼 '상세조회' 제외 · 마스크 시 실값 비노출)
+   - 엑셀 → SheetJS(단일 헤더 · 액션 컬럼 '상세조회' 제외)
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **전수 이식**했다 — 목업 원문 3건: 검색 2건(담당자·보고구분) + 그리드 헤더 1건(확정여부).
-     공용 `review_marker.tsx`, 규약은 apfs-grid 스킬.
 
    한계·가정(결정 기록)
    - 상세 화면(S1_06_01) 미포함 → 상세 진입 3경로 모두 toast 안내로 끝난다. 상세 모달을 위조하지 않았다.
@@ -30,15 +28,12 @@
    - '보고서' 열은 첨부파일명 표시 전용이다(목업 설계메모: "클릭 이동 없음") → 링크가 아니다.
    - 확정여부 컬럼에 `suppressKeyboardEvent`를 **브리프 명세 외로 1건 추가**했다: React 18은 합성 이벤트를
      루트 컨테이너에서 디스패치하므로 `onKeyDown`의 `stopPropagation`이 AG Grid의 셀 **네이티브** 리스너보다
-     늦다. 그대로 두면 select에 초점이 있을 때 ↑↓가 값 변경 대신 셀 이동으로 가로채여 키보드로 값을 못 바꾼다.
-     헤더 Tab을 `suppressHeaderKeyboardEvent`로 빼는 것과 같은 탈출구다(런타임 확인 필요 항목).
-   - 행 폭: 10컬럼 + 긴 조합명이라 `fitGridWidth`에서 텍스트 컬럼은 ellipsis로 잘린다(컬럼 리사이즈로 보완).
-     마스크 경계 때문에 `tooltipField`는 두지 않는다(툴팁으로 실값이 샌다). */
+     늦다. 그대로 두면 select에 초점이 있을 때 ↑↓가 값 변경 대신 셀 이동으로 가로채여 키보드로 값을 못 바꾼다. (런타임 확인 필요 항목).
+   - 행 폭: 10컬럼 + 긴 조합명이라 `fitGridWidth`에서 텍스트 컬럼은 ellipsis로 잘린다(컬럼 리사이즈로 보완). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -49,8 +44,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker, reviewInnerHeader } from './review_marker';
-import type { ReviewNote } from './review_marker';
 
 const { Button, IconBtn, StatusBadge, FilterChip } = UI;
 
@@ -108,28 +101,19 @@ const openDetail = () => toast('월간보고 상세는 별도 화면(S1_06_01)�
 
 /* ──────────────────────────────
    컬럼 정의 — 목업 헤더 순서·집합 그대로(단일 헤더):
-     No · 운용사 · 자펀드 · 보고년월 · 보고구분 · 보고서 · 수정일시 · 확정여부(⚠) · 상세조회 · 조합상태
+     No · 운용사 · 자펀드 · 보고년월 · 보고구분 · 보고서 · 수정일시 · 확정여부 · 상세조회 · 조합상태
    ⚠ 좌측 고정은 No만 — 다른 컬럼에 `pinned`를 주면 컬럼이 좌측 영역으로 끌려와 목업 순서가 깨진다.
    ⚠ 합계행·행 선택 컬럼 없음(금액 컬럼이 없고 다건 액션도 없다).
 ────────────────────────────── */
 const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
-
-/* ⚠검토필요 메모 — 목업 `S1_06_정기보고.html`의 `data-rec`/`data-dat` 원문 그대로(3건).
-   설계 메모라 마스킹·엑셀 대상이 아니다. */
-const CONFIRM_NOTE: ReviewNote = { rec: '확정 · 미확정', dat: "comp=셀렉트박스 · 샘플엔 '확정'만 · '미확정'은 추론" };
-const FILTER_NOTES: Record<'mgr' | 'rt', ReviewNote> = {
-  mgr: { rec: '담당자 목록(사용자 마스터 연동)', dat: '원천에 옵션·샘플 값 없음 — 실 목록 미확인' },
-  rt: { rec: '월간보고서 외 반기/연간 등', dat: "원천 옵션 미기재 · 샘플 데이터엔 '월간보고서'만 존재" },
-};
 /* 모듈 스코프에 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid가 헤더를 통째로 remount한다 */
-const CONFIRM_HEADER = reviewInnerHeader(CONFIRM_NOTE);
 
 /* 텍스트 셀(운용사·자펀드) — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다 */
-const textCell = (p: { value: string }) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span>;
-/* 날짜성/라벨 값은 mn() — ⚠ null 가드가 **mn보다 먼저**다(mn(null)은 문자열 'null'이 된다) */
-const mnFmt = (p: { value: unknown }) => (p.value == null ? '' : mn(p.value));
+const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
+/* 날짜성/라벨 값 — null 이면 빈 셀 */
+const mnFmt = (p: { value: unknown }) => (p.value == null ? '' : String(p.value));
 
 /* 확정여부 셀 — 목업 `.gsel` 네이티브 select. 보고 내역이 있는 행만 렌더된다.
    ⚠ 높이 30px: `lineHeight`와 `minHeight`를 함께 줘야 Chrome UA 메트릭에서 어긋나지 않는다.
@@ -180,19 +164,15 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void):
      넓은 표라 `fitGridWidth`를 쓰면 전 컬럼이 선언 폭 아래로 눌려 보고년월·수정일시·확정여부·상세조회 30셀이 잘렸다
      (2026-09-12 코디네이터 런타임 실측). 내용 맞춤이면 그리드가 프레임보다 넓어져 AG Grid 내부 가로 스크롤이 생기고 잘림은 0이다
      (apfs-aggrid "넓은 다열 테이블" 규약). 이 컬럼만 상한 520(더 긴 파일명은 truncate).
-     ⚠ 첨부파일명 표시 전용(클릭 이동 없음). 불릿 `• `은 장식이라 비마스킹, 파일명은 <MT>. */
+     ⚠ 첨부파일명 표시 전용(클릭 이동 없음). */
   { field: 'file', headerName: '보고서', width: 180, minWidth: 150, maxWidth: 520, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value
-      ? <span className="min-w-0 truncate">{'• '}<MT>{p.value}</MT></span>
+      ? <span className="min-w-0 truncate">{'• '}{p.value}</span>
       : <span style={{ color: 'var(--muted-foreground)' }}>보고 내역이 없습니다.</span>) },
   { field: 'updatedAt', headerName: '수정일시', width: 180,
     cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: mnFmt },
-  /* 확정여부 — 헤더에 ⚠마커(목업 원문). 셀은 보고 내역이 있는 행만 select. */
+  /* 확정여부 — 셀은 보고 내역이 있는 행만 select. */
   { field: 'confirmed', headerName: '확정여부', width: 120, cellStyle: flexMid,
-    headerComponentParams: { innerHeaderComponent: CONFIRM_HEADER },
-    /* Tab을 AG Grid 헤더 내비게이션에서 빼 브라우저 기본 순서로 넘긴다 — 안 하면 헤더 안의 ⚠마커 버튼에
-       키보드로 도달할 수 없다(AG Grid가 Tab을 가로채 다음 헤더 셀로 이동). */
-    suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab',
     /* 셀 안 select에 초점이 있을 때는 AG Grid 키 처리를 전부 끈다 — ↑↓가 값 변경 대신 셀 이동으로
        가로채이는 것을 막는다(합성 이벤트 stopPropagation으로는 못 막는다, 파일 상단 '한계'). */
     suppressKeyboardEvent: (p) => (p.event.target as HTMLElement | null)?.tagName === 'SELECT',
@@ -230,12 +210,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, note, children }: { label: string; noop?: boolean; plain?: boolean; note?: ReviewNote; children: React.ReactNode }) {
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{note && <ReviewMarker {...note} label={label} />}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
       </span>
       {children}
     </Wrap>
@@ -261,7 +241,6 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
   const [rows, setRows] = useState<RegularReportRow[]>(DEMO);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
-  const masked = useMask();
 
   /* 행 패치 — 확정여부 select가 쓴다. useCallback + 함수형 업데이트로 **안정**해야 한다
      (컬럼 정의를 deps []로 고정하므로 불안정 함수를 캡처하면 낡은 값을 붙든다). */
@@ -329,13 +308,13 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음). 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
       const v = c.get(r);
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : v;
+      if (typeof v === 'number') return v;
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '보고서' ? 54 : c.header === '자펀드' || c.header === '운용사' ? 26 : c.header === '수정일시' ? 22 : 12 }));
@@ -360,7 +339,7 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
           {(['', '월간보고서', '반기보고서'] as ('' | ReportKind)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fRt === s} onClick={() => setFRt(s)}>{s || '전체'}</FilterChip>
           ))}
-          {/* 값만 표시(접두사 없음) + × — 운용사·자펀드는 텍스트라 <MT>, 기준년월은 날짜성이라 mn() */}
+          {/* 값만 표시(접두사 없음) + × */}
           {([
             ['운용사', fGp, () => setFGp(''), true],
             ['자펀드', fFund, () => setFFund(''), true],
@@ -368,7 +347,7 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
             ['기준년월 종료', fTo, () => setFTo(''), false],
           ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isText]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {isText ? <MT>{value}</MT> : mn(value)}
+              {isText ? <>{value}</> : String(value)}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -380,7 +359,7 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(filteredRows.length)) + '개 중 ' + mn(String(Math.min(shown, filteredRows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -424,12 +403,12 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
             {/* 담당자 — 원천에 옵션·샘플 값이 없어 옵션을 생성하지 않는다(빈 목록 = '전체'만) */}
-            <DrawerField label="담당자" noop note={FILTER_NOTES.mgr}><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
+            <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
             {/* 기준년월 — 월(YYYY-MM) 범위. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}
             <DrawerField label="기준년월 시작" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}><PeriodPicker mode="month" value={fFrom} onChange={setFFrom} ariaLabel="기준년월 시작" /></div></DrawerField>
             <DrawerField label="기준년월 종료" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}><PeriodPicker mode="month" value={fTo} onChange={setFTo} ariaLabel="기준년월 종료" /></div></DrawerField>
             {/* 보고구분 — 툴바 칩과 같은 state 공유(옵션은 행에서 파생) */}
-            <DrawerField label="보고구분" note={FILTER_NOTES.rt}><DrawerSelect value={fRt} onChange={(v) => setFRt(v as '' | ReportKind)} options={rtOptions} /></DrawerField>
+            <DrawerField label="보고구분"><DrawerSelect value={fRt} onChange={(v) => setFRt(v as '' | ReportKind)} options={rtOptions} /></DrawerField>
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>

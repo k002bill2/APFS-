@@ -56,8 +56,7 @@ function SelectCell({ node }: ICellRendererParams) {
     return () => node.removeEventListener('rowSelected', h);
   }, [node]);
   if (dead) return null;
-  // 접근名은 고정 "행 선택" — 행 식별은 AG Grid 의 행/셀 컨텍스트 낭독에 맡긴다. 첫 컬럼 값을 넣으면 화면은 <MT>/mn() 마스크를
-  // 통과하는데 접근名은 통과하지 않아 마스크 ON 시 SR 이 인명·코드를 읽는다(독립 리뷰 지적).
+  // 접근名은 고정 "행 선택" — 행 식별은 AG Grid 의 행/셀 컨텍스트 낭독에 맡긴다.
   return (
     <div ref={guard} className="apfs-ds-select">
       <Checkbox checked={sel} onCheckedChange={(c) => node.setSelected(c === true)} aria-label="행 선택" />

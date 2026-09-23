@@ -13,7 +13,6 @@
    - ⚠️ 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지 — Theming API와 충돌. */
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
 import type { ValueFormatterParams, CellStyle, AutoSizeStrategy, GridApi } from 'ag-grid-community';
-import { mn } from './mask';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -51,7 +50,7 @@ export const apfsTheme = themeQuartz.withParams({
   headerBackgroundColor: 'var(--grid-header)',  // 토큰으로 명시 고정(fg 4% onto card, Quartz 기본 2%보다 진함) — 명세 팝업 표 헤더와 SSOT 공유. tokens.css의 --grid-header
   wrapperBorderRadius: 0,
   wrapperBorder: false,   // .ag-root-wrapper 외곽 테두리만 제거(2026-09-08) — 컬럼선·행선·헤더선은 유지. 프레임 카드가 테두리 없는 페이지 배경이라 맞춤
-  // 세로 컬럼 구분선 — 헤더·본문 모두. 구조(축)라 마스크와 무관하게 상시 표시. 색은 토큰(라이트/다크 추종).
+  // 세로 컬럼 구분선 — 헤더·본문 모두. 상시 표시. 색은 토큰(라이트/다크 추종).
   columnBorder: { color: 'var(--border)' },
   headerColumnBorder: { color: 'var(--border)' },
   headerColumnBorderHeight: '100%',
@@ -64,8 +63,8 @@ export const apfsTheme = themeQuartz.withParams({
 export const fmt = (n: number): string =>
   Number.isInteger(n) ? n.toLocaleString() : n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-/* 숫자 셀 valueFormatter — mn() 마스킹 통합("축은 두고 데이터는 가린다") */
-export const numFmt = (p: ValueFormatterParams): string => (p.value == null ? '' : mn(fmt(p.value as number)));
+/* 숫자 셀 valueFormatter */
+export const numFmt = (p: ValueFormatterParams): string => (p.value == null ? '' : String(fmt(p.value as number)));
 
 /* 0=muted, 강조/합계행=bold. 색은 var(--token) → 다크 자동추종 */
 export const numStyle = (strong?: boolean) => (p: { value: unknown; node: { rowPinned?: string | null } }): CellStyle => ({

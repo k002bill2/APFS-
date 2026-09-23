@@ -25,13 +25,11 @@
    한계·가정:
    - `mf`(모펀드)는 그리드 컬럼이 아니지만 **등록/수정 폼 1번 항목**이라 행에 왕복 저장한다(목록 표시·필터 대상 아님).
    - 전화번호·비고는 목업 샘플이 공란이라 muted '-'로 표시한다(없는 값 창작 금지).
-   ⚠검토필요 마커 1건 이식 — 수정 모달의 식별번호 라벨(member_info_form_modal.tsx). 목업 검색박스·그리드 헤더엔 0건.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
-import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky·마스크 헤더 바 — 합계행은 없지만 전 그리드 공통)
+import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky — 합계행은 없지만 전 그리드 공통)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, FIT_GRID_WIDTH, DEFAULT_COL_DEF } from './aggrid_theme';
 import { drawerInputStyle as inputStyle } from './schemas/renderers';
@@ -90,32 +88,30 @@ const fixed = (width: number) => ({ width, maxWidth: width, minWidth: width });
 /* 값 없음 표시 — 목업 `<span class="muted">-</span>`(전화번호·비고 공통) */
 const Dash = () => <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
 
-/* 상세조회 셀 — 셀 안 버튼. 라벨 '상세조회'는 액션이라 비마스킹, 대상 조합원명은 sr-only로 덧붙여 행마다 접근名을
-   구분한다(목업 `aria-label="<조합원명> 상세조회"`). UI.Button은 rest props가 없어 aria-label을 못 받으므로 children으로 보강.
-   ⚠ 조합원명은 <MT> — 마스크 경계는 엑셀·툴팁·접근名까지다(마스크 ON이면 이름이 빠지고 '상세조회'만 남는다). */
+/* 상세조회 셀 — 셀 안 버튼. 대상 조합원명은 sr-only로 덧붙여 행마다 접근名을
+   구분한다(목업 `aria-label="<조합원명> 상세조회"`). UI.Button은 rest props가 없어 aria-label을 못 받으므로 children으로 보강. */
 function DetailCell({ row, onDetail }: { row: MemberRow; onDetail: (r: MemberRow) => void }) {
   return (
     <Button variant="outline" size="sm" onClick={() => onDetail(row)}>
-      <span className="sr-only"><MT>{row.name}</MT> </span>상세조회
+      <span className="sr-only">{row.name} </span>상세조회
     </Button>
   );
 }
 
 const makeColumns = (onDetail: (r: MemberRow) => void): ColDef<MemberRow>[] => [
-  /* NO는 축(순번)이라 마스킹하지 않는다(골드 동형) */
   { field: 'no', headerName: 'NO', ...fixed(68), pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'name', headerName: '조합원', width: 200, minWidth: 160, maxWidth: 320, cellStyle: flexCenter,
-    cellRenderer: (p: any) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span> },
-  /* 식별번호(pii) — 값 그대로 노출하지 않도록 <MT>. 툴팁/`tooltipField`는 두지 않는다(마스크 우회) */
+    cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span> },
+  /* 식별번호(pii) */
   { field: 'biz', headerName: '사업자번호/주민번호', ...fixed(170), cellStyle: flexCenter,
-    cellRenderer: (p: any) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span> },
+    cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span> },
   /* 주소가 남는 폭을 흡수한다 — maxWidth 없는 유일한 컬럼 + `FIT_GRID_WIDTH`(목업 `td.addr` min-width 280 반영) */
   { field: 'addr', headerName: '주소', width: 320, minWidth: 280, cellStyle: flexCenter,
-    cellRenderer: (p: any) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span> },
+    cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span> },
   { field: 'tel', headerName: '전화번호', ...fixed(130), cellStyle: flexMid,
-    cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <Dash />) },
+    cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <Dash />) },
   { field: 'memo', headerName: '비고', ...fixed(160), cellStyle: flexCenter,
-    cellRenderer: (p: any) => (p.value ? <MT>{p.value}</MT> : <Dash />) },
+    cellRenderer: (p: any) => (p.value ? <>{p.value}</> : <Dash />) },
   /* 액션 컬럼 — 값이 아니라 정렬 대상이 아니다. field가 없으므로 colId 명시 */
   { colId: 'detail', headerName: '상세조회', ...fixed(120), sortable: false, cellStyle: flexMid,
     cellRenderer: (p: any) => (p.data ? <DetailCell row={p.data} onDetail={onDetail} /> : null) },
@@ -175,7 +171,6 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
-  const masked = useMask();
 
   /* 상세필터 — 목업 검색박스는 모펀드 1항목뿐이고 그리드 컬럼과 미연동이라 state만 둔다(no-op).
      연동 항목이 0개이므로 External Filter를 배선하지 않는다 → 표시 집합 === rows(파일 상단 주석). */
@@ -247,13 +242,13 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음). 마스크 ON이면 숫자 0·텍스트 ''(식별번호·주소 포함) ── */
+  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = rows.map((r) => EXPORT_COLS.map((c) => {
       const v = c.get(r);
-      if (typeof v === 'number') return masked ? 0 : v;
-      return masked ? '' : v;
+      if (typeof v === 'number') return v;
+      return v;
     }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === 'NO' ? 6 : c.header === '주소' ? 44 : c.header === '조합원' ? 28 : 22 }));
@@ -275,14 +270,14 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
          목업 listbar의 `총 N건` 캡션을 건수 컨텍스트로 옮겼다(report_form_manage 동형) */
       toolbarLeft={<>
         <Icon name="filter" size={16} className="text-caption" />
-        <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>조합원 {mn(String(rows.length))}건</span>
+        <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>조합원 {String(rows.length)}건</span>
       </>}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>조합원정보 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '개 중 ' + mn(String(Math.min(shown, rows.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(rows.length) + '개 중 ' + String(Math.min(shown, rows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -352,7 +347,7 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
             <AlertDialogHeader>
               <AlertDialogTitle>조합원 삭제</AlertDialogTitle>
               <AlertDialogDescription>
-                <b className="text-foreground"><MT>{target.name}</MT></b> 조합원 정보를 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.
+                <b className="text-foreground">{target.name}</b> 조합원 정보를 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

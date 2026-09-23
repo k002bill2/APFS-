@@ -7,11 +7,10 @@
    - 원문 `등록` 버튼 → 툴바 독립 버튼 `운용사 정량지표 등록`(apfs-manage-page: 도메인 액션명 그대로, 상세필터 오른쪽·새로고침 왼쪽).
    - 원문 "행 클릭 → 그 운용사구분의 수정 팝업" → **행 더블클릭 · 행에서 Enter**(apfs-aggrid 수정 진입 규약). 행 선택(체크박스)은 두지 않는다 —
      선택으로 실행할 다건 액션이 원문에 없다(apfs-aggrid "선택이 액션을 만들 때만").
-   - 등록/수정 팝업 = gp_quant_indicator_modal.tsx(원문 편집 그리드·행추가/행삭제·입력항목 ⚠검토필요 마커 이식).
+   - 등록/수정 팝업 = gp_quant_indicator_modal.tsx(원문 편집 그리드·행추가/행삭제).
    - 엑셀은 원문에 없지만 전 화면 공통 푸터 내보내기(apfs-grid 푸터 골드)로 목록을 내보낸다. KPI 배지 행 없음. */
 import React, { useCallback, useMemo, useState } from 'react';
 import { UI } from './components';
-import { mn, useMask } from './mask';
 import { toast } from './ui/sonner';
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { RiskPage } from './risk_page_kit';
@@ -28,7 +27,6 @@ const LABEL = '운용사 정량지표 관리';
 type Modal = null | { mode: QuantModalMode; type?: string };
 
 export function GpQuantIndicatorManage({ onNav }: { onNav?: (r: string) => void }) {
-  const masked = useMask();
   const [type, setType] = useState('');
   const [modal, setModal] = useState<Modal>(null);
   const rows = useMemo(() => QUANT_LIST.rows.filter((r) => !type || r.type === type), [type]);
@@ -37,7 +35,7 @@ export function GpQuantIndicatorManage({ onNav }: { onNav?: (r: string) => void 
 
   const filters: FilterSpec[] = [{ label: '운용사 유형', kind: 'select', value: type, onChange: setType, options: MGR_TYPES }];
   const exportExcel = () => {
-    exportTables(LABEL, [{ name: LABEL, table: QUANT_LIST, rows }], null, masked);
+    exportTables(LABEL, [{ name: LABEL, table: QUANT_LIST, rows }], null);
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -45,7 +43,7 @@ export function GpQuantIndicatorManage({ onNav }: { onNav?: (r: string) => void 
     <RiskPage group="자펀드정보" label={LABEL} route={LABEL} onNav={onNav}
       filters={filters} onReset={() => setType('')}
       actions={<Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ mode: 'create' })}>운용사 정량지표 등록</Button>}
-      footerLeft={<span>{`총 ${mn(String(rows.length))}건 · 행을 더블클릭(또는 Enter)하면 그 운용사구분의 정량지표를 수정합니다`}</span>}
+      footerLeft={<span>{`총 ${String(rows.length)}건 · 행을 더블클릭(또는 Enter)하면 그 운용사구분의 정량지표를 수정합니다`}</span>}
       onExport={exportExcel} exportEnabled={modal === null}>
       <ReadGrid table={QUANT_LIST} rows={rows} onRowOpen={onRowOpen} ariaLabel={LABEL} />
       {modal && <GpQuantIndicatorModal mode={modal.mode} preType={modal.type} onClose={() => setModal(null)} />}

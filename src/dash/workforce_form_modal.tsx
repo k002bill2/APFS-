@@ -26,7 +26,6 @@
    PageSchema 가 SSOT다 — 이 파일은 그 fields 를 순회해 렌더만 한다(항목을 여기 다시 적지 않는다). */
 import React from 'react';
 import { UI } from './components';
-import { mn } from './mask';
 import { SchemaField, isComplexControl, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
@@ -172,7 +171,7 @@ export function WorkforceReleaseDialog({ count, onConfirm, onClose }: {
         <AlertDialogHeader>
           <AlertDialogTitle>해제등록 확인</AlertDialogTitle>
           <AlertDialogDescription>
-            선택한 <b className="text-foreground">{mn(String(count))}건</b>의 운용인력을 해제 처리하시겠습니까? 해제일자는 오늘 날짜로 기록됩니다.
+            선택한 <b className="text-foreground">{String(count)}건</b>의 운용인력을 해제 처리하시겠습니까? 해제일자는 오늘 날짜로 기록됩니다.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -198,7 +197,7 @@ export function WorkforceDeleteDialog({ count, onConfirm, onClose }: {
         <AlertDialogHeader>
           <AlertDialogTitle>운용인력변동 삭제</AlertDialogTitle>
           <AlertDialogDescription>
-            선택한 <b className="text-foreground">{mn(String(count))}건</b>을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.
+            선택한 <b className="text-foreground">{String(count)}건</b>을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

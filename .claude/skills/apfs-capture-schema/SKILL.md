@@ -43,6 +43,3 @@ description: 현행시스템 목업 HTML(+`*_spec.json`) 또는 화면 캡처에
 - (complex일 때) 전용 페이지 escalate 안내
 - data.ts path/registry 등록 diff
 
-## 마스킹 규칙 (CRITICAL)
-- type=code/pii/text → 자동 MT 마스킹. mn은 숫자 전용. default도 MT(평문 누출 금지).
-- 표 헤더·단위·탭·StatusBadge·날짜 라벨은 비마스킹.

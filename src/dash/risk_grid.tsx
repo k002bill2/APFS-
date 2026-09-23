@@ -1,10 +1,9 @@
 /* risk_grid.tsx — TableMeta(risk_table_meta.ts) → AG Grid 읽기전용 표. 조기경보 기업정보·자펀드정보·가치평가 15개 typed 화면 공용.
 
-   왜 공용인가: 15개 화면의 표 29장이 같은 셀 규약(정렬·마스킹·단위 환산·배지·합계행·검토필요 헤더)을 쓴다.
+   왜 공용인가: 15개 화면의 표 29장이 같은 셀 규약(정렬·단위 환산·배지·합계행)을 쓴다.
    화면마다 ColDef 를 손으로 쓰면 같은 규약이 29벌 복제돼 한쪽만 고쳐진다 — 규약은 여기 한 곳이다.
 
-   셀 규약(apfs-aggrid "마스킹" · "관리형 페이지 그리드 규약"):
-   - text/center = `<MT>`(텍스트 마스킹) · date/amount/number = `mn()` · badge·헤더·합계 라벨은 비마스킹(축)
+   셀 규약(apfs-aggrid "관리형 페이지 그리드 규약"):
    - amount 는 원 단위 저장값을 **렌더 경계에서만** 선택 단위로 환산한다(schemas/unit.ts `formatUnit` SSOT)
    - 값 없음(null) = muted `-` · 합계행의 빈 칸('') = 빈 셀(원문 colspan 영역)
    - 행 선택 없음 — 조회 전용 화면이라 선택이 만드는 액션이 없다(apfs-aggrid "조회 전용 화면은 rowSelection 자체를 두지 않는다")
@@ -13,18 +12,16 @@
    열 합이 프레임보다 좁으면 flex 가 채우고(빈 거터 0), 넓으면 minWidth 하한에서 가로 스크롤이 생긴다(잘림 없음).
    ⚠ AG Grid v35 Theming API: 레거시 CSS import 금지. 객체 prop 은 전부 참조 안정(계약 ⑥⑦). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 보정 + autoHeight sticky 헤더(공유)
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ColGroupDef, CellStyle, CellClickedEvent, CellKeyDownEvent, CellValueChangedEvent, ICellRendererParams, GetRowIdParams, RowDoubleClickedEvent, GridApi, GridReadyEvent, SelectionChangedEvent, SelectionColumnDef } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, CellStyle, CellClickedEvent, CellKeyDownEvent, CellValueChangedEvent, ICellRendererParams, GetRowIdParams, RowDoubleClickedEvent, GridApi, GridReadyEvent, SelectionChangedEvent, SelectionColumnDef, RowDataUpdatedEvent } from 'ag-grid-community';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
-import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { reviewInnerHeader } from './review_marker';
+import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { toUnit, fromUnit } from './schemas/unit';
 import type { Unit } from './schemas/unit';
-import type { ColMeta, ColKind, TableMeta, Row, Cell, ReviewNoteMeta } from './risk_table_meta';
+import type { ColMeta, ColKind, TableMeta, Row, Cell } from './risk_table_meta';
 import { groupRuns, computeTotal, amountText } from './risk_table_meta';
 
 const { StatusBadge } = UI;
@@ -50,7 +47,7 @@ const textWidth = (s: string, px = 14) => [...s].reduce((w, ch) => w + (WIDE.tes
 
 type UnitDigits = TableMeta['unitDigits'];
 
-/** 표시 문자열(마스킹 전) — 엑셀이 아닌 화면 전용. digits = 표가 선언한 단위별 소수 자릿수(없으면 공용 formatUnit) */
+/** 표시 문자열 — 엑셀이 아닌 화면 전용. digits = 표가 선언한 단위별 소수 자릿수(없으면 공용 formatUnit) */
 export function displayText(c: ColMeta, v: Cell, unit: Unit | null, digits?: UnitDigits): string {
   if (v == null) return '-';
   if (typeof v === 'string') return v;
@@ -60,8 +57,8 @@ export function displayText(c: ColMeta, v: Cell, unit: Unit | null, digits?: Uni
 }
 
 function minWidthOf(c: ColMeta, rows: readonly Row[], unit: Unit | null, digits?: UnitDigits): number {
-  /* 좌우 패딩 + 정렬 아이콘 자리 (+ ⚠검토필요 마커 자리 — 마커 단 헤더는 길어진다, apfs-aggrid "마커 컬럼 폭") */
-  const head = textWidth(c.label, 13.5) + 44 + (c.note ? 26 : 0);
+  /* 좌우 패딩 + 정렬 아이콘 자리 */
+  const head = textWidth(c.label, 13.5) + 44;
   const body = Math.max(0, ...rows.map((r) => textWidth(displayText(c, r[c.key], unit, digits)) + (c.kind === 'badge' ? 50 : c.link ? 58 : 38)));
   /* c.width 는 하한(원문이 넓게 잡은 칸) — 내용이 더 길면 내용이 이긴다(잘림 금지). 상한 420 = 긴 주소·조합명 캡 */
   return Math.round(Math.min(420, Math.max(c.width ?? 0, KIND_MIN[c.kind], head, body)));
@@ -69,32 +66,22 @@ function minWidthOf(c: ColMeta, rows: readonly Row[], unit: Unit | null, digits?
 
 const Dash = () => <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
 
-/* ⚠검토필요 헤더 — 렌더마다 새 컴포넌트 타입이면 AG Grid 가 헤더를 remount 한다 → 메모 문구 키로 모듈 캐시 */
-const NOTE_HEADERS = new Map<string, ReturnType<typeof reviewInnerHeader>>();
-const noteHeader = (n: ReviewNoteMeta) => {
-  const k = `${n.rec}\u0000${n.dat}`;
-  if (!NOTE_HEADERS.has(k)) NOTE_HEADERS.set(k, reviewInnerHeader(n));
-  return NOTE_HEADERS.get(k)!;
-};
-
 /* 팝업 트리거 셀 — fund_early_warning.tsx YieldCell 과 같은 계약:
    탭 스톱은 `.ag-cell` 하나(자식에 tabIndex/role 금지), ARIA 는 포커스를 받는 gridcell 에 useEffect 로 싣는다. */
 function LinkCell({ p, label }: { p: ICellRendererParams<Row>; label: string }) {
   const cell = p.eGridCell;
   const v = p.value as Cell;
-  const masked = useMask();
   useEffect(() => {
     if (!cell || v == null) return;
     cell.setAttribute('aria-haspopup', 'dialog');
-    /* 마스크 ON 이면 접근名에 실값을 싣지 않는다 — <MT> 가 화면만 가리고 aria-label 로 새는 것을 막는다 */
-    cell.setAttribute('aria-label', `${masked ? '' : `${String(v)} — `}${label} 팝업 열기 (클릭 또는 Enter)`);
+    cell.setAttribute('aria-label', `${`${String(v)} — `}${label} 팝업 열기 (클릭 또는 Enter)`);
     return () => { cell.removeAttribute('aria-haspopup'); cell.removeAttribute('aria-label'); };
-  }, [cell, v, label, masked]);
+  }, [cell, v, label]);
   if (v == null) return <Dash />;
   return (
     <span title={`${label} (클릭 또는 Enter)`} className="inline-flex items-center gap-1 min-w-0 font-semibold"
       style={{ cursor: 'pointer', color: 'var(--primary)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
-      <span className="min-w-0 truncate"><MT>{String(v)}</MT></span>
+      <span className="min-w-0 truncate">{String(v)}</span>
       <Icon name="external" size={13} stroke={2.2} className="shrink-0" />
     </span>
   );
@@ -121,7 +108,7 @@ function renderer(c: ColMeta, unit: Unit | null, linkLabel: string, custom?: (ro
         return <StatusBadge tone={c.tones?.[String(v)] ?? c.tone ?? 'muted'} label={String(v)} size="lg" dot={false} />;
       case 'text':
       case 'center':
-        return <span className="min-w-0 truncate"><MT>{String(v)}</MT></span>;
+        return <span className="min-w-0 truncate">{String(v)}</span>;
       default: {
         const zero = v === 0;
         const box = c.editable && !pinned
@@ -129,7 +116,7 @@ function renderer(c: ColMeta, unit: Unit | null, linkLabel: string, custom?: (ro
           : undefined;
         return (
           <span className="tabular-nums" style={{ color: color ?? (zero ? 'var(--muted-foreground)' : undefined), ...box }}>
-            {mn(displayText(c, v, unit, digits))}
+            {String(displayText(c, v, unit, digits))}
           </span>
         );
       }
@@ -158,14 +145,10 @@ function leafDef(c: ColMeta, rows: readonly Row[], unit: Unit | null, linkLabel:
       valueParser: (p) => fromUnit(p.newValue, unit ?? '원'),
     } as Partial<ColDef<Row>> : {}),
     /* 조작 칸(입력칸·체크박스·스위치·행 버튼) — Tab 을 그리드 셀 이동이 아니라 브라우저 기본 이동에 맡겨
-       셀 안 컨트롤에 키보드로 닿게 한다(검토필요 헤더 suppressHeaderKeyboardEvent 와 같은 해법).
+       셀 안 컨트롤에 키보드로 닿게 한다.
        셀 안 입력칸에서는 모든 키를 입력칸에 준다 — 안 그러면 방향키·Home/End 가 그리드 셀 이동이 돼 포커스를 뺏는다
        (React onKeyDown 의 stopPropagation 은 그리드의 네이티브 리스너보다 늦어 막지 못한다 — 2026-09-23 실측) */
     ...(custom?.[c.key] ? { suppressKeyboardEvent: (p) => p.event.key === 'Tab' || (p.event.target as HTMLElement | null)?.tagName === 'INPUT' } as Partial<ColDef<Row>> : {}),
-    ...(c.note ? {
-      headerComponentParams: { innerHeaderComponent: noteHeader(c.note) },
-      suppressHeaderKeyboardEvent: (p) => p.event.key === 'Tab',
-    } as Partial<ColDef<Row>> : {}),
   };
 }
 
@@ -206,13 +189,15 @@ export interface ReadGridProps {
   onSelect?: (rows: Row[]) => void;
   /** 선택 컬럼 정의(미지정 = SELECTION_COL). 헤더 텍스트가 필요한 화면만 LABELED_SELECTION_COL 등 모듈 상수를 넘긴다 */
   selectionCol?: SelectionColumnDef;
+  /** 선택 SSOT(페이지 state 의 선택 id) — rowData 가 바뀐 뒤(수정·활성 전이·필터) restoreSelection 으로 체크를 되살린다 */
+  selectedIds?: readonly string[];
   /** 그리드 API(선택 해제 등) — 페이지가 ref 로 받는다 */
   apiRef?: React.MutableRefObject<GridApi<Row> | null>;
   /** 칸 전용 렌더러(열 키별). 참조 안정(useMemo) 필수 — 바뀌면 컬럼 정의가 다시 만들어진다 */
   cellRenderers?: CellRenderers;
 }
 
-export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세', onEdit, onRowOpen, ariaLabel, selectable, onSelect, selectionCol = SELECTION_COL, apiRef, cellRenderers }: ReadGridProps) {
+export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세', onEdit, onRowOpen, ariaLabel, selectable, onSelect, selectionCol = SELECTION_COL, selectedIds, apiRef, cellRenderers }: ReadGridProps) {
   const data = rows ?? table.rows;
   const columnDefs = useMemo(() => buildColumnDefs(table, table.rows, unit, linkLabel, cellRenderers), [table, unit, linkLabel, cellRenderers]);
   const pinned = useMemo(() => {
@@ -251,6 +236,10 @@ export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세
   }, [onEdit]);
   const onGridReady = useCallback((e: GridReadyEvent<Row>) => { if (apiRef) apiRef.current = e.api; }, [apiRef]);
   const onSelectionChanged = useCallback((e: SelectionChangedEvent<Row>) => { onSelect?.(e.api.getSelectedRows()); }, [onSelect]);
+  /* 선택 복원 — 페이지 state 가 SSOT(apfs-aggrid "선택 배선": multiRow 복원은 공유 헬퍼 하나로만). ref 로 최신 id 를 읽는다 */
+  const selRef = useRef(selectedIds);
+  selRef.current = selectedIds;
+  const onRowDataUpdated = useCallback((e: RowDataUpdatedEvent<Row>) => { if (selRef.current) restoreSelection(e.api, selRef.current); }, []);
 
   return (
     /* apfs-grid-min: 1~2행 autoHeight 그리드의 AG Grid 기본 최소 본문높이(150px)를 48px 로 낮춘다(aggrid_shared.css) */
@@ -270,6 +259,7 @@ export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세
         rowSelection={selectable ? ROW_SELECTION : undefined}
         selectionColumnDef={selectable ? selectionCol : undefined}
         onSelectionChanged={selectable ? onSelectionChanged : undefined}
+        onRowDataUpdated={selectable && selectedIds ? onRowDataUpdated : undefined}
         onGridReady={apiRef ? onGridReady : undefined}
         stopEditingWhenCellsLoseFocus
         localeText={locale}

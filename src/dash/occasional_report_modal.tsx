@@ -12,7 +12,6 @@
       어느 행의 보고서를 열어도 같은 내용이 표시된다. 실데이터 연동 시 `row`로 조회하도록 바꾼다. */
 import React from 'react';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 
 const { Button, StatusBadge } = UI;
@@ -124,7 +123,7 @@ function MetaList({ items }: { items: [string, string, boolean][] }) {
         <React.Fragment key={k}>
           <dt className="m-0 font-bold text-muted-foreground" style={{ minWidth: 92 }}>{k}</dt>
           <dd className="m-0 text-caption">:</dd>
-          <dd className="m-0 min-w-0" style={{ overflowWrap: 'anywhere' }}>{isDate ? mn(v) : <MT>{v}</MT>}</dd>
+          <dd className="m-0 min-w-0" style={{ overflowWrap: 'anywhere' }}>{isDate ? String(v) : <>{v}</>}</dd>
         </React.Fragment>
       ))}
     </dl>
@@ -139,7 +138,7 @@ function MetaInline({ items }: { items: [string, string, boolean][] }) {
         <div key={k} className="flex items-baseline gap-1.5">
           <dt className="m-0 font-bold text-muted-foreground">{k}</dt>
           <dd className="m-0 text-caption">:</dd>
-          <dd className="m-0">{isDate ? mn(v) : <MT>{v}</MT>}</dd>
+          <dd className="m-0">{isDate ? String(v) : <>{v}</>}</dd>
         </div>
       ))}
     </dl>
@@ -188,11 +187,11 @@ function SummaryTable() {
         <tbody>
           <tr>
             <th scope="row" className={`${TD} bg-[color:var(--grid-header)] font-bold text-center align-middle`} style={{ ...CELL, width: 92 }}>제목</th>
-            <td className={TD} style={CELL}><MT>{RPT_TITLE}</MT></td>
+            <td className={TD} style={CELL}>{RPT_TITLE}</td>
           </tr>
           <tr>
             <th scope="row" className={`${TD} bg-[color:var(--grid-header)] font-bold text-center align-middle`} style={CELL}>내용</th>
-            <td className={TD} style={{ ...CELL, whiteSpace: 'pre-wrap', lineHeight: 1.85 }}><MT>{RPT_BODY}</MT></td>
+            <td className={TD} style={{ ...CELL, whiteSpace: 'pre-wrap', lineHeight: 1.85 }}>{RPT_BODY}</td>
           </tr>
         </tbody>
       </table>
@@ -215,8 +214,8 @@ function FileTable() {
         <tbody>
           {RPT_FILES.map((f) => (
             <tr key={f.name}>
-              <td className={TD} style={CELL}><MT>{f.name}</MT></td>
-              <td className={`${TD} text-center tabular`} style={CELL}>{mn(f.at)}</td>
+              <td className={TD} style={CELL}>{f.name}</td>
+              <td className={`${TD} text-center tabular`} style={CELL}>{String(f.at)}</td>
               <td className={`${TD} text-center`} style={CELL}>O</td>
             </tr>
           ))}
@@ -235,7 +234,7 @@ export function OccasionalReportModal({ onClose }: { onClose: () => void }) {
           {/* 제목+대상명은 한 래퍼로 묶는다 — DialogHeader가 justify-between이라 안 묶으면 대상명이 우측 끝으로 밀린다 */}
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">조합 운용현황 수시보고서</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0"><MT>{RPT_TITLE}</MT></DialogDescription>
+            <DialogDescription className="text-caption truncate min-w-0">{RPT_TITLE}</DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">

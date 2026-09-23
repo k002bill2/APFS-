@@ -10,7 +10,6 @@
      보존한다 — 원문에 없는 값을 행에서 합성해 채우면 목업 충실도가 깨진다. */
 import { useState, useRef } from 'react';
 import { UI } from './components';
-import { MT } from './mask';
 import type { Unit } from './schemas/unit';
 import { CompanyProfileBody, UnitSeg, CO_NAME } from './company_profile_model';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
@@ -30,7 +29,7 @@ export function CompanyProfileModal({ row, onClose }: { row?: Record<string, unk
           {/* 제목+대상명은 한 래퍼로 — DialogHeader가 justify-between이라 안 묶으면 대상명이 우측 끝으로 밀린다 */}
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">기업개요</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0"><MT>{target}</MT></DialogDescription>
+            <DialogDescription className="text-caption truncate min-w-0">{target}</DialogDescription>
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">

@@ -12,9 +12,8 @@
      `· 데이터 연동 후 적용` 캡션을 단다(무신호 무효 필터 금지 — apfs-detail-filter).
    - 원문 `조회` 버튼은 없다(필터 즉시 반영). `엑셀` 은 푸터 내보내기 아이콘 + ⌥D(활성 탭 표를 그대로).
    - 행 선택 없음(조회 전용 — 원문의 행 하이라이트는 액션이 없는 표시 전용이었다) · KPI 배지 행·카드뷰 없음.
-   - ⚠검토필요 마커: S2_69 `CRI기준일자` 헤더 1건(원문 유지 마커, 문구 그대로). 원문 스캐폴딩·설계메모는 옮기지 않는다. */
+   - 원문 스캐폴딩·설계메모는 옮기지 않는다. */
 import React, { useMemo, useState } from 'react';
-import { mn, useMask } from './mask';
 import { toast } from './ui/sonner';
 import { RiskPage, TabBar, TabPanel } from './risk_page_kit';
 import type { FilterSpec } from './risk_page_kit';
@@ -24,7 +23,6 @@ import { NICE_TABS, CREDIT_TABS, GUBUN_OPTIONS, CORP_BASE_DATE } from './risk_co
 import type { CorpTab, Gubun } from './risk_corp_info_data';
 
 function CorpInfoTabsPage({ label, tabs, idBase, onNav }: { label: string; tabs: CorpTab[]; idBase: string; onNav?: (r: string) => void }) {
-  const masked = useMask();
   const [tabId, setTabId] = useState(tabs[0].id);
   const [date, setDate] = useState(CORP_BASE_DATE);
   const [gubun, setGubun] = useState<Gubun>('운용사');
@@ -50,7 +48,7 @@ function CorpInfoTabsPage({ label, tabs, idBase, onNav }: { label: string; tabs:
 
   const hasAmount = tab.table.cols.some((c) => c.kind === 'amount');
   const exportExcel = () => {
-    exportTables(`${label}_${tab.label}`, [{ name: tab.label, table: tab.table, rows }], null, masked);
+    exportTables(`${label}_${tab.label}`, [{ name: tab.label, table: tab.table, rows }], null);
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -58,7 +56,7 @@ function CorpInfoTabsPage({ label, tabs, idBase, onNav }: { label: string; tabs:
     <RiskPage group="기업정보" label={label} route={label} onNav={onNav}
       filters={filters} onReset={reset}
       unitCaption={hasAmount ? '단위: 원' : undefined}
-      footerLeft={<span>{`기준일자 ${date ? mn(date) : '-'} · ${tab.label} 총 ${mn(String(rows.length))}건`}</span>}
+      footerLeft={<span>{`기준일자 ${date ? String(date) : '-'} · ${tab.label} 총 ${String(rows.length)}건`}</span>}
       onExport={exportExcel}>
       <TabBar tabs={tabs.map((t) => ({ id: t.id, label: t.label }))} value={tab.id} onChange={switchTab} idBase={idBase} label={label} />
       <TabPanel idBase={idBase} value={tab.id}>

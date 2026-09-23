@@ -12,16 +12,15 @@
    - 권한 설정 모달(명칭·사용자 구분·설명·사용여부 + 메뉴별 기능 권한 매트릭스) → 전용 `UserPermissionModal`
        (flat 스키마 밖 — 매트릭스). 등록/수정/복사 3모드, 복사는 명칭 뒤 ' (복사)' + 사용자수 0.
    - 매트릭스 메뉴 트리 = LNB 정본(`admin_menu_tree.ts`) — 목업 "제안서 기능구성도" 대신 현행 메뉴 구조표.
-   - 엑셀(목업 없음이지만 리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 마스크 ON이면 텍스트 ''·숫자 0.
-   - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · ⚠검토필요 마커 없음(목업 원문 0건).
+   - 엑셀(목업 없음이지만 리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D.
+   - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음.
    ⚠ 실제 인가/RBAC 이 아니다 — 백엔드 없이 화면 로컬 더미 상태만 바꾼다(브리프). 목업의 설계 메모(.note)·GNB/LNB 는 이식하지 않는다. */
-import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky·마스크 헤더 바)
+import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import { format } from 'date-fns';
 import { UI } from './components';
 import { Icon } from './icons';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -81,16 +80,16 @@ const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 const columnDefs: ColDef<PermRow>[] = [
   { field: 'no', headerName: 'No', width: 64, maxWidth: 64, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'name', headerName: '명칭', width: 170, minWidth: 130, maxWidth: 260, cellStyle: flexCenter,
-    cellRenderer: (p: any) => <span className="font-semibold"><MT>{p.value}</MT></span> },
+    cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
   { field: 'utype', headerName: '사용자 구분', width: 116, maxWidth: 116, cellStyle: flexMid,
     cellRenderer: (p: any) => <UTypeBadge value={p.value} /> },
   /* 설명이 남는 폭을 흡수한다 — flex:1 인 유일한 컬럼(aggrid_theme: autoSizeStrategy 대신 flex) */
-  { field: 'desc', headerName: '설명', flex: 1, width: 300, minWidth: 200, cellStyle: flexCenter, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'by', headerName: '최종수정', width: 112, maxWidth: 112, cellStyle: muted, cellRenderer: (p: any) => <MT>{p.value}</MT> },
-  { field: 'at', headerName: '최종수정일', width: 126, maxWidth: 126, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => mn(p.value) },
+  { field: 'desc', headerName: '설명', flex: 1, width: 300, minWidth: 200, cellStyle: flexCenter, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'by', headerName: '최종수정', width: 112, maxWidth: 112, cellStyle: muted, cellRenderer: (p: any) => <>{p.value}</> },
+  { field: 'at', headerName: '최종수정일', width: 126, maxWidth: 126, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => String(p.value) },
   { field: 'use', headerName: '사용여부', width: 96, maxWidth: 96, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} /> },
   { field: 'users', headerName: '사용자수', width: 96, maxWidth: 96, type: 'rightAligned', cellStyle: { textAlign: 'right', fontVariantNumeric: 'tabular-nums' },
-    valueFormatter: (p) => mn(String(p.value)) },
+    valueFormatter: (p) => String(p.value) },
 ];
 /* 라디오 단일선택 — 모듈 상수(인라인 리터럴은 렌더마다 컬럼 재생성 → 폭 되돌림, apfs-aggrid ⑦) */
 /* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
@@ -155,7 +154,6 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
-  const masked = useMask();
 
   /* 상세필터 — SSOT=개별 state(빈 값=미적용). 항목은 전부 그리드 컬럼 파생(명칭·사용자 구분·사용여부·최종수정일) */
   const [filterOpen, setFilterOpen] = useState(false);
@@ -268,10 +266,10 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
   };
   const refresh = () => { setRows([...DEMO]); clearFilters(); apiRef.current?.deselectAll(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더. 마스크 ON이면 숫자 0·텍스트 '' ── */
+  /* ── Excel(.xlsx) — 단일 헤더 ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
-    const body = visible.map((r) => EXPORT_COLS.map((c) => { const v = c.get(r); return typeof v === 'number' ? (masked ? 0 : v) : masked ? '' : v; }));
+    const body = visible.map((r) => EXPORT_COLS.map((c) => { const v = c.get(r); return typeof v === 'number' ? (v) : v; }));
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === 'No' ? 6 : c.header === '설명' ? 36 : 14 }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '권한관리');
@@ -287,7 +285,7 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
   const selActions = selCount > 0 ? (
     /* 선택 행 컨텍스트 액션(목업 gate: 수정·복사·삭제). 단건 전용은 single 블록 안, 삭제는 다건 공통 */
     <>
-      <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <>
         <UTypeBadge value={single.utype} />
         <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: single.id })}>수정</Button>
@@ -306,10 +304,10 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
       toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="shield-check" size={16} className="text-caption" />
-          <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>권한 {mn(String(visible.length))}건 · 행을 선택하면 수정·복사·삭제</span>
+          <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>권한 {String(visible.length)}건 · 행을 선택하면 수정·복사·삭제</span>
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              <MT>{value}</MT>
+              {value}
               <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
                 <Icon name="x" size={13} stroke={2.4} />
               </button>
@@ -323,7 +321,7 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>권한 등록</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>{'총 ' + mn(String(rows.length)) + '개 중 ' + mn(String(Math.min(shown, visible.length))) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(rows.length) + '개 중 ' + String(Math.min(shown, visible.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -402,9 +400,9 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
               <AlertDialogTitle>권한 삭제</AlertDialogTitle>
               <AlertDialogDescription>
                 {modal.ids.length === 1
-                  ? <>「<b className="text-foreground"><MT>{(rows.find((r) => r.id === modal.ids[0])?.name ?? "")}</MT></b>」 권한을 삭제할까요?</>
-                  : <>선택한 <b className="text-foreground">{mn(String(modal.ids.length))}건</b>의 권한을 삭제할까요?</>}
-                {modal.blocked > 0 && <><br />배정 사용자가 있는 {mn(String(modal.blocked))}건은 제외됩니다.</>}
+                  ? <>「<b className="text-foreground">{(rows.find((r) => r.id === modal.ids[0])?.name ?? "")}</b>」 권한을 삭제할까요?</>
+                  : <>선택한 <b className="text-foreground">{String(modal.ids.length)}건</b>의 권한을 삭제할까요?</>}
+                {modal.blocked > 0 && <><br />배정 사용자가 있는 {String(modal.blocked)}건은 제외됩니다.</>}
                 <br />메뉴별 기능 권한 설정이 함께 삭제되며 복구할 수 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>

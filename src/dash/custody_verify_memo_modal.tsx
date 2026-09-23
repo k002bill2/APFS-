@@ -14,11 +14,9 @@
      (web-a11y 함정 A) 라벨 '내용 *'이 그 역할을 한다. `SchemaField`에 placeholder 슬롯도 없다.
    - 백엔드가 없어 저장은 부모 state(행의 `memos`)에만 반영된다 — 토스트 문구는 목업 원문 그대로.
    - 섹션2(미투자자산 거래)·섹션3(미투자자산)은 원문 샘플이 없다. 두 섹션은 `corp` 슬롯에 종목/계좌번호를
-     넘기지만 **라벨은 목업 팝업 템플릿 그대로 '투자기업' 고정**이다(팝업 템플릿이 섹션별로 갈리지 않는다).
-   - ⚠검토필요 마커는 이 팝업에 없다 — 목업 `.review`는 검색영역 1건뿐이고 팝업 템플릿엔 없다. */
+     넘기지만 **라벨은 목업 팝업 템플릿 그대로 '투자기업' 고정**이다(팝업 템플릿이 섹션별로 갈리지 않는다). */
 import React from 'react';
 import { UI } from './components';
-import { mn, MT } from './mask';
 import { SchemaField } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
@@ -30,7 +28,7 @@ const { Button, SaveButton } = UI;
 /** 팝업 헤더의 검증 대상 — 목업 `.memo-btn`의 data-fund/data-gubun/data-corp 3값 그대로. */
 export interface CustodyMemoCtx {
   fund: string;    // 조합명(data-fund)
-  gubun: string;   // 구분(data-gubun) — 섹션명. 분류 축이라 마스킹 대상 아님
+  gubun: string;   // 구분(data-gubun) — 섹션명
   corp: string;    // 투자기업(data-corp) — 섹션2는 종목, 섹션3은 계좌번호가 이 슬롯에 들어온다
 }
 
@@ -63,8 +61,8 @@ function KvGrid({ items }: { items: KvItem[] }) {
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.v ? '' : 'text-caption'}`}
             style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
-            {/* plain=분류 축(구분)은 비마스킹, 나머지 텍스트는 <MT>. 값 없음은 '-' */}
-            {!o.v ? '-' : o.plain ? o.v : <MT>{o.v}</MT>}
+            {/* 값 없음은 '-' */}
+            {!o.v ? '-' : o.plain ? o.v : <>{o.v}</>}
           </dd>
         </div>
       ))}
@@ -146,8 +144,8 @@ export function CustodyMemoModal({ ctx, history, baseDate, onSave, onClose }: {
                     </tr>
                   ) : history.map((h, i) => (
                     <tr key={h.date + '-' + i}>
-                      <td className={`${TD} text-center tabular`} style={CELL}>{mn(h.date)}</td>
-                      <td className={TD} style={{ ...CELL, overflowWrap: 'anywhere' }}><MT>{h.content}</MT></td>
+                      <td className={`${TD} text-center tabular`} style={CELL}>{String(h.date)}</td>
+                      <td className={TD} style={{ ...CELL, overflowWrap: 'anywhere' }}>{h.content}</td>
                     </tr>
                   ))}
                 </tbody>

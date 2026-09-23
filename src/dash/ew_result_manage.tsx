@@ -17,12 +17,11 @@
    - 합계행·행 선택·페이지네이션·등록 없음 → selbar·pinned 합계·페이저도 없다(목업 동일). KPI 배지 행 미포함(사용자 결정).
    - 엑셀 → SheetJS 워크북 1개 + 시트 2개("생성결과내역"·"재무정보보고"). 단일 헤더라 병합 없음.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커 1건: 생성 확인 다이얼로그 본문(목업 원문 그대로). 섹션2 전월 규칙은 [확인 필요]로 아래 주석에만 기록한다
-     (섹션2 헤더 마커는 2026-09-23 사용자 결정으로 제거).
+   섹션2 전월 규칙은 [확인 필요]로 아래 주석에만 기록한다.
 
    한계·가정(결정 기록)
    - **섹션2 기준년월 = 선택 월의 전월(-1)** — 목업이 상단 2026-07 / 섹션2 2026-06 으로 그렸고 설계메모가
-     "전월 집계인지 하드코딩 오류인지" [확인 필요]로 남겼다. 목업 그대로 전월로 둔다(주석에만 기록 — 화면 마커는 2026-09-23 사용자 결정으로 제거).
+     "전월 집계인지 하드코딩 오류인지" [확인 필요]로 남겼다. 목업 그대로 전월로 둔다(주석에만 기록).
    - **기획서 범위로 한정(2026-09-23 사용자 결정)** — 기획서(통합_화면_구조도_v1.5.xlsx)는 버튼·확인팝업만 정의하고
      처리 효과가 없다 → 생성·확정·마감·마감해제·수정권한처리·전체권한부여·전체권한해제 버튼은 **상태 무관 상시 노출**,
      확인 후 **토스트만**(데이터 불변). 섹션2가 빈 월은 전체권한 버튼만 비활성(대상 없음).
@@ -30,12 +29,10 @@
      재무정보 등록/보고 화면 편집 가능 여부와 어떻게 연동되는지 원문에 없다(목업 설계메모). 여기선 값을 바꾸지 않는다.
    - **더미 데이터는 목업 원문 2건뿐**(섹션1 2026-07 · 섹션2 2026-06) — 그 외 월은 빈 그리드. 값 창작 금지.
    - **데이터는 불변 상수**(월 키로 보관, 백엔드 없음) — 새로고침 버튼은 기준년월을 기본값(2026-07)으로 되돌린다.
-   - 금액이 없는 조회·상태관리 화면이라 단위 표기·단위 토글이 없다(목업 설계메모와 동일 결론).
-   - 마스크 경계 때문에 `tooltipField`는 두지 않는다(툴팁으로 실값이 샌다). 순번·배지·헤더는 가리지 않는다. */
+   - 금액이 없는 조회·상태관리 화면이라 단위 표기·단위 토글이 없다(목업 설계메모와 동일 결론). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정 + autoHeight sticky 헤더(공유)
 import React, { useState, useCallback, useMemo } from 'react';
 import { UI } from './components';
-import { mn, MT, useMask } from './mask';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
@@ -45,8 +42,6 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { PeriodPicker } from './ui/period-picker';
-import { ReviewMarker } from './review_marker';
-import type { ReviewNote } from './review_marker';
 import { EwConfirmDialog } from './ew_result_dialogs';
 import { prevYm } from './ew_result_model';   // 섹션2 기준년월 = 전월(순수함수 — 유닛 테스트 대상)
 
@@ -85,13 +80,6 @@ const REPORT_DEMO: Record<string, GpReportRow[]> = {
 /* 기준년월 기본값 — 목업 `#f-ym` value */
 const BASE_YM = '2026-07';
 
-/* ⚠검토필요 메모 — 설계 메모라 마스킹·엑셀 대상이 아니다.
-   MAKE_NOTE = 목업 425행 `data-rec`/`data-dat` 원문 그대로. */
-const MAKE_NOTE: ReviewNote = {
-  rec: '안내문구 원문 확정 필요 — 비고(O열) 원문 없음',
-  dat: '「생성하시겠습니까?」 (P열 실데이터 샘플)',
-};
-
 /* ──────────────────────────────
    컬럼 정의 — 목업 thead 순서·집합 그대로(단일 헤더 7컬럼 × 2)
    ⚠ 폭 전략 = **flex + minWidth**(`autoSizeStrategy` 없음) — 7컬럼 내용 폭 합이 프레임보다 좁아 내용 맞춤을 쓰면
@@ -108,9 +96,9 @@ const oxBadge = (v: OX | null | undefined) =>
   (v == null ? dashCell : <StatusBadge tone={OX_TONE[v]} label={v} size="lg" dot={false} />);
 const oxCell = (p: { value: OX | null }) => oxBadge(p.value);
 /* 텍스트 셀 — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate */
-const textCell = (p: { value: string }) => <span className="min-w-0 truncate"><MT>{p.value}</MT></span>;
-/* 기준년월 — 행 데이터라 mn() */
-const ymFmt = (p: { value?: string | null }) => (p.value ? mn(p.value) : '-');
+const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
+/* 기준년월 */
+const ymFmt = (p: { value?: string | null }) => (p.value ? String(p.value) : '-');
 
 /* 생성여부 셀 — 배지 + 생성일시. 값은 `make|makeTs` 결합 문자열(valueGetter) — 셀 값이 두 필드를 모두 반영해야
    (데이터 연동 후) 일시만 바뀌어도 AG Grid 델타 갱신이 셀을 다시 그린다. */
@@ -120,13 +108,12 @@ const makeCell = (p: { value: string }) => {
   return (
     <span className="inline-flex items-center gap-1.5 min-w-0">
       {oxBadge((make || null) as OX | null)}
-      {ts && <span className="truncate" style={{ fontSize: 12, color: 'var(--muted-foreground)', fontVariantNumeric: 'tabular-nums' }}>{mn(ts)}</span>}
+      {ts && <span className="truncate" style={{ fontSize: 12, color: 'var(--muted-foreground)', fontVariantNumeric: 'tabular-nums' }}>{String(ts)}</span>}
     </span>
   );
 };
 
 const seqCol = <T,>(): ColDef<T> =>
-  /* 순번은 축이라 비마스킹(mn 미적용) */
   ({ field: 'no' as ColDef<T>['field'], headerName: '순번', width: 72, maxWidth: 72, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) });
 const ymCol = <T,>(): ColDef<T> =>
   ({ field: 'ym' as ColDef<T>['field'], headerName: '기준년월', flex: 0.7, minWidth: 100, width: 100, cellStyle: centerNum, valueFormatter: ymFmt });
@@ -167,33 +154,33 @@ function makeReportCols(openPerm: OpenPerm): ColDef<GpReportRow>[] {
 }
 
 /* ──────────────────────────────
-   Excel — 섹션별 시트 2개(단일 헤더). O/X 는 화면에서도 가리지 않는 배지라 마스크 대상이 아니다.
+   Excel — 섹션별 시트 2개(단일 헤더).
    생성일시는 화면에선 생성여부 셀 안에 붙어 있지만 엑셀에선 **별도 열**로 푼다(한 셀에 섞으면 정렬·필터 불가).
 ────────────────────────────── */
-type XCol<T> = { header: string; get: (r: T) => string | number | null; masked?: boolean; wide?: boolean };
+type XCol<T> = { header: string; get: (r: T) => string | number | null; wide?: boolean };
 const RESULT_X: XCol<EwResultRow>[] = [
   { header: '순번', get: (r) => r.no },
-  { header: '기준년월', get: (r) => r.ym, masked: true },
-  { header: '생성정보', get: (r) => r.info, masked: true, wide: true },
+  { header: '기준년월', get: (r) => r.ym },
+  { header: '생성정보', get: (r) => r.info, wide: true },
   { header: '생성여부', get: (r) => r.make },
-  { header: '생성일시', get: (r) => r.makeTs, masked: true, wide: true },
+  { header: '생성일시', get: (r) => r.makeTs, wide: true },
   { header: '수정여부', get: (r) => r.mod },
   { header: '확정여부', get: (r) => r.cfm },
   { header: '마감여부', get: (r) => r.cls },
 ];
 const REPORT_X: XCol<GpReportRow>[] = [
   { header: '순번', get: (r) => r.no },
-  { header: '기준년월', get: (r) => r.ym, masked: true },
-  { header: '운용사', get: (r) => r.gp, masked: true, wide: true },
+  { header: '기준년월', get: (r) => r.ym },
+  { header: '운용사', get: (r) => r.gp, wide: true },
   { header: '보고여부', get: (r) => r.rep },
   { header: '정합성여부', get: (r) => r.cons },
   { header: '수정권한여부', get: (r) => r.perm },
 ];
-function toSheet<T>(cols: XCol<T>[], rows: T[], masked: boolean): XLSX.WorkSheet {
+function toSheet<T>(cols: XCol<T>[], rows: T[]): XLSX.WorkSheet {
   const body = rows.map((r) => cols.map((c) => {
     const v = c.get(r);
     if (v == null) return '-';
-    return c.masked && masked ? '' : v;
+    return v;
   }));
   const ws = XLSX.utils.aoa_to_sheet([cols.map((c) => c.header), ...body]);
   ws['!cols'] = cols.map((c) => ({ wch: c.wide ? 24 : 12 }));
@@ -240,7 +227,6 @@ const DONE_TOAST: Record<NonNullable<ModalState>['kind'], string> = {
 export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
   const [ym, setYm] = useState(BASE_YM);
   const [modal, setModal] = useState<ModalState>(null);
-  const masked = useMask();
 
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null });
@@ -265,11 +251,11 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('새로고침했습니다');
   };
 
-  /* ── Excel(.xlsx) — 워크북 1개 + 섹션 시트 2개. 마스크 ON이면 텍스트·일시 비노출(O/X·순번은 유지) ── */
+  /* ── Excel(.xlsx) — 워크북 1개 + 섹션 시트 2개 ── */
   const exportExcel = () => {
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, toSheet(RESULT_X, resultRows, masked), '생성결과내역');
-    XLSX.utils.book_append_sheet(wb, toSheet(REPORT_X, reportRows, masked), '재무정보보고');
+    XLSX.utils.book_append_sheet(wb, toSheet(RESULT_X, resultRows), '생성결과내역');
+    XLSX.utils.book_append_sheet(wb, toSheet(REPORT_X, reportRows), '재무정보보고');
     XLSX.writeFile(wb, '조기경보 결과정보 관리.xlsx');
     toast.success('Excel로 내보냈습니다');
   };
@@ -277,10 +263,10 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
   /* 다이얼로그 문구 — 목업 confirmDlg 호출 원문 그대로 */
   const dialog = (() => {
     if (!modal) return null;
-    const ymB = <b className="text-foreground">{mn('ym' in modal ? modal.ym : '')}</b>;   // close·reopen 만 사용
+    const ymB = <b className="text-foreground">{String('ym' in modal ? modal.ym : '')}</b>;   // close·reopen 만 사용
     switch (modal.kind) {
       case 'make': return { title: '조기경보 결과정보 관리 - 생성 확인', ok: '확인',
-        body: <span className="inline-flex items-center">생성하시겠습니까?<ReviewMarker {...MAKE_NOTE} label="생성 확인 안내문구" /></span> };
+        body: <span className="inline-flex items-center">생성하시겠습니까?</span> };
       case 'close': return { title: '마감 처리', ok: '마감',
         body: <>기준년월 {ymB}의 조기경보 결과정보를 마감하시겠습니까?<br />마감 후에는 수정이 제한됩니다.</> };
       case 'reopen': return { title: '마감해제', ok: '마감해제', body: <>기준년월 {ymB}의 마감을 해제하시겠습니까?</> };
@@ -317,12 +303,12 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
       /* 푸터 좌 = 섹션별 건수(페이지네이션이 없어 '총 N개 중 M개' 형식이 성립하지 않는다) */
-      footerLeft={<span>{'생성 결과내역 ' + mn(String(resultRows.length)) + '건 · 운용사 재무정보 보고 ' + mn(String(reportRows.length)) + '건'}</span>}
+      footerLeft={<span>{'생성 결과내역 ' + String(resultRows.length) + '건 · 운용사 재무정보 보고 ' + String(reportRows.length) + '건'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       {/* ── ① 조기경보 생성 결과내역 (선택 월) ── */}
       <SectionHead n="1" title="조기경보 생성 결과내역"
-        cap={<>총 {mn(String(resultRows.length))}건 · 기준년월 {mn(ym)}</>} />
+        cap={<>총 {String(resultRows.length)}건 · 기준년월 {String(ym)}</>} />
       <div>
         <AgGridReact<EwResultRow>
           theme={apfsTheme}
@@ -337,7 +323,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
 
       {/* ── ② 운용사 재무정보 보고 (선택 월의 전월) ── */}
       <SectionHead n="2" title="운용사 재무정보 보고"
-        cap={<>총 {mn(String(reportRows.length))}건 · 기준년월 {reportYm ? mn(reportYm) : '-'}</>}
+        cap={<>총 {String(reportRows.length)}건 · 기준년월 {reportYm ? String(reportYm) : '-'}</>}
         actions={<>
           <Button variant="outline" size="sm" disabled={noReport} onClick={() => setModal({ kind: 'grantAll' })}>전체권한부여</Button>
           <Button variant="outline" size="sm" disabled={noReport} onClick={() => setModal({ kind: 'revokeAll' })}>전체권한해제</Button>

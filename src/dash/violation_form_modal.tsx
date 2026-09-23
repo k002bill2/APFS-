@@ -15,7 +15,6 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { UI } from './components';
-import { mn } from './mask';
 import { SchemaField, isPlainWrapControl } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
@@ -162,15 +161,14 @@ export function ViolationReleaseModal({ count, onSave, onClose }: {
     if (errKey === k) setErrKey('');
   };
 
-  /* 선택 건수는 행 데이터(건수)라 mn() 경유 — 라벨·단위('건')는 축이라 비마스킹 */
-  const countText = mn(String(count)) + '건';
+  const countText = String(count) + '건';
   const valueOf = (key: string) => (key === 'count' ? countText : key === 'rd' ? v.rd : v.reason);
 
   const submit = () => {
     if (!v.rd.trim()) { setErrKey('rd'); return; }
     return () => {
       onSave({ rd: v.rd, reason: v.reason });
-      toast.success(`${mn(String(count))}건 해제등록 되었습니다`);
+      toast.success(`${String(count)}건 해제등록 되었습니다`);
     };
   };
 
@@ -228,7 +226,7 @@ export function ViolationDeleteDialog({ count, onConfirm, onClose }: {
         <AlertDialogHeader>
           <AlertDialogTitle>위반사항 삭제</AlertDialogTitle>
           <AlertDialogDescription>
-            선택한 <b className="text-foreground">{mn(String(count))}건</b>을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.
+            선택한 <b className="text-foreground">{String(count)}건</b>을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

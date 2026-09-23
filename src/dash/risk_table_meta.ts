@@ -18,18 +18,15 @@ export type Cell = string | number | null;
 /** 표 한 행. `id` 는 AG Grid getRowId 용 안정 키(원문 값이 아니다 — 화면·엑셀에 나오지 않는다). */
 export type Row = { id: string } & Record<string, Cell>;
 
-/** 셀 종류 — 정렬·마스킹·서식을 한꺼번에 정한다.
+/** 셀 종류 — 정렬·서식을 한꺼번에 정한다.
     text=좌측 텍스트 · center=가운데 텍스트 · date=가운데 날짜/년월 · amount=우측 금액(단위 환산 대상)
-    number=우측 수치(단위 환산 안 함: 주식수·건수·배수·IRR) · badge=상태 배지(비마스킹) */
+    number=우측 수치(단위 환산 안 함: 주식수·건수·배수·IRR) · badge=상태 배지 */
 export type ColKind = 'text' | 'center' | 'date' | 'amount' | 'number' | 'badge';
 
 /** 합계 행 규칙 — 표마다 원문이 다르다(한 가지 "숫자면 합산" 규칙을 두지 않는다).
     'sum' = null 을 0 으로 보고 합산(원문 `reduce((a,r)=>a+(r[k]||0))`) · 'dash' = '-' 표시 ·
     함수 = 파생값(누적Multiple 처럼 합계끼리 나눈 값) · 미지정 = 빈 칸(원문 colspan 영역). */
 export type TotalRule = 'sum' | 'dash' | ((rows: readonly Row[]) => Cell);
-
-/** ⚠검토필요 메모 — 목업 `.review` 의 data-rec/data-dat 원문 그대로(창작 금지). */
-export interface ReviewNoteMeta { rec: string; dat: string }
 
 export interface ColMeta {
   key: string;
@@ -58,7 +55,6 @@ export interface ColMeta {
   /** 최소 폭(px). 미지정이면 kind 기본값 */
   width?: number;
   total?: TotalRule;
-  note?: ReviewNoteMeta;
   /** 원문이 행 값을 저장하지 않고 렌더 때 계산하는 칸(누적Multiple = 운용성과÷투자금액, 투자잔액 = 총투자−회수).
       값은 같은 식으로 계산해 싣는다 — 출처 충실성 테스트는 이 칸을 원문 리터럴과 대조하지 않는다 */
   derived?: boolean;
@@ -143,7 +139,7 @@ export const ratioOf = (numKey: string, denKey: string, digits = 2) => (rows: re
   return d ? (n / d).toFixed(digits) : '-';
 };
 
-/** 금액 표시 문자열(마스킹 전) — 표가 단위별 소수 자릿수를 선언했으면 그대로, 아니면 공용 formatUnit(schemas/unit.ts) */
+/** 금액 표시 문자열 — 표가 단위별 소수 자릿수를 선언했으면 그대로, 아니면 공용 formatUnit(schemas/unit.ts) */
 export function amountText(won: number, unit: Unit, digits?: TableMeta['unitDigits']): string {
   const d = digits?.[unit];
   if (!d) return formatUnit(won, unit);
