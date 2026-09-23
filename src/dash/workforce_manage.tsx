@@ -272,7 +272,11 @@ type ModalState =
 export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<WorkforceRow> | null>(null);
   const [rows, setRows] = useState<WorkforceRow[]>(DEMO);
-  const [selCount, setSelCount] = useState(0);   // 선택 행 수만 state — 행 자체는 그리드가 SSOT
+  /* 선택은 **id 집합**만 state — 행 자체는 그리드가 SSOT. 파생값은 React `rows` 에서 읽는다:
+     해제등록 직후 행이 '해제'로 바뀌어도 selectionChanged 는 발생하지 않으므로, 렌더 시 getSelectedRows() 는 낡는다. */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selCount = selIds.length;
+  const selHasReleased = useMemo(() => rows.some((r) => r.gubun === '해제' && selIds.includes(r.id)), [rows, selIds]);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
@@ -337,7 +341,7 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
      그리드 체크박스는 rowData 반영 뒤에야 노드가 생기므로 onRowDataUpdated 에서 맞춘다. */
   const pendingSelect = useRef<string | null>(null);
   const onGridReady = useCallback((e: GridReadyEvent<WorkforceRow>) => { apiRef.current = e.api; }, []);
-  const onSelectionChanged = useCallback((e: SelectionChangedEvent<WorkforceRow>) => { setSelCount(e.api.getSelectedRows().length); }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<WorkforceRow>) => { setSelIds(e.api.getSelectedRows().map((r) => r.id)); }, []);
   const onRowDataUpdated = useCallback((e: { api: GridApi<WorkforceRow> }) => {
     const id = pendingSelect.current;
     if (!id) return;
@@ -362,8 +366,11 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
   const selectedRows = () => apiRef.current?.getSelectedRows() ?? [];
   const openCreate = () => setModal({ kind: 'form' });
   const openRelease = () => {
-    const ids = selectedRows().map((r) => r.id);
-    if (!ids.length) return;
+    const sel = selectedRows();
+    if (!sel.length) return;
+    /* 방어 가드 — 버튼은 숨기지만 우클릭·단축키 등 다른 진입 경로 대비(openEdit 1건 가드와 동형) */
+    if (sel.some((r) => r.gubun === '해제')) { toast('이미 해제된 행은 해제등록할 수 없습니다'); return; }
+    const ids = sel.map((r) => r.id);
     setModal({ kind: 'release', ids });
   };
 
@@ -388,10 +395,11 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
   const commitRelease = () => {
     if (modal?.kind !== 'release') return;
     const ids = new Set(modal.ids);
+    const n = rows.filter((r) => ids.has(r.id) && r.gubun === '등록').length;   // 토스트 = 실제 전이 건수
     const rdate = today();
-    setRows((prev) => prev.map((r) => (ids.has(r.id) ? { ...r, gubun: '해제' as WorkforceKind, rdate } : r)));
+    setRows((prev) => prev.map((r) => (ids.has(r.id) && r.gubun === '등록' ? { ...r, gubun: '해제' as WorkforceKind, rdate } : r)));
     setModal(null);
-    toast.success(`${mn(String(ids.size))}건 해제등록 되었습니다`);
+    toast.success(`${mn(String(n))}건 해제등록 되었습니다`);
   };
 
   const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
@@ -434,7 +442,8 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{mn(String(selCount))}건 선택됨</span>
-      <Button variant="outline" size="sm" leadingIcon="check" onClick={openRelease}>해제등록</Button>
+      {/* 이미 해제된 행은 다시 해제등록할 수 없다 — 2026-09-23 사용자 결정 */}
+      {!selHasReleased && <Button variant="outline" size="sm" leadingIcon="check" onClick={openRelease}>해제등록</Button>}
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;

@@ -27,8 +27,8 @@
    - 더미 3행은 목업 `DATA` **원문 그대로**다(값·빈칸 포함). 행을 새로 만들지 않는다.
    - `no` 는 **행에 고정된 값**이다(정렬 가능한 그리드에서 연번을 재계산하면 정렬과 싸운다 — 형제 골드 동일 결정).
      삭제하면 번호에 구멍이 남는다.
-   - 해제등록에 **`구분` 게이트를 두지 않는다** — 목업도 이미 '해제'인 행을 막지 않고, 원문에 그 도메인
-     규칙이 없어 임의로 만들지 않는다. 단 목업이 토스트만 띄우는 것과 달리 우리는 상태를 들고 있으므로
+   - 해제등록은 **`구분`='등록' 행에만** — 선택에 '해제' 행이 있으면 버튼 숨김 + openRelease 가드 +
+     commitRelease 는 '등록' 행만 전이(2026-09-23 사용자 결정, 목업은 막지 않았음). 목업이 토스트만 띄우는 것과 달리 우리는 상태를 들고 있으므로
      선택 행의 `구분`→'해제', `해제일자`→입력값으로 실제 전이시킨다(화면이 결과를 보여주는 편이 자연스럽다).
    - `수정`은 목업 그대로 **1건이 아니면 토스트 경고**다(버튼을 숨기는 generic_list 규약 대신 목업 문구 보존).
      selbar 는 1건 이상 선택에서만 뜨므로 실제 도달 경로는 2건 이상이다. */
@@ -247,7 +247,11 @@ type ModalState =
 export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<ViolationRow> | null>(null);
   const [rows, setRows] = useState<ViolationRow[]>(DEMO);
-  const [selCount, setSelCount] = useState(0);   // 선택 행 수만 state — 행 자체는 그리드가 SSOT
+  /* 선택은 **id 집합**만 state — 행 자체는 그리드가 SSOT. 파생값은 React `rows` 에서 읽는다:
+     해제등록 직후 행이 '해제'로 바뀌어도 selectionChanged 는 발생하지 않으므로, 렌더 시 getSelectedRows() 는 낡는다. */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selCount = selIds.length;
+  const selHasReleased = useMemo(() => rows.some((r) => r.gb === '해제' && selIds.includes(r.id)), [rows, selIds]);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
@@ -313,7 +317,7 @@ export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
      그리드 체크박스는 rowData 반영 뒤에야 노드가 생기므로 onRowDataUpdated 에서 맞춘다. */
   const pendingSelect = useRef<string | null>(null);
   const onGridReady = useCallback((e: GridReadyEvent<ViolationRow>) => { apiRef.current = e.api; }, []);
-  const onSelectionChanged = useCallback((e: SelectionChangedEvent<ViolationRow>) => { setSelCount(e.api.getSelectedRows().length); }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<ViolationRow>) => { setSelIds(e.api.getSelectedRows().map((r) => r.id)); }, []);
   const onRowDataUpdated = useCallback((e: { api: GridApi<ViolationRow> }) => {
     const id = pendingSelect.current;
     if (!id) return;
@@ -349,8 +353,11 @@ export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
     setModal({ kind: 'delete', ids });
   };
   const openRelease = () => {
-    const ids = selectedRows().map((r) => r.id);
-    if (!ids.length) return;
+    const sel = selectedRows();
+    if (!sel.length) return;
+    /* 방어 가드 — 버튼은 숨기지만 우클릭·단축키 등 다른 진입 경로 대비(openEdit 1건 가드와 동형) */
+    if (sel.some((r) => r.gb === '해제')) { toast('이미 해제된 행은 해제등록할 수 없습니다'); return; }
+    const ids = sel.map((r) => r.id);
     setModal({ kind: 'release', ids });
   };
 
@@ -387,7 +394,7 @@ export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
   const commitRelease = ({ rd, reason }: { rd: string; reason: string }) => {
     if (modal?.kind !== 'release') return;
     const ids = new Set(modal.ids);
-    setRows((prev) => prev.map((r) => (ids.has(r.id) ? { ...r, gb: '해제' as ViolationKind, rd, releaseReason: reason } : r)));
+    setRows((prev) => prev.map((r) => (ids.has(r.id) && r.gb === '등록' ? { ...r, gb: '해제' as ViolationKind, rd, releaseReason: reason } : r)));
     setModal(null);
   };
 
@@ -433,7 +440,8 @@ export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
           openEdit 안의 1건 가드는 방어로 남긴다(우클릭·단축키 등 다른 진입 경로). */}
       {selCount === 1 && <Button variant="primary" size="sm" leadingIcon="file" onClick={openEdit}>수정</Button>}
       <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={openDelete}>삭제</Button>
-      <Button variant="outline" size="sm" leadingIcon="check" onClick={openRelease}>해제등록</Button>
+      {/* 이미 해제된 행은 다시 해제등록할 수 없다 — 2026-09-23 사용자 결정 */}
+      {!selHasReleased && <Button variant="outline" size="sm" leadingIcon="check" onClick={openRelease}>해제등록</Button>}
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;

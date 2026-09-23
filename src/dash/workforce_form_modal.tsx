@@ -152,8 +152,8 @@ export function WorkforceFormModal({ initial, onSave, onClose }: {
    ⚠ 해제일자 입력을 두지 않는다 — 원문이 "오늘 날짜로 기록"이라고 못 박았다. 형제 litigation 의
      `LitigationReleaseModal`(해제일자 date 입력)은 그쪽 원문에 팝업 정의가 없어 S2_55 를 차용한 것이라
      여기에 이식하면 원문을 덮어쓰는 셈이 된다.
-   ⚠ `구분` 게이트를 두지 않는다 — 목업 `openRelease()` 도 이미 '해제'인 행을 막지 않고,
-     원문에 그 도메인 규칙이 없으므로 임의로 만들지 않는다.
+   ⚠ 해제등록은 `구분`='등록' 행에만 — 선택에 '해제' 행이 있으면 버튼 숨김 + openRelease 가드 +
+     commitRelease 는 '등록' 행만 전이(2026-09-23 사용자 결정, 목업은 막지 않았음 · workforce_manage.tsx).
    ⚠ 저장 토스트는 여기가 아니라 호출부(commitRelease)가 띄운다 — AlertDialogAction 은 SaveButton 의
      submit 계약(성공 시 commit 반환)을 쓰지 않는다. 형제 `LitigationDeleteDialog` 배선과 동형이다.
 ────────────────────────────── */
