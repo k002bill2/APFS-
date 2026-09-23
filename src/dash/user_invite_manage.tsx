@@ -223,7 +223,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
       toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
-          {STATE_CHIPS.map((s) => <FilterChip key={s || 'all'} active={fState === s} onClick={() => setFState(s)}>{s || '전체'}</FilterChip>)}
+          {STATE_CHIPS.map((s) => <FilterChip key={s || 'all'} active={fState === s} onClick={() => setFState(s)}>{s || '초대상태: 전체'}</FilterChip>)}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               {value}

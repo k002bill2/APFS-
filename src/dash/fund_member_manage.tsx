@@ -368,7 +368,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['', ...ACC_OPTS] as ('' | Acc)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fAcc === s} onClick={() => setFAcc(s)}>{s || '전체'}</FilterChip>
+            <FilterChip key={s || 'all'} active={fAcc === s} onClick={() => setFAcc(s)}>{s || '계정구분: 전체'}</FilterChip>
           ))}
           {/* 값만 표시(접두사 없음) + × */}
           {([

@@ -367,7 +367,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['' as const, ...STAGES] as ('' | Stage)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fStage === s} onClick={() => setFStage(s)}>{s || '전체'}</FilterChip>
+            <FilterChip key={s || 'all'} active={fStage === s} onClick={() => setFStage(s)}>{s || '심사단계: 전체'}</FilterChip>
           ))}
           {/* 적용 중인 상세필터 — 항목별 개별 칩(각각 ×로 해제). 라벨=드로어 항목명(apfs-detail-filter) */}
           {([

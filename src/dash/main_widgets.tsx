@@ -30,7 +30,7 @@ function ExecChart({ period, setPeriod, fund, setFund, span }) {
       reveal={true}
       right={<><SegTabs options={["분기", "연"]} value={period} onChange={setPeriod} size="sm" /><MoreBtn /></>}
       footer={<div
-        className="flex items-center gap-4 flex-wrap"><Legend color="var(--chart-grid)" label={<>계획</>} /><Legend color="var(--chart-1)" label={<>실적</>} /><Legend color="var(--chart-3)" label={<>집행률 %</>} line={true} /><span className="flex gap-1.5" style={{ marginLeft: "auto" }}>{funds.map((f) => <FilterChip key={f} active={fund === f} onClick={() => setFund(f)}>{f}</FilterChip>)}</span></div>}><ComposedBars data={data} height={270} /></ChartCard>
+        className="flex items-center gap-4 flex-wrap"><Legend color="var(--chart-grid)" label={<>계획</>} /><Legend color="var(--chart-1)" label={<>실적</>} /><Legend color="var(--chart-3)" label={<>집행률 %</>} line={true} /><span className="flex gap-1.5" style={{ marginLeft: "auto" }}>{funds.map((f) => <FilterChip key={f} active={fund === f} onClick={() => setFund(f)}>{f === "전체" ? "펀드: 전체" : f}</FilterChip>)}</span></div>}><ComposedBars data={data} height={270} /></ChartCard>
   );
 }
 function Legend({ color, label, line }: { color?: string; label?: React.ReactNode; line?: boolean }) {

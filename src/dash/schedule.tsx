@@ -365,7 +365,7 @@ function Schedule({ onNav }) {
                 key={k}
                 active={active}
                 dot={active && dot ? dot : undefined}
-                onClick={() => setKindFilter(k)}>{k}</FilterChip>
+                onClick={() => setKindFilter(k)}>{k === "전체" ? "종류: 전체" : k}</FilterChip>
             );
           })}</div><div className="w-px h-5 bg-border mx-1" /><SegTabs
           options={PERIODS}

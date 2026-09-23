@@ -48,7 +48,7 @@ const { Button, IconBtn, StatusBadge, FilterChip } = UI;
 const SEARCHABLE = true;
 const PAGE_SIZE = 20;
 const SEARCH_FIELDS: { key: ProgramField; label: string }[] = [{ key: 'pid', label: '프로그램ID' }, { key: 'pname', label: '프로그램명' }];
-const USE_CHIPS = [['', '전체'], ['여', '사용 여'], ['부', '사용 부']] as const;
+const USE_CHIPS = [['', '사용여부: 전체'], ['여', '사용 여'], ['부', '사용 부']] as const;
 const nowStamp = () => format(new Date(), 'yyyy-MM-dd HH:mm');
 const seedPrograms = () => demoPrograms(buildMenuRows());
 

@@ -61,7 +61,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
   - ⚠️ **폭**: PeriodPicker/DatePicker 트리거는 `w-full`이라 `DrawerField plain`(block 100%)에 **바로 넣으면 드로어 전체 폭으로 늘어난다**(2026-09-09 회귀). 반드시 `<div style={{ width:'fit-content', minWidth: controlMinWidth(year|date), maxWidth:'100%' }}>`로 감싼다 — 네이티브 `DrawerSelect`(자체 fit-content)와 달리 버튼엔 고유 콘텐츠 폭이 없다. 폭 계약 정본은 →[[apfs-datepicker]] "폭" 규칙.
 - **적용 칩은 항목별 개별 칩**(합쳐서 `A · B · C` 한 칩 금지). 각 칩 = **값만 표시**(항목명 접두사 없음, 2026-09-08 결정) + `×`(`aria-label="<항목> 필터 제거"`, 해당 필터만 해제). no-op 항목은 칩을 만들지 않는다.
   - ✅ **전 트랙 통일(2026-09-09)**: `generic_list.tsx` `FilterPill`·`asset_funding.tsx` 자체 칩 모두 **값만 표시**로 맞췄다(구 `라벨: 값`/합친 한 칩 폐기). 항목명은 `title`(호버)+`aria-label`로 회수. **"값만"은 항목명 제거지 연산자 제거가 아니다** — `출자금액 ≥ 800`은 `≥ 800`으로 남긴다. 태그형(value 없음)은 라벨이 곧 값 토큰이라 라벨을 표시.
-- 주 필터 1개(심사단계)는 툴바 `FilterChip`(전체+단계들)로 노출, 선택 행이 있으면 툴바 좌 슬롯이 selbar로 바뀐다(→[[apfs-stage-workflow]]).
+- 주 필터 1개(심사단계)는 툴바 `FilterChip`(`심사단계: 전체`+단계들 — 전체 칩 라벨 규칙 → [[apfs-grid]])로 노출, 선택 행이 있으면 툴바 좌 슬롯이 selbar로 바뀐다(→[[apfs-stage-workflow]]).
 - 상태 SSOT는 `useState` N개 + `clearFilters`(초기화 버튼·전체 해제 공유). `passes`는 `useCallback`, 변경 시 `apiRef.current?.onFilterChanged()`(External Filter).
 
 ## 정본 코드 (로직은 여기, 스킬은 규약만)

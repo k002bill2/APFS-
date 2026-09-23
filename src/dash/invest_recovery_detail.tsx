@@ -133,7 +133,7 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
           <SegTabs options={RECOVERY_MODES.map((m) => ({ value: m.key, label: m.label }))} value={modeKey}
             onChange={(v: string) => setModeKey(v as RecoveryMode['key'])} />
           <Icon name="filter" size={16} className="text-caption" />
-          <FilterChip active={fGp === ''} onClick={() => setFGp('')} count={String(mode.rows.length)}>전체</FilterChip>
+          <FilterChip active={fGp === ''} onClick={() => setFGp('')} count={String(mode.rows.length)}>운용사: 전체</FilterChip>
           {gpOptions.map((g) => (
             <FilterChip key={g} active={fGp === g} onClick={() => setFGp(g)}
               count={String(mode.rows.filter((r) => String(r.gp) === g).length)}>{g}</FilterChip>

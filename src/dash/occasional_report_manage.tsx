@@ -346,7 +346,7 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['', '미확인', '일부확인', '확인완료'] as ('' | Stage)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fStage === s} onClick={() => setFStage(s)}>{s || '전체'}</FilterChip>
+            <FilterChip key={s || 'all'} active={fStage === s} onClick={() => setFStage(s)}>{s || '확인상태: 전체'}</FilterChip>
           ))}
           {([
             ['운용사', fGp, () => setFGp('')],

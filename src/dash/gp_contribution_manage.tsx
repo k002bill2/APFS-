@@ -366,7 +366,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['', '출자', '배분'] as ('' | Gb)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fGb === s} onClick={() => setFGb(s)}>{s || '전체'}</FilterChip>
+            <FilterChip key={s || 'all'} active={fGb === s} onClick={() => setFGb(s)}>{s || '출자/배분: 전체'}</FilterChip>
           ))}
           {/* 값만 표시(접두사 없음) + × */}
           {([

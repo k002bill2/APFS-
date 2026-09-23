@@ -377,7 +377,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['' as const, '일정' as const, '결과' as const]).map((s) => (
-            <FilterChip key={s || 'all'} active={fState === s} onClick={() => setFState(s)}>{s || '전체'}</FilterChip>
+            <FilterChip key={s || 'all'} active={fState === s} onClick={() => setFState(s)}>{s || '투자심의상태: 전체'}</FilterChip>
           ))}
           {([
             ['운용사', fGp, () => setFGp('')],
