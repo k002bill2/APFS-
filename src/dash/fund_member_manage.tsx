@@ -144,14 +144,11 @@ const amt = (field: keyof FundMemberRow, header: string, strong?: boolean, width
   field, headerName: header, width, type: 'rightAligned', valueFormatter: nullFmt, cellStyle: numStyle(strong) as any,
 });
 
-/* 조합원유형 칩 — 목업 `typeTag()`: 모태펀드만 강조 톤(.tag.b), 나머지는 무채색(.tag.n).
-   무채색은 StatusBadge tone 집합에 없어(primary/success/warning/danger/info/cyan) 인라인 칩으로 그리되,
-   치수·라운드는 StatusBadge size="lg"와 동일 클래스를 써서 같은 열에서 두 칩이 어긋나지 않게 한다. */
+/* 조합원유형 칩 — 목업 `typeTag()`: 모태펀드만 강조 톤(.tag.b), 나머지는 info 톤.
+   목업의 무채색(.tag.n)은 muted(비활성·대상아님) 톤과 겹쳐 '비활성'으로 읽혀서 info로 올렸다(2026-09-23 사용자 결정).
+   조합원유형은 상태가 아니라 분류이므로 muted를 쓰지 않는다. */
 function TypeChip({ value }: { value: string }) {
-  if (value === '모태펀드') return <StatusBadge tone="primary" label={value} size="lg" dot={false} />;
-  return (
-    <span className="inline-flex items-center rounded-[7px] px-[10px] py-[4px] text-[13px] font-bold leading-tight whitespace-nowrap bg-muted text-muted-foreground">{value}</span>
-  );
+  return <StatusBadge tone={value === '모태펀드' ? 'primary' : 'info'} label={value} size="lg" dot={false} />;
 }
 
 const columnDefs: ColDef<FundMemberRow>[] = [
