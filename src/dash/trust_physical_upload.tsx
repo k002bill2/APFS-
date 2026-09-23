@@ -130,7 +130,7 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
       <div style={{ padding: '0 18px 16px' }}>
         <UploadDropzone files={files} onChange={setFiles} hint={HINT} maxSize="20MB" label={cfg.fileLabel} removedMsg="선택 파일 제거됨" />
       </div>
-      <ReadGrid table={cfg.table} rows={shown} ariaLabel={cfg.label} selectable onSelect={onSelect} selectionCol={LABELED_SELECTION_COL} apiRef={apiRef} onRowOpen={openEdit} />
+      <ReadGrid table={cfg.table} rows={shown} ariaLabel={cfg.label} selectable onSelect={onSelect} selectedIds={selIds} selectionCol={LABELED_SELECTION_COL} apiRef={apiRef} onRowOpen={openEdit} />
       {modal?.kind === 'delete' && <DeleteDialog title={cfg.deleteTitle} count={selIds.length} onConfirm={remove} onClose={() => setModal(null)} />}
       {editRow && (
         <RowEditModal schema={PHYSICAL_FORM} mode="edit" title={`${cfg.entity} 수정`} initial={formFromRow(PHYSICAL_FORM, editRow)}

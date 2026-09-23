@@ -75,7 +75,7 @@ export function TrustFundCode({ onNav }: { onNav?: (r: string) => void }) {
       filters={filters} onReset={reset} contextActions={selActions}
       footerLeft={<span>수탁기관 <MT>{org}</MT> · 총 {mn(String(rows.length))}건</span>}
       onExport={exportExcel} exportEnabled={!modal}>
-      <ReadGrid table={FUND_CODE_TABLE} rows={rows} ariaLabel={LABEL} selectable onSelect={onSelect} apiRef={apiRef} onRowOpen={openEdit} />
+      <ReadGrid table={FUND_CODE_TABLE} rows={rows} ariaLabel={LABEL} selectable onSelect={onSelect} selectedIds={selIds} apiRef={apiRef} onRowOpen={openEdit} />
       {modal?.kind === 'delete' && <DeleteDialog title="자펀드코드 삭제" count={selIds.length} onConfirm={remove} onClose={() => setModal(null)} />}
       {editRow && (
         <RowEditModal schema={FUND_CODE_FORM} mode="edit" title="자펀드코드 수정" initial={formFromRow(FUND_CODE_FORM, editRow)}

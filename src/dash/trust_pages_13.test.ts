@@ -487,6 +487,7 @@ describe('관리형 선택 바 규약', () => {
     const s = src(f);
     expect(s).toMatch(/<ReadGrid [^>]*\bselectable\b/);
     expect(s).toMatch(/<ReadGrid [^>]*onRowOpen=\{openEdit\}/);
+    expect(s).toMatch(/<ReadGrid [^>]*selectedIds=\{selIds\}/);   // rowData 변경 후 선택 복원(restoreSelection)
     expect(s).toMatch(/contextActions=\{selActions\}/);
     expect(s).toMatch(/SelBar\(\{/);
     expect(s).not.toMatch(/cellRenderers=|<Switch|<Checkbox|<input/);

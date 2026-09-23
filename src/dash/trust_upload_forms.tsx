@@ -117,7 +117,7 @@ function ManageListPage({ cfg, onNav }: { cfg: ManageConfig; onNav?: (r: string)
       </>}
       footerLeft={<span>총 {mn(String(rows.length))}건</span>}
       onExport={exportExcel} exportEnabled={!modal}>
-      <ReadGrid table={cfg.table} rows={rows} ariaLabel={cfg.label} selectable onSelect={onSelect} apiRef={apiRef} onRowOpen={openEdit} />
+      <ReadGrid table={cfg.table} rows={rows} ariaLabel={cfg.label} selectable onSelect={onSelect} selectedIds={selIds} apiRef={apiRef} onRowOpen={openEdit} />
       {(modal?.kind === 'create' || editRow) && (
         <RowEditModal schema={cfg.form} mode={editRow ? 'edit' : 'create'} title={`${cfg.entity} ${editRow ? '수정' : '등록'}`}
           initial={editRow ? formFromRow(cfg.form, editRow) : undefined} onSave={save} onClose={() => setModal(null)} />

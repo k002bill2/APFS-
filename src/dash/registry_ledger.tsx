@@ -130,7 +130,7 @@ export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void })
       </>}
       footerLeft={<span>{applied && <>{name ? <><MT>{name}</MT> · </> : ''}비활성원부 {inactive} · </>}총 {mn(String(shown.length))}건</span>}
       onExport={exportExcel} exportEnabled={!modal}>
-      <ReadGrid table={LEDGER_TABLE} rows={shown} ariaLabel={LABEL} selectable onSelect={onSelect} apiRef={apiRef} onRowOpen={openEdit} />
+      <ReadGrid table={LEDGER_TABLE} rows={shown} ariaLabel={LABEL} selectable onSelect={onSelect} selectedIds={selIds} apiRef={apiRef} onRowOpen={openEdit} />
       {modal?.kind === 'delete' && <DeleteDialog title="등록원부 삭제" count={sel.length} onConfirm={remove} onClose={() => setModal(null)} />}
       {modal?.kind === 'ledger' && <LedgerFormModal mode={modal.mode} row={modal.row} onClose={close} />}
       {modal?.kind === 'members' && <MembersModal row={modal.row} onClose={close} />}

@@ -13,14 +13,14 @@
    열 합이 프레임보다 좁으면 flex 가 채우고(빈 거터 0), 넓으면 minWidth 하한에서 가로 스크롤이 생긴다(잘림 없음).
    ⚠ AG Grid v35 Theming API: 레거시 CSS import 금지. 객체 prop 은 전부 참조 안정(계약 ⑥⑦). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 보정 + autoHeight sticky 헤더(공유)
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ColGroupDef, CellStyle, CellClickedEvent, CellKeyDownEvent, CellValueChangedEvent, ICellRendererParams, GetRowIdParams, RowDoubleClickedEvent, GridApi, GridReadyEvent, SelectionChangedEvent, SelectionColumnDef } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, CellStyle, CellClickedEvent, CellKeyDownEvent, CellValueChangedEvent, ICellRendererParams, GetRowIdParams, RowDoubleClickedEvent, GridApi, GridReadyEvent, SelectionChangedEvent, SelectionColumnDef, RowDataUpdatedEvent } from 'ag-grid-community';
 import { UI } from './components';
 import { Icon } from './icons';
 import { mn, MT, useMask } from './mask';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
-import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { reviewInnerHeader } from './review_marker';
 import { toUnit, fromUnit } from './schemas/unit';
 import type { Unit } from './schemas/unit';
@@ -206,13 +206,15 @@ export interface ReadGridProps {
   onSelect?: (rows: Row[]) => void;
   /** 선택 컬럼 정의(미지정 = SELECTION_COL). 헤더 텍스트가 필요한 화면만 LABELED_SELECTION_COL 등 모듈 상수를 넘긴다 */
   selectionCol?: SelectionColumnDef;
+  /** 선택 SSOT(페이지 state 의 선택 id) — rowData 가 바뀐 뒤(수정·활성 전이·필터) restoreSelection 으로 체크를 되살린다 */
+  selectedIds?: readonly string[];
   /** 그리드 API(선택 해제 등) — 페이지가 ref 로 받는다 */
   apiRef?: React.MutableRefObject<GridApi<Row> | null>;
   /** 칸 전용 렌더러(열 키별). 참조 안정(useMemo) 필수 — 바뀌면 컬럼 정의가 다시 만들어진다 */
   cellRenderers?: CellRenderers;
 }
 
-export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세', onEdit, onRowOpen, ariaLabel, selectable, onSelect, selectionCol = SELECTION_COL, apiRef, cellRenderers }: ReadGridProps) {
+export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세', onEdit, onRowOpen, ariaLabel, selectable, onSelect, selectionCol = SELECTION_COL, selectedIds, apiRef, cellRenderers }: ReadGridProps) {
   const data = rows ?? table.rows;
   const columnDefs = useMemo(() => buildColumnDefs(table, table.rows, unit, linkLabel, cellRenderers), [table, unit, linkLabel, cellRenderers]);
   const pinned = useMemo(() => {
@@ -251,6 +253,10 @@ export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세
   }, [onEdit]);
   const onGridReady = useCallback((e: GridReadyEvent<Row>) => { if (apiRef) apiRef.current = e.api; }, [apiRef]);
   const onSelectionChanged = useCallback((e: SelectionChangedEvent<Row>) => { onSelect?.(e.api.getSelectedRows()); }, [onSelect]);
+  /* 선택 복원 — 페이지 state 가 SSOT(apfs-aggrid "선택 배선": multiRow 복원은 공유 헬퍼 하나로만). ref 로 최신 id 를 읽는다 */
+  const selRef = useRef(selectedIds);
+  selRef.current = selectedIds;
+  const onRowDataUpdated = useCallback((e: RowDataUpdatedEvent<Row>) => { if (selRef.current) restoreSelection(e.api, selRef.current); }, []);
 
   return (
     /* apfs-grid-min: 1~2행 autoHeight 그리드의 AG Grid 기본 최소 본문높이(150px)를 48px 로 낮춘다(aggrid_shared.css) */
@@ -270,6 +276,7 @@ export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세
         rowSelection={selectable ? ROW_SELECTION : undefined}
         selectionColumnDef={selectable ? selectionCol : undefined}
         onSelectionChanged={selectable ? onSelectionChanged : undefined}
+        onRowDataUpdated={selectable && selectedIds ? onRowDataUpdated : undefined}
         onGridReady={apiRef ? onGridReady : undefined}
         stopEditingWhenCellsLoseFocus
         localeText={locale}
