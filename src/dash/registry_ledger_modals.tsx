@@ -9,7 +9,7 @@
    - D 업로드: 여러 파일 드롭존(원문 multiple) — 파일 없이 업로드 → 경고, 있으면 완료 토스트 후 닫기. 처리·전송 없음(브리프 규칙 5).
    - E 출력 · F 발급이력: 원문 리터럴(발급일자 2016-01-19, 페이지 수 0, 발급이력 1건). 원문처럼 목록 행과 무관하게 연다.
    날짜 입력은 네이티브 date 가 아니라 SchemaField date(DatePicker — apfs-datepicker). */
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { UI } from './components';
 import { toast } from './ui/sonner';
@@ -91,7 +91,7 @@ type RowAct = 'edit' | 'detail';
 /** 원문 `.mgrid` — 헤더 + 행. 원문의 행 끝 `관리` 칸(수정/삭제 · 상세/삭제 버튼)은 **행 안에 두지 않는다**(2026-09-23 사용자 결정 —
     관리형 선택 바 규약을 팝업 안 표에도 적용): 행 체크박스 → 표 위 선택 바 `N건 선택됨` · [수정|상세](1건) · [삭제](N건) · [선택 해제].
     `관리` 헤더는 원문 리터럴(heads)에 남기고 렌더에서만 뺀다. 첫 칸이 이름·주소면 좌측, 금액·수량은 우측 */
-function MiniTable({ heads, rows, act, label, right = [], empty = '변경 이력이 없습니다.', onOpen, onDelete }: {
+export function MiniTable({ heads, rows, act, label, right = [], empty = '변경 이력이 없습니다.', onOpen, onDelete }: {
   heads: string[]; rows: string[][]; act: RowAct; label: string; right?: number[]; empty?: string;
   /** [수정]/[상세] — 1건 선택 시. 미지정이면 원문처럼 토스트 */
   onOpen?: (row: string[]) => void;
@@ -100,6 +100,8 @@ function MiniTable({ heads, rows, act, label, right = [], empty = '변경 이력
 }) {
   const cols = heads.filter((h) => h !== '관리');
   const [sel, setSel] = useState<number[]>([]);
+  /* 선택은 행 인덱스다 — 행이 바뀌면(추가는 맨 위 삽입) 인덱스가 다른 행을 가리키므로 비운다 */
+  useEffect(() => setSel([]), [rows]);
   const align = (i: number) => (right.includes(i) ? 'text-right' : i === 0 ? 'text-left' : 'text-center');
   const cell: React.CSSProperties = { padding: '8px 11px' };
   const openLabel = act === 'edit' ? '수정' : '상세';
@@ -150,14 +152,16 @@ function MiniTable({ heads, rows, act, label, right = [], empty = '변경 이력
 const T = (key: string, label: string, extra: Partial<FieldSpec> = {}): FieldSpec => ({ key, label, control: 'text', ...extra });
 const D = (key: string, label: string): FieldSpec => ({ key, label, control: 'date' });
 
-function initialLedger(edit: boolean, row?: Row): Record<string, string> {
+export function initialLedger(edit: boolean, row?: Row): Record<string, string> {
   const ev = (k: HistSection['key']) => (edit ? HIST_SECTIONS.find((s) => s.key === k)!.editValue ?? '' : '');
-  /* 목록에 있는 칸(존속기간·출자약정총액·업무집행조합원명)은 그 행 값을 쓴다 — 원문 isEdit 기본값은 1행 기준이라 다른 행을 열면 어긋난다 */
-  const [d1 = '', d2 = ''] = (edit && row?.dur ? String(row.dur) : ev('dur')).split('~').map((x) => x.trim());
+  /* 목록에 있는 칸(존속기간·출자약정총액·업무집행조합원명)은 그 행 값을 쓴다 — 원문 isEdit 기본값은 1행 기준이라 다른 행을 열면 어긋난다.
+     판정은 값이 아니라 **키 유무**다: 저장 시 비운 칸은 null 로 남으므로(ledgerPatch) 값으로 판정하면 샘플값이 되살아난다 */
+  const has = (k: string) => edit && row != null && k in row;
+  const [d1 = '', d2 = ''] = (has('dur') ? String(row!.dur ?? '') : ev('dur')).split('~').map((x) => x.trim());
   return {
     regno: edit ? String(row?.regno ?? '') : '', nm: edit ? String(row?.nm ?? '') : '', dur1: d1, dur2: d2,
-    addr: ev('addr'), amt: edit && typeof row?.amt === 'number' ? row.amt.toLocaleString() : ev('amt'),
-    gpname: edit && row?.gp ? String(row.gp) : ev('gpname'), gpaddr: ev('gpaddr'),
+    addr: ev('addr'), amt: has('amt') ? (typeof row!.amt === 'number' ? row!.amt.toLocaleString() : '') : ev('amt'),
+    gpname: has('gp') ? String(row!.gp ?? '') : ev('gpname'), gpaddr: ev('gpaddr'),
     unit: edit ? LEDGER_UNIT_PRICE : '', first: edit ? LEDGER_FIRST_REG : '',
   };
 }
