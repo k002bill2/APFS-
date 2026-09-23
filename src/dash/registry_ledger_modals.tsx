@@ -59,14 +59,15 @@ function Modal({ title, target, badge, wide, onClose, footer, children, dlgRef }
   );
 }
 
-/** 원문 `.msec` — 제목(h3) + 섹션 버튼(`.sacts`) + 본문. 섹션 버튼은 원문의 우측 끝이 아니라
-    **제목 바로 옆 좌측**(2026-09-24 사용자 결정 — apfs-form-modal "섹션 버튼 정렬") */
-export function Section({ title, actions, children }: { title: string; actions?: React.ReactNode; children: React.ReactNode }) {
+/** 원문 `.msec` — 제목(h3) + 좌측 행 추가 버튼(`add`) + 우측 섹션 버튼(`.sacts`) + 본문.
+   행 추가는 제목 바로 옆 좌측(apfs-form-modal 반복행 규약 — 골드 subfund_form_modal) */
+export function Section({ title, add, actions, children }: { title: string; add?: React.ReactNode; actions?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section style={{ marginBottom: 26 }}>
       <div className="flex items-center gap-2 border-b-2 border-border" style={{ paddingBottom: 8, marginBottom: 12 }}>
         <h3 className="m-0 font-bold" style={{ fontSize: 16 }}>{title}</h3>
-        {actions && <div className="flex items-center gap-1.5">{actions}</div>}
+        {add}
+        {actions && <div className="ml-auto flex items-center gap-1.5">{actions}</div>}
       </div>
       {children}
     </section>
@@ -219,7 +220,7 @@ export function LedgerFormModal({ mode, row, onSave, onClose }: { mode: 'new' | 
       badge={edit ? <>등록번호 {v.regno} · 잠금</> : '신규 · PK 편집'}
       footer={<><Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button><Button variant="primary" size="sm" onClick={save}>저장</Button></>}>
       {HIST_SECTIONS.map((s) => (
-        <Section key={s.key} title={s.title} actions={<Button variant="outline" size="sm" leadingIcon="plus" onClick={() => addHist(s)}>추가</Button>}>
+        <Section key={s.key} title={s.title} add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={() => addHist(s)}>추가</Button>}>
           <HistInputs s={s} v={v} set={set} edit={edit} />
           <MiniTable heads={s.heads} rows={hist[s.key]} act="edit" label={`${s.title} 변경 이력`} right={s.key === 'amt' ? [0] : []}
             onDelete={(idx) => setHist((p) => ({ ...p, [s.key]: dropAt(p[s.key], idx) }))} />
@@ -249,17 +250,14 @@ export function MembersModal({ row, onClose }: { row: Row; onClose: () => void }
   return (
     <Modal dlgRef={dlgRef} wide onClose={onClose} title="조합원 및 납입출자금 관리" target={String(row.nm)}
       footer={<Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>}>
-      <Section title="조합원 및 납입출자금 관리" actions={<>
-        <Button variant="outline" size="sm" onClick={say('양도/양수 추가 (목업)')}>양도/양수 추가</Button>
+      <Section title="조합원 및 납입출자금 관리" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('양도/양수 추가 (목업)')}>양도/양수 추가</Button>} actions={<>
         <Button variant="outline" size="sm" onClick={say('추가출자 등록 (목업)')}>추가출자</Button>
         <Button variant="primary" size="sm" onClick={say('조합원 조회 (목업)')}>조회</Button>
       </>}>
         <MiniTable heads={MEMBER_HEADS} rows={members} act="detail" label="조합원" right={[3, 4]} onOpen={openMember} onDelete={(idx) => setMembers((p) => dropAt(p, idx))} />
       </Section>
-      <Section title="조합원 정보 상세" actions={<>
-        <Button variant="outline" size="sm" onClick={say('조합원 입력 초기화 (목업)')}>추가</Button>
-        <Button variant="primary" size="sm" onClick={say('조합원 정보 저장 (목업)')}>저장</Button>
-      </>}>
+      <Section title="조합원 정보 상세" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('조합원 입력 초기화 (목업)')}>추가</Button>}
+        actions={<Button variant="primary" size="sm" onClick={say('조합원 정보 저장 (목업)')}>저장</Button>}>
         <Grid2>
           <F spec={T('name', '명칭')} value={f.name} onChange={set('name')} />
           <F spec={{ key: 'kind', label: '조합원구분', control: 'radio', options: [...MEMBER_KINDS] }} value={f.kind} onChange={set('kind')} />
@@ -269,7 +267,7 @@ export function MembersModal({ row, onClose }: { row: Row; onClose: () => void }
           <F spec={T('units', '출자좌수')} value={f.units} onChange={set('units')} />
         </Grid2>
       </Section>
-      <Section title="납입출자금" actions={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('납입출자금 이력 추가 (목업)')}>추가</Button>}>
+      <Section title="납입출자금" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('납입출자금 이력 추가 (목업)')}>추가</Button>}>
         <MiniTable heads={PAYMENT_HEADS} rows={payments} act="edit" label="납입출자금" right={[1, 3, 4]} onDelete={(idx) => setPayments((p) => dropAt(p, idx))} />
       </Section>
     </Modal>
@@ -294,10 +292,8 @@ export function ExpertsModal({ row, onClose }: { row: Row; onClose: () => void }
       <Section title="전문인력 관리" actions={<Button variant="primary" size="sm" onClick={say('전문인력 조회 (목업)')}>조회</Button>}>
         <MiniTable heads={EXPERT_HEADS} rows={experts} act="detail" label="전문인력" onOpen={openExpert} onDelete={(idx) => setExperts((p) => dropAt(p, idx))} />
       </Section>
-      <Section title="전문인력 상세 정보" actions={<>
-        <Button variant="outline" size="sm" onClick={say('전문인력 입력 초기화 (목업)')}>추가</Button>
-        <Button variant="primary" size="sm" onClick={say('전문인력 정보 저장 (목업)')}>저장</Button>
-      </>}>
+      <Section title="전문인력 상세 정보" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('전문인력 입력 초기화 (목업)')}>추가</Button>}
+        actions={<Button variant="primary" size="sm" onClick={say('전문인력 정보 저장 (목업)')}>저장</Button>}>
         <Grid2>
           <F spec={T('name', '성명')} value={f.name} onChange={set('name')} />
           <F spec={{ key: 'kind', label: '전문인력 구분', control: 'radio', options: [...EXPERT_KINDS] }} value={f.kind} onChange={set('kind')} />
@@ -313,7 +309,7 @@ export function ExpertsModal({ row, onClose }: { row: Row; onClose: () => void }
         </div>
         <MiniTable heads={CAREER_HEADS} rows={careers} act="edit" label="약력" onDelete={(idx) => setCareers((p) => dropAt(p, idx))} />
       </Section>
-      <Section title="투자경력" actions={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('투자경력 추가 (목업)')}>추가</Button>}>
+      <Section title="투자경력" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('투자경력 추가 (목업)')}>추가</Button>}>
         <MiniTable heads={INVEST_CAREER_HEADS} rows={invests} act="edit" label="투자경력" onDelete={(idx) => setInvests((p) => dropAt(p, idx))} />
       </Section>
     </Modal>

@@ -33,11 +33,17 @@ describe('MiniTable — 행이 바뀌면 선택을 비운다', () => {
   });
 });
 
-describe('Section — 섹션 버튼은 제목 바로 옆 좌측(2026-09-24 사용자 결정)', () => {
-  it('버튼 묶음을 우측 끝으로 밀지 않는다(ml-auto 금지)', () => {
-    render(React.createElement(Section, { title: '소재지', actions: React.createElement('button', null, '추가'), children: 'body' }));
-    const wrap = screen.getByRole('button', { name: '추가' }).parentElement!;
-    expect(wrap.className).not.toMatch(/ml-auto|justify-between/);
-    expect(wrap.previousElementSibling?.textContent).toBe('소재지');
+describe('Section — 추가 버튼은 제목 바로 옆 좌측, 조회·저장은 우측(2026-09-24 사용자 결정)', () => {
+  it('add 는 제목 직후에 붙고 actions 만 우측 끝(ml-auto)으로 민다', () => {
+    render(React.createElement(Section, {
+      title: '소재지',
+      add: React.createElement('button', null, '추가'),
+      actions: React.createElement('button', null, '저장'),
+      children: 'body',
+    }));
+    const add = screen.getByRole('button', { name: '추가' });
+    expect(add.previousElementSibling?.textContent).toBe('소재지');
+    expect(add.className).not.toMatch(/ml-auto|justify-between/);
+    expect(screen.getByRole('button', { name: '저장' }).parentElement!.className).toMatch(/ml-auto/);
   });
 });

@@ -5,8 +5,8 @@
    목업 → 우리 규약
    - 검색박스 → 상세필터 드로어(항목·순서·기본값 원문). 운용사·조합은 원문 옵션이 없어 조회 조건으로만,
      기준월·대분류·중분류는 행 값으로 **실제로 거른다**(대분류·중분류 옵션 '[B] 채권' → 행의 원문 코드 B).
-   - 업로드 박스 → 카드 본문 상단 섹션(제목·`파일명 = 파일 선택` 캡션·[업로드] + 드롭존). 파일 처리·전송은 하지 않는다(브리프 규칙 5):
-     파일 선택 없이 업로드 → 원문 토스트, 선택 후 업로드 → 원문 완료 토스트 + 선택 비움.
+   - 업로드 박스 → 툴바 [업로드] → 업로드 모달(계좌정보 관리 패턴, 2026-09-24 사용자 결정). 파일 처리·전송은 하지 않는다(브리프 규칙 5):
+     파일 선택 없이 확인 → 원문 토스트, 선택 후 확인 → 원문 완료 토스트 + 모달 닫힘.
    - 목록바 [수정]·[삭제] → 행 선택 selbar(GridFrame contextActions, trust_manage_kit SelBar). 수정은 1건일 때만 →
      행 수정 모달(원문은 토스트뿐이지만 2026-09-23 관리형 규약 — 항목 = 목록 컬럼) · 행 더블클릭/Enter 도 같은 모달.
      삭제는 선택 N건 확인 다이얼로그(기본 포커스 = 취소, 원문과 같다) → 선택 행 제거.
@@ -18,12 +18,11 @@ import { UI } from './components';
 import { toast } from './ui/sonner';
 import { RiskPage } from './risk_page_kit';
 import type { FilterSpec } from './risk_page_kit';
-import { ReadGrid, SectionHead } from './risk_grid';
+import { ReadGrid } from './risk_grid';
 import { LABELED_SELECTION_COL } from './aggrid_selection';
 import { exportTables } from './risk_excel';
 import type { TableMeta, Row } from './risk_table_meta';
-import { UploadDropzone } from './trust_upload';
-import { NewScreenNotice } from './trust_table_pages';
+import { UploadModal } from './trust_upload';
 import { useRowSelection, SelBar, DeleteDialog, RowEditModal, formFromRow, rowPatch } from './trust_manage_kit';
 import { PHYSICAL_FORM, displayCode } from './trust_manage_schemas';
 import {
@@ -36,7 +35,7 @@ const { Button } = UI;
 interface UploadPageConfig {
   label: string;
   table: TableMeta;
-  /** 업로드 박스 제목(원문 `.uploadhd .t`) */
+  /** 업로드 모달 제목(원문 업로드 박스 `.uploadhd .t`) */
   uploadTitle: string;
   /** 드롭존 접근名 */
   fileLabel: string;
@@ -45,8 +44,6 @@ interface UploadPageConfig {
   /** 엔티티명 — 수정 모달 제목(`실물자료 수정`) */
   entity: string;
   baseYm: string;
-  /** 신규 화면 안내(원천 목업 없음) */
-  isNew?: boolean;
 }
 
 /** 원문 드롭존 보조 문구 — 형식·용량 */
@@ -54,14 +51,13 @@ const HINT = 'PDF, HWP, DOCX, XLSX, ZIP · 최대 20MB';
 
 function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: string) => void }) {
   const [rows, setRows] = useState<Row[]>(cfg.table.rows);
-  const [files, setFiles] = useState<string[]>([]);
   const [gp, setGp] = useState('');
   const [union, setUnion] = useState('');
   const [ym, setYm] = useState(cfg.baseYm);
   const [big, setBig] = useState('');
   const [mid, setMid] = useState('');
   const { apiRef, selIds, onSelect, clear } = useRowSelection();
-  const [modal, setModal] = useState<null | { kind: 'edit'; id: string } | { kind: 'delete' }>(null);
+  const [modal, setModal] = useState<null | { kind: 'edit'; id: string } | { kind: 'delete' } | { kind: 'upload' }>(null);
 
   const reset = () => { setGp(''); setUnion(''); setYm(cfg.baseYm); setBig(''); setMid(''); };
   const shown = useMemo(() => rows.filter((r) =>
@@ -75,11 +71,6 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
     { label: '중분류', kind: 'select', value: mid, onChange: setMid, options: MID_OPTIONS },
   ];
 
-  const upload = () => {
-    if (!files.length) { toast('업로드할 파일을 먼저 선택하세요'); return; }
-    toast.success(`업로드되었습니다 (목업): ${files[0]}`);
-    setFiles([]);
-  };
   /* 행 더블클릭·Enter·선택 바 [수정] — 같은 모달(참조 안정: ReadGrid onRowOpen 계약) */
   const openEdit = useCallback((r: Row) => setModal({ kind: 'edit', id: r.id }), []);
   const editRow = modal?.kind === 'edit' ? rows.find((r) => r.id === modal.id) : undefined;
@@ -114,17 +105,14 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
   return (
     <RiskPage system="수탁보고" group="자펀드 수탁" label={cfg.label} route={cfg.label} onNav={onNav}
       filters={filters} onReset={reset} contextActions={selActions}
+      actions={<Button variant="outline" size="sm" leadingIcon="upload" onClick={() => setModal({ kind: 'upload' })}>업로드</Button>}
       footerLeft={<span>{`${ym ? `기준월 ${String(ym)} · ` : ''}총 ${String(shown.length)}건`}</span>}
       onExport={exportExcel} exportEnabled={!modal}>
-      {cfg.isNew && <NewScreenNotice sibling="실물자료 조회(월별)(S3_98)" />}
-      {/* 원문 `.uploadbox` — 제목 · 캡션 · [업로드] + 드롭존 */}
-      <SectionHead title={cfg.uploadTitle}
-        cap={<>파일명 = 파일 선택</>}
-        actions={<Button variant="outline" size="sm" leadingIcon="upload" onClick={upload}>업로드</Button>} />
-      <div style={{ padding: '0 18px 16px' }}>
-        <UploadDropzone files={files} onChange={setFiles} hint={HINT} maxSize="20MB" label={cfg.fileLabel} removedMsg="선택 파일 제거됨" />
-      </div>
       <ReadGrid table={cfg.table} rows={shown} ariaLabel={cfg.label} selectable onSelect={onSelect} selectedIds={selIds} selectionCol={LABELED_SELECTION_COL} apiRef={apiRef} onRowOpen={openEdit} />
+      {modal?.kind === 'upload' && (
+        <UploadModal title={cfg.uploadTitle} label={cfg.fileLabel} hint={HINT} maxSize="20MB" removedMsg="선택 파일 제거됨"
+          emptyMsg="업로드할 파일을 먼저 선택하세요" doneMsg={(fs) => `업로드되었습니다 (목업): ${fs[0]}`} onClose={() => setModal(null)} />
+      )}
       {modal?.kind === 'delete' && <DeleteDialog title={cfg.deleteTitle} count={selIds.length} onConfirm={remove} onClose={() => setModal(null)} />}
       {editRow && (
         <RowEditModal schema={PHYSICAL_FORM} mode="edit" title={`${cfg.entity} 수정`} initial={formFromRow(PHYSICAL_FORM, editRow)}
@@ -141,7 +129,7 @@ const PHYSICAL: UploadPageConfig = {
 /* 신규 — 형제 S3_98 준용. 제목·삭제 문구는 형제의 '실물자료' 를 '유가증권' 으로 바꾼 추정이다.
    기준월 기본값은 형제 화면의 데이터 시점이라 가져오지 않는다(빈 값). */
 const SECURITIES: UploadPageConfig = {
-  label: '유가증권관리(업로드)', table: SECURITIES_TABLE, uploadTitle: '유가증권 업로드', fileLabel: '유가증권 파일', deleteTitle: '유가증권 삭제', entity: '유가증권', baseYm: '', isNew: true,
+  label: '유가증권관리(업로드)', table: SECURITIES_TABLE, uploadTitle: '유가증권 업로드', fileLabel: '유가증권 파일', deleteTitle: '유가증권 삭제', entity: '유가증권', baseYm: '',
 };
 
 /** 실물자료관리(업로드) — S3_98 */

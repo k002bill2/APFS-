@@ -152,10 +152,10 @@ export function GpQuantIndicatorModal({ mode, preType, onClose }: { mode: QuantM
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-end gap-2 mt-3">
-            <span className="text-caption mr-auto" aria-live="polite" style={{ fontSize: 12.5 }}>{sel.size > 0 ? `${sel.size}개 행 선택됨` : '행을 눌러 선택'}</span>
+          <div className="flex items-center gap-2 mt-3">
             <Button variant="outline" size="sm" leadingIcon="plus" onClick={addRow}>행추가</Button>
             <Button variant="outline" size="sm" leadingIcon="trash" onClick={deleteRows}>행삭제</Button>
+            <span className="text-caption" aria-live="polite" style={{ fontSize: 12.5 }}>{sel.size > 0 ? `${sel.size}개 행 선택됨` : '행을 눌러 선택'}</span>
           </div>
         </div>
 
