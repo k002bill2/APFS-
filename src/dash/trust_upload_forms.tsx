@@ -8,8 +8,7 @@
    - KPI 배지 행 미포함(기본값 — 형제 수탁보고 화면과 같다) · 카드뷰·명세 팝업 없음 · 엑셀은 푸터 내보내기(⌥D). */
 import React, { useCallback, useState } from 'react';
 import { UI } from './components';
-import { Icon } from './icons';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu';
+import { SplitButton } from './ui/split-button';
 import { toast } from './ui/sonner';
 import { RiskPage } from './risk_page_kit';
 import { ReadGrid } from './risk_grid';
@@ -38,23 +37,11 @@ interface ManageConfig {
 }
 
 /* 등록 콤보 버튼 — [+ ○○ 등록 | ▾]. 본 버튼 = 등록, ▾ = 추가 등록 경로 메뉴(업로드).
-   클래스는 UI.Button size="sm" variant="outline" 규격(registry_ledger OutputMenu 선례 — UI.Button 은 Radix asChild 트리거가 될 수 없다) */
-const BTN = 'ui-btn ui-outline inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold whitespace-nowrap border transition-colors duration-tok-fast ease-ds py-1.5 text-[12.5px] bg-card text-foreground border-border-strong hover:bg-muted';
+   구현은 공용 SplitButton(ui/split-button.tsx — apfs-grid 허용 combo ①) — 여기선 라벨·항목만 정한다 */
 function RegisterCombo({ entity, onRegister, onUpload }: { entity: string; onRegister: () => void; onUpload: () => void }) {
   return (
-    <span className="inline-flex items-stretch">
-      <button type="button" className={`${BTN} px-[11px] rounded-l-[9px]`} onClick={onRegister}>
-        <Icon name="plus" size={14} stroke={2.2} />{entity} 등록
-      </button>
-      <DropdownMenu>
-        <DropdownMenuTrigger aria-label={`${entity} 등록 방법 더보기`} className={`${BTN} px-[7px] rounded-r-[9px] -ml-px data-[state=open]:bg-muted`}>
-          <Icon name="chevron-down" size={14} stroke={2.2} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={onUpload}><Icon name="upload" size={14} stroke={2.2} />{entity} 업로드</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </span>
+    <SplitButton label={`${entity} 등록`} leadingIcon="plus" menuLabel={`${entity} 등록 방법 더보기`} onClick={onRegister}
+      items={[{ label: `${entity} 업로드`, icon: 'upload', onSelect: onUpload }]} />
   );
 }
 
