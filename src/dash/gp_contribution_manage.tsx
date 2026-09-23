@@ -9,7 +9,7 @@
        ⚠ 기준일자는 **일(YYYY-MM-DD) 범위**다 → `PeriodPicker mode="day"` 2개. 목업 기본값
          `2000-01-01 ~ 2026-08-12`은 **적용하지 않는다**(빈 문자열 = 열린 경계, apfs-datepicker 함정).
        ⚠ 행 컬럼과 미연동인 항목(모펀드·계정구분·담당자)은 `noop` 캡션만 두고 `passes`에 넣지 않는다.
-         담당자는 원문에 옵션·샘플 값이 없어 옵션을 **지어내지 않는다**(빈 목록 + 검토필요 마커).
+         담당자는 원문에 옵션·샘플 값이 없어 옵션을 **지어내지 않는다**(빈 목록).
    - 목록 그리드 → AG Grid **2단 그룹헤더**(기타조합원 배분·모태펀드 배분 각 5열, `marryChildren`) +
      **pinned 합계 2행**(목업 tfoot 소계·합계 둘 다). 행 선택·등록·워크플로우 없음 → selbar도 없다.
    - 기준일자 셀 → **링크(LinkCell)**: 클릭·Enter로 `일자별출자배분관리` 상세 팝업
@@ -17,9 +17,8 @@
      (골드 `general_meeting_manage.tsx` 동형 — 행 클릭은 행 선택과 충돌하고 어느 셀이 진입점인지 보이지 않는다).
    - KPI 배지 행 → **미포함**. 카드뷰 토글·`sub` 캡션·명세 팝업·금액 단위 토글도 없다
      (단위 토글은 목업 설계메모 [확인 필요]가 미확정이라 원문 상태 유지 — 툴바엔 `단위: 원` 캡션만).
-   - 엑셀 → SheetJS(2단 헤더 병합 · 본문 + 소계 + 합계 · 마스크 시 실값 비노출)
+   - 엑셀 → SheetJS(2단 헤더 병합 · 본문 + 소계 + 합계)
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **전수 이식**했다 — 목업 원문 2건: 검색 1건(담당자) + 상세 팝업 1건(업로드 여부, 모달 파일).
 
    한계·가정(결정 기록)
    - **rowspan 미재현**: 목업은 운용사·자펀드·약정총액·모태펀드 약정액을 `rowspan=12`로 1회만 표시하지만
@@ -30,9 +29,8 @@
    - 배지 톤은 목업이 출자·배분을 같은 `tag b`로 칠하지만, 우리는 **출자=info · 배분=primary**로 갈랐다
      (같은 색이면 열 전체가 한 덩어리로 보여 구분 컬럼의 의미가 사라진다. 문구·값은 원문 그대로).
    - **담당자 필터의 의미**(출자자(LP) 측인지 운용사(GP) 측인지)는 목업 설계메모 [개발자 확인 필요]로 남아 있다 →
-     옵션 없이 검토필요 마커만 단다.
-   - 배분 5열은 엑셀 flatten이 `colDef.field`를 쓰므로 목업 배열 `o`/`m`을 **개별 키(o0..o4·m0..m4)**로 펼쳤다.
-   - 마스크 경계 때문에 `tooltipField`는 두지 않는다(툴팁으로 실값이 샌다). */
+     옵션을 두지 않는다.
+   - 배분 5열은 엑셀 flatten이 `colDef.field`를 쓰므로 목업 배열 `o`/`m`을 **개별 키(o0..o4·m0..m4)**로 펼쳤다. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
@@ -144,7 +142,7 @@ const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-/* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수·마스킹)에 null 가드만 얇게 덧씌운다(재구현 아님) */
+/* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수)에 null 가드만 얇게 덧씌운다(재구현 아님) */
 const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p));
 /* 약정액 2열 — 소계행은 목업 tfoot의 `colspan=7`에 덮여 값이 없다(공란). 합계행만 값을 갖는다 */
 const cmtFmt = (p: ValueFormatterParams) => (pinnedId(p) === SUB_ID ? '' : nullFmt(p));
@@ -165,8 +163,7 @@ const GB_TONE: Record<Gb, Tone> = { 출자: 'info', 배분: 'primary' };
 const MATCH_TONE: Record<Match, Tone> = { 일치: 'success', 불일치: 'warning' };
 
 /* 기준일자 셀 링크 — 클릭 시 상세 팝업(골드 `general_meeting_manage.tsx` LinkCell 복사).
-   ⚠ `title`엔 동작 힌트만 담는다 — 값을 넣으면 마스크 ON일 때 툴팁으로 실데이터가 샌다.
-   ⚠ 값이 날짜라 `<MT>`가 아니라 `mn()`으로 마스킹한다(마스크 규약: 날짜·숫자는 mn).
+   ⚠ `title`엔 동작 힌트만 담는다.
    ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다. */
 function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
   return (
@@ -180,7 +177,7 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
 }
 
 const makeColumns = (openDetail: (id: string) => void): (ColDef<GpContribRow> | ColGroupDef<GpContribRow>)[] => [
-  /* No는 축(순번)이라 마스킹하지 않는다. 합계 2행은 목업 tfoot 라벨('소계'/'합계')을 그 자리에 쓴다 */
+  /* 합계 2행은 목업 tfoot 라벨('소계'/'합계')을 그 자리에 쓴다 */
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum,
     valueFormatter: (p) => { const id = pinnedId(p); return id === SUB_ID ? '소 계' : id === TOT_ID ? '합 계' : String(p.value); } },
   txt('gp', '운용사', 170, 200),
@@ -332,7 +329,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 2단 헤더 병합 + 본문 + 소계 + 합계(화면=엑셀 불변식). 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 2단 헤더 병합 + 본문 + 소계 + 합계(화면=엑셀 불변식) ── */
   const exportExcel = () => {
     const { head1, head2, keys, merges } = flattenForExcel(columnDefs);
     const src = [...filteredRows, ...pinnedBottom];
@@ -371,7 +368,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
           {(['', '출자', '배분'] as ('' | Gb)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fGb === s} onClick={() => setFGb(s)}>{s || '전체'}</FilterChip>
           ))}
-          {/* 값만 표시(접두사 없음) + × — 운용사·자펀드는 텍스트라 <MT>, 기준일자는 날짜성이라 mn() */}
+          {/* 값만 표시(접두사 없음) + × */}
           {([
             ['운용사', fGp, () => setFGp(''), true],
             ['자펀드', fFn, () => setFFn(''), true],

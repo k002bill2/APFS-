@@ -30,7 +30,7 @@ export type ReportRow = Record<string, string | number> & { id: string };
 
 export interface ReportTab {
   key: string;
-  label: string;          // SegTabs 라벨 (축 = 비마스킹)
+  label: string;          // SegTabs 라벨
   sheet: string;          // Excel 시트명
   dateKey: string;        // 기준일자 필터가 비교할 날짜 컬럼
   columns: readonly ColumnSpec[];

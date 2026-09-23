@@ -8,7 +8,7 @@
    - B 조합원 · C 전문인력: 원문 표·상세 폼 리터럴. 섹션 버튼·행 버튼([상세]·[삭제]·[수정])은 원문처럼 토스트.
    - D 업로드: 여러 파일 드롭존(원문 multiple) — 파일 없이 업로드 → 경고, 있으면 완료 토스트 후 닫기. 처리·전송 없음(브리프 규칙 5).
    - E 출력 · F 발급이력: 원문 리터럴(발급일자 2016-01-19, 페이지 수 0, 발급이력 1건). 원문처럼 목록 행과 무관하게 연다.
-   날짜 입력은 네이티브 date 가 아니라 SchemaField date(DatePicker — apfs-datepicker). 표 값은 <MT>/mn() 으로 마스킹 규약을 따른다. */
+   날짜 입력은 네이티브 date 가 아니라 SchemaField date(DatePicker — apfs-datepicker). */
 import React, { useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { UI } from './components';
@@ -37,7 +37,7 @@ const today = () => format(new Date(), 'yyyy-MM-dd');
 /* ──────────────────────────────
    공용 부품 — 모달 골격 · 섹션 · 필드 · 소형 표
 ────────────────────────────── */
-/* 제목 뒤 대상명(조합명)·배지의 등록번호는 데이터라 <MT> 로 가린다(설명문 sr-only 는 대상명 없이 제목만) */
+/* 제목 뒤 대상명(조합명)·배지의 등록번호(설명문 sr-only 는 대상명 없이 제목만) */
 function Modal({ title, target, badge, wide, onClose, footer, children, dlgRef }: {
   title: string; target?: string; badge?: React.ReactNode; wide?: boolean; onClose: () => void; footer: React.ReactNode; children: React.ReactNode;
   dlgRef: React.RefObject<DialogHandle>;

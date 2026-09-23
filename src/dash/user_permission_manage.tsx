@@ -12,10 +12,10 @@
    - 권한 설정 모달(명칭·사용자 구분·설명·사용여부 + 메뉴별 기능 권한 매트릭스) → 전용 `UserPermissionModal`
        (flat 스키마 밖 — 매트릭스). 등록/수정/복사 3모드, 복사는 명칭 뒤 ' (복사)' + 사용자수 0.
    - 매트릭스 메뉴 트리 = LNB 정본(`admin_menu_tree.ts`) — 목업 "제안서 기능구성도" 대신 현행 메뉴 구조표.
-   - 엑셀(목업 없음이지만 리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 마스크 ON이면 텍스트 ''·숫자 0.
-   - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · ⚠검토필요 마커 없음(목업 원문 0건).
+   - 엑셀(목업 없음이지만 리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D.
+   - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음.
    ⚠ 실제 인가/RBAC 이 아니다 — 백엔드 없이 화면 로컬 더미 상태만 바꾼다(브리프). 목업의 설계 메모(.note)·GNB/LNB 는 이식하지 않는다. */
-import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky·마스크 헤더 바)
+import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import { format } from 'date-fns';
@@ -266,7 +266,7 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
   };
   const refresh = () => { setRows([...DEMO]); clearFilters(); apiRef.current?.deselectAll(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더. 마스크 ON이면 숫자 0·텍스트 '' ── */
+  /* ── Excel(.xlsx) — 단일 헤더 ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = visible.map((r) => EXPORT_COLS.map((c) => { const v = c.get(r); return typeof v === 'number' ? (v) : v; }));

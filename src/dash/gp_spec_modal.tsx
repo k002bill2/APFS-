@@ -19,7 +19,7 @@ const { Button, SegTabs, StatusBadge } = UI;
 type Unit = '원' | '백만원' | '억원';
 const UNIT_DIV: Record<Unit, number> = { 원: 1, 백만원: 1e6, 억원: 1e8 };
 
-/* 금액 → 단위 환산 문자열(마스킹 포함). 억/백만은 소수 2자리까지 */
+/* 금액 → 단위 환산 문자열. 억/백만은 소수 2자리까지 */
 function money(won: number | null, unit: Unit): string {
   if (won == null) return '-';
   const v = won / UNIT_DIV[unit];

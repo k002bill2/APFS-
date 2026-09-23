@@ -126,7 +126,7 @@ export const IRR_FUND: TableMeta = {
     { key: 'invest', label: '총투자금액', kind: 'amount' },
     { key: 'recover', label: '회수총액', kind: 'amount' },
     { key: 'balance', label: '투자잔액', kind: 'amount' },
-    /* 원문 샘플 '0.52' — 비율 형태라 금액 환산하지 않고 원문 문자열 그대로(⚠검토필요 원문 이식) */
+    /* 원문 샘플 '0.52' — 비율 형태라 금액 환산하지 않고 원문 문자열 그대로 */
     { key: 'uninvest', label: '미투자자산', kind: 'number', align: 'center', width: 130 },
     { key: 'nav', label: '평가금액', kind: 'amount' },
     { key: 'irr', label: 'IRR', kind: 'number', align: 'center', width: 100 },

@@ -41,8 +41,6 @@
    - KPI 배지 행 → **미포함**(2026-09-22 사용자 HITL 결정) → `kpis` prop 을 아예 넘기지 않는다
      (GridFrame 이 `{kpis && …}` 라 영역째 사라진다). 이 화면은 **금액 개념 자체가 없어** 제네릭 금액 KPI 가
      붙을 자리도 없다. 재질문 방지용으로 여기 기록해 둔다.
-   - ⚠검토필요 마커 → **구현하지 않는다**(형제 3화면과 동일한 사용자 결정 + 목업 설계메모도 "검토필요
-     마커 제거"라고 적고 있다 · ReviewMarker 를 import 하지 않는다).
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·설계메모 `.note`·리스트바 `총 N건`·
    목업 자체 월픽커/토스트/스크롤락 JS 는 셸·푸터·우리 컴포넌트가 소유하므로 이식하지 않는다.
 
@@ -149,7 +147,7 @@ const textCell = (p: { value?: string }) => (p.value
   ? <span className="min-w-0 truncate">{p.value}</span>
   : <span className="text-muted-foreground">-</span>);
 const kindCell = (p: { value: WorkforceKind }) => <StatusBadge tone={KIND_TONE[p.value]} label={p.value} size="lg" dot={false} />;
-/* 날짜 셀 — 행 데이터(축이 아니다)라 mn(). 빈 값·null 은 '-' */
+/* 날짜 셀 — 빈 값·null 은 '-' */
 const dateFmt = (p: { value?: string | null }) => (p.value ? String(p.value) : '-');
 
 const txt = (field: keyof WorkforceRow, headerName: string, flex: number, minWidth: number, center?: boolean): ColDef<WorkforceRow> => ({
@@ -433,7 +431,7 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더 8컬럼(병합 없음·합계행 없음). 마스크 ON 이면 숫자 0·텍스트 '' ── */
+  /* ── Excel(.xlsx) — 단일 헤더 8컬럼(병합 없음·합계행 없음) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
@@ -454,7 +452,7 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
   const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
 
-  /* 적용 필터 칩 — 항목별 개별 칩, **값만 표시**(항목명 접두사 없음) + ×. 값은 <MT>·날짜는 mn().
+  /* 적용 필터 칩 — 항목별 개별 칩, **값만 표시**(항목명 접두사 없음) + ×.
      기간은 한쪽만 채워도 칩이 뜬다(빈 쪽은 열린 경계로 표시).
      ⚠ `구분`(스코프)은 칩이 없다 — 행을 거르지 않는 modifier 라 끌 것이 없다(위 filterActive 주석 참조).
        대상 칩의 aria-label 은 드로어 라벨과 같은 `운용사/자펀드` 로 고정한다(스코프가 바뀌어도 안정적). */

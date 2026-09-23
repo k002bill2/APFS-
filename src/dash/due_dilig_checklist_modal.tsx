@@ -13,10 +13,7 @@
 
    구성(목업 → 우리 규약): `.modal` → Radix Dialog · `dl.dl` → KvGrid(골드 복사) · 푸터 `닫기` 하나.
    원문의 `.doclink` 는 클릭 시 토스트만 띄우는 목업 링크라, 우리는 **다운로드 동작 없는 파일 칩**으로
-   옮긴다 — 열리지 않는 링크를 만들면 죽은 버튼이 된다.
-
-   마스크 경계: 확장자 아이콘·색(유형 표식)은 비마스킹, **파일명은 데이터라 MT** 로 가린다
-   (mask-boundary-includes-excel-and-filename). */
+   옮긴다 — 열리지 않는 링크를 만들면 죽은 버튼이 된다. */
 import React from 'react';
 import { UI } from './components';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';

@@ -15,8 +15,7 @@
      ⚠ 팝업 내용이 수익률 전용이라 트리거 스코프도 행이 아니라 **셀**이다 — 다른 셀은 아무 일도 하지 않는다.
    - KPI 배지 행 없음 · 행 선택 없음 · 합계행 없음 · 페이지네이션 없음(1행, 등급 문자열이라 합계 무의미).
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·하단 설계메모/[확인 필요] 블록은 프로토타입 스캐폴딩이라
-   이식하지 않는다(셸이 소유). ⚠검토필요 마커는 **구현하지 않는다**(2026-09-21 사용자 지시 —
-   애초에 이 화면 본문엔 `.review` 요소가 0개라 목업 JS 도 죽은 코드였다).
+   이식하지 않는다(셸이 소유).
 
    한계·가정:
    - 행 데이터는 목업 `DATA` 실측 **1행**이 전부다 — 없는 자펀드를 창작하지 않는다.
@@ -114,7 +113,7 @@ const FUND_OPTIONS: string[] = ROWS.map((r) => r.fn);
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 
-/* 등급 셀 — 상태 표식이라 마스킹하지 않는다("축은 두고 데이터는 가린다"). 값이 없으면 빈 셀. */
+/* 등급 셀 — 값이 없으면 빈 셀. */
 function GradeCell({ v }: { v: Grade | null }) {
   if (!v) return null;
   return <StatusBadge tone={GRADE_TONE[v]} label={v} size="lg" dot={false} />;
@@ -177,14 +176,14 @@ const gradeCol = (field: keyof FundEwRow, header: string, width: number): ColDef
   field, headerName: header, width, minWidth: width, cellStyle: flexMid,
   cellRenderer: (p: any) => <GradeCell v={(p.value ?? null) as Grade | null} />,
 });
-/* 텍스트 리프 — 행 데이터라 <MT> 마스킹(표 헤더는 축이라 비마스킹) */
+/* 텍스트 리프 */
 const txtCol = (field: keyof FundEwRow, header: string, width: number, center?: boolean): ColDef<FundEwRow> => ({
   field, headerName: header, width, minWidth: width, cellStyle: center ? flexMid : flexCenter,
   cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span>,
 });
 
 const COLUMNS: (ColDef<FundEwRow> | ColGroupDef<FundEwRow>)[] = [
-  /* No 는 순번(축)이라 마스킹하지 않는다 — 행에 저장된 값이라 정렬해도 번호가 다시 매겨지지 않는다 */
+  /* No 는 행에 저장된 값이라 정렬해도 번호가 다시 매겨지지 않는다 */
   { field: 'no', headerName: 'No', width: 64, minWidth: 64, pinned: 'left', type: 'rightAligned',
     cellStyle: { textAlign: 'right', fontVariantNumeric: 'tabular-nums' } as CellStyle,
     valueFormatter: (p) => (p.value == null ? '' : String(p.value)) },
@@ -273,7 +272,7 @@ function DrawerSelect({ value, onChange, options, ariaLabel }: { value: string; 
   );
 }
 
-/* 적용 필터 칩 — 값만 표시(항목명 접두사 없음) + × 제거. 값은 행 데이터라 <MT> 마스킹. */
+/* 적용 필터 칩 — 값만 표시(항목명 접두사 없음) + × 제거. */
 function AppliedChip({ label, value, onClear }: { label: string; value: string; onClear: () => void }) {
   return (
     <span className="inline-flex items-center gap-1.5 font-semibold text-primary"
@@ -355,8 +354,7 @@ export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
   const refresh = () => { clearFilters(); toast.success('새로고침했습니다'); };
 
   /* ── Excel(.xlsx) — **시트 1장**. 2단 헤더 병합(`한도관리` 4열)·리프 키는 columnDefs 에서 자동 산출.
-     본문은 **화면과 같은 필터 결과**(visible)를 쓴다 — 화면=엑셀 불변식(apfs-spec-popup 규약 6).
-     마스크 ON이면 숫자 0 · 텍스트 ''(실값 비노출). ── */
+     본문은 **화면과 같은 필터 결과**(visible)를 쓴다 — 화면=엑셀 불변식(apfs-spec-popup 규약 6). ── */
   const exportExcel = () => {
     const { heads, keys, merges } = flattenForExcel(COLUMNS);
     const body = visible.map((r) => keys.map((k) => {

@@ -1,10 +1,9 @@
 /* risk_grid.tsx — TableMeta(risk_table_meta.ts) → AG Grid 읽기전용 표. 조기경보 기업정보·자펀드정보·가치평가 15개 typed 화면 공용.
 
-   왜 공용인가: 15개 화면의 표 29장이 같은 셀 규약(정렬·마스킹·단위 환산·배지·합계행·검토필요 헤더)을 쓴다.
+   왜 공용인가: 15개 화면의 표 29장이 같은 셀 규약(정렬·단위 환산·배지·합계행)을 쓴다.
    화면마다 ColDef 를 손으로 쓰면 같은 규약이 29벌 복제돼 한쪽만 고쳐진다 — 규약은 여기 한 곳이다.
 
-   셀 규약(apfs-aggrid "마스킹" · "관리형 페이지 그리드 규약"):
-   - text/center = `<MT>`(텍스트 마스킹) · date/amount/number = `mn()` · badge·헤더·합계 라벨은 비마스킹(축)
+   셀 규약(apfs-aggrid "관리형 페이지 그리드 규약"):
    - amount 는 원 단위 저장값을 **렌더 경계에서만** 선택 단위로 환산한다(schemas/unit.ts `formatUnit` SSOT)
    - 값 없음(null) = muted `-` · 합계행의 빈 칸('') = 빈 셀(원문 colspan 영역)
    - 행 선택 없음 — 조회 전용 화면이라 선택이 만드는 액션이 없다(apfs-aggrid "조회 전용 화면은 rowSelection 자체를 두지 않는다")
@@ -48,7 +47,7 @@ const textWidth = (s: string, px = 14) => [...s].reduce((w, ch) => w + (WIDE.tes
 
 type UnitDigits = TableMeta['unitDigits'];
 
-/** 표시 문자열(마스킹 전) — 엑셀이 아닌 화면 전용. digits = 표가 선언한 단위별 소수 자릿수(없으면 공용 formatUnit) */
+/** 표시 문자열 — 엑셀이 아닌 화면 전용. digits = 표가 선언한 단위별 소수 자릿수(없으면 공용 formatUnit) */
 export function displayText(c: ColMeta, v: Cell, unit: Unit | null, digits?: UnitDigits): string {
   if (v == null) return '-';
   if (typeof v === 'string') return v;
@@ -75,7 +74,6 @@ function LinkCell({ p, label }: { p: ICellRendererParams<Row>; label: string }) 
   useEffect(() => {
     if (!cell || v == null) return;
     cell.setAttribute('aria-haspopup', 'dialog');
-    /* 마스크 ON 이면 접근名에 실값을 싣지 않는다 — <MT> 가 화면만 가리고 aria-label 로 새는 것을 막는다 */
     cell.setAttribute('aria-label', `${`${String(v)} — `}${label} 팝업 열기 (클릭 또는 Enter)`);
     return () => { cell.removeAttribute('aria-haspopup'); cell.removeAttribute('aria-label'); };
   }, [cell, v, label]);

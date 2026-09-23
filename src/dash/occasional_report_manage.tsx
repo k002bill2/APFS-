@@ -25,11 +25,8 @@
          더블클릭도 함께 뺀 이유: 링크가 진입점이면 운용사 링크를 두 번 눌렀을 때 행 더블클릭이 보고서를
          띄워 엉뚱한 팝업으로 바뀐다. 셀 링크는 **조회 전용**이며 단계 전이는 여전히 툴바에만 있다.
    - KPI 배지 행                → 미포함(2026-09-12 HITL 결정). 금액 개념이 없어 건수 지표뿐이었다.
-   - 엑셀                       → SheetJS(단일 헤더, 마스크 시 실값 비노출)
-   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **이식한다**(2026-09-12 사용자 지시) — 원문 미정의 지점을 화면에서 바로 보여주는
-     설계 메모라 스캐폴딩이 아니다. 목업 원문 5건 전부 옮겼다: 검색 3건(심사담당자·리스크담당자·구분) +
-     확인 컬럼 2건(심사담당·리스크담당). 공용 `review_marker.tsx`, 규약은 apfs-grid 스킬. */
+   - 엑셀                       → SheetJS(단일 헤더)
+   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
@@ -148,8 +145,7 @@ const date = (field: keyof OccReportRow, header: string, width = 128): ColDef<Oc
 
 /* 확인 컬럼 — 미확인이면 셀 안 [확인] 버튼, 확인되면 확인자명 배지(목업 S1_04 `cell()` 그대로).
    2026-09-12 사용자 지시로 툴바 컨텍스트 액션을 대체한다 — 행 선택(체크박스)이 없어졌으므로
-   전이를 실을 곳이 셀뿐이다(apfs-stage-workflow 규약 1의 이 화면 한정 예외).
-   확인자명은 인명 데이터라 <MT> 마스킹, '확인' 라벨은 액션이라 비마스킹. */
+   전이를 실을 곳이 셀뿐이다(apfs-stage-workflow 규약 1의 이 화면 한정 예외). */
 const confirmCol = (field: 'jsBy' | 'rsBy', header: string, role: Role,
                     onConfirm: (role: Role, id: string) => void): ColDef<OccReportRow> => ({
   field, headerName: header, width: 146, maxWidth: 146, cellStyle: flexMid, sortable: true,
@@ -160,8 +156,6 @@ const confirmCol = (field: 'jsBy' | 'rsBy', header: string, role: Role,
 
 /* 셀 내 링크 — 클릭 시 해당 명세/보고서 팝업(목업 S1_04의 셀 링크 동작 그대로).
    2026-09-12 사용자 지시로 툴바 조회 버튼 3종을 대체한다.
-   ⚠ `title`엔 동작 힌트만 담는다 — 값을 넣으면 마스크 ON일 때 툴팁으로 실데이터가 샌다
-     (마스크 경계는 툴팁·엑셀까지). 같은 이유로 제목 컬럼의 `tooltipField`도 두지 않는다.
    ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다.
    외관은 목업 `.linktxt` 그대로: primary 색 + font-weight 600, **평상시 밑줄 없음 / hover에만 밑줄**
    (2026-09-12 사용자 지시 "밑줄 삭제" = 목업 원본 `text-decoration:none`과 일치). */
@@ -322,7 +316,7 @@ export function OccasionalReportManage({ onNav }: { onNav?: (r: string) => void 
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음). 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {

@@ -89,8 +89,7 @@ export function visibleRows(rows: EwCompareRow[], gradeOn: Record<Grade, boolean
   return rows.filter((r) => passFilter(r, gradeOn, chgOn)).map((r, i) => ({ ...r, no: i + 1 }));
 }
 
-/* 당월/전월 셀 텍스트 — `운용사명 등급`, 대상 아님이면 `–`(목업 `cell()`·`gradeTag()` 의 빈 표기).
-   마스크 ON 이면 운용사명(행 데이터)은 비우고 등급(상태 표식)만 남긴다. */
+/* 당월/전월 셀 텍스트 — `운용사명 등급`, 대상 아님이면 `–`(목업 `cell()`·`gradeTag()` 의 빈 표기). */
 export function sideText(gp: string, g: Grade | ''): string {
   if (!g) return '–';
   return `${gp} ${g}`;
@@ -98,8 +97,7 @@ export function sideText(gp: string, g: Grade | ''): string {
 
 export const EXCEL_HEAD = ['No', '구분', '모펀드', '항목', '등급', '당월', '전월'];
 
-/* 엑셀 AOA — 헤더 1행 + 본문. 모든 셀이 문자열/숫자(객체 금지). 마스크 ON 이면 텍스트 '' · 숫자 0
-   (단 변동·등급은 축/상태라 그대로 둔다). */
+/* 엑셀 AOA — 헤더 1행 + 본문. 모든 셀이 문자열/숫자(객체 금지). */
 export function buildAoa(rows: NumberedRow[]): (string | number)[][] {
   const body = rows.map((r) => [
     r.no,

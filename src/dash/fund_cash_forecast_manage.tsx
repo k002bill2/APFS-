@@ -8,7 +8,7 @@
                            → 계정구분 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter).
                              검색어는 OFF(목업에 없음). 항목 순서는 목업 그대로.
        ⚠ 담당자는 목업이 `data-dat="원천 데이터에 옵션·CDTP 없음 — 실 담당자 목록 미확인"`으로 못 박아
-         옵션을 지어내지 않는다(options=[] + ⚠검토필요 마커, noop).
+         옵션을 지어내지 않는다(options=[], noop).
        ⚠ 기준년월은 행에 기준년월 필드가 없어 **noop**(상태만, `· 데이터 연동 후 적용` 캡션).
          초기값은 ''이다 — 목업의 `value="2026-05"`는 데모 표시값이라 필터 기본값으로 승격하지 않는다.
    - 목록바(단위 전환)     → 툴바 우측 `단위` 캡션 + SegTabs(원/백만원/억원, **기본 원** = 목업 기본값).
@@ -19,11 +19,8 @@
                              나머지 텍스트/일시/배지 칸은 rowPinned 분기로 비운다('-').
    - 엑셀                  → SheetJS. 2단 헤더 병합·리프 키는 `flattenForExcel(columnDefs, unit)`로 columnDefs에서
                              자동 산출하고, 금액은 **선택 단위로 환산한 숫자 셀**(t:'n' + 단위별 z 서식)로 쓴다.
-                             마스크 ON이면 숫자 0·텍스트 ''(화면 밖 출력은 valueFormatter를 안 거침).
    - KPI 배지 행 · 카드뷰 · 명세 팝업 · 행 선택 · 등록 → **없음**(목업에 없는 조회 전용 화면).
-   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **이식한다**(2026-09-12 사용자 지시) — 목업 원문 1건(담당자)을 상세필터 라벨 옆에 그대로 싣는다.
-   공용 `review_marker.tsx`, 규약은 apfs-grid 스킬. */
+   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유) — 없으면 합계행이 안 보인다
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
@@ -103,7 +100,7 @@ const unitText = (won: number, unit: Unit): string =>
 /* 엑셀 숫자서식 — 화면 소수 자릿수와 일치(정수 판정이 아니라 **단위**가 기준) */
 const Z_BY_UNIT: Record<Unit, string> = { 원: '#,##0', 백만원: '#,##0.0', 억원: '#,##0.00' };
 
-/* 금액 셀 포매터 — grid context.unit로 환산 후 마스킹(numFmt 동형, 단위만 반영).
+/* 금액 셀 포매터 — grid context.unit로 환산(numFmt 동형, 단위만 반영).
    단위가 바뀌면 `refreshCells({force:true})`로 재적용한다(본문 + pinned 합계행). */
 const moneyFmt = (p: ValueFormatterParams): string => {
   if (p.value == null) return '-';
@@ -137,7 +134,7 @@ const txt = (field: keyof CashForecastRow, header: string, width: number, center
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
   cellRenderer: (p: any) => (p.node.rowPinned ? null : <>{p.value}</>),
 });
-/* 일시 — 합계행은 '-'(목업 tfoot), 값 없음도 '-'. 숫자 문자열이라 mn() 마스킹 */
+/* 일시 — 합계행은 '-'(목업 tfoot), 값 없음도 '-'. */
 const date = (field: keyof CashForecastRow, header: string, width = 128): ColDef<CashForecastRow> => ({
   field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
   valueFormatter: (p) => (p.node?.rowPinned ? '-' : p.value == null ? '-' : String(p.value)),
@@ -295,13 +292,13 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 2단 헤더 병합 + 합계행 + 선택 단위 환산. 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 2단 헤더 병합 + 합계행 + 선택 단위 환산 ── */
   const exportExcel = () => {
     const { head1, head2, keys, merges } = flattenForExcel(columnDefs, unit);
     const src = [...filteredRows, pinnedBottom[0]];
     const body = src.map((r, i) => keys.map((k) => {
       const v = (r as any)[k];
-      if (k === 'no') return i === src.length - 1 ? '합계' : v;   // No는 행 번호(축)라 마스킹 대상 아님
+      if (k === 'no') return i === src.length - 1 ? '합계' : v;
       if (MONEY.has(k)) return v == null ? '' : toUnit(v as number, unit);
       return (v ?? '');
     }));

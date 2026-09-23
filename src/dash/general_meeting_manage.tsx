@@ -5,8 +5,7 @@
    - 검색박스(모펀드·운용사·자펀드·계정구분·담당자·총회구분·총회기간)
        → 보고상태 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter)
        ⚠ 목업 기본 총회기간(2025-08-28~2026-08-28)은 데모값이라 이식하지 않는다(초기값 '' = 미적용).
-       ⚠ 담당자는 행 컬럼이 아니라 상세(`detail.gen.mgr`)에 있다 — 그 값으로 실제 필터링하되
-         ⚠검토필요 마커를 붙여 "실 담당자 목록 미확인"을 화면에 남긴다(목업 원문 1건).
+       ⚠ 담당자는 행 컬럼이 아니라 상세(`detail.gen.mgr`)에 있다 — 그 값으로 실제 필터링한다.
    - 목록 그리드                → AG Grid 단일 헤더(apfs-aggrid). **합계행 없음·행 선택 없음** — 금액 컬럼이
        없는 조회 화면이고 목업에도 체크박스/라디오가 없다.
    - 확정여부 2열              → **셀 안 네이티브 `<select>`**(목업 `selCell`/`resultCell` 그대로).
@@ -15,9 +14,8 @@
        ⚠ **행 더블클릭으로는 열지 않는다** — 링크가 진입점인데 더블클릭까지 걸면 링크를 두 번 누른 순간
          엉뚱한 팝업이 뜬다(골드 `occasional_report_manage.tsx`와 동일 결정). 진입은 링크 + Enter 단일.
    - KPI 배지 행                → 미포함(브리프 확정). 금액 개념이 없어 건수 지표뿐이다.
-   - 엑셀                       → SheetJS(단일 헤더, 마스크 시 실값 비노출)
-   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **이식한다**(apfs-grid 규약) — 목업 원문 1건(검색 '담당자')을 그대로 옮겼다. */
+   - 엑셀                       → SheetJS(단일 헤더)
+   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
@@ -134,7 +132,6 @@ const txt = (field: keyof MeetingRow, header: string, width: number, maxWidth: n
 const fixed = (width: number) => ({ width, maxWidth: width, minWidth: width });
 
 /* 셀 내 링크 — 클릭 시 상세 팝업(목업은 행 전체 클릭이지만, 우리 규약은 셀 링크가 진입점이다).
-   ⚠ `title`엔 동작 힌트만 담는다 — 값을 넣으면 마스크 ON일 때 툴팁으로 실데이터가 샌다.
    ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다.
    외관은 목업 `.linktxt` 그대로: primary 색 + font-weight 600, 평상시 밑줄 없음 / hover에만 밑줄. */
 function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
@@ -192,7 +189,7 @@ const makeColumns = (
   openDetail: (id: string) => void,
   patchRow: (id: string, patch: Partial<MeetingRow>) => void,
 ): ColDef<MeetingRow>[] => [
-  /* No는 축(순번)이라 마스킹하지 않는다(골드 동형) */
+  /* No는 순번(골드 동형) */
   { field: 'no', headerName: 'No', ...fixed(68), pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   /* 운용사·자펀드는 명세 팝업이 없어 링크가 아니다(브리프) — 텍스트 + maxWidth 캡 */
   txt('gp', '운용사', 160, 240, 120),
@@ -351,7 +348,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음). 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
@@ -442,8 +439,8 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             {/* 목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·총회구분·총회기간.
-                그리드 컬럼과 미연동인 항목(모펀드·계정구분)은 noop 캡션. 담당자는 행 상세값으로 실제 필터링하되
-                원문 미정의라 ⚠마커. 보고상태는 툴바 칩과 state를 공유한다. 기간은 PeriodPicker day 2개 */}
+                그리드 컬럼과 미연동인 항목(모펀드·계정구분)은 noop 캡션. 담당자는 행 상세값으로 실제 필터링한다.
+                보고상태는 툴바 칩과 state를 공유한다. 기간은 PeriodPicker day 2개 */}
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>

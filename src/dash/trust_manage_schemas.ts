@@ -3,7 +3,6 @@
    ⚠ 원문 목업에는 이 폼들이 **없다**(원문 [수정]은 토스트뿐 · 자펀드코드는 셀 편집 · 계좌정보/입출금은 업로드 폼뿐).
      2026-09-23 사용자 결정 — 관리형 화면은 체크박스 선택 → 선택 바 [수정]·[삭제](목업 배치를 따르지 않는다).
      그래서 항목은 **각 화면 목록 컬럼을 그대로** 폼으로 옮긴 것이다(창작 항목 없음 · No 는 자동 부여라 제외).
-     원문 근거가 없는 폼이라 페이지의 등록/수정 진입에 ⚠검토필요 마커를 단다(TRUST_FORM_NOTE).
    ⚠ schemas/index.ts ALL 에 등록하지 않는다 — 라우트가 아니라 화면 전용 모달 스키마다. 모듈 스코프 parsePageSchema 로
      import 시점에 zod 검증한다(형제 shareholder_manage_schemas 와 동형). */
 import { parsePageSchema } from './schemas/types';

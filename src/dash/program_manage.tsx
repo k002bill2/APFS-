@@ -11,7 +11,7 @@
    - 프로그램 등록/수정(프로그램ID*·프로그램명*·사용여부) → RowFormModal + 팩토리 스키마(program_manage_schemas). 등록 = 미연결(linked:false).
    - 도움말 편집(개요·캡처·항목·절차·FAQ·유의사항·첨부) → 전용 `ProgramHelpModal`. 저장 시 도움말 수정자·일시 갱신.
    - 데이터 = LNB 정본(`admin_menu_tree.programCatalog`) 파생(`program_manage_model.demoPrograms`) — 메뉴관리·권한 매트릭스와 같은 소스.
-   - 엑셀(리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 마스크 ON이면 텍스트 ''.
+   - 엑셀(리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D.
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · 페이지네이션 20건.
    ⚠ 백엔드 없음 — 등록·수정·삭제·도움말 저장은 화면 로컬 상태만 바꾼다. 실제 LNB·메뉴 연결은 바뀌지 않는다. */
 import './aggrid_shared.css';
@@ -123,7 +123,7 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
    ⚠ disabled 버튼은 브라우저가 마우스 이벤트를 아예 발생시키지 않아 자신도 조상도 hover 를 못 받는다.
      그래서 Button 에 pointerEvents:'none' 을 주고, hover·키보드·팝오버 트리거를 **바깥 span** 이 소유한다.
      disabled 버튼은 초점도 못 받으므로 키보드 경로도 이 span(role=button, tabIndex 0)이 대신 연다.
-   여닫기 규약은 review_marker.tsx 와 동일(그쪽에서 실측으로 다듬은 패턴):
+   여닫기 규약(실측으로 다듬은 패턴):
      - 닫기는 140ms 유예 + 팝오버 콘텐츠도 같은 핸들러 → 트리거→콘텐츠로 포인터가 넘어가도 안 닫힌다
      - 포인터 클릭은 **열기 전용**(토글 아님) — hover 로 이미 열린 걸 클릭이 곧바로 닫아버린다
      - 초점 이동은 **키보드로 열었을 때만** — hover 로 열 때 초점을 뺏으면 작업 중 초점이 튄다

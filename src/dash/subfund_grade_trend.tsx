@@ -23,7 +23,6 @@ const REST = 'var(--border-strong)';
 /* 2구간 도넛 — 정상 비중(원문 값 그대로를 %로) vs 그 외. 세그먼트 사이 2px 표면 간격 */
 function GradeDonut({ year, pct }: { year: number; pct: number }) {
   const r = 26, c = 2 * Math.PI * r, seg = (c * pct) / 100;
-  /* 접근名·툴팁도 행 데이터 — 마스크 ON 이면 mn() 으로 가린다(화면 숫자만 가리고 aria 로 새지 않게) */
   const p = String(pct), rest = String(100 - pct);
   return (
     <figure className="flex flex-col items-center gap-1 m-0">

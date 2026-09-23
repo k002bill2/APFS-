@@ -4,11 +4,11 @@
 
    목업 → 우리 규약(골드 fund_early_warning_yield_modal.tsx · apfs-spec-popup)
    - modal-head 제목 → DialogTitle. 조합명 머리글(S2_90 `.fn`) → DialogDescription.
-   - 맥락 kv(`.ctx .ci` 자펀드·투자기업·투자자산종류) → 본문 상단 kv 행(라벨 비마스킹, 값 <MT>).
+   - 맥락 kv(`.ctx .ci` 자펀드·투자기업·투자자산종류) → 본문 상단 kv 행.
    - 금액 단위 seg(열 때마다 `원` 으로 초기화 — 원문 openIrr 의 irrUnit 리셋) → 본문 우측 SegTabs.
    - 금액은 원문이 양수에 '-' 를 붙여 그린다 → 음수 값 + 위험색(`--danger-text`).
    - `엑셀` 은 헤더 우측이 아니라 **푸터**(DialogContent 의 절대배치 닫기 X 와 겹침 방지 — 골드와 같은 판단).
-   - 엑셀 = 화면 소스 전부(맥락 kv + 현금흐름 표), 화면 단위 그대로. 마스크 ON 이면 숫자 0 · 텍스트 ''. */
+   - 엑셀 = 화면 소스 전부(맥락 kv + 현금흐름 표), 화면 단위 그대로. */
 import React, { useRef, useState } from 'react';
 import { UI } from './components';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
@@ -56,7 +56,7 @@ export function IrrBasisModal({ basis, onClose }: { basis: IrrBasis; onClose: ()
         </DialogHeader>
 
         <div className="overflow-y-auto p-[46px]">
-          {/* 맥락 kv — 라벨은 축(비마스킹), 값만 <MT> */}
+          {/* 맥락 kv */}
           {basis.ctx && (
             <dl className="grid gap-px border border-border bg-border" style={{ margin: '0 0 16px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
               {basis.ctx.map((c) => (

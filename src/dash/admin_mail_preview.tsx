@@ -1,6 +1,5 @@
 /* 관리자 화면 공용 메일 미리보기 다이얼로그 — 사용자관리(온보딩 안내·OTP 재등록 안내)·사용자 초대(운용사)(초대 메일) 공용.
-   출처: S0_101 `mailFrame`·S0_103 `mail`. 제목/수신/발신 헤더 + 본문(pre-line). ⚠ 실제 발송 없음(목업) — 링크 토큰·인증 정보는 ●●●●●● 로만 표시.
-   본문·수신자는 동적 텍스트라 `MT` 마스킹, 발신 주소·설명 캡션은 고정 문구라 비마스킹. */
+   출처: S0_101 `mailFrame`·S0_103 `mail`. 제목/수신/발신 헤더 + 본문(pre-line). ⚠ 실제 발송 없음(목업) — 링크 토큰·인증 정보는 ●●●●●● 로만 표시. */
 import { useRef } from 'react';
 import { UI } from './components';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';

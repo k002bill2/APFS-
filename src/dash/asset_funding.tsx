@@ -52,7 +52,7 @@ type Unit = '원' | '백만원' | '억원';
 const UNITS: Unit[] = ['원', '백만원', '억원'];
 // 억원 저장값 → 선택 단위 숫자. ≤1소수 억원이라 원(×1e8)·백만원(×100) 모두 정수 → 기존 fmt() 규칙 그대로 재사용.
 const toUnit = (eok: number, unit: Unit): number => unit === '원' ? eok * 1e8 : unit === '백만원' ? eok * 100 : eok;
-// 금액 셀 포매터 — grid context.unit로 변환 후 마스킹·서식(numFmt 동형, 단위만 반영). 단위 바뀌면 refreshCells로 재적용.
+// 금액 셀 포매터 — grid context.unit로 변환 후 서식(numFmt 동형, 단위만 반영). 단위 바뀌면 refreshCells로 재적용.
 const moneyFmt = (p: ValueFormatterParams): string => {
   if (p.value == null) return '';
   const unit = (p.context as { unit?: Unit } | undefined)?.unit ?? '억원';
@@ -102,8 +102,6 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   useHotkey(HOTKEYS.print.combo, () => window.print());
   const [ctx, setCtx] = useState<CtxMenuState>(null);   // 우클릭 컨텍스트 메뉴 좌표·항목(null=닫힘)
 
-     // 마스크 ON이면 Excel 숫자 셀 값을 0으로(실값 비노출) — 표시 모양은 z 서식이 담당
-
   const onGridReady = useCallback((e: GridReadyEvent<FundingRow>) => { apiRef.current = e.api; }, []);
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
@@ -119,7 +117,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
     setRows((prev) => prev.filter((r) => r.y !== y));
     toast.success('항목을 삭제했습니다');
   };
-  // 행 복사 — 구분(축)은 실값 유지, 숫자 값만 mn(fmt())로 마스킹(엑셀 내보내기와 동일 계약). TSV로 클립보드에.
+  // 행 복사 — 구분 + 숫자 값(fmt()). TSV로 클립보드에.
   const copyRow = (row: FundingRow) => {
     const nums = (['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'u0', 'u1'] as const).map((k) => String(fmt(row[k])));
     navigator.clipboard?.writeText([row.y, ...nums].join('\t')).then(
@@ -143,8 +141,8 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   };
   // Excel(.xlsx) 내보내기 — SheetJS. 화면의 2단 그룹헤더(병합)·합계행을 그대로 재현한다(필터 없음 → 전 행).
   // 숫자 컬럼은 실제 숫자(t:'n')+숫자서식(z)으로 기록 → Excel이 화면 그리드(type:'rightAligned')와 동일하게 자동 우측 정렬,
-  // 실데이터 연동 시(_on=false) 합계 계산도 가능. (커뮤니티 xlsx는 셀 정렬 '스타일'을 쓰지 못하므로 숫자 셀로 정렬을 얻는다.)
-  // 마스크 ON이면 값을 0으로 써서 실값을 파일에 남기지 않는다(비노출). 서식의 정수/소수 판단은 '원값'을 따른다(소수 컬럼은 0.0로 표시).
+  // 실데이터 연동 시 합계 계산도 가능. (커뮤니티 xlsx는 셀 정렬 '스타일'을 쓰지 못하므로 숫자 셀로 정렬을 얻는다.)
+  // 서식의 정수/소수 판단은 '원값'을 따른다.
   const exportExcel = () => {
     const zFmt = (v: number) => (Number.isInteger(v) ? '#,##0' : '#,##0.0');   // 화면 fmt()와 동일한 콤마/소수 규칙
     const numKeys = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'u0', 'u1'] as const;   // 헤더 순: 합계·농특회계·농안기금·FTA·수산발전기금·농금원 / 조합수·출자금액

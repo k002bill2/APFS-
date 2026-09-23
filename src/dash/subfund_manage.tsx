@@ -6,10 +6,8 @@
    - 2단 헤더 그리드+합계  → AG Grid ColGroupDef + pinned 합계행(useMemo 재계산, apfs-aggrid)
    - 심사단계 워크플로우   → 행(라디오) 선택 시 툴바 좌에 단계별 컨텍스트 액션 → 단계 전이(공고관리 패턴)
    - 편집 팝업 3종         → 제안서접수/선정조합 = RowFormModal(스키마), 결성조합 수정 = 섹션형 전용 모달
-   - 엑셀                  → SheetJS(2단 헤더 병합 자동 산출, 마스크 시 실값 비노출)
+   - 엑셀                  → SheetJS(2단 헤더 병합 자동 산출)
    목업의 GNB/LNB 토글·출처시스템 메뉴·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **이식한다**(2026-09-12 사용자 지시) — 목업이 남긴 두 건(심사담당자·리스크담당자 옵션)을
-   상세필터 라벨 옆에 그대로 싣는다. 공용 `review_marker.tsx`, 규약은 apfs-grid 스킬.
 
    apfs-manage-page · apfs-stage-workflow 스킬의 골드 레퍼런스. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
@@ -87,7 +85,7 @@ const today = () => format(new Date(), 'yyyy-MM-dd');   // 로컬 달력일 — 
 /* ──────────────────────────────
    컬럼 정의 — 목업 헤더 순서 그대로. 2단 그룹 4개(우선손실충당률·약정액·변동약정액·납입액)
 ────────────────────────────── */
-/* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수·마스킹)에 null 가드만 얇게 덧씌운다(재구현 아님) */
+/* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수)에 null 가드만 얇게 덧씌운다(재구현 아님) */
 const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p));
 /* AG Grid cellStyle은 CellStyle(문자열 인덱스 시그니처) — React CSSProperties와 타입이 다르다 */
 const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
@@ -292,7 +290,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 2단 헤더 병합·합계행 재현, 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 2단 헤더 병합·합계행 재현 ── */
   const exportExcel = () => {
     const { head1, head2, keys, merges } = flattenForExcel(columnDefs);
     const src = [...filteredRows, pinnedBottom[0]];
@@ -371,7 +369,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           {(['' as const, ...STAGES] as ('' | Stage)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fStage === s} onClick={() => setFStage(s)}>{s || '전체'}</FilterChip>
           ))}
-          {/* 적용 중인 상세필터 — 항목별 개별 칩(각각 ×로 해제). 라벨=드로어 항목명, 값은 MT 마스킹(apfs-detail-filter) */}
+          {/* 적용 중인 상세필터 — 항목별 개별 칩(각각 ×로 해제). 라벨=드로어 항목명(apfs-detail-filter) */}
           {([
             ['검색어', fText, () => setFText('')],
             ['자펀드', fFund, () => setFFund('')],
@@ -392,7 +390,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
       )}
       contextActions={selActions}
       toolbarRight={<>
-        {/* 금액 단위 표기 — 캡션(비마스킹). 카드헤더 sub 캡션을 없애면서 여기로 이동 */}
+        {/* 금액 단위 표기 — 캡션. 카드헤더 sub 캡션을 없애면서 여기로 이동 */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'apply' })}>제안서접수 등록</Button>

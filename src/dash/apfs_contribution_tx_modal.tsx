@@ -18,12 +18,9 @@
    - **`chk` 편집 도메인이 행 도메인보다 넓다**: 표 select는 일치/확인/**미확인** 3값인데 행 타입(`TxMember['chk']`)은
      `'' | '일치' | '확인'`이다(그리드에서 `''`가 '-' 분기를 담당). 행 타입을 넓히지 않고 모달 안에서만
      `'' ↔ '미확인'`으로 매핑한다.
-   - **마스크 경계**: 입력 컨트롤(`<input>`)의 값은 가릴 수 없다 → 입력값과 그로부터 파생되는 실 입금액·합계는
-     비마스킹이다. 읽기전용 셀(조합원·약정금액·수탁납입금액 등)과 상단 kv는 규약대로 `<MT>`/`mn()`으로 가린다.
    - **출자거래 수정은 그리드와 무관한 별 자펀드 데이터**(목업 `INVEST_GROUP` — 나이스투자파트너스 8명).
      사용자 제공 실 화면 캡처 기반이라 목록의 어느 그룹과도 연결되지 않는다 → 저장은 로컬 편집만 되돌리고 닫는다.
-   - 목업 tfoot의 납입금액 합계는 입력이 바뀌어도 갱신되지 않는데(이벤트 미배선), 명백한 누락이라 실시간 합계로 고친다.
-   ⚠검토필요 마커 0건(이 파일 범위의 목업 원문에 `data-rec`/`data-dat` 없음 — 2건은 모두 검색박스라 목록 파일). */
+   - 목업 tfoot의 납입금액 합계는 입력이 바뀌어도 갱신되지 않는데(이벤트 미배선), 명백한 누락이라 실시간 합계로 고친다. */
 import React from 'react';
 import { UI } from './components';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
@@ -61,7 +58,6 @@ const CELL: React.CSSProperties = { padding: '6px 8px' };
 const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)' };
 const DT_STYLE: React.CSSProperties = { padding: '8px 12px', fontSize: 13 };
 
-/** `numeric`(날짜·금액) → `mn()` · `raw`(분류 라벨 = 축) → 그대로 · 그 외 텍스트 → `<MT>` */
 type KvItem = { l: string; v: string; numeric?: boolean; raw?: boolean };
 
 function KvGrid({ items }: { items: KvItem[] }) {
@@ -80,7 +76,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
 }
 
 /* 조합원구분(GP/LP/SP) 칩 — 목업 `.tag.n`(중립 회색). Tone에 중립 톤이 없어 직접 만든다
-   (기하는 StatusBadge size="lg"와 동일). 분류 표식이라 마스킹하지 않는다 */
+   (기하는 StatusBadge size="lg"와 동일) */
 function GradeChip({ v }: { v: string }) {
   return <span className="inline-flex items-center rounded-[7px] bg-muted px-[10px] py-[4px] text-[13px] font-bold leading-tight text-muted-foreground">{v}</span>;
 }
@@ -200,7 +196,6 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
   const kv: KvItem[] = [
     { l: '운용사', v: group.un },
     { l: '자펀드', v: group.fn },
-    /* 거래구분은 분류 라벨(축)이라 마스킹 대상이 아니다 */
     { l: '거래구분', v: `${group.tx} / ${group.dtx}`, raw: true },
     { l: '거래일자', v: group.td, numeric: true },
   ];
@@ -253,7 +248,6 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
                 <tbody>
                   {group.members.map((m, i) => (
                     <tr key={m.mem + i}>
-                      {/* NO는 축(순번)이라 마스킹하지 않는다 */}
                       <td className={`${TD} text-center tabular`} style={CELL}>{i + 1}</td>
                       <td className={TD} style={CELL}>{m.mem}</td>
                       <td className={`${TD} text-center`} style={CELL}><GradeChip v={m.mg} /></td>
@@ -263,7 +257,7 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
                           <AmountInput value={drafts[i][k]} onChange={set(i, k)} ariaLabel={`${m.mem} ${DIST_HEADERS[k]}`} />
                         </td>
                       ))}
-                      {/* 실 입금액 — 입력에서 파생되므로 비마스킹(파일 상단 '마스크 경계') */}
+                      {/* 실 입금액 — 입력에서 파생 */}
                       <td className={`${TD} text-right tabular font-semibold`} style={CELL}>{toFmt(nums[i].net)}</td>
                       <td className={`${TD} text-center`} style={CELL}>
                         {editable
@@ -386,7 +380,7 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
                   {INVEST_GROUP.members.map((m, i) => (
                     <tr key={m.id}>
                       <td className={`${TD} text-center tabular`} style={CELL}>{i + 1}</td>
-                      {/* 조합원명 + 사업자번호 — 둘 다 식별 정보라 <MT> */}
+                      {/* 조합원명 + 사업자번호 */}
                       <td className={TD} style={CELL}>{`${m.mem} (${m.id})`}</td>
                       <td className={`${TD} text-center`} style={CELL}><GradeChip v={m.mg} /></td>
                       <td className={`${TD} text-center`} style={CELL}>{m.mtype}</td>

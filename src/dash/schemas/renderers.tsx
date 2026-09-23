@@ -32,9 +32,7 @@ function toneFor(label: string, domain?: StatusDomainEntry[]): Tone {
 }
 
 /* 첨부파일 칩 — 리스트 셀 값 뒤에 붙는 확장자 배지(ColumnSpec.attachFrom). 첨부 컬럼을 따로 만들지 않고
-   제목 뒤에 "· PDF"처럼 덧붙이는 표현. 값 계약은 filepond와 동일한 CSV("a.pdf, b.xlsx").
-   마스크 경계: 확장자는 **유형 표식**(StatusBadge·단위와 동류)이라 가리지 않는다. 반면 파일명은 데이터이므로
-   마스크 ON에서는 tooltip(title)을 떼어 평문 누출을 막는다(마스크 경계 = 엑셀·파일명·툴팁까지). */
+   제목 뒤에 "· PDF"처럼 덧붙이는 표현. 값 계약은 filepond와 동일한 CSV("a.pdf, b.xlsx"). */
 export function AttachChips({ value, max = 3 }: { value?: unknown; max?: number }) {
   const names = parseFileNames(typeof value === 'string' ? value : '');
   if (names.length === 0) return null;
@@ -69,14 +67,14 @@ export function Cell({ col, value, color, statusDomain, unit }: { col: ColumnSpe
     case 'status':     return <StatusBadge tone={toneFor(String(value), statusDomain)} label={String(value)} size="sm" />;
     case 'rate':       return <DeltaBadge value={Number(value)} />;
     /* 운용사(gp): 이름 앞 아이콘 칩 제거(2026-09-16 사용자 지시). 표 전반에서 같은 건물 아이콘이
-       모든 행에 반복돼 정보가 없었고, 좁은 폭에서 이름을 밀어냈다. 렌더는 마스킹 텍스트와 같다 —
+       모든 행에 반복돼 정보가 없었고, 좁은 폭에서 이름을 밀어냈다. 렌더는 일반 텍스트와 같다 —
        `type:'gp'` 자체는 남긴다(스키마 의미 표식이고 정렬·필터 해석에 쓰인다). */
     case 'gp':         return <>{String(value)}</>;
     case 'numeric':
       if (unit && col.type === 'amount' && typeof value === 'number')
         return <span className="tabular">{String(formatUnit(value, unit))}</span>;
       return <span className="tabular">{String(typeof value === 'number' ? value.toLocaleString() : String(value))}</span>;
-    // maskedText (text/code/pii) + 미지 타입 → 항상 MT (평문 누출 차단)
+    // maskedText (text/code/pii) + 미지 타입 → 일반 텍스트
     default:           return <>{String(value)}</>;
   }
 }

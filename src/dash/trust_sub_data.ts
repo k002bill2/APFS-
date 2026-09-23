@@ -76,7 +76,7 @@ export const PHYSICAL_TABLE: TableMeta = {
 
 /* ═══════════════ 신규 — 유가증권관리(업로드) ═══════════════
    원천 목업이 없다. 형제 화면 S3_98(실물자료 조회(월별))의 검색조건·업로드 박스·목록 컬럼을 **그대로 준용**하고,
-   원문 근거가 없는 추정이므로 모든 컬럼에 ⚠검토필요 마커를 단다. 행은 만들지 않는다(빈 상태). */
+   원문 근거가 없는 추정이다. 행은 만들지 않는다(빈 상태). */
 export const SECURITIES_PROVENANCE = NEW_PROVENANCE;
 export const NEW_SCREEN_CAPTION = '신규 화면 — 현행 목업 없음(업무 정의 확인 필요)';
 export const SECURITIES_TABLE: TableMeta = {
@@ -148,8 +148,8 @@ export const VERIFY_UNINV: TableMeta = {
 export const VERIFY_TABLES: TableMeta[] = [VERIFY_INVEST, VERIFY_UNINV_TX, VERIFY_UNINV];
 
 /* ═══════════════ 신규 — 유가증권비교조회 ═══════════════
-   원천 목업이 없다. 형제 S3_101 섹션1(투자자산: 운용사·수탁기관·일치여부 2단 헤더)의 컬럼을 그대로 준용한 표 1장,
-   모든 컬럼에 ⚠검토필요 마커. 섹션 제목·합계·행은 만들지 않는다(원문 근거 없음). */
+   원천 목업이 없다. 형제 S3_101 섹션1(투자자산: 운용사·수탁기관·일치여부 2단 헤더)의 컬럼을 그대로 준용한 표 1장.
+   섹션 제목·합계·행은 만들지 않는다(원문 근거 없음). */
 export const SECURITIES_COMPARE_PROVENANCE = NEW_PROVENANCE;
 export const SECURITIES_COMPARE: TableMeta = {
   id: 'securitiesCompare', unitDigits: VERIFY_DIGITS,

@@ -18,9 +18,9 @@ export type Cell = string | number | null;
 /** 표 한 행. `id` 는 AG Grid getRowId 용 안정 키(원문 값이 아니다 — 화면·엑셀에 나오지 않는다). */
 export type Row = { id: string } & Record<string, Cell>;
 
-/** 셀 종류 — 정렬·마스킹·서식을 한꺼번에 정한다.
+/** 셀 종류 — 정렬·서식을 한꺼번에 정한다.
     text=좌측 텍스트 · center=가운데 텍스트 · date=가운데 날짜/년월 · amount=우측 금액(단위 환산 대상)
-    number=우측 수치(단위 환산 안 함: 주식수·건수·배수·IRR) · badge=상태 배지(비마스킹) */
+    number=우측 수치(단위 환산 안 함: 주식수·건수·배수·IRR) · badge=상태 배지 */
 export type ColKind = 'text' | 'center' | 'date' | 'amount' | 'number' | 'badge';
 
 /** 합계 행 규칙 — 표마다 원문이 다르다(한 가지 "숫자면 합산" 규칙을 두지 않는다).
@@ -139,7 +139,7 @@ export const ratioOf = (numKey: string, denKey: string, digits = 2) => (rows: re
   return d ? (n / d).toFixed(digits) : '-';
 };
 
-/** 금액 표시 문자열(마스킹 전) — 표가 단위별 소수 자릿수를 선언했으면 그대로, 아니면 공용 formatUnit(schemas/unit.ts) */
+/** 금액 표시 문자열 — 표가 단위별 소수 자릿수를 선언했으면 그대로, 아니면 공용 formatUnit(schemas/unit.ts) */
 export function amountText(won: number, unit: Unit, digits?: TableMeta['unitDigits']): string {
   const d = digits?.[unit];
   if (!d) return formatUnit(won, unit);

@@ -430,8 +430,7 @@ function GroupedBars({ data, height = 240, ariaLabel }: { data: any[]; height?: 
    - `tableCaption`을 주면 차트의 접근가능 대체 표현으로 **시각적 숨김 데이터 표**를 함께 렌더한다.
    - `fullLabels`(선택) = 툴팁·숨김표에 쓸 **완전형 라벨**(예: 축 `25.07` ↔ 접근성 `2025-07`).
      미전달 시 `labels`로 폴백한다 — 시각 축은 좁으니 축약하되 비시각 표현은 모호하면 안 된다.
-   - 좁은 폭에서는 x라벨이 겹치므로 `minWidth`(기본 640) 아래로는 svg를 줄이지 않고 래퍼가 가로 스크롤한다.
-   마스크 경계: 축(눈금 숫자·월 라벨·범례·캡션)은 비마스킹, **값(툴팁·숨김표 셀)은 `mn()`**. */
+   - 좁은 폭에서는 x라벨이 겹치므로 `minWidth`(기본 640) 아래로는 svg를 줄이지 않고 래퍼가 가로 스크롤한다. */
 export type TrendSeries = { key: string; name: string; color: string; dash?: boolean };
 
 /* 축 상한 — 4분할 그리드와 눈금이 정수로 떨어지게 올림(10/20/50 단위). */

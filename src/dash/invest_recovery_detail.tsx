@@ -61,7 +61,7 @@ function toColDef(c: ColumnSpec, unit: Unit): ColDef<RecoveryRow> {
         return p.value == null ? null : <span className="font-bold tabular">{String(formatRecoveryUnit(Number(p.value), unit))}</span>;
       }
       /* 금액 셀은 공용 Cell(=formatUnit, 백만원 2자리)을 쓰지 않는다 — 이 화면의 표기 규칙은
-         원문 applyUnit(백만원 1자리)이다. 나머지 타입은 그대로 Cell 에 맡긴다(마스킹·배지 내장). */
+         원문 applyUnit(백만원 1자리)이다. 나머지 타입은 그대로 Cell 에 맡긴다(배지 내장). */
       if (amount) return <span className="tabular">{p.value == null ? '' : String(formatRecoveryUnit(Number(p.value), unit))}</span>;
       return (
         <span className="inline-flex items-center gap-0.5 min-w-0">
@@ -110,7 +110,6 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
     const cols = mode.columns;
     const head = cols.map((c) => (c.type === 'amount' ? amountHeader(c.label, unit) : c.label));
     const body = [...rows, ...pinned].map((r) => cols.map((c) => {
-         // 마스크 ON이면 엑셀에도 값을 내보내지 않는다(마스크 경계 = 엑셀까지)
       const v = r[c.key];
       return c.type === 'amount' && typeof v === 'number' ? Number(formatRecoveryUnit(v, unit).replace(/,/g, '')) : String(v ?? '');
     }));

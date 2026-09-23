@@ -19,8 +19,6 @@
       종료 상태를 success 로 읽었으나, #228 이 중립 톤 `muted` 를 신설해 "더는 경보 아님"을
       중립으로 표현할 수 있게 됐다. dashboard-ui 규약 "중립은 muted" 와 정렬된다.)
    - KPI 배지 행 → **미포함**(사용자 결정) → `kpis` prop 을 아예 넘기지 않는다.
-   - ⚠검토필요 마커 → **구현하지 않는다**(사용자 결정). 목업 설계메모도 "검토필요 마커 제거"라고 적고,
-     실제로 `class="review"` 출현이 0회다(CSS/JS 는 공통 보일러플레이트).
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·설계메모·총 N건 표시는 셸/푸터가 소유하므로 이식하지 않는다.
 
    한계·가정(결정 기록)
@@ -121,7 +119,7 @@ const textCell = (p: { value?: string }) => (p.value
   ? <span className="min-w-0 truncate">{p.value}</span>
   : <span className="text-muted-foreground">-</span>);
 const kindCell = (p: { value: ViolationKind }) => <StatusBadge tone={KIND_TONE[p.value]} label={p.value} size="lg" dot={false} />;
-/* 날짜 셀 — 행 데이터(축이 아니다)라 mn(). 빈 값은 '-' */
+/* 날짜 셀 — 빈 값은 '-' */
 const dateFmt = (p: { value?: string }) => (p.value ? String(p.value) : '-');
 
 const txt = (field: keyof ViolationRow, headerName: string, width: number, center?: boolean): ColDef<ViolationRow> => ({
@@ -398,7 +396,7 @@ export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더 15컬럼(병합 없음·합계행 없음). 마스크 ON 이면 숫자 0·텍스트 '' ── */
+  /* ── Excel(.xlsx) — 단일 헤더 15컬럼(병합 없음·합계행 없음) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
@@ -419,7 +417,7 @@ export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
   const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
 
-  /* 적용 필터 칩 — 항목별 개별 칩, **값만 표시**(항목명 접두사 없음) + ×. 값은 <MT>·날짜는 mn().
+  /* 적용 필터 칩 — 항목별 개별 칩, **값만 표시**(항목명 접두사 없음) + ×.
      기간은 한쪽만 채워도 칩이 뜬다(빈 쪽은 열린 경계로 표시). */
   const chips = ([
     { key: '검색어', on: !!fText, value: <>{fText}</>, clear: () => setFText('') },

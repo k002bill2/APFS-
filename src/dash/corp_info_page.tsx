@@ -12,7 +12,7 @@
      `· 데이터 연동 후 적용` 캡션을 단다(무신호 무효 필터 금지 — apfs-detail-filter).
    - 원문 `조회` 버튼은 없다(필터 즉시 반영). `엑셀` 은 푸터 내보내기 아이콘 + ⌥D(활성 탭 표를 그대로).
    - 행 선택 없음(조회 전용 — 원문의 행 하이라이트는 액션이 없는 표시 전용이었다) · KPI 배지 행·카드뷰 없음.
-   - ⚠검토필요 마커: S2_69 `CRI기준일자` 헤더 1건(원문 유지 마커, 문구 그대로). 원문 스캐폴딩·설계메모는 옮기지 않는다. */
+   - 원문 스캐폴딩·설계메모는 옮기지 않는다. */
 import React, { useMemo, useState } from 'react';
 import { toast } from './ui/sonner';
 import { RiskPage, TabBar, TabPanel } from './risk_page_kit';

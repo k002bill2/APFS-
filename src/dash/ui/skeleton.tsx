@@ -1,8 +1,6 @@
 /* shadcn/ui Skeleton — 로딩 중 콘텐츠 자리표시자(펄스 애니메이션). APFS 규약 적용:
    - 배경: 정본 `bg-primary/10`(=full-color 토큰에 /NN opacity → 무음 no-op) 대신 매핑 토큰 `bg-muted`.
    - animate-pulse: Tailwind 코어 유틸(기저 opacity 1 → 중간 .5 → 1). 큰 블록 자리표시자에 표준.
-     ⚠️ 인라인 텍스트 마스크 바(mask.tsx MT / AG Grid 헤더)는 기저 opacity가 낮아(.28)
-        이 코어 펄스를 쓰면 중간에 '밝아져' 튄다 → 그쪽은 tokens.css의 apfs-mask-pulse(어두워지는 범위) 사용.
    - PageSkeleton: 라우트 전환 로딩 시 전 페이지 공용 스켈레톤 화면(app.tsx가 500ms 노출).
      responsive-ui: KPI 행은 flexWrap+flexBasis(고정 grid-cols 금지), 테이블 블록은 카드 overflow:hidden 내부.
    - PageSkeleton 중앙 상단 40% 지점에 GridLoader Spinner를 오버레이(래퍼 div aria-hidden으로 SR 중복 차단).

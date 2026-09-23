@@ -161,7 +161,6 @@ export function ViolationReleaseModal({ count, onSave, onClose }: {
     if (errKey === k) setErrKey('');
   };
 
-  /* 선택 건수는 행 데이터(건수)라 mn() 경유 — 라벨·단위('건')는 축이라 비마스킹 */
   const countText = String(count) + '건';
   const valueOf = (key: string) => (key === 'count' ? countText : key === 'rd' ? v.rd : v.reason);
 

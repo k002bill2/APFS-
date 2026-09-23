@@ -19,7 +19,7 @@ import type { OvItem } from './company_profile_data';
 
 const { SegTabs } = UI;
 
-/* 금액 → 단위 환산 문자열(마스킹 포함). null은 '-' */
+/* 금액 → 단위 환산 문자열. null은 '-' */
 const money = (won: number | null, unit: Unit): string =>
   won == null ? '-' : String(formatProfileUnit(won, unit));
 

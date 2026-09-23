@@ -1,5 +1,5 @@
 /* 관리자 화면 3종(공통코드·메뉴·사용자 권한) 공용 셀 표현 — 목업 `dbadge ok/grey/blue`의 APFS 대응.
-   StatusBadge(tone) 위에 얹는 얇은 래퍼라 색은 토큰만 쓴다(color-tokens). 배지 라벨은 상태 표식이라 비마스킹. */
+   StatusBadge(tone) 위에 얹는 얇은 래퍼라 색은 토큰만 쓴다(color-tokens). */
 import { UI } from './components';
 
 const { StatusBadge } = UI;

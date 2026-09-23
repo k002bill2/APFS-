@@ -2,7 +2,7 @@
    → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - modal-head(제목 + ctx 한 줄)  → `DialogHeader` 제목 + 부제(운용사 · 자펀드 · 기준일자) + ⚠검토필요 마커 1건
+   - modal-head(제목 + ctx 한 줄)  → `DialogHeader` 제목 + 부제(운용사 · 자펀드 · 기준일자)
    - 섹션1 투자자산                → 2단 헤더 수제 표(운용사 5 · 수탁기관 3 · 일치여부 2 = 10열) + tfoot 합계
    - 섹션2 미투자자산 거래         → 2단 헤더 수제 표(3·3·2 = 8열), 본문은 목업 그대로 "조회된 내역이 없습니다."
    - 섹션3 미투자자산              → 2단 헤더 수제 표(2·2·1 = 5열) + tfoot 합계
@@ -10,14 +10,13 @@
 
    한계·가정:
    - ⚠ 목업 상세는 **원 구조도(엑셀) 상세 예시 1건 고정**이다 — 목록 24행 각각의 실제 대사 내역이 아니다.
-     이 사실은 헤더의 ⚠검토필요 마커(목업 `data-rec`/`data-dat` 원문 그대로)가 화면에 싣는다.
    - ⚠ 목업 tfoot 합계(투자자산 보유주수 96,783 · 미투자자산 잔액 132,681,103)는 본문 행 값(7,142 · 1)과
      맞지 않는다. **출처 값을 그대로 둔다**(apfs-spec-popup 규약 7 — 실데이터 연동 시 계산식 확인 항목).
    - 금액 단위 토글 없음: 목업에 단위 선택이 없고 수치가 전부 원 단위 단일이다(apfs-spec-popup 규약 2는 단위가
      여럿일 때의 규약). 엑셀도 두지 않는다 — 목업 푸터도 닫기 하나다(골드 `general_meeting_detail_modal` 동일 결정).
 
    골격·크롬(Dialog · `px-[46px]` 인셋 정렬 · Section · TH/TD/CELL 표 헬퍼)은 골드
-   `general_meeting_detail_modal.tsx` 복사 관례. ⚠검토필요 마커 1건 이식. */
+   `general_meeting_detail_modal.tsx` 복사 관례. */
 import React from 'react';
 import { UI } from './components';
 import { fmt } from './aggrid_theme';   // 숫자 표기 SSOT(정수=콤마) — 자체 포매터 재구현 금지
@@ -44,7 +43,7 @@ const GRP: React.CSSProperties = { borderLeft: '2px solid var(--border-strong)' 
 /* 목업 `tfoot td{font-weight:800;background:surface-3;border-top:2px solid ink}` → 합계행 공용 표기(aggrid_shared 동형) */
 const FOOT: React.CSSProperties = { ...CELL, borderTop: '2px solid var(--border-strong)' };
 
-/* 일치여부 표식 — 목업 `<span class="tag g">일치</span>`. 상태 배지라 비마스킹("축은 두고 데이터는 가린다") */
+/* 일치여부 표식 — 목업 `<span class="tag g">일치</span>`. 상태 배지 */
 function MatchTag({ label }: { label: string }) {
   return <StatusBadge tone="success" label={label} size="md" dot={false} />;
 }
@@ -106,7 +105,7 @@ function InvestTable() {
             </tr>
           ))}
         </tbody>
-        {/* 합계 — 목업 tfoot 그대로(라벨·'-'는 축이라 비마스킹) */}
+        {/* 합계 — 목업 tfoot 그대로 */}
         <tfoot>
           <tr className="bg-muted font-bold">
             <td className={TD} style={FOOT}>합계</td>
@@ -202,9 +201,7 @@ export function CustodyConfirmDetailModal({ row, baseDate, onClose }: { row: Cus
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[1000px] max-h-[88vh]">
         <DialogHeader className="px-[46px]">
-          {/* 제목+부제는 한 래퍼로 묶는다 — DialogHeader가 justify-between이라 안 묶으면 부제가 우측 끝으로 밀린다.
-              ⚠ 마커는 부제 **바깥**(형제)에 둔다: 부제는 truncate(overflow:hidden)라 안에 넣으면 잘리고,
-                 Radix aria-describedby 대상이라 설명 문구에 메모가 섞인다. */}
+          {/* 제목+부제는 한 래퍼로 묶는다 — DialogHeader가 justify-between이라 안 묶으면 부제가 우측 끝으로 밀린다. */}
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">자펀드수탁관리(확정) 상세</DialogTitle>
             {/* Radix Description은 <p> — preflight:false라 UA 기본 마진이 살아 있어 m-0을 명시한다(공용 dialog.tsx는 불변) */}

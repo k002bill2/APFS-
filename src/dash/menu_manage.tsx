@@ -11,10 +11,10 @@
    - 등록/수정 모달(레벨↔상위메뉴 연동·프로그램 검색·단축번호 중복확인) → 전용 `MenuFormModal`(flat 스키마 밖).
        저장 시 같은 부모 안 정렬을 `reseqSiblings` 로 자동 재조정(목업 "저장되었습니다 · 정렬 자동 조정").
    - 메뉴 데이터 = LNB 정본(`admin_menu_tree.ts`) — 목업 "제안서 기능구성도" 대신 현행 메뉴 구조표. 권한 매트릭스와 동일 데이터.
-   - 엑셀(리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 표시 중인 행(트리 순서)을 내보낸다. 마스크 ON이면 텍스트 ''·숫자 0.
+   - 엑셀(리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 표시 중인 행(트리 순서)을 내보낸다.
    - 정렬(헤더 클릭)은 끈다 — 계층 순서가 곧 의미라 컬럼 정렬이 트리를 깨뜨린다(목업 defaultColDef sortable:false).
    - 페이지네이션 없음 — 트리에서 자식이 다음 페이지로 넘어가면 계층이 끊긴다. 긴 목록은 sticky 헤더(aggrid_shared.css)가 받친다.
-   - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · ⚠검토필요 마커 없음(목업 원문 0건).
+   - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음.
    ⚠ 백엔드가 없어 여기서의 등록·수정·삭제는 화면 로컬 상태만 바꾸며 실제 LNB 를 바꾸지 않는다(UI 프로토타입). */
 import './aggrid_shared.css';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -275,7 +275,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   };
   const refresh = () => { setRows(buildMenuRows()); setExpanded(new Set()); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel — 표시 중인 행(트리/평면 순서 그대로). 마스크 ON이면 텍스트 ''·숫자 0 ── */
+  /* ── Excel — 표시 중인 행(트리/평면 순서 그대로) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = visible.map((r) => EXPORT_COLS.map((c) => { const v = c.get(r); return typeof v === 'number' ? (v) : v; }));

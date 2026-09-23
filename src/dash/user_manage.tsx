@@ -8,7 +8,7 @@
        → 라디오 단일선택 + 툴바 좌 selbar 에 **열린 액션만** 노출(apfs-stage-workflow 선택 SSOT). 게이팅은 user_manage_model.gateFor.
    - 등록/수정 모달(조건부 소속·권한 복수) → 전용 `UserFormModal`. 등록 = 온보딩대기 + 온보딩 안내 메일 미리보기(목업).
    - 온보딩/OTP 재등록 메일 → `MailPreviewDialog`(실제 발송 없음). 잠금 해제·만료 처리·담당자 교체·OTP 재발급은 AlertDialog 확인 후 로컬 상태 전이.
-   - 엑셀(리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 마스크 ON이면 텍스트 ''·숫자 0.
+   - 엑셀(리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D.
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · 삭제 없음(목업 원문에 없음).
    ⚠ 실제 계정 발급·인증·잠금 정책·메일 발송이 아니다 — 백엔드 없이 화면 로컬 더미 상태만 바꾼다(브리프). 실명 아님. */
 import './aggrid_shared.css';
@@ -231,7 +231,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
   };
   const refresh = () => { setRows(demoUsers()); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel — 표시 중인 행. 마스크 ON이면 텍스트 '' ── */
+  /* ── Excel — 표시 중인 행 ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = visible.map((r) => EXPORT_COLS.map((c) => (c.get(r))));

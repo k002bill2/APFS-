@@ -7,8 +7,6 @@
    - unitbar(원/백만원/억원)                     → `SegTabs size="sm"`, 기본 `원`. 저장 base = **원**(목업 `RATE_UNIT='won'`)
    - kpirow(자펀드수익률 · 등급)                 → KPI 2장. 수익률 음수는 `--danger-text`, 등급은 `StatusBadge`
    - grid2(항목/금액 2열)                        → 표 + `(단위: {선택단위})` 캡션. 금액 우측정렬
-   - ⚠검토필요 마커                              → **구현하지 않는다**(2026-09-21 사용자 지시).
-                                                    애초에 S2_49 본문엔 `.review` 요소가 0개다.
 
    ⚠ 팝업 값은 **구조 시연용 표본**이다 — 목업이 원문에서 확인된 유일한 표본(엘앤에스농식품6차산업화투자조합)을
      모든 행에 재사용한다고 명시했다. **행마다 달라지는 실데이터가 아니며**, 신규 데이터를 창작하지 않는다.
@@ -64,7 +62,7 @@ const TH = 'border border-border bg-[color:var(--grid-header)] font-bold whitesp
 const TD = 'border border-border';
 const CELL: React.CSSProperties = { padding: '8px 11px' };
 
-/* KPI 카드 — 라벨은 축이라 비마스킹, 값만 마스킹(등급 배지는 상태 표식이라 가리지 않는다) */
+/* KPI 카드 */
 function Kpi({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="bg-[color:var(--grid-header)] border border-border" style={{ borderRadius: 10, padding: '12px 14px' }}>
@@ -83,7 +81,7 @@ export function FundEarlyWarningYieldModal({ fund, ym, onClose }: { fund: string
 
   /* 엑셀 — 화면이 그리는 소스 **전부**를 직렬화한다(대상 자펀드·수익률·등급·금액 지표 6행).
      한쪽만 넣으면 "화면엔 보이는데 엑셀엔 없는" 누락이 난다(apfs-spec-popup 규약 6).
-     금액은 단위 무관 **원 단위 원값**(골드 subfund_spec_modal 동형). 마스크 ON이면 숫자 0 · 텍스트 ''. */
+     금액은 단위 무관 **원 단위 원값**(골드 subfund_spec_modal 동형). */
   const excel = () => {
     const num = (v: number) => (v);
     const txt = (v: string) => (v);
@@ -137,7 +135,7 @@ export function FundEarlyWarningYieldModal({ fund, ym, onClose }: { fund: string
             </Kpi>
           </div>
 
-          {/* 금액 지표 표 — 목업 `.grid2`(항목/금액). 단위 캡션은 축이라 비마스킹 */}
+          {/* 금액 지표 표 — 목업 `.grid2`(항목/금액) */}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse" style={{ fontSize: 13.5, minWidth: 380 }}>
               <caption className="text-left font-bold" style={{ fontSize: 14, paddingBottom: 6 }}>
@@ -152,7 +150,6 @@ export function FundEarlyWarningYieldModal({ fund, ym, onClose }: { fund: string
               <tbody>
                 {AMT_SAMPLE.map(({ k, v }) => (
                   <tr key={k}>
-                    {/* 항목명은 표의 축(행 라벨)이라 비마스킹, 금액만 mn() */}
                     <td className={`${TD} font-semibold text-muted-foreground`} style={CELL}>{k}</td>
                     <td className={`${TD} text-right tabular font-semibold`} style={CELL}>{money(v, unit)}</td>
                   </tr>

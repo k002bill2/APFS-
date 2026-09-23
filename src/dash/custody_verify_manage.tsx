@@ -12,13 +12,12 @@
    - 메모 그룹 '등록' 버튼 → 자펀드실물검증 메모 등록 팝업(`custody_verify_memo_modal.tsx`).
      날짜·내용 열은 최신 메모(`memos[0]`)를 보여주고, 저장하면 그 행 `memos` 선두에 불변으로 쌓인다.
    - 합계행·행 선택·페이지네이션·등록 없음 → selbar·pinned 합계·페이저·전체보기 토글도 없다(목업 동일).
-   - 엑셀 → SheetJS 워크북 1개 + 시트 3개(섹션별 2단 헤더 병합 자동 산출, 마스크 시 실값 비노출).
+   - 엑셀 → SheetJS 워크북 1개 + 시트 3개(섹션별 2단 헤더 병합 자동 산출).
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **전수 이식**했다 — 목업 원문 1건(검색 영역 '자펀드'). 공용 `review_marker.tsx`, 규약은 apfs-grid 스킬.
 
    한계·가정(결정 기록)
    - **섹션2·3은 원문 샘플이 없다**(목업 `<tbody>`가 '조회된 데이터가 없습니다.' 한 줄) → 빈 상태로 둔다. 값 창작 금지.
-   - **조회조건은 추론**이다 — 목업에 [검색] 영역 자체가 없어 자펀드·기준일 2항목을 목업 설계메모대로 넣었다(⚠마커).
+   - **조회조건은 추론**이다 — 목업에 [검색] 영역 자체가 없어 자펀드·기준일 2항목을 목업 설계메모대로 넣었다.
      기준일은 행 컬럼과 미연동이라 `noop`(데이터 연동 후 적용)이고, 실제로 거르는 건 자펀드뿐이다.
    - **금액 단위 토글 미적용** — 편집 팝업(메모 등록)이 있는 관리화면이라 규칙상 제외(목업 설계메모와 동일 결론).
      단위는 툴바 캡션 `단위: 원`으로만 표기한다.
@@ -26,8 +25,7 @@
    - 빈 섹션 그리드는 높이 0으로 접히지 않는다 → 래퍼 `minHeight`·`EmptyState` 대체가 필요 없다. 근거:
      AG Grid v35 Theming API 주입 CSS의 `.ag-layout-auto-height .ag-center-cols-viewport{min-height:150px}`
      (node_modules/ag-grid-community/dist/package/main.esm.mjs 실측) — 2단 헤더 80px + 본문 150px가 확보돼
-     `overlayNoRowsTemplate` 문구가 그 안에 그려진다.
-   - 마스크 경계 때문에 `tooltipField`는 두지 않는다(툴팁으로 실값이 샌다). */
+     `overlayNoRowsTemplate` 문구가 그 안에 그려진다. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정 + autoHeight sticky 헤더(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties } from 'react';
@@ -105,7 +103,7 @@ const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-/* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수·마스킹)에 null 가드만 얇게 덧씌운다(재구현 아님) */
+/* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수)에 null 가드만 얇게 덧씌운다(재구현 아님) */
 const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p));
 /* 텍스트 셀 — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다 */
 const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
@@ -118,7 +116,6 @@ const matchCell = (p: { value: MatchResult | null }) =>
 
 /* 컬럼 팩토리 — `field`를 인자로 받아 호출부에서 행 타입이 확정된다(섹션 3개가 같은 규격을 공유) */
 function seq<T>(field: ColDef<T>['field']): ColDef<T> {
-  /* 순번 No는 축이라 비마스킹(mn 미적용) */
   return { field, headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) };
 }
 function txt<T>(field: ColDef<T>['field'], header: string, width: number, maxWidth?: number): ColDef<T> {
@@ -155,7 +152,7 @@ function memoGroup<T extends MemoRow>(sec: SectionKey, secLabel: string, openMem
         valueGetter: (p) => p.data?.memos[0]?.content ?? null,
         cellRenderer: (p: { value: string | null }) => (p.value == null ? dashCell : <span className="min-w-0 truncate">{p.value}</span>) },
       /* 등록 — 액션 컬럼(정렬·엑셀 제외). UI.Button은 aria-label을 받지 않으므로 접근名은 sr-only로 보강한다
-         ("투자자산 1행 메모"). 행 번호는 축이라 비마스킹. */
+         ("투자자산 1행 메모"). */
       { colId: MEMO_ACTION_COL, headerName: '등록', width: 96, sortable: false, cellStyle: flexMid,
         cellRenderer: (p: { data?: T }) => (p.data
           ? <Button variant="outline" size="sm" onClick={() => openMemo(sec, p.data!.id)}>
@@ -268,7 +265,7 @@ const exportValue = (r: MemoRow, k: string): unknown =>
     : k === 'memoContent' ? (r.memos[0]?.content ?? null)
       : ((r as unknown as Record<string, unknown>)[k] ?? null);
 
-/* 숫자 컬럼(마스크 시 0 + `z` 서식). 'no'는 축이라 별도 취급(비마스킹) */
+/* 숫자 컬럼(`z` 서식). 'no'는 별도 취급 */
 const INVEST_NUM = new Set(['gpShares', 'gpPrin', 'gpImpair', 'gpBal', 'cuShares', 'cuBal']);
 const TRADE_NUM = new Set(['gpShares', 'gpBal', 'cuShares', 'cuBal']);
 const NONINVEST_NUM = new Set(['gpBal', 'cuBal']);
@@ -394,7 +391,7 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
     toast.success('새로고침했습니다');
   };
 
-  /* ── Excel(.xlsx) — 워크북 1개 + 섹션 시트 3개. 2단 헤더 병합 재현, 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 워크북 1개 + 섹션 시트 3개. 2단 헤더 병합 재현 ── */
   const exportExcel = () => {
     const wb = XLSX.utils.book_new();
     const sheets: [string, (ColDef<any> | ColGroupDef<any>)[], MemoRow[], Set<string>][] = [
@@ -405,7 +402,7 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
     for (const [name, defs, rows, numKeys] of sheets) {
       const { head1, head2, keys, merges } = flattenForExcel(defs);
       const body = rows.map((r) => keys.map((k) => {
-        if (k === 'no') return r.no;                        // 순번=축(비마스킹)
+        if (k === 'no') return r.no;                        // 순번
         const v = exportValue(r, k);
         if (numKeys.has(k)) return v == null ? '' : v;
         return (v ?? '');
@@ -437,7 +434,7 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
       toolbarLeft={(
         <>
           <Icon name="filter" size={16} className="text-caption" />
-          {/* 값만 표시(항목명 접두사 없음) + × — 텍스트 값이라 <MT>. 기준일은 no-op이라 칩을 만들지 않는다 */}
+          {/* 값만 표시(항목명 접두사 없음) + ×. 기준일은 no-op이라 칩을 만들지 않는다 */}
           {fFund && (
             <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               {fFund}
@@ -449,7 +446,7 @@ export function CustodyVerifyManage({ onNav }: { onNav?: (r: string) => void }) 
         </>
       )}
       toolbarRight={<>
-        {/* 금액 단위 표기 — 캡션(비마스킹). 단위 토글은 규칙상 미적용(파일 상단 '한계') */}
+        {/* 금액 단위 표기 — 캡션. 단위 토글은 규칙상 미적용(파일 상단 '한계') */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />

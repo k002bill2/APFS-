@@ -10,7 +10,7 @@
          6행 전부가 같은 값이라 첫 화면이 "필터가 걸린 상태"로 보인다(열린 경계 = 전체).
        ⚠ 모펀드는 행 컬럼이 아니라 no-op(`· 데이터 연동 후 적용` 캡션)이다.
        ⚠ 운용사 옵션은 **행에서 파생**한다(관측값 KB증권(주) 1건). 목업의 IMM인베스트먼트·한국투자파트너스는
-         원문 주석이 "그 외 옵션 예시"라고 밝힌 예시값이라 옮기지 않는다(옵션 창작 금지) — 그 판단을 ⚠마커로 남긴다.
+         원문 주석이 "그 외 옵션 예시"라고 밝힌 예시값이라 옮기지 않는다(옵션 창작 금지).
    - 목록 그리드(13컬럼 단일 헤더) → AG Grid(apfs-aggrid) + **pinned 합계행**(목업 tfoot).
        목업 tfoot은 colspan 9 '합계' + 최초/최종 출자약정액 2합 + colspan 2 '-'인데 AG Grid는 셀 병합이 없다 →
        No 셀만 '합 계', 두 약정액은 합, 나머지 텍스트 셀은 빈 값, 합계 없는 금액(결성액)은 '-'(apfs-aggrid 규약).
@@ -19,21 +19,18 @@
        삭제 = 우클릭 메뉴(→ AlertDialog) 또는 수정 모달 안 2단계 삭제.
    - 등록/수정 단일 폼 2모드 팝업 → RowFormModal + `fund_member_manage_schemas.ts`(CREATE/EDIT 2스키마,
        6필드라 460px 1단). 제목은 `title` prop으로 '조합원 등록'/'조합원 수정'(목업 h2 그대로).
-   - 엑셀(목업 [엑셀] 버튼) → SheetJS 단일 헤더 + 합계행. 마스크 ON이면 숫자 0·텍스트 ''.
+   - 엑셀(목업 [엑셀] 버튼) → SheetJS 단일 헤더 + 합계행.
    - KPI 배지 행 미포함 · 카드뷰 없음 · 명세 팝업 없음 · 금액 단위 토글 없음(목업 설계메모: 편집 있는 관리화면이라 미적용).
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **전수 이식**했다 — 목업 원문 2건: 검색 1건(운용사) + 등록 팝업 라벨 1건(조합원, FieldSpec.note).
-     공용 `review_marker.tsx`, 규약은 apfs-grid 스킬.
 
    한계·가정(결정 기록)
    - **조합원 마스터 미연동** — 목업 등록 팝업의 조합원 select는 옵션이 0개(`선택`뿐)다. 빈 select 금지 +
-     옵션 창작 금지가 동시에 걸려 `text` 입력으로 격하하고 근거를 ⚠마커로 남겼다(schemas 파일 주석 참조).
+     옵션 창작 금지가 동시에 걸려 `text` 입력으로 격하했다(schemas 파일 주석 참조).
    - **최종 출자약정액·출자배분 거래유무는 팝업 입력 항목이 아니다**(목업 설계메모: 실 캡처에 해당 필드 없음).
      등록 시 최종=최초로 시드하고 거래유무는 미배분 상태 'N'으로 둔다 — 목업 save 핸들러는 toast만 띄우고
      행을 추가하지 않아 이 두 값의 원문 근거가 없다(창작이 아니라 공백 메움임을 명시).
-   - 계정구분 기본 '농식품'(목업 chipGroup 초기값)은 위 사유로 적용하지 않았다.
-   - 마스크 경계 때문에 `tooltipField`를 두지 않는다(툴팁으로 실값이 샌다). 긴 명칭은 컬럼 리사이즈로 본다. */
-import './aggrid_shared.css';   // 합계(floating)행 opacity:0 stuck 버그 보정 + 마스크 헤더 바(공유)
+   - 계정구분 기본 '농식품'(목업 chipGroup 초기값)은 위 사유로 적용하지 않았다. */
+import './aggrid_shared.css';   // 합계(floating)행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
@@ -118,7 +115,7 @@ const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-/* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수·마스킹)에 null 가드만 얇게 덧씌운다(재구현 아님) */
+/* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수)에 null 가드만 얇게 덧씌운다(재구현 아님) */
 const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p));
 
 /* 텍스트 셀 — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다.
@@ -143,7 +140,7 @@ function TypeChip({ value }: { value: string }) {
 }
 
 const columnDefs: ColDef<FundMemberRow>[] = [
-  /* No는 축(순번)이라 비마스킹. 합계행은 목업 tfoot 라벨 '합계' → 골드 표기 '합 계' */
+  /* 합계행은 목업 tfoot 라벨 '합계' → 골드 표기 '합 계' */
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '합 계' : String(p.value)) },
   { ...txt('gp', '운용사', 190), maxWidth: 240 },
@@ -159,7 +156,7 @@ const columnDefs: ColDef<FundMemberRow>[] = [
     cellRenderer: (p: any) => (p.node.rowPinned ? null : <TypeChip value={p.value} />) },
   amt('c1', '최초 출자약정액', true),
   amt('c2', '최종 출자약정액', true),
-  /* 비고 — 목업의 '-'(값 없음)는 muted로 낮춘다(마스킹 대상 아님: 값이 아니라 공백 표식) */
+  /* 비고 — 목업의 '-'(값 없음)는 muted로 낮춘다(값이 아니라 공백 표식) */
   { ...txt('memo', '비고', 170),
     cellRenderer: (p: any) => (p.node.rowPinned ? null
       : p.value === '-' ? <span style={{ color: 'var(--muted-foreground)' }}>-</span>
@@ -193,7 +190,7 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-/* 드로어 필드 래퍼 — noop=컬럼 미연동 필터(캡션으로 no-op 신호), note=⚠검토필요 마커(apfs-detail-filter) */
+/* 드로어 필드 래퍼 — noop=컬럼 미연동 필터(캡션으로 no-op 신호)(apfs-detail-filter) */
 function DrawerField({ label, noop, children }: { label: string; noop?: boolean; children: React.ReactNode }) {
   return (
     <label className="block mb-4">
@@ -335,8 +332,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더 13열 + 합계행(화면=엑셀 불변식). 마스크 ON이면 숫자 0·텍스트 '' ──
-     No는 축(순번)이라 화면과 동일하게 비마스킹(subfund_manage 동형). */
+  /* ── Excel(.xlsx) — 단일 헤더 13열 + 합계행(화면=엑셀 불변식) ── */
   const exportExcel = () => {
     const src = [...filteredRows, pinnedBottom[0]];
     const head = EXPORT_COLS.map((c) => c.header);
@@ -374,7 +370,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
           {(['', ...ACC_OPTS] as ('' | Acc)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fAcc === s} onClick={() => setFAcc(s)}>{s || '전체'}</FilterChip>
           ))}
-          {/* 값만 표시(접두사 없음) + × — 운용사·자펀드는 텍스트라 <MT> */}
+          {/* 값만 표시(접두사 없음) + × */}
           {([
             ['운용사', fGp, () => setFGp('')],
             ['자펀드', fFund, () => setFFund('')],
@@ -389,7 +385,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
         </>
       )}
       toolbarRight={<>
-        {/* 금액 단위 표기 — 캡션(비마스킹). 목업 설계메모대로 단위 전환 토글은 두지 않는다(편집 있는 관리화면) */}
+        {/* 금액 단위 표기 — 캡션. 목업 설계메모대로 단위 전환 토글은 두지 않는다(편집 있는 관리화면) */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>조합원 등록</Button>
@@ -440,7 +436,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
-            {/* 운용사 — 옵션은 행 파생(관측 1건). 목업의 예시 옵션은 옮기지 않고 ⚠마커로 근거를 남긴다 */}
+            {/* 운용사 — 옵션은 행 파생(관측 1건). 목업의 예시 옵션은 옮기지 않는다 */}
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             {/* 계정구분 — 툴바 FilterChip과 같은 state 공유(목업은 칩 그룹, 드로어에선 select로 표현) */}

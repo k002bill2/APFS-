@@ -31,15 +31,14 @@ const { Button, SegTabs, StatusBadge } = UI;
 type Unit = '원' | '백만원' | '억원';
 const UNIT_DIV: Record<Unit, number> = { 원: 1, 백만원: 1e6, 억원: 1e8 };
 
-/* 금액 → 단위 환산 문자열(마스킹 포함). 억/백만은 소수 2자리까지 — 골드 subfund_spec_modal.money와 동일 계약 */
+/* 금액 → 단위 환산 문자열. 억/백만은 소수 2자리까지 — 골드 subfund_spec_modal.money와 동일 계약 */
 function money(won: number | null | undefined, unit: Unit): string {
   if (won == null) return '-';
   const v = won / UNIT_DIV[unit];
   return String(unit === '원' ? fmt(won) : v.toLocaleString(undefined, { maximumFractionDigits: 2 }));
 }
 const negStyle = (v: number): React.CSSProperties | undefined => (v < 0 ? { color: 'var(--danger-text)' } : undefined);
-/* 사후관리 등급 → 톤. 등급분류기준(AA~D)이 상태 도메인이라 StatusBadge로 렌더한다
-   (StatusBadge는 마스크 경계 밖 — "축은 두고 데이터는 가린다"의 축에 해당). */
+/* 사후관리 등급 → 톤. 등급분류기준(AA~D)이 상태 도메인이라 StatusBadge로 렌더한다. */
 const GRADE_TONE: Record<string, Tone> = { AA: 'success', A: 'success', B: 'info', C: 'warning', D: 'danger' };
 
 /* ── 표 프리미티브 ── */
@@ -210,7 +209,7 @@ function CriteriaTable() {
         {GRADE_CRITERIA.map((c) => (
           <tr key={c.grade}>
             <th scope="row" className={`${TD} text-center font-bold align-top`} style={CELL}>{c.grade}</th>
-            {/* 규정 문구라 마스킹 대상이 아니다. 원문 <br> 줄바꿈은 pre-line으로 보존 */}
+            {/* 원문 <br> 줄바꿈은 pre-line으로 보존 */}
             <td className={`${TD} align-top`} style={{ ...CELL, whiteSpace: 'pre-line', lineHeight: 1.6 }}>{c.desc}</td>
           </tr>
         ))}

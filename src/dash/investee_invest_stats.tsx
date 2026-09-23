@@ -118,9 +118,6 @@ function RegionTable({ rows, unit }: { rows: RegionRow[]; unit: StatUnit }) {
                 ? <th scope="row" colSpan={2} className={`${TD} text-center font-bold bg-muted`} style={PAD}>합계</th>
                 : (<>
                     <td className={`${TD} text-center tabular`} style={PAD}>{r.no}</td>
-                    {/* 소재지는 행 축이다 — 차트 축·표 헤더와 같은 부류라 마스킹하지 않는다
-                        (CLAUDE.md 데이터 마스크 규약: "축은 두고 데이터는 가린다"). 가리면 어느 지역
-                        숫자인지 알 수 없어 표 자체가 판독 불가가 된다(2026-09-16 Codex 지적). */}
                     <th scope="row" className={`${TD} text-left font-normal`} style={PAD}>{r.region}</th>
                   </>)}
               {/* values = [투자건수, 건수비율, 투자금액, 금액비율] — 인덱스 2만 금액이라 환산 대상이다 */}
@@ -147,8 +144,7 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
   const headers = view === 'salesScale' ? SALES_SCALE_HEADERS : INVEST_TYPE_HEADERS;
   const meta = VIEWS.find((v) => v.key === view)!;
 
-  /* 엑셀 — 원문 툴바의 `엑셀` 액션. 화면에 보이는 표를 **현재 단위 그대로** 내보낸다.
-     마스크 경계는 엑셀까지 같되 **축(연도·NO·소재지)은 남긴다**(축까지 비우면 빈 격자가 된다). */
+  /* 엑셀 — 원문 툴바의 `엑셀` 액션. 화면에 보이는 표를 **현재 단위 그대로** 내보낸다. */
   const exportExcel = useCallback(() => {
     const head = isMatrix
       ? ['구분', '연도', ...headers]

@@ -4,8 +4,7 @@
    계약
    - 화면 = 엑셀: 화면이 그리는 표를 **전부** 시트로 쓴다(표 N장 → 시트 N장). 본문은 화면과 같은 필터 결과 행 + 합계행.
    - 2단 헤더는 TableMeta 에서 자동 산출(그룹 가로 병합 · 비그룹 리프 세로 병합) — 손으로 적지 않는다.
-   - 금액은 **화면에 보이는 단위**로 쓴다(schemas/unit.ts 엑셀 계약) — 그래서 금액 헤더에 단위를 붙인다(`amountHeader`).
-   - 마스크 ON 이면 숫자 0 · 텍스트 '' (실값 비노출). 배지(상태 표식)·헤더·합계 라벨은 화면에서도 가리지 않으므로 그대로 둔다. */
+   - 금액은 **화면에 보이는 단위**로 쓴다(schemas/unit.ts 엑셀 계약) — 그래서 금액 헤더에 단위를 붙인다(`amountHeader`). */
 import * as XLSX from 'xlsx';
 import { toUnit, amountHeader, UNIT_DIV } from './schemas/unit';
 import type { Unit } from './schemas/unit';

@@ -11,7 +11,6 @@
      당월/전월 = `운용사명 + 등급 배지`, 대상이 아니면 `–`. 당월≠전월 행은 두 셀에 음영(목업 `td.diff`).
    - KPI 배지 행 없음(사용자 결정) · 행 선택 없음 · 합계행 없음 · 페이지네이션 없음 · 팝업 없음.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·하단 설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다.
-   검토필요 마커는 본문에 `.review` 요소가 0개(목업 JS 는 죽은 코드)라 구현하지 않는다.
 
    한계·가정:
    - 행 데이터는 목업 `DATA` 6행이 전부다(→ `ew_month_compare_model.ts`). 운용사 창작 금지.
@@ -75,7 +74,7 @@ const diffStyle = (p: CellClassParams<NumberedRow>): CellStyle => (
   p.data && isDiff(p.data) ? { ...flexCenter, background: 'var(--info-soft)' } : flexCenter
 );
 
-/* 당월/전월 셀 — 운용사명(행 데이터 → <MT>) + 등급 배지(상태 표식 → 비마스킹). 대상 아님이면 `–`. */
+/* 당월/전월 셀 — 운용사명 + 등급 배지. 대상 아님이면 `–`. */
 function SideCell({ gp, g }: { gp: string; g: Grade | '' }) {
   if (!g) return <span className="text-muted-foreground">–</span>;
   return (
@@ -93,7 +92,7 @@ const txtCol = (field: keyof NumberedRow, header: string, width: number, opts: P
 });
 
 const COLUMNS: ColDef<NumberedRow>[] = [
-  /* No 는 순번(축)이라 마스킹하지 않는다 — 필터 후 1..N 으로 다시 매긴 값 */
+  /* No 는 필터 후 1..N 으로 다시 매긴 값 */
   { field: 'no', headerName: 'No', width: 64, minWidth: 64, pinned: 'left', type: 'rightAligned',
     cellStyle: { textAlign: 'right', fontVariantNumeric: 'tabular-nums' } as CellStyle,
     valueFormatter: (p) => (p.value == null ? '' : String(p.value)) },
@@ -142,8 +141,7 @@ function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: b
   );
 }
 
-/* 적용 필터 칩 — 값만 표시 + × 제거(aria-label 에 항목명). 행 데이터 값은 <MT>, 등급·변동 같은
-   상태 카테고리는 축이라 `plain` 으로 비마스킹. */
+/* 적용 필터 칩 — 값만 표시 + × 제거(aria-label 에 항목명). */
 function AppliedChip({ label, value, onClear, plain }: { label: string; value: string; onClear: () => void; plain?: boolean }) {
   return (
     <span className="inline-flex items-center gap-1.5 font-semibold text-primary"

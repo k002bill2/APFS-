@@ -11,10 +11,8 @@
        파생 단계: 미확정 → 확정(AlertDialog 확인) → 미결 → 가결/부결/조건부/보류, 미확정→투심위취소, 가결/조건부→승인취소.
    - 투자준법감시내역 CRUD    → 별개 엔티티. [준법감시 등록|수정] 1버튼(상태별) + [삭제](있을 때만). RowFormModal(apfs-form-modal)
    - 상세(명세) 팝업          → opt-in(기본 미포함, 2026-09-11 사용자 결정 "필요할 때 생성"). 필요 시 apfs-spec-popup 규약으로 재생성
-   - 엑셀                     → SheetJS(단일 헤더, 마스크 시 실값 비노출)
-   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **이식한다**(2026-09-12 사용자 지시). 목업 `S1_01_투자심의관리.html` 원문 3건
-     (운용사·자펀드·담당자)을 그대로 옮겼다. 공용 `review_marker.tsx`, 규약은 apfs-grid 스킬. */
+   - 엑셀                     → SheetJS(단일 헤더)
+   목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
@@ -300,7 +298,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
   const clearSelection = () => { setSelIds([]); apiRef.current?.deselectAll(); };
   const refresh = () => { setRows([...DEMO]); setSelIds([]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더, 합계행 재현. 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 단일 헤더, 합계행 재현 ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const src = [...filteredRows, pinnedBottom[0]];

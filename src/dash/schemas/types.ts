@@ -28,9 +28,6 @@ export type DetailPopup = typeof DETAIL_POPUPS[number];
 //   S1_40 실사일자는 원문이 `/^\d{4}-\d{2}-\d{2}$/` 를 통과한 행만 버튼으로 만들고 ''·'X'는 평상 셀이라
 //   동등비교로 표현할 수 없다. 판정 정본은 schemas/detail_link.ts 의 linksDetail 하나다(소비처 3곳 공유).
 // 선언이 없는 스키마는 종전과 동일하게 동작한다(opt-in).
-// note: 컬럼 **헤더** 옆 ⚠검토필요 마커. 조회 전용 스키마(fields: [])는 RowFormModal이 없어 FieldSpec.note로
-//   목업의 `!` 마커를 실을 데가 없다 — 억지로 fields를 채우면 `editable = fields.length > 0`이 켜져
-//   조회 화면에 등록 버튼이 생긴다(generic_list.tsx:444). 그래서 컬럼에도 note를 둔다.
 // group: 2단 헤더의 상위 묶음 이름. **연속한** 컬럼이 같은 group이면 하나의 ColGroupDef로 접힌다
 //   (컬럼 수십 개를 단일 헤더로 늘어놓으면 판독 불가 — S1_31 58컬럼·S1_33 회수실적 4컬럼이 원문에서 2단이다).
 // pinned: 좌측 고정 열. 와이드 표에서 가로 스크롤 중에도 식별 컬럼(운용사·자펀드·투자기업)을 붙잡아 둔다.

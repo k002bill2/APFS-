@@ -14,10 +14,10 @@
    - Download 열(행별 양식 파일 내려받기) → 셀 안 `Button outline sm`. 백엔드가 없어 toast로 응답(목업도 toast).
        ⚠ 이 열 때문에 typed 트랙이다 — 스키마 트랙(GenericListPage)은 첨부를 제목 뒤 확장자 칩으로만 그려 행별
          다운로드 액션을 표현할 수 없고, 공유 generic_list.tsx를 고치면 기존 스키마 페이지 동작이 바뀐다.
-   - 엑셀(목업 없음이지만 리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D. 마스크 ON이면 텍스트 ''.
-   - KPI 배지 행 미포함(사용자 결정) · 카드뷰 없음 · 명세 팝업 없음 · ⚠검토필요 마커 없음(목업 원문에 0건).
+   - 엑셀(목업 없음이지만 리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D.
+   - KPI 배지 행 미포함(사용자 결정) · 카드뷰 없음 · 명세 팝업 없음.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
-import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky·마스크 헤더 바 — 합계행은 없지만 전 그리드 공통)
+import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky — 합계행은 없지만 전 그리드 공통)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
@@ -62,7 +62,7 @@ const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-/* Download 셀 — 셀 안 버튼. 라벨 '다운로드'는 액션이라 비마스킹, 대상 파일명은 sr-only로 덧붙여 행마다 접근名을 구분한다
+/* Download 셀 — 셀 안 버튼. 라벨 '다운로드'에 대상 파일명을 sr-only로 덧붙여 행마다 접근名을 구분한다
    (UI.Button은 rest props가 없어 aria-label을 못 받는다 → children으로 접근名 보강). */
 function DownloadCell({ row, onDownload }: { row: ReportFormRow; onDownload: (r: ReportFormRow) => void }) {
   return (
@@ -179,7 +179,7 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { setRows([...DEMO]); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더. 마스크 ON이면 숫자 0·텍스트 ''(파일명 포함 — 마스크 경계는 엑셀·파일명까지) ── */
+  /* ── Excel(.xlsx) — 단일 헤더 ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = rows.map((r) => EXPORT_COLS.map((c) => {

@@ -25,9 +25,8 @@
    한계·가정:
    - `mf`(모펀드)는 그리드 컬럼이 아니지만 **등록/수정 폼 1번 항목**이라 행에 왕복 저장한다(목록 표시·필터 대상 아님).
    - 전화번호·비고는 목업 샘플이 공란이라 muted '-'로 표시한다(없는 값 창작 금지).
-   ⚠검토필요 마커 1건 이식 — 수정 모달의 식별번호 라벨(member_info_form_modal.tsx). 목업 검색박스·그리드 헤더엔 0건.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
-import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky·마스크 헤더 바 — 합계행은 없지만 전 그리드 공통)
+import './aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky — 합계행은 없지만 전 그리드 공통)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
@@ -89,9 +88,8 @@ const fixed = (width: number) => ({ width, maxWidth: width, minWidth: width });
 /* 값 없음 표시 — 목업 `<span class="muted">-</span>`(전화번호·비고 공통) */
 const Dash = () => <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
 
-/* 상세조회 셀 — 셀 안 버튼. 라벨 '상세조회'는 액션이라 비마스킹, 대상 조합원명은 sr-only로 덧붙여 행마다 접근名을
-   구분한다(목업 `aria-label="<조합원명> 상세조회"`). UI.Button은 rest props가 없어 aria-label을 못 받으므로 children으로 보강.
-   ⚠ 조합원명은 <MT> — 마스크 경계는 엑셀·툴팁·접근名까지다(마스크 ON이면 이름이 빠지고 '상세조회'만 남는다). */
+/* 상세조회 셀 — 셀 안 버튼. 대상 조합원명은 sr-only로 덧붙여 행마다 접근名을
+   구분한다(목업 `aria-label="<조합원명> 상세조회"`). UI.Button은 rest props가 없어 aria-label을 못 받으므로 children으로 보강. */
 function DetailCell({ row, onDetail }: { row: MemberRow; onDetail: (r: MemberRow) => void }) {
   return (
     <Button variant="outline" size="sm" onClick={() => onDetail(row)}>
@@ -101,11 +99,10 @@ function DetailCell({ row, onDetail }: { row: MemberRow; onDetail: (r: MemberRow
 }
 
 const makeColumns = (onDetail: (r: MemberRow) => void): ColDef<MemberRow>[] => [
-  /* NO는 축(순번)이라 마스킹하지 않는다(골드 동형) */
   { field: 'no', headerName: 'NO', ...fixed(68), pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'name', headerName: '조합원', width: 200, minWidth: 160, maxWidth: 320, cellStyle: flexCenter,
     cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span> },
-  /* 식별번호(pii) — 값 그대로 노출하지 않도록 <MT>. 툴팁/`tooltipField`는 두지 않는다(마스크 우회) */
+  /* 식별번호(pii) */
   { field: 'biz', headerName: '사업자번호/주민번호', ...fixed(170), cellStyle: flexCenter,
     cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span> },
   /* 주소가 남는 폭을 흡수한다 — maxWidth 없는 유일한 컬럼 + `FIT_GRID_WIDTH`(목업 `td.addr` min-width 280 반영) */
@@ -245,7 +242,7 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음). 마스크 ON이면 숫자 0·텍스트 ''(식별번호·주소 포함) ── */
+  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = rows.map((r) => EXPORT_COLS.map((c) => {

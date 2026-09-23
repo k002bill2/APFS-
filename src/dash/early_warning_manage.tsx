@@ -43,8 +43,6 @@
        출력은 푸터 인쇄 아이콘(`window.print()`)이 흡수한다(apfs-grid 푸터 골드 양식, kebab 폐기).
    - KPI 배지 행 → **미포함**(사용자 결정) → `kpis` prop을 아예 넘기지 않는다.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **이식 대상이 없다** — 목업에 `class="review"` 출현 0회이고, 설계메모가
-     "팝업 내 검토필요 마커도 함께 해소했습니다"라고 명시한다(CSS/JS는 공통 보일러플레이트).
 
    한계·가정(결정 기록)
    - 더미 21행: 목업 DATA 4행(유니·한투)은 **값까지 그대로** 옮기고, 페이저·건수가 의미를 갖도록
@@ -151,7 +149,7 @@ const gradeCell = (p: { value: EarlyWarningGrade }) => <StatusBadge tone={GRADE_
 const COLUMNS: ColDef<EarlyWarningRow>[] = [
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'mf', headerName: '모펀드', flex: 1, minWidth: 150, width: 150, cellStyle: flexCenter, cellRenderer: textCell },
-  /* 기준년월 — 날짜성 값이라 mn()(축이 아니라 행 데이터) */
+  /* 기준년월 — 날짜성 값(행 데이터) */
   { field: 'ym', headerName: '기준년월', width: 110, minWidth: 110, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   { field: 'gp', headerName: '운용사', flex: 1.3, minWidth: 180, width: 180, cellStyle: flexCenter, cellRenderer: textCell },
   { field: 'gpg', headerName: '종합등급(운용사)', width: 150, minWidth: 150, cellStyle: flexMid, cellRenderer: gradeCell },
@@ -286,7 +284,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음). 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
@@ -329,7 +327,6 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
               count={String(gradeFacet[g])}>{g}</FilterChip>
           ))}
           {/* 적용 필터 칩 — 값만 표시(접두사 없음) + ×.
-              운용사·자펀드는 텍스트라 `<MT>`, 기준년월은 날짜성이라 `mn()`(마스크 규약).
               ⚠ 기준년월은 행을 거르지 않는 조회 기준이라 값이 늘 있다 → **기본값과 다를 때만** 칩을 띄우고,
                 ×는 '제거'가 아니라 **기본값 복귀**다(aria-label도 그렇게 말한다). */}
           {([

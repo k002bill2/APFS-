@@ -11,8 +11,8 @@
    - 모달 2종(코드구분 5필드 / 코드상세 7필드)  → RowFormModal + 팩토리 스키마(code_manage_schemas.ts). 수정 시 키 필드 readonly.
        중복 검증(코드구분·그룹 내 코드)은 onSave 에서 — 중복이면 toast 로 알리고 모달을 닫지 않는다(목업 '이미 존재하는 …').
        코드상세 저장 시 그룹 안 정렬을 `reseqSiblings` 로 자동 재조정(목업 '저장되었습니다 · 정렬 자동 조정').
-   - 엑셀(리스트 공통 규약) → 시트 2장(코드구분 전체 · 선택 코드구분의 코드상세). 마스크 ON이면 텍스트 ''·숫자 0.
-   - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · ⚠검토필요 마커 없음(목업 원문 0건) · 페이지네이션 없음(그룹 ≤ 20).
+   - 엑셀(리스트 공통 규약) → 시트 2장(코드구분 전체 · 선택 코드구분의 코드상세).
+   - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · 페이지네이션 없음(그룹 ≤ 20).
    ⚠ 백엔드가 없어 등록·수정·삭제는 화면 로컬 상태만 바꾼다. 목업의 GNB/LNB·설계 메모는 이식하지 않는다(셸 소유). */
 import './aggrid_shared.css';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -295,7 +295,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('새로고침했습니다');
   };
 
-  /* ── Excel — 시트 2장(코드구분 전체 · 선택 코드구분의 코드상세). 마스크 ON이면 텍스트 ''·숫자 0 ── */
+  /* ── Excel — 시트 2장(코드구분 전체 · 선택 코드구분의 코드상세) ── */
   const exportExcel = () => {
     const t = (v: string) => (v), n = (v: number) => (v);
     const ws1 = XLSX.utils.aoa_to_sheet([

@@ -25,7 +25,6 @@
      2026-09-22 사용자 결정 — 중립은 `muted`).
      목업 `변동구분`도 태그(`tag a`)로 칠하지만 배지 컬럼은 `구분` 하나뿐이다 — 평문 텍스트로 렌더한다.
    - KPI 배지 행 → **미포함**(사용자 결정) → `kpis` prop 을 아예 넘기지 않는다.
-   - ⚠검토필요 마커 → **구현하지 않는다**(사용자 결정 · ReviewMarker 를 import 하지 않는다).
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·설계메모([확인 필요] 2블록)·총 N건 표시는
    셸/푸터가 소유하므로 이식하지 않는다.
 
@@ -120,7 +119,7 @@ const textCell = (p: { value?: string }) => (p.value
   ? <span className="min-w-0 truncate">{p.value}</span>
   : <span className="text-muted-foreground">-</span>);
 const kindCell = (p: { value: ShareholderKind }) => <StatusBadge tone={KIND_TONE[p.value]} label={p.value} size="lg" dot={false} />;
-/* 날짜 셀 — 행 데이터(축이 아니다)라 mn(). 빈 값은 '-' */
+/* 날짜 셀 — 빈 값은 '-' */
 const dateFmt = (p: { value?: string }) => (p.value ? String(p.value) : '-');
 
 const txt = (field: keyof ShareholderRow, headerName: string, flex: number, minWidth: number, center?: boolean): ColDef<ShareholderRow> => ({
@@ -365,7 +364,7 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더 8컬럼(병합 없음·합계행 없음). 마스크 ON 이면 숫자 0·텍스트 '' ── */
+  /* ── Excel(.xlsx) — 단일 헤더 8컬럼(병합 없음·합계행 없음) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
@@ -386,7 +385,7 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
   const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
 
-  /* 적용 필터 칩 — 항목별 개별 칩, **값만 표시**(항목명 접두사 없음) + ×. 값은 <MT>·날짜는 mn().
+  /* 적용 필터 칩 — 항목별 개별 칩, **값만 표시**(항목명 접두사 없음) + ×.
      기간은 한쪽만 채워도 칩이 뜬다(빈 쪽은 열린 경계로 표시). */
   const chips = ([
     { key: '검색어', on: !!fText, value: <>{fText}</>, clear: () => setFText('') },

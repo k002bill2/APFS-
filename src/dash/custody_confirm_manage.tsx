@@ -9,7 +9,7 @@
        (행 `confirm` 값에서 파생 — 수시보고 '확인상태' 파생 칩과 같은 관례). 드로어 select와 state를 공유한다.
    - 3단 헤더 목록 그리드          → AG Grid 중첩 `ColGroupDef`(일치여부 > 투자자산/미투자자산 거래/미투자자산 > 리프),
        `marryChildren`. 합계행 없음·행 선택 없음 — 가산 가능한 금액 컬럼이 없고 목업에도 체크박스/라디오가 없다.
-   - 마크 셀(O/X/-)                 → `StatusBadge`(O=success · X=danger) + 회색 칩('-'). 상태 표식이라 비마스킹.
+   - 마크 셀(O/X/-)                 → `StatusBadge`(O=success · X=danger) + 회색 칩('-').
    - 상세보기 셀                    → 셀 링크(+ 셀 Enter) → 읽기전용 `CustodyConfirmDetailModal`.
        ⚠ **행 더블클릭으로는 열지 않는다** — 링크가 진입점인데 더블클릭까지 걸면 링크를 두 번 누른 순간
          엉뚱한 팝업이 뜬다(골드 `general_meeting_manage.tsx`와 동일 결정).
@@ -21,8 +21,7 @@
    한계·가정:
    - 목록은 **실 화면 캡처 24건 발췌**(전체 약 152건) — 목업이 명시한 범위 그대로이고 나머지를 창작하지 않는다.
    - 확정여부 변경은 로컬 state(`patchRow` 불변 갱신)로만 반영된다(백엔드 없음).
-   - 상세 팝업은 원 구조도 예시 1건 고정 — 자펀드 고유 값이 아니다(팝업 헤더의 ⚠검토필요 마커가 이 사실을 싣는다).
-   ⚠검토필요 마커 1건(상세 팝업 헤더)은 `custody_confirm_detail_modal.tsx`에 이식했다. */
+   - 상세 팝업은 원 구조도 예시 1건 고정 — 자펀드 고유 값이 아니다. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
@@ -118,8 +117,7 @@ const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 마크 셀 — O/X는 StatusBadge, '-'는 회색 칩(Tone에 중립 톤이 없어 직접 만든다).
-   기하(padding·radius·13px)는 StatusBadge size="lg"와 동일하게 맞춘다(O/X와 섞여 반복되는 열이라 어긋나면 눈에 띈다).
-   상태 표식이라 마스킹하지 않는다("축은 두고 데이터는 가린다"). */
+   기하(padding·radius·13px)는 StatusBadge size="lg"와 동일하게 맞춘다(O/X와 섞여 반복되는 열이라 어긋나면 눈에 띈다). */
 function MarkCell({ v }: { v: Mark }) {
   if (v !== 'O' && v !== 'X') {
     return <span className="inline-flex items-center rounded-[7px] bg-muted px-[10px] py-[4px] text-[13px] font-bold leading-tight text-muted-foreground">{v}</span>;
@@ -141,9 +139,7 @@ const txt = (field: keyof CustodyConfirmRow, header: string, minWidth: number): 
 /* 셀 내 링크 — 클릭 시 상세 팝업(목업은 `.linkbtn` 버튼 셀이 진입점이다).
    ⚠ 색은 **목업 그대로 상태에 따라 갈린다**(`.linkbtn`=danger / `.linkbtn.ok`=ok) — 색이 곧 정보라 단일 링크색으로
       통일하지 않는다. 텍스트 색이므로 `-text` 토큰을 쓴다(color-tokens 규약).
-   ⚠ 링크 텍스트(일치/불일치)는 **상태 표식이라 `<MT>`로 가리지 않는다** — 가리면 버튼의 유일한 텍스트가 사라져
-      접근名까지 없어진다. 마스킹 경계는 "축은 두고 데이터는 가린다".
-   ⚠ `title`엔 동작 힌트만 담는다 — 값을 넣으면 마스크 ON일 때 툴팁으로 실데이터가 샌다.
+   ⚠ `title`엔 동작 힌트만 담는다.
    ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다. */
 function LinkCell({ value, color, hint, onClick }: { value: string; color: string; hint: string; onClick: () => void }) {
   return (
@@ -188,7 +184,7 @@ const makeColumns = (
   openDetail: (id: string) => void,
   patchRow: (id: string, patch: Partial<CustodyConfirmRow>) => void,
 ): (ColDef<CustodyConfirmRow> | ColGroupDef<CustodyConfirmRow>)[] => [
-  /* No는 축(순번)이라 마스킹하지 않는다(골드 동형). 행에 저장된 값이라 정렬해도 번호가 다시 매겨지지 않는다 */
+  /* No는 행에 저장된 값이라 정렬해도 번호가 다시 매겨지지 않는다 */
   { field: 'no', headerName: 'No', width: 68, minWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
   txt('gp', '운용사', 170),
   txt('fn', '자펀드', 220),
@@ -342,7 +338,7 @@ export function CustodyConfirmManage({ onNav }: { onNav?: (r: string) => void })
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 3단 헤더(병합 자동 산출). 합계행 없음. 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 3단 헤더(병합 자동 산출). 합계행 없음 ── */
   const exportExcel = () => {
     const { heads, keys, merges } = flattenForExcel(columnDefs);
     const body = filteredRows.map((r) => keys.map((k) => {

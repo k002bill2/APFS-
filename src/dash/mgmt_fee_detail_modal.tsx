@@ -11,13 +11,7 @@
    원문 그대로 둔 것
    - 섹션 제목이 팝업 제목과 **같은 문자열**로 한 번 더 나온다(원문 `modal-head h2` + 첫 `sec-title`).
      중복처럼 보이지만 원문이 그렇다 — 임의로 지우지 않는다. `<>` 꺾쇠는 원문의 장식이라 h3 로 대체한다.
-   - `지출내역`·`삭감내역` 은 원문이 리터럴 `-` 다(값 없음이 아니라 "없음"이 원문 값).
-
-   마스크 경계("축은 두고 데이터는 가린다")
-   - 가린다: 운용사·자펀드·보고구분·지급구분(MT) · 지급일자·금액·일자·일수·기준금액·관리보수금액(mn)
-   - 안 가린다: `산출내역`/`계산산식`/`보수율` — 상수 RATE 에서 파생된 **산식 정의**라 행마다 같고
-     엔티티 데이터가 아니다(단위 표기와 같은 부류). 셋 중 하나만 가리면 같은 값이 한 화면에서
-     가려진 채로도 드러난 채로도 보이게 된다. */
+   - `지출내역`·`삭감내역` 은 원문이 리터럴 `-` 다(값 없음이 아니라 "없음"이 원문 값). */
 import React from 'react';
 import { UI } from './components';
 import { fmt } from './aggrid_theme';
@@ -42,7 +36,7 @@ const CELL: React.CSSProperties = { padding: '7px 9px' };
 const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)' };
 const DT_STYLE: React.CSSProperties = { padding: '8px 12px', fontSize: 13 };
 
-/* kind: 'text'=MT 마스킹 · 'num'=mn 마스킹 · 'plain'=비마스킹(산식 정의) · 'empty'=원문 리터럴 '-' */
+/* kind: 'text'=텍스트 · 'num'=숫자·날짜 · 'plain'=산식 정의 · 'empty'=원문 리터럴 '-' */
 type KvItem = { l: string; v: string; full?: boolean; kind: 'text' | 'num' | 'plain' | 'empty' };
 
 function KvGrid({ items }: { items: KvItem[] }) {
@@ -75,9 +69,8 @@ const buildItems = (r: Record<string, unknown>): KvItem[] => [
 ];
 
 /* 원문 `<관리보수 산출내역>` 표 — 7컬럼 1행.
-   ⚠ `기준금액` 헤더의 검토필요 마커는 **baseConfirmed 가 false 일 때만** 뜬다(원문 `baseMark`).
-     현재 유일한 원문 행(no:1)은 true 라 마커가 없고 실캡처 값이 그대로 나온다 — 뒤집으면
-     역산값이 경고 없이 표시된다(mgmt_fee_detail_model.ts 상단 참조). */
+   ⚠ 현재 유일한 원문 행(no:1)은 baseConfirmed 가 true 라 실캡처 값이 그대로 나온다 — 뒤집으면
+     역산값이 표시된다(mgmt_fee_detail_model.ts 상단 참조). */
 function CalcTable({ row }: { row: Record<string, unknown> }) {
   const calc = CALC_BY_NO[String(row.no ?? '')];
   const amount = Number(row.amount ?? 0);

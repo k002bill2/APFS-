@@ -32,7 +32,7 @@ export function fromUnit(v: unknown, unit: Unit): number {
   return Number.isFinite(n) ? Math.round(n * UNIT_DIV[unit]) : 0;
 }
 
-/** 표시 문자열 — 마스킹은 호출부(mn)가 담당한다. 여기서는 서식만 만든다. */
+/** 표시 문자열 — 서식만 만든다. */
 export function formatUnit(won: number, unit: Unit): string {
   const v = toUnit(won, unit);
   return Number.isInteger(v) ? v.toLocaleString() : v.toLocaleString(undefined, { maximumFractionDigits: 2 });

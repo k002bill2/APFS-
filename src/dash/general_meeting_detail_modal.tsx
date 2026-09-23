@@ -38,7 +38,7 @@ const CELL: React.CSSProperties = { padding: '7px 9px' };
 const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)' };
 const DT_STYLE: React.CSSProperties = { padding: '8px 12px', fontSize: 13 };
 
-/* kv 항목 — `date`면 mn(숫자 마스킹), 아니면 <MT>. 값 없음은 '-'(muted) */
+/* kv 항목 — 값 없음은 '-'(muted) */
 type KvItem = { l: string; v: string; full?: boolean; date?: boolean };
 
 const buildGen = (g: MeetingDetail['gen']): KvItem[] => [
@@ -136,8 +136,7 @@ function MotionTable({ list }: { list: MeetingDetail['motion'] }) {
 
 /* ④ 첨부파일 — 파일명·등록일시·수정일시·업로드 여부·다운로드.
    ⚠ 다운로드 버튼의 접근名: `UI.Button`은 `aria-label`을 받지 않으므로(rest props 없음) 파일명을
-      sr-only 자식으로 넣어 "<파일명> 다운로드"를 만든다. 파일명은 <MT>라 마스크 ON이면 이름이 빠지고
-      "다운로드"만 남는다(마스크 경계는 엑셀·툴팁·접근名까지). */
+      sr-only 자식으로 넣어 "<파일명> 다운로드"를 만든다. */
 function FileTable({ list }: { list: MeetingDetail['files'] }) {
   return (
     <div className="overflow-x-auto">
@@ -158,7 +157,6 @@ function FileTable({ list }: { list: MeetingDetail['files'] }) {
               <td className={TD} style={{ ...CELL, overflowWrap: 'anywhere' }}>{f.name}</td>
               <td className={`${TD} text-center tabular`} style={CELL}>{String(f.reg)}</td>
               <td className={`${TD} text-center tabular`} style={CELL}>{String(f.mod)}</td>
-              {/* 업로드 여부는 O/X 표식(상태)이라 비마스킹 — "축은 두고 데이터는 가린다" */}
               <td className={`${TD} text-center`} style={CELL}>{f.up || '-'}</td>
               <td className={`${TD} text-center`} style={CELL}>
                 <Button variant="outline" size="sm" leadingIcon="download" onClick={() => toast('다운로드 (목업)')}>

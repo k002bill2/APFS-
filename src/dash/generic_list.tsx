@@ -17,7 +17,7 @@ import { GpSpecModal } from './gp_spec_modal';                 // 운용사 명�
 import { CompanyProfileModal } from './company_profile_modal'; // 투자기업 기업개요(S1_30) — 투자기업정보(통합)의 행 상세
 import { MgmtFeeDetailModal } from './mgmt_fee_detail_modal';   // 관리보수보고 상세조회(S1_43) — 지급일자 링크
 import { DueDiligChecklistModal } from './due_dilig_checklist_modal'; // 투자금실사보고서 체크리스트(S1_40) — 실사일자 링크
-import { foldGroups } from './grid_header_note';   // 컬럼 헤더 옆 ⚠검토필요 마커 + 2단 그룹헤더(ColumnSpec note/group 소비처)
+import { foldGroups } from './grid_header_note';   // 2단 그룹헤더(ColumnSpec group 소비처)
 import { linksDetail } from './schemas/detail_link';   // detail 링크 술어 정본(소비처 3곳 공유)
 import { UNITS, DEFAULT_UNIT, isUnit, toUnit, amountHeader } from './schemas/unit';
 import type { Unit } from './schemas/unit';
@@ -177,7 +177,7 @@ function MiniBars({ data, color }: { data: number[]; color: string }) {
 /* KpiBadge는 grid_frame.tsx(GridFrame SSOT)에서 import — 인라인 정의 제거(apfs-grid 양식 이관) */
 
 /* 제거 가능한 필터 칩 — 값만 표시(항목명 접두사 없음, 2026-09-09 통일: typed 페이지 골드 규약과 일치).
-   항목명은 title(호버)·aria-label로 회수해 의미 손실을 상쇄한다. 값은 데이터→MT 마스킹. 태그형(value 없음)은 라벨=값 토큰이라 라벨을 그대로 표시. */
+   항목명은 title(호버)·aria-label로 회수해 의미 손실을 상쇄한다. 태그형(value 없음)은 라벨=값 토큰이라 라벨을 그대로 표시. */
 function FilterPill({ label, value, onRemove }: { label: string; value?: string; onRemove: () => void }) {
   return (
     <span title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: "5px 8px 5px 11px", borderRadius: 9, fontSize: 12.5, background: "color-mix(in srgb, var(--primary) 10%, transparent)" }}>
@@ -360,7 +360,7 @@ const DETAIL_MODALS: Record<DetailPopup, (p: { onClose: () => void; row: Row }) 
   mgmtFeeDetail: MgmtFeeDetailModal,
   dueDiligChecklist: DueDiligChecklistModal,
 };
-/* 링크 셀 title(동작 힌트) — 값은 절대 넣지 않는다(마스크 경계) */
+/* 링크 셀 title(동작 힌트) — 값은 절대 넣지 않는다 */
 const DETAIL_HINT: Record<DetailPopup, string> = {
   monthlyReport: '월간보고 상세 보기',
   gpSpec: '운용사 명세 보기',
@@ -370,7 +370,7 @@ const DETAIL_HINT: Record<DetailPopup, string> = {
 };
 
 /* 셀 안 링크 — 값 클릭으로 상세 팝업 진입. occasional_report_manage.tsx의 LinkCell 복사 관례.
-   ⚠ `title`엔 동작 힌트만 담는다 — 값을 넣으면 마스크 ON일 때 툴팁으로 실데이터가 샌다(마스크 경계는 툴팁까지).
+   ⚠ `title`엔 동작 힌트만 담는다.
    ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다.
    외관: primary + 600, 평상시 밑줄 없음 / hover에만 밑줄(목업 `.linktxt`). */
 function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
@@ -390,8 +390,6 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
    컬럼 수준 계약으로 푼다. 원문도 StatusBadge 격인 `cfmTag()` 를 정의만 해 두고 쓰지 않는다 —
    이 셀은 select 만 그린다(배지와 함께 그리면 같은 값이 두 번 나온다).
 
-   ⚠ 값은 마스킹하지 않는다. select 의 표시값은 **선택 상태**이고 가리면 무엇이 선택됐는지 알 수 없어
-     컨트롤이 무의미해진다(StatusBadge 를 안 가리는 것과 같은 이유 — "축은 두고 데이터는 가린다").
    ⚠ 폰트는 inline 으로 준다 — preflight:false 라 select 가 UA 기본(13.3px Arial)으로 튄다.
    ⚠ Chrome UA 때문에 height 만으로는 안 맞는다 — lineHeight 를 함께 준다([[form-control-height-38-line-height-trap]]). */
 function InlineSelectCell({ value, options, label, onChange }: {
@@ -417,7 +415,6 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   /* editable = 등록 가능 스키마(fields 보유). 툴바 규약의 분기 하나를 이것이 결정한다(2026-09-11 사용자 결정):
      등록이 있으면 combo(split) 버튼 하나로 합치고, 등록이 없으면 종전처럼 kebab(⋯) 단독. */
   const editable = schema.fields.length > 0;
-     // Excel 우측정렬 숫자 셀의 마스킹 시 값을 0으로(실값 비노출)
   const apiRef = useRef<GridApi<Row> | null>(null);
   const [rows, setRows] = useState<Row[]>(() => makeRows(schema, 23));
   const [selCount, setSelCount] = useState(0);   // AG Grid 선택 행 수(수제 Set 선택 대체)
@@ -495,7 +492,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     [schema, filterValues]);
 
   // ── 스키마 주도 컬럼 정의 ──
-  // 특수 컬럼(name=2줄 · trend=스파크라인)만 전용 cellRenderer, 그 외는 Cell 재사용(마스킹 내장).
+  // 특수 컬럼(name=2줄 · trend=스파크라인)만 전용 cellRenderer, 그 외는 Cell 재사용.
   // 마지막 '관리' 컬럼은 editable일 때만 — 더블클릭 수정과 동일하게 수정 모달을 연다.
   const columnDefs = useMemo<(ColDef<Row> | ColGroupDef<Row>)[]>(() => {
     // 남는 그리드 폭을 채울 stretch 컬럼 = 주 식별/텍스트 컬럼(마지막 left-text, 또는 name).
@@ -546,7 +543,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
            ② attachFrom 컬럼(제목 등) — 값 뒤에 첨부 확장자 칩을 덧붙인다(첨부 전용 컬럼을 만들지 않는 표현 규약).
               값(텍스트)은 min-w-0 + ellipsis로 줄고, 칩은 shrink-0이라 긴 제목에도 살아남는다.
            ③ inlineSelect 컬럼 — 셀 안 select(S1_43 확정여부). 값을 바꾸면 rows 가 바뀐다.
-           ④ 그 외 — 공용 Cell(마스킹 내장) */
+           ④ 그 외 — 공용 Cell */
         cellRenderer: c.detail
           ? (p: ICellRendererParams<Row>) => (linksDetail(c, p.value)
               ? <LinkCell value={String(p.value ?? "")} hint={DETAIL_HINT[c.detail!]} onClick={() => { if (p.data) setDetail({ kind: c.detail!, row: p.data }); }} />
@@ -617,7 +614,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
   // Excel(.xlsx) 내보내기 — SheetJS. 스키마 컬럼을 동적 추출(스파크라인 trend는 값 없음 → 제외), 현재 필터(filtered) 반영.
   // 화면 우측정렬(align:'right') 숫자 컬럼만 숫자 셀(t:'n'+z)로 기록 → Excel 자동 우측정렬·실데이터 연동 시 계산 가능.
-  // 그 외(text/code/date/status·center 정렬)는 화면처럼 텍스트 셀(좌측). 마스크 ON이면 숫자 셀 값을 0으로 비노출.
+  // 그 외(text/code/date/status·center 정렬)는 화면처럼 텍스트 셀(좌측).
   // ※ Excel은 center 정렬을 스타일 없이 못 내므로(커뮤니티 xlsx 한계) center 숫자 컬럼은 텍스트(좌측) 유지가 최선.
   const exportExcel = () => {
     const cols = schema.columns.filter((c) => c.key !== 'trend');
@@ -659,7 +656,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
-  // 행 복사 — 스키마 컬럼(스파크라인 trend 제외)을 TSV로. 마스크 ON이면 mn()으로 실값 비노출(엑셀과 동일 계약).
+  // 행 복사 — 스키마 컬럼(스파크라인 trend 제외)을 TSV로.
   const copyRow = (row: Row) => {
     const line = schema.columns.filter((c) => c.key !== 'trend')
       .map((c) => String((row as any)[c.key] ?? '')).join('\t');

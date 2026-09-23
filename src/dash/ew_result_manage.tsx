@@ -17,12 +17,11 @@
    - 합계행·행 선택·페이지네이션·등록 없음 → selbar·pinned 합계·페이저도 없다(목업 동일). KPI 배지 행 미포함(사용자 결정).
    - 엑셀 → SheetJS 워크북 1개 + 시트 2개("생성결과내역"·"재무정보보고"). 단일 헤더라 병합 없음.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커 1건: 생성 확인 다이얼로그 본문(목업 원문 그대로). 섹션2 전월 규칙은 [확인 필요]로 아래 주석에만 기록한다
-     (섹션2 헤더 마커는 2026-09-23 사용자 결정으로 제거).
+   섹션2 전월 규칙은 [확인 필요]로 아래 주석에만 기록한다.
 
    한계·가정(결정 기록)
    - **섹션2 기준년월 = 선택 월의 전월(-1)** — 목업이 상단 2026-07 / 섹션2 2026-06 으로 그렸고 설계메모가
-     "전월 집계인지 하드코딩 오류인지" [확인 필요]로 남겼다. 목업 그대로 전월로 둔다(주석에만 기록 — 화면 마커는 2026-09-23 사용자 결정으로 제거).
+     "전월 집계인지 하드코딩 오류인지" [확인 필요]로 남겼다. 목업 그대로 전월로 둔다(주석에만 기록).
    - **기획서 범위로 한정(2026-09-23 사용자 결정)** — 기획서(통합_화면_구조도_v1.5.xlsx)는 버튼·확인팝업만 정의하고
      처리 효과가 없다 → 생성·확정·마감·마감해제·수정권한처리·전체권한부여·전체권한해제 버튼은 **상태 무관 상시 노출**,
      확인 후 **토스트만**(데이터 불변). 섹션2가 빈 월은 전체권한 버튼만 비활성(대상 없음).
@@ -30,8 +29,7 @@
      재무정보 등록/보고 화면 편집 가능 여부와 어떻게 연동되는지 원문에 없다(목업 설계메모). 여기선 값을 바꾸지 않는다.
    - **더미 데이터는 목업 원문 2건뿐**(섹션1 2026-07 · 섹션2 2026-06) — 그 외 월은 빈 그리드. 값 창작 금지.
    - **데이터는 불변 상수**(월 키로 보관, 백엔드 없음) — 새로고침 버튼은 기준년월을 기본값(2026-07)으로 되돌린다.
-   - 금액이 없는 조회·상태관리 화면이라 단위 표기·단위 토글이 없다(목업 설계메모와 동일 결론).
-   - 마스크 경계 때문에 `tooltipField`는 두지 않는다(툴팁으로 실값이 샌다). 순번·배지·헤더는 가리지 않는다. */
+   - 금액이 없는 조회·상태관리 화면이라 단위 표기·단위 토글이 없다(목업 설계메모와 동일 결론). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정 + autoHeight sticky 헤더(공유)
 import React, { useState, useCallback, useMemo } from 'react';
 import { UI } from './components';
@@ -99,7 +97,7 @@ const oxBadge = (v: OX | null | undefined) =>
 const oxCell = (p: { value: OX | null }) => oxBadge(p.value);
 /* 텍스트 셀 — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate */
 const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
-/* 기준년월 — 행 데이터라 mn() */
+/* 기준년월 */
 const ymFmt = (p: { value?: string | null }) => (p.value ? String(p.value) : '-');
 
 /* 생성여부 셀 — 배지 + 생성일시. 값은 `make|makeTs` 결합 문자열(valueGetter) — 셀 값이 두 필드를 모두 반영해야
@@ -116,7 +114,6 @@ const makeCell = (p: { value: string }) => {
 };
 
 const seqCol = <T,>(): ColDef<T> =>
-  /* 순번은 축이라 비마스킹(mn 미적용) */
   ({ field: 'no' as ColDef<T>['field'], headerName: '순번', width: 72, maxWidth: 72, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) });
 const ymCol = <T,>(): ColDef<T> =>
   ({ field: 'ym' as ColDef<T>['field'], headerName: '기준년월', flex: 0.7, minWidth: 100, width: 100, cellStyle: centerNum, valueFormatter: ymFmt });
@@ -157,7 +154,7 @@ function makeReportCols(openPerm: OpenPerm): ColDef<GpReportRow>[] {
 }
 
 /* ──────────────────────────────
-   Excel — 섹션별 시트 2개(단일 헤더). O/X 는 화면에서도 가리지 않는 배지라 마스크 대상이 아니다.
+   Excel — 섹션별 시트 2개(단일 헤더).
    생성일시는 화면에선 생성여부 셀 안에 붙어 있지만 엑셀에선 **별도 열**로 푼다(한 셀에 섞으면 정렬·필터 불가).
 ────────────────────────────── */
 type XCol<T> = { header: string; get: (r: T) => string | number | null; wide?: boolean };
@@ -254,7 +251,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('새로고침했습니다');
   };
 
-  /* ── Excel(.xlsx) — 워크북 1개 + 섹션 시트 2개. 마스크 ON이면 텍스트·일시 비노출(O/X·순번은 유지) ── */
+  /* ── Excel(.xlsx) — 워크북 1개 + 섹션 시트 2개 ── */
   const exportExcel = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, toSheet(RESULT_X, resultRows), '생성결과내역');

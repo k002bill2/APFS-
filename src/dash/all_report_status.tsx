@@ -48,10 +48,10 @@ const MOTHER_FUND = '농식품모태펀드';   // 원문 검색박스의 읽기�
 const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
 
 /* ColumnSpec → AG Grid ColDef. 셀 렌더는 공용 `Cell`에 위임한다 —
-   마스킹(mn/MT)·StatusBadge·운용사 ColorChip·금액 단위 환산이 전부 그 안에 있다(중복 구현 금지). */
+   StatusBadge·운용사 ColorChip·금액 단위 환산이 전부 그 안에 있다(중복 구현 금지). */
 function toColDef(c: ColumnSpec, tab: ReportTab, unit: Unit): ColDef<ReportRow> {
   if (c.key === 'no')
-    /* No 는 축(순번)이라 마스킹하지 않는다. 정렬·필터로 순서가 바뀌어도 1..n 이 되도록 rowIndex 로 매기되,
+    /* No 는 순번. 정렬·필터로 순서가 바뀌어도 1..n 이 되도록 rowIndex 로 매기되,
        **하단 고정 행(소계·합계)은 예외** — 그쪽 rowIndex 는 0,1 로 다시 시작하므로 원문 라벨을 그대로 쓴다. */
     return { colId: NO_COL_ID, headerName: c.label, width: 68, maxWidth: 68, cellStyle: centerNum, sortable: false,
              valueGetter: (p) => (p.node?.rowPinned ? String(p.data?.no ?? '') : (p.node?.rowIndex ?? 0) + 1) };
@@ -152,7 +152,6 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
     const cols = tab.columns.filter((c) => c.key !== 'no');
     const head = cols.map((c) => (c.type === 'amount' ? amountHeader(c.label, unit) : c.label));
     const body = [...visible, ...(pinnedBottom ?? [])].map((r) => cols.map((c) => {
-         // 마스크 ON이면 엑셀에도 값을 내보내지 않는다(마스크 경계 = 엑셀까지)
       const v = r[c.key];
       // 우측정렬 금액만 숫자 셀 — 화면에 보이는 단위를 그대로 따른다(헤더가 단위를 명시한다)
       return c.type === 'amount' && typeof v === 'number' ? Number(formatUnit(v, unit).replace(/,/g, '')) : String(v ?? '');

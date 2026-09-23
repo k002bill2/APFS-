@@ -50,8 +50,6 @@ const DOC_MAX_CHARS = 3 * 1024 * 1024;
 //    B 버튼이 클릭돼 toggleBold가 발화한다(빈 문단에 bold가 박혀 "B가 켜진 채 안 꺼짐"). 그래서 <div>로 감싼다.
 //    (네이티브 단일 컨트롤은 <label> 암묵 연결이 정상·접근성 이점이 있어 그대로 둔다. 에디터는 자체 aria-label 보유.)
 /* 배열: 라벨 위·컨트롤 아래(세로 적층, 기존 유지 — 2026-09-08 inline 시안은 사용자 원복). 컨트롤 폭은 renderers.tsx base가 fit-content로 결정. */
-// note: FieldSpec.note → 라벨 옆 ⚠검토필요 마커(공용 ReviewMarker). 트리거가 <span role=button>이라 <label> 안에서도
-//   암묵 연결을 가로채지 않는다(review_marker.tsx 주석). 접근名은 마커가 `${label} 검토필요 메모 보기`로 만든다.
 function Field({ label, children, errMsg, className, plain }: { label: string; children: React.ReactNode; errMsg?: string; className?: string; plain?: boolean; }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (

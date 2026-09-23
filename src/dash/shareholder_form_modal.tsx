@@ -151,7 +151,6 @@ export function ShareholderReleaseModal({ count, onSave, onClose }: {
   const [err, setErr] = React.useState(false);
   const setDate = (val: string) => { setRd(val); if (err) setErr(false); };
 
-  /* 선택 건수는 행 데이터(건수)라 mn() 경유 — 단위('건 선택됨')는 축이라 비마스킹 */
   const targetText = String(count) + '건 선택됨';
 
   const submit = () => {

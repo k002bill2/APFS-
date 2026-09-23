@@ -20,13 +20,11 @@
          일어나지 않아 그 자체가 UI 결함이었다. 상세 진입 경로도 원래 없다(더블클릭·우클릭 메뉴 미배선).
          툴바 좌는 예전처럼 항상 필터 칩이다.
    - KPI 배지 행                → 미포함(`kpis` 미전달). 카드뷰·명세 팝업·등록/수정/삭제도 없음(읽기전용).
-   - 엑셀                       → SheetJS(단일 헤더, 승인금액은 선택 단위 숫자 셀, 마스크 시 실값 비노출)
+   - 엑셀                       → SheetJS(단일 헤더, 승인금액은 선택 단위 숫자 셀)
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **이식한다**(2026-09-12 사용자 지시) — 목업 원문 4건 전부 옮겼다:
-     검색 1건(보고구분) + 그리드 헤더 3건(구분·투심상태·파일구분). 공용 `review_marker.tsx`, 규약은 apfs-grid.
 
    한계(목업 원문 범위):
-   - 구분·투심상태·파일구분은 원본에 샘플값이 없어 표시값이 도메인 추론이다(헤더 마커로 명시).
+   - 구분·투심상태·파일구분은 원본에 샘플값이 없어 표시값이 도메인 추론이다.
    - 투자금납입 예정일의 '-' 는 목업 문자 그대로다(텍스트 N/A). 숫자 N/A 는 null→'-'. */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유) — 없으면 합계행이 안 보인다
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -124,12 +122,12 @@ const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-/* 텍스트 컬럼(운용사·자펀드·투자기업) — 인명/기관명이라 <MT> 마스킹. 합계행은 빈 칸(목업 tfoot 병합 구간) */
+/* 텍스트 컬럼(운용사·자펀드·투자기업) — 합계행은 빈 칸(목업 tfoot 병합 구간) */
 const txt = (field: keyof ReportUpdateRow, header: string, width: number, maxWidth: number): ColDef<ReportUpdateRow> => ({
   field, headerName: header, width, maxWidth, cellStyle: flexCenter,
   cellRenderer: (p: any) => (p.node.rowPinned ? null : <>{p.value}</>),
 });
-/* 날짜/일시 — mn() 마스킹. 합계행 '-'(목업 tfoot colspan 3 '-'). muted 는 일자 컬럼만.
+/* 날짜/일시 — 합계행 '-'(목업 tfoot colspan 3 '-'). muted 는 일자 컬럼만.
    ⚠ 골드 `occasional_report_manage` 의 date() 는 `maxWidth: width` 를 걸지만 그건 `FIT_GRID_WIDTH`
      전용 장치다(잉여 폭을 제목 컬럼으로만 흘리려고 성장을 막는 것). 이 화면은 `AUTO_SIZE_CONTENT` 이고
      컬럼 합이 프레임(1280)보다 넓어 흡수할 잉여가 없으므로 cap 을 두지 않는다 —
@@ -141,13 +139,13 @@ const dateCol = (field: keyof ReportUpdateRow, header: string, width: number, mu
 });
 
 const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
-  /* 구분(⚠) — 합계행에서 '합계' 라벨을 맡는다(목업 tfoot 의 colspan 7 구간 대표). 공통코드값이라 비마스킹 */
+  /* 구분 — 합계행에서 '합계' 라벨을 맡는다(목업 tfoot 의 colspan 7 구간 대표) */
   { field: 'gb', headerName: '구분', width: 96, minWidth: 96, maxWidth: 96, cellStyle: centerNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '합계' : p.value) },
   txt('gp', '운용사', 180, 220),
   txt('fd', '자펀드', 240, 300),
   txt('co', '투자기업', 160, 200),
-  /* 투심상태(⚠) — 배지는 상태 표시 전용(클릭 전이 없음). 합계행은 배지 대신 '-' */
+  /* 투심상태 — 배지는 상태 표시 전용(클릭 전이 없음). 합계행은 배지 대신 '-' */
   { field: 'stat', headerName: '투심상태', width: 136, minWidth: 136, maxWidth: 136, cellStyle: flexMid,
     cellRenderer: (p: any) => (p.node.rowPinned ? '-' : <StatusBadge tone={STAT_TONE[p.value as ReviewStatus]} label={p.value} size="lg" dot={false} />) },
   dateCol('sdt', '투심일자', 124),
@@ -156,7 +154,7 @@ const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
     valueFormatter: moneyFmt, cellStyle: numStyle() as any },
   /* 투자금납입 예정일 — 목업 '-' 문자 그대로(텍스트 N/A). 일자 muted 는 주지 않는다(목업 본문색) */
   dateCol('pdt', '투자금납입 예정일', 150, false),
-  /* 파일구분(⚠) — 공통코드값이라 비마스킹. 합계행 '-' */
+  /* 파일구분 — 합계행 '-' */
   { field: 'ftype', headerName: '파일구분', width: 156, minWidth: 156, maxWidth: 156, cellStyle: centerNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '-' : p.value) },
   dateCol('reg', '등록/변경일시', 156),
@@ -259,8 +257,7 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더 + 합계행. 승인금액은 **선택 단위로 환산한 숫자 셀**(t:'n' + z 서식)이라
-       Excel 이 화면처럼 우측 정렬하고 합계도 계산된다. 마스크 ON이면 숫자 0·텍스트 ''(실값 비노출).
-       합계행 라벨('합계')은 구조 라벨이라 마스크 대상이 아니다(골드 subfund_manage 동형). ── */
+       Excel 이 화면처럼 우측 정렬하고 합계도 계산된다. ── */
   const exportExcel = () => {
     const amtHeader = `승인금액(${unit})`;
     const head = [...EXCEL_TEXT.map((c) => c.header), amtHeader, ...EXCEL_TAIL.map((c) => c.header)];
@@ -305,7 +302,7 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
         </>
       )}
       toolbarRight={<>
-        {/* 금액 단위 전환 — 목업 listbar 의 '금액단위 원/백만원/억원'. 캡션·단위는 비마스킹(축) */}
+        {/* 금액 단위 전환 — 목업 listbar 의 '금액단위 원/백만원/억원' */}
         <span className="text-caption font-semibold" style={{ fontSize: 12, marginRight: 6 }}>금액단위</span>
         <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>

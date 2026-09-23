@@ -9,7 +9,7 @@
          목업 기본값 `2026-04 ~ 2026-04`은 **적용하지 않는다** — 9행 중 1행만 남아 첫 화면이 빈약해진다.
          빈 문자열 = 열린 경계(apfs-datepicker 함정).
        ⚠ 행 컬럼과 미연동인 항목(모펀드·계정구분·담당자)은 `noop` 캡션만 두고 `passes`에 넣지 않는다.
-         담당자는 원천에 옵션·샘플 값이 없어 옵션을 **지어내지 않는다**(빈 목록 + 검토필요 마커).
+         담당자는 원천에 옵션·샘플 값이 없어 옵션을 **지어내지 않는다**(빈 목록).
    - 목록 그리드 → AG Grid 단일 헤더(apfs-aggrid). **합계행 없음**(금액 컬럼이 없는 엔티티) ·
      **행 선택 없음**(다건 액션이 없는 조회 화면) → selbar도 없다.
    - 확정여부 → **셀 안 네이티브 `<select>`**(목업 `.gsel` 그대로, 행별 aria-label 동일).
@@ -18,10 +18,8 @@
        → 목업은 별도 화면 `S1_06_01_월간보고.html`로 이동하지만 **그 화면은 이번 변환 범위 밖**이라
          이동 대상이 없다. 가짜 상세 모달을 만들지 않고 toast로 한계를 알린다(아래 '한계').
    - KPI 배지 행 → **미포함**(사용자 결정). 카드뷰 토글·`sub` 캡션·명세 팝업도 없다.
-   - 엑셀 → SheetJS(단일 헤더 · 액션 컬럼 '상세조회' 제외 · 마스크 시 실값 비노출)
+   - 엑셀 → SheetJS(단일 헤더 · 액션 컬럼 '상세조회' 제외)
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   ⚠검토필요 마커는 **전수 이식**했다 — 목업 원문 3건: 검색 2건(담당자·보고구분) + 그리드 헤더 1건(확정여부).
-     공용 `review_marker.tsx`, 규약은 apfs-grid 스킬.
 
    한계·가정(결정 기록)
    - 상세 화면(S1_06_01) 미포함 → 상세 진입 3경로 모두 toast 안내로 끝난다. 상세 모달을 위조하지 않았다.
@@ -31,8 +29,7 @@
    - 확정여부 컬럼에 `suppressKeyboardEvent`를 **브리프 명세 외로 1건 추가**했다: React 18은 합성 이벤트를
      루트 컨테이너에서 디스패치하므로 `onKeyDown`의 `stopPropagation`이 AG Grid의 셀 **네이티브** 리스너보다
      늦다. 그대로 두면 select에 초점이 있을 때 ↑↓가 값 변경 대신 셀 이동으로 가로채여 키보드로 값을 못 바꾼다. (런타임 확인 필요 항목).
-   - 행 폭: 10컬럼 + 긴 조합명이라 `fitGridWidth`에서 텍스트 컬럼은 ellipsis로 잘린다(컬럼 리사이즈로 보완).
-     마스크 경계 때문에 `tooltipField`는 두지 않는다(툴팁으로 실값이 샌다). */
+   - 행 폭: 10컬럼 + 긴 조합명이라 `fitGridWidth`에서 텍스트 컬럼은 ellipsis로 잘린다(컬럼 리사이즈로 보완). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
@@ -104,7 +101,7 @@ const openDetail = () => toast('월간보고 상세는 별도 화면(S1_06_01)�
 
 /* ──────────────────────────────
    컬럼 정의 — 목업 헤더 순서·집합 그대로(단일 헤더):
-     No · 운용사 · 자펀드 · 보고년월 · 보고구분 · 보고서 · 수정일시 · 확정여부(⚠) · 상세조회 · 조합상태
+     No · 운용사 · 자펀드 · 보고년월 · 보고구분 · 보고서 · 수정일시 · 확정여부 · 상세조회 · 조합상태
    ⚠ 좌측 고정은 No만 — 다른 컬럼에 `pinned`를 주면 컬럼이 좌측 영역으로 끌려와 목업 순서가 깨진다.
    ⚠ 합계행·행 선택 컬럼 없음(금액 컬럼이 없고 다건 액션도 없다).
 ────────────────────────────── */
@@ -115,7 +112,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 /* 텍스트 셀(운용사·자펀드) — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다 */
 const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
-/* 날짜성/라벨 값은 mn() — ⚠ null 가드가 **mn보다 먼저**다(mn(null)은 문자열 'null'이 된다) */
+/* 날짜성/라벨 값 — null 이면 빈 셀 */
 const mnFmt = (p: { value: unknown }) => (p.value == null ? '' : String(p.value));
 
 /* 확정여부 셀 — 목업 `.gsel` 네이티브 select. 보고 내역이 있는 행만 렌더된다.
@@ -167,7 +164,7 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void):
      넓은 표라 `fitGridWidth`를 쓰면 전 컬럼이 선언 폭 아래로 눌려 보고년월·수정일시·확정여부·상세조회 30셀이 잘렸다
      (2026-09-12 코디네이터 런타임 실측). 내용 맞춤이면 그리드가 프레임보다 넓어져 AG Grid 내부 가로 스크롤이 생기고 잘림은 0이다
      (apfs-aggrid "넓은 다열 테이블" 규약). 이 컬럼만 상한 520(더 긴 파일명은 truncate).
-     ⚠ 첨부파일명 표시 전용(클릭 이동 없음). 불릿 `• `은 장식이라 비마스킹, 파일명은 <MT>. */
+     ⚠ 첨부파일명 표시 전용(클릭 이동 없음). */
   { field: 'file', headerName: '보고서', width: 180, minWidth: 150, maxWidth: 520, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value
       ? <span className="min-w-0 truncate">{'• '}{p.value}</span>
@@ -311,7 +308,7 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음). 마스크 ON이면 숫자 0·텍스트 비노출 ── */
+  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
     const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
@@ -342,7 +339,7 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
           {(['', '월간보고서', '반기보고서'] as ('' | ReportKind)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fRt === s} onClick={() => setFRt(s)}>{s || '전체'}</FilterChip>
           ))}
-          {/* 값만 표시(접두사 없음) + × — 운용사·자펀드는 텍스트라 <MT>, 기준년월은 날짜성이라 mn() */}
+          {/* 값만 표시(접두사 없음) + × */}
           {([
             ['운용사', fGp, () => setFGp(''), true],
             ['자펀드', fFund, () => setFFund(''), true],

@@ -4,7 +4,7 @@
    - 목록 = 형제 비교조회 화면(S3_104 계좌정보조회 · S3_106 입출금정보조회)의 표 선언·원문 DATA 를 그대로 쓴다(SSOT 공유, 행 복제 없음).
    - 원문 업로드 폼 → 툴바 [업로드] → 업로드 모달(파일명 드롭존 + [확인], 원문 토스트 문구 그대로).
    - 등록 → 툴바 독립 버튼(`계좌정보 등록`/`입출금정보 등록`) · 체크박스 선택 → 선택 바 [수정](1건)·[삭제]·[선택 해제] ·
-     행 더블클릭/Enter = 수정. 등록/수정 폼은 원문에 없어 목록 컬럼을 옮긴 추정(⚠검토필요, trust_manage_schemas).
+     행 더블클릭/Enter = 수정. 등록/수정 폼은 원문에 없어 목록 컬럼을 옮긴 추정(trust_manage_schemas).
    - KPI 배지 행 미포함(기본값 — 형제 수탁보고 화면과 같다) · 카드뷰·명세 팝업 없음 · 엑셀은 푸터 내보내기(⌥D). */
 import React, { useCallback, useRef, useState } from 'react';
 import { UI } from './components';
@@ -105,7 +105,7 @@ function ManageListPage({ cfg, onNav }: { cfg: ManageConfig; onNav?: (r: string)
     <RiskPage system="수탁보고" group="모태펀드 수탁" label={cfg.label} route={cfg.label} onNav={onNav}
       onReset={clear} contextActions={selActions}
       actions={<>
-        {/* 등록 = 툴바 독립 버튼(도메인 액션명) — 폼이 원문에 없어 검토필요를 단다 */}
+        {/* 등록 = 툴바 독립 버튼(도메인 액션명) */}
         <span className="inline-flex items-center gap-1">
           <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>{cfg.entity} 등록</Button>
         </span>
