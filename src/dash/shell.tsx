@@ -75,7 +75,7 @@ function MenuChildren({ m, route, expanded, setExpanded, onNav }) {
   // ancestorsOf 첫-매치가 정한 소유 그룹(owner[subKey]/owner[m.id])에서만 마킹해, 경쟁 top이 열려 있어도 한 리프만 활성.
   const owner = ancestorsOf(route);
   return (
-    <>{m.children.map((c, i) => {
+    m.children.map((c, i) => {
       if (c.sub && c.children) {
         const subKey = m.id + ":s" + i;
         const subOpen = expanded[subKey];
@@ -131,7 +131,7 @@ function MenuChildren({ m, route, expanded, setExpanded, onNav }) {
             className="whitespace-nowrap overflow-hidden text-left"
             style={{ textOverflow: "ellipsis" }}>{c.label}</span>{showDots && c.badge > 0 && <NewDot urgent={m.urgent} />}</button>
       );
-    })}</>
+    })
   );
 }
 

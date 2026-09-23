@@ -180,7 +180,7 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
                 </div>
               ) : (
                 <div className="flex items-center gap-[7px]" style={boxStyle({ muted: true })}>
-                  <span className="min-w-0 truncate">{v.biz ? <>{v.biz}</> : '-'}</span>
+                  <span className="min-w-0 truncate">{v.biz ? v.biz : '-'}</span>
                   <span className="shrink-0 text-caption" style={{ fontSize: 11 }}>수정불가</span>
                 </div>
               )}

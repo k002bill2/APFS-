@@ -142,11 +142,11 @@ function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: b
 }
 
 /* 적용 필터 칩 — 값만 표시 + × 제거(aria-label 에 항목명). */
-function AppliedChip({ label, value, onClear, plain }: { label: string; value: string; onClear: () => void; plain?: boolean }) {
+function AppliedChip({ label, value, onClear }: { label: string; value: string; onClear: () => void }) {
   return (
     <span className="inline-flex items-center gap-1.5 font-semibold text-primary"
       style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-      {plain ? value : <>{value}</>}
+      {value}
       <button type="button" onClick={onClear} aria-label={`${label} 필터 제거`}
         className="inline-flex items-center justify-center border-0 cursor-pointer"
         style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
@@ -215,8 +215,8 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
           <Icon name="filter" size={16} className="text-caption" />
           {!fYm && gradeAll && chgAll && <span className="text-caption" style={{ fontSize: 12.5 }}>전체</span>}
           {fYm && <AppliedChip label="기준년월" value={fYm} onClear={() => setFYm('')} />}
-          {!gradeAll && <AppliedChip label="등급" value={gradeChipValue} plain onClear={() => setGradeOn(ALL_GRADES_ON)} />}
-          {!chgAll && <AppliedChip label="변동" value={chgChipValue} plain onClear={() => setChgOn(ALL_CHG_ON)} />}
+          {!gradeAll && <AppliedChip label="등급" value={gradeChipValue} onClear={() => setGradeOn(ALL_GRADES_ON)} />}
+          {!chgAll && <AppliedChip label="변동" value={chgChipValue} onClear={() => setChgOn(ALL_CHG_ON)} />}
         </>
       )}
       toolbarRight={<>

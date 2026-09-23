@@ -69,13 +69,13 @@ export function Cell({ col, value, color, statusDomain, unit }: { col: ColumnSpe
     /* 운용사(gp): 이름 앞 아이콘 칩 제거(2026-09-16 사용자 지시). 표 전반에서 같은 건물 아이콘이
        모든 행에 반복돼 정보가 없었고, 좁은 폭에서 이름을 밀어냈다. 렌더는 일반 텍스트와 같다 —
        `type:'gp'` 자체는 남긴다(스키마 의미 표식이고 정렬·필터 해석에 쓰인다). */
-    case 'gp':         return <>{String(value)}</>;
+    case 'gp':         return String(value);
     case 'numeric':
       if (unit && col.type === 'amount' && typeof value === 'number')
         return <span className="tabular">{String(formatUnit(value, unit))}</span>;
       return <span className="tabular">{String(typeof value === 'number' ? value.toLocaleString() : String(value))}</span>;
     // text (text/code/pii) + 미지 타입 → 일반 텍스트
-    default:           return <>{String(value)}</>;
+    default:           return String(value);
   }
 }
 

@@ -48,7 +48,7 @@ function KvGrid({ items }: { items: OvItem[] }) {
         <React.Fragment key={it.l}>
           <div className="bg-muted px-2.5 py-[7px] text-[11.5px] font-bold text-muted-foreground">{it.l}</div>
           <div className="bg-card px-2.5 py-[7px] text-[12px] text-foreground min-w-0 break-words" style={it.full ? { gridColumn: 'span 3' } : undefined}>
-            {it.v == null ? <span className="text-muted-foreground">-</span> : <>{it.v}</>}
+            {it.v == null ? <span className="text-muted-foreground">-</span> : it.v}
           </div>
         </React.Fragment>
       ))}

@@ -145,7 +145,7 @@ function KvGrid({ items, unit }: { items: OvItem[]; unit: Unit }) {
             <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
             <dd className={`m-0 flex items-center min-w-0 ${isMoney ? 'justify-end tabular font-semibold' : ''} ${empty ? 'text-caption' : ''}`}
               style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
-              {empty ? '-' : isMoney ? money(o.won!, unit) : <>{o.v}</>}
+              {empty ? '-' : isMoney ? money(o.won!, unit) : o.v}
             </dd>
           </div>
         );

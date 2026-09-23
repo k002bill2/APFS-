@@ -267,7 +267,7 @@ function PopNumber({ value, className, style }: { value: React.ReactNode; classN
     if (first.current) { first.current = false; return; }
     setGen((g) => g + 1); setAnimating(true);
   }, [text]);
-  if (text === null) return <>{value}</>;
+  if (text === null) return value;
   const chars = Array.from(text);
   /* 마지막 자릿수(data-stagger="2")가 항상 가장 늦게 끝나므로 그 animationend 에서만 내린다. 빈 문자열은 span 이 없어
      animationend 가 오지 않으니 처음부터 is-animating 을 붙이지 않는다. */

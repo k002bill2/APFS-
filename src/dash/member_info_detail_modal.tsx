@@ -137,7 +137,7 @@ function KvValue({ item }: { item: KvItem }) {
   if (item.badge === 'muted') {
     return <span className="inline-flex items-center rounded-[7px] px-[9px] py-[3px] text-xs font-bold bg-muted text-muted-foreground">{item.v}</span>;
   }
-  return <>{item.v}</>;
+  return item.v;
 }
 
 /* ── 거래내역 표 ── */
