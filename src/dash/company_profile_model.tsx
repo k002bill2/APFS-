@@ -116,12 +116,12 @@ function ShareTable({ unit }: { unit: Unit }) {
               <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(r.date)}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.totalCapital, unit)}</td>
               {/* 주수는 금액이 아니다 — 단위 토글 대상에서 제외(축이 무너지지 않도록) */}
-              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{String(fmt(r.totalShares))}</td>
+              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{fmt(r.totalShares)}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.comCapital, unit)}</td>
-              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{String(fmt(r.comShares))}</td>
+              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{fmt(r.comShares)}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.comPar, unit)}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.prfCapital, unit)}</td>
-              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{String(fmt(r.prfShares))}</td>
+              <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{fmt(r.prfShares)}</td>
               <td className={`${TD} text-right tabular`} style={{ padding: '7px 8px' }}>{money(r.prfPar, unit)}</td>
             </tr>
           ))}

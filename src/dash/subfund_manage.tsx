@@ -450,7 +450,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
                 {([['약정총액', r.c1], ['납입총액', r.p1], ['분배액', r.dist]] as [string, number | null][]).map(([label, v]) => (
                   <div key={label} className="flex items-center justify-between gap-2">
                     <span className="text-caption shrink-0" style={{ fontSize: 12 }}>{label}</span>
-                    <span className="tabular" style={{ fontSize: 13, fontWeight: 500, color: v == null || v === 0 ? 'var(--muted-foreground)' : 'var(--foreground)' }}>{v == null ? '-' : String(fmt(v))}</span>
+                    <span className="tabular" style={{ fontSize: 13, fontWeight: 500, color: v == null || v === 0 ? 'var(--muted-foreground)' : 'var(--foreground)' }}>{v == null ? '-' : fmt(v)}</span>
                   </div>
                 ))}
               </div>

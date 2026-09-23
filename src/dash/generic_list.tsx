@@ -818,7 +818,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
                 {!schema.hideMetrics && genericMetrics && (
                   <>
                     <div className="flex items-center justify-between">
-                      <span className="tabular font-bold" style={{ fontSize: 15 }}>{String(r.amount.toLocaleString())}</span>
+                      <span className="tabular font-bold" style={{ fontSize: 15 }}>{r.amount.toLocaleString()}</span>
                       <DeltaBadge value={r.change} />
                     </div>
                     <StatusBadge tone={statusTone(r.status)} label={r.status} size="sm" />

@@ -97,7 +97,7 @@ export function IrrBasisModal({ basis, onClose }: { basis: IrrBasis; onClose: ()
                           {v == null ? <span className="text-muted-foreground">-</span>
                             : c.kind === 'badge' ? <StatusBadge tone={c.tones?.[String(v)] ?? 'muted'} label={String(v)} size="lg" dot={false} />
                             : c.kind === 'text' || c.kind === 'center' ? String(v)
-                            : String(displayText(c, v, unit))}
+                            : displayText(c, v, unit)}
                         </td>
                       );
                     })}

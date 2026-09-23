@@ -72,7 +72,7 @@ export function Cell({ col, value, color, statusDomain, unit }: { col: ColumnSpe
     case 'gp':         return String(value);
     case 'numeric':
       if (unit && col.type === 'amount' && typeof value === 'number')
-        return <span className="tabular">{String(formatUnit(value, unit))}</span>;
+        return <span className="tabular">{formatUnit(value, unit)}</span>;
       return <span className="tabular">{String(typeof value === 'number' ? value.toLocaleString() : String(value))}</span>;
     // text (text/code/pii) + 미지 타입 → 일반 텍스트
     default:           return String(value);

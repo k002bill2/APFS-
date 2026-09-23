@@ -251,7 +251,7 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
                       <td className={`${TD} text-center tabular`} style={CELL}>{i + 1}</td>
                       <td className={TD} style={CELL}>{m.mem}</td>
                       <td className={`${TD} text-center`} style={CELL}><GradeChip v={m.mg} /></td>
-                      <td className={`${TD} text-right tabular`} style={CELL}>{String(toFmt(m.mc))}</td>
+                      <td className={`${TD} text-right tabular`} style={CELL}>{toFmt(m.mc)}</td>
                       {AMOUNT_FIELDS.map((k) => (
                         <td key={k} className={TD} style={CELL}>
                           <AmountInput value={drafts[i][k]} onChange={set(i, k)} ariaLabel={`${m.mem} ${DIST_HEADERS[k]}`} />
@@ -384,13 +384,13 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
                       <td className={TD} style={CELL}>{`${m.mem} (${m.id})`}</td>
                       <td className={`${TD} text-center`} style={CELL}><GradeChip v={m.mg} /></td>
                       <td className={`${TD} text-center`} style={CELL}>{m.mtype}</td>
-                      <td className={`${TD} text-right tabular`} style={CELL}>{String(toFmt(m.commit))}</td>
+                      <td className={`${TD} text-right tabular`} style={CELL}>{toFmt(m.commit)}</td>
                       <td className={`${TD} text-center tabular`} style={CELL}>{String(m.cpct)}</td>
                       <td className={TD} style={CELL}>
                         <AmountInput value={drafts[i].pay} onChange={set(i, 'pay')} ariaLabel={`${m.mem} 납입금액`} />
                       </td>
                       <td className={`${TD} text-center tabular`} style={CELL}>{String(m.ppct)}</td>
-                      <td className={`${TD} text-right tabular`} style={CELL}>{m.custody == null ? dash : String(toFmt(m.custody))}</td>
+                      <td className={`${TD} text-right tabular`} style={CELL}>{m.custody == null ? dash : toFmt(m.custody)}</td>
                       <td className={`${TD} text-center`} style={CELL}>
                         {m.chk == null ? dash
                           : <SelectInput value={drafts[i].chk} onChange={set(i, 'chk')} options={INVEST_CHK_OPTIONS} ariaLabel={`${m.mem} 데이터확인`} />}
@@ -405,7 +405,7 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
                 <tfoot>
                   <tr className="bg-muted font-bold">
                     <td className={`${TD} text-center`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }} colSpan={4}>합계</td>
-                    <td className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{String(toFmt(sumCommit))}</td>
+                    <td className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{toFmt(sumCommit)}</td>
                     <td className={`${TD} text-center text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
                     <td className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{toFmt(sumPay)}</td>
                     <td className={`${TD} text-center text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>

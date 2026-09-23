@@ -95,7 +95,7 @@ function GaugeLight({ value }) {
         x={65}
         y={64}
         textAnchor="middle"
-        style={{ fontSize: 26, fontWeight: 800, fill: "var(--on-brand-solid)" }}>{String(value + "%")}</text></svg>
+        style={{ fontSize: 26, fontWeight: 800, fill: "var(--on-brand-solid)" }}>{(value + "%")}</text></svg>
   );
 }
 function HeroStat({ icon, label, value, unit, delta, danger, onNav }: { icon: string; label?: React.ReactNode; value?: React.ReactNode; unit?: string; delta?: React.ReactNode; danger?: boolean; onNav?: () => void }) {
@@ -130,7 +130,7 @@ function StatusBar() {
       style={{ borderRadius: 12 }}>{D.STATUS_DONUT.map((st) => <div
         key={st.key}
         className="py-2 px-3"
-        style={{ flex: st.value, minWidth: 70, background: `color-mix(in srgb,${st.color} 13%,transparent)`, borderRadius: 8 }}><div className="flex items-center gap-1.5"><span style={{ width: 8, height: 8, borderRadius: 99, background: st.color }} /><span className="font-bold" style={{ fontSize: 11.5, color: st.color }}>{st.name}</span></div><div className="flex items-baseline gap-1 mt-0.5"><span className="tabular font-extrabold" style={{ fontSize: 20 }}>{String(st.value)}</span><span className="t-caption">{String(((st.value / total) * 100).toFixed(0) + "%")}</span></div></div>)}</div>
+        style={{ flex: st.value, minWidth: 70, background: `color-mix(in srgb,${st.color} 13%,transparent)`, borderRadius: 8 }}><div className="flex items-center gap-1.5"><span style={{ width: 8, height: 8, borderRadius: 99, background: st.color }} /><span className="font-bold" style={{ fontSize: 11.5, color: st.color }}>{st.name}</span></div><div className="flex items-baseline gap-1 mt-0.5"><span className="tabular font-extrabold" style={{ fontSize: 20 }}>{String(st.value)}</span><span className="t-caption">{(((st.value / total) * 100).toFixed(0) + "%")}</span></div></div>)}</div>
   );
 }
 function VariantC({ s, onNav }) {

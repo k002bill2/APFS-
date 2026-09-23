@@ -101,7 +101,7 @@ function ScheduleCard({ item, onAdd }) {
         }}><span className="text-[10px] font-bold" style={{ color: toneVar(tone)[0] }}>{item.kind}</span><span
           className="text-[15px] font-extrabold tabular leading-tight"
           style={{ color: toneVar(tone)[0] }}>{String(item.dday)}</span></div><div className="shrink-0"><ColorChip icon={kindIcon} color={kindColor} size={36} iconSize={18} /></div><div className="flex-1 min-w-0"><div className="flex items-center gap-2 flex-wrap"><span className="text-[14px] font-bold text-foreground truncate">{item.title}</span><StatusBadge tone="info" label={item.to} size="sm" /></div><div
-          className="flex items-center gap-3 mt-1 text-[12px] text-muted-foreground"><Icon name="calendar" size={12} stroke={2} /><span>{String(fmtDate(item.date))}</span>{item.time && <><Icon name="clock" size={12} stroke={2} /><span>{String(item.time)}</span></>}{item.owner && <><Icon name="user" size={12} stroke={2} /><span>{item.owner}</span></>}</div></div><div className="shrink-0 flex items-center gap-1.5"><IconBtn icon="bell" label="알림 추가" size={32} onClick={onAdd} /><Button variant="ghost" size="sm" leadingIcon="plus">추가</Button></div></div>
+          className="flex items-center gap-3 mt-1 text-[12px] text-muted-foreground"><Icon name="calendar" size={12} stroke={2} /><span>{fmtDate(item.date)}</span>{item.time && <><Icon name="clock" size={12} stroke={2} /><span>{String(item.time)}</span></>}{item.owner && <><Icon name="user" size={12} stroke={2} /><span>{item.owner}</span></>}</div></div><div className="shrink-0 flex items-center gap-1.5"><IconBtn icon="bell" label="알림 추가" size={32} onClick={onAdd} /><Button variant="ghost" size="sm" leadingIcon="plus">추가</Button></div></div>
   );
 }
 
@@ -202,7 +202,7 @@ function TimelineView({ items }) {
             className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-[11px] bg-muted text-muted-foreground border-2 border-border">{String(fmtDate(date).split("(")[0])}</div>{gi < grouped.length - 1 && <div
             className="flex-1 w-px bg-border my-1"
             style={{ minHeight: 16 }} />}</div><div className="flex-1 pb-4"><div
-            className="text-[12px] font-bold mb-1.5 mt-1 text-muted-foreground">{String(fmtDate(date))}</div><div className="flex flex-col gap-2">{entries.map((item, ii) => {
+            className="text-[12px] font-bold mb-1.5 mt-1 text-muted-foreground">{fmtDate(date)}</div><div className="flex flex-col gap-2">{entries.map((item, ii) => {
               const tone = ddayTone(item);
               const [c, soft] = toneVar(tone);
               return (

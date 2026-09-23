@@ -94,7 +94,7 @@ function DualSeries({ a, b, labels, height = 170, area = false, ca = "var(--char
         </defs>
         {ticks.map((t, i) => <g key={i}>
           <line x1={m.l} x2={m.l+iw} y1={m.t+ih-(t/max)*ih} y2={m.t+ih-(t/max)*ih} stroke="var(--chart-grid)" strokeDasharray="3 3" />
-          <text x={m.l-6} y={m.t+ih-(t/max)*ih+4} textAnchor="end" style={{ fontSize: 10, fill: "var(--caption)" }} className="tabular">{String(t.toLocaleString())}</text>
+          <text x={m.l-6} y={m.t+ih-(t/max)*ih+4} textAnchor="end" style={{ fontSize: 10, fill: "var(--caption)" }} className="tabular">{t.toLocaleString()}</text>
         </g>)}
         {(labels||[]).map((lb, i) => <text key={"x"+i} x={m.l+(i/(labels!.length-1))*iw} y={height-6} textAnchor="middle" style={{ fontSize: 10.5, fill: "var(--caption)", fontWeight: 600 }}>{lb}</text>)}
         {series(b, cb, "b")}{series(a, ca, "a")}
