@@ -42,7 +42,8 @@ const decimals = (v: number) => (String(v).split('.')[1] ?? '').length;
 const zFmt = (v: number) => (decimals(v) === 0 ? '#,##0' : `#,##0.${'0'.repeat(Math.min(decimals(v), 2))}`);
 
 /** lead = 표 위에 먼저 쓸 행(팝업 맥락 kv 등). 있으면 한 줄 비우고 표를 이어 쓴다 */
-export function tableSheet(table: TableMeta, rows: readonly Row[], unit: Unit | null, masked: boolean, lead: (string | number)[][] = []): XLSX.WorkSheet {
+export function tableSheet(full: TableMeta, rows: readonly Row[], unit: Unit | null, masked: boolean, lead: (string | number)[][] = []): XLSX.WorkSheet {
+  const table = full.cols.some((c) => c.noExport) ? { ...full, cols: full.cols.filter((c) => !c.noExport) } : full;
   const { heads, merges: m0 } = excelHeads(table, unit);
   const off = lead.length ? lead.length + 1 : 0;
   const merges = m0.map((m) => ({ s: { r: m.s.r + off, c: m.s.c }, e: { r: m.e.r + off, c: m.e.c } }));

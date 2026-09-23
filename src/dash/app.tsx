@@ -66,6 +66,14 @@ import { GpTypeIndicatorTrend } from './gp_type_indicator_trend';          // �
 import { SubfundGradeTrend } from './subfund_grade_trend';                  // 자펀드 종합등급 변동 조회(S2_79 — 등급표 2 + 정상 비중 도넛)
 import { MotherFundValuation } from './mother_fund_valuation';              // 모태펀드 가치평가 결과조회(S2_80 — 결과(입력칸 3) + 2단 헤더 상세)
 import { SubfundReturnCompare, FundValuationResult, InvesteeValuationResult, SubfundAssetTx, ValuationExceptionReport, PortfolioReport } from './risk_table_pages';   // S2_77·81·82·84·85·83(표 1~4장 공용 골격)
+/* 부처보고(2)·수탁보고(11) 13리프(2026-09-23 목업 S4_108·03/04_연도별투자현황·S3_98~S3_106 이식). 연도별투자현황은 기존 report-bucheo 분기,
+   나머지 12리프도 전용 페이지(아래) — 계좌정보 비교조회(S3_104)는 단일 헤더지만 원문 검색이 기본값 있는 기간이라 스키마 필터로 못 담는다.
+   표 규약·바깥 양식은 조기경보 17리프와 같은 risk_grid.tsx · risk_page_kit.tsx 를 재사용한다. */
+import { RegistryLedgerManage } from './registry_ledger';                    // 등록원부관리(S4_108 — 목록 + 팝업 6종)
+import { PhysicalDataManage, SecuritiesManage } from './trust_physical_upload';   // 실물자료관리(업로드)(S3_98) · 유가증권관리(업로드)(신규)
+import { PhysicalVerifyCompare, SecuritiesCompare, TrustCommonCode, MotherTrustCode, AccountCompare, CashflowCompare } from './trust_table_pages';   // S3_101 · 신규 · S3_100 · S3_102 · S3_104 · S3_106
+import { TrustFundCode } from './trust_fund_code';                            // 자펀드코드 조회(S3_99 — 편집형 목록)
+import { AccountInfoManage, CashflowInfoManage } from './trust_upload_forms'; // 계좌정보 관리(S3_103) · 입출금 정보관리(S3_105) — 업로드 폼
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -269,6 +277,18 @@ function App() {
   else if (route === "자펀드 투자자산 및 거래내역 조회") page = <SubfundAssetTx onNav={onNav} />;
   else if (route === "예외사항리포트") page = <ValuationExceptionReport onNav={onNav} />;
   else if (route === "Portfolio Report") page = <PortfolioReport onNav={onNav} />;
+  else if (route === "등록원부관리") page = <RegistryLedgerManage onNav={onNav} />;
+  else if (route === "실물자료관리(업로드)") page = <PhysicalDataManage onNav={onNav} />;
+  else if (route === "실물검증비교조회") page = <PhysicalVerifyCompare onNav={onNav} />;
+  else if (route === "유가증권관리(업로드)") page = <SecuritiesManage onNav={onNav} />;
+  else if (route === "유가증권비교조회") page = <SecuritiesCompare onNav={onNav} />;
+  else if (route === "공통코드조회") page = <TrustCommonCode onNav={onNav} />;
+  else if (route === "자펀드코드 조회") page = <TrustFundCode onNav={onNav} />;
+  else if (route === "모태수탁 공통코드") page = <MotherTrustCode onNav={onNav} />;
+  else if (route === "계좌정보 관리") page = <AccountInfoManage onNav={onNav} />;
+  else if (route === "계좌정보 비교조회") page = <AccountCompare onNav={onNav} />;
+  else if (route === "입출금 정보관리") page = <CashflowInfoManage onNav={onNav} />;
+  else if (route === "입출금정보 비교조회") page = <CashflowCompare onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;
