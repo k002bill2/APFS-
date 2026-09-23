@@ -54,6 +54,7 @@ import { InvesteeInvestStats } from './investee_invest_stats';      // 투자실
 import { InvestRecoveryDetail } from './invest_recovery_detail';    // 투자금 회수현황(S1_36) — 조회기준 2모드(컬럼·데이터 동시 전환)
 import { GpEarlyWarning } from './gp_early_warning';                // 운용사별 조기경보 조회(S2_47) — 운용사구분 4종 그리드 + 재무정보 팝업
 import { FundEarlyWarning } from './fund_early_warning';            // 자펀드별 조기경보 조회(S2_49) — 한도관리 2단 헤더 그리드 + 자펀드수익률 팝업
+import { EwMonthCompare } from './ew_month_compare';              // 조기경보 전월 비교 조회(S2_63) — 당월/전월 대조 그리드 + 등급·변동 필터
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -240,6 +241,7 @@ function App() {
   else if (route === "운용인력 변동관리") page = <WorkforceManage onNav={onNav} />;
   else if (route === "운용사별 조기경보 조회") page = <GpEarlyWarning onNav={onNav} />;
   else if (route === "자펀드별 조기경보 조회") page = <FundEarlyWarning onNav={onNav} />;
+  else if (route === "조기경보 전월 비교 조회") page = <EwMonthCompare onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;
