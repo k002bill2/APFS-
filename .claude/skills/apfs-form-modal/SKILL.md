@@ -43,6 +43,19 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
    ```
    동작: 클릭 → 검증 → "저장 중"(`SAVE_DEMO_MS`=400ms, `components.tsx` 상수 하나로 조절) → commit. 백엔드가 없어 저장이 동기라 지연은 데모용 흉내다. loading 중 `disabled`를 주지 않는다(포커스 유지 — `UI.Button` 규약). **저장 중에는 다이얼로그 닫기가 잠긴다**(`useDialogLock` — 취소·X·Esc 무시, 본문 `aria-busy`+pointer 차단). 사용자가 누른 저장은 유실되지 않는다. ⚠ 처음 시도한 "닫기 시작 시 commit 폐기"는 exit 애니메이션(≈280ms)과 400ms 지연이 경합해 취소해도 저장되는 실측 결함 + 무음 유실 UX라 폐기했다. ⚠ **submit이 성공 경로에서 closure 반환을 잊으면 무음 no-op**(타입으로 못 잡음) → 검증 항목: 저장 클릭 시 스피너가 떠야 한다. 적용처: 폼 모달 10종(`generic_list_modal`·`user_form_modal`·`user_permission_modal`·`member_info_form_modal`·`custody_verify_memo_modal`·`menu_form_modal`·`program_help_modal`·`subfund_form_modal`·`apfs_contribution_tx_modal`의 Dist/Invest) + 디자인시스템 3-2-1 라이브 데모. 전수 조사는 `grep -rn ">저장</Button>" src/dash`(leadingIcon 유무 무관).
 
+7. **섹션 버튼 정렬 = 추가류는 제목 바로 옆 좌측, 조회·저장은 우측 (2026-09-24 사용자 결정).** 모달 본문 섹션(·소제목)의 **추가류 버튼**(`추가`·`행 추가`·`양도/양수 추가` 등)은 **제목 텍스트 바로 뒤, 같은 줄 좌측**에 붙인다(`ml-auto`·`justify-between` 금지, 섹션 본문 아래·표 아래로 떼지도 않는다). **조회·저장 등 섹션 액션**은 제목 줄 우측 끝(`ml-auto`)에 둔다. 두 종류를 한 헬퍼가 받으면 슬롯을 `add`(좌)·`actions`(우)로 분리한다.
+   ```tsx
+   <div className="flex items-center gap-2 …섹션 헤더 클래스(규칙 3)…">
+     <h3 …>{title}</h3>
+     {add}                                                                       {/* 제목 바로 옆 */}
+     {actions && <div className="ml-auto flex items-center gap-1.5">{actions}</div>}   {/* 조회·저장 = 우측 */}
+   </div>
+   ```
+   - 버튼은 `UI.Button size="sm"`, 추가류는 `variant="outline" leadingIcon="plus"`.
+   - 목업 원문이 추가 버튼을 우측(`.sacts` 등)에 두어도 이 규칙이 우선한다. 모달 **푸터**(닫기·저장)는 이 규칙 대상이 아니다 — 기존대로 `DialogFooter` 우측.
+   - 적용처: `registry_ledger_modals.tsx` `Section`(등록원부 입력/수정·조합원·전문인력 모달), `gp_quant_indicator_modal.tsx`(행추가·행삭제 좌측), 소제목 선례 `subfund_form_modal.tsx`(업무집행조합원 `행 추가`)·등록원부 `약력`. 가드 테스트: `registry_ledger_modals.test.ts` "Section — 추가 버튼은 제목 바로 옆 좌측".
+   - ⚠ 미정합 잔존(별건): `program_help_modal.tsx`(섹션 아래 좌측 `action`). 손댈 때 이 규칙으로 맞춘다.
+
 ## 핵심 계약 (CRITICAL)
 1. **새 컨트롤은 `FIELD_CONTROLS`(types.ts)에 먼저 추가.** 컨트롤 종류는 `FIELD_CONTROLS` 배열이 **타입+zod enum을 동시 공급(SSOT)**. 배열에 없는 control을 스키마에 쓰면 `PageSchemaZ.parse`가 실패해 **스키마 테스트·빌드가 깨진다**. 추가 순서: ① `FIELD_CONTROLS`에 문자열 추가 → ② `SchemaField`(renderers.tsx)에 `case` 추가 → ③ 스키마에서 사용.
 2. **2단 적응은 자동.** `RowFormModal`이 `schema.fields.length > 6`이면 `max-w-[880px]` + `grid grid-cols-1 sm:grid-cols-2`(좁은 화면은 1단 적층)로, 6개 이하면 `max-w-[460px]` 단일 컬럼으로 **자동 렌더**. 호출자가 폭을 지정하지 않는다.
