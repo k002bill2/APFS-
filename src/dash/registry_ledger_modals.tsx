@@ -16,6 +16,7 @@ import { mn, MT } from './mask';
 import { toast } from './ui/sonner';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
 import { SchemaField, isPlainWrapControl } from './schemas/renderers';
+import { Checkbox } from './ui/checkbox';
 import type { FieldSpec } from './schemas/types';
 import { UploadDropzone } from './trust_upload';
 import type { Row } from './risk_table_meta';
@@ -26,9 +27,12 @@ import {
   PRINT_DATE, PRINT_PAGES, ISSUE_HISTORY,
 } from './brief_data';
 import type { HistSection } from './brief_data';
+import { ledgerPatch } from './brief_data';
 
 const { Button, IconBtn } = UI;
 const say = (msg: string) => () => toast(msg);
+/** 선택 인덱스 제거(불변) */
+const dropAt = (rows: string[][], idx: number[]) => rows.filter((_, i) => !idx.includes(i));
 const today = () => format(new Date(), 'yyyy-MM-dd');
 
 /* ──────────────────────────────
@@ -85,37 +89,58 @@ function F({ spec, value, onChange, full, children }: { spec: FieldSpec; value: 
 const Grid2 = ({ children }: { children: React.ReactNode }) => <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5">{children}</div>;
 
 type RowAct = 'edit' | 'detail';
-/** 원문 `.mgrid` — 헤더 + 리터럴 행 + 관리 버튼(수정/삭제 · 상세/삭제). 첫 칸이 이름·주소면 좌측, 금액·수량은 우측 */
-function MiniTable({ heads, rows, act, label, right = [], empty = '변경 이력이 없습니다.' }: {
+/** 원문 `.mgrid` — 헤더 + 행. 원문의 행 끝 `관리` 칸(수정/삭제 · 상세/삭제 버튼)은 **행 안에 두지 않는다**(2026-09-23 사용자 결정 —
+    관리형 선택 바 규약을 팝업 안 표에도 적용): 행 체크박스 → 표 위 선택 바 `N건 선택됨` · [수정|상세](1건) · [삭제](N건) · [선택 해제].
+    `관리` 헤더는 원문 리터럴(heads)에 남기고 렌더에서만 뺀다. 첫 칸이 이름·주소면 좌측, 금액·수량은 우측 */
+function MiniTable({ heads, rows, act, label, right = [], empty = '변경 이력이 없습니다.', onOpen, onDelete }: {
   heads: string[]; rows: string[][]; act: RowAct; label: string; right?: number[]; empty?: string;
+  /** [수정]/[상세] — 1건 선택 시. 미지정이면 원문처럼 토스트 */
+  onOpen?: (row: string[]) => void;
+  /** [삭제] — 선택 행 인덱스들 */
+  onDelete: (idx: number[]) => void;
 }) {
+  const cols = heads.filter((h) => h !== '관리');
+  const [sel, setSel] = useState<number[]>([]);
   const align = (i: number) => (right.includes(i) ? 'text-right' : i === 0 ? 'text-left' : 'text-center');
   const cell: React.CSSProperties = { padding: '8px 11px' };
-  const [a, b] = act === 'edit' ? ['수정', '삭제'] : ['상세', '삭제'];
+  const openLabel = act === 'edit' ? '수정' : '상세';
+  const toggle = (i: number, on: boolean) => setSel((p) => (on ? [...p, i] : p.filter((x) => x !== i)));
+  const open = () => { const r = rows[sel[0]]; if (!r) return; if (onOpen) onOpen(r); else toast(`${label} ${openLabel} (목업)`); };
+  const remove = () => { onDelete(sel); setSel([]); toast.success(`${label} ${sel.length}건을 삭제했습니다 (목업)`); };
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse" style={{ fontSize: 13.5 }}>
-        <caption className="sr-only">{label}</caption>
-        <thead><tr>{heads.map((h, i) => (
-          <th key={h} scope="col" className={`border border-border bg-[color:var(--grid-header)] font-bold whitespace-nowrap ${i === heads.length - 1 ? 'text-center' : align(i)}`} style={cell}>{h}</th>
-        ))}</tr></thead>
-        <tbody>
-          {rows.length === 0 && <tr><td colSpan={heads.length} className="border border-border text-center text-caption" style={cell}>{empty}</td></tr>}
-          {rows.map((r, ri) => (
-            <tr key={ri}>
-              {r.map((v, i) => <td key={i} className={`border border-border ${align(i)} ${right.includes(i) ? 'tabular-nums' : ''}`} style={cell}>
-                {/^[\d,.\-]+$/.test(v) ? mn(v) : <MT>{v}</MT>}
-              </td>)}
-              <td className="border border-border text-center whitespace-nowrap" style={cell}>
-                <span className="inline-flex gap-1">
-                  <Button variant="outline" size="sm" onClick={say(`${act === 'edit' ? '이력' : label} ${a} (목업)`)}>{a}</Button>
-                  <Button variant="outline" size="sm" style={{ color: 'var(--danger-text)' }} onClick={say(`${act === 'edit' ? '이력' : label} ${b} (목업)`)}>{b}</Button>
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div>
+      {sel.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap" style={{ marginBottom: 8 }}>
+          <span className="font-semibold" style={{ fontSize: 13 }}>{sel.length}건 선택됨</span>
+          {sel.length === 1 && <Button variant="primary" size="sm" leadingIcon="file" onClick={open}>{openLabel}</Button>}
+          <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={remove}>삭제</Button>
+          <Button variant="ghost" size="sm" onClick={() => setSel([])}>선택 해제</Button>
+        </div>
+      )}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse" style={{ fontSize: 13.5 }}>
+          <caption className="sr-only">{label}</caption>
+          <thead><tr>
+            <th scope="col" className="border border-border bg-[color:var(--grid-header)] text-center" style={{ ...cell, width: 44 }}><span className="sr-only">선택</span></th>
+            {cols.map((h, i) => (
+              <th key={h} scope="col" className={`border border-border bg-[color:var(--grid-header)] font-bold whitespace-nowrap ${align(i)}`} style={cell}>{h}</th>
+            ))}
+          </tr></thead>
+          <tbody>
+            {rows.length === 0 && <tr><td colSpan={cols.length + 1} className="border border-border text-center text-caption" style={cell}>{empty}</td></tr>}
+            {rows.map((r, ri) => (
+              <tr key={ri} className={sel.includes(ri) ? 'bg-muted' : undefined}>
+                <td className="border border-border text-center" style={cell}>
+                  <Checkbox checked={sel.includes(ri)} onCheckedChange={(c) => toggle(ri, c === true)} aria-label={`${label} ${ri + 1}번 행 선택`} />
+                </td>
+                {r.map((v, i) => <td key={i} className={`border border-border ${align(i)} ${right.includes(i) ? 'tabular-nums' : ''}`} style={cell}>
+                  {/^[\d,.\-]+$/.test(v) ? mn(v) : <MT>{v}</MT>}
+                </td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -128,10 +153,12 @@ const D = (key: string, label: string): FieldSpec => ({ key, label, control: 'da
 
 function initialLedger(edit: boolean, row?: Row): Record<string, string> {
   const ev = (k: HistSection['key']) => (edit ? HIST_SECTIONS.find((s) => s.key === k)!.editValue ?? '' : '');
-  const [d1 = '', d2 = ''] = ev('dur').split('~');
+  /* 목록에 있는 칸(존속기간·출자약정총액·업무집행조합원명)은 그 행 값을 쓴다 — 원문 isEdit 기본값은 1행 기준이라 다른 행을 열면 어긋난다 */
+  const [d1 = '', d2 = ''] = (edit && row?.dur ? String(row.dur) : ev('dur')).split('~').map((x) => x.trim());
   return {
     regno: edit ? String(row?.regno ?? '') : '', nm: edit ? String(row?.nm ?? '') : '', dur1: d1, dur2: d2,
-    addr: ev('addr'), amt: ev('amt'), gpname: ev('gpname'), gpaddr: ev('gpaddr'),
+    addr: ev('addr'), amt: edit && typeof row?.amt === 'number' ? row.amt.toLocaleString() : ev('amt'),
+    gpname: edit && row?.gp ? String(row.gp) : ev('gpname'), gpaddr: ev('gpaddr'),
     unit: edit ? LEDGER_UNIT_PRICE : '', first: edit ? LEDGER_FIRST_REG : '',
   };
 }
@@ -159,7 +186,7 @@ function HistInputs({ s, v, set, edit }: { s: HistSection; v: Record<string, str
   }
 }
 
-export function LedgerFormModal({ mode, row, onClose }: { mode: 'new' | 'edit'; row?: Row; onClose: () => void }) {
+export function LedgerFormModal({ mode, row, onSave, onClose }: { mode: 'new' | 'edit'; row?: Row; onSave: (patch: Partial<Row>) => void; onClose: () => void }) {
   const edit = mode === 'edit';
   const dlgRef = useRef<DialogHandle>(null);
   const [v, setV] = useState(() => initialLedger(edit, row));
@@ -175,7 +202,13 @@ export function LedgerFormModal({ mode, row, onClose }: { mode: 'new' | 'edit'; 
     setHist((p) => ({ ...p, [s.key]: [[...vals, today(), today()], ...p[s.key]] }));
     toast.success('변경 이력이 추가되었습니다 (목업)');
   };
-  const save = () => { toast.success('등록원부가 저장되었습니다 (목업)'); dlgRef.current?.close(); };
+  /* 저장 = 목록 반영(수정은 그 행 교체, 입력은 새 행) + 원문 토스트. 등록번호·조합명칭은 원문 필수(*) */
+  const save = () => {
+    if (!v.regno.trim() || !v.nm.trim()) { toast('등록번호와 조합명칭을 입력하세요'); return; }
+    onSave(ledgerPatch(v));
+    toast.success('등록원부가 저장되었습니다 (목업)');
+    dlgRef.current?.close();
+  };
 
   return (
     <Modal dlgRef={dlgRef} wide onClose={onClose} title={edit ? '등록원부 수정' : '등록원부 입력'}
@@ -184,7 +217,8 @@ export function LedgerFormModal({ mode, row, onClose }: { mode: 'new' | 'edit'; 
       {HIST_SECTIONS.map((s) => (
         <Section key={s.key} title={s.title} actions={<Button variant="outline" size="sm" leadingIcon="plus" onClick={() => addHist(s)}>추가</Button>}>
           <HistInputs s={s} v={v} set={set} edit={edit} />
-          <MiniTable heads={s.heads} rows={hist[s.key]} act="edit" label={`${s.title} 변경 이력`} right={s.key === 'amt' ? [0] : []} />
+          <MiniTable heads={s.heads} rows={hist[s.key]} act="edit" label={`${s.title} 변경 이력`} right={s.key === 'amt' ? [0] : []}
+            onDelete={(idx) => setHist((p) => ({ ...p, [s.key]: dropAt(p[s.key], idx) }))} />
         </Section>
       ))}
       <Section title="출자 좌당 금액 / 최초등록">
@@ -204,6 +238,10 @@ export function MembersModal({ row, onClose }: { row: Row; onClose: () => void }
   const dlgRef = useRef<DialogHandle>(null);
   const [f, setF] = useState<Record<string, string>>({ ...MEMBER_FORM });
   const set = (k: string) => (x: string) => setF((p) => ({ ...p, [k]: x }));
+  const [members, setMembers] = useState<string[][]>(MEMBER_ROWS);
+  const [payments, setPayments] = useState<string[][]>(PAYMENT_ROWS);
+  /* [상세] = 아래 '조합원 정보 상세' 폼에 그 행을 채운다(원문 헤더 순서: 명칭·등록번호·구분·약정액·출자좌수) */
+  const openMember = ([name, regNo, kind, amount, units]: string[]) => setF((p) => ({ ...p, name, regNo, kind, amount, units }));
   return (
     <Modal dlgRef={dlgRef} wide onClose={onClose} title="조합원 및 납입출자금 관리" target={String(row.nm)}
       footer={<Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>}>
@@ -212,7 +250,7 @@ export function MembersModal({ row, onClose }: { row: Row; onClose: () => void }
         <Button variant="outline" size="sm" onClick={say('추가출자 등록 (목업)')}>추가출자</Button>
         <Button variant="primary" size="sm" onClick={say('조합원 조회 (목업)')}>조회</Button>
       </>}>
-        <MiniTable heads={MEMBER_HEADS} rows={MEMBER_ROWS} act="detail" label="조합원" right={[3, 4]} />
+        <MiniTable heads={MEMBER_HEADS} rows={members} act="detail" label="조합원" right={[3, 4]} onOpen={openMember} onDelete={(idx) => setMembers((p) => dropAt(p, idx))} />
       </Section>
       <Section title="조합원 정보 상세" actions={<>
         <Button variant="outline" size="sm" onClick={say('조합원 입력 초기화 (목업)')}>추가</Button>
@@ -228,7 +266,7 @@ export function MembersModal({ row, onClose }: { row: Row; onClose: () => void }
         </Grid2>
       </Section>
       <Section title="납입출자금" actions={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('납입출자금 이력 추가 (목업)')}>추가</Button>}>
-        <MiniTable heads={PAYMENT_HEADS} rows={PAYMENT_ROWS} act="edit" label="납입출자금" right={[1, 3, 4]} />
+        <MiniTable heads={PAYMENT_HEADS} rows={payments} act="edit" label="납입출자금" right={[1, 3, 4]} onDelete={(idx) => setPayments((p) => dropAt(p, idx))} />
       </Section>
     </Modal>
   );
@@ -241,11 +279,16 @@ export function ExpertsModal({ row, onClose }: { row: Row; onClose: () => void }
   const dlgRef = useRef<DialogHandle>(null);
   const [f, setF] = useState<Record<string, string>>({ ...EXPERT_FORM });
   const set = (k: string) => (x: string) => setF((p) => ({ ...p, [k]: x }));
+  const [experts, setExperts] = useState<string[][]>(EXPERT_ROWS);
+  const [careers, setCareers] = useState<string[][]>(CAREER_ROWS);
+  const [invests, setInvests] = useState<string[][]>(INVEST_CAREER_ROWS);
+  /* [상세] = 아래 '전문인력 상세 정보' 폼에 그 행을 채운다(원문 헤더 순서: 명칭·등록번호·구분·담당시작일·담당종료일) */
+  const openExpert = ([name, regNo, kind, from, to]: string[]) => setF((p) => ({ ...p, name, regNo, kind, from, to }));
   return (
     <Modal dlgRef={dlgRef} wide onClose={onClose} title="전문인력 관리" target={String(row.nm)}
       footer={<Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>}>
       <Section title="전문인력 관리" actions={<Button variant="primary" size="sm" onClick={say('전문인력 조회 (목업)')}>조회</Button>}>
-        <MiniTable heads={EXPERT_HEADS} rows={EXPERT_ROWS} act="detail" label="전문인력" />
+        <MiniTable heads={EXPERT_HEADS} rows={experts} act="detail" label="전문인력" onOpen={openExpert} onDelete={(idx) => setExperts((p) => dropAt(p, idx))} />
       </Section>
       <Section title="전문인력 상세 정보" actions={<>
         <Button variant="outline" size="sm" onClick={say('전문인력 입력 초기화 (목업)')}>추가</Button>
@@ -264,10 +307,10 @@ export function ExpertsModal({ row, onClose }: { row: Row; onClose: () => void }
           <h4 className="m-0 font-bold" style={{ fontSize: 14 }}>약력</h4>
           <Button variant="outline" size="sm" leadingIcon="plus" onClick={say('약력 추가 (목업)')}>추가</Button>
         </div>
-        <MiniTable heads={CAREER_HEADS} rows={CAREER_ROWS} act="edit" label="약력" />
+        <MiniTable heads={CAREER_HEADS} rows={careers} act="edit" label="약력" onDelete={(idx) => setCareers((p) => dropAt(p, idx))} />
       </Section>
       <Section title="투자경력" actions={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('투자경력 추가 (목업)')}>추가</Button>}>
-        <MiniTable heads={INVEST_CAREER_HEADS} rows={INVEST_CAREER_ROWS} act="edit" label="투자경력" />
+        <MiniTable heads={INVEST_CAREER_HEADS} rows={invests} act="edit" label="투자경력" onDelete={(idx) => setInvests((p) => dropAt(p, idx))} />
       </Section>
     </Modal>
   );

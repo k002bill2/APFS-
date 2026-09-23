@@ -31,14 +31,14 @@ import { ReadGrid } from './risk_grid';
 import { exportTables } from './risk_excel';
 import type { Row } from './risk_table_meta';
 import { LEDGER_TABLE, INACTIVE_OPTIONS, LEDGER_UPLOAD_NOTE, ledgerShown } from './brief_data';
-import { useRowSelection, SelBar, DeleteDialog } from './trust_manage_kit';
+import { useRowSelection, SelBar, DeleteDialog, nextRow } from './trust_manage_kit';
 import { LedgerFormModal, MembersModal, ExpertsModal, LedgerUploadModal, LedgerPrintModal, LedgerIssueHistoryModal } from './registry_ledger_modals';
 
 const { Button } = UI;
 const LABEL = '등록원부관리';
 
 type Modal = null
-  | { kind: 'ledger'; mode: 'new' | 'edit'; row?: Row }
+  | { kind: 'ledger'; mode: 'new' | 'edit'; id?: string }
   | { kind: 'members' | 'experts'; row: Row }
   | { kind: 'upload' | 'print' | 'history' | 'delete' };
 
@@ -92,7 +92,14 @@ export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void })
     toast.success('삭제되었습니다 (목업)');
   };
   /* 행 더블클릭·Enter = 수정(참조 안정: ReadGrid onRowOpen 계약) */
-  const openEdit = useCallback((r: Row) => setModal({ kind: 'ledger', mode: 'edit', row: r }), []);
+  const openEdit = useCallback((r: Row) => setModal({ kind: 'ledger', mode: 'edit', id: r.id }), []);
+  /* 모달은 id 만 들고 행은 매번 rows 에서 찾는다(불변 교체 후 옛 객체 방지) */
+  const ledgerRow = modal?.kind === 'ledger' && modal.id ? rows.find((r) => r.id === modal.id) : undefined;
+  const saveLedger = (patch: Partial<Row>) => {
+    if (ledgerRow) { setRows((prev) => prev.map((r) => (r.id === ledgerRow.id ? { ...r, ...patch } : r))); return; }
+    const { id, no } = nextRow(rows, 'lg');
+    setRows((prev) => [{ ...patch, id, no, active: '활성' } as Row, ...prev]);   // 신규는 선두 · 활성
+  };
 
   const selActions = SelBar({
     count: sel.length, onClear: clear, onDelete: () => setModal({ kind: 'delete' }),
@@ -132,7 +139,7 @@ export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void })
       onExport={exportExcel} exportEnabled={!modal}>
       <ReadGrid table={LEDGER_TABLE} rows={shown} ariaLabel={LABEL} selectable onSelect={onSelect} selectedIds={selIds} apiRef={apiRef} onRowOpen={openEdit} />
       {modal?.kind === 'delete' && <DeleteDialog title="등록원부 삭제" count={sel.length} onConfirm={remove} onClose={() => setModal(null)} />}
-      {modal?.kind === 'ledger' && <LedgerFormModal mode={modal.mode} row={modal.row} onClose={close} />}
+      {modal?.kind === 'ledger' && <LedgerFormModal mode={modal.mode} row={ledgerRow} onSave={saveLedger} onClose={close} />}
       {modal?.kind === 'members' && <MembersModal row={modal.row} onClose={close} />}
       {modal?.kind === 'experts' && <ExpertsModal row={modal.row} onClose={close} />}
       {modal?.kind === 'upload' && <LedgerUploadModal onClose={close} />}

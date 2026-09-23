@@ -145,6 +145,15 @@ export const LEDGER_TABLE: TableMeta = {
     { id: 'lg-3', no: 3, regno: '2015-03', nm: '수산식품 성장투자조합', dur: '2015-04-01 ~ 2023-03-31', amt: 12000000000, gp: '한국투자파트너스', active: '비활성' },
   ],
 };
+/** 폼 값 → 목록 행 조각(등록번호·명칭·존속기간·출자약정총액·업무집행조합원명) */
+export function ledgerPatch(v: Record<string, string>): Partial<Row> {
+  const n = Number(v.amt.replace(/,/g, ''));
+  return {
+    regno: v.regno.trim(), nm: v.nm.trim(), dur: v.dur1 || v.dur2 ? `${v.dur1} ~ ${v.dur2}` : null,
+    amt: v.amt.trim() && Number.isFinite(n) ? n : null, gp: v.gpname.trim() || null,
+  };
+}
+
 /** 원문 비활성원부 라디오(기본 '제외') */
 export const INACTIVE_OPTIONS = ['제외', '포함'] as const;
 /** 검색조건 적용 — 명칭 부분일치 · 비활성원부 '제외' 면 활성상태 '비활성' 행을 숨긴다 */

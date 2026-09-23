@@ -21,7 +21,7 @@ import {
 import {
   YEARLY_PROVENANCE, YEARLY_TABLES, YEARLY_TOTALS_LIT, YEARLY_FOOTNOTES, YEARLY_BASE_YM, BASES, COMB_TYPES, ACCOUNT_TYPES, DETAIL_ROWS, DETAIL_EMPTY,
   detailTable, detailRows, LEDGER_TABLE, LEDGER_PROVENANCE, LEDGER_UPLOAD_NOTE, INACTIVE_OPTIONS, HIST_SECTIONS, HIST_REQUIRED,
-  MEMBER_ROWS, PAYMENT_ROWS, EXPERT_ROWS, CAREER_ROWS, INVEST_CAREER_ROWS, MEMBER_FORM, EXPERT_FORM, PRINT_DATE, ISSUE_HISTORY, ledgerRows, ledgerShown,
+  MEMBER_ROWS, PAYMENT_ROWS, EXPERT_ROWS, CAREER_ROWS, INVEST_CAREER_ROWS, MEMBER_FORM, EXPERT_FORM, PRINT_DATE, ISSUE_HISTORY, ledgerRows, ledgerShown, ledgerPatch,
 } from './brief_data';
 
 /* 부처보고(2) · 수탁보고(11) = 13리프 — 라우트 결선 + **원본 목업 대비 출처 충실성**(risk_pages_17.test.ts 방식).
@@ -526,5 +526,26 @@ describe('관리형 선택 바 규약', () => {
       const cols = new Set(t.cols.map((c) => c.key));
       for (const x of f.fields) expect(cols.has(x.key), `${t.id}.${x.key}`).toBe(true);
     }
+  });
+});
+
+describe('등록원부 저장 → 목록 반영 · 팝업 안 표 선택 규약', () => {
+  it('폼 값 → 행 조각: 존속기간 결합 · 금액 숫자 · 빈 값 null', () => {
+    expect(ledgerPatch({ regno: ' 2026-01 ', nm: '신규조합', dur1: '2026-01-01', dur2: '2033-12-31', amt: '5,000,000,000', gpname: '(주)테스트' }))
+      .toEqual({ regno: '2026-01', nm: '신규조합', dur: '2026-01-01 ~ 2033-12-31', amt: 5000000000, gp: '(주)테스트' });
+    expect(ledgerPatch({ regno: 'x', nm: 'y', dur1: '', dur2: '', amt: '', gpname: '' })).toEqual({ regno: 'x', nm: 'y', dur: null, amt: null, gp: null });
+  });
+  it('등록원부 목록: 저장이 행을 교체/선두 추가한다(모달은 id 만 든다)', () => {
+    const s = read(new URL('./registry_ledger.tsx', import.meta.url).pathname);
+    expect(s).toMatch(/onSave=\{saveLedger\}/);
+    expect(s).toMatch(/kind: 'ledger'; mode: 'new' \| 'edit'; id\?: string/);
+  });
+  it('팝업 안 표: 행 버튼 없음 — 체크박스 + 표 위 선택 바', () => {
+    const s = read(new URL('./registry_ledger_modals.tsx', import.meta.url).pathname);
+    const mini = s.slice(s.indexOf('function MiniTable('), s.indexOf('A — 등록원부 입력/수정'));
+    expect(mini).toMatch(/<Checkbox /);
+    expect(mini).toMatch(/건 선택됨/);
+    expect(mini).not.toMatch(/<td[^>]*>\s*<span className="inline-flex gap-1">/);
+    expect(s.match(/<MiniTable /g)?.length).toBe((s.match(/<MiniTable [^>]*onDelete=/g) ?? []).length);
   });
 });
