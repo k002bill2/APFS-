@@ -56,6 +56,16 @@ import { InvestRecoveryDetail } from './invest_recovery_detail';    // 투자금
 import { GpEarlyWarning } from './gp_early_warning';                // 운용사별 조기경보 조회(S2_47) — 운용사구분 4종 그리드 + 재무정보 팝업
 import { FundEarlyWarning } from './fund_early_warning';            // 자펀드별 조기경보 조회(S2_49) — 한도관리 2단 헤더 그리드 + 자펀드수익률 팝업
 import { EwMonthCompare } from './ew_month_compare';              // 조기경보 전월 비교 조회(S2_63) — 당월/전월 대조 그리드 + 등급·변동 필터
+/* 조기경보 > 기업정보·자펀드정보·가치평가 17리프(2026-09-23 목업 S2_65~S2_92 이식). 2단 헤더·합계행·다중 표·탭 통합·근거 팝업이
+   있는 15리프는 전용 페이지(아래), 단일 헤더·flat 2리프(운용사 재무정보 비교 조회·평가시점 데이터 확인)는 스키마 주도 GenericListPage.
+   표 데이터·컬럼 SSOT = risk_*_data.ts, 표 규약 = risk_grid.tsx, 바깥 양식 = risk_page_kit.tsx. */
+import { CorpNiceInfo, CorpCreditInfo } from './corp_info_page';      // 투자기업정보(NICE평가정보)(S2_65·66·67 탭 3) · 투자기업신용정보 조회(S2_69·68 탭 2)
+import { IrrByContract, IrrByInvestee, IrrBySubfund } from './irr_pages';   // IRR 3종(S2_87·91·89) + 근거 팝업(S2_88·92·90)
+import { GpQuantIndicatorManage } from './gp_quant_indicator_manage';      // 운용사 정량지표 관리(S2_70 + 등록 S2_71·수정 S2_72 팝업)
+import { GpTypeIndicatorTrend } from './gp_type_indicator_trend';          // 운용사 유형별 정량지표 변동 조회(S2_78 — 평균 카드 + 추이 차트 2섹션)
+import { SubfundGradeTrend } from './subfund_grade_trend';                  // 자펀드 종합등급 변동 조회(S2_79 — 등급표 2 + 정상 비중 도넛)
+import { MotherFundValuation } from './mother_fund_valuation';              // 모태펀드 가치평가 결과조회(S2_80 — 결과(입력칸 3) + 2단 헤더 상세)
+import { SubfundReturnCompare, FundValuationResult, InvesteeValuationResult, SubfundAssetTx, ValuationExceptionReport, PortfolioReport } from './risk_table_pages';   // S2_77·81·82·84·85·83(표 1~4장 공용 골격)
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -244,6 +254,21 @@ function App() {
   else if (route === "운용사별 조기경보 조회") page = <GpEarlyWarning onNav={onNav} />;
   else if (route === "자펀드별 조기경보 조회") page = <FundEarlyWarning onNav={onNav} />;
   else if (route === "조기경보 전월 비교 조회") page = <EwMonthCompare onNav={onNav} />;
+  else if (route === "투자기업정보(NICE평가정보)") page = <CorpNiceInfo onNav={onNav} />;
+  else if (route === "투자기업신용정보 조회") page = <CorpCreditInfo onNav={onNav} />;
+  else if (route === "투자기업별(계약별) IRR") page = <IrrByContract onNav={onNav} />;
+  else if (route === "투자기업별 IRR") page = <IrrByInvestee onNav={onNav} />;
+  else if (route === "자펀드별 IRR") page = <IrrBySubfund onNav={onNav} />;
+  else if (route === "운용사 정량지표 관리") page = <GpQuantIndicatorManage onNav={onNav} />;
+  else if (route === "운용사 유형별 정량지표 변동 조회") page = <GpTypeIndicatorTrend onNav={onNav} />;
+  else if (route === "자펀드 수익률정보 비교 조회") page = <SubfundReturnCompare onNav={onNav} />;
+  else if (route === "자펀드 종합등급 변동 조회") page = <SubfundGradeTrend onNav={onNav} />;
+  else if (route === "모태펀드 가치평가 결과조회") page = <MotherFundValuation onNav={onNav} />;
+  else if (route === "투자조합 가치평가 결과조회") page = <FundValuationResult onNav={onNav} />;
+  else if (route === "피투자회사 가치평가 결과조회") page = <InvesteeValuationResult onNav={onNav} />;
+  else if (route === "자펀드 투자자산 및 거래내역 조회") page = <SubfundAssetTx onNav={onNav} />;
+  else if (route === "예외사항리포트") page = <ValuationExceptionReport onNav={onNav} />;
+  else if (route === "Portfolio Report") page = <PortfolioReport onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;

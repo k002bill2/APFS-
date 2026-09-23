@@ -35,6 +35,9 @@ import { schema as s전체보고현황 } from './전체_보고현황';
 import { schema as s투자기업명세서통합 } from './투자기업명세서_통합';
 import { schema as s우수투자기업관리 } from './우수투자기업_관리';
 import { schema as s운용사명세서 } from './운용사_명세서';
+// 2026-09-23 조기경보 17리프 목업 이식 중 단일 헤더·flat 2리프(나머지 15리프는 typed 페이지 — app.tsx 분기)
+import { schema as s운용사재무정보비교조회 } from './운용사_재무정보_비교_조회';
+import { schema as s평가시점데이터확인 } from './평가시점_데이터_확인';
 
 const ALL: PageSchema[] = [
   s연도별투자현황, s조합별월간보고현황, s자펀드공고정보관리, s투자기업정보통합, s사후관리기록관리, s투자성과포트폴리오,
@@ -45,6 +48,7 @@ const ALL: PageSchema[] = [
   s전체투자실적, s투자실적현황투자기업, s투자금회수현황,
   s운용사별재무제표, s운용사재무정보조회, s투자금실사보고, s관리보수관리, s전체보고현황,
   s투자기업명세서통합, s우수투자기업관리, s운용사명세서,
+  s운용사재무정보비교조회, s평가시점데이터확인,
 ];
 
 export function buildRegistry(list: PageSchema[]): Record<string, PageSchema> {
