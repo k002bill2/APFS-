@@ -56,9 +56,12 @@ export function displayText(c: ColMeta, v: Cell, unit: Unit | null, digits?: Uni
   return v.toLocaleString();
 }
 
+/** 화면 헤더 텍스트 — unitInHeader(opt-in) 금액 칸만 선택 단위를 붙인다. 폭 산정과 headerName 이 같은 문자열을 쓴다 */
+const headerText = (c: ColMeta, unit: Unit | null): string => (c.unitInHeader && c.kind === 'amount' && unit ? `${c.label}(${unit})` : c.label);
+
 function minWidthOf(c: ColMeta, rows: readonly Row[], unit: Unit | null, digits?: UnitDigits): number {
   /* 좌우 패딩 + 정렬 아이콘 자리 */
-  const head = textWidth(c.label, 13.5) + 44;
+  const head = textWidth(headerText(c, unit), 13.5) + 44;
   const body = Math.max(0, ...rows.map((r) => textWidth(displayText(c, r[c.key], unit, digits)) + (c.kind === 'badge' ? 50 : c.link ? 58 : 38)));
   /* c.width 는 하한(원문이 넓게 잡은 칸) — 내용이 더 길면 내용이 이긴다(잘림 금지). 상한 420 = 긴 주소·조합명 캡 */
   return Math.round(Math.min(420, Math.max(c.width ?? 0, KIND_MIN[c.kind], head, body)));
@@ -130,7 +133,7 @@ function leafDef(c: ColMeta, rows: readonly Row[], unit: Unit | null, linkLabel:
   return {
     colId: c.key,
     field: c.key,
-    headerName: c.label,
+    headerName: headerText(c, unit),
     flex: c.flex ?? 1, minWidth: w, width: w,
     pinned: c.pinned ? 'left' : undefined,
     cellStyle: c.strong ? STRONG_STYLE[align] : ALIGN_STYLE[align],
