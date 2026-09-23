@@ -198,8 +198,9 @@ export const FUND_CODE_TABLE: TableMeta = {
     { key: 'no', label: 'NO', kind: 'number', align: 'center', width: 64 },
     { key: 'nm', label: '조합이름', kind: 'text', width: 260 },
     { key: 'code', label: '수탁기관조합코드', kind: 'center', width: 200 },
-    { key: 'sub', label: '자조합수탁', kind: 'center', width: 110 },
-    { key: 'mo', label: '모태수탁', kind: 'center', width: 110 },
+    /* 원문 셀 체크박스 → 표시 전용 Y/N 배지(편집은 선택 바 [수정] 모달 — 2026-09-23 관리형 규약) */
+    { key: 'sub', label: '자조합수탁', kind: 'badge', tones: { Y: 'success', N: 'muted' }, width: 110 },
+    { key: 'mo', label: '모태수탁', kind: 'badge', tones: { Y: 'success', N: 'muted' }, width: 110 },
   ],
   rows: [
     { id: 'fc-1', no: 1, nm: '와이앤아처 로컬 리노베이션 투자조합', code: 'CAZ00001', sub: 'Y', mo: 'Y' },
