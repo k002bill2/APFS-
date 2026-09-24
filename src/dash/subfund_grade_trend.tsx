@@ -48,7 +48,7 @@ function GradeSection({ table }: { table: TableMeta }) {
   return (
     <section aria-label={table.title}>
       <SectionHead title={table.title!} />
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,460px)]" style={{ padding: '0 18px 18px' }}>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,460px)]" style={{ padding: '0 0 18px' }}>
         <div className="min-w-0"><ReadGrid table={table} ariaLabel={table.title} /></div>
         <div className="min-w-0 border border-border" style={{ borderRadius: 12, padding: '12px 14px', background: 'var(--card)' }}>
           {/* preflight:false — p UA 마진 제거 */}

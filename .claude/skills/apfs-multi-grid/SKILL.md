@@ -53,7 +53,18 @@ description: APFS "여러 표 세로 쌓기"(멀티 그리드) 조회 화면 규
 엑셀은 TablesPage 가 **표 N장 → 시트 N장**으로 자동 처리한다(`risk_excel.ts`, 화면 단위·필터 결과 그대로).
 
 ## TablesPage 로 못 담는 화면
-표 사이에 차트·도넛·입력 셀·섹션 버튼이 끼는 화면은 `RiskPage`(또는 `GridFrame`)를 직접 쓰고 **공용 `SectionHead` 만 import** 한다 — 예: `subfund_grade_trend.tsx`(표+도넛), `gp_type_indicator_trend.tsx`(차트), `mother_fund_valuation.tsx`(입력 셀), `ew_result_manage.tsx`(섹션 actions), `custody_verify_manage.tsx`. 섹션 헤더 규약은 동일하다.
+표 사이에 차트·도넛·입력 셀·섹션 버튼이 끼는 화면은 `RiskPage`(또는 `GridFrame`)를 직접 쓰고 **공용 `SectionHead` 만 import** 한다 — 예: `subfund_grade_trend.tsx`(표+도넛), `gp_type_indicator_trend.tsx`(차트), `mother_fund_valuation.tsx`(입력 셀), `ew_result_manage.tsx`(섹션 actions), `custody_verify_manage.tsx`, `gp_early_warning.tsx`(운용사구분 4단 — 설명 문구는 `cap`). 섹션 헤더 규약은 동일하다.
+
+### 섹션 본문 좌우 padding 0 (차트·카드 섹션)
+표(AG Grid)는 원래 좌우 padding 이 없지만, 차트 패널·도넛 카드를 감싸는 래퍼는 흔히 `padding: '0 18px 18px'` 를 들고 온다 → 본문이 섹션 끝선보다 18px 안쪽에 떠서 표 섹션·필터 바와 끝선이 어긋난다.
+- 래퍼는 **`padding: '0 0 18px'`**(하단 간격만) — 본문 좌측 = 섹션 좌측, 제목 글자 = 섹션 좌측 + 4px.
+- 제목과 본문은 **한 쌍으로** 고친다. 제목만 4px 로 당기고 본문 18px 을 남기면 제목이 본문보다 바깥으로 나오는 역방향 어긋남이 생긴다(구 일일보고 조회 탭 실사례).
+- 제목을 `h3`/`p` 로 따로 그리지 않는다 — 13.5px 제목은 15px 인 다른 화면보다 작아 보인다(구 `gp_early_warning.tsx`).
+```tsx
+<SectionHead title={sec.title} cap={sec.chartTitle} />
+<div className="grid grid-cols-1 gap-3 xl:grid-cols-2" style={{ padding: '0 0 18px' }}>{/* 패널 */}</div>
+```
+검증: ego-browser 1440px 에서 `section`·`h4`·본문 첫 요소의 `getBoundingClientRect().left` 실측 — 본문 = 섹션, 제목 = 섹션 + 4.
 
 ## 검증
 1. `npx vitest run src/dash/section_head_rule.test.ts` — 로컬 SectionHead·`n=`·`총 N건` 캡션·padding 가드.
