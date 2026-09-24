@@ -9,7 +9,7 @@ import { RowFormModal, statusTone } from './generic_list_modal';
 import type { Row } from './generic_list_modal';
 import { resolveSchema } from './schemas';
 import { Cell, AttachChips, controlMinWidth, drawerInputStyle } from './schemas/renderers';   // controlMinWidth = 컨트롤 폭 하한 SSOT(fit-content 짝)
-import { resolveFilterField, YEAR_OPTIONS } from './schemas/filter_field';
+import { resolveFilterField, YEAR_OPTIONS, filterValueMatches, defaultFilterValues, filterChipText, splitPair, joinPair } from './schemas/filter_field';
 import type { FilterField } from './schemas/filter_field';
 import type { PageSchema, DetailPopup } from './schemas/types';
 import { MonthlyReportModal } from './monthly_report_modal';   // 읽기전용 상세 보고서 팝업(컬럼 detail 옵트인 스키마만)
@@ -179,14 +179,17 @@ function MiniBars({ data, color }: { data: number[]; color: string }) {
 /* KpiBadge는 grid_frame.tsx(GridFrame SSOT)에서 import — 인라인 정의 제거(apfs-grid 양식 이관) */
 
 /* 제거 가능한 필터 칩 — 값만 표시(항목명 접두사 없음, 2026-09-09 통일: typed 페이지 골드 규약과 일치).
-   항목명은 title(호버)·aria-label로 회수해 의미 손실을 상쇄한다. 태그형(value 없음)은 라벨=값 토큰이라 라벨을 그대로 표시. */
-function FilterPill({ label, value, onRemove }: { label: string; value?: string; onRemove: () => void }) {
+   항목명은 title(호버)·aria-label로 회수해 의미 손실을 상쇄한다. 태그형(value 없음)은 라벨=값 토큰이라 라벨을 그대로 표시.
+   onRemove 가 없으면 × 도 없다 — 원문 select 에 '전체'가 없는 항목(filterSpecs allLabel:null)은 해제할 빈 값이 없다(typed AppliedChip 동형). */
+function FilterPill({ label, value, onRemove }: { label: string; value?: string; onRemove?: () => void }) {
   return (
-    <span title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: "5px 8px 5px 11px", borderRadius: 9, fontSize: 12.5, background: "color-mix(in srgb, var(--primary) 10%, transparent)" }}>
+    <span title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: onRemove ? "5px 8px 5px 11px" : "5px 11px", borderRadius: 9, fontSize: 12.5, background: "color-mix(in srgb, var(--primary) 10%, transparent)" }}>
       {value ? value : <span>{label}</span>}
-      <button onClick={onRemove} aria-label={label + " 필터 제거"} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: "transparent", color: "inherit", minWidth: 24, minHeight: 24, padding: 0, margin: "-5px -4px -5px 0" }}>
-        <Icon name="x" size={13} stroke={2.4} />
-      </button>
+      {onRemove && (
+        <button onClick={onRemove} aria-label={label + " 필터 제거"} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: "transparent", color: "inherit", minWidth: 24, minHeight: 24, padding: 0, margin: "-5px -4px -5px 0" }}>
+          <Icon name="x" size={13} stroke={2.4} />
+        </button>
+      )}
     </span>
   );
 }
@@ -227,7 +230,7 @@ function DrawerFilterControl({ ff, value, onChange, onEnter }: { ff: FilterField
       // 래퍼도 fit-content — block 100% 래퍼면 절대배치 chevron이 드로어 오른쪽 끝으로 떨어진다
       <div className="relative" style={{ width: "fit-content", maxWidth: "100%" }}>
         <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...drawerInputStyle("enum"), appearance: "none", WebkitAppearance: "none", paddingRight: 32 }}>
-          <option value="">전체</option>
+          {ff.allLabel !== null && <option value="">전체</option>}
           {ff.options.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
         <Icon name="chevron-down" size={16} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted-foreground)", pointerEvents: "none" }} />
@@ -239,6 +242,9 @@ function DrawerFilterControl({ ff, value, onChange, onEnter }: { ff: FilterField
   } else if (ff.kind === "month") {
     // 월선택 — PeriodPicker 월 그리드. 값은 'YYYY-MM' 문자열(정확일치 필터 계약 — rowMatchesFilters). 트리거가 w-full이라 date와 같은 fit-content 래퍼(minW=130).
     control = <div style={{ width: "fit-content", minWidth: controlMinWidth("month"), maxWidth: "100%" }}><PeriodPicker mode="month" value={value} onChange={onChange} ariaLabel={ff.label} /></div>;
+  } else if (ff.kind === "dayRange" || ff.kind === "monthRange" || ff.kind === "codeName") {
+    // 두 칸 컨트롤(범위 시작~종료 · 코드+명칭) — PeriodPicker 트리거가 <button> 이라 <label> 로 감싸면 이중 토글된다 → <div> 래퍼
+    return <DrawerPairControl ff={ff} value={value} onChange={onChange} onKeyDown={onKeyDown} />;
   } else if (ff.kind === "number") {
     control = <input type="number" value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} placeholder="값 입력" style={drawerInputStyle("number")} />;
   } else {
@@ -253,6 +259,40 @@ function DrawerFilterControl({ ff, value, onChange, onEnter }: { ff: FilterField
       </span>
       {control}
     </label>
+  );
+}
+
+/* 두 칸 필터(filterSpecs opt-in 전용) — 값은 'a~b' 한 문자열(splitPair/joinPair 정본).
+   dayRange·monthRange = 원문 `시작 ~ 종료` 두 달력 · codeName = 원문 `코드 입력 + 명칭 입력`(검색 팝업 대신 명칭 입력이 검색어). */
+function DrawerPairControl({ ff, value, onChange, onKeyDown }: { ff: FilterField; value: string; onChange: (v: string) => void; onKeyDown: (e: React.KeyboardEvent) => void }) {
+  const [a, b] = splitPair(value);
+  let body: React.ReactNode;
+  if (ff.kind === "codeName") {
+    body = (
+      <div className="flex items-center gap-2">
+        <input type="text" value={a} onChange={(e) => onChange(joinPair(e.target.value, b))} onKeyDown={onKeyDown} aria-label={ff.label + " 코드"} placeholder="코드" style={{ ...drawerInputStyle("text"), width: 110, flex: "none" }} />
+        <input type="text" value={b} onChange={(e) => onChange(joinPair(a, e.target.value))} onKeyDown={onKeyDown} aria-label={ff.label + "명"} placeholder={ff.label + "명"} style={{ ...drawerInputStyle("text"), flex: 1, minWidth: 0 }} />
+      </div>
+    );
+  } else {
+    const mode = ff.kind === "dayRange" ? "day" : "month";
+    const wrap: React.CSSProperties = { width: "fit-content", minWidth: controlMinWidth(ff.kind === "dayRange" ? "date" : "month"), maxWidth: "100%" };
+    body = (
+      <div className="flex items-center gap-2 flex-wrap">
+        <div style={wrap}><PeriodPicker mode={mode} value={a} onChange={(v) => onChange(joinPair(v || "", b))} ariaLabel={ff.label + " 시작"} /></div>
+        <span className="text-caption">~</span>
+        <div style={wrap}><PeriodPicker mode={mode} value={b} onChange={(v) => onChange(joinPair(a, v || ""))} ariaLabel={ff.label + " 종료"} /></div>
+      </div>
+    );
+  }
+  return (
+    <div className="block mb-4">
+      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>
+        {ff.label}
+        {!ff.columnKey && <span className="font-medium text-caption" style={{ marginLeft: 6 }}>· 데이터 연동 후 적용</span>}
+      </span>
+      {body}
+    </div>
   );
 }
 
@@ -312,8 +352,8 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
           )}
         </div>
         <SheetFooter>
-          {/* 초기화 = 즉시 전체 해제(드로어는 열린 채) · 필터 적용 = 닫기(값은 이미 적용됨) — typed 페이지와 동일 */}
-          <Button variant="outline" size="md" onClick={() => onApply({})}>초기화</Button>
+          {/* 초기화 = 즉시 원문 기본값으로(filterSpecs def — 미선언 스키마는 전체 해제, 드로어는 열린 채) · 필터 적용 = 닫기(값은 이미 적용됨) — typed 페이지와 동일 */}
+          <Button variant="outline" size="md" onClick={() => onApply(defaultFilterValues(schema))}>초기화</Button>
           <Button variant="primary" size="md" style={{ flex: 1 }} onClick={onClose}>필터 적용</Button>
         </SheetFooter>
       </SheetContent>
@@ -323,7 +363,8 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
 
 /* 활성 필터(filterValues)로 행 1건의 통과 여부 판정.
    값-필터(year/month/enum/date/number/text)는 모두 AND, 카테고리 태그끼리는 합집합(OR).
-   text/number는 부분일치(includes), 그 외(year/month/enum/date)는 정확일치. columnKey 미해결 필터는 무시(칩만). */
+   값 비교 정본은 filter_field.ts filterValueMatches(text/number 부분일치 · year/month/enum/date 정확일치 · 범위 · 코드/명칭).
+   columnKey 미해결 필터는 무시(칩만). */
 function rowMatchesFilters(row: Row, schema: PageSchema, filterValues: Record<string, string>): boolean {
   const active = Object.entries(filterValues).filter(([, v]) => v !== "");
   if (active.length === 0) return true;
@@ -340,11 +381,7 @@ function rowMatchesFilters(row: Row, schema: PageSchema, filterValues: Record<st
     const ff = resolveFilterField(label, schema);
     if (ff.kind === "tag") { tags.push(label); continue; }
     if (!ff.columnKey) continue;
-    const rv = String((row as Record<string, unknown>)[ff.columnKey] ?? "");
-    const ok = ff.kind === "text" || ff.kind === "number"
-      ? rv.toLowerCase().includes(value.toLowerCase())
-      : rv === value;
-    if (!ok) return false;
+    if (!filterValueMatches(ff, value, (row as Record<string, unknown>)[ff.columnKey])) return false;
   }
   if (tags.length > 0 && !tags.includes(row.category)) return false;
   return true;
@@ -440,7 +477,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const [rows, setRows] = useState<Row[]>(() => makeRows(schema, 23));
   const [selCount, setSelCount] = useState(0);   // AG Grid 선택 행 수(수제 Set 선택 대체)
   // 상태 SSOT: 필터 라벨 → 선택값(빈 값/부재 = 비활성). 칩·행필터 모두 여기서 파생.
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  // 초기값 = 원문 검색박스 기본값(filterSpecs def, opt-in) — 미선언 스키마는 {}(종전 동작)
+  const [filterValues, setFilterValues] = useState<Record<string, string>>(() => defaultFilterValues(schema));
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 23 });   // AG Grid 페이지네이션 미러
   const [viewState, setView] = useState("list");
   // 카드뷰 미사용 스키마(hideCardView)는 SegTabs를 숨기고 리스트 뷰로 고정 — view === "list" 게이트가 모두 참이 된다
@@ -477,9 +515,11 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   }, [schema, filtered]);
   // 칩: filterValues에서 파생 (값-필터는 "라벨: 값", 카테고리 태그는 값 없이 라벨만)
   // 검색어(예약 라벨)는 휴리스틱이 tag로 오판하므로 값-칩으로 강제
-  const chipItems = Object.entries(filterValues).map(([label, value]) => ({
-    label, value: label !== SEARCH_LABEL && resolveFilterField(label, schema).kind === "tag" ? undefined : value,
-  }));
+  const chipItems = Object.entries(filterValues).map(([label, value]) => {
+    if (label === SEARCH_LABEL) return { label, value, clearable: true };
+    const ff = resolveFilterField(label, schema);
+    return { label, value: ff.kind === "tag" ? undefined : filterChipText(ff, value), clearable: ff.allLabel !== null };
+  });
   /* 필터 변경 단일 관문 — 드로어(즉시 반영)·툴바 칩 ×·초기화가 모두 이 함수를 거친다.
      여기서만 첫 페이지로 되돌리므로 경로마다 정책이 갈리지 않는다(칩 ×만 페이지 유지되던 불일치 해소). */
   const applyFilters = (next: Record<string, string>) => { setFilterValues(next); apiRef.current?.paginationGoToFirstPage(); };
@@ -744,7 +784,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
-          {chipItems.map((c) => <FilterPill key={c.label} label={c.label} value={c.value} onRemove={() => removeFilter(c.label)} />)}
+          {chipItems.map((c) => <FilterPill key={c.label} label={c.label} value={c.value} onRemove={c.clearable ? () => removeFilter(c.label) : undefined} />)}
           {chipItems.length === 0 && <span className="text-caption" style={{ fontSize: 12.5 }}>필터 없음</span>}
         </>
       )}

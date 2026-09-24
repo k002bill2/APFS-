@@ -50,6 +50,10 @@ export const FIN_AMT_HEADERS = ['자산총계', '부채총계', '자본총계', 
 /* 주주명부 — [No, 운용사, 자펀드, 기준일자, 총자본금, 총발행주수, 보통주 자본금, 보통주 총발행주수,
    보통주 액면가, 우선주 자본금, 우선주 총발행주수, 우선주 액면가]. 주수는 금액이 아니라 단위 환산 제외. */
 export type ShareRow = { no: number; gp: string; fund: string; date: string; totalCapital: number; totalShares: number; comCapital: number; comShares: number; comPar: number; prfCapital: number; prfShares: number; prfPar: number };
+/* 주주명부 헤더 — 원문 S1_30:351-356 은 **단일 헤더 12열**이다(보통주·우선주를 2단으로 묶지 않는다).
+   소비처(ShareTable)는 이 배열을 그대로 그린다 — 라벨을 표 마크업에 다시 적지 않는다. */
+export const SHARE_HEADERS = ['No', '운용사', '자펀드', '기준일자', '총자본금', '총발행주수',
+  '보통주 자본금', '보통주 총발행주수', '보통주 액면가', '우선주 자본금', '우선주 총발행주수', '우선주 액면가'] as const;
 export const SHARE_ROWS: ShareRow[] = [
   { no: 1, gp: 'KB증권(주)', fund: '현대동양농식품사모투자전문회사', date: '2012-12-31', totalCapital: 3_234_180_000, totalShares: 323_418, comCapital: 1_416_000_000, comShares: 141_600, comPar: 10_000, prfCapital: 1_818_180_000, prfShares: 181_818, prfPar: 10_000 },
   { no: 2, gp: 'KB증권(주)', fund: '현대동양농식품사모투자전문회사', date: '2013-07-01', totalCapital: 1_416_000_000, totalShares: 141_600, comCapital: 1_416_000_000, comShares: 141_600, comPar: 10_000, prfCapital: 0, prfShares: 0, prfPar: 10_000 },

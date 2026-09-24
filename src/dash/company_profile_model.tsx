@@ -14,7 +14,7 @@ import { UI } from './components';
 import { fmt } from './aggrid_theme';
 import { UNITS } from './schemas/unit';
 import type { Unit } from './schemas/unit';
-import { OVERVIEW, FIN_ROWS, FIN_AMT_HEADERS, SHARE_ROWS, formatProfileUnit } from './company_profile_data';
+import { OVERVIEW, FIN_ROWS, FIN_AMT_HEADERS, SHARE_HEADERS, SHARE_ROWS, formatProfileUnit } from './company_profile_data';
 import type { OvItem } from './company_profile_data';
 
 const { SegTabs } = UI;
@@ -89,21 +89,14 @@ function FinTable({ unit }: { unit: Unit }) {
 }
 
 function ShareTable({ unit }: { unit: Unit }) {
-  // 2단 헤더 — 보통주/우선주 아래 자본금·총발행주수·액면가 3개씩(원문 구조).
+  // 단일 헤더 12열 — 원문 S1_30:351-356 그대로(보통주·우선주를 2단으로 묶지 않는다). 라벨 정본 = SHARE_HEADERS.
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse" style={{ minWidth: 980 }}>
         <thead>
           <tr>
-            {[['No', 2], ['운용사', 2], ['자펀드', 2], ['기준일자', 2], ['총자본금', 2], ['총발행주수', 2]].map(([h, rs]) => (
-              <th key={String(h)} scope="col" rowSpan={rs as number} className={TH} style={{ padding: '7px 8px' }}>{h}</th>
-            ))}
-            <th scope="colgroup" colSpan={3} className={TH} style={{ padding: '7px 8px' }}>보통주</th>
-            <th scope="colgroup" colSpan={3} className={TH} style={{ padding: '7px 8px' }}>우선주</th>
-          </tr>
-          <tr>
-            {['자본금', '총발행주수', '액면가', '자본금', '총발행주수', '액면가'].map((h, i) => (
-              <th key={h + i} scope="col" className={TH} style={{ padding: '7px 8px' }}>{h}</th>
+            {SHARE_HEADERS.map((h) => (
+              <th key={h} scope="col" className={TH} style={{ padding: '7px 8px' }}>{h}</th>
             ))}
           </tr>
         </thead>

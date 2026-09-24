@@ -16,7 +16,9 @@
       `fields` 로는 못 한다 — fields 는 `editable = fields.length > 0` 을 켜서 원문에 없는 `등록`
       버튼과 등록/수정 모달을 함께 만든다(이전 버전이 그 상태였다). 그래서 컬럼 수준 계약을 뒀다.
       원문 옵션 순서(확정 → 미확정)와 변경 시 데이터 갱신(`DATA[i].cfm = s.value`)을 그대로 옮겼다.
-   원문이 "확정 여부를 다루는 관리 화면이므로 금액 단위전환 토글은 규칙상 미적용"이라 unitToggle 도 두지 않는다. */
+   원문이 "확정 여부를 다루는 관리 화면이므로 금액 단위전환 토글은 규칙상 미적용"이라 unitToggle 도 두지 않는다.
+
+   ── 검색조건 ── 원문 `.searchbox` 항목·옵션·기본값과 행 매칭(key) 판단 근거는 아래 `filters`/`filterSpecs` 위 주석에 있다(2026-09-24). */
 import type { PageSchema } from './types';
 
 export const schema: PageSchema = {
@@ -42,9 +44,25 @@ export const schema: PageSchema = {
     { key: 'isConfirmed', label: '확정여부', type: 'status', align: 'center', inlineSelect: ['확정', '미확정'] },
   ],
   fields: [],
-  /* `지급기간`은 행에 대응 필드가 없어 tag 로 떨어져 표를 0건으로 만든다(2026-09-16 Codex 지적).
-     같은 뜻을 컬럼 라벨 `지급일자`(date 필터)로 대신한다 — 원문 검색조건의 기간 범위와 동치다. */
-  filters: ['운용사', '자펀드', '보고구분', '지급일자'],
+  /* 검색조건(S1_43:204-217) — 원문 `.searchbox` 라벨 순서 그대로:
+     운용사·자펀드·계정구분·담당자·보고구분·지급구분·지급기간(모펀드 제외 — CHECK_REPORT 모펀드 규칙).
+     지급기간은 원문 그대로 **범위**(dayRange, 기본 2026-05-12~2026-08-12)이고 payDate 로 거른다 — 종전의
+     단일 `지급일자` 대체는 원문과 다른 조건이라 되돌렸다(범위는 filterSpecs 가 표현하므로 tag 로 떨어지지 않는다).
+     행 매칭(`key`) — 원문 옵션 값이 원문 행에 있는 항목만 거른다:
+     · 운용사(원문 16개 옵션 — 행 값 제이비인베스트먼트(주) 포함) → gp · 보고구분(관리보수) → reportType ·
+       지급구분(지급·삭감) → payType · 자펀드(원문 옵션 '전체'뿐 → text 격하) → subFund 부분일치.
+     · 계정구분(chipGroup 전체·농식품·수산) · 담당자(원문 옵션 '전체'뿐 → text 격하) = 행에 값 없음 → no-op.
+     원문 1행(2026-07-03)은 기본 지급기간 안이라 기본값이 행을 줄이지 않는다. */
+  filters: ['운용사', '자펀드', '계정구분', '담당자', '보고구분', '지급구분', '지급기간'],
+  filterSpecs: {
+    운용사: { kind: 'select', key: 'gp', options: ['제이비인베스트먼트(주)', '씨제이인베스트먼트(주)', '어니스트벤처스(유)', '미시간벤처캐피탈주식회사', '롯데벤처스(주)', '씨케이디창업투자(주)', '가이아벤처파트너스(유)', '타임윅스인베스트먼트(주)', '엔브이씨파트너스 주식회사', '하랑기술투자 주식회사', '시너지아이비투자 주식회사', '(주)데일리파트너스', '(주)탭엔젤파트너스', '인라이트벤처스(주)', '(주)넥스트지인베스트먼트', '(주)노틸러스인베스트먼트'] },
+    자펀드: { kind: 'select', key: 'subFund' },
+    계정구분: { kind: 'select', options: ['농식품', '수산'] },
+    담당자: { kind: 'select' },
+    보고구분: { kind: 'select', options: ['관리보수'], key: 'reportType' },
+    지급구분: { kind: 'select', options: ['지급', '삭감'], key: 'payType' },
+    지급기간: { kind: 'dayRange', def: '2026-05-12~2026-08-12', key: 'payDate' },
+  },
   statusDomain: [
     { label: '확정',   tone: 'success' },
     { label: '미확정', tone: 'warning' },
