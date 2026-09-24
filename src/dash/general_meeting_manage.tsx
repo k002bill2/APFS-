@@ -33,6 +33,7 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
+import { ConfirmCombo, uniformConfirm } from './confirm_combo';
 import { GeneralMeetingDetailModal } from './general_meeting_detail_modal';
 
 const { Button, IconBtn, StatusBadge, FilterChip } = UI;
@@ -350,6 +351,9 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
   /* 확정여부 일괄 변경 — 셀 select 와 같은 도메인 규칙을 따른다.
      - 일정: 선택 행 전부. '확정'이 아니게 되면 결과도 ''로 리셋(셀 onChange 와 동일).
      - 결과: 일정이 '확정'인 행만(게이트는 요청 시점에 한 번 평가). 전부 막히면 바꾸지 않고 알리고, 일부면 제외 건수를 알린다. */
+  /* 선택 행의 현재 일정·결과 확정여부 — 전부 같으면 그 값, 섞였거나 빈값('')이면 null. 선택 바 콤보의 활성 세그먼트가 이 값을 따른다 */
+  const selSch = useMemo(() => uniformConfirm(rows.filter((r) => selIds.includes(r.id)).map((r) => r.sch)), [rows, selIds]);
+  const selRes = useMemo(() => uniformConfirm(rows.filter((r) => selIds.includes(r.id)).map((r) => r.res)), [rows, selIds]);
   const bulkSet = (kind: 'sch' | 'res', v: Confirm) => {
     const targets = rows.filter((r) => selIds.includes(r.id));
     const ok = kind === 'res' ? targets.filter((r) => r.sch === '확정') : targets;
@@ -387,10 +391,8 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
-      <Button variant="primary" size="sm" leadingIcon="check" onClick={() => bulkSet('sch', '확정')}>일정 확정</Button>
-      <Button variant="outline" size="sm" onClick={() => bulkSet('sch', '미확정')}>일정 미확정</Button>
-      <Button variant="primary" size="sm" leadingIcon="check" onClick={() => bulkSet('res', '확정')}>결과 확정</Button>
-      <Button variant="outline" size="sm" onClick={() => bulkSet('res', '미확정')}>결과 미확정</Button>
+      <ConfirmCombo label="일정" value={selSch} onPick={(v) => bulkSet('sch', v)} />
+      <ConfirmCombo label="결과" value={selRes} onPick={(v) => bulkSet('res', v)} />
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;
