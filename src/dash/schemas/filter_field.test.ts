@@ -113,3 +113,29 @@ describe('레지스트리 전수 — 년월 필터는 tag 가 아니다', () => 
       expect(resolveFilterField(label, s).kind).not.toBe('tag');
     });
 });
+
+/* 2026-09-24 상세필터 전수조사 — 원문 <select> 가 text input 으로 격하되던 결함.
+   select 명세가 options 를 비우고 key 만 주면, sample 행의 실제 값(중복 제거)을 선택지로 쓴다.
+   목업 옵션을 그대로 옮기면 'KB증권' vs 행 'KB증권(주)' 처럼 정확일치가 깨져 조용히 0건이 된다. */
+describe('filterSpecs select — options 생략 시 sample 값 도출', () => {
+  const base = {
+    route: 't', title: 't', kind: 'list' as const, entity: 't', fields: [],
+    columns: [{ key: 'gp', label: '운용사', type: 'gp' as const }],
+    filters: ['운용사'],
+    provenance: { capturedAt: '', sourceSystem: 'T', captureFile: '' },
+  };
+
+  it('key + sample → sample 의 비어있지 않은 고유값(첫 등장 순)으로 enum', () => {
+    const s = { ...base, filterSpecs: { 운용사: { kind: 'select' as const, key: 'gp' } },
+      sample: [{ gp: 'B(주)' }, { gp: '' }, { gp: 'A' }, { gp: 'B(주)' }] };
+    const ff = resolveFilterField('운용사', s);
+    expect(ff.kind).toBe('enum');
+    expect(ff.options).toEqual(['B(주)', 'A']);
+    expect(ff.columnKey).toBe('gp');
+  });
+
+  it('key 없음 / sample 없음 → 종전대로 text 격하(빈 select 금지)', () => {
+    expect(resolveFilterField('운용사', { ...base, filterSpecs: { 운용사: { kind: 'select' as const } }, sample: [{ gp: 'A' }] }).kind).toBe('text');
+    expect(resolveFilterField('운용사', { ...base, filterSpecs: { 운용사: { kind: 'select' as const, key: 'gp' } } }).kind).toBe('text');
+  });
+});

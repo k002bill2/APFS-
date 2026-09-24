@@ -33,6 +33,10 @@ export const schema: PageSchema = {
   ],
   fields: [],
   filters: ['기준년월'],
+  /* 상세필터 명세 — 원문 검색박스 컨트롤 그대로(select·칩→select·범위) — 행이 합성값이라 key 없음(no-op + 캡션) (2026-09-24 전수조사) */
+  filterSpecs: {
+    기준년월: { kind: 'month', key: 'ym' },
+  },
   hideCardView: true,
   hideRowSelection: true,
   hideKpis: true,

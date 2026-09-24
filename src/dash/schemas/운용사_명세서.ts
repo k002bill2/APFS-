@@ -38,6 +38,11 @@ export const schema: PageSchema = {
   // 원문 검색박스 3종 중 `모펀드`는 두지 않는다 — APFS는 농식품모태펀드 단일이라 항상 한 값이고,
   // resolveFilterField가 이 라벨을 카테고리 태그로 판정해 체크 시 표가 조용히 0건이 된다.
   filters: ['운용사', '자펀드'],
+  /* 상세필터 명세 — sample 행의 실제 값에서 선택지 도출 (2026-09-24 전수조사) */
+  filterSpecs: {
+    운용사: { kind: 'select', key: 'gp' },
+    자펀드: { kind: 'select', key: 'subFund' },
+  },
   searchable: true,
   hideRowSelection: true,
   hideCardView: true,

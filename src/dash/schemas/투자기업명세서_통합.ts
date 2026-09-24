@@ -15,6 +15,7 @@
      페이지 전체(documentElement)에 생기지 않게 한다. 좌측 고정 3열(운용사·자펀드·투자기업)은
      고정 폭이 아니라 하한 폭이다(400% 확대 시 화면을 다 먹지 않도록). */
 import type { PageSchema } from './types';
+import { ACCOUNT_OPTIONS } from './filter_domains';
 
 export const schema: PageSchema = {
   route: '투자기업명세서(통합)',   // ⚠️ data.ts 메뉴 리프 라벨과 정확히 일치(라우팅 키, NFC)
@@ -94,6 +95,12 @@ export const schema: PageSchema = {
      APFS는 농식품모태펀드 단일이라 항상 한 값이다. 게다가 현 resolveFilterField는 이 라벨을
      카테고리 태그로 판정해(kind:'tag') 체크 시 row.category와 대조하므로 표가 조용히 0건이 된다. */
   filters: ['운용사', '자펀드', '계정구분', '기준일자'],
+  /* 상세필터 명세 — 합성 행 없음 — sample 4행의 실제 값에서 선택지 도출(목업 'KB증권' ≠ 행 'KB증권(주)') (2026-09-24 전수조사) */
+  filterSpecs: {
+    운용사: { kind: 'select', key: 'gp' },
+    자펀드: { kind: 'select', key: 'subFund' },
+    계정구분: { kind: 'select', options: [...ACCOUNT_OPTIONS] },
+  },
   searchable: true,
   hideRowSelection: true,
   hideCardView: true,
