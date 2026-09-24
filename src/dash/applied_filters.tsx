@@ -11,7 +11,7 @@
    - 적용 칩 = 값만 표시(항목명은 title·aria-label 로 회수), 최대 240px 말줄임. onClear 가 있는 칩만 ×.
    - 해제 가능한 적용 칩이 2개 이상이면 `전체 해제` — 각 칩의 onClear 를 차례로 부른다.
    - 보이는 캡션 없음(role="group" aria-label 만).
-   - collapsed(행 선택 중): 칩을 모두 `+N` 안으로 접는다 — 선택 액션 바가 좌측을 차지하므로.
+   - 행 선택 중엔 GridFrame 이 이 행을 아예 렌더하지 않는다(선택 = 액션 영역, 필터와 별개).
    ⚠ 적용 칩 모양·'필터 제거' aria·기본 칩 렌더는 이 파일에만 둔다 — 가드 applied_filters.test.ts. */
 import React from 'react';
 import { UI } from './components';
@@ -114,7 +114,7 @@ export function planChips<T extends { id: string; kind: string; chip?: { active:
   return { shown: order.filter((it) => vis.has(it.id)), hidden: order.filter((it) => !vis.has(it.id)) };
 }
 
-export function FilterChipRow({ chips = [], applied, collapsed }: { chips?: readonly FilterChipItem[]; applied?: readonly AppliedFilter[]; collapsed?: boolean }) {
+export function FilterChipRow({ chips = [], applied }: { chips?: readonly FilterChipItem[]; applied?: readonly AppliedFilter[] }) {
   const on = activeFilters(applied);
   const clearable = on.filter((f) => f.onClear);
   const items: Item[] = [
@@ -144,22 +144,19 @@ export function FilterChipRow({ chips = [], applied, collapsed }: { chips?: read
     return () => ro.disconnect();
   }, [sig]);
 
-  const { shown, hidden } = collapsed ? { shown: [] as Item[], hidden: items }
-    : m ? planChips(items, m.w, m.avail, m.trigger) : { shown: items, hidden: [] as Item[] };
+  const { shown, hidden } = m ? planChips(items, m.w, m.avail, m.trigger) : { shown: items, hidden: [] as Item[] };
   const hiddenActive = hidden.some((it) => it.kind === 'applied' || (it.kind === 'chip' && it.chip.active));
 
   if (items.length === 0) return null;
   return (
-    /* collapsed(행 선택 중)면 +N 트리거 폭만큼 고정(flex-none) — 선택 바가 좌측을 다 먹어도 트리거가 잘리지 않는다(Codex P2).
-       평소엔 남은 폭을 다 받는다(flex-1, basis 0 → 판정 폭 = 우측·선택 바를 뺀 나머지). */
-    <div ref={boxRef} role="group" aria-label="필터" className={`relative flex items-center ${collapsed ? 'flex-none' : 'min-w-0 flex-1 overflow-hidden'}`}
+    /* 남은 폭을 다 받는다(flex-1, basis 0 → 판정 폭 = 우측 액션을 뺀 나머지). */
+    <div ref={boxRef} role="group" aria-label="필터" className="relative flex items-center min-w-0 flex-1 overflow-hidden"
       /* 세로 3px 여유 — overflow:hidden 이 칩 focus 링을 자르지 않게(음수 마진으로 줄 높이는 그대로) */
       style={{ gap: GAP, padding: 3, margin: -3 }}>
       {shown.map((it) => <React.Fragment key={it.id}><ItemView it={it} /></React.Fragment>)}
       {hidden.length > 0 && <OverflowMenu key="more" hidden={hidden} tinted={hiddenActive} rowRef={boxRef} />}
       {/* 측정용 사본 — 보이지 않고(visibility:hidden)·포커스·읽기 대상에서 빠진다.
-          크기 0 + overflow:hidden 상자에 가둔다 — collapsed 에선 행이 overflow 를 풀기 때문에, 가두지 않으면
-          max-content 사본이 페이지 가로 스크롤을 만든다(400px 실측 +312px). 자식 offsetWidth 는 잘림과 무관하다. */}
+          크기 0 + overflow:hidden 상자에 가둔다 — 가두지 않으면 max-content 사본이 페이지 가로 스크롤을 만든다(400px 실측 +312px). 자식 offsetWidth 는 잘림과 무관하다. */}
       <div aria-hidden="true" style={{ position: 'absolute', left: 0, top: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}>
         <div ref={measureRef} className="flex items-center" style={{ width: 'max-content', visibility: 'hidden', gap: GAP }}>
           {items.map((it) => <span key={it.id} data-fid={it.id} className="inline-flex shrink-0"><ItemView it={it} /></span>)}
