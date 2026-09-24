@@ -57,7 +57,7 @@ export function MotherFundValuation({ onNav }: { onNav?: (r: string) => void }) 
       onExport={exportExcel}>
       <SectionHead title={MF_SUMMARY.title!} cap="미투자자산·기타자산·기타부채는 셀을 눌러 입력" />
       <ReadGrid table={MF_SUMMARY} rows={summaryRows} unit={unit} onEdit={onEdit} ariaLabel={MF_SUMMARY.title} />
-      <SectionHead title={MF_DETAIL.title!} cap={<>총 {String(detailRows.length)}건</>} />
+      <SectionHead title={MF_DETAIL.title!} />
       <ReadGrid table={MF_DETAIL} rows={detailRows} unit={unit} ariaLabel={MF_DETAIL.title} />
     </RiskPage>
   );

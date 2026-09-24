@@ -45,6 +45,13 @@
       "intentPatterns": ["(캡처|capture|OCR).*(페이지|스키마|schema|page|필드|field)", "(현행시스템|실화면|실물).*(추출|생성|동결|배선|schema)"]
     },
     {
+      "skillName": "apfs-multi-grid",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["여러 표", "여러 그리드", "멀티 그리드", "multi grid", "multi-grid", "표 여러", "그리드 여러", "섹션 헤더", "섹션 제목", "SectionHead", "TablesPage", "예외사항레포트", "세로로 쌓"],
+      "intentPatterns": ["(여러|멀티|multi).*(표|그리드|grid|테이블)"]
+    },
+    {
       "skillName": "apfs-grid",
       "priority": "high",
       "enforcement": "suggest",

@@ -11,6 +11,7 @@ APFS 대시보드의 리스트/그리드/매트릭스 페이지는 **테이블 �
 - 정본 컴포넌트: `src/dash/grid_frame.tsx` (`GridFrame`, `KpiBadge`, `FooterActions`)
 - 첫 실증: `src/dash/asset_funding.tsx` (매트릭스형)
 - 양식 출처(SSOT): `generic_list.tsx`의 인라인 양식을 GridFrame이 흡수 — 신규/마이그레이션 모두 이 프레임을 쓴다.
+- **표 2장 이상을 섹션 제목으로 세로로 쌓는 조회 화면**(기준: 예외사항레포트)은 `apfs-multi-grid` 스킬 — `TablesPage` 골격 + 공용 `SectionHead`(번호 칩·건수 없음).
 
 ## 프레임 구조
 ```

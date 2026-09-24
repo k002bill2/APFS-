@@ -8,7 +8,7 @@
    | 피투자회사 가치평가 결과조회      | S2_82 | 내역 집계 + 상세·합계       | 자펀드(fund) · 결성년도(fy 접두) · 평가년월(ym)         |
    | 자펀드 투자자산 및 거래내역 조회  | S2_84 | 투자잔액관리 · 거래내역     | 자펀드(—) · 투자기업(co) · 조회일자(—)                  |
    | 예외사항레포트                    | S2_85 | 4 (②는 원문 0건)            | 평가년월(—)                                             |
-   | Portfolio Report                  | S2_83 | 3 (③ 합계), 번호 칩         | 자펀드(—) · 평가년월(—)                                 |
+   | Portfolio Report                  | S2_83 | 3 (③ 합계)                  | 자펀드(—) · 평가년월(—)                                 |
    (—) = 행에 대응 컬럼 없음 → `· 데이터 연동 후 적용`. 원문 `조회` 버튼은 두지 않는다(즉시 반영). */
 import React from 'react';
 import { TablesPage } from './risk_tables_page';
@@ -70,7 +70,7 @@ const EXCEPTION: TablesPageConfig = {
 
 const PORTFOLIO: TablesPageConfig = {
   group: '가치평가', label: 'Portfolio Report', route: 'Portfolio Report',
-  tables: PORTFOLIO_TABLES, unit: true, numbered: true,
+  tables: PORTFOLIO_TABLES, unit: true,
   filters: [
     /* 원문 자펀드 select 옵션 1개(전체 없음) — 보고서 대상 파라미터 */
     { label: '자펀드', kind: 'select', def: PORTFOLIO_FUNDS[0], options: PORTFOLIO_FUNDS, allLabel: null },
