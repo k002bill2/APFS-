@@ -28,7 +28,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 - ⚠️ **적용 누락 함정**: GenericListPage만 고치고 typed 페이지를 빠뜨리면 그 페이지에서 검색어가 계속 노출된다(2026-09-11 실제 발생 — asset_funding). "검색어 opt-in"은 **드로어를 가진 모든 표면**(generic_list + 각 typed 페이지)에서 각각 게이트해야 완결된다.
 
 ## 타입 도출 — `resolveFilterField(label, schema)` 우선순위
-- **① field 매칭**(label 정확일치, 가장 정확): `select`→enum(field.options) · `date`→date · 년도라벨→year · `number`→number · 그외→text.
+- **① field 매칭**(label 정확일치, 가장 정확): `select`·`radio`·`switch`→enum(field.options, `isEnumControl` — 2026-09-24 radio·switch 추가) · `date`→date · 년도라벨→year · `number`→number · 그외→text.
 - **② column 매칭**: 년도라벨→year · `date`→date · `status`→enum(statusDomain) · amount/number/rate→number · 그외→text.
 - **③ 휴리스틱**(무매칭): `년도|연도`→year · `일자|날짜|~일`→date · `구분|유형|종류|상태|기준`(도메인 없음)→text · 그외→**tag**(카테고리 on/off).
 - 반환 `{label, kind, options, columnKey}`. **columnKey는 행필터의 키** — ①(field.key가 행에 시드됨)·②가 columnKey로 행을 거르고, ③ tag는 `row.category`로 거른다. **데모(자펀드 공고)의 사업연도·정기/수시가 바로 ① 경로**(field 매칭, 키가 columns에도 존재)라 표가 실제로 줄어든다. 같은 스키마의 **모펀드는 columns엔 없지만 `sample` 리터럴 행이 값을 실어** 역시 ① 경로로 걸러진다(2026-09-12). columnKey 없는 경우(어디에도 시드되지 않는 field-only 키·휴리스틱 비-tag date/text)는 칩만 뜨고 행은 안 걸러진다(no-op, 아래 캡션 규약).
@@ -51,7 +51,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 - [ ] **columnKey 불변식**: columnKey는 **행에 그 키가 실제로 시드될 때만** 부여(`filter_field.ts`의 `seeded`/`colKey` 가드). 시드 경로는 둘 — ① `schema.columns`(makeRows 합성) ② `schema.sample`(목업 리터럴 행은 컬럼이 아닌 필드 키도 싣는다, 2026-09-12). 어느 쪽에도 없으면 침묵 0건 대신 no-op+캡션으로 안전 격하된다 — 가드를 우회해 직접 columnKey를 주지 말 것. ⚠️ sample 경로는 **`sample` 있는 스키마에만** 성립한다(현재 자펀드 공고 1종) — sample 없는 스키마의 field-only 키는 종전대로 격하.
 - [ ] **빈 `<select>` 금지**: options/statusDomain이 비면 enum 대신 **text로 격하**(선택지 없는 드롭다운 = 고장처럼 보임).
 - [ ] **columnKey 없는 값-필터**: `· 데이터 연동 후 적용` 캡션으로 no-op을 사용자에게 신호(무신호 무효 필터 금지).
-- [ ] **시드 정합**: `makeRows`가 컬럼에 도메인값을 심어야 value 필터가 매칭됨 — 년도라벨→YEAR_OPTIONS 순환, select 필드 옵션→options 순환. **tag는 예외**: `row.category`로 매칭되는데 이는 schema가 아니라 `generic_list.tsx`의 하드코딩 `ROW_CATS`에서 시드된다 → 새 tag 라벨이 `ROW_CATS`에 없으면 토글 선택 시 **표가 통째로 비워진다**(value의 안전 no-op과 다른 비대칭). 새 tag 필터는 `ROW_CATS`에 같은 라벨을 추가하거나 `ROW_CATS` 중 하나와 정확일치시킬 것.
+- [ ] **시드 정합**: `makeRows`가 컬럼에 도메인값을 심어야 value 필터가 매칭됨 — 년도라벨→YEAR_OPTIONS 순환, select·radio·switch 필드 옵션→options 순환. **tag는 예외**: `row.category`로 매칭되는데 이는 schema가 아니라 `generic_list.tsx`의 하드코딩 `ROW_CATS`에서 시드된다 → 새 tag 라벨이 `ROW_CATS`에 없으면 토글 선택 시 **표가 통째로 비워진다**(value의 안전 no-op과 다른 비대칭). 새 tag 필터는 `ROW_CATS`에 같은 라벨을 추가하거나 `ROW_CATS` 중 하나와 정확일치시킬 것.
 - [ ] **토큰·테마**: 색은 `var(--...)`만(하드코딩 hex 금지 — 다크 양립). 태그 토글에 `aria-pressed={checked}`.
 
 ## typed 페이지 트랙 (2026-09-08 — 골드 `subfund_manage.tsx`, 스키마 `GenericListPage`가 아닌 전용 페이지)

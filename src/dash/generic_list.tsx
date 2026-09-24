@@ -9,7 +9,7 @@ import { RowFormModal, statusTone } from './generic_list_modal';
 import type { Row } from './generic_list_modal';
 import { resolveSchema } from './schemas';
 import { Cell, AttachChips, controlMinWidth, drawerInputStyle } from './schemas/renderers';   // controlMinWidth = 컨트롤 폭 하한 SSOT(fit-content 짝)
-import { resolveFilterField, YEAR_OPTIONS, filterValueMatches, defaultFilterValues, filterChipText, splitPair, joinPair } from './schemas/filter_field';
+import { resolveFilterField, isEnumControl, YEAR_OPTIONS,filterValueMatches, defaultFilterValues, filterChipText, splitPair, joinPair } from './schemas/filter_field';
 import type { FilterField } from './schemas/filter_field';
 import type { PageSchema, DetailPopup } from './schemas/types';
 import { MonthlyReportModal } from './monthly_report_modal';   // 읽기전용 상세 보고서 팝업(컬럼 detail 옵트인 스키마만)
@@ -124,7 +124,7 @@ function makeRows(schema: PageSchema, n: number): Row[] {
     for (const c of schema.columns) {
       if (['name', 'amount', 'change', 'status', 'trend'].includes(c.key)) continue;
       const field = schema.fields.find((f) => f.key === c.key);
-      if (field?.control === 'select' && field.options?.length) {
+      if (field && isEnumControl(field.control) && field.options?.length) {
         extra[c.key] = field.options[i % field.options.length];     // enum 도메인 시드 → 상세필터 매칭 성립
       } else if (/(년도|연도)/.test(c.label)) {
         extra[c.key] = YEAR_OPTIONS[i % YEAR_OPTIONS.length];        // 년도 도메인 시드 → year 필터 매칭
