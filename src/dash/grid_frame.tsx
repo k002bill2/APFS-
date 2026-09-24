@@ -311,6 +311,20 @@ export function GridFrame({
      깔때기·필터 칩·+N 을 모두 감춘다(접어 두면 색 입은 +N 이 '필터가 걸렸다'로 읽힌다). */
   const selecting = Boolean(contextActions && !toolbarOut);
 
+  /* sticky 푸터 높이 → `--grid-footer-h` (autoHeight 그리드 가로 스크롤바가 푸터 바로 위에 붙는 기준,
+     aggrid_shared.css). 좁은 폭에서 푸터가 줄바꿈되면 높이가 바뀌므로 ResizeObserver 로 추적한다. */
+  const footerRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const root = rootRef.current, foot = footerRef.current;
+    if (!root) return;
+    if (!foot || typeof ResizeObserver === 'undefined') { root.style.removeProperty('--grid-footer-h'); return; }
+    const sync = () => root.style.setProperty('--grid-footer-h', foot.offsetHeight + 'px');
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(foot);
+    return () => ro.disconnect();
+  }, [hasFooter]);
+
   return (
     <div ref={rootRef} style={{ maxWidth: 1280, margin: '0 auto', animation: 'dashFade var(--dur-slow) var(--ease) both' }}>
       {/* PageHeader: 현 shell은 title/sub를 렌더하지 않으므로(crumbs·actions만) title/sub는 카드헤더가 직접 그린다.
@@ -363,7 +377,7 @@ export function GridFrame({
             background 불투명(스크롤되는 행이 비치지 않게) + 하단 모서리 라운딩(카드 overflow:hidden 제거 보완)
             + zIndex는 FAB(60)보다 낮게 둬 우하단 FAB 클릭성을 침범하지 않게 한다. */}
         {hasFooter && (
-          <div className="flex items-center justify-between flex-wrap gap-3" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', position: 'sticky', bottom: 0, zIndex: 20, background: 'var(--frame-bg)', borderBottomLeftRadius: 'var(--radius)', borderBottomRightRadius: 'var(--radius)' }}>
+          <div ref={footerRef} className="flex items-center justify-between flex-wrap gap-3" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', position: 'sticky', bottom: 0, zIndex: 20, background: 'var(--frame-bg)', borderBottomLeftRadius: 'var(--radius)', borderBottomRightRadius: 'var(--radius)' }}>
             <span className="flex items-center min-w-0 text-caption" style={{ fontSize: 12.5 }}>{footerLeft}</span>
             {footerCenter && <div className="flex items-center gap-1 flex-wrap">{footerCenter}</div>}
             <div className="flex items-center gap-1.5 flex-wrap">{footerRight}</div>
