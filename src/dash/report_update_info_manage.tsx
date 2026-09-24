@@ -295,7 +295,6 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
          드로어 값 칩도 없다: 투심상태는 이 칩 행이 이미 보여주고, 보고구분은 noop 이라 칩을 만들지 않는다. */
       toolbarLeft={(
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {(['', '승인', '보류', '부결'] as ('' | ReviewStatus)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fStat === s} onClick={() => setFStat(s)}>{s || '투심상태: 전체'}</FilterChip>
           ))}

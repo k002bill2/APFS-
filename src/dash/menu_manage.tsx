@@ -313,20 +313,12 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={selCount > 0 ? null : (
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {UTYPE_CHIPS.map((u) => <FilterChip key={u || 'all'} active={fUtype === u} onClick={() => setFUtype(u)}>{u || '사용자 구분: 전체'}</FilterChip>)}
           {/* 적용 중인 상세필터 — 항목별 개별 칩(값만 표시, 항목명은 × aria-label) */}
-          {chips.filter(([, v]) => v).map(([label, value, clear]) => (
-            <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {value}
-              <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-                <Icon name="x" size={13} stroke={2.4} />
-              </button>
-            </span>
-          ))}
         </>
       )}
       contextActions={selActions}
+      appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* 전체 펼치기/접기 — 평면(검색) 모드에서는 의미가 없어 비활성 */}

@@ -432,22 +432,10 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
       title={tabs?.label ?? "자펀드 수탁관리"}
       favRoute={tabs?.route ?? "custody-verify"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 적용 중인 드로어 값 칩. 주 필터(FilterChip 그룹)는 없다 — 목업 검색박스가 자펀드·기준일 2개뿐이고
-         자펀드는 값이 하나라 칩 그룹으로 펼칠 축이 아니다. 행 선택이 없어 selbar도 없다. */
-      toolbarLeft={(
-        <>
-          <Icon name="filter" size={16} className="text-caption" />
-          {/* 값만 표시(항목명 접두사 없음) + ×. 기준일은 no-op이라 칩을 만들지 않는다 */}
-          {fFund && (
-            <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {fFund}
-              <button type="button" onClick={() => setFFund('')} aria-label="자펀드 필터 제거" className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-                <Icon name="x" size={13} stroke={2.4} />
-              </button>
-            </span>
-          )}
-        </>
-      )}
+      /* 적용 중인 드로어 값 칩 = appliedFilters(둘째 줄). 주 필터(FilterChip 그룹)는 없어 toolbarLeft 도 없다 — 목업 검색박스가 자펀드·기준일 2개뿐이고
+         자펀드는 값이 하나라 칩 그룹으로 펼칠 축이 아니다. 행 선택이 없어 selbar도 없다.
+         값만 표시(항목명 접두사 없음) + ×. 기준일은 no-op이라 칩을 만들지 않는다 */
+      appliedFilters={[{ label: '자펀드', value: fFund, onClear: () => setFFund('') }]}
       toolbarRight={<>
         {/* 금액 단위 표기 — 캡션. 단위 토글은 규칙상 미적용(파일 상단 '한계') */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>

@@ -305,17 +305,10 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
         <>
           <Icon name="shield-check" size={16} className="text-caption" />
           <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>권한 {String(visible.length)}건 · 행을 선택하면 수정·복사·삭제</span>
-          {chips.filter(([, v]) => v).map(([label, value, clear]) => (
-            <span key={label} title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {value}
-              <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-                <Icon name="x" size={13} stroke={2.4} />
-              </button>
-            </span>
-          ))}
         </>
       )}
       contextActions={selActions}
+      appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>권한 등록</Button>

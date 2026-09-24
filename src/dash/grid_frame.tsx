@@ -9,6 +9,8 @@ import { Shell } from './shell';
 import { UI } from './components';
 import { Icon } from './icons';
 import { SplitButton } from './ui/split-button';
+import { AppliedFilters, activeFilters } from './applied_filters';
+import type { AppliedFilter } from './applied_filters';
 import type { SplitButtonItem } from './ui/split-button';
 import { APFS_DATA, MenuStore, useMenuSel } from './data';
 
@@ -121,6 +123,31 @@ export function KpiBadge({ icon, color, label, value, valueColor, valueSize }: {
   );
 }
 
+/* 가로 스크롤 줄의 끝 흐림 — 넘칠 때만, 더 볼 쪽에만 24px 페이드(mask). 스크롤바는 숨기므로 이것이 "더 있음" 신호다.
+   측정은 스크롤·리사이즈·내용 변화(ResizeObserver: 컨테이너 + 첫 자식)마다. 값이 같으면 setState 하지 않는다(렌더 루프 방지). */
+function useScrollFade() {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = React.useState<{ l: boolean; r: boolean }>({ l: false, r: false });
+  const measure = React.useCallback(() => {
+    const el = ref.current; if (!el) return;
+    const l = el.scrollLeft > 1;
+    const r = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+    setEdge((p) => (p.l === l && p.r === r ? p : { l, r }));
+  }, []);
+  React.useEffect(() => {
+    const el = ref.current; if (!el) return;
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el); if (el.firstElementChild) ro.observe(el.firstElementChild);
+    return () => ro.disconnect();
+  }, [measure]);
+  const mask = edge.l || edge.r
+    ? `linear-gradient(to right, ${edge.l ? 'transparent 0, black 24px' : 'black 0'}, ${edge.r ? 'black calc(100% - 24px), transparent 100%' : 'black 100%'})`
+    : undefined;
+  return { ref, onScroll: measure, style: mask ? { maskImage: mask, WebkitMaskImage: mask } as React.CSSProperties : undefined };
+}
+
 export interface GridFrameProps {
   crumbs: string[];
   title: string;
@@ -145,6 +172,9 @@ export interface GridFrameProps {
       소비처는 선택 시 `toolbarLeft` 를 비우고 이 prop 에 묶음을 넘긴다.
       이 prop 을 넘기지 않는 페이지는 동작 변화가 없다(기본 off). */
   contextActions?: React.ReactNode;
+  /** 적용된 필터 — 툴바 아래 둘째 줄(값이 있는 항목이 있을 때만). 칩·전체 해제·aria 는 applied_filters.tsx 가 소유한다.
+      툴바 좌측에 적용 칩을 직접 그리지 않는다(2026-09-24 전 화면 규약, 가드 applied_filters.test.ts). */
+  appliedFilters?: readonly AppliedFilter[];
   /** 푸터 좌: 건수 등 요약 텍스트 */
   footerLeft?: React.ReactNode;
   /** 푸터 중: 페이지네이션 */
@@ -158,9 +188,11 @@ export interface GridFrameProps {
 
 export function GridFrame({
   crumbs, title, sub, headerActions, cardTitle, kpis, favRoute,
-  toolbarLeft, toolbarRight, contextActions, footerLeft, footerCenter, footerRight, children,
+  toolbarLeft, toolbarRight, contextActions, appliedFilters, footerLeft, footerCenter, footerRight, children,
 }: GridFrameProps) {
   const hasToolbar = Boolean(toolbarLeft || toolbarRight || contextActions);
+  const leftScroll = useScrollFade();
+
   const hasFooter = Boolean(footerLeft || footerCenter || footerRight);
 
   /* 툴바가 화면 밖으로 스크롤됐는지 추적 → 그때만 하단 플로팅 바를 띄운다.
@@ -298,6 +330,36 @@ export function GridFrame({
       if (raf) cancelAnimationFrame(raf);
     };
   }, [wantsFloating, toolbarOut]);
+  /* 적용 칩 배치 — 첫 줄에 들어가면 기본 필터 칩 뒤 인라인, 넘칠 때만 둘째 줄(2026-09-24 사용자 결정).
+     판정: (좌측 콘텐츠 자연폭 + 적용 칩 자연폭[측정용 사본] + 간격) ≤ (툴바 내부폭 − 우측 액션폭 − 간격).
+     적용 칩은 좌측 호스트 **밖**의 형제라 배치가 바뀌어도 두 측정값이 변하지 않는다 → 인라인↔둘째 줄 진동 없음.
+     ≤640px 는 좌측이 항상 basis-full(깔때기 또는 선택 바가 늘 있다)이라 우측이 다음 줄로 적층된다 → 우측 폭을 빼지 않는다.
+     (좌측 basis-full 을 조건부로 두면 적용 칩만 있는 화면에서 판정과 실제 배치가 어긋난다 — Codex P2) */
+  const hasApplied = activeFilters(appliedFilters).length > 0;
+  const funnelShown = !(contextActions && !toolbarOut);
+  const toolbarRowRef = React.useRef<HTMLDivElement>(null);
+  const rightRef = React.useRef<HTMLDivElement>(null);
+  const appliedMeasureRef = React.useRef<HTMLDivElement>(null);
+  const [appliedInline, setAppliedInline] = React.useState(true);
+  React.useLayoutEffect(() => {
+    const row = toolbarRowRef.current, host = actionsHostRef.current, m = appliedMeasureRef.current, right = rightRef.current;
+    if (!hasApplied || !row || !host || !m || !right) return;
+    const decide = () => {
+      const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
+      const inner = row.clientWidth - 36;                       // padding 18px ×2
+      const avail = narrow ? inner : inner - right.offsetWidth - 12;   // 좌·우 사이 gap-3
+      /* 좌측 = [깔때기 16 + gap 8]? + 호스트 + gap 8 + 적용 칩. 호스트가 비어도 flex 항목이라 gap 은 남는다. */
+      const need = (funnelShown ? 24 : 0) + host.scrollWidth + 8 + m.offsetWidth;
+      const fits = need <= avail;
+      setAppliedInline((p) => (p === fits ? p : fits));
+    };
+    decide();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(decide);
+    [row, host, m, right].forEach((el) => ro.observe(el));
+    return () => ro.disconnect();
+  }, [hasApplied, funnelShown]);
+
   return (
     <div ref={rootRef} style={{ maxWidth: 1280, margin: '0 auto', animation: 'dashFade var(--dur-slow) var(--ease) both' }}>
       {/* PageHeader: 현 shell은 title/sub를 렌더하지 않으므로(crumbs·actions만) title/sub는 카드헤더가 직접 그린다.
@@ -324,18 +386,34 @@ export function GridFrame({
 
         {/* 툴바 */}
         {hasToolbar && (
-          <div className="flex items-center justify-between flex-wrap gap-3" style={{ padding: '6px 18px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'color-mix(in srgb, var(--muted) 35%, transparent)' }}>
-            {/* 액션은 툴바가 화면 안일 때만 여기 — 밖이면 아래 플로팅 바로 **이동**한다(복제 아님) */}
-            <div ref={actionsHostRef} data-apfs-actions={contextActions && !toolbarOut ? '' : undefined} className="flex items-center gap-2 flex-wrap" style={{ position: 'relative' }}>
+          /* 첫 줄은 감기지 않는다(2026-09-24 규약): 우측 액션은 shrink-0 으로 항상 오른쪽 고정, 폭이 모자라면
+             좌측(기본 필터 칩·선택 바)만 줄 안에서 가로 스크롤 + 끝 흐림. ≤640px 에서만 좌/우 두 줄 적층. */
+          <div ref={toolbarRowRef} className="flex items-center justify-between gap-3 max-[640px]:flex-wrap" style={{ position: 'relative', padding: '6px 18px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'color-mix(in srgb, var(--muted) 35%, transparent)' }}>
+            {/* 액션은 툴바가 화면 안일 때만 여기 — 밖이면 아래 플로팅 바로 **이동**한다(복제 아님).
+                가로 스크롤 컨테이너는 바깥 래퍼, 센티넬 기준(relative)은 안쪽 호스트 — 스크롤 래퍼의 세로 패딩 3px 는
+                칩 focus 링이 잘리지 않게 두는 여유다(음수 마진으로 줄 높이는 그대로). */}
+            <div ref={leftScroll.ref} onScroll={leftScroll.onScroll} className="min-w-0 flex-1 max-[640px]:basis-full overflow-x-auto overflow-y-hidden"
+              style={{ padding: '3px 3px', margin: '-3px -3px', scrollbarWidth: 'none', ...leftScroll.style }}>
+            <div className="flex items-center gap-2 w-max">
+            {/* 깔때기 = 필터 영역 표지, 항상 유지(2026-09-24 사용자 결정). 화면이 그리지 않고 프레임이 그린다.
+                행 선택 중(선택 액션 바가 좌측을 차지)에만 뺀다 — 그때 좌측은 필터가 아니라 선택 액션이다. */}
+            {funnelShown && <Icon name="filter" size={16} className="text-caption shrink-0" />}
+            <div ref={actionsHostRef} data-apfs-actions={contextActions && !toolbarOut ? '' : undefined} className="flex items-center gap-2 w-max" style={{ position: 'relative' }}>
               {!toolbarOut && contextActions}{toolbarLeft}
               {/* 센티넬 — absolute 라 flex 흐름·gap 에 영향 없음. relative 는 z-index 가 없으면
                   쌓임맥락을 만들지 않는다(→ z-index 스킬 "비-맥락: position:relative"). */}
               <div ref={topSentinelRef} aria-hidden="true" style={{ position: 'absolute', top: 0, left: 0, width: 1, height: 1, pointerEvents: 'none' }} />
               <div ref={midSentinelRef} aria-hidden="true" style={{ position: 'absolute', top: '50%', left: 0, width: 1, height: 1, pointerEvents: 'none' }} />
             </div>
-            <div className="flex items-center gap-1 flex-wrap">{toolbarRight}</div>
+            {appliedFilters && appliedInline && <AppliedFilters items={appliedFilters} layout="inline" />}
+            </div>
+            </div>
+            <div ref={rightRef} className="flex items-center gap-1 shrink-0 max-[640px]:flex-wrap">{toolbarRight}</div>
+            {/* 폭 측정용 사본(보이지 않음) — 인라인/둘째 줄 판정의 입력 */}
+            {appliedFilters && <div ref={appliedMeasureRef} aria-hidden="true" style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', left: 0, top: 0 }}><AppliedFilters items={appliedFilters} layout="inline" measure /></div>}
           </div>
         )}
+        {appliedFilters && (!hasToolbar || !appliedInline) && <AppliedFilters items={appliedFilters} layout="row" />}
 
         {/* 본문: 테이블 (가로 스크롤은 children 책임 — 상단 계약 주석 참조) */}
         {children}

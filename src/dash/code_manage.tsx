@@ -331,17 +331,11 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       favRoute="code-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={<>
-        <Icon name="filter" size={16} className="text-caption" />
         {(['', '여', '부'] as const).map((u) => <FilterChip key={u || 'all'} active={fUse === u} onClick={() => setFUse(u)}>{u ? `사용 ${u}` : '사용여부: 전체'}</FilterChip>)}
-        {fText.trim() && (
-          <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-            {`${SEARCH_FIELDS.find((f) => f.key === fField)?.label}: ${fText.trim()}`}
-            <button type="button" onClick={() => setFText('')} aria-label="검색어 필터 제거" className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-              <Icon name="x" size={13} stroke={2.4} />
-            </button>
-          </span>
-        )}
       </>}
+      appliedFilters={[
+        { label: '검색어', value: fText.trim() ? `${SEARCH_FIELDS.find((f) => f.key === fField)?.label}: ${fText.trim()}` : '', onClear: () => setFText('') },
+      ]}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'group', mode: 'create' })}>코드구분 등록</Button>

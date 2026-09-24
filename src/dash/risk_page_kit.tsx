@@ -9,6 +9,7 @@ import React, { useRef, useState } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
 import { GridFrame, FooterActions } from './grid_frame';
+import type { AppliedFilter } from './applied_filters';
 import type { SplitButtonItem } from './ui/split-button';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 드로어 컨트롤 34px SSOT
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
@@ -147,35 +148,14 @@ export function FilterDrawer({ open, onOpenChange, filters, onReset, title }: {
   );
 }
 
-/* 적용 칩 — 항목별 개별 칩, **값만** 표시(항목명은 title·aria-label 로 회수). 빈 선택지가 없는 항목(구분)은 해제 × 없음 */
-function AppliedChip({ f }: { f: FilterSpec }) {
-  const clearable = f.allLabel !== null && f.kind !== 'radio';
-  const shown = f.kind === 'dayRange' ? splitRange(f.value).join(' ~ ') : f.value;
-  return (
-    <span title={f.label} className="inline-flex items-center gap-1.5 font-semibold text-primary"
-      style={{ padding: clearable ? '5px 8px 5px 11px' : '5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-      {shown}
-      {clearable && (
-        <button type="button" onClick={() => f.onChange('')} aria-label={`${f.label} 필터 제거`}
-          className="inline-flex items-center justify-center border-0 cursor-pointer"
-          style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-          <Icon name="x" size={13} stroke={2.4} />
-        </button>
-      )}
-    </span>
-  );
-}
-
-export function AppliedChips({ filters }: { filters: FilterSpec[] }) {
-  const on = filters.filter((f) => f.value && f.chip !== false);
-  return (
-    <>
-      <Icon name="filter" size={16} className="text-caption" />
-      {on.length === 0 && <span className="text-caption" style={{ fontSize: 12.5 }}>전체</span>}
-      {on.map((f) => <AppliedChip key={f.label} f={f} />)}
-    </>
-  );
-}
+/* 적용된 필터(GridFrame 둘째 줄) — 항목별 개별 칩, **값만** 표시(항목명은 title·aria-label 로 회수).
+   빈 선택지가 없는 항목(구분·radio)은 해제 × 없음. 칩 렌더는 applied_filters.tsx 가 소유한다. */
+export const specsToApplied = (filters: FilterSpec[]): AppliedFilter[] =>
+  filters.filter((f) => f.value && f.chip !== false).map((f) => ({
+    label: f.label,
+    value: f.kind === 'dayRange' ? splitRange(f.value).join(' ~ ') : f.value,
+    onClear: f.allLabel !== null && f.kind !== 'radio' ? () => f.onChange('') : undefined,
+  }));
 
 /* ──────────────────────────────
    금액 단위 토글 — 원 단위 저장값을 렌더·엑셀 경계에서만 환산(schemas/unit.ts)
@@ -282,8 +262,8 @@ export function RiskPage({ system = '조기경보', group, label, route, onNav, 
       title={label}
       favRoute={route}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={!contextActions && filters.length > 0 ? <AppliedChips filters={filters} /> : undefined}
       contextActions={contextActions || undefined}
+      appliedFilters={specsToApplied(filters)}
       toolbarRight={<>
         {unitCaption && <span className="text-caption" style={{ fontSize: 12 }}>{unitCaption}</span>}
         {unit && onUnit && <UnitToggle unit={unit} onChange={onUnit} note={unitNote} />}

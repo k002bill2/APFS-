@@ -514,29 +514,21 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
       title="출자/분배조회(농금원)"
       favRoute="apfs-contribution"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 주 필터 칩(조회기준) + 적용 중인 드로어 값 칩. 행 선택이 없어 selbar는 존재하지 않는다 */
+      /* 툴바 좌 = 주 필터 칩(조회기준). 드로어 값 칩은 appliedFilters(둘째 줄). 행 선택이 없어 selbar는 존재하지 않는다 */
       toolbarLeft={(
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {BASES.map((b) => (
             <FilterChip key={b} active={basis === b} onClick={() => setBasis(b)}>{b}</FilterChip>
           ))}
-          {/* 값만 표시(접두사 없음) + × */}
-          {([
-            ['운용사', fUn, () => setFUn(''), true],
-            ['자펀드', fFn, () => setFFn(''), true],
-            ['계정구분', fAcc, () => setFAcc(''), true],
-            ['기준일자', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }, false],
-          ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isText]) => (
-            <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {isText ? value : String(value)}
-              <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-                <Icon name="x" size={13} stroke={2.4} />
-              </button>
-            </span>
-          ))}
         </>
       )}
+      /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
+      appliedFilters={[
+        { label: '운용사', value: fUn, onClear: () => setFUn('') },
+        { label: '자펀드', value: fFn, onClear: () => setFFn('') },
+        { label: '계정구분', value: fAcc, onClear: () => setFAcc('') },
+        { label: '기준일자', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
+      ]}
       toolbarRight={<>
         {/* 금액 단위 전환(목업 목록바 `.seg.sm`) — 캡션 + 세그먼트 */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>{'단위: ' + unit}</span>

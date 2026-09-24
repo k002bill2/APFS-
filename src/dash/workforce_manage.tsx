@@ -460,10 +460,10 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
     { key: '검색어', on: !!fText, value: fText, clear: () => setFText('') },
     { key: '운용사/자펀드', on: !!fTarget, value: fTarget, clear: () => setFTarget('') },
     { key: '기간', on: !!(fFrom || fTo), value: `${fFrom ? String(fFrom) : ''} ~ ${fTo ? String(fTo) : ''}`, clear: () => { setFFrom(''); setFTo(''); } },
-  ] as { key: string; on: boolean; value: React.ReactNode; clear: () => void }[]).filter((c) => c.on);
+  ] as { key: string; on: boolean; value: string; clear: () => void }[]).filter((c) => c.on);
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다.
-     그래서 선택 시 toolbarLeft 는 비운다(둘 다 넘기면 탭 스톱이 2벌 된다).
+     이 화면은 toolbarLeft 를 쓰지 않는다(적용 필터 칩은 둘째 줄 appliedFilters 로 옮겼다).
      ⚠ selbar 에 대상명·취소 안내 캡션을 넣지 않는다(apfs-manage-page 5절).
      수정·삭제는 목업엔 없지만 2026-09-23 사용자 결정(형제 4화면 버튼 구성 통일). */
   const selActions = selCount > 0 ? (
@@ -486,19 +486,7 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
       cardTitle="운용인력 변동관리"
       favRoute="운용인력 변동관리"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selCount > 0 || chips.length === 0 ? null : (
-        <>
-          <Icon name="filter" size={16} className="text-caption" />
-          {chips.map((c) => (
-            <span key={c.key} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {c.value}
-              <button type="button" onClick={c.clear} aria-label={c.key + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-                <Icon name="x" size={13} stroke={2.4} />
-              </button>
-            </span>
-          ))}
-        </>
-      )}
+      appliedFilters={chips.map((c) => ({ label: c.key, value: c.value, onClear: c.clear }))}
       contextActions={selActions}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
