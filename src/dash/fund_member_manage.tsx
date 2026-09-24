@@ -136,7 +136,7 @@ const amt = (field: keyof FundMemberRow, header: string, strong?: boolean, width
    목업의 무채색(.tag.n)은 muted(비활성·대상아님) 톤과 겹쳐 '비활성'으로 읽혀서 info로 올렸다(2026-09-23 사용자 결정).
    조합원유형은 상태가 아니라 분류이므로 muted를 쓰지 않는다. */
 function TypeChip({ value }: { value: string }) {
-  return <StatusBadge tone={value === '모태펀드' ? 'primary' : 'info'} label={value} size="lg" dot={false} />;
+  return <StatusBadge tone={value === '모태펀드' ? 'primary' : 'info'} label={value} size="lg" />;
 }
 
 const columnDefs: ColDef<FundMemberRow>[] = [

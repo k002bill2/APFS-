@@ -28,7 +28,7 @@
    - 목업 [엑셀] → 툴바가 아니라 푸터 `FooterActions` 내보내기 + `⌥D`(apfs-grid 푸터 골드 양식).
    - 목록 그리드 → AG Grid **단일 헤더 8컬럼**(목업 thead 순서 그대로). **2단 그룹헤더 없음**,
      **합계행 없음**(전 컬럼이 문자/날짜라 가산 개념이 없다 → pinnedBottomRowData 자체를 두지 않는다).
-   - `구분` 셀 → `StatusBadge size="lg" dot={false}`. **등록=info · 해제=muted**.
+   - `구분` 셀 → `StatusBadge size="lg"`. **등록=info · 해제=muted**.
      ⚠ `해제` 톤은 3단 경위를 거쳤다 — 목업 `gTag()` 원문은 danger(`.tag r`) → 형제 3화면
        (S2_53 위반사항 · S2_55 주주변동 · S2_57 소송) 일관성으로 success → **2026-09-22 사용자 지시로
        muted(중립)**. 해제는 경보가 아니라 정상 종료라 중립 톤이 맞다는 판단이다.
@@ -146,7 +146,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 const textCell = (p: { value?: string }) => (p.value
   ? <span className="min-w-0 truncate">{p.value}</span>
   : <span className="text-muted-foreground">-</span>);
-const kindCell = (p: { value: WorkforceKind }) => <StatusBadge tone={KIND_TONE[p.value]} label={p.value} size="lg" dot={false} />;
+const kindCell = (p: { value: WorkforceKind }) => <StatusBadge tone={KIND_TONE[p.value]} label={p.value} size="lg" />;
 /* 날짜 셀 — 빈 값·null 은 '-' */
 const dateFmt = (p: { value?: string | null }) => (p.value ? String(p.value) : '-');
 

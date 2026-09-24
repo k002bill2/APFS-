@@ -198,7 +198,7 @@ const makeColumns = (
   txt('gp', '운용사', 160, 240, 120),
   txt('fund', '자펀드', 180, 300, 140),
   { field: 'rst', headerName: '보고상태', ...fixed(100), cellStyle: flexMid,
-    cellRenderer: (p: any) => <StatusBadge tone={STATUS_TONE[p.value as MeetingStatus]} label={p.value} size="lg" dot={false} /> },
+    cellRenderer: (p: any) => <StatusBadge tone={STATUS_TONE[p.value as MeetingStatus]} label={p.value} size="lg" /> },
   txt('gt', '총회구분', 100, 100, 100, true),
   /* 112 는 날짜 10자(tabular-nums)에 1px 모자라 '2026-06-…'로 잘렸다(scrollWidth 111 > clientWidth 110 실측) → 120 */
   { field: 'gdate', headerName: '총회일자', ...fixed(120), cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },

@@ -214,7 +214,7 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     - ✗ `node.setSelected(true, true)` 로 **첫 id 만** 되살리면 두 번째 인자(clearSelection)가 나머지 체크를 지워, 사용자가 아무것도 안 했는데 다건 선택이 1건으로 줄고 이어지는 벌크 삭제 대상이 바뀐다(Codex 리뷰 2026-09-23 — 실측으로 확인·수정).
     - ✗ `setSelected(true)` 만으로 단일 복원하면 반대로 기존 체크에 **더해져** 2건이 된다. 둘 다 틀리므로 헬퍼를 쓴다.
     - **선택 상태는 `selIds: string[]` 하나로 든다** — `selId = selIds[0] ?? null`, `selCount = selIds.length` 는 파생. id 와 카운트를 별도 state 로 두면 한쪽만 비우는 경로가 생긴다(`code_manage` 가 코드구분 전환 때 실제로 그랬다: 선택 0인데 선택 바가 떠 있고 벌크 삭제가 조용히 no-op).
-- **단계/상태 배지 셀**: `StatusBadge size="lg" dot={false}`(13px, 앞 점 없음 — 배지가 촘촘히 반복되는 열).
+- **단계/상태 배지 셀**: `StatusBadge size="lg"`(13px, 텍스트만). 뱃지 앞 점(bullet)은 2026-09-24 전 화면에서 폐지 — `dot` prop 은 더 이상 없다. 스키마 그리드(`renderers.tsx` `status` 셀)도 `lg` 로 통일됐다(종전 `sm`+점).
 - **엑셀**: 2단 헤더 병합·리프 키를 손으로 적지 말고 `flattenForExcel(columnDefs)`(골드 로컬 헬퍼, `ColGroupDef` 순회 → `head1/head2/keys/merges`)로 **columnDefs에서 자동 산출**.
 - 읽기전용 명세는 [[apfs-spec-popup]]. (카드뷰 토글 규약은 2026-09-11 폐기 — 리스트 뷰 단일 표현.)
 

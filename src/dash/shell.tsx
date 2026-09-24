@@ -368,7 +368,7 @@ function ncRow(key: string, p: any) {
       border: "none", background: "color-mix(in srgb, var(--muted) 45%, var(--card))", font: "inherit",
     }}>
       {!tag && <Icon name={ic} size={16} style={{ color: `var(--${tone})`, flex: "0 0 auto" }} />}
-      {tag && <><StatusBadge tone={tone} label={tag} size="lg" dot={false} /><span className="sr-only">{({ danger: "위험", warning: "주의", success: "정상", info: "정보" } as Record<string, string>)[tone] || tone}</span></>}
+      {tag && <><StatusBadge tone={tone} label={tag} size="lg" /><span className="sr-only">{({ danger: "위험", warning: "주의", success: "정상", info: "정보" } as Record<string, string>)[tone] || tone}</span></>}
       <span className="flex-1 min-w-0 font-semibold text-foreground whitespace-nowrap overflow-hidden" style={{ fontSize: 13.5, textOverflow: "ellipsis" }}>{title}</span>
       {meta && <span className="t-caption nc-meta whitespace-nowrap shrink-0">{meta}</span>}
       {(date || dday) && <span className="whitespace-nowrap shrink-0" style={{ fontSize: 11.5, fontWeight: dday ? 800 : 600, color: dday ? `var(--${tone})` : "var(--caption)" }}>{String(dday || date)}</span>}
@@ -444,7 +444,7 @@ function NcScheduleBody() {
             border: "none", font: "inherit",
             background: s.day === sel ? "color-mix(in srgb,var(--brand-blue) 12%,var(--card))" : "color-mix(in srgb, var(--muted) 45%, var(--card))",
           }}>
-            <StatusBadge tone={s.tone} label={s.tag} size="lg" dot={false} />
+            <StatusBadge tone={s.tone} label={s.tag} size="lg" />
             <span className="flex-1 min-w-0 font-semibold whitespace-nowrap overflow-hidden" style={{ fontSize: 13.5, textOverflow: "ellipsis" }}>{s.title}</span>
             <span className="t-caption nc-meta whitespace-nowrap shrink-0">{s.by + (s.time ? " · " + s.time : "")}</span>
           </button>

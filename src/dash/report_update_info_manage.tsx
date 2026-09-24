@@ -147,7 +147,7 @@ const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
   txt('co', '투자기업', 160, 200),
   /* 투심상태 — 배지는 상태 표시 전용(클릭 전이 없음). 합계행은 배지 대신 '-' */
   { field: 'stat', headerName: '투심상태', width: 136, minWidth: 136, maxWidth: 136, cellStyle: flexMid,
-    cellRenderer: (p: any) => (p.node.rowPinned ? '-' : <StatusBadge tone={STAT_TONE[p.value as ReviewStatus]} label={p.value} size="lg" dot={false} />) },
+    cellRenderer: (p: any) => (p.node.rowPinned ? '-' : <StatusBadge tone={STAT_TONE[p.value as ReviewStatus]} label={p.value} size="lg" />) },
   dateCol('sdt', '투심일자', 124),
   /* 승인금액 — 단위는 context 에서(moneyFmt). 합계행은 numStyle 이 자동으로 굵게 처리 */
   { field: 'amt', headerName: '승인금액', width: 154, type: 'rightAligned',

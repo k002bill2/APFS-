@@ -23,7 +23,7 @@
    - 목업 [엑셀] → 툴바가 아니라 푸터 `FooterActions` 내보내기 + `⌥D`(apfs-grid 푸터 골드 양식).
    - 목록 그리드 → AG Grid **단일 헤더 8컬럼**(목업 thead 순서 그대로). **2단 그룹헤더 없음**,
      **합계행 없음**(전 컬럼이 문자/날짜라 가산 개념이 없다 → pinnedBottomRowData 자체를 두지 않는다).
-   - `구분` 셀 → `StatusBadge size="lg" dot={false}`. 등록=info · 해제=muted(형제 2화면과 동일 매핑,
+   - `구분` 셀 → `StatusBadge size="lg"`. 등록=info · 해제=muted(형제 2화면과 동일 매핑,
      2026-09-22 사용자 결정 — #228 이 신설한 중립 톤. 이전 success 를 대체한다).
      `확정구분` 셀도 같은 배지 — 확정=success · 미확정=warning(목업 `.tag g` / `.tag a` 대응).
      ⚠ 이 화면만 배지 컬럼이 2개다. 해제가 success 이던 동안 `구분:해제` 와 `확정구분:확정` 이 같은
@@ -145,8 +145,8 @@ const textCell = (p: { value?: string }) => (p.value
 const wrapCell = (p: { value?: string }) => (p.value
   ? <span className="min-w-0">{p.value}</span>
   : <span className="text-muted-foreground">-</span>);
-const kindCell = (p: { value: LitigationKind }) => <StatusBadge tone={KIND_TONE[p.value]} label={p.value} size="lg" dot={false} />;
-const confCell = (p: { value: LitigationConf }) => <StatusBadge tone={CONF_TONE[p.value]} label={p.value} size="lg" dot={false} />;
+const kindCell = (p: { value: LitigationKind }) => <StatusBadge tone={KIND_TONE[p.value]} label={p.value} size="lg" />;
+const confCell = (p: { value: LitigationConf }) => <StatusBadge tone={CONF_TONE[p.value]} label={p.value} size="lg" />;
 /* 날짜 셀 — 빈 값·null 은 '-' */
 const dateFmt = (p: { value?: string | null }) => (p.value ? String(p.value) : '-');
 

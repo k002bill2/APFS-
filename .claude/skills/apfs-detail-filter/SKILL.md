@@ -62,6 +62,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 - **범위(시작~종료) = 한 항목**(2026-09-24 사용자 지시): `DrawerField label="<그룹명>" plain` 하나 안에 `flex items-center gap-2 flex-wrap` 행 → 시작 picker · `<span className="text-caption">~</span>` · 종료 picker(각 fit-content 래퍼, `ariaLabel`은 시작일/종료일로 따로). `…시작`/`…종료` 두 DrawerField로 쪼개지 말 것. 정본 `audit_log.tsx`. **칩도 한 개**: 값 `${fFrom || '…'} ~ ${fTo || '…'}`(한쪽만 있으면 `…`), `×`는 두 끝을 함께 해제, aria-label은 그룹명.
 - **적용 칩은 항목별 개별 칩**(합쳐서 `A · B · C` 한 칩 금지). 각 칩 = **값만 표시**(항목명 접두사 없음, 2026-09-08 결정) + `×`(`aria-label="<항목> 필터 제거"`, 해당 필터만 해제). no-op 항목은 칩을 만들지 않는다.
   - ✅ **전 트랙 통일(2026-09-09)**: `generic_list.tsx` `FilterPill`·`asset_funding.tsx` 자체 칩 모두 **값만 표시**로 맞췄다(구 `라벨: 값`/합친 한 칩 폐기). 항목명은 `title`(호버)+`aria-label`로 회수. **"값만"은 항목명 제거지 연산자 제거가 아니다** — `출자금액 ≥ 800`은 `≥ 800`으로 남긴다. 태그형(value 없음)은 라벨이 곧 값 토큰이라 라벨을 표시.
+- **모드형 조회기준이 있으면 그것이 주 필터다**(2026-09-24 사용자 지시, `invest_recovery_detail.tsx`): 컬럼·데이터를 함께 바꾸는 `조회기준`(투자및회수/전체거래)은 SegTabs 가 아니라 **깔때기 아이콘 바로 뒤 첫 칩 줄**의 `FilterChip`(건수 = 그 모드 행에 현재 조건을 건 facet)으로 둔다. 나머지 원문 검색항목(계정구분 등)은 드로어 + 적용 칩으로만 — 툴바에 두 번째 칩 줄을 만들지 않는다.
 - 주 필터 1개(심사단계)는 툴바 `FilterChip`(`심사단계: 전체`+단계들 — 전체 칩 라벨 규칙 → [[apfs-grid]])로 노출, 선택 행이 있으면 툴바 좌 슬롯이 selbar로 바뀐다(→[[apfs-stage-workflow]]).
 - 상태 SSOT는 `useState` N개 + `clearFilters`(초기화 버튼·전체 해제 공유). `passes`는 `useCallback`, 변경 시 `apiRef.current?.onFilterChanged()`(External Filter).
 

@@ -124,7 +124,7 @@ function MarkCell({ v }: { v: Mark }) {
   if (v !== 'O' && v !== 'X') {
     return <span className="inline-flex items-center rounded-[7px] bg-muted px-[10px] py-[4px] text-[13px] font-bold leading-tight text-muted-foreground">{v}</span>;
   }
-  return <StatusBadge tone={MARK_TONE[v]} label={v} size="lg" dot={false} />;
+  return <StatusBadge tone={MARK_TONE[v]} label={v} size="lg" />;
 }
 
 const mark = (field: keyof CustodyConfirmRow, header: string, width = 100): ColDef<CustodyConfirmRow> => ({

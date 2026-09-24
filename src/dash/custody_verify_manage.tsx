@@ -114,7 +114,7 @@ const dashCell = <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
 const MATCH_TONE: Record<'일치' | '불일치', Tone> = { 일치: 'success', 불일치: 'danger' };
 /* 일치여부 셀 — '-'는 판정 대상 아님(배지로 칠하면 '판정됨'으로 잘못 읽힌다) */
 const matchCell = (p: { value: MatchResult | null }) =>
-  (p.value == null || p.value === '-' ? dashCell : <StatusBadge tone={MATCH_TONE[p.value]} label={p.value} size="lg" dot={false} />);
+  (p.value == null || p.value === '-' ? dashCell : <StatusBadge tone={MATCH_TONE[p.value]} label={p.value} size="lg" />);
 
 /* 컬럼 팩토리 — `field`를 인자로 받아 호출부에서 행 타입이 확정된다(섹션 3개가 같은 규격을 공유) */
 function seq<T>(field: ColDef<T>['field']): ColDef<T> {

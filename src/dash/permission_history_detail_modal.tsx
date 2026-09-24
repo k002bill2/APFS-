@@ -116,7 +116,7 @@ export function PermissionHistoryDetailModal({ entry, onClose }: { entry: HistEn
         <div className="overflow-y-auto p-[46px] flex flex-col" style={{ gap: 22 }}>
           {/* 요약 스트립 — 한눈에 볼 3가지 */}
           <div className="grid bg-muted rounded-[10px]" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', padding: '14px 18px', gap: '12px 16px' }}>
-            <Stat label="변경유형"><StatusBadge tone={CT_TONE[d.ctype]} label={d.ctype} size="md" dot={false} /></Stat>
+            <Stat label="변경유형"><StatusBadge tone={CT_TONE[d.ctype]} label={d.ctype} size="md" /></Stat>
             <Stat label="권한">{d.preset}</Stat>
             {items.length ? (
               <Stat label="변경 건수">총 {items.length}건 <span className="font-normal text-muted-foreground">· 추가 {cntAdd(d)} · 회수 {cntRev(d)}</span></Stat>

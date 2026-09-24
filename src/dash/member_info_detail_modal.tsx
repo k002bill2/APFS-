@@ -133,7 +133,7 @@ function KvGrid({ items, unit }: { items: KvItem[]; unit: Unit }) {
 /* kv 값 — 배지(계정구분·조합원구분)는 분류 표식.
    ⚠ 'LP'는 중립 톤이라 StatusBadge에 대응 tone이 없다 → 같은 기하(md)의 muted 칩을 직접 만든다. */
 function KvValue({ item }: { item: KvItem }) {
-  if (item.badge === 'info') return <StatusBadge tone="info" label={item.v} size="md" dot={false} />;
+  if (item.badge === 'info') return <StatusBadge tone="info" label={item.v} size="md" />;
   if (item.badge === 'muted') {
     return <span className="inline-flex items-center rounded-[7px] px-[9px] py-[3px] text-xs font-bold bg-muted text-muted-foreground">{item.v}</span>;
   }
@@ -156,7 +156,7 @@ function TxTable({ unit }: { unit: Unit }) {
           {TX_ROWS.map((r) => (
             <tr key={r.sub}>
               {/* 거래구분은 분류 배지(목업 `tag b`) */}
-              <td className={`${TD} text-center`} style={CELL}><StatusBadge tone="info" label={r.kind} size="md" dot={false} /></td>
+              <td className={`${TD} text-center`} style={CELL}><StatusBadge tone="info" label={r.kind} size="md" /></td>
               <td className={`${TD} text-center`} style={CELL}>{r.sub}</td>
               <td className={`${TD} text-center tabular`} style={CELL}>{String(r.date)}</td>
               {r.vals.map((v, i) => (

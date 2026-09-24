@@ -8,7 +8,7 @@
      탭으로 합치지 않는다 — 구분마다 지표1·지표2 컬럼(자본충실도/영업용순자본비율/…)이 달라 하나의
      컬럼 집합으로 표현할 수 없다(목업도 4개 표를 나란히 둔다).
    - 2단 그룹헤더(지표1·지표2·자기자본이익률·총자산수익률·법령위반·주주변동·소송여부·총점) → `ColGroupDef` + `marryChildren`.
-   - 등급 셀 → `StatusBadge`(정상=success · 주의=warning · 경고=danger), `size="lg" dot={false}`.
+   - 등급 셀 → `StatusBadge`(정상=success · 주의=warning · 경고=danger), `size="lg"`.
    - 행 더블클릭(+셀 Enter/Space) → 「운용사별 조기경보 재무정보」 팝업(`gp_early_warning_fin_modal.tsx`).
      ⚠ 목업 설계메모는 "단일 클릭"이라 적었으나 **앱 규약(더블클릭 진입)으로 뒤집었다**(2026-09-21 사용자 결정).
    - KPI 배지 행 없음 · 행 선택 없음 · 합계행 없음 · 페이지네이션 없음(그리드당 1행, 비율·등급이라 합계 무의미).
@@ -146,7 +146,7 @@ const countFmt = (p: ValueFormatterParams): string =>
 /* 등급 셀 — 상태 표식. 값이 없으면 빈 셀. */
 function GradeCell({ v }: { v: Grade | null }) {
   if (!v) return null;
-  return <StatusBadge tone={GRADE_TONE[v]} label={v} size="lg" dot={false} />;
+  return <StatusBadge tone={GRADE_TONE[v]} label={v} size="lg" />;
 }
 
 const numCol = (field: keyof GpEwRow, header: string, width: number, fmtr = ratioFmt): ColDef<GpEwRow> => ({

@@ -35,7 +35,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 프레임 외관·푸터 | `--frame-bg`(테두리·그림자 없음), `sub` 미사용, 단위 캡션은 `toolbarRight`, 푸터 골드(건수·페이저·뷰 토글·아이콘) | [[apfs-grid]] "프레임 외관 규약" |
 | 리스트 ↔ 카드뷰 | **폐기(2026-09-11 사용자 결정)** — 만들지 않는다. 푸터에 뷰 토글 `SegTabs`를 두지 않고, `view` state·카드 분기도 넣지 않는다(리스트 뷰 단일 표현) | — |
 | 읽기전용 명세 팝업 | **opt-in(기본 미포함)** — 목업/사용자가 요구할 때만 포함. 포함 시 진입=`명세` 버튼 + 더블클릭(단위 토글·kv·재무요약). **미포함이면 selbar에 `명세` 버튼·`onRowDoubleClicked` 배선을 넣지 않는다**(자동 고정 금지) | **[[apfs-spec-popup]]** |
-| 그리드 세부(폭·선택색·합계행·배지) | `AUTO_SIZE_CONTENT`+`maxWidth`, `wrapperBorder:false`, 합계 `--muted`+1px, 배지 `lg`/`dot={false}` | [[apfs-aggrid]] "관리형 페이지 그리드 규약" |
+| 그리드 세부(폭·선택색·합계행·배지) | `AUTO_SIZE_CONTENT`+`maxWidth`, `wrapperBorder:false`, 합계 `--muted`+1px, 배지 `lg`(텍스트만, 점 없음) | [[apfs-aggrid]] "관리형 페이지 그리드 규약" |
 | 색·대비 | 토큰만. 상태 텍스트는 `-text` 토큰(StatusBadge 내장) | [[color-tokens]] |
 
 ## 2. 목업에서 **버리는 것** (프로토타입 스캐폴딩 — 셸이 소유)

@@ -111,7 +111,7 @@ const columnDefs: (ColDef<SubFundRow> | ColGroupDef<SubFundRow>)[] = [
   { field: 'no', headerName: 'No', width: 68, pinned: 'left', cellStyle: centerNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '합 계' : String(p.value)) },
   { field: 'stg', headerName: '심사단계', width: 96, pinned: 'left', cellStyle: flexMid, sortable: true,
-    cellRenderer: (p: any) => (p.node.rowPinned ? null : <StatusBadge tone={STAGE_TONE[p.value as Stage]} label={p.value} size="lg" dot={false} />) },
+    cellRenderer: (p: any) => (p.node.rowPinned ? null : <StatusBadge tone={STAGE_TONE[p.value as Stage]} label={p.value} size="lg" />) },
   { ...txt('fn', '자펀드', 240), maxWidth: 360, pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold">{p.value}</span>) },
   num('y', '사업연도', 92), txt('rt', '정기/수시', 88, true), num('ch', '차수', 70),
   txt('ctype', '조합유형', 150, true), txt('cg', '조합구분', 96, true), txt('cs', '조합성격', 120, true),
@@ -348,7 +348,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <>
       {/* 단계 배지만 표시 — 자펀드명은 선택 행에서 이미 보이므로 생략(2026-09-08 결정) */}
-      <StatusBadge tone={STAGE_TONE[single.stg]} label={single.stg} size="lg" dot={false} />
+      <StatusBadge tone={STAGE_TONE[single.stg]} label={single.stg} size="lg" />
       {stageActs.map((a) => (
         <Button key={a.label} variant={a.primary ? 'primary' : 'outline'} size="sm" onClick={a.run}>{a.label}</Button>
       ))}
@@ -444,7 +444,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
                   <div className="font-semibold truncate" style={{ fontSize: 14 }}>{r.fn}</div>
                   <div className="text-muted-foreground truncate" style={{ fontSize: 12 }}>{r.gp1} · {r.y}년</div>
                 </div>
-                <StatusBadge tone={STAGE_TONE[r.stg]} label={r.stg} size="lg" dot={false} />
+                <StatusBadge tone={STAGE_TONE[r.stg]} label={r.stg} size="lg" />
               </div>
               <div className="flex flex-col gap-1.5">
                 {([['약정총액', r.c1], ['납입총액', r.p1], ['분배액', r.dist]] as [string, number | null][]).map(([label, v]) => (
