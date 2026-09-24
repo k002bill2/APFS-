@@ -8,8 +8,9 @@
        그래서 라디오 기본값은 '제외'로 두되 조건 변경 전(applied=false)에는 거르지 않는다(ledgerShown, 테스트가 보증).
        초기화·새로고침(onReset)은 이 첫 화면 상태로 되돌린다. 원문 [조회] 버튼은 두지 않는다(변경 즉시 반영).
        푸터의 조건 표기(명칭·비활성원부)도 적용 중일 때만 붙인다 — 미적용인데 '제외'라 쓰면 비활성 행과 모순된다.
-   - 목록바 [출력▾](등록원부 출력 · 등록원부 발급이력 출력) · [등록원부입력] · [등록원부업로드]+검토필요 → 툴바 액션(상세필터 오른쪽).
-     출력 트리거는 UI.Button 이 Radix asChild 를 못 받아(forwardRef 없음) 트리거에 Button 스타일을 직접 얹는다.
+   - 목록바 [등록원부입력] · [등록원부업로드] → 툴바 SplitButton 한 덩어리 — 본체 = 입력(1클릭), ▾ = 업로드.
+     목록바 [출력▾](등록원부 출력 · 등록원부 발급이력 출력) → 툴바에 두지 않고 **푸터 인쇄 combo 의 ▾ 메뉴**
+     (본체 = 화면 인쇄 ⌘P) — 둘 다 2026-09-24 사용자 결정.
      원문 [엑셀] → 푸터 내보내기(⌥D).
    - 원문 행 관리 버튼 3개·활성상태 스위치는 **행 안에 옮기지 않는다**(2026-09-23 사용자 결정 — 관리형 선택 바 규약,
      원문 배치를 따르지 않는다). 체크박스 선택 → 선택 바:
@@ -20,9 +21,8 @@
    - 원문 비활성 행 흐림(`tr.inact`)은 활성상태 배지가 같은 정보를 준다 — 행 전체 투명도는 대비를 깎아 두지 않는다. */
 import React, { useCallback, useMemo, useState } from 'react';
 import { UI } from './components';
-import { Icon } from './icons';
+import { SplitButton } from './ui/split-button';
 import { toast } from './ui/sonner';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu';
 import { RiskPage } from './risk_page_kit';
 import type { FilterSpec } from './risk_page_kit';
 import { ReadGrid } from './risk_grid';
@@ -40,23 +40,11 @@ type Modal = null
   | { kind: 'members' | 'experts'; row: Row }
   | { kind: 'upload' | 'print' | 'history' | 'delete' };
 
-/* 출력 드롭다운 — 트리거 className 은 UI.Button size="sm" variant="outline" 과 같은 규격(investment_review_manage ResultMenu 선례) */
-function OutputMenu({ onPick }: { onPick: (k: 'print' | 'history') => void }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        className="ui-btn ui-outline inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border transition-colors duration-tok-fast ease-ds px-[11px] py-1.5 text-[12.5px] bg-card text-foreground border-border-strong data-[state=open]:bg-muted">
-        <Icon name="printer" size={14} stroke={2.2} />
-        출력
-        <Icon name="chevron-down" size={14} stroke={2.2} />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => onPick('print')}>등록원부 출력</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onPick('history')}>등록원부 발급이력 출력</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
+/* 푸터 인쇄 combo ▾ 메뉴 — 원문 목록바 [출력▾] 2항목(2026-09-24 사용자 결정: 툴바 출력 삭제 → 푸터 인쇄 combo) */
+const PRINT_ITEMS = (open: (m: Modal) => void) => [
+  { label: '등록원부 출력', icon: 'printer', onSelect: () => open({ kind: 'print' }) },
+  { label: '등록원부 발급이력 출력', icon: 'file', onSelect: () => open({ kind: 'history' }) },
+];
 
 export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void }) {
   const [rows, setRows] = useState<Row[]>(LEDGER_TABLE.rows);
@@ -125,14 +113,13 @@ export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void })
     <RiskPage system="부처보고" group="등록원부" label={LABEL} route={LABEL} onNav={onNav}
       filters={filters} onReset={reset} contextActions={selActions}
       actions={<>
-        <OutputMenu onPick={(k) => setModal({ kind: k })} />
-        <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'ledger', mode: 'new' })}>등록원부입력</Button>
-        <span className="inline-flex items-center gap-1">
-          <Button variant="outline" size="sm" leadingIcon="upload" onClick={() => setModal({ kind: 'upload' })}>등록원부업로드</Button>
-        </span>
+        <SplitButton label="등록원부입력" leadingIcon="plus" menuLabel="등록원부 추가 방법 더보기"
+          onClick={() => setModal({ kind: 'ledger', mode: 'new' })}
+          items={[{ label: '등록원부업로드', icon: 'upload', onSelect: () => setModal({ kind: 'upload' }) }]} />
       </>}
       footerLeft={<span>{applied && <>{name ? <>{name} · </> : ''}비활성원부 {inactive} · </>}총 {String(shown.length)}건</span>}
-      onExport={exportExcel} exportEnabled={!modal}>
+      onExport={exportExcel} exportEnabled={!modal}
+      printItems={PRINT_ITEMS(setModal)}>
       <ReadGrid table={LEDGER_TABLE} rows={shown} ariaLabel={LABEL} selectable onSelect={onSelect} selectedIds={selIds} apiRef={apiRef} onRowOpen={openEdit} />
       {modal?.kind === 'delete' && <DeleteDialog title="등록원부 삭제" count={sel.length} onConfirm={remove} onClose={() => setModal(null)} />}
       {modal?.kind === 'ledger' && <LedgerFormModal mode={modal.mode} row={ledgerRow} onSave={saveLedger} onClose={close} />}

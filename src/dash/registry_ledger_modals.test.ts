@@ -4,7 +4,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { initialLedger, MiniTable } from './registry_ledger_modals';
+import { initialLedger, MiniTable, Section } from './registry_ledger_modals';
 
 afterEach(() => cleanup());
 
@@ -30,5 +30,20 @@ describe('MiniTable — 행이 바뀌면 선택을 비운다', () => {
     rerender(React.createElement(MiniTable, { ...props, rows: [['NEW', 'd'], ['A', 'd'], ['B', 'd']] }));
     expect(screen.queryByText('1건 선택됨')).toBeNull();
     expect(onDelete).not.toHaveBeenCalled();
+  });
+});
+
+describe('Section — 추가 버튼은 제목 바로 옆 좌측, 조회·저장은 우측(2026-09-24 사용자 결정)', () => {
+  it('add 는 제목 직후에 붙고 actions 만 우측 끝(ml-auto)으로 민다', () => {
+    render(React.createElement(Section, {
+      title: '소재지',
+      add: React.createElement('button', null, '추가'),
+      actions: React.createElement('button', null, '저장'),
+      children: 'body',
+    }));
+    const add = screen.getByRole('button', { name: '추가' });
+    expect(add.previousElementSibling?.textContent).toBe('소재지');
+    expect(add.className).not.toMatch(/ml-auto|justify-between/);
+    expect(screen.getByRole('button', { name: '저장' }).parentElement!.className).toMatch(/ml-auto/);
   });
 });

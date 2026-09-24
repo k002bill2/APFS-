@@ -54,7 +54,8 @@ export interface ColMeta {
   pinned?: boolean;
   /** 최소 폭(px). 미지정이면 kind 기본값 */
   width?: number;
-  /** 남는 폭 분배 비율(AG Grid flex). 미지정 = 1. 0 이면 늘지 않고 최소 폭에 고정(No 순번 칸) */
+  /** 남는 폭 분배 비율(AG Grid flex). 0 = 늘지 않고 내용폭 고정. 미지정 = 자동 — No·순번 라벨·badge 는 0, 그 외 1
+      (risk_grid isCompactCol, apfs-aggrid ⑩) */
   flex?: number;
   total?: TotalRule;
   /** 원문이 행 값을 저장하지 않고 렌더 때 계산하는 칸(누적Multiple = 운용성과÷투자금액, 투자잔액 = 총투자−회수).

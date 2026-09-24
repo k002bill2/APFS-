@@ -61,7 +61,7 @@ function Modal({ title, target, badge, wide, onClose, footer, children, dlgRef }
 
 /** 원문 `.msec` — 제목(h3) + 좌측 행 추가 버튼(`add`) + 우측 섹션 버튼(`.sacts`) + 본문.
    행 추가는 제목 바로 옆 좌측(apfs-form-modal 반복행 규약 — 골드 subfund_form_modal) */
-function Section({ title, add, actions, children }: { title: string; add?: React.ReactNode; actions?: React.ReactNode; children: React.ReactNode }) {
+export function Section({ title, add, actions, children }: { title: string; add?: React.ReactNode; actions?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section style={{ marginBottom: 26 }}>
       <div className="flex items-center gap-2 border-b-2 border-border" style={{ paddingBottom: 8, marginBottom: 12 }}>

@@ -41,6 +41,11 @@ description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규
    - 팩토리 정본: `const txt = (…, flex, minWidth) => ({ field, headerName, flex, minWidth, width: minWidth, … })`. **2026-09-22 전수 적용 완료** — flex 컬럼이 있는 11파일 전부(`litigation/shareholder/workforce_manage` + `all_report_status`·`asset_funding`·`custody_confirm_manage`·`early_warning_manage`·`fund_invest_status`·`generic_list`(stretch 컬럼)·`report_bucheo`·`risk_manage`). 이미 `width` 를 명시한 flex 컬럼(`audit_log`·`code_manage`·`menu_manage` 등, 200~300)은 손대지 않았다 — 초기폭 명시 자체가 목적이라 값은 그대로 둔다. 신규 flex 컬럼은 예외 없이 `width` 동반.
    - 검증: 리로드 직후 15ms 폴링으로 `.ag-body-horizontal-scroll` 에 `ag-invisible` 없는 프레임이 **한 번도** 없어야 한다. 2.5초 뒤 `ag-invisible` 유무만 보면 3/10 확률이라 놓친다.
    - 함정: 좁혔다 넓히는 리사이즈 경로는 정상(3/3) — 이 버그는 **마운트 직후 초기폭 200px** 에서만 난다. 컬럼 드래그도 무관(flex 이웃이 흡수).
+10. **컬럼 폭은 균등 배분하지 않는다 — No·상태 배지는 compact(내용폭 고정) (2026-09-24 사용자 결정, 등록원부관리).** flex 로 남는 폭을 전 컬럼에 똑같이 나누면 `No`·`활성상태` 같은 짧은 칸까지 넓어져 표가 헐거워진다. **compact 컬럼은 `flex` 없이 `width = minWidth = maxWidth`(내용폭)**, 남는 폭은 **텍스트·금액·일자 칸(flex:1)만** 나눠 갖는다.
+   - compact 대상: **`No`·`NO`·`순번`·`번호` 라벨**, **상태 배지 칸**(`kind:'badge'` — 활성상태·진행상태 등). 그 밖에 값 길이가 고정인 짧은 칸은 명시적으로 compact 로 켠다. 선택 체크박스 열(`SELECTION_COL` 44)은 이미 고정이다.
+   - compact 폭 = 헤더·값 글자폭 추정(+원문 `width` 하한)만 — **종류 하한(`KIND_MIN`, 숫자 84·배지 96)을 쓰지 않는다**(쓰면 No 가 84로 넓어진다). 실측: 등록원부관리 No 84→64, 활성상태(원문 width 120)→98.
+   - **전 컬럼이 compact 인 표는 flex 를 유지**한다(아무도 안 늘어나면 우측 빈 거터).
+   - 구현 정본: `risk_grid.tsx` `isCompactCol` + `buildColumnDefs` 의 `anyFlex` 가드. 수동 지정은 **`ColMeta.flex` 하나로만**(#252 도입) — `flex: 0` = compact 고정, `flex: 1` 이상 = 남는 폭 흡수(자동 판정을 이긴다), 미지정 = 자동. 폭 스위치를 따로 만들지 말 것(같은 뜻의 knob 2개 = 드리프트). 가드 테스트 `risk_grid_width.test.ts`. 수제 ColDef 그리드(GenericListPage 등)도 같은 규칙으로 No·배지 칸에 `flex` 를 주지 않는다.
 
 ## 컬럼 정의 (정본 패턴)
 ```tsx
@@ -148,7 +153,7 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
 **페이지가 켜는 것**
 - **컬럼 폭 = 그리드 특성으로 고른다.** AG Grid엔 "내용 맞춤 + 남는 공간 채움"을 한 방법으로 하는 수단이 없다:
   - **넓은 다열 테이블**(컬럼 합 > 프레임 폭, 자펀드관리 등) → `autoSizeStrategy={AUTO_SIZE_CONTENT}`(`aggrid_theme.ts` export, `fitCellContents`, 내용 폭·잘림 방지). 긴 텍스트 컬럼은 `maxWidth` 캡(자펀드 360·GP 240). ⚠ 자동 산정 순간 컬럼 가상화가 풀려 전 컬럼을 그린다(35컬럼도 동작, 첫 프레임만 무거움).
-  - **좁은 매트릭스/집계 그리드**(컬럼 합 < 프레임 폭 → 우측 빈 공간, 조성·출자현황 등) → `autoSizeStrategy`를 **빼고** 컬럼에 **`flex:1` + `minWidth`**(예: `numCol`에 `flex:1, minWidth:92`). flex가 그리드 폭을 동적으로 채우고(우측 빈 공간 0) 리사이즈에도 자동 재분배한다. 고정폭 컬럼(pinned 구분 등)은 flex 없이 `width` 유지. 좁으면 minWidth 하한→가로 스크롤(반응형 보존). **flex 컬럼에도 `width: minWidth` 를 함께 준다**(→ ⑨ — 안 주면 마운트 직후 200px 기본폭 넘침이 캐시돼 하단 스크롤 띠가 남는다).
+  - **좁은 매트릭스/집계 그리드**(컬럼 합 < 프레임 폭 → 우측 빈 공간, 조성·출자현황 등) → `autoSizeStrategy`를 **빼고** 컬럼에 **`flex:1` + `minWidth`**(예: `numCol`에 `flex:1, minWidth:92`). flex가 그리드 폭을 동적으로 채우고(우측 빈 공간 0) 리사이즈에도 자동 재분배한다. 고정폭 컬럼(pinned 구분 등)·**No·상태 배지(→ ⑩ compact)**는 flex 없이 `width` 유지. 좁으면 minWidth 하한→가로 스크롤(반응형 보존). **flex 컬럼에도 `width: minWidth` 를 함께 준다**(→ ⑨ — 안 주면 마운트 직후 200px 기본폭 넘침이 캐시돼 하단 스크롤 띠가 남는다).
     - ✗ `autoSizeStrategy={fitGridWidth}`는 쓰지 말 것: `domLayout="autoHeight"`+지연 레이아웃에서 **생성 시점 폭에 1회만** 맞춰 빈 공간이 남는다(2026-09-11 asset_funding 실측 gap 455px). flex를 쓴다.
   - 검증: 잘린 셀 0 — `[...document.querySelectorAll('.ag-cell')].filter(c=>c.scrollWidth>c.clientWidth+1).length===0`. **빈 공간 0**은 `.ag-center-cols-container` 폭이 아니라(pinned 컬럼 제외돼 항상 pinned폭만큼 작게 나옴) **헤더셀 폭 합 ≈ `.ag-root-wrapper` 폭**으로 본다: `Math.abs([...document.querySelectorAll('.ag-header-cell')].reduce((s,h)=>s+h.getBoundingClientRect().width,0) - document.querySelector('.ag-root-wrapper').getBoundingClientRect().width) < 4`.
 - **행 높이는 테마 기본(42px)** — `rowHeight` 오버라이드 금지(골드와 간격 통일).
