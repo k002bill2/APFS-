@@ -169,3 +169,24 @@ export function formatRecoveryUnit(won: number, unit: string): string {
   const v = won / (UNIT_DIV[unit] ?? 1);
   return v.toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
 }
+
+/* ── 검색조건(원문 검색박스) ──
+   원문 S1_36 검색박스: 모펀드(읽기전용) · 운용사 · 자펀드 · 계정구분 · 조회기준 · 기준일자(시작~종료).
+   조회기준은 필터가 아니라 **모드**(컬럼·데이터 동시 전환)라 여기 없다. 모펀드는 단일값이라 표시만 한다.
+   계정구분 도메인은 원문 `chipGroup('f-acc',['전체','농식품','수산'])` 그대로다 — 현 데이터엔 수산 행이 없어 0건이 정상. */
+export const RECOVERY_ACCOUNTS = ['농식품', '수산'] as const;
+
+export interface RecoveryFilter { gp: string; fund: string; acc: string; from: string; to: string }
+
+/** 값-필터 전부 AND. 빈 값 = 미적용. 운용사·자펀드·계정구분 = 정확일치, 기준일자 = 거래일자 양끝 포함 범위. */
+export function filterRecovery(rows: readonly RecoveryRow[], f: RecoveryFilter): RecoveryRow[] {
+  return rows.filter((r) => {
+    if (f.gp && String(r.gp ?? '') !== f.gp) return false;
+    if (f.fund && String(r.fund ?? '') !== f.fund) return false;
+    if (f.acc && String(r.acc ?? '') !== f.acc) return false;
+    const d = String(r.tdate ?? '');
+    if (f.from && !(d && d >= f.from)) return false;
+    if (f.to && !(d && d <= f.to)) return false;
+    return true;
+  });
+}
