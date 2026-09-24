@@ -300,14 +300,11 @@ export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세
 
 /* ──────────────────────────────
    섹션 헤더 — 한 GridFrame 안에 표를 세로로 쌓는 화면의 경계(골드 ew_result_manage.tsx SectionHead)
+   본문 표/카드가 섹션 끝선까지 차므로 번호 배지 없이 좌측 4px 만 들여 제목을 끝선에 맞춘다.
 ────────────────────────────── */
-export function SectionHead({ n, title, cap, actions }: { n?: string | number; title: string; cap?: React.ReactNode; actions?: React.ReactNode }) {
+export function SectionHead({ title, cap, actions }: { title: string; cap?: React.ReactNode; actions?: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 flex-wrap" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)' }}>
-      {n != null && (
-        <span aria-hidden className="inline-flex items-center justify-center shrink-0 font-bold"
-          style={{ width: 20, height: 20, borderRadius: 6, fontSize: 12, background: 'color-mix(in srgb, var(--primary) 13%, transparent)', color: 'var(--primary)' }}>{n}</span>
-      )}
+    <div className="flex items-center gap-2 flex-wrap" style={{ padding: '12px 18px 12px 4px', borderTop: '1px solid var(--border)' }}>
       {/* preflight:false — h4 는 UA 기본 마진이 살아 있어 m-0 필수 */}
       <h4 className="font-bold m-0" style={{ fontSize: 15 }}>{title}</h4>
       {cap && <span className="text-caption inline-flex items-center" style={{ fontSize: 12.5 }}>{cap}</span>}

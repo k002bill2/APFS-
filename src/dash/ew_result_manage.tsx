@@ -191,12 +191,10 @@ function toSheet<T>(cols: XCol<T>[], rows: T[]): XLSX.WorkSheet {
    페이지 로컬 프리미티브(골드 복사 + actions 슬롯)
 ────────────────────────────── */
 /* 섹션 헤더 — 목업 `.sectitle`(제목) + `.listbar`(캡션·우측 버튼)을 한 행으로 합친다.
-   번호 칩은 ColorChip(아이콘 전용)이 아니라 숫자를 담는 primary soft 배지다. */
-function SectionHead({ n, title, cap, actions }: { n: string; title: string; cap: React.ReactNode; actions?: React.ReactNode }) {
+   그리드가 섹션 끝선까지 차므로 번호 배지 없이 좌측 4px 만 들여 제목을 끝선에 맞춘다. */
+function SectionHead({ title, cap, actions }: { title: string; cap: React.ReactNode; actions?: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 flex-wrap" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)' }}>
-      <span aria-hidden className="inline-flex items-center justify-center shrink-0 font-bold"
-        style={{ width: 20, height: 20, borderRadius: 6, fontSize: 12, background: 'color-mix(in srgb, var(--primary) 13%, transparent)', color: 'var(--primary)' }}>{n}</span>
+    <div className="flex items-center gap-2 flex-wrap" style={{ padding: '12px 18px 12px 4px', borderTop: '1px solid var(--border)' }}>
       {/* preflight:false — h4는 UA 기본 마진이 살아 있어 m-0 필수 */}
       <h4 className="font-bold m-0" style={{ fontSize: 15 }}>{title}</h4>
       <span className="text-caption inline-flex items-center" style={{ fontSize: 12.5 }}>{cap}</span>
@@ -307,7 +305,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       {/* ── ① 조기경보 생성 결과내역 (선택 월) ── */}
-      <SectionHead n="1" title="조기경보 생성 결과내역"
+      <SectionHead title="조기경보 생성 결과내역"
         cap={<>총 {String(resultRows.length)}건 · 기준년월 {String(ym)}</>} />
       <div>
         <AgGridReact<EwResultRow>
@@ -322,7 +320,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
       </div>
 
       {/* ── ② 운용사 재무정보 보고 (선택 월의 전월) ── */}
-      <SectionHead n="2" title="운용사 재무정보 보고"
+      <SectionHead title="운용사 재무정보 보고"
         cap={<>총 {String(reportRows.length)}건 · 기준년월 {reportYm ? String(reportYm) : '-'}</>}
         actions={<>
           <Button variant="outline" size="sm" disabled={noReport} onClick={() => setModal({ kind: 'grantAll' })}>전체권한부여</Button>

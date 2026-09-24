@@ -18,7 +18,7 @@ const CELL_PAD = { padding: '9px 12px' } as const;
 
 function PropTable({ sec }: { sec: PropSection }) {
   return (
-    <div className="overflow-x-auto" style={{ padding: '0 18px 16px' }}>
+    <div className="overflow-x-auto" style={{ padding: '0 0 16px' }}>
       <table className="w-full border-collapse" style={{ minWidth: 640, tableLayout: 'fixed' }}>
         <caption className="sr-only">{`${DAILY_TITLE} — ${sec.title}`}</caption>
         <colgroup><col style={{ width: '20%' }} /><col style={{ width: '30%' }} /><col style={{ width: '20%' }} /><col style={{ width: '30%' }} /></colgroup>
@@ -45,10 +45,10 @@ export function DailyReportView({ onNav, tabs }: { onNav?: (r: string) => void; 
       footerLeft={<span>{DAILY_TITLE} · {String(DAILY_SECTIONS.length)}개 블록 · {String(count)}행</span>}>
       <LeafTabBody slot={tabs}>
         {/* preflight:false — h3 UA 마진 제거 */}
-        <h3 className="m-0 font-bold" style={{ fontSize: 16, padding: '16px 18px 4px' }}>{DAILY_TITLE}</h3>
-        {DAILY_SECTIONS.map((sec, i) => (
+        <h3 className="m-0 font-bold" style={{ fontSize: 16, padding: '16px 18px 4px 4px' }}>{DAILY_TITLE}</h3>
+        {DAILY_SECTIONS.map((sec) => (
           <section key={sec.title} aria-label={sec.title}>
-            <SectionHead n={i + 1} title={sec.title} />
+            <SectionHead title={sec.title} />
             <PropTable sec={sec} />
           </section>
         ))}

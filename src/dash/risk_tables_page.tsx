@@ -43,8 +43,6 @@ export interface TablesPageConfig {
   /** 금액 단위 토글(원문 seg 가 있는 화면) */
   unit?: boolean;
   unitNote?: string;
-  /** 원문 섹션 번호 칩(`.sechead .num`) */
-  numbered?: boolean;
   /** 표 위 머리 줄(원문 툴바의 제목·태그 — 예: 실물검증 `대사 결과`) */
   intro?: React.ReactNode;
 }
@@ -110,7 +108,7 @@ export function TablesPage({ cfg, onNav }: { cfg: TablesPageConfig; onNav?: (r: 
         <React.Fragment key={t.id}>
           {/* 원문 섹션 제목이 있으면 섹션 헤더, 없으면(원문이 제목을 지운 표) 구분선만 */}
           {cfg.tables.length > 1 && (t.title
-            ? <SectionHead n={cfg.numbered ? i + 1 : undefined} title={t.title} cap={<>총 {String(filtered[i].length)}건</>} />
+            ? <SectionHead title={t.title} cap={<>총 {String(filtered[i].length)}건</>} />
             : i > 0 && <div aria-hidden style={{ height: 16, borderTop: '1px solid var(--border)' }} />)}
           <ReadGrid table={t} rows={filtered[i]} unit={unitOrNull} ariaLabel={t.title ?? cfg.label} />
         </React.Fragment>

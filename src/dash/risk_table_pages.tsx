@@ -70,7 +70,7 @@ const EXCEPTION: TablesPageConfig = {
 
 const PORTFOLIO: TablesPageConfig = {
   group: '가치평가', label: 'Portfolio Report', route: 'Portfolio Report',
-  tables: PORTFOLIO_TABLES, unit: true, numbered: true,
+  tables: PORTFOLIO_TABLES, unit: true,
   filters: [
     /* 원문 자펀드 select 옵션 1개(전체 없음) — 보고서 대상 파라미터 */
     { label: '자펀드', kind: 'select', def: PORTFOLIO_FUNDS[0], options: PORTFOLIO_FUNDS, allLabel: null },

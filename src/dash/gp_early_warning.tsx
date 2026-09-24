@@ -380,16 +380,12 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
       )}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
-      <div style={{ padding: '4px 2px 8px' }}>
+      <div style={{ padding: '4px 0 8px' }}>
         {SECTIONS.map((s) => (
           <section key={s.kind} className="mb-8 last:mb-0" aria-label={`${s.kind} 조기경보`}>
             {/* preflight:false 라 h3/p 에 UA 기본 마진이 살아 있다 → margin 명시 */}
-            <h3 className="flex items-center gap-2 text-[13.5px] font-bold text-foreground" style={{ margin: '0 0 3px' }}>
-              <span className="inline-flex items-center justify-center tabular"
-                style={{ width: 20, height: 20, borderRadius: 6, background: 'var(--muted)', color: 'var(--muted-foreground)', fontSize: 11.5, fontWeight: 800 }}>{s.no}</span>
-              {s.kind}
-            </h3>
-            <p className="text-[11.5px] text-muted-foreground" style={{ margin: '0 0 8px' }}>
+            <h3 className="text-[13.5px] font-bold text-foreground" style={{ margin: '0 0 3px', paddingLeft: 4 }}>{s.kind}</h3>
+            <p className="text-[11.5px] text-muted-foreground" style={{ margin: '0 0 8px', paddingLeft: 4 }}>
               {`재무건전성 지표 — ${s.m1} · ${s.m2} · 자기자본이익률 · 총자산수익률 · 법령위반 · 주주변동 · 소송여부 · 총점 (비율/등급/연환산 2단 헤더)`}
             </p>
             {/* apfs-grid-min: autoHeight 그리드의 AG Grid 기본 최소 본문높이(150px)를 48px 로 낮춘다.
