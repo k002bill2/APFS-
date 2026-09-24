@@ -410,10 +410,11 @@ describe('상세필터 라벨 — 표를 조용히 0건으로 만드는 tag 폴�
      와 대조하는데, 업무 화면의 category 는 엔티티명(예: '실사보고')이라 **절대 일치하지 않는다**
      → 사용자가 필터를 켜는 순간 표가 에러 없이 0건이 된다(2026-09-16 Codex 지적으로 발견).
 
-     ⚠ 레거시 4건은 이번 범위 밖이라 고치지 않았다. 기준선으로 고정해 **더 늘지 않게만** 막는다 —
+     ⚠ 기준선은 0건이다 — 레거시 4건(조합원총회·(운용사)출자배분관리·조합원정보등록·투자기업정보)은
+     typed 페이지에 가려 렌더되지 않던 dead 스키마라 2026-09-24 스키마째 삭제됐다.
      새로 추가하면 이 테스트가 깨지고, 해결책은 목록에 넣는 것이 아니라 **컬럼/필드 라벨과
      정확히 같은 라벨을 쓰거나 그 필터를 빼는 것**이다. */
-  const LEGACY_TAG_FILTERS = ['조합원총회', '(운용사)출자배분관리', '조합원정보등록', '투자기업정보'];
+  const LEGACY_TAG_FILTERS: string[] = [];
 
   const offenders = ALL_SCHEMAS
     .map((sc) => [sc.route, (sc.filters ?? []).filter((l) => {
@@ -422,7 +423,7 @@ describe('상세필터 라벨 — 표를 조용히 0건으로 만드는 tag 폴�
     })] as const)
     .filter(([, bad]) => bad.length > 0);
 
-  it('tag 로 떨어지는 필터를 가진 스키마는 레거시 4건뿐이다', () => {
+  it('tag 로 떨어지는 필터를 가진 스키마는 레거시 기준선(0건)뿐이다', () => {
     const routes = offenders.map(([r]) => r).sort();
     expect(routes, offenders.map(([r, b]) => `${r}: ${b.join('·')}`).join(' | ')).toEqual([...LEGACY_TAG_FILTERS].sort());
   });
