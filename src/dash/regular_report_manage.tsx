@@ -392,8 +392,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
           {([
             ['운용사', fGp, () => setFGp(''), true],
             ['자펀드', fFund, () => setFFund(''), true],
-            ['기준년월 시작', fFrom, () => setFFrom(''), false],
-            ['기준년월 종료', fTo, () => setFTo(''), false],
+            ['기준년월', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }, false],
           ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isText]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               {isText ? value : String(value)}
@@ -460,8 +459,13 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
             {/* 담당자 — 원천에 옵션·샘플 값이 없어 옵션을 생성하지 않는다(빈 목록 = '전체'만) */}
             <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
             {/* 기준년월 — 월(YYYY-MM) 범위. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}
-            <DrawerField label="기준년월 시작" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}><PeriodPicker mode="month" value={fFrom} onChange={setFFrom} ariaLabel="기준년월 시작" /></div></DrawerField>
-            <DrawerField label="기준년월 종료" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}><PeriodPicker mode="month" value={fTo} onChange={setFTo} ariaLabel="기준년월 종료" /></div></DrawerField>
+            <DrawerField label="기준년월" plain>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}><PeriodPicker mode="month" value={fFrom} onChange={setFFrom} ariaLabel="기준년월 시작" /></div>
+                <span className="text-caption">~</span>
+                <div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}><PeriodPicker mode="month" value={fTo} onChange={setFTo} ariaLabel="기준년월 종료" /></div>
+              </div>
+            </DrawerField>
             {/* 보고구분 — 툴바 칩과 같은 state 공유(옵션은 행에서 파생) */}
             <DrawerField label="보고구분"><DrawerSelect value={fRt} onChange={(v) => setFRt(v as '' | ReportKind)} options={rtOptions} /></DrawerField>
           </div>
