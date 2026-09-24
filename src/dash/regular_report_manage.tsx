@@ -52,7 +52,7 @@ import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
 import { ConfirmCombo, uniformConfirm } from './confirm_combo';
 
-const { Button, IconBtn, StatusBadge, FilterChip } = UI;
+const { Button, IconBtn, StatusBadge } = UI;
 
 /* ──────────────────────────────
    도메인 타입
@@ -350,7 +350,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
 
   const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측/하단 플로팅 바 중 한 곳에만 렌더한다 → 선택 중엔 toolbarLeft 를 비운다 */
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측/하단 플로팅 바 중 한 곳에만 렌더한다 → 필터 칩은 filterChips 로 넘기고, 선택 중엔 GridFrame 이 칩을 +N 안으로 접는다 */
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
@@ -384,13 +384,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
       favRoute={tabs?.route ?? "regular-report"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(보고구분) + 적용 중인 드로어 값 칩. 선택 중엔 비우고 선택 바(contextActions)가 대신한다 */
-      toolbarLeft={selCount > 0 ? null : (
-        <>
-          {(['', '월간보고서', '반기보고서'] as ('' | ReportKind)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fRt === s} onClick={() => setFRt(s)}>{s || '보고구분: 전체'}</FilterChip>
-          ))}
-        </>
-      )}
+      filterChips={(['', '월간보고서', '반기보고서'] as ('' | ReportKind)[]).map((s) => ({ key: s || 'all', label: s || '보고구분: 전체', active: fRt === s, onSelect: () => setFRt(s) }))}
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },

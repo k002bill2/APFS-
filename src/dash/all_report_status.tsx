@@ -187,14 +187,8 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
       title="자펀드 전체 보고현황"
       favRoute="전체 보고현황"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={(
-        <>
-          {/* 기본 필터 = 보고 구분(6개 표 전환). 표가 바뀌면 컬럼·건수·필터 도메인이 함께 바뀐다. */}
-          {REPORT_TABS.map((t) => (
-            <FilterChip key={t.key} active={tabKey === t.key} onClick={() => onTab(t.key)} count={tabCount(t)}>{t.label}</FilterChip>
-          ))}
-        </>
-      )}
+      /* 기본 필터 = 보고 구분(6개 표 전환). 표가 바뀌면 컬럼·건수·필터 도메인이 함께 바뀐다. 넘치면 +N 메뉴로 접힌다. */
+      filterChips={REPORT_TABS.map((t) => ({ key: t.key, label: t.label, count: tabCount(t), active: tabKey === t.key, onSelect: () => onTab(t.key) }))}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>
         {hasAmount && <>

@@ -45,7 +45,7 @@ import { PeriodPicker } from './ui/period-picker';
 import { RAW, SUBTOTALS, GRAND } from './fund_stats_data';
 import type { RawRow, StatBase } from './fund_stats_data';
 
-const { Button, IconBtn, FilterChip, SegTabs } = UI;
+const { Button, IconBtn, SegTabs } = UI;
 
 /* ──────────────────────────────
    도메인 타입 · 파생값(목업 calc) — 금액 단위는 전부 **억원**
@@ -392,13 +392,7 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(연도기준). 목업 select가 결성/선정 2개뿐이라 '전체' 칩은 없다.
          나머지 필터는 전부 noop이라 적용 칩을 만들지 않는다(값이 행을 거르지 않으므로 칩이 거짓 신호가 된다). */
-      toolbarLeft={(
-        <>
-          {YEAR_BASES.map((b) => (
-            <FilterChip key={b} active={yearBasis === b} onClick={() => setYearBasis(b)}>{b}</FilterChip>
-          ))}
-        </>
-      )}
+      filterChips={YEAR_BASES.map((b) => ({ key: b, label: b, active: yearBasis === b, onSelect: () => setYearBasis(b) }))}
       toolbarRight={<>
         {/* 금액 단위 전환(목업 목록바 `.unitwrap`) — 캡션 + 세그먼트 */}
         <span className="text-caption font-semibold inline-flex items-center" style={{ fontSize: 12, marginRight: 6 }}>

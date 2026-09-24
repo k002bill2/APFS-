@@ -173,17 +173,12 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
       title="투자실적현황(투자기업)"
       favRoute="투자실적 현황(투자기업)"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={(
-        <>
-          {/* 원문 `투자실적구분` — 이것만이 실제로 그리드를 전환한다(원문 스크립트 `.gridblock` 토글).
-              나머지 검색조건(계정구분·연도기준·데이터기준·기준일자)은 **원문 select 에 옵션이 0개**라
-              컨트롤을 만들지 않는다 — 빈 select 는 고를 것이 없고, 값을 지어내면 창작이 된다.
-              `모펀드`는 APFS 단일값이라 푸터 캡션으로 둔다. */}
-          <span className="text-muted-foreground" style={{ fontSize: 13 }}>투자실적구분</span>
-          <SegTabs options={VIEWS.map((v) => ({ value: v.key, label: v.label }))} value={view}
-            onChange={(v: string) => setView(v as ViewKey)} />
-        </>
-      )}
+      /* 원문 `투자실적구분` — 이것만이 실제로 그리드를 전환한다(원문 스크립트 `.gridblock` 토글).
+         모드 전환이라 기본 필터 칩으로 둔다(2026-09-24 — 한 줄 툴바, 넘치면 +N 메뉴).
+         나머지 검색조건(계정구분·연도기준·데이터기준·기준일자)은 **원문 select 에 옵션이 0개**라
+         컨트롤을 만들지 않는다 — 빈 select 는 고를 것이 없고, 값을 지어내면 창작이 된다.
+         `모펀드`는 APFS 단일값이라 푸터 캡션으로 둔다. */
+      filterChips={VIEWS.map((v) => ({ key: v.key, label: v.label, active: view === v.key, onSelect: () => setView(v.key) }))}
       toolbarRight={<>
         <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
         <SegTabs size="sm" options={STAT_UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as StatUnit)} />

@@ -52,7 +52,7 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 →
 import { PeriodPicker } from './ui/period-picker';
 import { DistTxModal, InvestTxModal } from './apfs_contribution_tx_modal';
 
-const { Button, IconBtn, StatusBadge, FilterChip, SegTabs } = UI;
+const { Button, IconBtn, StatusBadge, SegTabs } = UI;
 
 /* ──────────────────────────────
    도메인 타입 — 목업 GROUPS(자펀드 거래 1건 = 1그룹, 그 안에 조합원 N명)
@@ -515,13 +515,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
       favRoute="apfs-contribution"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(조회기준). 드로어 값 칩은 appliedFilters(둘째 줄). 행 선택이 없어 selbar는 존재하지 않는다 */
-      toolbarLeft={(
-        <>
-          {BASES.map((b) => (
-            <FilterChip key={b} active={basis === b} onClick={() => setBasis(b)}>{b}</FilterChip>
-          ))}
-        </>
-      )}
+      filterChips={BASES.map((b) => ({ key: b, label: b, active: basis === b, onSelect: () => setBasis(b) }))}
       /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
       appliedFilters={[
         { label: '운용사', value: fUn, onClear: () => setFUn('') },

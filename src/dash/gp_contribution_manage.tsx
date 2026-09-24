@@ -48,7 +48,7 @@ import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
 import { GpContributionDetailModal } from './gp_contribution_detail_modal';
 
-const { Button, IconBtn, StatusBadge, FilterChip } = UI;
+const { Button, IconBtn, StatusBadge } = UI;
 
 /* ──────────────────────────────
    도메인 타입 — 목업 DATA 1행 = 1 출자/배분 내역
@@ -362,13 +362,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
       favRoute="gp-contribution"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(출자/배분) + 적용 중인 드로어 값 칩. 행 선택이 없어 selbar는 존재하지 않는다. */
-      toolbarLeft={(
-        <>
-          {(['', '출자', '배분'] as ('' | Gb)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fGb === s} onClick={() => setFGb(s)}>{s || '출자/배분: 전체'}</FilterChip>
-          ))}
-        </>
-      )}
+      filterChips={(['', '출자', '배분'] as ('' | Gb)[]).map((s) => ({ key: s || 'all', label: s || '출자/배분: 전체', active: fGb === s, onSelect: () => setFGb(s) }))}
       /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },

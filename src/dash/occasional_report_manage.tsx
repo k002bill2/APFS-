@@ -50,7 +50,7 @@ import { GpSpecModal } from './gp_spec_modal';
 import { SubFundSpecModal } from './subfund_spec_modal';
 import type { SubFundRow } from './subfund_manage';
 
-const { Button, IconBtn, StatusBadge, FilterChip } = UI;
+const { Button, IconBtn, StatusBadge } = UI;
 
 /* ──────────────────────────────
    도메인 타입 · 상태 도메인
@@ -345,13 +345,7 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌는 항상 필터칩이다 — 행 선택(체크박스)을 없앤 2026-09-12 이후 selbar가 존재하지 않는다.
          확인 전이는 셀 [확인] 버튼, 조회 팝업은 셀 링크가 각각 가져갔다(목업 S1_04 원본 구조). */
-      toolbarLeft={(
-        <>
-          {(['', '미확인', '일부확인', '확인완료'] as ('' | Stage)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fStage === s} onClick={() => setFStage(s)}>{s || '확인상태: 전체'}</FilterChip>
-          ))}
-        </>
-      )}
+      filterChips={(['', '미확인', '일부확인', '확인완료'] as ('' | Stage)[]).map((s) => ({ key: s || 'all', label: s || '확인상태: 전체', active: fStage === s, onSelect: () => setFStage(s) }))}
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },

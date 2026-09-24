@@ -36,7 +36,7 @@ import { PeriodPicker } from './ui/period-picker';
 import { ConfirmCombo, uniformConfirm } from './confirm_combo';
 import { GeneralMeetingDetailModal } from './general_meeting_detail_modal';
 
-const { Button, IconBtn, StatusBadge, FilterChip } = UI;
+const { Button, IconBtn, StatusBadge } = UI;
 
 /* ──────────────────────────────
    도메인 타입 — 목업 DATA/detail 구조 그대로
@@ -387,7 +387,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
 
   const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
-  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측/하단 플로팅 바 중 한 곳에만 렌더한다 → 선택 중엔 toolbarLeft 를 비운다 */
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측/하단 플로팅 바 중 한 곳에만 렌더한다 → 필터 칩은 filterChips 로 넘기고, 선택 중엔 GridFrame 이 칩을 +N 안으로 접는다 */
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
@@ -422,13 +422,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
       favRoute="general-meeting"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 필터칩. 선택 중엔 비우고 선택 바(contextActions)가 대신한다 */
-      toolbarLeft={selCount > 0 ? null : (
-        <>
-          {(['', '일정', '결과'] as ('' | MeetingStatus)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fRst === s} onClick={() => setFRst(s)}>{s || '보고상태: 전체'}</FilterChip>
-          ))}
-        </>
-      )}
+      filterChips={(['', '일정', '결과'] as ('' | MeetingStatus)[]).map((s) => ({ key: s || 'all', label: s || '보고상태: 전체', active: fRst === s, onSelect: () => setFRst(s) }))}
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },

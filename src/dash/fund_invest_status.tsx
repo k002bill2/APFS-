@@ -43,7 +43,7 @@ import { PeriodPicker } from './ui/period-picker';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS — 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 
-const { Button, IconBtn, SegTabs, FilterChip } = UI;
+const { Button, IconBtn, SegTabs } = UI;
 
 /* ──────────────────────────────
    뷰(투자실적구분) · 단위
@@ -480,14 +480,7 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
       favRoute="fund-invest-status"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(투자실적구분 4뷰, 단일 선택). 드로어 항목이 전부 noop이라 적용 칩은 없다. */
-      toolbarLeft={(
-        <>
-          <Icon name="layers" size={16} className="text-caption" />
-          {VIEWS.map((v) => (
-            <FilterChip key={v} active={view === v} onClick={() => setView(v)}>{v}</FilterChip>
-          ))}
-        </>
-      )}
+      filterChips={VIEWS.map((v) => ({ key: v, label: v, active: view === v, onSelect: () => setView(v) }))}
       toolbarRight={<>
         {/* 금액 단위 전환(목업 목록바 `.unitwrap`) — 캡션 + 세그먼트 */}
         <span className="text-caption" style={{ fontSize: 12.5 }}>{'단위: ' + unit}</span>

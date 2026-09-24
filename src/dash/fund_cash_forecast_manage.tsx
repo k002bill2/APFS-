@@ -38,7 +38,7 @@ import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { PeriodPicker } from './ui/period-picker';
 
-const { Button, IconBtn, StatusBadge, FilterChip, SegTabs } = UI;
+const { Button, IconBtn, StatusBadge, SegTabs } = UI;
 
 /* ──────────────────────────────
    도메인 타입 · 데모 데이터 (목업 `DATA` 3행 그대로 — **원 단위 저장**)
@@ -327,13 +327,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(계정구분, 목업 검색박스의 chipGroup) (적용 중인 드로어 값 칩 운용사·자펀드는 appliedFilters 둘째 줄).
          계정구분은 칩 자체가 적용 상태를 보여주므로 값 칩을 따로 만들지 않는다. */
-      toolbarLeft={(
-        <>
-          {(['', ...ACCTS] as ('' | Acct)[]).map((a) => (
-            <FilterChip key={a || 'all'} active={fAcct === a} onClick={() => setFAcct(a)}>{a || '계정구분: 전체'}</FilterChip>
-          ))}
-        </>
-      )}
+      filterChips={(['', ...ACCTS] as ('' | Acct)[]).map((a) => ({ key: a || 'all', label: a || '계정구분: 전체', active: fAcct === a, onSelect: () => setFAcct(a) }))}
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },

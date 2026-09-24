@@ -42,7 +42,7 @@ import { UseBadge } from './admin_shared';
 import { MenuFormModal } from './menu_form_modal';
 import type { MenuPatch, MenuPreset } from './menu_form_modal';
 
-const { Button, IconBtn, StatusBadge, FilterChip, ClearableInput } = UI;
+const { Button, IconBtn, StatusBadge, ClearableInput } = UI;
 
 /* 검색어 입력 opt-in(apfs-detail-filter) — 목업 검색박스 첫 항목이 검색기준+검색어라 이 화면은 켠다 */
 const SEARCHABLE = true;
@@ -293,7 +293,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   ];
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
-     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+     (contextActions 슬롯). 필터 칩은 filterChips 로 넘기고, 선택 중엔 GridFrame 이 깔때기를 빼고 칩을 +N 안으로 접는다. */
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
@@ -311,13 +311,9 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
       title="메뉴관리"
       favRoute="menu-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selCount > 0 ? null : (
-        <>
-          {UTYPE_CHIPS.map((u) => <FilterChip key={u || 'all'} active={fUtype === u} onClick={() => setFUtype(u)}>{u || '사용자 구분: 전체'}</FilterChip>)}
-          {/* 적용 중인 상세필터 — 항목별 개별 칩(값만 표시, 항목명은 × aria-label) */}
-        </>
-      )}
+      filterChips={UTYPE_CHIPS.map((u) => ({ key: u || 'all', label: u || '사용자 구분: 전체', active: fUtype === u, onSelect: () => setFUtype(u) }))}
       contextActions={selActions}
+      /* 적용 중인 상세필터 — 항목별 개별 칩(값만 표시, 항목명은 × aria-label) */
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>

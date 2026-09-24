@@ -32,7 +32,7 @@ import { SubFundFormEditModal } from './subfund_form_modal';   // 결성조합 �
 import { APPLY_SCHEMA, SELECT_SCHEMA, OPT_AG, OPT_FG, OPT_FS, OPT_MANAGER, OPT_MF, CUR_YEAR } from './subfund_manage_schemas';
 import { PeriodPicker } from './ui/period-picker';
 
-const { Button, IconBtn, StatusBadge, FilterChip, ColorChip } = UI;
+const { Button, IconBtn, StatusBadge, ColorChip } = UI;
 
 /* ──────────────────────────────
    도메인 타입 · 심사단계
@@ -341,7 +341,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
-     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+     (contextActions 슬롯). 필터 칩은 filterChips 로 넘기고, 선택 중엔 GridFrame 이 깔때기를 빼고 칩을 +N 안으로 접는다. */
   const selActions = selCount > 0 ? (
     /* 선택 행의 심사단계에 맞는 작업만 노출(공고관리 컨텍스트 액션 패턴). 취소 단계는 작업 없음 */
     <>
@@ -363,13 +363,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
       cardTitle="자펀드 관리"
       favRoute="subfund"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selCount > 0 ? null : (
-        <>
-          {(['' as const, ...STAGES] as ('' | Stage)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fStage === s} onClick={() => setFStage(s)}>{s || '심사단계: 전체'}</FilterChip>
-          ))}
-        </>
-      )}
+      filterChips={(['' as const, ...STAGES] as ('' | Stage)[]).map((s) => ({ key: s || 'all', label: s || '심사단계: 전체', active: fStage === s, onSelect: () => setFStage(s) }))}
       /* 적용 중인 상세필터 — 항목별 개별 칩(각각 ×로 해제). 라벨=드로어 항목명(apfs-detail-filter) */
       appliedFilters={[
         { label: '검색어', value: fText, onClear: () => setFText('') },

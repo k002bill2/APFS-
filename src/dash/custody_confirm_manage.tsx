@@ -41,7 +41,7 @@ import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
 import { CustodyConfirmDetailModal } from './custody_confirm_detail_modal';
 
-const { Button, IconBtn, StatusBadge, FilterChip } = UI;
+const { Button, IconBtn, StatusBadge } = UI;
 
 /* ──────────────────────────────
    도메인 타입 — 목업 DATA 구조 그대로(inv[2]·nt[2]·ni 를 리프 키로 폄)
@@ -374,13 +374,7 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌는 항상 필터칩이다 — 행 선택이 없어 selbar가 존재하지 않는다(조회 전용 화면).
          기준일자 칩은 **목업 기본값과 다를 때만** 띄운다(기본값이 상시 칩으로 남으면 시끄럽다). */
-      toolbarLeft={(
-        <>
-          {(['', '확정', '미확정'] as ('' | ConfirmState)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fConfirm === s} onClick={() => setFConfirm(s)}>{s || '확정여부: 전체'}</FilterChip>
-          ))}
-        </>
-      )}
+      filterChips={(['', '확정', '미확정'] as ('' | ConfirmState)[]).map((s) => ({ key: s || 'all', label: s || '확정여부: 전체', active: fConfirm === s, onSelect: () => setFConfirm(s) }))}
       appliedFilters={[
         { label: '기준일자', value: fBaseDate !== BASE_DATE ? String(fBaseDate) : '', onClear: () => setFBaseDate(BASE_DATE) },
       ]}
