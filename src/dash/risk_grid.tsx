@@ -127,7 +127,7 @@ function renderer(c: ColMeta, unit: Unit | null, linkLabel: string, custom?: (ro
       default: {
         const zero = v === 0;
         const box = c.editable && !pinned
-          ? { border: '1px solid var(--border-strong)', borderRadius: 7, padding: '3px 9px', background: 'var(--card)', minWidth: 72, textAlign: 'right' as const, cursor: 'text' }
+          ? { border: '1px solid var(--border-strong)', borderRadius: 7, padding: '3px 9px', lineHeight: '20px', background: 'var(--card)', minWidth: 72, textAlign: 'right' as const, cursor: 'text' }
           : undefined;
         return (
           <span className="tabular-nums" style={{ color: color ?? (zero ? 'var(--muted-foreground)' : undefined), ...box }}>
