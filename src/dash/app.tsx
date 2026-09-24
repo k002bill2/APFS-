@@ -19,9 +19,9 @@ import { Pages as ReportBucheoPages } from './report_bucheo';
 import { GenericListPage, findMenuContext } from './generic_list';
 import { AssetFunding } from './asset_funding';
 import { InvestmentReviewManage } from './investment_review_manage';   // 투자심의관리(관리형 리스트, S1_01). GenericListPage 폴백 앞 분기
-// 수시보고(S1_04)+일일보고 조회(S5_117) · 자펀드수탁관리 실물검증(S1_26)+확정(S1_27)
-// — 원문 2개를 가진 리프는 탭 묶음 래퍼로 분기한다(asset_leaf_tabs.tsx)
-import { OccasionalReportLeaf, CustodyLeaf } from './asset_leaf_tabs';
+// 자펀드수탁관리 실물검증(S1_26)+확정(S1_27) — 원문 2개를 가진 리프는 탭 묶음 래퍼로 분기한다(asset_leaf_tabs.tsx)
+import { CustodyLeaf } from './asset_leaf_tabs';
+import { OccasionalReportManage } from './occasional_report_manage';     // 수시보고(S1_04) — 일일보고 조회 탭 삭제(2026-09-24)로 단일 화면
 import { RegularReportManage } from './regular_report_manage';           // 정기보고(S1_06) — 회수내역 탭 삭제(2026-09-24)로 단일 화면
 import { GeneralMeetingManage } from './general_meeting_manage';         // 조합원총회(S1_07). 동상
 import { FundCashForecastManage } from './fund_cash_forecast_manage';    // 조합예상자금 정보보고(S1_08). 동상
@@ -234,7 +234,7 @@ function App() {
   else if (route === "subfund") page = <SubFundManage onNav={onNav} />;
   else if (route === "asset-funding") page = <AssetFunding onNav={onNav} />;
   else if (route === "investment-review") page = <InvestmentReviewManage onNav={onNav} />;
-  else if (route === "occasional-report") page = <OccasionalReportLeaf onNav={onNav} />;
+  else if (route === "occasional-report") page = <OccasionalReportManage onNav={onNav} />;
   else if (route === "regular-report") page = <RegularReportManage onNav={onNav} />;
   else if (route === "general-meeting") page = <GeneralMeetingManage onNav={onNav} />;
   else if (route === "fund-cash-forecast") page = <FundCashForecastManage onNav={onNav} />;
