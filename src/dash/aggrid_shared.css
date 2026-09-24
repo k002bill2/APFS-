@@ -57,6 +57,18 @@
   top: 58px;                 /* GNB 높이 (shell.tsx sticky header height:58) */
   z-index: 30;
 }
+/* ── sticky 가로 스크롤바 (autoHeight 그리드 한정, 2026-09-25) ──
+   autoHeight 그리드는 가로 스크롤바가 그리드 맨 끝에 그려져, 긴 목록에선 GridFrame sticky 푸터 아래
+   화면 밖에 있다(투심보고 통계: 스크롤바 y≈1393 · 푸터 y=743). 푸터 바로 위에 붙여 항상 보이게 한다.
+   bottom = GridFrame 이 실측해 내려주는 --grid-footer-h(푸터 없거나 GridFrame 밖이면 0 = 뷰포트 하단).
+   위 헤더 sticky 와 같은 overflow:visible 체인에 기대며, wrapper 의 overflow-x:clip 은 세로 sticky 를 깨지 않는다.
+   background 불투명 — 스크롤되는 행이 비치지 않게. z 25 = 행·pinned 셀 위, 헤더(30)·푸터 경계 아래. */
+.ag-root-wrapper.ag-layout-auto-height .ag-body-horizontal-scroll {
+  position: sticky !important;
+  bottom: var(--grid-footer-h, 0px) !important;   /* AG Grid FakeHScrollComp 가 오버레이 스크롤바 환경에서 inline bottom 을 쓴다 — 덮어야 함 */
+  z-index: 25;
+  background: var(--card);
+}
 
 /* ── 표의 바깥 가장자리는 선 없이 "열어 둔다"(2026-09-22 사용자 지시) ──
    규약: 맨 왼쪽 컬럼에 왼쪽 선이 없듯, 맨 오른쪽 컬럼에도 오른쪽 선이 없어야 한다.
