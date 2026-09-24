@@ -424,7 +424,6 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
       /* 툴바 좌 = 필터칩. 선택 중엔 비우고 선택 바(contextActions)가 대신한다 */
       toolbarLeft={selCount > 0 ? null : (
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {(['', '일정', '결과'] as ('' | MeetingStatus)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fRst === s} onClick={() => setFRst(s)}>{s || '보고상태: 전체'}</FilterChip>
           ))}

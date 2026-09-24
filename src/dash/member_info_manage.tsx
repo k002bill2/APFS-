@@ -269,7 +269,6 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
       /* 툴바 좌 — 주 필터 칩이 없는 화면이다(검색박스 유일 항목인 모펀드가 행과 미연동).
          목업 listbar의 `총 N건` 캡션을 건수 컨텍스트로 옮겼다(report_form_manage 동형) */
       toolbarLeft={<>
-        <Icon name="filter" size={16} className="text-caption" />
         <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>조합원 {String(rows.length)}건</span>
       </>}
       toolbarRight={<>

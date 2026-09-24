@@ -276,7 +276,6 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={selCount > 0 ? null : (
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {STATUS_CHIPS.map((s) => <FilterChip key={s || 'all'} active={fStatus === s} onClick={() => setFStatus(s)}>{s || '상태: 전체'}</FilterChip>)}
         </>
       )}

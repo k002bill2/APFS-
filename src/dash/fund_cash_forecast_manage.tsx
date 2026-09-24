@@ -329,7 +329,6 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
          계정구분은 칩 자체가 적용 상태를 보여주므로 값 칩을 따로 만들지 않는다. */
       toolbarLeft={(
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {(['', ...ACCTS] as ('' | Acct)[]).map((a) => (
             <FilterChip key={a || 'all'} active={fAcct === a} onClick={() => setFAcct(a)}>{a || '계정구분: 전체'}</FilterChip>
           ))}

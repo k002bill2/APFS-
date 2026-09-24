@@ -313,7 +313,6 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={selCount > 0 ? null : (
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {UTYPE_CHIPS.map((u) => <FilterChip key={u || 'all'} active={fUtype === u} onClick={() => setFUtype(u)}>{u || '사용자 구분: 전체'}</FilterChip>)}
           {/* 적용 중인 상세필터 — 항목별 개별 칩(값만 표시, 항목명은 × aria-label) */}
         </>

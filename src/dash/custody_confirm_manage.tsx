@@ -376,7 +376,6 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
          기준일자 칩은 **목업 기본값과 다를 때만** 띄운다(기본값이 상시 칩으로 남으면 시끄럽다). */
       toolbarLeft={(
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {(['', '확정', '미확정'] as ('' | ConfirmState)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fConfirm === s} onClick={() => setFConfirm(s)}>{s || '확정여부: 전체'}</FilterChip>
           ))}

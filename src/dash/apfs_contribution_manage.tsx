@@ -517,7 +517,6 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
       /* 툴바 좌 = 주 필터 칩(조회기준). 드로어 값 칩은 appliedFilters(둘째 줄). 행 선택이 없어 selbar는 존재하지 않는다 */
       toolbarLeft={(
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {BASES.map((b) => (
             <FilterChip key={b} active={basis === b} onClick={() => setBasis(b)}>{b}</FilterChip>
           ))}

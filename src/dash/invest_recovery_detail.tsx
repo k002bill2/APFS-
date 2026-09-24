@@ -165,7 +165,6 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
         <>
           {/* 기본(주) 필터 = 조회기준(2026-09-24 사용자 지시). 깔때기 아이콘 뒤 첫 칩 줄이다.
               바꾸면 컬럼과 데이터가 함께 바뀐다(원문 select와 같은 동작). 건수 = 그 모드에 나머지 조건을 건 facet. */}
-          <Icon name="filter" size={16} className="text-caption" />
           {RECOVERY_MODES.map((m) => (
             <FilterChip key={m.key} active={modeKey === m.key} onClick={() => setModeKey(m.key)} count={modeCount(m)}>{m.label}</FilterChip>
           ))}

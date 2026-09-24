@@ -394,7 +394,6 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
          나머지 필터는 전부 noop이라 적용 칩을 만들지 않는다(값이 행을 거르지 않으므로 칩이 거짓 신호가 된다). */
       toolbarLeft={(
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {YEAR_BASES.map((b) => (
             <FilterChip key={b} active={yearBasis === b} onClick={() => setYearBasis(b)}>{b}</FilterChip>
           ))}

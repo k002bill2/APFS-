@@ -366,7 +366,6 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
       /* 툴바 좌 = 주 필터 칩(계정구분) + 적용 중인 드로어 값 칩. 행 선택이 없어 selbar는 존재하지 않는다. */
       toolbarLeft={(
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {(['', ...ACC_OPTS] as ('' | Acc)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fAcc === s} onClick={() => setFAcc(s)}>{s || '계정구분: 전체'}</FilterChip>
           ))}

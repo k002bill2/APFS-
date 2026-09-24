@@ -347,7 +347,6 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
          확인 전이는 셀 [확인] 버튼, 조회 팝업은 셀 링크가 각각 가져갔다(목업 S1_04 원본 구조). */
       toolbarLeft={(
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {(['', '미확인', '일부확인', '확인완료'] as ('' | Stage)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fStage === s} onClick={() => setFStage(s)}>{s || '확인상태: 전체'}</FilterChip>
           ))}

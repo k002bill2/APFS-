@@ -316,7 +316,6 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
          행 선택이 없어 selbar는 존재하지 않는다. */
       toolbarLeft={(
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {/* `전체` 칩 — 3칩 모두 ON일 때 활성이고, 누르면 3개를 한 번에 켠다(0행 상태의 복구 경로를 겸한다).
               멱등이라 이미 전부 켜진 상태에서 눌러도 무해. count는 세 facet의 합(상수 금지). */}
           <FilterChip active={allGradesOn} onClick={() => setGrades(ALL_GRADES_ON)} count={String(gradeTotal)}>등급: 전체</FilterChip>

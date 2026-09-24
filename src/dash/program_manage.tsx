@@ -344,7 +344,6 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={selCount > 0 ? null : (
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {USE_CHIPS.map(([v, l]) => <FilterChip key={v || 'all'} active={fUse === v} onClick={() => setFUse(v)}>{l}</FilterChip>)}
         </>
       )}

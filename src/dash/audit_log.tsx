@@ -188,7 +188,6 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={(
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {RESULT_CHIPS.map((r) => <FilterChip key={r || 'all'} active={fResult === r} onClick={() => setFResult(r)} count={chipCount(r)}>{r || '결과: 전체'}</FilterChip>)}
         </>
       )}

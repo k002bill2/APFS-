@@ -365,7 +365,6 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={selCount > 0 ? null : (
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {(['' as const, ...STAGES] as ('' | Stage)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fStage === s} onClick={() => setFStage(s)}>{s || '심사단계: 전체'}</FilterChip>
           ))}

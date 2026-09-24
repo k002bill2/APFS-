@@ -364,7 +364,6 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
       /* 툴바 좌 = 주 필터 칩(출자/배분) + 적용 중인 드로어 값 칩. 행 선택이 없어 selbar는 존재하지 않는다. */
       toolbarLeft={(
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {(['', '출자', '배분'] as ('' | Gb)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fGb === s} onClick={() => setFGb(s)}>{s || '출자/배분: 전체'}</FilterChip>
           ))}

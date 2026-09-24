@@ -386,7 +386,6 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
       /* 툴바 좌 = 주 필터 칩(보고구분) + 적용 중인 드로어 값 칩. 선택 중엔 비우고 선택 바(contextActions)가 대신한다 */
       toolbarLeft={selCount > 0 ? null : (
         <>
-          <Icon name="filter" size={16} className="text-caption" />
           {(['', '월간보고서', '반기보고서'] as ('' | ReportKind)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fRt === s} onClick={() => setFRt(s)}>{s || '보고구분: 전체'}</FilterChip>
           ))}

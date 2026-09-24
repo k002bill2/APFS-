@@ -28,6 +28,14 @@ describe('적용 칩 = applied_filters.tsx 단일 소유', () => {
   });
 });
 
+describe('깔때기 = GridFrame 단일 소유', () => {
+  it('페이지가 툴바 깔때기 아이콘을 직접 그리지 않는다(프레임이 항상 그린다)', () => {
+    const hits = walk(ROOT).filter((f) => relative(ROOT, f) !== 'dash/grid_frame.tsx' && /<Icon name="filter"/.test(strip(readFileSync(f, 'utf8'))))
+      .map((f) => relative(ROOT, f));
+    expect(hits).toEqual([]);
+  });
+});
+
 describe('activeFilters', () => {
   it('빈 값·공백 값은 적용되지 않은 것으로 본다', () => {
     const r = activeFilters([{ label: 'a', value: '' }, { label: 'b', value: '  ' }, { label: 'c', value: 'x' }]);

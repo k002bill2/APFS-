@@ -331,7 +331,6 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       favRoute="code-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={<>
-        <Icon name="filter" size={16} className="text-caption" />
         {(['', '여', '부'] as const).map((u) => <FilterChip key={u || 'all'} active={fUse === u} onClick={() => setFUse(u)}>{u ? `사용 ${u}` : '사용여부: 전체'}</FilterChip>)}
       </>}
       appliedFilters={[
