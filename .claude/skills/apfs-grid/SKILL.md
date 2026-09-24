@@ -194,6 +194,19 @@ const selActions = selected ? (            // 또는 selCount > 0 ?
   **후일담(2026-09-17)**: `asset_funding` 은 결국 선택을 통째로 걷어냈다(체크박스 없는 화면의 선택 툴바는 군더더기 —
   사용자 판정). 이 화면은 더 이상 `contextActions` 소비처가 아니다.
 
+### 값 쌍 일괄 변경 = 콤보 버튼 `ConfirmCombo` (2026-09-24 사용자 결정 — 정기보고·조합원총회)
+선택 바에서 체크한 행의 **상태값을 두 값 중 하나로 일괄 지정**하는 액션(확정/미확정 등)은 버튼 2개를 따로 두지 않고
+**붙은 세그먼트 콤보 `[확정|미확정]`** 한 묶음으로 둔다 — 공용 `src/dash/confirm_combo.tsx`(`ConfirmCombo` + `uniformConfirm`).
+- **활성 세그먼트 = 선택 행의 현재 값**(primary 채움 + ✓). 전부 같은 값이면 그 값, **섞였거나 빈값('')·null 이 끼면 둘 다 비활성**.
+  ✗ 종전 `확정=primary` 고정 / `미확정=outline` 고정은 "지금 상태"처럼 읽혀 오인을 부른다(사용자 지적 — 미확정 행을 골라도 확정이 켜져 보였다).
+- 클릭 = **"이 값으로 변경" 액션**(토글 아님). 활성 세그먼트를 다시 눌러도 같은 값을 재적용하고, 게이트·toast 는 호출부 `bulk*` 가 그대로 맡는다.
+- 활성값은 **파생**한다 — `useMemo(() => uniformConfirm(rows.filter(r => selIds.includes(r.id)).map(r => r.<필드>)), [rows, selIds])`. 별도 state 금지(→[[apfs-aggrid]] "선택 상태는 selIds 하나로").
+- 필드가 둘이면 콤보도 둘, 앞에 짧은 라벨: `<ConfirmCombo label="일정" …/> <ConfirmCombo label="결과" …/>`(조합원총회). 라벨은 그룹 `aria-label`(`일정 확정여부`)에도 쓰인다.
+- 접근성: 그룹 `role="group"`, 세그먼트 `aria-pressed` 가 현재 값을 알린다.
+- 구현 함정(이미 컴포넌트가 피한다 — 손으로 다시 만들지 말 것): 세그먼트 구분선은 **inline `borderLeft`**(`border-0`+`border-l` 유틸 겹치면 CSS 순서로 무음 소실), 래퍼 `overflow-hidden` 금지(focus 링 잘림), `UI.Button` 으로 조립 금지(세그먼트 모양 불가).
+- 확정/미확정 외의 두 값 쌍(사용/미사용 등)이 생기면 `ConfirmCombo` 에 옵션을 받도록 넓힌다 — 페이지별 사본 금지.
+- 적용: `regular_report_manage` · `general_meeting_manage`. ⚠ **단계 전이(심사단계·승인상태)는 이 패턴이 아니다** — 행 단계에 따라 버튼이 사라지는 [[apfs-stage-workflow]](`investment_review`·`subfund_manage`)를 따른다. 기준: 두 값을 **아무 방향으로나 자유롭게** 오갈 수 있으면 콤보, 순서가 있는 전이면 stage-workflow.
+
 ### 프레임 쪽 구현 계약 (건드릴 때 반드시 읽을 것)
 - **body Portal 필수.** GridFrame 루트에 `animation: dashFade … both` 가 걸려 있어 종료 상태가 항등행렬로 굳고, 그 transform 이 (a) 새 쌓임맥락 (b) `fixed` 의 컨테이닝블록을 만든다. 포털 없이 `fixed` 를 쓰면 좌표가 뷰포트가 아니라 **카드 기준**이 되고 z 도 갇힌다(→[[z-index]] 규칙 3·5의 문서화된 버그와 동일 원인).
 - **z = 55 (raw 정수, 토큰 아님).** 오버레이가 아니라 셸 chrome 계층(≤60) 소속 — sticky 푸터(20) 위, FAB(60) 아래, 모달(80)이 항상 덮는다.
