@@ -33,6 +33,7 @@ import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
 import { GridFrame, FooterActions } from './grid_frame';
+import { SectionHead } from './risk_grid';   // 여러 표 세로 쌓기 공용 섹션 헤더
 import { LeafTabBody } from './leaf_tabs';   // 리프 탭 묶음(opt-in)
 import type { LeafTabsSlot } from './leaf_tabs';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
@@ -303,20 +304,6 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
   );
 }
 
-/* 섹션 헤더 — 목업 `.sectitle`(번호 칩 + 제목) + `.listbar`(캡션)을 한 행으로 합친다.
-   번호 칩은 ColorChip(아이콘 전용)이 아니라 숫자를 담는 primary soft 배지다. */
-function SectionHead({ n, title, cap }: { n: string; title: string; cap: string }) {
-  return (
-    <div className="flex items-center gap-2 flex-wrap" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)' }}>
-      <span aria-hidden className="inline-flex items-center justify-center shrink-0 font-bold"
-        style={{ width: 20, height: 20, borderRadius: 6, fontSize: 12, background: 'color-mix(in srgb, var(--primary) 13%, transparent)', color: 'var(--primary)' }}>{n}</span>
-      {/* preflight:false — h4는 UA 기본 마진이 살아 있어 m-0 필수 */}
-      <h4 className="font-bold m-0" style={{ fontSize: 15 }}>{title}</h4>
-      <span className="text-caption" style={{ fontSize: 12.5 }}>{cap}</span>
-    </div>
-  );
-}
-
 const NO_ROWS = '<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회된 데이터가 없습니다.</span>';
 
 /* ──────────────────────────────
@@ -448,7 +435,7 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
 
       <LeafTabBody slot={tabs}>
       {/* ── ① 투자자산 ── */}
-      <SectionHead n="1" title="투자자산" cap="운용사 장부 ↔ 수탁기관 보관내역 대사" />
+      <SectionHead title="투자자산" cap="운용사 장부 ↔ 수탁기관 보관내역 대사" />
       <div>
         <AgGridReact<InvestAssetRow>
           theme={apfsTheme}
@@ -463,7 +450,7 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
       </div>
 
       {/* ── ② 미투자자산 거래 (원문 샘플 없음 — 빈 상태) ── */}
-      <SectionHead n="2" title="미투자자산 거래" cap="종목·보유주수·잔액 대사" />
+      <SectionHead title="미투자자산 거래" cap="종목·보유주수·잔액 대사" />
       <div>
         <AgGridReact<NonInvestTradeRow>
           theme={apfsTheme}
@@ -478,7 +465,7 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
       </div>
 
       {/* ── ③ 미투자자산 (원문 샘플 없음 — 빈 상태) ── */}
-      <SectionHead n="3" title="미투자자산" cap="계좌번호·잔액 대사" />
+      <SectionHead title="미투자자산" cap="계좌번호·잔액 대사" />
       <div>
         <AgGridReact<NonInvestRow>
           theme={apfsTheme}

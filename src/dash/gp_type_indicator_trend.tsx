@@ -73,7 +73,7 @@ export function GpTypeIndicatorTrend({ onNav }: { onNav?: (r: string) => void })
       footerLeft={<span>{`운용사 유형 ${type || '전체'} · 기간 ${from ? String(from) : '-'} ~ ${to ? String(to) : '-'} · ${String(idx.length)}개월 · 월별 값은 원문 예시(평균만 확정값)`}</span>}>
       {TREND_SECTIONS.map((sec, i) => (
         <section key={sec.id} aria-labelledby={`trend-${sec.id}`}>
-          <SectionHead n={i + 1} title={sec.title} cap={sec.chartTitle} />
+          <SectionHead title={sec.title} cap={sec.chartTitle} />
           <span id={`trend-${sec.id}`} className="sr-only">{sec.title}</span>
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-2" style={{ padding: '0 18px 18px' }}>
             {sec.series.map((s) => <IndicatorPanel key={s.name} s={s} idx={idx} />)}

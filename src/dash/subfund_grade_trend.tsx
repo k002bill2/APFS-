@@ -43,11 +43,11 @@ function GradeDonut({ year, pct }: { year: number; pct: number }) {
   );
 }
 
-function GradeSection({ n, table }: { n: number; table: TableMeta }) {
+function GradeSection({ table }: { table: TableMeta }) {
   const normal = table.rows.find((r) => r.grade === '정상')!;
   return (
     <section aria-label={table.title}>
-      <SectionHead n={n} title={table.title!} />
+      <SectionHead title={table.title!} />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,460px)]" style={{ padding: '0 18px 18px' }}>
         <div className="min-w-0"><ReadGrid table={table} ariaLabel={table.title} /></div>
         <div className="min-w-0 border border-border" style={{ borderRadius: 12, padding: '12px 14px', background: 'var(--card)' }}>
@@ -85,8 +85,8 @@ export function SubfundGradeTrend({ onNav }: { onNav?: (r: string) => void }) {
       filters={filters} onReset={reset}
       footerLeft={<span>{`기준년도 ${year ? String(year) : '-'} · ${GRADE_YEARS[0]}~${GRADE_YEARS[GRADE_YEARS.length - 1]}년 등급별 값`}</span>}
       onExport={exportExcel}>
-      <GradeSection n={1} table={FUND_GRADE} />
-      <GradeSection n={2} table={MGR_GRADE} />
+      <GradeSection table={FUND_GRADE} />
+      <GradeSection table={MGR_GRADE} />
     </RiskPage>
   );
 }

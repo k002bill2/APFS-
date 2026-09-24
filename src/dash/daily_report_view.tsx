@@ -48,7 +48,7 @@ export function DailyReportView({ onNav, tabs }: { onNav?: (r: string) => void; 
         <h3 className="m-0 font-bold" style={{ fontSize: 16, padding: '16px 18px 4px' }}>{DAILY_TITLE}</h3>
         {DAILY_SECTIONS.map((sec, i) => (
           <section key={sec.title} aria-label={sec.title}>
-            <SectionHead n={i + 1} title={sec.title} />
+            <SectionHead title={sec.title} />
             <PropTable sec={sec} />
           </section>
         ))}
