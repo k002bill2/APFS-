@@ -11,13 +11,14 @@
    날짜 입력은 네이티브 date 가 아니라 SchemaField date(DatePicker — apfs-datepicker). */
 import React, { useEffect, useRef, useState } from 'react';
 import { format } from 'date-fns';
-import { UI } from './components';
+import { UI, type SubmitResult } from './components';
 import { toast } from './ui/sonner';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
-import { SchemaField, isPlainWrapControl } from './schemas/renderers';
+import { CONTROL_BOX, SchemaField, isPlainWrapControl } from './schemas/renderers';
 import { Checkbox } from './ui/checkbox';
 import type { FieldSpec } from './schemas/types';
 import { UploadDropzone } from './trust_upload';
+import { isAddressEmpty } from './fields/address_value';
 import type { Row } from './risk_table_meta';
 import {
   HIST_SECTIONS, HIST_REQUIRED, LEDGER_UNIT_PRICE, LEDGER_FIRST_REG,
@@ -28,7 +29,7 @@ import {
 import type { HistSection } from './brief_data';
 import { ledgerPatch } from './brief_data';
 
-const { Button, IconBtn } = UI;
+const { Button, SaveButton } = UI;
 const say = (msg: string) => () => toast(msg);
 /** 선택 인덱스 제거(불변) */
 const dropAt = (rows: string[][], idx: number[]) => rows.filter((_, i) => !idx.includes(i));
@@ -168,26 +169,38 @@ export function initialLedger(edit: boolean, row?: Row): Record<string, string> 
   };
 }
 
-/** 이력 섹션의 입력칸(원문 histSec 의 inputHtml) */
-function HistInputs({ s, v, set, edit }: { s: HistSection; v: Record<string, string>; set: (k: string) => (x: string) => void; edit: boolean }) {
-  const search = (what: string) => <IconBtn icon="search" label={`${what} 검색`} size={34} onClick={say(`${what}(주소) 검색 팝업 (목업)`)} />;
+/** 이력 섹션의 입력칸(원문 histSec 의 inputHtml) + 행 추가 버튼. 추가는 섹션 제목 옆이 아니라
+    **입력칸 오른쪽**에 붙인다 — 방금 입력한 값을 이력에 넣는 동작이라 입력칸과 한 줄로 읽혀야 한다.
+    grow = 전체 폭 입력(long)이면 입력칸이 남는 폭을 채우고 버튼은 그 끝에 붙는다 */
+function HistRow({ add, grow, children }: { add: React.ReactNode; grow?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-end gap-x-4">
+      {grow ? <div className="min-w-0 flex-1">{children}</div> : children}
+      {/* 버튼은 자연 높이, 입력칸 높이(CONTROL_BOX) 줄 안에서 세로 가운데 */}
+      <div className="mb-3.5 shrink-0 flex items-center" style={{ height: CONTROL_BOX.height }}>{add}</div>
+    </div>
+  );
+}
+function HistInputs({ s, v, set, edit, add }: { s: HistSection; v: Record<string, string>; set: (k: string) => (x: string) => void; edit: boolean; add: React.ReactNode }) {
   switch (s.key) {
+    /* 등록번호·조합명칭, 시작일·종료일은 한 쌍이라 2단 그리드(반폭 칸)로 벌리지 않고 내용 폭으로 나란히 붙인다 */
     case 'nm': return (
-      <Grid2>
+      <HistRow add={add}>
         <F spec={T('regno', '등록번호', { required: true, placeholder: '예: 2025-01', control: edit ? 'readonly' : 'text' })} value={v.regno} onChange={set('regno')} />
         <F spec={T('nm', '조합명칭', { required: true, placeholder: '조합 명칭' })} value={v.nm} onChange={set('nm')} />
-      </Grid2>
+      </HistRow>
     );
     case 'dur': return (
-      <Grid2>
+      <HistRow add={add}>
         <F spec={D('dur1', '존속기간 시작일')} value={v.dur1} onChange={set('dur1')} />
         <F spec={D('dur2', '존속기간 종료일')} value={v.dur2} onChange={set('dur2')} />
-      </Grid2>
+      </HistRow>
     );
-    case 'addr': return <F spec={T('addr', '소재지', { placeholder: '주소 검색으로 입력', long: true })} value={v.addr} onChange={set('addr')} full>{search('소재지')}</F>;
-    case 'amt': return <F spec={T('amt', '출자약정총액', { placeholder: '원' })} value={v.amt} onChange={set('amt')} />;
-    case 'gpname': return <F spec={T('gpname', '업무집행조합원 명칭', { placeholder: '업무집행조합원 명칭', long: true })} value={v.gpname} onChange={set('gpname')} full />;
-    case 'gpaddr': return <F spec={T('gpaddr', '업무집행조합원의 주소', { placeholder: '주소 검색으로 입력', long: true })} value={v.gpaddr} onChange={set('gpaddr')} full>{search('업무집행조합원의 주소')}</F>;
+    /* 소재지·업무집행조합원의 주소 = 다음(카카오) 우편번호 검색 — SchemaField 'address'(AddressField). 값은 '(12345) 주소' 단일 문자열 */
+    case 'addr': return <HistRow add={add} grow><F spec={T('addr', '소재지', { control: 'address', long: true })} value={v.addr} onChange={set('addr')} full /></HistRow>;
+    case 'amt': return <HistRow add={add}><F spec={T('amt', '출자약정총액', { placeholder: '원' })} value={v.amt} onChange={set('amt')} /></HistRow>;
+    case 'gpname': return <HistRow add={add} grow><F spec={T('gpname', '업무집행조합원 명칭', { placeholder: '업무집행조합원 명칭', long: true })} value={v.gpname} onChange={set('gpname')} full /></HistRow>;
+    case 'gpaddr': return <HistRow add={add} grow><F spec={T('gpaddr', '업무집행조합원의 주소', { control: 'address', long: true })} value={v.gpaddr} onChange={set('gpaddr')} full /></HistRow>;
   }
 }
 
@@ -201,27 +214,32 @@ export function LedgerFormModal({ mode, row, onSave, onClose }: { mode: 'new' | 
 
   /* 원문 addHistRow — 빈 값이면 경고, 아니면 [값…, 오늘, 오늘] 을 맨 위에 */
   const addHist = (s: HistSection) => {
-    const vals = s.key === 'dur' ? [v.dur1, v.dur2] : [v[s.key].trim()];
+    const vals = s.key === 'dur' ? [v.dur1, v.dur2] : (s.key === 'addr' || s.key === 'gpaddr') && isAddressEmpty(v[s.key]) ? [''] : [v[s.key].trim()];
     if (s.key === 'dur' && !v.dur2 && v.dur1) { toast('존속기간 종료일을 입력하세요'); return; }
     if (vals.some((x) => !x)) { toast(HIST_REQUIRED[s.key]); return; }
     setHist((p) => ({ ...p, [s.key]: [[...vals, today(), today()], ...p[s.key]] }));
     toast.success('변경 이력이 추가되었습니다 (목업)');
   };
-  /* 저장 = 목록 반영(수정은 그 행 교체, 입력은 새 행) + 원문 토스트. 등록번호·조합명칭은 원문 필수(*) */
-  const save = () => {
+  /* 저장 = 목록 반영(수정은 그 행 교체, 입력은 새 행) + 원문 토스트. 등록번호·조합명칭은 원문 필수(*).
+     SaveButton 계약: 검증 실패면 undefined(스피너 없음), 통과면 commit 을 돌려줘 '저장 중' 모션 뒤 실행된다 */
+  const save = (): SubmitResult => {
     if (!v.regno.trim() || !v.nm.trim()) { toast('등록번호와 조합명칭을 입력하세요'); return; }
-    onSave(ledgerPatch(v));
-    toast.success('등록원부가 저장되었습니다 (목업)');
-    dlgRef.current?.close();
+    return () => {
+      onSave(ledgerPatch(v));
+      toast.success('등록원부가 저장되었습니다 (목업)');
+      dlgRef.current?.close();
+    };
   };
 
   return (
     <Modal dlgRef={dlgRef} wide onClose={onClose} title={edit ? '등록원부 수정' : '등록원부 입력'}
       badge={edit ? <>등록번호 {v.regno} · 잠금</> : '신규 · PK 편집'}
-      footer={<><Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button><Button variant="primary" size="sm" onClick={save}>저장</Button></>}>
+      footer={<><Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button><SaveButton onSubmit={save} /></>}>
       {HIST_SECTIONS.map((s) => (
-        <Section key={s.key} title={s.title} add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={() => addHist(s)}>추가</Button>}>
-          <HistInputs s={s} v={v} set={set} edit={edit} />
+        <Section key={s.key} title={s.title}>
+          {/* 입력 옆 버튼은 sm 자연 높이 그대로(apfs-form-modal 규칙 5 — 34px 맞춤은 2026-09-21 원복). 접근名에 섹션명을 붙여 '추가' 6개를 구분 */}
+          <HistInputs s={s} v={v} set={set} edit={edit}
+            add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={() => addHist(s)}><span className="sr-only">{s.title} </span>추가</Button>} />
           <MiniTable heads={s.heads} rows={hist[s.key]} act="edit" label={`${s.title} 변경 이력`} right={s.key === 'amt' ? [0] : []}
             onDelete={(idx) => setHist((p) => ({ ...p, [s.key]: dropAt(p[s.key], idx) }))} />
         </Section>

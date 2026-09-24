@@ -55,6 +55,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
    - 목업 원문이 추가 버튼을 우측(`.sacts` 등)에 두어도 이 규칙이 우선한다. 모달 **푸터**(닫기·저장)는 이 규칙 대상이 아니다 — 기존대로 `DialogFooter` 우측.
    - 적용처: `registry_ledger_modals.tsx` `Section`(등록원부 입력/수정·조합원·전문인력 모달), `gp_quant_indicator_modal.tsx`(행추가·행삭제 좌측), 소제목 선례 `subfund_form_modal.tsx`(업무집행조합원 `행 추가`)·등록원부 `약력`. 가드 테스트: `registry_ledger_modals.test.ts` "Section — 추가 버튼은 제목 바로 옆 좌측".
    - ⚠ 미정합 잔존(별건): `program_help_modal.tsx`(섹션 아래 좌측 `action`). 손댈 때 이 규칙으로 맞춘다.
+   - **예외(2026-09-25 사용자 결정): 등록원부 입력/수정 모달의 이력 섹션 6종**(`LedgerFormModal` — 조합명칭·존속기간·소재지·출자약정총액·업무집행조합원 명칭/주소)은 `추가`가 "방금 입력한 값을 이력에 넣는" 동작이라 제목 옆이 아니라 **입력칸 오른쪽**(`HistRow`)에 붙인다. 되돌리지 말 것. 같은 모달의 다른 섹션·조합원·전문인력 모달은 기본 규칙 그대로.
 
 ## 핵심 계약 (CRITICAL)
 1. **새 컨트롤은 `FIELD_CONTROLS`(types.ts)에 먼저 추가.** 컨트롤 종류는 `FIELD_CONTROLS` 배열이 **타입+zod enum을 동시 공급(SSOT)**. 배열에 없는 control을 스키마에 쓰면 `PageSchemaZ.parse`가 실패해 **스키마 테스트·빌드가 깨진다**. 추가 순서: ① `FIELD_CONTROLS`에 문자열 추가 → ② `SchemaField`(renderers.tsx)에 `case` 추가 → ③ 스키마에서 사용.
