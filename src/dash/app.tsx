@@ -45,6 +45,7 @@ import { AuditLog } from './audit_log';                                      // 
 import { LoginDemo } from './login_demo';                                    // 로그인(S0_001, Shell 없는 UI 데모)
 import { OnboardingIssue } from './onboarding_issue';                        // 발급 온보딩(S0_002, 동상)
 import { OnboardingInvite } from './onboarding_invite';                      // 초대 온보딩(S0_003, 동상)
+import { MonthlyReportWindow } from './monthly_report';                      // 월간보고 상세(S1_06_01) — 정기보고에서 여는 팝업 창
 /* 원문이 **한 화면에 여러 표/여러 조회기준**이라 PageSchema(columns 1벌)로 담기지 않는 4리프.
    나머지 9리프는 페이지 코드 0줄(스키마 주도 GenericListPage + 원문 리터럴 sample)로 남는다.
    근거는 각 파일 헤더 주석 참조(2026-09-15 source-fidelity 정정). */
@@ -141,7 +142,11 @@ const hashRoute = () => {
 const APP_ROUTE_TITLES: Record<string, string> = {
   main: "메인 대시보드", designsystem: "디자인 시스템", editor: "문서 편집기", schedule: "일정 관리",
   login: "로그인", "onboarding-issue": "발급 온보딩", "onboarding-invite": "초대 온보딩",
+  "monthly-report": "월간보고",
 };
+// 팝업 창 전용 route — 메인 창과 localStorage 를 공유하므로 apfs.route·방문기록에 남기지 않는다
+// (남기면 메인 창을 새로고침했을 때 팝업 화면이 열린다).
+const POPUP_ROUTES = new Set(["monthly-report"]);
 const routeTitleFor = (r: string) => APP_ROUTE_TITLES[r] || findMenuContext(r).title;
 
 const { useState, useEffect, useRef } = React;
@@ -178,7 +183,7 @@ function App() {
     ls.set("apfs.theme", theme);
   }, [theme]);
   useEffect(() => {
-    ls.set("apfs.route", route);
+    if (!POPUP_ROUTES.has(route)) ls.set("apfs.route", route);
     try {
       const nextHash = `#/${route}`;
       if (window.location.hash !== nextHash) window.history.replaceState(null, '', nextHash);
@@ -192,7 +197,7 @@ function App() {
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
-  useEffect(() => { HistoryStore.push(route); }, [route]);   // 방문기록 적재(복원된 초기 라우트 포함)
+  useEffect(() => { if (!POPUP_ROUTES.has(route)) HistoryStore.push(route); }, [route]);   // 방문기록 적재(복원된 초기 라우트 포함)
   useEffect(() => {                                            // 라우트 전환마다 로딩 스켈레톤 노출
     const changed = mountedRef.current;                        // 초기 마운트 false, 이후 전환 true
     setRouteChanged(changed);
@@ -301,13 +306,15 @@ function App() {
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;
 
   // 로그인·온보딩 3종은 메뉴 Shell/LNB의 자식이 아닌 독립 데모 route다(GNB/LNB 없이 단독 표시).
+  // 월간보고(monthly-report)도 Shell 없이 단독 표시한다 — 정기보고에서 window.open 으로 여는 팝업 창 내용이다.
   // 실제 인증·계정 활성화·권한 판정은 수행하지 않는다.
   // Shell 밖이라도 MotionConfig 는 감싼다 — ui/checkbox·radio-group 의 scale 팝은 JS 구동 Motion 이라
   // tokens.css 의 prefers-reduced-motion 차단이 닿지 않고, 이 래퍼가 유일한 저모션 관문이다(Codex 리뷰 2026-09-19).
   const authPage =
     route === "login" ? <LoginDemo onNav={onNav} /> :
     route === "onboarding-issue" ? <OnboardingIssue onNav={onNav} /> :
-    route === "onboarding-invite" ? <OnboardingInvite onNav={onNav} /> : null;
+    route === "onboarding-invite" ? <OnboardingInvite onNav={onNav} /> :
+    route === "monthly-report" ? <MonthlyReportWindow onNav={onNav} /> : null;
   if (authPage) return <MotionConfig reducedMotion="user">{authPage}</MotionConfig>;
 
   return (

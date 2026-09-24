@@ -387,10 +387,55 @@ function DistribTable({ unit }: { unit: Unit }) {
   );
 }
 
-/* ── 팝업 본체 ── */
-export function MonthlyReportModal({ onClose }: { onClose: () => void }) {
+/* ── 보고서 본문 — 담는 그릇과 무관(이 Dialog · 정기보고의 팝업 창 monthly_report.tsx 가 공유). 단위 토글을 스스로 가진다 ── */
+export function MonthlyReportBody() {
   const [unit, setUnit] = useState<Unit>('원');
   const un = `(단위: ${unit})`;
+  return (
+    <>
+      <UnitSeg unit={unit} onChange={setUnit} />
+      <Section title="1. 펀드개요" unitNote={un}>
+        <FundOverview unit={unit} />
+        <SubTitle>라. 조합구성</SubTitle>
+        <MembersTable unit={unit} />
+      </Section>
+      <Section title="2. 투자 진행상황" unitNote={un}>
+        <SubTitle>가. 투자집행 업체현황</SubTitle>
+        <InvestTable unit={unit} />
+        <p className="text-caption mt-2 mb-4" style={{ fontSize: 12 }}>{NOTES.invest}</p>
+        <SubTitle>나. 투자집행 업체 사후관리 등급</SubTitle>
+        <GradeTable />
+        <p className="text-caption mt-2 mb-0" style={{ fontSize: 12 }}>{NOTES.grade}</p>
+        <p className="text-caption mt-1 mb-3" style={{ fontSize: 12 }}>{NOTES.gradeAction}</p>
+        <SubTitle>&lt;등급분류기준&gt;</SubTitle>
+        <CriteriaTable />
+        <div className="mt-4"><SubTitle>다. 회수내역</SubTitle></div>
+        <RecoveryTable unit={unit} />
+        <p className="text-caption mt-2 mb-4" style={{ fontSize: 12 }}>{NOTES.recovery}</p>
+        <SubTitle>라. 수시보고 내역</SubTitle>
+        <OccTable />
+        <p className="text-caption mt-2 mb-0" style={{ fontSize: 12 }}>{NOTES.occ}</p>
+        <p className="text-caption mt-1 mb-0" style={{ fontSize: 12 }}>{NOTES.occEtc}</p>
+      </Section>
+      <Section title="3. 미투자자산 운용현황" unitNote={un}>
+        <SubTitle>예금내역</SubTitle>
+        <DepositTable unit={unit} />
+      </Section>
+      <Section title="4. 수입내역 (일자별 발생내역)" unitNote={un}>
+        <LedgerTable caption="수입내역 — 일자별 발생내역" rows={INCOME} total={INCOME_TOTAL} unit={unit} />
+      </Section>
+      <Section title="5. 비용내역 (일자별 발생내역)" unitNote={un} notes={[NOTES.expense]}>
+        <LedgerTable caption="비용내역 — 일자별 발생내역" rows={EXPENSE} total={EXPENSE_TOTAL} unit={unit} />
+      </Section>
+      <Section title="6. 누적분배내역" unitNote={un}>
+        <DistribTable unit={unit} />
+      </Section>
+    </>
+  );
+}
+
+/* ── 팝업 본체 ── */
+export function MonthlyReportModal({ onClose }: { onClose: () => void }) {
   const dlgRef = React.useRef<DialogHandle>(null);
   return (
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -404,43 +449,7 @@ export function MonthlyReportModal({ onClose }: { onClose: () => void }) {
           </div>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">
-          <UnitSeg unit={unit} onChange={setUnit} />
-          <Section title="1. 펀드개요" unitNote={un}>
-            <FundOverview unit={unit} />
-            <SubTitle>라. 조합구성</SubTitle>
-            <MembersTable unit={unit} />
-          </Section>
-          <Section title="2. 투자 진행상황" unitNote={un}>
-            <SubTitle>가. 투자집행 업체현황</SubTitle>
-            <InvestTable unit={unit} />
-            <p className="text-caption mt-2 mb-4" style={{ fontSize: 12 }}>{NOTES.invest}</p>
-            <SubTitle>나. 투자집행 업체 사후관리 등급</SubTitle>
-            <GradeTable />
-            <p className="text-caption mt-2 mb-0" style={{ fontSize: 12 }}>{NOTES.grade}</p>
-            <p className="text-caption mt-1 mb-3" style={{ fontSize: 12 }}>{NOTES.gradeAction}</p>
-            <SubTitle>&lt;등급분류기준&gt;</SubTitle>
-            <CriteriaTable />
-            <div className="mt-4"><SubTitle>다. 회수내역</SubTitle></div>
-            <RecoveryTable unit={unit} />
-            <p className="text-caption mt-2 mb-4" style={{ fontSize: 12 }}>{NOTES.recovery}</p>
-            <SubTitle>라. 수시보고 내역</SubTitle>
-            <OccTable />
-            <p className="text-caption mt-2 mb-0" style={{ fontSize: 12 }}>{NOTES.occ}</p>
-            <p className="text-caption mt-1 mb-0" style={{ fontSize: 12 }}>{NOTES.occEtc}</p>
-          </Section>
-          <Section title="3. 미투자자산 운용현황" unitNote={un}>
-            <SubTitle>예금내역</SubTitle>
-            <DepositTable unit={unit} />
-          </Section>
-          <Section title="4. 수입내역 (일자별 발생내역)" unitNote={un}>
-            <LedgerTable caption="수입내역 — 일자별 발생내역" rows={INCOME} total={INCOME_TOTAL} unit={unit} />
-          </Section>
-          <Section title="5. 비용내역 (일자별 발생내역)" unitNote={un} notes={[NOTES.expense]}>
-            <LedgerTable caption="비용내역 — 일자별 발생내역" rows={EXPENSE} total={EXPENSE_TOTAL} unit={unit} />
-          </Section>
-          <Section title="6. 누적분배내역" unitNote={un}>
-            <DistribTable unit={unit} />
-          </Section>
+          <MonthlyReportBody />
         </div>
         <DialogFooter className="px-[46px]">
           <div />
