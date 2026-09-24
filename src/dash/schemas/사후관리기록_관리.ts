@@ -13,7 +13,14 @@
    사용자가 복합 화면 후보로 지목했으나, S1_42 원문은 **단일 표 1개 + 단일 섹션 편집 모달**이다
    (행 선택 → 수정/삭제). PageSchema + RowFormModal 이 그대로 표현하므로 전용 .tsx 가 얻는 충실도가
    없다. 대신 원문 모달의 필드 구성(대분류*·자펀드*·투자기업·해당일자*·유형·내용·전달형태·
-   Counterpart·관련문서)을 fields 에 그대로 옮겼다. */
+   Counterpart·관련문서)을 fields 에 그대로 옮겼다.
+
+   ── 검색조건(S1_42:231-240) ── 원문 `.searchbox` 라벨 순서 그대로: 운용사·자펀드·투자기업·기간
+   (모펀드 제외 — CHECK_REPORT 모펀드 규칙). 원문에 없던 대분류·유형·전달형태 필터는 뺐다(모달 필드로는 남는다).
+   · 운용사 = 원문 <select> 옵션 `KB증권` 1개('전체' 없음, 기본 선택). 원문 행에 운용사 컬럼이 없다 → no-op.
+   · 자펀드 = 원문 옵션 전체·현대동양농식품사모투자전문회사 → subFund 정확일치(3행 중 1행이 그 값).
+   · 투자기업 = 원문 `코드 + 명칭 + 검색` 묶음(codeName) → investee 명칭 부분일치(원문 3행은 투자기업이 비어 있다).
+   · 기간 = 원문 범위(기본 2000-01-01~2026-08-12) → 해당일자(recordDate) 범위. 3행 모두 범위 안이라 기본값이 행을 줄이지 않는다. */
 import type { PageSchema } from './types';
 
 export const schema: PageSchema = {
@@ -46,7 +53,13 @@ export const schema: PageSchema = {
     { key: 'counterpart',  label: 'Counterpart', control: 'text' },
     { key: 'documents',    label: '관련문서',    control: 'filepond' },
   ],
-  filters: ['대분류', '유형', '전달형태'],
+  filters: ['운용사', '자펀드', '투자기업', '기간'],
+  filterSpecs: {
+    운용사: { kind: 'select', options: ['KB증권'], def: 'KB증권', allLabel: null },
+    자펀드: { kind: 'select', options: ['현대동양농식품사모투자전문회사'], key: 'subFund' },
+    투자기업: { kind: 'codeName', key: 'investee' },
+    기간: { kind: 'dayRange', def: '2000-01-01~2026-08-12', key: 'recordDate' },
+  },
   // 대분류 배지 톤 — 원문 `bdTag()`가 제재조치를 경고색(.tag n), 일반 사후관리를 기본색으로 칠한다.
   statusDomain: [
     { label: '일반 사후관리', tone: 'info' },

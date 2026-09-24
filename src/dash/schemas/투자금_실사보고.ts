@@ -22,7 +22,9 @@
      구분할 수 없다(2026-09-16 Codex 5R P2).
 
    ⚠ `잔여일수`는 숫자가 아니라 상태 문구다 — 원문 값이 `보고완료` / `171일 전` / `45일 전` /
-     `보고 대상 제외` / `130일 초과` 다. type:'number'로 두면 셀이 우측정렬 숫자 포맷을 시도한다. */
+     `보고 대상 제외` / `130일 초과` 다. type:'number'로 두면 셀이 우측정렬 숫자 포맷을 시도한다.
+
+   ── 검색조건 ── 원문 `.searchbox` 항목·옵션·기본값과 행 매칭(key) 판단 근거는 아래 `filters`/`filterSpecs` 위 주석에 있다(2026-09-24). */
 import type { PageSchema } from './types';
 
 export const schema: PageSchema = {
@@ -50,12 +52,26 @@ export const schema: PageSchema = {
     { key: 'note',            label: '비고',        type: 'text',   align: 'left' },
   ],
   fields: [],
-  /* 원문 검색조건 6종(모펀드·계정구분·담당자·자펀드·보고여부·투자기간) 중 **행 데이터에 대응
-     필드가 있는 것만** 노출한다. `담당자`·`보고여부`·`투자기간`·`모펀드`는 원문 행에 그 값이
-     없어 라벨이 tag 로 떨어지고, rowMatchesFilters 가 row.category 와 대조해 표가 조용히
-     0건이 된다(filter_field.ts resolveFilterField 3단계 — 2026-09-16 Codex 지적).
-     없는 값을 지어내 채우지 않고, 도메인이 확인되면 그때 되살린다. */
-  filters: ['운용사', '자펀드', '투자기업', '투자유형', '확정여부'],
+  /* 검색조건(S1_40:206-223) — 원문 `.searchbox` 라벨 순서 그대로: 운용사·자펀드·계정구분·담당자·보고여부·투자기간
+     (모펀드는 읽기전용 표시 칸이라 제외 — CHECK_REPORT 모펀드 규칙). 원문에 없던 투자기업·투자유형·확정여부 필터는 뺐다.
+     행에 값이 없는 항목은 **행을 지어내지 않고** filterSpecs 로 no-op 을 명시한다(종전 "tag 로 떨어져 표 0건" 위험은
+     명시 명세가 막는다 — 명세 라벨은 tag 도출을 타지 않는다). 행 매칭(`key`) 판단:
+     · 운용사 = 원문 <select> 옵션 `원익투자파트너스` 1개('전체' 없음, 기본 선택). 7행 값은 `원익투자파트너스(주)` 라
+       정확일치가 성립하지 않는다(원문 내부 표기 불일치) → no-op. 접두 매칭 같은 새 규칙을 만들지 않는다.
+     · 자펀드 = 원문 옵션 '(전체)'뿐(선택지 미확인) → 빈 select 금지 규약대로 text 격하, subFund 부분일치.
+     · 계정구분(chipGroup 전체·농식품·수산) · 담당자·보고여부(원문 옵션 '전체'뿐 → text 격하) = 행에 값 없음 → no-op.
+     · 투자기간 = 원문 범위(기본 2024-08-12~2026-08-12) → **최초 투자일자**(firstInvestDate) 범위.
+       `투자일자` 컬럼은 미보고 4행이 '-' 라 기본 범위만으로 원문 행이 사라진다 — 7행 전부 값이 있는 최초 투자일자가
+       '투자한 기간'의 뜻에도 맞다. 7행 모두 기본 범위 안이라 기본값이 행을 줄이지 않는다. */
+  filters: ['운용사', '자펀드', '계정구분', '담당자', '보고여부', '투자기간'],
+  filterSpecs: {
+    운용사: { kind: 'select', options: ['원익투자파트너스'], def: '원익투자파트너스', allLabel: null },
+    자펀드: { kind: 'select', key: 'subFund' },
+    계정구분: { kind: 'select', options: ['농식품', '수산'] },
+    담당자: { kind: 'select' },
+    보고여부: { kind: 'select' },
+    투자기간: { kind: 'dayRange', def: '2024-08-12~2026-08-12', key: 'firstInvestDate' },
+  },
   statusDomain: [
     { label: '확정',   tone: 'success' },
     { label: '미확정', tone: 'warning' },

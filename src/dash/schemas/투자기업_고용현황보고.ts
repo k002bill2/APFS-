@@ -4,7 +4,16 @@
    원문 3행을 그대로 싣는다. 원문 tfoot 의 `합계`(총고용 155 · 청년 62)는 행이 아니라 집계라
    sample 에 넣지 않는다 — 넣으면 건수가 4건이 되고 합계가 데이터로 위조된다.
    대신 `totals`(opt-in)로 pinned 합계 행을 그린다(S1_32:255-263): `합계`(colspan 7 = No~기준년월) ·
-   매출액 = 원문 `TOTAL_SALES`(DATA sales 합) · 총고용·청년고용 = 원문 리터럴 155·62(= 3행 합) · 끝 3칸 `-`. */
+   매출액 = 원문 `TOTAL_SALES`(DATA sales 합) · 총고용·청년고용 = 원문 리터럴 155·62(= 3행 합) · 끝 3칸 `-`.
+
+   ── 검색조건(S1_32:206-218) ── 원문 `.searchbox` 라벨 순서 그대로: 운용사·자펀드·계정구분·담당자·기준년월
+   (모펀드는 농식품모태펀드 단일이라 제외 — CHECK_REPORT 모펀드 규칙). 옵션·기본값은 원문 <select>/chipGroup 그대로.
+   행 매칭(`key`) 판단 — 원문 조회 버튼은 토스트뿐(S1_32:382)이라 **원문 옵션 값이 원문 행에 실제로 있을 때만** 행을 거른다:
+   · 운용사 = 원문 옵션 NH투자증권 = 3행 gp 값 → gp 로 거른다.
+   · 자펀드 = 원문 옵션 `엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사`가 3행 자펀드(NH농식품밸류업투자조합)에
+     없다(원문 내부 불일치) → 거르면 선택 즉시 0건이라 no-op(`· 데이터 연동 후 적용`). 행을 옵션에 맞춰 고치지 않는다.
+   · 계정구분(전체·농식품·수산 chipGroup) · 담당자(원문 옵션 '전체'뿐 — 빈 select 금지 규약상 text 로 격하) = 행에 값 없음 → no-op.
+   · 기준년월 = 원문 범위(from~to, 기본 2026-06~2026-06) → baseYm 범위. 3행 모두 2026-06 이라 기본값이 행을 줄이지 않는다. */
 import type { PageSchema } from './types';
 
 export const schema: PageSchema = {
@@ -35,7 +44,14 @@ export const schema: PageSchema = {
     { key: 'youthEmployees', label: '청년고용인수', control: 'number' },
     { key: 'attachment',    label: '첨부파일',    control: 'filepond' },
   ],
-  filters: ['운용사', '자펀드', '계정구분', '기준년월'],
+  filters: ['운용사', '자펀드', '계정구분', '담당자', '기준년월'],
+  filterSpecs: {
+    운용사: { kind: 'select', options: ['NH투자증권'], key: 'gp' },
+    자펀드: { kind: 'select', options: ['엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사'] },
+    계정구분: { kind: 'select', options: ['농식품', '수산'] },
+    담당자: { kind: 'select' },
+    기준년월: { kind: 'monthRange', def: '2026-06~2026-06', key: 'baseYm' },
+  },
   statusDomain: [
     // 원문 `upTag()` 실값 — 완료(.tag g) / 미완료(.tag n).
     { label: '완료',   tone: 'success' },

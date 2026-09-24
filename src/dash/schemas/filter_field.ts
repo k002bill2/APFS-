@@ -3,14 +3,21 @@
    상세 필터 드로어의 컨트롤(year/enum/date/number/text/tag)과 행 필터 키를 결정한다. */
 import type { PageSchema } from './types';
 
-export type FilterKind = 'year' | 'month' | 'enum' | 'date' | 'number' | 'text' | 'tag';
+/* dayRange·monthRange·codeName 은 schema.filterSpecs(opt-in)로만 생긴다 — 라벨 휴리스틱은 만들지 않는다.
+   값은 모두 'a~b' 한 문자열(filterValues 가 Record<라벨, string> 이라서) — splitPair/joinPair 가 정본. */
+export type FilterKind = 'year' | 'month' | 'enum' | 'date' | 'number' | 'text' | 'tag' | 'dayRange' | 'monthRange' | 'codeName';
 
 export interface FilterField {
   label: string;        // 필터 라벨 (== schema.filters 항목)
   kind: FilterKind;     // 렌더할 컨트롤 종류
   options: string[];    // year/enum 선택지 (그 외 [])
   columnKey?: string;   // 행 데이터에서 매칭할 키 (해결 가능할 때만 — 없으면 행필터 불가)
+  allLabel?: null;      // null = 원문 select 에 '전체'가 없다(빈 선택지·칩 × 없음) — filterSpecs 전용
 }
+
+/** 'a~b' ↔ [a, b] — 범위(from~to)·코드/명칭(code~name) 공용. 둘 다 비면 '' (= 비활성) */
+export const splitPair = (v: string): [string, string] => { const [a = '', b = ''] = v.split('~'); return [a, b]; };
+export const joinPair = (a: string, b: string): string => (a || b ? `${a}~${b}` : '');
 
 // 사업/회계 년도 선택지 — 현재 연도(2026) 기준 내림차순 7년. (시드/픽커 공용 고정 도메인)
 export const YEAR_OPTIONS: readonly string[] = ['2026', '2025', '2024', '2023', '2022', '2021', '2020'];
@@ -30,6 +37,18 @@ export function resolveFilterField(label: string, schema: PageSchema): FilterFie
   const seeded = (k: string) => schema.columns.some((c) => c.key === k)
     || !!schema.sample?.some((r) => r[k] !== undefined);
   const colKey = (k: string) => (seeded(k) ? k : undefined);
+  // 0) 명시 명세(schema.filterSpecs, opt-in) — 원문 옵션·범위·코드/명칭을 싣는다. key 생략 = no-op.
+  const spec = schema.filterSpecs?.[label];
+  if (spec) {
+    const base = { label, columnKey: spec.key ? colKey(spec.key) : undefined, ...(spec.allLabel === null ? { allLabel: null } : {}) };
+    if (spec.kind === 'select') {
+      const opts = spec.options ?? [];
+      // 원문이 '전체'만 가진 select(선택지 미확인) → 빈 select 금지 규약대로 text 격하
+      return opts.length ? { ...base, kind: 'enum', options: [...opts] } : { label, kind: 'text', options: [], columnKey: base.columnKey };
+    }
+    const kind: FilterKind = spec.kind === 'day' ? 'date' : spec.kind;
+    return { ...base, kind, options: [] };
+  }
   // 1) 폼 필드 매칭 — control + options 로 가장 정확한 타입
   const field = schema.fields.find((f) => f.label === label);
   if (field) {
@@ -69,4 +88,36 @@ export function resolveFilterField(label: string, schema: PageSchema): FilterFie
   // enum 휴리스틱 **뒤**에 둔다: '기준년월'(기준 포함)은 종전대로 text — tag 로 떨어지던 라벨만 바뀐다(2026-09-23).
   if (/년월$/.test(label)) return { label, kind: 'month', options: [] };
   return { label, kind: 'tag', options: [] }; // 순수 카테고리 태그 → on/off
+}
+
+/** 값-필터 1개가 셀 값 하나를 통과시키는가(tag·columnKey 없음은 호출부가 거른다).
+    text/number = 부분일치 · year/month/enum/date = 정확일치 ·
+    dayRange/monthRange = 경계 포함 범위(한쪽이 비면 열린 경계 — 'YYYY-MM(-DD)' 은 문자열 비교가 곧 시간 비교) ·
+    codeName = 명칭 부분일치(원문 행에 코드 컬럼이 없어 코드는 조회 파라미터로만 남는다). */
+export function filterValueMatches(ff: FilterField, value: string, cell: unknown): boolean {
+  const rv = String(cell ?? '');
+  if (ff.kind === 'text' || ff.kind === 'number') return rv.toLowerCase().includes(value.toLowerCase());
+  if (ff.kind === 'dayRange' || ff.kind === 'monthRange') {
+    const [a, b] = splitPair(value);
+    // 날짜가 아닌 셀('-'·'')은 범위 밖이다 — 안 거르면 '-' < '2…' 라 상한만 준 범위를 통과한다
+    if (!/^\d{4}-\d{2}/.test(rv)) return false;
+    return (!a || rv >= a) && (!b || rv <= b);
+  }
+  if (ff.kind === 'codeName') {
+    const name = splitPair(value)[1].trim();
+    return !name || rv.toLowerCase().includes(name.toLowerCase());
+  }
+  return rv === value;
+}
+
+/** 원문 초기값 — filterSpecs 의 def 만 모은다(미선언 스키마 = {} → 종전 동작) */
+export function defaultFilterValues(schema: PageSchema): Record<string, string> {
+  return Object.fromEntries(Object.entries(schema.filterSpecs ?? {}).filter(([, f]) => !!f.def).map(([label, f]) => [label, f.def!]));
+}
+
+/** 적용 칩 표시 문자열 — 범위는 'a ~ b', 코드/명칭은 '코드 명칭', 그 외는 값 그대로 */
+export function filterChipText(ff: FilterField, value: string): string {
+  if (ff.kind === 'dayRange' || ff.kind === 'monthRange') return splitPair(value).join(' ~ ');
+  if (ff.kind === 'codeName') return splitPair(value).filter(Boolean).join(' ');
+  return value;
 }

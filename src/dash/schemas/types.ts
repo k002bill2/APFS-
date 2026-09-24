@@ -68,10 +68,33 @@ export interface TotalsSpec {
   labelKey?: string;
   rules: Record<string, TotalRuleName>;
 }
+/* 상세필터 항목 명세 — **opt-in**. 원문 검색박스 항목이 columns/fields 라벨로 도출되지 않을 때
+   (원문 옵션·기본값·범위·코드/명칭 검색, 또는 원문 행에 대응 값이 없음) 라벨 단위로 선언한다.
+   미선언 라벨·미선언 스키마는 종전 resolveFilterField 도출 그대로다.
+   어휘는 typed 트랙 risk_tables_page.FilterDef 와 같다(새로 만들지 않는다):
+   · kind: select · text · day · month · dayRange('YYYY-MM-DD~YYYY-MM-DD') · monthRange('YYYY-MM~YYYY-MM')
+           · codeName('코드~명칭' — 원문 코드 입력 + 명칭 입력 + 검색 버튼 묶음. 행 매칭은 명칭 부분일치)
+   · options: select 선택지(원문 <select>/LISTS 그대로, '전체' 제외 — 드로어가 붙인다).
+              원문이 '전체'만 가진 select 는 options 를 비운다 → 빈 select 금지 규약에 따라 text 로 격하.
+   · def: 원문 초기값 — 마운트 시 적용되고 '초기화'가 이 값으로 되돌린다.
+   · allLabel: null = 원문 select 에 '전체'가 없다(빈 선택지·칩 × 없음, def 필수).
+   · key: 행 매칭 키. **생략 = no-op**(원문 행에 그 값이 없음 → `· 데이터 연동 후 적용` 캡션).
+   판정 정본은 filter_field.ts(resolveFilterField · filterValueMatches · defaultFilterValues). */
+export const FILTER_KINDS = ['select', 'text', 'day', 'month', 'dayRange', 'monthRange', 'codeName'] as const;
+export type SchemaFilterKind = typeof FILTER_KINDS[number];
+export interface SchemaFilterSpec {
+  kind: SchemaFilterKind;
+  options?: string[];
+  def?: string;
+  allLabel?: null;
+  key?: string;
+}
 export interface PageSchema {
   route: string; title: string; kind: 'list'|'form'; entity: string;
   columns: ColumnSpec[]; fields: FieldSpec[];
   filters?: string[]; kpis?: KpiSpec[]; statusDomain?: StatusDomainEntry[];
+  // 상세필터 항목 명세(opt-in) — 위 SchemaFilterSpec 주석 참조
+  filterSpecs?: Record<string, SchemaFilterSpec>;
   // 상세필터 최상단 검색어 입력(전 컬럼 부분일치) 노출 여부. 기본 OFF(opt-in) — 필요한 페이지만 true.
   searchable?: boolean;
   sample?: SampleRow[];
@@ -128,6 +151,13 @@ export const PageSchemaZ = z.object({
   route: z.string(), title: z.string(), kind: z.enum(['list','form']), entity: z.string(),
   columns: z.array(ColumnZ), fields: z.array(FieldZ),
   filters: z.array(z.string()).optional(), kpis: z.array(KpiZ).optional(),
+  filterSpecs: z.record(z.string(), z.object({
+    kind: z.enum(FILTER_KINDS),
+    options: z.array(z.string()).optional(),
+    def: z.string().optional(),
+    allLabel: z.null().optional(),
+    key: z.string().optional(),
+  })).optional(),
   statusDomain: z.array(z.object({ label: z.string(), tone: z.enum(TONE_VALUES) })).optional(),
   sample: z.array(z.record(z.string(), z.union([z.string(), z.number()]))).optional(),
   hideMetrics: z.boolean().optional(),
@@ -145,6 +175,16 @@ export const PageSchemaZ = z.object({
   }).optional(),
   provenance: ProvenanceZ,
 }).superRefine((s, ctx) => {
+  /* 필터 명세가 죽은 선언이면 **조용히 무효 필터**가 된다 — 파싱 시점에 잡는다:
+     filters 에 없는 라벨 · 행에 시드되지 않는 key(columnKey 불변식) · 선택지 밖 def · def 없는 allLabel:null */
+  const issue = (message: string) => ctx.addIssue({ code: 'custom', path: ['filterSpecs'], message });
+  const seeded = (k: string) => s.columns.some((c) => c.key === k) || !!s.sample?.some((r) => r[k] !== undefined);
+  for (const [label, f] of Object.entries(s.filterSpecs ?? {})) {
+    if (!(s.filters ?? []).includes(label)) issue(`filterSpecs label not in filters: ${label}`);
+    if (f.key && !seeded(f.key)) issue(`filterSpecs key not seeded: ${label} → ${f.key}`);
+    if (f.kind === 'select' && f.def && !(f.options ?? []).includes(f.def)) issue(`filterSpecs def not in options: ${label}`);
+    if (f.allLabel === null && !f.def) issue(`filterSpecs allLabel:null needs def: ${label}`);
+  }
   /* 합계 규칙·라벨 칸이 columns 에 없는 key 면 **조용히 빈 합계**가 된다 — 파싱 시점에 잡는다 */
   if (!s.totals) return;
   const keys = new Set(s.columns.map((c) => c.key));
