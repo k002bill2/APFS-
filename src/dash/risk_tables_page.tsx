@@ -4,7 +4,7 @@
 
    규약
    - 표가 1장이면 섹션 헤더 없이 표만, 2장 이상이면 원문 섹션 제목(`.sectitle`/`.cap`/`.sechead`)으로 **한 GridFrame 안에 세로로 쌓는다**
-     (골드 ew_result_manage.tsx). 원문이 번호 칩을 둔 화면(Portfolio Report `.sechead .num`)만 번호를 단다.
+     (기준 화면: 예외사항레포트). 섹션 제목엔 번호 칩·건수를 달지 않는다 — 건수는 푸터에만(risk_grid.tsx SectionHead).
    - 검색조건은 `key` 가 있으면 **그 키를 가진 표의 행만** 거른다(eq = 같은 값 · prefix = '2012' 로 '2012년도' 매칭 ·
      dayRange 필터는 기간 안 · text 필터는 부분일치). "그 키를 가진 표" = 컬럼이 있거나 **행에 그 키가 시드된** 표다 —
      원문이 화면에 그리지 않는 분류 키로 목록을 바꾸는 화면(공통코드 `LISTS[코드구분]`)을 숨은 키로 재현한다
@@ -108,7 +108,7 @@ export function TablesPage({ cfg, onNav }: { cfg: TablesPageConfig; onNav?: (r: 
         <React.Fragment key={t.id}>
           {/* 원문 섹션 제목이 있으면 섹션 헤더, 없으면(원문이 제목을 지운 표) 구분선만 */}
           {cfg.tables.length > 1 && (t.title
-            ? <SectionHead title={t.title} cap={<>총 {String(filtered[i].length)}건</>} />
+            ? <SectionHead title={t.title} />
             : i > 0 && <div aria-hidden style={{ height: 16, borderTop: '1px solid var(--border)' }} />)}
           <ReadGrid table={t} rows={filtered[i]} unit={unitOrNull} ariaLabel={t.title ?? cfg.label} />
         </React.Fragment>

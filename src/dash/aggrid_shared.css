@@ -90,3 +90,12 @@
 .apfs-grid-min .ag-layout-auto-height .ag-center-cols-viewport {
   min-height: 48px !important;
 }
+
+/* ── 섹션 헤더 바로 뒤 그리드 상단 라인(여러 표 세로 쌓기 — apfs-multi-grid) ──
+   SectionHead(risk_grid.tsx) 다음 형제 안의 AG Grid 에만 상단선을 긋는다.
+   제목(border-bottom)에 두지 않는 이유: 차트·카드 섹션(운용사 유형별 지표 등)에도 선이 생긴다.
+   wrapperBorder:false(apfsTheme)라 외곽선이 없어 중복선이 생기지 않는다. */
+.apfs-section-head + * .ag-root-wrapper,
+.apfs-section-head + .ag-root-wrapper {
+  border-top: 1px solid var(--border);
+}

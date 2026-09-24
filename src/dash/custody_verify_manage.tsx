@@ -33,6 +33,7 @@ import { UI } from './components';
 import type { Tone } from './components';
 import { Icon } from './icons';
 import { GridFrame, FooterActions } from './grid_frame';
+import { SectionHead } from './risk_grid';   // 여러 표 세로 쌓기 공용 섹션 헤더
 import { LeafTabBody } from './leaf_tabs';   // 리프 탭 묶음(opt-in)
 import type { LeafTabsSlot } from './leaf_tabs';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
@@ -299,18 +300,6 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
       <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
-    </div>
-  );
-}
-
-/* 섹션 헤더 — 목업 `.sectitle`(제목) + `.listbar`(캡션)을 한 행으로 합친다.
-   그리드가 섹션 끝선까지 차므로 번호 배지 없이 좌측 4px 만 들여 제목을 끝선에 맞춘다. */
-function SectionHead({ title, cap }: { title: string; cap: string }) {
-  return (
-    <div className="flex items-center gap-2 flex-wrap" style={{ padding: '12px 18px 12px 4px', borderTop: '1px solid var(--border)' }}>
-      {/* preflight:false — h4는 UA 기본 마진이 살아 있어 m-0 필수 */}
-      <h4 className="font-bold m-0" style={{ fontSize: 15 }}>{title}</h4>
-      <span className="text-caption" style={{ fontSize: 12.5 }}>{cap}</span>
     </div>
   );
 }

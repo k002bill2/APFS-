@@ -45,6 +45,13 @@
       "intentPatterns": ["(캡처|capture|OCR).*(페이지|스키마|schema|page|필드|field)", "(현행시스템|실화면|실물).*(추출|생성|동결|배선|schema)"]
     },
     {
+      "skillName": "apfs-multi-grid",
+      "priority": "high",
+      "enforcement": "suggest",
+      "keywords": ["여러 표", "여러 그리드", "멀티 그리드", "multi grid", "multi-grid", "표 여러", "그리드 여러", "섹션 헤더", "섹션 제목", "SectionHead", "TablesPage", "예외사항레포트", "세로로 쌓"],
+      "intentPatterns": ["(여러|멀티|multi).*(표|그리드|grid|테이블)"]
+    },
+    {
       "skillName": "apfs-grid",
       "priority": "high",
       "enforcement": "suggest",
@@ -136,13 +143,6 @@
       "_comment": "기존 모션 '튠업' 어휘만. transitions-dev 와 일부 겹치는 키워드는 의도(둘 다 추천되어야 폴리시 트랙이 선택된다). 이 저장소의 '모션 토큰'은 --dur-*/--ease 다 — SKILL.md 'APFS 적용 규약' 참조.",
       "keywords": ["transitions polish", "transitions review", "polish", "폴리시", "refine the motion", "모션 다듬", "모션 튠", "timing feels off", "타이밍이", "too slow", "too fast", "너무 느려", "너무 빨라", "tighten the durations", "fix the stagger", "align to the motion tokens", "audit the motion", "모션 감사", "scan for ad-hoc transitions", "tokenize my animations", "open close timing", "hover in out", "hover-out", "호버 아웃", "easing", "이징", "duration", "stagger", "스태거", "모션 토큰", "motion tokens"],
       "intentPatterns": ["(polish|refine|tune|다듬|튠|정리|감사|audit).*(motion|모션|animation|애니메이션|transition|트랜지션|timing|타이밍|easing|이징|duration)"]
-    },
-    {
-      "skillName": "apfs-section-stack",
-      "priority": "high",
-      "enforcement": "suggest",
-      "keywords": ["다단", "섹션 헤더", "섹션 제목", "SectionHead", "번호 배지", "섹션 번호", "멀티 섹션", "섹션 여러", "표 여러", "2열 패널", "섹션 정렬"],
-      "intentPatterns": ["(섹션|다단|section).*(정렬|padding|패딩|배지|제목|적층)"]
     }
   ]
 }

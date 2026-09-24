@@ -384,7 +384,7 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
       <div>
         {SECTIONS.map((s) => (
           <section key={s.kind} aria-label={`${s.kind} 조기경보`}>
-            {/* 다단 섹션 공용 헤더(apfs-section-stack) — 제목 15px·좌측 4px, 캡션에 지표 구성 */}
+            {/* 공용 섹션 헤더(apfs-multi-grid) — 제목 15px·좌측 4px, 캡션에 지표 구성 */}
             <SectionHead title={s.kind}
               cap={`재무건전성 지표 — ${s.m1} · ${s.m2} · 자기자본이익률 · 총자산수익률 · 법령위반 · 주주변동 · 소송여부 · 총점 (비율/등급/연환산 2단 헤더)`} />
             {/* apfs-grid-min: autoHeight 그리드의 AG Grid 기본 최소 본문높이(150px)를 48px 로 낮춘다.

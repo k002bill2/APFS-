@@ -299,12 +299,14 @@ export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세
 }
 
 /* ──────────────────────────────
-   섹션 헤더 — 한 GridFrame 안에 표를 세로로 쌓는 화면의 경계(골드 ew_result_manage.tsx SectionHead)
-   본문 표/카드가 섹션 끝선까지 차므로 번호 배지 없이 좌측 4px 만 들여 제목을 끝선에 맞춘다.
+   섹션 헤더 — 한 GridFrame 안에 표를 세로로 쌓는 화면의 경계(기준 화면: 예외사항레포트).
+   규약: 제목 앞 번호 칩(블릿)·건수 캡션 없음. padding 16px 18px 12px 4px 고정. cap 은 설명 문구만.
+   그리드 상단 라인은 제목이 아니라 **바로 뒤 AG Grid** 에 긋는다(aggrid_shared.css `.apfs-section-head + *`) —
+   제목에 border-bottom 을 주면 차트·카드 섹션에도 선이 생긴다.
 ────────────────────────────── */
 export function SectionHead({ title, cap, actions }: { title: string; cap?: React.ReactNode; actions?: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 flex-wrap" style={{ padding: '12px 18px 12px 4px', borderTop: '1px solid var(--border)' }}>
+    <div className="apfs-section-head flex items-center gap-2 flex-wrap" style={{ padding: '16px 18px 12px 4px', borderTop: '1px solid var(--border)' }}>
       {/* preflight:false — h4 는 UA 기본 마진이 살아 있어 m-0 필수 */}
       <h4 className="font-bold m-0" style={{ fontSize: 15 }}>{title}</h4>
       {cap && <span className="text-caption inline-flex items-center" style={{ fontSize: 12.5 }}>{cap}</span>}

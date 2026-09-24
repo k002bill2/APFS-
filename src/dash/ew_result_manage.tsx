@@ -34,6 +34,7 @@ import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 �
 import React, { useState, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import { GridFrame, FooterActions } from './grid_frame';
+import { SectionHead } from './risk_grid';   // 여러 표 세로 쌓기 공용 섹션 헤더
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { AgGridReact } from 'ag-grid-react';
@@ -188,21 +189,8 @@ function toSheet<T>(cols: XCol<T>[], rows: T[]): XLSX.WorkSheet {
 }
 
 /* ──────────────────────────────
-   페이지 로컬 프리미티브(골드 복사 + actions 슬롯)
+   페이지 로컬 프리미티브(섹션 헤더는 공용 risk_grid SectionHead)
 ────────────────────────────── */
-/* 섹션 헤더 — 목업 `.sectitle`(제목) + `.listbar`(캡션·우측 버튼)을 한 행으로 합친다.
-   그리드가 섹션 끝선까지 차므로 번호 배지 없이 좌측 4px 만 들여 제목을 끝선에 맞춘다. */
-function SectionHead({ title, cap, actions }: { title: string; cap: React.ReactNode; actions?: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-2 flex-wrap" style={{ padding: '12px 18px 12px 4px', borderTop: '1px solid var(--border)' }}>
-      {/* preflight:false — h4는 UA 기본 마진이 살아 있어 m-0 필수 */}
-      <h4 className="font-bold m-0" style={{ fontSize: 15 }}>{title}</h4>
-      <span className="text-caption inline-flex items-center" style={{ fontSize: 12.5 }}>{cap}</span>
-      {actions && <div className="ml-auto flex items-center gap-1.5">{actions}</div>}
-    </div>
-  );
-}
-
 const NO_ROWS = '<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회된 데이터가 없습니다.</span>';
 
 /* ──────────────────────────────
@@ -306,7 +294,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
 
       {/* ── ① 조기경보 생성 결과내역 (선택 월) ── */}
       <SectionHead title="조기경보 생성 결과내역"
-        cap={<>총 {String(resultRows.length)}건 · 기준년월 {String(ym)}</>} />
+        cap={<>기준년월 {String(ym)}</>} />
       <div>
         <AgGridReact<EwResultRow>
           theme={apfsTheme}
@@ -321,7 +309,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
 
       {/* ── ② 운용사 재무정보 보고 (선택 월의 전월) ── */}
       <SectionHead title="운용사 재무정보 보고"
-        cap={<>총 {String(reportRows.length)}건 · 기준년월 {reportYm ? String(reportYm) : '-'}</>}
+        cap={<>기준년월 {reportYm ? String(reportYm) : '-'}</>}
         actions={<>
           <Button variant="outline" size="sm" disabled={noReport} onClick={() => setModal({ kind: 'grantAll' })}>전체권한부여</Button>
           <Button variant="outline" size="sm" disabled={noReport} onClick={() => setModal({ kind: 'revokeAll' })}>전체권한해제</Button>
