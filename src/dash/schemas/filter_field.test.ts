@@ -83,6 +83,27 @@ describe('resolveFilterField — 필터 라벨 → 컨트롤 타입 도출', () 
     const emptySelect = { ...gongo, fields: [{ key: 'x', label: '빈셀렉트', control: 'select' as const, options: [] }] };
     expect(resolveFilterField('빈셀렉트', emptySelect).kind).toBe('text');
   });
+
+  /* 2026-09-24: radio·switch 도 선택지가 정해진 열거형이다 — 종전엔 select 만 enum 이라 자유 텍스트로 떨어졌다. */
+  it('radio 필드(options 있음) → enum + options + columnKey', () => {
+    const s = { ...gongo, fields: [{ key: 'periodType', label: '구분R', control: 'radio' as const, options: ['내부', '외부'] }] };
+    const ff = resolveFilterField('구분R', s);
+    expect(ff.kind).toBe('enum');
+    expect(ff.options).toEqual(['내부', '외부']);
+    expect(ff.columnKey).toBe('periodType');
+  });
+
+  it('switch 필드(options 있음) → enum', () => {
+    const s = { ...gongo, fields: [{ key: 'use', label: '사용여부', control: 'switch' as const, options: ['여', '부'] }] };
+    const ff = resolveFilterField('사용여부', s);
+    expect(ff.kind).toBe('enum');
+    expect(ff.options).toEqual(['여', '부']);
+  });
+
+  it('빈 옵션 radio → text 격하 (빈 <select> 금지)', () => {
+    const s = { ...gongo, fields: [{ key: 'x', label: '빈라디오', control: 'radio' as const, options: [] }] };
+    expect(resolveFilterField('빈라디오', s).kind).toBe('text');
+  });
 });
 
 /* 레지스트리 전수 — '…년월' 필터 라벨이 tag 로 떨어지는 스키마가 없어야 한다(tag = 켜면 표 증발). */

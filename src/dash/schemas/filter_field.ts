@@ -26,6 +26,10 @@ const isYearLabel = (s: string) => /(년도|연도)/.test(s);
 const isDateLabel = (s: string) => /(일자|날짜)/.test(s) || /일$/.test(s);
 const isEnumLabel = (s: string) => /(구분|유형|종류|상태|기준)/.test(s);
 
+/** 선택지가 정해진 폼 컨트롤 — 필터에선 enum(<select>)이 된다. radio·switch 도 모달 표현만 다를 뿐 열거형이다
+    (2026-09-24: 종전엔 select 만 enum 이라 위원구분·사용여부 등이 자유 텍스트로 떨어졌다). makeRows 시드와 공유. */
+export const isEnumControl = (control: string): boolean => control === 'select' || control === 'radio' || control === 'switch';
+
 const year = (label: string, columnKey?: string): FilterField => ({ label, kind: 'year', options: [...YEAR_OPTIONS], columnKey });
 
 export function resolveFilterField(label: string, schema: PageSchema): FilterField {
@@ -53,7 +57,7 @@ export function resolveFilterField(label: string, schema: PageSchema): FilterFie
   const field = schema.fields.find((f) => f.label === label);
   if (field) {
     const key = colKey(field.key);
-    if (field.control === 'select') {
+    if (isEnumControl(field.control)) {
       const opts = field.options ?? [];
       // 빈 옵션 select 금지 → text로 격하 (step3와 동일 정책)
       return opts.length ? { label, kind: 'enum', options: opts, columnKey: key } : { label, kind: 'text', options: [], columnKey: key };
