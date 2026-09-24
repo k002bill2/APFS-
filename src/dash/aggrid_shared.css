@@ -44,6 +44,14 @@
 .ag-root.ag-layout-auto-height {
   overflow: visible !important;
 }
+/* 단, wrapper 의 **가로**만은 clip 한다(2026-09-24). pinned-left 폭 합이 뷰포트보다 넓으면(400px 등)
+   가로 스크롤바의 .ag-horizontal-left-spacer 가 그 폭으로 그려져 문서 밖으로 새고(AG Grid 가 초과 컬럼을
+   unpin 하기까지 ~300ms), 페이지가 순간 가로로 넘쳤다(자펀드 관리 129px · 투자금 회수현황 265px).
+   clip 은 스크롤 컨테이너를 만들지 않아 위 sticky 헤더를 깨지 않는다 — hidden/auto 로 바꾸지 말 것
+   (가드 aggrid_overflow_clip.test.ts). 셀·헤더는 내부 뷰포트가 이미 가로로 자르므로 추가로 잘리는 것은 없다. */
+.ag-root-wrapper.ag-layout-auto-height {
+  overflow-x: clip !important;
+}
 .ag-root-wrapper.ag-layout-auto-height .ag-header {
   position: sticky;
   top: 58px;                 /* GNB 높이 (shell.tsx sticky header height:58) */
