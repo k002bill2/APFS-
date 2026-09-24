@@ -436,7 +436,7 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
       <LeafTabBody slot={tabs}>
       {/* ── ① 투자자산 ── */}
       <SectionHead title="투자자산" cap="운용사 장부 ↔ 수탁기관 보관내역 대사" />
-      <div>
+      <div className="apfs-stack-grid">
         <AgGridReact<InvestAssetRow>
           theme={apfsTheme}
           rowData={investRows}
@@ -451,7 +451,7 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
 
       {/* ── ② 미투자자산 거래 (원문 샘플 없음 — 빈 상태) ── */}
       <SectionHead title="미투자자산 거래" cap="종목·보유주수·잔액 대사" />
-      <div>
+      <div className="apfs-stack-grid">
         <AgGridReact<NonInvestTradeRow>
           theme={apfsTheme}
           rowData={tradeRows}
@@ -466,7 +466,7 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
 
       {/* ── ③ 미투자자산 (원문 샘플 없음 — 빈 상태) ── */}
       <SectionHead title="미투자자산" cap="계좌번호·잔액 대사" />
-      <div>
+      <div className="apfs-stack-grid">
         <AgGridReact<NonInvestRow>
           theme={apfsTheme}
           rowData={nonInvestRows}
