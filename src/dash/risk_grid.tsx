@@ -58,6 +58,9 @@ export function displayText(c: ColMeta, v: Cell, unit: Unit | null, digits?: Uni
   return v.toLocaleString();
 }
 
+/** 화면 헤더 텍스트 — unitInHeader(opt-in) 금액 칸만 선택 단위를 붙인다. 폭 산정과 headerName 이 같은 문자열을 쓴다 */
+const headerText = (c: ColMeta, unit: Unit | null): string => (c.unitInHeader && c.kind === 'amount' && unit ? `${c.label}(${unit})` : c.label);
+
 /** 내용폭 고정 컬럼 — 순번·상태 배지처럼 값이 짧고 길이가 고정인 칸.
     c.flex 를 명시하면 그것이 이긴다(0 = 고정, ≥1 = 남는 폭 흡수). 미지정이면 No·순번 라벨·badge 자동 판정 */
 const COMPACT_LABELS = new Set(['No', 'NO', '순번', '번호']);
@@ -65,7 +68,7 @@ export const isCompactCol = (c: ColMeta) => (c.flex != null ? c.flex === 0 : COM
 
 function minWidthOf(c: ColMeta, rows: readonly Row[], unit: Unit | null, digits?: UnitDigits): number {
   /* 좌우 패딩 + 정렬 아이콘 자리 */
-  const head = textWidth(c.label, 13.5) + 44;
+  const head = textWidth(headerText(c, unit), 13.5) + 44;
   const body = Math.max(0, ...rows.map((r) => textWidth(displayText(c, r[c.key], unit, digits)) + (c.kind === 'badge' ? 50 : c.link ? 58 : 38)));
   /* c.width 는 하한(원문이 넓게 잡은 칸) — 내용이 더 길면 내용이 이긴다(잘림 금지). 상한 420 = 긴 주소·조합명 캡.
      compact(No·배지)는 종류 하한(KIND_MIN)을 쓰지 않는다 — 숫자 84 하한이 No 칸을 넓힌다(apfs-aggrid ⑩) */
@@ -139,7 +142,7 @@ function leafDef(c: ColMeta, rows: readonly Row[], unit: Unit | null, linkLabel:
   return {
     colId: c.key,
     field: c.key,
-    headerName: c.label,
+    headerName: headerText(c, unit),
     ...(fixed ? { minWidth: w, width: w, maxWidth: w } : { flex: c.flex || 1, minWidth: w, width: w }),
     pinned: c.pinned ? 'left' : undefined,
     cellStyle: c.strong ? STRONG_STYLE[align] : ALIGN_STYLE[align],

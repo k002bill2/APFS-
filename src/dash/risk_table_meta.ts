@@ -63,6 +63,9 @@ export interface ColMeta {
   derived?: boolean;
   /** 엑셀에서 뺀다 — 값이 아니라 조작 UI 만 있는 칸(원문 `관리` 버튼 묶음). 화면·헤더 대조에는 남는다 */
   noExport?: boolean;
+  /** 화면 헤더에 선택 단위를 붙인다(opt-in · amount 칸 · 단위 토글 화면) — 원문이 헤더를 `투자금액(억원)`처럼 단위에 맞춰
+      바꿔 적는 칸(S1_28 render()). 미지정이면 종전대로 라벨만. 엑셀 헤더는 이와 무관하게 항상 단위를 단다(risk_excel) */
+  unitInHeader?: boolean;
 }
 
 export interface TableMeta {
