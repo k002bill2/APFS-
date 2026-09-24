@@ -11,21 +11,24 @@
        ⚠ 행 컬럼과 미연동인 항목(모펀드·계정구분·담당자)은 `noop` 캡션만 두고 `passes`에 넣지 않는다.
          담당자는 원천에 옵션·샘플 값이 없어 옵션을 **지어내지 않는다**(빈 목록).
    - 목록 그리드 → AG Grid 단일 헤더(apfs-aggrid). **합계행 없음**(금액 컬럼이 없는 엔티티) ·
-     **행 선택 없음**(다건 액션이 없는 조회 화면) → selbar도 없다.
+     **행 선택 = 체크박스 multiRow**(2026-09-24 사용자 결정) — 선택 바에서 확정여부 일괄 변경(확정/미확정).
+     보고 내역이 없는 행(확정여부 빈칸)은 변경 대상에서 빼고 toast로 알린다(apfs-aggrid 게이트 필터형).
    - 확정여부 → **셀 안 네이티브 `<select>`**(목업 `.gsel` 그대로, 행별 aria-label 동일).
-     보고 내역이 없는 행(7·9)은 목업처럼 빈 셀이다(수정일시·상세조회도 동상).
-   - 상세 진입(보고구분 '월간보고서' 배지 · 상세조회 버튼 · 해당 셀 Enter)
-       → 목업은 별도 화면 `S1_06_01_월간보고.html`로 이동하지만 **그 화면은 이번 변환 범위 밖**이라
-         이동 대상이 없다. 가짜 상세 모달을 만들지 않고 toast로 한계를 알린다(아래 '한계').
+     목업의 보고 내역 없는 행(7·9)은 빈 셀 대신 샘플 보고서·수정일시·확정여부(미확정)로 채웠다(2026-09-24 사용자 결정 — 빈 셀 금지).
+   - 상세조회 컬럼 → **삭제**(2026-09-24 사용자 결정). 상세 진입은 보고구분 '월간보고서' 배지(클릭·셀 Enter) 하나다.
+   - 상세 진입(보고구분 '월간보고서' 배지 · 해당 셀 Enter)
+       → 월간보고 상세(`monthly_report.tsx` 창 + `monthly_report_modal.tsx`의 `MonthlyReportBody`)를 **팝업 창**으로 연다
+         (모달 아님, 사용자 결정 2026-09-24).
    - KPI 배지 행 → **미포함**(사용자 결정). 카드뷰 토글·`sub` 캡션·명세 팝업도 없다.
-   - 엑셀 → SheetJS(단일 헤더 · 액션 컬럼 '상세조회' 제외)
+   - 엑셀 → SheetJS(단일 헤더 · 선택 체크박스 열 제외)
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
 
    한계·가정(결정 기록)
-   - 상세 화면(S1_06_01) 미포함 → 상세 진입 3경로 모두 toast 안내로 끝난다. 상세 모달을 위조하지 않았다.
+   - 상세 화면(S1_06_01)은 Shell 없는 route `#/monthly-report`를 이름 붙은 팝업 창('apfs-monthly-report')으로 연다 —
+     반복 클릭은 같은 창을 재사용한다. 원천 데이터가 2026.01.31 보고 1건뿐이라 모든 월간보고서 행이 같은 보고를 연다.
    - 운용사·자펀드 셀은 목업이 `.linktxt`지만(설계메모: "명세서 이동 여부 검토필요") **링크로 만들지 않았다** —
      명세 팝업은 opt-in이고 이 화면은 미요청이다(apfs-spec-popup: 미포함이면 진입 배선을 넣지 않는다).
-   - '보고서' 열은 첨부파일명 표시 전용이다(목업 설계메모: "클릭 이동 없음") → 링크가 아니다.
+   - '보고서' 열은 첨부파일명 표시 전용이다(목업 설계메모: "클릭 이동 없음") — 링크·bullet·밑줄 없음(2026-09-24 사용자 결정).
    - 확정여부 컬럼에 `suppressKeyboardEvent`를 **브리프 명세 외로 1건 추가**했다: React 18은 합성 이벤트를
      루트 컨테이너에서 디스패치하므로 `onKeyDown`의 `stopPropagation`이 AG Grid의 셀 **네이티브** 리스너보다
      늦다. 그대로 두면 select에 초점이 있을 때 ↑↓가 값 변경 대신 셀 이동으로 가로채여 키보드로 값을 못 바꾼다. (런타임 확인 필요 항목).
@@ -40,7 +43,8 @@ import type { LeafTabsSlot } from './leaf_tabs';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle } from 'ag-grid-community';
+import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SelectionChangedEvent } from 'ag-grid-community';
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
@@ -84,12 +88,12 @@ const DEMO: RegularReportRow[] = [
   { id: 'rr-4', no: 4, gp: GP, fn: FN, ymKey: '2026-04', ymLabel: '2026년 04월', rt: '월간보고서', file: FILE('04'), updatedAt: '2026-05-07 오후 5:55:38', confirmed: '확정', fundStatus: ST },
   { id: 'rr-5', no: 5, gp: GP, fn: FN, ymKey: '2026-05', ymLabel: '2026년 05월', rt: '월간보고서', file: FILE('05'), updatedAt: '2026-06-04 오후 4:27:21', confirmed: '확정', fundStatus: ST },
   { id: 'rr-6', no: 6, gp: GP, fn: FN, ymKey: '2026-06', ymLabel: '2026년 06월', rt: '월간보고서', file: FILE('06'), updatedAt: '2026-07-07 오후 8:35:43', confirmed: '확정', fundStatus: ST },
-  /* 7행 — 반기보고서. 보고 내역이 없어 보고서·수정일시·확정여부·상세조회가 전부 비어 있다(목업 동일).
+  /* 7행 — 반기보고서. 목업은 보고 내역이 없어 빈칸이지만 빈 셀을 두지 않기로 해(2026-09-24) 보고서·수정일시·확정여부는 샘플.
      ymKey는 상반기 말('2026-06')로 둬 기준년월 범위 필터에 걸리게 한다(표시값은 원문 '2026년 1/2분기'). */
-  { id: 'rr-7', no: 7, gp: GP, fn: FN, ymKey: '2026-06', ymLabel: '2026년 1/2분기', rt: '반기보고서', file: null, updatedAt: null, confirmed: null, fundStatus: ST },
+  { id: 'rr-7', no: 7, gp: GP, fn: FN, ymKey: '2026-06', ymLabel: '2026년 1/2분기', rt: '반기보고서', file: '[보고서] AJ-ISU경기도애그리푸드투자조합 반기보고서_26.1H.pdf', updatedAt: '2026-07-30 오후 3:12:08', confirmed: '미확정', fundStatus: ST },
   { id: 'rr-8', no: 8, gp: GP, fn: FN, ymKey: '2026-07', ymLabel: '2026년 07월', rt: '월간보고서', file: '[보고서] AJ-ISU-경기도애그리푸드투자조합 월간보고서_26.07 (2).pdf', updatedAt: '2026-08-07 오후 4:09:29', confirmed: '확정', fundStatus: ST },
-  /* 9행 — 월간보고서지만 보고 내역 없음. 목업에서 **보고구분 태그는 여전히 상세 링크**이고 상세조회 칸만 비어 있다 */
-  { id: 'rr-9', no: 9, gp: GP, fn: FN, ymKey: '2026-08', ymLabel: '2026년 08월', rt: '월간보고서', file: null, updatedAt: null, confirmed: null, fundStatus: ST },
+  /* 9행 — 목업은 보고 내역 없음(빈칸)이지만 7행과 같은 이유로 보고서·수정일시·확정여부는 샘플 */
+  { id: 'rr-9', no: 9, gp: GP, fn: FN, ymKey: '2026-08', ymLabel: '2026년 08월', rt: '월간보고서', file: FILE('08'), updatedAt: '2026-09-07 오후 2:18:44', confirmed: '미확정', fundStatus: ST },
 ];
 
 const PAGE_SIZE = 20;
@@ -97,15 +101,21 @@ const PAGE_SIZE = 20;
 /* 폭 관련 그리드 prop(`autoSizeStrategy`·`defaultColDef`)은 `aggrid_theme.ts`의 공용 상수를 쓴다 —
    인라인 리터럴 금지 이유(렌더마다 새 객체 → 폭이 선언값으로 되돌아감)는 그 파일 주석이 정본. */
 
-/* 상세 진입 — 목업은 S1_06_01_월간보고.html로 이동하지만 그 화면은 이번 변환 범위 밖이다.
-   이동 대상이 없으므로 한계를 알리는 toast로 끝낸다(가짜 상세 모달 금지). 모듈 스코프 = 컬럼 deps 안정. */
-const openDetail = () => toast('월간보고 상세는 별도 화면(S1_06_01)으로 분리된 화면입니다 — 현 프로토타입 미포함');
+/* 상세 진입 — 월간보고 route 를 팝업 창으로 연다(모달 아님). 모듈 스코프 = 컬럼 deps 안정.
+   이름 붙은 창이라 반복 클릭은 같은 창을 재사용한다. `noopener`를 주지 않는다 — 같은 출처이고,
+   주면 window.open 이 null 을 돌려 focus 를 못 주며, 팝업 쪽은 window.opener 로 '닫기' 표시 여부를 판단한다. */
+const openDetail = () => {
+  const url = `${window.location.pathname}${window.location.search}#/monthly-report`;
+  const w = window.open(url, 'apfs-monthly-report', 'popup,width=1320,height=900');
+  if (!w) { toast.error('팝업이 차단되어 월간보고를 열 수 없습니다. 이 사이트의 팝업을 허용한 뒤 다시 시도하세요.'); return; }
+  w.focus();
+};
 
 /* ──────────────────────────────
    컬럼 정의 — 목업 헤더 순서·집합 그대로(단일 헤더):
-     No · 운용사 · 자펀드 · 보고년월 · 보고구분 · 보고서 · 수정일시 · 확정여부 · 상세조회 · 조합상태
+     (선택) · No · 운용사 · 자펀드 · 보고년월 · 보고구분 · 보고서 · 수정일시 · 확정여부 · 조합상태   (목업의 상세조회는 삭제)
    ⚠ 좌측 고정은 No만 — 다른 컬럼에 `pinned`를 주면 컬럼이 좌측 영역으로 끌려와 목업 순서가 깨진다.
-   ⚠ 합계행·행 선택 컬럼 없음(금액 컬럼이 없고 다건 액션도 없다).
+   ⚠ 합계행 없음(금액 컬럼이 없다). 선택 컬럼은 `SELECTION_COL`(좌측 고정 44px)이 그린다.
 ────────────────────────────── */
 const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
@@ -154,22 +164,25 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void):
      배지를 버튼으로 감싼다: `font:'inherit'`는 preflight:false에서 UA 기본 폰트(13.3px Arial)로 튀는 것을 막는다. */
   { field: 'rt', headerName: '보고구분', width: 110, cellStyle: flexMid,
     cellRenderer: (p: any) => {
-      const badge = <StatusBadge tone="primary" label={p.value} size="lg" dot={false} />;
-      if (p.value !== '월간보고서') return badge;
+      if (p.value !== '월간보고서') return <StatusBadge tone="primary" label={p.value} size="lg" dot={false} />;
+      /* 링크 배지 = 라벨 뒤 external 아이콘(자펀드별 조기경보 등급 배지와 같은 규약·같은 보정값 — fund_early_warning.tsx 주석이 정본) */
       return (
-        <button type="button" aria-label="월간보고서 상세 보기" onClick={openDetail}
+        <button type="button" aria-label="월간보고서 상세 보기 (새 창)" title="월간보고 상세 (새 창)" onClick={openDetail}
           className="inline-flex items-center cursor-pointer border-0 p-0"
-          style={{ font: 'inherit', background: 'transparent' }}>{badge}</button>
+          style={{ font: 'inherit', background: 'transparent' }}>
+          <StatusBadge tone="primary" size="lg" dot={false}
+            label={<>{p.value}<Icon name="external" size={13.5} stroke={2.4} style={{ position: 'relative', top: -0.75 }} /></>} />
+        </button>
       );
     } },
   /* 보고서 — 파일명이 가장 긴 컬럼. 폭 전략은 `AUTO_SIZE_CONTENT`(내용 맞춤)다: 10컬럼 내용 폭 합이 프레임(1280)을 넘는
      넓은 표라 `fitGridWidth`를 쓰면 전 컬럼이 선언 폭 아래로 눌려 보고년월·수정일시·확정여부·상세조회 30셀이 잘렸다
      (2026-09-12 코디네이터 런타임 실측). 내용 맞춤이면 그리드가 프레임보다 넓어져 AG Grid 내부 가로 스크롤이 생기고 잘림은 0이다
      (apfs-aggrid "넓은 다열 테이블" 규약). 이 컬럼만 상한 520(더 긴 파일명은 truncate).
-     ⚠ 첨부파일명 표시 전용(클릭 이동 없음). */
+     ⚠ 첨부파일명 표시 전용(클릭 이동 없음 · bullet·밑줄 없음). */
   { field: 'file', headerName: '보고서', width: 180, minWidth: 150, maxWidth: 520, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value
-      ? <span className="min-w-0 truncate">{'• '}{p.value}</span>
+      ? <span className="min-w-0 truncate">{p.value}</span>
       : <span style={{ color: 'var(--muted-foreground)' }}>보고 내역이 없습니다.</span>) },
   { field: 'updatedAt', headerName: '수정일시', width: 180,
     cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: mnFmt },
@@ -180,16 +193,11 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void):
     suppressKeyboardEvent: (p) => (p.event.target as HTMLElement | null)?.tagName === 'SELECT',
     cellRenderer: (p: any) => (p.value == null ? null
       : <ConfirmSelect value={p.value} no={p.data.no} onChange={(v) => patch(p.data.id, { confirmed: v })} />) },
-  /* 상세조회 — 액션 컬럼(field 없음 → colId 명시, 정렬·엑셀 제외). 보고 내역이 있는 행만 버튼(목업 동일) */
-  { colId: 'detail', headerName: '상세조회', width: 110, cellStyle: flexMid, sortable: false,
-    cellRenderer: (p: any) => (p.data.file
-      ? <Button variant="outline" size="sm" onClick={openDetail}>상세조회</Button>
-      : null) },
   { field: 'fundStatus', headerName: '조합상태', width: 100, cellStyle: flexMid,
     cellRenderer: (p: any) => <StatusBadge tone="success" label={p.value} size="lg" dot={false} /> },
 ];
 
-/* 엑셀 컬럼 — 화면 컬럼과 1:1(화면=엑셀 불변식), 액션 컬럼 '상세조회'만 제외.
+/* 엑셀 컬럼 — 화면 컬럼과 1:1(화면=엑셀 불변식, 선택 체크박스 열 제외).
    값 없음은 ''(목업 placeholder 문구 '보고 내역이 없습니다.'는 화면 표현이라 내보내지 않는다). */
 type XCol = { header: string; get: (r: RegularReportRow) => string | number };
 const EXPORT_COLS: XCol[] = [
@@ -234,6 +242,14 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
     </div>
   );
 }
+
+/* 행 선택 — 확정여부 일괄 변경이 N건에 그대로 적용되는 액션이라 multiRow(apfs-aggrid "체크박스" 절).
+   선택은 체크박스로만(enableClickSelection:false 명시). 헤더 전체선택은 SELECTION_COL 의 DS 헤더가 그리므로
+   내장 헤더는 끄고 범위를 'filtered' 로 맞춘다. 모듈 상수(렌더마다 새 객체면 컬럼 폭이 되돌아간다). */
+const ROW_SELECTION = {
+  mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered',
+  enableClickSelection: false,
+} as const;
 
 /* ──────────────────────────────
    메인 컴포넌트
@@ -287,13 +303,32 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
   const rtOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.rt))), [rows]);
 
   const onGridReady = useCallback((e: GridReadyEvent<RegularReportRow>) => { apiRef.current = e.api; }, []);
+
+  /* 선택 SSOT = id 배열 하나(건수는 파생 — apfs-aggrid "선택 상태는 selIds 하나로") */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selCount = selIds.length;
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<RegularReportRow>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
+  /* 확정여부 일괄 변경 — 게이트(confirmed != null — 현재 샘플은 전 행이 값이 있어 막히는 행이 없지만, 실데이터의 '보고 내역 없음' 행 방어로 둔다)는 요청 시점에 한 번만 평가한다.
+     전부 막히면 아무것도 바꾸지 않고 알리고, 일부만 막히면 제외 건수를 함께 알린다. */
+  const bulkConfirm = (v: Confirmed) => {
+    const targets = rows.filter((r) => selIds.includes(r.id));
+    const ok = targets.filter((r) => r.confirmed != null);
+    const blocked = targets.length - ok.length;
+    if (!ok.length) { toast.error('보고 내역이 있는 정기보고 행만 확정여부를 변경할 수 있습니다.'); return; }
+    const okIds = new Set(ok.map((r) => r.id));
+    setRows((prev) => prev.map((r) => (okIds.has(r.id) ? { ...r, confirmed: v } : r)));
+    apiRef.current?.deselectAll();
+    toast.success(`${String(ok.length)}건을 '${v}'(으)로 변경했습니다` + (blocked ? ` (확정 대상이 아닌 ${String(blocked)}건 제외)` : ''));
+  };
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
     const next = { current: api.paginationGetCurrentPage(), total: api.paginationGetTotalPages(), rowCount: api.paginationGetRowCount() };
     setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
   }, []);
   /* 키보드 — AG Grid의 Tab은 **셀 단위**로만 이동해 셀 안 컨트롤에 초점이 닿지 않는다.
-     보고구분/상세조회 셀 Enter = 상세 진입, 확정여부 셀 Enter = 셀 안 select로 초점 이동(WCAG 2.1.1). */
+     보고구분(월간) 셀 Enter = 상세 진입, 확정여부 셀 Enter = 셀 안 select로 초점 이동(WCAG 2.1.1). */
   const onCellKeyDown = useCallback((e: CellKeyDownEvent<RegularReportRow>) => {
     const ev = e.event as KeyboardEvent | null;
     if (ev?.key !== 'Enter') return;
@@ -305,11 +340,22 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
       if (sel) sel.focus();
       return;
     }
+    /* 셀 안 링크·버튼에 초점이 있으면 네이티브 활성화가 이미 연다 — 여기서 또 열면 두 번 연다 */
+    if ((ev.target as HTMLElement | null)?.closest?.('a,button')) return;
     if (colId === 'rt' && e.data?.rt === '월간보고서') { openDetail(); return; }
-    if (colId === 'detail' && e.data?.file) openDetail();
   }, []);
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
+
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측/하단 플로팅 바 중 한 곳에만 렌더한다 → 선택 중엔 toolbarLeft 를 비운다 */
+  const selActions = selCount > 0 ? (
+    <>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
+      <Button variant="primary" size="sm" leadingIcon="check" onClick={() => bulkConfirm('확정')}>확정</Button>
+      <Button variant="outline" size="sm" onClick={() => bulkConfirm('미확정')}>미확정</Button>
+      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+    </>
+  ) : null;
 
   /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
@@ -335,8 +381,8 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
       title={tabs?.label ?? "정기보고"}
       favRoute={tabs?.route ?? "regular-report"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 주 필터 칩(보고구분) + 적용 중인 드로어 값 칩. 행 선택이 없어 selbar는 존재하지 않는다. */
-      toolbarLeft={(
+      /* 툴바 좌 = 주 필터 칩(보고구분) + 적용 중인 드로어 값 칩. 선택 중엔 비우고 선택 바(contextActions)가 대신한다 */
+      toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['', '월간보고서', '반기보고서'] as ('' | ReportKind)[]).map((s) => (
@@ -358,6 +404,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
           ))}
         </>
       )}
+      contextActions={selActions}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
@@ -382,6 +429,9 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
           domLayout="autoHeight"
           autoSizeStrategy={AUTO_SIZE_CONTENT}   // 내용 맞춤(넓은 10컬럼 표) — fitGridWidth는 셀 잘림 30건(실측)
           defaultColDef={DEFAULT_COL_DEF}
+          rowSelection={ROW_SELECTION}
+          selectionColumnDef={SELECTION_COL}
+          onSelectionChanged={onSelectionChanged}
           pagination paginationPageSize={pageSize} suppressPaginationPanel
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}
