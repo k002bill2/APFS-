@@ -16,7 +16,7 @@
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 보정 + autoHeight sticky 헤더(공유)
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ColGroupDef, CellStyle, CellClickedEvent, CellKeyDownEvent, CellValueChangedEvent, ICellRendererParams, GetRowIdParams, RowDoubleClickedEvent, GridApi, GridReadyEvent, SelectionChangedEvent, SelectionColumnDef, RowDataUpdatedEvent } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, CellStyle, CellClickedEvent, CellKeyDownEvent, CellValueChangedEvent, ICellRendererParams, GetRowIdParams, RowDoubleClickedEvent, GridApi, GridReadyEvent, SelectionChangedEvent, SelectionColumnDef, RowDataUpdatedEvent, RowClassParams, RowStyle } from 'ag-grid-community';
 import { UI } from './components';
 import { Icon } from './icons';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
@@ -103,11 +103,14 @@ function LinkCell({ p, label }: { p: ICellRendererParams<Row>; label: string }) 
     열 키 → (행) → 노드. 메타(risk_table_meta)를 React 비의존으로 두려고 표 선언이 아니라 ReadGrid prop 으로 받는다. */
 export type CellRenderers = Record<string, (row: Row) => React.ReactNode>;
 
-function renderer(c: ColMeta, unit: Unit | null, linkLabel: string, custom?: (row: Row) => React.ReactNode, digits?: UnitDigits) {
+/** 본문 인라인 소계 행 판정(opt-in) — 참이면 그 행을 합계 행처럼 그린다(문자열 굵게·'-' muted·'' 빈 칸·배지/링크 없음) */
+export type SubtotalPred = (row: Row) => boolean;
+
+function renderer(c: ColMeta, unit: Unit | null, linkLabel: string, custom?: (row: Row) => React.ReactNode, digits?: UnitDigits, isSubtotal?: SubtotalPred) {
   return (p: ICellRendererParams<Row>) => {
     // 편집 셀은 valueGetter 가 선택 단위 숫자를 주므로(편집기 초기값용) 원 단위 저장값을 직접 읽는다
     const v = (c.editable ? p.data?.[c.key] : p.value) as Cell;
-    const pinned = !!p.node.rowPinned;
+    const pinned = !!p.node.rowPinned || (!!isSubtotal && !!p.data && isSubtotal(p.data));
     if (custom && !pinned && p.data) return custom(p.data);
     if (pinned && v === '') return null;                      // 합계행 colspan 영역
     if (c.link && !pinned) return <LinkCell p={p} label={linkLabel} />;
@@ -136,7 +139,7 @@ function renderer(c: ColMeta, unit: Unit | null, linkLabel: string, custom?: (ro
   };
 }
 
-function leafDef(c: ColMeta, rows: readonly Row[], unit: Unit | null, linkLabel: string, custom?: CellRenderers, digits?: UnitDigits, fixed = false): ColDef<Row> {
+function leafDef(c: ColMeta, rows: readonly Row[], unit: Unit | null, linkLabel: string, custom?: CellRenderers, digits?: UnitDigits, fixed = false, isSubtotal?: SubtotalPred): ColDef<Row> {
   const align = c.align ?? KIND_ALIGN[c.kind];
   const w = minWidthOf(c, rows, unit, digits);
   return {
@@ -147,7 +150,7 @@ function leafDef(c: ColMeta, rows: readonly Row[], unit: Unit | null, linkLabel:
     pinned: c.pinned ? 'left' : undefined,
     cellStyle: c.strong ? STRONG_STYLE[align] : ALIGN_STYLE[align],
     headerClass: align === 'right' ? 'ag-right-aligned-header' : undefined,
-    cellRenderer: renderer(c, unit, linkLabel, custom?.[c.key], digits),
+    cellRenderer: renderer(c, unit, linkLabel, custom?.[c.key], digits, isSubtotal),
     ...(c.editable ? {
       editable: (p) => !p.node.rowPinned,
       singleClickEdit: true,
@@ -166,9 +169,9 @@ function leafDef(c: ColMeta, rows: readonly Row[], unit: Unit | null, linkLabel:
 
 /** TableMeta → ColDef/ColGroupDef. 연속 같은 group 은 한 ColGroupDef(marryChildren)로 접는다.
     호출부는 `useMemo(..., [table, unit])` 로 참조를 고정한다(렌더마다 새 배열 = 폭 되돌림). */
-export function buildColumnDefs(table: TableMeta, rows: readonly Row[], unit: Unit | null, linkLabel = '상세', custom?: CellRenderers): (ColDef<Row> | ColGroupDef<Row>)[] {
+export function buildColumnDefs(table: TableMeta, rows: readonly Row[], unit: Unit | null, linkLabel = '상세', custom?: CellRenderers, isSubtotal?: SubtotalPred): (ColDef<Row> | ColGroupDef<Row>)[] {
   const anyFlex = table.cols.some((c) => !isCompactCol(c));
-  const leaf = (c: ColMeta) => leafDef(c, rows, unit, linkLabel, custom, table.unitDigits, anyFlex && isCompactCol(c));
+  const leaf = (c: ColMeta) => leafDef(c, rows, unit, linkLabel, custom, table.unitDigits, anyFlex && isCompactCol(c), isSubtotal);
   return groupRuns(table.cols).map((run) => (run.group
     ? { headerName: run.group, marryChildren: true, children: run.cols.map(leaf) }
     : leaf(run.cols[0])));
@@ -181,6 +184,10 @@ export const DEFAULT_EMPTY = '조회된 데이터가 없습니다.';
    체크박스로만 on/off(행 본문 클릭 선택 없음, 2026-09-22 사용자 결정) · 헤더 전체선택은 SELECTION_COL 의 DS 헤더가 그린다.
    모듈 상수 — 렌더마다 새 객체면 컬럼 폭이 되돌아간다. */
 const ROW_SELECTION = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false } as const;
+/* 정렬 끔(opt-in `sortable={false}`) — 행 순서 자체가 의미인 표(본문 인라인 소계). 정렬하면 소계가 흩어진다(fund_stats 선례) */
+const NO_SORT_COL_DEF = { ...DEFAULT_COL_DEF, sortable: false } as const;
+/* 인라인 소계 행 강조 — 목업 `tr.sub`(회색 배경 + 굵게). fund_stats getRowStyle 과 같은 값 */
+const SUBTOTAL_ROW_STYLE: RowStyle = { background: 'var(--muted)', fontWeight: 700 };
 
 export interface ReadGridProps {
   table: TableMeta;
@@ -209,11 +216,18 @@ export interface ReadGridProps {
   apiRef?: React.MutableRefObject<GridApi<Row> | null>;
   /** 칸 전용 렌더러(열 키별). 참조 안정(useMemo) 필수 — 바뀌면 컬럼 정의가 다시 만들어진다 */
   cellRenderers?: CellRenderers;
+  /** 본문 인라인 소계 행 판정(opt-in, 모듈 상수 필수). 미지정 = 종전 그대로 */
+  isSubtotal?: SubtotalPred;
+  /** false = 전 컬럼 정렬 끔(opt-in). 미지정 = 종전 그대로(정렬 가능) */
+  sortable?: boolean;
 }
 
-export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세', onEdit, onRowOpen, ariaLabel, selectable, onSelect, selectionCol = SELECTION_COL, selectedIds, apiRef, cellRenderers }: ReadGridProps) {
+export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세', onEdit, onRowOpen, ariaLabel, selectable, onSelect, selectionCol = SELECTION_COL, selectedIds, apiRef, cellRenderers, isSubtotal, sortable = true }: ReadGridProps) {
   const data = rows ?? table.rows;
-  const columnDefs = useMemo(() => buildColumnDefs(table, table.rows, unit, linkLabel, cellRenderers), [table, unit, linkLabel, cellRenderers]);
+  const columnDefs = useMemo(() => buildColumnDefs(table, table.rows, unit, linkLabel, cellRenderers, isSubtotal), [table, unit, linkLabel, cellRenderers, isSubtotal]);
+  const getRowStyle = useMemo(() => (isSubtotal
+    ? (p: RowClassParams<Row>): RowStyle | undefined => (p.data && !p.node.rowPinned && isSubtotal(p.data) ? SUBTOTAL_ROW_STYLE : undefined)
+    : undefined), [isSubtotal]);
   const pinned = useMemo(() => {
     const t = computeTotal({ ...table, rows: data });
     return t ? [t] : undefined;
@@ -225,9 +239,9 @@ export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세
   const overlay = useMemo(() => `<span style="padding:24px 0;display:inline-block;color:var(--muted-foreground);font-size:13px">${empty}</span>`, [empty]);
 
   const onCellClicked = useCallback((e: CellClickedEvent<Row>) => {
-    if (!linkCol || !onLink || e.rowPinned || !e.data || e.column?.getColId() !== linkCol) return;
+    if (!linkCol || !onLink || e.rowPinned || !e.data || (isSubtotal && isSubtotal(e.data)) || e.column?.getColId() !== linkCol) return;
     onLink(e.data);
-  }, [linkCol, onLink]);
+  }, [linkCol, onLink, isSubtotal]);
   const onCellKeyDown = useCallback((e: CellKeyDownEvent<Row>) => {
     if (e.rowPinned || !e.data) return;
     const ev = e.event as KeyboardEvent | null;
@@ -265,7 +279,8 @@ export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세
         getRowId={getRowId}
         pinnedBottomRowData={pinned}
         domLayout="autoHeight"
-        defaultColDef={DEFAULT_COL_DEF}
+        defaultColDef={sortable ? DEFAULT_COL_DEF : NO_SORT_COL_DEF}
+        getRowStyle={getRowStyle}
         onCellClicked={onLink ? onCellClicked : undefined}
         onCellKeyDown={onLink || onRowOpen ? onCellKeyDown : undefined}
         onRowDoubleClicked={onRowOpen ? onRowDoubleClicked : undefined}

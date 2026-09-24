@@ -35,6 +35,8 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
 import { GridFrame, FooterActions } from './grid_frame';
+import { LeafTabBody } from './leaf_tabs';   // 리프 탭 묶음(opt-in)
+import type { LeafTabsSlot } from './leaf_tabs';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
@@ -236,7 +238,8 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
-export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) {
+/* tabs(opt-in) — 메뉴 리프가 원문 화면 2개를 탭으로 묶을 때(leaf_tabs.tsx). 미지정이면 종전 화면 그대로 */
+export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => void; tabs?: LeafTabsSlot }) {
   const apiRef = useRef<GridApi<RegularReportRow> | null>(null);
   const [rows, setRows] = useState<RegularReportRow[]>(DEMO);
   const [showAll, setShowAll] = useState(false);
@@ -328,9 +331,9 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
 
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '사후보고관리', '정기보고']}
-      title="정기보고"
-      favRoute="regular-report"
+      crumbs={tabs?.crumbs ?? ['홈', '투자자산관리', '사후보고관리', '정기보고']}
+      title={tabs?.label ?? "정기보고"}
+      favRoute={tabs?.route ?? "regular-report"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(보고구분) + 적용 중인 드로어 값 칩. 행 선택이 없어 selbar는 존재하지 않는다. */
       toolbarLeft={(
@@ -369,6 +372,7 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
       ) : undefined}
       footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}>
 
+      <LeafTabBody slot={tabs}>
       <div>
         <AgGridReact<RegularReportRow>
           theme={apfsTheme}
@@ -387,6 +391,7 @@ export function RegularReportManage({ onNav }: { onNav?: (r: string) => void }) 
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 정기보고 건이 없습니다.</span>'}
         />
       </div>
+      </LeafTabBody>
 
       {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(모펀드·운용사·자펀드·계정구분·담당자·기준년월·보고구분).
              검색어는 미사용(OFF). 컬럼 미연동 항목은 noop 캡션(apfs-detail-filter) ── */}

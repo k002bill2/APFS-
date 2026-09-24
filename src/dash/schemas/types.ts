@@ -17,7 +17,7 @@ export const TONE_VALUES = ['primary','success','warning','danger','info','cyan'
 
 // 읽기전용 상세 보고서 팝업 종류. 컬럼이 detail을 선언하면 그 셀 값이 링크가 되어 해당 팝업을 연다.
 // 팝업 컴포넌트 매핑은 소비처(generic_list.tsx)가 갖는다 — 스키마는 어떤 팝업인지만 선언한다.
-export const DETAIL_POPUPS = ['monthlyReport', 'gpSpec', 'companyProfile', 'mgmtFeeDetail', 'dueDiligChecklist'] as const;
+export const DETAIL_POPUPS = ['monthlyReport', 'gpSpec', 'companyProfile', 'mgmtFeeDetail', 'dueDiligChecklist', 'gpRatioDetail'] as const;
 export type DetailPopup = typeof DETAIL_POPUPS[number];
 
 // attachFrom: 이 컬럼의 값 뒤에 첨부파일 확장자 칩(PDF 등)을 붙인다. 값은 같은 행의 **필드 키**
@@ -53,6 +53,21 @@ export interface Provenance { capturedAt: string; sourceSystem: string; captureF
 // 리터럴 샘플 행 — 목업/캡처의 실제 데이터를 그대로 보여줄 때(합성 더미 대신).
 // 키는 column/field key와 일치. 부재 시 generic_list의 makeRows가 결정적 더미를 합성한다.
 export type SampleRow = Record<string, string | number>;
+
+/* 합계(pinned bottom) 행 — **opt-in**. 원문 `<tfoot>` 합계가 있는 스키마만 선언한다(미선언 스키마는 합계 행 없음 — 종전 동작).
+   칸 규칙은 typed 트랙 risk_table_meta.ts TotalRule 과 같은 뜻을 쓴다(어휘를 새로 만들지 않는다):
+   'sum' = 합산(null·비숫자는 0) · 'dash' = '-' 표시 · 미지정 = 빈 칸(원문 colspan 라벨 영역).
+   함수 규칙은 스키마가 데이터(zod)라 못 싣는다 — 대신 이름 붙은 파생 규칙 하나만 둔다:
+   'nextSeq' = 합계 대상 행 수 + 1(원문 S1_33 `연번` 은 합계 행까지 매긴 일련번호 — 1건이면 2).
+   라벨의 `{n}` 은 합계 대상(필터 결과) 행 수로 치환한다(원문 '합계 1건'). 계산 정본은 schemas/totals.ts. */
+export const TOTAL_RULES = ['sum', 'dash', 'nextSeq'] as const;
+export type TotalRuleName = typeof TOTAL_RULES[number];
+export interface TotalsSpec {
+  label: string;
+  /** 라벨을 싣는 컬럼 key(원문 colspan 라벨 영역의 시작). 미지정 = 첫 컬럼 */
+  labelKey?: string;
+  rules: Record<string, TotalRuleName>;
+}
 export interface PageSchema {
   route: string; title: string; kind: 'list'|'form'; entity: string;
   columns: ColumnSpec[]; fields: FieldSpec[];
@@ -81,6 +96,8 @@ export interface PageSchema {
   // 토글의 **초기 선택값**. 목업마다 다르다(S1_33 은 `var unit='억원'`으로 시작한다) —
   // 미지정이면 unit.ts 의 DEFAULT_UNIT('원'). 저장 단위(원)와는 다른 축이다: 표시 기본값일 뿐.
   defaultUnit?: string;
+  // 합계 행(opt-in) — 위 TotalsSpec 주석 참조
+  totals?: TotalsSpec;
   provenance: Provenance;
 }
 
@@ -121,7 +138,19 @@ export const PageSchemaZ = z.object({
   hideCardView: z.boolean().optional(),
   unitToggle: z.boolean().optional(),
   defaultUnit: z.string().optional(),
+  totals: z.object({
+    label: z.string().min(1),
+    labelKey: z.string().optional(),
+    rules: z.record(z.string(), z.enum(TOTAL_RULES)),
+  }).optional(),
   provenance: ProvenanceZ,
+}).superRefine((s, ctx) => {
+  /* 합계 규칙·라벨 칸이 columns 에 없는 key 면 **조용히 빈 합계**가 된다 — 파싱 시점에 잡는다 */
+  if (!s.totals) return;
+  const keys = new Set(s.columns.map((c) => c.key));
+  for (const k of [...Object.keys(s.totals.rules), ...(s.totals.labelKey ? [s.totals.labelKey] : [])]) {
+    if (!keys.has(k)) ctx.addIssue({ code: 'custom', path: ['totals'], message: `totals key not in columns: ${k}` });
+  }
 });
 
 export function parsePageSchema(obj: unknown): PageSchema {

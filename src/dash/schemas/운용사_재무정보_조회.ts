@@ -3,7 +3,8 @@
 
    원문 `DATA` 2건(NH투자증권·농협은행, 2026-01)을 그대로 싣는다. `No` 는 원문에 데이터 필드가
    없고 렌더 시 인덱스로 붙으므로 sample 에서도 1부터 부여한다.
-   조회 전용이라 fields 는 비운다(원문에 등록/수정 폼 없음). */
+   조회 전용이라 fields 는 비운다(원문에 등록/수정 폼 없음).
+   기준년월 셀 → 운용사정량지표상세(재무건정성비율) 팝업(gp_ratio_detail_modal.tsx, 원문 openRatioDetail). */
 import type { PageSchema } from './types';
 
 export const schema: PageSchema = {
@@ -15,7 +16,9 @@ export const schema: PageSchema = {
     { key: 'no',            label: 'No',         type: 'number', align: 'center' },
     { key: 'gp',            label: '운용사명',   type: 'gp',     align: 'left' },
     { key: 'gpType',        label: 'GP구분',     type: 'text',   align: 'center' },
-    { key: 'baseYm',        label: '기준년월',   type: 'text',   align: 'center' },
+    /* 원문 `.gridlnk-btn` — 모든 행의 기준년월이 운용사정량지표상세(재무건정성비율) 팝업 버튼이다(S1_38:322·419-434).
+       detailWhen/detailPattern 없음 = 전 행 링크(detail_link.ts ③) */
+    { key: 'baseYm',        label: '기준년월',   type: 'text',   align: 'center', detail: 'gpRatioDetail' },
     { key: 'currentAssets', label: '유동자산',   type: 'amount', unit: '원', align: 'right' },
     { key: 'nonCurrentAssets', label: '비유동자산', type: 'amount', unit: '원', align: 'right' },
     { key: 'totalAssets',   label: '자산총계',   type: 'amount', unit: '원', align: 'right' },
