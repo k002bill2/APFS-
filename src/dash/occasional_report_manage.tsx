@@ -152,7 +152,7 @@ const confirmCol = (field: 'jsBy' | 'rsBy', header: string, role: Role,
                     onConfirm: (role: Role, id: string) => void): ColDef<OccReportRow> => ({
   field, headerName: header, width: 146, maxWidth: 146, cellStyle: flexMid, sortable: true,
   cellRenderer: (p: any) => (p.value
-    ? <StatusBadge tone="success" label={p.value} size="lg" dot={false} />
+    ? <StatusBadge tone="success" label={p.value} size="lg" />
     : <Button variant="outline" size="sm" onClick={() => onConfirm(role, p.data.id)}>확인</Button>),
 });
 

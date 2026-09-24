@@ -108,7 +108,7 @@ const badge = (field: keyof InvReviewRow, header: string, width: number, toneMap
     if (p.node.rowPinned) return null;
     const val = (p.value as string) || fallback;
     if (!val) return null;
-    return <StatusBadge tone={toneMap[val] ?? 'info'} label={val} size="lg" dot={false} />;
+    return <StatusBadge tone={toneMap[val] ?? 'info'} label={val} size="lg" />;
   },
 });
 
@@ -120,7 +120,7 @@ const columnDefs: ColDef<InvReviewRow>[] = [
   { ...txt('co', '투자기업', 160), maxWidth: 240 },
   { colId: 'st', headerName: '투심상태', width: 96, cellStyle: flexMid, sortable: true,
     valueGetter: (p) => (p.data ? stOf(p.data) : ''),
-    cellRenderer: (p: any) => (p.node.rowPinned ? null : <StatusBadge tone={ST_TONE[p.value] ?? 'info'} label={p.value} size="lg" dot={false} />) },
+    cellRenderer: (p: any) => (p.node.rowPinned ? null : <StatusBadge tone={ST_TONE[p.value] ?? 'info'} label={p.value} size="lg" />) },
   date('dt', '투심일자'),
   amt('inv', '투자금액', true),
   txt('ty', '투자유형', 120, true),
@@ -328,8 +328,8 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <>
       {/* 확정여부 배지 + (확정 시)결과 배지 — 상태 표시. 전이는 아래 액션 버튼 */}
-      <StatusBadge tone={CONFIRM_TONE[single.confirm]} label={single.confirm} size="lg" dot={false} />
-      {single.confirm === '확정' && <StatusBadge tone={RES_TONE[single.res || '미결'] ?? 'info'} label={single.res || '미결'} size="lg" dot={false} />}
+      <StatusBadge tone={CONFIRM_TONE[single.confirm]} label={single.confirm} size="lg" />
+      {single.confirm === '확정' && <StatusBadge tone={RES_TONE[single.res || '미결'] ?? 'info'} label={single.res || '미결'} size="lg" />}
       {/* 파생 단계별 전이 액션 */}
       {stage === 'pending' && <>
         <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'confirmSchedule' })}>투심일정 확정</Button>

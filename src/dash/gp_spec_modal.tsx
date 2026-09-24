@@ -123,7 +123,7 @@ function FundTable({ unit }: { unit: Unit }) {
               <td className={`${TD} text-center text-caption`} style={{ padding: '7px 8px' }}>{f.liq ? String(f.liq) : '-'}</td>
               <td className={`${TD} text-right tabular font-semibold`} style={{ padding: '7px 8px' }}>{money(f.amt, unit)}</td>
               <td className={`${TD} text-right tabular font-semibold`} style={{ padding: '7px 8px' }}>{money(f.moa, unit)}</td>
-              <td className={`${TD} text-center`} style={{ padding: '7px 8px' }}><StatusBadge tone="success" label={f.st} size="sm" dot={false} /></td>
+              <td className={`${TD} text-center`} style={{ padding: '7px 8px' }}><StatusBadge tone="success" label={f.st} size="sm" /></td>
             </tr>
           ))}
         </tbody>

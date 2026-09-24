@@ -143,10 +143,10 @@ const date = (field: keyof CashForecastRow, header: string, width = 128): ColDef
 const amt = (field: keyof CashForecastRow, header: string, width = 150): ColDef<CashForecastRow> => ({
   field, headerName: header, width, type: 'rightAligned', valueFormatter: moneyFmt, cellStyle: numStyle() as any,
 });
-/* 상태 배지 — 배지가 촘촘히 반복되는 열이라 size="lg" dot={false}(apfs-aggrid). 합계행은 '-' */
+/* 상태 배지 — 배지가 촘촘히 반복되는 열이라 size="lg"(apfs-aggrid). 합계행은 '-' */
 const badge = (field: 'tgt' | 'att', header: string, tones: Record<string, Tone>, width: number): ColDef<CashForecastRow> => ({
   field, headerName: header, width, cellStyle: flexMid,
-  cellRenderer: (p: any) => (p.node.rowPinned ? '-' : <StatusBadge tone={tones[p.value]} label={p.value} size="lg" dot={false} />),
+  cellRenderer: (p: any) => (p.node.rowPinned ? '-' : <StatusBadge tone={tones[p.value]} label={p.value} size="lg" />),
 });
 
 const columnDefs: (ColDef<CashForecastRow> | ColGroupDef<CashForecastRow>)[] = [

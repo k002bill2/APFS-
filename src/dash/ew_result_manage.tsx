@@ -9,7 +9,7 @@
    - 섹션 2개(조기경보 생성 결과내역 · 운용사 재무정보 보고) → **GridFrame 하나 안에 세로로 쌓은 AG Grid 2개**.
      섹션 경계는 번호 칩 + 제목 + 캡션(총 N건 · 기준년월) 헤더 행(목업 `.sectitle`+`.listbar` 통합).
      섹션2 헤더 우측에 목업 `.acts`(전체권한부여·전체권한해제) 버튼.
-   - O/X(목업 `.tag g`/`.tag n`) → `StatusBadge size="lg" dot={false}` O=success · X=muted. null 은 muted 텍스트 '-'.
+   - O/X(목업 `.tag g`/`.tag n`) → `StatusBadge size="lg"` O=success · X=muted. null 은 muted 텍스트 '-'.
      생성여부 셀은 배지 옆에 생성일시(목업 `.ts`)를 작은 muted 텍스트로 붙인다.
    - 섹션2 수정권한처리 → 셀 안 outline 버튼 → 확인 다이얼로그.
    - 확인 다이얼로그(목업 `confirmDlg`) → Radix AlertDialog(`ew_result_dialogs.tsx`), 기본 포커스=취소.
@@ -93,7 +93,7 @@ const dashCell = <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
 /* O/X 셀 — O=success · X=muted(중립). null 은 값 없음 표식이라 배지가 아니라 muted 텍스트 */
 const OX_TONE = { O: 'success', X: 'muted' } as const;
 const oxBadge = (v: OX | null | undefined) =>
-  (v == null ? dashCell : <StatusBadge tone={OX_TONE[v]} label={v} size="lg" dot={false} />);
+  (v == null ? dashCell : <StatusBadge tone={OX_TONE[v]} label={v} size="lg" />);
 const oxCell = (p: { value: OX | null }) => oxBadge(p.value);
 /* 텍스트 셀 — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate */
 const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;

@@ -131,7 +131,7 @@ export function FundEarlyWarningYieldModal({ fund, ym, onClose }: { fund: string
               <span className="font-semibold text-caption" style={{ fontSize: 13 }}>%</span>
             </Kpi>
             <Kpi label="등급">
-              <StatusBadge tone={GRADE_TONE[GRADE_SAMPLE]} label={GRADE_SAMPLE} size="lg" dot={false} />
+              <StatusBadge tone={GRADE_TONE[GRADE_SAMPLE]} label={GRADE_SAMPLE} size="lg" />
             </Kpi>
           </div>
 

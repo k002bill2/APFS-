@@ -56,18 +56,18 @@ const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 const columnDefs: ColDef<UserRow>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'name', headerName: '성명', width: 130, minWidth: 110, maxWidth: 200, cellStyle: flexCenter,
-    cellRenderer: (p: any) => <span className="inline-flex items-center gap-1.5 min-w-0"><span className="font-semibold">{p.value}</span>{p.data?.seed && <StatusBadge tone="success" label="시드" size="sm" dot={false} />}</span> },
+    cellRenderer: (p: any) => <span className="inline-flex items-center gap-1.5 min-w-0"><span className="font-semibold">{p.value}</span>{p.data?.seed && <StatusBadge tone="success" label="시드" size="sm" />}</span> },
   { field: 'lid', headerName: '로그인 아이디', width: 134, maxWidth: 160, cellStyle: { ...flexCenter, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => p.value },
   { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 170, cellStyle: muted, cellRenderer: (p: any) => (p.value || '-') },
-  { field: 'type', headerName: '구분', width: 84, maxWidth: 84, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone="info" label={p.value} size="lg" dot={false} /> },
+  { field: 'type', headerName: '구분', width: 84, maxWidth: 84, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone="info" label={p.value} size="lg" /> },
   { headerName: '소속유형', width: 116, maxWidth: 116, cellStyle: flexMid, valueGetter: (p) => (p.data ? belong(p.data) : ''),
-    cellRenderer: (p: any) => <StatusBadge tone={p.data?.type === '농금원' ? 'primary' : 'warning'} label={p.value} size="lg" dot={false} /> },
+    cellRenderer: (p: any) => <StatusBadge tone={p.data?.type === '농금원' ? 'primary' : 'warning'} label={p.value} size="lg" /> },
   { headerName: '소속', width: 150, minWidth: 110, maxWidth: 220, cellStyle: flexCenter, valueGetter: (p) => (p.data ? belongName(p.data) : ''), cellRenderer: (p: any) => p.value },
   { field: 'roles', headerName: '권한', width: 170, minWidth: 120, maxWidth: 260, cellStyle: flexCenter, valueFormatter: (p) => (p.value ?? []).join(', '),
-    cellRenderer: (p: any) => <span className="inline-flex items-center gap-1 flex-wrap">{(p.value ?? []).map((r: string) => <StatusBadge key={r} tone="info" label={r} size="lg" dot={false} />)}</span> },
-  { field: 'status', headerName: '상태', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={STATUS_TONE[p.value as UserStatus]} label={p.value} size="lg" dot={false} /> },
+    cellRenderer: (p: any) => <span className="inline-flex items-center gap-1 flex-wrap">{(p.value ?? []).map((r: string) => <StatusBadge key={r} tone="info" label={r} size="lg" />)}</span> },
+  { field: 'status', headerName: '상태', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={STATUS_TONE[p.value as UserStatus]} label={p.value} size="lg" /> },
   { field: 'pwExpired', headerName: '비밀번호', width: 100, maxWidth: 100, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '만료' : '정상'),
-    cellRenderer: (p: any) => (p.value ? <StatusBadge tone="warning" label="만료" size="lg" dot={false} /> : <span style={{ color: 'var(--muted-foreground)' }}>정상</span>) },
+    cellRenderer: (p: any) => (p.value ? <StatusBadge tone="warning" label="만료" size="lg" /> : <span style={{ color: 'var(--muted-foreground)' }}>정상</span>) },
   { field: 'last', headerName: '최근 접속일시', width: 170, maxWidth: 170, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value && p.value !== '—' ? String(p.value) : '—') },
 ];
 /* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
@@ -257,7 +257,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <>
-      <StatusBadge tone={STATUS_TONE[single.status]} label={single.status} size="lg" dot={false} />
+      <StatusBadge tone={STATUS_TONE[single.status]} label={single.status} size="lg" />
       <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: single.id })}>수정</Button>
       {gate.mail && <Button variant="outline" size="sm" leadingIcon="bell" onClick={() => openMail(`온보딩 안내 메일 미리보기 — ${single.name}`, onboardMail(single))}>온보딩 메일</Button>}
       {gate.replace && <Button variant="outline" size="sm" leadingIcon="users" onClick={() => askReplace(single)}>담당자 교체</Button>}

@@ -279,12 +279,12 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
 
 /** 수탁데이터 확인검토 셀 — 목업 `chkCell(s, gi, tx)` 그대로 */
 function ChkCell({ v, tx, onRegister }: { v: Chk; tx: Tx | null; onRegister: () => void }) {
-  if (v === '일치') return <StatusBadge tone="success" label="일치" size="lg" dot={false} />;
+  if (v === '일치') return <StatusBadge tone="success" label="일치" size="lg" />;
   if (v === '확인') {
     /* 배분 거래에서만 클릭 가능한 [확인] 버튼(배분거래등록). 출자 거래는 비활성 배지(목업 지시 2026-08-31) */
     return tx === '배분'
       ? <Button variant="outline" size="sm" onClick={onRegister}>확인<span className="sr-only"> — 배분거래등록 팝업 열기</span></Button>
-      : <StatusBadge tone="info" label="확인" size="lg" dot={false} />;
+      : <StatusBadge tone="info" label="확인" size="lg" />;
   }
   return dash;
 }
@@ -308,7 +308,7 @@ const makeColumns = (act: CellActions): ColDef<DistRow>[] => [
   /* 거래구분 — 배분은 강조(primary), 출자는 중립 회색(목업 `txTag`의 tag b / tag n) */
   { field: 'tx', headerName: '거래구분', width: 104, sortable: false, cellStyle: flexMid,
     cellRenderer: (p: any) => (p.value == null ? null
-      : p.value === '배분' ? <StatusBadge tone="primary" label="배분" size="lg" dot={false} /> : <NeutralChip v={p.value as string} />) },
+      : p.value === '배분' ? <StatusBadge tone="primary" label="배분" size="lg" /> : <NeutralChip v={p.value as string} />) },
   ctr('dtx', '상세구분', 110),
   /* 거래일자 — 편집 팝업 진입점(클릭 / 셀 Enter). 소계·합계 행은 링크가 아니다 */
   { field: 'td', headerName: '거래일자', width: 124, sortable: false, cellStyle: flexMid,

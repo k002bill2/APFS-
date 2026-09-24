@@ -73,7 +73,7 @@ function HoldersCell({ d }: { d: HistEntry }) {
 const columnDefs: ColDef<HistEntry>[] = [
   { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'ts', headerName: '일시', width: 176, maxWidth: 176, cellStyle: { ...centerNum }, valueFormatter: (p) => String(p.value) },
-  { field: 'ctype', headerName: '변경유형', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={CT_TONE[p.value as ChangeType]} label={p.value} size="lg" dot={false} /> },
+  { field: 'ctype', headerName: '변경유형', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={CT_TONE[p.value as ChangeType]} label={p.value} size="lg" /> },
   { field: 'preset', headerName: '권한', width: 130, minWidth: 110, maxWidth: 180, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
   { headerName: '변경 요약', width: 200, minWidth: 170, maxWidth: 260, cellStyle: flexCenter, valueGetter: (p) => (p.data ? summaryText(p.data) : ''), cellRenderer: (p: any) => (p.data ? <SummaryCell d={p.data} /> : null) },
   { headerName: '적용 대상(동일 권한 보유)', flex: 1, width: 220, minWidth: 180, cellStyle: flexCenter, valueGetter: (p) => (p.data?.holders ?? []).map((h) => h.name).join(', '), cellRenderer: (p: any) => (p.data ? <HoldersCell d={p.data} /> : null) },

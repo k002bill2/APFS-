@@ -187,7 +187,7 @@ const makeColumns = (openDetail: (id: string) => void): (ColDef<GpContribRow> | 
   { field: 'gb', headerName: '구분', width: 90, cellStyle: flexMid,
     cellRenderer: (p: any) => (p.node.rowPinned
       ? (p.data?.id === TOT_ID ? dash : null)
-      : <StatusBadge tone={GB_TONE[p.value as Gb]} label={p.value} size="lg" dot={false} />) },
+      : <StatusBadge tone={GB_TONE[p.value as Gb]} label={p.value} size="lg" />) },
   /* 기준일자 — 상세 팝업 진입점(클릭 / 셀 Enter). 합계행은 링크가 아니다(가짜 행의 상세는 열 수 없다) */
   { field: 'bd', headerName: '기준일자', width: 124, cellStyle: flexMid,
     cellRenderer: (p: any) => (p.node.rowPinned
@@ -204,7 +204,7 @@ const makeColumns = (openDetail: (id: string) => void): (ColDef<GpContribRow> | 
   /* 수탁일치여부 — 합계 2행은 값이 없어 '-'(목업 tfoot 동일) */
   { field: 'match', headerName: '수탁일치여부', width: 124, cellStyle: flexMid,
     cellRenderer: (p: any) => (p.value == null ? dash
-      : <StatusBadge tone={MATCH_TONE[p.value as Match]} label={p.value} size="lg" dot={false} />) },
+      : <StatusBadge tone={MATCH_TONE[p.value as Match]} label={p.value} size="lg" />) },
 ];
 
 /* Excel 헤더 병합·리프 컬럼을 columnDefs에서 자동 산출(22컬럼 수작업 오프바이원 방지, 골드 subfund_manage 복사) */

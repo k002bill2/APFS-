@@ -101,7 +101,7 @@ const makeColumns = (toggle: (id: string) => void): ColDef<MenuView>[] => [
     cellRenderer: (p: any) => {
       const u: UType[] = p.value ?? [];
       if (!u.length) return <span style={{ color: 'var(--muted-foreground)' }}>공통</span>;
-      return <span className="inline-flex items-center gap-1 flex-wrap">{u.map((x) => <StatusBadge key={x} tone="info" label={x} size="md" dot={false} />)}</span>;
+      return <span className="inline-flex items-center gap-1 flex-wrap">{u.map((x) => <StatusBadge key={x} tone="info" label={x} size="md" />)}</span>;
     } },
   { field: 'use', headerName: '사용여부', width: 92, ...NOSORT, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} /> },
 ];
@@ -297,7 +297,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
-      {single && <StatusBadge tone="info" label={`레벨 ${single.lvl}`} size="lg" dot={false} />}
+      {single && <StatusBadge tone="info" label={`레벨 ${single.lvl}`} size="lg" />}
       {single && <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'edit', id: single.id })}>수정</Button>}
       {single && single.lvl < 3 && <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create', preset: { lvl: (single.lvl + 1) as MenuRow['lvl'], parentId: single.id } })}>하위 메뉴 등록</Button>}
       <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={deleteSelected}>삭제</Button>

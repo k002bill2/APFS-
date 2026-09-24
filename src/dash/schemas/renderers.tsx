@@ -64,7 +64,7 @@ export function AttachChips({ value, max = 3 }: { value?: unknown; max?: number 
    행 데이터는 원 단위 원본 그대로 둔다(KPI 합계·필터 비교값 보존). */
 export function Cell({ col, value, color, statusDomain, unit }: { col: ColumnSpec; value: any; color?: string; statusDomain?: StatusDomainEntry[]; unit?: Unit }) {
   switch (renderKind(col.type)) {
-    case 'status':     return <StatusBadge tone={toneFor(String(value), statusDomain)} label={String(value)} size="sm" />;
+    case 'status':     return <StatusBadge tone={toneFor(String(value), statusDomain)} label={String(value)} size="lg" />;   // 그리드 뱃지 = lg(13px) — typed 그리드와 통일(2026-09-24)
     case 'rate':       return <DeltaBadge value={Number(value)} />;
     /* 운용사(gp): 이름 앞 아이콘 칩 제거(2026-09-16 사용자 지시). 표 전반에서 같은 건물 아이콘이
        모든 행에 반복돼 정보가 없었고, 좁은 폭에서 이름을 밀어냈다. 렌더는 일반 텍스트와 같다 —

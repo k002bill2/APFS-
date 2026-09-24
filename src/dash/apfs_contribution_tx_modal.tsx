@@ -165,8 +165,8 @@ const toDraft = (m: TxMember): DistDraft => ({
 
 /** 수탁데이터 확인검토 — register 모드는 표시 전용(목업 `chkField(s,false)`) */
 function ChkDisplay({ v }: { v: TxMember['chk'] }) {
-  if (v === '일치') return <StatusBadge tone="success" label="일치" size="lg" dot={false} />;
-  if (v === '확인') return <StatusBadge tone="info" label="확인대상" size="lg" dot={false} />;
+  if (v === '일치') return <StatusBadge tone="success" label="일치" size="lg" />;
+  if (v === '확인') return <StatusBadge tone="info" label="확인대상" size="lg" />;
   return dash;
 }
 

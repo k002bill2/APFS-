@@ -55,8 +55,8 @@ const columnDefs: ColDef<InviteView>[] = [
   { field: 'name', headerName: '성명', width: 110, maxWidth: 160, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
   { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 160, cellStyle: muted, cellRenderer: (p: any) => p.value },
   { field: 'active', headerName: '재직', width: 88, maxWidth: 88, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '재직' : '퇴사'),
-    cellRenderer: (p: any) => <StatusBadge tone={p.value ? 'success' : 'danger'} label={p.value ? '재직' : '퇴사'} size="md" dot={false} /> },
-  { field: 'state', headerName: '초대상태', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={INVITE_TONE[p.value as InviteState]} label={p.value} size="lg" dot={false} /> },
+    cellRenderer: (p: any) => <StatusBadge tone={p.value ? 'success' : 'danger'} label={p.value ? '재직' : '퇴사'} size="md" /> },
+  { field: 'state', headerName: '초대상태', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={INVITE_TONE[p.value as InviteState]} label={p.value} size="lg" /> },
   { field: 'invitedAt', headerName: '초대일시', width: 156, maxWidth: 156, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? String(p.value) : '-') },
   { field: 'expiresAt', headerName: `만료(${INVITE_TTL_HOURS}시간)`, width: 156, maxWidth: 156, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
     valueFormatter: (p) => (p.data?.state === '초대발송' && p.value ? String(p.value) : '-') },
@@ -205,7 +205,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <>
-      <StatusBadge tone={INVITE_TONE[single.state]} label={single.state} size="lg" dot={false} />
+      <StatusBadge tone={INVITE_TONE[single.state]} label={single.state} size="lg" />
       {gate.send && <Button variant="primary" size="sm" leadingIcon="bell" onClick={() => askSend(single, false)}>초대 발송</Button>}
       {gate.resend && <Button variant="primary" size="sm" leadingIcon="refresh" onClick={() => askSend(single, true)}>재발송</Button>}
       <Button variant="outline" size="sm" leadingIcon="eye" onClick={() => openPreview(single.id)}>메일 미리보기</Button>

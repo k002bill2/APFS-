@@ -95,7 +95,7 @@ export function IrrBasisModal({ basis, onClose }: { basis: IrrBasis; onClose: ()
                         <td key={c.key} className={`${TD} ${ALIGN[c.kind]} ${c.kind === 'amount' ? 'tabular font-semibold' : ''}`}
                           style={{ ...CELL, color: neg ? 'var(--danger-text)' : undefined }}>
                           {v == null ? <span className="text-muted-foreground">-</span>
-                            : c.kind === 'badge' ? <StatusBadge tone={c.tones?.[String(v)] ?? 'muted'} label={String(v)} size="lg" dot={false} />
+                            : c.kind === 'badge' ? <StatusBadge tone={c.tones?.[String(v)] ?? 'muted'} label={String(v)} size="lg" />
                             : c.kind === 'text' || c.kind === 'center' ? String(v)
                             : displayText(c, v, unit)}
                         </td>

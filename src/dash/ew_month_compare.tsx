@@ -80,7 +80,7 @@ function SideCell({ gp, g }: { gp: string; g: Grade | '' }) {
   return (
     <span className="inline-flex items-center gap-2 min-w-0">
       <span className="min-w-0 truncate">{gp}</span>
-      <StatusBadge tone={GRADE_TONE[g]} label={g} size="lg" dot={false} />
+      <StatusBadge tone={GRADE_TONE[g]} label={g} size="lg" />
     </span>
   );
 }
@@ -102,7 +102,7 @@ const COLUMNS: ColDef<NumberedRow>[] = [
   /* 등급 = 변동 배지. valueGetter 가 문구를 내서 정렬·엑셀이 텍스트로 동작한다 */
   { colId: 'chg', headerName: '등급', width: 110, minWidth: 110, cellStyle: flexMid,
     valueGetter: (p) => (p.data ? chgLabel(p.data.cur, p.data.prev) : ''),
-    cellRenderer: (p: any) => (p.value ? <StatusBadge tone={CHG_TONE[p.value] ?? 'muted'} label={p.value} size="lg" dot={false} /> : null) },
+    cellRenderer: (p: any) => (p.value ? <StatusBadge tone={CHG_TONE[p.value] ?? 'muted'} label={p.value} size="lg" /> : null) },
   { colId: 'cur', headerName: '당월', width: 230, minWidth: 230, flex: 1, cellStyle: diffStyle,
     valueGetter: (p) => (p.data ? sideText(p.data.gp, p.data.cur) : ''),
     cellRenderer: (p: any) => (p.data ? <SideCell gp={p.data.gp} g={p.data.cur} /> : null) },

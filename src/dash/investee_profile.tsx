@@ -39,25 +39,8 @@ export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
       title="투자기업정보(통합)"
       favRoute="투자기업정보(통합)"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={(
-        /* 원문 검색조건 4종(모펀드·운용사·자펀드·투자기업) 복원 — 2026-09-16 Codex 지적.
-           ⚠ 원문 각 select 에 **옵션이 하나씩뿐**이다(모펀드만 농식품모태펀드/MOAF 2개).
-           그래서 고를 것이 없는 읽기전용 표시로 둔다 — 없는 선택지를 지어내면 "조회했는데 안 바뀐다"는
-           거짓 기대를 만든다. 실데이터가 (주)선양 1건뿐인 것도 같은 제약이다(모델 헤더 참조). */
-        <>
-          {QUERY_FIELDS.map(({ label, value }) => (
-            <span key={label} className="inline-flex items-center gap-1.5 text-caption" style={{ fontSize: 12 }}>
-              {label}
-              <span className="inline-flex items-center rounded-[7px] bg-muted text-foreground"
-                style={{ padding: '4px 9px', fontSize: 12, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {value}
-              </span>
-            </span>
-          ))}
-        </>
-      )}
       toolbarRight={<>
-        <span className="text-caption" style={{ fontSize: 12 }}>금액 단위</span>
+        <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
         <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />
       </>}
       footerLeft={(
@@ -67,8 +50,26 @@ export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
       )}
       footerRight={<FooterActions />}>
       {/* 원문이 세 표를 세로로 쌓는 상세 화면이라 탭으로 나누지 않는다 — 한 기업의 단면을 한 번에 본다 */}
-      <div style={{ padding: '4px 2px 8px' }}>
-        <CompanyProfileBody unit={unit} />
+      <div style={{ padding: '20px 2px 8px' }}>
+        {/* 원문 검색조건 4종(모펀드·운용사·자펀드·투자기업) 복원 — 2026-09-16 Codex 지적.
+            ⚠ 원문 각 select 에 **옵션이 하나씩뿐**이다(모펀드만 농식품모태펀드/MOAF 2개).
+            그래서 고를 것이 없는 읽기전용 표시로 둔다 — 없는 선택지를 지어내면 "조회했는데 안 바뀐다"는
+            거짓 기대를 만든다. 실데이터가 (주)선양 1건뿐인 것도 같은 제약이다(모델 헤더 참조).
+            위치: 필터(툴바) 영역이 아니라 본문 첫 줄 — 조작할 수 없는 값이라 필터처럼 보이면 안 된다(2026-09-24 사용자 지시).
+            형태: 디자인 시안(2026-09-24)의 경로 칩 — 모펀드 › 운용사 › 자펀드 › 투자기업 */}
+        <div role="group" aria-label="조회 대상" className="mb-7 flex flex-wrap items-center gap-1.5">
+          {QUERY_FIELDS.map(({ label, value }, i) => (
+            <span key={label} className="inline-flex items-center gap-1.5">
+              {i > 0 && <span className="text-caption" aria-hidden="true">›</span>}
+              <span className="inline-flex items-center gap-2 rounded-full border border-solid border-border bg-card"
+                style={{ height: 32, padding: '0 12px', fontSize: 13, maxWidth: 320 }}>
+                <span className="text-muted-foreground shrink-0">{label}</span>
+                <b className="font-semibold text-foreground" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</b>
+              </span>
+            </span>
+          ))}
+        </div>
+        <CompanyProfileBody variant="page" unit={unit} />
       </div>
     </GridFrame>
   );

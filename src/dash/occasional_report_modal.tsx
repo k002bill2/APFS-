@@ -169,7 +169,7 @@ function CheckTable() {
               )}
               <td className={TD} style={CELL}>{it.t}</td>
               <td className={`${TD} text-center`} style={CELL}>
-                <StatusBadge tone={it.y ? 'primary' : 'muted'} label={it.y ? 'Y' : 'N'} size="sm" dot={false} />
+                <StatusBadge tone={it.y ? 'primary' : 'muted'} label={it.y ? 'Y' : 'N'} size="sm" />
               </td>
             </tr>
           ))))}

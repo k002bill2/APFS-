@@ -7,7 +7,7 @@
      (백엔드가 없어 필터가 즉시 반영된다). `엑셀`·`출력`은 툴바가 아니라 **푸터 FooterActions**가 소유한다.
    - 그리드 1개 · 리프 14컬럼. 2단 그룹헤더는 **`한도관리` 하나뿐**이고(의무투자·일정규모이하투자·투자자산·미투자자산),
      나머지 10개는 최상위 컬럼이라 AG Grid 가 자동으로 2행을 세로 병합한다(목업 `rowspan="2"` 와 동형).
-   - 등급 셀 → `StatusBadge`(정상=success · 주의=warning · 경고=danger), `size="lg" dot={false}`.
+   - 등급 셀 → `StatusBadge`(정상=success · 주의=warning · 경고=danger), `size="lg"`.
    - **`자펀드수익률` 셀**(행 전체가 아니다) 단일 클릭 + 셀 Enter/Space → 「자펀드별 조기경보 상세조회 -
      자펀드수익률」 팝업(`fund_early_warning_yield_modal.tsx`, 출처 S2_50).
      ⚠ 목업 `td.pick` 과 같은 **단일 클릭**이다(2026-09-21 사용자 지시). 셀이 링크 아이콘을 달아
@@ -116,7 +116,7 @@ const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 /* 등급 셀 — 값이 없으면 빈 셀. */
 function GradeCell({ v }: { v: Grade | null }) {
   if (!v) return null;
-  return <StatusBadge tone={GRADE_TONE[v]} label={v} size="lg" dot={false} />;
+  return <StatusBadge tone={GRADE_TONE[v]} label={v} size="lg" />;
 }
 
 /* 자펀드수익률 셀 — 이 한 셀만 팝업을 연다. 한 셀만 열리는 구조라 **시각 단서 없이는 발견이 불가능**하므로
@@ -163,7 +163,7 @@ function YieldCell(p: ICellRendererParams<FundEwRow, Grade>) {
     <span title="자펀드수익률 상세 조회 (클릭 또는 Enter)"
       className="inline-flex items-center"
       style={{ cursor: 'pointer' }}>
-      <StatusBadge tone={GRADE_TONE[v]} size="lg" dot={false}
+      <StatusBadge tone={GRADE_TONE[v]} size="lg"
         label={<>{v}<Icon name="external" size={13.5} stroke={2.4} style={{ position: 'relative', top: -0.75 }} /></>} />
     </span>
   );

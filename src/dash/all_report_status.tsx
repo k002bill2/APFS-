@@ -7,14 +7,15 @@
     dev/active/investment-asset-menu-pages/BRIEF.md 의 "2026-09-15 정정" 절 참조).
 
    구성(목업 → 우리 규약):
-   - 표 6개를 세로로 쌓지 않고 **툴바 SegTabs**(투자심의 | 수시보고 | 조합원총회 | 관리보수 |
-     운용사 출자배분 | 농금원 출자배분)로 전환. 전환은 aria-live로 통지. 원문 표를 하나라도 빼면
+   - 표 6개를 세로로 쌓지 않고 **깔때기 뒤 기본 필터 칩**(투자심의 | 수시보고 | 조합원총회 | 관리보수 |
+     운용사 출자배분 | 농금원 출자배분)으로 전환(2026-09-24 — 투자금 회수현황과 같은 패턴, apfs-detail-filter). 전환은 aria-live로 통지. 원문 표를 하나라도 빼면
      화면 이름 `전체 보고현황`이 거짓이 되므로 6개를 모두 싣는다(2026-09-15 정정).
    - 원문이 2단 헤더인 표(운용사 출자배분: 기타조합원·모태펀드)는 ColumnSpec.group → ColGroupDef로 접는다.
    - 원문 tfoot의 소계·합계는 데이터 행이 아니라 `pinnedBottomRowData`로 하단 고정한다.
-   - 검색박스(모펀드·운용사·자펀드·계정구분·기준일자) → 운용사/자펀드 필터칩 + 상세필터 드로어(검색어·기간).
-       `모펀드`는 원문에서 읽기전용 단일값(농식품모태펀드)이라 컨트롤이 아니라 툴바 캡션으로 둔다.
-       `계정구분`은 원문 select에 `전체` 외 옵션이 없어(값 도메인 미정) 컨트롤을 만들지 않는다 — 없는 값을 지어내지 않는다.
+   - 검색박스(모펀드·운용사·자펀드·계정구분·기준일자) → 상세필터 드로어 + 적용 칩(값만·×). 툴바에 두 번째 칩 줄을 두지 않는다.
+       `모펀드`는 원문에서 읽기전용 단일값(농식품모태펀드)이라 드로어에 표시만 한다.
+       `계정구분`은 원문 `chipGroup('f-acc',['전체','농식품','수산'])` 이 도메인이다(종전 "옵션 없음"은 오기). 다만 원문 표
+       행에 계정구분 칸이 없어 거를 키가 없다 → 드로어에 컨트롤만 두고 no-op(`· 데이터 연동 후 적용`), 칩도 만들지 않는다.
    - 금액 단위(원|백만원|억원) 토글 → `schemas/unit.ts` 공유 SSOT. 금액 컬럼이 있는 탭에서만 렌더.
    - 등록 없음(조회 전용) → 툴바 kebab 단독 + 푸터 폴백. 엑셀·인쇄 = kebab + 푸터 download + ⌥D/⌘P.
    - KPI 배지 행 미포함 · 카드뷰 없음 · 행 선택 없음(선택으로 실행할 액션이 없다).
@@ -42,6 +43,13 @@ import { REPORT_TABS, findTab, distinctValues, filterRows } from './all_report_s
 import type { ReportRow, ReportTab } from './all_report_status_model';
 
 const { Button, IconBtn, SegTabs, FilterChip } = UI;
+
+const ACCOUNTS = ['농식품', '수산'];   // 원문 chipGroup('f-acc') 도메인
+/* 드로어 선택지 = 6개 표 전체의 합집합. 탭을 바꿔도 필터가 유지되므로, 현재 표 기준으로 뽑으면
+   걸린 값이 선택지에서 사라져 select 가 `전체`로 거짓 표시된다. */
+const allValues = (k: 'gp' | 'subFund') => [...new Set(REPORT_TABS.flatMap((t) => distinctValues(t, k)))].sort();
+const GP_OPTIONS = allValues('gp');
+const SUBFUND_OPTIONS = allValues('subFund');
 
 const MOTHER_FUND = '농식품모태펀드';   // 원문 검색박스의 읽기전용 `모펀드` 값
 
@@ -80,11 +88,13 @@ function toColDef(c: ColumnSpec, tab: ReportTab, unit: Unit): ColDef<ReportRow> 
 const toColumnDefs = (tab: ReportTab, unit: Unit): (ColDef<ReportRow> | ColGroupDef<ReportRow>)[] =>
   foldGroups(tab.columns.map((c) => toColDef(c, tab, unit)), tab.columns);
 
-function DrawerField({ label, children, plain }: { label: string; children: React.ReactNode; plain?: boolean }) {
+function DrawerField({ label, children, plain, noop }: { label: string; children: React.ReactNode; plain?: boolean; noop?: boolean }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
+      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+      </span>
       {children}
     </Wrap>
   );
@@ -114,23 +124,20 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
   const [fFrom, setFFrom] = useState('');
   const [fTo, setFTo] = useState('');
   const [fText, setFText] = useState('');
+  const [fAcc, setFAcc] = useState('');   // no-op — 행에 계정구분 키가 없다(헤더 주석)
 
   const tab = findTab(tabKey);
-  const clearFilters = () => { setFGp(''); setFSubFund(''); setFFrom(''); setFTo(''); setFText(''); };
+  const clearFilters = () => { setFGp(''); setFSubFund(''); setFAcc(''); setFFrom(''); setFTo(''); setFText(''); };
 
-  /* 탭을 바꾸면 필터를 비운다 — 표마다 운용사·자펀드 값 도메인이 달라, 남겨두면 "0건"만 보이고
-     왜 비었는지 알 수 없다(원문도 표마다 검색이 따로다). */
-  const onTab = (k: string) => { setTabKey(k); clearFilters(); };
+  /* 탭을 바꿔도 필터는 유지한다(2026-09-24 — 투자금 회수현황과 같은 규약). 칩 건수를 같은 조건으로 세야
+     표끼리 비교가 되고(facet), 걸린 조건은 적용 칩으로 보이므로 0건이어도 이유가 드러난다.
+     (종전: 전환 시 필터를 비웠다 — 칩 건수가 선택 칩만 필터 기준이라 비교가 깨졌다, Codex P2) */
+  const onTab = (k: string) => setTabKey(k);
 
   const visible = useMemo(() => filterRows(tab, { gp: fGp, subFund: fSubFund, from: fFrom, to: fTo, kw: fText }),
     [tab, fGp, fSubFund, fFrom, fTo, fText]);
-  /* 운용사 칩의 건수는 "운용사만 빼고" 나머지 필터를 적용한 모집단 기준(facet count).
-     visible로 세면 칩 하나를 누른 순간 나머지 칩이 전부 0이 돼 비교 기능이 죽는다. */
-  const facet = useMemo(() => filterRows(tab, { gp: '', subFund: fSubFund, from: fFrom, to: fTo, kw: fText }),
-    [tab, fSubFund, fFrom, fTo, fText]);
-  const gpOptions = useMemo(() => distinctValues(tab, 'gp'), [tab]);
-  const subFundOptions = useMemo(() => distinctValues(tab, 'subFund'), [tab]);
-  const chipCount = (gp: string) => String(gp ? facet.filter((r) => String(r.gp) === gp).length : facet.length);
+  /* 보고 구분 칩 건수 = 그 표에 현재 조건을 건 결과(facet) — 누르면 보게 될 건수와 같다 */
+  const tabCount = (t: ReportTab) => String(filterRows(t, { gp: fGp, subFund: fSubFund, from: fFrom, to: fTo, kw: fText }).length);
 
   /* 원문 tfoot(소계·합계)은 **캡처한 리터럴**이지 우리가 계산한 값이 아니다 —
      `합계` 행의 약정총액(32,000,000,000)은 12행의 합이 아니라 조합 약정액이라 필터링된
@@ -168,6 +175,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { clearFilters(); toast.success('새로고침했습니다'); };
   const chips: [string, string, () => void][] = [
+    ['운용사', fGp, () => setFGp('')],
     ['자펀드', fSubFund, () => setFSubFund('')],
     ['기간', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }],
     ['검색어', fText.trim(), () => setFText('')],
@@ -181,12 +189,10 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       toolbarLeft={(
         <>
-          {/* 보고 구분 = 3개 표 전환. 표가 바뀌면 컬럼·건수·필터 도메인이 함께 바뀐다. */}
-          <SegTabs options={REPORT_TABS.map((t) => ({ value: t.key, label: t.label }))} value={tabKey} onChange={onTab} />
+          {/* 기본 필터 = 보고 구분(6개 표 전환). 표가 바뀌면 컬럼·건수·필터 도메인이 함께 바뀐다. */}
           <Icon name="filter" size={16} className="text-caption" />
-          <FilterChip active={fGp === ''} onClick={() => setFGp('')} count={chipCount('')}>운용사: 전체</FilterChip>
-          {gpOptions.map((g) => (
-            <FilterChip key={g} active={fGp === g} onClick={() => setFGp(g)} count={chipCount(g)}>{g}</FilterChip>
+          {REPORT_TABS.map((t) => (
+            <FilterChip key={t.key} active={tabKey === t.key} onClick={() => onTab(t.key)} count={tabCount(t)}>{t.label}</FilterChip>
           ))}
           {chips.filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
@@ -199,16 +205,14 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
         </>
       )}
       toolbarRight={<>
-        {/* 표가 바뀌었음을 스크린리더에 알린다 — SegTabs는 시각적으로만 바뀌고 표는 통째로 교체된다 */}
-        <span className="text-caption" style={{ fontSize: 12 }} aria-live="polite">{tab.label} <b className="text-foreground">{String(visible.length)}</b>건</span>
         {hasAmount && <>
-          <span className="text-caption" style={{ fontSize: 12 }}>금액 단위</span>
+          <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
           <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />
         </>}
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
       </>}
-      footerLeft={<span>
+      footerLeft={<span aria-live="polite">
         {`모펀드 ${MOTHER_FUND} · ${tab.label} 총 ` + String(tab.rows.length) + '건 중 ' + String(visible.length) + '건 표시 중'}
         {tab.pinnedBottom && filtered && ' · 필터 적용 중이라 원문 소계·합계는 숨김(전체 기준 값이라 부분집합에 맞지 않음)'}
       </span>}
@@ -245,8 +249,9 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
             <DrawerField label="검색어">
               <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="제목 · 투자기업 · 안건" style={inputStyle('text')} />
             </DrawerField>
-            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={fSubFund} onChange={setFSubFund} options={subFundOptions} /></DrawerField>
+            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={GP_OPTIONS} /></DrawerField>
+            <DrawerField label="자펀드"><DrawerSelect value={fSubFund} onChange={setFSubFund} options={SUBFUND_OPTIONS} /></DrawerField>
+            <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={ACCOUNTS} /></DrawerField>
             <DrawerField label="기준일자" plain>
               <div className="flex items-center gap-2 flex-wrap">
                 <div style={dayWrap}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="기준일자 시작일" /></div>

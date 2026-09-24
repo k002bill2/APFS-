@@ -29,7 +29,7 @@ export function MailPreviewDialog({ title, mail, onClose, action }: {
             <div className="bg-muted" style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 12.5 }}>
               <div className="flex items-center gap-2 flex-wrap">
                 <span><b>제목:</b> {mail.subject}</span>
-                {mail.stamp && <StatusBadge tone={mail.stamp === '발송됨' ? 'success' : 'info'} label={mail.stamp} size="sm" dot={false} />}
+                {mail.stamp && <StatusBadge tone={mail.stamp === '발송됨' ? 'success' : 'info'} label={mail.stamp} size="sm" />}
               </div>
               <div className="text-caption" style={{ marginTop: 4 }}><b>받는사람:</b> {mail.to} · <b>발신:</b> {MAIL_FROM}</div>
             </div>

@@ -36,7 +36,7 @@
        합계행 없음(가산 가능한 금액 컬럼이 없다) · 2단 그룹헤더 없음 · **행 선택 없음**(읽기전용 모니터링
        화면이라 선택이 만들 액션이 0 — apfs-aggrid "조회 전용 화면은 rowSelection 자체를 두지 않는다").
        → selbar·신규 등록·편집/삭제 모달·명세 팝업·`onRowDoubleClicked`·카드뷰 토글도 없다.
-   - 종합등급 셀 → `StatusBadge size="lg" dot={false}`. 톤은 목업 `GRADE_TAG` 매핑 그대로
+   - 종합등급 셀 → `StatusBadge size="lg"`. 톤은 목업 `GRADE_TAG` 매핑 그대로
        정상→success · 주의→warning · 경고→danger.
    - 목업 [차트] 버튼 → 툴바 우측 `차트` 버튼 → `EarlyWarningTrendModal`(S2_52 시계열 차트 팝업).
    - 목업 [엑셀]/[출력] 버튼 → 툴바에 두지 않는다. 엑셀은 푸터 `FooterActions` 내보내기 + `⌥D`,
@@ -144,7 +144,7 @@ const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyConte
 
 /* 텍스트 셀 — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다 */
 const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
-const gradeCell = (p: { value: EarlyWarningGrade }) => <StatusBadge tone={GRADE_TONE[p.value]} label={p.value} size="lg" dot={false} />;
+const gradeCell = (p: { value: EarlyWarningGrade }) => <StatusBadge tone={GRADE_TONE[p.value]} label={p.value} size="lg" />;
 
 const COLUMNS: ColDef<EarlyWarningRow>[] = [
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },

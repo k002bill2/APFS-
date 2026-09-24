@@ -188,7 +188,7 @@ function GradeTable() {
           <tr key={g.no}>
             <td className={`${TD} text-center align-top`} style={CELL}>{g.no}</td>
             <td className={`${TD} align-top`} style={CELL}>{g.co}</td>
-            <td className={`${TD} text-center align-top`} style={CELL}><StatusBadge size="sm" tone={GRADE_TONE[g.grade] ?? 'info'} label={g.grade} dot={false} /></td>
+            <td className={`${TD} text-center align-top`} style={CELL}><StatusBadge size="sm" tone={GRADE_TONE[g.grade] ?? 'info'} label={g.grade} /></td>
             <td className={`${TD} align-top`} style={{ ...CELL, lineHeight: 1.6 }}>{g.basis}</td>
             <td className={`${TD} align-top`} style={{ ...CELL, lineHeight: 1.6 }}>{g.note}</td>
           </tr>

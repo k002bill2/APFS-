@@ -29,9 +29,15 @@ import type { MatrixRow, RegionRow } from './investee_invest_stats_model';
 
 const { Button, IconBtn, SegTabs } = UI;
 
-const TH = 'border border-border bg-muted text-[11.5px] font-bold text-muted-foreground whitespace-nowrap';
-const TD = 'border border-border text-[12px] text-foreground';
-const PAD = { padding: '7px 8px' } as const;
+/* 표 밀도 — 투자기업정보(통합) 페이지(company_profile_model `page` variant)와 같은 시각 언어(2026-09-24).
+   셀은 사방 테두리를 그대로 두고, 표를 `border-hidden` 으로 감싸 바깥 테두리만 지운다 —
+   collapse 모델에서 table 의 hidden 이 바깥 셀 테두리를 이기므로 rowspan·3단 헤더에도 이중선이 안 생긴다.
+   바깥선은 둥근 래퍼(TABLE_FRAME)가 그린다. */
+const TH = 'border border-solid border-border bg-muted text-[12.5px] font-semibold text-muted-foreground whitespace-nowrap text-center';
+const TD = 'border border-solid border-border text-[13.5px] text-foreground whitespace-nowrap';
+const PAD = { padding: '10px 12px' } as const;
+const TABLE_FRAME = 'overflow-x-auto border border-solid border-border rounded-[var(--radius-sm)]';
+const ROW_HOVER = 'hover:[&>td]:bg-muted';
 const num = (v: number | string) => (typeof v === 'number' ? v.toLocaleString('ko-KR') : v);
 /* 블록별 포맷 — `투자건수` 블록은 건수(환산 대상 아님), `투자금액` 블록만 단위 환산한다.
    소재지별 표는 건수/금액이 한 행에 섞여 있어 열 인덱스로 가른다(0·1=건수, 2·3=금액). */
@@ -56,11 +62,13 @@ const fmtEok = (eok: number, unit: StatUnit) =>
 
 function Section({ title, caption, children }: { title: string; caption: string; children: React.ReactNode }) {
   return (
-    <section className="mb-8 last:mb-0">
-      {/* preflight:false라 h3/p에 UA 기본 마진이 살아 있다 → margin:0 명시(preflight-off-ua-margin-trap) */}
-      <h3 className="text-[13.5px] font-bold text-foreground" style={{ margin: '0 0 3px' }}>{title}</h3>
-      <p className="text-[11.5px] text-muted-foreground" style={{ margin: '0 0 8px' }}>{caption}</p>
-      <div className="overflow-x-auto">{children}</div>
+    <section className="mb-7 last:mb-0">
+      <div className="mb-[14px] flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        {/* preflight:false라 h3/p에 UA 기본 마진이 살아 있다 → margin:0 명시(preflight-off-ua-margin-trap) */}
+        <h3 className="t-cardtitle text-foreground" style={{ margin: 0 }}>{title}</h3>
+        <p className="text-[12.5px] text-caption" style={{ margin: 0 }}>{caption}</p>
+      </div>
+      <div className={TABLE_FRAME}>{children}</div>
     </section>
   );
 }
@@ -69,7 +77,7 @@ function Section({ title, caption, children }: { title: string; caption: string;
 function BlockMatrix({ rows, headers, head, unit }: { rows: MatrixRow[]; headers: readonly string[]; head: React.ReactNode; unit: StatUnit }) {
   let prev = '';
   return (
-    <table className="w-full border-collapse" style={{ minWidth: 60 * headers.length + 240 }}>
+    <table className="w-full border-collapse border-hidden" style={{ minWidth: 60 * headers.length + 240 }}>
       <thead>{head}</thead>
       <tbody>
         {rows.map((r) => {
@@ -78,7 +86,7 @@ function BlockMatrix({ rows, headers, head, unit }: { rows: MatrixRow[]; headers
           prev = r.block;
           const total = r.label.replace(/\s/g, '') === '합계';
           return (
-            <tr key={r.block + r.label}>
+            <tr key={r.block + r.label} className={total ? '' : ROW_HOVER}>
               {first && <th scope="rowgroup" rowSpan={span} className={TH} style={PAD}>{r.block}</th>}
               <th scope="row" className={`${TD} text-center ${total ? 'font-bold bg-muted' : ''}`} style={PAD}>
                 {r.label}
@@ -98,7 +106,7 @@ function BlockMatrix({ rows, headers, head, unit }: { rows: MatrixRow[]; headers
 
 function RegionTable({ rows, unit }: { rows: RegionRow[]; unit: StatUnit }) {
   return (
-    <table className="w-full border-collapse" style={{ minWidth: 560 }}>
+    <table className="w-full border-collapse border-hidden" style={{ minWidth: 560 }}>
       <thead>
         <tr>
           <th scope="col" rowSpan={2} className={TH} style={PAD}>NO</th>
@@ -113,7 +121,7 @@ function RegionTable({ rows, unit }: { rows: RegionRow[]; unit: StatUnit }) {
         {rows.map((r) => {
           const total = r.region === '합계';
           return (
-            <tr key={r.region}>
+            <tr key={r.region} className={total ? '' : ROW_HOVER}>
               {total
                 ? <th scope="row" colSpan={2} className={`${TD} text-center font-bold bg-muted`} style={PAD}>합계</th>
                 : (<>
@@ -171,19 +179,19 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
               나머지 검색조건(계정구분·연도기준·데이터기준·기준일자)은 **원문 select 에 옵션이 0개**라
               컨트롤을 만들지 않는다 — 빈 select 는 고를 것이 없고, 값을 지어내면 창작이 된다.
               `모펀드`는 APFS 단일값이라 푸터 캡션으로 둔다. */}
-          <span className="text-caption" style={{ fontSize: 12 }}>투자실적구분</span>
+          <span className="text-muted-foreground" style={{ fontSize: 13 }}>투자실적구분</span>
           <SegTabs options={VIEWS.map((v) => ({ value: v.key, label: v.label }))} value={view}
             onChange={(v: string) => setView(v as ViewKey)} />
         </>
       )}
       toolbarRight={<>
-        <span className="text-caption" style={{ fontSize: 12 }}>금액 단위</span>
+        <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
         <SegTabs size="sm" options={STAT_UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as StatUnit)} />
         <IconBtn icon="download" label="내보내기 (Excel)" size={34} onClick={exportExcel} />
       </>}
       footerLeft={<span>{`모펀드 농식품모태펀드 · 매출액별 ${SOURCE_COUNTS.salesScale}행 · 투자형태별 ${SOURCE_COUNTS.investType}행 · 소재지별 ${SOURCE_COUNTS.region}행 (원문 그대로)`}</span>}
       footerRight={<FooterActions />}>
-      <div style={{ padding: '4px 2px 8px', minHeight: 320 }}>
+      <div style={{ padding: '20px 2px 8px', minHeight: 320 }}>
         {view === 'salesScale' && (
           <Section title="경영체 매출액별 투자실적" caption={`투자건수·투자금액 2개 블록 · 연도(2010~2025)+합계 · 금액 단위: ${unit}`}>
             <BlockMatrix rows={rows} headers={SALES_SCALE_HEADERS} unit={unit}

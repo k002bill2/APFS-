@@ -165,13 +165,13 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void):
      배지를 버튼으로 감싼다: `font:'inherit'`는 preflight:false에서 UA 기본 폰트(13.3px Arial)로 튀는 것을 막는다. */
   { field: 'rt', headerName: '보고구분', width: 110, cellStyle: flexMid,
     cellRenderer: (p: any) => {
-      if (p.value !== '월간보고서') return <StatusBadge tone="primary" label={p.value} size="lg" dot={false} />;
+      if (p.value !== '월간보고서') return <StatusBadge tone="primary" label={p.value} size="lg" />;
       /* 링크 배지 = 라벨 뒤 external 아이콘(자펀드별 조기경보 등급 배지와 같은 규약·같은 보정값 — fund_early_warning.tsx 주석이 정본) */
       return (
         <button type="button" aria-label="월간보고서 상세 보기 (새 창)" title="월간보고 상세 (새 창)" onClick={openDetail}
           className="inline-flex items-center cursor-pointer border-0 p-0"
           style={{ font: 'inherit', background: 'transparent' }}>
-          <StatusBadge tone="primary" size="lg" dot={false}
+          <StatusBadge tone="primary" size="lg"
             label={<>{p.value}<Icon name="external" size={13.5} stroke={2.4} style={{ position: 'relative', top: -0.75 }} /></>} />
         </button>
       );
@@ -195,7 +195,7 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void):
     cellRenderer: (p: any) => (p.value == null ? null
       : <ConfirmSelect value={p.value} no={p.data.no} onChange={(v) => patch(p.data.id, { confirmed: v })} />) },
   { field: 'fundStatus', headerName: '조합상태', width: 100, cellStyle: flexMid,
-    cellRenderer: (p: any) => <StatusBadge tone="success" label={p.value} size="lg" dot={false} /> },
+    cellRenderer: (p: any) => <StatusBadge tone="success" label={p.value} size="lg" /> },
 ];
 
 /* 엑셀 컬럼 — 화면 컬럼과 1:1(화면=엑셀 불변식, 선택 체크박스 열 제외).

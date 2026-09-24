@@ -69,13 +69,13 @@ const columnDefs: ColDef<ProgramRow>[] = [
   { field: 'gubun', headerName: '구분', width: 120, maxWidth: 140, cellStyle: muted, cellRenderer: (p: any) => (p.value ? p.value : dash) },
   { field: 'use', headerName: '사용여부', width: 92, maxWidth: 92, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} size="md" /> },
   { field: 'linked', headerName: '메뉴연결', width: 100, maxWidth: 100, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '연결' : '미연결'),
-    cellRenderer: (p: any) => <StatusBadge tone={p.value ? 'info' : 'primary'} label={p.value ? '연결' : '미연결'} size="md" dot={false} /> },
+    cellRenderer: (p: any) => <StatusBadge tone={p.value ? 'info' : 'primary'} label={p.value ? '연결' : '미연결'} size="md" /> },
   { field: 'menuPath', headerName: '연결 메뉴', width: 260, minWidth: 180, maxWidth: 360, cellStyle: muted,
     cellRenderer: (p: any) => (p.value ? p.value : dash) },
   { field: 'at', headerName: '최종수정일시', width: 150, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => String(p.value) },
   { field: 'by', headerName: '최종수정자', width: 110, maxWidth: 120, cellStyle: muted, cellRenderer: (p: any) => (p.value ? p.value : dash) },
   { field: 'help', headerName: '도움말', width: 92, maxWidth: 92, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '있음' : '없음'),
-    cellRenderer: (p: any) => (p.value ? <StatusBadge tone="success" label="있음" size="md" dot={false} /> : dash) },
+    cellRenderer: (p: any) => (p.value ? <StatusBadge tone="success" label="있음" size="md" /> : dash) },
   { field: 'helpAt', headerName: '도움말 수정일시', width: 150, maxWidth: 150, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? String(p.value) : '-') },
   { field: 'helpBy', headerName: '도움말 수정자', width: 120, maxWidth: 130, cellStyle: muted, cellRenderer: (p: any) => (p.value ? p.value : dash) },
 ];
@@ -324,7 +324,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <>
-        <StatusBadge tone={single.linked ? 'info' : 'primary'} label={single.linked ? '메뉴 연결' : '미연결'} size="lg" dot={false} />
+        <StatusBadge tone={single.linked ? 'info' : 'primary'} label={single.linked ? '메뉴 연결' : '미연결'} size="lg" />
         <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: single.id })}>수정</Button>
         <Button variant="outline" size="sm" leadingIcon="memo" onClick={() => setModal({ kind: 'help', id: single.id })}>도움말</Button>
       </>}

@@ -45,7 +45,7 @@ const FOOT: React.CSSProperties = { ...CELL, borderTop: '2px solid var(--border-
 
 /* 일치여부 표식 — 목업 `<span class="tag g">일치</span>`. 상태 배지 */
 function MatchTag({ label }: { label: string }) {
-  return <StatusBadge tone="success" label={label} size="md" dot={false} />;
+  return <StatusBadge tone="success" label={label} size="md" />;
 }
 
 /* ── 섹션 데이터 — 목업 `detailHTML` 표 값 그대로(원 단위) ──────────────────────

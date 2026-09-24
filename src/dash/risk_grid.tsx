@@ -120,7 +120,7 @@ function renderer(c: ColMeta, unit: Unit | null, linkLabel: string, custom?: (ro
     if (pinned && typeof v === 'string') return <span className="font-bold" style={{ color: v === '-' ? 'var(--muted-foreground)' : undefined }}>{v}</span>;
     switch (c.kind) {
       case 'badge':
-        return <StatusBadge tone={c.tones?.[String(v)] ?? c.tone ?? 'muted'} label={String(v)} size="lg" dot={false} />;
+        return <StatusBadge tone={c.tones?.[String(v)] ?? c.tone ?? 'muted'} label={String(v)} size="lg" />;
       case 'text':
       case 'center':
         return <span className="min-w-0 truncate">{String(v)}</span>;
