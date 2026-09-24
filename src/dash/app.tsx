@@ -19,9 +19,10 @@ import { Pages as ReportBucheoPages } from './report_bucheo';
 import { GenericListPage, findMenuContext } from './generic_list';
 import { AssetFunding } from './asset_funding';
 import { InvestmentReviewManage } from './investment_review_manage';   // 투자심의관리(관리형 리스트, S1_01). GenericListPage 폴백 앞 분기
-// 수시보고(S1_04)+일일보고 조회(S5_117) · 정기보고(S1_06)+정기보고회수내역(S1_29) · 자펀드수탁관리 실물검증(S1_26)+확정(S1_27)
-// — 원문 2개를 가진 리프 3개는 탭 묶음 래퍼로 분기한다(asset_leaf_tabs.tsx)
-import { OccasionalReportLeaf, RegularReportLeaf, CustodyLeaf } from './asset_leaf_tabs';
+// 수시보고(S1_04)+일일보고 조회(S5_117) · 자펀드수탁관리 실물검증(S1_26)+확정(S1_27)
+// — 원문 2개를 가진 리프는 탭 묶음 래퍼로 분기한다(asset_leaf_tabs.tsx)
+import { OccasionalReportLeaf, CustodyLeaf } from './asset_leaf_tabs';
+import { RegularReportManage } from './regular_report_manage';           // 정기보고(S1_06) — 회수내역 탭 삭제(2026-09-24)로 단일 화면
 import { GeneralMeetingManage } from './general_meeting_manage';         // 조합원총회(S1_07). 동상
 import { FundCashForecastManage } from './fund_cash_forecast_manage';    // 조합예상자금 정보보고(S1_08). 동상
 import { ReportFormManage } from './report_form_manage';                 // 보고양식관리(S1_09). 동상
@@ -93,7 +94,7 @@ const ROUTE_ALIAS: Record<string, string> = {
   "수시보고": "occasional-report",        // 동상(2026-09-12 typed 페이지 전환)
   // 사후보고관리 5리프(2026-09-12 typed 페이지 전환, S1_06~S1_10) — 리프에 path 부여 전 잔존 한글 route 승격
   "정기보고": "regular-report",
-  // "정기보고회수내역" 은 별칭이 아니라 app 분기(정기보고 리프의 두 번째 탭)로 연다 — 스키마는 삭제(2026-09-24)
+  "정기보고회수내역": "regular-report",   // 정기보고 리프의 옛 두 번째 탭 — 탭 삭제(2026-09-24 사용자 결정)로 정기보고로 승격
   "조합원총회": "general-meeting",
   "조합예상자금 정보보고": "fund-cash-forecast",
   "보고양식관리": "report-form",
@@ -234,9 +235,7 @@ function App() {
   else if (route === "asset-funding") page = <AssetFunding onNav={onNav} />;
   else if (route === "investment-review") page = <InvestmentReviewManage onNav={onNav} />;
   else if (route === "occasional-report") page = <OccasionalReportLeaf onNav={onNav} />;
-  else if (route === "regular-report") page = <RegularReportLeaf key={route} onNav={onNav} />;
-  // 옛 고아 스키마 route — 정기보고 리프의 정기보고회수내역 탭으로 연다(key 로 같은 래퍼라도 초기 탭을 다시 잡는다)
-  else if (route === "정기보고회수내역") page = <RegularReportLeaf key={route} onNav={onNav} initial="recovery" />;
+  else if (route === "regular-report") page = <RegularReportManage onNav={onNav} />;
   else if (route === "general-meeting") page = <GeneralMeetingManage onNav={onNav} />;
   else if (route === "fund-cash-forecast") page = <FundCashForecastManage onNav={onNav} />;
   else if (route === "report-form") page = <ReportFormManage onNav={onNav} />;

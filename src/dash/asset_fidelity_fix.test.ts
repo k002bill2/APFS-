@@ -3,7 +3,7 @@
    ① investment-review 행 = S1_01 `var DATA` 3건 전 값(합성 행 금지)
    ② S1_32·S1_33 합계 행 = 원문 tfoot(라벨·합산 칸·'-' 칸·연번)
    ③ S1_38 기준년월 → 운용사정량지표상세(재무건정성비율) 팝업 = 원문 openRatioDetail
-   ④ S5_117(수시보고 확인 탭 2)·S1_29(정기보고 탭 2) 헤더·행 = 원문
+   ④ S5_117(수시보고 확인 탭 2) 헤더·행 = 원문 (S1_29 정기보고 탭 2는 2026-09-24 사용자 결정으로 삭제)
    ⑤ custody-verify 리프에서 확정(S1_27) 탭 도달 · 딥링크 별칭 유지 */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -14,8 +14,6 @@ import { linksDetail } from './schemas/detail_link';
 import { INV_REVIEW_ROWS } from './investment_review_data';
 import { GP_RATIO_TITLE, GP_RATIO_EMPTY, gpRatioItems } from './gp_ratio_detail_model';
 import { DAILY_SECTIONS, DAILY_TITLE, DAILY_SOURCE } from './daily_report_model';
-import { RECOVERY_TABLE, RECOVERY_COLS, RECOVERY_SOURCE, RECOVERY_GP, RECOVERY_FUND, isRecoverySubtotal, recoveryTxCount } from './regular_recovery_model';
-import { computeTotal, headerSequence } from './risk_table_meta';
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const src = (f: string) => readFileSync(new URL('./' + f, import.meta.url), 'utf8');
@@ -208,66 +206,6 @@ describe('④ S5_117 일일보고 조회 = 원문 투자기업개요 프로퍼�
   });
 });
 
-describe('④ S1_29 정기보고회수내역 = 원문 헤더·행·소계·합계', () => {
-  const html = read(RECOVERY_SOURCE);
-  type D = { grp: number; co: string; t: string; inv: number; done: boolean; rd: string; a: number; b: number; status: string; memo: string };
-  const DATA = scriptLiteral<D[]>(html, 'DATA');
-  const rows = RECOVERY_TABLE.rows;
-  const tx = rows.filter((r) => !isRecoverySubtotal(r));
-  const subs = rows.filter(isRecoverySubtotal);
-
-  it('헤더 14칸 = 원문 thead 순서', () => {
-    const head = html.match(/<thead>([\s\S]*?)<\/thead>/)![1];
-    const ths = [...head.matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)].map((m) => strip(m[1]));
-    expect(headerSequence(RECOVERY_COLS)).toEqual(ths);
-  });
-
-  it('회수거래 11건 전 값 = 원문 DATA(수익 = B−A · 감액 0 · 빈 상태/비고 `-`)', () => {
-    expect(tx).toHaveLength(DATA.length);
-    expect(recoveryTxCount(rows)).toBe(11);
-    tx.forEach((r, i) => {
-      const o = DATA[i];
-      expect([r.no, r.gp, r.fund, r.co, r.t, r.inv, r.done, r.rd, r.a, r.b, r.p, r.d, r.status, r.memo]).toEqual([
-        String(i + 1), RECOVERY_GP, RECOVERY_FUND, o.co, o.t, o.inv, o.done ? 'O' : 'X', o.rd, o.a, o.b, o.b - o.a, 0, o.status || '-', o.memo || '-',
-      ]);
-    });
-    expect(html).toContain(`var gp='${RECOVERY_GP}', fund='${RECOVERY_FUND}'`);
-  });
-
-  it('소계 = 원문 grp 6개, 각 grp 끝 · 투자금액은 grp 당 1번 · 합계 = 소계들의 합', () => {
-    const grps = [...new Set(DATA.map((o) => o.grp))];
-    expect(subs).toHaveLength(grps.length);
-    let k = 0;
-    for (const g of grps) {
-      const items = DATA.filter((o) => o.grp === g);
-      k += items.length;
-      const sub = rows[k + grps.indexOf(g)];
-      expect(isRecoverySubtotal(sub)).toBe(true);
-      expect([sub.no, sub.inv, sub.a, sub.b, sub.p, sub.d]).toEqual([
-        '소계', items[0].inv, items.reduce((a, o) => a + o.a, 0), items.reduce((a, o) => a + o.b, 0), items.reduce((a, o) => a + o.b - o.a, 0), 0,
-      ]);
-    }
-    const total = computeTotal(RECOVERY_TABLE)!;
-    const gInv = grps.reduce((a, g) => a + DATA.find((o) => o.grp === g)!.inv, 0);
-    expect([total.no, total.inv, total.a, total.b, total.p, total.d]).toEqual([
-      '합계', gInv, DATA.reduce((a, o) => a + o.a, 0), DATA.reduce((a, o) => a + o.b, 0), DATA.reduce((a, o) => a + o.b - o.a, 0), 0,
-    ]);
-    // 원문 tfoot 의 '-' 칸(회수완료 여부·회수일자·회수 상태·비고), colspan 5 라벨 영역(운용사~투자시점)은 빈 칸
-    expect([total.done, total.rd, total.status, total.memo]).toEqual(['-', '-', '-', '-']);
-    expect([total.gp, total.fund, total.co, total.t]).toEqual(['', '', '', '']);
-  });
-
-  it('금액 단위 자릿수 = 원문 UNITS(백만원 1 · 억원 2)', () => {
-    expect(html).toContain("var UNITS={won:{div:1,dec:0},mn:{div:1000000,dec:1},eok:{div:100000000,dec:2}}");
-    expect(RECOVERY_TABLE.unitDigits).toEqual({ 백만원: { min: 1, max: 1 }, 억원: { min: 2, max: 2 } });
-  });
-
-  it('옛 고아 스키마 `정기보고회수내역` 은 삭제됐다(절대경로 captureFile · 합성 더미 경로 제거)', () => {
-    expect(ALL_SCHEMAS.some((s) => s.route === '정기보고회수내역')).toBe(false);
-    expect(RECOVERY_SOURCE.startsWith('docs/mockups/')).toBe(true);
-  });
-});
-
 /* ─────────────── ⑤ 리프 탭 결선 · 딥링크 ─────────────── */
 describe('⑤ 원본 2개 리프 = 한 화면 안 탭으로 도달', () => {
   const app = src('app.tsx');
@@ -284,12 +222,27 @@ describe('⑤ 원본 2개 리프 = 한 화면 안 탭으로 도달', () => {
     expect(app).toContain('else if (route === "custody-confirm") page = <CustodyLeaf key={route} onNav={onNav} initial="confirm" />;');
   });
 
-  it('수시보고 확인 = 수시보고(S1_04) | 일일보고 조회(S5_117), 정기보고 = 정기보고(S1_06) | 정기보고회수내역(S1_29)', () => {
+  it('수시보고 확인 = 수시보고(S1_04) | 일일보고 조회(S5_117)', () => {
     expect(app).toContain('else if (route === "occasional-report") page = <OccasionalReportLeaf onNav={onNav} />;');
-    expect(app).toContain('else if (route === "regular-report") page = <RegularReportLeaf key={route} onNav={onNav} />;');
-    expect(app).toContain('else if (route === "정기보고회수내역") page = <RegularReportLeaf key={route} onNav={onNav} initial="recovery" />;');
     expect(leaf).toContain("[{ id: 'occ', label: '수시보고' }, { id: 'daily', label: '일일보고 조회' }]");
-    expect(leaf).toContain("[{ id: 'regular', label: '정기보고' }, { id: 'recovery', label: '정기보고회수내역' }]");
+  });
+
+  it('정기보고는 회수내역 탭을 삭제해 탭 없는 단일 화면이고, 옛 route `정기보고회수내역` 은 정기보고로 승격된다', () => {
+    expect(app).toContain('else if (route === "regular-report") page = <RegularReportManage onNav={onNav} />;');
+    expect(app).toContain('"정기보고회수내역": "regular-report"');
+    expect(app).not.toContain('RegularReportLeaf');
+    expect(leaf).not.toContain('정기보고회수내역');
+  });
+
+  it('탭 바는 세로로 넘치지 않는다 — overflow-x:auto 면 y도 auto 가 되므로 overflowY 를 명시적으로 숨긴다', () => {
+    expect(src('risk_page_kit.tsx')).toMatch(/role="tablist"[^\n]*overflow-x-auto[^\n]*overflowY: 'hidden'/);
+    expect(src('shell.tsx')).toMatch(/role="tablist"[^\n]*overflow-x-auto[^\n]*overflowY: "hidden"/);
+  });
+
+  it('세로 넘침을 자른 탭 바는 탭 포커스를 안쪽(inset)으로 그린다 — 바깥 글로우는 잘린다', () => {
+    expect(src('risk_page_kit.tsx')).toMatch(/role="tablist"[^\n]*className="apfs-tabbar /);
+    expect(src('shell.tsx')).toMatch(/role="tablist" className="apfs-tabbar /);
+    expect(src('tokens.css')).toMatch(/\.apfs-tabbar \[role="tab"\]:focus-visible\{box-shadow:inset 0 0 0 1px var\(--ring\)/);
   });
 
   it('탭으로 묶인 화면은 리프의 제목·브레드크럼·즐겨찾기 route 를 쓴다(확정 탭도 `자펀드 수탁관리`)', () => {

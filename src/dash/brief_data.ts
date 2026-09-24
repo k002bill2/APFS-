@@ -1,5 +1,5 @@
 /* 부처보고 2리프의 원문 데이터(순수 모듈, React import 금지).
-   - 연도별투자현황(route report-bucheo) = 03_연도별투자현황 목업 + 04_연도별투자현황상세 목업(탭 2 — 메뉴 리프가 하나라 상세를 탭으로 통합)
+   - 연도별투자현황(route report-bucheo) = 03_연도별투자현황 목업(옛 탭 2 '04_연도별투자현황상세'는 원본에 없는 탭이라 2026-09-24 삭제)
    - 등록원부관리 = S4_108_등록원부_관리 — 목록 + 팝업 6종(입력/수정 · 조합원 · 전문인력 · 업로드 · 출력 · 발급이력)
    출처: docs/mockups/04_모태펀드보고/** 의 `<script> DATA` 를 2026-09-23 파싱 실측으로 옮겼다. 값·순서·개수를 바꾸지 않는다.
 
@@ -9,10 +9,9 @@ import type { TableMeta, Provenance, Row, ColMeta, Cell } from './risk_table_met
 
 const MOCK = 'docs/mockups/04_모태펀드보고';
 export const YEARLY_SRC = `${MOCK}/03_연도별투자현황/mockup/연도별투자현황_목업.html`;
-export const YEARLY_DETAIL_SRC = `${MOCK}/04_연도별투자현황상세/mockup/연도별투자현황상세_목업.html`;
 export const LEDGER_SRC = `${MOCK}/S4_108_등록원부_관리.html`;
 
-export const YEARLY_PROVENANCE: Provenance = { capturedAt: '2026-09-23', sourceSystem: 'BRIEF', captureFiles: [YEARLY_SRC, YEARLY_DETAIL_SRC] };
+export const YEARLY_PROVENANCE: Provenance = { capturedAt: '2026-09-23', sourceSystem: 'BRIEF', captureFiles: [YEARLY_SRC] };
 export const LEDGER_PROVENANCE: Provenance = { capturedAt: '2026-09-23', sourceSystem: 'BRIEF', captureFiles: [LEDGER_SRC] };
 
 /* ═══════════════ 연도별투자현황 — 검색조건 ═══════════════ */
@@ -20,7 +19,6 @@ export const YEARLY_BASE_YM = '2026-08';
 export const ACCOUNT_TYPES = ['농식품', '수산'] as const;          // 원문 계정구분 select(전체 + 2)
 export const BASES = ['선정년도', '결성년도'] as const;            // 원문 조회기준 라디오 — 그리드 연도 컬럼 라벨·집계축
 export type Basis = typeof BASES[number];
-export const COMB_TYPES = ['전체', '운영조합', '청산조합'] as const;  // 상세 원문 조합구분 라디오 — 행 필터
 /** 원문 `.foot-note` 3줄(화면 안내문 — 설계메모 `.note` 와 다르다, spec 이 "원문 사용·임의 문구 금지") */
 export const YEARLY_FOOTNOTES = [
   '* 현금성자산 = 미투자자산의 금융상품',
@@ -75,9 +73,8 @@ const DATA_FORM: YearlyLit[] = [
 /** 원문 TOTALS(백만원) + 조합수 11 + 투자배수 1.63 — 테스트가 합계 규칙과 대조한다 */
 export const YEARLY_TOTALS_LIT = { c: 11, ct: 151000, mc: 74000, a: 66000, ma: 66000, b1: 7770, b2: 70764, cc: 29000, rec: 36836, pf: 8319, mul: '1.63' } as const;
 
-/** 원문 fmt() 소수 자릿수 — 요약: 백만원 정수 · 억원 최대 1자리 / 상세: 백만원 반올림 정수 · 억원 항상 1자리 */
+/** 원문 fmt() 소수 자릿수 — 백만원 정수 · 억원 최대 1자리 */
 export const YEARLY_DIGITS: TableMeta['unitDigits'] = { 원: { min: 0, max: 0 }, 백만원: { min: 0, max: 0 }, 억원: { min: 0, max: 1 } };
-export const DETAIL_DIGITS: TableMeta['unitDigits'] = { 원: { min: 0, max: 0 }, 백만원: { min: 0, max: 0 }, 억원: { min: 1, max: 1 } };
 
 const yearlyTable = (basis: Basis, rows: YearlyLit[]): TableMeta => ({
   id: `yearly-${basis}`, totalLabel: '합계', unitDigits: YEARLY_DIGITS,
@@ -92,36 +89,6 @@ const yearlyTable = (basis: Basis, rows: YearlyLit[]): TableMeta => ({
   rows: rows.map(yearlyRow(basis === '선정년도' ? 'sel' : 'form')),
 });
 export const YEARLY_TABLES: Record<Basis, TableMeta> = { 선정년도: yearlyTable('선정년도', DATA_SEL), 결성년도: yearlyTable('결성년도', DATA_FORM) };
-
-/* ═══════════════ 탭 2 — 연도별투자현황상세(04 목업) ═══════════════ */
-/** 원문 DATA 4행(원 단위). ys=선정년도 · yf=결성년도(조회기준에 따라 연도 칸이 바뀐다) · g=운영/청산(조합구분 필터 — 화면 칸 아님) */
-export const DETAIL_ROWS: Row[] = [
-  { id: 'det-1', ys: '2010', yf: '2011', r: '1', gp: 'KB증권(주)', fn: '현대동양농식품사모투자전문회사', ct: 32000000000, mc: 15700000000, a: 32000000000, ma: 15700000000, b1: 0, b2: 0, cc: 39713485321, rec: 39713485321, pf: 7713485321, mul: '1.24', g: '청산' },
-  { id: 'det-2', ys: '2012', yf: '2012', r: '1', gp: '한국투자파트너스', fn: '한투 농식품 투자조합', ct: 20000000000, mc: 10000000000, a: 20000000000, ma: 10000000000, b1: 2000000000, b2: 22000000000, cc: 3000000000, rec: 5000000000, pf: 1000000000, mul: '1.35', g: '운영' },
-  { id: 'det-3', ys: '2013', yf: '2014', r: '2', gp: 'IMM인베스트먼트', fn: 'IMM 스마트농업 투자조합', ct: 40000000000, mc: 20000000000, a: 40000000000, ma: 20000000000, b1: 5000000000, b2: 45000000000, cc: 8000000000, rec: 12000000000, pf: 3000000000, mul: '1.45', g: '운영' },
-  { id: 'det-4', ys: '2015', yf: '2015', r: '1', gp: '수산벤처파트너스', fn: '블루푸드테크 투자조합', ct: 15000000000, mc: 7500000000, a: 5000000000, ma: 2500000000, b1: 0, b2: 0, cc: 12000000000, rec: 11000000000, pf: 4000000000, mul: '2.40', g: '청산' },
-];
-export const DETAIL_EMPTY = '조건에 맞는 자펀드가 없습니다.';
-
-/** 상세 표 — No 는 원문이 필터 후 `i+1` 로 다시 매기는 파생 칸, 연도 칸은 조회기준에 따라 ys/yf 를 싣는다 */
-export const detailTable = (basis: Basis): TableMeta => ({
-  id: `detail-${basis}`, empty: DETAIL_EMPTY, unitDigits: DETAIL_DIGITS,
-  cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64, derived: true },
-    { key: 'y', label: basis, kind: 'center', derived: true },
-    { key: 'r', label: '차수', kind: 'center' },
-    { key: 'gp', label: '운용사', kind: 'text', width: 150 },
-    { key: 'fn', label: '자펀드', kind: 'text', width: 220 },
-    ...AMOUNT_COLS,
-    { key: 'mul', label: MULTIPLE_LABEL, kind: 'number', align: 'center' },
-  ],
-  rows: DETAIL_ROWS,
-});
-/** 원문 render(): 조합구분 필터 → 연도 칸(basis) → No 재부여 */
-export function detailRows(basis: Basis, comb: string): Row[] {
-  const g = comb === '운영조합' ? '운영' : comb === '청산조합' ? '청산' : '';
-  return DETAIL_ROWS.filter((r) => !g || r.g === g).map((r, i) => ({ ...r, no: i + 1, y: basis === '결성년도' ? r.yf : r.ys }));
-}
 
 /* ═══════════════ 등록원부관리(S4_108) — 목록 ═══════════════ */
 /** 원문 DATA 3행("행1=원천 샘플, 행2·3=도메인 정합 샘플" — 원문 주석 그대로, 3행 모두 원문 리터럴).

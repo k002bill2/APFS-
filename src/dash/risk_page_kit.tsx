@@ -206,7 +206,10 @@ export function TabBar({ tabs, value, onChange, idBase, label }: { tabs: TabItem
     refs.current[j]?.focus();
   };
   return (
-    <div role="tablist" aria-label={label} className="flex gap-0.5 overflow-x-auto" style={{ padding: '0 14px', borderBottom: '1px solid var(--border)' }}>
+    /* overflow-x:auto 면 overflow-y 도 visible 이 아니라 auto 로 계산된다(CSS 규칙). 활성 탭 밑줄(2px)+marginBottom:-1 이
+       세로로 1px 넘쳐 세로 스크롤바가 생기므로 y축은 명시적으로 숨긴다. 숨기면 바깥 포커스 글로우도 잘리므로
+       `apfs-tabbar` 가 탭 포커스를 안쪽(inset)으로 그린다(tokens.css) */
+    <div role="tablist" aria-label={label} className="apfs-tabbar flex gap-0.5 overflow-x-auto" style={{ padding: '0 14px', borderBottom: '1px solid var(--border)', overflowY: 'hidden' }}>
       {tabs.map((t, i) => {
         const on = t.id === value;
         return (
