@@ -23,6 +23,7 @@
       선정등급·선정사유·사후관리상태 3개를 뺀 나머지 컬럼은 전부 S1_31/S1_32/S1_33 실재 필드다.
    A5 등록/수정/삭제 CRUD가 있다(선정·해제가 업무). 배치 산출이면 조회 전용으로 바뀐다. */
 import type { PageSchema } from './types';
+import { GP_OPTIONS, SUBFUND_OPTIONS } from './filter_domains';
 
 export const schema: PageSchema = {
   route: '우수투자기업 관리',   // ⚠️ data.ts 메뉴 리프 라벨과 정확히 일치(라우팅 키, NFC)
@@ -59,6 +60,11 @@ export const schema: PageSchema = {
     { key: 'remark',       label: '비고',         control: 'textarea', long: true },
   ],
   filters: ['선정연도', '선정등급', '운용사', '자펀드', '사업분야', '사후관리상태'],
+  /* 상세필터 명세 — 원천 목업 없음(NEW) — 현행 목업 검색박스 실값 도메인(filter_domains.ts) (2026-09-24 전수조사) */
+  filterSpecs: {
+    운용사: { kind: 'select', options: [...GP_OPTIONS], key: 'gp' },
+    자펀드: { kind: 'select', options: [...SUBFUND_OPTIONS], key: 'subFund' },
+  },
   statusDomain: [
     { label: '선정', tone: 'success' },
     { label: '후보', tone: 'info' },

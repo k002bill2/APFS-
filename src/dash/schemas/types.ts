@@ -76,6 +76,8 @@ export interface TotalsSpec {
            · codeName('코드~명칭' — 원문 코드 입력 + 명칭 입력 + 검색 버튼 묶음. 행 매칭은 명칭 부분일치)
    · options: select 선택지(원문 <select>/LISTS 그대로, '전체' 제외 — 드로어가 붙인다).
               원문이 '전체'만 가진 select 는 options 를 비운다 → 빈 select 금지 규약에 따라 text 로 격하.
+              단 key 가 sample 에 시드되면 **sample 행의 실제 값(고유값)으로 select** 를 만든다(2026-09-24 사용자 지시:
+              "원본이 select 면 select"). 목업 옵션을 옮겨 적는 것보다 이쪽이 정확일치(0건 함정)에 안전하다.
    · def: 원문 초기값 — 마운트 시 적용되고 '초기화'가 이 값으로 되돌린다.
    · allLabel: null = 원문 select 에 '전체'가 없다(빈 선택지·칩 × 없음, def 필수).
    · key: 행 매칭 키. **생략 = no-op**(원문 행에 그 값이 없음 → `· 데이터 연동 후 적용` 캡션).

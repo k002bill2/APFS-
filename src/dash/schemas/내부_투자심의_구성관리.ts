@@ -15,6 +15,7 @@
    A3 위원구분 선택지(내부/외부)는 **구조 제안**이다. 실제 구분 체계가 확인되면 공통코드(코드관리)로 분리한다.
    A4 위촉·해촉일자와 사용여부로 구성 이력을 남긴다(삭제 대신 해촉). 등록/수정/삭제 CRUD 가 있다. */
 import type { PageSchema } from './types';
+import { GP_OPTIONS, SUBFUND_OPTIONS } from './filter_domains';
 
 export const schema: PageSchema = {
   route: '내부 투자심의 구성관리',   // ⚠️ data.ts 메뉴 리프 라벨과 정확히 일치(라우팅 키, NFC)
@@ -47,6 +48,11 @@ export const schema: PageSchema = {
     { key: 'remark',      label: '비고',     control: 'textarea', long: true },
   ],
   filters: ['운용사', '자펀드', '위원구분', '사용여부'],
+  /* 상세필터 명세 — 원천 목업 없음(NEW) — 현행 목업 검색박스 실값 도메인(filter_domains.ts) (2026-09-24 전수조사) */
+  filterSpecs: {
+    운용사: { kind: 'select', options: [...GP_OPTIONS], key: 'gp' },
+    자펀드: { kind: 'select', options: [...SUBFUND_OPTIONS], key: 'subFund' },
+  },
   hideKpis: true,   // KPI: 미포함(apfs-capture-schema HITL 기본값 — 비대화 세션 2026-09-24)
   hideCardView: true,
   // 원천 없음 = 행 0건. 위 주석 참조 — 빈 배열이 SSOT 다.

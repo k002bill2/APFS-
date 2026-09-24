@@ -46,7 +46,10 @@ export function resolveFilterField(label: string, schema: PageSchema): FilterFie
   if (spec) {
     const base = { label, columnKey: spec.key ? colKey(spec.key) : undefined, ...(spec.allLabel === null ? { allLabel: null } : {}) };
     if (spec.kind === 'select') {
-      const opts = spec.options ?? [];
+      /* options 생략 + key 가 sample 에 시드 → 행의 실제 값(비어있지 않은 고유값, 첫 등장 순)을 선택지로.
+         목업 옵션을 옮겨 적으면 'KB증권' vs 행 'KB증권(주)' 처럼 정확일치(enum)가 깨져 조용히 0건이 된다. */
+      const fromSample = () => [...new Set((schema.sample ?? []).map((r) => String(r[spec.key!] ?? '')).filter(Boolean))];
+      const opts = spec.options?.length ? spec.options : base.columnKey ? fromSample() : [];
       // 원문이 '전체'만 가진 select(선택지 미확인) → 빈 select 금지 규약대로 text 격하
       return opts.length ? { ...base, kind: 'enum', options: [...opts] } : { label, kind: 'text', options: [], columnKey: base.columnKey };
     }

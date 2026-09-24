@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { resolveSchema, buildRegistry, ALL_SCHEMAS } from './index';
 import { linksDetail } from './detail_link';
 import { DEFAULT_SCHEMA } from './_default';
+import { resolveFilterField } from './filter_field';
 
 describe('resolveSchema', () => {
   it('미등록 route는 DEFAULT(오늘 동작) 스키마를 반환한다', () => {
@@ -117,5 +118,28 @@ describe('금액 컬럼 헤더 — 단위 중복 금지', () => {
         expect(c.label, `${s.route}.${c.key} label='${c.label}' unit='${c.unit}'`).not.toContain(`(${c.unit})`);
       }
     }
+  });
+});
+
+/* 2026-09-24 상세필터 전수조사 — 원문 <select> 는 select 로, 그리고 **선택해도 표가 조용히 비지 않게**.
+   filterSpecs 로 선언한 keyed select 가 행 값과 어긋나면(목업 'KB증권' vs 행 'KB증권(주)') 어떤 선택지도
+   행에 맞지 않아 0건이 된다. sample 없는 스키마의 행은 '운용사 001' 같은 합성값이라 선언 선택지와 맞을 수 없다. */
+describe('상세필터 select 명세 ↔ 행 값 정합', () => {
+  const keyedSpecEnums = ALL_SCHEMAS.flatMap((s) => (s.filters ?? [])
+    .filter((l) => s.filterSpecs?.[l]?.kind === 'select')
+    .map((l) => ({ s, l, ff: resolveFilterField(l, s) }))
+    .filter(({ ff }) => ff.kind === 'enum' && ff.columnKey));
+
+  it('sample 없는(합성 행) 스키마는 keyed select 명세를 두지 않는다', () => {
+    const bad = keyedSpecEnums.filter(({ s }) => !s.sample).map(({ s, l }) => `${s.route}/${l}`);
+    expect(bad).toEqual([]);
+  });
+
+  it('sample 행이 있으면 keyed select 선택지 중 최소 1개는 행 값과 정확일치한다', () => {
+    const bad = keyedSpecEnums.filter(({ s }) => s.sample?.length).filter(({ s, ff }) => {
+      const vals = new Set(s.sample!.map((r) => String(r[ff.columnKey!] ?? '')));
+      return !ff.options.some((o) => vals.has(o));
+    }).map(({ s, l }) => `${s.route}/${l}`);
+    expect(bad).toEqual([]);
   });
 });

@@ -206,9 +206,10 @@ describe('A. 범위 필터 동작(dayRange·monthRange)', () => {
 });
 
 describe('A. opt-in — 미선언 스키마는 종전 동작', () => {
-  it('filterSpecs 선언은 이 6화면뿐이고, 나머지 스키마의 초기 필터값은 {} 다', () => {
-    const declared = ALL_SCHEMAS.filter((s) => s.filterSpecs).map((s) => s.route).sort();
-    expect(declared).toEqual(SCREENS.map(([, r]) => r).sort());
+  // 2026-09-24 상세필터 전수조사로 선언 화면이 늘었다 — 불변식은 "이 6화면 포함 + 미선언은 {}" 다.
+  it('filterSpecs 는 이 6화면을 포함하고, 미선언 스키마의 초기 필터값은 {} 다', () => {
+    const declared = ALL_SCHEMAS.filter((s) => s.filterSpecs).map((s) => s.route);
+    expect(declared).toEqual(expect.arrayContaining(SCREENS.map(([, r]) => r)));
     for (const s of ALL_SCHEMAS.filter((x) => !x.filterSpecs)) expect(defaultFilterValues(s), s.route).toEqual({});
   });
 
