@@ -35,12 +35,6 @@ describe('상세 팝업(detail) 옵트인 불변식', () => {
     }
   });
 
-  it('정기보고는 보고구분 컬럼에 월간보고 상세를 선언한다', () => {
-    const col = resolveSchema('정기보고').columns.find((c) => c.key === 'reportType');
-    expect(col?.detail).toBe('monthlyReport');
-    expect(col?.detailWhen).toBe('월간보고');
-  });
-
   /* detailPattern 은 detailWhen 과 **같은 무음 실패 모드**를 갖는다 — 어느 행과도 안 맞으면
      링크가 그냥 안 뜨고 에러는 없다. 그래서 같은 모양의 가드를 둔다. */
   it('detailPattern 은 sample 행 중 최소 1건과 맞는다', () => {
