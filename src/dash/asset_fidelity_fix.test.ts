@@ -3,7 +3,7 @@
    ① investment-review 행 = S1_01 `var DATA` 3건 전 값(합성 행 금지)
    ② S1_32·S1_33 합계 행 = 원문 tfoot(라벨·합산 칸·'-' 칸·연번)
    ③ S1_38 기준년월 → 운용사정량지표상세(재무건정성비율) 팝업 = 원문 openRatioDetail
-   ④ S5_117(수시보고 확인 탭 2) 헤더·행 = 원문 (S1_29 정기보고 탭 2는 2026-09-24 사용자 결정으로 삭제)
+   ④ (삭제) S5_117 수시보고 확인 탭 2·S1_29 정기보고 탭 2는 2026-09-24 사용자 결정으로 탭째 삭제
    ⑤ custody-verify 리프에서 확정(S1_27) 탭 도달 · 딥링크 별칭 유지 */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -13,7 +13,6 @@ import { computeSchemaTotal } from './schemas/totals';
 import { linksDetail } from './schemas/detail_link';
 import { INV_REVIEW_ROWS } from './investment_review_data';
 import { GP_RATIO_TITLE, GP_RATIO_EMPTY, gpRatioItems } from './gp_ratio_detail_model';
-import { DAILY_SECTIONS, DAILY_TITLE, DAILY_SOURCE } from './daily_report_model';
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const src = (f: string) => readFileSync(new URL('./' + f, import.meta.url), 'utf8');
@@ -189,23 +188,6 @@ describe('③ S1_38 기준년월 → 운용사정량지표상세(재무건정성
   });
 });
 
-/* ─────────────── ④ 두 번째 원본 탭 ─────────────── */
-describe('④ S5_117 일일보고 조회 = 원문 투자기업개요 프로퍼티 시트', () => {
-  const html = read(DAILY_SOURCE);
-  const blocks = [...html.matchAll(/<h3 class="section-head">([\s\S]*?)<\/h3>[\s\S]*?<table class="prop">([\s\S]*?)<\/table>/g)];
-
-  it('원문 [타이틀] 과 블록 5개(제목·순서)', () => {
-    expect(html).toContain(`<span class="dot"></span>${DAILY_TITLE}</h2>`);
-    expect(blocks.map((b) => strip(b[1]))).toEqual(DAILY_SECTIONS.map((s) => s.title));
-  });
-
-  it.each(DAILY_SECTIONS.map((s, i) => [s.title, i] as const))('%s 블록의 행·칸이 원문 th·td 순서 그대로다', (_t, i) => {
-    const rows = [...blocks[i][2].matchAll(/<tr>([\s\S]*?)<\/tr>/g)].map((tr) =>
-      [...tr[1].matchAll(/<t[hd]\b[^>]*>([\s\S]*?)<\/t[hd]>/g)].map((c) => strip(c[1])));
-    expect(DAILY_SECTIONS[i].rows.map((r) => [...r])).toEqual(rows);
-  });
-});
-
 /* ─────────────── ⑤ 리프 탭 결선 · 딥링크 ─────────────── */
 describe('⑤ 원본 2개 리프 = 한 화면 안 탭으로 도달', () => {
   const app = src('app.tsx');
@@ -222,9 +204,11 @@ describe('⑤ 원본 2개 리프 = 한 화면 안 탭으로 도달', () => {
     expect(app).toContain('else if (route === "custody-confirm") page = <CustodyLeaf key={route} onNav={onNav} initial="confirm" />;');
   });
 
-  it('수시보고 확인 = 수시보고(S1_04) | 일일보고 조회(S5_117)', () => {
-    expect(app).toContain('else if (route === "occasional-report") page = <OccasionalReportLeaf onNav={onNav} />;');
-    expect(leaf).toContain("[{ id: 'occ', label: '수시보고' }, { id: 'daily', label: '일일보고 조회' }]");
+  it('수시보고 확인은 일일보고 조회 탭을 삭제해 탭 없는 단일 화면이다', () => {
+    expect(app).toContain('else if (route === "occasional-report") page = <OccasionalReportManage onNav={onNav} />;');
+    expect(app).not.toContain('OccasionalReportLeaf');
+    expect(leaf).not.toContain('DailyReportView');
+    expect(leaf).not.toContain('OccasionalReportManage');
   });
 
   it('정기보고는 회수내역 탭을 삭제해 탭 없는 단일 화면이고, 옛 route `정기보고회수내역` 은 정기보고로 승격된다', () => {
