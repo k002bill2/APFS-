@@ -430,8 +430,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
             ['자펀드', fFund, () => setFFund(''), false],
             ['담당자', fMgr, () => setFMgr(''), false],
             ['총회구분', fGt, () => setFGt(''), false],
-            ['총회기간 시작', fFrom, () => setFFrom(''), true],
-            ['총회기간 종료', fTo, () => setFTo(''), true],
+            ['총회기간', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }, true],
           ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isDate]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               {isDate ? String(value) : value}
@@ -499,8 +498,13 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
             <DrawerField label="총회구분"><DrawerSelect value={fGt} onChange={setFGt} options={GT_OPTIONS} /></DrawerField>
             <DrawerField label="보고상태"><DrawerSelect value={fRst} onChange={(v) => setFRst(v as '' | MeetingStatus)} options={['일정', '결과']} /></DrawerField>
             {/* PeriodPicker 트리거는 w-full이라 fit-content 래퍼로 감싼다(apfs-datepicker "폭" 규칙) */}
-            <DrawerField label="총회기간 시작" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="총회기간 시작일" /></div></DrawerField>
-            <DrawerField label="총회기간 종료" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="총회기간 종료일" /></div></DrawerField>
+            <DrawerField label="총회기간" plain>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="총회기간 시작일" /></div>
+                <span className="text-caption">~</span>
+                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="총회기간 종료일" /></div>
+              </div>
+            </DrawerField>
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>

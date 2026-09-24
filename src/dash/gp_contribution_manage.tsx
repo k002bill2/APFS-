@@ -372,8 +372,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
           {([
             ['운용사', fGp, () => setFGp(''), true],
             ['자펀드', fFn, () => setFFn(''), true],
-            ['기준일자 시작', fFrom, () => setFFrom(''), false],
-            ['기준일자 종료', fTo, () => setFTo(''), false],
+            ['기준일자', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }, false],
           ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isText]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               {isText ? value : String(value)}
@@ -438,8 +437,13 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
             {/* 출자/배분 — 툴바 칩과 같은 state 공유(옵션은 행에서 파생) */}
             <DrawerField label="출자/배분"><DrawerSelect value={fGb} onChange={(v) => setFGb(v as '' | Gb)} options={gbOptions} /></DrawerField>
             {/* 기준일자 — 일(YYYY-MM-DD) 범위. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}
-            <DrawerField label="기준일자 시작" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="기준일자 시작일" /></div></DrawerField>
-            <DrawerField label="기준일자 종료" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="기준일자 종료일" /></div></DrawerField>
+            <DrawerField label="기준일자" plain>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="기준일자 시작일" /></div>
+                <span className="text-caption">~</span>
+                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="기준일자 종료일" /></div>
+              </div>
+            </DrawerField>
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>

@@ -354,8 +354,7 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
           {([
             ['운용사', fGp, () => setFGp('')],
             ['자펀드', fFund, () => setFFund('')],
-            ['시작일', fFrom, () => setFFrom('')],
-            ['종료일', fTo, () => setFTo('')],
+            ['기간', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }],
           ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
             <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
               {value}
@@ -421,8 +420,13 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
             <DrawerField label="리스크담당자" noop><DrawerSelect value={fRs} onChange={setFRs} options={rsNames} /></DrawerField>
             <DrawerField label="구분" noop><DrawerSelect value={fKind} onChange={setFKind} options={[]} /></DrawerField>
             <DrawerField label="확인상태"><DrawerSelect value={fStage} onChange={(v) => setFStage(v as '' | Stage)} options={['미확인', '일부확인', '확인완료']} /></DrawerField>
-            <DrawerField label="기간 시작 (보고일자)" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="조회기간 시작일" /></div></DrawerField>
-            <DrawerField label="기간 종료 (보고일자)" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="조회기간 종료일" /></div></DrawerField>
+            <DrawerField label="기간 (보고일자)" plain>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="조회기간 시작일" /></div>
+                <span className="text-caption">~</span>
+                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="조회기간 종료일" /></div>
+              </div>
+            </DrawerField>
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
