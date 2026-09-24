@@ -68,8 +68,8 @@ export const schema: PageSchema = {
     { label: '미확정', tone: 'warning' },
   ],
   hideCardView: true,
-  // 조회 전용 — 선택으로 실행할 액션이 없어 체크박스 컬럼을 두지 않는다(apfs-grid hideRowSelection).
-  hideRowSelection: true,
+  /* 체크박스 선택을 둔다(2026-09-24 사용자 결정) — 선택 바에서 확정여부를 여러 건 한 번에 바꾼다
+     (generic_list 가 확정/미확정 inlineSelect 컬럼을 보고 ConfirmCombo 를 붙인다) + 기본 선택 액션(삭제·선택 해제). */
   hideKpis: true,
   hideMetrics: true,
   sample: [

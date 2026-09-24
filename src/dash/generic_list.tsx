@@ -38,7 +38,8 @@ import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS C
 import './aggrid_shared.css';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
-import { GridFrame, KpiBadge, FooterActions } from './grid_frame';   // 공통 양식 셸 + KPI 배지(apfs-grid 스킬 SSOT)
+import { GridFrame, KpiBadge, FooterActions } from './grid_frame';
+import { ConfirmCombo, uniformConfirm } from './confirm_combo';   // 확정/미확정 inlineSelect 컬럼의 선택 바 일괄 변경   // 공통 양식 셸 + KPI 배지(apfs-grid 스킬 SSOT)
 
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
 const { Button, StatusBadge, IconBtn, ColorChip, SegTabs, DeltaBadge, ClearableInput } = UI;
@@ -448,7 +449,10 @@ function pinnedAware(col: ColumnSpec, unit: Unit | undefined, render: (p: ICellR
    컬럼 수준 계약으로 푼다. 원문도 StatusBadge 격인 `cfmTag()` 를 정의만 해 두고 쓰지 않는다 —
    이 셀은 select 만 그린다(배지와 함께 그리면 같은 값이 두 번 나온다).
 
+   스타일은 정기보고(regular_report_manage `confirmSelectStyle`)의 셀 select 와 같은 값이다(14px·radius 8).
    ⚠ 폰트는 inline 으로 준다 — preflight:false 라 select 가 UA 기본(13.3px Arial)으로 튄다.
+     `font` 단축속성은 뒤 키의 fontSize 를 리셋할 수 있어 fontFamily 로 분리해 쓴다.
+   ⚠ `rounded-tok-sm` 같은 클래스를 쓰지 않는다 — tailwind 설정에 없는 클래스라 무음으로 radius 0 이 됐다(2026-09-24).
    ⚠ Chrome UA 때문에 height 만으로는 안 맞는다 — lineHeight 를 함께 준다([[form-control-height-38-line-height-trap]]). */
 function InlineSelectCell({ value, options, label, onChange }: {
   value: string; options: string[]; label: string; onChange: (v: string) => void;
@@ -460,8 +464,11 @@ function InlineSelectCell({ value, options, label, onChange }: {
       onChange={(e) => onChange(e.target.value)}
       /* 셀 클릭이 행 선택·컨텍스트로 새지 않도록 컨트롤 안에서 멈춘다 */
       onClick={(e) => e.stopPropagation()}
-      className="rounded-tok-sm border border-border-strong bg-card text-foreground"
-      style={{ font: 'inherit', fontSize: 12.5, height: 30, lineHeight: '20px', padding: '0 8px', maxWidth: '100%' }}>
+      style={{
+        fontFamily: 'inherit', fontSize: 14, height: 30, minHeight: 30, lineHeight: '20px', padding: '0 8px',
+        boxSizing: 'border-box', maxWidth: '100%', cursor: 'pointer',
+        border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--card)', color: 'var(--foreground)',
+      }}>
       {options.map((o) => <option key={o} value={o}>{o}</option>)}
     </select>
   );
@@ -475,7 +482,9 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const editable = schema.fields.length > 0;
   const apiRef = useRef<GridApi<Row> | null>(null);
   const [rows, setRows] = useState<Row[]>(() => makeRows(schema, 23));
-  const [selCount, setSelCount] = useState(0);   // AG Grid 선택 행 수(수제 Set 선택 대체)
+  /* 선택 SSOT = id 배열 하나(건수는 파생 — apfs-aggrid "선택 상태는 selIds 하나로") */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selCount = selIds.length;
   // 상태 SSOT: 필터 라벨 → 선택값(빈 값/부재 = 비활성). 칩·행필터 모두 여기서 파생.
   // 초기값 = 원문 검색박스 기본값(filterSpecs def, opt-in) — 미선언 스키마는 {}(종전 동작)
   const [filterValues, setFilterValues] = useState<Record<string, string>>(() => defaultFilterValues(schema));
@@ -543,7 +552,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
   // ── AG Grid 연결 ──
   const onGridReady = useCallback((e: GridReadyEvent<Row>) => { apiRef.current = e.api; }, []);
-  const onSelectionChanged = useCallback((e: SelectionChangedEvent<Row>) => { setSelCount(e.api.getSelectedRows().length); }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<Row>) => { setSelIds(e.api.getSelectedRows().map((r) => r.id)); }, []);
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
     const next = { current: api.paginationGetCurrentPage(), total: api.paginationGetTotalPages(), rowCount: api.paginationGetRowCount() };
@@ -646,6 +655,20 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const setCellValue = useCallback((id: string, key: string, value: string) => {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [key]: value } : r)));
   }, []);
+
+  /* 확정/미확정 inlineSelect 컬럼 → 선택 바 콤보(apfs-grid "값 쌍 일괄 변경 = ConfirmCombo").
+     셀 select 로 한 건씩, 콤보로 체크한 여러 건을 한 번에 바꾼다. 옵션이 정확히 확정·미확정 쌍인 컬럼만 대상이다
+     — 다른 값 쌍은 ConfirmCombo 가 옵션을 받도록 넓힌 뒤에 붙인다(페이지별 사본 금지). */
+  const confirmCols = useMemo(() => schema.columns.filter((c) =>
+    c.inlineSelect?.length === 2 && c.inlineSelect.includes('확정') && c.inlineSelect.includes('미확정')), [schema]);
+  const selRows = useMemo(() => rows.filter((r) => selIds.includes(r.id)), [rows, selIds]);
+  const bulkSetValue = (key: string, value: string) => {
+    const ids = new Set(selIds);
+    if (!ids.size) return;
+    setRows((prev) => prev.map((r) => (ids.has(r.id) ? { ...r, [key]: value } : r)));
+    apiRef.current?.deselectAll();
+    toast.success(`${ids.size}건을 '${value}'(으)로 변경했습니다`);
+  };
 
   // CRUD
   const save = (row: Row) => {
@@ -764,6 +787,12 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       <span className="font-semibold" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
       {/* 단건 체크일 때만 '수정' — 다건 선택에 수정 모달은 의미가 없다(bespoke user_manage·subfund_manage 규약과 동형) */}
       {editable && selCount === 1 && <Button variant="primary" size="sm" leadingIcon="file" onClick={editSelected}>수정</Button>}
+      {/* 활성 세그먼트 = 선택 행의 현재 값(섞이면 둘 다 비활성). 컬럼이 둘 이상이면 라벨로 구분한다 */}
+      {confirmCols.map((c) => (
+        <ConfirmCombo key={c.key} label={confirmCols.length > 1 ? c.label : undefined}
+          value={uniformConfirm(selRows.map((r) => r[c.key] as string | undefined))}
+          onPick={(v) => bulkSetValue(c.key, v)} />
+      ))}
       <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger)" }} onClick={bulkDelete}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
