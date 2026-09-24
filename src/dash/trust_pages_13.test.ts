@@ -19,8 +19,8 @@ import {
   CASHFLOW_UPLOAD_HINT, CASHFLOW_TABLE, CASHFLOW_PROVENANCE, CASHFLOW_RANGE, ACCOUNT_TABLE, ACCOUNT_PROVENANCE, ACCOUNT_RANGE,
 } from './trust_mother_data';
 import {
-  YEARLY_PROVENANCE, YEARLY_TABLES, YEARLY_TOTALS_LIT, YEARLY_FOOTNOTES, YEARLY_BASE_YM, BASES, COMB_TYPES, ACCOUNT_TYPES, DETAIL_ROWS, DETAIL_EMPTY,
-  detailTable, detailRows, LEDGER_TABLE, LEDGER_PROVENANCE, INACTIVE_OPTIONS, HIST_SECTIONS, HIST_REQUIRED,
+  YEARLY_PROVENANCE, YEARLY_TABLES, YEARLY_TOTALS_LIT, YEARLY_FOOTNOTES, YEARLY_BASE_YM, BASES, ACCOUNT_TYPES,
+  LEDGER_TABLE, LEDGER_PROVENANCE, INACTIVE_OPTIONS, HIST_SECTIONS, HIST_REQUIRED,
   MEMBER_ROWS, PAYMENT_ROWS, EXPERT_ROWS, CAREER_ROWS, INVEST_CAREER_ROWS, MEMBER_FORM, EXPERT_FORM, PRINT_DATE, ISSUE_HISTORY, ledgerRows, ledgerShown, ledgerPatch,
 } from './brief_data';
 
@@ -71,7 +71,7 @@ const shown = (v: unknown) => (v == null ? '-' : typeof v === 'number' ? v.toLoc
 /* 13리프 전부 typed — 단일 헤더 화면(공통코드 2 · 계좌정보 비교조회)도 원문 검색조건(기본값 있는 코드구분 select ·
    기본 기간)을 스키마 필터가 담지 못해 TablesPage 로 둔다(trust_table_pages.tsx 머리말) */
 const LEAVES: [label: string, prov: Provenance, files: string[]][] = [
-  ['연도별투자현황', YEARLY_PROVENANCE, [B('03_연도별투자현황/mockup/연도별투자현황_목업.html'), B('04_연도별투자현황상세/mockup/연도별투자현황상세_목업.html')]],
+  ['연도별투자현황', YEARLY_PROVENANCE, [B('03_연도별투자현황/mockup/연도별투자현황_목업.html')]],
   ['등록원부관리', LEDGER_PROVENANCE, [B('S4_108_등록원부_관리.html')]],
   ['실물자료관리(업로드)', PHYSICAL_PROVENANCE, [T('S3_98_실물자료_조회__월별_.html')]],
   ['실물검증비교조회', VERIFY_PROVENANCE, [T('S3_101_실물검증_조회.html')]],
@@ -141,7 +141,6 @@ describe('원본 대비 헤더', () => {
     ['등록원부', B('S4_108_등록원부_관리.html'), LEDGER_TABLE, 0, (xs) => xs.filter((x) => x !== '관리')],
     /* 연도 컬럼 헤더는 조회기준 라디오 값(원문 기본 선정년도) */
     ['연도별 투자현황', B('03_연도별투자현황/mockup/연도별투자현황_목업.html'), YEARLY_TABLES['선정년도'], 0],
-    ['연도별 투자현황 상세', B('04_연도별투자현황상세/mockup/연도별투자현황상세_목업.html'), detailTable('선정년도'), 0],
     /* 신규 2리프 = 형제 화면 헤더 그대로(준용) */
     ['유가증권관리 ← S3_98', T('S3_98_실물자료_조회__월별_.html'), SECURITIES_TABLE, 0, (xs) => xs.slice(1)],
     ['유가증권비교 ← S3_101 투자자산', T('S3_101_실물검증_조회.html'), SECURITIES_COMPARE, 0],
@@ -154,7 +153,6 @@ describe('원본 대비 헤더', () => {
   });
   it('조회기준 결성년도 → 연도 컬럼 헤더가 결성년도(원문 #basisCol 동적 라벨)', () => {
     expect(YEARLY_TABLES['결성년도'].cols[1].label).toBe('결성년도');
-    expect(detailTable('결성년도').cols[1].label).toBe('결성년도');
   });
   it('계좌정보 비교조회: 원문 18열 — 원본액 헤더의 단위 span 은 단위 토글(엑셀은 헤더 단위)이 대신한다', () => {
     const th = thTexts(mainTables(read(T('S3_104_계좌정보조회.html')))[0]);
@@ -229,11 +227,6 @@ describe('원본 대비 행(값·순서·개수)', () => {
       });
     }
   });
-  it('연도별투자현황상세: 원문 DATA 4행(원 단위)', () => {
-    const src = scriptLiteral<Record<string, unknown>[]>(read(B('04_연도별투자현황상세/mockup/연도별투자현황상세_목업.html')), 'DATA');
-    expect(DETAIL_ROWS).toHaveLength(src.length);
-    src.forEach((s, i) => { for (const [k, v] of Object.entries(s)) expect(DETAIL_ROWS[i][k], `${i}.${k}`).toBe(v); });
-  });
   it('신규 2리프는 행을 만들지 않는다(빈 상태)', () => {
     expect(SECURITIES_TABLE.rows).toEqual([]);
     expect(SECURITIES_COMPARE.rows).toEqual([]);
@@ -242,22 +235,20 @@ describe('원본 대비 행(값·순서·개수)', () => {
     expect(read(T('S3_98_실물자료_조회__월별_.html'))).toContain(`class="empty">${PHYSICAL_TABLE.empty}</td>`);
     expect(read(T('S3_100_공통코드.html'))).toContain(`colspan="3">${CODE_TABLE.empty}</td>`);
     expect(read(T('S3_102_모태수탁공통코드.html'))).toContain(`class="empty">${MOTHER_CODE_TABLE.empty}</td>`);
-    expect(read(B('04_연도별투자현황상세/mockup/연도별투자현황상세_목업.html'))).toContain(`hidden>${DETAIL_EMPTY}</div>`);
   });
   it('모든 행 id 가 표 안에서 유일하다', () => {
     const tables = [PHYSICAL_TABLE, ...VERIFY_TABLES, CODE_TABLE, FUND_CODE_TABLE, MOTHER_CODE_TABLE, ACCOUNT_TABLE, CASHFLOW_TABLE, LEDGER_TABLE, ...Object.values(YEARLY_TABLES)];
     for (const t of tables) expect(new Set(t.rows.map((r: Row) => r.id)).size, t.id).toBe(t.rows.length);
-    expect(new Set(DETAIL_ROWS.map((r) => r.id)).size).toBe(DETAIL_ROWS.length);
   });
 });
 
 /* ─────────────── 탭/섹션/팝업 수 ─────────────── */
 describe('통합 화면 — 탭·섹션·팝업 수', () => {
-  it('연도별투자현황 = 원문 2화면(요약·상세) → 탭 2, 탭 라벨 = 원문 <h1>', () => {
-    const [a, b] = YEARLY_PROVENANCE.captureFiles.map(read);
+  it('연도별투자현황 = 원문 1화면 → 탭 없음(옛 탭 2 연도별투자현황상세는 원본에 없어 삭제, 2026-09-24)', () => {
+    const [a] = YEARLY_PROVENANCE.captureFiles.map(read);
     expect(a).toContain('<h1>연도별투자현황</h1>');
-    expect(b).toContain('<h1>연도별투자현황상세</h1>');
-    expect(read(new URL('./report_bucheo.tsx', import.meta.url).pathname)).toMatch(/label: '연도별투자현황' }[\s\S]*label: '연도별투자현황상세' }/);
+    const page = read(new URL('./report_bucheo.tsx', import.meta.url).pathname);
+    expect(page).not.toMatch(/TabBar|label: '연도별투자현황상세'/);
   });
   it('실물검증 = 원문 <section> 3개 = 표 3장(섹션 제목 원문 그대로)', () => {
     const html = read(T('S3_101_실물검증_조회.html'));
@@ -316,8 +307,8 @@ describe('합계 행 — 표마다 원문 규칙대로', () => {
     }
     expect(read(B('03_연도별투자현황/mockup/연도별투자현황_목업.html'))).toContain(`<td class="c">${YEARLY_TOTALS_LIT.c}</td>`);
   });
-  it('합계가 없는 표(원문 tfoot 없음): 공통코드·조합코드·입출금·등록원부·연도별 상세', () => {
-    for (const t of [CODE_TABLE, MOTHER_CODE_TABLE, FUND_CODE_TABLE, ACCOUNT_TABLE, CASHFLOW_TABLE, LEDGER_TABLE, detailTable('선정년도')]) expect(computeTotal(t), t.id).toBeNull();
+  it('합계가 없는 표(원문 tfoot 없음): 공통코드·조합코드·입출금·등록원부', () => {
+    for (const t of [CODE_TABLE, MOTHER_CODE_TABLE, FUND_CODE_TABLE, ACCOUNT_TABLE, CASHFLOW_TABLE, LEDGER_TABLE]) expect(computeTotal(t), t.id).toBeNull();
   });
 });
 
@@ -351,7 +342,6 @@ describe('검색조건 — 원문 옵션·기본값', () => {
     }
     expect(read(B('03_연도별투자현황/mockup/연도별투자현황_목업.html'))).toContain(`value="${YEARLY_BASE_YM}"`);
     for (const a of ACCOUNT_TYPES) expect(read(B('03_연도별투자현황/mockup/연도별투자현황_목업.html'))).toContain(`<option>${a}</option>`);
-    for (const k of COMB_TYPES) expect(read(B('04_연도별투자현황상세/mockup/연도별투자현황상세_목업.html'))).toContain(`value="${k}"`);
     for (const k of INACTIVE_OPTIONS) expect(read(B('S4_108_등록원부_관리.html'))).toContain(`>${k}</label>`);
   });
   it('입출금정보관리 드롭존 안내 = 원문 #dzHint', () => {
@@ -389,20 +379,10 @@ describe('화면별 도메인 규칙', () => {
     const page = read(new URL('./trust_physical_upload.tsx', import.meta.url).pathname);
     expect(page).toContain('selectionCol={LABELED_SELECTION_COL}');
   });
-  it('연도별 상세 조합구분: 운영조합 → 운영 행만 + No 재부여 · 결성년도 → 연도 칸 yf', () => {
-    const r = detailRows('결성년도', '운영조합');
-    expect(r.map((x) => [x.no, x.y, x.fn])).toEqual([[1, '2012', '한투 농식품 투자조합'], [2, '2014', 'IMM 스마트농업 투자조합']]);
-    expect(detailRows('선정년도', '전체').map((x) => x.y)).toEqual(['2010', '2012', '2013', '2015']);
-    expect(detailRows('선정년도', '청산조합')).toHaveLength(2);
-  });
-  it('연도별 금액 표기 = 원문 fmt() 소수 자릿수(요약 억원 최대 1 · 상세 억원 항상 1 · 백만원 정수)', () => {
+  it('연도별 금액 표기 = 원문 fmt() 소수 자릿수(억원 최대 1 · 백만원 정수)', () => {
     const y = YEARLY_TABLES['선정년도'].unitDigits;
-    const d = detailTable('선정년도').unitDigits;
     expect(amountText(16000000000, '억원', y)).toBe('160');
     expect(amountText(270000000, '억원', y)).toBe('2.7');
-    expect(amountText(32000000000, '억원', d)).toBe('320.0');
-    expect(amountText(39713485321, '억원', d)).toBe('397.1');
-    expect(amountText(39713485321, '백만원', d)).toBe('39,713');
     expect(amountText(16000000000, '백만원', y)).toBe('16,000');
   });
   it('실물검증·입출금 금액 표기 = 원문 fmt()(백만원 최대 1 · 억원 최대 2)', () => {
@@ -424,7 +404,7 @@ describe('화면별 도메인 규칙', () => {
     expect(head).toEqual(LEDGER_TABLE.cols.map((c) => c.label));
   });
   it('엑셀 금액 = 화면 금액(표 선언 unitDigits 자릿수) — 화면 17.6 이면 엑셀도 17.6', () => {
-    const tables = [...Object.values(YEARLY_TABLES), ...BASES.map((b) => ({ ...detailTable(b), rows: detailRows(b, COMB_TYPES[0]) })), ...VERIFY_TABLES, CASHFLOW_TABLE];
+    const tables = [...Object.values(YEARLY_TABLES), ...VERIFY_TABLES, CASHFLOW_TABLE];
     let checked = 0;
     for (const t of tables) for (const unit of ['백만원', '억원'] as const) {
       const ws = tableSheet(t, t.rows, unit);

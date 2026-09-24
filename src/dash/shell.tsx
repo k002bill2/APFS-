@@ -529,7 +529,7 @@ function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) 
           <button onClick={onClose} className="text-muted-foreground font-semibold cursor-pointer py-1.5 px-2" style={{ border: "none", background: "transparent", fontSize: 13, fontFamily: "inherit" }}>모두 읽음</button>
           <IconBtn icon="x" onClick={onClose} label="닫기" size={36} />
         </header>
-        <div role="tablist" className="flex gap-0.5 overflow-x-auto py-0 px-3.5" style={{ borderBottom: "1px solid var(--border)" }}>
+        <div role="tablist" className="apfs-tabbar flex gap-0.5 overflow-x-auto py-0 px-3.5" style={{ borderBottom: "1px solid var(--border)", overflowY: "hidden" }}>
           {tabs.map((t) => {
             const on = tab === t.id;
             return (
