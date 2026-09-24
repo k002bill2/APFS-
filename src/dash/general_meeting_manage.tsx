@@ -6,8 +6,9 @@
        → 보고상태 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter)
        ⚠ 목업 기본 총회기간(2025-08-28~2026-08-28)은 데모값이라 이식하지 않는다(초기값 '' = 미적용).
        ⚠ 담당자는 행 컬럼이 아니라 상세(`detail.gen.mgr`)에 있다 — 그 값으로 실제 필터링한다.
-   - 목록 그리드                → AG Grid 단일 헤더(apfs-aggrid). **합계행 없음·행 선택 없음** — 금액 컬럼이
-       없는 조회 화면이고 목업에도 체크박스/라디오가 없다.
+   - 목록 그리드                → AG Grid 단일 헤더(apfs-aggrid). **합계행 없음**(금액 컬럼이 없다).
+       **행 선택 = 체크박스 multiRow**(2026-09-24 사용자 결정 — 정기보고와 동형) → 선택 바에서 확정여부 일괄 변경.
+       일정은 선택 행 전부, 결과는 일정 '확정' 행만 대상(게이트 필터형 — 제외 건수는 toast).
    - 확정여부 2열              → **셀 안 네이티브 `<select>`**(목업 `selCell`/`resultCell` 그대로).
        결과는 일정이 '확정'일 때만 선택 가능(그 외 '-'), 일정이 '확정'에서 풀리면 결과도 ''로 리셋한다(도메인 정합).
    - 상세 팝업(읽기전용)       → 제목 링크(+ 셀 Enter) → `GeneralMeetingDetailModal`.
@@ -25,7 +26,8 @@ import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SuppressKeyboardEventParams } from 'ag-grid-community';
+import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SuppressKeyboardEventParams, SelectionChangedEvent } from 'ag-grid-community';
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
@@ -222,7 +224,7 @@ const makeColumns = (
       : <SelectCell value={p.value} label={`결과 확정여부 ${p.data?.no}행`} onChange={(v) => p.data && patchRow(p.data.id, { res: v as MeetingRow['res'] })} />) },
 ];
 
-/* 엑셀 컬럼 — 화면 컬럼과 1:1(화면=엑셀 불변식). 순서·집합이 목업 원본 헤더와 같다.
+/* 엑셀 컬럼 — 화면 컬럼과 1:1(화면=엑셀 불변식, 선택 체크박스 열 제외). 순서·집합이 목업 원본 헤더와 같다.
    확정여부 미선택은 목업 빈 option과 같게 ''로 둔다(임의 '미선택' 문자열 생성 금지) */
 type XCol = { header: string; get: (r: MeetingRow) => string | number };
 const EXPORT_COLS: XCol[] = [
@@ -269,10 +271,20 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
   );
 }
 
+/* 행 선택 — 확정여부 일괄 변경이 N건에 그대로 적용되는 액션이라 multiRow(apfs-aggrid "체크박스" 절, 정기보고 동형).
+   선택은 체크박스로만(enableClickSelection:false). 헤더 전체선택은 SELECTION_COL 의 DS 헤더가 그리므로
+   내장 헤더는 끄고 범위를 'filtered' 로 맞춘다. 모듈 상수(렌더마다 새 객체면 컬럼 폭이 되돌아간다). */
+const ROW_SELECTION = {
+  mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered',
+  enableClickSelection: false,
+} as const;
+
+type Confirm = typeof CONFIRM_OPTIONS[number];
+
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
-/* 상세 팝업은 **대상 행 id를 직접 싣는다** — 행 선택(체크박스)이 없어 `selected`가 존재하지 않는다 */
+/* 상세 팝업은 **대상 행 id를 직접 싣는다** — 제목 링크가 진입점이라 행 선택(체크박스)과 무관하다 */
 type ModalState = null | { kind: 'detail'; id: string };
 
 export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void }) {
@@ -328,6 +340,28 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
   const mgrOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.detail.gen.mgr).filter(Boolean))), [rows]);
 
   const onGridReady = useCallback((e: GridReadyEvent<MeetingRow>) => { apiRef.current = e.api; }, []);
+  /* 선택 SSOT = id 배열 하나(건수는 파생 — apfs-aggrid "선택 상태는 selIds 하나로") */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selCount = selIds.length;
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<MeetingRow>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
+  /* 확정여부 일괄 변경 — 셀 select 와 같은 도메인 규칙을 따른다.
+     - 일정: 선택 행 전부. '확정'이 아니게 되면 결과도 ''로 리셋(셀 onChange 와 동일).
+     - 결과: 일정이 '확정'인 행만(게이트는 요청 시점에 한 번 평가). 전부 막히면 바꾸지 않고 알리고, 일부면 제외 건수를 알린다. */
+  const bulkSet = (kind: 'sch' | 'res', v: Confirm) => {
+    const targets = rows.filter((r) => selIds.includes(r.id));
+    const ok = kind === 'res' ? targets.filter((r) => r.sch === '확정') : targets;
+    const blocked = targets.length - ok.length;
+    if (!ok.length) { toast.error('결과 확정여부는 일정이 확정된 총회만 변경할 수 있습니다.'); return; }
+    const okIds = new Set(ok.map((r) => r.id));
+    const patch: Partial<MeetingRow> = kind === 'res' ? { res: v } : v === '확정' ? { sch: v } : { sch: v, res: '' };
+    setRows((prev) => prev.map((r) => (okIds.has(r.id) ? { ...r, ...patch } : r)));
+    apiRef.current?.deselectAll();
+    const what = kind === 'sch' ? '일정' : '결과';
+    toast.success(`${String(ok.length)}건의 ${what} 확정여부를 '${v}'(으)로 변경했습니다` + (blocked ? ` (일정 미확정 ${String(blocked)}건 제외)` : ''));
+  };
+
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
     const next = { current: api.paginationGetCurrentPage(), total: api.paginationGetTotalPages(), rowCount: api.paginationGetRowCount() };
@@ -346,7 +380,19 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
 
   const target = modal?.kind === 'detail' ? rows.find((r) => r.id === modal.id) ?? null : null;
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
+
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측/하단 플로팅 바 중 한 곳에만 렌더한다 → 선택 중엔 toolbarLeft 를 비운다 */
+  const selActions = selCount > 0 ? (
+    <>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
+      <Button variant="primary" size="sm" leadingIcon="check" onClick={() => bulkSet('sch', '확정')}>일정 확정</Button>
+      <Button variant="outline" size="sm" onClick={() => bulkSet('sch', '미확정')}>일정 미확정</Button>
+      <Button variant="primary" size="sm" leadingIcon="check" onClick={() => bulkSet('res', '확정')}>결과 확정</Button>
+      <Button variant="outline" size="sm" onClick={() => bulkSet('res', '미확정')}>결과 미확정</Button>
+      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+    </>
+  ) : null;
 
   /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
@@ -372,8 +418,8 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
       title="조합원총회"
       favRoute="general-meeting"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌는 항상 필터칩이다 — 행 선택이 없어 selbar가 존재하지 않는다(조회 전용 화면) */
-      toolbarLeft={(
+      /* 툴바 좌 = 필터칩. 선택 중엔 비우고 선택 바(contextActions)가 대신한다 */
+      toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="filter" size={16} className="text-caption" />
           {(['', '일정', '결과'] as ('' | MeetingStatus)[]).map((s) => (
@@ -396,6 +442,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
           ))}
         </>
       )}
+      contextActions={selActions}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
@@ -419,6 +466,9 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
           domLayout="autoHeight"
           autoSizeStrategy={AUTO_SIZE_CONTENT}   // 내용 맞춤(넓은 10컬럼 표) — fitGridWidth는 셀 잘림 7건(실측)
           defaultColDef={DEFAULT_COL_DEF}
+          rowSelection={ROW_SELECTION}
+          selectionColumnDef={SELECTION_COL}
+          onSelectionChanged={onSelectionChanged}
           pagination paginationPageSize={pageSize} suppressPaginationPanel
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}
