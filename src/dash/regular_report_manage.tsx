@@ -50,6 +50,7 @@ import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
+import { ConfirmCombo, uniformConfirm } from './confirm_combo';
 
 const { Button, IconBtn, StatusBadge, FilterChip } = UI;
 
@@ -322,6 +323,8 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
     apiRef.current?.deselectAll();
     toast.success(`${String(ok.length)}건을 '${v}'(으)로 변경했습니다` + (blocked ? ` (확정 대상이 아닌 ${String(blocked)}건 제외)` : ''));
   };
+  /* 선택 행의 현재 확정여부 — 전부 같으면 그 값, 섞였거나 없으면 null. 선택 바 콤보의 활성 세그먼트가 이 값을 따른다 */
+  const selConfirmed = useMemo(() => uniformConfirm(rows.filter((r) => selIds.includes(r.id)).map((r) => r.confirmed)), [rows, selIds]);
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
     const next = { current: api.paginationGetCurrentPage(), total: api.paginationGetTotalPages(), rowCount: api.paginationGetRowCount() };
@@ -351,8 +354,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
-      <Button variant="primary" size="sm" leadingIcon="check" onClick={() => bulkConfirm('확정')}>확정</Button>
-      <Button variant="outline" size="sm" onClick={() => bulkConfirm('미확정')}>미확정</Button>
+      <ConfirmCombo value={selConfirmed} onPick={bulkConfirm} />
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;
