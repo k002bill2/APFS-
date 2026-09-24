@@ -304,7 +304,7 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
       toolbarLeft={selCount > 0 ? null : (
         <>
           <Icon name="shield-check" size={16} className="text-caption" />
-          <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>권한 {String(visible.length)}건 · 행을 선택하면 수정·복사·삭제</span>
+          <span className="text-caption font-semibold truncate min-w-0" style={{ fontSize: 12.5 }}>권한 {String(visible.length)}건 · 행을 선택하면 수정·복사·삭제</span>
         </>
       )}
       contextActions={selActions}

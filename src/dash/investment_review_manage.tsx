@@ -38,7 +38,7 @@ import { INV_REVIEW_ROWS } from './investment_review_data';
 import type { Confirm, Result, InvReviewRow } from './investment_review_data';
 export type { Confirm, Result, InvReviewRow } from './investment_review_data';
 
-const { Button, IconBtn, StatusBadge, FilterChip } = UI;
+const { Button, IconBtn, StatusBadge } = UI;
 
 /* ──────────────────────────────
    도메인 타입 · 상태 도메인
@@ -322,7 +322,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
-     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+     (contextActions 슬롯). 필터 칩은 filterChips 로 넘기고, 선택 중엔 GridFrame 이 깔때기를 빼고 칩을 +N 안으로 접는다. */
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
@@ -358,13 +358,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       cardTitle="투심보고 확정 및 승인"
       favRoute="investment-review"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selCount > 0 ? null : (
-        <>
-          {(['' as const, '일정' as const, '결과' as const]).map((s) => (
-            <FilterChip key={s || 'all'} active={fState === s} onClick={() => setFState(s)}>{s || '투자심의상태: 전체'}</FilterChip>
-          ))}
-        </>
-      )}
+      filterChips={(['' as const, '일정' as const, '결과' as const]).map((s) => ({ key: s || 'all', label: s || '투자심의상태: 전체', active: fState === s, onSelect: () => setFState(s) }))}
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },

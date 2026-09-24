@@ -186,11 +186,7 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
       title="감사로그"
       favRoute="audit-log"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={(
-        <>
-          {RESULT_CHIPS.map((r) => <FilterChip key={r || 'all'} active={fResult === r} onClick={() => setFResult(r)} count={chipCount(r)}>{r || '결과: 전체'}</FilterChip>)}
-        </>
-      )}
+      filterChips={RESULT_CHIPS.map((r) => ({ key: r || 'all', label: r || '결과: 전체', count: chipCount(r), active: fResult === r, onSelect: () => setFResult(r) }))}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>

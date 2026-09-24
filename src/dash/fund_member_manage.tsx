@@ -49,7 +49,7 @@ import { RowContextMenu } from './row_context_menu';
 import type { CtxItem, CtxMenuState } from './row_context_menu';
 import { CREATE_SCHEMA, EDIT_SCHEMA, CLS_OPTS, TYPE_OPTS } from './fund_member_manage_schemas';
 
-const { Button, IconBtn, StatusBadge, FilterChip } = UI;
+const { Button, IconBtn, StatusBadge } = UI;
 
 /* ──────────────────────────────
    도메인 타입 · 데모 데이터 — 목업 하단 `<script>`의 FUND·DATA 값 그대로(창작 없음)
@@ -364,13 +364,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
       favRoute="fund-member"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(계정구분) + 적용 중인 드로어 값 칩. 행 선택이 없어 selbar는 존재하지 않는다. */
-      toolbarLeft={(
-        <>
-          {(['', ...ACC_OPTS] as ('' | Acc)[]).map((s) => (
-            <FilterChip key={s || 'all'} active={fAcc === s} onClick={() => setFAcc(s)}>{s || '계정구분: 전체'}</FilterChip>
-          ))}
-        </>
-      )}
+      filterChips={(['', ...ACC_OPTS] as ('' | Acc)[]).map((s) => ({ key: s || 'all', label: s || '계정구분: 전체', active: fAcc === s, onSelect: () => setFAcc(s) }))}
       /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },

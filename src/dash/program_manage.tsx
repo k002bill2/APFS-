@@ -43,7 +43,7 @@ import type { ProgramRow, ProgramField, HelpDoc } from './program_manage_model';
 import { programSchema } from './program_manage_schemas';
 import { ProgramHelpModal } from './program_help_modal';
 
-const { Button, IconBtn, StatusBadge, FilterChip } = UI;
+const { Button, IconBtn, StatusBadge } = UI;
 
 const SEARCHABLE = true;
 const PAGE_SIZE = 20;
@@ -319,7 +319,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   ];
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
-     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+     (contextActions 슬롯). 필터 칩은 filterChips 로 넘기고, 선택 중엔 GridFrame 이 깔때기를 빼고 칩을 +N 안으로 접는다. */
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
@@ -342,11 +342,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
       title="프로그램관리"
       favRoute="program-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selCount > 0 ? null : (
-        <>
-          {USE_CHIPS.map(([v, l]) => <FilterChip key={v || 'all'} active={fUse === v} onClick={() => setFUse(v)}>{l}</FilterChip>)}
-        </>
-      )}
+      filterChips={USE_CHIPS.map(([v, l]) => ({ key: v || 'all', label: l, active: fUse === v, onSelect: () => setFUse(v) }))}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>

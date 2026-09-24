@@ -35,7 +35,7 @@ import type { InviteRow, InviteState } from './user_invite_model';
 import { MailPreviewDialog, MASKED_LINK } from './admin_mail_preview';
 import type { MailSpec } from './admin_mail_preview';
 
-const { Button, IconBtn, StatusBadge, FilterChip } = UI;
+const { Button, IconBtn, StatusBadge } = UI;
 
 const SEARCHABLE = true;
 const nowStamp = () => format(new Date(), 'yyyy-MM-dd HH:mm');
@@ -200,7 +200,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
   ];
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
-     (contextActions 슬롯). 그래서 선택 시 toolbarLeft 는 비워 둔다 — 둘 다 넘기면 탭 스톱이 2벌 된다. */
+     (contextActions 슬롯). 필터 칩은 filterChips 로 넘기고, 선택 중엔 GridFrame 이 깔때기를 빼고 칩을 +N 안으로 접는다. */
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
@@ -220,11 +220,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
       title="사용자 초대(운용사)"
       favRoute="user-invite-gp"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={selCount > 0 ? null : (
-        <>
-          {STATE_CHIPS.map((s) => <FilterChip key={s || 'all'} active={fState === s} onClick={() => setFState(s)}>{s || '초대상태: 전체'}</FilterChip>)}
-        </>
-      )}
+      filterChips={STATE_CHIPS.map((s) => ({ key: s || 'all', label: s || '초대상태: 전체', active: fState === s, onSelect: () => setFState(s) }))}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>

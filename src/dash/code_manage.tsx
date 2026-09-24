@@ -40,7 +40,7 @@ import { groupSchema, detailSchema, upOption, upCodeOf, UP_NONE } from './code_m
 import { reseqSiblings, applyReseq } from './reseq';
 import { UseBadge } from './admin_shared';
 
-const { Button, IconBtn, FilterChip, EmptyState, ClearableInput } = UI;
+const { Button, IconBtn, EmptyState, ClearableInput } = UI;
 
 const SEARCHABLE = true;
 const SEARCH_FIELDS: { key: 'code' | 'name'; label: string }[] = [{ key: 'code', label: '코드구분' }, { key: 'name', label: '코드구분명' }];
@@ -330,9 +330,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       title="코드관리"
       favRoute="code-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={<>
-        {(['', '여', '부'] as const).map((u) => <FilterChip key={u || 'all'} active={fUse === u} onClick={() => setFUse(u)}>{u ? `사용 ${u}` : '사용여부: 전체'}</FilterChip>)}
-      </>}
+      filterChips={(['', '여', '부'] as const).map((u) => ({ key: u || 'all', label: u ? `사용 ${u}` : '사용여부: 전체', active: fUse === u, onSelect: () => setFUse(u) }))}
       appliedFilters={[
         { label: '검색어', value: fText.trim() ? `${SEARCH_FIELDS.find((f) => f.key === fField)?.label}: ${fText.trim()}` : '', onClear: () => setFText('') },
       ]}

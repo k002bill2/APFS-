@@ -36,7 +36,7 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { RECOVERY_MODES, RECOVERY_TONES, RECOVERY_ACCOUNTS, findMode, recoverySummary, filterRecovery, DETAIL_ROWS_IR, formatRecoveryUnit } from './invest_recovery_detail_model';
 import type { RecoveryRow, RecoveryMode, RecoveryFilter } from './invest_recovery_detail_model';
 
-const { Button, IconBtn, SegTabs, FilterChip } = UI;
+const { Button, IconBtn, SegTabs } = UI;
 
 const MOTHER_FUND = '농식품모태펀드';   // 원문 검색박스의 읽기전용 `모펀드` 값
 
@@ -161,15 +161,9 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
       title="투자금 회수현황"
       favRoute="투자금 회수현황"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      toolbarLeft={(
-        <>
-          {/* 기본(주) 필터 = 조회기준(2026-09-24 사용자 지시). 깔때기 아이콘 뒤 첫 칩 줄이다.
-              바꾸면 컬럼과 데이터가 함께 바뀐다(원문 select와 같은 동작). 건수 = 그 모드에 나머지 조건을 건 facet. */}
-          {RECOVERY_MODES.map((m) => (
-            <FilterChip key={m.key} active={modeKey === m.key} onClick={() => setModeKey(m.key)} count={modeCount(m)}>{m.label}</FilterChip>
-          ))}
-        </>
-      )}
+      /* 기본(주) 필터 = 조회기준(2026-09-24 사용자 지시). 깔때기 아이콘 뒤 첫 칩 줄이다.
+         바꾸면 컬럼과 데이터가 함께 바뀐다(원문 select와 같은 동작). 건수 = 그 모드에 나머지 조건을 건 facet. */
+      filterChips={RECOVERY_MODES.map((m) => ({ key: m.key, label: m.label, count: modeCount(m), active: modeKey === m.key, onSelect: () => setModeKey(m.key) }))}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>
         <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>

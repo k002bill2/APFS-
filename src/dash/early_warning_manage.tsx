@@ -71,7 +71,7 @@ import * as XLSX from 'xlsx';
 import { PeriodPicker } from './ui/period-picker';
 import { EarlyWarningTrendModal } from './early_warning_trend_modal';
 
-const { Button, IconBtn, StatusBadge, FilterChip } = UI;
+const { Button, IconBtn, StatusBadge } = UI;
 
 /* ──────────────────────────────
    도메인 타입 — 등급 도메인은 목업 `GRADES` 3값
@@ -314,19 +314,14 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 전체+등급 칩(적용 중인 값 칩은 appliedFilters 둘째 줄). 외관 정본은 감사로그 툴바(`audit_log.tsx:191-204`).
          행 선택이 없어 selbar는 존재하지 않는다. */
-      toolbarLeft={(
-        <>
-          {/* `전체` 칩 — 3칩 모두 ON일 때 활성이고, 누르면 3개를 한 번에 켠다(0행 상태의 복구 경로를 겸한다).
-              멱등이라 이미 전부 켜진 상태에서 눌러도 무해. count는 세 facet의 합(상수 금지). */}
-          <FilterChip active={allGradesOn} onClick={() => setGrades(ALL_GRADES_ON)} count={String(gradeTotal)}>등급: 전체</FilterChip>
-          {/* ⚠ `전체`가 활성이면 등급 칩은 **비활성으로 보인다** — 상태(`grades`)는 3개 다 true지만
-              참조처럼 "활성 칩은 하나"로 읽히게 표시만 분리한다(파일 상단 '절충' 참조). */}
-          {GRADES.map((g) => (
-            <FilterChip key={g} active={!allGradesOn && grades[g]} onClick={() => toggleGrade(g)}
-              count={String(gradeFacet[g])}>{g}</FilterChip>
-          ))}
-        </>
-      )}
+      filterChips={[
+        /* `전체` 칩 — 3칩 모두 ON일 때 활성이고, 누르면 3개를 한 번에 켠다(0행 상태의 복구 경로를 겸한다).
+           멱등이라 이미 전부 켜진 상태에서 눌러도 무해. count는 세 facet의 합(상수 금지). */
+        { key: 'all', label: '등급: 전체', count: String(gradeTotal), active: allGradesOn, onSelect: () => setGrades(ALL_GRADES_ON) },
+        /* ⚠ `전체`가 활성이면 등급 칩은 **비활성으로 보인다** — 상태(`grades`)는 3개 다 true지만
+           참조처럼 "활성 칩은 하나"로 읽히게 표시만 분리한다(파일 상단 '절충' 참조). */
+        ...GRADES.map((g) => ({ key: g, label: g, count: String(gradeFacet[g]), active: !allGradesOn && grades[g], onSelect: () => toggleGrade(g) })),
+      ]}
       /* 적용 필터 칩 — 값만 표시(접두사 없음) + ×.
          ⚠ 기준년월은 행을 거르지 않는 조회 기준이라 값이 늘 있다 → **기본값과 다를 때만** 칩을 띄우고,
            ×는 '제거'가 아니라 **기본값 복귀**다. */
