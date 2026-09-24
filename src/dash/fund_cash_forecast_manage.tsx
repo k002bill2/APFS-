@@ -325,7 +325,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
       title="조합예상자금요청보고"
       favRoute="fund-cash-forecast"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 주 필터 칩(계정구분, 목업 검색박스의 chipGroup) + 적용 중인 드로어 값 칩(운용사·자펀드).
+      /* 툴바 좌 = 주 필터 칩(계정구분, 목업 검색박스의 chipGroup) (적용 중인 드로어 값 칩 운용사·자펀드는 appliedFilters 둘째 줄).
          계정구분은 칩 자체가 적용 상태를 보여주므로 값 칩을 따로 만들지 않는다. */
       toolbarLeft={(
         <>
@@ -333,19 +333,12 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
           {(['', ...ACCTS] as ('' | Acct)[]).map((a) => (
             <FilterChip key={a || 'all'} active={fAcct === a} onClick={() => setFAcct(a)}>{a || '계정구분: 전체'}</FilterChip>
           ))}
-          {([
-            ['운용사', fGp, () => setFGp('')],
-            ['자펀드', fFund, () => setFFund('')],
-          ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
-            <span key={label} title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {value}
-              <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-                <Icon name="x" size={13} stroke={2.4} />
-              </button>
-            </span>
-          ))}
         </>
       )}
+      appliedFilters={[
+        { label: '운용사', value: fGp, onClear: () => setFGp('') },
+        { label: '자펀드', value: fFund, onClear: () => setFFund('') },
+      ]}
       toolbarRight={<>
         {/* 금액 단위 전환(목업 목록바 `.unit`) — 캡션 + 세그먼트. 현재 값은 SegTabs가 보여주므로 캡션은 '단위'만 */}
         <span className="text-caption font-semibold" style={{ fontSize: 12, marginRight: 6 }}>단위</span>

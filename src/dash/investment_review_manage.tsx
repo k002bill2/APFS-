@@ -364,20 +364,13 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
           {(['' as const, '일정' as const, '결과' as const]).map((s) => (
             <FilterChip key={s || 'all'} active={fState === s} onClick={() => setFState(s)}>{s || '투자심의상태: 전체'}</FilterChip>
           ))}
-          {([
-            ['운용사', fGp, () => setFGp('')],
-            ['자펀드', fFund, () => setFFund('')],
-            ['투자심의기간', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }],
-          ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
-            <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {value}
-              <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-                <Icon name="x" size={13} stroke={2.4} />
-              </button>
-            </span>
-          ))}
         </>
       )}
+      appliedFilters={[
+        { label: '운용사', value: fGp, onClear: () => setFGp('') },
+        { label: '자펀드', value: fFund, onClear: () => setFFund('') },
+        { label: '투자심의기간', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
+      ]}
       contextActions={selActions}
       toolbarRight={<>
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>

@@ -369,25 +369,17 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           {(['' as const, ...STAGES] as ('' | Stage)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fStage === s} onClick={() => setFStage(s)}>{s || '심사단계: 전체'}</FilterChip>
           ))}
-          {/* 적용 중인 상세필터 — 항목별 개별 칩(각각 ×로 해제). 라벨=드로어 항목명(apfs-detail-filter) */}
-          {([
-            ['검색어', fText, () => setFText('')],
-            ['자펀드', fFund, () => setFFund('')],
-            ['자펀드구분', fType, () => setFType('')],
-            ['사업연도', fYear && fYear + '년', () => setFYear('')],
-            ['정기/수시', fRt, () => setFRt('')],
-            ['조합상태', fSt, () => setFSt('')],
-          ] as [string, string, () => void][]).filter(([, v]) => v).map(([label, value, clear]) => (
-            <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {/* 값만 표시(항목명 접두사 없음 — 2026-09-08 결정). 항목명은 × 버튼 aria-label에만 남긴다 */}
-              {value}
-              <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-                <Icon name="x" size={13} stroke={2.4} />
-              </button>
-            </span>
-          ))}
         </>
       )}
+      /* 적용 중인 상세필터 — 항목별 개별 칩(각각 ×로 해제). 라벨=드로어 항목명(apfs-detail-filter) */
+      appliedFilters={[
+        { label: '검색어', value: fText, onClear: () => setFText('') },
+        { label: '자펀드', value: fFund, onClear: () => setFFund('') },
+        { label: '자펀드구분', value: fType, onClear: () => setFType('') },
+        { label: '사업연도', value: fYear && fYear + '년', onClear: () => setFYear('') },
+        { label: '정기/수시', value: fRt, onClear: () => setFRt('') },
+        { label: '조합상태', value: fSt, onClear: () => setFSt('') },
+      ]}
       contextActions={selActions}
       toolbarRight={<>
         {/* 금액 단위 표기 — 캡션. 카드헤더 sub 캡션을 없애면서 여기로 이동 */}

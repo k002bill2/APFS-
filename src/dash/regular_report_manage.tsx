@@ -390,21 +390,13 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
           {(['', '월간보고서', '반기보고서'] as ('' | ReportKind)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fRt === s} onClick={() => setFRt(s)}>{s || '보고구분: 전체'}</FilterChip>
           ))}
-          {/* 값만 표시(접두사 없음) + × */}
-          {([
-            ['운용사', fGp, () => setFGp(''), true],
-            ['자펀드', fFund, () => setFFund(''), true],
-            ['기준년월', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }, false],
-          ] as [string, string, () => void, boolean][]).filter(([, v]) => v).map(([label, value, clear, isText]) => (
-            <span key={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {isText ? value : String(value)}
-              <button type="button" onClick={clear} aria-label={label + ' 필터 제거'} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-                <Icon name="x" size={13} stroke={2.4} />
-              </button>
-            </span>
-          ))}
         </>
       )}
+      appliedFilters={[
+        { label: '운용사', value: fGp, onClear: () => setFGp('') },
+        { label: '자펀드', value: fFund, onClear: () => setFFund('') },
+        { label: '기준년월', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
+      ]}
       contextActions={selActions}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>

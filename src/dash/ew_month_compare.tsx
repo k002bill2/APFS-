@@ -141,21 +141,6 @@ function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: b
   );
 }
 
-/* 적용 필터 칩 — 값만 표시 + × 제거(aria-label 에 항목명). */
-function AppliedChip({ label, value, onClear }: { label: string; value: string; onClear: () => void }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 font-semibold text-primary"
-      style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-      {value}
-      <button type="button" onClick={onClear} aria-label={`${label} 필터 제거`}
-        className="inline-flex items-center justify-center border-0 cursor-pointer"
-        style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-        <Icon name="x" size={13} stroke={2.4} />
-      </button>
-    </span>
-  );
-}
-
 const NO_ROWS = '<span style="padding:40px 0;display:inline-block;color:var(--muted-foreground);font-size:13px">조건에 맞는 비교 결과가 없습니다.</span>';
 /* 필터가 rowData 자체를 비우므로 `noRowsToShow` 경로가 돈다. `noMatchingRows` 도 형제와 같이 둔다.
    객체 prop이라 모듈 상수(apfs-aggrid ⑦). */
@@ -208,17 +193,13 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
       cardTitle={TITLE}
       favRoute={TITLE}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 적용된 필터 칩(값만). 등급·변동 칩은 **그룹이 전부 on 이 아닐 때만** 하나씩 띄우고,
+      /* 적용된 필터 칩(값만) = appliedFilters(둘째 줄). 등급·변동 칩은 **그룹이 전부 on 이 아닐 때만** 하나씩 띄우고,
          값 = 켜진 항목 목록, × = 그 그룹을 전체 on 으로 되돌림(칩을 지웠는데 필터가 좁아지는 역설 방지). */
-      toolbarLeft={(
-        <>
-          <Icon name="filter" size={16} className="text-caption" />
-          {!fYm && gradeAll && chgAll && <span className="text-caption" style={{ fontSize: 12.5 }}>전체</span>}
-          {fYm && <AppliedChip label="기준년월" value={fYm} onClear={() => setFYm('')} />}
-          {!gradeAll && <AppliedChip label="등급" value={gradeChipValue} onClear={() => setGradeOn(ALL_GRADES_ON)} />}
-          {!chgAll && <AppliedChip label="변동" value={chgChipValue} onClear={() => setChgOn(ALL_CHG_ON)} />}
-        </>
-      )}
+      appliedFilters={[
+        { label: '기준년월', value: fYm, onClear: () => setFYm('') },
+        { label: '등급', value: gradeAll ? '' : gradeChipValue, onClear: () => setGradeOn(ALL_GRADES_ON) },
+        { label: '변동', value: chgAll ? '' : chgChipValue, onClear: () => setChgOn(ALL_CHG_ON) },
+      ]}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />

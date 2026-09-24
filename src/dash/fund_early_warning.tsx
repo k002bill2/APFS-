@@ -272,21 +272,6 @@ function DrawerSelect({ value, onChange, options, ariaLabel }: { value: string; 
   );
 }
 
-/* 적용 필터 칩 — 값만 표시(항목명 접두사 없음) + × 제거. */
-function AppliedChip({ label, value, onClear }: { label: string; value: string; onClear: () => void }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 font-semibold text-primary"
-      style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-      {value}
-      <button type="button" onClick={onClear} aria-label={`${label} 필터 제거`}
-        className="inline-flex items-center justify-center border-0 cursor-pointer"
-        style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-        <Icon name="x" size={13} stroke={2.4} />
-      </button>
-    </span>
-  );
-}
-
 const NO_ROWS = '<span style="padding:40px 0;display:inline-block;color:var(--muted-foreground);font-size:13px">조건에 맞는 자펀드가 없습니다.</span>';
 /* ⚠ `overlayNoRowsTemplate`은 **rowData 자체가 빈** 경우에만 쓰인다. 필터로 0행이 된 경우 AG Grid v35는
    별도 오버레이(`NoMatchingRowsOverlayComponent`)를 띄워 기본 영문 "No Matching Rows"가 노출된다.
@@ -385,18 +370,14 @@ export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
       cardTitle="자펀드별 조기경보 조회"
       favRoute="자펀드별 조기경보 조회"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 적용된 필터 칩(값만). FilterChip 세트는 두지 않는다 —
-         목업 검색박스에 카테고리형 주 필터가 없다(형제 S2_47 과 같은 판단). */
-      toolbarLeft={(
-        <>
-          <Icon name="filter" size={16} className="text-caption" />
-          {!fMf && !fFn && !fYm && <span className="text-caption" style={{ fontSize: 12.5 }}>전체</span>}
-          {fMf && <AppliedChip label="모펀드" value={fMf} onClear={() => setFMf('')} />}
-          {fFn && <AppliedChip label="자펀드" value={fFn} onClear={() => setFFn('')} />}
-          {/* 기준년월은 조회 기준 컨텍스트 — 선택했을 때만 칩으로 띄운다 */}
-          {fYm && <AppliedChip label="기준년월" value={fYm} onClear={() => setFYm('')} />}
-        </>
-      )}
+      /* 적용된 필터 칩(값만)은 둘째 줄(appliedFilters). FilterChip 세트는 두지 않는다 —
+         목업 검색박스에 카테고리형 주 필터가 없다(형제 S2_47 과 같은 판단).
+         기준년월은 조회 기준 컨텍스트 — 선택했을 때만 칩으로 띄운다 */
+      appliedFilters={[
+        { label: '모펀드', value: fMf, onClear: () => setFMf('') },
+        { label: '자펀드', value: fFn, onClear: () => setFFn('') },
+        { label: '기준년월', value: fYm, onClear: () => setFYm('') },
+      ]}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />

@@ -380,16 +380,11 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
           {(['', '확정', '미확정'] as ('' | ConfirmState)[]).map((s) => (
             <FilterChip key={s || 'all'} active={fConfirm === s} onClick={() => setFConfirm(s)}>{s || '확정여부: 전체'}</FilterChip>
           ))}
-          {fBaseDate !== BASE_DATE && (
-            <span className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: '5px 8px 5px 11px', borderRadius: 9, fontSize: 12.5, background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}>
-              {String(fBaseDate)}
-              <button type="button" onClick={() => setFBaseDate(BASE_DATE)} aria-label="기준일자 필터 제거" className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
-                <Icon name="x" size={13} stroke={2.4} />
-              </button>
-            </span>
-          )}
         </>
       )}
+      appliedFilters={[
+        { label: '기준일자', value: fBaseDate !== BASE_DATE ? String(fBaseDate) : '', onClear: () => setFBaseDate(BASE_DATE) },
+      ]}
       /* 단위 캡션 없음 — 금액 컬럼이 없다(마크·상태만) */
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>

@@ -42,7 +42,8 @@ interface GridFrameProps {
   favRoute?: string;         // 즐겨찾기 별(★) 토글 활성 — 현재 페이지 라우트(onNav 인자와 동일 문자열).
                              // 지정 시 카드헤더 타이틀 옆에 별 렌더, 클릭=MenuStore 'fav' on/off(제한 없음).
                              // 키 도메인=ALLMENU(key=라우트, MENU 평탄화) — 라우트가 메뉴에 없으면 별 미렌더.
-  toolbarLeft?: ReactNode;   // 툴바 좌: 필터칩·컨텍스트 설명 (선택 액션은 toolbarLeft 가 아니라 contextActions 로)
+  toolbarLeft?: ReactNode;   // 툴바 좌: **기본 필터 칩**·컨텍스트 설명 (선택 액션은 contextActions 로, 적용 칩은 appliedFilters 로)
+  appliedFilters?: readonly AppliedFilter[]; // 적용된 필터 = 툴바 아래 둘째 줄({label,value,onClear?}[]) → "필터 툴바 2줄 규약" 절
   contextActions?: ReactNode;// 선택 컨텍스트 액션 묶음(수정·삭제·선택 해제·단계 전이…).
                              // 툴바 좌측에 렌더되다가 스크롤로 툴바가 가려지면 하단 플로팅 바로 **이동**한다.
                              // → 아래 "선택 액션 플로팅 바" 절. 안 넘기면 동작 변화 0.
@@ -141,6 +142,21 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 - **각 `<section>`에 `min-w-0` 필수** — 없으면 그리드 아이템 기본 `min-width:auto`가 내용 폭에 눌려 AG Grid 내부 가로 스크롤이 죽고 레이아웃이 비어져 나온다.
 - 좁은 화면은 `grid-cols-1`로 세로 적층(→[[responsive-ui]]). `gap-3`이 가로·세로 양쪽에 걸리므로 적층 간격도 함께 해결된다.
 - 좌 그리드의 **선택 규약(해제 불가 = 라디오)**과 선택 건수 오탐 함정은 → [[apfs-aggrid]].
+
+## 필터 툴바 2줄 규약 (2026-09-24 사용자 결정 — 전 화면 공통, grilling Q1~Q14)
+필터가 몇 개만 걸려도 툴바가 여러 줄로 감기고 우측 액션이 아래로 밀리던 문제의 해법. **역할로 줄을 나눈다.**
+
+| 줄 | 역할 | 넘칠 때 |
+|---|---|---|
+| 첫 줄(툴바) | 무엇을 볼지 — 좌: 기본 필터 칩(깔때기 뒤) · 우: 액션(단위·상세필터·새로고침) | **감기지 않는다.** 우측 `shrink-0` 고정, 좌측만 줄 안 가로 스크롤 + 끝 흐림(mask, 스크롤바 숨김). ≤640px 만 좌/우 적층 |
+| 둘째 줄(`appliedFilters`) | 무엇이 걸렸는지 — `적용된 필터` 캡션 + 칩 + (해제 가능 ≥2) `전체 해제` | **감긴다** — 해제 대상이라 스크롤 안에 숨기지 않는다 |
+
+- **페이지는 배열만 넘긴다**: `appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}`. 칩·말줄임(240px)·title/aria·전체 해제·`role="group"` 은 `applied_filters.tsx` 가 소유한다. 값이 빈 항목은 자동 제외, `onClear` 없으면 × 없음(전체 해제 대상에서도 제외).
+- **툴바 좌측에 적용 칩을 직접 그리지 않는다** — 가드 `applied_filters.test.ts`('필터 제거' aria·`AppliedChip`·`FilterPill` 사본 금지). 스키마 트랙은 `generic_list`, 조기경보 트랙은 `risk_page_kit.specsToApplied` 가 이미 배선돼 있다.
+- **기본 필터 칩이 없는 화면은 첫 줄 좌측을 비운다** — 깔때기·`필터 없음`·`전체` 자리표시 문구 금지(둘째 줄이 상태를 말한다).
+- 행 선택 중에도 둘째 줄은 유지된다(선택 바는 첫 줄 좌측만 차지).
+- ⚠️ **`전체 해제` = 칩별 `onClear` 를 한 이벤트에서 연달아 호출**한다. 클로저의 객체 state 를 복사해 지우는 onClear(`const n={...state}; delete n[k]; set(n)`)는 마지막 호출만 남는다 → 반드시 함수형 업데이트(`set(p => …)`). 실제 사례: `generic_list.removeFilter`(2026-09-24 수정).
+- 첫 줄 좌측 스크롤 래퍼는 세로 3px 패딩+음수 마진을 둔다 — `overflow-x:auto` 가 칩 focus 링을 자르지 않게.
 
 ## 관리형 리스트 툴바·타이틀 규약 (2026-09-11 subfund_manage에서 정립)
 리스트형(CRUD) 페이지 한정. 매트릭스/집계형은 위 골든(`headerActions` primary 내보내기)을 그대로 둔다.

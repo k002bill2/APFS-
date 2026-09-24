@@ -38,6 +38,7 @@ import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS C
 import './aggrid_shared.css';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
+import type { AppliedFilter } from './applied_filters';
 import { GridFrame, KpiBadge, FooterActions } from './grid_frame';
 import { ConfirmCombo, uniformConfirm } from './confirm_combo';   // 확정/미확정 inlineSelect 컬럼의 선택 바 일괄 변경   // 공통 양식 셸 + KPI 배지(apfs-grid 스킬 SSOT)
 
@@ -179,21 +180,6 @@ function MiniBars({ data, color }: { data: number[]; color: string }) {
 
 /* KpiBadge는 grid_frame.tsx(GridFrame SSOT)에서 import — 인라인 정의 제거(apfs-grid 양식 이관) */
 
-/* 제거 가능한 필터 칩 — 값만 표시(항목명 접두사 없음, 2026-09-09 통일: typed 페이지 골드 규약과 일치).
-   항목명은 title(호버)·aria-label로 회수해 의미 손실을 상쇄한다. 태그형(value 없음)은 라벨=값 토큰이라 라벨을 그대로 표시.
-   onRemove 가 없으면 × 도 없다 — 원문 select 에 '전체'가 없는 항목(filterSpecs allLabel:null)은 해제할 빈 값이 없다(typed AppliedChip 동형). */
-function FilterPill({ label, value, onRemove }: { label: string; value?: string; onRemove?: () => void }) {
-  return (
-    <span title={label} className="inline-flex items-center gap-1.5 font-semibold text-primary" style={{ padding: onRemove ? "5px 8px 5px 11px" : "5px 11px", borderRadius: 9, fontSize: 12.5, background: "color-mix(in srgb, var(--primary) 10%, transparent)" }}>
-      {value ? value : <span>{label}</span>}
-      {onRemove && (
-        <button onClick={onRemove} aria-label={label + " 필터 제거"} className="inline-flex items-center justify-center border-0 cursor-pointer" style={{ background: "transparent", color: "inherit", minWidth: 24, minHeight: 24, padding: 0, margin: "-5px -4px -5px 0" }}>
-          <Icon name="x" size={13} stroke={2.4} />
-        </button>
-      )}
-    </span>
-  );
-}
 
 /* ── 드로어 체크 행 — 박스+체크 시각 (토큰 기반, 라이트/다크 양립) ── */
 function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: boolean; onClick: () => void }) {
@@ -532,7 +518,16 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   /* 필터 변경 단일 관문 — 드로어(즉시 반영)·툴바 칩 ×·초기화가 모두 이 함수를 거친다.
      여기서만 첫 페이지로 되돌리므로 경로마다 정책이 갈리지 않는다(칩 ×만 페이지 유지되던 불일치 해소). */
   const applyFilters = (next: Record<string, string>) => { setFilterValues(next); apiRef.current?.paginationGoToFirstPage(); };
-  const removeFilter = (label: string) => { const n = { ...filterValues }; delete n[label]; applyFilters(n); };
+  /* 함수형 업데이트 — 적용 필터 줄의 `전체 해제`가 칩별 onClear 를 연달아 부르므로, 클로저의 filterValues 를
+     복사하면 마지막 호출만 남는다(stale closure). */
+  const removeFilter = (label: string) => {
+    setFilterValues((p) => { const n = { ...p }; delete n[label]; return n; });
+    apiRef.current?.paginationGoToFirstPage();
+  };
+  /* 적용된 필터 줄(GridFrame appliedFilters) — 값만 표시, 태그형은 라벨이 곧 값 토큰. 해제 불가 항목은 × 없음 */
+  const appliedFilters: AppliedFilter[] = chipItems.map((c) => ({
+    label: c.label, value: c.value ?? c.label, onClear: c.clearable ? () => removeFilter(c.label) : undefined,
+  }));
 
   /* 제네릭 금액·변동률 KPI(총액/평균 변동률)는 makeRows 의 **합성 시드**를 집계한 값이다.
      리터럴 샘플(원문 행)을 쓰는 화면에는 그 시드가 없으므로 배지를 아예 내린다 —
@@ -810,14 +805,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         <KpiBadge icon="wallet" color="var(--accent)" label="합계 금액"
           value={"₩" + String(Math.round(sumAmount / 100).toLocaleString()) + "억"} />
       </>)}
-      toolbarLeft={selCount > 0 ? null : (
-        <>
-          <Icon name="filter" size={16} className="text-caption" />
-          {chipItems.map((c) => <FilterPill key={c.label} label={c.label} value={c.value} onRemove={c.clearable ? () => removeFilter(c.label) : undefined} />)}
-          {chipItems.length === 0 && <span className="text-caption" style={{ fontSize: 12.5 }}>필터 없음</span>}
-        </>
-      )}
       contextActions={selActions}
+      appliedFilters={appliedFilters}
       toolbarRight={<>
         {unitOn && <>
           <span className="text-caption" style={{ fontSize: 12 }}>금액 단위</span>
