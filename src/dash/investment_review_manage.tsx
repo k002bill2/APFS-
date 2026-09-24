@@ -197,7 +197,7 @@ function ResultMenu({ options, onPick }: { options: Result[]; onPick: (v: Result
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
-type ModalState = null | { kind: 'complianceReg' } | { kind: 'complianceEdit' } | { kind: 'complianceDelete' } | { kind: 'confirmSchedule' };
+type ModalState = null | { kind: 'complianceReg' } | { kind: 'complianceEdit' } | { kind: 'complianceDelete' } | { kind: 'confirmSchedule' } | { kind: 'bulkDelete'; ids: string[] };   // ids = 요청 시점의 선택(확인 사이 선택이 바뀌어도 이 건만 지운다)
 
 export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<InvReviewRow> | null>(null);
@@ -281,6 +281,15 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
   /* 선택 해제 — React selId가 SSOT(stage-workflow 규약 9). 카드뷰에선 그리드가 unmount라 apiRef가 stale →
      deselectAll만으론 onSelectionChanged가 안 깨워져 selId가 남는다(Codex P2). selId를 직접 비우고 그리드는 따라오게 한다. */
   const clearSelection = () => { setSelIds([]); apiRef.current?.deselectAll(); };
+  /* 다건 삭제 — 2건 이상 체크 시 툴바 [삭제]. 요청 시점 ids 를 모달에 담고, 확인 후 그 건만 지운 뒤 모달을 닫는다
+     (닫지 않으면 bulkDelete 가 남아 다음 다건 선택 때 확인창이 저절로 다시 뜬다 — Codex P2) */
+  const deleteSelected = (idList: readonly string[]) => {
+    const ids = new Set(idList);
+    setRows((prev) => prev.filter((r) => !ids.has(r.id)));
+    setModal(null);
+    clearSelection();
+    toast.success(`${String(ids.size)}건 삭제되었습니다`);
+  };
   const refresh = () => { setRows([...DEMO]); setSelIds([]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더, 합계행 재현 ── */
@@ -348,6 +357,8 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       </Button>
       {single.compliance && <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => setModal({ kind: 'complianceDelete' })}>준법감시 삭제</Button>}
       </>}
+      {/* 다건 선택 — 단건 전이 액션 대신 일괄 삭제만 */}
+      {selCount >= 2 && <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={() => setModal({ kind: 'bulkDelete', ids: [...selIds] })}>삭제</Button>}
       <Button variant="ghost" size="sm" onClick={clearSelection}>선택 해제</Button>
     </>
   ) : null;
@@ -473,6 +484,22 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
               <AlertDialogAction onClick={deleteCompliance} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+      {/* ── 다건 삭제 확인 ── */}
+      {modal?.kind === 'bulkDelete' && (
+        <AlertDialog open onOpenChange={(o) => { if (!o) setModal(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>투심보고 삭제</AlertDialogTitle>
+              <AlertDialogDescription>선택한 <b className="text-foreground">{String(modal.ids.length)}건</b>을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogAction onClick={() => deleteSelected(modal.ids)} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

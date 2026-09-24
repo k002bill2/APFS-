@@ -307,7 +307,8 @@ export function GridFrame({
       if (raf) cancelAnimationFrame(raf);
     };
   }, [wantsFloating, toolbarOut]);
-  /* 행 선택 중(선택 액션 바가 툴바 좌측을 차지) — 깔때기는 빼고, 필터 칩은 전부 +N 안으로 접는다 */
+  /* 행 선택 중 — 툴바는 **선택 액션 영역**이 된다. 체크는 액션의 대상일 뿐 필터와 별개라(2026-09-24 사용자 결정)
+     깔때기·필터 칩·+N 을 모두 감춘다(접어 두면 색 입은 +N 이 '필터가 걸렸다'로 읽힌다). */
   const selecting = Boolean(contextActions && !toolbarOut);
 
   return (
@@ -349,7 +350,7 @@ export function GridFrame({
                 <div ref={topSentinelRef} aria-hidden="true" style={{ position: 'absolute', top: 0, left: 0, width: 1, height: 1, pointerEvents: 'none' }} />
                 <div ref={midSentinelRef} aria-hidden="true" style={{ position: 'absolute', top: '50%', left: 0, width: 1, height: 1, pointerEvents: 'none' }} />
               </div>
-              <FilterChipRow chips={filterChips} applied={appliedFilters} collapsed={selecting} />
+              {!selecting && <FilterChipRow chips={filterChips} applied={appliedFilters} />}
             </div>
             <div className="flex items-center gap-1 shrink-0 max-[640px]:flex-wrap">{toolbarRight}</div>
           </div>
