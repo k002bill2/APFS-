@@ -295,7 +295,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
       {/* ── ① 조기경보 생성 결과내역 (선택 월) ── */}
       <SectionHead title="조기경보 생성 결과내역"
         cap={<>기준년월 {String(ym)}</>} />
-      <div>
+      <div className="apfs-stack-grid">
         <AgGridReact<EwResultRow>
           theme={apfsTheme}
           rowData={resultRows}
@@ -314,7 +314,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
           <Button variant="outline" size="sm" disabled={noReport} onClick={() => setModal({ kind: 'grantAll' })}>전체권한부여</Button>
           <Button variant="outline" size="sm" disabled={noReport} onClick={() => setModal({ kind: 'revokeAll' })}>전체권한해제</Button>
         </>} />
-      <div>
+      <div className="apfs-stack-grid">
         <AgGridReact<GpReportRow>
           theme={apfsTheme}
           rowData={reportRows}

@@ -42,4 +42,12 @@ describe('섹션 헤더 규약(여러 표 세로 쌓기)', () => {
     const css = readFileSync(join(ROOT, 'dash/aggrid_shared.css'), 'utf8');
     expect(css).toMatch(/\.apfs-section-head \+ \* \.ag-root-wrapper[\s\S]*?border-top: 1px solid var\(--border\)/);
   });
+  it('그리드 하단 이중선 없음 — min-height 42px(행 높이) + 섹션 스택 마지막 행 하단선 투명', () => {
+    const css = readFileSync(join(ROOT, 'dash/aggrid_shared.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(css).toMatch(/\.apfs-grid-min \.ag-layout-auto-height \.ag-center-cols-viewport\s*\{\s*min-height: 42px/);
+    expect(css).toMatch(/\.apfs-section-head \+ :is\(\.apfs-grid-min, \.apfs-stack-grid\) \.ag-row-last[\s\S]*?\.apfs-section-sep \+ \.apfs-grid-min \.ag-row-last[\s\S]*?\.apfs-grid-min:has\(\+ \.apfs-section-sep\) \.ag-row-last[\s\S]*?\{\s*border-bottom-color: transparent/);
+    /* `+ *` 광역 선택자 금지 — 표+카드 2단 래퍼(자펀드 종합등급) 안 그리드의 하단선까지 지운다 */
+    expect(css).not.toMatch(/\+ \* \.ag-row-last/);
+    expect(src(join(ROOT, 'dash/risk_tables_page.tsx'))).toContain('className="apfs-section-sep"');
+  });
 });

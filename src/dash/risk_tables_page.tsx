@@ -109,7 +109,7 @@ export function TablesPage({ cfg, onNav }: { cfg: TablesPageConfig; onNav?: (r: 
           {/* 원문 섹션 제목이 있으면 섹션 헤더, 없으면(원문이 제목을 지운 표) 구분선만 */}
           {cfg.tables.length > 1 && (t.title
             ? <SectionHead title={t.title} />
-            : i > 0 && <div aria-hidden style={{ height: 16, borderTop: '1px solid var(--border)' }} />)}
+            : i > 0 && <div aria-hidden className="apfs-section-sep" style={{ height: 16, borderTop: '1px solid var(--border)' }} />)}
           <ReadGrid table={t} rows={filtered[i]} unit={unitOrNull} ariaLabel={t.title ?? cfg.label} />
         </React.Fragment>
       ))}

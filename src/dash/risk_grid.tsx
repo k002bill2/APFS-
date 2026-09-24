@@ -270,7 +270,7 @@ export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세
   const onRowDataUpdated = useCallback((e: RowDataUpdatedEvent<Row>) => { if (selRef.current) restoreSelection(e.api, selRef.current); }, []);
 
   return (
-    /* apfs-grid-min: 1~2행 autoHeight 그리드의 AG Grid 기본 최소 본문높이(150px)를 48px 로 낮춘다(aggrid_shared.css) */
+    /* apfs-grid-min: 1~2행 autoHeight 그리드의 AG Grid 기본 최소 본문높이(150px)를 42px(행 높이) 로 낮춘다(aggrid_shared.css) */
     <div className="apfs-grid-min" role="region" aria-label={ariaLabel ?? table.title}>
       <AgGridReact<Row>
         theme={apfsTheme}
