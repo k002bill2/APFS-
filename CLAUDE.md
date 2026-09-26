@@ -108,6 +108,7 @@ APFS/
 - `tsc --noEmit`은 현재 타입 에러를 다수 보고하지만 빌드(esbuild)는 타입체크를 하지 않아 `vite build`는 green입니다.
 - 색/간격/타이포는 하드코딩 대신 CSS 변수 토큰(`tokens.css`)을 사용하세요.
 - 새 페이지/메뉴는 라이트/다크 모두에서 대비를 확인하세요.
+- **UI 신규 작업 규칙: .claude/rules/frontend-design-defaults.md** — 금지 패턴 15개와 대체 토큰·컴포넌트(src/** 작업 시 자동 로드). 기존 화면 위반은 지시 없이 고치지 않는다.
 - **데이터 마스크는 없다**(2026-09-24 사용자 결정 — 시안용 `mask.tsx`(`mn`·`MT`·`useMask`)와 CSS 훅을 전부 삭제). 값을 가리는 래퍼를 새로 만들지 않는다. 가드 테스트: `src/dash/no_demo_mask.test.ts`.
 - **레거시**: 루트 `농식품모태펀드 대시보드*.html`(구 오프라인 번들)은 더 이상 정본이 아닙니다. `apfs-bundle` 스킬(번들 gzip+base64 디코드/재인코드)도 이 레거시 파일에만 해당하며, 신규 작업엔 불필요합니다.
 
@@ -174,3 +175,4 @@ APFS/
 ## 하네스 변경 이력
 
 하네스(에이전트·스킬·훅·설정) 변경 이력은 → `docs/HARNESS_CHANGELOG.md` 참조. 구성요소 추가/삭제/수정 시 그 파일에 기록한다.
+- 2026-09-27: 경로 스코프 규칙 `.claude/rules/frontend-design-defaults.md` 추가(`paths: src/**`, 근거 `docs/design-rules/REPORT-opus55-design-defaults.md`).

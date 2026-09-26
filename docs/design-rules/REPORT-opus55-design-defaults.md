@@ -1,3 +1,4 @@
+> 적용됨: 규칙 본문은 .claude/rules/frontend-design-defaults.md 로 이동(2026-09-27).
 # REPORT — Opus 5.5 디자인 기본값 금지 패턴 초안 (APFS)
 
 - 작성: Designer, 2026-09-27 / 브랜치 `k002bill2/design-defaults-opus55`
