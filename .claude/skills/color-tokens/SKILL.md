@@ -40,7 +40,7 @@ APFS 대시보드의 색 토큰 규약. 전체 카탈로그·근거는 **`docs/C
 `--brand-solid`(#4F46E5) · `--on-brand-solid`(#fff) · `--gradient-hero`(기존 메인 Hero 전용 — 신규 사용 금지, `.claude/rules/frontend-design-defaults.md` 6번) · `--on-gradient-{mint,sky,danger}` · `--on-chart-fill`. config에 named 유틸 없으니 Tailwind는 **arbitrary value** `text-[color:var(--on-brand-solid)]`로.
 
 ## 정당한 hex 예외 (토큰화 안 함)
-로고 SVG 마크 · `tweaks.css` 무드 정의 · `index.html` 부트/스플래시(FOUC) · designsystem 표시용 hex 라벨 · scrim `rgba(0,0,0,.x)`/`rgba(255,255,255,.x)`.
+로고 SVG 마크 · `index.html` 부트/스플래시(FOUC) · designsystem 표시용 hex 라벨 · scrim `rgba(0,0,0,.x)`/`rgba(255,255,255,.x)`.
 
 ## 안티패턴
 - `var(--primary)` 배경 + 하드코딩 흰 글자(다크 깨짐).

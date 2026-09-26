@@ -21,7 +21,7 @@ paths:
 11. `uppercase` + 넓은 자간 eyebrow/kicker 라벨. (예외: 메뉴 단축키 힌트 `DropdownMenuShortcut`)
 12. 그라데이션 텍스트(`bg-clip-text text-transparent`).
 13. 색 좌측 스트라이프 강조 카드(`border-l-4` 컬러). 구분선용 1px 중립 `--border` 는 허용.
-14. hex·rgba 리터럴 색 → `color-tokens` 스킬 규약. 예외 목록은 그 스킬의 '정당한 hex 예외' 절이 정본(로고 SVG·`tweaks.css`·`index.html` 부트·DS hex 라벨·scrim rgba). 기존 에디터 글자색 팔레트·외부 위젯 테마 주입은 현행 유지.
+14. hex·rgba 리터럴 색 → `color-tokens` 스킬 규약. 예외 목록은 그 스킬의 '정당한 hex 예외' 절이 정본(로고 SVG·`index.html` 부트·DS hex 라벨·scrim rgba). 기존 에디터 글자색 팔레트·외부 위젯 테마 주입은 현행 유지.
 15. 상태 배지 앞 점(bullet) — 이미 폐지됨(가드 `status_badge_no_dot.test.ts`).
 
 ## 대신 이것을 쓴다 (Do)

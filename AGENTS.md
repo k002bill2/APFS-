@@ -27,7 +27,7 @@
 - 독립된 큰 작업은 `luna_worker`에게 병렬로 맡깁니다. 각 작업의 파일 범위와 기대 결과를 따로 전달합니다.
 - 사용자가 요청한 범위에 직접 필요한 파일만 수정합니다.
 - 기존 사용자 변경을 되돌리지 않습니다.
-- UI 변경은 `tokens.css`, `tweaks.css`, 공통 컴포넌트, 기존 Tailwind 유틸 패턴을 우선 사용합니다.
+- UI 변경은 `tokens.css`, 공통 컴포넌트, 기존 Tailwind 유틸 패턴을 우선 사용합니다.
 - 메뉴/라우트 변경은 `src/dash/data.ts`의 `APFS_DATA.MENU`와 `src/dash/app.tsx` 라우트 분기를 함께 검토합니다.
 - 더미 데이터는 백엔드/API가 아니라 `src/dash/data.ts`의 `APFS_DATA`에서 관리합니다.
 
