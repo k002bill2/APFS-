@@ -175,4 +175,3 @@ APFS/
 ## 하네스 변경 이력
 
 하네스(에이전트·스킬·훅·설정) 변경 이력은 → `docs/HARNESS_CHANGELOG.md` 참조. 구성요소 추가/삭제/수정 시 그 파일에 기록한다.
-- 2026-09-27: 경로 스코프 규칙 `.claude/rules/frontend-design-defaults.md` 추가(`paths: src/**`, 근거 `docs/design-rules/REPORT-opus55-design-defaults.md`).
