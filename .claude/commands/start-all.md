@@ -41,5 +41,5 @@ APFS는 백엔드 없는 프론트엔드 SPA(더미데이터 `src/dash/data.ts`)
 
 ## 참고
 
-- 테마/역할/Tweaks 설정은 `localStorage`에 영속화됩니다.
+- 테마 등 UI 설정(라우트·LNB·화면 폭·내비 스타일·대시보드 시안)은 `localStorage` 의 `apfs.*` 키에 영속화됩니다.
 - 서버 중지: 실행한 백그라운드 태스크를 중단하거나, `lsof -ti:5273 | xargs kill`.
