@@ -342,7 +342,7 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
   ];
 
   /* 저장 — 이 팝업의 데이터는 목록 그리드와 연결돼 있지 않다(별 자펀드). 닫고 알림만 낸다 */
-  const save = () => () => { toast.success('저장되었습니다 (목업)'); onClose(); };
+  const save = () => () => { toast.success('저장되었습니다'); onClose(); };
 
   const dlgRef = React.useRef<DialogHandle>(null);
 

@@ -109,8 +109,8 @@ export function MiniTable({ heads, rows, act, label, right = [], empty = '변경
   const cell: React.CSSProperties = { padding: '8px 11px' };
   const openLabel = act === 'edit' ? '수정' : '상세';
   const toggle = (i: number, on: boolean) => setSel((p) => (on ? [...p, i] : p.filter((x) => x !== i)));
-  const open = () => { const r = rows[sel[0]]; if (!r) return; if (onOpen) onOpen(r); else toast(`${label} ${openLabel} (목업)`); };
-  const remove = () => { onDelete(sel); setSel([]); toast.success(`${label} ${sel.length}건을 삭제했습니다 (목업)`); };
+  const open = () => { const r = rows[sel[0]]; if (!r) return; if (onOpen) onOpen(r); else toast(`${label} ${openLabel}`); };
+  const remove = () => { onDelete(sel); setSel([]); toast.success(`${label} ${sel.length}건을 삭제했습니다`); };
   return (
     <div>
       {sel.length > 0 && (
@@ -218,7 +218,7 @@ export function LedgerFormModal({ mode, row, onSave, onClose }: { mode: 'new' | 
     if (s.key === 'dur' && !v.dur2 && v.dur1) { toast('존속기간 종료일을 입력하세요'); return; }
     if (vals.some((x) => !x)) { toast(HIST_REQUIRED[s.key]); return; }
     setHist((p) => ({ ...p, [s.key]: [[...vals, today(), today()], ...p[s.key]] }));
-    toast.success('변경 이력이 추가되었습니다 (목업)');
+    toast.success('변경 이력이 추가되었습니다');
   };
   /* 저장 = 목록 반영(수정은 그 행 교체, 입력은 새 행) + 원문 토스트. 등록번호·조합명칭은 원문 필수(*).
      SaveButton 계약: 검증 실패면 undefined(스피너 없음), 통과면 commit 을 돌려줘 '저장 중' 모션 뒤 실행된다 */
@@ -226,7 +226,7 @@ export function LedgerFormModal({ mode, row, onSave, onClose }: { mode: 'new' | 
     if (!v.regno.trim() || !v.nm.trim()) { toast('등록번호와 조합명칭을 입력하세요'); return; }
     return () => {
       onSave(ledgerPatch(v));
-      toast.success('등록원부가 저장되었습니다 (목업)');
+      toast.success('등록원부가 저장되었습니다');
       dlgRef.current?.close();
     };
   };
@@ -268,14 +268,14 @@ export function MembersModal({ row, onClose }: { row: Row; onClose: () => void }
   return (
     <Modal dlgRef={dlgRef} wide onClose={onClose} title="조합원 및 납입출자금 관리" target={String(row.nm)}
       footer={<Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>}>
-      <Section title="조합원 및 납입출자금 관리" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('양도/양수 추가 (목업)')}>양도/양수 추가</Button>} actions={<>
-        <Button variant="outline" size="sm" onClick={say('추가출자 등록 (목업)')}>추가출자</Button>
-        <SaveButton leadingIcon="" busyLabel="조회 중" onSubmit={() => say('조합원 조회 (목업)')}>조회</SaveButton>
+      <Section title="조합원 및 납입출자금 관리" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('양도/양수 추가')}>양도/양수 추가</Button>} actions={<>
+        <Button variant="outline" size="sm" onClick={say('추가출자 등록')}>추가출자</Button>
+        <SaveButton leadingIcon="" busyLabel="조회 중" onSubmit={() => say('조합원 조회')}>조회</SaveButton>
       </>}>
         <MiniTable heads={MEMBER_HEADS} rows={members} act="detail" label="조합원" right={[3, 4]} onOpen={openMember} onDelete={(idx) => setMembers((p) => dropAt(p, idx))} />
       </Section>
-      <Section title="조합원 정보 상세" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('조합원 입력 초기화 (목업)')}>추가</Button>}
-        actions={<SaveButton leadingIcon="" onSubmit={() => say('조합원 정보 저장 (목업)')}>저장</SaveButton>}>
+      <Section title="조합원 정보 상세" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('조합원 입력 초기화')}>추가</Button>}
+        actions={<SaveButton leadingIcon="" onSubmit={() => say('조합원 정보 저장')}>저장</SaveButton>}>
         <Grid2>
           <F spec={T('name', '명칭')} value={f.name} onChange={set('name')} />
           <F spec={{ key: 'kind', label: '조합원구분', control: 'radio', options: [...MEMBER_KINDS] }} value={f.kind} onChange={set('kind')} />
@@ -285,7 +285,7 @@ export function MembersModal({ row, onClose }: { row: Row; onClose: () => void }
           <F spec={T('units', '출자좌수')} value={f.units} onChange={set('units')} />
         </Grid2>
       </Section>
-      <Section title="납입출자금" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('납입출자금 이력 추가 (목업)')}>추가</Button>}>
+      <Section title="납입출자금" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('납입출자금 이력 추가')}>추가</Button>}>
         <MiniTable heads={PAYMENT_HEADS} rows={payments} act="edit" label="납입출자금" right={[1, 3, 4]} onDelete={(idx) => setPayments((p) => dropAt(p, idx))} />
       </Section>
     </Modal>
@@ -307,11 +307,11 @@ export function ExpertsModal({ row, onClose }: { row: Row; onClose: () => void }
   return (
     <Modal dlgRef={dlgRef} wide onClose={onClose} title="전문인력 관리" target={String(row.nm)}
       footer={<Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>}>
-      <Section title="전문인력 관리" actions={<SaveButton leadingIcon="" busyLabel="조회 중" onSubmit={() => say('전문인력 조회 (목업)')}>조회</SaveButton>}>
+      <Section title="전문인력 관리" actions={<SaveButton leadingIcon="" busyLabel="조회 중" onSubmit={() => say('전문인력 조회')}>조회</SaveButton>}>
         <MiniTable heads={EXPERT_HEADS} rows={experts} act="detail" label="전문인력" onOpen={openExpert} onDelete={(idx) => setExperts((p) => dropAt(p, idx))} />
       </Section>
-      <Section title="전문인력 상세 정보" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('전문인력 입력 초기화 (목업)')}>추가</Button>}
-        actions={<SaveButton leadingIcon="" onSubmit={() => say('전문인력 정보 저장 (목업)')}>저장</SaveButton>}>
+      <Section title="전문인력 상세 정보" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('전문인력 입력 초기화')}>추가</Button>}
+        actions={<SaveButton leadingIcon="" onSubmit={() => say('전문인력 정보 저장')}>저장</SaveButton>}>
         <Grid2>
           <F spec={T('name', '성명')} value={f.name} onChange={set('name')} />
           <F spec={{ key: 'kind', label: '전문인력 구분', control: 'radio', options: [...EXPERT_KINDS] }} value={f.kind} onChange={set('kind')} />
@@ -323,11 +323,11 @@ export function ExpertsModal({ row, onClose }: { row: Row; onClose: () => void }
         </Grid2>
         <div className="flex items-center gap-2" style={{ margin: '6px 0 10px' }}>
           <h4 className="m-0 font-bold" style={{ fontSize: 14 }}>약력</h4>
-          <Button variant="outline" size="sm" leadingIcon="plus" onClick={say('약력 추가 (목업)')}>추가</Button>
+          <Button variant="outline" size="sm" leadingIcon="plus" onClick={say('약력 추가')}>추가</Button>
         </div>
         <MiniTable heads={CAREER_HEADS} rows={careers} act="edit" label="약력" onDelete={(idx) => setCareers((p) => dropAt(p, idx))} />
       </Section>
-      <Section title="투자경력" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('투자경력 추가 (목업)')}>추가</Button>}>
+      <Section title="투자경력" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('투자경력 추가')}>추가</Button>}>
         <MiniTable heads={INVEST_CAREER_HEADS} rows={invests} act="edit" label="투자경력" onDelete={(idx) => setInvests((p) => dropAt(p, idx))} />
       </Section>
     </Modal>
@@ -342,7 +342,7 @@ export function LedgerUploadModal({ onClose }: { onClose: () => void }) {
   const [files, setFiles] = useState<string[]>([]);
   const upload = (): SubmitResult => {
     if (!files.length) { toast('업로드할 파일을 선택하세요'); return; }
-    return () => { toast.success('등록원부 업로드 완료 (목업)'); dlgRef.current?.close(); };
+    return () => { toast.success('등록원부 업로드 완료'); dlgRef.current?.close(); };
   };
   return (
     <Modal dlgRef={dlgRef} onClose={onClose} title="등록원부 업로드"
@@ -360,12 +360,12 @@ export function LedgerPrintModal({ onClose }: { onClose: () => void }) {
   const dlgRef = useRef<DialogHandle>(null);
   const [date, setDate] = useState(PRINT_DATE);
   const [pages, setPages] = useState<Record<string, string>>(() => Object.fromEntries(PRINT_PAGES.map((p) => [p, '0'])));
-  const save = () => { toast.success('저장되었습니다 (목업)'); dlgRef.current?.close(); };
+  const save = () => { toast.success('저장되었습니다'); dlgRef.current?.close(); };
   return (
     <Modal dlgRef={dlgRef} onClose={onClose} title="등록원부 출력"
       footer={<><Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button><SaveButton leadingIcon="" onSubmit={() => save}>저장</SaveButton></>}>
       <F spec={D('issue', '발급일자')} value={date} onChange={setDate}>
-        <Button variant="outline" size="sm" leadingIcon="printer" onClick={say('등록원부를 출력합니다 (목업)')}>출력</Button>
+        <Button variant="outline" size="sm" leadingIcon="printer" onClick={say('등록원부를 출력합니다')}>출력</Button>
       </F>
       <h3 className="m-0 font-bold" style={{ fontSize: 14, margin: '10px 0 10px' }}>출력 페이지 수</h3>
       {PRINT_PAGES.map((p) => (
@@ -379,7 +379,7 @@ export function LedgerPrintModal({ onClose }: { onClose: () => void }) {
 
 export function LedgerIssueHistoryModal({ onClose }: { onClose: () => void }) {
   const dlgRef = useRef<DialogHandle>(null);
-  const print = () => { toast.success('선택한 발급이력을 출력합니다 (목업)'); dlgRef.current?.close(); };
+  const print = () => { toast.success('선택한 발급이력을 출력합니다'); dlgRef.current?.close(); };
   const cell: React.CSSProperties = { padding: '8px 11px' };
   return (
     <Modal dlgRef={dlgRef} onClose={onClose} title="등록원부 발급이력 출력"

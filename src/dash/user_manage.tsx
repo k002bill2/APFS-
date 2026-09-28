@@ -183,20 +183,20 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
   const patchRow = (id: string, fn: (u: UserRow) => UserRow) => setRows((prev) => prev.map((r) => (r.id === id ? fn(r) : r)));
   const openMail = (title: string, mail: MailSpec) => setModal({ kind: 'mail', title, mail });
   const askUnlock = (u: UserRow) => setModal({ kind: 'confirm', title: '잠금 해제', desc: `${u.name} 계정의 잠금을 해제할까요? (실패 횟수 초기화)`, okLabel: '잠금 해제', onOk: () => {
-    patchRow(u.id, unlockUser); toast.success(`${u.name} 잠금 해제 — 감사로그에 기록됩니다 (목업)`);
+    patchRow(u.id, unlockUser); toast.success(`${u.name} 잠금 해제 — 감사로그에 기록됩니다`);
   } });
   const askExpire = (u: UserRow) => setModal({ kind: 'confirm', title: '비밀번호 만료 처리', desc: `${u.name} 계정을 비밀번호 만료 처리할까요? 다음 로그인 시 변경을 안내합니다.`, okLabel: '만료 처리', onOk: () => {
-    patchRow(u.id, (r) => ({ ...r, pwExpired: true })); toast.success(`${u.name} 만료 처리 — 안내 메일 발송 (목업)`);
+    patchRow(u.id, (r) => ({ ...r, pwExpired: true })); toast.success(`${u.name} 만료 처리 — 안내 메일 발송`);
   } });
   const askOtp = (u: UserRow) => setModal({ kind: 'confirm', title: 'OTP 재발급', desc: `${u.name} 계정의 OTP를 재발급할까요? 기존 앱 등록은 무효화되고 재등록 안내 메일을 미리봅니다.`, okLabel: '재발급', onOk: () => {
-    openMail(`OTP 재등록 안내 메일 미리보기 — ${u.name}`, otpMail(u)); toast.success('OTP 재발급 — 재등록 안내 메일 (목업)');
+    openMail(`OTP 재등록 안내 메일 미리보기 — ${u.name}`, otpMail(u)); toast.success('OTP 재발급 — 재등록 안내 메일');
   } });
   const askReplace = (u: UserRow) => setModal({ kind: 'confirm', title: '담당자 교체', desc: `담당자를 교체할까요? ${u.name} 계정은 비활성되고, 신 담당자 계정이 신규 발급(온보딩대기)됩니다. 같은 아이디를 물려주지 않습니다.`, okLabel: '교체', onOk: () => {
     const { retired, created } = replaceUser(rows, u);
     setRows((prev) => [...prev.map((r) => (r.id === u.id ? retired : r)), created]);
     setSelIds([created.id]);
     openMail(`온보딩 안내 메일 미리보기 — ${created.name}`, onboardMail(created));
-    toast.success(`담당자 교체 — ${u.name} 비활성 + 신규 계정 발급(온보딩대기) (목업)`);
+    toast.success(`담당자 교체 — ${u.name} 비활성 + 신규 계정 발급(온보딩대기)`);
   } });
 
   const handleCellContextMenu = (e: CellContextMenuEvent<UserRow>) => {
@@ -220,13 +220,13 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
     if (modal.mode === 'edit' && target) {
       patchRow(target.id, (r) => ({ ...r, ...patch }));
       setModal(null);
-      toast.success('저장되었습니다 (목업)');
+      toast.success('저장되었습니다');
     } else {
       const row: UserRow = { id: nextUserId(rows), ...patch, last: '—', fail: 0 };
       setRows((prev) => [...prev, row]);
       setSelIds([row.id]);
       openMail(`온보딩 안내 메일 미리보기 — ${row.name}`, onboardMail(row));
-      toast.success(`${row.name} 등록 — 온보딩 안내 메일 (목업)`);
+      toast.success(`${row.name} 등록 — 온보딩 안내 메일`);
     }
   };
   const refresh = () => { setRows(demoUsers()); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };

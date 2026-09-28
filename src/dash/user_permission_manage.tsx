@@ -255,14 +255,14 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
       setSelIds([row.id]);   // 새 행에 선택을 두면 후속 액션(수정·복사)이 바로 보인다(apfs-stage-workflow 규약 9)
     }
     setModal(null);
-    toast.success('권한이 저장되었습니다 · 권한변경 이력 3년 보관 (목업)');
+    toast.success('권한이 저장되었습니다 · 권한변경 이력 3년 보관');
   };
   const doDelete = () => {
     if (modal?.kind !== 'delete') return;
     const ids = new Set(modal.ids);
     setRows((prev) => prev.filter((r) => !ids.has(r.id)).map((r, i) => ({ ...r, no: i + 1 })));   // 목업: 삭제 후 No 재번호
     apiRef.current?.deselectAll(); setSelIds([]);
-    toast.success(`${ids.size}건 삭제되었습니다 (목업)`);
+    toast.success(`${ids.size}건 삭제되었습니다`);
   };
   const refresh = () => { setRows([...DEMO]); clearFilters(); apiRef.current?.deselectAll(); toast.success('조회되었습니다'); };
 

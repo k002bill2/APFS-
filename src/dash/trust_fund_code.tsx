@@ -48,7 +48,7 @@ export function TrustFundCode({ onNav }: { onNav?: (r: string) => void }) {
     setRows((prev) => prev.filter((r) => !ids.has(r.id)));
     clear();
     setModal(null);
-    toast.success('삭제되었습니다 (목업)');
+    toast.success('삭제되었습니다');
   };
   const exportExcel = () => {
     exportTables(LABEL, [{ name: LABEL, table: FUND_CODE_TABLE, rows }], null);

@@ -22,7 +22,7 @@ export function MailPreviewDialog({ title, mail, onClose, action }: {
       <DialogContent className="max-w-[720px] max-h-[88vh]">
         <DialogHeader className="px-[46px]">
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className="sr-only">메일 미리보기 — 실제로 발송되지 않는 시연용 목업</DialogDescription>
+          <DialogDescription className="sr-only">메일 미리보기 — 실제로 발송되지 않는 시연용 미리보기</DialogDescription>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">
           <div className="rounded-[10px] border border-border overflow-hidden">
@@ -35,7 +35,7 @@ export function MailPreviewDialog({ title, mail, onClose, action }: {
             </div>
             <div style={{ padding: '14px 16px', fontSize: 12.5, lineHeight: 1.75, whiteSpace: 'pre-line' }}>{mail.body}</div>
           </div>
-          <p className="text-caption m-0 mt-3" style={{ fontSize: 12, lineHeight: 1.5 }}>실제로 발송되지 않는 시연용 미리보기입니다(목업). QR·비밀번호·OTP·링크 토큰은 표시하지 않습니다.</p>
+          <p className="text-caption m-0 mt-3" style={{ fontSize: 12, lineHeight: 1.5 }}>실제로 발송되지 않는 시연용 미리보기입니다. QR·비밀번호·OTP·링크 토큰은 표시하지 않습니다.</p>
         </div>
         <DialogFooter className="px-[46px]">
           <div />

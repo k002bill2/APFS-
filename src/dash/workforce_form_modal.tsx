@@ -95,7 +95,7 @@ export function WorkforceFormModal({ mode = 'create', initial, title, onSave, on
     if (miss) { setErrKey(miss.key); return; }
     return () => {
       onSave({ ...v });
-      toast.success(mode === 'create' ? '등록되었습니다 (목업)' : '수정되었습니다 (목업)');
+      toast.success(mode === 'create' ? '등록되었습니다' : '수정되었습니다');
     };
   };
 

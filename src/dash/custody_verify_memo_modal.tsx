@@ -104,7 +104,7 @@ export function CustodyMemoModal({ ctx, history, baseDate, onSave, onClose }: {
     if (!date.trim()) { setErrKey('date'); return; }
     if (!content.trim()) { setErrKey('content'); return; }
     setErrKey('');
-    return () => { onSave({ date, content: content.trim() }); toast.success('저장되었습니다 (목업)'); };
+    return () => { onSave({ date, content: content.trim() }); toast.success('저장되었습니다'); };
   };
 
   const kv: KvItem[] = [

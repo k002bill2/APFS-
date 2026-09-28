@@ -309,7 +309,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
       deal: 'N',           // 출자배분 거래유무도 팝업 입력 항목이 아니다 → 미배분 상태로 등록(동상)
     }]);
     setModal(null);
-    toast.success('등록되었습니다 (목업)');
+    toast.success('등록되었습니다');
   };
   const saveEdit = (f: any) => {
     if (!target) return;
@@ -322,12 +322,12 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
       memo: str(f.memo) || '-',
     } : r)));
     setModal(null);
-    toast.success('수정되었습니다 (목업)');
+    toast.success('수정되었습니다');
   };
   const doDelete = () => {
     if (!target) return;
     setRows((prev) => prev.filter((r) => r.id !== target.id));   // no 재번호 없음(목업 동일), 합계는 useMemo가 재계산
-    toast.success('삭제되었습니다 (목업)');
+    toast.success('삭제되었습니다');
   };
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('조회되었습니다'); };

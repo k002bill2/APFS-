@@ -65,7 +65,7 @@ function ManageListPage({ cfg, onNav }: { cfg: ManageConfig; onNav?: (r: string)
     setRows((prev) => prev.filter((r) => !ids.has(r.id)));
     clear();
     setModal(null);
-    toast.success('삭제되었습니다 (목업)');
+    toast.success('삭제되었습니다');
   };
   const exportExcel = () => {
     exportTables(cfg.label, [{ name: cfg.label, table: cfg.table, rows }], null);
@@ -99,11 +99,11 @@ function ManageListPage({ cfg, onNav }: { cfg: ManageConfig; onNav?: (r: string)
 
 const ACCOUNT: ManageConfig = {
   label: '계좌정보 관리', entity: '계좌정보', table: ACCOUNT_TABLE, form: ACCOUNT_FORM, idPrefix: 'acc',
-  fileLabel: '계좌정보 파일', emptyMsg: '파일을 선택하세요', doneMsg: '등록되었습니다 (목업)',
+  fileLabel: '계좌정보 파일', emptyMsg: '파일을 선택하세요', doneMsg: '등록되었습니다',
 };
 const CASHFLOW: ManageConfig = {
   label: '입출금 정보관리', entity: '입출금정보', table: CASHFLOW_TABLE, form: CASHFLOW_FORM, idPrefix: 'cf',
-  fileLabel: '입출금정보 파일', hint: CASHFLOW_UPLOAD_HINT, emptyMsg: '파일을 먼저 선택하세요', doneMsg: '처리되었습니다 (목업)',
+  fileLabel: '입출금정보 파일', hint: CASHFLOW_UPLOAD_HINT, emptyMsg: '파일을 먼저 선택하세요', doneMsg: '처리되었습니다',
 };
 
 /** 계좌정보 관리 — S3_103(업로드) + S3_104 목록 */
