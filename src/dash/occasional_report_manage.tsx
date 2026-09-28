@@ -9,11 +9,10 @@
          구분은 옵션 없이 noop 캡션만 남긴다.
    - 목록 그리드                → AG Grid 단일 헤더(apfs-aggrid). **합계행 없음** — 금액 컬럼이 없는 엔티티다.
    - 확인 워크플로우            → **셀 안 [확인] 버튼**(심사담당·리스크담당) → 확인 모달 → 확인자명 배지.
-       ⚠ 2026-09-12 사용자 지시로 목업 S1_04 원본 구조를 채택했다: 행 선택(체크박스)을 없애고 전이를
-         셀로 되돌렸다. 따라서 이 화면엔 **행 선택도 툴바 selbar도 없다** — `apfs-stage-workflow`의
-         "전이는 오직 컨텍스트 액션으로"(규약 1)와 selbar 규약(4)은 이 화면에 적용되지 않는다.
-         선택이 없으니 `selId`·`onSelectionChanged`·`rowSelection`도 두지 않으며, 확인 모달은
-         대상 행 id를 모달 상태에 직접 싣는다.
+       + **행 선택 = 체크박스 multiRow**(2026-09-28 사용자 지시 — 조합원총회 방식 적용) → 선택 바에서
+         [심사담당 확인]·[리스크담당 확인] 일괄 처리. 값은 확정/미확정이 아니라 **확인만**이다(같은 날 사용자 정정).
+         일괄 대상은 그 주체가 아직 미확인인 선택 행만(게이트 필터형 — 이미 확인된 건수는 모달·toast로 알린다).
+         확인 모달은 대상 행 id 배열을 모달 상태에 직접 싣는다(셀 버튼 = 1건, 선택 바 = N건).
        ⚠ **확인은 비가역**이다(목업 검토메모: "확인 후 확인자명만 표시(취소 불가)") — 확인 해제 액션을 만들지 않는다.
          확인된 셀은 버튼이 사라지고 배지만 남는다.
        파생 확인상태(미확인/일부확인/확인완료)는 컬럼이 아니라 **툴바 필터 칩**에만 쓰인다(stageOf).
@@ -38,7 +37,8 @@ import type { LeafTabsSlot } from './leaf_tabs';
 import { apfsTheme, FIT_GRID_WIDTH, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle } from 'ag-grid-community';
+import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SelectionChangedEvent } from 'ag-grid-community';
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
@@ -125,7 +125,7 @@ const ROLE_BY_COL: Record<string, Role> = { jsBy: 'js', rsBy: 'rs' };
      No · 보고일자 · 상황 발생일자 · 운용사 · 자펀드 · 제목 · 심사담당 · 리스크담당
    ⚠ 운용사·자펀드에 `pinned:'left'`를 주지 않는다 — pinned는 컬럼을 좌측 영역으로 끌어와
      목업 순서(보고일자·상황발생일자보다 뒤)를 깨뜨린다(2026-09-12 사용자 지시 "원본대로").
-     좌측 고정은 No만(체크박스 컬럼은 2026-09-12 사용자 지시로 삭제 — 행 선택 자체가 없다).
+     좌측 고정은 No만(+ 2026-09-28 복원된 선택 체크박스 컬럼 — SELECTION_COL 이 pinned left 로 그린다).
    ⚠ 파생 '확인상태' 컬럼은 두지 않는다(2026-09-12 사용자 지시) — 목업에 없는 컬럼이다.
      파생값 자체는 남아 툴바 필터 칩이 계속 쓴다(stageOf).
 ────────────────────────────── */
@@ -146,8 +146,7 @@ const date = (field: keyof OccReportRow, header: string, width = 128): ColDef<Oc
 /* 검색(상세필터) 메모 3건 — 원문 라벨: 심사담당자 · 리스크담당자 · 구분 */
 
 /* 확인 컬럼 — 미확인이면 셀 안 [확인] 버튼, 확인되면 확인자명 배지(목업 S1_04 `cell()` 그대로).
-   2026-09-12 사용자 지시로 툴바 컨텍스트 액션을 대체한다 — 행 선택(체크박스)이 없어졌으므로
-   전이를 실을 곳이 셀뿐이다(apfs-stage-workflow 규약 1의 이 화면 한정 예외). */
+   단건 확인은 이 셀 버튼, 여러 건은 체크박스 선택 → 선택 바 일괄 확인(2026-09-28). */
 const confirmCol = (field: 'jsBy' | 'rsBy', header: string, role: Role,
                     onConfirm: (role: Role, id: string) => void): ColDef<OccReportRow> => ({
   field, headerName: header, width: 146, maxWidth: 146, cellStyle: flexMid, sortable: true,
@@ -237,8 +236,16 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
-/* 확인 모달은 **대상 행 id를 직접 싣는다** — 행 선택(체크박스)이 없어 `selected`가 존재하지 않는다 */
-type ModalState = null | { kind: 'confirm'; role: Role; id: string } | { kind: 'report' } | { kind: 'gpSpec' } | { kind: 'fundSpec' };
+/* 행 선택 — 일괄 확인이 N건에 그대로 적용되는 액션이라 multiRow(조합원총회·정기보고 동형).
+   선택은 체크박스로만(enableClickSelection:false — 셀 링크·확인 버튼과 겹치지 않게). 헤더 전체선택은
+   SELECTION_COL 의 DS 헤더가 그리므로 내장 헤더는 끄고 범위를 'filtered' 로 맞춘다. 모듈 상수(렌더마다 새 객체 금지). */
+const ROW_SELECTION = {
+  mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered',
+  enableClickSelection: false,
+} as const;
+
+/* 확인 모달은 **대상 행 id 배열을 직접 싣는다** — 셀 버튼은 1건, 선택 바는 미확인 선택 행 N건(skipped = 이미 확인돼 제외된 건수) */
+type ModalState = null | { kind: 'confirm'; role: Role; ids: string[]; skipped: number; bulk: boolean } | { kind: 'report' } | { kind: 'gpSpec' } | { kind: 'fundSpec' };
 
 /* tabs(opt-in) — 메뉴 리프가 원문 화면 2개를 탭으로 묶을 때(leaf_tabs.tsx). 미지정이면 종전 화면 그대로 */
 export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) => void; tabs?: LeafTabsSlot }) {
@@ -250,7 +257,7 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
   /* setModal은 useState 세터라 안정 — deps []로 컬럼 정의를 고정한다(매 렌더 새 배열이면 그리드가 컬럼을 재생성) */
   const columnDefs = useMemo(() => makeColumns(
     (k: SpecKind) => setModal({ kind: k }),
-    (role: Role, id: string) => setModal({ kind: 'confirm', role, id }),
+    (role: Role, id: string) => setModal({ kind: 'confirm', role, ids: [id], skipped: 0, bulk: false }),
   ), []);
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
@@ -305,19 +312,55 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
     const kind = SPEC_BY_COL[colId];
     if (kind) { setModal({ kind }); return; }
     const role = ROLE_BY_COL[colId];
-    if (role && e.data && !e.data[colId as 'jsBy' | 'rsBy']) setModal({ kind: 'confirm', role, id: e.data.id });
+    if (role && e.data && !e.data[colId as 'jsBy' | 'rsBy']) setModal({ kind: 'confirm', role, ids: [e.data.id], skipped: 0, bulk: false });
   }, []);
 
-  const patchRow = (id: string, patch: Partial<OccReportRow>) => setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  /* 선택 SSOT = id 배열 하나(건수는 파생 — apfs-aggrid "선택 상태는 selIds 하나로") */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selCount = selIds.length;
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<OccReportRow>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
 
-  /* ── 확인 워크플로우 — 전이는 셀 [확인] 버튼(또는 셀 Enter) → 확인 모달. 비가역: 해제 액션 없음 ── */
-  const confirmTarget = modal?.kind === 'confirm' ? rows.find((r) => r.id === modal.id) ?? null : null;
-  const doConfirm = (role: Role, id: string) => {
-    patchRow(id, role === 'js' ? { jsBy: CONFIRMER } : { rsBy: CONFIRMER });
-    toast.success(`${ROLE_LABEL[role]} 확인 처리되었습니다`);
+  /* ── 확인 워크플로우 — 셀 [확인] 버튼(또는 셀 Enter) = 1건, 선택 바 = N건 → 확인 모달. 비가역: 해제 액션 없음 ── */
+  const field = (role: Role) => (role === 'js' ? 'jsBy' : 'rsBy') as 'jsBy' | 'rsBy';
+  const confirmTargets = modal?.kind === 'confirm' ? rows.filter((r) => modal.ids.includes(r.id)) : [];
+  /* 일괄 확인 — 게이트(그 주체가 아직 미확인)는 요청 시점에 한 번 평가한다.
+     선택 행이 전부 확인된 주체는 버튼 자체를 숨기므로(selPending) 빈 대상은 방어적 no-op 이다 */
+  const selRows = useMemo(() => rows.filter((r) => selIds.includes(r.id)), [rows, selIds]);
+  const selPending = (role: Role) => selRows.filter((r) => !r[field(role)]).length;
+  const bulkConfirm = (role: Role) => {
+    const targets = selRows;
+    const ok = targets.filter((r) => !r[field(role)]);
+    if (!ok.length) return;
+    setModal({ kind: 'confirm', role, ids: ok.map((r) => r.id), skipped: targets.length - ok.length, bulk: true });
+  };
+  const doConfirm = (role: Role, ids: string[], skipped: number, bulk: boolean) => {
+    const idSet = new Set(ids);
+    const f = field(role);
+    setRows((prev) => prev.map((r) => (idSet.has(r.id) && !r[f] ? { ...r, [f]: CONFIRMER } : r)));
+    if (bulk) apiRef.current?.deselectAll();   // 셀 버튼 단건 확인은 진행 중인 선택을 건드리지 않는다
+    toast.success(bulk
+      ? `${String(ids.length)}건을 ${ROLE_LABEL[role]} 확인 처리했습니다` + (skipped ? ` (이미 확인된 ${String(skipped)}건 제외)` : '')
+      : `${ROLE_LABEL[role]} 확인 처리되었습니다`);
   };
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('조회되었습니다'); };
+  const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
+
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측/하단 플로팅 바 중 한 곳에만 렌더한다(조합원총회 동형).
+     확정/미확정 콤보가 아니라 [확인] 단일 액션이다 — 확인은 비가역이라 되돌리는 값이 없다.
+     선택 행이 전부 그 주체 확인을 마쳤으면 버튼 대신 '○○ 확인완료' 배지를 보인다(셀에서 확인된 칸이 버튼→배지로 바뀌는 것과 같은 규칙). */
+  const roleAction = (role: Role) => (selPending(role) > 0
+    ? <Button variant="outline" size="sm" onClick={() => bulkConfirm(role)}>{ROLE_LABEL[role]} 확인</Button>
+    : <StatusBadge tone="success" label={`${ROLE_LABEL[role]} 확인완료`} size="lg" />);
+  const selActions = selCount > 0 ? (
+    <>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
+      {roleAction('js')}
+      {roleAction('rs')}
+      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+    </>
+  ) : null;
 
   /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
@@ -343,14 +386,14 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
       title={tabs?.label ?? "수시보고 확인"}
       favRoute={tabs?.route ?? "occasional-report"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌는 항상 필터칩이다 — 행 선택(체크박스)을 없앤 2026-09-12 이후 selbar가 존재하지 않는다.
-         확인 전이는 셀 [확인] 버튼, 조회 팝업은 셀 링크가 각각 가져갔다(목업 S1_04 원본 구조). */
+      /* 툴바 좌 = 필터칩. 선택 중엔 선택 바(contextActions)가 대신한다. 조회 팝업은 셀 링크(목업 S1_04 원본 구조) */
       filterChips={(['', '미확인', '일부확인', '확인완료'] as ('' | Stage)[]).map((s) => ({ key: s || 'all', label: s || '확인상태: 전체', active: fStage === s, onSelect: () => setFStage(s) }))}
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
         { label: '기간', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
       ]}
+      contextActions={selActions}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
@@ -375,6 +418,9 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
           domLayout="autoHeight"
           autoSizeStrategy={FIT_GRID_WIDTH}
           defaultColDef={DEFAULT_COL_DEF}
+          rowSelection={ROW_SELECTION}
+          selectionColumnDef={SELECTION_COL}
+          onSelectionChanged={onSelectionChanged}
           pagination paginationPageSize={pageSize} suppressPaginationPanel
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}
@@ -422,18 +468,28 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
       </Sheet>
 
       {/* ── 확인 처리 확인(목업 클라이언트 회신 명시 UX — toast로 격하 금지). 비가역이라 설명에 명시 ── */}
-      {modal?.kind === 'confirm' && confirmTarget && (
+      {modal?.kind === 'confirm' && confirmTargets.length > 0 && (
         <AlertDialog open onOpenChange={(o) => { if (!o) setModal(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{ROLE_LABEL[modal.role]} 확인</AlertDialogTitle>
               <AlertDialogDescription>
-                아래 수시보고 건을 {ROLE_LABEL[modal.role]}이 확인 처리합니다.
+                {confirmTargets.length > 1 ? `선택한 수시보고 ${String(confirmTargets.length)}건을` : '아래 수시보고 건을'} {ROLE_LABEL[modal.role]}이 확인 처리합니다.
+                {modal.skipped > 0 && ` 이미 확인된 ${String(modal.skipped)}건은 제외됩니다.`}
                 {' '}확인 후에는 <b className="text-foreground">취소할 수 없습니다.</b>
               </AlertDialogDescription>
             </AlertDialogHeader>
-            {/* 대상 요약 4행 — 목업 원본과 동일(상황 발생일자·운용사·자펀드·제목).
-                제목을 설명 문장에 묻지 않는다(2026-09-12 사용자 지적) — 목록의 한 행이다. */}
+            {/* 단건 = 대상 요약 4행(목업 원본: 상황 발생일자·운용사·자펀드·제목). 제목을 설명 문장에 묻지 않는다(2026-09-12).
+                N건 = 제목 목록(운용사 병기) — 무엇을 되돌릴 수 없게 확인하는지 모달 안에서 보이게 한다. */}
+            {confirmTargets.length > 1 ? (
+              <ul className="m-0 p-0 list-none grid gap-y-1.5 overflow-y-auto" style={{ fontSize: 13.5, maxHeight: 240 }}>
+                {confirmTargets.map((t) => (
+                  <li key={t.id} className="min-w-0" style={{ overflowWrap: 'anywhere' }}>
+                    {t.title} <span className="text-muted-foreground">· {t.gp}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (() => { const confirmTarget = confirmTargets[0]; return (
             <dl className="m-0 grid gap-y-1.5" style={{ gridTemplateColumns: 'max-content minmax(0,1fr)', columnGap: 14, fontSize: 13.5 }}>
               {([['상황 발생일자', String(confirmTarget.occ)], ['운용사', <React.Fragment key="gp">{confirmTarget.gp}</React.Fragment>], ['자펀드', <React.Fragment key="fn">{confirmTarget.fn}</React.Fragment>], ['제목', <React.Fragment key="ti">{confirmTarget.title}</React.Fragment>]] as [string, React.ReactNode][]).map(([k, v]) => (
                 <div key={k} className="contents">
@@ -442,9 +498,10 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
                 </div>
               ))}
             </dl>
+            ); })()}
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
-              <AlertDialogAction onClick={() => doConfirm(modal.role, modal.id)}>확인</AlertDialogAction>
+              <AlertDialogAction onClick={() => doConfirm(modal.role, modal.ids, modal.skipped, modal.bulk)}>확인</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
