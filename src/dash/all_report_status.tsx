@@ -196,7 +196,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
           <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />
         </>}
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span aria-live="polite">
         {`모펀드 ${MOTHER_FUND} · ${tab.label} 총 ` + String(tab.rows.length) + '건 중 ' + String(visible.length) + '건 표시 중'}

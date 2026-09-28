@@ -26,6 +26,9 @@ export const HOTKEYS = {
   memo: { combo: { alt: true, key: 'm' } as HotkeyCombo, hint: ALT + 'M' },
   schedule: { combo: { alt: true, key: 'e' } as HotkeyCombo, hint: ALT + 'E' },
   logout: { combo: { alt: true, key: 'l' } as HotkeyCombo, hint: ALT + 'L' },
+  history: { combo: { alt: true, key: 'h' } as HotkeyCombo, hint: ALT + 'H' },     // 방문기록 드롭다운(PageHeader)
+  favorites: { combo: { alt: true, key: 'b' } as HotkeyCombo, hint: ALT + 'B' },   // 즐겨찾기 FAB 메뉴(B=Bookmark — ⌥F는 Win Chrome 메뉴라 회피)
+  refresh: { combo: { alt: true, key: 'r' } as HotkeyCombo, hint: ALT + 'R' },     // 리스트 툴바 조회(⌘R은 새로고침이라 회피)
 } as const;
 
 export function useHotkey(combo: HotkeyCombo, handler: () => void, opts: { enabled?: boolean } = {}) {

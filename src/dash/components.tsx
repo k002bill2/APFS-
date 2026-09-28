@@ -10,6 +10,7 @@ import { Progress } from './ui/progress';
 import { spring, tween, revealVariants } from './motion/presets';
 import { CountUp } from './motion/count-up';
 import { useDialogLock } from './ui/dialog-exit';
+import { useHotkey, type HotkeyCombo } from './use-hotkey';
 
 const { Sparkline } = Charts;
 const cx = (...a: any[]) => a.filter(Boolean).join(" ");
@@ -235,7 +236,10 @@ function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', d
 }
 
 /* ---- IconBtn ---- */
-function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed, spinOnClick = icon === "refresh" && !!onClick }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => unknown; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean; spinOnClick?: boolean }) {
+const NO_COMBO: HotkeyCombo = { key: '' };
+/* aria-keyshortcuts 값(WAI-ARIA 표기) — 예: {alt,key:'r'} → "Alt+R" */
+const ariaShortcut = (c: HotkeyCombo) => [c.mod && 'Control', c.alt && 'Alt', c.shift && 'Shift', c.key.length === 1 ? c.key.toUpperCase() : c.key].filter(Boolean).join('+');
+function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed, hotkey, spinOnClick = icon === "refresh" && !!onClick }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => unknown; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean; hotkey?: { combo: HotkeyCombo; hint: string }; spinOnClick?: boolean }) {
   // 조회(refresh) 클릭 피드백(onClick 있을 때만 — 무동작 버튼이 조회된 척하지 않게): 클릭마다 +360° 누적 회전 — 연타해도 진행 중 회전을 끊지 않고 이어 돈다.
   // onClick이 Promise를 돌려주면(비동기 조회) settle까지 등속으로 계속 돌고, 끝나면 돌던 바퀴를 마저 돈 뒤 감속 1회전으로 멈춘다.
   // repeat:Infinity는 0°로 되감겨 튀므로 쓰지 않고, 회전 완료마다 turns를 +1 해 이어 붙인다.
@@ -259,6 +263,9 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
       Promise.resolve(r).then(done, done);
     }
   } : onClick;
+  /* 단축키(선택) — HOTKEYS 항목을 넘기면 클릭과 같은 동작을 바인딩하고 툴팁에 힌트를 붙인다.
+     모달이 열려 있으면 무시 — 폼 편집 중 뒤의 목록이 조회·메뉴 개폐되지 않게. */
+  useHotkey(hotkey ? hotkey.combo : NO_COMBO, () => { if (!document.querySelector('[role="dialog"]')) click?.(); }, { enabled: !!hotkey && !!onClick });
   const onSpinDone = () => {
     if (reduced) return;
     if (pending.current > 0) setTurns((t) => t + 1);
@@ -275,6 +282,7 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
       aria-expanded={expanded}
       aria-pressed={pressed}
       aria-busy={phase === "busy" || undefined}
+      aria-keyshortcuts={hotkey ? ariaShortcut(hotkey.combo) : undefined}
       whileHover={{ scale: 1.06 }}
       whileTap={{ scale: 0.9 }}
       transition={spring.control}
@@ -292,7 +300,7 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
   return (
     <Tooltip>
       <TooltipTrigger asChild>{btn}</TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
+      <TooltipContent>{label}{hotkey && <span className="ml-1.5 opacity-60">{hotkey.hint}</span>}</TooltipContent>
     </Tooltip>
   );
 }

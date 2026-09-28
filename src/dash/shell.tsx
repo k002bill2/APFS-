@@ -631,6 +631,8 @@ function FavoritesFab({ onNav }) {
   const [dragging, setDragging] = useState(false);
   const drag = useRef<{ x: number; y: number; right: number; bottom: number; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
+  // ⌥B 즐겨찾기 메뉴 토글 — 설정 모달(edit)이나 다른 모달이 열려 있으면 무시
+  useHotkey(HOTKEYS.favorites.combo, () => { if (!document.querySelector('[role="dialog"]')) setOpen((o) => !o); }, { enabled: !edit });
   // 맨 위로 — 일정 이상 스크롤했을 때만 FAB 옆에 노출(스크롤 주체는 window)
   const [showTop, setShowTop] = useState(false);
   useEffect(() => {
@@ -728,7 +730,8 @@ function FavoritesFab({ onNav }) {
         onPointerCancel={onPointerUp}
         aria-label="즐겨찾기"
         aria-expanded={open}
-        title="즐겨찾기 (드래그로 이동)"
+        title={`즐겨찾기 ${HOTKEYS.favorites.hint} (드래그로 이동)`}
+        aria-keyshortcuts="Alt+B"
         className={"shadow-lg flex items-center justify-center " + (dragging ? "cursor-grabbing" : "cursor-pointer")}
         style={{ width: FAB_SIZE, height: FAB_SIZE, borderRadius: 99, border: "none", background: "var(--brand-solid)", color: "var(--on-brand-solid)", touchAction: "none", userSelect: "none", transition: "transform .18s var(--ease)", transform: open ? "rotate(90deg) scale(1.04)" : dragging ? "scale(1.08)" : "none" }}>
         <Icon name={open ? "x" : "star"} size={20} stroke={2.2} />
@@ -943,7 +946,7 @@ function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: stri
   }, [open]);
   return (
     <div ref={rootRef} className="relative inline-flex">
-      <IconBtn icon="clock" onClick={() => setOpen((o) => !o)} label="방문기록" size={38} active={open} expanded={open} />
+      <IconBtn icon="clock" onClick={() => setOpen((o) => !o)} label="방문기록" size={38} active={open} expanded={open} hotkey={HOTKEYS.history} />
       {open && <>
         <div onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: 59 }} />
         <MenuHighlightProvider>
