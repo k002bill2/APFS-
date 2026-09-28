@@ -607,14 +607,68 @@ function FavItem({ f, onSelect }: { f: any; onSelect: () => void }) {
   );
 }
 
+/* FAB 드래그 위치 — 우하단 기준 오프셋(px)으로 저장해 창 크기가 바뀌어도 모서리 관계를 유지한다.
+   AppShell은 라우트 전환에 리마운트되지 않지만, 새로고침·재방문까지 기억하도록 localStorage에 둔다. */
+const FAB_POS_KEY = "apfs.favFabPos";
+const FAB_SIZE = 46, FAB_MARGIN = 8, FAB_DEFAULT = { right: 24, bottom: 44 };
+function readFabPos() {
+  try { const v = JSON.parse(localStorage.getItem(FAB_POS_KEY) || "null"); if (v && typeof v.right === "number" && typeof v.bottom === "number") return v; } catch {}
+  return FAB_DEFAULT;
+}
+function clampFabPos(p: { right: number; bottom: number }) {
+  const maxR = Math.max(FAB_MARGIN, document.documentElement.clientWidth - FAB_SIZE - FAB_MARGIN);
+  const maxB = Math.max(FAB_MARGIN, document.documentElement.clientHeight - FAB_SIZE - FAB_MARGIN);
+  return { right: Math.min(Math.max(p.right, FAB_MARGIN), maxR), bottom: Math.min(Math.max(p.bottom, FAB_MARGIN), maxB) };
+}
+
 function FavoritesFab({ onNav }) {
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(false);
   const favKeys = useMenuSel("fav", D.DEFAULT_FAV);
   const favs = MenuStore.resolve(favKeys);
   const { MenuPickerModal } = MainWidgets;
+  const [pos, setPos] = useState(() => clampFabPos(readFabPos()));
+  const [dragging, setDragging] = useState(false);
+  const drag = useRef<{ x: number; y: number; right: number; bottom: number; moved: boolean } | null>(null);
+  const suppressClick = useRef(false);
+  // 창 크기 변경 시 화면 밖으로 밀려나지 않게 재클램프(저장값은 그대로 — 창을 다시 키우면 원위치)
+  useEffect(() => {
+    const onResize = () => setPos(clampFabPos(readFabPos()));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return;
+    drag.current = { x: e.clientX, y: e.clientY, right: pos.right, bottom: pos.bottom, moved: false };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    if (!d) return;
+    const dx = e.clientX - d.x, dy = e.clientY - d.y;
+    if (!d.moved && Math.hypot(dx, dy) < 4) return;   // 4px 미만은 클릭으로 취급
+    if (!d.moved) { d.moved = true; setDragging(true); setOpen(false); }
+    setPos(clampFabPos({ right: d.right - dx, bottom: d.bottom - dy }));
+  };
+  const onPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    drag.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+    if (!d?.moved) return;
+    if (e.type === "pointerup") suppressClick.current = true;   // 드래그 직후 click으로 메뉴가 열리지 않게(pointercancel은 click이 없으므로 제외)
+    setDragging(false);
+    setPos((p) => { try { localStorage.setItem(FAB_POS_KEY, JSON.stringify(p)); } catch {} return p; });
+  };
+  // 위치에 따라 메뉴 펼침 방향을 뒤집는다 — 상단이면 아래로, 좌측이면 왼쪽 정렬. 펼쳐지는 쪽의 반대편 모서리에 고정해 버튼이 밀리지 않게 한다.
+  const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;   // 스크롤바 제외 폭 — fixed 기준 상자와 일치
+  const onTop = pos.bottom + FAB_SIZE / 2 > vh / 2;
+  const onLeft = pos.right + FAB_SIZE / 2 > vw / 2;
+  const anchor: React.CSSProperties = {
+    ...(onTop ? { top: vh - pos.bottom - FAB_SIZE } : { bottom: pos.bottom }),
+    ...(onLeft ? { left: vw - pos.right - FAB_SIZE } : { right: pos.right }),
+  };
   return (
-    <div className="fixed right-6 flex flex-col items-end gap-3" style={{ zIndex: 60, bottom: 44 }}>
+    <div className={"fixed flex gap-3 " + (onTop ? "flex-col-reverse" : "flex-col") + (onLeft ? " items-start" : " items-end")} style={{ zIndex: 60, ...anchor }}>
       <MenuPickerModal open={edit} onClose={() => setEdit(false)} initialTab="fav" />
       {open && <>
         <div onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: -1 }} />
@@ -643,11 +697,16 @@ function FavoritesFab({ onNav }) {
         </MenuHighlightProvider>
       </>}
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => { if (suppressClick.current) { suppressClick.current = false; return; } setOpen((o) => !o); }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
         aria-label="즐겨찾기"
         aria-expanded={open}
-        className="cursor-pointer shadow-lg flex items-center justify-center"
-        style={{ width: 46, height: 46, borderRadius: 99, border: "none", background: "var(--brand-solid)", color: "var(--on-brand-solid)", transition: "transform .18s var(--ease)", transform: open ? "rotate(90deg) scale(1.04)" : "none" }}>
+        title="즐겨찾기 (드래그로 이동)"
+        className={"shadow-lg flex items-center justify-center " + (dragging ? "cursor-grabbing" : "cursor-pointer")}
+        style={{ width: FAB_SIZE, height: FAB_SIZE, borderRadius: 99, border: "none", background: "var(--brand-solid)", color: "var(--on-brand-solid)", touchAction: "none", userSelect: "none", transition: "transform .18s var(--ease)", transform: open ? "rotate(90deg) scale(1.04)" : dragging ? "scale(1.08)" : "none" }}>
         <Icon name={open ? "x" : "star"} size={20} stroke={2.2} />
       </button>
     </div>
