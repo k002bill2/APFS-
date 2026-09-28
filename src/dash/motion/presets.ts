@@ -24,7 +24,7 @@ export const tween = {
   ds: { duration: 0.18, ease: EASE_DS }, // 범용 ease-ds
   dropdown: { duration: 0.2, ease: EASE_DS }, // 원본 dropdown은 spring 아님
   reveal: { duration: 0.4, ease: EASE_DS }, // 스크롤 진입 fade+slide(위젯 多라 spring 대신 차분한 tween)
-  spin: { duration: 0.6, ease: EASE_DS }, // 조회(refresh) 아이콘 클릭 1회전 피드백 — spring은 360° 끝에서 오버슈트가 보여 tween
+  spin: { duration: 1.0, ease: EASE_DS }, // 조회(refresh) 아이콘 클릭 1회전 피드백 — spring은 360° 끝에서 오버슈트가 보여 tween
 } satisfies Record<string, Transition>;
 
 /* 스크롤 reveal variants — Card/ChartCard의 opt-in reveal prop이 소비.
