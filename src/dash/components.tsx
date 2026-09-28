@@ -342,7 +342,29 @@ function TextSwap({ text, className, style }: { text: string; className?: string
     void ref.current?.offsetHeight; // enter-start 스타일을 한 번 계산시켜야 다음 클래스 제거가 transition 으로 잡힌다
     setPhase("rest");
   }, [phase]);
-  return <span ref={ref} className={cx("t-text-swap", phase === "exit" && "is-exit", phase === "enter" && "is-enter-start", className)} style={style}>{shown}</span>;
+  /* 폭 보간(transitions.dev 01 card-resize 방식): 라벨 길이가 바뀌면 버튼 폭이 한 번에 튀지 않게, 바깥 상자를 현재 폭에 고정한 뒤
+     숨은 측정 span 으로 잰 새 폭까지 width transition 한다. exit 시작과 동시에 출발해 enter 끝 무렵 도착(--dur-slow).
+     끝나면 width 를 비워 auto 로 되돌린다(폰트·줌 변화 추종). 저모션이면 건너뛴다 — CSS 가드로 transitionend 가 안 와 px 폭이 고착되므로. */
+  const box = React.useRef<HTMLSpanElement>(null);
+  const meas = React.useRef<HTMLSpanElement>(null);
+  React.useLayoutEffect(() => {
+    const b = box.current, m = meas.current;
+    if (!b || !m) return;
+    if (typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches) { b.style.width = ""; return; }
+    const from = b.getBoundingClientRect().width, to = m.getBoundingClientRect().width;
+    if (Math.abs(from - to) < 0.5) return;
+    b.style.width = from + "px";
+    void b.offsetWidth; // 시작 폭을 한 번 계산시켜야 다음 대입이 transition 으로 잡힌다
+    b.style.width = to + "px";
+    const id = window.setTimeout(() => { if (box.current) box.current.style.width = ""; }, 600); // transitionend 누락 대비
+    return () => window.clearTimeout(id);
+  }, [text]);
+  return (
+    <span ref={box} className="t-text-swap-w" onTransitionEnd={(e) => { if (e.target === box.current && e.propertyName === "width") box.current.style.width = ""; }}>
+      <span ref={ref} className={cx("t-text-swap", phase === "exit" && "is-exit", phase === "enter" && "is-enter-start", className)} style={style}>{shown}</span>
+      <span ref={meas} className="t-text-swap-measure" aria-hidden="true">{text}</span>
+    </span>
+  );
 }
 
 /* ---- TextsReveal ---- */
