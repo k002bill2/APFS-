@@ -222,11 +222,16 @@ function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', d
 }
 
 /* ---- IconBtn ---- */
-function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean }) {
+function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed, spinOnClick = icon === "refresh" }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean; spinOnClick?: boolean }) {
+  // 조회(refresh) 클릭 피드백: 클릭마다 +360° 누적 회전 — 연타해도 진행 중 회전을 끊지 않고 이어 돈다.
+  // rotate는 transform이라 저모션 시 MotionConfig(reducedMotion="user")가 자동 비활성.
+  const [turns, setTurns] = React.useState(0);
+  const click = spinOnClick ? () => { setTurns((t) => t + 1); onClick?.(); } : onClick;
+  const glyph = <Icon name={icon} size={iconSize} stroke={2} />;
   const btn = (
     // hover/press는 Motion spring(색 전환은 CSS 유지). scale은 저모션 시 MotionConfig가 자동 비활성.
     <motion.button
-      onClick={onClick}
+      onClick={click}
       aria-label={label && badge && badge > 0 ? `${label} ${badge > 99 ? "99+" : badge}건` : label}
       aria-haspopup={expanded === undefined ? undefined : "menu"}
       aria-expanded={expanded}
@@ -239,7 +244,9 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
       style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}>{altIcon
         /* 아이콘 스왑(transitions.dev 09, src/styles/transitions.css .t-icon-swap): 두 아이콘을 같은 슬롯에 두고 swapped 로 교차 페이드. 테마 토글 등 상태 아이콘용. */
         ? <span className="t-icon-swap" data-state={swapped ? "b" : "a"} aria-hidden="true"><span className="t-icon" data-icon="a"><Icon name={icon} size={iconSize} stroke={2} /></span><span className="t-icon" data-icon="b"><Icon name={altIcon} size={iconSize} stroke={2} /></span></span>
-        : <Icon name={icon} size={iconSize} stroke={2} />}{badge > 0 && <span
+        : spinOnClick
+          ? <motion.span className="inline-flex" aria-hidden="true" initial={false} animate={{ rotate: turns * 360 }} transition={tween.spin}>{glyph}</motion.span>
+          : glyph}{badge > 0 && <span
         className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-[color:var(--destructive-foreground)] text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</motion.button>
   );
   if (!label) return btn;
