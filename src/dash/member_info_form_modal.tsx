@@ -123,7 +123,7 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
         mf: v.mf, name: v.name.trim(), ptype: v.ptype, region: v.region,
         biz: v.biz.trim(), addr: v.addr.trim(), tel: v.tel.trim(), memo: v.memo.trim(),
       });
-      toast.success(mode === 'create' ? '등록되었습니다 (목업)' : '수정되었습니다 (목업)');
+      toast.success(mode === 'create' ? '등록되었습니다' : '수정되었습니다');
     };
   };
 
@@ -176,7 +176,7 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
                     onFocus={() => setBizFocus(true)} onBlur={() => setBizFocus(false)}
                     style={{ ...boxStyle({ danger: true, focused: bizFocus }), flex: 1, minWidth: 0, width: 'auto' }} />
                   {/* 백엔드가 없어 중복확인은 toast로만 회신한다(목업 동일) */}
-                  <SaveButton variant="outline" leadingIcon="" busyLabel="확인 중" onSubmit={() => () => toast('사용 가능한 번호입니다 (목업)')}>중복확인</SaveButton>
+                  <SaveButton variant="outline" leadingIcon="" busyLabel="확인 중" onSubmit={() => () => toast('사용 가능한 번호입니다')}>중복확인</SaveButton>
                 </div>
               ) : (
                 <div className="flex items-center gap-[7px]" style={boxStyle({ muted: true })}>

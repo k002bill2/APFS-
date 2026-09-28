@@ -67,14 +67,14 @@ export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void })
   const setActive = (on: boolean) => {
     const ids = new Set(sel.filter((r) => (r.active === '활성') !== on).map((r) => r.id));
     setRows((prev) => prev.map((r) => (ids.has(r.id) ? { ...r, active: on ? '활성' : '비활성' } : r)));
-    toast.success(on ? '등록원부를 활성화했습니다 (목업)' : '등록원부를 비활성화했습니다 (목업)');
+    toast.success(on ? '등록원부를 활성화했습니다' : '등록원부를 비활성화했습니다');
   };
   const remove = () => {
     const ids = new Set(selIds);
     setRows((prev) => prev.filter((r) => !ids.has(r.id)));
     clear();
     setModal(null);
-    toast.success('삭제되었습니다 (목업)');
+    toast.success('삭제되었습니다');
   };
   /* 행 더블클릭·Enter = 수정(참조 안정: ReadGrid onRowOpen 계약) */
   const openEdit = useCallback((r: Row) => setModal({ kind: 'ledger', mode: 'edit', id: r.id }), []);

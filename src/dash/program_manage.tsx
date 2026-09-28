@@ -279,21 +279,21 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
       setSelIds([row.id]);
     }
     setModal(null);
-    toast.success('저장되었습니다 (목업)');
+    toast.success('저장되었습니다');
   };
   const saveHelp = (on: boolean, doc: HelpDoc) => {
     if (modal?.kind !== 'help') return;
     const id = modal.id;
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, help: on, helpDoc: doc, helpBy: '전산관리', helpAt: nowStamp() } : r)));
     setModal(null);
-    toast.success('도움말이 저장되었습니다 (목업)');
+    toast.success('도움말이 저장되었습니다');
   };
   const doDelete = () => {
     if (modal?.kind !== 'delete') return;
     const ids = new Set(modal.ids);
     setRows((prev) => prev.filter((r) => !ids.has(r.id)));
     apiRef.current?.deselectAll(); setSelIds([]);
-    toast.success(`${ids.size}건 삭제되었습니다 (목업)`);
+    toast.success(`${ids.size}건 삭제되었습니다`);
   };
   const refresh = () => { setRows(seedPrograms()); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
 

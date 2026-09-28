@@ -170,7 +170,7 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '대상' || c.header === '행위' ? 30 : 16 }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '감사로그');
     XLSX.writeFile(wb, '감사로그.xlsx');
-    toast.success('Excel로 내보냈습니다 — 다운로드 행위도 감사로그에 기록됩니다 (목업)');
+    toast.success('Excel로 내보냈습니다 — 다운로드 행위도 감사로그에 기록됩니다');
   };
 
   const chips: [string, string, () => void][] = [

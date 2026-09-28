@@ -109,7 +109,7 @@ export function RowEditModal({ schema, mode, initial, title, onSave, onClose }: 
     const miss = schema.fields.find((f) => f.required && !String(v[f.key] ?? '').trim());
     if (miss) { setErrKey(miss.key); return; }
     /* 저장 후 모달이 스스로 닫힌다(close → onOpenChange → onClose) — SaveButton 은 닫지 않는다 */
-    return () => { onSave({ ...v }); toast.success(mode === 'create' ? '등록되었습니다 (목업)' : '수정되었습니다 (목업)'); dlgRef.current?.close(); };
+    return () => { onSave({ ...v }); toast.success(mode === 'create' ? '등록되었습니다' : '수정되었습니다'); dlgRef.current?.close(); };
   };
   const dlgRef = useRef<DialogHandle>(null);
   const wide = schema.fields.length > 6;

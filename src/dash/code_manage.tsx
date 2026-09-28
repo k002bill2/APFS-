@@ -248,7 +248,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       setCurCode(code); setSelDIds([]);
     }
     setModal(null);
-    toast.success('저장되었습니다 (목업)');
+    toast.success('저장되었습니다');
   };
   const doDelGroup = () => {
     if (modal?.kind !== 'delGroup') return;
@@ -258,7 +258,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
     setGroups((prev) => prev.filter((g) => g.code !== code));
     setDetails((prev) => { const n = { ...prev }; delete n[code]; return n; });
     if (curCode === code) { setCurCode(null); setSelDIds([]); }
-    toast.success('삭제되었습니다 (목업)');
+    toast.success('삭제되었습니다');
   };
   /* ── CRUD(코드상세) — 그룹 안 중복 검사 + 정렬 재배치 ── */
   const saveDetail = (f: any) => {
@@ -281,14 +281,14 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
     setDetails((prev) => ({ ...prev, [g]: reseqed }));
     setSelDIds([movedId]);
     setModal(null);
-    toast.success('저장되었습니다 · 정렬 자동 조정 (목업)');
+    toast.success('저장되었습니다 · 정렬 자동 조정');
   };
   const doDelDetail = () => {
     if (modal?.kind !== 'delDetail' || !curG) return;
     const ids = new Set(modal.ids), g = curG.code;
     setDetails((prev) => ({ ...prev, [g]: (prev[g] ?? []).filter((d) => !ids.has(d.id)) }));
     rApi.current?.deselectAll(); setSelDIds([]);
-    toast.success(`${ids.size}건 삭제되었습니다 (목업)`);
+    toast.success(`${ids.size}건 삭제되었습니다`);
   };
   const refresh = () => {
     const gs = demoGroups(); setGroups(gs); setDetails(demoDetails()); setCurCode(gs[0]?.code ?? null); setSelDIds([]); clearFilters();

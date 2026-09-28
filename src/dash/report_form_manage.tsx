@@ -114,7 +114,7 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
   const download = useCallback((r: ReportFormRow) => {
-    toast.success(`다운로드: ${r.file} (목업)`);
+    toast.success(`다운로드: ${r.file}`);
   }, []);
   /* download는 useCallback(deps [])로 안정 → 컬럼 정의 고정(매 렌더 새 배열이면 그리드가 컬럼을 재생성) */
   const columnDefs = useMemo(() => makeColumns(download), [download]);
@@ -163,18 +163,18 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
     const nextNo = rows.reduce((m, r) => Math.max(m, r.no), 0) + 1;   // 삭제 후 재번호 없음(목업 동일 — 저장된 no 유지)
     setRows((prev) => [...prev, { id: crypto.randomUUID(), no: nextNo, title: str(f.title), desc: str(f.desc), file: str(f.file) }]);
     setModal(null);
-    toast.success('등록되었습니다 (목업)');
+    toast.success('등록되었습니다');
   };
   const saveEdit = (f: any) => {
     if (!target) return;
     setRows((prev) => prev.map((r) => (r.id === target.id ? { ...r, title: str(f.title), desc: str(f.desc), file: str(f.file) } : r)));
     setModal(null);
-    toast.success('수정되었습니다 (목업)');
+    toast.success('수정되었습니다');
   };
   const doDelete = () => {
     if (!target) return;
     setRows((prev) => prev.filter((r) => r.id !== target.id));
-    toast.success('삭제되었습니다 (목업)');
+    toast.success('삭제되었습니다');
   };
 
   const refresh = () => { setRows([...DEMO]); toast.success('조회되었습니다'); };

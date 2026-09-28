@@ -264,14 +264,14 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
       setSelIds([row.id]);
     }
     setModal(null);
-    toast.success('저장되었습니다 · 정렬 자동 조정 (목업)');
+    toast.success('저장되었습니다 · 정렬 자동 조정');
   };
   const doDelete = () => {
     if (!modal || modal.kind !== 'delete') return;
     const ids = new Set(modal.ids);
     setRows((prev) => prev.filter((r) => !ids.has(r.id)));
     apiRef.current?.deselectAll(); setSelIds([]);
-    toast.success(`${ids.size}건 삭제되었습니다 (목업)`);
+    toast.success(`${ids.size}건 삭제되었습니다`);
   };
   const refresh = () => { setRows(buildMenuRows()); setExpanded(new Set()); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
 

@@ -155,7 +155,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
   const patchRow = (id: string, fn: (r: InviteRow) => InviteRow) => setRows((prev) => prev.map((r) => (r.id === id ? fn(r) : r)));
   const doSend = (r: InviteView, resend: boolean) => {
     patchRow(r.id, (x) => sendInvite(x, nowStamp()));
-    toast.success(`초대 메일 ${resend ? '재발송' : '발송'}: ${r.name} (${r.orgn}) — 감사로그에 기록됩니다 (목업)`);
+    toast.success(`초대 메일 ${resend ? '재발송' : '발송'}: ${r.name} (${r.orgn}) — 감사로그에 기록됩니다`);
   };
   const askSend = (r: InviteView, resend: boolean) => setModal({
     kind: 'confirm', title: resend ? '초대 재발송' : '초대 발송', okLabel: resend ? '재발송' : '발송',
@@ -164,7 +164,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
   });
   const askCancel = (r: InviteView) => setModal({
     kind: 'confirm', title: '초대 취소', okLabel: '초대 취소', desc: `${r.name} (${r.orgn}) 님의 초대를 취소할까요? 발송된 링크는 무효 처리되고 미초대 상태로 돌아갑니다.`,
-    onOk: () => { patchRow(r.id, cancelInvite); toast.success(`초대 취소: ${r.name} — 미초대로 되돌렸습니다 (목업)`); },
+    onOk: () => { patchRow(r.id, cancelInvite); toast.success(`초대 취소: ${r.name} — 미초대로 되돌렸습니다`); },
   });
   const handleCellContextMenu = (e: CellContextMenuEvent<InviteView>) => {
     (e.event as MouseEvent | undefined)?.preventDefault();
@@ -280,7 +280,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
       {/* ── 초대 메일 미리보기 — 발송 가능한 행이면 [이 내용으로 초대 발송] ── */}
       {previewRow && (
         <MailPreviewDialog title={`초대 메일 미리보기 — ${previewRow.name}`} mail={inviteMail(previewRow)} onClose={() => setModal(null)}
-          action={inviteGate(previewRow).send ? { label: '이 내용으로 초대 발송 (목업)', onClick: () => doSend(previewRow, false) } : undefined} />
+          action={inviteGate(previewRow).send ? { label: '이 내용으로 초대 발송', onClick: () => doSend(previewRow, false) } : undefined} />
       )}
       {modal?.kind === 'confirm' && (
         <AlertDialog open onOpenChange={(o) => { if (!o) setModal(null); }}>

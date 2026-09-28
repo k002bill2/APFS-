@@ -163,7 +163,7 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '사유' || c.header === '적용 대상' ? 30 : 16 }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '권한 변경이력');
     XLSX.writeFile(wb, '권한변경이력.xlsx');
-    toast.success('Excel로 내보냈습니다 — 다운로드 행위도 감사로그에 기록됩니다 (목업)');
+    toast.success('Excel로 내보냈습니다 — 다운로드 행위도 감사로그에 기록됩니다');
   };
 
   const chips: [string, string, () => void][] = [

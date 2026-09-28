@@ -475,7 +475,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
   const saveDist = (gi: number, members: TxMember[]) => {
     setGroups((prev) => prev.map((g) => (g.gi === gi ? { ...g, members } : g)));
     setModal(null);
-    toast.success('저장되었습니다 (목업)');
+    toast.success('저장되었습니다');
   };
 
   /* ── Excel(.xlsx) — 단일 헤더 28열 + 표시행(조합원+소계) + 합계, 선택 단위 환산. ── */

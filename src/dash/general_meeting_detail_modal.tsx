@@ -159,7 +159,7 @@ function FileTable({ list }: { list: MeetingDetail['files'] }) {
               <td className={`${TD} text-center tabular`} style={CELL}>{String(f.mod)}</td>
               <td className={`${TD} text-center`} style={CELL}>{f.up || '-'}</td>
               <td className={`${TD} text-center`} style={CELL}>
-                <Button variant="outline" size="sm" leadingIcon="download" onClick={() => toast('다운로드 (목업)')}>
+                <Button variant="outline" size="sm" leadingIcon="download" onClick={() => toast('다운로드')}>
                   <span className="sr-only">{f.name} </span>다운로드
                 </Button>
               </td>

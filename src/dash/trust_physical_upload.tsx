@@ -85,7 +85,7 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
     setRows((prev) => prev.filter((r) => !ids.has(r.id)));
     clear();
     setModal(null);
-    toast.success('삭제되었습니다 (목업)');
+    toast.success('삭제되었습니다');
   };
   const exportExcel = () => {
     exportTables(cfg.label, [{ name: cfg.label, table: cfg.table, rows: shown }], null);
@@ -111,7 +111,7 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
       <ReadGrid table={cfg.table} rows={shown} ariaLabel={cfg.label} selectable onSelect={onSelect} selectedIds={selIds} selectionCol={LABELED_SELECTION_COL} apiRef={apiRef} onRowOpen={openEdit} />
       {modal?.kind === 'upload' && (
         <UploadModal title={cfg.uploadTitle} label={cfg.fileLabel} hint={HINT} maxSize="20MB" removedMsg="선택 파일 제거됨"
-          emptyMsg="업로드할 파일을 먼저 선택하세요" doneMsg={(fs) => `업로드되었습니다 (목업): ${fs[0]}`} onClose={() => setModal(null)} />
+          emptyMsg="업로드할 파일을 먼저 선택하세요" doneMsg={(fs) => `업로드되었습니다: ${fs[0]}`} onClose={() => setModal(null)} />
       )}
       {modal?.kind === 'delete' && <DeleteDialog title={cfg.deleteTitle} count={selIds.length} onConfirm={remove} onClose={() => setModal(null)} />}
       {editRow && (

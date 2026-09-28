@@ -92,7 +92,7 @@ export function ShareholderFormModal({ mode = 'create', initial, title, onSave, 
     if (miss) { setErrKey(miss.key); return; }
     return () => {
       onSave({ ...v });
-      toast.success(mode === 'create' ? '저장되었습니다 (목업)' : '수정되었습니다 (목업)');
+      toast.success(mode === 'create' ? '저장되었습니다' : '수정되었습니다');
     };
   };
 

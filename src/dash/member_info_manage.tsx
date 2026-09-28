@@ -237,7 +237,7 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
   };
   const doDelete = (id: string) => {
     setRows((prev) => prev.filter((r) => r.id !== id));
-    toast.success('삭제되었습니다 (목업)');
+    toast.success('삭제되었습니다');
   };
 
   const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('조회되었습니다'); };
