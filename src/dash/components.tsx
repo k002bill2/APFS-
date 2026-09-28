@@ -222,8 +222,8 @@ function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', d
 }
 
 /* ---- IconBtn ---- */
-function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed, spinOnClick = icon === "refresh" }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => void | Promise<unknown>; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean; spinOnClick?: boolean }) {
-  // 조회(refresh) 클릭 피드백: 클릭마다 +360° 누적 회전 — 연타해도 진행 중 회전을 끊지 않고 이어 돈다.
+function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed, spinOnClick = icon === "refresh" && !!onClick }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => void | Promise<unknown>; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean; spinOnClick?: boolean }) {
+  // 조회(refresh) 클릭 피드백(onClick 있을 때만 — 무동작 버튼이 조회된 척하지 않게): 클릭마다 +360° 누적 회전 — 연타해도 진행 중 회전을 끊지 않고 이어 돈다.
   // onClick이 Promise를 돌려주면(비동기 조회) settle까지 등속으로 계속 돌고, 끝나면 돌던 바퀴를 마저 돈 뒤 감속 1회전으로 멈춘다.
   // repeat:Infinity는 0°로 되감겨 튀므로 쓰지 않고, 회전 완료마다 turns를 +1 해 이어 붙인다.
   // rotate는 transform이라 저모션 시 MotionConfig(reducedMotion="user")가 자동 비활성 — 그때 진행 신호는 aria-busy.
