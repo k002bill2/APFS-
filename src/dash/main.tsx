@@ -153,32 +153,7 @@ function Main({ onNav, navStyle, onNavStyle }: { onNav: any; navStyle?: string; 
   const s = { period, setPeriod, fund, setFund, active: donutActive, setActive: setDonutActive };
   const V = { A: VariantA, B: VariantB, C: VariantC }[variant];
   return (
-    <div style={{ maxWidth: 1320, margin: "0 auto" }}><div
-        className="flex items-center gap-2.5 flex-wrap bg-muted py-2.5 px-3.5"
-        style={{ marginBottom: 18, border: "1px dashed var(--border-strong)", borderRadius: 12 }}><span
-          className="inline-flex items-center gap-1.5 font-bold text-foreground"
-          style={{ fontSize: 12 }}><Icon name="layers" size={15} />레이아웃 시안</span><div className="flex gap-2 flex-wrap">{VARIANTS.map((v) => <button
-            key={v.id}
-            onClick={() => setV(v.id)}
-            aria-pressed={variant === v.id}
-            className="cursor-pointer text-left py-1.5 px-3"
-            style={{
-                font: "inherit", borderRadius: 9,
-                border: `1.5px solid ${variant === v.id ? "var(--foreground)" : "var(--border-strong)"}`,
-                background: variant === v.id ? "color-mix(in srgb,var(--foreground) 8%,var(--card))" : "var(--card)",
-                color: variant === v.id ? "var(--foreground)" : "var(--muted-foreground)",
-              }}><span className="font-bold" style={{ fontSize: 12.5 }}>{"시안 " + v.id + " · " + v.name}</span><span className="ml-1.5" style={{ fontSize: 10.5, opacity: .8 }}>{v.desc}</span></button>)}</div><span className="t-caption">3종 중 선택 — 동작 그대로 비교</span>{onNavStyle && <div className="flex items-center gap-2" style={{ marginLeft: "auto" }}><span className="t-caption">네비게이션</span><div className="flex items-center gap-0.5 bg-card border border-border-strong" style={{ borderRadius: 9, padding: 3 }}>{[["classic", "panel-left", "기본"], ["rail", "grid", "레일"]].map(([val, icon, label]) => <button
-            key={val}
-            onClick={() => onNavStyle(val)}
-            aria-pressed={navStyle === val}
-            title={label + " 네비게이션"}
-            className="flex items-center cursor-pointer"
-            style={{
-              gap: 5, border: "none", font: "inherit", fontWeight: 700,
-              borderRadius: 7, padding: "5px 10px", fontSize: 11.5,
-              background: navStyle === val ? "color-mix(in srgb,var(--foreground) 9%,var(--card))" : "transparent",
-              color: navStyle === val ? "var(--foreground)" : "var(--caption)", transition: "all .15s",
-            }}><Icon name={icon} size={15} />{label}</button>)}</div></div>}</div>{variant !== "B" && <QuickTasksBar onNav={onNav} />}<div key={variant} style={{ animation: "dashFade var(--dur-slow) var(--ease) backwards" }}><V s={s} onNav={onNav} /></div></div>
+    <div style={{ maxWidth: 1320, margin: "0 auto" }}>{/* 레이아웃 시안·네비게이션 전환 바는 2026-09-28 화면에서 제거 — 시안 B·C/레일 코드와 localStorage 선택값은 유지 */}{variant !== "B" && <QuickTasksBar onNav={onNav} />}<div key={variant} style={{ animation: "dashFade var(--dur-slow) var(--ease) backwards" }}><V s={s} onNav={onNav} /></div></div>
   );
 }
 
