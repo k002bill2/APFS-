@@ -10,6 +10,7 @@ import { MenuHighlightProvider, useMenuHighlight, ItemHighlight } from './ui/men
 import { useHotkey, HOTKEYS } from './use-hotkey';   // 사용자 메뉴 ⌥ 단축키(도달 가능·입력창 자동 무시)
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from './ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
+import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } from './ui/navigation-menu';
 import logoUrl from './assets/logo.svg';
 import logoWhiteUrl from './assets/logo_white.svg';
@@ -631,6 +632,7 @@ function FavoritesFab({ onNav }) {
   const [dragging, setDragging] = useState(false);
   const drag = useRef<{ x: number; y: number; right: number; bottom: number; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
+  const [tip, setTip] = useState(false);   // FAB 툴팁 — 메뉴가 열렸거나 드래그 중엔 숨긴다(메뉴·손가락을 가리지 않게)
   // ⌥B 즐겨찾기 메뉴 토글 — 설정 모달(edit)이나 다른 모달이 열려 있으면 무시
   useHotkey(HOTKEYS.favorites.combo, () => { if (!document.querySelector('[role="dialog"]')) setOpen((o) => !o); }, { enabled: !edit });
   // 맨 위로 — 일정 이상 스크롤했을 때만 FAB 옆에 노출(스크롤 주체는 window)
@@ -722,6 +724,9 @@ function FavoritesFab({ onNav }) {
           <Icon name="arrow-up" size={17} stroke={2.2} />
         </button>
       )}
+      {/* 툴팁 = IconBtn 과 같은 룩(라벨 + 흐린 단축키 힌트). 종전 네이티브 title 은 지연·스타일이 달라 교체(2026-09-28). */}
+      <Tooltip open={tip && !open && !dragging} onOpenChange={setTip}>
+      <TooltipTrigger asChild>
       <button
         onClick={() => { if (suppressClick.current) { suppressClick.current = false; return; } setOpen((o) => !o); }}
         onPointerDown={onPointerDown}
@@ -730,12 +735,14 @@ function FavoritesFab({ onNav }) {
         onPointerCancel={onPointerUp}
         aria-label="즐겨찾기"
         aria-expanded={open}
-        title={`즐겨찾기 ${HOTKEYS.favorites.hint} (드래그로 이동)`}
         aria-keyshortcuts="Alt+B"
         className={"shadow-lg flex items-center justify-center " + (dragging ? "cursor-grabbing" : "cursor-pointer")}
         style={{ width: FAB_SIZE, height: FAB_SIZE, borderRadius: 99, border: "none", background: "var(--brand-solid)", color: "var(--on-brand-solid)", touchAction: "none", userSelect: "none", transition: "transform .18s var(--ease)", transform: open ? "rotate(90deg) scale(1.04)" : dragging ? "scale(1.08)" : "none" }}>
         <Icon name={open ? "x" : "star"} size={20} stroke={2.2} />
       </button>
+      </TooltipTrigger>
+      <TooltipContent side="left">즐겨찾기<span className="ml-1.5 opacity-60">{HOTKEYS.favorites.hint}</span><span className="block opacity-60" style={{ fontSize: 11 }}>드래그로 이동</span></TooltipContent>
+      </Tooltip>
       </div>
     </div>
   );
@@ -808,7 +815,7 @@ function Gnb({ theme, onToggleTheme, onToggleLnb, wide, onToggleWide, notifs, on
         zIndex: 50, height: 58,
         background: "color-mix(in srgb,var(--card) 86%,transparent)", backdropFilter: "blur(10px)",
         borderBottom: "1px solid var(--border)", gap: "clamp(6px, 1.5vw, 12px)", padding: "0 clamp(8px, 2vw, 16px)",
-      }}><IconBtn icon="menu" onClick={onToggleLnb} label="메뉴 접기/펴기" size={38} /><img
+      }}><IconBtn icon="menu" onClick={onToggleLnb} label="메뉴 접기/펴기" size={38} hotkey={HOTKEYS.lnb} /><img
         src={theme === "dark" ? logoWhiteUrl : logoUrl}
         alt="APFS 농업정책보험금융원"
         style={{ height: 24, width: "auto" }} /><div className="bg-border" style={{ width: 1, height: 22 }} /><div
@@ -829,11 +836,11 @@ function Gnb({ theme, onToggleTheme, onToggleLnb, wide, onToggleWide, notifs, on
           active={wide}
           activeClassName="text-primary border-transparent"
           activeStyle={{ background: "color-mix(in srgb, var(--primary) 12%, transparent)" }}
-          size={32} iconSize={18} /></span><IconBtn
+          size={32} iconSize={18} hotkey={HOTKEYS.wide} /></span><IconBtn
           icon="moon" altIcon="sun" swapped={theme === "dark"}
           onClick={onToggleTheme}
           label="라이트/다크"
-          size={32} iconSize={18} /><IconBtn icon="bell" onClick={onOpenNotif} label="알림" badge={unread} size={32} iconSize={18} /></div><UserMenu onUserModal={onUserModal} /></header>
+          size={32} iconSize={18} hotkey={HOTKEYS.theme} /><IconBtn icon="bell" onClick={onOpenNotif} label="알림" badge={unread} size={32} iconSize={18} hotkey={HOTKEYS.notif} /></div><UserMenu onUserModal={onUserModal} /></header>
     </>
   );
 }

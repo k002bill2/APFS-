@@ -38,7 +38,7 @@ APFS의 열림·닫힘 표면은 이미 소유자와 확정 규약이 있다. �
 - **닫힘 레인에 `filter: blur()` 금지** — blur는 합성 불가라 닫힘 순간 Radix scroll-lock 해제·포커스 복원과 겹쳐 프레임이 떨어진다(2026-09-18 실측 rAF 133ms). 원문의 "cross-blur" 레시피(07·09·14·18·22·30)를 쓸 때 **exit 쪽 blur는 뺀다**. enter 쪽만 허용.
 - **열림 끝 프레임에 `filter`/3D `transform`을 남기지 말 것**(`forwards` 금지, `to`는 `filter:none`) — 텍스트가 흐려진다(2026-09-08 실측). 닫힘만 `forwards`.
 - **`prefers-reduced-motion` 가드는 반드시 유지** — 전역 규칙(`tokens.css`)은 `animation-duration`만 0으로 만들고 **`transition`은 못 막는다**. 레시피의 저모션 블록이 유일한 안전장치다. 키프레임 로더(28~31)는 0% 프레임이 화면 밖이면 "멈춤"으로 오독되니 **저모션 폴백 프레임을 함께 정의**한다.
-- 클릭 press는 `motion-safe:active:scale-[.97]`(motion-safe 없이 `active:scale` 단독 금지).
+- 버튼 hover·클릭 크기 변화(hover 확대·press 축소)는 **쓰지 않는다**(2026-09-28 사용자 결정, 가드 `no_hover_scale.test.ts`). 종전 `motion-safe:active:scale-[.97]` press 규약은 폐지.
 - **`.t-*` 접두사 충돌 주의** — 프로젝트 타이포 클래스가 이미 `.t-caption`·`.t-label`·`.t-body`·`.t-display`·`.t-h1/h2`·`.t-cardtitle`을 쓴다(`tokens.css`). 레시피의 `.t-input`·`.t-badge`·`.t-icon`·`.t-check`·`.t-toast`처럼 일반적인 이름은 장래 충돌 여지가 있으니, 붙여넣기 전 `grep -rn "\.t-<이름>" src/` 로 빈 이름인지 확인하고 겹치면 레시피 쪽을 `.t-<이름>-tx`로 바꾼다(프로젝트 클래스는 손대지 않는다).
 
 ### 4. 색·테마

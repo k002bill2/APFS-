@@ -129,7 +129,7 @@ function MotionPreview() {
           <IconBtn icon="bell" label="알림" />
           <IconBtn icon="settings" label="설정" />
         </div>
-        <p className="t-caption m-0">hover 시 확대(버튼 1.03/아이콘 1.06), 누르면 축소(0.97/0.9) — spring.control. 색 전환은 CSS(transition-colors) 유지.</p>
+        <p className="t-caption m-0">hover·클릭 시 크기 변화 없음(2026-09-28 삭제) — 색 전환만. 색 전환은 CSS(transition-colors) 유지.</p>
       </Card>
 
       <Card className="flex flex-col gap-3">

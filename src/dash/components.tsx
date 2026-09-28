@@ -10,7 +10,7 @@ import { Progress } from './ui/progress';
 import { spring, tween, revealVariants } from './motion/presets';
 import { CountUp } from './motion/count-up';
 import { useDialogLock } from './ui/dialog-exit';
-import { useHotkey, type HotkeyCombo } from './use-hotkey';
+import { useHotkey, ariaShortcut, type HotkeyCombo } from './use-hotkey';
 
 const { Sparkline } = Charts;
 const cx = (...a: any[]) => a.filter(Boolean).join(" ");
@@ -181,15 +181,11 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
   const iconSize = size === "sm" ? 14 : 16;
   return (
     // loading은 disabled 속성을 쓰지 않는다(포커스 유지) — aria-busy + onClick 가드로 차단. disabled prop만 진짜 disabled.
-    // hover/press는 Motion spring(원본 Animate UI Button: hoverScale/tapScale). scale은 transform이라
-    // MotionConfig reducedMotion="user"가 저모션 시 자동 비활성. 색 전환은 CSS(transition-colors) 유지.
+    // hover·press 크기 변화 없음(2026-09-28 사용자 지시로 전 버튼 삭제 — 재도입 금지, 가드 no_hover_scale.test.ts). 색 전환만 CSS.
     <motion.button
       onClick={(e) => { if (loading || disabled) return; onClick?.(e); }}
       disabled={disabled}
       aria-busy={loading || undefined}
-      whileHover={disabled || loading ? undefined : { scale: 1.03 }}
-      whileTap={disabled || loading ? undefined : { scale: 0.97 }}
-      transition={spring.control}
       className={cx("ui-btn ui-" + variant, "inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border transition-colors duration-tok-fast ease-ds disabled:opacity-60 disabled:cursor-not-allowed", loading && "cursor-wait", sizeCls, variantCls)}
       style={style}>{loading && loadingIcon ? <Icon name="loader" size={iconSize} stroke={2.2} className="animate-spin" /> : leadingIcon && <Icon name={leadingIcon} size={iconSize} stroke={2.2} />}{children}{trailingIcon && <Icon name={trailingIcon} size={iconSize} stroke={2.2} />}</motion.button>
   );
@@ -237,9 +233,7 @@ function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', d
 
 /* ---- IconBtn ---- */
 const NO_COMBO: HotkeyCombo = { key: '' };
-/* aria-keyshortcuts 값(WAI-ARIA 표기) — 예: {alt,key:'r'} → "Alt+R" */
-const ariaShortcut = (c: HotkeyCombo) => [c.mod && 'Control', c.alt && 'Alt', c.shift && 'Shift', c.key.length === 1 ? c.key.toUpperCase() : c.key].filter(Boolean).join('+');
-function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed, hotkey, spinOnClick = icon === "refresh" && !!onClick }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => unknown; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean; hotkey?: { combo: HotkeyCombo; hint: string }; spinOnClick?: boolean }) {
+function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed, hotkey, shortcut, spinOnClick = icon === "refresh" && !!onClick }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => unknown; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean; hotkey?: { combo: HotkeyCombo; hint: string }; shortcut?: { combo: HotkeyCombo; hint: string }; spinOnClick?: boolean }) {
   // 조회(refresh) 클릭 피드백(onClick 있을 때만 — 무동작 버튼이 조회된 척하지 않게): 클릭마다 +360° 누적 회전 — 연타해도 진행 중 회전을 끊지 않고 이어 돈다.
   // onClick이 Promise를 돌려주면(비동기 조회) settle까지 등속으로 계속 돌고, 끝나면 돌던 바퀴를 마저 돈 뒤 감속 1회전으로 멈춘다.
   // repeat:Infinity는 0°로 되감겨 튀므로 쓰지 않고, 회전 완료마다 turns를 +1 해 이어 붙인다.
@@ -265,6 +259,9 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
   } : onClick;
   /* 단축키(선택) — HOTKEYS 항목을 넘기면 클릭과 같은 동작을 바인딩하고 툴팁에 힌트를 붙인다.
      모달이 열려 있으면 무시 — 폼 편집 중 뒤의 목록이 조회·메뉴 개폐되지 않게. */
+  /* shortcut(선택) = 표시 전용 — 바인딩은 페이지가 이미 useHotkey 로 소유할 때(인쇄 ⌘P·내보내기 ⌥D) 툴팁 힌트·aria-keyshortcuts 만 붙인다.
+     hotkey 와 둘 다 넘기면 hotkey 가 이긴다. 바인딩 없는 화면에 넘기면 거짓 힌트가 된다. */
+  const shown = hotkey ?? shortcut;
   useHotkey(hotkey ? hotkey.combo : NO_COMBO, () => { if (!document.querySelector('[role="dialog"]')) click?.(); }, { enabled: !!hotkey && !!onClick });
   const onSpinDone = () => {
     if (reduced) return;
@@ -274,7 +271,7 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
   };
   const glyph = <Icon name={icon} size={iconSize} stroke={2} />;
   const btn = (
-    // hover/press는 Motion spring(색 전환은 CSS 유지). scale은 저모션 시 MotionConfig가 자동 비활성.
+    // hover·press 크기 변화 없음(2026-09-28 삭제 — 색 전환은 CSS 유지). 조회 아이콘 회전(spinOnClick)은 크기 변화가 아니라 유지.
     <motion.button
       onClick={click}
       aria-label={label && badge && badge > 0 ? `${label} ${badge > 99 ? "99+" : badge}건` : label}
@@ -282,10 +279,7 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
       aria-expanded={expanded}
       aria-pressed={pressed}
       aria-busy={phase === "busy" || undefined}
-      aria-keyshortcuts={hotkey ? ariaShortcut(hotkey.combo) : undefined}
-      whileHover={{ scale: 1.06 }}
-      whileTap={{ scale: 0.9 }}
-      transition={spring.control}
+      aria-keyshortcuts={shown ? ariaShortcut(shown.combo) : undefined}
       className={cx("relative inline-flex items-center justify-center rounded-[10px] cursor-pointer border transition-colors duration-tok-fast ease-ds",
         active ? (activeClassName || "bg-card text-primary border-ring") : "bg-transparent text-muted-foreground border-transparent")}
       style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}>{altIcon
@@ -300,7 +294,7 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
   return (
     <Tooltip>
       <TooltipTrigger asChild>{btn}</TooltipTrigger>
-      <TooltipContent>{label}{hotkey && <span className="ml-1.5 opacity-60">{hotkey.hint}</span>}</TooltipContent>
+      <TooltipContent>{label}{shown && <span className="ml-1.5 opacity-60">{shown.hint}</span>}</TooltipContent>
     </Tooltip>
   );
 }

@@ -15,6 +15,7 @@
 import { useState } from 'react';
 import { UI } from './components';
 import { GridFrame, FooterActions } from './grid_frame';
+import { useHotkey, HOTKEYS } from './use-hotkey';   // ⌘P 인쇄(푸터 툴팁 힌트와 짝)
 import { CompanyProfileBody } from './company_profile_model';
 import { SOURCE_COUNTS, CO_NAME } from './company_profile_data';
 import { UNITS, DEFAULT_UNIT } from './schemas/unit';
@@ -33,6 +34,7 @@ const QUERY_FIELDS = [
 
 export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
+  useHotkey(HOTKEYS.print.combo, () => window.print());
   return (
     <GridFrame
       crumbs={['홈', '투자자산관리', '투자기업정보', '투자기업정보(통합)']}

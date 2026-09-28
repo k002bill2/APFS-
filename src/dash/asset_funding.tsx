@@ -17,7 +17,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, CellContextMenuEvent, ValueFormatterParams } from 'ag-grid-community';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
-import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘P 인쇄)
+import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘P 인쇄 · ⌥D 내보내기)
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 
@@ -98,8 +98,9 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: ROWS.length });
   const [unit, setUnit] = useState<Unit>('억원');           // 금액 단위(원/백만원/억원) — 조합수(개)는 불변
 
-  // 앱-스코프 단축키: ⌘P=인쇄. (등록 기능 제거로 ⌘⏎ 등록 단축키도 함께 제거)
+  // 앱-스코프 단축키: ⌘P=인쇄 · ⌥D=내보내기(푸터 툴팁 힌트와 짝). (등록 기능 제거로 ⌘⏎ 등록 단축키도 함께 제거)
   useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.export.combo, () => exportExcel());   // exportExcel 은 아래 const — 화살표로 감싸 TDZ 회피
   const [ctx, setCtx] = useState<CtxMenuState>(null);   // 우클릭 컨텍스트 메뉴 좌표·항목(null=닫힘)
 
   const onGridReady = useCallback((e: GridReadyEvent<FundingRow>) => { apiRef.current = e.api; }, []);

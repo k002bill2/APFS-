@@ -19,6 +19,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { UI } from './components';
 import { GridFrame, FooterActions } from './grid_frame';
+import { useHotkey, HOTKEYS } from './use-hotkey';   // ⌘P 인쇄(푸터 툴팁 힌트와 짝)
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import {
@@ -145,6 +146,7 @@ function RegionTable({ rows, unit }: { rows: RegionRow[]; unit: StatUnit }) {
 export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) {
   const [view, setView] = useState<ViewKey>(VIEWS[0].key);
   const [unit, setUnit] = useState<StatUnit>('억원');   // 원문 기본값 = 저장 base
+  useHotkey(HOTKEYS.print.combo, () => window.print());
 
   const isMatrix = view !== 'region';
   // 두 블록(투자건수·투자금액)은 **함께** 그린다 — 원문이 그렇고, 하나만 남기면 보고서 절반이 사라진다.

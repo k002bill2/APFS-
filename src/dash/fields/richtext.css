@@ -243,9 +243,10 @@
 .apfs-rt-swatch {
   width: 18px; height: 18px; padding: 0; border-radius: 9999px; cursor: pointer;
   border: 1px solid color-mix(in srgb, var(--border-strong) 70%, transparent);
-  transition: transform .1s ease;
+  transition: border-color .1s ease;
 }
-.apfs-rt-swatch:hover { transform: scale(1.15); }
+/* hover 확대(scale 1.15) 삭제(2026-09-28 사용자 지시 — 버튼 hover 크기 변화 전면 금지) → 테두리 색으로만 표시 */
+.apfs-rt-swatch:hover { border-color: var(--foreground); }
 .apfs-rt-swatch.is-sel { outline: 2px solid var(--ring); outline-offset: 1px; }
 
 /* 이미지 편집 — 선택 시 오버레이 툴바(정렬·너비·삭제) */

@@ -1,5 +1,5 @@
 /* Motion 프리셋 — Animate UI(animate-ui.com) 원본 spring 계수를 한 곳에 상수화.
-   소비: ui/*(Radix 래퍼 spring 전환), components(버튼 press), 신규 인터랙션.
+   소비: ui/*(Radix 래퍼 spring 전환), 신규 인터랙션(버튼 hover·press 크기 변화는 2026-09-28 폐지).
 
    ⚠ reduced-motion: 이 transition들은 JS(WAAPI/rAF) 구동이라 tokens.css의
    `*{animation-duration:.001ms}` CSS 규칙이 무효하다. 저모션은 app.tsx 루트의
@@ -42,10 +42,5 @@ export const popVariants: Variants = {
   visible: { opacity: 1, scale: 1 },
 };
 
-/* 버튼 hover/press — 원본 hoverScale 1.05 / tapScale 0.95.
-   APFS 툴바는 버튼 밀착이라 hover는 1.03으로 낮춤(겹침 완화, reflow 없음). */
-export const btnInteraction = {
-  whileHover: { scale: 1.03 },
-  whileTap: { scale: 0.97 },
-  transition: spring.control,
-} as const;
+/* 버튼 hover/press 크기 변화는 없다(2026-09-28 사용자 지시로 전 버튼 삭제 — 재도입 금지, 가드 no_hover_scale.test.ts).
+   구 btnInteraction(whileHover 1.03 / whileTap 0.97) 프리셋은 소비처가 없어 함께 제거. */

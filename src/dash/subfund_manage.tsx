@@ -154,7 +154,7 @@ function flattenForExcel(defs: (ColDef<SubFundRow> | ColGroupDef<SubFundRow>)[])
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined}
-      className="inline-flex items-center justify-center font-semibold cursor-pointer motion-safe:active:scale-[.97]"
+      className="inline-flex items-center justify-center font-semibold cursor-pointer"
       style={{ minWidth: 30, height: 30, padding: '0 8px', borderRadius: 8, border: '1px solid ' + (active ? 'var(--primary)' : 'var(--border)'), background: active ? 'var(--primary)' : 'transparent', color: active ? 'var(--primary-foreground)' : 'var(--foreground)', fontSize: 12.5 }}>{n}</button>
   );
 }
@@ -444,7 +444,7 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
           {filteredRows.length === 0 && <span className="text-muted-foreground" style={{ fontSize: 13, padding: '24px 0' }}>조건에 맞는 자펀드가 없습니다.</span>}
           {filteredRows.map((r) => (
             <button key={r.id} type="button" onClick={() => setSelIds([r.id])} aria-pressed={selId === r.id}
-              className="border bg-card flex flex-col gap-3 p-3.5 text-left cursor-pointer motion-safe:active:scale-[.98]"
+              className="border bg-card flex flex-col gap-3 p-3.5 text-left cursor-pointer"
               style={{ borderRadius: 12, borderColor: selId === r.id ? 'var(--primary)' : 'var(--border)', fontFamily: 'inherit', color: 'inherit' }}>
               <div className="flex items-center gap-2.5">
                 <ColorChip icon="layers" color="var(--primary)" size={34} iconSize={16} />
