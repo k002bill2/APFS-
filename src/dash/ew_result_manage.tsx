@@ -51,7 +51,7 @@ import { PeriodPicker } from './ui/period-picker';
 import { EwConfirmDialog } from './ew_result_dialogs';
 import { prevYm, setFlag, togglePerm } from './ew_result_model';   // 순수함수 — 유닛 테스트 대상
 
-const { Button, IconBtn, StatusBadge } = UI;
+const { Button, IconBtn, SaveButton, StatusBadge } = UI;
 
 /* ──────────────────────────────
    도메인 타입 — 목업 2개 표의 컬럼 집합 그대로
@@ -365,7 +365,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
         cap={<>기준년월 {String(ym)}</>}
         actions={sel1.selIds.length > 0 && (
           <SelActions count={sel1.selIds.length} onClear={sel1.clear}>
-            <Button variant="outline" size="sm" onClick={doConfirm}>확정</Button>
+            <SaveButton variant="outline" leadingIcon="" busyLabel="확정 중" onSubmit={() => doConfirm}>확정</SaveButton>
             <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'close', ym, ids: sel1.selIds })}>마감</Button>
             <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'reopen', ym, ids: sel1.selIds })}>마감해제</Button>
           </SelActions>

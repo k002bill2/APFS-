@@ -21,7 +21,7 @@ import { exportTables } from './risk_excel';
 import type { Row } from './risk_table_meta';
 import { MF_SUMMARY, MF_SUMMARY_ROW, MF_DETAIL, EVAL_BASE_YM, mfTotal } from './risk_valuation_data';
 
-const { Button } = UI;
+const { SaveButton } = UI;
 const LABEL = '모태펀드 가치평가 결과조회';
 type Inputs = { uninv: number; oa: number; ol: number };
 const INIT: Inputs = { uninv: Number(MF_SUMMARY_ROW.uninv), oa: Number(MF_SUMMARY_ROW.oa), ol: Number(MF_SUMMARY_ROW.ol) };
@@ -52,7 +52,7 @@ export function MotherFundValuation({ onNav }: { onNav?: (r: string) => void }) 
   return (
     <RiskPage group="가치평가" label={LABEL} route={LABEL} onNav={onNav}
       filters={filters} onReset={reset} unit={unit} onUnit={setUnit}
-      actions={<Button variant="outline" size="sm" leadingIcon="check" onClick={save}>저장</Button>}
+      actions={<SaveButton variant="outline" onSubmit={() => save}>저장</SaveButton>}
       footerLeft={<span>{`${ym ? `평가년월 ${String(ym)} · ` : ''}가치평가 상세내역 ${String(detailRows.length)}건`}</span>}
       onExport={exportExcel}>
       <SectionHead title={MF_SUMMARY.title!} cap="미투자자산·기타자산·기타부채는 셀을 눌러 입력" />
