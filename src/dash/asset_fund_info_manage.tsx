@@ -32,7 +32,7 @@ const toNum = (v: unknown): number | null => {
 };
 
 /* 추가 열 = S2_73 헤더 중 v1.4 에 없는 키(원문 순서). 숫자 키는 Excel 숫자셀 대상 */
-const EXTRA_KEYS: readonly string[] = ['otype', 'cogp', 'ps', 'pe', 'must', 'small', 'r1', 'r2', 'r3', 'r4', 'nia'];
+export const EXTRA_KEYS: readonly string[] = ['otype', 'cogp', 'ps', 'pe', 'must', 'small', 'r1', 'r2', 'r3', 'r4', 'nia'];
 const NUM_EXTRA = ['must', 'small', 'r1', 'r2', 'r3', 'r4', 'nia'];
 
 function buildExtraColumns(): (ColDef<SubFundRow> | ColGroupDef<SubFundRow>)[] {
@@ -76,7 +76,7 @@ const toModalRow = (r: SubFundRow): Row => ({
    **그리드에 투영된 칸은 현재 행 값을 덮어쓴다**(자펀드·투자기간·의무투자·대표/2번째 운용사명·운용사유형) — 일반 `수정`이
    행만 바꿔도 보관 폼이 stale 로 되돌리지 않게(Codex P2 3차). 처음이면 원문 openEditFund(r)(formFromRow) + 업무집행조합원2 를 2행째로 */
 const nm = (v: string) => (v === '-' ? '' : v);
-const formOf = (r: SubFundRow): FundInfoForm => {
+export const formOf = (r: SubFundRow): FundInfoForm => {
   if (r.extForm) {
     const f = r.extForm as FundInfoForm;
     const named = f.gps.filter((g) => g.name.trim());
@@ -96,7 +96,7 @@ const formOf = (r: SubFundRow): FundInfoForm => {
 /* 팝업 저장 → 행 패치. 한도관리 비율=의무투자, 운용사 표 → 업무집행조합원1(대표)·2(다음 행)·운용사유형(대표의 구분),
    이름 있는 운용사 2개 이상=공동GP(O). 이름 빈 행은 무시(빈 행 추가만으로 공동GP 가 되지 않게 — Codex P2 2026-09-28).
    비운 칸은 미입력(undefined/'-')으로 되돌린다 */
-const patchFromForm = (f: FundInfoForm): Partial<SubFundRow> => {
+export const patchFromForm = (f: FundInfoForm): Partial<SubFundRow> => {
   const named = f.gps.filter((g) => g.name.trim());
   const rep = named.find((g) => g.rep) ?? named[0];
   const second = named.find((g) => g !== rep);
@@ -109,7 +109,7 @@ const patchFromForm = (f: FundInfoForm): Partial<SubFundRow> => {
 };
 
 /* 모듈 상수 — 렌더마다 새 객체면 SubFundManage 의 columnDefs 가 재생성된다(apfs-aggrid 계약 6) */
-const EXT: SubFundExt = {
+export const EXT: SubFundExt = {
   crumbs: ['홈', '투자자산관리', '조합관리', LABEL],
   title: LABEL,
   favRoute: LABEL,
