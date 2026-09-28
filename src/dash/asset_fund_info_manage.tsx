@@ -72,8 +72,10 @@ const FUND_INFO_ROW: SubFundRow = {
 const toModalRow = (r: SubFundRow): Row => ({
   id: r.id, fn: r.fn, ps: r.ps ?? '', pe: r.pe ?? '', must: r.must == null ? '' : String(r.must), gp: r.gp1 === '-' ? '' : r.gp1, otype: r.otype ?? '',
 });
-/* 초기 폼 = 원문 openEditFund(r)(formFromRow) + 업무집행조합원2 가 있으면 공동GP 2행째로 — 저장 시 gp2 가 지워지지 않게 */
+/* 초기 폼 = 이 팝업으로 저장한 적 있으면 그 폼 그대로(결산월·연수·한도 기간·운용사 전 행/전 칸 보존 — Codex P2 2차),
+   처음이면 원문 openEditFund(r)(formFromRow) + 업무집행조합원2 를 공동GP 2행째로 */
 const formOf = (r: SubFundRow): FundInfoForm => {
+  if (r.extForm) return r.extForm as FundInfoForm;
   const f = formFromRow(toModalRow(r));
   return r.gp2 && r.gp2 !== '-' ? { ...f, gps: [...f.gps, newGpRow({ name: r.gp2 })] } : f;
 };
@@ -88,6 +90,7 @@ const patchFromForm = (f: FundInfoForm): Partial<SubFundRow> => {
     ps: f.start || undefined, pe: f.end || undefined, must: toNum(f.limits[0]?.rate),
     gp1: rep ? rep.name.trim() : '-', gp2: second ? second.name.trim() : '-',
     otype: rep?.otype || undefined, cogp: named.length > 1 ? 'O' : 'X',
+    extForm: f,   // 열로 투영되지 않는 항목까지 원본 폼째 보관 → formOf 가 복원
   };
 };
 

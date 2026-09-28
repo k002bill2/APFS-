@@ -56,6 +56,7 @@ export interface SubFundRow {
   /* S2_73 자펀드정보(투자기준) — 자펀드정보관리 리프가 합성할 때만 채운다(asset_fund_info_manage.tsx). 미입력=undefined/null → '-' */
   otype?: string; cogp?: string; ps?: string; pe?: string;
   must?: number | null; small?: number | null; r1?: number | null; r2?: number | null; r3?: number | null; r4?: number | null; nia?: number | null;
+  extForm?: unknown;   // 확장 팝업이 마지막으로 저장한 원본 폼(재오픈 시 그대로 복원 — 열로 투영되지 않는 항목 보존). 소비처가 타입을 안다
 }
 
 /* 데모 데이터 — 4개 심사단계(신청·선정·결성·취소) 전부 포함. 금액 N/A=null(문자 '-' 아님), 텍스트 N/A='-'.
@@ -247,7 +248,7 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
 
   const passes = useCallback((r: SubFundRow) => {
     if (fStage && r.stg !== fStage) return false;
-    if (fText && !Object.values(r).some((v) => String(v ?? '').toLowerCase().includes(fText.toLowerCase()))) return false;
+    if (fText && !Object.values(r).some((v) => typeof v !== 'object' && String(v ?? '').toLowerCase().includes(fText.toLowerCase()))) return false;   // 객체(extForm)는 검색 대상 아님
     if (fFund && r.fn !== fFund) return false;
     if (fType && r.ctype !== fType) return false;
     if (fYear && r.y !== fYear) return false;
