@@ -72,10 +72,24 @@ const FUND_INFO_ROW: SubFundRow = {
 const toModalRow = (r: SubFundRow): Row => ({
   id: r.id, fn: r.fn, ps: r.ps ?? '', pe: r.pe ?? '', must: r.must == null ? '' : String(r.must), gp: r.gp1 === '-' ? '' : r.gp1, otype: r.otype ?? '',
 });
-/* 초기 폼 = 이 팝업으로 저장한 적 있으면 그 폼 그대로(결산월·연수·한도 기간·운용사 전 행/전 칸 보존 — Codex P2 2차),
-   처음이면 원문 openEditFund(r)(formFromRow) + 업무집행조합원2 를 공동GP 2행째로 */
+/* 초기 폼 = 이 팝업으로 저장한 적 있으면 그 폼(결산월·연수·한도 기간·운용사 전 행/전 칸 보존 — Codex P2 2차)에
+   **그리드에 투영된 칸은 현재 행 값을 덮어쓴다**(자펀드·투자기간·의무투자·대표/2번째 운용사명·운용사유형) — 일반 `수정`이
+   행만 바꿔도 보관 폼이 stale 로 되돌리지 않게(Codex P2 3차). 처음이면 원문 openEditFund(r)(formFromRow) + 업무집행조합원2 를 2행째로 */
+const nm = (v: string) => (v === '-' ? '' : v);
 const formOf = (r: SubFundRow): FundInfoForm => {
-  if (r.extForm) return r.extForm as FundInfoForm;
+  if (r.extForm) {
+    const f = r.extForm as FundInfoForm;
+    const named = f.gps.filter((g) => g.name.trim());
+    const rep = named.find((g) => g.rep) ?? named[0];
+    const second = named.find((g) => g !== rep);
+    let gps = f.gps.map((g) => (g === rep ? { ...g, name: nm(r.gp1), otype: r.otype ?? '' } : g === second ? { ...g, name: nm(r.gp2) } : g));
+    if (!rep && nm(r.gp1)) gps = [newGpRow({ rep: true, name: r.gp1, otype: r.otype ?? '' }), ...gps];
+    if (!second && nm(r.gp2)) gps = [...gps, newGpRow({ name: r.gp2 })];
+    return {
+      ...f, fund: r.fn, start: r.ps ?? '', end: r.pe ?? '', gps,
+      limits: f.limits.length ? f.limits.map((l, i) => (i === 0 ? { ...l, rate: r.must == null ? '' : String(r.must) } : l)) : f.limits,
+    };
+  }
   const f = formFromRow(toModalRow(r));
   return r.gp2 && r.gp2 !== '-' ? { ...f, gps: [...f.gps, newGpRow({ name: r.gp2 })] } : f;
 };

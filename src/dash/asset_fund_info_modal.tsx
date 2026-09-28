@@ -109,8 +109,8 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
     toast.success(`${n}개 행 삭제됨`);
   };
   const save = () => {
-    /* 원문 등록 팝업만 자펀드에 필수(*) 표식이 있다 */
-    if (mode === 'create' && !form.fund) { setTried(true); toast.error('자펀드를 선택하세요'); return; }
+    /* 원문 등록 팝업만 자펀드에 필수(*) 표식이 있다. 통합 그리드(onSave 있음)는 수정에서도 필수 — 빈 '선택'으로 저장 성공 방지(Codex P2 3차) */
+    if ((mode === 'create' || onSave) && !form.fund) { setTried(true); toast.error('자펀드를 선택하세요'); return; }
     onSave?.(form);
     toast.success(mode === 'create' ? '저장되었습니다' : '수정되었습니다');
     dlgRef.current?.close();
