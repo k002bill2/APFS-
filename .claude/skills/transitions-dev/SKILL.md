@@ -21,8 +21,10 @@ APFS의 열림·닫힘 표면은 이미 소유자와 확정 규약이 있다. �
 | 14 skeleton reveal | `ui/skeleton.tsx` — 로딩=`PageSkeleton` | **적용 금지**(메모리 `skeleton-two-tier-adoption`) |
 | 25 checkbox · 27 toggle | Radix `ui/checkbox`·`ui/switch`; 저장 대기형 '여/부'는 **체크박스**로 렌더(의미 규약, PR #202) | **적용 금지** — 컨트롤 교체·모션 추가 모두 |
 | 16 tabs sliding | `UI.SegTabs`(`components.tsx`) — 이미 Motion `layoutId` 슬라이딩 표시자를 가짐 | **적용 금지**. 탭 모션 변경은 SegTabs 한 곳에서 |
+| 04 text swap | `UI.TextSwap`(`components.tsx`) + `.t-text-swap`/`.t-text-swap-w`(`src/styles/transitions.css`) — 버튼 라벨은 `UI.SaveButton`이 자동 경유, 라벨 길이 변화 시 폭 보간 내장(2026-09-28) | 새로 붙이지 말고 `TextSwap`/`SaveButton` 재사용. 라벨 스왑을 레시피로 재구현 금지 |
+| (회전 피드백) 조회 아이콘 | `UI.IconBtn` `spinOnClick`(기본 `icon==='refresh' && onClick`) + `tween.spin/spinLoop/spinStop`(`motion/presets.ts`) | 조회·새로고침 아이콘 회전은 IconBtn 한 곳에서 |
 | 03 notification badge | LNB 조기경보 점 `NewDot`(숫자 아닌 **빨간 점**, `showDots=risk` 게이트) | 점 의미는 유지하고 등장 모션만 참고 가능 |
-| 01 card resize · 02 number pop-in · 04 text swap · 08 page side-by-side · 09 icon swap · 10 success check · 11 avatar hover · 12 error shake · 13 input clear · 15 shimmer · 18 texts reveal · 19 card tilt · 23 like · 24 learn-more · 26 spinning counter · 28~31 AI 상태/로더 | 소유자 없음 | **이 스킬의 주 대상** |
+| 01 card resize · 02 number pop-in · 08 page side-by-side · 09 icon swap · 10 success check · 11 avatar hover · 12 error shake · 13 input clear · 15 shimmer · 18 texts reveal · 19 card tilt · 23 like · 24 learn-more · 26 spinning counter · 28~31 AI 상태/로더 | 소유자 없음 | **이 스킬의 주 대상** |
 
 `transitions review`/`refine` 출력에서도 위 "적용 금지" 표면은 제안 목록에서 **제외**한다.
 

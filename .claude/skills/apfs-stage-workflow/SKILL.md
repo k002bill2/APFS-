@@ -16,6 +16,7 @@ description: APFS 리스트 화면의 "행 선택 → 그 행의 단계(심사�
 3. **액션 맵은 단계별 배열 하나로.** primary는 단계당 **1개**(주 전이), 나머지 outline. 액션 라벨은 업무 동사("선정조합 등록"·"결성 확정"·"신청취소"). 말단 단계(취소)는 빈 배열 — **안내 캡션 없음**(2026-09-08 사용자 결정으로 제거).
 4. **툴바 좌 슬롯은 경합한다**: `selCount > 0 ? <selbar> : <필터칩>`(selbar 안의 단계 배지·전이 버튼은 다시 `{single && …}` 로 감싼다). selbar = 단계 배지(`size="lg"`, 텍스트만) + 전이 액션 버튼들 + (**opt-in**) 공통 조회(`명세`, 단계 무관) + `선택 해제`. **명세 버튼은 고정이 아니라 opt-in**(2026-09-11 결정) — 명세 팝업을 포함한 페이지만 넣고, 아니면 생략. **대상명(자펀드명)은 넣지 않는다** — 선택 행에서 이미 보임(2026-09-08 결정).
 5. **전이 = 불변 patch + toast.** `patchRow(id, {stg, ...부수효과})`. 부수효과는 도메인 정합(예: 취소→조합상태 '-', 결성 확정→결성일=오늘·운영중).
+   - **확인창 없이 즉시 전이하는 액션 버튼(확정 등)은 `UI.SaveButton`**으로 렌더해 "…중" 텍스트 스왑을 준다: `<SaveButton variant="outline" leadingIcon="" busyLabel="확정 중" onSubmit={() => doConfirm}>확정</SaveButton>`(기준 `ew_result_manage.tsx`, 2026-09-28). 대기 중 선택 해제로 버튼이 사라져도 전이는 flush된다. 확인 모달·AlertDialog를 여는 액션은 그대로 `Button`(확인창 쪽 버튼이 press·SaveButton을 가짐) — [[apfs-form-modal]] 6-1.
 6. **모달을 여는 액션**은 단계에 따라 **제목이 달라진다** → `RowFormModal title={...}` prop. 저장 콜백이 patch + 전이를 함께 수행(`saveSelect(f, target)`).
 7. **신규 등록 액션**(헤더 우측 primary)은 첫 단계 행을 **선두 삽입** + `setSelId(newId)` → 다음 액션이 바로 보인다.
 8. 합계행이 있으면 `useMemo` 재계산(→[[apfs-aggrid]] 계약4). 색은 단계 tone 맵(`Record<Stage,Tone>`)으로만(→[[color-tokens]]).
