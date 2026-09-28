@@ -53,12 +53,15 @@ export interface SubFundRow {
   rec: number | null; ti: number | null; tir: number | null; mi: number | null; mir: number | null; dist: number | null; mul: number | null;
   st: string; liq: string;
   attach?: string;   // 첨부파일명 CSV(백엔드 없음 — 이름만 보관). 제안서접수 등록 시 DocumentsField(filepond)가 공급, saveApply가 행에 영속.
+  /* S2_73 자펀드정보(투자기준) — 자펀드정보관리 리프가 합성할 때만 채운다(asset_fund_info_manage.tsx). 미입력=undefined/null → '-' */
+  otype?: string; cogp?: string; ps?: string; pe?: string;
+  must?: number | null; small?: number | null; r1?: number | null; r2?: number | null; r3?: number | null; r4?: number | null; nia?: number | null;
 }
 
 /* 데모 데이터 — 4개 심사단계(신청·선정·결성·취소) 전부 포함. 금액 N/A=null(문자 '-' 아님), 텍스트 N/A='-'.
    도메인 정합: 납입(p1) 전제 없으면 회수·투자·배분=0. 금액 단위=원. */
 const N = null;
-const DEMO: SubFundRow[] = [
+export const DEMO: SubFundRow[] = [
   { id: 'sf-1', no: 1, y: '2026', rt: '정기', ch: '1', stg: '신청', ctype: '-', cg: '-', cs: '-', gp1: '대성창업투자', gp2: '-', fn: '대성 스마트농업 스케일업 투자조합(가칭)', fd: '-', rd: '2026-05-20', yrs: N, dur: N, mat: '-', rate: N, lgp: N, lmo: '-', c1: N, c2: N, c3: N, v1: N, v2: N, v3: N, p1: 0, p2: 0, rec: 0, ti: 0, tir: N, mi: 0, mir: N, dist: 0, mul: N, st: '-', liq: '-' },
   { id: 'sf-2', no: 2, y: '2026', rt: '정기', ch: '1', stg: '선정', ctype: '벤처투자조합', cg: '일반', cs: '그린바이오', gp1: '한국투자파트너스', gp2: '-', fn: '한투 그린바이오 투자조합', fd: '-', rd: '2026-03-10', yrs: N, dur: 8, mat: '-', rate: 8, lgp: 10, lmo: 'N', c1: 25e9, c2: 12e9, c3: 13e9, v1: 25e9, v2: 12e9, v3: 13e9, p1: 0, p2: 0, rec: 0, ti: 0, tir: N, mi: 0, mir: N, dist: 0, mul: N, st: '-', liq: '-' },
   { id: 'sf-3', no: 3, y: '2018', rt: '정기', ch: '1', stg: '결성', ctype: '벤처투자조합', cg: '일반', cs: '스마트농업', gp1: 'IMM인베스트먼트', gp2: '-', fn: 'IMM 농식품 스마트투자조합', fd: '2018-06-15', rd: '2018-06-15', yrs: 8, dur: 8, mat: '2026-06-14', rate: 8, lgp: 10, lmo: 'N', c1: 30e9, c2: 15e9, c3: 15e9, v1: 30e9, v2: 15e9, v3: 15e9, p1: 28e9, p2: 14e9, rec: 5e9, ti: 22e9, tir: 73.3, mi: 15e9, mir: 50, dist: 3e9, mul: 0.96, st: '운영중', liq: '-' },
@@ -92,18 +95,18 @@ const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-const txt = (field: keyof SubFundRow, header: string, width: number, center?: boolean): ColDef<SubFundRow> => ({
+export const txt = (field: keyof SubFundRow, header: string, width: number, center?: boolean): ColDef<SubFundRow> => ({
   field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
-  cellRenderer: (p: any) => (p.node.rowPinned ? null : p.value),
+  cellRenderer: (p: any) => (p.node.rowPinned ? null : p.value ?? '-'),   // 확장 열(S2_73)은 미입력 행에 값이 없다(undefined)
 });
-const date = (field: keyof SubFundRow, header: string, width = 112): ColDef<SubFundRow> => ({
+export const date = (field: keyof SubFundRow, header: string, width = 112): ColDef<SubFundRow> => ({
   field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
-  valueFormatter: (p) => (p.node?.rowPinned ? '' : String(p.value)),
+  valueFormatter: (p) => (p.node?.rowPinned ? '' : String(p.value ?? '-')),
 });
 const amt = (field: keyof SubFundRow, header: string, strong?: boolean, width = 150): ColDef<SubFundRow> => ({
   field, headerName: header, width, type: 'rightAligned', valueFormatter: nullFmt, cellStyle: numStyle(strong) as any,
 });
-const num = (field: keyof SubFundRow, header: string, width = 96): ColDef<SubFundRow> => ({
+export const num = (field: keyof SubFundRow, header: string, width = 96): ColDef<SubFundRow> => ({
   field, headerName: header, width, valueFormatter: nullFmt, cellStyle: centerNum,
 });
 
@@ -185,11 +188,30 @@ function DrawerSelect({ value, onChange, options, all = '전체' }: { value: str
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
-type ModalState = null | { kind: 'apply' } | { kind: 'select'; target: Stage } | { kind: 'formEdit' };
+type ModalState = null | { kind: 'apply' } | { kind: 'select'; target: Stage } | { kind: 'formEdit' } | { kind: 'ext' };
 
-export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
+/* 확장 슬롯 — 같은 자펀드 엔티티를 다른 리프가 **열 추가 + 결성 행 액션 추가**로 합성한다(페이지 복제 금지).
+   소비처: 자펀드정보관리(조합관리) = v1.4 자펀드관리 + S2_73 투자기준(2026-09-28 사용자 결정 — 통합 그리드).
+   ext 객체는 소비처 모듈 상수여야 한다(렌더마다 새 객체면 columnDefs 가 재생성돼 폭이 되돌아간다 — apfs-aggrid 계약 6). */
+export interface SubFundExt {
+  crumbs: string[];
+  title: string;
+  favRoute: string;
+  seed: SubFundRow[];
+  extraColumns: (ColDef<SubFundRow> | ColGroupDef<SubFundRow>)[];
+  extraNumKeys: string[];   // Excel 숫자셀 대상(추가 열 중 숫자)
+  /* 결성 행에만 붙는 추가 작업 — 결성돼야 자펀드로 등재되므로 투자기준 편집도 결성 행 대상 */
+  /* render 의 onSave 는 행 반영만 한다(모달을 닫지 않음) — 모달은 스스로 닫히고 끝나면 onClose 를 부른다 */
+  formedAction: { label: string; render: (row: SubFundRow, onSave: (patch: Partial<SubFundRow>) => void, onClose: () => void) => React.ReactNode };
+}
+
+export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext?: SubFundExt }) {
+  const seed = ext?.seed ?? DEMO;
+  const cols = useMemo(() => (ext ? [...columnDefs, ...ext.extraColumns] : columnDefs), [ext]);
+  const numKeys = useMemo(() => (ext ? new Set([...NUM_KEYS, ...ext.extraNumKeys]) : NUM_KEYS), [ext]);
+  const sheetName = ext?.title ?? '자펀드관리';
   const apiRef = useRef<GridApi<SubFundRow> | null>(null);
-  const [rows, setRows] = useState<SubFundRow[]>(DEMO);
+  const [rows, setRows] = useState<SubFundRow[]>(seed);
   /* 선택 SSOT — 체크된 행 id 배열. selId(첫 행)·selCount 는 파생이라 둘이 어긋날 수 없다(Codex 리뷰 2026-09-23) */
   const [selIds, setSelIds] = useState<string[]>([]);
   const selId = selIds[0] ?? null;      // 단일 액션 대상(선택 1건일 때만 쓴다)
@@ -198,7 +220,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   // 되살리려면 이 줄을 useState('list')로 되돌리고 footerRight에 SegTabs를 복원하면 된다(카드 렌더 분기는 그대로 남아 있다).
   const view = 'list';
   const [showAll, setShowAll] = useState(false);          // 전체보기 — 페이지 크기를 전체 행 수로 키워 한 페이지에 모두 표시
-  const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
+  const [page, setPage] = useState({ current: 0, total: 1, rowCount: seed.length });
   /* 상단 kebab이 스크롤로 화면 밖에 나가면 푸터 kebab을 대신 노출(IntersectionObserver, root=뷰포트).
      툴바는 sticky가 아니라 스크롤로 사라지고 푸터는 sticky bottom이라 항상 보이므로 성립(grid_frame 구조) */
   const [modal, setModal] = useState<ModalState>(null);
@@ -284,32 +306,32 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   const stageActs: Act[] = !single ? [] : ({
     신청: [{ label: '선정조합 등록', primary: true, run: () => setModal({ kind: 'select', target: '선정' }) }, { label: '신청취소', run: () => toStage('취소', '신청이 취소되었습니다') }],
     선정: [{ label: '결성 확정', primary: true, run: confirmFormation }, { label: '수정', run: () => setModal({ kind: 'select', target: '선정' }) }, { label: '선정취소', run: () => toStage('취소', '선정이 취소되었습니다') }],
-    결성: [{ label: '수정', run: () => setModal({ kind: 'formEdit' }) }],
+    결성: [{ label: '수정', run: () => setModal({ kind: 'formEdit' }) }, ...(ext ? [{ label: ext.formedAction.label, run: () => setModal({ kind: 'ext' }) }] : [])],
     취소: [],
   } as Record<Stage, Act[]>)[single.stg];
 
-  const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...seed]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
 
   /* ── Excel(.xlsx) — 2단 헤더 병합·합계행 재현 ── */
   const exportExcel = () => {
-    const { head1, head2, keys, merges } = flattenForExcel(columnDefs);
+    const { head1, head2, keys, merges } = flattenForExcel(cols);
     const src = [...filteredRows, pinnedBottom[0]];
     const body = src.map((r, i) => keys.map((k) => {
       const v = (r as any)[k];
       if (k === 'no') return i === src.length - 1 ? '합 계' : v;
-      if (NUM_KEYS.has(k)) return v == null ? '' : v;
+      if (numKeys.has(k)) return v == null ? '' : v;
       return (v ?? '');
     }));
     const ws = XLSX.utils.aoa_to_sheet([head1, head2, ...body]);
     src.forEach((r, i) => keys.forEach((k, j) => {
-      if (!NUM_KEYS.has(k) || (r as any)[k] == null) return;
+      if (!numKeys.has(k) || (r as any)[k] == null) return;
       const a = XLSX.utils.encode_cell({ r: i + 2, c: j });
       if (ws[a]) ws[a].z = Number.isInteger((r as any)[k]) ? '#,##0' : '#,##0.0';
     }));
     ws['!merges'] = merges;
-    ws['!cols'] = keys.map((k) => ({ wch: k === 'fn' ? 34 : NUM_KEYS.has(k) ? 16 : 12 }));
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '자펀드관리');
-    XLSX.writeFile(wb, '자펀드관리.xlsx');
+    ws['!cols'] = keys.map((k) => ({ wch: k === 'fn' ? 34 : numKeys.has(k) ? 16 : 12 }));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, sheetName + '.xlsx');
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -358,10 +380,10 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
   ) : null;
   return (
     <GridFrame
-      crumbs={['홈', '투자자산관리', '자펀드 관리', '자펀드 관리']}
-      title="자펀드 관리"
-      cardTitle="자펀드 관리"
-      favRoute="subfund"
+      crumbs={ext?.crumbs ?? ['홈', '투자자산관리', '자펀드 관리', '자펀드 관리']}
+      title={ext?.title ?? '자펀드 관리'}
+      cardTitle={ext?.title ?? '자펀드 관리'}
+      favRoute={ext?.favRoute ?? 'subfund'}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       filterChips={(['' as const, ...STAGES] as ('' | Stage)[]).map((s) => ({ key: s || 'all', label: s || '심사단계: 전체', active: fStage === s, onSelect: () => setFStage(s) }))}
       /* 적용 중인 상세필터 — 항목별 개별 칩(각각 ×로 해제). 라벨=드로어 항목명(apfs-detail-filter) */
@@ -397,7 +419,7 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
         <AgGridReact<SubFundRow>
           theme={apfsTheme}
           rowData={rows}
-          columnDefs={columnDefs}
+          columnDefs={cols}
           getRowId={(p) => p.data.id}
           pinnedBottomRowData={pinnedBottom}
           domLayout="autoHeight"
@@ -496,6 +518,10 @@ export function SubFundManage({ onNav }: { onNav?: (r: string) => void }) {
           onSave={(patch) => { patchRow(single.id, patch); setModal(null); toast.success('수정되었습니다'); }}
           onClose={() => setModal(null)} />
       )}
+      {modal?.kind === 'ext' && single && ext?.formedAction.render(single,
+        /* 저장은 행 반영만 — 닫기는 모달이 자기 exit 애니메이션 뒤 onClose 로 알린다(dialog-flip-animation-contract) */
+        (patch) => patchRow(single.id, patch),
+        () => setModal(null))}
     </GridFrame>
   );
 }

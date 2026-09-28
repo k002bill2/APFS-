@@ -73,7 +73,7 @@ import { SubfundReturnCompare, FundValuationResult, InvesteeValuationResult, Sub
 import { RegistryLedgerManage } from './registry_ledger';                    // 등록원부관리(S4_108 — 목록 + 팝업 6종)
 import { PhysicalDataManage, SecuritiesManage } from './trust_physical_upload';   // 실물자료관리(업로드)(S3_98) · 유가증권관리(업로드)(신규)
 import { PhysicalVerifyCompare, SecuritiesCompare, TrustCommonCode, MotherTrustCode, AccountCompare, CashflowCompare } from './trust_table_pages';   // S3_101 · 신규 · S3_100 · S3_102 · S3_104 · S3_106
-import { AssetFundInfoManage } from './asset_fund_info_manage';           // 자펀드정보관리(S2_73 2단 헤더 목록 + 등록 S2_74·수정 S2_75 팝업)
+import { AssetFundInfoManage } from './asset_fund_info_manage';           // 자펀드정보관리 = v1.4 자펀드관리 + S2_73 투자기준 통합 그리드(SubFundManage ext 합성)
 import { ReviewStats } from './review_stats';                            // 투심보고 통계(S1_28 — 단일 표 27열 + 기본값 검색조건·금액 단위)
 import { TrustFundCode } from './trust_fund_code';                            // 자펀드코드 조회(S3_99 — 편집형 목록)
 import { AccountInfoManage, CashflowInfoManage } from './trust_upload_forms'; // 계좌정보 관리(S3_103) · 입출금 정보관리(S3_105) — 업로드 폼
