@@ -276,7 +276,7 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
           <div>
             {mode === 'edit' && onDelete && (
               confirmDel
-                ? <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={onDelete}>삭제 확인</Button>
+                ? <SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: 'var(--danger)' }} onSubmit={() => onDelete}>삭제 확인</SaveButton>
                 : <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => setConfirmDel(true)}>삭제</Button>
             )}
           </div>

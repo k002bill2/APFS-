@@ -275,7 +275,7 @@ export function MembersModal({ row, onClose }: { row: Row; onClose: () => void }
         <MiniTable heads={MEMBER_HEADS} rows={members} act="detail" label="조합원" right={[3, 4]} onOpen={openMember} onDelete={(idx) => setMembers((p) => dropAt(p, idx))} />
       </Section>
       <Section title="조합원 정보 상세" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('조합원 입력 초기화 (목업)')}>추가</Button>}
-        actions={<Button variant="primary" size="sm" onClick={say('조합원 정보 저장 (목업)')}>저장</Button>}>
+        actions={<SaveButton leadingIcon="" onSubmit={() => say('조합원 정보 저장 (목업)')}>저장</SaveButton>}>
         <Grid2>
           <F spec={T('name', '명칭')} value={f.name} onChange={set('name')} />
           <F spec={{ key: 'kind', label: '조합원구분', control: 'radio', options: [...MEMBER_KINDS] }} value={f.kind} onChange={set('kind')} />
@@ -311,7 +311,7 @@ export function ExpertsModal({ row, onClose }: { row: Row; onClose: () => void }
         <MiniTable heads={EXPERT_HEADS} rows={experts} act="detail" label="전문인력" onOpen={openExpert} onDelete={(idx) => setExperts((p) => dropAt(p, idx))} />
       </Section>
       <Section title="전문인력 상세 정보" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('전문인력 입력 초기화 (목업)')}>추가</Button>}
-        actions={<Button variant="primary" size="sm" onClick={say('전문인력 정보 저장 (목업)')}>저장</Button>}>
+        actions={<SaveButton leadingIcon="" onSubmit={() => say('전문인력 정보 저장 (목업)')}>저장</SaveButton>}>
         <Grid2>
           <F spec={T('name', '성명')} value={f.name} onChange={set('name')} />
           <F spec={{ key: 'kind', label: '전문인력 구분', control: 'radio', options: [...EXPERT_KINDS] }} value={f.kind} onChange={set('kind')} />
@@ -340,14 +340,13 @@ export function ExpertsModal({ row, onClose }: { row: Row; onClose: () => void }
 export function LedgerUploadModal({ onClose }: { onClose: () => void }) {
   const dlgRef = useRef<DialogHandle>(null);
   const [files, setFiles] = useState<string[]>([]);
-  const upload = () => {
+  const upload = (): SubmitResult => {
     if (!files.length) { toast('업로드할 파일을 선택하세요'); return; }
-    toast.success('등록원부 업로드 완료 (목업)');
-    dlgRef.current?.close();
+    return () => { toast.success('등록원부 업로드 완료 (목업)'); dlgRef.current?.close(); };
   };
   return (
     <Modal dlgRef={dlgRef} onClose={onClose} title="등록원부 업로드"
-      footer={<><Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button><Button variant="primary" size="sm" leadingIcon="upload" onClick={upload}>업로드</Button></>}>
+      footer={<><Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button><SaveButton leadingIcon="upload" busyLabel="업로드 중" onSubmit={upload}>업로드</SaveButton></>}>
       <span className="font-semibold text-caption block" style={{ fontSize: 12, marginBottom: 6 }}>파일 업로드</span>
       <UploadDropzone files={files} onChange={setFiles} multiple hint="XLSX, CSV · 최대 20MB" maxSize="20MB" label="등록원부 파일" />
     </Modal>
@@ -364,7 +363,7 @@ export function LedgerPrintModal({ onClose }: { onClose: () => void }) {
   const save = () => { toast.success('저장되었습니다 (목업)'); dlgRef.current?.close(); };
   return (
     <Modal dlgRef={dlgRef} onClose={onClose} title="등록원부 출력"
-      footer={<><Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button><Button variant="primary" size="sm" onClick={save}>저장</Button></>}>
+      footer={<><Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button><SaveButton leadingIcon="" onSubmit={() => save}>저장</SaveButton></>}>
       <F spec={D('issue', '발급일자')} value={date} onChange={setDate}>
         <Button variant="outline" size="sm" leadingIcon="printer" onClick={say('등록원부를 출력합니다 (목업)')}>출력</Button>
       </F>
