@@ -270,7 +270,7 @@ export function MembersModal({ row, onClose }: { row: Row; onClose: () => void }
       footer={<Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>}>
       <Section title="조합원 및 납입출자금 관리" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('양도/양수 추가 (목업)')}>양도/양수 추가</Button>} actions={<>
         <Button variant="outline" size="sm" onClick={say('추가출자 등록 (목업)')}>추가출자</Button>
-        <Button variant="primary" size="sm" onClick={say('조합원 조회 (목업)')}>조회</Button>
+        <SaveButton leadingIcon="" busyLabel="조회 중" onSubmit={() => say('조합원 조회 (목업)')}>조회</SaveButton>
       </>}>
         <MiniTable heads={MEMBER_HEADS} rows={members} act="detail" label="조합원" right={[3, 4]} onOpen={openMember} onDelete={(idx) => setMembers((p) => dropAt(p, idx))} />
       </Section>
@@ -307,7 +307,7 @@ export function ExpertsModal({ row, onClose }: { row: Row; onClose: () => void }
   return (
     <Modal dlgRef={dlgRef} wide onClose={onClose} title="전문인력 관리" target={String(row.nm)}
       footer={<Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>}>
-      <Section title="전문인력 관리" actions={<Button variant="primary" size="sm" onClick={say('전문인력 조회 (목업)')}>조회</Button>}>
+      <Section title="전문인력 관리" actions={<SaveButton leadingIcon="" busyLabel="조회 중" onSubmit={() => say('전문인력 조회 (목업)')}>조회</SaveButton>}>
         <MiniTable heads={EXPERT_HEADS} rows={experts} act="detail" label="전문인력" onOpen={openExpert} onDelete={(idx) => setExperts((p) => dropAt(p, idx))} />
       </Section>
       <Section title="전문인력 상세 정보" add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={say('전문인력 입력 초기화 (목업)')}>추가</Button>}

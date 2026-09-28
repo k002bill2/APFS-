@@ -204,7 +204,7 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
    ⚠ submit 이 성공 경로에서 closure 반환을 잊으면 무음 no-op 이다(타입으로 못 잡음) — 검증 항목: 저장 클릭 시 스피너가 떠야 한다. */
 export const SAVE_DEMO_MS = 400;
 export type SubmitResult = (() => void) | void;
-function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', delay = SAVE_DEMO_MS, variant = 'primary', size = 'sm', leadingIcon = 'check', style }: { onSubmit: () => SubmitResult; children?: React.ReactNode; busyLabel?: React.ReactNode; delay?: number; variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent'; size?: Size; leadingIcon?: string; style?: React.CSSProperties }) {
+function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', delay = SAVE_DEMO_MS, variant = 'primary', size = 'sm', leadingIcon = 'check', style, disabled }: { onSubmit: () => SubmitResult; children?: React.ReactNode; busyLabel?: React.ReactNode; delay?: number; variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent'; size?: Size; leadingIcon?: string; style?: React.CSSProperties; disabled?: boolean }) {
   const [saving, setSaving] = React.useState(false);
   const timer = React.useRef<number | null>(null);
   const lock = useDialogLock();
@@ -222,7 +222,7 @@ function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', d
   // 아이콘 없는 버튼(leadingIcon="")은 스피너를 새로 끼우지 않고 텍스트 스왑만 — 폭 점프·아이콘 돌출 없이 "…중"으로.
   const label = saving ? busyLabel : children;
   const swappable = typeof children === 'string' && typeof busyLabel === 'string';
-  return <Button variant={variant} size={size} leadingIcon={leadingIcon} loading={saving} loadingIcon={!!leadingIcon} onClick={click} style={style}>{swappable ? <TextSwap text={label as string} /> : label}</Button>;
+  return <Button variant={variant} size={size} leadingIcon={leadingIcon} loading={saving} loadingIcon={!!leadingIcon} disabled={disabled} onClick={click} style={style}>{swappable ? <TextSwap text={label as string} /> : label}</Button>;
 }
 
 /* ---- IconBtn ---- */

@@ -171,7 +171,7 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
   const checkShort = () => {
     const s = v.short.replace(/[^\d]/g, '');
     if (!s) { toast.error('단축번호를 입력해 주세요.'); return; }
-    toast[shortDup(s) ? 'error' : 'success'](shortDup(s) ? '이미 사용 중인 단축번호입니다.' : '사용 가능한 단축번호입니다.');
+    return () => { toast[shortDup(s) ? 'error' : 'success'](shortDup(s) ? '이미 사용 중인 단축번호입니다.' : '사용 가능한 단축번호입니다.'); };
   };
   const uid = React.useId();   // 체크 그룹 id 접두(htmlFor 명시 연결용)
   const toggleUtype = (u: UType) => set('utypes', v.utypes.includes(u) ? v.utypes.filter((x) => x !== u) : [...v.utypes, u]);
@@ -234,7 +234,7 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
                     ? <SchemaField field={F.short} value={v.short} onChange={(x) => { set('short', x.replace(/[^\d]/g, '')); if (errKey === 'shortDup') setErrKey(''); }} invalid={errKey === 'shortDup'} fill />
                     : <SchemaField field={F.shortRo} value="" onChange={() => undefined} fill />}
                 </div>
-                <Button variant="outline" size="sm" disabled={!v.pid} onClick={checkShort}>중복확인</Button>
+                <SaveButton variant="outline" leadingIcon="" busyLabel="확인 중" disabled={!v.pid} onSubmit={checkShort}>중복확인</SaveButton>
               </div>
             </Field>
 
