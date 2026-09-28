@@ -10,7 +10,7 @@
    (파일명 드롭존 + [닫기]/[확인]). 계좌정보 관리(S3_103) 패턴이 정본이다. */
 import { useEffect, useId, useRef, useState } from 'react';
 import { toast } from './ui/sonner';
-import { UI } from './components';
+import { UI, type SubmitResult } from './components';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
 import { DocumentsField } from './fields/DocumentsField';
 import { parseFileNames } from './fields/file_names';
@@ -82,10 +82,10 @@ export interface UploadModalProps {
 export function UploadModal({ title, label, hint, maxSize, removedMsg, emptyMsg, doneMsg, onClose }: UploadModalProps) {
   const dlgRef = useRef<DialogHandle>(null);
   const [files, setFiles] = useState<string[]>([]);
-  const confirm = () => {
+  /* SaveButton 계약: 파일 없음 = undefined(스피너 없이 즉시 토스트), 있음 = commit — '확인'→'업로드 중' 텍스트 스왑 후 닫힘 */
+  const confirm = (): SubmitResult => {
     if (!files.length) { toast(emptyMsg); return; }
-    toast.success(typeof doneMsg === 'function' ? doneMsg(files) : doneMsg);
-    dlgRef.current?.close();
+    return () => { toast.success(typeof doneMsg === 'function' ? doneMsg(files) : doneMsg); dlgRef.current?.close(); };
   };
   return (
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -102,7 +102,7 @@ export function UploadModal({ title, label, hint, maxSize, removedMsg, emptyMsg,
           <div />
           <div className="flex gap-2">
             <UI.Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</UI.Button>
-            <UI.Button variant="primary" size="sm" onClick={confirm}>확인</UI.Button>
+            <UI.SaveButton leadingIcon="" busyLabel="업로드 중" onSubmit={confirm}>확인</UI.SaveButton>
           </div>
         </DialogFooter>
       </DialogContent>
