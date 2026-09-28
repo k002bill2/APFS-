@@ -57,6 +57,12 @@
   top: 58px;                 /* GNB 높이 (shell.tsx sticky header height:58) */
   z-index: 30;
 }
+/* 다이얼로그(모달·드로어) 안의 autoHeight 그리드 — 스크롤러는 window 가 아니라 다이얼로그 본문이고 GNB 도 없다.
+   top:58px 을 그대로 두면 헤더가 본문 스크롤포트 기준 58px 에 붙으려 밀려 내려가 첫 행을 가린다
+   (2026-09-28 운용사 정량지표 모달 실측: 헤더 하단 336 > 1행 상단 328, 8px 겹침). 0 = 본문 상단에 고정. */
+[role='dialog'] .ag-root-wrapper.ag-layout-auto-height .ag-header {
+  top: 0;
+}
 /* ── sticky 가로 스크롤바 (autoHeight 그리드 한정, 2026-09-25) ──
    autoHeight 그리드는 가로 스크롤바가 그리드 맨 끝에 그려져, 긴 목록에선 GridFrame sticky 푸터 아래
    화면 밖에 있다(투심보고 통계: 스크롤바 y≈1393 · 푸터 y=743). 푸터 바로 위에 붙여 항상 보이게 한다.
