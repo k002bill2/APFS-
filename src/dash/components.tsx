@@ -218,7 +218,10 @@ function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', d
     lock?.setLocked(true);
     timer.current = window.setTimeout(() => { timer.current = null; setSaving(false); lockRef.current?.setLocked(false); commit(); }, delay);
   };
-  return <Button variant={variant} size={size} leadingIcon={leadingIcon} loading={saving} onClick={click} style={style}>{saving ? busyLabel : children}</Button>;
+  // 라벨 교체는 transitions.dev 04 text-states-swap(TextSwap) — 문자열 라벨일 때만(노드면 그대로 교체).
+  const label = saving ? busyLabel : children;
+  const swappable = typeof children === 'string' && typeof busyLabel === 'string';
+  return <Button variant={variant} size={size} leadingIcon={leadingIcon} loading={saving} onClick={click} style={style}>{swappable ? <TextSwap text={label as string} /> : label}</Button>;
 }
 
 /* ---- IconBtn ---- */
