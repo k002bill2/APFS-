@@ -269,7 +269,7 @@ export function RiskPage({ system = '조기경보', group, label, route, onNav, 
         {unit && onUnit && <UnitToggle unit={unit} onChange={onUnit} note={unitNote} />}
         {filters.length > 0 && <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setOpen(true)}>상세필터</Button>}
         {actions}
-        <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
       </>}
       footerLeft={footerLeft}
       footerRight={<FooterActions onExport={onExport} printItems={printItems} />}>

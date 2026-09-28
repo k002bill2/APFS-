@@ -337,7 +337,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'group', mode: 'create' })}>코드구분 등록</Button>
-        <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
       </>}
       footerLeft={<span>{'코드구분 ' + String(groupViews.length) + '개 표시 중 (전체 ' + String(groups.length) + '개) · 코드상세 ' + String(totalDetails) + '건'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>

@@ -320,7 +320,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
         {/* 전체 펼치기/접기 — 평면(검색) 모드에서는 의미가 없어 비활성 */}
         <Button variant="ghost" size="sm" leadingIcon={allExpanded ? 'collapse-v' : 'expand-v'} disabled={searching} onClick={toggleAll}>{allExpanded ? '전체 접기' : '전체 펼치기'}</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>메뉴 등록</Button>
-        <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(rows.length) + '개 메뉴 중 ' + String(visible.length) + '개 표시 중' + (searching ? ' · 검색 결과(평면)' : '')}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>

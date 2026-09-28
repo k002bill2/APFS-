@@ -400,7 +400,7 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
         </span>
         <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(ROWS.length) + '개 중 ' + String(shown) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
