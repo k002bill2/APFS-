@@ -370,7 +370,7 @@ function flattenForExcel(defs: StatColDefs, unitOf: (key: string) => string | nu
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined}
-      className="inline-flex items-center justify-center font-semibold cursor-pointer motion-safe:active:scale-[.97]"
+      className="inline-flex items-center justify-center font-semibold cursor-pointer"
       style={{ minWidth: 30, height: 30, padding: '0 8px', borderRadius: 8, border: '1px solid ' + (active ? 'var(--primary)' : 'var(--border)'), background: active ? 'var(--primary)' : 'transparent', color: active ? 'var(--primary-foreground)' : 'var(--foreground)', fontSize: 12.5 }}>{n}</button>
   );
 }

@@ -9,6 +9,7 @@ import { Shell } from './shell';
 import { UI } from './components';
 import { Icon } from './icons';
 import { SplitButton } from './ui/split-button';
+import { HOTKEYS } from './use-hotkey';
 import { FilterChipRow, activeFilters } from './applied_filters';
 import type { AppliedFilter, FilterChipItem } from './applied_filters';
 import type { SplitButtonItem } from './ui/split-button';
@@ -23,6 +24,10 @@ const { Card, ColorChip, IconBtn } = UI;
    - `onToggleAll` 을 넘기지 않는 화면(페이지네이션 없는 집계·매트릭스표)은 전체보기 버튼이 빠져 3개만 렌더된다.
    - 페이지마다 복사하지 말고 이 컴포넌트를 쓴다 — 아이콘 순서·라벨·크기가 갈라지지 않게 하는 SSOT.
    - 단축키(⌥D 내보내기 · ⌘P 인쇄)는 페이지의 `useHotkey` 가 그대로 소유한다(여기서 바인딩하지 않는다).
+     툴팁 힌트만 여기서 붙인다(`shortcut` = 표시 전용, 2026-09-28). ⚠ 그래서 FooterActions 를 쓰는 화면은 **반드시**
+     `useHotkey(HOTKEYS.print.combo, …)`(+ onExport 가 있으면 `HOTKEYS.export`)를 바인딩한다 — 안 하면 힌트가 거짓이 된다.
+     가드 테스트 footer_hotkey_hints.test.ts.
+     반면 전체보기(⌥A)·새 창(⌥O)은 페이지 바인딩이 없어 **여기서** `hotkey` 로 바인딩한다 — 화면당 FooterActions 는 1개만 둔다(2개면 이중 발화).
    - `printItems` 를 넘기면 인쇄가 combo(SplitButton iconOnly)가 된다 — 본체 = 화면 인쇄, ▾ = 화면 전용 출력물
      (등록원부 출력·발급이력 출력 등, 2026-09-24 사용자 결정). 툴바에 별도 [출력▾] 을 두지 않는다. */
 export function FooterActions({ onExport, onPrint, printItems, showAll, onToggleAll, size = 32 }: {
@@ -31,12 +36,12 @@ export function FooterActions({ onExport, onPrint, printItems, showAll, onToggle
   const print = onPrint ?? (() => window.print());
   return (
     <>
-      {onToggleAll && <IconBtn icon="maximize" label="전체보기" size={size} active={showAll} pressed={showAll} onClick={onToggleAll} />}
-      <IconBtn icon="external" label="새 창" size={size} onClick={() => window.open(location.href, '_blank')} />
-      {onExport && <IconBtn icon="download" label="내보내기" size={size} onClick={onExport} />}
+      {onToggleAll && <IconBtn icon="maximize" label="전체보기" size={size} active={showAll} pressed={showAll} onClick={onToggleAll} hotkey={HOTKEYS.showAll} />}
+      <IconBtn icon="external" label="새 창" size={size} onClick={() => window.open(location.href, '_blank')} hotkey={HOTKEYS.newWindow} />
+      {onExport && <IconBtn icon="download" label="내보내기" size={size} onClick={onExport} shortcut={HOTKEYS.export} />}
       {printItems?.length
-        ? <SplitButton iconOnly size={size} label="인쇄" leadingIcon="printer" menuLabel="출력 메뉴" onClick={print} items={printItems} />
-        : <IconBtn icon="printer" label="인쇄" size={size} onClick={print} />}
+        ? <SplitButton iconOnly size={size} label="인쇄" leadingIcon="printer" menuLabel="출력 메뉴" onClick={print} items={printItems} shortcut={HOTKEYS.print} />
+        : <IconBtn icon="printer" label="인쇄" size={size} onClick={print} shortcut={HOTKEYS.print} />}
     </>
   );
 }

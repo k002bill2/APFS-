@@ -13,6 +13,7 @@ import React from 'react';
 import { Icon } from '../icons';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
+import { ariaShortcut, type HotkeyCombo } from '../use-hotkey';
 
 export type SplitButtonItem = { label: string; icon?: string; onSelect: () => void };
 
@@ -23,18 +24,18 @@ const HALF = 'ui-btn ui-outline inline-flex items-center justify-center gap-[7px
 const GHOST_HALF = 'inline-flex items-center justify-center cursor-pointer border-0 bg-transparent text-muted-foreground '
   + 'transition-colors duration-tok-fast ease-ds hover:bg-muted hover:text-foreground data-[state=open]:bg-muted';
 
-function IconOnlySplit({ label, leadingIcon = 'more', onClick, items, menuLabel, size }: {
-  label: string; leadingIcon?: string; onClick: () => void; items: SplitButtonItem[]; menuLabel: string; size: number;
+function IconOnlySplit({ label, leadingIcon = 'more', onClick, items, menuLabel, size, shortcut }: {
+  label: string; leadingIcon?: string; onClick: () => void; items: SplitButtonItem[]; menuLabel: string; size: number; shortcut?: { combo: HotkeyCombo; hint: string };
 }) {
   return (
     <span className="inline-flex items-stretch rounded-[10px] border border-border" style={{ height: size }}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button type="button" aria-label={label} onClick={onClick} className={`${GHOST_HALF} rounded-l-[9px]`} style={{ width: size - 2 }}>
+          <button type="button" aria-label={label} aria-keyshortcuts={shortcut ? ariaShortcut(shortcut.combo) : undefined} onClick={onClick} className={`${GHOST_HALF} rounded-l-[9px]`} style={{ width: size - 2 }}>
             <Icon name={leadingIcon} size={16} stroke={2} />
           </button>
         </TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
+        <TooltipContent>{label}{shortcut && <span className="ml-1.5 opacity-60">{shortcut.hint}</span>}</TooltipContent>
       </Tooltip>
       <DropdownMenu>
         <DropdownMenuTrigger aria-label={menuLabel} className={`${GHOST_HALF} rounded-r-[9px] border-l border-solid border-border`} style={{ width: 20 }}>
@@ -59,14 +60,16 @@ function SplitMenu({ items }: { items: SplitButtonItem[] }) {
   );
 }
 
-export function SplitButton({ label, leadingIcon, onClick, items, menuLabel, iconOnly, size = 32 }: {
+export function SplitButton({ label, leadingIcon, onClick, items, menuLabel, iconOnly, size = 32, shortcut }: {
   label: string; leadingIcon?: string; onClick: () => void; items: SplitButtonItem[]; menuLabel: string;
   /** 푸터 아이콘 줄용 — 본체 아이콘만(label=접근名·툴팁) */
   iconOnly?: boolean;
   /** iconOnly 높이(FooterActions IconBtn size 와 맞춘다) */
   size?: number;
+  /** iconOnly 툴팁의 단축키 힌트(표시 전용 — 바인딩은 소비처 소유, IconBtn shortcut 과 같은 룩) */
+  shortcut?: { combo: HotkeyCombo; hint: string };
 }) {
-  if (iconOnly) return <IconOnlySplit label={label} leadingIcon={leadingIcon} onClick={onClick} items={items} menuLabel={menuLabel} size={size} />;
+  if (iconOnly) return <IconOnlySplit label={label} leadingIcon={leadingIcon} onClick={onClick} items={items} menuLabel={menuLabel} size={size} shortcut={shortcut} />;
   return (
     <span className="inline-flex items-stretch">
       <button type="button" onClick={onClick} className={`${HALF} rounded-l-[9px] border-r-0 px-[11px]`}>

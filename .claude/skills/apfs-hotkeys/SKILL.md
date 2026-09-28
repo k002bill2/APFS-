@@ -26,14 +26,21 @@ APFS의 앱-스코프 키보드 단축키는 **단일 훅 + 단일 레지스트�
 | `⌥E` / `Alt+E` | 일정 모달 | `HOTKEYS.schedule` | shell | Mac 실측 / **Windows 미실측** |
 | `⌥L` / `Alt+L` | 로그아웃 모달 | `HOTKEYS.logout` | shell | Mac 실측 / **Windows 미실측** |
 | `⌥H` / `Alt+H` | 방문기록 드롭다운 토글 | `HOTKEYS.history` | shell `HistoryMenu`(IconBtn `hotkey`) | Mac 실측 / **Windows 미실측** |
-| `⌥B` / `Alt+B` | 즐겨찾기 FAB 메뉴 토글 | `HOTKEYS.favorites` | shell `FavoritesFab` | Mac 실측 / **Windows 미실측** |
+| `⌥B` / `Alt+B` | 즐겨찾기 FAB 메뉴 토글 | `HOTKEYS.favorites` | shell `FavoritesFab`(Radix 툴팁 힌트, 메뉴 열림·드래그 중 숨김) | Mac 실측 / **Windows 미실측** |
+| `⌥N` / `Alt+N` | 알림센터 열기 | `HOTKEYS.notif` | shell `Gnb` 알림 IconBtn(`hotkey`) | Mac 실측 / **Windows 미실측** |
+| `⌥\` / `Alt+\` | LNB 메뉴 접기/펴기 | `HOTKEYS.lnb`(`code:'Backslash'` — 한글 자판 ₩ 키) | shell `Gnb`(IconBtn `hotkey`) | Mac 실측 / **Windows 미실측** |
+| `⌥W` / `Alt+W` | 고정/전체 너비 | `HOTKEYS.wide` | shell `Gnb` | Mac 실측 / **Windows 미실측** |
+| `⌥T` / `Alt+T` | 라이트/다크 | `HOTKEYS.theme` | shell `Gnb` | Mac 실측 / **Windows 미실측** |
+| `⌥A` / `Alt+A` | 푸터 전체보기 | `HOTKEYS.showAll` | `FooterActions`(IconBtn `hotkey`, onToggleAll 있는 화면만) | Mac 실측 / **Windows 미실측** |
+| `⌥O` / `Alt+O` | 푸터 새 창 | `HOTKEYS.newWindow` | `FooterActions`(IconBtn `hotkey`) | Mac 실측 / **Windows 미실측** |
 | `⌥R` / `Alt+R` | 리스트 툴바 조회 | `HOTKEYS.refresh` | 조회 IconBtn 38개 페이지 + `generic_list`(IconBtn `hotkey`) | Mac 실측 / **Windows 미실측** |
 
 - **등록 `⌘⏎`는 화면 힌트가 없다**(2026-09-11~). 등록이 kebab 항목에서 툴바 독립 버튼으로 승격되며 `DropdownMenuShortcut` 힌트가 함께 빠졌다 — `UI.Button`은 `forwardRef`/rest props가 없어 Radix `Tooltip asChild` 트리거로 못 쓰고 `title`도 전달되지 않는다(→[[ui-button-not-radix-aschild-trigger]]). 바인딩은 정상 동작. 힌트를 되살리려면 Button `children`에 `<span>{HOTKEYS.register.hint}</span>`를 덧붙이는 방법뿐. 툴바 배치 규약은 →[[apfs-grid]].
 - **`⌘K`는 HOTKEYS 밖의 직접 리스너**(`shell.tsx`, `(e.key==="k"||"K") && (metaKey||ctrlKey)`)다. `useHotkey`가 바로 이 ⌘K 명령팔레트 패턴을 재사용 훅으로 일반화한 것 — 신규 단축키는 반드시 `HOTKEYS`+`useHotkey`로 만든다.
 
-- **`IconBtn`의 `hotkey` prop**(2026-09-28~): `hotkey={HOTKEYS.x}`를 넘기면 클릭과 같은 동작을 바인딩하고 툴팁에 힌트·`aria-keyshortcuts`를 붙인다. **`[role="dialog"]`가 열려 있으면 무시**(폼 편집 중 뒤 목록이 조회·개폐되지 않게). 한 화면에 같은 `hotkey`를 가진 IconBtn이 2개 마운트되면 둘 다 발화하니 페이지당 1개만.
-- 회피한 키: `⌥F`(Windows Chrome 메뉴) → 즐겨찾기는 `⌥B`, `⌘R`(새로고침) → 조회는 `⌥R`.
+- **`IconBtn`의 `hotkey` vs `shortcut`**: `shortcut={HOTKEYS.x}`는 **표시 전용**(툴팁 힌트·`aria-keyshortcuts`만, 바인딩은 호출부 소유 — 이중 발화 방지). `hotkey={HOTKEYS.x}`를 넘기면 클릭과 같은 동작을 바인딩하고 툴팁에 힌트·`aria-keyshortcuts`를 붙인다. **`[role="dialog"]`가 열려 있으면 무시**(폼 편집 중 뒤 목록이 조회·개폐되지 않게). 한 화면에 같은 `hotkey`를 가진 IconBtn이 2개 마운트되면 둘 다 발화하니 페이지당 1개만.
+- 회피한 키: `⌥F`(Windows Chrome 메뉴) → 즐겨찾기는 `⌥B`·전체보기는 `⌥A`, `⌘R`(새로고침) → 조회는 `⌥R`, `⌘W`(탭 닫기) → 전체 너비는 `⌥W`.
+- 기호 키 콤보는 `combo.code`(물리 키 코드)로 매칭한다 — `⌥\` = `code:'Backslash'`(한글 자판 ₩ 키와 같은 물리 키). 글자 키는 `code` 없이 `'Key'+대문자`로 유도된다.
 
 ## Mac / Windows 대응 (질문 자주 나옴)
 **둘 다 정의돼 있다.** 코드가 플랫폼을 분기한다:
@@ -67,5 +74,5 @@ Windows Chromium은 `Alt+D`(주소창)·`Alt+E`(메뉴) 등 일부 단축키를 
 - `useHotkey`의 `useEffect` deps는 `[enabled, combo.mod, combo.shift, combo.key]`로 **`combo.alt`가 빠져 있다**. `HOTKEYS`가 `const`(정적)라 현재는 무해하지만, **동적으로 바뀌는 alt 콤보를 넘기면** 리스너가 갱신되지 않아 깨진다. 동적 콤보가 필요해지면 deps에 `combo.alt` 추가.
 
 ## 관련 스킬
-- ⚠️ **kebab(⋯)은 2026-09-17 전 화면에서 폐기됐다** — 내보내기·인쇄는 푸터 `FooterActions` 아이콘이 항시 노출한다(→[[apfs-grid]]). 바인딩(⌥D·⌘P)은 그대로지만 `DropdownMenuShortcut` 힌트 표면이 사라져 **세 단축키 모두 화면 힌트가 없다**. 이 스킬은 **키 바인딩·힌트 레지스트리**만 담당.
+- ⚠️ **kebab(⋯)은 2026-09-17 전 화면에서 폐기됐다** — 내보내기·인쇄는 푸터 `FooterActions` 아이콘이 항시 노출한다(→[[apfs-grid]]). 2026-09-28부터 그 아이콘 툴팁에 `⌥D`·`⌘P` 힌트가 붙는다 — IconBtn/SplitButton 의 **`shortcut` prop(표시 전용)**. 바인딩은 페이지 `useHotkey` 가 그대로 소유하므로 `FooterActions` 를 쓰는 화면은 print(+onExport 면 export) 바인딩이 **필수**(가드 `footer_hotkey_hints.test.ts`). 등록 `⌘⏎` 만 여전히 화면 힌트가 없다. 이 스킬은 **키 바인딩·힌트 레지스트리**만 담당.
 - 리스트 페이지 툴바 골격 → `apfs-grid`.
