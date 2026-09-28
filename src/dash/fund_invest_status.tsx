@@ -437,7 +437,7 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
   useEffect(() => { apiRef.current?.refreshCells({ force: true }); }, [unit]);
 
   /* 새로고침 — 원천이 정적 상수라 재조회할 원본이 없다. 표시만 다시 그리고 알린다(가짜 데이터 갱신 금지) */
-  const refresh = () => { apiRef.current?.refreshCells({ force: true }); toast.success('새로고침했습니다'); };
+  const refresh = () => { apiRef.current?.refreshCells({ force: true }); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 현재 뷰 기준. 다단 헤더 병합은 flattenForExcel(재귀), 금액은 선택 단위 숫자 셀. ── */
   const exportExcel = () => {

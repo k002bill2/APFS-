@@ -111,7 +111,7 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   // 단위 변경 → 금액 셀(context.unit 참조) 재포맷. 본문 + pinned 합계행 모두. (KPI·카드는 React state로 자동 갱신)
   useEffect(() => { apiRef.current?.refreshCells({ force: true }); }, [unit]);
 
-  const refresh = () => { setRows([...ROWS]); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...ROWS]); toast.success('조회되었습니다'); };
   // 단일 행 삭제 — 우클릭 컨텍스트 메뉴용(y가 행 식별자). 합계행은 호출부에서 제외.
   const deleteOne = (y: string) => {
     setRows((prev) => prev.filter((r) => r.y !== y));

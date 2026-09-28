@@ -317,7 +317,7 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
     toast.success(`${ROLE_LABEL[role]} 확인 처리되었습니다`);
   };
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {

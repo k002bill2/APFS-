@@ -469,7 +469,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
     else if (col === 'chk' && e.data.chk === '확인' && e.data.tx === '배분') openTx(e.data.gi, 'register');
   }, [openTx]);
 
-  const refresh = () => { setGroups(GROUPS); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setGroups(GROUPS); clearFilters(); toast.success('조회되었습니다'); };
 
   /* 배분거래 저장 — 대상 그룹의 members만 불변 갱신(다른 그룹·필드는 그대로) */
   const saveDist = (gi: number, members: TxMember[]) => {

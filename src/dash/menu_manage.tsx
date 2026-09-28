@@ -273,7 +273,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
     apiRef.current?.deselectAll(); setSelIds([]);
     toast.success(`${ids.size}건 삭제되었습니다 (목업)`);
   };
-  const refresh = () => { setRows(buildMenuRows()); setExpanded(new Set()); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows(buildMenuRows()); setExpanded(new Set()); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel — 표시 중인 행(트리/평면 순서 그대로) ── */
   const exportExcel = () => {

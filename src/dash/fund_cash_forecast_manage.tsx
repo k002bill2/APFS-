@@ -290,7 +290,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
     setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
   }, []);
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 2단 헤더 병합 + 합계행 + 선택 단위 환산 ── */
   const exportExcel = () => {

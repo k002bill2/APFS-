@@ -295,7 +295,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
     apiRef.current?.deselectAll(); setSelIds([]);
     toast.success(`${ids.size}건 삭제되었습니다 (목업)`);
   };
-  const refresh = () => { setRows(seedPrograms()); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows(seedPrograms()); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
 
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);

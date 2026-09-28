@@ -282,7 +282,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
     setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
   }, []);
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {

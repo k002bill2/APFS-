@@ -154,7 +154,7 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
   };
 
   const detail = detailId ? DEMO.find((r) => r.id === detailId) ?? null : null;
-  const refresh = () => { clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { clearFilters(); toast.success('조회되었습니다'); };
 
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);

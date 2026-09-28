@@ -378,7 +378,7 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
   const refresh = () => {
     setInvest([...INVEST_DEMO]); setTrade([...TRADE_DEMO]); setNonInvest([...NONINVEST_DEMO]);
     clearFilters();
-    toast.success('새로고침했습니다');
+    toast.success('조회되었습니다');
   };
 
   /* ── Excel(.xlsx) — 워크북 1개 + 섹션 시트 3개. 2단 헤더 병합 재현 ── */

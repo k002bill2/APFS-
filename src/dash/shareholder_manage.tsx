@@ -362,7 +362,7 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
     setModal(null);
   };
 
-  const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더 8컬럼(병합 없음·합계행 없음) ── */
   const exportExcel = () => {

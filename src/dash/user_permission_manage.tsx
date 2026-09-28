@@ -264,7 +264,7 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
     apiRef.current?.deselectAll(); setSelIds([]);
     toast.success(`${ids.size}건 삭제되었습니다 (목업)`);
   };
-  const refresh = () => { setRows([...DEMO]); clearFilters(); apiRef.current?.deselectAll(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); clearFilters(); apiRef.current?.deselectAll(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더 ── */
   const exportExcel = () => {

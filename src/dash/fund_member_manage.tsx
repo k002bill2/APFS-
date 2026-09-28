@@ -330,7 +330,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('삭제되었습니다 (목업)');
   };
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더 13열 + 합계행(화면=엑셀 불변식) ── */
   const exportExcel = () => {

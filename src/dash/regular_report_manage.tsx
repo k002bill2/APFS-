@@ -348,7 +348,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
     if (colId === 'rt' && e.data?.rt === '월간보고서') { openDetail(); return; }
   }, []);
 
-  const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측/하단 플로팅 바 중 한 곳에만 렌더한다 → 필터 칩은 filterChips 로 넘기고, 선택 중엔 GridFrame 이 칩을 +N 안으로 접는다 */
   const selActions = selCount > 0 ? (

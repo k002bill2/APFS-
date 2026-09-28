@@ -308,7 +308,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
     setYmRaw(BASE_YM);
     setResults(RESULT_DEMO);
     setReports(REPORT_DEMO);
-    toast.success('새로고침했습니다');
+    toast.success('조회되었습니다');
   };
 
   /* ── Excel(.xlsx) — 워크북 1개 + 섹션 시트 2개 ── */

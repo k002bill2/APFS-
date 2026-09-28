@@ -229,7 +229,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
       toast.success(`${row.name} 등록 — 온보딩 안내 메일 (목업)`);
     }
   };
-  const refresh = () => { setRows(demoUsers()); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows(demoUsers()); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel — 표시 중인 행 ── */
   const exportExcel = () => {

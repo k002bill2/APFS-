@@ -318,7 +318,7 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
     if (e.data) setModalRow(e.data);
   }, []);
 
-  const refresh = () => { clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — **시트 4장**(시트명 = 운용사구분). 2단 헤더 병합·리프 키는 columnDefs 에서 자동 산출.
      본문은 **화면과 같은 필터 결과**(visible)를 쓴다 — 화면=엑셀 불변식(apfs-spec-popup 규약 6). ── */
