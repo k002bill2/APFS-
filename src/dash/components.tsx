@@ -1,7 +1,7 @@
 /* 공통 래퍼 컴포넌트 — Tailwind 유틸리티 className 기반.
    동적 색(accent/tone 토큰)·계산된 치수는 인라인 유지(Tailwind로 표현 불가), 나머지는 유틸리티. */
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Icon } from './icons';
 import { Charts } from './charts';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
@@ -230,19 +230,24 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
   const [turns, setTurns] = React.useState(0);
   const [phase, setPhase] = React.useState<"idle" | "busy" | "settling" | "stopping">("idle");
   const pending = React.useRef(0);
+  // 저모션: MotionConfig가 회전을 즉시 완료시키므로 onSpinDone 체인이 대기 내내 렌더 루프가 된다 → 체인 대신 aria-busy만.
+  const reduced = useReducedMotion();
   const click = spinOnClick ? () => {
     setTurns((t) => t + 1);
     const r = onClick?.();
     if (r && typeof (r as Promise<unknown>).then === "function") {
       pending.current += 1;
       setPhase("busy");
-      Promise.resolve(r).catch(() => {}).finally(() => {
+      const done = () => {
         pending.current -= 1;
-        if (pending.current === 0) setPhase("settling"); // 도는 중인 등속 1바퀴는 마저 돈다(여기서 +1 하면 거리 2배로 급가속)
-      });
+        if (pending.current === 0) setPhase(reduced ? "idle" : "settling"); // 도는 중인 등속 1바퀴는 마저 돈다(여기서 +1 하면 거리 2배로 급가속)
+      };
+      // reject는 삼키지 않고 다시 던진다 — 호출부 오류가 이 래퍼 때문에 조용히 사라지지 않게.
+      Promise.resolve(r).then(done, (e) => { done(); throw e; });
     }
   } : onClick;
   const onSpinDone = () => {
+    if (reduced) return;
     if (pending.current > 0) setTurns((t) => t + 1);
     else if (phase === "settling") { setPhase("stopping"); setTurns((t) => t + 1); } // 등속 → 감속 정지 1바퀴
     else if (phase !== "idle") setPhase("idle");
