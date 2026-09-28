@@ -631,6 +631,18 @@ function FavoritesFab({ onNav }) {
   const [dragging, setDragging] = useState(false);
   const drag = useRef<{ x: number; y: number; right: number; bottom: number; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
+  // 맨 위로 — 일정 이상 스크롤했을 때만 FAB 옆에 노출(스크롤 주체는 window)
+  const [showTop, setShowTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 240);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  const scrollTop = () => {
+    const reduce = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  };
   // 창 크기 변경 시 화면 밖으로 밀려나지 않게 재클램프(저장값은 그대로 — 창을 다시 키우면 원위치)
   useEffect(() => {
     const onResize = () => setPos(clampFabPos(readFabPos()));
@@ -696,6 +708,18 @@ function FavoritesFab({ onNav }) {
         </div>
         </MenuHighlightProvider>
       </>}
+      {/* FAB과 맨 위로 버튼은 한 열로 묶어 가운데 정렬 — 메뉴 쪽(FAB과 메뉴 사이)에 붙는다. FAB이 고정 모서리에 있으므로 버튼이 나타나도 FAB은 움직이지 않는다. */}
+      <div className={"flex items-center gap-2 " + (onTop ? "flex-col-reverse" : "flex-col")}>
+      {showTop && !open && !dragging && (
+        <button
+          onClick={scrollTop}
+          aria-label="맨 위로"
+          title="맨 위로"
+          className="bg-card text-foreground shadow-lg cursor-pointer flex items-center justify-center"
+          style={{ width: 36, height: 36, borderRadius: 10, border: "1px solid var(--border)", animation: "dashFade var(--dur) var(--ease) both" }}>
+          <Icon name="arrow-up" size={17} stroke={2.2} />
+        </button>
+      )}
       <button
         onClick={() => { if (suppressClick.current) { suppressClick.current = false; return; } setOpen((o) => !o); }}
         onPointerDown={onPointerDown}
@@ -709,6 +733,7 @@ function FavoritesFab({ onNav }) {
         style={{ width: FAB_SIZE, height: FAB_SIZE, borderRadius: 99, border: "none", background: "var(--brand-solid)", color: "var(--on-brand-solid)", touchAction: "none", userSelect: "none", transition: "transform .18s var(--ease)", transform: open ? "rotate(90deg) scale(1.04)" : dragging ? "scale(1.08)" : "none" }}>
         <Icon name={open ? "x" : "star"} size={20} stroke={2.2} />
       </button>
+      </div>
     </div>
   );
 }
