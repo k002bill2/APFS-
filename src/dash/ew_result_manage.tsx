@@ -1,50 +1,55 @@
 /* 조기경보 결과정보 관리 — 관리형 페이지 (조기경보 > 조기경보 > 조기경보 결과정보 관리).
    출처: S2_61_조기경보_결과정보_관리.html(KRDS TO-BE) + S2_62(생성 확인 팝업 — 목업에 이미 이식돼 있음)
-   → APFS 디자인시스템으로 변형. 골드 레퍼런스: custody_verify_manage.tsx(섹션 적층형).
+   → APFS 디자인시스템으로 변형. 골드 레퍼런스: custody_verify_manage.tsx(섹션 적층형 + 상세필터 드로어).
 
    구성(목업 → 우리 규약):
-   - 검색박스(기준년월 + [조회]) → 툴바 좌 `PeriodPicker mode="month"`(apfs-datepicker). [조회] 버튼은 없다 —
-     월을 고르면 즉시 반영된다. 필터가 기준년월 하나뿐이라 상세필터 드로어·검색어는 두지 않는다.
-   - `.actbar`(생성·확정·마감·마감해제) → 툴바 우 버튼 4개 **상태 무관 상시 노출**(아래 '한계·가정' 첫 항목).
+   - 검색박스(기준년월 + [조회]) → **상세필터 드로어**(Sheet, apfs-detail-filter) 안의 `PeriodPicker mode="month"`.
+     [조회] 버튼은 없다 — 월을 고르면 즉시 반영된다. 적용 값은 GridFrame `appliedFilters` 칩(값만 + ×)으로 보인다.
+     기준년월은 항상 값이 있어(빈 조회 조건이 없다) 칩이 상시 보이고, × = 기본값(2026-07)으로 되돌리기. 검색어는 OFF.
+   - `.actbar`(생성·확정·마감·마감해제) → 생성은 툴바 우 상세필터 오른쪽 `+ 생성` 버튼(등록 버튼 자리·형태, 월 단위라 행 선택과 무관),
+     확정·마감·마감해제는 **섹션1 체크박스 선택 액션**(2026-09-28 사용자 지시 "그리드에 체크박스로 기능 구현").
    - 섹션 2개(조기경보 생성 결과내역 · 운용사 재무정보 보고) → **GridFrame 하나 안에 세로로 쌓은 AG Grid 2개**.
-     섹션 경계는 번호 칩 + 제목 + 캡션(총 N건 · 기준년월) 헤더 행(목업 `.sectitle`+`.listbar` 통합).
-     섹션2 헤더 우측에 목업 `.acts`(전체권한부여·전체권한해제) 버튼.
+     두 그리드 모두 multiRow 체크박스(apfs-aggrid "체크박스" 절 — 본문 클릭 선택 없음, SELECTION_COL).
+     선택이 두 그리드에서 동시에 생길 수 있어 GridFrame `contextActions`(단일 선택원 전제)가 아니라
+     **각 섹션 헤더 우측**에 `N건 선택됨 · [액션] · 선택 해제`를 그린다. 선택이 없으면 섹션2는 전체권한부여·해제.
+   - 섹션2 수정권한처리 → 구 셀 안 버튼 컬럼을 걷어내고 체크박스 선택 액션으로 옮겼다(선택 행 수정권한여부 토글).
    - O/X(목업 `.tag g`/`.tag n`) → `StatusBadge size="lg"` O=success · X=muted. null 은 muted 텍스트 '-'.
      생성여부 셀은 배지 옆에 생성일시(목업 `.ts`)를 작은 muted 텍스트로 붙인다.
-   - 섹션2 수정권한처리 → 셀 안 outline 버튼 → 확인 다이얼로그.
    - 확인 다이얼로그(목업 `confirmDlg`) → Radix AlertDialog(`ew_result_dialogs.tsx`), 기본 포커스=취소.
-     확정은 목업과 같이 다이얼로그 없이 토스트만 띄운다.
-   - 합계행·행 선택·페이지네이션·등록 없음 → selbar·pinned 합계·페이저도 없다(목업 동일). KPI 배지 행 미포함(사용자 결정).
+     확정은 목업과 같이 다이얼로그 없이 바로 반영 + 토스트.
+   - 합계행·페이지네이션·등록 없음 → pinned 합계·페이저도 없다(목업 동일). KPI 배지 행 미포함(사용자 결정).
    - 엑셀 → SheetJS 워크북 1개 + 시트 2개("생성결과내역"·"재무정보보고"). 단일 헤더라 병합 없음.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
-   섹션2 전월 규칙은 [확인 필요]로 아래 주석에만 기록한다.
 
    한계·가정(결정 기록)
    - **섹션2 기준년월 = 선택 월의 전월(-1)** — 목업이 상단 2026-07 / 섹션2 2026-06 으로 그렸고 설계메모가
      "전월 집계인지 하드코딩 오류인지" [확인 필요]로 남겼다. 목업 그대로 전월로 둔다(주석에만 기록).
-   - **기획서 범위로 한정(2026-09-23 사용자 결정)** — 기획서(통합_화면_구조도_v1.5.xlsx)는 버튼·확인팝업만 정의하고
-     처리 효과가 없다 → 생성·확정·마감·마감해제·수정권한처리·전체권한부여·전체권한해제 버튼은 **상태 무관 상시 노출**,
-     확인 후 **토스트만**(데이터 불변). 섹션2가 빈 월은 전체권한 버튼만 비활성(대상 없음).
+   - **처리 효과 = 선택 행 O/X 로컬 갱신(2026-09-28 사용자 결정 — 09-23 '토스트만' 결정을 대체)**:
+     확정→확정여부 O · 마감→마감여부 O · 마감해제→마감여부 X · 수정권한처리→수정권한여부 토글(미정 '-'→O) ·
+     전체권한부여/해제→섹션2 전 행 O/X. 버튼은 상태 무관(이미 O 인 행에 마감해도 막지 않는다 — 기획서에 게이트 정의 없음).
+     **생성은 여전히 토스트만** — 새 결과 행을 만들려면 없는 값을 창작해야 한다.
    - **"수정권한"의 의미·범위 미정의** [확인 필요] — 부여 시 운용사가 어느 화면·항목을 수정할 수 있는지, 기준년월 한정인지,
-     재무정보 등록/보고 화면 편집 가능 여부와 어떻게 연동되는지 원문에 없다(목업 설계메모). 여기선 값을 바꾸지 않는다.
+     재무정보 등록/보고 화면 편집 가능 여부와 어떻게 연동되는지 원문에 없다(목업 설계메모). 여기선 플래그만 바꾼다.
    - **더미 데이터는 목업 원문 2건뿐**(섹션1 2026-07 · 섹션2 2026-06) — 그 외 월은 빈 그리드. 값 창작 금지.
-   - **데이터는 불변 상수**(월 키로 보관, 백엔드 없음) — 새로고침 버튼은 기준년월을 기본값(2026-07)으로 되돌린다.
+   - **데이터는 로컬 state**(월 키, 백엔드 없음) — 새로고침은 기준년월·데이터·선택을 모두 초기값으로 되돌린다.
    - 금액이 없는 조회·상태관리 화면이라 단위 표기·단위 토글이 없다(목업 설계메모와 동일 결론). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정 + autoHeight sticky 헤더(공유)
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { UI } from './components';
 import { GridFrame, FooterActions } from './grid_frame';
 import { SectionHead } from './risk_grid';   // 여러 표 세로 쌓기 공용 섹션 헤더
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
+import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // DS 체크박스 선택 열 + multiRow 선택 복원
 import { controlMinWidth } from './schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, CellStyle } from 'ag-grid-community';
+import type { ColDef, CellStyle, GridApi, GridReadyEvent, SelectionChangedEvent, RowSelectionOptions } from 'ag-grid-community';
+import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { PeriodPicker } from './ui/period-picker';
 import { EwConfirmDialog } from './ew_result_dialogs';
-import { prevYm } from './ew_result_model';   // 섹션2 기준년월 = 전월(순수함수 — 유닛 테스트 대상)
+import { prevYm, setFlag, togglePerm } from './ew_result_model';   // 순수함수 — 유닛 테스트 대상
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -81,9 +86,12 @@ const REPORT_DEMO: Record<string, GpReportRow[]> = {
 /* 기준년월 기본값 — 목업 `#f-ym` value */
 const BASE_YM = '2026-07';
 
+/* 다중 선택(체크박스로만 on/off — 행 본문 클릭 선택 없음, apfs-aggrid "체크박스" 절). 모듈 상수(계약 6 — 인라인이면 컬럼 재생성) */
+const ROW_SELECTION: RowSelectionOptions = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
+
 /* ──────────────────────────────
-   컬럼 정의 — 목업 thead 순서·집합 그대로(단일 헤더 7컬럼 × 2)
-   ⚠ 폭 전략 = **flex + minWidth**(`autoSizeStrategy` 없음) — 7컬럼 내용 폭 합이 프레임보다 좁아 내용 맞춤을 쓰면
+   컬럼 정의 — 목업 thead 순서·집합 그대로(단일 헤더)
+   ⚠ 폭 전략 = **flex + minWidth**(`autoSizeStrategy` 없음) — 컬럼 내용 폭 합이 프레임보다 좁아 내용 맞춤을 쓰면
      오른쪽에 빈 거터가 남는다(workforce_manage 와 같은 상황). flex 컬럼에도 `width: minWidth` 필수(apfs-aggrid ⑨).
 ────────────────────────────── */
 const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
@@ -132,27 +140,15 @@ const RESULT_COLS: ColDef<EwResultRow>[] = [
   oxCol<EwResultRow>('cls', '마감여부'),
 ];
 
-/* 수정권한처리 버튼 컬럼의 colId — 조작 요소라 엑셀 직렬화에서 제외한다 */
-const PERM_ACTION_COL = 'permAct';
-type OpenPerm = () => void;
-
-function makeReportCols(openPerm: OpenPerm): ColDef<GpReportRow>[] {
-  return [
-    seqCol<GpReportRow>(),
-    ymCol<GpReportRow>(),
-    { field: 'gp', headerName: '운용사', flex: 1.4, minWidth: 160, width: 160, cellStyle: flexCenter, cellRenderer: textCell },
-    oxCol<GpReportRow>('rep', '보고여부'),
-    oxCol<GpReportRow>('cons', '정합성여부'),
-    oxCol<GpReportRow>('perm', '수정권한여부'),
-    /* 액션 컬럼(정렬·엑셀 제외). UI.Button은 aria-label을 받지 않으므로 접근名은 sr-only로 보강("1행 ") */
-    { colId: PERM_ACTION_COL, headerName: '수정권한처리', flex: 0.9, minWidth: 128, width: 128, sortable: false, cellStyle: flexMid,
-      cellRenderer: (p: { data?: GpReportRow }) => (p.data
-        ? <Button variant="outline" size="sm" onClick={() => openPerm()}>
-            <span className="sr-only">{p.data.no + '행 '}</span>수정권한처리
-          </Button>
-        : null) },
-  ];
-}
+/* 섹션2 — 수정권한처리는 셀 버튼 컬럼이 아니라 체크박스 선택 액션이다(파일 상단 구성) */
+const REPORT_COLS: ColDef<GpReportRow>[] = [
+  seqCol<GpReportRow>(),
+  ymCol<GpReportRow>(),
+  { field: 'gp', headerName: '운용사', flex: 1.4, minWidth: 160, width: 160, cellStyle: flexCenter, cellRenderer: textCell },
+  oxCol<GpReportRow>('rep', '보고여부'),
+  oxCol<GpReportRow>('cons', '정합성여부'),
+  oxCol<GpReportRow>('perm', '수정권한여부'),
+];
 
 /* ──────────────────────────────
    Excel — 섹션별 시트 2개(단일 헤더).
@@ -193,14 +189,50 @@ function toSheet<T>(cols: XCol<T>[], rows: T[]): XLSX.WorkSheet {
 ────────────────────────────── */
 const NO_ROWS = '<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회된 데이터가 없습니다.</span>';
 
+/* 드로어 필드 래퍼(custody_verify_manage 골드 복사) — PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 → <div> */
+function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="block mb-4">
+      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
+      {children}
+    </div>
+  );
+}
+
+/* 그리드 1장의 multiRow 선택 배선 — 선택 SSOT = `selIds`(배열, 건수는 파생). 두 섹션이 같은 배선을 한 벌씩 쓴다.
+   rowData 가 바뀌어도(O/X 갱신) getRowId 가 같으면 선택이 유지되고, onRowDataUpdated 의 restoreSelection 이 되맞춘다. */
+function useGridSelection<T extends { id: string }>() {
+  const apiRef = useRef<GridApi<T> | null>(null);
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
+  const onGridReady = useCallback((e: GridReadyEvent<T>) => {
+    apiRef.current = e.api;
+    restoreSelection(e.api, selIdsRef.current);
+  }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<T>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
+  const onRowDataUpdated = useCallback((e: { api: GridApi<T> }) => {
+    restoreSelection(e.api, selIdsRef.current);
+  }, []);
+  /* 선택 해제 — ref 를 먼저 비워야 뒤따르는 rowData 교체(월 변경) 때 restoreSelection 이 옛 id 를 되살리지 않는다 */
+  const clear = useCallback(() => {
+    selIdsRef.current = [];
+    setSelIds([]);
+    apiRef.current?.deselectAll();
+  }, []);
+  return { selIds, clear, gridProps: { onGridReady, onSelectionChanged, onRowDataUpdated } };
+}
+
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
 type ModalState = null
-  | { kind: 'close' | 'reopen'; ym: string }   // 본문에 기준년월을 싣는다
-  | { kind: 'make' | 'grantAll' | 'revokeAll' | 'perm' };
+  | { kind: 'make' }
+  | { kind: 'close' | 'reopen'; ym: string; ids: string[] }   // 섹션1 선택 행
+  | { kind: 'perm'; ids: string[] }                            // 섹션2 선택 행
+  | { kind: 'grantAll' | 'revokeAll'; ids: string[] };         // 섹션2 전 행
 
-/* 확인 후 토스트 — 기획서에 처리 효과 정의가 없어 데이터는 바꾸지 않는다(파일 상단 '한계·가정') */
 const DONE_TOAST: Record<NonNullable<ModalState>['kind'], string> = {
   make: '생성되었습니다',
   close: '마감 처리되었습니다',
@@ -210,30 +242,72 @@ const DONE_TOAST: Record<NonNullable<ModalState>['kind'], string> = {
   perm: '권한처리 되었습니다',
 };
 
+/** 선택 액션 묶음 — 첫 자식은 언제나 `N건 선택됨`(apfs-aggrid 선택 툴바 규약), 끝은 `선택 해제` */
+function SelActions({ count, onClear, children }: { count: number; onClear: () => void; children: React.ReactNode }) {
+  return <>
+    <span className="font-semibold" style={{ fontSize: 13 }}>{String(count)}건 선택됨</span>
+    {children}
+    <Button variant="ghost" size="sm" onClick={onClear}>선택 해제</Button>
+  </>;
+}
+
 export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
-  const [ym, setYm] = useState(BASE_YM);
+  const [ym, setYmRaw] = useState(BASE_YM);
+  const [results, setResults] = useState<Record<string, EwResultRow[]>>(RESULT_DEMO);
+  const [reports, setReports] = useState<Record<string, GpReportRow[]>>(REPORT_DEMO);
   const [modal, setModal] = useState<ModalState>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  const sel1 = useGridSelection<EwResultRow>();
+  const sel2 = useGridSelection<GpReportRow>();
+
+  /* 기준년월 변경 = 두 표의 행 집합이 통째로 바뀐다 → 선택을 함께 비운다(안 비우면 'N건 선택됨'만 남는 유령 선택) */
+  const setYm = (v: string) => {
+    const next = v || BASE_YM;
+    if (next === ym) return;
+    sel1.clear(); sel2.clear();
+    setYmRaw(next);
+  };
 
   useHotkey(HOTKEYS.print.combo, () => window.print());
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen });
 
   /* 섹션2 기준년월 = 선택 월의 전월(파일 상단 '한계·가정') */
   const reportYm = prevYm(ym);
-  const resultRows = useMemo(() => RESULT_DEMO[ym] ?? [], [ym]);
-  const reportRows = useMemo(() => (reportYm ? REPORT_DEMO[reportYm] ?? [] : []), [reportYm]);
+  const resultRows = useMemo(() => results[ym] ?? [], [results, ym]);
+  const reportRows = useMemo(() => (reportYm ? reports[reportYm] ?? [] : []), [reports, reportYm]);
 
-  /* 컬럼 정의 — openPerm(안정)만 캡처하므로 deps는 [openPerm](apfs-aggrid 계약6) */
-  const openPerm = useCallback<OpenPerm>(() => setModal({ kind: 'perm' }), []);
-  const reportCols = useMemo(() => makeReportCols(openPerm), [openPerm]);
+  /* 섹션1 선택 행의 O/X 갱신 / 섹션2 선택 행의 수정권한여부 갱신 — 월 키 한 칸만 바꾼다 */
+  const patchResults = (at: string, ids: string[], key: 'cfm' | 'cls', v: OX) =>
+    setResults((prev) => ({ ...prev, [at]: setFlag(prev[at] ?? [], ids, key, v) }));
+  const patchPerm = (ids: string[], v: OX | typeof togglePerm) =>
+    setReports((prev) => (reportYm ? { ...prev, [reportYm]: setFlag(prev[reportYm] ?? [], ids, 'perm', v) } : prev));
 
-  /* 확정 — 목업과 같이 다이얼로그 없이 토스트만 */
-  const doConfirm = () => toast.success('결과정보를 확정했습니다');
+  /* 확정 — 목업과 같이 다이얼로그 없이 바로 반영 */
+  const doConfirm = () => {
+    patchResults(ym, sel1.selIds, 'cfm', 'O');
+    toast.success(`${sel1.selIds.length}건을 확정했습니다`);
+  };
 
-  /* 확인 다이얼로그 확정 — 토스트만. 닫힘은 AlertDialog deferred close → onClose 가 처리(여기서 setModal(null) 하지 않는다) */
-  const commit = () => { if (modal) toast.success(DONE_TOAST[modal.kind]); };
+  /* 확인 다이얼로그 확정. 닫힘은 AlertDialog deferred close → onClose 가 처리(여기서 setModal(null) 하지 않는다) */
+  const commit = () => {
+    if (!modal) return;
+    switch (modal.kind) {
+      case 'close': patchResults(modal.ym, modal.ids, 'cls', 'O'); break;
+      case 'reopen': patchResults(modal.ym, modal.ids, 'cls', 'X'); break;
+      case 'perm': patchPerm(modal.ids, togglePerm); break;
+      case 'grantAll': patchPerm(modal.ids, 'O'); break;
+      case 'revokeAll': patchPerm(modal.ids, 'X'); break;
+      case 'make': break;   // 생성은 토스트만(파일 상단 '한계·가정')
+    }
+    toast.success(DONE_TOAST[modal.kind]);
+  };
 
   const refresh = () => {
-    setYm(BASE_YM);
+    sel1.clear(); sel2.clear();
+    setYmRaw(BASE_YM);
+    setResults(RESULT_DEMO);
+    setReports(REPORT_DEMO);
     toast.success('새로고침했습니다');
   };
 
@@ -246,23 +320,26 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('Excel로 내보냈습니다');
   };
 
-  /* 다이얼로그 문구 — 목업 confirmDlg 호출 원문 그대로 */
+  /* 다이얼로그 문구 — 목업 confirmDlg 호출 원문 + 선택 건수 */
   const dialog = (() => {
     if (!modal) return null;
-    const ymB = <b className="text-foreground">{String('ym' in modal ? modal.ym : '')}</b>;   // close·reopen 만 사용
+    const n = 'ids' in modal ? modal.ids.length : 0;
+    const nB = <b className="text-foreground">{String(n)}건</b>;
     switch (modal.kind) {
       case 'make': return { title: '조기경보 결과정보 관리 - 생성 확인', ok: '확인',
         body: <span className="inline-flex items-center">생성하시겠습니까?</span> };
       case 'close': return { title: '마감 처리', ok: '마감',
-        body: <>기준년월 {ymB}의 조기경보 결과정보를 마감하시겠습니까?<br />마감 후에는 수정이 제한됩니다.</> };
-      case 'reopen': return { title: '마감해제', ok: '마감해제', body: <>기준년월 {ymB}의 마감을 해제하시겠습니까?</> };
+        body: <>기준년월 <b className="text-foreground">{modal.ym}</b>의 조기경보 결과정보 {nB}을 마감하시겠습니까?<br />마감 후에는 수정이 제한됩니다.</> };
+      case 'reopen': return { title: '마감해제', ok: '마감해제',
+        body: <>기준년월 <b className="text-foreground">{modal.ym}</b>의 조기경보 결과정보 {nB}의 마감을 해제하시겠습니까?</> };
       case 'grantAll': return { title: '전체권한부여', ok: '부여', body: '운용사 재무정보 보고 대상 전체에 수정 권한을 일괄 부여하시겠습니까?' };
       case 'revokeAll': return { title: '전체권한해제', ok: '해제', body: '운용사 재무정보 보고 대상 전체의 수정 권한을 일괄 해제하시겠습니까?' };
-      case 'perm': return { title: '수정권한처리', ok: '처리', body: '권한처리하시겠습니까?' };
+      case 'perm': return { title: '수정권한처리', ok: '처리', body: <>선택한 운용사 {nB}을 권한처리하시겠습니까?</> };
     }
   })();
 
   const noReport = reportRows.length === 0;
+  const allReportIds = reportRows.map((r) => r.id);
 
   return (
     <GridFrame
@@ -271,30 +348,28 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
       cardTitle="조기경보 결과정보 관리"
       favRoute="조기경보 결과정보 관리"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 기준년월(주 조회조건, 즉시 반영). PeriodPicker 트리거는 w-full 이라 fit-content 래퍼(apfs-datepicker "폭") */
-      toolbarLeft={(
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-muted-foreground whitespace-nowrap" style={{ fontSize: 13 }}>기준년월</span>
-          <div style={{ width: 'fit-content', minWidth: controlMinWidth('month'), maxWidth: '100%' }}>
-            <PeriodPicker mode="month" value={ym} onChange={(v) => setYm(v || BASE_YM)} ariaLabel="기준년월" />
-          </div>
-        </div>
-      )}
-      /* 툴바 우 = 워크플로 버튼 4개(상태 무관 상시 노출) → 새로고침 */
+      /* 적용 중인 드로어 값 칩 = appliedFilters. 기준년월은 비는 일이 없어 칩이 상시 보이고 × = 기본값 복귀 */
+      appliedFilters={[{ label: '기준년월', value: ym, onClear: () => setYm(BASE_YM) }]}
+      /* 툴바 우 = 상세필터 → 생성(월 단위, 선택 무관 — 등록 버튼 자리·형태, workforce_manage 선례) → 새로고침 */
       toolbarRight={<>
-        <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'make' })}>생성</Button>
-        <Button variant="outline" size="sm" onClick={doConfirm}>확정</Button>
-        <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'close', ym })}>마감</Button>
-        <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'reopen', ym })}>마감해제</Button>
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
+        <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'make' })}>생성</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
       </>}
       /* 푸터 좌 = 섹션별 건수(페이지네이션이 없어 '총 N개 중 M개' 형식이 성립하지 않는다) */
       footerLeft={<span>{'생성 결과내역 ' + String(resultRows.length) + '건 · 운용사 재무정보 보고 ' + String(reportRows.length) + '건'}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
-      {/* ── ① 조기경보 생성 결과내역 (선택 월) ── */}
+      {/* ── ① 조기경보 생성 결과내역 (선택 월) — 선택 시 확정·마감·마감해제 ── */}
       <SectionHead title="조기경보 생성 결과내역"
-        cap={<>기준년월 {String(ym)}</>} />
+        cap={<>기준년월 {String(ym)}</>}
+        actions={sel1.selIds.length > 0 && (
+          <SelActions count={sel1.selIds.length} onClear={sel1.clear}>
+            <Button variant="outline" size="sm" onClick={doConfirm}>확정</Button>
+            <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'close', ym, ids: sel1.selIds })}>마감</Button>
+            <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'reopen', ym, ids: sel1.selIds })}>마감해제</Button>
+          </SelActions>
+        )} />
       <div className="apfs-stack-grid">
         <AgGridReact<EwResultRow>
           theme={apfsTheme}
@@ -304,27 +379,60 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
           domLayout="autoHeight"
           defaultColDef={DEFAULT_COL_DEF}
           overlayNoRowsTemplate={NO_ROWS}
+          rowSelection={ROW_SELECTION}
+          selectionColumnDef={SELECTION_COL}
+          {...sel1.gridProps}
         />
       </div>
 
-      {/* ── ② 운용사 재무정보 보고 (선택 월의 전월) ── */}
+      {/* ── ② 운용사 재무정보 보고 (선택 월의 전월) — 선택 시 수정권한처리, 미선택 시 전체권한부여·해제 ── */}
       <SectionHead title="운용사 재무정보 보고"
         cap={<>기준년월 {reportYm ? String(reportYm) : '-'}</>}
-        actions={<>
-          <Button variant="outline" size="sm" disabled={noReport} onClick={() => setModal({ kind: 'grantAll' })}>전체권한부여</Button>
-          <Button variant="outline" size="sm" disabled={noReport} onClick={() => setModal({ kind: 'revokeAll' })}>전체권한해제</Button>
+        actions={sel2.selIds.length > 0 ? (
+          <SelActions count={sel2.selIds.length} onClear={sel2.clear}>
+            <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'perm', ids: sel2.selIds })}>수정권한처리</Button>
+          </SelActions>
+        ) : <>
+          <Button variant="outline" size="sm" disabled={noReport} onClick={() => setModal({ kind: 'grantAll', ids: allReportIds })}>전체권한부여</Button>
+          <Button variant="outline" size="sm" disabled={noReport} onClick={() => setModal({ kind: 'revokeAll', ids: allReportIds })}>전체권한해제</Button>
         </>} />
       <div className="apfs-stack-grid">
         <AgGridReact<GpReportRow>
           theme={apfsTheme}
           rowData={reportRows}
-          columnDefs={reportCols}
+          columnDefs={REPORT_COLS}
           getRowId={(p) => p.data.id}
           domLayout="autoHeight"
           defaultColDef={DEFAULT_COL_DEF}
           overlayNoRowsTemplate={NO_ROWS}
+          rowSelection={ROW_SELECTION}
+          selectionColumnDef={SELECTION_COL}
+          {...sel2.gridProps}
         />
       </div>
+
+      {/* ── 상세필터 드로어 — 목업 검색박스 항목 그대로(기준년월). 즉시 반영형이라 적용 버튼은 닫기만 한다 ── */}
+      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
+          <SheetHeader>
+            <SheetTitle>상세 필터</SheetTitle>
+            <SheetDescription className="sr-only">조기경보 결과정보 목록을 거르는 상세 필터</SheetDescription>
+            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
+            {/* PeriodPicker 트리거는 w-full 이라 fit-content 래퍼(apfs-datepicker "폭") */}
+            <DrawerField label="기준년월">
+              <div style={{ width: 'fit-content', minWidth: controlMinWidth('month'), maxWidth: '100%' }}>
+                <PeriodPicker mode="month" value={ym} onChange={setYm} ariaLabel="기준년월" />
+              </div>
+            </DrawerField>
+          </div>
+          <SheetFooter>
+            <Button variant="outline" size="md" onClick={() => setYm(BASE_YM)}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       {/* ── 확인 다이얼로그 — 조건부 마운트. 닫힘 후 onClose 에서 state 해제 ── */}
       {dialog && (
