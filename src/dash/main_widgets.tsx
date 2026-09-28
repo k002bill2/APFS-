@@ -432,7 +432,7 @@ function QuickTasksBar({ onNav }: { onNav: (r: string) => void }) {
   const items: any[] = D.QUICKMENU || [];
   return (
     <div style={{ marginBottom: 18 }}>
-      <div style={{ animation: "dashFade var(--dur) var(--ease) both" }}>
+      <div style={{ animation: "dashFade var(--dur) var(--ease) backwards" }}>
         <ConceptLayeredGlass items={items} onNav={onNav} />
       </div>
     </div>
