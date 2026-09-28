@@ -242,8 +242,8 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
         pending.current -= 1;
         if (pending.current === 0) setPhase(reduced ? "idle" : "settling"); // 도는 중인 등속 1바퀴는 마저 돈다(여기서 +1 하면 거리 2배로 급가속)
       };
-      // reject는 삼키지 않고 다시 던진다 — 호출부 오류가 이 래퍼 때문에 조용히 사라지지 않게.
-      Promise.resolve(r).then(done, (e) => { done(); throw e; });
+      // 오류 처리(토스트 등)는 호출부 책임 — 여기서 다시 던지면 호출부가 처리한 reject도 unhandledrejection으로 한 번 더 뜬다.
+      Promise.resolve(r).then(done, done);
     }
   } : onClick;
   const onSpinDone = () => {
