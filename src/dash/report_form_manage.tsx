@@ -177,7 +177,7 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('삭제되었습니다 (목업)');
   };
 
-  const refresh = () => { setRows([...DEMO]); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더 ── */
   const exportExcel = () => {

@@ -292,7 +292,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
   };
   const refresh = () => {
     const gs = demoGroups(); setGroups(gs); setDetails(demoDetails()); setCurCode(gs[0]?.code ?? null); setSelDIds([]); clearFilters();
-    toast.success('새로고침했습니다');
+    toast.success('조회되었습니다');
   };
 
   /* ── Excel — 시트 2장(코드구분 전체 · 선택 코드구분의 코드상세) ── */

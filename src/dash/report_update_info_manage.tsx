@@ -254,7 +254,7 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
     setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
   }, []);
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더 + 합계행. 승인금액은 **선택 단위로 환산한 숫자 셀**(t:'n' + z 서식)이라
        Excel 이 화면처럼 우측 정렬하고 합계도 계산된다. ── */

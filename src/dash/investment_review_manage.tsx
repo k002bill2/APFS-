@@ -290,7 +290,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
     clearSelection();
     toast.success(`${String(ids.size)}건 삭제되었습니다`);
   };
-  const refresh = () => { setRows([...DEMO]); setSelIds([]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); setSelIds([]); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더, 합계행 재현 ── */
   const exportExcel = () => {

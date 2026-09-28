@@ -217,6 +217,18 @@
     opacity   var(--text-swap-dur) var(--text-swap-ease);
 }
 .t-text-swap.is-exit, .t-text-swap.is-enter-start { will-change: transform, filter, opacity; }   /* 전이 중에만 힌트 — 정지 후 레이어 상주 방지 */
+/* TextSwap 폭 보간 래퍼 — 라벨 길이 변화에 버튼 폭이 튀지 않게 width 를 transition(값 대입은 JS). 가로만 clip 해
+   늘어나는 도중 새 글자가 패딩 밖으로 삐져나오지 않게 한다(세로 translate·blur 는 살림). */
+.t-text-swap-w {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  overflow-x: clip;
+  vertical-align: bottom;
+  transition: width var(--dur-slow) var(--ease);
+}
+.t-text-swap-measure { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; white-space: nowrap; }
+.t-text-swap-measure::before { content: attr(data-text); }
 .t-text-swap.is-exit {
   transform: translateY(calc(var(--text-swap-translate-y) * -1));
   filter: blur(var(--text-swap-blur));
@@ -230,6 +242,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .t-text-swap { transition: none !important; }
+  .t-text-swap-w { transition: none !important; }
   /* TextSwap 은 저모션이면 exit/enter 단계를 건너뛰지만(components.tsx), 전이 도중 설정이 바뀌는 경우까지 막는 이중 가드 —
      단계 클래스가 남아도 숨김·힌트가 적용되지 않게 한다. */
   .t-text-swap.is-exit, .t-text-swap.is-enter-start { transform: none !important; filter: none !important; opacity: 1 !important; will-change: auto !important; }

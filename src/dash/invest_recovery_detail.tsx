@@ -140,7 +140,7 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
     ['계정구분', fAcc, () => setFAcc('')],
     ['기준일자', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }],
   ];
-  const refresh = () => { clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { clearFilters(); toast.success('조회되었습니다'); };
 
   const exportExcel = useCallback(() => {
     const cols = mode.columns;

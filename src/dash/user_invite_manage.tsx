@@ -181,7 +181,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
     ];
     setCtx({ x: ev.clientX, y: ev.clientY, items });
   };
-  const refresh = () => { setRows(demoPersonnel()); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows(demoPersonnel()); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
 
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);

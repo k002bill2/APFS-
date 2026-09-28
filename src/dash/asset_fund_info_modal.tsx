@@ -24,7 +24,7 @@ import type { Row } from './risk_table_meta';
 import { FUND_OPTS, GP_TYPES, MONTHS, LIMIT_INDICATOR, MODAL_EMPTY, emptyForm, formFromRow, newGpRow } from './asset_fund_info_data';
 import type { FundInfoForm, GpRow, LimitRow } from './asset_fund_info_data';
 
-const { Button, IconBtn } = UI;
+const { Button, IconBtn, SaveButton } = UI;
 
 export type FundInfoModalMode = 'create' | 'edit';
 
@@ -108,12 +108,15 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
     setSel(new Set());
     toast.success(`${n}개 행 삭제됨`);
   };
+  /* SaveButton 계약: 검증 실패면 undefined(즉시 오류), 통과면 commit 반환 → 저장 중 표시 후 commit */
   const save = () => {
     /* 원문 등록 팝업만 자펀드에 필수(*) 표식이 있다. 통합 그리드(onSave 있음)는 수정에서도 필수 — 빈 '선택'으로 저장 성공 방지(Codex P2 3차) */
     if ((mode === 'create' || onSave) && !form.fund) { setTried(true); toast.error('자펀드를 선택하세요'); return; }
-    onSave?.(form);
-    toast.success(mode === 'create' ? '저장되었습니다' : '수정되었습니다');
-    dlgRef.current?.close();
+    return () => {
+      onSave?.(form);
+      toast.success(mode === 'create' ? '저장되었습니다' : '수정되었습니다');
+      dlgRef.current?.close();
+    };
   };
   const onRowClick = (e: React.MouseEvent, id: string) => {
     if ((e.target as HTMLElement).closest('input,button,select,label,[role=checkbox]')) return;
@@ -234,7 +237,7 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
           <div />
           <div className="flex gap-2">
             <Button variant="outline" size="md" onClick={() => dlgRef.current?.close()}>닫기</Button>
-            <Button variant="primary" size="md" onClick={save}>저장</Button>
+            <SaveButton size="md" leadingIcon="" onSubmit={save}>저장</SaveButton>
           </div>
         </DialogFooter>
       </DialogContent>

@@ -173,7 +173,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
-  const refresh = () => { clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { clearFilters(); toast.success('조회되었습니다'); };
   const chips: [string, string, () => void][] = [
     ['운용사', fGp, () => setFGp('')],
     ['자펀드', fSubFund, () => setFSubFund('')],

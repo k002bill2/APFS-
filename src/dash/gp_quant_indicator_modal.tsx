@@ -20,7 +20,7 @@ import { toast } from './ui/sonner';
 import { drawerInputStyle } from './schemas/renderers';
 import { MGR_TYPES, INDICATORS, metricsFor } from './risk_subfund_info_data';
 
-const { Button, IconBtn } = UI;
+const { Button, IconBtn, SaveButton } = UI;
 
 export type QuantModalMode = 'create' | 'edit';
 
@@ -163,7 +163,7 @@ export function GpQuantIndicatorModal({ mode, preType, onClose }: { mode: QuantM
           <div />
           <div className="flex gap-2">
             <Button variant="outline" size="md" onClick={() => dlgRef.current?.close()}>닫기</Button>
-            <Button variant="primary" size="md" onClick={save}>저장</Button>
+            <SaveButton size="md" leadingIcon="" onSubmit={() => save}>저장</SaveButton>
           </div>
         </DialogFooter>
       </DialogContent>

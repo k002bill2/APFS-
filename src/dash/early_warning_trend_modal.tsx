@@ -37,7 +37,7 @@ import { PeriodPicker } from './ui/period-picker';
 import { controlMinWidth } from './schemas/renderers';
 import { toast } from './ui/sonner';
 
-const { Button, SegTabs } = UI;
+const { Button, SaveButton, SegTabs } = UI;
 const { MultiLineTrend } = Charts;
 
 /* ── 목업 원문 데이터 ─────────────────────────────────────────────
@@ -160,8 +160,7 @@ export function EarlyWarningTrendModal({ onClose }: { onClose: () => void }) {
 
   const apply = () => {
     if (fromDraft && toDraft && fromDraft > toDraft) { toast.error('기준년월 시작이 종료보다 늦습니다'); return; }
-    setRange({ from: fromDraft, to: toDraft });
-    toast.success('조회되었습니다');
+    return () => { setRange({ from: fromDraft, to: toDraft }); toast.success('조회되었습니다'); };
   };
 
   return (
@@ -195,7 +194,7 @@ export function EarlyWarningTrendModal({ onClose }: { onClose: () => void }) {
               value={scope}
               onChange={(v: 'all' | 'warn') => setScope(v)}
               size="sm" />
-            <Button variant="primary" size="sm" onClick={apply}>조회</Button>
+            <SaveButton leadingIcon="" busyLabel="조회 중" onSubmit={apply}>조회</SaveButton>
           </div>
 
           <ChartCard

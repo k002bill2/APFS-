@@ -255,7 +255,7 @@ export function RiskPage({ system = '조기경보', group, label, route, onNav, 
   const [open, setOpen] = useState(false);
   useHotkey(HOTKEYS.export.combo, () => onExport?.(), { enabled: !!onExport && exportEnabled });
   useHotkey(HOTKEYS.print.combo, () => window.print());
-  const refresh = () => { onReset(); toast.success('새로고침했습니다'); };
+  const refresh = () => { onReset(); toast.success('조회되었습니다'); };
   return (
     <GridFrame
       crumbs={['홈', system, group, label]}

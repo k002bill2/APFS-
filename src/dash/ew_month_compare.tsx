@@ -167,7 +167,7 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
   /* 필터 + 재번호 — 화면·엑셀 공용 */
   const visible = useMemo(() => visibleRows(ROWS, gradeOn, chgOn), [gradeOn, chgOn]);
 
-  const refresh = () => { clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 시트 1장 · 단일 헤더. 본문 = 화면과 같은 visible(화면=엑셀 불변식).
      등급/당월/전월은 텍스트(`▲ 악화`·`운용사 등급`·`–`)로 나간다. ── */

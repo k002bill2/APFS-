@@ -1,7 +1,7 @@
 /* 공통 래퍼 컴포넌트 — Tailwind 유틸리티 className 기반.
    동적 색(accent/tone 토큰)·계산된 치수는 인라인 유지(Tailwind로 표현 불가), 나머지는 유틸리티. */
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Icon } from './icons';
 import { Charts } from './charts';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
@@ -167,7 +167,7 @@ function FilterChip({ active, children, onClick, dot, count }: { active?: boolea
 }
 
 /* ---- Button ---- */
-function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, children, onClick, style, loading, disabled }: { variant?: "primary" | "secondary" | "outline" | "ghost" | "accent"; size?: Size; leadingIcon?: string; trailingIcon?: string; children?: React.ReactNode; onClick?: (e?: any) => void; style?: React.CSSProperties; loading?: boolean; disabled?: boolean }) {
+function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, children, onClick, style, loading, loadingIcon = true, disabled }: { variant?: "primary" | "secondary" | "outline" | "ghost" | "accent"; size?: Size; leadingIcon?: string; trailingIcon?: string; children?: React.ReactNode; onClick?: (e?: any) => void; style?: React.CSSProperties; loading?: boolean; loadingIcon?: boolean; disabled?: boolean }) {
   const sizeCls = size === "sm" ? "px-[11px] py-1.5 text-[12.5px]" : size === "lg" ? "px-5 py-[11px] text-[13.5px]" : "px-[15px] py-2 text-[13.5px]";
   const variantCls = {
     // 변형마다 border-color 유틸을 하나만 둔다 — 베이스 border-transparent + 변형 border-border-strong 처럼 둘을 겹치면
@@ -191,7 +191,7 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
       whileTap={disabled || loading ? undefined : { scale: 0.97 }}
       transition={spring.control}
       className={cx("ui-btn ui-" + variant, "inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border transition-colors duration-tok-fast ease-ds disabled:opacity-60 disabled:cursor-not-allowed", loading && "cursor-wait", sizeCls, variantCls)}
-      style={style}>{loading ? <Icon name="loader" size={iconSize} stroke={2.2} className="animate-spin" /> : leadingIcon && <Icon name={leadingIcon} size={iconSize} stroke={2.2} />}{children}{trailingIcon && <Icon name={trailingIcon} size={iconSize} stroke={2.2} />}</motion.button>
+      style={style}>{loading && loadingIcon ? <Icon name="loader" size={iconSize} stroke={2.2} className="animate-spin" /> : leadingIcon && <Icon name={leadingIcon} size={iconSize} stroke={2.2} />}{children}{trailingIcon && <Icon name={trailingIcon} size={iconSize} stroke={2.2} />}</motion.button>
   );
 }
 
@@ -202,42 +202,86 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
    loading 중 disabled 는 쓰지 않는다(포커스 유지 — Button 규약). 저장 중에는 다이얼로그 닫기를 잠근다(useDialogLock):
    취소·X·Esc 가 무시되고 본문은 aria-busy+pointer 차단 — 사용자가 누른 저장이 무음으로 유실되는 경로를 없앤다.
    (언마운트 시 폐기 방식은 exit 애니메이션 ≈280ms 와 400ms 지연이 경합해 취소해도 저장되던 실측 결함이 있었다.)
+   저장 중 언마운트는 flush(즉시 commit)한다 — 잠금으로 사용자 취소 경로가 없으니 위 결함과 무관하고, 페이지 액션의 무음 취소를 막는다.
    ⚠ submit 이 성공 경로에서 closure 반환을 잊으면 무음 no-op 이다(타입으로 못 잡음) — 검증 항목: 저장 클릭 시 스피너가 떠야 한다. */
 export const SAVE_DEMO_MS = 400;
 export type SubmitResult = (() => void) | void;
-function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', delay = SAVE_DEMO_MS, variant = 'primary', size = 'sm', leadingIcon = 'check', style }: { onSubmit: () => SubmitResult; children?: React.ReactNode; busyLabel?: React.ReactNode; delay?: number; variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent'; size?: Size; leadingIcon?: string; style?: React.CSSProperties }) {
+function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', delay = SAVE_DEMO_MS, variant = 'primary', size = 'sm', leadingIcon = 'check', style, disabled }: { onSubmit: () => SubmitResult; children?: React.ReactNode; busyLabel?: React.ReactNode; delay?: number; variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent'; size?: Size; leadingIcon?: string; style?: React.CSSProperties; disabled?: boolean }) {
   const [saving, setSaving] = React.useState(false);
   const timer = React.useRef<number | null>(null);
   const lock = useDialogLock();
   const lockRef = React.useRef(lock); lockRef.current = lock;
-  React.useEffect(() => () => { if (timer.current != null) window.clearTimeout(timer.current); lockRef.current?.setLocked(false); }, []);
+  const pendingCommit = React.useRef<(() => void) | null>(null);
+  // 저장 중 언마운트(선택 해제로 선택 바가 사라짐·화면 이동 등)되면 누른 실행을 버리지 않고 즉시 flush 한다 —
+  // 폐기하면 페이지 액션(확정 등)이 조용히 취소된다(Codex P2). 다이얼로그는 잠금으로 취소 경로가 없어 동작이 같다.
+  React.useEffect(() => () => {
+    if (timer.current != null) window.clearTimeout(timer.current);
+    lockRef.current?.setLocked(false);
+    const c = pendingCommit.current; pendingCommit.current = null; c?.();
+  }, []);
   const click = () => {
     if (saving) return;
     const commit = onSubmit();
     if (typeof commit !== 'function') return;
     setSaving(true);
     lock?.setLocked(true);
-    timer.current = window.setTimeout(() => { timer.current = null; setSaving(false); lockRef.current?.setLocked(false); commit(); }, delay);
+    pendingCommit.current = commit;
+    timer.current = window.setTimeout(() => { timer.current = null; pendingCommit.current = null; setSaving(false); lockRef.current?.setLocked(false); commit(); }, delay);
   };
-  return <Button variant={variant} size={size} leadingIcon={leadingIcon} loading={saving} onClick={click} style={style}>{saving ? busyLabel : children}</Button>;
+  // 라벨 교체는 transitions.dev 04 text-states-swap(TextSwap) — 문자열 라벨일 때만(노드면 그대로 교체).
+  // 아이콘 없는 버튼(leadingIcon="")은 스피너를 새로 끼우지 않고 텍스트 스왑만 — 폭 점프·아이콘 돌출 없이 "…중"으로.
+  const label = saving ? busyLabel : children;
+  const swappable = typeof children === 'string' && typeof busyLabel === 'string';
+  return <Button variant={variant} size={size} leadingIcon={leadingIcon} loading={saving} loadingIcon={!!leadingIcon} disabled={disabled} onClick={click} style={style}>{swappable ? <TextSwap text={label as string} /> : label}</Button>;
 }
 
 /* ---- IconBtn ---- */
 const NO_COMBO: HotkeyCombo = { key: '' };
 /* aria-keyshortcuts 값(WAI-ARIA 표기) — 예: {alt,key:'r'} → "Alt+R" */
 const ariaShortcut = (c: HotkeyCombo) => [c.mod && 'Control', c.alt && 'Alt', c.shift && 'Shift', c.key.length === 1 ? c.key.toUpperCase() : c.key].filter(Boolean).join('+');
-function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed, hotkey }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean; hotkey?: { combo: HotkeyCombo; hint: string } }) {
+function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed, hotkey, spinOnClick = icon === "refresh" && !!onClick }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => unknown; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean; hotkey?: { combo: HotkeyCombo; hint: string }; spinOnClick?: boolean }) {
+  // 조회(refresh) 클릭 피드백(onClick 있을 때만 — 무동작 버튼이 조회된 척하지 않게): 클릭마다 +360° 누적 회전 — 연타해도 진행 중 회전을 끊지 않고 이어 돈다.
+  // onClick이 Promise를 돌려주면(비동기 조회) settle까지 등속으로 계속 돌고, 끝나면 돌던 바퀴를 마저 돈 뒤 감속 1회전으로 멈춘다.
+  // repeat:Infinity는 0°로 되감겨 튀므로 쓰지 않고, 회전 완료마다 turns를 +1 해 이어 붙인다.
+  // rotate는 transform이라 저모션 시 MotionConfig(reducedMotion="user")가 자동 비활성 — 그때 진행 신호는 aria-busy.
+  const [turns, setTurns] = React.useState(0);
+  const [phase, setPhase] = React.useState<"idle" | "busy" | "settling" | "stopping">("idle");
+  const pending = React.useRef(0);
+  // 저모션: MotionConfig가 회전을 즉시 완료시키므로 onSpinDone 체인이 대기 내내 렌더 루프가 된다 → 체인 대신 aria-busy만.
+  const reduced = useReducedMotion();
+  const click = spinOnClick ? () => {
+    setTurns((t) => t + 1);
+    const r = onClick?.();
+    if (r && typeof (r as Promise<unknown>).then === "function") {
+      pending.current += 1;
+      setPhase("busy");
+      const done = () => {
+        pending.current -= 1;
+        if (pending.current === 0) setPhase(reduced ? "idle" : "settling"); // 도는 중인 등속 1바퀴는 마저 돈다(여기서 +1 하면 거리 2배로 급가속)
+      };
+      // 오류 처리(토스트 등)는 호출부 책임 — 여기서 다시 던지면 호출부가 처리한 reject도 unhandledrejection으로 한 번 더 뜬다.
+      Promise.resolve(r).then(done, done);
+    }
+  } : onClick;
   /* 단축키(선택) — HOTKEYS 항목을 넘기면 클릭과 같은 동작을 바인딩하고 툴팁에 힌트를 붙인다.
      모달이 열려 있으면 무시 — 폼 편집 중 뒤의 목록이 조회·메뉴 개폐되지 않게. */
-  useHotkey(hotkey ? hotkey.combo : NO_COMBO, () => { if (!document.querySelector('[role="dialog"]')) onClick?.(); }, { enabled: !!hotkey && !!onClick });
+  useHotkey(hotkey ? hotkey.combo : NO_COMBO, () => { if (!document.querySelector('[role="dialog"]')) click?.(); }, { enabled: !!hotkey && !!onClick });
+  const onSpinDone = () => {
+    if (reduced) return;
+    if (pending.current > 0) setTurns((t) => t + 1);
+    else if (phase === "settling") { setPhase("stopping"); setTurns((t) => t + 1); } // 등속 → 감속 정지 1바퀴
+    else if (phase !== "idle") setPhase("idle");
+  };
+  const glyph = <Icon name={icon} size={iconSize} stroke={2} />;
   const btn = (
     // hover/press는 Motion spring(색 전환은 CSS 유지). scale은 저모션 시 MotionConfig가 자동 비활성.
     <motion.button
-      onClick={onClick}
+      onClick={click}
       aria-label={label && badge && badge > 0 ? `${label} ${badge > 99 ? "99+" : badge}건` : label}
       aria-haspopup={expanded === undefined ? undefined : "menu"}
       aria-expanded={expanded}
       aria-pressed={pressed}
+      aria-busy={phase === "busy" || undefined}
       aria-keyshortcuts={hotkey ? ariaShortcut(hotkey.combo) : undefined}
       whileHover={{ scale: 1.06 }}
       whileTap={{ scale: 0.9 }}
@@ -247,7 +291,9 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
       style={{ width: size, height: size, ...(active ? activeStyle : undefined) }}>{altIcon
         /* 아이콘 스왑(transitions.dev 09, src/styles/transitions.css .t-icon-swap): 두 아이콘을 같은 슬롯에 두고 swapped 로 교차 페이드. 테마 토글 등 상태 아이콘용. */
         ? <span className="t-icon-swap" data-state={swapped ? "b" : "a"} aria-hidden="true"><span className="t-icon" data-icon="a"><Icon name={icon} size={iconSize} stroke={2} /></span><span className="t-icon" data-icon="b"><Icon name={altIcon} size={iconSize} stroke={2} /></span></span>
-        : <Icon name={icon} size={iconSize} stroke={2} />}{badge > 0 && <span
+        : spinOnClick
+          ? <motion.span className="inline-flex" aria-hidden="true" initial={false} animate={{ rotate: turns * 360 }} transition={phase === "busy" || phase === "settling" ? tween.spinLoop : phase === "stopping" ? tween.spinStop : tween.spin} onAnimationComplete={onSpinDone}>{glyph}</motion.span>
+          : glyph}{badge > 0 && <span
         className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-[color:var(--destructive-foreground)] text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</motion.button>
   );
   if (!label) return btn;
@@ -313,7 +359,30 @@ function TextSwap({ text, className, style }: { text: string; className?: string
     void ref.current?.offsetHeight; // enter-start 스타일을 한 번 계산시켜야 다음 클래스 제거가 transition 으로 잡힌다
     setPhase("rest");
   }, [phase]);
-  return <span ref={ref} className={cx("t-text-swap", phase === "exit" && "is-exit", phase === "enter" && "is-enter-start", className)} style={style}>{shown}</span>;
+  /* 폭 보간(transitions.dev 01 card-resize 방식): 라벨 길이가 바뀌면 버튼 폭이 한 번에 튀지 않게, 바깥 상자를 현재 폭에 고정한 뒤
+     숨은 측정 span(::before attr, textContent 비오염)으로 잰 새 폭까지 width transition 한다. exit 시작과 동시에 출발해 enter 끝 무렵 도착(--dur-slow).
+     끝나면 width 를 비워 auto 로 되돌린다(폰트·줌 변화 추종). 저모션이면 건너뛴다 — CSS 가드로 transitionend 가 안 와 px 폭이 고착되므로. */
+  const box = React.useRef<HTMLSpanElement>(null);
+  const meas = React.useRef<HTMLSpanElement>(null);
+  React.useLayoutEffect(() => {
+    const b = box.current, m = meas.current;
+    if (!b || !m) return;
+    if (typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches) { b.style.width = ""; return; }
+    const from = b.getBoundingClientRect().width, to = m.getBoundingClientRect().width;
+    if (Math.abs(from - to) < 0.5) return;
+    b.style.width = from + "px";
+    void b.offsetWidth; // 시작 폭을 한 번 계산시켜야 다음 대입이 transition 으로 잡힌다
+    b.style.width = to + "px";
+    const id = window.setTimeout(() => { if (box.current) box.current.style.width = ""; }, 600); // transitionend 누락 대비
+    return () => window.clearTimeout(id);
+  }, [text]);
+  return (
+    <span ref={box} className="t-text-swap-w" onTransitionEnd={(e) => { if (e.target === box.current && e.propertyName === "width") box.current.style.width = ""; }}>
+      <span ref={ref} className={cx("t-text-swap", phase === "exit" && "is-exit", phase === "enter" && "is-enter-start", className)} style={style}>{shown}</span>
+      {/* 측정 글자는 ::before attr() 로 — textContent·복사에 섞이지 않게 */}
+      <span ref={meas} className="t-text-swap-measure" data-text={text} aria-hidden="true" />
+    </span>
+  );
 }
 
 /* ---- TextsReveal ---- */

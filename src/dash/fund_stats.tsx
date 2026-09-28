@@ -350,7 +350,7 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
     setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
   }, []);
 
-  const refresh = () => { clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 2단 헤더 병합 + 표시행(행+소계) + 총계, 선택 단위 환산. ── */
   const exportExcel = () => {

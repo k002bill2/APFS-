@@ -339,7 +339,7 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
 
   const target = modal?.kind === 'detail' ? rows.find((r) => r.id === modal.id) ?? null : null;
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 3단 헤더(병합 자동 산출). 합계행 없음 ── */
   const exportExcel = () => {

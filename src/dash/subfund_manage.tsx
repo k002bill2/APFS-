@@ -311,7 +311,7 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
     취소: [],
   } as Record<Stage, Act[]>)[single.stg];
 
-  const refresh = () => { setRows([...seed]); apiRef.current?.deselectAll(); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...seed]); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 2단 헤더 병합·합계행 재현 ── */
   const exportExcel = () => {

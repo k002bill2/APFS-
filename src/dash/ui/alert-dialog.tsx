@@ -89,7 +89,9 @@ const AlertDialogDescription = React.forwardRef<
 ));
 AlertDialogDescription.displayName = AlertDialogPrimitive.Description.displayName;
 
-const baseBtn = 'inline-flex items-center justify-center gap-1.5 cursor-pointer rounded-[9px] px-[15px] py-2 text-[13.5px] font-semibold whitespace-nowrap transition-colors';
+/* 확인·취소는 삭제/승인 등 서버 액션의 최종 트리거 — UI.Button(Motion whileTap .97)과 같은 press 피드백을 CSS로 준다.
+   Radix 버튼이라 Motion으로 감싸지 않는다(transitions-dev 규약). motion-safe 로 저모션 시 비활성. */
+const baseBtn = 'inline-flex items-center justify-center gap-1.5 cursor-pointer rounded-[9px] px-[15px] py-2 text-[13.5px] font-semibold whitespace-nowrap transition-[color,background-color,border-color,transform] duration-tok-fast ease-ds motion-safe:active:scale-[.97]';
 
 const AlertDialogAction = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Action>,

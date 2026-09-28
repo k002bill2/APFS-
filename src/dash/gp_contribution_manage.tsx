@@ -327,7 +327,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
 
   const detailRow = modal?.kind === 'detail' ? rows.find((r) => r.id === modal.id) ?? null : null;
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('새로고침했습니다'); };
+  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 2단 헤더 병합 + 본문 + 소계 + 합계(화면=엑셀 불변식) ── */
   const exportExcel = () => {
