@@ -427,7 +427,7 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
         {/* 금액 단위 표기 — 캡션. 단위 토글은 규칙상 미적용(파일 상단 '한계') */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       /* 푸터 좌 = 섹션별 건수(페이지네이션이 없어 '총 N개 중 M개' 형식이 성립하지 않는다) */
       footerLeft={<span>{'투자자산 ' + String(investRows.length) + '건 · 미투자자산 거래 ' + String(tradeRows.length) + '건 · 미투자자산 ' + String(nonInvestRows.length) + '건'}</span>}

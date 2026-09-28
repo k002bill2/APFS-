@@ -380,7 +380,7 @@ export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
       ]}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       /* 페이저 없음(1행) → footerCenter 미전달, FooterActions 에 onToggleAll 미전달(버튼 3개) */
       /* 기준년월은 선택했을 때만 앞에 붙인다(미선택이면 '총 N건'으로 시작) — 목업 툴바 `총 N건` 이식 */
