@@ -228,6 +228,7 @@
   transition: width var(--dur-slow) var(--ease);
 }
 .t-text-swap-measure { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; white-space: nowrap; }
+.t-text-swap-measure::before { content: attr(data-text); }
 .t-text-swap.is-exit {
   transform: translateY(calc(var(--text-swap-translate-y) * -1));
   filter: blur(var(--text-swap-blur));

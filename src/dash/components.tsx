@@ -201,6 +201,7 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
    loading 중 disabled 는 쓰지 않는다(포커스 유지 — Button 규약). 저장 중에는 다이얼로그 닫기를 잠근다(useDialogLock):
    취소·X·Esc 가 무시되고 본문은 aria-busy+pointer 차단 — 사용자가 누른 저장이 무음으로 유실되는 경로를 없앤다.
    (언마운트 시 폐기 방식은 exit 애니메이션 ≈280ms 와 400ms 지연이 경합해 취소해도 저장되던 실측 결함이 있었다.)
+   저장 중 언마운트는 flush(즉시 commit)한다 — 잠금으로 사용자 취소 경로가 없으니 위 결함과 무관하고, 페이지 액션의 무음 취소를 막는다.
    ⚠ submit 이 성공 경로에서 closure 반환을 잊으면 무음 no-op 이다(타입으로 못 잡음) — 검증 항목: 저장 클릭 시 스피너가 떠야 한다. */
 export const SAVE_DEMO_MS = 400;
 export type SubmitResult = (() => void) | void;
@@ -209,14 +210,22 @@ function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', d
   const timer = React.useRef<number | null>(null);
   const lock = useDialogLock();
   const lockRef = React.useRef(lock); lockRef.current = lock;
-  React.useEffect(() => () => { if (timer.current != null) window.clearTimeout(timer.current); lockRef.current?.setLocked(false); }, []);
+  const pendingCommit = React.useRef<(() => void) | null>(null);
+  // 저장 중 언마운트(선택 해제로 선택 바가 사라짐·화면 이동 등)되면 누른 실행을 버리지 않고 즉시 flush 한다 —
+  // 폐기하면 페이지 액션(확정 등)이 조용히 취소된다(Codex P2). 다이얼로그는 잠금으로 취소 경로가 없어 동작이 같다.
+  React.useEffect(() => () => {
+    if (timer.current != null) window.clearTimeout(timer.current);
+    lockRef.current?.setLocked(false);
+    const c = pendingCommit.current; pendingCommit.current = null; c?.();
+  }, []);
   const click = () => {
     if (saving) return;
     const commit = onSubmit();
     if (typeof commit !== 'function') return;
     setSaving(true);
     lock?.setLocked(true);
-    timer.current = window.setTimeout(() => { timer.current = null; setSaving(false); lockRef.current?.setLocked(false); commit(); }, delay);
+    pendingCommit.current = commit;
+    timer.current = window.setTimeout(() => { timer.current = null; pendingCommit.current = null; setSaving(false); lockRef.current?.setLocked(false); commit(); }, delay);
   };
   // 라벨 교체는 transitions.dev 04 text-states-swap(TextSwap) — 문자열 라벨일 때만(노드면 그대로 교체).
   // 아이콘 없는 버튼(leadingIcon="")은 스피너를 새로 끼우지 않고 텍스트 스왑만 — 폭 점프·아이콘 돌출 없이 "…중"으로.
@@ -343,7 +352,7 @@ function TextSwap({ text, className, style }: { text: string; className?: string
     setPhase("rest");
   }, [phase]);
   /* 폭 보간(transitions.dev 01 card-resize 방식): 라벨 길이가 바뀌면 버튼 폭이 한 번에 튀지 않게, 바깥 상자를 현재 폭에 고정한 뒤
-     숨은 측정 span 으로 잰 새 폭까지 width transition 한다. exit 시작과 동시에 출발해 enter 끝 무렵 도착(--dur-slow).
+     숨은 측정 span(::before attr, textContent 비오염)으로 잰 새 폭까지 width transition 한다. exit 시작과 동시에 출발해 enter 끝 무렵 도착(--dur-slow).
      끝나면 width 를 비워 auto 로 되돌린다(폰트·줌 변화 추종). 저모션이면 건너뛴다 — CSS 가드로 transitionend 가 안 와 px 폭이 고착되므로. */
   const box = React.useRef<HTMLSpanElement>(null);
   const meas = React.useRef<HTMLSpanElement>(null);
@@ -362,7 +371,8 @@ function TextSwap({ text, className, style }: { text: string; className?: string
   return (
     <span ref={box} className="t-text-swap-w" onTransitionEnd={(e) => { if (e.target === box.current && e.propertyName === "width") box.current.style.width = ""; }}>
       <span ref={ref} className={cx("t-text-swap", phase === "exit" && "is-exit", phase === "enter" && "is-enter-start", className)} style={style}>{shown}</span>
-      <span ref={meas} className="t-text-swap-measure" aria-hidden="true">{text}</span>
+      {/* 측정 글자는 ::before attr() 로 — textContent·복사에 섞이지 않게 */}
+      <span ref={meas} className="t-text-swap-measure" data-text={text} aria-hidden="true" />
     </span>
   );
 }
