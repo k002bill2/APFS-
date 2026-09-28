@@ -169,6 +169,9 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   등록 O:  단위: 원 │ ▣ 상세필터 │ ＋ <도메인 액션명> 등록 │ ⟳ 조회
   등록 X:  단위: 원 │ ▣ 상세필터 │ ⟳ 조회
   ```
+  - ⟳ **조회 = `<IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />` (라벨 "새로고침" 아님 — 2026-09-28 통일).** `IconBtn`은 `icon="refresh"` **+ `onClick`이 있을 때** 클릭마다 아이콘을 +360° 누적 회전한다(1.6s ease-ds, 연타 시 이어 돎, 저모션 자동 비활성). `onClick` 없는 refresh 버튼은 돌지 않는다 — 무동작 버튼이 조회된 척하지 않게. 끄려면 `spinOnClick={false}`.
+  - **비동기 조회**: `refresh`가 Promise를 반환하면 settle까지 등속 회전(`tween.spinLoop`)하다 돌던 바퀴를 마저 돌고 감속 1회전(`tween.spinStop`)으로 멈추며 대기 중 `aria-busy`. 현재 핸들러는 전부 동기라 이 경로는 API 연동 시 활성 — 오류 토스트는 호출부 책임(IconBtn은 reject를 다시 던지지 않는다).
+  - 토스트 문구는 `'조회되었습니다'`(구 '새로고침했습니다' 금지).
   - 등록 버튼 = `<Button variant="outline" size="sm" leadingIcon="plus" onClick={…}>{라벨}</Button>`. 라벨은 도메인 액션명 그대로(`제안서접수 등록`·`공고 등록`), "등록"으로 줄이지 않는다. 스키마 트랙은 `editable = schema.fields.length > 0` 으로 자동 분기(`generic_list.tsx`).
   - ⛔ **폐기된 형태 2종 — 되돌리지 말 것**: ① `RegisterCombo`(등록+`⌄` split 버튼, 2026-09-11~09-17) ② 툴바 kebab 단독. 둘 다 보조 액션을 숨기는 구조였고, 그 항목이 이제 푸터에 상시 노출된다.
   - ✅ **허용되는 combo = 공용 `SplitButton`(`ui/split-button.tsx`) 2가지뿐 (2026-09-24 사용자 결정, 등록원부관리).** 위 폐기는 "보조 액션(내보내기·인쇄)을 `⌄` 안에 숨기는" combo 에 대한 것이다 — 아래 둘은 보조 액션을 숨기지 않으므로 허용:

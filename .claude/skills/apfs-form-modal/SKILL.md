@@ -41,7 +41,23 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
    };
    <DialogFooter className="px-[46px]">…<SaveButton onSubmit={submit} /></DialogFooter>
    ```
-   동작: 클릭 → 검증 → "저장 중"(`SAVE_DEMO_MS`=400ms, `components.tsx` 상수 하나로 조절) → commit. 백엔드가 없어 저장이 동기라 지연은 데모용 흉내다. loading 중 `disabled`를 주지 않는다(포커스 유지 — `UI.Button` 규약). **저장 중에는 다이얼로그 닫기가 잠긴다**(`useDialogLock` — 취소·X·Esc 무시, 본문 `aria-busy`+pointer 차단). 사용자가 누른 저장은 유실되지 않는다. ⚠ 처음 시도한 "닫기 시작 시 commit 폐기"는 exit 애니메이션(≈280ms)과 400ms 지연이 경합해 취소해도 저장되는 실측 결함 + 무음 유실 UX라 폐기했다. ⚠ **submit이 성공 경로에서 closure 반환을 잊으면 무음 no-op**(타입으로 못 잡음) → 검증 항목: 저장 클릭 시 스피너가 떠야 한다. 적용처: 폼 모달 10종(`generic_list_modal`·`user_form_modal`·`user_permission_modal`·`member_info_form_modal`·`custody_verify_memo_modal`·`menu_form_modal`·`program_help_modal`·`subfund_form_modal`·`apfs_contribution_tx_modal`의 Dist/Invest) + 디자인시스템 3-2-1 라이브 데모. 전수 조사는 `grep -rn ">저장</Button>" src/dash`(leadingIcon 유무 무관).
+   동작: 클릭 → 검증 → "저장 중"(`SAVE_DEMO_MS`=400ms, `components.tsx` 상수 하나로 조절) → commit. 백엔드가 없어 저장이 동기라 지연은 데모용 흉내다. loading 중 `disabled`를 주지 않는다(포커스 유지 — `UI.Button` 규약). **저장 중에는 다이얼로그 닫기가 잠긴다**(`useDialogLock` — 취소·X·Esc 무시, 본문 `aria-busy`+pointer 차단). 사용자가 누른 저장은 유실되지 않는다. ⚠ 처음 시도한 "닫기 시작 시 commit 폐기"는 exit 애니메이션(≈280ms)과 400ms 지연이 경합해 취소해도 저장되는 실측 결함 + 무음 유실 UX라 폐기했다. ⚠ **submit이 성공 경로에서 closure 반환을 잊으면 무음 no-op**(타입으로 못 잡음) → 검증 항목: 저장 클릭 시 스피너가 떠야 한다. 적용처: 폼 모달 전부 + 디자인시스템 3-2-1 라이브 데모. 전수 조사는 `grep -rn ">저장</Button>" src/dash`(leadingIcon 유무 무관).
+
+   **6-1. 모달 안 서버 실행 버튼은 저장이 아니어도 전부 `SaveButton` (2026-09-28, PR #286).** 저장·업로드·삭제 확인·(모달 내) 조회·중복확인처럼 서버 통신을 흉내 내는 버튼은 `<Button onClick>` 대신 `SaveButton`으로 쓰고 `busyLabel`로 동사를 맞춘다. 페이지 툴바·선택 바의 즉시 실행(가치평가 저장·조기경보 결과 `확정`)도 같다.
+   | 버튼 | 선언 |
+   |---|---|
+   | 저장(아이콘 있음) | `<SaveButton onSubmit={submit} />` — 기본 ✓ 아이콘·"저장 중" |
+   | 저장(원래 아이콘 없음) | `<SaveButton leadingIcon="" onSubmit={() => save}>저장</SaveButton>` |
+   | 업로드 | `<SaveButton leadingIcon="upload" busyLabel="업로드 중" onSubmit={upload}>업로드</SaveButton>` |
+   | 삭제 확인 | `<SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: 'var(--danger)' }} onSubmit={() => onDelete}>삭제 확인</SaveButton>` |
+   | 모달 내 조회 | `<SaveButton leadingIcon="" busyLabel="조회 중" onSubmit={apply}>조회</SaveButton>` |
+   | 중복확인 | `<SaveButton variant="outline" leadingIcon="" busyLabel="확인 중" disabled={…} onSubmit={check}>중복확인</SaveButton>` |
+   - 검증 없는 기존 핸들러는 `onSubmit={() => save}`(함수를 그대로 commit으로 반환)로 감싼다. 검증이 있으면 실패 `return;` / 성공 `return () => {…}`로 나눈다. `say(msg)`처럼 이미 함수를 돌려주는 헬퍼는 `onSubmit={() => say('…')}`.
+   - **라벨 전환 = 텍스트 스왑 + 폭 보간이 자동**이다(`children`·`busyLabel`이 둘 다 문자열일 때 `TextSwap` 경유 — transitions.dev 04, 폭은 01 card-resize 방식). 라벨을 노드로 넘기면 스왑·폭 보간이 꺼진다 → 문자열로 넘길 것.
+   - **`leadingIcon=""`(아이콘 없음)이면 로딩 중 스피너를 끼우지 않고 텍스트 스왑만** 한다(`Button` `loadingIcon={false}` — 폭 점프·아이콘 돌출 방지, 2026-09-28 사용자 결정). 아이콘이 있으면 아이콘 자리가 스피너로 바뀐다.
+   - 저장 중 **언마운트되면 누른 실행을 즉시 flush**한다(선택 해제로 선택 바가 사라져도 `확정`이 무음 취소되지 않음 — Codex P2). 다이얼로그는 잠금으로 취소 경로가 없어 결과가 같다.
+   - 🔒 **검증 실패 시 추가 모션(shake 등)은 두지 않는다**(2026-09-28 사용자 결정 — 현행 빨간 테두리·오류 문구 유지, 재제안 금지). "애니메이션이 안 된다"는 보고의 1순위 원인은 **필수값 미입력으로 검증에서 막힌 것**이다 → 필수값을 채워 재현한 뒤 판단.
+   - 제외: 모달을 여는 버튼·취소·닫기·출력·행추가/행삭제(화면 내 편집)·선택용 "확인"(서버 통신 아님).
 
 7. **섹션 버튼 정렬 = 추가류는 제목 바로 옆 좌측, 조회·저장은 우측 (2026-09-24 사용자 결정).** 모달 본문 섹션(·소제목)의 **추가류 버튼**(`추가`·`행 추가`·`양도/양수 추가` 등)은 **제목 텍스트 바로 뒤, 같은 줄 좌측**에 붙인다(`ml-auto`·`justify-between` 금지, 섹션 본문 아래·표 아래로 떼지도 않는다). **조회·저장 등 섹션 액션**은 제목 줄 우측 끝(`ml-auto`)에 둔다. 두 종류를 한 헬퍼가 받으면 슬롯을 `add`(좌)·`actions`(우)로 분리한다.
    ```tsx

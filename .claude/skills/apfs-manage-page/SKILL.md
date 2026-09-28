@@ -30,6 +30,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 사업연도/기준일자 | 드로어·모달 모두 **`PeriodPicker`**(`mode="year"` / `"day"`, `DrawerField plain`) — 연도 `<select>`·네이티브 date 금지 | [[apfs-datepicker]] "PeriodPicker" |
 | 적용 필터 칩 | 항목별 개별 칩, **값만**(접두사 없음) + × aria-label에 항목명 | [[apfs-detail-filter]] "typed 페이지 트랙" |
 | 신규 등록(1차 액션) | **툴바 독립 버튼** `Button variant="outline" size="sm" leadingIcon="plus"` — `toolbarRight`에서 **상세필터 오른쪽·새로고침 왼쪽**. **kebab 항목으로 넣지 않는다**(2026-09-11 사용자 결정으로 이전 "등록도 kebab 안" 규약을 뒤집음 — 진입 빈도 높은데 2클릭). 라벨은 도메인 액션명 그대로(`제안서접수 등록`), "등록"으로 축약 금지. 단축키 `⌘⏎`(`HOTKEYS.register`)는 유지되나 **화면 힌트는 없다**(Button이 Tooltip asChild 불가) | 툴바 순서=[[apfs-grid]] "관리형 리스트 툴바·타이틀 규약" · 모달=[[apfs-form-modal]] · 단축키=[[apfs-hotkeys]] |
+| 서버 실행 버튼(모달 저장·업로드·삭제 확인·모달 내 조회·중복확인 / 선택 바 즉시 전이 `확정`) · 툴바 조회 | 실행 버튼은 **`UI.SaveButton`**(`busyLabel`로 "…중", 아이콘 없으면 `leadingIcon=""` → 텍스트 스왑만) · 툴바 조회는 `IconBtn icon="refresh" label="조회" onClick={refresh}`(클릭 회전 내장) | [[apfs-form-modal]] 6-1 · [[apfs-grid]] 툴바 |
 | 파일 업로드(목업 `.uploadbox`·파일명 드롭존·업로드 폼) | 진입은 툴바, 본체는 **공용 `UploadModal`**(`trust_upload.tsx` — 파일명 드롭존 + [닫기]/[확인], `emptyMsg`·`doneMsg`는 원문 토스트 문구). **등록 액션이 있으면 등록 콤보 버튼 `[+ ○○ 등록 | ▾]`** — 본 버튼=등록, ▾ 메뉴 항목 `○○ 업로드`(정본 `trust_upload_forms.tsx` `RegisterCombo` — 계좌정보·입출금 관리. 내부 구현은 공용 `ui/split-button.tsx` `SplitButton` — 등록원부관리 `[등록원부입력 │ ▾ 등록원부업로드]` 도 같은 부품, [[apfs-grid]] 허용 combo ①). **등록 액션이 없으면 툴바 독립 `[업로드]`** 버튼(`variant="outline" size="sm" leadingIcon="upload"` — 실물자료·유가증권관리). **드롭존을 카드 본문(그리드 위 섹션)에 펼쳐 두지 않는다**(2026-09-24 사용자 결정). 모달·콤보를 새로 만들지 말고 재사용(콤보 트리거는 `UI.Button` 불가 — Radix asChild). 가드 테스트 `trust_pages_13.test.ts` | 드롭존 본체=[[apfs-form-modal]] `file` 규약(`UploadDropzone`→`DocumentsField`) |
 | 엑셀 | SheetJS — 병합/리프 컬럼을 **columnDefs에서 자동 산출**(`flattenForExcel`). **진입=푸터 `FooterActions` 내보내기 아이콘**(툴바 독립 "엑셀" 버튼·kebab 항목 둘 다 금지 — kebab은 2026-09-17 폐기) + 단축키 `⌥D`(`HOTKEYS.export`) | [[apfs-aggrid]] · 툴바/푸터=[[apfs-grid]] · 단축키=[[apfs-hotkeys]] |
 | 프레임 외관·푸터 | `--frame-bg`(테두리·그림자 없음), `sub` 미사용, 단위 캡션은 `toolbarRight`, 푸터 골드(건수·페이저·뷰 토글·아이콘) | [[apfs-grid]] "프레임 외관 규약" |
@@ -60,6 +61,8 @@ await page.evaluate(()=>localStorage.setItem('apfs.route','<path>')); await page
 - [ ] 2단 헤더: **컬럼 가상화**로 뷰포트 밖 그룹헤더는 DOM에 없다 → `scrollLeft` 후 `.ag-header-group-cell` 재질의
 - [ ] 선택: **`.ag-row`가 아니라 `.ag-cell`을 클릭**(행 div 클릭은 AG Grid 셀 리스너를 안 탐) → `.ag-row-selected` ≥1 + 툴바 액션 노출
 - [ ] 전이 1회 이상 실제 실행(배지·토스트·액션 재계산·합계 재계산)
+- [ ] 모달 저장/실행: **필수값을 채운 상태에서** 클릭 → 라벨이 "…중"으로 스왑(`.t-text-swap` 존재, `aria-busy=true`)→ 400ms 후 commit. 빈 폼은 검증에서 막혀 스왑이 없는 게 정상. 버튼 찾기는 `textContent.trim()===라벨`(측정 글자는 `::before`라 섞이지 않음)
+- [ ] 툴바 조회 클릭 → 아이콘 `style.transform`이 `rotate(360deg)`로 증가
 - [ ] 섹션형 모달 열림 + `getComputedStyle(select).fontSize==='14px'`
 - [ ] 라이트/다크 스크린샷(`./artifacts/` 세션 상대경로만 허용) · 콘솔/페이지 에러 0
 
