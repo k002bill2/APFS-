@@ -286,7 +286,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" onClick={doConfirm}>확정</Button>
         <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'close', ym })}>마감</Button>
         <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'reopen', ym })}>마감해제</Button>
-        <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
       </>}
       /* 푸터 좌 = 섹션별 건수(페이지네이션이 없어 '총 N개 중 M개' 형식이 성립하지 않는다) */
       footerLeft={<span>{'생성 결과내역 ' + String(resultRows.length) + '건 · 운용사 재무정보 보고 ' + String(reportRows.length) + '건'}</span>}

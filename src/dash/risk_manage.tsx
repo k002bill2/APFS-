@@ -261,7 +261,7 @@ function RiskManage({ onNav }: { onNav: (r: string) => void }) {
           <div className="flex items-center gap-2 flex-wrap">
             <StatusBadge tone="danger"  label={"처리대기 " + String(countOf("처리대기")) + "건"} />
             <StatusBadge tone="warning" label={"처리중 " + String(countOf("처리중")) + "건"} />
-            <IconBtn icon="refresh" label="새로고침" size={34} />
+            <IconBtn icon="refresh" label="조회" size={34} />
             <IconBtn icon="download" label="내보내기" size={34} />
           </div>
         </div>

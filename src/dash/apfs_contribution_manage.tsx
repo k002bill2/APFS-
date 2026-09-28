@@ -528,7 +528,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>{'단위: ' + unit}</span>
         <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <IconBtn icon="refresh" label="새로고침" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
       </>}
       footerLeft={<span>{/* 총계는 그리드 표시행(조합원+소계) 기준 — shown이 같은 행 집합의 페이지 슬라이스라 분모·분자를 맞춘다 */
         '총 ' + String(displayRows.length) + '개 중 ' + String(shown) + '개 항목 표시 중'}</span>}

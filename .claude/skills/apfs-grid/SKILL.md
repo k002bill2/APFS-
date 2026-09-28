@@ -94,7 +94,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   headerActions={<><Button variant="outline" leadingIcon="chevron-left" onClick={()=>onNav('main')}>메인으로</Button><Button variant="primary" leadingIcon="download">내보내기</Button></>}
   kpis={<><KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={fmt(t) + ' 억원'} /> …</>}  // ⚠ 옵션: HITL "포함" 선택 시에만 전달(미포함이면 kpis 생략) — "KPI 배지 행" 절 참조
   toolbarLeft={<><Icon name="file" size={16} /><span>… 집계</span></>}
-  toolbarRight={<IconBtn icon="refresh" label="새로고침" size={34} />}
+  toolbarRight={<IconBtn icon="refresh" label="조회" size={34} />}
   footerLeft={<span>{'2010 ~ 2025년 · 총 16개 연도'}</span>}>
   <div className="overflow-x-auto"><table className="w-full border-collapse min-w-[880px]">…</table></div>
 </GridFrame>
@@ -166,8 +166,8 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 
 - 🔀 **툴바 형태는 하나다(2026-09-17 사용자 결정 — combo 폐기, 단 2026-09-24 허용 예외 2종은 아래 ✅).** 1차 액션(등록)이 있으면 **단독 outline 버튼**, 없으면 아무것도 두지 않는다. 보조 액션(내보내기·인쇄)은 툴바가 아니라 **푸터 `FooterActions`**가 항시 노출한다.
   ```
-  등록 O:  단위: 원 │ ▣ 상세필터 │ ＋ <도메인 액션명> 등록 │ ⟳ 새로고침
-  등록 X:  단위: 원 │ ▣ 상세필터 │ ⟳ 새로고침
+  등록 O:  단위: 원 │ ▣ 상세필터 │ ＋ <도메인 액션명> 등록 │ ⟳ 조회
+  등록 X:  단위: 원 │ ▣ 상세필터 │ ⟳ 조회
   ```
   - 등록 버튼 = `<Button variant="outline" size="sm" leadingIcon="plus" onClick={…}>{라벨}</Button>`. 라벨은 도메인 액션명 그대로(`제안서접수 등록`·`공고 등록`), "등록"으로 줄이지 않는다. 스키마 트랙은 `editable = schema.fields.length > 0` 으로 자동 분기(`generic_list.tsx`).
   - ⛔ **폐기된 형태 2종 — 되돌리지 말 것**: ① `RegisterCombo`(등록+`⌄` split 버튼, 2026-09-11~09-17) ② 툴바 kebab 단독. 둘 다 보조 액션을 숨기는 구조였고, 그 항목이 이제 푸터에 상시 노출된다.
