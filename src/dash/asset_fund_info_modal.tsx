@@ -78,10 +78,15 @@ const EmptyRow = ({ span }: { span: number }) => (
   <tr><td colSpan={span} className="text-center text-caption" style={{ padding: '18px 0', fontSize: 13 }}>{MODAL_EMPTY}</td></tr>
 );
 
-export function AssetFundInfoModal({ mode, row, onClose }: { mode: FundInfoModalMode; row?: Row; onClose: () => void }) {
+/* onSave·fundOptions·initialForm 은 자펀드정보관리 통합 그리드(v1.4 + S2_73, 2026-09-28)용 — 저장 폼을 행에 반영하고,
+   자펀드 선택지를 그리드 행의 자펀드로 바꾸며, 공동GP(업무집행조합원2)까지 채운 초기 폼을 받는다.
+   셋 다 없으면 원문처럼 토스트만(목록 불변)·FUND_OPTS·formFromRow(row). */
+export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = FUND_OPTS, initialForm }: {
+  mode: FundInfoModalMode; row?: Row; onClose: () => void; onSave?: (form: FundInfoForm) => void; fundOptions?: readonly string[]; initialForm?: FundInfoForm;
+}) {
   const dlgRef = useRef<DialogHandle>(null);
   const gpBodyRef = useRef<HTMLTableSectionElement>(null);
-  const [form, setForm] = useState<FundInfoForm>(() => (mode === 'edit' && row ? formFromRow(row) : emptyForm()));
+  const [form, setForm] = useState<FundInfoForm>(() => initialForm ?? (mode === 'edit' && row ? formFromRow(row) : emptyForm()));
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [tried, setTried] = useState(false);
   const title = mode === 'create' ? '자펀드 정보 등록' : '자펀드 정보 수정';
@@ -104,8 +109,9 @@ export function AssetFundInfoModal({ mode, row, onClose }: { mode: FundInfoModal
     toast.success(`${n}개 행 삭제됨`);
   };
   const save = () => {
-    /* 원문 등록 팝업만 자펀드에 필수(*) 표식이 있다 */
-    if (mode === 'create' && !form.fund) { setTried(true); toast.error('자펀드를 선택하세요'); return; }
+    /* 원문 등록 팝업만 자펀드에 필수(*) 표식이 있다. 통합 그리드(onSave 있음)는 수정에서도 필수 — 빈 '선택'으로 저장 성공 방지(Codex P2 3차) */
+    if ((mode === 'create' || onSave) && !form.fund) { setTried(true); toast.error('자펀드를 선택하세요'); return; }
+    onSave?.(form);
     toast.success(mode === 'create' ? '저장되었습니다' : '수정되었습니다');
     dlgRef.current?.close();
   };
@@ -135,7 +141,7 @@ export function AssetFundInfoModal({ mode, row, onClose }: { mode: FundInfoModal
           <Sec title="검색조건">
             <label className="block mb-3.5">
               <Lbl req={mode === 'create'}>자펀드</Lbl>
-              <SelectBox label="자펀드" value={form.fund} onChange={set('fund')} options={FUND_OPTS} invalid={tried && !form.fund} />
+              <SelectBox label="자펀드" value={form.fund} onChange={set('fund')} options={fundOptions} invalid={tried && !form.fund} />
             </label>
             <div className="mb-3.5">
               <Lbl>투자기간</Lbl>

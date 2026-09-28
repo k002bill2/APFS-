@@ -31,7 +31,7 @@ APFS/
 │       ├── icons/charts/components/shell/designsystem/main_widgets/main(.tsx)
 │       ├── performance/risk/gp_health/accounting/schedule/report(.tsx)  # PRD 페이지
 │       ├── auth_model.ts + auth_shared.tsx + login_demo + onboarding_issue + onboarding_invite  # 인증 3화면(Shell 없음)
-│       ├── subfund_manage(.tsx) + subfund_form_modal + subfund_spec_modal + subfund_manage_schemas.ts  # 자펀드 정보관리(구 subfund.tsx 대체)
+│       ├── subfund_manage(.tsx) + subfund_form_modal + subfund_spec_modal + subfund_manage_schemas.ts  # 자펀드 관리(route subfund, 구 subfund.tsx 대체)
 │       ├── app.tsx                              # 앱 루트 (#root 마운트)
 │       └── tokens.css / assets/logo*.svg
 └── 농식품모태펀드 대시보드*.html  # (레거시) 구 오프라인 자가완결 번들 — Vite 전환 전 산출물, 더 이상 정본 아님
@@ -51,7 +51,7 @@ APFS/
 - `main_widgets.tsx` + `main.tsx` → 메인 종합 대시보드 (공유 위젯 + 3개 레이아웃 시안)
 - PRD 페이지: `performance` `risk` `gp_health` `accounting` `schedule` `report`.tsx (각 `Pages.*` export)
 - 인증 화면 3종(Shell 없는 독립 라우트, 정본=claude.ai/design 캔버스 `APFS 로그인 프로토타입.dc.html`): `login_demo.tsx`(S0_001) · `onboarding_issue.tsx`(S0_002 발급) · `onboarding_invite.tsx`(S0_003 초대). 판정 로직은 `auth_model.ts`(+테스트), 공용 UI는 `auth_shared.tsx`. 관리자가 초대를 *보내는* `user_invite_manage.tsx`(S0_103)와는 별개 화면이다.
-- 자펀드 정보관리(route `subfund`): `subfund_manage.tsx`(`SubFundManage` export) + `subfund_form_modal`(결성조합 등록/수정) + `subfund_spec_modal`(읽기전용 명세 팝업) + `subfund_manage_schemas.ts`. 구 `subfund.tsx`(bespoke, `SubFund` export)는 2026-09-09 삭제됨.
+- 자펀드 관리(route `subfund`, 리프 라벨 "자펀드 관리"): `subfund_manage.tsx`(`SubFundManage` export) + `subfund_form_modal`(결성조합 등록/수정) + `subfund_spec_modal`(읽기전용 명세 팝업) + `subfund_manage_schemas.ts`. 구 `subfund.tsx`(bespoke, `SubFund` export)는 2026-09-09 삭제됨. **별개 리프** 조합관리 > `자펀드정보관리`(`asset_fund_info_manage.tsx`)는 `SubFundManage`의 `ext` 확장 슬롯으로 v1.4 + S2_73 투자기준을 합성한 통합 그리드다(2026-09-28).
 - `app.tsx` → 테마/라우트 상태, `#root`에 마운트
 
 **벤더**: React 18 / ReactDOM (npm), lucide. JSX 변환은 **빌드타임(esbuild)** — 브라우저 Babel은 제거됨.
