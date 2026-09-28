@@ -25,6 +25,8 @@ export const tween = {
   dropdown: { duration: 0.2, ease: EASE_DS }, // 원본 dropdown은 spring 아님
   reveal: { duration: 0.4, ease: EASE_DS }, // 스크롤 진입 fade+slide(위젯 多라 spring 대신 차분한 tween)
   spin: { duration: 1.6, ease: EASE_DS }, // 조회(refresh) 아이콘 클릭 1회전 피드백 — spring은 360° 끝에서 오버슈트가 보여 tween
+  spinLoop: { duration: 0.9, ease: 'linear' }, // 비동기 조회 대기 중 등속 회전(1회전씩 이어 붙임 — 이음새 없게 linear)
+  spinStop: { duration: 1.8, ease: [0.5, 1, 0.89, 1] }, // 조회 완료 후 감속 정지 1회전(easeOutQuad: 시작 기울기 2 → 360°×2/1.8s = 400°/s로 spinLoop 속도와 이음매 없이 이어 받음)
 } satisfies Record<string, Transition>;
 
 /* 스크롤 reveal variants — Card/ChartCard의 opt-in reveal prop이 소비.

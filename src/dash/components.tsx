@@ -222,11 +222,31 @@ function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', d
 }
 
 /* ---- IconBtn ---- */
-function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed, spinOnClick = icon === "refresh" }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean; spinOnClick?: boolean }) {
+function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed, spinOnClick = icon === "refresh" }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => void | Promise<unknown>; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean; spinOnClick?: boolean }) {
   // 조회(refresh) 클릭 피드백: 클릭마다 +360° 누적 회전 — 연타해도 진행 중 회전을 끊지 않고 이어 돈다.
-  // rotate는 transform이라 저모션 시 MotionConfig(reducedMotion="user")가 자동 비활성.
+  // onClick이 Promise를 돌려주면(비동기 조회) settle까지 등속으로 계속 돌고, 끝나면 돌던 바퀴를 마저 돈 뒤 감속 1회전으로 멈춘다.
+  // repeat:Infinity는 0°로 되감겨 튀므로 쓰지 않고, 회전 완료마다 turns를 +1 해 이어 붙인다.
+  // rotate는 transform이라 저모션 시 MotionConfig(reducedMotion="user")가 자동 비활성 — 그때 진행 신호는 aria-busy.
   const [turns, setTurns] = React.useState(0);
-  const click = spinOnClick ? () => { setTurns((t) => t + 1); onClick?.(); } : onClick;
+  const [phase, setPhase] = React.useState<"idle" | "busy" | "settling" | "stopping">("idle");
+  const pending = React.useRef(0);
+  const click = spinOnClick ? () => {
+    setTurns((t) => t + 1);
+    const r = onClick?.();
+    if (r && typeof (r as Promise<unknown>).then === "function") {
+      pending.current += 1;
+      setPhase("busy");
+      Promise.resolve(r).catch(() => {}).finally(() => {
+        pending.current -= 1;
+        if (pending.current === 0) setPhase("settling"); // 도는 중인 등속 1바퀴는 마저 돈다(여기서 +1 하면 거리 2배로 급가속)
+      });
+    }
+  } : onClick;
+  const onSpinDone = () => {
+    if (pending.current > 0) setTurns((t) => t + 1);
+    else if (phase === "settling") { setPhase("stopping"); setTurns((t) => t + 1); } // 등속 → 감속 정지 1바퀴
+    else if (phase !== "idle") setPhase("idle");
+  };
   const glyph = <Icon name={icon} size={iconSize} stroke={2} />;
   const btn = (
     // hover/press는 Motion spring(색 전환은 CSS 유지). scale은 저모션 시 MotionConfig가 자동 비활성.
@@ -236,6 +256,7 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
       aria-haspopup={expanded === undefined ? undefined : "menu"}
       aria-expanded={expanded}
       aria-pressed={pressed}
+      aria-busy={phase === "busy" || undefined}
       whileHover={{ scale: 1.06 }}
       whileTap={{ scale: 0.9 }}
       transition={spring.control}
@@ -245,7 +266,7 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
         /* 아이콘 스왑(transitions.dev 09, src/styles/transitions.css .t-icon-swap): 두 아이콘을 같은 슬롯에 두고 swapped 로 교차 페이드. 테마 토글 등 상태 아이콘용. */
         ? <span className="t-icon-swap" data-state={swapped ? "b" : "a"} aria-hidden="true"><span className="t-icon" data-icon="a"><Icon name={icon} size={iconSize} stroke={2} /></span><span className="t-icon" data-icon="b"><Icon name={altIcon} size={iconSize} stroke={2} /></span></span>
         : spinOnClick
-          ? <motion.span className="inline-flex" aria-hidden="true" initial={false} animate={{ rotate: turns * 360 }} transition={tween.spin}>{glyph}</motion.span>
+          ? <motion.span className="inline-flex" aria-hidden="true" initial={false} animate={{ rotate: turns * 360 }} transition={phase === "busy" || phase === "settling" ? tween.spinLoop : phase === "stopping" ? tween.spinStop : tween.spin} onAnimationComplete={onSpinDone}>{glyph}</motion.span>
           : glyph}{badge > 0 && <span
         className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-danger text-[color:var(--destructive-foreground)] text-[10px] font-bold flex items-center justify-center border-2 border-card">{badge > 99 ? "99+" : badge}</span>}</motion.button>
   );
