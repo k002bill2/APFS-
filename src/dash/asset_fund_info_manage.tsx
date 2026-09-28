@@ -16,6 +16,7 @@ import type { Tone } from './components';
 import { SubFundManage, DEMO, txt, date, num } from './subfund_manage';
 import type { SubFundRow, SubFundExt } from './subfund_manage';
 import { FUND_INFO_TABLE } from './asset_fund_info_data';
+import { formFromRow, newGpRow } from './asset_fund_info_data';
 import type { FundInfoForm } from './asset_fund_info_data';
 import { AssetFundInfoModal } from './asset_fund_info_modal';
 import type { Row } from './risk_table_meta';
@@ -71,14 +72,22 @@ const FUND_INFO_ROW: SubFundRow = {
 const toModalRow = (r: SubFundRow): Row => ({
   id: r.id, fn: r.fn, ps: r.ps ?? '', pe: r.pe ?? '', must: r.must == null ? '' : String(r.must), gp: r.gp1 === '-' ? '' : r.gp1, otype: r.otype ?? '',
 });
-/* 팝업 저장 → 행 패치. 한도관리 비율=의무투자, 대표 운용사의 구분=운용사유형, 운용사 2개 이상=공동GP(O).
-   비운 칸은 미입력(undefined → '-')으로 되돌린다 */
+/* 초기 폼 = 원문 openEditFund(r)(formFromRow) + 업무집행조합원2 가 있으면 공동GP 2행째로 — 저장 시 gp2 가 지워지지 않게 */
+const formOf = (r: SubFundRow): FundInfoForm => {
+  const f = formFromRow(toModalRow(r));
+  return r.gp2 && r.gp2 !== '-' ? { ...f, gps: [...f.gps, newGpRow({ name: r.gp2 })] } : f;
+};
+/* 팝업 저장 → 행 패치. 한도관리 비율=의무투자, 운용사 표 → 업무집행조합원1(대표)·2(다음 행)·운용사유형(대표의 구분),
+   이름 있는 운용사 2개 이상=공동GP(O). 이름 빈 행은 무시(빈 행 추가만으로 공동GP 가 되지 않게 — Codex P2 2026-09-28).
+   비운 칸은 미입력(undefined/'-')으로 되돌린다 */
 const patchFromForm = (f: FundInfoForm): Partial<SubFundRow> => {
-  const rep = f.gps.find((g) => g.rep) ?? f.gps[0];
+  const named = f.gps.filter((g) => g.name.trim());
+  const rep = named.find((g) => g.rep) ?? named[0];
+  const second = named.find((g) => g !== rep);
   return {
     ps: f.start || undefined, pe: f.end || undefined, must: toNum(f.limits[0]?.rate),
-    ...(rep ? { otype: rep.otype || undefined } : {}),
-    ...(f.gps.length ? { cogp: f.gps.length > 1 ? 'O' : 'X' } : {}),
+    gp1: rep ? rep.name.trim() : '-', gp2: second ? second.name.trim() : '-',
+    otype: rep?.otype || undefined, cogp: named.length > 1 ? 'O' : 'X',
   };
 };
 
@@ -93,7 +102,7 @@ const EXT: SubFundExt = {
   formedAction: {
     label: '자펀드 정보 수정',
     render: (row, onSave, onClose) => (
-      <AssetFundInfoModal mode="edit" row={toModalRow(row)} fundOptions={[row.fn]}
+      <AssetFundInfoModal mode="edit" row={toModalRow(row)} initialForm={formOf(row)} fundOptions={[row.fn]}
         onSave={(f) => onSave(patchFromForm(f))} onClose={onClose} />
     ),
   },
