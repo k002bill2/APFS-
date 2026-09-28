@@ -236,6 +236,24 @@ const onGroupSelection = useCallback((e: SelectionChangedEvent<Row>) => {
 // ready / rowDataUpdated 에도 같이 물려 초기 자동선택·필터 후 재마운트를 되맞춘다.
 ```
 
+## 모달 안 편집 그리드 (2026-09-28 PR #288 — 정본 `gp_quant_indicator_modal.tsx`)
+폼 모달 안에서 행을 추가·삭제하고 셀에 입력칸·체크박스를 두는 편집 표도 수제 `<table>` 대신 AG Grid 로 만든다. 행 데이터 SSOT 는 React state(`rows`)이고, 셀 렌더러가 `patch(id, {...})` 로 되쓴다(`getRowId` 로 AG Grid 가 diff).
+- **셀 입력칸은 로컬 state 로 값을 든다** — `value={p.data.x}` 로 직접 읽는 controlled input 은 **타이핑이 유실된다**(실측 "abc def"→"bef"): `setRows` → AG Grid rowData 반영이 비동기라 그 사이 React 가 옛 `p.data` 값으로 되돌린다. 셀 렌더러는 행 id 가 같으면 재마운트되지 않으므로 로컬 state 가 유지된다.
+  ```tsx
+  function CellInput({ row, field, patch }) {
+    const [v, setV] = useState(row[field]);
+    return <input value={v} onChange={(e) => { setV(e.target.value); patch(row.id, { [field]: e.target.value }); }} />;
+  }
+  ```
+  체크박스(DS `Checkbox`)는 값 반영이 한 번뿐이라 `checked={p.data.x}` 그대로 둬도 된다.
+- **`field` = 렌더러가 읽는 필드** — AG Grid 는 그 컬럼 `field` 값이 바뀔 때만 셀을 다시 그린다. 모드별로 다른 필드를 그리면(등록=`inpText` 입력 / 수정=`inp` 체크) 컬럼 정의도 모드별로 갈라 `field` 를 맞춘다.
+- **셀 안 컨트롤 키 격리** — 컬럼마다 `suppressKeyboardEvent: (p) => p.event.key === 'Tab' || !!p.event.target?.closest?.('input,button')`. `button` 절이 중요하다: DS `Checkbox`(Radix = `<button role=checkbox>`)에서 Space 가 그리드의 "Space=행 선택 토글"까지 먹는다. 입력칸의 방향키가 셀 이동으로 새는 것도 막는다(React `stopPropagation` 은 그리드 네이티브 리스너보다 늦어 무효 — `risk_grid.tsx` 실측).
+- **행 선택 = `SELECTION_COL` 체크박스**(원문이 행 클릭 선택이어도 체크박스 전용 규약을 따른다). "사용" 같은 **데이터 체크박스와 선택 체크박스는 별개 컬럼**이다. 삭제는 `getSelectedRows()` → `setRows(filter)` → `deselectAll()`.
+- **정렬 끔** — `EDIT_COL_DEF = { ...DEFAULT_COL_DEF, sortable: false }`(모듈 상수, 계약 6). 편집 중 정렬은 커서 아래 행 순서를 바꾸고 "새 행 = 마지막 행"을 깬다.
+- **행추가 포커스** — `focusIdRef.current = newRow.id` 후 `onRowDataUpdated` 에서 `requestAnimationFrame(() => box.querySelector('.ag-center-cols-container [row-id="…"] input[type=text]')?.focus())`. React 셀 렌더러는 rowDataUpdated 뒤에 붙으므로 한 프레임 미룬다. 같은 핸들러에서 선택 건수도 재동기화한다(유형 변경으로 rows 가 통째로 바뀌면 선택이 소멸).
+- **다이얼로그 안 sticky 헤더** — 공용 `aggrid_shared.css` 는 autoHeight 그리드 헤더를 GNB 아래(`top:58px`)에 붙인다. 다이얼로그 본문이 스크롤러면 헤더가 밀려 **첫 행을 8px 가린다** → `[role='dialog'] .ag-root-wrapper.ag-layout-auto-height .ag-header { top: 0 }` 규칙이 이미 있다(드로어·모달 공통). 검증: 헤더 하단 y == 1행 상단 y.
+- 검증 세트(실측): 한글 입력 유지("테스트 입력") · 입력칸 방향키가 셀 이동 안 함 · 행추가 후 새 행 입력칸 포커스 · 본문 클릭/데이터 체크박스는 선택 0 · N행 선택→삭제 건수 일치 · 입력 전후 헤더 폭 합 불변.
+
 ## ⚠️ 선택 건수를 DOM 으로 세지 말 것 (오탐 함정, 2026-09-15 실측)
 `.ag-row-selected`를 `querySelectorAll`로 세면 **한 행이 2건으로 잡힌다** — AG Grid가 체크박스(선택) 열을 `.ag-pinned-left-cols-container`에, 나머지를 `.ag-center-cols-container`에 **따로 렌더**하므로 같은 행의 조각이 양쪽에 하나씩 존재한다. 이걸 모르면 멀쩡한 단일선택을 "중복 선택 버그"로 오진하고 없는 버그를 고치게 된다.
 - 세는 법: `new Set([...els].map(r => r.getAttribute('row-id'))).size` — 또는 애초에 DOM 대신 `api.getSelectedRows().length`.

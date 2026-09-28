@@ -10,7 +10,11 @@ APFS의 앱-스코프 키보드 단축키는 **단일 훅 + 단일 레지스트�
 
 - **정본 파일**: `src/dash/use-hotkey.ts` — `HOTKEYS`(레지스트리) + `useHotkey(combo, handler, opts)`(바인딩 훅).
 - **`HOTKEYS`는 힌트+바인딩 단일 소스** — 메뉴 표시(`DropdownMenuShortcut`)와 실제 키 바인딩(`useHotkey`)이 **같은 정의**를 참조한다. 한 곳만 바꾸면 표시와 동작이 동시에 따라온다.
-- **소비처**: `shell.tsx`(사용자 메뉴 ⌥ 단축키), `asset_funding.tsx`·`subfund_manage.tsx`(리스트 페이지 등록/인쇄/내보내기).
+- **소비처**: `shell.tsx`(사용자 메뉴 ⌥M/E/L · GNB ⌥\·⌥W·⌥T·⌥N · 방문기록 ⌥H · 즐겨찾기 FAB ⌥B), `grid_frame.tsx` `FooterActions`(전체보기 ⌥A·새 창 ⌥O 바인딩 + 내보내기·인쇄 힌트), 리스트 페이지 40여 곳(등록 ⌘⏎ · 인쇄 ⌘P · 내보내기 ⌥D · 조회 ⌥R).
+- **힌트 표면 3종**(2026-09-28 — 툴팁이 있는 버튼은 단축키 힌트도 가진다):
+  - `IconBtn hotkey={HOTKEYS.x}` = **바인딩 + 툴팁 힌트 + `aria-keyshortcuts`**. 버튼이 곧 액션인 경우(조회·알림·GNB 토글·푸터 전체보기/새 창).
+  - `IconBtn shortcut={HOTKEYS.x}` / `SplitButton shortcut={HOTKEYS.x}` = **표시 전용**(힌트·aria만). 바인딩을 페이지 `useHotkey` 가 이미 소유할 때(푸터 인쇄·내보내기) — 둘 다 바인딩하면 한 번 누름에 두 번 실행된다.
+  - Radix `Tooltip` 직접 조립(즐겨찾기 FAB): 라벨 + `<span className="ml-1.5 opacity-60">{hint}</span>` 로 IconBtn 과 같은 룩. 네이티브 `title` 은 쓰지 않는다(지연·스타일이 다름). 트리거가 메뉴를 열면 `open={tip && !menuOpen && !dragging}` 으로 열린 메뉴를 가리지 않게.
 
 ## 단축키 레지스트리 (SSOT — 충돌 검사표)
 
@@ -40,7 +44,6 @@ APFS의 앱-스코프 키보드 단축키는 **단일 훅 + 단일 레지스트�
 
 - **`IconBtn`의 `hotkey` vs `shortcut`**: `shortcut={HOTKEYS.x}`는 **표시 전용**(툴팁 힌트·`aria-keyshortcuts`만, 바인딩은 호출부 소유 — 이중 발화 방지). `hotkey={HOTKEYS.x}`를 넘기면 클릭과 같은 동작을 바인딩하고 툴팁에 힌트·`aria-keyshortcuts`를 붙인다. **`[role="dialog"]`가 열려 있으면 무시**(폼 편집 중 뒤 목록이 조회·개폐되지 않게). 한 화면에 같은 `hotkey`를 가진 IconBtn이 2개 마운트되면 둘 다 발화하니 페이지당 1개만.
 - 회피한 키: `⌥F`(Windows Chrome 메뉴) → 즐겨찾기는 `⌥B`·전체보기는 `⌥A`, `⌘R`(새로고침) → 조회는 `⌥R`, `⌘W`(탭 닫기) → 전체 너비는 `⌥W`.
-- 기호 키 콤보는 `combo.code`(물리 키 코드)로 매칭한다 — `⌥\` = `code:'Backslash'`(한글 자판 ₩ 키와 같은 물리 키). 글자 키는 `code` 없이 `'Key'+대문자`로 유도된다.
 
 ## Mac / Windows 대응 (질문 자주 나옴)
 **둘 다 정의돼 있다.** 코드가 플랫폼을 분기한다:
@@ -59,19 +62,28 @@ Windows Chromium은 `Alt+D`(주소창)·`Alt+E`(메뉴) 등 일부 단축키를 
 3. `useHotkey(HOTKEYS.<name>.combo, handler)`로 바인딩.
    - **모달을 여는 액션**은 `{ enabled: modal === null }`(또는 그 페이지의 열림 상태) 가드로 **이중 열림 방지**. 예: `subfund_manage.tsx` register.
    - handler가 뒤에 정의된 `const`(예: `exportExcel`)를 참조하면 `() => exportExcel()`로 감싼다(TDZ 회피 — 직접 참조는 선언 전 접근이 됨).
+   - **버튼 하나와 1:1인 액션이면 3단 대신 `IconBtn hotkey={HOTKEYS.<name>}` 한 줄**(바인딩·힌트·aria 동시, 열린 `[role="dialog"]` 에선 자동 무시).
+   - 뒤의 화면을 덮는 시트·드로어(상세필터 등)가 열려 있는 동안 페이지 `useHotkey` 는 `{ enabled: !filterOpen }` 으로 끈다(Codex 2026-09-28 — 시트 뒤 인쇄·내보내기가 발화).
+4. 레지스트리 표에 행 추가 + 그 액션의 버튼에 툴팁이 있으면 힌트 표면(위 3종)까지 연결 — **등록된 단축키가 있는 버튼인데 툴팁에 힌트가 빠진 상태를 남기지 않는다**(2026-09-28 사용자 지시). 단축키가 없는 버튼(페이저·닫기 등)에 힌트를 위해 단축키를 새로 만들 의무는 없다 — 새로 만들지는 사용자 결정(2026-09-28 GNB·푸터 6종은 지시로 추가). 예외: 등록 `⌘⏎`(UI.Button 은 툴팁 트리거 불가, 아래 잠복 이슈).
 
 ## 2티어 규약 (어떤 수식어를 고를지)
 - **mod 조합(⌘/Ctrl)**: 입력창에서도 발화한다(전역). 브라우저 계층 키(⌘P/⌘S/⌘F/⌘E…)는 capture+preventDefault로 되찾을 수 있다. 인쇄·저장류 전역 액션에.
 - **⌥(Alt) 조합**: 입력창(INPUT/TEXTAREA/SELECT/contentEditable)에선 **자동 무시**(타이핑·특수문자 입력 보호). `⌥`+letter는 Mac에서 `e.key`가 특수문자('µ' 등)로 변질되므로 **`e.code`(물리 키, `KeyD`)로 매칭**한다(훅이 이미 처리). "표를 보는 중 쓰는" 페이지 액션(내보내기 등)에 적합.
+  - **기호 키는 `combo.code` 를 명시**한다 — 글자 키만 `'Key'+대문자`로 자동 유도된다. 예 `lnb: { alt:true, key:'\\', code:'Backslash' }`(한글 자판의 ₩ 키와 같은 물리 키).
+- **키 자동반복**: 키를 누르고 있으면 브라우저가 `keydown` 을 반복한다. 훅은 `e.repeat` 이면 **기본동작만 막고 액션은 실행하지 않는다**(첫 입력 1회) — 새 창 ⌥O 가 탭을 여러 개 열거나 토글이 홀짝으로 끝나지 않게. 반복 실행이 필요한 단축키(스크롤·증감 등)가 생기면 opt-in 옵션을 따로 만들 것.
+- **`aria-keyshortcuts` 표기**는 `use-hotkey.ts` 의 `ariaShortcut(combo)` 하나로 만든다 — mod 는 Mac=`Meta`·그 외=`Control`(힌트 ⌘/Ctrl 과 일치). 컴포넌트에서 문자열을 손으로 쓰지 않는다(예외: FAB 의 고정 `Alt+B`).
 - **OS 계층 금지**: `⌘M`(최소화)·`⌘Q`(종료)·`⌘W`(닫기)·`⌘T`(새탭)·`⌘Tab`은 페이지에 도달조차 안 하므로 **쓰지 말 것**.
 - **키 선택은 한 번에** — 충돌이 나도 추측으로 연달아 바꾸지 말고 위 레지스트리 표로 확인 후 확정. (⌘E→⌥D 사례: 사용자 보고 충돌 후 ⌥ 티어로 이동.)
 
 ## 검증 규약
 - **`page.keyboard`(trusted 이벤트)로만 검증**한다. `dispatchEvent`로 만든 합성 KeyboardEvent는 `preventDefault`가 브라우저 기본동작을 실제로 억제하는지 **증명하지 못한다**(→ 메모리 `context-menu-keyboard-focus-snapback`의 함정과 동류: 프로그래밍 이벤트는 가짜 성공).
 - 순서: `vite build` green → Codex 정적 리뷰 → **브라우저 런타임 확인**(단축키가 실제로 발화하고 기본동작을 억제하는지). 정적 통과가 런타임 통과를 보장하지 않는다.
+- 확인 항목(2026-09-28 실측 세트): ① 툴팁 텍스트 `라벨 + 힌트` ② `aria-keyshortcuts` 값 ③ `page.keyboard.press('Alt+KeyX')` 로 실제 동작(토글은 두 번 눌러 원복) ④ 입력칸 포커스 상태에선 ⌥ 단축키 무반응 ⑤ **길게 누르기**(`keyboard.down`→900ms→`up`)에도 1회만 실행.
+- ⚠ 자동화 함정: 툴팁 hover 측정은 직전 툴팁이 닫히기 전(Radix skip-delay)이면 빈 문자열이 나온다 — 버튼 사이에 포인터를 멀리 빼고 1.5초 이상 둔다. `⌥\` 버튼은 CSS 셀렉터 `[aria-keyshortcuts="Alt+\"]` 가 이스케이프로 깨지니 `getAttribute` 비교로 찾는다.
 
 ## 알려진 잠복 이슈
-- `useHotkey`의 `useEffect` deps는 `[enabled, combo.mod, combo.shift, combo.key]`로 **`combo.alt`가 빠져 있다**. `HOTKEYS`가 `const`(정적)라 현재는 무해하지만, **동적으로 바뀌는 alt 콤보를 넘기면** 리스너가 갱신되지 않아 깨진다. 동적 콤보가 필요해지면 deps에 `combo.alt` 추가.
+- (해소 2026-09-28) `useHotkey` deps 에 `combo.alt` 가 빠져 있던 문제 — 지금은 `[enabled, combo.mod, combo.alt, combo.shift, combo.key, combo.code]`.
+- 등록 `⌘⏎` 는 여전히 화면 힌트가 없다 — `UI.Button` 이 Radix `Tooltip asChild` 트리거가 못 된다(→[[ui-button-not-radix-aschild-trigger]]).
 
 ## 관련 스킬
 - ⚠️ **kebab(⋯)은 2026-09-17 전 화면에서 폐기됐다** — 내보내기·인쇄는 푸터 `FooterActions` 아이콘이 항시 노출한다(→[[apfs-grid]]). 2026-09-28부터 그 아이콘 툴팁에 `⌥D`·`⌘P` 힌트가 붙는다 — IconBtn/SplitButton 의 **`shortcut` prop(표시 전용)**. 바인딩은 페이지 `useHotkey` 가 그대로 소유하므로 `FooterActions` 를 쓰는 화면은 print(+onExport 면 export) 바인딩이 **필수**(가드 `footer_hotkey_hints.test.ts`). 등록 `⌘⏎` 만 여전히 화면 힌트가 없다. 이 스킬은 **키 바인딩·힌트 레지스트리**만 담당.

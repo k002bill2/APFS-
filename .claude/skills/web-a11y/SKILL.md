@@ -25,6 +25,7 @@ APFS는 **React 인라인 `style` + 스키마 주도 폼 + shadcn/Radix 프리�
 | **모달/다이얼로그** | shadcn/**Radix Dialog** 사용 → focus trap·Escape·`aria-modal`·포커스 복귀 자동 제공. 손수 오버레이 만들지 말 것 | generic_list_modal.tsx `RowFormModal` |
 | **날짜 입력** | `DatePicker`(Popover+Calendar), `ariaLabel` 필수 전달 | apfs-datepicker 스킬, renderers.tsx:48 |
 | **비동기 상태 알림** | `Alert`(`role="alert"`)·`Skeleton`(`aria-live="polite"`·`aria-busy`)·`Spinner`(`role="status"`) 재사용. 토스트/조회완료/저장성공도 이 라이브리전으로 알린다 | ui/alert.tsx·skeleton.tsx·spinner.tsx |
+| **키보드 단축키가 있는 버튼** | `IconBtn hotkey`(바인딩) / `shortcut`(표시 전용) 가 툴팁 힌트와 `aria-keyshortcuts` 를 함께 붙인다. 값은 `use-hotkey.ts` `ariaShortcut()` 로만 만든다(Mac=`Meta`·그 외=`Control` — 힌트 ⌘/Ctrl 과 일치, 손으로 쓰지 않는다). ⌥ 단축키는 입력칸에서 자동 무시 → [[apfs-hotkeys]] | components.tsx `IconBtn`, ui/split-button.tsx |
 | **토글/확장 버튼** | `IconBtn`의 `expanded` prop → `aria-expanded`·`aria-haspopup="menu"` 자동. LNB 접기·메뉴 등 | components.tsx `IconBtn` |
 | **의미 구조** | 클릭 요소는 `<button>`, 내비는 `<nav>`, 제목은 `<h1>~<h6>`. `<div onClick>`로 버튼 흉내 금지(포커스·엔터·SR 역할 전부 손실) | 전역 |
 

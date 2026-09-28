@@ -94,7 +94,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   headerActions={<><Button variant="outline" leadingIcon="chevron-left" onClick={()=>onNav('main')}>메인으로</Button><Button variant="primary" leadingIcon="download">내보내기</Button></>}
   kpis={<><KpiBadge icon="landmark" color="var(--primary)" label="누적 조성총액" value={fmt(t) + ' 억원'} /> …</>}  // ⚠ 옵션: HITL "포함" 선택 시에만 전달(미포함이면 kpis 생략) — "KPI 배지 행" 절 참조
   toolbarLeft={<><Icon name="file" size={16} /><span>… 집계</span></>}
-  toolbarRight={<IconBtn icon="refresh" label="조회" size={34} />}
+  toolbarRight={<IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />}
   footerLeft={<span>{'2010 ~ 2025년 · 총 16개 연도'}</span>}>
   <div className="overflow-x-auto"><table className="w-full border-collapse min-w-[880px]">…</table></div>
 </GridFrame>
@@ -109,10 +109,14 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 - **`sub` 캡션은 쓰지 않는다.** 화면 설명 문구는 제거 대상(사용자 결정). 단위 표기는 **`toolbarRight` 맨 앞에 12px caption** `단위: 원`으로.
 - **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `page.total>1`일 때만 페이저(`IconBtn chevron-left/right` + `PageBtn`) · `footerRight` = **`<FooterActions …/>` 하나**(`grid_frame.tsx` export).
   - **푸터 액션 4종은 항시 노출이며 순서가 고정이다(2026-09-17 사용자 결정): 전체보기(⛶) · 새 창(⧉) · 내보내기(⤓) · 인쇄(🖨).** 인쇄는 화면 전용 출력물이 있으면 `printItems` 로 `[🖨 │ ⌄]` combo 가 된다(아래 ✅ ②). 페이지가 직접 `IconBtn`을 나열하지 않는다 — `footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}` 한 줄.
+  - **단축키(2026-09-28)** — 네 아이콘 툴팁에 전부 단축키 힌트가 붙는다: 전체보기 `⌥A` · 새 창 `⌥O` · 내보내기 `⌥D` · 인쇄 `⌘P`.
+    - 전체보기·새 창은 **`FooterActions` 가 직접 바인딩**한다(IconBtn `hotkey`) → **화면당 `<FooterActions>` 는 정확히 1개**(2개면 한 번 누름에 두 번 실행).
+    - 내보내기·인쇄는 **표시 전용**(`shortcut`) — 바인딩은 페이지가 소유한다. 그래서 `FooterActions` 를 쓰는 화면은 `useHotkey(HOTKEYS.print.combo, () => window.print())` 가 **필수**, `onExport` 를 넘기면 `useHotkey(HOTKEYS.export.combo, () => exportExcel())` 도 필수(안 하면 툴팁이 거짓 단축키를 광고). 상세필터 시트처럼 화면을 덮는 오버레이가 열려 있으면 `{ enabled: !filterOpen }`.
+    - 가드 `src/dash/footer_hotkey_hints.test.ts` 가 위 두 규칙(바인딩 필수·1개)을 소스로 검사한다. `RiskPage` 는 자체 바인딩을 가지므로 그 소비처는 따로 할 일이 없다. 키 규약 상세 → [[apfs-hotkeys]].
   - `onToggleAll`을 안 넘기면 전체보기가 빠져 3개만 렌더된다 — **페이저가 없는 화면**(집계·매트릭스·master-detail 등 현재 10개)이 그 경우다. `onExport`를 안 넘기면 내보내기도 빠진다(투자기업정보(통합)·투자실적 현황(투자기업)).
   - ⛔ **kebab(⋯)은 전 화면에서 폐기됐다(2026-09-17).** 툴바 독립 kebab · 등록 combo의 `⌄` 절반 · 푸터 폴백 kebab(`!topMoreVisible && <MoreMenu>`) 셋 다 삭제했고, 그 안에 있던 내보내기·인쇄가 푸터 아이콘으로 항시 노출된다. `MoreMenu`/`MoreMenuItems`/`RegisterCombo`/`PoCMoreMenu` 로컬 복사본 39개와 `topMoreRef`/`topMoreVisible`/IntersectionObserver 폴백 배선(26파일)도 함께 제거됐다 — **다시 만들지 말 것.**
   - 툴바에 인쇄 `IconBtn`을 따로 두지 않는다(푸터와 중복 — investee_profile·investee_invest_stats에서 실제 2개가 됐다).
-  - 단축키(⌥D 내보내기 · ⌘P 인쇄)는 그대로다 — 페이지의 `useHotkey` 소유이며 kebab 제거와 무관하다. 다만 힌트를 보여주던 `DropdownMenuShortcut`이 사라졌으므로 화면 힌트는 없다.
+  - 단축키(⌥D 내보내기 · ⌘P 인쇄)는 그대로다 — 페이지의 `useHotkey` 소유이며 kebab 제거와 무관하다. kebab 의 `DropdownMenuShortcut` 힌트는 사라졌지만 **2026-09-28부터 푸터 아이콘 툴팁이 힌트를 보여준다**(위 "단축키" 항목).
   - `PageBtn`은 골드(`asset_funding.tsx`·`subfund_manage.tsx`)에 **로컬 복사**돼 있는 헬퍼다 — 공유 export 아님, 골드에서 복사.
 - ⛔ **카드뷰(리스트 뷰|카드뷰 토글)는 폐기됐다(2026-09-11 사용자 결정).** 신규 페이지에 뷰 토글 `SegTabs`·`view` state·카드 렌더 분기를 **만들지 않는다** — 리스트 뷰 단일 표현이다. 전용 스킬 `apfs-card-view`도 같은 날 삭제됐다.
   - 스키마 트랙은 `schema.hideCardView: true`로 끈다(`generic_list.tsx`가 푸터 `SegTabs`를 렌더하지 않고 `view`를 `"list"` 파생값으로 고정). 기존 카드 렌더 코드는 아직 남아 있으나 도달 불가다.
@@ -169,7 +173,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   등록 O:  단위: 원 │ ▣ 상세필터 │ ＋ <도메인 액션명> 등록 │ ⟳ 조회
   등록 X:  단위: 원 │ ▣ 상세필터 │ ⟳ 조회
   ```
-  - ⟳ **조회 = `<IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />` (라벨 "새로고침" 아님 — 2026-09-28 통일).** `IconBtn`은 `icon="refresh"` **+ `onClick`이 있을 때** 클릭마다 아이콘을 +360° 누적 회전한다(1.6s ease-ds, 연타 시 이어 돎, 저모션 자동 비활성). `onClick` 없는 refresh 버튼은 돌지 않는다 — 무동작 버튼이 조회된 척하지 않게. 끄려면 `spinOnClick={false}`.
+  - ⟳ **조회 = `<IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />` (라벨 "새로고침" 아님 — 2026-09-28 통일).** `hotkey` 로 `⌥R` 바인딩 + 툴팁 힌트(`조회 ⌥R`)가 같이 붙는다 — 페이지당 1개. `IconBtn`은 `icon="refresh"` **+ `onClick`이 있을 때** 클릭마다 아이콘을 +360° 누적 회전한다(1.6s ease-ds, 연타 시 이어 돎, 저모션 자동 비활성). `onClick` 없는 refresh 버튼은 돌지 않는다 — 무동작 버튼이 조회된 척하지 않게. 끄려면 `spinOnClick={false}`.
   - **비동기 조회**: `refresh`가 Promise를 반환하면 settle까지 등속 회전(`tween.spinLoop`)하다 돌던 바퀴를 마저 돌고 감속 1회전(`tween.spinStop`)으로 멈추며 대기 중 `aria-busy`. 현재 핸들러는 전부 동기라 이 경로는 API 연동 시 활성 — 오류 토스트는 호출부 책임(IconBtn은 reject를 다시 던지지 않는다).
   - 토스트 문구는 `'조회되었습니다'`(구 '새로고침했습니다' 금지).
   - 등록 버튼 = `<Button variant="outline" size="sm" leadingIcon="plus" onClick={…}>{라벨}</Button>`. 라벨은 도메인 액션명 그대로(`제안서접수 등록`·`공고 등록`), "등록"으로 줄이지 않는다. 스키마 트랙은 `editable = schema.fields.length > 0` 으로 자동 분기(`generic_list.tsx`).
