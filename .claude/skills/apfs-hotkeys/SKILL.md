@@ -25,9 +25,15 @@ APFS의 앱-스코프 키보드 단축키는 **단일 훅 + 단일 레지스트�
 | `⌥M` / `Alt+M` | 메모 모달 | `HOTKEYS.memo` | shell | Mac 실측 / **Windows 미실측** |
 | `⌥E` / `Alt+E` | 일정 모달 | `HOTKEYS.schedule` | shell | Mac 실측 / **Windows 미실측** |
 | `⌥L` / `Alt+L` | 로그아웃 모달 | `HOTKEYS.logout` | shell | Mac 실측 / **Windows 미실측** |
+| `⌥H` / `Alt+H` | 방문기록 드롭다운 토글 | `HOTKEYS.history` | shell `HistoryMenu`(IconBtn `hotkey`) | Mac 실측 / **Windows 미실측** |
+| `⌥B` / `Alt+B` | 즐겨찾기 FAB 메뉴 토글 | `HOTKEYS.favorites` | shell `FavoritesFab` | Mac 실측 / **Windows 미실측** |
+| `⌥R` / `Alt+R` | 리스트 툴바 조회 | `HOTKEYS.refresh` | 조회 IconBtn 38개 페이지 + `generic_list`(IconBtn `hotkey`) | Mac 실측 / **Windows 미실측** |
 
 - **등록 `⌘⏎`는 화면 힌트가 없다**(2026-09-11~). 등록이 kebab 항목에서 툴바 독립 버튼으로 승격되며 `DropdownMenuShortcut` 힌트가 함께 빠졌다 — `UI.Button`은 `forwardRef`/rest props가 없어 Radix `Tooltip asChild` 트리거로 못 쓰고 `title`도 전달되지 않는다(→[[ui-button-not-radix-aschild-trigger]]). 바인딩은 정상 동작. 힌트를 되살리려면 Button `children`에 `<span>{HOTKEYS.register.hint}</span>`를 덧붙이는 방법뿐. 툴바 배치 규약은 →[[apfs-grid]].
 - **`⌘K`는 HOTKEYS 밖의 직접 리스너**(`shell.tsx`, `(e.key==="k"||"K") && (metaKey||ctrlKey)`)다. `useHotkey`가 바로 이 ⌘K 명령팔레트 패턴을 재사용 훅으로 일반화한 것 — 신규 단축키는 반드시 `HOTKEYS`+`useHotkey`로 만든다.
+
+- **`IconBtn`의 `hotkey` prop**(2026-09-28~): `hotkey={HOTKEYS.x}`를 넘기면 클릭과 같은 동작을 바인딩하고 툴팁에 힌트·`aria-keyshortcuts`를 붙인다. **`[role="dialog"]`가 열려 있으면 무시**(폼 편집 중 뒤 목록이 조회·개폐되지 않게). 한 화면에 같은 `hotkey`를 가진 IconBtn이 2개 마운트되면 둘 다 발화하니 페이지당 1개만.
+- 회피한 키: `⌥F`(Windows Chrome 메뉴) → 즐겨찾기는 `⌥B`, `⌘R`(새로고침) → 조회는 `⌥R`.
 
 ## Mac / Windows 대응 (질문 자주 나옴)
 **둘 다 정의돼 있다.** 코드가 플랫폼을 분기한다:

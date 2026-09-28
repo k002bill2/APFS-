@@ -486,7 +486,7 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
         <span className="text-caption" style={{ fontSize: 12.5 }}>{'단위: ' + unit}</span>
         <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(rows.length) + '개 중 ' + String(Math.min(shown, rows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (

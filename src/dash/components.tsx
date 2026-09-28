@@ -10,6 +10,7 @@ import { Progress } from './ui/progress';
 import { spring, tween, revealVariants } from './motion/presets';
 import { CountUp } from './motion/count-up';
 import { useDialogLock } from './ui/dialog-exit';
+import { useHotkey, type HotkeyCombo } from './use-hotkey';
 
 const { Sparkline } = Charts;
 const cx = (...a: any[]) => a.filter(Boolean).join(" ");
@@ -222,7 +223,13 @@ function SaveButton({ onSubmit, children = '저장', busyLabel = '저장 중', d
 }
 
 /* ---- IconBtn ---- */
-function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean }) {
+const NO_COMBO: HotkeyCombo = { key: '' };
+/* aria-keyshortcuts 값(WAI-ARIA 표기) — 예: {alt,key:'r'} → "Alt+R" */
+const ariaShortcut = (c: HotkeyCombo) => [c.mod && 'Control', c.alt && 'Alt', c.shift && 'Shift', c.key.length === 1 ? c.key.toUpperCase() : c.key].filter(Boolean).join('+');
+function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size = 38, iconSize = 16, activeClassName, activeStyle, expanded, pressed, hotkey }: { icon: string; altIcon?: string; swapped?: boolean; onClick?: () => void; label?: string; badge?: number; active?: boolean; size?: number; iconSize?: number; activeClassName?: string; activeStyle?: React.CSSProperties; expanded?: boolean; pressed?: boolean; hotkey?: { combo: HotkeyCombo; hint: string } }) {
+  /* 단축키(선택) — HOTKEYS 항목을 넘기면 클릭과 같은 동작을 바인딩하고 툴팁에 힌트를 붙인다.
+     모달이 열려 있으면 무시 — 폼 편집 중 뒤의 목록이 조회·메뉴 개폐되지 않게. */
+  useHotkey(hotkey ? hotkey.combo : NO_COMBO, () => { if (!document.querySelector('[role="dialog"]')) onClick?.(); }, { enabled: !!hotkey && !!onClick });
   const btn = (
     // hover/press는 Motion spring(색 전환은 CSS 유지). scale은 저모션 시 MotionConfig가 자동 비활성.
     <motion.button
@@ -231,6 +238,7 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
       aria-haspopup={expanded === undefined ? undefined : "menu"}
       aria-expanded={expanded}
       aria-pressed={pressed}
+      aria-keyshortcuts={hotkey ? ariaShortcut(hotkey.combo) : undefined}
       whileHover={{ scale: 1.06 }}
       whileTap={{ scale: 0.9 }}
       transition={spring.control}
@@ -246,7 +254,7 @@ function IconBtn({ icon, altIcon, swapped, onClick, label, badge, active, size =
   return (
     <Tooltip>
       <TooltipTrigger asChild>{btn}</TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
+      <TooltipContent>{label}{hotkey && <span className="ml-1.5 opacity-60">{hotkey.hint}</span>}</TooltipContent>
     </Tooltip>
   );
 }

@@ -35,6 +35,7 @@ import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { RECOVERY_MODES, RECOVERY_TONES, RECOVERY_ACCOUNTS, findMode, recoverySummary, filterRecovery, DETAIL_ROWS_IR, formatRecoveryUnit } from './invest_recovery_detail_model';
 import type { RecoveryRow, RecoveryMode, RecoveryFilter } from './invest_recovery_detail_model';
+import { HOTKEYS } from './use-hotkey';   // ⌥R 조회
 
 const { Button, IconBtn, SegTabs } = UI;
 
@@ -169,7 +170,7 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
         <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
         <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span aria-live="polite">
         {`총 ${mode.rows.length}건 중 ${rows.length}건 표시 중 · ${mode.label} · 모펀드 ${MOTHER_FUND}`}

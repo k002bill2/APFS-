@@ -280,7 +280,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>사용자 등록</Button>
-        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(rows.length) + '명 중 ' + String(visible.length) + '명 · ' + String(Math.min(shown, visible.length)) + '명 표시 중'}</span>}
       footerCenter={page.total > 1 ? (

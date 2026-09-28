@@ -422,7 +422,7 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={openCreate}>주주변동 등록</Button>
-        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (

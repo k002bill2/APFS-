@@ -202,7 +202,7 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
       ]}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       /* 목업 캡션 `총 N건 · 기준 X vs 전월 Y` — 기준년월은 선택했을 때만 앞에 붙인다(골드 푸터 캡션 위치) */
       footerLeft={(

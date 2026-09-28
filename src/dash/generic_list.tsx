@@ -818,7 +818,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         {editable && (
           <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ mode: "create" })}>{schema.entity + " 등록"}</Button>
         )}
-        <IconBtn icon="refresh" label="조회" size={34} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); }} />
+        <IconBtn icon="refresh" label="조회" size={34} hotkey={HOTKEYS.refresh} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); }} />
       </>}
       footerLeft={'총 ' + String(totalForCount) + '개 중 ' + String(shown) + '개 항목 표시 중'}
       footerCenter={view === "list" && page.total > 1 ? (
