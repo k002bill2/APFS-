@@ -90,6 +90,14 @@ const columnDefs: (ColDef<Row> | ColGroupDef<Row>)[] = [
 />
 ```
 
+## 빈 상태(0행) = 전역 EmptyState (2026-09-29 사용자 지시 "리스트에 데이터 없을 때 empty 표시를 기본으로 모두 적용")
+- **그리드마다 배선하지 않는다.** `aggrid_theme.ts` 가 import 시 `provideGlobalGridOptions({ overlayComponentSelector: emptyOverlaySelector })` 를 1회 호출 → `apfsTheme` 를 import 하는 모든 그리드에 `grid_empty_overlay.tsx` 의 `GridEmptyOverlay`(= `UI.EmptyState` 아이콘+문구, `role=status`)가 뜬다.
+- 대상 오버레이 = **noRows**(rowData 자체가 빔) + **noMatchingRows**(필터로 0행 — v35 는 별도 오버레이라 예전엔 영문 "No Matching Rows"가 새던 경로). loading·exporting 은 selector 가 `undefined` 를 돌려 AG Grid 기본 유지.
+- **문구 = 그리드별 선언을 그대로 읽는다**: noRows → `overlayNoRowsTemplate` 텍스트 → `localeText.noRowsToShow` → 기본 "표시할 데이터가 없습니다." / noMatchingRows → `localeText.noMatchingRows` → 템플릿 텍스트 → 기본 "조건에 맞는 데이터가 없습니다.". 새 그리드는 문구만 바꾸고 싶으면 `overlayNoRowsTemplate` 에 **평문**(또는 한 줄 span)만 주면 된다 — HTML/인라인 스타일은 무시되고 텍스트만 쓰인다.
+- ⚠ 그리드가 `overlayComponent`/`overlayComponentSelector` 를 직접 주면 그쪽이 전역을 이긴다(shallow 병합) — 특수 화면만 쓰고, 기본 빈 상태를 끄려는 용도로 쓰지 말 것.
+- **`.apfs-grid-min`(본문 최소 42px) 그리드**는 오버레이가 떠 있는 동안만 150px 로 되돌린다(`aggrid_shared.css` `:has(.ag-overlay-no-rows-wrapper, .ag-overlay-no-matching-rows-wrapper)`) — 42px 에선 아이콘+문구가 잘린다. 행이 있는 그리드는 42px 그대로.
+- 검증(실측 2026-09-29): 자펀드 관리 상세필터 검색어 불일치 → `.ag-overlay-no-matching-rows-wrapper` 안 `[role=status]` + svg + 그리드 문구 / 운용사별 조기경보 운용사 1곳 선택 → 빈 3개 그리드 viewport 150·행 있는 그리드 42.
+
 ## 자주 쓰는 동작 (정본 — asset_funding.tsx)
 | 동작 | 방법 |
 |------|------|

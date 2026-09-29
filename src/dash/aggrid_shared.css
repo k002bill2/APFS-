@@ -109,6 +109,11 @@
 .apfs-grid-min .ag-layout-auto-height .ag-center-cols-viewport {
   min-height: 42px !important;
 }
+/* 단, 빈 상태 오버레이(EmptyState — grid_empty_overlay.tsx)가 떠 있는 동안은 AG Grid 기본 150px 로 되돌린다.
+   42px 에선 아이콘+문구가 잘린다. 오버레이 래퍼 클래스는 AG Grid 가 붙인다(no-rows / no-matching-rows). */
+.apfs-grid-min .ag-layout-auto-height:has(.ag-overlay-no-rows-wrapper, .ag-overlay-no-matching-rows-wrapper) .ag-center-cols-viewport {
+  min-height: 150px !important;
+}
 
 /* ── 섹션 헤더 바로 뒤 그리드 상단 라인(여러 표 세로 쌓기 — apfs-multi-grid) ──
    SectionHead(risk_grid.tsx) 다음 형제 안의 AG Grid 에만 상단선을 긋는다.

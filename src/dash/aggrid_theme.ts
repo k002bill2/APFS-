@@ -11,10 +11,16 @@
    - v33+ 필수: AllCommunityModule을 import 시 1회 등록(미등록 시 런타임 blank grid).
      이 모듈을 import하는 모든 그리드가 등록을 공유한다.
    - ⚠️ 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지 — Theming API와 충돌. */
-import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
+import { ModuleRegistry, AllCommunityModule, themeQuartz, provideGlobalGridOptions } from 'ag-grid-community';
 import type { ValueFormatterParams, CellStyle, AutoSizeStrategy, GridApi } from 'ag-grid-community';
+import { emptyOverlaySelector } from './grid_empty_overlay';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
+
+/* 빈 상태(0행) 오버레이 = 전 그리드 기본 EmptyState(2026-09-29). 모듈 등록과 같이 import 시 1회 — 그리드별 배선 불필요.
+   그리드별 문구(overlayNoRowsTemplate·localeText)는 오버레이가 읽어 그대로 쓴다(→ grid_empty_overlay.tsx 헤더).
+   ⚠ 그리드에서 overlayComponent/overlayComponentSelector 를 따로 주면 그쪽이 이긴다(shallow 병합, 개별 옵션 우선). */
+provideGlobalGridOptions({ overlayComponentSelector: emptyOverlaySelector });
 
 /* 컬럼 폭 = 내용 폭(잘림 방지) — autoSizeStrategy 기본(2026-09-08 사용자 결정). 첫 데이터 렌더 때 헤더+셀 내용으로 자동 산정.
    → 컬럼이 많아 프레임 폭을 넘는 넓은 테이블(자펀드관리 등)용. 긴 텍스트 컬럼은 colDef.maxWidth로 상한.
