@@ -154,7 +154,8 @@ export function FilterChipRow({ chips = [], applied }: { chips?: readonly Filter
       /* 세로 3px 여유 — overflow:hidden 이 칩 focus 링을 자르지 않게(음수 마진으로 줄 높이는 그대로) */
       style={{ gap: GAP, padding: 3, margin: -3 }}>
       {shown.map((it) => <React.Fragment key={it.id}><ItemView it={it} /></React.Fragment>)}
-      {hidden.length > 0 && <OverflowMenu key="more" hidden={hidden} tinted={hiddenActive} rowRef={boxRef} />}
+      {/* 숨긴 게 `전체 해제` 하나뿐이면 +0 트리거가 된다 → 그리지 않는다(칩별 × 는 보이는 칩에 그대로 있다) */}
+      {hidden.some((it) => it.kind !== 'clear') && <OverflowMenu key="more" hidden={hidden} tinted={hiddenActive} rowRef={boxRef} />}
       {/* 측정용 사본 — 보이지 않고(visibility:hidden)·포커스·읽기 대상에서 빠진다.
           크기 0 + overflow:hidden 상자에 가둔다 — 가두지 않으면 max-content 사본이 페이지 가로 스크롤을 만든다(400px 실측 +312px). 자식 offsetWidth 는 잘림과 무관하다. */}
       <div aria-hidden="true" style={{ position: 'absolute', left: 0, top: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}>
@@ -182,15 +183,17 @@ function OverflowMenu({ hidden, tinted, rowRef }: { hidden: Item[]; tinted: bool
   const chips = hidden.filter((it): it is Extract<Item, { kind: 'chip' }> => it.kind === 'chip');
   const applied = hidden.filter((it): it is Extract<Item, { kind: 'applied' }> => it.kind === 'applied');
   const clear = hidden.find((it): it is Extract<Item, { kind: 'clear' }> => it.kind === 'clear');
+  /* +N = 숨긴 **필터** 수 — `전체 해제`는 필터가 아니라 세지 않는다(세면 칩 2개 숨김에 +3 으로 보였다). */
+  const n = chips.length + applied.length;
   /* 항목을 고르면 필터가 바뀌며 행 전체가 다시 그려져 Radix 의 자동 초점 복귀가 body 로 떨어진다(실측) —
      닫힌 뒤 다음 프레임에 트리거로 직접 되돌린다(키보드 사용자가 제자리에서 이어 가도록). */
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button ref={triggerRef} type="button" aria-label={`필터 ${hidden.length}개 더 보기`}
+        <button ref={triggerRef} type="button" aria-label={`필터 ${n}개 더 보기`}
           className="inline-flex shrink-0 border-0 bg-transparent p-0 cursor-pointer rounded-lg" style={{ fontFamily: 'inherit' }}>
-          <TriggerFace n={hidden.length} tinted={tinted} />
+          <TriggerFace n={n} tinted={tinted} />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-[200px] max-w-[320px]"
