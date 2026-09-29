@@ -97,8 +97,8 @@ export function controlMinWidth(kind?: string): number {
 const FORM_INPUT_W: React.CSSProperties = { width: '100%', minWidth: 'min(200px, 100%)', maxWidth: 320 };
 // 짧은 값 입력 = 100px(2026-09-29 사용자 지시) — 값이 짧아 열 폭을 채우지 않는다.
 //   · % 단위(라벨에 '%' — 수익률·충당율·비율 등) · 차수/회차(라벨에 '차수'|'회차' — generic_list 컬럼 폭 규칙과 같은 어휘)
-//   · 인원 수(라벨에 '인수' — 총고용인수·청년고용인수)
-const SHORT_VALUE_LABEL = /%|차수|회차|인수/;
+//   · 인원 수(라벨에 '인수' — 총고용인수·청년고용인수) · 순번(라벨에 '순번' — 순번·거래순번)
+const SHORT_VALUE_LABEL = /%|차수|회차|인수|순번/;
 const FORM_SHORT_W: React.CSSProperties = { width: 100, minWidth: 'min(100px, 100%)', maxWidth: '100%' };
 const FORM_SELECT_W: React.CSSProperties = { width: 'fit-content', minWidth: 'min(240px, 100%)', maxWidth: 'min(320px, 100%)' };
 
