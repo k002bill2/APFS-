@@ -19,7 +19,6 @@ import { Attachment, AttachmentGroup, AttachmentMedia, AttachmentContent, Attach
 const { useState, useRef } = React;
 const { Button, SaveButton, IconBtn } = UI;
 
-const OPT_MONTH = Array.from({ length: 12 }, (_, i) => `${i + 1}월`);
 const GP_KINDS = ['대표GP', '공동GP'];
 const DUTY_KINDS = ['GP담당자', '모태펀드담당자', 'RISK관리담당자'];
 /* 첨부서류 고정 슬롯 — 규약서만 규약일자 동반 */
@@ -51,8 +50,9 @@ function F({ spec, value, onChange, full }: { spec: FieldSpec; value: string; on
   // radio·switch·checkbox·복합 컨트롤은 <label> 로 감싸지 않는다 — 판정 SSOT = renderers.isPlainWrapControl(사유는 그쪽 주석).
   const Wrap: any = isPlainWrapControl(spec.control) ? 'div' : 'label';
   return (
-    <Wrap className={`block mb-3.5 ${full ? 'sm:col-span-2' : ''}`}>
+    <Wrap className={`block mb-3.5 ${full || spec.long ? 'sm:col-span-2' : ''}`}>
       <span className="font-semibold text-caption block" style={{ fontSize: 12, marginBottom: 5 }}>{spec.label}{spec.required ? ' *' : ''}</span>
+      {/* 폭(입력 200~320 · select fit-content 240~320 · 달력 기존 · long 전체 폭)은 SchemaField 공용 규약(renderers FORM_*_W) */}
       <SchemaField field={spec} value={value} onChange={onChange} />
     </Wrap>
   );
@@ -66,7 +66,7 @@ const tdLast: React.CSSProperties = { ...tdStyle, paddingRight: 0 };
 export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow; onSave: (patch: Partial<SubFundRow>) => void; onClose: () => void }) {
   const [v, setV] = useState<Record<string, string>>({
     fn: nz(row.fn), fd: nz(row.fd), rd: nz(row.rd), mat: nz(row.mat), liq: nz(row.liq), st: row.st === '-' ? OPT_FS[0] : row.st, regNo: '',
-    c1: nz(row.c1), c2: nz(row.c2), v1: nz(row.v1), v2: nz(row.v2), unitAmt: '', closeMonth: OPT_MONTH[11],
+    c1: nz(row.c1), c2: nz(row.c2), v1: nz(row.v1), v2: nz(row.v2), unitAmt: '', closeMonth: '12',
     ctype: row.ctype === '-' ? OPT_FG[0] : row.ctype, cs: row.cs === '-' ? OPT_FC[0] : row.cs, ag: OPT_AG[0], tc: OPT_TC[0], pt: OPT_PT[0], payRounds: '',
     dur: nz(row.dur), rate: nz(row.rate), mgmtFee: '', perfFee: '',
     lgp: nz(row.lgp), lmo: '', lossOrder: '선GP', pm: '', note: '',
@@ -124,7 +124,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
           <Section title="기본정보">
             <F spec={s('mf', '모펀드구분', 'readonly')} value="농식품모태펀드" onChange={() => {}} />
             <F spec={s('y', '사업연도', 'readonly')} value={yLabel} onChange={() => {}} />
-            <F spec={s('fn', '조합명', 'text', { required: true })} value={v.fn} onChange={set('fn')} full />
+            <F spec={s('fn', '조합명', 'text', { required: true, long: true })} value={v.fn} onChange={set('fn')} />
             {/* 업무집행조합원(GP) 반복행 */}
             <div className="sm:col-span-2 mb-3.5">
               <div className="flex items-center gap-2 mb-2">
@@ -160,7 +160,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
             <F spec={s('p1', '조합납입금누계(원)', 'readonly')} value={nz(row.p1) || '0'} onChange={() => {}} />
             <F spec={s('p2', '모태펀드납입금누계(원)', 'readonly')} value={nz(row.p2) || '0'} onChange={() => {}} />
             <F spec={s('unitAmt', '1좌당출자금액(원)', 'number')} value={v.unitAmt} onChange={set('unitAmt')} />
-            <F spec={s('closeMonth', '결산월', 'select', { options: OPT_MONTH })} value={v.closeMonth} onChange={set('closeMonth')} />
+            <F spec={s('closeMonth', '결산월', 'monthOfYear')} value={v.closeMonth} onChange={set('closeMonth')} />
           </Section>
 
           <Section title="조합 속성">
@@ -172,8 +172,8 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
             <F spec={s('payRounds', '납입회차', 'number')} value={v.payRounds} onChange={set('payRounds')} />
             <F spec={s('dur', '존속기간(년)', 'number')} value={v.dur} onChange={set('dur')} />
             <F spec={s('rate', '기준수익률(%)', 'number')} value={v.rate} onChange={set('rate')} />
-            <F spec={s('mgmtFee', '관리보수', 'text')} value={v.mgmtFee} onChange={set('mgmtFee')} full />
-            <F spec={s('perfFee', '성과보수', 'text')} value={v.perfFee} onChange={set('perfFee')} full />
+            <F spec={s('mgmtFee', '관리보수', 'text', { long: true })} value={v.mgmtFee} onChange={set('mgmtFee')} />
+            <F spec={s('perfFee', '성과보수', 'text', { long: true })} value={v.perfFee} onChange={set('perfFee')} />
           </Section>
 
           <Section title="우선손실·보수">
@@ -237,7 +237,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
                   </tr>))}</tbody>
               </table>
             </div>
-            <F spec={s('note', '비고', 'text')} value={v.note} onChange={set('note')} />
+            <F spec={s('note', '비고', 'text', { long: true })} value={v.note} onChange={set('note')} />
           </Section>
         </div>
 

@@ -38,7 +38,7 @@ export const schema: PageSchema = {
   ],
   fields: [
     { key: 'investee',      label: '투자기업',    control: 'text', long: true, required: true },
-    { key: 'baseYm',        label: '기준년월',    control: 'text', required: true },
+    { key: 'baseYm',        label: '기준년월',    control: 'month', required: true },
     { key: 'salesAmt',      label: '매출액',      control: 'number' },
     { key: 'totalEmployees', label: '총고용인수', control: 'number', required: true },
     { key: 'youthEmployees', label: '청년고용인수', control: 'number' },

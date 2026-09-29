@@ -1,6 +1,6 @@
 ---
 name: apfs-form-modal
-description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 배타 선택은 radio(DS RadioGroup), 복수 선택·매트릭스는 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 정본 예시는 "투자기업정보(통합)"(schemas/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
+description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 배타 선택은 radio(DS RadioGroup), 복수 선택·매트릭스는 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 컨트롤 폭 규약(입력 200~320 · select fit-content 240~320 · %·차수·회차 100px · 달력 불변 · long 전체폭). 정본 예시는 "투자기업정보(통합)"(schemas/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·입력칸 폭이 들쭉날쭉할 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
 ---
 
 # apfs-form-modal Skill
@@ -78,7 +78,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 2. **2단 적응은 자동.** `RowFormModal`이 `schema.fields.length > 6`이면 `max-w-[880px]` + `grid grid-cols-1 sm:grid-cols-2`(좁은 화면은 1단 적층)로, 6개 이하면 `max-w-[460px]` 단일 컬럼으로 **자동 렌더**. 호출자가 폭을 지정하지 않는다.
 3. **`textarea`/`file`, 그리고 `long: true` 필드는 전체 폭.** 2단 모드에서 이 셋은 `sm:col-span-2`로 한 줄 전체를 차지한다(긴 입력 잘림 방지) — `RowFormModal`이 자동 처리.
    - **`long: true` = 긴 텍스트 필드 표식(2026-09-15 사용자 결정).** **설명·비고·운용사(명)·자펀드/조합명/펀드명·기업명/투자기업·주소·제목·사업내용** 류는 `FieldSpec`에 `long: true`를 단다. 그러면 ① `RowFormModal`이 `sm:col-span-2`(한 줄 전체) ② `SchemaField`가 `fill`을 자동 ON(→ `width:100% minWidth:0`)한다.
-   - ⚠️ **`span2`만으로는 안 늘어난다 — 컨트롤 폭이 진범.** 셀을 2단으로 넓혀도 `base`의 `width:'fit-content' minWidth:240`(규칙 7)이 입력을 240px에 묶는다. 권한관리 모달 '설명'이 이미 `sm:col-span-2`인데도 짧게 보이던 원인이 이것 → 반드시 **`long`(=fill)** 로 폭까지 함께 푼다.
+   - ⚠️ **`span2`만으로는 안 늘어난다 — 컨트롤 폭이 진범.** 셀을 2단으로 넓혀도 비-`fill` 입력은 규칙 7의 max 320 에 묶인다(09-29 이전엔 `fit-content minWidth:240`). 권한관리 모달 '설명'이 이미 `sm:col-span-2`인데도 짧게 보이던 원인이 이것 → 반드시 **`long`(=fill)** 로 폭까지 함께 푼다.
    - ⚠️ **전용(bespoke) 모달은 `span2` 가 자동이 아니다.** `RowFormModal` 밖에서 `SchemaField` 를 직접 부르는 모달(`user_permission_modal`·`member_info_form_modal` 등)은 `long` 이 폭(`fill`)만 켜준다 — 한 줄 전체를 쓰려면 래퍼 `<Field className="sm:col-span-2">` 를 **직접** 붙인다.
    - 짧은 코드·일자·금액·구분값에는 달지 않는다(`long`을 남발하면 2단 그리드가 1단으로 무너진다).
 4. **seed 기본값.** 초기값은 `initial`(수정) 또는 빈 문자열(등록). 단 **`select`·`radio`·`switch`는 첫 옵션**(`f.options?.[0]`)을 기본값으로 시드한다. ⚠ `switch`를 시드 목록에서 빠뜨리면 등록 모드가 `''`를 저장해 그리드 배지가 빈칸으로 렌더된다.
@@ -89,7 +89,19 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
    - ⚠ **입력 옆 동거 버튼(프로그램 검색·중복확인·해제)은 `UI.Button size="sm"` 자연 높이(실측 29px) 그대로 둔다 — 2026-09-21 사용자 원복 결정.** 34px 컨트롤에 맞추는 `CONTROL_BTN` 공용 스타일을 도입했다가(PR #219) 사용자가 화면을 보고 "버튼을 원복하자"로 되돌렸다(revert PR). 입력과 버튼의 5px 높이 차는 의도된 상태이므로 **다시 맞추자고 제안하지 말 것**(규칙 8 안티패턴과 같은 성격). 기존 선례인 주소 검색(`CONTROL_BOX.height`)·결성조합 파일 선택(`height: 34`)은 원복 대상이 아니라 그대로다.
    - ⚠️ **단축 속성 `font` 금지 — 패밀리는 `fontFamily`(longhand)로만 상속.** `base`에서 `fontSize: 14` **뒤에** `font: 'inherit'`를 쓰면 안 된다. `font`은 `font-style/variant/weight/`**`size`**`/line-height/family`를 한꺼번에 지정하는 shorthand라, 인라인 스타일이 키 순서대로 적용되며 **뒤에 온 `font:'inherit'`가 앞의 `fontSize:14`를 부모 상속값(모달=16px)으로 되돌린다** → 네이티브 `select/input`이 16px로 렌더(라벨 14px보다 큼). 패밀리(Pretendard)만 상속하려면 **`fontFamily: 'inherit'`**(longhand)를 써서 `fontSize:14`를 보존하라. 검증: 모달 열고 `getComputedStyle(select).fontSize === '14px'`.
 6. **필수값·삭제.** 필수는 `field.required`(미입력 시 첫 누락 필드에 인라인 에러). 삭제는 edit 모드에서 ghost→`삭제 확인`(danger) 2단계.
-7. **컨트롤 폭 = fit-content + 타입별 minWidth(2026-09-09 사용자 확정, 이전 일률 220 폐기).** `renderers.tsx` `base`가 `width:'fit-content', minWidth:minW, maxWidth:'100%'` — 셀을 꽉 채우지 않고, 하한만 타입별로 차등. `minW`는 필드 위에서 `field.control`로 분기: **date 120**(짧은 고정포맷 YYYY-MM-DD) · **select 130**(이름만이면 fit-content로 더 좁아짐) · **number 180**(금액 자리수) · **text/기본 240**(GP명·조합명 등 명칭은 길게). **`textarea` 와 `long:true` 필드만 `width:'100%'`**(긴 입력 — `long` 은 `SchemaField` 안에서 `fill` 을 자동 ON 해 같은 경로를 탄다), `date`는 `DatePicker` 트리거가 `w-full`이라 같은 `minW`(=120) `fit-content` 래퍼 `<div>`로 감싼다. `maxWidth:'100%'`는 전 타입 공통(필드/셀 초과 방지 — 이것만 유지가 사용자 요구). 폭을 다시 일률값으로 되돌리지 말 것.
+7. **컨트롤 폭 = 타입별 범위(2026-09-29 사용자 확정 — 09-09 "fit-content + 타입별 minWidth" 를 대체).** 같은 열의 select·number·text 폭이 제각각이라 "들쭉날쭉" 지적 → 결성조합 수정 모달에서 확정 후 **전 폼 모달 적용**. SSOT 는 `renderers.tsx` 상단 `FORM_INPUT_W`·`FORM_SELECT_W`·`FORM_SHORT_W`(+`SHORT_VALUE_LABEL`), `SchemaField` 비-`fill` 경로가 컨트롤 종류로 고른다:
+   | 컨트롤 | 폭 | 비고 |
+   |---|---|---|
+   | 입력 `text`·`number`·`readonly` | `width:100%` · **min 200 ~ max 320** | 열 폭을 따라가되 320에서 멈춤 → 같은 열 입력칸 끝선이 맞는다 |
+   | **짧은 값 입력** — 라벨에 `%`·`차수`·`회차` | **100px 고정** | 수익률·충당율·비율·IRR·차수·납입회차. 판정 = `SHORT_VALUE_LABEL = /%\|차수\|회차/`(generic_list 컬럼 폭 규칙과 같은 어휘). 짧은 값 항목을 늘리려면 이 정규식에 단어만 추가 |
+   | `select` | 래퍼 `width:fit-content` · **min 240 ~ max 320** | 옵션 길이에 맞추되 범위 안. select 는 래퍼를 채운다(`width:100% minWidth:0`) |
+   | `date`·`year`·`month`·`monthOfYear` | **기존 그대로**(`controlMinWidth` 하한 + fit-content 래퍼) | 사용자 지시 "달력은 변동시키지 말자" — 이 규약에 넣지 말 것 |
+   | `long:true`·`textarea` | 전체 폭(`fill`) | 규칙 3 |
+   - min 은 `min(Npx, 100%)` — 모바일 1단 등 좁은 컨테이너에서 하한이 칸을 넘지 않게. `maxWidth` 도 `100%` 이하.
+   - ⚠ **입력칸 "최소폭만" 낮춰서는 안 보인다** — 입력은 `width:100%` 로 열을 따르므로 min 을 줄여도 넓은 열에선 여전히 320. 짧게 보이게 하려면 폭 자체를 고정(`FORM_SHORT_W` 처럼).
+   - ⚠ **열을 꽉 채우는 full-width 로 통일하지 말 것** — 2026-09-29 시안 후 사용자 기각("full width 말고 최소·최대 너비를 맞추자").
+   - 상세필터 드로어(`drawerInputStyle`·`controlMinWidth`)는 **이 규약 대상이 아니다**(별도 SSOT, →[[apfs-detail-filter]]). `controlMinWidth` 는 드로어·달력 래퍼용으로 그대로 남아 있다.
+   - 전용(bespoke) 모달도 `SchemaField` 를 쓰면 자동 적용 — 모달 쪽에 폭 상수를 복제하지 말 것(subfund_form_modal 에서 로컬 FIELD_W 를 만들었다가 공용으로 올리고 삭제한 연혁).
    - **셀 채움 탈출구 `SchemaField fill` prop(2026-09-11 PR #132).** 반복행 테이블처럼 컨트롤이 **셀(컬럼) 폭을 꽉 채워야** 할 때만 `<SchemaField fill … />`. (스키마 쪽 스위치는 `long:true` — `fill = fillProp || field.long` 으로 합류한다.) 이건 일률값 원복이 아니라 **컨텍스트가 폭을 지배할 때의 opt-in**이다 — `fill`이면 `width:'100%'` **그리고** `minWidth:0`(input·`date` 래퍼 둘 다), `select` 래퍼는 `display:'block' width:'100%'`. ⚠ `width:100%`만 주고 `minWidth`(text 240 등)를 남기면 **240min이 100%를 이겨** 200px 고정 컬럼을 넘쳐 옆 셀 위로 겹친다(Codex P2). 기본(prop 미전달)은 그대로 `fit-content`라 RowFormModal 그리드는 무영향. `date`는 `fill`이면 fit-content 래퍼도 `width:100% minWidth:0`로 같이 분기.
 8. **배열은 라벨 위·컨트롤 아래(세로 적층) 고정.** ⚠ 안티패턴: 라벨 좌·컨트롤 우 inline 배열 — 2026-09-08 시안 후 **사용자 원복**. 다시 제안하지 말 것(폭만 fit-content로 줄이는 것이 결정).
 
@@ -99,6 +111,8 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 | `text` | `<input type=text>` | 기본 |
 | `number` | `<input type=number>` | 숫자 |
 | `date` | shadcn Radix `DatePicker`(달력+Popover) | 네이티브 input 아님 — 값 계약 `'YYYY-MM-DD'`·KST 함정 →[[apfs-datepicker]] |
+| `month` | `PeriodPicker mode='month'`(12개월 그리드+연도 ‹ ›) | **기준년월·등록년월 등 년월은 `text`/`date` 가 아니라 이것**(2026-09-22). 값 계약 `'YYYY-MM'`. →[[apfs-datepicker]] |
+| `monthOfYear` | `PeriodPicker mode='monthOfYear'`(연도 없는 12개월 그리드) | **결산월 등 연도 없는 월은 `select`(1~12월 나열)가 아니라 이것**(2026-09-29). 값 계약 `'M'`(`'1'`~`'12'`), 표시 `12월` — 옆에 '월' 접미사 붙이지 말 것. →[[apfs-datepicker]] |
 | `year` | `PeriodPicker mode='year'`(연도 그리드+Popover) | **사업연도·회계연도는 `number` 가 아니라 이것**(2026-09-17). 값 계약 `'YYYY'` 문자열, 표시는 `2026년`. 컬럼은 `type:'text'` 그대로 — 저장값이 곧 셀 값이다. →[[apfs-datepicker]] |
 | `select` | `<select>`+`options` | 첫 옵션 시드 |
 | `radio` | DS **`RadioGroup`/`RadioGroupItem`**(ui/radio-group.tsx, 선택 점 scale-pop)+`options` | **분류형 2지 이상**(개인/법인, 신주/구주, Y/N/해당없음). 첫 옵션 시드. Item 은 `<button role=radio>` — `<label>` 래핑 금지, `htmlFor`/`id` 명시 연결 |
@@ -172,6 +186,7 @@ export const schema: PageSchema = {
 ## 검증
 - `npm test`(zod 스키마 테스트 — 새 control은 `FIELD_CONTROLS`에 있어야 통과) + `npm run build`(exit 0).
 - 브라우저: 항목>6 → 880px 2단(400px에서 1단 적층 확인), textarea/`long` 전체폭, radio·switch 첫 옵션 기본, 필수 미입력 에러, 삭제 2단계. 라이트/다크(→[[responsive-ui]]).
+- 폭(규칙 7) 검증: 입력 `getBoundingClientRect().width` ≤ 320·같은 열 입력칸 우측 끝 일치, `%`·차수·회차 입력 = 100, select 240~320, 달력 트리거는 120/130 근처(변동 없음).
 - `long` 검증은 **span 이 아니라 실측 폭**으로: 모달 열고 `getComputedStyle(input).width` 가 셀 폭과 같은지(240px 로 묶여 있지 않은지) 확인.
 - `switch` 검증은 **왕복으로**: 등록 → 토글 → 저장 → 그리드 배지가 '여'/'부'로 뜨는지 + 상세필터 '사용여부'가 그 행을 걸러내는지(문자열 계약이 깨지면 여기서 드러난다).
 - 체크박스 라벨 검증 2종: ① 라벨 텍스트 클릭이 **정확히 1회** 발화하는지(`addEventListener('click')` 카운터 — 암묵 `<label>` 래핑이면 2가 된다), ② `getByRole('checkbox', { name: '사용여부 여' })` 로 접근名이 **필드명+값** 둘 다 잡히는지.

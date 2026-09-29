@@ -86,6 +86,21 @@ export function controlMinWidth(kind?: string): number {
   return kind === 'date' ? 120 : (kind === 'select' || kind === 'enum' || kind === 'year' || kind === 'month') ? 130 : kind === 'number' ? 180 : 240;
 }
 
+/* 폼 모달(SchemaField 비-fill) 폭 규약(2026-09-29 사용자 결정, 결성조합 수정 모달에서 확정 후 "전체 적용") —
+   타입별 하한 + fit-content 만 쓰니 select·number·text 폭이 제각각이라 들쭉날쭉했다. 그래서:
+   · 입력(text·number·readonly) = 열 폭을 따르되 200~320 사이 → 같은 열의 입력칸 끝선이 맞는다.
+   · select = 240~320 범위 안에서 옵션 길이에 맞춘 fit-content.
+   · date/year/month = 기존 그대로(controlMinWidth 하한 + fit-content) — 사용자 지시 "달력은 변동시키지 말자".
+   · long(설명·비고·조합명 등 긴 글)·textarea = 전체 폭(fill).
+   min 은 `min(Npx,100%)` — 좁은 컨테이너(모바일 1단)에서 하한이 컨테이너를 넘지 않게.
+   ⚠ 상세필터 드로어(drawerInputStyle·controlMinWidth)는 이 규약 대상이 아니다. */
+const FORM_INPUT_W: React.CSSProperties = { width: '100%', minWidth: 'min(200px, 100%)', maxWidth: 320 };
+// 짧은 값 입력 = 100px(2026-09-29 사용자 지시) — 값이 짧아 열 폭을 채우지 않는다.
+//   · % 단위(라벨에 '%' — 수익률·충당율·비율 등) · 차수/회차(라벨에 '차수'|'회차' — generic_list 컬럼 폭 규칙과 같은 어휘)
+const SHORT_VALUE_LABEL = /%|차수|회차/;
+const FORM_SHORT_W: React.CSSProperties = { width: 100, minWidth: 'min(100px, 100%)', maxWidth: '100%' };
+const FORM_SELECT_W: React.CSSProperties = { width: 'fit-content', minWidth: 'min(240px, 100%)', maxWidth: 'min(320px, 100%)' };
+
 /* 폼 컨트롤 박스 규격(높이 34px) — 등록/수정 모달(SchemaField base)과 상세필터 드로어가 **공유하는 SSOT**.
    ⚠️ 이 값을 페이지로 복사하지 말 것: 24개 드로어가 각자 복제한 결과 9px 패딩·14px 폰트로 굳어
    모달(34px)보다 6px 높아졌다(2026-09-17 사용자 지적). 높이를 바꾸려면 여기 한 곳만 바꾼다.
@@ -201,17 +216,21 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
   // ⚠ invalid/미입력 필수는 focus 중에도 danger 테두리를 유지한다(검증 단서 소실 방지, Codex P2). 그땐 테두리를 --ring로 스왑하지 않고
   //   글로우만 danger 색으로 맞춘다(정상 필드·이미 채운 필수는 --ring 테두리+글로우).
   const fs = controlFocusStyle(focused, !!invalid || requiredEmpty);
+  // 입력(text·number·readonly) 비-fill 폭 = FORM_INPUT_W(200~320, 열 폭 추종). fill 이면 base(100%) 그대로.
+  //   % 단위·차수/회차(SHORT_VALUE_LABEL)면 FORM_SHORT_W(100px).
+  const inputW: React.CSSProperties = fill ? {} : SHORT_VALUE_LABEL.test(field.label) ? FORM_SHORT_W : FORM_INPUT_W;
   switch (field.control) {
     case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} placeholder={field.placeholder} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical', ...fs }} />;
     // select: native 화살표는 Chrome UA가 오른쪽 경계에 고정해 padding으로 못 움직임 → appearance:none로 제거하고 lucide chevron을 오버레이(토큰색·다크대응).
     //   아이콘은 pointer-events:none라 클릭이 select로 통과. 오른쪽 간격 = 아이콘 right(12px). paddingRight 34는 옵션 텍스트가 chevron과 겹치지 않게 확보.
     case 'select':   return (
-      <div style={{ position: 'relative', display: fill ? 'block' : 'inline-block', width: fill ? '100%' : undefined, maxWidth: '100%' }}>
-        <select value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: 34, ...fs }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>
+      // 비-fill 폭은 래퍼가 FORM_SELECT_W(240~320 fit-content)로 정하고 select 는 래퍼를 채운다(폭 규약 주석 참조).
+      <div style={{ position: 'relative', display: 'block', ...(fill ? { width: '100%', maxWidth: '100%' } : FORM_SELECT_W) }}>
+        <select value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', minWidth: 0, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: 34, ...fs }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>
         <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--muted-foreground)' }} />
       </div>
     );
-    case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...fs }} />;
+    case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...inputW, ...fs }} />;
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(네이티브 input과 동일 계약).
     // DatePicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW=120)을 적용
     case 'date':     return <div style={{ width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%' }}><DatePicker value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
@@ -221,6 +240,8 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
     // 월선택 — PeriodPicker 월 그리드. 값은 'YYYY-MM' 문자열(기준년월·등록년월). year 와 동일한 fit-content 래퍼(minW=130).
     // field.placeholder 는 넘기지 않는다 — 위 date/year 와 같은 기존 패턴이다(픽커 트리거는 자체 기본 문구를 쓴다).
     case 'month':    return <div style={{ width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : minW, maxWidth: '100%' }}><PeriodPicker mode="month" value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
+    // 연도 없는 월(결산월) — PeriodPicker 12개월 그리드. 값 'M'('1'~'12'). month 와 같은 fit-content 래퍼.
+    case 'monthOfYear': return <div style={{ width: fill ? '100%' : 'fit-content', minWidth: fill ? 0 : controlMinWidth('month'), maxWidth: '100%' }}><PeriodPicker mode="monthOfYear" value={value} onChange={onChange} invalid={invalid} required={requiredMark} ariaLabel={field.label} /></div>;
     // 독립 체크값('true'/'false' 계약) — 가시 라벨은 모달이 위에 렌더하므로 여기선 접근名만 aria-label 로 준다.
     // ⚠ 신규 스키마는 이 토큰 대신 `control:'switch' + options`를 쓴다(현재 사용처 0). 이유:
     //   ① 값 계약이 'true'/'false' 라 형제 Y/N 필드와 나란히 두면 똑같아 보이는데 저장 형태만 다르다,
@@ -288,7 +309,7 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
         <AddressField value={value} onChange={onChange} required={requiredMark} label={field.label} invalid={invalid} fill={fill} />
       </React.Suspense>
     );
-    case 'readonly': return <div title={value || undefined} style={{ ...base, background: 'var(--muted)', color: 'var(--muted-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value || '—'}</div>;
-    default:         return <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...fs }} />;
+    case 'readonly': return <div title={value || undefined} style={{ ...base, ...inputW, background: 'var(--muted)', color: 'var(--muted-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value || '—'}</div>;
+    default:         return <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...inputW, ...fs }} />;
   }
 }

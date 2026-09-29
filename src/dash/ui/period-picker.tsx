@@ -2,6 +2,7 @@
    연도·월·분기·반기는 같은 트리거(38px 폼 컨트롤 모사) + Popover 안 버튼 그리드로 고른다.
    값 계약(문자열, 빈 문자열=미선택 — 필터 정확일치·zod·Excel이 의존):
      day 'YYYY-MM-DD' · month 'YYYY-MM' · quarter 'YYYY-Qn' · half 'YYYY-Hn' · year 'YYYY'
+     monthOfYear 'M'('1'~'12') — 연도 없는 월(결산월 등). 연도 이동 헤더 없이 12개월 그리드만 연다(2026-09-29 사용자 지시 "월 선택은 모두 datepicker").
    규약은 apfs-datepicker 스킬 "PeriodPicker" 절. Popover는 DatePicker와 같이 non-modal(모달/드로어 안 2-click 회귀 방지). */
 import * as React from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -9,7 +10,7 @@ import { Popover, PopoverTrigger, PopoverContent } from './popover';
 import { DatePicker } from './date-picker';
 import { cn } from '@/lib/utils';
 
-export type PeriodMode = 'day' | 'month' | 'quarter' | 'half' | 'year';
+export type PeriodMode = 'day' | 'month' | 'quarter' | 'half' | 'year' | 'monthOfYear';
 
 export interface PeriodPickerProps {
   mode: PeriodMode;
@@ -23,11 +24,12 @@ export interface PeriodPickerProps {
   yearRange?: [number, number];   // 연도 선택 범위(기본 2000~2035 — DatePicker와 동일)
 }
 
-const PLACEHOLDER: Record<PeriodMode, string> = { day: '날짜 선택', month: '월 선택', quarter: '분기 선택', half: '반기 선택', year: '연도 선택' };
+const PLACEHOLDER: Record<PeriodMode, string> = { day: '날짜 선택', month: '월 선택', monthOfYear: '월 선택', quarter: '분기 선택', half: '반기 선택', year: '연도 선택' };
 
 /* 값 → 표시 문자열(한글). 파싱 실패는 원문 그대로 */
 export function formatPeriod(mode: PeriodMode, v: string): string {
   if (!v) return '';
+  if (mode === 'monthOfYear') return /^\d{1,2}$/.test(v) ? `${Number(v)}월` : v;
   const m = v.match(/^(\d{4})(?:-(?:(\d{2})|Q([1-4])|H([12])))?/);
   if (!m) return v;
   const y = m[1];
@@ -98,8 +100,8 @@ function GridPicker({ mode, value, onChange, ariaLabel, invalid, required, disab
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="p-3" style={{ width: 268 }}>
-        {/* 헤더: 연도(월/분기/반기) 또는 12년 범위(연도) 이동 */}
-        <div className="flex items-center justify-between mb-2">
+        {/* 헤더: 연도(월/분기/반기) 또는 12년 범위(연도) 이동. monthOfYear 는 연도 축이 없어 헤더 없음 */}
+        {mode !== 'monthOfYear' && <div className="flex items-center justify-between mb-2">
           <button type="button" className={navBtn} aria-label={mode === 'year' ? '이전 12년' : '이전 연도'}
             disabled={mode === 'year' ? pageStart - 1 < minY : year - 1 < minY}
             onClick={() => setYear((y) => (mode === 'year' ? y - 12 : y - 1))}>
@@ -113,7 +115,7 @@ function GridPicker({ mode, value, onChange, ariaLabel, invalid, required, disab
             onClick={() => setYear((y) => (mode === 'year' ? y + 12 : y + 1))}>
             <ChevronRight className="h-4 w-4" strokeWidth={2} />
           </button>
-        </div>
+        </div>}
 
         {mode === 'year' && (
           <div className="grid grid-cols-3 gap-1" role="listbox" aria-label="연도">
@@ -129,6 +131,14 @@ function GridPicker({ mode, value, onChange, ariaLabel, invalid, required, disab
             {Array.from({ length: 12 }, (_, i) => i + 1).map((mo) => {
               const v = `${year}-${String(mo).padStart(2, '0')}`; const sel = v === value;
               return <button key={mo} type="button" role="option" aria-selected={sel} className={cn(cell, sel && cellSelected)} onClick={() => pick(v)}>{mo}월</button>;
+            })}
+          </div>
+        )}
+        {mode === 'monthOfYear' && (
+          <div className="grid grid-cols-3 gap-1" role="listbox" aria-label="월">
+            {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((v) => {
+              const sel = v === value;
+              return <button key={v} type="button" role="option" aria-selected={sel} className={cn(cell, sel && cellSelected)} onClick={() => pick(v)}>{v}월</button>;
             })}
           </div>
         )}
