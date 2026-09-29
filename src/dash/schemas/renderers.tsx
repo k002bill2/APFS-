@@ -97,7 +97,8 @@ export function controlMinWidth(kind?: string): number {
 const FORM_INPUT_W: React.CSSProperties = { width: '100%', minWidth: 'min(200px, 100%)', maxWidth: 320 };
 // 짧은 값 입력 = 100px(2026-09-29 사용자 지시) — 값이 짧아 열 폭을 채우지 않는다.
 //   · % 단위(라벨에 '%' — 수익률·충당율·비율 등) · 차수/회차(라벨에 '차수'|'회차' — generic_list 컬럼 폭 규칙과 같은 어휘)
-const SHORT_VALUE_LABEL = /%|차수|회차/;
+//   · 인원 수(라벨에 '인수' — 총고용인수·청년고용인수)
+const SHORT_VALUE_LABEL = /%|차수|회차|인수/;
 const FORM_SHORT_W: React.CSSProperties = { width: 100, minWidth: 'min(100px, 100%)', maxWidth: '100%' };
 const FORM_SELECT_W: React.CSSProperties = { width: 'fit-content', minWidth: 'min(240px, 100%)', maxWidth: 'min(320px, 100%)' };
 
@@ -217,7 +218,7 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
   //   글로우만 danger 색으로 맞춘다(정상 필드·이미 채운 필수는 --ring 테두리+글로우).
   const fs = controlFocusStyle(focused, !!invalid || requiredEmpty);
   // 입력(text·number·readonly) 비-fill 폭 = FORM_INPUT_W(200~320, 열 폭 추종). fill 이면 base(100%) 그대로.
-  //   % 단위·차수/회차(SHORT_VALUE_LABEL)면 FORM_SHORT_W(100px).
+  //   % 단위·차수/회차·인수(SHORT_VALUE_LABEL)면 FORM_SHORT_W(100px).
   const inputW: React.CSSProperties = fill ? {} : SHORT_VALUE_LABEL.test(field.label) ? FORM_SHORT_W : FORM_INPUT_W;
   switch (field.control) {
     case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} placeholder={field.placeholder} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical', ...fs }} />;
