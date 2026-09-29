@@ -143,9 +143,7 @@ function NonInvestTradeTable() {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td className={`${TD} text-center text-caption`} colSpan={8} style={{ ...CELL, padding: '18px 9px' }}>조회된 내역이 없습니다.</td>
-          </tr>
+          <UI.EmptyRow span={8} msg="조회된 내역이 없습니다." className={TD} style={{ ...CELL, padding: '18px 9px' }} />
         </tbody>
       </table>
     </div>

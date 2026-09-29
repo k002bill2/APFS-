@@ -69,13 +69,9 @@ function KvGrid({ items }: { items: KvItem[] }) {
   );
 }
 
-/* 비어 있는 표 본문 — 목업 `.empty` 한 행 그대로 */
+/* 비어 있는 표 본문 — 공용 UI.EmptyRow(아이콘+문구 한 줄)에 이 표의 테두리 셀 규격(TD·CELL)만 넘긴다 */
 function EmptyRow({ span, msg }: { span: number; msg: string }) {
-  return (
-    <tr>
-      <td className={`${TD} text-center text-caption`} colSpan={span} style={{ ...CELL, padding: '18px 9px' }}>{msg}</td>
-    </tr>
-  );
+  return <UI.EmptyRow span={span} msg={msg} className={TD} style={{ ...CELL, padding: '18px 9px' }} />;
 }
 
 /* ② 보고안건 — 안건순서·보고안건 */

@@ -131,7 +131,7 @@ export function MiniTable({ heads, rows, act, label, right = [], empty = '변경
             ))}
           </tr></thead>
           <tbody>
-            {rows.length === 0 && <tr><td colSpan={cols.length + 1} className="border border-border text-center text-caption" style={cell}>{empty}</td></tr>}
+            {rows.length === 0 && <UI.EmptyRow span={cols.length + 1} msg={empty} className="border border-border" style={{ ...cell, padding: '18px 9px' }} />}
             {rows.map((r, ri) => (
               <tr key={ri} className={sel.includes(ri) ? 'bg-muted' : undefined}>
                 <td className="border border-border text-center" style={cell}>

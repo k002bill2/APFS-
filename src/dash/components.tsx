@@ -429,6 +429,25 @@ function EmptyState({ msg = "표시할 데이터가 없습니다", icon = "inbox
   );
 }
 
+/* ---- EmptyRow — 비-그리드 <table>(반복행·명세·이력 표)의 0행 표시 (2026-09-29 사용자 지시 "empty 표시 기본 적용") ----
+   AG Grid 는 전역 오버레이(grid_empty_overlay.tsx)가 처리하지만, 직접 만든 <table> 은 0행을 알 방법이 없어
+   소비처가 `rows.length === 0 ? <UI.EmptyRow span={열수} /> : rows.map(…)` 로 직접 넣는다.
+   · 폼 안 표라 EmptyState(120px)가 아니라 한 줄(아이콘 16 + 문구, 상하 18px) — 폼이 늘어지지 않게.
+   · 행 추가 버튼이 있는 표는 hint 로 채우는 방법을 덧붙인다(예: "「행 추가」로 입력하세요").
+   · 테두리 있는 표는 className/style 로 셀 규격(border·cell padding)을 그대로 넘긴다. */
+function EmptyRow({ span, msg = "등록된 항목이 없습니다.", hint, className, style }: { span: number; msg?: string; hint?: string; className?: string; style?: React.CSSProperties }) {
+  return (
+    <tr>
+      <td colSpan={span} className={cx("text-center text-caption", className)} style={{ padding: "18px 9px", fontSize: 13, ...style }}>
+        <span className="inline-flex items-center gap-1.5 align-middle">
+          <span aria-hidden="true" className="inline-flex"><Icon name="inbox" size={16} stroke={1.8} /></span>
+          <span>{msg}{hint ? <span className="text-muted-foreground"> {hint}</span> : null}</span>
+        </span>
+      </td>
+    </tr>
+  );
+}
+
 /* ---- CountPill ---- */
 function CountPill({ count, urgent }: { count?: number; urgent?: boolean }) {
   if (!count) return null;
@@ -439,4 +458,4 @@ function CountPill({ count, urgent }: { count?: number; urgent?: boolean }) {
   );
 }
 
-export const UI = { ColorChip, StatusBadge, DeltaBadge, StatCard, Card, ChartCard, SegTabs, FilterChip, Button, SaveButton, IconBtn, EmptyState, CountPill, Progress, PopNumber, TextSwap, TextsReveal, ClearableInput, toneVar };
+export const UI = { ColorChip, StatusBadge, DeltaBadge, StatCard, Card, ChartCard, SegTabs, FilterChip, Button, SaveButton, IconBtn, EmptyState, EmptyRow, CountPill, Progress, PopNumber, TextSwap, TextsReveal, ClearableInput, toneVar };
