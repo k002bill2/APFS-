@@ -163,9 +163,7 @@ function GradeChangeTable() {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td colSpan={5} className={`${TD} text-center text-muted-foreground`} style={{ padding: '22px 9px' }}>조회된 등급 변경 내역이 없습니다.</td>
-          </tr>
+          <UI.EmptyRow span={5} msg="조회된 등급 변경 내역이 없습니다." className={TD} style={{ padding: '22px 9px' }} />
         </tbody>
       </table>
     </div>

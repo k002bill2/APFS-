@@ -191,7 +191,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
             <div className="overflow-x-auto mb-3.5">
               <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 560, tableLayout: 'fixed' }}>
                 <thead><tr><th style={{ ...thStyle, width: 180 }}>담당 구분</th><th style={{ ...thStyle, width: 200 }}>성명</th><th style={thStyle}>EMAIL</th><th style={{ ...thLast, width: 40 }}></th></tr></thead>
-                <tbody>{duties.map((d, i) => (
+                <tbody>{duties.length === 0 && <UI.EmptyRow span={4} msg="등록된 담당자가 없습니다." hint="「행 추가」로 입력하세요." />}{duties.map((d, i) => (
                   <tr key={i}>
                     <td style={tdStyle}><SchemaField fill field={s(`dk${i}`, '담당 구분', 'select', { options: DUTY_KINDS })} value={d.kind} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, kind: val } : x)))} /></td>
                     <td style={tdStyle}><SchemaField fill field={s(`dn${i}`, '성명', 'text', { pii: true })} value={d.name} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, name: val } : x)))} /></td>

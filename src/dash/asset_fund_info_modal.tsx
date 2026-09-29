@@ -74,9 +74,8 @@ const th: React.CSSProperties = { textAlign: 'left', fontSize: 13, fontWeight: 7
 const td: React.CSSProperties = { padding: '4px 0', paddingRight: 8, verticalAlign: 'middle' };
 const thLast: React.CSSProperties = { ...th, paddingRight: 0 };
 const tdLast: React.CSSProperties = { ...td, paddingRight: 0 };
-const EmptyRow = ({ span }: { span: number }) => (
-  <tr><td colSpan={span} className="text-center text-caption" style={{ padding: '18px 0', fontSize: 13 }}>{MODAL_EMPTY}</td></tr>
-);
+/* 0행 — 공용 UI.EmptyRow(아이콘+문구). 두 표 모두 「행 추가」로 채우므로 hint 를 붙인다 */
+const EmptyRow = ({ span }: { span: number }) => <UI.EmptyRow span={span} msg={MODAL_EMPTY} hint="「행 추가」로 입력하세요." style={{ padding: '18px 0' }} />;
 
 /* onSave·fundOptions·initialForm 은 자펀드정보관리 통합 그리드(v1.4 + S2_73, 2026-09-28)용 — 저장 폼을 행에 반영하고,
    자펀드 선택지를 그리드 행의 자펀드로 바꾸며, 공동GP(업무집행조합원2)까지 채운 초기 폼을 받는다.

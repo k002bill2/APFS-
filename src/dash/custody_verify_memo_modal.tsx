@@ -139,9 +139,7 @@ export function CustodyMemoModal({ ctx, history, baseDate, onSave, onClose }: {
                 </thead>
                 <tbody>
                   {history.length === 0 ? (
-                    <tr>
-                      <td className={`${TD} text-center text-caption`} colSpan={2} style={{ ...CELL, padding: '18px 9px' }}>작성 이력이 없습니다.</td>
-                    </tr>
+                    <UI.EmptyRow span={2} msg="작성 이력이 없습니다." className={TD} style={{ ...CELL, padding: '18px 9px' }} />
                   ) : history.map((h, i) => (
                     <tr key={h.date + '-' + i}>
                       <td className={`${TD} text-center tabular`} style={CELL}>{String(h.date)}</td>
