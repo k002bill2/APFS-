@@ -1,5 +1,7 @@
 # APFS 대시보드 접근성 감사 보고서
 
+> **종료 (2026-09-29 정리)** — 대표 패턴 조치 확인: tweaks-panel 삭제, FilterChip/IconBtn `aria-pressed`, 폼 검증 `role="alert"`(generic_list_modal), 차트 접근名. **41건 전수 재검증은 하지 않음** — 잔여 항목은 web-a11y 스킬 점검으로 다룬다.
+
 ## Executive Summary
 
 - 검증된 위반 **41건**(CONFIRMED 37 + UNCERTAIN 4). Critical 없음, **Major 12건 / Minor 25건**. 대부분이 소수 공유 컴포넌트에서 발원하는 **체계적 패턴 5종**으로, 원인 파일 몇 개만 고치면 다수가 일괄 해소된다.

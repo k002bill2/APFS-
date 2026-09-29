@@ -14,7 +14,7 @@ export const OTP_PERIOD = 120;         // 초. 표준 TOTP 는 30초지만, 화�
 
 /* 시연용 가짜 계정 — 실제 자격증명 아님.
 
-   ⚠ 의도적 편차(2026-09-16 사용자 결정): `dev/active/admin-pages-complete/BRIEF.md` 는 S0_001 에서
+   ⚠ 의도적 편차(2026-09-16 사용자 결정): `dev/completed/admin-pages-complete/BRIEF.md` 는 S0_001 에서
    raw mock credential·TOTP seed/code·실명/개인정보를 화면·커밋에 노출하지 말 것을 요구한다.
    이 화면들의 정본은 claude.ai/design 캔버스 `APFS 로그인 프로토타입.dc.html` 이고 캔버스가 이 값들을
    화면에 그대로 띄우는 구성이라, "원본 디자인을 그대로 쓴다"는 결정에 따라 캔버스를 따랐다.

@@ -1,5 +1,7 @@
 # 보고 관리 페이지 5종 HTML → React 변환 브리프
 
+> **종료 (2026-09-29 정리)** — 구현 머지됨: PR #150 `7fc11ab` feat(report) add five post-report management pages.
+
 ## 목적
 `/Users/younghwankang/Downloads/통합/01_투자자산관리`의 현행 목업 HTML 5개를 APFS Vite + React 페이지로 변환하고, 각각 기존 APFS 메뉴의 해당 리프에서 도달 가능하게 만든다.
 
