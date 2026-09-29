@@ -19,7 +19,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { UI } from './components';
 import { GridFrame, FooterActions } from './grid_frame';
-import { useHotkey, HOTKEYS } from './use-hotkey';   // ⌘P 인쇄(푸터 툴팁 힌트와 짝)
+import { useHotkey, HOTKEYS } from './use-hotkey';   // ⌘P 인쇄 · ⌥D 내보내기(푸터 툴팁 힌트와 짝)
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import {
@@ -28,7 +28,7 @@ import {
 } from './investee_invest_stats_model';
 import type { MatrixRow, RegionRow } from './investee_invest_stats_model';
 
-const { Button, IconBtn, SegTabs } = UI;
+const { Button, SegTabs } = UI;
 
 /* 표 밀도 — 투자기업정보(통합) 페이지(company_profile_model `page` variant)와 같은 시각 언어(2026-09-24).
    셀은 사방 테두리를 그대로 두고, 표를 `border-hidden` 으로 감싸 바깥 테두리만 지운다 —
@@ -168,6 +168,7 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
     XLSX.writeFile(wb, `투자실적현황(투자기업)_${meta.label}_${unit}.xlsx`);
     toast.success(`${meta.label} 표를 Excel로 내보냈습니다 (단위: ${unit})`);
   }, [isMatrix, headers, rows, meta, unit]);
+  useHotkey(HOTKEYS.export.combo, () => exportExcel());   // ⌥D — 푸터 내보내기 툴팁 힌트와 짝
 
   return (
     <GridFrame
@@ -184,10 +185,9 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
       toolbarRight={<>
         <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
         <SegTabs size="sm" options={STAT_UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as StatUnit)} />
-        <IconBtn icon="download" label="내보내기 (Excel)" size={34} onClick={exportExcel} />
       </>}
       footerLeft={<span>{`모펀드 농식품모태펀드 · 매출액별 ${SOURCE_COUNTS.salesScale}행 · 투자형태별 ${SOURCE_COUNTS.investType}행 · 소재지별 ${SOURCE_COUNTS.region}행 (원문 그대로)`}</span>}
-      footerRight={<FooterActions />}>
+      footerRight={<FooterActions onExport={exportExcel} />}>
       <div style={{ padding: '20px 2px 8px', minHeight: 320 }}>
         {view === 'salesScale' && (
           <Section title="경영체 매출액별 투자실적" caption={`투자건수·투자금액 2개 블록 · 연도(2010~2025)+합계 · 금액 단위: ${unit}`}>
