@@ -206,7 +206,7 @@ function RiskManage({ onNav }: { onNav: (r: string) => void }) {
   const countOf = (s: string) => WORKITEMS.filter((w) => w.status === s).length;
 
   return (
-    <div className="max-w-[1320px] mx-auto" style={{ animation: "dashFade var(--dur-slow) var(--ease) both" }}>
+    <div className="max-w-[1320px] mx-auto" style={{ animation: "dashFade var(--dur-slow) var(--ease) backwards" }}>
       <PageHeader
         crumbs={["홈", "조기경보", "조기경보 관리"]}
         title="조기경보 관리"

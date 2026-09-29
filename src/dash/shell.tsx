@@ -684,12 +684,12 @@ function FavoritesFab({ onNav }) {
     ...(onLeft ? { left: vw - pos.right - FAB_SIZE } : { right: pos.right }),
   };
   return (
-    <div className={"fixed flex gap-3 " + (onTop ? "flex-col-reverse" : "flex-col") + (onLeft ? " items-start" : " items-end")} style={{ zIndex: 60, ...anchor }}>
+    <div className={"fixed flex gap-3 " + (onTop ? "flex-col-reverse" : "flex-col") + (onLeft ? " items-start" : " items-end")} style={{ zIndex: 58, ...anchor }}>{/* 58: 방문기록 팝오버(백드롭 59·패널 60) 아래 — 같은 60이면 DOM 뒤쪽인 FAB가 팝오버를 덮는다 */}
       <MenuPickerModal open={edit} onClose={() => setEdit(false)} initialTab="fav" />
       {open && <>
         <div onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: -1 }} />
         <MenuHighlightProvider>
-        <div role="menu" aria-label="즐겨찾기" className="bg-card shadow-lg p-2" style={{ width: 244, border: "1px solid var(--border)", borderRadius: 14, animation: "dashFade var(--dur) var(--ease) both" }}>
+        <div role="menu" aria-label="즐겨찾기" className="bg-card shadow-lg p-2" style={{ width: 244, border: "1px solid var(--border)", borderRadius: 14, animation: "dashFade var(--dur) var(--ease) backwards" }}>
           <div className="flex items-center gap-1.5 pt-1.5 px-2 pb-2">
             <Icon name="star" size={14} style={{ color: "var(--warning)" }} />
             <span className="font-bold" style={{ fontSize: 12.5 }}>즐겨찾기</span>
@@ -720,7 +720,7 @@ function FavoritesFab({ onNav }) {
           aria-label="맨 위로"
           title="맨 위로"
           className="bg-card text-foreground shadow-lg cursor-pointer flex items-center justify-center"
-          style={{ width: 36, height: 36, borderRadius: 10, border: "1px solid var(--border)", animation: "dashFade var(--dur) var(--ease) both" }}>
+          style={{ width: 36, height: 36, borderRadius: 10, border: "1px solid var(--border)", animation: "dashFade var(--dur) var(--ease) backwards" }}>
           <Icon name="arrow-up" size={17} stroke={2.2} />
         </button>
       )}

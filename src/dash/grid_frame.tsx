@@ -331,7 +331,7 @@ export function GridFrame({
   }, [hasFooter]);
 
   return (
-    <div ref={rootRef} style={{ maxWidth: 1280, margin: '0 auto', animation: 'dashFade var(--dur-slow) var(--ease) both' }}>
+    <div ref={rootRef} style={{ maxWidth: 1280, margin: '0 auto', animation: 'dashFade var(--dur-slow) var(--ease) backwards' }}>
       {/* PageHeader: 현 shell은 title/sub를 렌더하지 않으므로(crumbs·actions만) title/sub는 카드헤더가 직접 그린다.
           title은 forward-compat용으로 계속 넘기되 라이브 제목은 카드 <h3> — 향후 shell이 title 렌더를 복원하면 중복 주의 */}
       <PageHeader crumbs={crumbs} title={title} actions={headerActions} />
@@ -391,9 +391,10 @@ export function GridFrame({
       </Card>
 
       {/* 플로팅 액션 바(선택된 행 바로 위에 붙어 따라다닌다) — ⚠️ **반드시 body Portal**.
-          이 컴포넌트 루트에 `animation: dashFade … both` 가 걸려 있어 종료 상태가 항등행렬로 굳고,
-          그 transform 이 (a) 새 쌓임맥락 (b) fixed 의 컨테이닝블록을 만든다. 포털 없이 fixed 를 쓰면
-          bottom 이 뷰포트가 아니라 카드 기준이 되고 z 도 그 맥락 안에 갇힌다(→ z-index 스킬 규칙 3·5). */}
+          이 컴포넌트 루트엔 `animation: dashFade …` 가 걸려 있어 진입 중엔 transform 이 (a) 새 쌓임맥락
+          (b) fixed 의 컨테이닝블록을 만든다. 포털 없이 fixed 를 쓰면 bottom 이 뷰포트가 아니라 카드 기준이 되고
+          z 도 그 맥락 안에 갇힌다(→ z-index 스킬 규칙 3·5). (fill-mode 는 2026-09-28 `both`→`backwards` 로
+          바꿔 종료 후엔 맥락이 사라지지만, 진입 구간·향후 transform 재도입에 대비해 포털을 유지한다.) */}
       {wantsFloating && toolbarOut && createPortal(
         <div
           ref={barRef} data-apfs-actions=""
