@@ -49,7 +49,9 @@ function seedValues(fields: FieldSpec[], mode: 'create' | 'edit', initial?: Part
   const seed: ViolationFormValues = {};
   for (const f of fields) {
     const from = initial ? String(initial[f.key] ?? '') : '';
-    seed[f.key] = (!from && f.control === 'select' && mode === 'create') ? (f.options?.[0] ?? '') : from;
+    // switch 는 OFF 값(options[1])으로 시드 — 공시여부 기본 'X'(미공시) 유지, ''로 두면 스위치는 OFF 로 보이는데 저장값은 빈칸이 된다.
+    const def = f.control === 'select' ? f.options?.[0] : f.control === 'switch' ? f.options?.[1] : undefined;
+    seed[f.key] = (!from && def !== undefined && mode === 'create') ? def : from;
   }
   return seed;
 }

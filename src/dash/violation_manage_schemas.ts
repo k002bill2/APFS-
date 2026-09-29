@@ -13,7 +13,7 @@ export const OPT_ORG = ['MOAF', '중소기업청', '농림수산식품부', '금
 export const OPT_LAW = ['법령', '규약'];                                                    // 법령/규약위반
 export const OPT_GP = ['주식회사 에쓰비인베스트먼트'];                                        // 운용사
 export const OPT_FUND = ['에쓰비 농식품투자조합'];                                            // 자펀드
-export const OPT_DISC = ['X', 'O'];                                                         // 공시여부
+export const OPT_DISC = ['O', 'X'];                                                         // 공시여부 — switch 계약 [ON, OFF]
 export const OPT_ACT = ['주의촉구', '경고', '시정명령', '기타'];                              // 조치구분
 /* 위반형태 — 목업 `VF_LIST` 19종 순서 그대로 */
 export const OPT_VF = [
@@ -62,7 +62,7 @@ export const VIOLATION_SCHEMA: PageSchema = parsePageSchema({
          빈 선택지가 없으면 값이 ''인 행을 수정으로 열 때 네이티브 <select> 가 목록에 없는 ''를 못 그려
          **첫 옵션(에쓰비…)을 선택된 것처럼 표시**하는데 실제 state 는 '' 이라 화면과 값이 어긋난다. */
     { key: 'fund', label: '자펀드', control: 'select', options: ['', ...OPT_FUND] },
-    { key: 'disc', label: '공시여부', control: 'select', options: OPT_DISC },
+    { key: 'disc', label: '공시여부', control: 'switch', options: OPT_DISC },
     { key: 'rep', label: '대표자', control: 'text', placeholder: '대표자명' },
     { key: 'chk', label: '점검구분', control: 'text', placeholder: '점검구분' },
     { key: 'vf', label: '위반형태', control: 'select', options: OPT_VF },
