@@ -1,5 +1,7 @@
 # AFIT 관리자 전체 페이지 전환·보강
 
+> **종료 (2026-09-29 정리)** — 구현 머지됨: PR #158 `38425a1` feat(admin) AFIT 관리자 화면 전환·보강. 후속 수정 #164·#201·#210.
+
 ## 책임/실행 환경
 - 책임 역할: Developer
 - 실행 환경: Orca-managed worktree + Claude Code

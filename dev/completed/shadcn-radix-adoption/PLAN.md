@@ -1,5 +1,7 @@
 # shadcn/ui + Radix UI 도입 — 현황 분석 및 구축 계획
 
+> **종료 (2026-09-29 정리)** — 도입 완료: `src/dash/ui/`에 Radix 기반 dialog·alert-dialog·dropdown-menu·popover·tooltip·command·context-menu·sheet 등 존재. 문서는 설계 근거로 보존.
+
 > 작성: 2026-06-22 · 브랜치: `feat/tailwind-token-migration`
 > 근거: 4-에이전트 워크플로우(context7 요구사항 리서치 + 손짠 상호작용 프리미티브 인벤토리 + opacity 모디파이어 빌드 검증 + 적대적 비평) 결과 종합. 빌드 검증·비평가 정정은 **경험적 사실**이므로 추측과 구분해 표기.
 
