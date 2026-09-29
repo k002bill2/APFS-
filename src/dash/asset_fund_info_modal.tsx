@@ -21,7 +21,7 @@ import { toast } from './ui/sonner';
 import { SchemaField, drawerInputStyle } from './schemas/renderers';
 import type { FieldSpec } from './schemas/types';
 import type { Row } from './risk_table_meta';
-import { FUND_OPTS, GP_TYPES, MONTHS, LIMIT_INDICATOR, MODAL_EMPTY, emptyForm, formFromRow, newGpRow } from './asset_fund_info_data';
+import { FUND_OPTS, GP_TYPES, LIMIT_INDICATOR, MODAL_EMPTY, emptyForm, formFromRow, newGpRow } from './asset_fund_info_data';
 import type { FundInfoForm, GpRow, LimitRow } from './asset_fund_info_data';
 
 const { Button, IconBtn, SaveButton } = UI;
@@ -158,10 +158,8 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
             </div>
             <label className="block mb-3.5">
               <Lbl>결산월</Lbl>
-              <span className="inline-flex items-center gap-2">
-                <SelectBox label="결산월" value={form.month} onChange={set('month')} options={MONTHS} />
-                <Sfx>월</Sfx>
-              </span>
+              {/* 결산월 = 연도 없는 월 → PeriodPicker monthOfYear(표시 'M월'이라 '월' 접미사 불필요). 값 '1'~'12' 계약 유지 */}
+              <SchemaField field={spec('month', '결산월', 'monthOfYear')} value={form.month} onChange={set('month')} />
             </label>
           </Sec>
 
@@ -222,7 +220,7 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
                         <td style={td}><Named name={`${name} 운용사`}><SchemaField fill field={spec(`gn-${g.id}`, '운용사', 'text')} value={g.name} onChange={(v) => patchGp(g.id, { name: v })} /></Named></td>
                         <td style={td}><Named name={`${name} 사업자번호`}><SchemaField fill field={spec(`gb-${g.id}`, '사업자번호', 'text')} value={g.bizno} onChange={(v) => patchGp(g.id, { bizno: v })} /></Named></td>
                         <td style={td}><SelectBox fill label={`${name} 운용사구분`} value={g.otype} onChange={(v) => patchGp(g.id, { otype: v })} options={GP_TYPES} /></td>
-                        <td style={td}><SelectBox fill label={`${name} 결산월`} value={g.month} onChange={(v) => patchGp(g.id, { month: v })} options={MONTHS} /></td>
+                        <td style={td}><SchemaField fill field={spec(`gm-${g.id}`, `${name} 결산월`, 'monthOfYear')} value={g.month} onChange={(v) => patchGp(g.id, { month: v })} /></td>
                         <td style={tdLast}><Named name={`${name} 보고운용사코드`}><SchemaField fill field={spec(`gc-${g.id}`, '보고운용사코드', 'text')} value={g.code} onChange={(v) => patchGp(g.id, { code: v })} /></Named></td>
                       </tr>
                     );
