@@ -1,6 +1,6 @@
 ---
 name: apfs-form-modal
-description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 배타 선택은 radio(DS RadioGroup), 복수 선택·매트릭스는 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 컨트롤 폭 규약(입력 200~320 · select fit-content 240~320 · %·차수·회차·인수·순번 100px · 달력 불변 · long 전체폭). 정본 예시는 "투자기업정보(통합)"(schemas/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·입력칸 폭이 들쭉날쭉할 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
+description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 배타 선택은 radio(DS RadioGroup), 복수 선택·매트릭스는 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 컨트롤 폭 규약(입력 200~320 · select fit-content 240~320 · %·차수·회차·인수·순번·(년) 100px · 달력 불변 · long 전체폭). 정본 예시는 "투자기업정보(통합)"(schemas/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·입력칸 폭이 들쭉날쭉할 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
 ---
 
 # apfs-form-modal Skill
@@ -93,7 +93,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
    | 컨트롤 | 폭 | 비고 |
    |---|---|---|
    | 입력 `text`·`number`·`readonly` | `width:100%` · **min 200 ~ max 320** | 열 폭을 따라가되 320에서 멈춤 → 같은 열 입력칸 끝선이 맞는다 |
-   | **짧은 값 입력** — 라벨에 `%`·`차수`·`회차`·`인수`·`순번` | **100px 고정** | 수익률·충당율·비율·IRR·차수·납입회차·총고용인수·청년고용인수·순번·거래순번. 판정 = `SHORT_VALUE_LABEL = /%\|차수\|회차\|인수\|순번/`(generic_list 컬럼 폭 규칙과 같은 어휘). 짧은 값 항목을 늘리려면 이 정규식에 단어만 추가 |
+   | **짧은 값 입력** — 라벨에 `%`·`차수`·`회차`·`인수`·`순번`·`(년)` | **100px 고정** | 수익률·충당율·비율·IRR·차수·납입회차·총고용인수·청년고용인수·순번·거래순번·존속기간(년). 판정 = `SHORT_VALUE_LABEL = /%\|차수\|회차\|인수\|순번\|\(년\)/`(generic_list 컬럼 폭 규칙과 같은 어휘). 짧은 값 항목을 늘리려면 이 정규식에 단어만 추가 |
    | `select` | 래퍼 `width:fit-content` · **min 240 ~ max 320** | 옵션 길이에 맞추되 범위 안. select 는 래퍼를 채운다(`width:100% minWidth:0`) |
    | `date`·`year`·`month`·`monthOfYear` | **기존 그대로**(`controlMinWidth` 하한 + fit-content 래퍼) | 사용자 지시 "달력은 변동시키지 말자" — 이 규약에 넣지 말 것 |
    | `long:true`·`textarea` | 전체 폭(`fill`) | 규칙 3 |
@@ -186,7 +186,7 @@ export const schema: PageSchema = {
 ## 검증
 - `npm test`(zod 스키마 테스트 — 새 control은 `FIELD_CONTROLS`에 있어야 통과) + `npm run build`(exit 0).
 - 브라우저: 항목>6 → 880px 2단(400px에서 1단 적층 확인), textarea/`long` 전체폭, radio·switch 첫 옵션 기본, 필수 미입력 에러, 삭제 2단계. 라이트/다크(→[[responsive-ui]]).
-- 폭(규칙 7) 검증: 입력 `getBoundingClientRect().width` ≤ 320·같은 열 입력칸 우측 끝 일치, `%`·차수·회차·인수·순번 입력 = 100, select 240~320, 달력 트리거는 120/130 근처(변동 없음).
+- 폭(규칙 7) 검증: 입력 `getBoundingClientRect().width` ≤ 320·같은 열 입력칸 우측 끝 일치, `%`·차수·회차·인수·순번·(년) 입력 = 100, select 240~320, 달력 트리거는 120/130 근처(변동 없음).
 - `long` 검증은 **span 이 아니라 실측 폭**으로: 모달 열고 `getComputedStyle(input).width` 가 셀 폭과 같은지(240px 로 묶여 있지 않은지) 확인.
 - `switch` 검증은 **왕복으로**: 등록 → 토글 → 저장 → 그리드 배지가 '여'/'부'로 뜨는지 + 상세필터 '사용여부'가 그 행을 걸러내는지(문자열 계약이 깨지면 여기서 드러난다).
 - 체크박스 라벨 검증 2종: ① 라벨 텍스트 클릭이 **정확히 1회** 발화하는지(`addEventListener('click')` 카운터 — 암묵 `<label>` 래핑이면 2가 된다), ② `getByRole('checkbox', { name: '사용여부 여' })` 로 접근名이 **필드명+값** 둘 다 잡히는지.
