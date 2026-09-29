@@ -56,6 +56,19 @@ export function SearchableSelect({
   onBlur?: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
+  // 접근名 폴백 — ariaLabel 을 안 넘긴 소비처(<DrawerField label="X"> 래핑)는 role=combobox 버튼이 표시값('전체')으로 읽혔다(2026-09-29 실측).
+  // 감싼 <label> 의 캡션(첫 요소)의 첫 텍스트 노드 = 필드명을 이름으로 쓴다('· 데이터 연동 후 적용' 같은 부가 문구 제외).
+  const btnRef = React.useRef<HTMLButtonElement>(null);
+  const [derivedLabel, setDerivedLabel] = React.useState<string>();
+  React.useLayoutEffect(() => {
+    if (ariaLabel) return;
+    const btn = btnRef.current;
+    const cap = btn?.closest('label')?.firstElementChild;
+    if (!btn || !cap || cap.contains(btn)) return;
+    const first = [...cap.childNodes].find((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
+    setDerivedLabel((first ?? cap).textContent?.trim() || undefined);
+  }, [ariaLabel]);
+  const name = ariaLabel ?? derivedLabel;
   const items = React.useMemo(() => options.map(norm), [options]);
   const withAll = allLabel != null;
   const current = items.find((o) => o.value === value);
@@ -72,10 +85,11 @@ export function SearchableSelect({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
+          ref={btnRef}
           type="button"
           role="combobox"
           aria-haspopup="listbox"
-          aria-label={ariaLabel}
+          aria-label={name}
           aria-invalid={invalid || undefined}
           aria-required={required || undefined}
           onFocus={onFocus}
@@ -105,7 +119,7 @@ export function SearchableSelect({
         style={{ width: 'max(var(--radix-popover-trigger-width), 220px)', maxWidth: 'min(420px, calc(100vw - 32px))' }}
       >
         <Command defaultValue={highlighted} loop>
-          <CommandInput placeholder="검색" aria-label={ariaLabel ? `${ariaLabel} 검색` : '옵션 검색'} className="h-9 py-2 text-[13.5px]" />
+          <CommandInput placeholder="검색" aria-label={name ? `${name} 검색` : '옵션 검색'} className="h-9 py-2 text-[13.5px]" />
           <CommandList className="max-h-[280px] p-1">
             <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>
             {withAll && (
