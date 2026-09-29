@@ -135,7 +135,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 420, tableLayout: 'fixed' }}>
                   <thead><tr><th style={{ ...thStyle, width: 160 }}>구분</th><th style={thStyle}>기관명(GP)</th><th style={{ ...thLast, width: 40 }}></th></tr></thead>
-                  <tbody>{gps.map((g, i) => (
+                  <tbody>{gps.length === 0 && <UI.EmptyRow span={3} msg="등록된 업무집행조합원이 없습니다." hint="「행 추가」로 입력하세요." />}{gps.map((g, i) => (
                     <tr key={i}>
                       <td style={tdStyle}><SchemaField fill field={s(`gpk${i}`, '구분', 'select', { options: GP_KINDS })} value={g.kind} onChange={(val) => setGps((p) => p.map((x, k) => (k === i ? { ...x, kind: val } : x)))} /></td>
                       <td style={tdStyle}><SchemaField fill field={s(`gpn${i}`, '기관명', 'text')} value={g.name} onChange={(val) => setGps((p) => p.map((x, k) => (k === i ? { ...x, name: val } : x)))} /></td>
