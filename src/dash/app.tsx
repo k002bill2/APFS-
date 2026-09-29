@@ -159,6 +159,14 @@ const ls = {
   set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
 };
 
+// 1회성 초기화(2026-09-28): 메인의 시안·네비 전환 바를 제거해 앱 안에서 되돌릴 UI가 없다.
+// 이전에 저장된 시안 B·C / 레일 선택을 기본값(시안 A·classic)으로 되돌린다 — 모듈 로드 시점이라
+// App·Main의 useState 초기화보다 먼저 돈다. 마커로 1회만 실행(이후 코드로 바꾼 값은 존중).
+if (ls.get("apfs.layoutReset", "") !== "1") {
+  try { localStorage.removeItem("apfs.variant"); localStorage.removeItem("apfs.navstyle"); } catch (e) {}
+  ls.set("apfs.layoutReset", "1");
+}
+
 function App() {
   const [theme, setTheme] = useState(() => ls.get("apfs.theme", "light"));
   // 삭제/개명된 route는 ROUTE_ALIAS로 승격(잔존 localStorage/방문기록 방어) — 안 하면 GenericListPage 폴백(영문 제네릭 표)
