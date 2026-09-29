@@ -195,40 +195,11 @@ const MENU = [
   ]},
 
   { id:"gp", label:"자펀드 보고", icon:"building", roles:["admin","manager","viewer"], children:[
-    { label:"운영기관정보", sub:true, children:[
-      { label:"운용사별 공통코드 정보" },
-      { label:"운용사 정보" },
-      { label:"운용사 인력현황" },
-      { label:"공동GP펀드별 인력현황", path:"공통GP펀드별 인력현황" },
-      { label:"운용사 계정과목" },
-      { label:"운용사 재무정보", path:"운용사 재무보고" },
-      { label:"운용사 정량지표 보고내역" },
+    { label:"보고조회", sub:true, children:[
+      { label:"자펀드 보고 조회" },
     ]},
     { label:"조합정보", sub:true, children:[
-      { label:"조합정보" },
-      // 투자자산관리>조합관리에 같은 라벨이 있어 nav 키 충돌 — 이쪽에만 고유 path 부여(브레드크럼 오매칭 방지)
-      { label:"조합원정보조회", path:"gp-report/조합원정보조회" },
-      { label:"조합 투자운용인력" },
-      { label:"조합 월별/반기별 보고현황" },
-      { label:"조합 재무현황" },
-      { label:"조합 계좌현황" },
-      { label:"조합Call 요청일정 및 보고" },
-      { label:"조합 출자/분배 현황" },
-      { label:"조합원 총회" },
-      { label:"조합 관리보수 및 성과보수 내역" },
       { label:"조합 수시보고 내역" },
-      { label:"조합 유가증권 투자현황(상장주식)" },
-    ]},
-    { label:"투자자산", sub:true, children:[
-      { label:"투자기업 정보" },
-      { label:"투자기업 고용현황(반기별)" },
-      { label:"투자기업 재무정보" },
-      { label:"투자기업 주주명부" },
-      { label:"투자자금 실사보고" },
-      { label:"프로젝트 정보" },
-      { label:"투자기업 투심현황" },
-      { label:"투자 약정정보" },
-      { label:"투자 거래정보" },
     ]},
     { label:"월간보고조회", sub:true, children:[
       { label:"조합별 월간보고 현황" },

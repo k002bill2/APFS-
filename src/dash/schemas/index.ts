@@ -24,6 +24,8 @@ import { schema as s평가시점데이터확인 } from './평가시점_데이터
 // 2026-09-24 사후보고관리 신규(현행 없음) 2리프 — 원천 목업 없음, provenance NEW · 행 0건
 import { schema as s내부투자심의구성관리 } from './내부_투자심의_구성관리';
 import { schema as s체크리스트관리 } from './체크리스트_관리';
+// 2026-09-29 자펀드 보고 개편 — S5_119(조합별 반기보고 현황). S5_117(조합 수시보고 내역)은 kv 시트라 typed 페이지(gp_occasional_overview)
+import { schema as s조합별반기보고현황 } from './조합별_반기보고_현황';
 
 const ALL: PageSchema[] = [
   s연도별투자현황, s조합별월간보고현황, s자펀드공고정보관리, s투자기업정보통합, s사후관리기록관리, s투자성과포트폴리오,
@@ -33,6 +35,7 @@ const ALL: PageSchema[] = [
   s투자기업명세서통합, s우수투자기업관리, s운용사명세서,
   s운용사재무정보비교조회, s평가시점데이터확인,
   s내부투자심의구성관리, s체크리스트관리,
+  s조합별반기보고현황,
 ];
 
 export function buildRegistry(list: PageSchema[]): Record<string, PageSchema> {
