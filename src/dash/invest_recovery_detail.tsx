@@ -36,6 +36,7 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { RECOVERY_MODES, RECOVERY_TONES, RECOVERY_ACCOUNTS, findMode, recoverySummary, filterRecovery, DETAIL_ROWS_IR, formatRecoveryUnit } from './invest_recovery_detail_model';
 import type { RecoveryRow, RecoveryMode, RecoveryFilter } from './invest_recovery_detail_model';
 import { useHotkey, HOTKEYS } from './use-hotkey';   // ⌥R 조회 · ⌘P 인쇄 · ⌥D 내보내기
+import { DrawerSelect } from './drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
 const { Button, IconBtn, SegTabs } = UI;
 
@@ -49,17 +50,6 @@ function DrawerField({ label, children, plain }: { label: string; children: Reac
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
       {children}
     </Wrap>
-  );
-}
-function DrawerSelect({ value, onChange, options, all = '전체' }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; all?: string | null }) {
-  return (
-    <div className="relative" style={{ width: 'fit-content', maxWidth: '100%' }}>
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputStyle('select'), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32, maxWidth: '100%' }}>
-        {all != null && <option value="">{all}</option>}
-        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-      <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
-    </div>
   );
 }
 const dayWrap: CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };

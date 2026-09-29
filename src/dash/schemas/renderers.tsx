@@ -3,6 +3,7 @@ import { UI } from '../components';
 import { parseFileNames, fileExtLabel } from '../fields/file_names';   // 첨부 CSV 계약 파서(DocumentsField와 SSOT 공유)
 import { glyphFor } from '../ui/attachment';   // 확장자 → 아이콘·색 매핑(모달 첨부목록과 SSOT 공유)
 import { DatePicker } from '../ui/date-picker';
+import { SearchableSelect, shouldSearch } from '../ui/searchable-select';   // 긴 목록 select → 검색형 콤보박스
 import { PeriodPicker } from '../ui/period-picker';   // 연도 선택(control:'year') — 일자선택과 같은 폭·팝오버 계약
 import { Checkbox } from '../ui/checkbox';   // 'checkbox'('true'/'false' 계약) 컨트롤
 import { Switch } from '../ui/switch';       // 'switch'('여/부' 2지선다) — 2026-09-18 오후 사용자 결정으로 스위치 렌더 원복
@@ -225,7 +226,13 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
     case 'textarea': return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} placeholder={field.placeholder} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', height: 'auto', resize: 'vertical', ...fs }} />;
     // select: native 화살표는 Chrome UA가 오른쪽 경계에 고정해 padding으로 못 움직임 → appearance:none로 제거하고 lucide chevron을 오버레이(토큰색·다크대응).
     //   아이콘은 pointer-events:none라 클릭이 select로 통과. 오른쪽 간격 = 아이콘 right(12px). paddingRight 34는 옵션 텍스트가 chevron과 겹치지 않게 확보.
-    case 'select':   return (
+    //   옵션이 많으면(shouldSearch — 10개 이상 또는 field.searchable) 검색형 콤보박스. 같은 래퍼·같은 base/fs 박스라 폭·34px·필수 테두리 규약이 그대로 유지된다.
+    case 'select':   return shouldSearch(field.options?.length ?? 0, field.searchable) ? (
+      <div style={{ display: 'block', ...(fill ? { width: '100%', maxWidth: '100%' } : FORM_SELECT_W) }}>
+        <SearchableSelect value={value} onChange={onChange} options={field.options || []} ariaLabel={field.label} invalid={invalid} required={requiredMark}
+          fill triggerStyle={{ ...base, ...fs }} activeStyle={controlFocusStyle(true, !!invalid || requiredEmpty)} {...fh} />
+      </div>
+    ) : (
       // 비-fill 폭은 래퍼가 FORM_SELECT_W(240~320 fit-content)로 정하고 select 는 래퍼를 채운다(폭 규약 주석 참조).
       <div style={{ position: 'relative', display: 'block', ...(fill ? { width: '100%', maxWidth: '100%' } : FORM_SELECT_W) }}>
         <select value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', minWidth: 0, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: 34, ...fs }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>

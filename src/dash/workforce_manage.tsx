@@ -78,6 +78,7 @@ import { PeriodPicker } from './ui/period-picker';
 import { WorkforceFormModal, WorkforceReleaseDialog, WorkforceDeleteDialog } from './workforce_form_modal';
 import type { WorkforceFormValues } from './workforce_form_modal';
 import { OPT_GP, OPT_FUND } from './workforce_manage_schemas';
+import { DrawerSelect } from './drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -221,21 +222,6 @@ function DrawerField({ label, plain, children }: { label: string; plain?: boolea
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
       {children}
     </Wrap>
-  );
-}
-/* ⚠ 이 화면의 `구분`(운용사/자펀드) select 는 목업에 전체 옵션이 **없고** 비면 안 되는 스코프 스위치라
-   전체 옵션을 억제할 수단이 필요하다. 억제 관용구는 새로 만들지 않고 **패밀리 다수파**
-   (`audit_log.tsx` · `menu_manage.tsx` · `user_manage.tsx`)의 `all?: string | null` 을 그대로 따른다
-   — 기본값 '전체', `all={null}` 이면 전체 옵션을 그리지 않는다. */
-function DrawerSelect({ value, onChange, options, all = '전체' }: { value: string; onChange: (v: string) => void; options: string[]; all?: string | null }) {
-  return (
-    <div className="relative" style={{ width: 'fit-content', maxWidth: '100%' }}>
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputStyle('select'), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
-        {all != null && <option value="">{all}</option>}
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
-      <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
-    </div>
   );
 }
 

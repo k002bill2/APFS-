@@ -41,6 +41,7 @@ import { UserPermissionModal } from './user_permission_modal';
 import type { PermRow, PermPatch, PermMode } from './user_permission_modal';
 import { matrixRows, grant, PERM_KEYS, permNameTaken } from './user_permission_model';
 import type { PermMap } from './user_permission_model';
+import { DrawerSelect } from './drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
 const { Button, IconBtn } = UI;
 
@@ -114,18 +115,6 @@ function DrawerField({ label, hint, plain, children }: { label: string; hint?: s
       </span>
       {children}
     </Wrap>
-  );
-}
-function DrawerSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: readonly string[] }) {
-  // 래퍼도 fit-content — block 100% 래퍼면 절대배치 chevron 이 드로어 오른쪽 끝으로 떨어진다(형제 드로어와 동일)
-  return (
-    <div className="relative" style={{ width: 'fit-content', maxWidth: '100%' }}>
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputStyle('select'), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
-        <option value="">전체</option>
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
-      <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
-    </div>
   );
 }
 

@@ -44,6 +44,7 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 →
 import { PeriodPicker } from './ui/period-picker';
 import { RAW, SUBTOTALS, GRAND } from './fund_stats_data';
 import type { RawRow, StatBase } from './fund_stats_data';
+import { DrawerSelect } from './drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
 const { Button, IconBtn, SegTabs } = UI;
 
@@ -298,19 +299,6 @@ function DrawerField({ label, noop, plain, children }: { label: string; noop?: b
       </span>
       {children}
     </Wrap>
-  );
-}
-function DrawerSelect({ value, onChange, options, all = '전체', noAll }: { value: string; onChange: (v: string) => void; options: string[]; all?: string; noAll?: boolean }) {
-  /* noAll — '전체'(빈 값) 선택지가 없는 항목. 목업 연도기준 select가 결성/선정 2개뿐이고 늘 하나가 잡혀 있다
-     (행을 거르는 조회 조건이 아니라 연도 컬럼의 의미 전환이라 '미적용' 상태가 존재하지 않는다). */
-  return (
-    <div className="relative" style={{ width: 'fit-content', maxWidth: '100%' }}>
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputStyle('select'), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
-        {!noAll && <option value="">{all}</option>}
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
-      <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
-    </div>
   );
 }
 

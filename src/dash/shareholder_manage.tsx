@@ -54,6 +54,7 @@ import { PeriodPicker } from './ui/period-picker';
 import { ShareholderFormModal, ShareholderReleaseModal, ShareholderDeleteDialog } from './shareholder_form_modal';
 import type { ShareholderFormValues } from './shareholder_form_modal';
 import { OPT_GP } from './shareholder_manage_schemas';
+import { DrawerSelect } from './drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -191,17 +192,6 @@ function DrawerField({ label, plain, children }: { label: string; plain?: boolea
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
       {children}
     </Wrap>
-  );
-}
-function DrawerSelect({ value, onChange, options, all = '전체' }: { value: string; onChange: (v: string) => void; options: string[]; all?: string }) {
-  return (
-    <div className="relative" style={{ width: 'fit-content', maxWidth: '100%' }}>
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputStyle('select'), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
-        <option value="">{all}</option>
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
-      <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
-    </div>
   );
 }
 
