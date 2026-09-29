@@ -107,7 +107,7 @@ function MenuChildren({ m, route, expanded, setExpanded, onNav }) {
                   style={{
                     border: "none", font: "inherit", fontWeight: leafActive ? 700 : 500,
                     borderRadius: 6, paddingTop: 5, paddingBottom: 5, fontSize: 13,
-                    color: leafActive ? "var(--primary)" : "var(--muted-foreground)",
+                    color: leafActive ? "var(--primary)" : "var(--nav-muted)",
                     background: leafActive ? primaryBg : "transparent", transition: "background var(--dur-fast)",
                   }}><span
                     className="whitespace-nowrap overflow-hidden text-left"
@@ -126,7 +126,7 @@ function MenuChildren({ m, route, expanded, setExpanded, onNav }) {
           className="w-full flex items-center justify-between gap-2 cursor-pointer py-1.5 px-2.5"
           style={{
             border: "none", font: "inherit", fontWeight: cActive ? 700 : 500, borderRadius: 7, fontSize: 13,
-            color: cActive ? "var(--primary)" : "var(--muted-foreground)",
+            color: cActive ? "var(--primary)" : "var(--nav-muted)",
             background: cActive ? primaryBg : "transparent", transition: "background var(--dur-fast)",
           }}><span
             className="whitespace-nowrap overflow-hidden text-left"
@@ -266,7 +266,7 @@ function Lnb({ open, route, onNav, mobile, drawerOpen }) {
           style={{
             gap: 11, border: "none", font: "inherit", borderRadius: 9, padding: open ? "9px 10px" : "10px", justifyContent: open ? "flex-start" : "center",
             background: route === "designsystem" ? "color-mix(in srgb,var(--primary) 12%,transparent)" : "transparent",
-            color: route === "designsystem" ? "var(--primary)" : "var(--muted-foreground)", fontWeight: route === "designsystem" ? 700 : 500, fontSize: 13.5,
+            color: route === "designsystem" ? "var(--primary)" : "var(--nav-muted)", fontWeight: route === "designsystem" ? 700 : 500, fontSize: 13.5,
           }}><Icon name="layers" size={20} />{open && <span className="whitespace-nowrap">디자인 시스템</span>}</button></div><div
         style={{ borderTop: "1px solid var(--border)", padding: open ? "10px 14px" : "10px 8px" }}>{open
           ? <div className="flex items-center gap-2.5"><ColorChip icon="shield-check" color="var(--success)" size={30} iconSize={16} /><div style={{ lineHeight: 1.3 }}><div className="font-bold" style={{ fontSize: 11.5 }}>보안 접속 정상</div><div className="t-caption" style={{ fontSize: 10.5 }}>내부망 · TLS 1.3</div></div></div>

@@ -48,7 +48,7 @@ const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const THEME_FALLBACK = {
   // tokens.css :root / .dark 의 현재 값과 짝. 토큰을 못 읽는 환경(SSR·테스트)에서만 쓰인다.
   light: { card: '#FFFFFF', foreground: '#1A2620', primary: '#5A5FE8', outline: '#E2E6E0' },
-  dark: { card: '#181D17', foreground: '#E6EBE2', primary: '#818CF8', outline: '#39403A' },
+  dark: { card: '#181D17', foreground: '#F7F9F5', primary: '#818CF8', outline: '#39403A' },
 };
 
 /* getComputedStyle 은 선행 공백을 붙여 돌려준다("  #FFFFFF") → trim 후 hex 형식을 검증하고,

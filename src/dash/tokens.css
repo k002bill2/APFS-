@@ -36,6 +36,7 @@
   --muted-foreground:#5E6B60;
   --grid-header:color-mix(in srgb, var(--card), var(--foreground) 4%);   /* 표/그리드 헤더 공통색 (fg 4% onto card — Quartz 기본 2%보다 한 단계 진하게). --card·--foreground 참조라 다크 자동추종. 명세 팝업 kv dt·표 헤더가 이 토큰으로 그리드 헤더와 동일 */
   --caption:#66726A;   /* a11y: 3.4:1→4.6:1 on bg (WCAG AA 본문) — 이전 #7C887E는 소형 캡션에서 미달 */
+  --nav-muted:var(--muted-foreground);   /* LNB 리프·하단 메뉴 글자(비활성). 다크만 별도 상향 */
   --border:rgba(31,54,40,.12);
   --border-strong:rgba(31,54,40,.20);
   --input:rgba(31,54,40,.16);
@@ -143,10 +144,11 @@
   --card:#181D17;
   --frame-bg:var(--bg);
   --card-raised:#1D231C;
-  --foreground:#E6EBE2;
+  --foreground:#F7F9F5;   /* 2026-09-29 밝기 상향(구 #E6EBE2) */
   --muted:#1F261D;
-  --muted-foreground:#9AA694;
-  --caption:#828E7D;
+  --muted-foreground:#C4CDBF;   /* 구 #9AA694 */
+  --caption:#ACB6A6;   /* 구 #828E7D */
+  --nav-muted:#DCE2D8;   /* 2026-09-29 LNB 메뉴 글자 상향 — muted-foreground보다 밝게, foreground보다 어둡게 */
   --border:rgba(255,255,255,.10);
   --border-strong:rgba(255,255,255,.16);
   --input:rgba(255,255,255,.16);
