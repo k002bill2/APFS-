@@ -164,7 +164,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
           </Section>
 
           <Section title="조합 속성">
-            <F spec={s('ctype', '조합구분', 'select', { options: OPT_FG })} value={v.ctype} onChange={set('ctype')} />
+            <F spec={s('ctype', '조합구분', 'select', { options: OPT_FG, searchable: true })} value={v.ctype} onChange={set('ctype')} />
             <F spec={s('cs', '조합성격', 'select', { options: OPT_FC })} value={v.cs} onChange={set('cs')} />
             <F spec={s('ag', '조합계정', 'select', { options: OPT_AG })} value={v.ag} onChange={set('ag')} />
             <F spec={s('tc', '수탁기관', 'select', { options: OPT_TC })} value={v.tc} onChange={set('tc')} />
