@@ -1,6 +1,6 @@
 ---
 name: apfs-form-modal
-description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 배타 선택은 radio(DS RadioGroup), 복수 선택·매트릭스는 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 컨트롤 폭 규약(입력 200~320 · select fit-content 240~320 · %·차수·회차·인수 100px · 달력 불변 · long 전체폭). 정본 예시는 "투자기업정보(통합)"(schemas/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·입력칸 폭이 들쭉날쭉할 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
+description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 배타 선택은 radio(DS RadioGroup), 복수 선택·매트릭스는 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 컨트롤 폭 규약(입력 200~320 · select fit-content 240~320 · %·차수·회차·인수·순번·(년) 100px · 달력 불변 · long 전체폭). 정본 예시는 "투자기업정보(통합)"(schemas/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·입력칸 폭이 들쭉날쭉할 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
 ---
 
 # apfs-form-modal Skill
@@ -93,7 +93,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
    | 컨트롤 | 폭 | 비고 |
    |---|---|---|
    | 입력 `text`·`number`·`readonly` | `width:100%` · **min 200 ~ max 320** | 열 폭을 따라가되 320에서 멈춤 → 같은 열 입력칸 끝선이 맞는다 |
-   | **짧은 값 입력** — 라벨에 `%`·`차수`·`회차`·`인수` | **100px 고정** | 수익률·충당율·비율·IRR·차수·납입회차·총고용인수·청년고용인수. 판정 = `SHORT_VALUE_LABEL = /%\|차수\|회차\|인수/`(generic_list 컬럼 폭 규칙과 같은 어휘). 짧은 값 항목을 늘리려면 이 정규식에 단어만 추가 |
+   | **짧은 값 입력** — 라벨에 `%`·`차수`·`회차`·`인수`·`순번`·`(년)` | **100px 고정** | 수익률·충당율·비율·IRR·차수·납입회차·총고용인수·청년고용인수·순번·거래순번·존속기간(년). 판정 = `SHORT_VALUE_LABEL = /%\|차수\|회차\|인수\|순번\|\(년\)/`(generic_list 컬럼 폭 규칙과 같은 어휘). 짧은 값 항목을 늘리려면 이 정규식에 단어만 추가 |
    | `select` | 래퍼 `width:fit-content` · **min 240 ~ max 320** | 옵션 길이에 맞추되 범위 안. select 는 래퍼를 채운다(`width:100% minWidth:0`) |
    | `date`·`year`·`month`·`monthOfYear` | **기존 그대로**(`controlMinWidth` 하한 + fit-content 래퍼) | 사용자 지시 "달력은 변동시키지 말자" — 이 규약에 넣지 말 것 |
    | `long:true`·`textarea` | 전체 폭(`fill`) | 규칙 3 |
@@ -186,7 +186,7 @@ export const schema: PageSchema = {
 ## 검증
 - `npm test`(zod 스키마 테스트 — 새 control은 `FIELD_CONTROLS`에 있어야 통과) + `npm run build`(exit 0).
 - 브라우저: 항목>6 → 880px 2단(400px에서 1단 적층 확인), textarea/`long` 전체폭, radio·switch 첫 옵션 기본, 필수 미입력 에러, 삭제 2단계. 라이트/다크(→[[responsive-ui]]).
-- 폭(규칙 7) 검증: 입력 `getBoundingClientRect().width` ≤ 320·같은 열 입력칸 우측 끝 일치, `%`·차수·회차·인수 입력 = 100, select 240~320, 달력 트리거는 120/130 근처(변동 없음).
+- 폭(규칙 7) 검증: 입력 `getBoundingClientRect().width` ≤ 320·같은 열 입력칸 우측 끝 일치, `%`·차수·회차·인수·순번·(년) 입력 = 100, select 240~320, 달력 트리거는 120/130 근처(변동 없음).
 - `long` 검증은 **span 이 아니라 실측 폭**으로: 모달 열고 `getComputedStyle(input).width` 가 셀 폭과 같은지(240px 로 묶여 있지 않은지) 확인.
 - `switch` 검증은 **왕복으로**: 등록 → 토글 → 저장 → 그리드 배지가 '여'/'부'로 뜨는지 + 상세필터 '사용여부'가 그 행을 걸러내는지(문자열 계약이 깨지면 여기서 드러난다).
 - 체크박스 라벨 검증 2종: ① 라벨 텍스트 클릭이 **정확히 1회** 발화하는지(`addEventListener('click')` 카운터 — 암묵 `<label>` 래핑이면 2가 된다), ② `getByRole('checkbox', { name: '사용여부 여' })` 로 접근名이 **필드명+값** 둘 다 잡히는지.
@@ -200,7 +200,7 @@ export const schema: PageSchema = {
 - **반복행이 곧 본문인 편집 표**(행 선택→행삭제, 셀마다 입력칸·체크박스 — 운용사 정량지표 등록/수정)는 수제 `<table>` 대신 **AG Grid** 로 만든다(2026-09-28 PR #288). 셀 입력 로컬 state·키 격리·선택 체크박스·다이얼로그 sticky 헤더 등 함정은 → [[apfs-aggrid]] "모달 안 편집 그리드". 아래 수제 반복행 표 규약은 섹션 안의 소형 반복행(GP·담당자·첨부) 용이다.
 - 규칙: ① Radix `Dialog` `max-w-[880px] max-h-[88vh]` + `onInteractOutside preventDefault`(RowFormModal과 동일) ② `<fieldset>/<legend>` 섹션, 본문은 `grid grid-cols-1 sm:grid-cols-2 gap-x-5`(wide 규격 동일) ③ **개별 컨트롤은 `SchemaField`(schemas/renderers.tsx) 재사용** — ad-hoc `FieldSpec`을 만들어 넘기면 14px·DatePicker·토큰이 자동(라벨 래퍼도 RowFormModal `Field` 규격 복제) ④ 반복행은 로컬 배열 state + `IconBtn icon="trash"` 행삭제 + `Button leadingIcon="plus"` 행추가 ⑤ 첨부는 hidden `<input type=file>` 1개를 슬롯별로 재사용(파일명만 보관, 백엔드 없음). **파일이 실린 슬롯 셀은 `ui/attachment.tsx`의 `Attachment` 카드**(확장자 아이콘+파일명+교체/삭제)로 렌더하되 단일 카드도 `AttachmentGroup`(role=list)로 감싼다(고아 listitem 방지 · web-a11y), 빈 슬롯은 `Button leadingIcon="upload"` [파일 선택] — 드롭존(DocumentsField)과 같은 카드 프리미티브를 공유해 파일 표시를 단일화(2026-09-09) ⑥ 저장은 `onSave(patch: Partial<Row>)` — 문자열 폼값→`number|null`·`'YYYY-MM-DD'` 변환은 모달이 책임.
 - **반복행 테이블 레이아웃 규약(2026-09-11 PR #132 사용자 결정)** — `subfund_form_modal.tsx`의 GP·담당자·첨부서류 3표 정본:
-  - **0행 = `UI.EmptyRow` 필수(2026-09-29 사용자 지시 "empty 표시 기본 적용")** — 행삭제로 0행이 될 수 있는 표는 `{rows.length === 0 && <UI.EmptyRow span={열수} msg="등록된 ○○이 없습니다." hint="「행 추가」로 입력하세요." />}`. 빠뜨리면 헤더만 덩그러니 남는다(담당자 표 실사례). 한 줄(아이콘 16 + 문구, 상하 18px) — 폼 안 표라 그리드용 EmptyState(120px)는 쓰지 않는다. 테두리 표는 `className`/`style` 로 셀 규격(TD·CELL)을 넘긴다. **비-그리드 모든 `<table>`(명세·이력·검색결과) 공통** — 로컬 EmptyRow·인라인 `<tr><td colSpan>` 복제 금지(09-29 7곳 통일). AG Grid 는 전역 오버레이가 처리하므로 해당 없음(→[[apfs-aggrid]] "빈 상태").
+  - **0행 = `UI.EmptyRow` 필수(2026-09-29 사용자 지시 "empty 표시 기본 적용")** — 행삭제로 0행이 될 수 있는 표는 `{rows.length === 0 && <UI.EmptyRow span={열수} msg="등록된 ○○이 없습니다." hint="「행 추가」로 입력하세요." />}`. 빠뜨리면 헤더만 덩그러니 남는다(담당자 표 실사례). 한 줄(아이콘 16 + 문구, 상하 18px, **좌측 정렬** — 좌우 padding 은 그 표의 셀 padding 과 같게 넘겨 첫 열 헤더와 시작점을 맞춘다, 2026-09-29) — 폼 안 표라 그리드용 EmptyState(120px)는 쓰지 않는다. 테두리 표는 `className`/`style` 로 셀 규격(TD·CELL)을 넘긴다. **비-그리드 모든 `<table>`(명세·이력·검색결과) 공통** — 로컬 EmptyRow·인라인 `<tr><td colSpan>` 복제 금지(09-29 7곳 통일). AG Grid 는 전역 오버레이가 처리하므로 해당 없음(→[[apfs-aggrid]] "빈 상태").
   - **`tableLayout:'fixed'` 필수** (`<table className="w-full border-collapse" style={{ fontSize:13, minWidth:…, tableLayout:'fixed' }}>`). 이유 2가지(비자명): ⓐ 내용이 컬럼을 못 넓혀서 **nowrap `AttachmentTitle`이 실제 컬럼 폭 기준으로 `…`(ellipsis) 잘림** — auto면 파일명이 `<td>`→컬럼을 밀어 테이블이 넘치고 truncate가 안 걸린다. ⓑ **"width 미지정 컬럼 1개가 나머지 폭을 전부 흡수"가 결정론적**이 된다(auto는 내용 비율로 성명·EMAIL을 반씩 나눔).
   - **컬럼 폭**: 좁은 컬럼만 `<th>`에 고정(구분 160/180 · 성명 200 · 문서구분/규약일자 150 · **삭제 40**), **정확히 하나의 `<th>`만 width 미지정**(기관명·EMAIL·첨부파일 = 나머지 흡수).
   - **셀 스타일**: `thStyle`/`tdStyle`은 **좌 0·우 8**(컬럼 간격), 마지막 컬럼은 `thLast`/`tdLast`(우 0) → 첫/마지막 컬럼이 컨테이너 좌우 끝에 정렬. **헤더 밑줄 없음**(th `borderBottom` 제거) — th 13px bold caption `padding:'6px 0 12px'`, td `padding:'4px 0'`.

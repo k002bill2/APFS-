@@ -92,7 +92,7 @@ function ProgramSearchDialog({ programs, onPick, onClose }: { programs: readonly
               <colgroup><col style={{ width: 40 }} /><col style={{ width: 150 }} /><col /></colgroup>
               <thead><tr><th style={th}><span className="sr-only">선택</span></th><th style={th}>프로그램ID</th><th style={th}>프로그램명</th></tr></thead>
               <tbody>
-                {list.length === 0 && <UI.EmptyRow span={3} msg="검색 결과가 없습니다." style={{ ...td, padding: '26px 0' }} />}
+                {list.length === 0 && <UI.EmptyRow span={3} msg="검색 결과가 없습니다." style={{ ...td, padding: '26px 10px' }} />}
                 {list.map((p) => (
                   /* 행 클릭 = 그 행의 라디오를 클릭한 것으로 위임 — setPick 직접 호출은 Item onClick 을 건너뛰어 선택 점 pop 이 안 튄다
                      (radio-group.tsx 의 self 플래그). 라디오 자체 클릭은 tr 로 버블되므로 재클릭하지 않는다(이미 선택된 Item 재클릭은 플래그만 남긴다). */

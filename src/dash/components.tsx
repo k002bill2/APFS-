@@ -434,11 +434,13 @@ function EmptyState({ msg = "표시할 데이터가 없습니다", icon = "inbox
    소비처가 `rows.length === 0 ? <UI.EmptyRow span={열수} /> : rows.map(…)` 로 직접 넣는다.
    · 폼 안 표라 EmptyState(120px)가 아니라 한 줄(아이콘 16 + 문구, 상하 18px) — 폼이 늘어지지 않게.
    · 행 추가 버튼이 있는 표는 hint 로 채우는 방법을 덧붙인다(예: "「행 추가」로 입력하세요").
-   · 테두리 있는 표는 className/style 로 셀 규격(border·cell padding)을 그대로 넘긴다. */
+   · 테두리 있는 표는 className/style 로 셀 규격(border·cell padding)을 그대로 넘긴다.
+   · 좌측 정렬(2026-09-29 사용자 지시) — 문구 시작점이 첫 열 헤더 텍스트와 맞아야 하므로 **좌우 padding 은 그 표의 셀 padding 과 같게** 넘긴다.
+     기본값 좌우 0 = 헤더 좌측 패딩 0 인 반복행 표(subfund_form_modal·asset_fund_info_modal) 규격. */
 function EmptyRow({ span, msg = "등록된 항목이 없습니다.", hint, className, style }: { span: number; msg?: string; hint?: string; className?: string; style?: React.CSSProperties }) {
   return (
     <tr>
-      <td colSpan={span} className={cx("text-center text-caption", className)} style={{ padding: "18px 9px", fontSize: 13, ...style }}>
+      <td colSpan={span} className={cx("text-left text-caption", className)} style={{ padding: "18px 0", fontSize: 13, ...style }}>
         <span className="inline-flex items-center gap-1.5 align-middle">
           <span aria-hidden="true" className="inline-flex"><Icon name="inbox" size={16} stroke={1.8} /></span>
           <span>{msg}{hint ? <span className="text-muted-foreground"> {hint}</span> : null}</span>
