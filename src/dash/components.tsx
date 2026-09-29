@@ -425,7 +425,7 @@ function EmptyState({ msg = "표시할 데이터가 없습니다", icon = "inbox
   return (
     <div
       className="flex flex-col items-center justify-center gap-2 text-caption"
-      style={{ height }}><Icon name={icon} size={30} stroke={1.7} /><div className="text-[13px] font-medium">{msg}</div></div>
+      style={{ height }}>{/* 아이콘은 문구보다 한 단계 흐리게(2026-09-29 사용자 지시) — 문구가 주, 아이콘은 보조 */}<span aria-hidden="true" className="inline-flex" style={{ opacity: 0.35 }}><Icon name={icon} size={30} stroke={1.7} /></span><div className="text-[13px] font-medium">{msg}</div></div>
   );
 }
 
