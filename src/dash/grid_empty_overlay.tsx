@@ -8,7 +8,10 @@
        noRows         → overlayNoRowsTemplate 의 텍스트 → localeText.noRowsToShow → 기본 문구
        noMatchingRows → localeText.noMatchingRows → overlayNoRowsTemplate 의 텍스트 → 기본 문구
      ⚠ 전역 selector 가 있으면 AG Grid 기본 NoRows 컴포넌트가 안 쓰이므로 overlayNoRowsTemplate 의 HTML/스타일은 무시되고 텍스트만 쓴다.
-   · 높이: .apfs-grid-min(본문 최소 42px) 그리드는 오버레이가 뜬 동안만 150px 로 되돌린다(aggrid_shared.css). */
+   · 높이: .apfs-grid-min(본문 최소 42px) 그리드는 오버레이가 뜬 동안만 150px 로 되돌린다(aggrid_shared.css).
+   · 세로 가운데: AG Grid 오버레이는 그리드 전체를 덮고 위쪽만 헤더 높이만큼 비운다 — 고정행(합계 pinned bottom/top)은
+     빼지 않아 문구가 본문보다 행 높이의 절반만큼 아래로 처졌다(2026-09-29 사용자 지적, 실물검증 결과 보고 미투자자산 거래 표).
+     고정행 수 × --ag-row-height 만큼 위/아래 margin 을 줘서 flex 가운데 정렬이 본문 영역 기준이 되게 한다. */
 import React from 'react';
 import type { IOverlayParams, OverlaySelectorFunc } from 'ag-grid-community';
 import { UI } from './components';
@@ -32,9 +35,14 @@ export function emptyMessage(params: Pick<IOverlayParams, 'api' | 'overlayType'>
 }
 
 /* role=status — 오버레이가 뜰 때 SR 에 문구를 알린다(AG Grid 기본 오버레이의 ariaAnnounce 대체). */
+/* 고정행 n 개 높이 — 테마 행 높이 변수(apfsTheme rowHeight)를 그대로 쓴다. 0 이면 margin 없음 */
+export const pinnedInset = (n: number): string | undefined => (n > 0 ? `calc(var(--ag-row-height) * ${n})` : undefined);
+
 export function GridEmptyOverlay(params: IOverlayParams) {
+  const top = pinnedInset(params.api.getPinnedTopRowCount());
+  const bottom = pinnedInset(params.api.getPinnedBottomRowCount());
   return (
-    <div role="status" style={{ padding: '8px 16px' }}>
+    <div role="status" style={{ padding: '8px 16px', marginTop: top, marginBottom: bottom }}>
       <UI.EmptyState msg={emptyMessage(params)} height={120} />
     </div>
   );

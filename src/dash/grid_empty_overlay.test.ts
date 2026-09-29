@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { emptyMessage, emptyOverlaySelector } from './grid_empty_overlay';
+import { emptyMessage, emptyOverlaySelector, pinnedInset } from './grid_empty_overlay';
 
 const api = (opts: Record<string, unknown>) => ({ getGridOption: (k: string) => opts[k] }) as any;
 
@@ -20,5 +20,10 @@ describe('grid_empty_overlay', () => {
     expect(emptyOverlaySelector({ overlayType: 'noMatchingRows' } as any)?.component).toBeTruthy();
     expect(emptyOverlaySelector({ overlayType: 'loading' } as any)).toBeUndefined();
     expect(emptyOverlaySelector({ overlayType: 'exporting' } as any)).toBeUndefined();
+  });
+  it('고정행(합계) 수만큼 행 높이 inset — 본문 영역 가운데 정렬, 0행이면 margin 없음', () => {
+    expect(pinnedInset(0)).toBeUndefined();
+    expect(pinnedInset(1)).toBe('calc(var(--ag-row-height) * 1)');
+    expect(pinnedInset(2)).toBe('calc(var(--ag-row-height) * 2)');
   });
 });
