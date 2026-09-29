@@ -433,15 +433,27 @@
 
 ## 11. Developer 인계 체크리스트
 
-- [ ] §1 표의 **라우트 키 리터럴을 복사**해 스키마 `route`에 넣는다(NFC). 오타 시 조용히 `DEFAULT_SCHEMA`로 떨어진다 — **결선 테스트로 `resolveSchema(route).provenance.sourceSystem !== 'DEFAULT'` 를 13개 전수 단언**
-- [ ] 단위 토글(§4.2)을 **먼저** 공유화한 뒤 스키마 8개를 붙인다
-- [ ] `DETAIL_POPUPS` 확장 시 **컴포넌트 매핑은 `generic_list.tsx`** 에 둔다(스키마엔 키만)
-- [ ] `GpSpecModal` 시그니처 확장 시 `occasional_report_manage.tsx:546` **기존 호출부 회귀 확인**
-- [ ] `!` 마커 문구는 **목업 원문 그대로**(`ReviewNoteSpec.rec`/`dat`). 창작 금지
-- [ ] #7은 `provenance.sourceSystem: 'NEW'`, `sample` 미사용
-- [ ] 엑셀 내보내기는 **마스크 규약을 상속**한다(`mask-boundary-includes-excel-and-filename`) + 단위 표기
-- [ ] pinned 합계 행은 결선 후 **눈으로 확인**(`ag-opacity-zero` 이력)
-- [ ] `npm test` · `npm run build` · 1280/768/400 폭 검증
+> **종료 (2026-09-29 정리)** — 구현은 PR #256·#258(`fix(investment-assets)`)로 머지됐다. 아래는 그날 코드 대조 결과다.
+> ✅ = 코드·테스트로 확인 · ⊘ = 이후 결정으로 무효 · ☐ = 이번 정리에서 재확인하지 않음
+
+- [x] ✅ §1 표의 **라우트 키 리터럴을 복사**해 스키마 `route`에 넣는다(NFC). 오타 시 조용히 `DEFAULT_SCHEMA`로 떨어진다 — **결선 테스트로 `resolveSchema(route).provenance.sourceSystem !== 'DEFAULT'` 를 13개 전수 단언**
+  - `src/dash/investment_asset_routes.test.ts` 「라우트 → 스키마 결선 (DEFAULT_SCHEMA 폴백 금지)」 — 118 테스트 통과
+- [x] ✅ 단위 토글(§4.2)을 **먼저** 공유화한 뒤 스키마 8개를 붙인다
+  - `PageSchema.unitToggle`(`schemas/types.ts:121`) + `generic_list.tsx` 공용 렌더
+- [x] ✅ `DETAIL_POPUPS` 확장 시 **컴포넌트 매핑은 `generic_list.tsx`** 에 둔다(스키마엔 키만)
+  - 키는 `schemas/types.ts:21`, 매핑은 `generic_list.tsx:384`(`gpSpec: GpSpecModal`)
+- [x] ✅ `GpSpecModal` 시그니처 확장 시 `occasional_report_manage.tsx:546` **기존 호출부 회귀 확인**
+  - 호출부는 현재 `occasional_report_manage.tsx:512`, 인자 없는 `onClose` 계약 그대로
+- [x] ⊘ `!` 마커 문구는 **목업 원문 그대로**(`ReviewNoteSpec.rec`/`dat`). 창작 금지
+  - `ReviewNoteSpec` 타입은 도입되지 않음 — 해당 화면은 이후 typed 페이지로 전환(`00d8390` dead 스키마 정리)
+- [x] ✅ #7은 `provenance.sourceSystem: 'NEW'`, `sample` 미사용
+  - `schemas/우수투자기업_관리.ts` + 테스트 「우수투자기업 관리는 원천 없음을 NEW 로 명시하고 행 0건이다」
+- [x] ⊘ 엑셀 내보내기는 **마스크 규약을 상속**한다(`mask-boundary-includes-excel-and-filename`) + 단위 표기
+  - 데이터 마스크 자체가 2026-09-24 사용자 결정으로 전면 삭제됨(`no_demo_mask.test.ts`)
+- [ ] ☐ pinned 합계 행은 결선 후 **눈으로 확인**(`ag-opacity-zero` 이력)
+  - 머지 당시 PR에서 확인됐는지 여부는 이번 정리에서 재검증하지 않음
+- [ ] ☐ `npm test` · `npm run build` · 1280/768/400 폭 검증
+  - 2026-09-29: vitest 48파일/896테스트 통과, `vite build` 성공. **폭 검증(1280/768/400)은 재실행하지 않음**
 
 ---
 

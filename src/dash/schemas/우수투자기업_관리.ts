@@ -4,7 +4,7 @@
    `~/Downloads/통합 2` 전체에 대응 목업 HTML이 없다(2026-09-15 확인). 그래서
    `provenance.sourceSystem = 'NEW'` · `captureFile = ''` 로 **원천 없음을 스키마에 기록**한다
    — 그럴듯한 파일명을 적으면 이후 누구도 이 화면이 창작물임을 알 수 없게 된다.
-   (근거 이력: dev/active/investment-asset-menu-pages/BRIEF.md "2026-09-15 정정" 절)
+   (근거 이력: dev/completed/investment-asset-menu-pages/BRIEF.md "2026-09-15 정정" 절)
 
    같은 이유로 `sample: []`(빈 배열)을 선언한다 — **행이 0건임을 명시**하는 자리다.
    슬롯을 비워 두면(sample 미선언) generic_list.makeRows 가 결정적 더미 20행을 합성하고,

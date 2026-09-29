@@ -4,7 +4,7 @@
    왜 전용 페이지인가: 원문이 한 화면에 여러 표를 쌓는데 `PageSchema`는 `columns`가 하나뿐이라 담지 못한다.
    나머지 12개 리프는 페이지 코드 0줄(스키마 주도 GenericListPage)이 목표고, 이 화면만 예외다
    ("전체"라는 이름으로 원문의 일부만 보여주면 제목이 거짓이 된다 — 2026-09-15 정정 이력은
-    dev/active/investment-asset-menu-pages/BRIEF.md 의 "2026-09-15 정정" 절 참조).
+    dev/completed/investment-asset-menu-pages/BRIEF.md 의 "2026-09-15 정정" 절 참조).
 
    구성(목업 → 우리 규약):
    - 표 6개를 세로로 쌓지 않고 **깔때기 뒤 기본 필터 칩**(투자심의 | 수시보고 | 조합원총회 | 관리보수 |
