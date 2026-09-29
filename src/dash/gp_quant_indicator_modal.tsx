@@ -21,6 +21,7 @@ import { Checkbox } from './ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
 import { toast } from './ui/sonner';
 import { drawerInputStyle } from './schemas/renderers';
+import { SearchableSelect } from './ui/searchable-select';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import './aggrid_shared.css';
@@ -149,9 +150,8 @@ export function GpQuantIndicatorModal({ mode, preType, onClose }: { mode: QuantM
         <div className="overflow-y-auto p-[46px]" style={{ fontSize: 13.5 }}>
           <label className="flex items-center gap-2.5 mb-4" style={{ width: 'fit-content' }}>
             <span className="font-semibold text-muted-foreground" style={{ fontSize: 13.5 }}>운용사 유형</span>
-            <select value={type} onChange={(e) => changeType(e.target.value)} style={drawerInputStyle('select')}>
-              {MGR_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
+            {/* 검색형(2026-09-29 사용자 지정 — 6종이지만 개별 opt-in). 박스는 기존 drawerInputStyle 그대로 */}
+            <SearchableSelect value={type} onChange={changeType} options={MGR_TYPES} ariaLabel="운용사 유형" triggerStyle={drawerInputStyle('select')} />
           </label>
 
           <div ref={gridBoxRef} role="region" aria-label={`${title} — 지표별 사용여부·기준·입력항목. 선택 체크박스로 고른 뒤 행삭제`}>

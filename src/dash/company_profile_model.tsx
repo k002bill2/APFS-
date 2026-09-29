@@ -47,7 +47,7 @@ const DENSITY: Record<ProfileVariant, Density> = {
   },
 };
 
-function Section({ title, count, unitNote, variant, children }: { title: string; count?: number; unitNote?: string; variant: ProfileVariant; children: React.ReactNode }) {
+export function Section({ title, count, unitNote, variant, children }: { title: string; count?: number; unitNote?: string; variant: ProfileVariant; children: React.ReactNode }) {
   if (variant === 'page') {
     return (
       <section className="mb-7 last:mb-0">
@@ -100,7 +100,7 @@ const KV_CELL = 'border-0 border-b border-solid border-border px-[14px] py-[10px
 const KV_K = `${KV_CELL} bg-muted text-[12.5px] font-semibold text-muted-foreground`;
 const KV_V = `${KV_CELL} text-[13.5px] text-foreground min-w-0 [overflow-wrap:anywhere]`;
 
-function KvGridPage({ items }: { items: OvItem[] }) {
+export function KvGridPage({ items }: { items: OvItem[] }) {
   const cells: React.ReactNode[] = [];
   let col = 0; // 현재 행에서 채운 (라벨,값) 쌍 수: 0 또는 1
   items.forEach((it) => {

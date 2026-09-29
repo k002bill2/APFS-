@@ -72,6 +72,10 @@ import { SubfundReturnCompare, FundValuationResult, InvesteeValuationResult, Sub
    표 규약·바깥 양식은 조기경보 17리프와 같은 risk_grid.tsx · risk_page_kit.tsx 를 재사용한다. */
 import { RegistryLedgerManage } from './registry_ledger';                    // 등록원부관리(S4_108 — 목록 + 팝업 6종)
 import { PhysicalDataManage, SecuritiesManage } from './trust_physical_upload';   // 실물자료관리(업로드)(S3_98) · 유가증권관리(업로드)(신규)
+import { GpReportFile } from './gp_report_file';   // 자펀드 보고 > 보고 파일 조회(S5_116 — 조회 + 툴바 업로드 모달)
+import { GpVerifyReport } from './gp_verify_report';
+import { GpReportQuery } from './gp_report_query';   // 자펀드 보고 > 자펀드 보고 조회(S5_121 — 보고항목 select → 항목별 그리드)
+import { GpOccasionalOverview } from './gp_occasional_overview';   // 자펀드 보고 > 조합 수시보고 내역(S5_117 — 투자기업개요 kv 5섹션)   // 자펀드 보고 > 조합별 실물검증 결과 보고(S5_120 — 표 3장 TablesPage)
 import { PhysicalVerifyCompare, SecuritiesCompare, TrustCommonCode, MotherTrustCode, AccountCompare, CashflowCompare } from './trust_table_pages';   // S3_101 · 신규 · S3_100 · S3_102 · S3_104 · S3_106
 import { AssetFundInfoManage } from './asset_fund_info_manage';           // 자펀드정보관리 = v1.4 자펀드관리 + S2_73 투자기준 통합 그리드(SubFundManage ext 합성)
 import { ReviewStats } from './review_stats';                            // 투심보고 통계(S1_28 — 단일 표 27열 + 기본값 검색조건·금액 단위)
@@ -299,6 +303,10 @@ function App() {
   else if (route === "등록원부관리") page = <RegistryLedgerManage onNav={onNav} />;
   else if (route === "실물자료관리(업로드)") page = <PhysicalDataManage onNav={onNav} />;
   else if (route === "실물검증비교조회") page = <PhysicalVerifyCompare onNav={onNav} />;
+  else if (route === "보고 파일 조회") page = <GpReportFile onNav={onNav} />;
+  else if (route === "자펀드 보고 조회") page = <GpReportQuery onNav={onNav} />;
+  else if (route === "조합 수시보고 내역") page = <GpOccasionalOverview onNav={onNav} />;
+  else if (route === "조합별 실물검증 결과 보고") page = <GpVerifyReport onNav={onNav} />;
   else if (route === "유가증권관리(업로드)") page = <SecuritiesManage onNav={onNav} />;
   else if (route === "유가증권비교조회") page = <SecuritiesCompare onNav={onNav} />;
   else if (route === "공통코드조회") page = <TrustCommonCode onNav={onNav} />;

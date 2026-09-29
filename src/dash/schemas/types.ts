@@ -45,7 +45,9 @@ export interface ColumnSpec { key: string; label: string; type: CellType; unit?:
 //   컨트롤 width:100%(fit-content 240px 하한 해제)로 렌더한다. 짧은 코드/일자 필드와 구분하는 유일한 SSOT.
 // placeholder: 비어 있을 때 입력칸에 보이는 힌트(text/number/textarea 에만 적용 — 나머지 컨트롤은 무시).
 //   목업 원문이 placeholder 를 지정한 필드를 그대로 옮길 때 쓴다(2026-09-22 추가). 미지정이면 종전과 동일.
-export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; long?: boolean; placeholder?: string; }
+export interface FieldSpec { key: string; label: string; control: FieldControl; required?: boolean; options?: string[]; pii?: boolean; long?: boolean; placeholder?: string;
+  /** select 검색형 강제 on/off — 미지정이면 옵션 개수로 자동(ui/searchable-select.tsx shouldSearch, 10개 이상 = 검색형). */
+  searchable?: boolean; }
 export interface KpiSpec { key: string; label: string; icon: string; color: string; from: 'sum'|'avg'|'rate'; column: string; }
 // 건수형 KPI — 금액 집계가 아닌 행 카운트. column+value 있으면 그 값과 일치하는 행 수, 없으면 전체 건수.
 export interface CountKpiSpec { label: string; icon: string; color: string; column?: string; value?: string; }
@@ -145,7 +147,7 @@ const ColumnZ = z.object({
 const FieldZ = z.object({
   key: z.string(), label: z.string(), control: z.enum(FIELD_CONTROLS),
   required: z.boolean().optional(), options: z.array(z.string()).optional(), pii: z.boolean().optional(), long: z.boolean().optional(),
-  placeholder: z.string().optional(),
+  placeholder: z.string().optional(), searchable: z.boolean().optional(),
 });
 const KpiZ = z.object({ key: z.string(), label: z.string(), icon: z.string(), color: z.string(), from: z.enum(['sum','avg','rate']), column: z.string() });
 const ProvenanceZ = z.object({ capturedAt: z.string(), sourceSystem: z.string(), captureFile: z.string(), sourceUrl: z.string().optional() });

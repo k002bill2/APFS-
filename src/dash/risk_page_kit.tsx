@@ -19,6 +19,7 @@ import { toast } from './ui/sonner';
 import { UNITS } from './schemas/unit';
 import type { Unit } from './schemas/unit';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { DrawerSelect as SharedDrawerSelect } from './drawer_select';   // 상세필터 select 공용본
 
 const { Button, IconBtn, SegTabs } = UI;
 
@@ -61,18 +62,9 @@ function DrawerField({ label, plain, noop, children }: { label: string; plain?: 
   );
 }
 
+// 상세필터 select — 공용 DrawerSelect(drawer_select.tsx, 옵션 많으면 검색형)로 위임. allLabel: undefined=‘전체’, null=전체 항목 없음.
 function DrawerSelect({ f }: { f: FilterSpec }) {
-  const all = f.allLabel === undefined ? '전체' : f.allLabel;
-  return (
-    <div className="relative" style={{ width: 'fit-content', maxWidth: '100%' }}>
-      <select aria-label={f.label} value={f.value} onChange={(e) => f.onChange(e.target.value)}
-        style={{ ...inputStyle('select'), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
-        {all !== null && <option value="">{all}</option>}
-        {(f.options ?? []).map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
-      <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
-    </div>
-  );
+  return <SharedDrawerSelect value={f.value} onChange={f.onChange} options={f.options ?? []} all={f.allLabel === undefined ? '전체' : f.allLabel} ariaLabel={f.label} />;
 }
 
 /* 배타 선택 — DS RadioGroup. Item 은 <button role=radio> 라 <label> 로 감싸지 않고 htmlFor 로 잇는다(ui/radio-group.tsx 규약) */

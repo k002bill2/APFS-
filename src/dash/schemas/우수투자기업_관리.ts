@@ -54,7 +54,7 @@ export const schema: PageSchema = {
     { key: 'selectYear',   label: '선정연도',     control: 'select', required: true, options: ['2026', '2025', '2024', '2023', '2022'] },
     { key: 'grade',        label: '선정등급',     control: 'radio',  required: true, options: ['최우수', '우수', '후보'] },
     { key: 'investee',     label: '투자기업',     control: 'text',   required: true, long: true },
-    { key: 'bizField',     label: '사업분야',     control: 'select', options: ['정보통신', '바이오·헬스', '농식품 가공', '스마트팜', '식품제조', '유통·물류', '기타'] },
+    { key: 'bizField',     label: '사업분야',     control: 'select', options: ['정보통신', '바이오·헬스', '농식품 가공', '스마트팜', '식품제조', '유통·물류', '기타'], searchable: true },
     { key: 'selectReason', label: '선정사유',     control: 'textarea', long: true },
     { key: 'status',       label: '사후관리상태', control: 'select', required: true, options: ['선정', '후보', '해제', '보류'] },
     { key: 'remark',       label: '비고',         control: 'textarea', long: true },

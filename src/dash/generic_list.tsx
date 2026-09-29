@@ -40,6 +40,7 @@ import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트
 import type { CtxItem, CtxMenuState } from './row_context_menu';
 import type { AppliedFilter } from './applied_filters';
 import { GridFrame, KpiBadge, FooterActions } from './grid_frame';
+import { DrawerSelect } from './drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 import { ConfirmCombo, uniformConfirm } from './confirm_combo';   // 확정/미확정 inlineSelect 컬럼의 선택 바 일괄 변경   // 공통 양식 셸 + KPI 배지(apfs-grid 스킬 SSOT)
 
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
@@ -213,16 +214,8 @@ function DrawerFilterControl({ ff, value, onChange, onEnter }: { ff: FilterField
   if (ff.kind === "year" || ff.kind === "enum") {
     // Safari menulist는 세로 padding을 무시해 select가 input보다 낮게 렌더됨(WebKit 22 vs 37px).
     // appearance:none으로 높이를 맞추고, 사라진 네이티브 화살표는 chevron으로 보강. (date는 달력 아이콘 보존 위해 미적용)
-    control = (
-      // 래퍼도 fit-content — block 100% 래퍼면 절대배치 chevron이 드로어 오른쪽 끝으로 떨어진다
-      <div className="relative" style={{ width: "fit-content", maxWidth: "100%" }}>
-        <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...drawerInputStyle("enum"), appearance: "none", WebkitAppearance: "none", paddingRight: 32 }}>
-          {ff.allLabel !== null && <option value="">전체</option>}
-          {ff.options.map((o) => <option key={o} value={o}>{o}</option>)}
-        </select>
-        <Icon name="chevron-down" size={16} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted-foreground)", pointerEvents: "none" }} />
-      </div>
-    );
+    // 공용 DrawerSelect(fit-content 래퍼+chevron 동일) — enum 옵션이 많으면(운용사 16~23개 등) 검색형. year 는 숫자 나열이라 네이티브 유지.
+    control = <DrawerSelect value={value} onChange={onChange} options={ff.options} all={ff.allLabel !== null ? "전체" : null} ariaLabel={ff.label} searchable={ff.kind === "year" ? false : undefined} />;
   } else if (ff.kind === "date") {
     // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(정확일치 필터 계약). DatePicker 트리거는 w-full이라 fit-content 래퍼로 폭 규칙 적용.
     control = <div style={{ width: "fit-content", minWidth: controlMinWidth("date"), maxWidth: "100%" }}><DatePicker value={value} onChange={onChange} ariaLabel={ff.label} /></div>;

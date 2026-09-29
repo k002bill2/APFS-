@@ -31,6 +31,7 @@ import { RowFormModal } from './generic_list_modal';
 import { SubFundFormEditModal } from './subfund_form_modal';   // 결성조합 수정 — 섹션형 전용 모달
 import { APPLY_SCHEMA, SELECT_SCHEMA, OPT_AG, OPT_FG, OPT_FS, OPT_MANAGER, OPT_MF, CUR_YEAR } from './subfund_manage_schemas';
 import { PeriodPicker } from './ui/period-picker';
+import { DrawerSelect } from './drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
 const { Button, IconBtn, StatusBadge, ColorChip } = UI;
 
@@ -171,18 +172,6 @@ function DrawerField({ label, noop, plain, children }: { label: string; noop?: b
       </span>
       {children}
     </Wrap>
-  );
-}
-function DrawerSelect({ value, onChange, options, all = '전체' }: { value: string; onChange: (v: string) => void; options: string[]; all?: string }) {
-  // 래퍼도 fit-content — block 100% 래퍼면 절대배치 chevron이 드로어 오른쪽 끝으로 떨어진다(형제 드로어와 동일)
-  return (
-    <div className="relative" style={{ width: 'fit-content', maxWidth: '100%' }}>
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputStyle('select'), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
-        <option value="">{all}</option>
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
-      <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
-    </div>
   );
 }
 
