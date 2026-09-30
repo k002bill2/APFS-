@@ -216,11 +216,22 @@ export function LedgerFormModal({ mode, row, onSave, onClose }: { mode: 'new' | 
 
   /* 이력 행 [수정] = 그 행 값을 섹션 입력칸에 올리고 [추가]를 [수정 반영]으로 바꾼다(조합원·전문인력 openMember 와 같은 행→입력칸 로드).
      addHist 순매핑의 역: dur 는 [시작, 종료], 나머지는 첫 칸. 등록번호는 이력 행에 없으니 건드리지 않는다 */
+  const histKeys = (s: HistSection) => (s.key === 'dur' ? ['dur1', 'dur2'] : [s.key]);
+  /* 로드 직전 입력칸 값 — [취소] 시 되돌린다. 안 되돌리면 취소한 편집값이 [저장](ledgerPatch)에 섞인다(Codex P2).
+     수정 중 다른 행을 다시 불러도 최초 스냅샷을 유지한다 */
+  const backup = useRef<Record<string, Record<string, string>>>({});
   const loadHist = (s: HistSection, r: string[], idx: number) => {
-    setV((p) => (s.key === 'dur' ? { ...p, dur1: r[0], dur2: r[1] } : { ...p, [s.key]: r[0] }));
+    if (!backup.current[s.key]) backup.current[s.key] = Object.fromEntries(histKeys(s).map((k) => [k, v[k]]));
+    setV((p) => ({ ...p, ...Object.fromEntries(histKeys(s).map((k, i) => [k, r[i]])) }));
     setEditing((p) => ({ ...p, [s.key]: idx }));
   };
-  const cancelEdit = (s: HistSection) => setEditing((p) => ({ ...p, [s.key]: null }));
+  /* restore=true(취소·삭제) = 스냅샷 복원, false([수정 반영]) = 반영한 값을 입력칸에 그대로 둔다([추가]와 같은 동작) */
+  const endEdit = (s: HistSection, restore: boolean) => {
+    const snap = backup.current[s.key];
+    delete backup.current[s.key];
+    if (restore && snap) setV((p) => ({ ...p, ...snap }));
+    setEditing((p) => ({ ...p, [s.key]: null }));
+  };
 
   /* 원문 addHistRow — 빈 값이면 경고, 아니면 [값…, 오늘, 오늘] 을 맨 위에.
      수정 중이면 그 행을 교체 — 변경일자 = 오늘, 등록일자는 원래 값 유지 */
@@ -231,7 +242,7 @@ export function LedgerFormModal({ mode, row, onSave, onClose }: { mode: 'new' | 
     const idx = editing[s.key];
     if (idx != null) {
       setHist((p) => ({ ...p, [s.key]: p[s.key].map((row, i) => (i === idx ? [...vals, today(), row[row.length - 1]] : row)) }));
-      cancelEdit(s);
+      endEdit(s, false);
       toast.success('변경 이력이 수정되었습니다');
       return;
     }
@@ -260,11 +271,11 @@ export function LedgerFormModal({ mode, row, onSave, onClose }: { mode: 'new' | 
             add={editing[s.key] != null
               ? <div className="flex items-center gap-1.5">
                   <Button variant="primary" size="sm" leadingIcon="check" onClick={() => addHist(s)}><span className="sr-only">{s.title} </span>수정 반영</Button>
-                  <Button variant="ghost" size="sm" onClick={() => cancelEdit(s)}><span className="sr-only">{s.title} 수정 </span>취소</Button>
+                  <Button variant="ghost" size="sm" onClick={() => endEdit(s, true)}><span className="sr-only">{s.title} 수정 </span>취소</Button>
                 </div>
               : <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => addHist(s)}><span className="sr-only">{s.title} </span>추가</Button>} />
           {/* 삭제로 인덱스가 밀리면 수정 대상이 다른 행을 가리키므로 수정 모드를 해제한다 */}
-          <MiniTable heads={s.heads} rows={hist[s.key]} act="edit" label={`${s.title} 변경 이력`} right={s.key === 'amt' ? [0] : []} onDelete={(idx) => { cancelEdit(s); setHist((p) => ({ ...p, [s.key]: dropAt(p[s.key], idx) })); }} onOpen={(r, idx) => loadHist(s, r, idx)} />
+          <MiniTable heads={s.heads} rows={hist[s.key]} act="edit" label={`${s.title} 변경 이력`} right={s.key === 'amt' ? [0] : []} onDelete={(idx) => { if (editing[s.key] != null) endEdit(s, true); setHist((p) => ({ ...p, [s.key]: dropAt(p[s.key], idx) })); }} onOpen={(r, idx) => loadHist(s, r, idx)} />
         </Section>
       ))}
       <Section title="출자 좌당 금액 / 최초등록">

@@ -67,4 +67,16 @@ describe('LedgerFormModal — 이력 행 [수정]은 입력칸에 로드 후 그
     expect(table().textContent).not.toContain('가조합');
     expect(screen.getByRole('button', { name: /조합 명칭 \/ 등록번호\s*추가/ })).toBeTruthy();
   });
+  it('[취소]는 로드 전 입력칸 값으로 되돌린다(Codex P2)', () => {
+    render(React.createElement(LedgerFormModal, { mode: 'new', onSave: vi.fn(), onClose: vi.fn() }));
+    const nm = screen.getByPlaceholderText('조합 명칭') as HTMLInputElement;
+    fireEvent.change(nm, { target: { value: '가조합' } });
+    fireEvent.click(screen.getByRole('button', { name: /조합 명칭 \/ 등록번호\s*추가/ }));
+    fireEvent.change(nm, { target: { value: '입력중' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: '조합 명칭 / 등록번호 변경 이력 1번 행 선택' }));
+    fireEvent.click(screen.getByRole('button', { name: '수정' }));
+    fireEvent.change(nm, { target: { value: '버릴값' } });
+    fireEvent.click(screen.getByRole('button', { name: /조합 명칭 \/ 등록번호\s*수정\s*취소/ }));
+    expect(nm.value).toBe('입력중');
+  });
 });
