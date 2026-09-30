@@ -56,11 +56,12 @@ export function IrrBasisModal({ basis, onClose }: { basis: IrrBasis; onClose: ()
         </DialogHeader>
 
         <div className="overflow-y-auto p-[46px]">
-          {/* 맥락 kv */}
+          {/* 맥락 kv — grid auto-fit 이면 폭에 따라 마지막 행이 반만 차 빈 칸에 bg-border(회색)가 드러난다.
+              flex-wrap + grow 로 마지막 행 항목이 남은 폭을 채워 빈 칸 자체를 없앤다(열 수는 폭 따라 그대로). */}
           {basis.ctx && (
-            <dl className="grid gap-px border border-border bg-border" style={{ margin: '0 0 16px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+            <dl className="flex flex-wrap gap-px border border-border bg-border" style={{ margin: '0 0 16px' }}>
               {basis.ctx.map((c) => (
-                <div key={c.label} className="bg-card flex items-center gap-3" style={{ padding: '9px 12px' }}>
+                <div key={c.label} className="bg-card flex items-center gap-3 min-w-0" style={{ padding: '9px 12px', flex: '1 1 220px' }}>
                   <dt className="text-caption font-semibold shrink-0" style={{ fontSize: 12.5 }}>{c.label}</dt>
                   <dd className="font-semibold min-w-0 truncate" style={{ margin: 0, fontSize: 14 }}>{c.value}</dd>
                 </div>
