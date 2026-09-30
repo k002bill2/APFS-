@@ -42,7 +42,7 @@ describe('resolveSchema 파일럿 등록 확인', () => {
     const controls = s.fields.map((f) => f.control);
     expect(controls).toContain('richtext'); // 공고내용 = Plate 에디터(textarea에서 전환)
     expect(controls).toContain('filepond'); // 첨부파일 = FilePond 드롭존(네이티브 file 입력에서 전환)
-    expect(controls).toContain('select');
+    expect(controls).toContain('radio');  // 모펀드·정기/수시·계정구분 = radio(2026-09-29 select에서 전환)
   });
 
   it('미등록 route는 여전히 DEFAULT 반환 (회귀 0)', () => {

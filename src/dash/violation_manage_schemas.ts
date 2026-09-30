@@ -54,7 +54,7 @@ export const VIOLATION_SCHEMA: PageSchema = parsePageSchema({
   fields: [
     { key: 'ym', label: '등록년월', control: 'month', required: true },
     { key: 'org', label: '적발기관', control: 'select', options: OPT_ORG, required: true },
-    { key: 'law', label: '법령/규약위반', control: 'select', options: OPT_LAW, required: true },
+    { key: 'law', label: '법령/규약위반', control: 'radio', options: OPT_LAW, required: true },
     { key: 'gp', label: '운용사', control: 'select', options: OPT_GP, required: true },
     /* 자펀드는 **조건부 필수**(FUND_REQUIRED_WHEN) — 정적 required 로 선언하지 않는다.
        법령 위반이면 운용사까지만 필수이므로 여기서 true 로 박으면 저장이 막힌다.

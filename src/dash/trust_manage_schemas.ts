@@ -90,7 +90,7 @@ export const CASHFLOW_FORM: PageSchema = parsePageSchema({
     { key: 'tc', label: '거래구분코드', control: 'text' },
     { key: 'td', label: '거래구분', control: 'text' },
     { key: 'ic', label: '입출금구분코드', control: 'text' },
-    { key: 'io', label: '입출금구분', control: 'select', options: ['입금', '출금'] },
+    { key: 'io', label: '입출금구분', control: 'radio', options: ['입금', '출금'] },
     { key: 'prin', label: '거래금액 원금', control: 'number' },
     { key: 'pl', label: '거래금액 손익', control: 'number' },
     { key: 'bal', label: '거래후잔액', control: 'number' },
