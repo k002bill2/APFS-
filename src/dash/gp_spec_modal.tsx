@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { UI } from './components';
 import { fmt } from './aggrid_theme';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
+import { withKvFill } from './kv_fill';
 
 const { Button, SegTabs, StatusBadge } = UI;
 
@@ -81,7 +82,7 @@ const DT_STYLE: React.CSSProperties = { padding: '8px 12px', fontSize: 13 };
 function KvGrid({ items }: { items: OvItem[] }) {
   return (
     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border border border-border overflow-hidden m-0" style={{ borderRadius: 8 }}>
-      {items.map((o) => (
+      {withKvFill(items, (o) => (
         <div key={o.l} className={`grid bg-card ${o.full ? 'sm:col-span-2' : ''}`} style={KV_COLS}>
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.v == null ? 'text-caption' : ''}`}
@@ -89,7 +90,7 @@ function KvGrid({ items }: { items: OvItem[] }) {
             {o.v == null ? '-' : o.v}
           </dd>
         </div>
-      ))}
+      ), (o) => !!o.full)}
     </dl>
   );
 }

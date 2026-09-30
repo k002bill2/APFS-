@@ -21,6 +21,7 @@ import { UI } from './components';
 import { fmt } from './aggrid_theme';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import type { GpContribRow } from './gp_contribution_manage';
+import { withKvFill } from './kv_fill';
 
 const { Button } = UI;
 
@@ -58,7 +59,7 @@ const FILE_ITEMS: KvItem[] = [{ l: '업로드 여부', v: '', full: true }];
 function KvGrid({ items }: { items: KvItem[] }) {
   return (
     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border border border-border overflow-hidden m-0" style={{ borderRadius: 8 }}>
-      {items.map((o) => (
+      {withKvFill(items, (o) => (
         <div key={o.l} className={`grid bg-card ${o.full ? 'sm:col-span-2' : ''}`} style={KV_COLS}>
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>
             {o.l}
@@ -68,7 +69,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
             {!o.v ? '-' : o.numeric ? String(o.v) : o.v}
           </dd>
         </div>
-      ))}
+      ), (o) => !!o.full)}
     </dl>
   );
 }

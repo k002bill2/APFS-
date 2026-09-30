@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogD
 import { toast } from './ui/sonner';
 import type { SubFundRow } from './subfund_manage';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
+import { withKvFill } from './kv_fill';
 
 const { Button, SegTabs } = UI;
 
@@ -137,7 +138,7 @@ const DT_STYLE: React.CSSProperties = { padding: '8px 12px', fontSize: 13 };
 function KvGrid({ items, unit }: { items: OvItem[]; unit: Unit }) {
   return (
     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border border border-border overflow-hidden m-0" style={{ borderRadius: 8 }}>
-      {items.map((o) => {
+      {withKvFill(items, (o) => {
         const isMoney = 'won' in o;
         const empty = isMoney ? o.won == null : o.v == null;
         return (
@@ -162,7 +163,7 @@ function KvGrid({ items, unit }: { items: OvItem[]; unit: Unit }) {
             ) : '미첨부'}
           </dd>
         </div>
-      ))}
+      ), (o) => !!o.full)}
     </dl>
   );
 }

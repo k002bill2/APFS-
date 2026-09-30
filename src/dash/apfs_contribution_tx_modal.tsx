@@ -27,6 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogD
 import { Icon } from './icons';
 import { toast } from './ui/sonner';
 import type { TxGroup, TxMember } from './apfs_contribution_manage';
+import { withKvFill } from './kv_fill';
 
 const { Button, SaveButton, StatusBadge } = UI;
 const { useState, useMemo } = React;
@@ -63,7 +64,7 @@ type KvItem = { l: string; v: string };
 function KvGrid({ items }: { items: KvItem[] }) {
   return (
     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border border border-border overflow-hidden m-0 mb-5" style={{ borderRadius: 8 }}>
-      {items.map((o) => (
+      {withKvFill(items, (o) => (
         <div key={o.l} className="grid bg-card" style={KV_COLS}>
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.v ? '' : 'text-caption'}`} style={{ padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' }}>
