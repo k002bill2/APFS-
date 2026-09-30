@@ -23,15 +23,15 @@
 
    ⚠️ AG Grid v35.3.1(v33+) Theming API: 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지. */
 import './aggrid_shared.css';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useId } from 'react';
 import { UI } from './components';
 import type { Tone } from './components';
-import { Icon } from './icons';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from './aggrid_theme';
 import { controlMinWidth } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, CellStyle, CellClassParams } from 'ag-grid-community';
+import { Checkbox } from './ui/checkbox';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
@@ -124,20 +124,15 @@ function DrawerField({ label, plain, children }: { label: string; plain?: boolea
   );
 }
 
-/* 카테고리 토글 행 — generic_list.tsx `DrawerCheckRow` 동형(박스+체크, aria-pressed, 토큰 색) */
-function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: boolean; onClick: () => void }) {
+/* 카테고리 토글 행 — DS Checkbox(ui/checkbox.tsx, Radix) + htmlFor 라벨.
+   Root 가 <button> 이라 <label> 로 감싸지 않는다(클릭 2회 발화) — id/htmlFor 명시 연결. */
+function DrawerCheckRow({ group, label, checked, onClick }: { group: string; label: string; checked: boolean; onClick: () => void }) {
+  const id = useId();
   return (
-    <button type="button" onClick={onClick} aria-pressed={checked}
-      className="flex items-center gap-3 w-full text-left cursor-pointer border-0 py-2 px-0"
-      style={{ background: 'transparent', font: 'inherit' }}>
-      <span className="inline-flex items-center justify-center shrink-0" style={{
-        width: 24, height: 24, borderRadius: 7, transition: 'all .15s var(--ease)',
-        background: checked ? 'var(--primary)' : 'var(--card)',
-        border: checked ? '1px solid var(--primary)' : '1.5px solid var(--border-strong)' }}>
-        {checked && <Icon name="check" size={16} stroke={3} style={{ color: 'var(--primary-foreground)' }} />}
-      </span>
-      <span className="font-semibold text-foreground" style={{ fontSize: 14 }}>{label}</span>
-    </button>
+    <div className="flex items-center gap-3 py-2">
+      <Checkbox id={id} checked={checked} onCheckedChange={onClick} aria-label={`${group} ${label}`} />
+      <label htmlFor={id} className="font-semibold text-foreground cursor-pointer select-none" style={{ fontSize: 14 }}>{label}</label>
+    </div>
   );
 }
 
@@ -241,14 +236,14 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
             <DrawerField label="등급" plain>
               <div role="group" aria-label="등급">
                 {GRADES.map((g) => (
-                  <DrawerCheckRow key={g} label={g} checked={gradeOn[g]} onClick={() => setGradeOn((p) => ({ ...p, [g]: !p[g] }))} />
+                  <DrawerCheckRow key={g} group="등급" label={g} checked={gradeOn[g]} onClick={() => setGradeOn((p) => ({ ...p, [g]: !p[g] }))} />
                 ))}
               </div>
             </DrawerField>
             <DrawerField label="변동" plain>
               <div role="group" aria-label="변동">
                 {CHG_KEYS.map((k) => (
-                  <DrawerCheckRow key={k} label={CHG_KEY_LABEL[k]} checked={chgOn[k]} onClick={() => setChgOn((p) => ({ ...p, [k]: !p[k] }))} />
+                  <DrawerCheckRow key={k} group="변동" label={CHG_KEY_LABEL[k]} checked={chgOn[k]} onClick={() => setChgOn((p) => ({ ...p, [k]: !p[k] }))} />
                 ))}
               </div>
             </DrawerField>

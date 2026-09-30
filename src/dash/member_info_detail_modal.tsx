@@ -28,6 +28,7 @@ import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogD
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import type { MemberRow } from './member_info_manage';   // ⚠ type-only — 값 import는 런타임 순환(manage→detail→manage)
+import { withKvFill } from './kv_fill';
 
 const { Button, StatusBadge, SegTabs } = UI;
 
@@ -114,7 +115,7 @@ const FOOT_ROWS: FootRow[] = [
 function KvGrid({ items, unit }: { items: KvItem[]; unit: Unit }) {
   return (
     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border border border-border overflow-hidden m-0" style={{ borderRadius: 8 }}>
-      {items.map((o) => {
+      {withKvFill(items, (o) => {
         const isMoney = o.won != null;
         return (
           <div key={o.l} className={`grid bg-card ${o.full ? 'sm:col-span-2' : ''}`} style={KV_COLS}>
@@ -125,7 +126,7 @@ function KvGrid({ items, unit }: { items: KvItem[]; unit: Unit }) {
             </dd>
           </div>
         );
-      })}
+      }, (o) => !!o.full)}
     </dl>
   );
 }

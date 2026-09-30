@@ -27,6 +27,7 @@ import type { ColumnSpec } from './schemas/types';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘⏎ 등록·⌘P 인쇄·⌥D 내보내기)
 import { toast } from './ui/sonner';
+import { Checkbox } from './ui/checkbox';   // 상세필터 카테고리 태그 = DS Checkbox(Radix)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { DatePicker } from './ui/date-picker';
 import { PeriodPicker } from './ui/period-picker';   // 월 선택 필터(kind:'month') — 값 'YYYY-MM'
@@ -182,22 +183,14 @@ function MiniBars({ data, color }: { data: number[]; color: string }) {
 /* KpiBadge는 grid_frame.tsx(GridFrame SSOT)에서 import — 인라인 정의 제거(apfs-grid 양식 이관) */
 
 
-/* ── 드로어 체크 행 — 박스+체크 시각 (토큰 기반, 라이트/다크 양립) ── */
+/* ── 드로어 체크 행 — DS Checkbox + htmlFor 라벨(Root 가 <button> 이라 <label> 로 감싸지 않는다) ── */
 function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: boolean; onClick: () => void }) {
+  const id = React.useId();
   return (
-    <button
-      onClick={onClick}
-      aria-pressed={checked}
-      className="flex items-center gap-3 w-full text-left cursor-pointer border-0 py-2 px-0"
-      style={{ background: "transparent", font: "inherit" }}>
-      <span className="inline-flex items-center justify-center shrink-0" style={{
-        width: 24, height: 24, borderRadius: 7, transition: "all .15s var(--ease)",
-        background: checked ? "var(--primary)" : "var(--card)",
-        border: checked ? "1px solid var(--primary)" : "1.5px solid var(--border-strong)" }}>
-        {checked && <Icon name="check" size={16} stroke={3} style={{ color: "var(--primary-foreground)" }} />}
-      </span>
-      <span className="font-semibold text-foreground" style={{ fontSize: 14 }}>{label}</span>
-    </button>
+    <div className="flex items-center gap-3 py-2">
+      <Checkbox id={id} checked={checked} onCheckedChange={onClick} aria-label={label} />
+      <label htmlFor={id} className="font-semibold text-foreground cursor-pointer select-none" style={{ fontSize: 14 }}>{label}</label>
+    </div>
   );
 }
 

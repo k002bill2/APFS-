@@ -21,6 +21,7 @@ import { fmt } from './aggrid_theme';   // 숫자 표기 SSOT(정수=콤마) —
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';
+import { withKvFill } from './kv_fill';
 
 const { Button, SegTabs } = UI;
 
@@ -82,7 +83,7 @@ const negStyle = (neg: boolean): React.CSSProperties | undefined => (neg ? { col
 function KvGrid({ items, unit }: { items: [string, number][]; unit: Unit }) {
   return (
     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border border border-border overflow-hidden m-0" style={{ borderRadius: 8 }}>
-      {items.map(([l, v]) => (
+      {withKvFill(items, ([l, v]) => (
         <div key={l} className="grid bg-card" style={KV_COLS}>
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{l}</dt>
           <dd className="m-0 flex items-baseline justify-end gap-1 min-w-0 tabular font-semibold"
@@ -99,7 +100,7 @@ function KvGrid({ items, unit }: { items: [string, number][]; unit: Unit }) {
 function RatioGrid({ items }: { items: [string, string][] }) {
   return (
     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border border border-border overflow-hidden m-0" style={{ borderRadius: 8 }}>
-      {items.map(([l, v]) => (
+      {withKvFill(items, ([l, v]) => (
         <div key={l} className="grid bg-card" style={KV_COLS}>
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{l}</dt>
           <dd className="m-0 flex items-center justify-end min-w-0 tabular font-semibold"

@@ -19,6 +19,7 @@ import { UI } from './components';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
 import { toast } from './ui/sonner';
 import type { MeetingRow, MeetingDetail } from './general_meeting_manage';
+import { withKvFill } from './kv_fill';
 
 const { Button } = UI;
 
@@ -56,7 +57,7 @@ const buildGen = (g: MeetingDetail['gen']): KvItem[] => [
 function KvGrid({ items }: { items: KvItem[] }) {
   return (
     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border border border-border overflow-hidden m-0" style={{ borderRadius: 8 }}>
-      {items.map((o) => (
+      {withKvFill(items, (o) => (
         <div key={o.l} className={`grid bg-card ${o.full ? 'sm:col-span-2' : ''}`} style={KV_COLS}>
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{o.l}</dt>
           <dd className={`m-0 flex items-center min-w-0 ${o.v ? '' : 'text-caption'}`}
@@ -64,7 +65,7 @@ function KvGrid({ items }: { items: KvItem[] }) {
             {!o.v ? '-' : o.date ? String(o.v) : o.v}
           </dd>
         </div>
-      ))}
+      ), (o) => !!o.full)}
     </dl>
   );
 }
