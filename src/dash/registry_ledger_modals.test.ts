@@ -4,7 +4,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { initialLedger, MiniTable, Section } from './registry_ledger_modals';
+import { initialLedger, LedgerFormModal, MiniTable, Section } from './registry_ledger_modals';
 
 afterEach(() => cleanup());
 
@@ -45,5 +45,38 @@ describe('Section — 추가 버튼은 제목 바로 옆 좌측, 조회·저장�
     expect(add.previousElementSibling?.textContent).toBe('소재지');
     expect(add.className).not.toMatch(/ml-auto|justify-between/);
     expect(screen.getByRole('button', { name: '저장' }).parentElement!.className).toMatch(/ml-auto/);
+  });
+});
+
+describe('LedgerFormModal — 이력 행 [수정]은 입력칸에 로드 후 그 행을 교체한다(2026-09-30)', () => {
+  it('행 수는 그대로, 값만 바뀌고 [추가]로 돌아온다', () => {
+    render(React.createElement(LedgerFormModal, { mode: 'new', onSave: vi.fn(), onClose: vi.fn() }));
+    const nm = screen.getByPlaceholderText('조합 명칭') as HTMLInputElement;
+    fireEvent.change(nm, { target: { value: '가조합' } });
+    fireEvent.click(screen.getByRole('button', { name: /조합 명칭 \/ 등록번호\s*추가/ }));
+    const table = () => screen.getByRole('table', { name: '조합 명칭 / 등록번호 변경 이력' });
+    expect(table().textContent).toContain('가조합');
+    fireEvent.change(nm, { target: { value: '' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: '조합 명칭 / 등록번호 변경 이력 1번 행 선택' }));
+    fireEvent.click(screen.getByRole('button', { name: '수정' }));
+    expect(nm.value).toBe('가조합');
+    fireEvent.change(nm, { target: { value: '나조합' } });
+    fireEvent.click(screen.getByRole('button', { name: /조합 명칭 \/ 등록번호\s*수정 반영/ }));
+    expect(table().querySelectorAll('tbody tr').length).toBe(1);
+    expect(table().textContent).toContain('나조합');
+    expect(table().textContent).not.toContain('가조합');
+    expect(screen.getByRole('button', { name: /조합 명칭 \/ 등록번호\s*추가/ })).toBeTruthy();
+  });
+  it('[취소]는 로드 전 입력칸 값으로 되돌린다(Codex P2)', () => {
+    render(React.createElement(LedgerFormModal, { mode: 'new', onSave: vi.fn(), onClose: vi.fn() }));
+    const nm = screen.getByPlaceholderText('조합 명칭') as HTMLInputElement;
+    fireEvent.change(nm, { target: { value: '가조합' } });
+    fireEvent.click(screen.getByRole('button', { name: /조합 명칭 \/ 등록번호\s*추가/ }));
+    fireEvent.change(nm, { target: { value: '입력중' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: '조합 명칭 / 등록번호 변경 이력 1번 행 선택' }));
+    fireEvent.click(screen.getByRole('button', { name: '수정' }));
+    fireEvent.change(nm, { target: { value: '버릴값' } });
+    fireEvent.click(screen.getByRole('button', { name: /조합 명칭 \/ 등록번호\s*수정\s*취소/ }));
+    expect(nm.value).toBe('입력중');
   });
 });
