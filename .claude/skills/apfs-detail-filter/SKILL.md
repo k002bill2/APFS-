@@ -36,7 +36,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 ## 컨트롤 매핑 (DrawerFilterControl / DrawerCheckRow)
 | kind | 컨트롤 |
 |------|--------|
-| year · enum | `<select>` — 첫 옵션 `전체`(="" = 미적용) + options |
+| year · enum | 공용 **`DrawerSelect`**(drawer_select.tsx) — 첫 옵션 `전체`(="" = 미적용) + options. enum 옵션 **10개 이상이면 검색형**(운용사 16~23개 등), year 는 `searchable={false}` 로 네이티브 유지 |
 | date | `<input type=date>` |
 | number · text | `<input type=number/text>` |
 | tag | 토글 버튼(체크 아이콘) — 다중선택 |
@@ -58,7 +58,10 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 전용 페이지는 `ListFilterDrawer`를 쓰지 않고 **자체 드로어**를 가진다. 규약은 위와 같되 다음이 다르다:
 - **드로어 항목 = 목업 검색박스의 항목·순서 그대로**(자펀드관리: 모펀드·자펀드·계정구분·자펀드구분·사업연도·정기/수시·심사담당자·리스크담당자·심사단계·조합상태·기준일자). ⚠ 검색어는 **기본 OFF opt-in**(위 "예약 라벨 `검색어`" 절 — 상시 아님). 필요한 페이지만 `searchable`/`SEARCHABLE`로 켜고, 켜질 때만 최상단 고정. 행 컬럼과 미연동인 항목은 상태만 두고 `passes`에 넣지 않으며 `DrawerField noop`으로 `· 데이터 연동 후 적용` 캡션.
 - **연도/일자 컨트롤 = `PeriodPicker`**(사업연도 `mode="year"`, 기준일자 `mode="day"`) — 연도 `<select>`·네이티브 date 금지(→[[apfs-datepicker]] PeriodPicker 절). 버튼 트리거는 `DrawerField plain`(`<div>` 래퍼, `<label>` 이중 토글 방지) + `ariaLabel`.
-  - ⚠️ **폭**: PeriodPicker/DatePicker 트리거는 `w-full`이라 `DrawerField plain`(block 100%)에 **바로 넣으면 드로어 전체 폭으로 늘어난다**(2026-09-09 회귀). 반드시 `<div style={{ width:'fit-content', minWidth: controlMinWidth(year|date), maxWidth:'100%' }}>`로 감싼다 — 네이티브 `DrawerSelect`(자체 fit-content)와 달리 버튼엔 고유 콘텐츠 폭이 없다. 폭 계약 정본은 →[[apfs-datepicker]] "폭" 규칙.
+  - ⚠️ **폭**: PeriodPicker/DatePicker 트리거는 `w-full`이라 `DrawerField plain`(block 100%)에 **바로 넣으면 드로어 전체 폭으로 늘어난다**(2026-09-09 회귀). 반드시 `<div style={{ width:'fit-content', minWidth: controlMinWidth(year|date), maxWidth:'100%' }}>`로 감싼다 — 네이티브 `DrawerSelect`(자체 fit-content)와 달리 버튼엔 고유 콘텐츠 폭이 없다(검색형 `DrawerSelect` 는 숨은 사이저 스팬으로 최장 옵션 폭을 스스로 잡으므로 래퍼 불필요). 폭 계약 정본은 →[[apfs-datepicker]] "폭" 규칙.
+- **select = 공용 `DrawerSelect` import 필수 — 페이지 로컬 복제 금지**(2026-09-29 PR #306). 32개 페이지에 복제돼 있던 로컬 `function DrawerSelect`(시그니처 7종)를 `src/dash/drawer_select.tsx` 하나로 합쳤다. props 는 상위 집합: `options: string[] | {value,label}[]` · `all`(기본 `'전체'`, `null`=전체 항목 없음) · `noAll` · `ariaLabel` · `searchable`. 옵션 10개 이상이면 자동으로 검색형 `SearchableSelect`(Popover+cmdk)로 그린다 — 로컬 복제본을 다시 만들면 그 페이지만 검색이 빠진다. 가드 `drawer_select.test.ts`(네이티브 `<select>` 를 직접 그리는 로컬 `DrawerSelect` 가 있으면 실패).
+  - 검색형 트리거는 `<button role=combobox>` 하나라 **`DrawerField`(label 래핑) 그대로 둬도 된다** — 라벨 클릭 = 열림 1회(2026-09-29 실측, 이중 토글은 버튼 **2개**짜리 PairControl 문제). `ariaLabel` 을 안 넘기면 감싼 `<label>` 캡션의 첫 텍스트 노드를 접근名으로 쓴다(폴백 도입 전엔 "전체"로 읽혔다) — 그래도 명시 전달이 정석.
+  - Popover 는 **non-modal**(DatePicker 와 같은 이유). 열린 상태에서 다른 컨트롤 첫 클릭이 바로 먹는지 검증할 때 **aside `locator.click()` 은 pointerdown 을 안 쏴서 DatePicker 도 안 닫힌다**(도구 한계) — `page.mouse.click(x,y)` 좌표 클릭으로, 그리고 **열린 목록이 덮지 않는 컨트롤**을 겨냥할 것(목록 위 좌표면 항목이 선택돼 오판).
 - **범위(시작~종료) = 한 항목**(2026-09-24 사용자 지시): `DrawerField label="<그룹명>" plain` 하나 안에 `flex items-center gap-2 flex-wrap` 행 → 시작 picker · `<span className="text-caption">~</span>` · 종료 picker(각 fit-content 래퍼, `ariaLabel`은 시작일/종료일로 따로). `…시작`/`…종료` 두 DrawerField로 쪼개지 말 것. 정본 `audit_log.tsx`. **칩도 한 개**: 값 `${fFrom || '…'} ~ ${fTo || '…'}`(한쪽만 있으면 `…`), `×`는 두 끝을 함께 해제, aria-label은 그룹명.
 - **적용 칩은 GridFrame `appliedFilters` 로 넘긴다**(2026-09-24 — 한 줄, 넘치는 만큼만 `+N` 메뉴. 렌더는 `applied_filters.tsx` 단일 소유 → [[apfs-grid]] "필터 툴바" 절). 아래 규칙(개별 칩·값만·×)은 그 컴포넌트가 구현한다 — 페이지에서 칩 마크업을 다시 쓰지 않는다.
 - **적용 칩은 항목별 개별 칩**(합쳐서 `A · B · C` 한 칩 금지). 각 칩 = **값만 표시**(항목명 접두사 없음, 2026-09-08 결정) + `×`(`aria-label="<항목> 필터 제거"`, 해당 필터만 해제). no-op 항목은 칩을 만들지 않는다.
