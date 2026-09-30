@@ -98,7 +98,7 @@ export function RowEditModal({ schema, mode, initial, title, onSave, onClose }: 
     const seed: Record<string, string> = {};
     for (const f of schema.fields) {
       const from = initial?.[f.key] ?? '';
-      const optionish = f.control === 'select' || f.control === 'switch';
+      const optionish = f.control === 'select' || f.control === 'radio' || f.control === 'switch';
       seed[f.key] = !from && optionish && mode === 'create' ? (f.options?.[0] ?? '') : from;
     }
     return seed;

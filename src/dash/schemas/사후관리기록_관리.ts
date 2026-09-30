@@ -43,13 +43,13 @@ export const schema: PageSchema = {
   ],
   // ── 등록/수정 모달 양식(원문 모달 필드 순서 그대로) ──
   fields: [
-    { key: 'majorCat',     label: '대분류',      control: 'select', required: true, options: ['일반 사후관리', '제재조치'] },
+    { key: 'majorCat',     label: '대분류',      control: 'radio',  required: true, options: ['일반 사후관리', '제재조치'] },
     { key: 'subFund',      label: '자펀드',      control: 'text', long: true, required: true },
     { key: 'investee',     label: '투자기업',    control: 'text', long: true },
     { key: 'recordDate',   label: '해당일자',    control: 'date', required: true },
-    { key: 'recordType',   label: '유형',        control: 'select', options: ['기타', '투자비율위반'] },
+    { key: 'recordType',   label: '유형',        control: 'radio',  options: ['기타', '투자비율위반'] },
     { key: 'content',      label: '내용',        control: 'textarea' },
-    { key: 'deliveryType', label: '전달형태',    control: 'select', options: ['회의', '공문'] },
+    { key: 'deliveryType', label: '전달형태',    control: 'radio',  options: ['회의', '공문'] },
     { key: 'counterpart',  label: 'Counterpart', control: 'text' },
     { key: 'documents',    label: '관련문서',    control: 'filepond' },
   ],

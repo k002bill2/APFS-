@@ -59,12 +59,12 @@ function Field({ label, children, errMsg, className, plain }: { label: string; c
 
 /* 초기값 시드 — RowFormModal 과 동일 규칙: initial 값 우선, 등록 모드에서 비어 있는 select 는 첫 옵션.
    (옵션형이 ''로 저장되면 그리드 셀이 빈칸으로 렌더된다 — apfs-form-modal 계약4)
-   이 폼에 radio·switch 는 없으므로 select 만 다룬다(목업 openReg 에 radio 가 없다). */
+   인력구분은 radio(2026-09-30 select에서 전환) — select 와 같이 첫 옵션을 시드한다. */
 function seedValues(fields: FieldSpec[], mode: 'create' | 'edit', initial?: Partial<WorkforceFormValues>): WorkforceFormValues {
   const seed: WorkforceFormValues = {};
   for (const f of fields) {
     const from = initial ? String(initial[f.key] ?? '') : '';
-    seed[f.key] = (!from && f.control === 'select' && mode === 'create') ? (f.options?.[0] ?? '') : from;
+    seed[f.key] = (!from && (f.control === 'select' || f.control === 'radio') && mode === 'create') ? (f.options?.[0] ?? '') : from;
   }
   return seed;
 }

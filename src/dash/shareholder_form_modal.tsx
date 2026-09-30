@@ -74,7 +74,7 @@ export function ShareholderFormModal({ mode = 'create', initial, title, onSave, 
     const seed: ShareholderFormValues = {};
     for (const f of SHAREHOLDER_SCHEMA.fields) {
       const from = initial ? String(initial[f.key] ?? '') : '';
-      seed[f.key] = (!from && f.control === 'select' && mode === 'create') ? (f.options?.[0] ?? '') : from;
+      seed[f.key] = (!from && (f.control === 'select' || f.control === 'radio') && mode === 'create') ? (f.options?.[0] ?? '') : from;
     }
     return seed;
   });

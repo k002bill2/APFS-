@@ -37,7 +37,7 @@ export const APPLY_SCHEMA: PageSchema = parsePageSchema({
   route: '자펀드관리/제안서접수', title: '제안서접수 등록', kind: 'form', entity: '자펀드',
   columns: REP_COLUMNS,
   fields: [
-    { key: 'mf', label: '모펀드', control: 'select', options: OPT_MF },
+    { key: 'mf', label: '모펀드', control: 'radio', options: OPT_MF },
     { key: 'applyDate', label: '신청일자', control: 'date', required: true },
     { key: 'y', label: '사업연도', control: 'year', required: true },   // 연도 선택 = PeriodPicker(apfs-datepicker) — select 금지
     { key: 'rt', label: '정기/수시', control: 'radio', options: ['정기', '수시'] },   // 배타 2지선다 = radio

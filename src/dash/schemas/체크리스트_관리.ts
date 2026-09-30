@@ -32,7 +32,7 @@ export const schema: PageSchema = {
     { key: 'regDate',  label: '등록일자',       type: 'date',   align: 'center' },
   ],
   fields: [
-    { key: 'category', label: '구분',           control: 'select',   required: true, options: ['투심일정', '투심결과', '투자계약서'] },
+    { key: 'category', label: '구분',           control: 'radio',    required: true, options: ['투심일정', '투심결과', '투자계약서'] },
     { key: 'item',     label: '체크리스트 항목', control: 'text',     required: true, long: true },
     { key: 'desc',     label: '설명',           control: 'textarea', long: true },
     { key: 'required', label: '필수여부',       control: 'switch',   options: ['여', '부'] },
