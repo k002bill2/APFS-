@@ -88,6 +88,11 @@ function KvGrid({ items, variant }: { items: OvItem[]; variant: ProfileVariant }
           </div>
         </React.Fragment>
       ))}
+      {/* 홀수 개로 끝나면 남는 (라벨,값) 2트랙을 bg-card 로 덮는다 — 안 덮으면 컨테이너 bg-border(회색)가 드러난다.
+          -ml-px 로 왼쪽 1px gap(세로선)까지 덮는다. full 항목은 전부 짝수 뒤라(현 OVERVIEW) 중간 빈칸은 없다. */}
+      {items.reduce((c, it) => (it.full ? 0 : (c + 1) % 2), 0) === 1 && (
+        <div aria-hidden="true" className="bg-card -ml-px" style={{ gridColumn: 'span 2' }} />
+      )}
     </div>
   );
 }

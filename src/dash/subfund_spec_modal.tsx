@@ -150,7 +150,7 @@ function KvGrid({ items, unit }: { items: OvItem[]; unit: Unit }) {
             </dd>
           </div>
         );
-      })}
+      }, (o) => !!o.full)}
       {FILES.map((f) => (
         <div key={f.l} className="grid bg-card sm:col-span-2" style={KV_COLS}>
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{f.l}</dt>
@@ -163,7 +163,7 @@ function KvGrid({ items, unit }: { items: OvItem[]; unit: Unit }) {
             ) : '미첨부'}
           </dd>
         </div>
-      ), (o) => !!o.full)}
+      ))}
     </dl>
   );
 }
