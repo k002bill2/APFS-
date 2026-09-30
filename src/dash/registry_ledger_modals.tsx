@@ -97,7 +97,7 @@ type RowAct = 'edit' | 'detail';
 export function MiniTable({ heads, rows, act, label, right = [], empty = '변경 이력이 없습니다.', onOpen, onDelete }: {
   heads: string[]; rows: string[][]; act: RowAct; label: string; right?: number[]; empty?: string;
   /** [수정]/[상세] — 1건 선택 시. 미지정이면 원문처럼 토스트 */
-  onOpen?: (row: string[]) => void;
+  onOpen?: (row: string[], idx: number) => void;
   /** [삭제] — 선택 행 인덱스들 */
   onDelete: (idx: number[]) => void;
 }) {
@@ -109,7 +109,7 @@ export function MiniTable({ heads, rows, act, label, right = [], empty = '변경
   const cell: React.CSSProperties = { padding: '8px 11px' };
   const openLabel = act === 'edit' ? '수정' : '상세';
   const toggle = (i: number, on: boolean) => setSel((p) => (on ? [...p, i] : p.filter((x) => x !== i)));
-  const open = () => { const r = rows[sel[0]]; if (!r) return; if (onOpen) onOpen(r); else toast(`${label} ${openLabel}`); };
+  const open = () => { const r = rows[sel[0]]; if (!r) return; if (onOpen) onOpen(r, sel[0]); else toast(`${label} ${openLabel}`); };
   const remove = () => { onDelete(sel); setSel([]); toast.success(`${label} ${sel.length}건을 삭제했습니다`); };
   return (
     <div>
@@ -210,13 +210,31 @@ export function LedgerFormModal({ mode, row, onSave, onClose }: { mode: 'new' | 
   const [v, setV] = useState(() => initialLedger(edit, row));
   const [hist, setHist] = useState<Record<string, string[][]>>(() =>
     Object.fromEntries(HIST_SECTIONS.map((s) => [s.key, edit && s.editHistory ? [s.editHistory] : []])));
+  /* 섹션별 수정 중인 이력 행 인덱스(null = 추가 모드) */
+  const [editing, setEditing] = useState<Record<string, number | null>>({});
   const set = (k: string) => (x: string) => setV((p) => ({ ...p, [k]: x }));
 
-  /* 원문 addHistRow — 빈 값이면 경고, 아니면 [값…, 오늘, 오늘] 을 맨 위에 */
+  /* 이력 행 [수정] = 그 행 값을 섹션 입력칸에 올리고 [추가]를 [수정 반영]으로 바꾼다(조합원·전문인력 openMember 와 같은 행→입력칸 로드).
+     addHist 순매핑의 역: dur 는 [시작, 종료], 나머지는 첫 칸. 등록번호는 이력 행에 없으니 건드리지 않는다 */
+  const loadHist = (s: HistSection, r: string[], idx: number) => {
+    setV((p) => (s.key === 'dur' ? { ...p, dur1: r[0], dur2: r[1] } : { ...p, [s.key]: r[0] }));
+    setEditing((p) => ({ ...p, [s.key]: idx }));
+  };
+  const cancelEdit = (s: HistSection) => setEditing((p) => ({ ...p, [s.key]: null }));
+
+  /* 원문 addHistRow — 빈 값이면 경고, 아니면 [값…, 오늘, 오늘] 을 맨 위에.
+     수정 중이면 그 행을 교체 — 변경일자 = 오늘, 등록일자는 원래 값 유지 */
   const addHist = (s: HistSection) => {
     const vals = s.key === 'dur' ? [v.dur1, v.dur2] : (s.key === 'addr' || s.key === 'gpaddr') && isAddressEmpty(v[s.key]) ? [''] : [v[s.key].trim()];
     if (s.key === 'dur' && !v.dur2 && v.dur1) { toast('존속기간 종료일을 입력하세요'); return; }
     if (vals.some((x) => !x)) { toast(HIST_REQUIRED[s.key]); return; }
+    const idx = editing[s.key];
+    if (idx != null) {
+      setHist((p) => ({ ...p, [s.key]: p[s.key].map((row, i) => (i === idx ? [...vals, today(), row[row.length - 1]] : row)) }));
+      cancelEdit(s);
+      toast.success('변경 이력이 수정되었습니다');
+      return;
+    }
     setHist((p) => ({ ...p, [s.key]: [[...vals, today(), today()], ...p[s.key]] }));
     toast.success('변경 이력이 추가되었습니다');
   };
@@ -239,9 +257,14 @@ export function LedgerFormModal({ mode, row, onSave, onClose }: { mode: 'new' | 
         <Section key={s.key} title={s.title}>
           {/* 입력 옆 버튼은 sm 자연 높이 그대로(apfs-form-modal 규칙 5 — 34px 맞춤은 2026-09-21 원복). 접근名에 섹션명을 붙여 '추가' 6개를 구분 */}
           <HistInputs s={s} v={v} set={set} edit={edit}
-            add={<Button variant="outline" size="sm" leadingIcon="plus" onClick={() => addHist(s)}><span className="sr-only">{s.title} </span>추가</Button>} />
-          <MiniTable heads={s.heads} rows={hist[s.key]} act="edit" label={`${s.title} 변경 이력`} right={s.key === 'amt' ? [0] : []}
-            onDelete={(idx) => setHist((p) => ({ ...p, [s.key]: dropAt(p[s.key], idx) }))} />
+            add={editing[s.key] != null
+              ? <div className="flex items-center gap-1.5">
+                  <Button variant="primary" size="sm" leadingIcon="check" onClick={() => addHist(s)}><span className="sr-only">{s.title} </span>수정 반영</Button>
+                  <Button variant="ghost" size="sm" onClick={() => cancelEdit(s)}><span className="sr-only">{s.title} 수정 </span>취소</Button>
+                </div>
+              : <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => addHist(s)}><span className="sr-only">{s.title} </span>추가</Button>} />
+          {/* 삭제로 인덱스가 밀리면 수정 대상이 다른 행을 가리키므로 수정 모드를 해제한다 */}
+          <MiniTable heads={s.heads} rows={hist[s.key]} act="edit" label={`${s.title} 변경 이력`} right={s.key === 'amt' ? [0] : []} onDelete={(idx) => { cancelEdit(s); setHist((p) => ({ ...p, [s.key]: dropAt(p[s.key], idx) })); }} onOpen={(r, idx) => loadHist(s, r, idx)} />
         </Section>
       ))}
       <Section title="출자 좌당 금액 / 최초등록">
