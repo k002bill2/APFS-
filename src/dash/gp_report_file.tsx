@@ -7,7 +7,7 @@
      원문 토스트 문구 그대로: 파일 없이 확인 '첨부파일을 먼저 선택하세요' / 선택 후 '업로드되었습니다'. 파일 처리·전송은 하지 않는다.
    - 목록 5열(No·보고구분·파일명·수정일자·정합성) = 원문 thead 그대로. 정합성 `.tag.g` O / `.tag.n` X → 배지 success / muted.
      원문은 보고구분 셀을 rowspan 병합했지만 AG Grid 는 행별로 같은 값을 반복 표시한다(값은 동일).
-   - 정합성 안내 캡션 2줄은 그리드 위 캡션으로 옮긴다(원문 문구 그대로).
+   - 원문 그리드 위 정합성 안내 2줄은 두지 않는다(2026-09-29 사용자 지시로 삭제).
    - 조회 전용 — 선택이 만드는 액션이 없으므로 행 선택(체크박스)을 두지 않는다. 엑셀 = 푸터 내보내기(⌥D).
    - 원문 스캐폴딩(GNB/LNB 토글·출처시스템 메뉴·서브탭)·설계 메모·검토필요 마커는 옮기지 않는다. KPI 배지 행 없음. */
 import { useMemo, useState } from 'react';
@@ -71,11 +71,6 @@ export function GpReportFile({ onNav }: { onNav?: (r: string) => void }) {
       actions={<Button variant="outline" size="sm" leadingIcon="upload" onClick={() => setUploadOpen(true)}>업로드</Button>}
       footerLeft={<span>{`총 ${String(shown.length)}건`}</span>}
       onExport={exportExcel} exportEnabled={!uploadOpen}>
-      {/* preflight:false — <p> UA 마진 제거(margin:0) */}
-      <p className="text-caption" style={{ margin: '0 0 10px', fontSize: 12.5, lineHeight: 1.6 }}>
-        * 정합성 : DB상으로 보고한 파일명과 실제로 업로드한 파일명을 비교<br />
-        * 아래 조회 데이터는 DB상으로 보고한 파일명입니다.
-      </p>
       <ReadGrid table={GP_REPORT_FILE_TABLE} rows={shown} ariaLabel="보고 첨부파일 목록" />
       {uploadOpen && (
         <UploadModal title="보고 첨부파일 업로드" label="첨부파일" removedMsg="첨부파일 제거됨"

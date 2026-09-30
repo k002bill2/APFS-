@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { emptyMessage, emptyOverlaySelector } from './grid_empty_overlay';
+import { emptyMessage, emptyOverlaySelector, centerInsets } from './grid_empty_overlay';
 
 const api = (opts: Record<string, unknown>) => ({ getGridOption: (k: string) => opts[k] }) as any;
 
@@ -20,5 +20,13 @@ describe('grid_empty_overlay', () => {
     expect(emptyOverlaySelector({ overlayType: 'noMatchingRows' } as any)?.component).toBeTruthy();
     expect(emptyOverlaySelector({ overlayType: 'loading' } as any)).toBeUndefined();
     expect(emptyOverlaySelector({ overlayType: 'exporting' } as any)).toBeUndefined();
+  });
+  it('centerInsets: 본문 뷰포트 밖 여분을 위/아래 margin 으로 — 합계행·스크롤바만큼 아래 여분', () => {
+    // 오버레이 콘텐츠 영역 745~938, 본문 746~896 (헤더 테두리 1px 위 · 합계행 42px 아래)
+    expect(centerInsets(745, 938, 746, 896)).toEqual({ top: 1, bottom: 42 });
+    // 본문 = 영역이면 margin 0 (변화 없음)
+    expect(centerInsets(100, 250, 100, 250)).toEqual({ top: 0, bottom: 0 });
+    // 음수로 가지 않는다(본문이 영역보다 크게 잡혀도)
+    expect(centerInsets(100, 250, 90, 260)).toEqual({ top: 0, bottom: 0 });
   });
 });
