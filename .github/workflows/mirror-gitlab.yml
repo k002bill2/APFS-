@@ -1,0 +1,48 @@
+# GitHub main(및 태그) → 사내 GitLab 자동 미러
+#
+# PR 머지는 GitHub 서버에서 일어나므로 로컬 dual-push 로는 GitLab 에 전달되지 않는다.
+# main 이 갱신될 때마다 여기서 GitLab 으로 push 한다.
+#
+# 필요한 설정 (1회):
+#   GitHub 저장소 Settings → Secrets and variables → Actions → New repository secret
+#     이름: GITLAB_TOKEN
+#     값:   GitLab Project Access Token (role: Maintainer, scope: write_repository)
+#   GitLab main 이 보호 브랜치면 토큰 역할이 push 허용 대상(Maintainer)이어야 한다.
+#
+# 강제 push 는 하지 않는다 — GitLab 에서 직접 커밋해 이력이 갈라지면 실패로 드러나게 한다.
+
+name: Mirror to GitLab
+
+on:
+  push:
+    branches: [main]
+    tags: ['*']
+  workflow_dispatch:
+
+concurrency:
+  group: mirror-gitlab
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to GitLab
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_REPO: lab.kiips.co.kr/logos/apfs/APFS-UIUX.git
+        run: |
+          if [ -z "$GITLAB_TOKEN" ]; then
+            echo "::error::GITLAB_TOKEN secret 이 없습니다. 워크플로 파일 상단 주석의 설정을 먼저 하세요."
+            exit 1
+          fi
+          git remote add gitlab "https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO}"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            git push gitlab "refs/tags/${GITHUB_REF_NAME}"
+          else
+            git push gitlab HEAD:refs/heads/main
+          fi
