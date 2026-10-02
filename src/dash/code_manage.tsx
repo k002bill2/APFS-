@@ -77,9 +77,9 @@ const DETAIL_COLS: ColDef<CodeDetail>[] = [
 /* 좌·우 모두 체크박스로만 선택(행 본문 클릭 선택 해제 — 2026-09-22 사용자 결정). 좌 그리드의 "해제 금지"는
    enableClickSelection:'enableSelection' 이 아니라 onGroupSelection 의 queueMicrotask 복원이 담당한다(apfs-aggrid master-detail 절). */
 const GROUP_SELECTION: RowSelectionOptions<GroupView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };
-/* 우측 코드상세는 일반 리스트 — 다중 선택이 기본(2026-09-23). 단일 액션(수정)은 1건일 때만.
-   ⚠ 좌측 GROUP_SELECTION 은 그대로 singleRow(라디오) — 우측 패널이 무엇을 보여줄지 정하는 데이터 소스라 2건 이상이 성립하지 않는다. */
-const DETAIL_SELECTION: RowSelectionOptions<CodeDetail> = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
+/* 우측 코드상세도 단일 선택(2026-10-02 사용자 결정) — 삭제가 사라져 다건 선택으로 할 수 있는 액션이 없다(종전 2026-09-23 다중 선택 기본을 뒤집음).
+   좌측과 달리 해제는 허용한다 — 우측 선택은 데이터 소스가 아니라 수정 대상 지정일 뿐이다. */
+const DETAIL_SELECTION: RowSelectionOptions<CodeDetail> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };
 
 function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -341,14 +341,14 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
 
         <section aria-label="코드상세 목록" className="min-w-0">
           <PaneBar title={curG ? <>「{curG.name}」 코드상세 </> : '코드상세 '} count={curDetails.length}>
-            {/* 코드 등록은 코드구분 선택 전에는 disabled(목업 rg-new) — 선택하면 즉시 활성 */}
-            <Button variant="outline" size="sm" leadingIcon="plus" disabled={!curG} onClick={() => setModal({ kind: 'detail', mode: 'create' })}>코드 등록</Button>
             {selDCount > 0 && (
               <>
                 <span className="font-semibold" style={{ fontSize: 13 }}>{String(selDCount)}건 선택됨</span>
                 {selD && <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'detail', mode: 'edit', id: selD.id })}>수정</Button>}
               </>
             )}
+            {/* 코드 등록은 패널 바 우측 끝(2026-10-02 사용자 지시). 코드구분 선택 전에는 disabled(목업 rg-new) — 선택하면 즉시 활성 */}
+            <Button variant="outline" size="sm" leadingIcon="plus" disabled={!curG} onClick={() => setModal({ kind: 'detail', mode: 'create' })}>코드 등록</Button>
           </PaneBar>
           {curG ? (
             <AgGridReact<CodeDetail>
