@@ -127,9 +127,9 @@ export const IRR_FUND: TableMeta = {
     { key: 'recover', label: '회수총액', kind: 'amount' },
     { key: 'balance', label: '투자잔액', kind: 'amount' },
     /* 원문 샘플 '0.52' — 비율 형태라 금액 환산하지 않고 원문 문자열 그대로 */
-    { key: 'uninvest', label: '미투자자산', kind: 'number', align: 'center', width: 130 },
+    { key: 'uninvest', label: '미투자자산', kind: 'number', width: 130 },
     { key: 'nav', label: '평가금액', kind: 'amount' },
-    { key: 'irr', label: 'IRR', kind: 'number', align: 'center', width: 100 },
+    { key: 'irr', label: 'IRR', kind: 'number', width: 100 },
   ],
   rows: [{ id: 'irrf-1', mgr: '원익투자파트너스(주)', fund: '2022 원익 스마트 혁신 Agtech투자조합', yr: '2022년도',
     commit: 21000000000, paid: 21000000000, dist: 4851000000, invest: 19302262939, recover: 5847282719, balance: 15112427939,

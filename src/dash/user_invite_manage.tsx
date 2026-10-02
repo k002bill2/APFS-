@@ -44,22 +44,21 @@ const nowStamp = () => format(new Date(), 'yyyy-MM-dd HH:mm');
 /* ──────────────────────────────
    컬럼 정의 — 목업 헤더 + 초대일시·만료(브리프: 초대 상태 목록화)
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 type InviteView = InviteRow & { orgn: string; state: InviteState; expiresAt: string };
 
 const columnDefs: ColDef<InviteView>[] = [
-  { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
+  { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: tabNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'orgn', headerName: '운용사', width: 160, minWidth: 130, maxWidth: 220, cellStyle: flexCenter, cellRenderer: (p: any) => p.value },
   { field: 'name', headerName: '성명', width: 110, maxWidth: 160, cellStyle: flexCenter, cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
   { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 160, cellStyle: muted, cellRenderer: (p: any) => p.value },
-  { field: 'active', headerName: '재직', width: 88, maxWidth: 88, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '재직' : '퇴사'),
+  { field: 'active', headerName: '재직', width: 88, maxWidth: 88, cellStyle: flexCenter, valueFormatter: (p) => (p.value ? '재직' : '퇴사'),
     cellRenderer: (p: any) => <StatusBadge tone={p.value ? 'success' : 'danger'} label={p.value ? '재직' : '퇴사'} size="md" /> },
-  { field: 'state', headerName: '초대상태', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={INVITE_TONE[p.value as InviteState]} label={p.value} size="lg" /> },
-  { field: 'invitedAt', headerName: '초대일시', width: 156, maxWidth: 156, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? String(p.value) : '-') },
-  { field: 'expiresAt', headerName: `만료(${INVITE_TTL_HOURS}시간)`, width: 156, maxWidth: 156, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
+  { field: 'state', headerName: '초대상태', width: 110, maxWidth: 110, cellStyle: flexCenter, cellRenderer: (p: any) => <StatusBadge tone={INVITE_TONE[p.value as InviteState]} label={p.value} size="lg" /> },
+  { field: 'invitedAt', headerName: '초대일시', width: 156, maxWidth: 156, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? String(p.value) : '-') },
+  { field: 'expiresAt', headerName: `만료(${INVITE_TTL_HOURS}시간)`, width: 156, maxWidth: 156, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' },
     valueFormatter: (p) => (p.data?.state === '초대발송' && p.value ? String(p.value) : '-') },
 ];
 /* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.

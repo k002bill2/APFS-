@@ -62,6 +62,8 @@ const thStyle: React.CSSProperties = { textAlign: 'left', fontSize: 13, fontWeig
 const tdStyle: React.CSSProperties = { padding: '4px 0', paddingRight: 8, verticalAlign: 'middle' };
 const thLast: React.CSSProperties = { ...thStyle, paddingRight: 0 };
 const tdLast: React.CSSProperties = { ...tdStyle, paddingRight: 0 };
+/* 행 삭제(아이콘 전용 버튼) = 값이 아닌 컨트롤 열 — 표 정렬 규약의 예외로 가운데 유지 */
+const tdCtrl: React.CSSProperties = { ...tdLast, textAlign: 'center' };
 
 export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow; onSave: (patch: Partial<SubFundRow>) => void; onClose: () => void }) {
   const [v, setV] = useState<Record<string, string>>({
@@ -139,7 +141,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
                     <tr key={i}>
                       <td style={tdStyle}><SchemaField fill field={s(`gpk${i}`, '구분', 'select', { options: GP_KINDS })} value={g.kind} onChange={(val) => setGps((p) => p.map((x, k) => (k === i ? { ...x, kind: val } : x)))} /></td>
                       <td style={tdStyle}><SchemaField fill field={s(`gpn${i}`, '기관명', 'text')} value={g.name} onChange={(val) => setGps((p) => p.map((x, k) => (k === i ? { ...x, name: val } : x)))} /></td>
-                      <td style={{ ...tdLast, textAlign: 'center' }}><IconBtn icon="trash" label="행 삭제" size={34} onClick={() => setGps((p) => p.filter((_, k) => k !== i))} /></td>
+                      <td style={tdCtrl}><IconBtn icon="trash" label="행 삭제" size={34} onClick={() => setGps((p) => p.filter((_, k) => k !== i))} /></td>
                     </tr>))}</tbody>
                 </table>
               </div>
@@ -196,7 +198,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
                     <td style={tdStyle}><SchemaField fill field={s(`dk${i}`, '담당 구분', 'select', { options: DUTY_KINDS })} value={d.kind} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, kind: val } : x)))} /></td>
                     <td style={tdStyle}><SchemaField fill field={s(`dn${i}`, '성명', 'text', { pii: true })} value={d.name} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, name: val } : x)))} /></td>
                     <td style={tdStyle}><SchemaField fill field={s(`de${i}`, 'EMAIL', 'text', { pii: true })} value={d.email} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, email: val } : x)))} /></td>
-                    <td style={{ ...tdLast, textAlign: 'center' }}><IconBtn icon="trash" label="행 삭제" size={34} onClick={() => setDuties((p) => p.filter((_, k) => k !== i))} /></td>
+                    <td style={tdCtrl}><IconBtn icon="trash" label="행 삭제" size={34} onClick={() => setDuties((p) => p.filter((_, k) => k !== i))} /></td>
                   </tr>))}</tbody>
               </table>
             </div>

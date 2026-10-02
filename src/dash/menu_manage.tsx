@@ -58,9 +58,8 @@ type MenuView = MenuRow & { hasKids: boolean; expanded: boolean; parentName: str
 /* ──────────────────────────────
    컬럼 정의 — 목업 헤더 순서(메뉴명·메뉴ID·영문·프로그램명·단축번호·레벨·정렬·사용자 구분·사용여부) + 브리프 보존 항목(프로그램ID·상위메뉴)
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const mono: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)', fontVariantNumeric: 'tabular-nums' };
 const NOSORT = { sortable: false } as const;   // 트리 순서 보존 — 헤더 정렬 금지
 
@@ -92,11 +91,11 @@ const makeColumns = (toggle: (id: string) => void): ColDef<MenuView>[] => [
   { field: 'pid', headerName: '프로그램ID', width: 110, ...NOSORT, cellStyle: mono, cellRenderer: (p: any) => (p.value ? p.value : <span>-</span>) },
   { field: 'pname', headerName: '프로그램명', width: 200, maxWidth: 280, ...NOSORT, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value ? p.value : <span style={{ color: 'var(--muted-foreground)' }}>-</span>) },
-  { field: 'short', headerName: '단축번호', width: 92, ...NOSORT, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? String(p.value) : '-') },
-  { field: 'lvl', headerName: '레벨', width: 68, ...NOSORT, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
+  { field: 'short', headerName: '단축번호', width: 92, ...NOSORT, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value ? String(p.value) : '-') },
+  { field: 'lvl', headerName: '레벨', width: 68, ...NOSORT, cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
   { field: 'parentName', headerName: '상위메뉴', width: 150, maxWidth: 220, ...NOSORT, cellStyle: { ...flexCenter, color: 'var(--muted-foreground)' },
     cellRenderer: (p: any) => (p.value ? p.value : <span>-</span>) },
-  { field: 'ord', headerName: '정렬', width: 68, ...NOSORT, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
+  { field: 'ord', headerName: '정렬', width: 68, ...NOSORT, cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
   { field: 'utypes', headerName: '사용자 구분', width: 150, maxWidth: 220, ...NOSORT, cellStyle: flexCenter,
     valueFormatter: (p) => utypeLabel(p.value ?? []),
     cellRenderer: (p: any) => {
@@ -104,7 +103,7 @@ const makeColumns = (toggle: (id: string) => void): ColDef<MenuView>[] => [
       if (!u.length) return <span style={{ color: 'var(--muted-foreground)' }}>공통</span>;
       return <span className="inline-flex items-center gap-1 flex-wrap">{u.map((x) => <StatusBadge key={x} tone="info" label={x} size="md" />)}</span>;
     } },
-  { field: 'use', headerName: '사용여부', width: 92, ...NOSORT, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} /> },
+  { field: 'use', headerName: '사용여부', width: 92, ...NOSORT, cellStyle: flexCenter, cellRenderer: (p: any) => <UseBadge use={p.value} /> },
 ];
 /* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출하고,
    삭제는 게이트를 통과한 행만 지운다. 행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */

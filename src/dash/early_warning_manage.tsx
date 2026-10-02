@@ -139,23 +139,22 @@ const PAGE_SIZE = 20;
      내용 맞춤을 쓰면 우측에 빈 공간이 남는다(apfs-aggrid "좁은 매트릭스/집계 그리드" 규약).
    ⚠ 좌측 고정은 No만 — 다른 컬럼에 `pinned`를 주면 목업 순서가 깨진다.
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 텍스트 셀 — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다 */
 const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
 const gradeCell = (p: { value: EarlyWarningGrade }) => <StatusBadge tone={GRADE_TONE[p.value]} label={p.value} size="lg" />;
 
 const COLUMNS: ColDef<EarlyWarningRow>[] = [
-  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
+  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
   { field: 'mf', headerName: '모펀드', flex: 1, minWidth: 150, width: 150, cellStyle: flexCenter, cellRenderer: textCell },
   /* 기준년월 — 날짜성 값(행 데이터) */
-  { field: 'ym', headerName: '기준년월', width: 110, minWidth: 110, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
+  { field: 'ym', headerName: '기준년월', width: 110, minWidth: 110, cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
   { field: 'gp', headerName: '운용사', flex: 1.3, minWidth: 180, width: 180, cellStyle: flexCenter, cellRenderer: textCell },
-  { field: 'gpg', headerName: '종합등급(운용사)', width: 150, minWidth: 150, cellStyle: flexMid, cellRenderer: gradeCell },
+  { field: 'gpg', headerName: '종합등급(운용사)', width: 150, minWidth: 150, cellStyle: flexCenter, cellRenderer: gradeCell },
   { field: 'fn', headerName: '자펀드', flex: 1.8, minWidth: 220, width: 220, cellStyle: flexCenter, cellRenderer: textCell },
-  { field: 'fng', headerName: '종합등급(자펀드)', width: 150, minWidth: 150, cellStyle: flexMid, cellRenderer: gradeCell },
+  { field: 'fng', headerName: '종합등급(자펀드)', width: 150, minWidth: 150, cellStyle: flexCenter, cellRenderer: gradeCell },
 ];
 
 /* 엑셀 컬럼 — 화면 컬럼과 1:1(화면=엑셀 불변식). 단일 헤더라 병합 없음. */

@@ -46,7 +46,7 @@ export const ACCOUNT_RANGE = '2026-07-13~2026-08-13';
 export const ACCOUNT_TABLE: TableMeta = {
   id: 'account',
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 },
     { key: 'acc', label: '계좌번호', kind: 'text' },
     { key: 'pnm', label: '상품명', kind: 'text', width: 240 },
     { key: 'gcd', label: '계좌구분코드', kind: 'center' },
@@ -80,10 +80,10 @@ export const CASHFLOW_RANGE = '2026-07-13~2026-08-13';
 export const CASHFLOW_TABLE: TableMeta = {
   id: 'cashflow', unitDigits: VERIFY_DIGITS,   // S3_106 원문 fmt() 도 원 정수 · 백만원 최대 1 · 억원 최대 2(S3_101 과 같다)
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 },
     { key: 'acct', label: '계좌번호', kind: 'text' },
     { key: 'dt', label: '거래일자', kind: 'date' },
-    { key: 'seq', label: '거래순번', kind: 'number', align: 'center' },
+    { key: 'seq', label: '거래순번', kind: 'number', align: 'left' },
     { key: 'tc', label: '거래구분코드', kind: 'center' },
     { key: 'td', label: '거래구분', kind: 'text' },
     { key: 'ic', label: '입출금구분코드', kind: 'center' },

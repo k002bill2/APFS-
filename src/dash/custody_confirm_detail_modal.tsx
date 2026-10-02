@@ -35,7 +35,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-center';
+const TH_BASE = 'border border-border bg-[color:var(--grid-header)] font-bold';
+const TH = `${TH_BASE} text-left`;
+const THR = `${TH_BASE} text-right`;
+/* 2단 그룹 헤더(colSpan 묶음 제목)만 가운데 — 표 정렬 규약의 허용 예외 */
+const THG = `${TH_BASE} text-center`;
 const TD = 'border border-border';
 const CELL: React.CSSProperties = { padding: '7px 9px' };
 /* 목업 `.grpline` — 운용사/수탁기관/일치여부 묶음 경계선. 축(구조)이라 상시 표시, 색은 토큰 */
@@ -72,19 +76,19 @@ function InvestTable() {
         <caption className="sr-only">투자자산 대사 — 운용사·수탁기관 보유내역 비교</caption>
         <thead>
           <tr>
-            <th scope="colgroup" colSpan={5} className={TH} style={CELL}>운용사</th>
-            <th scope="colgroup" colSpan={3} className={TH} style={{ ...CELL, ...GRP }}>수탁기관</th>
-            <th scope="colgroup" colSpan={2} className={TH} style={{ ...CELL, ...GRP }}>일치여부</th>
+            <th scope="colgroup" colSpan={5} className={THG} style={CELL}>운용사</th>
+            <th scope="colgroup" colSpan={3} className={THG} style={{ ...CELL, ...GRP }}>수탁기관</th>
+            <th scope="colgroup" colSpan={2} className={THG} style={{ ...CELL, ...GRP }}>일치여부</th>
           </tr>
           <tr>
             <th scope="col" className={TH} style={CELL}>투자기업</th>
-            <th scope="col" className={TH} style={CELL}>보유주수</th>
-            <th scope="col" className={TH} style={CELL}>원금(A)</th>
-            <th scope="col" className={TH} style={CELL}>감액금액(B)</th>
-            <th scope="col" className={TH} style={CELL}>잔액(A-B)</th>
+            <th scope="col" className={THR} style={CELL}>보유주수</th>
+            <th scope="col" className={THR} style={CELL}>원금(A)</th>
+            <th scope="col" className={THR} style={CELL}>감액금액(B)</th>
+            <th scope="col" className={THR} style={CELL}>잔액(A-B)</th>
             <th scope="col" className={TH} style={{ ...CELL, ...GRP }}>투자기업</th>
-            <th scope="col" className={TH} style={CELL}>보유주수</th>
-            <th scope="col" className={TH} style={CELL}>잔액</th>
+            <th scope="col" className={THR} style={CELL}>보유주수</th>
+            <th scope="col" className={THR} style={CELL}>잔액</th>
             <th scope="col" className={TH} style={{ ...CELL, ...GRP }}>보유주수</th>
             <th scope="col" className={TH} style={CELL}>잔액</th>
           </tr>
@@ -100,8 +104,8 @@ function InvestTable() {
               <td className={TD} style={{ ...CELL, ...GRP }}>{r.tsName}</td>
               <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.tsShares)}</td>
               <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.tsBal)}</td>
-              <td className={`${TD} text-center`} style={{ ...CELL, ...GRP }}><MatchTag label={r.mShares} /></td>
-              <td className={`${TD} text-center`} style={CELL}><MatchTag label={r.mBal} /></td>
+              <td className={TD} style={{ ...CELL, ...GRP }}><MatchTag label={r.mShares} /></td>
+              <td className={TD} style={CELL}><MatchTag label={r.mBal} /></td>
             </tr>
           ))}
         </tbody>
@@ -110,7 +114,7 @@ function InvestTable() {
           <tr className="bg-muted font-bold">
             <td className={TD} style={FOOT}>합계</td>
             <td className={`${TD} text-right tabular`} style={FOOT}>{fmt(INV_TOTAL_SHARES)}</td>
-            <td className={`${TD} text-center`} colSpan={8} style={FOOT}>-</td>
+            <td className={TD} colSpan={8} style={FOOT}>-</td>
           </tr>
         </tfoot>
       </table>
@@ -127,17 +131,17 @@ function NonInvestTradeTable() {
         <caption className="sr-only">미투자자산 거래 대사 — 운용사·수탁기관 비교</caption>
         <thead>
           <tr>
-            <th scope="colgroup" colSpan={3} className={TH} style={CELL}>운용사</th>
-            <th scope="colgroup" colSpan={3} className={TH} style={{ ...CELL, ...GRP }}>수탁기관</th>
-            <th scope="colgroup" colSpan={2} className={TH} style={{ ...CELL, ...GRP }}>일치여부</th>
+            <th scope="colgroup" colSpan={3} className={THG} style={CELL}>운용사</th>
+            <th scope="colgroup" colSpan={3} className={THG} style={{ ...CELL, ...GRP }}>수탁기관</th>
+            <th scope="colgroup" colSpan={2} className={THG} style={{ ...CELL, ...GRP }}>일치여부</th>
           </tr>
           <tr>
             <th scope="col" className={TH} style={CELL}>종목</th>
-            <th scope="col" className={TH} style={CELL}>보유주수</th>
-            <th scope="col" className={TH} style={CELL}>잔액</th>
+            <th scope="col" className={THR} style={CELL}>보유주수</th>
+            <th scope="col" className={THR} style={CELL}>잔액</th>
             <th scope="col" className={TH} style={{ ...CELL, ...GRP }}>종목</th>
-            <th scope="col" className={TH} style={CELL}>보유주수</th>
-            <th scope="col" className={TH} style={CELL}>잔액</th>
+            <th scope="col" className={THR} style={CELL}>보유주수</th>
+            <th scope="col" className={THR} style={CELL}>잔액</th>
             <th scope="col" className={TH} style={{ ...CELL, ...GRP }}>보유주수</th>
             <th scope="col" className={TH} style={CELL}>잔액</th>
           </tr>
@@ -158,15 +162,15 @@ function NonInvestTable() {
         <caption className="sr-only">미투자자산(예치금) 대사 — 운용사·수탁기관 계좌 비교</caption>
         <thead>
           <tr>
-            <th scope="colgroup" colSpan={2} className={TH} style={CELL}>운용사</th>
-            <th scope="colgroup" colSpan={2} className={TH} style={{ ...CELL, ...GRP }}>수탁기관</th>
-            <th scope="colgroup" colSpan={1} className={TH} style={{ ...CELL, ...GRP }}>일치여부</th>
+            <th scope="colgroup" colSpan={2} className={THG} style={CELL}>운용사</th>
+            <th scope="colgroup" colSpan={2} className={THG} style={{ ...CELL, ...GRP }}>수탁기관</th>
+            <th scope="colgroup" colSpan={1} className={THG} style={{ ...CELL, ...GRP }}>일치여부</th>
           </tr>
           <tr>
             <th scope="col" className={TH} style={CELL}>계좌번호</th>
-            <th scope="col" className={TH} style={CELL}>잔액</th>
+            <th scope="col" className={THR} style={CELL}>잔액</th>
             <th scope="col" className={TH} style={{ ...CELL, ...GRP }}>계좌번호</th>
-            <th scope="col" className={TH} style={CELL}>잔액</th>
+            <th scope="col" className={THR} style={CELL}>잔액</th>
             <th scope="col" className={TH} style={{ ...CELL, ...GRP }}>잔액</th>
           </tr>
         </thead>
@@ -177,7 +181,7 @@ function NonInvestTable() {
               <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.gpBal)}</td>
               <td className={TD} style={{ ...CELL, ...GRP, overflowWrap: 'anywhere' }}>{r.tsAcct}</td>
               <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.tsBal)}</td>
-              <td className={`${TD} text-center`} style={{ ...CELL, ...GRP }}><MatchTag label={r.mBal} /></td>
+              <td className={TD} style={{ ...CELL, ...GRP }}><MatchTag label={r.mBal} /></td>
             </tr>
           ))}
         </tbody>
@@ -185,7 +189,7 @@ function NonInvestTable() {
           <tr className="bg-muted font-bold">
             <td className={TD} style={FOOT}>합계</td>
             <td className={`${TD} text-right tabular`} style={FOOT}>{fmt(NI_TOTAL_BAL)}</td>
-            <td className={`${TD} text-center`} colSpan={3} style={FOOT}>-</td>
+            <td className={TD} colSpan={3} style={FOOT}>-</td>
           </tr>
         </tfoot>
       </table>

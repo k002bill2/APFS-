@@ -93,42 +93,45 @@ const today = () => format(new Date(), 'yyyy-MM-dd');   // 로컬 달력일 — 
 /* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수)에 null 가드만 얇게 덧씌운다(재구현 아님) */
 const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p));
 /* AG Grid cellStyle은 CellStyle(문자열 인덱스 시그니처) — React CSSProperties와 타입이 다르다 */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-export const txt = (field: keyof SubFundRow, header: string, width: number, center?: boolean): ColDef<SubFundRow> => ({
-  field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
+export const txt = (field: keyof SubFundRow, header: string, width: number): ColDef<SubFundRow> => ({
+  field, headerName: header, width, cellStyle: flexCenter,
   cellRenderer: (p: any) => (p.node.rowPinned ? null : p.value ?? '-'),   // 확장 열(S2_73)은 미입력 행에 값이 없다(undefined)
 });
 export const date = (field: keyof SubFundRow, header: string, width = 112): ColDef<SubFundRow> => ({
-  field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
+  field, headerName: header, width, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' },
   valueFormatter: (p) => (p.node?.rowPinned ? '' : String(p.value ?? '-')),
 });
 const amt = (field: keyof SubFundRow, header: string, strong?: boolean, width = 150): ColDef<SubFundRow> => ({
   field, headerName: header, width, type: 'rightAligned', valueFormatter: nullFmt, cellStyle: numStyle(strong) as any,
 });
 export const num = (field: keyof SubFundRow, header: string, width = 96): ColDef<SubFundRow> => ({
-  field, headerName: header, width, valueFormatter: nullFmt, cellStyle: centerNum,
+  field, headerName: header, width, type: 'rightAligned', valueFormatter: nullFmt, cellStyle: numStyle() as any,
+});
+/* 숫자 모양이지만 수량이 아닌 열(사업연도·차수) — 좌측 */
+const ordNum = (field: keyof SubFundRow, header: string, width = 96): ColDef<SubFundRow> => ({
+  field, headerName: header, width, valueFormatter: nullFmt, cellStyle: tabNum,
 });
 
 const columnDefs: (ColDef<SubFundRow> | ColGroupDef<SubFundRow>)[] = [
-  { field: 'no', headerName: 'No', width: 68, pinned: 'left', cellStyle: centerNum,
+  { field: 'no', headerName: 'No', width: 68, pinned: 'left', cellStyle: tabNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '합 계' : String(p.value)) },
-  { field: 'stg', headerName: '심사단계', width: 96, pinned: 'left', cellStyle: flexMid, sortable: true,
+  { field: 'stg', headerName: '심사단계', width: 96, pinned: 'left', cellStyle: flexCenter, sortable: true,
     cellRenderer: (p: any) => (p.node.rowPinned ? null : <StatusBadge tone={STAGE_TONE[p.value as Stage]} label={p.value} size="lg" />) },
   { ...txt('fn', '자펀드', 240), maxWidth: 360, pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold">{p.value}</span>) },
-  num('y', '사업연도', 92), txt('rt', '정기/수시', 88, true), num('ch', '차수', 70),
-  txt('ctype', '조합유형', 150, true), txt('cg', '조합구분', 96, true), txt('cs', '조합성격', 120, true),
+  ordNum('y', '사업연도', 92), txt('rt', '정기/수시', 88), ordNum('ch', '차수', 70),
+  txt('ctype', '조합유형', 150), txt('cg', '조합구분', 96), txt('cs', '조합성격', 120),
   { ...txt('gp1', '업무집행조합원1', 150), maxWidth: 240 }, { ...txt('gp2', '업무집행조합원2', 150), maxWidth: 240 },
   date('fd', '결성일'), date('rd', '등록일시'), num('yrs', '결과년수', 88), num('dur', '최초존속기간', 112), date('mat', '만기일'),
   num('rate', '기준수익률', 100),
-  { headerName: '우선손실충당률', marryChildren: true, headerClass: 'apfs-grp-a', children: [num('lgp', 'GP', 80), txt('lmo', '농모태', 80, true)] },
+  { headerName: '우선손실충당률', marryChildren: true, headerClass: 'apfs-grp-a', children: [num('lgp', 'GP', 80), txt('lmo', '농모태', 80)] },
   { headerName: '약정액', marryChildren: true, headerClass: 'apfs-grp-b', children: [amt('c1', '총액', true), amt('c2', '모태펀드'), amt('c3', '민간')] },
   { headerName: '변동약정액', marryChildren: true, headerClass: 'apfs-grp-a', children: [amt('v1', '총액', true), amt('v2', '모태펀드'), amt('v3', '민간')] },
   { headerName: '납입액', marryChildren: true, headerClass: 'apfs-grp-b', children: [amt('p1', '총액', true), amt('p2', '모태펀드')] },
   amt('rec', '회수금액'), amt('ti', '전체 투자금액'), num('tir', '전체 투자비율', 108), amt('mi', '주목적 투자금액'), num('mir', '주목적 투자비율', 116),
-  amt('dist', '배분총액'), num('mul', '투자배수', 88), txt('st', '조합상태', 96, true), date('liq', '청산(예정)일', 116),
+  amt('dist', '배분총액'), num('mul', '투자배수', 88), txt('st', '조합상태', 96), date('liq', '청산(예정)일', 116),
 ];
 
 /* Excel 헤더 병합·리프 컬럼을 columnDefs에서 자동 산출(35컬럼 수작업 오프바이원 방지) */

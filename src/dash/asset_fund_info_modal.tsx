@@ -74,6 +74,9 @@ const th: React.CSSProperties = { textAlign: 'left', fontSize: 13, fontWeight: 7
 const td: React.CSSProperties = { padding: '4px 0', paddingRight: 8, verticalAlign: 'middle' };
 const thLast: React.CSSProperties = { ...th, paddingRight: 0 };
 const tdLast: React.CSSProperties = { ...td, paddingRight: 0 };
+/* 대표여부 체크박스 = 값이 아닌 컨트롤 열 — 표 정렬 규약(숫자 우측·그 외 좌측)의 예외로 가운데 유지 */
+const thCtrl: React.CSSProperties = { ...th, textAlign: 'center' };
+const tdCtrl: React.CSSProperties = { ...td, textAlign: 'center' };
 /* 0행 — 공용 UI.EmptyRow(아이콘+문구). 두 표 모두 「행 추가」로 채우므로 hint 를 붙인다 */
 const EmptyRow = ({ span }: { span: number }) => <UI.EmptyRow span={span} msg={MODAL_EMPTY} hint="「행 추가」로 입력하세요." style={{ padding: '18px 0' }} />;
 
@@ -198,7 +201,7 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
                 <caption className="sr-only">운용사(공동GP) — 대표여부·운용사·사업자번호·운용사구분·결산월·보고운용사코드. 행을 눌러 선택한 뒤 행삭제</caption>
                 <thead>
                   <tr>
-                    <th scope="col" style={{ ...th, width: 56, textAlign: 'center' }}>대표</th>
+                    <th scope="col" style={{ ...thCtrl, width: 56 }}>대표</th>
                     <th scope="col" style={th}>운용사</th>
                     <th scope="col" style={{ ...th, width: 140 }}>사업자번호</th>
                     <th scope="col" style={{ ...th, width: 156 }}>운용사구분</th>
@@ -213,7 +216,7 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
                     return (
                       <tr key={g.id} tabIndex={0} aria-selected={on} onClick={(e) => onRowClick(e, g.id)} onKeyDown={(e) => onRowKey(e, g.id)}
                         style={{ cursor: 'pointer', background: on ? 'var(--row-selected)' : undefined }}>
-                        <td style={{ ...td, textAlign: 'center' }}>
+                        <td style={tdCtrl}>
                           <span className="inline-flex"><Checkbox checked={g.rep} onCheckedChange={(v) => patchGp(g.id, { rep: v === true })} aria-label={`${name} 대표여부`} /></span>
                         </td>
                         <td style={td}><Named name={`${name} 운용사`}><SchemaField fill field={spec(`gn-${g.id}`, '운용사', 'text')} value={g.name} onChange={(v) => patchGp(g.id, { name: v })} /></Named></td>

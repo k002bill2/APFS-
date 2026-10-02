@@ -212,18 +212,18 @@ function MinistryTab() {
         className="rounded-card-lg border border-border bg-card shadow-sm overflow-hidden"><div
           className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border"><div className="flex items-center gap-2"><h3 className="text-[16px] font-bold m-0">보고서 목록</h3><CountPill count={MINISTRY_REPORTS.length} /></div><div className="flex items-center gap-2"><Button variant="primary" size="sm" leadingIcon="plus">신규 보고 등록</Button><IconBtn icon="download" label="내보내기" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[760px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
                   ["보고서명", "left"],
-                  ["보고유형", "center"],
-                  ["보고기관", "center"],
-                  ["보고일", "center"],
-                  ["상태", "center"],
-                  ["담당자", "center"],
+                  ["보고유형", "left"],
+                  ["보고기관", "left"],
+                  ["보고일", "left"],
+                  ["상태", "left"],
+                  ["담당자", "left"],
                   ["액션", "right"],
                 ].map(([label, align], i) =>
                   <th
                     key={i}
                     className={cx(
                       "t-label font-semibold px-4 py-3 whitespace-nowrap",
-                      align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
+                      align === "right" ? "text-right" : "text-left",
                       i === 0 && "pl-6"
                     )}>{label}</th>
                 )}</tr></thead><tbody>{MINISTRY_REPORTS.map((r) =>
@@ -232,7 +232,7 @@ function MinistryTab() {
                   className="border-t border-border transition-colors"
                   onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb,var(--muted) 45%,transparent)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><td className="px-4 pl-6 py-3.5"><div
-                      className="text-[13.5px] font-semibold text-foreground">{r.name}</div></td><td className="px-4 py-3.5 text-center"><span
+                      className="text-[13.5px] font-semibold text-foreground">{r.name}</div></td><td className="px-4 py-3.5"><span
                       className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold"
                       style={{
                         background: r.type === "수시"
@@ -240,8 +240,8 @@ function MinistryTab() {
                           : "color-mix(in srgb,var(--info) 14%,transparent)",
                         color: r.type === "수시" ? "var(--warning)" : "var(--info)",
                       }}>{r.type}</span></td><td
-                    className="px-4 py-3.5 text-center text-[13px] font-semibold text-foreground">{r.org}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{String(r.date)}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={reportTone(r.status)} label={r.status} size="sm" /></td><td
-                    className="px-4 py-3.5 text-center text-[13px] font-semibold text-foreground">{r.manager}</td><td className="px-4 pr-5 py-3.5 text-right">{r.action === "-"
+                    className="px-4 py-3.5 text-[13px] font-semibold text-foreground">{r.org}</td><td className="px-4 py-3.5 t-caption tabular text-[12.5px]">{String(r.date)}</td><td className="px-4 py-3.5"><StatusBadge tone={reportTone(r.status)} label={r.status} size="sm" /></td><td
+                    className="px-4 py-3.5 text-[13px] font-semibold text-foreground">{r.manager}</td><td className="px-4 pr-5 py-3.5 text-right">{r.action === "-"
                       ? <span className="t-caption text-[12px]">—</span>
                       : <Button variant={r.action === "작성" ? "primary" : "outline"} size="sm">{r.action}</Button>}</td></tr>
               )}</tbody></table></div></div></div>
@@ -260,16 +260,16 @@ function CustodyTab() {
             urgent={true} /></div><div className="flex items-center gap-2"><Button variant="outline" size="sm" leadingIcon="upload">데이터 업로드</Button><IconBtn icon="refresh" label="재검증" size={34} /></div></div><div className="overflow-x-auto"><table className="w-full border-collapse min-w-[740px]"><thead><tr style={{ background: "color-mix(in srgb,var(--muted) 60%,transparent)" }}>{[
                 ["검증유형", "left"],
                 ["대상 자펀드", "left"],
-                ["업로드일", "center"],
-                ["비교검증결과", "center"],
-                ["상태", "center"],
+                ["업로드일", "left"],
+                ["비교검증결과", "left"],
+                ["상태", "left"],
                 ["액션", "right"],
               ].map(([label, align], i) =>
                 <th
                   key={i}
                   className={cx(
                     "t-label font-semibold px-4 py-3 whitespace-nowrap",
-                    align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
+                    align === "right" ? "text-right" : "text-left",
                     i === 0 && "pl-6"
                   )}>{label}</th>
               )}</tr></thead><tbody>{CUSTODY_VERIFICATIONS.map((r) =>
@@ -291,11 +291,11 @@ function CustodyTab() {
                       size={15}
                       className="text-danger shrink-0" />}<span
                       className="text-[13.5px] font-semibold text-foreground">{r.vtype}</span></div></td><td
-                  className="px-4 py-3.5 text-[13px] text-foreground">{r.fund}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12.5px]">{String(r.uploadDate)}</td><td className="px-4 py-3.5 text-center"><StatusBadge
+                  className="px-4 py-3.5 text-[13px] text-foreground">{r.fund}</td><td className="px-4 py-3.5 t-caption tabular text-[12.5px]">{String(r.uploadDate)}</td><td className="px-4 py-3.5"><StatusBadge
                     tone={resultTone(r.result)}
                     label={r.result}
                     size="sm"
-                    icon={r.result === "일치" ? "check-circle" : "x-circle"} /></td><td className="px-4 py-3.5 text-center"><StatusBadge tone={custodyTone(r.status)} label={r.status} size="sm" /></td><td className="px-4 pr-5 py-3.5 text-right"><Button
+                    icon={r.result === "일치" ? "check-circle" : "x-circle"} /></td><td className="px-4 py-3.5"><StatusBadge tone={custodyTone(r.status)} label={r.status} size="sm" /></td><td className="px-4 pr-5 py-3.5 text-right"><Button
                     variant={r.mismatch ? "outline" : "ghost"}
                     size="sm"
                     style={r.mismatch ? { color: "var(--danger)", borderColor: "var(--danger)" } : undefined}>{r.mismatch ? "불일치 검토" : "상세 보기"}</Button></td></tr>
@@ -314,17 +314,17 @@ function RegistryTab() {
                   ["자펀드코드", "left"],
                   ["자펀드명", "left"],
                   ["운용사", "left"],
-                  ["등록일", "center"],
-                  ["최종수정일", "center"],
-                  ["버전", "center"],
-                  ["상태", "center"],
+                  ["등록일", "left"],
+                  ["최종수정일", "left"],
+                  ["버전", "left"],
+                  ["상태", "left"],
                   ["다운로드", "right"],
                 ].map(([label, align], i) =>
                   <th
                     key={i}
                     className={cx(
                       "t-label font-semibold px-4 py-3 whitespace-nowrap",
-                      align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
+                      align === "right" ? "text-right" : "text-left",
                       i === 0 && "pl-6"
                     )}>{label}</th>
                 )}</tr></thead><tbody>{REGISTRY_FUNDS.map((r) =>
@@ -335,8 +335,8 @@ function RegistryTab() {
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><td
                     className="px-4 pl-6 py-3.5 tabular text-[12.5px] font-mono font-semibold text-accent">{r.code}</td><td
                     className="px-4 py-3.5 text-[13.5px] font-semibold text-foreground">{r.name}</td><td
-                    className="px-4 py-3.5 text-[13px] text-muted-foreground">{r.gp}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{String(r.regDate)}</td><td className="px-4 py-3.5 text-center t-caption tabular text-[12px]">{String(r.lastModified)}</td><td
-                    className="px-4 py-3.5 text-center text-[12.5px] font-bold tabular text-primary">{String(r.version)}</td><td className="px-4 py-3.5 text-center"><StatusBadge tone={registryTone(r.status)} label={r.status} size="sm" /></td><td className="px-4 pr-5 py-3.5 text-right"><IconBtn icon="download" label={`${r.name} 다운로드`} size={32} /></td></tr>
+                    className="px-4 py-3.5 text-[13px] text-muted-foreground">{r.gp}</td><td className="px-4 py-3.5 t-caption tabular text-[12px]">{String(r.regDate)}</td><td className="px-4 py-3.5 t-caption tabular text-[12px]">{String(r.lastModified)}</td><td
+                    className="px-4 py-3.5 text-[12.5px] font-bold tabular text-primary">{String(r.version)}</td><td className="px-4 py-3.5"><StatusBadge tone={registryTone(r.status)} label={r.status} size="sm" /></td><td className="px-4 pr-5 py-3.5 text-right"><IconBtn icon="download" label={`${r.name} 다운로드`} size={32} /></td></tr>
               )}</tbody></table></div></div><div className="rounded-card border border-border bg-card px-5 py-4 shadow-sm"><div className="flex items-center gap-2 mb-4"><ColorChip icon="clock" color="var(--info)" size={28} iconSize={15} /><h4 className="text-[14px] font-bold m-0">최근 수정이력</h4></div><div className="flex flex-col">{REGISTRY_HISTORY.map((item, i) =>
             <div
               key={i}

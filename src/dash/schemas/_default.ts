@@ -7,9 +7,9 @@ export function DEFAULT_SCHEMA(route: string): PageSchema {
     columns: [
       { key: 'name', label: '항목명', type: 'text', align: 'left' },
       { key: 'amount', label: '금액 (백만원)', type: 'amount', align: 'right' },
-      { key: 'change', label: '변동률', type: 'rate', align: 'center' },
-      { key: 'status', label: '상태', type: 'status', align: 'center' },
-      { key: 'trend', label: '추이', type: 'number', align: 'center' },
+      { key: 'change', label: '변동률', type: 'rate' },
+      { key: 'status', label: '상태', type: 'status' },
+      { key: 'trend', label: '추이', type: 'number', align: 'left' },
     ],
     fields: [
       { key: 'name', label: '항목명', control: 'text', required: true },

@@ -58,14 +58,14 @@ const 투심Rows: ReportRow[] = [
 
 /* ── 2. 수시보고 ── 컬럼 8개(원문 그대로) · 원문 1행 */
 const 수시보고Columns: readonly ColumnSpec[] = [
-  { key: 'no',          label: 'No',            type: 'number', align: 'center' },
-  { key: 'inputDate',   label: '입력일자',      type: 'date',   align: 'center' },
-  { key: 'occurDate',   label: '상황 발생일자', type: 'date',   align: 'center' },
+  { key: 'no',          label: 'No',            type: 'number', align: 'left' },
+  { key: 'inputDate',   label: '입력일자',      type: 'date' },
+  { key: 'occurDate',   label: '상황 발생일자', type: 'date' },
   { key: 'gp',          label: '운용사',        type: 'gp',     align: 'left' },
   { key: 'subFund',     label: '자펀드',        type: 'text',   align: 'left' },
   { key: 'title',       label: '제목',          type: 'text',   align: 'left' },
-  { key: 'reviewer',    label: '심사담당',      type: 'pii',    align: 'center' },
-  { key: 'riskManager', label: '리스크담당',    type: 'pii',    align: 'center' },
+  { key: 'reviewer',    label: '심사담당',      type: 'pii' },
+  { key: 'riskManager', label: '리스크담당',    type: 'pii' },
 ];
 const 수시보고Rows: ReportRow[] = [
   { id: 'oc-1', no: 1, inputDate: '2018-06-08', occurDate: '2018-06-08', gp: 'KB증권(주)',
@@ -74,12 +74,12 @@ const 수시보고Rows: ReportRow[] = [
 
 /* ── 3. 조합원총회 ── 컬럼 8개(원문 그대로) · 원문 1행 */
 const 조합원총회Columns: readonly ColumnSpec[] = [
-  { key: 'no',           label: 'No',       type: 'number', align: 'center' },
+  { key: 'no',           label: 'No',       type: 'number', align: 'left' },
   { key: 'gp',           label: '운용사',   type: 'gp',     align: 'left' },
   { key: 'subFund',      label: '자펀드',   type: 'text',   align: 'left' },
-  { key: 'reportStatus', label: '보고상태', type: 'status', align: 'center' },
-  { key: 'meetingType',  label: '총회구분', type: 'text',   align: 'center' },
-  { key: 'meetingDate',  label: '총회일자', type: 'date',   align: 'center' },
+  { key: 'reportStatus', label: '보고상태', type: 'status' },
+  { key: 'meetingType',  label: '총회구분', type: 'text' },
+  { key: 'meetingDate',  label: '총회일자', type: 'date' },
   { key: 'title',        label: '제목',     type: 'text',   align: 'left' },
   { key: 'agenda',       label: '안건',     type: 'text',   align: 'left' },
 ];
@@ -90,24 +90,24 @@ const 조합원총회Rows: ReportRow[] = [
 
 /* ── 4. 관리보수관리 ── 컬럼 7개(원문 그대로) · 원문 "조회된 데이터가 없습니다" → 0건 */
 const 관리보수Columns: readonly ColumnSpec[] = [
-  { key: 'no',         label: 'No',       type: 'number', align: 'center' },
+  { key: 'no',         label: 'No',       type: 'number', align: 'left' },
   { key: 'gp',         label: '운용사',   type: 'gp',     align: 'left' },
   { key: 'subFund',    label: '자펀드',   type: 'text',   align: 'left' },
-  { key: 'reportType', label: '보고구분', type: 'text',   align: 'center' },
-  { key: 'payDate',    label: '지급일자', type: 'date',   align: 'center' },
-  { key: 'payType',    label: '지급구분', type: 'text',   align: 'center' },
+  { key: 'reportType', label: '보고구분', type: 'text' },
+  { key: 'payDate',    label: '지급일자', type: 'date' },
+  { key: 'payType',    label: '지급구분', type: 'text' },
   { key: 'amount',     label: '금액',     type: 'amount', unit: '원', align: 'right' },
 ];
 
 /* ── 5. 운용사 출자배분관리 ── 컬럼 19개(기타조합원·모태펀드가 2단 헤더) · 원문 12행 + 소계·합계 */
 const 운용사출자배분Columns: readonly ColumnSpec[] = [
-  { key: 'no',                label: 'No',             type: 'text',   align: 'center' },
+  { key: 'no',                label: 'No',             type: 'text',   align: 'left' },
   { key: 'gp',                label: '운용사',         type: 'gp',     align: 'left', pinned: 'left' },
   { key: 'subFund',           label: '자펀드',         type: 'text',   align: 'left', pinned: 'left' },
   { key: 'commitTotal',       label: '약정총액',       type: 'amount', unit: '원', align: 'right' },
   { key: 'moafCommit',        label: '모태펀드 약정액', type: 'amount', unit: '원', align: 'right' },
-  { key: 'kind',              label: '구분',           type: 'text',   align: 'center' },
-  { key: 'baseDate',          label: '기준일자',       type: 'date',   align: 'center' },
+  { key: 'kind',              label: '구분',           type: 'text' },
+  { key: 'baseDate',          label: '기준일자',       type: 'date' },
   { key: 'paidTotal',         label: '납입총액',       type: 'amount', unit: '원', align: 'right' },
   { key: 'moafPaid',          label: '모태펀드 납입액', type: 'amount', unit: '원', align: 'right' },
   { key: 'otherPrincipal',    label: '원금배분',       type: 'amount', unit: '원', align: 'right', group: '기타조합원' },
@@ -143,17 +143,17 @@ const 운용사출자배분Totals: ReportRow[] = [
 
 /* ── 6. 농금원 출자배분관리 ── 컬럼 22개(원문 그대로) · 원문 1행 */
 const 농금원출자배분Columns: readonly ColumnSpec[] = [
-  { key: 'no',                label: 'No',               type: 'text',   align: 'center' },
+  { key: 'no',                label: 'No',               type: 'text',   align: 'left' },
   { key: 'gp',                label: '운용사',           type: 'gp',     align: 'left', pinned: 'left' },
   { key: 'subFund',           label: '자펀드',           type: 'text',   align: 'left', pinned: 'left' },
   { key: 'fundAmount',        label: '결성액',           type: 'amount', unit: '원', align: 'right' },
   { key: 'member',            label: '조합원',           type: 'text',   align: 'left' },
-  { key: 'memberType',        label: '조합원 구분',      type: 'text',   align: 'center' },
+  { key: 'memberType',        label: '조합원 구분',      type: 'text' },
   { key: 'memberCommit',      label: '조합원 약정금액',  type: 'amount', unit: '원', align: 'right' },
   { key: 'memberCommitTotal', label: '조합원 약정총액',  type: 'amount', unit: '원', align: 'right' },
-  { key: 'tradeType',         label: '거래구분',         type: 'text',   align: 'center' },
-  { key: 'tradeDetail',       label: '상세구분',         type: 'text',   align: 'center' },
-  { key: 'tradeDate',         label: '거래일자',         type: 'date',   align: 'center' },
+  { key: 'tradeType',         label: '거래구분',         type: 'text' },
+  { key: 'tradeDetail',       label: '상세구분',         type: 'text' },
+  { key: 'tradeDate',         label: '거래일자',         type: 'date' },
   { key: 'paidAmt',           label: '납입금액',         type: 'amount', unit: '원', align: 'right' },
   { key: 'fundPaidTotal',     label: '조합 납입총액',    type: 'amount', unit: '원', align: 'right' },
   { key: 'principalDist',     label: '원금배분액',       type: 'amount', unit: '원', align: 'right' },

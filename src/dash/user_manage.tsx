@@ -49,27 +49,26 @@ const nowStamp = () => format(new Date(), 'yyyy-MM-dd HH:mm');
 /* ──────────────────────────────
    컬럼 정의 — 목업 헤더 순서 그대로
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 
 const columnDefs: ColDef<UserRow>[] = [
-  { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
+  { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: tabNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
   { field: 'name', headerName: '성명', width: 130, minWidth: 110, maxWidth: 200, cellStyle: flexCenter,
     cellRenderer: (p: any) => <span className="inline-flex items-center gap-1.5 min-w-0"><span className="font-semibold">{p.value}</span>{p.data?.seed && <StatusBadge tone="success" label="시드" size="sm" />}</span> },
   { field: 'lid', headerName: '로그인 아이디', width: 134, maxWidth: 160, cellStyle: { ...flexCenter, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => p.value },
   { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 170, cellStyle: muted, cellRenderer: (p: any) => (p.value || '-') },
-  { field: 'type', headerName: '구분', width: 84, maxWidth: 84, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone="info" label={p.value} size="lg" /> },
-  { headerName: '소속유형', width: 116, maxWidth: 116, cellStyle: flexMid, valueGetter: (p) => (p.data ? belong(p.data) : ''),
+  { field: 'type', headerName: '구분', width: 84, maxWidth: 84, cellStyle: flexCenter, cellRenderer: (p: any) => <StatusBadge tone="info" label={p.value} size="lg" /> },
+  { headerName: '소속유형', width: 116, maxWidth: 116, cellStyle: flexCenter, valueGetter: (p) => (p.data ? belong(p.data) : ''),
     cellRenderer: (p: any) => <StatusBadge tone={p.data?.type === '농금원' ? 'primary' : 'warning'} label={p.value} size="lg" /> },
   { headerName: '소속', width: 150, minWidth: 110, maxWidth: 220, cellStyle: flexCenter, valueGetter: (p) => (p.data ? belongName(p.data) : ''), cellRenderer: (p: any) => p.value },
   { field: 'roles', headerName: '권한', width: 170, minWidth: 120, maxWidth: 260, cellStyle: flexCenter, valueFormatter: (p) => (p.value ?? []).join(', '),
     cellRenderer: (p: any) => <span className="inline-flex items-center gap-1 flex-wrap">{(p.value ?? []).map((r: string) => <StatusBadge key={r} tone="info" label={r} size="lg" />)}</span> },
-  { field: 'status', headerName: '상태', width: 110, maxWidth: 110, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={STATUS_TONE[p.value as UserStatus]} label={p.value} size="lg" /> },
-  { field: 'pwExpired', headerName: '비밀번호', width: 100, maxWidth: 100, cellStyle: flexMid, valueFormatter: (p) => (p.value ? '만료' : '정상'),
+  { field: 'status', headerName: '상태', width: 110, maxWidth: 110, cellStyle: flexCenter, cellRenderer: (p: any) => <StatusBadge tone={STATUS_TONE[p.value as UserStatus]} label={p.value} size="lg" /> },
+  { field: 'pwExpired', headerName: '비밀번호', width: 100, maxWidth: 100, cellStyle: flexCenter, valueFormatter: (p) => (p.value ? '만료' : '정상'),
     cellRenderer: (p: any) => (p.value ? <StatusBadge tone="warning" label="만료" size="lg" /> : <span style={{ color: 'var(--muted-foreground)' }}>정상</span>) },
-  { field: 'last', headerName: '최근 접속일시', width: 170, maxWidth: 170, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value && p.value !== '—' ? String(p.value) : '—') },
+  { field: 'last', headerName: '최근 접속일시', width: 170, maxWidth: 170, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value && p.value !== '—' ? String(p.value) : '—') },
 ];
 /* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
    행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */

@@ -44,7 +44,7 @@ const quantRows: Row[] = [
 export const QUANT_LIST: TableMeta = {
   id: 'quant',
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 },
     { key: 'type', label: '운용사구분', kind: 'text', width: 150 },
     { key: 'ind', label: '지표구분', kind: 'text', width: 170 },
     /* 원문 `.tag ok / warn / bad` — 값과 무관하게 칸별 고정 톤 */
@@ -120,10 +120,10 @@ export const RETURN_TABLE: TableMeta = {
   id: 'return',
   totalLabel: '합계',
   cols: [
-    { key: 'no', label: '순번', kind: 'number', align: 'center', width: 72 },
+    { key: 'no', label: '순번', kind: 'number', align: 'left', width: 72 },
     { key: 'fn', label: '자펀드', kind: 'text', width: 200 },
     { key: 'ym', label: '기준년월', kind: 'date' },
-    { key: 'ret', label: '자펀드수익률(%)', kind: 'number', align: 'center', fixed: 2, neg: true, total: 'dash' },
+    { key: 'ret', label: '자펀드수익률(%)', kind: 'number', fixed: 2, neg: true, total: 'dash' },
     /* 원문 gradeTag: 정상=g · 주의=a · 경고=r */
     { key: 'grade', label: '등급', kind: 'badge', tones: { 정상: 'success', 주의: 'warning', 경고: 'danger' }, total: 'dash' },
     { key: 'invest', label: '투자잔액', kind: 'amount', total: 'sum' },

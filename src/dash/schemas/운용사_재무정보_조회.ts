@@ -20,12 +20,12 @@ export const schema: PageSchema = {
   kind: 'list',
   entity: '재무정보',
   columns: [
-    { key: 'no',            label: 'No',         type: 'number', align: 'center' },
+    { key: 'no',            label: 'No',         type: 'number', align: 'left' },
     { key: 'gp',            label: '운용사명',   type: 'gp',     align: 'left' },
-    { key: 'gpType',        label: 'GP구분',     type: 'text',   align: 'center' },
+    { key: 'gpType',        label: 'GP구분',     type: 'text' },
     /* 원문 `.gridlnk-btn` — 모든 행의 기준년월이 운용사정량지표상세(재무건정성비율) 팝업 버튼이다(S1_38:322·419-434).
        detailWhen/detailPattern 없음 = 전 행 링크(detail_link.ts ③) */
-    { key: 'baseYm',        label: '기준년월',   type: 'text',   align: 'center', detail: 'gpRatioDetail' },
+    { key: 'baseYm',        label: '기준년월',   type: 'text', detail: 'gpRatioDetail' },
     { key: 'currentAssets', label: '유동자산',   type: 'amount', unit: '원', align: 'right' },
     { key: 'nonCurrentAssets', label: '비유동자산', type: 'amount', unit: '원', align: 'right' },
     { key: 'totalAssets',   label: '자산총계',   type: 'amount', unit: '원', align: 'right' },

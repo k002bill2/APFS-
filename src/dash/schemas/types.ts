@@ -40,7 +40,14 @@ export type DetailPopup = typeof DETAIL_POPUPS[number];
 //   선언하면 그 셀은 StatusBadge/Cell 대신 select 만 그린다(원문도 `cfmTag()` 를 정의해 놓고 쓰지 않는다).
 // multiline: 줄바꿈이 든 본문 셀(사후관리 내용 등)을 `white-space: pre-line` 으로 편다.
 //   기본 셀은 nowrap+ellipsis 라 여러 줄 원문이 한 줄로 잘려 내용을 잃는다(원문 `.content-cell`).
-export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'|'center'; group?: string; pinned?: 'left'; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; detailPattern?: string; inlineSelect?: string[]; multiline?: boolean; }
+// align: 생략하면 resolveAlign 이 타입에서 파생한다(그리드 정렬 규약 2026-10-02 — 숫자=우측 / 그 외=좌측, 가운데 없음).
+//   amount·rate·number → 'right', 나머지 → 'left'. 순번(No)·차수처럼 수량이 아닌 'number' 컬럼은 align:'left' 를 명시하고,
+//   '율(%)'을 text 로 담은 컬럼은 align:'right' 를 명시한다. 'center' 는 규약상 금지라 타입에서 뺐다.
+export interface ColumnSpec { key: string; label: string; type: CellType; unit?: string; align?: 'left'|'right'; group?: string; pinned?: 'left'; attachFrom?: string; detail?: DetailPopup; detailWhen?: string; detailPattern?: string; inlineSelect?: string[]; multiline?: boolean; }
+/* 그리드 정렬 해석 정본 — 화면 셀·헤더·Excel 숫자셀 판정이 모두 이 함수를 거친다(화면=엑셀 불변식). */
+const RIGHT_BY_TYPE: ReadonlySet<CellType> = new Set<CellType>(['amount', 'rate', 'number']);
+export const resolveAlign = (c: Pick<ColumnSpec, 'type' | 'align'>): 'left' | 'right' =>
+  c.align ?? (RIGHT_BY_TYPE.has(c.type) ? 'right' : 'left');
 // long: 긴 텍스트 필드(설명·비고·운용사명·펀드명·주소 등) 표식 — 모달에서 2단 전체 폭(sm:col-span-2) +
 //   컨트롤 width:100%(fit-content 240px 하한 해제)로 렌더한다. 짧은 코드/일자 필드와 구분하는 유일한 SSOT.
 // placeholder: 비어 있을 때 입력칸에 보이는 힌트(text/number/textarea 에만 적용 — 나머지 컨트롤은 무시).
@@ -131,7 +138,7 @@ export interface PageSchema {
 
 const ColumnZ = z.object({
   key: z.string(), label: z.string(), type: z.enum(CELL_TYPES),
-  unit: z.string().optional(), align: z.enum(['left','right','center']).optional(), group: z.string().optional(),
+  unit: z.string().optional(), align: z.enum(['left','right']).optional(), group: z.string().optional(),
   pinned: z.literal('left').optional(),
   attachFrom: z.string().optional(),
   detail: z.enum(DETAIL_POPUPS).optional(), detailWhen: z.string().optional(),

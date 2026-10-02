@@ -19,8 +19,8 @@ export type Cell = string | number | null;
 export type Row = { id: string } & Record<string, Cell>;
 
 /** 셀 종류 — 정렬·서식을 한꺼번에 정한다.
-    text=좌측 텍스트 · center=가운데 텍스트 · date=가운데 날짜/년월 · amount=우측 금액(단위 환산 대상)
-    number=우측 수치(단위 환산 안 함: 주식수·건수·배수·IRR) · badge=상태 배지 */
+    text=좌측 텍스트 · center=좌측 짧은 텍스트(코드·구분 — 이름만 남음, 2026-10-02 가운데 정렬 폐지) · date=좌측 날짜/년월 · amount=우측 금액(단위 환산 대상)
+    number=우측 수치(단위 환산 안 함: 주식수·건수·배수·IRR) · badge=좌측 상태 배지 */
 export type ColKind = 'text' | 'center' | 'date' | 'amount' | 'number' | 'badge';
 
 /** 합계 행 규칙 — 표마다 원문이 다르다(한 가지 "숫자면 합산" 규칙을 두지 않는다).
@@ -48,8 +48,9 @@ export interface ColMeta {
   neg?: boolean;
   /** 이 셀이 상세 팝업을 여는 트리거다(IRR 근거) */
   link?: boolean;
-  /** 정렬 재지정(원문이 수치를 가운데 정렬한 칸 — 결산월·종업원수·배수 등). 미지정이면 kind 기본값 */
-  align?: 'left' | 'center' | 'right';
+  /** 정렬 재지정 — kind 기본값과 다른 칸(순번 No 는 number 지만 좌측, 수량을 문자열로 담은 center/text 칸은 우측). 미지정이면 kind 기본값.
+      가운데 정렬은 없다(그리드 정렬 규약 2026-10-02) */
+  align?: 'left' | 'right';
   /** 좌측 고정 */
   pinned?: boolean;
   /** 최소 폭(px). 미지정이면 kind 기본값 */

@@ -25,7 +25,7 @@ description: 현행시스템 목업 HTML(+`*_spec.json`) 또는 화면 캡처에
 
    추출 항목(공통):
    - 상단 조회 컨트롤 → `filters`
-   - 표 컬럼 → `columns[]`: type 매핑(금액→amount, 비율/변동→rate, 날짜→date, 상태/등급→status(+statusDomain), 운용사/기관→gp, **영숫자 코드/ID→code**, **주민번호/계좌→pii**, 그 외→text), `unit`/`align`/중첩이면 `group`
+   - 표 컬럼 → `columns[]`: type 매핑(금액→amount, 비율/변동→rate, 날짜→date, 상태/등급→status(+statusDomain), 운용사/기관→gp, **영숫자 코드/ID→code**, **주민번호/계좌→pii**, 그 외→text), `unit`/중첩이면 `group`. **`align` 은 원문 정렬을 옮기지 않는다** — 생략하면 타입에서 파생(금액·율·number=우측, 그 외=좌측, 가운데 없음). No/차수(`number`)만 `align:'left'`, text 로 담은 율·수량만 `align:'right'` 명시([[apfs-aggrid]] "정렬 규약")
    - 입력 컨트롤 → `fields[]`: control 매핑(textarea/file/select(+options)/date/checkbox/readonly)
    - 1~2행 → 샘플 인지용. 목업의 **실제 행을 그대로 노출**해야 하면 `sample: SampleRow[]`(키=column/field key)로 저장(부재 시 런타임 합성 더미)
    - **KPI 행 후보** → 카드헤더 KPI 배지 후보를 **추출만** 해 둔다(전체 건수 + 도메인별 2지표 후보, 예: 계정구분 농식품/수산). ⚠️ 스키마에 바로 넣지 말 것 — 포함 여부는 2.5단계 HITL에서 결정한다. 규약은 [[apfs-grid]] "KPI 배지 행".

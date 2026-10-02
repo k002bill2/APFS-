@@ -72,6 +72,8 @@ function ProgramSearchDialog({ programs, onPick, onClose }: { programs: readonly
   };
   const th: React.CSSProperties = { position: 'sticky', top: 0, background: 'var(--grid-header)', color: 'var(--muted-foreground)', fontSize: 12, fontWeight: 700, textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid var(--border)' };
   const td: React.CSSProperties = { padding: '6px 10px', borderBottom: '1px solid var(--border)', fontSize: 13 };
+  /* 선택 라디오 = 값이 아닌 컨트롤 열 — 표 정렬 규약의 예외로 가운데 유지 */
+  const tdCtrl: React.CSSProperties = { ...td, textAlign: 'center' };
   const dlgRef = React.useRef<DialogHandle>(null);
   return (
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -101,7 +103,7 @@ function ProgramSearchDialog({ programs, onPick, onClose }: { programs: readonly
                       if ((e.target as Element).closest('button[role=radio]')) return;
                       e.currentTarget.querySelector<HTMLButtonElement>('button[role=radio]')?.click();
                     }}>
-                    <td style={{ ...td, textAlign: 'center' }}>
+                    <td style={tdCtrl}>
                       <RadioGroupItem value={p.pid} aria-label={`${p.pid} ${p.pname}`} className="align-middle" />
                     </td>
                     <td style={{ ...td, fontVariantNumeric: 'tabular-nums' }}>{p.pid}</td>

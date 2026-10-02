@@ -42,12 +42,12 @@ function buildExtraColumns(): (ColDef<SubFundRow> | ColGroupDef<SubFundRow>)[] {
     const key = c.key as keyof SubFundRow;
     const col: ColDef<SubFundRow> =
       c.kind === 'badge'
-        ? { ...txt(key, c.label, 104, true), cellRenderer: (p: any) => (p.node.rowPinned ? null : p.value == null ? '-'
+        ? { ...txt(key, c.label, 104), cellRenderer: (p: any) => (p.node.rowPinned ? null : p.value == null ? '-'
             : <StatusBadge tone={(c.tones?.[String(p.value)] ?? 'muted') as Tone} label={String(p.value)} size="lg" />) }
         : c.kind === 'date' ? date(key, c.label)
         /* nia 헤더(미투자자산운용비율(상장주식, %))는 fitCellContents 로도 말줄임이 나 minWidth 로 하한을 준다(런타임 확인 2026-09-28) */
         : c.kind === 'number' ? (c.key === 'nia' ? { ...num(key, c.label, 240), minWidth: 240 } : num(key, c.label, c.key === 'small' ? 132 : 88))
-        : txt(key, c.label, 112, true);
+        : txt(key, c.label, 112);
     const last = out[out.length - 1];
     if (c.group && last && 'children' in last && last.headerName === c.group) last.children.push(col);
     else if (c.group) out.push({ headerName: c.group, marryChildren: true, headerClass: grpIdx++ % 2 ? 'apfs-grp-b' : 'apfs-grp-a', children: [col] });

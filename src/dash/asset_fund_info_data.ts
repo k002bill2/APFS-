@@ -22,7 +22,7 @@ const COGP_TONES = { O: 'success', Y: 'success', X: 'muted' } as const;
 export const FUND_INFO_TABLE: TableMeta = {
   id: 'fundInfo',
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64, flex: 0 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64, flex: 0 },
     { key: 'y', label: '사업연도', kind: 'center' },
     { key: 'ch', label: '차수', kind: 'center', width: 64 },
     { key: 'otype', label: '운용사유형', kind: 'center' },

@@ -24,9 +24,9 @@ const MATCH_TONES: Record<string, Tone> = { 일치: 'success', 불일치: 'dange
 const O = '운용사';
 const C = '수탁기관';
 const M = '일치여부';
-const noCol: ColMeta = { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 };
+const noCol: ColMeta = { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 };
 /** 원문 보유주수 칸은 가운데 정렬(`td.c`) */
-const shares = (key: string, group: string, total: ColMeta['total']): ColMeta => ({ key, label: '보유주수', kind: 'number', align: 'center', group, total });
+const shares = (key: string, group: string, total: ColMeta['total']): ColMeta => ({ key, label: '보유주수', kind: 'number', group, total });
 const match = (key: string, label: string): ColMeta => ({ key, label, kind: 'badge', group: M, tones: MATCH_TONES, total: 'dash' });
 
 /* ═══════════════ 섹션1 투자자산 ═══════════════

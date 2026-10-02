@@ -111,7 +111,6 @@ const FUND_OPTIONS: string[] = ROWS.map((r) => r.fn);
    ⚠ 배열은 **모듈 스코프에서 1회만** 만들어 상수로 고정한다 — 렌더마다 새 배열/컴포넌트 타입을 만들면
      AG Grid 가 헤더를 remount 하고 폭을 선언값으로 되돌린다(apfs-aggrid 계약 ⑥·⑦).
 ────────────────────────────── */
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 
 /* 등급 셀 — 값이 없으면 빈 셀. */
@@ -174,26 +173,26 @@ function YieldCell(p: ICellRendererParams<FundEwRow, Grade>) {
    정렬은 `DEFAULT_COL_DEF`의 sortable:true 를 그대로 둔다(등급 문자열 정렬이 유효하고,
    일부 컬럼만 정렬 불가면 헤더에 시각 단서가 없어 혼란스럽다). */
 const gradeCol = (field: keyof FundEwRow, header: string, width: number): ColDef<FundEwRow> => ({
-  field, headerName: header, width, minWidth: width, cellStyle: flexMid,
+  field, headerName: header, width, minWidth: width, cellStyle: flexCenter,
   cellRenderer: (p: any) => <GradeCell v={(p.value ?? null) as Grade | null} />,
 });
 /* 텍스트 리프 */
-const txtCol = (field: keyof FundEwRow, header: string, width: number, center?: boolean): ColDef<FundEwRow> => ({
-  field, headerName: header, width, minWidth: width, cellStyle: center ? flexMid : flexCenter,
+const txtCol = (field: keyof FundEwRow, header: string, width: number): ColDef<FundEwRow> => ({
+  field, headerName: header, width, minWidth: width, cellStyle: flexCenter,
   cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span>,
 });
 
 const COLUMNS: (ColDef<FundEwRow> | ColGroupDef<FundEwRow>)[] = [
   /* No 는 행에 저장된 값이라 정렬해도 번호가 다시 매겨지지 않는다 */
-  { field: 'no', headerName: 'No', width: 64, minWidth: 64, pinned: 'left', type: 'rightAligned',
-    cellStyle: { textAlign: 'right', fontVariantNumeric: 'tabular-nums' } as CellStyle,
+  { field: 'no', headerName: 'No', width: 64, minWidth: 64, pinned: 'left',
+    cellStyle: { fontVariantNumeric: 'tabular-nums' } as CellStyle,
     valueFormatter: (p) => (p.value == null ? '' : String(p.value)) },
   txtCol('mf', '모펀드', 140),
   txtCol('gp', '운용사', 170),
   txtCol('fn', '자펀드', 260),
-  txtCol('cs', '조합성격', 100, true),
+  txtCol('cs', '조합성격', 100),
   /* 자펀드수익률 = 팝업 트리거 셀(colId 'ret' = YIELD_COL) */
-  { field: 'ret', headerName: '자펀드수익률', width: 132, minWidth: 132, cellStyle: flexMid,
+  { field: 'ret', headerName: '자펀드수익률', width: 132, minWidth: 132, cellStyle: flexCenter,
     cellRenderer: YieldCell },
   gradeCol('viol', '규약위반', 106),
   gradeCol('mgr', '대표펀드매니저변동', 158),

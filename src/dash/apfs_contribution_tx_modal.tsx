@@ -53,7 +53,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-center';
+const TH_BASE = 'border border-border bg-[color:var(--grid-header)] font-bold';
+const TH = `${TH_BASE} text-left`;
+const THR = `${TH_BASE} text-right`;
 const TD = 'border border-border';
 const CELL: React.CSSProperties = { padding: '6px 8px' };
 const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)' };
@@ -237,11 +239,11 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
                     <th scope="col" className={TH} style={{ ...CELL, width: 44 }}>NO</th>
                     <th scope="col" className={TH} style={{ ...CELL, width: 140 }}>조합원</th>
                     <th scope="col" className={TH} style={{ ...CELL, width: 74 }}>조합원구분</th>
-                    <th scope="col" className={TH} style={{ ...CELL, width: 118 }}>조합원약정금액</th>
+                    <th scope="col" className={THR} style={{ ...CELL, width: 118 }}>조합원약정금액</th>
                     {AMOUNT_FIELDS.map((k) => (
-                      <th key={k} scope="col" className={TH} style={{ ...CELL, width: DIST_WIDTHS[k] }}>{DIST_HEADERS[k]}</th>
+                      <th key={k} scope="col" className={THR} style={{ ...CELL, width: DIST_WIDTHS[k] }}>{DIST_HEADERS[k]}</th>
                     ))}
-                    <th scope="col" className={TH} style={{ ...CELL, width: 118 }}>실 입금액</th>
+                    <th scope="col" className={THR} style={{ ...CELL, width: 118 }}>실 입금액</th>
                     <th scope="col" className={TH} style={{ ...CELL, width: 116 }}>수탁데이터 확인검토</th>
                     <th scope="col" className={TH} style={{ ...CELL, width: 150 }}>비고</th>
                   </tr>
@@ -249,9 +251,9 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
                 <tbody>
                   {group.members.map((m, i) => (
                     <tr key={m.mem + i}>
-                      <td className={`${TD} text-center tabular`} style={CELL}>{i + 1}</td>
+                      <td className={`${TD} tabular`} style={CELL}>{i + 1}</td>
                       <td className={TD} style={CELL}>{m.mem}</td>
-                      <td className={`${TD} text-center`} style={CELL}><GradeChip v={m.mg} /></td>
+                      <td className={TD} style={CELL}><GradeChip v={m.mg} /></td>
                       <td className={`${TD} text-right tabular`} style={CELL}>{toFmt(m.mc)}</td>
                       {AMOUNT_FIELDS.map((k) => (
                         <td key={k} className={TD} style={CELL}>
@@ -260,7 +262,7 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
                       ))}
                       {/* 실 입금액 — 입력에서 파생 */}
                       <td className={`${TD} text-right tabular font-semibold`} style={CELL}>{toFmt(nums[i].net)}</td>
-                      <td className={`${TD} text-center`} style={CELL}>
+                      <td className={TD} style={CELL}>
                         {editable
                           ? <SelectInput value={drafts[i].chk} onChange={set(i, 'chk')} options={CHK_OPTIONS} ariaLabel={`${m.mem} 수탁데이터 확인검토`} />
                           : <ChkDisplay v={m.chk} />}
@@ -274,12 +276,12 @@ export function DistTxModal({ group, mode, onSave, onClose }: {
                 {/* 합계행 — 목업 tfoot(6개 금액 합 + 실 입금액 합, 확인검토·비고는 '-') */}
                 <tfoot>
                   <tr className="bg-muted font-bold">
-                    <td className={`${TD} text-center`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }} colSpan={4}>합계</td>
+                    <td className={TD} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }} colSpan={4}>합계</td>
                     {AMOUNT_FIELDS.map((k) => (
                       <td key={k} className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{toFmt(sums[k])}</td>
                     ))}
                     <td className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{toFmt(sums.net)}</td>
-                    <td className={`${TD} text-center text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
+                    <td className={`${TD} text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
                     <td className={`${TD} text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
                   </tr>
                 </tfoot>
@@ -368,11 +370,11 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
                     <th scope="col" className={TH} style={{ ...CELL, width: 190 }}>조합원</th>
                     <th scope="col" className={TH} style={{ ...CELL, width: 74 }}>조합원구분</th>
                     <th scope="col" className={TH} style={{ ...CELL, width: 90 }}>조합원유형</th>
-                    <th scope="col" className={TH} style={{ ...CELL, width: 130 }}>조합원약정금액</th>
-                    <th scope="col" className={TH} style={{ ...CELL, width: 82 }}>약정지분</th>
-                    <th scope="col" className={TH} style={{ ...CELL, width: 130 }}>납입금액</th>
-                    <th scope="col" className={TH} style={{ ...CELL, width: 82 }}>납입지분</th>
-                    <th scope="col" className={TH} style={{ ...CELL, width: 130 }}>수탁납입금액</th>
+                    <th scope="col" className={THR} style={{ ...CELL, width: 130 }}>조합원약정금액</th>
+                    <th scope="col" className={THR} style={{ ...CELL, width: 82 }}>약정지분</th>
+                    <th scope="col" className={THR} style={{ ...CELL, width: 130 }}>납입금액</th>
+                    <th scope="col" className={THR} style={{ ...CELL, width: 82 }}>납입지분</th>
+                    <th scope="col" className={THR} style={{ ...CELL, width: 130 }}>수탁납입금액</th>
                     <th scope="col" className={TH} style={{ ...CELL, width: 116 }}>데이터확인</th>
                     <th scope="col" className={TH} style={{ ...CELL, width: 150 }}>비고</th>
                   </tr>
@@ -380,19 +382,19 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
                 <tbody>
                   {INVEST_GROUP.members.map((m, i) => (
                     <tr key={m.id}>
-                      <td className={`${TD} text-center tabular`} style={CELL}>{i + 1}</td>
+                      <td className={`${TD} tabular`} style={CELL}>{i + 1}</td>
                       {/* 조합원명 + 사업자번호 */}
                       <td className={TD} style={CELL}>{`${m.mem} (${m.id})`}</td>
-                      <td className={`${TD} text-center`} style={CELL}><GradeChip v={m.mg} /></td>
-                      <td className={`${TD} text-center`} style={CELL}>{m.mtype}</td>
+                      <td className={TD} style={CELL}><GradeChip v={m.mg} /></td>
+                      <td className={TD} style={CELL}>{m.mtype}</td>
                       <td className={`${TD} text-right tabular`} style={CELL}>{toFmt(m.commit)}</td>
-                      <td className={`${TD} text-center tabular`} style={CELL}>{String(m.cpct)}</td>
+                      <td className={`${TD} text-right tabular`} style={CELL}>{String(m.cpct)}</td>
                       <td className={TD} style={CELL}>
                         <AmountInput value={drafts[i].pay} onChange={set(i, 'pay')} ariaLabel={`${m.mem} 납입금액`} />
                       </td>
-                      <td className={`${TD} text-center tabular`} style={CELL}>{String(m.ppct)}</td>
+                      <td className={`${TD} text-right tabular`} style={CELL}>{String(m.ppct)}</td>
                       <td className={`${TD} text-right tabular`} style={CELL}>{m.custody == null ? dash : toFmt(m.custody)}</td>
-                      <td className={`${TD} text-center`} style={CELL}>
+                      <td className={TD} style={CELL}>
                         {m.chk == null ? dash
                           : <SelectInput value={drafts[i].chk} onChange={set(i, 'chk')} options={INVEST_CHK_OPTIONS} ariaLabel={`${m.mem} 데이터확인`} />}
                       </td>
@@ -405,13 +407,13 @@ export function InvestTxModal({ onClose }: { onClose: () => void }) {
                 {/* 합계행 — 목업 tfoot(약정금액 합·납입금액 합, 나머지 '-') */}
                 <tfoot>
                   <tr className="bg-muted font-bold">
-                    <td className={`${TD} text-center`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }} colSpan={4}>합계</td>
+                    <td className={TD} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }} colSpan={4}>합계</td>
                     <td className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{toFmt(sumCommit)}</td>
-                    <td className={`${TD} text-center text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
+                    <td className={`${TD} text-right text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
                     <td className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{toFmt(sumPay)}</td>
-                    <td className={`${TD} text-center text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
-                    <td className={`${TD} text-center text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
-                    <td className={`${TD} text-center text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
+                    <td className={`${TD} text-right text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
+                    <td className={`${TD} text-right text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
+                    <td className={`${TD} text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
                     <td className={`${TD} text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
                   </tr>
                 </tfoot>

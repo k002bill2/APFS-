@@ -28,18 +28,18 @@ import { groupRuns, computeTotal, amountText } from './risk_table_meta';
 
 const { StatusBadge } = UI;
 
-type Align = 'left' | 'center' | 'right';
-const KIND_ALIGN: Record<ColKind, Align> = { text: 'left', center: 'center', date: 'center', amount: 'right', number: 'right', badge: 'center' };
+type Align = 'left' | 'right';
+/* 그리드 정렬 규약(2026-10-02): 수량형 숫자=우측 / 그 외(텍스트·코드·날짜·배지)=좌측, 가운데 없음.
+   kind 'center' 는 이름만 남은 짧은 텍스트 칸(폭 하한 KIND_MIN 용) — 정렬은 좌측이다. */
+const KIND_ALIGN: Record<ColKind, Align> = { text: 'left', center: 'left', date: 'left', amount: 'right', number: 'right', badge: 'left' };
 const KIND_MIN: Record<ColKind, number> = { text: 120, center: 96, date: 108, amount: 130, number: 84, badge: 96 };
 
 const ALIGN_STYLE: Record<Align, CellStyle> = {
   left: { display: 'flex', alignItems: 'center' },
-  center: { display: 'flex', alignItems: 'center', justifyContent: 'center' },
   right: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontVariantNumeric: 'tabular-nums' },
 };
 const STRONG_STYLE: Record<Align, CellStyle> = {
   left: { ...ALIGN_STYLE.left, fontWeight: 700 },
-  center: { ...ALIGN_STYLE.center, fontWeight: 700 },
   right: { ...ALIGN_STYLE.right, fontWeight: 700 },
 };
 

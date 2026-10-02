@@ -110,9 +110,8 @@ const PAGE_SIZE = 20;
    ⚠ 좌측 고정은 No 만 — 다른 컬럼에 pinned 를 주면 목업 순서가 깨진다.
    모듈 스코프 상수다(렌더마다 새 배열이면 AG Grid 가 헤더를 remount 하고 폭을 되돌린다 — apfs-aggrid ⑦).
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 텍스트 N/A 는 '-'(숫자 N/A 의 null 규약과 다른 축 — 이 화면엔 숫자 컬럼이 없다).
    flex 셀은 AG Grid 기본 ellipsis 가 안 먹으므로 내부 span 에 truncate 를 준다. */
@@ -123,25 +122,25 @@ const kindCell = (p: { value: ViolationKind }) => <StatusBadge tone={KIND_TONE[p
 /* 날짜 셀 — 빈 값은 '-' */
 const dateFmt = (p: { value?: string }) => (p.value ? String(p.value) : '-');
 
-const txt = (field: keyof ViolationRow, headerName: string, width: number, center?: boolean): ColDef<ViolationRow> => ({
-  field, headerName, width, cellStyle: center ? flexMid : flexCenter, cellRenderer: textCell,
+const txt = (field: keyof ViolationRow, headerName: string, width: number): ColDef<ViolationRow> => ({
+  field, headerName, width, cellStyle: flexCenter, cellRenderer: textCell,
 });
 const date = (field: keyof ViolationRow, headerName: string, width = 118): ColDef<ViolationRow> => ({
-  field, headerName, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: dateFmt,
+  field, headerName, width, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' }, valueFormatter: dateFmt,
 });
 
 const COLUMNS: ColDef<ViolationRow>[] = [
-  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
-  { field: 'ym', headerName: '기준년월', width: 104, cellStyle: centerNum, valueFormatter: dateFmt },
-  { field: 'gb', headerName: '구분', width: 92, cellStyle: flexMid, cellRenderer: kindCell },
-  txt('org', '적발기관', 132, true),
+  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
+  { field: 'ym', headerName: '기준년월', width: 104, cellStyle: tabNum, valueFormatter: dateFmt },
+  { field: 'gb', headerName: '구분', width: 92, cellStyle: flexCenter, cellRenderer: kindCell },
+  txt('org', '적발기관', 132),
   { ...txt('gp', '운용사', 200), maxWidth: 240 },
   { ...txt('fund', '자펀드', 180), maxWidth: 240 },
-  txt('disc', '공시여부', 96, true),
-  txt('rep', '대표자', 96, true),
-  txt('vf', '위반형태', 110, true),
-  txt('law', '법률/규약', 104, true),
-  txt('act', '조치구분', 104, true),
+  txt('disc', '공시여부', 96),
+  txt('rep', '대표자', 96),
+  txt('vf', '위반형태', 110),
+  txt('law', '법률/규약', 104),
+  txt('act', '조치구분', 104),
   date('od', '시정명령일자'),
   date('pd', '완료예정일자'),
   date('cd', '시정완료일자'),

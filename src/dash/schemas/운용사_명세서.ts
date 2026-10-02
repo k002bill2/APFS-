@@ -20,11 +20,11 @@ export const schema: PageSchema = {
   kind: 'list',
   entity: '운용사재무',
   columns: [
-    { key: 'no',              label: 'No',          type: 'number', align: 'center' },
+    { key: 'no',              label: 'No',          type: 'number', align: 'left' },
     { key: 'gp',              label: '운용사',      type: 'gp',     align: 'left', pinned: 'left' },
     { key: 'subFund',         label: '자펀드',      type: 'text',   align: 'left', pinned: 'left' },
     { key: 'investee',        label: '투자기업',    type: 'text',   align: 'left', pinned: 'left' },
-    { key: 'baseYm',          label: '기준년월',    type: 'text',   align: 'center' },
+    { key: 'baseYm',          label: '기준년월',    type: 'text' },
     { key: 'totalAssets',     label: '자산총계',    type: 'amount', unit: '원', align: 'right' },
     { key: 'totalLiab',       label: '부채총계',    type: 'amount', unit: '원', align: 'right' },
     { key: 'totalEquity',     label: '자본총계',    type: 'amount', unit: '원', align: 'right' },

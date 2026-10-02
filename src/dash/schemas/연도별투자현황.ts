@@ -7,7 +7,7 @@ export const schema: PageSchema = {
   entity: '모태펀드',
   columns: [
     { key: 'gubun',        label: '구분',           type: 'text',   align: 'left' },
-    { key: 'selectYear',   label: '선정년도',        type: 'text',   align: 'center' },
+    { key: 'selectYear',   label: '선정년도',        type: 'text' },
     { key: 'fundCount',    label: '조합수',          type: 'number', align: 'right' },
     { key: 'commitTotal',  label: '약정총액',        type: 'amount', unit: '원', align: 'right' },
     { key: 'moaeCommit',   label: '모태펀드약정액',   type: 'amount', unit: '원', align: 'right' },

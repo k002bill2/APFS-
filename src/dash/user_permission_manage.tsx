@@ -73,22 +73,21 @@ const today = () => format(new Date(), 'yyyy-MM-dd');
 /* ──────────────────────────────
    컬럼 정의 — 목업 헤더 순서 그대로. 폭 prop 은 aggrid_theme 공용 상수만(인라인 금지 — 그 파일 주석)
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 
 const columnDefs: ColDef<PermRow>[] = [
-  { field: 'no', headerName: 'No', width: 64, maxWidth: 64, cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
+  { field: 'no', headerName: 'No', width: 64, maxWidth: 64, cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
   { field: 'name', headerName: '명칭', width: 170, minWidth: 130, maxWidth: 260, cellStyle: flexCenter,
     cellRenderer: (p: any) => <span className="font-semibold">{p.value}</span> },
-  { field: 'utype', headerName: '사용자 구분', width: 116, maxWidth: 116, cellStyle: flexMid,
+  { field: 'utype', headerName: '사용자 구분', width: 116, maxWidth: 116, cellStyle: flexCenter,
     cellRenderer: (p: any) => <UTypeBadge value={p.value} /> },
   /* 설명이 남는 폭을 흡수한다 — flex:1 인 유일한 컬럼(aggrid_theme: autoSizeStrategy 대신 flex) */
   { field: 'desc', headerName: '설명', flex: 1, width: 300, minWidth: 200, cellStyle: flexCenter, cellRenderer: (p: any) => p.value },
   { field: 'by', headerName: '최종수정', width: 112, maxWidth: 112, cellStyle: muted, cellRenderer: (p: any) => p.value },
-  { field: 'at', headerName: '최종수정일', width: 126, maxWidth: 126, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => String(p.value) },
-  { field: 'use', headerName: '사용여부', width: 96, maxWidth: 96, cellStyle: flexMid, cellRenderer: (p: any) => <UseBadge use={p.value} /> },
+  { field: 'at', headerName: '최종수정일', width: 126, maxWidth: 126, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => String(p.value) },
+  { field: 'use', headerName: '사용여부', width: 96, maxWidth: 96, cellStyle: flexCenter, cellRenderer: (p: any) => <UseBadge use={p.value} /> },
   { field: 'users', headerName: '사용자수', width: 96, maxWidth: 96, type: 'rightAligned', cellStyle: { textAlign: 'right', fontVariantNumeric: 'tabular-nums' },
     valueFormatter: (p) => String(p.value) },
 ];

@@ -43,7 +43,7 @@ export const OVERVIEW: TableMeta = {
     { key: 'startDate', label: '창업일', kind: 'date', group: OV },
     { key: 'foundDate', label: '설립일', kind: 'date', group: OV },
     { key: 'empDate', label: '종업원기준일', kind: 'date', group: OV },
-    { key: 'emp', label: '종업원수', kind: 'number', group: OV, align: 'center' },
+    { key: 'emp', label: '종업원수', kind: 'number', group: OV },
     { key: 'korName', label: '한글기업명', kind: 'text', group: OV },
     { key: 'shortName', label: '약식기업명', kind: 'text', group: OV },
     { key: 'ceo', label: '한글대표자명', kind: 'center', group: OV },
@@ -80,7 +80,7 @@ const siteRow = (no: number, biz: string, comp: string, sbiz: string, kind: stri
 export const SITES: TableMeta = {
   id: 'sites',
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 },
     { key: 'biz', label: '사업자번호', kind: 'center' },
     { key: 'comp', label: '투자기업', kind: 'text' },
     { key: 'sbiz', label: '사업장사업자번호', kind: 'center' },
@@ -107,7 +107,7 @@ const courtRow = (no: number, biz: string, co: string, dt: string, ct: string, f
 export const COURT: TableMeta = {
   id: 'court',
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 },
     { key: 'biz', label: '사업자번호', kind: 'center' },
     { key: 'co', label: '투자기업', kind: 'text' },
     { key: 'dt', label: '기준일자', kind: 'date' },
@@ -161,7 +161,7 @@ const cashRow = (no: number, biz: string, co: string, cd: string, g: string, fn:
 export const CASHFLOW: TableMeta = {
   id: 'cashflow',
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 },
     { key: 'biz', label: '사업자번호', kind: 'center' },
     { key: 'co', label: '투자기업', kind: 'text' },
     { key: 'cd', label: '결산일자', kind: 'date' },

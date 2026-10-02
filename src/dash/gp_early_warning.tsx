@@ -133,7 +133,6 @@ const ROWS: Record<GpKind, GpEwRow[]> = SECTIONS.reduce((acc, s) => {
    ⚠ 팩토리는 **모듈 스코프에서 1회만** 실행해 상수로 고정한다 — 렌더마다 새 배열/컴포넌트 타입을 만들면
      AG Grid 가 헤더를 remount 하고 폭을 선언값으로 되돌린다(apfs-aggrid 계약 ⑥·⑦).
 ────────────────────────────── */
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 
 /* 비율·점수 포매터 — 공유 `numFmt`(=fmt)는 비정수를 **소수 1자리로 반올림**해 목업 값 166.53·124.82 가
@@ -159,7 +158,7 @@ const numCol = (field: keyof GpEwRow, header: string, width: number, fmtr = rati
    정렬은 `DEFAULT_COL_DEF`의 sortable:true 를 그대로 둔다(등급 문자열 정렬이 유효하고,
    일부 컬럼만 정렬 불가면 헤더에 시각 단서가 없어 혼란스럽다). */
 const gradeCol = (field: keyof GpEwRow, header = '등급'): ColDef<GpEwRow> => ({
-  field, headerName: header, width: 84, minWidth: 84, cellStyle: flexMid,
+  field, headerName: header, width: 84, minWidth: 84, cellStyle: flexCenter,
   cellRenderer: (p: any) => <GradeCell v={(p.value ?? null) as Grade | null} />,
 });
 /* 텍스트 리프 */
@@ -171,8 +170,8 @@ const txtCol = (field: keyof GpEwRow, header: string, width: number): ColDef<GpE
 function makeColumnDefs(label1: string, label2: string): (ColDef<GpEwRow> | ColGroupDef<GpEwRow>)[] {
   return [
     /* No 는 순번 — 행에 저장된 값이라 정렬해도 번호가 다시 매겨지지 않는다 */
-    { field: 'no', headerName: 'No', width: 64, minWidth: 64, pinned: 'left', type: 'rightAligned',
-      cellStyle: { textAlign: 'right', fontVariantNumeric: 'tabular-nums' } as CellStyle,
+    { field: 'no', headerName: 'No', width: 64, minWidth: 64, pinned: 'left',
+      cellStyle: { fontVariantNumeric: 'tabular-nums' } as CellStyle,
       valueFormatter: (p) => (p.value == null ? '' : String(p.value)) },
     txtCol('mf', '모펀드', 140),
     txtCol('gp', '운용사', 210),

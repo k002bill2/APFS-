@@ -139,9 +139,8 @@ const computeTotal = (rows: GpContribRow[]): GpContribRow =>
 /* ──────────────────────────────
    컬럼 정의 — 목업 헤더 순서·집합 그대로(22 리프, 2단 그룹 2개)
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수)에 null 가드만 얇게 덧씌운다(재구현 아님) */
 const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p));
@@ -179,18 +178,18 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
 
 const makeColumns = (openDetail: (id: string) => void): (ColDef<GpContribRow> | ColGroupDef<GpContribRow>)[] => [
   /* 합계 2행은 목업 tfoot 라벨('소계'/'합계')을 그 자리에 쓴다 */
-  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum,
+  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum,
     valueFormatter: (p) => { const id = pinnedId(p); return id === SUB_ID ? '소 계' : id === TOT_ID ? '합 계' : String(p.value); } },
   txt('gp', '운용사', 170, 200),
   txt('fn', '자펀드', 220, 260),
   { ...amt('cmt', '약정총액'), valueFormatter: cmtFmt },
   { ...amt('cmtM', '모태펀드 약정액'), valueFormatter: cmtFmt },
-  { field: 'gb', headerName: '구분', width: 90, cellStyle: flexMid,
+  { field: 'gb', headerName: '구분', width: 90, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.node.rowPinned
       ? (p.data?.id === TOT_ID ? dash : null)
       : <StatusBadge tone={GB_TONE[p.value as Gb]} label={p.value} size="lg" />) },
   /* 기준일자 — 상세 팝업 진입점(클릭 / 셀 Enter). 합계행은 링크가 아니다(가짜 행의 상세는 열 수 없다) */
-  { field: 'bd', headerName: '기준일자', width: 124, cellStyle: flexMid,
+  { field: 'bd', headerName: '기준일자', width: 124, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.node.rowPinned
       ? (p.data?.id === TOT_ID ? dash : null)
       : <LinkCell value={p.value} hint="일자별출자배분관리 상세 보기" onClick={() => p.data && openDetail(p.data.id)} />) },
@@ -203,7 +202,7 @@ const makeColumns = (openDetail: (id: string) => void): (ColDef<GpContribRow> | 
   amt('dist', '배분합계', true),
   amt('bal', '출자잔액'),
   /* 수탁일치여부 — 합계 2행은 값이 없어 '-'(목업 tfoot 동일) */
-  { field: 'match', headerName: '수탁일치여부', width: 124, cellStyle: flexMid,
+  { field: 'match', headerName: '수탁일치여부', width: 124, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value == null ? dash
       : <StatusBadge tone={MATCH_TONE[p.value as Match]} label={p.value} size="lg" />) },
 ];

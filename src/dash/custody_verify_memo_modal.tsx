@@ -42,7 +42,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-center';
+const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-left';
 const TD = 'border border-border';
 const CELL: React.CSSProperties = { padding: '7px 9px' };
 const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)' };
@@ -142,7 +142,7 @@ export function CustodyMemoModal({ ctx, history, baseDate, onSave, onClose }: {
                     <UI.EmptyRow span={2} msg="작성 이력이 없습니다." className={TD} style={{ ...CELL, padding: '18px 9px' }} />
                   ) : history.map((h, i) => (
                     <tr key={h.date + '-' + i}>
-                      <td className={`${TD} text-center tabular`} style={CELL}>{String(h.date)}</td>
+                      <td className={`${TD} tabular`} style={CELL}>{String(h.date)}</td>
                       <td className={TD} style={{ ...CELL, overflowWrap: 'anywhere' }}>{h.content}</td>
                     </tr>
                   ))}

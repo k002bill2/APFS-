@@ -21,8 +21,8 @@ export const schema: PageSchema = {
   entity: '재무정보',
   columns: [
     { key: 'nm', label: '운용사명', type: 'gp', align: 'left' },
-    { key: 'cat', label: '운용사구분', type: 'text', align: 'center' },
-    { key: 'ym', label: '기준년월', type: 'text', align: 'center' },
+    { key: 'cat', label: '운용사구분', type: 'text' },
+    { key: 'ym', label: '기준년월', type: 'text' },
     amt('ca', '유동자산'), amt('nca', '비유동자산'), amt('ta', '자산총계'),
     amt('cl', '유동부채'), amt('ncl', '비유동부채'), amt('tl', '부채총계'),
     amt('cap', '자본금'), amt('te', '자본총계'),

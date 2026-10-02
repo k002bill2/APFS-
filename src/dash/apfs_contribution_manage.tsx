@@ -207,9 +207,8 @@ const Z_BY_UNIT: Record<Unit, string> = { 원: '#,##0', 백만원: '#,##0', 억�
 /* ──────────────────────────────
    컬럼 정의 — 목업 `<thead>` 28열 순서 그대로(단일 헤더)
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 const dash = <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
 
@@ -234,14 +233,14 @@ const txt = (field: keyof DistRow, header: string, width: number, maxWidth?: num
   field, headerName: header, width, maxWidth, sortable: false, cellStyle: flexCenter,
   cellRenderer: (p: any) => (p.value == null ? null : <span className="min-w-0 truncate">{p.value}</span>),
 });
-/** 가운데 정렬 분류 텍스트(계정구분·상세구분) */
+/** 분류 텍스트(계정구분·상세구분) — 좌측 */
 const ctr = (field: keyof DistRow, header: string, width: number): ColDef<DistRow> => ({
-  field, headerName: header, width, sortable: false, cellStyle: flexMid,
+  field, headerName: header, width, sortable: false, cellStyle: flexCenter,
   cellRenderer: (p: any) => (p.value == null ? null : p.value),
 });
 /** 날짜 열 */
 const dt = (field: keyof DistRow, header: string, width: number): ColDef<DistRow> => ({
-  field, headerName: header, width, sortable: false, cellStyle: centerNum,
+  field, headerName: header, width, sortable: false, cellStyle: tabNum,
   valueFormatter: (p) => (p.value == null ? '' : String(p.value)),
 });
 const amt = (field: keyof DistRow, header: string, strong?: boolean, width = 148): ColDef<DistRow> => ({
@@ -294,7 +293,7 @@ interface CellActions { openTx: (gi: number, mode: 'register' | 'edit') => void 
 
 const makeColumns = (act: CellActions): ColDef<DistRow>[] => [
   /* 소계·합계 행은 목업 라벨을 그 자리에 쓴다 */
-  { field: 'no', headerName: 'NO', width: 72, maxWidth: 72, pinned: 'left', sortable: false, cellStyle: centerNum,
+  { field: 'no', headerName: 'NO', width: 72, maxWidth: 72, pinned: 'left', sortable: false, cellStyle: tabNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '합 계' : p.value == null ? '소 계' : String(p.value)) },
   txt('un', '운용사', 190, 230),
   txt('fn', '자펀드', 230, 280),
@@ -302,17 +301,17 @@ const makeColumns = (act: CellActions): ColDef<DistRow>[] => [
   dt('rd', '등록일', 116),
   amtBlank('form', '결성액'),
   txt('mem', '조합원', 210, 260),
-  { field: 'mg', headerName: '조합원구분', width: 112, sortable: false, cellStyle: flexMid,
+  { field: 'mg', headerName: '조합원구분', width: 112, sortable: false, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value == null ? null : <NeutralChip v={p.value as Grade} />) },
   amtBlank('mc', '조합원 약정금액'),
   amtBlank('mtc', '조합원 약정총액'),
   /* 거래구분 — 배분은 강조(primary), 출자는 중립 회색(목업 `txTag`의 tag b / tag n) */
-  { field: 'tx', headerName: '거래구분', width: 104, sortable: false, cellStyle: flexMid,
+  { field: 'tx', headerName: '거래구분', width: 104, sortable: false, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value == null ? null
       : p.value === '배분' ? <StatusBadge tone="primary" label="배분" size="lg" /> : <NeutralChip v={p.value as string} />) },
   ctr('dtx', '상세구분', 110),
   /* 거래일자 — 편집 팝업 진입점(클릭 / 셀 Enter). 소계·합계 행은 링크가 아니다 */
-  { field: 'td', headerName: '거래일자', width: 124, sortable: false, cellStyle: flexMid,
+  { field: 'td', headerName: '거래일자', width: 124, sortable: false, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value == null ? null
       : <LinkCell value={p.value} hint={p.data?.tx === '출자' ? '출자거래 수정 열기' : '배분거래수정 열기'}
           onClick={() => p.data && act.openTx(p.data.gi, 'edit')} />) },
@@ -328,7 +327,7 @@ const makeColumns = (act: CellActions): ColDef<DistRow>[] => [
   amt('netin', '실 입금액', true),
   amt('netintot', '실 입금총액', true),
   amt('bal', '보유잔액'),
-  { field: 'chk', headerName: '수탁데이터 확인검토', width: 160, sortable: false, cellStyle: flexMid,
+  { field: 'chk', headerName: '수탁데이터 확인검토', width: 160, sortable: false, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value == null ? dash
       : <ChkCell v={p.value as Chk} tx={p.data?.tx ?? null} onRegister={() => p.data && act.openTx(p.data.gi, 'register')} />) },
   dashTxt('red', '감액여부', 104),

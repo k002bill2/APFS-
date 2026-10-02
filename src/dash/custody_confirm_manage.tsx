@@ -115,9 +115,8 @@ const PAGE_SIZE = 20;
      안에 들어오는 좁은 표라, 내용 맞춤이면 우측에 빈 공간이 남는다(apfs-aggrid "좁은 매트릭스" 규약).
      운용사·자펀드만 `flex:1`로 잉여를 흡수하고, 마크/상세보기/확정여부는 고정폭(헤더 라벨 폭이 하한).
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 마크 셀 — O/X는 StatusBadge, '-'는 회색 칩(Tone에 중립 톤이 없어 직접 만든다).
    기하(padding·radius·13px)는 StatusBadge size="lg"와 동일하게 맞춘다(O/X와 섞여 반복되는 열이라 어긋나면 눈에 띈다). */
@@ -129,7 +128,7 @@ function MarkCell({ v }: { v: Mark }) {
 }
 
 const mark = (field: keyof CustodyConfirmRow, header: string, width = 100): ColDef<CustodyConfirmRow> => ({
-  field, headerName: header, width, minWidth: width, cellStyle: flexMid,
+  field, headerName: header, width, minWidth: width, cellStyle: flexCenter,
   cellRenderer: (p: any) => <MarkCell v={p.value as Mark} />,
 });
 
@@ -188,7 +187,7 @@ const makeColumns = (
   patchRow: (id: string, patch: Partial<CustodyConfirmRow>) => void,
 ): (ColDef<CustodyConfirmRow> | ColGroupDef<CustodyConfirmRow>)[] => [
   /* No는 행에 저장된 값이라 정렬해도 번호가 다시 매겨지지 않는다 */
-  { field: 'no', headerName: 'No', width: 68, minWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
+  { field: 'no', headerName: 'No', width: 68, minWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
   txt('gp', '운용사', 170),
   txt('fn', '자펀드', 220),
   /* 3단 헤더 — 중첩 ColGroupDef. 바깥·안쪽 모두 marryChildren으로 묶음이 흩어지지 않게 한다.
@@ -198,14 +197,14 @@ const makeColumns = (
     { headerName: '미투자자산 거래', marryChildren: true, children: [mark('ntShares', '보유주수'), mark('ntBal', '잔액')] },
     { headerName: '미투자자산', marryChildren: true, children: [mark('niBal', '잔액')] },
   ] },
-  { field: 'status', headerName: '상세보기', width: 120, minWidth: 120, cellStyle: flexMid,
+  { field: 'status', headerName: '상세보기', width: 120, minWidth: 120, cellStyle: flexCenter,
     cellRenderer: (p: any) => (
       <LinkCell
         value={p.value} hint="대사 상세 보기"
         color={p.value === '일치' ? 'var(--success-text)' : 'var(--danger-text)'}
         onClick={() => p.data && openDetail(p.data.id)} />
     ) },
-  { field: 'confirm', headerName: '확정여부', width: 120, minWidth: 120, cellStyle: flexMid, suppressKeyboardEvent: suppressFromSelect,
+  { field: 'confirm', headerName: '확정여부', width: 120, minWidth: 120, cellStyle: flexCenter, suppressKeyboardEvent: suppressFromSelect,
     cellRenderer: (p: any) => (
       <SelectCell
         value={p.value} label={`${p.data?.no}행 확정여부`}

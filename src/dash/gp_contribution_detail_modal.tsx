@@ -35,7 +35,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-center';
+const TH_BASE = 'border border-border bg-[color:var(--grid-header)] font-bold';
+const TH = `${TH_BASE} text-left`;
+const THR = `${TH_BASE} text-right`;
 const TD = 'border border-border';
 const CELL: React.CSSProperties = { padding: '7px 9px' };
 const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)' };
@@ -85,14 +87,14 @@ function DetailTable({ row }: { row: GpContribRow }) {
           <tr>
             <th scope="col" className={TH} style={{ ...CELL, width: 56 }}>No</th>
             <th scope="col" className={TH} style={CELL}>조합원</th>
-            <th scope="col" className={TH} style={{ ...CELL, width: 140 }}>납입금액</th>
-            <th scope="col" className={TH} style={{ ...CELL, width: 160 }}>모태수탁 납입금액</th>
+            <th scope="col" className={THR} style={{ ...CELL, width: 140 }}>납입금액</th>
+            <th scope="col" className={THR} style={{ ...CELL, width: 160 }}>모태수탁 납입금액</th>
             <th scope="col" className={TH} style={{ ...CELL, width: 96 }}>비고</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td className={`${TD} text-center tabular`} style={CELL}>1</td>
+            <td className={`${TD} tabular`} style={CELL}>1</td>
             <td className={TD} style={CELL}><>농식품모태펀드</></td>
             <td className={`${TD} text-right tabular`} style={CELL}>{money(row.payM)}</td>
             <td className={`${TD} text-right tabular`} style={CELL}>{money(row.payM)}</td>
@@ -102,9 +104,9 @@ function DetailTable({ row }: { row: GpContribRow }) {
         {/* 합계행 — 목업 tfoot(합계=납입총액, 모태수탁·비고는 '-'). 톤은 그리드 합계행과 같은 muted + 굵은 윗선 */}
         <tfoot>
           <tr className="bg-muted font-bold">
-            <td className={`${TD} text-center`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }} colSpan={2}>합계</td>
+            <td className={TD} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }} colSpan={2}>합계</td>
             <td className={`${TD} text-right tabular`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>{money(row.pay)}</td>
-            <td className={`${TD} text-center text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
+            <td className={`${TD} text-right text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
             <td className={`${TD} text-caption font-normal`} style={{ ...CELL, borderTop: '2px solid var(--border-strong)' }}>-</td>
           </tr>
         </tfoot>

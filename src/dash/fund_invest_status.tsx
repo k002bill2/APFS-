@@ -221,8 +221,8 @@ const PAGE_SIZE = 20;
 /* ──────────────────────────────
    포매터·컬럼 팩토리
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
-const axisCell: CellStyle = { ...centerNum, fontWeight: 600 };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
+const axisCell: CellStyle = { ...tabNum, fontWeight: 600 };
 
 const ctxUnit = (p: ValueFormatterParams): Unit => (p.context as { unit?: Unit } | undefined)?.unit ?? DEFAULT_UNIT;
 

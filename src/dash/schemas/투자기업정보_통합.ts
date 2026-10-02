@@ -20,11 +20,11 @@ export const schema: PageSchema = {
   columns: [
     { key: 'company',      label: '투자기업',      type: 'text',   align: 'left' },
     { key: 'gp',           label: '운용사',        type: 'gp',     align: 'left' },
-    { key: 'bizNo',        label: '사업자번호',    type: 'code',   align: 'center' },
-    { key: 'investMethod', label: '투자방식',      type: 'text',   align: 'center' },
+    { key: 'bizNo',        label: '사업자번호',    type: 'code' },
+    { key: 'investMethod', label: '투자방식',      type: 'text' },
     { key: 'preRevenue',   label: '투자전 매출액', type: 'amount', unit: '원', align: 'right' },
-    { key: 'baseDate',     label: '기준일',        type: 'date',   align: 'center' },
-    { key: 'status',       label: '상태',          type: 'status', align: 'center' },
+    { key: 'baseDate',     label: '기준일',        type: 'date' },
+    { key: 'status',       label: '상태',          type: 'status' },
   ],
   // ── 등록/수정 모달 양식(캡처 실측 순서) ──
   fields: [

@@ -34,7 +34,11 @@ const { Button, SegTabs } = UI;
    셀은 사방 테두리를 그대로 두고, 표를 `border-hidden` 으로 감싸 바깥 테두리만 지운다 —
    collapse 모델에서 table 의 hidden 이 바깥 셀 테두리를 이기므로 rowspan·3단 헤더에도 이중선이 안 생긴다.
    바깥선은 둥근 래퍼(TABLE_FRAME)가 그린다. */
-const TH = 'border border-solid border-border bg-muted text-[12.5px] font-semibold text-muted-foreground whitespace-nowrap text-center';
+const TH_BASE = 'border border-solid border-border bg-muted text-[12.5px] font-semibold text-muted-foreground whitespace-nowrap';
+const TH = `${TH_BASE} text-left`;
+const THR = `${TH_BASE} text-right`;
+/* 2단 그룹 헤더(colSpan 묶음 제목)만 가운데 — 표 정렬 규약의 허용 예외 */
+const THG = `${TH_BASE} text-center`;
 const TD = 'border border-solid border-border text-[13.5px] text-foreground whitespace-nowrap';
 const PAD = { padding: '10px 12px' } as const;
 const TABLE_FRAME = 'overflow-x-auto border border-solid border-border rounded-[var(--radius-sm)]';
@@ -89,7 +93,7 @@ function BlockMatrix({ rows, headers, head, unit }: { rows: MatrixRow[]; headers
           return (
             <tr key={r.block + r.label} className={total ? '' : ROW_HOVER}>
               {first && <th scope="rowgroup" rowSpan={span} className={TH} style={PAD}>{r.block}</th>}
-              <th scope="row" className={`${TD} text-center ${total ? 'font-bold bg-muted' : ''}`} style={PAD}>
+              <th scope="row" className={`${TD} text-left ${total ? 'font-bold bg-muted' : ''}`} style={PAD}>
                 {r.label}
               </th>
               {r.values.map((v, i) => (
@@ -112,10 +116,10 @@ function RegionTable({ rows, unit }: { rows: RegionRow[]; unit: StatUnit }) {
         <tr>
           <th scope="col" rowSpan={2} className={TH} style={PAD}>NO</th>
           <th scope="col" rowSpan={2} className={TH} style={PAD}>소재지</th>
-          {REGION_GROUPS.map((g) => <th key={g.label} scope="colgroup" colSpan={2} className={TH} style={PAD}>{g.label}</th>)}
+          {REGION_GROUPS.map((g) => <th key={g.label} scope="colgroup" colSpan={2} className={THG} style={PAD}>{g.label}</th>)}
         </tr>
         <tr>
-          {REGION_GROUPS.flatMap((g) => g.children.map((c) => <th key={g.label + c} scope="col" className={TH} style={PAD}>{c}</th>))}
+          {REGION_GROUPS.flatMap((g) => g.children.map((c) => <th key={g.label + c} scope="col" className={THR} style={PAD}>{c}</th>))}
         </tr>
       </thead>
       <tbody>
@@ -124,9 +128,9 @@ function RegionTable({ rows, unit }: { rows: RegionRow[]; unit: StatUnit }) {
           return (
             <tr key={r.region} className={total ? '' : ROW_HOVER}>
               {total
-                ? <th scope="row" colSpan={2} className={`${TD} text-center font-bold bg-muted`} style={PAD}>합계</th>
+                ? <th scope="row" colSpan={2} className={`${TD} text-left font-bold bg-muted`} style={PAD}>합계</th>
                 : (<>
-                    <td className={`${TD} text-center tabular`} style={PAD}>{r.no}</td>
+                    <td className={`${TD} tabular`} style={PAD}>{r.no}</td>
                     <th scope="row" className={`${TD} text-left font-normal`} style={PAD}>{r.region}</th>
                   </>)}
               {/* values = [투자건수, 건수비율, 투자금액, 금액비율] — 인덱스 2만 금액이라 환산 대상이다 */}
@@ -197,7 +201,7 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
                   <th scope="col" colSpan={2} className={TH} style={PAD}>
                     구분
                   </th>
-                  {SALES_SCALE_HEADERS.map((h) => <th key={h} scope="col" className={TH} style={PAD}>{h}</th>)}
+                  {SALES_SCALE_HEADERS.map((h) => <th key={h} scope="col" className={THR} style={PAD}>{h}</th>)}
                 </tr>
               )} />
           </Section>
@@ -211,20 +215,20 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
                   <th scope="col" colSpan={2} rowSpan={3} className={TH} style={PAD}>
                     구분
                   </th>
-                  <th scope="colgroup" colSpan={INVEST_TYPE_GROUPS[0].span} className={TH} style={PAD}>{INVEST_TYPE_GROUPS[0].label}</th>
-                  <th scope="colgroup" colSpan={INVEST_TYPE_GROUPS[1].span} className={TH} style={PAD}>{INVEST_TYPE_GROUPS[1].label}</th>
-                  <th scope="col" rowSpan={3} className={TH} style={PAD}>프로젝트</th>
-                  <th scope="col" rowSpan={3} className={TH} style={PAD}>합계</th>
+                  <th scope="colgroup" colSpan={INVEST_TYPE_GROUPS[0].span} className={THG} style={PAD}>{INVEST_TYPE_GROUPS[0].label}</th>
+                  <th scope="colgroup" colSpan={INVEST_TYPE_GROUPS[1].span} className={THG} style={PAD}>{INVEST_TYPE_GROUPS[1].label}</th>
+                  <th scope="col" rowSpan={3} className={THR} style={PAD}>프로젝트</th>
+                  <th scope="col" rowSpan={3} className={THR} style={PAD}>합계</th>
                 </tr>
                 <tr>
-                  <th scope="colgroup" colSpan={2} className={TH} style={PAD}>보통주</th>
-                  <th scope="col" rowSpan={2} className={TH} style={PAD}>전환우선주</th>
-                  <th scope="col" rowSpan={2} className={TH} style={PAD}>BW</th>
-                  <th scope="col" rowSpan={2} className={TH} style={PAD}>CB</th>
+                  <th scope="colgroup" colSpan={2} className={THG} style={PAD}>보통주</th>
+                  <th scope="col" rowSpan={2} className={THR} style={PAD}>전환우선주</th>
+                  <th scope="col" rowSpan={2} className={THR} style={PAD}>BW</th>
+                  <th scope="col" rowSpan={2} className={THR} style={PAD}>CB</th>
                 </tr>
                 <tr>
-                  <th scope="col" className={TH} style={PAD}>신주</th>
-                  <th scope="col" className={TH} style={PAD}>구주</th>
+                  <th scope="col" className={THR} style={PAD}>신주</th>
+                  <th scope="col" className={THR} style={PAD}>구주</th>
                 </tr>
               </>)} />
           </Section>

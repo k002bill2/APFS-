@@ -127,17 +127,16 @@ function computeTotal(rows: CashForecastRow[]): CashForecastRow {
      │ 모태펀드(5) │ 다음월 자금요청 예상금액(3) │ 다다음월 자금요청 예상금액(3) │ 첨부파일 · 수정일시
    ⚠ pinned는 **No만** — 다른 컬럼에 pinned를 주면 목업 순서가 좌측 영역으로 끌려와 깨진다.
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-const txt = (field: keyof CashForecastRow, header: string, width: number, center?: boolean): ColDef<CashForecastRow> => ({
-  field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
+const txt = (field: keyof CashForecastRow, header: string, width: number): ColDef<CashForecastRow> => ({
+  field, headerName: header, width, cellStyle: flexCenter,
   cellRenderer: (p: any) => (p.node.rowPinned ? null : p.value),
 });
 /* 일시 — 합계행은 '-'(목업 tfoot), 값 없음도 '-'. */
 const date = (field: keyof CashForecastRow, header: string, width = 128): ColDef<CashForecastRow> => ({
-  field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
+  field, headerName: header, width, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' },
   valueFormatter: (p) => (p.node?.rowPinned ? '-' : p.value == null ? '-' : String(p.value)),
 });
 /* 금액 — 우측정렬 + 단위 반영 포매터. numStyle()은 셀마다 호출되는 함수(0=muted, 합계행 자동 bold) */
@@ -146,17 +145,17 @@ const amt = (field: keyof CashForecastRow, header: string, width = 150): ColDef<
 });
 /* 상태 배지 — 배지가 촘촘히 반복되는 열이라 size="lg"(apfs-aggrid). 합계행은 '-' */
 const badge = (field: 'tgt' | 'att', header: string, tones: Record<string, Tone>, width: number): ColDef<CashForecastRow> => ({
-  field, headerName: header, width, cellStyle: flexMid,
+  field, headerName: header, width, cellStyle: flexCenter,
   cellRenderer: (p: any) => (p.node.rowPinned ? '-' : <StatusBadge tone={tones[p.value]} label={p.value} size="lg" />),
 });
 
 const columnDefs: (ColDef<CashForecastRow> | ColGroupDef<CashForecastRow>)[] = [
   /* 목업 tfoot의 `colspan=5 합계`를 여기 한 칸으로 싣는다(AG Grid는 가로 병합 불가) */
-  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum,
+  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '합계' : String(p.value)) },
   { ...txt('gp', '운용사', 190), maxWidth: 240 },
   { ...txt('fn', '자펀드', 230), maxWidth: 300 },
-  txt('acct', '계정구분', 96, true),
+  txt('acct', '계정구분', 96),
   date('reg', '등록일시'),
   amt('total', '약정총액'),
   { headerName: '모태펀드', headerClass: 'apfs-grp-a', marryChildren: true,

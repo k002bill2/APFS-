@@ -49,7 +49,7 @@ export const PHYSICAL_BASE_YM = '2026-07';
 const PHYSICAL_COLS: ColMeta[] = [
   { key: 'custodian', label: '수탁기관', kind: 'center' },
   { key: 'ym', label: '기준년월', kind: 'date' },
-  { key: 'seq', label: '순번', kind: 'number', align: 'center', width: 64 },
+  { key: 'seq', label: '순번', kind: 'number', align: 'left', width: 64 },
   { key: 'big', label: '자산분류(대분류)', kind: 'center' },
   { key: 'mid', label: '유형분류(중분류)', kind: 'center' },
   { key: 'union', label: '조합명', kind: 'text', width: 180 },
@@ -89,7 +89,7 @@ export const VERIFY_BASE_YM = '2026-07';
 const O = '운용사';
 const C = '수탁기관';
 const M = '일치여부';
-const noCol: ColMeta = { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 };
+const noCol: ColMeta = { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 };
 
 /** 섹션1 투자자산 — 원문 tfoot 는 **표시된 1행의 합이 아닌** 보유 합계 리터럴(보유주수 287,260 · 잔액 16,112,429,939)이다.
     값을 다시 계산하지 않고 원문 그대로 싣는다('sum' 이면 24,462 · 1,810,188,000 으로 원문 값이 바뀐다). */
@@ -99,7 +99,7 @@ const VERIFY_INVEST_COLS: ColMeta[] = [
   { key: 'oCo', label: '투자기업', kind: 'text', group: O, width: 150 },
   { key: 'oSh', label: '보유주수', kind: 'number', group: O, total: () => VERIFY_INVEST_TOTAL.shares },
   { key: 'oPr', label: '원금(A)', kind: 'amount', group: O },
-  { key: 'oRd', label: '감액금액(B)', kind: 'amount', group: O, align: 'center' },
+  { key: 'oRd', label: '감액금액(B)', kind: 'amount', group: O },
   { key: 'oBal', label: '잔액(A-B)', kind: 'amount', group: O, total: () => VERIFY_INVEST_TOTAL.balance },
   { key: 'cSh', label: '보유주수', kind: 'number', group: C },
   { key: 'cBal', label: '잔액', kind: 'amount', group: C },
@@ -182,7 +182,7 @@ export const FUND_CODE_ORGS = ['농협중앙회'] as const;
 export const FUND_CODE_TABLE: TableMeta = {
   id: 'fundCode',
   cols: [
-    { key: 'no', label: 'NO', kind: 'number', align: 'center', width: 64, flex: 0 },
+    { key: 'no', label: 'NO', kind: 'number', align: 'left', width: 64, flex: 0 },
     { key: 'nm', label: '조합이름', kind: 'text', width: 260 },
     { key: 'code', label: '수탁기관조합코드', kind: 'center', width: 200 },
     /* 원문 셀 체크박스 → 표시 전용 Y/N 배지(편집은 선택 바 [수정] 모달 — 2026-09-23 관리형 규약) */

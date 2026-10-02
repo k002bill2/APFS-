@@ -103,9 +103,8 @@ const BASE_DATE = '2026-04-30';
    컬럼 정의 — 목업 헤더 순서·집합 그대로(2단 그룹: 운용사·수탁기관·일치여부·메모)
 ────────────────────────────── */
 /* AG Grid cellStyle은 CellStyle(문자열 인덱스 시그니처) — React CSSProperties와 타입이 다르다 */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수)에 null 가드만 얇게 덧씌운다(재구현 아님) */
 const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p));
@@ -120,19 +119,19 @@ const matchCell = (p: { value: MatchResult | null }) =>
 
 /* 컬럼 팩토리 — `field`를 인자로 받아 호출부에서 행 타입이 확정된다(섹션 3개가 같은 규격을 공유) */
 function seq<T>(field: ColDef<T>['field']): ColDef<T> {
-  return { field, headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) };
+  return { field, headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) };
 }
 function txt<T>(field: ColDef<T>['field'], header: string, width: number, maxWidth?: number): ColDef<T> {
   return { field, headerName: header, width, maxWidth, cellStyle: flexCenter, cellRenderer: textCell };
 }
 function num<T>(field: ColDef<T>['field'], header: string, width = 110): ColDef<T> {
-  return { field, headerName: header, width, valueFormatter: nullFmt, cellStyle: centerNum };
+  return { field, headerName: header, width, type: 'rightAligned', valueFormatter: nullFmt, cellStyle: numStyle() as any };
 }
 function amt<T>(field: ColDef<T>['field'], header: string, width = 140): ColDef<T> {
   return { field, headerName: header, width, type: 'rightAligned', valueFormatter: nullFmt, cellStyle: numStyle() as any };
 }
 function match<T>(field: ColDef<T>['field'], header: string, width = 106): ColDef<T> {
-  return { field, headerName: header, width, cellStyle: flexMid, cellRenderer: matchCell };
+  return { field, headerName: header, width, cellStyle: flexCenter, cellRenderer: matchCell };
 }
 
 type SectionKey = 'invest' | 'trade' | 'noninvest';
@@ -149,7 +148,7 @@ function memoGroup<T extends MemoRow>(sec: SectionKey, secLabel: string, openMem
   return {
     headerName: '메모', marryChildren: true,
     children: [
-      { colId: 'memoDate', headerName: '날짜', width: 112, cellStyle: centerNum,
+      { colId: 'memoDate', headerName: '날짜', width: 112, cellStyle: tabNum,
         valueGetter: (p) => p.data?.memos[0]?.date ?? null,
         valueFormatter: (p) => (p.value == null ? '-' : String(p.value)) },
       { colId: 'memoContent', headerName: '내용', width: 170, maxWidth: 320, cellStyle: flexCenter,
@@ -157,7 +156,7 @@ function memoGroup<T extends MemoRow>(sec: SectionKey, secLabel: string, openMem
         cellRenderer: (p: { value: string | null }) => (p.value == null ? dashCell : <span className="min-w-0 truncate">{p.value}</span>) },
       /* 등록 — 액션 컬럼(정렬·엑셀 제외). UI.Button은 aria-label을 받지 않으므로 접근名은 sr-only로 보강한다
          ("투자자산 1행 메모"). */
-      { colId: MEMO_ACTION_COL, headerName: '등록', width: 96, sortable: false, cellStyle: flexMid,
+      { colId: MEMO_ACTION_COL, headerName: '등록', width: 96, sortable: false, cellStyle: flexCenter,
         cellRenderer: (p: { data?: T }) => (p.data
           ? <Button variant="outline" size="sm" onClick={() => openMemo(sec, p.data!.id)}>
               <span className="sr-only">{secLabel + ' ' + p.data.no + '행 '}</span>메모

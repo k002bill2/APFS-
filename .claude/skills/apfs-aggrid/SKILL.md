@@ -65,8 +65,22 @@ const columnDefs: (ColDef<Row> | ColGroupDef<Row>)[] = [
 ```
 - **2단 헤더**: `ColGroupDef` + `children` + `marryChildren: true`(그룹 열 묶음 유지). 그룹 라벨 `headerClass`(예: `apfs-grp-co`/`apfs-grp-in`)는 **현재 CSS 규칙이 없는 placeholder 훅**(=시각 효과 없음). 톤 분리가 필요하면 `aggrid_shared.css`에 `.apfs-grp-*` 규칙을 직접 추가하라.
 - **첫 열 고정**: 구분/연도 등 행 식별 열은 `pinned: 'left'`.
-- **숫자 셀**: `valueFormatter: numFmt`(콤마·소수 내장 — 공유 `fmt`는 정수=콤마/비정수=소수1자리, **자체 포매터 재구현 금지**), `cellStyle: numStyle(strong)`, `type: 'rightAligned'`. ⚠️ `numStyle(strong)`은 **셀마다 호출되는 함수를 반환**한다(정적 스타일 객체 아님) — 0=muted·pinned/strong=bold·tabular-nums 자동.
+- **숫자 셀**(정렬은 아래 "정렬 규약"): `valueFormatter: numFmt`(콤마·소수 내장 — 공유 `fmt`는 정수=콤마/비정수=소수1자리, **자체 포매터 재구현 금지**), `cellStyle: numStyle(strong)`, `type: 'rightAligned'`. ⚠️ `numStyle(strong)`은 **셀마다 호출되는 함수를 반환**한다(정적 스타일 객체 아님) — 0=muted·pinned/strong=bold·tabular-nums 자동.
 - AG Grid의 React 커스텀 헤더는 **첫 페인트보다 늦게 붙는다** — 로드 직후 스냅샷하면 헤더 텍스트가 빈 문자열로 보인다(2026-09-12 오탐). 검증 스크립트는 2초 이상 대기 후 질의.
+
+### 정렬 규약 (2026-10-02 사용자 결정 — 모든 표 공통)
+**수량형 숫자 = 우측, 그 외 = 좌측, 가운데 없음.** 헤더는 셀을 따른다(AG Grid `type:'rightAligned'` 가 헤더까지 우측으로 맞춘다).
+
+| 우측 | 좌측 |
+|---|---|
+| 금액, 율(%·비율·수익률·ROE), 건수·개수·인원, 수량·주식수, 일수·기간(수치), 점수 | **No/순번/연번, 차수/회차**, 연도·년월·날짜·일시, 코드·번호(사업자·약정·우편·전화), 상태 배지·여부·구분·유형·등급, 이름·텍스트·첨부, 레벨 |
+
+- AG Grid: 우측 열 = `type:'rightAligned'` + `numStyle()`(또는 `tabular-nums` 스타일). 좌측 열은 정렬을 **지정하지 않는다**(기본 좌측). No 열은 `{ fontVariantNumeric: 'tabular-nums' }` 만 — `rightAligned`·`textAlign:'center'` 금지.
+- 스키마 그리드(`ColumnSpec`): `align` 을 생략하면 `resolveAlign` 이 파생한다 — `amount`·`rate`·`number` → 우측, 나머지 → 좌측. **`type:'number'` 인 No/차수는 `align:'left'` 명시**, 율을 `type:'text'` 로 담은 열은 `align:'right'` 명시. `'center'` 는 타입에서 제거됐다. Excel 숫자셀 판정(`isNum`)도 같은 `resolveAlign` 을 쓴다(화면=엑셀).
+- 직접 만든 `<table>`: 숫자 열 `<th>`·`<td>` 모두 `textAlign:'right'`(+`tabular-nums`), 나머지는 정렬 지정 없음. 2단 헤더의 **묶음 제목(colSpan 상위 th)** 만 가운데 허용.
+- 예외(규약 밖): 선택 체크박스·라디오 열, 아이콘 전용 액션 열(휴지통 등), 표 전체 폭 빈 상태 문구. **값을 고르는 셀 안 select(확정여부 등)·텍스트 버튼 열(상세조회·Download·등록)은 예외가 아니다 → 좌측.**
+- `<th>` 기본 정렬: `tailwind.config.js` 가 `preflight:false` 라 UA 기본 `th{text-align:center}` 가 살아 있다 → `src/styles/tailwind.css` base 레이어에 `th{text-align:left}` 를 둬서 지정 없는 th 도 좌측이 된다. 숫자 열 th 만 우측을 명시하면 된다(달력 요일 등 표가 아닌 th 는 `text-center` 를 명시).
+- 가드: `src/dash/grid_align.test.ts`(스키마 resolveAlign 검사 + `centerNum`·`align:'center'`·td/th 가운데·No 우측 소스 검사). 새 화면도 이 테스트가 통과해야 한다.
 
 ### 검토필요 마커 — 폐기 (2026-09-24)
 2026-09-24: 검토필요 마커(ReviewMarker·note 필드·*_NOTE)는 전부 삭제됐다. 목업의 `.review`/`.rpop` 은 이식하지 않는다(2026-09-12 '이식' 규약 폐기).
