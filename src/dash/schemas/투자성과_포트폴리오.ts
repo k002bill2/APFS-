@@ -15,12 +15,12 @@ export const schema: PageSchema = {
   // 필터 대상(assetClass·region·status)은 컬럼+필드가 키를 공유해야 makeRows가 enum을 시드한다.
   columns: [
     { key: 'name',       label: '자산명',        type: 'text',   align: 'left' },
-    { key: 'assetClass', label: '자산분류',      type: 'text',   align: 'center' },
+    { key: 'assetClass', label: '자산분류',      type: 'text' },
     { key: 'amount',     label: '평가금액',      type: 'amount', unit: '백만원', align: 'right' },
     { key: 'change',     label: '수익률',        type: 'rate',   align: 'right' },
-    { key: 'status',     label: '리스크등급',    type: 'status', align: 'center' },
-    { key: 'region',     label: '지역',          type: 'text',   align: 'center' },
-    { key: 'trend',      label: '성과추이',      type: 'number', align: 'center' },
+    { key: 'status',     label: '리스크등급',    type: 'status' },
+    { key: 'region',     label: '지역',          type: 'text' },
+    { key: 'trend',      label: '성과추이',      type: 'number', align: 'left' },
   ],
   // ── 등록/수정 모달 양식 ──
   fields: [

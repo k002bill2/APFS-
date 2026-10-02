@@ -111,7 +111,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-center';
+const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-left';
 const TD = 'border border-border';
 const CELL: React.CSSProperties = { padding: '7px 9px' };
 
@@ -162,13 +162,13 @@ function CheckTable() {
           {CHECKLIST.map((g) => g.subs.map((s, si) => s.items.map((it, ii) => (
             <tr key={`${g.g1}-${s.g2}-${it.t}`}>
               {si === 0 && ii === 0 && (
-                <th scope="rowgroup" rowSpan={groupRows(g)} className={`${TD} bg-[color:var(--grid-header)] font-bold text-center align-middle`} style={CELL}>{g.g1}</th>
+                <th scope="rowgroup" rowSpan={groupRows(g)} className={`${TD} bg-[color:var(--grid-header)] font-bold text-left align-middle`} style={CELL}>{g.g1}</th>
               )}
               {ii === 0 && (
-                <th scope="rowgroup" rowSpan={s.items.length} className={`${TD} bg-[color:var(--grid-header)] font-bold text-center align-middle`} style={CELL}>{s.g2}</th>
+                <th scope="rowgroup" rowSpan={s.items.length} className={`${TD} bg-[color:var(--grid-header)] font-bold text-left align-middle`} style={CELL}>{s.g2}</th>
               )}
               <td className={TD} style={CELL}>{it.t}</td>
-              <td className={`${TD} text-center`} style={CELL}>
+              <td className={`${TD} text-left`} style={CELL}>
                 <StatusBadge tone={it.y ? 'primary' : 'muted'} label={it.y ? 'Y' : 'N'} size="sm" />
               </td>
             </tr>
@@ -186,11 +186,11 @@ function SummaryTable() {
         <caption className="sr-only">수시보고사항 요약 — 제목 및 내용</caption>
         <tbody>
           <tr>
-            <th scope="row" className={`${TD} bg-[color:var(--grid-header)] font-bold text-center align-middle`} style={{ ...CELL, width: 92 }}>제목</th>
+            <th scope="row" className={`${TD} bg-[color:var(--grid-header)] font-bold text-left align-middle`} style={{ ...CELL, width: 92 }}>제목</th>
             <td className={TD} style={CELL}>{RPT_TITLE}</td>
           </tr>
           <tr>
-            <th scope="row" className={`${TD} bg-[color:var(--grid-header)] font-bold text-center align-middle`} style={CELL}>내용</th>
+            <th scope="row" className={`${TD} bg-[color:var(--grid-header)] font-bold text-left align-middle`} style={CELL}>내용</th>
             <td className={TD} style={{ ...CELL, whiteSpace: 'pre-wrap', lineHeight: 1.85 }}>{RPT_BODY}</td>
           </tr>
         </tbody>
@@ -215,8 +215,8 @@ function FileTable() {
           {RPT_FILES.map((f) => (
             <tr key={f.name}>
               <td className={TD} style={CELL}>{f.name}</td>
-              <td className={`${TD} text-center tabular`} style={CELL}>{String(f.at)}</td>
-              <td className={`${TD} text-center`} style={CELL}>O</td>
+              <td className={`${TD} text-left tabular`} style={CELL}>{String(f.at)}</td>
+              <td className={`${TD} text-left`} style={CELL}>O</td>
             </tr>
           ))}
         </tbody>

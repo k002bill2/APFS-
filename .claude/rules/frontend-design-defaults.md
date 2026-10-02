@@ -35,6 +35,12 @@ paths:
 - **버튼**: `UI.Button` variant `primary`·`outline`·`ghost`·`secondary`·`accent`, size `sm/md/lg`. 새 버튼 컴포넌트를 만들지 않는다.
 - **카드·페이지 골격**: 대시보드 `UI.Card`/`UI.ChartCard`/`UI.StatCard`, 리스트·그리드 `GridFrame`+`KpiBadge`(apfs-grid 스킬).
 - **표·수치**: AG Grid 는 `apfsTheme`(tabular-nums 내장), 금액·수량 컬럼 `type:'rightAligned'`. 표 밖 수치는 `.tabular`+우측 정렬.
+- **표 정렬 규약(2026-10-02 사용자 결정 — 모든 표: AG Grid·스키마 그리드·직접 만든 `<table>`)**:
+  **금액·율(%·비율)·건수·인원·수량 같은 수량형 숫자 = 우측, 그 외 전부 = 좌측. 가운데 정렬은 쓰지 않는다.**
+  좌측에는 숫자처럼 보여도 수량이 아닌 것 — **No/순번/연번·차수/회차**·연도·년월·날짜·코드/번호·상태 배지·여부 — 이 포함된다.
+  헤더는 그 열의 셀 정렬을 따른다. 규약 밖 예외는 값이 아닌 컨트롤 열(선택 체크박스·라디오·아이콘 전용 액션 열)과
+  표 전체 폭 빈 상태 문구, 여러 열을 묶는 2단 그룹 헤더 제목뿐이다(셀 안 select·텍스트 버튼은 좌측). 스키마 그리드는 `resolveAlign`(`schemas/types.ts`)이 타입에서 파생하고,
+  가드 테스트 `src/dash/grid_align.test.ts` 가 위반을 잡는다. 상세는 apfs-aggrid 스킬 "정렬 규약".
   헤더 `--grid-header`, 행 선택 `--row-selected`. 단위는 값 옆 작은 `muted-foreground` 텍스트.
 - **상태 화면**: 빈 `UI.EmptyState`, 로딩 `PageSkeleton`/`Skeleton`/`Spinner`, 오류·경고 `Alert`(variant `destructive`/`warning`/`info`).
 - **모션**: `duration-tok-fast`/`duration-tok` + `ease-ds`. 장식 목적의 새 애니메이션을 추가하지 않는다.

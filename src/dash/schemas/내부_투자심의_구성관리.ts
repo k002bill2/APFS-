@@ -23,16 +23,16 @@ export const schema: PageSchema = {
   kind: 'list',
   entity: '투자심의위원',
   columns: [
-    { key: 'no',       label: 'No',       type: 'number', align: 'center' },
+    { key: 'no',       label: 'No',       type: 'number', align: 'left' },
     { key: 'gp',       label: '운용사',   type: 'gp',     align: 'left' },
     { key: 'subFund',  label: '자펀드',   type: 'text',   align: 'left' },
     { key: 'member',   label: '위원명',   type: 'text',   align: 'left' },
     { key: 'org',      label: '소속',     type: 'text',   align: 'left' },
-    { key: 'position', label: '직위',     type: 'text',   align: 'center' },
-    { key: 'kind',     label: '위원구분', type: 'text',   align: 'center' },
-    { key: 'appointDate', label: '위촉일자', type: 'date', align: 'center' },
-    { key: 'dismissDate', label: '해촉일자', type: 'date', align: 'center' },
-    { key: 'use',      label: '사용여부', type: 'text',   align: 'center' },
+    { key: 'position', label: '직위',     type: 'text' },
+    { key: 'kind',     label: '위원구분', type: 'text' },
+    { key: 'appointDate', label: '위촉일자', type: 'date' },
+    { key: 'dismissDate', label: '해촉일자', type: 'date' },
+    { key: 'use',      label: '사용여부', type: 'text' },
   ],
   // 항목 10개 > 6 → RowFormModal 이 2단 wide 로 자동 렌더한다(schema-form-modal-2col).
   fields: [

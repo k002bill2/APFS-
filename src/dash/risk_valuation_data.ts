@@ -34,7 +34,7 @@ export const MF_SUMMARY: TableMeta = {
     { key: 'total', label: '모태펀드 총운영성과', kind: 'amount', strong: true },
     { key: 'found', label: '결성총액', kind: 'amount' },
     { key: 'paid', label: '납입총액', kind: 'amount' },
-    { key: 'mult', label: '출자액대비 수익배수', kind: 'number', align: 'center', strong: true },
+    { key: 'mult', label: '출자액대비 수익배수', kind: 'number', strong: true },
   ],
   rows: [MF_SUMMARY_ROW],
 };
@@ -42,7 +42,7 @@ const MF = '농식품모태펀드';
 export const MF_DETAIL: TableMeta = {
   id: 'mfDetail', title: '가치평가 상세내역',
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 },
     { key: 'ym', label: '평가년월', kind: 'date' },
     { key: 'fy', label: '결성년도', kind: 'center' },
     { key: 'fn', label: '자펀드', kind: 'text', width: 200 },
@@ -51,11 +51,11 @@ export const MF_DETAIL: TableMeta = {
     { key: 'paid', label: '납입총액', kind: 'amount' },
     { key: 'mfFound', label: '결성총액', kind: 'amount', group: MF },
     { key: 'mfPaid', label: '납입총액', kind: 'amount', group: MF },
-    { key: 'share', label: '출자지분율', kind: 'number', align: 'center' },
+    { key: 'share', label: '출자지분율', kind: 'number' },
     { key: 'cinv', label: '누적투자금액', kind: 'amount' },
     { key: 'pbal', label: '투자원금잔액', kind: 'amount' },
     { key: 'perf', label: '조합운용성과', kind: 'amount' },
-    { key: 'mul', label: '수익배수', kind: 'number', align: 'center' },
+    { key: 'mul', label: '수익배수', kind: 'number' },
   ],
   rows: [{ id: 'mfdet-1', no: 1, ym: '2025-12', fy: '2012년도', fn: '엘앤에스 농수산업 투자조합', gp: '엘앤에스벤처캐피탈(주)',
     found: 16000000000, paid: 16000000000, mfFound: 8000000000, mfPaid: 8000000000, share: '50.00',
@@ -80,7 +80,7 @@ export const FUND_VAL: TableMeta = {
     { key: 'cinv', label: '누적투자금액', kind: 'amount', total: 'sum' },
     { key: 'pbal', label: '투자원금잔액', kind: 'amount', total: 'sum' },
     { key: 'perf', label: '조합운용성과', kind: 'amount', total: 'sum' },
-    { key: 'mul', label: '수익배수', kind: 'number', align: 'center', total: 'dash' },
+    { key: 'mul', label: '수익배수', kind: 'number', total: 'dash' },
     /* 원문 gradeTag: 주의=a · 경고=d · 우수|양호=g · 그 외 n (원문 실값은 '주의' 1건) */
     { key: 'grade', label: '관리등급', kind: 'badge', tones: { 주의: 'warning', 경고: 'danger', 우수: 'success', 양호: 'success' }, total: 'dash' },
     { key: 'aval', label: '투자자산평가', kind: 'amount', total: 'sum' },
@@ -124,7 +124,7 @@ const invRow = { ym: '2025-12', fy: '2022년도', fund: '2022 원익 스마트 �
 export const INVESTEE_DETAIL: TableMeta = {
   id: 'investeeDetail', totalLabel: '합계',
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 },
     { key: 'ym', label: '평가년월', kind: 'date' },
     { key: 'fy', label: '결성년도', kind: 'center' },
     { key: 'fund', label: '자펀드', kind: 'text', width: 240 },
@@ -141,7 +141,7 @@ export const INVESTEE_DETAIL: TableMeta = {
     { key: 'rec', label: '누적회수총액', kind: 'amount', total: 'sum' },
     { key: 'perf', label: '운용성과', kind: 'amount', total: 'sum' },
     /* 파생값 — 행·합계 모두 원문처럼 운용성과 ÷ 투자금액 */
-    { key: 'mult', label: '누적Multiple', kind: 'number', align: 'center', derived: true, total: ratioOf('perf', 'fa') },
+    { key: 'mult', label: '누적Multiple', kind: 'number', derived: true, total: ratioOf('perf', 'fa') },
     /* 원문 grade(): {A:'a', B:'b', C:'c', D:'d'} → B=.tag b(info). 원문 실값은 'B' 1건 */
     { key: 'g', label: '관리등급', kind: 'badge', tones: { A: 'warning', B: 'info', D: 'danger' }, total: 'dash' },
   ],
@@ -160,7 +160,7 @@ const CS = '보통주', PS = '우선주';
 export const ASSET_BALANCE: TableMeta = {
   id: 'assetBalance', title: '투자잔액관리',
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 },
     { key: 'co', label: '투자기업', kind: 'text', width: 130 },
     { key: 'dt', label: '일자', kind: 'date' },
     { key: 'cAmt', label: '금액', kind: 'amount', group: CS },
@@ -179,7 +179,7 @@ export const ASSET_BALANCE: TableMeta = {
 export const ASSET_TX: TableMeta = {
   id: 'assetTx', title: '거래내역',
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 },
     { key: 'co', label: '투자기업', kind: 'text', width: 130 },
     { key: 'kind', label: '자산의종류', kind: 'center' },
     { key: 'dt', label: '일자', kind: 'date' },
@@ -285,7 +285,7 @@ export const PF_PERF: TableMeta = {
   id: 'pfPerf', title: '조합의 운용성과',
   cols: [
     { key: 'total', label: '조합 총운용성과', kind: 'amount', strong: true },
-    { key: 'mult', label: '출자액대비 수익배수', kind: 'number', align: 'center', strong: true },
+    { key: 'mult', label: '출자액대비 수익배수', kind: 'number', strong: true },
     { key: 'cinv', label: '(1) 누적투자금액', kind: 'amount' },
     { key: 'bal', label: '(2) 투자잔액합계', kind: 'amount' },
     { key: 'aval', label: '(3) 투자자산평가액', kind: 'amount' },
@@ -302,19 +302,19 @@ export const PF_PERF: TableMeta = {
 export const PF_DETAIL: TableMeta = {
   id: 'pfDetail', title: '투자자산 별 상세내역', totalLabel: '합계',
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 },
     { key: 'co', label: '투자기업', kind: 'text', width: 130 },
     { key: 'kind', label: '자산의 종류', kind: 'center' },
     { key: 'a', label: '누적투자금액(a)', kind: 'amount', total: 'sum' },
     { key: 'b', label: '누적회수원금 (감액포함)(b)', kind: 'amount', total: 'sum' },
     { key: 'c', label: '잔액(c) =((a)-(b))', kind: 'amount', total: 'sum' },
     /* 원문 보유주식수는 문자열 '3,846' 이고 합계 칸은 '-' 다(S2_87 과 달리 합산하지 않는다) */
-    { key: 'sh', label: '보유주식수', kind: 'number', align: 'center', total: 'dash' },
+    { key: 'sh', label: '보유주식수', kind: 'number', total: 'dash' },
     { key: 'd', label: '보유자산의 평가액(d)', kind: 'amount', total: 'sum' },
-    { key: 'mdc', label: '평가Multiple (d)/(c)', kind: 'number', align: 'center', total: ratioOf('d', 'c') },
+    { key: 'mdc', label: '평가Multiple (d)/(c)', kind: 'number', total: ratioOf('d', 'c') },
     { key: 'e', label: '누적회수총액(e)', kind: 'amount', total: 'sum' },
     { key: 'f', label: '누적운용성과(f) =((d)+(e))', kind: 'amount', total: 'sum' },
-    { key: 'mfa', label: '누적Multiple (f)/(a)', kind: 'number', align: 'center', total: ratioOf('f', 'a') },
+    { key: 'mfa', label: '누적Multiple (f)/(a)', kind: 'number', total: ratioOf('f', 'a') },
     { key: 'm', label: '평가방법론', kind: 'center', total: 'dash' },
   ],
   rows: [{ id: 'pf3-1', no: 1, co: '(주)당근마켓', kind: '보통주', a: 999960000, b: 0, c: 999960000, sh: '3,846',

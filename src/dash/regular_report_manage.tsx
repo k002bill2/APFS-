@@ -119,9 +119,8 @@ const openDetail = () => {
    ⚠ 좌측 고정은 No만 — 다른 컬럼에 `pinned`를 주면 컬럼이 좌측 영역으로 끌려와 목업 순서가 깨진다.
    ⚠ 합계행 없음(금액 컬럼이 없다). 선택 컬럼은 `SELECTION_COL`(좌측 고정 44px)이 그린다.
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 /* 모듈 스코프에 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid가 헤더를 통째로 remount한다 */
 
 /* 텍스트 셀(운용사·자펀드) — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다 */
@@ -157,14 +156,14 @@ function ConfirmSelect({ value, no, onChange }: { value: Confirmed; no: number; 
 }
 
 const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void): ColDef<RegularReportRow>[] => [
-  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
+  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
   /* 운용사·자펀드는 링크가 아니다(명세 팝업 미포함 — 파일 상단 '한계'). 긴 명칭 컬럼만 maxWidth 상한(apfs-aggrid 관리형 그리드 규약). */
   { field: 'gp', headerName: '운용사', width: 190, maxWidth: 240, cellStyle: flexCenter, cellRenderer: textCell },
   { field: 'fn', headerName: '자펀드', width: 196, maxWidth: 300, cellStyle: flexCenter, cellRenderer: textCell },
-  { field: 'ymLabel', headerName: '보고년월', width: 112, cellStyle: centerNum, valueFormatter: mnFmt },
+  { field: 'ymLabel', headerName: '보고년월', width: 112, cellStyle: tabNum, valueFormatter: mnFmt },
   /* 보고구분 — '월간보고서'만 상세 진입 링크(목업 `<a class="tag b">`), 반기보고서는 비링크 `<span>`.
      배지를 버튼으로 감싼다: `font:'inherit'`는 preflight:false에서 UA 기본 폰트(13.3px Arial)로 튀는 것을 막는다. */
-  { field: 'rt', headerName: '보고구분', width: 110, cellStyle: flexMid,
+  { field: 'rt', headerName: '보고구분', width: 110, cellStyle: flexCenter,
     cellRenderer: (p: any) => {
       if (p.value !== '월간보고서') return <StatusBadge tone="primary" label={p.value} size="lg" />;
       /* 링크 배지 = 라벨 뒤 external 아이콘(자펀드별 조기경보 등급 배지와 같은 규약·같은 보정값 — fund_early_warning.tsx 주석이 정본) */
@@ -187,15 +186,15 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void):
       ? <span className="min-w-0 truncate">{p.value}</span>
       : <span style={{ color: 'var(--muted-foreground)' }}>보고 내역이 없습니다.</span>) },
   { field: 'updatedAt', headerName: '수정일시', width: 180,
-    cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: mnFmt },
+    cellStyle: { ...tabNum, color: 'var(--muted-foreground)' }, valueFormatter: mnFmt },
   /* 확정여부 — 셀은 보고 내역이 있는 행만 select. */
-  { field: 'confirmed', headerName: '확정여부', width: 120, cellStyle: flexMid,
+  { field: 'confirmed', headerName: '확정여부', width: 120, cellStyle: flexCenter,
     /* 셀 안 select에 초점이 있을 때는 AG Grid 키 처리를 전부 끈다 — ↑↓가 값 변경 대신 셀 이동으로
        가로채이는 것을 막는다(합성 이벤트 stopPropagation으로는 못 막는다, 파일 상단 '한계'). */
     suppressKeyboardEvent: (p) => (p.event.target as HTMLElement | null)?.tagName === 'SELECT',
     cellRenderer: (p: any) => (p.value == null ? null
       : <ConfirmSelect value={p.value} no={p.data.no} onChange={(v) => patch(p.data.id, { confirmed: v })} />) },
-  { field: 'fundStatus', headerName: '조합상태', width: 100, cellStyle: flexMid,
+  { field: 'fundStatus', headerName: '조합상태', width: 100, cellStyle: flexCenter,
     cellRenderer: (p: any) => <StatusBadge tone="success" label={p.value} size="lg" /> },
 ];
 

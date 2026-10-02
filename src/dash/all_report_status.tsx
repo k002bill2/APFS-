@@ -54,7 +54,7 @@ const SUBFUND_OPTIONS = allValues('subFund');
 
 const MOTHER_FUND = '농식품모태펀드';   // 원문 검색박스의 읽기전용 `모펀드` 값
 
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };   // No(순번) — 좌측(그리드 정렬 규약 2026-10-02)
 
 /* ColumnSpec → AG Grid ColDef. 셀 렌더는 공용 `Cell`에 위임한다 —
    StatusBadge·운용사 ColorChip·금액 단위 환산이 전부 그 안에 있다(중복 구현 금지). */
@@ -62,7 +62,7 @@ function toColDef(c: ColumnSpec, tab: ReportTab, unit: Unit): ColDef<ReportRow> 
   if (c.key === 'no')
     /* No 는 순번. 정렬·필터로 순서가 바뀌어도 1..n 이 되도록 rowIndex 로 매기되,
        **하단 고정 행(소계·합계)은 예외** — 그쪽 rowIndex 는 0,1 로 다시 시작하므로 원문 라벨을 그대로 쓴다. */
-    return { colId: NO_COL_ID, headerName: c.label, width: 68, maxWidth: 68, cellStyle: centerNum, sortable: false,
+    return { colId: NO_COL_ID, headerName: c.label, width: 68, maxWidth: 68, cellStyle: tabNum, sortable: false,
              valueGetter: (p) => (p.node?.rowPinned ? String(p.data?.no ?? '') : (p.node?.rowIndex ?? 0) + 1) };
   const right = c.align === 'right';
   const amount = c.type === 'amount';

@@ -112,21 +112,20 @@ const PAGE_SIZE = 20;
    ⚠ 폭 관련 그리드 prop(autoSizeStrategy·defaultColDef)은 aggrid_theme.ts 공용 상수만 쓴다(인라인 금지).
 ────────────────────────────── */
 /* AG Grid cellStyle은 CellStyle(문자열 인덱스 시그니처) — React CSSProperties와 타입이 다르다 */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 숫자 N/A(null)는 '-'로 — 공유 numFmt(콤마·소수)에 null 가드만 얇게 덧씌운다(재구현 아님) */
 const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p));
 
 /* 텍스트 셀 — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다.
    합계행은 값이 없으므로 null(목업 tfoot의 병합 셀 자리). */
-const txt = (field: keyof FundMemberRow, header: string, width: number, center?: boolean): ColDef<FundMemberRow> => ({
-  field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
+const txt = (field: keyof FundMemberRow, header: string, width: number): ColDef<FundMemberRow> => ({
+  field, headerName: header, width, cellStyle: flexCenter,
   cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="min-w-0 truncate">{p.value}</span>),
 });
 const date = (field: keyof FundMemberRow, header: string, width = 112): ColDef<FundMemberRow> => ({
-  field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
+  field, headerName: header, width, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' },
   valueFormatter: (p) => (p.node?.rowPinned ? '' : String(p.value)),
 });
 const amt = (field: keyof FundMemberRow, header: string, strong?: boolean, width = 158): ColDef<FundMemberRow> => ({
@@ -142,18 +141,18 @@ function TypeChip({ value }: { value: string }) {
 
 const columnDefs: ColDef<FundMemberRow>[] = [
   /* 합계행은 목업 tfoot 라벨 '합계' → 골드 표기 '합 계' */
-  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum,
+  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '합 계' : String(p.value)) },
   { ...txt('gp', '운용사', 190), maxWidth: 240 },
   { ...txt('fn', '자펀드', 240), maxWidth: 300 },
-  txt('acc', '계정구분', 96, true),
+  txt('acc', '계정구분', 96),
   date('rd', '등록일'),
   amt('formed', '결성액'),
   /* 조합원 = 이 화면의 주 엔티티라 굵게(목업도 좌측정렬 본문 열) */
   { ...txt('mem', '조합원', 180),
     cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="min-w-0 truncate font-semibold">{p.value}</span>) },
-  txt('cls', '조합원구분', 110, true),
-  { field: 'mtype', headerName: '조합원유형', width: 120, cellStyle: flexMid,
+  txt('cls', '조합원구분', 110),
+  { field: 'mtype', headerName: '조합원유형', width: 120, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.node.rowPinned ? null : <TypeChip value={p.value} />) },
   amt('c1', '최초 출자약정액', true),
   amt('c2', '최종 출자약정액', true),
@@ -162,7 +161,7 @@ const columnDefs: ColDef<FundMemberRow>[] = [
     cellRenderer: (p: any) => (p.node.rowPinned ? null
       : p.value === '-' ? <span style={{ color: 'var(--muted-foreground)' }}>-</span>
       : <span className="min-w-0 truncate">{p.value}</span>) },
-  txt('deal', '출자배분 거래유무', 140, true),
+  txt('deal', '출자배분 거래유무', 140),
 ];
 
 /* 엑셀 컬럼 — 화면 컬럼과 1:1(화면=엑셀 불변식). 액션 컬럼이 없어 13열 전부 직렬화한다. */

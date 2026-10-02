@@ -94,9 +94,8 @@ const ROW_SELECTION: RowSelectionOptions = { mode: 'multiRow', checkboxes: true,
    ⚠ 폭 전략 = **flex + minWidth**(`autoSizeStrategy` 없음) — 컬럼 내용 폭 합이 프레임보다 좁아 내용 맞춤을 쓰면
      오른쪽에 빈 거터가 남는다(workforce_manage 와 같은 상황). flex 컬럼에도 `width: minWidth` 필수(apfs-aggrid ⑨).
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 const dashCell = <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
 /* O/X 셀 — O=success · X=muted(중립). null 은 값 없음 표식이라 배지가 아니라 muted 텍스트 */
@@ -123,17 +122,17 @@ const makeCell = (p: { value: string }) => {
 };
 
 const seqCol = <T,>(): ColDef<T> =>
-  ({ field: 'no' as ColDef<T>['field'], headerName: '순번', width: 72, maxWidth: 72, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) });
+  ({ field: 'no' as ColDef<T>['field'], headerName: '순번', width: 72, maxWidth: 72, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) });
 const ymCol = <T,>(): ColDef<T> =>
-  ({ field: 'ym' as ColDef<T>['field'], headerName: '기준년월', flex: 0.7, minWidth: 100, width: 100, cellStyle: centerNum, valueFormatter: ymFmt });
+  ({ field: 'ym' as ColDef<T>['field'], headerName: '기준년월', flex: 0.7, minWidth: 100, width: 100, cellStyle: tabNum, valueFormatter: ymFmt });
 const oxCol = <T,>(field: string, headerName: string): ColDef<T> =>
-  ({ field: field as ColDef<T>['field'], headerName, flex: 0.7, minWidth: 104, width: 104, cellStyle: flexMid, cellRenderer: oxCell });
+  ({ field: field as ColDef<T>['field'], headerName, flex: 0.7, minWidth: 104, width: 104, cellStyle: flexCenter, cellRenderer: oxCell });
 
 const RESULT_COLS: ColDef<EwResultRow>[] = [
   seqCol<EwResultRow>(),
   ymCol<EwResultRow>(),
   { field: 'info', headerName: '생성정보', flex: 1.4, minWidth: 160, width: 160, cellStyle: flexCenter, cellRenderer: textCell },
-  { colId: MAKE_COL, headerName: '생성여부', flex: 1.3, minWidth: 196, width: 196, cellStyle: flexMid,
+  { colId: MAKE_COL, headerName: '생성여부', flex: 1.3, minWidth: 196, width: 196, cellStyle: flexCenter,
     valueGetter: (p) => (p.data ? `${p.data.make}|${p.data.makeTs ?? ''}` : ''), cellRenderer: makeCell },
   oxCol<EwResultRow>('mod', '수정여부'),
   oxCol<EwResultRow>('cfm', '확정여부'),

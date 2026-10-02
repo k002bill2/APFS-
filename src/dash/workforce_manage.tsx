@@ -138,9 +138,8 @@ const PAGE_SIZE = 20;
    ⚠ flex 컬럼에도 `width: minWidth` 필수 — flex 적용 전 기본폭 200px 초기 레이아웃 뒤 AG Grid 35.3.1 이 넘침 0인데도
      하단 가로 스크롤 띠를 남기는 일이 있다(수정 전 10회 중 3회 → 수정 후 0/20 실측·내부 원인 미확정, litigation_manage 주석·apfs-aggrid ⑨).
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 텍스트 N/A 는 '-'(숫자 N/A 의 null 규약과 다른 축 — 이 화면엔 숫자 컬럼이 없다).
    flex 셀은 AG Grid 기본 ellipsis 가 안 먹으므로 내부 span 에 truncate 를 준다. */
@@ -151,18 +150,18 @@ const kindCell = (p: { value: WorkforceKind }) => <StatusBadge tone={KIND_TONE[p
 /* 날짜 셀 — 빈 값·null 은 '-' */
 const dateFmt = (p: { value?: string | null }) => (p.value ? String(p.value) : '-');
 
-const txt = (field: keyof WorkforceRow, headerName: string, flex: number, minWidth: number, center?: boolean): ColDef<WorkforceRow> => ({
-  field, headerName, flex, minWidth, width: minWidth, cellStyle: center ? flexMid : flexCenter, cellRenderer: textCell,
+const txt = (field: keyof WorkforceRow, headerName: string, flex: number, minWidth: number): ColDef<WorkforceRow> => ({
+  field, headerName, flex, minWidth, width: minWidth, cellStyle: flexCenter, cellRenderer: textCell,
 });
 const date = (field: keyof WorkforceRow, headerName: string, flex: number, minWidth: number): ColDef<WorkforceRow> => ({
-  field, headerName, flex, minWidth, width: minWidth, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: dateFmt,
+  field, headerName, flex, minWidth, width: minWidth, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' }, valueFormatter: dateFmt,
 });
 
 const COLUMNS: ColDef<WorkforceRow>[] = [
-  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
-  { field: 'ym', headerName: '기준년월', flex: 0.7, minWidth: 96, width: 96, cellStyle: centerNum, valueFormatter: dateFmt },
-  { field: 'gubun', headerName: '구분', width: 96, minWidth: 96, cellStyle: flexMid, cellRenderer: kindCell },
-  txt('hr', '인력구분', 0.9, 118, true),
+  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
+  { field: 'ym', headerName: '기준년월', flex: 0.7, minWidth: 96, width: 96, cellStyle: tabNum, valueFormatter: dateFmt },
+  { field: 'gubun', headerName: '구분', width: 96, minWidth: 96, cellStyle: flexCenter, cellRenderer: kindCell },
+  txt('hr', '인력구분', 0.9, 118),
   txt('mgr', '운용사', 1.4, 150),
   /* 자펀드(조합명) = 가장 긴 문자열 → 가장 큰 가중치로 잉여 폭을 흡수한다 */
   txt('fund', '자펀드', 2.0, 200),

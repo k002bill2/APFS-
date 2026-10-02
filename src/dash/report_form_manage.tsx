@@ -58,9 +58,8 @@ const PAGE_SIZE = 20;
    컬럼 정의 — 목업 헤더 순서 그대로: No · 양식제목 · 설명 · Download
    ⚠ 폭 관련 그리드 prop(`autoSizeStrategy`·`defaultColDef`)은 aggrid_theme.ts 공용 상수만 쓴다(인라인 금지 이유는 그 파일 주석).
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* Download 셀 — 셀 안 버튼. 라벨 '다운로드'에 대상 파일명을 sr-only로 덧붙여 행마다 접근名을 구분한다
    (UI.Button은 rest props가 없어 aria-label을 못 받는다 → children으로 접근名 보강). */
@@ -73,14 +72,14 @@ function DownloadCell({ row, onDownload }: { row: ReportFormRow; onDownload: (r:
 }
 
 const makeColumns = (onDownload: (r: ReportFormRow) => void): ColDef<ReportFormRow>[] => [
-  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
+  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
   { field: 'title', headerName: '양식제목', width: 340, minWidth: 240, maxWidth: 520, cellStyle: flexCenter,
     cellRenderer: (p: any) => p.value },
   /* 설명이 남는 폭을 흡수한다 — maxWidth 없는 유일한 컬럼 + `FIT_GRID_WIDTH`(수시보고 '제목' 컬럼과 같은 기법) */
   { field: 'desc', headerName: '설명', width: 320, minWidth: 200, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value ? p.value : <span style={{ color: 'var(--muted-foreground)' }}>-</span>) },
   /* 액션 컬럼 — 정렬 대상이 아니다. 헤더명은 목업 원문 'Download' 그대로 */
-  { field: 'file', headerName: 'Download', width: 132, maxWidth: 132, sortable: false, cellStyle: flexMid,
+  { field: 'file', headerName: 'Download', width: 132, maxWidth: 132, sortable: false, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.data ? <DownloadCell row={p.data} onDownload={onDownload} /> : null) },
 ];
 

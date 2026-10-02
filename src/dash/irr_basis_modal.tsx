@@ -25,7 +25,8 @@ const { Button, SegTabs, StatusBadge } = UI;
 const TH = 'border border-border bg-[color:var(--grid-header)] font-bold whitespace-nowrap';
 const TD = 'border border-border';
 const CELL: React.CSSProperties = { padding: '8px 11px' };
-const ALIGN = { text: 'text-left', center: 'text-center', date: 'text-center', amount: 'text-right', number: 'text-right', badge: 'text-center' } as const;
+/* 표 정렬 규약: 수량형(amount·number)만 우측, 나머지는 좌측. `center` 는 데이터 메타(risk_*_data)의 kind 이름일 뿐 가운데 정렬이 아니다 */
+const ALIGN = { text: 'text-left', center: 'text-left', date: 'text-left', amount: 'text-right', number: 'text-right', badge: 'text-left' } as const;
 
 export function IrrBasisModal({ basis, onClose }: { basis: IrrBasis; onClose: () => void }) {
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);

@@ -42,7 +42,14 @@ const negStyle = (v: number): React.CSSProperties | undefined => (v < 0 ? { colo
 const GRADE_TONE: Record<string, Tone> = { AA: 'success', A: 'success', B: 'info', C: 'warning', D: 'danger' };
 
 /* ── 표 프리미티브 ── */
-const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-center whitespace-nowrap';
+const TH_BASE = 'border border-border bg-[color:var(--grid-header)] font-bold whitespace-nowrap';
+const TH = `${TH_BASE} text-left`;
+const THR = `${TH_BASE} text-right`;
+/* 2단 그룹 헤더(colSpan 묶음 제목)만 가운데 — 표 정렬 규약의 허용 예외 */
+const THG = `${TH_BASE} text-center`;
+/* 수량형(금액·율) 열 헤더 = 우측. 나머지(NO·일자·코드·텍스트) = 좌측 */
+const NUM_HEAD = new Set(['출자금액', '출자비율', '투자금액', '회수원금(A)', '회수금액(B)', '수익금액(B-A)', '감액금액', '예금액', '이자율', '금액', '분배원금', '분배수익', '분배총액', '잔여원금']);
+const thFor = (h: string) => (NUM_HEAD.has(h) ? THR : TH);
 const TD = 'border border-border';
 const CELL: React.CSSProperties = { padding: '6px 10px' };
 const SUM_ROW = 'bg-muted font-bold';
@@ -108,21 +115,21 @@ function MembersTable({ unit }: { unit: Unit }) {
     <Tbl caption="조합구성 — 조합원별 출자금액·출자비율" minWidth={560}>
       <thead><tr>
         {['NO', '조합원', '출자금액', '출자비율', '비고'].map((h) => (
-          <th key={h} scope="col" className={TH} style={CELL}>{h}</th>
+          <th key={h} scope="col" className={thFor(h)} style={CELL}>{h}</th>
         ))}
       </tr></thead>
       <tbody>
         {MEMBERS.map((m) => (
           <tr key={m.no}>
-            <td className={`${TD} text-center`} style={CELL}>{m.no}</td>
+            <td className={`${TD} text-left`} style={CELL}>{m.no}</td>
             <td className={TD} style={CELL}>{m.name}</td>
             <td className={`${TD} text-right tabular`} style={CELL}>{money(m.won, unit)}</td>
             <td className={`${TD} text-right tabular`} style={CELL}>{String(m.rate)} %</td>
-            <td className={`${TD} text-center`} style={CELL}>{m.note}</td>
+            <td className={`${TD} text-left`} style={CELL}>{m.note}</td>
           </tr>
         ))}
         <tr className={SUM_ROW}>
-          <th scope="row" colSpan={2} className={`${TD} text-center`} style={CELL}>합 계</th>
+          <th scope="row" colSpan={2} className={`${TD} text-left`} style={CELL}>합 계</th>
           <td className={`${TD} text-right tabular`} style={CELL}>{money(MEMBERS_TOTAL.won, unit)}</td>
           <td className={`${TD} text-right tabular`} style={CELL}>{String(MEMBERS_TOTAL.rate)} %</td>
           <td className={TD} style={CELL} />
@@ -145,26 +152,26 @@ function InvestTable({ unit }: { unit: Unit }) {
           {['NO', '투자기업', '대표자', '소재지', '제품', '투자시점'].map((h) => (
             <th key={h} rowSpan={2} scope="col" className={TH} style={CELL}>{h}</th>
           ))}
-          <th colSpan={INV_SUB.length} scope="colgroup" className={TH} style={CELL}>투자내역</th>
-          <th rowSpan={2} scope="col" className={TH} style={CELL}>합계</th>
+          <th colSpan={INV_SUB.length} scope="colgroup" className={THG} style={CELL}>투자내역</th>
+          <th rowSpan={2} scope="col" className={THR} style={CELL}>합계</th>
         </tr>
-        <tr>{INV_SUB.map(([k, l]) => <th key={k} scope="col" className={TH} style={{ ...CELL, fontWeight: 600 }}>{l}</th>)}</tr>
+        <tr>{INV_SUB.map(([k, l]) => <th key={k} scope="col" className={THR} style={{ ...CELL, fontWeight: 600 }}>{l}</th>)}</tr>
       </thead>
       <tbody>
         {INVEST.map((r) => (
           <tr key={r.no}>
-            <td className={`${TD} text-center`} style={CELL}>{r.no}</td>
+            <td className={`${TD} text-left`} style={CELL}>{r.no}</td>
             <td className={TD} style={CELL}>{r.co}</td>
-            <td className={`${TD} text-center`} style={CELL}>{r.ceo}</td>
-            <td className={`${TD} text-center`} style={CELL}>{r.loc}</td>
+            <td className={`${TD} text-left`} style={CELL}>{r.ceo}</td>
+            <td className={`${TD} text-left`} style={CELL}>{r.loc}</td>
             <td className={TD} style={{ ...CELL, minWidth: 220 }}>{r.product}</td>
-            <td className={`${TD} text-center`} style={CELL}>{String(r.at)}</td>
+            <td className={`${TD} text-left`} style={CELL}>{String(r.at)}</td>
             {INV_SUB.map(([k]) => <td key={k} className={`${TD} text-right tabular`} style={CELL}>{money(r[k], unit)}</td>)}
             <td className={`${TD} text-right tabular font-semibold`} style={CELL}>{money(r.total, unit)}</td>
           </tr>
         ))}
         <tr className={SUM_ROW}>
-          <th scope="row" colSpan={6} className={`${TD} text-center`} style={CELL}>합계</th>
+          <th scope="row" colSpan={6} className={`${TD} text-left`} style={CELL}>합계</th>
           {INV_SUB.map(([k]) => <td key={k} className={`${TD} text-right tabular`} style={CELL}>{money(INVEST_TOTAL[k], unit)}</td>)}
           <td className={`${TD} text-right tabular`} style={CELL}>{money(INVEST_TOTAL.total, unit)}</td>
         </tr>
@@ -180,15 +187,15 @@ function GradeTable() {
       <colgroup><col style={{ width: 52 }} /><col style={{ width: 132 }} /><col style={{ width: 104 }} /><col /><col style={{ width: 300 }} /></colgroup>
       <thead><tr>
         {['NO', '투자기업', '사후관리 등급', '등급부여 근거', '비고'].map((h) => (
-          <th key={h} scope="col" className={TH} style={CELL}>{h}</th>
+          <th key={h} scope="col" className={thFor(h)} style={CELL}>{h}</th>
         ))}
       </tr></thead>
       <tbody>
         {GRADES.map((g) => (
           <tr key={g.no}>
-            <td className={`${TD} text-center align-top`} style={CELL}>{g.no}</td>
+            <td className={`${TD} text-left align-top`} style={CELL}>{g.no}</td>
             <td className={`${TD} align-top`} style={CELL}>{g.co}</td>
-            <td className={`${TD} text-center align-top`} style={CELL}><StatusBadge size="sm" tone={GRADE_TONE[g.grade] ?? 'info'} label={g.grade} /></td>
+            <td className={`${TD} text-left align-top`} style={CELL}><StatusBadge size="sm" tone={GRADE_TONE[g.grade] ?? 'info'} label={g.grade} /></td>
             <td className={`${TD} align-top`} style={{ ...CELL, lineHeight: 1.6 }}>{g.basis}</td>
             <td className={`${TD} align-top`} style={{ ...CELL, lineHeight: 1.6 }}>{g.note}</td>
           </tr>
@@ -208,7 +215,7 @@ function CriteriaTable() {
       <tbody>
         {GRADE_CRITERIA.map((c) => (
           <tr key={c.grade}>
-            <th scope="row" className={`${TD} text-center font-bold align-top`} style={CELL}>{c.grade}</th>
+            <th scope="row" className={`${TD} text-left font-bold align-top`} style={CELL}>{c.grade}</th>
             {/* 원문 <br> 줄바꿈은 pre-line으로 보존 */}
             <td className={`${TD} align-top`} style={{ ...CELL, whiteSpace: 'pre-line', lineHeight: 1.6 }}>{c.desc}</td>
           </tr>
@@ -223,32 +230,32 @@ const REC_HEAD = ['NO', '투자기업', '투자시점', '투자금액', '회수�
 function RecoveryTable({ unit }: { unit: Unit }) {
   return (
     <Tbl caption="회수내역 — 업체별 회수 다리와 소계" minWidth={1400}>
-      <thead><tr>{REC_HEAD.map((h) => <th key={h} scope="col" className={TH} style={CELL}>{h}</th>)}</tr></thead>
+      <thead><tr>{REC_HEAD.map((h) => <th key={h} scope="col" className={thFor(h)} style={CELL}>{h}</th>)}</tr></thead>
       <tbody>
         {RECOVERY.map((g) => (
           <React.Fragment key={g.co + g.at}>
             {g.legs.map((L, i) => (
               <tr key={L.no}>
-                <td className={`${TD} text-center`} style={CELL}>{L.no}</td>
+                <td className={`${TD} text-left`} style={CELL}>{L.no}</td>
                 {i === 0 && (
                   <>
                     <td rowSpan={g.legs.length} className={`${TD} align-middle`} style={CELL}>{g.co}</td>
-                    <td rowSpan={g.legs.length} className={`${TD} text-center align-middle`} style={CELL}>{String(g.at)}</td>
+                    <td rowSpan={g.legs.length} className={`${TD} text-left align-middle`} style={CELL}>{String(g.at)}</td>
                     <td rowSpan={g.legs.length} className={`${TD} text-right tabular align-middle`} style={CELL}>{money(g.amount, unit)}</td>
-                    <td rowSpan={g.legs.length} className={`${TD} text-center align-middle`} style={CELL}>{String(g.done)}</td>
+                    <td rowSpan={g.legs.length} className={`${TD} text-left align-middle`} style={CELL}>{String(g.done)}</td>
                   </>
                 )}
-                <td className={`${TD} text-center`} style={CELL}>{String(L.date)}</td>
+                <td className={`${TD} text-left`} style={CELL}>{String(L.date)}</td>
                 <td className={`${TD} text-right tabular`} style={CELL}>{money(L.principal, unit)}</td>
                 <td className={`${TD} text-right tabular`} style={CELL}>{money(L.recovered, unit)}</td>
                 <td className={`${TD} text-right tabular`} style={CELL}>{money(L.profit, unit)}</td>
                 <td className={`${TD} text-right tabular`} style={{ ...CELL, ...negStyle(L.impair) }}>{money(L.impair, unit)}</td>
-                <td className={`${TD} text-center`} style={CELL}>{L.state}</td>
-                <td className={`${TD} text-center`} style={CELL}>{L.note}</td>
+                <td className={`${TD} text-left`} style={CELL}>{L.state}</td>
+                <td className={`${TD} text-left`} style={CELL}>{L.note}</td>
               </tr>
             ))}
             <tr className={SUM_ROW}>
-              <th scope="row" colSpan={3} className={`${TD} text-center`} style={CELL}>소 계</th>
+              <th scope="row" colSpan={3} className={`${TD} text-left`} style={CELL}>소 계</th>
               <td className={`${TD} text-right tabular`} style={CELL}>{money(g.amount, unit)}</td>
               <td colSpan={2} className={TD} style={CELL} />
               <td className={`${TD} text-right tabular`} style={CELL}>{money(g.sub.principal, unit)}</td>
@@ -260,7 +267,7 @@ function RecoveryTable({ unit }: { unit: Unit }) {
           </React.Fragment>
         ))}
         <tr className={SUM_ROW}>
-          <th scope="row" colSpan={3} className={`${TD} text-center`} style={CELL}>합 계</th>
+          <th scope="row" colSpan={3} className={`${TD} text-left`} style={CELL}>합 계</th>
           <td className={`${TD} text-right tabular`} style={CELL}>{money(RECOVERY_TOTAL.amount, unit)}</td>
           <td colSpan={2} className={TD} style={CELL} />
           <td className={`${TD} text-right tabular`} style={CELL}>{money(RECOVERY_TOTAL.principal, unit)}</td>
@@ -281,15 +288,15 @@ function OccTable() {
       <colgroup><col style={{ width: 52 }} /><col style={{ width: 180 }} /><col style={{ width: 120 }} /><col /></colgroup>
       <thead><tr>
         {['NO', '투자기업', '보고일자', '수시보고 내역 요약'].map((h) => (
-          <th key={h} scope="col" className={TH} style={CELL}>{h}</th>
+          <th key={h} scope="col" className={thFor(h)} style={CELL}>{h}</th>
         ))}
       </tr></thead>
       <tbody>
         {OCC_NOTES.map((g) => g.items.map((it, i) => (
           <tr key={it.no}>
-            <td className={`${TD} text-center`} style={CELL}>{it.no}</td>
+            <td className={`${TD} text-left`} style={CELL}>{it.no}</td>
             {i === 0 && <td rowSpan={g.items.length} className={`${TD} align-middle`} style={CELL}>{g.co}</td>}
-            <td className={`${TD} text-center`} style={CELL}>{String(it.date)}</td>
+            <td className={`${TD} text-left`} style={CELL}>{String(it.date)}</td>
             <td className={TD} style={CELL}>{it.summary}</td>
           </tr>
         )))}
@@ -304,22 +311,22 @@ function DepositTable({ unit }: { unit: Unit }) {
     <Tbl caption="미투자자산 운용현황 — 예금내역" minWidth={720}>
       <thead><tr>
         {['NO', '계좌번호(기관)', '예금액', '만기일', '이자율', '비고'].map((h) => (
-          <th key={h} scope="col" className={TH} style={CELL}>{h}</th>
+          <th key={h} scope="col" className={thFor(h)} style={CELL}>{h}</th>
         ))}
       </tr></thead>
       <tbody>
         {DEPOSITS.map((d) => (
           <tr key={d.no}>
-            <td className={`${TD} text-center`} style={CELL}>{d.no}</td>
+            <td className={`${TD} text-left`} style={CELL}>{d.no}</td>
             <td className={TD} style={CELL}>{d.account}</td>
             <td className={`${TD} text-right tabular`} style={CELL}>{money(d.won, unit)}</td>
-            <td className={`${TD} text-center`} style={CELL}>{d.due ? String(d.due) : '-'}</td>
+            <td className={`${TD} text-left`} style={CELL}>{d.due ? String(d.due) : '-'}</td>
             <td className={`${TD} text-right tabular`} style={CELL}>{String(d.rate)} %</td>
-            <td className={`${TD} text-center`} style={CELL}>{d.note}</td>
+            <td className={`${TD} text-left`} style={CELL}>{d.note}</td>
           </tr>
         ))}
         <tr className={SUM_ROW}>
-          <th scope="row" colSpan={2} className={`${TD} text-center`} style={CELL}>합 계</th>
+          <th scope="row" colSpan={2} className={`${TD} text-left`} style={CELL}>합 계</th>
           <td className={`${TD} text-right tabular`} style={CELL}>{money(DEPOSITS_TOTAL, unit)}</td>
           <td colSpan={3} className={TD} style={CELL} />
         </tr>
@@ -334,19 +341,19 @@ function LedgerTable({ caption, rows, total, unit }: { caption: string; rows: ty
     <Tbl caption={caption} minWidth={620}>
       <colgroup><col style={{ width: 52 }} /><col style={{ width: 140 }} /><col style={{ width: 180 }} /><col /></colgroup>
       <thead><tr>
-        {['NO', '일자', '금액', '내역'].map((h) => <th key={h} scope="col" className={TH} style={CELL}>{h}</th>)}
+        {['NO', '일자', '금액', '내역'].map((h) => <th key={h} scope="col" className={thFor(h)} style={CELL}>{h}</th>)}
       </tr></thead>
       <tbody>
         {rows.map((r) => (
           <tr key={r.no}>
-            <td className={`${TD} text-center`} style={CELL}>{r.no}</td>
-            <td className={`${TD} text-center`} style={CELL}>{String(r.date)}</td>
+            <td className={`${TD} text-left`} style={CELL}>{r.no}</td>
+            <td className={`${TD} text-left`} style={CELL}>{String(r.date)}</td>
             <td className={`${TD} text-right tabular`} style={CELL}>{money(r.won, unit)}</td>
             <td className={TD} style={CELL}>{r.note}</td>
           </tr>
         ))}
         <tr className={SUM_ROW}>
-          <th scope="row" colSpan={2} className={`${TD} text-center`} style={CELL}>합 계</th>
+          <th scope="row" colSpan={2} className={`${TD} text-left`} style={CELL}>합 계</th>
           <td className={`${TD} text-right tabular`} style={CELL}>{money(total, unit)}</td>
           <td className={TD} style={CELL} />
         </tr>
@@ -361,14 +368,14 @@ function DistribTable({ unit }: { unit: Unit }) {
     <Tbl caption="누적분배내역" minWidth={780}>
       <thead><tr>
         {['NO', '일자', '분배원금', '분배수익', '분배총액', '잔여원금'].map((h) => (
-          <th key={h} scope="col" className={TH} style={CELL}>{h}</th>
+          <th key={h} scope="col" className={thFor(h)} style={CELL}>{h}</th>
         ))}
       </tr></thead>
       <tbody>
         {DISTRIB.map((d) => (
           <tr key={d.no}>
-            <td className={`${TD} text-center`} style={CELL}>{d.no}</td>
-            <td className={`${TD} text-center`} style={CELL}>{String(d.date)}</td>
+            <td className={`${TD} text-left`} style={CELL}>{d.no}</td>
+            <td className={`${TD} text-left`} style={CELL}>{String(d.date)}</td>
             <td className={`${TD} text-right tabular`} style={CELL}>{money(d.principal, unit)}</td>
             <td className={`${TD} text-right tabular`} style={CELL}>{money(d.profit, unit)}</td>
             <td className={`${TD} text-right tabular`} style={CELL}>{money(d.total, unit)}</td>
@@ -376,7 +383,7 @@ function DistribTable({ unit }: { unit: Unit }) {
           </tr>
         ))}
         <tr className={SUM_ROW}>
-          <th scope="row" colSpan={2} className={`${TD} text-center`} style={CELL}>합 계</th>
+          <th scope="row" colSpan={2} className={`${TD} text-left`} style={CELL}>합 계</th>
           <td className={`${TD} text-right tabular`} style={CELL}>{money(DISTRIB_TOTAL.principal, unit)}</td>
           <td className={`${TD} text-right tabular`} style={CELL}>{money(DISTRIB_TOTAL.profit, unit)}</td>
           <td className={`${TD} text-right tabular`} style={CELL}>{money(DISTRIB_TOTAL.total, unit)}</td>

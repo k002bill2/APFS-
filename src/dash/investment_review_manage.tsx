@@ -87,16 +87,15 @@ const today = () => format(new Date(), 'yyyy-MM-dd');   // 로컬 달력일(toIS
    컬럼 정의 — 목업 헤더 순서 그대로(단일 헤더). No·운용사·자펀드 좌측 고정
 ────────────────────────────── */
 const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p));
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-const txt = (field: keyof InvReviewRow, header: string, width: number, center?: boolean): ColDef<InvReviewRow> => ({
-  field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
+const txt = (field: keyof InvReviewRow, header: string, width: number): ColDef<InvReviewRow> => ({
+  field, headerName: header, width, cellStyle: flexCenter,
   cellRenderer: (p: any) => (p.node.rowPinned ? null : p.value),
 });
 const date = (field: keyof InvReviewRow, header: string, width = 128): ColDef<InvReviewRow> => ({
-  field, headerName: header, width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
+  field, headerName: header, width, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' },
   valueFormatter: (p) => (p.node?.rowPinned ? '' : String(p.value)),
 });
 const amt = (field: keyof InvReviewRow, header: string, strong?: boolean, width = 150): ColDef<InvReviewRow> => ({
@@ -104,7 +103,7 @@ const amt = (field: keyof InvReviewRow, header: string, strong?: boolean, width 
 });
 /* 상태 배지 컬럼(읽기전용) — 전이는 툴바 액션에서만(apfs-stage-workflow 규약 1) */
 const badge = (field: keyof InvReviewRow, header: string, width: number, toneMap: Record<string, Tone>, fallback = ''): ColDef<InvReviewRow> => ({
-  field, headerName: header, width, cellStyle: flexMid, sortable: true,
+  field, headerName: header, width, cellStyle: flexCenter, sortable: true,
   cellRenderer: (p: any) => {
     if (p.node.rowPinned) return null;
     const val = (p.value as string) || fallback;
@@ -114,18 +113,18 @@ const badge = (field: keyof InvReviewRow, header: string, width: number, toneMap
 });
 
 const columnDefs: ColDef<InvReviewRow>[] = [
-  { field: 'no', headerName: 'No', width: 68, pinned: 'left', cellStyle: centerNum,
+  { field: 'no', headerName: 'No', width: 68, pinned: 'left', cellStyle: tabNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '합 계' : String(p.value)) },
   { ...txt('gp', '운용사', 180), maxWidth: 240, pinned: 'left' },
   { ...txt('fn', '자펀드', 220), maxWidth: 320, pinned: 'left', cellRenderer: (p: any) => (p.node.rowPinned ? null : <span className="font-semibold">{p.value}</span>) },
   { ...txt('co', '투자기업', 160), maxWidth: 240 },
-  { colId: 'st', headerName: '투심상태', width: 96, cellStyle: flexMid, sortable: true,
+  { colId: 'st', headerName: '투심상태', width: 96, cellStyle: flexCenter, sortable: true,
     valueGetter: (p) => (p.data ? stOf(p.data) : ''),
     cellRenderer: (p: any) => (p.node.rowPinned ? null : <StatusBadge tone={ST_TONE[p.value] ?? 'info'} label={p.value} size="lg" />) },
   date('dt', '투심일자'),
   amt('inv', '투자금액', true),
-  txt('ty', '투자유형', 120, true),
-  txt('ob', '의무투자', 92, true), txt('sm', '일정규모 이하투자', 128, true), txt('ag', '농어업투자', 100, true),
+  txt('ty', '투자유형', 120),
+  txt('ob', '의무투자', 92), txt('sm', '일정규모 이하투자', 128), txt('ag', '농어업투자', 100),
   badge('confirm', '투심일정 확정여부', 132, CONFIRM_TONE),
   amt('appr', '승인금액', false),
   date('pay', '투자금납입 예정일', 140),

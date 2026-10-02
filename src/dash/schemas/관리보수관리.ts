@@ -27,21 +27,21 @@ export const schema: PageSchema = {
   kind: 'list',
   entity: '관리보수',
   columns: [
-    { key: 'no',         label: 'No',       type: 'number', align: 'center' },
+    { key: 'no',         label: 'No',       type: 'number', align: 'left' },
     { key: 'gp',         label: '운용사',   type: 'gp',     align: 'left' },
     { key: 'subFund',    label: '자펀드',   type: 'text',   align: 'left' },
-    { key: 'reportType', label: '보고구분', type: 'text',   align: 'center' },
+    { key: 'reportType', label: '보고구분', type: 'text' },
     /* 원문 `.paylink` — 지급일자 클릭 시 `관리보수보고 상세조회` 팝업. detailWhen/detailPattern 이
        없으므로 모든 행이 링크다(원문도 전 행이 버튼). 산출내역 값은 mgmt_fee_detail_model.ts. */
-    { key: 'payDate',    label: '지급일자', type: 'date',   align: 'center', detail: 'mgmtFeeDetail' },
-    { key: 'payType',    label: '지급구분', type: 'text',   align: 'center' },
+    { key: 'payDate',    label: '지급일자', type: 'date', detail: 'mgmtFeeDetail' },
+    { key: 'payType',    label: '지급구분', type: 'text' },
     /* ⚠ 라벨에 단위를 박지 않는다 — generic_list 가 `c.unit` 을 헤더에 덧붙이므로
        label:'금액(원)' + unit:'원' 이면 헤더가 `금액(원) (원)` 이 된다(2026-09-16 런타임 실측). */
     { key: 'amount',     label: '금액',     type: 'amount', unit: '원', align: 'right' },
     /* 원문 `<select class="cellsel" data-cfm>` — 이 화면의 핵심 액션이다(조회 화면인데 이 컬럼만 편집).
        원문은 StatusBadge 격인 `cfmTag()` 를 정의해 놓고 **쓰지 않는다** — 셀에 select 만 그린다.
        type:'status' 는 남겨 둔다: 필터 도메인(statusDomain)이 그 값을 쓰고, 렌더는 inlineSelect 가 이긴다. */
-    { key: 'isConfirmed', label: '확정여부', type: 'status', align: 'center', inlineSelect: ['확정', '미확정'] },
+    { key: 'isConfirmed', label: '확정여부', type: 'status', inlineSelect: ['확정', '미확정'] },
   ],
   fields: [],
   /* 검색조건(S1_43:204-217) — 원문 `.searchbox` 라벨 순서 그대로:

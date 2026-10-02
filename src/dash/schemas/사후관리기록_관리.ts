@@ -29,17 +29,17 @@ export const schema: PageSchema = {
   kind: 'list',
   entity: '사후관리기록',
   columns: [
-    { key: 'no',           label: 'No',          type: 'number', align: 'center' },
-    { key: 'majorCat',     label: '대분류',      type: 'status', align: 'center' },
+    { key: 'no',           label: 'No',          type: 'number', align: 'left' },
+    { key: 'majorCat',     label: '대분류',      type: 'status' },
     { key: 'subFund',      label: '자펀드',      type: 'text',   align: 'left' },
     { key: 'investee',     label: '투자기업',    type: 'text',   align: 'left' },
-    { key: 'recordDate',   label: '해당일자',    type: 'date',   align: 'center' },
-    { key: 'recordType',   label: '유형',        type: 'text',   align: 'center' },
+    { key: 'recordDate',   label: '해당일자',    type: 'date' },
+    { key: 'recordType',   label: '유형',        type: 'text' },
     // 원문 `.content-cell{white-space:pre-line;min-width:260px;max-width:360px}` — 5줄짜리 행이 있다.
     { key: 'content',      label: '내용',        type: 'text',   align: 'left', multiline: true },
-    { key: 'deliveryType', label: '전달형태',    type: 'text',   align: 'center' },
+    { key: 'deliveryType', label: '전달형태',    type: 'text' },
     { key: 'counterpart',  label: 'Counterpart', type: 'text',   align: 'left' },
-    { key: 'documents',    label: '관련문서',    type: 'text',   align: 'center' },
+    { key: 'documents',    label: '관련문서',    type: 'text' },
   ],
   // ── 등록/수정 모달 양식(원문 모달 필드 순서 그대로) ──
   fields: [

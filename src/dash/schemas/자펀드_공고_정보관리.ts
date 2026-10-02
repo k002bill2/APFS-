@@ -8,10 +8,10 @@ export const schema: PageSchema = {
   kind: 'form',
   entity: '공고',
   columns: [
-    { key: 'bizYear',    label: '사업연도',  type: 'text',   align: 'center' },
-    { key: 'periodType', label: '정기/수시',  type: 'text',   align: 'center' },
-    { key: 'seqNo',      label: '차수',       type: 'number', align: 'center' },
-    { key: 'fundAccount',label: '계정구분',   type: 'text',   align: 'center' },
+    { key: 'bizYear',    label: '사업연도',  type: 'text' },
+    { key: 'periodType', label: '정기/수시',  type: 'text' },
+    { key: 'seqNo',      label: '차수',       type: 'number', align: 'left' },
+    { key: 'fundAccount',label: '계정구분',   type: 'text' },
     // 첨부파일은 별도 컬럼을 만들지 않고 제목 뒤 확장자 칩(PDF 등)으로 표현(2026-09-12 사용자 결정).
     { key: 'title',      label: '제목',       type: 'text',   align: 'left', attachFrom: 'attachment' },
   ],

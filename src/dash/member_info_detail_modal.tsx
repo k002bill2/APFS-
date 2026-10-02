@@ -70,7 +70,9 @@ function UnitSeg({ unit, onChange }: { unit: Unit; onChange: (u: Unit) => void }
   );
 }
 
-const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-center';
+const TH_BASE = 'border border-border bg-[color:var(--grid-header)] font-bold';
+const TH = `${TH_BASE} text-left`;
+const THR = `${TH_BASE} text-right`;
 const TD = 'border border-border';
 const CELL: React.CSSProperties = { padding: '7px 9px' };
 /* 목업 `tfoot{border-top:2px solid ink}` → 합계행 공용 표기(형제 팝업 동형) */
@@ -150,18 +152,18 @@ function TxTable({ unit }: { unit: Unit }) {
         <caption className="sr-only">조합원 거래내역 — 출자·배분·잔액. 배분 관련 값은 아직 발생하지 않아 '-'로 표시(납입 전제)</caption>
         <thead>
           <tr>
-            {TX_HEAD.map((h) => <th key={h} scope="col" className={TH} style={CELL}>{h}</th>)}
+            {TX_HEAD.map((h, i) => <th key={h} scope="col" className={i < 3 ? TH : THR} style={CELL}>{h}</th>)}
           </tr>
         </thead>
         <tbody>
           {TX_ROWS.map((r) => (
             <tr key={r.sub}>
               {/* 거래구분은 분류 배지(목업 `tag b`) */}
-              <td className={`${TD} text-center`} style={CELL}><StatusBadge tone="info" label={r.kind} size="md" /></td>
-              <td className={`${TD} text-center`} style={CELL}>{r.sub}</td>
-              <td className={`${TD} text-center tabular`} style={CELL}>{String(r.date)}</td>
+              <td className={TD} style={CELL}><StatusBadge tone="info" label={r.kind} size="md" /></td>
+              <td className={TD} style={CELL}>{r.sub}</td>
+              <td className={`${TD} tabular`} style={CELL}>{String(r.date)}</td>
               {r.vals.map((v, i) => (
-                <td key={TX_HEAD[i + 3]} className={`${TD} tabular ${v == null ? 'text-center text-caption' : 'text-right'}`} style={CELL}>
+                <td key={TX_HEAD[i + 3]} className={`${TD} tabular text-right ${v == null ? 'text-caption' : ''}`} style={CELL}>
                   {money(v, unit)}
                 </td>
               ))}
@@ -177,7 +179,7 @@ function TxTable({ unit }: { unit: Unit }) {
               : FOOT;
             return (
               <tr key={f.l} className={`font-bold ${f.sub ? '' : 'bg-muted'}`}>
-                <th scope="row" colSpan={3} className={`${TD} text-center`} style={st}>{f.l}</th>
+                <th scope="row" colSpan={3} className={`${TD} text-left`} style={st}>{f.l}</th>
                 {f.vals.map((v, i) => (
                   <td key={TX_HEAD[i + 3]} className={`${TD} text-right tabular`} style={st}>{money(v, unit)}</td>
                 ))}

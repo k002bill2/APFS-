@@ -33,7 +33,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-center';
+const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-left';
 const TD = 'border border-border';
 const CELL: React.CSSProperties = { padding: '7px 9px' };
 const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)' };
@@ -90,7 +90,7 @@ function ReportTable({ list }: { list: MeetingDetail['report'] }) {
         <tbody>
           {list.length === 0 ? <EmptyRow span={2} msg="등록된 보고안건 없음" /> : list.map((x) => (
             <tr key={x.ord}>
-              <td className={`${TD} text-center tabular`} style={CELL}>{String(x.ord)}</td>
+              <td className={`${TD} tabular`} style={CELL}>{String(x.ord)}</td>
               <td className={TD} style={CELL}>{x.content}</td>
             </tr>
           ))}
@@ -118,11 +118,11 @@ function MotionTable({ list }: { list: MeetingDetail['motion'] }) {
         <tbody>
           {list.length === 0 ? <EmptyRow span={5} msg="등록된 부의안건 없음" /> : list.map((x) => (
             <tr key={x.ord}>
-              <td className={`${TD} text-center tabular`} style={CELL}>{String(x.ord)}</td>
+              <td className={`${TD} tabular`} style={CELL}>{String(x.ord)}</td>
               <td className={TD} style={CELL}>{x.content}</td>
-              <td className={`${TD} text-center`} style={CELL}>{x.way}</td>
-              <td className={`${TD} text-center ${x.moaf ? '' : 'text-caption'}`} style={CELL}>{x.moaf ? x.moaf : '-'}</td>
-              <td className={`${TD} text-center ${x.result ? '' : 'text-caption'}`} style={CELL}>{x.result ? x.result : '-'}</td>
+              <td className={TD} style={CELL}>{x.way}</td>
+              <td className={`${TD} ${x.moaf ? '' : 'text-caption'}`} style={CELL}>{x.moaf ? x.moaf : '-'}</td>
+              <td className={`${TD} ${x.result ? '' : 'text-caption'}`} style={CELL}>{x.result ? x.result : '-'}</td>
             </tr>
           ))}
         </tbody>
@@ -152,10 +152,10 @@ function FileTable({ list }: { list: MeetingDetail['files'] }) {
           {list.length === 0 ? <EmptyRow span={5} msg="첨부파일 없음" /> : list.map((f) => (
             <tr key={f.name}>
               <td className={TD} style={{ ...CELL, overflowWrap: 'anywhere' }}>{f.name}</td>
-              <td className={`${TD} text-center tabular`} style={CELL}>{String(f.reg)}</td>
-              <td className={`${TD} text-center tabular`} style={CELL}>{String(f.mod)}</td>
-              <td className={`${TD} text-center`} style={CELL}>{f.up || '-'}</td>
-              <td className={`${TD} text-center`} style={CELL}>
+              <td className={`${TD} tabular`} style={CELL}>{String(f.reg)}</td>
+              <td className={`${TD} tabular`} style={CELL}>{String(f.mod)}</td>
+              <td className={TD} style={CELL}>{f.up || '-'}</td>
+              <td className={TD} style={CELL}>
                 <Button variant="outline" size="sm" leadingIcon="download" onClick={() => toast('다운로드')}>
                   <span className="sr-only">{f.name} </span>다운로드
                 </Button>

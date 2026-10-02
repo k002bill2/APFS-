@@ -130,17 +130,16 @@ const ROLE_BY_COL: Record<string, Role> = { jsBy: 'js', rsBy: 'rs' };
    ⚠ 파생 '확인상태' 컬럼은 두지 않는다(2026-09-12 사용자 지시) — 목업에 없는 컬럼이다.
      파생값 자체는 남아 툴바 필터 칩이 계속 쓴다(stageOf).
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-const txt = (field: keyof OccReportRow, header: string, width: number, center?: boolean): ColDef<OccReportRow> => ({
-  field, headerName: header, width, cellStyle: center ? flexMid : flexCenter,
+const txt = (field: keyof OccReportRow, header: string, width: number): ColDef<OccReportRow> => ({
+  field, headerName: header, width, cellStyle: flexCenter,
   cellRenderer: (p: any) => p.value,
 });
 /* maxWidth = width — `fitGridWidth`가 남는 폭을 이 컬럼에 주지 못하게 막아, 잉여가 제목으로만 흘러가게 한다 */
 const date = (field: keyof OccReportRow, header: string, width = 128): ColDef<OccReportRow> => ({
-  field, headerName: header, width, maxWidth: width, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
+  field, headerName: header, width, maxWidth: width, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' },
   valueFormatter: (p) => String(p.value),
 });
 /* 모듈 스코프에 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid가 헤더를 통째로 remount한다 */
@@ -150,7 +149,7 @@ const date = (field: keyof OccReportRow, header: string, width = 128): ColDef<Oc
    단건 확인은 이 셀 버튼, 여러 건은 체크박스 선택 → 선택 바 일괄 확인(2026-09-28). */
 const confirmCol = (field: 'jsBy' | 'rsBy', header: string, role: Role,
                     onConfirm: (role: Role, id: string) => void): ColDef<OccReportRow> => ({
-  field, headerName: header, width: 146, maxWidth: 146, cellStyle: flexMid, sortable: true,
+  field, headerName: header, width: 146, maxWidth: 146, cellStyle: flexCenter, sortable: true,
   cellRenderer: (p: any) => (p.value
     ? <StatusBadge tone="success" label={p.value} size="lg" />
     : <Button variant="outline" size="sm" onClick={() => onConfirm(role, p.data.id)}>확인</Button>),
@@ -173,7 +172,7 @@ function LinkCell({ value, hint, onClick }: { value: string; hint: string; onCli
 }
 
 const makeColumns = (openSpec: (k: SpecKind) => void, onConfirm: (role: Role, id: string) => void): ColDef<OccReportRow>[] => [
-  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
+  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
   date('ind', '보고일자'),
   date('occ', '상황 발생일자', 136),
   { ...txt('gp', '운용사', 180), maxWidth: 240,

@@ -119,9 +119,8 @@ function computeTotal(rows: ReportUpdateRow[]): ReportUpdateRow {
      완전히 고정되고(useMemo([]) 보다 강함) 골드 `subfund_manage.tsx` 와 같은 형태다(apfs-aggrid 계약 6).
    ⚠ pinned 는 선택 컬럼만 — 다른 컬럼에 pinned 를 주면 목업 순서가 깨진다.
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 텍스트 컬럼(운용사·자펀드·투자기업) — 합계행은 빈 칸(목업 tfoot 병합 구간) */
 const txt = (field: keyof ReportUpdateRow, header: string, width: number, maxWidth: number): ColDef<ReportUpdateRow> => ({
@@ -135,19 +134,19 @@ const txt = (field: keyof ReportUpdateRow, header: string, width: number, maxWid
      특히 '투자금납입 예정일'(9자) 헤더가 cap 에 걸려 잘릴 수 있다. */
 const dateCol = (field: keyof ReportUpdateRow, header: string, width: number, muted = true): ColDef<ReportUpdateRow> => ({
   field, headerName: header, width,
-  cellStyle: muted ? { ...centerNum, color: 'var(--muted-foreground)' } : centerNum,
+  cellStyle: muted ? { ...tabNum, color: 'var(--muted-foreground)' } : tabNum,
   valueFormatter: (p) => (p.node?.rowPinned ? '-' : String(p.value)),
 });
 
 const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
   /* 구분 — 합계행에서 '합계' 라벨을 맡는다(목업 tfoot 의 colspan 7 구간 대표) */
-  { field: 'gb', headerName: '구분', width: 96, minWidth: 96, maxWidth: 96, cellStyle: centerNum,
+  { field: 'gb', headerName: '구분', width: 96, minWidth: 96, maxWidth: 96, cellStyle: tabNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '합계' : p.value) },
   txt('gp', '운용사', 180, 220),
   txt('fd', '자펀드', 240, 300),
   txt('co', '투자기업', 160, 200),
   /* 투심상태 — 배지는 상태 표시 전용(클릭 전이 없음). 합계행은 배지 대신 '-' */
-  { field: 'stat', headerName: '투심상태', width: 136, minWidth: 136, maxWidth: 136, cellStyle: flexMid,
+  { field: 'stat', headerName: '투심상태', width: 136, minWidth: 136, maxWidth: 136, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.node.rowPinned ? '-' : <StatusBadge tone={STAT_TONE[p.value as ReviewStatus]} label={p.value} size="lg" />) },
   dateCol('sdt', '투심일자', 124),
   /* 승인금액 — 단위는 context 에서(moneyFmt). 합계행은 numStyle 이 자동으로 굵게 처리 */
@@ -156,7 +155,7 @@ const COLUMN_DEFS: ColDef<ReportUpdateRow>[] = [
   /* 투자금납입 예정일 — 목업 '-' 문자 그대로(텍스트 N/A). 일자 muted 는 주지 않는다(목업 본문색) */
   dateCol('pdt', '투자금납입 예정일', 150, false),
   /* 파일구분 — 합계행 '-' */
-  { field: 'ftype', headerName: '파일구분', width: 156, minWidth: 156, maxWidth: 156, cellStyle: centerNum,
+  { field: 'ftype', headerName: '파일구분', width: 156, minWidth: 156, maxWidth: 156, cellStyle: tabNum,
     valueFormatter: (p) => (p.node?.rowPinned ? '-' : p.value) },
   dateCol('reg', '등록/변경일시', 156),
 ];

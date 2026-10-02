@@ -129,9 +129,8 @@ const PAGE_SIZE = 20;
      (1280 프레임)·1회(1500 프레임) 있었다 — 내부 원인은 미확정(캐시 가설은 소스 대조로 기각됨). 초기폭을 minWidth 로
      낮추면 두 레이아웃 합계 0/20. width 는 flex 적용 뒤 무시된다.
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 /* 줄바꿈 셀(소송내역) — 위 정렬 + 사용자 줄바꿈 보존(pre-line). autoHeight 가 늘릴 수 있도록
    세로 패딩을 직접 준다(정본 패턴: generic_list.tsx 의 `multiline` 컬럼). */
 const wrapLeft: CellStyle = { display: 'flex', alignItems: 'flex-start', whiteSpace: 'pre-line', lineHeight: 1.5, paddingTop: 8, paddingBottom: 8 };
@@ -151,22 +150,22 @@ const confCell = (p: { value: LitigationConf }) => <StatusBadge tone={CONF_TONE[
 /* 날짜 셀 — 빈 값·null 은 '-' */
 const dateFmt = (p: { value?: string | null }) => (p.value ? String(p.value) : '-');
 
-const txt = (field: keyof LitigationRow, headerName: string, flex: number, minWidth: number, center?: boolean): ColDef<LitigationRow> => ({
-  field, headerName, flex, minWidth, width: minWidth, cellStyle: center ? flexMid : flexCenter, cellRenderer: textCell,
+const txt = (field: keyof LitigationRow, headerName: string, flex: number, minWidth: number): ColDef<LitigationRow> => ({
+  field, headerName, flex, minWidth, width: minWidth, cellStyle: flexCenter, cellRenderer: textCell,
 });
 const date = (field: keyof LitigationRow, headerName: string, flex: number, minWidth: number): ColDef<LitigationRow> => ({
-  field, headerName, flex, minWidth, width: minWidth, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: dateFmt,
+  field, headerName, flex, minWidth, width: minWidth, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' }, valueFormatter: dateFmt,
 });
 
 const COLUMNS: ColDef<LitigationRow>[] = [
-  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
-  { field: 'ym', headerName: '기준년월', flex: 0.7, minWidth: 96, width: 96, cellStyle: centerNum, valueFormatter: dateFmt },
-  { field: 'gubun', headerName: '구분', width: 96, minWidth: 96, cellStyle: flexMid, cellRenderer: kindCell },
+  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
+  { field: 'ym', headerName: '기준년월', flex: 0.7, minWidth: 96, width: 96, cellStyle: tabNum, valueFormatter: dateFmt },
+  { field: 'gubun', headerName: '구분', width: 96, minWidth: 96, cellStyle: flexCenter, cellRenderer: kindCell },
   txt('mgr', '운용사', 1.2, 150),
   /* 소송내역 = 유일한 문장 컬럼 → 가장 큰 가중치로 잉여 폭을 흡수 + 줄바꿈(목업 td.l · 설계메모 "셀 줄바꿈").
      maxWidth 상한을 둬 좁은 창에서 다른 컬럼을 밀어내지 않게 한다. */
   { field: 'detail', headerName: '소송내역', flex: 3.2, minWidth: 260, width: 260, maxWidth: 560, autoHeight: true, wrapText: true, cellStyle: wrapLeft, cellRenderer: wrapCell },
-  { field: 'conf', headerName: '확정구분', width: 104, minWidth: 104, cellStyle: flexMid, cellRenderer: confCell },
+  { field: 'conf', headerName: '확정구분', width: 104, minWidth: 104, cellStyle: flexCenter, cellRenderer: confCell },
   date('sdate', '소송일자', 0.85, 120),
   date('rdate', '해제일자', 0.85, 120),
 ];

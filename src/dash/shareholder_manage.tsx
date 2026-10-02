@@ -110,9 +110,8 @@ const PAGE_SIZE = 20;
    ⚠ flex 컬럼에도 `width: minWidth` 필수 — flex 적용 전 기본폭 200px 초기 레이아웃 뒤 AG Grid 35.3.1 이 넘침 0인데도
      하단 가로 스크롤 띠를 남기는 일이 있다(수정 전 10회 중 3회 → 수정 후 0/20 실측·내부 원인 미확정, litigation_manage 주석·apfs-aggrid ⑨).
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 텍스트 N/A 는 '-'(숫자 N/A 의 null 규약과 다른 축 — 이 화면엔 숫자 컬럼이 없다).
    flex 셀은 AG Grid 기본 ellipsis 가 안 먹으므로 내부 span 에 truncate 를 준다. */
@@ -123,22 +122,22 @@ const kindCell = (p: { value: ShareholderKind }) => <StatusBadge tone={KIND_TONE
 /* 날짜 셀 — 빈 값은 '-' */
 const dateFmt = (p: { value?: string }) => (p.value ? String(p.value) : '-');
 
-const txt = (field: keyof ShareholderRow, headerName: string, flex: number, minWidth: number, center?: boolean): ColDef<ShareholderRow> => ({
-  field, headerName, flex, minWidth, width: minWidth, cellStyle: center ? flexMid : flexCenter, cellRenderer: textCell,
+const txt = (field: keyof ShareholderRow, headerName: string, flex: number, minWidth: number): ColDef<ShareholderRow> => ({
+  field, headerName, flex, minWidth, width: minWidth, cellStyle: flexCenter, cellRenderer: textCell,
 });
 const date = (field: keyof ShareholderRow, headerName: string, flex: number, minWidth: number): ColDef<ShareholderRow> => ({
-  field, headerName, flex, minWidth, width: minWidth, cellStyle: { ...centerNum, color: 'var(--muted-foreground)' }, valueFormatter: dateFmt,
+  field, headerName, flex, minWidth, width: minWidth, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' }, valueFormatter: dateFmt,
 });
 
 /* 변동내역 툴팁 — 긴 문장이 잘렸을 때 전체를 보게 한다. 빈 값은 null(빈 툴팁 상자 방지) */
 const contTooltip = (p: { value?: string }): string | null => p.value || null;
 
 const COLUMNS: ColDef<ShareholderRow>[] = [
-  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
-  { field: 'ym', headerName: '기준년월', flex: 0.7, minWidth: 96, width: 96, cellStyle: centerNum, valueFormatter: dateFmt },
-  { field: 'g', headerName: '구분', width: 96, minWidth: 96, cellStyle: flexMid, cellRenderer: kindCell },
+  { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
+  { field: 'ym', headerName: '기준년월', flex: 0.7, minWidth: 96, width: 96, cellStyle: tabNum, valueFormatter: dateFmt },
+  { field: 'g', headerName: '구분', width: 96, minWidth: 96, cellStyle: flexCenter, cellRenderer: kindCell },
   txt('gp', '운용사', 1.6, 168),
-  txt('vt', '변동구분', 0.9, 106, true),
+  txt('vt', '변동구분', 0.9, 106),
   /* 변동내역 = 유일한 문장 컬럼 → 가장 큰 가중치로 잉여 폭을 흡수한다 */
   { ...txt('cont', '변동내역', 3.0, 220), tooltipValueGetter: contTooltip },
   date('cd', '주주변동일자', 0.85, 120),

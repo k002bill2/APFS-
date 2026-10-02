@@ -123,12 +123,11 @@ const PAGE_SIZE = 20;
      긴 텍스트 컬럼(운용사·자펀드·제목·안건)만 maxWidth 상한, 고정폭 컬럼(No·보고상태·총회구분·총회일자·확정여부 2열)은
      `minWidth===width===maxWidth`로 묶어 헤더 라벨 폭을 보장한다.
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-const txt = (field: keyof MeetingRow, header: string, width: number, maxWidth: number, minWidth: number, center?: boolean): ColDef<MeetingRow> => ({
-  field, headerName: header, width, maxWidth, minWidth, cellStyle: center ? flexMid : flexCenter,
+const txt = (field: keyof MeetingRow, header: string, width: number, maxWidth: number, minWidth: number): ColDef<MeetingRow> => ({
+  field, headerName: header, width, maxWidth, minWidth, cellStyle: flexCenter,
   cellRenderer: (p: any) => p.value,
 });
 
@@ -194,22 +193,22 @@ const makeColumns = (
   patchRow: (id: string, patch: Partial<MeetingRow>) => void,
 ): ColDef<MeetingRow>[] => [
   /* No는 순번(골드 동형) */
-  { field: 'no', headerName: 'No', ...fixed(68), pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
+  { field: 'no', headerName: 'No', ...fixed(68), pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
   /* 운용사·자펀드는 명세 팝업이 없어 링크가 아니다(브리프) — 텍스트 + maxWidth 캡 */
   txt('gp', '운용사', 160, 240, 120),
   txt('fund', '자펀드', 180, 300, 140),
-  { field: 'rst', headerName: '보고상태', ...fixed(100), cellStyle: flexMid,
+  { field: 'rst', headerName: '보고상태', ...fixed(100), cellStyle: flexCenter,
     cellRenderer: (p: any) => <StatusBadge tone={STATUS_TONE[p.value as MeetingStatus]} label={p.value} size="lg" /> },
-  txt('gt', '총회구분', 100, 100, 100, true),
+  txt('gt', '총회구분', 100, 100, 100),
   /* 112 는 날짜 10자(tabular-nums)에 1px 모자라 '2026-06-…'로 잘렸다(scrollWidth 111 > clientWidth 110 실측) → 120 */
-  { field: 'gdate', headerName: '총회일자', ...fixed(120), cellStyle: { ...centerNum, color: 'var(--muted-foreground)' },
+  { field: 'gdate', headerName: '총회일자', ...fixed(120), cellStyle: { ...tabNum, color: 'var(--muted-foreground)' },
     valueFormatter: (p) => String(p.value) },
   /* 제목 — 링크 셀. 내용 맞춤(AUTO_SIZE_CONTENT)이라 흡수 컬럼 장치는 없고, 긴 총회명은 420 상한에서 truncate. */
   { field: 'title', headerName: '제목', width: 210, minWidth: 180, maxWidth: 420, cellStyle: flexCenter,
     cellRenderer: (p: any) => <LinkCell value={p.value} hint="총회 상세 보기" onClick={() => p.data && openDetail(p.data.id)} /> },
   txt('agenda', '안건', 170, 300, 130),
   /* 일정 확정여부 — 변경 시 sch가 '확정'이 아니게 되면 res도 ''로 리셋(목업 resultCell 게이팅과 정합) */
-  { field: 'sch', headerName: '일정 확정여부', ...fixed(124), cellStyle: flexMid, suppressKeyboardEvent: suppressFromSelect,
+  { field: 'sch', headerName: '일정 확정여부', ...fixed(124), cellStyle: flexCenter, suppressKeyboardEvent: suppressFromSelect,
     cellRenderer: (p: any) => (
       <SelectCell
         value={p.value ?? ''} label={`일정 확정여부 ${p.data?.no}행`}
@@ -220,7 +219,7 @@ const makeColumns = (
         rowNode.updateData(update:true) → refreshRow(newData:false)라 "값이 달라졌을 때만" 셀을 다시 그린다
         (ag-grid-community v35 소스 rowCtrl.refreshRow/cellCtrl.refreshCell 확인). 게이팅 결과를 값에 엮어
         (비활성=null) 전이마다 값이 달라지게 만든다. colId는 valueGetter를 쓰면 field에서 파생되지 않으므로 명시. */
-  { colId: 'res', field: 'res', headerName: '결과 확정여부', ...fixed(124), cellStyle: flexMid, suppressKeyboardEvent: suppressFromSelect,
+  { colId: 'res', field: 'res', headerName: '결과 확정여부', ...fixed(124), cellStyle: flexCenter, suppressKeyboardEvent: suppressFromSelect,
     valueGetter: (p) => (p.data && p.data.sch === '확정' ? p.data.res : null),
     cellRenderer: (p: any) => (p.value == null
       ? <span style={{ color: 'var(--muted-foreground)' }}>-</span>

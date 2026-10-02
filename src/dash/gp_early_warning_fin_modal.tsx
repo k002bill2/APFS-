@@ -111,7 +111,11 @@ function RatioGrid({ items }: { items: [string, string][] }) {
   );
 }
 
-const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-center whitespace-nowrap';
+const TH_BASE = 'border border-border bg-[color:var(--grid-header)] font-bold whitespace-nowrap';
+const TH = `${TH_BASE} text-left`;
+const THR = `${TH_BASE} text-right`;
+/* 2단 그룹 헤더(colSpan 묶음 제목)만 가운데 — 표 정렬 규약의 허용 예외 */
+const THG = `${TH_BASE} text-center`;
 const TD = 'border border-border';
 const CELL: React.CSSProperties = { padding: '7px 9px' };
 
@@ -123,12 +127,12 @@ function TrendTable({ unit }: { unit: Unit }) {
         <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 820 }}>
           <caption className="sr-only">기준년월별 추이</caption>
           <thead>
-            <tr>{TREND_HEAD.map((h) => <th key={h} scope="col" className={TH} style={CELL}>{h}</th>)}</tr>
+            <tr>{TREND_HEAD.map((h, i) => <th key={h} scope="col" className={i === 0 ? TH : THR} style={CELL}>{h}</th>)}</tr>
           </thead>
           <tbody>
             {TREND.map((t) => (
               <tr key={t.ym}>
-                <td className={`${TD} text-center`} style={CELL}>{String(t.ym)}</td>
+                <td className={TD} style={CELL}>{String(t.ym)}</td>
                 {t.v.map((v, i) => (
                   <td key={TREND_HEAD[i + 1]} className={`${TD} text-right tabular`} style={{ ...CELL, ...negStyle(v < 0) }}>{money(v, unit)}</td>
                 ))}
@@ -153,7 +157,7 @@ function GradeChangeTable() {
           <tr>
             <th rowSpan={2} scope="col" className={TH} style={CELL}>변경일자</th>
             <th rowSpan={2} scope="col" className={TH} style={CELL}>정량지표</th>
-            <th colSpan={2} scope="colgroup" className={TH} style={CELL}>
+            <th colSpan={2} scope="colgroup" className={THG} style={CELL}>
               등급
             </th>
             <th rowSpan={2} scope="col" className={TH} style={CELL}>변경사유</th>

@@ -65,7 +65,6 @@ const ALL_CHG_ON: Record<ChgKey, boolean> = { up: true, down: true, same: true }
 /* ──────────────────────────────
    컬럼 — 모듈 스코프 1회 생성(apfs-aggrid ⑥·⑦: 렌더마다 새 배열이면 폭이 선언값으로 되돌아간다)
 ────────────────────────────── */
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 
 /* 당월≠전월 셀 음영 — 토큰만(`--info-soft`, 라이트/다크 양쪽 정의 — 등급 배지 soft 색(success·warning·danger)과 겹치지 않아 `주의` 배지가 묻히지 않는다). 한 행의 diff 여부는 불변이고
@@ -93,14 +92,14 @@ const txtCol = (field: keyof NumberedRow, header: string, width: number, opts: P
 
 const COLUMNS: ColDef<NumberedRow>[] = [
   /* No 는 필터 후 1..N 으로 다시 매긴 값 */
-  { field: 'no', headerName: 'No', width: 64, minWidth: 64, pinned: 'left', type: 'rightAligned',
-    cellStyle: { textAlign: 'right', fontVariantNumeric: 'tabular-nums' } as CellStyle,
+  { field: 'no', headerName: 'No', width: 64, minWidth: 64, pinned: 'left',
+    cellStyle: { fontVariantNumeric: 'tabular-nums' } as CellStyle,
     valueFormatter: (p) => (p.value == null ? '' : String(p.value)) },
-  txtCol('gu', '구분', 140, { cellStyle: flexMid }),
-  txtCol('mf', '모펀드', 140, { cellStyle: flexMid }),
+  txtCol('gu', '구분', 140),
+  txtCol('mf', '모펀드', 140),
   txtCol('it', '항목', 190, { flex: 1 }),
   /* 등급 = 변동 배지. valueGetter 가 문구를 내서 정렬·엑셀이 텍스트로 동작한다 */
-  { colId: 'chg', headerName: '등급', width: 110, minWidth: 110, cellStyle: flexMid,
+  { colId: 'chg', headerName: '등급', width: 110, minWidth: 110, cellStyle: flexCenter,
     valueGetter: (p) => (p.data ? chgLabel(p.data.cur, p.data.prev) : ''),
     cellRenderer: (p: any) => (p.value ? <StatusBadge tone={CHG_TONE[p.value] ?? 'muted'} label={p.value} size="lg" /> : null) },
   { colId: 'cur', headerName: '당월', width: 230, minWidth: 230, flex: 1, cellStyle: diffStyle,

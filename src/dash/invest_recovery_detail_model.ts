@@ -36,17 +36,17 @@ export const COLUMNS_IR: readonly ColumnSpec[] = 투자금회수현황Schema.col
 export const COLUMNS_ALL: readonly ColumnSpec[] = [
   { key: 'gp',     label: '운용사',   type: 'gp',     align: 'left', pinned: 'left' },
   { key: 'fund',   label: '자펀드',   type: 'text',   align: 'left', pinned: 'left' },
-  { key: 'yr',     label: '사업년도', type: 'text',   align: 'center' },
-  { key: 'acc',    label: '계정구분', type: 'text',   align: 'center' },
+  { key: 'yr',     label: '사업년도', type: 'text' },
+  { key: 'acc',    label: '계정구분', type: 'text' },
   { key: 'co',     label: '투자기업', type: 'text',   align: 'left', pinned: 'left' },
-  { key: 'ag',     label: '약정번호', type: 'code',   align: 'center' },
-  { key: 'itype',  label: '투자유형', type: 'text',   align: 'center' },
-  { key: 'tdate',  label: '거래일자', type: 'date',   align: 'center' },
-  { key: 'tname',  label: '거래명',   type: 'status', align: 'center' },
-  { key: 'tgb',    label: '거래구분', type: 'text',   align: 'center' },
+  { key: 'ag',     label: '약정번호', type: 'code' },
+  { key: 'itype',  label: '투자유형', type: 'text' },
+  { key: 'tdate',  label: '거래일자', type: 'date' },
+  { key: 'tname',  label: '거래명',   type: 'status' },
+  { key: 'tgb',    label: '거래구분', type: 'text' },
   { key: 'prin',   label: '거래원금', type: 'amount', unit: '원', align: 'right' },
   { key: 'prof',   label: '거래수익', type: 'amount', unit: '원', align: 'right' },
-  { key: 'shares', label: '거래주수', type: 'number', align: 'center' },
+  { key: 'shares', label: '거래주수', type: 'number', align: 'right' },
 ];
 
 export const DETAIL_ROWS_IR: RecoveryRow[] = [

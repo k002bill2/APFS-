@@ -77,11 +77,10 @@ const PAGE_SIZE = 20;
    컬럼 정의 — 목업 thead 순서 그대로:
      NO · 조합원 · 사업자번호/주민번호 · 주소 · 전화번호 · 비고 · 상세조회
    ⚠ 폭 관련 그리드 prop(`autoSizeStrategy`·`defaultColDef`)은 aggrid_theme.ts 공용 상수만 쓴다(인라인 금지 이유는 그 파일 주석).
-   ⚠ 가운데 정렬은 목업 `th.c/td.c`(NO·전화번호·상세조회)와 동일하게 맞춘다.
+   ⚠ 정렬 규약(2026-10-02): 값 열은 좌측(NO·전화번호 포함). 상세조회 버튼 열만 가운데(컨트롤 열).
 ────────────────────────────── */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 고정폭(내용 맞춤 불필요·헤더 라벨 폭이 하한) — 잉여는 maxWidth 없는 주소 컬럼이 흡수한다 */
 const fixed = (width: number) => ({ width, maxWidth: width, minWidth: width });
@@ -100,7 +99,7 @@ function DetailCell({ row, onDetail }: { row: MemberRow; onDetail: (r: MemberRow
 }
 
 const makeColumns = (onDetail: (r: MemberRow) => void): ColDef<MemberRow>[] => [
-  { field: 'no', headerName: 'NO', ...fixed(68), pinned: 'left', cellStyle: centerNum, valueFormatter: (p) => String(p.value) },
+  { field: 'no', headerName: 'NO', ...fixed(68), pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
   { field: 'name', headerName: '조합원', width: 200, minWidth: 160, maxWidth: 320, cellStyle: flexCenter,
     cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span> },
   /* 식별번호(pii) */
@@ -109,12 +108,12 @@ const makeColumns = (onDetail: (r: MemberRow) => void): ColDef<MemberRow>[] => [
   /* 주소가 남는 폭을 흡수한다 — maxWidth 없는 유일한 컬럼 + `FIT_GRID_WIDTH`(목업 `td.addr` min-width 280 반영) */
   { field: 'addr', headerName: '주소', width: 320, minWidth: 280, cellStyle: flexCenter,
     cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span> },
-  { field: 'tel', headerName: '전화번호', ...fixed(130), cellStyle: flexMid,
+  { field: 'tel', headerName: '전화번호', ...fixed(130), cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value ? p.value : <Dash />) },
   { field: 'memo', headerName: '비고', ...fixed(160), cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value ? p.value : <Dash />) },
   /* 액션 컬럼 — 값이 아니라 정렬 대상이 아니다. field가 없으므로 colId 명시 */
-  { colId: 'detail', headerName: '상세조회', ...fixed(120), sortable: false, cellStyle: flexMid,
+  { colId: 'detail', headerName: '상세조회', ...fixed(120), sortable: false, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.data ? <DetailCell row={p.data} onDetail={onDetail} /> : null) },
 ];
 

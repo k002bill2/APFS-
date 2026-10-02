@@ -48,7 +48,7 @@ const ROWS: Row[] = [
 export const REVIEW_STATS_TABLE: TableMeta = {
   id: 'reviewStats',
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64, flex: 0 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64, flex: 0 },
     { key: 'gp', label: '운용사', kind: 'text' },
     { key: 'fund', label: '자펀드', kind: 'text' },
     { key: 'corp', label: '투자기업', kind: 'text' },
@@ -68,7 +68,7 @@ export const REVIEW_STATS_TABLE: TableMeta = {
     { key: 'field', label: '사업분야', kind: 'center' },
     { key: 'biz', label: '사업내용', kind: 'text' },
     { key: 'method', label: '투자방식', kind: 'center' },
-    { key: 'period', label: '투자기간', kind: 'center' },
+    { key: 'period', label: '투자기간', kind: 'center', align: 'right' },
     { key: 'found', label: '창업일자', kind: 'date' },
     { key: 'mgmt', label: '경영형태', kind: 'center' },
     { key: 'region', label: '소재지', kind: 'center' },

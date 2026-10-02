@@ -36,20 +36,19 @@ const { Button, IconBtn, StatusBadge, FilterChip } = UI;
 const SEARCHABLE = true;
 const DEMO: AuditRow[] = demoLogs();   // 정적 데모(조회 전용)
 
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
 
 const columnDefs: ColDef<AuditRow>[] = [
-  { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: centerNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
-  { field: 'ts', headerName: '일시', width: 176, maxWidth: 176, cellStyle: centerNum, sort: 'desc', valueFormatter: (p) => String(p.value) },
+  { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: tabNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
+  { field: 'ts', headerName: '일시', width: 176, maxWidth: 176, cellStyle: tabNum, sort: 'desc', valueFormatter: (p) => String(p.value) },
   { field: 'actor', headerName: '행위자', width: 120, maxWidth: 140, cellStyle: { ...flexCenter, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => p.value },
-  { field: 'kind', headerName: '유형', width: 110, maxWidth: 120, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={KIND_TONE[p.value as AuditKind]} label={p.value} size="lg" /> },
+  { field: 'kind', headerName: '유형', width: 110, maxWidth: 120, cellStyle: flexCenter, cellRenderer: (p: any) => <StatusBadge tone={KIND_TONE[p.value as AuditKind]} label={p.value} size="lg" /> },
   { field: 'action', headerName: '행위', width: 200, minWidth: 150, maxWidth: 260, cellStyle: flexCenter, cellRenderer: (p: any) => p.value },
   { field: 'target', headerName: '대상', flex: 1, width: 240, minWidth: 180, cellStyle: flexCenter, cellRenderer: (p: any) => p.value },
   { field: 'ip', headerName: 'IP', width: 122, maxWidth: 122, cellStyle: { ...muted, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => p.value },
-  { field: 'result', headerName: '결과', width: 92, maxWidth: 92, cellStyle: flexMid, cellRenderer: (p: any) => <StatusBadge tone={RESULT_TONE[p.value as AuditResult]} label={p.value} size="lg" /> },
+  { field: 'result', headerName: '결과', width: 92, maxWidth: 92, cellStyle: flexCenter, cellRenderer: (p: any) => <StatusBadge tone={RESULT_TONE[p.value as AuditResult]} label={p.value} size="lg" /> },
 ];
 // 조회 전용(audit-read-only) — 행 선택 자체를 두지 않는다(체크박스도, 클릭 선택도).
 // 선택으로 실행할 액션(일괄삭제·단계전이·선택 행 편집)이 없어 선택은 죽은 상태값이었다.

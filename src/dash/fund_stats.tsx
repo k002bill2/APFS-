@@ -169,9 +169,8 @@ interface GridCtx { unit: Unit; yearBasis: YearBasis }
    ⚠ 전 컬럼 `sortable:false` — 행 순서(연도 오름차순 + 각 해 끝의 소계)가 의미라 정렬하면 소계가 흩어진다.
 ────────────────────────────── */
 /* AG Grid cellStyle은 CellStyle(문자열 인덱스 시그니처) — React CSSProperties와 타입이 다르다 */
-const centerNum: CellStyle = { textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
-const flexMid: CellStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 /* 숫자 N/A(null) → '-' : 공유 numFmt(콤마·소수)에 null 가드만 얇게 덧씌운다(재구현 아님) */
 const nullFmt = (p: ValueFormatterParams) => (p.value == null ? '-' : numFmt(p));
@@ -185,8 +184,8 @@ const moneyFmt = (p: ValueFormatterParams): string => {
 const pctFmt = (p: ValueFormatterParams): string => String(pctN(p.value as number | null));
 
 /* 텍스트 — 소계·총계 행은 값이 null이라 빈 칸(목업 tr.subtotal / tfoot의 빈 td) */
-const txt = (field: keyof StatRow, header: string, width: number, center?: boolean): ColDef<StatRow> => ({
-  field, headerName: header, width, sortable: false, cellStyle: center ? flexMid : flexCenter,
+const txt = (field: keyof StatRow, header: string, width: number): ColDef<StatRow> => ({
+  field, headerName: header, width, sortable: false, cellStyle: flexCenter,
   cellRenderer: (p: any) => (p.value == null ? null : p.value),
 });
 /* 금액(억원 저장) — 우측정렬. numStyle()은 셀마다 호출되는 함수(0=muted, pinned 총계행 자동 bold) */
@@ -194,30 +193,32 @@ const amt = (field: keyof StatRow, header: string, width = 116): ColDef<StatRow>
   field, headerName: header, width, sortable: false, type: 'rightAligned',
   valueFormatter: moneyFmt, cellStyle: numStyle() as any,
 });
-/* 건수(개) — 가운데 정렬 정수 */
+/* 건수(개) — 우측정렬 정수 */
 const cnt = (field: keyof StatRow, header: string, width = 92): ColDef<StatRow> => ({
-  field, headerName: header, width, sortable: false, valueFormatter: nullFmt, cellStyle: centerNum,
+  field, headerName: header, width, sortable: false, type: 'rightAligned', valueFormatter: nullFmt, cellStyle: numStyle() as any,
 });
-/* 비율(%) — 가운데 정렬 */
+/* 비율(%) — 우측정렬 */
 const pct = (field: keyof StatRow, header: string, width = 108): ColDef<StatRow> => ({
-  field, headerName: header, width, sortable: false, valueFormatter: pctFmt, cellStyle: centerNum,
+  field, headerName: header, width, sortable: false, type: 'rightAligned', valueFormatter: pctFmt, cellStyle: numStyle() as any,
 });
-/* 원문 미확인 열 — 값이 항상 null이라 nullFmt가 전 행 '-'를 낸다(별도 하드코딩 아님) */
-const dash = (field: keyof StatRow, header: string, width = 104): ColDef<StatRow> => ({
-  field, headerName: header, width, sortable: false, valueFormatter: nullFmt, cellStyle: centerNum,
+/* 원문 미확인 열 — 값이 항상 null이라 nullFmt가 전 행 '-'를 낸다(별도 하드코딩 아님).
+   정렬은 열 의미를 따른다 — 수량형(금액·년수·승수)은 right=true 로 우측, 연도·날짜는 좌측 */
+const dash = (field: keyof StatRow, header: string, width = 104, right = false): ColDef<StatRow> => ({
+  field, headerName: header, width, sortable: false, valueFormatter: nullFmt,
+  ...(right ? { type: 'rightAligned', cellStyle: numStyle() as any } : { cellStyle: tabNum }),
 });
 
 const columnDefs: (ColDef<StatRow> | ColGroupDef<StatRow>)[] = [
   /* NO — 소계·총계 행은 목업에서 NO~분야가 가로 병합된 한 칸이라 비운다
      (AG Grid엔 가로 병합이 없어 '2011 소계'/'총 계' 라벨을 연도 컬럼에 싣는다). */
-  { field: 'no', headerName: 'NO', width: 72, maxWidth: 72, pinned: 'left', sortable: false, cellStyle: centerNum,
+  { field: 'no', headerName: 'NO', width: 72, maxWidth: 72, pinned: 'left', sortable: false, cellStyle: tabNum,
     valueFormatter: (p) => (p.value == null ? '' : String(p.value)) },
   /* 연도 — 헤더 라벨이 연도기준(결성/선정)을 따른다. headerName을 state로 갈아끼워 컬럼을 재생성하면
      폭이 선언값으로 되돌아가므로(apfs-aggrid 계약6) headerValueGetter + refreshHeader()로만 바꾼다. */
-  { field: 'ylabel', headerName: DEFAULT_YEAR_BASIS, width: 110, pinned: 'left', sortable: false, cellStyle: centerNum,
+  { field: 'ylabel', headerName: DEFAULT_YEAR_BASIS, width: 110, pinned: 'left', sortable: false, cellStyle: tabNum,
     headerValueGetter: (p: HeaderValueGetterParams<StatRow>) => (p.context as GridCtx | undefined)?.yearBasis ?? DEFAULT_YEAR_BASIS,
     valueFormatter: (p) => String(p.value) },
-  txt('fld', '분야', 132, true),
+  txt('fld', '분야', 132),
   { ...txt('fund', '조합', 240), maxWidth: 320 },
   amt('form', '결성액'), amt('gov', '정부'), amt('pri', '민간'),
   pct('prir', '민간비율'),
@@ -231,13 +232,13 @@ const columnDefs: (ColDef<StatRow> | ColGroupDef<StatRow>)[] = [
     children: [amt('totInv', '투자금액'), pct('tir', '결성액대비 총투자율', 144)] },
   { headerName: '회수실적', headerClass: 'apfs-grp-a', marryChildren: true,
     children: [amt('recPrin', '회수원금'), amt('recProf', '회수수익'), amt('recTotal', '회수총액'),
-      dash('recCut', '감액금액', 116)] },
+      dash('recCut', '감액금액', 116, true)] },
   dash('ybiz', '출자사업연도', 132),
   dash('fd', '결성일', 112), dash('rd', '등록일', 112), dash('bd', '기준일', 112),
   /* 목업 헤더의 보조 줄 `(등록일~기준일)`은 한 줄 headerName으로 합친다(AG Grid 헤더는 단일 텍스트) */
-  dash('elapsed', '경과년(등록일~기준일)', 160),
+  dash('elapsed', '경과년(등록일~기준일)', 160, true),
   { headerName: '투자승수', headerClass: 'apfs-grp-b', marryChildren: true,
-    children: [dash('mAf', '농식품', 96), dash('mNaf', '비농식품', 100), dash('mAll', '전체', 92)] },
+    children: [dash('mAf', '농식품', 96, true), dash('mNaf', '비농식품', 100, true), dash('mAll', '전체', 92, true)] },
 ];
 
 /* 소계 행 강조 — 목업 `tr.subtotal`(회색 배경 + 굵게). 모듈 스코프 함수라 렌더 간 참조 고정 */

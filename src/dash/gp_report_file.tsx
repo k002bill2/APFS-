@@ -31,7 +31,7 @@ export const RPT_OPTIONS = ['투심일정보고'] as const;
 const FILE = '(붙임8) 농식품혁신스타트업투자조합 별지 서식_적격성 심의 체크리스트 투자검토 보고서 준법감시보고서 등(그리네틀).hwp';
 
 const COLS: ColMeta[] = [
-  { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64, flex: 0 },
+  { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64, flex: 0 },
   { key: 'rpt', label: '보고구분', kind: 'center', width: 120, flex: 0 },
   { key: 'file', label: '파일명', kind: 'text', width: 320 },
   { key: 'mdate', label: '수정일자', kind: 'date', width: 110, flex: 0 },

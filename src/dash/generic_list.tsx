@@ -24,6 +24,7 @@ import { UNITS, DEFAULT_UNIT, isUnit, toUnit, amountHeader, formatUnit } from '.
 import { computeSchemaTotal } from './schemas/totals';   // 합계 행(schema.totals opt-in) 계산 정본
 import type { Unit } from './schemas/unit';
 import type { ColumnSpec } from './schemas/types';
+import { resolveAlign } from './schemas/types';   // 그리드 정렬 정본(숫자=우측 / 그 외=좌측)
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘⏎ 등록·⌘P 인쇄·⌥D 내보내기)
 import { toast } from './ui/sonner';
@@ -554,7 +555,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const columnDefs = useMemo<(ColDef<Row> | ColGroupDef<Row>)[]>(() => {
     // 남는 그리드 폭을 채울 stretch 컬럼 = 주 식별/텍스트 컬럼(마지막 left-text, 또는 name).
     // 이 컬럼만 flex로 잔여폭 흡수 + autoSize 제외(fitCellContents가 폭을 고정하지 않도록) → 우측 빈 공간 제거.
-    const textCols = schema.columns.filter((c) => (c.type === "text" || c.key === "name") && c.align !== "right" && c.key !== "trend");
+    const textCols = schema.columns.filter((c) => (c.type === "text" || c.key === "name") && resolveAlign(c) !== "right" && c.key !== "trend");
     const stretchKey = textCols.length ? textCols[textCols.length - 1].key : undefined;
     const cols: ColDef<Row>[] = schema.columns.map((c): ColDef<Row> => {
       const stretch = c.key === stretchKey;
@@ -575,11 +576,11 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         return {
           field: "trend", headerName: c.label, width: 120, minWidth: 120, sortable: false,   // 스파크라인 — 내용폭 측정이 좁으니 하한 고정
           cellDataType: false,   // 값은 number[](스파크라인) — 커스텀 렌더러라 타입 추론 불필요(AG Grid warning #48 억제)
-          cellStyle: { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any },
+          cellStyle: { display: "flex", alignItems: "center", textAlign: resolveAlign(c) },
           cellRenderer: (p: ICellRendererParams<Row>) => <><MiniBars data={(p.value as number[]) || []} color={p.data?.color || "var(--chart-1)"} /></>,
         };
       }
-      const right = c.align === "right";
+      const right = resolveAlign(c) === "right";
       return {
         field: c.key as any,   // 스키마 동적 키 — Row 정적 타입 밖
         headerName: unitOn && c.type === 'amount' ? amountHeader(c.label, unit) : c.label + (c.unit ? ` (${c.unit})` : ""),
@@ -592,8 +593,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         ...(c.multiline ? { autoHeight: true, wrapText: true, minWidth: 260, maxWidth: 360 } : {}),
         cellStyle: c.multiline
           // 여러 줄 원문(사후관리 내용 등) — 기본 nowrap+ellipsis 면 5줄이 한 줄로 잘린다(원문 .content-cell)
-          ? { display: "flex", alignItems: "flex-start", textAlign: (c.align || "left") as any, whiteSpace: "pre-line", lineHeight: 1.5, paddingTop: 8, paddingBottom: 8 }
-          : { display: "flex", alignItems: "center", textAlign: (c.align || "left") as any, ...(right ? { justifyContent: "flex-end" } : {}) },
+          ? { display: "flex", alignItems: "flex-start", textAlign: right ? "right" : "left", whiteSpace: "pre-line", lineHeight: 1.5, paddingTop: 8, paddingBottom: 8 }
+          : { display: "flex", alignItems: "center", textAlign: right ? "right" : "left", ...(right ? { justifyContent: "flex-end" } : {}) },
         /* 렌더러 분기 4갈래:
            ① detail 옵트인 컬럼 — 값이 detailWhen과 같은 셀만 링크가 되고 나머지는 평상 셀이다
               (정기보고: 보고구분 '월간보고'만 상세 보고서가 있고 반기·연간은 없다 — 원문 목업 동작)
@@ -684,9 +685,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   };
 
   // Excel(.xlsx) 내보내기 — SheetJS. 스키마 컬럼을 동적 추출(스파크라인 trend는 값 없음 → 제외), 현재 필터(filtered) 반영.
-  // 화면 우측정렬(align:'right') 숫자 컬럼만 숫자 셀(t:'n'+z)로 기록 → Excel 자동 우측정렬·실데이터 연동 시 계산 가능.
-  // 그 외(text/code/date/status·center 정렬)는 화면처럼 텍스트 셀(좌측).
-  // ※ Excel은 center 정렬을 스타일 없이 못 내므로(커뮤니티 xlsx 한계) center 숫자 컬럼은 텍스트(좌측) 유지가 최선.
+  // 화면 우측정렬(resolveAlign==='right') 숫자 컬럼만 숫자 셀(t:'n'+z)로 기록 → Excel 자동 우측정렬·실데이터 연동 시 계산 가능.
+  // 그 외(text/code/date/status·No/차수)는 화면처럼 텍스트 셀(좌측).
   const exportExcel = () => {
     const cols = schema.columns.filter((c) => c.key !== 'trend');
     const cell = (v: any) => String(typeof v === 'number' ? v.toLocaleString() : String(v ?? ''));
@@ -697,7 +697,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       const d = (String(v).split('.')[1] ?? '').length;
       return d === 0 ? '#,##0' : `#,##0.${'0'.repeat(Math.min(d, 2))}`;
     };
-    const isNum = (c: typeof cols[number], v: any) => c.align === 'right' && typeof v === 'number';   // 우측정렬 숫자 컬럼만
+    const isNum = (c: typeof cols[number], v: any) => resolveAlign(c) === 'right' && typeof v === 'number';   // 우측정렬 숫자 컬럼만
     // 내보내기는 **화면에 보이는 단위**를 따른다(unit.ts 엑셀 계약). 헤더에 단위를 적지 않으면
     // 1/10⁸ 값이 의미 불명이 되므로 금액 컬럼 헤더는 amountHeader 를 거친다.
     const conv = (c: typeof cols[number], v: number) => (unitOn && c.type === 'amount' ? toUnit(v, unit) : v);

@@ -95,7 +95,9 @@ function KvGrid({ items }: { items: OvItem[] }) {
   );
 }
 
-const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-center whitespace-nowrap';
+const TH_BASE = 'border border-border bg-[color:var(--grid-header)] font-bold whitespace-nowrap';
+const TH = `${TH_BASE} text-left`;
+const THR = `${TH_BASE} text-right`;
 const TD = 'border border-border whitespace-nowrap';
 const negStyle = (v: number): React.CSSProperties | undefined => (v < 0 ? { color: 'var(--danger-text)' } : undefined);
 
@@ -108,32 +110,32 @@ function FundTable({ unit }: { unit: Unit }) {
         <thead>
           <tr>
             {['NO', '자펀드', '계정구분', '결성일자', '등록일자', '만기일자', '청산일자', '결성액', '모펀드약정액', '상태'].map((h) => (
-              <th key={h} scope="col" className={TH} style={{ padding: '7px 8px' }}>{h}</th>
+              <th key={h} scope="col" className={h === '결성액' || h === '모펀드약정액' ? THR : TH} style={{ padding: '7px 8px' }}>{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {GP_FUNDS.map((f) => (
             <tr key={f.no}>
-              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(f.no)}</td>
+              <td className={`${TD} tabular`} style={{ padding: '7px 8px' }}>{String(f.no)}</td>
               <td className={TD} style={{ padding: '7px 8px', whiteSpace: 'normal' }}>{f.fn}</td>
-              <td className={`${TD} text-center`} style={{ padding: '7px 8px' }}>{f.acc}</td>
-              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(f.fd)}</td>
-              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(f.rd)}</td>
-              <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(f.mat)}</td>
-              <td className={`${TD} text-center text-caption`} style={{ padding: '7px 8px' }}>{f.liq ? String(f.liq) : '-'}</td>
+              <td className={TD} style={{ padding: '7px 8px' }}>{f.acc}</td>
+              <td className={`${TD} tabular`} style={{ padding: '7px 8px' }}>{String(f.fd)}</td>
+              <td className={`${TD} tabular`} style={{ padding: '7px 8px' }}>{String(f.rd)}</td>
+              <td className={`${TD} tabular`} style={{ padding: '7px 8px' }}>{String(f.mat)}</td>
+              <td className={`${TD} text-caption`} style={{ padding: '7px 8px' }}>{f.liq ? String(f.liq) : '-'}</td>
               <td className={`${TD} text-right tabular font-semibold`} style={{ padding: '7px 8px' }}>{money(f.amt, unit)}</td>
               <td className={`${TD} text-right tabular font-semibold`} style={{ padding: '7px 8px' }}>{money(f.moa, unit)}</td>
-              <td className={`${TD} text-center`} style={{ padding: '7px 8px' }}><StatusBadge tone="success" label={f.st} size="sm" /></td>
+              <td className={TD} style={{ padding: '7px 8px' }}><StatusBadge tone="success" label={f.st} size="sm" /></td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr style={{ background: 'var(--muted)' }}>
-            <td className={`${TD} text-center font-bold`} colSpan={7} style={{ padding: '7px 8px' }}>합계</td>
+            <td className={`${TD} font-bold`} colSpan={7} style={{ padding: '7px 8px' }}>합계</td>
             <td className={`${TD} text-right tabular font-bold`} style={{ padding: '7px 8px' }}>{money(GP_FUNDS_TOTAL, unit)}</td>
-            <td className={`${TD} text-center`} style={{ padding: '7px 8px' }}>-</td>
-            <td className={`${TD} text-center`} style={{ padding: '7px 8px' }}>-</td>
+            <td className={`${TD} text-right`} style={{ padding: '7px 8px' }}>-</td>
+            <td className={TD} style={{ padding: '7px 8px' }}>-</td>
           </tr>
         </tfoot>
       </table>
@@ -150,12 +152,12 @@ function FinTable({ unit }: { unit: Unit }) {
         <thead>
           <tr>
             <th scope="col" className={TH} style={{ padding: '7px 8px' }}>기준년월</th>
-            {GP_FIN.map(([l]) => <th key={l} scope="col" className={TH} style={{ padding: '7px 8px' }}>{l}</th>)}
+            {GP_FIN.map(([l]) => <th key={l} scope="col" className={THR} style={{ padding: '7px 8px' }}>{l}</th>)}
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td className={`${TD} text-center tabular`} style={{ padding: '7px 8px' }}>{String(GP_BASEYM)}</td>
+            <td className={`${TD} tabular`} style={{ padding: '7px 8px' }}>{String(GP_BASEYM)}</td>
             {GP_FIN.map(([l, v]) => (
               <td key={l} className={`${TD} text-right tabular`} style={{ padding: '7px 8px', ...negStyle(v) }}>{money(v, unit)}</td>
             ))}

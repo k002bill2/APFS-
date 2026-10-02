@@ -31,7 +31,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-const TH = 'border border-border bg-[color:var(--grid-header)] font-bold text-center';
+const TH_BASE = 'border border-border bg-[color:var(--grid-header)] font-bold';
+const TH = `${TH_BASE} text-left`;
+const THR = `${TH_BASE} text-right`;
 const TD = 'border border-border';
 const CELL: React.CSSProperties = { padding: '7px 9px' };
 const KV_COLS: React.CSSProperties = { gridTemplateColumns: '150px minmax(0,1fr)' };
@@ -88,22 +90,22 @@ function CalcTable({ row }: { row: Record<string, unknown> }) {
           <tr>
             <th scope="col" className={TH} style={{ ...CELL, width: 88 }}>기준</th>
             <th scope="col" className={TH} style={{ ...CELL, width: 180 }}>일자</th>
-            <th scope="col" className={TH} style={{ ...CELL, width: 150 }}>
+            <th scope="col" className={THR} style={{ ...CELL, width: 150 }}>
               <span className="inline-flex items-center gap-1">기준금액</span>
             </th>
-            <th scope="col" className={TH} style={{ ...CELL, width: 68 }}>일수</th>
-            <th scope="col" className={TH} style={{ ...CELL, width: 74 }}>보수율</th>
-            <th scope="col" className={TH} style={{ ...CELL, width: 140 }}>관리보수금액</th>
+            <th scope="col" className={THR} style={{ ...CELL, width: 68 }}>일수</th>
+            <th scope="col" className={THR} style={{ ...CELL, width: 74 }}>보수율</th>
+            <th scope="col" className={THR} style={{ ...CELL, width: 140 }}>관리보수금액</th>
             <th scope="col" className={TH} style={CELL}>계산산식</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td className={`${TD} text-center`} style={CELL}><>투자잔액</></td>
-            <td className={`${TD} text-center tabular`} style={CELL}>{String(calc.span)}</td>
+            <td className={TD} style={CELL}><>투자잔액</></td>
+            <td className={`${TD} tabular`} style={CELL}>{String(calc.span)}</td>
             <td className={`${TD} text-right tabular`} style={CELL}>{fmt(base)}</td>
-            <td className={`${TD} text-center tabular`} style={CELL}>{String(calc.days)}</td>
-            <td className={`${TD} text-center tabular`} style={CELL}>{PCT_LABEL}</td>
+            <td className={`${TD} text-right tabular`} style={CELL}>{String(calc.days)}</td>
+            <td className={`${TD} text-right tabular`} style={CELL}>{PCT_LABEL}</td>
             <td className={`${TD} text-right tabular`} style={CELL}>{fmt(amount)}</td>
             <td className={TD} style={CELL}>{FORMULA}</td>
           </tr>

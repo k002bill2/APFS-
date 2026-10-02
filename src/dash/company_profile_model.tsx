@@ -39,7 +39,7 @@ const DENSITY: Record<ProfileVariant, Density> = {
   },
   /* 페이지: 바깥 테두리는 둥근 래퍼가 그리고, 셀은 좌측·하단 선만 긋는다(첫 열 좌선·마지막 행 하단선 제거) */
   page: {
-    th: 'border-0 border-b border-l border-solid border-border first:border-l-0 bg-muted text-[12.5px] font-semibold text-muted-foreground whitespace-nowrap text-center',
+    th: 'border-0 border-b border-l border-solid border-border first:border-l-0 bg-muted text-[12.5px] font-semibold text-muted-foreground whitespace-nowrap',
     td: 'border-0 border-b border-l border-solid border-border first:border-l-0 group-last:border-b-0 text-[13.5px] text-foreground whitespace-nowrap',
     thPad: '9px 12px', tdPad: '10px 12px',
     frame: 'overflow-x-auto border border-solid border-border rounded-[var(--radius-sm)]',
@@ -132,24 +132,25 @@ function FinTable({ unit, variant }: { unit: Unit; variant: ProfileVariant }) {
       <table className="w-full border-collapse" style={{ minWidth: 860 }}>
         <thead>
           <tr>
-            {['No', '운용사', '자펀드', '기준년월', ...FIN_AMT_HEADERS, '종업원수'].map((h) => (
-              <th key={h} scope="col" className={d.th} style={{ padding: d.thPad }}>{h}</th>
+            {['No', '운용사', '자펀드', '기준년월', ...FIN_AMT_HEADERS, '종업원수'].map((h, i) => (
+              // 헤더 정렬은 셀을 따른다 — 앞 4열(No·운용사·자펀드·기준년월) 좌측, 금액·종업원수 우측(그리드 정렬 규약 2026-10-02)
+              <th key={h} scope="col" className={`${d.th} ${i < 4 ? 'text-left' : 'text-right'}`} style={{ padding: d.thPad }}>{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {FIN_ROWS.map((r) => (
             <tr key={r.no} className={d.rowHover}>
-              <td className={`${d.td} text-center tabular`} style={{ padding: d.tdPad }}>{r.no}</td>
+              <td className={`${d.td} tabular`} style={{ padding: d.tdPad }}>{r.no}</td>
               <td className={d.td} style={{ padding: d.tdPad }}>{r.gp}</td>
               <td className={d.td} style={{ padding: d.tdPad }}>{r.fund}</td>
-              <td className={`${d.td} text-center tabular`} style={{ padding: d.tdPad }}>{String(r.ym)}</td>
+              <td className={`${d.td} tabular`} style={{ padding: d.tdPad }}>{String(r.ym)}</td>
               {r.amounts.map((v, i) => (
                 // 음수(적자)는 색 단독으로 알리지 않는다 — 값 자체에 '-' 부호가 남아 텍스트로도 읽힌다(A11Y 원칙 2)
                 <td key={FIN_AMT_HEADERS[i]} className={`${d.td} text-right tabular`}
                   style={{ padding: d.tdPad, ...(v < 0 ? { color: 'var(--danger-text)' } : {}) }}>{money(v, unit)}</td>
               ))}
-              <td className={`${d.td} text-center tabular`} style={{ padding: d.tdPad }}>{String(r.emp)}</td>
+              <td className={`${d.td} text-right tabular`} style={{ padding: d.tdPad }}>{String(r.emp)}</td>
             </tr>
           ))}
         </tbody>
@@ -168,18 +169,19 @@ function ShareTable({ unit, variant }: { unit: Unit; variant: ProfileVariant }) 
       <table className="w-full border-collapse" style={{ minWidth: 980 }}>
         <thead>
           <tr>
-            {SHARE_HEADERS.map((h) => (
-              <th key={h} scope="col" className={d.th} style={{ padding: d.thPad }}>{h}</th>
+            {SHARE_HEADERS.map((h, i) => (
+              // 헤더 정렬은 셀을 따른다 — 앞 4열(No·운용사·자펀드·기준일자) 좌측, 자본금·주수·액면가 우측
+              <th key={h} scope="col" className={`${d.th} ${i < 4 ? 'text-left' : 'text-right'}`} style={{ padding: d.thPad }}>{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {SHARE_ROWS.map((r) => (
             <tr key={r.no} className={d.rowHover}>
-              {td('text-center tabular', r.no)}
+              {td('tabular', r.no)}
               {td('', r.gp)}
               {td('', r.fund)}
-              {td('text-center tabular', String(r.date))}
+              {td('tabular', String(r.date))}
               {td('text-right tabular', money(r.totalCapital, unit))}
               {/* 주수는 금액이 아니다 — 단위 토글 대상에서 제외(축이 무너지지 않도록) */}
               {td('text-right tabular', fmt(r.totalShares))}

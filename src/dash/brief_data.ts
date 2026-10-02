@@ -82,9 +82,9 @@ const yearlyTable = (basis: Basis, rows: YearlyLit[]): TableMeta => ({
     { key: 'g', label: '구분', kind: 'badge', tones: { 운영: 'info', 청산: 'muted' }, pinned: true },
     /* 원문 `#basisCol` — 조회기준 라디오 값이 곧 헤더 라벨. 합계행은 '-' */
     { key: 'y', label: basis, kind: 'center', total: 'dash' },
-    { key: 'c', label: '조합수', kind: 'number', align: 'center', total: 'sum' },
+    { key: 'c', label: '조합수', kind: 'number', total: 'sum' },
     ...AMOUNT_COLS.map((c) => ({ ...c, total: 'sum' as const })),
-    { key: 'mul', label: MULTIPLE_LABEL, kind: 'number', align: 'center', total: multipleOf },
+    { key: 'mul', label: MULTIPLE_LABEL, kind: 'number', total: multipleOf },
   ],
   rows: rows.map(yearlyRow(basis === '선정년도' ? 'sel' : 'form')),
 });
@@ -96,7 +96,7 @@ export const YEARLY_TABLES: Record<Basis, TableMeta> = { 선정년도: yearlyTab
 export const LEDGER_TABLE: TableMeta = {
   id: 'ledger',
   cols: [
-    { key: 'no', label: 'No', kind: 'number', align: 'center', width: 64 },
+    { key: 'no', label: 'No', kind: 'number', align: 'left', width: 64 },
     { key: 'regno', label: '등록번호', kind: 'center' },
     { key: 'nm', label: '명칭', kind: 'text', width: 200 },
     { key: 'dur', label: '존속기간', kind: 'center', width: 210 },

@@ -105,7 +105,10 @@ export function MiniTable({ heads, rows, act, label, right = [], empty = '변경
   const [sel, setSel] = useState<number[]>([]);
   /* 선택은 행 인덱스다 — 행이 바뀌면(추가는 맨 위 삽입) 인덱스가 다른 행을 가리키므로 비운다 */
   useEffect(() => setSel([]), [rows]);
-  const align = (i: number) => (right.includes(i) ? 'text-right' : i === 0 ? 'text-left' : 'text-center');
+  const align = (i: number) => (right.includes(i) ? 'text-right' : 'text-left');
+  /* 선택 체크박스 = 값이 아닌 컨트롤 열 — 표 정렬 규약(숫자 우측·그 외 좌측)의 예외로 가운데 유지 */
+  const ctrlTh = 'border border-border bg-[color:var(--grid-header)] text-center';
+  const ctrlTd = 'border border-border text-center';
   const cell: React.CSSProperties = { padding: '8px 11px' };
   const openLabel = act === 'edit' ? '수정' : '상세';
   const toggle = (i: number, on: boolean) => setSel((p) => (on ? [...p, i] : p.filter((x) => x !== i)));
@@ -125,7 +128,7 @@ export function MiniTable({ heads, rows, act, label, right = [], empty = '변경
         <table className="w-full border-collapse" style={{ fontSize: 13.5 }}>
           <caption className="sr-only">{label}</caption>
           <thead><tr>
-            <th scope="col" className="border border-border bg-[color:var(--grid-header)] text-center" style={{ ...cell, width: 44 }}><span className="sr-only">선택</span></th>
+            <th scope="col" className={ctrlTh} style={{ ...cell, width: 44 }}><span className="sr-only">선택</span></th>
             {cols.map((h, i) => (
               <th key={h} scope="col" className={`border border-border bg-[color:var(--grid-header)] font-bold whitespace-nowrap ${align(i)}`} style={cell}>{h}</th>
             ))}
@@ -134,7 +137,7 @@ export function MiniTable({ heads, rows, act, label, right = [], empty = '변경
             {rows.length === 0 && <UI.EmptyRow span={cols.length + 1} msg={empty} className="border border-border" style={{ ...cell, padding: '18px 11px' }} />}
             {rows.map((r, ri) => (
               <tr key={ri} className={sel.includes(ri) ? 'bg-muted' : undefined}>
-                <td className="border border-border text-center" style={cell}>
+                <td className={ctrlTd} style={cell}>
                   <Checkbox checked={sel.includes(ri)} onCheckedChange={(c) => toggle(ri, c === true)} aria-label={`${label} ${ri + 1}번 행 선택`} />
                 </td>
                 {r.map((v, i) => <td key={i} className={`border border-border ${align(i)} ${right.includes(i) ? 'tabular-nums' : ''}`} style={cell}>
@@ -424,11 +427,11 @@ export function LedgerIssueHistoryModal({ onClose }: { onClose: () => void }) {
       <table className="w-full border-collapse" style={{ fontSize: 13.5 }}>
         <caption className="sr-only">발급이력</caption>
         <thead><tr>
-          <th scope="col" className="border border-border bg-[color:var(--grid-header)] font-bold text-center" style={{ ...cell, width: 64 }}>No</th>
-          <th scope="col" className="border border-border bg-[color:var(--grid-header)] font-bold text-center" style={cell}>발급일자</th>
+          <th scope="col" className="border border-border bg-[color:var(--grid-header)] font-bold text-left" style={{ ...cell, width: 64 }}>No</th>
+          <th scope="col" className="border border-border bg-[color:var(--grid-header)] font-bold text-left" style={cell}>발급일자</th>
         </tr></thead>
         <tbody>{ISSUE_HISTORY.map((h) => (
-          <tr key={h.no}><td className="border border-border text-center" style={cell}>{h.no}</td><td className="border border-border text-center" style={cell}>{String(h.date)}</td></tr>
+          <tr key={h.no}><td className="border border-border" style={cell}>{h.no}</td><td className="border border-border" style={cell}>{String(h.date)}</td></tr>
         ))}</tbody>
       </table>
     </Modal>

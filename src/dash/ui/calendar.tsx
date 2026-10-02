@@ -84,7 +84,7 @@ function Calendar({
         ),
         month_grid: cn('w-full border-collapse', defaultClassNames.month_grid),
         weekdays: cn('flex', defaultClassNames.weekdays),
-        weekday: cn('flex-1 select-none rounded-card-sm text-[0.8rem] font-normal text-muted-foreground', defaultClassNames.weekday),
+        weekday: cn('flex-1 select-none text-center rounded-card-sm text-[0.8rem] font-normal text-muted-foreground', defaultClassNames.weekday),
         week: cn('mt-2 flex w-full', defaultClassNames.week),
         week_number_header: cn('w-[var(--cell-size)] select-none', defaultClassNames.week_number_header),
         week_number: cn('select-none text-[0.8rem] text-muted-foreground', defaultClassNames.week_number),

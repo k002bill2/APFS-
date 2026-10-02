@@ -33,7 +33,7 @@ const c = (key: string, label: string, kind: ColMeta['kind'], extra: Partial<Col
 const FUND_OVERVIEW: TableMeta = {
   id: 'FUND_OVERVIEW',
   cols: [
-    c('no', 'No', 'number', { align: 'center', width: 64, flex: 0 }),
+    c('no', 'No', 'number', { align: 'left', width: 64, flex: 0 }),
     c('ym', '보고기준년월', 'date'),
     c('mgr', '운용사코드', 'text'),
     c('fcode', '운용사펀드코드', 'center'),
@@ -52,7 +52,7 @@ const FUND_OVERVIEW: TableMeta = {
 const UNION_OVERVIEW: TableMeta = {
   id: 'UNION_OVERVIEW',
   cols: [
-    c('no', 'No', 'number', { align: 'center', width: 64, flex: 0 }),
+    c('no', 'No', 'number', { align: 'left', width: 64, flex: 0 }),
     c('ym', '보고기준년월', 'date'),
     c('mgr', '운용사코드', 'center'),
     c('fcode', '운용사펀드코드', 'center'),

@@ -83,11 +83,11 @@ const textCell = (field: 'ind' | 'ok' | 'warn' | 'bad' | 'inpText', placeholder:
 const makeCols = (mode: QuantModalMode, patch: Patch): ColDef<EditRow>[] => [
   { field: 'use', headerName: '사용', width: 64, minWidth: 64, maxWidth: 64, cellStyle: CENTER, cellRenderer: boolCell('use', '사용', patch), suppressKeyboardEvent: suppressCtrlKeys },
   { field: 'ind', headerName: '지표구분', flex: 1.4, minWidth: 160, width: 160, cellStyle: MID, cellRenderer: textCell('ind', '지표구분', '지표구분', patch), suppressKeyboardEvent: suppressCtrlKeys },
-  { field: 'ok', headerName: '정상', flex: 1, minWidth: 110, width: 110, cellStyle: CENTER, cellRenderer: textCell('ok', '예: 75 이상', '정상 기준', patch), suppressKeyboardEvent: suppressCtrlKeys },
-  { field: 'warn', headerName: '주의', flex: 1, minWidth: 110, width: 110, cellStyle: CENTER, cellRenderer: textCell('warn', '예: 50 이상', '주의 기준', patch), suppressKeyboardEvent: suppressCtrlKeys },
-  { field: 'bad', headerName: '경고', flex: 1, minWidth: 110, width: 110, cellStyle: CENTER, cellRenderer: textCell('bad', '예: 50 미만', '경고 기준', patch), suppressKeyboardEvent: suppressCtrlKeys },
+  { field: 'ok', headerName: '정상', flex: 1, minWidth: 110, width: 110, cellStyle: MID, cellRenderer: textCell('ok', '예: 75 이상', '정상 기준', patch), suppressKeyboardEvent: suppressCtrlKeys },
+  { field: 'warn', headerName: '주의', flex: 1, minWidth: 110, width: 110, cellStyle: MID, cellRenderer: textCell('warn', '예: 50 이상', '주의 기준', patch), suppressKeyboardEvent: suppressCtrlKeys },
+  { field: 'bad', headerName: '경고', flex: 1, minWidth: 110, width: 110, cellStyle: MID, cellRenderer: textCell('bad', '예: 50 미만', '경고 기준', patch), suppressKeyboardEvent: suppressCtrlKeys },
   mode === 'create'
-    ? { field: 'inpText', headerName: '입력항목', width: 150, minWidth: 150, maxWidth: 150, cellStyle: CENTER, cellRenderer: textCell('inpText', '', '입력항목', patch, true), suppressKeyboardEvent: suppressCtrlKeys }
+    ? { field: 'inpText', headerName: '입력항목', width: 150, minWidth: 150, maxWidth: 150, cellStyle: MID, cellRenderer: textCell('inpText', '', '입력항목', patch, true), suppressKeyboardEvent: suppressCtrlKeys }
     : { field: 'inp', headerName: '입력항목', width: 104, minWidth: 104, maxWidth: 104, cellStyle: CENTER, cellRenderer: boolCell('inp', '입력항목', patch), suppressKeyboardEvent: suppressCtrlKeys },
 ];
 

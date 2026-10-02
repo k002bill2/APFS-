@@ -18,7 +18,7 @@ export const schema: PageSchema = {
   entity: '투자실적',
   // 원문 ③ 소재지별 표 — 투자건수(건수·비율)·투자금액(금액·비율) 2단 헤더. 금액 단위는 억원이다.
   columns: [
-    { key: 'no',          label: 'NO',       type: 'number', align: 'center' },
+    { key: 'no',          label: 'NO',       type: 'number', align: 'left' },
     { key: 'region',      label: '소재지',   type: 'text',   align: 'left' },
     { key: 'investCount', label: '건수',     type: 'number', align: 'right', group: '투자건수' },
     { key: 'countRatio',  label: '비율(%)',  type: 'rate',   align: 'right', group: '투자건수' },

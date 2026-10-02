@@ -31,23 +31,23 @@ export const schema: PageSchema = {
   kind: 'list',
   entity: '우수투자기업',
   columns: [
-    { key: 'no',              label: 'No',          type: 'number', align: 'center' },
-    { key: 'selectYear',      label: '선정연도',    type: 'text',   align: 'center' },
+    { key: 'no',              label: 'No',          type: 'number', align: 'left' },
+    { key: 'selectYear',      label: '선정연도',    type: 'text' },
     // 등급은 type:'text' 로 둔다 — 'status' 로 두면 아래 statusDomain(사후관리상태 도메인)에서
     // 톤을 찾다 실패해 전부 info 색으로 칠해진다(두 축은 서로 다른 값 도메인이다).
-    { key: 'grade',           label: '선정등급',    type: 'text',   align: 'center' },
+    { key: 'grade',           label: '선정등급',    type: 'text' },
     { key: 'gp',              label: '운용사',      type: 'gp',     align: 'left' },
     { key: 'subFund',         label: '자펀드',      type: 'text',   align: 'left' },
     { key: 'investee',        label: '투자기업',    type: 'text',   align: 'left' },
-    { key: 'bizNo',           label: '사업자번호',  type: 'pii',    align: 'center' },
-    { key: 'bizField',        label: '사업분야',    type: 'text',   align: 'center' },
-    { key: 'firstInvestDate', label: '최초투자일자', type: 'date',  align: 'center' },
+    { key: 'bizNo',           label: '사업자번호',  type: 'pii' },
+    { key: 'bizField',        label: '사업분야',    type: 'text' },
+    { key: 'firstInvestDate', label: '최초투자일자', type: 'date' },
     { key: 'investAmt',       label: '투자금액',    type: 'amount', unit: '원', align: 'right' },
     { key: 'salesAmt',        label: '매출액',      type: 'amount', unit: '원', align: 'right' },
     { key: 'totalEmployees',  label: '총고용인수',  type: 'number', align: 'right' },
     { key: 'youthEmployees',  label: '청년고용인수', type: 'number', align: 'right' },
     { key: 'selectReason',    label: '선정사유',    type: 'text',   align: 'left' },
-    { key: 'status',          label: '사후관리상태', type: 'status', align: 'center' },
+    { key: 'status',          label: '사후관리상태', type: 'status' },
   ],
   // 항목 7개 > 6 → RowFormModal이 2단 wide로 자동 렌더한다(schema-form-modal-2col).
   fields: [

@@ -171,7 +171,11 @@ const negStyle = (v: number): React.CSSProperties | undefined => (v < 0 ? { colo
 
 /* 재무정보 요약 — 2단 헤더 표(기준년월 rowSpan + 대차대조표 9 + 손익 5). 가로는 자체 스크롤 */
 function FinGrid({ unit, zero }: { unit: Unit; zero: boolean }) {
-  const th = 'border border-border bg-[color:var(--grid-header)] font-bold text-center whitespace-nowrap';
+  const thBase = 'border border-border bg-[color:var(--grid-header)] font-bold whitespace-nowrap';
+  const th = `${thBase} text-left`;
+  const thR = `${thBase} text-right`;
+  /* 2단 그룹 헤더(colSpan 묶음 제목)만 가운데 — 표 정렬 규약의 허용 예외 */
+  const thG = `${thBase} text-center`;
   const cols = [...FIN_BS, ...FIN_IS];
   return (
     <div className="overflow-x-auto">
@@ -180,14 +184,14 @@ function FinGrid({ unit, zero }: { unit: Unit; zero: boolean }) {
         <thead>
           <tr>
             <th rowSpan={2} scope="col" className={th} style={{ padding: '6px 10px' }}>기준년월</th>
-            <th colSpan={FIN_BS.length} scope="colgroup" className={th} style={{ padding: '6px 10px' }}>대차대조표</th>
-            <th colSpan={FIN_IS.length} scope="colgroup" className={th} style={{ padding: '6px 10px' }}>손익계산서</th>
+            <th colSpan={FIN_BS.length} scope="colgroup" className={thG} style={{ padding: '6px 10px' }}>대차대조표</th>
+            <th colSpan={FIN_IS.length} scope="colgroup" className={thG} style={{ padding: '6px 10px' }}>손익계산서</th>
           </tr>
-          <tr>{cols.map(([l]) => <th key={l} scope="col" className={th} style={{ padding: '6px 10px', fontWeight: 600 }}>{l}</th>)}</tr>
+          <tr>{cols.map(([l]) => <th key={l} scope="col" className={thR} style={{ padding: '6px 10px', fontWeight: 600 }}>{l}</th>)}</tr>
         </thead>
         <tbody>
           <tr>
-            <td className="border border-border text-center" style={{ padding: '6px 10px' }}>{BASEYM}</td>
+            <td className="border border-border" style={{ padding: '6px 10px' }}>{BASEYM}</td>
             {cols.map(([l, v]) => {
               const val = zero ? 0 : v;
               return <td key={l} className="border border-border text-right tabular" style={{ padding: '6px 10px', ...negStyle(val) }}>{money(val, unit)}</td>;
