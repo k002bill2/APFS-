@@ -6,14 +6,14 @@
    - 좌 코드구분 목록 ⟷ 우 선택 코드구분의 코드상세(master-detail) → GridFrame 하나 안에 2단 그리드(lg 이상 좌 440px / 우 잔여, 좁으면 세로 적층).
        각 패널은 자체 헤더 바(제목·건수·패널 액션)와 AG Grid 를 갖는다. 좌 선택(라디오)이 우측 데이터 소스를 정한다.
        우측은 코드구분 미선택이면 **empty state**(목업 overlay '좌측에서 코드구분을 선택해 주세요.')를 그리드 대신 그린다.
-   - 그룹/상세 각각 등록·수정·삭제(목업 lg-·rg- 접두 버튼)  → 툴바 등록 버튼(코드구분 등록, ⌘⏎) + 패널 바 액션(수정·삭제·코드 등록).
-       삭제 게이트: 코드상세가 있는 코드구분은 삭제 불가(toast). 확인은 AlertDialog. 보조 경로 = 행 더블클릭·셀 Enter·우클릭 메뉴.
+   - 그룹/상세 각각 등록·수정(목업 lg-·rg- 접두 버튼)  → 툴바 등록 버튼(코드구분 등록, ⌘⏎) + 패널 바 액션(수정·코드 등록).
+       삭제는 없다(2026-10-02 사용자 결정 — 패널 바·우클릭·수정 모달의 삭제 진입점 전부 제거). 보조 경로 = 행 더블클릭·셀 Enter·우클릭 메뉴.
    - 모달 2종(코드구분 5필드 / 코드상세 7필드)  → RowFormModal + 팩토리 스키마(code_manage_schemas.ts). 수정 시 키 필드 readonly.
        중복 검증(코드구분·그룹 내 코드)은 onSave 에서 — 중복이면 toast 로 알리고 모달을 닫지 않는다(목업 '이미 존재하는 …').
        코드상세 저장 시 그룹 안 정렬을 `reseqSiblings` 로 자동 재조정(목업 '저장되었습니다 · 정렬 자동 조정').
    - 엑셀(리스트 공통 규약) → 시트 2장(코드구분 전체 · 선택 코드구분의 코드상세).
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · 페이지네이션 없음(그룹 ≤ 20).
-   ⚠ 백엔드가 없어 등록·수정·삭제는 화면 로컬 상태만 바꾼다. 목업의 GNB/LNB·설계 메모는 이식하지 않는다(셸 소유). */
+   ⚠ 백엔드가 없어 등록·수정은 화면 로컬 상태만 바꾼다. 목업의 GNB/LNB·설계 메모는 이식하지 않는다(셸 소유). */
 import './aggrid_shared.css';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { CSSProperties } from 'react';
@@ -30,11 +30,10 @@ import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescrip
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
 import { RowFormModal } from './generic_list_modal';
 import { RowContextMenu } from './row_context_menu';
 import type { CtxItem, CtxMenuState } from './row_context_menu';
-import { demoGroups, demoDetails, detailId, groupDeleteBlocker } from './code_manage_data';
+import { demoGroups, demoDetails, detailId } from './code_manage_data';
 import type { CodeGroup, CodeDetail } from './code_manage_data';
 import { groupSchema, detailSchema, upOption, upCodeOf, UP_NONE } from './code_manage_schemas';
 import { reseqSiblings, applyReseq } from './reseq';
@@ -78,7 +77,7 @@ const DETAIL_COLS: ColDef<CodeDetail>[] = [
 /* 좌·우 모두 체크박스로만 선택(행 본문 클릭 선택 해제 — 2026-09-22 사용자 결정). 좌 그리드의 "해제 금지"는
    enableClickSelection:'enableSelection' 이 아니라 onGroupSelection 의 queueMicrotask 복원이 담당한다(apfs-aggrid master-detail 절). */
 const GROUP_SELECTION: RowSelectionOptions<GroupView> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };
-/* 우측 코드상세는 일반 리스트 — 다중 선택이 기본(2026-09-23). 단일 액션(수정)은 1건일 때만, 삭제는 다건.
+/* 우측 코드상세는 일반 리스트 — 다중 선택이 기본(2026-09-23). 단일 액션(수정)은 1건일 때만.
    ⚠ 좌측 GROUP_SELECTION 은 그대로 singleRow(라디오) — 우측 패널이 무엇을 보여줄지 정하는 데이터 소스라 2건 이상이 성립하지 않는다. */
 const DETAIL_SELECTION: RowSelectionOptions<CodeDetail> = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
 
@@ -108,9 +107,7 @@ function PaneBar({ title, count, children }: { title: React.ReactNode; count: nu
 ────────────────────────────── */
 type ModalState = null
   | { kind: 'group'; mode: 'create' | 'edit'; code?: string }
-  | { kind: 'detail'; mode: 'create' | 'edit'; id?: string }
-  | { kind: 'delGroup'; code: string }
-  | { kind: 'delDetail'; ids: string[] };
+  | { kind: 'detail'; mode: 'create' | 'edit'; id?: string };
 
 export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
   const lApi = useRef<GridApi<GroupView> | null>(null);
@@ -191,13 +188,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
     setModal({ kind: 'detail', mode: 'edit', id: e.data.id });
   }, []);
 
-  /* ── 삭제 게이트 + 컨텍스트 메뉴 ── */
-  /* 삭제 게이트: 코드상세 또는 이 코드를 상위로 참조하는 코드구분이 있으면 불가(groupDeleteBlocker). 확인 실행 시 재검사 */
-  const requestDelGroup = (g: CodeGroup) => {
-    const blocker = groupDeleteBlocker(groups, details, g.code);
-    if (blocker) { toast.error(`${blocker}가 있어 삭제할 수 없습니다.`); return; }
-    setModal({ kind: 'delGroup', code: g.code });
-  };
+  /* ── 컨텍스트 메뉴 ── */
   const groupCtx = (e: CellContextMenuEvent<GroupView>) => {
     (e.event as MouseEvent | undefined)?.preventDefault();
     const g = e.data; if (!g) return;
@@ -206,8 +197,6 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       { label: '코드상세 보기', icon: 'eye', onSelect: () => { setCurCode(g.code); setSelDIds([]); } },
       { label: '수정', icon: 'file', onSelect: () => setModal({ kind: 'group', mode: 'edit', code: g.code }) },
       { label: 'Excel 내보내기', icon: 'download', onSelect: exportExcel },
-      'sep',
-      { label: '삭제', icon: 'trash', danger: true, onSelect: () => requestDelGroup(g) },
     ];
     setCtx({ x: ev.clientX, y: ev.clientY, items });
   };
@@ -218,8 +207,6 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
     const items: CtxItem[] = [
       { label: '수정', icon: 'file', onSelect: () => setModal({ kind: 'detail', mode: 'edit', id: d.id }) },
       { label: 'Excel 내보내기', icon: 'download', onSelect: exportExcel },
-      'sep',
-      { label: '삭제', icon: 'trash', danger: true, onSelect: () => setModal({ kind: 'delDetail', ids: [d.id] }) },
     ];
     setCtx({ x: ev.clientX, y: ev.clientY, items });
   };
@@ -249,16 +236,6 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
     setModal(null);
     toast.success('저장되었습니다');
   };
-  const doDelGroup = () => {
-    if (modal?.kind !== 'delGroup') return;
-    const code = modal.code;
-    const blocker = groupDeleteBlocker(groups, details, code);
-    if (blocker) { toast.error(`${blocker}가 있어 삭제할 수 없습니다.`); return; }
-    setGroups((prev) => prev.filter((g) => g.code !== code));
-    setDetails((prev) => { const n = { ...prev }; delete n[code]; return n; });
-    if (curCode === code) { setCurCode(null); setSelDIds([]); }
-    toast.success('삭제되었습니다');
-  };
   /* ── CRUD(코드상세) — 그룹 안 중복 검사 + 정렬 재배치 ── */
   const saveDetail = (f: any) => {
     if (!detailModal || !curG) return;
@@ -281,13 +258,6 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
     setSelDIds([movedId]);
     setModal(null);
     toast.success('저장되었습니다 · 정렬 자동 조정');
-  };
-  const doDelDetail = () => {
-    if (modal?.kind !== 'delDetail' || !curG) return;
-    const ids = new Set(modal.ids), g = curG.code;
-    setDetails((prev) => ({ ...prev, [g]: (prev[g] ?? []).filter((d) => !ids.has(d.id)) }));
-    rApi.current?.deselectAll(); setSelDIds([]);
-    toast.success(`${ids.size}건 삭제되었습니다`);
   };
   const refresh = () => {
     const gs = demoGroups(); setGroups(gs); setDetails(demoDetails()); setCurCode(gs[0]?.code ?? null); setSelDIds([]); clearFilters();
@@ -347,12 +317,7 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[440px_minmax(0,1fr)]">
         <section aria-label="코드구분 목록" className="min-w-0">
           <PaneBar title="코드구분 " count={groupViews.length}>
-            {curG && (
-              <>
-                <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'group', mode: 'edit', code: curG.code })}>수정</Button>
-                <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => requestDelGroup(curG)}>삭제</Button>
-              </>
-            )}
+            {curG && <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'group', mode: 'edit', code: curG.code })}>수정</Button>}
           </PaneBar>
           <AgGridReact<GroupView>
             theme={apfsTheme}
@@ -382,8 +347,6 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
               <>
                 <span className="font-semibold" style={{ fontSize: 13 }}>{String(selDCount)}건 선택됨</span>
                 {selD && <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'detail', mode: 'edit', id: selD.id })}>수정</Button>}
-                <Button variant="outline" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }}
-                  onClick={() => { const ids = (rApi.current?.getSelectedRows() ?? []).map((d) => d.id); if (ids.length) setModal({ kind: 'delDetail', ids }); }}>삭제</Button>
               </>
             )}
           </PaneBar>
@@ -447,56 +410,17 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
         </SheetContent>
       </Sheet>
 
-      {/* ── 코드구분 등록/수정(RowFormModal, 5필드 1단). 삭제는 패널 액션·우클릭(코드상세 없을 때만) ── */}
+      {/* ── 코드구분 등록/수정(RowFormModal, 5필드 1단) ── */}
       {groupModal && gSchema && (groupModal.mode === 'create' || editGroup) && (
         <RowFormModal mode={groupModal.mode} schema={gSchema} title={gSchema.title} initial={groupInitial as any}
-          onSave={saveGroup} onClose={() => setModal(null)}
-          onDelete={editGroup ? () => { setModal(null); requestDelGroup(editGroup); } : undefined} />
+          onSave={saveGroup} onClose={() => setModal(null)} />
       )}
       {/* ── 코드상세 등록/수정(RowFormModal, 7필드 2단) ── */}
       {detailModal && dSchema && curG && (detailModal.mode === 'create' || editDetail) && (
         <RowFormModal mode={detailModal.mode} schema={dSchema} title={dSchema.title} initial={detailInitial as any}
-          onSave={saveDetail} onClose={() => setModal(null)}
-          onDelete={editDetail ? () => setModal({ kind: 'delDetail', ids: [editDetail.id] }) : undefined} />
+          onSave={saveDetail} onClose={() => setModal(null)} />
       )}
 
-      {/* ── 삭제 확인 2종 ── */}
-      {modal?.kind === 'delGroup' && (
-        <AlertDialog open onOpenChange={(o) => { if (!o) setModal(null); }}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>코드구분 삭제</AlertDialogTitle>
-              <AlertDialogDescription>
-                「<b className="text-foreground">{groups.find((g) => g.code === modal.code)?.name ?? modal.code}</b>」 코드구분을 삭제할까요?
-                <br />삭제 후에는 복구할 수 없습니다.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>취소</AlertDialogCancel>
-              <AlertDialogAction onClick={doDelGroup} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-      {modal?.kind === 'delDetail' && curG && (
-        <AlertDialog open onOpenChange={(o) => { if (!o) setModal(null); }}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>코드 삭제</AlertDialogTitle>
-              <AlertDialogDescription>
-                {modal.ids.length === 1
-                  ? <>코드 「<b className="text-foreground">{(() => { const d = curDetails.find((x) => x.id === modal.ids[0]); return d ? `${d.code} ${d.name}` : modal.ids[0]; })()}</b>」 을 삭제할까요?</>
-                  : <>선택한 <b className="text-foreground">{String(modal.ids.length)}건</b>의 코드를 삭제할까요?</>}
-                <br />삭제 후에는 복구할 수 없습니다.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>취소</AlertDialogCancel>
-              <AlertDialogAction onClick={doDelDetail} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
     </GridFrame>
   );
 }
