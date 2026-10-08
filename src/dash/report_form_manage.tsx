@@ -7,7 +7,7 @@
    - 행 클릭 선택 → [등록][수정][삭제] 노출(목업) → **선택 UI 없이** APFS 단건 CRUD 관례로 치환(2026-09-12 자펀드 공고
        정보관리 사용자 결정 "다건 선택/선택삭제가 없는 단건 CRUD 화면은 선택 UI가 군더더기" — apfs-grid `hideRowSelection` 절):
          등록 = 툴바 등록 버튼(1차 액션 상시 노출, ⌘⏎) · 수정 = 행 더블클릭·셀 Enter·우클릭 메뉴 ·
-         삭제 = 우클릭 메뉴(→ AlertDialog 확인) 또는 수정 모달 안 2단계 삭제.
+         삭제 = 우클릭 메뉴(→ AlertDialog 확인) 또는 수정 모달 안 [삭제](→ AlertDialog 확인).
    - 등록/수정 단일 폼 2모드(제목*·설명·첨부 드롭존) → RowFormModal + 로컬 `FORM_SCHEMA`(report_form_manage_schemas.ts),
        제목은 `title` prop으로 '양식 등록'/'양식 수정'(목업 h2 그대로).
    - 삭제 확인 alertdialog(기본 포커스 취소, 위험 버튼) → Radix AlertDialog(Cancel 기본 포커스 내장).
@@ -243,7 +243,7 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      {/* ── 등록/수정 — 단일 폼 2모드(목업 openForm). 수정 모달 안 2단계 삭제는 RowFormModal 내장(onDelete) ── */}
+      {/* ── 등록/수정 — 단일 폼 2모드(목업 openForm). 수정 모달 안 [삭제]는 onDelete로 삭제 확인 AlertDialog를 연다 ── */}
       {modal?.kind === 'create' && (
         <RowFormModal mode="create" schema={FORM_SCHEMA} title="양식 등록"
           onSave={saveCreate} onClose={() => setModal(null)} />

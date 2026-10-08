@@ -14,9 +14,11 @@
    - 목록 그리드(13컬럼 단일 헤더) → AG Grid(apfs-aggrid) + **pinned 합계행**(목업 tfoot).
        목업 tfoot은 colspan 9 '합계' + 최초/최종 출자약정액 2합 + colspan 2 '-'인데 AG Grid는 셀 병합이 없다 →
        No 셀만 '합 계', 두 약정액은 합, 나머지 텍스트 셀은 빈 값, 합계 없는 금액(결성액)은 '-'(apfs-aggrid 규약).
-   - 행 선택 후 [등록][수정][삭제](목업) → **선택 UI 없이** APFS 단건 CRUD 관례로 치환(report_form_manage 골드):
-       등록 = 툴바 등록 버튼(⌘⏎) · 수정 = 행 더블클릭·셀 Enter·우클릭 메뉴 ·
-       삭제 = 우클릭 메뉴(→ AlertDialog) 또는 수정 모달 안 2단계 삭제.
+   - 행 선택 후 [등록][수정][삭제](목업) → **체크박스 다중 선택 + 선택 바** 규약(2026-10-08 사용자 지시,
+       generic_list·user_manage 동형): 선택 바 = `N건 선택됨` · [수정](1건일 때만) · [삭제](→ AlertDialog 확인) · [선택 해제].
+       등록 = 툴바 등록 버튼(⌘⏎) · 수정 = 선택 바 [수정]·행 더블클릭·셀 Enter·우클릭 메뉴 ·
+       삭제 = 선택 바 [삭제]·우클릭 메뉴(→ AlertDialog, 다건 가능) 또는 수정 모달 안 삭제(→ AlertDialog).
+       pinned 합계행엔 SELECTION_COL이 체크박스를 그리지 않는다(선택 모델 밖).
    - 등록/수정 단일 폼 2모드 팝업 → RowFormModal + `fund_member_manage_schemas.ts`(CREATE/EDIT 2스키마,
        6필드라 460px 1단). 제목은 `title` prop으로 '조합원 등록'/'조합원 수정'(목업 h2 그대로).
    - 엑셀(목업 [엑셀] 버튼) → SheetJS 단일 헤더 + 합계행.
@@ -36,9 +38,10 @@ import { UI } from './components';
 import { Icon } from './icons';
 import { GridFrame, FooterActions } from './grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, numFmt, numStyle } from './aggrid_theme';
+import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, ValueFormatterParams } from 'ag-grid-community';
+import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, RowSelectionOptions, IRowNode, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, ValueFormatterParams } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { toast } from './ui/sonner';
@@ -108,7 +111,7 @@ const PAGE_SIZE = 20;
    컬럼 정의 — 목업 thead 순서 그대로(단일 헤더 13컬럼):
      No · 운용사 · 자펀드 · 계정구분 · 등록일 · 결성액 · 조합원 · 조합원구분 · 조합원유형 ·
      최초 출자약정액 · 최종 출자약정액 · 비고 · 출자배분 거래유무
-   ⚠ 좌측 고정은 No만 — 다른 컬럼에 pinned를 주면 좌측 영역으로 끌려와 목업 순서가 깨진다.
+   ⚠ 좌측 고정은 No만(선택 컬럼은 SELECTION_COL이 좌측 고정) — 다른 컬럼에 pinned를 주면 좌측 영역으로 끌려와 목업 순서가 깨진다.
    ⚠ 폭 관련 그리드 prop(autoSizeStrategy·defaultColDef)은 aggrid_theme.ts 공용 상수만 쓴다(인라인 금지).
 ────────────────────────────── */
 /* AG Grid cellStyle은 CellStyle(문자열 인덱스 시그니처) — React CSSProperties와 타입이 다르다 */
@@ -164,6 +167,10 @@ const columnDefs: ColDef<FundMemberRow>[] = [
   txt('deal', '출자배분 거래유무', 140),
 ];
 
+/* 다중 선택(2026-10-08 사용자 지시 — generic_list·user_manage 동형). 체크박스로만 on/off(행 본문 클릭 선택 없음).
+   모듈 상수 — 렌더마다 새 객체면 AG Grid가 컬럼을 재생성한다(generic_list ROW_SELECTION 주석) */
+const ROW_SELECTION: RowSelectionOptions<FundMemberRow> = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
+
 /* 엑셀 컬럼 — 화면 컬럼과 1:1(화면=엑셀 불변식). 액션 컬럼이 없어 13열 전부 직렬화한다. */
 type XCol = { header: string; key: keyof FundMemberRow; num?: boolean; wch: number };
 const EXPORT_COLS: XCol[] = [
@@ -205,7 +212,8 @@ function DrawerField({ label, noop, children }: { label: string; noop?: boolean;
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
-type ModalState = null | { kind: 'create' } | { kind: 'edit'; id: string } | { kind: 'delete'; id: string };
+/* delete는 다건(ids) — 우클릭·수정 모달 삭제 = [row.id], 선택 바 삭제 = 선택 id 전체 */
+type ModalState = null | { kind: 'create' } | { kind: 'edit'; id: string } | { kind: 'delete'; ids: string[] };
 type Acc = FundMemberRow['acc'];
 
 /* 계정구분 칩 — 목업 chipGroup(['전체','농식품','수산']) 그대로. 초기값 '농식품'은 적용하지 않는다(파일 상단 '한계') */
@@ -214,6 +222,9 @@ const ACC_OPTS: Acc[] = ['농식품', '수산'];
 export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<FundMemberRow> | null>(null);
   const [rows, setRows] = useState<FundMemberRow[]>(DEMO);
+  /* 선택 SSOT = id 배열 하나(건수는 파생 — apfs-aggrid "선택 상태는 selIds 하나로") */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selCount = selIds.length;
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
@@ -252,6 +263,9 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
   const fundOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.fn))), [rows]);
 
   const onGridReady = useCallback((e: GridReadyEvent<FundMemberRow>) => { apiRef.current = e.api; }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<FundMemberRow>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
   /* 값 비교 가드 — 매 호출 새 객체 setState는 렌더 루프 유발(aggrid-onpaginationchanged-render-loop) */
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
@@ -275,12 +289,14 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
       { label: '수정', icon: 'file', onSelect: () => setModal({ kind: 'edit', id: row.id }) },
       { label: 'Excel 내보내기', icon: 'download', onSelect: exportExcel },
       'sep',
-      { label: '삭제', icon: 'trash', danger: true, onSelect: () => setModal({ kind: 'delete', id: row.id }) },
+      { label: '삭제', icon: 'trash', danger: true, onSelect: () => setModal({ kind: 'delete', ids: [row.id] }) },
     ];
     setCtx({ x: ev.clientX, y: ev.clientY, items });
   };
 
-  const target = modal && modal.kind !== 'create' ? rows.find((r) => r.id === modal.id) ?? null : null;
+  const target = modal?.kind === 'edit' ? rows.find((r) => r.id === modal.id) ?? null : null;
+  /* 삭제 대상 — 모달이 연 시점의 ids 중 아직 존재하는 행 */
+  const delRows = modal?.kind === 'delete' ? rows.filter((r) => modal.ids.includes(r.id)) : [];
 
   /* ── CRUD — 불변 갱신 + toast(목업 클라이언트 회신 문구 유지) ── */
   const str = (v: unknown) => String(v ?? '').trim();
@@ -313,13 +329,16 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
     setModal(null);
     toast.success('수정되었습니다');
   };
-  const doDelete = () => {
-    if (!target) return;
-    setRows((prev) => prev.filter((r) => r.id !== target.id));   // no 재번호 없음(목업 동일), 합계는 useMemo가 재계산
-    toast.success('삭제되었습니다');
+  const doDelete = (ids: string[]) => {
+    const del = new Set(ids);
+    setRows((prev) => prev.filter((r) => !del.has(r.id)));   // no 재번호 없음(목업 동일), 합계는 useMemo가 재계산
+    apiRef.current?.deselectAll();
+    toast.success(ids.length === 1 ? '삭제되었습니다' : `${ids.length}건을 삭제했습니다`);
   };
+  /* 선택 바 [수정] — 체크 1건일 때만 노출. 더블클릭·Enter·우클릭 '수정'과 같은 모달을 연다 */
+  const editSelected = () => { if (selIds.length === 1) setModal({ kind: 'edit', id: selIds[0] }); };
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('조회되었습니다'); };
+  const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더 13열 + 합계행(화면=엑셀 불변식) ── */
   const exportExcel = () => {
@@ -346,19 +365,31 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
   const pageSize = showAll ? Math.max(filteredRows.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
 
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다(contextActions 슬롯).
+     선택 중엔 GridFrame 이 filterChips 를 접는다 */
+  const selActions = selCount > 0 ? (
+    <>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
+      {selCount === 1 && <Button variant="primary" size="sm" leadingIcon="file" onClick={editSelected}>수정</Button>}
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={() => setModal({ kind: 'delete', ids: selIds })}>삭제</Button>
+      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+    </>
+  ) : null;
+
   return (
     <GridFrame
       crumbs={['홈', '투자자산관리', '자펀드 관리', '자펀드별조합원조회']}
       title="자펀드별조합원조회"
       favRoute="fund-member"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 주 필터 칩(계정구분) + 적용 중인 드로어 값 칩. 행 선택이 없어 selbar는 존재하지 않는다. */
+      /* 툴바 좌 = 주 필터 칩(계정구분) + 적용 중인 드로어 값 칩. 행 선택 중엔 선택 바(contextActions)가 나오고 칩은 접힌다. */
       filterChips={(['', ...ACC_OPTS] as ('' | Acc)[]).map((s) => ({ key: s || 'all', label: s || '계정구분: 전체', active: fAcc === s, onSelect: () => setFAcc(s) }))}
       /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
       ]}
+      contextActions={selActions}
       toolbarRight={<>
         {/* 금액 단위 표기 — 캡션. 목업 설계메모대로 단위 전환 토글은 두지 않는다(편집 있는 관리화면) */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
@@ -386,11 +417,14 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
           domLayout="autoHeight"
           autoSizeStrategy={AUTO_SIZE_CONTENT}   // 내용 맞춤(13컬럼 · 긴 조합명/자펀드명)
           defaultColDef={DEFAULT_COL_DEF}
+          rowSelection={ROW_SELECTION}
+          selectionColumnDef={SELECTION_COL}
           pagination paginationPageSize={pageSize} suppressPaginationPanel
           preventDefaultOnContextMenu
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}
           onGridReady={onGridReady}
+          onSelectionChanged={onSelectionChanged}
           onPaginationChanged={onPaginationChanged}
           onRowDoubleClicked={onRowDoubleClicked}
           onCellKeyDown={onCellKeyDown}
@@ -424,7 +458,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
         </SheetContent>
       </Sheet>
 
-      {/* ── 등록/수정 — 목업 openForm(mode) 2모드. 수정 모달 안 2단계 삭제는 RowFormModal 내장(onDelete) ──
+      {/* ── 등록/수정 — 목업 openForm(mode) 2모드. 수정 모달 안 [삭제]는 onDelete로 삭제 확인 AlertDialog를 연다 ──
              ⚠ create에 initial을 넘기면 RowFormModal의 "select 첫 옵션 시드"가 통째로 꺼진다(initial 분기).
                → 자펀드(readonly)뿐 아니라 select 2개의 초기값도 여기서 직접 시드한다.
                cls 'SP'는 목업 openForm의 add 기본값 그대로, mtype은 목업 기본값 '민간'이 옵션 집합에 없어
@@ -439,23 +473,26 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
           /* 비고의 '-'는 "값 없음" 표식이라 입력창엔 빈 값으로 넣는다(목업 openForm과 동일) */
           initial={{ id: target.id, fn: target.fn, mem: target.mem, mtype: target.mtype, cls: target.cls, c1: target.c1, memo: target.memo === '-' ? '' : target.memo } as any}
           onSave={saveEdit} onClose={() => setModal(null)}
-          onDelete={() => setModal({ kind: 'delete', id: target.id })} />
+          onDelete={() => setModal({ kind: 'delete', ids: [target.id] })} />
       )}
 
-      {/* ── 삭제 확인(목업 alertdialog — 기본 포커스 취소·위험 버튼). Radix AlertDialog는 Cancel 기본 포커스 내장 ── */}
-      {modal?.kind === 'delete' && target && (
+      {/* ── 삭제 확인(목업 alertdialog — 기본 포커스 취소·위험 버튼). Radix AlertDialog는 Cancel 기본 포커스 내장.
+             우클릭·수정 모달(1건)·선택 바(N건) 공용 — 1건이면 조합원명, 다건이면 건수를 굵게 ── */}
+      {delRows.length > 0 && (
         <AlertDialog open onOpenChange={(o) => { if (!o) setModal(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>조합원 삭제</AlertDialogTitle>
               <AlertDialogDescription>
-                <b className="text-foreground">{target.mem}</b> 조합원을 삭제하시겠습니까?
+                {delRows.length === 1
+                  ? <><b className="text-foreground">{delRows[0].mem}</b> 조합원을 삭제하시겠습니까?</>
+                  : <><b className="text-foreground">{String(delRows.length)}건</b>의 조합원 정보를 삭제하시겠습니까?</>}
                 <br />삭제 후에는 복구할 수 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
-              <AlertDialogAction onClick={doDelete} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
+              <AlertDialogAction onClick={() => doDelete(delRows.map((r) => r.id))} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

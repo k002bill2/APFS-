@@ -1,4 +1,4 @@
-/* 일반 리스트 페이지의 CRUD 모달 — 신규 등록 / 수정 / 삭제(2단계 확인).
+/* 일반 리스트 페이지의 CRUD 모달 — 신규 등록 / 수정 / 삭제(→ 부모 화면의 삭제 확인 AlertDialog).
    Radix Dialog 기반(focus trap·Escape·aria-modal·포커스 복귀 제공). */
 import React from 'react';
 import { UI } from './components';
@@ -93,7 +93,6 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
   const wide = schema.fields.length > 6;
   const [errKey, setErrKey] = useState("");
   const [docErr, setDocErr] = useState("");
-  const [confirmDel, setConfirmDel] = useState(false);
   const set = (k: string, v: string) => {
     setVals((p) => ({ ...p, [k]: v }));
     if (errKey === k) setErrKey('');
@@ -165,13 +164,11 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
           <div role="alert" className="text-danger px-[46px] pb-1" style={{ fontSize: 12 }}>{docErr}</div>
         )}
 
-        {/* 푸터 */}
+        {/* 푸터 — 좌: 수정 모드 삭제(→ 부모의 삭제 확인 AlertDialog, 인라인 2단계 확인 제거 2026-10-08) · 우: 취소·저장 */}
         <DialogFooter className="px-[46px]">
           <div>
             {mode === "edit" && onDelete && (
-              confirmDel
-                ? <SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: "var(--danger)" }} onSubmit={() => onDelete}>삭제 확인</SaveButton>
-                : <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: "var(--danger)" }} onClick={() => setConfirmDel(true)}>삭제</Button>
+              <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: "var(--danger)" }} onClick={onDelete}>삭제</Button>
             )}
           </div>
           <div className="flex gap-2">

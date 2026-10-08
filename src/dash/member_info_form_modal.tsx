@@ -97,7 +97,6 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
     ? { mf: initial.mf, name: initial.name, ptype: initial.ptype, region: initial.region, biz: initial.biz, addr: initial.addr, tel: initial.tel, memo: initial.memo }
     : EMPTY);
   const [errKey, setErrKey] = React.useState('');
-  const [confirmDel, setConfirmDel] = React.useState(false);
   const [bizFocus, setBizFocus] = React.useState(false);
 
   const set = <K extends keyof Patch>(k: K, val: Patch[K]) => {
@@ -201,13 +200,11 @@ export function MemberInfoFormModal({ mode, initial, onSave, onClose, onDelete }
           </div>
         </div>
 
-        {/* 푸터 — 좌: 수정 모드 2단계 삭제(ghost → 삭제 확인) · 우: 닫기·저장(목업 modal-foot 구성) */}
+        {/* 푸터 — 좌: 수정 모드 삭제(→ 부모의 삭제 확인 AlertDialog, 2026-10-08) · 우: 닫기·저장(목업 modal-foot 구성) */}
         <DialogFooter className="px-[46px]">
           <div>
             {mode === 'edit' && onDelete && (
-              confirmDel
-                ? <SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: 'var(--danger)' }} onSubmit={() => onDelete}>삭제 확인</SaveButton>
-                : <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => setConfirmDel(true)}>삭제</Button>
+              <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={onDelete}>삭제</Button>
             )}
           </div>
           <div className="flex gap-2">

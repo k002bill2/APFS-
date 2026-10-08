@@ -146,7 +146,6 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
     ? { code: initial.code, name: initial.name, en: initial.en, pid: initial.pid, pname: initial.pname, short: initial.short, lvl: String(initial.lvl) as V['lvl'], parentId: initial.parentId ?? '', ord: String(initial.ord), utypes: [...initial.utypes], use: initial.use ? '여' : '부' }
     : { code: '', name: '', en: '', pid: '', pname: '', short: '', lvl: preset ? (String(preset.lvl) as V['lvl']) : '', parentId: preset?.parentId ?? '', ord: '', utypes: [], use: '여' });
   const [errKey, setErrKey] = React.useState('');
-  const [confirmDel, setConfirmDel] = React.useState(false);
   const [pgOpen, setPgOpen] = React.useState(false);
   const set = <K extends keyof V>(k: K, val: V[K]) => { setV((p) => ({ ...p, [k]: val })); if (errKey === k) setErrKey(''); };
 
@@ -276,10 +275,9 @@ export function MenuFormModal({ mode, initial, preset, rows, programs, onSave, o
 
         <DialogFooter className="px-[46px]">
           <div>
+            {/* 수정 모드 삭제 → 부모(menu_manage)의 삭제 확인 AlertDialog(인라인 2단계 확인 제거 2026-10-08) */}
             {mode === 'edit' && onDelete && (
-              confirmDel
-                ? <SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: 'var(--danger)' }} onSubmit={() => onDelete}>삭제 확인</SaveButton>
-                : <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => setConfirmDel(true)}>삭제</Button>
+              <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={onDelete}>삭제</Button>
             )}
           </div>
           <div className="flex gap-2">
