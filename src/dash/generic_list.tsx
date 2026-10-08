@@ -25,6 +25,7 @@ import { computeSchemaTotal } from './schemas/totals';   // 합계 행(schema.to
 import type { Unit } from './schemas/unit';
 import type { ColumnSpec } from './schemas/types';
 import { resolveAlign } from './schemas/types';   // 그리드 정렬 정본(숫자=우측 / 그 외=좌측)
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘⏎ 등록·⌘P 인쇄·⌥D 내보내기)
 import { toast } from './ui/sonner';
@@ -467,6 +468,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const view = schema.hideCardView ? "list" : viewState;
   const [showAll, setShowAll] = useState(false);   // 전체보기 — 페이지 크기를 전체 행 수로 키워 한 페이지에 모두 표시
   const [modal, setModal] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null);
+  const [delIds, setDelIds] = useState<string[] | null>(null);   // 삭제 확인 AlertDialog 대상(null=닫힘) — 우클릭·수정 모달(1건)·선택 바(N건) 공용
   /* 상세 보고서 팝업 — 컬럼이 detail을 선언한 스키마만(정기보고 등). 편집 모달과 별개 상태다:
      둘은 서로 다른 진입(셀 링크 vs 더블클릭)이고 동시에 열리지 않는다. */
   const [detail, setDetail] = useState<{ kind: DetailPopup; row: Row } | null>(null);
@@ -661,11 +663,19 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     setModal(null);
     toast.success(creating ? "항목이 등록되었습니다" : "항목이 수정되었습니다");
   };
-  const deleteOne = (id: string) => {
-    setRows((prev) => prev.filter((r) => r.id !== id));
-    apiRef.current?.deselectAll();
+  /* 삭제 = [삭제](우클릭·수정 모달·선택 바) → 삭제 확인 AlertDialog → 실삭제(2026-10-08). 요청 함수는 대상만 정하고,
+     실삭제(doDelete)는 AlertDialogAction에서만 실행된다. */
+  const requestDeleteOne = (id: string) => {
     setModal(null);
-    toast.success("항목이 삭제되었습니다");
+    setDelIds([id]);
+  };
+  const delRows = useMemo(() => (delIds ? rows.filter((r) => delIds.includes(r.id)) : []), [rows, delIds]);   // 현존 행 기준
+  const doDelete = (ids: string[]) => {
+    if (!ids.length) return;
+    const set = new Set(ids);
+    setRows((prev) => prev.filter((r) => !set.has(r.id)));
+    apiRef.current?.deselectAll();
+    toast.success(ids.length === 1 ? "항목이 삭제되었습니다" : `${ids.length}개 항목을 삭제했습니다`);
   };
   /* 선택 행 수정 — 체크 1건일 때만 노출되는 툴바 액션(2026-09-17). 더블클릭·Enter·우클릭 '수정'과
      같은 모달을 연다(대체가 아니라 추가 진입점). 선택 행은 bulkDelete와 동일하게 클릭 시점에 읽는다 —
@@ -678,10 +688,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const bulkDelete = () => {
     const sel = apiRef.current?.getSelectedRows() ?? [];
     if (!sel.length) return;
-    const ids = new Set(sel.map((r) => r.id));
-    setRows((prev) => prev.filter((r) => !ids.has(r.id)));
-    apiRef.current?.deselectAll();
-    toast.success(`${sel.length}개 항목을 삭제했습니다`);
+    setDelIds(sel.map((r) => r.id));
   };
 
   // Excel(.xlsx) 내보내기 — SheetJS. 스키마 컬럼을 동적 추출(스파크라인 trend는 값 없음 → 제외), 현재 필터(filtered) 반영.
@@ -751,7 +758,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     if (editable) items.push({ label: '수정', icon: 'file', onSelect: () => setModal({ mode: 'edit', row }) });
     items.push({ label: '행 복사', icon: 'layers', onSelect: () => copyRow(row) });
     items.push({ label: 'Excel 내보내기', icon: 'download', onSelect: exportExcel });
-    if (editable) { items.push('sep'); items.push({ label: '삭제', icon: 'trash', danger: true, onSelect: () => deleteOne(row.id) }); }
+    if (editable) { items.push('sep'); items.push({ label: '삭제', icon: 'trash', danger: true, onSelect: () => requestDeleteOne(row.id) }); }
     setCtx({ x: ev.clientX, y: ev.clientY, items });
   };
 
@@ -910,7 +917,28 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           schema={schema}
           onSave={save}
           onClose={() => setModal(null)}
-          onDelete={modal.row ? () => deleteOne(modal.row!.id) : undefined} />
+          onDelete={modal.row ? () => requestDeleteOne(modal.row!.id) : undefined} />
+      )}
+
+      {/* ── 삭제 확인(fund_member_manage 동형 alertdialog — 기본 포커스 취소·위험 버튼). 1건/다건 공용 ── */}
+      {delRows.length > 0 && (
+        <AlertDialog open onOpenChange={(o) => { if (!o) setDelIds(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>항목 삭제</AlertDialogTitle>
+              <AlertDialogDescription>
+                {delRows.length === 1
+                  ? <>선택한 항목을 삭제하시겠습니까?</>
+                  : <><b className="text-foreground">{String(delRows.length)}건</b>의 항목을 삭제하시겠습니까?</>}
+                <br />삭제 후에는 복구할 수 없습니다.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogAction onClick={() => doDelete(delRows.map((r) => r.id))} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
 
       {/* 읽기전용 상세 보고서 팝업 — 스키마가 detail을 선언한 컬럼에서만 열린다(그 외 페이지엔 없음) */}
