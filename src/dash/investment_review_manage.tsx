@@ -10,7 +10,8 @@
          툴바 컨텍스트 액션으로 옮긴다. 두 컬럼(투심일정 확정여부·투심결과 승인여부)은 읽기전용 StatusBadge로 유지.
        파생 단계: 미확정 → 확정(AlertDialog 확인) → 미결 → 가결/부결/조건부/보류, 미확정→투심위취소, 가결/조건부→승인취소.
    - 투자준법감시내역 CRUD    → 별개 엔티티. [준법감시 등록|수정] 1버튼(상태별) + [삭제](있을 때만). RowFormModal(apfs-form-modal)
-   - 상세(명세) 팝업          → opt-in(기본 미포함, 2026-09-11 사용자 결정 "필요할 때 생성"). 필요 시 apfs-spec-popup 규약으로 재생성
+   - 상세(명세) 팝업          → 포함(2026-10-08 사용자 요청 — opt-in 규약, apfs-spec-popup). InvestmentReviewDetailModal.
+       진입: 셀 더블클릭(합계행·선택 체크박스 열 제외 — 목업도 select 셀 제외) + 1건 선택 시 툴바 [상세]
    - 엑셀                     → SheetJS(단일 헤더)
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
 import './aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
@@ -24,7 +25,7 @@ import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from 
 import { SELECTION_COL, restoreSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle, RowSelectionOptions } from 'ag-grid-community';
+import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellDoubleClickedEvent, IRowNode, ValueFormatterParams, CellStyle, RowSelectionOptions } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';
@@ -37,6 +38,7 @@ import { COMPLIANCE_SCHEMA } from './investment_review_manage_schemas';
 import { INV_REVIEW_ROWS } from './investment_review_data';
 import type { Confirm, Result, InvReviewRow } from './investment_review_data';
 import { DrawerSelect } from './drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { InvestmentReviewDetailModal } from './investment_review_detail_modal';
 export type { Confirm, Result, InvReviewRow } from './investment_review_data';
 
 const { Button, IconBtn, StatusBadge } = UI;
@@ -63,8 +65,10 @@ const stageOf = (r: InvReviewRow): Stage => {
   return 'confirmed';
 };
 
-/* 명세(읽기전용 상세) 팝업은 opt-in — 이 페이지 미포함(2026-09-11 사용자 결정). 포함 시 detail 구조·데이터를
-   행에 다시 실어 InvReviewSpecModal을 재생성한다(apfs-spec-popup). 지금은 그리드에 안 쓰이므로 두지 않는다. */
+/* 명세(읽기전용 상세) 팝업은 opt-in — 이 페이지 포함(2026-10-08 사용자 요청). detail 데이터는 행에 실려 있다
+   (investment_review_data.ts `detail`, 원문 그대로) → InvestmentReviewDetailModal(apfs-spec-popup). */
+/* 선택 체크박스 열 colId(AG Grid 내장 selection column) — 더블클릭 상세 진입에서 제외한다 */
+const SEL_COL_ID = 'ag-Grid-SelectionColumn';
 
 /* 목록 행 = 원문 S1_01 `var DATA` 3건(investment_review_data.ts — 합성 행 없음). 새로고침은 이 원본으로 되돌린다 */
 const DEMO: InvReviewRow[] = [...INV_REVIEW_ROWS];
@@ -186,7 +190,9 @@ function ResultMenu({ options, onPick }: { options: Result[]; onPick: (v: Result
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
-type ModalState = null | { kind: 'complianceReg' } | { kind: 'complianceEdit' } | { kind: 'complianceDelete' } | { kind: 'confirmSchedule' } | { kind: 'bulkDelete'; ids: string[] };   // ids = 요청 시점의 선택(확인 사이 선택이 바뀌어도 이 건만 지운다)
+type ModalState = null | { kind: 'complianceReg' } | { kind: 'complianceEdit' } | { kind: 'complianceDelete' } | { kind: 'confirmSchedule' }
+  | { kind: 'bulkDelete'; ids: string[] }   // ids = 요청 시점의 선택(확인 사이 선택이 바뀌어도 이 건만 지운다)
+  | { kind: 'detail'; id: string };         // id = 더블클릭·[상세] 대상 행(선택과 무관)
 
 export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<InvReviewRow> | null>(null);
@@ -244,6 +250,16 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
   const onRowDataUpdated = useCallback((e: { api: GridApi<InvReviewRow> }) => {
     restoreSelection(e.api, selIdsRef.current);
   }, []);
+  /* 상세 진입 ① 셀 더블클릭 — 합계(pinned)행·선택 체크박스 열 제외. onRowDoubleClicked가 아니라 셀 이벤트여야
+     열을 알 수 있다(member_info_manage 선례). 선택 상태와 무관하게 그 행 id로 연다 */
+  const onCellDoubleClicked = useCallback((e: CellDoubleClickedEvent<InvReviewRow>) => {
+    if (!e.data || e.rowPinned || e.column.getColId() === SEL_COL_ID) return;
+    setModal({ kind: 'detail', id: e.data.id });
+  }, []);
+  /* 상세 대상 행이 사라지면(다건 삭제 등) detail 모달 상태를 정리한다 — 남겨 두면 null 렌더인데 modal 이 걸려 있다 */
+  useEffect(() => {
+    if (modal?.kind === 'detail' && !rows.some((r) => r.id === modal.id)) setModal(null);
+  }, [modal, rows]);
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
     const next = { current: api.paginationGetCurrentPage(), total: api.paginationGetTotalPages(), rowCount: api.paginationGetRowCount() };
@@ -328,6 +344,8 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       {/* 확정여부 배지 + (확정 시)결과 배지 — 상태 표시. 전이는 아래 액션 버튼 */}
       <StatusBadge tone={CONFIRM_TONE[single.confirm]} label={single.confirm} size="lg" />
       {single.confirm === '확정' && <StatusBadge tone={RES_TONE[single.res || '미결'] ?? 'info'} label={single.res || '미결'} size="lg" />}
+      {/* 상세 진입 ② — 전이 액션 맵 밖(전 단계 공통) */}
+      <Button variant="ghost" size="sm" leadingIcon="eye" onClick={() => setModal({ kind: 'detail', id: single.id })}>상세</Button>
       {/* 파생 단계별 전이 액션 */}
       {stage === 'pending' && <>
         <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'confirmSchedule' })}>투심일정 확정</Button>
@@ -399,6 +417,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
             onSelectionChanged={onSelectionChanged}
             onRowDataUpdated={onRowDataUpdated}
             onPaginationChanged={onPaginationChanged}
+            onCellDoubleClicked={onCellDoubleClicked}
             overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 투자심의 건이 없습니다.</span>'}
           />
         </div>
@@ -445,6 +464,12 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
         <RowFormModal mode="edit" schema={COMPLIANCE_SCHEMA} title="투자준법감시내역 수정"
           initial={complianceInitial as any} onSave={saveCompliance} onClose={() => setModal(null)} />
       )}
+
+      {/* ── 투자심의 상세(읽기전용) — 선택(single)이 아니라 modal.id로 찾는다(체크 없이 더블클릭해도 열린다) ── */}
+      {modal?.kind === 'detail' && (() => {
+        const row = rows.find((r) => r.id === modal.id);
+        return row ? <InvestmentReviewDetailModal row={row} onClose={() => setModal(null)} /> : null;
+      })()}
 
       {/* ── 투심일정 확정 확인(목업 클라이언트 회신 명시 UX — toast로 격하 금지) ── */}
       {modal?.kind === 'confirmSchedule' && single && (
