@@ -21,6 +21,10 @@ import { UI } from './components';
 import { GridFrame, FooterActions } from './grid_frame';
 import { useHotkey, HOTKEYS } from './use-hotkey';   // ⌘P 인쇄 · ⌥D 내보내기(푸터 툴팁 힌트와 짝)
 import { toast } from './ui/sonner';
+import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
+import { PeriodPicker } from './ui/period-picker';
+import { DrawerSelect } from './drawer_select';   // 상세필터 select 공용본(로컬 복제 금지 — drawer_select.test.ts)
+import { controlMinWidth } from './schemas/renderers';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import {
   SALES_SCALE_HEADERS, INVEST_TYPE_HEADERS, INVEST_TYPE_GROUPS, REGION_GROUPS,
@@ -28,7 +32,7 @@ import {
 } from './investee_invest_stats_model';
 import type { MatrixRow, RegionRow } from './investee_invest_stats_model';
 
-const { Button, SegTabs } = UI;
+const { Button, IconBtn, SegTabs } = UI;
 
 /* 표 밀도 — 투자기업정보(통합) 페이지(company_profile_model `page` variant)와 같은 시각 언어(2026-09-24).
    셀은 사방 테두리를 그대로 두고, 표를 `border-hidden` 으로 감싸 바깥 테두리만 지운다 —
@@ -49,9 +53,7 @@ const num = (v: number | string) => (typeof v === 'number' ? v.toLocaleString('k
 const fmtVal = (v: number | string, isAmount: boolean, unit: StatUnit) =>
   isAmount && typeof v === 'number' ? fmtEok(v, unit) : num(v);
 
-/* 원문 검색조건 중 **화면을 바꾸는** 두 컨트롤(2026-09-16 Codex 지적으로 복원).
-   나머지(모펀드·계정구분·연도기준·데이터기준·기준일자)는 원문에서도 값 도메인이 비어 있어
-   컨트롤을 만들지 않는다 — 없는 선택지를 지어내지 않는다. */
+/* 원문 투자실적구분 — 화면(표)을 실제로 전환하는 유일한 검색조건. 툴바 칩과 드로어가 이 state 를 공유한다. */
 const VIEWS = [
   { key: 'salesScale', label: '경영체매출액별' },
   { key: 'investType', label: '투자형태별' },
@@ -64,6 +66,28 @@ const STAT_UNITS = ['원', '백만원', '억원'] as const;
 type StatUnit = typeof STAT_UNITS[number];
 const fmtEok = (eok: number, unit: StatUnit) =>
   (unit === '억원' ? eok : unit === '백만원' ? eok * 100 : eok * 1e8).toLocaleString('ko-KR');
+
+/* 상세필터 옵션 — 원문 목업이 **런타임 스크립트**로 주입하는 값 그대로(정적 <select> 파싱으론 0개로 보였다).
+   `chipGroup('f-acc'|'f-yb'|'f-src', …)` + `#f-mf`·`#f-cnt` <option>. 철자도 원문(출자사업년도) 그대로. */
+const MOTHER_FUNDS = ['농식품모태펀드', 'MOAF'];
+const ACCOUNTS = ['농식품', '수산'];                       // 원문 '전체'는 DrawerSelect 기본 '전체'(="")가 대신한다
+const YEAR_BASES = ['출자사업년도', '결성연도', '등록연도'];
+const COUNT_BASES = ['투자건수', '투자금액'];
+const DATA_BASES = ['운용사보고', '월말확정'];
+
+/* 드로어 항목 래퍼 — fund_invest_status.tsx 와 같은 모양(공용 export 가 없어 같은 관례로 둔다).
+   noop = 행 데이터와 미연동 → `· 데이터 연동 후 적용` 캡션(무신호 무효 필터 금지). */
+function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+  const Wrap: any = plain ? 'div' : 'label';
+  return (
+    <Wrap className="block mb-4">
+      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+      </span>
+      {children}
+    </Wrap>
+  );
+}
 
 function Section({ title, caption, children }: { title: string; caption: string; children: React.ReactNode }) {
   return (
@@ -152,6 +176,21 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
   const [unit, setUnit] = useState<StatUnit>('억원');   // 원문 기본값 = 저장 base
   useHotkey(HOTKEYS.print.combo, () => window.print());
 
+  /* 상세필터 — 원문 검색박스 7항목. 투자실적구분(=view)만 표를 바꾸고 나머지 6종은 noop:
+     집계표 원천이 고정 상수라 거를 차원이 없다(값을 지어내 행을 바꾸지 않는다).
+     ⚠ 건수기준은 noop 이어야 한다 — 블록 숨김에 배선하면 보고서 절반이 사라진다(상단 ⚠, Codex P1).
+     기준일자 기본값(원문 2026-07-31)은 적용하지 않는다 — 자펀드 투자실적현황과 같은 열린 경계. */
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [fMf, setFMf] = useState('');       // 모펀드
+  const [fAcc, setFAcc] = useState('');     // 계정구분
+  const [fYBase, setFYBase] = useState(''); // 연도기준
+  const [fCnt, setFCnt] = useState('');     // 건수기준
+  const [fDBase, setFDBase] = useState(''); // 데이터기준
+  const [fAsOf, setFAsOf] = useState('');   // 기준일자
+  const resetFilters = () => { setFMf(''); setFAcc(''); setFYBase(''); setFCnt(''); setFDBase(''); setFAsOf(''); setView(VIEWS[0].key); };
+  /* 조회 — 원천이 정적 상수라 재조회할 원본이 없다. 알림만(가짜 데이터 갱신 금지) */
+  const refresh = () => toast.success('조회되었습니다');
+
   const isMatrix = view !== 'region';
   // 두 블록(투자건수·투자금액)은 **함께** 그린다 — 원문이 그렇고, 하나만 남기면 보고서 절반이 사라진다.
   const rows = view === 'salesScale' ? SALES_SCALE_ROWS : INVEST_TYPE_ROWS;
@@ -182,13 +221,14 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 원문 `투자실적구분` — 이것만이 실제로 그리드를 전환한다(원문 스크립트 `.gridblock` 토글).
          모드 전환이라 기본 필터 칩으로 둔다(2026-09-24 — 한 줄 툴바, 넘치면 +N 메뉴).
-         나머지 검색조건(계정구분·연도기준·데이터기준·기준일자)은 **원문 select 에 옵션이 0개**라
-         컨트롤을 만들지 않는다 — 빈 select 는 고를 것이 없고, 값을 지어내면 창작이 된다.
-         `모펀드`는 APFS 단일값이라 푸터 캡션으로 둔다. */
+         나머지 검색조건(모펀드·계정구분·연도기준·건수기준·데이터기준·기준일자)은 상세필터 드로어에 둔다
+         (자펀드 투자실적현황과 같은 패턴). 전부 noop 이라 적용 칩은 만들지 않는다. */
       filterChips={VIEWS.map((v) => ({ key: v.key, label: v.label, active: view === v.key, onSelect: () => setView(v.key) }))}
       toolbarRight={<>
         <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
         <SegTabs size="sm" options={STAT_UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as StatUnit)} />
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{`모펀드 농식품모태펀드 · 매출액별 ${SOURCE_COUNTS.salesScale}행 · 투자형태별 ${SOURCE_COUNTS.investType}행 · 소재지별 ${SOURCE_COUNTS.region}행 (원문 그대로)`}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
@@ -240,6 +280,39 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
           </Section>
         )}
       </div>
+
+      {/* ── 상세필터 드로어 — 원문 검색박스 순서 그대로(모펀드·계정구분·연도기준·투자실적구분·건수기준·데이터기준·기준일자).
+             투자실적구분만 표시를 바꾸고 나머지는 noop 캡션. 검색어는 OFF(만들지 않는다). ── */}
+      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
+          <SheetHeader>
+            <SheetTitle>상세 필터</SheetTitle>
+            <SheetDescription className="sr-only">투자실적 현황(투자기업) 조회 조건을 고르는 상세 필터</SheetDescription>
+            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
+            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={MOTHER_FUNDS} /></DrawerField>
+            <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={ACCOUNTS} /></DrawerField>
+            <DrawerField label="연도기준" noop><DrawerSelect value={fYBase} onChange={setFYBase} options={YEAR_BASES} /></DrawerField>
+            {/* 투자실적구분 — 툴바 칩과 같은 state 공유. 항상 3뷰 중 하나라 '전체' 옵션이 없다 */}
+            <DrawerField label="투자실적구분">
+              <DrawerSelect value={view} onChange={(v: string) => setView(v as ViewKey)} options={VIEWS.map((v) => ({ value: v.key, label: v.label }))} all={null} />
+            </DrawerField>
+            <DrawerField label="건수기준" noop><DrawerSelect value={fCnt} onChange={setFCnt} options={COUNT_BASES} /></DrawerField>
+            <DrawerField label="데이터기준" noop><DrawerSelect value={fDBase} onChange={setFDBase} options={DATA_BASES} /></DrawerField>
+            {/* 기준일자 — PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker), fit-content 래퍼로 폭 고정 */}
+            <DrawerField label="기준일자" noop plain>
+              <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
+                <PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" />
+              </div>
+            </DrawerField>
+          </div>
+          <SheetFooter>
+            <Button variant="outline" size="md" onClick={resetFilters}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </GridFrame>
   );
 }
