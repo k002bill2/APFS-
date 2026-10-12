@@ -28,7 +28,7 @@ argument-hint: [기능/변경 설명]
 ## 도구
 
 - 설계 검토: `code-architect` 에이전트 (읽기 전용)
-- 계획 문서화: `superpowers:writing-plans` → `docs/superpowers/plans/` (진행 중만 둠, 없으면 생성 · 완료 시 `completed/` 로 `git mv`)
+- 계획 문서화: `docs/superpowers/plans/` (진행 중만 둠, 없으면 생성 · 완료 시 `completed/` 로 `git mv`)
 - 대규모 작업 컨텍스트 유지: `/dev-docs <task>` → `dev/active/<task>/`
 
 ## 다음 단계

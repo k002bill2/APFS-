@@ -36,8 +36,7 @@ description: 세션 종료 전 문서·패턴·학습·후속작업을 정리하
 ## Phase 3: 인계 저장
 
 전역 CLAUDE.md "컨텍스트 예산" 절의 분기를 따른다:
-- `.planning/phases/` 에 SUMMARY 없는 PLAN 존재 → `/gsd:pause-work`
-- 그 외 `.planning/STATE.md` 존재 → STATE.md 갱신
+- `.planning/STATE.md` 존재 → STATE.md 갱신
 - 둘 다 없음 → `dev/active/<task>/` dev-docs 또는 HANDOFF.md
 
 ## 출력 형식
