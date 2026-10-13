@@ -47,4 +47,4 @@ npx vitest run         # 회귀 없음
 - 최소 diff (리팩토링·인접 코드 "개선" 금지 — Surgical Changes)
 - 로직 변경 금지, 아키텍처 변경 금지
 - 의존성 추가가 필요하면 멈추고 사용자에게 묻는다
-- 같은 수정 2회 실패 → 멈추고 근본 원인 분석(`superpowers:systematic-debugging`)
+- 같은 수정 2회 실패 → 멈추고 근본 원인 분석

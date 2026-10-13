@@ -5,7 +5,7 @@ argument-hint: [구현할 기능/버그]
 
 # TDD Command
 
-`superpowers:test-driven-development` 스킬을 호출해 테스트 주도로 진행합니다.
+아래 절차대로 테스트 주도로 진행합니다.
 
 ## 절차
 
