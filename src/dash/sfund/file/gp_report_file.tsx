@@ -23,6 +23,7 @@ import { UploadModal } from '../../trust_upload';
 const { Button } = UI;
 
 export const GP_REPORT_FILE_LABEL = '보고 파일 조회';
+export const GP_REPORT_FILE_ROUTE = 'gp-report-file';
 export const GP_REPORT_FILE_SOURCE = 'docs/mockups/05_MOAF/S5_116_업로드.html';
 
 /** 원문 보고구분 select 옵션 — 확인된 실값 1건뿐(그 외 옵션은 만들지 않는다) */
@@ -66,7 +67,7 @@ export function GpReportFile({ onNav }: { onNav?: (r: string) => void }) {
   };
 
   return (
-    <RiskPage system="자펀드 보고" group="파일" label={GP_REPORT_FILE_LABEL} route={GP_REPORT_FILE_LABEL} onNav={onNav}
+    <RiskPage system="자펀드 보고" group="파일" label={GP_REPORT_FILE_LABEL} route={GP_REPORT_FILE_ROUTE} onNav={onNav}
       filters={filters} onReset={reset}
       actions={<Button variant="outline" size="sm" leadingIcon="upload" onClick={() => setUploadOpen(true)}>업로드</Button>}
       footerLeft={<span>{`총 ${String(shown.length)}건`}</span>}

@@ -84,7 +84,7 @@ function IndustryCard({ span, onNav, height = 240 }) {
       accent="var(--chart-2)"
       span={span}
       reveal={true}
-      right={<><SegTabs options={["금액", "건수"]} value="금액" onChange={() => {}} size="sm" /><MoreBtn /></>}><Treemap data={D.INDUSTRY} height={height} onCell={() => onNav("투자 성과·포트폴리오")} /></ChartCard>
+      right={<><SegTabs options={["금액", "건수"]} value="금액" onChange={() => {}} size="sm" /><MoreBtn /></>}><Treemap data={D.INDUSTRY} height={height} onCell={() => onNav("portfolio-performance")} /></ChartCard>
   );
 }
 

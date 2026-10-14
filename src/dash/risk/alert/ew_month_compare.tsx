@@ -185,7 +185,7 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
       crumbs={['홈', '조기경보', '조기경보', TITLE]}
       title={TITLE}
       cardTitle={TITLE}
-      favRoute={TITLE}
+      favRoute="ew-month-compare"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 적용된 필터 칩(값만) = appliedFilters(둘째 줄). 등급·변동 칩은 **그룹이 전부 on 이 아닐 때만** 하나씩 띄우고,
          값 = 켜진 항목 목록, × = 그 그룹을 전체 on 으로 되돌림(칩을 지웠는데 필터가 좁아지는 역설 방지). */

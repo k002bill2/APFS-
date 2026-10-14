@@ -22,7 +22,7 @@ import {
 type P = { onNav?: (r: string) => void };
 
 const FUND_VALUATION: TablesPageConfig = {
-  group: '가치평가', label: '투자조합 가치평가 결과조회', route: '투자조합 가치평가 결과조회',
+  group: '가치평가', label: '투자조합 가치평가 결과조회', route: 'fund-valuation',
   tables: [FUND_VAL], unit: true,
   filters: [
     { label: '자펀드', kind: 'select', def: '', options: FUND_VAL_FUNDS, key: 'fn' },
@@ -33,7 +33,7 @@ const FUND_VALUATION: TablesPageConfig = {
 };
 
 const INVESTEE_VALUATION: TablesPageConfig = {
-  group: '가치평가', label: '피투자회사 가치평가 결과조회', route: '피투자회사 가치평가 결과조회',
+  group: '가치평가', label: '피투자회사 가치평가 결과조회', route: 'investee-valuation',
   /* 원문이 [섹션1] "요약"·[섹션2] "상세내역" 제목을 사용자 지시로 삭제했다 — 제목 없이 구분선으로만 쌓는다(창작 금지) */
   tables: [INVESTEE_SUMMARY, INVESTEE_DETAIL],
   unit: true,
@@ -45,7 +45,7 @@ const INVESTEE_VALUATION: TablesPageConfig = {
 };
 
 const ASSET_TX_PAGE: TablesPageConfig = {
-  group: '가치평가', label: '자펀드 투자자산 및 거래내역 조회', route: '자펀드 투자자산 및 거래내역 조회',
+  group: '가치평가', label: '자펀드 투자자산 및 거래내역 조회', route: 'subfund-asset-txn',
   tables: [ASSET_BALANCE, ASSET_TX], unit: true, unitNote: '주식수 제외',
   filters: [
     /* 원문 첫 옵션 '선택하세요' — 필수 선택형. 행에 자펀드 컬럼이 없어 조회 조건으로만 둔다 */
@@ -56,7 +56,7 @@ const ASSET_TX_PAGE: TablesPageConfig = {
 };
 
 const EXCEPTION: TablesPageConfig = {
-  group: '가치평가', label: '예외사항레포트', route: '예외사항리포트',
+  group: '가치평가', label: '예외사항레포트', route: 'exception-report',
   tables: EXC_TABLES, unit: true,
   filters: [{ label: '평가년월', kind: 'month', def: EVAL_BASE_YM }],
 };

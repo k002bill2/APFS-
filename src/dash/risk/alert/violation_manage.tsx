@@ -436,7 +436,7 @@ export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
       crumbs={['홈', '조기경보', '조기경보', '법률/규약위반사항 관리']}
       title="법률/규약위반사항 관리"
       cardTitle="법률/규약위반사항 관리"
-      favRoute="법률/규약위반사항 관리"
+      favRoute="violation-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips.map((c) => ({ label: c.key, value: c.value, onClear: c.clear }))}
       contextActions={selActions}

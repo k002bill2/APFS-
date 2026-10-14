@@ -13,7 +13,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '투자기업정보(통합)',
+  route: 'investee-profile',
   title: '투자기업정보(통합)',
   kind: 'form',
   entity: '투자기업',

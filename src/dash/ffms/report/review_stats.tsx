@@ -20,7 +20,7 @@ import { REVIEW_STATS_TABLE, MOTHER_FUNDS, ACCOUNT_KINDS, REVIEW_STATS_RANGE, GP
 const LABEL = '투심보고 통계';
 
 export const REVIEW_STATS_PAGE: TablesPageConfig = {
-  system: '투자자산관리', group: '사후보고관리', label: LABEL, route: LABEL,
+  system: '투자자산관리', group: '사후보고관리', label: LABEL, route: 'review-stats',
   tables: [REVIEW_STATS_TABLE], unit: true,
   filters: [
     { label: '모펀드', kind: 'select', def: MOTHER_FUNDS[0], options: MOTHER_FUNDS, allLabel: null },

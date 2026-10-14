@@ -4,8 +4,8 @@
    (컬럼 8 vs 15). 규약 판단이 갈리면 그 파일을 따른다.
 
    ⚠ 메뉴 라벨과 목업 제목이 다르다 — 목업 h1 은 "주주변동관리" 지만 우리 메뉴 리프(data.ts)는
-     **"운용사 주주변동관리"** 다. title·cardTitle·favRoute·crumbs 리프는 전부 **메뉴 라벨**을 쓴다
-     (라우트 키 = 한글 라벨이라 한 글자만 어긋나도 즐겨찾기·딥링크가 조용히 빗나간다).
+     **"운용사 주주변동관리"** 다. title·cardTitle·crumbs 리프는 전부 **메뉴 라벨**을 쓴다
+     (favRoute 는 메뉴 path `shareholder-manage`).
 
    구성(목업 → 우리 규약)
    - 검색박스 2항목(운용사·기간) → **상세필터 드로어**(Sheet). 툴바 FilterChip 세트는 만들지 않는다
@@ -404,7 +404,7 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
       crumbs={['홈', '조기경보', '조기경보', '운용사 주주변동관리']}
       title="운용사 주주변동관리"
       cardTitle="운용사 주주변동관리"
-      favRoute="운용사 주주변동관리"
+      favRoute="shareholder-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips.map((c) => ({ label: c.key, value: c.value, onClear: c.clear }))}
       contextActions={selActions}

@@ -1,4 +1,4 @@
-/* 자펀드 전체 보고현황 — 조회 전용 6표 화면 (투자자산관리 > 운용사 모니터링, route `전체 보고현황`).
+/* 자펀드 전체 보고현황 — 조회 전용 6표 화면 (투자자산관리 > 운용사 모니터링, route `all-report-status`).
    출처: S1_44_전체_보고현황.html → APFS 디자인시스템(GridFrame + AG Grid)으로 변형.
 
    왜 전용 페이지인가: 원문이 한 화면에 여러 표를 쌓는데 `PageSchema`는 `columns`가 하나뿐이라 담지 못한다.
@@ -175,7 +175,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
     <GridFrame
       crumbs={['홈', '투자자산관리', '운용사 모니터링', '자펀드 전체 보고현황']}
       title="자펀드 전체 보고현황"
-      favRoute="전체 보고현황"
+      favRoute="all-report-status"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 기본 필터 = 보고 구분(6개 표 전환). 표가 바뀌면 컬럼·건수·필터 도메인이 함께 바뀐다. 넘치면 +N 메뉴로 접힌다. */
       filterChips={REPORT_TABS.map((t) => ({ key: t.key, label: t.label, count: tabCount(t), active: tabKey === t.key, onSelect: () => onTab(t.key) }))}

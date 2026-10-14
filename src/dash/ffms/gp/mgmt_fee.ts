@@ -22,7 +22,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '관리보수관리',
+  route: 'mgmt-fee',
   title: '관리보수관리',
   kind: 'list',
   entity: '관리보수',

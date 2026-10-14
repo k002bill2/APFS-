@@ -1,5 +1,5 @@
 /* 투자실적 현황(투자기업) — 조회 전용 집계표 3장 (투자자산관리 > 투자기업정보,
-   route `투자실적 현황(투자기업)`).
+   route `investee-invest-stats`).
    출처: docs/mockups/01_투자자산관리/S1_34_투자실적_현황_투자기업_.html (2026-09-15 파싱 실측)
 
    데이터·헤더 구조는 `investee_invest_stats_model.ts` 가 SSOT 다. 이 파일은 표현만 맡는다.
@@ -217,7 +217,7 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
     <GridFrame
       crumbs={['홈', '투자자산관리', '투자기업정보', '투자실적현황(투자기업)']}
       title="투자실적현황(투자기업)"
-      favRoute="투자실적 현황(투자기업)"
+      favRoute="investee-invest-stats"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 원문 `투자실적구분` — 이것만이 실제로 그리드를 전환한다(원문 스크립트 `.gridblock` 토글).
          모드 전환이라 기본 필터 칩으로 둔다(2026-09-24 — 한 줄 툴바, 넘치면 +N 메뉴).

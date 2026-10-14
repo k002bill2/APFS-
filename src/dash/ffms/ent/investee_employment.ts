@@ -17,7 +17,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '투자기업 고용현황보고',
+  route: 'investee-employment',
   title: '투자기업 고용현황보고',
   kind: 'list',
   entity: '고용현황',

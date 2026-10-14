@@ -43,21 +43,21 @@ type Leaf = [label: string, route: string, source: string | null, render: 'schem
 const 투자기업정보: Leaf[] = [
   /* ⚠ 스키마 출처가 목업이 아닌 유일한 리프. 아래 `투자기업정보(통합) 예외` 테스트 참조 —
      화면(S1_30)과 등록/수정 양식(clipboard 캡처)의 출처가 서로 다르다. */
-  ['투자기업정보(통합)',    '투자기업정보(통합)',      null,                                  'typed'],
-  ['투자기업명세서(통합)',  '투자기업명세서(통합)',    'S1_31_투자기업정보_전체_.html',       'schema'],
-  ['투자기업고용현황(통합)', '투자기업 고용현황보고',   'S1_32_투자기업_고용현황보고.html',     'schema'],
-  ['전체 투자실적',         '전체 투자실적',           'S1_33_전체_투자실적.html',            'schema'],
-  ['투자실적현황(투자기업)', '투자실적 현황(투자기업)', 'S1_34_투자실적_현황_투자기업_.html',   'typed'],
-  ['투자금 회수현황',       '투자금 회수현황',         'S1_36_투자_및_회수_상세정보.html',     'typed'],
-  ['우수투자기업 관리',     '우수투자기업 관리',       null,                                  'schema'],
+  ['투자기업정보(통합)',    'investee-profile',      null,                                  'typed'],
+  ['투자기업명세서(통합)',  'investee-spec',    'S1_31_투자기업정보_전체_.html',       'schema'],
+  ['투자기업고용현황(통합)', 'investee-employment',   'S1_32_투자기업_고용현황보고.html',     'schema'],
+  ['전체 투자실적',         'invest-performance-all',           'S1_33_전체_투자실적.html',            'schema'],
+  ['투자실적현황(투자기업)', 'investee-invest-stats', 'S1_34_투자실적_현황_투자기업_.html',   'typed'],
+  ['투자금 회수현황',       'invest-recovery-detail',         'S1_36_투자_및_회수_상세정보.html',     'typed'],
+  ['우수투자기업 관리',     'top-investee-manage',       null,                                  'schema'],
 ];
 const 운용사모니터링: Leaf[] = [
-  ['운용사 명세서',          '운용사 명세서',        'S1_37_운용사별_재무제표.html',        'schema'],
-  ['운용사 재무정보 조회',   '운용사 재무정보 조회', 'S1_38_운용사_재무정보_조회.html',     'schema'],
-  ['투자금 실사보고 조회',   '투자금 실사보고',      'S1_40_투자금실사보고.html',           'schema'],
-  ['사후관리기록 관리',      '사후관리기록 관리',    'S1_42_사후관리기록.html',             'schema'],
-  ['관리보수/성과보수 조회', '관리보수관리',         'S1_43_관리보수관리.html',             'schema'],
-  ['자펀드 전체 보고현황',   '전체 보고현황',        'S1_44_전체_보고현황.html',            'typed'],
+  ['운용사 명세서',          'gp-spec',        'S1_37_운용사별_재무제표.html',        'schema'],
+  ['운용사 재무정보 조회',   'gp-financial', 'S1_38_운용사_재무정보_조회.html',     'schema'],
+  ['투자금 실사보고 조회',   'invest-due-diligence',      'S1_40_투자금실사보고.html',           'schema'],
+  ['사후관리기록 관리',      'post-mgmt-record',    'S1_42_사후관리기록.html',             'schema'],
+  ['관리보수/성과보수 조회', 'mgmt-fee',         'S1_43_관리보수관리.html',             'schema'],
+  ['자펀드 전체 보고현황',   'all-report-status',        'S1_44_전체_보고현황.html',            'typed'],
 ];
 /* 자펀드 관리 6리프 — 이미 전용 React 페이지다. 이번 작업의 회귀 가드(재구현 금지). */
 const 자펀드관리: [string, string][] = [
@@ -111,7 +111,7 @@ describe('라우트 → 스키마 결선 (DEFAULT_SCHEMA 폴백 금지)', () => 
 describe('출처(provenance) 충실성 — 어느 목업에서 왔는가', () => {
   /* 원천이 없는 신규 화면은 가짜 파일명 대신 sourceSystem:'NEW' + captureFile:'' 로 기록한다. */
   it('우수투자기업 관리는 원천 없음을 NEW 로 명시하고 행 0건이다', () => {
-    const s = resolveSchema('우수투자기업 관리');
+    const s = resolveSchema('top-investee-manage');
     expect(s.provenance.sourceSystem).toBe('NEW');
     expect(s.provenance.captureFile).toBe('');
     // sample:[] (빈 배열) = "원천에 행이 0건". 미선언이면 generic_list 가 합성 더미를 만든다.
@@ -136,10 +136,10 @@ describe('출처(provenance) 충실성 — 어느 목업에서 왔는가', () =>
   /* 화면을 전용 페이지가 그리는 4리프 — 출처는 그 데이터 모듈의 PROVENANCE 가 기록한다.
      스키마 provenance 만 보면 이 4리프의 출처 바꿔치기를 놓친다. */
   it.each([
-    ['투자기업정보(통합)',      PROFILE_PROV,  'S1_30_투자기업정보.html'],
-    ['투자실적 현황(투자기업)', STATS_PROV,    'S1_34_투자실적_현황_투자기업_.html'],
-    ['투자금 회수현황',         RECOVERY_PROV, 'S1_36_투자_및_회수_상세정보.html'],
-    ['전체 보고현황',           REPORT_PROV,   'S1_44_전체_보고현황.html'],
+    ['investee-profile',      PROFILE_PROV,  'S1_30_투자기업정보.html'],
+    ['investee-invest-stats', STATS_PROV,    'S1_34_투자실적_현황_투자기업_.html'],
+    ['invest-recovery-detail',         RECOVERY_PROV, 'S1_36_투자_및_회수_상세정보.html'],
+    ['all-report-status',           REPORT_PROV,   'S1_44_전체_보고현황.html'],
   ] as const)('%s 전용 페이지의 데이터 모듈 출처는 %#2$s 다', (route, prov, file) => {
     expect(prov.captureFile, route).toBe(`${MOCKUP_DIR}/${file}`);
     expect(existsSync(prov.captureFile), `${route}: ${prov.captureFile} 없음`).toBe(true);
@@ -149,10 +149,10 @@ describe('출처(provenance) 충실성 — 어느 목업에서 왔는가', () =>
      21필드는 현행시스템 양식 clipboard 캡처. 스키마 provenance 를 S1_30 으로 고쳐 적으면
      그 21필드의 진짜 출처가 지워진다(출처 위조). 그래서 서로 다른 값인 것이 정상이다. */
   it('투자기업정보(통합) 스키마는 등록/수정 양식 캡처 출처를 그대로 보존한다', () => {
-    const p = resolveSchema('투자기업정보(통합)').provenance;
+    const p = resolveSchema('investee-profile').provenance;
     expect(p.sourceSystem).toBe('FFMS');
     expect(p.captureFile).toBe('clipboard-2026-06-29-154620.png');
-    expect(resolveSchema('투자기업정보(통합)').fields.length).toBe(21);
+    expect(resolveSchema('investee-profile').fields.length).toBe(21);
   });
 
   it('명시적으로 배제된 목업(S1_35 · S1_02)을 출처로 쓰는 라우트가 없다', () => {
@@ -180,15 +180,15 @@ describe('원문 행 충실성 — 합성 더미 금지', () => {
 
   /* 행 수 — 원문 실측치. 늘어나면 창작 행이 끼었다는 뜻이고, 줄어들면 원문을 잃은 것이다. */
   it.each([
-    ['투자기업명세서(통합)', 4],
-    ['투자기업 고용현황보고', 3],
-    ['전체 투자실적', 1],
-    ['운용사 명세서', 22],
-    ['운용사 재무정보 조회', 2],
-    ['투자금 실사보고', 7],
-    ['사후관리기록 관리', 3],
-    ['관리보수관리', 1],
-    ['우수투자기업 관리', 0],
+    ['investee-spec', 4],
+    ['investee-employment', 3],
+    ['invest-performance-all', 1],
+    ['gp-spec', 22],
+    ['gp-financial', 2],
+    ['invest-due-diligence', 7],
+    ['post-mgmt-record', 3],
+    ['mgmt-fee', 1],
+    ['top-investee-manage', 0],
   ] as const)('%s 의 행 수는 원문 그대로 %i건이다', (route, n) => {
     expect(resolveSchema(route).sample!.length).toBe(n);
   });
@@ -196,7 +196,7 @@ describe('원문 행 충실성 — 합성 더미 금지', () => {
   /* 샘플 값 지점검 — 키 remap 이 어긋나면 셀이 조용히 빈칸이 된다(에러 없음).
      "행 수는 맞는데 값이 비어 있는" 상태를 잡으려면 실제 값을 봐야 한다. */
   it('고용현황 1행은 S1_32 원문 값 그대로다', () => {
-    const r = resolveSchema('투자기업 고용현황보고').sample![0];
+    const r = resolveSchema('investee-employment').sample![0];
     expect(r.investee).toBe('(주)그린팜테크');
     expect(r.salesAmt).toBe(12_500_000_000);
     expect(r.totalEmployees).toBe(85);
@@ -204,7 +204,7 @@ describe('원문 행 충실성 — 합성 더미 금지', () => {
     expect(r.isUploaded).toBe('완료');
   });
   it('운용사 명세서는 S1_37(운용사별 재무제표) 원문 값이다 — S1_02 운용사 명세가 아니다', () => {
-    const s = resolveSchema('운용사 명세서');
+    const s = resolveSchema('gp-spec');
     expect(s.columns.map((c) => c.label)).toContain('투자기업');   // S1_02 에는 없는 축
     const r = s.sample![0];
     expect(r.gp).toBe('KB증권(주)');
@@ -213,7 +213,7 @@ describe('원문 행 충실성 — 합성 더미 금지', () => {
     expect(r.totalAssets).toBe(17_792_580_021);
   });
   it('전체 투자실적은 회수실적 4컬럼(2단 헤더)을 보존한다', () => {
-    const s = resolveSchema('전체 투자실적');
+    const s = resolveSchema('invest-performance-all');
     const recovery = s.columns.filter((c) => c.group === '회수실적').map((c) => c.label);
     expect(recovery).toEqual(['회수원금', '회수수익', '회수총액', '감액금액']);
     const r = s.sample![0];
@@ -228,18 +228,18 @@ describe('원문 행 충실성 — 합성 더미 금지', () => {
       expect(s.columns.find((c) => c.key === k)!.type, k).toBe('text');
   });
   it('사후관리기록은 S1_42 원문 값·코드 도메인을 쓴다', () => {
-    const s = resolveSchema('사후관리기록 관리');
+    const s = resolveSchema('post-mgmt-record');
     expect(s.fields.find((f) => f.key === 'majorCat')!.options).toEqual(['일반 사후관리', '제재조치']);
     expect(s.fields.find((f) => f.key === 'deliveryType')!.options).toEqual(['회의', '공문']);
     expect(s.sample![1].recordType).toBe('투자비율위반');
   });
   it('투자금 실사보고의 잔여일수는 숫자가 아니라 원문 상태 문구다', () => {
-    const s = resolveSchema('투자금 실사보고');
+    const s = resolveSchema('invest-due-diligence');
     expect(s.columns.find((c) => c.key === 'remainDays')!.type).toBe('text');
     expect(s.sample!.map((r) => r.remainDays)).toContain('보고 대상 제외');
   });
   it('관리보수관리 1행은 S1_43 원문 값 그대로다', () => {
-    const r = resolveSchema('관리보수관리').sample![0];
+    const r = resolveSchema('mgmt-fee').sample![0];
     expect(r.gp).toBe('제이비인베스트먼트(주)');
     expect(r.amount).toBe(191_482_240);
     expect(r.isConfirmed).toBe('미확정');
@@ -454,13 +454,13 @@ describe('ColumnSpec 선언이 실제로 ColDef 에 전달되는가', () => {
   });
 
   it('S1_31 은 단일 헤더다 — group 을 선언하지 않는다(원문 colspan 0건)', () => {
-    expect(resolveSchema('투자기업명세서(통합)').columns.some((c) => c.group)).toBe(false);
+    expect(resolveSchema('investee-spec').columns.some((c) => c.group)).toBe(false);
   });
 
   it('2단 헤더를 선언한 스키마는 원문이 실제로 2단인 것뿐이다', () => {
     const grouped = ALL_SCHEMAS.filter((sc) => sc.columns.some((c) => c.group)).map((sc) => sc.route).sort();
     // 전체 투자실적 = 회수실적 4컬럼 · 투자실적 현황(투자기업) = 소재지별 표 2단 헤더
-    expect(grouped).toEqual(['전체 투자실적', '투자실적 현황(투자기업)']);
+    expect(grouped).toEqual(['invest-performance-all', 'investee-invest-stats']);
   });
 });
 describe('S1_34 — 원문이 배선한 동작만 구현한다', () => {
@@ -623,7 +623,7 @@ describe('S1_43 관리보수보고 상세조회 팝업 — 원문 대조', () =>
 
   /* 목업 주석이 못박은 규칙: "확정 여부를 다루는 관리 화면이므로 금액 단위전환 토글은 규칙상 미적용" */
   it('관리보수관리는 단위 토글이 없다(원문 규칙)', () => {
-    expect(resolveSchema('관리보수관리').unitToggle).toBeUndefined();
+    expect(resolveSchema('mgmt-fee').unitToggle).toBeUndefined();
   });
 });
 
@@ -655,7 +655,7 @@ describe('S1_40 투자금실사보고서 체크리스트 팝업 — 원문 대�
   it('투자금액·실사회계법인은 목록 컬럼이 아니고 팝업에서 리터럴 -다', () => {
     expect(html).toContain('<dt>투자금액</dt><dd class="empty">-</dd>');
     expect(html).toContain('<dt>실사회계법인</dt><dd class="empty">-</dd>');
-    const keys = resolveSchema('투자금 실사보고').columns.map((c) => c.key);
+    const keys = resolveSchema('invest-due-diligence').columns.map((c) => c.key);
     expect(keys).not.toContain('investAmount');
     expect(keys).not.toContain('auditFirm');
   });
@@ -676,7 +676,7 @@ describe('S1_40 투자금실사보고서 체크리스트 팝업 — 원문 대�
   });
 
   it('확정 액션이 화면에도 없다', () => {
-    const s = resolveSchema('투자금 실사보고');
+    const s = resolveSchema('invest-due-diligence');
     expect(s.fields).toHaveLength(0);                     // fields 가 있으면 등록/수정 모달이 켜진다
     expect((s.sample ?? []).every((r) => r.isConfirmed === '-')).toBe(true);
   });
@@ -708,7 +708,7 @@ describe('inlineSelect(셀 안 select) — 선언이 화면까지 닿는가', ()
   });
 
   it('관리보수관리 확정여부가 원문 옵션 2종을 원문 순서로 갖는다', () => {
-    const col = resolveSchema('관리보수관리').columns.find((c) => c.key === 'isConfirmed');
+    const col = resolveSchema('mgmt-fee').columns.find((c) => c.key === 'isConfirmed');
     expect(col?.inlineSelect).toEqual(['확정', '미확정']);
     // 원문 option 순서: 확정 먼저, 미확정 다음
     expect(html).toContain("<option'+(r.cfm==='확정'?' selected':'')+'>확정</option><option'+(r.cfm==='미확정'?' selected':'')+'>미확정</option>");

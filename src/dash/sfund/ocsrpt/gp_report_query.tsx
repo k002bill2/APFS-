@@ -21,8 +21,8 @@ import { DEFAULT_UNIT } from '../../schemas/unit';
 import type { Unit } from '../../schemas/unit';
 
 export const GP_REPORT_QUERY_LABEL = '수시보고 제출현황';
-/** route 키 — 라벨 rename(2026-10-14, 구 '자펀드 보고 조회') 후에도 해시·localStorage·방문기록·즐겨찾기 보존(MENU leaf.path) */
-export const GP_REPORT_QUERY_ROUTE = '자펀드 보고 조회';
+/** route 키 = MENU leaf.path(영문). 옛 한글 route('자펀드 보고 조회')는 route_alias.ts 가 승격한다 */
+export const GP_REPORT_QUERY_ROUTE = 'gp-report-query';
 export const GP_REPORT_QUERY_SOURCE = 'docs/mockups/05_MOAF/S5_121_자펀드_보고_조회.html';
 
 /** 원문 미정의 항목의 안내 문구(원문 그대로) */
