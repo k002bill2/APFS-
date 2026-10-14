@@ -47,8 +47,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, 
 import { PeriodPicker } from '../../ui/period-picker';
 import { OccasionalReportModal } from './occasional_report_modal';
 import { GpSpecModal } from './gp_spec_modal';
-import { SubFundSpecModal } from './subfund_spec_modal';
-import type { SubFundRow } from '../sfund/subfund_manage';
+import { SubFundSpecModal, SPEC_SAMPLE_SUBFUND } from './subfund_spec_modal';   // 샘플 행 = 명세 팝업 공유본
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
 const { Button, IconBtn, StatusBadge } = UI;
@@ -85,24 +84,6 @@ const DEMO: OccReportRow[] = [
   { id: 'or-5', no: 5, ind: '2026-05-20', occ: '2026-05-18', gp: '유안타인베스트먼트', fn: '유안타 수산투자조합', title: '투자기업 소송 발생 보고', jsBy: CONFIRMER, rsBy: CONFIRMER },
   { id: 'or-6', no: 6, ind: '2026-05-27', occ: '2026-05-25', gp: '대성창업투자', fn: '대성 농식품벤처투자조합', title: '조합 결산 일정 지연 관련 보고', jsBy: null, rsBy: null },
 ];
-
-/* 자펀드 명세 팝업(SubFundSpecModal) 재사용용 행.
-   ⚠ 목업 원문 한계 그대로: S1_03 실데이터가 1건뿐이라 어느 행의 자펀드를 눌러도 이 조합이 표시된다.
-   ⚠ `stg: '결성'`은 load-bearing — SubFundSpecModal의 buildOverview가 `formed = stg === '결성'`으로
-      조합고유번호·1좌당출자금액·결산월·수탁기관·납입방식·보수·담당자를 게이팅하고 재무표를 0으로 만든다.
-      값은 목업 FUND_OV에서 그대로 옮겼다(우선손실충당률은 목업에 없어 null/'-' → '-'로 렌더). */
-const SPEC_SUBFUND: SubFundRow = {
-  id: 'spec-fund', no: 1, y: '2025', rt: '정기', ch: '1', stg: '결성',
-  ctype: '농림수산식품투자조합', cg: '사업화(Step-up)', cs: '-',
-  gp1: '인라이트벤처스', gp2: '-', fn: '인라이트 농식품 청년기업 성장펀드',
-  fd: '2025-10-24', rd: '2025-11-07', yrs: null, dur: 8, mat: '2033-11-06', rate: 2,
-  lgp: null, lmo: '-',
-  c1: 12_100_000_000, c2: 7_000_000_000, c3: 5_100_000_000,
-  v1: 12_100_000_000, v2: 7_000_000_000, v3: 5_100_000_000,
-  p1: 3_630_000_000, p2: 2_100_000_000,
-  rec: 0, ti: 0, tir: null, mi: 0, mir: null, dist: 0, mul: null,
-  st: '운영중', liq: '-',
-};
 
 const PAGE_SIZE = 20;
 
@@ -499,7 +480,7 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
       {/* ── 읽기전용 팝업 3종 — 셀 링크가 연다. 행 선택과 무관하므로 `selected` 게이트 없음 ── */}
       {modal?.kind === 'report' && <OccasionalReportModal onClose={() => setModal(null)} />}
       {modal?.kind === 'gpSpec' && <GpSpecModal onClose={() => setModal(null)} />}
-      {modal?.kind === 'fundSpec' && <SubFundSpecModal row={SPEC_SUBFUND} onClose={() => setModal(null)} />}
+      {modal?.kind === 'fundSpec' && <SubFundSpecModal row={SPEC_SAMPLE_SUBFUND} onClose={() => setModal(null)} />}
 
     </GridFrame>
   );

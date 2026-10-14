@@ -260,6 +260,24 @@ function FsDetailModal({ fn, unit: initUnit, onClose }: { fn: string; unit: Unit
   );
 }
 
+/* 명세 팝업 샘플 행 — 행 데이터에 SubFundRow 원천이 없는 화면(수시보고·정기보고)이 공유한다.
+   ⚠ 목업 원문 한계 그대로: S1_03 실데이터가 1건뿐이라 어느 행의 자펀드를 눌러도 이 조합이 표시된다.
+   ⚠ `stg: '결성'`은 load-bearing — buildOverview가 `formed = stg === '결성'`으로
+      조합고유번호·1좌당출자금액·결산월·수탁기관·납입방식·보수·담당자를 게이팅하고 재무표를 0으로 만든다.
+      값은 목업 FUND_OV에서 그대로 옮겼다(우선손실충당률은 목업에 없어 null/'-' → '-'로 렌더). */
+export const SPEC_SAMPLE_SUBFUND: SubFundRow = {
+  id: 'spec-fund', no: 1, y: '2025', rt: '정기', ch: '1', stg: '결성',
+  ctype: '농림수산식품투자조합', cg: '사업화(Step-up)', cs: '-',
+  gp1: '인라이트벤처스', gp2: '-', fn: '인라이트 농식품 청년기업 성장펀드',
+  fd: '2025-10-24', rd: '2025-11-07', yrs: null, dur: 8, mat: '2033-11-06', rate: 2,
+  lgp: null, lmo: '-',
+  c1: 12_100_000_000, c2: 7_000_000_000, c3: 5_100_000_000,
+  v1: 12_100_000_000, v2: 7_000_000_000, v3: 5_100_000_000,
+  p1: 3_630_000_000, p2: 2_100_000_000,
+  rec: 0, ti: 0, tir: null, mi: 0, mir: null, dist: 0, mul: null,
+  st: '운영중', liq: '-',
+};
+
 /* ── 팝업 1: 자펀드 명세 ── */
 export function SubFundSpecModal({ row, onClose }: { row: SubFundRow; onClose: () => void }) {
   const [unit, setUnit] = useState<Unit>('원');

@@ -215,7 +215,8 @@ function CriteriaTable() {
       <tbody>
         {GRADE_CRITERIA.map((c) => (
           <tr key={c.grade}>
-            <th scope="row" className={`${TD} text-left font-bold align-top`} style={CELL}>{c.grade}</th>
+            {/* 등급 = 사후관리 등급 열과 같은 배지·톤(GRADE_TONE) — 기준표와 부여 결과가 한눈에 대응되게 */}
+            <th scope="row" className={`${TD} text-left align-top`} style={CELL}><StatusBadge size="sm" tone={GRADE_TONE[c.grade] ?? 'info'} label={c.grade} /></th>
             {/* 원문 <br> 줄바꿈은 pre-line으로 보존 */}
             <td className={`${TD} align-top`} style={{ ...CELL, whiteSpace: 'pre-line', lineHeight: 1.6 }}>{c.desc}</td>
           </tr>

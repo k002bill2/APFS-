@@ -15,20 +15,22 @@
      보고 내역이 없는 행(확정여부 빈칸)은 변경 대상에서 빼고 toast로 알린다(apfs-aggrid 게이트 필터형).
    - 확정여부 → **셀 안 네이티브 `<select>`**(목업 `.gsel` 그대로, 행별 aria-label 동일).
      목업의 보고 내역 없는 행(7·9)은 빈 셀 대신 샘플 보고서·수정일시·확정여부(미확정)로 채웠다(2026-09-24 사용자 결정 — 빈 셀 금지).
-   - 상세조회 컬럼 → **삭제**(2026-09-24 사용자 결정). 상세 진입은 보고구분 '월간보고서' 배지(클릭·셀 Enter) 하나다.
-   - 상세 진입(보고구분 '월간보고서' 배지 · 해당 셀 Enter)
+   - 상세조회 컬럼 → **복원**(2026-10-14 사용자 결정, 2026-09-24 삭제 번복). 월간보고 행만 버튼, 반기·보고 없음 행은 빈칸.
+   - 상세 진입(보고구분 '월간보고서' 배지 · 상세조회 버튼 · 해당 셀 Enter)
        → 월간보고 상세(`monthly_report.tsx` 창 + `monthly_report_modal.tsx`의 `MonthlyReportBody`)를 **팝업 창**으로 연다
          (모달 아님, 사용자 결정 2026-09-24).
-   - KPI 배지 행 → **미포함**(사용자 결정). 카드뷰 토글·`sub` 캡션·명세 팝업도 없다.
+   - KPI 배지 행 → **미포함**(사용자 결정). 카드뷰 토글·`sub` 캡션도 없다.
+   - 운용사·자펀드 셀 → 링크 → 운용사 명세(GpSpecModal)·자펀드 명세(SubFundSpecModal) 팝업
+     (2026-10-14 사용자 결정 — 목업 `.gpf-gp-link`/`.gpf-fund-link`. 패턴은 occasional_report_manage.tsx와 동일).
    - 엑셀 → SheetJS(단일 헤더 · 선택 체크박스 열 제외)
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
 
    한계·가정(결정 기록)
    - 상세 화면(S1_06_01)은 Shell 없는 route `#/monthly-report`를 이름 붙은 팝업 창('apfs-monthly-report')으로 연다 —
      반복 클릭은 같은 창을 재사용한다. 원천 데이터가 2026.01.31 보고 1건뿐이라 모든 월간보고서 행이 같은 보고를 연다.
-   - 운용사·자펀드 셀은 목업이 `.linktxt`지만(설계메모: "명세서 이동 여부 검토필요") **링크로 만들지 않았다** —
-     명세 팝업은 opt-in이고 이 화면은 미요청이다(apfs-spec-popup: 미포함이면 진입 배선을 넣지 않는다).
-   - '보고서' 열은 첨부파일명 표시 전용이다(목업 설계메모: "클릭 이동 없음") — 링크·bullet·밑줄 없음(2026-09-24 사용자 결정).
+   - 명세 팝업은 원천 데이터가 1건씩뿐이라 어느 행을 눌러도 같은 운용사·자펀드 명세가 열린다(SPEC_SAMPLE_SUBFUND).
+   - '보고서' 열은 목업 `.linkbtn` 외관(• 접두 · primary · 600 · 밑줄 없음)이지만 클릭 이동은 없다(목업 설계메모,
+     2026-10-14 사용자 결정 — 종전 '링크·bullet 없음' 번복). 버튼/앵커가 아닌 span이다.
    - 확정여부 컬럼에 `suppressKeyboardEvent`를 **브리프 명세 외로 1건 추가**했다: React 18은 합성 이벤트를
      루트 컨테이너에서 디스패치하므로 `onKeyDown`의 `stopPropagation`이 AG Grid의 셀 **네이티브** 리스너보다
      늦다. 그대로 두면 select에 초점이 있을 때 ↑↓가 값 변경 대신 셀 이동으로 가로채여 키보드로 값을 못 바꾼다. (런타임 확인 필요 항목).
@@ -52,6 +54,8 @@ import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
 import { ConfirmCombo, uniformConfirm } from '../../confirm_combo';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { GpSpecModal } from './gp_spec_modal';
+import { SubFundSpecModal, SPEC_SAMPLE_SUBFUND } from './subfund_spec_modal';
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -115,7 +119,7 @@ const openDetail = () => {
 
 /* ──────────────────────────────
    컬럼 정의 — 목업 헤더 순서·집합 그대로(단일 헤더):
-     (선택) · No · 운용사 · 자펀드 · 보고년월 · 보고구분 · 보고서 · 수정일시 · 확정여부 · 조합상태   (목업의 상세조회는 삭제)
+     (선택) · No · 운용사 · 자펀드 · 보고년월 · 보고구분 · 보고서 · 수정일시 · 확정여부 · 상세조회 · 조합상태
    ⚠ 좌측 고정은 No만 — 다른 컬럼에 `pinned`를 주면 컬럼이 좌측 영역으로 끌려와 목업 순서가 깨진다.
    ⚠ 합계행 없음(금액 컬럼이 없다). 선택 컬럼은 `SELECTION_COL`(좌측 고정 44px)이 그린다.
 ────────────────────────────── */
@@ -123,8 +127,22 @@ const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 /* 모듈 스코프에 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid가 헤더를 통째로 remount한다 */
 
-/* 텍스트 셀(운용사·자펀드) — flex 셀은 AG Grid 기본 ellipsis가 안 먹으므로 내부 span에 truncate를 준다 */
-const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
+/* 셀 내 링크(운용사·자펀드) — 클릭 시 명세 팝업. occasional_report_manage.tsx `LinkCell`과 같은 규약:
+   primary + 600, 평상시 밑줄 없음 / hover에만 밑줄. flex 셀은 기본 ellipsis가 안 먹어 truncate를 준다.
+   ⚠ `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다. */
+function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
+  return (
+    <button
+      type="button" title={hint} aria-label={`${value} ${hint}`} onClick={onClick}
+      className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
+      style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
+      {value}
+    </button>
+  );
+}
+type SpecKind = 'gpSpec' | 'fundSpec';
+/* 상세조회 표시 조건 — 상세 화면(S1_06_01)은 월간보고 전용이라 반기·보고 없음 행은 빈칸 */
+const hasDetail = (r: RegularReportRow | undefined) => r?.rt === '월간보고서' && r.file != null;
 /* 날짜성/라벨 값 — null 이면 빈 셀 */
 const mnFmt = (p: { value: unknown }) => (p.value == null ? '' : String(p.value));
 
@@ -155,11 +173,13 @@ function ConfirmSelect({ value, no, onChange }: { value: Confirmed; no: number; 
   );
 }
 
-const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void): ColDef<RegularReportRow>[] => [
+const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void, openSpec: (k: SpecKind) => void): ColDef<RegularReportRow>[] => [
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
-  /* 운용사·자펀드는 링크가 아니다(명세 팝업 미포함 — 파일 상단 '한계'). 긴 명칭 컬럼만 maxWidth 상한(apfs-aggrid 관리형 그리드 규약). */
-  { field: 'gp', headerName: '운용사', width: 190, maxWidth: 240, cellStyle: flexCenter, cellRenderer: textCell },
-  { field: 'fn', headerName: '자펀드', width: 196, maxWidth: 300, cellStyle: flexCenter, cellRenderer: textCell },
+  /* 운용사·자펀드 = 명세 팝업 링크(셀 Enter도 같은 팝업). 긴 명칭 컬럼만 maxWidth 상한(apfs-aggrid 관리형 그리드 규약). */
+  { field: 'gp', headerName: '운용사', width: 190, maxWidth: 240, cellStyle: flexCenter,
+    cellRenderer: (p: any) => <LinkCell value={p.value} hint="운용사 명세 보기" onClick={() => openSpec('gpSpec')} /> },
+  { field: 'fn', headerName: '자펀드', width: 196, maxWidth: 300, cellStyle: flexCenter,
+    cellRenderer: (p: any) => <LinkCell value={p.value} hint="자펀드 명세 보기" onClick={() => openSpec('fundSpec')} /> },
   { field: 'ymLabel', headerName: '보고년월', width: 112, cellStyle: tabNum, valueFormatter: mnFmt },
   /* 보고구분 — '월간보고서'만 상세 진입 링크(목업 `<a class="tag b">`), 반기보고서는 비링크 `<span>`.
      배지를 버튼으로 감싼다: `font:'inherit'`는 preflight:false에서 UA 기본 폰트(13.3px Arial)로 튀는 것을 막는다. */
@@ -180,10 +200,10 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void):
      넓은 표라 `fitGridWidth`를 쓰면 전 컬럼이 선언 폭 아래로 눌려 보고년월·수정일시·확정여부·상세조회 30셀이 잘렸다
      (2026-09-12 코디네이터 런타임 실측). 내용 맞춤이면 그리드가 프레임보다 넓어져 AG Grid 내부 가로 스크롤이 생기고 잘림은 0이다
      (apfs-aggrid "넓은 다열 테이블" 규약). 이 컬럼만 상한 520(더 긴 파일명은 truncate).
-     ⚠ 첨부파일명 표시 전용(클릭 이동 없음 · bullet·밑줄 없음). */
+     ⚠ 목업 `.linkbtn` 외관(• 접두 · primary · 600 · 밑줄 없음 · cursor:default)이지만 클릭 이동 없음 — span으로 둔다. */
   { field: 'file', headerName: '보고서', width: 180, minWidth: 150, maxWidth: 520, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value
-      ? <span className="min-w-0 truncate">{p.value}</span>
+      ? <span className="min-w-0 truncate text-primary font-semibold" style={{ cursor: 'default' }}>{'• ' + p.value}</span>
       : <span style={{ color: 'var(--muted-foreground)' }}>보고 내역이 없습니다.</span>) },
   { field: 'updatedAt', headerName: '수정일시', width: 180,
     cellStyle: { ...tabNum, color: 'var(--muted-foreground)' }, valueFormatter: mnFmt },
@@ -194,11 +214,15 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void):
     suppressKeyboardEvent: (p) => (p.event.target as HTMLElement | null)?.tagName === 'SELECT',
     cellRenderer: (p: any) => (p.value == null ? null
       : <ConfirmSelect value={p.value} no={p.data.no} onChange={(v) => patch(p.data.id, { confirmed: v })} />) },
+  /* 상세조회 — 목업 `<a class="btn btn-sec btn-sm">`. 월간보고 행만(hasDetail), 그 외 빈칸. 셀 안 텍스트 버튼이라 좌측 정렬(표 정렬 규약) */
+  { colId: 'detail', headerName: '상세조회', width: 104, sortable: false, cellStyle: flexCenter,
+    cellRenderer: (p: any) => (hasDetail(p.data)
+      ? <Button variant="outline" size="sm" onClick={openDetail}>상세조회</Button> : null) },
   { field: 'fundStatus', headerName: '조합상태', width: 100, cellStyle: flexCenter,
     cellRenderer: (p: any) => <StatusBadge tone="success" label={p.value} size="lg" /> },
 ];
 
-/* 엑셀 컬럼 — 화면 컬럼과 1:1(화면=엑셀 불변식, 선택 체크박스 열 제외).
+/* 엑셀 컬럼 — 화면 컬럼과 1:1(화면=엑셀 불변식, 선택 체크박스·상세조회 버튼 열은 값이 아닌 컨트롤 열이라 제외).
    값 없음은 ''(목업 placeholder 문구 '보고 내역이 없습니다.'는 화면 표현이라 내보내지 않는다). */
 type XCol = { header: string; get: (r: RegularReportRow) => string | number };
 const EXPORT_COLS: XCol[] = [
@@ -257,7 +281,9 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }, []);
   /* deps []: patchRow는 안정(useCallback) — 매 렌더 새 배열이면 그리드가 컬럼을 재생성하며 폭이 되돌아간다 */
-  const columnDefs = useMemo(() => makeColumns(patchRow), [patchRow]);
+  /* 명세 팝업 — setSpec은 useState 세터라 안정(컬럼 재생성 없음) */
+  const [spec, setSpec] = useState<null | SpecKind>(null);
+  const columnDefs = useMemo(() => makeColumns(patchRow, setSpec), [patchRow]);
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
@@ -320,7 +346,8 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
     setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
   }, []);
   /* 키보드 — AG Grid의 Tab은 **셀 단위**로만 이동해 셀 안 컨트롤에 초점이 닿지 않는다.
-     보고구분(월간) 셀 Enter = 상세 진입, 확정여부 셀 Enter = 셀 안 select로 초점 이동(WCAG 2.1.1). */
+     운용사·자펀드 셀 Enter = 명세 팝업, 보고구분(월간)·상세조회 셀 Enter = 상세 진입,
+     확정여부 셀 Enter = 셀 안 select로 초점 이동(WCAG 2.1.1). */
   const onCellKeyDown = useCallback((e: CellKeyDownEvent<RegularReportRow>) => {
     const ev = e.event as KeyboardEvent | null;
     if (ev?.key !== 'Enter') return;
@@ -334,7 +361,10 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
     }
     /* 셀 안 링크·버튼에 초점이 있으면 네이티브 활성화가 이미 연다 — 여기서 또 열면 두 번 연다 */
     if ((ev.target as HTMLElement | null)?.closest?.('a,button')) return;
+    if (colId === 'gp') { setSpec('gpSpec'); return; }
+    if (colId === 'fn') { setSpec('fundSpec'); return; }
     if (colId === 'rt' && e.data?.rt === '월간보고서') { openDetail(); return; }
+    if (colId === 'detail' && hasDetail(e.data)) { openDetail(); return; }
   }, []);
 
   const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
@@ -451,6 +481,9 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      {spec === 'gpSpec' && <GpSpecModal onClose={() => setSpec(null)} />}
+      {spec === 'fundSpec' && <SubFundSpecModal row={SPEC_SAMPLE_SUBFUND} onClose={() => setSpec(null)} />}
 
     </GridFrame>
   );

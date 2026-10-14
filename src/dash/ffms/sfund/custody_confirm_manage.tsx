@@ -8,19 +8,25 @@
    - 툴바 좌 주 필터                → `확정여부` FilterChip(전체·확정·미확정). ⚠ 목업 검색박스엔 없는 **파생 칩**이다
        (행 `confirm` 값에서 파생 — 수시보고 '확인상태' 파생 칩과 같은 관례). 드로어 select와 state를 공유한다.
    - 3단 헤더 목록 그리드          → AG Grid 중첩 `ColGroupDef`(일치여부 > 투자자산/미투자자산 거래/미투자자산 > 리프),
-       `marryChildren`. 합계행 없음·행 선택 없음 — 가산 가능한 금액 컬럼이 없고 목업에도 체크박스/라디오가 없다.
+       `marryChildren`. 합계행 없음 — 가산 가능한 금액 컬럼이 없다.
+   - 행 선택(multiRow 체크박스, `SELECTION_COL`) → 1건일 때 선택 바 [수정] / 행 더블클릭=수정
+       (2026-10-14 사용자 결정, 관리 열 삭제). 목업엔 체크박스가 없지만 선택이 [수정] 액션을 만든다(apfs-aggrid "체크박스" 절).
    - 마크 셀(O/X/-)                 → `StatusBadge`(O=success · X=danger) + 회색 칩('-').
    - 상세보기 셀                    → 셀 링크(+ 셀 Enter) → 읽기전용 `CustodyConfirmDetailModal`.
-       ⚠ **행 더블클릭으로는 열지 않는다** — 링크가 진입점인데 더블클릭까지 걸면 링크를 두 번 누른 순간
-         엉뚱한 팝업이 뜬다(골드 `general_meeting_manage.tsx`와 동일 결정).
+       ⚠ **행 더블클릭은 상세보기가 아니라 수정을 연다** — 상세보기 진입점은 링크뿐이다. 링크·버튼·select 안에서
+         발생한 더블클릭은 무시해 링크를 두 번 누른 순간 엉뚱한 팝업이 뜨지 않게 한다(골드 `general_meeting_manage.tsx`의 우려와 동일).
    - 확정여부 셀                    → 셀 안 네이티브 `<select>`(목업 `confirmSel` 그대로). 변경은 로컬 state(백엔드 없음).
+   - (2026-10-14 사용자 결정 — 기획서 회의록 반영분 이식)
+     운용사·자펀드 셀                → 셀 링크(+ 셀 Enter) → `GpSpecModal` / `SubFundSpecModal`(+`SPEC_SAMPLE_SUBFUND`, 샘플 1건).
+     선택 바 [수정]·행 더블클릭 · 툴바 [단건 등록] → `CustodyEntryModal`(custody_confirm_entry_modal.tsx). X가 하나라도 있으면 불일치.
+     툴바 [불일치 건 알림]            → `CustodyMismatchAlertModal`(전체 행 중 불일치 목록 + 시스템 알림 발송).
    - KPI 배지 행                    → 미포함(브리프 확정). 금액 개념이 없어 건수 지표뿐이다.
    - 엑셀                           → SheetJS. 3단 헤더 병합을 `flattenForExcel`(깊이 N 재귀)로 columnDefs에서 자동 산출.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
 
    한계·가정:
    - 목록은 **실 화면 캡처 24건 발췌**(전체 약 152건) — 목업이 명시한 범위 그대로이고 나머지를 창작하지 않는다.
-   - 확정여부 변경은 로컬 state(`patchRow` 불변 갱신)로만 반영된다(백엔드 없음).
+   - 확정여부 변경·단건 등록/수정은 로컬 state(불변 갱신)로만 반영된다(백엔드 없음). 등록 행은 사용자 입력값이다.
    - 상세 팝업은 원 구조도 예시 1건 고정 — 자펀드 고유 값이 아니다. */
 import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -33,13 +39,19 @@ import type { LeafTabsSlot } from '../leaf_tabs';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SuppressKeyboardEventParams } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SuppressKeyboardEventParams, SelectionChangedEvent, RowDoubleClickedEvent } from 'ag-grid-community';
+import { SELECTION_COL } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT, 좌측 고정 44px)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
 import { CustodyConfirmDetailModal } from './custody_confirm_detail_modal';
+import { CustodyEntryModal } from './custody_confirm_entry_modal';
+import type { CustodyEntryValue } from './custody_confirm_entry_modal';
+import { CustodyMismatchAlertModal } from './custody_mismatch_alert_modal';
+import { GpSpecModal } from '../report/gp_spec_modal';
+import { SubFundSpecModal, SPEC_SAMPLE_SUBFUND } from '../report/subfund_spec_modal';   // 샘플 행 = 명세 팝업 공유본
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
 const { Button, IconBtn, StatusBadge } = UI;
@@ -110,8 +122,8 @@ const PAGE_SIZE = 20;
 /* ──────────────────────────────
    컬럼 정의 — 목업 3단 헤더 그대로:
      No · 운용사 · 자펀드 · [일치여부 > 투자자산(보유주수·잔액) / 미투자자산 거래(보유주수·잔액) / 미투자자산(잔액)]
-     · 상세보기 · 확정여부  (리프 10개)
-   ⚠ 폭 전략은 **autoSizeStrategy 없이 고정폭 + 텍스트 2열 flex** — 리프 10개의 고정폭 합(≈1198)이 프레임(1280)
+     · 상세보기 · 확정여부  (리프 10개 + 선택 열 44px. 관리 열은 2026-10-14 사용자 결정으로 삭제 — 선택 바 [수정]이 대체)
+   ⚠ 폭 전략은 **autoSizeStrategy 없이 고정폭 + 텍스트 2열 flex** — 선택 열 포함 고정폭 합(≈1242, 프레임 안쪽 실폭 대비 미실측)이 프레임(1280)
      안에 들어오는 좁은 표라, 내용 맞춤이면 우측에 빈 공간이 남는다(apfs-aggrid "좁은 매트릭스" 규약).
      운용사·자펀드만 `flex:1`로 잉여를 흡수하고, 마크/상세보기/확정여부는 고정폭(헤더 라벨 폭이 하한).
 ────────────────────────────── */
@@ -154,6 +166,23 @@ function LinkCell({ value, color, hint, onClick }: { value: string; color: strin
   );
 }
 
+/* 명세 링크 — 운용사·자펀드 셀(`occasional_report_manage.tsx` LinkCell 동형 로컬 복사).
+   외관: primary 색 + 600, **평상시 밑줄 없음 / hover에만 밑줄**. 폰트 `font:'inherit'`(위 LinkCell 주석) */
+function SpecLink({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
+  return (
+    <button
+      type="button" title={hint} onClick={onClick}
+      className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
+      style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
+      {value}
+    </button>
+  );
+}
+
+type SpecKind = 'gpSpec' | 'fundSpec';
+/* 셀 Enter → 팝업 매핑(링크 셀만) */
+const SPEC_BY_COL: Record<string, SpecKind> = { gp: 'gpSpec', fn: 'fundSpec' };
+
 /* 확정여부 셀 — 목업 `confirmSel()` 그대로(확정/미확정 2개. 값이 ''가 되는 경로가 없어 빈 option은 두지 않는다).
    ⚠ 폰트는 `fontFamily:'inherit'` + 14px — preflight:false라 select가 UA 기본(13.3px Arial)으로 튄다.
      `font` 단축속성을 쓰면 뒤 키의 fontSize를 리셋할 수 있어 분리해 쓴다(키 순서 함정).
@@ -185,11 +214,16 @@ const suppressFromSelect = (p: SuppressKeyboardEventParams<CustodyConfirmRow>): 
 const makeColumns = (
   openDetail: (id: string) => void,
   patchRow: (id: string, patch: Partial<CustodyConfirmRow>) => void,
+  openSpec: (k: SpecKind) => void,
 ): (ColDef<CustodyConfirmRow> | ColGroupDef<CustodyConfirmRow>)[] => [
   /* No는 행에 저장된 값이라 정렬해도 번호가 다시 매겨지지 않는다 */
   { field: 'no', headerName: 'No', width: 68, minWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
-  txt('gp', '운용사', 170),
-  txt('fn', '자펀드', 220),
+  /* 운용사·자펀드 = 명세 링크(목업 `.gpf-gp-link`·`.gpf-fund-link`). minWidth 170/220 — 관리 열(88) 추가 때 150/200로 줄였다가
+     관리 열 삭제(선택 열 44 추가)로 되돌렸다. 고정폭 합 1242 < 관리 열 시절 1246 이라 가로 스크롤 하한은 그때보다 낮다 */
+  { ...txt('gp', '운용사', 170),
+    cellRenderer: (p: any) => <SpecLink value={p.value} hint="운용사 명세 보기" onClick={() => openSpec('gpSpec')} /> },
+  { ...txt('fn', '자펀드', 220),
+    cellRenderer: (p: any) => <SpecLink value={p.value} hint="자펀드 명세 보기" onClick={() => openSpec('fundSpec')} /> },
   /* 3단 헤더 — 중첩 ColGroupDef. 바깥·안쪽 모두 marryChildren으로 묶음이 흩어지지 않게 한다.
      리프 headerName이 겹치지만(보유주수·잔액) field가 달라 문제 없다. */
   { headerName: '일치여부', marryChildren: true, children: [
@@ -268,11 +302,23 @@ function DrawerField({ label, noop, plain, children }: { label: string; noop?: b
   );
 }
 
+/* 행 선택 — 선택 행 [수정](1건일 때만)이 액션이라 multiRow(apfs-aggrid "체크박스" 절, 2026-09-23 기본값).
+   선택은 체크박스로만(enableClickSelection:false 명시). 헤더 전체선택은 SELECTION_COL 의 DS 헤더가 그리므로
+   내장 헤더는 끄고 범위를 'filtered' 로 맞춘다. 모듈 상수(렌더마다 새 객체면 컬럼 폭이 되돌아간다). */
+const ROW_SELECTION = {
+  mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered',
+  enableClickSelection: false,
+} as const;
+
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
-/* 상세 팝업은 **대상 행 id를 직접 싣는다** — 행 선택(체크박스)이 없어 `selected`가 존재하지 않는다 */
-type ModalState = null | { kind: 'detail'; id: string };
+/* 상세 팝업은 **대상 행 id를 직접 싣는다** — 상세보기 링크는 선택과 무관하게 그 행을 연다 */
+type ModalState = null
+  | { kind: 'detail'; id: string }
+  | { kind: SpecKind }                          // 운용사/자펀드 명세(샘플 — 행 무관)
+  | { kind: 'entry'; id?: string }              // 대사 결과 단건 등록(id 없음) / 수정(id)
+  | { kind: 'mismatch' };                       // 불일치 건 알림
 
 /* tabs(opt-in) — 메뉴 리프가 원문 화면 2개를 탭으로 묶을 때(leaf_tabs.tsx). 미지정이면 종전 화면 그대로 */
 export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => void; tabs?: LeafTabsSlot }) {
@@ -289,7 +335,11 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
 
   /* setModal(useState 세터)·patchRow(useCallback []) 둘 다 안정 참조라 deps로 컬럼 정의를 고정한다
      (매 렌더 새 배열이면 AG Grid가 컬럼을 재생성하며 폭을 선언값으로 되돌린다) */
-  const columnDefs = useMemo(() => makeColumns((id: string) => setModal({ kind: 'detail', id }), patchRow), [patchRow]);
+  const columnDefs = useMemo(() => makeColumns(
+    (id: string) => setModal({ kind: 'detail', id }),
+    patchRow,
+    (k: SpecKind) => setModal({ kind: k }),
+  ), [patchRow]);
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
@@ -302,13 +352,28 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
   const passes = useCallback((r: CustodyConfirmRow) => !fConfirm || r.confirm === fConfirm, [fConfirm]);
   /* 기준일자는 행을 거르지 않으므로 External Filter 판정에 넣지 않는다 */
   const filterActive = Boolean(fConfirm);
-  useEffect(() => { apiRef.current?.onFilterChanged(); }, [passes]);
+  /* 필터가 바뀌면 선택을 정리한다 — 걸러진 행의 체크가 보이지 않는 채로 남지 않게 */
+  useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<CustodyConfirmRow>) => (node.data ? passes(node.data) : true), [passes]);
 
   const filteredRows = useMemo(() => rows.filter(passes), [rows, passes]);
 
   const onGridReady = useCallback((e: GridReadyEvent<CustodyConfirmRow>) => { apiRef.current = e.api; }, []);
+
+  /* 선택 SSOT = id 배열 하나(건수·단건은 파생 — apfs-aggrid "선택 상태는 selIds 하나로") */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selCount = selIds.length;
+  const single = selCount === 1 ? rows.find((r) => r.id === selIds[0]) ?? null : null;
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<CustodyConfirmRow>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
+  /* 행 더블클릭 = 수정(규약 "더블클릭=수정"). 셀 안 링크/버튼/select 에서 난 더블클릭은 그 컨트롤의 몫이라 무시한다.
+     체크박스 셀 더블클릭 누수는 SELECTION_COL 이 막는다 */
+  const onRowDoubleClicked = useCallback((e: RowDoubleClickedEvent<CustodyConfirmRow>) => {
+    if ((e.event?.target as HTMLElement | null)?.closest?.('a,button,select')) return;
+    if (e.data && !e.rowPinned) setModal({ kind: 'entry', id: e.data.id });
+  }, []);
   const onPaginationChanged = useCallback(() => {
     const api = apiRef.current; if (!api) return;
     const next = { current: api.paginationGetCurrentPage(), total: api.paginationGetTotalPages(), rowCount: api.paginationGetRowCount() };
@@ -317,8 +382,13 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
   /* 키보드 진입 — 셀에 초점을 둔 채 Enter. 상세보기 셀=팝업, 확정여부 셀=셀 안 select로 포커스.
      (AG Grid의 Tab은 **셀 단위**로만 이동해 셀 안 button/select에 초점이 닿지 않는다) */
   const onCellKeyDown = useCallback((e: CellKeyDownEvent<CustodyConfirmRow>) => {
-    if ((e.event as KeyboardEvent | null)?.key !== 'Enter') return;
+    const ev = e.event as KeyboardEvent | null | undefined;
+    if (ev?.key !== 'Enter') return;
+    /* 셀 안 링크/버튼에 초점이 있으면 그 버튼의 click이 이미 연다 — 중복 오픈 방지 */
+    if ((ev.target as HTMLElement | null)?.closest?.('a,button')) return;
     const colId = e.column.getColId();
+    const spec = SPEC_BY_COL[colId];
+    if (spec) { setModal({ kind: spec }); return; }
     if (colId === 'status') { if (e.data) setModal({ kind: 'detail', id: e.data.id }); return; }
     if (colId !== 'confirm') return;
     const cell = (e.event?.target as HTMLElement | null)?.closest?.('.ag-cell') as HTMLElement | null;
@@ -326,8 +396,33 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
   }, []);
 
   const target = modal?.kind === 'detail' ? rows.find((r) => r.id === modal.id) ?? null : null;
+  const entryTarget = modal?.kind === 'entry' && modal.id ? rows.find((r) => r.id === modal.id) ?? null : null;
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('조회되었습니다'); };
+  /* 단건 등록/수정 저장 — 수정은 id·no 유지, 등록은 끝에 추가(no = 최대+1, 목업 `DATA.push`). 불변 갱신 */
+  const saveEntry = (v: CustodyEntryValue) => {
+    if (modal?.kind !== 'entry') return;
+    const { id } = modal;
+    if (id) { setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...v } : r))); apiRef.current?.deselectAll(); }
+    else setRows((prev) => {
+      const no = prev.reduce((m, r) => Math.max(m, r.no), 0) + 1;
+      return [...prev, { ...v, id: 'cc-new-' + no + '-' + Date.now(), no }];
+    });
+    setModal(null);
+  };
+
+  const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
+
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측에 렌더한다(선택 중엔 필터 칩을 +N 안으로 접는다).
+     [수정]·[상세보기]+상태 배지는 단일 대상이라 1건일 때만(`single` 게이트) */
+  const selActions = selCount > 0 ? (
+    <>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
+      {single && <Button variant="outline" size="sm" leadingIcon="file" onClick={() => setModal({ kind: 'entry', id: single.id })}>수정</Button>}
+      {single && <Button variant="outline" size="sm" leadingIcon="eye" onClick={() => setModal({ kind: 'detail', id: single.id })}>상세보기</Button>}
+      {single && <StatusBadge tone={single.status === '일치' ? 'success' : 'danger'} label={single.status} size="lg" />}
+      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+    </>
+  ) : null;
 
   /* ── Excel(.xlsx) — 3단 헤더(병합 자동 산출). 합계행 없음 ── */
   const exportExcel = () => {
@@ -360,14 +455,18 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
       title={tabs?.label ?? "자펀드수탁관리(확정)"}
       favRoute={tabs?.route ?? "custody-confirm"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌는 항상 필터칩이다 — 행 선택이 없어 selbar가 존재하지 않는다(조회 전용 화면).
+      /* 툴바 좌 = 주 필터 칩(확정여부) + 적용 중인 드로어 값 칩. 선택 중엔 선택 바(contextActions)가 대신한다.
          기준일자 칩은 **목업 기본값과 다를 때만** 띄운다(기본값이 상시 칩으로 남으면 시끄럽다). */
       filterChips={(['', '확정', '미확정'] as ('' | ConfirmState)[]).map((s) => ({ key: s || 'all', label: s || '확정여부: 전체', active: fConfirm === s, onSelect: () => setFConfirm(s) }))}
       appliedFilters={[
         { label: '기준일자', value: fBaseDate !== BASE_DATE ? String(fBaseDate) : '', onClear: () => setFBaseDate(BASE_DATE) },
       ]}
+      contextActions={selActions}
       /* 단위 캡션 없음 — 금액 컬럼이 없다(마크·상태만) */
       toolbarRight={<>
+        {/* 목업 listbar `.acts` 순서 그대로: 불일치 건 알림 · 단건 등록(2026-09 회의록 반영분) */}
+        <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'mismatch' })}>불일치 건 알림</Button>
+        <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'entry' })}>단건 등록</Button>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -391,6 +490,10 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
           domLayout="autoHeight"
           /* autoSizeStrategy 없음 — 고정폭 합이 프레임에 들어오는 좁은 표라 flex로 잉여를 흡수한다(위 컬럼 주석) */
           defaultColDef={DEFAULT_COL_DEF}
+          rowSelection={ROW_SELECTION}
+          selectionColumnDef={SELECTION_COL}
+          onSelectionChanged={onSelectionChanged}
+          onRowDoubleClicked={onRowDoubleClicked}
           pagination paginationPageSize={pageSize} suppressPaginationPanel
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}
@@ -431,10 +534,22 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
         </SheetContent>
       </Sheet>
 
-      {/* ── 읽기전용 상세 팝업 — 상세보기 링크(또는 그 셀 Enter)가 연다. 행 선택과 무관 ── */}
+      {/* ── 읽기전용 상세 팝업 — 상세보기 링크(또는 그 셀 Enter)가 연다. 행 선택·더블클릭과 무관 ── */}
       {modal?.kind === 'detail' && target && (
         <CustodyConfirmDetailModal row={target} baseDate={fBaseDate} onClose={() => setModal(null)} />
       )}
+
+      {/* ── 운용사/자펀드 명세 — 샘플(행에 원천이 없다 — 수시보고 화면과 같은 한계) ── */}
+      {modal?.kind === 'gpSpec' && <GpSpecModal onClose={() => setModal(null)} />}
+      {modal?.kind === 'fundSpec' && <SubFundSpecModal row={SPEC_SAMPLE_SUBFUND} onClose={() => setModal(null)} />}
+
+      {/* ── 대사 결과 단건 등록 / 수정 ── */}
+      {modal?.kind === 'entry' && (!modal.id || entryTarget) && (
+        <CustodyEntryModal row={entryTarget ?? undefined} onSave={saveEntry} onClose={() => setModal(null)} />
+      )}
+
+      {/* ── 불일치 건 알림 — 전체 행 기준(목업 DATA.filter) ── */}
+      {modal?.kind === 'mismatch' && <CustodyMismatchAlertModal rows={rows} onClose={() => setModal(null)} />}
 
     </GridFrame>
   );
