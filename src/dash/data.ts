@@ -195,23 +195,18 @@ const MENU = [
   ]},
 
   { id:"gp", label:"자펀드 보고", icon:"building", roles:["admin","manager","viewer"], children:[
-    { label:"보고조회", sub:true, children:[
-      { label:"자펀드 보고 조회" },
+    { label:"수시보고", sub:true, children:[
+      { label:"수시보고 제출현황", path:"자펀드 보고 조회" },
     ]},
-    { label:"조합정보", sub:true, children:[
-      { label:"조합 수시보고 내역" },
-    ]},
-    { label:"월간보고조회", sub:true, children:[
-      { label:"조합별 월간보고 현황" },
-    ]},
-    { label:"반기보고조회", sub:true, children:[
-      { label:"조합별 반기보고 현황" },
+    { label:"정기보고", sub:true, children:[
+      { label:"월간보고 제출현황", path:"조합별 월간보고 현황" },
+      { label:"반기보고 제출현황", path:"조합별 반기보고 현황" },
     ]},
     { label:"실물검증", sub:true, children:[
       { label:"조합별 실물검증 결과 보고" },
     ]},
     { label:"파일", sub:true, children:[
-      { label:"보고 파일 조회" },
+      { label:"보고 파일 조회" },{ label:"보고양식·가이드 조회" },
     ]},
   ]},
 

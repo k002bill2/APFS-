@@ -74,9 +74,8 @@ import { FundValuationResult, InvesteeValuationResult, SubfundAssetTx, Valuation
 import { RegistryLedgerManage } from './brief/register/registry_ledger';                    // 등록원부관리(S4_108 — 목록 + 팝업 6종)
 import { PhysicalDataManage, SecuritiesManage } from './trust/sfund/trust_physical_upload';   // 실물자료관리(업로드)(S3_98) · 유가증권관리(업로드)(신규)
 import { GpReportFile } from './sfund/file/gp_report_file';   // 자펀드 보고 > 보고 파일 조회(S5_116 — 조회 + 툴바 업로드 모달)
-import { GpVerifyReport } from './sfund/verify/gp_verify_report';
-import { GpReportQuery } from './sfund/gp_report_query';   // 자펀드 보고 > 자펀드 보고 조회(S5_121 — 보고항목 select → 항목별 그리드)
-import { GpOccasionalOverview } from './sfund/ocsrpt/gp_occasional_overview';   // 자펀드 보고 > 조합 수시보고 내역(S5_117 — 투자기업개요 kv 5섹션)   // 자펀드 보고 > 조합별 실물검증 결과 보고(S5_120 — 표 3장 TablesPage)
+import { GpVerifyReport } from './sfund/verify/gp_verify_report';   // 자펀드 보고 > 조합별 실물검증 결과 보고(S5_120 — 표 3장 TablesPage)
+import { GpReportQuery } from './sfund/gp_report_query';   // 자펀드 보고 > 수시보고 > 수시보고 제출현황(S5_121 — 보고항목 select → 항목별 그리드)
 import { PhysicalVerifyCompare, SecuritiesCompare, TrustCommonCode } from './trust/sfund/trust_sub_table_pages';   // S3_101 · 신규 · S3_100
 import { MotherTrustCode, AccountCompare, CashflowCompare } from './trust/mfund/trust_mother_table_pages';   // S3_102·104·106
 import { AssetFundInfoManage } from './ffms/asct/asset_fund_info_manage';           // 자펀드정보관리 = v1.4 자펀드관리 + S2_73 투자기준 통합 그리드(SubFundManage ext 합성)
@@ -114,6 +113,7 @@ const ROUTE_ALIAS: Record<string, string> = {
   "종합통계": "fund-stats",
   "자펀드수탁관리(실물검증)": "custody-verify",
   "자펀드수탁관리(확정)": "custody-confirm",
+  "조합 수시보고 내역": "자펀드 보고 조회",   // S5_117 화면 삭제(2026-10-14 사용자 결정) — 옛 해시·localStorage·방문기록은 수시보고 제출현황으로 승격
   // 관리자 3리프(2026-09-14 typed 페이지 전환, S0_106·S0_105·S0_102) — 리프에 path 부여 전 잔존 한글 route(구조표 라벨)와
   // 브리프가 지정한 짧은 한글 별칭(코드관리·메뉴관리·권한관리) 모두 승격
   "공통코드 관리": "code-manage", "코드관리": "code-manage",
@@ -307,7 +307,6 @@ function App() {
   else if (route === "실물검증비교조회") page = <PhysicalVerifyCompare onNav={onNav} />;
   else if (route === "보고 파일 조회") page = <GpReportFile onNav={onNav} />;
   else if (route === "자펀드 보고 조회") page = <GpReportQuery onNav={onNav} />;
-  else if (route === "조합 수시보고 내역") page = <GpOccasionalOverview onNav={onNav} />;
   else if (route === "조합별 실물검증 결과 보고") page = <GpVerifyReport onNav={onNav} />;
   else if (route === "유가증권관리(업로드)") page = <SecuritiesManage onNav={onNav} />;
   else if (route === "유가증권비교조회") page = <SecuritiesCompare onNav={onNav} />;

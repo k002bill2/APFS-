@@ -24,7 +24,7 @@ import { schema as s평가시점데이터확인 } from '../risk/valuation/평가
 // 2026-09-24 사후보고관리 신규(현행 없음) 2리프 — 원천 목업 없음, provenance NEW · 행 0건
 import { schema as s내부투자심의구성관리 } from '../ffms/report/내부_투자심의_구성관리';
 import { schema as s체크리스트관리 } from '../ffms/report/체크리스트_관리';
-// 2026-09-29 자펀드 보고 개편 — S5_119(조합별 반기보고 현황). S5_117(조합 수시보고 내역)은 kv 시트라 typed 페이지(gp_occasional_overview)
+// 2026-09-29 자펀드 보고 개편 — S5_119(조합별 반기보고 현황). S5_117(조합 수시보고 내역)은 2026-10-14 메뉴·화면 삭제
 import { schema as s조합별반기보고현황 } from '../sfund/fxtmrpt/조합별_반기보고_현황';
 
 const ALL: PageSchema[] = [
