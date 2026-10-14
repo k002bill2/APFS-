@@ -169,7 +169,8 @@ APFS/
 
 ### superpowers plan/spec 문서 관례 (`docs/superpowers/`)
 - `specs/` = 설계 스펙(*왜/무엇을*), `plans/` = 구현 계획(*어떻게*, 체크박스 Task). superpowers `writing-plans`/`executing-plans` 산출물.
-- **완료(구현·머지)된 plan은 `completed/`로 이동**(`git mv`로 rename 보존). `plans/`엔 **진행 중 계획만** 둔다 → `plans/`에 파일이 있으면 "미완료" 신호. `specs/`는 설계 근거라 이동하지 않고 유지.
+- **완료(구현·머지)된 plan은 `docs/archive/superpowers/completed/`로 이동**(`git mv`로 rename 보존). `plans/`엔 **진행 중 계획만** 둔다 → `plans/`에 파일이 있으면 "미완료" 신호. spec은 짝 plan이 완료될 때 함께 `docs/archive/superpowers/specs/`로 옮긴다(설계 근거라 삭제하지 않음).
+- 2026-10-14: 기존 완료 plan 4·spec 2를 `docs/archive/superpowers/`로 이관 — 지금 `docs/superpowers/`는 비어 있고 새 산출물이 생길 때 다시 만든다.
 
 ## 참조 문서
 | 문서 | 위치 |
