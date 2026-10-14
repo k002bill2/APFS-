@@ -1,5 +1,6 @@
 /* 한국어 더미 데이터 — 백엔드 없이 화면 완결. PRD 근거 위젯만. */
 import React from 'react';
+import { aliasRoutes } from './route_alias';
 const spark = (arr) => arr;
 
 const KPI = [
@@ -76,7 +77,7 @@ const SHORTCUTS = [
   { id:"risk", title:"조기경보 리스크", desc:"운용사 상태·리스크 추이·위반 처리", metric:"경고 14건", tone:"danger", icon:"shield-alert", to:"risk" },
   { id:"gp",   title:"운용사 건전성", desc:"건전성·체크리스트·보수정산", metric:"운용사 38사", tone:"primary", icon:"building", to:"gp-health" },
   { id:"acct", title:"회계·자금 마감", desc:"일자별 마감·자금수지·전표 승인", metric:"미결 23건", tone:"warning", icon:"wallet", to:"accounting" },
-  { id:"perf", title:"투자 성과·포트폴리오", desc:"IRR·산업/지역 비중·컴플라이언스", metric:"평균 +12.6%", tone:"success", icon:"trending", to:"투자 성과·포트폴리오" },
+  { id:"perf", title:"투자 성과·포트폴리오", desc:"IRR·산업/지역 비중·컴플라이언스", metric:"평균 +12.6%", tone:"success", icon:"trending", to:"portfolio-performance" },
   { id:"sched",title:"오늘 일정·알림", desc:"마감 임박·보고·실사 일정", metric:"임박 6건", tone:"info", icon:"calendar", to:"schedule" },
 ];
 
@@ -105,26 +106,27 @@ const NOTIFS = [
    정본과의 차이는 docs/메뉴대조표_xlsx_vs_APFS_DATA.md 참조 —
    재생성: python3 scripts/menu-doc/gen_diff.py docs/메뉴대조표_xlsx_vs_APFS_DATA.md
    ⚠️ nav 키 규약: leaf.path || leaf.label (data.ts ALLMENU·shell flattenMenu·generic_list findMenuContext 공통).
-   라벨이 구조표와 달라진 리프는 label만 구조표에 맞추고 기존 nav 키를 path:로 고정한다
-   — 스키마 route(schemas/*.ts)와 app.tsx 분기 문자열은 손대지 않는다. */
+   모든 리프는 영문 kebab-case path 를 갖는다(2026-10-14 한글 route 전면 폐지) — label 은 화면 표시용 한글.
+   라벨을 바꿀 땐 path 를 그대로 두고, path 를 바꿀 땐 옛 값을 route_alias.ts 에 남긴다
+   (해시·apfs.route·방문기록·즐겨찾기 호환). */
 const MENU = [
   { id:"home", label:"대시보드", icon:"home", path:"main", roles:["admin","manager","viewer"] },
 
   { id:"asset", label:"투자자산관리", icon:"landmark", roles:["admin","manager","viewer"], children:[
     { label:"모태펀드 관리", sub:true, children:[
-      { label:"자펀드 공고 정보관리" },
+      { label:"자펀드 공고 정보관리", path:"subfund-notice-manage" },
       { label:"모태펀드 조성 및 출자현황", path:"asset-funding" },
     ]},
     { label:"조합관리", sub:true, children:[
-      { label:"자펀드정보관리" },
+      { label:"자펀드정보관리", path:"asset-fund-info-manage" },
       { label:"조합원정보조회", path:"member-info" },
       { label:"자펀드별조합원조회", path:"fund-member" },
     ]},
     { label:"사후보고관리", sub:true, children:[
       { label:"투심보고 확정 및 승인", path:"investment-review" },
-      { label:"투심보고 통계" },
-      { label:"내부 투자심의 구성관리" },
-      { label:"체크리스트 관리" },
+      { label:"투심보고 통계", path:"review-stats" },
+      { label:"내부 투자심의 구성관리", path:"review-committee-manage" },
+      { label:"체크리스트 관리", path:"checklist-manage" },
       { label:"수시보고 확인", path:"occasional-report" },
       { label:"정기보고", path:"regular-report" },
       { label:"조합원총회", path:"general-meeting" },
@@ -139,108 +141,108 @@ const MENU = [
       { label:"종합통계(확정)", path:"fund-stats" },
     ]},
     { label:"투자기업정보", sub:true, children:[
-      { label:"투자기업정보(통합)" },
-      { label:"투자기업명세서(통합)" },
-      { label:"투자기업고용현황(통합)", path:"투자기업 고용현황보고" },
-      { label:"전체 투자실적" },
-      { label:"투자실적현황(투자기업)", path:"투자실적 현황(투자기업)" },
-      { label:"투자금 회수현황" },
-      { label:"우수투자기업 관리" },
+      { label:"투자기업정보(통합)", path:"investee-profile" },
+      { label:"투자기업명세서(통합)", path:"investee-spec" },
+      { label:"투자기업고용현황(통합)", path:"investee-employment" },
+      { label:"전체 투자실적", path:"invest-performance-all" },
+      { label:"투자실적현황(투자기업)", path:"investee-invest-stats" },
+      { label:"투자금 회수현황", path:"invest-recovery-detail" },
+      { label:"우수투자기업 관리", path:"top-investee-manage" },
     ]},
     { label:"운용사 모니터링", sub:true, children:[
-      { label:"운용사 명세서" },
-      { label:"운용사 재무정보 조회" },
-      { label:"투자금 실사보고 조회", path:"투자금 실사보고" },
-      { label:"사후관리기록 관리" },
-      { label:"관리보수/성과보수 조회", path:"관리보수관리" },
-      { label:"자펀드 전체 보고현황", path:"전체 보고현황" },
+      { label:"운용사 명세서", path:"gp-spec" },
+      { label:"운용사 재무정보 조회", path:"gp-financial" },
+      { label:"투자금 실사보고 조회", path:"invest-due-diligence" },
+      { label:"사후관리기록 관리", path:"post-mgmt-record" },
+      { label:"관리보수/성과보수 조회", path:"mgmt-fee" },
+      { label:"자펀드 전체 보고현황", path:"all-report-status" },
     ]},
   ]},
 
   { id:"risk", label:"조기경보", icon:"shield-alert", badge:14, urgent:true, roles:["admin","manager","viewer"], children:[
     { label:"조기경보", sub:true, badge:9, children:[
       { label:"조기경보 관리", path:"risk-manage" },
-      { label:"운용사별 조기경보 조회" },
-      { label:"자펀드별 조기경보 조회" },
-      { label:"법률/규약위반사항 관리" },
-      { label:"운용사 주주변동관리" },
-      { label:"운용사 소송관리" },
-      { label:"운용인력 변동관리" },
-      { label:"조기경보 결과정보 관리", badge:9 },
-      { label:"조기경보 전월 비교 조회" },
+      { label:"운용사별 조기경보 조회", path:"gp-early-warning" },
+      { label:"자펀드별 조기경보 조회", path:"fund-early-warning" },
+      { label:"법률/규약위반사항 관리", path:"violation-manage" },
+      { label:"운용사 주주변동관리", path:"shareholder-manage" },
+      { label:"운용사 소송관리", path:"litigation-manage" },
+      { label:"운용인력 변동관리", path:"workforce-manage" },
+      { label:"조기경보 결과정보 관리", path:"ew-result-manage", badge:9 },
+      { label:"조기경보 전월 비교 조회", path:"ew-month-compare" },
     ]},
     { label:"기업정보", sub:true, children:[
-      { label:"투자기업정보(NICE평가정보)" },
-      { label:"투자기업신용정보 조회" },
+      { label:"투자기업정보(NICE평가정보)", path:"corp-info-nice" },
+      { label:"투자기업신용정보 조회", path:"corp-credit-info" },
     ]},
     { label:"자펀드정보", sub:true, children:[
-      { label:"운용사 정량지표 관리" },
-      { label:"운용사 유형별 정량지표 변동 조회" },
-      { label:"운용사 재무정보 비교 조회" },
-      { label:"자펀드 수익률정보 비교 조회" },
-      { label:"자펀드 종합등급 변동 조회" },
+      { label:"운용사 정량지표 관리", path:"gp-quant-indicator-manage" },
+      { label:"운용사 유형별 정량지표 변동 조회", path:"gp-type-indicator-trend" },
+      { label:"운용사 재무정보 비교 조회", path:"gp-financial-compare" },
+      { label:"자펀드 수익률정보 비교 조회", path:"subfund-return-compare" },
+      { label:"자펀드 종합등급 변동 조회", path:"subfund-grade-trend" },
     ]},
     { label:"가치평가", sub:true, children:[
-      { label:"모태펀드 가치평가 결과조회" },
-      { label:"투자조합 가치평가 결과조회" },
-      { label:"피투자회사 가치평가 결과조회" },
-      { label:"자펀드 투자자산 및 거래내역 조회" },
-      { label:"예외사항레포트", path:"예외사항리포트" },
-      { label:"평가시점 데이터 확인" },
+      { label:"모태펀드 가치평가 결과조회", path:"mother-fund-valuation" },
+      { label:"투자조합 가치평가 결과조회", path:"fund-valuation" },
+      { label:"피투자회사 가치평가 결과조회", path:"investee-valuation" },
+      { label:"자펀드 투자자산 및 거래내역 조회", path:"subfund-asset-txn" },
+      { label:"예외사항레포트", path:"exception-report" },
+      { label:"평가시점 데이터 확인", path:"valuation-data-check" },
       { label:"Portfolio Report" },
-      { label:"투자기업별(계약별) IRR" },
-      { label:"투자기업별 IRR" },
-      { label:"자펀드별 IRR" },
+      { label:"투자기업별(계약별) IRR", path:"irr-by-contract" },
+      { label:"투자기업별 IRR", path:"irr-by-investee" },
+      { label:"자펀드별 IRR", path:"irr-by-fund" },
     ]},
   ]},
 
   { id:"gp", label:"자펀드 보고", icon:"building", roles:["admin","manager","viewer"], children:[
     { label:"수시보고", sub:true, children:[
-      { label:"수시보고 제출현황", path:"자펀드 보고 조회" },
+      { label:"수시보고 제출현황", path:"gp-report-query" },
     ]},
     { label:"정기보고", sub:true, children:[
-      { label:"월간보고 제출현황", path:"조합별 월간보고 현황" },
-      { label:"반기보고 제출현황", path:"조합별 반기보고 현황" },
+      { label:"월간보고 제출현황", path:"gp-monthly-report-status" },
+      { label:"반기보고 제출현황", path:"gp-halfyear-report-status" },
     ]},
     { label:"실물검증", sub:true, children:[
-      { label:"조합별 실물검증 결과 보고" },
+      { label:"조합별 실물검증 결과 보고", path:"gp-verify-report" },
     ]},
     { label:"파일", sub:true, children:[
-      { label:"보고 파일 조회" },{ label:"보고양식·가이드 조회" },
+      { label:"보고 파일 조회", path:"gp-report-file" },{ label:"보고양식·가이드 조회", path:"report-guide" },
     ]},
   ]},
 
   { id:"acct", label:"회계", icon:"wallet", roles:["admin","manager"], children:[
     { label:"기초관리", sub:true, children:[
-      { label:"계정과목 관리" },{ label:"결산양식 관리" },
+      { label:"계정과목 관리", path:"acct-account-code" },{ label:"결산양식 관리", path:"acct-closing-form" },
     ]},
     { label:"전표관리", sub:true, children:[
-      { label:"일반전표 관리" },
-      { label:"삭제전표 관리" },
-      { label:"미결계정 관리" },
-      { label:"전표증빙 미첨부 관리" },
-      { label:"일마감" },{ label:"전표검색" },
+      { label:"일반전표 관리", path:"acct-journal" },
+      { label:"삭제전표 관리", path:"acct-deleted-journal" },
+      { label:"미결계정 관리", path:"acct-suspense" },
+      { label:"전표증빙 미첨부 관리", path:"acct-missing-evidence" },
+      { label:"일마감", path:"acct-daily-close" },{ label:"전표검색", path:"acct-journal-search" },
     ]},
     { label:"장부조회", sub:true, children:[
-      { label:"일/월계표" },{ label:"계정별보조부" },
-      { label:"총계정원장" },{ label:"재무상태표" },
-      { label:"손익계산서" },{ label:"합계잔액시산표" },
+      { label:"일/월계표", path:"acct-daily-monthly" },{ label:"계정별보조부", path:"acct-subledger" },
+      { label:"총계정원장", path:"acct-general-ledger" },{ label:"재무상태표", path:"acct-balance-sheet" },
+      { label:"손익계산서", path:"acct-income-statement" },{ label:"합계잔액시산표", path:"acct-trial-balance" },
     ]},
     { label:"결산관리", sub:true, children:[
-      { label:"결산전표 관리" },{ label:"회기생성/전기이월" },
+      { label:"결산전표 관리", path:"acct-closing-journal" },{ label:"회기생성/전기이월", path:"acct-fiscal-rollover" },
     ]},
     { label:"고정자산", sub:true, children:[
-      { label:"유무형자산관리" },{ label:"감가상각비처리" },
+      { label:"유무형자산관리", path:"acct-fixed-asset" },{ label:"감가상각비처리", path:"acct-depreciation" },
     ]},
     { label:"자금관리", sub:true, children:[
-      { label:"계좌관리" },{ label:"계좌잔액" },
-      { label:"자금일보" },{ label:"출자금현황 정보관리" },
+      { label:"계좌관리", path:"acct-bank-account" },{ label:"계좌잔액", path:"acct-account-balance" },
+      { label:"자금일보", path:"acct-daily-cash" },{ label:"출자금현황 정보관리", path:"acct-contribution-status" },
     ]},
     { label:"농식품경영체", sub:true, children:[
-      { label:"경영체 정보 조회" },{ label:"IR정보 조회" },
+      { label:"경영체 정보 조회", path:"acct-agrifood-entity" },{ label:"IR정보 조회", path:"acct-ir-info" },
     ]},
     { label:"설정", sub:true, children:[
-      { label:"휴일관리" },{ label:"회계거래처관리" },
+      { label:"휴일관리", path:"acct-holiday" },{ label:"회계거래처관리", path:"acct-partner" },
     ]},
   ]},
 
@@ -249,25 +251,25 @@ const MENU = [
       { label:"연도별투자현황", path:"report-bucheo" },
     ]},
     { label:"등록원부", sub:true, children:[
-      { label:"등록원부관리" },
+      { label:"등록원부관리", path:"registry-ledger" },
     ]},
   ]},
 
   { id:"trustee", label:"수탁보고", icon:"file-check", roles:["admin","manager"], children:[
     { label:"자펀드 수탁", sub:true, children:[
-      { label:"실물자료관리(업로드)" },
-      { label:"실물검증비교조회" },
-      { label:"유가증권관리(업로드)" },
-      { label:"유가증권비교조회" },
-      { label:"공통코드조회" },
-      { label:"자펀드코드 조회" },
+      { label:"실물자료관리(업로드)", path:"trust-physical-upload" },
+      { label:"실물검증비교조회", path:"trust-physical-compare" },
+      { label:"유가증권관리(업로드)", path:"trust-securities-upload" },
+      { label:"유가증권비교조회", path:"trust-securities-compare" },
+      { label:"공통코드조회", path:"trust-common-code" },
+      { label:"자펀드코드 조회", path:"trust-fund-code" },
     ]},
     { label:"모태펀드 수탁", sub:true, children:[
-      { label:"모태수탁 공통코드" },
-      { label:"계좌정보 관리" },
-      { label:"계좌정보 비교조회" },
-      { label:"입출금 정보관리" },
-      { label:"입출금정보 비교조회" },
+      { label:"모태수탁 공통코드", path:"trust-mother-common-code" },
+      { label:"계좌정보 관리", path:"trust-account-info" },
+      { label:"계좌정보 비교조회", path:"trust-account-compare" },
+      { label:"입출금 정보관리", path:"trust-cashflow-info" },
+      { label:"입출금정보 비교조회", path:"trust-cashflow-compare" },
     ]},
   ]},
 
@@ -308,7 +310,7 @@ const PORTFOLIO = [
 
 // 퀵메뉴 — 메인 상단 정적 카드 섹션 (자주 쓰는 업무 바로가기 6종, 기능 설명 포함)
 const QUICKMENU = [
-  { label: "투자등록", desc: "신규 출자·투자 건 등록 및 심의 요청", icon: "plus", to: "투자 성과·포트폴리오", tone: "primary" },
+  { label: "투자등록", desc: "신규 출자·투자 건 등록 및 심의 요청", icon: "plus", to: "portfolio-performance", tone: "primary" },
   { label: "보고서 제출", desc: "운용사 정기·수시 보고서 작성·제출", icon: "file", to: "gp-health", tone: "info" },
   { label: "조기경보 확인", desc: "리스크 경보 모니터링 및 위반 처리", icon: "shield-alert", to: "risk", tone: "danger", urgent: true, badge: 14 },
   { label: "운용사 평가", desc: "건전성·체크리스트 기반 정기 평가", icon: "activity", to: "risk", tone: "warning" },
@@ -318,7 +320,7 @@ const QUICKMENU = [
 
 // 즐겨찾기 — LNB 상단 고정 (사용자가 핀한 업무 딥링크)
 const FAVORITES = [
-  { label: "투자등록 신청", icon: "plus", to: "투자 성과·포트폴리오" },
+  { label: "투자등록 신청", icon: "plus", to: "portfolio-performance" },
   { label: "조합 등록/변경 신청", icon: "file", to: "gp-health" },
   { label: "전문인력 확인서 출력", icon: "download", to: "accounting" },
 ];
@@ -409,13 +411,14 @@ MENU.forEach((top: any) => {
     }
   });
 });
-const DEFAULT_FAV = ["asset-funding", "risk-manage", "자펀드 공고 정보관리"];
+const DEFAULT_FAV = ["asset-funding", "risk-manage", "subfund-notice-manage"];
 
 export const MenuStore = {
   // v3: 즐겨찾기 key가 positional(c0-0-0)→라우트 문자열로 변경 — 구 저장분과 호환 안 되므로 버전 승격
   _key: (kind: string) => "apfs.menu.v3." + kind,
   get(kind: string) {
-    try { const v = JSON.parse(localStorage.getItem(this._key(kind)) || "null"); if (Array.isArray(v)) return v; } catch (e) {}
+    // 저장 키는 옛 한글 route 일 수 있다 — 읽을 때 현재 route 로 승격(route_alias.ts)
+    try { const v = JSON.parse(localStorage.getItem(this._key(kind)) || "null"); if (Array.isArray(v)) return aliasRoutes(v); } catch (e) {}
     return null;
   },
   keysOr(kind: string, def: string[]) { return this.get(kind) || def; },
@@ -432,7 +435,7 @@ const HISTORY_KEY = "apfs.history.v1";
 const HISTORY_MAX = 30;
 export const HistoryStore = {
   get(): string[] {
-    try { const v = JSON.parse(localStorage.getItem(HISTORY_KEY) || "null"); if (Array.isArray(v)) return v.filter((x) => typeof x === "string"); } catch (e) {}
+    try { const v = JSON.parse(localStorage.getItem(HISTORY_KEY) || "null"); if (Array.isArray(v)) return aliasRoutes(v.filter((x) => typeof x === "string")); } catch (e) {}   // 옛 한글 route 승격
     return [];
   },
   push(route: string) {

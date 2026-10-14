@@ -1,4 +1,4 @@
-/* 반기보고 제출현황 — 자펀드 보고 > 정기보고 > 반기보고 제출현황 (route 키는 옛 라벨 '조합별 반기보고 현황' 보존 — MENU leaf.path).
+/* 반기보고 제출현황 — 자펀드 보고 > 정기보고 > 반기보고 제출현황 (route 키 = MENU leaf.path `gp-halfyear-report-status`).
    출처: docs/mockups/05_MOAF/S5_119_반기보고_조회.html (MOAF REPORT System, KRDS TO-BE, 2026-09-29 파싱 실측)
 
    ── 트랙 판단: 스키마 트랙(GenericListPage, 페이지 코드 0줄) ──
@@ -20,7 +20,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '조합별 반기보고 현황',
+  route: 'gp-halfyear-report-status',
   title: '반기보고 제출현황',
   kind: 'list',
   entity: '반기보고',

@@ -15,7 +15,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '운용사 명세서',   // ⚠️ data.ts 메뉴 리프 라벨과 정확히 일치(라우팅 키, NFC)
+  route: 'gp-spec',   // ⚠️ data.ts 메뉴 리프 path 와 정확히 일치(라우팅 키)
   title: '운용사 명세서',
   kind: 'list',
   entity: '운용사재무',

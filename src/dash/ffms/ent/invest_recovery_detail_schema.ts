@@ -23,7 +23,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '투자금 회수현황',
+  route: 'invest-recovery-detail',
   title: '투자금 회수현황',
   kind: 'list',
   entity: '투자회수내역',

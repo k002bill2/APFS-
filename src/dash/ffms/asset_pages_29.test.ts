@@ -60,9 +60,9 @@ describe('메뉴 IA — 조합관리·사후보고관리 리프 보존(추가·�
       '수시보고 확인', '정기보고', '조합원총회', '조합예상자금요청보고',
     ]);
   });
-  it('신규 4리프는 path 없이 라벨이 곧 route 이고 NFC 다', () => {
+  it('신규 4리프는 영문 path 가 route 다(라벨은 한글 그대로)', () => {
     for (const [g, l] of [...TYPED, ...NEW_SCHEMA]) {
-      expect(routeOf(g, l)).toBe(l);
+      expect(routeOf(g, l)).toMatch(/^[a-z0-9-]+$/);
       expect(routeOf(g, l)).toBe(routeOf(g, l).normalize('NFC'));
     }
   });
@@ -76,14 +76,14 @@ describe('라우트 결선 — DEFAULT_SCHEMA 폴백 금지', () => {
   });
   it.each(NEW_SCHEMA.map(([g, l]) => [l, g] as const))('%s 는 전용 스키마(NEW · 행 0건 · 등록/수정 폼)로 해석된다', (label, group) => {
     const s = resolveSchema(routeOf(group, label));
-    expect(s.route).toBe(label);
+    expect(s.route).toBe(routeOf(group, label));
     expect(s.title).toBe(label);
     expect(s.provenance.sourceSystem).toBe('NEW');
     expect(s.provenance.captureFile).toBe('');
     expect(s.sample, '빈 배열이어야 빈 표로 그려진다(미선언이면 합성 더미)').toEqual([]);
     expect(s.fields.length, '등록/수정 모달').toBeGreaterThan(0);
     expect(s.hideKpis).toBe(true);
-    expect(app, 'typed 분기와 다투지 않는다').not.toContain(`route === "${label}"`);
+    expect(app, 'typed 분기와 다투지 않는다').not.toContain(`route === "${routeOf(group, label)}"`);
   });
   it('구 투심승인정보조회 스키마(메뉴 미연결 route · 절대경로 출처)는 제거됐다', () => {
     expect(resolveSchema('투심승인정보조회').provenance.sourceSystem).toBe('DEFAULT');
@@ -93,8 +93,8 @@ describe('라우트 결선 — DEFAULT_SCHEMA 폴백 금지', () => {
 
 describe('출처(provenance) — 저장소 상대경로 · 파일 실재', () => {
   it.each([
-    ['자펀드정보관리', FUND_INFO_PROVENANCE.captureFiles, [S2('S2_73_자펀드_정보_관리.html'), S2('S2_74_자펀드_정보_등록.html'), S2('S2_75_자펀드_정보_수정.html')]],
-    ['투심보고 통계', REVIEW_STATS_PROVENANCE.captureFiles, [S1('S1_28_투심승인정보조회.html')]],
+    ['asset-fund-info-manage', FUND_INFO_PROVENANCE.captureFiles, [S2('S2_73_자펀드_정보_관리.html'), S2('S2_74_자펀드_정보_등록.html'), S2('S2_75_자펀드_정보_수정.html')]],
+    ['review-stats', REVIEW_STATS_PROVENANCE.captureFiles, [S1('S1_28_투심승인정보조회.html')]],
   ] as const)('%s', (_l, actual, expected) => {
     expect(actual).toEqual(expected);
     for (const f of actual) {
@@ -217,6 +217,6 @@ describe('투심보고 통계 — S1_28 투심승인정보조회', () => {
     /* opt-in — 선언하지 않은 금액 칸(공용 기본)은 라벨 그대로 */
     expect((buildColumnDefs({ ...REVIEW_STATS_TABLE, cols: [{ key: 'amt', label: '투자금액', kind: 'amount' }] }, [], '억원') as ColDef[])[0].headerName).toBe('투자금액');
     expect(amountText(2999774712, '백만원', REVIEW_STATS_TABLE.unitDigits)).toBe('2,999.8');
-    expect(REVIEW_STATS_PAGE).toMatchObject({ system: '투자자산관리', group: '사후보고관리', label: '투심보고 통계', route: '투심보고 통계' });
+    expect(REVIEW_STATS_PAGE).toMatchObject({ system: '투자자산관리', group: '사후보고관리', label: '투심보고 통계', route: 'review-stats' });
   });
 });

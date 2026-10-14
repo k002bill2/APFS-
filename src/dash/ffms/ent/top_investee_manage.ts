@@ -26,7 +26,7 @@ import type { PageSchema } from '../../schemas/types';
 import { GP_OPTIONS, SUBFUND_OPTIONS } from '../../schemas/filter_domains';
 
 export const schema: PageSchema = {
-  route: '우수투자기업 관리',   // ⚠️ data.ts 메뉴 리프 라벨과 정확히 일치(라우팅 키, NFC)
+  route: 'top-investee-manage',   // ⚠️ data.ts 메뉴 리프 path 와 정확히 일치(라우팅 키)
   title: '우수투자기업 관리',
   kind: 'list',
   entity: '우수투자기업',

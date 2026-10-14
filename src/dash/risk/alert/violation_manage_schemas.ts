@@ -49,7 +49,7 @@ const REP_COLUMNS: PageSchema['columns'] = [
 /* ① 위반사항 등록/수정 — 목업 `openReg(idx)` 의 modal-body row() 호출 순서 그대로(15항목).
    제목은 호출 시점에 따라 모달 title prop 으로 바꾼다(등록/수정). */
 export const VIOLATION_SCHEMA: PageSchema = parsePageSchema({
-  route: '법률/규약위반사항 관리/등록', title: '법률/규약위반사항 등록', kind: 'form', entity: '위반사항',
+  route: 'violation-manage/create', title: '법률/규약위반사항 등록', kind: 'form', entity: '위반사항',
   columns: REP_COLUMNS,
   fields: [
     { key: 'ym', label: '등록년월', control: 'month', required: true },
@@ -79,7 +79,7 @@ export const VIOLATION_SCHEMA: PageSchema = parsePageSchema({
 /* ② 위반사항 해제등록 — 목업 `openRelease()` 그대로(선택 건수 readonly · 해제일자* · 해제사유).
    선택 건수는 화면 상태에서 주입하는 읽기전용 값이다(입력 대상 아님). */
 export const RELEASE_SCHEMA: PageSchema = parsePageSchema({
-  route: '법률/규약위반사항 관리/해제등록', title: '위반사항 해제등록', kind: 'form', entity: '위반사항',
+  route: 'violation-manage/release', title: '위반사항 해제등록', kind: 'form', entity: '위반사항',
   columns: REP_COLUMNS,
   fields: [
     { key: 'count', label: '선택 건수', control: 'readonly' },

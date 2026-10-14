@@ -81,15 +81,15 @@ function IrrPage({ cfg, onNav }: { cfg: IrrConfig; onNav?: (r: string) => void }
 }
 
 const CONTRACT: IrrConfig = {
-  label: '투자기업별(계약별) IRR', route: '투자기업별(계약별) IRR', table: IRR_CONTRACT, basis: IRR_CONTRACT_BASIS,
+  label: '투자기업별(계약별) IRR', route: 'irr-by-contract', table: IRR_CONTRACT, basis: IRR_CONTRACT_BASIS,
   funds: IRR_CONTRACT_FUNDS, fundAll: false, defaultFund: IRR_CONTRACT_FUNDS[0],
 };
 const INVESTEE: IrrConfig = {
-  label: '투자기업별 IRR', route: '투자기업별 IRR', table: IRR_INVESTEE, basis: IRR_INVESTEE_BASIS,
+  label: '투자기업별 IRR', route: 'irr-by-investee', table: IRR_INVESTEE, basis: IRR_INVESTEE_BASIS,
   funds: IRR_INVESTEE_FUNDS, fundAll: true, defaultFund: IRR_INVESTEE_DEFAULT_FUND, companies: IRR_INVESTEE_COMPANIES,
 };
 const FUND: IrrConfig = {
-  label: '자펀드별 IRR', route: '자펀드별 IRR', table: IRR_FUND, basis: IRR_FUND_BASIS,
+  label: '자펀드별 IRR', route: 'irr-by-fund', table: IRR_FUND, basis: IRR_FUND_BASIS,
   funds: IRR_FUND_FUNDS, fundAll: false, defaultFund: IRR_FUND_FUNDS[0],
 };
 

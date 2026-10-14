@@ -40,7 +40,7 @@ export function GpQuantIndicatorManage({ onNav }: { onNav?: (r: string) => void 
   };
 
   return (
-    <RiskPage group="자펀드정보" label={LABEL} route={LABEL} onNav={onNav}
+    <RiskPage group="자펀드정보" label={LABEL} route="gp-quant-indicator-manage" onNav={onNav}
       filters={filters} onReset={() => setType('')}
       actions={<Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ mode: 'create' })}>운용사 정량지표 등록</Button>}
       footerLeft={<span>{`총 ${String(rows.length)}건 · 행을 더블클릭(또는 Enter)하면 그 운용사구분의 정량지표를 수정합니다`}</span>}

@@ -15,7 +15,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '운용사 재무정보 조회',
+  route: 'gp-financial',
   title: '운용사 재무정보 조회',
   kind: 'list',
   entity: '재무정보',

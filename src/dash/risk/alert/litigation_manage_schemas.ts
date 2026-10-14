@@ -38,7 +38,7 @@ const REP_COLUMNS: PageSchema['columns'] = [
    ⚠ 항목 5개는 RowFormModal 의 2단 wide 경계(`fields.length > 6`)에 **걸리지 않는다** →
      1단 좁은 모달(max-w-[460px])이 규격이다. long:true 는 그 안에서 컨트롤 폭 100% 만 켠다. */
 export const LITIGATION_SCHEMA: PageSchema = parsePageSchema({
-  route: '운용사 소송관리/등록', title: '소송 등록', kind: 'form', entity: '소송',
+  route: 'litigation-manage/create', title: '소송 등록', kind: 'form', entity: '소송',
   columns: REP_COLUMNS,
   fields: [
     /* 목업 `<input id="rm-ym" readonly>` + openM(월 그리드 픽커) = 월 선택.
@@ -57,7 +57,7 @@ export const LITIGATION_SCHEMA: PageSchema = parsePageSchema({
      항목을 늘리는 쪽이 창작이다.
    선택 대상은 화면 상태에서 주입하는 읽기전용 값이다(입력 대상 아님). */
 export const RELEASE_SCHEMA: PageSchema = parsePageSchema({
-  route: '운용사 소송관리/해제등록', title: '소송 해제등록', kind: 'form', entity: '소송',
+  route: 'litigation-manage/release', title: '소송 해제등록', kind: 'form', entity: '소송',
   columns: REP_COLUMNS,
   fields: [
     { key: 'target', label: '선택 대상', control: 'readonly' },

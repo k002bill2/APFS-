@@ -81,7 +81,7 @@ export function SubfundGradeTrend({ onNav }: { onNav?: (r: string) => void }) {
   };
 
   return (
-    <RiskPage group="자펀드정보" label={LABEL} route={LABEL} onNav={onNav}
+    <RiskPage group="자펀드정보" label={LABEL} route="subfund-grade-trend" onNav={onNav}
       filters={filters} onReset={reset}
       footerLeft={<span>{`기준년도 ${year ? String(year) : '-'} · ${GRADE_YEARS[0]}~${GRADE_YEARS[GRADE_YEARS.length - 1]}년 등급별 값`}</span>}
       onExport={exportExcel}>

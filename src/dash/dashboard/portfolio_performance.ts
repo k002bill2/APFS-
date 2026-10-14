@@ -1,12 +1,12 @@
 /* 투자 성과·포트폴리오 — 통계조회 > 투자 성과·포트폴리오.
    기존 바스포크 페이지(performance.tsx)를 스키마 주도 GenericListPage로 통일한 결과.
-   route는 한글 리프 라벨로 등록 — MENU(LNB)에는 없는 고아 페이지라 findMenuContext가
-   route 문자열 자체를 제목으로 fallback한다(영문 'performance'면 제목이 깨짐).
-   메인 대시보드 QUICKWIDGETS/QUICKMENU 숏컷의 to도 이 라벨로 맞춰 진입시킨다. */
+   route 는 영문 'portfolio-performance' — MENU(LNB)에는 없는 고아 페이지라 findMenuContext 가
+   메뉴에서 못 찾으면 이 스키마의 title(한글)을 제목으로 쓴다(generic_list.tsx).
+   메인 대시보드 QUICKWIDGETS/QUICKMENU 숏컷의 to 도 이 route 로 진입시킨다. */
 import type { PageSchema } from '../schemas/types';
 
 export const schema: PageSchema = {
-  route: '투자 성과·포트폴리오',
+  route: 'portfolio-performance',
   title: '투자 성과·포트폴리오',
   kind: 'list',
   entity: '투자자산',

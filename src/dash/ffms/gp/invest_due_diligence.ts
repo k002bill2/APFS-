@@ -28,7 +28,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '투자금 실사보고',
+  route: 'invest-due-diligence',
   title: '투자금 실사보고',
   kind: 'list',
   entity: '실사보고',

@@ -17,7 +17,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '체크리스트 관리',   // ⚠️ data.ts 메뉴 리프 라벨과 정확히 일치(라우팅 키, NFC)
+  route: 'checklist-manage',   // ⚠️ data.ts 메뉴 리프 path 와 정확히 일치(라우팅 키)
   title: '체크리스트 관리',
   kind: 'list',
   entity: '체크리스트 항목',

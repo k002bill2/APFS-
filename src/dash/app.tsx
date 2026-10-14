@@ -87,50 +87,11 @@ import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
 import { PageSkeleton } from './ui/skeleton';
 import { MotionConfig } from 'motion/react';
+import { aliasRoute } from './route_alias';
 const ReportBucheo = ReportBucheoPages.ReportBucheo;
 const EditorPage = EditorPages.EditorPage;
 
-// 삭제된 서브 대시보드 route → 대체 페이지(main) 별칭.
-// localStorage(apfs.route)·방문기록에 잔존한 옛 route로 진입하면 GenericListPage 폴백(영문 제네릭 표)으로
-// 떨어지므로, 여기서 안전 홈(main)으로 승격한다. 'performance'는 개명(한글 route)이라 별도 매핑.
-const ROUTE_ALIAS: Record<string, string> = {
-  performance: "투자 성과·포트폴리오",
-  "투자심의 관리": "investment-review",   // 리프에 path 부여 전 잔존한 한글 route(localStorage·방문기록) 승격
-  "수시보고": "occasional-report",        // 동상(2026-09-12 typed 페이지 전환)
-  // 사후보고관리 5리프(2026-09-12 typed 페이지 전환, S1_06~S1_10) — 리프에 path 부여 전 잔존 한글 route 승격
-  "정기보고": "regular-report",
-  "정기보고회수내역": "regular-report",   // 정기보고 리프의 옛 두 번째 탭 — 탭 삭제(2026-09-24 사용자 결정)로 정기보고로 승격
-  "조합원총회": "general-meeting",
-  "조합예상자금 정보보고": "fund-cash-forecast",
-  "보고양식관리": "report-form",
-  "보고 업데이트정보": "report-update-info",
-  // 자펀드 관리 8리프(2026-09-12 typed 페이지 전환, S1_14~S1_27) — 리프에 path 부여 전 잔존 한글 route 승격
-  "(운용사)출자배분관리": "gp-contribution",
-  "조합원정보등록": "member-info",
-  "자펀드별조합원관리": "fund-member",
-  "(농금원)출자배분관리": "apfs-contribution",
-  "투자실적 현황(자펀드)": "fund-invest-status",
-  "종합통계": "fund-stats",
-  "자펀드수탁관리(실물검증)": "custody-verify",
-  "자펀드수탁관리(확정)": "custody-confirm",
-  "조합 수시보고 내역": "자펀드 보고 조회",   // S5_117 화면 삭제(2026-10-14 사용자 결정) — 옛 해시·localStorage·방문기록은 수시보고 제출현황으로 승격
-  // 관리자 3리프(2026-09-14 typed 페이지 전환, S0_106·S0_105·S0_102) — 리프에 path 부여 전 잔존 한글 route(구조표 라벨)와
-  // 브리프가 지정한 짧은 한글 별칭(코드관리·메뉴관리·권한관리) 모두 승격
-  "공통코드 관리": "code-manage", "코드관리": "code-manage",
-  "메뉴 관리": "menu-manage", "메뉴관리": "menu-manage",
-  "사용자 권한 관리": "user-permission-manage", "권한관리": "user-permission-manage",
-  "프로그램 관리": "program-manage", "프로그램관리": "program-manage",
-  "사용자 관리": "user-manage", "사용자관리": "user-manage",
-  "사용자 초대(운용사)": "user-invite-gp",
-  "권한 변경이력": "permission-history",
-  "감사로그": "audit-log",
-  "로그인": "login",
-  "발급온보딩": "onboarding-issue", "발급 온보딩": "onboarding-issue",
-  "초대온보딩": "onboarding-invite", "초대 온보딩": "onboarding-invite",
-  asset: "main", risk: "main", "gp-health": "main",
-  accounting: "main", report: "main", "report-sutack": "main",
-};
-const aliasRoute = (r: string) => ROUTE_ALIAS[r] || r;
+// route 별칭(삭제·개명된 옛 route → 현재 route)은 route_alias.ts 가 SSOT.
 // 메뉴 항목은 해시 URL로도 직접 열 수 있다. 기존 localStorage 복원은 해시가 없을 때만 보조한다.
 const hashRoute = () => {
   try {
@@ -273,50 +234,50 @@ function App() {
   else if (route === "audit-log") page = <AuditLog onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "editor") page = <EditorPage onNav={onNav} />;
-  else if (route === "자펀드정보관리") page = <AssetFundInfoManage onNav={onNav} />;
-  else if (route === "투심보고 통계") page = <ReviewStats onNav={onNav} />;
-  else if (route === "전체 보고현황") page = <AllReportStatus onNav={onNav} />;
-  else if (route === "투자기업정보(통합)") page = <InvesteeProfile onNav={onNav} />;
-  else if (route === "투자실적 현황(투자기업)") page = <InvesteeInvestStats onNav={onNav} />;
-  else if (route === "투자금 회수현황") page = <InvestRecoveryDetail onNav={onNav} />;
-  else if (route === "법률/규약위반사항 관리") page = <ViolationManage onNav={onNav} />;
-  else if (route === "운용사 주주변동관리") page = <ShareholderManage onNav={onNav} />;
-  else if (route === "운용사 소송관리") page = <LitigationManage onNav={onNav} />;
-  else if (route === "운용인력 변동관리") page = <WorkforceManage onNav={onNav} />;
-  else if (route === "조기경보 결과정보 관리") page = <EwResultManage onNav={onNav} />;
-  else if (route === "운용사별 조기경보 조회") page = <GpEarlyWarning onNav={onNav} />;
-  else if (route === "자펀드별 조기경보 조회") page = <FundEarlyWarning onNav={onNav} />;
-  else if (route === "조기경보 전월 비교 조회") page = <EwMonthCompare onNav={onNav} />;
-  else if (route === "투자기업정보(NICE평가정보)") page = <CorpNiceInfo onNav={onNav} />;
-  else if (route === "투자기업신용정보 조회") page = <CorpCreditInfo onNav={onNav} />;
-  else if (route === "투자기업별(계약별) IRR") page = <IrrByContract onNav={onNav} />;
-  else if (route === "투자기업별 IRR") page = <IrrByInvestee onNav={onNav} />;
-  else if (route === "자펀드별 IRR") page = <IrrBySubfund onNav={onNav} />;
-  else if (route === "운용사 정량지표 관리") page = <GpQuantIndicatorManage onNav={onNav} />;
-  else if (route === "운용사 유형별 정량지표 변동 조회") page = <GpTypeIndicatorTrend onNav={onNav} />;
-  else if (route === "자펀드 수익률정보 비교 조회") page = <SubfundReturnCompare onNav={onNav} />;
-  else if (route === "자펀드 종합등급 변동 조회") page = <SubfundGradeTrend onNav={onNav} />;
-  else if (route === "모태펀드 가치평가 결과조회") page = <MotherFundValuation onNav={onNav} />;
-  else if (route === "투자조합 가치평가 결과조회") page = <FundValuationResult onNav={onNav} />;
-  else if (route === "피투자회사 가치평가 결과조회") page = <InvesteeValuationResult onNav={onNav} />;
-  else if (route === "자펀드 투자자산 및 거래내역 조회") page = <SubfundAssetTx onNav={onNav} />;
-  else if (route === "예외사항리포트") page = <ValuationExceptionReport onNav={onNav} />;
+  else if (route === "asset-fund-info-manage") page = <AssetFundInfoManage onNav={onNav} />;
+  else if (route === "review-stats") page = <ReviewStats onNav={onNav} />;
+  else if (route === "all-report-status") page = <AllReportStatus onNav={onNav} />;
+  else if (route === "investee-profile") page = <InvesteeProfile onNav={onNav} />;
+  else if (route === "investee-invest-stats") page = <InvesteeInvestStats onNav={onNav} />;
+  else if (route === "invest-recovery-detail") page = <InvestRecoveryDetail onNav={onNav} />;
+  else if (route === "violation-manage") page = <ViolationManage onNav={onNav} />;
+  else if (route === "shareholder-manage") page = <ShareholderManage onNav={onNav} />;
+  else if (route === "litigation-manage") page = <LitigationManage onNav={onNav} />;
+  else if (route === "workforce-manage") page = <WorkforceManage onNav={onNav} />;
+  else if (route === "ew-result-manage") page = <EwResultManage onNav={onNav} />;
+  else if (route === "gp-early-warning") page = <GpEarlyWarning onNav={onNav} />;
+  else if (route === "fund-early-warning") page = <FundEarlyWarning onNav={onNav} />;
+  else if (route === "ew-month-compare") page = <EwMonthCompare onNav={onNav} />;
+  else if (route === "corp-info-nice") page = <CorpNiceInfo onNav={onNav} />;
+  else if (route === "corp-credit-info") page = <CorpCreditInfo onNav={onNav} />;
+  else if (route === "irr-by-contract") page = <IrrByContract onNav={onNav} />;
+  else if (route === "irr-by-investee") page = <IrrByInvestee onNav={onNav} />;
+  else if (route === "irr-by-fund") page = <IrrBySubfund onNav={onNav} />;
+  else if (route === "gp-quant-indicator-manage") page = <GpQuantIndicatorManage onNav={onNav} />;
+  else if (route === "gp-type-indicator-trend") page = <GpTypeIndicatorTrend onNav={onNav} />;
+  else if (route === "subfund-return-compare") page = <SubfundReturnCompare onNav={onNav} />;
+  else if (route === "subfund-grade-trend") page = <SubfundGradeTrend onNav={onNav} />;
+  else if (route === "mother-fund-valuation") page = <MotherFundValuation onNav={onNav} />;
+  else if (route === "fund-valuation") page = <FundValuationResult onNav={onNav} />;
+  else if (route === "investee-valuation") page = <InvesteeValuationResult onNav={onNav} />;
+  else if (route === "subfund-asset-txn") page = <SubfundAssetTx onNav={onNav} />;
+  else if (route === "exception-report") page = <ValuationExceptionReport onNav={onNav} />;
   else if (route === "Portfolio Report") page = <PortfolioReport onNav={onNav} />;
-  else if (route === "등록원부관리") page = <RegistryLedgerManage onNav={onNav} />;
-  else if (route === "실물자료관리(업로드)") page = <PhysicalDataManage onNav={onNav} />;
-  else if (route === "실물검증비교조회") page = <PhysicalVerifyCompare onNav={onNav} />;
-  else if (route === "보고 파일 조회") page = <GpReportFile onNav={onNav} />;
-  else if (route === "자펀드 보고 조회") page = <GpReportQuery onNav={onNav} />;
-  else if (route === "조합별 실물검증 결과 보고") page = <GpVerifyReport onNav={onNav} />;
-  else if (route === "유가증권관리(업로드)") page = <SecuritiesManage onNav={onNav} />;
-  else if (route === "유가증권비교조회") page = <SecuritiesCompare onNav={onNav} />;
-  else if (route === "공통코드조회") page = <TrustCommonCode onNav={onNav} />;
-  else if (route === "자펀드코드 조회") page = <TrustFundCode onNav={onNav} />;
-  else if (route === "모태수탁 공통코드") page = <MotherTrustCode onNav={onNav} />;
-  else if (route === "계좌정보 관리") page = <AccountInfoManage onNav={onNav} />;
-  else if (route === "계좌정보 비교조회") page = <AccountCompare onNav={onNav} />;
-  else if (route === "입출금 정보관리") page = <CashflowInfoManage onNav={onNav} />;
-  else if (route === "입출금정보 비교조회") page = <CashflowCompare onNav={onNav} />;
+  else if (route === "registry-ledger") page = <RegistryLedgerManage onNav={onNav} />;
+  else if (route === "trust-physical-upload") page = <PhysicalDataManage onNav={onNav} />;
+  else if (route === "trust-physical-compare") page = <PhysicalVerifyCompare onNav={onNav} />;
+  else if (route === "gp-report-file") page = <GpReportFile onNav={onNav} />;
+  else if (route === "gp-report-query") page = <GpReportQuery onNav={onNav} />;
+  else if (route === "gp-verify-report") page = <GpVerifyReport onNav={onNav} />;
+  else if (route === "trust-securities-upload") page = <SecuritiesManage onNav={onNav} />;
+  else if (route === "trust-securities-compare") page = <SecuritiesCompare onNav={onNav} />;
+  else if (route === "trust-common-code") page = <TrustCommonCode onNav={onNav} />;
+  else if (route === "trust-fund-code") page = <TrustFundCode onNav={onNav} />;
+  else if (route === "trust-mother-common-code") page = <MotherTrustCode onNav={onNav} />;
+  else if (route === "trust-account-info") page = <AccountInfoManage onNav={onNav} />;
+  else if (route === "trust-account-compare") page = <AccountCompare onNav={onNav} />;
+  else if (route === "trust-cashflow-info") page = <CashflowInfoManage onNav={onNav} />;
+  else if (route === "trust-cashflow-compare") page = <CashflowCompare onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;

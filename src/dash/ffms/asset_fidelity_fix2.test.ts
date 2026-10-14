@@ -79,12 +79,12 @@ function fieldSpec(html: string, c: string): SchemaFilterSpec {
 }
 
 const SCREENS = [
-  ['S1_32_투자기업_고용현황보고.html', '투자기업 고용현황보고'],
-  ['S1_33_전체_투자실적.html', '전체 투자실적'],
-  ['S1_38_운용사_재무정보_조회.html', '운용사 재무정보 조회'],
-  ['S1_40_투자금실사보고.html', '투자금 실사보고'],
-  ['S1_42_사후관리기록.html', '사후관리기록 관리'],
-  ['S1_43_관리보수관리.html', '관리보수관리'],
+  ['S1_32_투자기업_고용현황보고.html', 'investee-employment'],
+  ['S1_33_전체_투자실적.html', 'invest-performance-all'],
+  ['S1_38_운용사_재무정보_조회.html', 'gp-financial'],
+  ['S1_40_투자금실사보고.html', 'invest-due-diligence'],
+  ['S1_42_사후관리기록.html', 'post-mgmt-record'],
+  ['S1_43_관리보수관리.html', 'mgmt-fee'],
 ] as const;
 
 /** 행 매칭 키는 원문 판단(스키마 머리 주석)이라 대조에서 뺀다 — 나머지(kind·options·def·allLabel)는 원문 그대로여야 한다 */
@@ -119,10 +119,10 @@ describe('A. 검색조건 = 원문 .searchbox (라벨 순서·옵션·기본값�
 
   it('원문에 없던 필터가 없다', () => {
     const gone: [string, string[]][] = [
-      ['운용사 재무정보 조회', ['GP구분', '운용사명']],
-      ['투자금 실사보고', ['투자기업', '투자유형', '확정여부']],
-      ['사후관리기록 관리', ['대분류', '유형', '전달형태']],
-      ['관리보수관리', ['지급일자']],
+      ['gp-financial', ['GP구분', '운용사명']],
+      ['invest-due-diligence', ['투자기업', '투자유형', '확정여부']],
+      ['post-mgmt-record', ['대분류', '유형', '전달형태']],
+      ['mgmt-fee', ['지급일자']],
     ];
     for (const [route, labels] of gone) for (const l of labels) expect(resolveSchema(route).filters, `${route} · ${l}`).not.toContain(l);
   });
@@ -143,7 +143,7 @@ describe('A. 검색조건 = 원문 .searchbox (라벨 순서·옵션·기본값�
   });
 
   it('원문 옵션이 행 값과 어긋나는 select 는 no-op 이다(스키마 머리 주석 판단의 근거)', () => {
-    const cases: [string, string, string][] = [['투자기업 고용현황보고', '자펀드', 'subFund'], ['투자금 실사보고', '운용사', 'gp']];
+    const cases: [string, string, string][] = [['investee-employment', '자펀드', 'subFund'], ['invest-due-diligence', '운용사', 'gp']];
     for (const [route, label, rowKey] of cases) {
       const sc = resolveSchema(route);
       const vals = new Set(rowsOf(sc).map((r) => String(r[rowKey])));
@@ -152,7 +152,7 @@ describe('A. 검색조건 = 원문 .searchbox (라벨 순서·옵션·기본값�
     }
     // S1_38 운용사: 원문 설계 메모가 "NH투자증권으로 조회했는데 2건이 함께 나옴"이라 적었다 → no-op
     expect(M1('S1_38_운용사_재무정보_조회.html')).toContain('운용사 필터가 실제로 결과를 좁히는지');
-    expect(resolveFilterField('운용사', resolveSchema('운용사 재무정보 조회')).columnKey).toBeUndefined();
+    expect(resolveFilterField('운용사', resolveSchema('gp-financial')).columnKey).toBeUndefined();
   });
 
   it('명세 라벨은 tag 로 떨어지지 않는다(표 0건 폴백 금지)', () => {
@@ -165,7 +165,7 @@ describe('A. 검색조건 = 원문 .searchbox (라벨 순서·옵션·기본값�
 
 describe('A. 범위 필터 동작(dayRange·monthRange)', () => {
   it('경계 포함 · 한쪽 열린 경계 · 날짜 아닌 셀은 범위 밖', () => {
-    const ff = resolveFilterField('지급기간', resolveSchema('관리보수관리'));
+    const ff = resolveFilterField('지급기간', resolveSchema('mgmt-fee'));
     expect(ff.kind).toBe('dayRange');
     expect(filterValueMatches(ff, '2026-07-03~2026-07-03', '2026-07-03')).toBe(true);
     expect(filterValueMatches(ff, '2026-07-04~2026-08-12', '2026-07-03')).toBe(false);
@@ -174,33 +174,33 @@ describe('A. 범위 필터 동작(dayRange·monthRange)', () => {
     expect(filterValueMatches(ff, '2026-07-04~', '2026-07-03')).toBe(false);
     expect(filterValueMatches(ff, '~2026-12-31', '-')).toBe(false);
     expect(filterValueMatches(ff, '~2026-12-31', '')).toBe(false);
-    const mf = resolveFilterField('기준년월', resolveSchema('투자기업 고용현황보고'));
+    const mf = resolveFilterField('기준년월', resolveSchema('investee-employment'));
     expect(mf.kind).toBe('monthRange');
     expect(filterValueMatches(mf, '2026-06~2026-06', '2026-06')).toBe(true);
     expect(filterValueMatches(mf, '2026-07~2026-12', '2026-06')).toBe(false);
   });
 
   it('화면에서 범위를 좁히면 원문 행이 실제로 줄어든다', () => {
-    const fee = resolveSchema('관리보수관리');
+    const fee = resolveSchema('mgmt-fee');
     expect(count(fee, { 지급기간: '2026-08-01~2026-08-31' })).toBe(0);
     expect(count(fee, { 지급기간: '2026-07-01~2026-07-31' })).toBe(1);
-    const post = resolveSchema('사후관리기록 관리');
+    const post = resolveSchema('post-mgmt-record');
     expect(count(post, { 기간: '2014-01-01~2014-12-31' })).toBe(1);   // 2014-04-25 1건
-    const dd = resolveSchema('투자금 실사보고');
+    const dd = resolveSchema('invest-due-diligence');
     expect(count(dd, { 투자기간: '2026-01-01~2026-12-31' })).toBe(1);  // 최초 투자일자 2026-01-30(삼진푸드)
-    const emp = resolveSchema('투자기업 고용현황보고');
+    const emp = resolveSchema('investee-employment');
     expect(count(emp, { 기준년월: '2026-07~2026-12' })).toBe(0);
   });
 
   it('칩 문자열: 범위는 "a ~ b", 코드/명칭은 "코드 명칭"', () => {
-    const fee = resolveSchema('관리보수관리');
+    const fee = resolveSchema('mgmt-fee');
     expect(filterChipText(resolveFilterField('지급기간', fee), '2026-05-12~2026-08-12')).toBe('2026-05-12 ~ 2026-08-12');
-    const gp = resolveSchema('운용사 재무정보 조회');
+    const gp = resolveSchema('gp-financial');
     expect(filterChipText(resolveFilterField('운용사', gp), 'NHLIB~NH투자증권')).toBe('NHLIB NH투자증권');
   });
 
   it('codeName 은 명칭 부분일치로 거른다(S1_42 투자기업 — 원문 행은 투자기업이 비어 있다)', () => {
-    const post = resolveSchema('사후관리기록 관리');
+    const post = resolveSchema('post-mgmt-record');
     expect(count(post, { 투자기업: 'C001~' })).toBe(3);        // 코드만 = 조회 파라미터(행에 코드 없음)
     expect(count(post, { 투자기업: '~그린' })).toBe(0);
   });
@@ -222,7 +222,7 @@ describe('A. opt-in — 미선언 스키마는 종전 동작', () => {
   });
 
   it('zod 가 죽은 필터 명세를 파싱 시점에 거부한다', () => {
-    const base = resolveSchema('관리보수관리');
+    const base = resolveSchema('mgmt-fee');
     const bad = (filterSpecs: Record<string, SchemaFilterSpec>, filters = base.filters) =>
       () => parsePageSchema({ ...base, filters, filterSpecs });
     expect(bad({ 없는라벨: { kind: 'text' } })).toThrow(/label not in filters/);

@@ -72,7 +72,9 @@ export function findMenuContext(route: string): { title: string; crumbs: string[
       }
     }
   }
-  return { title: route, crumbs: ["홈", route] };
+  // 메뉴 밖 스키마 라우트(portfolio-performance 등)는 영문 route 대신 스키마의 한글 title을 제목으로 쓴다.
+  const title = resolveSchema(route).title || route;
+  return { title, crumbs: ["홈", title] };
 }
 
 /* 행 더미 데이터 생성 — index 기반 결정적 값 (브랜드 차트 팔레트 토큰 매핑) */
@@ -450,7 +452,12 @@ function InlineSelectCell({ value, options, label, onChange }: {
 
 export function GenericListPage({ route, onNav }: { route: string; onNav: (r: string) => void }) {
   const { title, crumbs } = findMenuContext(route);
-  const schema = resolveSchema(route);
+  /* 화면 없는 리프(회계 등)는 DEFAULT_SCHEMA 로 떨어지는데, 그 entity/title 은 route(영문 path)다.
+     표시 문구('… 등록')가 영문 route 로 새지 않게 메뉴 라벨로 덮는다. useMemo — 폴백은 호출마다 새 객체라 참조 고정. */
+  const schema = useMemo(() => {
+    const s = resolveSchema(route);
+    return s.provenance.sourceSystem === 'DEFAULT' ? { ...s, title, entity: title } : s;
+  }, [route, title]);
   /* editable = 등록 가능 스키마(fields 보유). 툴바 규약의 분기 하나를 이것이 결정한다(2026-09-11 사용자 결정):
      등록이 있으면 combo(split) 버튼 하나로 합치고, 등록이 없으면 종전처럼 kebab(⋯) 단독. */
   const editable = schema.fields.length > 0;

@@ -2,7 +2,7 @@
    출처: docs/mockups/01_투자자산관리/S1_30_투자기업정보.html (2026-09-15 파싱 실측)
 
    왜 별도 모듈인가: 같은 원문을 **두 곳**이 쓴다 —
-   ① 페이지 `investee_profile.tsx`(route `투자기업정보(통합)`, 메뉴 리프 진입)
+   ① 페이지 `investee_profile.tsx`(route `investee-profile`, 메뉴 리프 진입)
    ② 팝업 `company_profile_modal.tsx`(다른 목록에서 행 상세로 열 때)
    데이터·표 마크업을 양쪽에 복사하면 한쪽만 고쳐져 원문과 갈라진다.
 
