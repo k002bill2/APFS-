@@ -262,7 +262,7 @@ function App() {
   else if (route === "investee-valuation") page = <InvesteeValuationResult onNav={onNav} />;
   else if (route === "subfund-asset-txn") page = <SubfundAssetTx onNav={onNav} />;
   else if (route === "exception-report") page = <ValuationExceptionReport onNav={onNav} />;
-  else if (route === "Portfolio Report") page = <PortfolioReport onNav={onNav} />;
+  else if (route === "portfolio-report") page = <PortfolioReport onNav={onNav} />;
   else if (route === "registry-ledger") page = <RegistryLedgerManage onNav={onNav} />;
   else if (route === "trust-physical-upload") page = <PhysicalDataManage onNav={onNav} />;
   else if (route === "trust-physical-compare") page = <PhysicalVerifyCompare onNav={onNav} />;
