@@ -1,6 +1,6 @@
 # APFS Claude Code 통합 시스템 — 설치 주의사항 / 조정 사항
 
-> 생성: 2026-06-16 · 근거: `Claude code system setup/` 가이드 (setup_prompt + Protocol v3.2.0)
+> 생성: 2026-06-16 · 근거: `Claude code system setup/` 가이드 (setup_prompt + Protocol v3.2.0) — 해당 디렉터리는 이후 삭제됨(커밋 7892ba4)
 > 가이드 STEP 5의 "**주의사항** 섹션을 반드시 확인하세요"에 해당하는 감사 기록입니다.
 
 이 설치는 오래된 `claude_code_setup_prompt.md`를 그대로 따르지 않고, **최신 프로토콜 v3.2.0(§A4)과 현행 Claude Code 동작**에 맞춰 아래 항목을 의도적으로 조정했습니다. 모두 정상이며 결함이 아닙니다.
@@ -11,8 +11,8 @@
 |---|------|------------|-----------|------|
 | 1 | 에이전트 frontmatter | `model, effort, maxTurns, disallowedTools` | `name, description, model, tools` 만 | 프로토콜 §A4: `effort/maxTurns/disallowedTools`는 환경별 지원 차이 → `tools` 화이트리스트가 안전. 권한 제한은 settings.json `permissions.deny`로 전역 강제. |
 | 2 | settings.json `maxTokens: 16000` | 포함 | **제외** | 현행 settings.json의 인식 키가 아님(무시/경고 위험). 토큰 한도는 요청 단위 설정. |
-| 3 | hooks 이벤트 스캐폴드 | 13개 이벤트 빈 배열 포함 | **UserPromptSubmit, PreCompact 만 등록** | 그 외(`PostToolUseFailure/SubagentStart/PermissionRequest/Setup` 등)는 현행 스키마 유효 이벤트가 아닐 수 있어 등록 시 검증 실패 위험. 실제 사용하는 hook만 등록. |
-| 4 | model 표기 | 문서엔 `sonnet-4.6` 단축형 혼재 | 전체 ID `claude-opus-4-8` / `claude-sonnet-4-6` | setup_prompt #5 지시 + 현 환경에서 확인된 실제 ID. |
+| 3 | hooks 이벤트 스캐폴드 | 13개 이벤트 빈 배열 포함 | **UserPromptSubmit, PreCompact 만 등록** (이후 PreToolUse `block-main-write.sh` 추가 — 현행 settings.json 은 3개) | 그 외(`PostToolUseFailure/SubagentStart/PermissionRequest/Setup` 등)는 현행 스키마 유효 이벤트가 아닐 수 있어 등록 시 검증 실패 위험. 실제 사용하는 hook만 등록. |
+| 4 | model 표기 | 문서엔 `sonnet-4.6` 단축형 혼재 | 전체 ID `claude-opus-4-8` / `claude-sonnet-4-6` (현행 에이전트 frontmatter 는 별칭 `opus` / `sonnet`) | setup_prompt #5 지시 + 현 환경에서 확인된 실제 ID. |
 | 5 | 프로토콜 사본 파일명 | `Parallel_Agents_Safety_Protocol_v3_1_0.md` | 동일(`v3_1_0`) — **내용은 v3.2.0** | 가이드가 이 파일명을 명시했고 CLAUDE.md 참조도 이 이름이라 일치 유지. 파일명-내용 버전 표기 불일치는 cosmetic(참조는 정상 동작). |
 
 ## B. Hook 동작 계약 (claude-code-guide로 확인)

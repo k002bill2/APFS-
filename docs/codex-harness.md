@@ -37,7 +37,7 @@ The current repo is a frontend prototype with no backend/API. Most useful automa
 | 16. Takeaway | Move repeated standards, procedures, and verification into executable structure. | Future APFS work should begin from repo-local harness assets instead of prompt recollection. |
 | 17. Practice app | The sample app emphasizes fast, shareable output over feature sprawl. | APFS is not Commit Hero, but the lesson is to constrain scope and ship verifiable increments. |
 | 18. Service build flow | Interview, plan, setup rules, build, add AI, verify/deploy. | For APFS, the useful part is plan before implementation and build verification at the end. |
-| 19. HTML plan review | Turn plans into reviewable artifacts for quick human inspection. | This implementation saves a concrete plan under `docs/superpowers/plans/`. |
+| 19. HTML plan review | Turn plans into reviewable artifacts for quick human inspection. | This implementation saved a concrete plan, now at `docs/superpowers/completed/2026-06-21-codex-harness-engineering.md`. |
 | 20. Project rules | Generate AGENTS after a real app skeleton exists, so rules fit the codebase. | APFS rules now reflect the migrated Vite/React app, not the old offline bundle. |
 | 21. Harness in practice | Combine interview, plan review, AGENTS, prompt flow, verification, MCP/plugins. | APFS adopts the same combination, with MCP deferred until needed. |
 | 22. GitHub integration | Codex Cloud can review PRs using repo AGENTS guidance. | Stronger `AGENTS.md` also improves future cloud or PR review behavior. |
@@ -98,6 +98,8 @@ Guardrail layer:
 - detects tool calls that appear to edit `농식품모태펀드 대시보드*.html`
 - blocks likely write operations to the legacy bundle unless the user explicitly requested that work
 - reminds the agent to edit `src/` and run `npm run build`
+
+Note: the legacy bundle files were deleted on 2026-09-09 (commit `5fb2dfa`), so this guard currently has no target and is effectively a no-op safety net.
 
 Hooks are not a full security boundary. They are a repeatability and safety layer that catches common mistakes early.
 

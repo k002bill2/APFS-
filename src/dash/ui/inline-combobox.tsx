@@ -1,7 +1,7 @@
 /* inline-combobox — Plate 공식 registry 컴포넌트 이식(@ariakit/react 기반).
    멘션(@)·슬래시(/)·이모지(:) 인라인 콤보박스의 공용 UI. 트리거가 삽입한 Slate input-element를 앵커로,
    떠 있는 리스트만 포털로 렌더한다(캐럿은 에디터에 유지 → 포커스 경쟁 없음).
-   원본 대비 변경: cn 경로(@/lib/utils), 팝오버 z-index를 모달 위(z-[10000])로. 나머지 verbatim. */
+   원본 대비 변경: cn 경로(@/lib/utils), 팝오버 z-index를 모달 위(z-popover 토큰)로. 나머지 verbatim. */
 import * as React from 'react';
 
 import type { PointRef, TElement } from 'platejs';
@@ -277,7 +277,7 @@ const InlineComboboxContent: typeof ComboboxPopover = ({
     <Portal>
       <ComboboxPopover
         className={cn(
-          'z-[10000] max-h-[288px] w-[300px] overflow-y-auto rounded-md border border-[var(--border)] bg-popover shadow-md',
+          'z-popover max-h-[288px] w-[300px] overflow-y-auto rounded-md border border-[var(--border)] bg-popover shadow-md',
           className
         )}
         onKeyDownCapture={handleKeyDown}

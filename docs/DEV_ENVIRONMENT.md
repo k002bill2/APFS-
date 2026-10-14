@@ -1,6 +1,6 @@
 # APFS 개발환경
 
-> 실측: 2026-09-16 · 대상: 이 저장소(`APFS-` 공유 체크아웃)
+> 실측: 2026-10-14 (최초 2026-09-16) · 대상: 이 저장소(`APFS-` 공유 체크아웃)
 >
 > **이 문서는 참고용 요약이다. 정본은 항상 오른쪽 "정본" 열의 파일이다.**
 > 값이 의심되면 "재측정" 명령을 돌려 대조한다 — 손으로 적은 실측값은 환경이 움직이면 조용히 거짓이 된다.
@@ -10,7 +10,7 @@
 
 | 항목 | 값 | 정본 | 재측정 |
 |---|---|---|---|
-| Node | v25.6.0 | `package.json` `engines.node: ">=22"` | `node -v` |
+| Node | v25.6.0 | `package.json` `engines.node: ">=22"` · `.nvmrc` `22.23.1` | `node -v` |
 | npm | 11.8.0 | `package.json` `packageManager: "npm@11.8.0"` | `npm -v` |
 
 - `engines`의 상한을 두지 않는 이유: Vercel은 LTS 짝수 메이저(18/20/22/24)만 빌드 이미지로 제공한다.
@@ -25,11 +25,11 @@
 | `npm run dev` | Vite dev 서버 (**포트 5273 고정**, `strictPort`) |
 | `npm run build` | `vite build` → `dist/` |
 | `npm run preview` | 빌드 산출물 미리보기 (**포트 4273 고정**) |
-| `npm test` | `vitest run` (테스트 파일 21개) |
+| `npm test` | `vitest run` (테스트 파일 55개 — `vitest.config.ts` `include: src/dash/**/*.test.ts`) |
 | `npm run test:watch` | `vitest` watch |
 
 - 번들러: **Vite** + `@vitejs/plugin-react`. JSX 변환은 빌드타임(esbuild).
-- 별칭 `@/` → `src/`. **`vite.config.ts`의 `resolve.alias`와 `tsconfig.json`의 `paths` 양쪽 모두** 필요하다.
+- 별칭 `@/` → `src/`. **`vite.config.ts`·`vitest.config.ts`의 `resolve.alias`와 `tsconfig.json`의 `paths` 세 곳 모두** 필요하다.
 - 포트 5273인 이유: agent-system이 5173을 점유해 충돌을 피한 고정값이다.
 - dev 서버 워처는 `.claude/worktrees/`를 **이 설정 파일 기준 절대경로**로 제외한다.
   상대 glob으로 바꾸면 워크트리 안에서 dev를 띄웠을 때 자기 자신을 무시해 HMR이 죽는다.
@@ -61,7 +61,7 @@
 
 - 포트는 브랜치명 해시로 **5300~5389에 고정 배정**(배정표 `.claude/worktrees/.ports`). 충돌 시 풀 안에서 순환한다.
 - `node_modules`는 APFS clonefile(`cp -c`) 복제 — 심볼릭 링크로 공유하면 `node_modules/.vite` 캐시가 브랜치 간에 섞인다.
-- `scripts/block-main-write.sh` 가드가 공유 체크아웃의 직접 쓰기를 차단한다. 가드 수정 시 `bash scripts/block-main-write.test.sh`.
+- `.claude/hooks/block-main-write.sh` 가드(PreToolUse 훅)가 공유 체크아웃의 직접 쓰기를 차단한다. 가드 수정 시 `bash scripts/block-main-write.test.sh`.
 
 ## 6. 주요 스택
 

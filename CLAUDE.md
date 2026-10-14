@@ -23,22 +23,21 @@ APFS/
 ├── postcss.config.js           # tailwindcss + autoprefixer
 ├── package.json                # react, react-dom, vite, tailwindcss, typescript ...
 ├── vercel.json                 # framework=vite, buildCommand=vite build, outputDirectory=dist
-├── src/
-│   ├── main.tsx                # 엔트리: tailwind.css + tokens.css + app import
-│   ├── styles/tailwind.css     # @tailwind base/components/utilities
-│   └── dash/                   # 앱 모듈 (ES modules) — 페이지는 메뉴 도메인 폴더, 공용은 루트
-│       ├── login/                               # 로그인·발급/초대 온보딩 + auth_model/auth_shared (Shell 없음)
-│       ├── dashboard/                           # 메인 대시보드(main.tsx)
-│       ├── ffms/{mfund,asct,report,sfund,ent,gp}/   # 투자자산관리 (모태펀드·조합·사후보고·자펀드·투자기업·운용사)
-│       ├── risk/{alert,ent,sfund,valuation}/    # 조기경보
-│       ├── sfund/{ocsrpt,fxtmrpt,verify,file}/  # 자펀드 보고 (수시·정기보고·실물검증·파일)
-│       ├── brief/{mfund,register}/  trust/{sfund,mfund}/  system/{user,setting,audit}/
-│       │                                        # 대분류 루트 = 중분류 공용만(ffms/leaf_tabs · brief/brief_data · trust/trust_sub_data · system/admin_*)
-│       ├── schemas/                             # 스키마 레지스트리(index.ts)·타입·렌더러 — 공용 인프라만
-│       ├── data.ts / app.tsx / shell / components / icons / charts / grid_frame / generic_list / aggrid_* …  # 2개 이상 도메인이 쓰는 공용
-│       ├── ui/ fields/ motion/                  # 공용 컴포넌트
-│       └── tokens.css / assets/logo*.svg
-└── 농식품모태펀드 대시보드*.html  # (레거시) 구 오프라인 자가완결 번들 — Vite 전환 전 산출물, 더 이상 정본 아님
+└── src/
+    ├── main.tsx                # 엔트리: tailwind.css + tokens.css + app import
+    ├── styles/tailwind.css     # @tailwind base/components/utilities
+    └── dash/                   # 앱 모듈 (ES modules) — 페이지는 메뉴 도메인 폴더, 공용은 루트
+        ├── login/                               # 로그인·발급/초대 온보딩 + auth_model/auth_shared (Shell 없음)
+        ├── dashboard/                           # 메인 대시보드(main.tsx)
+        ├── ffms/{mfund,asct,report,sfund,ent,gp}/   # 투자자산관리 (모태펀드·조합·사후보고·자펀드·투자기업·운용사)
+        ├── risk/{alert,ent,sfund,valuation}/    # 조기경보
+        ├── sfund/{ocsrpt,fxtmrpt,verify,file}/  # 자펀드 보고 (수시·정기보고·실물검증·파일)
+        ├── brief/{mfund,register}/  trust/{sfund,mfund}/  system/{user,setting,audit}/
+        │                                        # 대분류 루트 = 중분류 공용만(ffms/leaf_tabs · brief/brief_data · trust/trust_sub_data · system/admin_*)
+        ├── schemas/                             # 스키마 레지스트리(index.ts)·타입·렌더러 — 공용 인프라만
+        ├── data.ts / app.tsx / shell / components / icons / charts / grid_frame / generic_list / aggrid_* …  # 2개 이상 도메인이 쓰는 공용
+        ├── ui/ fields/ motion/                  # 공용 컴포넌트
+        └── tokens.css / assets/logo*.svg
 ```
 
 ## 모듈 아키텍처
@@ -116,7 +115,7 @@ APFS/
 - 새 페이지/메뉴는 라이트/다크 모두에서 대비를 확인하세요.
 - **UI 신규 작업 규칙: .claude/rules/frontend-design-defaults.md** — 금지 패턴 15개와 대체 토큰·컴포넌트(src/** 작업 시 자동 로드). 기존 화면 위반은 지시 없이 고치지 않는다.
 - **데이터 마스크는 없다**(2026-09-24 사용자 결정 — 시안용 `mask.tsx`(`mn`·`MT`·`useMask`)와 CSS 훅을 전부 삭제). 값을 가리는 래퍼를 새로 만들지 않는다. 가드 테스트: `src/dash/no_demo_mask.test.ts`.
-- **레거시**: 루트 `농식품모태펀드 대시보드*.html`(구 오프라인 번들)은 더 이상 정본이 아닙니다. `apfs-bundle` 스킬(번들 gzip+base64 디코드/재인코드)도 이 레거시 파일에만 해당하며, 신규 작업엔 불필요합니다.
+- **레거시**: 구 오프라인 번들 `농식품모태펀드 대시보드*.html`은 커밋 5fb2dfa로 저장소에서 삭제됐습니다. `apfs-bundle` 스킬(번들 gzip+base64 디코드/재인코드)은 git 이력에서 옛 번들을 읽을 때만 쓰며, 신규 작업엔 불필요합니다.
 
 ## 디자인 토큰 / 브랜드
 
@@ -176,7 +175,6 @@ APFS/
 | 문서 | 위치 |
 |------|------|
 | 전체 안전 프로토콜 | `docs/Parallel_Agents_Safety_Protocol_v3_1_0.md` |
-| 셋업 가이드/원문 | `Claude code system setup/` |
 
 ## 하네스 변경 이력
 

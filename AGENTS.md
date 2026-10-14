@@ -19,7 +19,7 @@
 
 - 정본 편집 표면은 `src/` 아래 Vite + React 18 + TypeScript 소스입니다.
 - 배포 산출물은 `npm run build`로 생성되는 `dist/`입니다.
-- 루트의 `농식품모태펀드 대시보드*.html` 파일은 Vite 전환 전 레거시 오프라인 번들입니다. 사용자가 명시적으로 요청하지 않는 한 직접 편집하지 마세요.
+- Vite 전환 전 레거시 오프라인 번들(`농식품모태펀드 대시보드*.html`)은 커밋 5fb2dfa로 저장소에서 삭제됐습니다. 옛 번들이 필요하면 git 이력에서 읽기만 하세요.
 
 ## Codex 작업 규칙
 
@@ -47,7 +47,7 @@ npm run build
 ## 하네스 자산
 
 - `.agents/skills/apfs-dashboard-workflow/` — APFS 대시보드 UI/라우트/데이터 변경 workflow.
-- `.codex/hooks.json` + `scripts/codex-guard.sh` — 레거시 번들 직접 편집 같은 고위험 작업을 막는 Codex hook 설정.
+- `.codex/hooks.json` + `scripts/codex-guard.sh` — 고위험 작업을 막는 Codex hook 설정(레거시 번들 재생성·편집 차단은 번들 삭제 후에도 남겨 둔 안전망).
 - `docs/codex-harness.md` — 이 저장소에 적용된 Codex 하네스 레이어 설명.
 
 ## Claude Code 전용
