@@ -31,7 +31,7 @@ APFS의 열림·닫힘 표면은 이미 소유자와 확정 규약이 있다. �
 ### 2. 토큰 — `_root.css`를 전역에 붓지 않는다
 - 원문 Output format 1단계("`_root.css`를 전역 스타일시트에 설치")는 **하지 않는다**. `src/dash/tokens.css`에 `--duration-*`/`--ease-*`/`--distance-*`/`--scale-*`/`--blur-*` 블록을 추가하지 말 것.
 - 이 저장소의 모션 토큰은 **`--dur-fast`(120ms) / `--dur`(180ms) / `--dur-slow`(280ms) / `--ease`(cubic-bezier(.4,0,.2,1))**이고 Tailwind 소비형은 `duration-tok-fast`/`duration-tok`/`duration-tok-slow`·`ease-ds`다(`tokens.css`, `tailwind.config.js`). 새 토큰 이름을 만들지 않는다.
-- 레시피별 튜너블(`--resize-*`, `--badge-*`, `--shake-*` …)은 **컴포넌트 루트 클래스에 스코프**해 두거나, 여러 화면이 공유하면 `src/styles/transitions.css` 한 파일에 모아 `main.tsx`에서 한 번 import 한다. duration/easing 튜너블은 **용도가 맞을 때** `var(--dur-*)`/`var(--ease)`로 배선한다(quick·micro→`--dur-fast`, fast→`--dur`, medium·slow·very-slow→`--dur-slow`). 바운스 커브·blur·distance 값은 원문 리터럴을 유지한다.
+- 레시피별 튜너블(`--resize-*`, `--badge-*`, `--shake-*` …)은 **컴포넌트 루트 클래스에 스코프**해 두거나, 여러 화면이 공유하면 `src/styles/transitions.css` 한 파일에 모아 `src/main.ts`에서 한 번 import 한다. duration/easing 튜너블은 **용도가 맞을 때** `var(--dur-*)`/`var(--ease)`로 배선한다(quick·micro→`--dur-fast`, fast→`--dur`, medium·slow·very-slow→`--dur-slow`). 바운스 커브·blur·distance 값은 원문 리터럴을 유지한다.
 - `cubic-bezier(0.22,1,0.36,1)`(smooth-out)은 이미 `dialog-in`이 리터럴로 쓰는 커브다. 필요하면 리터럴로 쓰고 전역 토큰으로 승격하지 않는다.
 
 ### 3. 프로젝트 실측 함정 (원문 레시피에 그대로 있음)

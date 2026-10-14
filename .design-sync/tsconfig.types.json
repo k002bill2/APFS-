@@ -11,7 +11,7 @@
     "isolatedModules": false
   },
   "files": [
-    "../src/ds/index.tsx"
+    "../src/ds/index.ts"
   ],
   "include": []
 }

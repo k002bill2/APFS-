@@ -1,7 +1,7 @@
 # design-sync NOTES — APFS Dashboard DS (claude.ai/design 프로젝트 709895f7)
 
 ## 저장소 특성 (재동기 시 먼저 읽을 것)
-- **앱 저장소, 라이브러리 아님.** dist 라이브러리 엔트리·.d.ts 트리가 없다. 컨버터는 `srcDir: src/ds`(배럴 `src/ds/index.tsx`)에서 엔트리를 합성한다.
+- **앱 저장소, 라이브러리 아님.** dist 라이브러리 엔트리·.d.ts 트리가 없다. 컨버터는 `srcDir: src/ds`(배럴 `src/ds/index.ts`)에서 엔트리를 합성한다.
   `--entry ./dist/index.es.js`(존재하지 않는 경로)를 넘겨야 패키지 루트가 저장소 루트로 잡힌다(없으면 `node_modules/<pkg>`를 찾다 실패).
 - **합성 모드는 `componentSrcMap` 핀만 컴포넌트로 인정**한다(`exportedNames`가 .d.ts 엔트리에서 읽으므로). 배럴에 모듈을 추가하면 핀도 추가할 것.
 - **props 계약**: `npx tsc -p .design-sync/tsconfig.types.json`(noCheck, emitDeclarationOnly)로 배럴 그래프 .d.ts를 `dist/types/`에 emit하고
