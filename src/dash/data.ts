@@ -100,8 +100,9 @@ const NOTIFS = [
 
 // RBAC 역할 (3등급)
 // LNB — PRD 부록A 전체 메뉴 체계 (대분류→중분류→메뉴 3단계)
-/* LNB 메뉴 트리 — 정본은 **신규(to-be) 메뉴 구성**이다: 프로젝트일정계획표 xlsx 의
-   「메뉴구성도」 시트(docs/source/, 추출본 docs/메뉴구성도_v0.2.md). 현행(as-is) 트리가 아니다.
+/* LNB 메뉴 트리 — 정본은 **신규(to-be) 메뉴 구성**이다: SharePoint 메뉴구조 문서
+   (링크는 팀 내부 공유 — 공개 저장소라 URL 미기재,
+   추출본 docs/메뉴구성도_v0.2.md). 현행(as-is) 트리가 아니다.
    대분류 7(+대시보드 리프 1) / 중분류 32 / 리프 137 (2026-09-15 실측).
    정본과의 차이는 docs/메뉴대조표_xlsx_vs_APFS_DATA.md 참조 —
    재생성: python3 scripts/menu-doc/gen_diff.py docs/메뉴대조표_xlsx_vs_APFS_DATA.md
