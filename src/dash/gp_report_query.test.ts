@@ -38,4 +38,17 @@ describe('수시보고 제출현황 — S5_121', () => {
     expect(mid.children).toEqual([{ label: GP_REPORT_QUERY_LABEL, path: GP_REPORT_QUERY_ROUTE }]);
     expect(app).toMatch(/route === "자펀드 보고 조회"\) page = <GpReportQuery/);
   });
+
+  it('자펀드 보고 메뉴 구성(2026-10-14 사용자 지정) — 중분류·리프 라벨과 보존 route', () => {
+    const gp = (APFS_DATA.MENU as any[]).find((m) => m.id === 'gp');
+    const tree = gp.children.map((c: any) => [c.label, c.children.map((l: any) => [l.label, l.path || l.label])]);
+    expect(tree).toEqual([
+      ['수시보고', [['수시보고 제출현황', '자펀드 보고 조회']]],
+      ['정기보고', [['월간보고 제출현황', '조합별 월간보고 현황'], ['반기보고 제출현황', '조합별 반기보고 현황']]],
+      ['실물검증', [['조합별 실물검증 결과 보고', '조합별 실물검증 결과 보고']]],
+      ['파일', [['보고 파일 조회', '보고 파일 조회'], ['보고양식·가이드 조회', '보고양식·가이드 조회']]],
+    ]);
+    expect(app).not.toMatch(/route === "조합 수시보고 내역"/);
+    expect(app).toContain('"조합 수시보고 내역": "자펀드 보고 조회"');   // 삭제 화면의 옛 route 승격
+  });
 });

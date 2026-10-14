@@ -15,9 +15,9 @@ describe('조합별 반기보고 현황 스키마', () => {
     expect(() => parsePageSchema(schema)).not.toThrow();
   });
 
-  it('route·title 은 메뉴 리프 라벨 그대로다', () => {
+  it('title 은 새 리프 라벨, route 는 옛 라벨(MENU leaf.path)로 보존한다', () => {
     expect(schema.route).toBe('조합별 반기보고 현황');
-    expect(schema.title).toBe('조합별 반기보고 현황');
+    expect(schema.title).toBe('반기보고 제출현황');
   });
 
   it('컬럼은 원문 thead 19개와 순서·라벨이 같다', () => {
