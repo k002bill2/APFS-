@@ -12,12 +12,12 @@ import { Cell, AttachChips, controlMinWidth, drawerInputStyle } from './schemas/
 import { resolveFilterField, isEnumControl, YEAR_OPTIONS,filterValueMatches, defaultFilterValues, filterChipText, splitPair, joinPair } from './schemas/filter_field';
 import type { FilterField } from './schemas/filter_field';
 import type { PageSchema, DetailPopup } from './schemas/types';
-import { MonthlyReportModal } from './monthly_report_modal';   // 읽기전용 상세 보고서 팝업(컬럼 detail 옵트인 스키마만)
-import { GpSpecModal } from './gp_spec_modal';                 // 운용사 명세(S1_02) — 운용사 명세서 목록의 행 상세
-import { CompanyProfileModal } from './company_profile_modal'; // 투자기업 기업개요(S1_30) — 투자기업정보(통합)의 행 상세
-import { MgmtFeeDetailModal } from './mgmt_fee_detail_modal';   // 관리보수보고 상세조회(S1_43) — 지급일자 링크
-import { DueDiligChecklistModal } from './due_dilig_checklist_modal'; // 투자금실사보고서 체크리스트(S1_40) — 실사일자 링크
-import { GpRatioDetailModal } from './gp_ratio_detail_modal';       // 운용사정량지표상세(재무건정성비율)(S1_38) — 기준년월 링크
+import { MonthlyReportModal } from './ffms/report/monthly_report_modal';   // 읽기전용 상세 보고서 팝업(컬럼 detail 옵트인 스키마만)
+import { GpSpecModal } from './ffms/report/gp_spec_modal';                 // 운용사 명세(S1_02) — 운용사 명세서 목록의 행 상세
+import { CompanyProfileModal } from './ffms/ent/company_profile_modal'; // 투자기업 기업개요(S1_30) — 투자기업정보(통합)의 행 상세
+import { MgmtFeeDetailModal } from './ffms/gp/mgmt_fee_detail_modal';   // 관리보수보고 상세조회(S1_43) — 지급일자 링크
+import { DueDiligChecklistModal } from './ffms/gp/due_dilig_checklist_modal'; // 투자금실사보고서 체크리스트(S1_40) — 실사일자 링크
+import { GpRatioDetailModal } from './ffms/gp/gp_ratio_detail_modal';       // 운용사정량지표상세(재무건정성비율)(S1_38) — 기준년월 링크
 import { foldGroups } from './grid_header_note';   // 2단 그룹헤더(ColumnSpec group 소비처)
 import { linksDetail } from './schemas/detail_link';   // detail 링크 술어 정본(소비처 3곳 공유)
 import { UNITS, DEFAULT_UNIT, isUnit, toUnit, amountHeader, formatUnit } from './schemas/unit';

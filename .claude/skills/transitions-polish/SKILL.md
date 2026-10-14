@@ -13,7 +13,7 @@ description: Polish and refine existing motion against the transitions.dev motio
 - **날짜가 박힌 결정은 원문 규칙보다 우선한다.** `tailwind.config.js`·`tokens.css`·`ui/dialog-exit.ts`의 주석에 날짜·실측이 있는 값은 리뷰 목록에 올리지 않는다. 대표 예: 다이얼로그는 **열림·닫힘 모두 `--dur-slow`(280ms)로 대칭**(2026-09-18 사용자 리포트 — 닫힘을 180ms+ease-in으로 두면 "툭 사라짐"으로 읽힘). 원문의 "modal close → 150ms" 비대칭 원칙을 여기 적용하면 **사용자 결정을 되돌리는 것**이다.
 - **닫힘 레인 blur 제거는 제안해도 된다**(합성 불가 → 프레임 드롭, 2026-09-18 실측). 반대로 닫힘에 blur를 추가하는 제안은 금지.
 - 원문의 비대칭·hover in/out·stagger 총합(<300ms)·"닫힘·hover-out에 delay 금지" 원칙은 **소유자 없는 모션**(number pop-in, text swap, shake, shimmer, reveal, 카운터 등)에 그대로 적용한다. Radix 오버레이(`ui/dialog`·`dropdown-menu`·`tooltip`·`accordion`·`sheet`)·`sonner`·`ui/skeleton`·`menu-highlight`는 [[transitions-dev]] 규약 1절의 "적용 금지" 표면이므로 폴리시 대상에서도 제외한다.
-- `transitions review` 스캔 범위에 `src/dash/tokens.css`·`tailwind.config.js`·`src/dash/ui/*.tsx`·`node_modules`는 **읽되 제안하지 않는다**(소유자 규약). 제안은 페이지·위젯 코드(`src/dash/*.tsx`, `src/dash/schemas/`, `src/styles/`)의 ad-hoc 값에 한정한다.
+- `transitions review` 스캔 범위에 `src/dash/tokens.css`·`tailwind.config.js`·`src/dash/ui/*.tsx`·`node_modules`는 **읽되 제안하지 않는다**(소유자 규약). 제안은 페이지·위젯 코드(`src/dash/**/*.tsx` — 도메인 폴더 포함, `src/styles/`)의 ad-hoc 값에 한정한다.
 - 수정은 원문대로 **확인 후**에만, 모션 값만 건드린다. 색은 [[color-tokens]], 저모션 폴백·끝 프레임 규칙은 [[transitions-dev]] 3절.
 
 ---

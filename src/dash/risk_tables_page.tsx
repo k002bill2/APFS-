@@ -1,6 +1,6 @@
 /* risk_tables_page.tsx — "검색박스 → (금액 단위) → 표 1~4장" 조회 전용 화면의 공용 골격.
    자펀드 수익률정보 비교 조회 · 투자조합/피투자회사 가치평가 결과조회 · 자펀드 투자자산 및 거래내역 조회 ·
-   예외사항레포트 · Portfolio Report 가 이 골격을 설정(risk_table_pages.tsx)으로 나눠 쓴다.
+   예외사항레포트 · Portfolio Report 가 이 골격을 설정(risk/sfund/subfund_return_compare.tsx · risk/valuation/valuation_table_pages.tsx)으로 나눠 쓴다.
 
    규약
    - 표가 1장이면 섹션 헤더 없이 표만, 2장 이상이면 원문 섹션 제목(`.sectitle`/`.cap`/`.sechead`)으로 **한 GridFrame 안에 세로로 쌓는다**

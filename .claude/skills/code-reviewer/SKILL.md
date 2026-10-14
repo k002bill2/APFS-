@@ -55,7 +55,7 @@ description: 품질·보안·유지보수성 코드 리뷰. PR/변경/병합 전
 - **빌드·테스트 러너가 있다.** `npm run build`(vite, exit 0이어야 함) · `npm test`(vitest, 테스트 파일 7개). ⚠️ "러너가 없으니 테스트 조언은 접는다"는 **옛 서술이며 거짓**이다 — 테스트 누락은 정상적으로 지적한다.
 - **`tsc --noEmit`은 타입 에러를 다수 보고하지만 `vite build`는 green이다** (esbuild는 타입체크를 하지 않고 `tsconfig`도 `strict:false`). 기존 타입 에러의 존재 자체를 회귀로 보고하지 말고, **이 변경이 새로 낸 타입 구멍만** 지적한다.
 - **`React.createElement`(별칭 `h`) 잔존은 알려진 미완 전환이지 결함이 아니다.** `src/dash/*.tsx` 49개 중 6개만 남았다(`charts` `icons` `generic_list` `fund_stats` `apfs_contribution_manage` `fund_cash_forecast_manage`). "JSX로 바꿔라"는 그 파일을 이미 손대는 PR에서만 유효하다.
-- **백엔드·인증이 없다.** 데이터는 더미(`src/dash/data.ts`, `src/dash/schemas/*.ts`). 서버 입력검증·authN/authZ·세션·SQL 류 지적은 **대상이 없다**. 반면 XSS(`dangerouslySetInnerHTML`·`innerHTML`)와 하드코딩 시크릿은 그대로 본다.
+- **백엔드·인증이 없다.** 데이터는 더미(`src/dash/data.ts`, 도메인 폴더의 스키마 `src/dash/<도메인>/**/*.ts`). 서버 입력검증·authN/authZ·세션·SQL 류 지적은 **대상이 없다**. 반면 XSS(`dangerouslySetInnerHTML`·`innerHTML`)와 하드코딩 시크릿은 그대로 본다.
 - **레거시 오프라인 HTML 번들은 삭제됐다**(커밋 `5fb2dfa`). 옛 예외 규칙(`blob URL의 integrity/crossorigin 제거는 정상`)은 **적용 대상이 사라졌다**. [[apfs-bundle]] 스킬도 이 리뷰 경로와 무관하다.
 
 관련 규약(중복 지적 금지 — 정본은 각 스킬): UI·디자인 [[dashboard-ui]] · 색 토큰 [[color-tokens]] · 반응형 [[responsive-ui]] · 접근성 [[web-a11y]] · 레이어 [[z-index]]

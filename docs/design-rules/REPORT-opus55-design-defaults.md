@@ -15,7 +15,7 @@
 | 공용 컴포넌트 | `src/dash/components.tsx` | `UI.Button`(:169, variant 5종) · `Card`(:94) · `ChartCard`(:105) · `StatCard`(:67) · `StatusBadge`(:44) · `EmptyState`(:353) |
 | shadcn 계열 | `src/dash/ui/*.tsx` | `alert.tsx`(variant default/info/success/warning/destructive) · `skeleton.tsx`(`Skeleton`,`PageSkeleton`) · `spinner.tsx` · dialog/popover/sheet(`shadow-lg`) · `dropdown-menu.tsx` |
 | 그리드 | `src/dash/aggrid_theme.ts` · `src/dash/grid_frame.tsx` | `apfsTheme`(:41, tabular-nums :72) · `GridFrame`(:167) · `KpiBadge`(:114) |
-| 대표 화면 | `src/dash/main.tsx` · `main_widgets.tsx` · `asset_funding.tsx` · `generic_list.tsx` · `subfund_manage.tsx` · `designsystem.tsx` · `auth_shared.tsx` | 메인 대시보드 Hero·퀵메뉴, AG Grid 정본(조성·출자 현황표), 스키마 리스트, DS 프리뷰, 인증 화면 |
+| 대표 화면 | `src/dash/dashboard/main.tsx` · `main_widgets.tsx` · `asset_funding.tsx` · `generic_list.tsx` · `subfund_manage.tsx` · `designsystem.tsx` · `auth_shared.tsx` | 메인 대시보드 Hero·퀵메뉴, AG Grid 정본(조성·출자 현황표), 스키마 리스트, DS 프리뷰, 인증 화면 |
 | 기존 규약 | `.claude/skills/dashboard-ui/SKILL.md`(62줄) · `.claude/skills/color-tokens/SKILL.md`(58줄) | 차트·모션·StatusBadge 규칙, hex 금지 규약(중복 서술 금지 대상) |
 
 조사 방법: 패턴별 `grep -rnE`(src, `*.tsx|*.ts|*.css`, `.test.` 제외) 후 히트를 한 줄씩 분류. **raw grep 수 ≠ 위반 수** — 아래 2절의 "오탐 사유" 참조.
