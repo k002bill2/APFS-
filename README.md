@@ -38,7 +38,7 @@ npm run dev     # 개발 서버 → http://localhost:5273
 ```
 ├── index.html              # Vite 엔트리 (#root + 테마 복원 인라인 스크립트)
 ├── src/
-│   ├── main.tsx            # 엔트리: tailwind.css + tokens.css + app
+│   ├── main.ts             # 엔트리: tailwind.css + tokens.css + app
 │   └── dash/
 │       ├── app.tsx         # 앱 루트 — 테마/라우트 상태
 │       ├── data.ts         # APFS_DATA (메뉴/위젯/지표 더미 데이터)

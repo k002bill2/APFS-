@@ -24,7 +24,7 @@ APFS/
 ├── package.json                # react, react-dom, vite, tailwindcss, typescript ...
 ├── vercel.json                 # framework=vite, buildCommand=vite build, outputDirectory=dist
 └── src/
-    ├── main.tsx                # 엔트리: tailwind.css + tokens.css + app import
+    ├── main.ts                 # 엔트리: tailwind.css + tokens.css + app import
     ├── styles/tailwind.css     # @tailwind base/components/utilities
     └── dash/                   # 앱 모듈 (ES modules) — 페이지는 메뉴 도메인 폴더, 공용은 루트
         ├── login/                               # 로그인·발급/초대 온보딩 + auth_model/auth_shared (Shell 없음)
@@ -109,6 +109,7 @@ APFS/
 
 표준 React/TypeScript 편집입니다 — `src/dash/**/*.tsx`를 직접 수정하고 `npm run dev`로 확인합니다.
 
+- **확장자 규칙: JSX 문법이 있으면 `.tsx`, 없으면 `.ts`** — 훅·컨텍스트·스키마·데이터·배럴·테스트는 React 를 import 해도 JSX 가 없으면 `.ts`. 일괄 `.tsx` 통일은 하지 않는다(vitest `include`·가드 테스트의 `.test.ts` 제외 정규식이 확장자를 신호로 쓴다). 가드: `src/dash/file_ext_rule.test.ts`.
 - 현재 코드는 `React.createElement`(별칭 `h`) 기반(**Phase 0**). **JSX 전환(Phase 2)·TypeScript 타입화(Phase 3)는 후속 작업** — 진행 시 점진적으로.
 - `tsc --noEmit`은 현재 타입 에러를 다수 보고하지만 빌드(esbuild)는 타입체크를 하지 않아 `vite build`는 green입니다.
 - 색/간격/타이포는 하드코딩 대신 CSS 변수 토큰(`tokens.css`)을 사용하세요.

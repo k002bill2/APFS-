@@ -14,7 +14,7 @@
 import type { ColumnSpec } from './types';
 
 /* 정규식은 모듈 캐시에 담는다 — 컴포넌트 본문에서 new RegExp 하면 렌더마다 재컴파일된다
-   (grid_header_note.tsx 의 HEADER_CACHE 와 같은 이유). 유효성은 스키마 파싱 시점에 zod 가 본다. */
+   (grid_header_note.ts 의 HEADER_CACHE 와 같은 이유). 유효성은 스키마 파싱 시점에 zod 가 본다. */
 const PATTERN_CACHE = new Map<string, RegExp>();
 function compiled(src: string): RegExp {
   let re = PATTERN_CACHE.get(src);
