@@ -130,6 +130,7 @@ export const ROUTE_ALIAS: Readonly<Record<string, string>> = {
   "입출금정보 비교조회": "trust-cashflow-compare",
   "투자 성과·포트폴리오": "portfolio-performance",
   "연도별투자현황": "annual-invest-status",
+  "Portfolio Report": "portfolio-report",   // path 없이 라벨을 route 로 쓰던 리프 — path 부여(2026-10-14)
 };
 export const aliasRoute = (r: string): string => ROUTE_ALIAS[r] || r;
 /** 저장된 route 키 배열을 현재 키로 승격하고, 승격으로 생긴 중복은 앞의 것만 남긴다. */

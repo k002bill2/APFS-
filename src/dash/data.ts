@@ -189,7 +189,7 @@ const MENU = [
       { label:"자펀드 투자자산 및 거래내역 조회", path:"subfund-asset-txn" },
       { label:"예외사항레포트", path:"exception-report" },
       { label:"평가시점 데이터 확인", path:"valuation-data-check" },
-      { label:"Portfolio Report" },
+      { label:"Portfolio Report", path:"portfolio-report" },
       { label:"투자기업별(계약별) IRR", path:"irr-by-contract" },
       { label:"투자기업별 IRR", path:"irr-by-investee" },
       { label:"자펀드별 IRR", path:"irr-by-fund" },
