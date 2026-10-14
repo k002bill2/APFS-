@@ -111,6 +111,7 @@ APFS/
 
 - **확장자 규칙: JSX 문법이 있으면 `.tsx`, 없으면 `.ts`** — 훅·컨텍스트·스키마·데이터·배럴·테스트는 React 를 import 해도 JSX 가 없으면 `.ts`. 일괄 `.tsx` 통일은 하지 않는다(vitest `include`·가드 테스트의 `.test.ts` 제외 정규식이 확장자를 신호로 쓴다). 가드: `src/dash/file_ext_rule.test.ts`.
 - 현재 코드는 `React.createElement`(별칭 `h`) 기반(**Phase 0**). **JSX 전환(Phase 2)·TypeScript 타입화(Phase 3)는 후속 작업** — 진행 시 점진적으로.
+- **lint**: `npm run lint`(ESLint 10 + typescript-eslint + react-hooks, 설정 `eslint.config.mjs`). error 0 이 게이트다 — 실버그 규칙(rules-of-hooks 등)만 error, Phase 0 기존 위반이 있는 규칙은 warn(`any` 는 off). 새 코드에서 warn 을 늘리지 말고, 어떤 규칙의 warn 이 0건이 되면 error 로 올린다.
 - `tsc --noEmit`은 현재 타입 에러를 다수 보고하지만 빌드(esbuild)는 타입체크를 하지 않아 `vite build`는 green입니다.
 - 색/간격/타이포는 하드코딩 대신 CSS 변수 토큰(`tokens.css`)을 사용하세요.
 - 새 페이지/메뉴는 라이트/다크 모두에서 대비를 확인하세요.
