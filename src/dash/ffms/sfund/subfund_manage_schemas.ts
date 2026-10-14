@@ -34,7 +34,7 @@ const REP_COLUMNS: PageSchema['columns'] = [
 
 /* ① 제안서접수 등록 — ＋제안서접수 등록 버튼 → 심사단계 '신청' 행 신규 생성 */
 export const APPLY_SCHEMA: PageSchema = parsePageSchema({
-  route: '자펀드관리/제안서접수', title: '제안서접수 등록', kind: 'form', entity: '자펀드',
+  route: 'subfund/proposal', title: '제안서접수 등록', kind: 'form', entity: '자펀드',
   columns: REP_COLUMNS,
   fields: [
     { key: 'mf', label: '모펀드', control: 'radio', options: OPT_MF },
@@ -66,7 +66,7 @@ export const APPLY_SCHEMA: PageSchema = parsePageSchema({
 /* ② 선정조합 등록/수정 — 행 선택 후 [선정조합 등록](신청→선정) · [수정](선정 단계) 에서 호출.
    제목은 호출 시점 단계에 따라 RowFormModal title prop으로 바꾼다. */
 export const SELECT_SCHEMA: PageSchema = parsePageSchema({
-  route: '자펀드관리/선정조합', title: '선정조합 등록', kind: 'form', entity: '자펀드',
+  route: 'subfund/selected-fund', title: '선정조합 등록', kind: 'form', entity: '자펀드',
   columns: REP_COLUMNS,
   fields: [
     { key: 'selDate', label: '선정일자', control: 'date', required: true },

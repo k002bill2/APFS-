@@ -875,7 +875,9 @@ const ROUTE_META: Record<string, { label: string; crumbs: string[]; icon: string
     designsystem: { label: "디자인 시스템", crumbs: ["홈", "디자인 시스템"], icon: "layers" },
     main: { label: "대시보드", crumbs: ["홈", "대시보드"], icon: "home" },
     "risk-manage": { label: "조기경보 관리", crumbs: ["홈", "조기경보", "조기경보 관리"], icon: "shield-alert" },
-    performance: { label: "투자 성과·포트폴리오", crumbs: ["홈", "통계조회", "투자 성과·포트폴리오"], icon: "trending" },
+    /* 메뉴 밖 스키마 화면 — route 가 영문이라(2026-10-14) 여기 없으면 방문기록에 영문 route 가 그대로 보인다 */
+    "portfolio-performance": { label: "투자 성과·포트폴리오", crumbs: ["홈", "통계조회", "투자 성과·포트폴리오"], icon: "trending" },
+    "annual-invest-status": { label: "연도별 투자현황", crumbs: ["홈", "부처보고", "모태펀드", "연도별 투자현황"], icon: "file" },
     schedule: { label: "일정·알림 센터", crumbs: ["홈", "일정·알림 센터"], icon: "calendar" },
     "report-bucheo": { label: "연도별투자현황", crumbs: ["홈", "부처보고", "모태펀드", "연도별투자현황"], icon: "file" },
     subfund: { label: "자펀드 관리", crumbs: ["홈", "투자자산관리", "자펀드 관리", "자펀드 관리"], icon: "landmark" },

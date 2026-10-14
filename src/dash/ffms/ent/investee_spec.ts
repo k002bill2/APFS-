@@ -18,7 +18,7 @@ import type { PageSchema } from '../../schemas/types';
 import { ACCOUNT_OPTIONS } from '../../schemas/filter_domains';
 
 export const schema: PageSchema = {
-  route: '투자기업명세서(통합)',   // ⚠️ data.ts 메뉴 리프 라벨과 정확히 일치(라우팅 키, NFC)
+  route: 'investee-spec',   // ⚠️ data.ts 메뉴 리프 path 와 정확히 일치(라우팅 키)
   title: '투자기업명세서(통합)',
   kind: 'list',
   entity: '투자기업명세',

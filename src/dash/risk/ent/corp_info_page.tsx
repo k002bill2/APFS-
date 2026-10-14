@@ -22,7 +22,7 @@ import { exportTables } from '../../risk_excel';
 import { NICE_TABS, CREDIT_TABS, GUBUN_OPTIONS, CORP_BASE_DATE } from './risk_corp_info_data';
 import type { CorpTab, Gubun } from './risk_corp_info_data';
 
-function CorpInfoTabsPage({ label, tabs, idBase, onNav }: { label: string; tabs: CorpTab[]; idBase: string; onNav?: (r: string) => void }) {
+function CorpInfoTabsPage({ label, route, tabs, idBase, onNav }: { label: string; route: string; tabs: CorpTab[]; idBase: string; onNav?: (r: string) => void }) {
   const [tabId, setTabId] = useState(tabs[0].id);
   const [date, setDate] = useState(CORP_BASE_DATE);
   const [gubun, setGubun] = useState<Gubun>('운용사');
@@ -53,7 +53,7 @@ function CorpInfoTabsPage({ label, tabs, idBase, onNav }: { label: string; tabs:
   };
 
   return (
-    <RiskPage group="기업정보" label={label} route={label} onNav={onNav}
+    <RiskPage group="기업정보" label={label} route={route} onNav={onNav}
       filters={filters} onReset={reset}
       unitCaption={hasAmount ? '단위: 원' : undefined}
       footerLeft={<span>{`기준일자 ${date ? String(date) : '-'} · ${tab.label} 총 ${String(rows.length)}건`}</span>}
@@ -68,10 +68,10 @@ function CorpInfoTabsPage({ label, tabs, idBase, onNav }: { label: string; tabs:
 
 /** 투자기업정보(NICE평가정보) — S2_65 + S2_66 + S2_67 */
 export function CorpNiceInfo({ onNav }: { onNav?: (r: string) => void }) {
-  return <CorpInfoTabsPage label="투자기업정보(NICE평가정보)" tabs={NICE_TABS} idBase="nice" onNav={onNav} />;
+  return <CorpInfoTabsPage label="투자기업정보(NICE평가정보)" route="corp-info-nice" tabs={NICE_TABS} idBase="nice" onNav={onNav} />;
 }
 
 /** 투자기업신용정보 조회 — S2_69 + S2_68 */
 export function CorpCreditInfo({ onNav }: { onNav?: (r: string) => void }) {
-  return <CorpInfoTabsPage label="투자기업신용정보 조회" tabs={CREDIT_TABS} idBase="credit" onNav={onNav} />;
+  return <CorpInfoTabsPage label="투자기업신용정보 조회" route="corp-credit-info" tabs={CREDIT_TABS} idBase="credit" onNav={onNav} />;
 }

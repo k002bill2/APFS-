@@ -6,7 +6,7 @@
    원문 `DATA` 는 확정 실데이터 **1건**(마이다스동아인베스트먼트(주), 재무상태표 8항목)뿐이다 — 행을 늘리지 않는다.
    손익계산서·재무비율 16항목은 원문 P열 공란이라 원문 화면과 같이 '-' 로 싣는다(0 으로 채우지 않는다).
    ⚠ 재무비율(%) 11컬럼은 type 'rate' 가 아니라 'text' 다 — 'rate' 면 Cell 이 DeltaBadge 로 보내 빈 값('-')이
-     "0" 배지로 그려진다(전체_투자실적.ts 와 같은 판단).
+     "0" 배지로 그려진다(invest_performance_all.ts 와 같은 판단).
    검색조건 `기준년월`(원문 기본 2026-06)은 컬럼 라벨과 정확일치해 상세필터가 실제로 행을 거른다.
    조회 전용 — fields 없음(등록/수정 폼 없음), 행 선택 없음. KPI: 미포함(브리프 규칙 5, 2026-09-23). */
 import type { PageSchema } from '../../schemas/types';
@@ -15,7 +15,7 @@ const amt = (key: string, label: string) => ({ key, label, type: 'amount' as con
 const pct = (key: string, label: string) => ({ key, label, type: 'text' as const, align: 'right' as const });
 
 export const schema: PageSchema = {
-  route: '운용사 재무정보 비교 조회',
+  route: 'gp-financial-compare',
   title: '운용사 재무정보 비교 조회',
   kind: 'list',
   entity: '재무정보',

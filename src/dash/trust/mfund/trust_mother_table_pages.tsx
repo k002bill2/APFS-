@@ -21,19 +21,19 @@ type P = { onNav?: (r: string) => void };
 const SYSTEM = '수탁보고';
 
 const MOTHER_CODE: TablesPageConfig = {
-  system: SYSTEM, group: '모태펀드 수탁', label: '모태수탁 공통코드', route: '모태수탁 공통코드',
+  system: SYSTEM, group: '모태펀드 수탁', label: '모태수탁 공통코드', route: 'trust-mother-common-code',
   tables: [MOTHER_CODE_TABLE],
   filters: [{ label: '코드구분', kind: 'select', def: MOTHER_CODE_DEFAULT, options: MOTHER_CODE_GROUPS, allLabel: null, key: 'grp' }],
 };
 
 const ACCOUNT: TablesPageConfig = {
-  system: SYSTEM, group: '모태펀드 수탁', label: '계좌정보 비교조회', route: '계좌정보 비교조회',
+  system: SYSTEM, group: '모태펀드 수탁', label: '계좌정보 비교조회', route: 'trust-account-compare',
   tables: [ACCOUNT_TABLE], unit: true,
   filters: [{ label: '개시일', kind: 'dayRange', def: ACCOUNT_RANGE, key: 'st' }],
 };
 
 const CASHFLOW: TablesPageConfig = {
-  system: SYSTEM, group: '모태펀드 수탁', label: '입출금정보 비교조회', route: '입출금정보 비교조회',
+  system: SYSTEM, group: '모태펀드 수탁', label: '입출금정보 비교조회', route: 'trust-cashflow-compare',
   tables: [CASHFLOW_TABLE], unit: true,
   filters: [{ label: '거래일자', kind: 'dayRange', def: CASHFLOW_RANGE, key: 'dt' }],
 };

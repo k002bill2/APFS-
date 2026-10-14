@@ -65,7 +65,7 @@
 
 <header>
   <h1>APFS 프로젝트 표준</h1>
-  <p>폴더 구조 · 명명 규칙 · 환경설정 분리 — 실측 2026-10-14 (<code>main</code> @ <code>9921de9</code>)</p>
+  <p>폴더 구조 · 명명 규칙 · 환경설정 분리 — 실측 2026-10-14 (<code>main</code> @ <code>e348bd1</code>)</p>
   <p style="margin-top:8px">
     <span class="tag now">현행</span> 저장소에서 실측한 사실 ·
     <span class="tag rec">권고</span> 아직 없거나 새로 정하는 규칙 ·
@@ -88,7 +88,7 @@
   <ul>
     <li><b>정본은 파일이다.</b> 이 문서는 요약이다. 표의 "정본" 열이 가리키는 파일이 항상 이긴다. 수치가 의심되면 <a href="#remeasure">5절 명령</a>으로 다시 잰다.</li>
     <li><b>새 규칙보다 기존 관례.</b> 아래 명명 규칙은 이미 저장소에 다수로 존재하는 패턴을 문서화한 것이다. 기존 파일을 이 문서에 맞추려 일괄 rename 하지 않는다(Surgical Changes).</li>
-    <li><b>디렉터리마다 규칙이 다르다.</b> <code>src/dash</code>(snake_case) · <code>ui/</code>(kebab-case) · 화면 스키마(한글 화면명)는 각자 근거가 있다. 전역 단일 규칙을 강제하지 않는다.</li>
+    <li><b>디렉터리마다 규칙이 다르다.</b> <code>src/dash</code>(snake_case) · <code>ui/</code>(kebab-case) · 화면 스키마(영문 snake_case)는 각자 근거가 있다. 전역 단일 규칙을 강제하지 않는다.</li>
     <li>관련 정본: <code>CLAUDE.md</code>(모듈 구조·워크트리), <code>docs/DEV_ENVIRONMENT.md</code>(런타임), <code>.claude/rules/frontend-design-defaults.md</code>(UI 금지 패턴).</li>
   </ul>
 </section>
@@ -106,7 +106,7 @@
 │   ├── styles/             tailwind.css · transitions.css (전역 CSS)
 │   ├── lib/                utils.ts (cn 등 프레임워크 무관 유틸)
 │   ├── ds/                 index.tsx (디자인시스템 공개 진입점)
-│   └── dash/               ★ 앱 본체 — 루트 56파일(공용) + 하위 13개
+│   └── dash/               ★ 앱 본체 — 루트 58파일(공용) + 하위 13개
 │       ├── login/ dashboard/ ffms/ risk/ sfund/ brief/ trust/ system/
 │       │                   메뉴 도메인 폴더 &lt;대분류&gt;/&lt;중분류&gt;/ (정본 docs/filetree.md)
 │       ├── ui/             shadcn/Radix 프리미티브 (kebab-case)
@@ -156,8 +156,8 @@ ew_result_model.test.ts   ← 그 로직의 테스트</pre>
     <tbody>
       <tr><td><code>src/dash/*</code></td><td><span class="tag now">현행</span> snake_case + 역할 접미사</td><td><code>audit_log_model.ts</code></td><td>다수 관례</td></tr>
       <tr><td><code>src/dash/ui/*</code></td><td><span class="tag now">현행</span> kebab-case</td><td><code>period-picker.tsx</code></td><td>shadcn 레지스트리(<code>components.json</code>)</td></tr>
-      <tr><td>화면 스키마 <code>&lt;대분류&gt;/&lt;중분류&gt;/*.ts</code></td><td><span class="tag now">현행</span> <b>메뉴 리프 한글 라벨</b>(공백→<code>_</code>)</td><td><code>ffms/ent/전체_투자실적.ts</code></td><td>메뉴구성도 시트가 정본</td></tr>
-      <tr><td><code>src/dash/schemas/*</code></td><td><span class="tag now">현행</span> 인프라 = snake_case</td><td><code>build_row.ts</code></td><td>다수 관례</td></tr>
+      <tr><td>화면 스키마 (<code>src/dash/&lt;도메인&gt;/&lt;중분류&gt;/*.ts</code>)</td><td><span class="tag now">현행</span> <b>영문 snake_case</b> = route 의 snake 표기. 전용 페이지 보조 스키마는 <code>&lt;페이지&gt;_schema.ts</code>. 한글 파일명 금지(2026-10-14 전환)</td><td><code>gp_spec.ts</code> · <code>investee_profile_schema.ts</code></td><td><a href="라우트_파일명_가이드.md">라우트·파일명 가이드</a></td></tr>
+      <tr><td><code>src/dash/schemas/*</code></td><td><span class="tag now">현행</span> 스키마 인프라(레지스트리·타입·렌더러) = snake_case</td><td><code>build_row.ts</code> · <code>filter_field.ts</code></td><td>화면 스키마는 도메인 폴더로 이동(#324)</td></tr>
       <tr><td><code>src/dash/fields/*</code></td><td><span class="tag gap">편차</span> 컴포넌트 PascalCase · 로직 snake_case 혼재</td><td><code>AddressField.tsx</code> · <code>address_value.ts</code></td><td>4절 참조</td></tr>
       <tr><td><code>src/dash/motion/*</code></td><td><span class="tag now">현행</span> kebab-case</td><td><code>count-up.tsx</code></td><td>ui/ 와 동일 계열</td></tr>
     </tbody>
@@ -168,7 +168,7 @@ ew_result_model.test.ts   ← 그 로직의 테스트</pre>
     <thead><tr><th>접미사</th><th>수</th><th>의미</th><th>확장자</th></tr></thead>
     <tbody>
       <tr><td><code>_modal</code></td><td>36</td><td>등록/수정/상세 팝업(Dialog) 컴포넌트</td><td>.tsx</td></tr>
-      <tr><td><code>_manage</code></td><td>29</td><td>관리형 리스트 화면(검색·그리드·워크플로우). 라우트 진입점</td><td>.tsx</td></tr>
+      <tr><td><code>_manage</code></td><td>33</td><td>관리형 리스트 화면(검색·그리드·워크플로우). 라우트 진입점</td><td>.tsx</td></tr>
       <tr><td><code>_model</code></td><td>24</td><td>React 없는 순수 판정·계산 로직 — 테스트 대상의 중심</td><td>.ts</td></tr>
       <tr><td><code>_data</code></td><td>17</td><td>화면 전용 더미 데이터 (백엔드 대체)</td><td>.ts</td></tr>
       <tr><td><code>_schemas</code></td><td>11</td><td>화면 전용 폼/컬럼 스키마 (zod 포함)</td><td>.ts</td></tr>
@@ -200,7 +200,8 @@ ew_result_model.test.ts   ← 그 로직의 테스트</pre>
       <tr><td>훅</td><td><code>use</code> + PascalCase</td><td><code>useHotkey</code></td></tr>
       <tr><td>CSS 변수</td><td><code>--kebab</code>, 정본 <code>tokens.css</code></td><td><code>--primary</code>, <code>--dur-fast</code></td></tr>
       <tr><td>localStorage 키</td><td><code>apfs.</code> + camelCase, <b>원시 문자열</b>로 저장</td><td><code>apfs.theme</code>, <code>apfs.route</code>, <code>apfs.favFabPos</code></td></tr>
-      <tr><td>라우트 path</td><td>영문 kebab-case (해시 <code>#/path</code>)</td><td><code>#/login</code>, <code>investment-review</code></td></tr>
+      <tr><td>라우트 path</td><td>영문 kebab-case (해시 <code>#/path</code>). 메뉴 리프는 <code>{ label:"한글", path:"kebab" }</code> — 라벨은 표시용, path 가 식별자. 옛 route 는 <code>route_alias.ts</code> 로 승격 (<a href="라우트_파일명_가이드.md">가이드</a>)</td><td><code>#/login</code>, <code>#/gp-report-query</code></td></tr>
+      <tr><td>확장자</td><td>JSX 가 있으면 <code>.tsx</code>, 없으면 <code>.ts</code> (스키마·모델·데이터·설정)</td><td><code>gp_report_query.tsx</code> · <code>gp_spec.ts</code></td></tr>
     </tbody>
   </table></div>
 
@@ -287,8 +288,8 @@ export const env = Env.parse(import.meta.env); // 누락 시 기동 단계에서
       <tr><td>1</td><td><span class="tag risk">위험</span> <code>.env</code> · <code>.claude/settings.local.json</code>이 저장소 <code>.gitignore</code>가 아니라 <b>개인 전역 <code>~/.gitignore</code></b>로만 무시됨</td><td>전역 설정이 없는 팀원은 비밀·개인 설정을 커밋할 수 있다</td><td>저장소 <code>.gitignore</code>에 <code>.env</code>, <code>.env.*.local</code>, <code>.env.local</code>, <code>.claude/settings.local.json</code> 추가</td></tr>
       <tr><td>2</td><td><span class="tag gap">편차</span> <code>components.json</code>이 <code>hooks: @/dash/hooks</code>를 선언하나 디렉터리 없음</td><td>shadcn 이 훅을 생성하면 새 폴더가 생긴다</td><td>그대로 두되, 훅 생성 시 이 경로로 모은다</td></tr>
       <tr><td>3</td><td><span class="tag gap">편차</span> <code>fields/</code>에 PascalCase(<code>AddressField.tsx</code>)와 snake_case(<code>address_value.ts</code>) 혼재</td><td>새 필드 파일명 선택이 흔들림</td><td>현행 유지: <b>컴포넌트 = PascalCase, 순수 로직 = snake_case</b>를 이 폴더의 규칙으로 인정</td></tr>
-      <tr><td>4</td><td><span class="tag gap">편차</span> 파일 800줄 한도 초과: <code>fields/RichTextField.tsx</code> 1611 · <code>shell.tsx</code> 1052 · <code>generic_list.tsx</code> 957 · <code>fields/RichTextElements.tsx</code> 811</td><td>golden-principles 위반</td><td>별도 요청 시 분리 (이번 문서 범위 밖)</td></tr>
-      <tr><td>5</td><td><code>docs/DEV_ENVIRONMENT.md</code> 수치 낡음 (테스트 21개 → 실측 54개)</td><td>문서 신뢰도</td><td>갱신됨 2026-10-14</td></tr>
+      <tr><td>4</td><td><span class="tag gap">편차</span> 파일 800줄 한도 초과: <code>fields/RichTextField.tsx</code> 1611 · <code>shell.tsx</code> 1054 · <code>generic_list.tsx</code> 964 · <code>fields/RichTextElements.tsx</code> 811</td><td>golden-principles 위반</td><td>별도 요청 시 분리 (이번 문서 범위 밖)</td></tr>
+      <tr><td>5</td><td><code>docs/DEV_ENVIRONMENT.md</code> 수치 낡음 (테스트 21개 → 실측 55개)</td><td>문서 신뢰도</td><td>갱신됨 2026-10-14</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -316,7 +317,7 @@ find src/dash -name '*.ts' -o -name '*.tsx' | xargs wc -l | sort -rn | awk '$1 &
 </section>
 
 <footer>
-  실측 2026-10-14 · 기준 커밋 <code>9921de9</code> · 정본: <code>CLAUDE.md</code>, <code>docs/DEV_ENVIRONMENT.md</code>, 각 설정 파일
+  실측 2026-10-14 · 기준 커밋 <code>e348bd1</code> · 정본: <code>CLAUDE.md</code>, <code>docs/DEV_ENVIRONMENT.md</code>, 각 설정 파일
 </footer>
 
 </div>

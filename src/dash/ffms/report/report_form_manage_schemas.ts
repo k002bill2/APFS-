@@ -20,7 +20,7 @@ const REP_COLUMNS: PageSchema['columns'] = [
 /* 양식 등록/수정 — 같은 스키마를 RowFormModal `title` prop으로 '양식 등록' / '양식 수정' 두 제목으로 연다.
    첨부는 `filepond`(DocumentsField 통일 드롭존 — 목업의 드래그앤드롭+파일 선택에 대응). 3필드라 460px 1단 모달. */
 export const FORM_SCHEMA: PageSchema = parsePageSchema({
-  route: '보고양식관리/양식', title: '양식 등록', kind: 'form', entity: '보고양식',
+  route: 'report-form/form', title: '양식 등록', kind: 'form', entity: '보고양식',
   columns: REP_COLUMNS,
   fields: [
     { key: 'title', label: '제목', control: 'text', long: true, required: true },

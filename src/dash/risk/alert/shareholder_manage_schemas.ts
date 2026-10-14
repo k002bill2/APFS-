@@ -32,7 +32,7 @@ const REP_COLUMNS: PageSchema['columns'] = [
    ⚠ 항목 6개는 RowFormModal 의 2단 wide 경계(`fields.length > 6`)에 **걸리지 않는다** →
      1단 좁은 모달(max-w-[460px])이 규격이다. long:true 는 그 안에서 컨트롤 폭 100% 만 켠다. */
 export const SHAREHOLDER_SCHEMA: PageSchema = parsePageSchema({
-  route: '운용사 주주변동관리/등록', title: '주주변동 등록', kind: 'form', entity: '주주변동',
+  route: 'shareholder-manage/create', title: '주주변동 등록', kind: 'form', entity: '주주변동',
   columns: REP_COLUMNS,
   fields: [
     /* 목업 `<input id="rm-ym" readonly placeholder="YYYY-MM">` + bindPick(ym,'month') = 월 그리드 픽커.
@@ -53,7 +53,7 @@ export const SHAREHOLDER_SCHEMA: PageSchema = parsePageSchema({
    ⚠ 목업엔 **해제사유 입력이 없다** — 형제 화면(S2_53)엔 있지만 이 원문엔 없어 만들지 않는다.
    선택 대상은 화면 상태에서 주입하는 읽기전용 값이다(입력 대상 아님). */
 export const RELEASE_SCHEMA: PageSchema = parsePageSchema({
-  route: '운용사 주주변동관리/해제등록', title: '주주변동 해제등록', kind: 'form', entity: '주주변동',
+  route: 'shareholder-manage/release', title: '주주변동 해제등록', kind: 'form', entity: '주주변동',
   columns: REP_COLUMNS,
   fields: [
     { key: 'target', label: '선택 대상', control: 'readonly' },

@@ -11,10 +11,11 @@ import { GP_VERIFY_TABLES, GP_VERIFY_FUND, GP_VERIFY_BASE_YM } from './gp_verify
 
 type P = { onNav?: (r: string) => void };
 
-export const GP_VERIFY_ROUTE = '조합별 실물검증 결과 보고';
+export const GP_VERIFY_LABEL = '조합별 실물검증 결과 보고';
+export const GP_VERIFY_ROUTE = 'gp-verify-report';
 
 export const GP_VERIFY_CONFIG: TablesPageConfig = {
-  system: '자펀드 보고', group: '실물검증', label: GP_VERIFY_ROUTE, route: GP_VERIFY_ROUTE,
+  system: '자펀드 보고', group: '실물검증', label: GP_VERIFY_LABEL, route: GP_VERIFY_ROUTE,
   tables: GP_VERIFY_TABLES, unit: true,
   filters: [
     { label: '자펀드', kind: 'select', def: GP_VERIFY_FUND, options: [GP_VERIFY_FUND], allLabel: null },

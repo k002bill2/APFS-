@@ -112,7 +112,7 @@ export const patchFromForm = (f: FundInfoForm): Partial<SubFundRow> => {
 export const EXT: SubFundExt = {
   crumbs: ['홈', '투자자산관리', '조합관리', LABEL],
   title: LABEL,
-  favRoute: LABEL,
+  favRoute: "asset-fund-info-manage",
   seed: [...DEMO, FUND_INFO_ROW],
   extraColumns: buildExtraColumns(),
   extraNumKeys: NUM_EXTRA,

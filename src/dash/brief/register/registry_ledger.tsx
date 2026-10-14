@@ -110,7 +110,7 @@ export function RegistryLedgerManage({ onNav }: { onNav?: (r: string) => void })
   const close = () => setModal(null);
 
   return (
-    <RiskPage system="부처보고" group="등록원부" label={LABEL} route={LABEL} onNav={onNav}
+    <RiskPage system="부처보고" group="등록원부" label={LABEL} route="registry-ledger" onNav={onNav}
       filters={filters} onReset={reset} contextActions={selActions}
       actions={<>
         <SplitButton label="등록원부입력" leadingIcon="plus" menuLabel="등록원부 추가 방법 더보기"

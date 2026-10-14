@@ -51,7 +51,7 @@ describe('상세 팝업(detail) 옵트인 불변식', () => {
      나머지는 `-`(미실사) 또는 `X`(보고 대상 제외)라 **평상 셀이어야 한다** — 전 행을 링크로 만들면
      열리지 않는 죽은 링크가 4개 생긴다. 건수를 못박아 그 퇴행을 잡는다. */
   it('투자금 실사보고는 7행 중 실사일자가 날짜인 3행만 체크리스트 링크다', () => {
-    const s = resolveSchema('투자금 실사보고');
+    const s = resolveSchema('invest-due-diligence');
     const col = s.columns.find((c) => c.key === 'dueDiligDate');
     expect(col?.detail).toBe('dueDiligChecklist');
     const linked = (s.sample ?? []).filter((r) => linksDetail(col, r.dueDiligDate));
@@ -61,7 +61,7 @@ describe('상세 팝업(detail) 옵트인 불변식', () => {
   });
 
   it('관리보수관리는 지급일자 전 행이 상세조회 링크다(원문도 전 행이 버튼)', () => {
-    const s = resolveSchema('관리보수관리');
+    const s = resolveSchema('mgmt-fee');
     const col = s.columns.find((c) => c.key === 'payDate');
     expect(col?.detail).toBe('mgmtFeeDetail');
     expect(col?.detailWhen).toBeUndefined();

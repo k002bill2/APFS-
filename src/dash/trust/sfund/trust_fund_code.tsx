@@ -66,7 +66,7 @@ export function TrustFundCode({ onNav }: { onNav?: (r: string) => void }) {
   });
 
   return (
-    <RiskPage system="수탁보고" group="자펀드 수탁" label={LABEL} route={LABEL} onNav={onNav}
+    <RiskPage system="수탁보고" group="자펀드 수탁" label={LABEL} route="trust-fund-code" onNav={onNav}
       filters={filters} onReset={reset} contextActions={selActions}
       footerLeft={<span>수탁기관 {org} · 총 {String(rows.length)}건</span>}
       onExport={exportExcel} exportEnabled={!modal}>

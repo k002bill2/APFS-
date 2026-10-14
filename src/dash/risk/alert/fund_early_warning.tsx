@@ -355,7 +355,7 @@ export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
       crumbs={['홈', '조기경보', '조기경보', '자펀드별 조기경보 조회']}
       title="자펀드별 조기경보 조회"
       cardTitle="자펀드별 조기경보 조회"
-      favRoute="자펀드별 조기경보 조회"
+      favRoute="fund-early-warning"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 적용된 필터 칩(값만)은 둘째 줄(appliedFilters). FilterChip 세트는 두지 않는다 —
          목업 검색박스에 카테고리형 주 필터가 없다(형제 S2_47 과 같은 판단).

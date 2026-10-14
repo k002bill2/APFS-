@@ -24,7 +24,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '사후관리기록 관리',   // ⚠️ data.ts 메뉴 리프 라벨과 정확히 일치(라우팅 키)
+  route: 'post-mgmt-record',   // ⚠️ data.ts 메뉴 리프 라벨과 정확히 일치(라우팅 키)
   title: '사후관리기록 관리',
   kind: 'list',
   entity: '사후관리기록',

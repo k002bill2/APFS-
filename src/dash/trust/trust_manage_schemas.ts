@@ -19,7 +19,7 @@ export const displayCode = (s: string): string => s.match(/^(\w+)\s*\(/)?.[1] ??
 
 /* ① 실물자료·유가증권 — 목록 14열에서 No 성격의 순번 제외 없이 원문 순서 그대로(순번은 원문 데이터 항목이라 둔다) */
 export const PHYSICAL_FORM: PageSchema = parsePageSchema({
-  route: '실물자료관리(업로드)/폼', title: '실물자료 수정', kind: 'form', entity: '실물자료',
+  route: 'trust-physical-upload/form', title: '실물자료 수정', kind: 'form', entity: '실물자료',
   columns: [{ key: 'union', label: '조합명', type: 'text' }],
   fields: [
     { key: 'custodian', label: '수탁기관', control: 'text' },
@@ -41,7 +41,7 @@ export const PHYSICAL_FORM: PageSchema = parsePageSchema({
 
 /* ② 자펀드코드 — 원문 셀 편집 4칸(조합이름·수탁기관조합코드·자조합수탁·모태수탁). 체크박스 2칸은 on/off → switch(Y/N) */
 export const FUND_CODE_FORM: PageSchema = parsePageSchema({
-  route: '자펀드코드 조회/폼', title: '자펀드코드 수정', kind: 'form', entity: '자펀드코드',
+  route: 'trust-fund-code/form', title: '자펀드코드 수정', kind: 'form', entity: '자펀드코드',
   columns: [{ key: 'nm', label: '조합이름', type: 'text' }],
   fields: [
     { key: 'nm', label: '조합이름', control: 'text', required: true, long: true },
@@ -54,7 +54,7 @@ export const FUND_CODE_FORM: PageSchema = parsePageSchema({
 
 /* ③ 계좌정보 — 목록 컬럼 = S3_104 계좌정보조회 18열(No 제외 17). 분류값은 원문 값이 1건뿐이라 선택지를 만들지 않고 텍스트로 받는다 */
 export const ACCOUNT_FORM: PageSchema = parsePageSchema({
-  route: '계좌정보 관리/폼', title: '계좌정보 등록', kind: 'form', entity: '계좌정보',
+  route: 'trust-account-info/form', title: '계좌정보 등록', kind: 'form', entity: '계좌정보',
   columns: [{ key: 'acc', label: '계좌번호', type: 'text' }],
   fields: [
     { key: 'acc', label: '계좌번호', control: 'text', required: true },
@@ -81,7 +81,7 @@ export const ACCOUNT_FORM: PageSchema = parsePageSchema({
 /* ④ 입출금정보 — 목록 컬럼 = S3_106 입출금정보조회 19열(No 제외 18). 2단 헤더 '거래금액' 아래 두 칸은 평면 폼이라 접두사를 붙인다.
    입출금구분은 원문 ioTag 가 구분하는 두 값(입금·출금)만 선택지로 둔다 */
 export const CASHFLOW_FORM: PageSchema = parsePageSchema({
-  route: '입출금 정보관리/폼', title: '입출금정보 등록', kind: 'form', entity: '입출금정보',
+  route: 'trust-cashflow-info/form', title: '입출금정보 등록', kind: 'form', entity: '입출금정보',
   columns: [{ key: 'acct', label: '계좌번호', type: 'text' }],
   fields: [
     { key: 'acct', label: '계좌번호', control: 'text', required: true },

@@ -23,7 +23,7 @@ export const USE_OPTIONS = ['여', '부'] as const;
 /** 코드구분 등록/수정 — 5필드(≤6 → 460px 1단). `exclude` = 수정 중인 자기 자신(상위로 고를 수 없다). */
 export function groupSchema(mode: 'create' | 'edit', groups: readonly CodeGroup[], exclude?: string): PageSchema {
   return parsePageSchema({
-    route: '공통코드 관리/코드구분', title: mode === 'create' ? '코드구분 등록' : '코드구분 수정', kind: 'form', entity: '코드구분',
+    route: 'code-manage/code-group', title: mode === 'create' ? '코드구분 등록' : '코드구분 수정', kind: 'form', entity: '코드구분',
     columns: [{ key: 'code', label: '코드구분', type: 'code' }, { key: 'name', label: '코드구분명', type: 'text' }],
     fields: [
       { key: 'code', label: '코드구분', control: mode === 'edit' ? 'readonly' : 'text', required: mode === 'create' },
@@ -39,7 +39,7 @@ export function groupSchema(mode: 'create' | 'edit', groups: readonly CodeGroup[
 /** 코드상세 등록/수정 — 7필드(>6 → 880px 2단). 코드구분은 상위에서 고정(readonly), 코드는 수정 시 잠금. */
 export function detailSchema(mode: 'create' | 'edit'): PageSchema {
   return parsePageSchema({
-    route: '공통코드 관리/코드상세', title: mode === 'create' ? '코드 등록' : '코드 수정', kind: 'form', entity: '코드',
+    route: 'code-manage/code-detail', title: mode === 'create' ? '코드 등록' : '코드 수정', kind: 'form', entity: '코드',
     columns: [{ key: 'code', label: '코드', type: 'code' }, { key: 'name', label: '코드명', type: 'text' }],
     fields: [
       { key: 'gcode', label: '코드구분', control: 'readonly' },

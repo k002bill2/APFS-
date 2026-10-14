@@ -25,7 +25,7 @@
 | `npm run dev` | Vite dev 서버 (**포트 5273 고정**, `strictPort`) |
 | `npm run build` | `vite build` → `dist/` |
 | `npm run preview` | 빌드 산출물 미리보기 (**포트 4273 고정**) |
-| `npm test` | `vitest run` (테스트 파일 54개 — `vitest.config.ts` `include: src/dash/**/*.test.ts`) |
+| `npm test` | `vitest run` (테스트 파일 55개 — `vitest.config.ts` `include: src/dash/**/*.test.ts`) |
 | `npm run test:watch` | `vitest` watch |
 
 - 번들러: **Vite** + `@vitejs/plugin-react`. JSX 변환은 빌드타임(esbuild).
