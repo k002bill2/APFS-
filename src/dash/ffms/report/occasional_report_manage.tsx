@@ -46,7 +46,7 @@ import * as XLSX from 'xlsx';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../../ui/alert-dialog';
 import { PeriodPicker } from '../../ui/period-picker';
 import { OccasionalReportModal } from './occasional_report_modal';
-import { GpSpecModal } from '../../gp_spec_modal';
+import { GpSpecModal } from './gp_spec_modal';
 import { SubFundSpecModal } from './subfund_spec_modal';
 import type { SubFundRow } from '../sfund/subfund_manage';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)

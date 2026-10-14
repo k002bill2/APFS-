@@ -13,11 +13,11 @@
      중복처럼 보이지만 원문이 그렇다 — 임의로 지우지 않는다. `<>` 꺾쇠는 원문의 장식이라 h3 로 대체한다.
    - `지출내역`·`삭감내역` 은 원문이 리터럴 `-` 다(값 없음이 아니라 "없음"이 원문 값). */
 import React from 'react';
-import { UI } from './components';
-import { fmt } from './aggrid_theme';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
+import { UI } from '../../components';
+import { fmt } from '../../aggrid_theme';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from '../../ui/dialog';
 import { PCT_LABEL, FORMULA, CALC_BY_NO, baseAmount } from './mgmt_fee_detail_model';
-import { withKvFill } from './kv_fill';
+import { withKvFill } from '../../kv_fill';
 
 const { Button } = UI;
 

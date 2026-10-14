@@ -12,7 +12,7 @@ import { parsePageSchema } from '../../schemas/types';
 import { computeSchemaTotal } from '../../schemas/totals';
 import { linksDetail } from '../../schemas/detail_link';
 import { INV_REVIEW_ROWS } from './investment_review_data';
-import { GP_RATIO_TITLE, GP_RATIO_EMPTY, gpRatioItems } from '../../gp_ratio_detail_model';
+import { GP_RATIO_TITLE, GP_RATIO_EMPTY, gpRatioItems } from '../gp/gp_ratio_detail_model';
 import { readSrc } from '../../test_src';
 
 const read = (p: string) => readFileSync(p, 'utf8');

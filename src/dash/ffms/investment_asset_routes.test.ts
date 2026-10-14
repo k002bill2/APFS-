@@ -9,7 +9,7 @@ import { SOURCE_COUNTS as PROFILE_COUNTS, PROVENANCE as PROFILE_PROV, formatProf
 import { SOURCE_COUNTS as STATS_COUNTS, SALES_SCALE_ROWS, INVEST_TYPE_ROWS, REGION_ROWS, PROVENANCE as STATS_PROV } from './ent/investee_invest_stats_model';
 import { RECOVERY_MODES, SOURCE_COUNTS as RECOVERY_COUNTS, recoverySummary, PROVENANCE as RECOVERY_PROV, DETAIL_ROWS_IR, DETAIL_ROWS_ALL, formatRecoveryUnit } from './ent/invest_recovery_detail_model';
 import { PROVENANCE as REPORT_PROV } from './gp/all_report_status_model';
-import { RATE, PCT_LABEL, FORMULA, CALC_BY_NO, baseAmount } from '../mgmt_fee_detail_model';
+import { RATE, PCT_LABEL, FORMULA, CALC_BY_NO, baseAmount } from './gp/mgmt_fee_detail_model';
 
 /* 투자자산관리 > 투자기업정보(7) · 운용사 모니터링(6) · 자펀드 관리(6) 라우트 결선 + **출처 충실성** 불변식.
    (사용자 이미지 정본 2026-09-15 — 대분류 3 / 리프 19)
@@ -606,7 +606,7 @@ describe('S1_43 관리보수보고 상세조회 팝업 — 원문 대조', () =>
   });
 
   it('팝업 kv 9항목 라벨이 원문 dl 순서와 같다', () => {
-    const modal = readFileSync(new URL('../mgmt_fee_detail_modal.tsx', import.meta.url), 'utf8');
+    const modal = readFileSync(new URL('./gp/mgmt_fee_detail_modal.tsx', import.meta.url), 'utf8');
     for (const l of ['운용사', '자펀드', '보고구분', '지급구분', '지급일자', '금액', '지출내역', '산출내역', '삭감내역']) {
       // 원문 dt 는 class 를 가질 수 있다(`<dt class="row-b">삭감내역</dt>`)
       expect(html, `원문 dt ${l}`).toMatch(new RegExp('<dt[^>]*>' + l + '</dt>'));
@@ -615,7 +615,7 @@ describe('S1_43 관리보수보고 상세조회 팝업 — 원문 대조', () =>
   });
 
   it('산출내역 표 7개 헤더가 원문 그대로다', () => {
-    const modal = readFileSync(new URL('../mgmt_fee_detail_modal.tsx', import.meta.url), 'utf8');
+    const modal = readFileSync(new URL('./gp/mgmt_fee_detail_modal.tsx', import.meta.url), 'utf8');
     for (const h of ['기준', '일자', '기준금액', '일수', '보수율', '관리보수금액', '계산산식']) {
       expect(modal, `헤더 ${h}`).toContain('>' + h);
     }
@@ -629,7 +629,7 @@ describe('S1_43 관리보수보고 상세조회 팝업 — 원문 대조', () =>
 
 describe('S1_40 투자금실사보고서 체크리스트 팝업 — 원문 대조', () => {
   const html = readFileSync('docs/mockups/01_투자자산관리/S1_40_투자금실사보고.html', 'utf8');
-  const modal = readFileSync(new URL('../due_dilig_checklist_modal.tsx', import.meta.url), 'utf8');
+  const modal = readFileSync(new URL('./gp/due_dilig_checklist_modal.tsx', import.meta.url), 'utf8');
 
   it('원문에 openChecklist 와 날짜 형식 링크 조건이 있다', () => {
     expect(html).toContain('function openChecklist(r)');

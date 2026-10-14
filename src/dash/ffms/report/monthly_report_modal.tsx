@@ -16,10 +16,10 @@
      운용사명("운용사 003")을 얹으면 본문(AJ-ISU)과 어긋나기 때문이다. 실데이터 연동 시 `row`로 조회하도록 바꾼다.
      (동일 한계·동일 처리: occasional_report_modal.tsx) */
 import React, { useState } from 'react';
-import { UI } from './components';
-import type { Tone } from './components';
-import { fmt } from './aggrid_theme';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
+import { UI } from '../../components';
+import type { Tone } from '../../components';
+import { fmt } from '../../aggrid_theme';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from '../../ui/dialog';
 import {
   RPT_META, MEMBERS, MEMBERS_TOTAL, INVEST, INVEST_TOTAL, GRADES, GRADE_CRITERIA,
   RECOVERY, RECOVERY_TOTAL, OCC_NOTES, DEPOSITS, DEPOSITS_TOTAL,

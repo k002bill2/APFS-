@@ -15,9 +15,9 @@
    원문의 `.doclink` 는 클릭 시 토스트만 띄우는 목업 링크라, 우리는 **다운로드 동작 없는 파일 칩**으로
    옮긴다 — 열리지 않는 링크를 만들면 죽은 버튼이 된다. */
 import React from 'react';
-import { UI } from './components';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
-import { glyphFor } from './ui/attachment';
+import { UI } from '../../components';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from '../../ui/dialog';
+import { glyphFor } from '../../ui/attachment';
 
 const { Button } = UI;
 

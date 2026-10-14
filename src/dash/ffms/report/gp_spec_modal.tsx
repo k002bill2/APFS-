@@ -10,10 +10,10 @@
       (6,500,000,000)과 맞지 않는다 — S1_02 원문이 여러 자펀드를 갖고 목업이 1건만 이식한 결과다.
       계산으로 고쳐 쓰지 않고 원문 값을 보존한다. */
 import React, { useState } from 'react';
-import { UI } from './components';
-import { fmt } from './aggrid_theme';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
-import { withKvFill } from './kv_fill';
+import { UI } from '../../components';
+import { fmt } from '../../aggrid_theme';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from '../../ui/dialog';
+import { withKvFill } from '../../kv_fill';
 
 const { Button, SegTabs, StatusBadge } = UI;
 

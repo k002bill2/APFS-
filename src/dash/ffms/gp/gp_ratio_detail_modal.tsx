@@ -8,8 +8,8 @@
    구성(목업 → 우리 규약): `.modal.wide`(680px) → Radix Dialog · kv 표 → KvGrid(due_dilig_checklist_modal 복사 관례) ·
    푸터 `닫기` 하나(원문 `.modal-foot.right`). */
 import React from 'react';
-import { UI } from './components';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
+import { UI } from '../../components';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from '../../ui/dialog';
 import { GP_RATIO_TITLE, GP_RATIO_EMPTY, gpRatioItems } from './gp_ratio_detail_model';
 
 const { Button } = UI;

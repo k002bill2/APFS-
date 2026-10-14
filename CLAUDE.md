@@ -45,7 +45,7 @@ APFS/
 
 `src/dash/*.tsx|ts`는 표준 **ES 모듈**입니다. 각 모듈이 컴포넌트/데이터를 `export`하고 다음 모듈이 `import`로 받아 씁니다. (이전 `(function(w){…})(window)` 전역 IIFE 패턴은 2026-06 마이그레이션으로 제거됨.)
 
-**폴더 배치 규칙(2026-10-13, 정본 `docs/filetree.md`)**: 라우트된 페이지는 메뉴 위치의 `<대분류>/<중분류>/`에 둔다(스키마 페이지 `*.ts` 포함 — `schemas/index.ts` 가 import 해 등록). 페이지 전용 modal·model·data·schemas·test 는 페이지 옆에. 한 대분류 안 여러 중분류가 쓰면 대분류 루트(`trust/`), 여러 대분류가 쓰면 `src/dash/` 루트. 여러 중분류의 화면 설정을 한 파일에 모으지 않는다 — 공용 골격(`risk_tables_page`)을 쓰더라도 설정 파일은 중분류마다 따로 둔다(예: `risk/valuation/valuation_table_pages` · `trust/mfund/trust_mother_table_pages`). 테스트도 같은 규칙으로 검사 대상 옆에 둔다(대상이 여러 중분류면 대분류 루트, 여러 대분류면 `src/dash/` 루트). 회계(`account/`)는 페이지가 생길 때 만든다. 테스트에서 소스를 문자열로 읽을 땐 `test_src.ts`의 `readSrc(basename)`/`walkDash()`를 쓴다(고정 경로 금지 — 파일 이동 시 가드가 깨지거나 조용히 0건 통과).
+**폴더 배치 규칙(2026-10-13, 정본 `docs/filetree.md`)**: 라우트된 페이지는 메뉴 위치의 `<대분류>/<중분류>/`에 둔다(스키마 페이지 `*.ts` 포함 — `schemas/index.ts` 가 import 해 등록). 페이지 전용 modal·model·data·schemas·test 는 페이지 옆에. 한 대분류 안 여러 중분류가 쓰면 대분류 루트(`trust/`), 여러 대분류가 쓰면 `src/dash/` 루트. 여러 중분류의 화면 설정을 한 파일에 모으지 않는다 — 공용 골격(`risk_tables_page`)을 쓰더라도 설정 파일은 중분류마다 따로 둔다(예: `risk/valuation/valuation_table_pages` · `trust/mfund/trust_mother_table_pages`). 테스트도 같은 규칙으로 검사 대상 옆에 둔다(대상이 여러 중분류면 대분류 루트, 여러 대분류면 `src/dash/` 루트). 공용 인프라가 import 한다는 이유만으로 루트에 두지 않는다 — `generic_list` 의 상세 팝업 레지스트리(`DETAIL_POPUPS`)처럼 슬롯만 공용이고 실제로 띄우는 화면이 한 중분류뿐이면 그 중분류 폴더에 둔다(예: `ffms/gp/mgmt_fee_detail_modal` · `ffms/report/monthly_report_modal`). 메뉴에 없는 앱 라우트(`designsystem`·`editor_page`·`schedule`)는 루트에 둔다. 회계(`account/`)는 페이지가 생길 때 만든다. 테스트에서 소스를 문자열로 읽을 땐 `test_src.ts`의 `readSrc(basename)`/`walkDash()`를 쓴다(고정 경로 금지 — 파일 이동 시 가드가 깨지거나 조용히 0건 통과).
 
 **앱 모듈 (역할)**
 - `data.ts` → `APFS_DATA` — 메뉴/위젯/지표 등 화면 더미 데이터 소스
@@ -54,7 +54,7 @@ APFS/
 - `charts.tsx` → `Charts` — Recharts 동일 스펙의 자체 SVG 차트 프리미티브 (Sparkline/Donut/LineTrend/HBars 등)
 - `shell.tsx` → `Shell` — GNB / LNB(3-레벨) / 브레드크럼 / 알림센터 / 테마 토글
 - `designsystem.tsx` → 컬러 토큰·타이포·공통 컴포넌트 프리뷰
-- `main_widgets.tsx` + `main.tsx` → 메인 종합 대시보드 (공유 위젯 + 3개 레이아웃 시안)
+- `main_widgets.tsx` + `dashboard/main.tsx` → 메인 종합 대시보드 (공유 위젯 + 3개 레이아웃 시안)
 - PRD 페이지: `performance` `risk` `gp_health` `accounting` `schedule` `report`.tsx (각 `Pages.*` export)
 - 인증 화면 3종(Shell 없는 독립 라우트, 정본=claude.ai/design 캔버스 `APFS 로그인 프로토타입.dc.html`): `login_demo.tsx`(S0_001) · `onboarding_issue.tsx`(S0_002 발급) · `onboarding_invite.tsx`(S0_003 초대). 판정 로직은 `auth_model.ts`(+테스트), 공용 UI는 `auth_shared.tsx`. 관리자가 초대를 *보내는* `user_invite_manage.tsx`(S0_103)와는 별개 화면이다.
 - 자펀드 관리(route `subfund`, 리프 라벨 "자펀드 관리"): `subfund_manage.tsx`(`SubFundManage` export) + `subfund_form_modal`(결성조합 등록/수정) + `subfund_spec_modal`(읽기전용 명세 팝업) + `subfund_manage_schemas.ts`. 구 `subfund.tsx`(bespoke, `SubFund` export)는 2026-09-09 삭제됨. **별개 리프** 조합관리 > `자펀드정보관리`(`asset_fund_info_manage.tsx`)는 `SubFundManage`의 `ext` 확장 슬롯으로 v1.4 + S2_73 투자기준을 합성한 통합 그리드다(2026-09-28).

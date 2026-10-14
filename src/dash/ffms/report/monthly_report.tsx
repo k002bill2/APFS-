@@ -4,8 +4,8 @@
    여기는 창 크롬(제목 헤더 · 닫기)만 둔다. 데이터 한계(원천 1건)도 그 파일 주석이 정본. */
 import { useEffect, useState } from 'react';
 import { UI } from '../../components';
-import { MonthlyReportBody } from '../../monthly_report_modal';
-import { RPT_META } from '../../monthly_report_data';
+import { MonthlyReportBody } from './monthly_report_modal';
+import { RPT_META } from './monthly_report_data';
 
 const { Button } = UI;
 
