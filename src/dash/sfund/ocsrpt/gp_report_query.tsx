@@ -11,14 +11,14 @@
    - 날짜·년월은 원문 fmtD/fmtYM 표시값(YYYY-MM-DD / YYYY-MM)으로 싣는다. 빈 값은 null → '-'.
    - 조회 전용 — 행 선택 없음. 원문 스캐폴딩(GNB/LNB 토글·출처시스템 메뉴)·설계 메모·검토필요 마커(2026-09-24 삭제 규약)는 옮기지 않는다. */
 import { useMemo, useState } from 'react';
-import { toast } from '../ui/sonner';
-import { RiskPage } from '../risk_page_kit';
-import type { FilterSpec } from '../risk_page_kit';
-import { ReadGrid } from '../risk_grid';
-import { exportTables } from '../risk_excel';
-import type { ColMeta, TableMeta } from '../risk_table_meta';
-import { DEFAULT_UNIT } from '../schemas/unit';
-import type { Unit } from '../schemas/unit';
+import { toast } from '../../ui/sonner';
+import { RiskPage } from '../../risk_page_kit';
+import type { FilterSpec } from '../../risk_page_kit';
+import { ReadGrid } from '../../risk_grid';
+import { exportTables } from '../../risk_excel';
+import type { ColMeta, TableMeta } from '../../risk_table_meta';
+import { DEFAULT_UNIT } from '../../schemas/unit';
+import type { Unit } from '../../schemas/unit';
 
 export const GP_REPORT_QUERY_LABEL = '수시보고 제출현황';
 /** route 키 — 라벨 rename(2026-10-14, 구 '자펀드 보고 조회') 후에도 해시·localStorage·방문기록·즐겨찾기 보존(MENU leaf.path) */

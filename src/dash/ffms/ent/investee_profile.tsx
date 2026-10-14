@@ -16,8 +16,8 @@ import { useState } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';   // ⌘P 인쇄(푸터 툴팁 힌트와 짝)
-import { CompanyProfileBody } from '../../company_profile_model';
-import { SOURCE_COUNTS, CO_NAME } from '../../company_profile_data';
+import { CompanyProfileBody } from './company_profile_model';
+import { SOURCE_COUNTS, CO_NAME } from './company_profile_data';
 import { UNITS, DEFAULT_UNIT } from '../../schemas/unit';
 import type { Unit } from '../../schemas/unit';
 

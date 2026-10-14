@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { REPORT_ITEMS, optionLabel, UNDEFINED_MSG, GP_REPORT_QUERY_LABEL, GP_REPORT_QUERY_ROUTE } from './gp_report_query';
-import { APFS_DATA } from '../data';
+import { APFS_DATA } from '../../data';
 
 /* S5_121 원문 ITEMS 리터럴과 대조 */
-const MOCK = readFileSync(new URL('../../../docs/mockups/05_MOAF/S5_121_자펀드_보고_조회.html', import.meta.url), 'utf8').normalize('NFC');
-const app = readFileSync(new URL('../app.tsx', import.meta.url), 'utf8');
+const MOCK = readFileSync(new URL('../../../../docs/mockups/05_MOAF/S5_121_자펀드_보고_조회.html', import.meta.url), 'utf8').normalize('NFC');
+const app = readFileSync(new URL('../../app.tsx', import.meta.url), 'utf8');
 
 describe('수시보고 제출현황 — S5_121', () => {
   it('보고항목 8건의 key·label·순서가 원문과 같다', () => {

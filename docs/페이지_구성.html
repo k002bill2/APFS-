@@ -61,7 +61,7 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
 <body>
 <div class="top"><div class="top-in">
   <h1>APFS 페이지 구성</h1>
-  <span class="stats">라우트된 페이지 <b>98</b> (전용 tsx <b>80</b> · 스키마 <b>18</b>) · 미구현 리프 <b>26</b></span>
+  <span class="stats">라우트된 페이지 <b>97</b> (전용 tsx <b>79</b> · 스키마 <b>18</b>) · 미구현 리프 <b>27</b></span>
   <input type="search" id="q" placeholder="메뉴명·파일·라우트·화면ID 검색" aria-label="페이지 검색">
   <nav aria-label="대분류"><a href="#login">로그인</a><a href="#dashboard">대시보드</a><a href="#ffms">투자자산관리</a><a href="#risk">조기경보</a><a href="#sfund">자펀드 보고</a><a href="#account">회계</a><a href="#brief">부처보고</a><a href="#trust">수탁보고</a><a href="#system">관리자</a><a href="#shared">공용</a></nav>
 </div></div>
@@ -342,7 +342,7 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
     <article class="card" data-card>
       <header class="card-h">
         <div><span class="path">src/dash/ffms/ent/</span><h3>투자기업정보</h3></div>
-        <span class="count">페이지 7 · 파일 13</span>
+        <span class="count">페이지 7 · 파일 16</span>
       </header>
       <div class="tbl"><table>
         <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
@@ -396,8 +396,8 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
           <td class="muted"><code>#/우수투자기업 관리</code></td>
           <td class="muted"></td>
         </tr></tbody></table></div>
-      <details><summary>동반 파일 6개 (modal·model·data·test)</summary>
-        <ul class="chips"><li><code>invest_recovery_detail_model.ts</code></li><li><code>invest_recovery_filter.test.ts</code></li><li><code>investee_invest_stats_model.ts</code></li><li><code>투자금_회수현황.ts</code></li><li><code>투자기업정보_통합.ts</code></li><li><code>투자실적_현황_투자기업.ts</code></li></ul></details>
+      <details><summary>동반 파일 9개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>company_profile_data.ts</code></li><li><code>company_profile_modal.tsx</code></li><li><code>company_profile_model.tsx</code></li><li><code>invest_recovery_detail_model.ts</code></li><li><code>invest_recovery_filter.test.ts</code></li><li><code>investee_invest_stats_model.ts</code></li><li><code>투자금_회수현황.ts</code></li><li><code>투자기업정보_통합.ts</code></li><li><code>투자실적_현황_투자기업.ts</code></li></ul></details>
     </article>
     <article class="card" data-card>
       <header class="card-h">
@@ -455,11 +455,11 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
     <article class="card" data-card>
       <header class="card-h">
         <div><span class="path">src/dash/ffms/</span><h3>투자자산관리 공용 (여러 중분류)</h3></div>
-        <span class="count">페이지 0 · 파일 4</span>
+        <span class="count">페이지 0 · 파일 5</span>
       </header>
       <p class="empty">이 폴더에는 공용 파일만 있다.</p>
-      <details><summary>동반 파일 4개 (modal·model·data·test)</summary>
-        <ul class="chips"><li><code>asset_fund_info_merge.test.ts</code></li><li><code>asset_pages_29.test.ts</code></li><li><code>investment_asset_routes.test.ts</code></li><li><code>leaf_tabs.tsx</code></li></ul></details>
+      <details><summary>동반 파일 5개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>asset_fidelity_fix2.test.ts</code></li><li><code>asset_fund_info_merge.test.ts</code></li><li><code>asset_pages_29.test.ts</code></li><li><code>investment_asset_routes.test.ts</code></li><li><code>leaf_tabs.tsx</code></li></ul></details>
     </article></div>
   </section>
   <section id="risk" class="domain">
@@ -702,25 +702,25 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
     </article></div>
   </section>
   <section id="sfund" class="domain">
-    <h2><span>자펀드 보고</span><code>sfund/</code><small>페이지 6</small></h2>
+    <h2><span>자펀드 보고</span><code>sfund/</code><small>페이지 5</small></h2>
     <div class="grid">
     <article class="card" data-card>
       <header class="card-h">
         <div><span class="path">src/dash/sfund/ocsrpt/</span><h3>수시보고</h3></div>
-        <span class="count">페이지 1 · 파일 3</span>
+        <span class="count">페이지 1 · 파일 2</span>
       </header>
       <div class="tbl"><table>
         <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
         <tbody>
-        <tr data-q="조합 수시보고 내역 조합정보 조합 수시보고 내역 sfund/ocsrpt/gp_occasional_overview s5_117 s5_120">
-          <td class="menu">조합 수시보고 내역<span class="note">조합정보</span></td>
-          <td><code>gp_occasional_overview.tsx</code></td>
+        <tr data-q="수시보고 제출현황 수시보고 자펀드 보고 조회 sfund/ocsrpt/gp_report_query s5_121">
+          <td class="menu">수시보고 제출현황<span class="note">수시보고</span></td>
+          <td><code>gp_report_query.tsx</code></td>
           <td><span class="tag tsx">전용 페이지</span></td>
-          <td class="muted"><code>#/조합 수시보고 내역</code></td>
-          <td class="muted">S5_117 · S5_120</td>
+          <td class="muted"><code>#/자펀드 보고 조회</code></td>
+          <td class="muted">S5_121</td>
         </tr></tbody></table></div>
-      <details><summary>동반 파일 2개 (modal·model·data·test)</summary>
-        <ul class="chips"><li><code>gp_occasional_overview.test.ts</code></li><li><code>gp_occasional_overview_data.ts</code></li></ul></details>
+      <details><summary>동반 파일 1개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>gp_report_query.test.ts</code></li></ul></details>
     </article>
     <article class="card" data-card>
       <header class="card-h">
@@ -730,15 +730,15 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
       <div class="tbl"><table>
         <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
         <tbody>
-        <tr data-q="조합별 월간보고 현황 월간보고조회 조합별 월간보고 현황 sfund/fxtmrpt/조합별_월간보고_현황 ">
-          <td class="menu">조합별 월간보고 현황<span class="note">월간보고조회</span></td>
+        <tr data-q="월간보고 제출현황 정기보고 조합별 월간보고 현황 sfund/fxtmrpt/조합별_월간보고_현황 ">
+          <td class="menu">월간보고 제출현황<span class="note">정기보고</span></td>
           <td><code>조합별_월간보고_현황.ts</code></td>
           <td><span class="tag schema">스키마</span></td>
           <td class="muted"><code>#/조합별 월간보고 현황</code></td>
           <td class="muted"></td>
         </tr>
-        <tr data-q="조합별 반기보고 현황 반기보고조회 조합별 반기보고 현황 sfund/fxtmrpt/조합별_반기보고_현황 ">
-          <td class="menu">조합별 반기보고 현황<span class="note">반기보고조회</span></td>
+        <tr data-q="반기보고 제출현황 정기보고 조합별 반기보고 현황 sfund/fxtmrpt/조합별_반기보고_현황 ">
+          <td class="menu">반기보고 제출현황<span class="note">정기보고</span></td>
           <td><code>조합별_반기보고_현황.ts</code></td>
           <td><span class="tag schema">스키마</span></td>
           <td class="muted"><code>#/조합별 반기보고 현황</code></td>
@@ -755,12 +755,12 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
       <div class="tbl"><table>
         <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
         <tbody>
-        <tr data-q="조합별 실물검증 결과 보고 실물검증 조합별 실물검증 결과 보고 sfund/verify/gp_verify_report ">
+        <tr data-q="조합별 실물검증 결과 보고 실물검증 조합별 실물검증 결과 보고 sfund/verify/gp_verify_report s5_120">
           <td class="menu">조합별 실물검증 결과 보고<span class="note">실물검증</span></td>
           <td><code>gp_verify_report.tsx</code></td>
           <td><span class="tag tsx">전용 페이지</span></td>
           <td class="muted"><code>#/조합별 실물검증 결과 보고</code></td>
-          <td class="muted"></td>
+          <td class="muted">S5_120</td>
         </tr></tbody></table></div>
       <details><summary>동반 파일 2개 (modal·model·data·test)</summary>
         <ul class="chips"><li><code>gp_verify_report.test.ts</code></li><li><code>gp_verify_report_data.ts</code></li></ul></details>
@@ -783,23 +783,10 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
       <details><summary>동반 파일 1개 (modal·model·data·test)</summary>
         <ul class="chips"><li><code>gp_report_file.test.ts</code></li></ul></details>
     </article>
-    <article class="card" data-card>
-      <header class="card-h">
-        <div><span class="path">src/dash/sfund/</span><h3>자펀드 보고 공용 (여러 중분류)</h3></div>
-        <span class="count">페이지 1 · 파일 2</span>
-      </header>
-      <div class="tbl"><table>
-        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
-        <tbody>
-        <tr data-q="자펀드 보고 조회 보고조회 자펀드 보고 조회 sfund/gp_report_query s5_121">
-          <td class="menu">자펀드 보고 조회<span class="note">보고조회</span></td>
-          <td><code>gp_report_query.tsx</code></td>
-          <td><span class="tag tsx">전용 페이지</span></td>
-          <td class="muted"><code>#/자펀드 보고 조회</code></td>
-          <td class="muted">S5_121</td>
-        </tr></tbody></table></div>
-      <details><summary>동반 파일 1개 (modal·model·data·test)</summary>
-        <ul class="chips"><li><code>gp_report_query.test.ts</code></li></ul></details>
+    <article class="card pending" data-card>
+      <header class="card-h"><div><span class="path">src/dash/sfund/ (미생성)</span><h3>미구현 리프</h3></div>
+      <span class="count">1개 — 기본 스키마 폴백</span></header>
+      <ul class="chips"><li data-q="보고양식·가이드 조회 파일">파일 › 보고양식·가이드 조회</li></ul>
     </article></div>
   </section>
   <section id="account" class="domain">
@@ -1080,14 +1067,14 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
     </article></div>
   </section>
   <section id="shared" class="domain">
-    <h2><span>공용 (src/dash 루트)</span><code>./</code><small>파일 38</small></h2>
+    <h2><span>공용 (src/dash 루트)</span><code>./</code><small>파일 35</small></h2>
     <div class="grid">
       <article class="card" data-card><header class="card-h"><div><span class="path">src/dash/</span><h3>메뉴 밖 앱 라우트</h3></div></header>
         <div class="tbl"><table><thead><tr><th>라우트</th><th>파일</th></tr></thead><tbody>
         <tr data-q="designsystem designsystem"><td><code>#/designsystem</code></td><td><code>designsystem.tsx</code></td></tr><tr data-q="schedule schedule"><td><code>#/schedule</code></td><td><code>schedule.tsx</code></td></tr><tr data-q="editor editor_page"><td><code>#/editor</code></td><td><code>editor_page.tsx</code></td></tr>
         </tbody></table></div></article>
       <article class="card" data-card><header class="card-h"><div><span class="path">src/dash/</span><h3>2개 이상 도메인이 쓰는 공용 모듈</h3></div></header>
-        <ul class="chips" style="padding:0 14px 12px"><li data-q="aggrid_selection.css"><code>aggrid_selection.css</code></li><li data-q="aggrid_selection.tsx"><code>aggrid_selection.tsx</code></li><li data-q="aggrid_shared.css"><code>aggrid_shared.css</code></li><li data-q="aggrid_theme.ts"><code>aggrid_theme.ts</code></li><li data-q="app.tsx"><code>app.tsx</code></li><li data-q="applied_filters.tsx"><code>applied_filters.tsx</code></li><li data-q="charts.tsx"><code>charts.tsx</code></li><li data-q="company_profile_data.ts"><code>company_profile_data.ts</code></li><li data-q="company_profile_modal.tsx"><code>company_profile_modal.tsx</code></li><li data-q="company_profile_model.tsx"><code>company_profile_model.tsx</code></li><li data-q="components.tsx"><code>components.tsx</code></li><li data-q="confirm_combo.tsx"><code>confirm_combo.tsx</code></li><li data-q="data.ts"><code>data.ts</code></li><li data-q="drawer_select.tsx"><code>drawer_select.tsx</code></li><li data-q="gallery_charts.tsx"><code>gallery_charts.tsx</code></li><li data-q="generic_list.tsx"><code>generic_list.tsx</code></li><li data-q="generic_list_modal.tsx"><code>generic_list_modal.tsx</code></li><li data-q="grid_empty_overlay.tsx"><code>grid_empty_overlay.tsx</code></li><li data-q="grid_frame.tsx"><code>grid_frame.tsx</code></li><li data-q="grid_header_note.tsx"><code>grid_header_note.tsx</code></li><li data-q="icons.tsx"><code>icons.tsx</code></li><li data-q="kv_fill.tsx"><code>kv_fill.tsx</code></li><li data-q="main_widgets.tsx"><code>main_widgets.tsx</code></li><li data-q="report.tsx"><code>report.tsx</code></li><li data-q="risk_excel.ts"><code>risk_excel.ts</code></li><li data-q="risk_grid.tsx"><code>risk_grid.tsx</code></li><li data-q="risk_manage.tsx"><code>risk_manage.tsx</code></li><li data-q="risk_page_kit.tsx"><code>risk_page_kit.tsx</code></li><li data-q="risk_table_meta.ts"><code>risk_table_meta.ts</code></li><li data-q="risk_tables_page.tsx"><code>risk_tables_page.tsx</code></li><li data-q="row_context_menu.tsx"><code>row_context_menu.tsx</code></li><li data-q="shell.tsx"><code>shell.tsx</code></li><li data-q="test_src.ts"><code>test_src.ts</code></li><li data-q="tokens.css"><code>tokens.css</code></li><li data-q="trust_manage_kit.tsx"><code>trust_manage_kit.tsx</code></li><li data-q="trust_manage_rows.ts"><code>trust_manage_rows.ts</code></li><li data-q="trust_upload.tsx"><code>trust_upload.tsx</code></li><li data-q="use-hotkey.ts"><code>use-hotkey.ts</code></li></ul>
+        <ul class="chips" style="padding:0 14px 12px"><li data-q="aggrid_selection.css"><code>aggrid_selection.css</code></li><li data-q="aggrid_selection.tsx"><code>aggrid_selection.tsx</code></li><li data-q="aggrid_shared.css"><code>aggrid_shared.css</code></li><li data-q="aggrid_theme.ts"><code>aggrid_theme.ts</code></li><li data-q="app.tsx"><code>app.tsx</code></li><li data-q="applied_filters.tsx"><code>applied_filters.tsx</code></li><li data-q="charts.tsx"><code>charts.tsx</code></li><li data-q="components.tsx"><code>components.tsx</code></li><li data-q="confirm_combo.tsx"><code>confirm_combo.tsx</code></li><li data-q="data.ts"><code>data.ts</code></li><li data-q="drawer_select.tsx"><code>drawer_select.tsx</code></li><li data-q="gallery_charts.tsx"><code>gallery_charts.tsx</code></li><li data-q="generic_list.tsx"><code>generic_list.tsx</code></li><li data-q="generic_list_modal.tsx"><code>generic_list_modal.tsx</code></li><li data-q="grid_empty_overlay.tsx"><code>grid_empty_overlay.tsx</code></li><li data-q="grid_frame.tsx"><code>grid_frame.tsx</code></li><li data-q="grid_header_note.tsx"><code>grid_header_note.tsx</code></li><li data-q="icons.tsx"><code>icons.tsx</code></li><li data-q="kv_fill.tsx"><code>kv_fill.tsx</code></li><li data-q="main_widgets.tsx"><code>main_widgets.tsx</code></li><li data-q="report.tsx"><code>report.tsx</code></li><li data-q="risk_excel.ts"><code>risk_excel.ts</code></li><li data-q="risk_grid.tsx"><code>risk_grid.tsx</code></li><li data-q="risk_manage.tsx"><code>risk_manage.tsx</code></li><li data-q="risk_page_kit.tsx"><code>risk_page_kit.tsx</code></li><li data-q="risk_table_meta.ts"><code>risk_table_meta.ts</code></li><li data-q="risk_tables_page.tsx"><code>risk_tables_page.tsx</code></li><li data-q="row_context_menu.tsx"><code>row_context_menu.tsx</code></li><li data-q="shell.tsx"><code>shell.tsx</code></li><li data-q="test_src.ts"><code>test_src.ts</code></li><li data-q="tokens.css"><code>tokens.css</code></li><li data-q="trust_manage_kit.tsx"><code>trust_manage_kit.tsx</code></li><li data-q="trust_manage_rows.ts"><code>trust_manage_rows.ts</code></li><li data-q="trust_upload.tsx"><code>trust_upload.tsx</code></li><li data-q="use-hotkey.ts"><code>use-hotkey.ts</code></li></ul>
         <p class="empty">그 외 공용 폴더: <code>ui/</code> <code>fields/</code> <code>motion/</code> <code>schemas/</code>(레지스트리·타입) <code>assets/</code></p>
       </article>
     </div>

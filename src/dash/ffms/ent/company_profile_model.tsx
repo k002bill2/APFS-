@@ -10,10 +10,10 @@
    주주명부 4행). `PageSchema` 는 columns 가 한 벌이라 이 3섹션을 담지 못한다 — 그래서 전용 모듈이다.
    행을 늘리지 않는다: 원문 실데이터가 (주)선양 1건뿐이고, 채우려고 만든 행은 전부 위조다. */
 import React from 'react';
-import { UI } from './components';
-import { fmt } from './aggrid_theme';
-import { UNITS } from './schemas/unit';
-import type { Unit } from './schemas/unit';
+import { UI } from '../../components';
+import { fmt } from '../../aggrid_theme';
+import { UNITS } from '../../schemas/unit';
+import type { Unit } from '../../schemas/unit';
 import { OVERVIEW, FIN_ROWS, FIN_AMT_HEADERS, SHARE_HEADERS, SHARE_ROWS, formatProfileUnit } from './company_profile_data';
 import type { OvItem } from './company_profile_data';
 

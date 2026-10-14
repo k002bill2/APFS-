@@ -7,14 +7,15 @@
       S1_30 출처이고, S2_64(조기경보 투자기업정보 전체)에는 주주명부 표가 없다 → 화면별 opt-in 불필요. */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { resolveSchema, ALL_SCHEMAS } from './schemas';
-import { parsePageSchema } from './schemas/types';
-import type { PageSchema, SchemaFilterSpec } from './schemas/types';
-import { resolveFilterField, filterValueMatches, defaultFilterValues, filterChipText } from './schemas/filter_field';
-import { SHARE_HEADERS, SHARE_ROWS } from './company_profile_data';
+import { resolveSchema, ALL_SCHEMAS } from '../schemas';
+import { parsePageSchema } from '../schemas/types';
+import type { PageSchema, SchemaFilterSpec } from '../schemas/types';
+import { resolveFilterField, filterValueMatches, defaultFilterValues, filterChipText } from '../schemas/filter_field';
+import { SHARE_HEADERS, SHARE_ROWS } from './ent/company_profile_data';
+import { readSrc } from '../test_src';
 
 const read = (p: string) => readFileSync(p, 'utf8');
-const src = (f: string) => readFileSync(new URL('./' + f, import.meta.url), 'utf8');
+const src = readSrc;   // basename 으로 src/dash 전체에서 찾는다(파일 이동에 안전)
 const M1 = (f: string) => read(`docs/mockups/01_투자자산관리/${f}`);
 const strip = (s: string) => s.replace(/<button[\s\S]*?<\/button>/g, '').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim();
 const ALL = ['전체', '(전체)'];

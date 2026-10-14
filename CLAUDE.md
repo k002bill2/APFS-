@@ -31,7 +31,7 @@ APFS/
 │       ├── dashboard/                           # 메인 대시보드(main.tsx)
 │       ├── ffms/{mfund,asct,report,sfund,ent,gp}/   # 투자자산관리 (모태펀드·조합·사후보고·자펀드·투자기업·운용사)
 │       ├── risk/{alert,ent,sfund,valuation}/    # 조기경보
-│       ├── sfund/{ocsrpt,fxtmrpt,verify,file}/  # 자펀드 보고 (sfund/ 루트 = 보고조회)
+│       ├── sfund/{ocsrpt,fxtmrpt,verify,file}/  # 자펀드 보고 (수시·정기보고·실물검증·파일)
 │       ├── brief/{mfund,register}/  trust/{sfund,mfund}/  system/{user,setting,audit}/
 │       │                                        # 대분류 루트 = 중분류 공용만(ffms/leaf_tabs · brief/brief_data · trust/trust_sub_data · system/admin_*)
 │       ├── schemas/                             # 스키마 레지스트리(index.ts)·타입·렌더러 — 공용 인프라만

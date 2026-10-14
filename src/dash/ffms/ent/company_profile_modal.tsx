@@ -9,10 +9,10 @@
      기업이 표시된다. `row`를 받아 **헤더의 대상명만** 실제 행 값으로 바꾸고, 본문은 원문 값을
      보존한다 — 원문에 없는 값을 행에서 합성해 채우면 목업 충실도가 깨진다. */
 import { useState, useRef } from 'react';
-import { UI } from './components';
-import type { Unit } from './schemas/unit';
+import { UI } from '../../components';
+import type { Unit } from '../../schemas/unit';
 import { CompanyProfileBody, UnitSeg, CO_NAME } from './company_profile_model';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from '../../ui/dialog';
 
 const { Button } = UI;
 
