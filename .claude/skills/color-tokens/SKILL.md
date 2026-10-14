@@ -10,10 +10,10 @@ APFS 대시보드의 색 토큰 규약. 전체 카탈로그·근거는 **`docs/C
 ## 절대 규칙
 1. **색은 `var(--…)`로만.** `src/dash/tokens.css`가 SSOT. 컴포넌트에 hex(`#fff`, `#4F46E5`), `text-white`, `fill="#fff"` 하드코딩 금지.
 2. **흰 글자 표면은 배경의 다크 동작에 따라 전경 토큰을 가른다**(아래 ★).
-3. 색/간격/타이포는 토큰 — Tweaks 패널이 런타임 조정한다.
+3. 색/간격/타이포는 토큰 — 라이트/다크 테마 전환이 토큰 재정의로 동작한다(Tweaks 무드 패널은 fa422ce로 삭제됨).
 
 ## ★ adaptive-bg 함정 (가장 중요)
-다크에서 `--primary`는 **밝아진다**(`#6366F1`→`#818CF8`). `var(--primary)` 배경 위 하드코딩 흰 글자는 다크에서 깨진다(~2.7:1). 배경 종류로 전경을 정하라:
+다크에서 `--primary`는 **밝아진다**(`#5A5FE8`→`#818CF8`). `var(--primary)` 배경 위 하드코딩 흰 글자는 다크에서 깨진다(~3:1). 배경 종류로 전경을 정하라:
 
 | 배경 | 전경 토큰 |
 |------|-----------|
@@ -49,7 +49,7 @@ APFS 대시보드의 색 토큰 규약. 전체 카탈로그·근거는 **`docs/C
 
 ## 검증 (필수, 빌드 green ≠ 색 검증)
 ```bash
-grep -rnE '#[0-9A-Fa-f]{3,8}\b|: *"#fff"|text-white|fill: *"#fff"' src/dash --include='*.tsx' | grep -viE 'tokens.css|tweaks'
+grep -rnE '#[0-9A-Fa-f]{3,8}\b|: *"#fff"|text-white|fill: *"#fff"' src/dash --include='*.tsx'
 npm run build
 ```
 - 라이트/다크 **양쪽** 렌더·대비 확인(Chrome MCP). 토큰화 후 신규 `var(--…)`가 빈 값으로 안 풀리는지 computed 확인(투명/실종 방지).

@@ -176,7 +176,6 @@ APFS/
 | 문서 | 위치 |
 |------|------|
 | 전체 안전 프로토콜 | `docs/Parallel_Agents_Safety_Protocol_v3_1_0.md` |
-| 셋업 가이드/원문 | `Claude code system setup/` |
 
 ## 하네스 변경 이력
 
