@@ -7,12 +7,13 @@ from xlsx import load
 from resolver import (ASIS_SYS, DOC_DIR, REPO, ROOT, SRC_ROOT, SYS_DIR,
                       build_index, build_tobe_index, resolve, split_matches)
 
-# 원본 xlsx 는 저장소가 함께 보관한다(외부 파일에 의존하지 않고 재생성 가능).
-# 새 버전을 시험할 때만 환경변수로 덮어쓴다.
-XLSX = os.environ.get(
-    'APFS_MENU_XLSX',
-    os.path.join(REPO, 'docs/source',
-                 'APFS-2026-120-PP01_프로젝트일정계획표_메뉴매칭_v0.2.xlsx'))
+# 원본 xlsx 는 저장소에 두지 않는다 — 정본은 SharePoint 메뉴구조 문서다.
+#   (링크는 팀 내부 공유 — 공개 저장소라 URL 미기재)
+# 내려받은 파일 경로를 APFS_MENU_XLSX 로 넘긴다(미설정이면 즉시 실패).
+XLSX = os.environ.get('APFS_MENU_XLSX')
+if not XLSX:
+    sys.exit('APFS_MENU_XLSX 미설정 — SharePoint 메뉴구조 xlsx 를 내려받아 경로를 지정하세요 '
+             '(scripts/menu-doc/README.md 참조)')
 SHEET = 'xl/worksheets/sheet6.xml'
 TAGS = ('기존', '신규')
 codes = {}
