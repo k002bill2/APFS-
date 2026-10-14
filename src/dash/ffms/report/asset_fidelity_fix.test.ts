@@ -7,13 +7,13 @@
    ⑤ custody-verify 리프에서 확정(S1_27) 탭 도달 · 딥링크 별칭 유지 */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { resolveSchema, ALL_SCHEMAS } from './schemas';
-import { parsePageSchema } from './schemas/types';
-import { computeSchemaTotal } from './schemas/totals';
-import { linksDetail } from './schemas/detail_link';
-import { INV_REVIEW_ROWS } from './ffms/report/investment_review_data';
-import { GP_RATIO_TITLE, GP_RATIO_EMPTY, gpRatioItems } from './gp_ratio_detail_model';
-import { readSrc } from './test_src';
+import { resolveSchema, ALL_SCHEMAS } from '../../schemas';
+import { parsePageSchema } from '../../schemas/types';
+import { computeSchemaTotal } from '../../schemas/totals';
+import { linksDetail } from '../../schemas/detail_link';
+import { INV_REVIEW_ROWS } from './investment_review_data';
+import { GP_RATIO_TITLE, GP_RATIO_EMPTY, gpRatioItems } from '../../gp_ratio_detail_model';
+import { readSrc } from '../../test_src';
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const src = readSrc;   // basename → 도메인 폴더 어디에 있든 찾는다

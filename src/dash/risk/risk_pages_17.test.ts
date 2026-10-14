@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
-import { APFS_DATA } from './data';
-import { resolveSchema } from './schemas';
-import type { TableMeta, Provenance } from './risk_table_meta';
-import { headerSequence, computeTotal, MOCKUP_DIR } from './risk_table_meta';
-import { excelHeads } from './risk_excel';
-import { NICE_TABS, CREDIT_TABS, NICE_PROVENANCE, CREDIT_PROVENANCE } from './risk/ent/risk_corp_info_data';
+import { APFS_DATA } from '../data';
+import { resolveSchema } from '../schemas';
+import type { TableMeta, Provenance } from '../risk_table_meta';
+import { headerSequence, computeTotal, MOCKUP_DIR } from '../risk_table_meta';
+import { excelHeads } from '../risk_excel';
+import { NICE_TABS, CREDIT_TABS, NICE_PROVENANCE, CREDIT_PROVENANCE } from './ent/risk_corp_info_data';
 import { QUANT_LIST, QUANT_PROVENANCE, INDICATORS, MGR_TYPES, metricsFor, TREND_SECTIONS, TREND_PROVENANCE, monthLabels, TREND_FROM, TREND_TO, trendPointsInRange,
-  RETURN_TABLE, RETURN_PROVENANCE, FUND_GRADE, MGR_GRADE, GRADE_PROVENANCE } from './risk/sfund/risk_subfund_info_data';
+  RETURN_TABLE, RETURN_PROVENANCE, FUND_GRADE, MGR_GRADE, GRADE_PROVENANCE } from './sfund/risk_subfund_info_data';
 import { MF_SUMMARY, MF_DETAIL, MF_PROVENANCE, mfTotal, FUND_VAL, FUND_VAL_PROVENANCE, INVESTEE_SUMMARY, INVESTEE_DETAIL, INVESTEE_VAL_PROVENANCE,
-  ASSET_BALANCE, ASSET_TX, ASSET_TX_PROVENANCE, EXC_TABLES, EXC_PROVENANCE, PORTFOLIO_TABLES, PORTFOLIO_PROVENANCE } from './risk/valuation/risk_valuation_data';
+  ASSET_BALANCE, ASSET_TX, ASSET_TX_PROVENANCE, EXC_TABLES, EXC_PROVENANCE, PORTFOLIO_TABLES, PORTFOLIO_PROVENANCE } from './valuation/risk_valuation_data';
 import { IRR_CONTRACT, IRR_CONTRACT_BASIS, IRR_CONTRACT_PROVENANCE, IRR_INVESTEE, IRR_INVESTEE_BASIS, IRR_INVESTEE_PROVENANCE,
-  IRR_FUND, IRR_FUND_BASIS, IRR_FUND_PROVENANCE } from './risk/valuation/risk_irr_data';
+  IRR_FUND, IRR_FUND_BASIS, IRR_FUND_PROVENANCE } from './valuation/risk_irr_data';
 
 /* 조기경보 > 기업정보(2)·자펀드정보(5)·가치평가(10) = 17리프 — 라우트 결선 + **원본 목업 대비 출처 충실성**.
 
@@ -123,7 +123,7 @@ describe('메뉴 IA — 17리프 라벨·route 보존', () => {
 });
 
 describe('라우트 결선 — DEFAULT_SCHEMA 폴백 금지', () => {
-  const app = read(new URL('./app.tsx', import.meta.url).pathname);
+  const app = read(new URL('../app.tsx', import.meta.url).pathname);
   it.each(LEAVES.filter(([, t]) => t === 'typed').map(([l]) => l))('%s 는 app.tsx 전용 분기가 있다', (label) => {
     expect(app).toContain(`route === "${routeOf(label)}"`);
   });

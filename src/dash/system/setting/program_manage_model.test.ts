@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildMenuRows, programCatalog } from './admin_menu_tree';
-import { demoPrograms, filterPrograms, gubunOptions, deleteBlocker, programPidTaken, normalizeHelpDoc, helpDocError, emptyHelpDoc } from './setting/program_manage_model';
+import { buildMenuRows, programCatalog } from '../admin_menu_tree';
+import { demoPrograms, filterPrograms, gubunOptions, deleteBlocker, programPidTaken, normalizeHelpDoc, helpDocError, emptyHelpDoc } from './program_manage_model';
 
 const menu = buildMenuRows();
 const rows = demoPrograms(menu);

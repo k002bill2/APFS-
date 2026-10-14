@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
-import { APFS_DATA } from './data';
-import { headerSequence, computeTotal, amountText } from './risk_table_meta';
-import { GP_VERIFY_TABLES, GP_VERIFY_SRC, GP_VERIFY_PROVENANCE, GP_VERIFY_FUND, GP_VERIFY_BASE_YM } from './sfund/verify/gp_verify_report_data';
-import { GP_VERIFY_CONFIG, GP_VERIFY_ROUTE } from './sfund/verify/gp_verify_report';
+import { APFS_DATA } from '../../data';
+import { headerSequence, computeTotal, amountText } from '../../risk_table_meta';
+import { GP_VERIFY_TABLES, GP_VERIFY_SRC, GP_VERIFY_PROVENANCE, GP_VERIFY_FUND, GP_VERIFY_BASE_YM } from './gp_verify_report_data';
+import { GP_VERIFY_CONFIG, GP_VERIFY_ROUTE } from './gp_verify_report';
 
 /* 조합별 실물검증 결과 보고(S5_120) — 원본 목업 HTML 과 직접 대조(trust_pages_13.test.ts 방식). */
 

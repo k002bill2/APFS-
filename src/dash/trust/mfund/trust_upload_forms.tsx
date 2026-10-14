@@ -18,7 +18,7 @@ import type { PageSchema } from '../../schemas/types';
 import { UploadModal } from '../../trust_upload';
 import { useRowSelection, SelBar, DeleteDialog, RowEditModal, formFromRow, rowPatch, nextRow } from '../../trust_manage_kit';
 import { ACCOUNT_FORM, CASHFLOW_FORM } from '../trust_manage_schemas';
-import { ACCOUNT_TABLE, CASHFLOW_TABLE, CASHFLOW_UPLOAD_HINT } from '../trust_mother_data';
+import { ACCOUNT_TABLE, CASHFLOW_TABLE, CASHFLOW_UPLOAD_HINT } from './trust_mother_data';
 
 const { Button } = UI;
 

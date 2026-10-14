@@ -7,8 +7,8 @@
      (단일 헤더·flat 이지만 스키마 트랙이 아니다: 원문 검색조건이 **기본값 있는 기간**(시작~종료)인데 스키마 필터는
       단일 일자·기본값 없음이라 원문 조회 동작을 담지 못한다 — Codex 리뷰 2026-09-23 P2)
    출처: docs/mockups/03_자산수탁/*.html `<script> DATA/LISTS` 2026-09-23 파싱 실측. 값·순서·개수를 바꾸지 않는다. */
-import type { TableMeta, Provenance } from '../risk_table_meta';
-import { trustSrc, VERIFY_DIGITS } from './trust_sub_data';
+import type { TableMeta, Provenance } from '../../risk_table_meta';
+import { trustSrc, VERIFY_DIGITS } from '../trust_sub_data';
 
 const prov = (file: string): Provenance => ({ capturedAt: '2026-09-23', sourceSystem: 'TRUST', captureFiles: [trustSrc(file)] });
 

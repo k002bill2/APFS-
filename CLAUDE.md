@@ -33,6 +33,7 @@ APFS/
 │       ├── risk/{alert,ent,sfund,valuation}/    # 조기경보
 │       ├── sfund/{ocsrpt,fxtmrpt,verify,file}/  # 자펀드 보고 (sfund/ 루트 = 보고조회)
 │       ├── brief/{mfund,register}/  trust/{sfund,mfund}/  system/{user,setting,audit}/
+│       │                                        # 대분류 루트 = 중분류 공용만(ffms/leaf_tabs · brief/brief_data · trust/trust_sub_data · system/admin_*)
 │       ├── schemas/                             # 스키마 레지스트리(index.ts)·타입·렌더러 — 공용 인프라만
 │       ├── data.ts / app.tsx / shell / components / icons / charts / grid_frame / generic_list / aggrid_* …  # 2개 이상 도메인이 쓰는 공용
 │       ├── ui/ fields/ motion/                  # 공용 컴포넌트
@@ -44,7 +45,7 @@ APFS/
 
 `src/dash/*.tsx|ts`는 표준 **ES 모듈**입니다. 각 모듈이 컴포넌트/데이터를 `export`하고 다음 모듈이 `import`로 받아 씁니다. (이전 `(function(w){…})(window)` 전역 IIFE 패턴은 2026-06 마이그레이션으로 제거됨.)
 
-**폴더 배치 규칙(2026-10-13, 정본 `docs/filetree.md`)**: 라우트된 페이지는 메뉴 위치의 `<대분류>/<중분류>/`에 둔다(스키마 페이지 `*.ts` 포함 — `schemas/index.ts` 가 import 해 등록). 페이지 전용 modal·model·data·schemas·test 는 페이지 옆에. 한 대분류 안 여러 중분류가 쓰면 대분류 루트(`trust/`), 여러 대분류가 쓰면 `src/dash/` 루트. 회계(`account/`)는 페이지가 생길 때 만든다. 테스트에서 소스를 문자열로 읽을 땐 `test_src.ts`의 `readSrc(basename)`/`walkDash()`를 쓴다(고정 경로 금지 — 파일 이동 시 가드가 깨지거나 조용히 0건 통과).
+**폴더 배치 규칙(2026-10-13, 정본 `docs/filetree.md`)**: 라우트된 페이지는 메뉴 위치의 `<대분류>/<중분류>/`에 둔다(스키마 페이지 `*.ts` 포함 — `schemas/index.ts` 가 import 해 등록). 페이지 전용 modal·model·data·schemas·test 는 페이지 옆에. 한 대분류 안 여러 중분류가 쓰면 대분류 루트(`trust/`), 여러 대분류가 쓰면 `src/dash/` 루트. 여러 중분류의 화면 설정을 한 파일에 모으지 않는다 — 공용 골격(`risk_tables_page`)을 쓰더라도 설정 파일은 중분류마다 따로 둔다(예: `risk/valuation/valuation_table_pages` · `trust/mfund/trust_mother_table_pages`). 테스트도 같은 규칙으로 검사 대상 옆에 둔다(대상이 여러 중분류면 대분류 루트, 여러 대분류면 `src/dash/` 루트). 회계(`account/`)는 페이지가 생길 때 만든다. 테스트에서 소스를 문자열로 읽을 땐 `test_src.ts`의 `readSrc(basename)`/`walkDash()`를 쓴다(고정 경로 금지 — 파일 이동 시 가드가 깨지거나 조용히 0건 통과).
 
 **앱 모듈 (역할)**
 - `data.ts` → `APFS_DATA` — 메뉴/위젯/지표 등 화면 더미 데이터 소스

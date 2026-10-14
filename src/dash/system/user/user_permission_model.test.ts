@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildMenuRows } from './admin_menu_tree';
-import { matrixRows, setCells, triOf, countOn, grant, cellOf, EMPTY_CELL, PERM_KEYS, permNameTaken } from './user/user_permission_model';
+import { buildMenuRows } from '../admin_menu_tree';
+import { matrixRows, setCells, triOf, countOn, grant, cellOf, EMPTY_CELL, PERM_KEYS, permNameTaken } from './user_permission_model';
 
 const menu = buildMenuRows();
 const mx = matrixRows(menu);

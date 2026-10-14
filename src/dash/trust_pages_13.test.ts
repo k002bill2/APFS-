@@ -18,7 +18,7 @@ import {
 import {
   MOTHER_CODE_TABLE, MOTHER_CODE_PROVENANCE, MOTHER_CODE_GROUPS, MOTHER_CODE_DEFAULT, ACCOUNT_UPLOAD_PROVENANCE, CASHFLOW_UPLOAD_PROVENANCE,
   CASHFLOW_UPLOAD_HINT, CASHFLOW_TABLE, CASHFLOW_PROVENANCE, CASHFLOW_RANGE, ACCOUNT_TABLE, ACCOUNT_PROVENANCE, ACCOUNT_RANGE,
-} from './trust/trust_mother_data';
+} from './trust/mfund/trust_mother_data';
 import {
   YEARLY_PROVENANCE, YEARLY_TABLES, YEARLY_TOTALS_LIT, YEARLY_FOOTNOTES, YEARLY_BASE_YM, BASES, ACCOUNT_TYPES,
   LEDGER_TABLE, LEDGER_PROVENANCE, INACTIVE_OPTIONS, HIST_SECTIONS, HIST_REQUIRED,
@@ -70,7 +70,7 @@ const shown = (v: unknown) => (v == null ? '-' : typeof v === 'number' ? v.toLoc
 
 /* ─────────────── 13리프 기대표 ─────────────── */
 /* 13리프 전부 typed — 단일 헤더 화면(공통코드 2 · 계좌정보 비교조회)도 원문 검색조건(기본값 있는 코드구분 select ·
-   기본 기간)을 스키마 필터가 담지 못해 TablesPage 로 둔다(trust_table_pages.tsx 머리말) */
+   기본 기간)을 스키마 필터가 담지 못해 TablesPage 로 둔다(trust/sfund/trust_sub_table_pages.tsx 머리말) */
 const LEAVES: [label: string, prov: Provenance, files: string[]][] = [
   ['연도별투자현황', YEARLY_PROVENANCE, [B('03_연도별투자현황/mockup/연도별투자현황_목업.html')]],
   ['등록원부관리', LEDGER_PROVENANCE, [B('S4_108_등록원부_관리.html')]],

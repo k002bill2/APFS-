@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { APFS_DATA } from './data';
-import { buildMenuRows, childrenOf, hasChildren, programsOf, programCatalog, pidTakenBy, utypeLabel } from './system/admin_menu_tree';
+import { APFS_DATA } from '../data';
+import { buildMenuRows, childrenOf, hasChildren, programsOf, programCatalog, pidTakenBy, utypeLabel } from './admin_menu_tree';
 
 const rows = buildMenuRows();
 

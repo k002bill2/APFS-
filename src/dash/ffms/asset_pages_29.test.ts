@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
-import { APFS_DATA } from './data';
-import { resolveSchema } from './schemas';
-import type { Row } from './risk_table_meta';
-import { headerSequence, amountText } from './risk_table_meta';
-import { FUND_INFO_TABLE, FUND_INFO_PROVENANCE, FUND_INFO_KINDS, FUND_INFO_LISTS, FUND_OPTS, GP_TYPES, MONTHS, LIMIT_INDICATOR, MODAL_EMPTY, formFromRow, emptyForm } from './ffms/asct/asset_fund_info_data';
-import { REVIEW_STATS_TABLE, REVIEW_STATS_PROVENANCE, MOTHER_FUNDS, ACCOUNT_KINDS, REVIEW_STATS_RANGE, GP_OPTIONS, FUND_OPTIONS } from './ffms/report/review_stats_data';
-import { REVIEW_STATS_PAGE } from './ffms/report/review_stats';
-import { buildColumnDefs } from './risk_grid';
+import { APFS_DATA } from '../data';
+import { resolveSchema } from '../schemas';
+import type { Row } from '../risk_table_meta';
+import { headerSequence, amountText } from '../risk_table_meta';
+import { FUND_INFO_TABLE, FUND_INFO_PROVENANCE, FUND_INFO_KINDS, FUND_INFO_LISTS, FUND_OPTS, GP_TYPES, MONTHS, LIMIT_INDICATOR, MODAL_EMPTY, formFromRow, emptyForm } from './asct/asset_fund_info_data';
+import { REVIEW_STATS_TABLE, REVIEW_STATS_PROVENANCE, MOTHER_FUNDS, ACCOUNT_KINDS, REVIEW_STATS_RANGE, GP_OPTIONS, FUND_OPTIONS } from './report/review_stats_data';
+import { REVIEW_STATS_PAGE } from './report/review_stats';
+import { buildColumnDefs } from '../risk_grid';
 import type { ColDef } from 'ag-grid-community';
 
 /* 투자자산관리 신규 4리프 — 라우트 결선 + **원본 목업 대비 출처 충실성**(risk_pages_17 · trust_pages_13 방식).
@@ -69,7 +69,7 @@ describe('메뉴 IA — 조합관리·사후보고관리 리프 보존(추가·�
 });
 
 describe('라우트 결선 — DEFAULT_SCHEMA 폴백 금지', () => {
-  const app = read(new URL('./app.tsx', import.meta.url).pathname);
+  const app = read(new URL('../app.tsx', import.meta.url).pathname);
   it.each(TYPED.map(([g, l]) => [l, g] as const))('%s 는 app.tsx 전용 분기가 있고 스키마 레지스트리에 없다', (label, group) => {
     expect(app).toContain(`route === "${routeOf(group, label)}"`);
     expect(resolveSchema(routeOf(group, label)).provenance.sourceSystem).toBe('DEFAULT');
@@ -87,7 +87,7 @@ describe('라우트 결선 — DEFAULT_SCHEMA 폴백 금지', () => {
   });
   it('구 투심승인정보조회 스키마(메뉴 미연결 route · 절대경로 출처)는 제거됐다', () => {
     expect(resolveSchema('투심승인정보조회').provenance.sourceSystem).toBe('DEFAULT');
-    expect(existsSync(new URL('./schemas/투심승인정보조회.ts', import.meta.url).pathname)).toBe(false);
+    expect(existsSync(new URL('../schemas/투심승인정보조회.ts', import.meta.url).pathname)).toBe(false);
   });
 });
 
@@ -131,7 +131,7 @@ describe('자펀드정보관리 — 등록(S2_74)·수정(S2_75) 팝업', () => 
   const list = read(S2('S2_73_자펀드_정보_관리.html'));
   const reg = read(S2('S2_74_자펀드_정보_등록.html'));
   const edit = read(S2('S2_75_자펀드_정보_수정.html'));
-  const modal = read(new URL('./ffms/asct/asset_fund_info_modal.tsx', import.meta.url).pathname);
+  const modal = read(new URL('./asct/asset_fund_info_modal.tsx', import.meta.url).pathname);
   it('선택지 = 원문 FUND_OPTS · GPTYPES · monthOpts(1~12)', () => {
     expect([...FUND_OPTS]).toEqual(scriptLiteral<string[]>(list, 'FUND_OPTS'));
     expect([...GP_TYPES]).toEqual(scriptLiteral<string[]>(list, 'GPTYPES'));
