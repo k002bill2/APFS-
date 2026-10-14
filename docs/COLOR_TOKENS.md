@@ -1,6 +1,6 @@
 # APFS 컬러 토큰 시스템
 
-> 농림수산식품모태펀드 대시보드의 색 토큰 규약. **모든 색은 `src/dash/tokens.css`의 CSS 변수로 정의**되고, 컴포넌트는 `var(--…)`로만 소비한다. hex 하드코딩은 안티패턴이다(테마 추종 불가·Tweaks 무드 비반응).
+> 농림수산식품모태펀드 대시보드의 색 토큰 규약. **모든 색은 `src/dash/tokens.css`의 CSS 변수로 정의**되고, 컴포넌트는 `var(--…)`로만 소비한다. hex 하드코딩은 안티패턴이다(테마 추종 불가).
 >
 > 작업 시 스킬: `.claude/skills/color-tokens/SKILL.md`
 
@@ -8,37 +8,36 @@
 
 ## 1. 레이어 구조 (cascade)
 
-색은 `documentElement`에 걸리는 세 레이어로 결정된다 — 뒤가 앞을 이긴다.
+색은 `documentElement`에 걸리는 두 레이어로 결정된다 — 뒤가 앞을 이긴다.
 
 | 레이어 | 위치 | 역할 |
 |--------|------|------|
 | `:root` | `tokens.css` | **라이트 테마 기본값** |
 | `.dark` | `tokens.css` | **다크 테마 오버라이드** (`documentElement.classList`에 `dark`) |
-| `[data-accent="ocean"\|"harvest"]` | `tweaks.css` | Tweaks 패널 **무드** (사용자 토글) |
 
-- `data-accent="forest"`는 **기본 무드 = 오버라이드 규칙 없음** → `:root`/`.dark` base를 그대로 따른다(현재 인디고). 이름은 레거시(과거 forest-green 팔레트)지만 값은 base.
-- **shadcn/ui 별칭**: `--background`/`--card-foreground`/`--popover`/`--destructive`/`--accent-surface` 등은 base 토큰을 `var()`로 간접참조한다 → `.dark`·무드에서 원본이 바뀌면 자동 추종(중복 정의 불필요).
+- Tweaks 무드 레이어(`tweaks.css`의 `[data-accent]`)는 커밋 `fa422ce`로 **삭제됨**. 레거시 이름은 브랜드 원색 `--brand-forest`(값은 틸)만 남아 있다.
+- **shadcn/ui 별칭**: `--background`/`--card-foreground`/`--popover`/`--destructive`/`--accent-surface` 등은 base 토큰을 `var()`로 간접참조한다 → `.dark`에서 원본이 바뀌면 자동 추종(중복 정의 불필요).
 
 ## 2. 토큰 카탈로그
 
 값은 `tokens.css`가 SSOT다(여기 중복 기재하면 drift). 아래는 **이름·용도·다크 동작**.
 
 ### 표면 / 텍스트 (테마 적응형 — `.dark`에서 재정의됨)
-`--bg` `--bg-deep` `--card` `--card-raised` `--foreground` `--muted` `--muted-foreground` `--caption` `--border` `--border-strong` `--input` `--row-selected`
+`--bg` `--bg-deep` `--card` `--card-raised` `--frame-bg` `--grid-header` `--foreground` `--muted` `--muted-foreground` `--caption` `--nav-muted` `--border` `--border-strong` `--input` `--row-selected` `--accent-surface`
 
 ### 역할 (테마 적응형)
 | 토큰 | 짝 전경 | 비고 |
 |------|---------|------|
-| `--primary` | `--primary-foreground` | ⚠ 라이트 `#6366F1` → **다크 `#818CF8`(밝아짐)**. foreground는 라이트 흰색 → 다크 짙은 네이비로 플립 |
+| `--primary` | `--primary-foreground` | ⚠ 라이트 `#5A5FE8` → **다크 `#818CF8`(밝아짐)**. hover는 `--primary-hover`. foreground는 라이트 흰색 → 다크 짙은 네이비로 플립 |
 | `--secondary` | `--secondary-foreground` | 틸 |
 | `--accent` | `--accent-foreground` | 블루(링크·포커스) |
 | `--ring` | — | 포커스 링 |
 
 ### 상태 (테마 적응형)
-`--success` `--warning` `--danger` `--info` (+ `*-soft`) · shadcn `--destructive`(=`--danger`) / `--destructive-foreground`(**고정 `#FFFFFF`**, `.dark` 미재정의)
+`--success` `--warning` `--danger` `--info` (+ `*-soft` 배경, `*-text` 텍스트·배지 라벨 — 베이스 상태색은 칠 전용이라 텍스트로 쓰면 대비 미달) · shadcn `--destructive`(=`--danger`) / `--destructive-foreground`(**고정 `#FFFFFF`**, `.dark` 미재정의)
 
 ### 차트 / 자금원천
-`--chart-1`…`--chart-19`(적응형) · `--chart-grid` · `--fs-agri/fish/ops/etc`
+`--chart-1`…`--chart-19`(적응형) · `--chart-grid` · `--fs-agri/fish/ops/etc`(적응형)
 
 ### ★ 고정 솔리드 표면 & on-fill 전경 (테마 **고정** — `.dark` 미재정의, 라이트=다크)
 | 토큰 | 값 | 용도 |
@@ -55,21 +54,21 @@
 
 ## 3. ★ 핵심 규칙 — 적응형 vs 고정 전경 (the adaptive-bg trap)
 
-**다크 모드에서 `--primary`는 밝아진다**(`#6366F1`→`#818CF8`). 그래서 `var(--primary)` 배경 위에 **하드코딩 흰 글자**를 얹으면 다크에서 대비가 깨진다(~2.7:1, 흰 글자 실종).
+**다크 모드에서 `--primary`는 밝아진다**(`#5A5FE8`→`#818CF8`). 그래서 `var(--primary)` 배경 위에 **하드코딩 흰 글자**를 얹으면 다크에서 대비가 깨진다(~3:1, 흰 글자 실종).
 
 배경 종류에 따라 전경 토큰을 갈라야 한다:
 
 | 배경 종류 | 예 | 전경 토큰 | 이유 |
 |-----------|-----|-----------|------|
 | **적응형 역할색** | `var(--primary)`, `var(--accent)` | `var(--primary-foreground)` / `var(--accent-foreground)` | foreground도 함께 플립 → 다크 대비 확보 |
-| **고정 솔리드/그라디언트** | `var(--brand-blue)`, `var(--brand-gray)`, `--brand-solid`, `--gradient-hero` | `var(--on-brand-solid)` | 배경이 안 플립하니 흰색 고정이 양 테마 안전(~6:1) |
+| **고정 솔리드/그라디언트** | `var(--brand-blue)`, `var(--brand-gray)`, `--brand-solid`, `--gradient-hero` | `var(--on-brand-solid)` | 배경이 안 플립하니 흰색 고정이 양 테마 동일(`--brand-solid` 6.3:1·`--brand-gray` 7.1:1·`--brand-blue` 4.47:1) |
 | **데이터색 칠** | 차트 팔레트, `gpColor`, `_color` | `var(--on-chart-fill)` | 임의 데이터색이라 `-foreground` 페어 없음(대비 미보장) |
 | **의미 상태색** | `bg-danger` 등 | `var(--destructive-foreground)` | white-on-danger 의미 페어(고정) |
 
 ### ⚠ 트윈 함정
-**겉보기 동일한 두 컴포넌트가 반대 토큰을 필요로 할 수 있다.** 예: 체크박스 2종이 똑같이 생겼어도 —
-- `performance.tsx` CheckRow: checked 배경 `var(--brand-blue)`(고정) → `--on-brand-solid`
-- `generic_list.tsx` DrawerCheckRow: checked 배경 `var(--primary)`(적응형) → `--primary-foreground`
+**겉보기 동일한 두 컴포넌트가 반대 토큰을 필요로 할 수 있다.** 예: 달력의 선택일 셀 2종이 똑같이 생겼어도 —
+- `shell.tsx` NcScheduleBody(알림센터 일정) 선택일: 배경 `var(--brand-blue)`(고정) → `--on-brand-solid`
+- `ui/calendar.tsx` CalendarDayButton 선택일: 배경 `bg-primary`(적응형) → `text-primary-foreground`
 
 → **컨테이너 배경을 토큰화할 땐 반드시 그 안의 자식 전경색도 함께 점검**하고, 배경이 적응형인지 고정인지에 따라 전경을 정한다.
 
@@ -90,14 +89,13 @@
 - ❌ `var(--primary)` 배경 + 하드코딩 흰 글자(다크 깨짐) → 짝 전경 토큰 사용
 - ❌ Tailwind opacity 모디파이어 `bg-primary/80`(토큰 색엔 alpha 주입 무음 실패) → `color-mix(in srgb, var(--primary) 80%, transparent)`
 - ❌ 통째 팔레트 교체(디자인 프로젝트 미러는 stale일 수 있음) → 색 값만 외과적 이식
-- ✅ 정당한 hex 예외: 로고 SVG 코퍼릿 마크, `tweaks.css` 무드 정의, `index.html` 부트/스플래시(FOUC, CSS 변수 이전 실행), 디자인시스템 표시용 hex 라벨, scrim `rgba(0,0,0,.x)`/`rgba(255,255,255,.x)`
+- ✅ 정당한 hex 예외: 로고 SVG 코퍼릿 마크, `index.html` 부트/스플래시(FOUC, CSS 변수 이전 실행), 디자인시스템 표시용 hex 라벨, scrim `rgba(0,0,0,.x)`/`rgba(255,255,255,.x)`
 
 ## 6. 검증 체크리스트
 
 ```bash
-# ① 컴포넌트에 raw 색 잔여 점검 (tokens.css/tweaks.css = 토큰 정의는 제외)
-grep -rnE '#[0-9A-Fa-f]{3,8}\b|: *"#fff"|text-white|fill: *"#fff"' src/dash --include='*.tsx' \
-  | grep -viE 'tokens.css|tweaks'
+# ① 컴포넌트에 raw 색 잔여 점검 (--include='*.tsx' 라 토큰 정의 tokens.css 는 대상 밖)
+grep -rnE '#[0-9A-Fa-f]{3,8}\b|: *"#fff"|text-white|fill: *"#fff"' src/dash --include='*.tsx'
 # ② 빌드 (esbuild는 타입체크 안 함 — 빌드 green ≠ 색 검증)
 npm run build
 ```
