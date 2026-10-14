@@ -74,7 +74,7 @@ import { RegistryLedgerManage } from './registry_ledger';                    // 
 import { PhysicalDataManage, SecuritiesManage } from './trust_physical_upload';   // 실물자료관리(업로드)(S3_98) · 유가증권관리(업로드)(신규)
 import { GpReportFile } from './gp_report_file';   // 자펀드 보고 > 보고 파일 조회(S5_116 — 조회 + 툴바 업로드 모달)
 import { GpVerifyReport } from './gp_verify_report';
-import { GpReportQuery } from './gp_report_query';   // 자펀드 보고 > 자펀드 보고 조회(S5_121 — 보고항목 select → 항목별 그리드)
+import { GpReportQuery } from './gp_report_query';   // 자펀드 보고 > 수시보고 > 수시보고 제출현황(S5_121 — 보고항목 select → 항목별 그리드)
 import { GpOccasionalOverview } from './gp_occasional_overview';   // 자펀드 보고 > 조합 수시보고 내역(S5_117 — 투자기업개요 kv 5섹션)   // 자펀드 보고 > 조합별 실물검증 결과 보고(S5_120 — 표 3장 TablesPage)
 import { PhysicalVerifyCompare, SecuritiesCompare, TrustCommonCode, MotherTrustCode, AccountCompare, CashflowCompare } from './trust_table_pages';   // S3_101 · 신규 · S3_100 · S3_102 · S3_104 · S3_106
 import { AssetFundInfoManage } from './asset_fund_info_manage';           // 자펀드정보관리 = v1.4 자펀드관리 + S2_73 투자기준 통합 그리드(SubFundManage ext 합성)

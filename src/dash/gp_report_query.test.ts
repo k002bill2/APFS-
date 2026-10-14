@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { REPORT_ITEMS, optionLabel, UNDEFINED_MSG } from './gp_report_query';
+import { REPORT_ITEMS, optionLabel, UNDEFINED_MSG, GP_REPORT_QUERY_LABEL, GP_REPORT_QUERY_ROUTE } from './gp_report_query';
+import { APFS_DATA } from './data';
 
 /* S5_121 원문 ITEMS 리터럴과 대조 */
 const MOCK = readFileSync(new URL('../../docs/mockups/05_MOAF/S5_121_자펀드_보고_조회.html', import.meta.url), 'utf8').normalize('NFC');
 const app = readFileSync(new URL('./app.tsx', import.meta.url), 'utf8');
 
-describe('자펀드 보고 조회 — S5_121', () => {
+describe('수시보고 제출현황 — S5_121', () => {
   it('보고항목 8건의 key·label·순서가 원문과 같다', () => {
     const src = [...MOCK.matchAll(/key:'(\w+)', label:'([^']+)', grounded:(true|false)/g)].map((m) => [m[1], m[2], m[3] === 'true']);
     expect(REPORT_ITEMS.map((it) => [it.key, it.label, it.grounded])).toEqual(src);
@@ -31,7 +32,10 @@ describe('자펀드 보고 조회 — S5_121', () => {
     }
   });
 
-  it('app.tsx 가 리프 라벨 route 로 분기한다', () => {
+  it('라벨은 수시보고 제출현황, route 키는 옛 라벨(path)로 보존해 app.tsx 가 분기한다', () => {
+    const gp = (APFS_DATA.MENU as any[]).find((m) => m.id === 'gp');
+    const mid = gp.children.find((c: any) => c.label === '수시보고');
+    expect(mid.children).toEqual([{ label: GP_REPORT_QUERY_LABEL, path: GP_REPORT_QUERY_ROUTE }]);
     expect(app).toMatch(/route === "자펀드 보고 조회"\) page = <GpReportQuery/);
   });
 });

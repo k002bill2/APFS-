@@ -195,8 +195,8 @@ const MENU = [
   ]},
 
   { id:"gp", label:"자펀드 보고", icon:"building", roles:["admin","manager","viewer"], children:[
-    { label:"보고조회", sub:true, children:[
-      { label:"자펀드 보고 조회" },
+    { label:"수시보고", sub:true, children:[
+      { label:"수시보고 제출현황", path:"자펀드 보고 조회" },
     ]},
     { label:"조합정보", sub:true, children:[
       { label:"조합 수시보고 내역" },
