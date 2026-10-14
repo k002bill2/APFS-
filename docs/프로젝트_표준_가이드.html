@@ -156,8 +156,8 @@ ew_result_model.test.ts   ← 그 로직의 테스트</pre>
     <tbody>
       <tr><td><code>src/dash/*</code></td><td><span class="tag now">현행</span> snake_case + 역할 접미사</td><td><code>audit_log_model.ts</code></td><td>다수 관례</td></tr>
       <tr><td><code>src/dash/ui/*</code></td><td><span class="tag now">현행</span> kebab-case</td><td><code>period-picker.tsx</code></td><td>shadcn 레지스트리(<code>components.json</code>)</td></tr>
-      <tr><td>화면 스키마 <code>&lt;대분류&gt;/&lt;중분류&gt;/*.ts</code></td><td><span class="tag now">현행</span> <b>메뉴 리프 한글 라벨</b>(공백→<code>_</code>)</td><td><code>ffms/ent/전체_투자실적.ts</code></td><td>메뉴구성도 시트가 정본</td></tr>
-      <tr><td><code>src/dash/schemas/*</code></td><td><span class="tag now">현행</span> 인프라 = snake_case</td><td><code>build_row.ts</code></td><td>다수 관례</td></tr>
+      <tr><td>화면 스키마 (<code>src/dash/&lt;도메인&gt;/&lt;중분류&gt;/*.ts</code>)</td><td><span class="tag now">현행</span> <b>영문 snake_case</b> = route 의 snake 표기. 전용 페이지 보조 스키마는 <code>&lt;페이지&gt;_schema.ts</code>. 한글 파일명 금지(2026-10-14 전환)</td><td><code>gp_spec.ts</code> · <code>investee_profile_schema.ts</code></td><td><a href="라우트_파일명_가이드.md">라우트·파일명 가이드</a></td></tr>
+      <tr><td><code>src/dash/schemas/*</code></td><td><span class="tag now">현행</span> 스키마 인프라(레지스트리·타입·렌더러) = snake_case</td><td><code>build_row.ts</code> · <code>filter_field.ts</code></td><td>화면 스키마는 도메인 폴더로 이동(#324)</td></tr>
       <tr><td><code>src/dash/fields/*</code></td><td><span class="tag gap">편차</span> 컴포넌트 PascalCase · 로직 snake_case 혼재</td><td><code>AddressField.tsx</code> · <code>address_value.ts</code></td><td>4절 참조</td></tr>
       <tr><td><code>src/dash/motion/*</code></td><td><span class="tag now">현행</span> kebab-case</td><td><code>count-up.tsx</code></td><td>ui/ 와 동일 계열</td></tr>
     </tbody>
@@ -200,7 +200,8 @@ ew_result_model.test.ts   ← 그 로직의 테스트</pre>
       <tr><td>훅</td><td><code>use</code> + PascalCase</td><td><code>useHotkey</code></td></tr>
       <tr><td>CSS 변수</td><td><code>--kebab</code>, 정본 <code>tokens.css</code></td><td><code>--primary</code>, <code>--dur-fast</code></td></tr>
       <tr><td>localStorage 키</td><td><code>apfs.</code> + camelCase, <b>원시 문자열</b>로 저장</td><td><code>apfs.theme</code>, <code>apfs.route</code>, <code>apfs.favFabPos</code></td></tr>
-      <tr><td>라우트 path</td><td>영문 kebab-case (해시 <code>#/path</code>)</td><td><code>#/login</code>, <code>investment-review</code></td></tr>
+      <tr><td>라우트 path</td><td>영문 kebab-case (해시 <code>#/path</code>). 메뉴 리프는 <code>{ label:"한글", path:"kebab" }</code> — 라벨은 표시용, path 가 식별자. 옛 route 는 <code>route_alias.ts</code> 로 승격 (<a href="라우트_파일명_가이드.md">가이드</a>)</td><td><code>#/login</code>, <code>#/gp-report-query</code></td></tr>
+      <tr><td>확장자</td><td>JSX 가 있으면 <code>.tsx</code>, 없으면 <code>.ts</code> (스키마·모델·데이터·설정)</td><td><code>gp_report_query.tsx</code> · <code>gp_spec.ts</code></td></tr>
     </tbody>
   </table></div>
 

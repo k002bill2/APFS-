@@ -1,4 +1,4 @@
-/* 월간보고 제출현황 — 자펀드 보고 > 정기보고 > 월간보고 제출현황 (route 키는 옛 라벨 '조합별 월간보고 현황' 보존 — MENU leaf.path).
+/* 월간보고 제출현황 — 자펀드 보고 > 정기보고 > 월간보고 제출현황 (route 키 = MENU leaf.path `gp-monthly-report-status`).
    출처: docs/mockups/05_MOAF/S5_118_월간보고_조회.html (2026-09-29 파싱 실측, KRDS TO-BE)
    (종전 스키마는 잘린 캡처 image3.png 기반이라 우측 컬럼 미확인 상태였다 — 목업으로 교체)
 
@@ -11,7 +11,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '조합별 월간보고 현황',
+  route: 'gp-monthly-report-status',
   title: '월간보고 제출현황',
   kind: 'list',
   entity: '월간보고',

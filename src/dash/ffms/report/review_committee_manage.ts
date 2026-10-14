@@ -18,7 +18,7 @@ import type { PageSchema } from '../../schemas/types';
 import { GP_OPTIONS, SUBFUND_OPTIONS } from '../../schemas/filter_domains';
 
 export const schema: PageSchema = {
-  route: '내부 투자심의 구성관리',   // ⚠️ data.ts 메뉴 리프 라벨과 정확히 일치(라우팅 키, NFC)
+  route: 'review-committee-manage',   // ⚠️ data.ts 메뉴 리프 path 와 정확히 일치(라우팅 키)
   title: '내부 투자심의 구성관리',
   kind: 'list',
   entity: '투자심의위원',

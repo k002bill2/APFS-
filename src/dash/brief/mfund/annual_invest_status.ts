@@ -1,7 +1,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '연도별투자현황',
+  route: 'annual-invest-status',
   title: '연도별 투자현황',
   kind: 'list',
   entity: '모태펀드',

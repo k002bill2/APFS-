@@ -46,7 +46,7 @@ const REP_COLUMNS: PageSchema['columns'] = [
      2단 wide 모달(max-w-[880px])이 규격이다. litigation 은 5항목이라 1단 좁은 모달이었다 — 여기가 다르다.
      `long:true` 인 textarea 는 그 2단 그리드에서 `sm:col-span-2`(전체 폭)를 차지한다. */
 export const WORKFORCE_SCHEMA: PageSchema = parsePageSchema({
-  route: '운용인력 변동관리/등록', title: '운용인력변동 등록', kind: 'form', entity: '운용인력변동',
+  route: 'workforce-manage/create', title: '운용인력변동 등록', kind: 'form', entity: '운용인력변동',
   columns: REP_COLUMNS,
   fields: [
     /* 목업 `<input id="rg-ym" value="2026-07" readonly>` + openM(월 그리드 픽커) = 월 선택.

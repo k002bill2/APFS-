@@ -26,7 +26,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '전체 투자실적',
+  route: 'invest-performance-all',
   title: '전체 투자실적',
   kind: 'list',
   entity: '투자실적',

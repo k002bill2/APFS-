@@ -1,6 +1,6 @@
 ---
 name: apfs-form-modal
-description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 배타 선택은 radio(DS RadioGroup), 복수 선택·매트릭스는 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 컨트롤 폭 규약(입력 200~320 · select fit-content 240~320 · %·차수·회차·인수·순번·(년) 100px · 달력 불변 · long 전체폭). 정본 예시는 "투자기업정보(통합)"(ffms/ent/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·입력칸 폭이 들쭉날쭉할 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
+description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 배타 선택은 radio(DS RadioGroup), 복수 선택·매트릭스는 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 컨트롤 폭 규약(입력 200~320 · select fit-content 240~320 · %·차수·회차·인수·순번·(년) 100px · 달력 불변 · long 전체폭). 정본 예시는 "투자기업정보(통합)"(ffms/ent/investee_profile_schema.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·입력칸 폭이 들쭉날쭉할 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
 ---
 
 # apfs-form-modal Skill
@@ -9,7 +9,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 리스트 페이지의 **신규 등록 / 수정 / 삭제(2단계 확인)** 모달은 손으로 폼을 짜지 않는다. `RowFormModal`이 **`PageSchema.fields`를 받아 폼을 자동 생성**한다(Radix Dialog — focus trap·Escape·aria-modal·포커스 복귀 내장). "필드는 스키마가 정하고, 모달은 렌더만 한다."
 
 - **정본 컴포넌트**: `src/dash/generic_list_modal.tsx`(`RowFormModal`).
-- **정본 예시(골드 레퍼런스)**: `src/dash/ffms/ent/투자기업정보_통합.ts` — 21필드(readonly·radio·select·textarea·date·number·checkbox·text 혼합)라 2단 wide로 렌더되는 완성형.
+- **정본 예시(골드 레퍼런스)**: `src/dash/ffms/ent/investee_profile_schema.ts` — 21필드(readonly·radio·select·textarea·date·number·checkbox·text 혼합)라 2단 wide로 렌더되는 완성형.
 - **지원 SSOT**: `schemas/types.ts`(`FIELD_CONTROLS`+zod), `schemas/renderers.tsx`(`SchemaField` 컨트롤 렌더), `schemas/build_row.ts`(vals→Row 조립).
 
 ## 모달 크롬 공통 규약 (헤더·본문 섹션 헤더) — 전 모달 SSOT
@@ -115,7 +115,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 | `month` | `PeriodPicker mode='month'`(12개월 그리드+연도 ‹ ›) | **기준년월·등록년월 등 년월은 `text`/`date` 가 아니라 이것**(2026-09-22). 값 계약 `'YYYY-MM'`. →[[apfs-datepicker]] |
 | `monthOfYear` | `PeriodPicker mode='monthOfYear'`(연도 없는 12개월 그리드) | **결산월 등 연도 없는 월은 `select`(1~12월 나열)가 아니라 이것**(2026-09-29). 값 계약 `'M'`(`'1'`~`'12'`), 표시 `12월` — 옆에 '월' 접미사 붙이지 말 것. →[[apfs-datepicker]] |
 | `year` | `PeriodPicker mode='year'`(연도 그리드+Popover) | **사업연도·회계연도는 `number`·`select`(연도 옵션 나열) 가 아니라 이것**(2026-09-17; select 금지는 2026-09-29 자펀드 제안서접수 등록에서 확정). 값 계약 `'YYYY'` 문자열, 표시는 `2026년`. 컬럼은 `type:'text'` 그대로 — 저장값이 곧 셀 값이다. →[[apfs-datepicker]] |
-| `select` | 옵션 **10개 미만** = 네이티브 `<select>`+`options` · **10개 이상 또는 `searchable:true`** = 검색형 `SearchableSelect`(ui/searchable-select.tsx, Popover+cmdk) | 첫 옵션 시드. 분기 SSOT `shouldSearch(n, field.searchable)`(`SEARCHABLE_SELECT_MIN=10`) — 명시 플래그가 개수보다 우선(`searchable:false` 로 강제 네이티브). **10개 미만 필드는 사용자가 지정한 것만 opt-in**(2026-09-29 사용자 결정 (b) — 임계값을 낮추지 않는다; 적용: 조합구분·사업분야(우수투자기업 관리)·운용사 유형). 같은 필드가 스키마·bespoke 모달(`s()` 헬퍼)에 중복 선언돼 있으면 **전부** 플래그(조합구분 3곳 선례). `SchemaField` 를 안 거치고 `<select>` 를 직접 그리는 모달(`gp_quant_indicator_modal`)은 플래그가 안 먹힌다 → `SearchableSelect` 로 직접 교체. ⚠ 적용 대상은 **실제 렌더되는 스키마인지 먼저 확인** — `투자기업정보_통합.ts` 는 09-15부터 화면을 그리지 않는 레지스트리 전용이라 플래그가 무효였다 |
+| `select` | 옵션 **10개 미만** = 네이티브 `<select>`+`options` · **10개 이상 또는 `searchable:true`** = 검색형 `SearchableSelect`(ui/searchable-select.tsx, Popover+cmdk) | 첫 옵션 시드. 분기 SSOT `shouldSearch(n, field.searchable)`(`SEARCHABLE_SELECT_MIN=10`) — 명시 플래그가 개수보다 우선(`searchable:false` 로 강제 네이티브). **10개 미만 필드는 사용자가 지정한 것만 opt-in**(2026-09-29 사용자 결정 (b) — 임계값을 낮추지 않는다; 적용: 조합구분·사업분야(우수투자기업 관리)·운용사 유형). 같은 필드가 스키마·bespoke 모달(`s()` 헬퍼)에 중복 선언돼 있으면 **전부** 플래그(조합구분 3곳 선례). `SchemaField` 를 안 거치고 `<select>` 를 직접 그리는 모달(`gp_quant_indicator_modal`)은 플래그가 안 먹힌다 → `SearchableSelect` 로 직접 교체. ⚠ 적용 대상은 **실제 렌더되는 스키마인지 먼저 확인** — `investee_profile_schema.ts` 는 09-15부터 화면을 그리지 않는 레지스트리 전용이라 플래그가 무효였다 |
 | `radio` | DS **`RadioGroup`/`RadioGroupItem`**(ui/radio-group.tsx, 선택 점 scale-pop)+`options` | **분류형 2지 이상**(개인/법인, 신주/구주, 정기/수시, Y/N/해당없음). on/off 가 아닌 대등한 2지는 switch 가 아니라 radio(2026-09-29 정기/수시 select→radio). 첫 옵션 시드. Item 은 `<button role=radio>` — `<label>` 래핑 금지, `htmlFor`/`id` 명시 연결 |
 | `switch` | shadcn Radix **`Switch`**(ui/switch.tsx) + 상태 텍스트(켜짐=`options[0]`, 꺼짐=`options[1]`, `htmlFor` 라벨) | **on/off 2지선다**(사용여부·도움말 제공 '여'/'부', 'Y'/'N', '예'/'아니오', 공시여부 'O'/'X'). **라벨이 `…여부`인 필드는 select 가 아니라 switch**(2026-09-29 사용자 "여부는 무조건 switch"). ⚠ **`options` 순서 = `[ON, OFF]`** — 목업 순서(`['X','O']`)를 그대로 쓰면 켰을 때 OFF 값이 저장된다(OPT_DISC 재정렬 선례). 첫 옵션 시드. 값 계약은 **문자열 그대로** — `checked = value === options[0]`, 토글 시 `options[0] \| options[1]` emit. (2026-09-18 오전 체크박스 렌더로 바꿨다가 같은 날 오후 **스위치로 원복** — 아래 박스) |
 | `checkbox` | DS `Checkbox`(ui/checkbox.tsx, 가시 라벨 없음) | 'true'/'false' 문자열. **신규 스키마에서 쓰지 말 것**(사용처 0, 2026-09-18) — 옵션이 없어 클릭 라벨을 못 붙이고 첫옵션 시드도 안 걸린다. on/off 값은 `switch` + `options` 를 쓴다 |
@@ -162,7 +162,7 @@ export const schema: PageSchema = {
 - `columns`(리스트 표시) ≠ `fields`(모달 입력) — 분리. `fields`는 **출처 실측 순서**를 따른다(목업 HTML의 폼 순서 또는 캡처 순서, →[[apfs-capture-schema]]).
 - ⚠️ `kind:'form'`이어도 **`columns`·`provenance`는 `PageSchemaZ` 필수**(optional 아님) — 폼 페이지도 리스트 컬럼과 출처를 선언해야 zod 통과.
 - 전용 `email`/`tel` 컨트롤은 **없다** → `control: 'text'`로 두고(형식 검증 필요하면 별도). 없는 control을 발명하면 `PageSchemaZ.parse` 실패.
-- `route`/`title`이 라벨로 유일하면 route=라벨로 자동 해결. 새 스키마는 `schemas/index.ts`의 `ALL` 배열에 등록.
+- `route` = 메뉴 리프의 영문 `path`(kebab-case, 예 `investee-spec`), `title` = 메뉴 라벨(한글). 한글 route 는 쓰지 않는다(2026-10-14 전면 폐지). 새 스키마는 `schemas/index.ts`의 `ALL` 배열에 등록.
 
 ## 호출 (리스트에서 모달 열기)
 **시그니처(정본 — generic_list_modal.tsx)**: `RowFormModal({ mode: 'create' | 'edit', initial?: Row, schema, onSave: (row: Row) => void, onClose, onDelete? })`. **`open` prop 없음** — 조건부 마운트(`{modal && (…)}`)로 열고 닫는다. `onSave`는 **`buildRow`로 조립된 Row**를 받는다(원시 vals 아님). `onDelete`는 edit에서만 넘긴다.

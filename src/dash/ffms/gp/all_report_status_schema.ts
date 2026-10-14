@@ -9,7 +9,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '전체 보고현황',
+  route: 'all-report-status',
   title: '전체 보고현황',
   kind: 'list',
   entity: '보고현황',

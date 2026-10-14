@@ -7,9 +7,9 @@
    규약 판단이 갈리면 위 두 파일의 실제 코드가 진실이다.
 
    ⚠ 메뉴 라벨과 목업 제목이 다르다 — 목업 h1 은 "운용인력변동관리"(공백 없음)지만 우리 메뉴 리프
-     (data.ts)는 **"운용인력 변동관리"**(운용인력과 변동관리 사이 공백)다. title·cardTitle·favRoute·
-     crumbs 리프·EXPORT_BASENAME 은 전부 **메뉴 라벨**(NFC)을 쓴다 — 라우트 키가 한글 라벨이라
-     한 글자만 어긋나도 즐겨찾기·딥링크가 조용히 빗나간다.
+     (data.ts)는 **"운용인력 변동관리"**(운용인력과 변동관리 사이 공백)다. title·cardTitle·
+     crumbs 리프·EXPORT_BASENAME 은 전부 **메뉴 라벨**(NFC)을 쓰고, favRoute 는 메뉴 path
+     `workforce-manage` 를 쓴다.
 
    구성(목업 → 우리 규약)
    - 검색박스 3항목(구분 · 운용사/자펀드 · 기간) → **상세필터 드로어**(Sheet). 툴바 FilterChip 세트는
@@ -469,7 +469,7 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
       crumbs={['홈', '조기경보', '조기경보', '운용인력 변동관리']}
       title="운용인력 변동관리"
       cardTitle="운용인력 변동관리"
-      favRoute="운용인력 변동관리"
+      favRoute="workforce-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips.map((c) => ({ label: c.key, value: c.value, onClear: c.clear }))}
       contextActions={selActions}

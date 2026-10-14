@@ -68,7 +68,7 @@ export function GpTypeIndicatorTrend({ onNav }: { onNav?: (r: string) => void })
   const idx = trendPointsInRange(from, to);
 
   return (
-    <RiskPage group="자펀드정보" label={LABEL} route={LABEL} onNav={onNav}
+    <RiskPage group="자펀드정보" label={LABEL} route="gp-type-indicator-trend" onNav={onNav}
       filters={filters} onReset={reset}
       footerLeft={<span>{`운용사 유형 ${type || '전체'} · 기간 ${from ? String(from) : '-'} ~ ${to ? String(to) : '-'} · ${String(idx.length)}개월 · 월별 값은 원문 예시(평균만 확정값)`}</span>}>
       {TREND_SECTIONS.map((sec) => (

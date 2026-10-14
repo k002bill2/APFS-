@@ -23,7 +23,7 @@ type P = { onNav?: (r: string) => void };
 const SYSTEM = '수탁보고';
 
 const VERIFY: TablesPageConfig = {
-  system: SYSTEM, group: '자펀드 수탁', label: '실물검증비교조회', route: '실물검증비교조회',
+  system: SYSTEM, group: '자펀드 수탁', label: '실물검증비교조회', route: 'trust-physical-compare',
   tables: VERIFY_TABLES, unit: true,
   filters: [
     /* 원문 자펀드 select 옵션 1개('전체' 없음) — 조회 대상 파라미터(행에 자펀드 칸 없음) */
@@ -33,7 +33,7 @@ const VERIFY: TablesPageConfig = {
 };
 
 const SECURITIES_COMPARE_PAGE: TablesPageConfig = {
-  system: SYSTEM, group: '자펀드 수탁', label: '유가증권비교조회', route: '유가증권비교조회',
+  system: SYSTEM, group: '자펀드 수탁', label: '유가증권비교조회', route: 'trust-securities-compare',
   tables: [SECURITIES_COMPARE], unit: true,
   /* 형제 S3_101 검색조건 항목 준용 — 자펀드 옵션은 원천이 없어 비운다(형제 화면의 자펀드 값을 끌어오지 않는다) */
   filters: [
@@ -43,7 +43,7 @@ const SECURITIES_COMPARE_PAGE: TablesPageConfig = {
 };
 
 const COMMON_CODE: TablesPageConfig = {
-  system: SYSTEM, group: '자펀드 수탁', label: '공통코드조회', route: '공통코드조회',
+  system: SYSTEM, group: '자펀드 수탁', label: '공통코드조회', route: 'trust-common-code',
   tables: [CODE_TABLE],
   filters: [{ label: '코드구분', kind: 'select', def: CODE_DEFAULT, options: CODE_GROUPS, allLabel: null, key: 'grp' }],
 };

@@ -31,7 +31,7 @@ const REP_COLUMNS: PageSchema['columns'] = [
 /* 투자준법감시내역 등록/수정 — 행 선택 후 [준법감시 등록](신규) · [준법감시 수정](기존)에서 호출.
    제목은 호출 시점에 RowFormModal title prop으로 바꾼다. 운용사/자펀드는 선택 행에서 온 readonly. */
 export const COMPLIANCE_SCHEMA: PageSchema = parsePageSchema({
-  route: '투자심의관리/준법감시', title: '투자준법감시내역', kind: 'form', entity: '투자준법감시내역',
+  route: 'investment-review/compliance', title: '투자준법감시내역', kind: 'form', entity: '투자준법감시내역',
   columns: REP_COLUMNS,
   fields: [
     { key: 'gp', label: '운용사', control: 'readonly' },

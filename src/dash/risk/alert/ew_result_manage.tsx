@@ -345,7 +345,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
       crumbs={['홈', '조기경보', '조기경보', '조기경보 결과정보 관리']}
       title="조기경보 결과정보 관리"
       cardTitle="조기경보 결과정보 관리"
-      favRoute="조기경보 결과정보 관리"
+      favRoute="ew-result-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 적용 중인 드로어 값 칩 = appliedFilters. 기준년월은 비는 일이 없어 칩이 상시 보이고 × = 기본값 복귀 */
       appliedFilters={[{ label: '기준년월', value: ym, onClear: () => setYm(BASE_YM) }]}

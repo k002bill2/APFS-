@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { schema } from './조합별_반기보고_현황';
+import { schema } from './gp_halfyear_report_status';
 import { parsePageSchema } from '../../schemas/types';
 
 /* 원문 S5_119 반기보고 조회 — 헤더 순서·라벨·행 수를 못박는다.
@@ -16,7 +16,7 @@ describe('조합별 반기보고 현황 스키마', () => {
   });
 
   it('title 은 새 리프 라벨, route 는 옛 라벨(MENU leaf.path)로 보존한다', () => {
-    expect(schema.route).toBe('조합별 반기보고 현황');
+    expect(schema.route).toBe('gp-halfyear-report-status');
     expect(schema.title).toBe('반기보고 제출현황');
   });
 

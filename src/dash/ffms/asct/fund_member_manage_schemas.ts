@@ -40,7 +40,7 @@ const FM_COLUMNS: PageSchema['columns'] = [
 const AMOUNT_LABEL = '최초출자약정액(원)';
 
 export const CREATE_SCHEMA: PageSchema = parsePageSchema({
-  route: '자펀드별조합원관리/조합원등록', title: '조합원 등록', kind: 'form', entity: '조합원',
+  route: 'fund-member/member-create', title: '조합원 등록', kind: 'form', entity: '조합원',
   columns: FM_COLUMNS,
   fields: [
     { key: 'fn', label: '자펀드', control: 'readonly' },
@@ -55,7 +55,7 @@ export const CREATE_SCHEMA: PageSchema = parsePageSchema({
 
 /* 수정 — 목업은 조합원만 `.readonly` div로 바뀌고(마커도 등록 모드에만 붙는다) 나머지는 동일한 입력이다. */
 export const EDIT_SCHEMA: PageSchema = parsePageSchema({
-  route: '자펀드별조합원관리/조합원수정', title: '조합원 수정', kind: 'form', entity: '조합원',
+  route: 'fund-member/member-edit', title: '조합원 수정', kind: 'form', entity: '조합원',
   columns: FM_COLUMNS,
   fields: [
     { key: 'fn', label: '자펀드', control: 'readonly' },

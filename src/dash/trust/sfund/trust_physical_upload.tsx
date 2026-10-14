@@ -33,6 +33,7 @@ import {
 const { Button } = UI;
 
 interface UploadPageConfig {
+  route: string;
   label: string;
   table: TableMeta;
   /** 업로드 모달 제목(원문 업로드 박스 `.uploadhd .t`) */
@@ -103,7 +104,7 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
   });
 
   return (
-    <RiskPage system="수탁보고" group="자펀드 수탁" label={cfg.label} route={cfg.label} onNav={onNav}
+    <RiskPage system="수탁보고" group="자펀드 수탁" label={cfg.label} route={cfg.route} onNav={onNav}
       filters={filters} onReset={reset} contextActions={selActions}
       actions={<Button variant="outline" size="sm" leadingIcon="upload" onClick={() => setModal({ kind: 'upload' })}>업로드</Button>}
       footerLeft={<span>{`${ym ? `기준월 ${String(ym)} · ` : ''}총 ${String(shown.length)}건`}</span>}
@@ -123,13 +124,13 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
 }
 
 const PHYSICAL: UploadPageConfig = {
-  label: '실물자료관리(업로드)', table: PHYSICAL_TABLE, uploadTitle: '실물자료 업로드', fileLabel: '실물자료 파일',
+  route: 'trust-physical-upload', label: '실물자료관리(업로드)', table: PHYSICAL_TABLE, uploadTitle: '실물자료 업로드', fileLabel: '실물자료 파일',
   deleteTitle: '실물자료 삭제', entity: '실물자료', baseYm: PHYSICAL_BASE_YM,
 };
 /* 신규 — 형제 S3_98 준용. 제목·삭제 문구는 형제의 '실물자료' 를 '유가증권' 으로 바꾼 추정이다.
    기준월 기본값은 형제 화면의 데이터 시점이라 가져오지 않는다(빈 값). */
 const SECURITIES: UploadPageConfig = {
-  label: '유가증권관리(업로드)', table: SECURITIES_TABLE, uploadTitle: '유가증권 업로드', fileLabel: '유가증권 파일', deleteTitle: '유가증권 삭제', entity: '유가증권', baseYm: '',
+  route: 'trust-securities-upload', label: '유가증권관리(업로드)', table: SECURITIES_TABLE, uploadTitle: '유가증권 업로드', fileLabel: '유가증권 파일', deleteTitle: '유가증권 삭제', entity: '유가증권', baseYm: '',
 };
 
 /** 실물자료관리(업로드) — S3_98 */

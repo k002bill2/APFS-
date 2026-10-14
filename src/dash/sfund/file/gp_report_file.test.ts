@@ -8,7 +8,7 @@ const src = readFileSync('src/dash/sfund/file/gp_report_file.tsx', 'utf8');
 describe('보고 파일 조회 (S5_116)', () => {
   it('라벨 = 메뉴 리프', () => {
     expect(GP_REPORT_FILE_LABEL).toBe('보고 파일 조회');
-    expect(readFileSync('src/dash/data.ts', 'utf8')).toContain('{ label:"보고 파일 조회" }');
+    expect(readFileSync('src/dash/data.ts', 'utf8')).toContain('{ label:"보고 파일 조회", path:"gp-report-file" }');
   });
 
   it('컬럼 = 원문 thead 순서', () => {

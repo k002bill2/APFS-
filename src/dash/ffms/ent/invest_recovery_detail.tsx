@@ -1,4 +1,4 @@
-/* 투자금 회수현황 — 조회 전용 2-모드 화면 (투자자산관리 > 투자기업정보, route `투자금 회수현황`).
+/* 투자금 회수현황 — 조회 전용 2-모드 화면 (투자자산관리 > 투자기업정보, route `invest-recovery-detail`).
    출처: docs/mockups/01_투자자산관리/S1_36_투자_및_회수_상세정보.html (2026-09-15 파싱 실측)
 
    데이터·컬럼·합계 계산은 `invest_recovery_detail_model.ts` 가 SSOT 다(출처 확정 근거도 거기).
@@ -153,7 +153,7 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
     <GridFrame
       crumbs={['홈', '투자자산관리', '투자기업정보', '투자금 회수현황']}
       title="투자금 회수현황"
-      favRoute="투자금 회수현황"
+      favRoute="invest-recovery-detail"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 기본(주) 필터 = 조회기준(2026-09-24 사용자 지시). 깔때기 아이콘 뒤 첫 칩 줄이다.
          바꾸면 컬럼과 데이터가 함께 바뀐다(원문 select와 같은 동작). 건수 = 그 모드에 나머지 조건을 건 facet. */

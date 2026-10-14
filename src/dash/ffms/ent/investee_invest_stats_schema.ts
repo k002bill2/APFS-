@@ -12,7 +12,7 @@
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
-  route: '투자실적 현황(투자기업)',
+  route: 'investee-invest-stats',
   title: '투자실적 현황(투자기업)',
   kind: 'list',
   entity: '투자실적',

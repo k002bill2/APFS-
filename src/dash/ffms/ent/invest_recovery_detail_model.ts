@@ -25,12 +25,12 @@
    원문 주석 그대로: "전체거래엔 전환사채전환·무상증자 등 순현금흐름이 아닌 행이 섞여있어,
    산술 검증이 끝난 투자및회수 데이터로 항상 계산". 이 규칙을 바꾸지 않는다. */
 import type { ColumnSpec } from '../../schemas/types';
-import { schema as 투자금회수현황Schema } from './투자금_회수현황';
+import { schema as investRecoverySchema } from './invest_recovery_detail_schema';
 
 export type RecoveryRow = Record<string, string | number> & { id: string };
 
 /** 원문 COLS_IR — 조회기준 `투자및회수`. **스키마가 정본**이라 그대로 가져온다(복사 금지). */
-export const COLUMNS_IR: readonly ColumnSpec[] = 투자금회수현황Schema.columns;
+export const COLUMNS_IR: readonly ColumnSpec[] = investRecoverySchema.columns;
 
 /** 원문 COLS_ALL — 조회기준 `전체거래`. 사업자번호·거래처분코드가 빠지고 거래주수가 붙는다. */
 export const COLUMNS_ALL: readonly ColumnSpec[] = [

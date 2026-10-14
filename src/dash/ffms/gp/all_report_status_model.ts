@@ -1,11 +1,11 @@
-/* 자펀드 전체 보고현황(route `전체 보고현황`) — 원문 6개 표의 컬럼·행 SSOT.
+/* 자펀드 전체 보고현황(route `all-report-status`) — 원문 6개 표의 컬럼·행 SSOT.
    출처: docs/mockups/01_투자자산관리/S1_44_전체_보고현황.html (2026-09-15 파싱 실측)
 
    ⚠ 이 화면이 전용 컴포넌트인 이유: 원문이 한 화면에 표 6개를 쌓아 두는데 `PageSchema`는
    `columns` 배열이 **하나**뿐이라 담지 못한다. 그래서 표 정의를 여기 데이터로 두고,
    페이지(all_report_status.tsx)가 SegTabs 로 전환한다.
 
-   ⚠ 1번 탭(투자심의)의 컬럼은 **`schemas/전체_보고현황.ts`에서 그대로 가져온다** — 복사하면
+   ⚠ 1번 탭(투자심의)의 컬럼은 **`schemas/all_report_status_schema.ts`에서 그대로 가져온다** — 복사하면
    두 곳이 갈라진다. 그 스키마는 라우트 레지스트리·provenance 기록으로 계속 살아 있다(삭제 금지).
 
    ── 2026-09-15 정정 ──
@@ -24,7 +24,7 @@
    금액은 원(KRW) 정수 = `schemas/unit.ts` 저장 단위 계약. 원문 셀은 `data-amt` 속성이 원값이고
    화면 텍스트는 단위 토글이 덮어쓰므로, 텍스트가 아니라 `data-amt` 를 옮겼다. */
 import type { ColumnSpec, StatusDomainEntry } from '../../schemas/types';
-import { schema as 전체보고현황Schema } from './전체_보고현황';
+import { schema as allReportStatusSchema } from './all_report_status_schema';
 
 export type ReportRow = Record<string, string | number> & { id: string };
 
@@ -50,14 +50,14 @@ const YN_TONES: StatusDomainEntry[] = [
 ];
 
 /* ── 1. 투자심의관리 ── 컬럼 13개(원문 그대로) · 원문 1행 */
-const 투심Rows: ReportRow[] = [
+const reviewRows: ReportRow[] = [
   { id: 'rv-1', no: 1, gp: 'KB증권(주)', subFund: '현대동양농식품사모투자전문회사', investee: '(주)코스온',
     investStatus: '결과', investDate: '2014-09-15', investAmt: 5_000_000_000, investType: '전환사채',
     isMandatory: 'Y', isSmallScale: 'Y', isAgri: 'Y', approvedAmt: 5_000_000_000, paymentDue: '2014-09-19' },
 ];
 
 /* ── 2. 수시보고 ── 컬럼 8개(원문 그대로) · 원문 1행 */
-const 수시보고Columns: readonly ColumnSpec[] = [
+const occasionalColumns: readonly ColumnSpec[] = [
   { key: 'no',          label: 'No',            type: 'number', align: 'left' },
   { key: 'inputDate',   label: '입력일자',      type: 'date' },
   { key: 'occurDate',   label: '상황 발생일자', type: 'date' },
@@ -67,13 +67,13 @@ const 수시보고Columns: readonly ColumnSpec[] = [
   { key: 'reviewer',    label: '심사담당',      type: 'pii' },
   { key: 'riskManager', label: '리스크담당',    type: 'pii' },
 ];
-const 수시보고Rows: ReportRow[] = [
+const occasionalRows: ReportRow[] = [
   { id: 'oc-1', no: 1, inputDate: '2018-06-08', occurDate: '2018-06-08', gp: 'KB증권(주)',
     subFund: '현대동양농식품사모투자전문회사', title: '체리부로 투자금 회수 완료 보고', reviewer: '신상준', riskManager: '임은미' },
 ];
 
 /* ── 3. 조합원총회 ── 컬럼 8개(원문 그대로) · 원문 1행 */
-const 조합원총회Columns: readonly ColumnSpec[] = [
+const meetingColumns: readonly ColumnSpec[] = [
   { key: 'no',           label: 'No',       type: 'number', align: 'left' },
   { key: 'gp',           label: '운용사',   type: 'gp',     align: 'left' },
   { key: 'subFund',      label: '자펀드',   type: 'text',   align: 'left' },
@@ -83,13 +83,13 @@ const 조합원총회Columns: readonly ColumnSpec[] = [
   { key: 'title',        label: '제목',     type: 'text',   align: 'left' },
   { key: 'agenda',       label: '안건',     type: 'text',   align: 'left' },
 ];
-const 조합원총회Rows: ReportRow[] = [
+const meetingRows: ReportRow[] = [
   { id: 'mt-1', no: 1, gp: 'KB증권(주)', subFund: '현대동양농식품사모투자전문회사', reportStatus: '결과',
     meetingType: '청산총회', meetingDate: '2018-06-28', title: '임시사원(청산)총회', agenda: '청산 재무제표 승인의 건' },
 ];
 
 /* ── 4. 관리보수관리 ── 컬럼 7개(원문 그대로) · 원문 "조회된 데이터가 없습니다" → 0건 */
-const 관리보수Columns: readonly ColumnSpec[] = [
+const mgmtFeeColumns: readonly ColumnSpec[] = [
   { key: 'no',         label: 'No',       type: 'number', align: 'left' },
   { key: 'gp',         label: '운용사',   type: 'gp',     align: 'left' },
   { key: 'subFund',    label: '자펀드',   type: 'text',   align: 'left' },
@@ -100,7 +100,7 @@ const 관리보수Columns: readonly ColumnSpec[] = [
 ];
 
 /* ── 5. 운용사 출자배분관리 ── 컬럼 19개(기타조합원·모태펀드가 2단 헤더) · 원문 12행 + 소계·합계 */
-const 운용사출자배분Columns: readonly ColumnSpec[] = [
+const gpContribColumns: readonly ColumnSpec[] = [
   { key: 'no',                label: 'No',             type: 'text',   align: 'left' },
   { key: 'gp',                label: '운용사',         type: 'gp',     align: 'left', pinned: 'left' },
   { key: 'subFund',           label: '자펀드',         type: 'text',   align: 'left', pinned: 'left' },
@@ -121,7 +121,7 @@ const 운용사출자배분Columns: readonly ColumnSpec[] = [
   { key: 'distTotal',         label: '배분합계',       type: 'amount', unit: '원', align: 'right' },
   { key: 'contribBalance',    label: '출자잔액',       type: 'amount', unit: '원', align: 'right' },
 ];
-const 운용사출자배분Rows: ReportRow[] = [
+const gpContribRows: ReportRow[] = [
   { id: 'gc-1', no: '1', gp: 'KB증권(주)', subFund: '현대동양농식품사모투자전문회사', commitTotal: 32_000_000_000, moafCommit: 15_700_000_000, kind: '출자', baseDate: '2011-05-13', paidTotal: 1_600_000_000, moafPaid: 785_000_000, otherPrincipal: 0, otherProfit: 0, otherTax: 0, otherSum: 0, moafPrincipal: 0, moafProfit: 0, moafTax: 0, moafSum: 0, distTotal: 0, contribBalance: 1_600_000_000 },
   { id: 'gc-2', no: '2', gp: 'KB증권(주)', subFund: '현대동양농식품사모투자전문회사', commitTotal: 32_000_000_000, moafCommit: 15_700_000_000, kind: '출자', baseDate: '2011-10-21', paidTotal: 4_800_000_000, moafPaid: 2_355_000_000, otherPrincipal: 0, otherProfit: 0, otherTax: 0, otherSum: 0, moafPrincipal: 0, moafProfit: 0, moafTax: 0, moafSum: 0, distTotal: 0, contribBalance: 6_400_000_000 },
   { id: 'gc-3', no: '3', gp: 'KB증권(주)', subFund: '현대동양농식품사모투자전문회사', commitTotal: 32_000_000_000, moafCommit: 15_700_000_000, kind: '출자', baseDate: '2012-06-28', paidTotal: 4_800_000_000, moafPaid: 2_355_000_000, otherPrincipal: 0, otherProfit: 0, otherTax: 0, otherSum: 0, moafPrincipal: 0, moafProfit: 0, moafTax: 0, moafSum: 0, distTotal: 0, contribBalance: 11_200_000_000 },
@@ -136,13 +136,13 @@ const 운용사출자배분Rows: ReportRow[] = [
   { id: 'gc-12', no: '12', gp: 'KB증권(주)', subFund: '현대동양농식품사모투자전문회사', commitTotal: 32_000_000_000, moafCommit: 15_700_000_000, kind: '배분', baseDate: '2018-06-28', paidTotal: 0, moafPaid: 0, otherPrincipal: 163_000_000, otherProfit: 937_183_218, otherTax: 0, otherSum: 1_100_183_218, moafPrincipal: 157_000_000, moafProfit: 902_685_709, moafTax: 0, moafSum: 1_059_685_709, distTotal: 2_159_868_927, contribBalance: 0 },
 ];
 /* 소계 = 12행 집계, 합계 = 소계 + 약정액. 원문 tfoot 2줄을 그대로 옮겼다(재계산하지 않는다). */
-const 운용사출자배분Totals: ReportRow[] = [
+const gpContribTotals: ReportRow[] = [
   { id: 'gc-소계', no: '소계', gp: '', subFund: '', commitTotal: '-', moafCommit: '-', kind: '', baseDate: '', paidTotal: 26_642_000_000, moafPaid: 13_071_000_000, otherPrincipal: 13_571_000_000, otherProfit: 1_849_282_823, otherTax: 0, otherSum: 15_420_282_823, moafPrincipal: 13_071_000_000, moafProfit: 1_781_211_114, moafTax: 0, moafSum: 14_852_211_114, distTotal: 30_272_493_937, contribBalance: '-' },
   { id: 'gc-합계', no: '합계', gp: '', subFund: '', commitTotal: 32_000_000_000, moafCommit: 15_700_000_000, kind: '', baseDate: '', paidTotal: 26_642_000_000, moafPaid: 13_071_000_000, otherPrincipal: 13_571_000_000, otherProfit: 1_849_282_823, otherTax: 0, otherSum: 15_420_282_823, moafPrincipal: 13_071_000_000, moafProfit: 1_781_211_114, moafTax: 0, moafSum: 14_852_211_114, distTotal: 30_272_493_937, contribBalance: '-' },
 ];
 
 /* ── 6. 농금원 출자배분관리 ── 컬럼 22개(원문 그대로) · 원문 1행 */
-const 농금원출자배분Columns: readonly ColumnSpec[] = [
+const apfsContribColumns: readonly ColumnSpec[] = [
   { key: 'no',                label: 'No',               type: 'text',   align: 'left' },
   { key: 'gp',                label: '운용사',           type: 'gp',     align: 'left', pinned: 'left' },
   { key: 'subFund',           label: '자펀드',           type: 'text',   align: 'left', pinned: 'left' },
@@ -166,40 +166,40 @@ const 농금원출자배분Columns: readonly ColumnSpec[] = [
   { key: 'netDepositTotal',   label: '실 입금총액',      type: 'amount', unit: '원', align: 'right' },
   { key: 'holdBalance',       label: '보유잔액',         type: 'amount', unit: '원', align: 'right' },
 ];
-const 농금원출자배분Rows: ReportRow[] = [
+const apfsContribRows: ReportRow[] = [
   { id: 'ac-1', no: '1', gp: 'KB증권(주)', subFund: '현대동양농식품사모투자전문회사', fundAmount: 32_000_000_000, member: '농식품모태펀드', memberType: 'SP', memberCommit: 15_700_000_000, memberCommitTotal: 32_000_000_000, tradeType: '출자', tradeDetail: '설립출자', tradeDate: '2011-05-13', paidAmt: 785_000_000, fundPaidTotal: 1_600_000_000, principalDist: '-', profitDistPreTax: '-', fundDistTotal: '-', otherDist: '-', priorLossReserve: '-', withholdingTax: '-', netDeposit: '-', netDepositTotal: '-', holdBalance: 785_000_000 },
 ];
 
 export const REPORT_TABS: readonly ReportTab[] = [
   {
     key: 'review', label: '투자심의', sheet: '투자심의 현황', dateKey: 'investDate',
-    columns: 전체보고현황Schema.columns,   // ← 스키마가 정본(복사 금지)
-    statusDomain: [...(전체보고현황Schema.statusDomain ?? []), ...YN_TONES],
-    rows: 투심Rows,
+    columns: allReportStatusSchema.columns,   // ← 스키마가 정본(복사 금지)
+    statusDomain: [...(allReportStatusSchema.statusDomain ?? []), ...YN_TONES],
+    rows: reviewRows,
   },
   {
     key: 'occasional', label: '수시보고', sheet: '수시보고 현황', dateKey: 'inputDate',
-    columns: 수시보고Columns, statusDomain: YN_TONES, rows: 수시보고Rows,
+    columns: occasionalColumns, statusDomain: YN_TONES, rows: occasionalRows,
   },
   {
     key: 'meeting', label: '조합원총회', sheet: '조합원총회 현황', dateKey: 'meetingDate',
-    columns: 조합원총회Columns,
-    statusDomain: [...(전체보고현황Schema.statusDomain ?? []), ...YN_TONES],
-    rows: 조합원총회Rows,
+    columns: meetingColumns,
+    statusDomain: [...(allReportStatusSchema.statusDomain ?? []), ...YN_TONES],
+    rows: meetingRows,
   },
   {
     // 원문이 빈 표다. 행을 지어내지 않는다 — 빈 상태가 원문 충실이다.
     key: 'mgmtFee', label: '관리보수', sheet: '관리보수관리', dateKey: 'payDate',
-    columns: 관리보수Columns, statusDomain: YN_TONES, rows: [],
+    columns: mgmtFeeColumns, statusDomain: YN_TONES, rows: [],
   },
   {
     key: 'gpContribution', label: '운용사 출자배분', sheet: '운용사 출자배분관리', dateKey: 'baseDate',
-    columns: 운용사출자배분Columns, statusDomain: YN_TONES,
-    rows: 운용사출자배분Rows, pinnedBottom: 운용사출자배분Totals,
+    columns: gpContribColumns, statusDomain: YN_TONES,
+    rows: gpContribRows, pinnedBottom: gpContribTotals,
   },
   {
     key: 'apfsContribution', label: '농금원 출자배분', sheet: '농금원 출자배분관리', dateKey: 'tradeDate',
-    columns: 농금원출자배분Columns, statusDomain: YN_TONES, rows: 농금원출자배분Rows,
+    columns: apfsContribColumns, statusDomain: YN_TONES, rows: apfsContribRows,
   },
 ];
 

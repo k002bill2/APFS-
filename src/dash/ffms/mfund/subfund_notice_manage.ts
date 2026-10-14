@@ -3,7 +3,7 @@ import type { PageSchema } from '../../schemas/types';
 // 출처: 공고관리_목업_artifact.html (KRDS TO-BE, 파일럿 공고관리).
 // 모태펀드 출자사업 계획공고 조회·등록·수정·삭제. flat CRUD → 스키마 트랙(GenericListPage).
 export const schema: PageSchema = {
-  route: '자펀드 공고 정보관리',
+  route: 'subfund-notice-manage',
   title: '자펀드 공고 정보관리',
   kind: 'form',
   entity: '공고',

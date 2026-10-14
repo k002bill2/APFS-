@@ -10,7 +10,7 @@ export const USE_OPTIONS = ['여', '부'] as const;
 /** 프로그램 등록/수정 — 3필드(≤6 → 460px 1단) */
 export function programSchema(mode: 'create' | 'edit'): PageSchema {
   return parsePageSchema({
-    route: '프로그램관리/프로그램', title: mode === 'create' ? '프로그램 등록' : '프로그램 수정', kind: 'form', entity: '프로그램',
+    route: 'program-manage/program', title: mode === 'create' ? '프로그램 등록' : '프로그램 수정', kind: 'form', entity: '프로그램',
     columns: [{ key: 'pid', label: '프로그램ID', type: 'code' }, { key: 'pname', label: '프로그램명', type: 'text' }],
     fields: [
       { key: 'pid', label: '프로그램ID', control: mode === 'edit' ? 'readonly' : 'text', required: mode === 'create' },

@@ -3,7 +3,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { APFS_DATA } from '../../data';
 import { headerSequence, computeTotal, amountText } from '../../risk_table_meta';
 import { GP_VERIFY_TABLES, GP_VERIFY_SRC, GP_VERIFY_PROVENANCE, GP_VERIFY_FUND, GP_VERIFY_BASE_YM } from './gp_verify_report_data';
-import { GP_VERIFY_CONFIG, GP_VERIFY_ROUTE } from './gp_verify_report';
+import { GP_VERIFY_CONFIG, GP_VERIFY_LABEL, GP_VERIFY_ROUTE } from './gp_verify_report';
 
 /* 조합별 실물검증 결과 보고(S5_120) — 원본 목업 HTML 과 직접 대조(trust_pages_13.test.ts 방식). */
 
@@ -22,12 +22,12 @@ const tdRows = (frag: string, part: 'tbody' | 'tfoot'): string[][] => {
 const shown = (v: unknown) => (v == null || v === '' ? '-' : typeof v === 'number' ? v.toLocaleString('en-US') : String(v));
 
 describe('조합별 실물검증 결과 보고 — 라우트·출처', () => {
-  it('route = 자펀드 보고 > 실물검증 리프 라벨(path 없음)', () => {
+  it('route = 자펀드 보고 > 실물검증 리프의 영문 path', () => {
     const leaf = MENU.find((m) => m.id === 'gp')!.children!.find((g) => g.label === '실물검증')!.children![0];
-    expect(leaf.path).toBeUndefined();
-    expect(leaf.label.normalize('NFC')).toBe(GP_VERIFY_ROUTE);
+    expect(leaf.path).toBe(GP_VERIFY_ROUTE);
+    expect(leaf.label.normalize('NFC')).toBe(GP_VERIFY_LABEL);
     expect(GP_VERIFY_CONFIG.route).toBe(GP_VERIFY_ROUTE);
-    expect(GP_VERIFY_CONFIG.label).toBe(GP_VERIFY_ROUTE);
+    expect(GP_VERIFY_CONFIG.label).toBe(GP_VERIFY_LABEL);
   });
   it('출처 목업 파일이 존재한다', () => {
     expect(existsSync(GP_VERIFY_SRC)).toBe(true);

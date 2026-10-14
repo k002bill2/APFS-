@@ -50,7 +50,7 @@ export function MotherFundValuation({ onNav }: { onNav?: (r: string) => void }) 
   };
 
   return (
-    <RiskPage group="가치평가" label={LABEL} route={LABEL} onNav={onNav}
+    <RiskPage group="가치평가" label={LABEL} route="mother-fund-valuation" onNav={onNav}
       filters={filters} onReset={reset} unit={unit} onUnit={setUnit}
       actions={<SaveButton variant="outline" onSubmit={() => save}>저장</SaveButton>}
       footerLeft={<span>{`${ym ? `평가년월 ${String(ym)} · ` : ''}가치평가 상세내역 ${String(detailRows.length)}건`}</span>}

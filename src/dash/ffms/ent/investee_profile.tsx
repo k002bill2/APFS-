@@ -1,4 +1,4 @@
-/* 투자기업정보(통합) — 조회 전용 3섹션 화면 (투자자산관리 > 투자기업정보, route `투자기업정보(통합)`).
+/* 투자기업정보(통합) — 조회 전용 3섹션 화면 (투자자산관리 > 투자기업정보, route `investee-profile`).
    출처: docs/mockups/01_투자자산관리/S1_30_투자기업정보.html (2026-09-15 파싱 실측)
 
    왜 전용 페이지인가: S1_30 은 **목록이 아니라 기업 1건의 상세**다 — 기업개요 kv(34항목) +
@@ -9,7 +9,7 @@
    보여 줬다. 원문에 없는 행이라 전부 제거하고 원문 3섹션을 그대로 싣는다.
 
    데이터·표 마크업은 `company_profile_model.tsx` 가 SSOT 다(같은 원문을 팝업도 쓴다 — 복사 금지).
-   스키마 `schemas/투자기업정보_통합.ts` 는 삭제하지 않는다: 라우트 레지스트리(resolveSchema)가
+   스키마 `schemas/investee_profile_schema.ts` 는 삭제하지 않는다: 라우트 레지스트리(resolveSchema)가
    DEFAULT_SCHEMA 로 떨어지지 않게 하는 등록부이자, clipboard 캡처 기반 등록/수정 양식의
    provenance 기록이다(그 21필드는 S1_30 이 아니라 별도 캡처가 출처다 — 출처를 바꿔 적지 않는다).
 
@@ -73,7 +73,7 @@ export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
     <GridFrame
       crumbs={['홈', '투자자산관리', '투자기업정보', '투자기업정보(통합)']}
       title="투자기업정보(통합)"
-      favRoute="투자기업정보(통합)"
+      favRoute="investee-profile"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={[{ label: '조회 대상', value: path.some(Boolean) ? path.map((v) => v || '전체').join('\u00a0› ') : '', wide: true, onClear: clearFilters }]}
       toolbarRight={<>

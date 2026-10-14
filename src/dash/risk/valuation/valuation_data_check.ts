@@ -14,7 +14,7 @@ import type { PageSchema } from '../../schemas/types';
 const amt = (key: string, label: string) => ({ key, label, type: 'amount' as const, unit: '원', align: 'right' as const });
 
 export const schema: PageSchema = {
-  route: '평가시점 데이터 확인',
+  route: 'valuation-data-check',
   title: '평가시점 데이터 확인',
   kind: 'list',
   entity: '투자자산',

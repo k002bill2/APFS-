@@ -114,8 +114,8 @@ describe('메뉴 IA — 17리프 라벨·route 보존', () => {
     const labels = ['기업정보', '자펀드정보', '가치평가'].flatMap((g) => leavesOf(g).map((l) => l.label));
     expect(labels).toEqual(LEAVES.map(([l]) => l));
   });
-  it('예외사항레포트는 기존 path "예외사항리포트" 를 유지한다', () => {
-    expect(routeOf('예외사항레포트')).toBe('예외사항리포트');
+  it('예외사항레포트의 route 는 영문 path exception-report 다', () => {
+    expect(routeOf('예외사항레포트')).toBe('exception-report');
   });
   it('모든 route 키가 NFC 다', () => {
     for (const [label] of LEAVES) expect(routeOf(label), label).toBe(routeOf(label).normalize('NFC'));
@@ -331,13 +331,13 @@ describe('스키마 트랙 2리프 — 헤더·행', () => {
     expect(s.hideKpis).toBe(true);
   });
   it('운용사 재무정보 비교: 원문 실데이터 1건 값 그대로', () => {
-    const r = resolveSchema('운용사 재무정보 비교 조회').sample![0];
+    const r = resolveSchema('gp-financial-compare').sample![0];
     expect(r.nm).toBe('마이다스동아인베스트먼트(주)');
     expect(r.ta).toBe(11680451471);
     expect(r.sales).toBe('-');
   });
   it('평가시점 데이터: 원문 표시값(미보고·해당없음·무형자산상각비 0) 그대로', () => {
-    const r = resolveSchema('평가시점 데이터 확인').sample![0];
+    const r = resolveSchema('valuation-data-check').sample![0];
     expect(r.comp).toBe('어업회사법인 페리프씨웍스 주식회사');
     expect(r.recovered).toBe(19489041);
     expect(r.asset).toBe('미보고');

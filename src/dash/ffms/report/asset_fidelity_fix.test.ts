@@ -89,7 +89,7 @@ function tfootCells(html: string, fill: Record<string, number> = {}): Cell[] {
 
 describe('② S1_32 투자기업 고용현황보고 합계 행 = 원문 tfoot', () => {
   const html = M1('S1_32_투자기업_고용현황보고.html');
-  const schema = resolveSchema('투자기업 고용현황보고');
+  const schema = resolveSchema('investee-employment');
   const DATA = scriptLiteral<{ sales: number }[]>(html, 'DATA');
 
   it('스키마가 zod 를 통과한다(totals key ⊂ columns)', () => {
@@ -108,7 +108,7 @@ describe('② S1_32 투자기업 고용현황보고 합계 행 = 원문 tfoot', 
 
 describe('② S1_33 전체 투자실적 합계 행 = 원문 tfoot', () => {
   const html = M1('S1_33_전체_투자실적.html');
-  const schema = resolveSchema('전체 투자실적');
+  const schema = resolveSchema('invest-performance-all');
 
   it('스키마가 zod 를 통과한다(totals key ⊂ columns)', () => {
     expect(() => parsePageSchema(schema)).not.toThrow();
@@ -135,13 +135,13 @@ describe('② S1_33 전체 투자실적 합계 행 = 원문 tfoot', () => {
 
 describe('② totals 는 opt-in — 선언한 스키마만 합계 행을 갖는다', () => {
   it('합계를 선언한 스키마는 원문 tfoot 이 있는 S1_32·S1_33 둘뿐이다', () => {
-    expect(ALL_SCHEMAS.filter((s) => s.totals).map((s) => s.route).sort()).toEqual(['전체 투자실적', '투자기업 고용현황보고']);
+    expect(ALL_SCHEMAS.filter((s) => s.totals).map((s) => s.route).sort()).toEqual(['invest-performance-all', 'investee-employment']);
   });
   it('미선언 스키마는 null(= pinned 행 없음)', () => {
-    expect(computeSchemaTotal(resolveSchema('운용사 명세서'), [])).toBeNull();
+    expect(computeSchemaTotal(resolveSchema('gp-spec'), [])).toBeNull();
   });
   it('zod 는 columns 에 없는 합계 key 를 거부한다(오타 = 조용한 빈 합계 방지)', () => {
-    const bad = { ...resolveSchema('투자기업 고용현황보고'), totals: { label: '합계', rules: { salesAmtt: 'sum' } } };
+    const bad = { ...resolveSchema('investee-employment'), totals: { label: '합계', rules: { salesAmtt: 'sum' } } };
     expect(() => parsePageSchema(bad)).toThrow();
   });
   it('GenericListPage 가 합계 행을 pinnedBottomRowData 로 넘기고, 합계 행을 수정·상세 대상에서 뺀다', () => {
@@ -160,7 +160,7 @@ describe('② totals 는 opt-in — 선언한 스키마만 합계 행을 갖는�
 describe('③ S1_38 기준년월 → 운용사정량지표상세(재무건정성비율) 팝업 = 원문', () => {
   const html = M1('S1_38_운용사_재무정보_조회.html');
   const fn = html.slice(html.indexOf('function openRatioDetail'), html.indexOf("$('rows').addEventListener"));
-  const schema = resolveSchema('운용사 재무정보 조회');
+  const schema = resolveSchema('gp-financial');
 
   it('제목 = 원문 h2(철자 `재무건정성` 그대로)', () => {
     expect(strip(fn.match(/<h2 id="rt-t">([\s\S]*?)<\/h2>/)![1])).toBe(GP_RATIO_TITLE);
@@ -191,7 +191,7 @@ describe('③ S1_38 기준년월 → 운용사정량지표상세(재무건정성
 
 /* ─────────────── ⑤ 리프 탭 결선 · 딥링크 ─────────────── */
 describe('⑤ 원본 2개 리프 = 한 화면 안 탭으로 도달', () => {
-  const app = src('app.tsx');
+  const app = src('app.tsx') + src('route_alias.ts');   // 옛 route 별칭은 route_alias.ts 가 SSOT
   const leaf = src('asset_leaf_tabs.tsx');
 
   it('custody-verify 리프가 실물검증 | 확정 탭을 갖고, 확정 탭이 S1_27 화면(CustodyConfirmManage)을 연다', () => {

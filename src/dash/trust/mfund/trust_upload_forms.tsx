@@ -23,6 +23,7 @@ import { ACCOUNT_TABLE, CASHFLOW_TABLE, CASHFLOW_UPLOAD_HINT } from './trust_mot
 const { Button } = UI;
 
 interface ManageConfig {
+  route: string;
   label: string;
   /** 엔티티명 — 등록/수정/삭제 제목·버튼 라벨(`계좌정보 등록`) */
   entity: string;
@@ -79,7 +80,7 @@ function ManageListPage({ cfg, onNav }: { cfg: ManageConfig; onNav?: (r: string)
   });
 
   return (
-    <RiskPage system="수탁보고" group="모태펀드 수탁" label={cfg.label} route={cfg.label} onNav={onNav}
+    <RiskPage system="수탁보고" group="모태펀드 수탁" label={cfg.label} route={cfg.route} onNav={onNav}
       onReset={clear} contextActions={selActions}
       actions={<RegisterCombo entity={cfg.entity} onRegister={() => setModal({ kind: 'create' })} onUpload={() => setModal({ kind: 'upload' })} />}
       footerLeft={<span>총 {String(rows.length)}건</span>}
@@ -98,11 +99,11 @@ function ManageListPage({ cfg, onNav }: { cfg: ManageConfig; onNav?: (r: string)
 }
 
 const ACCOUNT: ManageConfig = {
-  label: '계좌정보 관리', entity: '계좌정보', table: ACCOUNT_TABLE, form: ACCOUNT_FORM, idPrefix: 'acc',
+  route: 'trust-account-info', label: '계좌정보 관리', entity: '계좌정보', table: ACCOUNT_TABLE, form: ACCOUNT_FORM, idPrefix: 'acc',
   fileLabel: '계좌정보 파일', emptyMsg: '파일을 선택하세요', doneMsg: '등록되었습니다',
 };
 const CASHFLOW: ManageConfig = {
-  label: '입출금 정보관리', entity: '입출금정보', table: CASHFLOW_TABLE, form: CASHFLOW_FORM, idPrefix: 'cf',
+  route: 'trust-cashflow-info', label: '입출금 정보관리', entity: '입출금정보', table: CASHFLOW_TABLE, form: CASHFLOW_FORM, idPrefix: 'cf',
   fileLabel: '입출금정보 파일', hint: CASHFLOW_UPLOAD_HINT, emptyMsg: '파일을 먼저 선택하세요', doneMsg: '처리되었습니다',
 };
 

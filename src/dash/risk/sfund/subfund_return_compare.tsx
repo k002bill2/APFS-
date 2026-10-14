@@ -9,7 +9,7 @@ import { RETURN_TABLE, RETURN_BASE_YM } from './risk_subfund_info_data';
 type P = { onNav?: (r: string) => void };
 
 const RETURN: TablesPageConfig = {
-  group: '자펀드정보', label: '자펀드 수익률정보 비교 조회', route: '자펀드 수익률정보 비교 조회',
+  group: '자펀드정보', label: '자펀드 수익률정보 비교 조회', route: 'subfund-return-compare',
   tables: [RETURN_TABLE], unit: true,
   filters: [{ label: '기준년월', kind: 'month', def: RETURN_BASE_YM, key: 'ym' }],
 };
