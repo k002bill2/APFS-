@@ -18,7 +18,7 @@ import type { FilterSpec } from '../../risk_page_kit';
 import { ReadGrid } from '../../risk_grid';
 import { exportTables } from '../../risk_excel';
 import type { Row } from '../../risk_table_meta';
-import { QUANT_LIST, MGR_TYPES } from '../risk_subfund_info_data';
+import { QUANT_LIST, MGR_TYPES } from './risk_subfund_info_data';
 import { GpQuantIndicatorModal } from './gp_quant_indicator_modal';
 import type { QuantModalMode } from './gp_quant_indicator_modal';
 

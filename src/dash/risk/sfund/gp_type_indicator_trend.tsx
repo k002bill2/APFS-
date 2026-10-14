@@ -17,8 +17,8 @@ import { Charts } from '../../charts';
 import { RiskPage } from '../../risk_page_kit';
 import type { FilterSpec } from '../../risk_page_kit';
 import { SectionHead } from '../../risk_grid';
-import { TREND_SECTIONS, TREND_FROM, TREND_TO, TREND_TYPES, MF_OPTIONS, monthLabels, trendPointsInRange } from '../risk_subfund_info_data';
-import type { TrendSeries } from '../risk_subfund_info_data';
+import { TREND_SECTIONS, TREND_FROM, TREND_TO, TREND_TYPES, MF_OPTIONS, monthLabels, trendPointsInRange } from './risk_subfund_info_data';
+import type { TrendSeries } from './risk_subfund_info_data';
 
 const LABEL = '운용사 유형별 정량지표 변동 조회';
 const LABELS = monthLabels(TREND_FROM, TREND_TO);   // 원문 시계열 13점의 월('YYYY.MM' — 툴팁·숨김 표)

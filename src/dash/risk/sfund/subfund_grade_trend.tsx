@@ -15,7 +15,7 @@ import type { FilterSpec } from '../../risk_page_kit';
 import { ReadGrid, SectionHead } from '../../risk_grid';
 import { exportTables } from '../../risk_excel';
 import type { TableMeta } from '../../risk_table_meta';
-import { FUND_GRADE, MGR_GRADE, GRADE_YEARS, GRADE_BASE_YEAR, MF_OPTIONS, yearKey } from '../risk_subfund_info_data';
+import { FUND_GRADE, MGR_GRADE, GRADE_YEARS, GRADE_BASE_YEAR, MF_OPTIONS, yearKey } from './risk_subfund_info_data';
 
 const LABEL = '자펀드 종합등급 변동 조회';
 const REST = 'var(--border-strong)';

@@ -1,9 +1,9 @@
-/* 조기경보 표 조회 6리프 — 공용 골격 TablesPage(risk_tables_page.tsx)의 화면별 설정.
-   검색조건 항목·순서·기본값은 목업 검색박스 원문 그대로다. 데이터는 risk_subfund_info_data.ts · risk_valuation_data.ts SSOT.
+/* 조기경보 > 가치평가 표 조회 5리프 — 공용 골격 TablesPage(risk_tables_page.tsx)의 화면별 설정.
+   검색조건 항목·순서·기본값은 목업 검색박스 원문 그대로다. 데이터는 risk_valuation_data.ts SSOT.
+   같은 골격의 자펀드정보 리프(S2_77)는 risk/sfund/subfund_return_compare.tsx.
 
    | 리프                              | 원본  | 표                          | 검색조건(→ 행 필터 키)                                  |
    |-----------------------------------|-------|-----------------------------|---------------------------------------------------------|
-   | 자펀드 수익률정보 비교 조회       | S2_77 | 1 + 합계                    | 기준년월(ym)                                            |
    | 투자조합 가치평가 결과조회        | S2_81 | 1 + 합계                    | 자펀드(fn) · 결성년도(fy 접두) · 평가년월(ym)           |
    | 피투자회사 가치평가 결과조회      | S2_82 | 내역 집계 + 상세·합계       | 자펀드(fund) · 결성년도(fy 접두) · 평가년월(ym)         |
    | 자펀드 투자자산 및 거래내역 조회  | S2_84 | 투자잔액관리 · 거래내역     | 자펀드(—) · 투자기업(co) · 조회일자(—)                  |
@@ -11,9 +11,8 @@
    | Portfolio Report                  | S2_83 | 3 (③ 합계)                  | 자펀드(—) · 평가년월(—)                                 |
    (—) = 행에 대응 컬럼 없음 → `· 데이터 연동 후 적용`. 원문 `조회` 버튼은 두지 않는다(즉시 반영). */
 import React from 'react';
-import { TablesPage } from '../risk_tables_page';
-import type { TablesPageConfig } from '../risk_tables_page';
-import { RETURN_TABLE, RETURN_BASE_YM } from './risk_subfund_info_data';
+import { TablesPage } from '../../risk_tables_page';
+import type { TablesPageConfig } from '../../risk_tables_page';
 import {
   EVAL_BASE_YM, FUND_VAL, FUND_VAL_FUNDS, INVESTEE_SUMMARY, INVESTEE_DETAIL, INVESTEE_VAL_FUNDS,
   ASSET_BALANCE, ASSET_TX, ASSET_TX_FUNDS, ASSET_TX_COMPANIES, ASSET_TX_BASE_DATE,
@@ -21,12 +20,6 @@ import {
 } from './risk_valuation_data';
 
 type P = { onNav?: (r: string) => void };
-
-const RETURN: TablesPageConfig = {
-  group: '자펀드정보', label: '자펀드 수익률정보 비교 조회', route: '자펀드 수익률정보 비교 조회',
-  tables: [RETURN_TABLE], unit: true,
-  filters: [{ label: '기준년월', kind: 'month', def: RETURN_BASE_YM, key: 'ym' }],
-};
 
 const FUND_VALUATION: TablesPageConfig = {
   group: '가치평가', label: '투자조합 가치평가 결과조회', route: '투자조합 가치평가 결과조회',
@@ -78,8 +71,6 @@ const PORTFOLIO: TablesPageConfig = {
   ],
 };
 
-/** 자펀드 수익률정보 비교 조회 — S2_77 */
-export function SubfundReturnCompare({ onNav }: P) { return <TablesPage cfg={RETURN} onNav={onNav} />; }
 /** 투자조합 가치평가 결과조회 — S2_81 */
 export function FundValuationResult({ onNav }: P) { return <TablesPage cfg={FUND_VALUATION} onNav={onNav} />; }
 /** 피투자회사 가치평가 결과조회 — S2_82 */

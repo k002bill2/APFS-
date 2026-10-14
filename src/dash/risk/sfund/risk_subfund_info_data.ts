@@ -4,8 +4,8 @@
    - 자펀드 수익률정보 비교 조회      = S2_77 (단일 헤더 + 합계행)
    - 자펀드 종합등급 변동 조회        = S2_79 (자펀드·운용사 종합등급 표 2개 + 연도별 정상 비중 도넛)
    출처: docs/mockups/02_조기경보/*.html `<script>` 를 2026-09-23 파싱 실측으로 옮겼다. 원문에 없는 행·값은 만들지 않는다. */
-import type { TableMeta, Provenance, Row } from '../risk_table_meta';
-import { src } from '../risk_table_meta';
+import type { TableMeta, Provenance, Row } from '../../risk_table_meta';
+import { src } from '../../risk_table_meta';
 
 /* ═══════════════ S2_70 운용사 정량지표 관리 (+ S2_71 등록 · S2_72 수정) ═══════════════ */
 

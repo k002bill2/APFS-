@@ -19,7 +19,7 @@ import type { FilterSpec } from '../../risk_page_kit';
 import { ReadGrid, SectionHead } from '../../risk_grid';
 import { exportTables } from '../../risk_excel';
 import type { Row } from '../../risk_table_meta';
-import { MF_SUMMARY, MF_SUMMARY_ROW, MF_DETAIL, EVAL_BASE_YM, mfTotal } from '../risk_valuation_data';
+import { MF_SUMMARY, MF_SUMMARY_ROW, MF_DETAIL, EVAL_BASE_YM, mfTotal } from './risk_valuation_data';
 
 const { SaveButton } = UI;
 const LABEL = '모태펀드 가치평가 결과조회';

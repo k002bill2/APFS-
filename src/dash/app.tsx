@@ -66,7 +66,8 @@ import { GpQuantIndicatorManage } from './risk/sfund/gp_quant_indicator_manage';
 import { GpTypeIndicatorTrend } from './risk/sfund/gp_type_indicator_trend';          // 운용사 유형별 정량지표 변동 조회(S2_78 — 평균 카드 + 추이 차트 2섹션)
 import { SubfundGradeTrend } from './risk/sfund/subfund_grade_trend';                  // 자펀드 종합등급 변동 조회(S2_79 — 등급표 2 + 정상 비중 도넛)
 import { MotherFundValuation } from './risk/valuation/mother_fund_valuation';              // 모태펀드 가치평가 결과조회(S2_80 — 결과(입력칸 3) + 2단 헤더 상세)
-import { SubfundReturnCompare, FundValuationResult, InvesteeValuationResult, SubfundAssetTx, ValuationExceptionReport, PortfolioReport } from './risk/risk_table_pages';   // S2_77·81·82·84·85·83(표 1~4장 공용 골격)
+import { SubfundReturnCompare } from './risk/sfund/subfund_return_compare';   // S2_77(표 공용 골격 TablesPage)
+import { FundValuationResult, InvesteeValuationResult, SubfundAssetTx, ValuationExceptionReport, PortfolioReport } from './risk/valuation/valuation_table_pages';   // S2_81·82·84·85·83(표 1~4장 공용 골격)
 /* 부처보고(2)·수탁보고(11) 13리프(2026-09-23 목업 S4_108·03/04_연도별투자현황·S3_98~S3_106 이식). 연도별투자현황은 기존 report-bucheo 분기,
    나머지 12리프도 전용 페이지(아래) — 계좌정보 비교조회(S3_104)는 단일 헤더지만 원문 검색이 기본값 있는 기간이라 스키마 필터로 못 담는다.
    표 규약·바깥 양식은 조기경보 17리프와 같은 risk_grid.tsx · risk_page_kit.tsx 를 재사용한다. */

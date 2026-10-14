@@ -7,8 +7,8 @@
    - Portfolio Report                 = S2_83 (표 3개, ③ 합계행)
    출처: docs/mockups/02_조기경보/*.html `<tbody>`·`<script> DATA` 를 2026-09-23 파싱 실측으로 옮겼다.
    원문이 "확정 실데이터 1건"만 남긴 화면이 대부분이다 — 행을 늘리지 않는다. */
-import type { TableMeta, Provenance, Row } from '../risk_table_meta';
-import { src, ratioOf } from '../risk_table_meta';
+import type { TableMeta, Provenance, Row } from '../../risk_table_meta';
+import { src, ratioOf } from '../../risk_table_meta';
 
 /** 평가년월 기본값 — S2_80·81·82·83·85·86 원문 `f-ym` value */
 export const EVAL_BASE_YM = '2025-12';

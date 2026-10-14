@@ -25,7 +25,7 @@ import { SearchableSelect } from '../../ui/searchable-select';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import '../../aggrid_shared.css';
-import { MGR_TYPES, INDICATORS, metricsFor } from '../risk_subfund_info_data';
+import { MGR_TYPES, INDICATORS, metricsFor } from './risk_subfund_info_data';
 
 const { Button, IconBtn, SaveButton } = UI;
 

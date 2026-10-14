@@ -23,7 +23,7 @@ import { ReadGrid } from '../../risk_grid';
 import { exportTables } from '../../risk_excel';
 import { IrrBasisModal } from './irr_basis_modal';
 import type { TableMeta } from '../../risk_table_meta';
-import { EVAL_BASE_YM } from '../risk_valuation_data';
+import { EVAL_BASE_YM } from './risk_valuation_data';
 import type { IrrBasis } from './risk_irr_data';
 import {
   IRR_CONTRACT, IRR_CONTRACT_BASIS, IRR_CONTRACT_FUNDS,
