@@ -45,6 +45,14 @@ def load():
     return xl, app
 
 
+# 앱 전용 리프의 성격(사람이 정한 값). 없으면 기본 문구(대시보드 = 프로토타입 홈).
+APP_ONLY_NOTE = {
+    '수시보고 제출현황': 'MOAF 현행 화면 S5_121(자펀드 보고 조회) 이식 — xlsx 메뉴 체계 밖',
+    '월간보고 제출현황': '구 월간보고조회 > 조합별 월간보고 현황(S5_118) rename — 2026-10-14 사용자 지정 구성',
+    '반기보고 제출현황': '구 반기보고조회 > 조합별 반기보고 현황(S5_119) rename — 2026-10-14 사용자 지정 구성',
+    '보고양식·가이드 조회': '신규 리프(화면 미구현, 목업 대기) — 2026-10-14 사용자 지정 구성',
+}
+
 def render(xl, app):
     xlk = {(r['area'], r['cat'], r['leaf']) for r in xl}
     appk = {(AREA_MAP.get(r['area'], r['area']), r['cat'], r['leaf']) for r in app}
@@ -173,7 +181,7 @@ def render(xl, app):
     w('| 업무영역 | 중분류 | 메뉴 | 성격 |')
     w('|---|---|---|---|')
     for a, c, lf in struct_app:
-        w(f'| {a} | {c or "—"} | {lf} | 프로토타입 홈 화면 (xlsx 메뉴 체계 밖) |')
+        w(f'| {a} | {c or "—"} | {lf} | {APP_ONLY_NOTE.get(lf, "프로토타입 홈 화면 (xlsx 메뉴 체계 밖)")} |')
     w('')
     w('## 5. 문서 드리프트 — `CLAUDE.md` 기재 수치')
     w('')

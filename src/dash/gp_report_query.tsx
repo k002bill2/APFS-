@@ -1,4 +1,4 @@
-/* 자펀드 보고 > 보고조회 > 자펀드 보고 조회 — 출처 목업 docs/mockups/05_MOAF/S5_121_자펀드_보고_조회.html(MOAF REPORT System).
+/* 자펀드 보고 > 수시보고 > 수시보고 제출현황 — 출처 목업 docs/mockups/05_MOAF/S5_121_자펀드_보고_조회.html(MOAF REPORT System).
 
    원문: 보고항목(DB 테이블 논리명) select 1개로 그 테이블을 조회하는 읽기전용 화면. 그리드 헤더 = 선택한 테이블의 논리 컬럼명.
    목업 → 우리 규약
@@ -20,7 +20,9 @@ import type { ColMeta, TableMeta } from './risk_table_meta';
 import { DEFAULT_UNIT } from './schemas/unit';
 import type { Unit } from './schemas/unit';
 
-export const GP_REPORT_QUERY_LABEL = '자펀드 보고 조회';
+export const GP_REPORT_QUERY_LABEL = '수시보고 제출현황';
+/** route 키 — 라벨 rename(2026-10-14, 구 '자펀드 보고 조회') 후에도 해시·localStorage·방문기록·즐겨찾기 보존(MENU leaf.path) */
+export const GP_REPORT_QUERY_ROUTE = '자펀드 보고 조회';
 export const GP_REPORT_QUERY_SOURCE = 'docs/mockups/05_MOAF/S5_121_자펀드_보고_조회.html';
 
 /** 원문 미정의 항목의 안내 문구(원문 그대로) */
@@ -108,7 +110,7 @@ export const REPORT_ITEMS: ReportItem[] = [
 /** select 옵션 표시 라벨 — 원문: 미정의 항목엔 ' (컬럼 미정의)' 접미 */
 export const optionLabel = (it: ReportItem): string => it.label + (it.grounded ? '' : ' (컬럼 미정의)');
 
-/** 자펀드 보고 조회 — S5_121 */
+/** 수시보고 제출현황 — S5_121 */
 export function GpReportQuery({ onNav }: { onNav?: (r: string) => void }) {
   const first = optionLabel(REPORT_ITEMS[0]);
   const [picked, setPicked] = useState<string>(first);
@@ -127,13 +129,13 @@ export function GpReportQuery({ onNav }: { onNav?: (r: string) => void }) {
   };
 
   return (
-    <RiskPage system="자펀드 보고" group="보고조회" label={GP_REPORT_QUERY_LABEL} route={GP_REPORT_QUERY_LABEL} onNav={onNav}
+    <RiskPage system="자펀드 보고" group="수시보고" label={GP_REPORT_QUERY_LABEL} route={GP_REPORT_QUERY_ROUTE} onNav={onNav}
       filters={filters} onReset={reset}
       unit={item.hasAmt ? unit : undefined} onUnit={item.hasAmt ? setUnit : undefined}
       footerLeft={<span>{`${item.label} · 총 ${String(item.table.rows.length)}건`}</span>}
       onExport={exportExcel} exportEnabled={item.grounded}>
       {/* key=항목 — 컬럼 세트가 통째로 바뀌므로 그리드를 새로 마운트한다(이전 컬럼 상태·정렬 잔존 방지) */}
-      <ReadGrid key={item.key} table={item.table} rows={item.table.rows} unit={item.hasAmt ? unit : null} ariaLabel={`자펀드 보고 조회 — ${item.label}`} />
+      <ReadGrid key={item.key} table={item.table} rows={item.table.rows} unit={item.hasAmt ? unit : null} ariaLabel={`${GP_REPORT_QUERY_LABEL} — ${item.label}`} />
     </RiskPage>
   );
 }
