@@ -9,6 +9,7 @@
 
    규칙:
    - 적용 칩 = 값만 표시(항목명은 title·aria-label 로 회수), 최대 240px 말줄임. onClear 가 있는 칩만 ×.
+     wide 칩 = 최대 480px·좁으면 2줄 줄바꿈, +N 으로 접지 않는다(배치 계산엔 minWidth 160 만 예약).
    - 해제 가능한 적용 칩이 2개 이상이면 `전체 해제` — 각 칩의 onClear 를 차례로 부른다.
    - 보이는 캡션 없음(role="group" aria-label 만).
    - 행 선택 중엔 GridFrame 이 이 행을 아예 렌더하지 않는다(선택 = 액션 영역, 필터와 별개).
@@ -27,6 +28,8 @@ export interface AppliedFilter {
   value: string;
   /** 없으면 × 없이 표시만 하고 전체 해제 대상에서도 빠진다 */
   onClear?: () => void;
+  /** 긴 경로형 값 — 최대 480px, 좁으면 2줄 줄바꿈(+N 으로 접히지 않고 최소 160px 을 예약한다) */
+  wide?: boolean;
 }
 
 /** 기본(주) 필터 칩 한 개 — 툴바 첫 칩 무리. 라벨·건수·선택 상태만 넘긴다(FilterChip 렌더는 이 파일이 한다). */
@@ -41,14 +44,35 @@ export interface FilterChipItem {
 export const activeFilters = (items: readonly AppliedFilter[] | undefined): AppliedFilter[] =>
   (items ?? []).filter((f) => f.value != null && String(f.value).trim() !== '');
 
+const WIDE_MIN = 160;
+const WIDE_MAX = 480;
+
 function Chip({ f }: { f: AppliedFilter }) {
   const clearable = Boolean(f.onClear);
+  if (f.wide) return <WideChip f={f} clearable={clearable} />;
   return (
     /* 글자색 = primary 에 foreground 15% 를 섞는다 — primary 단독은 라이트에서 10% 틴트 위 4.35:1 로 AA(4.5) 미달이었다.
        foreground 는 라이트=어둡게·다크=밝게 섞이므로 한 식으로 두 테마 모두 대비가 오른다(2026-09-24 실측). */
     <span title={`${f.label}: ${f.value}`} className="inline-flex items-center gap-1.5 font-semibold shrink-0"
       style={{ padding: clearable ? '5px 8px 5px 11px' : '5px 11px', borderRadius: 9, fontSize: 12.5, maxWidth: 240, color: CHIP_FG, background: CHIP_BG }}>
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{f.value}</span>
+      {clearable && (
+        <button type="button" onClick={f.onClear} aria-label={`${f.label} 필터 제거`}
+          className="inline-flex items-center justify-center border-0 cursor-pointer shrink-0"
+          style={{ background: 'transparent', color: 'inherit', minWidth: 24, minHeight: 24, padding: 0, margin: '-5px -4px -5px 0' }}>
+          <Icon name="x" size={13} stroke={2.4} />
+        </button>
+      )}
+    </span>
+  );
+}
+/* wide 칩 — 남은 폭까지 줄어들며(shrink, minWidth 160) 텍스트는 2줄까지 줄바꿈, 넘칠 때만 말줄임.
+   keep-all — 한글 이름이 글자 단위로 쪼개지지 않게(줄바꿈 지점은 소비처가 값 문자열의 공백으로 정한다). */
+function WideChip({ f, clearable }: { f: AppliedFilter; clearable: boolean }) {
+  return (
+    <span title={`${f.label}: ${f.value}`} className="inline-flex items-center gap-1.5 font-semibold min-w-0"
+      style={{ padding: clearable ? '5px 8px 5px 11px' : '5px 11px', borderRadius: 9, fontSize: 12.5, maxWidth: WIDE_MAX, minWidth: WIDE_MIN, flexShrink: 1, color: CHIP_FG, background: CHIP_BG }}>
+      <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'normal', wordBreak: 'keep-all', lineHeight: '18px', minWidth: 0 }}>{f.value}</span>
       {clearable && (
         <button type="button" onClick={f.onClear} aria-label={`${f.label} 필터 제거`}
           className="inline-flex items-center justify-center border-0 cursor-pointer shrink-0"
@@ -83,11 +107,17 @@ function ItemView({ it }: { it: Item }) {
 }
 
 const GAP = 8;
-/** 그리디 채우기 — 넘치면 트리거 폭을 예약하고 다시 채운다. 보이는 id 집합을 돌려준다. */
+const isWide = (it: { kind: string; f?: { wide?: boolean } }) => it.kind === 'applied' && Boolean(it.f?.wide);
+/** 그리디 채우기 — 넘치면 트리거 폭을 예약하고 다시 채운다. 보이는 id 집합을 돌려준다.
+    wide 칩은 항상 보인다 — 측정 폭 대신 minWidth(160)+gap 만 먼저 예약하고, 나머지 칩을 남은 폭에 채운다
+    (실제 렌더에선 wide 칩이 남은 폭을 차지하며 2줄로 줄어든다). */
 function fitIds(order: Item[], w: Record<string, number>, avail: number, trigger: number): Set<string> {
+  const wides = order.filter(isWide);
+  const reserve = wides.length ? wides.length * WIDE_MIN + (wides.length - 1) * GAP : 0;   // wide 사이 gap — 나머지 칩 앞 gap 은 아래 루프가 더한다
   const run = (limit: number) => {
-    const ids = new Set<string>(); let used = 0;
+    const ids = new Set<string>(wides.map((it) => it.id)); let used = reserve;
     for (const it of order) {
+      if (isWide(it)) continue;
       const next = used + (ids.size ? GAP : 0) + (w[it.id] ?? 0);
       if (next > limit) break;
       ids.add(it.id); used = next;

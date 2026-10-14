@@ -13,8 +13,8 @@
    DEFAULT_SCHEMA 로 떨어지지 않게 하는 등록부이자, clipboard 캡처 기반 등록/수정 양식의
    provenance 기록이다(그 21필드는 S1_30 이 아니라 별도 캡처가 출처다 — 출처를 바꿔 적지 않는다).
 
-   조회 대상 경로 칩(모펀드 › 운용사 › 자펀드 › 투자기업) 위치: 툴바 좌측(2026-10-14 사용자 지시, 09-24 본문 배치
-   결정 번복). 툴바 우측 = 금액 단위 · 상세필터(드로어, 4항목 noop) · 조회(toast 만). */
+   조회 대상 = 적용 필터 칩 1개(값만, '농식품모태펀드 › KB증권 › …', × = 전체로 해제 — 2026-10-14 사용자 지시,
+   다른 화면 필터 스타일 통일). wide — 최대 480px, 좁으면 2줄(구분자 'NBSP› ' 라 › 가 줄 끝에 붙는다). 툴바 우측 = 금액 단위 · 상세필터(드로어, 4항목 noop) · 조회(toast 만). */
 import { useState } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
@@ -57,45 +57,25 @@ function DrawerField({ label, noop, children }: { label: string; noop?: boolean;
 export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
   useHotkey(HOTKEYS.print.combo, () => window.print());
-  /* 조회 대상 4종 SSOT — 툴바 경로 칩과 상세필터 드로어가 공유한다. 실데이터가 1건뿐이라 본문은 바뀌지 않는다 */
+  /* 조회 대상 4종 SSOT — 적용 필터 칩과 상세필터 드로어가 공유한다. 실데이터가 1건뿐이라 본문은 바뀌지 않는다 */
   const [fMf, setFMf] = useState<string>(QUERY_FIELDS[0].value);
   const [fGp, setFGp] = useState<string>(QUERY_FIELDS[1].value);
   const [fFund, setFFund] = useState<string>(QUERY_FIELDS[2].value);
   const [fCo, setFCo] = useState<string>(QUERY_FIELDS[3].value);
   const [filterOpen, setFilterOpen] = useState(false);
   const resetFilters = () => { setFMf(QUERY_FIELDS[0].value); setFGp(QUERY_FIELDS[1].value); setFFund(QUERY_FIELDS[2].value); setFCo(QUERY_FIELDS[3].value); };
+  /* 칩 × = 네 항목 모두 '전체'('') 로 해제 — 전부 비면 칩 자체가 사라진다(초기화=원문 기본값 복원과는 별개) */
+  const clearFilters = () => { setFMf(''); setFGp(''); setFFund(''); setFCo(''); };
   /* 조회 — 필터를 기본값으로 되돌리지 않는다(선택한 조회 대상 유지) */
   const refresh = () => { toast.success('조회되었습니다'); };
-  const path = [
-    { label: '모펀드', value: fMf },
-    { label: '운용사', value: fGp },
-    { label: '자펀드', value: fFund },
-    { label: '투자기업', value: fCo },
-  ];
+  const path = [fMf, fGp, fFund, fCo];
   return (
     <GridFrame
       crumbs={['홈', '투자자산관리', '투자기업정보', '투자기업정보(통합)']}
       title="투자기업정보(통합)"
       favRoute="투자기업정보(통합)"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 원문 검색조건 4종(모펀드·운용사·자펀드·투자기업) 경로 칩 — 2026-09-16 Codex 지적으로 복원.
-         위치: 툴바 좌측(2026-10-14 사용자 지시, 09-24 본문 배치 결정 번복). 값 변경은 상세필터 드로어에서.
-         형태: 디자인 시안(2026-09-24)의 경로 칩 — 모펀드 › 운용사 › 자펀드 › 투자기업.
-         툴바 좌측 래퍼가 한 줄(nowrap·overflow-hidden) 규약이라 줄바꿈 대신 칩별 말줄임으로 좁은 폭을 버틴다. */
-      toolbarLeft={(
-        <div role="group" aria-label="조회 대상" className="flex items-center gap-1.5 min-w-0">
-          {path.map(({ label, value }, i) => (
-            <span key={label} className="inline-flex items-center gap-1.5 min-w-0">
-              {i > 0 && <span className="text-caption shrink-0" aria-hidden="true">›</span>}
-              <span className="inline-flex items-center gap-2 rounded-full border border-solid border-border bg-card min-w-0"
-                style={{ height: 28, padding: '0 10px', fontSize: 13, maxWidth: 320 }}>
-                <span className="text-muted-foreground shrink-0">{label}</span>
-                <b className="font-semibold text-foreground" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value || '전체'}</b>
-              </span>
-            </span>
-          ))}
-        </div>
-      )}
+      appliedFilters={[{ label: '조회 대상', value: path.some(Boolean) ? path.map((v) => v || '전체').join('\u00a0› ') : '', wide: true, onClear: clearFilters }]}
       toolbarRight={<>
         <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
         <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />
