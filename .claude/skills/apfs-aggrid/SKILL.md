@@ -8,7 +8,7 @@ description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규
 ## 컨텍스트
 `apfs-grid`(GridFrame)는 페이지의 **바깥 양식**(헤더·KPI·툴바·푸터)을 소유한다. 이 스킬은 그 안에 들어가는 **AG Grid 본체**(`AgGridReact` — 컬럼·테마·고정행·선택·필터·내보내기)를 소유한다. "양식은 apfs-grid, 알맹이는 apfs-aggrid."
 
-- **정본 예시(골드 레퍼런스)**: `src/dash/asset_funding.tsx` — "모태펀드 조성·출자 현황표". 2단 그룹헤더 + pinned 합계행 + flex 컬럼폭 + 정렬·상세필터(External Filter)·페이지네이션·Excel·우클릭 메뉴의 완성형.
+- **정본 예시(골드 레퍼런스)**: `src/dash/ffms/mfund/asset_funding.tsx` — "모태펀드 조성·출자 현황표". 2단 그룹헤더 + pinned 합계행 + flex 컬럼폭 + 정렬·상세필터(External Filter)·페이지네이션·Excel·우클릭 메뉴의 완성형.
   ⚠️ **선택·CRUD 툴바의 정본은 여기가 아니다** — 이 화면은 2026-09-17 결정으로 `rowSelection` 자체가 없다(아래 "행 선택" 절). 선택·다중선택·선택 액션 툴바를 베낄 때는 `src/dash/generic_list.tsx` 를 본다.
 - **공유 인프라(SSOT)**: `src/dash/aggrid_theme.ts`(`apfsTheme`·`fmt`·`numFmt`·`numStyle`·모듈등록), `src/dash/aggrid_shared.css`(합계행 버그 보정).
 - 버전: AG Grid Community **v35.3.1**(v33+ Theming API). 다른 정본 트랙: 리스트형은 `generic_list.tsx`(스키마 주도).

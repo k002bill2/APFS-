@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { REPORT_ITEMS, optionLabel, UNDEFINED_MSG } from './gp_report_query';
+import { REPORT_ITEMS, optionLabel, UNDEFINED_MSG } from './sfund/gp_report_query';
 
 /* S5_121 원문 ITEMS 리터럴과 대조 */
 const MOCK = readFileSync(new URL('../../docs/mockups/05_MOAF/S5_121_자펀드_보고_조회.html', import.meta.url), 'utf8').normalize('NFC');

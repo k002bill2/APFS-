@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { parsePageSchema } from './types';
 import { resolveSchema } from './index';
-import { schema as s1 } from './연도별투자현황';
-import { schema as s2 } from './조합별_월간보고_현황';
-import { schema as s3 } from './자펀드_공고_정보관리';
+import { schema as s1 } from '../brief/mfund/연도별투자현황';
+import { schema as s2 } from '../sfund/fxtmrpt/조합별_월간보고_현황';
+import { schema as s3 } from '../ffms/mfund/자펀드_공고_정보관리';
 
 describe('파일럿 스키마 zod 검증', () => {
   it('연도별투자현황 — parsePageSchema 통과', () => {

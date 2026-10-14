@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { APFS_DATA } from './data';
+import { readSrc } from './test_src';
 import { resolveSchema, ALL_SCHEMAS } from './schemas';
 import { resolveFilterField } from './schemas/filter_field';
-import { REPORT_TABS } from './all_report_status_model';
+import { REPORT_TABS } from './ffms/gp/all_report_status_model';
 import { SOURCE_COUNTS as PROFILE_COUNTS, PROVENANCE as PROFILE_PROV, formatProfileUnit } from './company_profile_data';
-import { SOURCE_COUNTS as STATS_COUNTS, SALES_SCALE_ROWS, INVEST_TYPE_ROWS, REGION_ROWS, PROVENANCE as STATS_PROV } from './investee_invest_stats_model';
-import { RECOVERY_MODES, SOURCE_COUNTS as RECOVERY_COUNTS, recoverySummary, PROVENANCE as RECOVERY_PROV, DETAIL_ROWS_IR, DETAIL_ROWS_ALL, formatRecoveryUnit } from './invest_recovery_detail_model';
-import { PROVENANCE as REPORT_PROV } from './all_report_status_model';
+import { SOURCE_COUNTS as STATS_COUNTS, SALES_SCALE_ROWS, INVEST_TYPE_ROWS, REGION_ROWS, PROVENANCE as STATS_PROV } from './ffms/ent/investee_invest_stats_model';
+import { RECOVERY_MODES, SOURCE_COUNTS as RECOVERY_COUNTS, recoverySummary, PROVENANCE as RECOVERY_PROV, DETAIL_ROWS_IR, DETAIL_ROWS_ALL, formatRecoveryUnit } from './ffms/ent/invest_recovery_detail_model';
+import { PROVENANCE as REPORT_PROV } from './ffms/gp/all_report_status_model';
 import { RATE, PCT_LABEL, FORMULA, CALC_BY_NO, baseAmount } from './mgmt_fee_detail_model';
 
 /* 투자자산관리 > 투자기업정보(7) · 운용사 모니터링(6) · 자펀드 관리(6) 라우트 결선 + **출처 충실성** 불변식.
@@ -448,7 +449,7 @@ describe('ColumnSpec 선언이 실제로 ColDef 에 전달되는가', () => {
     ['all_report_status.tsx', ['c.pinned', 'foldGroups']],
     ['invest_recovery_detail.tsx', ['c.pinned']],
   ] as const)('%s 가 %s 를 ColDef 로 넘긴다', (file, needles) => {
-    const src = readFileSync(new URL('./' + file, import.meta.url), 'utf8');
+    const src = readSrc(file);
     for (const n of needles) expect(src, `${file}: ${n} 미전달`).toContain(n);
   });
 
@@ -469,7 +470,7 @@ describe('S1_34 — 원문이 배선한 동작만 구현한다', () => {
        한때 이 컨트롤로 블록을 하나만 남겼는데 보고서 절반을 숨기는 창작 동작이었다(Codex 3라운드 P1).
      · `계정구분·연도기준·데이터기준` → select 에 option 0개 → 컨트롤을 만들지 않는다.
      · 금액단위 원/백만원/억원 → `fmtEok` 로 억원 base 를 환산한다 → 토글을 둔다. */
-  const stats = readFileSync(new URL('./investee_invest_stats.tsx', import.meta.url), 'utf8');
+  const stats = readFileSync(new URL('./ffms/ent/investee_invest_stats.tsx', import.meta.url), 'utf8');
 
   it('건수기준으로 블록을 걸러내지 않는다(두 블록 모두 렌더)', () => {
     expect(stats).not.toContain("filter((r) => r.block === block)");
@@ -520,7 +521,7 @@ describe('원문 tfoot 합계 — 필터가 켜지면 내린다', () => {
      합이 아니라 조합 약정액이다). 필터가 켜지면 내리고 푸터에 사유를 적는다.
      ⚠ 판정은 **필터 상태**여야 한다 — 행 수 비교로 하면 필터가 전 행과 일치할 때(선택지가
      하나뿐인 운용사 등) 플래그가 꺼져 전체 기준 합계가 남는다(2026-09-16 Codex 6R P2). */
-  const src = readFileSync(new URL('./all_report_status.tsx', import.meta.url), 'utf8');
+  const src = readFileSync(new URL('./ffms/gp/all_report_status.tsx', import.meta.url), 'utf8');
 
   it('행 수 비교로 판정하지 않는다', () => {
     expect(src).not.toContain('visible.length !== tab.rows.length');

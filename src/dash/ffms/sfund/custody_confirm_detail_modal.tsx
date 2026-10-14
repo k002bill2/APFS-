@@ -1,0 +1,227 @@
+/* 자펀드수탁관리(확정) 상세 — 읽기전용 팝업 (출처: S1_27_자펀드수탁관리_확정_.html의 `detailHTML`)
+   → APFS 디자인시스템으로 변형.
+
+   구성(목업 → 우리 규약):
+   - modal-head(제목 + ctx 한 줄)  → `DialogHeader` 제목 + 부제(운용사 · 자펀드 · 기준일자)
+   - 섹션1 투자자산                → 2단 헤더 수제 표(운용사 5 · 수탁기관 3 · 일치여부 2 = 10열) + tfoot 합계
+   - 섹션2 미투자자산 거래         → 2단 헤더 수제 표(3·3·2 = 8열), 본문은 목업 그대로 "조회된 내역이 없습니다."
+   - 섹션3 미투자자산              → 2단 헤더 수제 표(2·2·1 = 5열) + tfoot 합계
+   - modal-foot                    → 푸터 `닫기` 하나(목업 동일)
+
+   한계·가정:
+   - ⚠ 목업 상세는 **원 구조도(엑셀) 상세 예시 1건 고정**이다 — 목록 24행 각각의 실제 대사 내역이 아니다.
+   - ⚠ 목업 tfoot 합계(투자자산 보유주수 96,783 · 미투자자산 잔액 132,681,103)는 본문 행 값(7,142 · 1)과
+     맞지 않는다. **출처 값을 그대로 둔다**(apfs-spec-popup 규약 7 — 실데이터 연동 시 계산식 확인 항목).
+   - 금액 단위 토글 없음: 목업에 단위 선택이 없고 수치가 전부 원 단위 단일이다(apfs-spec-popup 규약 2는 단위가
+     여럿일 때의 규약). 엑셀도 두지 않는다 — 목업 푸터도 닫기 하나다(골드 `general_meeting_detail_modal` 동일 결정).
+
+   골격·크롬(Dialog · `px-[46px]` 인셋 정렬 · Section · TH/TD/CELL 표 헬퍼)은 골드
+   `general_meeting_detail_modal.tsx` 복사 관례. */
+import React from 'react';
+import { UI } from '../../components';
+import { fmt } from '../../aggrid_theme';   // 숫자 표기 SSOT(정수=콤마) — 자체 포매터 재구현 금지
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from '../../ui/dialog';
+import type { CustodyConfirmRow } from './custody_confirm_manage';
+
+const { Button, StatusBadge } = UI;
+
+/* ── 프리미티브(골드 복사 — 공유 export 아님) ── */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mb-5">
+      <h3 className="flex items-center gap-2 text-lg font-bold border-b-2 border-border pb-2 mt-0 mb-3">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+const TH_BASE = 'border border-border bg-[color:var(--grid-header)] font-bold';
+const TH = `${TH_BASE} text-left`;
+const THR = `${TH_BASE} text-right`;
+/* 2단 그룹 헤더(colSpan 묶음 제목)만 가운데 — 표 정렬 규약의 허용 예외 */
+const THG = `${TH_BASE} text-center`;
+const TD = 'border border-border';
+const CELL: React.CSSProperties = { padding: '7px 9px' };
+/* 목업 `.grpline` — 운용사/수탁기관/일치여부 묶음 경계선. 축(구조)이라 상시 표시, 색은 토큰 */
+const GRP: React.CSSProperties = { borderLeft: '2px solid var(--border-strong)' };
+/* 목업 `tfoot td{font-weight:800;background:surface-3;border-top:2px solid ink}` → 합계행 공용 표기(aggrid_shared 동형) */
+const FOOT: React.CSSProperties = { ...CELL, borderTop: '2px solid var(--border-strong)' };
+
+/* 일치여부 표식 — 목업 `<span class="tag g">일치</span>`. 상태 배지 */
+function MatchTag({ label }: { label: string }) {
+  return <StatusBadge tone="success" label={label} size="md" />;
+}
+
+/* ── 섹션 데이터 — 목업 `detailHTML` 표 값 그대로(원 단위) ──────────────────────
+   ⚠ 목업이 상세 예시 1건만 담고 있어 행 배열도 1건이다(없는 값을 만들지 않는다). */
+const INV_ROWS = [{
+  gpName: '(주)요즘주방', gpShares: 7142, principal: 499940000, reduce: 499939000, gpBal: 1000,
+  tsName: '(주)지에프케이 우선주', tsShares: 7142, tsBal: 1000, mShares: '일치', mBal: '일치',
+}];
+/* 목업 tfoot: 합계 / 96,783 / '-'(colSpan 8). 행 합(7,142)과 다르지만 출처 값 그대로 */
+const INV_TOTAL_SHARES = 96783;
+
+const NI_ROWS = [{
+  gpAcct: '00211252481(신한금융투자)', gpBal: 1,
+  tsAcct: '00211252481(신한금투 AJ-ISU경기도애그리푸드투자조합)', tsBal: 1, mBal: '일치',
+}];
+/* 목업 tfoot: 합계 / 132,681,103 / '-'(colSpan 3). 행 합(1)과 다르지만 출처 값 그대로 */
+const NI_TOTAL_BAL = 132681103;
+
+/* ① 투자자산 — 운용사[투자기업·보유주수·원금(A)·감액금액(B)·잔액(A-B)] · 수탁기관[투자기업·보유주수·잔액] · 일치여부[보유주수·잔액] */
+function InvestTable() {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 920 }}>
+        <caption className="sr-only">투자자산 대사 — 운용사·수탁기관 보유내역 비교</caption>
+        <thead>
+          <tr>
+            <th scope="colgroup" colSpan={5} className={THG} style={CELL}>운용사</th>
+            <th scope="colgroup" colSpan={3} className={THG} style={{ ...CELL, ...GRP }}>수탁기관</th>
+            <th scope="colgroup" colSpan={2} className={THG} style={{ ...CELL, ...GRP }}>일치여부</th>
+          </tr>
+          <tr>
+            <th scope="col" className={TH} style={CELL}>투자기업</th>
+            <th scope="col" className={THR} style={CELL}>보유주수</th>
+            <th scope="col" className={THR} style={CELL}>원금(A)</th>
+            <th scope="col" className={THR} style={CELL}>감액금액(B)</th>
+            <th scope="col" className={THR} style={CELL}>잔액(A-B)</th>
+            <th scope="col" className={TH} style={{ ...CELL, ...GRP }}>투자기업</th>
+            <th scope="col" className={THR} style={CELL}>보유주수</th>
+            <th scope="col" className={THR} style={CELL}>잔액</th>
+            <th scope="col" className={TH} style={{ ...CELL, ...GRP }}>보유주수</th>
+            <th scope="col" className={TH} style={CELL}>잔액</th>
+          </tr>
+        </thead>
+        <tbody>
+          {INV_ROWS.map((r) => (
+            <tr key={r.gpName}>
+              <td className={TD} style={CELL}>{r.gpName}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.gpShares)}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.principal)}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.reduce)}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.gpBal)}</td>
+              <td className={TD} style={{ ...CELL, ...GRP }}>{r.tsName}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.tsShares)}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.tsBal)}</td>
+              <td className={TD} style={{ ...CELL, ...GRP }}><MatchTag label={r.mShares} /></td>
+              <td className={TD} style={CELL}><MatchTag label={r.mBal} /></td>
+            </tr>
+          ))}
+        </tbody>
+        {/* 합계 — 목업 tfoot 그대로 */}
+        <tfoot>
+          <tr className="bg-muted font-bold">
+            <td className={TD} style={FOOT}>합계</td>
+            <td className={`${TD} text-right tabular`} style={FOOT}>{fmt(INV_TOTAL_SHARES)}</td>
+            <td className={TD} colSpan={8} style={FOOT}>-</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
+/* ② 미투자자산 거래 — 운용사[종목·보유주수·잔액] · 수탁기관[종목·보유주수·잔액] · 일치여부[보유주수·잔액].
+   목업 본문은 빈 상태 한 줄뿐이다(행 데이터 없음 — 만들어 넣지 않는다). */
+function NonInvestTradeTable() {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 820 }}>
+        <caption className="sr-only">미투자자산 거래 대사 — 운용사·수탁기관 비교</caption>
+        <thead>
+          <tr>
+            <th scope="colgroup" colSpan={3} className={THG} style={CELL}>운용사</th>
+            <th scope="colgroup" colSpan={3} className={THG} style={{ ...CELL, ...GRP }}>수탁기관</th>
+            <th scope="colgroup" colSpan={2} className={THG} style={{ ...CELL, ...GRP }}>일치여부</th>
+          </tr>
+          <tr>
+            <th scope="col" className={TH} style={CELL}>종목</th>
+            <th scope="col" className={THR} style={CELL}>보유주수</th>
+            <th scope="col" className={THR} style={CELL}>잔액</th>
+            <th scope="col" className={TH} style={{ ...CELL, ...GRP }}>종목</th>
+            <th scope="col" className={THR} style={CELL}>보유주수</th>
+            <th scope="col" className={THR} style={CELL}>잔액</th>
+            <th scope="col" className={TH} style={{ ...CELL, ...GRP }}>보유주수</th>
+            <th scope="col" className={TH} style={CELL}>잔액</th>
+          </tr>
+        </thead>
+        <tbody>
+          <UI.EmptyRow span={8} msg="조회된 내역이 없습니다." className={TD} style={{ ...CELL, padding: '18px 9px' }} />
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ③ 미투자자산 — 운용사[계좌번호·잔액] · 수탁기관[계좌번호·잔액] · 일치여부[잔액] */
+function NonInvestTable() {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 820 }}>
+        <caption className="sr-only">미투자자산(예치금) 대사 — 운용사·수탁기관 계좌 비교</caption>
+        <thead>
+          <tr>
+            <th scope="colgroup" colSpan={2} className={THG} style={CELL}>운용사</th>
+            <th scope="colgroup" colSpan={2} className={THG} style={{ ...CELL, ...GRP }}>수탁기관</th>
+            <th scope="colgroup" colSpan={1} className={THG} style={{ ...CELL, ...GRP }}>일치여부</th>
+          </tr>
+          <tr>
+            <th scope="col" className={TH} style={CELL}>계좌번호</th>
+            <th scope="col" className={THR} style={CELL}>잔액</th>
+            <th scope="col" className={TH} style={{ ...CELL, ...GRP }}>계좌번호</th>
+            <th scope="col" className={THR} style={CELL}>잔액</th>
+            <th scope="col" className={TH} style={{ ...CELL, ...GRP }}>잔액</th>
+          </tr>
+        </thead>
+        <tbody>
+          {NI_ROWS.map((r) => (
+            <tr key={r.gpAcct}>
+              <td className={TD} style={{ ...CELL, overflowWrap: 'anywhere' }}>{r.gpAcct}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.gpBal)}</td>
+              <td className={TD} style={{ ...CELL, ...GRP, overflowWrap: 'anywhere' }}>{r.tsAcct}</td>
+              <td className={`${TD} text-right tabular`} style={CELL}>{fmt(r.tsBal)}</td>
+              <td className={TD} style={{ ...CELL, ...GRP }}><MatchTag label={r.mBal} /></td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr className="bg-muted font-bold">
+            <td className={TD} style={FOOT}>합계</td>
+            <td className={`${TD} text-right tabular`} style={FOOT}>{fmt(NI_TOTAL_BAL)}</td>
+            <td className={TD} colSpan={3} style={FOOT}>-</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
+export function CustodyConfirmDetailModal({ row, baseDate, onClose }: { row: CustodyConfirmRow; baseDate: string; onClose: () => void }) {
+  const dlgRef = React.useRef<DialogHandle>(null);
+  return (
+    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-[1000px] max-h-[88vh]">
+        <DialogHeader className="px-[46px]">
+          {/* 제목+부제는 한 래퍼로 묶는다 — DialogHeader가 justify-between이라 안 묶으면 부제가 우측 끝으로 밀린다. */}
+          <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
+            <DialogTitle className="shrink-0">자펀드수탁관리(확정) 상세</DialogTitle>
+            {/* Radix Description은 <p> — preflight:false라 UA 기본 마진이 살아 있어 m-0을 명시한다(공용 dialog.tsx는 불변) */}
+            <DialogDescription className="m-0 text-caption truncate min-w-0">
+              {row.gp} · {row.fn} · 기준일자 {String(baseDate)}
+            </DialogDescription>
+          </div>
+        </DialogHeader>
+        <div className="overflow-y-auto p-[46px]">
+          <Section title="투자자산"><InvestTable /></Section>
+          <Section title="미투자자산 거래"><NonInvestTradeTable /></Section>
+          <Section title="미투자자산"><NonInvestTable /></Section>
+        </div>
+        <DialogFooter className="px-[46px]">
+          <div />
+          <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

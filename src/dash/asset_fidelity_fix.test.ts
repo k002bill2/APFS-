@@ -11,11 +11,12 @@ import { resolveSchema, ALL_SCHEMAS } from './schemas';
 import { parsePageSchema } from './schemas/types';
 import { computeSchemaTotal } from './schemas/totals';
 import { linksDetail } from './schemas/detail_link';
-import { INV_REVIEW_ROWS } from './investment_review_data';
+import { INV_REVIEW_ROWS } from './ffms/report/investment_review_data';
 import { GP_RATIO_TITLE, GP_RATIO_EMPTY, gpRatioItems } from './gp_ratio_detail_model';
+import { readSrc } from './test_src';
 
 const read = (p: string) => readFileSync(p, 'utf8');
-const src = (f: string) => readFileSync(new URL('./' + f, import.meta.url), 'utf8');
+const src = readSrc;   // basename → 도메인 폴더 어디에 있든 찾는다
 const M1 = (f: string) => read(`docs/mockups/01_투자자산관리/${f}`);
 const strip = (s: string) => s.replace(/<button[\s\S]*?<\/button>/g, '').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim();
 

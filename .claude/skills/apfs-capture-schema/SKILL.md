@@ -1,6 +1,6 @@
 ---
 name: apfs-capture-schema
-description: 현행시스템 목업 HTML(+`*_spec.json`) 또는 화면 캡처에서 실제 컬럼·필드·값도메인을 추출해 src/dash/schemas/<route>.ts(PageSchema)로 동결하고, 스키마 주도 GenericListPage에 배선하는 절차. 단일 헤더·flat 필드·단순 CRUD 화면을 페이지 코드 0줄로 만들 때 사용. 이름의 capture 는 연혁이며 실제 주 입력은 목업 HTML이다. Use when freezing a simple list/form screen into a PageSchema from a mockup HTML or a screen capture.
+description: 현행시스템 목업 HTML(+`*_spec.json`) 또는 화면 캡처에서 실제 컬럼·필드·값도메인을 추출해 src/dash/<도메인>/<중분류>/<route>.ts(PageSchema)로 동결하고, 스키마 주도 GenericListPage에 배선하는 절차. 단일 헤더·flat 필드·단순 CRUD 화면을 페이지 코드 0줄로 만들 때 사용. 이름의 capture 는 연혁이며 실제 주 입력은 목업 HTML이다. Use when freezing a simple list/form screen into a PageSchema from a mockup HTML or a screen capture.
 ---
 
 # apfs-capture-schema
@@ -34,12 +34,12 @@ description: 현행시스템 목업 HTML(+`*_spec.json`) 또는 화면 캡처에
    - **전체 건수만** — `countKpis:[{전체 건수}]`.
    - **전체 + 구분별 2지표** — 추출한 status/category 컬럼의 `column`/`value` 쌍으로 3배지.
    답에 따라 3단계 동결 시 스키마에 반영: **미포함 → `hideKpis: true`**(금액 컬럼이 있어도 제네릭 금액 KPI 폴백을 확실히 끈다) · 포함 → `countKpis` 배열. 결정은 `provenance` 옆 주석(예: `// KPI: 미포함(HITL 2026-..)`)으로 남겨 재실행 시 재질문을 피한다. 규약 근거는 [[apfs-grid]] "KPI 배지 행".
-3. **검수·동결**: 추출 결과를 **출처(목업 HTML 또는 캡처)와 1회 대조** → `provenance{capturedAt,sourceSystem,captureFile}` 채움 — `captureFile`에는 **실제로 읽은 파일 경로**를 넣는다(`.html` 목업 경로도 그대로) → 2.5단계 HITL 결정(`countKpis`/`hideKpis`) 반영 → `src/dash/schemas/<route>.ts`로 저장(parsePageSchema/zod 통과 필수).
+3. **검수·동결**: 추출 결과를 **출처(목업 HTML 또는 캡처)와 1회 대조** → `provenance{capturedAt,sourceSystem,captureFile}` 채움 — `captureFile`에는 **실제로 읽은 파일 경로**를 넣는다(`.html` 목업 경로도 그대로) → 2.5단계 HITL 결정(`countKpis`/`hideKpis`) 반영 → `src/dash/<도메인>/<중분류>/<route>.ts`로 저장 — 메뉴 위치의 도메인 폴더(`docs/filetree.md`, 예: 투자기업정보 → `ffms/ent/`). `schemas/` 에는 레지스트리·타입 등 공용 인프라만 둔다(parsePageSchema/zod 통과 필수).
 4. **충돌검사·배선**: 라벨이 중복 리프면 data.ts에 `path` 부여(필수) 후 그 path를 route로. schemas/index.ts의 ALL 배열에 import 추가(중복키면 buildRegistry가 빌드에러).
 5. **검증**: `npm test`(스키마 zod) + `npm run build` + `npm run dev` 시각 확인(라이트/다크) + responsive-ui 체크.
 
 ## 산출물
-- 검수된 `src/dash/schemas/<route>.ts`
+- 검수된 `src/dash/<도메인>/<중분류>/<route>.ts`
 - (complex일 때) 전용 페이지 escalate 안내
 - data.ts path/registry 등록 diff
 

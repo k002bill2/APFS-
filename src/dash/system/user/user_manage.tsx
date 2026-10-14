@@ -1,0 +1,358 @@
+/* 사용자관리 — 관리형 리스트 페이지 (관리자 > 사용자·권한 관리 > 사용자관리, route user-manage).
+   출처: S0_101_사용자관리.html(공통관리 KRDS TO-BE) → APFS 디자인시스템으로 변형.
+
+   구성(목업 → 우리 규약):
+   - 검색박스(사용자구분·상태·소속기관·검색어)  → 주 필터 1개 = 상태 FilterChip(툴바 좌) + 상세필터 드로어(검색어·사용자구분·소속기관). 검색어 opt-in(SEARCHABLE).
+   - 사용자 그리드(No·성명·로그인 아이디·이메일·구분·소속유형·소속·권한·상태·최근 접속일시) → AG Grid 단일 헤더(apfs-aggrid), 상태 배지 lg.
+   - 행 선택 → 상태·구분별 액션(목업 gate: 수정·온보딩 메일·담당자 교체·잠금 해제·비밀번호 만료 처리·OTP 재발급)
+       → 라디오 단일선택 + 툴바 좌 selbar 에 **열린 액션만** 노출(apfs-stage-workflow 선택 SSOT). 게이팅은 user_manage_model.gateFor.
+   - 등록/수정 모달(조건부 소속·권한 복수) → 전용 `UserFormModal`. 등록 = 온보딩대기 + 온보딩 안내 메일 미리보기(목업).
+   - 온보딩/OTP 재등록 메일 → `MailPreviewDialog`(실제 발송 없음). 잠금 해제·만료 처리·담당자 교체·OTP 재발급은 AlertDialog 확인 후 로컬 상태 전이.
+   - 엑셀(리스트 공통 규약) → 푸터 내보내기 아이콘 + ⌥D.
+   - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · 삭제 없음(목업 원문에 없음).
+   ⚠ 실제 계정 발급·인증·잠금 정책·메일 발송이 아니다 — 백엔드 없이 화면 로컬 더미 상태만 바꾼다(브리프). 실명 아님. */
+import '../../aggrid_shared.css';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import type { CSSProperties } from 'react';
+import { format } from 'date-fns';
+import { UI } from '../../components';
+import { Icon } from '../../icons';
+import { GridFrame, FooterActions } from '../../grid_frame';
+import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
+import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
+import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
+import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { toast } from '../../ui/sonner';
+import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../../ui/alert-dialog';
+import { RowContextMenu } from '../../row_context_menu';
+import type { CtxItem, CtxMenuState } from '../../row_context_menu';
+import { UTYPES } from '../admin_menu_tree';
+import { ORGS } from './admin_demo_data';
+import { demoUsers, filterUsers, gateFor, belong, belongName, STATUS_TONE, USER_STATUSES, nextUserId, unlockUser, replaceUser } from './user_manage_model';
+import type { UserRow, UserStatus } from './user_manage_model';
+import { UserFormModal } from './user_form_modal';
+import type { UserPatch } from './user_form_modal';
+import { MailPreviewDialog, MASKED_LINK } from './admin_mail_preview';
+import type { MailSpec } from './admin_mail_preview';
+import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+
+const { Button, IconBtn, StatusBadge } = UI;
+
+const SEARCHABLE = true;
+const PAGE_SIZE = 20;
+const nowStamp = () => format(new Date(), 'yyyy-MM-dd HH:mm');
+
+/* ──────────────────────────────
+   컬럼 정의 — 목업 헤더 순서 그대로
+────────────────────────────── */
+const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
+const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
+const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
+
+const columnDefs: ColDef<UserRow>[] = [
+  { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: tabNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
+  { field: 'name', headerName: '성명', width: 130, minWidth: 110, maxWidth: 200, cellStyle: flexCenter,
+    cellRenderer: (p: any) => <span className="inline-flex items-center gap-1.5 min-w-0"><span className="font-semibold">{p.value}</span>{p.data?.seed && <StatusBadge tone="success" label="시드" size="sm" />}</span> },
+  { field: 'lid', headerName: '로그인 아이디', width: 134, maxWidth: 160, cellStyle: { ...flexCenter, fontVariantNumeric: 'tabular-nums' }, cellRenderer: (p: any) => p.value },
+  { field: 'email', headerName: '이메일', flex: 1, width: 200, minWidth: 170, cellStyle: muted, cellRenderer: (p: any) => (p.value || '-') },
+  { field: 'type', headerName: '구분', width: 84, maxWidth: 84, cellStyle: flexCenter, cellRenderer: (p: any) => <StatusBadge tone="info" label={p.value} size="lg" /> },
+  { headerName: '소속유형', width: 116, maxWidth: 116, cellStyle: flexCenter, valueGetter: (p) => (p.data ? belong(p.data) : ''),
+    cellRenderer: (p: any) => <StatusBadge tone={p.data?.type === '농금원' ? 'primary' : 'warning'} label={p.value} size="lg" /> },
+  { headerName: '소속', width: 150, minWidth: 110, maxWidth: 220, cellStyle: flexCenter, valueGetter: (p) => (p.data ? belongName(p.data) : ''), cellRenderer: (p: any) => p.value },
+  { field: 'roles', headerName: '권한', width: 170, minWidth: 120, maxWidth: 260, cellStyle: flexCenter, valueFormatter: (p) => (p.value ?? []).join(', '),
+    cellRenderer: (p: any) => <span className="inline-flex items-center gap-1 flex-wrap">{(p.value ?? []).map((r: string) => <StatusBadge key={r} tone="info" label={r} size="lg" />)}</span> },
+  { field: 'status', headerName: '상태', width: 110, maxWidth: 110, cellStyle: flexCenter, cellRenderer: (p: any) => <StatusBadge tone={STATUS_TONE[p.value as UserStatus]} label={p.value} size="lg" /> },
+  { field: 'pwExpired', headerName: '비밀번호', width: 100, maxWidth: 100, cellStyle: flexCenter, valueFormatter: (p) => (p.value ? '만료' : '정상'),
+    cellRenderer: (p: any) => (p.value ? <StatusBadge tone="warning" label="만료" size="lg" /> : <span style={{ color: 'var(--muted-foreground)' }}>정상</span>) },
+  { field: 'last', headerName: '최근 접속일시', width: 170, maxWidth: 170, cellStyle: { ...tabNum, color: 'var(--muted-foreground)' }, valueFormatter: (p) => (p.value && p.value !== '—' ? String(p.value) : '—') },
+];
+/* 다중 선택이 기본(2026-09-23 사용자 결정 — 전 리스트 공통). 단일 대상 액션은 selCount===1 에서만 노출한다.
+   행 본문 클릭 선택 해제 — 체크박스로만 on/off (2026-09-22, apfs-aggrid "체크박스" 절) */
+const ROW_SELECTION: RowSelectionOptions<UserRow> = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
+const STATUS_CHIPS = ['', ...USER_STATUSES] as const;
+
+type XCol = { header: string; get: (r: UserRow) => string };
+const EXPORT_COLS: XCol[] = [
+  { header: '성명', get: (r) => r.name }, { header: '로그인 아이디', get: (r) => r.lid }, { header: '이메일', get: (r) => r.email },
+  { header: '구분', get: (r) => r.type }, { header: '소속유형', get: (r) => belong(r) }, { header: '소속', get: (r) => belongName(r) },
+  { header: '권한', get: (r) => r.roles.join(', ') }, { header: '상태', get: (r) => r.status }, { header: '비밀번호', get: (r) => (r.pwExpired ? '만료' : '정상') }, { header: '최근 접속일시', get: (r) => r.last },
+];
+
+/* ── 메일 본문(목업 openMail·openOtpMail — 링크·인증정보는 마스킹) ── */
+function onboardMail(u: UserRow): MailSpec {
+  const org = belongName(u), gong = u.type === '수탁' || u.type === '부처';
+  return {
+    subject: `[농림수산식품모태펀드] 계정 개설 안내 — ${u.name} (${org})`, to: `${u.name} <${u.email || '-'}>`,
+    body: `${u.name} 담당자님, 안녕하세요.\n농림수산식품모태펀드 투자자산관리시스템에 사용자 계정이 개설되었습니다.\n\n■ 계정 정보\n · 계정명: ${u.name}\n · 소속/구분: ${org} (${u.type})\n · 권한: ${u.roles.join(', ')}\n · 유효기간: 링크 발송 후 72시간(만료 시 재발송 요청)\n\n■ 최초 접속 절차\n 1) 아래 [계정 활성화] 클릭\n 2) 비밀번호 설정\n 3) 2차 인증(OTP) 등록 — 화면의 QR을 인증앱으로 1회 스캔\n 4) 앱에 표시된 6자리 입력 → 활성화 완료\n\n   [ 계정 활성화 ]\n   ${MASKED_LINK}${gong ? `\n\n■ 기관 소속 계정 안내\n · 본 계정은 ${org} 소속 개별 담당자 계정입니다(공유 계정 아님).\n · 담당자 변경 시 이 계정은 비활성되고 신 담당자에게 새 계정이 발급됩니다.` : ''}\n\n■ 보안 안내\n · QR코드·비밀번호·OTP는 이메일로 발송되지 않으며, 링크 접속 후 화면에서만 표시됩니다.\n · 본인이 요청하지 않은 안내라면 링크를 클릭하지 마시고 농금원 담당자에게 문의해 주세요.\n\n본 메일은 발신전용입니다.`,
+  };
+}
+function otpMail(u: UserRow): MailSpec {
+  const gong = u.type === '수탁' || u.type === '부처';
+  return {
+    subject: `[농림수산식품모태펀드] OTP(2차 인증) 재등록 안내 — ${u.name}`, to: `${u.name} <${u.email || '-'}>`,
+    body: `${u.name}님, 안녕하세요.\n2차 인증(OTP)이 재발급되었습니다. 기존 인증앱의 코드는 더 이상 사용할 수 없습니다.\n\n■ 안내\n · 계정: ${u.lid} (${u.type})\n · 사유: 기기 변경/분실${gong ? '·담당자 인수인계' : ''}에 따른 OTP 재발급(관리자 처리)\n · 조치: 아래 링크 접속 → 새 QR 스캔 → 6자리 입력으로 재등록\n\n   [ OTP 재등록 ]  ${MASKED_LINK}\n\n■ 보안 안내\n · QR·시드는 이메일이 아니라 링크 접속 후 화면에서만 표시됩니다.\n · 기존 인증앱에 등록된 항목은 삭제해 주세요.\n\n본 메일은 발신전용입니다.`,
+  };
+}
+
+function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block mb-4">
+      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
+      {children}
+    </label>
+  );
+}
+
+/* ──────────────────────────────
+   메인 컴포넌트
+────────────────────────────── */
+type ModalState = null
+  | { kind: 'form'; mode: 'create' | 'edit'; id?: string }
+  | { kind: 'mail'; title: string; mail: MailSpec }
+  | { kind: 'confirm'; title: string; desc: string; okLabel: string; onOk: () => void };
+
+export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
+  const apiRef = useRef<GridApi<UserRow> | null>(null);
+  const [rows, setRows] = useState<UserRow[]>(() => demoUsers());
+  /* 선택 SSOT — 체크된 행 id 배열. selId(첫 행)·selCount 는 파생이라 둘이 어긋날 수 없다(Codex 리뷰 2026-09-23) */
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const selId = selIds[0] ?? null;      // 단일 액션 대상(선택 1건일 때만 쓴다)
+  const selCount = selIds.length;       // 단일/다건 분기의 SSOT
+  const [showAll, setShowAll] = useState(false);
+  const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
+  const [modal, setModal] = useState<ModalState>(null);
+  const [ctx, setCtx] = useState<CtxMenuState>(null);
+
+  /* 필터 — 상태는 툴바 칩, 나머지는 드로어(목업 검색박스 순서: 사용자구분·상태·소속기관·검색어) */
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [fStatus, setFStatus] = useState<typeof STATUS_CHIPS[number]>('');
+  const [fType, setFType] = useState('');
+  const [fOrg, setFOrg] = useState('');
+  const [fText, setFText] = useState('');
+  const clearFilters = () => { setFStatus(''); setFType(''); setFOrg(''); setFText(''); };
+
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null });
+  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+
+  const visible = useMemo(() => filterUsers(rows, { type: fType, status: fStatus, org: fOrg, kw: fText }), [rows, fType, fStatus, fOrg, fText]);
+
+  /* 선택 SSOT = selId. 새로 만든 행은 onRowDataUpdated 에서 라디오를 되맞춘다 */
+  /* 선택 SSOT = selIds(배열). multiRow 라 복원도 **선택 전체**를 되돌린다 — 첫 id 만 되살리면 clearSelection 이
+     나머지 체크를 지워 사용자가 아무것도 안 했는데 다건 선택이 1건으로 줄어든다(Codex 리뷰 2026-09-23). */
+  const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
+  const onGridReady = useCallback((e: GridReadyEvent<UserRow>) => { apiRef.current = e.api; }, []);
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<UserRow>) => {
+    setSelIds(e.api.getSelectedRows().map((r) => r.id));
+  }, []);
+  const onRowDataUpdated = useCallback((e: { api: GridApi<UserRow> }) => {
+    restoreSelection(e.api, selIdsRef.current);
+  }, []);
+  const onPaginationChanged = useCallback(() => {
+    const api = apiRef.current; if (!api) return;
+    const next = { current: api.paginationGetCurrentPage(), total: api.paginationGetTotalPages(), rowCount: api.paginationGetRowCount() };
+    setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
+  }, []);
+  const onRowDoubleClicked = useCallback((e: RowDoubleClickedEvent<UserRow>) => { if (e.data && !e.rowPinned) setModal({ kind: 'form', mode: 'edit', id: e.data.id }); }, []);
+  const onCellKeyDown = useCallback((e: CellKeyDownEvent<UserRow>) => {
+    if ((e.event as KeyboardEvent | null)?.key !== 'Enter' || !e.data) return;
+    setModal({ kind: 'form', mode: 'edit', id: e.data.id });
+  }, []);
+
+  /* 단일 대상 액션은 **정확히 1건** 체크일 때만 — 다건 선택에 단건 모달·전이는 의미가 없다(2026-09-23) */
+  const single = selCount === 1 && selId ? rows.find((r) => r.id === selId) ?? null : null;
+  const gate = gateFor(single);
+  const target = modal?.kind === 'form' && modal.id ? rows.find((r) => r.id === modal.id) ?? null : null;
+
+  /* ── 액션(목업) — 확인 다이얼로그 → 로컬 전이 → toast(목업 회신 문구) ── */
+  const patchRow = (id: string, fn: (u: UserRow) => UserRow) => setRows((prev) => prev.map((r) => (r.id === id ? fn(r) : r)));
+  const openMail = (title: string, mail: MailSpec) => setModal({ kind: 'mail', title, mail });
+  const askUnlock = (u: UserRow) => setModal({ kind: 'confirm', title: '잠금 해제', desc: `${u.name} 계정의 잠금을 해제할까요? (실패 횟수 초기화)`, okLabel: '잠금 해제', onOk: () => {
+    patchRow(u.id, unlockUser); toast.success(`${u.name} 잠금 해제 — 감사로그에 기록됩니다`);
+  } });
+  const askExpire = (u: UserRow) => setModal({ kind: 'confirm', title: '비밀번호 만료 처리', desc: `${u.name} 계정을 비밀번호 만료 처리할까요? 다음 로그인 시 변경을 안내합니다.`, okLabel: '만료 처리', onOk: () => {
+    patchRow(u.id, (r) => ({ ...r, pwExpired: true })); toast.success(`${u.name} 만료 처리 — 안내 메일 발송`);
+  } });
+  const askOtp = (u: UserRow) => setModal({ kind: 'confirm', title: 'OTP 재발급', desc: `${u.name} 계정의 OTP를 재발급할까요? 기존 앱 등록은 무효화되고 재등록 안내 메일을 미리봅니다.`, okLabel: '재발급', onOk: () => {
+    openMail(`OTP 재등록 안내 메일 미리보기 — ${u.name}`, otpMail(u)); toast.success('OTP 재발급 — 재등록 안내 메일');
+  } });
+  const askReplace = (u: UserRow) => setModal({ kind: 'confirm', title: '담당자 교체', desc: `담당자를 교체할까요? ${u.name} 계정은 비활성되고, 신 담당자 계정이 신규 발급(온보딩대기)됩니다. 같은 아이디를 물려주지 않습니다.`, okLabel: '교체', onOk: () => {
+    const { retired, created } = replaceUser(rows, u);
+    setRows((prev) => [...prev.map((r) => (r.id === u.id ? retired : r)), created]);
+    setSelIds([created.id]);
+    openMail(`온보딩 안내 메일 미리보기 — ${created.name}`, onboardMail(created));
+    toast.success(`담당자 교체 — ${u.name} 비활성 + 신규 계정 발급(온보딩대기)`);
+  } });
+
+  const handleCellContextMenu = (e: CellContextMenuEvent<UserRow>) => {
+    (e.event as MouseEvent | undefined)?.preventDefault();
+    const row = e.data;
+    if (!row || e.rowPinned) return;
+    const ev = e.event as MouseEvent;
+    const g = gateFor(row);
+    const items: CtxItem[] = [
+      { label: '수정', icon: 'file', onSelect: () => setModal({ kind: 'form', mode: 'edit', id: row.id }) },
+      ...(g.mail ? [{ label: '온보딩 메일', icon: 'bell', onSelect: () => openMail(`온보딩 안내 메일 미리보기 — ${row.name}`, onboardMail(row)) } as CtxItem] : []),
+      ...(g.unlock ? [{ label: '잠금 해제', icon: 'check-circle', onSelect: () => askUnlock(row) } as CtxItem] : []),
+      { label: 'Excel 내보내기', icon: 'download', onSelect: exportExcel },
+    ];
+    setCtx({ x: ev.clientX, y: ev.clientY, items });
+  };
+
+  /* ── 등록/수정 저장 — 불변 갱신. 등록은 온보딩대기 + 온보딩 메일 미리보기(목업 회신) ── */
+  const save = (patch: UserPatch) => {
+    if (!modal || modal.kind !== 'form') return;
+    if (modal.mode === 'edit' && target) {
+      patchRow(target.id, (r) => ({ ...r, ...patch }));
+      setModal(null);
+      toast.success('저장되었습니다');
+    } else {
+      const row: UserRow = { id: nextUserId(rows), ...patch, last: '—', fail: 0 };
+      setRows((prev) => [...prev, row]);
+      setSelIds([row.id]);
+      openMail(`온보딩 안내 메일 미리보기 — ${row.name}`, onboardMail(row));
+      toast.success(`${row.name} 등록 — 온보딩 안내 메일`);
+    }
+  };
+  const refresh = () => { setRows(demoUsers()); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
+
+  /* ── Excel — 표시 중인 행 ── */
+  const exportExcel = () => {
+    const head = EXPORT_COLS.map((c) => c.header);
+    const body = visible.map((r) => EXPORT_COLS.map((c) => (c.get(r))));
+    const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
+    ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '이메일' || c.header === '권한' ? 28 : 14 }));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '사용자관리');
+    XLSX.writeFile(wb, '사용자관리.xlsx');
+    toast.success('Excel로 내보냈습니다');
+  };
+
+  const pageSize = showAll ? Math.max(visible.length, 1) : PAGE_SIZE;
+  const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
+  const chips: [string, string, () => void][] = [
+    ['사용자구분', fType, () => setFType('')],
+    ['소속기관', fOrg && (ORGS.find((o) => o.id === fOrg)?.name ?? fOrg), () => setFOrg('')],
+    ['검색어', fText.trim(), () => setFText('')],
+  ];
+
+  /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다
+     (contextActions 슬롯). 필터 칩은 filterChips 로 넘기고, 선택 중엔 GridFrame 이 깔때기를 빼고 칩을 +N 안으로 접는다. */
+  const selActions = selCount > 0 ? (
+    /* 선택 행 컨텍스트 액션 — 게이트가 연 것만(목업 gate). 대상명 캡션은 두지 않는다 */
+    <>
+      <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
+      {single && <>
+      <StatusBadge tone={STATUS_TONE[single.status]} label={single.status} size="lg" />
+      <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', id: single.id })}>수정</Button>
+      {gate.mail && <Button variant="outline" size="sm" leadingIcon="bell" onClick={() => openMail(`온보딩 안내 메일 미리보기 — ${single.name}`, onboardMail(single))}>온보딩 메일</Button>}
+      {gate.replace && <Button variant="outline" size="sm" leadingIcon="users" onClick={() => askReplace(single)}>담당자 교체</Button>}
+      {gate.unlock && <Button variant="outline" size="sm" leadingIcon="check-circle" onClick={() => askUnlock(single)}>잠금 해제</Button>}
+      {gate.expire && <Button variant="outline" size="sm" leadingIcon="clock" onClick={() => askExpire(single)}>비밀번호 만료 처리</Button>}
+      {gate.otp && <Button variant="outline" size="sm" leadingIcon="refresh" onClick={() => askOtp(single)}>OTP 재발급</Button>}
+      </>}
+      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+    </>
+  ) : null;
+  return (
+    <GridFrame
+      crumbs={['홈', '관리자', '사용자·권한 관리', '사용자관리']}
+      title="사용자관리"
+      favRoute="user-manage"
+      headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
+      filterChips={STATUS_CHIPS.map((s) => ({ key: s || 'all', label: s || '상태: 전체', active: fStatus === s, onSelect: () => setFStatus(s) }))}
+      contextActions={selActions}
+      appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      toolbarRight={<>
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
+        <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>사용자 등록</Button>
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
+      </>}
+      footerLeft={<span>{'총 ' + String(rows.length) + '명 중 ' + String(visible.length) + '명 · ' + String(Math.min(shown, visible.length)) + '명 표시 중'}</span>}
+      footerCenter={page.total > 1 ? (
+        <>
+          <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
+          <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => apiRef.current?.paginationGoToNextPage()} />
+        </>
+      ) : undefined}
+      footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}>
+
+      <div>
+        <AgGridReact<UserRow>
+          theme={apfsTheme}
+          rowData={visible}
+          columnDefs={columnDefs}
+          getRowId={(p) => p.data.id}
+          domLayout="autoHeight"
+          defaultColDef={DEFAULT_COL_DEF}
+          rowSelection={ROW_SELECTION}
+          selectionColumnDef={SELECTION_COL}
+          pagination paginationPageSize={pageSize} suppressPaginationPanel
+          preventDefaultOnContextMenu
+          onGridReady={onGridReady}
+          onModelUpdated={refreshNoColumn}
+          onSelectionChanged={onSelectionChanged}
+          onRowDataUpdated={onRowDataUpdated}
+          onPaginationChanged={onPaginationChanged}
+          onRowDoubleClicked={onRowDoubleClicked}
+          onCellKeyDown={onCellKeyDown}
+          onCellContextMenu={handleCellContextMenu}
+          overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 결과가 없습니다. 검색 조건을 변경해 주세요.</span>'}
+        />
+      </div>
+
+      <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
+
+      {/* ── 상세필터 드로어 — 검색어(opt-in) 최상단 + 사용자구분 · 소속기관(상태는 툴바 칩) ── */}
+      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
+          <SheetHeader>
+            <SheetTitle>상세 필터</SheetTitle>
+            <SheetDescription className="sr-only">사용자 목록을 거르는 상세 필터</SheetDescription>
+            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
+            {SEARCHABLE && (
+              <DrawerField label="검색어">
+                <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="성명 · 로그인 아이디 · 이메일" style={inputStyle('text')} />
+              </DrawerField>
+            )}
+            <DrawerField label="사용자구분"><DrawerSelect value={fType} onChange={setFType} options={UTYPES.map((u) => ({ value: u, label: u }))} /></DrawerField>
+            <DrawerField label="소속기관"><DrawerSelect value={fOrg} onChange={setFOrg} options={ORGS.map((o) => ({ value: o.id, label: `${o.name} (${o.type})` }))} /></DrawerField>
+          </div>
+          <SheetFooter>
+            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {/* ── 등록/수정 모달 ── */}
+      {modal?.kind === 'form' && (modal.mode === 'create' || target) && (
+        <UserFormModal mode={modal.mode} initial={modal.mode === 'edit' ? target! : undefined} existing={rows} onSave={save} onClose={() => setModal(null)} />
+      )}
+      {/* ── 메일 미리보기(온보딩·OTP 재등록) — 실제 발송 없음 ── */}
+      {modal?.kind === 'mail' && <MailPreviewDialog title={modal.title} mail={modal.mail} onClose={() => setModal(null)} />}
+      {/* ── 확인(잠금 해제·만료 처리·OTP 재발급·담당자 교체) — Radix AlertDialog ── */}
+      {/* 닫힘 콜백이 onOk 가 띄운 후속 모달(메일 미리보기)을 덮어쓰지 않게 — AlertDialogAction 은 Radix 닫기
+          버튼이라 onOk 직후 onOpenChange(false) 가 따라온다. 확인 모달일 때만 비운다. */}
+      {modal?.kind === 'confirm' && (
+        <AlertDialog open onOpenChange={(o) => { if (!o) setModal((m) => (m?.kind === 'confirm' ? null : m)); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{modal.title}</AlertDialogTitle>
+              <AlertDialogDescription>{modal.desc}<br />화면 시연용 프로토타입 — 실제 계정·인증 상태는 바뀌지 않습니다.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogAction onClick={modal.onOk}>{modal.okLabel}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </GridFrame>
+  );
+}

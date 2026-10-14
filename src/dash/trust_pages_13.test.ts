@@ -2,27 +2,28 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import * as XLSX from 'xlsx';
 import { APFS_DATA } from './data';
+import { readSrc } from './test_src';
 import { resolveSchema } from './schemas';
 import type { TableMeta, Provenance, Row } from './risk_table_meta';
 import { headerSequence, computeTotal, amountText } from './risk_table_meta';
 import { tableSheet } from './risk_excel';
 import { rowPatch } from './trust_manage_rows';
-import { PHYSICAL_FORM, FUND_CODE_FORM, ACCOUNT_FORM, CASHFLOW_FORM, BIG_DISPLAY, MID_DISPLAY, displayCode } from './trust_manage_schemas';
+import { PHYSICAL_FORM, FUND_CODE_FORM, ACCOUNT_FORM, CASHFLOW_FORM, BIG_DISPLAY, MID_DISPLAY, displayCode } from './trust/trust_manage_schemas';
 import {
   PHYSICAL_TABLE, PHYSICAL_PROVENANCE, BIG_LABEL, MID_LABEL, BIG_OPTIONS, MID_OPTIONS, optionCode, GP_PLACEHOLDER,
   SECURITIES_TABLE, SECURITIES_PROVENANCE, VERIFY_TABLES, VERIFY_PROVENANCE, VERIFY_INVEST_TOTAL, VERIFY_FUND,
   SECURITIES_COMPARE, SECURITIES_COMPARE_PROVENANCE, CODE_TABLE, CODE_PROVENANCE, CODE_GROUPS, CODE_DEFAULT,
   FUND_CODE_TABLE, FUND_CODE_PROVENANCE, FUND_CODE_ORGS,
-} from './trust_sub_data';
+} from './trust/trust_sub_data';
 import {
   MOTHER_CODE_TABLE, MOTHER_CODE_PROVENANCE, MOTHER_CODE_GROUPS, MOTHER_CODE_DEFAULT, ACCOUNT_UPLOAD_PROVENANCE, CASHFLOW_UPLOAD_PROVENANCE,
   CASHFLOW_UPLOAD_HINT, CASHFLOW_TABLE, CASHFLOW_PROVENANCE, CASHFLOW_RANGE, ACCOUNT_TABLE, ACCOUNT_PROVENANCE, ACCOUNT_RANGE,
-} from './trust_mother_data';
+} from './trust/trust_mother_data';
 import {
   YEARLY_PROVENANCE, YEARLY_TABLES, YEARLY_TOTALS_LIT, YEARLY_FOOTNOTES, YEARLY_BASE_YM, BASES, ACCOUNT_TYPES,
   LEDGER_TABLE, LEDGER_PROVENANCE, INACTIVE_OPTIONS, HIST_SECTIONS, HIST_REQUIRED,
   MEMBER_ROWS, PAYMENT_ROWS, EXPERT_ROWS, CAREER_ROWS, INVEST_CAREER_ROWS, MEMBER_FORM, EXPERT_FORM, PRINT_DATE, ISSUE_HISTORY, ledgerRows, ledgerShown, ledgerPatch,
-} from './brief_data';
+} from './brief/brief_data';
 
 /* 부처보고(2) · 수탁보고(11) = 13리프 — 라우트 결선 + **원본 목업 대비 출처 충실성**(risk_pages_17.test.ts 방식).
 
@@ -247,7 +248,7 @@ describe('통합 화면 — 탭·섹션·팝업 수', () => {
   it('연도별투자현황 = 원문 1화면 → 탭 없음(옛 탭 2 연도별투자현황상세는 원본에 없어 삭제, 2026-09-24)', () => {
     const [a] = YEARLY_PROVENANCE.captureFiles.map(read);
     expect(a).toContain('<h1>연도별투자현황</h1>');
-    const page = read(new URL('./report_bucheo.tsx', import.meta.url).pathname);
+    const page = read(new URL('./brief/mfund/report_bucheo.tsx', import.meta.url).pathname);
     expect(page).not.toMatch(/TabBar|label: '연도별투자현황상세'/);
   });
   it('실물검증 = 원문 <section> 3개 = 표 3장(섹션 제목 원문 그대로)', () => {
@@ -258,7 +259,7 @@ describe('통합 화면 — 탭·섹션·팝업 수', () => {
   it('등록원부 = 원문 팝업 6종(openLedger·openMembers·openExperts·openUpload·openRegOut·openRegHist)', () => {
     const html = read(B('S4_108_등록원부_관리.html'));
     expect((html.match(/function open(Ledger|Members|Experts|Upload|RegOut|RegHist)\(/g) ?? []).length).toBe(6);
-    const modals = read(new URL('./registry_ledger_modals.tsx', import.meta.url).pathname);
+    const modals = read(new URL('./brief/register/registry_ledger_modals.tsx', import.meta.url).pathname);
     for (const name of ['LedgerFormModal', 'MembersModal', 'ExpertsModal', 'LedgerUploadModal', 'LedgerPrintModal', 'LedgerIssueHistoryModal'])
       expect(modals).toContain(`export function ${name}(`);
   });
@@ -376,7 +377,7 @@ describe('화면별 도메인 규칙', () => {
     const labeled = sel.match(/export const LABELED_SELECTION_COL: SelectionColumnDef = \{([\s\S]*?)\n\};/)?.[1] ?? '';
     expect(labeled).toContain('headerName: SELECTION_HEADER_LABEL');
     expect(labeled).toContain('headerComponentParams: { label: SELECTION_HEADER_LABEL }');
-    const page = read(new URL('./trust_physical_upload.tsx', import.meta.url).pathname);
+    const page = read(new URL('./trust/sfund/trust_physical_upload.tsx', import.meta.url).pathname);
     expect(page).toContain('selectionCol={LABELED_SELECTION_COL}');
   });
   it('연도별 금액 표기 = 원문 fmt() 소수 자릿수(억원 최대 1 · 백만원 정수)', () => {
@@ -426,11 +427,11 @@ describe('화면별 도메인 규칙', () => {
     expect(src).not.toMatch(/type="file"|onDrop=/);
     expect(src).toMatch(/describedBy=\{hint \? hintId : undefined\}/);   // 보조 문구 = 드롭존 접근 설명(aria-describedby)
     for (const f of ['trust_physical_upload.tsx', 'trust_upload_forms.tsx', 'registry_ledger_modals.tsx']) {
-      expect(read(new URL(`./${f}`, import.meta.url).pathname), f).not.toMatch(/type="file"/);
+      expect(readSrc(f), f).not.toMatch(/type="file"/);
     }
   });
   it('업로드 용량 제한 = 원문 명시 화면만(S3_98·유가증권·S4_108 20MB) · 계좌/입출금은 무제한', () => {
-    const r = (f: string) => read(new URL(`./${f}`, import.meta.url).pathname);
+    const r = readSrc;
     expect(r('trust_upload.tsx')).not.toMatch(/maxSize = '/);
     expect(r('trust_physical_upload.tsx')).toMatch(/<UploadModal [^>]*maxSize="20MB"/);
     expect(r('registry_ledger_modals.tsx')).toMatch(/<UploadDropzone [^>]*maxSize="20MB"/);
@@ -439,14 +440,14 @@ describe('화면별 도메인 규칙', () => {
   it('등록원부 비활성원부 칩 = 적용 전 숨김(첫 화면 3행인데 제외 칩이 보이면 오해)', () => {
     const kit = read(new URL('./risk_page_kit.tsx', import.meta.url).pathname);
     expect(kit).toMatch(/filters\.filter\(\(f\) => f\.value && f\.chip !== false\)/);
-    expect(read(new URL('./registry_ledger.tsx', import.meta.url).pathname)).toMatch(/options: INACTIVE_OPTIONS, chip: applied/);
+    expect(read(new URL('./brief/register/registry_ledger.tsx', import.meta.url).pathname)).toMatch(/options: INACTIVE_OPTIONS, chip: applied/);
   });
 });
 
 /* 관리형 화면 규약(2026-09-23 사용자 결정) — 체크박스 선택 → 선택 바. 목업의 행 버튼·셀 스위치/입력칸 배치를 옮기지 않는다 */
 describe('관리형 선택 바 규약', () => {
   const MANAGE = ['registry_ledger.tsx', 'trust_fund_code.tsx', 'trust_physical_upload.tsx', 'trust_upload_forms.tsx'];
-  const src = (f: string) => read(new URL(`./${f}`, import.meta.url).pathname);
+  const src = readSrc;
   it.each(MANAGE)('%s: 체크박스 선택 + 선택 바 + 더블클릭 수정, 셀 안 조작 UI 없음', (f) => {
     const s = src(f);
     expect(s).toMatch(/<ReadGrid [^>]*\bselectable\b/);
@@ -513,12 +514,12 @@ describe('등록원부 저장 → 목록 반영 · 팝업 안 표 선택 규약'
     expect(ledgerPatch({ regno: 'x', nm: 'y', dur1: '', dur2: '', amt: '', gpname: '' })).toEqual({ regno: 'x', nm: 'y', dur: null, amt: null, gp: null });
   });
   it('등록원부 목록: 저장이 행을 교체/선두 추가한다(모달은 id 만 든다)', () => {
-    const s = read(new URL('./registry_ledger.tsx', import.meta.url).pathname);
+    const s = read(new URL('./brief/register/registry_ledger.tsx', import.meta.url).pathname);
     expect(s).toMatch(/onSave=\{saveLedger\}/);
     expect(s).toMatch(/kind: 'ledger'; mode: 'new' \| 'edit'; id\?: string/);
   });
   it('팝업 안 표: 행 버튼 없음 — 체크박스 + 표 위 선택 바', () => {
-    const s = read(new URL('./registry_ledger_modals.tsx', import.meta.url).pathname);
+    const s = read(new URL('./brief/register/registry_ledger_modals.tsx', import.meta.url).pathname);
     const mini = s.slice(s.indexOf('function MiniTable('), s.indexOf('A — 등록원부 입력/수정'));
     expect(mini).toMatch(/<Checkbox /);
     expect(mini).toMatch(/건 선택됨/);

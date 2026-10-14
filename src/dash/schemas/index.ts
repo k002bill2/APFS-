@@ -1,31 +1,31 @@
 import type { PageSchema } from './types';
 import { DEFAULT_SCHEMA } from './_default';
-import { schema as s연도별투자현황 } from './연도별투자현황';
-import { schema as s조합별월간보고현황 } from './조합별_월간보고_현황';
-import { schema as s자펀드공고정보관리 } from './자펀드_공고_정보관리';
-import { schema as s투자기업정보통합 } from './투자기업정보_통합';
-import { schema as s사후관리기록관리 } from './사후관리기록_관리';
-import { schema as s투자성과포트폴리오 } from './투자성과_포트폴리오';
-import { schema as s투자기업고용현황보고 } from './투자기업_고용현황보고';
-import { schema as s전체투자실적 } from './전체_투자실적';
-import { schema as s투자실적현황투자기업 } from './투자실적_현황_투자기업';
-import { schema as s투자금회수현황 } from './투자금_회수현황';
-import { schema as s운용사재무정보조회 } from './운용사_재무정보_조회';
-import { schema as s투자금실사보고 } from './투자금_실사보고';
-import { schema as s관리보수관리 } from './관리보수관리';
-import { schema as s전체보고현황 } from './전체_보고현황';
+import { schema as s연도별투자현황 } from '../brief/mfund/연도별투자현황';
+import { schema as s조합별월간보고현황 } from '../sfund/fxtmrpt/조합별_월간보고_현황';
+import { schema as s자펀드공고정보관리 } from '../ffms/mfund/자펀드_공고_정보관리';
+import { schema as s투자기업정보통합 } from '../ffms/ent/투자기업정보_통합';
+import { schema as s사후관리기록관리 } from '../ffms/gp/사후관리기록_관리';
+import { schema as s투자성과포트폴리오 } from '../dashboard/투자성과_포트폴리오';
+import { schema as s투자기업고용현황보고 } from '../ffms/ent/투자기업_고용현황보고';
+import { schema as s전체투자실적 } from '../ffms/ent/전체_투자실적';
+import { schema as s투자실적현황투자기업 } from '../ffms/ent/투자실적_현황_투자기업';
+import { schema as s투자금회수현황 } from '../ffms/ent/투자금_회수현황';
+import { schema as s운용사재무정보조회 } from '../ffms/gp/운용사_재무정보_조회';
+import { schema as s투자금실사보고 } from '../ffms/gp/투자금_실사보고';
+import { schema as s관리보수관리 } from '../ffms/gp/관리보수관리';
+import { schema as s전체보고현황 } from '../ffms/gp/전체_보고현황';
 // 2026-09-15 결선: DEFAULT_SCHEMA(영문 제네릭 5컬럼)로 떨어지던 3개 공백
-import { schema as s투자기업명세서통합 } from './투자기업명세서_통합';
-import { schema as s우수투자기업관리 } from './우수투자기업_관리';
-import { schema as s운용사명세서 } from './운용사_명세서';
+import { schema as s투자기업명세서통합 } from '../ffms/ent/투자기업명세서_통합';
+import { schema as s우수투자기업관리 } from '../ffms/ent/우수투자기업_관리';
+import { schema as s운용사명세서 } from '../ffms/gp/운용사_명세서';
 // 2026-09-23 조기경보 17리프 목업 이식 중 단일 헤더·flat 2리프(나머지 15리프는 typed 페이지 — app.tsx 분기)
-import { schema as s운용사재무정보비교조회 } from './운용사_재무정보_비교_조회';
-import { schema as s평가시점데이터확인 } from './평가시점_데이터_확인';
+import { schema as s운용사재무정보비교조회 } from '../risk/sfund/운용사_재무정보_비교_조회';
+import { schema as s평가시점데이터확인 } from '../risk/valuation/평가시점_데이터_확인';
 // 2026-09-24 사후보고관리 신규(현행 없음) 2리프 — 원천 목업 없음, provenance NEW · 행 0건
-import { schema as s내부투자심의구성관리 } from './내부_투자심의_구성관리';
-import { schema as s체크리스트관리 } from './체크리스트_관리';
+import { schema as s내부투자심의구성관리 } from '../ffms/report/내부_투자심의_구성관리';
+import { schema as s체크리스트관리 } from '../ffms/report/체크리스트_관리';
 // 2026-09-29 자펀드 보고 개편 — S5_119(조합별 반기보고 현황). S5_117(조합 수시보고 내역)은 kv 시트라 typed 페이지(gp_occasional_overview)
-import { schema as s조합별반기보고현황 } from './조합별_반기보고_현황';
+import { schema as s조합별반기보고현황 } from '../sfund/fxtmrpt/조합별_반기보고_현황';
 
 const ALL: PageSchema[] = [
   s연도별투자현황, s조합별월간보고현황, s자펀드공고정보관리, s투자기업정보통합, s사후관리기록관리, s투자성과포트폴리오,

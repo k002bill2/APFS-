@@ -6,81 +6,81 @@ import { Shell } from './shell';
 import { UI } from './components';
 import { APFS_DATA, HistoryStore } from './data';
 import { DesignSystem } from './designsystem';
-import { Main } from './main';
-import { EarlyWarningManage } from './early_warning_manage';   // 조기경보 관리(관리형 리스트, S2_51). 구 risk_manage.tsx(FR-5.6 운영 콘솔)는 미라우팅
-import { ViolationManage } from './violation_manage';   // 법률/규약위반사항 관리(관리형 리스트, S2_53 + 등록화면 S2_54 를 팝업으로 흡수)
-import { ShareholderManage } from './shareholder_manage';   // 운용사 주주변동관리(관리형 리스트, S2_55 + 등록화면 S2_56 을 팝업으로 흡수)
-import { LitigationManage } from './litigation_manage';   // 운용사 소송관리(관리형 리스트, S2_57 + 등록화면 S2_58 을 팝업으로 흡수)
-import { WorkforceManage } from './workforce_manage';   // 운용인력 변동관리(관리형 리스트, S2_59 + 등록화면 S2_60 을 팝업으로 흡수)
-import { EwResultManage } from './ew_result_manage';   // 조기경보 결과정보 관리(섹션 2개 적층 + 생성·확정·마감 워크플로, S2_61 + 생성확인 S2_62)
+import { Main } from './dashboard/main';
+import { EarlyWarningManage } from './risk/alert/early_warning_manage';   // 조기경보 관리(관리형 리스트, S2_51). 구 risk_manage.tsx(FR-5.6 운영 콘솔)는 미라우팅
+import { ViolationManage } from './risk/alert/violation_manage';   // 법률/규약위반사항 관리(관리형 리스트, S2_53 + 등록화면 S2_54 를 팝업으로 흡수)
+import { ShareholderManage } from './risk/alert/shareholder_manage';   // 운용사 주주변동관리(관리형 리스트, S2_55 + 등록화면 S2_56 을 팝업으로 흡수)
+import { LitigationManage } from './risk/alert/litigation_manage';   // 운용사 소송관리(관리형 리스트, S2_57 + 등록화면 S2_58 을 팝업으로 흡수)
+import { WorkforceManage } from './risk/alert/workforce_manage';   // 운용인력 변동관리(관리형 리스트, S2_59 + 등록화면 S2_60 을 팝업으로 흡수)
+import { EwResultManage } from './risk/alert/ew_result_manage';   // 조기경보 결과정보 관리(섹션 2개 적층 + 생성·확정·마감 워크플로, S2_61 + 생성확인 S2_62)
 import { Schedule } from './schedule';
-import { SubFundManage } from './subfund_manage';   // 자펀드관리(관리형 리스트, 구조도 v1.4). 구 subfund.tsx(FR-5.3 대시보드)는 미라우팅
-import { Pages as ReportBucheoPages } from './report_bucheo';
+import { SubFundManage } from './ffms/sfund/subfund_manage';   // 자펀드관리(관리형 리스트, 구조도 v1.4). 구 subfund.tsx(FR-5.3 대시보드)는 미라우팅
+import { Pages as ReportBucheoPages } from './brief/mfund/report_bucheo';
 import { GenericListPage, findMenuContext } from './generic_list';
-import { AssetFunding } from './asset_funding';
-import { InvestmentReviewManage } from './investment_review_manage';   // 투자심의관리(관리형 리스트, S1_01). GenericListPage 폴백 앞 분기
+import { AssetFunding } from './ffms/mfund/asset_funding';
+import { InvestmentReviewManage } from './ffms/report/investment_review_manage';   // 투자심의관리(관리형 리스트, S1_01). GenericListPage 폴백 앞 분기
 // 자펀드수탁관리 실물검증(S1_26)+확정(S1_27) — 원문 2개를 가진 리프는 탭 묶음 래퍼로 분기한다(asset_leaf_tabs.tsx)
-import { CustodyLeaf } from './asset_leaf_tabs';
-import { OccasionalReportManage } from './occasional_report_manage';     // 수시보고(S1_04) — 일일보고 조회 탭 삭제(2026-09-24)로 단일 화면
-import { RegularReportManage } from './regular_report_manage';           // 정기보고(S1_06) — 회수내역 탭 삭제(2026-09-24)로 단일 화면
-import { GeneralMeetingManage } from './general_meeting_manage';         // 조합원총회(S1_07). 동상
-import { FundCashForecastManage } from './fund_cash_forecast_manage';    // 조합예상자금 정보보고(S1_08). 동상
-import { ReportFormManage } from './report_form_manage';                 // 보고양식관리(S1_09). 동상
-import { ReportUpdateInfoManage } from './report_update_info_manage';    // 보고 업데이트정보(S1_10). 동상
+import { CustodyLeaf } from './ffms/sfund/asset_leaf_tabs';
+import { OccasionalReportManage } from './ffms/report/occasional_report_manage';     // 수시보고(S1_04) — 일일보고 조회 탭 삭제(2026-09-24)로 단일 화면
+import { RegularReportManage } from './ffms/report/regular_report_manage';           // 정기보고(S1_06) — 회수내역 탭 삭제(2026-09-24)로 단일 화면
+import { GeneralMeetingManage } from './ffms/report/general_meeting_manage';         // 조합원총회(S1_07). 동상
+import { FundCashForecastManage } from './ffms/report/fund_cash_forecast_manage';    // 조합예상자금 정보보고(S1_08). 동상
+import { ReportFormManage } from './ffms/report/report_form_manage';                 // 보고양식관리(S1_09). 동상
+import { ReportUpdateInfoManage } from './ffms/report/report_update_info_manage';    // 보고 업데이트정보(S1_10). 동상
 // 자펀드 관리 8리프(2026-09-12 typed 페이지 전환, S1_14~S1_27). 동상 — GenericListPage 폴백 앞 분기
-import { GpContributionManage } from './gp_contribution_manage';           // (운용사)출자배분관리(S1_14)
-import { MemberInfoManage } from './member_info_manage';                   // 조합원정보등록(S1_15)
-import { FundMemberManage } from './fund_member_manage';                   // 자펀드별조합원관리(S1_18)
-import { ApfsContributionManage } from './apfs_contribution_manage';       // (농금원)출자배분관리(S1_21)
-import { FundInvestStatus } from './fund_invest_status';                   // 투자실적 현황(자펀드)(S1_24)
-import { FundStats } from './fund_stats';                                  // 종합통계(S1_25)
+import { GpContributionManage } from './ffms/sfund/gp_contribution_manage';           // (운용사)출자배분관리(S1_14)
+import { MemberInfoManage } from './ffms/asct/member_info_manage';                   // 조합원정보등록(S1_15)
+import { FundMemberManage } from './ffms/asct/fund_member_manage';                   // 자펀드별조합원관리(S1_18)
+import { ApfsContributionManage } from './ffms/sfund/apfs_contribution_manage';       // (농금원)출자배분관리(S1_21)
+import { FundInvestStatus } from './ffms/sfund/fund_invest_status';                   // 투자실적 현황(자펀드)(S1_24)
+import { FundStats } from './ffms/sfund/fund_stats';                                  // 종합통계(S1_25)
 // 관리자 3리프(2026-09-14 typed 페이지 전환, 공통관리 S0_106·S0_105·S0_102). 동상 — GenericListPage 폴백 앞 분기
-import { CodeManage } from './code_manage';                                  // 공통코드 관리(S0_106, master-detail)
-import { MenuManage } from './menu_manage';                                  // 메뉴 관리(S0_105, 계층 트리)
-import { UserPermissionManage } from './user_permission_manage';             // 사용자 권한 관리(S0_102, 권한 매트릭스)
-import { ProgramManage } from './program_manage';                            // 프로그램 관리(S0_105 PROGRAMS 근거, 읽기 전용 목록)
-import { UserManage } from './user_manage';                                  // 사용자 관리(S0_101)
-import { UserInviteManage } from './user_invite_manage';                     // 사용자 초대(운용사)(S0_103)
-import { PermissionHistory } from './permission_history';                    // 권한 변경이력(S0_107)
-import { AuditLog } from './audit_log';                                      // 감사로그(S0_104)
-import { LoginDemo } from './login_demo';                                    // 로그인(S0_001, Shell 없는 UI 데모)
-import { OnboardingIssue } from './onboarding_issue';                        // 발급 온보딩(S0_002, 동상)
-import { OnboardingInvite } from './onboarding_invite';                      // 초대 온보딩(S0_003, 동상)
-import { MonthlyReportWindow } from './monthly_report';                      // 월간보고 상세(S1_06_01) — 정기보고에서 여는 팝업 창
+import { CodeManage } from './system/setting/code_manage';                                  // 공통코드 관리(S0_106, master-detail)
+import { MenuManage } from './system/setting/menu_manage';                                  // 메뉴 관리(S0_105, 계층 트리)
+import { UserPermissionManage } from './system/user/user_permission_manage';             // 사용자 권한 관리(S0_102, 권한 매트릭스)
+import { ProgramManage } from './system/setting/program_manage';                            // 프로그램 관리(S0_105 PROGRAMS 근거, 읽기 전용 목록)
+import { UserManage } from './system/user/user_manage';                                  // 사용자 관리(S0_101)
+import { UserInviteManage } from './system/user/user_invite_manage';                     // 사용자 초대(운용사)(S0_103)
+import { PermissionHistory } from './system/audit/permission_history';                    // 권한 변경이력(S0_107)
+import { AuditLog } from './system/audit/audit_log';                                      // 감사로그(S0_104)
+import { LoginDemo } from './login/login_demo';                                    // 로그인(S0_001, Shell 없는 UI 데모)
+import { OnboardingIssue } from './login/onboarding_issue';                        // 발급 온보딩(S0_002, 동상)
+import { OnboardingInvite } from './login/onboarding_invite';                      // 초대 온보딩(S0_003, 동상)
+import { MonthlyReportWindow } from './ffms/report/monthly_report';                      // 월간보고 상세(S1_06_01) — 정기보고에서 여는 팝업 창
 /* 원문이 **한 화면에 여러 표/여러 조회기준**이라 PageSchema(columns 1벌)로 담기지 않는 4리프.
    나머지 9리프는 페이지 코드 0줄(스키마 주도 GenericListPage + 원문 리터럴 sample)로 남는다.
    근거는 각 파일 헤더 주석 참조(2026-09-15 source-fidelity 정정). */
-import { AllReportStatus } from './all_report_status';              // 자펀드 전체 보고현황(S1_44) — 표 6개
-import { InvesteeProfile } from './investee_profile';               // 투자기업정보(통합)(S1_30) — 기업개요 kv + 재무제표 + 주주명부
-import { InvesteeInvestStats } from './investee_invest_stats';      // 투자실적현황(투자기업)(S1_34) — 집계 매트릭스 3장
-import { InvestRecoveryDetail } from './invest_recovery_detail';    // 투자금 회수현황(S1_36) — 조회기준 2모드(컬럼·데이터 동시 전환)
-import { GpEarlyWarning } from './gp_early_warning';                // 운용사별 조기경보 조회(S2_47) — 운용사구분 4종 그리드 + 재무정보 팝업
-import { FundEarlyWarning } from './fund_early_warning';            // 자펀드별 조기경보 조회(S2_49) — 한도관리 2단 헤더 그리드 + 자펀드수익률 팝업
-import { EwMonthCompare } from './ew_month_compare';              // 조기경보 전월 비교 조회(S2_63) — 당월/전월 대조 그리드 + 등급·변동 필터
+import { AllReportStatus } from './ffms/gp/all_report_status';              // 자펀드 전체 보고현황(S1_44) — 표 6개
+import { InvesteeProfile } from './ffms/ent/investee_profile';               // 투자기업정보(통합)(S1_30) — 기업개요 kv + 재무제표 + 주주명부
+import { InvesteeInvestStats } from './ffms/ent/investee_invest_stats';      // 투자실적현황(투자기업)(S1_34) — 집계 매트릭스 3장
+import { InvestRecoveryDetail } from './ffms/ent/invest_recovery_detail';    // 투자금 회수현황(S1_36) — 조회기준 2모드(컬럼·데이터 동시 전환)
+import { GpEarlyWarning } from './risk/alert/gp_early_warning';                // 운용사별 조기경보 조회(S2_47) — 운용사구분 4종 그리드 + 재무정보 팝업
+import { FundEarlyWarning } from './risk/alert/fund_early_warning';            // 자펀드별 조기경보 조회(S2_49) — 한도관리 2단 헤더 그리드 + 자펀드수익률 팝업
+import { EwMonthCompare } from './risk/alert/ew_month_compare';              // 조기경보 전월 비교 조회(S2_63) — 당월/전월 대조 그리드 + 등급·변동 필터
 /* 조기경보 > 기업정보·자펀드정보·가치평가 17리프(2026-09-23 목업 S2_65~S2_92 이식). 2단 헤더·합계행·다중 표·탭 통합·근거 팝업이
    있는 15리프는 전용 페이지(아래), 단일 헤더·flat 2리프(운용사 재무정보 비교 조회·평가시점 데이터 확인)는 스키마 주도 GenericListPage.
    표 데이터·컬럼 SSOT = risk_*_data.ts, 표 규약 = risk_grid.tsx, 바깥 양식 = risk_page_kit.tsx. */
-import { CorpNiceInfo, CorpCreditInfo } from './corp_info_page';      // 투자기업정보(NICE평가정보)(S2_65·66·67 탭 3) · 투자기업신용정보 조회(S2_69·68 탭 2)
-import { IrrByContract, IrrByInvestee, IrrBySubfund } from './irr_pages';   // IRR 3종(S2_87·91·89) + 근거 팝업(S2_88·92·90)
-import { GpQuantIndicatorManage } from './gp_quant_indicator_manage';      // 운용사 정량지표 관리(S2_70 + 등록 S2_71·수정 S2_72 팝업)
-import { GpTypeIndicatorTrend } from './gp_type_indicator_trend';          // 운용사 유형별 정량지표 변동 조회(S2_78 — 평균 카드 + 추이 차트 2섹션)
-import { SubfundGradeTrend } from './subfund_grade_trend';                  // 자펀드 종합등급 변동 조회(S2_79 — 등급표 2 + 정상 비중 도넛)
-import { MotherFundValuation } from './mother_fund_valuation';              // 모태펀드 가치평가 결과조회(S2_80 — 결과(입력칸 3) + 2단 헤더 상세)
-import { SubfundReturnCompare, FundValuationResult, InvesteeValuationResult, SubfundAssetTx, ValuationExceptionReport, PortfolioReport } from './risk_table_pages';   // S2_77·81·82·84·85·83(표 1~4장 공용 골격)
+import { CorpNiceInfo, CorpCreditInfo } from './risk/ent/corp_info_page';      // 투자기업정보(NICE평가정보)(S2_65·66·67 탭 3) · 투자기업신용정보 조회(S2_69·68 탭 2)
+import { IrrByContract, IrrByInvestee, IrrBySubfund } from './risk/valuation/irr_pages';   // IRR 3종(S2_87·91·89) + 근거 팝업(S2_88·92·90)
+import { GpQuantIndicatorManage } from './risk/sfund/gp_quant_indicator_manage';      // 운용사 정량지표 관리(S2_70 + 등록 S2_71·수정 S2_72 팝업)
+import { GpTypeIndicatorTrend } from './risk/sfund/gp_type_indicator_trend';          // 운용사 유형별 정량지표 변동 조회(S2_78 — 평균 카드 + 추이 차트 2섹션)
+import { SubfundGradeTrend } from './risk/sfund/subfund_grade_trend';                  // 자펀드 종합등급 변동 조회(S2_79 — 등급표 2 + 정상 비중 도넛)
+import { MotherFundValuation } from './risk/valuation/mother_fund_valuation';              // 모태펀드 가치평가 결과조회(S2_80 — 결과(입력칸 3) + 2단 헤더 상세)
+import { SubfundReturnCompare, FundValuationResult, InvesteeValuationResult, SubfundAssetTx, ValuationExceptionReport, PortfolioReport } from './risk/risk_table_pages';   // S2_77·81·82·84·85·83(표 1~4장 공용 골격)
 /* 부처보고(2)·수탁보고(11) 13리프(2026-09-23 목업 S4_108·03/04_연도별투자현황·S3_98~S3_106 이식). 연도별투자현황은 기존 report-bucheo 분기,
    나머지 12리프도 전용 페이지(아래) — 계좌정보 비교조회(S3_104)는 단일 헤더지만 원문 검색이 기본값 있는 기간이라 스키마 필터로 못 담는다.
    표 규약·바깥 양식은 조기경보 17리프와 같은 risk_grid.tsx · risk_page_kit.tsx 를 재사용한다. */
-import { RegistryLedgerManage } from './registry_ledger';                    // 등록원부관리(S4_108 — 목록 + 팝업 6종)
-import { PhysicalDataManage, SecuritiesManage } from './trust_physical_upload';   // 실물자료관리(업로드)(S3_98) · 유가증권관리(업로드)(신규)
-import { GpReportFile } from './gp_report_file';   // 자펀드 보고 > 보고 파일 조회(S5_116 — 조회 + 툴바 업로드 모달)
-import { GpVerifyReport } from './gp_verify_report';
-import { GpReportQuery } from './gp_report_query';   // 자펀드 보고 > 자펀드 보고 조회(S5_121 — 보고항목 select → 항목별 그리드)
-import { GpOccasionalOverview } from './gp_occasional_overview';   // 자펀드 보고 > 조합 수시보고 내역(S5_117 — 투자기업개요 kv 5섹션)   // 자펀드 보고 > 조합별 실물검증 결과 보고(S5_120 — 표 3장 TablesPage)
-import { PhysicalVerifyCompare, SecuritiesCompare, TrustCommonCode, MotherTrustCode, AccountCompare, CashflowCompare } from './trust_table_pages';   // S3_101 · 신규 · S3_100 · S3_102 · S3_104 · S3_106
-import { AssetFundInfoManage } from './asset_fund_info_manage';           // 자펀드정보관리 = v1.4 자펀드관리 + S2_73 투자기준 통합 그리드(SubFundManage ext 합성)
-import { ReviewStats } from './review_stats';                            // 투심보고 통계(S1_28 — 단일 표 27열 + 기본값 검색조건·금액 단위)
-import { TrustFundCode } from './trust_fund_code';                            // 자펀드코드 조회(S3_99 — 편집형 목록)
-import { AccountInfoManage, CashflowInfoManage } from './trust_upload_forms'; // 계좌정보 관리(S3_103) · 입출금 정보관리(S3_105) — 업로드 폼
+import { RegistryLedgerManage } from './brief/register/registry_ledger';                    // 등록원부관리(S4_108 — 목록 + 팝업 6종)
+import { PhysicalDataManage, SecuritiesManage } from './trust/sfund/trust_physical_upload';   // 실물자료관리(업로드)(S3_98) · 유가증권관리(업로드)(신규)
+import { GpReportFile } from './sfund/file/gp_report_file';   // 자펀드 보고 > 보고 파일 조회(S5_116 — 조회 + 툴바 업로드 모달)
+import { GpVerifyReport } from './sfund/verify/gp_verify_report';
+import { GpReportQuery } from './sfund/gp_report_query';   // 자펀드 보고 > 자펀드 보고 조회(S5_121 — 보고항목 select → 항목별 그리드)
+import { GpOccasionalOverview } from './sfund/ocsrpt/gp_occasional_overview';   // 자펀드 보고 > 조합 수시보고 내역(S5_117 — 투자기업개요 kv 5섹션)   // 자펀드 보고 > 조합별 실물검증 결과 보고(S5_120 — 표 3장 TablesPage)
+import { PhysicalVerifyCompare, SecuritiesCompare, TrustCommonCode, MotherTrustCode, AccountCompare, CashflowCompare } from './trust/trust_table_pages';   // S3_101 · 신규 · S3_100 · S3_102 · S3_104 · S3_106
+import { AssetFundInfoManage } from './ffms/asct/asset_fund_info_manage';           // 자펀드정보관리 = v1.4 자펀드관리 + S2_73 투자기준 통합 그리드(SubFundManage ext 합성)
+import { ReviewStats } from './ffms/report/review_stats';                            // 투심보고 통계(S1_28 — 단일 표 27열 + 기본값 검색조건·금액 단위)
+import { TrustFundCode } from './trust/sfund/trust_fund_code';                            // 자펀드코드 조회(S3_99 — 편집형 목록)
+import { AccountInfoManage, CashflowInfoManage } from './trust/mfund/trust_upload_forms'; // 계좌정보 관리(S3_103) · 입출금 정보관리(S3_105) — 업로드 폼
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';

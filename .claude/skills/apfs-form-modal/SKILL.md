@@ -1,6 +1,6 @@
 ---
 name: apfs-form-modal
-description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 배타 선택은 radio(DS RadioGroup), 복수 선택·매트릭스는 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 컨트롤 폭 규약(입력 200~320 · select fit-content 240~320 · %·차수·회차·인수·순번·(년) 100px · 달력 불변 · long 전체폭). 정본 예시는 "투자기업정보(통합)"(schemas/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·입력칸 폭이 들쭉날쭉할 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
+description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 배타 선택은 radio(DS RadioGroup), 복수 선택·매트릭스는 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 컨트롤 폭 규약(입력 200~320 · select fit-content 240~320 · %·차수·회차·인수·순번·(년) 100px · 달력 불변 · long 전체폭). 정본 예시는 "투자기업정보(통합)"(ffms/ent/투자기업정보_통합.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·입력칸 폭이 들쭉날쭉할 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
 ---
 
 # apfs-form-modal Skill
@@ -9,7 +9,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 리스트 페이지의 **신규 등록 / 수정 / 삭제(2단계 확인)** 모달은 손으로 폼을 짜지 않는다. `RowFormModal`이 **`PageSchema.fields`를 받아 폼을 자동 생성**한다(Radix Dialog — focus trap·Escape·aria-modal·포커스 복귀 내장). "필드는 스키마가 정하고, 모달은 렌더만 한다."
 
 - **정본 컴포넌트**: `src/dash/generic_list_modal.tsx`(`RowFormModal`).
-- **정본 예시(골드 레퍼런스)**: `src/dash/schemas/투자기업정보_통합.ts` — 21필드(readonly·radio·select·textarea·date·number·checkbox·text 혼합)라 2단 wide로 렌더되는 완성형.
+- **정본 예시(골드 레퍼런스)**: `src/dash/ffms/ent/투자기업정보_통합.ts` — 21필드(readonly·radio·select·textarea·date·number·checkbox·text 혼합)라 2단 wide로 렌더되는 완성형.
 - **지원 SSOT**: `schemas/types.ts`(`FIELD_CONTROLS`+zod), `schemas/renderers.tsx`(`SchemaField` 컨트롤 렌더), `schemas/build_row.ts`(vals→Row 조립).
 
 ## 모달 크롬 공통 규약 (헤더·본문 섹션 헤더) — 전 모달 SSOT
@@ -197,7 +197,7 @@ export const schema: PageSchema = {
 `RowFormModal`은 **flat 필드 배열**만 렌더한다. 다음 중 하나라도 있으면 스키마에 억지로 넣지 말고 **전용 섹션형 모달**로 escalate:
 섹션 ≥3개 · **반복행 테이블**(행추가/행삭제 — GP·담당자 등) · **고정 슬롯 첨부표**(문서구분×일자×파일) · 필드 40개 내외.
 
-- **골드 레퍼런스**: `src/dash/subfund_form_modal.tsx`(결성조합 수정 — 6섹션·반복행 2종·첨부표 9행).
+- **골드 레퍼런스**: `src/dash/ffms/sfund/subfund_form_modal.tsx`(결성조합 수정 — 6섹션·반복행 2종·첨부표 9행).
 - **반복행이 곧 본문인 편집 표**(행 선택→행삭제, 셀마다 입력칸·체크박스 — 운용사 정량지표 등록/수정)는 수제 `<table>` 대신 **AG Grid** 로 만든다(2026-09-28 PR #288). 셀 입력 로컬 state·키 격리·선택 체크박스·다이얼로그 sticky 헤더 등 함정은 → [[apfs-aggrid]] "모달 안 편집 그리드". 아래 수제 반복행 표 규약은 섹션 안의 소형 반복행(GP·담당자·첨부) 용이다.
 - 규칙: ① Radix `Dialog` `max-w-[880px] max-h-[88vh]` + `onInteractOutside preventDefault`(RowFormModal과 동일) ② `<fieldset>/<legend>` 섹션, 본문은 `grid grid-cols-1 sm:grid-cols-2 gap-x-5`(wide 규격 동일) ③ **개별 컨트롤은 `SchemaField`(schemas/renderers.tsx) 재사용** — ad-hoc `FieldSpec`을 만들어 넘기면 14px·DatePicker·토큰이 자동(라벨 래퍼도 RowFormModal `Field` 규격 복제) ④ 반복행은 로컬 배열 state + `IconBtn icon="trash"` 행삭제 + `Button leadingIcon="plus"` 행추가 ⑤ 첨부는 hidden `<input type=file>` 1개를 슬롯별로 재사용(파일명만 보관, 백엔드 없음). **파일이 실린 슬롯 셀은 `ui/attachment.tsx`의 `Attachment` 카드**(확장자 아이콘+파일명+교체/삭제)로 렌더하되 단일 카드도 `AttachmentGroup`(role=list)로 감싼다(고아 listitem 방지 · web-a11y), 빈 슬롯은 `Button leadingIcon="upload"` [파일 선택] — 드롭존(DocumentsField)과 같은 카드 프리미티브를 공유해 파일 표시를 단일화(2026-09-09) ⑥ 저장은 `onSave(patch: Partial<Row>)` — 문자열 폼값→`number|null`·`'YYYY-MM-DD'` 변환은 모달이 책임.
 - **반복행 테이블 레이아웃 규약(2026-09-11 PR #132 사용자 결정)** — `subfund_form_modal.tsx`의 GP·담당자·첨부서류 3표 정본:
@@ -212,7 +212,7 @@ export const schema: PageSchema = {
 - `RowFormModal`에 **`title?: string`** prop이 있다(2026-09-08) — 같은 flat 스키마를 단계별 다른 제목으로 열 때 사용(→[[apfs-stage-workflow]]).
 
 ## 읽기전용 명세(kv) 그리드 — 라벨 배열 규약 (2026-09-08 사용자 확정)
-상세/명세 팝업의 **라벨:값 kv 그리드**(골드: `src/dash/subfund_spec_modal.tsx` `KvGrid`)는 **라벨 언어로 배열이 갈린다**. 검토 이력: 한글에서 세로 적층·테두리 제거안을 시도 후 **가로 배열로 원복**, 영문은 세로 적층 샘플을 채택.
+상세/명세 팝업의 **라벨:값 kv 그리드**(골드: `src/dash/ffms/report/subfund_spec_modal.tsx` `KvGrid`)는 **라벨 언어로 배열이 갈린다**. 검토 이력: 한글에서 세로 적층·테두리 제거안을 시도 후 **가로 배열로 원복**, 영문은 세로 적층 샘플을 채택.
 
 | 라벨 | 배열 | 규격 |
 |------|------|------|

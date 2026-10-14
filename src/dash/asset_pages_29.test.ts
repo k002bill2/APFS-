@@ -4,9 +4,9 @@ import { APFS_DATA } from './data';
 import { resolveSchema } from './schemas';
 import type { Row } from './risk_table_meta';
 import { headerSequence, amountText } from './risk_table_meta';
-import { FUND_INFO_TABLE, FUND_INFO_PROVENANCE, FUND_INFO_KINDS, FUND_INFO_LISTS, FUND_OPTS, GP_TYPES, MONTHS, LIMIT_INDICATOR, MODAL_EMPTY, formFromRow, emptyForm } from './asset_fund_info_data';
-import { REVIEW_STATS_TABLE, REVIEW_STATS_PROVENANCE, MOTHER_FUNDS, ACCOUNT_KINDS, REVIEW_STATS_RANGE, GP_OPTIONS, FUND_OPTIONS } from './review_stats_data';
-import { REVIEW_STATS_PAGE } from './review_stats';
+import { FUND_INFO_TABLE, FUND_INFO_PROVENANCE, FUND_INFO_KINDS, FUND_INFO_LISTS, FUND_OPTS, GP_TYPES, MONTHS, LIMIT_INDICATOR, MODAL_EMPTY, formFromRow, emptyForm } from './ffms/asct/asset_fund_info_data';
+import { REVIEW_STATS_TABLE, REVIEW_STATS_PROVENANCE, MOTHER_FUNDS, ACCOUNT_KINDS, REVIEW_STATS_RANGE, GP_OPTIONS, FUND_OPTIONS } from './ffms/report/review_stats_data';
+import { REVIEW_STATS_PAGE } from './ffms/report/review_stats';
 import { buildColumnDefs } from './risk_grid';
 import type { ColDef } from 'ag-grid-community';
 
@@ -131,7 +131,7 @@ describe('자펀드정보관리 — 등록(S2_74)·수정(S2_75) 팝업', () => 
   const list = read(S2('S2_73_자펀드_정보_관리.html'));
   const reg = read(S2('S2_74_자펀드_정보_등록.html'));
   const edit = read(S2('S2_75_자펀드_정보_수정.html'));
-  const modal = read(new URL('./asset_fund_info_modal.tsx', import.meta.url).pathname);
+  const modal = read(new URL('./ffms/asct/asset_fund_info_modal.tsx', import.meta.url).pathname);
   it('선택지 = 원문 FUND_OPTS · GPTYPES · monthOpts(1~12)', () => {
     expect([...FUND_OPTS]).toEqual(scriptLiteral<string[]>(list, 'FUND_OPTS'));
     expect([...GP_TYPES]).toEqual(scriptLiteral<string[]>(list, 'GPTYPES'));

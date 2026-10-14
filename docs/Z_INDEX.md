@@ -185,6 +185,6 @@ overlayEl.closest('nav, [class*="dash-main"]')  // null이면 body 포털(안전
 
 ## 관련 문서/스킬
 - 스킬: `dashboard-ui`(UI/셸 전반), `responsive-ui`(반응형 — 모바일 드로어·플라이아웃 검증)
-- 토큰 스케일 SSOT: `tailwind.config.js:36` · 사례 연구 소스: `src/dash/shell.tsx`, `src/dash/ui/navigation-menu.tsx`, `src/dash/main.tsx`
+- 토큰 스케일 SSOT: `tailwind.config.js:36` · 사례 연구 소스: `src/dash/shell.tsx`, `src/dash/ui/navigation-menu.tsx`, `src/dash/dashboard/main.tsx`
 - 색 토큰 규약: `docs/COLOR_TOKENS.md`
 - 이력: 2026-06-30 접힘 LNB 측면 플라이아웃이 메인 카드에 가려진 버그(sticky/transform 조상 2중 쌓임맥락 트랩) 수정에서 규약 정립
