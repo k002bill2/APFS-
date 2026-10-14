@@ -1,0 +1,1112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APFS 페이지 구성</title>
+<style>
+:root{--bg:#f7f8fa;--card:#fff;--fg:#1a1d23;--muted:#5d6470;--border:#e2e5ea;--head:#f1f3f6;--primary:#4c51d6;--primary-soft:#ececfd;--cyan:#0b7a66;--cyan-soft:#e3f6f1}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1115;--card:#171a20;--fg:#e6e8ec;--muted:#9aa1ad;--border:#2a2f38;--head:#1d2129;--primary:#a9acff;--primary-soft:#262a4d;--cyan:#5fd6bd;--cyan-soft:#16302b}}
+:root[data-theme="dark"]{--bg:#0f1115;--card:#171a20;--fg:#e6e8ec;--muted:#9aa1ad;--border:#2a2f38;--head:#1d2129;--primary:#a9acff;--primary-soft:#262a4d;--cyan:#5fd6bd;--cyan-soft:#16302b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+code{font:12.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}
+.top{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--border)}
+.top-in{max-width:1200px;margin:0 auto;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+h1{font-size:18px;margin:0;font-weight:700}
+.stats{color:var(--muted);font-size:13px}
+.stats b{color:var(--fg);font-variant-numeric:tabular-nums}
+nav{display:flex;flex-wrap:wrap;gap:4px;width:100%}
+nav a{color:var(--muted);text-decoration:none;padding:4px 10px;border-radius:6px;font-size:13px;border:1px solid var(--border)}
+nav a:hover,nav a:focus-visible{color:var(--primary);border-color:var(--primary)}
+input[type=search]{margin-left:auto;min-width:0;flex:1 1 220px;max-width:340px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
+main{max-width:1200px;margin:0 auto;padding:8px 16px 48px}
+.domain{scroll-margin-top:130px}
+h2{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;font-size:17px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h2 code{color:var(--muted);font-weight:400}
+h2 small{margin-left:auto;color:var(--muted);font-weight:400;font-size:13px}
+.grid{display:grid;grid-template-columns:1fr;gap:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;min-width:0}
+.card.pending{border-style:dashed}
+.card-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.card-h h3{margin:2px 0 0;font-size:15px}
+.path{color:var(--muted);font:12px ui-monospace,Menlo,monospace}
+.count{color:var(--muted);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:7px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+th{background:var(--head);color:var(--muted);font-weight:600;font-size:12px;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.menu{font-weight:600;min-width:130px}
+td.muted{color:var(--muted);font-size:12.5px}
+.note{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.note.off{font-style:normal}
+table{table-layout:fixed}
+th:nth-child(1){width:28%}th:nth-child(2){width:30%}th:nth-child(3){width:11%}th:nth-child(4){width:19%}th:nth-child(5){width:12%}
+td{overflow-wrap:anywhere}
+@media (max-width:720px){table{table-layout:auto;min-width:640px}}
+.tag{display:inline-block;padding:1px 8px;border-radius:6px;font-size:12px;white-space:nowrap}
+.tag.tsx{background:var(--primary-soft);color:var(--primary)}
+.tag.schema{background:var(--cyan-soft);color:var(--cyan)}
+details{border-top:1px solid var(--border);padding:8px 14px}
+summary{cursor:pointer;color:var(--muted);font-size:13px}
+.chips{list-style:none;margin:8px 0 4px;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.chips li{background:var(--head);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:12.5px;overflow-wrap:anywhere}
+.pending .chips{padding:0 14px 12px}
+.empty{color:var(--muted);padding:10px 14px;margin:0}
+.legend{color:var(--muted);font-size:13px;margin:12px 0 0;display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div class="top"><div class="top-in">
+  <h1>APFS 페이지 구성</h1>
+  <span class="stats">라우트된 페이지 <b>98</b> (전용 tsx <b>80</b> · 스키마 <b>18</b>) · 미구현 리프 <b>26</b></span>
+  <input type="search" id="q" placeholder="메뉴명·파일·라우트·화면ID 검색" aria-label="페이지 검색">
+  <nav aria-label="대분류"><a href="#login">로그인</a><a href="#dashboard">대시보드</a><a href="#ffms">투자자산관리</a><a href="#risk">조기경보</a><a href="#sfund">자펀드 보고</a><a href="#account">회계</a><a href="#brief">부처보고</a><a href="#trust">수탁보고</a><a href="#system">관리자</a><a href="#shared">공용</a></nav>
+</div></div>
+<main>
+  <p class="legend"><span class="tag tsx">전용 페이지</span> app.tsx 라우트 분기로 여는 tsx 컴포넌트 <span class="tag schema">스키마</span> GenericListPage가 PageSchema(.ts)로 그리는 화면 · 정본 구조 <code>docs/filetree.md</code> · 생성 2026-10-14</p>
+  
+  <section id="login" class="domain">
+    <h2><span>로그인</span><code>login/</code><small>페이지 3</small></h2>
+    <div class="grid">
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/login/</span><h3>로그인</h3></div>
+        <span class="count">페이지 3 · 파일 6</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="로그인  login login/login_demo s0_001">
+          <td class="menu">로그인<span class="note off">LNB 미노출 라우트</span></td>
+          <td><code>login_demo.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/login</code></td>
+          <td class="muted">S0_001</td>
+        </tr>
+        <tr data-q="발급 온보딩  onboarding-issue login/onboarding_issue s0_002">
+          <td class="menu">발급 온보딩<span class="note off">LNB 미노출 라우트</span></td>
+          <td><code>onboarding_issue.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/onboarding-issue</code></td>
+          <td class="muted">S0_002</td>
+        </tr>
+        <tr data-q="초대 온보딩  onboarding-invite login/onboarding_invite s0_003">
+          <td class="menu">초대 온보딩<span class="note off">LNB 미노출 라우트</span></td>
+          <td><code>onboarding_invite.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/onboarding-invite</code></td>
+          <td class="muted">S0_003</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 3개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>auth_model.test.ts</code></li><li><code>auth_model.ts</code></li><li><code>auth_shared.tsx</code></li></ul></details>
+    </article></div>
+  </section>
+  <section id="dashboard" class="domain">
+    <h2><span>대시보드</span><code>dashboard/</code><small>페이지 2</small></h2>
+    <div class="grid">
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/dashboard/</span><h3>대시보드</h3></div>
+        <span class="count">페이지 2 · 파일 2</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="대시보드  main dashboard/main ">
+          <td class="menu">대시보드<span class="note"></span></td>
+          <td><code>main.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/main</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="투자 성과·포트폴리오  투자 성과·포트폴리오 dashboard/투자성과_포트폴리오 ">
+          <td class="menu">투자 성과·포트폴리오<span class="note off">LNB 미노출 라우트</span></td>
+          <td><code>투자성과_포트폴리오.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/투자 성과·포트폴리오</code></td>
+          <td class="muted"></td>
+        </tr></tbody></table></div>
+      
+    </article></div>
+  </section>
+  <section id="ffms" class="domain">
+    <h2><span>투자자산관리</span><code>ffms/</code><small>페이지 36</small></h2>
+    <div class="grid">
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/ffms/mfund/</span><h3>모태펀드 관리</h3></div>
+        <span class="count">페이지 2 · 파일 2</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="자펀드 공고 정보관리 모태펀드 관리 자펀드 공고 정보관리 ffms/mfund/자펀드_공고_정보관리 ">
+          <td class="menu">자펀드 공고 정보관리<span class="note">모태펀드 관리</span></td>
+          <td><code>자펀드_공고_정보관리.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/자펀드 공고 정보관리</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="모태펀드 조성 및 출자현황 모태펀드 관리 asset-funding ffms/mfund/asset_funding ">
+          <td class="menu">모태펀드 조성 및 출자현황<span class="note">모태펀드 관리</span></td>
+          <td><code>asset_funding.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/asset-funding</code></td>
+          <td class="muted"></td>
+        </tr></tbody></table></div>
+      
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/ffms/asct/</span><h3>조합관리</h3></div>
+        <span class="count">페이지 3 · 파일 8</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="자펀드정보관리 조합관리 자펀드정보관리 ffms/asct/asset_fund_info_manage s2_73">
+          <td class="menu">자펀드정보관리<span class="note">조합관리</span></td>
+          <td><code>asset_fund_info_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/자펀드정보관리</code></td>
+          <td class="muted">S2_73</td>
+        </tr>
+        <tr data-q="조합원정보조회 조합관리 member-info ffms/asct/member_info_manage s1_15">
+          <td class="menu">조합원정보조회<span class="note">조합관리</span></td>
+          <td><code>member_info_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/member-info</code></td>
+          <td class="muted">S1_15</td>
+        </tr>
+        <tr data-q="자펀드별조합원조회 조합관리 fund-member ffms/asct/fund_member_manage s1_18">
+          <td class="menu">자펀드별조합원조회<span class="note">조합관리</span></td>
+          <td><code>fund_member_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/fund-member</code></td>
+          <td class="muted">S1_18</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 5개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>asset_fund_info_data.ts</code></li><li><code>asset_fund_info_modal.tsx</code></li><li><code>fund_member_manage_schemas.ts</code></li><li><code>member_info_detail_modal.tsx</code></li><li><code>member_info_form_modal.tsx</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/ffms/report/</span><h3>사후보고관리</h3></div>
+        <span class="count">페이지 11 · 파일 19</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="투심보고 확정 및 승인 사후보고관리 investment-review ffms/report/investment_review_manage s1_01">
+          <td class="menu">투심보고 확정 및 승인<span class="note">사후보고관리</span></td>
+          <td><code>investment_review_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/investment-review</code></td>
+          <td class="muted">S1_01</td>
+        </tr>
+        <tr data-q="투심보고 통계 사후보고관리 투심보고 통계 ffms/report/review_stats s1_28">
+          <td class="menu">투심보고 통계<span class="note">사후보고관리</span></td>
+          <td><code>review_stats.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/투심보고 통계</code></td>
+          <td class="muted">S1_28</td>
+        </tr>
+        <tr data-q="내부 투자심의 구성관리 사후보고관리 내부 투자심의 구성관리 ffms/report/내부_투자심의_구성관리 ">
+          <td class="menu">내부 투자심의 구성관리<span class="note">사후보고관리</span></td>
+          <td><code>내부_투자심의_구성관리.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/내부 투자심의 구성관리</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="체크리스트 관리 사후보고관리 체크리스트 관리 ffms/report/체크리스트_관리 ">
+          <td class="menu">체크리스트 관리<span class="note">사후보고관리</span></td>
+          <td><code>체크리스트_관리.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/체크리스트 관리</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="수시보고 확인 사후보고관리 occasional-report ffms/report/occasional_report_manage s1_04">
+          <td class="menu">수시보고 확인<span class="note">사후보고관리</span></td>
+          <td><code>occasional_report_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/occasional-report</code></td>
+          <td class="muted">S1_04</td>
+        </tr>
+        <tr data-q="정기보고 사후보고관리 regular-report ffms/report/regular_report_manage s1_06">
+          <td class="menu">정기보고<span class="note">사후보고관리</span></td>
+          <td><code>regular_report_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/regular-report</code></td>
+          <td class="muted">S1_06</td>
+        </tr>
+        <tr data-q="조합원총회 사후보고관리 general-meeting ffms/report/general_meeting_manage s1_07">
+          <td class="menu">조합원총회<span class="note">사후보고관리</span></td>
+          <td><code>general_meeting_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/general-meeting</code></td>
+          <td class="muted">S1_07</td>
+        </tr>
+        <tr data-q="조합예상자금요청보고 사후보고관리 fund-cash-forecast ffms/report/fund_cash_forecast_manage s1_08">
+          <td class="menu">조합예상자금요청보고<span class="note">사후보고관리</span></td>
+          <td><code>fund_cash_forecast_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/fund-cash-forecast</code></td>
+          <td class="muted">S1_08</td>
+        </tr>
+        <tr data-q="보고양식관리  report-form ffms/report/report_form_manage s1_09">
+          <td class="menu">보고양식관리<span class="note off">LNB 미노출 라우트</span></td>
+          <td><code>report_form_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/report-form</code></td>
+          <td class="muted">S1_09</td>
+        </tr>
+        <tr data-q="보고 업데이트정보  report-update-info ffms/report/report_update_info_manage s1_10">
+          <td class="menu">보고 업데이트정보<span class="note off">LNB 미노출 라우트</span></td>
+          <td><code>report_update_info_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/report-update-info</code></td>
+          <td class="muted">S1_10</td>
+        </tr>
+        <tr data-q="월간보고  monthly-report ffms/report/monthly_report s1_06_01">
+          <td class="menu">월간보고<span class="note off">LNB 미노출 라우트</span></td>
+          <td><code>monthly_report.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/monthly-report</code></td>
+          <td class="muted">S1_06_01</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 8개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>general_meeting_detail_modal.tsx</code></li><li><code>investment_review_data.ts</code></li><li><code>investment_review_detail_modal.tsx</code></li><li><code>investment_review_manage_schemas.ts</code></li><li><code>occasional_report_modal.tsx</code></li><li><code>report_form_manage_schemas.ts</code></li><li><code>review_stats_data.ts</code></li><li><code>subfund_spec_modal.tsx</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/ffms/sfund/</span><h3>자펀드 관리</h3></div>
+        <span class="count">페이지 7 · 파일 15</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="자펀드 관리 자펀드 관리 subfund ffms/sfund/subfund_manage ">
+          <td class="menu">자펀드 관리<span class="note">자펀드 관리</span></td>
+          <td><code>subfund_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/subfund</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="출자/분배조회(자펀드) 자펀드 관리 gp-contribution ffms/sfund/gp_contribution_manage s1_14">
+          <td class="menu">출자/분배조회(자펀드)<span class="note">자펀드 관리</span></td>
+          <td><code>gp_contribution_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/gp-contribution</code></td>
+          <td class="muted">S1_14</td>
+        </tr>
+        <tr data-q="출자/분배조회(농금원) 자펀드 관리 apfs-contribution ffms/sfund/apfs_contribution_manage s1_21">
+          <td class="menu">출자/분배조회(농금원)<span class="note">자펀드 관리</span></td>
+          <td><code>apfs_contribution_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/apfs-contribution</code></td>
+          <td class="muted">S1_21</td>
+        </tr>
+        <tr data-q="자펀드 투자실적현황 자펀드 관리 fund-invest-status ffms/sfund/fund_invest_status s1_24">
+          <td class="menu">자펀드 투자실적현황<span class="note">자펀드 관리</span></td>
+          <td><code>fund_invest_status.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/fund-invest-status</code></td>
+          <td class="muted">S1_24</td>
+        </tr>
+        <tr data-q="자펀드 수탁관리 자펀드 관리 custody-verify ffms/sfund/asset_leaf_tabs ">
+          <td class="menu">자펀드 수탁관리<span class="note">자펀드 관리</span></td>
+          <td><code>asset_leaf_tabs.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/custody-verify</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="종합통계(확정) 자펀드 관리 fund-stats ffms/sfund/fund_stats s1_25">
+          <td class="menu">종합통계(확정)<span class="note">자펀드 관리</span></td>
+          <td><code>fund_stats.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/fund-stats</code></td>
+          <td class="muted">S1_25</td>
+        </tr>
+        <tr data-q="자펀드수탁관리(확정)  custody-confirm ffms/sfund/asset_leaf_tabs ">
+          <td class="menu">자펀드수탁관리(확정)<span class="note off">LNB 미노출 라우트</span></td>
+          <td><code>asset_leaf_tabs.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/custody-confirm</code></td>
+          <td class="muted"></td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 9개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>apfs_contribution_tx_modal.tsx</code></li><li><code>custody_confirm_detail_modal.tsx</code></li><li><code>custody_confirm_manage.tsx</code></li><li><code>custody_verify_manage.tsx</code></li><li><code>custody_verify_memo_modal.tsx</code></li><li><code>fund_stats_data.ts</code></li><li><code>gp_contribution_detail_modal.tsx</code></li><li><code>subfund_form_modal.tsx</code></li><li><code>subfund_manage_schemas.ts</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/ffms/ent/</span><h3>투자기업정보</h3></div>
+        <span class="count">페이지 7 · 파일 13</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="투자기업정보(통합) 투자기업정보 투자기업정보(통합) ffms/ent/investee_profile s1_30">
+          <td class="menu">투자기업정보(통합)<span class="note">투자기업정보</span></td>
+          <td><code>investee_profile.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/투자기업정보(통합)</code></td>
+          <td class="muted">S1_30</td>
+        </tr>
+        <tr data-q="투자기업명세서(통합) 투자기업정보 투자기업명세서(통합) ffms/ent/투자기업명세서_통합 ">
+          <td class="menu">투자기업명세서(통합)<span class="note">투자기업정보</span></td>
+          <td><code>투자기업명세서_통합.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/투자기업명세서(통합)</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="투자기업고용현황(통합) 투자기업정보 투자기업 고용현황보고 ffms/ent/투자기업_고용현황보고 ">
+          <td class="menu">투자기업고용현황(통합)<span class="note">투자기업정보</span></td>
+          <td><code>투자기업_고용현황보고.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/투자기업 고용현황보고</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="전체 투자실적 투자기업정보 전체 투자실적 ffms/ent/전체_투자실적 ">
+          <td class="menu">전체 투자실적<span class="note">투자기업정보</span></td>
+          <td><code>전체_투자실적.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/전체 투자실적</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="투자실적현황(투자기업) 투자기업정보 투자실적 현황(투자기업) ffms/ent/investee_invest_stats s1_34">
+          <td class="menu">투자실적현황(투자기업)<span class="note">투자기업정보</span></td>
+          <td><code>investee_invest_stats.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/투자실적 현황(투자기업)</code></td>
+          <td class="muted">S1_34</td>
+        </tr>
+        <tr data-q="투자금 회수현황 투자기업정보 투자금 회수현황 ffms/ent/invest_recovery_detail s1_36">
+          <td class="menu">투자금 회수현황<span class="note">투자기업정보</span></td>
+          <td><code>invest_recovery_detail.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/투자금 회수현황</code></td>
+          <td class="muted">S1_36</td>
+        </tr>
+        <tr data-q="우수투자기업 관리 투자기업정보 우수투자기업 관리 ffms/ent/우수투자기업_관리 ">
+          <td class="menu">우수투자기업 관리<span class="note">투자기업정보</span></td>
+          <td><code>우수투자기업_관리.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/우수투자기업 관리</code></td>
+          <td class="muted"></td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 6개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>invest_recovery_detail_model.ts</code></li><li><code>invest_recovery_filter.test.ts</code></li><li><code>investee_invest_stats_model.ts</code></li><li><code>투자금_회수현황.ts</code></li><li><code>투자기업정보_통합.ts</code></li><li><code>투자실적_현황_투자기업.ts</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/ffms/gp/</span><h3>운용사 모니터링</h3></div>
+        <span class="count">페이지 6 · 파일 8</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="운용사 명세서 운용사 모니터링 운용사 명세서 ffms/gp/운용사_명세서 ">
+          <td class="menu">운용사 명세서<span class="note">운용사 모니터링</span></td>
+          <td><code>운용사_명세서.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/운용사 명세서</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="운용사 재무정보 조회 운용사 모니터링 운용사 재무정보 조회 ffms/gp/운용사_재무정보_조회 ">
+          <td class="menu">운용사 재무정보 조회<span class="note">운용사 모니터링</span></td>
+          <td><code>운용사_재무정보_조회.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/운용사 재무정보 조회</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="투자금 실사보고 조회 운용사 모니터링 투자금 실사보고 ffms/gp/투자금_실사보고 ">
+          <td class="menu">투자금 실사보고 조회<span class="note">운용사 모니터링</span></td>
+          <td><code>투자금_실사보고.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/투자금 실사보고</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="사후관리기록 관리 운용사 모니터링 사후관리기록 관리 ffms/gp/사후관리기록_관리 ">
+          <td class="menu">사후관리기록 관리<span class="note">운용사 모니터링</span></td>
+          <td><code>사후관리기록_관리.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/사후관리기록 관리</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="관리보수/성과보수 조회 운용사 모니터링 관리보수관리 ffms/gp/관리보수관리 ">
+          <td class="menu">관리보수/성과보수 조회<span class="note">운용사 모니터링</span></td>
+          <td><code>관리보수관리.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/관리보수관리</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="자펀드 전체 보고현황 운용사 모니터링 전체 보고현황 ffms/gp/all_report_status s1_44">
+          <td class="menu">자펀드 전체 보고현황<span class="note">운용사 모니터링</span></td>
+          <td><code>all_report_status.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/전체 보고현황</code></td>
+          <td class="muted">S1_44</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 2개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>all_report_status_model.ts</code></li><li><code>전체_보고현황.ts</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/ffms/</span><h3>투자자산관리</h3></div>
+        <span class="count">페이지 0 · 파일 2</span>
+      </header>
+      <p class="empty">이 폴더에는 공용 파일만 있다.</p>
+      <details><summary>동반 파일 2개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>asset_fund_info_merge.test.ts</code></li><li><code>leaf_tabs.tsx</code></li></ul></details>
+    </article></div>
+  </section>
+  <section id="risk" class="domain">
+    <h2><span>조기경보</span><code>risk/</code><small>페이지 26</small></h2>
+    <div class="grid">
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/risk/alert/</span><h3>조기경보</h3></div>
+        <span class="count">페이지 9 · 파일 25</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="조기경보 관리 조기경보 risk-manage risk/alert/early_warning_manage s2_51">
+          <td class="menu">조기경보 관리<span class="note">조기경보</span></td>
+          <td><code>early_warning_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/risk-manage</code></td>
+          <td class="muted">S2_51</td>
+        </tr>
+        <tr data-q="운용사별 조기경보 조회 조기경보 운용사별 조기경보 조회 risk/alert/gp_early_warning s2_47">
+          <td class="menu">운용사별 조기경보 조회<span class="note">조기경보</span></td>
+          <td><code>gp_early_warning.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/운용사별 조기경보 조회</code></td>
+          <td class="muted">S2_47</td>
+        </tr>
+        <tr data-q="자펀드별 조기경보 조회 조기경보 자펀드별 조기경보 조회 risk/alert/fund_early_warning s2_49">
+          <td class="menu">자펀드별 조기경보 조회<span class="note">조기경보</span></td>
+          <td><code>fund_early_warning.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/자펀드별 조기경보 조회</code></td>
+          <td class="muted">S2_49</td>
+        </tr>
+        <tr data-q="법률/규약위반사항 관리 조기경보 법률/규약위반사항 관리 risk/alert/violation_manage s2_53 s2_54">
+          <td class="menu">법률/규약위반사항 관리<span class="note">조기경보</span></td>
+          <td><code>violation_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/법률/규약위반사항 관리</code></td>
+          <td class="muted">S2_53 · S2_54</td>
+        </tr>
+        <tr data-q="운용사 주주변동관리 조기경보 운용사 주주변동관리 risk/alert/shareholder_manage s2_55 s2_56">
+          <td class="menu">운용사 주주변동관리<span class="note">조기경보</span></td>
+          <td><code>shareholder_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/운용사 주주변동관리</code></td>
+          <td class="muted">S2_55 · S2_56</td>
+        </tr>
+        <tr data-q="운용사 소송관리 조기경보 운용사 소송관리 risk/alert/litigation_manage s2_57 s2_58">
+          <td class="menu">운용사 소송관리<span class="note">조기경보</span></td>
+          <td><code>litigation_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/운용사 소송관리</code></td>
+          <td class="muted">S2_57 · S2_58</td>
+        </tr>
+        <tr data-q="운용인력 변동관리 조기경보 운용인력 변동관리 risk/alert/workforce_manage s2_59 s2_60">
+          <td class="menu">운용인력 변동관리<span class="note">조기경보</span></td>
+          <td><code>workforce_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/운용인력 변동관리</code></td>
+          <td class="muted">S2_59 · S2_60</td>
+        </tr>
+        <tr data-q="조기경보 결과정보 관리 조기경보 조기경보 결과정보 관리 risk/alert/ew_result_manage s2_61 s2_62">
+          <td class="menu">조기경보 결과정보 관리<span class="note">조기경보</span></td>
+          <td><code>ew_result_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/조기경보 결과정보 관리</code></td>
+          <td class="muted">S2_61 · S2_62</td>
+        </tr>
+        <tr data-q="조기경보 전월 비교 조회 조기경보 조기경보 전월 비교 조회 risk/alert/ew_month_compare s2_63">
+          <td class="menu">조기경보 전월 비교 조회<span class="note">조기경보</span></td>
+          <td><code>ew_month_compare.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/조기경보 전월 비교 조회</code></td>
+          <td class="muted">S2_63</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 16개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>early_warning_trend_modal.tsx</code></li><li><code>ew_month_compare_model.test.ts</code></li><li><code>ew_month_compare_model.ts</code></li><li><code>ew_result_dialogs.tsx</code></li><li><code>ew_result_model.test.ts</code></li><li><code>ew_result_model.ts</code></li><li><code>fund_early_warning_yield_modal.tsx</code></li><li><code>gp_early_warning_fin_modal.tsx</code></li><li><code>litigation_form_modal.tsx</code></li><li><code>litigation_manage_schemas.ts</code></li><li><code>shareholder_form_modal.tsx</code></li><li><code>shareholder_manage_schemas.ts</code></li><li><code>violation_form_modal.tsx</code></li><li><code>violation_manage_schemas.ts</code></li><li><code>workforce_form_modal.tsx</code></li><li><code>workforce_manage_schemas.ts</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/risk/ent/</span><h3>기업정보</h3></div>
+        <span class="count">페이지 2 · 파일 2</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="투자기업정보(nice평가정보) 기업정보 투자기업정보(nice평가정보) risk/ent/corp_info_page s2_65 s2_66 s2_67 s2_69 s2_68">
+          <td class="menu">투자기업정보(NICE평가정보)<span class="note">기업정보</span></td>
+          <td><code>corp_info_page.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/투자기업정보(NICE평가정보)</code></td>
+          <td class="muted">S2_65 · S2_66 · S2_67 · S2_69 · S2_68<span class="note">파일 공용 ID</span></td>
+        </tr>
+        <tr data-q="투자기업신용정보 조회 기업정보 투자기업신용정보 조회 risk/ent/corp_info_page s2_65 s2_66 s2_67 s2_69 s2_68">
+          <td class="menu">투자기업신용정보 조회<span class="note">기업정보</span></td>
+          <td><code>corp_info_page.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/투자기업신용정보 조회</code></td>
+          <td class="muted">S2_65 · S2_66 · S2_67 · S2_69 · S2_68<span class="note">파일 공용 ID</span></td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 1개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>risk_corp_info_data.ts</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/risk/sfund/</span><h3>자펀드정보</h3></div>
+        <span class="count">페이지 4 · 파일 5</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="운용사 정량지표 관리 자펀드정보 운용사 정량지표 관리 risk/sfund/gp_quant_indicator_manage s2_70 s2_71 s2_72">
+          <td class="menu">운용사 정량지표 관리<span class="note">자펀드정보</span></td>
+          <td><code>gp_quant_indicator_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/운용사 정량지표 관리</code></td>
+          <td class="muted">S2_70 · S2_71 · S2_72</td>
+        </tr>
+        <tr data-q="운용사 유형별 정량지표 변동 조회 자펀드정보 운용사 유형별 정량지표 변동 조회 risk/sfund/gp_type_indicator_trend s2_78">
+          <td class="menu">운용사 유형별 정량지표 변동 조회<span class="note">자펀드정보</span></td>
+          <td><code>gp_type_indicator_trend.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/운용사 유형별 정량지표 변동 조회</code></td>
+          <td class="muted">S2_78</td>
+        </tr>
+        <tr data-q="운용사 재무정보 비교 조회 자펀드정보 운용사 재무정보 비교 조회 risk/sfund/운용사_재무정보_비교_조회 ">
+          <td class="menu">운용사 재무정보 비교 조회<span class="note">자펀드정보</span></td>
+          <td><code>운용사_재무정보_비교_조회.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/운용사 재무정보 비교 조회</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="자펀드 종합등급 변동 조회 자펀드정보 자펀드 종합등급 변동 조회 risk/sfund/subfund_grade_trend s2_79">
+          <td class="menu">자펀드 종합등급 변동 조회<span class="note">자펀드정보</span></td>
+          <td><code>subfund_grade_trend.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/자펀드 종합등급 변동 조회</code></td>
+          <td class="muted">S2_79</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 1개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>gp_quant_indicator_modal.tsx</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/risk/valuation/</span><h3>가치평가</h3></div>
+        <span class="count">페이지 5 · 파일 5</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="모태펀드 가치평가 결과조회 가치평가 모태펀드 가치평가 결과조회 risk/valuation/mother_fund_valuation s2_80">
+          <td class="menu">모태펀드 가치평가 결과조회<span class="note">가치평가</span></td>
+          <td><code>mother_fund_valuation.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/모태펀드 가치평가 결과조회</code></td>
+          <td class="muted">S2_80</td>
+        </tr>
+        <tr data-q="평가시점 데이터 확인 가치평가 평가시점 데이터 확인 risk/valuation/평가시점_데이터_확인 ">
+          <td class="menu">평가시점 데이터 확인<span class="note">가치평가</span></td>
+          <td><code>평가시점_데이터_확인.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/평가시점 데이터 확인</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="투자기업별(계약별) irr 가치평가 투자기업별(계약별) irr risk/valuation/irr_pages s2_87">
+          <td class="menu">투자기업별(계약별) IRR<span class="note">가치평가</span></td>
+          <td><code>irr_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/투자기업별(계약별) IRR</code></td>
+          <td class="muted">S2_87</td>
+        </tr>
+        <tr data-q="투자기업별 irr 가치평가 투자기업별 irr risk/valuation/irr_pages s2_91">
+          <td class="menu">투자기업별 IRR<span class="note">가치평가</span></td>
+          <td><code>irr_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/투자기업별 IRR</code></td>
+          <td class="muted">S2_91</td>
+        </tr>
+        <tr data-q="자펀드별 irr 가치평가 자펀드별 irr risk/valuation/irr_pages s2_89">
+          <td class="menu">자펀드별 IRR<span class="note">가치평가</span></td>
+          <td><code>irr_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/자펀드별 IRR</code></td>
+          <td class="muted">S2_89</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 2개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>irr_basis_modal.tsx</code></li><li><code>risk_irr_data.ts</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/risk/</span><h3>조기경보</h3></div>
+        <span class="count">페이지 6 · 파일 3</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="자펀드 수익률정보 비교 조회 자펀드정보 자펀드 수익률정보 비교 조회 risk/risk_table_pages s2_77">
+          <td class="menu">자펀드 수익률정보 비교 조회<span class="note">자펀드정보</span></td>
+          <td><code>risk_table_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/자펀드 수익률정보 비교 조회</code></td>
+          <td class="muted">S2_77</td>
+        </tr>
+        <tr data-q="투자조합 가치평가 결과조회 가치평가 투자조합 가치평가 결과조회 risk/risk_table_pages s2_81">
+          <td class="menu">투자조합 가치평가 결과조회<span class="note">가치평가</span></td>
+          <td><code>risk_table_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/투자조합 가치평가 결과조회</code></td>
+          <td class="muted">S2_81</td>
+        </tr>
+        <tr data-q="피투자회사 가치평가 결과조회 가치평가 피투자회사 가치평가 결과조회 risk/risk_table_pages s2_82">
+          <td class="menu">피투자회사 가치평가 결과조회<span class="note">가치평가</span></td>
+          <td><code>risk_table_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/피투자회사 가치평가 결과조회</code></td>
+          <td class="muted">S2_82</td>
+        </tr>
+        <tr data-q="자펀드 투자자산 및 거래내역 조회 가치평가 자펀드 투자자산 및 거래내역 조회 risk/risk_table_pages s2_84">
+          <td class="menu">자펀드 투자자산 및 거래내역 조회<span class="note">가치평가</span></td>
+          <td><code>risk_table_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/자펀드 투자자산 및 거래내역 조회</code></td>
+          <td class="muted">S2_84</td>
+        </tr>
+        <tr data-q="예외사항레포트 가치평가 예외사항리포트 risk/risk_table_pages s2_85">
+          <td class="menu">예외사항레포트<span class="note">가치평가</span></td>
+          <td><code>risk_table_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/예외사항리포트</code></td>
+          <td class="muted">S2_85</td>
+        </tr>
+        <tr data-q="portfolio report 가치평가 portfolio report risk/risk_table_pages s2_83">
+          <td class="menu">Portfolio Report<span class="note">가치평가</span></td>
+          <td><code>risk_table_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/Portfolio Report</code></td>
+          <td class="muted">S2_83</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 2개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>risk_subfund_info_data.ts</code></li><li><code>risk_valuation_data.ts</code></li></ul></details>
+    </article></div>
+  </section>
+  <section id="sfund" class="domain">
+    <h2><span>자펀드 보고</span><code>sfund/</code><small>페이지 6</small></h2>
+    <div class="grid">
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/sfund/ocsrpt/</span><h3>수시보고</h3></div>
+        <span class="count">페이지 1 · 파일 2</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="조합 수시보고 내역 조합정보 조합 수시보고 내역 sfund/ocsrpt/gp_occasional_overview s5_117 s5_120">
+          <td class="menu">조합 수시보고 내역<span class="note">조합정보</span></td>
+          <td><code>gp_occasional_overview.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/조합 수시보고 내역</code></td>
+          <td class="muted">S5_117 · S5_120</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 1개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>gp_occasional_overview_data.ts</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/sfund/fxtmrpt/</span><h3>정기보고</h3></div>
+        <span class="count">페이지 2 · 파일 3</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="조합별 월간보고 현황 월간보고조회 조합별 월간보고 현황 sfund/fxtmrpt/조합별_월간보고_현황 ">
+          <td class="menu">조합별 월간보고 현황<span class="note">월간보고조회</span></td>
+          <td><code>조합별_월간보고_현황.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/조합별 월간보고 현황</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="조합별 반기보고 현황 반기보고조회 조합별 반기보고 현황 sfund/fxtmrpt/조합별_반기보고_현황 ">
+          <td class="menu">조합별 반기보고 현황<span class="note">반기보고조회</span></td>
+          <td><code>조합별_반기보고_현황.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/조합별 반기보고 현황</code></td>
+          <td class="muted"></td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 1개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>조합별_반기보고_현황.test.ts</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/sfund/verify/</span><h3>실물검증</h3></div>
+        <span class="count">페이지 1 · 파일 2</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="조합별 실물검증 결과 보고 실물검증 조합별 실물검증 결과 보고 sfund/verify/gp_verify_report ">
+          <td class="menu">조합별 실물검증 결과 보고<span class="note">실물검증</span></td>
+          <td><code>gp_verify_report.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/조합별 실물검증 결과 보고</code></td>
+          <td class="muted"></td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 1개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>gp_verify_report_data.ts</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/sfund/file/</span><h3>파일</h3></div>
+        <span class="count">페이지 1 · 파일 1</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="보고 파일 조회 파일 보고 파일 조회 sfund/file/gp_report_file s5_116">
+          <td class="menu">보고 파일 조회<span class="note">파일</span></td>
+          <td><code>gp_report_file.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/보고 파일 조회</code></td>
+          <td class="muted">S5_116</td>
+        </tr></tbody></table></div>
+      
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/sfund/</span><h3>자펀드 보고</h3></div>
+        <span class="count">페이지 1 · 파일 1</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="자펀드 보고 조회 보고조회 자펀드 보고 조회 sfund/gp_report_query s5_121">
+          <td class="menu">자펀드 보고 조회<span class="note">보고조회</span></td>
+          <td><code>gp_report_query.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/자펀드 보고 조회</code></td>
+          <td class="muted">S5_121</td>
+        </tr></tbody></table></div>
+      
+    </article></div>
+  </section>
+  <section id="account" class="domain">
+    <h2><span>회계</span><code>account/</code><small>페이지 0</small></h2>
+    <div class="grid">
+    <article class="card pending" data-card>
+      <header class="card-h"><div><span class="path">src/dash/account/ (미생성)</span><h3>미구현 리프</h3></div>
+      <span class="count">26개 — 기본 스키마 폴백</span></header>
+      <ul class="chips"><li data-q="계정과목 관리 기초관리">기초관리 › 계정과목 관리</li><li data-q="결산양식 관리 기초관리">기초관리 › 결산양식 관리</li><li data-q="일반전표 관리 전표관리">전표관리 › 일반전표 관리</li><li data-q="삭제전표 관리 전표관리">전표관리 › 삭제전표 관리</li><li data-q="미결계정 관리 전표관리">전표관리 › 미결계정 관리</li><li data-q="전표증빙 미첨부 관리 전표관리">전표관리 › 전표증빙 미첨부 관리</li><li data-q="일마감 전표관리">전표관리 › 일마감</li><li data-q="전표검색 전표관리">전표관리 › 전표검색</li><li data-q="일/월계표 장부조회">장부조회 › 일/월계표</li><li data-q="계정별보조부 장부조회">장부조회 › 계정별보조부</li><li data-q="총계정원장 장부조회">장부조회 › 총계정원장</li><li data-q="재무상태표 장부조회">장부조회 › 재무상태표</li><li data-q="손익계산서 장부조회">장부조회 › 손익계산서</li><li data-q="합계잔액시산표 장부조회">장부조회 › 합계잔액시산표</li><li data-q="결산전표 관리 결산관리">결산관리 › 결산전표 관리</li><li data-q="회기생성/전기이월 결산관리">결산관리 › 회기생성/전기이월</li><li data-q="유무형자산관리 고정자산">고정자산 › 유무형자산관리</li><li data-q="감가상각비처리 고정자산">고정자산 › 감가상각비처리</li><li data-q="계좌관리 자금관리">자금관리 › 계좌관리</li><li data-q="계좌잔액 자금관리">자금관리 › 계좌잔액</li><li data-q="자금일보 자금관리">자금관리 › 자금일보</li><li data-q="출자금현황 정보관리 자금관리">자금관리 › 출자금현황 정보관리</li><li data-q="경영체 정보 조회 농식품경영체">농식품경영체 › 경영체 정보 조회</li><li data-q="ir정보 조회 농식품경영체">농식품경영체 › IR정보 조회</li><li data-q="휴일관리 설정">설정 › 휴일관리</li><li data-q="회계거래처관리 설정">설정 › 회계거래처관리</li></ul>
+    </article></div>
+  </section>
+  <section id="brief" class="domain">
+    <h2><span>부처보고</span><code>brief/</code><small>페이지 3</small></h2>
+    <div class="grid">
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/brief/mfund/</span><h3>모태펀드</h3></div>
+        <span class="count">페이지 2 · 파일 2</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="연도별투자현황 모태펀드 report-bucheo brief/mfund/report_bucheo ">
+          <td class="menu">연도별투자현황<span class="note">모태펀드</span></td>
+          <td><code>report_bucheo.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/report-bucheo</code></td>
+          <td class="muted"></td>
+        </tr>
+        <tr data-q="연도별 투자현황  연도별투자현황 brief/mfund/연도별투자현황 ">
+          <td class="menu">연도별 투자현황<span class="note off">LNB 미노출 라우트</span></td>
+          <td><code>연도별투자현황.ts</code></td>
+          <td><span class="tag schema">스키마</span></td>
+          <td class="muted"><code>#/연도별투자현황</code></td>
+          <td class="muted"></td>
+        </tr></tbody></table></div>
+      
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/brief/register/</span><h3>등록원부</h3></div>
+        <span class="count">페이지 1 · 파일 3</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="등록원부관리 등록원부 등록원부관리 brief/register/registry_ledger s4_108">
+          <td class="menu">등록원부관리<span class="note">등록원부</span></td>
+          <td><code>registry_ledger.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/등록원부관리</code></td>
+          <td class="muted">S4_108</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 2개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>registry_ledger_modals.test.ts</code></li><li><code>registry_ledger_modals.tsx</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/brief/</span><h3>부처보고</h3></div>
+        <span class="count">페이지 0 · 파일 1</span>
+      </header>
+      <p class="empty">이 폴더에는 공용 파일만 있다.</p>
+      <details><summary>동반 파일 1개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>brief_data.ts</code></li></ul></details>
+    </article></div>
+  </section>
+  <section id="trust" class="domain">
+    <h2><span>수탁보고</span><code>trust/</code><small>페이지 11</small></h2>
+    <div class="grid">
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/trust/sfund/</span><h3>자펀드 수탁</h3></div>
+        <span class="count">페이지 3 · 파일 2</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="실물자료관리(업로드) 자펀드 수탁 실물자료관리(업로드) trust/sfund/trust_physical_upload s3_98">
+          <td class="menu">실물자료관리(업로드)<span class="note">자펀드 수탁</span></td>
+          <td><code>trust_physical_upload.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/실물자료관리(업로드)</code></td>
+          <td class="muted">S3_98<span class="note">파일 공용 ID</span></td>
+        </tr>
+        <tr data-q="유가증권관리(업로드) 자펀드 수탁 유가증권관리(업로드) trust/sfund/trust_physical_upload s3_98">
+          <td class="menu">유가증권관리(업로드)<span class="note">자펀드 수탁</span></td>
+          <td><code>trust_physical_upload.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/유가증권관리(업로드)</code></td>
+          <td class="muted">S3_98<span class="note">파일 공용 ID</span></td>
+        </tr>
+        <tr data-q="자펀드코드 조회 자펀드 수탁 자펀드코드 조회 trust/sfund/trust_fund_code s3_99">
+          <td class="menu">자펀드코드 조회<span class="note">자펀드 수탁</span></td>
+          <td><code>trust_fund_code.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/자펀드코드 조회</code></td>
+          <td class="muted">S3_99</td>
+        </tr></tbody></table></div>
+      
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/trust/mfund/</span><h3>모태펀드 수탁</h3></div>
+        <span class="count">페이지 2 · 파일 1</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="계좌정보 관리 모태펀드 수탁 계좌정보 관리 trust/mfund/trust_upload_forms s3_103 s3_105">
+          <td class="menu">계좌정보 관리<span class="note">모태펀드 수탁</span></td>
+          <td><code>trust_upload_forms.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/계좌정보 관리</code></td>
+          <td class="muted">S3_103 · S3_105<span class="note">파일 공용 ID</span></td>
+        </tr>
+        <tr data-q="입출금 정보관리 모태펀드 수탁 입출금 정보관리 trust/mfund/trust_upload_forms s3_103 s3_105">
+          <td class="menu">입출금 정보관리<span class="note">모태펀드 수탁</span></td>
+          <td><code>trust_upload_forms.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/입출금 정보관리</code></td>
+          <td class="muted">S3_103 · S3_105<span class="note">파일 공용 ID</span></td>
+        </tr></tbody></table></div>
+      
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/trust/</span><h3>수탁보고</h3></div>
+        <span class="count">페이지 6 · 파일 4</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="실물검증비교조회 자펀드 수탁 실물검증비교조회 trust/trust_table_pages s3_101 s3_100 s3_102 s3_104 s3_106">
+          <td class="menu">실물검증비교조회<span class="note">자펀드 수탁</span></td>
+          <td><code>trust_table_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/실물검증비교조회</code></td>
+          <td class="muted">S3_101 · S3_100 · S3_102 · S3_104 · S3_106<span class="note">파일 공용 ID</span></td>
+        </tr>
+        <tr data-q="유가증권비교조회 자펀드 수탁 유가증권비교조회 trust/trust_table_pages s3_101 s3_100 s3_102 s3_104 s3_106">
+          <td class="menu">유가증권비교조회<span class="note">자펀드 수탁</span></td>
+          <td><code>trust_table_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/유가증권비교조회</code></td>
+          <td class="muted">S3_101 · S3_100 · S3_102 · S3_104 · S3_106<span class="note">파일 공용 ID</span></td>
+        </tr>
+        <tr data-q="공통코드조회 자펀드 수탁 공통코드조회 trust/trust_table_pages s3_101 s3_100 s3_102 s3_104 s3_106">
+          <td class="menu">공통코드조회<span class="note">자펀드 수탁</span></td>
+          <td><code>trust_table_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/공통코드조회</code></td>
+          <td class="muted">S3_101 · S3_100 · S3_102 · S3_104 · S3_106<span class="note">파일 공용 ID</span></td>
+        </tr>
+        <tr data-q="모태수탁 공통코드 모태펀드 수탁 모태수탁 공통코드 trust/trust_table_pages s3_101 s3_100 s3_102 s3_104 s3_106">
+          <td class="menu">모태수탁 공통코드<span class="note">모태펀드 수탁</span></td>
+          <td><code>trust_table_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/모태수탁 공통코드</code></td>
+          <td class="muted">S3_101 · S3_100 · S3_102 · S3_104 · S3_106<span class="note">파일 공용 ID</span></td>
+        </tr>
+        <tr data-q="계좌정보 비교조회 모태펀드 수탁 계좌정보 비교조회 trust/trust_table_pages s3_101 s3_100 s3_102 s3_104 s3_106">
+          <td class="menu">계좌정보 비교조회<span class="note">모태펀드 수탁</span></td>
+          <td><code>trust_table_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/계좌정보 비교조회</code></td>
+          <td class="muted">S3_101 · S3_100 · S3_102 · S3_104 · S3_106<span class="note">파일 공용 ID</span></td>
+        </tr>
+        <tr data-q="입출금정보 비교조회 모태펀드 수탁 입출금정보 비교조회 trust/trust_table_pages s3_101 s3_100 s3_102 s3_104 s3_106">
+          <td class="menu">입출금정보 비교조회<span class="note">모태펀드 수탁</span></td>
+          <td><code>trust_table_pages.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/입출금정보 비교조회</code></td>
+          <td class="muted">S3_101 · S3_100 · S3_102 · S3_104 · S3_106<span class="note">파일 공용 ID</span></td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 3개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>trust_manage_schemas.ts</code></li><li><code>trust_mother_data.ts</code></li><li><code>trust_sub_data.ts</code></li></ul></details>
+    </article></div>
+  </section>
+  <section id="system" class="domain">
+    <h2><span>관리자</span><code>system/</code><small>페이지 8</small></h2>
+    <div class="grid">
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/system/user/</span><h3>사용자·권한 관리</h3></div>
+        <span class="count">페이지 3 · 파일 12</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="권한관리 사용자·권한 관리 user-permission-manage system/user/user_permission_manage s0_102">
+          <td class="menu">권한관리<span class="note">사용자·권한 관리</span></td>
+          <td><code>user_permission_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/user-permission-manage</code></td>
+          <td class="muted">S0_102</td>
+        </tr>
+        <tr data-q="사용자관리 사용자·권한 관리 user-manage system/user/user_manage s0_101">
+          <td class="menu">사용자관리<span class="note">사용자·권한 관리</span></td>
+          <td><code>user_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/user-manage</code></td>
+          <td class="muted">S0_101</td>
+        </tr>
+        <tr data-q="사용자 초대(운용사) 사용자·권한 관리 user-invite-gp system/user/user_invite_manage s0_103">
+          <td class="menu">사용자 초대(운용사)<span class="note">사용자·권한 관리</span></td>
+          <td><code>user_invite_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/user-invite-gp</code></td>
+          <td class="muted">S0_103</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 9개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>admin_demo_data.ts</code></li><li><code>admin_mail_preview.tsx</code></li><li><code>user_form_modal.tsx</code></li><li><code>user_invite_model.test.ts</code></li><li><code>user_invite_model.ts</code></li><li><code>user_manage_model.test.ts</code></li><li><code>user_manage_model.ts</code></li><li><code>user_permission_modal.tsx</code></li><li><code>user_permission_model.ts</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/system/setting/</span><h3>시스템 관리</h3></div>
+        <span class="count">페이지 3 · 파일 12</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="프로그램관리 시스템 관리 program-manage system/setting/program_manage s0_105">
+          <td class="menu">프로그램관리<span class="note">시스템 관리</span></td>
+          <td><code>program_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/program-manage</code></td>
+          <td class="muted">S0_105</td>
+        </tr>
+        <tr data-q="메뉴관리 시스템 관리 menu-manage system/setting/menu_manage s0_105">
+          <td class="menu">메뉴관리<span class="note">시스템 관리</span></td>
+          <td><code>menu_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/menu-manage</code></td>
+          <td class="muted">S0_105</td>
+        </tr>
+        <tr data-q="코드관리 시스템 관리 code-manage system/setting/code_manage s0_106">
+          <td class="menu">코드관리<span class="note">시스템 관리</span></td>
+          <td><code>code_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/code-manage</code></td>
+          <td class="muted">S0_106</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 9개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>code_manage_data.test.ts</code></li><li><code>code_manage_data.ts</code></li><li><code>code_manage_schemas.ts</code></li><li><code>menu_form_modal.tsx</code></li><li><code>program_help_modal.tsx</code></li><li><code>program_manage_model.ts</code></li><li><code>program_manage_schemas.ts</code></li><li><code>reseq.test.ts</code></li><li><code>reseq.ts</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/system/audit/</span><h3>감사·기록</h3></div>
+        <span class="count">페이지 2 · 파일 7</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="권한 변경이력 감사·기록 permission-history system/audit/permission_history s0_107">
+          <td class="menu">권한 변경이력<span class="note">감사·기록</span></td>
+          <td><code>permission_history.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/permission-history</code></td>
+          <td class="muted">S0_107</td>
+        </tr>
+        <tr data-q="감사로그 감사·기록 audit-log system/audit/audit_log s0_104">
+          <td class="menu">감사로그<span class="note">감사·기록</span></td>
+          <td><code>audit_log.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/audit-log</code></td>
+          <td class="muted">S0_104</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 5개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>audit_log_model.test.ts</code></li><li><code>audit_log_model.ts</code></li><li><code>permission_history_detail_modal.tsx</code></li><li><code>permission_history_model.test.ts</code></li><li><code>permission_history_model.ts</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/system/</span><h3>관리자</h3></div>
+        <span class="count">페이지 0 · 파일 4</span>
+      </header>
+      <p class="empty">이 폴더에는 공용 파일만 있다.</p>
+      <details><summary>동반 파일 4개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>admin_menu_tree.ts</code></li><li><code>admin_shared.tsx</code></li><li><code>program_manage_model.test.ts</code></li><li><code>user_permission_model.test.ts</code></li></ul></details>
+    </article></div>
+  </section>
+  <section id="shared" class="domain">
+    <h2><span>공용 (src/dash 루트)</span><code>./</code><small>파일 46</small></h2>
+    <div class="grid">
+      <article class="card" data-card><header class="card-h"><div><span class="path">src/dash/</span><h3>메뉴 밖 앱 라우트</h3></div></header>
+        <div class="tbl"><table><thead><tr><th>라우트</th><th>파일</th></tr></thead><tbody>
+        <tr data-q="designsystem designsystem"><td><code>#/designsystem</code></td><td><code>designsystem.tsx</code></td></tr><tr data-q="schedule schedule"><td><code>#/schedule</code></td><td><code>schedule.tsx</code></td></tr><tr data-q="editor editor_page"><td><code>#/editor</code></td><td><code>editor_page.tsx</code></td></tr>
+        </tbody></table></div></article>
+      <article class="card" data-card><header class="card-h"><div><span class="path">src/dash/</span><h3>2개 이상 도메인이 쓰는 공용 모듈</h3></div></header>
+        <ul class="chips" style="padding:0 14px 12px"><li data-q="aggrid_selection.css"><code>aggrid_selection.css</code></li><li data-q="aggrid_selection.tsx"><code>aggrid_selection.tsx</code></li><li data-q="aggrid_shared.css"><code>aggrid_shared.css</code></li><li data-q="aggrid_theme.ts"><code>aggrid_theme.ts</code></li><li data-q="app.tsx"><code>app.tsx</code></li><li data-q="applied_filters.tsx"><code>applied_filters.tsx</code></li><li data-q="charts.tsx"><code>charts.tsx</code></li><li data-q="company_profile_data.ts"><code>company_profile_data.ts</code></li><li data-q="company_profile_modal.tsx"><code>company_profile_modal.tsx</code></li><li data-q="company_profile_model.tsx"><code>company_profile_model.tsx</code></li><li data-q="components.tsx"><code>components.tsx</code></li><li data-q="confirm_combo.tsx"><code>confirm_combo.tsx</code></li><li data-q="data.ts"><code>data.ts</code></li><li data-q="drawer_select.tsx"><code>drawer_select.tsx</code></li><li data-q="due_dilig_checklist_modal.tsx"><code>due_dilig_checklist_modal.tsx</code></li><li data-q="gallery_charts.tsx"><code>gallery_charts.tsx</code></li><li data-q="generic_list.tsx"><code>generic_list.tsx</code></li><li data-q="generic_list_modal.tsx"><code>generic_list_modal.tsx</code></li><li data-q="gp_ratio_detail_modal.tsx"><code>gp_ratio_detail_modal.tsx</code></li><li data-q="gp_ratio_detail_model.ts"><code>gp_ratio_detail_model.ts</code></li><li data-q="gp_spec_modal.tsx"><code>gp_spec_modal.tsx</code></li><li data-q="grid_empty_overlay.tsx"><code>grid_empty_overlay.tsx</code></li><li data-q="grid_frame.tsx"><code>grid_frame.tsx</code></li><li data-q="grid_header_note.tsx"><code>grid_header_note.tsx</code></li><li data-q="icons.tsx"><code>icons.tsx</code></li><li data-q="kv_fill.tsx"><code>kv_fill.tsx</code></li><li data-q="main_widgets.tsx"><code>main_widgets.tsx</code></li><li data-q="mgmt_fee_detail_modal.tsx"><code>mgmt_fee_detail_modal.tsx</code></li><li data-q="mgmt_fee_detail_model.ts"><code>mgmt_fee_detail_model.ts</code></li><li data-q="monthly_report_data.ts"><code>monthly_report_data.ts</code></li><li data-q="monthly_report_modal.tsx"><code>monthly_report_modal.tsx</code></li><li data-q="report.tsx"><code>report.tsx</code></li><li data-q="risk_excel.ts"><code>risk_excel.ts</code></li><li data-q="risk_grid.tsx"><code>risk_grid.tsx</code></li><li data-q="risk_manage.tsx"><code>risk_manage.tsx</code></li><li data-q="risk_page_kit.tsx"><code>risk_page_kit.tsx</code></li><li data-q="risk_table_meta.ts"><code>risk_table_meta.ts</code></li><li data-q="risk_tables_page.tsx"><code>risk_tables_page.tsx</code></li><li data-q="row_context_menu.tsx"><code>row_context_menu.tsx</code></li><li data-q="shell.tsx"><code>shell.tsx</code></li><li data-q="test_src.ts"><code>test_src.ts</code></li><li data-q="tokens.css"><code>tokens.css</code></li><li data-q="trust_manage_kit.tsx"><code>trust_manage_kit.tsx</code></li><li data-q="trust_manage_rows.ts"><code>trust_manage_rows.ts</code></li><li data-q="trust_upload.tsx"><code>trust_upload.tsx</code></li><li data-q="use-hotkey.ts"><code>use-hotkey.ts</code></li></ul>
+        <p class="empty">그 외 공용 폴더: <code>ui/</code> <code>fields/</code> <code>motion/</code> <code>schemas/</code>(레지스트리·타입) <code>assets/</code></p>
+      </article>
+    </div>
+  </section>
+</main>
+<script>
+(function(){
+  var q=document.getElementById('q');
+  q.addEventListener('input',function(){
+    var v=q.value.trim().toLowerCase();
+    document.querySelectorAll('[data-q]').forEach(function(el){el.classList.toggle('hide',!!v&&el.getAttribute('data-q').indexOf(v)<0);});
+    document.querySelectorAll('[data-card]').forEach(function(c){
+      var items=c.querySelectorAll('[data-q]');
+      var any=!items.length||Array.prototype.some.call(items,function(i){return !i.classList.contains('hide');});
+      c.classList.toggle('hide',!!v&&!any);
+    });
+  });
+})();
+</script>
+</body>
+</html>
