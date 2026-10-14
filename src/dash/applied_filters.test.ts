@@ -72,6 +72,19 @@ describe('planChips — 넘치는 만큼 +N, 선택 칩 끌어올림', () => {
     const r = planChips(mk(['a', 'b', 'c', 'd'], 'b'), w, 170, 40);
     expect(r.shown.map((x) => x.id)).toEqual(['a', 'b']);
   });
+  it('wide 칩은 avail 이 측정 폭보다 좁아도 hidden 에 들어가지 않는다', () => {
+    const items = [{ id: 'a:path', kind: 'applied', f: { wide: true } }];
+    const r = planChips(items, { 'a:path': 348 }, 200, 40);
+    expect(r.shown.map((x) => x.id)).toEqual(['a:path']); expect(r.hidden).toEqual([]);
+  });
+  it('wide 칩은 minWidth(160)만 예약 — 뒤 칩을 먼저 접고 wide 는 남긴다', () => {
+    const items = [{ id: 'a:path', kind: 'applied', f: { wide: true } }, { id: 'a:x', kind: 'applied', f: {} }, { id: 'a:y', kind: 'applied', f: {} }];
+    // 160 + 8 + 50 = 218 ≤ 230 → x 는 들어가지만 y(+58)는 넘친다 → 트리거(40+8) 예약 후 재배치: 230-48=182 → x 도 접힘
+    const r = planChips(items, { 'a:path': 348, 'a:x': 50, 'a:y': 50 }, 230, 40);
+    expect(r.shown.map((x) => x.id)).toEqual(['a:path']); expect(r.hidden.map((x) => x.id)).toEqual(['a:x', 'a:y']);
+    const r2 = planChips(items, { 'a:path': 348, 'a:x': 50, 'a:y': 50 }, 300, 40);
+    expect(r2.shown.map((x) => x.id)).toEqual(['a:path', 'a:x', 'a:y']); expect(r2.hidden).toEqual([]);
+  });
 });
 
 describe('activeFilters', () => {
