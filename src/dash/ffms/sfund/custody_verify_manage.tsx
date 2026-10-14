@@ -2,7 +2,7 @@
    출처: S1_26_자펀드수탁관리_실물검증_.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(자펀드·기준일) → 상세필터 드로어(Sheet, apfs-detail-filter). 목업 [조회] 버튼은 즉시 반영형이라 없고,
+   - 검색박스(자펀드·기준일·종목) → 상세필터 드로어(Sheet, apfs-detail-filter). 종목은 2026-09 회의록 추가 항목. 목업 [조회] 버튼은 즉시 반영형이라 없고,
      [엑셀] 버튼은 툴바 kebab '내보내기 (Excel)'로 흡수한다(apfs-grid: 독립 엑셀 버튼 금지). 검색어는 OFF.
    - 섹션 3개(투자자산 · 미투자자산 거래 · 미투자자산) → **GridFrame 하나 안에 세로로 쌓은 AG Grid 3개**.
      세 표 모두 2단 헤더(운용사·수탁기관·일치여부·메모)라 `ColGroupDef` + `marryChildren`(apfs-aggrid).
@@ -11,17 +11,24 @@
      (값 없음 표식이라 상태색을 주면 "판정됨"으로 잘못 읽힌다).
    - 메모 그룹 '등록' 버튼 → 자펀드실물검증 메모 등록 팝업(`custody_verify_memo_modal.tsx`).
      날짜·내용 열은 최신 메모(`memos[0]`)를 보여주고, 저장하면 그 행 `memos` 선두에 불변으로 쌓인다.
-   - 합계행·행 선택·페이지네이션·등록 없음 → selbar·pinned 합계·페이저·전체보기 토글도 없다(목업 동일).
+   - (2026-10-14 사용자 결정 — 기획서 회의록 반영분 이식) 섹션1 `자산유형` 열(자펀드 다음) · '등록' 열 [수정] 버튼
+     → 수탁기관 값 수정 팝업(`custody_verify_edit_modal.tsx`, 저장 시 일치여부 재계산) · 자펀드 셀 링크(+ 셀 Enter)
+     → 자펀드 명세 팝업(`SubFundSpecModal` + `SPEC_SAMPLE_SUBFUND`, 수시보고 화면과 같은 샘플 1건).
+   - 합계행·행 선택·페이지네이션·행 추가 없음 → selbar·pinned 합계·페이저·전체보기 토글도 없다(목업 동일).
    - 엑셀 → SheetJS 워크북 1개 + 시트 3개(섹션별 2단 헤더 병합 자동 산출).
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
 
    한계·가정(결정 기록)
    - **섹션2·3은 원문 샘플이 없다**(목업 `<tbody>`가 '조회된 데이터가 없습니다.' 한 줄) → 빈 상태로 둔다. 값 창작 금지.
-   - **조회조건은 추론**이다 — 목업에 [검색] 영역 자체가 없어 자펀드·기준일 2항목을 목업 설계메모대로 넣었다.
-     기준일은 행 컬럼과 미연동이라 `noop`(데이터 연동 후 적용)이고, 실제로 거르는 건 자펀드뿐이다.
-   - **금액 단위 토글 미적용** — 편집 팝업(메모 등록)이 있는 관리화면이라 규칙상 제외(목업 설계메모와 동일 결론).
+   - **조회조건은 추론**이다 — 목업에 [검색] 영역 자체가 없어 자펀드·기준일·종목 3항목을 목업대로 넣었다.
+     기준일은 행 컬럼과 미연동이라 `noop`(데이터 연동 후 적용)이고, 실제로 거르는 건 자펀드·종목이다.
+     종목은 부분일치로 섹션1 투자기업(운용사·수탁기관)·섹션2 종목(운용사·수탁기관)을 거르고, 종목 개념이 없는
+     섹션3(계좌번호)은 거르지 않는다.
+   - **수정은 섹션1만** — 기획서가 수정 버튼·판단 기준(자산유형)을 섹션1에만 정의한다. 일치여부 재계산은 그 행의
+     운용사 값과 비교한다(잔액↔잔액(A-B), 보유주수↔보유주수). 채권이면 보유주수 일치여부는 '-'.
+   - **금액 단위 토글 미적용** — 편집 팝업(메모 등록·값 수정)이 있는 관리화면이라 규칙상 제외(목업 설계메모와 동일 결론).
      단위는 툴바 캡션 `단위: 원`으로만 표기한다.
-   - **메모는 로컬 state**다(백엔드 없음) — 새로고침하면 초기 더미로 되돌아간다.
+   - **메모·값 수정은 로컬 state**다(백엔드 없음) — 새로고침하면 초기 더미로 되돌아간다.
    - 빈 섹션 그리드는 높이 0으로 접히지 않는다 → 래퍼 `minHeight`·`EmptyState` 대체가 필요 없다. 근거:
      AG Grid v35 Theming API 주입 CSS의 `.ag-layout-auto-height .ag-center-cols-viewport{min-height:150px}`
      (node_modules/ag-grid-community/dist/package/main.esm.mjs 실측) — 2단 헤더 80px + 본문 150px가 확보돼
@@ -39,7 +46,7 @@ import type { LeafTabsSlot } from '../leaf_tabs';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, ColGroupDef, ValueFormatterParams, CellStyle } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, ValueFormatterParams, CellStyle, CellKeyDownEvent } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { toast } from '../../ui/sonner';
@@ -47,6 +54,9 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { PeriodPicker } from '../../ui/period-picker';
 import { CustodyMemoModal } from './custody_verify_memo_modal';
 import type { CustodyMemoCtx } from './custody_verify_memo_modal';
+import { CustodyEditModal } from './custody_verify_edit_modal';
+import type { CustodyEditValue } from './custody_verify_edit_modal';
+import { SubFundSpecModal, SPEC_SAMPLE_SUBFUND } from '../report/subfund_spec_modal';   // 샘플 행 = 명세 팝업 공유본
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
 const { Button, IconBtn, StatusBadge } = UI;
@@ -61,8 +71,9 @@ export interface VerifyMemo { date: string; content: string }
 
 export interface InvestAssetRow {
   id: string; no: number; fn: string;
+  assetType: string;                                                                          // 자산유형(채권=액면·잔액 기준)
   gpCorp: string; gpShares: number | null; gpPrin: number; gpImpair: number; gpBal: number;   // 운용사 장부
-  cuCorp: string; cuShares: number | null; cuBal: number;                                     // 수탁기관 보관내역
+  cuCorp: string; cuShares: number | null; cuBal: number | null;                              // 수탁기관 보관내역(수정 팝업에서 비울 수 있다)
   matchShares: MatchResult; matchBal: MatchResult;
   memos: VerifyMemo[];
 }
@@ -83,9 +94,10 @@ export interface NonInvestRow {
 
 /* 데모 데이터 — 목업 `<tbody>` 값 그대로(창작 없음).
    섹션1 1행: 전환사채 원금 A=25억, 감액 B=25억 → 운용사 잔액 A-B=0 이나 수탁 잔액 25억 → **불일치**(목업 설계메모).
-   보유주수는 양쪽 모두 '-'(주식이 아닌 사채) → 숫자 N/A는 null(문자 '-' 금지, apfs-manage-page SOP 5). */
+   보유주수는 양쪽 모두 '-'(주식이 아닌 사채) → 숫자 N/A는 null(문자 '-' 금지, apfs-manage-page SOP 5).
+   자산유형 '채권'은 목업 행 `<span class="tag b">채권</span>` 그대로(설계메모: 유일한 실데이터가 전환사채). */
 const INVEST_DEMO: InvestAssetRow[] = [
-  { id: 'cv-i1', no: 1, fn: '유니 수산식품 투자조합1호',
+  { id: 'cv-i1', no: 1, fn: '유니 수산식품 투자조합1호', assetType: '채권',
     gpCorp: '(주)남양 f&b', gpShares: null, gpPrin: 2_500_000_000, gpImpair: 2_500_000_000, gpBal: 0,
     cuCorp: '주식회사남양에프앤비무보증사모전환사채', cuShares: null, cuBal: 2_500_000_000,
     matchShares: '-', matchBal: '불일치', memos: [] },
@@ -136,15 +148,37 @@ function match<T>(field: ColDef<T>['field'], header: string, width = 106): ColDe
 
 type SectionKey = 'invest' | 'trade' | 'noninvest';
 type OpenMemo = (sec: SectionKey, id: string) => void;
+/** 그리드 셀 액션 — 모두 안정 참조(useCallback)이고 id만 넘긴다. 대상 행은 팝업 렌더 시점에 찾는다
+    (행을 캡처하면 수정 때마다 컬럼이 재생성돼 폭이 리셋된다 — apfs-aggrid 계약6) */
+interface CellActions { openMemo: OpenMemo; openFundSpec: () => void; openEdit: (id: string) => void }
 /** 세 섹션 행의 공통 계약(메모 그룹이 요구하는 최소 형태) */
 type MemoRow = { id: string; no: number; memos: VerifyMemo[] };
 
-/* 메모 등록 버튼 컬럼의 colId — 조작 요소라 엑셀 직렬화에서 제외한다(화면=엑셀 불변식의 유일한 예외) */
+/* 메모 등록(+섹션1 수정) 버튼 컬럼의 colId — 조작 요소라 엑셀 직렬화에서 제외한다(화면=엑셀 불변식의 유일한 예외) */
 const MEMO_ACTION_COL = 'memoAdd';
+
+/* 셀 내 링크 — 클릭 시 자펀드 명세 팝업(`occasional_report_manage.tsx` LinkCell 동형 로컬 복사).
+   외관: primary 색 + 600, **평상시 밑줄 없음 / hover에만 밑줄**.
+   ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다. */
+function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
+  return (
+    <button
+      type="button" title={hint} onClick={onClick}
+      className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
+      style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
+      {value}
+    </button>
+  );
+}
+/* 자펀드 컬럼(세 섹션 공통) — 셀 링크 → 자펀드 명세. 셀 Enter는 그리드 onCellKeyDown이 같은 팝업을 연다 */
+function fundCol<T extends { fn: string }>(openFundSpec: () => void): ColDef<T> {
+  return { ...txt<T>('fn' as ColDef<T>['field'], '자펀드', 200, 280),
+    cellRenderer: (p: { value: string }) => <LinkCell value={p.value} hint="자펀드 명세 보기" onClick={openFundSpec} /> };
+}
 
 /* 메모 그룹(날짜·내용·등록) — 세 섹션이 동일하다. 날짜/내용은 최신 메모(memos[0]) 파생값이라
    `field`가 아니라 `valueGetter`(+colId)로 만든다. colId는 그리드마다 독립이라 섹션 간 충돌 없음. */
-function memoGroup<T extends MemoRow>(sec: SectionKey, secLabel: string, openMemo: OpenMemo): ColGroupDef<T> {
+function memoGroup<T extends MemoRow>(sec: SectionKey, secLabel: string, openMemo: OpenMemo, openEdit?: (id: string) => void): ColGroupDef<T> {
   return {
     headerName: '메모', marryChildren: true,
     children: [
@@ -155,22 +189,34 @@ function memoGroup<T extends MemoRow>(sec: SectionKey, secLabel: string, openMem
         valueGetter: (p) => p.data?.memos[0]?.content ?? null,
         cellRenderer: (p: { value: string | null }) => (p.value == null ? dashCell : <span className="min-w-0 truncate">{p.value}</span>) },
       /* 등록 — 액션 컬럼(정렬·엑셀 제외). UI.Button은 aria-label을 받지 않으므로 접근名은 sr-only로 보강한다
-         ("투자자산 1행 메모"). */
-      { colId: MEMO_ACTION_COL, headerName: '등록', width: 96, sortable: false, cellStyle: flexCenter,
+         ("투자자산 1행 메모"). openEdit가 있으면(섹션1) 메모 옆에 [수정] — 기획서 회의록 반영분(2026-10-14 이식) */
+      { colId: MEMO_ACTION_COL, headerName: '등록', width: openEdit ? 150 : 96, sortable: false, cellStyle: { ...flexCenter, gap: 6 },
         cellRenderer: (p: { data?: T }) => (p.data
-          ? <Button variant="outline" size="sm" onClick={() => openMemo(sec, p.data!.id)}>
-              <span className="sr-only">{secLabel + ' ' + p.data.no + '행 '}</span>메모
-            </Button>
+          ? <>
+              <Button variant="outline" size="sm" onClick={() => openMemo(sec, p.data!.id)}>
+                <span className="sr-only">{secLabel + ' ' + p.data.no + '행 '}</span>메모
+              </Button>
+              {openEdit && (
+                <Button variant="outline" size="sm" onClick={() => openEdit(p.data!.id)}>
+                  <span className="sr-only">{secLabel + ' ' + p.data.no + '행 수탁기관 값 '}</span>수정
+                </Button>
+              )}
+            </>
           : null) },
     ],
   };
 }
 
-/* ① 투자자산 — 운용사 5열 / 수탁기관 3열 / 일치여부 2열 / 메모 3열 */
-function makeInvestCols(openMemo: OpenMemo): (ColDef<InvestAssetRow> | ColGroupDef<InvestAssetRow>)[] {
+/* 자산유형 셀 — 목업 `.tag b`(분류 태그). 상태가 아니라 분류라 중립 정보 톤 */
+const assetTypeCell = (p: { value: string | null }) =>
+  (p.value ? <StatusBadge tone="info" label={p.value} size="lg" /> : dashCell);
+
+/* ① 투자자산 — 자산유형 1열 / 운용사 5열 / 수탁기관 3열 / 일치여부 2열 / 메모 3열 */
+function makeInvestCols({ openMemo, openFundSpec, openEdit }: CellActions): (ColDef<InvestAssetRow> | ColGroupDef<InvestAssetRow>)[] {
   return [
     seq<InvestAssetRow>('no'),
-    txt<InvestAssetRow>('fn', '자펀드', 200, 280),
+    fundCol<InvestAssetRow>(openFundSpec),
+    { field: 'assetType', headerName: '자산유형', width: 100, cellStyle: flexCenter, cellRenderer: assetTypeCell },
     { headerName: '운용사', marryChildren: true, children: [
       txt<InvestAssetRow>('gpCorp', '투자기업', 170, 260),
       num<InvestAssetRow>('gpShares', '보유주수'),
@@ -187,15 +233,15 @@ function makeInvestCols(openMemo: OpenMemo): (ColDef<InvestAssetRow> | ColGroupD
       match<InvestAssetRow>('matchShares', '보유주수'),
       match<InvestAssetRow>('matchBal', '잔액'),
     ] },
-    memoGroup<InvestAssetRow>('invest', '투자자산', openMemo),
+    memoGroup<InvestAssetRow>('invest', '투자자산', openMemo, openEdit),
   ];
 }
 
 /* ② 미투자자산 거래 — 종목·보유주수·잔액 대사 */
-function makeTradeCols(openMemo: OpenMemo): (ColDef<NonInvestTradeRow> | ColGroupDef<NonInvestTradeRow>)[] {
+function makeTradeCols({ openMemo, openFundSpec }: CellActions): (ColDef<NonInvestTradeRow> | ColGroupDef<NonInvestTradeRow>)[] {
   return [
     seq<NonInvestTradeRow>('no'),
-    txt<NonInvestTradeRow>('fn', '자펀드', 200, 280),
+    fundCol<NonInvestTradeRow>(openFundSpec),
     { headerName: '운용사', marryChildren: true, children: [
       txt<NonInvestTradeRow>('gpItem', '종목', 180, 280),
       num<NonInvestTradeRow>('gpShares', '보유주수'),
@@ -215,10 +261,10 @@ function makeTradeCols(openMemo: OpenMemo): (ColDef<NonInvestTradeRow> | ColGrou
 }
 
 /* ③ 미투자자산 — 계좌번호·잔액 대사. 일치여부는 잔액 하나뿐이라 **단일 컬럼**(목업 rowspan=2) */
-function makeNonInvestCols(openMemo: OpenMemo): (ColDef<NonInvestRow> | ColGroupDef<NonInvestRow>)[] {
+function makeNonInvestCols({ openMemo, openFundSpec }: CellActions): (ColDef<NonInvestRow> | ColGroupDef<NonInvestRow>)[] {
   return [
     seq<NonInvestRow>('no'),
-    txt<NonInvestRow>('fn', '자펀드', 200, 280),
+    fundCol<NonInvestRow>(openFundSpec),
     { headerName: '운용사', marryChildren: true, children: [
       txt<NonInvestRow>('gpAcct', '계좌번호', 180, 280),
       amt<NonInvestRow>('gpBal', '잔액'),
@@ -298,7 +344,28 @@ const NO_ROWS = '<span style="padding:40px 0;color:var(--muted-foreground);font-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
-type ModalState = null | { kind: 'memo'; sec: SectionKey; id: string };
+type ModalState = null
+  | { kind: 'memo'; sec: SectionKey; id: string }
+  | { kind: 'edit'; id: string }        // 섹션1 수탁기관 값 수정
+  | { kind: 'fundSpec' };               // 자펀드 명세(샘플 1건 — 행 무관)
+
+/* 수탁기관 값 수정 → 일치여부 재계산. 운용사 값은 그 행의 장부값(목업 JS는 실데이터 0을 하드코딩했다).
+   잔액: 수탁 잔액 ↔ 운용사 잔액(A-B). 보유주수: 채권이면 판정 대상 아님('-'), 아니면 양쪽 비교(둘 다 없으면 '-'). */
+function applyCustodyEdit(r: InvestAssetRow, v: CustodyEditValue): InvestAssetRow {
+  const matchBal: MatchResult = v.cuBal === r.gpBal ? '일치' : '불일치';
+  const matchShares: MatchResult = r.assetType === '채권' || (v.cuShares == null && r.gpShares == null)
+    ? '-'
+    : v.cuShares === r.gpShares ? '일치' : '불일치';
+  return { ...r, cuShares: v.cuShares, cuBal: v.cuBal, matchShares, matchBal };
+}
+
+/* 셀 Enter — 자펀드 셀이면 명세 팝업. 셀 안 링크 버튼에 초점이 있으면 버튼 click이 이미 열므로 건너뛴다(중복 오픈 방지) */
+function fundCellEnter(e: CellKeyDownEvent<any>, open: () => void) {
+  const ev = e.event as KeyboardEvent | null | undefined;
+  if (ev?.key !== 'Enter') return;
+  if ((ev.target as HTMLElement | null)?.closest?.('a,button')) return;
+  if (e.column.getColId() === 'fn') open();
+}
 
 /** 메모 선두 추가 — 불변(새 배열 + 새 행 객체). 세 섹션이 같은 규칙을 공유한다 */
 function prependMemo<T extends MemoRow>(rows: T[], id: string, memo: VerifyMemo): T[] {
@@ -315,16 +382,19 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
   useHotkey(HOTKEYS.print.combo, () => window.print());
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
-  /* 필터 — 드로어 2항목(목업 검색박스 순서 그대로). 실제로 거르는 건 자펀드뿐이다.
+  /* 필터 — 드로어 3항목(목업 검색박스 순서 그대로: 자펀드·기준일·종목). 실제로 거르는 건 자펀드·종목이다.
      행이 세 배열로 갈려 있어 External Filter(그리드 1개 전제)가 아니라 **React 쪽에서 각각 filter**한다. */
   const [filterOpen, setFilterOpen] = useState(false);
   const [fFund, setFFund] = useState('');
   const [fAsOf, setFAsOf] = useState(BASE_DATE);   // 기준일 — 행 컬럼 아님(no-op). 메모 팝업 기준일자 시드
+  const [fItem, setFItem] = useState('');          // 종목 — 부분일치(섹션1 투자기업 · 섹션2 종목, 섹션3 제외)
   /* 초기화는 기준일을 빈 값이 아니라 목업 기본값으로 되돌린다(위 BASE_DATE 주석 — 팝업 시드가 비면 저장이 막힌다) */
-  const clearFilters = () => { setFFund(''); setFAsOf(BASE_DATE); };
+  const clearFilters = () => { setFFund(''); setFAsOf(BASE_DATE); setFItem(''); };
 
-  const investRows = useMemo(() => invest.filter((r) => !fFund || r.fn === fFund), [invest, fFund]);
-  const tradeRows = useMemo(() => trade.filter((r) => !fFund || r.fn === fFund), [trade, fFund]);
+  const q = fItem.trim();
+  const hit = (...names: string[]) => !q || names.some((n) => n.includes(q));
+  const investRows = useMemo(() => invest.filter((r) => (!fFund || r.fn === fFund) && hit(r.gpCorp, r.cuCorp)), [invest, fFund, q]);
+  const tradeRows = useMemo(() => trade.filter((r) => (!fFund || r.fn === fFund) && hit(r.gpItem, r.cuItem)), [trade, fFund, q]);
   const nonInvestRows = useMemo(() => nonInvest.filter((r) => !fFund || r.fn === fFund), [nonInvest, fFund]);
   /* 자펀드 옵션 — 세 섹션 행에서 파생(원문에 별도 코드 목록이 없다) */
   const fundOptions = useMemo(
@@ -333,12 +403,25 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
   );
 
 
-  /* 컬럼 정의 — openMemo(안정)만 캡처하므로 deps는 [openMemo]. 매 렌더 새 배열이면 그리드가 컬럼을
-     재생성하며 폭이 선언값으로 되돌아간다(apfs-aggrid 계약6). */
+  /* 컬럼 정의 — 셀 액션(전부 setModal만 부르는 안정 참조)만 캡처하므로 deps는 [actions]. 매 렌더 새 배열이면
+     그리드가 컬럼을 재생성하며 폭이 선언값으로 되돌아간다(apfs-aggrid 계약6). */
   const openMemo = useCallback<OpenMemo>((sec, id) => setModal({ kind: 'memo', sec, id }), []);
-  const investCols = useMemo(() => makeInvestCols(openMemo), [openMemo]);
-  const tradeCols = useMemo(() => makeTradeCols(openMemo), [openMemo]);
-  const nonInvestCols = useMemo(() => makeNonInvestCols(openMemo), [openMemo]);
+  const openFundSpec = useCallback(() => setModal({ kind: 'fundSpec' }), []);
+  const openEdit = useCallback((id: string) => setModal({ kind: 'edit', id }), []);
+  const actions = useMemo<CellActions>(() => ({ openMemo, openFundSpec, openEdit }), [openMemo, openFundSpec, openEdit]);
+  const investCols = useMemo(() => makeInvestCols(actions), [actions]);
+  const tradeCols = useMemo(() => makeTradeCols(actions), [actions]);
+  const nonInvestCols = useMemo(() => makeNonInvestCols(actions), [actions]);
+  const onCellKeyDown = useCallback((e: CellKeyDownEvent<any>) => fundCellEnter(e, openFundSpec), [openFundSpec]);
+
+  /* 수정 팝업 대상 — 팝업 렌더 시점에 찾는다(컬럼이 행을 캡처하지 않게) */
+  const editTarget = modal?.kind === 'edit' ? invest.find((r) => r.id === modal.id) ?? null : null;
+  const saveEdit = (v: CustodyEditValue) => {
+    if (modal?.kind !== 'edit') return;
+    const { id } = modal;
+    setInvest((prev) => prev.map((r) => (r.id === id ? applyCustodyEdit(r, v) : r)));
+    setModal(null);
+  };
 
   /* 메모 팝업 대상 — 섹션별로 대상명 슬롯이 다르다(투자기업 / 종목 / 계좌번호) */
   const memoTarget = useMemo((): { ctx: CustodyMemoCtx; history: VerifyMemo[] } | null => {
@@ -408,10 +491,13 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
       title={tabs?.label ?? "자펀드 수탁관리"}
       favRoute={tabs?.route ?? "custody-verify"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 적용 중인 드로어 값 칩 = appliedFilters(둘째 줄). 주 필터(FilterChip 그룹)는 없어 toolbarLeft 도 없다 — 목업 검색박스가 자펀드·기준일 2개뿐이고
+      /* 적용 중인 드로어 값 칩 = appliedFilters(둘째 줄). 주 필터(FilterChip 그룹)는 없어 toolbarLeft 도 없다 — 목업 검색박스가 자펀드·기준일·종목 3개이고
          자펀드는 값이 하나라 칩 그룹으로 펼칠 축이 아니다. 행 선택이 없어 selbar도 없다.
          값만 표시(항목명 접두사 없음) + ×. 기준일은 no-op이라 칩을 만들지 않는다 */
-      appliedFilters={[{ label: '자펀드', value: fFund, onClear: () => setFFund('') }]}
+      appliedFilters={[
+        { label: '자펀드', value: fFund, onClear: () => setFFund('') },
+        { label: '종목', value: fItem.trim(), onClear: () => setFItem('') },
+      ]}
       toolbarRight={<>
         {/* 금액 단위 표기 — 캡션. 단위 토글은 규칙상 미적용(파일 상단 '한계') */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
@@ -435,6 +521,7 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
           autoSizeStrategy={AUTO_SIZE_CONTENT}   // 내용 맞춤(15컬럼 넓은 표) — 잘림 방지, 긴 명칭 컬럼은 maxWidth 캡
           defaultColDef={DEFAULT_COL_DEF}
           overlayNoRowsTemplate={NO_ROWS}
+          onCellKeyDown={onCellKeyDown}
         />
       </div>
 
@@ -450,6 +537,7 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
           autoSizeStrategy={AUTO_SIZE_CONTENT}
           defaultColDef={DEFAULT_COL_DEF}
           overlayNoRowsTemplate={NO_ROWS}
+          onCellKeyDown={onCellKeyDown}
         />
       </div>
 
@@ -465,11 +553,12 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
           autoSizeStrategy={AUTO_SIZE_CONTENT}
           defaultColDef={DEFAULT_COL_DEF}
           overlayNoRowsTemplate={NO_ROWS}
+          onCellKeyDown={onCellKeyDown}
         />
       </div>
       </LeafTabBody>
 
-      {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(자펀드·기준일). 검색어는 미사용(OFF) ── */}
+      {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(자펀드·기준일·종목). 검색어는 미사용(OFF) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -484,6 +573,10 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
               <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
                 <PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일" />
               </div>
+            </DrawerField>
+            {/* 종목 — 기획서 2026-09 회의록 추가 항목(목업 placeholder '종목명 검색' 그대로). 부분일치 */}
+            <DrawerField label="종목">
+              <input type="text" value={fItem} onChange={(e) => setFItem(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="종목명 검색" style={inputStyle('text')} />
             </DrawerField>
           </div>
           <SheetFooter>
@@ -503,6 +596,20 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
           onClose={() => setModal(null)}
         />
       )}
+
+      {/* ── 수탁기관 값 수정 팝업(섹션1) — 저장 시 일치여부 재계산(applyCustodyEdit) ── */}
+      {modal?.kind === 'edit' && editTarget && (
+        <CustodyEditModal
+          assetType={editTarget.assetType}
+          cuShares={editTarget.cuShares}
+          cuBal={editTarget.cuBal}
+          onSave={saveEdit}
+          onClose={() => setModal(null)}
+        />
+      )}
+
+      {/* ── 자펀드 명세 — 샘플 1건(행에 SubFundRow 원천이 없다 — 수시보고 화면과 같은 한계) ── */}
+      {modal?.kind === 'fundSpec' && <SubFundSpecModal row={SPEC_SAMPLE_SUBFUND} onClose={() => setModal(null)} />}
     </GridFrame>
   );
 }

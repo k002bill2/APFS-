@@ -11,7 +11,10 @@
    데이터·표 마크업은 `company_profile_model.tsx` 가 SSOT 다(같은 원문을 팝업도 쓴다 — 복사 금지).
    스키마 `schemas/투자기업정보_통합.ts` 는 삭제하지 않는다: 라우트 레지스트리(resolveSchema)가
    DEFAULT_SCHEMA 로 떨어지지 않게 하는 등록부이자, clipboard 캡처 기반 등록/수정 양식의
-   provenance 기록이다(그 21필드는 S1_30 이 아니라 별도 캡처가 출처다 — 출처를 바꿔 적지 않는다). */
+   provenance 기록이다(그 21필드는 S1_30 이 아니라 별도 캡처가 출처다 — 출처를 바꿔 적지 않는다).
+
+   조회 대상 경로 칩(모펀드 › 운용사 › 자펀드 › 투자기업) 위치: 툴바 좌측(2026-10-14 사용자 지시, 09-24 본문 배치
+   결정 번복). 툴바 우측 = 금액 단위 · 상세필터(드로어, 4항목 noop) · 조회(toast 만). */
 import { useState } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
@@ -20,30 +23,84 @@ import { CompanyProfileBody } from './company_profile_model';
 import { SOURCE_COUNTS, CO_NAME } from './company_profile_data';
 import { UNITS, DEFAULT_UNIT } from '../../schemas/unit';
 import type { Unit } from '../../schemas/unit';
+import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
+import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본
+import { toast } from '../../ui/sonner';
 
 const { Button, SegTabs, IconBtn } = UI;
 
-/* 원문 S1_30 검색박스의 값 — select 지만 옵션이 사실상 단일이라 표시 전용으로 옮긴다.
-   문자열은 원문 그대로(창작 금지). */
+/* 원문 S1_30 검색박스의 값(= 기본값) — 문자열·옵션은 원문 그대로(창작 금지).
+   원문 각 select 에 옵션이 하나씩뿐이다(모펀드만 농식품모태펀드/MOAF 2개). */
 const QUERY_FIELDS = [
   { label: '모펀드', value: '농식품모태펀드' },
   { label: '운용사', value: 'KB증권' },
   { label: '자펀드', value: '현대동양농식품사모투자전문회사' },
   { label: '투자기업', value: CO_NAME },
 ] as const;
+const MF_OPTIONS = ['농식품모태펀드', 'MOAF'];
+const GP_OPTIONS = ['KB증권'];
+const FUND_OPTIONS = ['현대동양농식품사모투자전문회사'];
+const CO_OPTIONS = [CO_NAME];
+
+/* 상세필터 드로어 필드 — regular_report_manage 의 DrawerField 패턴 그대로(noop = 미연동 캡션) */
+function DrawerField({ label, noop, children }: { label: string; noop?: boolean; children: React.ReactNode }) {
+  return (
+    <label className="block mb-4">
+      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
+        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+      </span>
+      {children}
+    </label>
+  );
+}
 
 export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
   useHotkey(HOTKEYS.print.combo, () => window.print());
+  /* 조회 대상 4종 SSOT — 툴바 경로 칩과 상세필터 드로어가 공유한다. 실데이터가 1건뿐이라 본문은 바뀌지 않는다 */
+  const [fMf, setFMf] = useState<string>(QUERY_FIELDS[0].value);
+  const [fGp, setFGp] = useState<string>(QUERY_FIELDS[1].value);
+  const [fFund, setFFund] = useState<string>(QUERY_FIELDS[2].value);
+  const [fCo, setFCo] = useState<string>(QUERY_FIELDS[3].value);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const resetFilters = () => { setFMf(QUERY_FIELDS[0].value); setFGp(QUERY_FIELDS[1].value); setFFund(QUERY_FIELDS[2].value); setFCo(QUERY_FIELDS[3].value); };
+  /* 조회 — 필터를 기본값으로 되돌리지 않는다(선택한 조회 대상 유지) */
+  const refresh = () => { toast.success('조회되었습니다'); };
+  const path = [
+    { label: '모펀드', value: fMf },
+    { label: '운용사', value: fGp },
+    { label: '자펀드', value: fFund },
+    { label: '투자기업', value: fCo },
+  ];
   return (
     <GridFrame
       crumbs={['홈', '투자자산관리', '투자기업정보', '투자기업정보(통합)']}
       title="투자기업정보(통합)"
       favRoute="투자기업정보(통합)"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
+      /* 원문 검색조건 4종(모펀드·운용사·자펀드·투자기업) 경로 칩 — 2026-09-16 Codex 지적으로 복원.
+         위치: 툴바 좌측(2026-10-14 사용자 지시, 09-24 본문 배치 결정 번복). 값 변경은 상세필터 드로어에서.
+         형태: 디자인 시안(2026-09-24)의 경로 칩 — 모펀드 › 운용사 › 자펀드 › 투자기업.
+         툴바 좌측 래퍼가 한 줄(nowrap·overflow-hidden) 규약이라 줄바꿈 대신 칩별 말줄임으로 좁은 폭을 버틴다. */
+      toolbarLeft={(
+        <div role="group" aria-label="조회 대상" className="flex items-center gap-1.5 min-w-0">
+          {path.map(({ label, value }, i) => (
+            <span key={label} className="inline-flex items-center gap-1.5 min-w-0">
+              {i > 0 && <span className="text-caption shrink-0" aria-hidden="true">›</span>}
+              <span className="inline-flex items-center gap-2 rounded-full border border-solid border-border bg-card min-w-0"
+                style={{ height: 28, padding: '0 10px', fontSize: 13, maxWidth: 320 }}>
+                <span className="text-muted-foreground shrink-0">{label}</span>
+                <b className="font-semibold text-foreground" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value || '전체'}</b>
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
       toolbarRight={<>
         <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
         <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={(
         <span>
@@ -52,27 +109,31 @@ export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
       )}
       footerRight={<FooterActions />}>
       {/* 원문이 세 표를 세로로 쌓는 상세 화면이라 탭으로 나누지 않는다 — 한 기업의 단면을 한 번에 본다 */}
-      <div style={{ padding: '20px 2px 8px' }}>
-        {/* 원문 검색조건 4종(모펀드·운용사·자펀드·투자기업) 복원 — 2026-09-16 Codex 지적.
-            ⚠ 원문 각 select 에 **옵션이 하나씩뿐**이다(모펀드만 농식품모태펀드/MOAF 2개).
-            그래서 고를 것이 없는 읽기전용 표시로 둔다 — 없는 선택지를 지어내면 "조회했는데 안 바뀐다"는
-            거짓 기대를 만든다. 실데이터가 (주)선양 1건뿐인 것도 같은 제약이다(모델 헤더 참조).
-            위치: 필터(툴바) 영역이 아니라 본문 첫 줄 — 조작할 수 없는 값이라 필터처럼 보이면 안 된다(2026-09-24 사용자 지시).
-            형태: 디자인 시안(2026-09-24)의 경로 칩 — 모펀드 › 운용사 › 자펀드 › 투자기업 */}
-        <div role="group" aria-label="조회 대상" className="mb-7 flex flex-wrap items-center gap-1.5">
-          {QUERY_FIELDS.map(({ label, value }, i) => (
-            <span key={label} className="inline-flex items-center gap-1.5">
-              {i > 0 && <span className="text-caption" aria-hidden="true">›</span>}
-              <span className="inline-flex items-center gap-2 rounded-full border border-solid border-border bg-card"
-                style={{ height: 32, padding: '0 12px', fontSize: 13, maxWidth: 320 }}>
-                <span className="text-muted-foreground shrink-0">{label}</span>
-                <b className="font-semibold text-foreground" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</b>
-              </span>
-            </span>
-          ))}
-        </div>
+      <div style={{ padding: '16px 2px 8px' }}>
         <CompanyProfileBody variant="page" unit={unit} />
       </div>
+
+      {/* 상세필터 드로어 — 선례 regular_report_manage 와 동일(Sheet right · DrawerSelect).
+          실데이터가 (주)선양 1건뿐이라 4항목 모두 noop 캡션으로 "적용해도 본문은 그대로"임을 알린다 */}
+      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
+          <SheetHeader>
+            <SheetTitle>상세 필터</SheetTitle>
+            <SheetDescription className="sr-only">조회 대상 투자기업을 고르는 상세 필터</SheetDescription>
+            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
+            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={MF_OPTIONS} /></DrawerField>
+            <DrawerField label="운용사" noop><DrawerSelect value={fGp} onChange={setFGp} options={GP_OPTIONS} /></DrawerField>
+            <DrawerField label="자펀드" noop><DrawerSelect value={fFund} onChange={setFFund} options={FUND_OPTIONS} /></DrawerField>
+            <DrawerField label="투자기업" noop><DrawerSelect value={fCo} onChange={setFCo} options={CO_OPTIONS} /></DrawerField>
+          </div>
+          <SheetFooter>
+            <Button variant="outline" size="md" onClick={resetFilters}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </GridFrame>
   );
 }
