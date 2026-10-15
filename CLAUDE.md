@@ -22,7 +22,7 @@ APFS/
 ├── tailwind.config.js          # CDN 인라인 config 재현 (preflight:false, CSS변수 컬러, darkMode:class)
 ├── postcss.config.js           # tailwindcss + autoprefixer
 ├── package.json                # react, react-dom, vite, tailwindcss, typescript ...
-├── vercel.json                 # framework=vite, buildCommand=vite build, outputDirectory=dist
+├── vercel.json                 # framework=vite, buildCommand=npm run lint && vite build, outputDirectory=dist
 └── src/
     ├── main.ts                 # 엔트리: tailwind.css + tokens.css + app import
     ├── styles/tailwind.css     # @tailwind base/components/utilities
@@ -70,7 +70,7 @@ APFS/
 ## 실행 방법
 
 - `localStorage`에 테마(라이트/다크) 설정을 영속화합니다.
-- 배포: `main`에 push하면 Vercel이 `vite build` 후 `dist/`를 서빙합니다(자동 배포).
+- 배포: `main`에 push하면 Vercel이 `npm run lint && vite build` 후 `dist/`를 서빙합니다(자동 배포). lint error 가 1건이라도 있으면 빌드가 실패해 배포되지 않는다 — PR 프리뷰 빌드도 같은 명령이라 머지 전 Vercel 체크에서 먼저 드러난다.
 
 ## 브랜치 작업 = 워크트리 (공유 체크아웃은 `main` 고정)
 
