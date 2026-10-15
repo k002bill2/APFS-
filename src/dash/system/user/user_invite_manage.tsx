@@ -11,11 +11,9 @@
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음.
    ⚠ 실제 메일 발송·계정 생성·사전 승인이 아니다 — 화면 로컬 더미 상태만(브리프). 실명 아님. */
 import '../../aggrid_shared.css';
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import type { CSSProperties } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { UI } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)

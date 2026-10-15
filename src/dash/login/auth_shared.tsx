@@ -97,11 +97,12 @@ export function Toast({ toast }: { toast: (NonNullable<ToastState> & { hiding?: 
   /* 마운트 다음 프레임에 is-open — transition 기반 레시피라 닫힌 상태로 먼저 그려져야 열림 전이가 잡힌다. */
   const [open, setOpen] = useState(false);
   const key = toast ? toast.msg + (toast.error ? '!' : '') : '';
+  const shown = !!toast;
   useEffect(() => {
-    if (!toast) { setOpen(false); return; }
+    if (!shown) { setOpen(false); return; }
     const id = requestAnimationFrame(() => setOpen(true));
     return () => cancelAnimationFrame(id);
-  }, [key, !!toast]);
+  }, [key, shown]);
   return (
     <div aria-live="polite" aria-atomic="true">
       {toast && (

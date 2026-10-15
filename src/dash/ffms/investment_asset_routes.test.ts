@@ -7,7 +7,7 @@ import { resolveFilterField } from '../schemas/filter_field';
 import { REPORT_TABS } from './gp/all_report_status_model';
 import { SOURCE_COUNTS as PROFILE_COUNTS, PROVENANCE as PROFILE_PROV, formatProfileUnit } from './ent/company_profile_data';
 import { SOURCE_COUNTS as STATS_COUNTS, SALES_SCALE_ROWS, INVEST_TYPE_ROWS, REGION_ROWS, PROVENANCE as STATS_PROV } from './ent/investee_invest_stats_model';
-import { RECOVERY_MODES, SOURCE_COUNTS as RECOVERY_COUNTS, recoverySummary, PROVENANCE as RECOVERY_PROV, DETAIL_ROWS_IR, DETAIL_ROWS_ALL, formatRecoveryUnit } from './ent/invest_recovery_detail_model';
+import { RECOVERY_MODES, SOURCE_COUNTS as RECOVERY_COUNTS, recoverySummary, PROVENANCE as RECOVERY_PROV, DETAIL_ROWS_IR, formatRecoveryUnit } from './ent/invest_recovery_detail_model';
 import { PROVENANCE as REPORT_PROV } from './gp/all_report_status_model';
 import { RATE, PCT_LABEL, FORMULA, CALC_BY_NO, baseAmount } from './gp/mgmt_fee_detail_model';
 

@@ -57,7 +57,6 @@ function fieldSpec(html: string, c: string): SchemaFilterSpec {
   if (grp) {
     const m = html.match(new RegExp(`chipGroup\\('${grp[1]}',(\\[[^\\]]*\\]),'([^']*)'\\)`));
     expect(m, `chipGroup ${grp[1]}`).not.toBeNull();
-    // eslint-disable-next-line no-new-func
     return selectLike(new Function(`return ${m![1]};`)() as string[], m![2]);
   }
   const inputs = [...c.matchAll(/<input([^>]*)>/g)].map((m) => ({

@@ -14,10 +14,9 @@ const { useState, useMemo } = React;
 const { PageHeader } = Shell;
 const {
   ColorChip, StatusBadge, DeltaBadge, ChartCard, SegTabs,
-  FilterChip, Button, IconBtn, EmptyState,
+  FilterChip, Button, IconBtn,
 } = UI;
 const { Sparkline, HBars } = Charts;
-const cx = (...a: any[]) => a.filter(Boolean).join(" ");
 
 /* 기준일 2026-06-16 (Risk 페이지와 동일 기준) */
 
@@ -188,7 +187,7 @@ const WORK_COLS: ColDef[] = [
   },
 ];
 
-function RiskManage({ onNav }: { onNav: (r: string) => void }) {
+function RiskManage(_props: { onNav: (r: string) => void }) {
   const [tab, setTab] = useState("전체");
   const [activeTypes, setActiveTypes] = useState<Record<string, boolean>>({});
 

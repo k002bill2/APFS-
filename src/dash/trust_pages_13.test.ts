@@ -62,7 +62,6 @@ const tdRows = (frag: string, part: 'tbody' | 'tfoot'): string[][] => {
 function scriptLiteral<T>(html: string, name: string): T {
   const m = html.match(new RegExp(`var ${name}=([\\[{][\\s\\S]*?[\\]}]);\\n`));
   expect(m, `${name} 리터럴을 찾지 못했다`).not.toBeNull();
-  // eslint-disable-next-line no-new-func
   return new Function('N', `return ${m![1]};`)(null) as T;
 }
 /** 화면 표시 문자열(원문 표기와 같은 서식) */

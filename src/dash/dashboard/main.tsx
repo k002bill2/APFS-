@@ -4,14 +4,12 @@ import { Icon } from '../icons';
 import { UI } from '../components';
 import { Charts } from '../charts';
 import { MainWidgets } from '../main_widgets';
-import { Shell } from '../shell';
 import { APFS_DATA } from '../data';
 
 const { useState } = React;
-const { StatCard, ChartCard, Card, Button, ColorChip, StatusBadge, DeltaBadge } = UI;
-const { Gauge, Sparkline, Donut } = Charts;
+const { StatCard, Button } = UI;
+const { Sparkline } = Charts;
 const { ExecChart, StatusDonut, IndustryCard, ScheduleCard, MiniKpis, ShortcutGrid, RiskTrendCard, RegionBarCard, QuickTasksBar } = MainWidgets;
-const { PageHeader } = Shell;
 const D = APFS_DATA;
 
 const Grid = ({ children, gap = 16, style }: { children?: React.ReactNode; gap?: number; style?: React.CSSProperties }) => <div className="dash-grid" style={{ gap, ...style }}>{children}</div>;
@@ -27,7 +25,7 @@ function VariantA({ s, onNav }) {
 
 /* ===== 시안 B — 임원 브리핑 (Hero) ===== */
 function HeroAUM({ onNav }) {
-  const aum = D.KPI[0], exec = D.KPI[1], irr = D.KPI[2], alert = D.KPI[3];
+  const aum = D.KPI[0], irr = D.KPI[2], alert = D.KPI[3];
   return (
     <div
       className="hero-aum dcol-12 relative overflow-hidden shadow-md grid items-center p-6"
@@ -138,18 +136,21 @@ function VariantC({ s, onNav }) {
 }
 
 /* ===== 래퍼 ===== */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- 시안 전환 바는 2026-09-28 제거, 시안 B·C 코드·선택값은 유지(아래 Main 주석)
 const VARIANTS = [
   { id: "A", name: "스탠다드", desc: "12컬럼 정석 배치" },
   { id: "B", name: "임원 브리핑", desc: "Hero AUM 중심" },
   { id: "C", name: "운영 모니터", desc: "고밀도 벤토" },
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- navStyle·onNavStyle: 네비 전환 바 제거 후에도 props 계약 유지
 function Main({ onNav, navStyle, onNavStyle }: { onNav: any; navStyle?: string; onNavStyle?: (v: string) => void }) {
   const [variant, setVariant] = useState(() => localStorage.getItem("apfs.variant") || "A");
   const [period, setPeriod] = useState("분기");
   const [fund, setFund] = useState("전체");
   const [donutActive, setDonutActive] = useState(null);
-  const setV = (v) => { setVariant(v); try { localStorage.setItem("apfs.variant", v); } catch (e) {} };
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- 시안 전환 바 제거 후에도 localStorage 선택값 경로 유지
+  const setV = (v) => { setVariant(v); try { localStorage.setItem("apfs.variant", v); } catch { /* 무시 — 저장소 접근 불가 등 */ } };
   const s = { period, setPeriod, fund, setFund, active: donutActive, setActive: setDonutActive };
   const V = { A: VariantA, B: VariantB, C: VariantC }[variant];
   return (

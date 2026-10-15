@@ -32,12 +32,11 @@ import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버�
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { LeafTabBody } from '../leaf_tabs';   // 리프 탭 묶음(opt-in)
 import type { LeafTabsSlot } from '../leaf_tabs';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
+import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SuppressKeyboardEventParams, SelectionChangedEvent, RowDoubleClickedEvent } from 'ag-grid-community';
 import { SELECTION_COL } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT, 좌측 고정 44px)

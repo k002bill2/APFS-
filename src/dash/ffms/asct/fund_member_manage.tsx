@@ -35,11 +35,9 @@
 import '../../aggrid_shared.css';   // 합계(floating)행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme';
 import { SELECTION_COL } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, RowSelectionOptions, IRowNode, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, ValueFormatterParams } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
@@ -96,7 +94,6 @@ const DEMO: FundMemberRow[] = [
 
 /* 합계 대상 = 목업 tfoot이 실제로 합산하는 2열뿐. 결성액은 자펀드 단일 값이라 행 합산 대상이 아니다(→ '-'). */
 const SUM_KEYS = ['c1', 'c2'] as const;
-const NUM_KEYS = new Set<string>(['formed', ...SUM_KEYS]);
 /* pinned 합계행 — 텍스트 컬럼은 빈 값, 결성액은 null('-'). `any` 경유는 합계행만 formed=null을 쓰기 때문
    (행 타입은 실데이터 계약을 유지한다 — subfund_manage computeTotal 동형). */
 function computeTotal(rows: FundMemberRow[]): FundMemberRow {

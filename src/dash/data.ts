@@ -419,12 +419,12 @@ export const MenuStore = {
   _key: (kind: string) => "apfs.menu.v3." + kind,
   get(kind: string) {
     // 저장 키는 옛 한글 route 일 수 있다 — 읽을 때 현재 route 로 승격(route_alias.ts)
-    try { const v = JSON.parse(localStorage.getItem(this._key(kind)) || "null"); if (Array.isArray(v)) return aliasRoutes(v); } catch (e) {}
+    try { const v = JSON.parse(localStorage.getItem(this._key(kind)) || "null"); if (Array.isArray(v)) return aliasRoutes(v); } catch { /* 무시 — 저장소 접근 불가 등 */ }
     return null;
   },
   keysOr(kind: string, def: string[]) { return this.get(kind) || def; },
   set(kind: string, keys: string[]) {
-    try { localStorage.setItem(this._key(kind), JSON.stringify(keys)); } catch (e) {}
+    try { localStorage.setItem(this._key(kind), JSON.stringify(keys)); } catch { /* 무시 — 저장소 접근 불가 등 */ }
     window.dispatchEvent(new CustomEvent("apfs-menu-change", { detail: { kind } }));
   },
   resolve(keys: string[]) { return keys.map((k) => ALLMENU.find((o) => o.key === k)).filter(Boolean); },
@@ -436,7 +436,7 @@ const HISTORY_KEY = "apfs.history.v1";
 const HISTORY_MAX = 30;
 export const HistoryStore = {
   get(): string[] {
-    try { const v = JSON.parse(localStorage.getItem(HISTORY_KEY) || "null"); if (Array.isArray(v)) return aliasRoutes(v.filter((x) => typeof x === "string")); } catch (e) {}   // 옛 한글 route 승격
+    try { const v = JSON.parse(localStorage.getItem(HISTORY_KEY) || "null"); if (Array.isArray(v)) return aliasRoutes(v.filter((x) => typeof x === "string")); } catch { /* 무시 — 저장소 접근 불가 등 */ }   // 옛 한글 route 승격
     return [];
   },
   push(route: string) {
@@ -444,11 +444,11 @@ export const HistoryStore = {
     const cur = this.get();
     if (cur[0] === route) return;                         // 이미 최상단이면 churn 방지
     const next = [route, ...cur.filter((r) => r !== route)].slice(0, HISTORY_MAX);
-    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(next)); } catch (e) {}
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(next)); } catch { /* 무시 — 저장소 접근 불가 등 */ }
     window.dispatchEvent(new CustomEvent("apfs-history-change"));
   },
   clear() {
-    try { localStorage.removeItem(HISTORY_KEY); } catch (e) {}
+    try { localStorage.removeItem(HISTORY_KEY); } catch { /* 무시 — 저장소 접근 불가 등 */ }
     window.dispatchEvent(new CustomEvent("apfs-history-change"));
   },
 };

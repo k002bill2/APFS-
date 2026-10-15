@@ -92,7 +92,7 @@ const revealProps = {
 };
 
 /* ---- Card (generic) ---- */
-function Card({ children, accent, pad = 18, className, style, span, reveal }: { children?: React.ReactNode; accent?: string; pad?: number; className?: string; style?: React.CSSProperties; span?: number | string; reveal?: boolean }) {
+function Card({ children, pad = 18, className, style, span, reveal }: { children?: React.ReactNode; accent?: string; pad?: number; className?: string; style?: React.CSSProperties; span?: number | string; reveal?: boolean }) {
   const Root: any = reveal ? motion.section : "section";
   return (
     <Root
@@ -127,7 +127,7 @@ function SegTabs({ options, value, onChange, size = "md" }: { options: any[]; va
       onValueChange={(nv) => {
         if (!nv) return; // 활성 항목 재클릭 시 해제 방지(항상 1개 선택 유지)
         const opt = options.find((o) => sv(o.value ?? o) === nv);
-        onChange && onChange(opt != null ? (opt.value ?? opt) : nv);
+        if (onChange) onChange(opt != null ? (opt.value ?? opt) : nv);
       }}
       className="inline-flex bg-muted rounded-[9px] p-[3px] gap-0.5">{options.map((o) => {
         const v = o.value ?? o, lab = o.label ?? o;

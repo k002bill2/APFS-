@@ -53,7 +53,6 @@ export function tableSheet(full: TableMeta, rows: readonly Row[], unit: Unit | n
   const minDp = table.cols.map((c) => (c.kind === 'amount' && dg ? dg.min : 0));
   const body = [...rows, ...(total ? [total] : [])].map((r) => table.cols.map((c) => {
     const v = r[c.key];
-    const isTotal = r === total;
     if (v == null) return '-';
     if (typeof v === 'number') {
       if (c.kind === 'amount' && unit) return dg ? Number((v / UNIT_DIV[unit]).toFixed(dg.max)) : toUnit(v, unit);

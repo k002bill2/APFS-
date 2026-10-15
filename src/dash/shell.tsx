@@ -1,6 +1,5 @@
 /* 전역 셸 — GNB / LNB / 브레드크럼 / 알림센터 / RBAC 게이팅 / 테마 토글 */
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { Icon } from './icons';
 import { UI } from './components';
 import { APFS_DATA, useMenuSel, MenuStore, HistoryStore } from './data';
@@ -16,7 +15,7 @@ import logoUrl from './assets/logo.svg';
 import logoWhiteUrl from './assets/logo_white.svg';
 
 const { useState, useEffect, useLayoutEffect, useContext, useRef } = React;
-const { ColorChip, IconBtn, StatusBadge, Button, SegTabs } = UI;
+const { ColorChip, IconBtn, StatusBadge } = UI;
 const D = APFS_DATA;
 
 function useIsMobile(bp) {
@@ -358,7 +357,6 @@ const NC_TAGICON: Record<string, string> = {
   공지: "bell", 환전: "landmark", 보완요청: "alert-triangle", 처리완료: "check-circle",
   준법: "shield-check", 운영: "settings", 회의: "users", 출장: "arrow-right", 휴가: "calendar",
 };
-const NC_SUMICON: Record<string, string> = { 메모: "memo", 공지사항: "bell", 일정: "calendar", 시스템: "shield-check" };
 
 function ncRow(key: string, p: any) {
   const { tone = "info", icon, tag, title, meta, date, dday } = p;
@@ -494,7 +492,7 @@ function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) 
     { id: "schedule", label: "일정", count: scCount },
     { id: "system", label: "시스템", count: syCount },
   ];
-  function Body() {
+  function renderBody() {
     if (tab === "all") {
       const recent = [
         { tone: "danger",  tag: "결재",     title: "물품구매 신청의 건",                      meta: "물품구매 · 김정원", date: "2026-06-15" },
@@ -541,7 +539,7 @@ function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) 
             );
           })}
         </div>
-        <div className="flex-1 overflow-y-auto" style={{ padding: "18px 18px 22px" }}><Body /></div>
+        <div className="flex-1 overflow-y-auto" style={{ padding: "18px 18px 22px" }}>{renderBody()}</div>
       </DialogContent>
     </Dialog>
   );
@@ -613,7 +611,7 @@ function FavItem({ f, onSelect }: { f: any; onSelect: () => void }) {
 const FAB_POS_KEY = "apfs.favFabPos";
 const FAB_SIZE = 46, FAB_MARGIN = 8, FAB_DEFAULT = { right: 24, bottom: 44 };
 function readFabPos() {
-  try { const v = JSON.parse(localStorage.getItem(FAB_POS_KEY) || "null"); if (v && typeof v.right === "number" && typeof v.bottom === "number") return v; } catch {}
+  try { const v = JSON.parse(localStorage.getItem(FAB_POS_KEY) || "null"); if (v && typeof v.right === "number" && typeof v.bottom === "number") return v; } catch { /* 무시 — 저장소 접근 불가 등 */ }
   return FAB_DEFAULT;
 }
 function clampFabPos(p: { right: number; bottom: number }) {
@@ -673,7 +671,7 @@ function FavoritesFab({ onNav }) {
     if (!d?.moved) return;
     if (e.type === "pointerup") suppressClick.current = true;   // 드래그 직후 click으로 메뉴가 열리지 않게(pointercancel은 click이 없으므로 제외)
     setDragging(false);
-    setPos((p) => { try { localStorage.setItem(FAB_POS_KEY, JSON.stringify(p)); } catch {} return p; });
+    setPos((p) => { try { localStorage.setItem(FAB_POS_KEY, JSON.stringify(p)); } catch { /* 무시 — 저장소 접근 불가 등 */ } return p; });
   };
   // 위치에 따라 메뉴 펼침 방향을 뒤집는다 — 상단이면 아래로, 좌측이면 왼쪽 정렬. 펼쳐지는 쪽의 반대편 모서리에 고정해 버튼이 밀리지 않게 한다.
   const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;   // 스크롤바 제외 폭 — fixed 기준 상자와 일치
@@ -904,7 +902,7 @@ function useHistory(): string[] {
    활성 신호는 hover·focus 둘 다(bespoke 버튼은 hover가 focus를 유발하지 않음). blur/mouseleave에선
    지우지 않는다(슬라이드 스냅 방지 — menu-highlight 규약). 배경은 슬라이드 span이 담당하므로 인라인
    background 토글은 제거. `relative isolate`로 -z-10 span을 텍스트 뒤·팝오버 앞에 가둔다. */
-function HistoryItem({ r, label, crumbs, icon, onSelect }: { r: string; label: string; crumbs: string[]; icon: string; onSelect: () => void }) {
+function HistoryItem({ label, crumbs, icon, onSelect }: { r: string; label: string; crumbs: string[]; icon: string; onSelect: () => void }) {
   const { id, setActive, active } = useMenuHighlight();
   const parent = crumbs.length > 2 ? crumbs[crumbs.length - 2] : crumbs[0];
   return (

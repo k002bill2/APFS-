@@ -4,15 +4,13 @@ import React from 'react';
 import { Icon } from './icons';
 import { Shell } from './shell';
 import { UI } from './components';
-import { APFS_DATA } from './data';
 
-const { useState, useEffect, useMemo, useCallback } = React;
+const { useState, useMemo, useCallback } = React;
 const { PageHeader } = Shell;
 const {
-  ColorChip, StatusBadge, Card, ChartCard, SegTabs,
+  ColorChip, StatusBadge, SegTabs,
   FilterChip, Button, IconBtn, EmptyState, CountPill, toneVar,
 } = UI;
-const D = APFS_DATA;
 const cx = (...a) => a.filter(Boolean).join(" ");
 
 /* ─────────────────────────────────────────────
@@ -75,8 +73,8 @@ function fmtDate(dateStr) {
 /* ─────────────────────────────────────────────
    KPI 카드 (요약 3개)
 ───────────────────────────────────────────── */
-function KpiCard({ icon, color, label, value, unit, tone }) {
-  const [c, soft] = toneVar(tone || "info");
+function KpiCard({ icon, color: _color, label, value, unit, tone }) {
+  const [c] = toneVar(tone || "info");
   return (
     <div
       className="flex items-center gap-3 rounded-card border border-border bg-card px-4 py-3.5 shadow-sm flex-1 min-w-0"><ColorChip icon={icon} color={c} size={40} iconSize={20} /><div className="min-w-0"><div className="t-label text-[12px]">{label}</div><div className="flex items-baseline gap-1 mt-0.5"><span className="text-[22px] font-bold tabular" style={{ color: c }}>{String(value)}</span><span className="text-[12px] font-semibold text-muted-foreground">{unit}</span></div></div></div>

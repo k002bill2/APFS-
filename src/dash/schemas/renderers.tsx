@@ -63,7 +63,7 @@ export function AttachChips({ value, max = 3 }: { value?: unknown; max?: number 
 /* unit: 금액 단위 토글(schema.unitToggle)이 켜진 화면만 넘긴다. **type:'amount' 숫자 값에만** 적용 —
    date/number(종업원수·주식수)까지 나누면 축이 무너진다. 환산은 여기(렌더 경계)에서만 하고
    행 데이터는 원 단위 원본 그대로 둔다(KPI 합계·필터 비교값 보존). */
-export function Cell({ col, value, color, statusDomain, unit }: { col: ColumnSpec; value: any; color?: string; statusDomain?: StatusDomainEntry[]; unit?: Unit }) {
+export function Cell({ col, value, statusDomain, unit }: { col: ColumnSpec; value: any; color?: string; statusDomain?: StatusDomainEntry[]; unit?: Unit }) {
   switch (renderKind(col.type)) {
     case 'status':     return <StatusBadge tone={toneFor(String(value), statusDomain)} label={String(value)} size="lg" />;   // 그리드 뱃지 = lg(13px) — typed 그리드와 통일(2026-09-24)
     case 'rate':       return <DeltaBadge value={Number(value)} />;

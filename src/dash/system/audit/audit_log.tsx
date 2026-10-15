@@ -10,10 +10,9 @@
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음.
    ⚠ 실제 접근 로그·보안 이벤트·정책 판정이 아니다 — 데모 행을 로컬로 조회만 한다(브리프). 실명 아님. */
 import '../../aggrid_shared.css';
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { UI } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
@@ -31,7 +30,7 @@ import { demoLogs, filterLogs, resultCounts, AUDIT_RESULTS, AUDIT_KINDS, RESULT_
 import type { AuditRow, AuditResult, AuditKind } from './audit_log_model';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
-const { Button, IconBtn, StatusBadge, FilterChip } = UI;
+const { Button, IconBtn, StatusBadge } = UI;
 
 const SEARCHABLE = true;
 const DEMO: AuditRow[] = demoLogs();   // 정적 데모(조회 전용)

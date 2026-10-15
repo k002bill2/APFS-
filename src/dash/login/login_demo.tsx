@@ -14,7 +14,7 @@ import {
 } from './auth_shared';
 import {
   railSteps, LOGIN_RAIL, RESET_RAIL, SIMPLE_AUTH_RAIL,
-  verifyCredentials, verifyOtp, verifyPwChange, verifySimpleAuth, hasError, OTP_PERIOD,
+  verifyCredentials, verifyOtp, verifyPwChange, verifySimpleAuth, hasError,
   verifyReset, DEMO_ID, LOCK_LIMIT, PW_POLICY_HINT, type PwChangeErrors,
 } from './auth_model';
 

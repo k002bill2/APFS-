@@ -10,10 +10,9 @@
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음.
    ⚠ 실제 감사 데이터·권한변경 수집이 아니다 — 데모 행을 로컬로 조회만 한다(브리프). 실명 아님. */
 import '../../aggrid_shared.css';
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import { UI } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';

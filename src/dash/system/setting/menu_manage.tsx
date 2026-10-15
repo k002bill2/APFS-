@@ -17,8 +17,7 @@
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음.
    ⚠ 백엔드가 없어 여기서의 등록·수정·삭제는 화면 로컬 상태만 바꾸며 실제 LNB 를 바꾸지 않는다(UI 프로토타입). */
 import '../../aggrid_shared.css';
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import type { CSSProperties } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';

@@ -1,7 +1,7 @@
 /* SVG 차트 프리미티브 — Recharts 동일 스펙(가로 그리드, 토큰색, 둥근 막대, 단일 진입 애니메이션). */
 import React from 'react';
 
-const { useRef, useState, useLayoutEffect, useEffect } = React;
+const { useRef, useState, useLayoutEffect } = React;
 
 /* ---- 측정 훅 ---- */
 function useMeasure(): [any, number] {
@@ -352,7 +352,6 @@ function HBars({ data, height = 220, unit = "%" }: { data: any[]; height?: numbe
   const max = Math.max(...data.map((d) => d.value));
   const rowH = height / data.length;
   const labelW = 110, valW = 52;
-  const bw = (W || 400) - labelW - valW;
   return (
     <div ref={ref} className="w-full" style={{ height }}>{W > 0 && data.map((d, i) =>
         <div
@@ -375,7 +374,6 @@ function Gauge({ value, max = 100, label, height = 150, color = "var(--primary)"
   const [ref, W] = useMeasure();
   const cx = (W || 200) / 2, cy = height - 14, r = Math.min(cx - 14, height - 28);
   const frac = Math.min(1, value / max);
-  const a = Math.PI * (1 - frac);
   const arc = (start, end) => {
     const x0 = cx + r * Math.cos(start), y0 = cy + r * Math.sin(start);
     const x1 = cx + r * Math.cos(end), y1 = cy + r * Math.sin(end);

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Charts } from './charts';
 
-const { useMeasure, fmtEok } = Charts;
+const { useMeasure } = Charts;
 
 function smooth(pts: number[][]): string {
   if (pts.length < 2) return "";

@@ -23,11 +23,11 @@ import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
+import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellDoubleClickedEvent, IRowNode, ValueFormatterParams, CellStyle, RowSelectionOptions } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from '../../ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../../ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';

@@ -67,7 +67,7 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
   const toggleRole = (r: RoleName) => { set('roles', v.roles.includes(r) ? v.roles.filter((x) => x !== r) : [...v.roles, r]); };
 
   /* 조건부 소속 — 운용사·수탁은 기관 select(값=기관명, 저장 시 id 로 환원) */
-  const orgs = v.type === '운용사' ? orgsOf('GP') : v.type === '수탁' ? orgsOf('수탁') : [];
+  const orgs = React.useMemo(() => (v.type === '운용사' ? orgsOf('GP') : v.type === '수탁' ? orgsOf('수탁') : []), [v.type]);
   const orgField: FieldSpec = React.useMemo(() => ({ key: 'org', label: v.type === '운용사' ? '소속 운용사' : '소속 수탁사', control: 'select', options: orgs.map((o) => o.name), required: true }), [v.type, orgs]);
   const orgValue = orgs.find((o) => o.id === v.org)?.name ?? orgs[0]?.name ?? '';
   const typeField: FieldSpec = React.useMemo(() => ({ key: 'type', label: '사용자구분', control: 'select', options: mode === 'create' ? NEW_TYPES : ALL_TYPES, required: true }), [mode]);

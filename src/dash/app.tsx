@@ -1,9 +1,7 @@
 /* 앱 루트 — 테마/역할/라우트 상태, 서브 대시보드 스텁, 마운트 */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Icon } from './icons';
 import { Shell } from './shell';
-import { UI } from './components';
 import { APFS_DATA, HistoryStore } from './data';
 import { DesignSystem } from './designsystem';
 import { Main } from './dashboard/main';
@@ -100,8 +98,8 @@ const hashRoute = () => {
     // 디코드하지 않으면 ROUTE_ALIAS·MENU 어느 것과도 매칭되지 않아 화면이 폴백으로 떨어지고,
     // 그 인코딩 문자열이 localStorage(apfs.route)에 저장돼 해시 없는 다음 방문까지 오염된다.
     // NFC 정규화는 외부에서 복사된 NFD 한글 URL 방어(메뉴 label 은 NFC).
-    try { return decodeURIComponent(raw).normalize('NFC'); } catch (e) { return raw; }   // 잘못된 % 시퀀스는 원문 유지
-  } catch (e) { return ''; }
+    try { return decodeURIComponent(raw).normalize('NFC'); } catch { return raw; }   // 잘못된 % 시퀀스는 원문 유지
+  } catch { return ''; }
 };
 
 // MENU 트리에 없는 앱 전용 라우트(대시보드·데모·에디터·일정)의 한글 제목 — aria-live 통지용.
@@ -122,15 +120,15 @@ const { AppShell } = Shell;
 const D = APFS_DATA;
 
 const ls = {
-  get: (k, d) => { try { return localStorage.getItem(k) ?? d; } catch (e) { return d; } },
-  set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
+  get: (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* 무시 — 저장소 접근 불가 등 */ } },
 };
 
 // 1회성 초기화(2026-09-28): 메인의 시안·네비 전환 바를 제거해 앱 안에서 되돌릴 UI가 없다.
 // 이전에 저장된 시안 B·C / 레일 선택을 기본값(시안 A·classic)으로 되돌린다 — 모듈 로드 시점이라
 // App·Main의 useState 초기화보다 먼저 돈다. 마커로 1회만 실행(이후 코드로 바꾼 값은 존중).
 if (ls.get("apfs.layoutReset", "") !== "1") {
-  try { localStorage.removeItem("apfs.variant"); localStorage.removeItem("apfs.navstyle"); } catch (e) {}
+  try { localStorage.removeItem("apfs.variant"); localStorage.removeItem("apfs.navstyle"); } catch { /* 무시 — 저장소 접근 불가 등 */ }
   ls.set("apfs.layoutReset", "1");
 }
 
@@ -163,7 +161,7 @@ function App() {
     try {
       const nextHash = `#/${route}`;
       if (window.location.hash !== nextHash) window.history.replaceState(null, '', nextHash);
-    } catch (e) {}
+    } catch { /* 무시 — 저장소 접근 불가 등 */ }
   }, [route]);
   useEffect(() => {
     const onHashChange = () => {

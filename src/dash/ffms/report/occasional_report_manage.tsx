@@ -29,13 +29,11 @@
 import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
-import type { Tone } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { LeafTabBody } from '../leaf_tabs';   // 리프 탭 묶음(opt-in)
 import type { LeafTabsSlot } from '../leaf_tabs';
 import { apfsTheme, FIT_GRID_WIDTH, DEFAULT_COL_DEF } from '../../aggrid_theme';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
+import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SelectionChangedEvent } from 'ag-grid-community';
 import { SELECTION_COL } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -66,7 +64,6 @@ export interface OccReportRow {
 
 /* 확인상태 — jsBy·rsBy 조합에서 파생(SSOT). 필터 칩·툴바 액션 맵의 키 */
 type Stage = '미확인' | '일부확인' | '확인완료';
-const STAGE_TONE: Record<Stage, Tone> = { 미확인: 'info', 일부확인: 'warning', 확인완료: 'success' };
 const stageOf = (r: OccReportRow): Stage =>
   r.jsBy && r.rsBy ? '확인완료' : r.jsBy || r.rsBy ? '일부확인' : '미확인';
 

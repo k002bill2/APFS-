@@ -26,12 +26,11 @@
    - 페이지네이션은 표시행(행 137 + 소계 16 = 153) 기준이라 20행 × 8페이지이고, 푸터 건수는 데이터 행 137만 센다. */
 import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유) — 없으면 총계행이 안 보인다
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { UI } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';   // 공유 테마·포매터 SSOT
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
+import { controlMinWidth } from '../../schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { AgGridReact } from 'ag-grid-react';
 import type {
   ColDef, ColGroupDef, GridApi, GridReadyEvent, ValueFormatterParams, CellStyle,

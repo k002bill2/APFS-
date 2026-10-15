@@ -18,7 +18,7 @@
    - KPI 배지 행 미포함(사용자 결정) · 카드뷰 없음 · 명세 팝업 없음.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭은 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
 import '../../aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky — 합계행은 없지만 전 그리드 공통)
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';

@@ -35,10 +35,9 @@ import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버�
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
+import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, ValueFormatterParams } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
