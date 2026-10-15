@@ -6,8 +6,8 @@ import { Charts } from './charts';
 import { APFS_DATA, MenuStore, useMenuSel } from './data';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 
-const { ColorChip, StatusBadge, StatCard, ChartCard, Card, Button, FilterChip, SegTabs, CountPill, PopNumber } = UI;
-const { ComposedBars, GroupedBars, Donut, Treemap, LineTrend, HBars, Gauge, Sparkline } = Charts;
+const { ColorChip, StatusBadge, ChartCard, Button, FilterChip, SegTabs, CountPill, PopNumber } = UI;
+const { ComposedBars, GroupedBars, Donut, Treemap, LineTrend } = Charts;
 const D = APFS_DATA;
 const ALLMENU = D.ALLMENU;
 

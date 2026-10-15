@@ -16,7 +16,7 @@
      전환 로직 없음 — 2026-09-16 실측). 두 블록은 항상 함께 그려진다. 한때 이 컨트롤로 블록을
      하나만 남겼었는데, 그건 원문에 없는 동작이고 보고서 절반을 숨겼다(Codex 3라운드 P1).
    ⚠ 표가 넓어 가로 스크롤은 **각 표의 래퍼 안에만** 둔다(페이지 전체가 가로로 밀리지 않게). */
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';   // ⌘P 인쇄 · ⌥D 내보내기(푸터 툴팁 힌트와 짝)

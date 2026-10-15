@@ -1,7 +1,9 @@
-/* ESLint(2026-10-14 도입). 실버그 규칙(rules-of-hooks 등)은 error, Phase 0 코드와 충돌하는 규칙은 완화.
+/* ESLint(2026-10-14 도입). 기본 = js/ts recommended + react-hooks recommended, 위반 0건 상태로 전부 error.
    - no-explicit-any: off — tsconfig strict:false·Phase 3(타입화) 전이라 any 는 의도된 상태.
-   - 아래 warn 목록: 도입 시점 기존 위반이 있어 error 로 두면 lint 가 처음부터 빨갛다. 기존 화면은 지시 없이
-     고치지 않는 규약이라 warn 으로 가시화만 한다 — 고칠 때 해당 줄을 정리하고, 0건이 되면 error 로 올린다. */
+   - React Compiler 전용 규칙 4종: off — 이 프로젝트는 Compiler 를 쓰지 않는다. 걸리는 곳 다수가 의도된 패턴
+     (렌더 중 ref 읽기로 지연 언마운트하는 dialog-exit 등)이라 리팩터링 이득 없이 회귀 위험만 크다.
+     Compiler 를 도입할 때 다시 켠다.
+   - no-unused-vars: `_` 접두·rest 형제(`const { id: _id, ...rest } = r`)는 의도된 버림으로 본다. */
 import { defineConfig, globalIgnores } from 'eslint/config';
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
@@ -15,20 +17,16 @@ export default defineConfig(
     extends: [js.configs.recommended, tseslint.configs.recommended],
     plugins: { 'react-hooks': reactHooks },
     languageOptions: { ecmaVersion: 2022, globals: { ...globals.browser, ...globals.node } },
+    linterOptions: { reportUnusedDisableDirectives: 'error' },
     rules: {
       ...reactHooks.configs.recommended.rules,
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': 'warn',
-      '@typescript-eslint/no-unused-expressions': 'warn',
-      'no-empty': 'warn',
-      'no-useless-escape': 'warn',
-      'no-useless-assignment': 'warn',
-      'no-control-regex': 'warn',
-      'react-hooks/immutability': 'warn',
-      'react-hooks/refs': 'warn',
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/preserve-manual-memoization': 'warn',
-      'react-hooks/static-components': 'warn',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true }],
+      'react-hooks/exhaustive-deps': 'error',
+      'react-hooks/immutability': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
     },
   },
 );

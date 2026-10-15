@@ -34,11 +34,9 @@
      (node_modules/ag-grid-community/dist/package/main.esm.mjs 실측) — 2단 헤더 80px + 본문 150px가 확보돼
      `overlayNoRowsTemplate` 문구가 그 안에 그려진다. */
 import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정 + autoHeight sticky 헤더(공유)
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import type { CSSProperties } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { SectionHead } from '../../risk_grid';   // 여러 표 세로 쌓기 공용 섹션 헤더
 import { LeafTabBody } from '../leaf_tabs';   // 리프 탭 묶음(opt-in)
@@ -392,9 +390,9 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
   const clearFilters = () => { setFFund(''); setFAsOf(BASE_DATE); setFItem(''); };
 
   const q = fItem.trim();
-  const hit = (...names: string[]) => !q || names.some((n) => n.includes(q));
-  const investRows = useMemo(() => invest.filter((r) => (!fFund || r.fn === fFund) && hit(r.gpCorp, r.cuCorp)), [invest, fFund, q]);
-  const tradeRows = useMemo(() => trade.filter((r) => (!fFund || r.fn === fFund) && hit(r.gpItem, r.cuItem)), [trade, fFund, q]);
+  const hit = useCallback((...names: string[]) => !q || names.some((n) => n.includes(q)), [q]);
+  const investRows = useMemo(() => invest.filter((r) => (!fFund || r.fn === fFund) && hit(r.gpCorp, r.cuCorp)), [invest, fFund, hit]);
+  const tradeRows = useMemo(() => trade.filter((r) => (!fFund || r.fn === fFund) && hit(r.gpItem, r.cuItem)), [trade, fFund, hit]);
   const nonInvestRows = useMemo(() => nonInvest.filter((r) => !fFund || r.fn === fFund), [nonInvest, fFund]);
   /* 자펀드 옵션 — 세 섹션 행에서 파생(원문에 별도 코드 목록이 없다) */
   const fundOptions = useMemo(

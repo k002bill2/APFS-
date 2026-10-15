@@ -20,6 +20,7 @@ const MEDIA_SCHEMES = ['http', 'https', 'mailto', 'tel', 'data', 'blob'];
 export type UrlKind = 'nav' | 'media';
 
 // 브라우저가 스킴 판정 전 무시하는 제어문자(0x00–0x1F, 0x7F). 스킴 추출 전에 제거해 `java\tscript:` 류 난독화를 차단.
+// eslint-disable-next-line no-control-regex -- 제어문자 제거가 이 정규식의 목적이다
 const CONTROL_CHARS = /[\u0000-\u001F\u007F]/g;
 const SCHEME = /^\s*([a-zA-Z][a-zA-Z0-9+.-]*)\s*:/;
 

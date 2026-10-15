@@ -2,7 +2,6 @@
    레이아웃: KPI 배지 · 필터 칩 툴바 · CRUD 테이블 · 페이지네이션 · 하단 요약 2-카드.
    route 값(한글 레이블 또는 경로)으로 제목·브레드크럼을 자동 구성. */
 import React from 'react';
-import { Icon } from './icons';
 import { UI } from './components';
 import { APFS_DATA } from './data';
 import { RowFormModal, statusTone } from './generic_list_modal';
@@ -26,7 +25,6 @@ import type { Unit } from './schemas/unit';
 import type { ColumnSpec } from './schemas/types';
 import { resolveAlign } from './schemas/types';   // 그리드 정렬 정본(숫자=우측 / 그 외=좌측)
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘⏎ 등록·⌘P 인쇄·⌥D 내보내기)
 import { toast } from './ui/sonner';
 import { Checkbox } from './ui/checkbox';   // 상세필터 카테고리 태그 = DS Checkbox(Radix)
@@ -287,12 +285,12 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
   // 값 변경 = 즉시 적용. 빈 값("" = 전체/미선택)은 키째 지워 비활성으로 만든다(rowMatchesFilters 계약).
   const setVal = (label: string, v: string) => {
     const next = { ...applied };
-    v === "" ? delete next[label] : (next[label] = v);
+    if (v === "") delete next[label]; else next[label] = v;
     onApply(next);
   };
   const toggleTag = (label: string) => {
     const next = { ...applied };
-    next[label] ? delete next[label] : (next[label] = label);
+    if (next[label]) delete next[label]; else next[label] = label;
     onApply(next);
   };
   // 입력 중 Enter = 드로어 닫기(값은 이미 반영돼 있다). IME 조합 확정 Enter는 제외
@@ -470,7 +468,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   // 초기값 = 원문 검색박스 기본값(filterSpecs def, opt-in) — 미선언 스키마는 {}(종전 동작)
   const [filterValues, setFilterValues] = useState<Record<string, string>>(() => defaultFilterValues(schema));
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 23 });   // AG Grid 페이지네이션 미러
-  const [viewState, setView] = useState("list");
+  const [viewState] = useState("list");
   // 카드뷰 미사용 스키마(hideCardView)는 SegTabs를 숨기고 리스트 뷰로 고정 — view === "list" 게이트가 모두 참이 된다
   const view = schema.hideCardView ? "list" : viewState;
   const [showAll, setShowAll] = useState(false);   // 전체보기 — 페이지 크기를 전체 행 수로 키워 한 페이지에 모두 표시
@@ -559,6 +557,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     [schema, filterValues]);
 
   // ── 스키마 주도 컬럼 정의 ──
+  /* 셀 안 select 의 값 변경(ColumnSpec.inlineSelect) — 원문 `DATA[i].cfm = s.value` 에 대응.
+     rows 가 SSOT 라 여기에 써야 필터·건수·엑셀이 같이 따라온다(그리드 node 만 고치면 React 쪽이 낡는다).
+     ⚠ 함수형 갱신만 쓴다 — columnDefs useMemo 의 deps 에 rows 가 없어 렌더러 클로저가 첫 렌더에 묶인다.
+       rows 를 직접 읽으면 낡은 배열을 덮어써 이전 변경이 되돌아간다. */
+  const setCellValue = useCallback((id: string, key: string, value: string) => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [key]: value } : r)));
+  }, []);
   // 특수 컬럼(name=2줄 · trend=스파크라인)만 전용 cellRenderer, 그 외는 Cell 재사용.
   // 마지막 '관리' 컬럼은 editable일 때만 — 더블클릭 수정과 동일하게 수정 모달을 연다.
   const columnDefs = useMemo<(ColDef<Row> | ColGroupDef<Row>)[]>(() => {
@@ -637,15 +642,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
     // 2단 헤더: ColumnSpec.group 이 선언된 스키마(투자기업명세서 58컬럼·전체 투자실적 회수실적 4컬럼)는
     // 연속 그룹을 ColGroupDef 로 접는다. group 이 없는 스키마는 이 호출이 그대로 통과시킨다.
     return foldGroups(cols, schema.columns);
-  }, [schema, editable, unitOn, unit]);
+  }, [schema, unitOn, unit, setCellValue]);
 
-  /* 셀 안 select 의 값 변경(ColumnSpec.inlineSelect) — 원문 `DATA[i].cfm = s.value` 에 대응.
-     rows 가 SSOT 라 여기에 써야 필터·건수·엑셀이 같이 따라온다(그리드 node 만 고치면 React 쪽이 낡는다).
-     ⚠ 함수형 갱신만 쓴다 — columnDefs useMemo 의 deps 에 rows 가 없어 렌더러 클로저가 첫 렌더에 묶인다.
-       rows 를 직접 읽으면 낡은 배열을 덮어써 이전 변경이 되돌아간다. */
-  const setCellValue = useCallback((id: string, key: string, value: string) => {
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [key]: value } : r)));
-  }, []);
 
   /* 확정/미확정 inlineSelect 컬럼 → 선택 바 콤보(apfs-grid "값 쌍 일괄 변경 = ConfirmCombo").
      셀 select 로 한 건씩, 콤보로 체크한 여러 건을 한 번에 바꾼다. 옵션이 정확히 확정·미확정 쌍인 컬럼만 대상이다

@@ -12,11 +12,8 @@
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · 삭제 없음(목업 원문에 없음).
    ⚠ 실제 계정 발급·인증·잠금 정책·메일 발송이 아니다 — 백엔드 없이 화면 로컬 더미 상태만 바꾼다(브리프). 실명 아님. */
 import '../../aggrid_shared.css';
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import type { CSSProperties } from 'react';
-import { format } from 'date-fns';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -44,7 +41,6 @@ const { Button, IconBtn, StatusBadge } = UI;
 
 const SEARCHABLE = true;
 const PAGE_SIZE = 20;
-const nowStamp = () => format(new Date(), 'yyyy-MM-dd HH:mm');
 
 /* ──────────────────────────────
    컬럼 정의 — 목업 헤더 순서 그대로

@@ -101,6 +101,7 @@ export function useDeferredClose(open: boolean | undefined, onOpenChange?: (o: b
      - 하드코딩(open 리터럴 true): 부모가 언마운트 → 커밋 없음 → 복원 없음(정상 경로).
      이전 rAF 방식은 부모 커밋과 순서가 보장되지 않아, 폴백 타이머가 먼저 finish 를 부른 경우 stale true 를 읽고
      제어형 모달을 다시 열었다 닫았다. */
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- 매 커밋 후 실행이 의도(위 주석: 부모 커밋 뒤 복원)
   React.useEffect(() => {
     if (!restorePending.current) return;
     restorePending.current = false;

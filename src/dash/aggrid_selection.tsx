@@ -72,13 +72,13 @@ function triOf(api: GridApi): Tri {
 }
 
 /* label = 헤더 시각 텍스트(옵트인, LABELED_SELECTION_COL) — 기본 SELECTION_COL 은 넘기지 않아 체크박스만 그린다 */
+const isMultiOf = (api: GridApi): boolean => { const rs = api.getGridOption('rowSelection'); return typeof rs === 'object' && rs?.mode === 'multiRow'; };
 function SelectHeader({ api, label }: IHeaderParams & { label?: string }) {
   const guard = useAgGridClickGuard();
-  const isMulti = () => { const rs = api.getGridOption('rowSelection'); return typeof rs === 'object' && rs?.mode === 'multiRow'; };
-  const [multi, setMulti] = React.useState<boolean>(isMulti);
+  const [multi, setMulti] = React.useState<boolean>(() => isMultiOf(api));
   const [tri, setTri] = React.useState<Tri>(() => triOf(api));
   React.useEffect(() => {
-    const h = () => { setMulti(isMulti()); setTri(triOf(api)); };
+    const h = () => { setMulti(isMultiOf(api)); setTri(triOf(api)); };
     h();
     api.addEventListener('selectionChanged', h);
     api.addEventListener('modelUpdated', h);

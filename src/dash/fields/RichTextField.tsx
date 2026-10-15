@@ -1143,7 +1143,7 @@ function downloadText(name: string, text: string, mime: string) {
 }
 // 마크다운 내보내기 — editor.api.markdown.serialize()로 직렬화.
 function exportMarkdown(editor: any) {
-  let md = '';
+  let md: string;
   try { md = editor.api.markdown.serialize(); } catch { md = ''; }
   downloadText('내용.md', md, 'text/markdown');
 }

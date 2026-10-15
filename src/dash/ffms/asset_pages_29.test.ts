@@ -41,7 +41,6 @@ const squash = (xs: string[]) => xs.map((x) => x.replace(/\s+/g, ''));
 function scriptLiteral<T>(html: string, name: string): T {
   const m = html.match(new RegExp(`var ${name}=([\\[{][\\s\\S]*?[\\]}]);\\s*(?:\\/\\/[^\\n]*)?\\n`));
   expect(m, `${name} 리터럴을 찾지 못했다`).not.toBeNull();
-  // eslint-disable-next-line no-new-func
   return new Function(`return ${m![1]};`)() as T;
 }
 const strip = (r: Row) => { const { id: _id, ...rest } = r; return rest; };

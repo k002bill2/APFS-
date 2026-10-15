@@ -35,12 +35,11 @@
    - 출자거래 수정 팝업 데이터는 목록과 다른 자펀드(목업 `INVEST_GROUP`)다 — 모달 파일 주석 참조. */
 import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유) — 없으면 합계행이 안 보인다
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { UI } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, numStyle } from '../../aggrid_theme';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
+import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type {
   ColDef, GridApi, GridReadyEvent, CellKeyDownEvent, CellStyle, ValueFormatterParams, RowClassParams, RowStyle,

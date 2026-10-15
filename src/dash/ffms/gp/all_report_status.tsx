@@ -21,10 +21,9 @@
    - KPI 배지 행 미포함 · 카드뷰 없음 · 행 선택 없음(선택으로 실행할 액션이 없다).
    ⚠ 실제 보고 접수·승인 판정이 아니다 — 로컬 데모 행을 조회만 한다. */
 import '../../aggrid_shared.css';
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import { UI } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
 import { Cell, controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
@@ -43,7 +42,7 @@ import { REPORT_TABS, findTab, distinctValues, filterRows } from './all_report_s
 import type { ReportRow, ReportTab } from './all_report_status_model';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
-const { Button, IconBtn, SegTabs, FilterChip } = UI;
+const { Button, IconBtn, SegTabs } = UI;
 
 const ACCOUNTS = ['농식품', '수산'];   // 원문 chipGroup('f-acc') 도메인
 /* 드로어 선택지 = 6개 표 전체의 합집합. 탭을 바꿔도 필터가 유지되므로, 현재 표 기준으로 뽑으면

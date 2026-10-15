@@ -10,8 +10,8 @@ import { APFS_DATA } from './data';
 const { useState, useMemo } = React;
 const { PageHeader } = Shell;
 const {
-  ColorChip, StatusBadge, DeltaBadge, Card, ChartCard, SegTabs,
-  FilterChip, Button, IconBtn, EmptyState, CountPill, toneVar,
+  ColorChip, StatusBadge, ChartCard, SegTabs,
+  Button, IconBtn, CountPill, toneVar,
 } = UI;
 const { ComposedBars } = Charts;
 const D = APFS_DATA;
@@ -152,7 +152,6 @@ function Stepper({ activeStep }) {
     <div className="flex items-center gap-0" aria-label="보고 승인 단계">{STEPS.map((label, i) => {
         const done = i < activeStep;
         const active = i === activeStep;
-        const [color] = toneVar(active ? "primary" : done ? "success" : "info");
         return (
           <React.Fragment key={label}><div className="flex flex-col items-center gap-1"><div
                 className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[12px] font-bold transition-all"
@@ -353,7 +352,7 @@ function RegistryTab() {
 /* ─────────────────────────────────────────────
    KPI 카드 (단순 수치 표시)
 ─────────────────────────────────────────────── */
-function KpiBox({ icon, color, label, value, sub, tone }: { icon?: string; color?: string; label?: React.ReactNode; value?: React.ReactNode; sub?: React.ReactNode; tone?: string }) {
+function KpiBox({ icon, label, value, sub, tone }: { icon?: string; color?: string; label?: React.ReactNode; value?: React.ReactNode; sub?: React.ReactNode; tone?: string }) {
   const [c, softBg] = toneVar(tone || "primary");
   return (
     <div

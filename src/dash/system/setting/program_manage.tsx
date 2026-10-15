@@ -16,7 +16,6 @@
    ⚠ 백엔드 없음 — 등록·수정·삭제·도움말 저장은 화면 로컬 상태만 바꾼다. 실제 LNB·메뉴 연결은 바뀌지 않는다. */
 import '../../aggrid_shared.css';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import type { CSSProperties } from 'react';
 import { format } from 'date-fns';
 import { UI } from '../../components';
 import { Icon } from '../../icons';

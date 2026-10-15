@@ -7,7 +7,6 @@
    KPI 배지 행 없음(브리프 규칙 5) · 카드뷰 없음 · 검색어 입력 없음(목업 검색박스에 없다 — SEARCHABLE opt-in 규약). */
 import React, { useRef, useState } from 'react';
 import { UI } from './components';
-import { Icon } from './icons';
 import { GridFrame, FooterActions } from './grid_frame';
 import type { AppliedFilter } from './applied_filters';
 import type { SplitButtonItem } from './ui/split-button';

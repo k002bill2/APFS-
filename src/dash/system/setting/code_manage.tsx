@@ -15,8 +15,7 @@
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음 · 페이지네이션 없음(그룹 ≤ 20).
    ⚠ 백엔드가 없어 등록·수정은 화면 로컬 상태만 바꾼다. 목업의 GNB/LNB·설계 메모는 이식하지 않는다(셸 소유). */
 import '../../aggrid_shared.css';
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import type { CSSProperties } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { UI } from '../../components';
 import { Icon } from '../../icons';

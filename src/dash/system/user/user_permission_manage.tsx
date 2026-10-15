@@ -16,8 +16,7 @@
    - KPI 배지 행 미포함(사용자 확정) · 카드뷰 없음 · 명세 팝업 없음.
    ⚠ 실제 인가/RBAC 이 아니다 — 백엔드 없이 화면 로컬 더미 상태만 바꾼다(브리프). 목업의 설계 메모(.note)·GNB/LNB 는 이식하지 않는다. */
 import '../../aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky)
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import type { CSSProperties } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { UI } from '../../components';
 import { Icon } from '../../icons';

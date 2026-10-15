@@ -11,7 +11,7 @@ const { Button } = UI;
 
 /** 정기보고에서 window.open 으로 연 창이면 '닫기', 주소로 직접 연 탭(window.close 무효)이면 '정기보고로' 이동을 보인다. */
 export function MonthlyReportWindow({ onNav }: { onNav?: (route: string) => void }) {
-  const [isPopup] = useState(() => { try { return !!window.opener; } catch (e) { return false; } });
+  const [isPopup] = useState(() => { try { return !!window.opener; } catch { return false; } });
   useEffect(() => {   // 창 제목(WCAG 2.4.2) — 떠날 때 원복
     const prev = document.title;
     document.title = `월간보고 · ${RPT_META.fundName} | APFS`;

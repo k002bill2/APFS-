@@ -10,7 +10,6 @@
 import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정 + 합계행 강조(공유)
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { UI } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, KpiBadge, FooterActions } from '../../grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, DEFAULT_COL_DEF } from '../../aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT. 그리드폭 채움은 컬럼 flex(numCol)
 import { AgGridReact } from 'ag-grid-react';

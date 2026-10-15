@@ -26,7 +26,6 @@ import '../../aggrid_shared.css';   // 합계행 opacity 버그 보정 + 공유 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { SectionHead } from '../../risk_grid';
 import { apfsTheme, DEFAULT_COL_DEF, numStyle } from '../../aggrid_theme';
