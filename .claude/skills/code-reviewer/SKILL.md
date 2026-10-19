@@ -54,7 +54,7 @@ description: 품질·보안·유지보수성 코드 리뷰. PR/변경/병합 전
 - **Vite + React 18 + TypeScript SPA.** JSX 변환은 빌드타임(esbuild). 브라우저 Babel·`window` 전역 IIFE·gzip+base64 자산 임베드는 2026-06 마이그레이션으로 **전부 제거**됐다.
 - **빌드·테스트 러너가 있다.** `npm run build`(vite, exit 0이어야 함) · `npm test`(vitest, 테스트 파일 7개). ⚠️ "러너가 없으니 테스트 조언은 접는다"는 **옛 서술이며 거짓**이다 — 테스트 누락은 정상적으로 지적한다.
 - **`tsc --noEmit`은 타입 에러를 다수 보고하지만 `vite build`는 green이다** (esbuild는 타입체크를 하지 않고 `tsconfig`도 `strict:false`). 기존 타입 에러의 존재 자체를 회귀로 보고하지 말고, **이 변경이 새로 낸 타입 구멍만** 지적한다.
-- **`React.createElement`(별칭 `h`) 잔존은 알려진 미완 전환이지 결함이 아니다.** `src/dash/*.tsx` 49개 중 6개만 남았다(`charts` `icons` `generic_list` `fund_stats` `apfs_contribution_manage` `fund_cash_forecast_manage`). "JSX로 바꿔라"는 그 파일을 이미 손대는 PR에서만 유효하다.
+- **JSX 전환은 끝났다**(2026-10-19 실측: `.tsx` 176개 전부 JSX, `h` 별칭 0건). 남은 `React.createElement` 2곳(`icons.tsx` 노드 트리 렌더러 · `generic_list.tsx` 상세 모달 레지스트리)은 컴포넌트를 런타임에 고르는 의도된 사용이라 "JSX로 바꿔라"를 지적하지 않는다. 새 코드에 `h()` 별칭이 들어오면 지적한다.
 - **백엔드·인증이 없다.** 데이터는 더미(`src/dash/data.ts`, 도메인 폴더의 스키마 `src/dash/<도메인>/**/*.ts`). 서버 입력검증·authN/authZ·세션·SQL 류 지적은 **대상이 없다**. 반면 XSS(`dangerouslySetInnerHTML`·`innerHTML`)와 하드코딩 시크릿은 그대로 본다.
 - **레거시 오프라인 HTML 번들은 삭제됐다**(커밋 `5fb2dfa`). 옛 예외 규칙(`blob URL의 integrity/crossorigin 제거는 정상`)은 **적용 대상이 사라졌다**. [[apfs-bundle]] 스킬도 이 리뷰 경로와 무관하다.
 
