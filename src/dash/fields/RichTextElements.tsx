@@ -264,6 +264,7 @@ export function VideoElement(props: any) {
       <div className="apfs-rt-imgwrap" contentEditable={false}>
         <span className={'apfs-rt-imgbox' + (selected ? ' is-sel' : '')} style={{ width: element.width || '100%' }}>
           {/* src는 safeUrl(media) 경유 — data:/blob:는 정식 값, javascript: 등 실행 스킴 차단. */}
+          {/* eslint-disable-next-line jsx-a11y/media-has-caption -- 사용자가 본문에 넣은 영상이라 자막 track 원본이 없다 */}
           <video className="apfs-rt-video" src={safeUrl(element.url, 'media')} controls />
         </span>
         <Caption><CaptionTextarea className="apfs-rt-caption" placeholder="캡션 입력…" /></Caption>

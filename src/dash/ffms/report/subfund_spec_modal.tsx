@@ -156,10 +156,10 @@ function KvGrid({ items, unit }: { items: OvItem[]; unit: Unit }) {
           <dt className="m-0 flex items-center bg-[color:var(--grid-header)] font-bold text-muted-foreground" style={DT_STYLE}>{f.l}</dt>
           <dd className={`m-0 flex items-center ${f.f ? '' : 'text-caption'}`} style={{ padding: '8px 12px', fontSize: 14 }}>
             {f.f ? (
-              <a href="#" onClick={(e) => e.preventDefault()} className="inline-flex items-center gap-2 border border-border bg-muted no-underline" style={{ padding: '5px 10px', borderRadius: 6, fontSize: 13, color: 'inherit' }}>
+              <span className="inline-flex items-center gap-2 border border-border bg-muted" style={{ padding: '5px 10px', borderRadius: 6, fontSize: 13, color: 'inherit' }}>
                 <span className="font-extrabold" style={{ padding: '1px 6px', borderRadius: 4, background: 'var(--danger)', color: 'var(--destructive-foreground)', fontSize: 10 }}>PDF</span>
                 {f.f}
-              </a>
+              </span>
             ) : '미첨부'}
           </dd>
         </div>

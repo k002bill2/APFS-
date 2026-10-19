@@ -44,6 +44,9 @@ export function DatePicker({ value, onChange, invalid, required, disabled, place
     // 2-click 회귀 ② Sheet 본문 스크롤 잠금 ③ 인라인 사용 시 전 페이지 freeze를 유발한다 → 재추가 금지.
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
+        {/* 폼 컨트롤 역할의 트리거 — aria-invalid/required 로 검증·필수 상태를 SR 에 전한다(아래 테두리 주석 참조).
+            button 역할 미지원 경고는 감수. */}
+        {/* eslint-disable-next-line jsx-a11y/role-supports-aria-props -- 위 사유 */}
         <button
           type="button"
           disabled={disabled}
