@@ -35,7 +35,7 @@ export function DocumentsField({ value, onChange, required, label, multiple, max
   return (
     // 복합 컨트롤(첨부목록+FilePond)이라 Field는 <div>로 래핑(<label> 암묵연결 금지) → 보이는 라벨 span이
     // orphan이 됨. role="group"+aria-label로 이 영역에 접근名을 직접 부여한다(bare div의 aria-label은 SR 무시).
-    <div className="flex flex-col gap-2.5" role="group" aria-label={label} aria-describedby={describedBy} aria-required={required || undefined}>
+    <div className="flex flex-col gap-2.5" role="group" aria-label={label} aria-describedby={describedBy}>
       {existing.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <div className="text-[12px] font-semibold text-muted-foreground">기존 첨부파일 ({existing.length})</div>

@@ -1040,7 +1040,7 @@ function TableDropdown() {
             {Array.from({ length: 64 }, (_, i) => {
               const r = Math.floor(i / 8), c = i % 8;
               return (
-                <div key={i} className={'apfs-rt-tablegrid__cell' + (r < grid.rows && c < grid.cols ? ' is-on' : '')}
+                <div key={i} aria-hidden="true" className={'apfs-rt-tablegrid__cell' + (r < grid.rows && c < grid.cols ? ' is-on' : '')}
                   onMouseMove={() => { if (grid.rows !== r + 1 || grid.cols !== c + 1) setGrid({ rows: r + 1, cols: c + 1 }); }}
                   onClick={(e) => { e.stopPropagation(); setOpen(false); run((ed) => ed.tf.insert.table({ rowCount: r + 1, colCount: c + 1 }, { select: true })); }} />
               );

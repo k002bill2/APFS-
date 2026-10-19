@@ -87,7 +87,10 @@ export function SearchableSelect({
         <button
           ref={btnRef}
           type="button"
+          // aria-controls 는 Radix PopoverTrigger(asChild)가 열릴 때 콘텐츠 id 로 주입한다(닫힘=없음, 실측) — 정적 분석엔 안 보인다.
+          // eslint-disable-next-line jsx-a11y/role-has-required-aria-props -- 위 사유
           role="combobox"
+          aria-expanded={open}
           aria-haspopup="listbox"
           aria-label={name}
           aria-invalid={invalid || undefined}

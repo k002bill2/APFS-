@@ -78,6 +78,9 @@ function GridPicker({ mode, value, onChange, ariaLabel, invalid, required, disab
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
+        {/* 폼 컨트롤 역할의 트리거 — aria-invalid/required 로 검증·필수 상태를 SR 에 전한다(date-picker 와 같은 규약).
+            button 역할 미지원 경고는 감수. */}
+        {/* eslint-disable-next-line jsx-a11y/role-supports-aria-props -- 위 사유 */}
         <button
           type="button"
           disabled={disabled}

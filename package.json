@@ -95,6 +95,7 @@
     "@vitejs/plugin-react": "^4",
     "autoprefixer": "^10",
     "eslint": "10.11.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "17.12.0",
     "jscodeshift": "^17.3.0",
@@ -108,5 +109,10 @@
   },
   "publishConfig": {
     "types": "dist/types/ds/index.d.ts"
+  },
+  "overrides": {
+    "eslint-plugin-jsx-a11y": {
+      "eslint": "$eslint"
+    }
   }
 }

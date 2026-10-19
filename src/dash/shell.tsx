@@ -685,7 +685,7 @@ function FavoritesFab({ onNav }) {
     <div className={"fixed flex gap-3 " + (onTop ? "flex-col-reverse" : "flex-col") + (onLeft ? " items-start" : " items-end")} style={{ zIndex: 58, ...anchor }}>{/* 58: 방문기록 팝오버(백드롭 59·패널 60) 아래 — 같은 60이면 DOM 뒤쪽인 FAB가 팝오버를 덮는다 */}
       <MenuPickerModal open={edit} onClose={() => setEdit(false)} initialTab="fav" />
       {open && <>
-        <div onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: -1 }} />
+        <div aria-hidden="true" onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: -1 }} />
         <MenuHighlightProvider>
         <div role="menu" aria-label="즐겨찾기" className="bg-card shadow-lg p-2" style={{ width: 244, border: "1px solid var(--border)", borderRadius: 14, animation: "dashFade var(--dur) var(--ease) backwards" }}>
           <div className="flex items-center gap-1.5 pt-1.5 px-2 pb-2">
@@ -955,7 +955,7 @@ function HistoryMenu({ onNav, route }: { onNav: (r: string) => void; route: stri
     <div ref={rootRef} className="relative inline-flex">
       <IconBtn icon="clock" onClick={() => setOpen((o) => !o)} label="방문기록" size={38} active={open} expanded={open} hotkey={HOTKEYS.history} />
       {open && <>
-        <div onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: 59 }} />
+        <div aria-hidden="true" onClick={() => setOpen(false)} className="fixed inset-0" style={{ zIndex: 59 }} />
         <MenuHighlightProvider>
         <div
           className="bg-card shadow-lg"
@@ -1044,6 +1044,7 @@ function AppShell(props) {
           : <Lnb open={mobile ? true : lnbOpen} route={route} onNav={navClose} mobile={mobile} drawerOpen={drawer} />}<NavContext.Provider value={{ onNav: navClose, route }}><main
           className="dash-main flex-1 min-w-0"
           style={{ padding: "14px 26px 104px" }}>{children}</main></NavContext.Provider></div>{mobile && <div
+        aria-hidden="true"
         className={"lnb-backdrop" + (drawer ? " show" : "")}
         onClick={() => setDrawer(false)} />}<FavoritesFab onNav={navClose} /><NotifCenter open={notifOpen} onClose={() => setNotifOpen(false)} /><CenterModal open={userModal === "memo"} onClose={() => setUserModal(null)} title="메모" icon="memo" width={620}>{ncMemoBody(true)}</CenterModal><CenterModal open={userModal === "schedule"} onClose={() => setUserModal(null)} title="일정" icon="calendar" width={880}><NcScheduleBody /></CenterModal><CenterModal open={userModal === "logout"} onClose={() => setUserModal(null)} title="로그아웃" icon="external" width={400} footer={[<button key="c" onClick={() => setUserModal(null)} className="bg-card cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "1px solid var(--border-strong)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>취소</button>, <button key="o" onClick={() => setUserModal(null)} className="bg-brand-blue cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "none", color: "var(--on-brand-solid)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>로그아웃</button>]}><div className="py-1.5 px-1 text-foreground" style={{ fontSize: 14, lineHeight: 1.6 }}>정말 로그아웃 하시겠습니까?</div></CenterModal></div>
   );

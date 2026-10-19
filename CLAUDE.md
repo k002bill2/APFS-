@@ -111,7 +111,7 @@ APFS/
 
 - **확장자 규칙: JSX 문법이 있으면 `.tsx`, 없으면 `.ts`** — 훅·컨텍스트·스키마·데이터·배럴·테스트는 React 를 import 해도 JSX 가 없으면 `.ts`. 일괄 `.tsx` 통일은 하지 않는다(vitest `include`·가드 테스트의 `.test.ts` 제외 정규식이 확장자를 신호로 쓴다). 가드: `src/dash/file_ext_rule.test.ts`.
 - 현재 코드는 `React.createElement`(별칭 `h`) 기반(**Phase 0**). **JSX 전환(Phase 2)·TypeScript 타입화(Phase 3)는 후속 작업** — 진행 시 점진적으로.
-- **lint**: `npm run lint`(ESLint 10 + typescript-eslint + react-hooks, 설정 `eslint.config.mjs`). 위반 0건 상태로 켜진 규칙은 전부 error 다(2026-10-14 warning 310건 정리). 끈 것: `any`(strict:false·Phase 3 전), React Compiler 전용 규칙 4종(`immutability`·`refs`·`set-state-in-effect`·`preserve-manual-memoization` — Compiler 미사용, dialog-exit 처럼 의도된 패턴이 걸림. Compiler 도입 시 다시 켠다). 의도된 예외는 줄 단위 `eslint-disable-next-line <규칙> -- <이유>` 로 남긴다(이유 없는 disable 금지, 쓸모없어진 disable 은 error).
+- **lint**: `npm run lint`(ESLint 10 + typescript-eslint + react-hooks + jsx-a11y, 설정 `eslint.config.mjs`). 위반 0건 상태로 켜진 규칙은 전부 error 다(2026-10-14 warning 310건 정리). `eqeqeq` 는 smart(`x == null` 만 허용). jsx-a11y 는 정적 a11y 게이트이고 동작 수준(대비·초점 이동·라이브리전)은 web-a11y 스킬이 맡는다 — peer 가 eslint ^9 까지라 `package.json` `overrides` 로 묶었다(플러그인이 10 을 공식 지원하면 overrides 제거). 끈 것: `any`(strict:false·Phase 3 전), React Compiler 전용 규칙 4종(`immutability`·`refs`·`set-state-in-effect`·`preserve-manual-memoization` — Compiler 미사용, dialog-exit 처럼 의도된 패턴이 걸림. Compiler 도입 시 다시 켠다), `jsx-a11y/no-autofocus`(전부 사용자가 연 팝오버·다이얼로그 안). 의도된 예외는 줄 단위 `eslint-disable-next-line <규칙> -- <이유>` 로 남긴다(이유 없는 disable 금지, 쓸모없어진 disable 은 error).
 - `tsc --noEmit`은 현재 타입 에러를 다수 보고하지만 빌드(esbuild)는 타입체크를 하지 않아 `vite build`는 green입니다.
 - 색/간격/타이포는 하드코딩 대신 CSS 변수 토큰(`tokens.css`)을 사용하세요.
 - 새 페이지/메뉴는 라이트/다크 모두에서 대비를 확인하세요.
