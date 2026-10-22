@@ -13,7 +13,7 @@ description: APFS "여러 표 세로 쌓기"(멀티 그리드) 조회 화면 규
 
 바깥 프레임(PageHeader·툴바·푸터)은 `apfs-grid` 가 SSOT다. 이 스킬은 **그 안에 표를 여러 장 쌓는 규약**만 다룬다.
 
-- 기준 화면: **예외사항레포트** (route `예외사항리포트`, 설정 `src/dash/risk/valuation/valuation_table_pages.tsx` `EXCEPTION`, 표 `risk/valuation/risk_valuation_data.ts` `EXC_TABLES`)
+- 기준 화면: **예외사항레포트** (route `예외사항리포트`, 설정 `src/dash/ews/valuation/valuation_table_pages.tsx` `EXCEPTION`, 표 `ews/valuation/risk_valuation_data.ts` `EXC_TABLES`)
 - 골격: `src/dash/risk_tables_page.tsx` (`TablesPage`, `TablesPageConfig`, `FilterDef`)
 - 섹션 헤더: `src/dash/risk_grid.tsx` `SectionHead` (공용 **하나뿐** — 페이지 로컬 복사 금지)
 - 표 본체: `risk_grid.tsx` `ReadGrid` + `risk_table_meta.ts` `TableMeta`/`ColMeta`

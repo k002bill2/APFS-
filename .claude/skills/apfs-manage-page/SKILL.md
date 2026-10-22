@@ -7,7 +7,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 
 목업(KRDS TO-BE HTML + `*_spec.json`) → **APFS 디자인시스템의 관리형 리스트 페이지**. 영역마다 이미 스킬이 있다 — 이 스킬은 **어느 영역을 어느 스킬로 조립하는지**와 **새 패턴 2개**(심사단계 워크플로우·섹션형 모달)만 소유한다. 중복 규약을 만들지 말 것.
 
-- **골드 레퍼런스**: `src/dash/ffms/sfund/subfund_manage.tsx`(페이지) · `subfund_manage_schemas.ts`(모달 스키마) · `subfund_form_modal.tsx`(섹션형 모달). 출처 목업: 자펀드관리_목업.html(구조도 v1.4).
+- **골드 레퍼런스**: `src/dash/iam/sfund/subfund_manage.tsx`(페이지) · `subfund_manage_schemas.ts`(모달 스키마) · `subfund_form_modal.tsx`(섹션형 모달). 출처 목업: 자펀드관리_목업.html(구조도 v1.4).
 - 형제 골드: `asset_funding.tsx`(매트릭스 조회형, 워크플로우 없음).
 
 ## 0. 트랙 분기 (먼저 결정)

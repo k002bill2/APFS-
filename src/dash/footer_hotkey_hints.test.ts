@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { walkDash } from './test_src';
 
-// 재귀 탐색 — 페이지가 도메인 폴더(ffms/·risk/ …)에 있으므로 src/dash 최상위만 보면 소비처를 놓친다
+// 재귀 탐색 — 페이지가 도메인 폴더(iam/·ews/ …)에 있으므로 src/dash 최상위만 보면 소비처를 놓친다
 const files = walkDash()
   .filter((p) => p.endsWith('.tsx') && basename(p) !== 'grid_frame.tsx')
   .map((p) => ({ f: basename(p), src: readFileSync(p, 'utf8') }))

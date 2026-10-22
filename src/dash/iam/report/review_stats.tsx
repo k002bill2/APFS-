@@ -1,7 +1,7 @@
 /* 투심보고 통계 — 투자자산관리 > 사후보고관리 (원본 S1_28_투심승인정보조회.html). 공용 골격 TablesPage(risk_tables_page.tsx).
    데이터 SSOT = review_stats_data.ts.
 
-   스키마 트랙이 아닌 이유(trust/mfund/trust_mother_table_pages.tsx 계좌정보 비교조회와 같다): 원문 검색조건이 **기본값 있는 모펀드 select**와
+   스키마 트랙이 아닌 이유(trs/mfund/trust_mother_table_pages.tsx 계좌정보 비교조회와 같다): 원문 검색조건이 **기본값 있는 모펀드 select**와
    **기본 기간(2026-07-13 ~ 2026-08-12)** 인데 PageSchema.filters 는 라벨 문자열 배열이라 기본값·기간을 담지 못한다.
 
    | 검색조건(원문 순서) | 컨트롤                           | 행 필터                                  |
