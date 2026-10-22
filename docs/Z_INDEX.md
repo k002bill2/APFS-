@@ -104,7 +104,7 @@ z-index는 **숫자가 큰 게 무조건 위가 아니다.** 같은 **쌓임맥�
 
 ### dashFade 항등행렬 함정 (근본원인)
 
-`animation: dashFade ... both`의 키프레임은 `to { transform: none }`(`tokens.css:293`)이다. `fill:both`로 끝상태가 고정되는데, **브라우저는 `transform:none`을 키워드가 아니라 항등행렬 `matrix(1,0,0,1,0,0)`로 계산한다** → 영속 쌓임맥락 생성. (`transform:none`은 맥락을 안 만들지만, 애니메이션이 굳힌 항등행렬은 만든다.) 해당 래퍼: `dashboard/main.tsx:156`(대시보드 variant 래퍼, 카드 묶음을 자기 맥락으로 끌어올린 §4 근본원인), `main_widgets.tsx:435`, `shell.tsx:692` 등. 앞 둘은 가둘 fixed 자손이 없어 무해하고, `dashboard/main.tsx:156`만 트랩에 기여했다.
+`animation: dashFade ... both`의 키프레임은 `to { transform: none }`(`tokens.css:293`)이다. `fill:both`로 끝상태가 고정되는데, **브라우저는 `transform:none`을 키워드가 아니라 항등행렬 `matrix(1,0,0,1,0,0)`로 계산한다** → 영속 쌓임맥락 생성. (`transform:none`은 맥락을 안 만들지만, 애니메이션이 굳힌 항등행렬은 만든다.) 해당 래퍼: `frt/main.tsx:156`(대시보드 variant 래퍼, 카드 묶음을 자기 맥락으로 끌어올린 §4 근본원인), `main_widgets.tsx:435`, `shell.tsx:692` 등. 앞 둘은 가둘 fixed 자손이 없어 무해하고, `frt/main.tsx:156`만 트랩에 기여했다.
 
 > **현재 상태(2026-09-28~)**: dashFade 소비처의 fill-mode가 전부 `both`→**`backwards`**로 바뀌어(`grid_frame.tsx:396` 주석) 애니메이션 종료 후엔 항등행렬 맥락이 남지 않는다. 다만 **진입 구간 동안은** transform이 살아 있어 맥락·컨테이닝블록을 만들므로, 비포털 fixed 오버레이를 이런 래퍼 안에 두지 않는 규칙(포털 우선)은 그대로 유지한다.
 
@@ -118,7 +118,7 @@ z-index는 **숫자가 큰 게 무조건 위가 아니다.** 같은 **쌓임맥�
 **증상**: 펼친 LNB의 접힘 플라이아웃(`NavigationMenuContent`, `position:fixed; z-popover=85`)이, 분명히 z-85인데도 메인 대시보드 카드에 가려졌다. 이 문서·규약의 동기가 된 실제 버그다.
 
 **근본원인 — 2중 쌓임맥락 트랩**:
-1. `dashboard/main.tsx`(당시 `main.tsx:178`) variant 래퍼의 `dashFade`(`fill:both`)가 끝상태 `transform:none`을 **항등행렬 `matrix(1,0,0,1,0,0)`로 굳혀** 카드 묶음에 쌓임맥락을 만들었다.
+1. `frt/main.tsx`(당시 `main.tsx:178`) variant 래퍼의 `dashFade`(`fill:both`)가 끝상태 `transform:none`을 **항등행렬 `matrix(1,0,0,1,0,0)`로 굳혀** 카드 묶음에 쌓임맥락을 만들었다.
 2. 접힌 Lnb `<nav>`가 `position:sticky`(현재 `shell.tsx:246`)라 쌓임맥락을 만들어, 자손 `fixed` 플라이아웃의 z-85를 **nav 맥락 안에 가뒀다**. `fixed`는 컨테이닝블록만 뷰포트로 탈출하고, 쌓임맥락은 box-tree 조상(nav)을 따르기 때문이다.
 
 당시 nav와 main이 **둘 다 `z-auto`**(루트 6단계 동률)라, 공유 부모(당시 flex — 현재는 grid `shell.tsx:1039`/`1044`, 페인팅 규칙 동일) 안에서 **DOM 순서**로 칠해졌다 → main이 나중 → 카드가 플라이아웃 위로.
@@ -141,7 +141,7 @@ z-index는 **숫자가 큰 게 무조건 위가 아니다.** 같은 **쌓임맥�
 | **58** | `shell.tsx:687` | FavoritesFab 컨테이너 | `fixed` · 방문기록 팝오버(59·60) 아래 — 같은 60이면 DOM 뒤쪽인 FAB가 팝오버를 덮어서 58로 내림(인라인 주석) |
 | **55** | `grid_frame.tsx:56`(`FLOATING_Z`) · `:405` | GridFrame 플로팅 액션 바 | **body 포털** · 푸터(20) 위·FAB 아래·모달이 덮음 |
 | **50** | `shell.tsx:815` | GNB 헤더 | `sticky top-0` · h58 · `backdrop-blur` (강한 chrome 맥락, 자손은 전부 포털→안전) |
-| **50** | `login/auth_shared.tsx:110` | 로그인·온보딩 토스트 | `fixed` 하단 중앙 · Shell 없는 독립 라우트라 셸 chrome과 겹치지 않음 |
+| **50** | `aut/auth_shared.tsx:110` | 로그인·온보딩 토스트 | `fixed` 하단 중앙 · Shell 없는 독립 라우트라 셸 chrome과 겹치지 않음 |
 | **48** | `shell.tsx:246` | 데스크톱 Lnb nav | `sticky top:58` · ★ **트랩 수정 지점**(§4) |
 | **48** | `shell.tsx:336` | Rail nav | `sticky`(데스크톱)/`fixed`(모바일) top:58 w64 · 대조군(처음부터 48) |
 | **45** | `shell.tsx:243` | 모바일 Lnb 드로어 nav | `fixed top:58` · translateX 슬라이드 |
@@ -149,13 +149,13 @@ z-index는 **숫자가 큰 게 무조건 위가 아니다.** 같은 **쌓임맥�
 | **30** | `aggrid_shared.css:58` | autoHeight 그리드 sticky 헤더 | `sticky top:58px` · 그리드 로컬 스택(주석 `:42`) |
 | **25** | `aggrid_shared.css:75` | autoHeight 그리드 sticky 가로 스크롤바 | `sticky` · 행·pinned 셀 위, 헤더(30) 아래 |
 | **20** | `grid_frame.tsx:385` | GridFrame sticky 푸터 툴바 | `sticky bottom:0` · 주석(`:383`)에 "FAB(60)보다 낮게 둬 클릭성 침범 방지" 명시(FAB은 현재 58) |
-| **10** | `ffms/report/monthly_report.tsx:22` | 월간보고 sticky 헤더 | `sticky top-0 z-10` · 페이지 로컬 |
+| **10** | `iam/report/monthly_report.tsx:22` | 월간보고 sticky 헤더 | `sticky top-0 z-10` · 페이지 로컬 |
 | **10** | `ui/dropdown-menu.tsx:130` · `ui/context-menu.tsx:71` · `row_context_menu.tsx:137` | 메뉴 구분선 | `relative z-10` · 슬라이드 하이라이트가 선을 덮지 않게(menu-highlight 규약) |
 | **10** | `ui/calendar.tsx:136` · `confirm_combo.tsx:31` | 포커스된 날짜 셀 / 포커스된 세그먼트 버튼 | `relative` + focus 시 `z-10` · 이웃 위로 초점 링 노출 |
 | **5** | `charts.tsx:52` | 차트 hover 툴팁 | `absolute` · 차트 위 |
 | **3** | `main_widgets.tsx:335` | 위젯 일러스트 SVG | `relative` · span 내부 순서용 |
 | **1~3** | `fields/richtext.css` (`:18`·`:268`·`:312`·`:338`·`:566`·`:591`·`:627`·`:647`·`:757`·`:818`·`:962`) | 리치텍스트 에디터 내부(이미지 툴바·드롭라인·표 셀 핸들 등) | 에디터/셀 내부 로컬 순서 — 오버레이 토큰 불필요(`:566` 주석) |
-| **2** | `system/user/user_permission_modal.tsx:97` | 권한 매트릭스 sticky `th` | `sticky top:0` · 모달 본문 로컬 |
+| **2** | `sys/user/user_permission_modal.tsx:97` | 권한 매트릭스 sticky `th` | `sticky top:0` · 모달 본문 로컬 |
 | **1** | `ui/skeleton.tsx:24` | PageSkeleton 중앙 스피너 | `absolute` · 스켈레톤 블록 위 |
 | **1** | `components.tsx:150` · `ui/dropdown-menu.tsx:65`·`:96` · `ui/context-menu.tsx:51` · `row_context_menu.tsx:37` · `shell.tsx:602`·`:915` | SegTabs 라벨 / 비활성 메뉴 항목 | `z-[1]` · 슬라이드 하이라이트(`ui/menu-highlight.tsx:57`, `-z-10` + 부모 `isolate`)가 형제 텍스트를 덮지 않게(menu-highlight 규약) |
 | **-1** | `shell.tsx:690` | FavoritesFab 클릭아웃 백드롭 | `fixed inset-0` · FAB 컨테이너 내부 스택에서 팝업 뒤로 |
@@ -197,6 +197,6 @@ overlayEl.closest('nav, [class*="dash-main"]')  // null이면 body 포털(안전
 
 ## 관련 문서/스킬
 - 스킬: `dashboard-ui`(UI/셸 전반), `responsive-ui`(반응형 — 모바일 드로어·플라이아웃 검증)
-- 토큰 스케일 SSOT: `tailwind.config.js:38` · 사례 연구 소스: `src/dash/shell.tsx`, `src/dash/ui/navigation-menu.tsx`, `src/dash/dashboard/main.tsx`
+- 토큰 스케일 SSOT: `tailwind.config.js:38` · 사례 연구 소스: `src/dash/shell.tsx`, `src/dash/ui/navigation-menu.tsx`, `src/dash/frt/main.tsx`
 - 색 토큰 규약: `docs/COLOR_TOKENS.md`
 - 이력: 2026-06-30 접힘 LNB 측면 플라이아웃이 메인 카드에 가려진 버그(sticky/transform 조상 2중 쌓임맥락 트랩) 수정에서 규약 정립

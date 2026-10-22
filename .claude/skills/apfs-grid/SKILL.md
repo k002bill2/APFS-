@@ -9,7 +9,7 @@ description: APFS 대시보드 리스트/그리드/매트릭스 페이지의 공
 APFS 대시보드의 리스트/그리드/매트릭스 페이지는 **테이블 본체는 제각각**(리스트=체크박스·CRUD·페이지네이션, 매트릭스=2단헤더·합계행·조회전용)이지만 **바깥 양식은 동일**해야 한다. `GridFrame`이 그 양식 골격을 SSOT로 소유하고, 테이블 내용은 `children`으로 주입받는다. "양식은 강제(통일), 내용은 자유"가 원칙.
 
 - 정본 컴포넌트: `src/dash/grid_frame.tsx` (`GridFrame`, `KpiBadge`, `FooterActions`)
-- 첫 실증: `src/dash/ffms/mfund/asset_funding.tsx` (매트릭스형)
+- 첫 실증: `src/dash/iam/mfund/asset_funding.tsx` (매트릭스형)
 - 양식 출처(SSOT): `generic_list.tsx`의 인라인 양식을 GridFrame이 흡수 — 신규/마이그레이션 모두 이 프레임을 쓴다.
 - **표 2장 이상을 섹션 제목으로 세로로 쌓는 조회 화면**(기준: 예외사항레포트)은 `apfs-multi-grid` 스킬 — `TablesPage` 골격 + 공용 `SectionHead`(번호 칩·건수 없음).
 
@@ -79,7 +79,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
     - 표준 팔레트: `layers`/`var(--primary)`(전체 건수) · `check-circle`/`var(--success)` · `wallet`/`var(--accent)`(도메인 2지표).
   - **미포함이면 `schema.hideKpis: true`** — 헤더 KPI 슬롯만 비운다. `countKpis`와 제네릭 금액 KPI(평균 변동률·합계 금액)를 **둘 다** 무력화한다(hideMetrics와 분리 — 금액 개념 자체는 남는다). ⚠️ 금액 컬럼이 있는 엔티티는 `countKpis`를 안 넣는 것만으로는 안 된다 — 제네릭 금액 KPI가 폴백으로 남으므로 `hideKpis:true`가 필수(`generic_list.tsx` `kpis={schema.hideKpis ? undefined : countKpiNodes ? … : hideMetrics ? undefined : 금액KPI}`).
   - **금액·변동률 개념 자체가 없는 엔티티**(공고 등)는 `hideMetrics: true`(제네릭 금액 KPI 제거 + 금액/상태 파생 표현 억제). KPI 행만 끄려면 `hideKpis`, 금액 개념 전체를 끄려면 `hideMetrics`.
-- 정본: **현재 두 트랙 모두 "미포함"이 실제 화면이다**(2026-09-11 사용자 지시로 자펀드 공고 정보관리·자펀드 관리에서 KPI 행 제거). 스키마 트랙 = `ffms/mfund/subfund_notice_manage.ts`(`countKpis` 3배지 삭제 → `hideKpis: true`), typed 트랙 = `subfund_manage.tsx`(`kpis` prop과 KPI 전용 파생값 `totalCommit`·`formedCount`를 함께 삭제 — GridFrame이 `{kpis && …}`라 슬롯째 사라진다). 포함 예시가 필요하면 이 커밋 이전 리비전을 참고.
+- 정본: **현재 두 트랙 모두 "미포함"이 실제 화면이다**(2026-09-11 사용자 지시로 자펀드 공고 정보관리·자펀드 관리에서 KPI 행 제거). 스키마 트랙 = `iam/mfund/subfund_notice_manage.ts`(`countKpis` 3배지 삭제 → `hideKpis: true`), typed 트랙 = `subfund_manage.tsx`(`kpis` prop과 KPI 전용 파생값 `totalCommit`·`formedCount`를 함께 삭제 — GridFrame이 `{kpis && …}`라 슬롯째 사라진다). 포함 예시가 필요하면 이 커밋 이전 리비전을 참고.
 
 ## 리스트 vs 매트릭스 — 어떤 children인가
 - **리스트**(항목 CRUD): 단일 헤더 + 체크박스 + 행 액션. 툴바=필터칩/선택, 푸터=건수+페이지네이션+뷰토글. 스키마 주도면 `generic_list.tsx`/PageSchema 트랙.
@@ -122,7 +122,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - 스키마 트랙은 `schema.hideCardView: true`로 끈다(`generic_list.tsx`가 푸터 `SegTabs`를 렌더하지 않고 `view`를 `"list"` 파생값으로 고정). 기존 카드 렌더 코드는 아직 남아 있으나 도달 불가다.
   - typed 트랙은 플래그 없이 직접 제거한다 — `subfund_manage.tsx`가 `SegTabs`를 지우고 `const view = 'list'` 상수로 내린 형태가 정본.
   - 표현 전용 플래그 4종은 서로 독립: `hideKpis`(헤더 KPI 슬롯) · `hideMetrics`(금액 개념 전체) · `hideCardView`(푸터 뷰 토글) · `hideRowSelection`(행 선택 체크박스 컬럼).
-- **행 선택 체크박스 제거** — 다건 선택/선택삭제가 없는 조회 전용 화면은 `schema.hideRowSelection: true`(현행 예시 `ffms/ent/invest_performance_all.ts`).
+- **행 선택 체크박스 제거** — 다건 선택/선택삭제가 없는 조회 전용 화면은 `schema.hideRowSelection: true`(현행 예시 `iam/ent/invest_performance_all.ts`).
   ⚠️ 이 절이 오래 인용해 온 "2026-09-12 자펀드 공고 정보관리" 사례는 **2026-09-17 사용자 결정으로 뒤집혔다** — 그 화면은 체크박스를 되살리고 툴바에서 수정·삭제를 실행한다. 단건 CRUD라는 이유만으로 선택을 끄지 않는다는 뜻이고, 판별 기준은 [[apfs-aggrid]] "체크박스" 절(=선택이 액션을 만드는가)이다.
   선택은 **체크박스로만** on/off 한다 — 행 본문 클릭 선택은 전 페이지에서 해제됐다(2026-09-22 사용자 결정, 09-17 의 클릭 누적선택 규약을 뒤집음. 규약·역사는 → [[apfs-aggrid]] "체크박스" 절). `generic_list.tsx`가 `rowSelection` prop 자체를 `undefined`로 넘겨 **선택 컬럼이 생성되지 않는다**(체크만 푸는 게 아니다). 선택이 없어지면 툴바의 `삭제`/`선택 해제` 분기(`selCount > 0`)도 자동으로 도달 불가가 된다 — 수정은 행 더블클릭·Enter, 삭제는 우클릭 메뉴가 대체 경로다. ⚠️ `rowSelection` 객체는 **모듈 상수**여야 한다([[apfs-aggrid]] ⑦ — 인라인 리터럴은 렌더마다 컬럼 재생성 → 폭 되돌림).
 - **툴바 칩의 '전체'는 `필터명: 전체`로 쓴다** (2026-09-24 사용자 규칙, 필터명 뒤 콜론 `:` + 공백). 예: `등급: 전체 21` · `심사단계: 전체` · `사용자 구분: 전체`. 칩 줄 앞에는 깔때기 아이콘만 있고 필터 이름이 보이지 않아서, 맨 `전체`만 있으면 무엇의 전체인지 알 수 없다.

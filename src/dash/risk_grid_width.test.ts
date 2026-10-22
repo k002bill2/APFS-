@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ColDef } from 'ag-grid-community';
 import { buildColumnDefs, isCompactCol } from './risk_grid';
-import { LEDGER_TABLE } from './brief/brief_data';
+import { LEDGER_TABLE } from './brf/brief_data';
 import type { TableMeta } from './risk_table_meta';
 
 const leaves = (t: TableMeta) => buildColumnDefs(t, t.rows, null) as ColDef[];
