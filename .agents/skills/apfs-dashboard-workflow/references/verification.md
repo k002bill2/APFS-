@@ -23,7 +23,7 @@ The configured preview port is usually `http://localhost:4273`.
 
 ## TypeScript Note
 
-The repository currently allows Phase 0 migration code with `strict:false`. `tsc --noEmit` may report pre-existing type errors that do not block `vite build`, so do not treat type-check failure as the default gate unless the user specifically asks for type hardening.
+The repository currently allows untyped code (Phase 3 type hardening pending) with `strict:false`. `tsc --noEmit` may report pre-existing type errors that do not block `vite build`, so do not treat type-check failure as the default gate unless the user specifically asks for type hardening.
 
 ## Post-Verification
 

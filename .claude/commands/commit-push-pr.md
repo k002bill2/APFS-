@@ -38,7 +38,7 @@ git switch -c feat/<작업-요약>     # feat/ fix/ refactor/ chore/ 접두사
 npm run build
 ```
 
-이 저장소는 esbuild 빌드라 `tsc` 타입에러는 빌드를 막지 않지만(Phase 0), 빌드 자체는 통과해야 합니다. 테스트가 있으면 `npm test`(vitest)도 권장.
+이 저장소는 esbuild 빌드라 `tsc` 타입에러는 빌드를 막지 않지만(Phase 3 타입화 전), 빌드 자체는 통과해야 합니다. 테스트가 있으면 `npm test`(vitest)도 권장.
 
 ## 3. 변경 분석 → 커밋 메시지
 

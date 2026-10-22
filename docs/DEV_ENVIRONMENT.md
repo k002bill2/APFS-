@@ -36,7 +36,7 @@
 
 ## 3. TypeScript
 
-`tsconfig.json` — 의도적으로 느슨하다(Phase 0 미타입 코드 허용).
+`tsconfig.json` — 의도적으로 느슨하다(Phase 3 타입화 전 미타입 코드 허용).
 
 - `strict: false`, `noImplicitAny: false`, `skipLibCheck: true`
 - `target/lib: ES2020` · `module: ESNext` · `moduleResolution: bundler` · `jsx: react-jsx` · `noEmit: true`

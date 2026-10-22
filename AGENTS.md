@@ -41,7 +41,7 @@ npm run build
 
 참고:
 
-- `tsc --noEmit`은 현재 Phase 0 미타입 코드 때문에 알려진 타입 오류가 있을 수 있습니다.
+- `tsc --noEmit`은 Phase 3(타입화) 전 미타입 코드 때문에 알려진 타입 오류가 있을 수 있습니다.
 - 빌드 확인 후 `git status --short --branch`로 수정 범위와 사전 존재 변경을 구분합니다.
 
 ## 하네스 자산
