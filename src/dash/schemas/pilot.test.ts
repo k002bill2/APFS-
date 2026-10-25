@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { parsePageSchema } from './types';
 import { resolveSchema } from './index';
-import { schema as s1 } from '../brief/mfund/annual_invest_status';
-import { schema as s2 } from '../sfund/fxtmrpt/gp_monthly_report_status';
-import { schema as s3 } from '../ffms/mfund/subfund_notice_manage';
+import { schema as s1 } from '../brf/mfund/annual_invest_status';
+import { schema as s2 } from '../sfr/regularreport/gp_monthly_report_status';
+import { schema as s3 } from '../iam/mfund/subfund_notice_manage';
 
 describe('파일럿 스키마 zod 검증', () => {
   it('연도별투자현황 — parsePageSchema 통과', () => {

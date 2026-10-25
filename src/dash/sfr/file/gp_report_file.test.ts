@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { GP_REPORT_FILE_TABLE, GP_REPORT_FILE_LABEL, GP_REPORT_FILE_SOURCE, RPT_OPTIONS } from './gp_report_file';
 
 const mockup = readFileSync(GP_REPORT_FILE_SOURCE.normalize('NFC'), 'utf8');
-const src = readFileSync('src/dash/sfund/file/gp_report_file.tsx', 'utf8');
+const src = readFileSync('src/dash/sfr/file/gp_report_file.tsx', 'utf8');
 
 describe('보고 파일 조회 (S5_116)', () => {
   it('라벨 = 메뉴 리프', () => {

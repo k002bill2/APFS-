@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { resolveFilterField, YEAR_OPTIONS } from './filter_field';
-import { schema as gongo } from '../ffms/mfund/subfund_notice_manage';
-import { schema as yearInv } from '../brief/mfund/annual_invest_status';
+import { schema as gongo } from '../iam/mfund/subfund_notice_manage';
+import { schema as yearInv } from '../brf/mfund/annual_invest_status';
 import { DEFAULT_SCHEMA } from './_default';
 import { ALL_SCHEMAS } from './index';
 

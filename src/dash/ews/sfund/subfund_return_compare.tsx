@@ -1,6 +1,6 @@
 /* 조기경보 > 자펀드정보 > 자펀드 수익률정보 비교 조회(S2_77) — 공용 골격 TablesPage(risk_tables_page.tsx) 설정.
    표 1장 + 합계, 검색조건 기준년월(ym). 데이터는 risk_subfund_info_data.ts SSOT.
-   가치평가 표 조회 5리프는 risk/valuation/valuation_table_pages.tsx. */
+   가치평가 표 조회 5리프는 ews/valuation/valuation_table_pages.tsx. */
 import React from 'react';
 import { TablesPage } from '../../risk_tables_page';
 import type { TablesPageConfig } from '../../risk_tables_page';

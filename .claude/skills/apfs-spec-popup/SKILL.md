@@ -5,7 +5,7 @@ description: APFS 읽기전용 "명세" 팝업 규약(자펀드 명세·운용�
 
 # apfs-spec-popup
 
-리스트 행의 **읽기전용 명세 팝업**. 골드: `src/dash/ffms/report/subfund_spec_modal.tsx`(`SubFundSpecModal` + 중첩 `FsDetailModal`), 출처 `S1_03_자펀드_명세.html`. 편집 모달과 다르다 — 입력 컨트롤 없음, 저장 없음.
+리스트 행의 **읽기전용 명세 팝업**. 골드: `src/dash/iam/report/subfund_spec_modal.tsx`(`SubFundSpecModal` + 중첩 `FsDetailModal`), 출처 `S1_03_자펀드_명세.html`. 편집 모달과 다르다 — 입력 컨트롤 없음, 저장 없음.
 
 ## 진입 (CRITICAL)
 - ⚠ **명세 팝업 자체가 opt-in**(2026-09-11 결정) — 페이지에 기본 고정으로 넣지 않는다. 목업/사용자가 요구할 때만 포함하고, 아니면 `명세` 버튼·`onRowDoubleClicked`를 아예 배선하지 않는다(→[[apfs-manage-page]] 조립표, [[apfs-stage-workflow]] 규약 4·10).
