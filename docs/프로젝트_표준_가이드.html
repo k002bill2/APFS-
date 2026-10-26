@@ -106,8 +106,8 @@
 │   ├── styles/             tailwind.css · transitions.css (전역 CSS)
 │   ├── lib/                utils.ts (cn 등 프레임워크 무관 유틸)
 │   ├── ds/                 index.tsx (디자인시스템 공개 진입점)
-│   └── dash/               ★ 앱 본체 — 루트 58파일(공용) + 하위 13개
-│       ├── login/ dashboard/ ffms/ risk/ sfund/ brief/ trust/ system/
+│   └── dash/               ★ 앱 본체 — 루트 57파일(공용) + 하위 13개
+│       ├── aut/ frt/ iam/ ews/ sfr/ brf/ trs/ sys/
 │       │                   메뉴 도메인 폴더 &lt;대분류&gt;/&lt;중분류&gt;/ (정본 docs/filetree.md)
 │       ├── ui/             shadcn/Radix 프리미티브 (kebab-case)
 │       ├── fields/         무거운 폼 컨트롤 (리치텍스트·FilePond·주소)
@@ -138,7 +138,7 @@
   </table></div>
 
   <h3>구성 방식: 메뉴 도메인 폴더 + 접두사(기능) + 접미사(역할)</h3>
-  <p>2026-10 재배치(정본 <code>docs/filetree.md</code>) 이후 라우트된 페이지는 메뉴 위치의 <code>&lt;대분류&gt;/&lt;중분류&gt;/</code>에 둔다. 한 대분류 안 여러 중분류가 쓰면 대분류 루트, 여러 대분류가 쓰면 <code>src/dash/</code> 루트. 폴더 안에서는 같은 기능의 파일이 접두사가 같아 정렬 시 붙어 나온다(예: <code>risk/alert/</code>).</p>
+  <p>2026-10 재배치(정본 <code>docs/filetree.md</code>) 이후 라우트된 페이지는 메뉴 위치의 <code>&lt;대분류&gt;/&lt;중분류&gt;/</code>에 둔다. 한 대분류 안 여러 중분류가 쓰면 대분류 루트, 여러 대분류가 쓰면 <code>src/dash/</code> 루트. 폴더 안에서는 같은 기능의 파일이 접두사가 같아 정렬 시 붙어 나온다(예: <code>ews/alert/</code>).</p>
 <pre>ew_result_manage.tsx      ← 화면
 ew_result_dialogs.tsx     ← 그 화면의 다이얼로그
 ew_result_model.ts        ← 순수 로직

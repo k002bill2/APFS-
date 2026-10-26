@@ -4,14 +4,14 @@ import ReactDOM from 'react-dom/client';
 import { Shell } from './shell';
 import { APFS_DATA, HistoryStore } from './data';
 import { DesignSystem } from './designsystem';
-import { Main } from './frt/main';
+import { Main } from './frt/widget/main';
 import { EarlyWarningManage } from './ews/alert/early_warning_manage';   // 조기경보 관리(관리형 리스트, S2_51). 구 risk_manage.tsx(FR-5.6 운영 콘솔)는 미라우팅
 import { ViolationManage } from './ews/alert/violation_manage';   // 법률/규약위반사항 관리(관리형 리스트, S2_53 + 등록화면 S2_54 를 팝업으로 흡수)
 import { ShareholderManage } from './ews/alert/shareholder_manage';   // 운용사 주주변동관리(관리형 리스트, S2_55 + 등록화면 S2_56 을 팝업으로 흡수)
 import { LitigationManage } from './ews/alert/litigation_manage';   // 운용사 소송관리(관리형 리스트, S2_57 + 등록화면 S2_58 을 팝업으로 흡수)
 import { WorkforceManage } from './ews/alert/workforce_manage';   // 운용인력 변동관리(관리형 리스트, S2_59 + 등록화면 S2_60 을 팝업으로 흡수)
 import { EwResultManage } from './ews/alert/ew_result_manage';   // 조기경보 결과정보 관리(섹션 2개 적층 + 생성·확정·마감 워크플로, S2_61 + 생성확인 S2_62)
-import { Schedule } from './schedule';
+import { Schedule } from './frt/schedule/schedule';
 import { SubFundManage } from './iam/sfund/subfund_manage';   // 자펀드관리(관리형 리스트, 구조도 v1.4). 구 subfund.tsx(FR-5.3 대시보드)는 미라우팅
 import { Pages as ReportBucheoPages } from './brf/mfund/report_bucheo';
 import { GenericListPage, findMenuContext } from './generic_list';
@@ -41,9 +41,9 @@ import { UserManage } from './sys/user/user_manage';                            
 import { UserInviteManage } from './sys/user/user_invite_manage';                     // 사용자 초대(운용사)(S0_103)
 import { PermissionHistory } from './sys/audit/permission_history';                    // 권한 변경이력(S0_107)
 import { AuditLog } from './sys/audit/audit_log';                                      // 감사로그(S0_104)
-import { LoginDemo } from './aut/login_demo';                                    // 로그인(S0_001, Shell 없는 UI 데모)
-import { OnboardingIssue } from './aut/onboarding_issue';                        // 발급 온보딩(S0_002, 동상)
-import { OnboardingInvite } from './aut/onboarding_invite';                      // 초대 온보딩(S0_003, 동상)
+import { LoginDemo } from './aut/login/login_demo';                                    // 로그인(S0_001, Shell 없는 UI 데모)
+import { OnboardingIssue } from './aut/otp/onboarding_issue';                        // 발급 온보딩(S0_002, 동상)
+import { OnboardingInvite } from './aut/otp/onboarding_invite';                      // 초대 온보딩(S0_003, 동상)
 import { MonthlyReportWindow } from './iam/report/monthly_report';                      // 월간보고 상세(S1_06_01) — 정기보고에서 여는 팝업 창
 /* 원문이 **한 화면에 여러 표/여러 조회기준**이라 PageSchema(columns 1벌)로 담기지 않는 4리프.
    나머지 9리프는 페이지 코드 0줄(스키마 주도 GenericListPage + 원문 리터럴 sample)로 남는다.

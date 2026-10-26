@@ -8,11 +8,11 @@ import React, { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   AuthLayout, Field, PrimaryBtn, SecondaryBtn, DonePanel, Callout,
   KvGrid, Pill, OtpRegisterBlock, Toast, Logo, useDemoOtp, useToast, T, StepPage, useStepDir, FADE_UP_CARD,
-} from './auth_shared';
+} from '../auth_shared';
 import {
   INVITE_LABELS, verifyRealName, verifyRegister, hasError,
   DEMO_REAL_NAME, PW_POLICY_HINT, type RegisterErrors,
-} from './auth_model';
+} from '../auth_model';
 
 const NO_ERR: RegisterErrors = { pw: null, confirm: null, otp: null };
 const SEED = 'KRQW G5LT MFZG K3TP';

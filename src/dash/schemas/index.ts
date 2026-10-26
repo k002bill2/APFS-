@@ -5,7 +5,7 @@ import { schema as sGpMonthlyReportStatus } from '../sfr/regularreport/gp_monthl
 import { schema as sSubfundNoticeManage } from '../iam/mfund/subfund_notice_manage';
 import { schema as sInvesteeProfileSchema } from '../iam/ent/investee_profile_schema';
 import { schema as sPostMgmtRecord } from '../iam/gp/post_mgmt_record';
-import { schema as sPortfolioPerformance } from '../frt/portfolio_performance';
+import { schema as sPortfolioPerformance } from '../frt/widget/portfolio_performance';
 import { schema as sInvesteeEmployment } from '../iam/ent/investee_employment';
 import { schema as sInvestPerformanceAll } from '../iam/ent/invest_performance_all';
 import { schema as sInvesteeInvestStatsSchema } from '../iam/ent/investee_invest_stats_schema';

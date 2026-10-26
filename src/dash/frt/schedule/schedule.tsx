@@ -1,9 +1,9 @@
 /* 일정·알림 센터 — PRD 부록 A / APFS 스케줄 관리 서브페이지
    ES module: export { Schedule }. JSX (Vite). */
 import React from 'react';
-import { Icon } from './icons';
-import { Shell } from './shell';
-import { UI } from './components';
+import { Icon } from '../../icons';
+import { Shell } from '../../shell';
+import { UI } from '../../components';
 
 const { useState, useMemo, useCallback } = React;
 const { PageHeader } = Shell;
