@@ -3,7 +3,7 @@ import React from 'react';
 import { Icon } from './icons';
 import { UI } from './components';
 import { APFS_DATA, useMenuSel, MenuStore, HistoryStore } from './data';
-import { MainWidgets } from './main_widgets';
+import { MainWidgets } from './frt/widget/main_widgets';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { MenuHighlightProvider, useMenuHighlight, ItemHighlight } from './ui/menu-highlight';
 import { useHotkey, HOTKEYS } from './use-hotkey';   // 사용자 메뉴 ⌥ 단축키(도달 가능·입력창 자동 무시)

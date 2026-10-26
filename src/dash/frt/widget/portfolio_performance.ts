@@ -3,7 +3,7 @@
    route 는 영문 'portfolio-performance' — MENU(LNB)에는 없는 고아 페이지라 findMenuContext 가
    메뉴에서 못 찾으면 이 스키마의 title(한글)을 제목으로 쓴다(generic_list.tsx).
    메인 대시보드 QUICKWIDGETS/QUICKMENU 숏컷의 to 도 이 route 로 진입시킨다. */
-import type { PageSchema } from '../schemas/types';
+import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
   route: 'portfolio-performance',
