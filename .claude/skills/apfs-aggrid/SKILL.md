@@ -288,7 +288,7 @@ const onGroupSelection = useCallback((e: SelectionChangedEvent<Row>) => {
   ⚠ master-detail 화면은 좌·우 그리드의 체크박스가 **같은 셀렉터에 함께 잡힌다** — `section[aria-label]` 으로 쪽을 먼저 좁히지 않으면 좌측 라디오를 누르고 "multiRow 가 안 먹는다"고 오진한다(2026-09-23 실제 오탐).
 - **행 선택(체크박스 전용) 회귀 5종**(2026-09-22 실측, aside repl): ① 본문 클릭 → 선택 0 유지 ② 체크박스 클릭 → 1, 다시 → 0 ③ multiRow 3건 체크 후 본문 클릭 → 3 유지 ④ 본문 더블클릭 → 수정 모달 열림 / 체크박스 더블클릭 → 모달 **안** 열림·선택 원복 ⑤ master 라디오(`code_manage`)의 체크된 행을 다시 눌러도 선택 복원, 본문 클릭은 무반응.
   - 키보드: 포커스된 본문 셀에서 **Space 는 여전히 선택을 토글**한다 — AG Grid 는 `source==='rowClicked'` 만 `enableClickSelection` 으로 막고 `spaceKey` 는 통과시킨다(`inferNodeSelections`). 접근성 경로 그대로.
-  - ⚠️ 자동화 함정: aside/Playwright `keyboard.press(' ')`·`type(' ')` 는 `key:""`·`code:"Space"` 로 도착해 AG Grid(`event.key===' '`)가 무시한다 → **오탐 0건**. 키보드 검증은 `activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:' ',code:'Space',bubbles:true}))` 로. 체크박스 클릭도 aside `locator.click()` 은 "checked 가 안 바뀌면 throw"(라디오 복원 케이스에서 터진다) → `page.mouse.click(중심좌표)` 로.
+  - 자동화: ego-browser `page.keyboard.press(' ')` 는 `key:' '`·`code:'Space'` 로 도착해 그대로 토글된다(2026-10-26 자펀드 관리 실측 0→1→0). 구 aside/Playwright 는 `key:""` 로 보내 AG Grid(`event.key===' '`)가 무시하는 오탐 0건이 났었다(그때 우회는 `activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:' ',code:'Space',bubbles:true}))`). aside `locator.click()` 의 "checked 가 안 바뀌면 throw"(라디오 복원 케이스)는 ego 에서 미확인 — 막히면 `page.mouse.click(중심좌표)` 로.
   - 선택 건수는 `new Set(row-id)` 로 센다(아래 "DOM 으로 세지 말 것"). `page.goto` 로 같은 해시 URL 재진입은 리로드가 아니라 열려 있던 모달이 남는다 — 케이스 사이에 Escape 를 넣는다.
 
 ## 참조
