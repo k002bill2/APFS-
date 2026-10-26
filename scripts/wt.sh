@@ -22,6 +22,7 @@
 #   bash scripts/wt.sh dev <branch>              배정된 포트로 dev 서버 실행
 #   bash scripts/wt.sh ls                        목록(브랜치·포트·상태)
 #   bash scripts/wt.sh rm <branch>               제거(미커밋 변경 있으면 거부)
+#   bash scripts/wt.sh prune                     죽은 포트 배정 정리(rm 을 거치지 않고 지운 워크트리)
 set -euo pipefail
 
 # 메인 체크아웃 루트 — 워크트리 안에서 실행해도 항상 같은 값을 준다.
@@ -114,6 +115,42 @@ port_drop() {
   unlock_ports
 }
 
+# 죽은 배정 정리 — 디렉터리가 실제로 있는 워크트리의 브랜치 배정만 남긴다.
+# rm 을 거치지 않고 지운 워크트리(git-cleanup apply·git worktree remove·수동 삭제)는 배정 줄이 남아
+# port_reserved 가 그 포트를 영구 예약한다. 살아 있음은 이 저장소의 모든 워크트리(setup 은 $WTROOT
+# 밖도 등록한다)에서 디렉터리 존재로 판정하고, git 메타데이터(prunable)는 건드리지 않는다.
+# 브랜치 이름을 바꾼 워크트리는 옛 이름 배정이 지워지고 새 이름엔 배정이 없다 → setup 으로 다시 받는다.
+port_prune() {
+  lock_ports
+  if [ ! -s "$PORTS" ]; then
+    unlock_ports
+    printf '정리할 배정 없음 (남은 배정 0개)\n'
+    return
+  fi
+  live=$(mktemp "$WTROOT/.ports.XXXXXX")
+  git -C "$MAIN" worktree list --porcelain \
+    | awk '/^worktree /{p=substr($0,10)} /^branch refs\/heads\//{print p"\t"substr($0,19)}' \
+    | while IFS=$'\t' read -r p b; do
+        if [ -d "$p" ]; then printf '%s\n' "$b"; fi
+      done > "$live"
+  # 두 파일 awk 는 FILENAME 으로 가른다 — NR==FNR 은 live 가 비면 배정표를 live 로 오인한다.
+  dropped=$(awk -F'\t' 'FILENAME==ARGV[1]{live[$0]=1; next} !($1 in live)' "$live" "$PORTS")
+  tmp=$(mktemp "$WTROOT/.ports.XXXXXX")
+  awk -F'\t' 'FILENAME==ARGV[1]{live[$0]=1; next} ($1 in live)' "$live" "$PORTS" > "$tmp"
+  mv "$tmp" "$PORTS"
+  rm -f "$live"
+  unlock_ports
+  kept=$(grep -c . "$PORTS" || true)
+  if [ -z "$dropped" ]; then
+    printf '정리할 배정 없음 (남은 배정 %s개)\n' "$kept"
+    return
+  fi
+  printf '%s\n' "$dropped" | while IFS=$'\t' read -r b p; do
+    printf '정리됨: %s (포트 %s)\n' "$b" "$p"
+  done
+  printf '남은 배정 %s개\n' "$kept"
+}
+
 # 선택 + 기록을 한 잠금 구간에서 수행한다. 임시 파일은 호출마다 고유(mktemp).
 assign_port() {
   lock_ports
@@ -199,7 +236,10 @@ case $cmd in
     port_drop "$branch"
     printf '제거됨: %s (브랜치 %s 는 남아 있습니다)\n' "$wt" "$branch"
     ;;
+  prune)
+    port_prune
+    ;;
   *)
-    sed -n '2,26p' "$0"
+    sed -n '2,25p' "$0"
     ;;
 esac
