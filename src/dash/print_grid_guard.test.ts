@@ -14,8 +14,8 @@ const sources = walkDash()
 describe('인쇄 진입점 가드', () => {
   /* window.print 를 직접 부르는 곳 — 사유와 함께만 허용한다.
      - print_grid.ts: 실제 인쇄 호출 지점
-     - gp_early_warning_fin_modal.tsx: 모달 안 [출력] 버튼(푸터 인쇄 아이콘이 아님 — 2026-10-26 범위 밖) */
-  const ALLOW = new Set(['print_grid.ts', 'gp_early_warning_fin_modal.tsx']);
+     모달 [출력]도 본문만 찍는다 — `printArea(본문 ref)`(2026-10-26 재무 팝업 전환으로 허용목록에서 뺐다). */
+  const ALLOW = new Set(['print_grid.ts']);
   it('window.print( 리터럴은 허용목록 파일에만 있다', () => {
     const hits = sources.filter(({ f, src }) => !ALLOW.has(f) && /window\.print\(/.test(strip(src))).map(({ f }) => f);
     expect(hits).toEqual([]);
