@@ -39,7 +39,7 @@ argument-hint: [의도 설명] [--max-retries N] [--only build|test|types]
 - 같은 수정 2회 실패 → 루프 중단, 근본 원인 분석
 
 ### 4단계: 통과 시 — 완료 게이트
-1. UI 변경이면 브라우저 실측: **ego-browser**(기본) 또는 aside repl. Playwright·claude-in-chrome 금지. 라이트/다크 둘 다.
+1. UI 변경이면 브라우저 실측: **ego-browser**. Playwright·claude-in-chrome 금지. 라이트/다크 둘 다.
 2. Codex 리뷰 (자기 결과 자기 승인 금지):
    ```bash
    SCRIPT=$(ls ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs | sort -V | tail -1)

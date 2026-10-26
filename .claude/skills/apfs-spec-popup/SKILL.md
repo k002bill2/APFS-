@@ -23,14 +23,18 @@ description: APFS 읽기전용 "명세" 팝업 규약(자펀드 명세·운용�
 7. **출처 충실**: 출처 명세의 수치가 내부 모순이어도(예: 영업이익≠수익−비용) **값은 그대로 두고 주석으로 표기** — 실데이터 연동 시 계산식 확인 항목. 고쳐 쓰지 말 것.
 8. **타이포(폰트 크기)**: 일반 페이지 본문(14px) 기준으로 맞춘다. 위계 = **모달 제목 `text-xl`(20) > 섹션 제목 `text-lg`(18)·`font-bold` > 본문 14**. 모달 헤더·본문 섹션 헤더의 정본 규약은 [[apfs-form-modal]] "모달 크롬 공통 규약"을 따른다 — 여기서 중복 정의하지 않는다. 요지: 모달 제목은 `DialogTitle` 공용 기본이 `text-xl`(**2026-09-09 사용자 결정으로 `ui/dialog.tsx` 기본값을 `text-base`→`text-xl`로 올려 전 모달 통일. 이전 '소비처 override·공용 불변' 규칙 폐기**) — 소비처에서 크기·굵기 재지정 금지. 개요 값(dd) 14 / 라벨(dt) 13, 재무제표 상세 표 14 / 재무요약 2단표 13, 대상명(`DialogDescription`) 13 · 단위주석·`금액 단위` 라벨 12.5. ⚠ **`preflight:false` + body base 폰트 없음** → bare heading은 UA 기본(h3≈18.7px)으로 튀므로, 섹션 제목에 인라인 `style={{fontSize}}` magic number 쓰지 말고 Tailwind `text-*` 유틸(`text-lg`)로 고정한다.
 
-## 검증 (ego-browser 기본)
-실행은 `ego-browser nodejs` — API는 `ego-browser skill` 로 확인한다. **Playwright가 아니다**: `locator()`·`getByRole()` 없음 → CSS 셀렉터 `page.click('<css>')`·`page.dblclick()`·`page.evaluate()` 로 옮긴다. 셀렉터는 **정확히 1개만** 매칭돼야 한다(여러 개면 `ElementResolutionError` — `.first()`·`.nth(n)` 은 `.ag-row[row-index="n"]` 로 좁힌다, 2026-10-26 실측). 아래 스니펫은 aside repl(Playwright 문법) 폴백용 원문이다 — 셀렉터는 그대로 유효하다.
+## 검증 (ego-browser)
+실행은 `ego-browser nodejs` — API는 `ego-browser skill` 로 확인한다. **Playwright가 아니다**(`locator()`·`getByRole()` 없음) → CSS 셀렉터·`loc=role:radio[name='…']`·`page.evaluate()` 를 쓴다. 셀렉터는 **정확히 1개만** 매칭돼야 한다(여러 개면 `ElementResolutionError` — `.ag-row[row-index="n"]` 로 좁힌다).
 ```js
-await page.locator('.ag-pinned-left-cols-container .ag-row').nth(2).locator('.ag-cell').nth(1).dblclick();
-// → [role=dialog] h2 '자펀드 명세', dt 개수 = 개요 항목+문서 슬롯(골드 41)
-await page.getByRole('radio', { name: '억원' }).click();        // SegTabs = radio
-// → 조합약정총액 dd '300' (30,000,000,000 → 억원)
-// 재무제표 상세 클릭 → [role=dialog] 2개, Esc → 1개, Esc → 0개
+// 진입 예: 수시보고 확인의 자펀드 셀 링크(샘플 1건 — 행 무관). 워크플로우 페이지에 포함했다면 위 진입 규약(행 더블클릭·툴바 명세)으로 연다
+await page.goto('http://localhost:<port>/#/occasional-report');
+await page.click('.ag-center-cols-container .ag-row[row-index="0"] button[title="자펀드 명세 보기"]');
+// → [role=dialog] h2 '자펀드 명세', dt 개수 = 개요 항목+문서 슬롯(41)
+await page.click("loc=role:radio[name='억원']");        // SegTabs = radio
+// → 조합약정총액 dd '121' (12,100,000,000 → 억원)
+await page.click("loc=role:button[name='재무제표 상세']");
+// → [role=dialog] 2개, page.keyboard.press('Escape') → 1개, 다시 → 0개
+// (2026-10-26 실측)
 ```
 라이트/다크 스크린샷. 취소/신청 행에서도 열려야 함(재무 0·보수/담당자 `-`).
 
