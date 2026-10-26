@@ -140,7 +140,7 @@ export function FilterDrawer({ open, onOpenChange, filters, onReset, title }: {
   );
 }
 
-/* 적용된 필터(GridFrame 둘째 줄) — 항목별 개별 칩, **값만** 표시(항목명은 title·aria-label 로 회수).
+/* 적용된 필터(GridFrame 둘째 줄) — 항목별 개별 칩, **값만** 표시(항목명은 툴팁·aria-label 로 회수).
    빈 선택지가 없는 항목(구분·radio)은 해제 × 없음. 칩 렌더는 applied_filters.tsx 가 소유한다. */
 export const specsToApplied = (filters: FilterSpec[]): AppliedFilter[] =>
   filters.filter((f) => f.value && f.chip !== false).map((f) => ({
