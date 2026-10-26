@@ -6,9 +6,9 @@ import React, { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   AuthLayout, SplitCard, Field, PrimaryBtn, SecondaryBtn, DonePanel,
   Callout, KvGrid, Pill, OtpRegisterBlock, Toast, Logo, useDemoOtp, useToast, T, StepPage, useStepDir,
-} from './auth_shared';
-import { Icon } from '../icons';
-import { railSteps, ISSUE_RAIL, verifyRegister, hasError, PW_POLICY_HINT, type RegisterErrors } from './auth_model';
+} from '../auth_shared';
+import { Icon } from '../../icons';
+import { railSteps, ISSUE_RAIL, verifyRegister, hasError, PW_POLICY_HINT, type RegisterErrors } from '../auth_model';
 
 const NO_ERR: RegisterErrors = { pw: null, confirm: null, otp: null };
 const SEED = 'JBSW Y3DP EHPK 3PXP';

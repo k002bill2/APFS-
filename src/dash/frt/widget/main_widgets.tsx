@@ -1,10 +1,10 @@
 /* 메인 종합 대시보드 — 공유 위젯 (3개 시안이 재사용) */
 import React from 'react';
-import { Icon } from './icons';
-import { UI } from './components';
-import { Charts } from './charts';
-import { APFS_DATA, MenuStore, useMenuSel } from './data';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
+import { Icon } from '../../icons';
+import { UI } from '../../components';
+import { Charts } from '../../charts';
+import { APFS_DATA, MenuStore, useMenuSel } from '../../data';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../ui/dialog';
 
 const { ColorChip, StatusBadge, ChartCard, Button, FilterChip, SegTabs, CountPill, PopNumber } = UI;
 const { ComposedBars, GroupedBars, Donut, Treemap, LineTrend } = Charts;

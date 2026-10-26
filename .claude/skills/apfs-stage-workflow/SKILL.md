@@ -63,7 +63,8 @@ toolbarLeft={selected
 - 단계 문자열을 여러 곳에 하드코딩 → `Stage` 유니온 + 액션 맵 SSOT.
 - **드롭다운형 액션 버튼(예: `투심결과 입력 ▾`)을 `<DropdownMenuTrigger asChild><Button>`으로 감싸기** → `UI.Button`은 `...rest`/`forwardRef`가 없어 Radix `onPointerDown`·ref가 유실돼 **메뉴가 안 열린다**(2026-09-11 실측). `DropdownMenuTrigger`에 스타일을 **직접** 얹되, 옆 selbar 버튼과 높이를 맞추려면 **`UI.Button size="sm"`의 유틸 클래스를 그대로 복제**(`ui-btn ui-<variant> inline-flex items-center justify-center gap-[7px] font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border border-transparent transition-colors duration-tok-fast ease-ds px-[11px] py-1.5 text-[12.5px]` + variant 색). **고정 `height` 금지** — 높이는 padding+line-height(sm=29px)에서 나오므로 `height:34`류를 주면 옆 버튼과 어긋난다. 아이콘 `size={14}`.
 
-## 검증 (aside repl)
+## 검증 (ego-browser 기본)
+실행은 `ego-browser nodejs` — API는 `ego-browser skill` 로 확인한다. **Playwright가 아니다**: `locator()`·`getByRole()` 없음 → CSS 셀렉터 `page.click('<css>')`·`page.dblclick()`·`page.evaluate()` 로 옮긴다. 셀렉터는 **정확히 1개만** 매칭돼야 한다(여러 개면 `ElementResolutionError` — `.first()`·`.nth(n)` 은 `.ag-row[row-index="n"]` 로 좁힌다, 2026-10-26 실측). 아래 스니펫은 aside repl(Playwright 문법) 폴백용 원문이다 — 셀렉터는 그대로 유효하나, 선택 기대값은 2026-09-22 체크박스 전용 결정([[apfs-aggrid]] 행 선택 회귀 5종) 기준으로 본다.
 ```js
 await page.locator('.ag-pinned-left-cols-container .ag-row').first().locator('.ag-cell').nth(1).click(); // ⚠ .ag-row 클릭은 선택 안 됨
 // → document.querySelectorAll('.ag-row-selected').length ≥ 1, 툴바에 그 단계 액션만 노출

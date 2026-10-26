@@ -6,17 +6,17 @@
    ⚠ 정본과의 차이(2026-09-18): "아이디 저장" 체크는 DS `Checkbox`(ui/checkbox.tsx)로 코드에서 **먼저** 바꿨다(전 화면 통일).
      캔버스는 아직 네이티브 체크박스다 — 캔버스에서 재이식할 때 이 체크만은 DS 컴포넌트를 유지하고, 캔버스도 함께 갱신할 것. */
 import React, { useEffect, useRef, useState, type FormEvent } from 'react';
-import { UI } from '../components';
-import { Checkbox } from '../ui/checkbox';   // 아이디 저장 = DS 체크박스(전 화면 통일, 2026-09-18). Radix <button> 이라 <label> 래핑 금지 → htmlFor
+import { UI } from '../../components';
+import { Checkbox } from '../../ui/checkbox';   // 아이디 저장 = DS 체크박스(전 화면 통일, 2026-09-18). Radix <button> 이라 <label> 래핑 금지 → htmlFor
 import {
   AuthLayout, SplitCard, Field, FormError, PrimaryBtn, SecondaryBtn, DonePanel,
   OtpCode, Toast, Logo, InfoHint, useDemoOtp, useToast, T, StepPage, useStepDir,
-} from './auth_shared';
+} from '../auth_shared';
 import {
   railSteps, LOGIN_RAIL, RESET_RAIL, SIMPLE_AUTH_RAIL,
   verifyCredentials, verifyOtp, verifyPwChange, verifySimpleAuth, hasError,
   verifyReset, DEMO_ID, LOCK_LIMIT, PW_POLICY_HINT, type PwChangeErrors,
-} from './auth_model';
+} from '../auth_model';
 
 const NO_PW_ERR: PwChangeErrors = { cur: null, next: null, confirm: null };
 

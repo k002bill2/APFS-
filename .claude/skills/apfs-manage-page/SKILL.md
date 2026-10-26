@@ -49,11 +49,11 @@ GNB/LNB 전환 토글(`.opts`) · 상단바/출처시스템 메뉴/서브탭/LNB
 3. **파일·라우트**: 기존 페이지를 덮어쓰지 말고 **새 파일**(`<domain>_manage.tsx`, `export function XxxManage`). `app.tsx` route 분기만 교체(구 파일은 미라우팅으로 두고 삭제는 PR에서 사용자 결정). `data.ts` 리프 `path`가 이미 있으면 유지, `favRoute`=그 path.
 4. **모달 스키마**: `<domain>_manage_schemas.ts`에 `kind:'form'` PageSchema들 + 공통코드 옵션 상수. **`schemas/index.ts ALL`에 등록 금지**(라우트 아님) — 대신 모듈 스코프 `parsePageSchema()`로 import 시점 zod 검증. `columns`·`provenance`는 zod 필수라 대표 컬럼만 선언.
 5. **페이지 조립**(1절 표대로). 조립 시작 전 **HITL — KPI 배지 행 포함 여부(필수)**: `AskUserQuestion`으로 카드헤더 KPI 배지 행을 넣을지 묻는다(헤더="KPI 배지", 옵션 = **미포함(Recommended)** / 전체 건수만 / 전체+구분별 2지표, 후보 값은 목업 DATA·spec에서 채움). 답 반영 — typed 트랙: 포함이면 `kpis={<>…KpiBadge…</>}`, **미포함이면 `kpis`를 아예 넘기지 않는다**(GridFrame `{kpis && …}`로 영역째 사라짐). 규약은 [[apfs-grid]] "KPI 배지 행". 이어서 행 타입: **숫자 N/A는 `null`**(문자 `'-'` 금지) → `valueFormatter: p => p.value==null ? '-' : numFmt(p)`(공유 numFmt에 null 가드만, 재구현 금지). 텍스트 N/A는 `'-'`.
-6. **검증**: `npm run build` + `npm test` + **aside repl 런타임**(4절). Codex 리뷰 후 커밋.
+6. **검증**: `npm run build` + `npm test` + **ego-browser 런타임**(4절, aside repl 폴백). Codex 리뷰 후 커밋.
 
 ## 4. 런타임 검증 체크리스트 (빌드 green ≠ 동작)
 ```js
-// aside repl — localStorage apfs.route는 원시 문자열
+// ego-browser nodejs (aside repl 폴백도 동일) — localStorage apfs.route는 원시 문자열
 await page.evaluate(()=>localStorage.setItem('apfs.route','<path>')); await page.reload();
 ```
 - [ ] `.ag-center-cols-container .ag-row` 수 = 더미 행 수(빈 그리드 아님)
@@ -64,7 +64,7 @@ await page.evaluate(()=>localStorage.setItem('apfs.route','<path>')); await page
 - [ ] 모달 저장/실행: **필수값을 채운 상태에서** 클릭 → 라벨이 "…중"으로 스왑(`.t-text-swap` 존재, `aria-busy=true`)→ 400ms 후 commit. 빈 폼은 검증에서 막혀 스왑이 없는 게 정상. 버튼 찾기는 `textContent.trim()===라벨`(측정 글자는 `::before`라 섞이지 않음)
 - [ ] 툴바 조회 클릭 → 아이콘 `style.transform`이 `rotate(360deg)`로 증가
 - [ ] 섹션형 모달 열림 + `getComputedStyle(select).fontSize==='14px'`
-- [ ] 라이트/다크 스크린샷(`./artifacts/` 세션 상대경로만 허용) · 콘솔/페이지 에러 0
+- [ ] 라이트/다크 스크린샷(ego-browser는 `page.screenshot({ path: '<절대경로>' })` — 스크립트가 셸 cwd에서 돌지 않는다 / aside 폴백은 `./artifacts/` 세션 상대경로만 허용) · 콘솔/페이지 에러 0
 
 ## 5. 함정 (골드에서 실제로 맞닥뜨린 것)
 - `RowFormModal` 제목은 mode 고정 → 단계별 제목은 **`title` prop**(2026-09-08 추가).

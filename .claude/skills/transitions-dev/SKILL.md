@@ -48,7 +48,7 @@ APFS의 열림·닫힘 표면은 이미 소유자와 확정 규약이 있다. �
 원문의 `classList.toggle` + `setTimeout` 스니펫은 **React 상태 + `onTransitionEnd`/`onAnimationEnd`**로 옮긴다. 리플레이용 reflow(`void el.offsetWidth`)는 ref로 그대로 해도 된다. `getComputedStyle(...).getPropertyValue('--…')` 타이밍 읽기는 유지한다. Radix 컴포넌트를 이 스니펫이나 Motion `AnimatePresence`로 감싸지 않는다.
 
 ### 6. 검증
-`npm run build` green + 라이트/다크 실측(aside-browser). 색·모션 끝 상태는 육안이 아니라 `getComputedStyle`로 확인한다(`filter==='none' && transform==='none'`). 반응형·접근성 체크는 [[responsive-ui]]·[[web-a11y]].
+`npm run build` green + 라이트/다크 실측(ego-browser). 색·모션 끝 상태는 육안이 아니라 `getComputedStyle`로 확인한다(`filter==='none' && transform==='none'`). 반응형·접근성 체크는 [[responsive-ui]]·[[web-a11y]].
 
 ---
 
