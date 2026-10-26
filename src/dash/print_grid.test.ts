@@ -84,6 +84,28 @@ const stubPrint = (onPrint: () => void = () => {}, { blocking = true } = {}) =>
     if (blocking) window.dispatchEvent(new Event('afterprint'));
   });
 
+/* 폭 맞춤 = 인쇄 순간 주입되는 zoom 사다리(<style data-print-zoom>) — jsdom 은 미디어쿼리를 평가하지 않으므로 직접 푼다:
+   인쇄 페이지 폭(page) 이하인 가장 큰 min-width 단의 zoom(맞는 단이 없으면 1). */
+const ladderCss = () => document.querySelector('style[data-print-zoom]')?.textContent ?? '';
+function zoomAt(css: string, page: number): number {
+  let z = 1;
+  for (const [, min, v] of css.matchAll(/@media print(?: and \(min-width: (\d+)px\))? \{[^{]*\{ zoom: ([\d.]+)/g)) {
+    if (Number(min ?? 0) <= page) z = Number(v);
+  }
+  return z;
+}
+/* 실측 인쇄 폭(2026-10-26 CDP printToPDF + min-width 사다리): A4 세로 720 · Letter 가로 980 · A4 가로 1045 · A4 가로 여백 최소 1100 */
+const PAGES = [720, 980, 1045, 1100];
+/* 어느 용지·방향·여백이든: 넘치면 페이지 폭 이하로 줄이되 오른쪽 여백은 5px 미만, 들어가면 zoom 1(확대 안 함) */
+function expectFits(css: string, width: number) {
+  for (const page of PAGES) {
+    const z = zoomAt(css, page);
+    if (width <= page) { expect(z).toBe(1); continue; }
+    expect(z * width).toBeLessThanOrEqual(page);
+    expect(z * width).toBeGreaterThan(page - 5);
+  }
+}
+
 let printGrid: () => Promise<void>;
 let printArea: (area: HTMLElement) => Promise<void>;
 beforeEach(async () => {
@@ -144,6 +166,7 @@ describe('printGrid — 그리드만 인쇄', () => {
     window.dispatchEvent(new Event('pointerdown'));
     expect(f.opts.domLayout).toBe('autoHeight');
     expect(document.documentElement.hasAttribute('data-printing')).toBe(false);
+    expect(document.querySelector('style[data-print-zoom]')).toBeNull();
   });
 
   it('렌더 대기 중 화면을 떠나면(영역 언마운트) 인쇄 창을 열지 않고 표식을 걷는다', async () => {
@@ -162,10 +185,10 @@ describe('printGrid — 그리드만 인쇄', () => {
     const area = document.getElementById('area')!;
     area.insertAdjacentHTML('beforeend', '<div class="overflow-x-auto"><table id="native"></table></div>');
     document.getElementById('native')!.getBoundingClientRect = () => ({ left: 0, right: 1400, width: 1400 } as DOMRect);
-    let atPrint: string[] = [];
-    stubPrint(() => { atPrint = [area.style.getPropertyValue('--print-zoom-portrait'), area.style.getPropertyValue('--print-zoom-landscape')]; });
+    let css = '';
+    stubPrint(() => { css = ladderCss(); });
     await printGrid();
-    expect(atPrint).toEqual(['0.5', '0.685']);
+    expectFits(css, 1400);
   });
 
   it('2페이지 이후(행 번호가 0이 아님)도 본문 셀이 다 그려질 때까지 기다린다', async () => {
@@ -183,10 +206,10 @@ describe('printGrid — 그리드만 인쇄', () => {
     const area = document.getElementById('area')!;
     area.insertAdjacentHTML('beforeend', '<table id="side"></table>');
     document.getElementById('side')!.getBoundingClientRect = () => ({ left: 540, right: 1240, width: 700 } as DOMRect);
-    let atPrint: string[] = [];
-    stubPrint(() => { atPrint = [area.style.getPropertyValue('--print-zoom-portrait'), area.style.getPropertyValue('--print-zoom-landscape')]; });
+    let css = '';
+    stubPrint(() => { css = ladderCss(); });
     await printGrid();
-    expect(atPrint).toEqual(['0.564', '0.774']);
+    expectFits(css, 1240);   // 0~1240 합친 범위
   });
 
   it('겹친 요청(재클릭·⌘P 연타)은 무시한다 — 인쇄 상태를 원래 레이아웃으로 착각하지 않는다', async () => {
@@ -219,31 +242,40 @@ describe('printGrid — 그리드만 인쇄', () => {
     expect(f.selVisible).toBe(false);
   });
 
-  /* 방향별 인쇄 폭(세로 700 · 가로 960)에 맞춘 zoom — 인쇄 동안만, 끝나면 제거 */
-  const zoomsAtPrint = async (width: number) => {
+  /* 인쇄 페이지 실제 폭에 맞춘 zoom — 고정 보수값(가로 960)으로 줄이면 A4 가로(1045)에서 오른쪽이 남았다(2026-10-26 사용자 제보).
+     인쇄 동안만, 끝나면 제거 */
+  const ladderAtPrint = async (width: number) => {
     mountShell({ width });
-    const area = document.getElementById('area')!;
-    const read = () => [area.style.getPropertyValue('--print-zoom-portrait'), area.style.getPropertyValue('--print-zoom-landscape')];
-    let atPrint: string[] = [];
-    stubPrint(() => { atPrint = read(); });
+    let css = '';
+    let target = false;
+    stubPrint(() => { css = ladderCss(); target = document.getElementById('area')!.hasAttribute('data-print-target'); });
     await printGrid();
-    return { atPrint, after: read() };
+    return { css, target, after: document.querySelector('style[data-print-zoom]'), targetAfter: document.getElementById('area')!.hasAttribute('data-print-target') };
   };
 
-  it('두 방향 인쇄 폭을 모두 넘는 넓은 표는 방향별 zoom 으로 맞춘다', async () => {
-    const { atPrint, after } = await zoomsAtPrint(2800);
-    expect(atPrint).toEqual(['0.25', '0.342']);
-    expect(after).toEqual(['', '']);
+  it('넓은 표는 용지·방향·여백과 무관하게 인쇄 폭에 꽉 차게(오른쪽 여백 5px 미만) 줄인다', async () => {
+    const { css, target, after, targetAfter } = await ladderAtPrint(2800);
+    expectFits(css, 2800);
+    expect(target).toBe(true);
+    expect(after).toBeNull();
+    expect(targetAfter).toBe(false);
   });
 
-  it('세로 폭만 넘는 표는 세로에만 zoom 을 건다', async () => {
-    const { atPrint } = await zoomsAtPrint(800);
-    expect(atPrint).toEqual(['0.875', '']);
+  it('자펀드 관리급 초광폭(4540px)도 반올림 오차 없이 인쇄 폭 이하로 맞춘다', async () => {
+    const { css } = await ladderAtPrint(4540);
+    expectFits(css, 4540);
   });
 
-  it('인쇄 폭 안의 표는 zoom 을 걸지 않는다', async () => {
-    const { atPrint } = await zoomsAtPrint(600);
-    expect(atPrint).toEqual(['', '']);
+  it('세로 폭만 넘는 표는 세로에서만 줄이고 가로에선 그대로 둔다', async () => {
+    const { css } = await ladderAtPrint(800);
+    expectFits(css, 800);
+    expect(zoomAt(css, 720)).toBeLessThan(1);
+    expect(zoomAt(css, 1045)).toBe(1);
+  });
+
+  it('인쇄 폭 안의 표는 zoom 을 걸지 않는다(확대 안 함)', async () => {
+    const { css } = await ladderAtPrint(600);
+    for (const page of PAGES) expect(zoomAt(css, page)).toBe(1);
   });
 });
 
@@ -267,16 +299,17 @@ describe('printArea — 지정 영역(모달 본문)만 인쇄', () => {
       seen = {
         printing: document.documentElement.getAttribute('data-printing'),
         ids: Array.from(document.querySelectorAll('[data-print-path]')).map((e) => e.id),
-        zoom: area2.style.getPropertyValue('--print-zoom-portrait'),
-        pageZoom: document.getElementById('area')!.style.getPropertyValue('--print-zoom-portrait'),
+        target: Array.from(document.querySelectorAll('[data-print-target]')).map((e) => e.id),
+        portraitFits: zoomAt(ladderCss(), 720) * 820 <= 720,
         pageLayout: page.opts.domLayout,
       };
     });
     await printArea(area2);
-    expect(seen).toEqual({ printing: 'grid', ids: ['portal', 'content', 'scroll'], zoom: '0.853', pageZoom: '', pageLayout: 'autoHeight' });
+    expect(seen).toEqual({ printing: 'grid', ids: ['portal', 'content', 'scroll'], target: ['area2'], portraitFits: true, pageLayout: 'autoHeight' });
     expect(document.querySelectorAll('[data-print-path]').length).toBe(0);
+    expect(document.querySelectorAll('[data-print-target]').length).toBe(0);
     expect(document.documentElement.hasAttribute('data-printing')).toBe(false);
-    expect(area2.style.getPropertyValue('--print-zoom-portrait')).toBe('');
+    expect(document.querySelector('style[data-print-zoom]')).toBeNull();
   });
 
   it('printGrid 는 이벤트 인자를 받아도 종전대로 첫 GridFrame 영역을 인쇄한다(⌘P·푸터 onClick)', async () => {
