@@ -7,7 +7,8 @@
     display: none !important;
   }
   /* 경로 요소는 레이아웃 껍데기만 남긴다 — 셸 그리드 칼럼(LNB 자리)·max-width:1280·sticky·여백·
-     overflow 클리핑·진입 애니메이션(transform)을 풀어 표가 인쇄 폭 전체를 쓰게 한다. */
+     overflow 클리핑·진입 애니메이션(transform)을 풀어 표가 인쇄 폭 전체를 쓰게 한다.
+     모달(printArea)도 같은 규칙으로 푼다 — DialogContent 의 fixed·중앙정렬 `translate`(transform 아님)·max-h-[88vh]. */
   html[data-printing="grid"] [data-print-path] {
     display: block !important;
     position: static !important;
@@ -15,6 +16,7 @@
     max-width: none !important;
     min-width: 0 !important;
     height: auto !important;
+    max-height: none !important;
     min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -23,6 +25,7 @@
     box-shadow: none !important;
     background: none !important;
     transform: none !important;
+    translate: none !important;
     animation: none !important;
   }
   /* 화면에선 display:contents(레이아웃 영향 0) — 인쇄에선 zoom 을 받을 박스가 필요하다.

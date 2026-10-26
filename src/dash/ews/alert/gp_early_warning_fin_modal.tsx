@@ -14,9 +14,11 @@
      재사용한다고 명시했다. 행마다 달라지는 실데이터가 아니며, 신규 데이터를 창작하지 않는다.
    ⚠ 목업은 `엑셀`·`출력`을 modal-head 우측에 뒀지만, 우리 `DialogContent` 는 헤더 우측 상단에 자체 닫기(X)를
      **절대배치**하므로 같은 자리에 버튼을 두면 겹친다 → DS 골드(`subfund_spec_modal.tsx`)대로 **푸터**에 둔다.
-     항목·동작(엑셀 다운로드 / 인쇄 / 닫기)은 목업과 같다. */
+     항목(엑셀 다운로드 / 인쇄 / 닫기)은 목업과 같다. [출력]은 페이지 전체가 아니라 **본문 5섹션만** 찍는다
+     (2026-10-26 사용자 결정 — 제목줄·금액단위 토글·버튼·뒤 페이지 제외. `printArea`, 페이지 그리드 인쇄와 같은 규칙). */
 import React, { useState } from 'react';
 import { UI } from '../../components';
+import { printArea } from '../../print_grid';
 import { fmt } from '../../aggrid_theme';   // 숫자 표기 SSOT(정수=콤마) — 자체 포매터 재구현 금지
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from '../../ui/dialog';
 import { toast } from '../../ui/sonner';
@@ -181,6 +183,7 @@ function GradeChangeTable() {
 export function GpEarlyWarningFinModal({ gp, kind, ym, onClose }: { gp: string; kind: string; ym: string; onClose: () => void }) {
   const [unit, setUnit] = useState<Unit>('원');   // 목업 기본값 = 저장 base
   const dlgRef = React.useRef<DialogHandle>(null);
+  const printRef = React.useRef<HTMLDivElement>(null);   // [출력] 범위 = 본문 5섹션(단위바 제외)
 
   /* 엑셀 — 화면이 그리는 소스 **전부**를 직렬화한다(재무정보·손익정보·정량지표·추이·등급변경).
      한쪽만 넣으면 "화면엔 보이는데 엑셀엔 없는" 누락이 난다(apfs-spec-popup 규약 6).
@@ -227,18 +230,20 @@ export function GpEarlyWarningFinModal({ gp, kind, ym, onClose }: { gp: string; 
             <SegTabs size="sm" value={unit} onChange={(v: string) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
           </div>
 
-          <Section title="재무정보" unitNote={`(단위: ${unit})`}><KvGrid items={FIN} unit={unit} /></Section>
-          <Section title="손익정보" unitNote={`(단위: ${unit})`}><KvGrid items={PROFIT} unit={unit} /></Section>
-          <Section title="정량지표"><RatioGrid items={RATIO} /></Section>
-          <Section title="기준년월별 추이" unitNote={`(단위: ${unit})`}><TrendTable unit={unit} /></Section>
-          <Section title="지표등급 변경정보"><GradeChangeTable /></Section>
+          <div ref={printRef} data-print-area="" style={{ display: 'contents' }}>
+            <Section title="재무정보" unitNote={`(단위: ${unit})`}><KvGrid items={FIN} unit={unit} /></Section>
+            <Section title="손익정보" unitNote={`(단위: ${unit})`}><KvGrid items={PROFIT} unit={unit} /></Section>
+            <Section title="정량지표"><RatioGrid items={RATIO} /></Section>
+            <Section title="기준년월별 추이" unitNote={`(단위: ${unit})`}><TrendTable unit={unit} /></Section>
+            <Section title="지표등급 변경정보"><GradeChangeTable /></Section>
+          </div>
         </div>
 
         <DialogFooter className="px-[46px]">
           <div />
           <div className="flex gap-2">
             <Button variant="outline" size="sm" leadingIcon="download" onClick={excel}>엑셀</Button>
-            <Button variant="outline" size="sm" leadingIcon="printer" onClick={() => window.print()}>출력</Button>
+            <Button variant="outline" size="sm" leadingIcon="printer" onClick={() => { if (printRef.current) void printArea(printRef.current); }}>출력</Button>
             <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
           </div>
         </DialogFooter>

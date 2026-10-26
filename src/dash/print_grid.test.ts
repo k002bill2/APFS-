@@ -85,9 +85,10 @@ const stubPrint = (onPrint: () => void = () => {}, { blocking = true } = {}) =>
   });
 
 let printGrid: () => Promise<void>;
+let printArea: (area: HTMLElement) => Promise<void>;
 beforeEach(async () => {
   fakes.clear();
-  ({ printGrid } = await import('./print_grid'));
+  ({ printGrid, printArea } = await import('./print_grid'));
 });
 afterEach(() => { vi.restoreAllMocks(); document.body.innerHTML = ''; });
 
@@ -243,5 +244,46 @@ describe('printGrid — 그리드만 인쇄', () => {
   it('인쇄 폭 안의 표는 zoom 을 걸지 않는다', async () => {
     const { atPrint } = await zoomsAtPrint(600);
     expect(atPrint).toEqual(['', '']);
+  });
+});
+
+/* 모달 [출력](2026-10-26 사용자 결정 "재무 팝업 [출력]도 그리드만 — 본문 5섹션") — GridFrame 밖 영역을 직접 지정한다.
+   모달은 body 포털이라 뒤 페이지의 GridFrame 영역(#area)보다 문서 순서가 뒤 — 첫 [data-print-area] 로 고르면 엉뚱한 페이지가 찍힌다. */
+describe('printArea — 지정 영역(모달 본문)만 인쇄', () => {
+  function mountModal() {
+    const page = mountShell();
+    document.body.insertAdjacentHTML('beforeend', `
+      <div id="portal"><div id="content"><div id="head"></div><div id="scroll"><div id="unitbar"></div>
+        <div data-print-area="" id="area2"><div class="overflow-x-auto"><table id="t"></table></div></div>
+      </div><div id="foot"></div></div></div>`);
+    document.getElementById('t')!.getBoundingClientRect = () => ({ left: 0, right: 820, width: 820 } as DOMRect);
+    return { page, area2: document.getElementById('area2')! };
+  }
+
+  it('지정 영역의 조상 경로만 표식하고, 뒤 페이지 그리드는 건드리지 않는다 / 끝나면 복원', async () => {
+    const { page, area2 } = mountModal();
+    let seen: Record<string, unknown> = {};
+    stubPrint(() => {
+      seen = {
+        printing: document.documentElement.getAttribute('data-printing'),
+        ids: Array.from(document.querySelectorAll('[data-print-path]')).map((e) => e.id),
+        zoom: area2.style.getPropertyValue('--print-zoom-portrait'),
+        pageZoom: document.getElementById('area')!.style.getPropertyValue('--print-zoom-portrait'),
+        pageLayout: page.opts.domLayout,
+      };
+    });
+    await printArea(area2);
+    expect(seen).toEqual({ printing: 'grid', ids: ['portal', 'content', 'scroll'], zoom: '0.853', pageZoom: '', pageLayout: 'autoHeight' });
+    expect(document.querySelectorAll('[data-print-path]').length).toBe(0);
+    expect(document.documentElement.hasAttribute('data-printing')).toBe(false);
+    expect(area2.style.getPropertyValue('--print-zoom-portrait')).toBe('');
+  });
+
+  it('printGrid 는 이벤트 인자를 받아도 종전대로 첫 GridFrame 영역을 인쇄한다(⌘P·푸터 onClick)', async () => {
+    mountModal();
+    let ids: string[] = [];
+    stubPrint(() => { ids = Array.from(document.querySelectorAll('[data-print-path]')).map((e) => e.id); });
+    await (printGrid as (e?: unknown) => Promise<void>)(new MouseEvent('click'));
+    expect(ids).toEqual(['root', 'layout', 'main', 'frame']);
   });
 });

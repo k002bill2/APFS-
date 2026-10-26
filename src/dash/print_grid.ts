@@ -101,9 +101,17 @@ async function waitRendered(grids: PrintGrid[]): Promise<void> {
 
 let printing = false;   // 표식~복원 사이 — 겹친 요청 차단
 
+/* 인자를 받지 않는다 — 푸터 onClick·useHotkey 가 이벤트 객체를 첫 인자로 넘기므로, 영역 지정은 printArea 로만 한다.
+   첫 [data-print-area] = 페이지 GridFrame(#root 안). 모달이 열려 있어도 body 포털이라 문서 순서상 뒤에 있다. */
 export async function printGrid(): Promise<void> {
   const area = document.querySelector<HTMLElement>('[data-print-area]');
   if (!area) { window.print(); return; }   // GridFrame 밖 화면(대시보드 등) = 종전대로 페이지 인쇄
+  return printArea(area);
+}
+
+/* 지정 영역만 인쇄 — GridFrame 밖(모달 [출력] 등)은 본문을 `data-print-area` 로 감싸고 그 요소를 넘긴다
+   (2026-10-26 사용자 결정 "조기경보 재무 팝업 [출력]도 그리드만 — 본문 5섹션"). 그리드 수집·폭 맞춤도 이 영역 안만 본다. */
+export async function printArea(area: HTMLElement): Promise<void> {
   if (printing) return;
   printing = true;
 
