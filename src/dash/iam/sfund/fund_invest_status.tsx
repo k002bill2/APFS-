@@ -37,6 +37,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, ValueFormatterParams, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { PeriodPicker } from '../../ui/period-picker';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS — 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
@@ -410,7 +411,7 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
   const rows = isYearView ? YEAR_ROWS : CROSS_ROWS[view as CrossView];
   const columnDefs = isYearView ? YEAR_COLUMNS : CROSS_COLUMNS[view as CrossView];
 
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   const onGridReady = useCallback((e: GridReadyEvent<StatRow>) => { apiRef.current = e.api; }, []);

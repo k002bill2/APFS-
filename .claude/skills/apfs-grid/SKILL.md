@@ -111,8 +111,12 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - **푸터 액션 4종은 항시 노출이며 순서가 고정이다(2026-09-17 사용자 결정): 전체보기(⛶) · 새 창(⧉) · 내보내기(⤓) · 인쇄(🖨).** 인쇄는 화면 전용 출력물이 있으면 `printItems` 로 `[🖨 │ ⌄]` combo 가 된다(아래 ✅ ②). 페이지가 직접 `IconBtn`을 나열하지 않는다 — `footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}` 한 줄.
   - **단축키(2026-09-28)** — 네 아이콘 툴팁에 전부 단축키 힌트가 붙는다: 전체보기 `⌥A` · 새 창 `⌥O` · 내보내기 `⌥D` · 인쇄 `⌘P`.
     - 전체보기·새 창은 **`FooterActions` 가 직접 바인딩**한다(IconBtn `hotkey`) → **화면당 `<FooterActions>` 는 정확히 1개**(2개면 한 번 누름에 두 번 실행).
-    - 내보내기·인쇄는 **표시 전용**(`shortcut`) — 바인딩은 페이지가 소유한다. 그래서 `FooterActions` 를 쓰는 화면은 `useHotkey(HOTKEYS.print.combo, () => window.print())` 가 **필수**, `onExport` 를 넘기면 `useHotkey(HOTKEYS.export.combo, () => exportExcel())` 도 필수(안 하면 툴팁이 거짓 단축키를 광고). 상세필터 시트처럼 화면을 덮는 오버레이가 열려 있으면 `{ enabled: !filterOpen }`.
+    - 내보내기·인쇄는 **표시 전용**(`shortcut`) — 바인딩은 페이지가 소유한다. 그래서 `FooterActions` 를 쓰는 화면은 `useHotkey(HOTKEYS.print.combo, printGrid)` 가 **필수**(`print_grid.ts` — 아래 "인쇄 = 그리드만"), `onExport` 를 넘기면 `useHotkey(HOTKEYS.export.combo, () => exportExcel())` 도 필수(안 하면 툴팁이 거짓 단축키를 광고). 상세필터 시트처럼 화면을 덮는 오버레이가 열려 있으면 `{ enabled: !filterOpen }`.
     - 가드 `src/dash/footer_hotkey_hints.test.ts` 가 위 두 규칙(바인딩 필수·1개)을 소스로 검사한다. `RiskPage` 는 자체 바인딩을 가지므로 그 소비처는 따로 할 일이 없다. 키 규약 상세 → [[apfs-hotkeys]].
+  - **인쇄 = 그리드만(2026-10-26 사용자 결정 "그리드만 · 표 전체 컬럼")** — 푸터 🖨 와 ⌘P 는 `printGrid`(`src/dash/print_grid.ts`)로 GridFrame **본문(children)만** 찍는다. GNB·LNB·브레드크럼·카드헤더·툴바·푸터는 인쇄에서 빠진다.
+    - 범위 표식은 `GridFrame` 이 children 을 감싼 `<div data-print-area style="display:contents">` — 화면 레이아웃 영향 0. 그래서 **본문에 넣은 것(섹션 제목·탭·셀 버튼)은 함께 찍힌다** — 인쇄에서 빼야 할 컨트롤은 children 밖(툴바·푸터 슬롯)에 둔다.
+    - 인쇄 동안만: AG Grid `domLayout:'print'`(가로 스크롤 밖 컬럼까지 전부) · 선택 체크박스 열 숨김 · 고정(pinned) 열 해제(안 풀면 합계행이 밀린다) · 방향별 인쇄 폭(세로 700/가로 960px)에 맞춘 zoom. 끝나면 전부 복원. 페이지는 아무것도 설정하지 않는다.
+    - `window.print()` 를 직접 부르지 않는다 — 가드 `print_grid_guard.test.ts`(허용목록: `print_grid.ts`, 모달 [출력] 버튼 `gp_early_warning_fin_modal.tsx`).
   - `onToggleAll`을 안 넘기면 전체보기가 빠져 3개만 렌더된다 — **페이저가 없는 화면**(집계·매트릭스·master-detail 등 현재 10개)이 그 경우다. `onExport`를 안 넘기면 내보내기도 빠진다(투자기업정보(통합)·투자실적 현황(투자기업)).
   - ⛔ **kebab(⋯)은 전 화면에서 폐기됐다(2026-09-17).** 툴바 독립 kebab · 등록 combo의 `⌄` 절반 · 푸터 폴백 kebab(`!topMoreVisible && <MoreMenu>`) 셋 다 삭제했고, 그 안에 있던 내보내기·인쇄가 푸터 아이콘으로 항시 노출된다. `MoreMenu`/`MoreMenuItems`/`RegisterCombo`/`PoCMoreMenu` 로컬 복사본 39개와 `topMoreRef`/`topMoreVisible`/IntersectionObserver 폴백 배선(26파일)도 함께 제거됐다 — **다시 만들지 말 것.**
   - 툴바에 인쇄 `IconBtn`을 따로 두지 않는다(푸터와 중복 — investee_profile·investee_invest_stats에서 실제 2개가 됐다).

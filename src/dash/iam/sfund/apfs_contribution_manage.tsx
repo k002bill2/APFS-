@@ -46,6 +46,7 @@ import type {
 } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { PeriodPicker } from '../../ui/period-picker';
@@ -411,7 +412,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
     setModal({ kind: 'dist', gi, mode });
   }, []);
   const columnDefs = useMemo(() => makeColumns({ openTx }), [openTx]);
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   /* ⚠ 필터는 **그룹 단위**다 — 평탄화된 행을 거르면 소계가 자기 멤버 없이 살아남는다(파일 상단 '한계').

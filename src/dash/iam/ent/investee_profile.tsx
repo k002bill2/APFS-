@@ -19,6 +19,7 @@ import { useState } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';   // ⌘P 인쇄(푸터 툴팁 힌트와 짝)
+import { printGrid } from '../../print_grid';
 import { CompanyProfileBody } from './company_profile_model';
 import { SOURCE_COUNTS, CO_NAME } from './company_profile_data';
 import { UNITS, DEFAULT_UNIT } from '../../schemas/unit';
@@ -56,7 +57,7 @@ function DrawerField({ label, noop, children }: { label: string; noop?: boolean;
 
 export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   /* 조회 대상 4종 SSOT — 적용 필터 칩과 상세필터 드로어가 공유한다. 실데이터가 1건뿐이라 본문은 바뀌지 않는다 */
   const [fMf, setFMf] = useState<string>(QUERY_FIELDS[0].value);
   const [fGp, setFGp] = useState<string>(QUERY_FIELDS[1].value);

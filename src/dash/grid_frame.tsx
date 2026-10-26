@@ -10,6 +10,7 @@ import { UI } from './components';
 import { Icon } from './icons';
 import { SplitButton } from './ui/split-button';
 import { HOTKEYS } from './use-hotkey';
+import { printGrid } from './print_grid';
 import { FilterChipRow, activeFilters } from './applied_filters';
 import type { AppliedFilter, FilterChipItem } from './applied_filters';
 import type { SplitButtonItem } from './ui/split-button';
@@ -29,11 +30,12 @@ const { Card, ColorChip, IconBtn } = UI;
      가드 테스트 footer_hotkey_hints.test.ts.
      반면 전체보기(⌥A)·새 창(⌥O)은 페이지 바인딩이 없어 **여기서** `hotkey` 로 바인딩한다 — 화면당 FooterActions 는 1개만 둔다(2개면 이중 발화).
    - `printItems` 를 넘기면 인쇄가 combo(SplitButton iconOnly)가 된다 — 본체 = 화면 인쇄, ▾ = 화면 전용 출력물
-     (등록원부 출력·발급이력 출력 등, 2026-09-24 사용자 결정). 툴바에 별도 [출력▾] 을 두지 않는다. */
+     (등록원부 출력·발급이력 출력 등, 2026-09-24 사용자 결정). 툴바에 별도 [출력▾] 을 두지 않는다.
+   - 인쇄 = **그리드만**(GridFrame 본문, 전 컬럼) — `printGrid`(print_grid.ts, 2026-10-26 사용자 결정). 페이지의 ⌘P 도 같은 함수. */
 export function FooterActions({ onExport, onPrint, printItems, showAll, onToggleAll, size = 32 }: {
   onExport?: () => void; onPrint?: () => void; printItems?: SplitButtonItem[]; showAll?: boolean; onToggleAll?: () => void; size?: number;
 }) {
-  const print = onPrint ?? (() => window.print());
+  const print = onPrint ?? printGrid;
   return (
     <>
       {onToggleAll && <IconBtn icon="maximize" label="전체보기" size={size} active={showAll} pressed={showAll} onClick={onToggleAll} hotkey={HOTKEYS.showAll} />}
@@ -375,8 +377,11 @@ export function GridFrame({
           </div>
         )}
 
-        {/* 본문: 테이블 (가로 스크롤은 children 책임 — 상단 계약 주석 참조) */}
-        {children}
+        {/* 본문: 테이블 (가로 스크롤은 children 책임 — 상단 계약 주석 참조).
+            data-print-area = 인쇄 범위(print_grid.ts). display:contents 라 화면 레이아웃 영향 0 — 인쇄에서만 박스가 된다. */}
+        <div data-print-area="" style={{ display: 'contents' }}>
+          {children}
+        </div>
 
         {/* 푸터 — sticky 하단 고정: 긴 목록을 스크롤해도 건수·페이지네이션·뷰토글이 항상 보인다.
             background 불투명(스크롤되는 행이 비치지 않게) + 하단 모서리 라운딩(카드 overflow:hidden 제거 보완)

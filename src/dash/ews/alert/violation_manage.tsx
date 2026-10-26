@@ -43,6 +43,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
@@ -243,7 +244,7 @@ export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
 
   /* 앱-스코프 단축키. 모달이 떠 있는 동안에는 등록(이중 열림)·내보내기(모달 위 다운로드)를 막는다. */
   useHotkey(HOTKEYS.register.combo, () => openCreate(), { enabled: modal === null });
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null });
 
   /* ── 필터 SSOT(빈 값 = 미적용) — 목업 검색박스 3항목 순서 그대로 ──

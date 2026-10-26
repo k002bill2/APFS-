@@ -35,6 +35,7 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { RECOVERY_MODES, RECOVERY_TONES, RECOVERY_ACCOUNTS, findMode, recoverySummary, filterRecovery, DETAIL_ROWS_IR, formatRecoveryUnit } from './invest_recovery_detail_model';
 import type { RecoveryRow, RecoveryMode, RecoveryFilter } from './invest_recovery_detail_model';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';   // ⌥R 조회 · ⌘P 인쇄 · ⌥D 내보내기
+import { printGrid } from '../../print_grid';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
 const { Button, IconBtn, SegTabs } = UI;
@@ -131,7 +132,7 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
   ];
   const refresh = () => { clearFilters(); toast.success('조회되었습니다'); };
   // 푸터 툴팁 힌트(⌘P·⌥D)와 짝 — exportExcel 은 아래 const 라 화살표로 감싼다(TDZ 회피)
-  useHotkey(HOTKEYS.print.combo, () => window.print(), { enabled: !filterOpen });   // 상세필터 시트가 덮고 있으면 뒤 푸터 액션은 닫혀 있다
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });   // 상세필터 시트가 덮고 있으면 뒤 푸터 액션은 닫혀 있다
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
 
   const exportExcel = useCallback(() => {

@@ -42,6 +42,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, ValueFormatterParams } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
@@ -262,7 +263,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
   /* deps []: setModal은 안정(useState 세터) — 매 렌더 새 배열이면 그리드가 컬럼을 재생성하며 폭이 되돌아간다 */
   const openDetail = useCallback((id: string) => setModal({ kind: 'detail', id }), []);
   const columnDefs = useMemo(() => makeColumns(openDetail), [openDetail]);
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   /* 필터 — 출자/배분은 툴바 칩 + 드로어가 **같은 state를 공유**한다(표시가 갈라지지 않게).

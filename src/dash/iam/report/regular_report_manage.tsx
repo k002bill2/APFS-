@@ -49,6 +49,7 @@ import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellS
 import { SELECTION_COL } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
@@ -284,7 +285,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
   /* 명세 팝업 — setSpec은 useState 세터라 안정(컬럼 재생성 없음) */
   const [spec, setSpec] = useState<null | SpecKind>(null);
   const columnDefs = useMemo(() => makeColumns(patchRow, setSpec), [patchRow]);
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   /* 필터 — 보고구분은 툴바 칩 + 드로어가 **같은 state를 공유**한다(표시가 갈라지지 않게).

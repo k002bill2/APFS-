@@ -39,6 +39,7 @@ import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellS
 import { SELECTION_COL } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../../ui/alert-dialog';
@@ -226,7 +227,7 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
     (k: SpecKind) => setModal({ kind: k }),
     (role: Role, id: string) => setModal({ kind: 'confirm', role, ids: [id], skipped: 0, bulk: false }),
   ), []);
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   /* 필터 — 확인상태는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */

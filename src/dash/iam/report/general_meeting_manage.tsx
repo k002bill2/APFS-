@@ -29,6 +29,7 @@ import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellS
 import { SELECTION_COL } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
@@ -292,7 +293,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
   /* setModal(useState 세터)·patchRow(useCallback []) 둘 다 안정 참조라 deps []로 컬럼 정의를 고정한다
      (매 렌더 새 배열이면 AG Grid가 컬럼을 재생성하며 폭을 선언값으로 되돌린다) */
   const columnDefs = useMemo(() => makeColumns((id: string) => setModal({ kind: 'detail', id }), patchRow), [patchRow]);
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   /* 필터 — 보고상태는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */

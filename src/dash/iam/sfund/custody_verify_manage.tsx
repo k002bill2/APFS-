@@ -47,6 +47,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, ValueFormatterParams, CellStyle, CellKeyDownEvent } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { PeriodPicker } from '../../ui/period-picker';
@@ -377,7 +378,7 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
   const [nonInvest, setNonInvest] = useState<NonInvestRow[]>(NONINVEST_DEMO);
   const [modal, setModal] = useState<ModalState>(null);
 
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   /* 필터 — 드로어 3항목(목업 검색박스 순서 그대로: 자펀드·기준일·종목). 실제로 거르는 건 자펀드·종목이다.

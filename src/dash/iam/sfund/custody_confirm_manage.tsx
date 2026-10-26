@@ -42,6 +42,7 @@ import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, IRowNode, CellKeyDow
 import { SELECTION_COL } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT, 좌측 고정 44px)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
@@ -339,7 +340,7 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
     patchRow,
     (k: SpecKind) => setModal({ kind: k }),
   ), [patchRow]);
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   /* 필터 — 확정여부는 툴바 칩(=드로어 select와 공유), 기준일자는 조회 기준 컨텍스트(행 필터 아님) */

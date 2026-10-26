@@ -38,6 +38,7 @@ import type {
 } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { PeriodPicker } from '../../ui/period-picker';
@@ -311,7 +312,7 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DISPLAY_ROWS.length });
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
   const [yearBasis, setYearBasis] = useState<YearBasis>(DEFAULT_YEAR_BASIS);
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   /* 상세필터 — 4종 전부 행 컬럼과 미연동(noop)이라 값은 상태로만 남고 행을 거르지 않는다.

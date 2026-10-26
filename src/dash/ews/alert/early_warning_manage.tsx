@@ -40,7 +40,7 @@
        정상→success · 주의→warning · 경고→danger.
    - 목업 [차트] 버튼 → 툴바 우측 `차트` 버튼 → `EarlyWarningTrendModal`(S2_52 시계열 차트 팝업).
    - 목업 [엑셀]/[출력] 버튼 → 툴바에 두지 않는다. 엑셀은 푸터 `FooterActions` 내보내기 + `⌥D`,
-       출력은 푸터 인쇄 아이콘(`window.print()`)이 흡수한다(apfs-grid 푸터 골드 양식, kebab 폐기).
+       출력은 푸터 인쇄 아이콘(`printGrid` — 그리드만)이 흡수한다(apfs-grid 푸터 골드 양식, kebab 폐기).
    - KPI 배지 행 → **미포함**(사용자 결정) → `kpis` prop을 아예 넘기지 않는다.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
 
@@ -65,6 +65,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
@@ -214,7 +215,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [chartOpen, setChartOpen] = useState(false);
 
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   /* 필터 SSOT — 등급(다중 토글, 초기 3개 ON) · 운용사 · 자펀드 · 기준년월(행 필터 아님) */

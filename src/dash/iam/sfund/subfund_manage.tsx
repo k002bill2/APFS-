@@ -23,6 +23,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle, RowSelectionOptions } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';   // 앱-스코프 단축키(⌘⏎ 제안서접수 등록·⌘P 인쇄)
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { RowFormModal } from '../../generic_list_modal';
@@ -217,7 +218,7 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
   const [modal, setModal] = useState<ModalState>(null);
   // 앱-스코프 단축키: ⌘⏎=제안서접수 등록(모달 열림 중엔 비활성 → 이중 열림 방지), ⌘P=인쇄.
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'apply' }), { enabled: modal === null });
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   /* 필터 — 심사단계는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */

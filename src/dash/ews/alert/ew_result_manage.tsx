@@ -45,6 +45,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, CellStyle, GridApi, GridReadyEvent, SelectionChangedEvent, RowSelectionOptions } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { PeriodPicker } from '../../ui/period-picker';
@@ -268,7 +269,7 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
     setYmRaw(next);
   };
 
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen });
 
   /* 섹션2 기준년월 = 선택 월의 전월(파일 상단 '한계·가정') */

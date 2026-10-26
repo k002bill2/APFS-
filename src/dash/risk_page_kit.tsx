@@ -14,6 +14,7 @@ import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/rende
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
 import { PeriodPicker } from './ui/period-picker';
 import { useHotkey, HOTKEYS } from './use-hotkey';
+import { printGrid } from './print_grid';
 import { toast } from './ui/sonner';
 import { UNITS } from './schemas/unit';
 import type { Unit } from './schemas/unit';
@@ -245,7 +246,7 @@ export interface RiskPageProps {
 export function RiskPage({ system = '조기경보', group, label, route, onNav, filters = [], onReset, unit, onUnit, unitNote, unitCaption, actions, footerLeft, onExport, printItems, exportEnabled = true, contextActions, children }: RiskPageProps) {
   const [open, setOpen] = useState(false);
   useHotkey(HOTKEYS.export.combo, () => onExport?.(), { enabled: !!onExport && exportEnabled });
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   const refresh = () => { onReset(); toast.success('조회되었습니다'); };
   return (
     <GridFrame
