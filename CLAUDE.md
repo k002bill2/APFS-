@@ -67,6 +67,7 @@ APFS/
 - 추출본 `docs/메뉴구성도_v0.2.md` — 시트 원문(신규 152리프 + 현행 128리프)을 md로 옮기고 화면 참조를 `docs/mockups/` 목업 HTML에 링크한 것. **앱이 구현한 111리프는 이 중 일부**다(관리자(기존) 12·자펀드 보고 대부분 미반영). 로그인 대분류 3리프(로그인·발급온보딩·초대온보딩)는 `MENU` 트리에 없지만 **앱 전용 라우트로 구현돼 있다**(`#/login` · `#/onboarding-issue` · `#/onboarding-invite`) — LNB에는 노출되지 않는다.
 - 대조표 `docs/메뉴대조표_xlsx_vs_APFS_DATA.md` — 시트와 `MENU`의 차이. 현재 완전일치 106 / 라벨 불일치 1(xlsx 오타) / 앱 전용 5(대시보드 + 자펀드 보고 4리프).
 - 두 문서는 **생성물**이다. 고칠 일이 생기면 md가 아니라 `scripts/menu-doc/`(README 참조)를 고치고 재생성한다.
+- `docs/UIUX_기능설명서.html`(현업·PM용 화면별 기능설명서)도 **생성물**이다. HTML 을 직접 고치지 말고 `scripts/uiux-doc/`(화면 원고 `screens_data.py` · 공통 절 `common_sections.py`)를 고친 뒤 `python3 scripts/uiux-doc/gen_doc.py` 로 재생성한다(README 참조) — HTML 만 고치면 다음 재생성 때 조용히 되돌아간다(2026-10-26 #352 실사례). 화면 동작을 바꾸는 PR 은 그 화면 원고 문장도 같이 고친다.
 
 ## 실행 방법
 
