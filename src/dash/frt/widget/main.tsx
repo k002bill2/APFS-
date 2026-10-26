@@ -1,10 +1,10 @@
 /* 메인 종합 대시보드 — 3개 레이아웃 시안 + 래퍼 */
 import React from 'react';
-import { Icon } from '../icons';
-import { UI } from '../components';
-import { Charts } from '../charts';
-import { MainWidgets } from '../main_widgets';
-import { APFS_DATA } from '../data';
+import { Icon } from '../../icons';
+import { UI } from '../../components';
+import { Charts } from '../../charts';
+import { MainWidgets } from './main_widgets';
+import { APFS_DATA } from '../../data';
 
 const { useState } = React;
 const { StatCard, Button } = UI;

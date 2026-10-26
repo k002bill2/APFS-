@@ -118,7 +118,7 @@ z-index는 **숫자가 큰 게 무조건 위가 아니다.** 같은 **쌓임맥�
 **증상**: 펼친 LNB의 접힘 플라이아웃(`NavigationMenuContent`, `position:fixed; z-popover=85`)이, 분명히 z-85인데도 메인 대시보드 카드에 가려졌다. 이 문서·규약의 동기가 된 실제 버그다.
 
 **근본원인 — 2중 쌓임맥락 트랩**:
-1. `frt/main.tsx`(당시 `main.tsx:178`) variant 래퍼의 `dashFade`(`fill:both`)가 끝상태 `transform:none`을 **항등행렬 `matrix(1,0,0,1,0,0)`로 굳혀** 카드 묶음에 쌓임맥락을 만들었다.
+1. `frt/widget/main.tsx`(당시 `main.tsx:178`) variant 래퍼의 `dashFade`(`fill:both`)가 끝상태 `transform:none`을 **항등행렬 `matrix(1,0,0,1,0,0)`로 굳혀** 카드 묶음에 쌓임맥락을 만들었다.
 2. 접힌 Lnb `<nav>`가 `position:sticky`(현재 `shell.tsx:246`)라 쌓임맥락을 만들어, 자손 `fixed` 플라이아웃의 z-85를 **nav 맥락 안에 가뒀다**. `fixed`는 컨테이닝블록만 뷰포트로 탈출하고, 쌓임맥락은 box-tree 조상(nav)을 따르기 때문이다.
 
 당시 nav와 main이 **둘 다 `z-auto`**(루트 6단계 동률)라, 공유 부모(당시 flex — 현재는 grid `shell.tsx:1039`/`1044`, 페인팅 규칙 동일) 안에서 **DOM 순서**로 칠해졌다 → main이 나중 → 카드가 플라이아웃 위로.
@@ -197,6 +197,6 @@ overlayEl.closest('nav, [class*="dash-main"]')  // null이면 body 포털(안전
 
 ## 관련 문서/스킬
 - 스킬: `dashboard-ui`(UI/셸 전반), `responsive-ui`(반응형 — 모바일 드로어·플라이아웃 검증)
-- 토큰 스케일 SSOT: `tailwind.config.js:38` · 사례 연구 소스: `src/dash/shell.tsx`, `src/dash/ui/navigation-menu.tsx`, `src/dash/frt/main.tsx`
+- 토큰 스케일 SSOT: `tailwind.config.js:38` · 사례 연구 소스: `src/dash/shell.tsx`, `src/dash/ui/navigation-menu.tsx`, `src/dash/frt/widget/main.tsx`
 - 색 토큰 규약: `docs/COLOR_TOKENS.md`
 - 이력: 2026-06-30 접힘 LNB 측면 플라이아웃이 메인 카드에 가려진 버그(sticky/transform 조상 2중 쌓임맥락 트랩) 수정에서 규약 정립
