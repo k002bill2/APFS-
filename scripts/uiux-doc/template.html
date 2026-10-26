@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APFS UI/UX 기능설명서</title>
+<meta name="description" content="농림수산식품모태펀드 투자자산관리시스템 대시보드 프로토타입 — 현재 구현된 화면과 사용자 기능 정리">
+<style>
+  /* 레이아웃: 상단 고정 바(제목·검색·목차) + 1080px 본문. 화면 카드는 넓으면 2열, 좁으면 1열.
+     색은 앱 tokens.css 의 인디고 역할색·중립색을 옮겨 왔다(라이트/다크 모두 정의). */
+  :root {
+    --bg: #f6f7f5; --card: #ffffff; --fg: #1a2620; --muted: #5a665f; --caption: #6b766f;
+    --line: rgba(31,54,40,.13); --line-strong: rgba(31,54,40,.24); --head: #eef1ec;
+    --primary: #5a5fe8; --primary-text: #4549c9; --primary-soft: #ecedfd; --accent: #2563eb;
+    --ok: #067562; --ok-soft: #def7f0; --warn: #8a5a00; --warn-soft: #fef3da;
+    --danger: #c7340f; --danger-soft: #ffe7df; --neutral-soft: #eceeea;
+    --font: "Pretendard", "Pretendard Variable", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1310; --card: #181d17; --fg: #f2f5f0; --muted: #a9b3ac; --caption: #959f97;
+      --line: rgba(255,255,255,.10); --line-strong: rgba(255,255,255,.20); --head: #1f261d;
+      --primary: #818cf8; --primary-text: #a5adfb; --primary-soft: #252a4a; --accent: #60a5fa;
+      --ok: #33ddb8; --ok-soft: rgba(51,221,184,.14); --warn: #fbc04a; --warn-soft: rgba(251,180,36,.14);
+      --danger: #ff7e59; --danger-soft: rgba(255,107,66,.16); --neutral-soft: #242b22;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1310; --card: #181d17; --fg: #f2f5f0; --muted: #a9b3ac; --caption: #959f97;
+    --line: rgba(255,255,255,.10); --line-strong: rgba(255,255,255,.20); --head: #1f261d;
+    --primary: #818cf8; --primary-text: #a5adfb; --primary-soft: #252a4a; --accent: #60a5fa;
+    --ok: #33ddb8; --ok-soft: rgba(51,221,184,.14); --warn: #fbc04a; --warn-soft: rgba(251,180,36,.14);
+    --danger: #ff7e59; --danger-soft: rgba(255,107,66,.16); --neutral-soft: #242b22;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: 120px; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14.5px/1.65 var(--font); }
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  code { font: 12.5px/1.4 var(--mono); background: var(--head); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+  h1, h2, h3, h4 { text-wrap: balance; }
+
+  .top-bar { position: sticky; top: 0; z-index: 10; background: var(--card); border-bottom: 1px solid var(--line); }
+  .top-in { max-width: 1080px; margin: 0 auto; padding-block: 12px 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 8px; }
+  .row1 { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .row1 h1 { font-size: 17px; margin: 0; font-weight: 700; }
+  .row1 .basis { color: var(--caption); font-size: 12.5px; }
+  .search { margin-left: auto; flex: 1 1 220px; max-width: 340px; display: flex; align-items: center; gap: 8px; }
+  .search input { width: 100%; min-width: 0; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg); color: var(--fg); font: inherit; font-size: 13.5px; }
+  .search output { color: var(--caption); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  nav.toc { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
+  nav.toc a { flex: none; color: var(--muted); text-decoration: none; padding: 3px 10px; border-radius: 6px; font-size: 12.5px; border: 1px solid var(--line); white-space: nowrap; }
+  nav.toc a:hover { color: var(--primary-text); border-color: var(--primary); }
+  nav.toc .sep { flex: none; width: 1px; background: var(--line); margin: 2px 2px; }
+
+  main { max-width: 1080px; margin: 0 auto; padding-block: 8px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  section.block { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 22px 24px 14px; margin-top: 18px; }
+  section.block > h2, section.top > h2 { font-size: 20px; margin: 0 0 6px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  h2 small, h3 small { color: var(--caption); font-weight: 500; font-size: 13px; font-variant-numeric: tabular-nums; }
+  section.block h3 { font-size: 16px; margin: 22px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 12px; max-width: 72ch; }
+  p { margin: 6px 0 10px; }
+  ul { padding-left: 20px; margin: 6px 0 12px; }
+  li { margin: 3px 0; }
+  li::marker { color: var(--caption); }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; margin: 14px 0 6px; }
+  .kpis div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .kpis b { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .kpis span { color: var(--caption); font-size: 12px; }
+
+  .tbl { overflow-x: auto; margin: 8px 0 14px; border: 1px solid var(--line); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  th { background: var(--head); color: var(--muted); font-weight: 600; font-size: 12.5px; white-space: nowrap; }
+  td.k { white-space: nowrap; font-weight: 600; }
+  kbd { font: 12px var(--mono); border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; background: var(--card); white-space: nowrap; }
+
+  .tag { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 6px; white-space: nowrap; }
+  .t-typed { background: var(--primary-soft); color: var(--primary-text); }
+  .t-schema { background: var(--ok-soft); color: var(--ok); }
+  .t-default { background: var(--warn-soft); color: var(--warn); }
+  .t-app, .t-auth { background: var(--neutral-soft); color: var(--muted); }
+  .demo { display: inline-block; font-size: 11px; font-weight: 700; padding: 0 6px; border-radius: 5px; background: var(--warn-soft); color: var(--warn); margin-left: 4px; white-space: nowrap; }
+  .note { border: 1px solid var(--line); background: var(--head); padding: 10px 14px; border-radius: 8px; margin: 10px 0 14px; font-size: 13.5px; }
+  .note.w { background: var(--warn-soft); border-color: transparent; }
+
+  section.top { margin-top: 34px; }
+  section.top > h2 { padding-bottom: 8px; border-bottom: 1px solid var(--line-strong); }
+  section.mid { margin-top: 18px; }
+  section.mid > h3 { font-size: 15px; margin: 0 0 10px; color: var(--muted); display: flex; gap: 8px; align-items: baseline; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(440px, 100%), 1fr)); gap: 12px; align-items: start; }
+  .scr { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 10px; min-width: 0; }
+  .scr header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .scr h4 { margin: 0; font-size: 15.5px; font-weight: 700; }
+  .scr .meta { color: var(--caption); font-size: 12px; margin: 4px 0 6px; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+  .scr .meta code { font-size: 11.5px; }
+  .scr .src { font: 11.5px var(--mono); overflow-wrap: anywhere; }
+  .scr .sum { margin: 6px 0 6px; font-weight: 500; }
+  .scr .lay { margin: 4px 0 6px; color: var(--muted); font-size: 13.5px; }
+  .scr .lay b, .scr .pop b { color: var(--fg); font-size: 12.5px; margin-right: 4px; }
+  .scr ul.feat { font-size: 13.5px; margin: 6px 0 8px; }
+  .scr .pop { border-top: 1px dashed var(--line-strong); padding-top: 6px; font-size: 13px; }
+  .scr .pop ul { margin: 2px 0 6px; }
+  .scr .nt { font-size: 12.5px; color: var(--warn); background: var(--warn-soft); border-radius: 6px; padding: 5px 9px; margin: 6px 0 6px; }
+  .scr-default { background: transparent; border-style: dashed; }
+  .dlist { columns: 2 220px; font-size: 13px; margin: 8px 0 6px; }
+  .dlist li { break-inside: avoid; }
+  .empty { display: none; color: var(--muted); padding: 30px 0; text-align: center; }
+  .hide { display: none !important; }
+
+  footer { margin-top: 34px; color: var(--caption); font-size: 12.5px; }
+  @media (max-width: 640px) {
+    section.block { padding: 18px 16px 10px; }
+    .search { max-width: none; flex-basis: 100%; }
+  }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="top-in">
+    <div class="row1">
+      <h1>APFS UI/UX 기능설명서</h1>
+      <span class="basis">{{BASIS}}</span>
+      <div class="search">
+        <input id="q" type="search" placeholder="화면명·기능·#/route 검색" aria-label="화면 검색" autocomplete="off">
+        <output id="qn" for="q" aria-live="polite"></output>
+      </div>
+    </div>
+    <nav class="toc" aria-label="목차">
+      <a href="#overview">개요</a><a href="#shell">공통 화면 골격</a><a href="#keys">단축키</a><a href="#list">리스트 공통 기능</a><a href="#print">인쇄·출력</a><a href="#dashboard">대시보드</a>
+      <span class="sep" aria-hidden="true"></span>{{TOC_MENU}}<span class="sep" aria-hidden="true"></span>
+      <a href="#extra">메뉴 밖 화면</a><a href="#limits">미구현·데모 한계</a>
+    </nav>
+  </div>
+</div>
+<main>
+  <section class="block" id="overview">
+    <h2>개요</h2>
+    <p class="lead">농림수산식품모태펀드 투자자산관리시스템(APFS) 대시보드 프로토타입에 지금 구현돼 있는 화면과, 각 화면에서 사용자가 할 수 있는 일을 정리한 문서다. 현업·PM이 화면별 기능 범위를 확인하는 용도로 쓴다. 파일 경로·폴더 배치는 <a href="페이지_구성.html">페이지 구성</a>과 <code>docs/filetree.md</code>를 본다.</p>
+    {{STATS}}
+    <h3>프로토타입 전제</h3>
+    <ul>
+      <li>백엔드가 없다. 모든 값은 화면에 넣어 둔 목업·더미 데이터다.</li>
+      <li>등록·수정·삭제·확정 같은 변경은 그 화면을 보는 동안만 유지되고, 새로고침하거나 다른 화면에 다녀오면 원래 데이터로 돌아간다.</li>
+      <li>로그인·권한 판정·메일 발송·파일 전송은 실제로 하지 않는다. 버튼을 누르면 결과 안내(토스트)만 보이는 곳은 화면 카드에 <span class="demo">데모</span>로 표시했다.</li>
+      <li>브라우저에 저장되는 것은 테마, 메뉴 접힘, 화면 폭, 마지막으로 연 화면, 즐겨찾기, 방문기록, 즐겨찾기 버튼 위치뿐이다.</li>
+    </ul>
+    <h3>화면 유형</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>유형</th><th>뜻</th><th>기능 설명 위치</th></tr></thead>
+      <tbody>
+        <tr><td class="k"><span class="tag t-typed">전용</span> {{N_TYPED}}</td><td>화면마다 따로 만든 페이지. 표 여러 장, 탭, 단계 워크플로, 전용 팝업처럼 화면 고유 기능이 있다.</td><td>화면 카드. 공통 골격은 <a href="#list">리스트 공통 기능</a>과 같다.</td></tr>
+        <tr><td class="k"><span class="tag t-schema">스키마</span> {{N_SCHEMA}}</td><td>공통 리스트 화면이 화면 정의(컬럼·필터·입력 항목)만 바꿔서 그리는 화면.</td><td><a href="#list">리스트 공통 기능</a> + 화면 카드의 차이점.</td></tr>
+        <tr><td class="k"><span class="tag t-default">미구현</span> {{N_DEFAULT}}</td><td>메뉴만 있고 화면 정의가 없다. 기본 예시 표가 보인다.</td><td><a href="#limits">미구현·데모 한계</a></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  {{COMMON}}
+  {{DASHBOARD}}
+
+  <div id="menu-screens">
+  {{MENU_SECTIONS}}
+  </div>
+
+  <section class="top" id="extra">
+    <h2>메뉴 밖 화면 <small>LNB에 없는 라우트</small></h2>
+    {{EXTRA}}
+  </section>
+
+  {{LIMITS}}
+  <p class="empty" id="qempty">검색어와 맞는 화면이 없다.</p>
+  <footer>메뉴 화면 {{N_LEAF}}개 기준. 화면 목록과 유형은 <code>src/dash/data.ts</code>의 메뉴 트리, <code>src/dash/app.tsx</code> 라우트 분기, <code>src/dash/schemas/index.ts</code> 레지스트리에서 뽑았다.</footer>
+</main>
+<script>
+(function () {
+  var q = document.getElementById('q'), out = document.getElementById('qn'), empty = document.getElementById('qempty');
+  var cards = Array.prototype.slice.call(document.querySelectorAll('#menu-screens .scr, #extra .scr'));
+  var groups = Array.prototype.slice.call(document.querySelectorAll('#menu-screens section.mid, #menu-screens section.top, #extra section.mid'));
+  var blocks = Array.prototype.slice.call(document.querySelectorAll('section.block'));
+  function run() {
+    var v = q.value.trim().toLowerCase(), terms = v ? v.split(/\s+/) : [], n = 0;
+    cards.forEach(function (c) {
+      var t = c.getAttribute('data-q') || '';
+      var hit = terms.every(function (w) { return t.indexOf(w) !== -1; });
+      c.classList.toggle('hide', !hit); if (hit) n++;
+    });
+    groups.forEach(function (g) { g.classList.toggle('hide', !g.querySelector('.scr:not(.hide)')); });
+    blocks.forEach(function (b) { b.classList.toggle('hide', terms.length > 0); });
+    out.textContent = terms.length ? n + '개 화면' : '';
+    empty.style.display = terms.length && n === 0 ? 'block' : 'none';
+  }
+  q.addEventListener('input', run);
+  q.addEventListener('keydown', function (e) { if (e.key === 'Escape') { q.value = ''; run(); } });
+})();
+</script>
+</body>
+</html>
