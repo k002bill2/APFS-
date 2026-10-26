@@ -36,6 +36,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
@@ -206,7 +207,7 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [unit, setUnit] = useState<Unit>('원');             // 금액 단위 — 목업 기본값 '원'
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   /* 필터 — 주 필터(투심상태)는 툴바 칩, 보고구분은 드로어. SSOT=개별 state(빈 값=미적용) */

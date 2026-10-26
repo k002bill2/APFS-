@@ -36,6 +36,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, ICellRendererParams, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { REPORT_TABS, findTab, distinctValues, filterRows } from './all_report_status_model';
@@ -159,7 +160,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
     toast.success(`${tab.label} 표를 Excel로 내보냈습니다`);
   }, [tab, visible, unit, pinnedBottom]);
 
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   const refresh = () => { clearFilters(); toast.success('조회되었습니다'); };

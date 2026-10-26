@@ -29,6 +29,7 @@ import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellDouble
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../../ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { RowFormModal } from '../../generic_list_modal';
@@ -204,7 +205,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   /* 필터 — 투심상태(일정/결과)는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */

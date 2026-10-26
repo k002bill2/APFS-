@@ -27,6 +27,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { Popover, PopoverTrigger, PopoverContent } from '../../ui/popover';
 import { Info } from 'lucide-react';
 import { toast } from '../../ui/sonner';
@@ -193,7 +194,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   const clearFilters = () => { setFHelp(''); setFField('pid'); setFText(''); setFGubun(''); setFUse(''); };
 
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null });
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   const gubuns = useMemo(() => gubunOptions(rows), [rows]);

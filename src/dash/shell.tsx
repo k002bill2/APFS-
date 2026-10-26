@@ -813,9 +813,14 @@ function Gnb({ theme, onToggleTheme, onToggleLnb, wide, onToggleWide, notifs, on
         zIndex: 50, height: 58,
         background: "color-mix(in srgb,var(--card) 86%,transparent)", backdropFilter: "blur(10px)",
         borderBottom: "1px solid var(--border)", gap: "clamp(6px, 1.5vw, 12px)", padding: "0 clamp(8px, 2vw, 16px)",
-      }}><IconBtn icon="menu" onClick={onToggleLnb} label="메뉴 접기/펴기" size={38} hotkey={HOTKEYS.lnb} /><img
-        src={theme === "dark" ? logoWhiteUrl : logoUrl}
+      }}><IconBtn icon="menu" onClick={onToggleLnb} label="메뉴 접기/펴기" size={38} hotkey={HOTKEYS.lnb} />{/* 두 장을 겹쳐 두고 .dark 에서 교체 — theme state 로 고르면 인쇄(print_theme 가 html.dark 만 뗌)에 흰 로고가 남는다 */}<img
+        src={logoUrl}
         alt="APFS 농업정책보험금융원"
+        className="dark:hidden"
+        style={{ height: 24, width: "auto" }} /><img
+        src={logoWhiteUrl}
+        alt="APFS 농업정책보험금융원"
+        className="hidden dark:inline"
         style={{ height: 24, width: "auto" }} /><div className="bg-border" style={{ width: 1, height: 22 }} /><div
         className="gnb-title font-bold whitespace-nowrap"
         style={{ fontSize: 14.5, letterSpacing: "-.01em" }}>농림수산식품모태펀드 투자자산관리시스템</div><div className="flex-1" /><button

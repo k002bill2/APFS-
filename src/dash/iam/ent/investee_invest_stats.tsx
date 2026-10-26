@@ -20,6 +20,7 @@ import { useState, useCallback } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';   // ⌘P 인쇄 · ⌥D 내보내기(푸터 툴팁 힌트와 짝)
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { PeriodPicker } from '../../ui/period-picker';
@@ -174,7 +175,7 @@ function RegionTable({ rows, unit }: { rows: RegionRow[]; unit: StatUnit }) {
 export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) {
   const [view, setView] = useState<ViewKey>(VIEWS[0].key);
   const [unit, setUnit] = useState<StatUnit>('억원');   // 원문 기본값 = 저장 base
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
 
   /* 상세필터 — 원문 검색박스 7항목. 투자실적구분(=view)만 표를 바꾸고 나머지 6종은 noop:
      집계표 원천이 고정 상수라 거를 차원이 없다(값을 지어내 행을 바꾸지 않는다).

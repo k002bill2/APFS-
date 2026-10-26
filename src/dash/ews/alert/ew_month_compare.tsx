@@ -34,6 +34,7 @@ import type { ColDef, CellStyle, CellClassParams } from 'ag-grid-community';
 import { Checkbox } from '../../ui/checkbox';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
@@ -175,7 +176,7 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
   };
 
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
 
   const gradeChipValue = GRADES.filter((g) => gradeOn[g]).join('·') || '등급 선택 안함';
   const chgChipValue = CHG_KEYS.filter((k) => chgOn[k]).map((k) => CHG_KEY_LABEL[k]).join('·') || '변동 선택 안함';

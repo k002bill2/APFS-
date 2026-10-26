@@ -29,6 +29,7 @@ import { _stopPropagationForAgGrid } from 'ag-grid-community';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../../ui/alert-dialog';
@@ -153,7 +154,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   const searching = Boolean(fUtype || fText.trim() || fLvl || fUse);   // 목업: 필터가 하나라도 걸리면 평면 모드
 
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null });
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   const programs = useMemo(() => programsOf(rows), [rows]);

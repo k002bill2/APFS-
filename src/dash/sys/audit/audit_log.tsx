@@ -22,6 +22,7 @@ import type { ColDef, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEv
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from '../../ui/dialog';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { RowContextMenu } from '../../row_context_menu';
@@ -122,7 +123,7 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
   const [fText, setFText] = useState('');
   const clearFilters = () => { setFResult(''); setFFrom(DEMO_RANGE[0]); setFTo(DEMO_RANGE[1]); setFKind(''); setFActor(''); setFText(''); };
 
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   const visible = useMemo(() => filterLogs(DEMO, { from: fFrom, to: fTo, result: fResult, kind: fKind, actor: fActor, kw: fText }), [fFrom, fTo, fResult, fKind, fActor, fText]);

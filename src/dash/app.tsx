@@ -86,6 +86,7 @@ import { TooltipProvider } from './ui/tooltip';
 import { PageSkeleton } from './ui/skeleton';
 import { MotionConfig } from 'motion/react';
 import { aliasRoute } from './route_alias';
+import { installPrintTheme } from './print_theme';
 const ReportBucheo = ReportBucheoPages.ReportBucheo;
 const EditorPage = EditorPages.EditorPage;
 
@@ -317,5 +318,6 @@ function App() {
   );
 }
 
+installPrintTheme();   // 다크모드여도 인쇄는 라이트(html.dark 를 인쇄 동안만 뗀다 — React 테마 상태·저장값은 그대로)
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App />);

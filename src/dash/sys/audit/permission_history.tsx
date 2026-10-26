@@ -21,6 +21,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { RowContextMenu } from '../../row_context_menu';
@@ -120,7 +121,7 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
   const clearFilters = () => { setFType(''); setFFrom(from0); setFTo(to0); setFUser(''); setFActor(''); setFText(''); };
   const thisMonth = () => { const [f, t] = monthRange(); setFFrom(f); setFTo(t); };
 
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   const visible = useMemo(() => filterHistory(DEMO, { from: fFrom, to: fTo, user: fUser, type: fType, actor: fActor, kw: fText }), [fFrom, fTo, fUser, fType, fActor, fText]);

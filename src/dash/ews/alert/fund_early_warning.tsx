@@ -37,6 +37,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, IRowNode, CellStyle, CellKeyDownEvent, CellClickedEvent, ICellRendererParams } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
@@ -348,7 +349,7 @@ export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
      ⚠ 팝업이 열린 동안 ⌥D 는 끕다 — 팝업은 자체 `엑셀` 버튼을 가지므로 키보드 경로만 그걸 지나쳐
        배경 그리드(다른 데이터)를 내려받는 것은 혼란이다. ⌘P 는 그대로 둔다(팝업을 띄운 화면 인쇄는 정상). */
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !modalRow });
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
 
   return (
     <GridFrame

@@ -26,6 +26,7 @@ import type { ColumnSpec } from './schemas/types';
 import { resolveAlign } from './schemas/types';   // 그리드 정렬 정본(숫자=우측 / 그 외=좌측)
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './ui/alert-dialog';
 import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘⏎ 등록·⌘P 인쇄·⌥D 내보내기)
+import { printGrid } from './print_grid';
 import { toast } from './ui/sonner';
 import { Checkbox } from './ui/checkbox';   // 상세필터 카테고리 태그 = DS Checkbox(Radix)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
@@ -738,7 +739,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
   /* 앱-스코프 단축키 — 등록 ⌘⏎(편집 가능 + 모달 닫힘일 때만)·인쇄 ⌘P·내보내기 ⌥D. 힌트는 kebab의 DropdownMenuShortcut */
   useHotkey(HOTKEYS.register.combo, () => setModal({ mode: 'create' }), { enabled: editable && modal === null && detail === null && !filterOpen && ctx === null });
-  useHotkey(HOTKEYS.print.combo, () => window.print());
+  useHotkey(HOTKEYS.print.combo, printGrid);
   useHotkey(HOTKEYS.export.combo, () => exportExcel());
 
   // 행 복사 — 스키마 컬럼(스파크라인 trend 제외)을 TSV로.
