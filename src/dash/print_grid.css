@@ -29,18 +29,12 @@
     animation: none !important;
   }
   /* 화면에선 display:contents(레이아웃 영향 0) — 인쇄에선 zoom 을 받을 박스가 필요하다.
-     zoom 값은 print_grid.ts 가 방향별 인쇄 폭으로 계산해 둔다(넘칠 때만 설정, 없으면 1). */
+     zoom 값은 print_grid.ts 가 인쇄 동안만 주입하는 `<style data-print-zoom>` 사다리(min-width 단별)가 정한다. */
   html[data-printing="grid"] [data-print-area] {
     display: block !important;
-    zoom: var(--print-zoom-portrait, 1);
   }
   /* 일반 <table> 화면(투자기업정보 등)의 가로 스크롤 래퍼 — 인쇄에선 잘라내지 않는다(폭은 zoom 이 맞춘다) */
   html[data-printing="grid"] [data-print-area] .overflow-x-auto {
     overflow: visible !important;
-  }
-}
-@media print and (orientation: landscape) {
-  html[data-printing="grid"] [data-print-area] {
-    zoom: var(--print-zoom-landscape, 1);
   }
 }
