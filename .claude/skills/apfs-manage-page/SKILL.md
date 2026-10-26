@@ -53,13 +53,16 @@ GNB/LNB 전환 토글(`.opts`) · 상단바/출처시스템 메뉴/서브탭/LNB
 
 ## 4. 런타임 검증 체크리스트 (빌드 green ≠ 동작)
 ```js
-// ego-browser nodejs (aside repl 폴백도 동일) — localStorage apfs.route는 원시 문자열
-await page.evaluate(()=>localStorage.setItem('apfs.route','<path>')); await page.reload();
+// ego-browser nodejs (aside repl 폴백도 동일) — 진입은 해시 URL 로 한다.
+// app.tsx hashRoute() 가 localStorage apfs.route 보다 우선이라 setItem('apfs.route')+reload 는
+// URL 에 해시가 이미 있으면 무시된다(2026-10-26 실측: #/designsystem 으로 되돌아가 0행)
+await page.goto('http://localhost:<port>/#/<path>');
+await page.waitForSelector('.ag-center-cols-container .ag-row');
 ```
 - [ ] `.ag-center-cols-container .ag-row` 수 = 더미 행 수(빈 그리드 아님)
 - [ ] `.ag-floating-bottom .ag-row` 존재 + `getComputedStyle(...).opacity==='1'`(aggrid_shared.css import 누락 시 0)
 - [ ] 2단 헤더: **컬럼 가상화**로 뷰포트 밖 그룹헤더는 DOM에 없다 → `scrollLeft` 후 `.ag-header-group-cell` 재질의
-- [ ] 선택: **`.ag-row`가 아니라 `.ag-cell`을 클릭**(행 div 클릭은 AG Grid 셀 리스너를 안 탐) → `.ag-row-selected` ≥1 + 툴바 액션 노출
+- [ ] 선택: **체크박스로만 on/off**(2026-09-22 결정, [[apfs-aggrid]] "체크박스" 절) — 본문 `.ag-cell` 클릭 → `.ag-row-selected` **0 유지** / 행 체크박스 `.ag-pinned-left-cols-container .ag-row[row-index="0"] button[role="checkbox"]` 클릭 → 1 + 그 단계 툴바 액션 노출(자펀드 관리 '신청' 행 = `선정조합 등록`·`신청취소`·`선택 해제`) → 다시 클릭 → 0. 숨은 내장 `input[type=checkbox]`(0×0)를 겨냥하지 않게 클릭 전 rect>0 확인, 선택 수는 `new Set(row-id)` 로 센다(2026-10-26 실측)
 - [ ] 전이 1회 이상 실제 실행(배지·토스트·액션 재계산·합계 재계산)
 - [ ] 모달 저장/실행: **필수값을 채운 상태에서** 클릭 → 라벨이 "…중"으로 스왑(`.t-text-swap` 존재, `aria-busy=true`)→ 400ms 후 commit. 빈 폼은 검증에서 막혀 스왑이 없는 게 정상. 버튼 찾기는 `textContent.trim()===라벨`(측정 글자는 `::before`라 섞이지 않음)
 - [ ] 툴바 조회 클릭 → 아이콘 `style.transform`이 `rotate(360deg)`로 증가
