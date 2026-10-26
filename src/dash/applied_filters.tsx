@@ -8,7 +8,7 @@
    (flex-1 min-w-0 — 우측 액션을 뺀 남은 폭)에 그리디로 채운다. 측정 사본은 보이는 배치와 무관해 진동이 없다.
 
    규칙:
-   - 적용 칩 = 값만 표시(항목명은 title·aria-label 로 회수), 최대 240px 말줄임. onClear 가 있는 칩만 ×.
+   - 적용 칩 = 값만 표시(항목명은 DS Tooltip·aria-label 로 회수), 최대 240px 말줄임. onClear 가 있는 칩만 ×.
      wide 칩 = 최대 480px·좁으면 2줄 줄바꿈, +N 으로 접지 않는다(배치 계산엔 minWidth 160 만 예약).
    - 해제 가능한 적용 칩이 2개 이상이면 `전체 해제` — 각 칩의 onClear 를 차례로 부른다.
    - 보이는 캡션 없음(role="group" aria-label 만).
@@ -18,11 +18,12 @@ import React from 'react';
 import { UI } from './components';
 import { Icon } from './icons';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
+import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
 const { FilterChip } = UI;
 
 export interface AppliedFilter {
-  /** 항목명 — 칩에는 안 보이고 title·aria-label 로 쓰인다 */
+  /** 항목명 — 칩에는 안 보이고 툴팁(ChipTip)·aria-label 로 쓰인다 */
   label: string;
   /** 표시 값. 빈 문자열/공백이면 적용되지 않은 것으로 보고 칩을 만들지 않는다 */
   value: string;
@@ -47,13 +48,30 @@ export const activeFilters = (items: readonly AppliedFilter[] | undefined): Appl
 const WIDE_MIN = 160;
 const WIDE_MAX = 480;
 
-function Chip({ f }: { f: AppliedFilter }) {
+/* 필터를 건 직후 툴팁 자동 노출 시간(2026-10-26 사용자 요청 "선택 시 바로 보여주고 3초 후 사라지게") */
+const FLASH_MS = 3000;
+const KV = '\u0000', EN = '\u0001';
+/** 적용 칩 값 서명 — 항목명·값 쌍을 이어 붙인 문자열. 두 서명을 freshLabels 로 비교한다. */
+export const valueSig = (fs: readonly AppliedFilter[]): string => fs.map((f) => f.label + KV + String(f.value)).join(EN);
+/** prev→cur 사이에 새로 걸리거나 값이 바뀐 항목명. prev 가 null(첫 렌더 = 페이지 진입 기본값)이면 없음, 해제는 세지 않는다. */
+export function freshLabels(prev: string | null, cur: string): string[] {
+  if (prev == null) return [];
+  const before = sigMap(prev);
+  return [...sigMap(cur)].filter(([k, v]) => before.get(k) !== v).map(([k]) => k);
+}
+const sigMap = (s: string) => new Map(s ? s.split(EN).map((e) => e.split(KV) as [string, string]) : []);
+/* 모달(상세필터 드로어 등)이 열려 있으면 칩이 가려져 있다 — 그동안 바뀐 항목은 모아 두었다가 닫힐 때 띄운다(2026-10-26 사용자 결정).
+   즉시 반영형 드로어(감사로그 등)는 고르는 순간 값이 바뀌어, 바로 띄우면 드로어 뒤에서 3초가 다 지나 버린다. */
+const modalOpen = () => document.querySelector('[role="dialog"][data-state="open"],[role="alertdialog"][data-state="open"]') != null;
+
+function Chip({ f, flash }: { f: AppliedFilter; flash?: boolean }) {
   const clearable = Boolean(f.onClear);
-  if (f.wide) return <WideChip f={f} clearable={clearable} />;
+  if (f.wide) return <WideChip f={f} clearable={clearable} flash={flash} />;
   return (
     /* 글자색 = primary 에 foreground 15% 를 섞는다 — primary 단독은 라이트에서 10% 틴트 위 4.35:1 로 AA(4.5) 미달이었다.
        foreground 는 라이트=어둡게·다크=밝게 섞이므로 한 식으로 두 테마 모두 대비가 오른다(2026-09-24 실측). */
-    <span title={`${f.label}: ${f.value}`} className="inline-flex items-center gap-1.5 font-semibold shrink-0"
+    <ChipTip f={f} flash={flash}>
+    <span className="inline-flex items-center gap-1.5 font-semibold shrink-0 cursor-pointer"
       style={{ padding: clearable ? '5px 8px 5px 11px' : '5px 11px', borderRadius: 9, fontSize: 12.5, maxWidth: 240, color: CHIP_FG, background: CHIP_BG }}>
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{f.value}</span>
       {clearable && (
@@ -64,13 +82,31 @@ function Chip({ f }: { f: AppliedFilter }) {
         </button>
       )}
     </span>
+    </ChipTip>
+  );
+}
+/* 항목명 툴팁(2026-10-26 사용자 요청) — 칩은 값만 보이므로 호버·× 포커스 때 DS Tooltip 으로 항목명을 띄운다.
+   본문 = 항목명만(값은 칩에 이미 보인다 — 사용자 지시). 네이티브 title 은 두지 않는다 — OS 말풍선이 겹쳐 뜬다.
+   × 포커스로도 열린다: React onFocus 는 버블링이라 자식 버튼 포커스가 트리거(span)까지 올라온다.
+   칩 본문 커서 = pointer(사용자 결정 — help 의 물음표는 거슬린다). × 버튼도 pointer.
+   flash(필터를 건 직후 3초, 행이 켜고 끈다) 동안은 바로 열어 둔다 — 제어형이라 Provider 의 300ms 지연을 건너뛴다.
+   flash 중에 포인터가 올라오면 호버 상태로 넘겨받는다 — 3초가 지나도 커서 아래에서 닫히지 않고, 벗어나면 Radix 가 닫는다
+   (Radix 는 같은 진입 안에서 다시 열지 않으므로 넘겨받지 않으면 커서 아래에서 꺼진다). */
+function ChipTip({ f, flash = false, children }: { f: AppliedFilter; flash?: boolean; children: React.ReactElement }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <Tooltip open={open || flash} onOpenChange={setOpen}>
+      <TooltipTrigger asChild onPointerEnter={() => { if (flash) setOpen(true); }}>{children}</TooltipTrigger>
+      <TooltipContent>{f.label}</TooltipContent>
+    </Tooltip>
   );
 }
 /* wide 칩 — 남은 폭까지 줄어들며(shrink, minWidth 160) 텍스트는 2줄까지 줄바꿈, 넘칠 때만 말줄임.
    keep-all — 한글 이름이 글자 단위로 쪼개지지 않게(줄바꿈 지점은 소비처가 값 문자열의 공백으로 정한다). */
-function WideChip({ f, clearable }: { f: AppliedFilter; clearable: boolean }) {
+function WideChip({ f, clearable, flash }: { f: AppliedFilter; clearable: boolean; flash?: boolean }) {
   return (
-    <span title={`${f.label}: ${f.value}`} className="inline-flex items-center gap-1.5 font-semibold min-w-0"
+    <ChipTip f={f} flash={flash}>
+    <span className="inline-flex items-center gap-1.5 font-semibold min-w-0 cursor-pointer"
       style={{ padding: clearable ? '5px 8px 5px 11px' : '5px 11px', borderRadius: 9, fontSize: 12.5, maxWidth: WIDE_MAX, minWidth: WIDE_MIN, flexShrink: 1, color: CHIP_FG, background: CHIP_BG }}>
       <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'normal', wordBreak: 'keep-all', lineHeight: '18px', minWidth: 0 }}>{f.value}</span>
       {clearable && (
@@ -81,6 +117,7 @@ function WideChip({ f, clearable }: { f: AppliedFilter; clearable: boolean }) {
         </button>
       )}
     </span>
+    </ChipTip>
   );
 }
 const CHIP_FG = 'color-mix(in srgb, var(--primary) 85%, var(--foreground))';
@@ -91,12 +128,12 @@ type Item =
   | { id: string; kind: 'applied'; f: AppliedFilter }
   | { id: string; kind: 'clear'; run: () => void };
 
-function ItemView({ it }: { it: Item }) {
+function ItemView({ it, flash }: { it: Item; flash?: boolean }) {
   if (it.kind === 'chip') {
     const c = it.chip;
     return <FilterChip active={c.active} onClick={c.onSelect} count={c.count}>{c.label}</FilterChip>;
   }
-  if (it.kind === 'applied') return <Chip f={it.f} />;
+  if (it.kind === 'applied') return <Chip f={it.f} flash={flash} />;
   return (
     <button type="button" onClick={it.run}
       className="border-0 bg-transparent cursor-pointer text-muted-foreground hover:text-foreground underline-offset-2 hover:underline shrink-0"
@@ -153,6 +190,44 @@ export function FilterChipRow({ chips = [], applied }: { chips?: readonly Filter
     ...(clearable.length >= 2 ? [{ id: 'clear', kind: 'clear', run: () => clearable.forEach((f) => f.onClear?.()) } as Item] : []),
   ];
 
+  /* 필터를 걸면(새 항목·값 변경) 그 칩의 툴팁을 FLASH_MS 동안 띄운다. 첫 렌더는 기준선만 잡는다(페이지 진입 기본값은 안 띄움).
+     타이머는 행이 항목별로 갖는다 — 3초 안에 다른 필터를 걸어도 앞 칩 타이머가 끊기지 않고, +N 에서 다시 펼쳐진 칩이 만료 뒤 또 뜨지 않는다.
+     (만료 시각을 state 에 두면 Date.now() 가 렌더 값으로 흘러 react-hooks/purity 위반이다) */
+  const vSig = valueSig(on);
+  const prevSig = React.useRef<string | null>(null);
+  const pending = React.useRef(new Set<string>());   // 모달이 열려 있는 동안 바뀐 항목
+  const timers = React.useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const [flashing, setFlashing] = React.useState<ReadonlySet<string>>(() => new Set());
+  const flashNow = React.useCallback((labels: readonly string[]) => {
+    setFlashing((p) => new Set([...p, ...labels]));
+    for (const l of labels) {
+      clearTimeout(timers.current[l]);   // 같은 항목을 3초 안에 다시 바꾸면 그때부터 다시 센다
+      timers.current[l] = setTimeout(() => setFlashing((p) => new Set([...p].filter((x) => x !== l))), FLASH_MS);
+    }
+  }, []);
+  React.useEffect(() => {
+    const fresh = freshLabels(prevSig.current, vSig);
+    prevSig.current = vSig;
+    const live = sigMap(vSig);
+    pending.current.forEach((l) => { if (!live.has(l)) pending.current.delete(l); });   // 모달 안에서 걸었다 푼 항목은 버린다
+    if (!fresh.length) return;
+    if (modalOpen()) fresh.forEach((l) => pending.current.add(l));
+    else flashNow(fresh);
+  }, [vSig, flashNow]);
+  React.useEffect(() => {
+    /* 모달이 닫힘 상태로 바뀌는 순간(data-state=closed) 모아 둔 항목을 띄운다 — 포털 위치와 무관하게 body 아래 속성 변화를 본다.
+       대기 항목이 없으면 바로 돌아가므로 다른 툴팁·메뉴의 상태 변화에는 비용이 거의 없다. */
+    const mo = new MutationObserver(() => {
+      if (!pending.current.size || modalOpen()) return;
+      const labels = [...pending.current];
+      pending.current.clear();
+      flashNow(labels);
+    });
+    mo.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['data-state'] });
+    const t = timers.current;
+    return () => { mo.disconnect(); Object.values(t).forEach(clearTimeout); };
+  }, [flashNow]);
+
   const boxRef = React.useRef<HTMLDivElement>(null);
   const measureRef = React.useRef<HTMLDivElement>(null);
   const [m, setM] = React.useState<{ w: Record<string, number>; trigger: number; avail: number } | null>(null);
@@ -183,7 +258,8 @@ export function FilterChipRow({ chips = [], applied }: { chips?: readonly Filter
     <div ref={boxRef} role="group" aria-label="필터" className="relative flex items-center min-w-0 flex-1 overflow-hidden"
       /* 세로 3px 여유 — overflow:hidden 이 칩 focus 링을 자르지 않게(음수 마진으로 줄 높이는 그대로) */
       style={{ gap: GAP, padding: 3, margin: -3 }}>
-      {shown.map((it) => <React.Fragment key={it.id}><ItemView it={it} /></React.Fragment>)}
+      {/* flash 는 보이는 줄에만 — 측정용 사본에 넘기면 0 크기 요소에 붙은 툴팁이 한 장 더 뜬다 */}
+      {shown.map((it) => <React.Fragment key={it.id}><ItemView it={it} flash={it.kind === 'applied' && flashing.has(it.f.label)} /></React.Fragment>)}
       {/* 숨긴 게 `전체 해제` 하나뿐이면 +0 트리거가 된다 → 그리지 않는다(칩별 × 는 보이는 칩에 그대로 있다) */}
       {hidden.some((it) => it.kind !== 'clear') && <OverflowMenu key="more" hidden={hidden} tinted={hiddenActive} rowRef={boxRef} />}
       {/* 측정용 사본 — 보이지 않고(visibility:hidden)·포커스·읽기 대상에서 빠진다.

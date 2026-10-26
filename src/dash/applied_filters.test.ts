@@ -4,7 +4,27 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { activeFilters, planChips } from './applied_filters';
+import { activeFilters, planChips, valueSig, freshLabels } from './applied_filters';
+
+describe('freshLabels — 필터를 건 직후 툴팁을 띄울 칩(2026-10-26)', () => {
+  const sig = (...kv: [string, string][]) => valueSig(kv.map(([label, value]) => ({ label, value })));
+  it('첫 렌더(prev=null)는 기준선만 — 페이지 진입 기본값 칩은 띄우지 않는다', () => {
+    expect(freshLabels(null, sig(['기간', '2026-08-01 ~ 2026-09-13']))).toEqual([]);
+  });
+  it('새로 걸린 항목만 고른다', () => {
+    expect(freshLabels(sig(['기간', 'a']), sig(['기간', 'a'], ['사업연도', '2026']))).toEqual(['사업연도']);
+  });
+  it('값이 바뀐 항목도 고른다', () => {
+    expect(freshLabels(sig(['사업연도', '2025']), sig(['사업연도', '2026']))).toEqual(['사업연도']);
+  });
+  it('해제·무변화는 고르지 않는다', () => {
+    expect(freshLabels(sig(['기간', 'a'], ['사업연도', '2026']), sig(['기간', 'a']))).toEqual([]);
+    expect(freshLabels(sig(['기간', 'a']), sig(['기간', 'a']))).toEqual([]);
+  });
+  it('빈 상태에서 여러 개를 한꺼번에 걸면 전부 고른다', () => {
+    expect(freshLabels(sig(), sig(['계정구분', '농식품'], ['정기/수시', '정기']))).toEqual(['계정구분', '정기/수시']);
+  });
+});
 
 const ROOT = new URL('..', import.meta.url).pathname;   // src/
 const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
