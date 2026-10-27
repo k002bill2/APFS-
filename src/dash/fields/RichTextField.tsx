@@ -758,6 +758,8 @@ function MoreMarksDropdown({ onOpenChange }: { onOpenChange?: (o: boolean) => vo
 
 // 삽입 드롭다운 — 표/콜아웃/다단/토글/날짜/수식/비디오/임베드/태그/구분선. 트리거는 '+ 삽입'.
 // prompt 항목(비디오·임베드)은 URL 입력 바를 열도록 openPrompt 콜백 호출.
+// 삽입하면 곧바로 다이얼로그가 열리는 항목(수식 → EquationDialog) — 메뉴 닫힘 재포커스를 1회 건너뛴다.
+const OPENS_DIALOG = new Set(['equation', 'inline_equation']);
 function InsertDropdown({ openPrompt, openFile, skipMenuRefocus }: {
   openPrompt: (m: 'video' | 'embed', selSnapshot?: any) => void; openFile: () => void;
   skipMenuRefocus: React.MutableRefObject<boolean>;
@@ -774,10 +776,11 @@ function InsertDropdown({ openPrompt, openFile, skipMenuRefocus }: {
         </button>
       </DropdownMenuTrigger>
       {/* prompt 항목(video/embed)은 다음 틱에 다이얼로그를 열므로, onCloseAutoFocus의 editor 복귀가
-          다이얼로그 autoFocus를 도로 뺏는 실측 레이스를 피하려 skipMenuRefocus로 복귀를 1회 건너뛴다. */}
+          다이얼로그 autoFocus를 도로 뺏는 실측 레이스를 피하려 skipMenuRefocus로 복귀를 1회 건너뛴다.
+          수식 2종도 삽입 직후 수식 편집 다이얼로그(EquationDialog)가 자동으로 열리므로 같은 처리(2026-10-27 실측). */}
       <DropdownMenuContent align="start" onCloseAutoFocus={(e) => { e.preventDefault(); if (skipMenuRefocus.current) skipMenuRefocus.current = false; else editor.tf.focus(); }}>
         {INSERT_ITEMS.map((t) => (
-          <DropdownMenuItem key={t.key} onSelect={() => (t.prompt ? (skipMenuRefocus.current = true, openPrompt(t.prompt, sel.current)) : t.action === 'file' ? openFile() : runWithSel(editor, sel.current, t.run!))}>
+          <DropdownMenuItem key={t.key} onSelect={() => (t.prompt ? (skipMenuRefocus.current = true, openPrompt(t.prompt, sel.current)) : t.action === 'file' ? openFile() : (OPENS_DIALOG.has(t.key) && (skipMenuRefocus.current = true), runWithSel(editor, sel.current, t.run!)))}>
             <t.Icon size={16} strokeWidth={2} aria-hidden={true} />
             <span style={{ flex: 1 }}>{t.label}</span>
           </DropdownMenuItem>
@@ -1159,9 +1162,9 @@ function exportHtml(root: HTMLElement | null) {
   const editable = root?.querySelector('[data-slate-editor]') as HTMLElement | null;
   if (!editable) { downloadText('내용.html', '', 'text/html'); return; }
   const clone = editable.cloneNode(true) as HTMLElement;
-  // 편집 UI chrome 제거(드래그핸들·드롭라인·이미지/표 편집 툴바·수식 입력·캡션 placeholder textarea
+  // 편집 UI chrome 제거(드래그핸들·드롭라인·이미지/표 편집 툴바·수식 편집 버튼·캡션 placeholder textarea
   // ·표 행 그립·열/행/이미지 리사이즈 핸들). 핸들을 새로 렌더하면 여기도 추가 — 가드 richtext_export_chrome.test.ts.
-  clone.querySelectorAll('.apfs-rt-draghandle, .apfs-rt-dropline, .apfs-rt-imgbar, .apfs-rt-tablebar, .apfs-rt-eqinput, .apfs-rt-ieq__pop, .apfs-rt-rowgrip, .apfs-rt-colresize, .apfs-rt-rowresize, .apfs-rt-imgresize').forEach((n) => n.remove());
+  clone.querySelectorAll('.apfs-rt-draghandle, .apfs-rt-dropline, .apfs-rt-imgbar, .apfs-rt-tablebar, .apfs-rt-eqedit, .apfs-rt-rowgrip, .apfs-rt-colresize, .apfs-rt-rowresize, .apfs-rt-imgresize').forEach((n) => n.remove());
   // DnD 래퍼 div 언랩(.apfs-rt-blockdrag > .apfs-rt-blockdrag__content > 실제 블록).
   clone.querySelectorAll('.apfs-rt-blockdrag__content, .apfs-rt-blockdrag').forEach((w) => { const p = w.parentNode; if (p) { while (w.firstChild) p.insertBefore(w.firstChild, w); p.removeChild(w); } });
   // 편집 전용 속성 제거.

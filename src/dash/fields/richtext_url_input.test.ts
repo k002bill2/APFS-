@@ -20,4 +20,8 @@ describe('에디터 알림은 툴바 아래 인라인 바가 아니라 모달', 
   it('RichTextField 에 인라인 role="alert" 바가 없다', () => {
     expect(readSrc('RichTextField.tsx')).not.toMatch(/role="alert"/);
   });
+  // 수식 입력도 같은 날 모달로(블록 수식 아래 입력칸·인라인 수식 팝오버 → EquationDialog).
+  it('수식 요소 안에 인라인 LaTeX 입력칸·팝오버가 없다', () => {
+    expect(readSrc('RichTextElements.tsx')).not.toMatch(/apfs-rt-eqinput|apfs-rt-ieq__pop/);
+  });
 });

@@ -699,30 +699,35 @@ caption.apfs-rt-tablebar .apfs-rt-imgbtn { gap: 1px; }
 /* 멘션 입력 중 칩(콤보박스 타이핑 앵커) — 트리거 @ + 입력 텍스트를 감싸는 은은한 칩. */
 .apfs-rt-mentioninput { display: inline-block; border-radius: 5px; background: var(--muted); padding: 0 4px; }
 
-/* ── 수식(math) — katex. 블록은 가운데 정렬 판, 인라인은 흐름 내. 선택 시 LaTeX 입력창(라이브 프리뷰). ── */
+/* ── 수식(math) — katex. 블록은 가운데 정렬 판, 인라인은 흐름 내. LaTeX 편집은 EquationDialog(모달) — 선택 시 자동으로 열리고
+   이미 선택된 수식은 편집 버튼(.apfs-rt-eqedit)으로 다시 연다. ── */
 .apfs-rt-equation { margin: .7em 0; padding: 8px 10px; border-radius: 8px; cursor: default; }
 .apfs-rt-equation.is-sel { background: var(--muted); outline: 1px solid var(--ring); }
-.apfs-rt-equation__body { display: flex; flex-direction: column; gap: 8px; }
+.apfs-rt-equation__body { position: relative; display: flex; flex-direction: column; gap: 8px; }
 .apfs-rt-equation__render { text-align: center; overflow-x: auto; min-height: 1.4em; }
 .apfs-rt-equation__empty { color: var(--muted-foreground); font-size: .9em; }
-.apfs-rt-eqinput {
-  width: 100%; height: 30px; padding: 0 10px;
-  font-size: 13px; font-family: ui-monospace, monospace;
-  color: var(--foreground); background: var(--card);
-  border: 1px solid var(--border-strong); border-radius: 7px; outline: none;
-}
-.apfs-rt-eqinput:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 22%, transparent); }
 .apfs-rt-ieq { position: relative; padding: 0 2px; }
 .apfs-rt-ieq.is-sel { outline: 2px solid var(--ring); outline-offset: 1px; border-radius: 3px; }
 .apfs-rt-ieq__empty { color: var(--muted-foreground); font-size: .88em; }
-/* 인라인 수식 편집 팝오버 — 선택 시 아래에 LaTeX 입력. */
-.apfs-rt-ieq__pop {
-  position: absolute; top: 100%; left: 0; z-index: 3;
-  margin-top: 4px; padding: 4px;
-  background: var(--popover); border: 1px solid var(--border);
-  border-radius: 8px; box-shadow: 0 4px 14px rgb(0 0 0 / .16);
+/* 수식 편집 버튼 — 선택된 블록 수식 오른쪽 위 / 인라인 수식 위. 누르면 EquationDialog. 편집 chrome(내보내기 제거). */
+.apfs-rt-eqedit {
+  position: absolute; top: -2px; right: -2px; z-index: 3;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; padding: 0;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--card); color: var(--muted-foreground); cursor: pointer;
 }
-.apfs-rt-ieq__pop .apfs-rt-eqinput { width: 180px; height: 28px; }
+.apfs-rt-eqedit:hover { background: var(--muted); color: var(--foreground); }
+.apfs-rt-ieq .apfs-rt-eqedit { top: auto; right: auto; bottom: calc(100% + 4px); left: 0; }
+/* 수식 다이얼로그 — LaTeX 는 코드값이라 고정폭(디자인 규칙 4 예외), 아래 렌더 미리보기 판. */
+.apfs-rt-texinput { font-family: ui-monospace, monospace; font-size: 13px; }
+.apfs-rt-texpreview {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 56px; margin-top: 10px; padding: 12px; overflow-x: auto;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--muted); color: var(--foreground);
+}
+.apfs-rt-texpreview__empty { color: var(--muted-foreground); font-size: 12.5px; }
 /* katex 자체 색을 본문색에 맞춤(다크모드 대비). */
 .apfs-prose .katex { color: var(--foreground); font-size: 1.05em; }
 

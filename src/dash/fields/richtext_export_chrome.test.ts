@@ -17,10 +17,10 @@ const stripped = (): string[] => {
   return m[1].split(',').map((s) => s.trim().replace(/^\./, ''));
 };
 
-// 셀·이미지 안에 렌더되는 편집 전용 핸들 클래스 — ResizeHandle 전부 + 표 행 이동 그립
+// 셀·이미지·수식 안에 렌더되는 편집 전용 chrome — ResizeHandle 전부 + 표 행 이동 그립 + 수식 편집 버튼
 const editHandles = (): string[] => {
   const resize = [...elements.matchAll(/<ResizeHandle\b[\s\S]*?className="([^"\s]+)/g)].map((m) => m[1]);
-  return [...new Set([...resize, 'apfs-rt-rowgrip'])];
+  return [...new Set([...resize, 'apfs-rt-rowgrip', 'apfs-rt-eqedit'])];
 };
 
 describe('HTML 내보내기 — 편집 chrome 제거', () => {
