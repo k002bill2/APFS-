@@ -11,6 +11,7 @@ import { getLinkAttributes, validateUrl } from '@platejs/link';
 import { safeUrl } from './safeUrl';
 import { UrlDialog, URL_SCHEME_ERROR } from './RichTextUrlDialog';
 import { EquationDialog } from './RichTextEquationDialog';
+import { whenMenusGone } from './when_menus_gone';
 import { insertTableRow, insertTableColumn, deleteRow, deleteColumn, deleteTable } from '@platejs/table';
 // 셀 다중 선택(공식 Plate): useSelectedCells=selection→선택 셀 id 동기화(표 요소에서 1회 마운트),
 // useIsCellSelected=셀별 선택 구독(element.id 기반 — NodeIdPlugin이 셀에도 id 부여).
@@ -732,22 +733,22 @@ function useEquationEdit(element: any, selected: boolean, readOnly: boolean) {
   const wasSelected = useRef(false);
   const selectedNow = useRef(selected);   // 지연 열기 직전 재확인용(대기 중 선택이 떠났으면 열지 않음 — Codex P2)
   selectedNow.current = selected;
+  const alive = useRef(true);   // 대기 중 언마운트(수식 삭제 등)면 폴링 중단 — 아래 effect 는 element 변경으로 재실행돼 정리 함수를 못 쓴다
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const begin = () => { setDraft(typeof element.texExpression === 'string' ? element.texExpression : ''); setOpen(true); };
   useEffect(() => {
     const entered = selected && !wasSelected.current;
     wasSelected.current = selected;
     if (entered && !readOnly && editor.api.isCollapsed()) {
       const tex = typeof element.texExpression === 'string' ? element.texExpression : '';
-      // 열려 있는 메뉴가 사라진 뒤에 연다 — "+ 삽입" 메뉴 항목으로 삽입하면 메뉴가 닫힘 애니메이션 중인데 모달이
-      // 열리고, 메뉴가 DOM 에 남아 있는 동안엔 그 typeahead 가 LaTeX 입력 첫 글자에 포커스를 뺏는다(2026-10-27 실측).
-      // 메뉴가 없으면 다음 틱에 바로 연다. setTimeout 폴링(rAF 는 가려진 창에서 멈춤), 상한 50ms×12.
+      // 메뉴가 DOM 에서 완전히 사라진 뒤에만 연다 — "+ 삽입" 메뉴가 닫힘 애니메이션 중일 때 모달이 열리면, 애니메이션이
+      // 메뉴를 포인터 밑에서 빼는 순간 pointerleave → Radix 가 메뉴로 포커스를 가져가 LaTeX 입력이 사라진다(2026-10-27 실측).
+      // 상한(5초)을 넘기면 열지 않는다 — 편집 버튼으로 연다. 세부 근거는 when_menus_gone.ts.
       // 정리 함수로 취소하지 않는다 — 삽입 직후 정규화로 element 가 바뀌어 effect 가 재실행돼도 열려야 한다.
-      const openWhenMenusGone = (tries: number) => {
-        if (document.querySelector('[role=menu]') && tries < 12) { setTimeout(() => openWhenMenusGone(tries + 1), 50); return; }
+      whenMenusGone(() => {
         if (!selectedNow.current || !editor.api.isCollapsed()) return;   // 기다리는 사이 다른 곳으로 옮겼으면 취소
         setDraft(tex); setOpen(true);
-      };
-      setTimeout(() => openWhenMenusGone(0), 0);
+      }, { alive: () => alive.current });
     }
   }, [selected, readOnly, editor, element]);
   const apply = () => { const p = editor.api.findPath(element); if (p) editor.tf.setNodes({ texExpression: draft } as any, { at: p }); setOpen(false); };
