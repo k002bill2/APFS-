@@ -62,7 +62,8 @@ export function DatePicker({ value, onChange, invalid, required, disabled, place
             invalid || (required && !value) ? 'border-danger' : 'border-border-strong focus-visible:border-ring',
           )}
         >
-          <span className={cn('tabular-nums', !selected && 'text-muted-foreground')}>
+          {/* 34px 박스(content 20px)는 정확히 한 줄 — 좁은 칸에서 '날짜 선택'이 줄내림되면 박스를 넘친다. 폭은 소비처가 보장 */}
+          <span className={cn('whitespace-nowrap tabular-nums', !selected && 'text-muted-foreground')}>
             {selected ? format(selected, 'yyyy-MM-dd') : placeholder}
           </span>
           <CalendarIcon className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />

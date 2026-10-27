@@ -205,7 +205,8 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
                     <th scope="col" style={th}>운용사</th>
                     <th scope="col" style={{ ...th, width: 140 }}>사업자번호</th>
                     <th scope="col" style={{ ...th, width: 156 }}>운용사구분</th>
-                    <th scope="col" style={{ ...th, width: 96 }}>결산월</th>
+                    {/* 120 = 버튼 크롬(패딩22·아이콘16·gap8·테두리2) + placeholder '월 선택' + 셀 패딩8. 96이면 '월/선택' 2줄로 깨졌다 */}
+                    <th scope="col" style={{ ...th, width: 120 }}>결산월</th>
                     <th scope="col" style={{ ...thLast, width: 130 }}>보고운용사코드</th>
                   </tr>
                 </thead>
