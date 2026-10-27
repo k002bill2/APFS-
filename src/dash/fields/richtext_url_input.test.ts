@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
-import { walkDash } from '../test_src';
+import { readSrc, walkDash } from '../test_src';
 
 describe('에디터 URL 입력은 UrlDialog 로만', () => {
   it('fields/*.tsx 중 type="url" 입력은 RichTextUrlDialog.tsx 에만 있다', () => {
@@ -12,5 +12,12 @@ describe('에디터 URL 입력은 UrlDialog 로만', () => {
       .filter((p) => /[\\/]fields[\\/][^\\/]+\.tsx$/.test(p) && /type="url"/.test(readFileSync(p, 'utf8')))
       .map((p) => basename(p));
     expect(owners).toEqual(['RichTextUrlDialog.tsx']);
+  });
+});
+
+// 업로드 거부(용량 초과) 알림도 툴바 아래 인라인 바였다 → 같은 날 사용자 요청으로 중앙 모달(2026-10-27).
+describe('에디터 알림은 툴바 아래 인라인 바가 아니라 모달', () => {
+  it('RichTextField 에 인라인 role="alert" 바가 없다', () => {
+    expect(readSrc('RichTextField.tsx')).not.toMatch(/role="alert"/);
   });
 });

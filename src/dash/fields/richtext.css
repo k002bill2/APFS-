@@ -330,17 +330,6 @@
 .apfs-prose sup { font-size: .75em; line-height: 0; vertical-align: super; }
 
 .apfs-rt-ddsep { height: 1px; margin: 4px -2px; background: var(--border); }
-.apfs-richtext__uploaderr {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  font-size: 13px;
-  color: var(--danger);
-  background: color-mix(in srgb, var(--danger) 10%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
-}
-.apfs-richtext__uploaderr button { margin-left: auto; }
 /* URL 입력 다이얼로그(UrlDialog) 입력칸 — 링크·이미지·동영상·임베드 공용. 크기는 기존 "이미지 삽입" 다이얼로그
    그대로(38px), 포커스 링은 옛 링크 바 것을 이어받고, 거부 사유가 있으면 danger 테두리. */
 .apfs-rt-urlinput {

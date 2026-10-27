@@ -93,6 +93,7 @@ import {
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuSeparator } from '../ui/context-menu';
 import { UrlDialog, URL_SCHEME_ERROR } from './RichTextUrlDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
 import { PortalContainerContext } from '../ui/portal-container';
 import './richtext.css';
 
@@ -1278,6 +1279,8 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
   // 메뉴 닫힘 시 에디터 재포커스를 1회 건너뛰는 플래그 — 드롭다운→다이얼로그(image/video/embed) 경로에서만 세운다.
   const skipMenuRefocus = useRef(false);
   const [uploadErr, setUploadErr] = useState('');
+  const lastUploadErr = useRef('');   // 알림 모달 문구 — 닫힘 애니메이션 중 uploadErr='' 이어도 마지막 문구 유지
+  if (uploadErr) lastUploadErr.current = uploadErr;
   // 붙여넣기/드래그 경로의 압축 초크포인트(module-level uploadImageChokepoint)가 이 배너로 에러를 알리도록 등록.
   // Toolbar는 이미지 삽입이 가능한 동안 항상 <Plate> 아래 마운트돼 있으므로 미등록 구간이 없다.
   useEffect(() => { reportUploadError = setUploadErr; return () => { reportUploadError = () => {}; }; }, []);
@@ -1481,12 +1484,20 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
       <input ref={imgUploadRef} type="file" accept="image/*" multiple hidden onChange={onPickImage} />
       <input ref={fileUploadRef} type="file" hidden onChange={onPickFile} />
       <input ref={importRef} type="file" accept={importAccept} hidden onChange={onImportFile} />
-      {uploadErr && (
-        <div className="apfs-richtext__uploaderr" role="alert">
-          {uploadErr}
-          <button type="button" className="apfs-rt-linkbtn is-ghost" onMouseDown={(e) => e.preventDefault()} onClick={() => setUploadErr('')}>닫기</button>
-        </div>
-      )}
+      {/* 업로드 거부(용량 초과) 알림 — 툴바 아래 인라인 바 대신 URL 다이얼로그와 같은 중앙 모달(2026-10-27 사용자 요청).
+          ui/dialog 라 에디터 전체화면(PortalContainer)·폼 모달 안에서도 위에 뜬다(ui/alert-dialog 는 container 미지원).
+          문구는 마지막 값을 붙잡아 닫힘 애니메이션 동안 비지 않게 한다. */}
+      <Dialog open={!!uploadErr} onOpenChange={(o) => { if (!o) setUploadErr(''); }}>
+        <DialogContent className="max-w-md" onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
+          <DialogHeader>
+            <DialogTitle>업로드할 수 없습니다</DialogTitle>
+          </DialogHeader>
+          <DialogDescription className="my-0 px-[18px] py-4 text-[13.5px] text-foreground">{lastUploadErr.current}</DialogDescription>
+          <DialogFooter className="justify-end">
+            <button type="button" className="apfs-rt-linkbtn" onClick={() => setUploadErr('')}>확인</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* URL 입력 — 링크·이미지·동영상·임베드 모두 같은 중앙 다이얼로그(공식 Playground "Insert Image" 룩, UrlDialog).
           링크는 연 순간 캐럿이 링크 안이면 편집(적용), 아니면 삽입. 빈 값 적용 = 링크 해제(기존 의미 유지 — 툴바에
