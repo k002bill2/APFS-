@@ -1158,8 +1158,9 @@ function exportHtml(root: HTMLElement | null) {
   const editable = root?.querySelector('[data-slate-editor]') as HTMLElement | null;
   if (!editable) { downloadText('내용.html', '', 'text/html'); return; }
   const clone = editable.cloneNode(true) as HTMLElement;
-  // 편집 UI chrome 제거(드래그핸들·드롭라인·이미지/표 편집 툴바·수식 입력·캡션 placeholder textarea).
-  clone.querySelectorAll('.apfs-rt-draghandle, .apfs-rt-dropline, .apfs-rt-imgbar, .apfs-rt-tablebar, .apfs-rt-eqinput, .apfs-rt-ieq__pop').forEach((n) => n.remove());
+  // 편집 UI chrome 제거(드래그핸들·드롭라인·이미지/표 편집 툴바·수식 입력·캡션 placeholder textarea
+  // ·표 행 그립·열/행/이미지 리사이즈 핸들). 핸들을 새로 렌더하면 여기도 추가 — 가드 richtext_export_chrome.test.ts.
+  clone.querySelectorAll('.apfs-rt-draghandle, .apfs-rt-dropline, .apfs-rt-imgbar, .apfs-rt-tablebar, .apfs-rt-eqinput, .apfs-rt-ieq__pop, .apfs-rt-rowgrip, .apfs-rt-colresize, .apfs-rt-rowresize, .apfs-rt-imgresize').forEach((n) => n.remove());
   // DnD 래퍼 div 언랩(.apfs-rt-blockdrag > .apfs-rt-blockdrag__content > 실제 블록).
   clone.querySelectorAll('.apfs-rt-blockdrag__content, .apfs-rt-blockdrag').forEach((w) => { const p = w.parentNode; if (p) { while (w.firstChild) p.insertBefore(w.firstChild, w); p.removeChild(w); } });
   // 편집 전용 속성 제거.
