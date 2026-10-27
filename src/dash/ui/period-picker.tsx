@@ -98,7 +98,8 @@ function GridPicker({ mode, value, onChange, ariaLabel, invalid, required, disab
             invalid || (required && !value) ? 'border-danger' : 'border-border-strong focus-visible:border-ring',
           )}
         >
-          <span className={cn('tabular-nums', !label && 'text-muted-foreground')}>{label || placeholder || PLACEHOLDER[mode]}</span>
+          {/* 34px 박스는 한 줄 전용 — '월 선택'이 좁은 칸에서 '월/선택' 2줄로 깨지지 않게 nowrap(DatePicker 와 동일). 폭은 소비처가 보장 */}
+          <span className={cn('whitespace-nowrap tabular-nums', !label && 'text-muted-foreground')}>{label || placeholder || PLACEHOLDER[mode]}</span>
           <CalendarIcon className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
         </button>
       </PopoverTrigger>
