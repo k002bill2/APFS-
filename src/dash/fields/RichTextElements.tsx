@@ -586,11 +586,12 @@ export function TableCellElement(props: any) {
       {props.children}
       {!readOnly && <ResizeHandle {...(rightPropsClamped as any)} className="apfs-rt-colresize" contentEditable={false} aria-label={`${colIndex + 1}열 너비 조절`} />}
       {!readOnly && <ResizeHandle {...(bottomProps as any)} className="apfs-rt-rowresize" contentEditable={false} aria-label={`${rowIndex + 1}행 높이 조절`} />}
-      {/* 행 드래그 그립 — 첫 열 셀 왼쪽 바깥(absolute), 행 hover 시 표시. 드래그 소스는 tr(useDraggable). */}
+      {/* 행 드래그 그립 — 첫 열 셀 왼쪽 테두리 위(absolute), 행 hover 시 표시. 드래그 소스는 tr(useDraggable).
+          블록 핸들 레인(표 이동 그립 자리)은 비워 둔다 — richtext.css .apfs-rt-rowgrip */}
       {rowDrag && colIndex === 0 && (
         <span ref={rowDrag.handleRef} className="apfs-rt-rowgrip" contentEditable={false} role="button"
           aria-label={`${rowIndex + 1}행 이동`} title="행 이동(드래그)">
-          <GripVertical size={13} aria-hidden />
+          <GripVertical size={12} aria-hidden />
         </span>
       )}
     </PlateElement>
@@ -766,12 +767,11 @@ export function TagElement(props: any) {
 function DraggableBlock({ element, children }: any) {
   const { isDragging, nodeRef, handleRef } = useDraggable({ element });
   const { dropLine } = useDropLine();
-  // 표 블록은 그립을 좌상단 모서리 대각 바깥으로 분리(공식 Plate "Drag to move" 룩) —
-  // 기본 위치(left:-22, top:2)는 행 드래그 그립(첫 셀 왼쪽)과 겹쳐 표-이동 그립을 집기 어렵다.
-  const isTable = element?.type === 'table';
-  const label = isTable ? '표 이동(드래그)' : '블록 이동(드래그)';
+  // 표도 다른 블록과 같은 자리의 그립으로 이동한다(라벨만 구분). 행 그립은 이 자리를 비우고
+  // 표 왼쪽 테두리 위에 뜬다 — richtext.css .apfs-rt-rowgrip, 가드 richtext_table_grip.test.ts.
+  const label = element?.type === 'table' ? '표 이동(드래그)' : '블록 이동(드래그)';
   return (
-    <div ref={nodeRef} className={'apfs-rt-blockdrag' + (isDragging ? ' is-dragging' : '') + (isTable ? ' is-table' : '')}>
+    <div ref={nodeRef} className={'apfs-rt-blockdrag' + (isDragging ? ' is-dragging' : '')}>
       <div ref={handleRef as any} className="apfs-rt-draghandle" contentEditable={false} role="button" aria-label={label} title={label} tabIndex={-1}>
         <GripVertical size={14} strokeWidth={2} aria-hidden={true} />
       </div>

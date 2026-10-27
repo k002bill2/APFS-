@@ -606,16 +606,18 @@
   transition: opacity .12s var(--ease, ease);
 }
 .apfs-rt-rowresize:hover::after { opacity: 1; }
-/* 행 드래그 그립 — 첫 열 셀 왼쪽 바깥(absolute), 행 hover 시 표시(공식 Plate 행 그립 룩). */
+/* 행 드래그 그립 — 첫 열 셀 왼쪽 테두리 위(absolute), 행 hover 시 표시(공식 Plate 행 그립 룩).
+   블록 핸들 레인(left:-22, w18 → -4까지)은 표 이동 그립 자리라 비워 두고, 셀 패딩(10px) 안에서 끝나
+   글자를 가리지 않는다(-4 ~ +8). 가드: richtext_table_grip.test.ts */
 .apfs-rt-rowgrip {
   position: absolute;
-  left: -24px;
+  left: -4px;
   top: 50%;
   transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
+  width: 12px;
   height: 22px;
   border-radius: 5px;
   border: 1px solid var(--border);
@@ -801,19 +803,9 @@ caption.apfs-rt-tablebar .apfs-rt-imgbtn { gap: 1px; }
 .apfs-rt-blockdrag:hover > .apfs-rt-draghandle { opacity: .5; }
 .apfs-rt-draghandle:hover { opacity: 1 !important; background: var(--muted); color: var(--foreground); }
 .apfs-rt-draghandle:active { cursor: grabbing; }
-/* 표 블록 그립 — 좌상단 모서리 대각 바깥(공식 Plate "Drag to move" 위치).
-   기본 위치는 행 드래그 그립(첫 셀 왼쪽 -24px)과 겹쳐 표-이동 그립을 집기 어렵다.
-   행 그립과 동일한 카드 박스 룩으로 존재감을 주고, 표 hover 시 더 뚜렷하게. */
-.apfs-rt-blockdrag.is-table > .apfs-rt-draghandle {
-  top: -24px;
-  left: -22px;
-  width: 20px;
-  height: 20px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: var(--card);
-}
-.apfs-rt-blockdrag.is-table:hover > .apfs-rt-draghandle { opacity: .85; }
+/* 표도 다른 블록과 같은 자리(left:-22, top:2)의 핸들로 이동한다 — 전용 위치 오버라이드 금지.
+   표 위 모서리(top:-24)로 빼면 블록 간격이 좁아 앞 블록 줄 옆에 붙어 그 블록 핸들처럼 보였다(2026-10-27).
+   행 그립은 이 레인을 비우고 표 왼쪽 테두리 위에 둔다(.apfs-rt-rowgrip). */
 .apfs-rt-blockdrag.is-dragging { opacity: .4; }
 .apfs-rt-dropline { position: absolute; z-index: 1; background: var(--accent); border-radius: 2px; pointer-events: none; }
 .apfs-rt-dropline.is-top    { top: -3px;    left: 0; right: 0; height: 2px; }
