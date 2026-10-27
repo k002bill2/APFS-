@@ -9,6 +9,7 @@ import { createContext, useContext, useRef, useState } from 'react';
 import { PlateElement, PlateLeaf, useEditorRef, useSelected, useReadOnly, usePluginOption, usePath } from 'platejs/react';
 import { getLinkAttributes, validateUrl } from '@platejs/link';
 import { safeUrl } from './safeUrl';
+import { UrlDialog, URL_SCHEME_ERROR } from './RichTextUrlDialog';
 import { insertTableRow, insertTableColumn, deleteRow, deleteColumn, deleteTable } from '@platejs/table';
 // 셀 다중 선택(공식 Plate): useSelectedCells=selection→선택 셀 id 동기화(표 요소에서 1회 마운트),
 // useIsCellSelected=셀별 선택 구독(element.id 기반 — NodeIdPlugin이 셀에도 id 부여).
@@ -159,8 +160,11 @@ export function ImageElement(props: any) {
   const align = element.align || 'left';
   const imgboxRef = useRef<HTMLSpanElement>(null);
   const [dragW, setDragW] = useState<number | null>(null);
-  const [editMode, setEditMode] = useState<null | 'link' | 'src'>(null);   // 인라인 입력 바: 링크(하이퍼링크) vs 소스(이미지 주소)
+  const [editMode, setEditMode] = useState<null | 'link' | 'src'>(null);   // URL 다이얼로그: 링크(하이퍼링크) vs 소스(이미지 주소)
   const [draft, setDraft] = useState('');
+  const [err, setErr] = useState('');    // 다이얼로그 거부 사유(무효 스킴·빈 소스)
+  // 다이얼로그 문구는 연 순간 기준(닫힘 애니메이션 중 editMode=null·링크 제거로 제목/버튼이 바뀌어 깜빡이지 않게)
+  const [shown, setShown] = useState<{ mode: 'link' | 'src'; hadLink: boolean }>({ mode: 'link', hadLink: false });
   const width = dragW != null ? `${Math.round(dragW)}px` : (element.width || '100%');
   const capBtn = useCaptionButton(useCaptionButtonState());   // 캡션 토글(정석): onClick이 visibleId=element.id + 포커스
   const set = (patch: any) => { const p = editor.api.findPath(element); if (p) editor.tf.setNodes(patch, { at: p }); };
@@ -173,21 +177,24 @@ export function ImageElement(props: any) {
     const next = Math.max(64, Math.min((e.initialSize || 0) + e.delta * mult, maxW));
     if (e.finished) { setDragW(null); set({ width: `${Math.round(next)}px` }); } else { setDragW(next); }
   };
-  const openLink = () => { setDraft(element.link || ''); setEditMode('link'); };
-  const openSrc = () => { setDraft(element.url || ''); setEditMode('src'); };
+  const openEdit = (mode: 'link' | 'src') => {
+    setDraft((mode === 'link' ? element.link : element.url) || '');
+    setErr(''); setShown({ mode, hadLink: !!element.link }); setEditMode(mode);
+  };
+  const closeEdit = () => { setErr(''); setEditMode(null); };
   const saveEdit = () => {
     const v = draft.trim();
     if (editMode === 'link') {
-      if (v && !validateUrl(editor, v)) return;   // javascript: 등 무효/위험 스킴 거부 — 입력 유지
+      if (v && !validateUrl(editor, v)) { setErr(URL_SCHEME_ERROR); return; }   // javascript: 등 거부 — 다이얼로그 유지
       set({ link: v || undefined });
     } else if (editMode === 'src') {
-      if (!v) return;                              // 소스는 필수 — 비우면 무시(입력 유지)
+      if (!v) { setErr('이미지 URL을 입력하세요.'); return; }                    // 소스는 필수 — 다이얼로그 유지
       set({ url: v });                             // 이미지 주소 교체(크기·정렬·캡션·링크 유지)
     }
-    setEditMode(null);
+    closeEdit();
     editor.tf.focus();
   };
-  const removeLink = () => { set({ link: undefined }); setEditMode(null); editor.tf.focus(); };
+  const removeLink = () => { set({ link: undefined }); closeEdit(); editor.tf.focus(); };
   // src는 safeUrl(media) 경유 — data:/blob:는 정식 값, javascript: 등 실행 스킴 차단.
   const imgEl = <img src={safeUrl(element.url, 'media')} alt="" />;
   const safeHref = element.link ? getLinkAttributes(editor, { type: 'a', url: element.link, children: [] } as any).href : undefined;
@@ -221,10 +228,10 @@ export function ImageElement(props: any) {
               ))}
               <span className="apfs-rt-imgsep" aria-hidden="true" />
               <button type="button" title="이미지 교체" aria-label="이미지 주소 교체" aria-pressed={editMode === 'src'}
-                className={'apfs-rt-imgbtn' + (editMode === 'src' ? ' is-active' : '')} onMouseDown={stop} onClick={openSrc}>
+                className={'apfs-rt-imgbtn' + (editMode === 'src' ? ' is-active' : '')} onMouseDown={stop} onClick={() => openEdit('src')}>
                 <Replace size={15} strokeWidth={2} aria-hidden={true} /></button>
               <button type="button" title="링크 편집" aria-label="링크 편집" aria-pressed={!!element.link}
-                className={'apfs-rt-imgbtn' + (element.link ? ' is-active' : '')} onMouseDown={stop} onClick={openLink}>
+                className={'apfs-rt-imgbtn' + (element.link ? ' is-active' : '')} onMouseDown={stop} onClick={() => openEdit('link')}>
                 <Link2 size={15} strokeWidth={2} aria-hidden={true} /></button>
               <button type="button" title="캡션" aria-label="캡션 추가" className="apfs-rt-imgbtn"
                 onMouseDown={stop} onClick={capBtn.props.onClick}>
@@ -235,21 +242,28 @@ export function ImageElement(props: any) {
                 <Trash2 size={15} strokeWidth={2} aria-hidden={true} /></button>
             </span>
           )}
-          {selected && !readOnly && editMode && (
-            <span className="apfs-rt-imginput" role="group" aria-label={editMode === 'src' ? '이미지 주소' : '이미지 링크 URL'}>
-              <input className="apfs-rt-imginput__field" type="url"
-                placeholder={editMode === 'src' ? 'https://.../image.png' : 'https://...'} value={draft}
-                autoFocus onMouseDown={(e) => e.stopPropagation()} onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveEdit(); } if (e.key === 'Escape') { e.preventDefault(); setEditMode(null); } }} />
-              <button type="button" className="apfs-rt-imgbtn is-text" onMouseDown={stop} onClick={saveEdit}>적용</button>
-              {editMode === 'link' && element.link && <button type="button" className="apfs-rt-imgbtn is-text" onMouseDown={stop} onClick={removeLink}>제거</button>}
-            </span>
-          )}
         </span>
         <Caption style={{ width }}>
           <CaptionTextarea className="apfs-rt-caption" placeholder="캡션 입력…" />
         </Caption>
       </div>
+      {/* 링크 편집·이미지 교체 — 툴바 URL 입력과 같은 중앙 다이얼로그(UrlDialog). selected 분기 밖에 둬서
+          다이얼로그로 포커스가 옮겨가며 선택이 바뀌어도 언마운트되지 않게 한다. */}
+      <UrlDialog
+        open={!!editMode && !readOnly}
+        title={shown.mode === 'src' ? '이미지 교체' : '이미지 링크'}
+        label={shown.mode === 'src' ? '이미지 URL' : '링크 URL'}
+        placeholder={shown.mode === 'src' ? 'https://…/image.png' : 'https://example.com'}
+        value={draft}
+        onChange={(v) => { setDraft(v); setErr(''); }}
+        submitLabel="적용"
+        onSubmit={saveEdit}
+        onCancel={closeEdit}
+        onRemove={shown.mode === 'link' && shown.hadLink ? removeLink : undefined}
+        removeLabel="링크 제거"
+        error={err || undefined}
+        onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}
+      />
       {props.children}
     </PlateElement>
   );

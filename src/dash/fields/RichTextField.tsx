@@ -46,7 +46,7 @@ import { toggleCodeBlock, CodeBlockRules } from '@platejs/code-block'; // tf.cod
 import { ListPlugin } from '@platejs/list-classic/react';       // ul/ol/li/lic + taskList 하위 플러그인은 ListPlugin에 nested 등록됨(taskList=체크리스트)
 import { BulletedListRules, OrderedListRules, TaskListRules } from '@platejs/list-classic';
 import { LinkPlugin } from '@platejs/link/react';
-import { upsertLink, unwrapLink, LinkRules } from '@platejs/link';
+import { upsertLink, unwrapLink, validateUrl, LinkRules } from '@platejs/link';
 import { ImagePlugin, VideoPlugin, MediaEmbedPlugin, FilePlugin } from '@platejs/media/react';
 import { insertImage, insertMediaEmbed, parseMediaUrl, parseTwitterUrl, parseVideoUrl } from '@platejs/media';
 import { CaptionPlugin } from '@platejs/caption/react';
@@ -92,7 +92,7 @@ import {
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuSeparator } from '../ui/context-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { UrlDialog, URL_SCHEME_ERROR } from './RichTextUrlDialog';
 import { PortalContainerContext } from '../ui/portal-container';
 import './richtext.css';
 
@@ -1285,6 +1285,14 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
   const canRedo = !!editor.history?.redos?.length;
   const linkActive = inNode(editor, 'a');
   const imageActive = inNode(editor, 'img');
+  const [pErr, setPErr] = useState('');   // URL 다이얼로그 거부 사유(링크 sanitize)
+  // URL 다이얼로그 문구는 "연 순간" 기준으로 고정 — 닫힘 애니메이션 동안 pMode=null(→ 기본 문구)이나 링크 삽입
+  // 직후 linkActive=true(→ '링크 편집')로 제목이 바뀌어 깜빡이지 않게. 열림 전이에서만 갱신(고정 툴바·플로팅 툴바
+  // 어느 쪽이 열어도 pMode 로 들어오므로 여기 한 곳에서 잡는다).
+  const shown = useRef<{ mode: Exclude<PromptMode, null>; editing: boolean; open: boolean }>({ mode: 'image', editing: false, open: false });
+  if (pMode && (!shown.current.open || pMode !== shown.current.mode)) shown.current = { mode: pMode, editing: pMode === 'link' && linkActive, open: true };
+  else if (!pMode && shown.current.open) shown.current = { ...shown.current, open: false };
+  const pm = shown.current.mode;
 
   function openLink() { openLinkPrompt(editor, savedSel, setPUrl, setPMode); }
   // 비디오·임베드도 이제 같은 중앙 다이얼로그를 연다(과거 인라인 바 → 다이얼로그 전환). InsertDropdown 항목의
@@ -1293,9 +1301,12 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
   // selSnapshot: InsertDropdown이 메뉴 열림 시점에 잡아둔 selection. Radix가 포커스를 옮기면 editor.selection이
   // null/stale이 되므로(Codex 리뷰 발견) 스냅샷을 우선 쓴다. 스냅샷 없으면(직접 호출 경로) 현재 selection.
   function openMedia(m: 'video' | 'embed', selSnapshot?: any) { savedSel.current = selSnapshot ?? editor.selection; setPUrl(''); setTimeout(() => setPMode(m), 0); }
-  function closeBar() { setPMode(null); editor.tf.focus(); }
+  function closeBar() { setPErr(''); setPMode(null); editor.tf.focus(); }
   function applyPrompt() {
     const url = pUrl.trim();
+    // 링크는 Plate sanitize 계약(validateUrl)에 걸리면 다이얼로그를 열어 둔 채 사유를 보인다(전엔 조용히 무시).
+    if (pMode === 'link' && url && !validateUrl(editor, url)) { setPErr(URL_SCHEME_ERROR); return; }
+    setPErr('');
     if (savedSel.current) editor.tf.select(savedSel.current);
     // 캐럿이 목록 안이면 목록 바로 뒤 최상위 경로(at). 목록 밖이면 undefined → 기존 삽입 경로.
     // 미디어(void) 뒤 trailing {type:'p'}는 필수: void 블록만 삽입하면 selection이 void에 남아 이후
@@ -1372,8 +1383,9 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
     e.target.value = '';
   }
   const importAccept = '.md,.markdown,.html,.htm,.json,.txt';
-  const promptLabel = pMode === 'image' ? '이미지 URL' : pMode === 'video' ? '비디오 URL' : pMode === 'embed' ? '임베드 URL(YouTube 등)' : '링크 URL';
-  const promptPlaceholder = pMode === 'image' ? 'https://…/image.png' : pMode === 'video' ? 'https://…/video.mp4' : pMode === 'embed' ? 'https://youtube.com/watch?v=…' : 'https://example.com';
+  const promptLabel = pm === 'image' ? '이미지 URL' : pm === 'video' ? '비디오 URL' : pm === 'embed' ? '임베드 URL(YouTube 등)' : '링크 URL';
+  const promptPlaceholder = pm === 'image' ? 'https://…/image.png' : pm === 'video' ? 'https://…/video.mp4' : pm === 'embed' ? 'https://youtube.com/watch?v=…' : 'https://example.com';
+  const promptTitle = pm === 'link' ? (shown.current.editing ? '링크 편집' : '링크 삽입') : pm === 'video' ? '동영상 삽입' : pm === 'embed' ? '임베드 삽입' : '이미지 삽입';
 
   return (
     <>
@@ -1424,7 +1436,7 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
         <button type="button" title="링크" aria-label="링크" aria-pressed={linkActive || pMode === 'link'}
           className={'apfs-rt-btn' + (linkActive || pMode === 'link' ? ' is-active' : '')}
           onMouseDown={(e) => e.preventDefault()}
-          onClick={() => (pMode === 'link' ? closeBar() : openLink())}><LinkIcon size={16} strokeWidth={2} aria-hidden={true} /></button>
+          onClick={openLink}><LinkIcon size={16} strokeWidth={2} aria-hidden={true} /></button>
         <button type="button" title="링크 제거" aria-label="링크 제거" className="apfs-rt-btn"
           disabled={!linkActive} onMouseDown={(e) => e.preventDefault()}
           onClick={() => { unwrapLink(editor); editor.tf.focus(); }}><Unlink size={16} strokeWidth={2} aria-hidden={true} /></button>
@@ -1476,49 +1488,22 @@ function Toolbar({ pMode, setPMode, pUrl, setPUrl, rootRef, savedSel,
         </div>
       )}
 
-      {/* 링크 URL 입력 바 — 선택 텍스트 문맥 편집이라 인라인 유지. 텍스트 입력이라 mousedown preventDefault 미적용. */}
-      {pMode === 'link' && (
-        <div className="apfs-richtext__linkbar">
-          <input
-            type="url" className="apfs-rt-linkinput" autoFocus
-            aria-label={promptLabel}
-            placeholder={promptPlaceholder}
-            value={pUrl}
-            onChange={(e) => setPUrl(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') { e.preventDefault(); applyPrompt(); }
-              if (e.key === 'Escape') { e.preventDefault(); closeBar(); }
-            }}
-          />
-          <button type="button" className="apfs-rt-linkbtn" onMouseDown={(e) => e.preventDefault()} onClick={applyPrompt}>적용</button>
-          <button type="button" className="apfs-rt-linkbtn is-ghost" onMouseDown={(e) => e.preventDefault()} onClick={closeBar}>취소</button>
-        </div>
-      )}
-
-      {/* 이미지·동영상·임베드 URL 삽입 — 중앙 다이얼로그(공식 Playground "Insert Image" 대응).
-          ui/dialog는 포털+z-modal 정본 모달 → 폼 모달 안 중첩이어도 DOM 순서상 위에 뜬다(임의 z 추가 금지). */}
-      <Dialog open={pMode === 'image' || pMode === 'video' || pMode === 'embed'} onOpenChange={(o) => { if (!o) closeBar(); }}>
-        <DialogContent className="max-w-md" aria-describedby={undefined} onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}>
-          <DialogHeader>
-            <DialogTitle>{pMode === 'video' ? '동영상 삽입' : pMode === 'embed' ? '임베드 삽입' : '이미지 삽입'}</DialogTitle>
-          </DialogHeader>
-          <div style={{ padding: '16px 18px' }}>
-            <label htmlFor="apfs-rt-media-url" style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{promptLabel}</label>
-            <input
-              id="apfs-rt-media-url" type="url" autoFocus
-              placeholder={promptPlaceholder}
-              value={pUrl}
-              onChange={(e) => setPUrl(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyPrompt(); } }}
-              style={{ width: '100%', height: 38, lineHeight: '20px', padding: '0 10px', fontSize: 14, color: 'var(--foreground)', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 7 }}
-            />
-          </div>
-          <DialogFooter>
-            <button type="button" className="apfs-rt-linkbtn is-ghost" onClick={closeBar}>취소</button>
-            <button type="button" className="apfs-rt-linkbtn" onClick={applyPrompt}>삽입</button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* URL 입력 — 링크·이미지·동영상·임베드 모두 같은 중앙 다이얼로그(공식 Playground "Insert Image" 룩, UrlDialog).
+          링크는 연 순간 캐럿이 링크 안이면 편집(적용), 아니면 삽입. 빈 값 적용 = 링크 해제(기존 의미 유지 — 툴바에
+          링크 해제 버튼도 따로 있다). ui/dialog는 포털+z-modal 정본 모달 → 폼 모달 안 중첩이어도 위에 뜬다(임의 z 금지). */}
+      <UrlDialog
+        open={pMode !== null}
+        title={promptTitle}
+        label={promptLabel}
+        placeholder={promptPlaceholder}
+        value={pUrl}
+        onChange={(v) => { setPUrl(v); setPErr(''); }}
+        submitLabel={pm === 'link' && shown.current.editing ? '적용' : '삽입'}
+        onSubmit={applyPrompt}
+        onCancel={closeBar}
+        error={pErr || undefined}
+        onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}
+      />
     </>
   );
 }
