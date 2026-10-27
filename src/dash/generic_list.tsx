@@ -36,7 +36,7 @@ import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생�
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode, CellContextMenuEvent, CellKeyDownEvent, SuppressKeyboardEventParams } from 'ag-grid-community';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from './aggrid_theme';   // 공유 테마(회색 행선택)·내용폭 자동화 SSOT
-import { SELECTION_COL } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, dropHiddenSelection } from './aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import './aggrid_shared.css';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
@@ -551,7 +551,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
   // 외부 필터(상세필터 드로어 → 그리드 행 거르기). 값이 바뀌면 그리드에 재적용 통지.
   const filterActive = Object.values(filterValues).some((v) => v !== "");
-  useEffect(() => { apiRef.current?.onFilterChanged(); }, [filterValues]);
+  /* 필터가 바뀌면 선택을 전부 해제한다 — 걸러진 행의 체크가 보이지 않는 채로 남아 액션이 숨은 행에 걸리지 않게(2026-10-27) */
+  useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [filterValues]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback(
     (node: IRowNode<Row>) => (node.data ? rowMatchesFilters(node.data, schema, filterValues) : true),
@@ -860,6 +861,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
               suppressPaginationPanel
               isExternalFilterPresent={isExternalFilterPresent}
               doesExternalFilterPass={doesExternalFilterPass}
+              onModelUpdated={dropHiddenSelection}   // 수정·단계 전이로 선택 행이 조건 밖에 나가면 선택 해제(2026-10-27)
               onGridReady={onGridReady}
               onSelectionChanged={onSelectionChanged}
               onPaginationChanged={onPaginationChanged}

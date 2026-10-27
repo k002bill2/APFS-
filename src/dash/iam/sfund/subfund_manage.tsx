@@ -17,7 +17,7 @@ import { UI } from '../../components';
 import type { Tone } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
-import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, restoreSelection, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝) — 형제 드로어(asset_funding·generic_list)와 동일
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle, RowSelectionOptions } from 'ag-grid-community';
@@ -248,7 +248,8 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
     return true;
   }, [fStage, fText, fFund, fType, fYear, fRt, fSt]);
   const filterActive = Boolean(fStage || fText || fFund || fType || fYear || fRt || fSt);
-  useEffect(() => { apiRef.current?.onFilterChanged(); }, [passes]);
+  /* 필터가 바뀌면 선택을 전부 해제한다 — 걸러진 행의 체크가 보이지 않는 채로 남아 액션이 숨은 행에 걸리지 않게(2026-10-27) */
+  useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<SubFundRow>) => (node.data ? passes(node.data) : true), [passes]);
 
@@ -422,6 +423,7 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
           pagination paginationPageSize={pageSize} suppressPaginationPanel
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}
+          onModelUpdated={dropHiddenSelection}   // 수정·단계 전이로 선택 행이 조건 밖에 나가면 선택 해제(2026-10-27)
           onGridReady={onGridReady}
           onSelectionChanged={onSelectionChanged}
           onRowDataUpdated={onRowDataUpdated}

@@ -118,7 +118,7 @@ const columnDefs: (ColDef<Row> | ColGroupDef<Row>)[] = [
 | 정렬 | `defaultColDef.sortable: true` (헤더 클릭) |
 | 행 선택→삭제(다건) | `rowSelection` multiRow(`checkboxes:true`, `enableClickSelection:false` — 체크박스로만 고른다), `api.getSelectedRows()`로 삭제 후 `deselectAll()`. 정본 `generic_list.tsx` |
 | 페이지네이션 | `pagination`+`suppressPaginationPanel` 후 `paginationGoToPage` 등으로 GridFrame 푸터에 커스텀 페이저 |
-| 상세필터 | **External Filter**(Community): `isExternalFilterPresent`/`doesExternalFilterPass` + 값 변경 시 `apiRef.current?.onFilterChanged()`. 드로어 UI·필터칩은 →[[apfs-detail-filter]] |
+| 상세필터 | **External Filter**(Community): `isExternalFilterPresent`/`doesExternalFilterPass` + 값 변경 시 `apiRef.current?.onFilterChanged()`. `rowSelection` 이 있으면 바로 뒤에 `deselectAll()` + 그리드에 `onModelUpdated={dropHiddenSelection}`(수정·단계 전이로 선택 행이 조건 밖에 나가는 경로) — 숨긴 행의 선택이 남는다(2026-10-27, 가드 `filter_clears_selection.test.ts`). 드로어 UI·필터칩은 →[[apfs-detail-filter]] |
 | 수정 진입 | `onRowDoubleClicked` → 스키마 모달(→[[apfs-form-modal]]) |
 | Excel 내보내기 | SheetJS(아래) — Community엔 `exportDataAsExcel` 없음 |
 | 우클릭 컨텍스트 메뉴 | **Community 대체**(내장 context menu는 Enterprise 전용): `onCellContextMenu`+`preventDefaultOnContextMenu`+공유 `RowContextMenu`(아래) |
