@@ -5,10 +5,12 @@
    맞물린다. a/img/hr/table/toggle/callout/column/math/mention/date는 각자 명시 컴포넌트로 실제 DOM을 그린다.
    COMPONENTS는 RichTextField의 usePlateEditor({components})로 주입된다. 배치별로 항목이 늘어난다. */
 import type { CSSProperties } from 'react';
-import { createContext, useContext, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { PlateElement, PlateLeaf, useEditorRef, useSelected, useReadOnly, usePluginOption, usePath } from 'platejs/react';
 import { getLinkAttributes, validateUrl } from '@platejs/link';
 import { safeUrl } from './safeUrl';
+import { UrlDialog, URL_SCHEME_ERROR } from './RichTextUrlDialog';
+import { EquationDialog } from './RichTextEquationDialog';
 import { insertTableRow, insertTableColumn, deleteRow, deleteColumn, deleteTable } from '@platejs/table';
 // 셀 다중 선택(공식 Plate): useSelectedCells=selection→선택 셀 id 동기화(표 요소에서 1회 마운트),
 // useIsCellSelected=셀별 선택 구독(element.id 기반 — NodeIdPlugin이 셀에도 id 부여).
@@ -39,6 +41,7 @@ import {
   ChevronRight, Info, TriangleAlert, CircleCheck, Lightbulb, Rows3, Columns3,
   Plus, CalendarDays, AtSign, GripVertical, FileDown as FileDownIcon, Combine, Ungroup,
   PaintBucket, Grid3x3, Square, SquareDashed, PanelTop, PanelBottom, PanelLeft, PanelRight, X as XIcon,
+  Pencil,
 } from 'lucide-react';
 
 // 문서 콘텐츠 팔레트(고정 절대색 — 문서에 박혀 라이트/다크 무관 유지). 글꼴색/형광(RichTextField)과 표 셀 배경이 공유.
@@ -159,8 +162,11 @@ export function ImageElement(props: any) {
   const align = element.align || 'left';
   const imgboxRef = useRef<HTMLSpanElement>(null);
   const [dragW, setDragW] = useState<number | null>(null);
-  const [editMode, setEditMode] = useState<null | 'link' | 'src'>(null);   // 인라인 입력 바: 링크(하이퍼링크) vs 소스(이미지 주소)
+  const [editMode, setEditMode] = useState<null | 'link' | 'src'>(null);   // URL 다이얼로그: 링크(하이퍼링크) vs 소스(이미지 주소)
   const [draft, setDraft] = useState('');
+  const [err, setErr] = useState('');    // 다이얼로그 거부 사유(무효 스킴·빈 소스)
+  // 다이얼로그 문구는 연 순간 기준(닫힘 애니메이션 중 editMode=null·링크 제거로 제목/버튼이 바뀌어 깜빡이지 않게)
+  const [shown, setShown] = useState<{ mode: 'link' | 'src'; hadLink: boolean }>({ mode: 'link', hadLink: false });
   const width = dragW != null ? `${Math.round(dragW)}px` : (element.width || '100%');
   const capBtn = useCaptionButton(useCaptionButtonState());   // 캡션 토글(정석): onClick이 visibleId=element.id + 포커스
   const set = (patch: any) => { const p = editor.api.findPath(element); if (p) editor.tf.setNodes(patch, { at: p }); };
@@ -173,21 +179,24 @@ export function ImageElement(props: any) {
     const next = Math.max(64, Math.min((e.initialSize || 0) + e.delta * mult, maxW));
     if (e.finished) { setDragW(null); set({ width: `${Math.round(next)}px` }); } else { setDragW(next); }
   };
-  const openLink = () => { setDraft(element.link || ''); setEditMode('link'); };
-  const openSrc = () => { setDraft(element.url || ''); setEditMode('src'); };
+  const openEdit = (mode: 'link' | 'src') => {
+    setDraft((mode === 'link' ? element.link : element.url) || '');
+    setErr(''); setShown({ mode, hadLink: !!element.link }); setEditMode(mode);
+  };
+  const closeEdit = () => { setErr(''); setEditMode(null); };
   const saveEdit = () => {
     const v = draft.trim();
     if (editMode === 'link') {
-      if (v && !validateUrl(editor, v)) return;   // javascript: 등 무효/위험 스킴 거부 — 입력 유지
+      if (v && !validateUrl(editor, v)) { setErr(URL_SCHEME_ERROR); return; }   // javascript: 등 거부 — 다이얼로그 유지
       set({ link: v || undefined });
     } else if (editMode === 'src') {
-      if (!v) return;                              // 소스는 필수 — 비우면 무시(입력 유지)
+      if (!v) { setErr('이미지 URL을 입력하세요.'); return; }                    // 소스는 필수 — 다이얼로그 유지
       set({ url: v });                             // 이미지 주소 교체(크기·정렬·캡션·링크 유지)
     }
-    setEditMode(null);
+    closeEdit();
     editor.tf.focus();
   };
-  const removeLink = () => { set({ link: undefined }); setEditMode(null); editor.tf.focus(); };
+  const removeLink = () => { set({ link: undefined }); closeEdit(); editor.tf.focus(); };
   // src는 safeUrl(media) 경유 — data:/blob:는 정식 값, javascript: 등 실행 스킴 차단.
   const imgEl = <img src={safeUrl(element.url, 'media')} alt="" />;
   const safeHref = element.link ? getLinkAttributes(editor, { type: 'a', url: element.link, children: [] } as any).href : undefined;
@@ -221,10 +230,10 @@ export function ImageElement(props: any) {
               ))}
               <span className="apfs-rt-imgsep" aria-hidden="true" />
               <button type="button" title="이미지 교체" aria-label="이미지 주소 교체" aria-pressed={editMode === 'src'}
-                className={'apfs-rt-imgbtn' + (editMode === 'src' ? ' is-active' : '')} onMouseDown={stop} onClick={openSrc}>
+                className={'apfs-rt-imgbtn' + (editMode === 'src' ? ' is-active' : '')} onMouseDown={stop} onClick={() => openEdit('src')}>
                 <Replace size={15} strokeWidth={2} aria-hidden={true} /></button>
               <button type="button" title="링크 편집" aria-label="링크 편집" aria-pressed={!!element.link}
-                className={'apfs-rt-imgbtn' + (element.link ? ' is-active' : '')} onMouseDown={stop} onClick={openLink}>
+                className={'apfs-rt-imgbtn' + (element.link ? ' is-active' : '')} onMouseDown={stop} onClick={() => openEdit('link')}>
                 <Link2 size={15} strokeWidth={2} aria-hidden={true} /></button>
               <button type="button" title="캡션" aria-label="캡션 추가" className="apfs-rt-imgbtn"
                 onMouseDown={stop} onClick={capBtn.props.onClick}>
@@ -235,21 +244,28 @@ export function ImageElement(props: any) {
                 <Trash2 size={15} strokeWidth={2} aria-hidden={true} /></button>
             </span>
           )}
-          {selected && !readOnly && editMode && (
-            <span className="apfs-rt-imginput" role="group" aria-label={editMode === 'src' ? '이미지 주소' : '이미지 링크 URL'}>
-              <input className="apfs-rt-imginput__field" type="url"
-                placeholder={editMode === 'src' ? 'https://.../image.png' : 'https://...'} value={draft}
-                autoFocus onMouseDown={(e) => e.stopPropagation()} onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveEdit(); } if (e.key === 'Escape') { e.preventDefault(); setEditMode(null); } }} />
-              <button type="button" className="apfs-rt-imgbtn is-text" onMouseDown={stop} onClick={saveEdit}>적용</button>
-              {editMode === 'link' && element.link && <button type="button" className="apfs-rt-imgbtn is-text" onMouseDown={stop} onClick={removeLink}>제거</button>}
-            </span>
-          )}
         </span>
         <Caption style={{ width }}>
           <CaptionTextarea className="apfs-rt-caption" placeholder="캡션 입력…" />
         </Caption>
       </div>
+      {/* 링크 편집·이미지 교체 — 툴바 URL 입력과 같은 중앙 다이얼로그(UrlDialog). selected 분기 밖에 둬서
+          다이얼로그로 포커스가 옮겨가며 선택이 바뀌어도 언마운트되지 않게 한다. */}
+      <UrlDialog
+        open={!!editMode && !readOnly}
+        title={shown.mode === 'src' ? '이미지 교체' : '이미지 링크'}
+        label={shown.mode === 'src' ? '이미지 URL' : '링크 URL'}
+        placeholder={shown.mode === 'src' ? 'https://…/image.png' : 'https://example.com'}
+        value={draft}
+        onChange={(v) => { setDraft(v); setErr(''); }}
+        submitLabel="적용"
+        onSubmit={saveEdit}
+        onCancel={closeEdit}
+        onRemove={shown.mode === 'link' && shown.hadLink ? removeLink : undefined}
+        removeLabel="링크 제거"
+        error={err || undefined}
+        onCloseAutoFocus={(e) => { e.preventDefault(); editor.tf.focus(); }}
+      />
       {props.children}
     </PlateElement>
   );
@@ -705,45 +721,82 @@ function renderTex(tex: string, displayMode: boolean): string {
   // HTML 이스케이프해 원본 LaTeX 소스만 텍스트로 노출(주입 차단). throwOnError:false라 정상엔 발동 안 하는 방어선.
   catch { return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string)); }
 }
-export function EquationElement(props: any) {
+// 수식 편집 모달(블록·인라인 공용, 2026-10-27 사용자 요청: 요소 안 입력칸·팝오버 → EquationDialog).
+// 선택이 수식으로 "들어올 때"(접힌 선택) 자동으로 연다 — 전 입력칸이 선택 즉시 뜨던 흐름(방향키 접근 포함) 유지.
+// 이미 선택된 수식은 편집 버튼(apfs-rt-eqedit)으로 다시 연다. 범위 선택(전체 선택 등)이 덮을 땐 열지 않는다.
+// 문서 반영은 적용 시 setNodes 1회(전엔 키 입력마다 반영) — 취소하면 그대로.
+function useEquationEdit(element: any, selected: boolean, readOnly: boolean) {
   const editor = useEditorRef();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState('');
+  const wasSelected = useRef(false);
+  const selectedNow = useRef(selected);   // 지연 열기 직전 재확인용(대기 중 선택이 떠났으면 열지 않음 — Codex P2)
+  selectedNow.current = selected;
+  const begin = () => { setDraft(typeof element.texExpression === 'string' ? element.texExpression : ''); setOpen(true); };
+  useEffect(() => {
+    const entered = selected && !wasSelected.current;
+    wasSelected.current = selected;
+    if (entered && !readOnly && editor.api.isCollapsed()) {
+      const tex = typeof element.texExpression === 'string' ? element.texExpression : '';
+      // 열려 있는 메뉴가 사라진 뒤에 연다 — "+ 삽입" 메뉴 항목으로 삽입하면 메뉴가 닫힘 애니메이션 중인데 모달이
+      // 열리고, 메뉴가 DOM 에 남아 있는 동안엔 그 typeahead 가 LaTeX 입력 첫 글자에 포커스를 뺏는다(2026-10-27 실측).
+      // 메뉴가 없으면 다음 틱에 바로 연다. setTimeout 폴링(rAF 는 가려진 창에서 멈춤), 상한 50ms×12.
+      // 정리 함수로 취소하지 않는다 — 삽입 직후 정규화로 element 가 바뀌어 effect 가 재실행돼도 열려야 한다.
+      const openWhenMenusGone = (tries: number) => {
+        if (document.querySelector('[role=menu]') && tries < 12) { setTimeout(() => openWhenMenusGone(tries + 1), 50); return; }
+        if (!selectedNow.current || !editor.api.isCollapsed()) return;   // 기다리는 사이 다른 곳으로 옮겼으면 취소
+        setDraft(tex); setOpen(true);
+      };
+      setTimeout(() => openWhenMenusGone(0), 0);
+    }
+  }, [selected, readOnly, editor, element]);
+  const apply = () => { const p = editor.api.findPath(element); if (p) editor.tf.setNodes({ texExpression: draft } as any, { at: p }); setOpen(false); };
+  const dialogProps = {
+    open: open && !readOnly, value: draft, onChange: setDraft, onSubmit: apply, onCancel: () => setOpen(false),
+    onCloseAutoFocus: (e: Event) => { e.preventDefault(); editor.tf.focus(); },
+  };
+  return { begin, dialogProps };
+}
+// 선택된 수식의 편집 버튼 — 편집 chrome 이라 HTML 내보내기에서 제거(exportHtml 목록).
+function EquationEditButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" className="apfs-rt-eqedit" contentEditable={false} title="수식 편집" aria-label="수식 편집"
+      onMouseDown={(e) => e.preventDefault()} onClick={onClick}>
+      <Pencil size={13} strokeWidth={2} aria-hidden />
+    </button>
+  );
+}
+export function EquationElement(props: any) {
   const { element } = props;
   const selected = useSelected();
   const readOnly = useReadOnly();
   const tex = element.texExpression || '';
-  const setTex = (v: string) => { const p = editor.api.findPath(element); if (p) editor.tf.setNodes({ texExpression: v } as any, { at: p }); };
+  const { begin, dialogProps } = useEquationEdit(element, selected, readOnly);
   return (
     <PlateElement {...props} className={'apfs-rt-equation' + (selected ? ' is-sel' : '')}>
       <div contentEditable={false} className="apfs-rt-equation__body">
         <div className="apfs-rt-equation__render">
           {tex ? <span dangerouslySetInnerHTML={{ __html: renderTex(tex, true) }} /> : <span className="apfs-rt-equation__empty">수식(LaTeX)을 입력하세요 — 예: E = mc^2</span>}
         </div>
-        {selected && !readOnly && (
-          <input className="apfs-rt-eqinput" value={tex} autoFocus spellCheck={false}
-            aria-label="수식 LaTeX" placeholder="E = mc^2" onChange={(e) => setTex(e.target.value)} />
-        )}
+        {selected && !readOnly && <EquationEditButton onClick={begin} />}
       </div>
+      <EquationDialog title="수식 편집" preview={(t) => renderTex(t, true)} {...dialogProps} />
       {props.children}
     </PlateElement>
   );
 }
 export function InlineEquationElement(props: any) {
-  const editor = useEditorRef();
   const { element } = props;
   const selected = useSelected();
   const readOnly = useReadOnly();
   const tex = element.texExpression || '';
-  const setTex = (v: string) => { const p = editor.api.findPath(element); if (p) editor.tf.setNodes({ texExpression: v } as any, { at: p }); };
+  const { begin, dialogProps } = useEquationEdit(element, selected, readOnly);
   return (
     <PlateElement {...props} as="span" className={'apfs-rt-inline apfs-rt-ieq' + (selected ? ' is-sel' : '')} attributes={{ ...props.attributes, contentEditable: false }}>
       <span className="apfs-rt-ieq__render" dangerouslySetInnerHTML={{ __html: tex ? renderTex(tex, false) : '' }} />
       {!tex && <span className="apfs-rt-ieq__empty">수식</span>}
-      {selected && !readOnly && (
-        <span className="apfs-rt-ieq__pop" contentEditable={false}>
-          <input className="apfs-rt-eqinput" value={tex} autoFocus spellCheck={false}
-            aria-label="인라인 수식 LaTeX" placeholder="x^2" onChange={(e) => setTex(e.target.value)} />
-        </span>
-      )}
+      {selected && !readOnly && <EquationEditButton onClick={begin} />}
+      <EquationDialog title="인라인 수식 편집" preview={(t) => renderTex(t, false)} {...dialogProps} />
       {props.children}
     </PlateElement>
   );
