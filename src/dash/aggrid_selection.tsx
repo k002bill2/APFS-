@@ -12,7 +12,8 @@
    - 헤더(multiRow 만): 전체/일부/없음 3상태(indeterminate). 클릭 → 전부 켜기/끄기(api.selectAll/deselectAll **'filtered'**). singleRow 는 빈 헤더.
      소비처 rowSelection 은 `headerCheckbox:false`(내장 SelectAllFeature 를 끔 → 전체선택 경로는 DS 헤더 하나) + `selectAll:'filtered'`
      (남는 select-all 경로 기본값도 DS 헤더와 같은 범위로 못 박음). 대가: 헤더 **셀**에 포커스한 Space 는 무동작(버튼으로 Tab 하면 정상).
-     ⚠ 푸터 `getSelectedRows().length` 는 필터 밖 선택까지 세므로 "N건 선택 + 헤더 미체크" 가 가능하다(의도).
+     ⚠ 푸터 `getSelectedRows().length` 는 필터 밖 선택까지 센다 — 외부 필터 화면은 필터 effect 의 deselectAll + `dropHiddenSelection`
+       으로 필터 밖 선택 자체를 남기지 않는다(2026-10-27). 다른 페이지(페이지네이션)의 선택은 그대로 세진다.
    - 내장 체크박스(.ag-selection-checkbox > ag-checkbox)·헤더 select-all 은 CSS 로 숨긴다(aggrid_selection.css).
    - ⚠ 이중 토글 방지(현재는 방어선): AG Grid 의 행클릭 선택(onRowClick)은 클래스가 아니라 **이벤트 플래그**(`_stopPropagationForAgGrid`,
      내장 체크박스도 같은 방식)로 건너뛴다. 래퍼 div 에 **네이티브** click/dblclick 리스너로 플래그를 세운다 — 네이티브라야
@@ -101,9 +102,13 @@ function SelectHeader({ api, label }: IHeaderParams & { label?: string }) {
      사용자가 아무것도 안 했는데 다건 선택이 1건으로 줄고 이어지는 벌크 삭제 대상이 바뀐다(Codex 리뷰 2026-09-23).
    그래서 ① 저장된 id 집합 밖의 선택을 풀고 ② 살아남은 id 를 additive(`setSelected(true)`)로 다시 켠다.
    행이 사라졌으면(삭제됨) 조용히 건너뛴다 — 호출자는 `getSelectedRows()` 로 다시 동기화된다.
+   ⚠ 행이 남아 있어도 **필터 결과 밖**(수정·단계 전이로 조건을 벗어남)이면 되살리지 않고 선택을 전부 푼다 — dropHiddenSelection 과
+     같은 규칙(2026-10-27). onModelUpdated 의 deselectAll 직후 같은 틱의 onRowDataUpdated 가 아직 갱신 전인 selIdsRef 로 여기를
+     부르므로, 이 검사가 없으면 숨은 행이 다시 선택된다(자펀드 관리 단계 전이 실측).
    master-detail 좌 그리드처럼 **라디오(singleRow)** 는 이 헬퍼를 쓰지 않는다(해제 금지 로직이 따로 있다). */
 export function restoreSelection(api: GridApi, ids: readonly string[]): void {
   if (!ids.length) return;
+  if (ids.some((id) => api.getRowNode(id)?.displayed === false)) { api.deselectAll(); return; }
   const keep = new Set(ids);
   for (const node of api.getSelectedNodes()) {
     const id = node.id;
@@ -113,6 +118,17 @@ export function restoreSelection(api: GridApi, ids: readonly string[]): void {
     const node = api.getRowNode(id);
     if (node && !node.isSelected()) node.setSelected(true);
   }
+}
+
+/* 숨은 선택 정리 — `onModelUpdated={dropHiddenSelection}`. 선택한 행 중 하나라도 필터 결과에서 빠지면 선택을 **전부** 푼다
+   (2026-10-27 사용자 결정 "필터를 바꾸면 선택을 전부 해제"의 데이터 변경 경로 — 숨은 것만 푸는 prune 은 거절된 안이다).
+   External Filter 는 걸러진 행을 숨기기만 하고 선택은 남기며 selectionChanged 도 쏘지 않는다. 필터 값 변경은 페이지의
+   필터 effect 가 잡지만, 선택한 행을 수정·단계 전이로 조건 밖에 내보내면 필터 값(passes)이 그대로라 effect 가 돌지 않는다
+   → 표는 0건인데 "1건 선택됨 · 수정 · 삭제"가 남는다(운용인력 변동관리·자펀드 관리 실측).
+   `displayed` = rowIndex 가 있다(필터 결과 안). 다른 페이지의 행도 rowIndex 가 있어 페이지 이동은 선택을 풀지 않는다.
+   deselectAll 은 모델을 바꾸지 않으므로 onModelUpdated 가 재발화하지 않는다(렌더 루프 없음). */
+export function dropHiddenSelection(e: { api: GridApi }): void {
+  if (e.api.getSelectedNodes().some((n) => !n.displayed)) e.api.deselectAll();
 }
 
 export const SELECTION_COL: SelectionColumnDef = {

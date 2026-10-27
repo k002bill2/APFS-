@@ -46,7 +46,7 @@ import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_them
 import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SelectionChangedEvent } from 'ag-grid-community';
-import { SELECTION_COL } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
@@ -310,7 +310,8 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
     return true;
   }, [fRt, fGp, fFund, fFrom, fTo]);
   const filterActive = Boolean(fRt || fGp || fFund || fFrom || fTo);
-  useEffect(() => { apiRef.current?.onFilterChanged(); }, [passes]);
+  /* 필터가 바뀌면 선택을 전부 해제한다 — 걸러진 행의 체크가 보이지 않는 채로 남아 액션이 숨은 행에 걸리지 않게(2026-10-27) */
+  useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<RegularReportRow>) => (node.data ? passes(node.data) : true), [passes]);
 
@@ -441,6 +442,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
           pagination paginationPageSize={pageSize} suppressPaginationPanel
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}
+          onModelUpdated={dropHiddenSelection}   // 수정·단계 전이로 선택 행이 조건 밖에 나가면 선택 해제(2026-10-27)
           onGridReady={onGridReady}
           onPaginationChanged={onPaginationChanged}
           onCellKeyDown={onCellKeyDown}

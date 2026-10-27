@@ -37,7 +37,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme';
-import { SELECTION_COL } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, RowSelectionOptions, IRowNode, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, ValueFormatterParams } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
@@ -249,7 +249,8 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
     return true;
   }, [fAcc, fGp, fFund]);
   const filterActive = Boolean(fAcc || fGp || fFund);
-  useEffect(() => { apiRef.current?.onFilterChanged(); }, [passes]);
+  /* 필터가 바뀌면 선택을 전부 해제한다 — 걸러진 행의 체크가 보이지 않는 채로 남아 액션이 숨은 행에 걸리지 않게(2026-10-27) */
+  useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<FundMemberRow>) => (node.data ? passes(node.data) : true), [passes]);
 
@@ -421,6 +422,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
           preventDefaultOnContextMenu
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}
+          onModelUpdated={dropHiddenSelection}   // 수정·단계 전이로 선택 행이 조건 밖에 나가면 선택 해제(2026-10-27)
           onGridReady={onGridReady}
           onSelectionChanged={onSelectionChanged}
           onPaginationChanged={onPaginationChanged}
