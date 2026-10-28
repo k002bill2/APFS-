@@ -89,7 +89,7 @@ APFS/
 | `bash scripts/wt.sh dev <branch>` | 배정된 포트로 dev 서버 실행 |
 | `bash scripts/wt.sh ls` / `rm <branch>` | 목록(브랜치·포트·dirty) / 제거(미커밋 변경 있으면 거부) |
 | `bash scripts/wt.sh setup <dir>` | `EnterWorktree` 도구로 만든 워크트리에 `node_modules`·포트만 배선 |
-| `bash scripts/wt.sh prune` | 죽은 포트 배정 정리 — `rm` 을 거치지 않고 지운 워크트리(git-cleanup `apply`·`git worktree remove`·수동 삭제) 뒤에 돌린다 |
+| `bash scripts/wt.sh prune` | 죽은 포트 배정 정리 — `rm` 을 거치지 않고 지운 워크트리(`git worktree remove`·수동 삭제) 뒤에 돌린다. git-cleanup `apply` 는 끝에 스스로 돌린다(2026-10-28 — 끄기 `GIT_CLEANUP_NO_WT_PRUNE=1`) |
 
 - 워크트리는 **인덱스·HEAD 를 따로 갖고 `.git` 만 공유**하므로, 다른 세션의 `switch`/`reset`/`add`
   경합에 면역이다(메모리 `multi-session-branch-is-batch-pr` 7·11·12·13번 사고가 원천 차단된다).
