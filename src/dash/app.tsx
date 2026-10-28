@@ -81,6 +81,7 @@ import { AssetFundInfoManage } from './iam/asct/asset_fund_info_manage';        
 import { ReviewStats } from './iam/report/review_stats';                            // 투심보고 통계(S1_28 — 단일 표 27열 + 기본값 검색조건·금액 단위)
 import { TrustFundCode } from './trs/sfund/trust_fund_code';                            // 자펀드코드 조회(S3_99 — 편집형 목록)
 import { AccountInfoManage, CashflowInfoManage } from './trs/mfund/trust_upload_forms'; // 계좌정보 관리(S3_103) · 입출금 정보관리(S3_105) — 업로드 폼
+import { ClosingFormManage } from './acc/baseinfo/closing_form_manage';              // 결산양식 관리(ACC-002 — 편집 그리드)
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -279,6 +280,7 @@ function App() {
   else if (route === "trust-account-compare") page = <AccountCompare onNav={onNav} />;
   else if (route === "trust-cashflow-info") page = <CashflowInfoManage onNav={onNav} />;
   else if (route === "trust-cashflow-compare") page = <CashflowCompare onNav={onNav} />;
+  else if (route === "acct-closing-form") page = <ClosingFormManage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;
