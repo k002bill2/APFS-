@@ -2,7 +2,7 @@
    출처: ACC-001 화면설계서(slide9~25) → APFS 디자인시스템(user_manage 골격).
 
    구성(설계서 → 우리 규약):
-   - 툴바: [상세필터](E02) → [계정과목 등록](E03, ⌘⏎) → 조회(E04) → [삭제이력](E11). 주 필터칩 없음.
+   - 툴바: [상세필터](E02) → [계정과목 등록](E03, ⌘⏎) → [삭제이력](E11) → 조회(E04, 항상 맨 끝). 주 필터칩 없음.
    - 설계서 '전체펼치기'(E01) = 푸터 FooterActions 전체보기(showAll, ⌥A) — 사용자 확정. 툴바 토글을 따로 두지 않는다.
    - 그리드 9열(계정코드·계정과목명·계정분류·차대구분·차감구분·입력여부·사용여부·최초등록자·최종수정자) + 선택 체크박스.
        계정코드 오름차순, getRowId=계정코드. 선택은 체크박스로만 → 선택 바 [삭제]·[선택 해제](E05·E06). 행 더블클릭 = 수정 모달(E07).
@@ -191,6 +191,8 @@ export function AccountCodeManage({ onNav }: { onNav?: (r: string) => void }) {
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
+      {/* 수정 = 단일 대상 액션(selCount===1 게이트), 삭제 = 벌크 */}
+      {selCount === 1 && <Button variant="primary" size="sm" onClick={() => setModal({ kind: 'form', mode: 'edit', code: selIds[0] })}>수정</Button>}
       <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={requestDelete}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
@@ -207,8 +209,9 @@ export function AccountCodeManage({ onNav }: { onNav?: (r: string) => void }) {
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>계정과목 등록</Button>
+        {/* 삭제이력 아이콘 = history(시계+되돌림) — clock 은 GNB 방문기록, trash 는 선택 바 삭제와 겹친다. 조회는 툴바 맨 끝 */}
+        <Button variant="outline" size="sm" leadingIcon="history" onClick={() => setModal({ kind: 'history' })}>삭제이력</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
-        <Button variant="outline" size="sm" leadingIcon="clock" onClick={() => setModal({ kind: 'history' })}>삭제이력</Button>
       </>}
       footerLeft={<span>{'총 ' + String(rows.length) + '건 중 ' + String(visible.length) + '건 · ' + String(Math.min(shown, visible.length)) + '건 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
