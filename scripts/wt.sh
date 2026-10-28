@@ -116,10 +116,12 @@ port_drop() {
 }
 
 # 죽은 배정 정리 — 디렉터리가 실제로 있는 워크트리의 브랜치 배정만 남긴다.
-# rm 을 거치지 않고 지운 워크트리(git-cleanup apply·git worktree remove·수동 삭제)는 배정 줄이 남아
+# rm 을 거치지 않고 지운 워크트리(git worktree remove·수동 삭제)는 배정 줄이 남아
 # port_reserved 가 그 포트를 영구 예약한다. 살아 있음은 이 저장소의 모든 워크트리(setup 은 $WTROOT
 # 밖도 등록한다)에서 디렉터리 존재로 판정하고, git 메타데이터(prunable)는 건드리지 않는다.
 # 브랜치 이름을 바꾼 워크트리는 옛 이름 배정이 지워지고 새 이름엔 배정이 없다 → setup 으로 다시 받는다.
+# git-cleanup apply 는 끝에 메인 워크트리의 이 prune 을 스스로 부른다 — 아래 `prune)` case 줄을 grep 으로
+# 찾으므로, 서브커맨드 이름을 바꾸면 그 연동이 경고 없이 끊긴다.
 port_prune() {
   lock_ports
   if [ ! -s "$PORTS" ]; then
