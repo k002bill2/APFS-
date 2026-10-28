@@ -12,8 +12,7 @@
      `single &&` 규약 — 다건이면 숨김), 경계 행에서 위로/아래로는 비활성. 행삭제는 다건 허용.
    - 그리드 9열: 선택 · 괄호 · 레벨(1~6) · 출력명 · 출력명(영문) · 계정코드 · 계정코드명([검색]) · 계정코드명(영문) · 출력위치.
      행 순서가 곧 출력 순서라 정렬은 끈다. 선택은 체크박스로만(전체선택 헤더 없음 — 사용자 결정).
-     설계서 9열 밖에 **상태 열(신규/변경/삭제 배지)**을 앞에 하나 더 둔다 — 설계서 E03-4 "편집 시 행 상태 표시"의 화면 단서.
-     엑셀에는 넣지 않는다.
+     별도 상태 열은 두지 않는다(설계서 9열 원형 — 사용자 결정). 삭제(D) 행만 흐림+취소선으로 구분된다.
    - 행 상태 I/U/D 는 행에 싣는다(closing_form_data.ts). 삭제(D) 행은 저장 전까지 흐림+취소선으로 남고,
      다시 골라 [행삭제]를 누르면 직전 상태로 복구된다. 신규(I) 행 삭제는 즉시 제거.
    - 계정코드·계정코드명은 직접 입력하지 않고 [검색] → 계정과목 검색 팝업(ACC-001 공통)으로만 채운다.
@@ -29,7 +28,6 @@ import type {
 } from 'ag-grid-community';
 import * as XLSX from 'xlsx';
 import { UI } from '../../components';
-import type { Tone } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, dropHiddenSelection, restoreSelection } from '../../aggrid_selection';
@@ -45,9 +43,9 @@ import {
   FORM_KINDS, OUT_POS, LEVELS, seedRows, reloadRows, appendBlank, insertAbove, patchRow, toggleDelete, moveRow, canMove,
   changedCount, validateRows, commitRows, passesFilter,
 } from './closing_form_data';
-import type { ClosingRow, ErrField, FormKind, OutPos, RowStatus } from './closing_form_data';
+import type { ClosingRow, ErrField, FormKind, OutPos } from './closing_form_data';
 
-const { Button, IconBtn, SaveButton, StatusBadge } = UI;
+const { Button, IconBtn, SaveButton } = UI;
 const LABEL = '결산양식 관리';
 
 type Patch = (id: string, p: Parameters<typeof patchRow>[2]) => void;
@@ -74,10 +72,6 @@ const errRule = (f: ErrField) => ({
    Tab 은 브라우저 기본 이동(셀 안 컨트롤에 키보드로 닿게). React stopPropagation 은 그리드 네이티브 리스너보다 늦다(gp_quant 관용구) */
 const suppressCtrlKeys = (p: SuppressKeyboardEventParams) => p.event.key === 'Tab' || !!(p.event.target as HTMLElement | null)?.closest?.('input,button,select');
 
-const STATUS_BADGE: Record<Exclude<RowStatus, ''>, { tone: Tone; label: string }> = {
-  I: { tone: 'info', label: '신규' }, U: { tone: 'warning', label: '변경' }, D: { tone: 'danger', label: '삭제' },
-};
-
 const inputBox: React.CSSProperties = { ...drawerInputStyle('text'), height: 30, minHeight: 30, padding: '0 8px', width: '100%', minWidth: 0 };
 const selectBox: React.CSSProperties = {
   fontFamily: 'inherit', fontSize: 13.5, lineHeight: '18px', height: 30, padding: '0 4px', boxSizing: 'border-box', maxWidth: '100%',
@@ -101,12 +95,6 @@ const textCell = (field: TextField, label: string, patch: Patch) => (p: ICellRen
   p.data ? <CellInput row={p.data} field={field} label={`${rowNo(p)} ${label}`} patch={patch} /> : null;
 
 const makeCols = (patch: Patch, openSearch: (r: ClosingRow) => void): ColDef<ClosingRow>[] => [
-  /* 상태 — 설계서 9열 밖 화면 단서(엑셀 제외) */
-  { colId: 'status', field: 'status', headerName: '상태', width: 76, minWidth: 76, maxWidth: 76, cellStyle: MID,
-    cellRenderer: (p: ICellRendererParams<ClosingRow>) => {
-      const s = p.data?.status;
-      return s ? <StatusBadge tone={STATUS_BADGE[s].tone} label={STATUS_BADGE[s].label} size="lg" /> : null;
-    } },
   { field: 'paren', headerName: '괄호', width: 72, minWidth: 72, maxWidth: 72, cellStyle: MID, suppressKeyboardEvent: suppressCtrlKeys,
     cellRenderer: (p: ICellRendererParams<ClosingRow>) => p.data
       ? <Checkbox checked={p.data.paren} disabled={p.data.status === 'D'} aria-label={`${rowNo(p)} 괄호 적용`}
