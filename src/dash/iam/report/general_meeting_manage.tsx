@@ -120,8 +120,11 @@ const PAGE_SIZE = 20;
    ⚠ 폭 전략은 `AUTO_SIZE_CONTENT`(내용 맞춤)다 — 10컬럼 내용 폭 합이 프레임(1280)을 넘는 넓은 표라 `fitGridWidth`를 쓰면
      텍스트 컬럼(운용사·자펀드·안건)이 선언 폭 아래로 눌려 7셀이 잘렸다(2026-09-12 코디네이터 런타임 실측). 내용 맞춤이면
      그리드가 프레임보다 넓어져 AG Grid 내부 가로 스크롤이 생기고 잘림은 0이다(apfs-aggrid "넓은 다열 테이블" 규약).
-     긴 텍스트 컬럼(운용사·자펀드·제목·안건)만 maxWidth 상한, 고정폭 컬럼(No·보고상태·총회구분·총회일자·확정여부 2열)은
+     긴 텍스트 컬럼(운용사·자펀드·안건)만 maxWidth 상한, 고정폭 컬럼(No·보고상태·총회구분·총회일자·확정여부 2열)은
      `minWidth===width===maxWidth`로 묶어 헤더 라벨 폭을 보장한다.
+   ⚠ 제목만 잔여폭 흡수 컬럼이다(`flex:1` + `suppressAutoSize`, generic_list stretch 컬럼과 동형) — 전체 폭 모드
+     (`apfs.width=full`)에서 프레임이 내용 폭 합보다 넓으면 행이 마지막 컬럼에서 끝나 우측이 비었다
+     (2026-10-28 실측: 1920·LNB 접힘 227px, 펼침 33px). 프레임이 좁으면 제목은 minWidth에서 멈추고 가로 스크롤.
 ────────────────────────────── */
 const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
@@ -203,8 +206,9 @@ const makeColumns = (
   /* 112 는 날짜 10자(tabular-nums)에 1px 모자라 '2026-06-…'로 잘렸다(scrollWidth 111 > clientWidth 110 실측) → 120 */
   { field: 'gdate', headerName: '총회일자', ...fixed(120), cellStyle: { ...tabNum, color: 'var(--muted-foreground)' },
     valueFormatter: (p) => String(p.value) },
-  /* 제목 — 링크 셀. 내용 맞춤(AUTO_SIZE_CONTENT)이라 흡수 컬럼 장치는 없고, 긴 총회명은 420 상한에서 truncate. */
-  { field: 'title', headerName: '제목', width: 210, minWidth: 180, maxWidth: 420, cellStyle: flexCenter,
+  /* 제목 — 링크 셀이자 잔여폭 흡수 컬럼(위 컬럼 주석). suppressAutoSize 가 없으면 fitCellContents 가 폭을 덮어써 흡수하지 못한다.
+     minWidth 240 = 수정 전 내용 맞춤 실측 223px 이상(좁은 프레임에서 최장 제목이 truncate 되지 않게). width=minWidth(apfs-aggrid ⑨). */
+  { field: 'title', headerName: '제목', flex: 1, minWidth: 240, width: 240, suppressAutoSize: true, cellStyle: flexCenter,
     cellRenderer: (p: any) => <LinkCell value={p.value} hint="총회 상세 보기" onClick={() => p.data && openDetail(p.data.id)} /> },
   txt('agenda', '안건', 170, 300, 130),
   /* 일정 확정여부 — 변경 시 sch가 '확정'이 아니게 되면 res도 ''로 리셋(목업 resultCell 게이팅과 정합) */
@@ -442,7 +446,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
           columnDefs={columnDefs}
           getRowId={(p) => p.data.id}
           domLayout="autoHeight"
-          autoSizeStrategy={AUTO_SIZE_CONTENT}   // 내용 맞춤(넓은 10컬럼 표) — fitGridWidth는 셀 잘림 7건(실측)
+          autoSizeStrategy={AUTO_SIZE_CONTENT}   // 내용 맞춤(넓은 10컬럼 표, 제목만 flex 흡수) — fitGridWidth는 셀 잘림 7건(실측)
           defaultColDef={DEFAULT_COL_DEF}
           rowSelection={ROW_SELECTION}
           selectionColumnDef={SELECTION_COL}
