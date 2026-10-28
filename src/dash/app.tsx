@@ -33,6 +33,7 @@ import { ApfsContributionManage } from './iam/sfund/apfs_contribution_manage';  
 import { FundInvestStatus } from './iam/sfund/fund_invest_status';                   // 투자실적 현황(자펀드)(S1_24)
 import { FundStats } from './iam/sfund/fund_stats';                                  // 종합통계(S1_25)
 // 관리자 3리프(2026-09-14 typed 페이지 전환, 공통관리 S0_106·S0_105·S0_102). 동상 — GenericListPage 폴백 앞 분기
+import { AccountCodeManage } from './acc/baseinfo/account_code_manage';                 // 계정과목 관리(ACC-001)
 import { CodeManage } from './sys/setting/code_manage';                                  // 공통코드 관리(S0_106, master-detail)
 import { MenuManage } from './sys/setting/menu_manage';                                  // 메뉴 관리(S0_105, 계층 트리)
 import { UserPermissionManage } from './sys/user/user_permission_manage';             // 사용자 권한 관리(S0_102, 권한 매트릭스)
@@ -223,6 +224,7 @@ function App() {
   else if (route === "custody-verify") page = <CustodyLeaf key={route} onNav={onNav} />;
   // 딥링크 별칭 '자펀드수탁관리(확정)' → custody-confirm — 자펀드 수탁관리 리프의 확정 탭으로 연다
   else if (route === "custody-confirm") page = <CustodyLeaf key={route} onNav={onNav} initial="confirm" />;
+  else if (route === "acct-account-code") page = <AccountCodeManage onNav={onNav} />;
   else if (route === "code-manage") page = <CodeManage onNav={onNav} />;
   else if (route === "menu-manage") page = <MenuManage onNav={onNav} />;
   else if (route === "user-permission-manage") page = <UserPermissionManage onNav={onNav} />;
