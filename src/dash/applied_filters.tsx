@@ -40,6 +40,8 @@ export interface FilterChipItem {
   count?: React.ReactNode;
   active: boolean;
   onSelect: () => void;
+  /** 필수 조건 칩 — 라벨 뒤에 `*`(foreground·700, 간격 2px — active 칩에서도 같은 색) + sr-only " 필수". 미지정이면 종전과 같다 */
+  required?: boolean;
 }
 
 export const activeFilters = (items: readonly AppliedFilter[] | undefined): AppliedFilter[] =>
@@ -131,7 +133,11 @@ type Item =
 function ItemView({ it, flash }: { it: Item; flash?: boolean }) {
   if (it.kind === 'chip') {
     const c = it.chip;
-    return <FilterChip active={c.active} onClick={c.onSelect} count={c.count}>{c.label}</FilterChip>;
+    /* 측정용 숨김 복제본도 ItemView 를 쓰므로 필수 마크업이 그대로 들어가 폭이 맞는다 */
+    const label = c.required
+      ? <>{c.label}<span aria-hidden="true" style={{ color: 'var(--foreground)', fontWeight: 700, marginLeft: 2 }}>*</span><span className="sr-only"> 필수</span></>
+      : c.label;
+    return <FilterChip active={c.active} onClick={c.onSelect} count={c.count}>{label}</FilterChip>;
   }
   if (it.kind === 'applied') return <Chip f={it.f} flash={flash} />;
   return (
