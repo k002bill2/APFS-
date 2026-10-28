@@ -72,7 +72,7 @@ const MAP = {
   "check-circle":["CircleCheckBig","CheckCircle2","CircleCheck"], download:["Download"], upload:["Upload"],
   inbox:["Inbox"], users:["Users"], activity:["Activity"], "alert-triangle":["TriangleAlert","AlertTriangle"],
   user:["User"], plus:["Plus"], filter:["Filter"], external:["ExternalLink"], refresh:["RefreshCw"],
-  "arrow-right":["ArrowRight"], clock:["Clock"], layers:["Layers","Layers3"],
+  "arrow-right":["ArrowRight"], clock:["Clock"], history:["History"], layers:["Layers","Layers3"],
   maximize:["Maximize2","Maximize"], minimize:["Minimize2","Minimize"],
   printer:["Printer"],   // 푸터 인쇄 액션(FooterActions) — kebab 인쇄 항목을 대체(2026-09-17)
   "expand-h":["UnfoldHorizontal","MoveHorizontal","StretchHorizontal"],
