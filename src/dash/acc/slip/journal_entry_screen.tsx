@@ -55,6 +55,8 @@ import type { EntryCheck, EntryForm, EntryLine, EntryState } from './general_jou
 const { Button, SaveButton, IconBtn } = UI;
 
 const TITLE: Record<EntryState['mode'], string> = { new: '전표등록', copy: '전표등록 (복사)', reverse: '전표등록 (역분개)', edit: '전표등록 (수정)' };
+/* 강제 조회 전용(readOnly prop) 제목 — mode 가 edit 여도 "수정"으로 보이지 않게 */
+const VIEW_TITLE = '전표상세';
 
 /* 헤더·관리항목 필드 명세 — SchemaField 재사용(34px 박스·DatePicker·토큰 자동) */
 const F_FUND: FieldSpec = { key: 'fundAccount', label: '계정구분', control: 'select', options: [...FUND_ACCOUNTS], required: true, searchable: true };
@@ -257,11 +259,13 @@ export interface JournalEntryScreenProps {
   partners?: readonly Partner[];
   /** 거래처 간편추가 저장 — 페이지 원장에 추가 */
   onAddPartner?: (p: Partner) => void;
+  /** 강제 조회 전용(미결계정 관리 E09 전표상세) — 결재 상태와 무관하게 입력 불가·[닫기]만·제목 "전표상세" */
+  readOnly?: boolean;
 }
 
 type SaveKind = 'stay' | 'submit' | 'close';
 
-export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS, onAddPartner }: JournalEntryScreenProps) {
+export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS, onAddPartner, readOnly: forceReadOnly = false }: JournalEntryScreenProps) {
   const dlgRef = useRef<DialogHandle>(null);
   const [form, setForm] = useState<EntryForm>(() => formFromEntry(entry, todayStr()));
   const [baseline, setBaseline] = useState(() => formSnapshot(form));
@@ -272,7 +276,7 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
   const [acctSearch, setAcctSearch] = useState<{ key: string; keyword: string } | null>(null);
   /* 거래처 검색 팝업 대상 행 + 초기 검색어(그 행 거래처 입력값) */
   const [partnerSearch, setPartnerSearch] = useState<{ key: string; keyword: string } | null>(null);
-  const readOnly = isReadOnlyEntry(mode, form.approval);
+  const readOnly = forceReadOnly || isReadOnlyEntry(mode, form.approval);
   const dirty = !readOnly && formSnapshot(form) !== baseline;
 
   const fundRef = useRef<HTMLDivElement>(null);
@@ -455,7 +459,7 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => { e.preventDefault(); if (!confirmClose && !acctSearch && !partnerSearch) requestClose(); }}>
         <DialogHeader className="px-6">
-          <DialogTitle>{TITLE[mode]}</DialogTitle>
+          <DialogTitle>{forceReadOnly ? VIEW_TITLE : TITLE[mode]}</DialogTitle>
           <DialogDescription className="sr-only">일반전표의 헤더·분개·증빙·관리항목을 입력합니다</DialogDescription>
           <IconBtn icon="x" label="닫기" size={34} onClick={requestClose} />
         </DialogHeader>
@@ -463,7 +467,7 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
         <div className="flex-1 min-h-0 overflow-y-auto">
           {readOnly && (
             <div role="note" className="flex items-center gap-2 text-muted-foreground px-6 pt-4" style={{ fontSize: 13 }}>
-              <Icon name="info" size={15} />결재 {form.approval} 전표는 조회만 할 수 있습니다.
+              <Icon name="info" size={15} />{forceReadOnly ? '전표상세는 조회만 할 수 있습니다.' : `결재 ${form.approval} 전표는 조회만 할 수 있습니다.`}
             </div>
           )}
           <fieldset disabled={readOnly} className="border-0 p-0 m-0" style={{ minWidth: 0 }}>
