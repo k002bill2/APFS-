@@ -12,6 +12,9 @@
    - 닫기 경로는 전부 requestClose 한 곳 — dirty(스냅샷 비교)면 AlertDialog 확인. Dialog onOpenChange(false) 는 exit 애니메이션이
      이미 시작된 뒤라 거기서 막을 수 없어서 X·Esc·바깥 클릭을 각각 가로챈다.
    - 조회 전용(상신·승인 전표 수정 진입) = 본문 <fieldset disabled> + 첨부는 표시 전용 카드, 하단 [닫기]만.
+   - 삭제전표 상세(ACC-004 slide12, mode 'deleted') = 위 조회 전용 + 삭제 안내 배너 · 분개 그리드 도구/[검색]/업로드 안내 미노출 ·
+     하단 [복원]·[닫기]. 복원 확인 Action 은 onRestore 만 부르고, 상세 닫기는 AlertDialog 닫힘(exit 종료) 뒤 ref.close() — exit 애니메이션 규약.
+     분기는 mode === 'deleted' 로만 해서 ACC-003 상신·승인 조회 전용 동작은 그대로 둔다.
    - 금액 `+` 키 = ×1,000. 설계서의 `-`(÷?)는 음수(마이너스전표) 입력과 충돌해 구현하지 않음.
    - 단축키 ⌥S·⌥K·⌥Z·⌥C 는 공용 훅 특성상 입력창 포커스 중엔 무시된다(공용 훅 수정 안 함). ⌥S 는 SaveButton 을 거치지 않아 스피너 없이 즉시 저장.
    - 계정과목 [검색]/키워드+Enter = 회계 공용 AccountSearchModal(입력여부 Y 만 선택 가능).
@@ -32,7 +35,8 @@ import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';
 import type { FieldSpec } from '../../schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from '../../ui/dialog';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel } from '../../ui/alert-dialog';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from '../../ui/alert-dialog';
+import { Alert, AlertDescription } from '../../ui/alert';
 import { SearchableSelect } from '../../ui/searchable-select';
 import { Checkbox } from '../../ui/checkbox';
 import { Attachment, AttachmentGroup, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentDescription } from '../../ui/attachment';
@@ -54,7 +58,7 @@ import type { EntryCheck, EntryForm, EntryLine, EntryState } from './general_jou
 
 const { Button, SaveButton, IconBtn } = UI;
 
-const TITLE: Record<EntryState['mode'], string> = { new: '전표등록', copy: '전표등록 (복사)', reverse: '전표등록 (역분개)', edit: '전표등록 (수정)' };
+const TITLE: Record<EntryState['mode'], string> = { new: '전표등록', copy: '전표등록 (복사)', reverse: '전표등록 (역분개)', edit: '전표등록 (수정)', deleted: '전표상세' };
 
 /* 헤더·관리항목 필드 명세 — SchemaField 재사용(34px 박스·DatePicker·토큰 자동) */
 const F_FUND: FieldSpec = { key: 'fundAccount', label: '계정구분', control: 'select', options: [...FUND_ACCOUNTS], required: true, searchable: true };
@@ -187,7 +191,7 @@ const textCell = (field: TextField, label: string, acts: ActsRef) => (p: ICellRe
   p.data && !p.node.rowPinned ? <CellInput row={p.data} field={field} label={`${rowNo(p)} ${label}`} acts={acts} /> : null;
 
 /* 검색형 칸 — 입력(Enter = 검색) + [검색] 버튼(closing_form 계정코드명 관용구) */
-const searchCell = (field: 'accountName' | 'partner', label: string, acts: ActsRef, run: (a: CellActs, key: string) => void) =>
+const searchCell = (field: 'accountName' | 'partner', label: string, acts: ActsRef, run: (a: CellActs, key: string) => void, noSearch = false) =>
   (p: ICellRendererParams<EntryLine>) => {
     if (!p.data || p.node.rowPinned) return null;
     const key = p.data.key;
@@ -196,7 +200,7 @@ const searchCell = (field: 'accountName' | 'partner', label: string, acts: ActsR
         <span className="min-w-0 flex-1">
           <CellInput row={p.data} field={field} label={`${rowNo(p)} ${label}`} acts={acts} onEnter={() => run(acts.current, key)} />
         </span>
-        <Button variant="outline" size="sm" onClick={() => run(acts.current, key)}>검색<span className="sr-only"> {rowNo(p)} {label}</span></Button>
+        {!noSearch && <Button variant="outline" size="sm" onClick={() => run(acts.current, key)}>검색<span className="sr-only"> {rowNo(p)} {label}</span></Button>}
       </span>
     );
   };
@@ -209,7 +213,8 @@ const amountCell = (side: 'debit' | 'credit', label: string, acts: ActsRef) => (
 };
 
 /* 설계서 컬럼: No. | ☐(SELECTION_COL) | 계정코드 | 계정과목 | 적요 | 관리번호 | 거래처 | 계좌번호 | 차변 | 대변 | 차액 */
-const makeCols = (acts: ActsRef): ColDef<EntryLine>[] => [
+/* noSearch — 삭제전표 상세(ACC-004)는 계정과목·거래처 [검색] 버튼을 그리지 않는다 */
+const makeCols = (acts: ActsRef, noSearch = false): ColDef<EntryLine>[] => [
   /* No. — 표시 전용 좁은 칸(좌측·tabular). pinned 합계 행은 Σ */
   { colId: NO_COL_ID, headerName: 'No.', width: 56, minWidth: 56, maxWidth: 56, pinned: 'left', cellStyle: { fontVariantNumeric: 'tabular-nums', fontWeight: 400 },
     valueGetter: (p: ValueGetterParams<EntryLine>) => (p.node?.rowPinned ? 'Σ' : (p.node?.rowIndex ?? 0) + 1) },
@@ -229,11 +234,11 @@ const makeCols = (acts: ActsRef): ColDef<EntryLine>[] => [
       );
     } },
   { field: 'accountName', headerName: '계정과목', flex: 1, minWidth: 220, width: 220, cellStyle: MID, suppressKeyboardEvent: suppressCtrlKeys,
-    cellRenderer: searchCell('accountName', '계정과목', acts, (a, k) => a.searchAccount(k)) },
+    cellRenderer: searchCell('accountName', '계정과목', acts, (a, k) => a.searchAccount(k), noSearch) },
   { field: 'memo', headerName: '적요', flex: 1, minWidth: 200, width: 200, cellStyle: MID, suppressKeyboardEvent: suppressCtrlKeys, cellRenderer: textCell('memo', '적요', acts) },
   { field: 'mgmtNo', headerName: '관리번호', width: 130, minWidth: 130, cellStyle: MID, suppressKeyboardEvent: suppressCtrlKeys, cellRenderer: textCell('mgmtNo', '관리번호', acts) },
   { field: 'partner', headerName: '거래처', flex: 1, minWidth: 220, width: 220, cellStyle: MID, suppressKeyboardEvent: suppressCtrlKeys,
-    cellRenderer: searchCell('partner', '거래처', acts, (a, k) => a.searchPartner(k)) },
+    cellRenderer: searchCell('partner', '거래처', acts, (a, k) => a.searchPartner(k), noSearch) },
   { field: 'accountNo', headerName: '계좌번호', width: 160, minWidth: 160, cellStyle: MID, suppressKeyboardEvent: suppressCtrlKeys, cellRenderer: textCell('accountNo', '계좌번호', acts) },
   { field: 'debit', headerName: '차변', type: 'rightAligned', width: 140, minWidth: 140, cellStyle: MID_NUM, suppressKeyboardEvent: suppressCtrlKeys, cellRenderer: amountCell('debit', '차변', acts) },
   { field: 'credit', headerName: '대변', type: 'rightAligned', width: 140, minWidth: 140, cellStyle: MID_NUM, suppressKeyboardEvent: suppressCtrlKeys, cellRenderer: amountCell('credit', '대변', acts) },
@@ -249,8 +254,10 @@ const makeCols = (acts: ActsRef): ColDef<EntryLine>[] => [
 
 export interface JournalEntryScreenProps {
   entry: EntryState;
-  /** 저장 반영 — 페이지가 rows upsert(신규 채번) 후 저장된 행을 돌려준다 */
-  onSave: (journal: JournalRow, opts: { submit: boolean }) => JournalRow;
+  /** 저장 반영 — 페이지가 rows upsert(신규 채번) 후 저장된 행을 돌려준다. 삭제전표 상세(조회 전용)는 저장 경로가 없어 생략 */
+  onSave?: (journal: JournalRow, opts: { submit: boolean }) => JournalRow;
+  /** 삭제전표 상세(mode 'deleted') [복원] 확정 — 페이지가 행 제외·토스트. 화면 닫기는 이 컴포넌트가 확인창 닫힘 뒤에 한다 */
+  onRestore?: () => void;
   /** 화면이 닫힌 뒤(exit 애니메이션 종료 후) 호출 */
   onClose: () => void;
   /** 거래처 원장(페이지 소유 — 간편추가분 포함). 기본 = 더미 원장 */
@@ -261,7 +268,7 @@ export interface JournalEntryScreenProps {
 
 type SaveKind = 'stay' | 'submit' | 'close';
 
-export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS, onAddPartner }: JournalEntryScreenProps) {
+export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners = PARTNERS, onAddPartner }: JournalEntryScreenProps) {
   const dlgRef = useRef<DialogHandle>(null);
   const [form, setForm] = useState<EntryForm>(() => formFromEntry(entry, todayStr()));
   const [baseline, setBaseline] = useState(() => formSnapshot(form));
@@ -273,6 +280,11 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
   /* 거래처 검색 팝업 대상 행 + 초기 검색어(그 행 거래처 입력값) */
   const [partnerSearch, setPartnerSearch] = useState<{ key: string; keyword: string } | null>(null);
   const readOnly = isReadOnlyEntry(mode, form.approval);
+  /* 삭제전표 상세(ACC-004) — 진입 모드가 수명 동안 고정이라 entry 에서 바로 읽는다 */
+  const deleted = entry.mode === 'deleted' ? entry : null;
+  const [confirmRestore, setConfirmRestore] = useState(false);
+  /* 복원 확인에서 [복원]을 눌렀는지 — AlertDialog 닫힘이 끝난 뒤 상세를 닫을지 판단([취소]·Esc 는 false = 상세 유지) */
+  const restoredRef = useRef(false);
   const dirty = !readOnly && formSnapshot(form) !== baseline;
 
   const fundRef = useRef<HTMLDivElement>(null);
@@ -341,7 +353,8 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
     patch: patchLine, commitCode, commitAmount, searchAccount, searchPartner,
     codeRef: (key, el) => { if (el) codeRefs.current.set(key, el); else codeRefs.current.delete(key); },
   };
-  const columnDefs = useMemo(() => makeCols(actsRef), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- columnDefs 고정(위 주석). deleted 는 진입 모드라 수명 동안 불변
+  const columnDefs = useMemo(() => makeCols(actsRef, !!deleted), []);
   /* Σ 합계 행 — lines 가 바뀔 때만 새 배열(인라인 배열이면 고정 행이 매 렌더 재생성된다) */
   const pinnedBottom = useMemo<EntryLine[]>(() => {
     const t = entryTotals(form.lines);
@@ -414,7 +427,7 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
     savingRef.current = true;
     return () => {
       savingRef.current = false;
-      const saved = onSave(journal, { submit: kind === 'submit' });
+      const saved = onSave ? onSave(journal, { submit: kind === 'submit' }) : journal;
       toast.success(ENTRY_MSG.saved, kind === 'submit' ? { description: '결재 상신되었습니다' } : undefined);
       if (kind === 'stay') {
         /* 화면 유지 — 신규·복사·역분개는 이후 수정 모드(같은 id 로 다시 저장 = 중복 생성 없음). 빈 행은 화면에 그대로 둔다 */
@@ -453,15 +466,28 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent hideClose className="w-[calc(100vw-48px)] h-[calc(100vh-48px)] max-w-none"
         onInteractOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => { e.preventDefault(); if (!confirmClose && !acctSearch && !partnerSearch) requestClose(); }}>
+        /* 삭제전표 상세 — 첫 포커스 가능 요소(첨부 카드·그리드)로 가지 않게 컨테이너(tabIndex=-1)에 둔다 */
+        onOpenAutoFocus={deleted ? (e) => { e.preventDefault(); (e.currentTarget as HTMLElement | null)?.focus(); } : undefined}
+        onEscapeKeyDown={(e) => { e.preventDefault(); if (!confirmClose && !confirmRestore && !acctSearch && !partnerSearch) requestClose(); }}>
         <DialogHeader className="px-6">
           <DialogTitle>{TITLE[mode]}</DialogTitle>
-          <DialogDescription className="sr-only">일반전표의 헤더·분개·증빙·관리항목을 입력합니다</DialogDescription>
+          <DialogDescription className="sr-only">{deleted ? '삭제된 전표의 헤더·분개·증빙·관리항목 — 조회 전용' : '일반전표의 헤더·분개·증빙·관리항목을 입력합니다'}</DialogDescription>
           <IconBtn icon="x" label="닫기" size={34} onClick={requestClose} />
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto">
-          {readOnly && (
+          {deleted && (
+            <div className="px-6 pt-4">
+              <Alert variant="info">
+                <Icon name="info" size={18} />
+                <AlertDescription className="text-foreground">
+                  <div>삭제된 전표입니다. 모든 항목은 조회 전용이며 수정할 수 없습니다.</div>
+                  <div className="text-muted-foreground">{`삭제일시 ${deleted.deletedAt} · 삭제자 ${deleted.deletedBy} — [복원] 시 일반전표관리(ACC-003) 목록으로 되돌아갑니다.`}</div>
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+          {readOnly && !deleted && (
             <div role="note" className="flex items-center gap-2 text-muted-foreground px-6 pt-4" style={{ fontSize: 13 }}>
               <Icon name="info" size={15} />결재 {form.approval} 전표는 조회만 할 수 있습니다.
             </div>
@@ -473,8 +499,9 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
                 {/* ① 헤더 */}
                 <Section title="전표 정보">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-5">
-                    <Field label={F_FUND.label} required plain>
-                      <div ref={fundRef}><SchemaField field={F_FUND} value={form.fundAccount} onChange={changeFund} /></div>
+                    {/* 삭제전표 상세(ACC-004)는 "전 항목 비활성, 필수(*) 표시 없음" — 모듈 상수는 그대로 두고 렌더에서만 required 를 끈다 */}
+                    <Field label={F_FUND.label} required={!deleted} plain>
+                      <div ref={fundRef}><SchemaField field={deleted ? { ...F_FUND, required: false } : F_FUND} value={form.fundAccount} onChange={changeFund} /></div>
                     </Field>
                     <Field label={F_KIND.label}><SchemaField field={F_KIND} value={form.slipKind} onChange={() => undefined} /></Field>
                     <Field label={F_WRITER.label}><SchemaField field={F_WRITER} value={form.writer} onChange={() => undefined} /></Field>
@@ -483,21 +510,21 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
                     </Field>
                     <Field label={F_ORIGIN.label}><SchemaField field={F_ORIGIN} value={form.origin} onChange={() => undefined} /></Field>
                     <div className="hidden sm:block" />
-                    <Field label={F_MEMO.label} required className="sm:col-span-3">
-                      <div ref={memoRef}><SchemaField field={F_MEMO} value={form.memo} onChange={changeMemo} /></div>
+                    <Field label={F_MEMO.label} required={!deleted} className="sm:col-span-3">
+                      <div ref={memoRef}><SchemaField field={deleted ? { ...F_MEMO, required: false } : F_MEMO} value={form.memo} onChange={changeMemo} /></div>
                     </Field>
                   </div>
                 </Section>
 
                 {/* ② 분개 그리드 — 결산양식 관리(ACC-002) 편집 그리드 규칙. 행을 고르면 도구 앞에 선택 작업이 붙는다 */}
-                <Section title="분개" actions={
+                <Section title="분개" actions={deleted ? undefined : (
                   <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="분개 그리드 도구">
                     {selTools}
                     <Button variant="outline" size="sm" leadingIcon="plus" disabled={readOnly} onClick={() => setLines((ls) => [...ls, emptyLine()])}>행추가</Button>
                     <Button variant="outline" size="sm" disabled={readOnly} onClick={removeBlank}>빈행삭제</Button>
                     <Button variant="outline" size="sm" disabled={readOnly} onClick={() => setLines((ls) => applyRepMemo(ls, form.memo))}>대표적요반영</Button>
                   </div>
-                }>
+                )}>
                   <div ref={gridBoxRef} className="apfs-grid-min" role="region" aria-label="분개 그리드 — 체크박스로 행을 고르면 도구에 위로·아래로이동·행삭제·행복사가 뜬다" onFocusCapture={trackRow}>
                     <AgGridReact<EntryLine>
                       theme={apfsTheme}
@@ -507,8 +534,9 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
                       getRowId={getRowId}
                       domLayout="autoHeight"
                       suppressColumnVirtualisation
-                      rowSelection={readOnly ? ROW_SELECTION_RO : ROW_SELECTION}
-                      selectionColumnDef={SELECTION_COL}
+                      /* 삭제전표 상세는 행 도구가 없어 선택 체크박스 열 자체를 뺀다(ACC-003 조회 전용은 기존대로 RO 선택) */
+                      rowSelection={deleted ? undefined : readOnly ? ROW_SELECTION_RO : ROW_SELECTION}
+                      selectionColumnDef={deleted ? undefined : SELECTION_COL}
                       pinnedBottomRowData={pinnedBottom}
                       onGridReady={(e) => { apiRef.current = e.api; }}
                       onSelectionChanged={onSelectionChanged}
@@ -552,11 +580,14 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
                     ) : (
                       <DocumentsField value={form.attachments} onChange={(v) => set('attachments', v)} label="첨부파일" multiple maxSize="20MB" describedBy="je-attach-hint" />
                     )}
-                    <div id="je-attach-hint" className="mt-1.5">
-                      {ATTACH_HINTS.map((t) => (
-                        <p key={t} className="m-0 flex items-start gap-1 text-caption" style={{ fontSize: 11.5 }}><Icon name="info" size={13} />{t}</p>
-                      ))}
-                    </div>
+                    {/* 업로드 안내 — 삭제전표 상세는 업로드 영역이 없어 숨긴다 */}
+                    {!deleted && (
+                      <div id="je-attach-hint" className="mt-1.5">
+                        {ATTACH_HINTS.map((t) => (
+                          <p key={t} className="m-0 flex items-start gap-1 text-caption" style={{ fontSize: 11.5 }}><Icon name="info" size={13} />{t}</p>
+                        ))}
+                      </div>
+                    )}
                   </Field>
                 </Section>
               </div>
@@ -594,28 +625,31 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
                     </div>
                   </Field>
                 </Section>
-                <Section title="기능 도움말">
-                  <table className="w-full border-collapse" style={{ fontSize: 12.5, tableLayout: 'fixed' }}>
-                    <thead><tr><th style={th}>기능</th><th style={th}>키 · 조건</th></tr></thead>
-                    <tbody>
-                      {HELP_ROWS.map(([f, k]) => <tr key={f}><td style={td}>{f}</td><td style={{ ...td, color: 'var(--muted-foreground)' }}>{k}</td></tr>)}
-                    </tbody>
-                  </table>
-                </Section>
-                <Section title="작성 도움말">
-                  <div style={{ fontSize: 13 }}>
-                    <p className="m-0 font-semibold">계정구분 필수 선택</p>
-                    <p className="m-0 mb-2 text-muted-foreground">- 계좌번호 선택 전 계정구분을 먼저 선택</p>
-                    <p className="m-0 font-semibold">필수값 지정</p>
-                    <p className="m-0 text-muted-foreground">- 계정과목별 필수입력사항은 회계/자금 &gt; 기초관리 &gt; 계정과목에서 설정</p>
-                  </div>
-                </Section>
+                {/* 기능·작성 도움말 — 입력용 안내라 삭제전표 상세(조회 전용)에선 숨긴다 */}
+                {!deleted && (<>
+                  <Section title="기능 도움말">
+                    <table className="w-full border-collapse" style={{ fontSize: 12.5, tableLayout: 'fixed' }}>
+                      <thead><tr><th style={th}>기능</th><th style={th}>키 · 조건</th></tr></thead>
+                      <tbody>
+                        {HELP_ROWS.map(([f, k]) => <tr key={f}><td style={td}>{f}</td><td style={{ ...td, color: 'var(--muted-foreground)' }}>{k}</td></tr>)}
+                      </tbody>
+                    </table>
+                  </Section>
+                  <Section title="작성 도움말">
+                    <div style={{ fontSize: 13 }}>
+                      <p className="m-0 font-semibold">계정구분 필수 선택</p>
+                      <p className="m-0 mb-2 text-muted-foreground">- 계좌번호 선택 전 계정구분을 먼저 선택</p>
+                      <p className="m-0 font-semibold">필수값 지정</p>
+                      <p className="m-0 text-muted-foreground">- 계정과목별 필수입력사항은 회계/자금 &gt; 기초관리 &gt; 계정과목에서 설정</p>
+                    </div>
+                  </Section>
+                </>)}
               </aside>
             </div>
           </fieldset>
         </div>
 
-        {/* ④ 버튼 — 조회 전용은 [닫기]만(slide 26) */}
+        {/* ④ 버튼 — 조회 전용은 [닫기]만(slide 26). 삭제전표 상세는 [복원]·[닫기](권한 노출은 RBAC 미구현이라 항상) */}
         <DialogFooter className="px-6">
           <div />
           <div className="flex flex-wrap gap-2">
@@ -624,6 +658,9 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
               <SaveButton variant="outline" leadingIcon="" busyLabel="상신 중" onSubmit={() => submit('submit')}>저장 후 상신</SaveButton>
               <SaveButton variant="outline" leadingIcon="" onSubmit={() => submit('close')}>저장 후 닫기</SaveButton>
             </>}
+            {deleted && onRestore && (
+              <Button variant="primary" size="sm" leadingIcon="history" onClick={() => { restoredRef.current = false; setConfirmRestore(true); }}>복원</Button>
+            )}
             <Button variant="outline" size="sm" onClick={requestClose}>닫기</Button>
           </div>
         </DialogFooter>
@@ -636,6 +673,27 @@ export function JournalEntryScreen({ entry, onSave, onClose, partners = PARTNERS
           <PartnerSearchModal open onOpenChange={(o) => { if (!o) setPartnerSearch(null); }}
             onSelect={(p) => applyPartner(partnerSearch.key, p)} initialKeyword={partnerSearch.keyword}
             list={partners} onAdd={(p) => onAddPartner?.(p)} />
+        )}
+
+        {/* 삭제전표 복원 확인 — Action onClick 은 onRestore 만(상위 state 를 비우면 exit 가 사라진다). 상세 닫기는 onOpenChange(false)(exit 종료 뒤)에서.
+            실패 경로는 백엔드 없는 데모라 없다 */}
+        {deleted && (
+          <AlertDialog open={confirmRestore} onOpenChange={(o) => {
+            if (o) return;
+            setConfirmRestore(false);
+            if (restoredRef.current) { restoredRef.current = false; dlgRef.current?.close(); }
+          }}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>전표 복원</AlertDialogTitle>
+                <AlertDialogDescription>전표를 복원하시겠습니까?</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>취소</AlertDialogCancel>
+                <AlertDialogAction onClick={() => { restoredRef.current = true; onRestore?.(); }}>복원</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
 
         {/* 입력 중 닫기 확인 */}
