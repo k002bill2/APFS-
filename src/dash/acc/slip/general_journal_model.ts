@@ -92,7 +92,9 @@ export type EntryState =
   | { mode: 'new' }
   | { mode: 'edit'; source: JournalRow }
   | { mode: 'copy'; source: JournalRow }
-  | { mode: 'reverse'; source: JournalRow; reverseKind: ReverseKind; date: string };
+  | { mode: 'reverse'; source: JournalRow; reverseKind: ReverseKind; date: string }
+  /** 삭제전표 관리(ACC-004) 전표상세 — 조회 전용 + [복원] */
+  | { mode: 'deleted'; source: JournalRow; deletedAt: string; deletedBy: string };
 
 
 /* ══════════════════════════════════════════════════════════════
@@ -302,11 +304,13 @@ export function formFromEntry(e: EntryState, today: string): EntryForm {
     case 'edit': return formFromRow(e.source);
     case 'copy': return formCopy(e.source, today);
     case 'reverse': return formReverse(e.source, e.reverseKind, e.date, today);
+    case 'deleted': return formFromRow(e.source);
   }
 }
 
-/** 조회 전용 — 수정 진입인데 결재가 상신·승인이면 입력 불가(slide 26). 반려·미상신은 수정 가능 */
-export const isReadOnlyEntry = (mode: EntryState['mode'], approval: ApprovalStatus): boolean => mode === 'edit' && (approval === '상신' || approval === '승인');
+/** 조회 전용 — 수정 진입인데 결재가 상신·승인이면 입력 불가(slide 26). 반려·미상신은 수정 가능. 삭제전표(ACC-004)는 결재와 무관하게 항상 조회 전용 */
+export const isReadOnlyEntry = (mode: EntryState['mode'], approval: ApprovalStatus): boolean =>
+  mode === 'deleted' || (mode === 'edit' && (approval === '상신' || approval === '승인'));
 
 /** dirty 비교용 스냅샷 — 행 key 는 제외(행 순서·값만) */
 export const formSnapshot = (f: EntryForm): string => JSON.stringify({ ...f, lines: f.lines.map(({ key: _k, ...rest }) => rest) });
