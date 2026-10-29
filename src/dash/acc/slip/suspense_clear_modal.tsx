@@ -114,28 +114,27 @@ export function SuspenseClearModal({ targets, onSave, onClose }: {
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[760px] max-h-[86vh]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="px-[46px]">
-          <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
-            <DialogTitle className="shrink-0">미결계정정리</DialogTitle>
-            <DialogDescription className="text-caption truncate min-w-0">{`${String(targets.length)}건`}</DialogDescription>
-          </div>
+          <DialogTitle>미결계정정리</DialogTitle>
+          <DialogDescription className="sr-only">선택한 미결 건의 정리일·정리금액·정리사유를 입력합니다</DialogDescription>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]">
           <div className="grid grid-cols-1 min-[769px]:grid-cols-2 gap-x-6">
             <SuspenseField label="계정구분"><SchemaField field={ro('계정구분')} value={first?.fundAccount ?? '-'} onChange={() => undefined} /></SuspenseField>
+            {/* 계정구분은 한 줄 단독 — 거래처부터 다음 줄 */}
+            <div className="hidden min-[769px]:block" aria-hidden="true" />
             <SuspenseField label="거래처"><SchemaField field={ro('거래처')} value={repValue(targets.map((r) => r.partner))} onChange={() => undefined} /></SuspenseField>
             <SuspenseField label="계정과목"><SchemaField field={ro('계정과목')} value={first?.accountName ?? '-'} onChange={() => undefined} /></SuspenseField>
             <SuspenseField label="발생일"><SchemaField field={ro('발생일')} value={occurDate} onChange={() => undefined} /></SuspenseField>
             <SuspenseField label="발생금액"><SchemaField field={ro('발생금액')} value={formatAmount(targets.reduce((s, r) => s + r.occurAmount, 0))} onChange={() => undefined} /></SuspenseField>
             <SuspenseField label="발생적요"><SchemaField field={ro('발생적요')} value={repValue(targets.map((r) => r.memo))} onChange={() => undefined} /></SuspenseField>
             <SuspenseField label="발생전표"><SchemaField field={ro('발생전표')} value={repValue(targets.map((r) => r.occurSlipNo))} onChange={() => undefined} /></SuspenseField>
-            <div aria-hidden />
 
             <SuspenseField label="정리일" required plain errMsg={errOf('date')}>
               <div ref={refs.date} style={dayWrap}>
                 <PeriodPicker mode="day" value={date} onChange={(v) => { setDate(v || ''); clearErr('date'); }} ariaLabel="정리일" required invalid={!!errOf('date')} />
               </div>
             </SuspenseField>
-            <SuspenseField label={single ? '정리금액' : '정리금액(합계)'} required errMsg={errOf('amount')} tip={single ? `미정리잔액 ${formatAmount(remaining)}원 이내` : '다건은 각 건의 미정리잔액을 전액 정리합니다'}>
+            <SuspenseField label={single ? '정리금액' : '정리금액(합계)'} required errMsg={errOf('amount')}>
               <div ref={refs.amount}>
                 {single
                   ? <SchemaField field={F_AMOUNT} value={amountText} invalid={!!errOf('amount')}
