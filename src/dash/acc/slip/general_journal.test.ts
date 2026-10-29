@@ -307,6 +307,12 @@ describe('전표등록 — 진입 모드 변환', () => {
     expect(isReadOnlyEntry('edit', '승인')).toBe(true);
     expect(isReadOnlyEntry('edit', '반려')).toBe(false);
     expect(isReadOnlyEntry('copy', '승인')).toBe(false);
+    /* 삭제전표(ACC-004) — 원 행 그대로, 결재 무관 조회 전용 */
+    const del = formFromEntry({ mode: 'deleted', source: src, deletedAt: '2026-10-29 10:00', deletedBy: '이서연' }, TODAY);
+    expect(del.id).toBe(src.id);
+    expect(del.slipNo).toBe(src.slipNo);
+    expect(isReadOnlyEntry('deleted', '미상신')).toBe(true);
+    expect(isReadOnlyEntry('deleted', '반려')).toBe(true);
   });
   it('스냅샷은 행 key 를 무시한다', () => {
     const f = formFromRow(src);
