@@ -36,6 +36,12 @@ export const HOTKEYS = {
   theme: { combo: { alt: true, key: 't' } as HotkeyCombo, hint: ALT + 'T' },       // GNB 라이트/다크
   showAll: { combo: { alt: true, key: 'a' } as HotkeyCombo, hint: ALT + 'A' },     // 푸터 전체보기(⌥F 는 Win Chrome 메뉴라 회피)
   newWindow: { combo: { alt: true, key: 'o' } as HotkeyCombo, hint: ALT + 'O' },   // 푸터 새 창(O=Open)
+  /* 전표등록 화면(ACC-003 · acc/slip/journal_entry_screen) — 화면이 열려 있고 입력 가능할 때만 enabled.
+     설계서 단축키 중 Alt+R(행 이동)·Alt+A(행 삽입)는 전역 refresh·showAll 과 충돌해 바인딩하지 않는다(도움말 표기만). */
+  journalSave: { combo: { alt: true, key: 's' } as HotkeyCombo, hint: ALT + 'S' },       // 전표 임시저장(= [저장])
+  journalCopyLast: { combo: { alt: true, key: 'k' } as HotkeyCombo, hint: ALT + 'K' },   // 마지막행 복사 및 추가
+  journalDeleteRows: { combo: { alt: true, key: 'z' } as HotkeyCombo, hint: ALT + 'Z' }, // 체크 행 삭제
+  journalCopyMemo: { combo: { alt: true, key: 'c' } as HotkeyCombo, hint: ALT + 'C' },   // 이전 행 적요 복사
 } as const;
 
 /* aria-keyshortcuts 값(WAI-ARIA 표기) — 힌트와 같은 플랫폼 기준: mod 는 Mac=Meta(⌘) / 그 외=Control.

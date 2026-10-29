@@ -38,11 +38,16 @@ APFS의 앱-스코프 키보드 단축키는 **단일 훅 + 단일 레지스트�
 | `⌥A` / `Alt+A` | 푸터 전체보기 | `HOTKEYS.showAll` | `FooterActions`(IconBtn `hotkey`, onToggleAll 있는 화면만) | Mac 실측 / **Windows 미실측** |
 | `⌥O` / `Alt+O` | 푸터 새 창 | `HOTKEYS.newWindow` | `FooterActions`(IconBtn `hotkey`) | Mac 실측 / **Windows 미실측** |
 | `⌥R` / `Alt+R` | 리스트 툴바 조회 | `HOTKEYS.refresh` | 조회 IconBtn 38개 페이지 + `generic_list`(IconBtn `hotkey`) | Mac 실측 / **Windows 미실측** |
+| `⌥S` / `Alt+S` | 전표등록 저장(임시저장) | `HOTKEYS.journalSave` | `acc/slip/journal_entry_screen`(화면 open·입력 가능 시만) | Mac 실측 / **Windows 미실측** |
+| `⌥K` / `Alt+K` | 전표등록 마지막행 복사·추가 | `HOTKEYS.journalCopyLast` | 〃 | **미실측** |
+| `⌥Z` / `Alt+Z` | 전표등록 체크 행 삭제 | `HOTKEYS.journalDeleteRows` | 〃 | **미실측** |
+| `⌥C` / `Alt+C` | 전표등록 이전 행 적요 복사 | `HOTKEYS.journalCopyMemo` | 〃 | **미실측** |
 
 - **등록 `⌘⏎`는 화면 힌트가 없다**(2026-09-11~). 등록이 kebab 항목에서 툴바 독립 버튼으로 승격되며 `DropdownMenuShortcut` 힌트가 함께 빠졌다 — `UI.Button`은 `forwardRef`/rest props가 없어 Radix `Tooltip asChild` 트리거로 못 쓰고 `title`도 전달되지 않는다(→[[ui-button-not-radix-aschild-trigger]]). 바인딩은 정상 동작. 힌트를 되살리려면 Button `children`에 `<span>{HOTKEYS.register.hint}</span>`를 덧붙이는 방법뿐. 툴바 배치 규약은 →[[apfs-grid]].
 - **`⌘K`는 HOTKEYS 밖의 직접 리스너**(`shell.tsx`, `(e.key==="k"||"K") && (metaKey||ctrlKey)`)다. `useHotkey`가 바로 이 ⌘K 명령팔레트 패턴을 재사용 훅으로 일반화한 것 — 신규 단축키는 반드시 `HOTKEYS`+`useHotkey`로 만든다.
 
 - **`IconBtn`의 `hotkey` vs `shortcut`**: `shortcut={HOTKEYS.x}`는 **표시 전용**(툴팁 힌트·`aria-keyshortcuts`만, 바인딩은 호출부 소유 — 이중 발화 방지). `hotkey={HOTKEYS.x}`를 넘기면 클릭과 같은 동작을 바인딩하고 툴팁에 힌트·`aria-keyshortcuts`를 붙인다. **`[role="dialog"]`가 열려 있으면 무시**(폼 편집 중 뒤 목록이 조회·개폐되지 않게). 한 화면에 같은 `hotkey`를 가진 IconBtn이 2개 마운트되면 둘 다 발화하니 페이지당 1개만.
+- 전표등록(ACC-003) 설계서의 `Alt+R`(행 이동)·`Alt+A`(행 삽입)는 전역 `refresh`·`showAll` 과 충돌해 바인딩하지 않았다(화면 도움말 표기만). 전표 ⌥ 4종도 입력창 포커스 중엔 무시된다(훅 규약).
 - 회피한 키: `⌥F`(Windows Chrome 메뉴) → 즐겨찾기는 `⌥B`·전체보기는 `⌥A`, `⌘R`(새로고침) → 조회는 `⌥R`, `⌘W`(탭 닫기) → 전체 너비는 `⌥W`.
 
 ## Mac / Windows 대응 (질문 자주 나옴)
