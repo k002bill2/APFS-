@@ -41,7 +41,7 @@
       "skillName": "apfs-capture-schema",
       "priority": "high",
       "enforcement": "suggest",
-      "keywords": ["캡처", "현행시스템", "실화면", "필드 추출", "페이지 생성", "스키마", "OCR", "조회 화면", "FFMS", "RISK", "REPORT", "TRUST", "BRIEF", "실물검증", "공고문"],
+      "keywords": ["캡처", "현행시스템", "실화면", "필드 추출", "페이지 생성", "스키마", "OCR", "조회 화면", "FFMS", "RISK", "REPORT", "TRUST", "BRIEF", "실물검증", "공고문", "설계서"],
       "intentPatterns": ["(캡처|capture|OCR).*(페이지|스키마|schema|page|필드|field)", "(현행시스템|실화면|실물).*(추출|생성|동결|배선|schema)"]
     },
     {
@@ -55,28 +55,28 @@
       "skillName": "apfs-grid",
       "priority": "high",
       "enforcement": "suggest",
-      "keywords": ["그리드", "grid", "gridframe", "리스트 페이지", "테이블 페이지", "양식 통일", "프레임", "frame", "매트릭스", "matrix", "집계표", "공통 양식", "통일", "플로팅 바", "floating bar", "선택 액션", "contextActions", "선택 해제", "액션 바", "스크롤 툴바", "일괄 변경", "일괄 확정", "확정/미확정", "콤보 버튼", "combo button", "ConfirmCombo", "세그먼트 버튼"],
+      "keywords": ["그리드", "grid", "gridframe", "리스트 페이지", "테이블 페이지", "양식 통일", "프레임", "frame", "매트릭스", "matrix", "집계표", "공통 양식", "통일", "플로팅 바", "floating bar", "선택 액션", "contextActions", "선택 해제", "액션 바", "스크롤 툴바", "일괄 변경", "일괄 확정", "확정/미확정", "콤보 버튼", "combo button", "ConfirmCombo", "세그먼트 버튼", "필수 필터", "필수 칩", "툴바 순서", "삭제이력"],
       "intentPatterns": ["(그리드|grid|리스트|list|테이블|table|매트릭스|matrix|양식|프레임|frame).*(통일|만들|작성|추가|컴포넌트|component|페이지|page)", "(통일|unify|공통).*(양식|그리드|grid|리스트|테이블)", "(플로팅|floating|떠 ?있는).*(바|bar|액션|버튼)"]
     },
     {
       "skillName": "apfs-detail-filter",
       "priority": "high",
       "enforcement": "suggest",
-      "keywords": ["상세필터", "상세 필터", "필터 드로어", "필터 항목", "필터 칩", "필터 패널", "필터 컨트롤", "filter drawer", "detail filter", "year picker", "연도 필터", "값 필터", "filterValues", "resolveFilterField", "DrawerSelect", "드로어 select"],
+      "keywords": ["상세필터", "상세 필터", "필터 드로어", "필터 항목", "필터 칩", "필터 패널", "필터 컨트롤", "filter drawer", "detail filter", "year picker", "연도 필터", "값 필터", "filterValues", "resolveFilterField", "DrawerSelect", "드로어 select", "기간 필터", "기간 검증", "범위 검증", "필터 적용 검증"],
       "intentPatterns": ["(상세\\s?필터|필터\\s?(드로어|항목|칩|패널|컨트롤|drawer)).*(만들|추가|작성|수정|바꾸|변경|개선|build|add|edit)", "(필터).*(년도|연도|year|열거|enum|select|체크박스|checkbox|값 선택)"]
     },
     {
       "skillName": "apfs-aggrid",
       "priority": "high",
       "enforcement": "suggest",
-      "keywords": ["ag grid", "aggrid", "AgGridReact", "컬럼", "column", "pinned", "합계행", "고정행", "그룹헤더", "2단 헤더", "ColGroupDef", "셀 렌더러", "cellRenderer", "valueFormatter", "정렬", "행선택", "행 선택", "중복선택", "다중선택", "다건 선택", "체크박스", "rowSelection", "enableClickSelection", "enableSelectionWithoutKeys", "엑셀 내보내기", "excel", "xlsx", "SheetJS", "우측정렬", "좌측정렬", "오른쪽 정렬", "왼쪽 정렬", "가운데 정렬", "중앙정렬", "rightAligned", "textAlign"],
+      "keywords": ["ag grid", "aggrid", "AgGridReact", "컬럼", "column", "pinned", "합계행", "고정행", "그룹헤더", "2단 헤더", "ColGroupDef", "셀 렌더러", "cellRenderer", "valueFormatter", "정렬", "행선택", "행 선택", "중복선택", "다중선택", "다건 선택", "체크박스", "rowSelection", "enableClickSelection", "enableSelectionWithoutKeys", "엑셀 내보내기", "excel", "xlsx", "SheetJS", "우측정렬", "좌측정렬", "오른쪽 정렬", "왼쪽 정렬", "가운데 정렬", "중앙정렬", "rightAligned", "textAlign", "편집 그리드", "인라인 편집", "셀 편집", "행추가", "행삽입", "행삭제", "셀 링크", "링크 셀", "suppressAutoSize", "전체 폭"],
       "intentPatterns": ["(ag\\s?grid|aggrid|aggridreact|컬럼|column|pinned|합계행|고정행|그룹헤더|셀\\s?렌더러|cellrenderer|valueformatter).*(만들|추가|작성|수정|정렬|sort|build|add|edit)", "(엑셀|excel|xlsx|sheetjs).*(내보내|export|다운로드)", "(중복|다중|다건|여러).*(선택|체크)", "(체크박스|행\\s?선택|rowselection).*(추가|만들|수정|켜|끄|제거)"]
     },
     {
       "skillName": "apfs-form-modal",
       "priority": "high",
       "enforcement": "suggest",
-      "keywords": ["등록 폼", "등록폼", "입력칸 폭", "컨트롤 폭", "들쭉날쭉", "최소너비", "최대너비", "최소 너비", "최대 너비", "등록 모달", "수정 모달", "폼 모달", "RowFormModal", "CRUD 모달", "필드 컨트롤", "FIELD_CONTROLS", "입력 양식", "삭제 확인", "radio", "라디오", "2단 폼", "스키마 폼", "명세 팝업", "명세 모달", "kv 그리드", "라벨 배열", "세로 배열", "가로 배열", "영문 라벨", "읽기전용 팝업", "SearchableSelect", "검색형 select", "select 검색", "셀렉트 검색", "콤보박스", "combobox", "옵션 검색", "옵션리스트", "옵션 리스트", "옵션이 많", "옵션 많", "검색형"],
+      "keywords": ["등록 폼", "등록폼", "입력칸 폭", "컨트롤 폭", "들쭉날쭉", "최소너비", "최대너비", "최소 너비", "최대 너비", "등록 모달", "수정 모달", "폼 모달", "RowFormModal", "CRUD 모달", "필드 컨트롤", "FIELD_CONTROLS", "입력 양식", "삭제 확인", "radio", "라디오", "2단 폼", "스키마 폼", "명세 팝업", "명세 모달", "kv 그리드", "라벨 배열", "세로 배열", "가로 배열", "영문 라벨", "읽기전용 팝업", "SearchableSelect", "검색형 select", "select 검색", "셀렉트 검색", "콤보박스", "combobox", "옵션 검색", "옵션리스트", "옵션 리스트", "옵션이 많", "옵션 많", "검색형", "검색 팝업", "검색 모달", "선택 팝업", "간편추가", "전체 화면 팝업", "전체화면 팝업", "전체 화면 모달", "조회 전용 모드"],
       "intentPatterns": ["(등록|수정|crud|입력|폼|form).*(모달|modal|양식)", "(rowformmodal|필드\\s?컨트롤|field_controls|radio|라디오|스키마\\s?폼).*(추가|만들|작성|수정|add|edit)", "(select|셀렉트|드롭다운|dropdown|옵션).*(검색|search|찾기|필터링)"]
     },
     {
@@ -90,7 +90,7 @@
       "skillName": "apfs-manage-page",
       "priority": "high",
       "enforcement": "suggest",
-      "keywords": ["목업", "mockup", "관리 화면", "관리형", "관리 페이지", "관리형 리스트", "KRDS", "구조도", "화면 구조도", "spec.json", "목업 변환", "우리 디자인으로", "우리 레이아웃", "검색 그리드", "search grid", "편집 팝업", "페이지 생성"],
+      "keywords": ["목업", "mockup", "관리 화면", "관리형", "관리 페이지", "관리형 리스트", "KRDS", "구조도", "화면 구조도", "spec.json", "목업 변환", "우리 디자인으로", "우리 레이아웃", "검색 그리드", "search grid", "편집 팝업", "페이지 생성", "설계서", "화면ID", "화면 ID", "ACC-"],
       "intentPatterns": ["(목업|mockup|krds|구조도|spec).*(변환|이식|구현|코딩|페이지|page|만들|작성|적용)", "(관리|manage).*(화면|페이지|리스트|list).*(만들|생성|작성|구현|코딩)", "(우리|현재).*(디자인|레이아웃).*(변형|맞춰|바꿔|적용)"]
     },
     {
