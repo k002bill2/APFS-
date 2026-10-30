@@ -59,6 +59,8 @@ import type { EntryCheck, EntryForm, EntryLine, EntryState } from './general_jou
 const { Button, SaveButton, IconBtn } = UI;
 
 const TITLE: Record<EntryState['mode'], string> = { new: '전표등록', copy: '전표등록 (복사)', reverse: '전표등록 (역분개)', edit: '전표등록 (수정)', deleted: '전표상세' };
+/* 강제 조회 전용(readOnly prop — 미결계정 관리 E09) 제목 — mode 가 edit 여도 "수정"으로 보이지 않게 */
+const VIEW_TITLE = '전표상세';
 
 /* 헤더·관리항목 필드 명세 — SchemaField 재사용(34px 박스·DatePicker·토큰 자동) */
 const F_FUND: FieldSpec = { key: 'fundAccount', label: '계정구분', control: 'select', options: [...FUND_ACCOUNTS], required: true, searchable: true };
@@ -264,11 +266,13 @@ export interface JournalEntryScreenProps {
   partners?: readonly Partner[];
   /** 거래처 간편추가 저장 — 페이지 원장에 추가 */
   onAddPartner?: (p: Partner) => void;
+  /** 강제 조회 전용(미결계정 관리 E09 전표상세) — 결재 상태와 무관하게 입력 불가·[닫기]만·제목 "전표상세" */
+  readOnly?: boolean;
 }
 
 type SaveKind = 'stay' | 'submit' | 'close';
 
-export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners = PARTNERS, onAddPartner }: JournalEntryScreenProps) {
+export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners = PARTNERS, onAddPartner, readOnly: forceReadOnly = false }: JournalEntryScreenProps) {
   const dlgRef = useRef<DialogHandle>(null);
   const [form, setForm] = useState<EntryForm>(() => formFromEntry(entry, todayStr()));
   const [baseline, setBaseline] = useState(() => formSnapshot(form));
@@ -279,7 +283,7 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
   const [acctSearch, setAcctSearch] = useState<{ key: string; keyword: string } | null>(null);
   /* 거래처 검색 팝업 대상 행 + 초기 검색어(그 행 거래처 입력값) */
   const [partnerSearch, setPartnerSearch] = useState<{ key: string; keyword: string } | null>(null);
-  const readOnly = isReadOnlyEntry(mode, form.approval);
+  const readOnly = forceReadOnly || isReadOnlyEntry(mode, form.approval);
   /* 삭제전표 상세(ACC-004) — 진입 모드가 수명 동안 고정이라 entry 에서 바로 읽는다 */
   const deleted = entry.mode === 'deleted' ? entry : null;
   const [confirmRestore, setConfirmRestore] = useState(false);
@@ -470,8 +474,8 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
         onOpenAutoFocus={deleted ? (e) => { e.preventDefault(); (e.currentTarget as HTMLElement | null)?.focus(); } : undefined}
         onEscapeKeyDown={(e) => { e.preventDefault(); if (!confirmClose && !confirmRestore && !acctSearch && !partnerSearch) requestClose(); }}>
         <DialogHeader className="px-6">
-          <DialogTitle>{TITLE[mode]}</DialogTitle>
-          <DialogDescription className="sr-only">{deleted ? '삭제된 전표의 헤더·분개·증빙·관리항목 — 조회 전용' : '일반전표의 헤더·분개·증빙·관리항목을 입력합니다'}</DialogDescription>
+          <DialogTitle>{forceReadOnly ? VIEW_TITLE : TITLE[mode]}</DialogTitle>
+          <DialogDescription className="sr-only">{deleted || forceReadOnly ? '전표의 헤더·분개·증빙·관리항목 — 조회 전용' : '일반전표의 헤더·분개·증빙·관리항목을 입력합니다'}</DialogDescription>
           <IconBtn icon="x" label="닫기" size={34} onClick={requestClose} />
         </DialogHeader>
 
@@ -489,7 +493,7 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
           )}
           {readOnly && !deleted && (
             <div role="note" className="flex items-center gap-2 text-muted-foreground px-6 pt-4" style={{ fontSize: 13 }}>
-              <Icon name="info" size={15} />결재 {form.approval} 전표는 조회만 할 수 있습니다.
+              <Icon name="info" size={15} />{forceReadOnly ? '전표상세는 조회만 할 수 있습니다.' : `결재 ${form.approval} 전표는 조회만 할 수 있습니다.`}
             </div>
           )}
           <fieldset disabled={readOnly} className="border-0 p-0 m-0" style={{ minWidth: 0 }}>
@@ -625,8 +629,8 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
                     </div>
                   </Field>
                 </Section>
-                {/* 기능·작성 도움말 — 입력용 안내라 삭제전표 상세(조회 전용)에선 숨긴다 */}
-                {!deleted && (<>
+                {/* 기능·작성 도움말 — 입력용 안내라 조회 전용 상세(삭제전표 ACC-004 · 미결계정 전표상세 ACC-005)에선 숨긴다 */}
+                {!deleted && !forceReadOnly && (<>
                   <Section title="기능 도움말">
                     <table className="w-full border-collapse" style={{ fontSize: 12.5, tableLayout: 'fixed' }}>
                       <thead><tr><th style={th}>기능</th><th style={th}>키 · 조건</th></tr></thead>
