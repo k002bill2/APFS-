@@ -26,19 +26,13 @@ export function ReportGuideHistoryModal({ title, versions, onDownload, onClose }
   title: string; versions: readonly GuideVersion[]; onDownload: (file: string) => void; onClose: () => void;
 }) {
   const dlgRef = useRef<DialogHandle>(null);
-  /* 연 자리(이력 버튼 또는 그리드 셀) — 첫 렌더 시점엔 아직 팝업이 초점을 가져가기 전이라 activeElement 가 곧 여는 요소다.
-     DialogTrigger 없이 조건부 마운트로 여는 팝업이라 Radix 가 돌려줄 대상을 모른다 → 닫힐 때 직접 돌려준다(Codex P2) */
-  const openerRef = useRef<HTMLElement | null>(document.activeElement instanceof HTMLElement ? document.activeElement : null);
+  /* 닫으면 연 자리(이력 버튼·그리드 셀)로 초점이 돌아오는 건 공용 DialogContent 기본값이다(ui/dialog.tsx) */
   return (
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       {/* 첫 초점 = 컨테이너(journal_entry_screen 조회 전용 상세와 같은 처리) — 기본값이면 첫 행 다운로드 IconBtn 에 초점이 가
           툴팁이 뜨고, Esc 한 번이 툴팁만 닫아 두 번 눌러야 팝업이 닫힌다 */}
       <DialogContent className="max-w-[640px] max-h-[88vh]"
-        onOpenAutoFocus={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement | null)?.focus(); }}
-        onCloseAutoFocus={(e) => {
-          const el = openerRef.current;
-          if (el?.isConnected && el !== document.body) { e.preventDefault(); el.focus(); }
-        }}>
+        onOpenAutoFocus={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement | null)?.focus(); }}>
         <DialogHeader className="px-[46px]">
           <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
             <DialogTitle className="shrink-0">버전 이력</DialogTitle>
