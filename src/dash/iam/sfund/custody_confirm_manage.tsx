@@ -210,7 +210,7 @@ const makeColumns = (
   { field: 'status', headerName: '상세보기', width: 120, minWidth: 120, cellStyle: flexCenter,
     cellRenderer: (p: any) => (
       <LinkCell
-        value={p.value} hint="대사 상세 보기" srText=" 대사 상세 보기"
+        value={p.value} hint="대사 상세 보기"
         color={p.value === '일치' ? 'var(--success-text)' : 'var(--danger-text)'}
         onClick={() => p.data && openDetail(p.data.id)} />
     ) },

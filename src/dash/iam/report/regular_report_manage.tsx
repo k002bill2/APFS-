@@ -167,9 +167,9 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void, 
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
   /* 운용사·자펀드 = 명세 팝업 링크(셀 Enter도 같은 팝업). 긴 명칭 컬럼만 maxWidth 상한(apfs-aggrid 관리형 그리드 규약). */
   { field: 'gp', headerName: '운용사', width: 190, maxWidth: 240, cellStyle: flexCenter,
-    cellRenderer: (p: any) => <LinkCell value={p.value} hint="운용사 명세 보기" ariaLabel={`${p.value} 운용사 명세 보기`} onClick={() => openSpec('gpSpec')} /> },
+    cellRenderer: (p: any) => <LinkCell value={p.value} hint="운용사 명세 보기" onClick={() => openSpec('gpSpec')} /> },
   { field: 'fn', headerName: '자펀드', width: 196, maxWidth: 300, cellStyle: flexCenter,
-    cellRenderer: (p: any) => <LinkCell value={p.value} hint="자펀드 명세 보기" ariaLabel={`${p.value} 자펀드 명세 보기`} onClick={() => openSpec('fundSpec')} /> },
+    cellRenderer: (p: any) => <LinkCell value={p.value} hint="자펀드 명세 보기" onClick={() => openSpec('fundSpec')} /> },
   { field: 'ymLabel', headerName: '보고년월', width: 112, cellStyle: tabNum, valueFormatter: mnFmt },
   /* 보고구분 — '월간보고서'만 상세 진입 링크(목업 `<a class="tag b">`), 반기보고서는 비링크 `<span>`.
      배지를 버튼으로 감싼다: `font:'inherit'`는 preflight:false에서 UA 기본 폰트(13.3px Arial)로 튀는 것을 막는다. */

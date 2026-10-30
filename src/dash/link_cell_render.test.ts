@@ -29,21 +29,26 @@ describe('LinkCell 렌더 계약', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('tabular · ariaLabel — tabular-nums 를 font:inherit 뒤에 싣고 aria-label 을 단다', () => {
-    render(React.createElement(LinkCell, { value: '2026-10-30', hint: '상세 보기', onClick: () => {}, tabular: true, ariaLabel: '2026-10-30 상세 보기' }));
+  it('접근名 = 값 · 접근 설명 = 힌트(title) — 동작은 이름이 아니라 설명이 전달한다(2026-10-30 사용자 결정)', () => {
+    render(React.createElement(LinkCell, { value: '농식품펀드 1호', hint: '자펀드 명세 보기', onClick: () => {} }));
+    expect(screen.getByRole('button', { name: '농식품펀드 1호', description: '자펀드 명세 보기' })).toBeTruthy();
+  });
+
+  it('tabular — tabular-nums 를 font:inherit 뒤에 싣는다, 접근名은 값 그대로', () => {
+    render(React.createElement(LinkCell, { value: '2026-10-30', hint: '상세 보기', onClick: () => {}, tabular: true }));
     const b = btn();
     expect(b.getAttribute('style')).toMatch(/^font: inherit;/);
     expect(b.style.fontWeight).toBe('600');
     expect(b.style.fontVariantNumeric).toBe('tabular-nums');
-    expect(b.getAttribute('aria-label')).toBe('2026-10-30 상세 보기');
+    expect(b.hasAttribute('aria-label')).toBe(false);
   });
 
-  it('color · srText — text-primary 대신 지정 색, 값 뒤 sr-only 접미(앞 공백 보존)', () => {
-    render(React.createElement(LinkCell, { value: '불일치', hint: '대사 상세 보기', onClick: () => {}, color: 'var(--danger-text)', srText: ' 대사 상세 보기' }));
+  it('color — text-primary 대신 지정 색, 접근名은 값 그대로(sr-only 접미 없음)', () => {
+    render(React.createElement(LinkCell, { value: '불일치', hint: '대사 상세 보기', onClick: () => {}, color: 'var(--danger-text)' }));
     const b = btn();
     expect(b.className.split(' ')).not.toContain('text-primary');
     expect(b.getAttribute('style')).toContain('color: var(--danger-text)');
-    expect(b.querySelector('span.sr-only')?.textContent).toBe(' 대사 상세 보기');
-    expect(b.textContent).toBe('불일치 대사 상세 보기');
+    expect(b.querySelector('.sr-only')).toBeNull();
+    expect(screen.getByRole('button', { name: '불일치', description: '대사 상세 보기' })).toBeTruthy();
   });
 });

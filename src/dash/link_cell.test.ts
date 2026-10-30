@@ -29,4 +29,20 @@ describe('셀 링크 = 공용 link_cell.tsx 하나', () => {
     const importers = sources.filter((f) => IMP.test(code.get(f)!));
     expect(importers.length).toBeGreaterThanOrEqual(9);
   });
+
+  /* 접근名 = 보이는 값 하나로 통일(2026-10-30 사용자 결정) — 동작('운용사 명세 보기')은 title(접근 설명)과 열 머리글이 전달한다.
+     화면마다 aria-label·sr-only 접미로 이름에 동작을 덧붙이면 title 설명과 겹쳐 두 번 낭독되고 화면 간 낭독이 갈린다. */
+  it('LinkCell 호출부는 접근名을 덧붙이지 않는다(ariaLabel · srText · aria-label 금지)', () => {
+    const calls: { file: string; text: string }[] = [];
+    for (const f of sources) {
+      const src = code.get(f)!;   // 주석 제거본 — 줄 번호가 원본과 어긋나므로 위치는 파일·조각으로 보고한다
+      for (let i = src.indexOf('<LinkCell'); i !== -1; i = src.indexOf('<LinkCell', i + 1)) {
+        calls.push({ file: relative(DASH_DIR, f), text: src.slice(i, src.indexOf('/>', i)) });
+      }
+    }
+    expect(calls.length, '조용한 0건 통과 방지').toBeGreaterThanOrEqual(12);
+    const hits = calls.filter((c) => /\b(?:ariaLabel|srText|aria-label)\s*=/.test(c.text))
+      .map((c) => `${c.file}: ${c.text.replace(/\s+/g, ' ').slice(0, 70)}`);
+    expect(hits, '접근名은 값 그대로 — 동작 설명은 hint(title)에 둔다').toEqual([]);
+  });
 });
