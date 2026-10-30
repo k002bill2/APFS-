@@ -7,11 +7,13 @@
    - 행 더블클릭 = 바로 반영 · [확인] 미선택 = "계정과목을 선택해 주세요." · [닫기]/× = 반영 없이 닫힘
    선택 가능 범위는 호출부가 `selectable` 로 정한다(상위계정=집계 N 만, 분개=입력 Y 만 등) — 여기서 하드코딩하지 않는다.
    선택 불가 행을 고르면 [확인]이 비활성되고 사유 캡션이 뜬다.
+   ACC-001 상위계정은 후보 자체를 `list`(account_code_model `parentCandidates`→`toAccountItem`)로 좁히고,
+   폼 계정분류로 라디오를 고정(`fixedClass`)·기존 상위 미리 선택(`initialSelected`)·레벨 안내(`note`)를 넘긴다.
    정렬 규약: 계정코드는 코드라 좌측(명세의 '가운데 정렬'은 프로젝트 표 정렬 규약이 우선한다 — frontend-design-defaults).
    크롬: 46px 패밀리(apfs-form-modal 5 — 헤더·본문·푸터 px-[46px]). [확인]은 서버 실행이 아닌 선택 반영이라 일반 Button. */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, GetRowIdParams, GridApi, RowDoubleClickedEvent, RowSelectionOptions, SelectionChangedEvent } from 'ag-grid-community';
+import type { ColDef, FirstDataRenderedEvent, GetRowIdParams, GridApi, RowDoubleClickedEvent, RowSelectionOptions, SelectionChangedEvent } from 'ag-grid-community';
 import { UI } from '../components';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from '../ui/dialog';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -20,7 +22,7 @@ import { drawerInputStyle } from '../schemas/renderers';
 import { apfsTheme, DEFAULT_COL_DEF } from '../aggrid_theme';
 import '../aggrid_shared.css';
 import { ACCOUNTS, ACCOUNT_CLASS_FILTERS, searchAccounts } from './account_data';
-import type { AccountItem, AccountClassFilter } from './account_data';
+import type { AccountItem, AccountClass, AccountClassFilter } from './account_data';
 
 const { Button, IconBtn } = UI;
 
@@ -41,7 +43,7 @@ const ALL_OK = () => true;
 const labelStyle: React.CSSProperties = { fontSize: 13.5, color: 'var(--foreground)', cursor: 'pointer', userSelect: 'none' };
 const keyStyle: React.CSSProperties = { fontSize: 13.5, minWidth: 64 };
 
-export function AccountSearchModal({ open, onOpenChange, onSelect, initialKeyword = '', selectable = ALL_OK, list = ACCOUNTS }: {
+export function AccountSearchModal({ open, onOpenChange, onSelect, initialKeyword = '', selectable = ALL_OK, list = ACCOUNTS, fixedClass, initialSelected, note }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (a: AccountItem) => void;
@@ -51,23 +53,35 @@ export function AccountSearchModal({ open, onOpenChange, onSelect, initialKeywor
   selectable?: (a: AccountItem) => boolean;
   /** 검색 원천(기본 공용 계정과목) */
   list?: readonly AccountItem[];
+  /** 계정분류 고정 — 라디오가 이 분류 하나만 보인다(ACC-001 상위계정: 폼에서 고른 분류와 일치해야 하는 계층 무결성) */
+  fixedClass?: AccountClass;
+  /** 열릴 때 미리 선택해 둘 계정코드(수정 모드의 기존 값). 결과에 없으면 무시 */
+  initialSelected?: string;
+  /** 결과 건수 아래 안내문(선택 가능 범위 설명 등) */
+  note?: string;
 }) {
   const dlgRef = useRef<DialogHandle>(null);
   const apiRef = useRef<GridApi<AccountItem> | null>(null);
   const [draft, setDraft] = useState(initialKeyword);
   const [keyword, setKeyword] = useState(initialKeyword);   // 조회에 쓰인 검색어(Enter/↵ 때만 갱신)
-  const [cls, setCls] = useState<AccountClassFilter>('전체');
+  const [cls, setCls] = useState<AccountClassFilter>(fixedClass ?? '전체');
   const [sel, setSel] = useState<AccountItem | null>(null);
+  const clsOptions: readonly AccountClassFilter[] = fixedClass ? [fixedClass] : ACCOUNT_CLASS_FILTERS;
 
   /* 열릴 때마다 초기화 — 검색어는 호출부 값으로 채워 바로 조회 */
   useEffect(() => {
     if (!open) return;
-    setDraft(initialKeyword); setKeyword(initialKeyword); setCls('전체'); setSel(null);
-  }, [open, initialKeyword]);
+    setDraft(initialKeyword); setKeyword(initialKeyword); setCls(fixedClass ?? '전체'); setSel(null);
+  }, [open, initialKeyword, fixedClass]);
 
   const rows = useMemo(() => searchAccounts(list, keyword, cls), [list, keyword, cls]);
   const search = () => setKeyword(draft);
 
+  /* 수정 모드의 기존 값 미리 선택 — 그리드가 열릴 때(첫 렌더) 한 번만. 이후 재조회는 사용자 선택을 따른다 */
+  const onFirstDataRendered = (e: FirstDataRenderedEvent<AccountItem>) => {
+    const n = initialSelected ? e.api.getRowNode(initialSelected) : undefined;
+    if (n) { n.setSelected(true); e.api.ensureNodeVisible(n); }
+  };
   const onSelectionChanged = useCallback((e: SelectionChangedEvent<AccountItem>) => setSel(e.api.getSelectedRows()[0] ?? null), []);
   /* 결과가 바뀌어 선택 행이 빠지면 AG Grid 가 선택을 푼다 — 그때 상태도 맞춘다 */
   const onRowDataUpdated = () => setSel(apiRef.current?.getSelectedRows()[0] ?? null);
@@ -113,7 +127,7 @@ export function AccountSearchModal({ open, onOpenChange, onSelect, initialKeywor
               </RadioGroup>
               <span className="font-semibold text-muted-foreground shrink-0 ml-4" style={{ fontSize: 13.5 }}>계정분류</span>
               <RadioGroup value={cls} onValueChange={(v) => setCls(v as AccountClassFilter)} aria-label="계정분류" style={{ minHeight: 34 }}>
-                {ACCOUNT_CLASS_FILTERS.map((c) => (
+                {clsOptions.map((c) => (
                   <span key={c} className="inline-flex items-center gap-1.5">
                     <RadioGroupItem id={`acct-search-cls-${c}`} value={c} aria-label={`계정분류 ${c}`} />
                     <label htmlFor={`acct-search-cls-${c}`} style={labelStyle}>{c}</label>
@@ -132,6 +146,7 @@ export function AccountSearchModal({ open, onOpenChange, onSelect, initialKeywor
               getRowId={getRowId}
               rowSelection={ROW_SELECTION}
               onGridReady={(e) => { apiRef.current = e.api; }}
+              onFirstDataRendered={onFirstDataRendered}
               onSelectionChanged={onSelectionChanged}
               onRowDataUpdated={onRowDataUpdated}
               onRowDoubleClicked={onRowDoubleClicked}
@@ -141,6 +156,7 @@ export function AccountSearchModal({ open, onOpenChange, onSelect, initialKeywor
           <p className="text-caption mt-2" aria-live="polite" style={{ fontSize: 12.5, minHeight: 18 }}>
             {blocked ? `${sel!.name}(${sel!.code})은(는) 이 화면에서 선택할 수 없는 계정입니다.` : `${rows.length}건`}
           </p>
+          {note && <p className="text-caption m-0 mt-1" style={{ fontSize: 12, lineHeight: 1.5 }}>{note}</p>}
         </div>
 
         <DialogFooter className="px-[46px]">

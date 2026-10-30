@@ -1,5 +1,6 @@
 /* 계정과목 관리(ACC-001) — 순수 로직(필터·정렬·저장 검증 순서·상위계정 후보·논리삭제). 화면과 분리해 vitest 로 검증한다. */
 import type { AccountClass, AccountRow } from './account_code_data';
+import type { AccountItem } from '../account_data';
 
 /* ── 목록 ── */
 export const sortByCode = (rows: readonly AccountRow[]): AccountRow[] => [...rows].sort((a, b) => a.code.localeCompare(b.code));
@@ -79,6 +80,10 @@ export function parentCandidates(rows: readonly AccountRow[], q: ParentQuery): A
     && (!q.cls || r.cls === q.cls)
     && (!kw || r.code.includes(kw) || r.name.toLowerCase().includes(kw))));
 }
+
+/** 상위계정 후보 → 회계 공용 계정과목 검색 팝업(`acc/account_search_modal`)의 원천 행.
+    팝업에는 `parentCandidates(rows, { selfCode, level })`(검색어·계정분류 없이)를 넘기고, 검색어·계정분류는 팝업이 거른다 */
+export const toAccountItem = (r: AccountRow): AccountItem => ({ code: r.code, name: r.name, inputYn: r.input, drcr: r.dc, cls: r.cls });
 
 /** 상위계정 표시 문자열 "코드 계정명"(저장값은 코드) */
 export const parentLabel = (r: Pick<AccountRow, 'code' | 'name'>): string => `${r.code} ${r.name}`;
