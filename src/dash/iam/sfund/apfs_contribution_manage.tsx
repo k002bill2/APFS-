@@ -52,6 +52,7 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 →
 import { PeriodPicker } from '../../ui/period-picker';
 import { DistTxModal, InvestTxModal } from './apfs_contribution_tx_modal';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 
 const { Button, IconBtn, StatusBadge, SegTabs } = UI;
 
@@ -263,20 +264,6 @@ function NeutralChip({ v }: { v: string }) {
   return <span className="inline-flex items-center rounded-[7px] bg-muted px-[10px] py-[4px] text-[13px] font-bold leading-tight text-muted-foreground">{v}</span>;
 }
 
-/* 거래일자 셀 링크 — 클릭 시 편집 팝업(골드 `general_meeting_manage.tsx` LinkCell 복사).
-   ⚠ `title`엔 동작 힌트만 담는다.
-   ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다. */
-function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
-  return (
-    <button
-      type="button" title={hint} onClick={onClick}
-      className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer tabular"
-      style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      {String(value)}
-    </button>
-  );
-}
-
 /** 수탁데이터 확인검토 셀 — 목업 `chkCell(s, gi, tx)` 그대로 */
 function ChkCell({ v, tx, onRegister }: { v: Chk; tx: Tx | null; onRegister: () => void }) {
   if (v === '일치') return <StatusBadge tone="success" label="일치" size="lg" />;
@@ -313,7 +300,7 @@ const makeColumns = (act: CellActions): ColDef<DistRow>[] => [
   /* 거래일자 — 편집 팝업 진입점(클릭 / 셀 Enter). 소계·합계 행은 링크가 아니다 */
   { field: 'td', headerName: '거래일자', width: 124, sortable: false, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.value == null ? null
-      : <LinkCell value={p.value} hint={p.data?.tx === '출자' ? '출자거래 수정 열기' : '배분거래수정 열기'}
+      : <LinkCell value={String(p.value)} hint={p.data?.tx === '출자' ? '출자거래 수정 열기' : '배분거래수정 열기'}
           onClick={() => p.data && act.openTx(p.data.gi, 'edit')} />) },
   amt('pay', '납입금액'),
   amt('paytot', '조합 납입총액'),

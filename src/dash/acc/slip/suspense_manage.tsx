@@ -46,6 +46,7 @@ import { JournalEntryScreen } from './journal_entry_screen';
 import { SuspenseClearModal } from './suspense_clear_modal';
 import { SuspenseOffsetModal } from './suspense_offset_modal';
 import { SuspenseAccountModal } from './suspense_account_modal';
+import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 
 const { Button, SaveButton, IconBtn, StatusBadge } = UI;
 
@@ -62,23 +63,10 @@ const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
 const badgeCell = (p: { value: string }) => (p.value === '-' || !p.value ? <span>-</span> : <StatusBadge tone={APPROVAL_TONE[p.value as ApprovalStatus]} label={p.value} size="lg" />);
 const amountFmt = (p: { value: number | null }) => (p.value == null ? '-' : fmt(p.value));
-/* 셀 내 링크 — 클릭 시 전표상세(E09). 출처 = iam/report/general_meeting_manage.tsx LinkCell(대분류가 달라 import 하지 않고 로컬 복제).
-   ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다.
-   외관은 목업 `.linktxt` 그대로: primary 색 + font-weight 600, 평상시 밑줄 없음 / hover에만 밑줄. */
-function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
-  return (
-    <button
-      type="button" title={hint} onClick={onClick}
-      className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
-      style={{ font: 'inherit', fontWeight: 600, fontVariantNumeric: 'tabular-nums', background: 'transparent', border: 0, padding: 0 }}>
-      {value}
-    </button>
-  );
-}
 type SlipCtx = { openSlip: (colId: string, r: SuspenseRow) => void };
 /* 전표번호 셀 — COLUMNS 는 모듈 상수라 클릭 핸들러를 grid context(openSlip)로 받는다 */
 const slipCell = (p: ICellRendererParams<SuspenseRow, string, SlipCtx>) => (!p.value || p.value === '-' ? <span>-</span>
-  : <LinkCell value={p.value} hint="전표상세 보기" onClick={() => { if (p.data && !p.node.rowPinned && p.column) p.context.openSlip(p.column.getColId(), p.data); }} />);
+  : <LinkCell value={p.value} tabular hint="전표상세 보기" onClick={() => { if (p.data && !p.node.rowPinned && p.column) p.context.openSlip(p.column.getColId(), p.data); }} />);
 
 const SLIP_COLS = new Set(['occurSlipNo', 'clearSlipNo']);
 

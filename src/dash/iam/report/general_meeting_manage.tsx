@@ -36,6 +36,7 @@ import { PeriodPicker } from '../../ui/period-picker';
 import { ConfirmCombo, uniformConfirm } from '../../confirm_combo';
 import { GeneralMeetingDetailModal } from './general_meeting_detail_modal';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -137,19 +138,7 @@ const txt = (field: keyof MeetingRow, header: string, width: number, maxWidth: n
 /* 고정폭(내용 맞춤 불필요·헤더 라벨 폭이 하한) */
 const fixed = (width: number) => ({ width, maxWidth: width, minWidth: width });
 
-/* 셀 내 링크 — 클릭 시 상세 팝업(목업은 행 전체 클릭이지만, 우리 규약은 셀 링크가 진입점이다).
-   ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다.
-   외관은 목업 `.linktxt` 그대로: primary 색 + font-weight 600, 평상시 밑줄 없음 / hover에만 밑줄. */
-function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
-  return (
-    <button
-      type="button" title={hint} onClick={onClick}
-      className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
-      style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      {value}
-    </button>
-  );
-}
+/* 셀 내 링크(공용 `link_cell.tsx`) — 클릭 시 상세 팝업(목업은 행 전체 클릭이지만, 우리 규약은 셀 링크가 진입점이다). */
 
 /* 확정여부 셀 — 목업 `selCell()` 그대로(빈 option + 확정/미확정).
    ⚠ 값이 ''인데 `<option value="">`가 없으면 브라우저가 첫 option을 그려 state와 표시가 엇갈린다 → 항상 둔다.

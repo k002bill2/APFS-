@@ -53,6 +53,7 @@ import { CustodyMismatchAlertModal } from './custody_mismatch_alert_modal';
 import { GpSpecModal } from '../report/gp_spec_modal';
 import { SubFundSpecModal, SPEC_SAMPLE_SUBFUND } from '../report/subfund_spec_modal';   // 샘플 행 = 명세 팝업 공유본
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -150,34 +151,9 @@ const txt = (field: keyof CustodyConfirmRow, header: string, minWidth: number): 
   cellRenderer: (p: any) => <span className="min-w-0 truncate">{p.value}</span>,
 });
 
-/* 셀 내 링크 — 클릭 시 상세 팝업(목업은 `.linkbtn` 버튼 셀이 진입점이다).
-   ⚠ 색은 **목업 그대로 상태에 따라 갈린다**(`.linkbtn`=danger / `.linkbtn.ok`=ok) — 색이 곧 정보라 단일 링크색으로
-      통일하지 않는다. 텍스트 색이므로 `-text` 토큰을 쓴다(color-tokens 규약).
-   ⚠ `title`엔 동작 힌트만 담는다.
-   ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다. */
-function LinkCell({ value, color, hint, onClick }: { value: string; color: string; hint: string; onClick: () => void }) {
-  return (
-    <button
-      type="button" title={hint} onClick={onClick}
-      className="min-w-0 truncate font-semibold no-underline hover:underline cursor-pointer"
-      style={{ font: 'inherit', fontWeight: 600, color, background: 'transparent', border: 0, padding: 0 }}>
-      {value}<span className="sr-only"> 대사 상세 보기</span>
-    </button>
-  );
-}
-
-/* 명세 링크 — 운용사·자펀드 셀(`occasional_report_manage.tsx` LinkCell 동형 로컬 복사).
-   외관: primary 색 + 600, **평상시 밑줄 없음 / hover에만 밑줄**. 폰트 `font:'inherit'`(위 LinkCell 주석) */
-function SpecLink({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
-  return (
-    <button
-      type="button" title={hint} onClick={onClick}
-      className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
-      style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      {value}
-    </button>
-  );
-}
+/* 셀 내 링크(공용 `link_cell.tsx`) — 상세보기 셀은 상세 팝업(목업은 `.linkbtn` 버튼 셀이 진입점이다), 운용사·자펀드 셀은 명세 팝업.
+   ⚠ 상세보기 셀 색은 **목업 그대로 상태에 따라 갈린다**(`.linkbtn`=danger / `.linkbtn.ok`=ok) — 색이 곧 정보라
+      단일 링크색으로 통일하지 않는다(`color` prop). 텍스트 색이므로 `-text` 토큰을 쓴다(color-tokens 규약). */
 
 type SpecKind = 'gpSpec' | 'fundSpec';
 /* 셀 Enter → 팝업 매핑(링크 셀만) */
@@ -221,9 +197,9 @@ const makeColumns = (
   /* 운용사·자펀드 = 명세 링크(목업 `.gpf-gp-link`·`.gpf-fund-link`). minWidth 170/220 — 관리 열(88) 추가 때 150/200로 줄였다가
      관리 열 삭제(선택 열 44 추가)로 되돌렸다. 고정폭 합 1242 < 관리 열 시절 1246 이라 가로 스크롤 하한은 그때보다 낮다 */
   { ...txt('gp', '운용사', 170),
-    cellRenderer: (p: any) => <SpecLink value={p.value} hint="운용사 명세 보기" onClick={() => openSpec('gpSpec')} /> },
+    cellRenderer: (p: any) => <LinkCell value={p.value} hint="운용사 명세 보기" onClick={() => openSpec('gpSpec')} /> },
   { ...txt('fn', '자펀드', 220),
-    cellRenderer: (p: any) => <SpecLink value={p.value} hint="자펀드 명세 보기" onClick={() => openSpec('fundSpec')} /> },
+    cellRenderer: (p: any) => <LinkCell value={p.value} hint="자펀드 명세 보기" onClick={() => openSpec('fundSpec')} /> },
   /* 3단 헤더 — 중첩 ColGroupDef. 바깥·안쪽 모두 marryChildren으로 묶음이 흩어지지 않게 한다.
      리프 headerName이 겹치지만(보유주수·잔액) field가 달라 문제 없다. */
   { headerName: '일치여부', marryChildren: true, children: [
@@ -234,7 +210,7 @@ const makeColumns = (
   { field: 'status', headerName: '상세보기', width: 120, minWidth: 120, cellStyle: flexCenter,
     cellRenderer: (p: any) => (
       <LinkCell
-        value={p.value} hint="대사 상세 보기"
+        value={p.value} hint="대사 상세 보기" srText=" 대사 상세 보기"
         color={p.value === '일치' ? 'var(--success-text)' : 'var(--danger-text)'}
         onClick={() => p.data && openDetail(p.data.id)} />
     ) },

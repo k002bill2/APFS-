@@ -48,6 +48,7 @@ import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
 import { GpContributionDetailModal } from './gp_contribution_detail_modal';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -162,20 +163,6 @@ const dash = <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
 const GB_TONE: Record<Gb, Tone> = { 출자: 'info', 배분: 'primary' };
 const MATCH_TONE: Record<Match, Tone> = { 일치: 'success', 불일치: 'warning' };
 
-/* 기준일자 셀 링크 — 클릭 시 상세 팝업(골드 `general_meeting_manage.tsx` LinkCell 복사).
-   ⚠ `title`엔 동작 힌트만 담는다.
-   ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다. */
-function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
-  return (
-    <button
-      type="button" title={hint} onClick={onClick}
-      className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer tabular"
-      style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      {String(value)}
-    </button>
-  );
-}
-
 const makeColumns = (openDetail: (id: string) => void): (ColDef<GpContribRow> | ColGroupDef<GpContribRow>)[] => [
   /* 합계 2행은 목업 tfoot 라벨('소계'/'합계')을 그 자리에 쓴다 */
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum,
@@ -192,7 +179,7 @@ const makeColumns = (openDetail: (id: string) => void): (ColDef<GpContribRow> | 
   { field: 'bd', headerName: '기준일자', width: 124, cellStyle: flexCenter,
     cellRenderer: (p: any) => (p.node.rowPinned
       ? (p.data?.id === TOT_ID ? dash : null)
-      : <LinkCell value={p.value} hint="일자별출자배분관리 상세 보기" onClick={() => p.data && openDetail(p.data.id)} />) },
+      : <LinkCell value={String(p.value)} hint="일자별출자배분관리 상세 보기" onClick={() => p.data && openDetail(p.data.id)} />) },
   amt('pay', '납입총액'),
   amt('payM', '모태펀드 납입액'),
   { headerName: '기타조합원 배분', marryChildren: true, headerClass: 'apfs-grp-a',
