@@ -117,7 +117,7 @@ export function AccountSearchModal({ open, onOpenChange, onSelect, initialKeywor
                 <IconBtn icon="search" label="조회" size={34} onClick={search} />
               </div>
             </div>
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
               <span className="font-semibold text-muted-foreground shrink-0" style={keyStyle}>검색기준</span>
               <RadioGroup value="code" aria-label="검색기준" style={{ minHeight: 34 }}>
                 <span className="inline-flex items-center gap-1.5">
@@ -125,8 +125,11 @@ export function AccountSearchModal({ open, onOpenChange, onSelect, initialKeywor
                   <label htmlFor="acct-search-by-code" style={labelStyle}>계정코드</label>
                 </span>
               </RadioGroup>
-              <span className="font-semibold text-muted-foreground shrink-0 ml-4" style={{ fontSize: 13.5 }}>계정분류</span>
-              <RadioGroup value={cls} onValueChange={(v) => setCls(v as AccountClassFilter)} aria-label="계정분류" style={{ minHeight: 34 }}>
+            </div>
+            {/* 계정분류는 자기 행 — 검색기준과 한 줄에 두면 640px 본문에서 1px 모자라 라디오만 다음 줄로 떨어져 라벨과 갈라졌다 */}
+            <div className="flex items-center gap-3">
+              <span className="font-semibold text-muted-foreground shrink-0" style={keyStyle}>계정분류</span>
+              <RadioGroup value={cls} onValueChange={(v) => setCls(v as AccountClassFilter)} aria-label="계정분류" className="min-w-0" style={{ minHeight: 34 }}>
                 {clsOptions.map((c) => (
                   <span key={c} className="inline-flex items-center gap-1.5">
                     <RadioGroupItem id={`acct-search-cls-${c}`} value={c} aria-label={`계정분류 ${c}`} />
