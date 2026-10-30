@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { demoAccounts, demoDeletedAccounts, DEMO_USER } from './account_code_data';
 import type { AccountFormValues } from './account_code_model';
-import { filterAccounts, validateAccount, parentCandidates, logicalDelete, sortByCode, descendantCodes, parentLabel, parentFits, hasChildren, blockedDeletes, DUP_CODE_MSG, PARENT_CLS_MSG, PARENT_LEVEL_MSG } from './account_code_model';
+import { filterAccounts, validateAccount, parentCandidates, logicalDelete, sortByCode, descendantCodes, parentLabel, parentFits, hasChildren, blockedDeletes, toAccountItem, DUP_CODE_MSG, PARENT_CLS_MSG, PARENT_LEVEL_MSG } from './account_code_model';
+import { searchAccounts } from '../account_data';
 
 const rows = demoAccounts();
 const deleted = demoDeletedAccounts();
@@ -168,6 +169,25 @@ describe('상위계정과목 후보', () => {
   });
   it('표시 문자열 "코드 계정명"', () => {
     expect(parentLabel(byCode.get('1110000')!)).toBe('1110000 당좌자산');
+  });
+});
+
+describe('회계 공용 계정과목 검색 팝업으로 상위계정 고르기(toAccountItem)', () => {
+  it('필드 매핑 — 입력 가능여부→입력여부 · 차대구분 · 계정분류', () => {
+    expect(toAccountItem(byCode.get('1110000')!)).toEqual({ code: '1110000', name: '당좌자산', inputYn: 'N', drcr: '차변', cls: '자산' });
+  });
+  it('팝업 검색(searchAccounts) = 기존 상위계정 후보(검색어·계정분류 포함)', () => {
+    const selfs = [undefined, '1100000', '3100000'];
+    const keywords = ['', '3100', '자본잉여', '  자산 ', 'zzz'];
+    const classes = ['전체', '자산', '부채', '자본', '손익'] as const;
+    let compared = 0;
+    for (const level of [2, 3, 4]) for (const selfCode of selfs) for (const kw of keywords) for (const cls of classes) {
+      const popup = searchAccounts(parentCandidates(rows, { selfCode, level }).map(toAccountItem), kw, cls).map((a) => a.code);
+      const legacy = parentCandidates(rows, { keyword: kw, cls: cls === '전체' ? '' : cls, selfCode, level }).map((r) => r.code);
+      expect(popup).toEqual(legacy);
+      if (legacy.length > 0) compared++;
+    }
+    expect(compared).toBeGreaterThan(20);   // 전부 0건끼리 비교하는 공허한 통과 방지
   });
 });
 

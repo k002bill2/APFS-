@@ -1,27 +1,27 @@
-/* 계정과목 관리(ACC-001) — 「계정과목관리 등록/수정」 모달(설계서 slide12) + 「계정과목 검색」 중첩 팝업(slide13).
+/* 계정과목 관리(ACC-001) — 「계정과목관리 등록/수정」 모달(설계서 slide12). 「계정과목 검색」(slide13)은 회계 공용 팝업을 중첩으로 띄운다.
 
    ⚠ RowFormModal(flat 스키마)로 담을 수 없어 전용 모달이다(menu_form_modal 동형):
      ① 계정레벨 ↔ 상위계정과목 연동(레벨1이면 상위 값 비우고 입력·[검색] 비활성, 검증 제외)
-     ② 상위계정과목은 [검색] 팝업(중첩 Dialog)에서 고른다 — 표시는 "코드 계정명", 저장값은 상위코드
+     ② 상위계정과목은 [검색] 팝업(공용 `acc/account_search_modal`, 중첩 Dialog)에서 고른다 — 표시는 "코드 계정명", 저장값은 상위코드
      ③ 저장 검증은 토스트 + 해당 필드 포커스(설계서 ③ — 인라인 오류 아님)
    골격·규격은 RowFormModal 그대로: 항목 13개(>6) → `max-w-[880px]` 2단, 본문 `p-[46px]`(+헤더·푸터 `px-[46px]`),
    개별 컨트롤은 `SchemaField`(ad-hoc FieldSpec — 높이 등 박스 규격은 renderers CONTROL_BOX SSOT), 라벨 래퍼는 `Field` 규격 로컬 복제.
    ⚠ 백엔드가 없어 저장은 부모(account_code_manage)의 로컬 행 상태만 바꾼다. */
 import React from 'react';
 import { UI } from '../../components';
-import { SchemaField, isPlainWrapControl, CONTROL_BOX } from '../../schemas/renderers';
+import { SchemaField, isPlainWrapControl } from '../../schemas/renderers';
 import type { FieldSpec } from '../../schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from '../../ui/dialog';
 import { Checkbox } from '../../ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '../../ui/radio-group';
 import { toast } from '../../ui/sonner';
 import { ACCOUNT_CLASSES, ACCOUNT_LEVELS, ACCOUNT_NATURES, REQUIRED_ITEMS } from './account_code_data';
 import type { AccountClass, AccountRow, AccountNature, ContraType, DcType, RequiredItem, Yn } from './account_code_data';
-import { validateAccount, parentCandidates, parentLabel, parentFits, hasChildren } from './account_code_model';
+import { validateAccount, parentCandidates, parentLabel, parentFits, hasChildren, toAccountItem } from './account_code_model';
 import { Switch } from '../../ui/switch';
 import type { ValidationKey } from './account_code_model';
+import { AccountSearchModal } from '../account_search_modal';
 
-const { Button, IconBtn, SaveButton } = UI;
+const { Button, SaveButton } = UI;
 
 /** 부모가 받는 저장값 — 최초등록자/최종수정자는 부모가 채운다 */
 export type AccountPatch = Omit<AccountRow, 'createdBy' | 'updatedBy'>;
@@ -56,94 +56,6 @@ function Field({ label, children, className, plain, hint, boxRef }: { label: str
       {children}
       {hint && <span className="text-caption block mt-1" style={{ fontSize: 11.5 }}>{hint}</span>}
     </Wrap>
-  );
-}
-
-/* ── 계정과목 검색 팝업(중첩 Dialog) — 설계서 slide13 ──
-   검색어(Enter/[조회]에서만 적용) · 검색기준(계정코드 단일) · 계정분류 라디오(변경 즉시 필터) · 결과 4열 단일 선택.
-   후보 = 입력여부 N(집계계정)·사용여부 Y만, 자기 자신·자손 제외, 레벨 = 폼 계정레벨-1(account_code_model.parentCandidates).
-   폼에서 계정분류를 골랐으면 계정분류 라디오는 그 분류 하나로 고정된다(상위와 분류 일치 — 계층 무결성). */
-const CLS_ALL = ['전체', ...ACCOUNT_CLASSES];
-const BASIS: FieldSpec = { key: 'basis', label: '검색기준', control: 'radio', options: ['계정코드'] };
-
-export function AccountSearchDialog({ rows, initialKeyword, initialPick, selfCode, level, lockCls, onPick, onClose }: {
-  rows: readonly AccountRow[]; initialKeyword: string; initialPick?: string; selfCode?: string;
-  level: number;                  // 폼 계정레벨(후보 = 그 바로 위 레벨)
-  lockCls?: AccountClass | '';    // 폼 계정분류 — 있으면 후보를 그 분류로 고정
-  onPick: (r: AccountRow) => void; onClose: () => void;
-}) {
-  const [kw, setKw] = React.useState(initialKeyword);
-  const [applied, setApplied] = React.useState(initialKeyword);   // 열 때 초기 검색어로 1회 조회
-  const [cls, setCls] = React.useState<string>(lockCls || '전체');
-  const [pick, setPick] = React.useState(initialPick ?? '');      // 수정 모드: 기존 상위가 선택된 채로 연다
-  const clsField: FieldSpec = React.useMemo(() => ({ key: 'qcls', label: '계정분류', control: 'radio', options: lockCls ? [lockCls] : CLS_ALL }), [lockCls]);
-  const list = React.useMemo(() => parentCandidates(rows, { keyword: applied, cls: cls === '전체' ? '' : (cls as AccountClass), selfCode, level }), [rows, applied, cls, selfCode, level]);
-  const search = () => { setApplied(kw); setPick(''); };
-  const confirm = () => {
-    const r = list.find((x) => x.code === pick);
-    if (!r) { toast.error('계정과목을 선택해 주세요.'); return; }
-    onPick(r);
-  };
-  const th: React.CSSProperties = { position: 'sticky', top: 0, background: 'var(--grid-header)', color: 'var(--muted-foreground)', fontSize: 12, fontWeight: 700, textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid var(--border)' };
-  const td: React.CSSProperties = { padding: '6px 10px', borderBottom: '1px solid var(--border)', fontSize: 13 };
-  const tdCtrl: React.CSSProperties = { ...td, textAlign: 'center' };   // 선택 라디오 = 컨트롤 열(정렬 규약 예외)
-  const dlgRef = React.useRef<DialogHandle>(null);
-  return (
-    <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-[720px] max-h-[84vh]" onInteractOutside={(e) => e.preventDefault()}>
-        <DialogHeader className="px-[46px]">
-          <DialogTitle>계정과목 검색</DialogTitle>
-          <DialogDescription className="sr-only">계정코드 또는 계정과목명으로 검색해 상위계정과목을 선택</DialogDescription>
-        </DialogHeader>
-        <div className="overflow-y-auto p-[46px]">
-          <Field label="계정과목" plain>
-            <div className="flex items-center gap-2">
-              <input type="text" value={kw} aria-label="계정과목 검색어" placeholder="계정코드/계정과목명"
-                onChange={(e) => setKw(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); search(); } }}
-                style={{ ...CONTROL_BOX, width: '100%', maxWidth: 320, border: '1px solid var(--border-strong)', borderRadius: 9, background: 'var(--card)', color: 'var(--foreground)' }} />
-              <IconBtn icon="search" label="조회" size={34} onClick={search} />
-            </div>
-          </Field>
-          <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-x-8">
-            <Field label="검색기준" plain><SchemaField field={BASIS} value="계정코드" onChange={() => undefined} /></Field>
-            <Field label="계정분류" plain><SchemaField field={clsField} value={cls} onChange={(x) => { setCls(x); setPick(''); }} /></Field>
-          </div>
-          {/* 결과 표 — DS 라디오 1건 선택(menu_form_modal ProgramSearchDialog 동형). 행 클릭 = 선택, 행 더블클릭 = 반영 + 닫힘 */}
-          <RadioGroup value={pick} onValueChange={setPick} aria-label="계정과목 검색 결과" className="block rounded-[9px] border border-border overflow-auto" style={{ maxHeight: 320 }}>
-            <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
-              <colgroup><col style={{ width: 40 }} /><col style={{ width: 110 }} /><col /><col style={{ width: 84 }} /><col style={{ width: 84 }} /></colgroup>
-              <thead><tr><th style={th}><span className="sr-only">선택</span></th><th style={th}>계정코드</th><th style={th}>계정과목명</th><th style={th}>입력여부</th><th style={th}>차대구분</th></tr></thead>
-              <tbody>
-                {list.length === 0 && <UI.EmptyRow span={5} msg="검색 결과가 없습니다." style={{ ...td, padding: '26px 10px' }} />}
-                {list.map((r) => (
-                  <tr key={r.code} className="cursor-pointer" style={pick === r.code ? { background: 'var(--row-selected)' } : undefined}
-                    onClick={(e) => {
-                      if ((e.target as Element).closest('button[role=radio]')) return;
-                      e.currentTarget.querySelector<HTMLButtonElement>('button[role=radio]')?.click();
-                    }}
-                    onDoubleClick={() => onPick(r)}>
-                    <td style={tdCtrl}><RadioGroupItem value={r.code} aria-label={parentLabel(r)} className="align-middle" /></td>
-                    <td style={{ ...td, fontVariantNumeric: 'tabular-nums' }}>{r.code}</td>
-                    <td style={{ ...td, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</td>
-                    <td style={td}>{r.input}</td>
-                    <td style={td}>{r.dc}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </RadioGroup>
-          <p className="text-caption m-0 mt-2" style={{ fontSize: 12, lineHeight: 1.5 }}>입력여부 N(집계계정) 중 계정레벨 {String(level - 1)}만 상위계정으로 선택할 수 있습니다. 행을 선택하고 [확인]을 누르거나 행을 더블클릭하세요.</p>
-        </div>
-        <DialogFooter className="px-[46px]">
-          <div />
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>닫기</Button>
-            <Button variant="primary" size="sm" leadingIcon="check" onClick={confirm}>확인</Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -322,13 +234,16 @@ export function AccountCodeFormModal({ mode, initial, rows, takenCodes, onSave, 
         </DialogFooter>
       </DialogContent>
 
+      {/* 상위계정 [검색] = 회계 공용 계정과목 검색 팝업(설계서 slide13). 후보(집계계정·사용 Y·레벨-1·자기/자손 제외)는
+          여기서 좁혀 넘기고, 검색어·계정분류는 팝업이 거른다. 폼에서 계정분류를 골랐으면 라디오를 그 분류로 고정(계층 무결성) */}
       {searchOpen && (
-        <AccountSearchDialog rows={rows} selfCode={mode === 'edit' ? initial?.code : v.code.trim() || undefined}
-          level={Number(v.level)} lockCls={v.cls} initialPick={v.parentCode || undefined}
+        <AccountSearchModal open onOpenChange={(o) => { if (!o) setSearchOpen(false); }}
+          list={parentCandidates(rows, { selfCode: mode === 'edit' ? initial?.code : v.code.trim() || undefined, level: Number(v.level) }).map(toAccountItem)}
+          fixedClass={v.cls || undefined} initialSelected={v.parentCode || undefined}
           /* 이미 고른 상위가 있으면 코드만 넘긴다 — "코드 계정명" 문자열은 부분일치 0건이 된다 */
           initialKeyword={v.parentCode || v.parentText.trim()}
-          onClose={() => setSearchOpen(false)}
-          onPick={(r) => { setV((p) => ({ ...p, parentCode: r.code, parentText: parentLabel(r) })); setSearchOpen(false); }} />
+          note={`입력여부 N(집계계정) 중 계정레벨 ${Number(v.level) - 1}만 상위계정으로 선택할 수 있습니다.`}
+          onSelect={(a) => setV((p) => ({ ...p, parentCode: a.code, parentText: parentLabel(a) }))} />
       )}
     </Dialog>
   );
