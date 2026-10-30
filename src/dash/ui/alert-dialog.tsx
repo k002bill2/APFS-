@@ -3,6 +3,7 @@
 import * as React from 'react';
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 import { cn } from '@/lib/utils';
+import { useFocusReturn } from './focus-return';
 import { DialogExitProvider, DialogExitStartProvider, DialogLockProvider, useDeferredClose, useExitEnd, useExitStart, makeExitEndHandler, makeExitStartHandler, type DialogHandle } from './dialog-exit';
 
 /* ⚠ 그냥 AlertDialogPrimitive.Root 가 아니다 — Dialog 와 같은 이유로 닫힘 애니메이션을 살리려고
@@ -46,7 +47,11 @@ AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, onAnimationStart, onAnimationEnd, ...props }, ref) => (
+>(({ className, onAnimationStart, onAnimationEnd, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => {
+  /* 닫으면 연 자리(삭제 버튼 등)로 초점 복귀 — 근거·한계는 focus-return.ts.
+     Radix 는 이 onOpenAutoFocus 를 [취소] 초점 이동보다 먼저 부르므로 연 요소가 그대로 잡힌다 */
+  const focusReturn = useFocusReturn(onOpenAutoFocus, onCloseAutoFocus);
+  return (
   <AlertDialogPortal>
     <AlertDialogOverlay />
     <AlertDialogPrimitive.Content
@@ -59,10 +64,12 @@ const AlertDialogContent = React.forwardRef<
       )}
       onAnimationStart={makeExitStartHandler(useExitStart(), onAnimationStart)}
       onAnimationEnd={makeExitEndHandler(useExitEnd(), onAnimationEnd)}
+      {...focusReturn}
       {...props}
     />
   </AlertDialogPortal>
-));
+  );
+});
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
 
 function AlertDialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
