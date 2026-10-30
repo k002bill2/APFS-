@@ -16,7 +16,7 @@ import { Checkbox } from '../../ui/checkbox';
 import { toast } from '../../ui/sonner';
 import { ACCOUNT_CLASSES, ACCOUNT_LEVELS, ACCOUNT_NATURES, REQUIRED_ITEMS } from './account_code_data';
 import type { AccountClass, AccountRow, AccountNature, ContraType, DcType, RequiredItem, Yn } from './account_code_data';
-import { validateAccount, parentCandidates, parentLabel, parentFits, hasChildren, toAccountItem } from './account_code_model';
+import { validateAccount, parentCandidates, parentLabel, parentFits, hasChildren, toAccountItem, parentSearchGate } from './account_code_model';
 import { Switch } from '../../ui/switch';
 import type { ValidationKey } from './account_code_model';
 import { AccountSearchModal } from '../account_search_modal';
@@ -113,9 +113,10 @@ export function AccountCodeFormModal({ mode, initial, rows, takenCodes, onSave, 
     el?.focus();
   });
 
-  /* [검색] — 후보가 계정레벨에 묶이므로 레벨 미선택이면 팝업을 열지 않는다 */
+  /* [검색] — 후보가 계정분류·계정레벨에 묶이므로 둘 중 하나라도 미선택이면 팝업을 열지 않는다(parentSearchGate) */
   const openSearch = () => {
-    if (!v.level) { toast.error('계정레벨을 선택해 주세요.'); focusField('level'); return; }
+    const gate = parentSearchGate(v.cls, v.level);
+    if (gate.ok === false) { toast.error(gate.msg); focusField(gate.key); return; }
     setSearchOpen(true);
   };
   const uid = React.useId();
@@ -235,7 +236,7 @@ export function AccountCodeFormModal({ mode, initial, rows, takenCodes, onSave, 
       </DialogContent>
 
       {/* 상위계정 [검색] = 회계 공용 계정과목 검색 팝업(설계서 slide13). 후보(집계계정·사용 Y·레벨-1·자기/자손 제외)는
-          여기서 좁혀 넘기고, 검색어·계정분류는 팝업이 거른다. 폼에서 계정분류를 골랐으면 라디오를 그 분류로 고정(계층 무결성) */}
+          여기서 좁혀 넘기고, 검색어는 팝업이 거른다. 계정분류를 먼저 골라야 열리므로(openSearch) 라디오는 항상 폼 분류로 고정(계층 무결성) */}
       {searchOpen && (
         <AccountSearchModal open onOpenChange={(o) => { if (!o) setSearchOpen(false); }}
           list={parentCandidates(rows, { selfCode: mode === 'edit' ? initial?.code : v.code.trim() || undefined, level: Number(v.level) }).map(toAccountItem)}

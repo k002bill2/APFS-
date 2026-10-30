@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { demoAccounts, demoDeletedAccounts, DEMO_USER } from './account_code_data';
 import type { AccountFormValues } from './account_code_model';
-import { filterAccounts, validateAccount, parentCandidates, logicalDelete, sortByCode, descendantCodes, parentLabel, parentFits, hasChildren, blockedDeletes, toAccountItem, DUP_CODE_MSG, PARENT_CLS_MSG, PARENT_LEVEL_MSG } from './account_code_model';
+import { filterAccounts, validateAccount, parentCandidates, logicalDelete, sortByCode, descendantCodes, parentLabel, parentFits, hasChildren, blockedDeletes, toAccountItem, parentSearchGate, DUP_CODE_MSG, PARENT_CLS_MSG, PARENT_LEVEL_MSG } from './account_code_model';
 import { searchAccounts } from '../account_data';
 
 const rows = demoAccounts();
@@ -169,6 +169,19 @@ describe('상위계정과목 후보', () => {
   });
   it('표시 문자열 "코드 계정명"', () => {
     expect(parentLabel(byCode.get('1110000')!)).toBe('1110000 당좌자산');
+  });
+});
+
+describe('상위계정 [검색] 열기 전제(parentSearchGate) — 계정분류·계정레벨을 먼저 고른다', () => {
+  it('계정분류 미선택이면 막는다(폼 순서상 분류가 먼저)', () => {
+    expect(parentSearchGate('', '')).toEqual({ ok: false, key: 'cls', msg: '계정분류를 선택해 주세요.' });
+    expect(parentSearchGate('', '3')).toEqual({ ok: false, key: 'cls', msg: '계정분류를 선택해 주세요.' });
+  });
+  it('계정레벨 미선택이면 막는다', () => {
+    expect(parentSearchGate('자산', '')).toEqual({ ok: false, key: 'level', msg: '계정레벨을 선택해 주세요.' });
+  });
+  it('둘 다 있으면 연다', () => {
+    expect(parentSearchGate('자본', '3')).toEqual({ ok: true });
   });
 });
 
