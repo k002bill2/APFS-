@@ -180,9 +180,9 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
   const columnDefs = useMemo(() => makeColumns(openDetail), [openDetail]);
 
   // 앱-스코프 단축키: ⌘⏎=조합원정보 등록(모달 열림 중엔 비활성 → 이중 열림 방지), ⌘P=인쇄, ⌥D=내보내기
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null });
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null && !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
 
 
   const onGridReady = useCallback((e: GridReadyEvent<MemberRow>) => { apiRef.current = e.api; }, []);

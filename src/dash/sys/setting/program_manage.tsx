@@ -193,9 +193,9 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   const [fUse, setFUse] = useState<'' | '여' | '부'>('');
   const clearFilters = () => { setFHelp(''); setFField('pid'); setFText(''); setFGubun(''); setFUse(''); };
 
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null });
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null && !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
 
   const gubuns = useMemo(() => gubunOptions(rows), [rows]);
   const visible = useMemo(() => filterPrograms(rows, { field: fField, kw: fText, help: fHelp, use: fUse, gubun: fGubun }), [rows, fField, fText, fHelp, fUse, fGubun]);

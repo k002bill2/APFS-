@@ -726,8 +726,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
   /* 앱-스코프 단축키 — 등록 ⌘⏎(편집 가능 + 모달 닫힘일 때만)·인쇄 ⌘P·내보내기 ⌥D. 힌트는 kebab의 DropdownMenuShortcut */
   useHotkey(HOTKEYS.register.combo, () => setModal({ mode: 'create' }), { enabled: editable && modal === null && detail === null && !filterOpen && ctx === null });
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
 
   // 행 복사 — 스키마 컬럼(스파크라인 trend 제외)을 TSV로.
   const copyRow = (row: Row) => {

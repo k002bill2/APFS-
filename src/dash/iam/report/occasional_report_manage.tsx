@@ -216,11 +216,11 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
     (k: SpecKind) => setModal({ kind: k }),
     (role: Role, id: string) => setModal({ kind: 'confirm', role, ids: [id], skipped: 0, bulk: false }),
   ), []);
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
 
   /* 필터 — 확인상태는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fStage, setFStage] = useState<'' | Stage>('');
   const [fGp, setFGp] = useState('');
   const [fFund, setFFund] = useState('');

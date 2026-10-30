@@ -270,11 +270,12 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
 
+  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
   /* 앱-스코프 단축키. 모달이 떠 있는 동안에는 등록(이중 열림)·내보내기(모달 위 다운로드)를 막는다.
      `print` 는 UI 표면이 없는 골격 단축키다(형제 전 화면 공통). */
-  useHotkey(HOTKEYS.register.combo, () => openCreate(), { enabled: modal === null });
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null });
+  useHotkey(HOTKEYS.register.combo, () => openCreate(), { enabled: modal === null && !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen });
 
   /* ── 필터 SSOT(빈 값 = 미적용) — 목업 검색박스 3항목 순서 그대로(구분 · 운용사/자펀드 · 기간) ──
      ⚠⚠ **라벨 충돌 경고**: 여기 `fScope`(필터 라벨 "구분")의 값 도메인은 **운용사/자펀드**이고,
@@ -284,7 +285,6 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
        비교될지 고르는 **스코프 스위치**다.
      ⚠ `fTarget` 의 '전체' 는 저장값이 **`''`** 다(DrawerSelect 의 all 옵션 계약). 리터럴 '전체' 를
        저장하면 select 가 매칭 실패로 빈칸이 되고 유령 칩이 뜬다. */
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fText, setFText] = useState('');     // 검색어 — SEARCHABLE=false 면 입력이 숨겨져 ''로 고정(무발동)
   const [fScope, setFScope] = useState<WorkforceScope>('운용사');   // 목업에 '전체' 옵션이 없다 → 기본 '운용사'
   const [fTarget, setFTarget] = useState('');  // '' = 전체(미적용)

@@ -228,14 +228,14 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
 
+  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
   // 앱-스코프 단축키: ⌘⏎=조합원 등록(모달 열림 중엔 비활성 → 이중 열림 방지), ⌘P=인쇄, ⌥D=내보내기
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null });
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null && !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
 
   /* 필터 — 계정구분은 툴바 칩 + 드로어가 **같은 state를 공유**한다(표시가 갈라지지 않게).
      SSOT=개별 state(빈 값=미적용, 열린 경계) */
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fAcc, setFAcc] = useState<'' | Acc>('');
   const [fGp, setFGp] = useState('');
   const [fFund, setFFund] = useState('');

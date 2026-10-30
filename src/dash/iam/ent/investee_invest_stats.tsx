@@ -175,13 +175,13 @@ function RegionTable({ rows, unit }: { rows: RegionRow[]; unit: StatUnit }) {
 export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) {
   const [view, setView] = useState<ViewKey>(VIEWS[0].key);
   const [unit, setUnit] = useState<StatUnit>('억원');   // 원문 기본값 = 저장 base
-  useHotkey(HOTKEYS.print.combo, printGrid);
+  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
 
   /* 상세필터 — 원문 검색박스 7항목. 투자실적구분(=view)만 표를 바꾸고 나머지 6종은 noop:
      집계표 원천이 고정 상수라 거를 차원이 없다(값을 지어내 행을 바꾸지 않는다).
      ⚠ 건수기준은 noop 이어야 한다 — 블록 숨김에 배선하면 보고서 절반이 사라진다(상단 ⚠, Codex P1).
      기준일자 기본값(원문 2026-07-31)은 적용하지 않는다 — 자펀드 투자실적현황과 같은 열린 경계. */
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fMf, setFMf] = useState('');       // 모펀드
   const [fAcc, setFAcc] = useState('');     // 계정구분
   const [fYBase, setFYBase] = useState(''); // 연도기준
@@ -212,7 +212,7 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
     XLSX.writeFile(wb, `투자실적현황(투자기업)_${meta.label}_${unit}.xlsx`);
     toast.success(`${meta.label} 표를 Excel로 내보냈습니다 (단위: ${unit})`);
   }, [isMatrix, headers, rows, meta, unit]);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());   // ⌥D — 푸터 내보내기 툴팁 힌트와 짝
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });   // ⌥D — 푸터 내보내기 툴팁 힌트와 짝
 
   return (
     <GridFrame

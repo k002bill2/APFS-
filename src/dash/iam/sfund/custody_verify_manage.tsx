@@ -366,12 +366,12 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
   const [nonInvest, setNonInvest] = useState<NonInvestRow[]>(NONINVEST_DEMO);
   const [modal, setModal] = useState<ModalState>(null);
 
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
 
   /* 필터 — 드로어 3항목(목업 검색박스 순서 그대로: 자펀드·기준일·종목). 실제로 거르는 건 자펀드·종목이다.
      행이 세 배열로 갈려 있어 External Filter(그리드 1개 전제)가 아니라 **React 쪽에서 각각 filter**한다. */
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fFund, setFFund] = useState('');
   const [fAsOf, setFAsOf] = useState(BASE_DATE);   // 기준일 — 행 컬럼 아님(no-op). 메모 팝업 기준일자 시드
   const [fItem, setFItem] = useState('');          // 종목 — 부분일치(섹션1 투자기업 · 섹션2 종목, 섹션3 제외)

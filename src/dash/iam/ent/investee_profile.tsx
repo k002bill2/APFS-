@@ -57,13 +57,13 @@ function DrawerField({ label, noop, children }: { label: string; noop?: boolean;
 
 export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
-  useHotkey(HOTKEYS.print.combo, printGrid);
+  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
   /* 조회 대상 4종 SSOT — 적용 필터 칩과 상세필터 드로어가 공유한다. 실데이터가 1건뿐이라 본문은 바뀌지 않는다 */
   const [fMf, setFMf] = useState<string>(QUERY_FIELDS[0].value);
   const [fGp, setFGp] = useState<string>(QUERY_FIELDS[1].value);
   const [fFund, setFFund] = useState<string>(QUERY_FIELDS[2].value);
   const [fCo, setFCo] = useState<string>(QUERY_FIELDS[3].value);
-  const [filterOpen, setFilterOpen] = useState(false);
   const resetFilters = () => { setFMf(QUERY_FIELDS[0].value); setFGp(QUERY_FIELDS[1].value); setFFund(QUERY_FIELDS[2].value); setFCo(QUERY_FIELDS[3].value); };
   /* 칩 × = 네 항목 모두 '전체'('') 로 해제 — 전부 비면 칩 자체가 사라진다(초기화=원문 기본값 복원과는 별개) */
   const clearFilters = () => { setFMf(''); setFGp(''); setFFund(''); setFCo(''); };
