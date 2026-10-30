@@ -41,7 +41,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 기간 기본값(전월 1일~오늘 등) · [필터 적용] 시 범위 검증 | 기본값 칩(× = 전 기간, [초기화] = 기본값) · 초안(draft) 드로어 | [[apfs-detail-filter]] "typed 페이지 트랙"의 '적용 방식 2가지'·'기본값으로 시작하는 기간' |
 | 2단 헤더 그리드 + tfoot 합계 | AG Grid `ColGroupDef`(`marryChildren`) + `pinnedBottomRowData=useMemo([computeTotal(filteredRows)])` | [[apfs-aggrid]] |
 | 셀 안 편집 + [저장] 일괄 반영(행추가·행삽입·행삭제 토글·이동) | 저장형 편집 그리드 — 행 상태 I/U/D, 저장 중 `inert` 잠금 | [[apfs-aggrid]] "페이지 편집 그리드 — 저장형 I/U/D" |
-| 상세로 들어가는 셀(제목·문서번호·전표번호) | `LinkCell` + `onCellKeyDown` Enter 동치 | [[apfs-aggrid]] "셀 링크" |
+| 상세로 들어가는 셀(제목·문서번호·전표번호) | `LinkCell`(`src/dash/link_cell.tsx`) + `onCellKeyDown` Enter 동치 | [[apfs-aggrid]] "셀 링크" |
 | 행 다중선택(기본) | 모듈 상수 `ROW_SELECTION = {mode:'multiRow',checkboxes:true,headerCheckbox:false,selectAll:'filtered',enableClickSelection:false}`(선택은 **체크박스로만** — 행 본문 클릭 선택 없음, 2026-09-22) + `selectionColumnDef={SELECTION_COL}` + `getRowId` 안정 id. **단일 대상 액션은 `selCount===1` 게이트, 삭제는 게이트 필터형 벌크**(2026-09-23 사용자 결정 — 종전 라디오 단일선택은 폐기). ⚠ **선택이 액션(삭제·단계전이·행 편집)을 만들 때만** — 조회 전용이면 `rowSelection` 자체를 두지 않는다. 라디오는 master-detail 좌 그리드 예외뿐 | [[apfs-aggrid]] |
 | 심사단계 셀 + 단계별 작업 버튼 + 전이 | **[[apfs-stage-workflow]]** (신규 패턴) | 이 조립표 |
 | 편집 팝업(flat ≤ 25필드) | `kind:'form'` PageSchema + `RowFormModal`(단계별 제목은 `title` prop) | [[apfs-form-modal]] |

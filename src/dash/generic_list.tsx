@@ -42,6 +42,7 @@ import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트
 import type { CtxItem, CtxMenuState } from './row_context_menu';
 import type { AppliedFilter } from './applied_filters';
 import { GridFrame, KpiBadge, FooterActions } from './grid_frame';
+import { LinkCell } from './link_cell';   // 셀 링크 공용본(상세 팝업 진입)
 import { DrawerSelect } from './drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 import { ConfirmCombo, uniformConfirm } from './confirm_combo';   // 확정/미확정 inlineSelect 컬럼의 선택 바 일괄 변경   // 공통 양식 셸 + KPI 배지(apfs-grid 스킬 SSOT)
 
@@ -385,21 +386,6 @@ const DETAIL_HINT: Record<DetailPopup, string> = {
   dueDiligChecklist: '투자금실사보고서 체크리스트 조회',
   gpRatioDetail: '운용사정량지표상세(재무건정성비율) 보기',
 };
-
-/* 셀 안 링크 — 값 클릭으로 상세 팝업 진입. occasional_report_manage.tsx의 LinkCell 복사 관례.
-   ⚠ `title`엔 동작 힌트만 담는다.
-   ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다.
-   외관: primary + 600, 평상시 밑줄 없음 / hover에만 밑줄(목업 `.linktxt`). */
-function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
-  return (
-    <button
-      type="button" title={hint} onClick={onClick}
-      className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
-      style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      {value}
-    </button>
-  );
-}
 
 /* 합계(pinned bottom) 행 셀 — `schema.totals` 선언 스키마만 그 행이 있다(schemas/totals.ts).
    데이터 행 렌더러(링크·셀 select·첨부 칩·상태 배지)를 합계 행에 쓰지 않는다 — 합계의 '-' 가 배지로,

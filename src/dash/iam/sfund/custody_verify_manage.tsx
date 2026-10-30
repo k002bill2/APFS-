@@ -57,6 +57,7 @@ import { CustodyEditModal } from './custody_verify_edit_modal';
 import type { CustodyEditValue } from './custody_verify_edit_modal';
 import { SubFundSpecModal, SPEC_SAMPLE_SUBFUND } from '../report/subfund_spec_modal';   // 샘플 행 = 명세 팝업 공유본
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -156,19 +157,6 @@ type MemoRow = { id: string; no: number; memos: VerifyMemo[] };
 /* 메모 등록(+섹션1 수정) 버튼 컬럼의 colId — 조작 요소라 엑셀 직렬화에서 제외한다(화면=엑셀 불변식의 유일한 예외) */
 const MEMO_ACTION_COL = 'memoAdd';
 
-/* 셀 내 링크 — 클릭 시 자펀드 명세 팝업(`occasional_report_manage.tsx` LinkCell 동형 로컬 복사).
-   외관: primary 색 + 600, **평상시 밑줄 없음 / hover에만 밑줄**.
-   ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다. */
-function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
-  return (
-    <button
-      type="button" title={hint} onClick={onClick}
-      className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
-      style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      {value}
-    </button>
-  );
-}
 /* 자펀드 컬럼(세 섹션 공통) — 셀 링크 → 자펀드 명세. 셀 Enter는 그리드 onCellKeyDown이 같은 팝업을 연다 */
 function fundCol<T extends { fn: string }>(openFundSpec: () => void): ColDef<T> {
   return { ...txt<T>('fn' as ColDef<T>['field'], '자펀드', 200, 280),

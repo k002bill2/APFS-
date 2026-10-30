@@ -48,6 +48,7 @@ import { OccasionalReportModal } from './occasional_report_modal';
 import { GpSpecModal } from './gp_spec_modal';
 import { SubFundSpecModal, SPEC_SAMPLE_SUBFUND } from './subfund_spec_modal';   // 샘플 행 = 명세 팝업 공유본
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -134,21 +135,9 @@ const confirmCol = (field: 'jsBy' | 'rsBy', header: string, role: Role,
     : <Button variant="outline" size="sm" onClick={() => onConfirm(role, p.data.id)}>확인</Button>),
 });
 
-/* 셀 내 링크 — 클릭 시 해당 명세/보고서 팝업(목업 S1_04의 셀 링크 동작 그대로).
-   2026-09-12 사용자 지시로 툴바 조회 버튼 3종을 대체한다.
-   ⚠ 폰트는 inline `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다.
-   외관은 목업 `.linktxt` 그대로: primary 색 + font-weight 600, **평상시 밑줄 없음 / hover에만 밑줄**
+/* 셀 내 링크(공용 `link_cell.tsx`) — 클릭 시 해당 명세/보고서 팝업(목업 S1_04의 셀 링크 동작 그대로).
+   2026-09-12 사용자 지시로 툴바 조회 버튼 3종을 대체한다. 평상시 밑줄 없음 / hover에만 밑줄
    (2026-09-12 사용자 지시 "밑줄 삭제" = 목업 원본 `text-decoration:none`과 일치). */
-function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
-  return (
-    <button
-      type="button" title={hint} onClick={onClick}
-      className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
-      style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      {value}
-    </button>
-  );
-}
 
 const makeColumns = (openSpec: (k: SpecKind) => void, onConfirm: (role: Role, id: string) => void): ColDef<OccReportRow>[] => [
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },

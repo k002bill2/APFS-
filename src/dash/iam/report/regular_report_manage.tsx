@@ -55,6 +55,7 @@ import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
 import { ConfirmCombo, uniformConfirm } from '../../confirm_combo';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 import { GpSpecModal } from './gp_spec_modal';
 import { SubFundSpecModal, SPEC_SAMPLE_SUBFUND } from './subfund_spec_modal';
 
@@ -128,19 +129,7 @@ const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 /* 모듈 스코프에 한 번만 만든다 — 렌더마다 새 컴포넌트 타입이면 AG Grid가 헤더를 통째로 remount한다 */
 
-/* 셀 내 링크(운용사·자펀드) — 클릭 시 명세 팝업. occasional_report_manage.tsx `LinkCell`과 같은 규약:
-   primary + 600, 평상시 밑줄 없음 / hover에만 밑줄. flex 셀은 기본 ellipsis가 안 먹어 truncate를 준다.
-   ⚠ `font:'inherit'` — preflight:false라 button이 UA 기본(13.3px Arial)으로 튄다. */
-function LinkCell({ value, hint, onClick }: { value: string; hint: string; onClick: () => void }) {
-  return (
-    <button
-      type="button" title={hint} aria-label={`${value} ${hint}`} onClick={onClick}
-      className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer"
-      style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>
-      {value}
-    </button>
-  );
-}
+/* 셀 내 링크(운용사·자펀드, 공용 `link_cell.tsx`) — 클릭 시 명세 팝업. 접근名 = `${값} ${힌트}`(ariaLabel) */
 type SpecKind = 'gpSpec' | 'fundSpec';
 /* 상세조회 표시 조건 — 상세 화면(S1_06_01)은 월간보고 전용이라 반기·보고 없음 행은 빈칸 */
 const hasDetail = (r: RegularReportRow | undefined) => r?.rt === '월간보고서' && r.file != null;
@@ -178,9 +167,9 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void, 
   { field: 'no', headerName: 'No', width: 68, maxWidth: 68, pinned: 'left', cellStyle: tabNum, valueFormatter: (p) => String(p.value) },
   /* 운용사·자펀드 = 명세 팝업 링크(셀 Enter도 같은 팝업). 긴 명칭 컬럼만 maxWidth 상한(apfs-aggrid 관리형 그리드 규약). */
   { field: 'gp', headerName: '운용사', width: 190, maxWidth: 240, cellStyle: flexCenter,
-    cellRenderer: (p: any) => <LinkCell value={p.value} hint="운용사 명세 보기" onClick={() => openSpec('gpSpec')} /> },
+    cellRenderer: (p: any) => <LinkCell value={p.value} hint="운용사 명세 보기" ariaLabel={`${p.value} 운용사 명세 보기`} onClick={() => openSpec('gpSpec')} /> },
   { field: 'fn', headerName: '자펀드', width: 196, maxWidth: 300, cellStyle: flexCenter,
-    cellRenderer: (p: any) => <LinkCell value={p.value} hint="자펀드 명세 보기" onClick={() => openSpec('fundSpec')} /> },
+    cellRenderer: (p: any) => <LinkCell value={p.value} hint="자펀드 명세 보기" ariaLabel={`${p.value} 자펀드 명세 보기`} onClick={() => openSpec('fundSpec')} /> },
   { field: 'ymLabel', headerName: '보고년월', width: 112, cellStyle: tabNum, valueFormatter: mnFmt },
   /* 보고구분 — '월간보고서'만 상세 진입 링크(목업 `<a class="tag b">`), 반기보고서는 비링크 `<span>`.
      배지를 버튼으로 감싼다: `font:'inherit'`는 preflight:false에서 UA 기본 폰트(13.3px Arial)로 튀는 것을 막는다. */

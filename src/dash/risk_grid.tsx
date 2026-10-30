@@ -79,8 +79,9 @@ function minWidthOf(c: ColMeta, rows: readonly Row[], unit: Unit | null, digits?
 const Dash = () => <span style={{ color: 'var(--muted-foreground)' }}>-</span>;
 
 /* 팝업 트리거 셀 — fund_early_warning.tsx YieldCell 과 같은 계약:
-   탭 스톱은 `.ag-cell` 하나(자식에 tabIndex/role 금지), ARIA 는 포커스를 받는 gridcell 에 useEffect 로 싣는다. */
-function LinkCell({ p, label }: { p: ICellRendererParams<Row>; label: string }) {
+   탭 스톱은 `.ag-cell` 하나(자식에 tabIndex/role 금지), ARIA 는 포커스를 받는 gridcell 에 useEffect 로 싣는다.
+   공용 LinkCell(`link_cell.tsx`, 버튼)과 다른 계약 — YieldCell 계열이라 합치지 않는다. */
+function PopupTriggerCell({ p, label }: { p: ICellRendererParams<Row>; label: string }) {
   const cell = p.eGridCell;
   const v = p.value as Cell;
   useEffect(() => {
@@ -113,7 +114,7 @@ function renderer(c: ColMeta, unit: Unit | null, linkLabel: string, custom?: (ro
     const pinned = !!p.node.rowPinned || (!!isSubtotal && !!p.data && isSubtotal(p.data));
     if (custom && !pinned && p.data) return custom(p.data);
     if (pinned && v === '') return null;                      // 합계행 colspan 영역
-    if (c.link && !pinned) return <LinkCell p={p} label={linkLabel} />;
+    if (c.link && !pinned) return <PopupTriggerCell p={p} label={linkLabel} />;
     if (v == null) return <Dash />;
     const neg = c.neg && typeof v === 'number' && v < 0;
     const color = neg ? 'var(--danger-text)' : undefined;

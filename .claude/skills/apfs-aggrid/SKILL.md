@@ -299,11 +299,24 @@ const onGroupSelection = useCallback((e: SelectionChangedEvent<Row>) => {
 - 엑셀은 `D` 행을 뺀다(저장 후 모습과 같게).
 - 형제: **전표 분개 그리드**(`acc/slip/journal_entry_screen.tsx`, 전체 화면 다이얼로그 안) — 같은 관용구 + Σ pinned 합계행 + 계정코드 미입력 행 `--warning` 안쪽 테두리. 검색 대상 행은 **인덱스가 아니라 행 key** 로 잡고(이동 후 어긋남 방지), 셀 콜백은 ref 로 최신 form 을 본다(`columnDefs` 고정 유지).
 
-## 셀 링크 = 상세 진입 (LinkCell — 로컬 사본 10개, 8개 동형)
+## 셀 링크 = 상세 진입 (공용 `LinkCell` — `src/dash/link_cell.tsx`)
 상세로 들어가는 칸이 정해져 있으면(제목·문서번호·전표번호) 그 셀을 링크 버튼으로 그린다. 행 더블클릭과 별개의 진입점이다.
-- 외관: `<button type="button" title={hint} className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer" style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>` — **`font:'inherit'` 필수**(preflight:false 라 button 이 UA 기본 13.3px Arial 로 튄다). 숫자 번호면 `tabular` 추가.
+- 외관: `<button type="button" title={hint} className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer" style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>` — **`font:'inherit'` 필수**(preflight:false 라 button 이 UA 기본 13.3px Arial 로 튄다). longhand(`fontWeight`·`fontVariantNumeric`)는 그 **뒤**에 둔다(앞에 두면 shorthand 가 리셋). 숫자 번호·일자면 `tabular` prop.
 - **키보드 동치 = 그리드 `onCellKeyDown`**: 초점 셀에서 Enter + 그 colId 이면 같은 핸들러를 부른다. pinned 행은 제외(`e.rowPinned`).
-- ⚠ **공용 부품이 아직 없다** — 같은 함수가 `generic_list`·`risk_grid`·`iam/report/{regular,occasional}_report_manage`·`general_meeting_manage`·`iam/sfund/{apfs_contribution,gp_contribution,custody_confirm,custody_verify}_manage`·`acc/slip/suspense_manage` 에 로컬 사본으로 있다(2026-10-30 실측 10개). 8개는 `({ value, hint, onClick })` + 위 클래스 동형(`apfs_contribution`·`gp_contribution` 은 `tabular` 추가)이고, **변형 2개**는 `risk_grid.tsx`(`({ p, label })` — 셀 params 를 직접 받음)와 `custody_confirm_manage.tsx`(`color` prop — `text-primary` 대신 색 지정)다. 새 화면은 동형 사본을 복사하되 위 외관 계약을 바꾸지 않는다. 공용화 때는 변형 2개의 요구(params 직접 수신·색 지정)를 함께 담아야 한다. 폴더 규칙상 루트 공용 대상이라 공용화는 별도 작업 후보다.
+- **`src/dash/link_cell.tsx` 의 `LinkCell` 을 import 한다** — 로컬 사본(`function LinkCell(`·이름만 다른 `SpecLink` 류)을 새로 두지 않는다(가드 `link_cell.test.ts`, 렌더 계약 `link_cell_render.test.ts`). 위 외관이 이 부품의 마크업이다.
+
+  | prop | 타입 | 용도 |
+  |---|---|---|
+  | `value` | `string \| number` | 셀에 보이는 값 |
+  | `hint` | `string` | `title`(동작 힌트만) |
+  | `onClick` | `() => void` | 상세 진입 |
+  | `color?` | `string` | `text-primary` 대신 이 색 — 상태색이 곧 정보인 셀(`custody_confirm` 상세보기 = `--success-text`/`--danger-text`) |
+  | `tabular?` | `boolean` | `fontVariantNumeric: 'tabular-nums'`(숫자 번호·일자) |
+  | `ariaLabel?` | `string` | button `aria-label`(예: `regular_report_manage` = `` `${값} ${힌트}` ``) |
+  | `srText?` | `string` | 값 뒤 `sr-only` 접미(예: `custody_confirm` = `' 대사 상세 보기'`, 앞 공백 포함) |
+
+  화면마다 다른 접근名은 호출부가 `ariaLabel`·`srText` 로 그대로 넘긴다(공용화 때 정규화하지 않았다).
+- ⚠ **`risk_grid.tsx` `PopupTriggerCell`·`ews/alert/fund_early_warning.tsx` `YieldCell` 은 별개 계약**이라 합치지 않는다 — 버튼이 아니라 `<span>` + 셀(`p.eGridCell`)에 `aria-haspopup`/`aria-label` 을 거는 팝업 트리거(탭 스톱=`.ag-cell` 하나, 자식 focusable 금지, 항상 밑줄 + external 아이콘).
 
 ## ⚠️ 선택 건수를 DOM 으로 세지 말 것 (오탐 함정, 2026-09-15 실측)
 `.ag-row-selected`를 `querySelectorAll`로 세면 **한 행이 2건으로 잡힌다** — AG Grid가 체크박스(선택) 열을 `.ag-pinned-left-cols-container`에, 나머지를 `.ag-center-cols-container`에 **따로 렌더**하므로 같은 행의 조각이 양쪽에 하나씩 존재한다. 이걸 모르면 멀쩡한 단일선택을 "중복 선택 버그"로 오진하고 없는 버그를 고치게 된다.
