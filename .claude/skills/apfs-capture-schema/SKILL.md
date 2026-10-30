@@ -10,6 +10,7 @@ description: 현행시스템 목업 HTML(+`*_spec.json`) 또는 화면 캡처에
 ## 입력
 - **1순위 — 목업 HTML** + 형제 `*_spec.json` (예: `S1_30_투자기업정보.html`). **현재 동결된 스키마 대부분이 이 경로다.**
 - 2순위 — 화면 캡처 이미지 1~5장 (예: `/tmp/apfs_caps/<SYS>/word/media/imageN.png`). 목업이 없을 때만.
+- 화면설계서(PPT/PDF, 화면ID `ACC-001` 식) — 그리드 컬럼·상세필터 슬라이드에서 같은 항목을 추출한다. 이벤트 슬라이드(`E00`~)에 저장·검증·게이트 같은 업무 규칙이 있으면 대개 typed 트랙이다 → [[apfs-manage-page]] "0-1. 입력 출처"(설계서 충돌 우선순위·"설계서와 다른 점" 기록 규약도 거기).
 - 대상 메뉴 리프 label (미지정 시 추출 후 매핑 제안)
 
 > ⚠️ **스킬 이름의 `capture`는 연혁이다** (이미지 전용이던 시절의 잔재, 2026-09-14 실측으로 정정).
@@ -36,7 +37,8 @@ description: 현행시스템 목업 HTML(+`*_spec.json`) 또는 화면 캡처에
    답에 따라 3단계 동결 시 스키마에 반영: **미포함 → `hideKpis: true`**(금액 컬럼이 있어도 제네릭 금액 KPI 폴백을 확실히 끈다) · 포함 → `countKpis` 배열. 결정은 `provenance` 옆 주석(예: `// KPI: 미포함(HITL 2026-..)`)으로 남겨 재실행 시 재질문을 피한다. 규약 근거는 [[apfs-grid]] "KPI 배지 행".
 3. **검수·동결**: 추출 결과를 **출처(목업 HTML 또는 캡처)와 1회 대조** → `provenance{capturedAt,sourceSystem,captureFile}` 채움 — `captureFile`에는 **실제로 읽은 파일 경로**를 넣는다(`.html` 목업 경로도 그대로) → 2.5단계 HITL 결정(`countKpis`/`hideKpis`) 반영 → `src/dash/<도메인>/<중분류>/<route_snake>.ts`로 저장(파일명은 영문 snake_case, `route` 는 메뉴 리프의 영문 kebab `path` — 한글 파일명·한글 route 금지, 2026-10-14) — 메뉴 위치의 도메인 폴더(`docs/filetree.md` — 백엔드 패키지 트리와 같은 도메인 약어, 예: 투자기업정보 → `iam/ent/`). `schemas/` 에는 레지스트리·타입 등 공용 인프라만 둔다(parsePageSchema/zod 통과 필수).
 4. **충돌검사·배선**: 라벨이 중복 리프면 data.ts에 `path` 부여(필수) 후 그 path를 route로. schemas/index.ts의 ALL 배열에 import 추가(중복키면 buildRegistry가 빌드에러).
-5. **검증**: `npm test`(스키마 zod) + `npm run build` + `npm run dev` 시각 확인(라이트/다크) + responsive-ui 체크.
+4.5. **기능설명서 원고**: 스키마 route 도 `docs/UIUX_기능설명서.html` 생성 대상이다(`schemas/index.ts` 등록 route 전부). `scripts/uiux-doc/screens_data.py` `SCREENS` 에 항목을 추가하고 `python3 scripts/uiux-doc/gen_doc.py` 로 재생성 — 빠뜨리면 `원고 누락: …` + exit 1. 절차·형식은 [[apfs-manage-page]] SOP 7.
+5. **검증**: `npm test`(스키마 zod) + `npm run build` + `python3 scripts/uiux-doc/gen_doc.py`(exit 0) + `npm run dev` 시각 확인(라이트/다크) + responsive-ui 체크.
 
 ## 산출물
 - 검수된 `src/dash/<도메인>/<중분류>/<route>.ts`

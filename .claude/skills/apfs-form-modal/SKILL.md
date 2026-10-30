@@ -212,6 +212,30 @@ export const schema: PageSchema = {
   - **첨부 카드 = 1줄·34px**: `Attachment size="sm" className="h-[34px] py-0"` + `AttachmentMedia className="size-6"`(36→24) + `AttachmentTitle`만(설명줄 `AttachmentDescription` 없음) → 날짜 입력 등 폼 컨트롤과 **높이 34px 정합**. 단일 카드도 `AttachmentGroup`(role=list) 유지(위 ⑤).
 - `RowFormModal`에 **`title?: string`** prop이 있다(2026-09-08) — 같은 flat 스키마를 단계별 다른 제목으로 열 때 사용(→[[apfs-stage-workflow]]).
 
+## 확장: 검색(선택) 팝업 — 다른 엔티티 1건을 골라 칸에 채우기 (2026-10-28 PR #365·#368)
+입력칸 옆 [검색](또는 키워드 + Enter)으로 열어 **계정과목·거래처처럼 다른 엔티티 한 건을 골라 반영**하는 팝업. 편집 모달이 아니다.
+- **정본**: `acc/account_search_modal.tsx`(`AccountSearchModal` — 회계 대분류 루트 공용, 결산양식 관리·전표등록 2화면이 씀) · 형제 `acc/slip/partner_search_modal.tsx`(간편추가 포함). 같은 엔티티 검색이 다른 화면에도 나오면 **새로 만들지 말고 이것을 import** 한다(대분류 루트 배치 규칙 — CLAUDE.md 폴더 규칙).
+  - ⚠ 계정과목 관리(ACC-001)의 상위계정 검색은 공용 팝업보다 먼저(PR #364) 만든 **별도 `AccountSearchDialog`**(`acc/baseinfo/account_code_form_modal.tsx` — 라디오 목록, 후보를 계정분류로 고정하는 `lockCls`)로 남아 있다(2026-10-30 실측). 공용 팝업 머리 주석은 ACC-001 도 공통이라고 적지만 실제 import 는 없다 — 통합은 별도 작업 후보이고, 새 화면은 이 사본이 아니라 공용 팝업을 쓴다.
+- **props 계약**: `open`·`onOpenChange`·`onSelect(item)` + `initialKeyword`(호출부 입력값 — 있으면 열리자마자 그 검색어로 조회) + **`selectable(item) => boolean`**(고를 수 있는 범위를 **호출부가 정한다** — 상위계정 = 집계계정만, 분개 = 입력여부 Y 만. 팝업 안에 하드코딩 금지) + `list`(검색 원천, 기본 공용 데이터). 원장에 추가까지 하는 팝업(간편추가)은 원장 `list`·`onAdd` 도 **호출부(페이지) state 소유** — 추가분이 페이지 수명 동안 다른 경로(업로드 코드 해석 등)에도 보이게.
+- **본문**: 검색어 입력(Enter 또는 `IconBtn icon="search" label="조회"`) + 조건 라디오(DS `RadioGroup`, 바꾸면 즉시 거름) → 결과 AG Grid(높이 고정 320 · 정렬 끔 `{...DEFAULT_COL_DEF, sortable:false}` · 코드 열 좌측 — 설계서의 가운데 정렬은 따르지 않는다).
+- **선택 = 행 클릭 단일선택**: `{ mode:'singleRow', checkboxes:false, enableClickSelection:true }` — 목록 페이지의 "체크박스로만" 규약([[apfs-aggrid]] "관리형 페이지 그리드 규약"의 체크박스·예외 3종 ③)의 **피커 예외**다(고를 대상이 1건뿐이고 선택 자체가 목적). 결과가 바뀌어 선택 행이 빠지면 `onRowDataUpdated` 에서 선택 state 를 다시 읽는다.
+- **반영**: 행 더블클릭 = 바로 반영 · [확인] = 선택 행 반영, 미선택이면 `toast.error('○○을 선택해 주세요.')` · `selectable` 이 false 인 행을 고르면 [확인] disabled + 결과 아래 `aria-live` 캡션에 사유(평소엔 `N건`). 반영 후 `dlgRef.current?.close()`(exit 애니메이션 경로).
+- **크롬**: 46px 패밀리(헤더·본문·푸터 `px-[46px]`, 위 "모달 크롬"), `max-w-[640px]`(결과 4열) / `max-w-[920px]`(7열) · `max-h-[88vh]` · `onInteractOutside` preventDefault. 푸터는 **[닫기] → 주 액션** 순(설계서 "선택 | 닫기" 표기 역순). [확인]은 선택 반영일 뿐 서버 실행이 아니라 `SaveButton` 이 아닌 일반 `Button variant="primary"`. 간편추가처럼 저장이 붙으면 그 버튼만 `SaveButton`.
+- 호출부 상태는 `{ kind: 'row'; id } | { kind: 'filter' }` 처럼 **어디에 반영할지**를 함께 든다 — 같은 팝업을 행 [검색]·상세필터 [검색]이 공유한다(결산양식 관리). 행 대상은 인덱스가 아니라 **행 id/key** 로 잡는다(행 이동 뒤 어긋남 방지).
+
+## 확장: 전체 화면 입력 다이얼로그 — 헤더+분개 그리드+첨부처럼 한 화면 분량의 입력 (2026-10-29 PR #368·#369·#370)
+등록 폼이 모달 한 장(880px)에 담기지 않으면 별도 라우트를 만들지 않고 **공용 `Dialog` 를 뷰포트 거의 전체로** 띄운다 — 포커스 트랩·Esc·포털은 Dialog 가 이미 준다(새 오버레이 프레임워크 금지).
+- **정본**: `acc/slip/journal_entry_screen.tsx`(`JournalEntryScreen`). 크기 `DialogContent hideClose className="w-[calc(100vw-48px)] h-[calc(100vh-48px)] max-w-none"`, 768px 이하는 우측 사이드를 본문 아래로 적층(`min-[769px]:flex-row`).
+- **닫기 경로는 `requestClose` 한 곳**: X(`hideClose` 후 자체 `IconBtn icon="x"`)·하단 [닫기]·Esc(`onEscapeKeyDown` preventDefault 후 호출)·바깥 클릭(`onInteractOutside` preventDefault)을 전부 여기로 모은다. `dirty`(= `formSnapshot(form) !== baseline`, 조회 전용이면 false)면 AlertDialog 로 확인, 아니면 `dlgRef.current?.close()`. ⚠ `onOpenChange(false)` 에서 막으려 하면 늦다 — exit 애니메이션이 이미 시작된 뒤다([[dialog-flip-animation-contract]]). 하위 팝업(검색 팝업·확인 다이얼로그)이 열려 있으면 Esc 는 바깥 화면을 닫지 않는다.
+- **모드는 유니온 하나로**: `entry.mode: 'new' | 'copy' | 'reverse' | 'edit' | 'deleted'` → 제목 맵(`전표등록 (복사)` 등)·초기 폼(`formFromEntry`)·버튼 구성이 갈린다. 다른 화면이 같은 상세를 보여줄 때 **새 상세 화면을 만들지 않고 모드를 더한다**(삭제전표 상세 = `mode:'deleted'`, 미결계정 전표상세 = `readOnly` prop). 새 분기는 그 모드일 때만 타게 해서 기존 모드 동작을 바꾸지 않는다.
+- **조회 전용 = 본문 `<fieldset disabled={readOnly}>`**(`border-0 p-0 m-0`, `minWidth:0`) — 컨트롤마다 disabled 를 달지 않는다. 첨부는 표시 전용 카드, 하단은 [닫기]만. 상단에 이유를 한 줄(`role="note"` + `info` 아이콘). 조회 전용이 생기는 경로가 셋이고 숨기는 범위가 다르다:
+  - 결재 상신·승인 전표의 수정 진입(`isReadOnlyEntry`) — fieldset 비활성만. 그리드 도구·도움말은 보이되 눌리지 않는다.
+  - 강제 조회(`readOnly` prop — 미결계정 전표상세) — 위 + 기능·작성 도움말 숨김, 제목 `전표상세`.
+  - 삭제 모드(`mode:'deleted'` — 삭제전표 상세) — 위 + 분개 그리드 도구·행 선택 열·[검색]·업로드 안내 미렌더, 필수 `*` 미표시(모듈 상수는 두고 렌더에서만 `required:false`), 상단 `Alert` 배너, 하단 [복원]·[닫기].
+- **확인 후 바깥 화면 닫기 순서**(삭제전표 [복원]): AlertDialog Action 은 `restoredRef.current = true; onRestore()` 만 하고, AlertDialog `onOpenChange(false)`(닫힘) 에서 ref 를 보고 `dlgRef.current?.close()` — 두 다이얼로그의 exit 가 겹치지 않는다. 호출부는 상세에 넘기는 행을 modal state **스냅샷**으로 들어, 목록에서 행이 빠져도 exit 동안 내용이 남게 한다.
+- 화면 전용 단축키(⌥S 저장 등)는 [[apfs-hotkeys]] 레지스트리에 등록하고 `{ enabled: !readOnly && 하위 팝업 없음 }` 으로 건다. 목록 화면의 ⌘P·⌥D 바인딩은 이 화면이 열린 동안 `enabled: !entry` 로 끈다.
+- 본문 그리드(분개)는 [[apfs-aggrid]] "페이지 편집 그리드 — 저장형 I/U/D" 의 형제 관용구를 따른다.
+
 ## 읽기전용 명세(kv) 그리드 — 라벨 배열 규약 (2026-09-08 사용자 확정)
 상세/명세 팝업의 **라벨:값 kv 그리드**(골드: `src/dash/iam/report/subfund_spec_modal.tsx` `KvGrid`)는 **라벨 언어로 배열이 갈린다**. 검토 이력: 한글에서 세로 적층·테두리 제거안을 시도 후 **가로 배열로 원복**, 영문은 세로 적층 샘플을 채택.
 

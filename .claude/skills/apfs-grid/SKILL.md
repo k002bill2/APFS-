@@ -165,6 +165,8 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 - **숨겨질 선택 칩은 첫 자리로 끌어올린다** — 메뉴에서 고른 칩이 active 가 되면 다음 렌더에서 slot 0 으로. 다중 선택(조기경보 등급)은 선택 칩이 하나라도 숨겨지면 **선택 칩 전부**를 원래 순서대로 앞에 모은다. **DOM 순서 자체를 바꾼다**(CSS `order` 금지 — 탭 순서 ≠ 보이는 순서, WCAG 2.4.3).
 - 메뉴: 기본 칩(✓ 선택 표시 + 건수) · 구분선 · 적용 칩(값 + × = 해제) · `전체 해제`. 숨긴 항목 중 걸린 필터가 있으면 `+N` 을 primary 틴트로. 트리거는 plain `<button>`(UI.Button 은 asChild 트리거 불가), 메뉴는 Radix 포털. 닫힌 뒤 초점은 트리거로(없어졌으면 행의 마지막 칩으로) — Radix 자동 복귀는 필터 변경 재렌더로 body 에 떨어졌다(실측).
 - **페이지는 데이터만 넘긴다**: `filterChips={X.map((v) => ({ key, label, count, active, onSelect }))}` + `appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}`. 페이지가 `<FilterChip>`·깔때기·적용 칩 마크업을 그리지 않는다 — 가드 `applied_filters.test.ts`(GridFrame/RiskPage 소비 파일의 `<FilterChip`·`<Icon name="filter"`·'필터 제거'·`AppliedChip`/`FilterPill` 사본 금지). `toolbarLeft` 는 칩이 아닌 내용(캡션 등)만.
+  - **필수 주 필터 = `FilterChipItem.required: true`**(2026-10-28 PR #365, 결산양식 관리 양식구분): 라벨 뒤 `*`(foreground·700) + sr-only " 필수" 를 `applied_filters.tsx` 가 그린다. 미선택 상태가 없는 조건이라 **`전체` 칩을 만들지 않고 항상 1개만 active**, active 칩을 다시 눌러도 풀리지 않는다(`onSelect` 에서 `k === 현재값` 이면 return). 그래서 아래 "`필터명: 전체`" 규칙의 대상이 아니다. 설계서의 콤보박스·"○○을 선택하세요" 검증은 미선택 상태가 없으므로 두지 않는다.
+  - **긴 경로형 적용 칩 = `AppliedFilter.wide: true`**(2026-10-14 PR #328, 투자기업정보(통합) 조회 대상): 최대 480px·좁으면 2줄 줄바꿈, `+N` 으로 접히지 않는다(배치 계산은 최소 160px 만 선예약). 여러 단계 선택(모펀드 › 운용사 › 조합 › 기업)을 칩 여러 개로 쪼개지 않고 값 하나(구분자 ` › `)로 합칠 때 쓴다. × 는 그 단계 전부를 해제한다.
 - 행 선택 중(선택 액션 바가 좌측 차지): 깔때기와 칩 줄(`FilterChipRow`)을 통째로 감춘다(`grid_frame.tsx` `selecting`) — 페이지가 `selCount>0 ? null` 로 칩을 끌 필요 없음. 그래서 필터를 바꿀 때 선택을 해제하지 않으면 칩이 계속 안 보인다 — 외부 필터 화면은 필터 effect 에서 `deselectAll()`(2026-10-27 → [[apfs-detail-filter]]).
 - 우측 액션 `shrink-0` 고정. ≤640px 만 좌측 `basis-full` 로 좌/우 두 줄 적층(칩 행 폭 = 남은 폭이라 판정이 자동으로 맞는다).
 - 보이는 캡션 없음(`role="group" aria-label="필터"`). 적용 칩 = 값만·240px 말줄임·항목명은 DS Tooltip(호버·× 포커스)/aria 로(2026-10-26 네이티브 title 대체 — 필터 적용 직후 3초 자동 노출·모달 중엔 닫힐 때까지 지연 → [[apfs-detail-filter]]). 해제 가능 ≥2 이면 `전체 해제`. **`+N` 의 N = 숨긴 필터(기본 칩+적용 칩) 수 — `전체 해제`는 세지 않는다**(2026-09-29: 필터 2개 숨김이 `+3` 으로 보인 버그). 숨긴 게 `전체 해제` 하나뿐이면 `+N` 트리거를 그리지 않는다(`+0` 금지).
@@ -178,7 +180,11 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   ```
   등록 O:  단위: 원 │ ▣ 상세필터 │ ＋ <도메인 액션명> 등록 │ ⟳ 조회
   등록 X:  단위: 원 │ ▣ 상세필터 │ ⟳ 조회
+  보조 O:  ▣ 상세필터 │ ＋ 계정과목 등록 │ ↺ 삭제이력 │ ⟳ 조회        ← 계정과목 관리(2026-10-28 PR #366)
+  편집형:  ▣ 상세필터 │ ＋ 행추가 │ ✓ 저장 │ ⟳ 조회                  ← 결산양식 관리(→[[apfs-aggrid]] "페이지 편집 그리드")
   ```
+  - **⟳ 조회는 언제나 맨 끝이다.** 등록 외 툴바 진입 버튼(삭제이력 팝업 등 화면 단위 보조 화면)은 **등록 오른쪽·조회 왼쪽**에 `variant="outline" size="sm"` 으로 둔다. 선택한 행에 거는 액션은 툴바가 아니라 선택 바(`contextActions`)다.
+  - 아이콘은 **화면 안에서 다른 뜻과 겹치지 않게** 고른다 — 삭제이력은 `history`(시계+되돌림). `clock` 은 GNB 방문기록, `trash` 는 선택 바 삭제와 겹친다(PR #366). 없는 아이콘은 `icons.tsx` MAP 에 lucide 이름으로 1줄 추가한다(기존 항목 변경 금지).
   - ⟳ **조회 = `<IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />` (라벨 "새로고침" 아님 — 2026-09-28 통일).** `hotkey` 로 `⌥R` 바인딩 + 툴팁 힌트(`조회 ⌥R`)가 같이 붙는다 — 페이지당 1개. `IconBtn`은 `icon="refresh"` **+ `onClick`이 있을 때** 클릭마다 아이콘을 +360° 누적 회전한다(1.6s ease-ds, 연타 시 이어 돎, 저모션 자동 비활성). `onClick` 없는 refresh 버튼은 돌지 않는다 — 무동작 버튼이 조회된 척하지 않게. 끄려면 `spinOnClick={false}`.
   - **비동기 조회**: `refresh`가 Promise를 반환하면 settle까지 등속 회전(`tween.spinLoop`)하다 돌던 바퀴를 마저 돌고 감속 1회전(`tween.spinStop`)으로 멈추며 대기 중 `aria-busy`. 현재 핸들러는 전부 동기라 이 경로는 API 연동 시 활성 — 오류 토스트는 호출부 책임(IconBtn은 reject를 다시 던지지 않는다).
   - 토스트 문구는 `'조회되었습니다'`(구 '새로고침했습니다' 금지).

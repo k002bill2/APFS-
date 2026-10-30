@@ -120,6 +120,8 @@ const columnDefs: (ColDef<Row> | ColGroupDef<Row>)[] = [
 | 페이지네이션 | `pagination`+`suppressPaginationPanel` 후 `paginationGoToPage` 등으로 GridFrame 푸터에 커스텀 페이저 |
 | 상세필터 | **External Filter**(Community): `isExternalFilterPresent`/`doesExternalFilterPass` + 값 변경 시 `apiRef.current?.onFilterChanged()`. `rowSelection` 이 있으면 바로 뒤에 `deselectAll()` + 그리드에 `onModelUpdated={dropHiddenSelection}`(수정·단계 전이로 선택 행이 조건 밖에 나가는 경로) — 숨긴 행의 선택이 남는다(2026-10-27, 가드 `filter_clears_selection.test.ts`). 드로어 UI·필터칩은 →[[apfs-detail-filter]] |
 | 수정 진입 | `onRowDoubleClicked` → 스키마 모달(→[[apfs-form-modal]]) |
+| 셀 링크 진입 | 제목·번호 셀 = `LinkCell` + `onCellKeyDown` Enter 동치(아래 "셀 링크" 절) |
+| 셀 안에서 고치고 [저장] | 저장형 편집 그리드(아래 "페이지 편집 그리드 — 저장형 I/U/D" 절) |
 | Excel 내보내기 | SheetJS(아래) — Community엔 `exportDataAsExcel` 없음 |
 | 우클릭 컨텍스트 메뉴 | **Community 대체**(내장 context menu는 Enterprise 전용): `onCellContextMenu`+`preventDefaultOnContextMenu`+공유 `RowContextMenu`(아래) |
 | pivot | **불가** — Enterprise 전용. Community 재현 불가(보류) |
@@ -175,6 +177,7 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
 **페이지가 켜는 것**
 - **컬럼 폭 = 그리드 특성으로 고른다.** AG Grid엔 "내용 맞춤 + 남는 공간 채움"을 한 방법으로 하는 수단이 없다:
   - **넓은 다열 테이블**(컬럼 합 > 프레임 폭, 자펀드관리 등) → `autoSizeStrategy={AUTO_SIZE_CONTENT}`(`aggrid_theme.ts` export, `fitCellContents`, 내용 폭·잘림 방지). 긴 텍스트 컬럼은 `maxWidth` 캡(자펀드 360·GP 240). ⚠ 자동 산정 순간 컬럼 가상화가 풀려 전 컬럼을 그린다(35컬럼도 동작, 첫 프레임만 무거움).
+    - **잔여폭 흡수 컬럼 1개를 둔다 — `flex:1, minWidth, width:minWidth, suppressAutoSize:true`**(2026-10-27 PR #362, 조합원총회). `fitCellContents` 는 전 컬럼을 내용 폭으로 고정하므로 **전체 폭 모드(`apfs.width=full`)처럼 프레임이 컬럼 합보다 넓어지면 행이 마지막 컬럼에서 끝나 우측이 빈다**(헤더 배경만 끝까지 칠해져 잘린 것처럼 보임 — 1920·LNB 접힘 227px 실측). 1280 고정 폭에선 가로 스크롤만 생겨 재현되지 않으니 전체 폭에서 확인한다. 가장 긴 텍스트 컬럼(제목·명칭)에 위 4종을 주고 `maxWidth` 는 뺀다. **`suppressAutoSize` 가 없으면 fitCellContents 가 flex 폭을 덮어써 흡수하지 못한다.** `minWidth` 는 수정 전 내용 맞춤 실측값 이상(가장 긴 값이 좁은 프레임에서도 안 잘리게). 정본: `generic_list.tsx` stretch 컬럼 · `iam/gp/all_report_status.tsx` · `iam/report/general_meeting_manage.tsx`(제목).
   - **좁은 매트릭스/집계 그리드**(컬럼 합 < 프레임 폭 → 우측 빈 공간, 조성·출자현황 등) → `autoSizeStrategy`를 **빼고** 컬럼에 **`flex:1` + `minWidth`**(예: `numCol`에 `flex:1, minWidth:92`). flex가 그리드 폭을 동적으로 채우고(우측 빈 공간 0) 리사이즈에도 자동 재분배한다. 고정폭 컬럼(pinned 구분 등)·**No·상태 배지(→ ⑩ compact)**는 flex 없이 `width` 유지. 좁으면 minWidth 하한→가로 스크롤(반응형 보존). **flex 컬럼에도 `width: minWidth` 를 함께 준다**(→ ⑨ — 안 주면 마운트 직후 200px 기본폭 넘침이 캐시돼 하단 스크롤 띠가 남는다).
     - ✗ `autoSizeStrategy={fitGridWidth}`는 쓰지 말 것: `domLayout="autoHeight"`+지연 레이아웃에서 **생성 시점 폭에 1회만** 맞춰 빈 공간이 남는다(2026-09-11 asset_funding 실측 gap 455px). flex를 쓴다.
   - 검증: 잘린 셀 0 — `[...document.querySelectorAll('.ag-cell')].filter(c=>c.scrollWidth>c.clientWidth+1).length===0`. **빈 공간 0**은 `.ag-center-cols-container` 폭이 아니라(pinned 컬럼 제외돼 항상 pinned폭만큼 작게 나옴) **헤더셀 폭 합 ≈ `.ag-root-wrapper` 폭**으로 본다: `Math.abs([...document.querySelectorAll('.ag-header-cell')].reduce((s,h)=>s+h.getBoundingClientRect().width,0) - document.querySelector('.ag-root-wrapper').getBoundingClientRect().width) < 4`.
@@ -223,8 +226,9 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     - ⚠ **게이트는 요청 시점에 한 번만 평가한다** — 확인 시점에 다시 재면 같은 배치 안의 행끼리(부모·자식) 삭제 순서에 결과가 달라진다. `doDelete` 는 `modal.ids` 를 그대로 지우고 `deselectAll()`+`setSelId(null)`+`setSelCount(0)`.
     - 모달은 `{ kind: 'delete'; ids: string[]; blocked: number }` — 단건 경로(우클릭·폼 모달 `onDelete`)도 `[row.id]` 로 넣는다. 다이얼로그 본문은 `ids.length===1` 이면 대상명, 아니면 `선택한 N건`, `blocked > 0` 이면 제외 안내를 덧붙인다.
     - ⚠ `target` 파생이 `modal.id` 를 읽고 있었다면 **삭제 kind 를 빼고** 좁힌다(`modal?.kind === 'edit'` 등) — 안 그러면 유니온 narrowing 이 깨진다.
-  - **예외 2종(그대로 `singleRow`)**: ① master-detail **좌** 그리드(라디오 — 우측이 무엇을 보여줄지 정하는 데이터 소스라 2건이 성립하지 않는다, 아래 절) ② 조회 전용(애초에 `rowSelection` 없음).
+  - **예외 3종(`singleRow` 또는 선택 없음)**: ① master-detail **좌** 그리드(라디오 — 우측이 무엇을 보여줄지 정하는 데이터 소스라 2건이 성립하지 않는다, 아래 절) ② 조회 전용(애초에 `rowSelection` 없음).
     `code_manage` 는 좌=singleRow·우=multiRow 로 **한 화면 안에 둘이 공존**한다.
+    ③ **검색(선택) 팝업의 결과 그리드**(계정과목·거래처 검색 — 2026-10-28 PR #365) = `{ mode:'singleRow', checkboxes:false, enableClickSelection:true }` — **행 클릭 선택이 허용되는 유일한 곳**이다. 목록이 아니라 1건을 고르는 피커라 선택 자체가 목적이고, 더블클릭 = 바로 반영. 목록 페이지에 이 구성을 옮겨 오지 않는다. 규약 → [[apfs-form-modal]] "확장: 검색(선택) 팝업".
   - 선택 툴바의 삭제 버튼 라벨은 **`삭제`**다 — `선택 삭제` 아님(2026-09-22 사용자 결정, 재제안 금지). 건수는 앞의 `N건 선택됨`이 이미 말하므로 라벨에 "선택"을 반복하지 않는다.
   - **역사(뒤집힌 결정 — 되돌리자는 제안이 오면 이 순서를 보일 것)**: 2026-09-08~09-22 는 "단일선택이 필요한 화면은 multiRow 로 올리지 않는다"였고 bespoke 11개가 전부 `singleRow` 였다(판별 기준 = 그 액션이 N건에 의미가 있나). **09-23 사용자가 뒤집었다** — 기준이 "액션이 N건에 의미가 있나"에서 "**체크는 항상 여러 건 되고, 버튼이 상황에 맞춰 사라진다**"로 바뀌었다. 전환 대상 10 그리드: `menu`·`program`·`user`·`user_permission`·`user_invite`·`subfund`·`investment_review`·`code_manage`(우) + 이미 multiRow 였던 `litigation`·`violation` 의 수정 버튼 게이팅.
   - **조회 전용 화면은 `rowSelection` 자체를 두지 않는다**(2026-09-15 사용자 지시 — 체크박스만 끄는 것보다 한 단계 더). 선택이 만들 액션이 없으면 `rowSelection` prop 을 통째로 지운다(`checkboxes:false` 로 남기지 않는다): 함께 `onSelectionChanged`·선택 state(`selId`)·`selected`·툴바의 `선택 해제` 버튼/선택 배지 분기·`refresh()`의 `deselectAll()`·`apiRef`(다른 용도가 없으면)까지 **한 벌로 사라진다**. `refreshNoColumn`은 자기 이벤트의 `e.api`를 쓰므로 `apiRef`에 의존하지 않는다. 상세 진입은 **더블클릭 / Enter / 우클릭 메뉴** 3경로로 이미 충분하고, 회색 행 강조가 없어지는 것이 "선택 기능 없음"과 일치한다. 선례: `audit_log.tsx`·`permission_history.tsx`·`report_update_info_manage.tsx`.
@@ -275,6 +279,31 @@ const onGroupSelection = useCallback((e: SelectionChangedEvent<Row>) => {
 - **행추가 포커스** — `focusIdRef.current = newRow.id` 후 `onRowDataUpdated` 에서 `requestAnimationFrame(() => box.querySelector('.ag-center-cols-container [row-id="…"] input[type=text]')?.focus())`. React 셀 렌더러는 rowDataUpdated 뒤에 붙으므로 한 프레임 미룬다. 같은 핸들러에서 선택 건수도 재동기화한다(유형 변경으로 rows 가 통째로 바뀌면 선택이 소멸).
 - **다이얼로그 안 sticky 헤더** — 공용 `aggrid_shared.css` 는 autoHeight 그리드 헤더를 GNB 아래(`top:58px`)에 붙인다. 다이얼로그 본문이 스크롤러면 헤더가 밀려 **첫 행을 8px 가린다** → `[role='dialog'] .ag-root-wrapper.ag-layout-auto-height .ag-header { top: 0 }` 규칙이 이미 있다(드로어·모달 공통). 검증: 헤더 하단 y == 1행 상단 y.
 - 검증 세트(실측): 한글 입력 유지("테스트 입력") · 입력칸 방향키가 셀 이동 안 함 · 행추가 후 새 행 입력칸 포커스 · 본문 클릭/데이터 체크박스는 선택 0 · N행 선택→삭제 건수 일치 · 입력 전후 헤더 폭 합 불변.
+
+### 페이지 편집 그리드 — 저장형 I/U/D (2026-10-28 PR #365 — 정본 `acc/baseinfo/closing_form_manage.tsx` + `closing_form_data.ts`)
+목록 화면 자체가 셀 안에서 바로 고치고 [저장]으로 한꺼번에 반영하는 그리드다(결산양식 관리). 위 모달 절의 규약(로컬 state 입력칸·`field` 일치·키 격리·`SELECTION_COL`·`EDIT_COL_DEF` 정렬 끔·행추가 포커스)을 그대로 쓰고, 아래만 더한다.
+- **행 상태를 행에 싣는다**: `status: '' | 'I' | 'U' | 'D'` + `prev?: '' | 'U'`(D 직전 상태) + `err?: 필드[]`. 전이 로직은 `*_data.ts`/`*_model.ts` 순수 함수 + 단위 테스트로 둔다(페이지에 인라인 금지).
+  - 편집(patch): `''`→`U`, `I` 는 `I` 유지, `D` 행은 편집 차단(셀 컨트롤 `disabled={status==='D'}`).
+  - [행삭제] = **토글**: `I` 는 즉시 제거, `''`/`U` → `D`(prev 보존), 이미 `D` 인 행을 다시 골라 누르면 prev 로 **복구**. 토스트는 삭제·복구 건수를 함께.
+  - [저장] = 변경분(`status !== ''`)만 검증·반영 → `D` 는 빠지고 나머지는 `''` 로. 변경 0건이면 `toast.info('변경된 내용이 없습니다')`.
+  - [조회]·주 필터 전환 = 저장본을 **새 행 id 로 다시 만든다**(`reloadRows`) — 셀 렌더러 로컬 state 도 새로 시작한다. 미저장 변경은 버린다.
+- **D 행 표시 = `rowClassRules` 모듈 상수**: `'opacity-50'` + `'[&_input]:line-through'` + 표시 전용 텍스트용 클래스(`'[&_.cf-text]:line-through'`). 키는 classList 토큰이라 **공백 없는 단일 클래스로 쪼갠다**(한 키에 두 클래스를 쓰면 무음 실패). 상태 전용 열은 두지 않는다(사용자 결정 — 흐림+취소선이 곧 표시).
+- **검증 위반 셀 = `cellClassRules`** `'shadow-[inset_0_0_0_2px_var(--danger)]'`(행 `err` 에 그 필드가 있을 때). 토스트에 위반 행 수 + 고칠 칸을 말한다.
+- ⚠ **셀은 자기 `field` 가 바뀔 때만 다시 그려진다** → status·err 변화는 셀에 안 보인다. `onRowDataUpdated` 에서 ① `restoreSelection(api, selIdsRef.current)`(이동한 행에 선택 재적용) ② `api.refreshCells({ force: true })`(렌더러 인스턴스는 유지돼 입력칸 로컬 state 는 남는다) ③ 새 행 포커스(rAF) 순으로 한다.
+- **셀 컨트롤 키 격리에 `select` 포함**: `closest('input,button,select')` — 셀 안 `<select>` 의 방향키가 셀 이동으로 샌다.
+- **셀 컨트롤 높이 30px** — `drawerInputStyle('text')` 에 `height/minHeight: 30, padding: '0 8px'`, select 도 30px 명시. 행 42px 안이라 폼 34px(`CONTROL_BOX`)보다 낮게 둔다(전표 분개 그리드도 30px).
+- **셀 컨트롤 접근名 = 표시 행 순번**(`${rowIndex + 1}행 출력명`) — 편집 중인 값을 넣으면 타이핑마다 접근名이 바뀐다. 행 [검색] 버튼은 `<span className="sr-only"> 3행 계정코드명</span>` 로 대상을 붙인다.
+- **버튼 배치**: 툴바 우 `[상세필터] [행추가] [저장] [조회]`(조회 맨 끝) · 선택 바(`contextActions`) `N건 선택됨 · 행삽입 · 행삭제 · 위로이동 · 아래로이동 · 선택 해제` — 행삽입·이동은 `single`(정확히 1건)일 때만, 경계 행의 위로/아래로는 disabled, 행삭제는 다건. 이동은 필터로 숨은 행을 건너뛴다.
+- **저장 = `SaveButton onSubmit={save}`**([[apfs-form-modal]] 6 계약): 검증 실패 → 오류 행으로 `setRows` + `return;` / 통과 → `setSaving(true)` + commit 함수 반환. **저장 중 잠금**: 그리드 래퍼에 `ref.inert = saving`(+`aria-busy`), 툴바·선택 바 버튼 `disabled={saving}`, `refresh`·주 필터 전환은 `if (saving) return`(⌥R 단축키 경로 포함). 그래서 검증을 통과한 스냅샷이 곧 저장 대상이다.
+- **외부 필터는 변경 행을 항상 통과시킨다**(`r.status !== '' || 조건`) — 편집 중인 행이 필터에 걸려 사라지지 않게. 필터 effect 의 `deselectAll()`·`onModelUpdated={dropHiddenSelection}` 은 그대로 건다([[apfs-detail-filter]]).
+- 엑셀은 `D` 행을 뺀다(저장 후 모습과 같게).
+- 형제: **전표 분개 그리드**(`acc/slip/journal_entry_screen.tsx`, 전체 화면 다이얼로그 안) — 같은 관용구 + Σ pinned 합계행 + 계정코드 미입력 행 `--warning` 안쪽 테두리. 검색 대상 행은 **인덱스가 아니라 행 key** 로 잡고(이동 후 어긋남 방지), 셀 콜백은 ref 로 최신 form 을 본다(`columnDefs` 고정 유지).
+
+## 셀 링크 = 상세 진입 (LinkCell — 로컬 사본 10개, 8개 동형)
+상세로 들어가는 칸이 정해져 있으면(제목·문서번호·전표번호) 그 셀을 링크 버튼으로 그린다. 행 더블클릭과 별개의 진입점이다.
+- 외관: `<button type="button" title={hint} className="min-w-0 truncate text-left text-primary font-semibold no-underline hover:underline cursor-pointer" style={{ font: 'inherit', fontWeight: 600, background: 'transparent', border: 0, padding: 0 }}>` — **`font:'inherit'` 필수**(preflight:false 라 button 이 UA 기본 13.3px Arial 로 튄다). 숫자 번호면 `tabular` 추가.
+- **키보드 동치 = 그리드 `onCellKeyDown`**: 초점 셀에서 Enter + 그 colId 이면 같은 핸들러를 부른다. pinned 행은 제외(`e.rowPinned`).
+- ⚠ **공용 부품이 아직 없다** — 같은 함수가 `generic_list`·`risk_grid`·`iam/report/{regular,occasional}_report_manage`·`general_meeting_manage`·`iam/sfund/{apfs_contribution,gp_contribution,custody_confirm,custody_verify}_manage`·`acc/slip/suspense_manage` 에 로컬 사본으로 있다(2026-10-30 실측 10개). 8개는 `({ value, hint, onClick })` + 위 클래스 동형(`apfs_contribution`·`gp_contribution` 은 `tabular` 추가)이고, **변형 2개**는 `risk_grid.tsx`(`({ p, label })` — 셀 params 를 직접 받음)와 `custody_confirm_manage.tsx`(`color` prop — `text-primary` 대신 색 지정)다. 새 화면은 동형 사본을 복사하되 위 외관 계약을 바꾸지 않는다. 공용화 때는 변형 2개의 요구(params 직접 수신·색 지정)를 함께 담아야 한다. 폴더 규칙상 루트 공용 대상이라 공용화는 별도 작업 후보다.
 
 ## ⚠️ 선택 건수를 DOM 으로 세지 말 것 (오탐 함정, 2026-09-15 실측)
 `.ag-row-selected`를 `querySelectorAll`로 세면 **한 행이 2건으로 잡힌다** — AG Grid가 체크박스(선택) 열을 `.ag-pinned-left-cols-container`에, 나머지를 `.ag-center-cols-container`에 **따로 렌더**하므로 같은 행의 조각이 양쪽에 하나씩 존재한다. 이걸 모르면 멀쩡한 단일선택을 "중복 선택 버그"로 오진하고 없는 버그를 고치게 된다.
