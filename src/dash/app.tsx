@@ -74,6 +74,7 @@ import { FundValuationResult, InvesteeValuationResult, SubfundAssetTx, Valuation
 import { RegistryLedgerManage } from './brf/register/registry_ledger';                    // 등록원부관리(S4_108 — 목록 + 팝업 6종)
 import { PhysicalDataManage, SecuritiesManage } from './trs/sfund/trust_physical_upload';   // 실물자료관리(업로드)(S3_98) · 유가증권관리(업로드)(신규)
 import { GpReportFile } from './sfr/file/gp_report_file';   // 자펀드 보고 > 보고 파일 조회(S5_116 — 조회 + 툴바 업로드 모달)
+import { ReportGuide } from './sfr/file/report_guide';   // 자펀드 보고 > 보고양식·가이드 조회(SRP-007 — 조회·다운로드 + 버전 이력 팝업)
 import { GpVerifyReport } from './sfr/verify/gp_verify_report';   // 자펀드 보고 > 조합별 실물검증 결과 보고(S5_120 — 표 3장 TablesPage)
 import { GpReportQuery } from './sfr/occasionalreport/gp_report_query';   // 자펀드 보고 > 수시보고 > 수시보고 제출현황(S5_121 — 보고항목 select → 항목별 그리드)
 import { PhysicalVerifyCompare, SecuritiesCompare, TrustCommonCode } from './trs/sfund/trust_sub_table_pages';   // S3_101 · 신규 · S3_100
@@ -273,6 +274,7 @@ function App() {
   else if (route === "trust-physical-upload") page = <PhysicalDataManage onNav={onNav} />;
   else if (route === "trust-physical-compare") page = <PhysicalVerifyCompare onNav={onNav} />;
   else if (route === "gp-report-file") page = <GpReportFile onNav={onNav} />;
+  else if (route === "report-guide") page = <ReportGuide onNav={onNav} />;
   else if (route === "gp-report-query") page = <GpReportQuery onNav={onNav} />;
   else if (route === "gp-verify-report") page = <GpVerifyReport onNav={onNav} />;
   else if (route === "trust-securities-upload") page = <SecuritiesManage onNav={onNav} />;

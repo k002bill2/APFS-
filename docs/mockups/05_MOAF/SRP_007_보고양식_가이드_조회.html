@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보고양식·가이드 조회</title>
+<style>
+  :root{
+    --bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;
+    --border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;
+    --primary:#256EF4;--primary-hover:#1E5AD6;--primary-weak:#EAF1FE;
+    --ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--grey-weak:#EEF2F7;
+    --danger:#E5484D;--danger-weak:#FCEBEC;
+    --navy:#16233F;--radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(37,110,244,.35);
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;
+    --ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-hover:#79A8FF;--primary-weak:#16233B;
+    --ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--grey-weak:#232C38;
+    --danger:#F2555A;--danger-weak:#2A1618;
+    --navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4);
+  }}
+  :root[data-theme="light"]{--bg:#F3F5F8;--surface:#FFFFFF;--surface-2:#F7F9FC;--surface-3:#EEF2F7;--border:#DCE0E6;--border-strong:#C3CAD3;--ink:#1A1D21;--ink-2:#48505A;--ink-3:#6B7480;--primary:#256EF4;--primary-weak:#EAF1FE;--ok:#0E7C86;--ok-weak:#E2F3F4;--amber:#B45309;--amber-weak:#FBF0E1;--danger:#E5484D;--danger-weak:#FCEBEC;--navy:#16233F;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--shadow-lg:0 12px 40px rgba(16,24,40,.22);--ring:0 0 0 3px rgba(37,110,244,.35)}
+  :root[data-theme="dark"]{--bg:#0F141B;--surface:#171E27;--surface-2:#1C242F;--surface-3:#232C38;--border:#2C3846;--border-strong:#3A4859;--ink:#EAEEF3;--ink-2:#AEB8C4;--ink-3:#7E8996;--primary:#5B94FF;--primary-weak:#16233B;--ok:#3FB8C2;--ok-weak:#123033;--amber:#E7A24A;--amber-weak:#2A2113;--danger:#F2555A;--danger-weak:#2A1618;--navy:#0B1220;--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 12px 40px rgba(0,0,0,.55);--ring:0 0 0 3px rgba(91,148,255,.4)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1300px;margin:0 auto;padding:32px 24px 80px}
+  button{font-family:inherit;cursor:pointer}
+  a{color:inherit}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  table{font-variant-numeric:tabular-nums}
+  .doc-title{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .doc-sub{font-size:14.5px;color:var(--ink-2);margin:0 0 18px;max-width:78ch}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .topbar{display:flex;align-items:center;height:56px;padding:0 22px;background:var(--navy);color:#fff}
+  .syswrap{position:relative}
+  .topbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:13px;font-weight:800;border:none;color:#fff;font-family:inherit;cursor:pointer}
+  .topbar .mark:hover{background:rgba(255,255,255,.28)}
+  .topbar .mark[aria-expanded="true"]{background:var(--primary)}
+  .sysmenu{position:absolute;top:36px;left:0;z-index:60;width:320px;background:var(--surface);color:var(--ink);border:1px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;animation:pop .12s ease}
+  .sysmenu .sh{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .sysmenu a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+  .sysmenu a:hover{background:var(--surface-3)}
+  .sysmenu a.on{background:var(--primary-weak)}
+  .sysmenu a .snm{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sysmenu a.on .snm::after{content:"현재";font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);border-radius:99px;padding:1px 7px;margin-left:auto}
+  .sysmenu a .smenu{font-size:11.5px;color:var(--ink-3)}
+  .topbar .nm{font-weight:700;font-size:15px;margin-left:10px}
+  .gnb-menu{display:flex;gap:4px;margin-left:22px;font-size:14px;overflow-x:auto;min-width:0}
+  .gnb-menu a{padding:7px 14px;border-radius:8px;color:rgba(255,255,255,.72);text-decoration:none;flex:none;white-space:nowrap}
+  .gnb-menu a.on{background:rgba(255,255,255,.15);color:#fff;font-weight:700}
+  .topbar .who{margin-left:auto;font-size:13px;color:rgba(255,255,255,.82)}
+  .subtab{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;overflow-x:auto}
+  .subtab span,.subtab a{padding:13px 14px;color:var(--ink-2);white-space:nowrap;text-decoration:none}
+  .subtab a:hover{color:var(--ink)}
+  .subtab span.on{color:var(--primary);font-weight:700;box-shadow:inset 0 -2px 0 var(--primary)}
+  .mid{display:flex;min-height:560px}
+  .lnb{width:216px;flex:none;border-right:1px solid var(--border);background:var(--surface-2);padding:18px 12px}
+  .lnb .grp{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0 12px 10px;text-transform:uppercase}
+  .lnb nav{display:flex;flex-direction:column;gap:2px}
+  .lnb a{padding:8px 12px;border-radius:8px;color:var(--ink-2);font-size:13.5px;font-weight:500;text-decoration:none}
+  .lnb a.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+  .lnb a:hover:not(.on){background:var(--surface-3)}
+  .content{flex:1;min-width:0;padding:22px 24px 28px;background:var(--surface)}
+  .crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:6px}
+  .h1row{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .h1row h1{font-size:21px;font-weight:800;margin:0}
+  label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  select,input[type=text]{height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--ink)}
+  .btn{height:38px;padding:0 20px;border:none;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;font-weight:700}
+  .btn:hover{background:var(--primary-hover)}
+  .btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--border-strong)}
+  .btn-sec:hover{background:var(--surface-3)}
+  .btn-sm{height:32px;padding:0 13px;font-size:12.5px}
+  .searchbox{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .filtergrid{display:flex;align-items:center;gap:10px}
+  .filtergrid .field{display:flex;align-items:center;gap:8px}
+  .filtergrid .field label{flex:none}
+  .filtergrid input[type=text]{width:260px}
+  .listbar{display:flex;align-items:center;margin:2px 0 8px}
+  .listbar .cap{font-size:15px;font-weight:700}
+  .listbar .cap b{color:var(--primary)}
+  .scroller{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+  table.grid-form{border-collapse:collapse;min-width:860px;width:100%}
+  table.grid-form th,table.grid-form td{padding:9px 12px;font-size:13.5px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:left}
+  table.grid-form th:last-child,table.grid-form td:last-child{border-right:none}
+  table.grid-form thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center;border-bottom:1px solid var(--border-strong);position:sticky;top:0;z-index:2}
+  table.grid-form th.c,table.grid-form td.c{text-align:center}
+  table.grid-form td.title{white-space:normal;font-weight:600;color:var(--ink)}
+  table.grid-form td.desc{white-space:normal;color:var(--ink-2)}
+  table.grid-form tbody tr:hover td{background:var(--surface-2)}
+  .latest-badge{display:inline-block;margin-left:6px;font-size:10px;font-weight:800;color:var(--ok);background:var(--ok-weak);border-radius:4px;padding:1px 6px;vertical-align:middle}
+  .dl{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--primary);font-size:12.5px;font-weight:700;text-decoration:none}
+  .dl:hover{background:var(--primary-weak)}
+  .dl svg{width:14px;height:14px}
+  .histbtn{border:none;background:none;color:var(--primary);font-size:12.5px;font-weight:700;text-decoration:underline;cursor:pointer;padding:0}
+  .histbtn[disabled]{color:var(--ink-3);text-decoration:none;cursor:default}
+  .empty{padding:34px;text-align:center;color:var(--ink-3);font-size:13.5px}
+  /* 버전 이력 모달 */
+  .scrim{position:fixed;inset:0;background:rgba(16,24,40,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;animation:fade .15s ease}
+  .scrim[hidden]{display:none}
+  .modal{width:560px;max-width:100%;max-height:85vh;overflow-y:auto;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);animation:pop .18s ease}
+  .modal-head{display:flex;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border)}
+  .modal-head h2{font-size:17px;font-weight:800;margin:0}
+  .icon-btn{margin-left:auto;width:34px;height:34px;border:none;background:none;color:var(--ink-3);font-size:22px;line-height:1;border-radius:6px}
+  .icon-btn:hover{background:var(--surface-3);color:var(--ink)}
+  .modal-body{padding:18px 22px}
+  table.histtbl{width:100%;border-collapse:collapse}
+  table.histtbl th,table.histtbl td{padding:8px 10px;font-size:13px;border-bottom:1px solid var(--border);text-align:left}
+  table.histtbl thead th{background:var(--surface-3);color:var(--ink-2);font-weight:700;text-align:center}
+  table.histtbl td.c{text-align:center}
+  table.histtbl tr.cur td{background:var(--ok-weak)}
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:95;background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg)}
+  .note{margin-top:26px;font-size:13px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:8px;padding:14px 16px;line-height:1.7}
+  .note b{color:var(--ink-2)}
+  @keyframes fade{from{opacity:0}to{opacity:1}} @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:900px){.lnb{display:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="doc-title" style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin-bottom:8px">자펀드 보고(SRP) · 파일 · SRP-007 · KRDS TO-BE</p>
+  <h1 class="doc-title">보고양식·가이드 조회</h1>
+  <p class="doc-sub">농금원이 제공하는 보고양식·작성 가이드라인을 운용사가 조회·다운로드하는 화면. 양식별 최신 버전을 우선 노출하고, "이력" 버튼으로 과거 버전을 조회할 수 있다(PM05 SRP-007). 통합 화면 구조도엔 이 화면이 없어 사후보고관리 하위로 가정해 배치했다(검토필요) — SRP-001(전자보고 전송현황)과 동일한 배치 기준.</p>
+
+  <div class="frame">
+    <div class="app" id="app">
+      <div class="topbar">
+        <div class="syswrap">
+          <button type="button" class="mark" id="sysBtn" aria-haspopup="true" aria-expanded="false" aria-label="시스템 전환">모</button>
+          <div class="sysmenu" id="sysMenu" role="menu" aria-label="시스템 선택" hidden>
+            <div class="sh">출처시스템 선택</div>
+            <a href="../../01_투자자산관리/S1_01_투자심의관리.html" role="menuitem" class="on"><span class="snm">🗂 투자자산관리시스템</span><span class="smenu">모태펀드·자펀드관리·사후보고관리·통계·투자기업정보</span></a>
+            <a href="../../02_조기경보/S2_46_메인화면.html" role="menuitem"><span class="snm">🔔 농식품모태펀드 조기경보시스템</span><span class="smenu">조기경보·기업정보·기초정보·가치평가·통계정보</span></a>
+            <a href="../../03_자산수탁/S3_98_실물자료_조회__월별_.html" role="menuitem"><span class="snm">🏦 농식품모태펀드 출자조합전문 자산수탁시스템</span><span class="smenu">모태펀드 수탁·자펀드 수탁</span></a>
+            <a href="../../04_모태펀드보고/03_연도별투자현황/mockup/연도별투자현황_목업.html" role="menuitem"><span class="snm">📜 모태펀드보고시스템</span><span class="smenu">등록원부·모태펀드·관리자</span></a>
+            <a href="../../05_MOAF/S5_116_업로드.html" role="menuitem"><span class="snm">📊 MOAF REPORT System</span><span class="smenu">업로드·일일/월간/반기보고·실물검증</span></a>
+          </div>
+        </div>
+        <span class="nm">투자자산관리시스템</span>
+        <nav class="gnb-menu" aria-label="글로벌 메뉴">
+          <a href="../../01_투자자산관리/01_파일럿_공고관리/mockup/공고관리_목업_artifact.html">모태펀드</a>
+          <a href="#" class="on" aria-current="page">사후보고관리</a>
+          <a href="../../01_투자자산관리/05_자펀드관리/mockup/자펀드관리_목업.html">자펀드</a>
+          <a href="../../01_투자자산관리/S1_28_투심승인정보조회.html">통계</a>
+          <a href="../../01_투자자산관리/S1_30_투자기업정보.html">투자기업</a>
+          <a href="../../01_투자자산관리/S1_38_운용사_재무정보_조회.html">모니터링</a>
+        </nav>
+        <span class="who">운용사 · 그린루트벤처스</span>
+      </div>
+      <div class="subtab" aria-label="사후보고관리 하위 메뉴">
+        <a href="../../01_투자자산관리/S1_01_투자심의관리.html">투자심의관리</a>
+        <a href="../../01_투자자산관리/S1_04_수시보고.html">수시보고</a>
+        <a href="../../01_투자자산관리/S1_06_정기보고.html">정기보고</a>
+        <a href="../../01_투자자산관리/S1_07_조합원총회.html">조합원총회</a>
+        <a href="../../01_투자자산관리/S1_08_조합예상자금보고.html">조합예상자금보고</a>
+        <a href="../../01_투자자산관리/S1_09_보고양식관리.html">보고 업데이트정보</a>
+        <a href="../../01_투자자산관리/전자보고_전송현황_목업.html">전자보고 전송현황</a>
+        <span class="on">보고양식·가이드 조회</span>
+      </div>
+      <div class="mid">
+        <aside class="lnb">
+          <div class="grp">사후보고관리</div>
+          <nav aria-label="사후보고관리 메뉴">
+            <a href="../../01_투자자산관리/S1_01_투자심의관리.html">투자심의관리</a>
+            <a href="../../01_투자자산관리/S1_04_수시보고.html">수시보고</a>
+            <a href="../../01_투자자산관리/S1_06_정기보고.html">정기보고</a>
+            <a href="../../01_투자자산관리/S1_07_조합원총회.html">조합원총회</a>
+            <a href="../../01_투자자산관리/S1_08_조합예상자금보고.html">조합예상자금보고</a>
+            <a href="../../01_투자자산관리/S1_09_보고양식관리.html">보고 업데이트정보</a>
+            <a href="../../01_투자자산관리/전자보고_전송현황_목업.html">전자보고 전송현황</a>
+            <a href="#" class="on" aria-current="page">보고양식·가이드 조회</a>
+          </nav>
+        </aside>
+        <main class="content">
+          <div class="crumb">투자자산관리 &gt; 사후보고관리 &gt; 보고양식·가이드 조회</div>
+          <div class="h1row"><h1>보고양식·가이드 조회</h1></div>
+
+          <div class="searchbox" role="search">
+            <div class="filtergrid">
+              <label for="f-q">제목 검색</label>
+              <input type="text" id="f-q" placeholder="양식·가이드 제목을 입력하세요">
+              <button class="btn btn-sm" id="search">조회</button>
+            </div>
+          </div>
+
+          <div class="listbar">
+            <div class="cap">총 <b id="cnt">14</b>건</div>
+          </div>
+
+          <div class="scroller">
+            <table class="grid-form">
+              <caption class="visually-hidden">보고양식·가이드 목록 — 양식별 최신 버전만 표시, 이력 버튼으로 과거 버전 조회</caption>
+              <thead>
+                <tr>
+                  <th class="c" style="width:54px">No</th>
+                  <th>양식·가이드명</th>
+                  <th>설명</th>
+                  <th class="c" style="width:110px">Download</th>
+                  <th class="c" style="width:150px">등록일시</th>
+                  <th class="c" style="width:90px">이력</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <p class="note"><b>설계 메모:</b> 데이터는 ADM-012(자펀드보고양식관리·관리자 측 CRUD)와 동일한 AS-IS(MOAF REPORT System) 14건을 그대로 사용 — 이 화면은 그 중 <b>운용사가 조회·다운로드만 하는 읽기 전용 화면</b>이라 등록/수정/삭제 없음. "양식 버전별 이력 조회(최신 버전 우선 제공)" 요구사항은 목록엔 최신 버전만 노출하고, 버전이 여러 건 있는 양식만 "이력" 링크를 활성화해 과거 버전 팝업으로 보여주는 방식으로 구현 — 버전 이력 자체가 원본에 샘플이 없어 3건만 임의로 과거 버전을 추가했다(검토필요).</p>
+</div>
+
+<!-- 버전 이력 팝업 -->
+<div class="scrim" id="hist-scrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="hist-t">
+    <div class="modal-head"><h2 id="hist-t">버전 이력</h2><button type="button" class="icon-btn" id="hist-close" aria-label="닫기">×</button></div>
+    <div class="modal-body">
+      <table class="histtbl">
+        <caption class="visually-hidden">버전 이력 — 최신 버전이 상단, 녹색 배경이 현재 버전</caption>
+        <thead><tr><th class="c" style="width:110px">버전</th><th>설명</th><th class="c" style="width:150px">등록일시</th><th class="c" style="width:90px">Download</th></tr></thead>
+        <tbody id="hist-rows"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+
+  var DATA=[
+    {title:'사모투자전문회사 준법감시보고서',desc:'',file:'사모투자전문회사_준법감시보고서.hwp',reg:'2012-12-06 09:35:00'},
+    {title:'농식품투자조합 투자자산 회수예정보고',desc:'',file:'농식품투자조합_투자자산_회수예정보고.hwp',reg:'2013-10-23 09:32:00'},
+    {title:'농식품투자조합 준법감시보고서(수산분야)',desc:'',file:'농식품투자조합_준법감시보고서_수산분야.hwp',reg:'2016-01-25 14:33:00'},
+    {title:'농식품투자조합 예상 Capital Call 요청보고',desc:'',file:'농식품투자조합_예상_Capital_Call_요청보고.hwp',reg:'2019-09-26 11:31:00'},
+    {title:'농식품투자조합 반기 영업보고서',desc:'2024.03 Ver.',file:'농식품투자조합_반기_영업보고서.hwp',reg:'2024-03-29 13:22:38',
+      history:[{v:'2024년 버전',desc:'2024.03 Ver.',file:'농식품투자조합_반기_영업보고서_2024.hwp',reg:'2024-03-29 13:22:38'},{v:'2021년 버전',desc:'최초 배포',file:'농식품투자조합_반기_영업보고서_2021.hwp',reg:'2021-05-10 10:00:00'}]},
+    {title:'농식품투자조합 회계처리 가이드라인',desc:'개정 2024. 6. 5.',file:'농식품투자조합_회계처리_가이드라인.pdf',reg:'2024-06-13 10:59:59',
+      history:[{v:'2024년 버전',desc:'개정 2024. 6. 5.',file:'농식품투자조합_회계처리_가이드라인_2024.pdf',reg:'2024-06-13 10:59:59'},{v:'2022년 버전',desc:'최초 제정',file:'농식품투자조합_회계처리_가이드라인_2022.pdf',reg:'2022-03-02 09:00:00'}]},
+    {title:'농림수산식품모태펀드 ESG 투자 가이드라인',desc:'24.12.27 신규 가이드라인',file:'농림수산식품모태펀드_ESG_투자_가이드라인.pdf',reg:'2024-12-27 17:32:04'},
+    {title:'농식품투자조합 준법감시보고서(일반분야)',desc:'25.02.20. 개정',file:'농식품투자조합_준법감시보고서_일반분야.hwp',reg:'2025-02-20 16:42:39'},
+    {title:'농식품투자조합 준법감시보고서(창업보육분야)',desc:'25.02.20. 개정',file:'농식품투자조합_준법감시보고서_창업보육분야.hwp',reg:'2025-02-20 16:44:05'},
+    {title:'농식품투자조합 준법감시보고서(세컨더리분야)',desc:'25.02.20. 개정',file:'농식품투자조합_준법감시보고서_세컨더리분야.hwp',reg:'2025-02-20 16:44:14'},
+    {title:'개인(신용)정보 수집 이용 동의서',desc:'농식품투자조합 (등록 시_투자인력 변경 시 첨부)',file:'개인신용정보_수집_이용_동의서.hwp',reg:'2025-02-24 09:03:50'},
+    {title:'농식품투자조합 월간보고 양식_수정',desc:'',file:'농식품투자조합_월간보고_양식_수정.hwp',reg:'2025-08-06 09:05:20',
+      history:[{v:'2025년 버전',desc:'양식 수정',file:'농식품투자조합_월간보고_양식_수정_2025.hwp',reg:'2025-08-06 09:05:20'},{v:'2023년 버전',desc:'최초 배포',file:'농식품투자조합_월간보고_양식_2023.hwp',reg:'2023-01-11 09:00:00'}]},
+    {title:'농식품모태펀드 출자 자펀드사후관리가이드라인',desc:'26.01.22. 개정',file:'농식품모태펀드_출자_자펀드사후관리가이드라인.pdf',reg:'2026-01-22 15:37:11'},
+    {title:'농식품모태펀드 자펀드 손상차손 처리기준',desc:'2026.2.26. 개정',file:'농식품모태펀드_자펀드_손상차손_처리기준.pdf',reg:'2026-03-10 15:12:19'}
+  ];
+  DATA.sort(function(a,b){return b.reg<a.reg?-1:(b.reg>a.reg?1:0)}); // 등록일시 최신순
+
+  var DLICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/></svg>';
+  function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  var activeQ='';
+
+  function filtered(){
+    if(!activeQ)return DATA;
+    return DATA.filter(function(r){return r.title.indexOf(activeQ)>-1});
+  }
+
+  function render(){
+    var items=filtered();
+    if(!items.length){$('rows').innerHTML='<tr><td colspan="6" class="empty">검색 결과가 없습니다.</td></tr>';$('cnt').textContent='0';return;}
+    $('rows').innerHTML=items.map(function(r,i){
+      var hasHist=r.history&&r.history.length;
+      return '<tr>'+
+        '<td class="c">'+(i+1)+'</td>'+
+        '<td class="title">'+esc(r.title)+(hasHist?'<span class="latest-badge">최신</span>':'')+'</td>'+
+        '<td class="desc">'+(r.desc?esc(r.desc):'<span style="color:var(--ink-3)">-</span>')+'</td>'+
+        '<td class="c"><a href="#" class="dl" aria-label="'+esc(r.title)+' 다운로드" data-file="'+esc(r.file)+'">'+DLICON+'다운로드</a></td>'+
+        '<td class="c">'+esc(r.reg)+'</td>'+
+        '<td class="c">'+(hasHist?'<button type="button" class="histbtn" data-title="'+esc(r.title)+'">이력 '+(r.history.length)+'건</button>':'<button type="button" class="histbtn" disabled>이력없음</button>')+'</td>'+
+      '</tr>';
+    }).join('');
+    $('cnt').textContent=String(items.length);
+    Array.prototype.forEach.call($('rows').querySelectorAll('.dl'),function(a){
+      a.addEventListener('click',function(e){e.preventDefault();toast('다운로드: '+a.getAttribute('data-file')+' (목업)')});
+    });
+    Array.prototype.forEach.call($('rows').querySelectorAll('.histbtn:not([disabled])'),function(b){
+      b.addEventListener('click',function(){openHist(b.getAttribute('data-title'))});
+    });
+  }
+
+  /* toast */
+  var tt=null;
+  function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(function(){el.remove()},2400);}
+
+  /* 버전 이력 팝업 */
+  function openHist(title){
+    var r=DATA.filter(function(x){return x.title===title})[0]; if(!r||!r.history)return;
+    $('hist-t').textContent='버전 이력 — '+title;
+    $('hist-rows').innerHTML=r.history.map(function(h,i){
+      return '<tr class="'+(i===0?'cur':'')+'"><td class="c">'+esc(h.v)+(i===0?' <span class="latest-badge">현재</span>':'')+'</td>'+
+        '<td>'+esc(h.desc)+'</td><td class="c">'+esc(h.reg)+'</td>'+
+        '<td class="c"><a href="#" class="dl" data-file="'+esc(h.file)+'" aria-label="'+esc(h.v)+' 다운로드">'+DLICON+'</a></td></tr>';
+    }).join('');
+    Array.prototype.forEach.call($('hist-rows').querySelectorAll('.dl'),function(a){
+      a.addEventListener('click',function(e){e.preventDefault();toast('다운로드: '+a.getAttribute('data-file')+' (목업)')});
+    });
+    $('hist-scrim').hidden=false;
+  }
+  function closeHist(){$('hist-scrim').hidden=true}
+  $('hist-close').addEventListener('click',closeHist);
+  $('hist-scrim').addEventListener('mousedown',function(e){if(e.target===$('hist-scrim'))closeHist()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('hist-scrim').hidden)closeHist()});
+
+  $('search').addEventListener('click',function(){activeQ=$('f-q').value.trim();render()});
+  $('f-q').addEventListener('keydown',function(e){if(e.key==='Enter'){activeQ=$('f-q').value.trim();render()}});
+
+  render();
+
+  /* 출처시스템 전환 메뉴 */
+  var sysBtn=$('sysBtn'),sysMenu=$('sysMenu');
+  function closeSys(){sysMenu.hidden=true;sysBtn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',sysOut,true);document.removeEventListener('keydown',sysKey,true)}
+  function openSys(){sysMenu.hidden=false;sysBtn.setAttribute('aria-expanded','true');setTimeout(function(){document.addEventListener('mousedown',sysOut,true);document.addEventListener('keydown',sysKey,true)},0)}
+  function sysOut(e){if(!sysMenu.contains(e.target)&&e.target!==sysBtn)closeSys()}
+  function sysKey(e){if(e.key==='Escape'){closeSys();sysBtn.focus()}}
+  sysBtn.addEventListener('click',function(){sysMenu.hidden?openSys():closeSys()});
+})();
+</script>
+</body>
+</html>
