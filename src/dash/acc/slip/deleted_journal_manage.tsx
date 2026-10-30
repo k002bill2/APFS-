@@ -47,6 +47,8 @@ const ATTACH_COL = 'attachments';
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const codeStyle: CellStyle = { ...flexCenter, fontVariantNumeric: 'tabular-nums' };
 const muted: CellStyle = { ...flexCenter, color: 'var(--muted-foreground)' };
+/* display:flex 셀은 AG Grid 기본 말줄임이 안 걸린다 → 긴 텍스트는 truncate span 으로 감싸 '…' 로 끝낸다(일반전표 textCell 과 동형) */
+const textCell = (p: { value: string }) => <span className="min-w-0 truncate">{p.value}</span>;
 
 const demoDownload = (files: readonly string[]) => toast(`${files.join(', ')} 다운로드(데모)`);
 
@@ -69,9 +71,9 @@ const columnDefs: ColDef<DeletedJournal>[] = [
   { field: 'fundAccount', headerName: '계정구분', width: 190, minWidth: 170, cellStyle: flexCenter },
   { field: 'slipDate', headerName: '전표일', width: 108, maxWidth: 116, cellStyle: codeStyle },
   { field: 'seq', headerName: '순번', width: 72, maxWidth: 80, cellStyle: codeStyle },
-  { field: 'memo', headerName: '적요', flex: 1, width: 200, minWidth: 180, cellStyle: { ...flexCenter, fontWeight: 600 } },
+  { field: 'memo', headerName: '적요', flex: 1, width: 200, minWidth: 180, cellStyle: { ...flexCenter, fontWeight: 600 }, cellRenderer: textCell },
   { field: 'amount', headerName: '금액', width: 140, minWidth: 120, type: 'rightAligned', valueFormatter: numFmt, cellStyle: numStyle() as any },
-  { field: 'partner', headerName: '거래처', width: 140, minWidth: 120, cellStyle: flexCenter },
+  { field: 'partner', headerName: '거래처', width: 140, minWidth: 120, cellStyle: flexCenter, cellRenderer: textCell },
   { field: ATTACH_COL, colId: ATTACH_COL, headerName: '첨부', width: 72, maxWidth: 80, sortable: false, cellDataType: false,
     valueFormatter: (p) => ((p.value as string[] | undefined) ?? []).join(', '), cellRenderer: AttachCell, cellStyle: flexCenter },
   { field: 'writer', headerName: '작성자', width: 96, maxWidth: 110, cellStyle: flexCenter },

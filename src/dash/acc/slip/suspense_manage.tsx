@@ -73,7 +73,9 @@ const SLIP_COLS = new Set(['occurSlipNo', 'clearSlipNo']);
 const COLUMNS: ColDef<SuspenseRow>[] = [
   { field: 'fundAccount', headerName: '계정구분', maxWidth: 220, cellStyle: flexCenter, cellRenderer: textCell },
   { field: 'partner', headerName: '거래처', maxWidth: 220, cellStyle: flexCenter, cellRenderer: textCell },
-  { field: 'memo', headerName: '적요', maxWidth: 260, cellStyle: flexCenter, cellRenderer: textCell },
+  /* 적요 = 잔여폭 흡수 컬럼(apfs-aggrid PR #362) — 전체 폭 모드에서 프레임이 컬럼 합보다 넓으면 우측이 빈다.
+     suppressAutoSize 가 없으면 fitCellContents 가 flex 폭을 덮어쓴다. minWidth 190 ≥ 수정 전 내용 맞춤 실측값(181) */
+  { field: 'memo', headerName: '적요', flex: 1, minWidth: 190, width: 190, suppressAutoSize: true, cellStyle: flexCenter, cellRenderer: textCell },
   { field: 'accountName', headerName: '계정과목', cellStyle: flexCenter },
   { field: 'occurDate', headerName: '발생일', cellStyle: tabNum },
   { field: 'occurAmount', headerName: '발생금액', type: 'rightAligned', cellStyle: tabNum, valueFormatter: amountFmt },
@@ -192,9 +194,10 @@ export function SuspenseManage({ onNav }: { onNav?: (r: string) => void }) {
   const doesExternalFilterPass = useCallback((node: IRowNode<SuspenseRow>) => (node.data ? passes(node.data) : true), [passes]);
   const visible = useMemo(() => rows.filter(passes), [rows, passes]);
 
-  /* 전표상세가 열려 있으면 뒤 목록 단축키를 끈다 */
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !viewSlip });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !viewSlip });
+  /* 전표상세·상세필터·처리 팝업이 열려 있으면 뒤 목록 단축키를 끈다(⌘P 는 입력창에서도 발화) */
+  const listKeys = !viewSlip && !filterOpen && modal === null;
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys });
 
   /* 선택 SSOT = selIds. 데이터 갱신 후 선택 전체 복원 */
   const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
