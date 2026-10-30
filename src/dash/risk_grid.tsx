@@ -217,13 +217,18 @@ export interface ReadGridProps {
   apiRef?: React.MutableRefObject<GridApi<Row> | null>;
   /** 칸 전용 렌더러(열 키별). 참조 안정(useMemo) 필수 — 바뀌면 컬럼 정의가 다시 만들어진다 */
   cellRenderers?: CellRenderers;
+  /** 칸 전용 렌더러 칸의 셀(gridcell) Enter → 그 칸의 행 동작(opt-in). 셀 안 버튼과 같은 동작을 넘긴다 —
+      방향키·Tab 으로 셀에 닿은 키보드 사용자가 버튼까지 한 번 더 Tab 하지 않아도 되게(LinkCell Enter 동치와 같은 계약).
+      포커스가 셀 안 컨트롤에 있으면 그 컨트롤 기본 동작에 맡긴다(이중 실행 방지). 렌더러만 있고 동작이 없는 칸(배지 표시용 등)의
+      key 는 받는 쪽이 무시하면 된다(비편집 셀 Enter 는 원래 무동작). 참조 안정(useCallback) 필수 */
+  onCellAction?: (row: Row, key: string) => void;
   /** 본문 인라인 소계 행 판정(opt-in, 모듈 상수 필수). 미지정 = 종전 그대로 */
   isSubtotal?: SubtotalPred;
   /** false = 전 컬럼 정렬 끔(opt-in). 미지정 = 종전 그대로(정렬 가능) */
   sortable?: boolean;
 }
 
-export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세', onEdit, onRowOpen, ariaLabel, selectable, onSelect, selectionCol = SELECTION_COL, selectedIds, apiRef, cellRenderers, isSubtotal, sortable = true }: ReadGridProps) {
+export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세', onEdit, onRowOpen, ariaLabel, selectable, onSelect, selectionCol = SELECTION_COL, selectedIds, apiRef, cellRenderers, onCellAction, isSubtotal, sortable = true }: ReadGridProps) {
   const data = rows ?? table.rows;
   const columnDefs = useMemo(() => buildColumnDefs(table, table.rows, unit, linkLabel, cellRenderers, isSubtotal), [table, unit, linkLabel, cellRenderers, isSubtotal]);
   const getRowStyle = useMemo(() => (isSubtotal
@@ -252,8 +257,16 @@ export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세
       onLink(e.data);
       return;
     }
+    const colId = e.column?.getColId();
+    if (onCellAction && colId && cellRenderers?.[colId] && ev.key === 'Enter') {
+      // 셀 안 버튼·입력칸에서 난 Enter 는 그 컨트롤이 이미 처리한다 — 여기서 또 부르면 두 번 실행된다
+      if ((ev.target as HTMLElement | null)?.closest?.('button,input,select,textarea,a')) return;
+      ev.preventDefault();
+      onCellAction(e.data, colId);
+      return;
+    }
     if (onRowOpen && ev.key === 'Enter') { ev.preventDefault(); onRowOpen(e.data); }
-  }, [linkCol, onLink, onRowOpen]);
+  }, [linkCol, onLink, onRowOpen, onCellAction, cellRenderers]);
   const onRowDoubleClicked = useCallback((e: RowDoubleClickedEvent<Row>) => {
     if (!onRowOpen || e.rowPinned || !e.data) return;
     onRowOpen(e.data);
@@ -283,7 +296,7 @@ export function ReadGrid({ table, rows, unit = null, onLink, linkLabel = '상세
         defaultColDef={sortable ? DEFAULT_COL_DEF : NO_SORT_COL_DEF}
         getRowStyle={getRowStyle}
         onCellClicked={onLink ? onCellClicked : undefined}
-        onCellKeyDown={onLink || onRowOpen ? onCellKeyDown : undefined}
+        onCellKeyDown={onLink || onRowOpen || onCellAction ? onCellKeyDown : undefined}
         onRowDoubleClicked={onRowOpen ? onRowDoubleClicked : undefined}
         onCellValueChanged={onEdit ? onCellValueChanged : undefined}
         rowSelection={selectable ? ROW_SELECTION : undefined}
