@@ -5,18 +5,17 @@
      longhand(`fontWeight`·`fontVariantNumeric`)는 반드시 그 **뒤**에 둔다 — 앞에 두면 shorthand 가 리셋한다(키 순서 함정).
    외관: primary 색 + font-weight 600, 평상시 밑줄 없음 / hover 에만 밑줄(목업 `.linktxt`).
    `color` 를 주면 `text-primary` 대신 그 색 — 상태색이 곧 정보인 셀(custody_confirm 대사 상태).
-   접근名은 화면마다 다르다 → `ariaLabel`(button aria-label) · `srText`(값 뒤 sr-only 접미)로 호출부가 그대로 넘긴다.
+   접근名 = 보이는 값 그대로, 동작은 `hint`(title → 접근 설명)와 열 머리글이 전달한다(2026-10-30 사용자 결정 — 전 화면 통일).
+   aria-label·sr-only 로 이름에 동작을 덧붙이지 않는다 — title 설명과 겹쳐 두 번 낭독된다. 가드: link_cell.test.ts.
    risk_grid 의 팝업 트리거 셀(`PopupTriggerCell` — span + gridcell ARIA, YieldCell 계열)은 다른 계약이라 여기 없다. */
-export function LinkCell({ value, hint, onClick, color, tabular, ariaLabel, srText }: {
+export function LinkCell({ value, hint, onClick, color, tabular }: {
   value: string | number; hint: string; onClick: () => void;
   color?: string;      // 지정하면 text-primary 대신 이 색(상태색이 곧 정보인 셀 — custody_confirm)
   tabular?: boolean;   // 숫자 번호·일자 셀
-  ariaLabel?: string;  // 지정 시 button aria-label
-  srText?: string;     // 지정 시 값 뒤 sr-only 접미
 }) {
   return (
     <button
-      type="button" title={hint} aria-label={ariaLabel} onClick={onClick}
+      type="button" title={hint} onClick={onClick}
       className={`min-w-0 truncate text-left${color ? '' : ' text-primary'} font-semibold no-underline hover:underline cursor-pointer`}
       style={{
         font: 'inherit', fontWeight: 600,
@@ -24,7 +23,7 @@ export function LinkCell({ value, hint, onClick, color, tabular, ariaLabel, srTe
         ...(color ? { color } : {}),
         background: 'transparent', border: 0, padding: 0,
       }}>
-      {value}{srText ? <span className="sr-only">{srText}</span> : null}
+      {value}
     </button>
   );
 }
