@@ -20,7 +20,7 @@ describe('① 회계 목록 단축키 — 상세필터가 열린 동안 끔', ()
     expect(calls.length).toBeGreaterThan(0);
     for (const c of calls) {
       /* enabled 가 식이면 그대로, 이름 하나(listKeys 등)면 그 const 정의를 본다 */
-      const expr = c.match(/enabled: ([^}]*)\}/)?.[1].trim() ?? '';
+      const expr = c.match(/enabled: ([^,}]*)/)?.[1].trim() ?? '';   // 쉼표 뒤 skipInDialog 등 다른 옵션은 제외
       const named = /^\w+$/.test(expr) ? src.match(new RegExp(`const ${expr} = ([^;]*);`))?.[1] ?? '' : expr;
       expect(named, c).toMatch(/!filterOpen/);
     }

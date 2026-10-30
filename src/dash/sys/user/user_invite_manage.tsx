@@ -111,8 +111,8 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
   const [fText, setFText] = useState('');
   const clearFilters = () => { setFState(''); setFOrg(''); setFActive(''); setFText(''); };
 
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
   const visible = useMemo<InviteView[]>(() => filterInvites(rows, { org: fOrg, active: fActive, state: fState, kw: fText })
     .map((r) => ({ ...r, orgn: orgName(r.org), state: inviteState(r), expiresAt: inviteExpiresAt(r.invitedAt) })), [rows, fOrg, fActive, fState, fText]);

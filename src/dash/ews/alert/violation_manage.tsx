@@ -244,9 +244,9 @@ export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
   /* 앱-스코프 단축키. 모달이 떠 있는 동안에는 등록(이중 열림)·내보내기(모달 위 다운로드)를 막는다. */
-  useHotkey(HOTKEYS.register.combo, () => openCreate(), { enabled: modal === null && !filterOpen });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen });
+  useHotkey(HOTKEYS.register.combo, () => openCreate(), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
 
   /* ── 필터 SSOT(빈 값 = 미적용) — 목업 검색박스 3항목 순서 그대로 ──
      fKind = **검색 대상 종류**(운용사/자펀드). 그리드의 `구분`(등록/해제) 컬럼과 무관하다.

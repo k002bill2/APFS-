@@ -27,6 +27,7 @@ describe('상세필터 드로어가 열린 동안 페이지 단축키(인쇄·�
   it('대상이 있다(경로·패턴이 바뀌어 0건 통과하지 않게)', () => expect(files.length).toBeGreaterThan(40));
   it.each(files.map(({ f, src, states, calls }) => [f, src, states, calls] as const))('%s', (_f, src, states, calls) => {
     for (const c of calls) {
+      if (/\bskipInDialog: true\b/.test(c)) continue;   // 2026-10-31~ 상세필터 Sheet 도 role="dialog" → skipInDialog 가 드로어까지 덮는다(hotkey_dialog_skip_guard)
       const expr = c.match(/enabled:\s*([^}]*)\}/)?.[1].trim() ?? '';
       const resolved = /^\w+$/.test(expr) ? src.match(new RegExp(`const ${expr} = ([^;]*);`))?.[1] ?? '' : expr;
       for (const s of states) expect(resolved, c.trim()).toMatch(new RegExp(`!${s}\\b`));

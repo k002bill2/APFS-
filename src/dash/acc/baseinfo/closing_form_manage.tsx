@@ -281,8 +281,8 @@ export function ClosingFormManage({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('Excel로 내보냈습니다');
   };
   /* 상세필터·계정과목 검색 팝업이 덮고 있으면 뒤 그리드 인쇄·내보내기 단축키를 끈다(⌘P 는 입력창에서도 발화) */
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen && !search });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen && !search });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen && !search, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen && !search, skipInDialog: true });
 
   /* 계정과목 검색 반영 — 행이면 코드/명을 그 행에, 필터면 드로어 사본에 */
   const onPickAccount = (a: AccountItem) => {

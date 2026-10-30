@@ -104,10 +104,10 @@ export function AccountCodeManage({ onNav }: { onNav?: (r: string) => void }) {
   const [fUse, setFUse] = useState('');
   const clearFilters = () => { setFName(''); setFCls(''); setFDc(''); setFContra(''); setFInput(''); setFUse(''); };
 
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null && !filterOpen });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
   /* 인쇄·내보내기는 모달·드로어가 열려 있지 않을 때만 */
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null && !filterOpen });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null && !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
 
   const visible = useMemo(() => filterAccounts(rows, { name: fName, cls: fCls, dc: fDc, contra: fContra, input: fInput, use: fUse }), [rows, fName, fCls, fDc, fContra, fInput, fUse]);
 

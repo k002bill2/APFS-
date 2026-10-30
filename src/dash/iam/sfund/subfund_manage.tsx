@@ -218,9 +218,9 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
   const [modal, setModal] = useState<ModalState>(null);
   const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
   // 앱-스코프 단축키: ⌘⏎=제안서접수 등록(모달 열림 중엔 비활성 → 이중 열림 방지), ⌘P=인쇄.
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'apply' }), { enabled: modal === null && !filterOpen });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'apply' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
   /* 필터 — 심사단계는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
   const [fStage, setFStage] = useState<'' | Stage>('');
