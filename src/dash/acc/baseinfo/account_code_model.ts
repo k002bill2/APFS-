@@ -81,6 +81,14 @@ export function parentCandidates(rows: readonly AccountRow[], q: ParentQuery): A
     && (!kw || r.code.includes(kw) || r.name.toLowerCase().includes(kw))));
 }
 
+/** 상위계정 [검색] 열기 전제 — 후보가 계정분류(라디오 고정)·계정레벨(-1)에 묶이므로 둘 다 골라야 연다(2026-10-30 사용자 결정).
+    폼 순서(계정분류 → 계정레벨)로 첫 미선택을 돌려준다. 계정분류 필수는 저장 검증(validateAccount)에도 따로 있다 */
+export function parentSearchGate(cls: string, level: string): ValidationResult {
+  if (!cls) return { ok: false, key: 'cls', msg: '계정분류를 선택해 주세요.' };
+  if (!level) return { ok: false, key: 'level', msg: '계정레벨을 선택해 주세요.' };
+  return { ok: true };
+}
+
 /** 상위계정 후보 → 회계 공용 계정과목 검색 팝업(`acc/account_search_modal`)의 원천 행.
     팝업에는 `parentCandidates(rows, { selfCode, level })`(검색어·계정분류 없이)를 넘기고, 검색어·계정분류는 팝업이 거른다 */
 export const toAccountItem = (r: AccountRow): AccountItem => ({ code: r.code, name: r.name, inputYn: r.input, drcr: r.dc, cls: r.cls });
