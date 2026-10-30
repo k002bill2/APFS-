@@ -4,6 +4,7 @@ import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFocusReturn } from './focus-return';
 
 const Sheet = DialogPrimitive.Root;
 const SheetTrigger = DialogPrimitive.Trigger;
@@ -25,7 +26,10 @@ SheetOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { side?: 'right' | 'left'; hideClose?: boolean }
->(({ side = 'right', className, children, hideClose, ...props }, ref) => (
+>(({ side = 'right', className, children, hideClose, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => {
+  /* 닫으면 연 자리(상세필터 버튼 등)로 초점 복귀 — 근거·한계는 focus-return.ts */
+  const focusReturn = useFocusReturn(onOpenAutoFocus, onCloseAutoFocus);
+  return (
   <SheetPortal>
     <SheetOverlay />
     <DialogPrimitive.Content
@@ -36,6 +40,7 @@ const SheetContent = React.forwardRef<
         side === 'left' && 'left-0 border-r border-border data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left',
         className,
       )}
+      {...focusReturn}
       {...props}
     >
       {children}
@@ -46,7 +51,8 @@ const SheetContent = React.forwardRef<
       )}
     </DialogPrimitive.Content>
   </SheetPortal>
-));
+  );
+});
 SheetContent.displayName = DialogPrimitive.Content.displayName;
 
 function SheetHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

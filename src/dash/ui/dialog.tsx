@@ -10,6 +10,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortalContainer } from './portal-container';
+import { useFocusReturn } from './focus-return';
 import { DialogExitProvider, DialogExitStartProvider, DialogLockProvider, useDeferredClose, useExitEnd, useExitStart, useDialogLock, makeExitEndHandler, makeExitStartHandler, useHardcodedOpenWarning, type DialogHandle } from './dialog-exit';
 
 /* ⚠ 그냥 DialogPrimitive.Root 가 아니다 — 닫힘 애니메이션을 살리려고 내부 open 상태를 들고
@@ -60,28 +61,8 @@ const DialogContent = React.forwardRef<
 >(({ className, children, hideClose, onAnimationStart, onAnimationEnd, onOpenAutoFocus, onCloseAutoFocus, style, ...props }, ref) => {
   /* 저장 대기(SaveButton 잠금) 중: 스크린리더에 busy 알림 + 본문 포인터 차단(취소·X·필드 클릭 무효). 키보드 입력은 남는다. */
   const busy = !!useDialogLock()?.locked;
-  /* 닫으면 연 자리로 초점 복귀(2026-10-30) — 앱 Dialog 는 거의 전부 DialogTrigger 없이 open 상태로 연다.
-     Radix 모달은 닫힐 때 초점을 triggerRef 로 보내는데 그게 null 이라 초점이 body 로 사라졌다.
-     onOpenAutoFocus 시점엔 FocusScope 가 아직 초점을 옮기기 전이라 activeElement 가 곧 연 요소다 → 열 때마다 기억한다
-     (상시 마운트 `<Dialog open={open}>` 는 이 컴포넌트가 닫힌 채로도 렌더돼 있어 첫 렌더에서 잡으면 틀린 요소가 잡힌다).
-     소비처 핸들러를 먼저 부르고, 소비처가 preventDefault 했으면(에디터·주소 검색처럼 직접 돌려줌) 손대지 않는다 — Radix 합성 규칙과 같다.
-     메뉴·Popover 등 떠 있는 오버레이 안에서 연 경우는 기억하지 않는다 — 그 항목은 오버레이 exit 동안만 DOM 에 남았다가 사라져
-     초점이 함께 body 로 사라진다. 그 오버레이가 자기 트리거로 돌려주는 기존 동작에 맡긴다(계좌정보 관리 ▾ → 업로드 실측). */
-  const openerRef = React.useRef<HTMLElement | null>(null);
-  const handleOpenAutoFocus = (e: Event) => {
-    const a = document.activeElement;
-    openerRef.current = a instanceof HTMLElement && a !== document.body
-      && !a.closest('[data-radix-popper-content-wrapper],[role="menu"]') ? a : null;
-    onOpenAutoFocus?.(e);
-  };
-  const handleCloseAutoFocus = (e: Event) => {
-    onCloseAutoFocus?.(e);
-    const el = openerRef.current;
-    openerRef.current = null;
-    if (e.defaultPrevented || !el?.isConnected) return;
-    e.preventDefault();
-    el.focus();
-  };
+  /* 닫으면 연 자리로 초점 복귀 — 근거·한계는 focus-return.ts */
+  const focusReturn = useFocusReturn(onOpenAutoFocus, onCloseAutoFocus);
   return (
   <DialogPortal container={usePortalContainer()}>
     <DialogOverlay />
@@ -97,8 +78,7 @@ const DialogContent = React.forwardRef<
       )}
       onAnimationStart={makeExitStartHandler(useExitStart(), onAnimationStart)}
       onAnimationEnd={makeExitEndHandler(useExitEnd(), onAnimationEnd)}
-      onOpenAutoFocus={handleOpenAutoFocus}
-      onCloseAutoFocus={handleCloseAutoFocus}
+      {...focusReturn}
       {...props}
     >
       {children}
