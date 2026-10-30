@@ -50,7 +50,7 @@ COMMON_HTML = f"""
 
 <section class="block" id="keys">
   <h2>키보드 단축키</h2>
-  <p class="lead">표시는 Mac 기준(⌘ = Windows Ctrl, ⌥ = Windows Alt). ⌥ 조합은 입력칸에 글자를 치는 중에는 동작하지 않고, ⌘ 조합은 입력 중에도 동작한다. 키를 누르고 있어도 한 번만 실행된다. 버튼에 마우스를 올리면 툴팁에 단축키가 함께 보인다.</p>
+  <p class="lead">표시는 Mac 기준(⌘ = Windows Ctrl, ⌥ = Windows Alt). ⌥ 조합은 입력칸에 글자를 치는 중에는 동작하지 않고, ⌘ 조합은 입력 중에도 동작한다. 키를 누르고 있어도 한 번만 실행된다. 버튼에 마우스를 올리면 툴팁에 단축키가 함께 보인다. 리스트 화면의 등록·내보내기·인쇄(<kbd>⌘⏎</kbd> · <kbd>⌥D</kbd> · <kbd>⌘P</kbd>)는 상세필터 드로어가 열려 있는 동안 쉰다 — 이때 <kbd>⌘P</kbd>는 브라우저 기본 인쇄(화면 전체)로 동작한다.</p>
   <div class="tbl"><table>
     <thead><tr><th>키</th><th>동작</th><th>범위</th></tr></thead>
     <tbody>

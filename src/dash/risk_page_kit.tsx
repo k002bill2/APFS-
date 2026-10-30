@@ -245,8 +245,8 @@ export interface RiskPageProps {
 
 export function RiskPage({ system = '조기경보', group, label, route, onNav, filters = [], onReset, unit, onUnit, unitNote, unitCaption, actions, footerLeft, onExport, printItems, exportEnabled = true, contextActions, children }: RiskPageProps) {
   const [open, setOpen] = useState(false);
-  useHotkey(HOTKEYS.export.combo, () => onExport?.(), { enabled: !!onExport && exportEnabled });
-  useHotkey(HOTKEYS.print.combo, printGrid);
+  useHotkey(HOTKEYS.export.combo, () => onExport?.(), { enabled: !!onExport && exportEnabled && !open });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !open });
   const refresh = () => { onReset(); toast.success('조회되었습니다'); };
   return (
     <GridFrame

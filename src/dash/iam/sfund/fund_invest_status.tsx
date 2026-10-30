@@ -411,8 +411,8 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
   const rows = isYearView ? YEAR_ROWS : CROSS_ROWS[view as CrossView];
   const columnDefs = isYearView ? YEAR_COLUMNS : CROSS_COLUMNS[view as CrossView];
 
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
 
   const onGridReady = useCallback((e: GridReadyEvent<StatRow>) => { apiRef.current = e.api; }, []);
   const onPaginationChanged = useCallback(() => {

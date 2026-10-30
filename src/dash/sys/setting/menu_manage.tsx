@@ -153,9 +153,9 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   const clearFilters = () => { setFUtype(''); setFField('name'); setFText(''); setFLvl(''); setFUse(''); };
   const searching = Boolean(fUtype || fText.trim() || fLvl || fUse);   // 목업: 필터가 하나라도 걸리면 평면 모드
 
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null });
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null && !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
 
   const programs = useMemo(() => programsOf(rows), [rows]);
   const match = useCallback((r: MenuRow) => {

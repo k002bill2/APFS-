@@ -399,8 +399,8 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
     setModal({ kind: 'dist', gi, mode });
   }, []);
   const columnDefs = useMemo(() => makeColumns({ openTx }), [openTx]);
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
 
   /* ⚠ 필터는 **그룹 단위**다 — 평탄화된 행을 거르면 소계가 자기 멤버 없이 살아남는다(파일 상단 '한계').
      AG Grid External Filter를 쓰지 않는 이유도 같다(행 단위로만 동작). */

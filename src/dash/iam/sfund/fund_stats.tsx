@@ -312,12 +312,12 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DISPLAY_ROWS.length });
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
   const [yearBasis, setYearBasis] = useState<YearBasis>(DEFAULT_YEAR_BASIS);
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
 
   /* 상세필터 — 4종 전부 행 컬럼과 미연동(noop)이라 값은 상태로만 남고 행을 거르지 않는다.
      실제로 거르는 필터가 없어 External Filter를 배선하지 않았다(상단 한계 주석 참조). */
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fMf, setFMf] = useState('');        // 모펀드
   const [fAcct, setFAcct] = useState('');    // 계정구분
   const [fDbasis, setFDbasis] = useState(''); // 데이터기준

@@ -286,11 +286,11 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
   /* setModal(useState 세터)·patchRow(useCallback []) 둘 다 안정 참조라 deps []로 컬럼 정의를 고정한다
      (매 렌더 새 배열이면 AG Grid가 컬럼을 재생성하며 폭을 선언값으로 되돌린다) */
   const columnDefs = useMemo(() => makeColumns((id: string) => setModal({ kind: 'detail', id }), patchRow), [patchRow]);
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
 
   /* 필터 — 보고상태는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fRst, setFRst] = useState<'' | MeetingStatus>('');
   const [fGp, setFGp] = useState('');
   const [fFund, setFFund] = useState('');

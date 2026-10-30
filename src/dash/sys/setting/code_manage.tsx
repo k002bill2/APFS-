@@ -131,9 +131,9 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
   const [fText, setFText] = useState('');
   const clearFilters = () => { setFUse(''); setFField('code'); setFText(''); };
 
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'group', mode: 'create' }), { enabled: modal === null });
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'group', mode: 'create' }), { enabled: modal === null && !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
 
   const curG = curCode ? groups.find((g) => g.code === curCode) ?? null : null;
   const groupViews = useMemo<GroupView[]>(() => {

@@ -175,8 +175,8 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('Excel로 내보냈습니다');
   };
 
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
-  useHotkey(HOTKEYS.print.combo, printGrid);
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
 
   const gradeChipValue = GRADES.filter((g) => gradeOn[g]).join('·') || '등급 선택 안함';
   const chgChipValue = CHG_KEYS.filter((k) => chgOn[k]).map((k) => CHG_KEY_LABEL[k]).join('·') || '변동 선택 안함';
