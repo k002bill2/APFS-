@@ -79,7 +79,9 @@ const COLUMNS: ColDef<JournalRow>[] = [
   { field: 'fundAccount', headerName: '계정구분', maxWidth: 220, cellStyle: flexCenter, cellRenderer: textCell },
   { field: 'slipDate', headerName: '전표일', cellStyle: tabNum },
   { field: 'seq', headerName: '순번', cellStyle: tabNum },
-  { field: 'memo', headerName: '적요', maxWidth: 280, cellStyle: flexCenter, cellRenderer: textCell },
+  /* 적요 = 잔여폭 흡수 컬럼(apfs-aggrid PR #362) — 전체 폭 모드에서 프레임이 컬럼 합보다 넓으면 우측이 비었다(2560 실측 139px).
+     suppressAutoSize 가 없으면 fitCellContents 가 flex 폭을 덮어쓴다. minWidth 220 = 수정 전 내용 맞춤 실측값 */
+  { field: 'memo', headerName: '적요', flex: 1, minWidth: 220, width: 220, suppressAutoSize: true, cellStyle: flexCenter, cellRenderer: textCell },
   { field: 'amount', headerName: '금액', type: 'rightAligned', cellStyle: tabNum, valueFormatter: (p) => (p.value == null ? '-' : fmt(p.value as number)) },
   { field: 'partner', headerName: '거래처', maxWidth: 220, cellStyle: flexCenter, cellRenderer: textCell },
   { field: 'approval', headerName: '결재', cellStyle: flexCenter, cellRenderer: (p: { value: ApprovalStatus }) => <StatusBadge tone={APPROVAL_TONE[p.value]} label={p.value} size="lg" /> },
@@ -216,10 +218,11 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
   const doesExternalFilterPass = useCallback((node: IRowNode<JournalRow>) => (node.data ? passes(node.data) : true), [passes]);
   const visible = useMemo(() => rows.filter(passes), [rows, passes]);
 
-  /* 전표등록 화면이 열려 있으면 뒤 목록의 등록·인쇄·내보내기 단축키를 끈다(⌘P 는 입력창에서도 발화) */
-  useHotkey(HOTKEYS.register.combo, () => openEntry({ mode: 'new' }), { enabled: modal === null && !entry && !uploadOpen });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !entry && !uploadOpen });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !entry && !uploadOpen });
+  /* 전표등록·업로드·상세필터·확인 팝업이 열려 있으면 뒤 목록의 등록·인쇄·내보내기 단축키를 끈다(⌘P 는 입력창에서도 발화) */
+  const listKeys = modal === null && !entry && !uploadOpen && !filterOpen;
+  useHotkey(HOTKEYS.register.combo, () => openEntry({ mode: 'new' }), { enabled: listKeys });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys });
 
   /* 선택 SSOT = selIds. 데이터 갱신 후 선택 전체 복원(첫 id 만 되살리면 다건이 1건으로 준다) */
   const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
