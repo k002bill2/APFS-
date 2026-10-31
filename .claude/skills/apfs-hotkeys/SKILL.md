@@ -68,7 +68,7 @@ Windows Chromium은 `Alt+D`(주소창)·`Alt+E`(메뉴) 등 일부 단축키를 
    - **모달을 여는 액션**은 `{ enabled: modal === null }`(또는 그 페이지의 열림 상태) 가드로 **이중 열림 방지**. 예: `subfund_manage.tsx` register.
    - handler가 뒤에 정의된 `const`(예: `exportExcel`)를 참조하면 `() => exportExcel()`로 감싼다(TDZ 회피 — 직접 참조는 선언 전 접근이 됨).
    - **버튼 하나와 1:1인 액션이면 3단 대신 `IconBtn hotkey={HOTKEYS.<name>}` 한 줄**(바인딩·힌트·aria 동시, 열린 `[role="dialog"]` 에선 자동 무시).
-   - 뒤의 화면을 덮는 시트·드로어(상세필터 등)가 열려 있는 동안 페이지 `useHotkey` 는 `{ enabled: !filterOpen }` 으로 끈다(Codex 2026-09-28 — 시트 뒤 인쇄·내보내기가 발화).
+   - **페이지가 바인딩하는 ⌘P 인쇄·⌥D 내보내기·⌘⏎ 등록은 `{ skipInDialog: true }`**(2026-10-31 사용자 결정) — 열린 dialog/alertdialog(모달·확인창·상세필터 Sheet·팝오버·⌘K, Radix `data-state="open"`)가 있으면 preventDefault 전에 빠져 키가 브라우저 기본 동작으로 간다(⌘P = 브라우저 인쇄). 화면마다 모달 state 를 `enabled` 에 배선하지 않는다 — RiskPage 는 kit 가 바인딩해 소비처 모달을 못 보고, 새 모달마다 배선이 빠진다. 없으면 모달이 열린 채 ⌘P 가 모달 뒤 목록 그리드를 인쇄했다(PDF 실측). 가드 `hotkey_dialog_skip_guard.test.ts`, 동작 계약 `use_hotkey_dialog.test.ts`. 모달 **안** 단축키(전표등록 ⌥S 등)·셸 단축키에는 쓰지 않는다. 옛 규칙 `{ enabled: !filterOpen }`(Codex 2026-09-28)은 남아 있어도 무해하다.
 4. 레지스트리 표에 행 추가 + 그 액션의 버튼에 툴팁이 있으면 힌트 표면(위 3종)까지 연결 — **등록된 단축키가 있는 버튼인데 툴팁에 힌트가 빠진 상태를 남기지 않는다**(2026-09-28 사용자 지시). 단축키가 없는 버튼(페이저·닫기 등)에 힌트를 위해 단축키를 새로 만들 의무는 없다 — 새로 만들지는 사용자 결정(2026-09-28 GNB·푸터 6종은 지시로 추가). 예외: 등록 `⌘⏎`(UI.Button 은 툴팁 트리거 불가, 아래 잠복 이슈).
 
 ## 2티어 규약 (어떤 수식어를 고를지)

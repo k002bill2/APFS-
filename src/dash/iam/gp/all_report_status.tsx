@@ -160,8 +160,8 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
     toast.success(`${tab.label} 표를 Excel로 내보냈습니다`);
   }, [tab, visible, unit, pinnedBottom]);
 
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
   const refresh = () => { clearFilters(); toast.success('조회되었습니다'); };
   const chips: [string, string, () => void][] = [

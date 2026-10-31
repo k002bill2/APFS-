@@ -99,8 +99,8 @@ export function AssetFunding({ onNav }: { onNav?: (r: string) => void }) {
   const [unit, setUnit] = useState<Unit>('억원');           // 금액 단위(원/백만원/억원) — 조합수(개)는 불변
 
   // 앱-스코프 단축키: ⌘P=인쇄 · ⌥D=내보내기(푸터 툴팁 힌트와 짝). (등록 기능 제거로 ⌘⏎ 등록 단축키도 함께 제거)
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());   // exportExcel 은 아래 const — 화살표로 감싸 TDZ 회피
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });   // exportExcel 은 아래 const — 화살표로 감싸 TDZ 회피
   const [ctx, setCtx] = useState<CtxMenuState>(null);   // 우클릭 컨텍스트 메뉴 좌표·항목(null=닫힘)
 
   const onGridReady = useCallback((e: GridReadyEvent<FundingRow>) => { apiRef.current = e.api; }, []);

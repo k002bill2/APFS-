@@ -317,8 +317,8 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
     (k: SpecKind) => setModal({ kind: k }),
   ), [patchRow]);
   const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
   /* 필터 — 확정여부는 툴바 칩(=드로어 select와 공유), 기준일자는 조회 기준 컨텍스트(행 필터 아님) */
   const [fConfirm, setFConfirm] = useState<'' | ConfirmState>('');

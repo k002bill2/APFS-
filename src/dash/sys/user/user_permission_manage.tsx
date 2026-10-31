@@ -171,9 +171,9 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
   ];
 
   // 앱-스코프 단축키: ⌘⏎=권한 등록(모달 열림 중엔 비활성), ⌘P=인쇄, ⌥D=내보내기
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null && !filterOpen });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
 
   /* 선택 SSOT = React state(selId). 그리드 라디오는 선택 변경 이벤트로 동기화, 신규 등록 후엔 onRowDataUpdated 로 되맞춘다 */

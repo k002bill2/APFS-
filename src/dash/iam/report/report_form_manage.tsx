@@ -119,9 +119,9 @@ export function ReportFormManage({ onNav }: { onNav?: (r: string) => void }) {
   /* download는 useCallback(deps [])로 안정 → 컬럼 정의 고정(매 렌더 새 배열이면 그리드가 컬럼을 재생성) */
   const columnDefs = useMemo(() => makeColumns(download), [download]);
   // 앱-스코프 단축키: ⌘⏎=양식 등록(모달 열림 중엔 비활성 → 이중 열림 방지), ⌘P=인쇄, ⌥D=내보내기
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null });
-  useHotkey(HOTKEYS.print.combo, printGrid);
-  useHotkey(HOTKEYS.export.combo, () => exportExcel());
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
 
   const onGridReady = useCallback((e: GridReadyEvent<ReportFormRow>) => { apiRef.current = e.api; }, []);

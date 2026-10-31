@@ -216,8 +216,8 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
   const [chartOpen, setChartOpen] = useState(false);
 
   const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
   /* 필터 SSOT — 등급(다중 토글, 초기 3개 ON) · 운용사 · 자펀드 · 기준년월(행 필터 아님) */
   const [grades, setGrades] = useState<Record<EarlyWarningGrade, boolean>>(ALL_GRADES_ON);

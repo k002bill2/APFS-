@@ -220,9 +220,9 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
 
   /* 전표등록·업로드·상세필터·확인 팝업이 열려 있으면 뒤 목록의 등록·인쇄·내보내기 단축키를 끈다(⌘P 는 입력창에서도 발화) */
   const listKeys = modal === null && !entry && !uploadOpen && !filterOpen;
-  useHotkey(HOTKEYS.register.combo, () => openEntry({ mode: 'new' }), { enabled: listKeys });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys });
+  useHotkey(HOTKEYS.register.combo, () => openEntry({ mode: 'new' }), { enabled: listKeys, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys, skipInDialog: true });
 
   /* 선택 SSOT = selIds. 데이터 갱신 후 선택 전체 복원(첫 id 만 되살리면 다건이 1건으로 준다) */
   const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
