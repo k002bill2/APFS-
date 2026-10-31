@@ -470,8 +470,10 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent hideClose className="w-[calc(100vw-48px)] h-[calc(100vh-48px)] max-w-none"
         onInteractOutside={(e) => e.preventDefault()}
-        /* 삭제전표 상세 — 첫 포커스 가능 요소(첨부 카드·그리드)로 가지 않게 컨테이너(tabIndex=-1)에 둔다 */
-        onOpenAutoFocus={deleted ? (e) => { e.preventDefault(); (e.currentTarget as HTMLElement | null)?.focus(); } : undefined}
+        /* 첫 초점 = 화면 컨테이너(tabIndex=-1), 모든 모드(2026-10-31). Radix 기본(첫 tabbable)이면 머리말 닫기 IconBtn 에
+           초점이 가며 툴팁이 뜨고, 그 툴팁 레이어가 첫 Esc 를 가져가 두 번 눌러야 닫혔다(실측). 삭제전표 상세는 원래
+           첨부 카드·그리드로 가지 않게 하려고 이렇게 했다. 첫 입력칸으로 보내지 않는 건 ⌥ 단축키가 입력칸 밖에서만 동작해서다 */
+        onOpenAutoFocus={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement | null)?.focus(); }}
         onEscapeKeyDown={(e) => { e.preventDefault(); if (!confirmClose && !confirmRestore && !acctSearch && !partnerSearch) requestClose(); }}>
         <DialogHeader className="px-6">
           <DialogTitle>{forceReadOnly ? VIEW_TITLE : TITLE[mode]}</DialogTitle>
