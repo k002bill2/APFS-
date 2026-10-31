@@ -708,7 +708,7 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
               <AlertDialogDescription>저장하지 않고 닫으시겠습니까?</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel autoFocus>취소</AlertDialogCancel>
+              <AlertDialogCancel>취소</AlertDialogCancel>
               <Button variant="primary" size="sm" onClick={() => { setConfirmClose(false); dlgRef.current?.close(); }}>닫기</Button>
             </AlertDialogFooter>
           </AlertDialogContent>

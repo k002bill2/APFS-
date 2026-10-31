@@ -423,7 +423,7 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
               <AlertDialogDescription>선택한 항목을 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel autoFocus>취소</AlertDialogCancel>
+              <AlertDialogCancel>취소</AlertDialogCancel>
               <SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }} onSubmit={() => commitDelete(modal.ids)}>삭제</SaveButton>
             </AlertDialogFooter>
           </AlertDialogContent>
