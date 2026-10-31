@@ -438,7 +438,7 @@ export function SuspenseManage({ onNav }: { onNav?: (r: string) => void }) {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel autoFocus>취소</AlertDialogCancel>
+              <AlertDialogCancel>취소</AlertDialogCancel>
               <SaveButton leadingIcon="" busyLabel="취소 중" onSubmit={() => commitCancelAt(modal.id)}>정리취소</SaveButton>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -65,7 +65,7 @@ export function DeleteDialog({ title, count, onConfirm, onClose }: { title: stri
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel autoFocus>취소</AlertDialogCancel>
+          <AlertDialogCancel>취소</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

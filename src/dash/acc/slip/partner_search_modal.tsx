@@ -83,6 +83,7 @@ export function PartnerSearchModal({ open, onOpenChange, onSelect, list, onAdd, 
   const dlgRef = useRef<DialogHandle>(null);
   const apiRef = useRef<GridApi<Partner> | null>(null);
   const addRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState(initialKeyword);
   const [corp, setCorp] = useState(true);
   const [indiv, setIndiv] = useState(true);
@@ -142,7 +143,9 @@ export function PartnerSearchModal({ open, onOpenChange, onSelect, list, onAdd, 
 
   return (
     <Dialog ref={dlgRef} open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[920px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}>
+      {/* 첫 초점 = 검색어 칸. autoFocus 는 React 가 마운트 때 먼저 초점을 가져가 연 자리 기억이 빠진다(ui/focus-return.ts) */}
+      <DialogContent className="max-w-[920px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}
+        onOpenAutoFocus={(e) => { e.preventDefault(); inputRef.current?.focus(); }}>
         <DialogHeader className="px-[46px]">
           <DialogTitle>거래처 검색</DialogTitle>
           <DialogDescription className="sr-only">법인·개인 구분과 거래처명으로 거래처를 찾아 한 건을 고르거나 간편추가합니다</DialogDescription>
@@ -159,8 +162,7 @@ export function PartnerSearchModal({ open, onOpenChange, onSelect, list, onAdd, 
               <label htmlFor="partner-search-indiv" style={labelStyle}>개인</label>
             </span>
             <input
-              type="text" value={draft} placeholder="거래처명으로 검색하세요." aria-label="거래처명 검색어"
-              autoFocus
+              ref={inputRef} type="text" value={draft} placeholder="거래처명으로 검색하세요." aria-label="거래처명 검색어"
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); search(); } }}
               style={{ ...drawerInputStyle('text'), flex: 1, minWidth: 200, width: 'auto' }} />

@@ -62,6 +62,7 @@ export function AccountSearchModal({ open, onOpenChange, onSelect, initialKeywor
 }) {
   const dlgRef = useRef<DialogHandle>(null);
   const apiRef = useRef<GridApi<AccountItem> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState(initialKeyword);
   const [keyword, setKeyword] = useState(initialKeyword);   // 조회에 쓰인 검색어(Enter/↵ 때만 갱신)
   const [cls, setCls] = useState<AccountClassFilter>(fixedClass ?? '전체');
@@ -97,7 +98,9 @@ export function AccountSearchModal({ open, onOpenChange, onSelect, initialKeywor
 
   return (
     <Dialog ref={dlgRef} open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[640px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}>
+      {/* 첫 초점 = 검색어 칸. autoFocus 는 React 가 마운트 때 먼저 초점을 가져가 연 자리 기억이 빠진다(ui/focus-return.ts) */}
+      <DialogContent className="max-w-[640px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}
+        onOpenAutoFocus={(e) => { e.preventDefault(); inputRef.current?.focus(); }}>
         <DialogHeader className="px-[46px]">
           <DialogTitle>계정과목 검색</DialogTitle>
           <DialogDescription className="sr-only">계정코드 또는 계정과목명으로 계정과목을 찾아 한 건을 고릅니다</DialogDescription>
@@ -109,8 +112,7 @@ export function AccountSearchModal({ open, onOpenChange, onSelect, initialKeywor
               <span className="font-semibold text-muted-foreground shrink-0" style={keyStyle}>계정과목</span>
               <div className="flex items-center gap-1.5 flex-1 min-w-0">
                 <input
-                  type="text" value={draft} placeholder="계정코드/계정과목명" aria-label="계정과목 검색어"
-                  autoFocus
+                  ref={inputRef} type="text" value={draft} placeholder="계정코드/계정과목명" aria-label="계정과목 검색어"
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); search(); } }}
                   style={{ ...drawerInputStyle('text'), width: '100%', minWidth: 0 }} />
