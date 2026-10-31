@@ -27,8 +27,16 @@ const SheetContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { side?: 'right' | 'left'; hideClose?: boolean }
 >(({ side = 'right', className, children, hideClose, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => {
-  /* 닫으면 연 자리(상세필터 버튼 등)로 초점 복귀 — 근거·한계는 focus-return.ts */
-  const focusReturn = useFocusReturn(onOpenAutoFocus, onCloseAutoFocus);
+  /* 닫으면 연 자리(상세필터 버튼 등)로 초점 복귀 — 근거·한계는 focus-return.ts.
+     첫 초점 = 드로어 자체(2026-10-31). 드로어는 전부 머리말 닫기가 IconBtn 이라 Radix 기본(첫 tabbable)이면
+     닫기 버튼에 초점이 가며 툴팁이 뜨고, 그 툴팁 레이어가 사라질 때까지 Esc 를 가져가 3~6번 눌러야 닫혔다(실측).
+     소비처가 onOpenAutoFocus 에서 preventDefault 하면 소비처가 이긴다. 연 자리 기억은 훅이 이 핸들러보다 먼저 한다. */
+  const focusReturn = useFocusReturn((e) => {
+    onOpenAutoFocus?.(e);
+    if (e.defaultPrevented) return;
+    e.preventDefault();
+    (e.currentTarget as HTMLElement | null)?.focus();
+  }, onCloseAutoFocus);
   return (
   <SheetPortal>
     <SheetOverlay />
