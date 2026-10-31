@@ -19,6 +19,7 @@
 import React, { useState } from 'react';
 import { UI } from '../../components';
 import { printArea } from '../../print_grid';
+import { HOTKEYS, useHotkey } from '../../use-hotkey';
 import { fmt } from '../../aggrid_theme';   // 숫자 표기 SSOT(정수=콤마) — 자체 포매터 재구현 금지
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from '../../ui/dialog';
 import { toast } from '../../ui/sonner';
@@ -184,6 +185,9 @@ export function GpEarlyWarningFinModal({ gp, kind, ym, onClose }: { gp: string; 
   const [unit, setUnit] = useState<Unit>('원');   // 목업 기본값 = 저장 base
   const dlgRef = React.useRef<DialogHandle>(null);
   const printRef = React.useRef<HTMLDivElement>(null);   // [출력] 범위 = 본문 5섹션(단위바 제외)
+  /* ⌘P = [출력](2026-10-31) — 페이지 ⌘P 는 skipInDialog 로 비켜 주므로 팝업이 받는다. 이 팝업 자신이 dialog 라
+     skipInDialog 를 달면 영원히 발화하지 않는다(가드 hotkey_dialog_skip_guard). */
+  useHotkey(HOTKEYS.print.combo, () => { if (printRef.current) void printArea(printRef.current); });
 
   /* 엑셀 — 화면이 그리는 소스 **전부**를 직렬화한다(재무정보·손익정보·정량지표·추이·등급변경).
      한쪽만 넣으면 "화면엔 보이는데 엑셀엔 없는" 누락이 난다(apfs-spec-popup 규약 6).
