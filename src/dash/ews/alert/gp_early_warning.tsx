@@ -337,9 +337,10 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
 
   /* 단축키 — ⌥D 내보내기 · ⌘P 인쇄. 화살표로 감싸야 한다(선언 전 참조 TDZ 방지).
      ⚠ 팝업이 열린 동안 ⌥D 는 끕다 — 팝업은 자체 `엑셀` 버튼을 가지므로 키보드 경로만 그걸 지나쳐
-       배경 그리드(다른 데이터)를 내려받는 것은 혼란이다. ⌘P 는 그대로 둔다(팝업을 띄운 화면 인쇄는 정상). */
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !modalRow && !filterOpen });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
+       배경 그리드(다른 데이터)를 내려받는 것은 혼란이다. ⌘P·⌥D 모두 skipInDialog — 팝업(dialog)이 열려 있으면 브라우저로 넘긴다
+       (⌘P 가 그리드만 인쇄로 바뀐 10-26 이후로는 팝업 뒤 목록이 찍혔다 — 2026-10-31 사용자 결정). */
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !modalRow && !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
 
   return (
     <GridFrame

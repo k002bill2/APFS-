@@ -132,9 +132,9 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
   const [fText, setFText] = useState('');
   const clearFilters = () => { setFStatus(''); setFType(''); setFOrg(''); setFText(''); };
 
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null && !filterOpen });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
   const visible = useMemo(() => filterUsers(rows, { type: fType, status: fStatus, org: fOrg, kw: fText }), [rows, fType, fStatus, fOrg, fText]);
 

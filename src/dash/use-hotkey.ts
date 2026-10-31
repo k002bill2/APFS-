@@ -48,8 +48,15 @@ export const HOTKEYS = {
    예: {alt,key:'r'} → "Alt+R", {mod,key:'p'} → Mac "Meta+P" · Win "Control+P". */
 export const ariaShortcut = (c: HotkeyCombo) => [c.mod && (isMac ? 'Meta' : 'Control'), c.alt && 'Alt', c.shift && 'Shift', c.key.length === 1 ? c.key.toUpperCase() : c.key].filter(Boolean).join('+');
 
-export function useHotkey(combo: HotkeyCombo, handler: () => void, opts: { enabled?: boolean } = {}) {
-  const { enabled = true } = opts;
+/* 열린 dialog(모달·확인창·상세필터 Sheet·팝오버) 여부. Radix 는 닫히는 동안(exit 애니메이션)에도 마운트돼 있으므로
+   data-state="open" 만 본다 — 확인창은 role="alertdialog". */
+export const isDialogOpen = () =>
+  document.querySelector('[role="dialog"][data-state="open"],[role="alertdialog"][data-state="open"]') != null;
+
+/* skipInDialog: 열린 dialog 가 있으면 가로채지 않는다(preventDefault 전에 빠짐 → 키가 브라우저 기본 동작으로 간다).
+   페이지가 바인딩하는 ⌘P·⌥D·⌘⏎ 용(2026-10-31 사용자 결정 — 모달 뒤 목록을 인쇄하지 않게). 모달 안·셸 단축키는 쓰지 않는다. */
+export function useHotkey(combo: HotkeyCombo, handler: () => void, opts: { enabled?: boolean; skipInDialog?: boolean } = {}) {
+  const { enabled = true, skipInDialog = false } = opts;
   const ref = React.useRef(handler);
   ref.current = handler;
   React.useEffect(() => {
@@ -70,6 +77,7 @@ export function useHotkey(combo: HotkeyCombo, handler: () => void, opts: { enabl
         const t = e.target as HTMLElement | null;
         if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
       }
+      if (skipInDialog && isDialogOpen()) return;
       e.preventDefault();
       e.stopPropagation();
       // 키를 누르고 있으면 브라우저가 keydown 을 자동 반복한다 — 기본동작은 계속 막되 액션은 첫 입력 1회만
@@ -79,5 +87,5 @@ export function useHotkey(combo: HotkeyCombo, handler: () => void, opts: { enabl
     };
     window.addEventListener('keydown', onKey, true); // capture: 브라우저 기본 동작보다 먼저 가로챔
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [enabled, combo.mod, combo.alt, combo.shift, combo.key, combo.code]);
+  }, [enabled, skipInDialog, combo.mod, combo.alt, combo.shift, combo.key, combo.code]);
 }

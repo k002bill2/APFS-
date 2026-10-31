@@ -196,8 +196,8 @@ export function SuspenseManage({ onNav }: { onNav?: (r: string) => void }) {
 
   /* 전표상세·상세필터·처리 팝업이 열려 있으면 뒤 목록 단축키를 끈다(⌘P 는 입력창에서도 발화) */
   const listKeys = !viewSlip && !filterOpen && modal === null;
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys, skipInDialog: true });
 
   /* 선택 SSOT = selIds. 데이터 갱신 후 선택 전체 복원 */
   const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;

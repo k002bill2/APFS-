@@ -31,7 +31,7 @@ export function GpQuantIndicatorManage({ onNav }: { onNav?: (r: string) => void 
   const [modal, setModal] = useState<Modal>(null);
   const rows = useMemo(() => QUANT_LIST.rows.filter((r) => !type || r.type === type), [type]);
   const onRowOpen = useCallback((r: Row) => setModal({ mode: 'edit', type: String(r.type) }), []);
-  useHotkey(HOTKEYS.register.combo, () => setModal({ mode: 'create' }), { enabled: modal === null });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ mode: 'create' }), { enabled: modal === null, skipInDialog: true });
 
   const filters: FilterSpec[] = [{ label: '운용사 유형', kind: 'select', value: type, onChange: setType, options: MGR_TYPES }];
   const exportExcel = () => {

@@ -121,8 +121,8 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
   const clearFilters = () => { setFType(''); setFFrom(from0); setFTo(to0); setFUser(''); setFActor(''); setFText(''); };
   const thisMonth = () => { const [f, t] = monthRange(); setFFrom(f); setFTo(t); };
 
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
   const visible = useMemo(() => filterHistory(DEMO, { from: fFrom, to: fTo, user: fUser, type: fType, actor: fActor, kw: fText }), [fFrom, fTo, fUser, fType, fActor, fText]);
   const onRowDoubleClicked = useCallback((e: RowDoubleClickedEvent<HistEntry>) => { if (e.data && !e.rowPinned) setDetailId(e.data.id); }, []);

@@ -269,8 +269,8 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
     setYmRaw(next);
   };
 
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
 
   /* 섹션2 기준년월 = 선택 월의 전월(파일 상단 '한계·가정') */
   const reportYm = prevYm(ym);

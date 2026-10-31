@@ -132,8 +132,8 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
   ];
   const refresh = () => { clearFilters(); toast.success('조회되었습니다'); };
   // 푸터 툴팁 힌트(⌘P·⌥D)와 짝 — exportExcel 은 아래 const 라 화살표로 감싼다(TDZ 회피)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen });   // 상세필터 시트가 덮고 있으면 뒤 푸터 액션은 닫혀 있다
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });   // 상세필터 시트가 덮고 있으면 뒤 푸터 액션은 닫혀 있다
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
   const exportExcel = useCallback(() => {
     const cols = mode.columns;
