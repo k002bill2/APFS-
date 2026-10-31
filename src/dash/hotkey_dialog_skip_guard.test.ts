@@ -18,6 +18,23 @@ const files = walkDash()
 describe('페이지 단축키(인쇄·내보내기·등록) = skipInDialog', () => {
   it('대상이 있다(경로·패턴이 바뀌어 0건 통과하지 않게)', () => expect(files.length).toBeGreaterThan(40));
   it.each(files.map(({ f, calls }) => [f, calls] as const))('%s', (_f, calls) => {
-    for (const c of calls) expect(c.trim()).toMatch(/\bskipInDialog: true\b/);
+    for (const c of calls) {
+      /* 모달 자체 [출력](printArea)은 자기 dialog 안에서 받아야 한다 — skipInDialog 를 달면 영원히 발화하지 않는다 */
+      if (/printArea\(/.test(c)) { expect(c.trim()).not.toMatch(/skipInDialog/); continue; }
+      expect(c.trim()).toMatch(/\bskipInDialog: true\b/);
+    }
+  });
+});
+
+/* 자체 [출력]이 있는 모달(printArea) = 모달이 열린 동안 ⌘P 도 그 [출력]으로(2026-10-31 사용자 결정).
+   페이지 ⌘P 는 skipInDialog 로 비켜 주므로, 바인딩이 없으면 ⌘P 가 브라우저 기본 인쇄(화면 전체)로 넘어간다. */
+describe('자체 [출력] 모달 — ⌘P = printArea', () => {
+  const printAreaFiles = walkDash()
+    .filter((p) => p.endsWith('.tsx'))
+    .map((p) => ({ f: relative(DASH_DIR, p), src: readFileSync(p, 'utf8') }))
+    .filter(({ src }) => /\bprintArea\(/.test(src));
+  it('대상이 있다', () => expect(printAreaFiles.length).toBeGreaterThan(0));
+  it.each(printAreaFiles.map(({ f, src }) => [f, src] as const))('%s', (_f, src) => {
+    expect(src).toMatch(/^\s*useHotkey\(HOTKEYS\.print\.combo, [^\n]*printArea\(/m);
   });
 });
