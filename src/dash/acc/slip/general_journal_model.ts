@@ -94,7 +94,9 @@ export type EntryState =
   | { mode: 'copy'; source: JournalRow }
   | { mode: 'reverse'; source: JournalRow; reverseKind: ReverseKind; date: string }
   /** 삭제전표 관리(ACC-004) 전표상세 — 조회 전용 + [복원] */
-  | { mode: 'deleted'; source: JournalRow; deletedAt: string; deletedBy: string };
+  | { mode: 'deleted'; source: JournalRow; deletedAt: string; deletedBy: string }
+  /** 전표증빙 미첨부 관리(ACC-006) 증빙첨부 — ③ 증빙·첨부만 입력, 나머지 조회 전용 · [저장 후 상신] 없음 */
+  | { mode: 'evidence'; source: JournalRow };
 
 
 /* ══════════════════════════════════════════════════════════════
@@ -305,6 +307,7 @@ export function formFromEntry(e: EntryState, today: string): EntryForm {
     case 'copy': return formCopy(e.source, today);
     case 'reverse': return formReverse(e.source, e.reverseKind, e.date, today);
     case 'deleted': return formFromRow(e.source);
+    case 'evidence': return formFromRow(e.source);
   }
 }
 

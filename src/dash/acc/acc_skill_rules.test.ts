@@ -11,6 +11,7 @@ import { readSrc, walkDash } from '../test_src';
 const LIST_PAGES = [
   'account_code_manage.tsx', 'closing_form_manage.tsx',
   'general_journal_manage.tsx', 'deleted_journal_manage.tsx', 'suspense_manage.tsx',
+  'missing_evidence_manage.tsx', 'journal_search_manage.tsx',
 ];
 
 describe('① 회계 목록 단축키 — 상세필터가 열린 동안 끔', () => {
