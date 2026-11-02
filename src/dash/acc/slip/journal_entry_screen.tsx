@@ -15,12 +15,29 @@
    - 삭제전표 상세(ACC-004 slide12, mode 'deleted') = 위 조회 전용 + 삭제 안내 배너 · 분개 그리드 도구/[검색]/업로드 안내 미노출 ·
      하단 [복원]·[닫기]. 복원 확인 Action 은 onRestore 만 부르고, 상세 닫기는 AlertDialog 닫힘(exit 종료) 뒤 ref.close() — exit 애니메이션 규약.
      분기는 mode === 'deleted' 로만 해서 ACC-003 상신·승인 조회 전용 동작은 그대로 둔다.
+   - 전표검색 전표상세(ACC-008 slide 12·16) = readOnly prop + hideGridTools(분개 그리드 도구 미노출) + onCopy(하단 [복사]·[닫기]).
+     둘 다 선택 prop 이라 같은 readOnly 를 쓰는 미결계정 관리(ACC-005 E09)는 그대로(도구 비활성 표시·[닫기]만).
+     [복사]는 onCopy(의도 기록)만 부르고 이 화면을 ref.close() 로 닫는다 — 복사 등록 화면은 페이지가 onClose(exit 종료 뒤)에서 연다.
+   - 증빙첨부(ACC-006 slide12, mode 'evidence') = ③ 증빙·첨부만 입력. ①헤더·②분개·⑤관리항목/손익계정은 감싼 <fieldset disabled>
+     (중첩 fieldset 은 안쪽을 다시 켤 수 없어 ③ 은 감싸지 않는다 — 감싸는 래퍼는 이 모드에서만 렌더해 다른 모드 DOM 은 그대로).
+     분개 그리드 도구·행 선택 체크박스 열·셀 [검색] 버튼 미노출(설계서는 '비활성 표시'지만 분개가 읽기 전용이라 사용자 결정으로 숨김 —
+     삭제전표 상세와 같은 처리: viewOnlyGrid). 잠긴 영역 컨트롤은 fieldset 으로 전부 :disabled(Tab·클릭 불가)이고 모양도 삭제전표 상세와 같다,
+     필수 `*` 미표시, ⌥ 단축키 전부 끔(설계서 "비활성" — ⌥K·⌥Z·⌥C 는 fieldset 을 우회한다).
+   - 조회 전용 = 회색 비활성 통일(2026-11-02 사용자 결정). 위 조회 전용 경로(mode 'deleted' · readOnly prop · isReadOnlyEntry · 'evidence' 잠금 영역)의
+     disabled 입력·select·textarea·팝오버 트리거를 전표구분·작성자(readonly 칸)와 같은 var(--muted)/var(--muted-foreground) 로 칠한다.
+     규칙은 journal_entry_screen.css 한 곳 — 조회 전용 fieldset 에만 붙는 data-ro-lock 으로 스코프(편집 모드의 disabled 칸
+     — 계정구분 미선택 거래처계좌번호·원화 환율/외화금액 — 은 모양 그대로). 증빙첨부 ③ 증빙·첨부는 활성이라 흰색 유지.
+     첨부는 전용 업로더(missing_evidence_upload — 허용 확장자 13종·20MB·파일별 안내). 저장 검증은 validateEntry 대신 validateEvidence,
+     하단 [저장]·[저장 후 닫기]·[닫기]([저장 후 상신] 미노출). [저장] 뒤에도 모드는 그대로(edit 전환 없음 — 승인 전표가 잠기지 않게).
+     ⚠ 의존 방향: 이 공용 화면(ACC-003)이 ACC-006 모듈(missing_evidence_upload·missing_evidence_model 의 EvidenceUpload·EVIDENCE_MSG·validateEvidence)을
+       import 한다(역방향). 'evidence' 모드 변경은 ACC-003 번들·회귀 범위에 함께 묶인다 — 다른 화면이 같이 쓰게 되면 중립 모듈로 올린다.
    - 금액 `+` 키 = ×1,000. 설계서의 `-`(÷?)는 음수(마이너스전표) 입력과 충돌해 구현하지 않음.
    - 단축키 ⌥S·⌥K·⌥Z·⌥C 는 공용 훅 특성상 입력창 포커스 중엔 무시된다(공용 훅 수정 안 함). ⌥S 는 SaveButton 을 거치지 않아 스피너 없이 즉시 저장.
    - 계정과목 [검색]/키워드+Enter = 회계 공용 AccountSearchModal(입력여부 Y 만 선택 가능).
    - 거래처 [검색]/키워드+Enter = PartnerSearchModal(청크 C). 거래처 원장·간편추가는 페이지가 소유(partners·onAddPartner) —
      간편추가 거래처가 페이지 수명 동안 남고 업로드 거래처코드 해석에도 쓰인다. 반영 = 거래처명·관리번호·계좌번호. */
 import '../../aggrid_shared.css';
+import './journal_entry_screen.css';   // 조회 전용 = 회색 비활성 통일([data-ro-lock] 스코프)
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import type {
@@ -49,6 +66,9 @@ import type { Currency, EvidenceType, FundAccount, JournalRow, Partner } from '.
 import type { AccountItem } from '../account_data';
 import { AccountSearchModal } from '../account_search_modal';
 import { PartnerSearchModal } from './partner_search_modal';
+import { EvidenceUpload } from './missing_evidence_upload';   // 증빙첨부(ACC-006) 전용 업로더
+import { EVIDENCE_MSG, validateEvidence } from './missing_evidence_model';
+import type { EvidenceCheck } from './missing_evidence_model';
 import {
   AGGREGATE_ACCOUNT_MSG, ENTRY_MSG, applyAccountTo, applyPartnerTo, applyRepMemo, copyLastAppend, copyPrevMemo, deleteBlank, deleteChecked,
   duplicateChecked, emptyLine, entryTotals, formFromEntry, formSnapshot, formToJournal, formatAmount, isReadOnlyEntry, lineDiff, missingCode,
@@ -58,7 +78,7 @@ import type { EntryCheck, EntryForm, EntryLine, EntryState } from './general_jou
 
 const { Button, SaveButton, IconBtn } = UI;
 
-const TITLE: Record<EntryState['mode'], string> = { new: '전표등록', copy: '전표등록 (복사)', reverse: '전표등록 (역분개)', edit: '전표등록 (수정)', deleted: '전표상세' };
+const TITLE: Record<EntryState['mode'], string> = { new: '전표등록', copy: '전표등록 (복사)', reverse: '전표등록 (역분개)', edit: '전표등록 (수정)', deleted: '전표상세', evidence: '증빙첨부' };
 /* 강제 조회 전용(readOnly prop — 미결계정 관리 E09) 제목 — mode 가 edit 여도 "수정"으로 보이지 않게 */
 const VIEW_TITLE = '전표상세';
 
@@ -91,6 +111,11 @@ const selectWrap: React.CSSProperties = { width: '100%', maxWidth: 320 };
 
 const th: React.CSSProperties = { padding: '8px 6px', fontSize: 12.5, fontWeight: 600, color: 'var(--muted-foreground)', background: 'var(--grid-header)', borderBottom: '1px solid var(--border)', textAlign: 'left', whiteSpace: 'nowrap' };
 const td: React.CSSProperties = { padding: '5px 6px', borderBottom: '1px solid var(--border)', verticalAlign: 'middle' };
+
+/* 증빙첨부(ACC-006)에서 ③ 밖 영역을 잠그는 래퍼 — on 일 때만 fieldset 을 렌더한다(다른 모드 DOM 불변) */
+function LockWhen({ on, children }: { on: boolean; children: React.ReactNode }) {
+  return on ? <fieldset disabled data-ro-lock="" className="border-0 p-0 m-0" style={{ minWidth: 0 }}>{children}</fieldset> : <>{children}</>;
+}
 
 /* 라벨 래퍼 — RowFormModal Field 규격(로컬 복제, 형제 모달과 동일). plain=<div>(버튼형 컨트롤 2회 발화 방지) */
 function Field({ label, required, plain, className, children }: { label: string; required?: boolean; plain?: boolean; className?: string; children: React.ReactNode }) {
@@ -215,7 +240,7 @@ const amountCell = (side: 'debit' | 'credit', label: string, acts: ActsRef) => (
 };
 
 /* 설계서 컬럼: No. | ☐(SELECTION_COL) | 계정코드 | 계정과목 | 적요 | 관리번호 | 거래처 | 계좌번호 | 차변 | 대변 | 차액 */
-/* noSearch — 삭제전표 상세(ACC-004)는 계정과목·거래처 [검색] 버튼을 그리지 않는다 */
+/* noSearch — 삭제전표 상세(ACC-004)·증빙첨부(ACC-006)는 계정과목·거래처 [검색] 버튼을 그리지 않는다(셀 입력은 바깥 fieldset 으로 비활성) */
 const makeCols = (acts: ActsRef, noSearch = false): ColDef<EntryLine>[] => [
   /* No. — 표시 전용 좁은 칸(좌측·tabular). pinned 합계 행은 Σ */
   { colId: NO_COL_ID, headerName: 'No.', width: 56, minWidth: 56, maxWidth: 56, pinned: 'left', cellStyle: { fontVariantNumeric: 'tabular-nums', fontWeight: 400 },
@@ -268,11 +293,16 @@ export interface JournalEntryScreenProps {
   onAddPartner?: (p: Partner) => void;
   /** 강제 조회 전용(미결계정 관리 E09 전표상세) — 결재 상태와 무관하게 입력 불가·[닫기]만·제목 "전표상세" */
   readOnly?: boolean;
+  /** 강제 조회 전용(readOnly)일 때 분개 그리드 도구(행추가·빈행삭제·대표적요반영) 미노출 — 전표검색 전표상세(ACC-008 slide 12) */
+  hideGridTools?: boolean;
+  /** 강제 조회 전용(readOnly)·비삭제일 때 하단 [복사]를 [닫기] 앞에 노출 — 누르면 이 콜백 뒤 화면을 닫는다(ACC-008 slide 12).
+      복사 등록 화면은 페이지가 onClose(exit 종료 뒤)에서 연다 — 여기서 상위 state 를 바꾸면 exit 애니메이션이 사라진다 */
+  onCopy?: () => void;
 }
 
 type SaveKind = 'stay' | 'submit' | 'close';
 
-export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners = PARTNERS, onAddPartner, readOnly: forceReadOnly = false }: JournalEntryScreenProps) {
+export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners = PARTNERS, onAddPartner, readOnly: forceReadOnly = false, hideGridTools = false, onCopy }: JournalEntryScreenProps) {
   const dlgRef = useRef<DialogHandle>(null);
   const [form, setForm] = useState<EntryForm>(() => formFromEntry(entry, todayStr()));
   const [baseline, setBaseline] = useState(() => formSnapshot(form));
@@ -287,6 +317,19 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
   /* 삭제전표 상세(ACC-004) — 진입 모드가 수명 동안 고정이라 entry 에서 바로 읽는다 */
   const deleted = entry.mode === 'deleted' ? entry : null;
   const [confirmRestore, setConfirmRestore] = useState(false);
+  /* 증빙첨부(ACC-006) — 진입 모드가 수명 동안 고정이라 entry 에서 바로 읽는다(mode state 는 [저장] 뒤에도 바뀌지 않는다) */
+  const evidence = entry.mode === 'evidence';
+  /* 필수 `*` 미표시 — 삭제전표 상세·증빙첨부(설계서 헤더 필수 칸 비어 있음) */
+  const noReq = !!deleted || evidence;
+  /* 분개 조회 전용 그리드 — 삭제전표 상세 · 증빙첨부(ACC-006 — 설계서는 '비활성 표시'지만 분개가 읽기 전용이라 사용자 결정으로 숨김).
+     그리드 도구·행 선택 체크박스 열·셀 [검색] 버튼 미노출(전표검색 전표상세·ACC-003 조회 전용은 기존대로 RO 선택·[검색] 비활성 표시) */
+  const viewOnlyGrid = !!deleted || evidence;
+  /* 분개 그리드 도구 미노출 — 위 조회 전용 그리드 · 전표검색 전표상세(readOnly + hideGridTools) */
+  const noGridTools = viewOnlyGrid || (forceReadOnly && hideGridTools);
+  /* 하단 [복사] — 강제 조회 전용·비삭제 + onCopy 를 넘긴 화면만(전표검색 전표상세) */
+  const showCopy = forceReadOnly && !deleted && !!onCopy;
+  const evTypeRef = useRef<HTMLDivElement>(null);
+  const uploadRef = useRef<HTMLButtonElement>(null);
   /* 복원 확인에서 [복원]을 눌렀는지 — AlertDialog 닫힘이 끝난 뒤 상세를 닫을지 판단([취소]·Esc 는 false = 상세 유지) */
   const restoredRef = useRef(false);
   const dirty = !readOnly && formSnapshot(form) !== baseline;
@@ -357,8 +400,8 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
     patch: patchLine, commitCode, commitAmount, searchAccount, searchPartner,
     codeRef: (key, el) => { if (el) codeRefs.current.set(key, el); else codeRefs.current.delete(key); },
   };
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- columnDefs 고정(위 주석). deleted 는 진입 모드라 수명 동안 불변
-  const columnDefs = useMemo(() => makeCols(actsRef, !!deleted), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- columnDefs 고정(위 주석). viewOnlyGrid(deleted·evidence)는 진입 모드라 수명 동안 불변
+  const columnDefs = useMemo(() => makeCols(actsRef, viewOnlyGrid), []);
   /* Σ 합계 행 — lines 가 바뀔 때만 새 배열(인라인 배열이면 고정 행이 매 렌더 재생성된다) */
   const pinnedBottom = useMemo<EntryLine[]>(() => {
     const t = entryTotals(form.lines);
@@ -412,7 +455,17 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
   const focusIn = (el: HTMLElement | null) => (el?.querySelector('button, select, input, textarea') as HTMLElement | null)?.focus();
   const submit = (kind: SaveKind): SubmitResult => {
     if (savingRef.current) return undefined;
-    const check = validateEntry(form);
+    /* 증빙첨부(ACC-006) — 증빙 항목만 검증(slide 12 '저장 검증' 표). 실패 = 토스트 + 해당 입력란 초점 */
+    if (evidence) {
+      const ev = validateEvidence(form);
+      if (!ev.ok) {
+        const v = ev as Exclude<EvidenceCheck, { ok: true }>;
+        toast.error(v.message);
+        if (v.field === 'evidenceType') focusIn(evTypeRef.current); else uploadRef.current?.focus();
+        return undefined;
+      }
+    }
+    const check = evidence ? ({ ok: true } as EntryCheck) : validateEntry(form);
     if (!check.ok) {
       /* strict:false 라 `ok` 판별 유니온이 좁혀지지 않는다 — 실패 분기 타입으로 명시 */
       const v = check as Exclude<EntryCheck, { ok: true }>;
@@ -432,8 +485,11 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
     return () => {
       savingRef.current = false;
       const saved = onSave ? onSave(journal, { submit: kind === 'submit' }) : journal;
-      toast.success(ENTRY_MSG.saved, kind === 'submit' ? { description: '결재 상신되었습니다' } : undefined);
-      if (kind === 'stay') {
+      toast.success(evidence ? EVIDENCE_MSG.saved : ENTRY_MSG.saved, kind === 'submit' ? { description: '결재 상신되었습니다' } : undefined);
+      if (kind === 'stay' && evidence) {
+        /* 증빙첨부 — 화면 유지, 모드 그대로(edit 로 바꾸면 제목이 바뀌고 상신·승인 전표는 조회 전용으로 잠긴다). 기준선만 갱신 */
+        setBaseline(formSnapshot(base));
+      } else if (kind === 'stay') {
         /* 화면 유지 — 신규·복사·역분개는 이후 수정 모드(같은 id 로 다시 저장 = 중복 생성 없음). 빈 행은 화면에 그대로 둔다 */
         const next: EntryForm = { ...base, id: saved.id, slipNo: saved.slipNo, seq: saved.seq, slipDate: saved.slipDate, slipDateFollows: false, approval: saved.approval, createdBy: saved.createdBy };
         setForm(next);
@@ -446,7 +502,8 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
   };
 
   /* ── 단축키 — 화면 open·입력 가능·확인창 없음일 때만 ── */
-  const hk = { enabled: !readOnly && !confirmClose && !acctSearch && !partnerSearch };
+  /* 증빙첨부는 설계서상 단축키 비활성 — ⌥K·⌥Z·⌥C 는 fieldset 을 거치지 않고 분개를 바꾸므로 반드시 끈다 */
+  const hk = { enabled: !readOnly && !evidence && !confirmClose && !acctSearch && !partnerSearch };
   /* ⌥S — 저장 진행 중(SaveButton busy)이면 무시(submit 이 savingRef 로 막는다) */
   useHotkey(HOTKEYS.journalSave.combo, () => { const c = submit('stay'); if (typeof c === 'function') c(); }, hk);
   useHotkey(HOTKEYS.journalCopyLast.combo, () => setLines(copyLastAppend), hk);
@@ -477,7 +534,7 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
         onEscapeKeyDown={(e) => { e.preventDefault(); if (!confirmClose && !confirmRestore && !acctSearch && !partnerSearch) requestClose(); }}>
         <DialogHeader className="px-6">
           <DialogTitle>{forceReadOnly ? VIEW_TITLE : TITLE[mode]}</DialogTitle>
-          <DialogDescription className="sr-only">{deleted || forceReadOnly ? '전표의 헤더·분개·증빙·관리항목 — 조회 전용' : '일반전표의 헤더·분개·증빙·관리항목을 입력합니다'}</DialogDescription>
+          <DialogDescription className="sr-only">{deleted || forceReadOnly ? '전표의 헤더·분개·증빙·관리항목 — 조회 전용' : evidence ? '전표의 증빙·첨부만 입력합니다 — 헤더·분개·관리항목은 조회 전용' : '일반전표의 헤더·분개·증빙·관리항목을 입력합니다'}</DialogDescription>
           <IconBtn icon="x" label="닫기" size={34} onClick={requestClose} />
         </DialogHeader>
 
@@ -498,16 +555,23 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
               <Icon name="info" size={15} />{forceReadOnly ? '전표상세는 조회만 할 수 있습니다.' : `결재 ${form.approval} 전표는 조회만 할 수 있습니다.`}
             </div>
           )}
-          <fieldset disabled={readOnly} className="border-0 p-0 m-0" style={{ minWidth: 0 }}>
+          {evidence && (
+            <div role="note" className="flex items-center gap-2 text-muted-foreground px-6 pt-4" style={{ fontSize: 13 }}>
+              <Icon name="info" size={15} />증빙 · 첨부만 입력할 수 있습니다. 전표 정보·분개·관리항목은 조회 전용입니다.
+            </div>
+          )}
+          {/* data-ro-lock — 조회 전용일 때만(편집 모드 DOM 불변). journal_entry_screen.css 가 이 스코프의 disabled 컨트롤을 회색으로 */}
+          <fieldset disabled={readOnly} data-ro-lock={readOnly ? '' : undefined} className="border-0 p-0 m-0" style={{ minWidth: 0 }}>
             <div className="flex flex-col min-[769px]:flex-row gap-6 p-6 items-start">
               {/* ────────── 좌측 본문 ────────── */}
               <div className="flex-1 min-w-0 w-full">
+                <LockWhen on={evidence}>
                 {/* ① 헤더 */}
                 <Section title="전표 정보">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-5">
                     {/* 삭제전표 상세(ACC-004)는 "전 항목 비활성, 필수(*) 표시 없음" — 모듈 상수는 그대로 두고 렌더에서만 required 를 끈다 */}
-                    <Field label={F_FUND.label} required={!deleted} plain>
-                      <div ref={fundRef}><SchemaField field={deleted ? { ...F_FUND, required: false } : F_FUND} value={form.fundAccount} onChange={changeFund} /></div>
+                    <Field label={F_FUND.label} required={!noReq} plain>
+                      <div ref={fundRef}><SchemaField field={noReq ? { ...F_FUND, required: false } : F_FUND} value={form.fundAccount} onChange={changeFund} /></div>
                     </Field>
                     <Field label={F_KIND.label}><SchemaField field={F_KIND} value={form.slipKind} onChange={() => undefined} /></Field>
                     <Field label={F_WRITER.label}><SchemaField field={F_WRITER} value={form.writer} onChange={() => undefined} /></Field>
@@ -516,14 +580,14 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
                     </Field>
                     <Field label={F_ORIGIN.label}><SchemaField field={F_ORIGIN} value={form.origin} onChange={() => undefined} /></Field>
                     <div className="hidden sm:block" />
-                    <Field label={F_MEMO.label} required={!deleted} className="sm:col-span-3">
-                      <div ref={memoRef}><SchemaField field={deleted ? { ...F_MEMO, required: false } : F_MEMO} value={form.memo} onChange={changeMemo} /></div>
+                    <Field label={F_MEMO.label} required={!noReq} className="sm:col-span-3">
+                      <div ref={memoRef}><SchemaField field={noReq ? { ...F_MEMO, required: false } : F_MEMO} value={form.memo} onChange={changeMemo} /></div>
                     </Field>
                   </div>
                 </Section>
 
                 {/* ② 분개 그리드 — 결산양식 관리(ACC-002) 편집 그리드 규칙. 행을 고르면 도구 앞에 선택 작업이 붙는다 */}
-                <Section title="분개" actions={deleted ? undefined : (
+                <Section title="분개" actions={noGridTools ? undefined : (
                   <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="분개 그리드 도구">
                     {selTools}
                     <Button variant="outline" size="sm" leadingIcon="plus" disabled={readOnly} onClick={() => setLines((ls) => [...ls, emptyLine()])}>행추가</Button>
@@ -540,9 +604,9 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
                       getRowId={getRowId}
                       domLayout="autoHeight"
                       suppressColumnVirtualisation
-                      /* 삭제전표 상세는 행 도구가 없어 선택 체크박스 열 자체를 뺀다(ACC-003 조회 전용은 기존대로 RO 선택) */
-                      rowSelection={deleted ? undefined : readOnly ? ROW_SELECTION_RO : ROW_SELECTION}
-                      selectionColumnDef={deleted ? undefined : SELECTION_COL}
+                      /* 삭제전표 상세·증빙첨부는 행 도구가 없어 선택 체크박스 열 자체를 뺀다(ACC-003 조회 전용은 기존대로 RO 선택) */
+                      rowSelection={viewOnlyGrid ? undefined : readOnly ? ROW_SELECTION_RO : ROW_SELECTION}
+                      selectionColumnDef={viewOnlyGrid ? undefined : SELECTION_COL}
                       pinnedBottomRowData={pinnedBottom}
                       onGridReady={(e) => { apiRef.current = e.api; }}
                       onSelectionChanged={onSelectionChanged}
@@ -550,12 +614,13 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
                     />
                   </div>
                 </Section>
+                </LockWhen>
 
                 {/* ③ 증빙·첨부 */}
                 <Section title="증빙 · 첨부">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-5">
                     <Field label="증빙구분" plain>
-                      <div style={selectWrap}>
+                      <div ref={evTypeRef} style={selectWrap}>
                         <SearchableSelect value={form.evidenceType} onChange={(v) => set('evidenceType', v as EvidenceType | '')} options={EVIDENCE_TYPES}
                           placeholder="선택해 주세요" ariaLabel="증빙구분" fill triggerStyle={selectTrigger} />
                       </div>
@@ -583,6 +648,8 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
                           ))}
                         </AttachmentGroup>
                       ) : <span className="text-muted-foreground" style={{ fontSize: 13 }}>첨부 없음</span>
+                    ) : evidence ? (
+                      <EvidenceUpload value={form.attachments} onChange={(v) => set('attachments', v)} buttonRef={uploadRef} describedBy="je-attach-hint" />
                     ) : (
                       <DocumentsField value={form.attachments} onChange={(v) => set('attachments', v)} label="첨부파일" multiple maxSize="20MB" describedBy="je-attach-hint" />
                     )}
@@ -600,6 +667,7 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
 
               {/* ────────── 우측 사이드 ⑤ ────────── */}
               <aside className="w-full min-[769px]:w-[320px] shrink-0">
+                <LockWhen on={evidence}>
                 <Section title="관리항목">
                   <Field label="거래처계좌번호" plain>
                     {/* slide 12: 계정구분 선택 후 조회 — 선택 전 비활성 */}
@@ -631,8 +699,8 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
                     </div>
                   </Field>
                 </Section>
-                {/* 기능·작성 도움말 — 입력용 안내라 조회 전용 상세(삭제전표 ACC-004 · 미결계정 전표상세 ACC-005)에선 숨긴다 */}
-                {!deleted && !forceReadOnly && (<>
+                {/* 기능·작성 도움말 — 입력용 안내라 조회 전용 상세(삭제전표 ACC-004 · 미결계정 전표상세 ACC-005)·증빙첨부 ACC-006 에선 숨긴다 */}
+                {!deleted && !forceReadOnly && !evidence && (<>
                   <Section title="기능 도움말">
                     <table className="w-full border-collapse" style={{ fontSize: 12.5, tableLayout: 'fixed' }}>
                       <thead><tr><th style={th}>기능</th><th style={th}>키 · 조건</th></tr></thead>
@@ -650,22 +718,28 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
                     </div>
                   </Section>
                 </>)}
+                </LockWhen>
               </aside>
             </div>
           </fieldset>
         </div>
 
-        {/* ④ 버튼 — 조회 전용은 [닫기]만(slide 26). 삭제전표 상세는 [복원]·[닫기](권한 노출은 RBAC 미구현이라 항상) */}
+        {/* ④ 버튼 — 조회 전용은 [닫기]만(slide 26). 삭제전표 상세는 [복원]·[닫기](권한 노출은 RBAC 미구현이라 항상).
+            전표검색 전표상세(onCopy)는 [복사]·[닫기](ACC-008 slide 12) */}
         <DialogFooter className="px-6">
           <div />
           <div className="flex flex-wrap gap-2">
             {!readOnly && <>
               <SaveButton onSubmit={() => submit('stay')}>저장</SaveButton>
-              <SaveButton variant="outline" leadingIcon="" busyLabel="상신 중" onSubmit={() => submit('submit')}>저장 후 상신</SaveButton>
+              {/* 증빙첨부(ACC-006)는 [저장 후 상신] 미노출 */}
+              {!evidence && <SaveButton variant="outline" leadingIcon="" busyLabel="상신 중" onSubmit={() => submit('submit')}>저장 후 상신</SaveButton>}
               <SaveButton variant="outline" leadingIcon="" onSubmit={() => submit('close')}>저장 후 닫기</SaveButton>
             </>}
             {deleted && onRestore && (
               <Button variant="primary" size="sm" leadingIcon="history" onClick={() => { restoredRef.current = false; setConfirmRestore(true); }}>복원</Button>
+            )}
+            {showCopy && (
+              <Button variant="primary" size="sm" leadingIcon="layers" onClick={() => { onCopy?.(); dlgRef.current?.close(); }}>복사</Button>
             )}
             <Button variant="outline" size="sm" onClick={requestClose}>닫기</Button>
           </div>

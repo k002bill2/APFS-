@@ -86,6 +86,9 @@ import { AccountInfoManage, CashflowInfoManage } from './trs/mfund/trust_upload_
 import { ClosingFormManage } from './acc/baseinfo/closing_form_manage';              // 결산양식 관리(ACC-002 — 편집 그리드)
 import { GeneralJournalManage } from './acc/slip/general_journal_manage'; // 일반전표 관리(ACC-003)
 import { SuspenseManage } from './acc/slip/suspense_manage'; // 미결계정 관리(ACC-005)
+import { MissingEvidenceManage } from './acc/slip/missing_evidence_manage'; // 전표증빙 미첨부 관리(ACC-006)
+import { DailyCloseManage } from './acc/slip/daily_close_manage'; // 일마감(ACC-007)
+import { JournalSearchManage } from './acc/slip/journal_search_manage'; // 전표검색(ACC-008)
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -289,6 +292,9 @@ function App() {
   else if (route === "acct-closing-form") page = <ClosingFormManage onNav={onNav} />;
   else if (route === "acct-journal") page = <GeneralJournalManage onNav={onNav} />;
   else if (route === "acct-suspense") page = <SuspenseManage onNav={onNav} />;
+  else if (route === "acct-missing-evidence") page = <MissingEvidenceManage onNav={onNav} />;
+  else if (route === "acct-daily-close") page = <DailyCloseManage onNav={onNav} />;
+  else if (route === "acct-journal-search") page = <JournalSearchManage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;

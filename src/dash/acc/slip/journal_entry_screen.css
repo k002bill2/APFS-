@@ -1,0 +1,16 @@
+/* 전표 화면(JournalEntryScreen) 조회 전용 = 회색 비활성 통일(2026-11-02 사용자 결정).
+   기준 표현 = 이미 회색인 전표구분·작성자(SchemaField control 'readonly' — background var(--muted) · color var(--muted-foreground) ·
+   테두리 var(--border-strong)). 조회 전용 경로(readOnly 전체 fieldset · 증빙첨부 LockWhen fieldset)에만 붙는 [data-ro-lock] 아래
+   disabled 입력·select·textarea·팝오버 트리거(검색형 select·DatePicker = button[aria-haspopup])를 같은 표현으로 맞춘다.
+   ⚠ 스코프 = [data-ro-lock] 만. 편집 모드에도 disabled 컨트롤이 있다(계정구분 미선택 시 거래처계좌번호 · 원화일 때 환율/외화금액) —
+     맨 :disabled·fieldset[disabled] 로 잡으면 ACC-003 편집 화면 모양이 바뀐다.
+   !important — 각 컨트롤이 인라인 style(background var(--card))로 흰 배경을 칠해 일반 규칙이 이길 수 없다.
+   opacity 1 — DatePicker 트리거(disabled:opacity-60)·Chrome UA disabled select(0.7)의 흐림을 걷어 기준과 같은 농도로.
+   체크박스·라디오(AG Grid 행 선택 입력 포함)와 일반 버튼([검색]·그리드 도구)은 각자의 비활성 표현을 유지한다. */
+[data-ro-lock] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea, button[aria-haspopup]):disabled {
+  background-color: var(--muted) !important;
+  color: var(--muted-foreground) !important;
+  border-color: var(--border-strong) !important;
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+}
