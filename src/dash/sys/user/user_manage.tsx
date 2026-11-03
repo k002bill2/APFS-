@@ -1,4 +1,4 @@
-/* 사용자관리 — 관리형 리스트 페이지 (관리자 > 사용자·권한 관리 > 사용자관리, route user-manage).
+/* 사용자관리 — 관리형 리스트 페이지 (관리자 > 사용자관리 > 사용자관리, route user-manage).
    출처: S0_101_사용자관리.html(공통관리 KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
@@ -256,7 +256,7 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
   ) : null;
   return (
     <GridFrame
-      crumbs={['홈', '관리자', '사용자·권한 관리', '사용자관리']}
+      crumbs={['홈', '관리자', '사용자관리', '사용자관리']}
       title="사용자관리"
       favRoute="user-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}

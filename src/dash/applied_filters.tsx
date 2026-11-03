@@ -10,6 +10,8 @@
    규칙:
    - 적용 칩 = 값만 표시(항목명은 DS Tooltip·aria-label 로 회수), 최대 240px 말줄임. onClear 가 있는 칩만 ×.
      wide 칩 = 최대 480px·좁으면 2줄 줄바꿈, +N 으로 접지 않는다(배치 계산엔 minWidth 160 만 예약).
+   - 칩 값(본문)은 버튼 — 누르면 같은 GridFrame 의 상세필터를 열고 그 항목으로 스크롤·초점(filter_field_jump.ts, 2026-11-02 사용자 요청).
+     × 는 형제 버튼(중첩 아님)이라 해제만 한다. +N 메뉴 항목은 종전대로 '제거'(숨은 칩의 해제 경로).
    - 해제 가능한 적용 칩이 2개 이상이면 `전체 해제` — 각 칩의 onClear 를 차례로 부른다.
    - 보이는 캡션 없음(role="group" aria-label 만).
    - 행 선택 중엔 GridFrame 이 이 행을 아예 렌더하지 않는다(선택 = 액션 영역, 필터와 별개).
@@ -19,6 +21,7 @@ import { UI } from './components';
 import { Icon } from './icons';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
+import { jumpToFilterField } from './filter_field_jump';
 
 const { FilterChip } = UI;
 
@@ -66,16 +69,30 @@ const sigMap = (s: string) => new Map(s ? s.split(EN).map((e) => e.split(KV) as 
    즉시 반영형 드로어(감사로그 등)는 고르는 순간 값이 바뀌어, 바로 띄우면 드로어 뒤에서 3초가 다 지나 버린다. */
 const modalOpen = () => document.querySelector('[role="dialog"][data-state="open"],[role="alertdialog"][data-state="open"]') != null;
 
-function Chip({ f, flash }: { f: AppliedFilter; flash?: boolean }) {
+/* 칩 값 = 상세필터로 가는 버튼. 칩 패딩까지 눌리게 음수 마진 + 같은 패딩으로 칩 왼쪽(× 없으면 오른쪽까지) 면을 덮는다 */
+function ValueButton({ f, onJump, clearable, children }: { f: AppliedFilter; onJump?: (label: string) => void; clearable: boolean; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={() => onJump?.(f.label)} aria-label={`${f.label}: ${f.value} — 상세필터에서 변경`}
+      className="inline-flex items-center border-0 bg-transparent cursor-pointer min-w-0 text-left"
+      style={{ color: 'inherit', fontFamily: 'inherit', fontSize: 'inherit', fontWeight: 'inherit', lineHeight: 'inherit',
+        padding: clearable ? '5px 0 5px 11px' : '5px 11px', margin: clearable ? '-5px 0 -5px -11px' : '-5px -11px', borderRadius: 9 }}>
+      {children}
+    </button>
+  );
+}
+
+function Chip({ f, flash, onJump }: { f: AppliedFilter; flash?: boolean; onJump?: (label: string) => void }) {
   const clearable = Boolean(f.onClear);
-  if (f.wide) return <WideChip f={f} clearable={clearable} flash={flash} />;
+  if (f.wide) return <WideChip f={f} clearable={clearable} flash={flash} onJump={onJump} />;
   return (
     /* 글자색 = primary 에 foreground 15% 를 섞는다 — primary 단독은 라이트에서 10% 틴트 위 4.35:1 로 AA(4.5) 미달이었다.
        foreground 는 라이트=어둡게·다크=밝게 섞이므로 한 식으로 두 테마 모두 대비가 오른다(2026-09-24 실측). */
     <ChipTip f={f} flash={flash}>
     <span className="inline-flex items-center gap-1.5 font-semibold shrink-0 cursor-pointer"
       style={{ padding: clearable ? '5px 8px 5px 11px' : '5px 11px', borderRadius: 9, fontSize: 12.5, maxWidth: 240, color: CHIP_FG, background: CHIP_BG }}>
-      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{f.value}</span>
+      <ValueButton f={f} onJump={onJump} clearable={clearable}>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{f.value}</span>
+      </ValueButton>
       {clearable && (
         <button type="button" onClick={f.onClear} aria-label={`${f.label} 필터 제거`}
           className="inline-flex items-center justify-center border-0 cursor-pointer shrink-0"
@@ -105,12 +122,14 @@ function ChipTip({ f, flash = false, children }: { f: AppliedFilter; flash?: boo
 }
 /* wide 칩 — 남은 폭까지 줄어들며(shrink, minWidth 160) 텍스트는 2줄까지 줄바꿈, 넘칠 때만 말줄임.
    keep-all — 한글 이름이 글자 단위로 쪼개지지 않게(줄바꿈 지점은 소비처가 값 문자열의 공백으로 정한다). */
-function WideChip({ f, clearable, flash }: { f: AppliedFilter; clearable: boolean; flash?: boolean }) {
+function WideChip({ f, clearable, flash, onJump }: { f: AppliedFilter; clearable: boolean; flash?: boolean; onJump?: (label: string) => void }) {
   return (
     <ChipTip f={f} flash={flash}>
     <span className="inline-flex items-center gap-1.5 font-semibold min-w-0 cursor-pointer"
       style={{ padding: clearable ? '5px 8px 5px 11px' : '5px 11px', borderRadius: 9, fontSize: 12.5, maxWidth: WIDE_MAX, minWidth: WIDE_MIN, flexShrink: 1, color: CHIP_FG, background: CHIP_BG }}>
-      <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'normal', wordBreak: 'keep-all', lineHeight: '18px', minWidth: 0 }}>{f.value}</span>
+      <ValueButton f={f} onJump={onJump} clearable={clearable}>
+        <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'normal', wordBreak: 'keep-all', lineHeight: '18px', minWidth: 0 }}>{f.value}</span>
+      </ValueButton>
       {clearable && (
         <button type="button" onClick={f.onClear} aria-label={`${f.label} 필터 제거`}
           className="inline-flex items-center justify-center border-0 cursor-pointer shrink-0"
@@ -130,7 +149,7 @@ type Item =
   | { id: string; kind: 'applied'; f: AppliedFilter }
   | { id: string; kind: 'clear'; run: () => void };
 
-function ItemView({ it, flash }: { it: Item; flash?: boolean }) {
+function ItemView({ it, flash, onJump }: { it: Item; flash?: boolean; onJump?: (label: string) => void }) {
   if (it.kind === 'chip') {
     const c = it.chip;
     /* 측정용 숨김 복제본도 ItemView 를 쓰므로 필수 마크업이 그대로 들어가 폭이 맞는다 */
@@ -139,7 +158,7 @@ function ItemView({ it, flash }: { it: Item; flash?: boolean }) {
       : c.label;
     return <FilterChip active={c.active} onClick={c.onSelect} count={c.count}>{label}</FilterChip>;
   }
-  if (it.kind === 'applied') return <Chip f={it.f} flash={flash} />;
+  if (it.kind === 'applied') return <Chip f={it.f} flash={flash} onJump={onJump} />;
   return (
     <button type="button" onClick={it.run}
       className="border-0 bg-transparent cursor-pointer text-muted-foreground hover:text-foreground underline-offset-2 hover:underline shrink-0"
@@ -220,6 +239,15 @@ export function FilterChipRow({ chips = [], applied }: { chips?: readonly Filter
     if (modalOpen()) fresh.forEach((l) => pending.current.add(l));
     else flashNow(fresh);
   }, [vSig, flashNow]);
+  const boxRef = React.useRef<HTMLDivElement>(null);
+  /* 칩 값 클릭 → 상세필터의 그 항목. 그 칩의 flash 툴팁을 먼저 끈다 — 제어형(open||flash)이라 클릭으로도 안 닫히고,
+     남은 툴팁 레이어가 드로어의 첫 Esc 를 가져간다(radix-tooltip-layer-eats-esc). */
+  const jump = React.useCallback((label: string) => {
+    clearTimeout(timers.current[label]);
+    pending.current.delete(label);
+    setFlashing((p) => (p.has(label) ? new Set([...p].filter((x) => x !== label)) : p));
+    void jumpToFilterField(boxRef.current, label);
+  }, []);
   React.useEffect(() => {
     /* 모달이 닫힘 상태로 바뀌는 순간(data-state=closed) 모아 둔 항목을 띄운다 — 포털 위치와 무관하게 body 아래 속성 변화를 본다.
        대기 항목이 없으면 바로 돌아가므로 다른 툴팁·메뉴의 상태 변화에는 비용이 거의 없다. */
@@ -234,7 +262,6 @@ export function FilterChipRow({ chips = [], applied }: { chips?: readonly Filter
     return () => { mo.disconnect(); Object.values(t).forEach(clearTimeout); };
   }, [flashNow]);
 
-  const boxRef = React.useRef<HTMLDivElement>(null);
   const measureRef = React.useRef<HTMLDivElement>(null);
   const [m, setM] = React.useState<{ w: Record<string, number>; trigger: number; avail: number } | null>(null);
   const sig = items.map((it) => it.id + (it.kind === 'chip' ? `${it.chip.label}${String(it.chip.count ?? '')}${it.chip.active}` : it.kind === 'applied' ? it.f.value : '')).join('|');
@@ -265,7 +292,7 @@ export function FilterChipRow({ chips = [], applied }: { chips?: readonly Filter
       /* 세로 3px 여유 — overflow:hidden 이 칩 focus 링을 자르지 않게(음수 마진으로 줄 높이는 그대로) */
       style={{ gap: GAP, padding: 3, margin: -3 }}>
       {/* flash 는 보이는 줄에만 — 측정용 사본에 넘기면 0 크기 요소에 붙은 툴팁이 한 장 더 뜬다 */}
-      {shown.map((it) => <React.Fragment key={it.id}><ItemView it={it} flash={it.kind === 'applied' && flashing.has(it.f.label)} /></React.Fragment>)}
+      {shown.map((it) => <React.Fragment key={it.id}><ItemView it={it} flash={it.kind === 'applied' && flashing.has(it.f.label)} onJump={jump} /></React.Fragment>)}
       {/* 숨긴 게 `전체 해제` 하나뿐이면 +0 트리거가 된다 → 그리지 않는다(칩별 × 는 보이는 칩에 그대로 있다) */}
       {hidden.some((it) => it.kind !== 'clear') && <OverflowMenu key="more" hidden={hidden} tinted={hiddenActive} rowRef={boxRef} />}
       {/* 측정용 사본 — 보이지 않고(visibility:hidden)·포커스·읽기 대상에서 빠진다.

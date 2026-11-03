@@ -1,4 +1,5 @@
-/* 사용자 초대(운용사) — 관리형 리스트 페이지 (관리자 > 사용자·권한 관리 > 사용자 초대(운용사), route user-invite-gp).
+/* 사용자 초대 — 관리형 리스트 페이지 (관리자 > 사용자관리 > 사용자 초대, route user-invite-gp).
+   메뉴 라벨은 2026-11-02 시트 개정으로 '사용자 초대(운용사)' → '사용자 초대'(초대 대상은 여전히 운용사 담당자).
    출처: S0_103_사용자초대_운용사.html(공통관리 KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
@@ -177,7 +178,7 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     ws['!cols'] = EXPORT_COLS.map((c) => ({ wch: c.header === '이메일' || c.header === '운용사' ? 26 : 14 }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '사용자 초대');
-    XLSX.writeFile(wb, '사용자초대_운용사.xlsx');
+    XLSX.writeFile(wb, '사용자 초대.xlsx');
     toast.success('Excel로 내보냈습니다');
   };
 
@@ -204,8 +205,8 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
   ) : null;
   return (
     <GridFrame
-      crumbs={['홈', '관리자', '사용자·권한 관리', '사용자 초대(운용사)']}
-      title="사용자 초대(운용사)"
+      crumbs={['홈', '관리자', '사용자관리', '사용자 초대']}
+      title="사용자 초대"
       favRoute="user-invite-gp"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       filterChips={STATE_CHIPS.map((s) => ({ key: s || 'all', label: s || '초대상태: 전체', active: fState === s, onSelect: () => setFState(s) }))}

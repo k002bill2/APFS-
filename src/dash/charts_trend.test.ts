@@ -4,6 +4,7 @@
    (b) `<title>`·sr-only 표의 라벨이 `undefined`가 되며 (c) n===1에서 0-division이 난다.
    화면으로는 재현되지 않는 경로라(앱 소비처는 항상 길이가 맞다) 순수 함수로 잘라 테스트한다. */
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { trendPlotRange } from './charts';
 import type { TrendSeries } from './charts';
 
@@ -64,5 +65,21 @@ describe('trendPlotRange — 빈 입력·단일 포인트', () => {
   });
   it('n=0 이어도 ymax는 0이 아니다(그리지 않더라도 0 나눗셈이 생기지 않게)', () => {
     expect(trendPlotRange([], {}, []).ymax).toBeGreaterThan(0);
+  });
+});
+
+/* hoverTip 십자선 모션(2026-11-02 사용자 "좀더 부드럽게 인터렉션") — 위치는 CSS transform 으로만 옮기고(SVG x1·cx 속성은 전환 불가),
+   transition 은 전역 저모션 규칙이 못 막으므로 transitions.css 의 저모션 가드가 유일한 안전장치다. */
+describe('MultiLineTrend hoverTip 모션 계약', () => {
+  const css = readFileSync(new URL('../styles/transitions.css', import.meta.url), 'utf8');
+  const src = readFileSync(new URL('./charts.tsx', import.meta.url), 'utf8');
+  it('glide(위치 미끄러짐)·fade(제자리 흐려짐) 두 클래스와 저모션 가드가 있다', () => {
+    expect(css).toMatch(/\.chart-xhair-glide\s*\{[^}]*transform var\(--dur\)/);
+    expect(css).toMatch(/\.chart-xhair-fade\s*\{[^}]*opacity var\(--dur-fast\)/);
+    expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{\s*\.chart-xhair-glide, \.chart-xhair-fade \{ transition: none; \}/);
+  });
+  it('안내선·점·툴팁 위치는 transform 으로 옮긴다', () => {
+    expect(src).toContain('style={{ transform: `translateX(${x(at)}px)`');
+    expect(src).toContain('style={{ transform: `translate(${x(at)}px, ${y(v)}px)`');
   });
 });

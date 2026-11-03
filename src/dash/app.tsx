@@ -40,9 +40,13 @@ import { MenuManage } from './sys/setting/menu_manage';                         
 import { UserPermissionManage } from './sys/user/user_permission_manage';             // 사용자 권한 관리(S0_102, 권한 매트릭스)
 import { ProgramManage } from './sys/setting/program_manage';                            // 프로그램 관리(S0_105 PROGRAMS 근거, 읽기 전용 목록)
 import { UserManage } from './sys/user/user_manage';                                  // 사용자 관리(S0_101)
-import { UserInviteManage } from './sys/user/user_invite_manage';                     // 사용자 초대(운용사)(S0_103)
+import { UserInviteManage } from './sys/user/user_invite_manage';                     // 사용자 초대(S0_103)
 import { PermissionHistory } from './sys/audit/permission_history';                    // 권한 변경이력(S0_107)
 import { AuditLog } from './sys/audit/audit_log';                                      // 감사로그(S0_104)
+import { PrivacyAccessLog } from './sys/audit/privacy_access_log';                     // 개인정보 접속관리(ADM-010 — 접근기록 + 통계 탭)
+import { IntegrationMonitor } from './sys/integration/integration_monitor';             // 연동 모니터링(ADM-005 — 송수신이력·연계처리이력 탭 + 상세 팝업)
+import { SfundReportFormManage } from './sys/board/sfund_report_form_manage';          // 자펀드보고양식관리(운용사ERP)(ADM-012 — 양식 CRUD + 버전 관리)
+import { BoardManage } from './sys/board/board_manage';                                // 게시판관리(ADM-013 — 게시글 CRUD + 게시 확정 + 팝업·배너)
 import { LoginDemo } from './aut/login/login_demo';                                    // 로그인(S0_001, Shell 없는 UI 데모)
 import { OnboardingIssue } from './aut/otp/onboarding_issue';                        // 발급 온보딩(S0_002, 동상)
 import { OnboardingInvite } from './aut/otp/onboarding_invite';                      // 초대 온보딩(S0_003, 동상)
@@ -242,6 +246,10 @@ function App() {
   else if (route === "user-invite-gp") page = <UserInviteManage onNav={onNav} />;
   else if (route === "permission-history") page = <PermissionHistory onNav={onNav} />;
   else if (route === "audit-log") page = <AuditLog onNav={onNav} />;
+  else if (route === "privacy-access-log") page = <PrivacyAccessLog onNav={onNav} />;
+  else if (route === "integration-monitor") page = <IntegrationMonitor onNav={onNav} />;
+  else if (route === "sfund-report-form-manage") page = <SfundReportFormManage onNav={onNav} />;
+  else if (route === "board-manage") page = <BoardManage onNav={onNav} />;
   else if (route === "report-bucheo") page = <ReportBucheo onNav={onNav} />;
   else if (route === "editor") page = <EditorPage onNav={onNav} />;
   else if (route === "asset-fund-info-manage") page = <AssetFundInfoManage onNav={onNav} />;

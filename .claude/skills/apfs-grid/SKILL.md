@@ -170,6 +170,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 - 행 선택 중(선택 액션 바가 좌측 차지): 깔때기와 칩 줄(`FilterChipRow`)을 통째로 감춘다(`grid_frame.tsx` `selecting`) — 페이지가 `selCount>0 ? null` 로 칩을 끌 필요 없음. 그래서 필터를 바꿀 때 선택을 해제하지 않으면 칩이 계속 안 보인다 — 외부 필터 화면은 필터 effect 에서 `deselectAll()`(2026-10-27 → [[apfs-detail-filter]]).
 - 우측 액션 `shrink-0` 고정. ≤640px 만 좌측 `basis-full` 로 좌/우 두 줄 적층(칩 행 폭 = 남은 폭이라 판정이 자동으로 맞는다).
 - 보이는 캡션 없음(`role="group" aria-label="필터"`). 적용 칩 = 값만·240px 말줄임·항목명은 DS Tooltip(호버·× 포커스)/aria 로(2026-10-26 네이티브 title 대체 — 필터 적용 직후 3초 자동 노출·모달 중엔 닫힐 때까지 지연 → [[apfs-detail-filter]]). 해제 가능 ≥2 이면 `전체 해제`. **`+N` 의 N = 숨긴 필터(기본 칩+적용 칩) 수 — `전체 해제`는 세지 않는다**(2026-09-29: 필터 2개 숨김이 `+3` 으로 보인 버그). 숨긴 게 `전체 해제` 하나뿐이면 `+N` 트리거를 그리지 않는다(`+0` 금지).
+- **적용 칩 값 클릭 = 상세필터 드로어를 열고 그 항목으로 스크롤·초점**(강조 표시 없음)(2026-11-02, `filter_field_jump.ts`). 전제: 툴바 드로어 버튼 텍스트 `상세필터` 고정 · 칩 `label` = 드로어 캡션 정확일치(불일치면 드로어만 열림). 규약·함정(flash 툴팁 Esc·rAF 스로틀 측정) → [[apfs-detail-filter]] "적용 칩 클릭".
 - ⚠️ **`전체 해제` = 칩별 `onClear` 를 한 이벤트에서 연달아 호출** → 클로저의 객체 state 를 복사해 지우는 onClear 는 마지막만 남는다. 반드시 함수형 업데이트. 실제 사례: `generic_list.removeFilter`.
 - 칩 행 컨테이너는 `overflow:hidden` 이라 세로 3px 패딩+음수 마진으로 focus 링 여유를 둔다.
 

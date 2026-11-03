@@ -1,4 +1,4 @@
-/* 사용자 초대(운용사) — 순수 모델(UI 없음). 출처: S0_103_사용자초대_운용사.html `PERSONNEL`·`inviteState`·`gate`·`doSend`.
+/* 사용자 초대 — 순수 모델(UI 없음). 출처: S0_103_사용자초대_운용사.html `PERSONNEL`·`inviteState`·`gate`·`doSend`.
    브리프 추가 요구: 초대 생성(발송)·재발송·취소 UI. 초대 링크 유효기간 72시간(목업 문구).
    ⚠ 실제 메일 발송·계정 생성이 아니다 — 화면 로컬 더미 상태만 바꾼다. 실명 아님. */
 import { addHours, format, parseISO } from 'date-fns';

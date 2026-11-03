@@ -114,3 +114,21 @@ describe('activeFilters', () => {
   });
   it('undefined 는 빈 배열', () => expect(activeFilters(undefined)).toEqual([]));
 });
+
+/* 적용 칩 클릭 → 상세필터의 그 항목(2026-11-02 사용자 요청, filter_field_jump.ts). 칩이 프레임 안 [상세필터] 버튼을 텍스트로 찾으므로
+   적용 칩을 쓰는 화면은 그 라벨의 버튼을 반드시 가진다 — 라벨을 바꾸면 칩 클릭이 조용히 아무 일도 안 한다. */
+describe('적용 칩 → 상세필터 이동 계약', () => {
+  it('appliedFilters 를 넘기는 화면은 모두 `상세필터` 버튼을 그린다', () => {
+    const users = walk(ROOT).filter((f) => f.endsWith('.tsx') && /appliedFilters=/.test(strip(readFileSync(f, 'utf8'))));
+    expect(users.length).toBeGreaterThan(30);
+    const missing = users.filter((f) => !/>상세필터</.test(strip(readFileSync(f, 'utf8')))).map((f) => relative(ROOT, f));
+    expect(missing).toEqual([]);
+  });
+  it('칩 값은 이동 버튼이고, GridFrame 루트가 이동 범위를 표시한다', () => {
+    const own = readFileSync(join(ROOT, OWNER), 'utf8');
+    expect(own).toContain('jumpToFilterField(boxRef.current, label)');
+    expect(own).toContain('상세필터에서 변경');
+    expect(readFileSync(join(ROOT, 'dash/grid_frame.tsx'), 'utf8')).toContain('data-grid-frame=""');
+  });
+});
+

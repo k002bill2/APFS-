@@ -22,8 +22,8 @@ import { ReadGrid } from '../../risk_grid';
 import type { CellRenderers } from '../../risk_grid';
 import { exportTables } from '../../risk_excel';
 import type { Row } from '../../risk_table_meta';
-import { REPORT_GUIDE_TABLE, REPORT_GUIDE_LABEL, REPORT_GUIDE_ROUTE, GUIDE_HISTORY } from './report_guide_data';
-import { ReportGuideHistoryModal } from './report_guide_history_modal';
+import { REPORT_GUIDE_TABLE, REPORT_GUIDE_LABEL, REPORT_GUIDE_ROUTE, GUIDE_HISTORY } from '../../report_guide_data';
+import { ReportGuideHistoryModal } from '../../report_guide_history_modal';
 
 const { Button, StatusBadge } = UI;
 

@@ -428,8 +428,12 @@ function GroupedBars({ data, height = 240, ariaLabel }: { data: any[]; height?: 
    - `tableCaption`을 주면 차트의 접근가능 대체 표현으로 **시각적 숨김 데이터 표**를 함께 렌더한다.
    - `fullLabels`(선택) = 툴팁·숨김표에 쓸 **완전형 라벨**(예: 축 `25.07` ↔ 접근성 `2025-07`).
      미전달 시 `labels`로 폴백한다 — 시각 축은 좁으니 축약하되 비시각 표현은 모호하면 안 된다.
-   - 좁은 폭에서는 x라벨이 겹치므로 `minWidth`(기본 640) 아래로는 svg를 줄이지 않고 래퍼가 가로 스크롤한다. */
-export type TrendSeries = { key: string; name: string; color: string; dash?: boolean };
+   - 좁은 폭에서는 x라벨이 겹치므로 `minWidth`(기본 640) 아래로는 svg를 줄이지 않고 래퍼가 가로 스크롤한다.
+   - `hoverTip`(선택, 기본 off — 켠 화면만 바뀐다): 플롯 위 어디든 마우스를 올리면 가장 가까운 x 에 세로 안내선 +
+     점 강조 + 값 툴팁(완전형 라벨 + 시리즈별 값). 점 `<title>` 은 지름 5px 점에 정확히 올려야 1초 뒤에 떠서 사실상 안 보였다
+     (2026-11-02 사용자 "차트에 오버시 정보 보이게" — 개인정보 접속관리). 툴팁은 플롯 안쪽 위에 붙여 래퍼 overflow 에 안 잘린다.
+   - 시리즈 `unit`(선택) = 그 시리즈 값 단위(방문자수 '명' · 페이지뷰 '건' 처럼 섞일 때). 없으면 차트 `unit`. */
+export type TrendSeries = { key: string; name: string; color: string; dash?: boolean; unit?: string };
 
 /* 축 상한 — 4분할 그리드와 눈금이 정수로 떨어지게 올림(10/20/50 단위). */
 const trendNiceMax = (v: number) => {
@@ -457,15 +461,20 @@ export function trendPlotRange(labels: string[], data: Record<string, number[]>,
   return { n, ymax: trendNiceMax(max) };
 }
 
-function MultiLineTrend({ labels, fullLabels, data, series, height = 260, unit = "", yLabel, ariaLabel, tableCaption, seriesHeader = "구분", minWidth = 640 }: {
+function MultiLineTrend({ labels, fullLabels, data, series, height = 260, unit = "", yLabel, ariaLabel, tableCaption, seriesHeader = "구분", minWidth = 640, hoverTip = false }: {
   labels: string[];
   fullLabels?: string[];
   data: Record<string, number[]>;
   series: TrendSeries[];
   height?: number; unit?: string; yLabel?: string; ariaLabel?: string;
-  tableCaption?: string; seriesHeader?: string; minWidth?: number;
+  tableCaption?: string; seriesHeader?: string; minWidth?: number; hoverTip?: boolean;
 }) {
   const [ref, W] = useMeasure();
+  const [hi, setHi] = useState<number | null>(null);
+  /* 마지막으로 가리킨 점 — 포인터가 떠나도 그 자리에서 흐려지며 사라지게(언마운트하지 않는다) */
+  const [last, setLast] = useState(0);
+  /* 직전 렌더에 보였는지 — 처음 나타날 땐 위치를 즉시(fade), 보이는 중 이동은 미끄러지게(glide). styles/transitions.css .chart-xhair-* */
+  const shownRef = useRef(false);
   const w = Math.max(W || minWidth, minWidth);
   const m = { t: 14, r: 16, b: 34, l: 50 };
   const iw = w - m.l - m.r, ih = height - m.t - m.b;
@@ -475,8 +484,16 @@ function MultiLineTrend({ labels, fullLabels, data, series, height = 260, unit =
   // n===1이면 분모 0 → 가운데 한 점으로 떨어뜨린다(구간 하나짜리 조회도 깨지지 않게)
   const x = (i: number) => m.l + (n > 1 ? (i / (n - 1)) * iw : iw / 2);
   const y = (v: number) => m.t + ih - (v / ymax) * ih;
+  const unitOf = (s: TrendSeries) => s.unit ?? unit;
+  const band = n > 1 ? iw / (n - 1) : iw;   // 호버 띠 폭 = 이웃 점 사이 간격(가장 가까운 점으로 붙는다)
+  const show = hoverTip && hi !== null && hi < n;
+  const at = Math.min(last, Math.max(n - 1, 0));
+  const motion = show && shownRef.current ? "chart-xhair-glide" : "chart-xhair-fade";
+  React.useEffect(() => { shownRef.current = show; });
+  const enter = (i: number) => { setHi(i); setLast(i); };
   return (
-    <div ref={ref} className="w-full overflow-x-auto">{W > 0 && n > 0 && <svg width={w} height={height} className="block" role={ariaLabel ? "img" : undefined} aria-label={ariaLabel}>{[0, 1, 2, 3, 4].map((g) => {
+    /* 안쪽 relative 상자 = 툴팁 기준. 숨김 표(sr-only table)는 그 밖에 둔다 — 표가 relative 안에 들어가면 내용 폭으로 퍼져 차트에 가로 스크롤이 생긴다 */
+    <div ref={ref} className="w-full overflow-x-auto">{W > 0 && n > 0 && <div style={{ position: "relative", width: w }}><svg width={w} height={height} className="block" role={ariaLabel ? "img" : undefined} aria-label={ariaLabel} onMouseLeave={hoverTip ? () => setHi(null) : undefined}>{[0, 1, 2, 3, 4].map((g) => {
           const yy = m.t + (ih * g) / 4, tick = Math.round(ymax * (1 - g / 4));
           return (
             <g key={g}><line x1={m.l} x2={m.l + iw} y1={yy} y2={yy} stroke="var(--chart-grid)" strokeDasharray="2 3" /><text
@@ -497,7 +514,16 @@ function MultiLineTrend({ labels, fullLabels, data, series, height = 260, unit =
           x={x(i)}
           y={height - 12}
           textAnchor="middle"
-          style={{ fontSize: 9.5, fill: "var(--caption)" }}>{lab}</text>)}{series.map((s) => {
+          style={{ fontSize: 9.5, fill: "var(--caption)" }}>{lab}</text>)}{hoverTip && <line
+          x1={0}
+          x2={0}
+          y1={m.t}
+          y2={m.t + ih}
+          stroke="var(--border-strong)"
+          strokeDasharray="3 3"
+          className={motion}
+          pointerEvents="none"
+          style={{ transform: `translateX(${x(at)}px)`, opacity: show ? 1 : 0 }} />}{series.map((s) => {
           const vs = (data[s.key] || []).slice(0, n);
           return (
             <g key={s.key}><polyline
@@ -512,13 +538,45 @@ function MultiLineTrend({ labels, fullLabels, data, series, height = 260, unit =
                 cx={x(i).toFixed(1)}
                 cy={y(v).toFixed(1)}
                 r={2.6}
-                fill={s.color}><title>{labelAt(i) + " " + s.name + " " + String(v) + unit}</title></circle>)}</g>
+                fill={s.color}><title>{labelAt(i) + " " + s.name + " " + String(v) + unitOf(s)}</title></circle>)}</g>
           );
-        })}</svg>}{tableCaption && n > 0 && (
+        })}{hoverTip && series.map((s) => {
+          const v = (data[s.key] || [])[at];
+          return typeof v === "number"
+            ? <g key={"hi" + s.key} className={motion} pointerEvents="none" style={{ transform: `translate(${x(at)}px, ${y(v)}px)`, opacity: show ? 1 : 0 }}>
+                <circle r={4.5} fill="var(--card)" stroke={s.color} strokeWidth={2} />
+              </g>
+            : null;
+        })}{hoverTip && Array.from({ length: n }, (_, i) => <rect
+          key={"band" + i}
+          x={Math.max(m.l, x(i) - band / 2)}
+          y={m.t}
+          width={Math.min(m.l + iw, x(i) + band / 2) - Math.max(m.l, x(i) - band / 2)}
+          height={ih}
+          fill="transparent"
+          onMouseEnter={() => enter(i)} />)}</svg>{hoverTip && <TrendTip x={x(at)} top={m.t + 2} flip={x(at) > w / 2} show={show} motion={motion} title={labelAt(at)} rows={series.map((s) => ({ key: s.key, name: s.name, color: s.color, value: String((data[s.key] || [])[at] ?? "-") + unitOf(s) }))} />}</div>}{tableCaption && n > 0 && (
         <table className="sr-only"><caption>{tableCaption}</caption><thead><tr><th scope="col">{seriesHeader}</th>{Array.from({ length: n }, (_, i) => <th key={i} scope="col">{labelAt(i)}</th>)}</tr></thead><tbody>{series.map((s) => (
               <tr key={s.key}><th scope="row">{s.name}</th>{(data[s.key] || []).slice(0, n).map((v, i) => <td key={i}>{String(v)}</td>)}</tr>
             ))}</tbody></table>
       )}</div>
+  );
+}
+
+/* MultiLineTrend 호버 툴팁 — Tip 과 같은 겉모습(반전 표면·12px·그림자 = 오버레이 elevation). 안내선 오른쪽에 붙고,
+   플롯 오른쪽 절반이면 왼쪽으로 뒤집는다(뒤집힘도 transform 이라 같은 전환으로 미끄러진다). 포인터를 받지 않는다(띠 호버가 끊기지 않게).
+   늘 마운트돼 있고 show=false 면 투명 — 값은 스크린리더용 숨김 표가 맡으므로 aria-hidden. */
+function TrendTip({ x, top, flip, show, motion, title, rows }: { x: number; top: number; flip: boolean; show: boolean; motion: string; title: string; rows: { key: string; name: string; color: string; value: string }[] }) {
+  return (
+    <div aria-hidden="true" className={`absolute bg-foreground text-bg font-semibold pointer-events-none whitespace-nowrap shadow-lg ${motion}`}
+      style={{ left: 0, top, transform: `translateX(${x}px) translateX(${flip ? "calc(-100% - 10px)" : "10px"})`, opacity: show ? 1 : 0, padding: "7px 10px", borderRadius: 9, fontSize: 12, zIndex: 5, lineHeight: 1.5 }}>
+      <div className="tabular-nums" style={{ marginBottom: 2 }}>{title}</div>
+      {rows.map((r) => (
+        <div key={r.key} className="flex items-center gap-1.5 font-medium">
+          <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: 2, background: r.color, display: "inline-block" }} />
+          <span>{r.name}</span><span className="tabular-nums font-bold" style={{ marginLeft: "auto", paddingLeft: 12 }}>{r.value}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 

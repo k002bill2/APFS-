@@ -65,7 +65,7 @@ function Field({ label, children, errMsg, className, plain }: { label: string; c
   );
 }
 
-export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete, title }: {
+export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete, title, footerStart, saveLabel }: {
   mode: "create" | "edit";
   initial?: Row;
   schema: PageSchema;
@@ -75,6 +75,10 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
   /** 모달 제목 오버라이드(선택). 미지정 시 mode별 기본("신규 등록"/"항목 수정").
       워크플로우 화면처럼 같은 스키마를 단계별 다른 제목으로 여는 경우(예: 선정조합 등록/수정)에 사용. */
   title?: string;
+  /** 푸터 왼쪽(삭제 옆) 보조 액션 슬롯(선택). 예: 수정 모달 안 [새 버전 등록](자펀드보고양식관리 ADM-012). */
+  footerStart?: React.ReactNode;
+  /** 저장 버튼 라벨(선택). 미지정 시 '저장'. 진행 중 라벨은 SaveButton 기본('저장 중'). */
+  saveLabel?: string;
 }) {
   const [vals, setVals] = useState<Record<string, string>>(() => {
     const seed: Record<string, string> = {};
@@ -166,14 +170,15 @@ export function RowFormModal({ mode, initial, schema, onSave, onClose, onDelete,
 
         {/* 푸터 — 좌: 수정 모드 삭제(→ 부모의 삭제 확인 AlertDialog, 인라인 2단계 확인 제거 2026-10-08) · 우: 취소·저장 */}
         <DialogFooter className="px-[46px]">
-          <div>
+          <div className="flex gap-2">
             {mode === "edit" && onDelete && (
               <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: "var(--danger)" }} onClick={onDelete}>삭제</Button>
             )}
+            {footerStart}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => dlgRef.current?.close()}>취소</Button>
-            <SaveButton onSubmit={submit} />
+            <SaveButton onSubmit={submit}>{saveLabel ?? '저장'}</SaveButton>
           </div>
         </DialogFooter>
       </DialogContent>
