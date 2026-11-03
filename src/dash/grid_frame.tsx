@@ -160,6 +160,10 @@ export interface GridFrameProps {
   /** 기본(주) 필터 칩 — 깔때기 뒤 첫 칩 무리. 페이지가 FilterChip 을 직접 그리지 않고 데이터로 넘긴다
       (넘치면 +N 메뉴로 접히고, 숨겨진 칩이 선택되면 첫 자리로 끌어올려진다 — applied_filters.tsx). */
   filterChips?: readonly FilterChipItem[];
+  /** 필터 맥락 키(선택) — 탭마다 필터 세트가 다른 화면이 활성 탭 id 를 넘긴다. 값이 바뀌면 칩 행을 새로 마운트해
+      '방금 건 필터' 툴팁(3초)을 띄우지 않는다 — 탭 전환은 필터를 건 게 아니다. 그 툴팁 레이어가 남아 있으면
+      직후에 연 팝업의 첫 Esc 를 가져간다(2026-11-02 연동 모니터링 실측). 미지정이면 종전과 같다. */
+  filterScope?: string;
   /** 푸터 좌: 건수 등 요약 텍스트 */
   footerLeft?: React.ReactNode;
   /** 푸터 중: 페이지네이션 */
@@ -173,7 +177,7 @@ export interface GridFrameProps {
 
 export function GridFrame({
   crumbs, title, sub, headerActions, cardTitle, kpis, favRoute,
-  toolbarLeft, toolbarRight, contextActions, appliedFilters, filterChips, footerLeft, footerCenter, footerRight, children,
+  toolbarLeft, toolbarRight, contextActions, appliedFilters, filterChips, filterScope, footerLeft, footerCenter, footerRight, children,
 }: GridFrameProps) {
   const hasToolbar = Boolean(toolbarLeft || toolbarRight || contextActions || (filterChips && filterChips.length) || activeFilters(appliedFilters).length);
 
@@ -333,7 +337,8 @@ export function GridFrame({
   }, [hasFooter]);
 
   return (
-    <div ref={rootRef} style={{ maxWidth: 1280, margin: '0 auto', animation: 'dashFade var(--dur-slow) var(--ease) backwards' }}>
+    /* data-grid-frame — 적용 칩 클릭이 같은 프레임의 [상세필터] 버튼을 찾는 범위(filter_field_jump.ts) */
+    <div ref={rootRef} data-grid-frame="" style={{ maxWidth: 1280, margin: '0 auto', animation: 'dashFade var(--dur-slow) var(--ease) backwards' }}>
       {/* PageHeader: 현 shell은 title/sub를 렌더하지 않으므로(crumbs·actions만) title/sub는 카드헤더가 직접 그린다.
           title은 forward-compat용으로 계속 넘기되 라이브 제목은 카드 <h3> — 향후 shell이 title 렌더를 복원하면 중복 주의 */}
       <PageHeader crumbs={crumbs} title={title} actions={headerActions} />
@@ -371,7 +376,7 @@ export function GridFrame({
                 <div ref={topSentinelRef} aria-hidden="true" style={{ position: 'absolute', top: 0, left: 0, width: 1, height: 1, pointerEvents: 'none' }} />
                 <div ref={midSentinelRef} aria-hidden="true" style={{ position: 'absolute', top: '50%', left: 0, width: 1, height: 1, pointerEvents: 'none' }} />
               </div>
-              {!selecting && <FilterChipRow chips={filterChips} applied={appliedFilters} />}
+              {!selecting && <FilterChipRow key={filterScope} chips={filterChips} applied={appliedFilters} />}
             </div>
             <div className="flex items-center gap-1 shrink-0 max-[640px]:flex-wrap">{toolbarRight}</div>
           </div>

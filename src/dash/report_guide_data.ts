@@ -1,10 +1,11 @@
 /* 보고양식·가이드 조회 데이터 — 출처 목업 docs/mockups/05_MOAF/SRP_007_보고양식_가이드_조회.html(SRP-007 · KRDS TO-BE).
+   관리자 > 게시판 > 자펀드보고양식관리(운용사ERP)(ADM-012)도 같은 시드를 본다 — 두 대분류 공용이라 src/dash 루트(2026-11-02 sfr/file 에서 이동).
    원문 DATA 리터럴 14건(AS-IS MOAF REPORT System 양식) 그대로. 버전 이력 3건도 원문 샘플 그대로 — 원문 설계 메모상
    "원본에 이력 샘플이 없어 임의로 추가(검토필요)" 한 값이다. 실데이터 연동 시 교체 대상.
    - 목록 순서 = 등록일시 최신순(원문 `DATA.sort`), No 는 정렬 뒤 1부터 매긴다.
    - 파일명은 화면 칸이 아니라 Download 버튼의 대상이라 컬럼 없이 행 값(`file`)으로만 싣는다.
    - 버전 이력은 배열이라 Row(Cell 값만)에 못 담는다 → 행 id 로 찾는 `GUIDE_HISTORY` 로 분리. */
-import type { ColMeta, Row, TableMeta } from '../../risk_table_meta';
+import type { ColMeta, Row, TableMeta } from './risk_table_meta';
 
 export const REPORT_GUIDE_LABEL = '보고양식·가이드 조회';
 export const REPORT_GUIDE_ROUTE = 'report-guide';
