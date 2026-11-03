@@ -1,0 +1,31 @@
+/* 장부조회 리포트 뷰어(ledger_report_viewer.tsx) — A4 세로 출력 양식.
+   화면: 현재 페이지만 보인다(배율은 부모 래퍼 transform — print_grid.css 가 인쇄 때 조상 transform 을 푼다).
+   인쇄(printArea): 전 페이지를 쪽마다 끊어 찍는다. */
+.ledger-report-page {
+  box-sizing: border-box;
+  width: 794px;            /* A4 210mm @96dpi */
+  min-height: 1123px;      /* A4 297mm @96dpi */
+  padding: 56px 52px;
+  background: var(--card);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.ledger-report-page table { width: 100%; border-collapse: collapse; }
+.ledger-report-page th,
+.ledger-report-page td { border: 1px solid var(--border-strong); padding: 4px 8px; }
+.ledger-report-page th { background: var(--muted); font-weight: 700; }
+
+@media screen {
+  .ledger-report-page:not([data-current]) { display: none; }
+}
+/* 인쇄 준비(printArea 가 html[data-printing] 을 단 뒤 **화면에서** 폭을 잰다) — 재기 전에 배율·숨김 쪽을 풀어야
+   폭 맞춤(zoom 사다리)이 100% 기준·전 쪽 기준으로 계산된다. 그래서 @media 밖에 둔다(인쇄 창이 닫히면 표식과 함께 풀린다). */
+html[data-printing] .ledger-zoom { transform: none !important; }
+html[data-printing] .ledger-report-page { display: block !important; }
+@media print {
+  /* 양식 폭 = 인쇄 페이지 폭(여백 안) — 화면용 794px·안쪽 여백을 풀어 표가 용지 폭에 맞게 */
+  .ledger-report-page { width: auto; min-height: 0; padding: 0; border: 0; break-after: page; }
+  .ledger-report-page:last-child { break-after: auto; }
+}

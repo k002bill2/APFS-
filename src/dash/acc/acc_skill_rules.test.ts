@@ -1,4 +1,4 @@
-/* 회계 화면 스킬 규약 가드 — 2026-10-30 점검에서 빠져 있던 3종(회계 대분류 루트: 대상이 baseinfo·slip 두 중분류).
+/* 회계 화면 스킬 규약 가드 — 2026-10-30 점검에서 빠져 있던 3종(회계 대분류 루트: 대상이 baseinfo·slip·ledger 중분류).
    ① 목록 단축키(⌘P·⌥D·⌘⏎)는 상세필터(Sheet)가 열린 동안 끈다 — apfs-grid "단축키". 드로어가 덮은 뒤 그리드가 인쇄됐다(실측).
    ② AUTO_SIZE_CONTENT 그리드는 잔여폭 흡수 컬럼 1개(flex:1 + minWidth = width + suppressAutoSize, maxWidth 없음)
       — apfs-aggrid PR #362. 없으면 프레임이 컬럼 합보다 넓을 때 행이 마지막 컬럼에서 끝나 우측이 빈다(2560 실측 139px).
@@ -12,6 +12,8 @@ const LIST_PAGES = [
   'account_code_manage.tsx', 'closing_form_manage.tsx',
   'general_journal_manage.tsx', 'deleted_journal_manage.tsx', 'suspense_manage.tsx',
   'missing_evidence_manage.tsx', 'journal_search_manage.tsx',
+  /* 장부조회(ACC-009~014) — 재무상태표·손익계산서는 단축키가 공용 골격 statement_kit 에 있다 */
+  'daily_monthly_manage.tsx', 'subledger_manage.tsx', 'general_ledger_manage.tsx', 'trial_balance_manage.tsx', 'statement_kit.tsx',
 ];
 
 describe('① 회계 목록 단축키 — 상세필터가 열린 동안 끔', () => {

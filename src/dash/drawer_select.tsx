@@ -9,6 +9,7 @@
 import { Icon } from './icons';
 import { drawerInputStyle } from './schemas/renderers';
 import { SearchableSelect, shouldSearch, type SelectOption } from './ui/searchable-select';
+import { MultiSelect } from './ui/multi-select';
 
 export function DrawerSelect({ value, onChange, options, all = '전체', noAll, ariaLabel, searchable }: {
   value: string;
@@ -37,6 +38,24 @@ export function DrawerSelect({ value, onChange, options, all = '전체', noAll, 
           : <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
       <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
+    </div>
+  );
+}
+
+/** 상세필터 드로어 다중선택 select — 박스 규격은 DrawerSelect 와 같은 drawerInputStyle('select').
+   [] = emptyLabel('전체'). 트리거가 <button> 이라 <label> 래퍼(DrawerField 기본) 대신 plain 래퍼에 둔다(2회 토글 방지). */
+export function DrawerMultiSelect({ value, onChange, options, emptyLabel = '전체', ariaLabel, searchable }: {
+  value: readonly string[];
+  onChange: (v: string[]) => void;
+  options: ReadonlyArray<SelectOption>;
+  emptyLabel?: string;
+  ariaLabel?: string;
+  searchable?: boolean;
+}) {
+  return (
+    <div style={{ width: 'fit-content', maxWidth: '100%' }}>
+      <MultiSelect searchable={searchable} value={value} onChange={onChange} options={options} emptyLabel={emptyLabel} ariaLabel={ariaLabel}
+        triggerStyle={{ ...drawerInputStyle('select'), maxWidth: '100%' }} />
     </div>
   );
 }
