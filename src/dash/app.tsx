@@ -5,7 +5,7 @@ import { Shell } from './shell';
 import { APFS_DATA, HistoryStore } from './data';
 import { DesignSystem } from './designsystem';
 import { Main } from './frt/widget/main';
-import { EarlyWarningManage } from './ews/alert/early_warning_manage';   // 조기경보 관리(관리형 리스트, S2_51). 구 risk_manage.tsx(FR-5.6 운영 콘솔)는 미라우팅
+import { EarlyWarningManage } from './ews/alert/early_warning_manage';   // 조기경보 관리(관리형 리스트, S2_51). 구 risk_manage.tsx(FR-5.6 운영 콘솔)는 2026-11-03 삭제
 import { ViolationManage } from './ews/alert/violation_manage';   // 법률/규약위반사항 관리(관리형 리스트, S2_53 + 등록화면 S2_54 를 팝업으로 흡수)
 import { ShareholderManage } from './ews/alert/shareholder_manage';   // 운용사 주주변동관리(관리형 리스트, S2_55 + 등록화면 S2_56 을 팝업으로 흡수)
 import { LitigationManage } from './ews/alert/litigation_manage';   // 운용사 소송관리(관리형 리스트, S2_57 + 등록화면 S2_58 을 팝업으로 흡수)

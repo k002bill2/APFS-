@@ -18,6 +18,7 @@ import { CountUp } from './motion/count-up';
 import { Checkbox } from './ui/checkbox';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';   // 체크박스와 한 패밀리(배타 선택) — 선택 점 scale-pop 프리뷰
 import { SchemaField } from './schemas/renderers';
+import { DrawerMultiSelect } from './drawer_select';
 import type { FieldSpec } from './schemas/types';
 
 const { ColorChip, StatusBadge, StatCard, ChartCard, Button, SaveButton, IconBtn, FilterChip, SegTabs, DeltaBadge, Card, Progress } = UI;
@@ -89,6 +90,47 @@ function RichTextPreview() {
       <div style={{ maxWidth: 860 }}><SchemaField field={RICHTEXT_FIELD} value={v} onChange={setV} /></div>
       <div className="t-caption" style={{ wordBreak: "break-all", maxHeight: 72, overflow: "auto" }}>저장 값(직렬화): <code className="tabular">{v || '(빈 문자열)'}</code></div>
     </Card>
+  );
+}
+
+/* 다중 선택 셀렉트 프리뷰 — 상세필터 드로어에서 쓰는 DrawerMultiSelect(→ ui/multi-select) 그대로. 짧은 목록(검색 없음)·긴 목록(검색 자동). */
+const MS_SECTORS = ['농식품', '수산', '스마트팜', '푸드테크', '그린바이오', 'ESG', '일반'];
+const MS_REGIONS = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남'];
+function MultiSelectCard({ title, label, options, initial }: { title: string; label: string; options: string[]; initial: string[] }) {
+  const [v, setV] = useState<string[]>(initial);
+  return (
+    <Card className="flex flex-col gap-2">
+      <div className="t-label" style={{ textTransform: "none" }}>{title}</div>
+      <div className="flex flex-col gap-1">
+        <span className="t-caption">{label}</span>
+        <DrawerMultiSelect value={v} onChange={setV} options={options} ariaLabel={label} />
+      </div>
+      <div className="t-caption">값(배열): <code className="tabular">{JSON.stringify(v)}</code> · 빈 배열 = 전체</div>
+    </Card>
+  );
+}
+/* 스키마 폼 'multiselect' — SchemaField 경유(RowFormModal 과 같은 경로). 값=JSON 배열 문자열(빈 배열 = ''), 빈 표시 '선택'. */
+const MS_FORM_FIELD: FieldSpec = { key: 'sectors', label: '투자분야', control: 'multiselect', options: MS_SECTORS };
+function MultiSelectFormCard() {
+  const [v, setV] = useState('');
+  return (
+    <Card className="flex flex-col gap-2">
+      <div className="t-label" style={{ textTransform: "none" }}>스키마 폼 — FIELD_CONTROLS 'multiselect'</div>
+      <div className="flex flex-col gap-1">
+        <span className="t-caption">{MS_FORM_FIELD.label}</span>
+        <SchemaField field={MS_FORM_FIELD} value={v} onChange={setV} />
+      </div>
+      <div className="t-caption">저장 값(직렬화): <code className="tabular">{v || '(빈 문자열)'}</code></div>
+    </Card>
+  );
+}
+function MultiSelectPreview() {
+  return (
+    <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(340px,100%),1fr))" }}>
+      <MultiSelectCard title="짧은 목록 — 검색 없음 (7개)" label="투자분야" options={MS_SECTORS} initial={['농식품', '수산']} />
+      <MultiSelectCard title="긴 목록 — 검색창 자동 (12개)" label="소재지역" options={MS_REGIONS} initial={[]} />
+      <MultiSelectFormCard />
+    </div>
   );
 }
 
@@ -310,6 +352,10 @@ function DesignSystem() {
         <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(340px,100%),1fr))" }}>
           <RichTextPreview />
         </div>
+      </Section>
+
+      <Section title="3-5. 폼 컨트롤 — 다중 선택 셀렉트" desc="목록 안에서 여러 값을 고르는 셀렉트(ui/multi-select · 드로어는 DrawerMultiSelect). 골라도 닫히지 않고, 맨 위 '전체 선택'은 없음/일부/전부 3상태, 하단에 선택 개수와 [선택 해제]. 옵션 10개 이상이면 검색창이 붙는다(단일 셀렉트와 같은 기준). 값은 옵션 순서의 문자열 배열이며, 하나도 고르지 않으면 '전체'(조건 없음). 정본 사용처: 일/월계표 상세필터 계정구분. 스키마 화면은 폼 control 'multiselect'(값 = JSON 배열 문자열, 빈 표시 '선택')와 상세필터 kind 'multi'(multiselect 필드면 자동, select 컬럼은 filterSpecs 로 선언)로 쓴다.">
+        <MultiSelectPreview />
       </Section>
 
       <Section title="4. 차트 스타일" desc="동일한 토큰·애니메이션을 공유하는 차트 컴포넌트 모음. 카드에 담아 그대로 사용합니다.">

@@ -38,7 +38,7 @@ description: APFS 대시보드의 AG Grid 본체(테이블 알맹이) 작성 규
    `main-internal` export 는 **semver 비보장** — 모듈 로드 시 `typeof` 어서션으로 사라지면 시끄럽게 실패한다(조용한 no-op 방지). multiRow 소비처는 `headerCheckbox:false` + `selectAll:'filtered'`(DS 헤더와 범위 일치, 내장 SelectAllFeature 끔). pinned 합계행·`selectable:false` 행은 렌더러가 `null` 을 그린다(내장 동작과 동일).
 9. **flex 컬럼에는 `width: minWidth` 를 같이 준다 (2026-09-22 운용사 소송관리 실측).** flex 가 적용되기 **전** 첫 레이아웃에서 AG Grid 는 flex 컬럼을 기본폭 **200px** 로 깔고, 초기폭 합이 뷰포트에 가깝거나 넘으면 마운트 중 가로 스크롤 띠(`.ag-body-horizontal-scroll`)가 잠깐 켜진다. 곧 flex 가 폭을 맞춰 띠는 꺼져야 하는데, AG Grid 35.3.1 에서 **넘침 0(`scrollWidth === clientWidth`)인데도 11px 띠 = 그리드 하단 회색 라인이 남는** 일이 리로드 10회 중 3회(1280 프레임)·1회(1500 프레임, 초기폭 합 1200 < 뷰포트 1210 인데도) 있었다. `width: minWidth` 를 주면 초기폭 합이 훨씬 작아 두 레이아웃 합계 **0/20**. `width` 는 flex 적용 뒤 무시되므로 최종 폭엔 영향 0. 실제 넘침(좁은 창)은 그대로 스크롤바가 뜬다.
    - ⚠ **내부 원인은 미확정.** 처음 세운 "`GridBodyScrollFeature.lastIsHorizontalScrollShowing` 캐시를 500ms 재검사가 재적용" 가설은 Codex 소스 대조로 **기각**됐다 — `ViewportSizeFeature.updateScrollVisibleService`(500ms 재호출)는 `RowContainerCtrl.isHorizontalScrollShowing()`(직접 DOM 판정)을 부르고 그 캐시는 이 경로에 없다. 원인을 단정해 적지 말고, 위 실측(과도 넘침 → 잔존 띠, 과도 넘침 제거 → 0회)만 근거로 쓴다.
-   - 팩토리 정본: `const txt = (…, flex, minWidth) => ({ field, headerName, flex, minWidth, width: minWidth, … })`. **2026-09-22 전수 적용 완료** — flex 컬럼이 있는 11파일 전부(`litigation/shareholder/workforce_manage` + `all_report_status`·`asset_funding`·`custody_confirm_manage`·`early_warning_manage`·`fund_invest_status`·`generic_list`(stretch 컬럼)·`report_bucheo`·`risk_manage`). 이미 `width` 를 명시한 flex 컬럼(`audit_log`·`code_manage`·`menu_manage` 등, 200~300)은 손대지 않았다 — 초기폭 명시 자체가 목적이라 값은 그대로 둔다. 신규 flex 컬럼은 예외 없이 `width` 동반.
+   - 팩토리 정본: `const txt = (…, flex, minWidth) => ({ field, headerName, flex, minWidth, width: minWidth, … })`. **2026-09-22 전수 적용 완료** — flex 컬럼이 있는 11파일 전부(`litigation/shareholder/workforce_manage` + `all_report_status`·`asset_funding`·`custody_confirm_manage`·`early_warning_manage`·`fund_invest_status`·`generic_list`(stretch 컬럼)·`report_bucheo`·`risk_manage`(2026-11-03 삭제)). 이미 `width` 를 명시한 flex 컬럼(`audit_log`·`code_manage`·`menu_manage` 등, 200~300)은 손대지 않았다 — 초기폭 명시 자체가 목적이라 값은 그대로 둔다. 신규 flex 컬럼은 예외 없이 `width` 동반.
    - 검증: 리로드 직후 15ms 폴링으로 `.ag-body-horizontal-scroll` 에 `ag-invisible` 없는 프레임이 **한 번도** 없어야 한다. 2.5초 뒤 `ag-invisible` 유무만 보면 3/10 확률이라 놓친다.
    - 함정: 좁혔다 넓히는 리사이즈 경로는 정상(3/3) — 이 버그는 **마운트 직후 초기폭 200px** 에서만 난다. 컬럼 드래그도 무관(flex 이웃이 흡수).
 10. **컬럼 폭은 균등 배분하지 않는다 — No·상태 배지는 compact(내용폭 고정) (2026-09-24 사용자 결정, 등록원부관리).** flex 로 남는 폭을 전 컬럼에 똑같이 나누면 `No`·`활성상태` 같은 짧은 칸까지 넓어져 표가 헐거워진다. **compact 컬럼은 `flex` 없이 `width = minWidth = maxWidth`(내용폭)**, 남는 폭은 **텍스트·금액·일자 칸(flex:1)만** 나눠 갖는다.
@@ -182,7 +182,7 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     - ✗ `autoSizeStrategy={fitGridWidth}`는 쓰지 말 것: `domLayout="autoHeight"`+지연 레이아웃에서 **생성 시점 폭에 1회만** 맞춰 빈 공간이 남는다(2026-09-11 asset_funding 실측 gap 455px). flex를 쓴다.
   - 검증: 잘린 셀 0 — `[...document.querySelectorAll('.ag-cell')].filter(c=>c.scrollWidth>c.clientWidth+1).length===0`. **빈 공간 0**은 `.ag-center-cols-container` 폭이 아니라(pinned 컬럼 제외돼 항상 pinned폭만큼 작게 나옴) **헤더셀 폭 합 ≈ `.ag-root-wrapper` 폭**으로 본다: `Math.abs([...document.querySelectorAll('.ag-header-cell')].reduce((s,h)=>s+h.getBoundingClientRect().width,0) - document.querySelector('.ag-root-wrapper').getBoundingClientRect().width) < 4`.
 - **행 높이는 테마 기본(42px)** — `rowHeight` 오버라이드 금지(골드와 간격 통일).
-- **체크박스는 "선택이 액션을 만들 때"만 만든다(기본값 아님).** 체크로 실행할 것이 있는 화면 — 다건 선택삭제, 단계 전이(→[[apfs-stage-workflow]]), 선택 행 편집 — 만 `checkboxes:true`. **조회 전용(감사·이력·집계)처럼 선택이 아무 것도 못 하는 화면은 `rowSelection` 자체를 두지 않는다**(아래 "조회 전용" 항목). `checkboxes:false` 로 체크박스만 끄고 선택을 남기는 중간 구성은 **없다** — 2026-09-22 부터 선택 수단이 체크박스뿐이라, 체크박스 없는 선택은 만들 수도 풀 수도 없는 죽은 선택이다(구 선례 `risk_manage.tsx` 는 같은 날 `rowSelection`·`onRowClicked`·write-only 였던 `selectedRow` state 를 한 벌로 걷어냈다).
+- **체크박스는 "선택이 액션을 만들 때"만 만든다(기본값 아님).** 체크로 실행할 것이 있는 화면 — 다건 선택삭제, 단계 전이(→[[apfs-stage-workflow]]), 선택 행 편집 — 만 `checkboxes:true`. **조회 전용(감사·이력·집계)처럼 선택이 아무 것도 못 하는 화면은 `rowSelection` 자체를 두지 않는다**(아래 "조회 전용" 항목). `checkboxes:false` 로 체크박스만 끄고 선택을 남기는 중간 구성은 **없다** — 2026-09-22 부터 선택 수단이 체크박스뿐이라, 체크박스 없는 선택은 만들 수도 풀 수도 없는 죽은 선택이다(구 선례 `risk_manage.tsx`(2026-11-03 삭제)는 같은 날 `rowSelection`·`onRowClicked`·write-only 였던 `selectedRow` state 를 한 벌로 걷어냈다).
   - **선택은 체크박스로만 on/off 한다 — 행 본문 클릭은 선택을 만들지도 풀지도 않는다(2026-09-22 사용자 결정).**
     모든 `rowSelection` 에 `enableClickSelection: false` 를 **명시**한다(AG Grid 기본값과 같지만, 아래 실사고처럼 "키 누락"이
     "선택 수단 0" 사고로 오독된 이력이 있어 의도를 적는다). `enableSelectionWithoutKeys` 는 클릭 선택 전용 옵션이라 함께 뺀다.
@@ -207,7 +207,9 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     ```tsx
     const ROW_SELECTION = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered',
       enableClickSelection: false } as const;                      // 모듈 상수(⑦)
-    const [selCount, setSelCount] = useState(0);                   // 단일/다건 분기의 SSOT
+    const [selIds, setSelIds] = useState<string[]>([]);            // 선택 SSOT — 체크된 행 id 배열(아래 '선택 상태는 selIds 하나로')
+    const selId = selIds[0] ?? null;                               // 파생
+    const selCount = selIds.length;                                // 파생 — 단일/다건 분기
     const single = selCount === 1 && selId ? rows.find((r) => r.id === selId) ?? null : null;
     ```
     - **단일 대상 액션 = `single` 게이트**: 수정·복사·도움말·단계 전이·메일 발송·별개 엔티티 CRUD 등 *한 건에만 뜻이 있는* 모든 버튼과 그 옆 StatusBadge. `{single && <>…</>}` 로 통째 감싼다.
@@ -223,7 +225,7 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     };
     const deleteSelected = () => requestDeleteRows(apiRef.current?.getSelectedRows() ?? []);
     ```
-    - ⚠ **게이트는 요청 시점에 한 번만 평가한다** — 확인 시점에 다시 재면 같은 배치 안의 행끼리(부모·자식) 삭제 순서에 결과가 달라진다. `doDelete` 는 `modal.ids` 를 그대로 지우고 `deselectAll()`+`setSelId(null)`+`setSelCount(0)`.
+    - ⚠ **게이트는 요청 시점에 한 번만 평가한다** — 확인 시점에 다시 재면 같은 배치 안의 행끼리(부모·자식) 삭제 순서에 결과가 달라진다. `doDelete` 는 `modal.ids` 를 그대로 지우고 `deselectAll()` 만 부른다 — `onSelectionChanged` 가 `selIds` 를 `[]` 로 되돌린다(정본 `fund_member_manage.tsx` `doDelete`).
     - 모달은 `{ kind: 'delete'; ids: string[]; blocked: number }` — 단건 경로(우클릭·폼 모달 `onDelete`)도 `[row.id]` 로 넣는다. 다이얼로그 본문은 `ids.length===1` 이면 대상명, 아니면 `선택한 N건`, `blocked > 0` 이면 제외 안내를 덧붙인다.
     - ⚠ `target` 파생이 `modal.id` 를 읽고 있었다면 **삭제 kind 를 빼고** 좁힌다(`modal?.kind === 'edit'` 등) — 안 그러면 유니온 narrowing 이 깨진다.
   - **예외 3종(`singleRow` 또는 선택 없음)**: ① master-detail **좌** 그리드(라디오 — 우측이 무엇을 보여줄지 정하는 데이터 소스라 2건이 성립하지 않는다, 아래 절) ② 조회 전용(애초에 `rowSelection` 없음).
@@ -231,9 +233,9 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     ③ **검색(선택) 팝업의 결과 그리드**(계정과목·거래처 검색 — 2026-10-28 PR #365) = `{ mode:'singleRow', checkboxes:false, enableClickSelection:true }` — **행 클릭 선택이 허용되는 유일한 곳**이다. 목록이 아니라 1건을 고르는 피커라 선택 자체가 목적이고, 더블클릭 = 바로 반영. 목록 페이지에 이 구성을 옮겨 오지 않는다. 규약 → [[apfs-form-modal]] "확장: 검색(선택) 팝업".
   - 선택 툴바의 삭제 버튼 라벨은 **`삭제`**다 — `선택 삭제` 아님(2026-09-22 사용자 결정, 재제안 금지). 건수는 앞의 `N건 선택됨`이 이미 말하므로 라벨에 "선택"을 반복하지 않는다.
   - **역사(뒤집힌 결정 — 되돌리자는 제안이 오면 이 순서를 보일 것)**: 2026-09-08~09-22 는 "단일선택이 필요한 화면은 multiRow 로 올리지 않는다"였고 bespoke 11개가 전부 `singleRow` 였다(판별 기준 = 그 액션이 N건에 의미가 있나). **09-23 사용자가 뒤집었다** — 기준이 "액션이 N건에 의미가 있나"에서 "**체크는 항상 여러 건 되고, 버튼이 상황에 맞춰 사라진다**"로 바뀌었다. 전환 대상 10 그리드: `menu`·`program`·`user`·`user_permission`·`user_invite`·`subfund`·`investment_review`·`code_manage`(우) + 이미 multiRow 였던 `litigation`·`violation` 의 수정 버튼 게이팅.
-  - **조회 전용 화면은 `rowSelection` 자체를 두지 않는다**(2026-09-15 사용자 지시 — 체크박스만 끄는 것보다 한 단계 더). 선택이 만들 액션이 없으면 `rowSelection` prop 을 통째로 지운다(`checkboxes:false` 로 남기지 않는다): 함께 `onSelectionChanged`·선택 state(`selId`)·`selected`·툴바의 `선택 해제` 버튼/선택 배지 분기·`refresh()`의 `deselectAll()`·`apiRef`(다른 용도가 없으면)까지 **한 벌로 사라진다**. `refreshNoColumn`은 자기 이벤트의 `e.api`를 쓰므로 `apiRef`에 의존하지 않는다. 상세 진입은 **더블클릭 / Enter / 우클릭 메뉴** 3경로로 이미 충분하고, 회색 행 강조가 없어지는 것이 "선택 기능 없음"과 일치한다. 선례: `audit_log.tsx`·`permission_history.tsx`·`report_update_info_manage.tsx`.
+  - **조회 전용 화면은 `rowSelection` 자체를 두지 않는다**(2026-09-15 사용자 지시 — 체크박스만 끄는 것보다 한 단계 더). 선택이 만들 액션이 없으면 `rowSelection` prop 을 통째로 지운다(`checkboxes:false` 로 남기지 않는다): 함께 `onSelectionChanged`·선택 state(`selIds`)·`selected`·툴바의 `선택 해제` 버튼/선택 배지 분기·`refresh()`의 `deselectAll()`·`apiRef`(다른 용도가 없으면)까지 **한 벌로 사라진다**. `refreshNoColumn`은 자기 이벤트의 `e.api`를 쓰므로 `apiRef`에 의존하지 않는다. 상세 진입은 **더블클릭 / Enter / 우클릭 메뉴** 3경로로 이미 충분하고, 회색 행 강조가 없어지는 것이 "선택 기능 없음"과 일치한다. 선례: `audit_log.tsx`·`permission_history.tsx`·`report_update_info_manage.tsx`.
     - `report_update_info_manage` 는 2026-09-23 에 뒤늦게 정리한 사례다 — 목업의 "행 선택은 실제 라디오"를 그대로 옮겨 **표시 전용** 싱글 선택을 뒀는데, 읽기전용 화면이라 체크해도 아무 일이 없었다. **목업에 선택 컬럼이 있다는 것은 선택을 둘 이유가 되지 않는다** — 그 화면에 선택이 만드는 액션이 있는지로만 판단한다.
-    - 걷어낼 때 같이 지우는 것: `rowSelection`·`selectionColumnDef` prop, `ROW_SELECTION` 상수(+`isRowSelectable`), `SELECTION_COL` import, 선택 state·`selIdRef`·초기 선택 상수, `onSelectionChanged`·선택 복원만 하던 `onRowDataUpdated`, `refresh()` 의 선택 복구, 그리고 **그 때문에 미사용이 된 타입 import**(`RowSelectionOptions`·`SelectionColumnDef`·`SelectionChangedEvent`). `apiRef`·`onGridReady` 는 페이저·외부필터·리프레시가 쓰므로 **남긴다**.
+    - 걷어낼 때 같이 지우는 것: `rowSelection`·`selectionColumnDef` prop, `ROW_SELECTION` 상수(+`isRowSelectable`), `SELECTION_COL` import, 선택 state·`selIdsRef`·초기 선택 상수, `onSelectionChanged`·선택 복원만 하던 `onRowDataUpdated`, `refresh()` 의 선택 복구, 그리고 **그 때문에 미사용이 된 타입 import**(`RowSelectionOptions`·`SelectionColumnDef`·`SelectionChangedEvent`). `apiRef`·`onGridReady` 는 페이저·외부필터·리프레시가 쓰므로 **남긴다**.
   - 스키마 주도(`generic_list.tsx`) 페이지는 이 규약을 `schema.hideRowSelection: true` 로 표현한다(→[[apfs-grid]]) — bespoke 페이지만 `rowSelection`을 직접 만진다.
 - **선택 배선(공통)**: `selectionColumnDef={SELECTION_COL}`(`aggrid_selection.tsx`, 핵심 규약 8) + `getRowId`. 선택 SSOT는 React state(→[[apfs-stage-workflow]] 규약 9). `mode` 는 위 규약대로 **기본 multiRow**, 라디오(`singleRow`)는 master-detail 좌 그리드 예외뿐이다.
   ⚠ **multiRow 의 선택 복원은 공유 헬퍼 `restoreSelection(api, ids)`**(`aggrid_selection.tsx`) 하나로만 한다. 저장된 id 집합 밖의 선택을 풀고 살아남은 id 를 additive 로 켠다.

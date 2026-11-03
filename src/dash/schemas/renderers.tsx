@@ -4,6 +4,8 @@ import { parseFileNames, fileExtLabel } from '../fields/file_names';   // 첨부
 import { glyphFor } from '../ui/attachment';   // 확장자 → 아이콘·색 매핑(모달 첨부목록과 SSOT 공유)
 import { DatePicker } from '../ui/date-picker';
 import { SearchableSelect, shouldSearch } from '../ui/searchable-select';   // 긴 목록 select → 검색형 콤보박스
+import { MultiSelect } from '../ui/multi-select';   // 'multiselect' — 셀렉트 모양 다중 선택
+import { parseMulti, joinMulti, formatMultiCell } from '../ui/multi-select-value';   // 다중 선택 값 계약(JSON 배열 문자열)
 import { PeriodPicker } from '../ui/period-picker';   // 연도 선택(control:'year') — 일자선택과 같은 폭·팝오버 계약
 import { Checkbox } from '../ui/checkbox';   // 'checkbox'('true'/'false' 계약) 컨트롤
 import { Switch } from '../ui/switch';       // 'switch'('여/부' 2지선다) — 2026-09-18 오후 사용자 결정으로 스위치 렌더 원복
@@ -75,8 +77,8 @@ export function Cell({ col, value, statusDomain, unit }: { col: ColumnSpec; valu
       if (unit && col.type === 'amount' && typeof value === 'number')
         return <span className="tabular">{formatUnit(value, unit)}</span>;
       return <span className="tabular">{String(typeof value === 'number' ? value.toLocaleString() : String(value))}</span>;
-    // text (text/code/pii) + 미지 타입 → 일반 텍스트
-    default:           return String(value);
+    // text (text/code/pii) + 미지 타입 → 일반 텍스트. 다중 선택(multiselect) 저장값은 'A, B' 로 펴서 보인다(원시 JSON 노출 금지)
+    default:           return formatMultiCell(String(value));
   }
 }
 
@@ -133,10 +135,11 @@ export function isComplexControl(control: FieldControl): boolean {
    · radio      — 암묵 연결이 그룹의 **첫 항목만** 가리켜 라벨 클릭이 엉뚱한 옵션을 고른다.
    · switch/checkbox — Radix 구현체가 `<button>` 이라 `<label>` 암묵 연결이 클릭을 한 번 더 발화시킨다
                        (가시 라벨은 렌더러가 htmlFor/id 로 **명시** 연결한다).
+   · multiselect — 트리거가 `<button role=combobox>` 라 같은 이유(라벨 클릭 = 열림 후 즉시 닫힘). 접근名은 ariaLabel 로 준다.
    판정을 폼 래퍼마다 리터럴로 복제하면 컨트롤이 늘 때 한 곳씩 빠지므로 여기를 SSOT 로 둔다
    (소비처: generic_list_modal Field plain, subfund_form_modal F Wrap). */
 export function isPlainWrapControl(control: FieldControl): boolean {
-  return isComplexControl(control) || control === 'radio' || control === 'switch' || control === 'checkbox';
+  return isComplexControl(control) || control === 'radio' || control === 'switch' || control === 'checkbox' || control === 'multiselect';
 }
 
 /* 체크박스 필드 — DS Checkbox + 클릭 가능한 가시 라벨(htmlFor/id 명시 연결). control 'checkbox'('true'/'false' 계약) 전용.
@@ -237,6 +240,16 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
       <div style={{ position: 'relative', display: 'block', ...(fill ? { width: '100%', maxWidth: '100%' } : FORM_SELECT_W) }}>
         <select value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', minWidth: 0, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: 34, ...fs }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>
         <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--muted-foreground)' }} />
+      </div>
+    );
+    // 다중 선택 — ui/multi-select(셀렉트 모양, 골라도 닫히지 않음). 값 계약은 JSON 배열 문자열(빈 배열 = '' → 필수 검사가 비었다고 판정).
+    //   폭은 select 와 같은 래퍼(FORM_SELECT_W 240~320 fit-content)를 쓰고 트리거는 래퍼를 채운다 — 트리거 자체 사이저가 가장 넓은 요약 폭을 잡는다.
+    //   빈 값 표시는 '선택'(필터 드로어의 '전체' = 조건 없음과 뜻이 다르다). 첫 옵션 자동 시드 대상이 아니다(generic_list_modal optionish).
+    case 'multiselect': return (
+      <div style={{ display: 'block', ...(fill ? { width: '100%', maxWidth: '100%' } : FORM_SELECT_W) }}>
+        <MultiSelect value={parseMulti(value)} onChange={(a) => onChange(joinMulti(a))} options={field.options || []} emptyLabel="선택"
+          ariaLabel={field.label} searchable={field.searchable} invalid={invalid} required={requiredMark}
+          triggerStyle={{ ...base, ...fs, width: '100%', minWidth: 0 }} />
       </div>
     );
     case 'number':   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, ...inputW, ...fs }} />;

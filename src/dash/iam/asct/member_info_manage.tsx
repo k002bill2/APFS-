@@ -63,10 +63,9 @@ export interface MemberRow {
   mf: string;      // 모펀드 — 폼 1번 항목(목록 컬럼 아님, 위 주석 참조)
 }
 
-/* 목업 DATA 그대로(1행) — "원본 샘플 데이터(1행) — 없는 값은 생성하지 않음". tel·memo는 원본 공란 유지 */
-const DEMO: MemberRow[] = [
-  { id: 'mi-1', no: 1, name: '마그나인베스트먼트(주)', biz: '120-87-54252', addr: '서울 강남구 테헤란로98길 15 대치동, 송강빌딩 14층', tel: '', memo: '', ptype: '법인', region: '국내', mf: '농식품모태펀드' },
-];
+/* 초기 행 없음(2026-11-03 사용자 지시로 목업 샘플 1행 삭제) — 빈 그리드는 overlayNoRowsTemplate 문구를 보인다.
+   [조회](refresh)도 이 배열로 되돌리므로 등록한 행은 조회 시 비워진다(백엔드 없음). */
+const DEMO: MemberRow[] = [];
 
 /* 모펀드 옵션 — 목업 검색박스/등록폼 select 2종 그대로 */
 const MF_OPTIONS = ['농식품모태펀드', 'MOAF'];

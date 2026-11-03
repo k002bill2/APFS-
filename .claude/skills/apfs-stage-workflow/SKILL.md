@@ -14,13 +14,13 @@ description: APFS 리스트 화면의 "행 선택 → 그 행의 단계(심사�
 1. **전이는 오직 컨텍스트 액션으로.** 단계 셀(`StatusBadge` cellRenderer)에 onClick을 달지 않는다. 더블클릭 수정 진입도 단계 전이엔 쓰지 않는다.
 2. **다중 선택 + 단계 액션은 1건 게이트 + 안정 id.** (단계 전이 = 선택이 만드는 액션이므로 이 화면류는 체크박스를 둔다 — 일반 규약은 [[apfs-aggrid]]) 모듈 상수 `ROW_SELECTION = {mode:'multiRow',checkboxes:true,headerCheckbox:false,selectAll:'filtered',enableClickSelection:false}`(선택은 체크박스로만 — 행 본문 클릭 선택 없음, 2026-09-22) + `getRowId={(p)=>p.data.id}`. **단계 전이는 한 건씩이므로 `single = selCount===1 ? row : null` 로 게이트**하고 다건 선택에서는 전이 버튼이 사라진다(2026-09-23 사용자 결정 — 종전 `singleRow` 라디오는 폐기). 전이로 `rowData`가 바뀌어도 선택이 유지돼 **새 단계의 액션이 자동으로 갱신**된다(선택 해제하지 말 것).
 3. **액션 맵은 단계별 배열 하나로.** primary는 단계당 **1개**(주 전이), 나머지 outline. 액션 라벨은 업무 동사("선정조합 등록"·"결성 확정"·"신청취소"). 말단 단계(취소)는 빈 배열 — **안내 캡션 없음**(2026-09-08 사용자 결정으로 제거).
-4. **툴바 좌 슬롯은 경합한다**: `selCount > 0 ? <selbar> : <필터칩>`(selbar 안의 단계 배지·전이 버튼은 다시 `{single && …}` 로 감싼다). selbar = 단계 배지(`size="lg"`, 텍스트만) + 전이 액션 버튼들 + (**opt-in**) 공통 조회(`명세`, 단계 무관) + `선택 해제`. **명세 버튼은 고정이 아니라 opt-in**(2026-09-11 결정) — 명세 팝업을 포함한 페이지만 넣고, 아니면 생략. **대상명(자펀드명)은 넣지 않는다** — 선택 행에서 이미 보임(2026-09-08 결정).
+4. **selbar 는 `contextActions` 슬롯으로 넘긴다**: `selActions = selCount > 0 ? <selbar> : null` → `contextActions={selActions}`(selbar 안의 단계 배지·전이 버튼은 다시 `{single && …}` 로 감싼다). 선택 중엔 GridFrame 이 깔때기·칩 줄을 스스로 감춘다(→[[apfs-grid]] "선택 액션 플로팅 바"). selbar = `N건 선택됨` + 단계 배지(`size="lg"`, 텍스트만) + 전이 액션 버튼들 + (**opt-in**) 공통 조회(`명세`, 단계 무관) + `선택 해제`. **명세 버튼은 고정이 아니라 opt-in**(2026-09-11 결정) — 명세 팝업을 포함한 페이지만 넣고, 아니면 생략. **대상명(자펀드명)은 넣지 않는다** — 선택 행에서 이미 보임(2026-09-08 결정).
 5. **전이 = 불변 patch + toast.** `patchRow(id, {stg, ...부수효과})`. 부수효과는 도메인 정합(예: 취소→조합상태 '-', 결성 확정→결성일=오늘·운영중).
    - **확인창 없이 즉시 전이하는 액션 버튼(확정 등)은 `UI.SaveButton`**으로 렌더해 "…중" 텍스트 스왑을 준다: `<SaveButton variant="outline" leadingIcon="" busyLabel="확정 중" onSubmit={() => doConfirm}>확정</SaveButton>`(기준 `ew_result_manage.tsx`, 2026-09-28). 대기 중 선택 해제로 버튼이 사라져도 전이는 flush된다. 확인 모달·AlertDialog를 여는 액션은 그대로 `Button`(확인창 쪽 버튼이 press·SaveButton을 가짐) — [[apfs-form-modal]] 6-1.
 6. **모달을 여는 액션**은 단계에 따라 **제목이 달라진다** → `RowFormModal title={...}` prop. 저장 콜백이 patch + 전이를 함께 수행(`saveSelect(f, target)`).
-7. **신규 등록 액션**(헤더 우측 primary)은 첫 단계 행을 **선두 삽입** + `setSelId(newId)` → 다음 액션이 바로 보인다.
+7. **신규 등록 액션**(헤더 우측 primary)은 첫 단계 행을 **선두 삽입** + `setSelIds([newId])` → 다음 액션이 바로 보인다.
 8. 합계행이 있으면 `useMemo` 재계산(→[[apfs-aggrid]] 계약4). 색은 단계 tone 맵(`Record<Stage,Tone>`)으로만(→[[color-tokens]]).
-9. **선택 SSOT = React `selId`, 그리드는 따라간다** (Codex 리뷰 반영 2026-09-08). 그리드 선택은 두 시점에 되돌린다: ① `onGridReady`(카드뷰→리스트 복귀 등 재마운트) ② `onRowDataUpdated`(신규 등록 선두 삽입 — `rowData` 반영 후 노드가 생기므로 이때만 잡힌다). 둘 다 `selIdRef.current`를 읽어 `api.getRowNode(id)?.setSelected(true, true)`. 이걸 빼면 "툴바는 선택됐는데 라디오는 빈" 불일치. `선택 해제`는 `deselectAll()` → `onSelectionChanged`가 `selId`를 null로.
+9. **선택 SSOT = React `selIds`(체크된 행 id 배열), 그리드는 따라간다** (Codex 리뷰 반영 2026-09-08, 배열화 2026-09-23). `selId = selIds[0] ?? null`·`selCount = selIds.length` 는 파생이다(→[[apfs-aggrid]] "선택 상태는 selIds 하나로"). 그리드 선택은 두 시점에 되돌린다: ① `onGridReady`(재마운트) ② `onRowDataUpdated`(신규 등록 선두 삽입 — `rowData` 반영 후 노드가 생기므로 이때만 잡힌다). 둘 다 `selIdsRef.current` 를 공용 `restoreSelection(api, ids)`(`aggrid_selection.tsx`)에 넘긴다 — 선택 **전체**를 되돌리고, 숨은 행이 섞이면 전부 푼다. 첫 id 만 `setSelected(true, true)` 로 되살리면 다건 선택이 1건으로 준다. 이걸 빼면 "툴바는 선택됐는데 체크박스는 빈" 불일치. `선택 해제`는 `deselectAll()` → `onSelectionChanged` 가 `selIds` 를 `[]` 로.
 10. **읽기전용 조회(`명세`)는 액션 맵 밖 · opt-in**: 명세 팝업을 포함할 때만 전 단계 공통 버튼 + 행 더블클릭으로 진입(→[[apfs-spec-popup]]). 명세 미포함 페이지는 버튼·`onRowDoubleClicked` 둘 다 생략. 더블클릭을 수정 진입에 쓰지 않는다.
 
 ## 코드 골격 (골드 발췌)
@@ -32,28 +32,38 @@ const STAGE_TONE: Record<Stage, Tone> = { 신청: 'info', 선정: 'primary', 결
 { field: 'stg', headerName: '심사단계', pinned: 'left',
   cellRenderer: (p) => p.node.rowPinned ? null : <StatusBadge tone={STAGE_TONE[p.value]} label={p.value} size="lg" /> }
 
-// 선택·전이
-const selected = selId ? rows.find((r) => r.id === selId) ?? null : null;
+// 선택·전이 — 선택 SSOT 는 selIds(규약 9), 단계 전이는 정확히 1건일 때만(규약 2)
+const [selIds, setSelIds] = useState<string[]>([]);
+const selId = selIds[0] ?? null;
+const selCount = selIds.length;
+const single = selCount === 1 && selId ? rows.find((r) => r.id === selId) ?? null : null;
 const patchRow = (id, patch) => setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
-const toStage = (ns: Stage, msg: string) => { if (!selected) return; patchRow(selected.id, { stg: ns }); toast.success(msg); };
+const toStage = (ns: Stage, msg: string) => { if (!single) return; patchRow(single.id, { stg: ns }); toast.success(msg); };
 
 // 단계별 액션 맵 — primary 1개, 말단은 []
-const stageActs = !selected ? [] : ({
+const stageActs = !single ? [] : ({
   신청: [{ label: '선정조합 등록', primary: true, run: () => setModal({ kind: 'select', target: '선정' }) },
          { label: '신청취소', run: () => toStage('취소', '신청이 취소되었습니다') }],
   선정: [{ label: '결성 확정', primary: true, run: confirmFormation }, { label: '수정', run: () => setModal({ kind: 'select', target: '선정' }) },
          { label: '선정취소', run: () => toStage('취소', '선정이 취소되었습니다') }],
   결성: [{ label: '수정', run: () => setModal({ kind: 'formEdit' }) }],
   취소: [],
-} as Record<Stage, Act[]>)[selected.stg];
+} as Record<Stage, Act[]>)[single.stg];
 
-// 툴바 좌 — 선택 시 selbar, 아니면 필터칩
-toolbarLeft={selected
-  ? <><StatusBadge tone={STAGE_TONE[selected.stg]} label={selected.stg} size="lg" />
+// selbar → contextActions 슬롯(규약 4). 단계 칩은 filterChips 데이터로 넘기고, 선택 중엔 GridFrame 이 감춘다
+const selActions = selCount > 0 ? (
+  <>
+    <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
+    {single && <>
+      <StatusBadge tone={STAGE_TONE[single.stg]} label={single.stg} size="lg" />
       {stageActs.map((a) => <Button key={a.label} variant={a.primary ? 'primary' : 'outline'} size="sm" onClick={a.run}>{a.label}</Button>)}
-      <Button variant="outline" size="sm" leadingIcon="file" onClick={() => setModal({ kind: 'spec' })}>명세</Button>   {/* 단계 무관 조회 — 액션 맵 밖 */}
-      <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button></>
-  : <>{STAGES.map((s) => <FilterChip …>{s}</FilterChip>)}</>}
+      {/* (opt-in) 명세 팝업을 포함한 페이지만: <Button variant="outline" size="sm" leadingIcon="file" onClick={() => setModal({ kind: 'spec' })}>명세</Button> — 액션 맵 밖 */}
+    </>}
+    <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
+  </>
+) : null;
+
+<GridFrame filterChips={…단계 칩…} contextActions={selActions} … />
 ```
 
 ## 안티패턴

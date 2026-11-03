@@ -38,6 +38,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | **KPI 배지 행(옵션·HITL)** | 기본 미포함. SOP(3절) 5단계 HITL로 포함 여부를 물어 "포함" 시에만 3배지(전체 건수 + 도메인별 2지표). typed=`kpis` 직접(미포함=`kpis` 미전달), 스키마=`schema.countKpis`(미포함=`hideKpis:true`). 금액 개념 자체가 없으면 `hideMetrics:true` 병행 | [[apfs-grid]] "KPI 배지 행" |
 | 검색박스(인라인 N개 필터) | **주 필터 1개=툴바 `FilterChip`**(예: 심사단계, 전체 칩은 `심사단계: 전체` → [[apfs-grid]]) + 나머지=**상세필터 드로어(Sheet)**, 검색어는 **기본 OFF opt-in**(필요한 페이지만 `searchable`/`SEARCHABLE`로 켜고, 켜질 때만 최상단 — 자동 추가 금지), 컬럼 미연동 필터는 `· 데이터 연동 후 적용` 캡션 | [[apfs-detail-filter]] |
 | 필수 조건(미선택 상태 없는 양식구분 등) · 긴 경로형 조건 | 툴바 칩 `filterChips` 에 `required: true`(`전체` 칩 없음) · 적용 칩 `appliedFilters` 에 `wide: true` | [[apfs-grid]] "필터 툴바" |
+| 다중 선택 항목(목업 `<select multiple>` · 설계서 '다중 선택/복수 선택' · 같은 이름 체크박스 나열) | **멀티 셀렉트가 기본**(2026-11-03 사용자 지시) — 상세필터 = 공용 `DrawerMultiSelect`(빈 배열 = 전체), 등록/수정 폼 = `MultiSelect`. 체크박스 나열·tag 토글로 만들지 않는다(권한·매트릭스처럼 칸마다 독립 설정인 체크 그룹만 예외). 스키마(GenericListPage) 트랙 = 폼 `control:'multiselect'`(상세필터 자동 다중 선택) · 단일값 컬럼 필터는 filterSpecs `kind:'multi'`(2026-11-03) | [[apfs-detail-filter]] typed 트랙 "다중 선택" · [[apfs-form-modal]] multi-select |
 | 기간 기본값(전월 1일~오늘 등) · [필터 적용] 시 범위 검증 | 기본값 칩(× = 전 기간, [초기화] = 기본값) · 초안(draft) 드로어 | [[apfs-detail-filter]] "typed 페이지 트랙"의 '적용 방식 2가지'·'기본값으로 시작하는 기간' |
 | 2단 헤더 그리드 + tfoot 합계 | AG Grid `ColGroupDef`(`marryChildren`) + `pinnedBottomRowData=useMemo([computeTotal(filteredRows)])` | [[apfs-aggrid]] |
 | 셀 안 편집 + [저장] 일괄 반영(행추가·행삽입·행삭제 토글·이동) | 저장형 편집 그리드 — 행 상태 I/U/D, 저장 중 `inert` 잠금 | [[apfs-aggrid]] "페이지 편집 그리드 — 저장형 I/U/D" |
@@ -99,7 +100,7 @@ await page.waitForSelector('.ag-center-cols-container .ag-row');
 - `pinnedBottomRowData`에 인라인 배열 금지 — 전이/등록으로 행이 변하므로 `useMemo([computeTotal(filteredRows)],[filteredRows])`.
 - `onPaginationChanged`는 값 비교 가드로 setState(매 호출 새 객체=렌더 루프, →[[aggrid-onpaginationchanged-render-loop]]).
 - AG Grid `cellStyle` 상수는 `CellStyle` 타입(React `CSSProperties` 아님 — 인덱스 시그니처 불일치).
-- 신규 등록 후 `setSelId(newId)`로 선택을 새 행에 두면 다음 단계 액션이 즉시 보인다 — 단 그리드 라디오는 `onRowDataUpdated`에서 따로 맞춰야 한다(→[[apfs-stage-workflow]] 규약 9).
+- 신규 등록 후 `setSelIds([newId])`로 선택을 새 행에 두면 다음 단계 액션이 즉시 보인다 — 단 그리드 체크박스는 `onRowDataUpdated`의 `restoreSelection`으로 따로 맞춰야 한다(→[[apfs-stage-workflow]] 규약 9).
 - selbar에 **대상명(조합명)·취소 안내 캡션을 넣지 않는다**(2026-09-08 제거). 카드헤더 `sub` 설명 캡션도 넣지 않는다.
 - 세분화 스킬 색인(2026-09-08): 프레임 외관 [[apfs-grid]] · 그리드 세부 [[apfs-aggrid]] · 칩/드로어 [[apfs-detail-filter]] · 컨트롤 폭 [[apfs-form-modal]] 계약7 · 기간 선택 [[apfs-datepicker]] · 명세 팝업 [[apfs-spec-popup]] · 선택 SSOT [[apfs-stage-workflow]] 규약 9.
 

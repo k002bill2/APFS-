@@ -43,3 +43,24 @@ describe('parsePageSchema', () => {
   });
 });
 
+
+/* 2026-11-03 스키마 트랙 다중 선택 — 폼 토큰 'multiselect' · 필터 kind 'multi'. zod 에 없으면 .parse() 가 throw 하거나 조용히 버린다. */
+describe('parsePageSchema — 다중 선택', () => {
+  const ms = {
+    ...valid,
+    columns: [...valid.columns, { key: 'fund', label: '계정구분', type: 'text' }],
+    fields: [{ key: 'fund', label: '계정구분', control: 'multiselect', options: ['농식품계정', '수산계정'] }],
+    filters: ['계정구분'],
+  };
+  it('폼 control multiselect 를 통과시킨다', () => {
+    expect(parsePageSchema(ms).fields[0].control).toBe('multiselect');
+  });
+  it('filterSpecs kind multi + 선택지 안의 def(JSON 배열) 를 통과시킨다', () => {
+    const s = { ...ms, filterSpecs: { 계정구분: { kind: 'multi', key: 'fund', options: ['농식품계정', '수산계정'], def: '["수산계정"]' } } };
+    expect(parsePageSchema(s).filterSpecs?.계정구분.kind).toBe('multi');
+  });
+  it('filterSpecs kind multi 의 def 가 선택지 밖이면 거부한다(조용한 무효 기본값 방지)', () => {
+    const s = { ...ms, filterSpecs: { 계정구분: { kind: 'multi', key: 'fund', options: ['농식품계정'], def: '["농식품계정","없는값"]' } } };
+    expect(() => parsePageSchema(s)).toThrow(/def not in options/);
+  });
+});
