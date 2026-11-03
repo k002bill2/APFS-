@@ -207,7 +207,9 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     ```tsx
     const ROW_SELECTION = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered',
       enableClickSelection: false } as const;                      // 모듈 상수(⑦)
-    const [selCount, setSelCount] = useState(0);                   // 단일/다건 분기의 SSOT
+    const [selIds, setSelIds] = useState<string[]>([]);            // 선택 SSOT — 체크된 행 id 배열(아래 '선택 상태는 selIds 하나로')
+    const selId = selIds[0] ?? null;                               // 파생
+    const selCount = selIds.length;                                // 파생 — 단일/다건 분기
     const single = selCount === 1 && selId ? rows.find((r) => r.id === selId) ?? null : null;
     ```
     - **단일 대상 액션 = `single` 게이트**: 수정·복사·도움말·단계 전이·메일 발송·별개 엔티티 CRUD 등 *한 건에만 뜻이 있는* 모든 버튼과 그 옆 StatusBadge. `{single && <>…</>}` 로 통째 감싼다.
@@ -223,7 +225,7 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     };
     const deleteSelected = () => requestDeleteRows(apiRef.current?.getSelectedRows() ?? []);
     ```
-    - ⚠ **게이트는 요청 시점에 한 번만 평가한다** — 확인 시점에 다시 재면 같은 배치 안의 행끼리(부모·자식) 삭제 순서에 결과가 달라진다. `doDelete` 는 `modal.ids` 를 그대로 지우고 `deselectAll()`+`setSelId(null)`+`setSelCount(0)`.
+    - ⚠ **게이트는 요청 시점에 한 번만 평가한다** — 확인 시점에 다시 재면 같은 배치 안의 행끼리(부모·자식) 삭제 순서에 결과가 달라진다. `doDelete` 는 `modal.ids` 를 그대로 지우고 `deselectAll()` 만 부른다 — `onSelectionChanged` 가 `selIds` 를 `[]` 로 되돌린다(정본 `fund_member_manage.tsx` `doDelete`).
     - 모달은 `{ kind: 'delete'; ids: string[]; blocked: number }` — 단건 경로(우클릭·폼 모달 `onDelete`)도 `[row.id]` 로 넣는다. 다이얼로그 본문은 `ids.length===1` 이면 대상명, 아니면 `선택한 N건`, `blocked > 0` 이면 제외 안내를 덧붙인다.
     - ⚠ `target` 파생이 `modal.id` 를 읽고 있었다면 **삭제 kind 를 빼고** 좁힌다(`modal?.kind === 'edit'` 등) — 안 그러면 유니온 narrowing 이 깨진다.
   - **예외 3종(`singleRow` 또는 선택 없음)**: ① master-detail **좌** 그리드(라디오 — 우측이 무엇을 보여줄지 정하는 데이터 소스라 2건이 성립하지 않는다, 아래 절) ② 조회 전용(애초에 `rowSelection` 없음).
@@ -231,9 +233,9 @@ XLSX.writeFile(wb, '지역별출자현황.xlsx');
     ③ **검색(선택) 팝업의 결과 그리드**(계정과목·거래처 검색 — 2026-10-28 PR #365) = `{ mode:'singleRow', checkboxes:false, enableClickSelection:true }` — **행 클릭 선택이 허용되는 유일한 곳**이다. 목록이 아니라 1건을 고르는 피커라 선택 자체가 목적이고, 더블클릭 = 바로 반영. 목록 페이지에 이 구성을 옮겨 오지 않는다. 규약 → [[apfs-form-modal]] "확장: 검색(선택) 팝업".
   - 선택 툴바의 삭제 버튼 라벨은 **`삭제`**다 — `선택 삭제` 아님(2026-09-22 사용자 결정, 재제안 금지). 건수는 앞의 `N건 선택됨`이 이미 말하므로 라벨에 "선택"을 반복하지 않는다.
   - **역사(뒤집힌 결정 — 되돌리자는 제안이 오면 이 순서를 보일 것)**: 2026-09-08~09-22 는 "단일선택이 필요한 화면은 multiRow 로 올리지 않는다"였고 bespoke 11개가 전부 `singleRow` 였다(판별 기준 = 그 액션이 N건에 의미가 있나). **09-23 사용자가 뒤집었다** — 기준이 "액션이 N건에 의미가 있나"에서 "**체크는 항상 여러 건 되고, 버튼이 상황에 맞춰 사라진다**"로 바뀌었다. 전환 대상 10 그리드: `menu`·`program`·`user`·`user_permission`·`user_invite`·`subfund`·`investment_review`·`code_manage`(우) + 이미 multiRow 였던 `litigation`·`violation` 의 수정 버튼 게이팅.
-  - **조회 전용 화면은 `rowSelection` 자체를 두지 않는다**(2026-09-15 사용자 지시 — 체크박스만 끄는 것보다 한 단계 더). 선택이 만들 액션이 없으면 `rowSelection` prop 을 통째로 지운다(`checkboxes:false` 로 남기지 않는다): 함께 `onSelectionChanged`·선택 state(`selId`)·`selected`·툴바의 `선택 해제` 버튼/선택 배지 분기·`refresh()`의 `deselectAll()`·`apiRef`(다른 용도가 없으면)까지 **한 벌로 사라진다**. `refreshNoColumn`은 자기 이벤트의 `e.api`를 쓰므로 `apiRef`에 의존하지 않는다. 상세 진입은 **더블클릭 / Enter / 우클릭 메뉴** 3경로로 이미 충분하고, 회색 행 강조가 없어지는 것이 "선택 기능 없음"과 일치한다. 선례: `audit_log.tsx`·`permission_history.tsx`·`report_update_info_manage.tsx`.
+  - **조회 전용 화면은 `rowSelection` 자체를 두지 않는다**(2026-09-15 사용자 지시 — 체크박스만 끄는 것보다 한 단계 더). 선택이 만들 액션이 없으면 `rowSelection` prop 을 통째로 지운다(`checkboxes:false` 로 남기지 않는다): 함께 `onSelectionChanged`·선택 state(`selIds`)·`selected`·툴바의 `선택 해제` 버튼/선택 배지 분기·`refresh()`의 `deselectAll()`·`apiRef`(다른 용도가 없으면)까지 **한 벌로 사라진다**. `refreshNoColumn`은 자기 이벤트의 `e.api`를 쓰므로 `apiRef`에 의존하지 않는다. 상세 진입은 **더블클릭 / Enter / 우클릭 메뉴** 3경로로 이미 충분하고, 회색 행 강조가 없어지는 것이 "선택 기능 없음"과 일치한다. 선례: `audit_log.tsx`·`permission_history.tsx`·`report_update_info_manage.tsx`.
     - `report_update_info_manage` 는 2026-09-23 에 뒤늦게 정리한 사례다 — 목업의 "행 선택은 실제 라디오"를 그대로 옮겨 **표시 전용** 싱글 선택을 뒀는데, 읽기전용 화면이라 체크해도 아무 일이 없었다. **목업에 선택 컬럼이 있다는 것은 선택을 둘 이유가 되지 않는다** — 그 화면에 선택이 만드는 액션이 있는지로만 판단한다.
-    - 걷어낼 때 같이 지우는 것: `rowSelection`·`selectionColumnDef` prop, `ROW_SELECTION` 상수(+`isRowSelectable`), `SELECTION_COL` import, 선택 state·`selIdRef`·초기 선택 상수, `onSelectionChanged`·선택 복원만 하던 `onRowDataUpdated`, `refresh()` 의 선택 복구, 그리고 **그 때문에 미사용이 된 타입 import**(`RowSelectionOptions`·`SelectionColumnDef`·`SelectionChangedEvent`). `apiRef`·`onGridReady` 는 페이저·외부필터·리프레시가 쓰므로 **남긴다**.
+    - 걷어낼 때 같이 지우는 것: `rowSelection`·`selectionColumnDef` prop, `ROW_SELECTION` 상수(+`isRowSelectable`), `SELECTION_COL` import, 선택 state·`selIdsRef`·초기 선택 상수, `onSelectionChanged`·선택 복원만 하던 `onRowDataUpdated`, `refresh()` 의 선택 복구, 그리고 **그 때문에 미사용이 된 타입 import**(`RowSelectionOptions`·`SelectionColumnDef`·`SelectionChangedEvent`). `apiRef`·`onGridReady` 는 페이저·외부필터·리프레시가 쓰므로 **남긴다**.
   - 스키마 주도(`generic_list.tsx`) 페이지는 이 규약을 `schema.hideRowSelection: true` 로 표현한다(→[[apfs-grid]]) — bespoke 페이지만 `rowSelection`을 직접 만진다.
 - **선택 배선(공통)**: `selectionColumnDef={SELECTION_COL}`(`aggrid_selection.tsx`, 핵심 규약 8) + `getRowId`. 선택 SSOT는 React state(→[[apfs-stage-workflow]] 규약 9). `mode` 는 위 규약대로 **기본 multiRow**, 라디오(`singleRow`)는 master-detail 좌 그리드 예외뿐이다.
   ⚠ **multiRow 의 선택 복원은 공유 헬퍼 `restoreSelection(api, ids)`**(`aggrid_selection.tsx`) 하나로만 한다. 저장된 id 집합 밖의 선택을 풀고 살아남은 id 를 additive 로 켠다.

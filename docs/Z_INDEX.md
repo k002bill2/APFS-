@@ -104,7 +104,7 @@ z-index는 **숫자가 큰 게 무조건 위가 아니다.** 같은 **쌓임맥�
 
 ### dashFade 항등행렬 함정 (근본원인)
 
-`animation: dashFade ... both`의 키프레임은 `to { transform: none }`(`tokens.css:293`)이다. `fill:both`로 끝상태가 고정되는데, **브라우저는 `transform:none`을 키워드가 아니라 항등행렬 `matrix(1,0,0,1,0,0)`로 계산한다** → 영속 쌓임맥락 생성. (`transform:none`은 맥락을 안 만들지만, 애니메이션이 굳힌 항등행렬은 만든다.) 해당 래퍼: `frt/main.tsx:156`(대시보드 variant 래퍼, 카드 묶음을 자기 맥락으로 끌어올린 §4 근본원인), `main_widgets.tsx:435`, `shell.tsx:692` 등. 앞 둘은 가둘 fixed 자손이 없어 무해하고, `frt/main.tsx:156`만 트랩에 기여했다.
+`animation: dashFade ... both`의 키프레임은 `to { transform: none }`(`tokens.css:293`)이다. `fill:both`로 끝상태가 고정되는데, **브라우저는 `transform:none`을 키워드가 아니라 항등행렬 `matrix(1,0,0,1,0,0)`로 계산한다** → 영속 쌓임맥락 생성. (`transform:none`은 맥락을 안 만들지만, 애니메이션이 굳힌 항등행렬은 만든다.) 해당 래퍼: `frt/widget/main.tsx:157`(대시보드 variant 래퍼, 카드 묶음을 자기 맥락으로 끌어올린 §4 근본원인), `main_widgets.tsx:435`, `shell.tsx:692` 등. 앞 둘은 가둘 fixed 자손이 없어 무해하고, `frt/widget/main.tsx:157`만 트랩에 기여했다.
 
 > **현재 상태(2026-09-28~)**: dashFade 소비처의 fill-mode가 전부 `both`→**`backwards`**로 바뀌어(`grid_frame.tsx:396` 주석) 애니메이션 종료 후엔 항등행렬 맥락이 남지 않는다. 다만 **진입 구간 동안은** transform이 살아 있어 맥락·컨테이닝블록을 만들므로, 비포털 fixed 오버레이를 이런 래퍼 안에 두지 않는 규칙(포털 우선)은 그대로 유지한다.
 
