@@ -804,7 +804,7 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
     <article class="card" data-card>
       <header class="card-h">
         <div><span class="path">src/dash/sfr/file/</span><h3>파일</h3></div>
-        <span class="count">페이지 2 · 파일 6</span>
+        <span class="count">페이지 2 · 파일 4</span>
       </header>
       <div class="tbl"><table>
         <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
@@ -824,7 +824,7 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
           <td class="muted">SRP-007</td>
         </tr></tbody></table></div>
       <details><summary>동반 파일 4개 (modal·model·data·test)</summary>
-        <ul class="chips"><li><code>gp_report_file.test.ts</code></li><li><code>report_guide.test.ts</code></li><li><code>report_guide_data.ts</code></li><li><code>report_guide_history_modal.tsx</code></li></ul></details>
+        <ul class="chips"><li><code>gp_report_file.test.ts</code></li><li><code>report_guide.test.ts</code></li></ul></details>
     </article></div>
   </section>
   <section id="acc" class="domain">
@@ -1003,39 +1003,57 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
     </article></div>
   </section>
   <section id="sys" class="domain">
-    <h2><span>관리자</span><code>sys/</code><small>페이지 8</small></h2>
+    <h2><span>관리자</span><code>sys/</code><small>페이지 12</small></h2>
     <div class="grid">
     <article class="card" data-card>
       <header class="card-h">
-        <div><span class="path">src/dash/sys/user/</span><h3>사용자·권한 관리</h3></div>
+        <div><span class="path">src/dash/sys/user/</span><h3>사용자관리</h3></div>
         <span class="count">페이지 3 · 파일 13</span>
       </header>
       <div class="tbl"><table>
         <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
         <tbody>
-        <tr data-q="권한관리 사용자·권한 관리 user-permission-manage sys/user/user_permission_manage s0_102">
-          <td class="menu">권한관리<span class="note">사용자·권한 관리</span></td>
-          <td><code>user_permission_manage.tsx</code></td>
-          <td><span class="tag tsx">전용 페이지</span></td>
-          <td class="muted"><code>#/user-permission-manage</code></td>
-          <td class="muted">S0_102</td>
-        </tr>
-        <tr data-q="사용자관리 사용자·권한 관리 user-manage sys/user/user_manage s0_101">
-          <td class="menu">사용자관리<span class="note">사용자·권한 관리</span></td>
+        <tr data-q="사용자관리 사용자관리 user-manage sys/user/user_manage s0_101">
+          <td class="menu">사용자관리<span class="note">사용자관리</span></td>
           <td><code>user_manage.tsx</code></td>
           <td><span class="tag tsx">전용 페이지</span></td>
           <td class="muted"><code>#/user-manage</code></td>
           <td class="muted">S0_101</td>
         </tr>
-        <tr data-q="사용자 초대(운용사) 사용자·권한 관리 user-invite-gp sys/user/user_invite_manage s0_103">
-          <td class="menu">사용자 초대(운용사)<span class="note">사용자·권한 관리</span></td>
+        <tr data-q="사용자 초대 사용자관리 user-invite-gp sys/user/user_invite_manage s0_103">
+          <td class="menu">사용자 초대<span class="note">사용자관리</span></td>
           <td><code>user_invite_manage.tsx</code></td>
           <td><span class="tag tsx">전용 페이지</span></td>
           <td class="muted"><code>#/user-invite-gp</code></td>
           <td class="muted">S0_103</td>
+        </tr>
+        <tr data-q="사용자권한관리 사용자관리 user-permission-manage sys/user/user_permission_manage s0_102">
+          <td class="menu">사용자권한관리<span class="note">사용자관리</span></td>
+          <td><code>user_permission_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/user-permission-manage</code></td>
+          <td class="muted">S0_102</td>
         </tr></tbody></table></div>
       <details><summary>동반 파일 10개 (modal·model·data·test)</summary>
         <ul class="chips"><li><code>admin_demo_data.ts</code></li><li><code>admin_mail_preview.tsx</code></li><li><code>user_form_modal.tsx</code></li><li><code>user_invite_model.test.ts</code></li><li><code>user_invite_model.ts</code></li><li><code>user_manage_model.test.ts</code></li><li><code>user_manage_model.ts</code></li><li><code>user_permission_modal.tsx</code></li><li><code>user_permission_model.test.ts</code></li><li><code>user_permission_model.ts</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/sys/integration/</span><h3>외부연동</h3></div>
+        <span class="count">페이지 1 · 파일 9</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="연동 모니터링 외부연동 integration-monitor sys/integration/integration_monitor adm-005">
+          <td class="menu">연동 모니터링<span class="note">외부연동</span></td>
+          <td><code>integration_monitor.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/integration-monitor</code></td>
+          <td class="muted">ADM-005</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 8개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>integration_badges.tsx</code></li><li><code>integration_detail_modal.tsx</code></li><li><code>integration_monitor_columns.test.ts</code></li><li><code>integration_monitor_columns.tsx</code></li><li><code>integration_monitor_data.ts</code></li><li><code>integration_monitor_model.test.ts</code></li><li><code>integration_monitor_model.ts</code></li><li><code>integration_monitor_page.test.ts</code></li></ul></details>
     </article>
     <article class="card" data-card>
       <header class="card-h">
@@ -1072,7 +1090,7 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
     <article class="card" data-card>
       <header class="card-h">
         <div><span class="path">src/dash/sys/audit/</span><h3>감사·기록</h3></div>
-        <span class="count">페이지 2 · 파일 7</span>
+        <span class="count">페이지 3 · 파일 12</span>
       </header>
       <div class="tbl"><table>
         <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
@@ -1084,6 +1102,13 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
           <td class="muted"><code>#/permission-history</code></td>
           <td class="muted">S0_107</td>
         </tr>
+        <tr data-q="개인정보 접속관리 감사·기록 privacy-access-log sys/audit/privacy_access_log adm-010">
+          <td class="menu">개인정보 접속관리<span class="note">감사·기록</span></td>
+          <td><code>privacy_access_log.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/privacy-access-log</code></td>
+          <td class="muted">ADM-010</td>
+        </tr>
         <tr data-q="감사로그 감사·기록 audit-log sys/audit/audit_log s0_104">
           <td class="menu">감사로그<span class="note">감사·기록</span></td>
           <td><code>audit_log.tsx</code></td>
@@ -1091,8 +1116,33 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
           <td class="muted"><code>#/audit-log</code></td>
           <td class="muted">S0_104</td>
         </tr></tbody></table></div>
-      <details><summary>동반 파일 5개 (modal·model·data·test)</summary>
-        <ul class="chips"><li><code>audit_log_model.test.ts</code></li><li><code>audit_log_model.ts</code></li><li><code>permission_history_detail_modal.tsx</code></li><li><code>permission_history_model.test.ts</code></li><li><code>permission_history_model.ts</code></li></ul></details>
+      <details><summary>동반 파일 9개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>audit_log_model.test.ts</code></li><li><code>audit_log_model.ts</code></li><li><code>permission_history_detail_modal.tsx</code></li><li><code>permission_history_model.test.ts</code></li><li><code>permission_history_model.ts</code></li><li><code>privacy_access_data.ts</code></li><li><code>privacy_access_model.test.ts</code></li><li><code>privacy_access_model.ts</code></li><li><code>privacy_access_stats.tsx</code></li></ul></details>
+    </article>
+    <article class="card" data-card>
+      <header class="card-h">
+        <div><span class="path">src/dash/sys/board/</span><h3>게시판</h3></div>
+        <span class="count">페이지 2 · 파일 12</span>
+      </header>
+      <div class="tbl"><table>
+        <thead><tr><th>메뉴명</th><th>파일</th><th>유형</th><th>라우트</th><th>화면 ID</th></tr></thead>
+        <tbody>
+        <tr data-q="자펀드보고양식관리(운용사ERP) 게시판 sfund-report-form-manage sys/board/sfund_report_form_manage adm-012">
+          <td class="menu">자펀드보고양식관리(운용사ERP)<span class="note">게시판</span></td>
+          <td><code>sfund_report_form_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/sfund-report-form-manage</code></td>
+          <td class="muted">ADM-012</td>
+        </tr>
+        <tr data-q="게시판관리 게시판 board-manage sys/board/board_manage adm-013">
+          <td class="menu">게시판관리<span class="note">게시판</span></td>
+          <td><code>board_manage.tsx</code></td>
+          <td><span class="tag tsx">전용 페이지</span></td>
+          <td class="muted"><code>#/board-manage</code></td>
+          <td class="muted">ADM-013</td>
+        </tr></tbody></table></div>
+      <details><summary>동반 파일 10개 (modal·model·data·test)</summary>
+        <ul class="chips"><li><code>board_data.ts</code></li><li><code>board_form_modal.tsx</code></li><li><code>board_model.test.ts</code></li><li><code>board_model.ts</code></li><li><code>board_preview_modal.tsx</code></li><li><code>sfund_report_form_manage.test.ts</code></li><li><code>sfund_report_form_model.test.ts</code></li><li><code>sfund_report_form_model.ts</code></li><li><code>sfund_report_form_modals.tsx</code></li><li><code>sfund_report_form_schemas.ts</code></li></ul></details>
     </article>
     <article class="card" data-card>
       <header class="card-h">
@@ -1105,14 +1155,14 @@ summary{cursor:pointer;color:var(--muted);font-size:13px}
     </article></div>
   </section>
   <section id="shared" class="domain">
-    <h2><span>공용 (src/dash 루트)</span><code>./</code><small>파일 35</small></h2>
+    <h2><span>공용 (src/dash 루트)</span><code>./</code><small>파일 37</small></h2>
     <div class="grid">
       <article class="card" data-card><header class="card-h"><div><span class="path">src/dash/</span><h3>메뉴 밖 앱 라우트</h3></div></header>
         <div class="tbl"><table><thead><tr><th>라우트</th><th>파일</th></tr></thead><tbody>
         <tr data-q="designsystem designsystem"><td><code>#/designsystem</code></td><td><code>designsystem.tsx</code></td></tr><tr data-q="editor editor_page"><td><code>#/editor</code></td><td><code>editor_page.tsx</code></td></tr>
         </tbody></table></div></article>
       <article class="card" data-card><header class="card-h"><div><span class="path">src/dash/</span><h3>2개 이상 도메인이 쓰는 공용 모듈</h3></div></header>
-        <ul class="chips" style="padding:0 14px 12px"><li data-q="aggrid_selection.css"><code>aggrid_selection.css</code></li><li data-q="aggrid_selection.tsx"><code>aggrid_selection.tsx</code></li><li data-q="aggrid_shared.css"><code>aggrid_shared.css</code></li><li data-q="aggrid_theme.ts"><code>aggrid_theme.ts</code></li><li data-q="app.tsx"><code>app.tsx</code></li><li data-q="applied_filters.tsx"><code>applied_filters.tsx</code></li><li data-q="charts.tsx"><code>charts.tsx</code></li><li data-q="components.tsx"><code>components.tsx</code></li><li data-q="confirm_combo.tsx"><code>confirm_combo.tsx</code></li><li data-q="data.ts"><code>data.ts</code></li><li data-q="drawer_select.tsx"><code>drawer_select.tsx</code></li><li data-q="gallery_charts.tsx"><code>gallery_charts.tsx</code></li><li data-q="generic_list.tsx"><code>generic_list.tsx</code></li><li data-q="generic_list_modal.tsx"><code>generic_list_modal.tsx</code></li><li data-q="grid_empty_overlay.tsx"><code>grid_empty_overlay.tsx</code></li><li data-q="grid_frame.tsx"><code>grid_frame.tsx</code></li><li data-q="grid_header_note.ts"><code>grid_header_note.ts</code></li><li data-q="icons.tsx"><code>icons.tsx</code></li><li data-q="kv_fill.tsx"><code>kv_fill.tsx</code></li><li data-q="report.tsx"><code>report.tsx</code></li><li data-q="risk_excel.ts"><code>risk_excel.ts</code></li><li data-q="risk_grid.tsx"><code>risk_grid.tsx</code></li><li data-q="risk_manage.tsx"><code>risk_manage.tsx</code></li><li data-q="risk_page_kit.tsx"><code>risk_page_kit.tsx</code></li><li data-q="risk_table_meta.ts"><code>risk_table_meta.ts</code></li><li data-q="risk_tables_page.tsx"><code>risk_tables_page.tsx</code></li><li data-q="route_alias.ts"><code>route_alias.ts</code></li><li data-q="row_context_menu.tsx"><code>row_context_menu.tsx</code></li><li data-q="shell.tsx"><code>shell.tsx</code></li><li data-q="test_src.ts"><code>test_src.ts</code></li><li data-q="tokens.css"><code>tokens.css</code></li><li data-q="trust_manage_kit.tsx"><code>trust_manage_kit.tsx</code></li><li data-q="trust_manage_rows.ts"><code>trust_manage_rows.ts</code></li><li data-q="trust_upload.tsx"><code>trust_upload.tsx</code></li><li data-q="use-hotkey.ts"><code>use-hotkey.ts</code></li></ul>
+        <ul class="chips" style="padding:0 14px 12px"><li data-q="aggrid_selection.css"><code>aggrid_selection.css</code></li><li data-q="aggrid_selection.tsx"><code>aggrid_selection.tsx</code></li><li data-q="aggrid_shared.css"><code>aggrid_shared.css</code></li><li data-q="aggrid_theme.ts"><code>aggrid_theme.ts</code></li><li data-q="app.tsx"><code>app.tsx</code></li><li data-q="applied_filters.tsx"><code>applied_filters.tsx</code></li><li data-q="charts.tsx"><code>charts.tsx</code></li><li data-q="components.tsx"><code>components.tsx</code></li><li data-q="confirm_combo.tsx"><code>confirm_combo.tsx</code></li><li data-q="data.ts"><code>data.ts</code></li><li data-q="drawer_select.tsx"><code>drawer_select.tsx</code></li><li data-q="gallery_charts.tsx"><code>gallery_charts.tsx</code></li><li data-q="generic_list.tsx"><code>generic_list.tsx</code></li><li data-q="generic_list_modal.tsx"><code>generic_list_modal.tsx</code></li><li data-q="grid_empty_overlay.tsx"><code>grid_empty_overlay.tsx</code></li><li data-q="grid_frame.tsx"><code>grid_frame.tsx</code></li><li data-q="grid_header_note.ts"><code>grid_header_note.ts</code></li><li data-q="icons.tsx"><code>icons.tsx</code></li><li data-q="kv_fill.tsx"><code>kv_fill.tsx</code></li><li data-q="report.tsx"><code>report.tsx</code></li><li data-q="report_guide_data.ts"><code>report_guide_data.ts</code></li><li data-q="report_guide_history_modal.tsx"><code>report_guide_history_modal.tsx</code></li><li data-q="risk_excel.ts"><code>risk_excel.ts</code></li><li data-q="risk_grid.tsx"><code>risk_grid.tsx</code></li><li data-q="risk_manage.tsx"><code>risk_manage.tsx</code></li><li data-q="risk_page_kit.tsx"><code>risk_page_kit.tsx</code></li><li data-q="risk_table_meta.ts"><code>risk_table_meta.ts</code></li><li data-q="risk_tables_page.tsx"><code>risk_tables_page.tsx</code></li><li data-q="route_alias.ts"><code>route_alias.ts</code></li><li data-q="row_context_menu.tsx"><code>row_context_menu.tsx</code></li><li data-q="shell.tsx"><code>shell.tsx</code></li><li data-q="test_src.ts"><code>test_src.ts</code></li><li data-q="tokens.css"><code>tokens.css</code></li><li data-q="trust_manage_kit.tsx"><code>trust_manage_kit.tsx</code></li><li data-q="trust_manage_rows.ts"><code>trust_manage_rows.ts</code></li><li data-q="trust_upload.tsx"><code>trust_upload.tsx</code></li><li data-q="use-hotkey.ts"><code>use-hotkey.ts</code></li></ul>
         <p class="empty">그 외 공용 폴더: <code>ui/</code> <code>fields/</code> <code>motion/</code> <code>schemas/</code>(레지스트리·타입) <code>assets/</code></p>
       </article>
     </div>

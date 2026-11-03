@@ -274,14 +274,17 @@ const MENU = [
     ]},
   ]},
 
-  // 관리자 IA(2026-09-14 사용자 이미지 정본 — 공통관리 S0_101~S0_108 LNB와 동일): 중분류 3 · 리프 8, 표시 순서 그대로.
-  // 구조표의 구 관리자 리프(외부연동·보안·게시판, 도움말 관리 등)는 이 이미지 IA로 대체됐다(브리프 dev/completed/admin-pages-complete/BRIEF.md).
-  // 모든 리프는 typed 페이지(app.tsx 명시 분기) — GenericListPage 폴백 없음. 라벨은 원본 표기(띄어쓰기 없음: 권한관리·사용자관리·프로그램관리…).
+  // 관리자 IA(2026-11-02 사용자 이미지 정본 — 메뉴구조 시트 관리자 절): 중분류 5 · 리프 12, 표시 순서 그대로.
+  // 2026-09-14 IA(중분류 3 · 리프 8)에서 외부연동·게시판 중분류와 개인정보 접속관리 리프가 늘고, 사용자 중분류 라벨·순서가 바뀌었다(path 불변).
+  // 모든 리프는 typed 페이지(app.tsx 명시 분기) — GenericListPage 폴백 없음. 라벨은 시트 표기 그대로(사용자권한관리·프로그램관리…).
   { id:"admin", label:"관리자", icon:"settings", roles:["admin"], children:[
-    { label:"사용자·권한 관리", sub:true, children:[
-      { label:"권한관리", path:"user-permission-manage" },          // S0_102
+    { label:"사용자관리", sub:true, children:[
       { label:"사용자관리", path:"user-manage" },                    // S0_101
-      { label:"사용자 초대(운용사)", path:"user-invite-gp" },        // S0_103
+      { label:"사용자 초대", path:"user-invite-gp" },                // S0_103
+      { label:"사용자권한관리", path:"user-permission-manage" },     // S0_102
+    ]},
+    { label:"외부연동", sub:true, children:[
+      { label:"연동 모니터링", path:"integration-monitor" },         // ADM-005
     ]},
     { label:"시스템 관리", sub:true, children:[
       { label:"프로그램관리", path:"program-manage" },               // S0_108
@@ -290,7 +293,12 @@ const MENU = [
     ]},
     { label:"감사·기록", sub:true, children:[
       { label:"권한 변경이력", path:"permission-history" },          // S0_107
+      { label:"개인정보 접속관리", path:"privacy-access-log" },      // ADM-010
       { label:"감사로그", path:"audit-log" },                        // S0_104
+    ]},
+    { label:"게시판", sub:true, children:[
+      { label:"자펀드보고양식관리(운용사ERP)", path:"sfund-report-form-manage" }, // ADM-012
+      { label:"게시판관리", path:"board-manage" },                   // ADM-013
     ]},
   ]},
 ];

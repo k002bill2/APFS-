@@ -32,7 +32,7 @@ APFS/
         ├── iam/{mfund,asct,report,sfund,ent,gp}/    # 투자자산관리 (모태펀드·조합·사후보고·자펀드·투자기업·운용사)
         ├── ews/{alert,ent,sfund,valuation}/     # 조기경보
         ├── sfr/{occasionalreport,regularreport,verify,file}/  # 자펀드 보고 (수시·정기보고·실물검증·파일)
-        ├── brf/{mfund,register}/  trs/{sfund,mfund}/  sys/{user,setting,audit}/   # 부처보고 · 수탁보고 · 관리자
+        ├── brf/{mfund,register}/  trs/{sfund,mfund}/  sys/{user,integration,setting,audit,board}/   # 부처보고 · 수탁보고 · 관리자
         │                                        # 대분류 루트 = 중분류 공용만(iam/leaf_tabs · brf/brief_data · trs/trust_sub_data · sys/admin_*)
         ├── schemas/                             # 스키마 레지스트리(index.ts)·타입·렌더러 — 공용 인프라만
         ├── data.ts / app.tsx / shell / components / icons / charts / grid_frame / generic_list / aggrid_* …  # 2개 이상 도메인이 쓰는 공용
@@ -62,10 +62,10 @@ APFS/
 
 **벤더**: React 18 / ReactDOM (npm), lucide. JSX 변환은 **빌드타임(esbuild)** — 브라우저 Babel은 제거됨.
 
-**메뉴**: `Shell`이 `APFS_DATA.MENU`를 그대로 렌더하며 모든 사용자에게 전 메뉴를 노출합니다. 메뉴의 정본은 **신규(to-be) 메뉴 구성** — SharePoint 메뉴구조 문서(링크는 팀 내부 공유 — 공개 저장소라 URL 미기재)다(원본 xlsx 는 저장소에 두지 않는다 — 구 v0.2 사본은 git 이력). **현행(as-is) 트리가 아니다.** 3-레벨로 대분류 7(+대시보드) / 중분류 29 / 리프 111개(2026-10-14 실측 — 자펀드 보고는 사용자 지정 4중분류·6리프). 정본은 시트이므로 리프를 임의로 추가·삭제하지 않는다. **route(해시 `#/...`)와 소스 파일명은 영문**이다(2026-10-14 전면 전환) — 리프는 `{ label:"한글 라벨", path:"kebab-route" }`, 스키마 파일은 snake_case, 메뉴 라벨·화면 제목·엑셀 파일명만 한글. 옛 한글 route 는 `src/dash/route_alias.ts`(SSOT)가 해시·`apfs.route`·방문기록·즐겨찾기 모두에서 새 route 로 승격한다. 라벨을 바꿀 땐 path 를 그대로 두고, path 를 바꿀 땐 옛 값을 별칭에 남긴다. 상세 규약·체크리스트·전환 매핑은 `docs/라우트_파일명_가이드.md`. (구 RBAC 데모 — `role` 상태·역할 스위처·`ROLES` 정의는 2026-09-09 제거됨. 백엔드/인증이 없는 프로토타입이라 실제 접근통제가 아닌 데모 토글이었음. MENU item의 `roles:` 필드는 잔존하나 현재 미사용.)
+**메뉴**: `Shell`이 `APFS_DATA.MENU`를 그대로 렌더하며 모든 사용자에게 전 메뉴를 노출합니다. 메뉴의 정본은 **신규(to-be) 메뉴 구성** — SharePoint 메뉴구조 문서(링크는 팀 내부 공유 — 공개 저장소라 URL 미기재)다(원본 xlsx 는 저장소에 두지 않는다 — 구 v0.2 사본은 git 이력). **현행(as-is) 트리가 아니다.** 3-레벨로 대분류 7(+대시보드) / 중분류 31 / 리프 115개(2026-11-02 실측 — 자펀드 보고는 사용자 지정 4중분류·6리프, 관리자는 2026-11-02 사용자 이미지 정본 5중분류·12리프). 정본은 시트이므로 리프를 임의로 추가·삭제하지 않는다. **route(해시 `#/...`)와 소스 파일명은 영문**이다(2026-10-14 전면 전환) — 리프는 `{ label:"한글 라벨", path:"kebab-route" }`, 스키마 파일은 snake_case, 메뉴 라벨·화면 제목·엑셀 파일명만 한글. 옛 한글 route 는 `src/dash/route_alias.ts`(SSOT)가 해시·`apfs.route`·방문기록·즐겨찾기 모두에서 새 route 로 승격한다. 라벨을 바꿀 땐 path 를 그대로 두고, path 를 바꿀 땐 옛 값을 별칭에 남긴다. 상세 규약·체크리스트·전환 매핑은 `docs/라우트_파일명_가이드.md`. (구 RBAC 데모 — `role` 상태·역할 스위처·`ROLES` 정의는 2026-09-09 제거됨. 백엔드/인증이 없는 프로토타입이라 실제 접근통제가 아닌 데모 토글이었음. MENU item의 `roles:` 필드는 잔존하나 현재 미사용.)
 
-- 추출본 `docs/메뉴구성도_v0.2.md` — 시트 원문(신규 152리프 + 현행 128리프)을 md로 옮기고 화면 참조를 `docs/mockups/` 목업 HTML에 링크한 것. **앱이 구현한 111리프는 이 중 일부**다(관리자(기존) 12·자펀드 보고 대부분 미반영). 로그인 대분류 3리프(로그인·발급온보딩·초대온보딩)는 `MENU` 트리에 없지만 **앱 전용 라우트로 구현돼 있다**(`#/login` · `#/onboarding-issue` · `#/onboarding-invite`) — LNB에는 노출되지 않는다.
-- 대조표 `docs/메뉴대조표_xlsx_vs_APFS_DATA.md` — 시트와 `MENU`의 차이. 현재 완전일치 106 / 라벨 불일치 1(xlsx 오타) / 앱 전용 5(대시보드 + 자펀드 보고 4리프).
+- 추출본 `docs/메뉴구성도_v0.2.md` — 시트 원문(신규 152리프 + 현행 128리프)을 md로 옮기고 화면 참조를 `docs/mockups/` 목업 HTML에 링크한 것. **앱이 구현한 115리프는 이 중 일부**다(관리자(기존) 12·자펀드 보고 대부분 미반영). 로그인 대분류 3리프(로그인·발급온보딩·초대온보딩)는 `MENU` 트리에 없지만 **앱 전용 라우트로 구현돼 있다**(`#/login` · `#/onboarding-issue` · `#/onboarding-invite`) — LNB에는 노출되지 않는다.
+- 대조표 `docs/메뉴대조표_xlsx_vs_APFS_DATA.md` — 시트와 `MENU`의 차이. 현재 완전일치 106 / 라벨 불일치 1(xlsx 오타) / 앱 전용 5(대시보드 + 자펀드 보고 4리프). ⚠ 2026-11-02 관리자 개편(신규 4리프·라벨 3건 변경)은 아직 미반영 — 재생성에 SharePoint xlsx 가 필요하다. 재생성 때 `gen_diff.py` `LABEL_DIFFS`·`resolver.py` `ALIAS` 에 옛 관리자 라벨(권한관리·사용자 초대(운용사))이 남았는지 함께 본다.
 - 두 문서는 **생성물**이다. 고칠 일이 생기면 md가 아니라 `scripts/menu-doc/`(README 참조)를 고치고 재생성한다.
 - `docs/UIUX_기능설명서.html`(현업·PM용 화면별 기능설명서)도 **생성물**이다. HTML 을 직접 고치지 말고 `scripts/uiux-doc/`(화면 원고 `screens_data.py` · 공통 절 `common_sections.py`)를 고친 뒤 `python3 scripts/uiux-doc/gen_doc.py` 로 재생성한다(README 참조) — HTML 만 고치면 다음 재생성 때 조용히 되돌아간다(2026-10-26 #352 실사례). 화면 동작을 바꾸는 PR 은 그 화면 원고 문장도 같이 고친다.
 

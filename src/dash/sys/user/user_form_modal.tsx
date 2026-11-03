@@ -3,7 +3,7 @@
    ⚠ RowFormModal(flat 스키마)로는 담을 수 없어 전용 모달이다 — ① 사용자구분에 따라 조건부 필드가 바뀐다
    (농금원=부서 · 운용사=소속 운용사 · 수탁=소속 수탁사 · 부처=계정구분 라디오) ② 권한은 복수 체크 + "유효 메뉴(권한 합집합)" 힌트.
    골격은 RowFormModal 규격(항목 >6 → `max-w-[880px]` 2단, 본문 `p-[46px]`, 헤더·푸터 `px-[46px]`), 컨트롤은 `SchemaField`(ad-hoc FieldSpec).
-   등록 = 농금원·수탁·부처만(운용사는 「사용자 초대(운용사)」로만 생성 — 목업 note). 수정은 로그인 아이디·사용자구분 잠금.
+   등록 = 농금원·수탁·부처만(운용사는 「사용자 초대」로만 생성 — 목업 note). 수정은 로그인 아이디·사용자구분 잠금.
    검증 순서(목업 주석): 성명 → 아이디(등록, 중복) → 이메일 → 조건부(부서) → 권한 1개 이상.
    ⚠ 백엔드 없음 — 저장은 부모(user_manage)의 로컬 행 상태만 바꾼다. 실제 계정 발급·메일 발송 없음. */
 import React from 'react';
@@ -115,7 +115,7 @@ export function UserFormModal({ mode, initial, existing, onSave, onClose }: {
             <Field label="이메일 *" hint="온보딩 안내 발송용 · 회사 이메일 우선" errMsg={errKey === 'email' ? '이메일을 입력하세요 — 온보딩 안내 발송에 필요합니다.' : undefined}>
               <SchemaField field={F.email} value={v.email} onChange={(x) => set('email', x)} invalid={errKey === 'email'} />
             </Field>
-            <Field label="사용자구분 *" hint={mode === 'create' ? '운용사 사용자는 「사용자 초대(운용사)」로만 생성됩니다.' : undefined}>
+            <Field label="사용자구분 *" hint={mode === 'create' ? '운용사 사용자는 「사용자 초대」로만 생성됩니다.' : undefined}>
               {mode === 'create'
                 ? <SchemaField field={typeField} value={v.type} onChange={setType} />
                 : <SchemaField field={F.typeRo} value={v.type} onChange={() => {}} />}

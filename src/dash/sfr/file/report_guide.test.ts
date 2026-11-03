@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { readSrc } from '../../test_src';
-import { REPORT_GUIDE_TABLE, REPORT_GUIDE_LABEL, REPORT_GUIDE_ROUTE, REPORT_GUIDE_SOURCE, GUIDE_HISTORY } from './report_guide_data';
+import { REPORT_GUIDE_TABLE, REPORT_GUIDE_LABEL, REPORT_GUIDE_ROUTE, REPORT_GUIDE_SOURCE, GUIDE_HISTORY } from '../../report_guide_data';
 
 const mockup = readFileSync(REPORT_GUIDE_SOURCE.normalize('NFC'), 'utf8');
 const page = readSrc('report_guide.tsx');

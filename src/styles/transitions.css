@@ -378,3 +378,20 @@
   .t-input { animation: none !important; transform: none !important; will-change: auto !important; }
   .t-error-msg { animation: none !important; }
 }
+
+/* ── 차트 호버 십자선(17 tooltip "travels between triggers" 를 차트 안내선에 응용) ─────────────
+   소비처: charts.tsx MultiLineTrend `hoverTip`(안내선·강조 점·값 툴팁 — Radix 툴팁이 아닌 SVG 오버레이라 소유자 없음).
+   - glide = 이미 보이는 중 다음 점으로: 위치는 --dur(180ms) smooth-out 으로 미끄러지고, 투명도는 --dur-fast.
+   - fade  = 처음 나타날 때·사라질 때: 위치는 즉시(왼쪽 끝에서 날아오지 않게), 투명도만 --dur-fast ease-out.
+   위치는 SVG 속성(x1·cx)이 아니라 CSS transform 으로 옮긴다 — 속성은 전환되지 않는다.
+   transition 은 전역 저모션 규칙(tokens.css — animation-duration 만 0)이 못 막으므로 아래 가드가 유일한 안전장치다. */
+.chart-xhair-glide {
+  transition: transform var(--dur) cubic-bezier(0.22, 1, 0.36, 1), opacity var(--dur-fast) ease-out;
+  will-change: transform, opacity;
+}
+.chart-xhair-fade {
+  transition: opacity var(--dur-fast) ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chart-xhair-glide, .chart-xhair-fade { transition: none; }
+}

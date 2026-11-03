@@ -6,8 +6,8 @@
    - 원문 아이콘 전용 다운로드 링크(aria-label '<버전> 다운로드') → IconBtn(label = 접근名 + 툴팁). 백엔드가 없어 토스트로 응답.
    - 원문엔 푸터가 없지만 모달 공통 크롬대로 [닫기] 를 둔다(Esc·스크림·X 도 닫힘 — Radix). */
 import React, { useRef } from 'react';
-import { UI } from '../../components';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from '../../ui/dialog';
+import { UI } from './components';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from './ui/dialog';
 import type { GuideVersion } from './report_guide_data';
 
 const { Button, IconBtn, StatusBadge } = UI;
@@ -49,7 +49,7 @@ export function ReportGuideHistoryModal({ title, versions, onDownload, onClose }
               </thead>
               <tbody>
                 {versions.map((h, i) => (
-                  <tr key={h.file} style={i === 0 ? { background: CUR_ROW_BG } : undefined}>
+                  <tr key={`${i}-${h.v}-${h.file}`} style={i === 0 ? { background: CUR_ROW_BG } : undefined}>
                     <td className={TD} style={CELL}>
                       <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
                         {h.v}{i === 0 && <StatusBadge tone="success" label="현재" size="sm" />}
