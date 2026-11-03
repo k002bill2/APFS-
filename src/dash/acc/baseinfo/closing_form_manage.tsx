@@ -17,6 +17,8 @@
      다시 골라 [행삭제]를 누르면 직전 상태로 복구된다. 신규(I) 행 삭제는 즉시 제거.
    - 계정코드·계정코드명은 직접 입력하지 않고 [검색] → 계정과목 검색 팝업(ACC-001 공통)으로만 채운다.
    - 상세필터 = 계정코드명(텍스트 + [검색]) 1개, 부분일치. 검색어 박스(searchable)는 두지 않는다.
+     즉시 반영 — 타이핑·[검색] 선택 즉시 조건 반영, [필터 적용] = 닫기(X·Esc·바깥 클릭으로 닫아도 값 유지), [초기화] = 빈 값
+     (2026-11-03 사용자 지시, 정본 privacy_access_log). 범위 항목이 없어 검증 실패 상태는 없다.
    - 저장(E03): 양식구분 → 변경 건수 → 편집 행 검증(위반 셀 빨간 테두리) → 저장 중 → "N건 저장되었습니다".
    한계: 백엔드가 없어 저장은 화면 안 저장본(양식구분별)만 바꾼다 — 새로고침하면 더미로 돌아간다. */
 import '../../aggrid_shared.css';
@@ -161,11 +163,9 @@ export function ClosingFormManage({ onNav }: { onNav?: (r: string) => void }) {
   const [selIds, setSelIds] = useState<string[]>([]);
   const [search, setSearch] = useState<SearchTarget>(null);
 
-  /* 상세필터 — 계정코드명 부분일치. 드로어는 사본(draft)을 고치고 [필터 적용] 때 반영 */
+  /* 상세필터 — 계정코드명 부분일치. 드로어 입력이 fAcct 를 바로 고친다(즉시 반영 — 초안 사본 없음) */
   const [filterOpen, setFilterOpen] = useState(false);
   const [fAcct, setFAcct] = useState('');
-  const [fDraft, setFDraft] = useState('');
-  const openFilter = () => { setFDraft(fAcct); setFilterOpen(true); };
   const passes = useMemo(() => passesFilter(fAcct), [fAcct]);
   /* 필터가 바뀌면 선택을 전부 해제(2026-10-27 사용자 결정 — filter_clears_selection 가드) */
   useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
@@ -287,7 +287,7 @@ export function ClosingFormManage({ onNav }: { onNav?: (r: string) => void }) {
   /* 계정과목 검색 반영 — 행이면 코드/명을 그 행에, 필터면 드로어 사본에 */
   const onPickAccount = (a: AccountItem) => {
     if (search?.kind === 'row') patch(search.id, { acctCode: a.code, acctName: a.name });
-    else if (search?.kind === 'filter') setFDraft(a.name);
+    else if (search?.kind === 'filter') setFAcct(a.name);
   };
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다(contextActions 슬롯).
@@ -314,7 +314,7 @@ export function ClosingFormManage({ onNav }: { onNav?: (r: string) => void }) {
       appliedFilters={[{ label: '계정코드명', value: fAcct, onClear: () => setFAcct('') }]}
       contextActions={selActions}
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" disabled={saving} onClick={openFilter}>상세필터</Button>
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" disabled={saving} onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" disabled={saving} onClick={addRow}>행추가</Button>
         <SaveButton onSubmit={save} />
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
@@ -356,17 +356,16 @@ export function ClosingFormManage({ onNav }: { onNav?: (r: string) => void }) {
             <div className="block mb-4">
               <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>계정코드명</span>
               <div className="flex items-center gap-1.5">
-                <input type="text" value={fDraft} placeholder="계정코드명 입력" aria-label="계정코드명"
-                  onChange={(e) => setFDraft(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setFAcct(fDraft); setFilterOpen(false); } }}
+                <input type="text" value={fAcct} placeholder="계정코드명 입력" aria-label="계정코드명"
+                  onChange={(e) => setFAcct(e.target.value)}
                   style={{ ...drawerInputStyle('text'), flex: 1, minWidth: 0 }} />
-                <Button variant="outline" size="md" onClick={() => setSearch({ kind: 'filter', keyword: fDraft })}>검색</Button>
+                <Button variant="outline" size="md" onClick={() => setSearch({ kind: 'filter', keyword: fAcct })}>검색</Button>
               </div>
             </div>
           </div>
           <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setFDraft('')}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => { setFAcct(fDraft); setFilterOpen(false); }}>필터 적용</Button>
+            <Button variant="outline" size="md" onClick={() => setFAcct('')}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
