@@ -292,7 +292,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
   /* `전체` 칩 건수 = 등급 facet의 합(상수 금지 — 운용사·자펀드 필터가 걸리면 함께 줄어야 한다) */
   const gradeTotal = GRADES.reduce((s, g) => s + gradeFacet[g], 0);
-  /* 기준년월 칩 노출 조건 — 값이 늘 있으므로 **목업 기본값과 다를 때만** 띄운다(선례 custody_confirm_manage) */
+  /* 기준년월 칩(항목명 '기간' = 드로어 캡션, 칩 → 항목 이동) 노출 조건 — 값이 늘 있으므로 **목업 기본값과 다를 때만** 띄운다(선례 custody_confirm_manage) */
   const periodChanged = fFrom !== BASE_FROM || fTo !== BASE_TO;
 
   return (
@@ -317,7 +317,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
-        { label: '기준년월', value: periodChanged ? String(fFrom) + ' ~ ' + String(fTo) : '', onClear: () => { setFFrom(BASE_FROM); setFTo(BASE_TO); } },
+        { label: '기간', value: periodChanged ? String(fFrom) + ' ~ ' + String(fTo) : '', onClear: () => { setFFrom(BASE_FROM); setFTo(BASE_TO); } },   // 드로어 캡션 '기간'과 같게(칩 → 항목 이동)
       ]}
       toolbarRight={<>
         <Button variant="outline" size="sm" leadingIcon="chart" onClick={() => setChartOpen(true)}>차트</Button>

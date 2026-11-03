@@ -34,7 +34,13 @@ export interface AppliedFilter {
   onClear?: () => void;
   /** 긴 경로형 값 — 최대 480px, 좁으면 2줄 줄바꿈(+N 으로 접히지 않고 최소 160px 을 예약한다) */
   wide?: boolean;
+  /** 칩을 눌렀을 때 이동할 상세필터 항목 캡션(기본 = label). 칩 하나가 여러 칸을 대표하는 **묶음 칩**만 쓴다 —
+      예: '조회 대상'(모펀드›운용사›자펀드›투자기업) → 첫 칸 '모펀드'. 단일 항목은 쓰지 말고 label 을 드로어 캡션과 같게 둔다 */
+  jumpTo?: string;
 }
+
+/** 칩 → 상세필터 이동 콜백 — label 은 플래시 툴팁 키, target 은 드로어에서 찾을 캡션(jumpTo) */
+type JumpFn = (label: string, target?: string) => void;
 
 /** 기본(주) 필터 칩 한 개 — 툴바 첫 칩 무리. 라벨·건수·선택 상태만 넘긴다(FilterChip 렌더는 이 파일이 한다). */
 export interface FilterChipItem {
@@ -70,9 +76,9 @@ const sigMap = (s: string) => new Map(s ? s.split(EN).map((e) => e.split(KV) as 
 const modalOpen = () => document.querySelector('[role="dialog"][data-state="open"],[role="alertdialog"][data-state="open"]') != null;
 
 /* 칩 값 = 상세필터로 가는 버튼. 칩 패딩까지 눌리게 음수 마진 + 같은 패딩으로 칩 왼쪽(× 없으면 오른쪽까지) 면을 덮는다 */
-function ValueButton({ f, onJump, clearable, children }: { f: AppliedFilter; onJump?: (label: string) => void; clearable: boolean; children: React.ReactNode }) {
+function ValueButton({ f, onJump, clearable, children }: { f: AppliedFilter; onJump?: JumpFn; clearable: boolean; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={() => onJump?.(f.label)} aria-label={`${f.label}: ${f.value} — 상세필터에서 변경`}
+    <button type="button" onClick={() => onJump?.(f.label, f.jumpTo)} aria-label={`${f.label}: ${f.value} — 상세필터에서 변경`}
       className="inline-flex items-center border-0 bg-transparent cursor-pointer min-w-0 text-left"
       style={{ color: 'inherit', fontFamily: 'inherit', fontSize: 'inherit', fontWeight: 'inherit', lineHeight: 'inherit',
         padding: clearable ? '5px 0 5px 11px' : '5px 11px', margin: clearable ? '-5px 0 -5px -11px' : '-5px -11px', borderRadius: 9 }}>
@@ -81,7 +87,7 @@ function ValueButton({ f, onJump, clearable, children }: { f: AppliedFilter; onJ
   );
 }
 
-function Chip({ f, flash, onJump }: { f: AppliedFilter; flash?: boolean; onJump?: (label: string) => void }) {
+function Chip({ f, flash, onJump }: { f: AppliedFilter; flash?: boolean; onJump?: JumpFn }) {
   const clearable = Boolean(f.onClear);
   if (f.wide) return <WideChip f={f} clearable={clearable} flash={flash} onJump={onJump} />;
   return (
@@ -122,7 +128,7 @@ function ChipTip({ f, flash = false, children }: { f: AppliedFilter; flash?: boo
 }
 /* wide 칩 — 남은 폭까지 줄어들며(shrink, minWidth 160) 텍스트는 2줄까지 줄바꿈, 넘칠 때만 말줄임.
    keep-all — 한글 이름이 글자 단위로 쪼개지지 않게(줄바꿈 지점은 소비처가 값 문자열의 공백으로 정한다). */
-function WideChip({ f, clearable, flash, onJump }: { f: AppliedFilter; clearable: boolean; flash?: boolean; onJump?: (label: string) => void }) {
+function WideChip({ f, clearable, flash, onJump }: { f: AppliedFilter; clearable: boolean; flash?: boolean; onJump?: JumpFn }) {
   return (
     <ChipTip f={f} flash={flash}>
     <span className="inline-flex items-center gap-1.5 font-semibold min-w-0 cursor-pointer"
@@ -149,7 +155,7 @@ type Item =
   | { id: string; kind: 'applied'; f: AppliedFilter }
   | { id: string; kind: 'clear'; run: () => void };
 
-function ItemView({ it, flash, onJump }: { it: Item; flash?: boolean; onJump?: (label: string) => void }) {
+function ItemView({ it, flash, onJump }: { it: Item; flash?: boolean; onJump?: JumpFn }) {
   if (it.kind === 'chip') {
     const c = it.chip;
     /* 측정용 숨김 복제본도 ItemView 를 쓰므로 필수 마크업이 그대로 들어가 폭이 맞는다 */
@@ -242,11 +248,11 @@ export function FilterChipRow({ chips = [], applied }: { chips?: readonly Filter
   const boxRef = React.useRef<HTMLDivElement>(null);
   /* 칩 값 클릭 → 상세필터의 그 항목. 그 칩의 flash 툴팁을 먼저 끈다 — 제어형(open||flash)이라 클릭으로도 안 닫히고,
      남은 툴팁 레이어가 드로어의 첫 Esc 를 가져간다(radix-tooltip-layer-eats-esc). */
-  const jump = React.useCallback((label: string) => {
+  const jump = React.useCallback((label: string, target?: string) => {
     clearTimeout(timers.current[label]);
     pending.current.delete(label);
     setFlashing((p) => (p.has(label) ? new Set([...p].filter((x) => x !== label)) : p));
-    void jumpToFilterField(boxRef.current, label);
+    void jumpToFilterField(boxRef.current, target ?? label);
   }, []);
   React.useEffect(() => {
     /* 모달이 닫힘 상태로 바뀌는 순간(data-state=closed) 모아 둔 항목을 띄운다 — 포털 위치와 무관하게 body 아래 속성 변화를 본다.

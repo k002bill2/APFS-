@@ -5,6 +5,7 @@ import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { activeFilters, planChips, valueSig, freshLabels } from './applied_filters';
+import { readSrc } from './test_src';
 
 describe('freshLabels — 필터를 건 직후 툴팁을 띄울 칩(2026-10-26)', () => {
   const sig = (...kv: [string, string][]) => valueSig(kv.map(([label, value]) => ({ label, value })));
@@ -126,9 +127,22 @@ describe('적용 칩 → 상세필터 이동 계약', () => {
   });
   it('칩 값은 이동 버튼이고, GridFrame 루트가 이동 범위를 표시한다', () => {
     const own = readFileSync(join(ROOT, OWNER), 'utf8');
-    expect(own).toContain('jumpToFilterField(boxRef.current, label)');
+    expect(own).toContain('jumpToFilterField(boxRef.current, target ?? label)');
+    expect(own).toContain('onJump?.(f.label, f.jumpTo)');
     expect(own).toContain('상세필터에서 변경');
     expect(readFileSync(join(ROOT, 'dash/grid_frame.tsx'), 'utf8')).toContain('data-grid-frame=""');
+  });
+  /* 2026-11-03 전수 점검(116 route · 칩 222개를 실제 jumpToFilterField 로 판정) — 드로어만 열리던 화면 3곳의 교정.
+     칩 항목명 = 드로어 캡션이 원칙이고, 칩 하나가 여러 칸을 대표하는 묶음 칩만 jumpTo 로 첫 칸을 가리킨다 */
+  it('칩 항목명이 드로어 캡션과 다르던 화면 — 캡션으로 맞추거나 jumpTo 로 첫 칸을 가리킨다', () => {
+    const inv = readSrc('investee_profile.tsx');
+    expect(inv).toMatch(/label: '조회 대상',[^}]*jumpTo: '모펀드'/);
+    const ars = readSrc('all_report_status.tsx');
+    expect(ars).toContain("['기준일자', fFrom || fTo");
+    expect(ars).toContain('<DrawerField label="기준일자"');
+    const ew = readSrc('early_warning_manage.tsx');
+    expect(ew).toContain("{ label: '기간', value: periodChanged");
+    expect(ew).toContain('<DrawerField label="기간"');
   });
 });
 
