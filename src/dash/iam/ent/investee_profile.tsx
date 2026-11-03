@@ -76,7 +76,7 @@ export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
       title="투자기업정보(통합)"
       favRoute="investee-profile"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      appliedFilters={[{ label: '조회 대상', value: path.some(Boolean) ? path.map((v) => v || '전체').join('\u00a0› ') : '', wide: true, onClear: clearFilters }]}
+      appliedFilters={[{ label: '조회 대상', value: path.some(Boolean) ? path.map((v) => v || '전체').join('\u00a0› ') : '', wide: true, jumpTo: '모펀드', onClear: clearFilters }]}
       toolbarRight={<>
         <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
         <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />

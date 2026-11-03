@@ -167,7 +167,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
   const chips: [string, string, () => void][] = [
     ['운용사', fGp, () => setFGp('')],
     ['자펀드', fSubFund, () => setFSubFund('')],
-    ['기간', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }],
+    ['기준일자', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }],   // 드로어 캡션과 같게(칩 → 항목 이동)
     ['검색어', fText.trim(), () => setFText('')],
   ];
 

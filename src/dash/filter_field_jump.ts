@@ -31,9 +31,16 @@ export function pickCaption<T extends { text: string }>(cands: readonly T[], lab
 
 const ownText = (el: Element) => [...el.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE).map((n) => n.textContent).join('');
 
+/* 드로어 설명 문구(aria-describedby — Radix SheetDescription)는 캡션이 아니다. "조회 대상 투자기업을 고르는 상세 필터" 가
+   칩 '조회 대상'에 앞부분 일치해 초점이 [닫기]로 갔다(2026-11-03 전수 점검, investee-profile) */
+function isDescription(el: Element, root: Element): boolean {
+  const ids = (root.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
+  return ids.some((id) => root.ownerDocument.getElementById(id)?.contains(el) ?? false);
+}
+
 function captions(root: Element): { el: HTMLElement; text: string }[] {
   return [...root.querySelectorAll<HTMLElement>(CAPTION_TAGS)]
-    .filter((el) => !el.closest(IN_CONTROL) && !el.closest('[role="heading"], h2'))
+    .filter((el) => !el.closest(IN_CONTROL) && !el.closest('[role="heading"], h2') && !isDescription(el, root))
     .map((el) => ({ el, text: norm(ownText(el)) }))
     .filter((c) => c.text);
 }
@@ -47,10 +54,13 @@ function fieldOf(caption: HTMLElement, dialog: Element): { box: HTMLElement; con
   return { box: caption, control: null };
 }
 
-/** 태그형(체크 토글) 항목처럼 캡션이 버튼 글자 자체인 경우 — 그 버튼으로 간다 */
+/** 캡션이 없을 때의 대체 경로 — 정확일치만(부분일치 없음).
+    ① 태그형(체크 토글)처럼 캡션이 버튼 글자 자체 ② 캡션 없이 aria-label 만 있는 입력칸
+    (프로그램관리 '검색기준' 칸 안의 `input[aria-label=검색어]` — 2026-11-03 전수 점검) */
 function controlByText(dialog: Element, label: string): HTMLElement | null {
   const want = norm(label);
-  return [...dialog.querySelectorAll<HTMLElement>('button, [role="checkbox"]')].find((b) => norm(b.textContent) === want || b.getAttribute('aria-label') === want) ?? null;
+  return [...dialog.querySelectorAll<HTMLElement>('button, [role="checkbox"], input, select, textarea, [role="combobox"]')]
+    .find((b) => b.getAttribute('aria-label') === want || (b.matches('button, [role="checkbox"]') && norm(b.textContent) === want)) ?? null;
 }
 
 function focusField(dialog: Element, label: string): boolean {
