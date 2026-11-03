@@ -45,7 +45,7 @@ import type { LeafTabsSlot } from '../leaf_tabs';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SelectionChangedEvent } from 'ag-grid-community';
+import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SelectionChangedEvent, RowClassParams } from 'ag-grid-community';
 import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
@@ -54,6 +54,7 @@ import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
 import { ConfirmCombo, uniformConfirm } from '../../confirm_combo';
+import type { ConfirmPick } from '../../confirm_combo';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 import { GpSpecModal } from './gp_spec_modal';
@@ -78,7 +79,7 @@ export interface RegularReportRow {
   rt: ReportKind;              // 보고구분
   file: string | null;         // 보고서 첨부파일명(null = 목업 "보고 내역이 없습니다.")
   updatedAt: string | null;    // 수정일시 — 목업 문자열 그대로. 보고 없으면 null
-  confirmed: Confirmed | null;  // 확정여부 — 보고 없으면 null(빈 셀)
+  confirmed: ConfirmPick | null;  // 확정여부 — 보고 없으면 null(빈 셀). '제외' = 선택 바 콤보에서만 지정(2026-11-02)
   fundStatus: string;          // 조합상태
 }
 
@@ -146,6 +147,7 @@ const confirmSelectStyle: React.CSSProperties = {
   background: 'var(--card)', color: 'var(--foreground)',
 };
 const CONFIRM_OPTIONS: Confirmed[] = ['확정', '미확정'];
+const EXCLUDED = '제외';   // 선택 바 콤보 3번째 값(confirm_combo withExclude) — 셀 select 옵션에는 없다
 
 function ConfirmSelect({ value, no, onChange }: { value: Confirmed; no: number; onChange: (v: Confirmed) => void }) {
   /* 그리드 셀 이벤트와 충돌 방지 — 클릭/더블클릭으로 셀 포커스·편집 흐름을 흔들지 않는다.
@@ -203,6 +205,7 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void, 
        가로채이는 것을 막는다(합성 이벤트 stopPropagation으로는 못 막는다, 파일 상단 '한계'). */
     suppressKeyboardEvent: (p) => (p.event.target as HTMLElement | null)?.tagName === 'SELECT',
     cellRenderer: (p: any) => (p.value == null ? null
+      : p.value === EXCLUDED ? <StatusBadge tone="muted" label={EXCLUDED} size="lg" />   // 제외 = muted 배지(보고대상 아님)
       : <ConfirmSelect value={p.value} no={p.data.no} onChange={(v) => patch(p.data.id, { confirmed: v })} />) },
   /* 상세조회 — 목업 `<a class="btn btn-sec btn-sm">`. 월간보고 행만(hasDetail), 그 외 빈칸. 셀 안 텍스트 버튼이라 좌측 정렬(표 정렬 규약) */
   { colId: 'detail', headerName: '상세조회', width: 104, sortable: false, cellStyle: flexCenter,
@@ -254,6 +257,11 @@ const ROW_SELECTION = {
   mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered',
   enableClickSelection: false,
 } as const;
+
+/* 제외 행 — 연하게(2026-11-02 사용자 요청). 회계 마감양식 삭제 행(closing_form_manage.tsx)과 같은 opacity-50. 모듈 상수 */
+const ROW_CLASS_RULES = {
+  'opacity-50': (p: RowClassParams<RegularReportRow>) => p.data?.confirmed === EXCLUDED,
+};
 
 /* ──────────────────────────────
    메인 컴포넌트
@@ -318,8 +326,9 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
     setSelIds(e.api.getSelectedRows().map((r) => r.id));
   }, []);
   /* 확정여부 일괄 변경 — 게이트(confirmed != null — 현재 샘플은 전 행이 값이 있어 막히는 행이 없지만, 실데이터의 '보고 내역 없음' 행 방어로 둔다)는 요청 시점에 한 번만 평가한다.
-     전부 막히면 아무것도 바꾸지 않고 알리고, 일부만 막히면 제외 건수를 함께 알린다. */
-  const bulkConfirm = (v: Confirmed) => {
+     전부 막히면 아무것도 바꾸지 않고 알리고, 일부만 막히면 건너뛴 건수를 함께 알린다.
+     '제외'도 같은 경로의 세 번째 값이다(콤보 withExclude). 안내의 '건너뜀'은 값 이름 '제외'와 겹치지 않게 고른 말. */
+  const bulkConfirm = (v: ConfirmPick) => {
     const targets = rows.filter((r) => selIds.includes(r.id));
     const ok = targets.filter((r) => r.confirmed != null);
     const blocked = targets.length - ok.length;
@@ -327,7 +336,8 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
     const okIds = new Set(ok.map((r) => r.id));
     setRows((prev) => prev.map((r) => (okIds.has(r.id) ? { ...r, confirmed: v } : r)));
     apiRef.current?.deselectAll();
-    toast.success(`${String(ok.length)}건을 '${v}'(으)로 변경했습니다` + (blocked ? ` (확정 대상이 아닌 ${String(blocked)}건 제외)` : ''));
+    toast.success((v === EXCLUDED ? `${String(ok.length)}건을 제외했습니다` : `${String(ok.length)}건을 '${v}'(으)로 변경했습니다`)
+      + (blocked ? ` (확정 대상이 아닌 ${String(blocked)}건 건너뜀)` : ''));
   };
   /* 선택 행의 현재 확정여부 — 전부 같으면 그 값, 섞였거나 없으면 null. 선택 바 콤보의 활성 세그먼트가 이 값을 따른다 */
   const selConfirmed = useMemo(() => uniformConfirm(rows.filter((r) => selIds.includes(r.id)).map((r) => r.confirmed)), [rows, selIds]);
@@ -364,7 +374,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
-      <ConfirmCombo value={selConfirmed} onPick={bulkConfirm} />
+      <ConfirmCombo value={selConfirmed} onPick={bulkConfirm} withExclude />
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;
@@ -432,6 +442,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}
           onModelUpdated={dropHiddenSelection}   // 수정·단계 전이로 선택 행이 조건 밖에 나가면 선택 해제(2026-10-27)
+          rowClassRules={ROW_CLASS_RULES}        // 제외 행 연하게
           onGridReady={onGridReady}
           onPaginationChanged={onPaginationChanged}
           onCellKeyDown={onCellKeyDown}
