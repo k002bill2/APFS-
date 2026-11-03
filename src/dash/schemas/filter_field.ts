@@ -2,15 +2,18 @@
    스키마 타입을 바꾸지 않고(DRY) 기존 fields/columns/statusDomain + 라벨 휴리스틱으로
    상세 필터 드로어의 컨트롤(year/enum/date/number/text/tag)과 행 필터 키를 결정한다. */
 import type { PageSchema } from './types';
+import { parseMulti, multiSelectSummary } from '../ui/multi-select-value';
 
 /* dayRange·monthRange·codeName 은 schema.filterSpecs(opt-in)로만 생긴다 — 라벨 휴리스틱은 만들지 않는다.
-   값은 모두 'a~b' 한 문자열(filterValues 가 Record<라벨, string> 이라서) — splitPair/joinPair 가 정본. */
-export type FilterKind = 'year' | 'month' | 'enum' | 'date' | 'number' | 'text' | 'tag' | 'dayRange' | 'monthRange' | 'codeName';
+   값은 모두 'a~b' 한 문자열(filterValues 가 Record<라벨, string> 이라서) — splitPair/joinPair 가 정본.
+   multi(다중 선택)는 filterSpecs kind:'multi' 또는 폼 필드 control:'multiselect' 로 생긴다 — 값은 JSON 배열 문자열
+   (parseMulti/joinMulti 가 정본, 빈 배열 = '' = 비활성). select 필드는 자동 승격하지 않는다(기존 화면 동작 보존). */
+export type FilterKind = 'year' | 'month' | 'enum' | 'date' | 'number' | 'text' | 'tag' | 'dayRange' | 'monthRange' | 'codeName' | 'multi';
 
 export interface FilterField {
   label: string;        // 필터 라벨 (== schema.filters 항목)
   kind: FilterKind;     // 렌더할 컨트롤 종류
-  options: string[];    // year/enum 선택지 (그 외 [])
+  options: string[];    // year/enum/multi 선택지 (그 외 [])
   columnKey?: string;   // 행 데이터에서 매칭할 키 (해결 가능할 때만 — 없으면 행필터 불가)
   allLabel?: null;      // null = 원문 select 에 '전체'가 없다(빈 선택지·칩 × 없음) — filterSpecs 전용
 }
@@ -45,13 +48,15 @@ export function resolveFilterField(label: string, schema: PageSchema): FilterFie
   const spec = schema.filterSpecs?.[label];
   if (spec) {
     const base = { label, columnKey: spec.key ? colKey(spec.key) : undefined, ...(spec.allLabel === null ? { allLabel: null } : {}) };
-    if (spec.kind === 'select') {
+    if (spec.kind === 'select' || spec.kind === 'multi') {
       /* options 생략 + key 가 sample 에 시드 → 행의 실제 값(비어있지 않은 고유값, 첫 등장 순)을 선택지로.
-         목업 옵션을 옮겨 적으면 'KB증권' vs 행 'KB증권(주)' 처럼 정확일치(enum)가 깨져 조용히 0건이 된다. */
-      const fromSample = () => [...new Set((schema.sample ?? []).map((r) => String(r[spec.key!] ?? '')).filter(Boolean))];
+         목업 옵션을 옮겨 적으면 'KB증권' vs 행 'KB증권(주)' 처럼 정확일치(enum)가 깨져 조용히 0건이 된다.
+         multi 는 셀이 다중 선택 저장값(JSON 배열)일 수 있어 펼쳐서 모은다(단일값 셀은 parseMulti 가 [값] 으로 준다). */
+      const cellVals = (r: Record<string, unknown>) => (spec.kind === 'multi' ? parseMulti(r[spec.key!]) : [String(r[spec.key!] ?? '')]);
+      const fromSample = () => [...new Set((schema.sample ?? []).flatMap(cellVals).filter(Boolean))];
       const opts = spec.options?.length ? spec.options : base.columnKey ? fromSample() : [];
       // 원문이 '전체'만 가진 select(선택지 미확인) → 빈 select 금지 규약대로 text 격하
-      return opts.length ? { ...base, kind: 'enum', options: [...opts] } : { label, kind: 'text', options: [], columnKey: base.columnKey };
+      return opts.length ? { ...base, kind: spec.kind === 'multi' ? 'multi' : 'enum', options: [...opts] } : { label, kind: 'text', options: [], columnKey: base.columnKey };
     }
     const kind: FilterKind = spec.kind === 'day' ? 'date' : spec.kind;
     return { ...base, kind, options: [] };
@@ -60,6 +65,12 @@ export function resolveFilterField(label: string, schema: PageSchema): FilterFie
   const field = schema.fields.find((f) => f.label === label);
   if (field) {
     const key = colKey(field.key);
+    /* 다중 선택 필드 → 다중 선택 필터. isEnumControl 에 넣지 않는다 — 넣으면 단일 select 필터로 떨어져
+       JSON 배열 셀과 정확일치가 안 맞아 조용히 0건이 된다. 빈 옵션은 enum 과 같이 text 격하. */
+    if (field.control === 'multiselect') {
+      const opts = field.options ?? [];
+      return opts.length ? { label, kind: 'multi', options: [...opts], columnKey: key } : { label, kind: 'text', options: [], columnKey: key };
+    }
     if (isEnumControl(field.control)) {
       const opts = field.options ?? [];
       // 빈 옵션 select 금지 → text로 격하 (step3와 동일 정책)
@@ -100,8 +111,13 @@ export function resolveFilterField(label: string, schema: PageSchema): FilterFie
 /** 값-필터 1개가 셀 값 하나를 통과시키는가(tag·columnKey 없음은 호출부가 거른다).
     text/number = 부분일치 · year/month/enum/date = 정확일치 ·
     dayRange/monthRange = 경계 포함 범위(한쪽이 비면 열린 경계 — 'YYYY-MM(-DD)' 은 문자열 비교가 곧 시간 비교) ·
-    codeName = 명칭 부분일치(원문 행에 코드 컬럼이 없어 코드는 조회 파라미터로만 남는다). */
+    codeName = 명칭 부분일치(원문 행에 코드 컬럼이 없어 코드는 조회 파라미터로만 남는다) ·
+    multi = 고른 값 중 하나라도 셀 값과 같으면 통과(OR) — 셀이 다중 선택 저장값이면 교집합이 있으면 통과. */
 export function filterValueMatches(ff: FilterField, value: string, cell: unknown): boolean {
+  if (ff.kind === 'multi') {
+    const cellVals = parseMulti(cell);
+    return parseMulti(value).some((v) => cellVals.includes(v));
+  }
   const rv = String(cell ?? '');
   if (ff.kind === 'text' || ff.kind === 'number') return rv.toLowerCase().includes(value.toLowerCase());
   if (ff.kind === 'dayRange' || ff.kind === 'monthRange') {
@@ -122,8 +138,9 @@ export function defaultFilterValues(schema: PageSchema): Record<string, string> 
   return Object.fromEntries(Object.entries(schema.filterSpecs ?? {}).filter(([, f]) => !!f.def).map(([label, f]) => [label, f.def!]));
 }
 
-/** 적용 칩 표시 문자열 — 범위는 'a ~ b', 코드/명칭은 '코드 명칭', 그 외는 값 그대로 */
+/** 적용 칩 표시 문자열 — 범위는 'a ~ b', 코드/명칭은 '코드 명칭', 다중 선택은 '첫 라벨 외 N'(트리거 요약과 같은 모양), 그 외는 값 그대로 */
 export function filterChipText(ff: FilterField, value: string): string {
+  if (ff.kind === 'multi') return multiSelectSummary(parseMulti(value), '');
   if (ff.kind === 'dayRange' || ff.kind === 'monthRange') return splitPair(value).join(' ~ ');
   if (ff.kind === 'codeName') return splitPair(value).filter(Boolean).join(' ');
   return value;

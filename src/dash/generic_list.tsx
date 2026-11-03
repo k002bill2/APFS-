@@ -43,7 +43,8 @@ import type { CtxItem, CtxMenuState } from './row_context_menu';
 import type { AppliedFilter } from './applied_filters';
 import { GridFrame, KpiBadge, FooterActions } from './grid_frame';
 import { LinkCell } from './link_cell';   // 셀 링크 공용본(상세 팝업 진입)
-import { DrawerSelect } from './drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { DrawerSelect, DrawerMultiSelect } from './drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형) · 다중 선택(kind 'multi')
+import { parseMulti, joinMulti, formatMultiCell } from './ui/multi-select-value';   // 다중 선택 값 계약(JSON 배열 문자열)
 import { ConfirmCombo, uniformConfirm } from './confirm_combo';   // 확정/미확정 inlineSelect 컬럼의 선택 바 일괄 변경   // 공통 양식 셸 + KPI 배지(apfs-grid 스킬 SSOT)
 
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
@@ -131,7 +132,12 @@ function makeRows(schema: PageSchema, n: number): Row[] {
     for (const c of schema.columns) {
       if (['name', 'amount', 'change', 'status', 'trend'].includes(c.key)) continue;
       const field = schema.fields.find((f) => f.key === c.key);
-      if (field && isEnumControl(field.control) && field.options?.length) {
+      if (field && field.control === 'multiselect' && field.options?.length) {
+        // 다중 선택 도메인 시드 — 저장 계약(JSON 배열, 옵션 순서) 그대로. 3행마다 2개를 골라 'A, B' 표시·OR 매칭이 함께 드러나게
+        const opts = field.options;
+        const picked = i % 3 === 2 && opts.length > 1 ? [opts[i % opts.length], opts[(i + 1) % opts.length]] : [opts[i % opts.length]];
+        extra[c.key] = joinMulti(opts.filter((o) => picked.includes(o)));
+      } else if (field && isEnumControl(field.control) && field.options?.length) {
         extra[c.key] = field.options[i % field.options.length];     // enum 도메인 시드 → 상세필터 매칭 성립
       } else if (/(년도|연도)/.test(c.label)) {
         extra[c.key] = YEAR_OPTIONS[i % YEAR_OPTIONS.length];        // 년도 도메인 시드 → year 필터 매칭
@@ -222,6 +228,18 @@ function DrawerFilterControl({ ff, value, onChange, onEnter }: { ff: FilterField
   } else if (ff.kind === "dayRange" || ff.kind === "monthRange" || ff.kind === "codeName") {
     // 두 칸 컨트롤(범위 시작~종료 · 코드+명칭) — PeriodPicker 트리거가 <button> 이라 <label> 로 감싸면 이중 토글된다 → <div> 래퍼
     return <DrawerPairControl ff={ff} value={value} onChange={onChange} onKeyDown={onKeyDown} />;
+  } else if (ff.kind === "multi") {
+    // 다중 선택 — 트리거가 <button> 이라 <label> 대신 <div> 래퍼(이중 토글 방지, drawer_select DrawerMultiSelect 주석).
+    // 값은 JSON 배열 문자열 — [] 는 '' 라 setVal 이 키째 지워 비활성(=전체)이 된다. 접근名은 ariaLabel.
+    return (
+      <div className="block mb-4">
+        <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>
+          {ff.label}
+          {!ff.columnKey && <span className="font-medium text-caption" style={{ marginLeft: 6 }}>· 데이터 연동 후 적용</span>}
+        </span>
+        <DrawerMultiSelect value={parseMulti(value)} onChange={(a) => onChange(joinMulti(a))} options={ff.options} ariaLabel={ff.label} />
+      </div>
+    );
   } else if (ff.kind === "number") {
     control = <input type="number" value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} placeholder="값 입력" style={drawerInputStyle("number")} />;
   } else {
@@ -689,7 +707,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   // 그 외(text/code/date/status·No/차수)는 화면처럼 텍스트 셀(좌측).
   const exportExcel = () => {
     const cols = schema.columns.filter((c) => c.key !== 'trend');
-    const cell = (v: any) => String(typeof v === 'number' ? v.toLocaleString() : String(v ?? ''));
+    // 다중 선택(multiselect) 저장값은 화면 셀과 같이 'A, B' 로 기록한다(화면=엑셀 불변식, 원시 JSON 금지)
+    const cell = (v: any) => (typeof v === 'number' ? v.toLocaleString() : formatMultiCell(String(v ?? '')));
     /* 숫자서식은 **그 값의 실제 소수 자릿수**를 따른다 — 고정 '#,##0.0' 으로 두면 단위 환산으로
        생긴 2자리 값(억원 12.35)이 엑셀에서 12.4 로 반올림돼 화면과 파일이 달라진다
        (2026-09-16 Codex 7R P2). toUnit 은 최대 2자리를 만든다. */

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { Tone } from '../components';
+import { parseMulti } from '../ui/multi-select-value';
 
 export const CELL_TYPES = ['text','code','pii','amount','rate','date','status','gp','number'] as const;
 export type CellType = typeof CELL_TYPES[number];
@@ -11,7 +12,10 @@ export type CellType = typeof CELL_TYPES[number];
 //   'text'로 두면 달력 없이 손입력이 된다. 드로어 쪽 월 선택(early_warning_manage)과 같은 PeriodPicker를 쓴다.
 // 'address' = 우편번호 검색 + 주소 입력(fields/AddressField). 값 계약은 단일 문자열 '(12345) 서울특별시 …'
 //   — 파싱/직렬화 SSOT는 fields/address_value.ts. 별도 상세주소 필드를 두지 않고 본문 뒤에 이어 쓴다.
-export const FIELD_CONTROLS = ['text','number','select','date','year','month','monthOfYear','textarea','file','checkbox','switch','readonly','radio','richtext','filepond','tags','address'] as const;
+// 'multiselect' = 옵션 목록에서 여러 값 고르기(ui/multi-select — 셀렉트 모양, 맨 위 '전체 선택'·하단 개수/선택 해제).
+//   값 계약은 JSON 배열 문자열(옵션 순서, 빈 배열 = '') — tags 와 같다. 파싱/직렬화 SSOT는 ui/multi-select-value.ts.
+//   상세필터는 이 필드를 자동으로 다중 선택(kind 'multi')으로 그린다(2026-11-03 추가).
+export const FIELD_CONTROLS = ['text','number','select','date','year','month','monthOfYear','textarea','file','checkbox','switch','readonly','radio','richtext','filepond','tags','address','multiselect'] as const;
 export type FieldControl = typeof FIELD_CONTROLS[number];
 
 export const TONE_VALUES = ['primary','success','warning','danger','info','cyan'] as const;
@@ -84,7 +88,9 @@ export interface TotalsSpec {
    어휘는 typed 트랙 risk_tables_page.FilterDef 와 같다(새로 만들지 않는다):
    · kind: select · text · day · month · dayRange('YYYY-MM-DD~YYYY-MM-DD') · monthRange('YYYY-MM~YYYY-MM')
            · codeName('코드~명칭' — 원문 코드 입력 + 명칭 입력 + 검색 버튼 묶음. 행 매칭은 명칭 부분일치)
-   · options: select 선택지(원문 <select>/LISTS 그대로, '전체' 제외 — 드로어가 붙인다).
+           · multi(다중 선택 — 값은 JSON 배열 문자열, 빈 배열 = ''. 행 매칭은 고른 값 중 하나라도(OR).
+             단일 select 컬럼을 여러 값으로 거를 때 선언한다. 폼 필드가 control:'multiselect' 면 선언 없이 자동, 2026-11-03)
+   · options: select·multi 선택지(원문 <select>/LISTS 그대로, '전체' 제외 — 드로어가 붙인다).
               원문이 '전체'만 가진 select 는 options 를 비운다 → 빈 select 금지 규약에 따라 text 로 격하.
               단 key 가 sample 에 시드되면 **sample 행의 실제 값(고유값)으로 select** 를 만든다(2026-09-24 사용자 지시:
               "원본이 select 면 select"). 목업 옵션을 옮겨 적는 것보다 이쪽이 정확일치(0건 함정)에 안전하다.
@@ -92,7 +98,7 @@ export interface TotalsSpec {
    · allLabel: null = 원문 select 에 '전체'가 없다(빈 선택지·칩 × 없음, def 필수).
    · key: 행 매칭 키. **생략 = no-op**(원문 행에 그 값이 없음 → `· 데이터 연동 후 적용` 캡션).
    판정 정본은 filter_field.ts(resolveFilterField · filterValueMatches · defaultFilterValues). */
-export const FILTER_KINDS = ['select', 'text', 'day', 'month', 'dayRange', 'monthRange', 'codeName'] as const;
+export const FILTER_KINDS = ['select', 'text', 'day', 'month', 'dayRange', 'monthRange', 'codeName', 'multi'] as const;
 export type SchemaFilterKind = typeof FILTER_KINDS[number];
 export interface SchemaFilterSpec {
   kind: SchemaFilterKind;
@@ -195,6 +201,8 @@ export const PageSchemaZ = z.object({
     if (!(s.filters ?? []).includes(label)) issue(`filterSpecs label not in filters: ${label}`);
     if (f.key && !seeded(f.key)) issue(`filterSpecs key not seeded: ${label} → ${f.key}`);
     if (f.kind === 'select' && f.def && !(f.options ?? []).includes(f.def)) issue(`filterSpecs def not in options: ${label}`);
+    // multi 의 def 는 JSON 배열 문자열 — 원소 하나라도 선택지 밖이면 그 기본값은 아무 행도 못 거르는 죽은 선언이다
+    if (f.kind === 'multi' && f.def && f.options?.length && !parseMulti(f.def).every((d) => f.options!.includes(d))) issue(`filterSpecs def not in options: ${label}`);
     if (f.allLabel === null && !f.def) issue(`filterSpecs allLabel:null needs def: ${label}`);
   }
   /* 합계 규칙·라벨 칸이 columns 에 없는 key 면 **조용히 빈 합계**가 된다 — 파싱 시점에 잡는다 */

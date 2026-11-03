@@ -28,7 +28,8 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 - ⚠️ **적용 누락 함정**: GenericListPage만 고치고 typed 페이지를 빠뜨리면 그 페이지에서 검색어가 계속 노출된다(2026-09-11 실제 발생 — asset_funding). "검색어 opt-in"은 **드로어를 가진 모든 표면**(generic_list + 각 typed 페이지)에서 각각 게이트해야 완결된다.
 
 ## 타입 도출 — `resolveFilterField(label, schema)` 우선순위
-- **① field 매칭**(label 정확일치, 가장 정확): `select`·`radio`·`switch`→enum(field.options, `isEnumControl` — 2026-09-24 radio·switch 추가) · `date`→date · 년도라벨→year · `number`→number · 그외→text.
+- **⓪ filterSpecs 명세**(opt-in): `select`→enum · `multi`→**multi**(다중 선택, 2026-11-03) · 그 외 kind 그대로. select·multi 모두 options 생략 + key 가 sample 에 시드되면 행 값(고유값)이 선택지 — multi 는 셀이 다중 선택 저장값(JSON 배열)이면 펼쳐서 모은다.
+- **① field 매칭**(label 정확일치, 가장 정확): `multiselect`→**multi**(field.options, 자동 — 2026-11-03) · `select`·`radio`·`switch`→enum(field.options, `isEnumControl` — 2026-09-24 radio·switch 추가) · `date`→date · 년도라벨→year · `number`→number · 그외→text. ⚠ `multiselect` 를 `isEnumControl` 에 넣지 않는다(단일 select 필터로 떨어져 JSON 배열 셀과 정확일치가 안 맞는다). `select` 필드는 multi 로 자동 승격하지 않는다 — 단일값 컬럼을 여러 값으로 거르려면 filterSpecs `kind:'multi'` 를 선언한다.
 - **② column 매칭**: 년도라벨→year · `date`→date · `status`→enum(statusDomain) · amount/number/rate→number · 그외→text.
 - **③ 휴리스틱**(무매칭): `년도|연도`→year · `일자|날짜|~일`→date · `구분|유형|종류|상태|기준`(도메인 없음)→text · 그외→**tag**(카테고리 on/off).
 - 반환 `{label, kind, options, columnKey}`. **columnKey는 행필터의 키** — ①(field.key가 행에 시드됨)·②가 columnKey로 행을 거르고, ③ tag는 `row.category`로 거른다. **데모(자펀드 공고)의 사업연도·정기/수시가 바로 ① 경로**(field 매칭, 키가 columns에도 존재)라 표가 실제로 줄어든다. 같은 스키마의 **모펀드는 columns엔 없지만 `sample` 리터럴 행이 값을 실어** 역시 ① 경로로 걸러진다(2026-09-12). columnKey 없는 경우(어디에도 시드되지 않는 field-only 키·휴리스틱 비-tag date/text)는 칩만 뜨고 행은 안 걸러진다(no-op, 아래 캡션 규약).
@@ -40,11 +41,11 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 | date | `<input type=date>` |
 | number · text | `<input type=number/text>` |
 | tag | 토글 버튼(체크 아이콘) — 다중선택 |
-| (typed 트랙) 열거형 다중 선택 | 공용 **`DrawerMultiSelect`**(drawer_select.tsx → ui/multi-select) — 아래 typed 트랙 "다중 선택" 항목. 스키마 트랙에는 이 kind 가 아직 없다 |
+| multi | 공용 **`DrawerMultiSelect`**(drawer_select.tsx → ui/multi-select) — `<div>` 래퍼(트리거가 `<button>`), 값은 JSON 배열 문자열(`parseMulti`/`joinMulti`, 빈 배열 = `''` = 비활성). typed 트랙도 같은 컴포넌트(아래 "다중 선택" 항목) |
 
 ## 상태·필터링
 - **SSOT = `filterValues: Record<라벨, 값>`**(부모 보유, 빈 값/부재 = 비활성). 칩·행필터·KPI 모두 여기서 파생. 라벨↔값을 "라벨: 값" 문자열로 합치지 말 것(`정기/수시`의 `/`가 깨진다).
-- **행필터**(`rowMatchesFilters`): 값-필터는 전부 AND(text/number=부분일치, year/enum/date=정확일치), 태그끼리는 합집합(OR, `row.category`). columnKey 없는 값-필터는 건너뜀(no-op).
+- **행필터**(`rowMatchesFilters`): 값-필터는 전부 AND(text/number=부분일치, year/enum/date=정확일치, multi=고른 값 중 하나라도 — 셀이 JSON 배열이면 교집합), 태그끼리는 합집합(OR, `row.category`). columnKey 없는 값-필터는 건너뜀(no-op). 칩은 `filterChipText` — multi 는 '첫 라벨 외 N'.
 - 적용 시 `setPage(1)` 리셋. 드로어는 draft 사본을 편집하고 적용 때 부모에 반영, 열릴 때 `applied`로 재동기화.
 
 ## 규약 체크리스트 (CRITICAL — 모르면 재발하는 함정)
@@ -65,7 +66,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
   - 계약: `value: string[]`(옵션 순서) · **빈 배열 = 전체(조건 없음)** — 트리거에 `emptyLabel`(기본 `'전체'`), 칩은 만들지 않거나 `×` 없음, `passes` 는 `!v.length || v.includes(row.x)`. 맨 위 '전체 선택'(3상태)·하단 'N개 선택'·[선택 해제]는 컴포넌트가 그린다(페이지에서 다시 만들지 않는다). 옵션 10개 이상이면 검색창 자동(단일과 같은 `shouldSearch`).
   - 래퍼는 `DrawerField label="…" plain` + `ariaLabel` — 트리거는 버튼 1개라 label 래핑도 동작하지만 드로어 사본들이 `plain` 을 쓴다(일/월계표). 필수·단일이어야 하는 항목(월계표 계정구분처럼 집계가 한 값만 받는 경우)은 `DrawerSelect` 그대로.
   - 칩 값 = 선택 라벨 요약(1개=라벨, 2개 이상='첫 라벨 외 N' — `multiSelectSummary` 와 같은 모양), `×` = `[]` 로 되돌림.
-  - ⚠ **스키마 트랙(`GenericListPage`/`ListFilterDrawer`)에는 다중 선택 kind 가 아직 없다** — `resolveFilterField` 의 enum 은 단일 `DrawerSelect`. 스키마 화면에 다중 선택 필터가 필요하면 typed 드로어로 만들거나, filter kind(`multi`)·`rowMatchesFilters`(OR 매칭)·칩 파생을 먼저 추가한다(미구현 — 지시 받고 진행).
+  - **스키마 트랙(`GenericListPage`)은 filter kind `multi`**(2026-11-03 구현) — 폼 필드가 `control:'multiselect'` 면 자동, 단일 select 컬럼을 여러 값으로 거르려면 `filterSpecs: { 계정구분: { kind:'multi', key:'fundAccount' } }`(options 생략 시 sample 고유값). 값 계약은 JSON 배열 문자열(`ui/multi-select-value.ts` `parseMulti`/`joinMulti` — `filterValues` 가 `Record<string,string>` 이라서), def 도 JSON 배열(zod 가 선택지 밖 원소를 거부). 2026-11-03 기준 실제 스키마 화면 사용처는 0 — 목업 근거가 생길 때 붙인다.
   - 검색형 트리거는 `<button role=combobox>` 하나라 **`DrawerField`(label 래핑) 그대로 둬도 된다** — 라벨 클릭 = 열림 1회(2026-09-29 실측, 이중 토글은 버튼 **2개**짜리 PairControl 문제). `ariaLabel` 을 안 넘기면 감싼 `<label>` 캡션의 첫 텍스트 노드를 접근名으로 쓴다(폴백 도입 전엔 "전체"로 읽혔다) — 그래도 명시 전달이 정석.
   - Popover 는 **non-modal**(DatePicker 와 같은 이유). 열린 상태에서 다른 컨트롤 첫 클릭이 바로 먹는지(포커스 이동·입력 가능) 검증한다. ego-browser `page.click()` 은 실제 pointerdown 을 쏜다(구 aside `locator.click()` 은 안 쏴서 이 검증 자체가 불가했다). 단 2026-10-26 ego 실측(자펀드 관리 상세필터 `기준일자` → 검색 입력 클릭)에서 pointerdown 이 1회 발생하고 포커스도 옮겨갔는데 달력은 열린 채였다(`page.click` 3/3·`page.mouse.click` 1/1) — 달력이 닫히는지는 별도 확인이 필요하다. **열린 목록이 덮지 않는 컨트롤**을 겨냥할 것(목록 위 좌표면 항목이 선택돼 오판).
 - **범위(시작~종료) = 한 항목**(2026-09-24 사용자 지시): `DrawerField label="<그룹명>" plain` 하나 안에 `flex items-center gap-2 flex-wrap` 행 → 시작 picker · `<span className="text-caption">~</span>` · 종료 picker(각 fit-content 래퍼, `ariaLabel`은 시작일/종료일로 따로). `…시작`/`…종료` 두 DrawerField로 쪼개지 말 것. 정본 `audit_log.tsx`. **칩도 한 개**: 값 `${fFrom || '…'} ~ ${fTo || '…'}`(한쪽만 있으면 `…`), `×`는 두 끝을 함께 해제, aria-label은 그룹명.

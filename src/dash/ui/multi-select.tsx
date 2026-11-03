@@ -25,20 +25,13 @@ import { shouldSearch, type SelectOption } from './searchable-select';
 import { UI } from '../components';
 import { cn } from '@/lib/utils';
 
+import { multiSelectSummaryParts } from './multi-select-value';
+
+// 요약 함수는 순수 모듈(multi-select-value.ts)이 정본 — 스키마 필터 칩(filter_field.ts, React 금지)도 같은 모양을 써야 해서 옮겼다.
+export { multiSelectSummary, multiSelectSummaryParts } from './multi-select-value';
+
 const norm = (o: SelectOption) => (typeof o === 'string' ? { value: o, label: o } : o);
 const ALL_SENTINEL = '\u0000__all__';
-
-/** 트리거 문구 두 조각 — head(라벨, 좁으면 말줄임) + rest(' 외 N', 줄지 않음). 0개 emptyLabel · 1개 라벨 · 2개 이상 '첫 라벨 외 N' */
-export function multiSelectSummaryParts(labels: readonly string[], emptyLabel: string): { head: string; rest: string } {
-  if (!labels.length) return { head: emptyLabel, rest: '' };
-  return { head: labels[0], rest: labels.length === 1 ? '' : ` 외 ${String(labels.length - 1)}` };
-}
-
-/** 트리거 문구 한 줄(접근名용) — multiSelectSummaryParts 를 이어 붙인 것 */
-export function multiSelectSummary(labels: readonly string[], emptyLabel: string): string {
-  const { head, rest } = multiSelectSummaryParts(labels, emptyLabel);
-  return head + rest;
-}
 
 /** 요약 한 줄 — 보이는 문구와 폭 사이저가 같은 마크업을 써야 폭이 정확히 맞는다(한 덩어리 텍스트로 재면 서브픽셀 차로 말줄임이 생길 수 있다).
    rest 는 tabular-nums — 자릿수가 같으면 폭이 같아 '외 N' 최댓값이 가장 넓은 후보가 된다. */
@@ -72,7 +65,7 @@ function BoxMark({ state }: { state: boolean | 'indeterminate' }) {
   );
 }
 
-export function MultiSelect({ value, onChange, options, emptyLabel = '전체', ariaLabel, triggerStyle, searchable, selectAll = true }: {
+export function MultiSelect({ value, onChange, options, emptyLabel = '전체', ariaLabel, triggerStyle, searchable, selectAll = true, invalid, required }: {
   value: readonly string[];
   onChange: (v: string[]) => void;
   options: ReadonlyArray<SelectOption>;
@@ -85,6 +78,9 @@ export function MultiSelect({ value, onChange, options, emptyLabel = '전체', a
   searchable?: boolean;
   /** 맨 위 '전체 선택' 항목(옵션 2개 이상일 때). 기본 표시 */
   selectAll?: boolean;
+  /** 폼 검증 상태 → 트리거 aria-invalid / aria-required(스키마 폼 'multiselect'). 테두리 색은 triggerStyle 이 맡는다 */
+  invalid?: boolean;
+  required?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   const listRef = React.useRef<HTMLDivElement>(null);
@@ -128,6 +124,8 @@ export function MultiSelect({ value, onChange, options, emptyLabel = '전체', a
           aria-expanded={open}
           aria-haspopup="listbox"
           aria-label={ariaLabel ? `${ariaLabel}: ${shown}` : undefined}
+          aria-invalid={invalid || undefined}
+          aria-required={required || undefined}
           onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); setOpen(true); } }}
           className="text-left"
           style={{ ...triggerStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', paddingRight: 10 }}

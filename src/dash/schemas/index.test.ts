@@ -3,6 +3,7 @@ import { resolveSchema, buildRegistry, ALL_SCHEMAS } from './index';
 import { linksDetail } from './detail_link';
 import { DEFAULT_SCHEMA } from './_default';
 import { resolveFilterField } from './filter_field';
+import { parseMulti } from '../ui/multi-select-value';
 
 describe('resolveSchema', () => {
   it('미등록 route는 DEFAULT(오늘 동작) 스키마를 반환한다', () => {
@@ -119,10 +120,11 @@ describe('금액 컬럼 헤더 — 단위 중복 금지', () => {
    filterSpecs 로 선언한 keyed select 가 행 값과 어긋나면(목업 'KB증권' vs 행 'KB증권(주)') 어떤 선택지도
    행에 맞지 않아 0건이 된다. sample 없는 스키마의 행은 '운용사 001' 같은 합성값이라 선언 선택지와 맞을 수 없다. */
 describe('상세필터 select 명세 ↔ 행 값 정합', () => {
+  // 다중 선택(multi, 2026-11-03)도 같은 함정이라 같이 본다 — 셀이 다중 선택 저장값(JSON 배열)이면 펼쳐서 대조
   const keyedSpecEnums = ALL_SCHEMAS.flatMap((s) => (s.filters ?? [])
-    .filter((l) => s.filterSpecs?.[l]?.kind === 'select')
+    .filter((l) => s.filterSpecs?.[l]?.kind === 'select' || s.filterSpecs?.[l]?.kind === 'multi')
     .map((l) => ({ s, l, ff: resolveFilterField(l, s) }))
-    .filter(({ ff }) => ff.kind === 'enum' && ff.columnKey));
+    .filter(({ ff }) => (ff.kind === 'enum' || ff.kind === 'multi') && ff.columnKey));
 
   it('sample 없는(합성 행) 스키마는 keyed select 명세를 두지 않는다', () => {
     const bad = keyedSpecEnums.filter(({ s }) => !s.sample).map(({ s, l }) => `${s.route}/${l}`);
@@ -131,7 +133,7 @@ describe('상세필터 select 명세 ↔ 행 값 정합', () => {
 
   it('sample 행이 있으면 keyed select 선택지 중 최소 1개는 행 값과 정확일치한다', () => {
     const bad = keyedSpecEnums.filter(({ s }) => s.sample?.length).filter(({ s, ff }) => {
-      const vals = new Set(s.sample!.map((r) => String(r[ff.columnKey!] ?? '')));
+      const vals = new Set(s.sample!.flatMap((r) => parseMulti(r[ff.columnKey!])));
       return !ff.options.some((o) => vals.has(o));
     }).map(({ s, l }) => `${s.route}/${l}`);
     expect(bad).toEqual([]);
