@@ -56,7 +56,7 @@ APFS/
 - `designsystem.tsx` → 컬러 토큰·타이포·공통 컴포넌트 프리뷰
 - `frt/widget/main_widgets.tsx` + `frt/widget/main.tsx` → 메인 종합 대시보드 (공유 위젯 + 3개 레이아웃 시안). `shell.tsx` 도 `MenuPickerModal` 때문에 `main_widgets` 를 import 한다
 - `frt/schedule/schedule.tsx` → 일정·알림 센터(route `schedule`, LNB 미노출)
-- 구 PRD 서브 대시보드(`performance` `risk` `gp_health` `accounting`.tsx)는 삭제됐다(`3fec7cd`·`9824690` — 투자 성과는 스키마 페이지 `frt/widget/portfolio_performance.ts`로 통일). 루트 `report.tsx`(`Report`)만 남았고 어디서도 import 하지 않는다(미라우팅).
+- 구 PRD 서브 대시보드(`performance` `risk` `gp_health` `accounting`.tsx)는 삭제됐다(`3fec7cd`·`9824690` — 투자 성과는 스키마 페이지 `frt/widget/portfolio_performance.ts`로 통일). 마지막까지 남아 있던 미라우팅 파일 루트 `report.tsx`(`Report`)·`risk_manage.tsx`(`RiskManage`, 구 FR-5.6 운영 콘솔 — 라우트는 `ews/alert/early_warning_manage`로 대체)도 2026-11-03 삭제했다(import 0).
 - 인증 화면 3종(Shell 없는 독립 라우트, 정본=claude.ai/design 캔버스 `APFS 로그인 프로토타입.dc.html`): `aut/login/login_demo.tsx`(S0_001) · `aut/otp/onboarding_issue.tsx`(S0_002 발급) · `aut/otp/onboarding_invite.tsx`(S0_003 초대). 판정 로직은 `auth_model.ts`(+테스트), 공용 UI는 `auth_shared.tsx`. 관리자가 초대를 *보내는* `user_invite_manage.tsx`(S0_103)와는 별개 화면이다.
 - 자펀드 관리(route `subfund`, 리프 라벨 "자펀드 관리"): `subfund_manage.tsx`(`SubFundManage` export) + `subfund_form_modal`(결성조합 등록/수정) + `subfund_manage_schemas.ts`. 읽기전용 명세 팝업 `iam/report/subfund_spec_modal`(`SubFundSpecModal`)은 자펀드 관리가 열지 않는다 — 자펀드 수탁관리(실물검증·확정 탭)의 자펀드 셀 링크에서 연다. 구 `subfund.tsx`(bespoke, `SubFund` export)는 2026-09-09 삭제됨. **별개 리프** 조합관리 > `자펀드정보관리`(`asset_fund_info_manage.tsx`)는 `SubFundManage`의 `ext` 확장 슬롯으로 v1.4 + S2_73 투자기준을 합성한 통합 그리드다(2026-09-28).
 - `app.tsx` → 테마/라우트 상태, `#root`에 마운트
