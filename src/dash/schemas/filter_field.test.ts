@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { resolveFilterField, YEAR_OPTIONS } from './filter_field';
+import { resolveFilterField, YEAR_OPTIONS, filterValueMatches, filterChipText } from './filter_field';
+import { joinMulti } from '../ui/multi-select-value';
 import { schema as gongo } from '../iam/mfund/subfund_notice_manage';
 import { schema as yearInv } from '../brf/mfund/annual_invest_status';
 import { DEFAULT_SCHEMA } from './_default';
@@ -137,5 +138,68 @@ describe('filterSpecs select — options 생략 시 sample 값 도출', () => {
   it('key 없음 / sample 없음 → 종전대로 text 격하(빈 select 금지)', () => {
     expect(resolveFilterField('운용사', { ...base, filterSpecs: { 운용사: { kind: 'select' as const } }, sample: [{ gp: 'A' }] }).kind).toBe('text');
     expect(resolveFilterField('운용사', { ...base, filterSpecs: { 운용사: { kind: 'select' as const, key: 'gp' } } }).kind).toBe('text');
+  });
+});
+
+/* 2026-11-03 스키마 트랙 다중 선택 — filter kind 'multi'. 값은 JSON 배열 문자열(joinMulti), [] = '' = 비활성.
+   경로 둘: ① filterSpecs kind:'multi'(단일값 컬럼을 여러 값으로 거르기, opt-in) ② 폼 필드 control:'multiselect'(자동).
+   select 필드는 그대로 enum(단일) — 자동 승격하면 기존 화면 동작이 바뀐다. */
+describe('다중 선택 필터(kind multi)', () => {
+  const base = {
+    route: 't', title: 't', kind: 'list' as const, entity: 't',
+    columns: [{ key: 'fund', label: '계정구분', type: 'text' as const }, { key: 'area', label: '분야', type: 'text' as const }],
+    fields: [
+      { key: 'fund', label: '계정구분', control: 'select' as const, options: ['농식품계정', '수산계정', '일반계정'] },
+      { key: 'area', label: '분야', control: 'multiselect' as const, options: ['성장', '회수', 'ESG'] },
+    ],
+    filters: ['계정구분', '분야'],
+    provenance: { capturedAt: '', sourceSystem: 'T', captureFile: '' },
+  };
+
+  it('select 필드는 종전대로 enum(단일) — 자동 승격하지 않는다', () => {
+    expect(resolveFilterField('계정구분', base).kind).toBe('enum');
+  });
+
+  it('filterSpecs kind:multi + options → multi, 행필터 키 유지', () => {
+    const s = { ...base, filterSpecs: { 계정구분: { kind: 'multi' as const, key: 'fund', options: ['농식품계정', '수산계정'] } } };
+    const ff = resolveFilterField('계정구분', s);
+    expect(ff).toMatchObject({ kind: 'multi', options: ['농식품계정', '수산계정'], columnKey: 'fund' });
+  });
+
+  it('filterSpecs kind:multi + options 생략 + sample → 행 값(JSON 배열 셀은 펼쳐서) 고유값', () => {
+    const s = { ...base, filterSpecs: { 분야: { kind: 'multi' as const, key: 'area' } },
+      sample: [{ area: joinMulti(['회수', '성장']) }, { area: 'ESG' }, { area: '' }, { area: joinMulti(['성장']) }] };
+    expect(resolveFilterField('분야', s)).toMatchObject({ kind: 'multi', options: ['회수', '성장', 'ESG'], columnKey: 'area' });
+  });
+
+  it('filterSpecs kind:multi 인데 선택지가 없으면 text 격하(빈 목록 금지)', () => {
+    const s = { ...base, filterSpecs: { 계정구분: { kind: 'multi' as const } } };
+    expect(resolveFilterField('계정구분', s).kind).toBe('text');
+  });
+
+  it('multiselect 필드 → multi + 필드 options(자동)', () => {
+    expect(resolveFilterField('분야', base)).toMatchObject({ kind: 'multi', options: ['성장', '회수', 'ESG'], columnKey: 'area' });
+  });
+
+  it('multiselect 필드에 옵션이 없으면 text 격하', () => {
+    const s = { ...base, fields: [{ key: 'area', label: '분야', control: 'multiselect' as const }] };
+    expect(resolveFilterField('분야', s).kind).toBe('text');
+  });
+
+  it('매칭 = 고른 값 중 하나라도(OR) — 단일값 셀·JSON 배열 셀 모두', () => {
+    const ff = resolveFilterField('분야', base);
+    const v = joinMulti(['성장', 'ESG']);
+    expect(filterValueMatches(ff, v, '성장')).toBe(true);
+    expect(filterValueMatches(ff, v, '회수')).toBe(false);
+    expect(filterValueMatches(ff, v, joinMulti(['회수', 'ESG']))).toBe(true);
+    expect(filterValueMatches(ff, v, joinMulti(['회수']))).toBe(false);
+    expect(filterValueMatches(ff, v, '')).toBe(false);
+    expect(filterValueMatches(ff, v, undefined)).toBe(false);
+  });
+
+  it('칩 = 첫 라벨 외 N(트리거 요약과 같은 모양)', () => {
+    const ff = resolveFilterField('분야', base);
+    expect(filterChipText(ff, joinMulti(['성장']))).toBe('성장');
+    expect(filterChipText(ff, joinMulti(['성장', '회수', 'ESG']))).toBe('성장 외 2');
   });
 });
