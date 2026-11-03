@@ -205,16 +205,18 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 
 ### 소비처 계약 — 이것만 지키면 된다
 ```tsx
-const selActions = selected ? (            // 또는 selCount > 0 ?
+const selActions = selCount > 0 ? (        // selCount = selIds.length (→[[apfs-aggrid]] "선택 상태는 selIds 하나로")
   <>
-    <StatusBadge … />
-    <Button …>수정</Button><Button …>삭제</Button>
+    <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
+    {single && <><StatusBadge … /><Button …>수정</Button></>}   {/* 단일 대상 액션은 1건일 때만 */}
+    <Button …>삭제</Button>
     <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
   </>
 ) : null;
 
 <GridFrame
-  toolbarLeft={selected ? null : (<>필터칩…</>)}   // ← 선택 시 **비운다**
+  filterChips={…} appliedFilters={…}             // 칩은 데이터로 — 선택 중엔 GridFrame 이 깔때기·칩 줄을 스스로 감춘다
+  toolbarLeft={selCount > 0 ? null : (<>컨텍스트 설명…</>)}   // ← toolbarLeft 를 쓰면 선택 시 **비운다**(selbar 와 나란히 그려진다)
   contextActions={selActions}
   … />
 ```
