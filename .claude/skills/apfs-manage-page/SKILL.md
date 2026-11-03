@@ -100,7 +100,7 @@ await page.waitForSelector('.ag-center-cols-container .ag-row');
 - `pinnedBottomRowData`에 인라인 배열 금지 — 전이/등록으로 행이 변하므로 `useMemo([computeTotal(filteredRows)],[filteredRows])`.
 - `onPaginationChanged`는 값 비교 가드로 setState(매 호출 새 객체=렌더 루프, →[[aggrid-onpaginationchanged-render-loop]]).
 - AG Grid `cellStyle` 상수는 `CellStyle` 타입(React `CSSProperties` 아님 — 인덱스 시그니처 불일치).
-- 신규 등록 후 `setSelId(newId)`로 선택을 새 행에 두면 다음 단계 액션이 즉시 보인다 — 단 그리드 라디오는 `onRowDataUpdated`에서 따로 맞춰야 한다(→[[apfs-stage-workflow]] 규약 9).
+- 신규 등록 후 `setSelIds([newId])`로 선택을 새 행에 두면 다음 단계 액션이 즉시 보인다 — 단 그리드 체크박스는 `onRowDataUpdated`의 `restoreSelection`으로 따로 맞춰야 한다(→[[apfs-stage-workflow]] 규약 9).
 - selbar에 **대상명(조합명)·취소 안내 캡션을 넣지 않는다**(2026-09-08 제거). 카드헤더 `sub` 설명 캡션도 넣지 않는다.
 - 세분화 스킬 색인(2026-09-08): 프레임 외관 [[apfs-grid]] · 그리드 세부 [[apfs-aggrid]] · 칩/드로어 [[apfs-detail-filter]] · 컨트롤 폭 [[apfs-form-modal]] 계약7 · 기간 선택 [[apfs-datepicker]] · 명세 팝업 [[apfs-spec-popup]] · 선택 SSOT [[apfs-stage-workflow]] 규약 9.
 

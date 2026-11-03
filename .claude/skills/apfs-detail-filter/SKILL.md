@@ -10,7 +10,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 
 ## 적용 대상
 - 정본: `generic_list.tsx`의 `ListFilterDrawer`(스키마 `filters`를 컨트롤로 노출). 페이지 골격은 [[apfs-grid]].
-- `performance.tsx`에도 자체 필터 드로어가 있으나 미통합 — 신규/수정 시 이 패턴을 쓰고, 여력 되면 통합.
+- 구 `performance.tsx`(자체 드로어)는 삭제됐다(`9824690` — 투자 성과·포트폴리오는 스키마 페이지 `frt/widget/portfolio_performance.ts`로 통일되어 이 드로어를 쓴다). 자체 드로어는 아래 "typed 페이지 트랙"만 가진다.
 
 ## SOP — 새 필터 추가는 보통 한 줄
 1. 스키마 `filters: string[]`에 라벨 추가. **라벨을 대응 field/column의 label과 정확일치**시키면 컨트롤·행필터가 자동 해결된다(추가 코드 0). 라벨 출처는 [[apfs-capture-schema]].
