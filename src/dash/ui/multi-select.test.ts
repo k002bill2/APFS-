@@ -7,7 +7,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { MultiSelect } from './multi-select';
+import { MultiSelect, multiSelectSummary, multiSelectSummaryParts } from './multi-select';
 
 globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as unknown as typeof ResizeObserver;
 Element.prototype.scrollIntoView ??= function scrollIntoView() {};
@@ -109,5 +109,35 @@ describe('MultiSelect — 키보드(검색창 없음)', () => {
     fireEvent.keyDown(screen.getByRole('listbox'), { key: 'ArrowDown' });
     fireEvent.keyDown(screen.getByRole('listbox'), { key: ' ' });
     expect(onChange).toHaveBeenLastCalledWith(['a']);
+  });
+});
+
+/* 2026-11-03 트리거 폭 · 모바일 — 일계표 계정구분 실측: 3개 선택 시 '…(기금) 외 2' 가 가장 긴 라벨보다 길어
+   칸이 196→223px 로 출렁였고, 좁은 드로어(240px)에선 말줄임이 '외 2' 를 먼저 먹어 개수가 안 보였다.
+   ① 요약 = head(라벨, 말줄임) + rest(' 외 N', 줄지 않음) ② 폭 사이저 = 가장 넓은 요약 후보(처음부터 그 폭). */
+const trigger = () => screen.getByRole('combobox', { name: /^계정구분/ });
+const renderTrigger = (value: string[]) =>
+  render(React.createElement(MultiSelect, { value, onChange: vi.fn(), options: OPTS, ariaLabel: '계정구분' }));
+
+describe('MultiSelect — 트리거 요약', () => {
+  it('요약을 라벨(head)과 "외 N"(rest)으로 나눈다 — 합치면 기존 문구와 같다', () => {
+    expect(multiSelectSummaryParts([], '전체')).toEqual({ head: '전체', rest: '' });
+    expect(multiSelectSummaryParts(['A'], '전체')).toEqual({ head: 'A', rest: '' });
+    expect(multiSelectSummaryParts(['A', 'B', 'C'], '전체')).toEqual({ head: 'A', rest: ' 외 2' });
+    expect(multiSelectSummary(['A', 'B', 'C'], '전체')).toBe('A 외 2');
+  });
+  it('"외 N" 은 줄어들지 않는 별도 요소이고 말줄임은 라벨에만 걸린다', () => {
+    renderTrigger(['a', 'b', 'c']);
+    const visible = [...trigger().querySelectorAll('span')].filter((s) => !s.closest('[aria-hidden]'));
+    const rest = visible.find((s) => s.textContent === ' 외 2');
+    const head = visible.find((s) => s.textContent === '동일');
+    expect(rest?.style.flexShrink).toBe('0');
+    expect(head?.style.textOverflow).toBe('ellipsis');
+  });
+  it('폭 사이저 = 가장 넓은 요약 후보 — 아무것도 안 골라도 선택 후와 같은 폭', () => {
+    renderTrigger([]);
+    const sizers = [...trigger().querySelectorAll('[aria-hidden]')].map((s) => s.textContent).filter(Boolean);
+    // 반환이 options 순서라 첫 라벨이 i번째면 '외 N' 의 최댓값은 뒤에 남은 옵션 수
+    expect(sizers).toEqual(['전체', '동일 외 2', '동일 외 1', '기타']);
   });
 });

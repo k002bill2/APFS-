@@ -7,7 +7,8 @@
    - value = 선택된 값 배열. [] = 아무것도 고르지 않음 → 트리거에 emptyLabel(기본 '전체').
    - 항목을 눌러도 닫히지 않는다(여러 개를 연달아 고르는 동작). 바깥 클릭·Esc 로 닫는다.
    - 반환 순서는 options 순서(누른 순서가 아님) — 칩·집계 결과가 클릭 순서에 따라 출렁이지 않게.
-   - 트리거 표시: 0개 = emptyLabel · 1개 = 그 라벨 · 2개 이상 = '첫 라벨 외 N'. 폭은 가장 긴 옵션 라벨 기준(사이저).
+   - 트리거 표시: 0개 = emptyLabel · 1개 = 그 라벨 · 2개 이상 = '첫 라벨 외 N'. 폭은 나올 수 있는 가장 넓은 요약 기준(사이저)이라
+     골라도 칸 폭이 그대로다. 드로어보다 넓으면(모바일) 라벨만 말줄임하고 ' 외 N' 은 남긴다(2026-11-03).
    - 맨 위 '전체 선택'(selectAll, 옵션 2개 이상일 때) = 3상태 — 없음/일부에서 누르면 전부, 전부에서 누르면 해제.
    - 하단: 'N개 선택'(aria-live) + [선택 해제](0개면 비활성).
    - 검색창: 단일 SearchableSelect 와 같은 분기 SSOT shouldSearch()(옵션 SEARCHABLE_SELECT_MIN 개 이상 또는 searchable) — 기준을 따로 두지 않는다.
@@ -27,10 +28,27 @@ import { cn } from '@/lib/utils';
 const norm = (o: SelectOption) => (typeof o === 'string' ? { value: o, label: o } : o);
 const ALL_SENTINEL = '\u0000__all__';
 
-/** 트리거 문구 — 0개 emptyLabel · 1개 라벨 · 2개 이상 '첫 라벨 외 N' */
+/** 트리거 문구 두 조각 — head(라벨, 좁으면 말줄임) + rest(' 외 N', 줄지 않음). 0개 emptyLabel · 1개 라벨 · 2개 이상 '첫 라벨 외 N' */
+export function multiSelectSummaryParts(labels: readonly string[], emptyLabel: string): { head: string; rest: string } {
+  if (!labels.length) return { head: emptyLabel, rest: '' };
+  return { head: labels[0], rest: labels.length === 1 ? '' : ` 외 ${String(labels.length - 1)}` };
+}
+
+/** 트리거 문구 한 줄(접근名용) — multiSelectSummaryParts 를 이어 붙인 것 */
 export function multiSelectSummary(labels: readonly string[], emptyLabel: string): string {
-  if (!labels.length) return emptyLabel;
-  return labels.length === 1 ? labels[0] : `${labels[0]} 외 ${String(labels.length - 1)}`;
+  const { head, rest } = multiSelectSummaryParts(labels, emptyLabel);
+  return head + rest;
+}
+
+/** 요약 한 줄 — 보이는 문구와 폭 사이저가 같은 마크업을 써야 폭이 정확히 맞는다(한 덩어리 텍스트로 재면 서브픽셀 차로 말줄임이 생길 수 있다).
+   rest 는 tabular-nums — 자릿수가 같으면 폭이 같아 '외 N' 최댓값이 가장 넓은 후보가 된다. */
+function SummaryLine({ head, rest }: { head: string; rest: string }) {
+  return (
+    <>
+      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{head}</span>
+      {rest && <span style={{ flexShrink: 0, whiteSpace: 'pre', fontVariantNumeric: 'tabular-nums' }}>{rest}</span>}
+    </>
+  );
 }
 
 /** '전체 선택' 3상태 — Radix Checkbox checked 계약과 같은 모양(true | false | 'indeterminate') */
@@ -72,11 +90,17 @@ export function MultiSelect({ value, onChange, options, emptyLabel = '전체', a
   const listRef = React.useRef<HTMLDivElement>(null);
   const items = React.useMemo(() => options.map(norm), [options]);
   const selected = items.filter((o) => value.includes(o.value));
-  const shown = multiSelectSummary(selected.map((o) => o.label), emptyLabel);
+  const parts = multiSelectSummaryParts(selected.map((o) => o.label), emptyLabel);
+  const shown = parts.head + parts.rest;
   const withSearch = shouldSearch(items.length, searchable);
   const showAll = selectAll && items.length > 1;
   const all = selectAllState(selected.length, items.length);
-  const sizers = React.useMemo(() => [emptyLabel, ...items.map((o) => o.label)], [items, emptyLabel]);
+  // 폭 사이저 = 나올 수 있는 가장 넓은 요약 후보 — 처음부터 그 폭이라 골라도 칸 폭이 출렁이지 않는다(196→223px 실측).
+  // 반환이 options 순서라 첫 라벨이 i번째면 '외 N' 의 최댓값은 뒤에 남은 옵션 수 → items.slice(i)
+  const sizers = React.useMemo(
+    () => [multiSelectSummaryParts([], emptyLabel), ...items.map((_, i) => multiSelectSummaryParts(items.slice(i).map((o) => o.label), emptyLabel))],
+    [items, emptyLabel],
+  );
 
   const toggle = (v: string) => {
     const on = !value.includes(v);
@@ -108,11 +132,12 @@ export function MultiSelect({ value, onChange, options, emptyLabel = '전체', a
           className="text-left"
           style={{ ...triggerStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', paddingRight: 10 }}
         >
+          {/* 좁으면(모바일 드로어) 라벨만 말줄임 — ' 외 N' 은 flexShrink 0 이라 개수는 끝까지 보인다 */}
           <span style={{ display: 'grid', flex: '1 1 auto', minWidth: 0 }}>
-            {sizers.map((l, i) => (
-              <span key={i} aria-hidden style={{ gridArea: '1 / 1', visibility: 'hidden', whiteSpace: 'nowrap', height: 0, overflow: 'hidden' }}>{l}</span>
+            {sizers.map((p, i) => (
+              <span key={i} aria-hidden style={{ gridArea: '1 / 1', display: 'flex', visibility: 'hidden', height: 0, overflow: 'hidden' }}><SummaryLine {...p} /></span>
             ))}
-            <span style={{ gridArea: '1 / 1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown}</span>
+            <span style={{ gridArea: '1 / 1', display: 'flex', minWidth: 0, overflow: 'hidden' }}><SummaryLine {...parts} /></span>
           </span>
           <ChevronDown aria-hidden size={16} strokeWidth={2} style={{ flexShrink: 0, color: 'var(--muted-foreground)' }} />
         </button>
