@@ -24,7 +24,10 @@ describe('인쇄 진입점 가드', () => {
   const pages = sources.filter(({ f, src }) => f !== 'grid_frame.tsx' && /<FooterActions\b/.test(src));
   it('FooterActions 소비처가 있다', () => expect(pages.length).toBeGreaterThan(30));
   it.each(pages.map(({ f, src }) => [f, src] as const))('%s — ⌘P 는 printGrid', (_f, src) => {
-    expect(src).toMatch(/useHotkey\(HOTKEYS\.print\.combo,\s*printGrid\b/);
+    /* 콜백이 이름 하나(조회 불가 가드 래퍼 등)면 그 한 줄 const 정의가 printGrid() 를 부르는지 본다 */
+    const cb = src.match(/useHotkey\(HOTKEYS\.print\.combo,\s*(\w+)\b/)?.[1] ?? '';
+    const body = cb && cb !== 'printGrid' ? src.match(new RegExp(`const ${cb} = (.*)$`, 'm'))?.[1] ?? '' : cb;
+    expect(body, cb).toMatch(cb === 'printGrid' ? /^printGrid$/ : /\bprintGrid\(\)/);
   });
 
   it('GridFrame 은 본문을 data-print-area 로 감싸고 푸터 인쇄 기본값이 printGrid 다', () => {

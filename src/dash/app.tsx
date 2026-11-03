@@ -93,6 +93,13 @@ import { SuspenseManage } from './acc/slip/suspense_manage'; // 미결계정 관
 import { MissingEvidenceManage } from './acc/slip/missing_evidence_manage'; // 전표증빙 미첨부 관리(ACC-006)
 import { DailyCloseManage } from './acc/slip/daily_close_manage'; // 일마감(ACC-007)
 import { JournalSearchManage } from './acc/slip/journal_search_manage'; // 전표검색(ACC-008)
+/* 회계 > 장부조회(ACC-009~014) */
+import { DailyMonthlyManage } from './acc/ledger/daily_monthly_manage';
+import { SubledgerManage } from './acc/ledger/subledger_manage';
+import { GeneralLedgerManage } from './acc/ledger/general_ledger_manage';
+import { BalanceSheetManage } from './acc/ledger/balance_sheet_manage';
+import { IncomeStatementManage } from './acc/ledger/income_statement_manage';
+import { TrialBalanceManage } from './acc/ledger/trial_balance_manage';
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -303,6 +310,12 @@ function App() {
   else if (route === "acct-missing-evidence") page = <MissingEvidenceManage onNav={onNav} />;
   else if (route === "acct-daily-close") page = <DailyCloseManage onNav={onNav} />;
   else if (route === "acct-journal-search") page = <JournalSearchManage onNav={onNav} />;
+  else if (route === "acct-daily-monthly") page = <DailyMonthlyManage onNav={onNav} />;
+  else if (route === "acct-subledger") page = <SubledgerManage onNav={onNav} />;
+  else if (route === "acct-general-ledger") page = <GeneralLedgerManage onNav={onNav} />;
+  else if (route === "acct-balance-sheet") page = <BalanceSheetManage onNav={onNav} />;
+  else if (route === "acct-income-statement") page = <IncomeStatementManage onNav={onNav} />;
+  else if (route === "acct-trial-balance") page = <TrialBalanceManage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;
