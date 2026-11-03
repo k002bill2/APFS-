@@ -13,8 +13,8 @@
    결정·가정(보고서에도 기재)
    - 기간은 툴바 날짜칸 없이 상세필터(dayRange, risk_page_kit FilterControl 과 같은 마크업)에서만 편집한다. 첫 진입·[초기화] = 기본값.
      적용 칩 `YYYY-MM-DD ~ YYYY-MM-DD` + × (× = 기간 해제·전 기간 — 참고 투심보고 통계 specsToApplied dayRange 동작).
-   - 상세필터는 **초안(draft) 방식**: 열 때 현재 조건을 복사 → [필터 적용]에서 범위 검증 후 반영(시작>종료면 차단). X·Esc 는 초안 폐기.
-     형제 화면은 즉시 반영형이지만 설계서가 "적용 시 검증·차단"을 요구해서다.
+   - 상세필터는 **즉시 반영**: 고르는 즉시 조건에 반영, [필터 적용] = 닫기(X·Esc·바깥 클릭으로 닫아도 값 유지), [초기화] = 기본 조건.
+     검증 실패(기간·자금집행예정기간 시작>종료) = 그 칸 invalid + 아래 안내 + 결과 0건(2026-11-03 사용자 지시 — 타 화면 룰, 정본 privacy_access_log).
    - 삭제는 **당일자(작성일 = 오늘) + 결재 미상신·반려** 전표만 가능 — 조건 밖 건이 하나라도 섞이면 **전체 중단**
      (slide 25 "다건 선택 시 당일자 아닌 건 포함되면 삭제 중단" + 리뷰 결정: 상신·승인 건은 역분개로 정정).
      안내는 상신·승인 사유("…역분개로 정정하세요.")가 당일자 사유보다 우선(deleteGateMessage).
@@ -136,18 +136,17 @@ function DrawerField({ label, plain, errMsg, children }: { label: string; plain?
 const dayWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
 
 /* 범위 컨트롤 — risk_page_kit.tsx FilterControl `dayRange` 와 같은 마크업 복제(그쪽은 export 없음) */
-function DayRange({ label, from, to, onFrom, onTo }: { label: string; from: string; to: string; onFrom: (v: string) => void; onTo: (v: string) => void }) {
+function DayRange({ label, from, to, onFrom, onTo, invalid }: { label: string; from: string; to: string; onFrom: (v: string) => void; onTo: (v: string) => void; invalid?: boolean }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <div style={dayWrap}><PeriodPicker mode="day" value={from} onChange={(v) => onFrom(v || '')} ariaLabel={`${label} 시작일`} /></div>
+      <div style={dayWrap}><PeriodPicker mode="day" value={from} onChange={(v) => onFrom(v || '')} ariaLabel={`${label} 시작일`} invalid={invalid} /></div>
       <span className="text-caption">~</span>
-      <div style={dayWrap}><PeriodPicker mode="day" value={to} onChange={(v) => onTo(v || '')} ariaLabel={`${label} 종료일`} /></div>
+      <div style={dayWrap}><PeriodPicker mode="day" value={to} onChange={(v) => onTo(v || '')} ariaLabel={`${label} 종료일`} invalid={invalid} /></div>
     </div>
   );
 }
 
 type Detail = typeof EMPTY_DETAIL;
-type Draft = Detail & { from: string; to: string };
 type ModalState = null
   | { kind: 'submit'; ids: string[] }
   | { kind: 'delete'; ids: string[] }
@@ -195,23 +194,16 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
   const [fTo, setFTo] = useState(baseTo);
   const [fd, setFd] = useState<Detail>(EMPTY_DETAIL);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [draft, setDraft] = useState<Draft>({ ...EMPTY_DETAIL, from: baseFrom, to: baseTo });
-  const [draftErr, setDraftErr] = useState<'' | 'period' | 'due'>('');
-  const setD = <K extends keyof Draft>(k: K, v: Draft[K]) => { setDraft((d) => ({ ...d, [k]: v })); setDraftErr(''); };
-  const openFilter = () => { setDraft({ ...fd, from: fFrom, to: fTo }); setDraftErr(''); setFilterOpen(true); };
-  const resetDraft = () => { setDraft({ ...EMPTY_DETAIL, from: baseFrom, to: baseTo }); setDraftErr(''); };
-  const applyDraft = () => {
-    /* 한쪽만 비우면 열린 경계(참고 risk_page_kit dayRange 와 동일) — 양끝이 있을 때만 시작>종료 검증 */
-    const { from, to, ...detail } = draft;
-    const pe = validateRange(from, to);
-    const de = validateRange(draft.dueFrom, draft.dueTo);
-    if (pe || de) { setDraftErr(pe ? 'period' : 'due'); toast.error((pe || de) as string); return; }
-    setFFrom(from); setFTo(to); setFd(detail);
-    setFilterOpen(false);
-  };
+  /* 드로어 컨트롤이 조건을 바로 고친다(즉시 반영 — 초안 사본 없음). [초기화] = 기본 조건 */
+  const setDetail = <K extends keyof Detail>(k: K, v: Detail[K]) => setFd((d) => ({ ...d, [k]: v }));
+  const resetFilter = () => { setFFrom(baseFrom); setFTo(baseTo); setFd(EMPTY_DETAIL); };
+  /* 범위 검증은 렌더마다 — 한쪽만 비우면 열린 경계(참고 risk_page_kit dayRange). 실패면 그 칸 표시 + 결과 0건 */
+  const periodErr = validateRange(fFrom, fTo);
+  const dueErr = validateRange(fd.dueFrom, fd.dueTo);
+  const rangeBad = !!(periodErr || dueErr);
 
   const filter: JournalFilter = useMemo(() => ({ ...fd, from: fFrom, to: fTo }), [fd, fFrom, fTo]);
-  const passes = useCallback((r: JournalRow) => journalPasses(r, filter), [filter]);
+  const passes = useCallback((r: JournalRow) => !rangeBad && journalPasses(r, filter), [filter, rangeBad]);
   /* 필터 변경 = 선택 전부 해제(2026-10-27 사용자 결정, 가드 filter_clears_selection) */
   useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => true, []);   // 항상 술어 평가(조건이 비면 전부 통과)
@@ -327,7 +319,7 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
         { label: '자금집행예정기간', value: rangeLabel(fd.dueFrom, fd.dueTo), onClear: () => setFd((d) => ({ ...d, dueFrom: '', dueTo: '' })) },
       ]}
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={openFilter}>상세필터</Button>
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <SplitButton label="전표 등록" leadingIcon="plus" menuLabel="전표 등록 방법 더보기" onClick={() => openEntry({ mode: 'new' })}
           items={[{ label: '전표 업로드', icon: 'upload', onSelect: openUpload }]} />
         {/* 전표등록·업로드가 열려 있으면 뒤 목록 단축키(⌥R) 바인딩을 끈다 — IconBtn 은 enabled prop 이 없어 hotkey 를 조건부로 */}
@@ -368,7 +360,7 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
         />
       </div>
 
-      {/* ── 상세필터 — slide 11 조건 9개 순서 그대로. 초안 방식([필터 적용]에서 범위 검증 후 반영) ── */}
+      {/* ── 상세필터 — slide 11 조건 9개 순서 그대로. 즉시 반영([필터 적용] = 닫기) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -377,23 +369,23 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="계정구분"><DrawerSelect value={draft.fundAccount} onChange={(v) => setD('fundAccount', v)} options={FUND_ACCOUNTS} ariaLabel="계정구분" /></DrawerField>
-            <DrawerField label="기간" plain errMsg={draftErr === 'period' ? '시작일은 종료일보다 늦을 수 없습니다.' : undefined}>
-              <DayRange label="기간" from={draft.from} to={draft.to} onFrom={(v) => setD('from', v)} onTo={(v) => setD('to', v)} />
+            <DrawerField label="계정구분"><DrawerSelect value={fd.fundAccount} onChange={(v) => setDetail('fundAccount', v)} options={FUND_ACCOUNTS} ariaLabel="계정구분" /></DrawerField>
+            <DrawerField label="기간" plain errMsg={periodErr ?? undefined}>
+              <DayRange label="기간" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} invalid={!!periodErr} />
             </DrawerField>
-            <DrawerField label="승인여부"><DrawerSelect value={draft.approvedYn} onChange={(v) => setD('approvedYn', v as Draft['approvedYn'])} options={APPROVAL_YN} ariaLabel="승인여부" /></DrawerField>
-            <DrawerField label="전표발생구분"><DrawerSelect value={draft.origin} onChange={(v) => setD('origin', v as '' | JournalOrigin)} options={JOURNAL_ORIGINS} ariaLabel="전표발생구분" /></DrawerField>
-            <DrawerField label="작성자"><input type="text" value={draft.writer} onChange={(e) => setD('writer', e.target.value)} placeholder="작성자명 일부" style={inputStyle('text')} /></DrawerField>
-            <DrawerField label="거래처"><input type="text" value={draft.partner} onChange={(e) => setD('partner', e.target.value)} placeholder="거래처명 일부" style={inputStyle('text')} /></DrawerField>
-            <DrawerField label="적요"><input type="text" value={draft.memo} onChange={(e) => setD('memo', e.target.value)} placeholder="적요 일부" style={inputStyle('text')} /></DrawerField>
-            <DrawerField label="전표번호"><input type="text" value={draft.slipNo} onChange={(e) => setD('slipNo', e.target.value)} placeholder="전표번호 일부" style={inputStyle('text')} /></DrawerField>
-            <DrawerField label="자금집행예정기간" plain errMsg={draftErr === 'due' ? '시작일은 종료일보다 늦을 수 없습니다.' : undefined}>
-              <DayRange label="자금집행예정기간" from={draft.dueFrom} to={draft.dueTo} onFrom={(v) => setD('dueFrom', v)} onTo={(v) => setD('dueTo', v)} />
+            <DrawerField label="승인여부"><DrawerSelect value={fd.approvedYn} onChange={(v) => setDetail('approvedYn', v as Detail['approvedYn'])} options={APPROVAL_YN} ariaLabel="승인여부" /></DrawerField>
+            <DrawerField label="전표발생구분"><DrawerSelect value={fd.origin} onChange={(v) => setDetail('origin', v as '' | JournalOrigin)} options={JOURNAL_ORIGINS} ariaLabel="전표발생구분" /></DrawerField>
+            <DrawerField label="작성자"><input type="text" value={fd.writer} onChange={(e) => setDetail('writer', e.target.value)} placeholder="작성자명 일부" style={inputStyle('text')} /></DrawerField>
+            <DrawerField label="거래처"><input type="text" value={fd.partner} onChange={(e) => setDetail('partner', e.target.value)} placeholder="거래처명 일부" style={inputStyle('text')} /></DrawerField>
+            <DrawerField label="적요"><input type="text" value={fd.memo} onChange={(e) => setDetail('memo', e.target.value)} placeholder="적요 일부" style={inputStyle('text')} /></DrawerField>
+            <DrawerField label="전표번호"><input type="text" value={fd.slipNo} onChange={(e) => setDetail('slipNo', e.target.value)} placeholder="전표번호 일부" style={inputStyle('text')} /></DrawerField>
+            <DrawerField label="자금집행예정기간" plain errMsg={dueErr ?? undefined}>
+              <DayRange label="자금집행예정기간" from={fd.dueFrom} to={fd.dueTo} onFrom={(v) => setDetail('dueFrom', v)} onTo={(v) => setDetail('dueTo', v)} invalid={!!dueErr} />
             </DrawerField>
           </div>
           <SheetFooter>
-            <Button variant="outline" size="md" onClick={resetDraft}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={applyDraft}>필터 적용</Button>
+            <Button variant="outline" size="md" onClick={resetFilter}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>

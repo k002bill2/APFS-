@@ -1,6 +1,6 @@
 /* 전표증빙 미첨부 관리 — 회계 > 전표관리 > 전표증빙 미첨부 관리, route `acct-missing-evidence`, 화면ID ACC-006.
    출처: ACC-006 화면설계서 slide 9~12(개요·그리드·상세필터·증빙첨부) · 14~19(이벤트 E00~E07) → APFS 디자인시스템.
-   골격 정본 = 같은 중분류 deleted_journal_manage.tsx(상세필터 draft→commit·칩·엑셀) + suspense_manage.tsx(선택 바·외부 필터).
+   골격 정본 = 같은 중분류 deleted_journal_manage.tsx(상세필터 즉시 반영·칩·엑셀) + suspense_manage.tsx(선택 바·외부 필터).
 
    구성(설계서 → 우리 규약)
    - 제목 "전표증빙 미첨부 관리"(메뉴 리프 라벨 — 설계서 "전표증빙미첨부관리" 아님) · KPI 배지 행 미포함.
@@ -11,8 +11,9 @@
    - E05 행 더블클릭(Enter 동일) = 그 행 1건 증빙첨부 — 체크 불필요. 체크박스 칸·첨부 버튼 더블클릭은 무시.
    - 증빙첨부 = ACC-003 전표 화면(JournalEntryScreen) mode 'evidence' — ③ 증빙·첨부만 입력, [저장]·[저장 후 닫기]·[닫기].
        상세에 넘기는 행은 modal state 스냅샷(저장으로 목록에서 빠져도 화면·exit 애니메이션 유지).
-   - 상세필터 7개(계정구분 검색형 · 기간 기본 당월 · 미결재포함 · 전표발생구분 · 작성자 · 거래처 · 적요). draft 편집 → [필터 적용]
-       (또는 텍스트 Enter)에서만 커밋 — 시작 > 종료면 toast.error + 드로어 유지. 닫기는 draft 폐기. 적용 조건 = 칩(값만, × 개별 해제).
+   - 상세필터 7개(계정구분 검색형 · 기간 기본 당월 · 미결재포함 · 전표발생구분 · 작성자 · 거래처 · 적요). 즉시 반영 — 고르는 즉시
+       applied 반영, [필터 적용] = 닫기(X·Esc·바깥 클릭으로 닫아도 값 유지). 시작 > 종료 = 두 칸 invalid + 아래 안내 + 결과 0건
+       (2026-11-03 사용자 지시, 정본 privacy_access_log). 적용 조건 = 칩(값만, × 개별 해제).
        기간 칩은 진입부터 떠 있고 × = 전 기간, [초기화] = 당월 복원.
    - 하단: 새 창·내보내기(FooterActions — ⌥O·⌥D) + ⌘P 인쇄. 권한 기반 노출은 RBAC 미구현이라 [증빙첨부]·[내보내기] 항상 노출.
 
@@ -138,24 +139,15 @@ export function MissingEvidenceManage({ onNav }: { onNav?: (r: string) => void }
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [modal, setModal] = useState<ModalState>(null);
 
-  /* E01 상세필터 — applied = 적용된 조건(칩·목록의 SSOT), draft = 드로어에서 편집 중인 사본 */
+  /* E01 상세필터 — applied = 드로어·칩·목록의 SSOT(초안 사본 없음 — 바꾸는 즉시 반영) */
   const [filterOpen, setFilterOpen] = useState(false);
   const [applied, setApplied] = useState<MissingFilter>(base);
-  const [draft, setDraft] = useState<MissingFilter>(base);
-  const setD = <K extends keyof MissingFilter>(k: K) => (v: MissingFilter[K]) => setDraft((d) => ({ ...d, [k]: v }));
-  const openFilter = () => { setDraft(applied); setFilterOpen(true); };
-  /* [필터 적용] — 기간 검증 실패면 드로어를 닫지 않는다 */
-  const commitFilter = () => {
-    const err = validateRange(draft.from, draft.to);
-    if (err) { toast.error(err); return; }
-    setApplied(draft);
-    setFilterOpen(false);
-  };
-  /* 편집 중 기간 오류 — 두 picker 에 invalid 표시(커밋 시 toast 는 그대로) */
-  const periodErr = validateRange(draft.from, draft.to);
+  const setD = <K extends keyof MissingFilter>(k: K) => (v: MissingFilter[K]) => setApplied((a) => ({ ...a, [k]: v }));
+  /* 기간 오류 — 렌더마다 applied 로 계산. 두 picker invalid + 아래 안내 + 결과 0건 */
+  const periodErr = validateRange(applied.from, applied.to);
   const clearApplied = (patch: Partial<MissingFilter>) => setApplied((a) => ({ ...a, ...patch }));
 
-  const passes = useCallback((r: JournalRow) => missingPasses(r, applied), [applied]);
+  const passes = useCallback((r: JournalRow) => !periodErr && missingPasses(r, applied), [applied, periodErr]);
   /* 필터 변경 = 선택 전부 해제(2026-10-27 사용자 결정, 가드 filter_clears_selection) */
   useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => true, []);
@@ -231,7 +223,6 @@ export function MissingEvidenceManage({ onNav }: { onNav?: (r: string) => void }
     ['거래처', applied.partner.trim(), () => clearApplied({ partner: '' })],
     ['적요', applied.memo.trim(), () => clearApplied({ memo: '' })],
   ];
-  const enterCommits = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) commitFilter(); };
 
   const selActions = selCount > 0 ? (
     <>
@@ -250,7 +241,7 @@ export function MissingEvidenceManage({ onNav }: { onNav?: (r: string) => void }
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={openFilter}>상세필터</Button>
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={modal ? undefined : HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(visible.length) + '건 중 ' + String(Math.min(shown, visible.length)) + '건 표시'}</span>}
@@ -287,7 +278,7 @@ export function MissingEvidenceManage({ onNav }: { onNav?: (r: string) => void }
         />
       </div>
 
-      {/* ── E01 상세필터 드로어 — 설계서 7개 조건. draft 편집 → [필터 적용]에서만 커밋 ── */}
+      {/* ── E01 상세필터 드로어 — 설계서 7개 조건. 즉시 반영([필터 적용] = 닫기) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -296,34 +287,35 @@ export function MissingEvidenceManage({ onNav }: { onNav?: (r: string) => void }
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="계정구분"><DrawerSelect value={draft.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} ariaLabel="계정구분" searchable /></DrawerField>
+            <DrawerField label="계정구분"><DrawerSelect value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} ariaLabel="계정구분" searchable /></DrawerField>
             <DrawerField label="기간" plain>
               <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={draft.from} onChange={(v) => setD('from')(v || '')} ariaLabel="기간 시작일" invalid={!!periodErr} /></div>
+                <div style={dayWrap}><PeriodPicker mode="day" value={applied.from} onChange={(v) => setD('from')(v || '')} ariaLabel="기간 시작일" invalid={!!periodErr} /></div>
                 <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={draft.to} onChange={(v) => setD('to')(v || '')} ariaLabel="기간 종료일" invalid={!!periodErr} /></div>
+                <div style={dayWrap}><PeriodPicker mode="day" value={applied.to} onChange={(v) => setD('to')(v || '')} ariaLabel="기간 종료일" invalid={!!periodErr} /></div>
               </div>
+              {periodErr && <p role="alert" className="m-0 mt-1 text-danger" style={{ fontSize: 12 }}>{periodErr}</p>}
             </DrawerField>
             <DrawerField label="미결재포함" plain>
               <div className="inline-flex items-center gap-2" style={{ minHeight: 34 }}>
-                <Checkbox id="me-include-unapproved" aria-label="미결재포함" checked={draft.includeUnapproved} onCheckedChange={(c) => setD('includeUnapproved')(c === true)} />
+                <Checkbox id="me-include-unapproved" aria-label="미결재포함" checked={applied.includeUnapproved} onCheckedChange={(c) => setD('includeUnapproved')(c === true)} />
                 <label htmlFor="me-include-unapproved" style={{ fontSize: 13.5, cursor: 'pointer', userSelect: 'none' }}>미결재 전표 포함(미상신·상신·반려)</label>
               </div>
             </DrawerField>
-            <DrawerField label="전표발생구분"><DrawerSelect value={draft.origin} onChange={setD('origin')} options={[...JOURNAL_ORIGINS]} ariaLabel="전표발생구분" /></DrawerField>
+            <DrawerField label="전표발생구분"><DrawerSelect value={applied.origin} onChange={setD('origin')} options={[...JOURNAL_ORIGINS]} ariaLabel="전표발생구분" /></DrawerField>
             <DrawerField label="작성자">
-              <input type="text" value={draft.writer} onChange={(e) => setD('writer')(e.target.value)} onKeyDown={enterCommits} placeholder="작성자" style={inputStyle('text')} />
+              <input type="text" value={applied.writer} onChange={(e) => setD('writer')(e.target.value)} placeholder="작성자" style={inputStyle('text')} />
             </DrawerField>
             <DrawerField label="거래처">
-              <input type="text" value={draft.partner} onChange={(e) => setD('partner')(e.target.value)} onKeyDown={enterCommits} placeholder="거래처" style={inputStyle('text')} />
+              <input type="text" value={applied.partner} onChange={(e) => setD('partner')(e.target.value)} placeholder="거래처" style={inputStyle('text')} />
             </DrawerField>
             <DrawerField label="적요">
-              <input type="text" value={draft.memo} onChange={(e) => setD('memo')(e.target.value)} onKeyDown={enterCommits} placeholder="적요" style={inputStyle('text')} />
+              <input type="text" value={applied.memo} onChange={(e) => setD('memo')(e.target.value)} placeholder="적요" style={inputStyle('text')} />
             </DrawerField>
           </div>
           <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setDraft(base)}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={commitFilter}>필터 적용</Button>
+            <Button variant="outline" size="md" onClick={() => setApplied(base)}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>

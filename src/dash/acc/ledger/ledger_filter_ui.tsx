@@ -1,13 +1,12 @@
 /* 장부조회(ACC-009~014) 상세필터 공용 조각 — 6화면이 같은 모양·같은 칩 문구를 쓰게(병렬 구현 드리프트 방지).
    - DrawerField: 라벨 + 컨트롤 + 오류 문구(일반전표 관리 동형). plain = <div> 래퍼(PeriodPicker 버튼 2회 토글 방지).
    - DayField / DayRangeField: PeriodPicker day 를 fit-content 래퍼로 감싼 단일·범위 일자(apfs-datepicker "폭").
-   - FlagSelect: 여/부 셀렉트 플래그(모든계정포함).
-   - FlagCheck: 체크박스 플래그(미결재포함·결산전표포함·작성계정과목만 — 2026-11-03 사용자 지시, 설계서 체크박스).
+   - FlagCheck: 체크박스 플래그 — 미결재포함·모든계정포함·결산전표포함·작성계정과목만. 2026-11-03 사용자 지시 '~포함 필터는 전부 체크박스'
+     (여/부 셀렉트 FlagSelect 는 폐기 — 다시 만들지 않는다).
    - flagChips: 플래그 적용 칩 — 값만 보이므로 값 자체가 뜻을 담게('미결재 포함'), 기본값과 같으면 × 없음.
    필수 조건(기간·기준일) 칩은 onClear 를 넘기지 않는다(설계서: 필수라 ✕ 없음). */
 import { useId } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { DrawerSelect } from '../../drawer_select';
 import { Checkbox } from '../../ui/checkbox';
 import { PeriodPicker } from '../../ui/period-picker';
 import { controlMinWidth } from '../../schemas/renderers';
@@ -47,15 +46,6 @@ export function DayRangeField({ label, from, to, onFrom, onTo, required, errMsg 
         <span className="text-caption">~</span>
         <div style={dayWrap}><PeriodPicker mode="day" value={to} onChange={onTo} ariaLabel={`${label} 종료일`} invalid={!!errMsg} /></div>
       </div>
-    </DrawerField>
-  );
-}
-
-/** 여/부 셀렉트. on/off 라벨은 화면 설계서 표기(결산전표포함 = '전부포함'/'제외' 등) */
-export function FlagSelect({ label, value, onChange, on = '여', off = '부' }: { label: string; value: boolean; onChange: (v: boolean) => void; on?: string; off?: string }) {
-  return (
-    <DrawerField label={label}>
-      <DrawerSelect value={value ? on : off} onChange={(v) => onChange(v === on)} options={[off, on]} noAll ariaLabel={label} />
     </DrawerField>
   );
 }
