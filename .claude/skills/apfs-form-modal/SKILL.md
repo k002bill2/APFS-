@@ -1,6 +1,6 @@
 ---
 name: apfs-form-modal
-description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 배타 선택은 radio(DS RadioGroup), 복수 선택·매트릭스는 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 컨트롤 폭 규약(입력 200~320 · select fit-content 240~320 · %·차수·회차·인수·순번·(년) 100px · 달력 불변 · long 전체폭). 정본 예시는 "투자기업정보(통합)"(iam/ent/investee_profile_schema.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·입력칸 폭이 들쭉날쭉할 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
+description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFormModal) 작성 규약 — PageSchema.fields 주도, 항목>6이면 2단 wide 자동 적응, FIELD_CONTROLS(zod SSOT) 컨트롤, 긴 텍스트(설명·비고·운용사·펀드명)는 long:true 로 전체 폭, '여/부' on/off 값은 control:'switch'(DS Switch), 배타 선택은 radio(DS RadioGroup), 목록 복수 선택은 멀티 셀렉트(MultiSelect), 권한·매트릭스 체크 그룹은 DS Checkbox, 모달 기본 폰트 13.5px·토큰만. 컨트롤 폭 규약(입력 200~320 · select fit-content 240~320 · %·차수·회차·인수·순번·(년) 100px · 달력 불변 · long 전체폭). 정본 예시는 "투자기업정보(통합)"(iam/ent/investee_profile_schema.ts). 섹션형·반복행 모달(subfund_form_modal)과 읽기전용 명세 kv 그리드의 라벨 배열 규약(한글=가로 라벨좌/값우, 영문=세로 적층)도 포함. 등록 폼·수정 모달·폼 모달·RowFormModal·필드 컨트롤·radio/switch/select/textarea 입력·입력칸이 짧게 나올 때·입력칸 폭이 들쭉날쭉할 때·사용여부 토글·모달 폰트 크기·삭제 확인·명세 팝업·kv 라벨 배열 작업 시 사용. Use when building or editing the schema-driven CRUD form modal (register/edit/delete) for list pages.
 ---
 
 # apfs-form-modal Skill
@@ -126,7 +126,8 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
 
 > **checkbox vs switch vs radio — 무엇을 쓰나(2026-09-18 재개정, 사용자 결정).** 모두 DS 컴포넌트(Radix)이며 표식 이펙트(scale-pop / 엄지 슬라이드)가 한 패밀리다:
 > · **switch** = on/off **2지선다 값**('여/부'·'Y/N'·'예/아니오'). 폼 모달 안이든 즉시 반영 설정이든 동일. 옆 텍스트는 현재 상태(여↔부)로 바뀐다.
-> · **checkbox** = **독립 복수 선택**(사용자 구분·권한 체크 그룹, 권한 매트릭스 셀/집계). 스키마 토큰 `checkbox`('true'/'false')는 신규 사용 금지.
+> · **multi-select** = **옵션 목록에서 여러 값을 고르는 필드**(분야·지역·계정구분 등) — 셀렉트 모양의 `MultiSelect`(ui/multi-select.tsx, 맨 위 '전체 선택' 3상태·하단 개수/[선택 해제]·10개 이상 검색). 2026-11-03 사용자 지시로 **목록 복수 선택의 기본값**(종전 "복수 선택 = 체크박스 나열"을 대체). 값은 `string[]`(옵션 순서) — 문자열 저장 계약이 필요한 스키마 폼에서는 `tags` 와 같은 **JSON 배열 문자열**(빈 배열 = `''`, required `.trim()` false-pass 방지)로 감싼다. ⚠ 스키마 `FIELD_CONTROLS` 에 다중 선택 토큰은 **아직 없다** — 스키마 폼에 필요하면 토큰 추가(zod·`renderers.tsx` case·`isPlainWrapControl`·첫옵션 시드 제외)부터 지시 받고 진행. bespoke 모달은 바로 `MultiSelect` 를 쓴다. 트리거는 `<button>` 이라 `ariaLabel` 필수.
+> · **checkbox** = **항목 하나하나가 독립 설정인 체크 그룹**(권한 체크 그룹, 권한 매트릭스 셀/집계, 사용자 구분처럼 각 칸이 on/off 의미를 가질 때). 목록에서 값 여러 개를 고르는 용도면 위 multi-select. 스키마 토큰 `checkbox`('true'/'false')는 신규 사용 금지.
 > · **radio** = 이름으로 묶인 배타 그룹 — 하나를 고르면 나머지가 풀린다(개인/법인, 신주/구주, Y/N/해당없음, 검색 결과 1건 선택). select↔radio 는 스키마 선언대로 그린다 — 옵션 개수로 자동 치환하지 않는다(2026-09-22 개수 규칙 PR #236 은 09-23 사용자 원복).
 > (연혁: 2026-09-15 2지선다 radio → switch. 2026-09-18 오전 namethatui 의미 규약(switch=즉시 반영 / checkbox=Save 대기)으로 switch → 체크박스 렌더 전환. **같은 날 오후 사용자 지시 "스위치는 체크로 하지 말고 원복"으로 Switch 렌더 복귀** — 화면 인터랙션 통일이 의미 규약보다 우선. 매트릭스·체크 그룹의 DS Checkbox 통일과 radio 의 DS 전환은 유지.)
 >

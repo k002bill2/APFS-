@@ -1,6 +1,6 @@
 ---
 name: apfs-detail-filter
-description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·확장 규약. 필터 항목을 라벨 타입에 맞는 값 컨트롤(년도 picker·열거형 select·날짜·텍스트·카테고리 토글)로 렌더하고, 선택값을 filterValues SSOT로 모아 실제 행을 필터링한다. 상세필터·필터 드로어·필터 항목·필터 칩·필터 패널 작업, 새 필터 추가, 체크박스형 필터를 값-컨트롤로 바꿀 때 반드시 사용. Use when building or editing the list detail-filter drawer (type-aware value controls + real row filtering).
+description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·확장 규약. 필터 항목을 라벨 타입에 맞는 값 컨트롤(년도 picker·열거형 select·열거형 다중 선택 DrawerMultiSelect·날짜·텍스트·카테고리 토글)로 렌더하고, 선택값을 filterValues SSOT로 모아 실제 행을 필터링한다. 상세필터·필터 드로어·필터 항목·필터 칩·필터 패널 작업, 새 필터 추가, 체크박스형 필터를 값-컨트롤로 바꿀 때 반드시 사용. Use when building or editing the list detail-filter drawer (type-aware value controls + real row filtering).
 ---
 
 # apfs-detail-filter
@@ -40,6 +40,7 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 | date | `<input type=date>` |
 | number · text | `<input type=number/text>` |
 | tag | 토글 버튼(체크 아이콘) — 다중선택 |
+| (typed 트랙) 열거형 다중 선택 | 공용 **`DrawerMultiSelect`**(drawer_select.tsx → ui/multi-select) — 아래 typed 트랙 "다중 선택" 항목. 스키마 트랙에는 이 kind 가 아직 없다 |
 
 ## 상태·필터링
 - **SSOT = `filterValues: Record<라벨, 값>`**(부모 보유, 빈 값/부재 = 비활성). 칩·행필터·KPI 모두 여기서 파생. 라벨↔값을 "라벨: 값" 문자열로 합치지 말 것(`정기/수시`의 `/`가 깨진다).
@@ -60,6 +61,11 @@ description: APFS 리스트 페이지 "상세 필터"(필터 드로어) 작성·
 - **연도/일자 컨트롤 = `PeriodPicker`**(사업연도 `mode="year"`, 기준일자 `mode="day"`) — 연도 `<select>`·네이티브 date 금지(→[[apfs-datepicker]] PeriodPicker 절). 버튼 트리거는 `DrawerField plain`(`<div>` 래퍼, `<label>` 이중 토글 방지) + `ariaLabel`.
   - ⚠️ **폭**: PeriodPicker/DatePicker 트리거는 `w-full`이라 `DrawerField plain`(block 100%)에 **바로 넣으면 드로어 전체 폭으로 늘어난다**(2026-09-09 회귀). 반드시 `<div style={{ width:'fit-content', minWidth: controlMinWidth(year|date), maxWidth:'100%' }}>`로 감싼다 — 네이티브 `DrawerSelect`(자체 fit-content)와 달리 버튼엔 고유 콘텐츠 폭이 없다(검색형 `DrawerSelect` 는 숨은 사이저 스팬으로 최장 옵션 폭을 스스로 잡으므로 래퍼 불필요). 폭 계약 정본은 →[[apfs-datepicker]] "폭" 규칙.
 - **select = 공용 `DrawerSelect` import 필수 — 페이지 로컬 복제 금지**(2026-09-29 PR #306). 32개 페이지에 복제돼 있던 로컬 `function DrawerSelect`(시그니처 7종)를 `src/dash/drawer_select.tsx` 하나로 합쳤다. props 는 상위 집합: `options: string[] | {value,label}[]` · `all`(기본 `'전체'`, `null`=전체 항목 없음) · `noAll` · `ariaLabel` · `searchable`. 옵션 10개 이상이면 자동으로 검색형 `SearchableSelect`(Popover+cmdk)로 그린다 — 로컬 복제본을 다시 만들면 그 페이지만 검색이 빠진다. 가드 `drawer_select.test.ts`(네이티브 `<select>` 를 직접 그리는 로컬 `DrawerSelect` 가 있으면 실패).
+- **열거형 다중 선택 = 공용 `DrawerMultiSelect` — 멀티 셀렉트가 기본**(2026-11-03 사용자 지시 "화면 생성시나 필터에도 멀티 셀렉트가 적용되게"). 설계서·목업이 '다중 선택'·'복수 선택'·`<select multiple>`·같은 이름 체크박스 나열인 열거형 항목(계정구분·운용사·지역 등)은 체크박스를 늘어놓거나 tag 토글로 만들지 않고 이것을 쓴다. 정본 일/월계표 일계표 탭(`acc/ledger/daily_monthly_manage.tsx`), 프리뷰 = 디자인시스템 3-5.
+  - 계약: `value: string[]`(옵션 순서) · **빈 배열 = 전체(조건 없음)** — 트리거에 `emptyLabel`(기본 `'전체'`), 칩은 만들지 않거나 `×` 없음, `passes` 는 `!v.length || v.includes(row.x)`. 맨 위 '전체 선택'(3상태)·하단 'N개 선택'·[선택 해제]는 컴포넌트가 그린다(페이지에서 다시 만들지 않는다). 옵션 10개 이상이면 검색창 자동(단일과 같은 `shouldSearch`).
+  - 래퍼는 `DrawerField label="…" plain` + `ariaLabel` — 트리거는 버튼 1개라 label 래핑도 동작하지만 드로어 사본들이 `plain` 을 쓴다(일/월계표). 필수·단일이어야 하는 항목(월계표 계정구분처럼 집계가 한 값만 받는 경우)은 `DrawerSelect` 그대로.
+  - 칩 값 = 선택 라벨 요약(1개=라벨, 2개 이상='첫 라벨 외 N' — `multiSelectSummary` 와 같은 모양), `×` = `[]` 로 되돌림.
+  - ⚠ **스키마 트랙(`GenericListPage`/`ListFilterDrawer`)에는 다중 선택 kind 가 아직 없다** — `resolveFilterField` 의 enum 은 단일 `DrawerSelect`. 스키마 화면에 다중 선택 필터가 필요하면 typed 드로어로 만들거나, filter kind(`multi`)·`rowMatchesFilters`(OR 매칭)·칩 파생을 먼저 추가한다(미구현 — 지시 받고 진행).
   - 검색형 트리거는 `<button role=combobox>` 하나라 **`DrawerField`(label 래핑) 그대로 둬도 된다** — 라벨 클릭 = 열림 1회(2026-09-29 실측, 이중 토글은 버튼 **2개**짜리 PairControl 문제). `ariaLabel` 을 안 넘기면 감싼 `<label>` 캡션의 첫 텍스트 노드를 접근名으로 쓴다(폴백 도입 전엔 "전체"로 읽혔다) — 그래도 명시 전달이 정석.
   - Popover 는 **non-modal**(DatePicker 와 같은 이유). 열린 상태에서 다른 컨트롤 첫 클릭이 바로 먹는지(포커스 이동·입력 가능) 검증한다. ego-browser `page.click()` 은 실제 pointerdown 을 쏜다(구 aside `locator.click()` 은 안 쏴서 이 검증 자체가 불가했다). 단 2026-10-26 ego 실측(자펀드 관리 상세필터 `기준일자` → 검색 입력 클릭)에서 pointerdown 이 1회 발생하고 포커스도 옮겨갔는데 달력은 열린 채였다(`page.click` 3/3·`page.mouse.click` 1/1) — 달력이 닫히는지는 별도 확인이 필요하다. **열린 목록이 덮지 않는 컨트롤**을 겨냥할 것(목록 위 좌표면 항목이 선택돼 오판).
 - **범위(시작~종료) = 한 항목**(2026-09-24 사용자 지시): `DrawerField label="<그룹명>" plain` 하나 안에 `flex items-center gap-2 flex-wrap` 행 → 시작 picker · `<span className="text-caption">~</span>` · 종료 picker(각 fit-content 래퍼, `ariaLabel`은 시작일/종료일로 따로). `…시작`/`…종료` 두 DrawerField로 쪼개지 말 것. 정본 `audit_log.tsx`. **칩도 한 개**: 값 `${fFrom || '…'} ~ ${fTo || '…'}`(한쪽만 있으면 `…`), `×`는 두 끝을 함께 해제, aria-label은 그룹명.
