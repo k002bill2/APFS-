@@ -20,7 +20,7 @@ const OPTS = [
   { value: 'c', label: '기타' },
 ];
 
-function open(props: { searchable?: boolean } = {}) {
+function open(props: { searchable?: boolean; value?: string[] } = {}) {
   const onChange = vi.fn();
   render(React.createElement(MultiSelect, { value: [], onChange, options: OPTS, ariaLabel: '계정구분', ...props }));
   fireEvent.click(screen.getByRole('combobox', { name: /^계정구분/ }));
@@ -48,5 +48,66 @@ describe('MultiSelect — 같은 라벨·다른 값', () => {
     open({ searchable: true });
     fireEvent.change(screen.getByRole('combobox', { name: '계정구분 검색' }), { target: { value: '기타' } });
     expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['기타']);
+  });
+});
+
+/* 2026-11-03 다중 선택 샘플(디자인시스템 3-5) 동작 이식 — 일계표 계정구분이 쓰는 컴포넌트.
+   맨 위 '전체 선택'(3상태) · 하단 'N개 선택 · 선택 해제' · 검색창 없으면 열자마자 listbox 초점 + Space 토글. */
+const allRow = () => screen.getAllByRole('option')[0];
+const itemRows = () => screen.getAllByRole('option').slice(1);
+
+describe('MultiSelect — 전체 선택', () => {
+  it('맨 위 항목이 "전체 선택"이고 없음/일부/전부를 aria-checked 로 알린다', () => {
+    open();
+    expect(allRow().textContent).toBe('전체 선택');
+    expect(allRow().getAttribute('aria-checked')).toBe('false');
+    cleanup(); document.body.replaceChildren();
+    open({ value: ['a'] });
+    expect(allRow().getAttribute('aria-checked')).toBe('mixed');
+    cleanup(); document.body.replaceChildren();
+    open({ value: ['a', 'b', 'c'] });
+    expect(allRow().getAttribute('aria-checked')).toBe('true');
+  });
+  it('없음·일부에서 누르면 전부(옵션 순서), 전부에서 누르면 해제', () => {
+    let onChange = open({ value: ['c'] });
+    fireEvent.click(allRow());
+    expect(onChange).toHaveBeenLastCalledWith(['a', 'b', 'c']);
+    cleanup(); document.body.replaceChildren();
+    onChange = open({ value: ['a', 'b', 'c'] });
+    fireEvent.click(allRow());
+    expect(onChange).toHaveBeenLastCalledWith([]);
+  });
+  it('항목 체크 상태는 aria-checked, 표시용 체크는 버튼이 아니다(중첩 인터랙티브 없음)', () => {
+    open({ value: ['b'] });
+    expect(itemRows().map((o) => o.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
+    expect(screen.getByRole('listbox').querySelectorAll('button')).toHaveLength(0);
+  });
+});
+
+describe('MultiSelect — 하단 개수·선택 해제', () => {
+  it('선택 개수를 보여 주고 [선택 해제]는 전부 비운다', () => {
+    const onChange = open({ value: ['a', 'c'] });
+    expect(screen.getByText('2개 선택')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '선택 해제' }));
+    expect(onChange).toHaveBeenLastCalledWith([]);
+  });
+  it('하나도 없으면 [선택 해제]는 비활성', () => {
+    open();
+    expect((screen.getByRole('button', { name: '선택 해제' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe('MultiSelect — 키보드(검색창 없음)', () => {
+  it('열자마자 초점이 listbox 에 있다', () => {
+    open();
+    expect(document.activeElement).toBe(screen.getByRole('listbox'));
+  });
+  it('Space 는 하이라이트 항목을 토글한다(첫 하이라이트 = 전체 선택)', () => {
+    const onChange = open();
+    fireEvent.keyDown(screen.getByRole('listbox'), { key: ' ' });
+    expect(onChange).toHaveBeenLastCalledWith(['a', 'b', 'c']);
+    fireEvent.keyDown(screen.getByRole('listbox'), { key: 'ArrowDown' });
+    fireEvent.keyDown(screen.getByRole('listbox'), { key: ' ' });
+    expect(onChange).toHaveBeenLastCalledWith(['a']);
   });
 });
