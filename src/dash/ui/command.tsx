@@ -16,13 +16,15 @@ const Command = React.forwardRef<
 ));
 Command.displayName = CommandPrimitive.displayName;
 
-function CommandDialog({ children, ...props }: React.ComponentProps<typeof Dialog>) {
+/* label = 검색창 접근名. cmdk Input 은 aria-labelledby 로 루트가 그리는 sr-only <label cmdk-label> 을 가리키므로
+   루트에 label 이 없으면 검색창 이름이 '' 가 된다(aria-label·placeholder 보다 labelledby 가 우선 — command.test.ts). */
+function CommandDialog({ children, label = '검색', ...props }: React.ComponentProps<typeof Dialog> & { label?: string }) {
   return (
     <Dialog {...props}>
       <DialogContent className="max-w-[560px] overflow-hidden p-0" hideClose>
         <DialogTitle className="sr-only">명령 팔레트</DialogTitle>
         <DialogDescription className="sr-only">메뉴·운용사·자펀드 빠른 이동</DialogDescription>
-        <Command>{children}</Command>
+        <Command label={label}>{children}</Command>
       </DialogContent>
     </Dialog>
   );

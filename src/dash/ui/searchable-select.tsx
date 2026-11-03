@@ -12,7 +12,10 @@
    🔴 Popover 는 non-modal(`modal` 금지) — date-picker.tsx 상단 주석과 같은 이유(2-click 회귀·드로어 스크롤 잠금).
    🔴 트리거는 raw <button> — UI.Button 은 forwardRef 가 없어 Radix asChild 트리거가 무음 미개폐.
    cmdk 함정: ① value="" 항목은 textContent 로 폴백 → 전체 항목은 센티넬 value ② onSelect 인자(가공된 value)를 되쓰지 않고
-   클로저로 원래 값을 emit ③ 필터는 cmdk value 기준 → value 에 라벨을 넣는다(라벨이 곧 사용자가 치는 글자). */
+   클로저로 원래 값을 emit ③ cmdk value = **옵션 값**(유일 식별자), 라벨은 keywords — 필터는 value+keywords 를 함께 본다.
+   (2026-11-03 전엔 라벨을 value 로 썼다 → 라벨이 같고 값이 다른 옵션이 한 항목으로 묶여 둘 다 하이라이트되고 Enter 가 늘 첫 번째를 골랐다.)
+   ④ listbox 접근名은 CommandList 의 label prop — aria-label 을 주면 cmdk 가 label(기본 'Suggestions')로 덮어쓴다.
+   ⑤ 검색창 접근名은 Command 루트의 label prop — Input 이 aria-labelledby 로 루트의 sr-only 라벨을 가리켜 aria-label 을 가린다. */
 import * as React from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from './popover';
@@ -76,8 +79,8 @@ export function SearchableSelect({
   const isPlaceholder = !current && !(value === '' && withAll) && !value;
   // 사이저 = 트리거가 가질 수 있는 모든 라벨. 가장 긴 것이 폭을 정한다.
   const sizers = React.useMemo(() => [...(withAll ? [allLabel as string] : []), ...items.map((o) => o.label), placeholder], [items, withAll, allLabel, placeholder]);
-  // 열릴 때 현재 값에 하이라이트 — cmdk 가 그 항목으로 스크롤한다.
-  const highlighted = current ? current.label : value === '' && withAll ? ALL_SENTINEL : undefined;
+  // 열릴 때 현재 값에 하이라이트 — cmdk 가 그 항목으로 스크롤한다(cmdk value = 옵션 값, 함정 ③).
+  const highlighted = current ? current.value : value === '' && withAll ? ALL_SENTINEL : undefined;
 
   const pick = (v: string) => { onChange(v); setOpen(false); };
 
@@ -121,9 +124,10 @@ export function SearchableSelect({
         className="p-0"
         style={{ width: 'max(var(--radix-popover-trigger-width), 220px)', maxWidth: 'min(420px, calc(100vw - 32px))' }}
       >
-        <Command defaultValue={highlighted} loop>
+        {/* 루트 label = 검색창 접근名(cmdk Input 의 aria-labelledby 가 이 라벨을 가리킨다 — 없으면 이름이 '', 함정 ⑤). */}
+        <Command defaultValue={highlighted} loop label={name ? `${name} 검색` : '옵션 검색'}>
           <CommandInput placeholder="검색" aria-label={name ? `${name} 검색` : '옵션 검색'} className="h-9 py-2 text-[13.5px]" />
-          <CommandList className="max-h-[280px] p-1">
+          <CommandList className="max-h-[280px] p-1" label={name ?? '옵션 목록'}>
             <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>
             {withAll && (
               <CommandItem value={ALL_SENTINEL} keywords={[allLabel as string]} onSelect={() => pick('')} className="py-1.5">
@@ -132,7 +136,7 @@ export function SearchableSelect({
               </CommandItem>
             )}
             {items.map((o) => (
-              <CommandItem key={o.value} value={o.label} keywords={o.value !== o.label ? [o.value] : undefined} onSelect={() => pick(o.value)} className="py-1.5">
+              <CommandItem key={o.value} value={o.value} keywords={o.value !== o.label ? [o.label] : undefined} onSelect={() => pick(o.value)} className="py-1.5">
                 <span className="flex-1 truncate">{o.label}</span>
                 <Check aria-hidden size={14} className={cn('shrink-0 text-primary', o.value === value ? 'opacity-100' : 'opacity-0')} />
               </CommandItem>

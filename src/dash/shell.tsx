@@ -767,7 +767,7 @@ function flattenMenu() {
 function MenuCommand({ open, onOpenChange, onNav }: { open: boolean; onOpenChange: (o: boolean) => void; onNav: (r: string) => void }) {
   const groups = React.useMemo(() => flattenMenu(), []);
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog open={open} onOpenChange={onOpenChange} label="메뉴·운용사·자펀드 검색">
       <CommandInput placeholder="메뉴·운용사·자펀드 검색…" />
       {/* min-h를 max-h(340px)와 같게 고정 — 검색 결과가 적어도 리스트가 쪼그라들지 않고 일정 높이 유지 */}
       <CommandList className="min-h-[340px]">

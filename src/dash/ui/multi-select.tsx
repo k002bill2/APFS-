@@ -73,14 +73,17 @@ export function MultiSelect({ value, onChange, options, emptyLabel = '전체', a
       </PopoverTrigger>
       <PopoverContent align="start" className="p-0"
         style={{ width: 'max(var(--radix-popover-trigger-width), 220px)', maxWidth: 'min(420px, calc(100vw - 32px))' }}>
-        <Command loop>
+        {/* 접근名은 cmdk label prop 으로 — aria-label 은 cmdk 가 덮거나(List → 'Suggestions') 가린다(Input → 루트 라벨 labelledby).
+            searchable-select.tsx 함정 ④⑤ · multi-select.test.ts */}
+        <Command loop label={ariaLabel ? `${ariaLabel} 검색` : '옵션 검색'}>
           {withSearch && <CommandInput placeholder="검색" aria-label={ariaLabel ? `${ariaLabel} 검색` : '옵션 검색'} className="h-9 py-2 text-[13.5px]" />}
-          <CommandList className="max-h-[280px] p-1" aria-label={ariaLabel} aria-multiselectable="true">
+          <CommandList className="max-h-[280px] p-1" label={ariaLabel ?? '옵션 목록'} aria-multiselectable="true">
             {withSearch && <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>}
             {items.map((o) => {
               const on = value.includes(o.value);
               return (
-                <CommandItem key={o.value} value={o.label} onSelect={() => toggle(o.value)} aria-checked={on} className="py-1.5 gap-2">
+                // cmdk 식별자 = 값(유일), 라벨은 검색 키워드 — 라벨을 식별자로 쓰면 같은 라벨·다른 값 옵션이 한 항목으로 묶인다(함정 ③)
+                <CommandItem key={o.value} value={o.value} keywords={o.value !== o.label ? [o.label] : undefined} onSelect={() => toggle(o.value)} aria-checked={on} className="py-1.5 gap-2">
                   {/* 표시용 — 상태는 항목(option)의 aria-checked 가 전달한다. 클릭은 항목이 받는다 */}
                   <Checkbox checked={on} tabIndex={-1} aria-hidden className="pointer-events-none" />
                   <span className="flex-1 truncate">{o.label}</span>
