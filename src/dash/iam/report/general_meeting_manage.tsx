@@ -25,7 +25,7 @@ import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SuppressKeyboardEventParams, SelectionChangedEvent } from 'ag-grid-community';
+import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SuppressKeyboardEventParams, SelectionChangedEvent, RowClassParams } from 'ag-grid-community';
 import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
@@ -34,6 +34,7 @@ import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
 import { ConfirmCombo, uniformConfirm } from '../../confirm_combo';
+import type { ConfirmPick } from '../../confirm_combo';
 import { GeneralMeetingDetailModal } from './general_meeting_detail_modal';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
@@ -58,8 +59,8 @@ export interface MeetingRow {
   gt: string;                   // 총회구분
   gdate: string;                // 총회일자 'YYYY-MM-DD'
   title: string; agenda: string;
-  sch: '' | '확정' | '미확정';  // 일정 확정여부('' = 미선택, 목업의 빈 option)
-  res: '' | '확정' | '미확정';  // 결과 확정여부(sch==='확정'일 때만 의미)
+  sch: '' | ConfirmPick;        // 일정 확정여부('' = 미선택, 목업의 빈 option). '제외' = 선택 바 콤보에서만 지정(2026-11-02)
+  res: '' | ConfirmPick;        // 결과 확정여부(sch==='확정'일 때만 의미). '제외' 동상
   detail: MeetingDetail;
 }
 
@@ -68,6 +69,7 @@ const STATUS_TONE: Record<MeetingStatus, Tone> = { 일정: 'info', 결과: 'succ
 
 /* 확정여부 옵션 — 목업 `selCell`의 ['확정','미확정'] */
 const CONFIRM_OPTIONS = ['확정', '미확정'] as const;
+const EXCLUDED = '제외';   // 선택 바 콤보 3번째 값(confirm_combo withExclude)
 
 /* 총회구분 옵션 — 목업 검색박스 8종 그대로 */
 const GT_OPTIONS = ['정기총회', '임시총회', '간담회', '보고회', '결성총회', '해산총회', '청산총회', '기타'];
@@ -200,10 +202,12 @@ const makeColumns = (
   { field: 'title', headerName: '제목', flex: 1, minWidth: 240, width: 240, suppressAutoSize: true, cellStyle: flexCenter,
     cellRenderer: (p: any) => <LinkCell value={p.value} hint="총회 상세 보기" onClick={() => p.data && openDetail(p.data.id)} /> },
   txt('agenda', '안건', 170, 300, 130),
-  /* 일정 확정여부 — 변경 시 sch가 '확정'이 아니게 되면 res도 ''로 리셋(목업 resultCell 게이팅과 정합) */
+  /* 일정 확정여부 — 변경 시 sch가 '확정'이 아니게 되면 res도 ''로 리셋(목업 resultCell 게이팅과 정합 — '제외'도 같다).
+     '제외'는 select 대신 muted 배지(보고대상 아님). 셀 select 엔 '제외' 옵션이 없다 — 지정·해제는 선택 바 콤보에서 */
   { field: 'sch', headerName: '일정 확정여부', ...fixed(124), cellStyle: flexCenter, suppressKeyboardEvent: suppressFromSelect,
-    cellRenderer: (p: any) => (
-      <SelectCell
+    cellRenderer: (p: any) => (p.value === EXCLUDED
+      ? <StatusBadge tone="muted" label={EXCLUDED} size="lg" />
+      : <SelectCell
         value={p.value ?? ''} label={`일정 확정여부 ${p.data?.no}행`}
         onChange={(v) => p.data && patchRow(p.data.id, v === '확정' ? { sch: v } : { sch: v as MeetingRow['sch'], res: '' })} />
     ) },
@@ -216,6 +220,7 @@ const makeColumns = (
     valueGetter: (p) => (p.data && p.data.sch === '확정' ? p.data.res : null),
     cellRenderer: (p: any) => (p.value == null
       ? <span style={{ color: 'var(--muted-foreground)' }}>-</span>
+      : p.value === EXCLUDED ? <StatusBadge tone="muted" label={EXCLUDED} size="lg" />
       : <SelectCell value={p.value} label={`결과 확정여부 ${p.data?.no}행`} onChange={(v) => p.data && patchRow(p.data.id, { res: v as MeetingRow['res'] })} />) },
 ];
 
@@ -263,7 +268,14 @@ const ROW_SELECTION = {
   enableClickSelection: false,
 } as const;
 
-type Confirm = typeof CONFIRM_OPTIONS[number];
+/* 제외 행 — 연하게(2026-11-02 사용자 요청). 일정·결과 중 하나라도 '제외'면 행 전체 opacity-50
+   (회계 마감양식 삭제 행 `closing_form_manage.tsx` ROW_CLASS_RULES 와 같은 표현). 어느 쪽이 제외인지는 셀 배지가 알린다.
+   모듈 상수 — 렌더마다 새 객체면 그리드가 규칙을 재적용하며 흔들린다 */
+const ROW_CLASS_RULES = {
+  'opacity-50': (p: RowClassParams<MeetingRow>) => p.data?.sch === EXCLUDED || p.data?.res === EXCLUDED,
+};
+
+type Confirm = ConfirmPick;
 
 /* ──────────────────────────────
    메인 컴포넌트
@@ -347,7 +359,9 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
     setRows((prev) => prev.map((r) => (okIds.has(r.id) ? { ...r, ...patch } : r)));
     apiRef.current?.deselectAll();
     const what = kind === 'sch' ? '일정' : '결과';
-    toast.success(`${String(ok.length)}건의 ${what} 확정여부를 '${v}'(으)로 변경했습니다` + (blocked ? ` (일정 미확정 ${String(blocked)}건 제외)` : ''));
+    /* 건너뛴 건 안내는 '건너뜀' — '제외'가 값 이름이 되어 "(… N건 제외)"로 쓰면 두 뜻이 겹친다 */
+    toast.success((v === EXCLUDED ? `${String(ok.length)}건의 ${kind === 'sch' ? '일정을' : '결과를'} 제외했습니다` : `${String(ok.length)}건의 ${what} 확정여부를 '${v}'(으)로 변경했습니다`)
+      + (blocked ? ` (일정이 확정되지 않은 ${String(blocked)}건 건너뜀)` : ''));
   };
 
   const onPaginationChanged = useCallback(() => {
@@ -374,8 +388,8 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
   const selActions = selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
-      <ConfirmCombo label="일정" value={selSch} onPick={(v) => bulkSet('sch', v)} />
-      <ConfirmCombo label="결과" value={selRes} onPick={(v) => bulkSet('res', v)} />
+      <ConfirmCombo label="일정" value={selSch} onPick={(v) => bulkSet('sch', v)} withExclude />
+      <ConfirmCombo label="결과" value={selRes} onPick={(v) => bulkSet('res', v)} withExclude />
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;
@@ -444,6 +458,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
           isExternalFilterPresent={isExternalFilterPresent}
           doesExternalFilterPass={doesExternalFilterPass}
           onModelUpdated={dropHiddenSelection}   // 수정·단계 전이로 선택 행이 조건 밖에 나가면 선택 해제(2026-10-27)
+          rowClassRules={ROW_CLASS_RULES}        // 제외 행 연하게
           onGridReady={onGridReady}
           onPaginationChanged={onPaginationChanged}
           onCellKeyDown={onCellKeyDown}
