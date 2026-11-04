@@ -234,7 +234,7 @@ export const schema: PageSchema = {
   - 강제 조회(`readOnly` prop — 미결계정 전표상세) — 위 + 기능·작성 도움말 숨김, 제목 `전표상세`.
   - 삭제 모드(`mode:'deleted'` — 삭제전표 상세) — 위 + 분개 그리드 도구·행 선택 열·[검색]·업로드 안내 미렌더, 필수 `*` 미표시(모듈 상수는 두고 렌더에서만 `required:false`), 상단 `Alert` 배너, 하단 [복원]·[닫기].
 - **확인 후 바깥 화면 닫기 순서**(삭제전표 [복원]): AlertDialog Action 은 `restoredRef.current = true; onRestore()` 만 하고, AlertDialog `onOpenChange(false)`(닫힘) 에서 ref 를 보고 `dlgRef.current?.close()` — 두 다이얼로그의 exit 가 겹치지 않는다. 호출부는 상세에 넘기는 행을 modal state **스냅샷**으로 들어, 목록에서 행이 빠져도 exit 동안 내용이 남게 한다.
-- 화면 전용 단축키(⌥S 저장 등)는 [[apfs-hotkeys]] 레지스트리에 등록하고 `{ enabled: !readOnly && 하위 팝업 없음 }` 으로 건다. 목록 화면의 ⌘P·⌥D 바인딩은 이 화면이 열린 동안 `enabled: !entry` 로 끈다. 목록 툴바 조회 IconBtn(⌥R)은 `enabled` prop 이 없어 `hotkey={entry || uploadOpen ? undefined : HOTKEYS.refresh}` 로 푼다(일반전표 관리). ⌥ 화면 단축키는 입력칸 포커스 중엔 무시되므로(훅 규약) 화면 도움말에 '입력칸 밖에서 동작'을 적는다(전표등록 `HELP_ROWS`).
+- 화면 전용 단축키(⌥S 저장 등)는 [[apfs-hotkeys]] 레지스트리에 등록하고 `{ enabled: !readOnly && 하위 팝업 없음 }` 으로 건다. 목록 화면의 ⌘P·⌥D 바인딩은 이 화면이 열린 동안 `enabled: !entry` 로 끈다. 목록 툴바 조회 IconBtn(⌥R)은 `enabled` prop 이 없어 `hotkey={entry || uploadOpen ? undefined : HOTKEYS.refresh}` 로 푼다(일반전표 관리). ⌥ 화면 단축키는 입력칸 포커스 중엔 무시되므로(훅 규약) 화면 도움말에 '입력칸 밖에서 동작'을 적는다(전표등록 `HELP_ROWS`). 체크 행이 있어야 의미 있는 단축키(⌥↑·⌥↓ 행 이동)는 `{ enabled: hk.enabled && checked.size > 0 }` 로 조건을 걸어, 대상이 없을 땐 키를 가로채지 않는다.
 - 본문 그리드(분개)는 [[apfs-aggrid]] "페이지 편집 그리드 — 저장형 I/U/D" 의 형제 관용구를 따른다.
 
 ## 읽기전용 명세(kv) 그리드 — 라벨 배열 규약 (2026-09-08 사용자 확정)

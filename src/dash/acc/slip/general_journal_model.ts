@@ -178,6 +178,12 @@ export function copyPrevMemo(lines: EntryLine[], targetKey?: string | null): Ent
   const memo = lines[i - 1].memo;
   return lines.map((l, k) => (k === i ? { ...l, memo } : l));
 }
+/** ⌥I 행 삽입 — 대상 행 바로 위에 빈 행. 대상이 없으면 그대로(결산양식 관리 insertAbove 와 같은 규칙) */
+export function insertBlankAbove(lines: EntryLine[], targetKey?: string | null): EntryLine[] {
+  const i = targetKey ? lines.findIndex((l) => l.key === targetKey) : -1;
+  if (i < 0) return lines;
+  return [...lines.slice(0, i), emptyLine(), ...lines.slice(i)];
+}
 
 /* ── 계정과목·거래처 반영 ── */
 export const findAccount = (code: string): AccountItem | undefined => ACCOUNTS.find((a) => a.code === code.trim());

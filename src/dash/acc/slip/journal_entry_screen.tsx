@@ -22,7 +22,7 @@
      (중첩 fieldset 은 안쪽을 다시 켤 수 없어 ③ 은 감싸지 않는다 — 감싸는 래퍼는 이 모드에서만 렌더해 다른 모드 DOM 은 그대로).
      분개 그리드 도구·행 선택 체크박스 열·셀 [검색] 버튼 미노출(설계서는 '비활성 표시'지만 분개가 읽기 전용이라 사용자 결정으로 숨김 —
      삭제전표 상세와 같은 처리: viewOnlyGrid). 잠긴 영역 컨트롤은 fieldset 으로 전부 :disabled(Tab·클릭 불가)이고 모양도 삭제전표 상세와 같다,
-     필수 `*` 미표시, ⌥ 단축키 전부 끔(설계서 "비활성" — ⌥K·⌥Z·⌥C 는 fieldset 을 우회한다).
+     필수 `*` 미표시, ⌥ 단축키 전부 끔(설계서 "비활성" — ⌥K·⌥Z·⌥C·⌥I·⌥↑·⌥↓·⌥+ 는 fieldset 을 우회한다).
    - 조회 전용 = 회색 비활성 통일(2026-11-02 사용자 결정). 위 조회 전용 경로(mode 'deleted' · readOnly prop · isReadOnlyEntry · 'evidence' 잠금 영역)의
      disabled 입력·select·textarea·팝오버 트리거를 전표구분·작성자(readonly 칸)와 같은 var(--muted)/var(--muted-foreground) 로 칠한다.
      규칙은 journal_entry_screen.css 한 곳 — 조회 전용 fieldset 에만 붙는 data-ro-lock 으로 스코프(편집 모드의 disabled 칸
@@ -32,7 +32,8 @@
      ⚠ 의존 방향: 이 공용 화면(ACC-003)이 ACC-006 모듈(missing_evidence_upload·missing_evidence_model 의 EvidenceUpload·EVIDENCE_MSG·validateEvidence)을
        import 한다(역방향). 'evidence' 모드 변경은 ACC-003 번들·회귀 범위에 함께 묶인다 — 다른 화면이 같이 쓰게 되면 중립 모듈로 올린다.
    - 금액 `+` 키 = ×1,000. 설계서의 `-`(÷?)는 음수(마이너스전표) 입력과 충돌해 구현하지 않음.
-   - 단축키 ⌥S·⌥K·⌥Z·⌥C 는 공용 훅 특성상 입력창 포커스 중엔 무시된다(공용 훅 수정 안 함). ⌥S 는 SaveButton 을 거치지 않아 스피너 없이 즉시 저장.
+   - 단축키 ⌥S·⌥K·⌥Z·⌥C·⌥I·⌥↑·⌥↓·⌥+ 는 공용 훅 특성상 입력창 포커스 중엔 무시된다(공용 훅 수정 안 함).
+     설계서 Alt+A(행 삽입)·Alt+R(행 이동)·'마지막 행에서 ↓'(행 추가)는 사용자 지정 ⌥I·⌥↑·⌥↓·⌥+ 로 대신한다(2026-11-04). ⌥S 는 SaveButton 을 거치지 않아 스피너 없이 즉시 저장.
    - 계정과목 [검색]/키워드+Enter = 회계 공용 AccountSearchModal(입력여부 Y 만 선택 가능).
    - 거래처 [검색]/키워드+Enter = PartnerSearchModal(청크 C). 거래처 원장·간편추가는 페이지가 소유(partners·onAddPartner) —
      간편추가 거래처가 페이지 수명 동안 남고 업로드 거래처코드 해석에도 쓰인다. 반영 = 거래처명·관리번호·계좌번호. */
@@ -70,7 +71,7 @@ import { EvidenceUpload } from './missing_evidence_upload';   // 증빙첨부(AC
 import { EVIDENCE_MSG, validateEvidence } from './missing_evidence_model';
 import type { EvidenceCheck } from './missing_evidence_model';
 import {
-  AGGREGATE_ACCOUNT_MSG, ENTRY_MSG, applyAccountTo, applyPartnerTo, applyRepMemo, copyLastAppend, copyPrevMemo, deleteBlank, deleteChecked,
+  AGGREGATE_ACCOUNT_MSG, ENTRY_MSG, applyAccountTo, applyPartnerTo, applyRepMemo, copyLastAppend, copyPrevMemo, insertBlankAbove, deleteBlank, deleteChecked,
   duplicateChecked, emptyLine, entryTotals, formFromEntry, formSnapshot, formToJournal, formatAmount, isReadOnlyEntry, lineDiff, missingCode,
   moveChecked, parseAmount, resolveCode, syncMemo, times1000, validateEntry, withAutoRow,
 } from './general_journal_model';
@@ -502,19 +503,28 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
   };
 
   /* ── 단축키 — 화면 open·입력 가능·확인창 없음일 때만 ── */
-  /* 증빙첨부는 설계서상 단축키 비활성 — ⌥K·⌥Z·⌥C 는 fieldset 을 거치지 않고 분개를 바꾸므로 반드시 끈다 */
+  /* 증빙첨부는 설계서상 단축키 비활성 — ⌥K·⌥Z·⌥C·⌥I·⌥↑·⌥↓·⌥+ 는 fieldset 을 거치지 않고 분개를 바꾸므로 반드시 끈다 */
   const hk = { enabled: !readOnly && !evidence && !confirmClose && !acctSearch && !partnerSearch };
   /* ⌥S — 저장 진행 중(SaveButton busy)이면 무시(submit 이 savingRef 로 막는다) */
   useHotkey(HOTKEYS.journalSave.combo, () => { const c = submit('stay'); if (typeof c === 'function') c(); }, hk);
   useHotkey(HOTKEYS.journalCopyLast.combo, () => setLines(copyLastAppend), hk);
   useHotkey(HOTKEYS.journalDeleteRows.combo, removeChecked, hk);
   useHotkey(HOTKEYS.journalCopyMemo.combo, () => setLines((ls) => copyPrevMemo(ls, lastRowKey.current)), hk);
+  /* ⌥I — 마지막으로 포커스한 행(체크박스 클릭 포함) 바로 위에 빈 행. 대상이 없으면 무동작 */
+  useHotkey(HOTKEYS.journalInsertRow.combo, () => setLines((ls) => insertBlankAbove(ls, lastRowKey.current)), hk);
+  /* ⌥↑·⌥↓ = [위로이동]·[아래로이동](체크 행). 체크 행이 없으면 가로채지 않는다 — 키가 그대로 지나가 스크롤 등 기본 동작이 산다 */
+  const hkMove = { enabled: hk.enabled && checked.size > 0 };
+  useHotkey(HOTKEYS.journalMoveUp.combo, () => setLines((ls) => moveChecked(ls, checked, -1)), hkMove);
+  useHotkey(HOTKEYS.journalMoveDown.combo, () => setLines((ls) => moveChecked(ls, checked, 1)), hkMove);
+  /* ⌥+ = [행추가](끝에 빈 행). 설계서 '마지막 행에서 ↓' 대체(2026-11-04 사용자 지정) */
+  useHotkey(HOTKEYS.journalAddRow.combo, () => setLines((ls) => [...ls, emptyLine()]), hk);
 
   const HELP_ROWS: [string, string][] = [
     ['전표 임시저장', HOTKEYS.journalSave.hint], ['이전 적요 복사', HOTKEYS.journalCopyMemo.hint],
-    ['마지막행 복사 및 추가', HOTKEYS.journalCopyLast.hint], ['행 추가', '마지막 행에서 ↓ (미지원 — [행추가] 사용)'],
-    ['행 삭제', HOTKEYS.journalDeleteRows.hint], ['행 삽입', HOTKEYS.showAll.hint + ' (미지원 — 전역 단축키와 충돌)'],
-    ['행 이동', HOTKEYS.refresh.hint + ' (미지원 — 전역 단축키와 충돌)'], ['저장 버튼으로 이동', '차액에서 Enter (미지원)'],
+    ['마지막행 복사 및 추가', HOTKEYS.journalCopyLast.hint], ['행 추가', HOTKEYS.journalAddRow.hint],
+    ['행 삭제', HOTKEYS.journalDeleteRows.hint], ['행 삽입', HOTKEYS.journalInsertRow.hint],
+    ['행 이동(위)', HOTKEYS.journalMoveUp.hint], ['행 이동(아래)', HOTKEYS.journalMoveDown.hint],
+    ['저장 버튼으로 이동', '차액에서 Enter (미지원)'],
     ['계정과목 자동 선택', '계정코드 + Tab'], ['계정과목 검색', '키워드 + Enter'],
     ['1,000단위 입력', '금액에서 +'], ['적요 자동 입력', '대표 적요 입력 시'],
     ['행 자동 추가', '차액 발생 시 1행'],
