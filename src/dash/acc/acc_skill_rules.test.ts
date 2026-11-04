@@ -12,6 +12,8 @@ const LIST_PAGES = [
   'account_code_manage.tsx', 'closing_form_manage.tsx',
   'general_journal_manage.tsx', 'deleted_journal_manage.tsx', 'suspense_manage.tsx',
   'missing_evidence_manage.tsx', 'journal_search_manage.tsx',
+  /* 고정자산(ACC-018) */
+  'depreciation_manage.tsx',
   /* 장부조회(ACC-009~014) — 재무상태표·손익계산서는 단축키가 공용 골격 statement_kit 에 있다 */
   'daily_monthly_manage.tsx', 'subledger_manage.tsx', 'general_ledger_manage.tsx', 'trial_balance_manage.tsx', 'statement_kit.tsx',
 ];

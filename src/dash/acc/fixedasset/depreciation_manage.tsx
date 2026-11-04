@@ -4,13 +4,14 @@
    설계서 → 우리 규약
    - 제목·브레드크럼 = 메뉴 리프 라벨 "감가상각비처리"(설계서 "결산관리 > 결산보정 > 감가상각" 표기는 따르지 않음) · KPI 배지 행 미포함(kpis 미전달).
    - 계정구분(필수) = 툴바 주 필터 칩(GridFrame `filterChips` `required: true`, '전체' 칩 없음, 기본 첫 계정구분 — closing_form_manage 관용구).
-   - 기준년월 = 툴바 PeriodPicker(month) 1곳, 기본값 현재월 − 1(slide 9 구성1·slide 10 ②). 칩 뒤에 오도록 toolbarRight 맨 앞에 둔다
-     (toolbarLeft 는 칩 앞에 그려지고 overflow-hidden 이라 순서가 설계서와 뒤집힌다). 빈 값으로 지울 수 없다(같은 달 재클릭 무시).
-   - 상세필터 드로어 없음 — 설계서 조건이 기준년월 1개뿐이라 툴바와 중복된다(slide 6 "조건 4개 이상" · daily_close 선례).
-     slide 11 상세필터 기본값 '당월'과 툴바 '현재월 − 1'이 모순 → 툴바 값을 따른다.
-   - 툴바 우: 기준년월 · [계정과목 설정](E03, outline) · [그리드 저장](E02, SaveButton — closing_form 처럼 조회 바로 왼쪽) · 조회(E04, IconBtn — 맨 끝).
+   - 기준년월(E01) = **상세필터 드로어에서만** 편집(툴바 날짜칸 없음 — general_journal_manage 기간 관용구). PeriodPicker month + DrawerField plain.
+     기본값 현재월 − 1(slide 9 구성1·slide 10 ② — slide 11 상세필터 기본값 '당월'과 모순, 개요·툴바 쪽을 따름).
+     드로어는 **즉시 반영**(값을 바꾸는 순간 목록·칩 반영, [필터 적용]은 닫기만 — account_code_manage 관용구, draft 없음). [초기화] = 기본값.
+     적용 칩 '2026-10' 은 기본값으로 시작하고, 필수 조건이라 × 는 해제가 아니라 기본값 복원이다. 빈 값으로 지울 수 없다(같은 달 재클릭 무시).
+   - 툴바 우: [상세필터] · [그리드 저장 │ ▾ 계정과목 설정](공용 SplitButton — 본체 = E02, ▾ 메뉴 = E03) · 조회(E04, IconBtn — 맨 끝).
+     SplitButton 은 busy(…중 스왑)가 없어 그리드 저장(덮어쓰기 아님)은 클릭 즉시 반영 + 토스트(형제 SplitButton 본체도 지연 없음).
+     덮어쓰기 확인창의 [확인]은 SaveButton(저장 중 스왑).
    - 그리드 체크박스 + 12열(자산유형 · 자산번호 · 자산명 · 취득일 · 종료일 · 내용년수 · 상각구분 · 전기말상각누계액 · 상각액 · 미상각잔액 · 취득금액 · 저장여부).
-     1100px 이하에선 '기준년월' 글자와 [계정과목 설정] 라벨을 sr-only 로 숨긴다(daily_close 관용구) — 툴바가 한 줄이라 768px 에서 계정구분 칩이 0폭으로 눌렸다(실측).
      금액·내용년수(수량)는 우측, 나머지 좌측. 저장여부 = 배지(여 success · 부 muted). 합계행 없음(설계서에 없다).
    - 행 선택(E05) 체크박스만(multiRow) → 선택 바 [삭제] · [선택 해제]. 더블클릭(E07)은 조회 전용이라 배선하지 않는다.
    - 푸터 = 새 창(E09) · 내보내기(E10, ⌥D) · 인쇄(푸터 4종 규약). "인쇄·다운로드 권한 보유자만 노출"은 RBAC 미구현이라 항상 노출.
@@ -19,7 +20,7 @@
    - 상각액·전기말 누계·미상각잔액은 조회 때마다 계산한다(depreciation_model). 기준년월 이후 취득 자산은 목록 제외, 종료일이 지난 자산은 상각액 0.
    - 저장·삭제 원장은 기간 키(계정구분 + 기준년월)별 state — 다른 기간으로 갔다 와도 저장여부 '여'·삭제가 유지된다. [조회]는 삭제를 되살리지 않는다.
    - E02 저장 대상 = 현재 조회된 전체 행(선택과 무관 — 설계서 "일괄 저장"). 0건 → "저장할 내역이 없습니다." · 이미 저장된 행이 섞이면 덮어쓰기 확인.
-     저장 기간 키·행은 클릭 시점에 잡는다(저장 지연 중 조건이 바뀌어도 누른 기간에 쓴다).
+     덮어쓰기 확인은 연 시점의 기간 키·행을 들고 있다(확인 지연 중 조건이 바뀌어도 그 기간에 쓴다).
    - E06 삭제 = 그 기간 계산 결과에서 행 제거(논리삭제). "자산 삭제"인지는 설계서 미결 — PM 확인.
    - 계정과목 설정 매핑은 화면 state(새로고침하면 기본값). 한계: 백엔드가 없어 저장·삭제는 화면 안에서만 유지된다. */
 import '../../aggrid_shared.css';
@@ -32,6 +33,8 @@ import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, AUTO_SIZE_CONTENT, numFmt } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';
 import { controlMinWidth } from '../../schemas/renderers';
+import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
+import { SplitButton } from '../../ui/split-button';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel } from '../../ui/alert-dialog';
 import { PeriodPicker } from '../../ui/period-picker';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
@@ -81,6 +84,16 @@ const EXPORT_COLS: XCol[] = [
   { header: '취득금액', get: (r) => r.cost, num: true, wch: 18 }, { header: '저장여부', get: (r) => r.saved, wch: 9 },
 ];
 
+/* plain=<div> 래퍼 — PeriodPicker(버튼 트리거)는 <label> 안에서 2회 토글된다(apfs-datepicker) */
+function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
+  const Wrap: any = plain ? 'div' : 'label';
+  return (
+    <Wrap className="block mb-4">
+      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
+      {children}
+    </Wrap>
+  );
+}
 const monthWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('month'), maxWidth: '100%' };
 
 type ModalState = null
@@ -91,7 +104,9 @@ type ModalState = null
 export function DepreciationManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<DeprRow> | null>(null);
   const [account, setAccount] = useState<DeprFundAccount>(DEPR_FUND_ACCOUNTS[0]);
-  const [ym, setYm] = useState(() => defaultYm(todayStr()));
+  const baseYm = useMemo(() => defaultYm(todayStr()), []);
+  const [ym, setYm] = useState(baseYm);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [saved, setSaved] = useState<PeriodLedger>({});
   const [deleted, setDeleted] = useState<PeriodLedger>({});
   const [mapping, setMapping] = useState<readonly AcctMapping[]>(DEFAULT_MAPPING);
@@ -114,23 +129,23 @@ export function DepreciationManage({ onNav }: { onNav?: (r: string) => void }) {
 
   /* 계정구분 칩(필수) — active 칩 재클릭은 무시 */
   const changeAccount = (a: DeprFundAccount) => { if (a !== account) setAccount(a); };
-  /* 기준년월 — 같은 달 재클릭(빈 값)은 무시해 항상 값이 있다 */
+  /* E01 기준년월(상세필터, 즉시 반영) — 같은 달 재클릭(빈 값)은 무시해 항상 값이 있다 */
   const changeYm = (v: string) => { if (v) setYm(v); };
+  const resetYm = () => setYm(baseYm);   // 드로어 [초기화] · 적용 칩 × = 기본값(필수 조건이라 해제 없음)
 
   /* E04 조회 — 현재 조건으로 재계산(rows 는 조건·원장에서 파생). 삭제한 행은 되살리지 않는다 */
   const refresh = () => { clearSel(); toast.success(MSG.queried); };
 
-  /* E02 그리드 저장 — SaveButton 계약: 0건·덮어쓰기 확인 = undefined(스피너 없음), 통과 = commit */
+  /* E02 그리드 저장(SplitButton 본체) — 0건 = 안내 · 저장된 행 포함 = 덮어쓰기 확인 · 그 밖 = 즉시 저장 */
   const commitGridSave = (k: string, rs: readonly DeprRow[]) => {
     setSaved((s) => commitSave(s, k, rs));
     toast.success(MSG.saved);
   };
   const saveGrid = () => {
     const gate = saveGate(rows);
-    if (gate === 'empty') { toast.info(MSG.emptySave); return undefined; }
-    const k = key, snapshot = rows;   // 클릭 시점 기간·행
-    if (gate === 'overwrite') { setModal({ kind: 'overwrite', key: k, rows: snapshot }); return undefined; }
-    return () => commitGridSave(k, snapshot);
+    if (gate === 'empty') { toast.info(MSG.emptySave); return; }
+    if (gate === 'overwrite') { setModal({ kind: 'overwrite', key, rows }); return; }
+    commitGridSave(key, rows);
   };
 
   /* E06 삭제 — 선택 행 다건 허용, 확인 후 그 기간 계산 결과에서 논리삭제 */
@@ -161,9 +176,9 @@ export function DepreciationManage({ onNav }: { onNav?: (r: string) => void }) {
     XLSX.writeFile(wb, `${LABEL}_${ym}.xlsx`);
     toast.success('Excel로 내보냈습니다');
   };
-  /* 모달·확인창이 덮고 있으면 뒤 그리드 인쇄·내보내기 단축키를 끈다(⌘P 는 입력창에서도 발화). 상세필터 드로어는 없다 */
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null, skipInDialog: true });
+  /* 모달·확인창·상세필터가 덮고 있으면 뒤 그리드 인쇄·내보내기 단축키를 끈다(⌘P 는 입력창에서도 발화) */
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null && !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
 
   const selActions = selIds.length > 0 ? (
     <>
@@ -182,14 +197,13 @@ export function DepreciationManage({ onNav }: { onNav?: (r: string) => void }) {
       /* 툴바 좌 = 주 필터 칩(계정구분, 필수라 '전체' 없음 · 칩 안 `*` 필수 표시) */
       filterChips={DEPR_FUND_ACCOUNTS.map((a) => ({ key: a, label: a, active: account === a, onSelect: () => changeAccount(a), required: true }))}
       contextActions={selActions}
+      /* 기준년월 칩 — 기본값으로 시작. × = 기본값 복원(필수 조건) */
+      appliedFilters={[{ label: '기준년월', value: ym, onClear: resetYm }]}
       toolbarRight={<>
-        <span className="inline-flex items-center gap-1.5" style={{ marginRight: 4 }}>
-          <span className="font-semibold text-muted-foreground max-[1100px]:sr-only" style={{ fontSize: 12.5 }}>기준년월</span>
-          <div style={monthWrap}><PeriodPicker mode="month" value={ym} onChange={changeYm} ariaLabel="기준년월" /></div>
-        </span>
-        <Button variant="outline" size="sm" leadingIcon="settings" onClick={() => setModal({ kind: 'account' })}><span className="max-[1100px]:sr-only">계정과목 설정</span></Button>
-        <SaveButton onSubmit={saveGrid} busyLabel="저장 중">그리드 저장</SaveButton>
-        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={modal ? undefined : HOTKEYS.refresh} />
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
+        <SplitButton label="그리드 저장" leadingIcon="check" menuLabel="감가상각 작업 더보기" onClick={saveGrid}
+          items={[{ label: '계정과목 설정', icon: 'settings', onSelect: () => setModal({ kind: 'account' }) }]} />
+        <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={modal || filterOpen ? undefined : HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{`총 ${String(rows.length)}건 중 ${String(rows.length)}건 표시`}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
@@ -212,6 +226,26 @@ export function DepreciationManage({ onNav }: { onNav?: (r: string) => void }) {
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">상각 대상 자산이 없습니다. 계정구분·기준년월을 바꿔 조회하세요.</span>'}
         />
       </div>
+
+      {/* ── E01 상세필터 — 조건 1개(기준년월). 즉시 반영, [필터 적용] = 닫기 ── */}
+      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
+          <SheetHeader>
+            <SheetTitle>상세 필터</SheetTitle>
+            <SheetDescription className="sr-only">감가상각 계산 기준년월을 고르는 상세 필터</SheetDescription>
+            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
+            <DrawerField label="기준년월" plain>
+              <div style={monthWrap}><PeriodPicker mode="month" value={ym} onChange={changeYm} ariaLabel="기준년월" /></div>
+            </DrawerField>
+          </div>
+          <SheetFooter>
+            <Button variant="outline" size="md" onClick={resetYm}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       {/* ── E02 덮어쓰기 확인 — 확인 시 클릭 시점 기간에 재계산 결과로 갱신 ── */}
       {modal?.kind === 'overwrite' && (
