@@ -36,7 +36,11 @@
      설계서 Alt+A(행 삽입)·Alt+R(행 이동)·'마지막 행에서 ↓'(행 추가)는 사용자 지정 ⌥I·⌥↑·⌥↓·⌥+ 로 대신한다(2026-11-04). ⌥S 는 SaveButton 을 거치지 않아 스피너 없이 즉시 저장.
    - 계정과목 [검색]/키워드+Enter = 회계 공용 AccountSearchModal(입력여부 Y 만 선택 가능).
    - 거래처 [검색]/키워드+Enter = PartnerSearchModal(청크 C). 거래처 원장·간편추가는 페이지가 소유(partners·onAddPartner) —
-     간편추가 거래처가 페이지 수명 동안 남고 업로드 거래처코드 해석에도 쓰인다. 반영 = 거래처명·관리번호·계좌번호. */
+     간편추가 거래처가 페이지 수명 동안 남고 업로드 거래처코드 해석에도 쓰인다. 반영 = 거래처명·관리번호·계좌번호.
+   - 결산전표(ACC-015 slide 12, closing prop) = 같은 화면 + 차이 3가지. closing 미전달이면 동작·DOM 그대로.
+     ① 헤더 전표발생구분 = 가결산/결산 셀렉트(필수 *, 신규 기본 미선택 '선택') — 일반의 readonly 칸 대신
+     ② 저장 검증 = validateEntry(form, { closing: true })(계정구분·작성일·전표발생구분·계정코드·차액만 — 적요 필수·금액 없는 행 검사 생략)
+     ③ 적요 * 미표시 · 작성 도움말 = 결산전표 안내. 가결산 환원전표 생성·동기화는 페이지(onSave)가 한다(이 화면은 원전표 1건만 넘긴다). */
 import '../../aggrid_shared.css';
 import './journal_entry_screen.css';   // 조회 전용 = 회색 비활성 통일([data-ro-lock] 스코프)
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -63,7 +67,7 @@ import { parseFileNames, fileExtLabel } from '../../fields/file_names';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { toast } from '../../ui/sonner';
 import { BASE_CURRENCY, CURRENCIES, EVIDENCE_TYPES, FUND_ACCOUNTS, FUND_BANK_ACCOUNTS, PARTNERS, PL_DEPTS, PL_EMPLOYEES, todayStr } from './general_journal_data';
-import type { Currency, EvidenceType, FundAccount, JournalRow, Partner } from './general_journal_data';
+import type { Currency, EvidenceType, FundAccount, JournalOrigin, JournalRow, Partner } from './general_journal_data';
 import type { AccountItem } from '../account_data';
 import { AccountSearchModal } from '../account_search_modal';
 import { PartnerSearchModal } from './partner_search_modal';
@@ -90,6 +94,8 @@ const F_WRITER: FieldSpec = { key: 'writer', label: '작성자', control: 'reado
 const F_WDATE: FieldSpec = { key: 'writtenDate', label: '작성일', control: 'date' };
 const F_ORIGIN: FieldSpec = { key: 'origin', label: '전표발생구분', control: 'readonly' };
 const F_MEMO: FieldSpec = { key: 'memo', label: '적요', control: 'textarea', required: true };
+/* 결산전표 전표발생구분 셀렉트 — 옵션 2개라 검색 없는 native select. placeholder 필수(없으면 '' 값이 첫 옵션처럼 보인다 — 숨김 '선택' 옵션으로 미선택 표시) */
+const closingOriginField = (origins: readonly string[]): FieldSpec => ({ key: 'origin', label: '전표발생구분', control: 'select', options: [...origins], required: true, placeholder: '선택' });
 const F_STORAGE: FieldSpec = { key: 'storage', label: '보관위치', control: 'text' };
 const F_DUE: FieldSpec = { key: 'fundDueDate', label: '자금집행예정일', control: 'date' };
 const F_CUR: FieldSpec = { key: 'currency', label: '통화', control: 'select', options: [...CURRENCIES] };
@@ -299,13 +305,19 @@ export interface JournalEntryScreenProps {
   /** 강제 조회 전용(readOnly)·비삭제일 때 하단 [복사]를 [닫기] 앞에 노출 — 누르면 이 콜백 뒤 화면을 닫는다(ACC-008 slide 12).
       복사 등록 화면은 페이지가 onClose(exit 종료 뒤)에서 연다 — 여기서 상위 state 를 바꾸면 exit 애니메이션이 사라진다 */
   onCopy?: () => void;
+  /** 결산전표 관리(ACC-015) — 헤더 전표발생구분 선택지(가결산·결산). 전달하면 결산 변형(위 머리 주석), 미전달이면 일반 그대로 */
+  closing?: { origins: readonly JournalOrigin[] };
 }
 
 type SaveKind = 'stay' | 'submit' | 'close';
 
-export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners = PARTNERS, onAddPartner, readOnly: forceReadOnly = false, hideGridTools = false, onCopy }: JournalEntryScreenProps) {
+export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners = PARTNERS, onAddPartner, readOnly: forceReadOnly = false, hideGridTools = false, onCopy, closing }: JournalEntryScreenProps) {
   const dlgRef = useRef<DialogHandle>(null);
-  const [form, setForm] = useState<EntryForm>(() => formFromEntry(entry, todayStr()));
+  /* 결산전표 신규 = 전표발생구분 미선택('') — 기준선 스냅샷도 같은 값에서 시작한다. EntryForm.origin 타입엔 '' 가 없어 단언 */
+  const [form, setForm] = useState<EntryForm>(() => {
+    const f = formFromEntry(entry, todayStr());
+    return closing && entry.mode === 'new' ? { ...f, origin: '' as JournalOrigin } : f;
+  });
   const [baseline, setBaseline] = useState(() => formSnapshot(form));
   const [mode, setMode] = useState<EntryState['mode']>(entry.mode);
   const [checked, setChecked] = useState<Set<string>>(() => new Set());
@@ -315,6 +327,8 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
   /* 거래처 검색 팝업 대상 행 + 초기 검색어(그 행 거래처 입력값) */
   const [partnerSearch, setPartnerSearch] = useState<{ key: string; keyword: string } | null>(null);
   const readOnly = forceReadOnly || isReadOnlyEntry(mode, form.approval);
+  /* 결산전표 전표발생구분 = 편집 가능하고 값이 미선택·선택지 안일 때만 셀렉트. 조회 전용·환원전표('가결산(환원)')는 F_ORIGIN 읽기 전용 */
+  const originSelect = !!closing && !readOnly && (!form.origin || (closing.origins as readonly string[]).includes(form.origin));
   /* 삭제전표 상세(ACC-004) — 진입 모드가 수명 동안 고정이라 entry 에서 바로 읽는다 */
   const deleted = entry.mode === 'deleted' ? entry : null;
   const [confirmRestore, setConfirmRestore] = useState(false);
@@ -336,6 +350,8 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
   const dirty = !readOnly && formSnapshot(form) !== baseline;
 
   const fundRef = useRef<HTMLDivElement>(null);
+  const originRef = useRef<HTMLDivElement>(null);
+  const wdateRef = useRef<HTMLDivElement>(null);
   const memoRef = useRef<HTMLDivElement>(null);
   const codeRefs = useRef(new Map<string, HTMLInputElement>());
   const lastRowKey = useRef<string | null>(null);
@@ -466,12 +482,14 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
         return undefined;
       }
     }
-    const check = evidence ? ({ ok: true } as EntryCheck) : validateEntry(form);
+    const check = evidence ? ({ ok: true } as EntryCheck) : closing ? validateEntry(form, { closing: true }) : validateEntry(form);
     if (!check.ok) {
       /* strict:false 라 `ok` 판별 유니온이 좁혀지지 않는다 — 실패 분기 타입으로 명시 */
       const v = check as Exclude<EntryCheck, { ok: true }>;
       toast.error(v.message);
       if (v.field === 'fundAccount') focusIn(fundRef.current);
+      else if (v.field === 'writtenDate') focusIn(wdateRef.current);
+      else if (v.field === 'origin') focusIn(originRef.current);
       else if (v.field === 'memo') focusIn(memoRef.current);
       else if (v.field === 'accountCode') codeRefs.current.get(v.rowKey)?.focus();
       else if (v.field === 'amount') {
@@ -486,7 +504,10 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
     return () => {
       savingRef.current = false;
       const saved = onSave ? onSave(journal, { submit: kind === 'submit' }) : journal;
-      toast.success(evidence ? EVIDENCE_MSG.saved : ENTRY_MSG.saved, kind === 'submit' ? { description: '결재 상신되었습니다' } : undefined);
+      /* 결산전표 가결산 = 환원전표 포함 2건(slide 12 저장 결과) — 상신 안내와 함께 description 으로 */
+      const pairNote = closing && journal.origin === '가결산' ? '가결산 환원전표 포함 2건' : '';
+      if (pairNote) toast.success(ENTRY_MSG.saved, { description: kind === 'submit' ? `${pairNote} · 결재 상신되었습니다` : pairNote });
+      else toast.success(evidence ? EVIDENCE_MSG.saved : ENTRY_MSG.saved, kind === 'submit' ? { description: '결재 상신되었습니다' } : undefined);
       if (kind === 'stay' && evidence) {
         /* 증빙첨부 — 화면 유지, 모드 그대로(edit 로 바꾸면 제목이 바뀌고 상신·승인 전표는 조회 전용으로 잠긴다). 기준선만 갱신 */
         setBaseline(formSnapshot(base));
@@ -544,7 +565,7 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
         onEscapeKeyDown={(e) => { e.preventDefault(); if (!confirmClose && !confirmRestore && !acctSearch && !partnerSearch) requestClose(); }}>
         <DialogHeader className="px-6">
           <DialogTitle>{forceReadOnly ? VIEW_TITLE : TITLE[mode]}</DialogTitle>
-          <DialogDescription className="sr-only">{deleted || forceReadOnly ? '전표의 헤더·분개·증빙·관리항목 — 조회 전용' : evidence ? '전표의 증빙·첨부만 입력합니다 — 헤더·분개·관리항목은 조회 전용' : '일반전표의 헤더·분개·증빙·관리항목을 입력합니다'}</DialogDescription>
+          <DialogDescription className="sr-only">{deleted || forceReadOnly ? '전표의 헤더·분개·증빙·관리항목 — 조회 전용' : evidence ? '전표의 증빙·첨부만 입력합니다 — 헤더·분개·관리항목은 조회 전용' : closing ? '결산전표의 헤더·분개·증빙·관리항목을 입력합니다' : '일반전표의 헤더·분개·증빙·관리항목을 입력합니다'}</DialogDescription>
           <IconBtn icon="x" label="닫기" size={34} onClick={requestClose} />
         </DialogHeader>
 
@@ -586,12 +607,23 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
                     <Field label={F_KIND.label}><SchemaField field={F_KIND} value={form.slipKind} onChange={() => undefined} /></Field>
                     <Field label={F_WRITER.label}><SchemaField field={F_WRITER} value={form.writer} onChange={() => undefined} /></Field>
                     <Field label={F_WDATE.label} plain={isPlainWrapControl(F_WDATE.control)}>
-                      <SchemaField field={F_WDATE} value={form.writtenDate} onChange={(v) => set('writtenDate', v)} />
+                      {/* 결산전표만 작성일 검증 초점용 래퍼(closing 미전달 DOM 그대로) */}
+                      {closing
+                        ? <div ref={wdateRef}><SchemaField field={F_WDATE} value={form.writtenDate} onChange={(v) => set('writtenDate', v)} /></div>
+                        : <SchemaField field={F_WDATE} value={form.writtenDate} onChange={(v) => set('writtenDate', v)} />}
                     </Field>
-                    <Field label={F_ORIGIN.label}><SchemaField field={F_ORIGIN} value={form.origin} onChange={() => undefined} /></Field>
+                    {/* 조회 전용이거나 값이 선택지 밖(환원전표 '가결산(환원)')이면 셀렉트 대신 읽기 전용 표시 — 빈 칸 + * 방지 */}
+                    {originSelect ? (
+                      <Field label="전표발생구분" required plain>
+                        <div ref={originRef}><SchemaField field={closingOriginField(closing?.origins ?? [])} value={form.origin} onChange={(v) => set('origin', v as JournalOrigin)} /></div>
+                      </Field>
+                    ) : (
+                      <Field label={F_ORIGIN.label}><SchemaField field={F_ORIGIN} value={form.origin} onChange={() => undefined} /></Field>
+                    )}
                     <div className="hidden sm:block" />
-                    <Field label={F_MEMO.label} required={!noReq} className="sm:col-span-3">
-                      <div ref={memoRef}><SchemaField field={noReq ? { ...F_MEMO, required: false } : F_MEMO} value={form.memo} onChange={changeMemo} /></div>
+                    {/* 결산전표는 적요 선택 입력(slide 12) */}
+                    <Field label={F_MEMO.label} required={!noReq && !closing} className="sm:col-span-3">
+                      <div ref={memoRef}><SchemaField field={noReq || closing ? { ...F_MEMO, required: false } : F_MEMO} value={form.memo} onChange={changeMemo} /></div>
                     </Field>
                   </div>
                 </Section>
@@ -720,12 +752,23 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
                     </table>
                   </Section>
                   <Section title="작성 도움말">
+                    {closing ? (
+                      <div style={{ fontSize: 13 }}>
+                        <p className="m-0 font-semibold">전표발생구분 필수 선택</p>
+                        <p className="m-0 text-muted-foreground">- 가결산: 저장 시 환원전표 자동 생성</p>
+                        <p className="m-0 mb-2 text-muted-foreground">- 결산: 전표 1건만 생성</p>
+                        <p className="m-0 font-semibold">필수값 예외(결산전표)</p>
+                        <p className="m-0 text-muted-foreground">- 계정과목별 필수입력사항 검증 생략</p>
+                        <p className="m-0 text-muted-foreground">- 차대 일치·계정코드만 검증</p>
+                      </div>
+                    ) : (
                     <div style={{ fontSize: 13 }}>
                       <p className="m-0 font-semibold">계정구분 필수 선택</p>
                       <p className="m-0 mb-2 text-muted-foreground">- 계좌번호 선택 전 계정구분을 먼저 선택</p>
                       <p className="m-0 font-semibold">필수값 지정</p>
                       <p className="m-0 text-muted-foreground">- 계정과목별 필수입력사항은 회계/자금 &gt; 기초관리 &gt; 계정과목에서 설정</p>
                     </div>
+                    )}
                   </Section>
                 </>)}
                 </LockWhen>

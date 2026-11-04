@@ -1,6 +1,6 @@
 /* 일반전표 관리(ACC-003) — 목록 화면 순수 로직. 화면(general_journal_manage.tsx)과 테스트가 공유한다.
    날짜는 전부 'YYYY-MM-DD' 문자열(사전순 = 시간순)로 비교하고, '오늘'은 호출부가 주입한다(테스트 결정성). */
-import { format, startOfMonth, subDays, subMonths } from 'date-fns';
+import { format, isValid, startOfMonth, subDays, subMonths } from 'date-fns';
 import { ACCOUNTS } from '../account_data';
 import type { AccountItem } from '../account_data';
 import { BASE_CURRENCY, CURRENT_USER, JOURNAL_ORIGINS, SLIP_KINDS, lineTotals } from './general_journal_data';
@@ -337,7 +337,7 @@ export const ENTRY_MSG = {
 } as const;
 export type EntryCheck =
   | { ok: true }
-  | { ok: false; field: 'fundAccount' | 'memo' | 'balance' | 'empty'; message: string }
+  | { ok: false; field: 'fundAccount' | 'writtenDate' | 'origin' | 'memo' | 'balance' | 'empty'; message: string }
   | { ok: false; field: 'accountCode' | 'amount'; message: string; rowKey: string };
 
 /** 계정코드가 입력 가능한 계정(ACCOUNTS 에 있고 입력여부 Y)인가 */
@@ -345,15 +345,30 @@ const usableCode = (code: string): boolean => findAccount(code)?.inputYn === 'Y'
 /** 계정코드만 있고 차변·대변이 모두 없는 행 */
 export const missingAmount = (l: JournalLine): boolean => !!l.accountCode.trim() && l.debit == null && l.credit == null;
 
-/** 위→아래 순서: 계정구분 → 적요 → 계정코드 미입력 행 → 계정코드 미존재·집계 행 → 금액 없는 행 → 차액≠0 → (유효 행 0건). 빈 행은 무시 */
-export function validateEntry(f: Pick<EntryForm, 'fundAccount' | 'memo' | 'lines'>): EntryCheck {
+/** 결산전표(ACC-015) 헤더 전표발생구분 미선택 문구 — slide 12 "{항목}을(를) 선택하세요." */
+export const CLOSING_ORIGIN_MSG = '전표발생구분을(를) 선택하세요.';
+/** 결산전표 작성일 미입력·무효 문구 — 같은 관용구. 작성일이 무효면 환원전표 전표일(다음날) 계산이 불가하다 */
+export const CLOSING_WDATE_MSG = '작성일을(를) 선택하세요.';
+/** 'YYYY-MM-DD' 이고 실재하는 날짜인가(2026-02-30 같은 넘침은 거부) */
+const isYmd = (s: string): boolean => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const t = new Date(s + 'T00:00:00');
+  return isValid(t) && format(t, 'yyyy-MM-dd') === s;
+};
+
+/** 위→아래 순서: 계정구분 → 적요 → 계정코드 미입력 행 → 계정코드 미존재·집계 행 → 금액 없는 행 → 차액≠0 → (유효 행 0건). 빈 행은 무시.
+    opts.closing(결산전표 ACC-015 slide 12 — 차대·계정만 검증) = 계정구분 → 작성일(필수·유효) → 전표발생구분 → 계정코드 미입력·미존재 → 차액≠0 → (유효 행 0건).
+    적요 필수·금액 없는 행 검사는 생략(계정과목별 필수입력사항 검증 예외). 미전달이면 기존 검증 그대로 */
+export function validateEntry(f: Pick<EntryForm, 'fundAccount' | 'memo' | 'lines'> & { origin?: string; writtenDate?: string }, opts: { closing?: boolean } = {}): EntryCheck {
   if (!f.fundAccount) return { ok: false, field: 'fundAccount', message: ENTRY_MSG.fundAccount };
-  if (!f.memo.trim()) return { ok: false, field: 'memo', message: ENTRY_MSG.memo };
+  if (opts.closing && !isYmd(f.writtenDate ?? '')) return { ok: false, field: 'writtenDate', message: CLOSING_WDATE_MSG };
+  if (opts.closing && !f.origin) return { ok: false, field: 'origin', message: CLOSING_ORIGIN_MSG };
+  if (!opts.closing && !f.memo.trim()) return { ok: false, field: 'memo', message: ENTRY_MSG.memo };
   const miss = f.lines.find(missingCode);
   if (miss) return { ok: false, field: 'accountCode', message: ENTRY_MSG.accountCode, rowKey: miss.key };
   const bad = f.lines.find((l) => !isBlankLine(l) && !usableCode(l.accountCode));
   if (bad) return { ok: false, field: 'accountCode', message: ENTRY_MSG.badCode, rowKey: bad.key };
-  const noAmt = f.lines.find(missingAmount);
+  const noAmt = opts.closing ? undefined : f.lines.find(missingAmount);
   if (noAmt) return { ok: false, field: 'amount', message: ENTRY_MSG.amount, rowKey: noAmt.key };
   const used = f.lines.filter((l) => !isBlankLine(l));
   if (entryTotals(used).diff !== 0) return { ok: false, field: 'balance', message: ENTRY_MSG.balance };
