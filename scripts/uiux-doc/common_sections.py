@@ -67,6 +67,7 @@ COMMON_HTML = f"""
       <tr><td class="k"><kbd>⌥D</kbd></td><td>엑셀 내보내기</td><td>리스트 화면</td></tr>
       <tr><td class="k"><kbd>⌘P</kbd></td><td>인쇄 — 표(그리드)만, 라이트 테마로 찍는다(<a href="#print">인쇄·출력</a>)</td><td>리스트 화면</td></tr>
       <tr><td class="k"><kbd>⌥A</kbd> <kbd>⌥O</kbd></td><td>전체보기(한 페이지에 모두) · 새 창</td><td>리스트 화면 푸터</td></tr>
+      <tr><td class="k"><kbd>⌥S</kbd> <kbd>⌥K</kbd> <kbd>⌥Z</kbd> <kbd>⌥C</kbd></td><td>저장 · 마지막 행 복사 추가 · 체크 행 삭제 · 이전 행 적요 복사</td><td>일반전표 관리의 전표등록 화면(입력칸 밖에서)</td></tr>
       <tr><td class="k"><kbd>Enter</kbd></td><td>표 셀에서: 수정 모달, 링크 셀이면 상세 팝업</td><td>표</td></tr>
       <tr><td class="k"><kbd>Esc</kbd></td><td>모달·드로어·방문기록 닫기</td><td>전역</td></tr>
     </tbody>
