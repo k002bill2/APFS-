@@ -89,6 +89,8 @@ import { TrustFundCode } from './trs/sfund/trust_fund_code';                    
 import { AccountInfoManage, CashflowInfoManage } from './trs/mfund/trust_upload_forms'; // 계좌정보 관리(S3_103) · 입출금 정보관리(S3_105) — 업로드 폼
 import { ClosingFormManage } from './acc/baseinfo/closing_form_manage';              // 결산양식 관리(ACC-002 — 편집 그리드)
 import { GeneralJournalManage } from './acc/slip/general_journal_manage'; // 일반전표 관리(ACC-003)
+import { ClosingJournalManage } from './acc/closing/closing_journal_manage'; // 결산전표 관리(ACC-015)
+import { FiscalRolloverManage } from './acc/closing/fiscal_rollover_manage'; // 회기생성/전기이월(ACC-016)
 import { SuspenseManage } from './acc/slip/suspense_manage'; // 미결계정 관리(ACC-005)
 import { MissingEvidenceManage } from './acc/slip/missing_evidence_manage'; // 전표증빙 미첨부 관리(ACC-006)
 import { DailyCloseManage } from './acc/slip/daily_close_manage'; // 일마감(ACC-007)
@@ -306,6 +308,8 @@ function App() {
   else if (route === "trust-cashflow-compare") page = <CashflowCompare onNav={onNav} />;
   else if (route === "acct-closing-form") page = <ClosingFormManage onNav={onNav} />;
   else if (route === "acct-journal") page = <GeneralJournalManage onNav={onNav} />;
+  else if (route === "acct-closing-journal") page = <ClosingJournalManage onNav={onNav} />;
+  else if (route === "acct-fiscal-rollover") page = <FiscalRolloverManage onNav={onNav} />;
   else if (route === "acct-suspense") page = <SuspenseManage onNav={onNav} />;
   else if (route === "acct-missing-evidence") page = <MissingEvidenceManage onNav={onNav} />;
   else if (route === "acct-daily-close") page = <DailyCloseManage onNav={onNav} />;
