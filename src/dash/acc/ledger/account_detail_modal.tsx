@@ -99,15 +99,16 @@ export function AccountDetailModal({ src, cond, account, from, to, onClose }: Ac
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="w-[96vw] max-w-[1240px] max-h-[90vh]" onInteractOutside={(e) => { if (view) e.preventDefault(); }}>
         <DialogHeader className="px-[46px]">
-          <div className="flex flex-1 items-baseline gap-2.5 min-w-0 pr-8">
-            <DialogTitle className="shrink-0">계정별 상세내역</DialogTitle>
-            <DialogDescription className="truncate min-w-0">{`${account.name}(${account.code})`}</DialogDescription>
-          </div>
+          {/* 계정과목은 본문 kv 표에 이미 있어 제목 옆 표기는 두지 않는다(2026-11-03 사용자 지시 — 중복). 설명은 화면낭독기용만 */}
+          <DialogTitle>계정별 상세내역</DialogTitle>
+          <DialogDescription className="sr-only">{`${account.name}(${account.code}) 계정의 기간 내 명세`}</DialogDescription>
         </DialogHeader>
         <div className="overflow-y-auto p-[46px]" style={{ paddingTop: 24 }}>
           <dl className="grid gap-0 mb-4 rounded-card-sm border border-border overflow-hidden" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', margin: '0 0 16px' }}>
             {kv.map(([k, v]) => (
-              <div key={k} className="flex min-w-0 border-border" style={{ borderRight: '1px solid var(--border)' }}>
+              /* 칸마다 오른쪽·아래 1px 선 + -1px 마진 — auto-fit 으로 몇 줄로 접혀도 줄 사이 가로선이 남고,
+                 바깥 테두리와 겹치는 마지막 열·마지막 줄 선은 dl overflow-hidden 에 잘린다(2026-11-03 좁은 폭 가로선 누락 지적) */
+              <div key={k} className="flex min-w-0" style={{ borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)', margin: '0 -1px -1px 0' }}>
                 <dt className="shrink-0 font-semibold text-muted-foreground bg-muted" style={{ width: 96, padding: '9px 12px', fontSize: 13, margin: 0 }}>{k}</dt>
                 <dd className="min-w-0 truncate tabular-nums" title={v} style={{ padding: '9px 12px', fontSize: 14, margin: 0 }}>{v}</dd>
               </div>

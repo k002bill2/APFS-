@@ -22,7 +22,8 @@ export type ApprovalStatus = typeof APPROVAL_STATUSES[number];
 
 /** 전표발생구분(slide 11 조건 4) */
 export const JOURNAL_ORIGINS = ['일반', '미결', '결산', '유무형자산'] as const;
-export type JournalOrigin = typeof JOURNAL_ORIGINS[number];
+/* 타입만 결산전표(ACC-015 · acc/closing CLOSING_ORIGINS)의 '가결산'·'가결산(환원)'까지 넓힌다 — 배열(일반전표 필터·더미 전수 테스트)은 그대로 */
+export type JournalOrigin = typeof JOURNAL_ORIGINS[number] | '가결산' | '가결산(환원)';
 
 /** 전표구분(slide 12 헤더 — 기본 '정상', 비활성) */
 export const SLIP_KINDS = ['정상'] as const;

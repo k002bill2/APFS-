@@ -33,5 +33,5 @@ export function subledgerRows(lines: readonly LedgerLine[], f: SubledgerFilter):
 /** E03 — 명세 행만 전표상세로 들어간다([전잔]·[소계] 무반응) */
 export const slipNoOf = (r: SubledgerRow | undefined | null): string | null => (r?.kind === 'entry' && r.line ? r.line.slipNo : null);
 
-/** [필터 적용] 검증 — 기간 시작 > 종료면 설계서 E01 문구. 통과 = null */
+/** 상세필터 검증(즉시 반영 — 렌더마다 applied 로) — 기간 시작 > 종료면 설계서 E01 문구. 통과 = null */
 export const validateFilter = (f: SubledgerFilter): string | null => validatePeriod(f.from, f.to);

@@ -13,7 +13,6 @@ import type { DayInfo, DayStatus } from './daily_close_model';
 
 const { StatusBadge, Button } = UI;
 
-const SOFT: Record<DayStatus, string> = { 마감: 'var(--success-soft)', 미마감: 'var(--warning-soft)', 진행중: 'var(--info-soft)', 예정: 'transparent' };
 const dowColor = (dow: number) => (dow === 0 ? 'var(--danger-text)' : dow === 6 ? 'var(--info-text)' : 'var(--muted-foreground)');
 
 export function StatusTag({ status, size = 'sm' }: { status: DayStatus; size?: 'sm' | 'md' | 'lg' }) {
@@ -110,7 +109,8 @@ const ROW_LABEL: CSSProperties = { padding: '8px 12px', fontSize: 12.5, fontWeig
 const CELL: CSSProperties = { padding: '8px 10px', fontSize: 13, borderBottom: '1px solid var(--border)', borderLeft: '1px solid var(--border)' };
 const NUM: CSSProperties = { ...CELL, textAlign: 'right', fontVariantNumeric: 'tabular-nums' };
 
-/** 주간 보드 — 7열(일~토) × 항목 행. 열 배경 = 상태 색. 회기 밖 일자(연도 경계 주)는 회색·조작 없음 */
+/** 주간 보드 — 7열(일~토) × 항목 행. 열 배경은 오늘 열만 블루(--info-soft) — 상태는 상태 행 배지로만 구분(2026-11-03 사용자 지시: 상태별 배경색 제거).
+    회기 밖 일자(연도 경계 주)는 회색·조작 없음 */
 export function WeekBoard({ dates, days, inTermDate, today, onOpen }: {
   dates: string[];
   days: Record<string, DayInfo>;
@@ -119,7 +119,7 @@ export function WeekBoard({ dates, days, inTermDate, today, onOpen }: {
   onOpen: (d: DayInfo) => void;
 }) {
   const cols = dates.map((date) => ({ date, d: days[date], live: inTermDate(date) }));
-  const bg = (c: (typeof cols)[number]) => (c.live ? SOFT[c.d.status] : 'var(--muted)');
+  const bg = (c: (typeof cols)[number]) => (!c.live ? 'var(--muted)' : c.date === today ? 'var(--info-soft)' : 'transparent');
   const num = (c: (typeof cols)[number], v: number, warn = false) => {
     if (!c.live || c.d.status === '예정') return <td key={c.date} style={{ ...NUM, background: bg(c) }}>—</td>;
     return <td key={c.date} style={{ ...NUM, background: bg(c), ...(warn && v > 0 ? { color: 'var(--danger-text)', fontWeight: 700 } : null) }}>{v}</td>;

@@ -8,7 +8,9 @@
    - 그리드 15컬럼 + 다중 체크박스(체크박스로만 선택). 계좌정보·예금주는 채무 건만, 채권 건은 '-'.
    - 발생전표번호·정리전표번호 셀 클릭(E09) = 전표상세(journal_entry_screen readOnly — [닫기]만).
      전표는 페이지 상태 맵(fixture + 정리/상계로 생성분, 정리취소 시 삭제)에서 찾는다.
-   - 상세필터 7개(초안 방식 — [필터 적용]에서 범위 검증). 기본값 = 정리여부 부 · 발생기간 2022-01-01~오늘(진입·[초기화]).
+   - 상세필터 7개 — 즉시 반영(고르는 즉시 조건 반영, [필터 적용] = 닫기 — X·Esc·바깥 클릭으로 닫아도 값 유지).
+     발생기간·정리기간 시작 > 종료 = 그 칸 invalid + 아래 안내 + 결과 0건(2026-11-03 사용자 지시, 정본 privacy_access_log).
+     기본값 = 정리여부 부 · 발생기간 2022-01-01~오늘(진입·[초기화]).
    결정·가정
    - 정리 칸(정리일·정리전표번호·정리결재상태)은 최근 정리전표, 정리금액은 누적정리금액을 보인다(부분정리 진행이 보이게).
    - 거래처 필터는 검색 팝업에서 고른 거래처명과 일치하는 건만(부분일치 아님). */
@@ -128,12 +130,12 @@ function DrawerField({ label, plain, errMsg, children }: { label: string; plain?
 const dayWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
 
 /* 범위 컨트롤 — risk_page_kit.tsx FilterControl `dayRange` 와 같은 마크업 복제(그쪽은 export 없음) */
-function DayRange({ label, from, to, onFrom, onTo }: { label: string; from: string; to: string; onFrom: (v: string) => void; onTo: (v: string) => void }) {
+function DayRange({ label, from, to, onFrom, onTo, invalid }: { label: string; from: string; to: string; onFrom: (v: string) => void; onTo: (v: string) => void; invalid?: boolean }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <div style={dayWrap}><PeriodPicker mode="day" value={from} onChange={(v) => onFrom(v || '')} ariaLabel={`${label} 시작일`} /></div>
+      <div style={dayWrap}><PeriodPicker mode="day" value={from} onChange={(v) => onFrom(v || '')} ariaLabel={`${label} 시작일`} invalid={invalid} /></div>
       <span className="text-caption">~</span>
-      <div style={dayWrap}><PeriodPicker mode="day" value={to} onChange={(v) => onTo(v || '')} ariaLabel={`${label} 종료일`} /></div>
+      <div style={dayWrap}><PeriodPicker mode="day" value={to} onChange={(v) => onTo(v || '')} ariaLabel={`${label} 종료일`} invalid={invalid} /></div>
     </div>
   );
 }
@@ -169,25 +171,18 @@ export function SuspenseManage({ onNav }: { onNav?: (r: string) => void }) {
   const [partners, setPartners] = useState<Partner[]>(() => [...PARTNERS]);
   const addPartner = useCallback((p: Partner) => setPartners((ps) => (ps.some((x) => x.custNo === p.custNo) ? ps : [...ps, p])), []);
 
-  /* 필터 SSOT + 상세필터 초안 */
+  /* 필터 SSOT — 드로어 컨트롤이 f 를 바로 고친다(즉시 반영 — 초안 사본 없음). [초기화] = 기본값 */
   const [f, setF] = useState<SuspenseFilter>(base);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [draft, setDraft] = useState<SuspenseFilter>(base);
-  const [draftErr, setDraftErr] = useState<'' | 'occur' | 'clear'>('');
   const [partnerPick, setPartnerPick] = useState(false);
-  const setD = <K extends keyof SuspenseFilter>(k: K, v: SuspenseFilter[K]) => { setDraft((d) => ({ ...d, [k]: v })); setDraftErr(''); };
-  const openFilter = () => { setDraft(f); setDraftErr(''); setFilterOpen(true); };
-  const resetDraft = () => { setDraft(base); setDraftErr(''); };
-  const applyDraft = () => {
-    const oe = validateRange(draft.occurFrom, draft.occurTo);
-    const ce = validateRange(draft.clearFrom, draft.clearTo);
-    if (oe || ce) { setDraftErr(oe ? 'occur' : 'clear'); toast.error((oe || ce) as string); return; }
-    setF(draft);
-    setFilterOpen(false);
-  };
+  const setD = <K extends keyof SuspenseFilter>(k: K, v: SuspenseFilter[K]) => setF((x) => ({ ...x, [k]: v }));
+  /* 범위 검증은 렌더마다 — 실패한 기간마다 그 칸 표시, 하나라도 실패면 결과 0건 */
+  const occurErr = validateRange(f.occurFrom, f.occurTo);
+  const clearErr = validateRange(f.clearFrom, f.clearTo);
+  const rangeBad = !!(occurErr || clearErr);
   const clearF = (patch: Partial<SuspenseFilter>) => setF((x) => ({ ...x, ...patch }));
 
-  const passes = useCallback((r: SuspenseRow) => suspensePasses(r, f), [f]);
+  const passes = useCallback((r: SuspenseRow) => !rangeBad && suspensePasses(r, f), [f, rangeBad]);
   /* 필터 변경 = 선택 전부 해제(2026-10-27 사용자 결정, 가드 filter_clears_selection) */
   useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => true, []);
@@ -327,7 +322,7 @@ export function SuspenseManage({ onNav }: { onNav?: (r: string) => void }) {
         { label: '정리여부', value: f.clearedYn ? `정리 ${f.clearedYn}` : '', onClear: () => clearF({ clearedYn: '' }) },
       ]}
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={openFilter}>상세필터</Button>
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={viewSlip ? undefined : HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(visible.length) + '건 중 ' + String(Math.min(shown, visible.length)) + '건 표시'}</span>}
@@ -365,7 +360,7 @@ export function SuspenseManage({ onNav }: { onNav?: (r: string) => void }) {
         />
       </div>
 
-      {/* ── 상세필터 7개 — 초안 방식([필터 적용]에서 범위 검증 후 반영) ── */}
+      {/* ── 상세필터 7개 — 즉시 반영([필터 적용] = 닫기) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -374,34 +369,34 @@ export function SuspenseManage({ onNav }: { onNav?: (r: string) => void }) {
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="계정구분"><DrawerSelect value={draft.fundAccount} onChange={(v) => setD('fundAccount', v)} options={FUND_ACCOUNTS} ariaLabel="계정구분" /></DrawerField>
+            <DrawerField label="계정구분"><DrawerSelect value={f.fundAccount} onChange={(v) => setD('fundAccount', v)} options={FUND_ACCOUNTS} ariaLabel="계정구분" /></DrawerField>
             <DrawerField label="거래처" plain>
               <div className="flex items-center gap-2">
-                <input type="text" readOnly value={draft.partner} placeholder="검색으로 선택" aria-label="거래처" style={{ ...inputStyle('text'), background: 'var(--muted)' }} />
+                <input type="text" readOnly value={f.partner} placeholder="검색으로 선택" aria-label="거래처" style={{ ...inputStyle('text'), background: 'var(--muted)' }} />
                 <Button variant="outline" size="sm" leadingIcon="search" onClick={() => setPartnerPick(true)}>검색</Button>
-                {draft.partner && <IconBtn icon="x" label="거래처 선택 해제" size={32} onClick={() => setD('partner', '')} />}
+                {f.partner && <IconBtn icon="x" label="거래처 선택 해제" size={32} onClick={() => setD('partner', '')} />}
               </div>
             </DrawerField>
-            <DrawerField label="적요"><input type="text" value={draft.memo} onChange={(e) => setD('memo', e.target.value)} placeholder="적요 일부" style={inputStyle('text')} /></DrawerField>
-            <DrawerField label="계정과목"><DrawerSelect value={draft.accountName} onChange={(v) => setD('accountName', v)} options={SUSPENSE_ACCOUNT_NAMES} ariaLabel="계정과목" /></DrawerField>
-            <DrawerField label="발생기간" plain errMsg={draftErr === 'occur' ? '시작일은 종료일보다 늦을 수 없습니다.' : undefined}>
-              <DayRange label="발생기간" from={draft.occurFrom} to={draft.occurTo} onFrom={(v) => setD('occurFrom', v)} onTo={(v) => setD('occurTo', v)} />
+            <DrawerField label="적요"><input type="text" value={f.memo} onChange={(e) => setD('memo', e.target.value)} placeholder="적요 일부" style={inputStyle('text')} /></DrawerField>
+            <DrawerField label="계정과목"><DrawerSelect value={f.accountName} onChange={(v) => setD('accountName', v)} options={SUSPENSE_ACCOUNT_NAMES} ariaLabel="계정과목" /></DrawerField>
+            <DrawerField label="발생기간" plain errMsg={occurErr ?? undefined}>
+              <DayRange label="발생기간" from={f.occurFrom} to={f.occurTo} onFrom={(v) => setD('occurFrom', v)} onTo={(v) => setD('occurTo', v)} invalid={!!occurErr} />
             </DrawerField>
-            <DrawerField label="정리기간" plain errMsg={draftErr === 'clear' ? '시작일은 종료일보다 늦을 수 없습니다.' : undefined}>
-              <DayRange label="정리기간" from={draft.clearFrom} to={draft.clearTo} onFrom={(v) => setD('clearFrom', v)} onTo={(v) => setD('clearTo', v)} />
+            <DrawerField label="정리기간" plain errMsg={clearErr ?? undefined}>
+              <DayRange label="정리기간" from={f.clearFrom} to={f.clearTo} onFrom={(v) => setD('clearFrom', v)} onTo={(v) => setD('clearTo', v)} invalid={!!clearErr} />
             </DrawerField>
-            <DrawerField label="정리여부"><DrawerSelect value={draft.clearedYn} onChange={(v) => setD('clearedYn', v as SuspenseFilter['clearedYn'])} options={CLEARED_YN} ariaLabel="정리여부" /></DrawerField>
+            <DrawerField label="정리여부"><DrawerSelect value={f.clearedYn} onChange={(v) => setD('clearedYn', v as SuspenseFilter['clearedYn'])} options={CLEARED_YN} ariaLabel="정리여부" /></DrawerField>
           </div>
           <SheetFooter>
-            <Button variant="outline" size="md" onClick={resetDraft}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={applyDraft}>필터 적용</Button>
+            <Button variant="outline" size="md" onClick={() => setF(base)}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
 
       {partnerPick && (
         <PartnerSearchModal open onOpenChange={(o) => { if (!o) setPartnerPick(false); }}
-          onSelect={(p) => setD('partner', p.name)} initialKeyword={draft.partner}
+          onSelect={(p) => setD('partner', p.name)} initialKeyword={f.partner}
           list={partners} onAdd={addPartner} />
       )}
 

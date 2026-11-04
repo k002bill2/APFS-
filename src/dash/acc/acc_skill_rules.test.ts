@@ -14,6 +14,8 @@ const LIST_PAGES = [
   'missing_evidence_manage.tsx', 'journal_search_manage.tsx',
   /* 장부조회(ACC-009~014) — 재무상태표·손익계산서는 단축키가 공용 골격 statement_kit 에 있다 */
   'daily_monthly_manage.tsx', 'subledger_manage.tsx', 'general_ledger_manage.tsx', 'trial_balance_manage.tsx', 'statement_kit.tsx',
+  /* 결산관리 */
+  'closing_journal_manage.tsx', 'fiscal_rollover_manage.tsx',
 ];
 
 describe('① 회계 목록 단축키 — 상세필터가 열린 동안 끔', () => {
