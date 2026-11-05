@@ -12,7 +12,7 @@
 import * as React from 'react';
 
 /* code(선택) = 물리 키 코드 직접 지정 — ⌥+글자 아닌 기호 키(⌥\ = 'Backslash')용. 없으면 글자 키는 'Key'+대문자로 유도. */
-export type HotkeyCombo = { mod?: boolean; alt?: boolean; shift?: boolean; key: string; code?: string };
+export type HotkeyCombo = { mod?: boolean; alt?: boolean; shift?: boolean; key: string; code?: string; codes?: readonly string[] };
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iP(hone|ad|od)/.test(navigator.platform);
 const MOD = isMac ? '⌘' : 'Ctrl+';
@@ -37,11 +37,16 @@ export const HOTKEYS = {
   showAll: { combo: { alt: true, key: 'a' } as HotkeyCombo, hint: ALT + 'A' },     // 푸터 전체보기(⌥F 는 Win Chrome 메뉴라 회피)
   newWindow: { combo: { alt: true, key: 'o' } as HotkeyCombo, hint: ALT + 'O' },   // 푸터 새 창(O=Open)
   /* 전표등록 화면(ACC-003 · acc/slip/journal_entry_screen) — 화면이 열려 있고 입력 가능할 때만 enabled.
-     설계서 단축키 중 Alt+R(행 이동)·Alt+A(행 삽입)는 전역 refresh·showAll 과 충돌해 바인딩하지 않는다(도움말 표기만). */
+     설계서 단축키 중 Alt+A(행 삽입)·Alt+R(행 이동)은 전역 showAll·refresh 와 키가 같아, 사용자 지정 ⌥I·⌥↑·⌥↓ 로 대신한다(2026-11-04).
+     방향키는 e.key('ArrowUp') 매칭 — 글자 키와 달리 Mac ⌥ 가 e.key 를 특수문자로 바꾸지 않는다. */
   journalSave: { combo: { alt: true, key: 's' } as HotkeyCombo, hint: ALT + 'S' },       // 전표 임시저장(= [저장])
   journalCopyLast: { combo: { alt: true, key: 'k' } as HotkeyCombo, hint: ALT + 'K' },   // 마지막행 복사 및 추가
   journalDeleteRows: { combo: { alt: true, key: 'z' } as HotkeyCombo, hint: ALT + 'Z' }, // 체크 행 삭제
   journalCopyMemo: { combo: { alt: true, key: 'c' } as HotkeyCombo, hint: ALT + 'C' },   // 이전 행 적요 복사
+  journalInsertRow: { combo: { alt: true, key: 'i' } as HotkeyCombo, hint: ALT + 'I' },  // 행 삽입(대상 행 위 빈 행 — I=Insert)
+  journalMoveUp: { combo: { alt: true, key: 'ArrowUp' } as HotkeyCombo, hint: ALT + '↑' },     // 체크 행 위로 이동(= [위로이동])
+  journalMoveDown: { combo: { alt: true, key: 'ArrowDown' } as HotkeyCombo, hint: ALT + '↓' }, // 체크 행 아래로 이동(= [아래로이동])
+  journalAddRow: { combo: { alt: true, key: '+', codes: ['Equal', 'NumpadAdd'] } as HotkeyCombo, hint: ALT + '+' }, // 행 추가(= [행추가], 끝에 빈 행) — ⌥=·⌥⇧=·숫자패드 + 모두
 } as const;
 
 /* aria-keyshortcuts 값(WAI-ARIA 표기) — 힌트와 같은 플랫폼 기준: mod 는 Mac=Meta(⌘) / 그 외=Control.
@@ -59,15 +64,20 @@ export function useHotkey(combo: HotkeyCombo, handler: () => void, opts: { enabl
   const { enabled = true, skipInDialog = false } = opts;
   const ref = React.useRef(handler);
   ref.current = handler;
+  /* codes 배열은 문자열 키로 deps 에 넣는다(배열 identity 로 넣으면 인라인 combo 가 매 렌더 재등록된다) */
+  const codesKey = combo.codes ? combo.codes.join(',') : '';
   React.useEffect(() => {
     if (!enabled) return;
+    const codes = codesKey ? codesKey.split(',') : null;
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (!!combo.mod !== mod) return;
       if (!!combo.alt !== e.altKey) return;
-      if (!!combo.shift !== e.shiftKey) return;
+      // codes(물리 키 여러 개 — '+' = Equal·NumpadAdd)가 있는 조합만 Shift 를 무시한다(Equal 은 Shift 를 눌러야 '+').
+      if (!codes && !!combo.shift !== e.shiftKey) return;
       // ⌥+letter(Mac)는 특수문자를 내므로 code(물리 키, KeyM 등)로 매칭 — e.key는 'µ' 등으로 변질됨.
-      const match = combo.code ? e.code === combo.code
+      const match = codes ? codes.includes(e.code)
+        : combo.code ? e.code === combo.code
         : combo.alt && combo.key.length === 1
         ? e.code === 'Key' + combo.key.toUpperCase()
         : combo.key.length === 1 ? e.key.toLowerCase() === combo.key.toLowerCase() : e.key === combo.key;
@@ -87,5 +97,5 @@ export function useHotkey(combo: HotkeyCombo, handler: () => void, opts: { enabl
     };
     window.addEventListener('keydown', onKey, true); // capture: 브라우저 기본 동작보다 먼저 가로챔
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [enabled, skipInDialog, combo.mod, combo.alt, combo.shift, combo.key, combo.code]);
+  }, [enabled, skipInDialog, combo.mod, combo.alt, combo.shift, combo.key, combo.code, codesKey]);
 }
