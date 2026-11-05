@@ -425,6 +425,8 @@ export function FixedAssetManage({ onNav }: { onNav?: (r: string) => void }) {
             domLayout="autoHeight"
             defaultColDef={COL_DEF}
             autoSizeStrategy={AUTO_SIZE_CONTENT}
+            // 가상화된(뷰포트 밖) 컬럼은 fitCellContents 에서 빠져 기본 200px 로 남는다 — 2026-11-05 실측
+            suppressColumnVirtualisation
             rowSelection={ROW_SELECTION_SUMMARY}
             selectionColumnDef={SELECTION_COL}
             getRowStyle={rowStyle}
@@ -450,6 +452,8 @@ export function FixedAssetManage({ onNav }: { onNav?: (r: string) => void }) {
             domLayout="autoHeight"
             defaultColDef={COL_DEF}
             autoSizeStrategy={AUTO_SIZE_CONTENT}
+            // 가상화된(뷰포트 밖) 컬럼은 fitCellContents 에서 빠져 기본 200px 로 남는다 — 2026-11-05 실측
+            suppressColumnVirtualisation
             rowSelection={ROW_SELECTION_CHANGE}
             selectionColumnDef={SELECTION_COL}
             getRowStyle={rowStyle}

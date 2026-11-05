@@ -191,6 +191,8 @@ export function FixedAssetFormModal({ initial, partners, onAddPartner, onSave, o
                 ? <SchemaField field={ro('계정구분')} value={v.fund} onChange={() => undefined} />
                 : <SchemaField field={sel('fund', '계정구분', FA_FUNDS, true)} value={toSel(v.fund)} invalid={!!errOf('fund')} onChange={(x) => setFund(fromSel(x) as FaFund | '')} />}
             </Field>
+            {/* 행 끊기(설계서) — 계정구분 단독 행. 컨트롤 폭을 반칸 그대로 두려고 full 대신 빈 칸으로 끊는다(모바일 1단은 숨김) */}
+            <div className="hidden sm:block" aria-hidden />
             <Field label="자산유형" required errMsg={errOf('assetType')} boxRef={refs.assetType} hint={amountLocked ? groupHint : v.fund ? undefined : '계정구분을 먼저 선택해 주세요.'}>
               {amountLocked
                 ? <SchemaField field={ro('자산유형')} value={v.assetType} onChange={() => undefined} />
@@ -200,6 +202,8 @@ export function FixedAssetFormModal({ initial, partners, onAddPartner, onSave, o
               <SchemaField field={txt('name', '자산명', true)} value={v.name} invalid={!!errOf('name')} onChange={(x) => set('name', x, 'name')} />
             </Field>
             <Field label="모델명"><SchemaField field={txt('model', '모델명')} value={v.model} onChange={(x) => set('model', x)} /></Field>
+            {/* 모델명 단독 행 — 뒤 구입가액|잔존가액 · 부대비용|취득원가 짝 유지 */}
+            <div className="hidden sm:block" aria-hidden />
             <Field label="구입가액(A)" required errMsg={errOf('purchase')} boxRef={refs.purchase} hint={lockHint}>
               <div className="flex items-center gap-2">{amountField('purchase', '구입가액(A)', true, amountLocked, 'purchase')}<span style={unitLabel}>원</span></div>
             </Field>
