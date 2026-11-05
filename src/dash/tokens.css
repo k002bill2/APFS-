@@ -70,7 +70,7 @@
   --success-text:#067562;    /* on bg 5.2:1 / on success-soft 5.0:1 */
   --danger-text:#C7340F;     /* on bg 4.9:1 / on danger-soft 4.5:1 */
   --info-text:#1D5FD8;       /* on bg 5.3:1 / on info-soft 4.6:1 */
-  --primary-text:#4F46E5;    /* primary 배지 라벨(TagBadge 확정) — --primary 는 12% soft 위 4.23:1 로 AA 미달. on primary-soft 5.4:1 / on bg 6.3:1 */
+  --primary-text:#4F46E5;    /* primary 배지 라벨(toneVar → StatusBadge·TagBadge 등) — --primary 는 12% soft 위 4.23:1 로 AA 미달. on primary-soft 5.4:1 / on bg 6.3:1 */
 
   /* shadcn/ui 호환 별칭 토큰 — 기존 토큰을 var() 간접참조로 가리킨다.
      이렇게 하면 .dark에서 원본 토큰이 바뀔 때 자동 추종하므로

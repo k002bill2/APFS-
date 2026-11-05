@@ -92,3 +92,18 @@ describe('TagBadge — 코드성 분류값', () => {
     expect(b.style.color).toBe('var(--primary-text)');
   });
 });
+
+describe('primary 톤 라벨 대비(toneVar 단일 지점)', () => {
+  it('toneVar("primary") 전경 = --primary-text · 배경 = primary 12% soft(그대로)', () => {
+    const [fg, soft] = (UI as any).toneVar('primary');
+    expect(fg).toBe('var(--primary-text)');
+    expect(soft).toBe('color-mix(in srgb,var(--primary) 12%,transparent)');
+  });
+  it('알 수 없는 톤의 폴백도 같은 primary 라벨색', () => {
+    expect((UI as any).toneVar('없는톤')[0]).toBe('var(--primary-text)');
+  });
+  it('StatusBadge primary 라벨 = --primary-text (보고구분·선정·확정·송신 등 톤 맵 화면 공통)', () => {
+    const b = mount(React.createElement(StatusBadge, { tone: 'primary', label: '선정', size: 'lg' }));
+    expect(b.style.color).toBe('var(--primary-text)');
+  });
+});

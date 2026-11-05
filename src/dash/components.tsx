@@ -20,15 +20,18 @@ export type Tone = "primary" | "success" | "warning" | "danger" | "info" | "cyan
 export type Size = "sm" | "md" | "lg";
 type ToneLike = Tone | string;
 
+/* [0] = 라벨(텍스트) 전경, [1] = soft 배경. 상태 톤이 -text 를 쓰듯 primary 도 --primary-text —
+   --primary(#5A5FE8)를 12% soft 위 라벨로 쓰면 4.23:1 로 AA 미달이었다(2026-11-05 실측 → --primary-text 5.4:1).
+   배경 soft 는 브랜드 칠이라 --primary 그대로. */
 const toneVar = (t?: ToneLike): string[] => ({
-  primary: ["var(--primary)", "color-mix(in srgb,var(--primary) 12%,transparent)"],
+  primary: ["var(--primary-text)", "color-mix(in srgb,var(--primary) 12%,transparent)"],
   success: ["var(--success-text)", "var(--success-soft)"],
   warning: ["var(--warning-text)", "var(--warning-soft)"],
   danger:  ["var(--danger-text)", "var(--danger-soft)"],
   info:    ["var(--info-text)", "var(--info-soft)"],
   cyan:    ["var(--cyan)", "color-mix(in srgb,var(--cyan) 14%,transparent)"],
   muted:   ["var(--muted-foreground)", "var(--muted)"],   /* 중립(비활성·대상아님·N) — 경보 아님. 라이트 5.0:1 / 다크 6.1:1 (AA) */
-}[t] || ["var(--primary)", "color-mix(in srgb,var(--primary) 12%,transparent)"]);
+}[t] || ["var(--primary-text)", "color-mix(in srgb,var(--primary) 12%,transparent)"]);
 
 /* ---- ColorChip ---- */
 function ColorChip({ icon, color = "var(--primary)", soft, size = 36, iconSize = 20 }: { icon: string; color?: string; soft?: string; size?: number; iconSize?: number }) {
@@ -98,10 +101,7 @@ function TrendBadge({ kind, size = "md" }: { kind: TrendKind; size?: Size }) {
    톤은 info · primary · muted 만 — success/warning/danger 는 등급 배지와 혼동되므로 타입에서 막는다(가드: badge_variants.test.ts). */
 export type TagTone = "info" | "primary" | "muted";
 function TagBadge({ tone = "muted", size = "md", children }: { tone?: TagTone; size?: Size; children?: React.ReactNode }) {
-  const [base, soft] = toneVar(tone);
-  /* primary 라벨은 --primary-text — toneVar 의 --primary 는 12% soft 위 4.23:1(AA 미달, 2026-11-05 실측).
-     toneVar 자체는 기존 StatusBadge primary 화면들이 공유하므로 여기서만 바꾼다. */
-  const c = tone === "primary" ? "var(--primary-text)" : base;
+  const [c, soft] = toneVar(tone);   // primary 라벨 = --primary-text(toneVar 가 소유)
   return (
     <span
       className={cx("inline-flex items-center rounded-[6px] font-semibold leading-tight whitespace-nowrap", BADGE_PAD[size])}
