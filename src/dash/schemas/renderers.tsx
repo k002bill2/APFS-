@@ -238,7 +238,9 @@ export function SchemaField({ field, value, onChange, invalid, fill: fillProp }:
     ) : (
       // 비-fill 폭은 래퍼가 FORM_SELECT_W(240~320 fit-content)로 정하고 select 는 래퍼를 채운다(폭 규약 주석 참조).
       <div style={{ position: 'relative', display: 'block', ...(fill ? { width: '100%', maxWidth: '100%' } : FORM_SELECT_W) }}>
-        <select value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', minWidth: 0, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: 34, ...fs }}>{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>
+        {/* placeholder opt-in(현재 결산전표 전표발생구분만) — 지정 시 숨김 빈 옵션으로 미선택('')을 '선택' 등으로 보인다(없으면 '' 값이 첫 옵션처럼 보임).
+            미지정 select 는 기존 DOM 그대로. 미선택 글자색은 검색형 트리거 placeholder 와 같은 --muted-foreground. */}
+        <select value={value} onChange={(e) => onChange(e.target.value)} {...fh} aria-invalid={invalid || undefined} aria-required={requiredMark || undefined} style={{ ...base, width: '100%', minWidth: 0, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: 34, ...(field.placeholder && value === '' ? { color: 'var(--muted-foreground)' } : {}), ...fs }}>{field.placeholder ? <option value="" disabled hidden>{field.placeholder}</option> : null}{(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}</select>
         <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--muted-foreground)' }} />
       </div>
     );

@@ -3,9 +3,8 @@
 
    설계서 → 우리 규약
    - ① 브레드크럼·제목·☆ 즐겨찾기·[메인으로] = GridFrame 규약.
-   - ② 툴바: 보기 칩(보기: 전체 · 차변 · 대변) · [상세필터](E01) · ⟳ 조회(E02 — 재조회 + 토스트 "조회되었습니다").
-     설계서 "보기 필터(당기·전기/차대변)" 중 시산표에 성립하는 '차대변'만 따른다(당기/전기 열이 없다 — PM 확인).
-     차변/대변 보기는 그 쪽 금액 열 묶음만 보인다. 선택 체크박스 없음(조회 전용).
+   - ② 툴바: [상세필터](E01) · ⟳ 조회(E02 — 재조회 + 토스트 "조회되었습니다"). 선택 체크박스 없음(조회 전용).
+     설계서 "보기 필터(당기·전기/차대변)" 칩은 두지 않는다 — 2026-11-03 사용자 결정(차변/대변 보기 불필요, 항상 차변·대변 모두 표시).
    - ③ 그리드 7열 2단 헤더: No. · 차변금액[잔액|합계] · 계정코드 · 계정과목(레벨 들여쓰기 · Ⅰ./(1) 명칭) · 대변금액[합계|잔액]
      — 차변이 계정 왼쪽, 대변이 오른쪽. 잔액 = 차−대(또는 대−차)가 양수일 때만, 아니면 0. 하단 고정 합계행(대차 일치).
      설계서 계정코드·계정과목 '중앙' → 좌측(정렬 규약). 헤더 정렬 끔(계층 순서 고정).
@@ -13,8 +12,9 @@
      입력계정 행만 — 집계 행·파생 전기이월이익잉여금 행·합계행은 무반응(설계서 "소계·합계 행 처리 확인 필요").
      그 팝업의 행 더블클릭(E06) = 전표상세(JournalEntryScreen readOnly — 팝업 내부).
    - 상세필터 5개(slide 11 · E01 — slide 15 의 체크박스 변형은 따르지 않는다): 계정구분(셀렉트 · 기본 전체 — 검색창은 옵션 10개 이상 자동) ·
-     기준일*(기본 당일) · 미결재포함(체크박스) · 모든계정포함(부/여) · 결산전표포함(체크박스) — 기본 미체크·부. [필터 적용]에서 기준일 미입력 →
-     "기준일을 입력하세요." + 드로어 유지. 적용 칩: 기준일은 필수라 × 없음, 플래그는 기본값과 다를 때만 ×.
+     기준일*(기본 당일) · 미결재포함(체크박스) · 모든계정포함(체크박스) · 결산전표포함(체크박스) — 기본 모두 미체크. 즉시 반영 — 고르는 즉시 applied 반영,
+     [필터 적용] = 닫기. 기준일 미입력 = 기준일 칸 빨간 테두리 + "기준일을 입력하세요.", 결과 0건(2026-11-03 사용자 지시, 정본 privacy_access_log).
+     적용 칩: 기준일은 필수라 × 없음, 플래그는 기본값과 다를 때만 ×.
    - ④ 푸터: 새 창(E04) · 내보내기(E05 ⌥D — SheetJS, 2단 헤더 병합 · 금액 숫자 셀 · 토스트 "Excel로 내보냈습니다") ·
      인쇄 combo [🖨 │ ⌄ 합계잔액시산표 출력]. 본체·⌘P = 그리드 인쇄(printGrid 가드), ⌄ = 리포트 뷰어(E07)
      — 설계서는 [인쇄] = 뷰어지만 프로젝트 규약(푸터 인쇄 combo ②)으로 둔다(PM 확인). 조회 결과 0건이면 "조회 결과가 없습니다.".
@@ -39,7 +39,7 @@ import { FUND_ACCOUNTS } from '../slip/general_journal_data';
 import { demoLedger, todayStr } from './ledger_data';
 import { DEFAULT_COND, fiscalStart, fundLabel, trialBalance, MSG } from './ledger_model';
 import type { LedgerCond } from './ledger_model';
-import { DrawerField, DayField, FlagCheck, FlagSelect, flagChips } from './ledger_filter_ui';
+import { DrawerField, DayField, FlagCheck, flagChips } from './ledger_filter_ui';
 import { AccountDetailModal } from './account_detail_modal';
 import { LedgerReportViewer } from './ledger_report_viewer';
 import { gridRows, printSections, printPages } from './trial_balance_model';
@@ -52,7 +52,6 @@ const TITLE = '합계잔액시산표';
 const PER_PAGE = 36;
 
 interface TbFilter extends LedgerCond { fundAccount: string; asOf: string }
-type View = 'all' | 'dr' | 'cr';
 type AmtKey = keyof TbAmounts;
 
 /* ── 그리드 ── */
@@ -73,16 +72,16 @@ const SIDE_KEYS: Record<'dr' | 'cr', Record<'balance' | 'total', AmtKey>> = {
   dr: { balance: 'drBalance', total: 'drTotal' }, cr: { balance: 'crBalance', total: 'crTotal' },
 };
 
-function makeColumns(view: View): (ColDef<TbGridRow> | ColGroupDef<TbGridRow>)[] {
+function makeColumns(): (ColDef<TbGridRow> | ColGroupDef<TbGridRow>)[] {
   /* 차변 = [잔액, 합계], 대변 = [합계, 잔액] — 계정 열을 가운데 두고 대칭 */
   const dr: ColGroupDef<TbGridRow> = { headerName: '차변금액', marryChildren: true, children: [amountCol(SIDE_KEYS.dr.balance, '잔액'), amountCol(SIDE_KEYS.dr.total, '합계')] };
   const cr: ColGroupDef<TbGridRow> = { headerName: '대변금액', marryChildren: true, children: [amountCol(SIDE_KEYS.cr.total, '합계'), amountCol(SIDE_KEYS.cr.balance, '잔액')] };
   return [
     { field: 'no', headerName: 'No.', width: 64, minWidth: 64, maxWidth: 64, cellStyle: tabular, valueFormatter: noFmt },
-    ...(view !== 'cr' ? [dr] : []),
+    dr,
     { field: 'code', headerName: '계정코드', width: 104, minWidth: 96, cellStyle: tabular },
     { field: 'label', headerName: '계정과목', flex: 1.4, minWidth: 240, width: 240, cellRenderer: LabelCell },
-    ...(view !== 'dr' ? [cr] : []),
+    cr,
   ];
 }
 
@@ -149,29 +148,21 @@ export function TrialBalanceManage({ onNav }: { onNav?: (r: string) => void }) {
   /* E00 — 필터 없음 전체 조회(계정구분 전체 · 기준일 당일 · 플래그 전부 부) */
   const base = useMemo<TbFilter>(() => ({ ...DEFAULT_COND, includeClosing: false, fundAccount: '', asOf: today }), [today]);
 
-  const [applied, setApplied] = useState<TbFilter>(base);
-  const [draft, setDraft] = useState<TbFilter>(base);
-  const [draftErr, setDraftErr] = useState(false);
+  const [applied, setApplied] = useState<TbFilter>(base);   // 드로어·칩·그리드의 SSOT(초안 사본 없음 — 바꾸는 즉시 반영)
   const [filterOpen, setFilterOpen] = useState(false);
-  const [view, setView] = useState<View>('all');
   const [detail, setDetail] = useState<{ code: string; name: string } | null>(null);
   const [viewer, setViewer] = useState(false);
 
-  const setD = <K extends keyof TbFilter>(k: K) => (v: TbFilter[K]) => { setDraft((d) => ({ ...d, [k]: v })); setDraftErr(false); };
-  const openFilter = () => { setDraft(applied); setDraftErr(false); setFilterOpen(true); };
-  /* E01 [필터 적용] — 기준일 미입력이면 드로어 유지 */
-  const commitFilter = () => {
-    if (!draft.asOf) { setDraftErr(true); toast.error(MSG.dateRequired); return; }
-    setApplied(draft);
-    setFilterOpen(false);
-  };
   const patch = (p: Partial<TbFilter>) => setApplied((a) => ({ ...a, ...p }));
+  const setD = <K extends keyof TbFilter>(k: K) => (v: TbFilter[K]) => patch({ [k]: v } as Partial<TbFilter>);
+  /* 기준일 필수 — 렌더마다 applied 로. 미입력이면 기준일 칸 표시 + 결과 0건(집계하지 않는다) */
+  const asOfErr = applied.asOf ? undefined : MSG.dateRequired;
 
-  const tb = useMemo(() => trialBalance(src.lines, applied, applied.asOf), [src, applied]);
-  const rows = useMemo(() => gridRows(tb), [tb]);
-  const pinned = useMemo<TbGridRow[]>(() => (rows.length
-    ? [{ code: '', label: '합계', level: 1, kind: 'group', cls: '자산', no: 0, drillable: false, ...tb.total }] : []), [rows.length, tb.total]);
-  const columnDefs = useMemo(() => makeColumns(view), [view]);
+  const tb = useMemo(() => (applied.asOf ? trialBalance(src.lines, applied, applied.asOf) : null), [src, applied]);
+  const rows = useMemo(() => (tb ? gridRows(tb) : []), [tb]);
+  const pinned = useMemo<TbGridRow[]>(() => (tb && rows.length
+    ? [{ code: '', label: '합계', level: 1, kind: 'group', cls: '자산', no: 0, drillable: false, ...tb.total }] : []), [rows.length, tb]);
+  const columnDefs = useMemo(() => makeColumns(), []);
   const fund = fundLabel(applied.fundAccount);
 
   /* 상세필터·팝업이 열린 동안 목록 단축키를 끈다(skipInDialog 와 이중 — 회계 가드 ①) */
@@ -189,11 +180,11 @@ export function TrialBalanceManage({ onNav }: { onNav?: (r: string) => void }) {
   }, [openDetail]);
 
   /* E02 — 현재 조건으로 재조회(백엔드 없음 — 로컬 재계산) */
-  const refresh = () => { setApplied((a) => ({ ...a })); toast.success('조회되었습니다'); };
+  const refresh = () => { if (asOfErr) { toast.error(asOfErr); return; } setApplied((a) => ({ ...a })); toast.success('조회되었습니다'); };
 
-  /* E05 — 화면 표 그대로(2단 헤더 병합 · 금액 숫자 셀 · 합계행). 보기 칩과 무관하게 원시자료 7열 전부(SFR-021) */
+  /* E05 — 화면 표 그대로(2단 헤더 병합 · 금액 숫자 셀 · 합계행). 원시자료 7열 전부(SFR-021) */
   const exportExcel = () => {
-    if (!rows.length) { toast.error(MSG.noResult); return; }   // 0건 = 인쇄(openViewer)와 같이 막는다
+    if (!tb || !rows.length) { toast.error(MSG.noResult); return; }   // 0건 = 인쇄(openViewer)와 같이 막는다
     const h1 = ['No.', '차변금액', '', '계정코드', '계정과목', '대변금액', ''];
     const h2 = ['', '잔액', '합계', '', '', '합계', '잔액'];
     const body: (string | number)[][] = rows.map((r) => [r.no, r.drBalance, r.drTotal, r.code, ' '.repeat(indentOf(r) / 8) + r.label, r.crTotal, r.crBalance]);
@@ -211,7 +202,7 @@ export function TrialBalanceManage({ onNav }: { onNav?: (r: string) => void }) {
   };
 
   /* E07 — 출력 양식(구분별 · 최하위 계정만) */
-  const sections = useMemo(() => printSections(tb), [tb]);
+  const sections = useMemo(() => (tb ? printSections(tb) : []), [tb]);
   const pages = useMemo(() => printPages(sections, PER_PAGE).map((lines, i) => (
     <TbPrintPage key={i} first={i === 0} fund={fund} asOf={applied.asOf} lines={lines} />
   )), [sections, fund, applied.asOf]);
@@ -234,7 +225,6 @@ export function TrialBalanceManage({ onNav }: { onNav?: (r: string) => void }) {
     { label: '기준일', value: applied.asOf },
     ...flagChips(applied, base, patch),
   ];
-  const VIEWS: [View, string][] = [['all', '보기: 전체'], ['dr', '차변'], ['cr', '대변']];
 
   return (
     <GridFrame
@@ -242,11 +232,10 @@ export function TrialBalanceManage({ onNav }: { onNav?: (r: string) => void }) {
       title={TITLE}
       favRoute={ROUTE}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      filterChips={VIEWS.map(([k, label]) => ({ key: k, label, active: view === k, onSelect: () => setView(k) }))}
       appliedFilters={chips}
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>단위: 원</span>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={openFilter}>상세필터</Button>
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{`총 ${String(rows.length)}건 중 ${String(rows.length)}건 표시`}</span>}
@@ -268,7 +257,7 @@ export function TrialBalanceManage({ onNav }: { onNav?: (r: string) => void }) {
         />
       </div>
 
-      {/* ── 상세필터(E01) — 초안 편집 → [필터 적용]에서 검증·커밋 ── */}
+      {/* ── 상세필터(E01) — 바꾸는 즉시 applied 반영([필터 적용] = 닫기) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -278,16 +267,16 @@ export function TrialBalanceManage({ onNav }: { onNav?: (r: string) => void }) {
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             <DrawerField label="계정구분">
-              <DrawerSelect value={draft.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} ariaLabel="계정구분" />
+              <DrawerSelect value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} ariaLabel="계정구분" />
             </DrawerField>
-            <DayField label="기준일" required value={draft.asOf} onChange={setD('asOf')} errMsg={draftErr ? MSG.dateRequired : undefined} />
-            <FlagCheck label="미결재포함" value={draft.includeUnapproved} onChange={setD('includeUnapproved')} />
-            <FlagSelect label="모든계정포함" value={draft.includeAll} onChange={setD('includeAll')} />
-            <FlagCheck label="결산전표포함" value={draft.includeClosing} onChange={setD('includeClosing')} />
+            <DayField label="기준일" required value={applied.asOf} onChange={setD('asOf')} errMsg={asOfErr} />
+            <FlagCheck label="미결재포함" value={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
+            <FlagCheck label="모든계정포함" value={applied.includeAll} onChange={setD('includeAll')} />
+            <FlagCheck label="결산전표포함" value={applied.includeClosing} onChange={setD('includeClosing')} />
           </div>
           <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => { setDraft(base); setDraftErr(false); }}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={commitFilter}>필터 적용</Button>
+            <Button variant="outline" size="md" onClick={() => setApplied(base)}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>

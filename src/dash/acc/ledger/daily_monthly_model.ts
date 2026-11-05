@@ -1,4 +1,4 @@
-/* 일/월계표(ACC-009) 화면 전용 규칙 — 탭별 기본값·탭 전환 시 조건 변환(slide 12 ③ 표)·[필터 적용] 검증.
+/* 일/월계표(ACC-009) 화면 전용 규칙 — 탭별 기본값·탭 전환 시 조건 변환(slide 12 ③ 표)·상세필터 검증(즉시 반영 — 렌더마다 applied 로 판정, 실패 = 칸 표시 + 결과 0건).
    집계 자체(dailyStatement·monthlyStatement)는 장부조회 공용 ledger_model 이 한다. 페이지는 배선만. */
 import { endOfMonth, format, parseISO } from 'date-fns';
 import { DEFAULT_COND, MSG, validatePeriod } from './ledger_model';

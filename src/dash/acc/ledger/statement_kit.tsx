@@ -6,8 +6,9 @@
    - 그리드 6열: 계정코드 · 계정과목명(레벨 들여쓰기) · 제N(당)기[세부금액|합계금액] · 제N-1(전)기[세부금액|합계금액] 2단 헤더.
      입력계정·파생 세부 = 세부금액 열, 집계·계산·총계 = 합계금액 열. 계정코드 '중앙' → 좌측(정렬 규약). 헤더 정렬 끔(계층 순서).
    - 상세필터 6개(slide 11 · E01 기준 — slide 15 의 기간형·체크박스형 변형은 따르지 않는다): 계정구분 · 당기기준일* · 전기기준일* ·
-     미결재포함(체크박스) · 모든계정포함(부/여) · 결산전표포함(체크박스 — 체크 = 전부포함). 초안 드로어 — [필터 적용]에서 검증
-     (기준일 미입력 · 전기 ≥ 당기 → 문구 + 드로어 유지). 기준일 칩은 필수라 × 없음.
+     미결재포함(체크박스) · 모든계정포함(체크박스 — 2026-11-03 사용자 지시) · 결산전표포함(체크박스 — 체크 = 전부포함). 즉시 반영 — 고르는 즉시 applied 반영,
+     [필터 적용] = 닫기. 검증 실패(기준일 미입력 → 그 기준일 칸 · 전기 ≥ 당기 → 전기기준일 칸) = 칸 빨간 테두리 + 아래 안내, 결과 0건
+     (2026-11-03 사용자 지시, 정본 privacy_access_log). 기준일 칩은 필수라 × 없음.
      계정구분: 설계서 '선택 필요·필수' 와 E00 '필터 없음 전체 조회' 가 충돌 → 기본 전체(빈 값)로 두고 × 로 해제 가능(PM 확인).
    - 행 더블클릭 / Enter(E03) = 「계정별 상세내역」(입력계정 행만 — 집계·계산·총계 행은 무반응, 설계서 "소계·합계 행 처리 확인 필요").
      기준일 = 당기 회기 시작일 ~ 당기기준일.
@@ -38,7 +39,7 @@ import { demoLedger, todayStr } from './ledger_data';
 import type { LedgerLine } from './ledger_data';
 import { DEFAULT_COND, fiscalEnd, fiscalNo, fiscalStart, fundLabel, validateStatementDates, MSG } from './ledger_model';
 import type { LedgerCond, StatementRow } from './ledger_model';
-import { DrawerField, DayField, FlagCheck, FlagSelect, flagChips } from './ledger_filter_ui';
+import { DrawerField, DayField, FlagCheck, flagChips } from './ledger_filter_ui';
 import { AccountDetailModal } from './account_detail_modal';
 import { LedgerReportViewer, paginate } from './ledger_report_viewer';
 
@@ -149,31 +150,26 @@ export function StatementKit({ config, onNav }: { config: StatementConfig; onNav
     return { ...DEFAULT_COND, fundAccount: '', cur: `${String(y)}-12-31`, prev: `${String(y - 1)}-12-31`, ...config.defaults };
   }, [today, config.defaults]);
 
-  const [applied, setApplied] = useState<StatementFilter>(base);
-  const [draft, setDraft] = useState<StatementFilter>(base);
-  const [draftErr, setDraftErr] = useState<'' | 'cur' | 'prev'>('');
+  const [applied, setApplied] = useState<StatementFilter>(base);   // 드로어·칩·그리드의 SSOT(초안 사본 없음 — 바꾸는 즉시 반영)
   const [filterOpen, setFilterOpen] = useState(false);
   const [detail, setDetail] = useState<{ code: string; name: string } | null>(null);
   const [viewer, setViewer] = useState(false);
 
-  const setD = <K extends keyof StatementFilter>(k: K) => (v: StatementFilter[K]) => { setDraft((d) => ({ ...d, [k]: v })); setDraftErr(''); };
-  const openFilter = () => { setDraft(applied); setDraftErr(''); setFilterOpen(true); };
-  /* E01 [필터 적용] — 검증 실패면 드로어 유지 */
-  const commitFilter = () => {
-    const err = validateStatementDates(draft.cur, draft.prev);
-    if (err) { setDraftErr(!draft.cur ? 'cur' : 'prev'); toast.error(err); return; }
-    setApplied(draft);
-    setFilterOpen(false);
-  };
   const patch = (p: Partial<StatementFilter>) => setApplied((a) => ({ ...a, ...p }));
+  const setD = <K extends keyof StatementFilter>(k: K) => (v: StatementFilter[K]) => patch({ [k]: v } as Partial<StatementFilter>);
+  /* 기준일 검증 — 렌더마다 applied 로. 실패면 그 칸 표시 + 결과 0건(미입력 = 그 칸 · 전기 ≥ 당기 = 전기기준일 칸) */
+  const dateErr = validateStatementDates(applied.cur, applied.prev);
+  const curErr = !applied.cur ? MSG.dateRequired : undefined;
+  const prevErr = !applied.prev ? MSG.dateRequired : dateErr === MSG.prevOrder ? MSG.prevOrder : undefined;
 
-  const rows = useMemo(() => config.build(src.lines, applied, applied.cur, applied.prev), [config, src, applied]);
+  const rows = useMemo(() => (dateErr ? [] : config.build(src.lines, applied, applied.cur, applied.prev)), [dateErr, config, src, applied]);
   /* 0건 판정 하나로 그리드·푸터·뷰어를 맞춘다 — 결산서는 머리·총계 행을 늘 만들어 rows 가 비지 않는다 */
   const hasData = rows.some((r) => (r.kind === 'leaf' || r.kind === 'calc') && (r.cur || r.prev));
   const gridRows = hasData ? rows : [];
   const count = dataRowCount(gridRows);
-  const cur = useMemo(() => termOf(applied.cur), [applied.cur]);
-  const prev = useMemo(() => termOf(applied.prev), [applied.prev]);
+  /* 헤더 회기 = 기준일이 비면 기본값으로(빈 날짜로 '제-2024기' 같은 헤더가 나오지 않게 — 결과는 0건) */
+  const cur = useMemo(() => termOf(applied.cur || base.cur), [applied.cur, base.cur]);
+  const prev = useMemo(() => termOf(applied.prev || base.prev), [applied.prev, base.prev]);
   const columnDefs = useMemo(() => makeColumns(cur, prev), [cur, prev]);
   const fund = fundLabel(applied.fundAccount);
 
@@ -190,7 +186,7 @@ export function StatementKit({ config, onNav }: { config: StatementConfig; onNav
   const onCellKeyDown = useCallback((e: CellKeyDownEvent<StatementRow>) => { if ((e.event as KeyboardEvent | null)?.key === 'Enter') openDetail(e.data); }, [openDetail]);
 
   /* E02 — 현재 조건으로 재조회(백엔드 없음 — 로컬 재계산) */
-  const refresh = () => { setApplied((a) => ({ ...a })); toast.success('조회되었습니다'); };
+  const refresh = () => { if (dateErr) { toast.error(dateErr); return; } setApplied((a) => ({ ...a })); toast.success('조회되었습니다'); };
 
   /* E05 — 화면 표 그대로(2단 헤더 병합 · 금액 숫자 셀) */
   const exportExcel = () => {
@@ -242,7 +238,7 @@ export function StatementKit({ config, onNav }: { config: StatementConfig; onNav
       appliedFilters={chips}
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>단위: 원</span>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={openFilter}>상세필터</Button>
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{`총 ${String(count)}건 중 ${String(count)}건 표시`}</span>}
@@ -263,7 +259,7 @@ export function StatementKit({ config, onNav }: { config: StatementConfig; onNav
         />
       </div>
 
-      {/* ── 상세필터(E01) — 초안 편집 → [필터 적용]에서 검증·커밋 ── */}
+      {/* ── 상세필터(E01) — 바꾸는 즉시 applied 반영([필터 적용] = 닫기) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -273,18 +269,17 @@ export function StatementKit({ config, onNav }: { config: StatementConfig; onNav
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             <DrawerField label="계정구분">
-              <DrawerSelect value={draft.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} ariaLabel="계정구분" />
+              <DrawerSelect value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} ariaLabel="계정구분" />
             </DrawerField>
-            <DayField label="당기기준일" required value={draft.cur} onChange={setD('cur')} errMsg={draftErr === 'cur' ? MSG.dateRequired : undefined} />
-            <DayField label="전기기준일" required value={draft.prev} onChange={setD('prev')}
-              errMsg={draftErr === 'prev' ? (draft.prev ? MSG.prevOrder : MSG.dateRequired) : undefined} />
-            <FlagCheck label="미결재포함" value={draft.includeUnapproved} onChange={setD('includeUnapproved')} />
-            <FlagSelect label="모든계정포함" value={draft.includeAll} onChange={setD('includeAll')} />
-            <FlagCheck label="결산전표포함" value={draft.includeClosing} onChange={setD('includeClosing')} />
+            <DayField label="당기기준일" required value={applied.cur} onChange={setD('cur')} errMsg={curErr} />
+            <DayField label="전기기준일" required value={applied.prev} onChange={setD('prev')} errMsg={prevErr} />
+            <FlagCheck label="미결재포함" value={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
+            <FlagCheck label="모든계정포함" value={applied.includeAll} onChange={setD('includeAll')} />
+            <FlagCheck label="결산전표포함" value={applied.includeClosing} onChange={setD('includeClosing')} />
           </div>
           <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => { setDraft(base); setDraftErr(''); }}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={commitFilter}>필터 적용</Button>
+            <Button variant="outline" size="md" onClick={() => setApplied(base)}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
