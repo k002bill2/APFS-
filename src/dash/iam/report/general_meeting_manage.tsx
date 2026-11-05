@@ -477,14 +477,13 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             {/* 목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·총회구분·총회기간.
                 그리드 컬럼과 미연동인 항목(모펀드·계정구분)은 noop 캡션. 담당자는 행 상세값으로 실제 필터링한다.
-                보고상태는 툴바 칩과 state를 공유한다. 기간은 PeriodPicker day 2개 */}
+                보고상태는 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시). 기간은 PeriodPicker day 2개 */}
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
             <DrawerField label="담당자"><DrawerSelect value={fMgr} onChange={setFMgr} options={mgrOptions} /></DrawerField>
             <DrawerField label="총회구분"><DrawerSelect value={fGt} onChange={setFGt} options={GT_OPTIONS} /></DrawerField>
-            <DrawerField label="보고상태"><DrawerSelect value={fRst} onChange={(v) => setFRst(v as '' | MeetingStatus)} options={['일정', '결과']} /></DrawerField>
             {/* PeriodPicker 트리거는 w-full이라 fit-content 래퍼로 감싼다(apfs-datepicker "폭" 규칙) */}
             <DrawerField label="총회기간" plain>
               <div className="flex items-center gap-2 flex-wrap">

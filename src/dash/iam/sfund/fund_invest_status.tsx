@@ -2,8 +2,8 @@
    출처: S1_24_투자실적_현황_자펀드_.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 투자실적구분(경영형태별·분야별·산업별·연도별) → **툴바 FilterChip 4개**(단일 선택) + 드로어 `투자실적구분`
-     (같은 state 공유). 목업 목록바 캡션 `투자실적 현황 · {구분}`은 카드 제목이 이미 같은 말을 하므로
+   - 투자실적구분(경영형태별·분야별·산업별·연도별) → **툴바 FilterChip 4개**(단일 선택)만
+     (드로어 중복 금지 — 2026-11-05). 목업 목록바 캡션 `투자실적 현황 · {구분}`은 카드 제목이 이미 같은 말을 하므로
      문구 대신 칩 앞 `Icon layers`로 대체한다.
    - 크로스탭 3뷰(경영형태별·분야별·산업별) → 2단 그룹헤더(`ColGroupDef` marryChildren) ·
      행 = 지표(투자건수·투자금액) × 연도 3(2011~2013). 목업 `VIEWS`·`crossTable()` 로직 그대로.
@@ -520,8 +520,7 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
             <DrawerField label="연도기준" noop><DrawerSelect value={fYBase} onChange={setFYBase} options={['출자사업연도', '결성연도', '등록연도']} /></DrawerField>
-            {/* 투자실적구분 — 툴바 칩과 같은 state 공유. 항상 4뷰 중 하나라 '전체' 옵션이 없다 */}
-            <DrawerField label="투자실적구분"><DrawerSelect value={view} onChange={(v) => setView(v as View)} options={VIEWS} all={null} /></DrawerField>
+            {/* 투자실적구분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
             <DrawerField label="데이터기준" noop><DrawerSelect value={fDBase} onChange={setFDBase} options={['운용사보고', '월말확정']} /></DrawerField>
             {/* 기준일자 — PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}
             <DrawerField label="기준일자" noop plain>

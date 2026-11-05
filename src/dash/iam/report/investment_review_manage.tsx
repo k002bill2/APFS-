@@ -3,7 +3,8 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(모펀드·운용사·자펀드·계정구분·담당자·투자심의상태·투자심의기간)
-       → 투심상태 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter)
+       → 투자심의상태 FilterChip(툴바 좌) + 나머지는 상세필터 드로어(Sheet, apfs-detail-filter).
+         칩으로 올린 투자심의상태는 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts)
    - 목록 그리드 + 합계행     → AG Grid + pinnedBottom(useMemo 재계산, apfs-aggrid). 투자금액·승인금액 합계
    - 심사단계 워크플로우      → 행 선택 시 툴바 좌에 그 단계의 컨텍스트 액션 → 단계 전이(apfs-stage-workflow)
        ⚠ 목업은 그리드 셀 안 인라인 <select>로 확정/승인을 전이했으나, 규약(인라인 전이 금지)에 따라
@@ -438,14 +439,13 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             {/* 검색어 입력은 기본 OFF(apfs-detail-filter opt-in 규약) — 이 페이지는 미사용이라 렌더하지 않는다.
-                목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·투자심의상태·투자심의기간.
+                목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·투자심의기간(투자심의상태는 툴바 칩 — 드로어 제외).
                 그리드 컬럼과 미연동인 항목(모펀드·계정구분·담당자)은 noop 캡션. 기간은 PeriodPicker day 2개(apfs-datepicker) */}
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAg} onChange={setFAg} options={['농식품', '수산']} /></DrawerField>
             <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={['양한솔', '이성훈']} /></DrawerField>
-            <DrawerField label="투자심의상태"><DrawerSelect value={fState} onChange={(v) => setFState(v as '' | '일정' | '결과')} options={['일정', '결과']} /></DrawerField>
             <DrawerField label="투자심의기간" plain>
               <div className="flex items-center gap-2 flex-wrap">
                 <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="투자심의기간 시작일" /></div>

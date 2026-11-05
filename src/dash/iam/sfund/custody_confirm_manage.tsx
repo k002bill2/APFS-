@@ -6,7 +6,7 @@
        목업 기본값 `2026-07-31`(실 캡처 기준일)을 그대로 유지한다 — 상세 팝업 부제에 실리는 값이라 빈 값이 될 수 없다.
        (apfs-detail-filter의 "목업 기본값을 필터 초기값으로 쓰지 않는다"는 **행을 거르는 필터**에 대한 규약이다.)
    - 툴바 좌 주 필터                → `확정여부` FilterChip(전체·확정·미확정). ⚠ 목업 검색박스엔 없는 **파생 칩**이다
-       (행 `confirm` 값에서 파생 — 수시보고 '확인상태' 파생 칩과 같은 관례). 드로어 select와 state를 공유한다.
+       (행 `confirm` 값에서 파생 — 수시보고 '확인상태' 파생 칩과 같은 관례). 칩에만 두고 드로어에 다시 두지 않는다(2026-11-05).
    - 3단 헤더 목록 그리드          → AG Grid 중첩 `ColGroupDef`(일치여부 > 투자자산/미투자자산 거래/미투자자산 > 리프),
        `marryChildren`. 합계행 없음 — 가산 가능한 금액 컬럼이 없다.
    - 행 선택(multiRow 체크박스, `SELECTION_COL`) → 1건일 때 선택 바 [수정] / 행 더블클릭=수정
@@ -52,7 +52,6 @@ import type { CustodyEntryValue } from './custody_confirm_entry_modal';
 import { CustodyMismatchAlertModal } from './custody_mismatch_alert_modal';
 import { GpSpecModal } from '../report/gp_spec_modal';
 import { SubFundSpecModal, SPEC_SAMPLE_SUBFUND } from '../report/subfund_spec_modal';   // 샘플 행 = 명세 팝업 공유본
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 
 const { Button, IconBtn, StatusBadge } = UI;
@@ -320,7 +319,7 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
-  /* 필터 — 확정여부는 툴바 칩(=드로어 select와 공유), 기준일자는 조회 기준 컨텍스트(행 필터 아님) */
+  /* 필터 — 확정여부는 툴바 칩(드로어엔 없음), 기준일자는 조회 기준 컨텍스트(행 필터 아님) */
   const [fConfirm, setFConfirm] = useState<'' | ConfirmState>('');
   const [fBaseDate, setFBaseDate] = useState(BASE_DATE);
   const clearFilters = () => { setFConfirm(''); setFBaseDate(BASE_DATE); };
@@ -499,10 +498,7 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
                 <PeriodPicker mode="day" value={fBaseDate} onChange={(v) => setFBaseDate(v || BASE_DATE)} ariaLabel="기준일자" />
               </div>
             </DrawerField>
-            {/* 확정여부 — 툴바 칩과 state 공유(목업엔 없는 파생 필터) */}
-            <DrawerField label="확정여부">
-              <DrawerSelect value={fConfirm} onChange={(v) => setFConfirm(v as '' | ConfirmState)} options={CONFIRM_OPTIONS} />
-            </DrawerField>
+            {/* 확정여부는 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
