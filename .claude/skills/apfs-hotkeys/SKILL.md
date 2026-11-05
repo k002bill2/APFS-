@@ -38,16 +38,24 @@ APFS의 앱-스코프 키보드 단축키는 **단일 훅 + 단일 레지스트�
 | `⌥A` / `Alt+A` | 푸터 전체보기 | `HOTKEYS.showAll` | `FooterActions`(IconBtn `hotkey`, onToggleAll 있는 화면만) | Mac 실측 / **Windows 미실측** |
 | `⌥O` / `Alt+O` | 푸터 새 창 | `HOTKEYS.newWindow` | `FooterActions`(IconBtn `hotkey`) | Mac 실측 / **Windows 미실측** |
 | `⌥R` / `Alt+R` | 리스트 툴바 조회 | `HOTKEYS.refresh` | 조회 IconBtn 38개 페이지 + `generic_list`(IconBtn `hotkey`) | Mac 실측 / **Windows 미실측** |
-| `⌥S` / `Alt+S` | 전표등록 저장(임시저장) | `HOTKEYS.journalSave` | `acc/slip/journal_entry_screen`(화면 open·입력 가능 시만) | Mac 실측 / **Windows 미실측** |
-| `⌥K` / `Alt+K` | 전표등록 마지막행 복사·추가 | `HOTKEYS.journalCopyLast` | 〃 | **미실측** |
-| `⌥Z` / `Alt+Z` | 전표등록 체크 행 삭제 | `HOTKEYS.journalDeleteRows` | 〃 | **미실측** |
-| `⌥C` / `Alt+C` | 전표등록 이전 행 적요 복사 | `HOTKEYS.journalCopyMemo` | 〃 | **미실측** |
+| `⌥S` / `Alt+S` | 전표등록 저장(임시저장) | `HOTKEYS.journalSave` | `acc/slip/journal_entry_screen`(화면 open·입력 가능 시만) | Mac 실측(2026-11-04 재확인 — 저장 검증 토스트) / **Windows 미실측** |
+| `⌥K` / `Alt+K` | 전표등록 마지막행 복사·추가 | `HOTKEYS.journalCopyLast` | 〃 | Mac 실측(2026-11-04 — 자동반복 keydown 4회에도 1행) / **Windows 미실측** |
+| `⌥Z` / `Alt+Z` | 전표등록 체크 행 삭제 | `HOTKEYS.journalDeleteRows` | 〃 | Mac 실측(2026-11-04 — 체크 행만, 체크 없으면 무동작) / **Windows 미실측** |
+| `⌥C` / `Alt+C` | 전표등록 이전 행 적요 복사 | `HOTKEYS.journalCopyMemo` | 〃 | Mac 실측(2026-11-04 — 마지막으로 포커스한 행 대상) / **Windows 미실측** |
+| `⌥I` / `Alt+I` | 전표등록 행 삽입(대상 행 바로 위 빈 행) | `HOTKEYS.journalInsertRow` | 〃(대상 = 마지막으로 포커스한 행·체크박스 클릭 포함, 없으면 무동작) | Mac 실측(2026-11-04) / **Windows 미실측** |
+| `⌥↑` / `Alt+↑` | 전표등록 체크 행 위로 이동(= [위로이동]) | `HOTKEYS.journalMoveUp` | 〃(체크 행이 있을 때만 enabled — 없으면 키를 가로채지 않음) | Mac 실측(2026-11-04 — 체크 유지) / **Windows 미실측** |
+| `⌥↓` / `Alt+↓` | 전표등록 체크 행 아래로 이동(= [아래로이동]) | `HOTKEYS.journalMoveDown` | 〃 | Mac 실측(2026-11-04 — 체크 유지) / **Windows 미실측** |
+| `⌥+` / `Alt++` | 전표등록 행 추가(= [행추가], 끝에 빈 행) | `HOTKEYS.journalAddRow`(`codes:['Equal','NumpadAdd']` — ⌥=·⌥⇧=·숫자패드 + 모두) | 〃 | Mac 실측(2026-11-04 — 3가지 입력 각 1행) / **Windows 미실측**(Alt+Shift = 입력 언어 전환 기본 키와 겹칠 수 있음). 금액칸 포커스 중 Windows Alt+⇧= 는 훅이 무시하지만 `AmountInput` 이 `e.key==='+'` 로 ×1,000 을 낸다(기존 동작, Mac 은 `±` 라 안 걸림) |
 
 - **등록 `⌘⏎`는 화면 힌트가 없다**(2026-09-11~). 등록이 kebab 항목에서 툴바 독립 버튼으로 승격되며 `DropdownMenuShortcut` 힌트가 함께 빠졌다 — `UI.Button`은 `forwardRef`/rest props가 없어 Radix `Tooltip asChild` 트리거로 못 쓰고 `title`도 전달되지 않는다(→[[ui-button-not-radix-aschild-trigger]]). 바인딩은 정상 동작. 힌트를 되살리려면 Button `children`에 `<span>{HOTKEYS.register.hint}</span>`를 덧붙이는 방법뿐. 툴바 배치 규약은 →[[apfs-grid]].
 - **`⌘K`는 HOTKEYS 밖의 직접 리스너**(`shell.tsx`, `(e.key==="k"||"K") && (metaKey||ctrlKey)`)다. `useHotkey`가 바로 이 ⌘K 명령팔레트 패턴을 재사용 훅으로 일반화한 것 — 신규 단축키는 반드시 `HOTKEYS`+`useHotkey`로 만든다.
 
 - **`IconBtn`의 `hotkey` vs `shortcut`**: `shortcut={HOTKEYS.x}`는 **표시 전용**(툴팁 힌트·`aria-keyshortcuts`만, 바인딩은 호출부 소유 — 이중 발화 방지). `hotkey={HOTKEYS.x}`를 넘기면 클릭과 같은 동작을 바인딩하고 툴팁에 힌트·`aria-keyshortcuts`를 붙인다. **`[role="dialog"]`가 열려 있으면 무시**(폼 편집 중 뒤 목록이 조회·개폐되지 않게). 한 화면에 같은 `hotkey`를 가진 IconBtn이 2개 마운트되면 둘 다 발화하니 페이지당 1개만.
-- 전표등록(ACC-003) 설계서의 `Alt+R`(행 이동)·`Alt+A`(행 삽입)는 전역 `refresh`·`showAll` 과 충돌해 바인딩하지 않았다(화면 도움말 표기만). 전표 ⌥ 4종도 입력창 포커스 중엔 무시된다(훅 규약).
+- 전표등록(ACC-003) 설계서의 `Alt+R`(행 이동)·`Alt+A`(행 삽입)는 전역 `refresh`·`showAll` 과 **키가 같아** 그 키로 바인딩하지 않고, **사용자 지정 ⌥↑·⌥↓(행 이동)·⌥I(행 삽입)로 대신한다**(2026-11-04 사용자 지시). 참고로 이 화면 안에선 ⌥A·⌥R 과 **동작 충돌은 없다**: 전표등록은 `[role="dialog"]` 라 ⌥A 전체보기·⌥R 조회 IconBtn 이 둘 다 dialog 가드(`components.tsx` IconBtn — 열린 dialog 가 있으면 click 을 부르지 않음)로 무동작이다. ⌥A 는 2026-11-04 Mac 실측(일반전표 관리 — 창을 닫은 목록에선 같은 측정으로 `aria-pressed` 가 토글돼 대조 확인). ⌥R 은 호스트마다 처리가 다르다 — `general_journal`·`journal_search`·`suspense`·`missing_evidence` 는 창이 열린 동안 hotkey 를 아예 풀고(예 `hotkey={entry || uploadOpen ? undefined : HOTKEYS.refresh}`), `general_ledger`·`subledger`·`trial_balance`·`deleted_journal` 은 바인딩을 둔 채 가드에 맡긴다(코드 근거, 미실측). 어느 쪽이든 전표등록 안에선 두 키가 비어 있다(그래도 설계서 키 대신 사용자 지정 키를 쓴다 — 전역 키와 같은 글자를 화면마다 다른 뜻으로 쓰지 않기 위해). 전표 ⌥ 8종도 입력창 포커스 중엔 무시된다(훅 규약 — 화면 도움말 '입력칸 밖에서 동작').
+- **전표등록 설계서(단축키·자동 입력 13종) 대조**(2026-11-04): 구현 11 · 부분 1 · 미구현 1.
+  - 구현: ⌥S 임시저장 · ⌥K 마지막행 복사 추가 · ⌥Z 행 삭제(체크 행만) · ⌥C 이전 적요 복사 · ⌥I 행 삽입(설계서 Alt+A 대체) · ⌥↑/⌥↓ 행 이동(설계서 Alt+R 대체, 체크 행) · ⌥+ 행 추가(설계서 '마지막 행에서 ↓' 대체) · 계정코드+Tab(=칸 blur 시 `resolveCode`) · 키워드+Enter 검색(계정과목·거래처 칸) · 대표 적요 추종(`syncMemo`)+[대표적요반영] · 차액 발생 시 1행(`withAutoRow`, 금액 blur).
+  - 부분: 금액 `+/-` — `+`(×1,000)만. `-` 는 마이너스전표 음수 입력과 겹쳐 제외.
+  - 미구현: 차액에서 Enter 저장 버튼 이동(차액 칸은 표시 전용이라 포커스 대상이 없다).
 - 회피한 키: `⌥F`(Windows Chrome 메뉴) → 즐겨찾기는 `⌥B`·전체보기는 `⌥A`, `⌘R`(새로고침) → 조회는 `⌥R`, `⌘W`(탭 닫기) → 전체 너비는 `⌥W`.
 
 ## Mac / Windows 대응 (질문 자주 나옴)
@@ -55,11 +63,13 @@ APFS의 앱-스코프 키보드 단축키는 **단일 훅 + 단일 레지스트�
 - 바인딩: `const mod = e.metaKey || e.ctrlKey` → Windows에선 **Ctrl**이 mod 역할. `e.altKey` → **Alt** 발화.
 - 힌트: `MOD = isMac ? '⌘' : 'Ctrl+'`, `ALT = isMac ? '⌥' : 'Alt+'`, register는 `isMac ? '⌘⏎' : 'Ctrl+Enter'`. 즉 Windows에선 `Ctrl+Enter`·`Ctrl+P`·`Alt+D`로 자동 표기·동작.
 - `isMac`은 `navigator.platform`(deprecated 경고 있으나 동작)으로 판별 → Windows='Win32'→`isMac=false`.
+- 설계서·도움말 표의 `Alt + X` 는 Windows 표기다 — 같은 바인딩이 Mac 에선 ⌥X 로 표시·동작한다(Mac 용 정의를 따로 두지 않는다). Mac Option 도 브라우저에선 `e.altKey` 다.
 
 **⚠️ 미검증 함정 — Windows에서 ⌥(Alt) 조합의 브라우저 충돌:**
 Windows Chromium은 `Alt+D`(주소창)·`Alt+E`(메뉴) 등 일부 단축키를 **렌더러에 도달하기 전**에 처리할 수 있다. 이 훅은 `capture` 단계 + `preventDefault`로 되찾으려 하지만 **Windows 브라우저에서 실측되지 않았다**(Mac만 확인). ⌥ 티어 단축키(D/M/E/L) 전부 이 리스크를 공유한다.
 - **판별 테스트**(Windows 브라우저): 페이지에 포커스 → 해당 ⌥/Alt 단축키 → **의도한 동작이 나면 통과**, **주소창/메뉴가 포커스되면** ⌥ 티어가 Windows에선 안전하지 않은 것(그 키만 mod 조합으로 이동 검토).
 - Codex 리뷰(2026-09-11)도 `Alt+D`가 Windows Chromium에서 주소창에 선점될 수 있다는 동일 우려를 제기했으나 **양쪽 다 미실측**(preventDefault 가능 여부는 버전별 편차). Windows 실측 전까지는 ⌥D를 유지하되 이 표의 검증 상태로 관리한다.
+- 같은 판별이 필요한 후보(전부 **미실측**): Windows Firefox 의 메뉴 접근키 Alt+S(기록)·Alt+B(북마크)·Alt+T(도구)·Alt+H(도움말) — preventDefault 로 되찾는지 버전별 확인 필요. NVIDIA 오버레이를 쓰는 PC는 Alt+Z 를 앱이 브라우저 밖에서 가로챌 수 있다(페이지 코드로는 못 막는다).
 
 ## 새 단축키 추가 절차 (3단)
 1. `use-hotkey.ts`의 `HOTKEYS`에 항목 추가 — `{ combo: {...}, hint: ... }`.
@@ -75,6 +85,9 @@ Windows Chromium은 `Alt+D`(주소창)·`Alt+E`(메뉴) 등 일부 단축키를 
 - **mod 조합(⌘/Ctrl)**: 입력창에서도 발화한다(전역). 브라우저 계층 키(⌘P/⌘S/⌘F/⌘E…)는 capture+preventDefault로 되찾을 수 있다. 인쇄·저장류 전역 액션에.
 - **⌥(Alt) 조합**: 입력창(INPUT/TEXTAREA/SELECT/contentEditable)에선 **자동 무시**(타이핑·특수문자 입력 보호). `⌥`+letter는 Mac에서 `e.key`가 특수문자('µ' 등)로 변질되므로 **`e.code`(물리 키, `KeyD`)로 매칭**한다(훅이 이미 처리). "표를 보는 중 쓰는" 페이지 액션(내보내기 등)에 적합.
   - **기호 키는 `combo.code` 를 명시**한다 — 글자 키만 `'Key'+대문자`로 자동 유도된다. 예 `lnb: { alt:true, key:'\\', code:'Backslash' }`(한글 자판의 ₩ 키와 같은 물리 키).
+  - **방향키는 `key:'ArrowUp'`·`'ArrowDown'`** 으로 쓴다(2026-11-04 `journalMoveUp/Down` 이 첫 사례) — 훅의 마지막 분기 `e.key === combo.key` 로 매칭된다. 글자 키와 달리 Mac ⌥ 가 방향키 `e.key` 를 특수문자로 바꾸지 않는다(브라우저 실측 `e.key:'ArrowUp'` — 단 CDP 는 key 를 직접 지정하므로 실제 키보드 매핑까지 증명한 건 아니다. Mac ⌥I 의 `e.key:'Dead'` → `code:'KeyI'` 경로는 jsdom 계약 테스트 `use_hotkey_keys.test.ts` 로만 확인). 힌트는 `ALT + '↑'`, aria 는 `ariaShortcut` 이 `Alt+ArrowUp` 으로 만든다.
+  - **한 글자가 물리 키 여러 개에서 나오면 `codes`** — `'+'` 는 `Equal`(Shift 필요)·`NumpadAdd` 둘이라 `{ alt:true, key:'+', codes:['Equal','NumpadAdd'] }`. `codes` 가 있는 조합만 Shift 를 무시한다(Chrome 확대 ⌘=·⌘⇧= 관례) — 그 밖의 조합은 Shift 엄격 비교 그대로(회귀 테스트: ⌥⇧R 은 조회를 발화하지 않는다, `use_hotkey_keys.test.ts`). 훅 deps 는 `codes.join(',')` 문자열(배열 identity 금지). `ariaShortcut` 은 `Alt++` 를 만든다 — IconBtn 에 붙일 일이 생기면 `Plus` 표기로 바꿀 것.
+  - **화면 상태가 있어야 의미 있는 단축키는 그 조건을 `enabled` 에 넣는다** — 훅은 매칭되면 무조건 preventDefault 하므로, 체크 행이 없는데 ⌥↑ 를 가로채면 스크롤·Radix select 열기 같은 기본 동작만 죽는다. 예: `{ enabled: hk.enabled && checked.size > 0 }`(전표등록 ⌥↑·⌥↓, 실측: 체크 0건이면 `defaultPrevented:false`).
 - **키 자동반복**: 키를 누르고 있으면 브라우저가 `keydown` 을 반복한다. 훅은 `e.repeat` 이면 **기본동작만 막고 액션은 실행하지 않는다**(첫 입력 1회) — 새 창 ⌥O 가 탭을 여러 개 열거나 토글이 홀짝으로 끝나지 않게. 반복 실행이 필요한 단축키(스크롤·증감 등)가 생기면 opt-in 옵션을 따로 만들 것.
 - **`aria-keyshortcuts` 표기**는 `use-hotkey.ts` 의 `ariaShortcut(combo)` 하나로 만든다 — mod 는 Mac=`Meta`·그 외=`Control`(힌트 ⌘/Ctrl 과 일치). 컴포넌트에서 문자열을 손으로 쓰지 않는다(예외: FAB 의 고정 `Alt+B`).
 - **OS 계층 금지**: `⌘M`(최소화)·`⌘Q`(종료)·`⌘W`(닫기)·`⌘T`(새탭)·`⌘Tab`은 페이지에 도달조차 안 하므로 **쓰지 말 것**.
@@ -83,7 +96,9 @@ Windows Chromium은 `Alt+D`(주소창)·`Alt+E`(메뉴) 등 일부 단축키를 
 ## 검증 규약
 - **`page.keyboard`(trusted 이벤트)로만 검증**한다. `dispatchEvent`로 만든 합성 KeyboardEvent는 `preventDefault`가 브라우저 기본동작을 실제로 억제하는지 **증명하지 못한다**(→ 메모리 `context-menu-keyboard-focus-snapback`의 함정과 동류: 프로그래밍 이벤트는 가짜 성공).
 - 순서: `vite build` green → Codex 정적 리뷰 → **브라우저 런타임 확인**(단축키가 실제로 발화하고 기본동작을 억제하는지). 정적 통과가 런타임 통과를 보장하지 않는다.
-- 확인 항목(2026-09-28 실측 세트): ① 툴팁 텍스트 `라벨 + 힌트` ② `aria-keyshortcuts` 값 ③ `page.keyboard.press('Alt+KeyX')` 로 실제 동작(토글은 두 번 눌러 원복) ④ 입력칸 포커스 상태에선 ⌥ 단축키 무반응 ⑤ **길게 누르기**(`keyboard.down`→900ms→`up`)에도 1회만 실행.
+- 확인 항목(2026-09-28 실측 세트): ① 툴팁 텍스트 `라벨 + 힌트` ② `aria-keyshortcuts` 값 ③ `page.keyboard.press('Alt+KeyX')` 로 실제 동작(토글은 두 번 눌러 원복) ④ 입력칸 포커스 상태에선 ⌥ 단축키 무반응 ⑤ **길게 누르기**(자동반복)에도 1회만 실행.
+  - ⑤ 는 `keyboard.down`→900ms→`up` 으로 재면 **안 된다** — ego-browser 는 이 방법으로 자동반복 keydown 을 만들지 않는다(2026-11-04 실측: `repeat:true` 0건 → '1회만 실행' 통과가 무의미). 반복은 CDP 로 직접 보낸다: `page.cdp('Input.dispatchKeyEvent', { type:'rawKeyDown', modifiers:1, code:'KeyK', key:'k', windowsVirtualKeyCode:75 })` 1회 + 같은 호출에 `autoRepeat:true` N회 + `type:'keyUp'`(modifiers 1 = Alt). 검증 때 window capture 리스너로 `[e.code, e.repeat]` 를 모아 반복이 실제로 생겼는지 같이 본다.
+- ⚠ 그리드 편집 화면(전표등록 등)은 고정 대기 금지 — 체크박스 클릭 뒤 200ms·단축키 뒤 300ms 고정 대기로 읽으면 선택 반영·AG Grid 행 DOM 갱신이 늦어 ⌥Z 가 '안 지운 것'처럼 보였다(2026-11-04 오탐, 조건 대기로 재측정하니 통과). 선택은 `N건 선택됨` 텍스트, 행 수는 기대값을 `waitForFunction` 으로 기다린다(→[[ego-browser-timing-throttle-trap]]).
 - ⚠ 자동화 함정: 툴팁 hover 측정은 직전 툴팁이 닫히기 전(Radix skip-delay)이면 빈 문자열이 나온다 — 버튼 사이에 포인터를 멀리 빼고 1.5초 이상 둔다. `⌥\` 버튼은 CSS 셀렉터 `[aria-keyshortcuts="Alt+\"]` 가 이스케이프로 깨지니 `getAttribute` 비교로 찾는다.
 
 ## 알려진 잠복 이슈

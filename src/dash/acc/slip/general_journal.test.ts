@@ -7,7 +7,7 @@ import { defaultPeriod, validateRange, filterJournals, submitForApproval, delete
 import type { JournalFilter } from './general_journal_model';
 import {
   emptyLine, isBlankLine, missingCode, entryTotals, lineDiff, withAutoRow, syncMemo, applyRepMemo,
-  moveChecked, deleteChecked, deleteBlank, duplicateChecked, copyLastAppend, copyPrevMemo,
+  moveChecked, deleteChecked, deleteBlank, duplicateChecked, copyLastAppend, copyPrevMemo, insertBlankAbove,
   resolveCode, applyAccountTo, applyPartnerTo, parseAmount, formatAmount, times1000,
   formNew, formFromRow, formCopy, formReverse, formFromEntry, isReadOnlyEntry, formSnapshot,
   validateEntry, formToJournal, commitJournal, nextSeq, ENTRY_MSG, REVERSE_PREFIX,
@@ -230,6 +230,17 @@ describe('전표등록 — 그리드 도구', () => {
     expect(copyPrevMemo(m).map((l) => l.memo)).toEqual(['m1', 'm2', 'm2']);
     expect(copyPrevMemo(m, m[1].key).map((l) => l.memo)).toEqual(['m1', 'm1', '']);
     expect(copyPrevMemo(m, m[0].key)).toBe(m);
+  });
+  it('Alt+I 행 삽입 — 대상 행 바로 위에 빈 행(새 key), 대상이 없으면 그대로(결산양식 insertAbove 와 같은 규칙)', () => {
+    const m = [L({ accountCode: 'A' }), L({ accountCode: 'B' })];
+    const r = insertBlankAbove(m, m[1].key);
+    expect(r.map((l) => l.accountCode)).toEqual(['A', '', 'B']);
+    expect(isBlankLine(r[1])).toBe(true);
+    expect(new Set(keys(r)).size).toBe(3);
+    expect(m.map((l) => l.accountCode)).toEqual(['A', 'B']);   // 입력 불변
+    expect(insertBlankAbove(m, m[0].key).map((l) => l.accountCode)).toEqual(['', 'A', 'B']);
+    expect(insertBlankAbove(m, null)).toBe(m);
+    expect(insertBlankAbove(m, 'ln-none')).toBe(m);
   });
 });
 
