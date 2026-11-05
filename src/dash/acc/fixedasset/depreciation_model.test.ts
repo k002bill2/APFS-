@@ -133,7 +133,7 @@ describe('조회 · 기본 기준년월', () => {
   });
 });
 
-describe('E02 그리드 저장 게이트 · 기간 원장', () => {
+describe('E02 저장 게이트 · 기간 원장', () => {
   const key = periodKey(FUND, '2026-10');
   it('대상 0건 = empty', () => { expect(saveGate([])).toBe('empty'); expect(MSG.emptySave).toBe('저장할 내역이 없습니다.'); });
   it('미저장 = ok → 저장 후 그 기간 전 행 여 · 다른 기간은 부', () => {
