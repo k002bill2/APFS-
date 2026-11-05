@@ -133,7 +133,7 @@ export function buildRows(assets: readonly DeprAsset[], account: DeprFundAccount
     .sort((x, y) => x.assetNo.localeCompare(y.assetNo));
 }
 
-/** E02 그리드 저장 게이트 — 대상 0건 · 이미 저장된 행 포함(덮어쓰기 확인) · 바로 저장 */
+/** E02 저장 게이트 — 대상 0건 · 이미 저장된 행 포함(덮어쓰기 확인) · 바로 저장 */
 export type SaveGate = 'empty' | 'overwrite' | 'ok';
 export function saveGate(rows: readonly DeprRow[]): SaveGate {
   if (rows.length === 0) return 'empty';
