@@ -24,6 +24,14 @@ describe('조기경보 그리드 적용(가이드 4.2.2)', () => {
     expect(strip(readSrc('litigation_manage.tsx'))).toMatch(/const confCell = [^\n]*<TagBadge\b/);
   });
 
+  it('투심보고 확정여부(미확정·확정·투심위취소)는 TagBadge — 투심위취소 = muted(2026-11-05 사용자 결정)', () => {
+    const s = strip(readSrc('investment_review_manage.tsx'));
+    expect(s).toMatch(/const CONFIRM_TONE: Record<Confirm, TagTone> = \{ 미확정: 'info', 확정: 'primary', 투심위취소: 'muted' \}/);
+    expect(s).toMatch(/<TagBadge tone=\{CONFIRM_TONE\[/);            // 그리드 셀·선택 바 모두
+    expect(s).not.toMatch(/<StatusBadge tone=\{CONFIRM_TONE\[/);
+    expect(s).not.toMatch(/badge\('confirm'/);                       // 상태 배지 헬퍼(badge) 경유 금지
+  });
+
   it('전월 비교 변동 셀은 TrendBadge', () => {
     expect(strip(readSrc('ew_month_compare.tsx'))).toMatch(/<TrendBadge\b/);
   });
