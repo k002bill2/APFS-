@@ -76,7 +76,7 @@ export function DepreciationAccountModal({ initial, onSave, onClose }: {
     return (
       <>
         <td style={{ ...td, borderLeft: '1px solid var(--border)' }} className="tabular-nums">{v.code || <span className="text-caption">–</span>}</td>
-        <td data-cell={cellKey(i, side)} style={{ ...td, boxShadow: bad ? 'inset 0 0 0 2px var(--danger)' : undefined }}>
+        <td data-cell={cellKey(i, side)} style={{ ...td, borderLeft: '1px solid var(--border)', boxShadow: bad ? 'inset 0 0 0 2px var(--danger)' : undefined }}>
           <span className="flex items-center gap-1.5 min-w-0">
             <span className="min-w-0 flex-1 truncate">{v.name || <span className="text-caption">미선택</span>}</span>
             <Button variant="outline" size="sm" onClick={() => setSearch({ index: i, side })}>
@@ -112,8 +112,8 @@ export function DepreciationAccountModal({ initial, onSave, onClose }: {
                 <th colSpan={2} scope="colgroup" style={groupTh}>대변</th>
               </tr>
               <tr>
-                <th scope="col" style={groupTh}>계정코드</th><th scope="col" style={th}>계정과목 *</th>
-                <th scope="col" style={groupTh}>계정코드</th><th scope="col" style={th}>계정과목 *</th>
+                <th scope="col" style={groupTh}>계정코드</th><th scope="col" style={groupTh}>계정과목 *</th>
+                <th scope="col" style={groupTh}>계정코드</th><th scope="col" style={groupTh}>계정과목 *</th>
               </tr>
             </thead>
             <tbody>
