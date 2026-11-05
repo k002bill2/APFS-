@@ -435,10 +435,7 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             {/* 목업은 전체/농식품/수산 칩 그룹 — DrawerSelect의 첫 옵션 '전체'가 같은 역할을 한다 */}
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcct} onChange={setFAcct} options={['농식품', '수산']} /></DrawerField>
-            {/* 연도기준은 툴바 칩과 같은 state를 공유한다(한 항목·두 진입점) */}
-            <DrawerField label="연도기준">
-              <DrawerSelect value={yearBasis} onChange={(v) => setYearBasis(v as YearBasis)} options={YEAR_BASES} noAll />
-            </DrawerField>
+            {/* 연도기준은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
             <DrawerField label="데이터기준" noop><DrawerSelect value={fDbasis} onChange={setFDbasis} options={['운용사보고', '월말확정']} /></DrawerField>
             {/* 기준일자 = PeriodPicker day('YYYY-MM-DD'). 트리거가 w-full이라 fit-content 래퍼 필수(apfs-datepicker 폭 규칙) */}
             <DrawerField label="기준일자" plain noop>

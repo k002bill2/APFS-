@@ -285,7 +285,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
-  /* 필터 — 보고구분은 툴바 칩 + 드로어가 **같은 state를 공유**한다(표시가 갈라지지 않게).
+  /* 필터 — 보고구분은 툴바 칩에만 둔다(드로어 중복 금지 — 2026-11-05).
      나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
   const [fRt, setFRt] = useState<'' | ReportKind>('');
   const [fGp, setFGp] = useState('');
@@ -314,7 +314,6 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
   const filteredRows = useMemo(() => rows.filter(passes), [rows, passes]);
   const gpOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.gp))), [rows]);
   const fundOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.fn))), [rows]);
-  const rtOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.rt))), [rows]);
 
   const onGridReady = useCallback((e: GridReadyEvent<RegularReportRow>) => { apiRef.current = e.api; }, []);
 
@@ -474,8 +473,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
                 <div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}><PeriodPicker mode="month" value={fTo} onChange={setFTo} ariaLabel="기준년월 종료" /></div>
               </div>
             </DrawerField>
-            {/* 보고구분 — 툴바 칩과 같은 state 공유(옵션은 행에서 파생) */}
-            <DrawerField label="보고구분"><DrawerSelect value={fRt} onChange={(v) => setFRt(v as '' | ReportKind)} options={rtOptions} /></DrawerField>
+            {/* 보고구분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>

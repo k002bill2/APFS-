@@ -410,7 +410,6 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
             <DrawerField label="심사담당자" noop><DrawerSelect value={fJs} onChange={setFJs} options={jsNames} /></DrawerField>
             <DrawerField label="리스크담당자" noop><DrawerSelect value={fRs} onChange={setFRs} options={rsNames} /></DrawerField>
             <DrawerField label="구분" noop><DrawerSelect value={fKind} onChange={setFKind} options={[]} /></DrawerField>
-            <DrawerField label="확인상태"><DrawerSelect value={fStage} onChange={(v) => setFStage(v as '' | Stage)} options={['미확인', '일부확인', '확인완료']} /></DrawerField>
             <DrawerField label="기간 (보고일자)" plain>
               <div className="flex items-center gap-2 flex-wrap">
                 <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="조회기간 시작일" /></div>

@@ -332,7 +332,7 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             {/* 보고구분 — 목업 유일 옵션('투자심의관리')만 둔다. 없는 옵션을 생성하지 않는다(검토필요 메모) */}
             <DrawerField label="보고구분" noop><DrawerSelect value={fRt} onChange={setFRt} options={['투자심의관리']} /></DrawerField>
-            <DrawerField label="투심상태"><DrawerSelect value={fStat} onChange={(v) => setFStat(v as '' | ReviewStatus)} options={['승인', '보류', '부결']} /></DrawerField>
+            {/* 투심상태는 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>

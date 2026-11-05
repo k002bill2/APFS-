@@ -378,7 +378,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
 
-  /* 필터 — 조회기준은 툴바 칩 + 드로어가 **같은 state를 공유**한다(표시가 갈라지지 않게) */
+  /* 필터 — 조회기준은 툴바 칩에만 둔다(드로어 중복 금지 — 2026-11-05) */
   const [filterOpen, setFilterOpen] = useState(false);
   const [basis, setBasis] = useState<Basis>(DEFAULT_BASIS);
   const [fMf, setFMf] = useState('');     // 모펀드 — 그룹 컬럼 아님(no-op)
@@ -553,8 +553,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
             <DrawerField label="자펀드"><DrawerSelect value={fFn} onChange={setFFn} options={fnOptions} /></DrawerField>
             {/* 목업은 전체/농식품/수산 칩 그룹 — DrawerSelect의 첫 옵션 '전체'가 같은 역할을 한다 */}
             <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            {/* 조회기준은 툴바 칩과 같은 state를 공유한다(한 항목·두 진입점). 늘 하나가 잡혀 있어 '전체' 빈 값이 없다 */}
-            <DrawerField label="조회기준"><DrawerSelect value={basis} onChange={(v) => setBasis(v as Basis)} options={BASES} noAll /></DrawerField>
+            {/* 조회기준은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
             {/* 기준일자 = 거래일자 범위. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}
             <DrawerField label="기준일자" plain>
               <div className="flex items-center gap-2 flex-wrap">

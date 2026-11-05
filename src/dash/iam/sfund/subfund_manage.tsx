@@ -472,7 +472,8 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
             <DrawerField label="검색어">
               <UI.ClearableInput type="text" value={fText} onValueChange={setFText} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="조합명·GP·단계 등 전 컬럼 검색" clearLabel="검색어 지우기" style={inputStyle('text')} />
             </DrawerField>
-            {/* 원본(목업) 검색박스 11항목·순서 그대로: 모펀드·자펀드·계정구분·자펀드구분·사업연도·정기/수시·심사담당자·리스크담당자·심사단계·조합상태·기준일자.
+            {/* 원본(목업) 검색박스 순서 그대로: 모펀드·자펀드·계정구분·자펀드구분·사업연도·정기/수시·심사담당자·리스크담당자·조합상태·기준일자.
+                목업 11항목 중 심사단계는 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts).
                 그리드 컬럼과 미연동인 항목(모펀드·계정구분·담당자 2종·기준일자)은 noop 캡션(apfs-detail-filter). 연도/일자는 PeriodPicker 표준(apfs-datepicker) */}
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={OPT_MF} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={formedFunds} /></DrawerField>
@@ -483,7 +484,6 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
             <DrawerField label="정기/수시"><DrawerSelect value={fRt} onChange={setFRt} options={['정기', '수시']} /></DrawerField>
             <DrawerField label="심사담당자" noop><DrawerSelect value={fManager} onChange={setFManager} options={OPT_MANAGER} /></DrawerField>
             <DrawerField label="리스크담당자" noop><DrawerSelect value={fRisk} onChange={setFRisk} options={OPT_MANAGER} /></DrawerField>
-            <DrawerField label="심사단계"><DrawerSelect value={fStage} onChange={(v) => setFStage(v as '' | Stage)} options={STAGES} /></DrawerField>
             <DrawerField label="조합상태"><DrawerSelect value={fSt} onChange={setFSt} options={OPT_FS} /></DrawerField>
             <DrawerField label="기준일자" noop plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" /></div></DrawerField>
           </div>
