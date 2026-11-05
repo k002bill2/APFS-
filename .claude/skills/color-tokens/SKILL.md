@@ -30,10 +30,11 @@ APFS 대시보드의 색 토큰 규약. 전체 카탈로그·근거는 **`docs/C
 | 용도 | 토큰 | 비고 |
 |------|------|------|
 | **칠**(점·막대·차트마크·아이콘·progress) | `--warning`·`--success`·`--danger`·`--info` | 밝게 유지(선명함) |
-| **텍스트**(라벨·델타 숫자·달력 요일·배지 글자·soft 위 텍스트) | `--warning-text`·`--success-text`·`--danger-text`·`--info-text` | 라이트=어둡게(≥4.5:1), `.dark`=베이스와 동일(다크는 이미 통과) |
+| **텍스트**(라벨·델타 숫자·달력 요일·배지 글자·soft 위 텍스트) | `--warning-text`·`--success-text`·`--danger-text`·`--info-text`·`--primary-text` | 라이트=어둡게(≥4.5:1), `.dark`=베이스와 동일(다크는 이미 통과) |
 
-- `.dark`에서 **-text 4개 반드시 재정의**(생략 시 라이트용 어두운 값이 다크 카드로 새어 배지 깨짐).
+- `.dark`에서 **-text 5개 반드시 재정의**(생략 시 라이트용 어두운 값이 다크 카드로 새어 배지 깨짐).
 - StatusBadge/DeltaBadge(components.tsx)는 이미 -text 사용 — 새 상태색 텍스트도 이 규약 준수.
+- `--primary-text`(2026-11-05 신설): `--primary` 를 primary-soft 위 글자로 쓰면 4.23:1 로 AA 미달이라 만든 토큰(라이트 5.4:1, 다크 4.8:1). 지금은 `TagBadge` primary 만 쓴다 — `toneVar('primary')` 는 아직 `--primary` 를 돌려줘서 기존 `StatusBadge tone="primary"` 는 미달 그대로다(바꾸면 그 화면들 색이 함께 바뀌므로 지시가 있을 때 별도 작업).
 - 애매하면 자문: 이 색이 **글자/작은 마크**인가(→-text) **면적 있는 칠**인가(→베이스)?
 
 ## 신규 토큰 (테마 고정, `.dark` 미재정의)
