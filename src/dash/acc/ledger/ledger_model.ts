@@ -63,7 +63,7 @@ export function openingBalance(base: readonly LedgerLine[], code: string, from: 
   return sumSigned(base.filter((l) => l.accountCode === code && l.slipDate < from && l.slipDate >= start));
 }
 
-/* ── 기간 검증(상세필터 [필터 적용]) — 설계서 E01 문구 그대로 ── */
+/* ── 기간 검증(상세필터 — 즉시 반영, 렌더마다 applied 로 판정) — 설계서 E01 문구 그대로 ── */
 export const MSG = {
   periodRequired: '기간을 입력하세요.',
   periodOrder: '시작일은 종료일보다 늦을 수 없습니다.',

@@ -21,9 +21,13 @@ describe('전표검색 화면 계약', () => {
     expect(right).toEqual(['debit', 'credit']);
     expect((src.match(/rightAligned/g) ?? []).length).toBe(2);
   });
-  it('필터 적용 = 기간 → 금액 → 금액(외화) 검증 후 커밋, 실패면 toast.error', () => {
-    expect(src).toMatch(/validateRange\(draft\.from, draft\.to\) \?\? validateAmountRange\(draft\.amountMin, draft\.amountMax\)\s+\?\? validateForeignAmountRange\(draft\.foreignAmountMin, draft\.foreignAmountMax\)/);
-    expect(src).toMatch(/if \(err\) \{ toast\.error\(err\); return; \}/);
+  it('상세필터 즉시 반영 — 기간·금액·금액(외화)을 applied 로 각자 검증, 실패면 결과 0건 · [필터 적용] = 닫기(2026-11-03)', () => {
+    expect(src).toContain('validateRange(applied.from, applied.to)');
+    expect(src).toContain('validateAmountRange(applied.amountMin, applied.amountMax)');
+    expect(src).toContain('validateForeignAmountRange(applied.foreignAmountMin, applied.foreignAmountMax)');
+    expect(src).toMatch(/rangeBad \? \[\] : filterLines\(rows, applied\)/);
+    expect(src).toMatch(/onClick=\{\(\) => setFilterOpen\(false\)\}>필터 적용</);
+    expect(src).not.toMatch(/commitFilter|enterCommits|setDraft|toast\.error\(err\)/);
   });
   it('상세필터 20항목 — slide 11 정의표 순서', () => {
     const drawer = src.slice(src.indexOf('<SheetContent'), src.indexOf('</SheetContent>'));

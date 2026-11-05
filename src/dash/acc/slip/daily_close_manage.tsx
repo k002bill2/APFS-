@@ -197,8 +197,11 @@ export function DailyCloseManage({ onNav }: { onNav?: (r: string) => void }) {
     setAnchor(next);
   };
   const shift = (dir: -1 | 1) => setAnchor((a) => shiftAnchor(view, a, term, dir, today));
+  /* [오늘] = 오늘이 속한 회기로 기수까지 바꾸고 오늘로 이동(2026-11-03 사용자 지시). 그 계정에 오늘을 품은 회기가 없을 때만 안내 */
   const goToday = () => {
-    if (!inTerm(term, today)) { toast.error(TODAY_OUT_OF_TERM); return; }
+    const t = terms.find((x) => x.account === account && inTerm(x, today));
+    if (!t) { toast.error(TODAY_OUT_OF_TERM); return; }
+    setTermId(t.id);
     setAnchor(today);
   };
   /* E02 조회 — 현재 조건으로 재조회(로컬 상태가 곧 원장) */

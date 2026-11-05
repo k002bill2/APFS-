@@ -8,14 +8,15 @@
        잔여폭 흡수 = 적요 1개, 긴 텍스트(계정구분·적요·계정과목·거래처)는 truncate span.
        작성일 내림차순·분개번호 오름차순(모델 정렬). 행 더블클릭 / Enter(조합키·IME 조합 중 제외) = 전표상세(E03).
        행 선택 기능이 없는 조회 그리드라 "행 강조"는 포커스 셀 행 표시로 갈음한다(setSelected 미사용).
-   - 상세필터 드로어 = slide 11 정의표 20개 전부(No.1~20, 정의표 순서). draft 를 편집하고 [필터 적용](또는 텍스트 Enter)에서만
-       커밋 — 기간 시작 > 종료 → 금액 최소 > 최대 → 금액(외화) 최소 > 최대 순으로 검사해 toast.error + 드로어 유지 + 두 칸 invalid. 닫기(X·Esc·바깥)는 draft 폐기.
+   - 상세필터 드로어 = slide 11 정의표 20개 전부(No.1~20, 정의표 순서). 즉시 반영 — 고르는 즉시 applied 반영, [필터 적용] = 닫기
+       (X·Esc·바깥 클릭으로 닫아도 값 유지). 기간 시작 > 종료 · 금액 최소 > 최대 · 금액(외화) 최소 > 최대는 각자 검사 —
+       실패한 항목마다 두 칸 invalid + 아래 안내, 결과 0건(2026-11-03 사용자 지시, 정본 privacy_access_log).
        기간 기본 = 당월 1일~말일(첫 진입부터 칩), 칩 × = 기간 해제(전 기간), [초기화] = 당월 복원.
        계정구분 기본 '전체', 나머지 셀렉트 기본 '선택해 주세요'(= 미적용). 적요 = 분개 라인 적요, 상단적요 = 전표 대표 적요.
        금액 = 라인 금액(차변 또는 대변). 금액(외화) = 원 전표 외화금액(원화 전표는 조건 시 제외 — 전표 단위라 라인이 함께 걸린다).
        증빙구분·증빙파일명·통화는 원 전표(journal) 값으로 거른다. 증빙미첨부사유 = 전표 사유(부분일치, 사유 없는 전표 제외).
        거래처 사업자등록번호 = 라인 거래처의 사업자번호(숫자만 부분일치 — 하이픈 무시, 번호 없는 라인 제외).
-       계정과목 = 텍스트(부분일치) + [검색] → 회계 공용 AccountSearchModal 로 값 채움.
+       계정과목·거래처 = 텍스트(부분일치) — 설계서(ACC-008) 정의대로 [검색] 팝업 없음(2026-11-04 사용자 결정).
    - 전표상세(E03) = ACC-003 전표 화면(JournalEntryScreen) readOnly + hideGridTools(분개 그리드 도구 미노출) + onCopy([복사]·[닫기]) —
        slide 12·16. 닫으면 목록 조건·더블클릭 행 유지(그 행 셀로 포커스 복귀, 재조회 없음).
        [복사] = 상세가 exit 로 닫힌 뒤(onClose) 같은 전표로 ACC-003 복사 등록(mode 'copy' — 전표등록 [복사]와 같은 EntryState)을 연다.
@@ -52,7 +53,6 @@ import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본
-import { AccountSearchModal } from '../account_search_modal';
 import { CURRENCIES, EVIDENCE_TYPES, FUND_ACCOUNTS, JOURNAL_ORIGINS, PL_DEPTS, PL_EMPLOYEES, todayStr } from './general_journal_data';
 import { validateRange } from './general_journal_model';
 import { SEARCH_SLIP_KINDS, demoSearchLines } from './journal_search_data';
@@ -112,7 +112,7 @@ const EXPORT_COLS: XCol[] = [
   { header: '최초등록자', get: (r) => r.createdBy }, { header: '최종수정자', get: (r) => r.updatedBy },
 ];
 
-/* plain=<div> 래퍼 — PeriodPicker·[검색] 버튼이 <label> 안에서 2회 토글되지 않게(apfs-datepicker) */
+/* plain=<div> 래퍼 — PeriodPicker 등 버튼이 <label> 안에서 2회 토글되지 않게(apfs-datepicker) */
 function DrawerField({ label, children, plain }: { label: string; children: ReactNode; plain?: boolean }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
@@ -141,35 +141,23 @@ export function JournalSearchManage({ onNav }: { onNav?: (r: string) => void }) 
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [modal, setModal] = useState<ModalState>(null);
 
-  /* 상세필터 — applied = 적용된 조건(칩·목록의 SSOT, 첫 진입 = 당월), draft = 드로어에서 편집 중인 사본 */
-  const initial = useMemo(() => defaultSearchFilter(todayStr()), []);
+  /* 상세필터 — applied = 드로어·칩·목록의 SSOT(첫 진입 = 당월, 초안 사본 없음 — 바꾸는 즉시 반영) */
   const [filterOpen, setFilterOpen] = useState(false);
-  const [applied, setApplied] = useState<SearchFilter>(initial);
-  const [draft, setDraft] = useState<SearchFilter>(initial);
-  const [acctPick, setAcctPick] = useState(false);
-  const setD = <K extends keyof SearchFilter>(k: K) => (v: SearchFilter[K]) => setDraft((d) => ({ ...d, [k]: v }));
-  /* E01 [상세필터] — 열 때 적용값으로 재동기화 */
-  const openFilter = () => { setDraft(applied); setFilterOpen(true); };
-  /* E01-3 [필터 적용] — 기간(시작 ≤ 종료) → 금액(최소 ≤ 최대) → 금액(외화)(최소 ≤ 최대) 순으로 검증, 실패면 드로어를 닫지 않는다 */
-  const commitFilter = () => {
-    const err = validateRange(draft.from, draft.to) ?? validateAmountRange(draft.amountMin, draft.amountMax)
-      ?? validateForeignAmountRange(draft.foreignAmountMin, draft.foreignAmountMax);
-    if (err) { toast.error(err); return; }
-    setApplied(draft);
-    setFilterOpen(false);
-  };
-  /* 편집 중 범위 오류 — 두 칸에 invalid 표시(커밋 시 toast 는 그대로) */
-  const periodErr = validateRange(draft.from, draft.to);
-  const amountErr = validateAmountRange(draft.amountMin, draft.amountMax);
-  const fxErr = validateForeignAmountRange(draft.foreignAmountMin, draft.foreignAmountMax);
+  const [applied, setApplied] = useState<SearchFilter>(() => defaultSearchFilter(todayStr()));
+  const setD = <K extends keyof SearchFilter>(k: K) => (v: SearchFilter[K]) => setApplied((a) => ({ ...a, [k]: v }));
+  /* 범위 오류 — 렌더마다 applied 로 계산. 실패한 항목마다 두 칸 invalid + 아래 안내, 하나라도 실패면 결과 0건 */
+  const periodErr = validateRange(applied.from, applied.to);
+  const amountErr = validateAmountRange(applied.amountMin, applied.amountMax);
+  const fxErr = validateForeignAmountRange(applied.foreignAmountMin, applied.foreignAmountMax);
+  const rangeBad = !!(periodErr || amountErr || fxErr);
   const clearApplied = (patch: Partial<SearchFilter>) => setApplied((a) => ({ ...a, ...patch }));
 
-  /* 인쇄·내보내기는 상세·드로어·계정과목 검색이 열려 있지 않을 때만 */
-  const listKeys = modal === null && !filterOpen && !acctPick;
+  /* 인쇄·내보내기는 상세·드로어가 열려 있지 않을 때만 */
+  const listKeys = modal === null && !filterOpen;
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys, skipInDialog: true });
 
-  const visible = useMemo(() => filterLines(rows, applied), [rows, applied]);
+  const visible = useMemo(() => (rangeBad ? [] : filterLines(rows, applied)), [rows, applied, rangeBad]);
 
   const onGridReady = useCallback((e: GridReadyEvent<SearchLine>) => { apiRef.current = e.api; }, []);
   const onPaginationChanged = useCallback(() => {
@@ -252,7 +240,6 @@ export function JournalSearchManage({ onNav }: { onNav?: (r: string) => void }) 
     ['증빙미첨부사유', applied.noEvidenceReason.trim(), () => clearApplied({ noEvidenceReason: '' })],
     ['거래처 사업자등록번호', applied.partnerBizNo.trim(), () => clearApplied({ partnerBizNo: '' })],
   ];
-  const enterCommits = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) commitFilter(); };
 
   return (
     <GridFrame
@@ -262,7 +249,7 @@ export function JournalSearchManage({ onNav }: { onNav?: (r: string) => void }) 
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={openFilter}>상세필터</Button>
+        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* 전표상세가 열려 있으면 뒤 목록 단축키(⌥R) 바인딩을 끈다 — IconBtn 은 enabled prop 이 없어 hotkey 를 조건부로 */}
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={listKeys ? HOTKEYS.refresh : undefined} />
       </>}
@@ -293,7 +280,7 @@ export function JournalSearchManage({ onNav }: { onNav?: (r: string) => void }) 
         />
       </div>
 
-      {/* ── E01 상세필터 드로어 — slide 11 정의표 순서(No.1~20). draft 편집 → [필터 적용]에서만 커밋 ── */}
+      {/* ── E01 상세필터 드로어 — slide 11 정의표 순서(No.1~20). 즉시 반영([필터 적용] = 닫기) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -302,83 +289,77 @@ export function JournalSearchManage({ onNav }: { onNav?: (r: string) => void }) 
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="계정구분"><DrawerSelect value={draft.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} ariaLabel="계정구분" searchable /></DrawerField>
+            <DrawerField label="계정구분"><DrawerSelect value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} ariaLabel="계정구분" searchable /></DrawerField>
             <DrawerField label="기간" plain>
               <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={draft.from} onChange={(v) => setD('from')(v || '')} ariaLabel="기간 시작일" invalid={!!periodErr} /></div>
+                <div style={dayWrap}><PeriodPicker mode="day" value={applied.from} onChange={(v) => setD('from')(v || '')} ariaLabel="기간 시작일" invalid={!!periodErr} /></div>
                 <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={draft.to} onChange={(v) => setD('to')(v || '')} ariaLabel="기간 종료일" invalid={!!periodErr} /></div>
+                <div style={dayWrap}><PeriodPicker mode="day" value={applied.to} onChange={(v) => setD('to')(v || '')} ariaLabel="기간 종료일" invalid={!!periodErr} /></div>
               </div>
+              {periodErr && <p role="alert" className="m-0 mt-1 text-danger" style={{ fontSize: 12 }}>{periodErr}</p>}
             </DrawerField>
             <DrawerField label="작성자">
-              <input type="text" value={draft.writer} onChange={(e) => setD('writer')(e.target.value)} onKeyDown={enterCommits} placeholder="작성자" style={inputStyle('text')} />
+              <input type="text" value={applied.writer} onChange={(e) => setD('writer')(e.target.value)} placeholder="작성자" style={inputStyle('text')} />
             </DrawerField>
-            <DrawerField label="계정과목" plain>
-              <div className="flex items-center gap-2">
-                <input type="text" value={draft.account} onChange={(e) => setD('account')(e.target.value)} onKeyDown={enterCommits} placeholder="계정과목명 또는 코드" aria-label="계정과목" style={inputStyle('text')} />
-                <Button variant="outline" size="sm" leadingIcon="search" onClick={() => setAcctPick(true)}>검색</Button>
-              </div>
+            <DrawerField label="계정과목">
+              <input type="text" value={applied.account} onChange={(e) => setD('account')(e.target.value)} placeholder="계정과목명 또는 코드" style={inputStyle('text')} />
             </DrawerField>
             <DrawerField label="거래처">
-              <input type="text" value={draft.partner} onChange={(e) => setD('partner')(e.target.value)} onKeyDown={enterCommits} placeholder="거래처" style={inputStyle('text')} />
+              <input type="text" value={applied.partner} onChange={(e) => setD('partner')(e.target.value)} placeholder="거래처" style={inputStyle('text')} />
             </DrawerField>
             <DrawerField label="적요">
-              <input type="text" value={draft.memo} onChange={(e) => setD('memo')(e.target.value)} onKeyDown={enterCommits} placeholder="적요" style={inputStyle('text')} />
+              <input type="text" value={applied.memo} onChange={(e) => setD('memo')(e.target.value)} placeholder="적요" style={inputStyle('text')} />
             </DrawerField>
             <DrawerField label="전표번호">
-              <input type="text" value={draft.slipNo} onChange={(e) => setD('slipNo')(e.target.value)} onKeyDown={enterCommits} placeholder="전표번호" style={inputStyle('text')} />
+              <input type="text" value={applied.slipNo} onChange={(e) => setD('slipNo')(e.target.value)} placeholder="전표번호" style={inputStyle('text')} />
             </DrawerField>
-            <DrawerField label="작성부서"><DrawerSelect value={draft.dept} onChange={setD('dept')} options={[...PL_DEPTS]} all={PICK} ariaLabel="작성부서" /></DrawerField>
-            <DrawerField label="전표구분"><DrawerSelect value={draft.slipKind} onChange={setD('slipKind')} options={[...SEARCH_SLIP_KINDS]} all={PICK} ariaLabel="전표구분" /></DrawerField>
-            <DrawerField label="전표발생구분"><DrawerSelect value={draft.origin} onChange={setD('origin')} options={[...JOURNAL_ORIGINS]} all={PICK} ariaLabel="전표발생구분" /></DrawerField>
+            <DrawerField label="작성부서"><DrawerSelect value={applied.dept} onChange={setD('dept')} options={[...PL_DEPTS]} all={PICK} ariaLabel="작성부서" /></DrawerField>
+            <DrawerField label="전표구분"><DrawerSelect value={applied.slipKind} onChange={setD('slipKind')} options={[...SEARCH_SLIP_KINDS]} all={PICK} ariaLabel="전표구분" /></DrawerField>
+            <DrawerField label="전표발생구분"><DrawerSelect value={applied.origin} onChange={setD('origin')} options={[...JOURNAL_ORIGINS]} all={PICK} ariaLabel="전표발생구분" /></DrawerField>
             <DrawerField label="상단적요">
-              <input type="text" value={draft.headMemo} onChange={(e) => setD('headMemo')(e.target.value)} onKeyDown={enterCommits} placeholder="전표 대표 적요" style={inputStyle('text')} />
+              <input type="text" value={applied.headMemo} onChange={(e) => setD('headMemo')(e.target.value)} placeholder="전표 대표 적요" style={inputStyle('text')} />
             </DrawerField>
             <DrawerField label="금액" plain>
               <div className="flex items-center gap-2">
-                <input type="text" inputMode="numeric" value={draft.amountMin} onChange={(e) => setD('amountMin')(e.target.value)} onKeyDown={enterCommits}
+                <input type="text" inputMode="numeric" value={applied.amountMin} onChange={(e) => setD('amountMin')(e.target.value)}
                   placeholder="최소" aria-label="금액 최소" aria-invalid={!!amountErr || undefined} style={amountInput(!!amountErr)} />
                 <span className="text-caption">~</span>
-                <input type="text" inputMode="numeric" value={draft.amountMax} onChange={(e) => setD('amountMax')(e.target.value)} onKeyDown={enterCommits}
+                <input type="text" inputMode="numeric" value={applied.amountMax} onChange={(e) => setD('amountMax')(e.target.value)}
                   placeholder="최대" aria-label="금액 최대" aria-invalid={!!amountErr || undefined} style={amountInput(!!amountErr)} />
               </div>
+              {amountErr && <p role="alert" className="m-0 mt-1 text-danger" style={{ fontSize: 12 }}>{amountErr}</p>}
             </DrawerField>
-            <DrawerField label="통화"><DrawerSelect value={draft.currency} onChange={setD('currency')} options={[...CURRENCIES]} all={PICK} ariaLabel="통화" /></DrawerField>
+            <DrawerField label="통화"><DrawerSelect value={applied.currency} onChange={setD('currency')} options={[...CURRENCIES]} all={PICK} ariaLabel="통화" /></DrawerField>
             <DrawerField label="금액(외화)" plain>
               <div className="flex items-center gap-2">
-                <input type="text" inputMode="decimal" value={draft.foreignAmountMin} onChange={(e) => setD('foreignAmountMin')(e.target.value)} onKeyDown={enterCommits}
+                <input type="text" inputMode="decimal" value={applied.foreignAmountMin} onChange={(e) => setD('foreignAmountMin')(e.target.value)}
                   placeholder="최소" aria-label="금액(외화) 최소" aria-invalid={!!fxErr || undefined} style={amountInput(!!fxErr)} />
                 <span className="text-caption">~</span>
-                <input type="text" inputMode="decimal" value={draft.foreignAmountMax} onChange={(e) => setD('foreignAmountMax')(e.target.value)} onKeyDown={enterCommits}
+                <input type="text" inputMode="decimal" value={applied.foreignAmountMax} onChange={(e) => setD('foreignAmountMax')(e.target.value)}
                   placeholder="최대" aria-label="금액(외화) 최대" aria-invalid={!!fxErr || undefined} style={amountInput(!!fxErr)} />
               </div>
+              {fxErr && <p role="alert" className="m-0 mt-1 text-danger" style={{ fontSize: 12 }}>{fxErr}</p>}
             </DrawerField>
-            <DrawerField label="손익부서"><DrawerSelect value={draft.plDept} onChange={setD('plDept')} options={[...PL_DEPTS]} all={PICK} ariaLabel="손익부서" /></DrawerField>
-            <DrawerField label="손익사원"><DrawerSelect value={draft.plEmployee} onChange={setD('plEmployee')} options={[...PL_EMPLOYEES]} all={PICK} ariaLabel="손익사원" /></DrawerField>
-            <DrawerField label="증빙구분"><DrawerSelect value={draft.evidenceType} onChange={setD('evidenceType')} options={[...EVIDENCE_TYPES]} all={PICK} ariaLabel="증빙구분" searchable /></DrawerField>
+            <DrawerField label="손익부서"><DrawerSelect value={applied.plDept} onChange={setD('plDept')} options={[...PL_DEPTS]} all={PICK} ariaLabel="손익부서" /></DrawerField>
+            <DrawerField label="손익사원"><DrawerSelect value={applied.plEmployee} onChange={setD('plEmployee')} options={[...PL_EMPLOYEES]} all={PICK} ariaLabel="손익사원" /></DrawerField>
+            <DrawerField label="증빙구분"><DrawerSelect value={applied.evidenceType} onChange={setD('evidenceType')} options={[...EVIDENCE_TYPES]} all={PICK} ariaLabel="증빙구분" searchable /></DrawerField>
             <DrawerField label="증빙파일명">
-              <input type="text" value={draft.evidenceFile} onChange={(e) => setD('evidenceFile')(e.target.value)} onKeyDown={enterCommits} placeholder="첨부 파일명" style={inputStyle('text')} />
+              <input type="text" value={applied.evidenceFile} onChange={(e) => setD('evidenceFile')(e.target.value)} placeholder="첨부 파일명" style={inputStyle('text')} />
             </DrawerField>
             <DrawerField label="증빙미첨부사유">
-              <input type="text" value={draft.noEvidenceReason} onChange={(e) => setD('noEvidenceReason')(e.target.value)} onKeyDown={enterCommits} placeholder="증빙미첨부사유" style={inputStyle('text')} />
+              <input type="text" value={applied.noEvidenceReason} onChange={(e) => setD('noEvidenceReason')(e.target.value)} placeholder="증빙미첨부사유" style={inputStyle('text')} />
             </DrawerField>
             <DrawerField label="거래처 사업자등록번호">
-              <input type="text" inputMode="numeric" value={draft.partnerBizNo} onChange={(e) => setD('partnerBizNo')(e.target.value)} onKeyDown={enterCommits} placeholder="000-00-00000" style={inputStyle('text')} />
+              <input type="text" inputMode="numeric" value={applied.partnerBizNo} onChange={(e) => setD('partnerBizNo')(e.target.value)} placeholder="000-00-00000" style={inputStyle('text')} />
             </DrawerField>
           </div>
           <SheetFooter>
             {/* E01-2 [초기화] = 기본값 복원(기간 = 당월) */}
-            <Button variant="outline" size="md" onClick={() => setDraft(defaultSearchFilter(todayStr()))}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={commitFilter}>필터 적용</Button>
+            <Button variant="outline" size="md" onClick={() => setApplied(defaultSearchFilter(todayStr()))}>초기화</Button>
+            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
-
-      {/* 계정과목 검색 — 고른 계정과목명을 draft 에 채운다(집계 계정도 조회 조건으론 허용) */}
-      {acctPick && (
-        <AccountSearchModal open onOpenChange={(o) => { if (!o) setAcctPick(false); }}
-          onSelect={(a) => setD('account')(a.name)} initialKeyword={draft.account} />
-      )}
 
       {/* ── E03 전표상세(조회 전용) — 게이트는 modal state(행 스냅샷) ── */}
       {modal?.kind === 'detail' && (
