@@ -28,7 +28,7 @@
    - 목업 [엑셀] → 툴바가 아니라 푸터 `FooterActions` 내보내기 + `⌥D`(apfs-grid 푸터 골드 양식).
    - 목록 그리드 → AG Grid **단일 헤더 8컬럼**(목업 thead 순서 그대로). **2단 그룹헤더 없음**,
      **합계행 없음**(전 컬럼이 문자/날짜라 가산 개념이 없다 → pinnedBottomRowData 자체를 두지 않는다).
-   - `구분` 셀 → `StatusBadge size="lg"`. **등록=info · 해제=muted**.
+   - `구분` 셀 → `TagBadge size="lg"`(코드성 분류값 — 화면스타일가이드 v1.2 4.2.2). **등록=info · 해제=muted**.
      ⚠ `해제` 톤은 3단 경위를 거쳤다 — 목업 `gTag()` 원문은 danger(`.tag r`) → 형제 3화면
        (S2_53 위반사항 · S2_55 주주변동 · S2_57 소송) 일관성으로 success → **2026-09-22 사용자 지시로
        muted(중립)**. 해제는 경보가 아니라 정상 종료라 중립 톤이 맞다는 판단이다.
@@ -62,7 +62,7 @@ import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버�
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { UI } from '../../components';
-import type { Tone } from '../../components';
+import type { TagTone } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -80,7 +80,7 @@ import type { WorkforceFormValues } from './workforce_form_modal';
 import { OPT_GP, OPT_FUND } from './workforce_manage_schemas';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
-const { Button, IconBtn, StatusBadge } = UI;
+const { Button, IconBtn, TagBadge } = UI;
 
 /* 검색어 입력은 기본 OFF(opt-in) — 목업 검색박스에 없다(apfs-detail-filter "예약 라벨 검색어").
    상태(`fText`)·행 필터·칩 배선은 남겨 두고 **드로어 입력만** 이 플래그로 가린다(정본 asset_funding·permission_history).
@@ -97,7 +97,7 @@ export type WorkforceKind = '등록' | '해제';
    해제는 경보가 아니라 정상 종료라 중립 톤이 맞다는 판단이고, 조기경보 관리 계열 전체가 muted 로
    정렬돼 가는 방향이다. **목업 대조나 형제 화면 대조만으로 danger·success 로 되돌리지 말 것**
    — 사용자가 직접 뒤집은 결정이다. `등록` 은 info 그대로다. */
-const KIND_TONE: Record<WorkforceKind, Tone> = { 등록: 'info', 해제: 'muted' };
+const KIND_TONE: Record<WorkforceKind, TagTone> = { 등록: 'info', 해제: 'muted' };
 
 export interface WorkforceRow {
   id: string; no: number;
@@ -146,7 +146,7 @@ const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const textCell = (p: { value?: string }) => (p.value
   ? <span className="min-w-0 truncate">{p.value}</span>
   : <span className="text-muted-foreground">-</span>);
-const kindCell = (p: { value: WorkforceKind }) => <StatusBadge tone={KIND_TONE[p.value]} label={p.value} size="lg" />;
+const kindCell = (p: { value: WorkforceKind }) => <TagBadge tone={KIND_TONE[p.value]} size="lg">{p.value}</TagBadge>;
 /* 날짜 셀 — 빈 값·null 은 '-' */
 const dateFmt = (p: { value?: string | null }) => (p.value ? String(p.value) : '-');
 

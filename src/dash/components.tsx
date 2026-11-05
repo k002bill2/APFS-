@@ -40,15 +40,72 @@ function ColorChip({ icon, color = "var(--primary)", soft, size = 36, iconSize =
 }
 
 /* ---- StatusBadge ---- */
-/* dot=false면 앞 점 없이 텍스트만(심사단계처럼 배지가 촘촘히 반복되는 열). 기본 true — 기존 화면 무변경 */
-/* 상태 뱃지 = 텍스트만(2026-09-24 사용자 결정 — 앞의 점(bullet) 폐지, dot 옵션 삭제). 아이콘은 명시할 때만. */
-function StatusBadge({ tone = "success", label, icon, size = "md" }: { tone?: ToneLike; label?: React.ReactNode; icon?: string; size?: "sm" | "md" | "lg" }) {
+/* 상태 뱃지 = 텍스트만(2026-09-24 사용자 결정 — 앞의 점(bullet) 폐지, dot 옵션 삭제). 아이콘은 명시할 때만.
+   허용 변형(화면스타일가이드 v1.2 4.2.2, 2026-11-05) — 같은 컬럼 안에서는 한 가지만 쓴다(행마다 섞지 않음):
+     ① 기본   색+아이콘+텍스트 — `icon` 명시. 대시보드·상세·범례.
+     ② 컴팩트 색+텍스트 — 고밀도 그리드 셀. `compact` 는 `icon` 을 넘겨도 끈다.
+              ⚠ 가이드는 ① 을 기본값으로 두지만 여기 기본값은 텍스트만(=②) 그대로다 — 그리드 밖 ~40개 파일의
+                아이콘 자동화는 별도 작업(2026-11-05 사용자 선택 "그리드만 이번에").
+     ③ 링크형 ②+후행 external — 상세 이동 셀. `link` 는 **표시 전용**(커서·hover 밑줄·아이콘)이다:
+              그리드에선 `.ag-cell` 이 클릭·Enter·ARIA 를 소유하고(fund_early_warning YieldCell),
+              그리드 밖에선 감싸는 button 이 소유한다(regular_report_manage) — 배지가 클릭을 받으면 탭 스톱·발화가 겹친다. */
+const BADGE_PAD: Record<Size, string> = { sm: "px-[7px] py-[2px] text-[11px]", md: "px-[9px] py-[3px] text-xs", lg: "px-[10px] py-[4px] text-[13px]" };
+/* ③ 후행 아이콘 — lg 13.5 / top -0.75 는 Pretendard 13px/700 **실측값**(2026-09-21 fund_early_warning 자펀드수익률 셀,
+   사용자 지시 "높이 맞춰줘"에서 잰 값을 여기로 옮김):
+   - lucide 글리프는 24 뷰박스 중 20.4 만 잉크다(상하 1.8 여백). size 12 면 잉크 10.2px 인데 13px 볼드 한글 잉크는
+     11.49px 라 아이콘이 작아 보였다 → 12 × 11.49/10.2 ≈ 13.5 로 두 잉크 높이를 맞춘다.
+   - 뷰박스 잉크가 상하 대칭이라 아이콘 잉크 중심 = 박스 중심이고, items-center 는 박스를 라인박스(16.25px) 기준으로
+     센터링한다. 한글 잉크 중심은 라인박스 중심보다 0.75px 위라 그만큼 올린다.
+   - ⚠ 올림은 음수 marginTop 이 아니라 relative top — align-items:center 가 마진 박스를 센터링해 절반만 움직인다.
+   sm 11 은 가이드 규격, sm·md 의 top 은 lg 실측을 글자 크기 비율로 옮긴 값(실측 아님 — 쓰는 화면이 생기면 다시 잰다). */
+const LINK_ICON: Record<Size, { size: number; top: number }> = { sm: { size: 11, top: -0.65 }, md: { size: 12.5, top: -0.7 }, lg: { size: 13.5, top: -0.75 } };
+function StatusBadge({ tone = "success", label, icon, size = "md", compact, link }: {
+  tone?: ToneLike; label?: React.ReactNode; icon?: string; size?: Size;
+  compact?: boolean;   // ② 아이콘 끔
+  link?: boolean;      // ③ 상세 이동 셀 표시(클릭은 바깥이 소유)
+}) {
   const [c, soft] = toneVar(tone);
+  const lead = !compact && !link && icon;
+  const li = LINK_ICON[size];
   return (
     <span
-      className={cx("inline-flex items-center gap-[5px] rounded-[7px] font-bold leading-tight whitespace-nowrap",
-        size === "sm" ? "px-[7px] py-[2px] text-[11px]" : size === "lg" ? "px-[10px] py-[4px] text-[13px]" : "px-[9px] py-[3px] text-xs")}
-      style={{ background: soft, color: c }}>{icon && <Icon name={icon} size={13} stroke={2.4} />}{label}</span>
+      className={cx("inline-flex items-center gap-[5px] rounded-[7px] font-bold leading-tight whitespace-nowrap", BADGE_PAD[size], link && "group cursor-pointer")}
+      style={{ background: soft, color: c }}>{lead && <Icon name={lead} size={13} stroke={2.4} />}{link
+        ? <span className="group-hover:underline underline-offset-2">{label}</span>
+        : label}{link && <Icon name="external" size={li.size} stroke={2.4} style={{ position: "relative", top: li.top }} />}</span>
+  );
+}
+
+/* ---- TrendBadge ---- 등급 변동 전용(가이드 4.2.2). 형태는 StatusBadge 와 같은 규격 · 아이콘(또는 기호)+텍스트.
+   악화 ▲ = 등급 상승(위험 ↑) · 개선 ▼ = 등급 하락 · 신규/해소 = 경보 발생/종료. 기호는 낭독하지 않는다(aria-hidden). */
+export type TrendKind = "same" | "worse" | "better" | "new" | "resolved";
+const TREND: Record<TrendKind, { tone: Tone; label: string; glyph?: string; icon?: string }> = {
+  same:     { tone: "muted",   label: "지속", glyph: "=" },
+  worse:    { tone: "danger",  label: "악화", glyph: "▲" },
+  better:   { tone: "success", label: "개선", glyph: "▼" },
+  new:      { tone: "warning", label: "신규", icon: "circle-plus" },
+  resolved: { tone: "info",    label: "해소", icon: "circle-check" },
+};
+function TrendBadge({ kind, size = "md" }: { kind: TrendKind; size?: Size }) {
+  const t = TREND[kind];
+  return (
+    <StatusBadge tone={t.tone} size={size} icon={t.icon}
+      label={t.glyph ? <><span aria-hidden="true">{t.glyph}</span>{t.label}</> : t.label} />
+  );
+}
+
+/* ---- TagBadge ---- 구분·확정구분 등 코드성 분류값(가이드 4.2.2). 아이콘 없음 · 600 · radius 6.
+   톤은 info · primary · muted 만 — success/warning/danger 는 등급 배지와 혼동되므로 타입에서 막는다(가드: badge_variants.test.ts). */
+export type TagTone = "info" | "primary" | "muted";
+function TagBadge({ tone = "muted", size = "md", children }: { tone?: TagTone; size?: Size; children?: React.ReactNode }) {
+  const [base, soft] = toneVar(tone);
+  /* primary 라벨은 --primary-text — toneVar 의 --primary 는 12% soft 위 4.23:1(AA 미달, 2026-11-05 실측).
+     toneVar 자체는 기존 StatusBadge primary 화면들이 공유하므로 여기서만 바꾼다. */
+  const c = tone === "primary" ? "var(--primary-text)" : base;
+  return (
+    <span
+      className={cx("inline-flex items-center rounded-[6px] font-semibold leading-tight whitespace-nowrap", BADGE_PAD[size])}
+      style={{ background: soft, color: c }}>{children}</span>
   );
 }
 
@@ -460,4 +517,4 @@ function CountPill({ count, urgent }: { count?: number; urgent?: boolean }) {
   );
 }
 
-export const UI = { ColorChip, StatusBadge, DeltaBadge, StatCard, Card, ChartCard, SegTabs, FilterChip, Button, SaveButton, IconBtn, EmptyState, EmptyRow, CountPill, Progress, PopNumber, TextSwap, TextsReveal, ClearableInput, toneVar };
+export const UI = { ColorChip, StatusBadge, TrendBadge, TagBadge, DeltaBadge, StatCard, Card, ChartCard, SegTabs, FilterChip, Button, SaveButton, IconBtn, EmptyState, EmptyRow, CountPill, Progress, PopNumber, TextSwap, TextsReveal, ClearableInput, toneVar };

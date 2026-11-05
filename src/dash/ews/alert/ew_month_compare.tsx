@@ -7,7 +7,7 @@
      목업의 `조회` 버튼은 없앴다(백엔드가 없어 필터가 즉시 반영된다). `엑셀`·`출력` 툴바 버튼은 없애고
      **푸터 FooterActions**(내보내기·인쇄 아이콘) + ⌥D/⌘P 단축키가 소유한다(골드 동형).
    - 그리드 1개 · 단일 헤더 7컬럼(No·구분·모펀드·항목·등급·당월·전월).
-     `등급` 컬럼은 등급이 아니라 **변동 배지**(신규·해소·▲ 악화·▼ 개선·= 지속)를 보인다(목업 `chg()`).
+     `등급` 컬럼은 등급이 아니라 **변동 배지**(신규·해소·▲ 악화·▼ 개선·= 지속)를 보인다(목업 `chg()` → `TrendBadge`, 가이드 4.2.2).
      당월/전월 = `운용사명 + 등급 배지`, 대상이 아니면 `–`. 당월≠전월 행은 두 셀에 음영(목업 `td.diff`).
    - KPI 배지 행 없음(사용자 결정) · 행 선택 없음 · 합계행 없음 · 페이지네이션 없음 · 팝업 없음.
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB·하단 설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다.
@@ -25,7 +25,7 @@
 import '../../aggrid_shared.css';
 import React, { useState, useMemo, useId } from 'react';
 import { UI } from '../../components';
-import type { Tone } from '../../components';
+import type { Tone, TrendKind } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { controlMinWidth } from '../../schemas/renderers';
@@ -44,7 +44,7 @@ import {
 } from './ew_month_compare_model';
 import type { Grade, ChgKey, NumberedRow } from './ew_month_compare_model';
 
-const { Button, IconBtn, StatusBadge } = UI;
+const { Button, IconBtn, StatusBadge, TrendBadge } = UI;
 
 const TITLE = '조기경보 전월 비교 조회';
 
@@ -52,12 +52,13 @@ const TITLE = '조기경보 전월 비교 조회';
    gp_early_warning.tsx:69 · early_warning_manage.tsx:86 · fund_early_warning.tsx:74). */
 const GRADE_TONE: Record<Grade, Tone> = { 정상: 'success', 주의: 'warning', 경고: 'danger' };
 
-/* 변동 배지 → 톤. 목업 `.chg.up`=danger · `.chg.down`=ok · `.chg.same`=grey 를 기존 tone 으로 옮김.
-   신규는 목업에서 `.chg up`(악화와 같은 톤)이다. */
-const CHG_TONE: Record<string, Tone> = {
-  '신규': 'danger', '▲ 악화': 'danger',
-  '해소': 'success', '▼ 개선': 'success',
-  '= 지속': 'muted',
+/* 변동 문구 → TrendBadge kind(화면스타일가이드 v1.2 4.2.2 — 등급 변동 전용 배지). 톤·기호·아이콘은 TrendBadge 가 소유한다.
+   ⚠ 문구(`chgLabel`)는 정렬·엑셀·필터 버킷이 쓰는 값이라 그대로 두고 **렌더 시점에만** 매핑한다.
+   톤 변경(2026-11-05 가이드): 신규 danger→warning(circle-plus) · 해소 success→info(circle-check) — 목업 `.chg up/down` 대신 가이드가 정본. */
+const CHG_KIND: Record<string, TrendKind> = {
+  '신규': 'new', '▲ 악화': 'worse',
+  '해소': 'resolved', '▼ 개선': 'better',
+  '= 지속': 'same',
 };
 
 const ALL_GRADES_ON: Record<Grade, boolean> = { 정상: true, 주의: true, 경고: true };
@@ -102,7 +103,7 @@ const COLUMNS: ColDef<NumberedRow>[] = [
   /* 등급 = 변동 배지. valueGetter 가 문구를 내서 정렬·엑셀이 텍스트로 동작한다 */
   { colId: 'chg', headerName: '등급', width: 110, minWidth: 110, cellStyle: flexCenter,
     valueGetter: (p) => (p.data ? chgLabel(p.data.cur, p.data.prev) : ''),
-    cellRenderer: (p: any) => (p.value ? <StatusBadge tone={CHG_TONE[p.value] ?? 'muted'} label={p.value} size="lg" /> : null) },
+    cellRenderer: (p: any) => (CHG_KIND[p.value] ? <TrendBadge kind={CHG_KIND[p.value]} size="lg" /> : null) },
   { colId: 'cur', headerName: '당월', width: 230, minWidth: 230, flex: 1, cellStyle: diffStyle,
     valueGetter: (p) => (p.data ? sideText(p.data.gp, p.data.cur) : ''),
     cellRenderer: (p: any) => (p.data ? <SideCell gp={p.data.gp} g={p.data.cur} /> : null) },

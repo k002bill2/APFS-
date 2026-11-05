@@ -29,7 +29,6 @@ import '../../aggrid_shared.css';   // 합계행 opacity 버그 보정 + 공유 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';   // 드로어 컨트롤 34px SSOT — 페이지 로컬 복제 금지
@@ -142,30 +141,14 @@ function YieldCell(p: ICellRendererParams<FundEwRow, Grade>) {
     };
   }, [cell, v]);
   if (!v) return null;
-  /* 링크 단서 = 배지 **안쪽** external 아이콘(2026-09-21 사용자 지시 "아이콘을 span안에 넣어줘").
-     점선 밑줄(border-bottom) → 배지 옆 아이콘 → 배지 안 아이콘 순으로 바뀌었다: 밑줄은 배지의 둥근
+  /* 링크 단서 = 배지 **안쪽** 후행 external 아이콘(2026-09-21 사용자 지시 "아이콘을 span안에 넣어줘").
+     점선 밑줄(border-bottom) → 배지 옆 아이콘 → 배지 안 아이콘 순으로 바뀌었다: 상시 밑줄은 배지의 둥근
      알약 모양과 어울리지 않았고, 배지 밖 아이콘은 알약과 따로 노는 덩어리로 읽혔다.
-     ⚠ `label` 에 넣는 이유: `StatusBadge` 의 span 이 `color: toneVar(tone)[0]` 을 걸고 `Icon` 은
-       `stroke="currentColor"` 라, **색 지정 없이** 등급 톤(정상/주의/경고)을 자동으로 물려받는다.
-       배지 밖에 두면 톤 색을 손으로 계산해 넘겨야 하고 등급이 바뀔 때 갈라진다.
-     배지의 `gap-[5px]` 가 라벨 텍스트와 아이콘 사이 간격을 준다(별도 래퍼 불필요).
-     ⚠ `size`·`marginTop` 은 눈대중이 아니라 **실측값**이다(2026-09-21 사용자 지시 "높이 맞춰줘"):
-       - lucide 글리프는 24 뷰박스 중 **20.4** 만 쓴다(stroke 번짐 포함, 상하 1.8 여백). 그래서 `size=12` 면
-         잉크가 10.2px 인데 13px 볼드 한글의 잉크는 11.49px 라 아이콘이 11% 작아 보였다.
-         `12 × 11.49/10.2 = 13.52` → **13.5** 로 두 잉크 높이가 맞는다.
-       - 뷰박스 잉크는 상하 대칭(1.8/1.8)이라 아이콘의 잉크 중심 = 박스 중심이고, flex `items-center` 는
-         그 박스를 **라인박스**(16.25px) 기준으로 센터링한다. 한글 잉크 중심은 라인박스 중심보다
-         0.75px 위라 그만큼 올린다. 크기를 바꿔도 이 값은 그대로다(잉크가 대칭이라 중심이 안 움직인다).
-       ⚠ 올릴 때 **음수 marginTop 을 쓰면 안 된다** — `align-items:center` 는 *마진 박스*를 중앙 정렬해서
-         `-0.75` 를 줘도 실제로는 절반(0.375px)만 올라간다(실측 확인). `position:relative; top` 은
-         정렬 계산 밖이라 준 만큼 그대로 움직인다.
-       ⚠ Pretendard 13px/700 기준 실측이다 — 폰트나 배지 `size` 를 바꾸면 다시 재야 한다. */
+     2026-11-05 화면스타일가이드 v1.2 4.2.2 가 이 셀을 링크형(③) 예시로 표준화 → `StatusBadge link` 가 아이콘
+     크기·높이 보정(실측값, 근거는 components.tsx LINK_ICON 주석)·hover 밑줄(3.7.2)·포인터 커서를 소유한다. */
   return (
-    <span title="자펀드수익률 상세 조회 (클릭 또는 Enter)"
-      className="inline-flex items-center"
-      style={{ cursor: 'pointer' }}>
-      <StatusBadge tone={GRADE_TONE[v]} size="lg"
-        label={<>{v}<Icon name="external" size={13.5} stroke={2.4} style={{ position: 'relative', top: -0.75 }} /></>} />
+    <span title="자펀드수익률 상세 조회 (클릭 또는 Enter)" className="inline-flex items-center">
+      <StatusBadge tone={GRADE_TONE[v]} size="lg" label={v} link />
     </span>
   );
 }

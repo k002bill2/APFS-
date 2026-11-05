@@ -21,7 +21,7 @@ import { SchemaField } from './schemas/renderers';
 import { DrawerMultiSelect } from './drawer_select';
 import type { FieldSpec } from './schemas/types';
 
-const { ColorChip, StatusBadge, StatCard, ChartCard, Button, SaveButton, IconBtn, FilterChip, SegTabs, DeltaBadge, Card, Progress } = UI;
+const { ColorChip, StatusBadge, TrendBadge, TagBadge, StatCard, ChartCard, Button, SaveButton, IconBtn, FilterChip, SegTabs, DeltaBadge, Card, Progress } = UI;
 const { Sparkline, Donut, LineTrend, GroupedBars, ComposedBars, Gauge, HBars, Treemap } = Charts;
 const { ColumnTrack, ProgressRing, DualSeries, PieLabeled, UsageSegments } = GalleryCharts;
 const D = APFS_DATA;
@@ -64,6 +64,60 @@ function Section({ title, desc, children }: { title?: React.ReactNode; desc?: Re
     <section style={{ marginBottom: 26 }}><div className="mb-3"><h2 className="t-h2 m-0">{title}</h2>{desc && <p
           className="t-body text-muted-foreground"
           style={{ margin: "3px 0 0", fontSize: 13 }}>{desc}</p>}</div>{children}</section>
+  );
+}
+
+/* 배지 변형 프리뷰 — 화면스타일가이드 v1.2 4.2.2 이미지(ds_b1·ds_b2)와 같은 행 구성.
+   ③ 링크형은 표시 전용이라 여기선 클릭 동작이 없다(실화면은 그리드 셀·감싸는 button 이 클릭을 소유). */
+function BadgeRow({ label, children, note }: { label: string; children: React.ReactNode; note: string }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 py-2.5 border-b border-border last:border-b-0">
+      <span className="w-[96px] shrink-0 text-[13px] font-bold text-foreground">{label}</span>
+      <div className="flex flex-wrap items-center gap-2">{children}</div>
+      <span className="text-[12.5px] text-muted-foreground">{note}</span>
+    </div>
+  );
+}
+function BadgeVariantsPreview() {
+  return (
+    <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(520px,100%),1fr))" }}>
+      <Card className="flex flex-col">
+        <div className="t-cardtitle mb-1">StatusBadge 허용 변형</div>
+        <BadgeRow label="① 기본" note="색 + 아이콘 + 텍스트 · 대시보드·상세·범례 (icon 명시)">
+          <StatusBadge tone="success" icon="check" label="정상" size="lg" />
+          <StatusBadge tone="warning" icon="alert-triangle" label="주의" size="lg" />
+          <StatusBadge tone="danger" icon="shield-alert" label="경고" size="lg" />
+        </BadgeRow>
+        <BadgeRow label="② 컴팩트" note="색 + 텍스트 · 고밀도 그리드 셀 (compact)">
+          <StatusBadge tone="success" label="정상" size="lg" compact />
+          <StatusBadge tone="warning" label="주의" size="lg" compact />
+          <StatusBadge tone="danger" label="경고" size="lg" compact />
+        </BadgeRow>
+        <BadgeRow label="③ 링크형" note="②에 후행 external-link · 상세 이동 셀 · hover 밑줄 (link)">
+          <StatusBadge tone="danger" label="경고" size="lg" link />
+          <StatusBadge tone="warning" label="주의" size="lg" link />
+        </BadgeRow>
+        <p className="flex items-center gap-1.5 m-0 mt-2.5 text-[12.5px] text-muted-foreground">
+          <Icon name="info" size={14} />같은 컬럼 안에서는 한 가지 변형만 사용 · ②③도 텍스트 라벨 필수(색 단독 표기 금지)
+        </p>
+      </Card>
+      <Card className="flex flex-col">
+        <div className="t-cardtitle mb-1">TrendBadge · TagBadge</div>
+        <BadgeRow label="TrendBadge" note="악화 ▲ = 등급 상승(위험 ↑) · 개선 ▼ = 등급 하락 · 신규/해소 = 경보 발생/종료">
+          <TrendBadge kind="same" size="lg" />
+          <TrendBadge kind="worse" size="lg" />
+          <TrendBadge kind="better" size="lg" />
+          <TrendBadge kind="new" size="lg" />
+          <TrendBadge kind="resolved" size="lg" />
+        </BadgeRow>
+        <BadgeRow label="TagBadge" note="구분 · 확정구분 등 코드성 값 · 아이콘 없음 · 상태색 미사용(info·primary·muted)">
+          <TagBadge tone="info" size="lg">등록</TagBadge>
+          <TagBadge tone="muted" size="lg">해제</TagBadge>
+          <TagBadge tone="primary" size="lg">확정</TagBadge>
+          <TagBadge tone="muted" size="lg">미확정</TagBadge>
+        </BadgeRow>
+      </Card>
+    </div>
   );
 }
 
@@ -235,7 +289,7 @@ function DesignSystem() {
                 className="shrink-0 font-semibold text-caption"
                 style={{ width: 120, fontSize: 11.5 }}>{r[0]}</span><span className={r[1]}>{r[2]}</span></div>)}</Card></Section><Section title="3. 공통 컴포넌트"><div
           className="grid gap-4 mb-4"
-          style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(420px,100%),1fr))" }}><div className="flex flex-col gap-2.5"><div className="t-label" style={{ textTransform: "none" }}>StatCard</div><StatCard kpi={D.KPI[0]} emphasis={true} /><StatCard kpi={D.KPI[1]} /></div><div className="flex flex-col gap-3"><Card className="flex flex-col gap-3"><div className="t-label" style={{ textTransform: "none" }}>StatusBadge (색 + 아이콘 + 텍스트 3중 표기)</div><div className="flex flex-wrap gap-2"><StatusBadge tone="success" icon="check" label="정상" /><StatusBadge tone="warning" icon="alert-triangle" label="주의" /><StatusBadge tone="danger" icon="shield-alert" label="경고" /><StatusBadge tone="info" icon="clock" label="진행중" /><StatusBadge tone="muted" icon="eye-off" label="비활성" /></div><div className="t-label mt-1" style={{ textTransform: "none" }}>DeltaBadge</div><div className="flex gap-4"><DeltaBadge value={3.2} label="전월 대비" /><DeltaBadge value={-2} label="전주 대비" invert={true} /></div></Card><Card className="flex flex-col gap-3"><div className="t-label" style={{ textTransform: "none" }}>Button</div><div className="flex flex-wrap gap-2"><Button variant="primary" leadingIcon="plus">새 등록</Button><Button variant="accent">강조</Button><Button variant="secondary">보조</Button><Button variant="outline" leadingIcon="download">엑셀 다운로드</Button><Button variant="ghost" leadingIcon="refresh">새로고침</Button></div><div className="t-label mt-1" style={{ textTransform: "none" }}>FilterChip · SegmentedControl</div><div
+          style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(420px,100%),1fr))" }}><div className="flex flex-col gap-2.5"><div className="t-label" style={{ textTransform: "none" }}>StatCard</div><StatCard kpi={D.KPI[0]} emphasis={true} /><StatCard kpi={D.KPI[1]} /></div><div className="flex flex-col gap-3"><Card className="flex flex-col gap-3"><div className="t-label" style={{ textTransform: "none" }}>StatusBadge ① 기본 (색 + 아이콘 + 텍스트 3중 표기 — 변형은 3-6)</div><div className="flex flex-wrap gap-2"><StatusBadge tone="success" icon="check" label="정상" /><StatusBadge tone="warning" icon="alert-triangle" label="주의" /><StatusBadge tone="danger" icon="shield-alert" label="경고" /><StatusBadge tone="info" icon="clock" label="진행중" /><StatusBadge tone="muted" icon="eye-off" label="비활성" /></div><div className="t-label mt-1" style={{ textTransform: "none" }}>DeltaBadge</div><div className="flex gap-4"><DeltaBadge value={3.2} label="전월 대비" /><DeltaBadge value={-2} label="전주 대비" invert={true} /></div></Card><Card className="flex flex-col gap-3"><div className="t-label" style={{ textTransform: "none" }}>Button</div><div className="flex flex-wrap gap-2"><Button variant="primary" leadingIcon="plus">새 등록</Button><Button variant="accent">강조</Button><Button variant="secondary">보조</Button><Button variant="outline" leadingIcon="download">엑셀 다운로드</Button><Button variant="ghost" leadingIcon="refresh">새로고침</Button></div><div className="t-label mt-1" style={{ textTransform: "none" }}>FilterChip · SegmentedControl</div><div
                 className="flex flex-wrap gap-2 items-center">{["정상", "주의", "경고"].map((s) => <FilterChip
                   key={s}
                   active={chip === s}
@@ -356,6 +410,10 @@ function DesignSystem() {
 
       <Section title="3-5. 폼 컨트롤 — 다중 선택 셀렉트" desc="목록 안에서 여러 값을 고르는 셀렉트(ui/multi-select · 드로어는 DrawerMultiSelect). 골라도 닫히지 않고, 맨 위 '전체 선택'은 없음/일부/전부 3상태, 하단에 선택 개수와 [선택 해제]. 옵션 10개 이상이면 검색창이 붙는다(단일 셀렉트와 같은 기준). 값은 옵션 순서의 문자열 배열이며, 하나도 고르지 않으면 '전체'(조건 없음). 정본 사용처: 일/월계표 상세필터 계정구분. 스키마 화면은 폼 control 'multiselect'(값 = JSON 배열 문자열, 빈 표시 '선택')와 상세필터 kind 'multi'(multiselect 필드면 자동, select 컬럼은 filterSpecs 로 선언)로 쓴다.">
         <MultiSelectPreview />
+      </Section>
+
+      <Section title="3-6. 배지 — StatusBadge 허용 변형 · TrendBadge · TagBadge" desc="화면스타일가이드 v1.2 4.2.2. 화면 성격에 따라 변형을 고르되, 같은 컬럼 안에서는 한 가지 변형만 씁니다(행마다 섞지 않음). 그리드 셀은 size lg.">
+        <BadgeVariantsPreview />
       </Section>
 
       <Section title="4. 차트 스타일" desc="동일한 토큰·애니메이션을 공유하는 차트 컴포넌트 모음. 카드에 담아 그대로 사용합니다.">

@@ -14,7 +14,7 @@
    - 목업 [엑셀] → 툴바가 아니라 푸터 `FooterActions` 내보내기 + `⌥D`(apfs-grid 푸터 골드 양식).
    - 목록 그리드 → AG Grid **단일 헤더 15컬럼**(목업 thead 순서 그대로). **2단 그룹헤더 없음**,
      **합계행 없음**(전 컬럼이 문자/날짜라 가산 개념이 없다 → pinnedBottomRowData 자체를 두지 않는다).
-   - `구분` 셀 → `StatusBadge size="lg"`. 등록=info · 해제=muted.
+   - `구분` 셀 → `TagBadge size="lg"`(코드성 분류값 — 화면스타일가이드 v1.2 4.2.2). 등록=info · 해제=muted.
      (목업 `gbTag` 와 같은 중립 회색. 2026-09-22 사용자 결정 — 이전에는 "시정 완료로 해제됨"이라는
       종료 상태를 success 로 읽었으나, #228 이 중립 톤 `muted` 를 신설해 "더는 경보 아님"을
       중립으로 표현할 수 있게 됐다. dashboard-ui 규약 "중립은 muted" 와 정렬된다.)
@@ -34,7 +34,7 @@ import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버�
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { UI } from '../../components';
-import type { Tone } from '../../components';
+import type { TagTone } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -52,7 +52,7 @@ import type { ViolationFormValues } from './violation_form_modal';
 import { OPT_GP, OPT_FUND, OPT_SEARCH_KIND } from './violation_manage_schemas';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
-const { Button, IconBtn, StatusBadge } = UI;
+const { Button, IconBtn, TagBadge } = UI;
 
 /* 검색어 입력은 기본 OFF(opt-in) — 목업 검색박스에 없다(apfs-detail-filter "예약 라벨 검색어").
    상태(`fText`)·행 필터·칩 배선은 남겨 두고 **드로어 입력만** 이 플래그로 가린다(정본 asset_funding·permission_history).
@@ -64,7 +64,7 @@ const SEARCHABLE = false;
 ────────────────────────────── */
 /** 그리드 `구분` — 목업 `gb`. 위반 등록 상태 ↔ 시정 후 해제 상태. */
 export type ViolationKind = '등록' | '해제';
-const KIND_TONE: Record<ViolationKind, Tone> = { 등록: 'info', 해제: 'muted' };
+const KIND_TONE: Record<ViolationKind, TagTone> = { 등록: 'info', 해제: 'muted' };
 
 export interface ViolationRow {
   id: string; no: number;
@@ -118,7 +118,7 @@ const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const textCell = (p: { value?: string }) => (p.value
   ? <span className="min-w-0 truncate">{p.value}</span>
   : <span className="text-muted-foreground">-</span>);
-const kindCell = (p: { value: ViolationKind }) => <StatusBadge tone={KIND_TONE[p.value]} label={p.value} size="lg" />;
+const kindCell = (p: { value: ViolationKind }) => <TagBadge tone={KIND_TONE[p.value]} size="lg">{p.value}</TagBadge>;
 /* 날짜 셀 — 빈 값은 '-' */
 const dateFmt = (p: { value?: string }) => (p.value ? String(p.value) : '-');
 
