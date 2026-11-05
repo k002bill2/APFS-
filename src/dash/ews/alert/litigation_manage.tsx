@@ -23,11 +23,11 @@
    - 목업 [엑셀] → 툴바가 아니라 푸터 `FooterActions` 내보내기 + `⌥D`(apfs-grid 푸터 골드 양식).
    - 목록 그리드 → AG Grid **단일 헤더 8컬럼**(목업 thead 순서 그대로). **2단 그룹헤더 없음**,
      **합계행 없음**(전 컬럼이 문자/날짜라 가산 개념이 없다 → pinnedBottomRowData 자체를 두지 않는다).
-   - `구분` 셀 → `StatusBadge size="lg"`. 등록=info · 해제=muted(형제 2화면과 동일 매핑,
+   - `구분` 셀 → `TagBadge size="lg"`(코드성 분류값 — 화면스타일가이드 v1.2 4.2.2). 등록=info · 해제=muted(형제 2화면과 동일 매핑,
      2026-09-22 사용자 결정 — #228 이 신설한 중립 톤. 이전 success 를 대체한다).
-     `확정구분` 셀도 같은 배지 — 확정=success · 미확정=warning(목업 `.tag g` / `.tag a` 대응).
-     ⚠ 이 화면만 배지 컬럼이 2개다. 해제가 success 이던 동안 `구분:해제` 와 `확정구분:확정` 이 같은
-     민트로 겹쳐 보였는데, 해제가 muted 로 바뀌며 해소됐다(형제 2화면은 배지 컬럼이 1개라 무관).
+     `확정구분` 셀도 같은 TagBadge — 확정=primary · 미확정=muted(가이드 4.2.2 이미지 매핑. 2026-11-05 이전엔
+     StatusBadge success/warning 이었으나 가이드가 분류값에 상태색을 금지 — 등급 배지(정상·주의)와 혼동).
+     ⚠ 이 화면만 배지 컬럼이 2개다 — 구분(info/muted)과 확정구분(primary/muted)이 같은 색으로 겹치지 않는다.
    - `소송내역` 은 장문 좌측정렬 컬럼이다(목업 `td.l` + doc-sub "소송내역은 장문 표시로 셀 줄바꿈")
      → `wrapText` + `autoHeight`. 그래서 `truncate` 렌더러를 쓰지 않는다(잘라 버리면 autoHeight 가 늘 근거를 잃는다).
    - KPI 배지 행 → **미포함**(2026-09-22 사용자 HITL 결정) → `kpis` prop 을 아예 넘기지 않는다
@@ -51,7 +51,7 @@ import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버�
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { UI } from '../../components';
-import type { Tone } from '../../components';
+import type { TagTone } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
@@ -69,7 +69,7 @@ import type { LitigationFormValues } from './litigation_form_modal';
 import { OPT_GP } from './litigation_manage_schemas';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 
-const { Button, IconBtn, StatusBadge } = UI;
+const { Button, IconBtn, TagBadge } = UI;
 
 /* 검색어 입력은 기본 OFF(opt-in) — 목업 검색박스에 없다(apfs-detail-filter "예약 라벨 검색어").
    상태(`fText`)·행 필터·칩 배선은 남겨 두고 **드로어 입력만** 이 플래그로 가린다(정본 asset_funding·permission_history).
@@ -83,8 +83,8 @@ const SEARCHABLE = false;
 export type LitigationKind = '등록' | '해제';
 /** 그리드 `확정구분` — 목업 `conf`(등록 팝업 radio 와 같은 값 도메인). */
 export type LitigationConf = '확정' | '미확정';
-const KIND_TONE: Record<LitigationKind, Tone> = { 등록: 'info', 해제: 'muted' };
-const CONF_TONE: Record<LitigationConf, Tone> = { 확정: 'success', 미확정: 'warning' };
+const KIND_TONE: Record<LitigationKind, TagTone> = { 등록: 'info', 해제: 'muted' };
+const CONF_TONE: Record<LitigationConf, TagTone> = { 확정: 'primary', 미확정: 'muted' };
 
 export interface LitigationRow {
   id: string; no: number;
@@ -145,8 +145,8 @@ const textCell = (p: { value?: string }) => (p.value
 const wrapCell = (p: { value?: string }) => (p.value
   ? <span className="min-w-0">{p.value}</span>
   : <span className="text-muted-foreground">-</span>);
-const kindCell = (p: { value: LitigationKind }) => <StatusBadge tone={KIND_TONE[p.value]} label={p.value} size="lg" />;
-const confCell = (p: { value: LitigationConf }) => <StatusBadge tone={CONF_TONE[p.value]} label={p.value} size="lg" />;
+const kindCell = (p: { value: LitigationKind }) => <TagBadge tone={KIND_TONE[p.value]} size="lg">{p.value}</TagBadge>;
+const confCell = (p: { value: LitigationConf }) => <TagBadge tone={CONF_TONE[p.value]} size="lg">{p.value}</TagBadge>;
 /* 날짜 셀 — 빈 값·null 은 '-' */
 const dateFmt = (p: { value?: string | null }) => (p.value ? String(p.value) : '-');
 
