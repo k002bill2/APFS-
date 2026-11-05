@@ -8,8 +8,8 @@
      기본값 현재월 − 1(slide 9 구성1·slide 10 ② — slide 11 상세필터 기본값 '당월'과 모순, 개요·툴바 쪽을 따름).
      드로어는 **즉시 반영**(값을 바꾸는 순간 목록·칩 반영, [필터 적용]은 닫기만 — account_code_manage 관용구, draft 없음). [초기화] = 기본값.
      적용 칩 '2026-10' 은 기본값으로 시작하고, 필수 조건이라 × 는 해제가 아니라 기본값 복원이다. 빈 값으로 지울 수 없다(같은 달 재클릭 무시).
-   - 툴바 우: [상세필터] · [그리드 저장 │ ▾ 계정과목 설정](공용 SplitButton — 본체 = E02, ▾ 메뉴 = E03) · 조회(E04, IconBtn — 맨 끝).
-     SplitButton 은 busy(…중 스왑)가 없어 그리드 저장(덮어쓰기 아님)은 클릭 즉시 반영 + 토스트(형제 SplitButton 본체도 지연 없음).
+   - 툴바 우: [상세필터] · [저장 │ ▾ 계정과목 설정](공용 SplitButton — 본체 = E02, ▾ 메뉴 = E03) · 조회(E04, IconBtn — 맨 끝).
+     SplitButton 은 busy(…중 스왑)가 없어 저장(덮어쓰기 아님)은 클릭 즉시 반영 + 토스트(형제 SplitButton 본체도 지연 없음).
      덮어쓰기 확인창의 [확인]은 SaveButton(저장 중 스왑).
    - 그리드 체크박스 + 12열(자산유형 · 자산번호 · 자산명 · 취득일 · 종료일 · 내용년수 · 상각구분 · 전기말상각누계액 · 상각액 · 미상각잔액 · 취득금액 · 저장여부).
      금액·내용년수(수량)는 우측, 나머지 좌측. 저장여부 = 배지(여 success · 부 muted). 합계행 없음(설계서에 없다).
@@ -136,7 +136,7 @@ export function DepreciationManage({ onNav }: { onNav?: (r: string) => void }) {
   /* E04 조회 — 현재 조건으로 재계산(rows 는 조건·원장에서 파생). 삭제한 행은 되살리지 않는다 */
   const refresh = () => { clearSel(); toast.success(MSG.queried); };
 
-  /* E02 그리드 저장(SplitButton 본체) — 0건 = 안내 · 저장된 행 포함 = 덮어쓰기 확인 · 그 밖 = 즉시 저장 */
+  /* E02 저장(SplitButton 본체) — 0건 = 안내 · 저장된 행 포함 = 덮어쓰기 확인 · 그 밖 = 즉시 저장 */
   const commitGridSave = (k: string, rs: readonly DeprRow[]) => {
     setSaved((s) => commitSave(s, k, rs));
     toast.success(MSG.saved);
@@ -201,7 +201,7 @@ export function DepreciationManage({ onNav }: { onNav?: (r: string) => void }) {
       appliedFilters={[{ label: '기준년월', value: ym, onClear: resetYm }]}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <SplitButton label="그리드 저장" leadingIcon="check" menuLabel="감가상각 작업 더보기" onClick={saveGrid}
+        <SplitButton label="저장" leadingIcon="check" menuLabel="감가상각 작업 더보기" onClick={saveGrid}
           items={[{ label: '계정과목 설정', icon: 'settings', onSelect: () => setModal({ kind: 'account' }) }]} />
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={modal || filterOpen ? undefined : HOTKEYS.refresh} />
       </>}
