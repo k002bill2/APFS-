@@ -242,7 +242,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
-  /* 필터 — 계정구분은 툴바 칩(드로어 select와 state 공유), 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
+  /* 필터 — 계정구분은 툴바 칩에만(드로어 중복 금지 — 2026-11-05), 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
   const [fAcct, setFAcct] = useState<'' | Acct>('');
   const [fGp, setFGp] = useState('');
   const [fFund, setFFund] = useState('');
@@ -373,8 +373,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            {/* 계정구분은 툴바 칩과 같은 state를 공유한다(한 필터·두 진입점) */}
-            <DrawerField label="계정구분"><DrawerSelect value={fAcct} onChange={(v) => setFAcct(v as '' | Acct)} options={ACCTS} /></DrawerField>
+            {/* 계정구분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
             <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
             {/* 기준년월 = PeriodPicker month('YYYY-MM'). 트리거가 w-full이라 fit-content 래퍼 필수(apfs-datepicker 폭 규칙) */}
             <DrawerField label="기준년월" plain noop>

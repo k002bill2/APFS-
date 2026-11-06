@@ -54,7 +54,7 @@ const num = (v: number | string) => (typeof v === 'number' ? v.toLocaleString('k
 const fmtVal = (v: number | string, isAmount: boolean, unit: StatUnit) =>
   isAmount && typeof v === 'number' ? fmtEok(v, unit) : num(v);
 
-/* 원문 투자실적구분 — 화면(표)을 실제로 전환하는 유일한 검색조건. 툴바 칩과 드로어가 이 state 를 공유한다. */
+/* 원문 투자실적구분 — 화면(표)을 실제로 전환하는 유일한 검색조건. 툴바 칩에만 둔다(드로어 중복 금지 — 2026-11-05). */
 const VIEWS = [
   { key: 'salesScale', label: '경영체매출액별' },
   { key: 'investType', label: '투자형태별' },
@@ -295,10 +295,7 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={MOTHER_FUNDS} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={ACCOUNTS} /></DrawerField>
             <DrawerField label="연도기준" noop><DrawerSelect value={fYBase} onChange={setFYBase} options={YEAR_BASES} /></DrawerField>
-            {/* 투자실적구분 — 툴바 칩과 같은 state 공유. 항상 3뷰 중 하나라 '전체' 옵션이 없다 */}
-            <DrawerField label="투자실적구분">
-              <DrawerSelect value={view} onChange={(v: string) => setView(v as ViewKey)} options={VIEWS.map((v) => ({ value: v.key, label: v.label }))} all={null} />
-            </DrawerField>
+            {/* 투자실적구분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
             <DrawerField label="건수기준" noop><DrawerSelect value={fCnt} onChange={setFCnt} options={COUNT_BASES} /></DrawerField>
             <DrawerField label="데이터기준" noop><DrawerSelect value={fDBase} onChange={setFDBase} options={DATA_BASES} /></DrawerField>
             {/* 기준일자 — PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker), fit-content 래퍼로 폭 고정 */}

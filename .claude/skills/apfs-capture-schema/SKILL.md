@@ -25,9 +25,9 @@ description: 현행시스템 목업 HTML(+`*_spec.json`) 또는 화면 캡처에
    - **캡처 이미지**: Read로 이미지 열람(비전). OS 파일다이얼로그 오버레이·가로스크롤 잘림 영역은 제외하고 플래그.
 
    추출 항목(공통):
-   - 상단 조회 컨트롤 → `filters`
+   - 상단 조회 컨트롤 → `filters`. **열거형 다중 선택 항목**(`<select multiple>` · 같은 이름 체크박스 나열 · 설계서 '다중 선택/복수 선택')은 멀티 셀렉트가 기본이다(2026-11-03 사용자 지시) — 같은 라벨의 폼 필드가 `multiselect` 면 라벨 일치만으로 자동 다중 선택, 폼 필드 없이 단일값 컬럼을 여러 값으로 거르면 `filterSpecs: { <라벨>: { kind:'multi', key:'<컬럼키>' } }`(options 생략 시 sample 고유값). tag 토글·체크박스로 만들지 않는다 → [[apfs-detail-filter]] "타입 도출" ⓪·①
    - 표 컬럼 → `columns[]`: type 매핑(금액→amount, 비율/변동→rate, 날짜→date, 상태/등급→status(+statusDomain), 운용사/기관→gp, **영숫자 코드/ID→code**, **주민번호/계좌→pii**, 그 외→text), `unit`/중첩이면 `group`. **`align` 은 원문 정렬을 옮기지 않는다** — 생략하면 타입에서 파생(금액·율·number=우측, 그 외=좌측, 가운데 없음). No/차수(`number`)만 `align:'left'`, text 로 담은 율·수량만 `align:'right'` 명시([[apfs-aggrid]] "정렬 규약")
-   - 입력 컨트롤 → `fields[]`: control 매핑(textarea/file/select(+options)/date/checkbox/readonly)
+   - 입력 컨트롤 → `fields[]`: control 매핑(textarea/file/select(+options)/date/readonly · 여/부·Y/N 2지선다 → `switch` · 이름으로 묶인 배타 그룹 → `radio` · **목록에서 여러 값 고르기(`<select multiple>`·같은 이름 체크박스 나열·'복수 선택') → `multiselect`(+options)**). `checkbox` 토큰은 신규 사용 금지 — 칸마다 독립 설정인 권한·매트릭스 체크 그룹은 스키마 트랙 밖(bespoke DS Checkbox). 판단 기준 정본 [[apfs-form-modal]] "checkbox vs switch vs radio"
    - 1~2행 → 샘플 인지용. 목업의 **실제 행을 그대로 노출**해야 하면 `sample: SampleRow[]`(키=column/field key)로 저장(부재 시 런타임 합성 더미)
    - **KPI 행 후보** → 카드헤더 KPI 배지 후보를 **추출만** 해 둔다(전체 건수 + 도메인별 2지표 후보, 예: 계정구분 농식품/수산). ⚠️ 스키마에 바로 넣지 말 것 — 포함 여부는 2.5단계 HITL에서 결정한다. 규약은 [[apfs-grid]] "KPI 배지 행".
 2.5. **HITL — KPI 배지 행 포함 여부(필수)**: 동결(3단계) 전에 `AskUserQuestion`으로 카드헤더 KPI 배지 행을 넣을지 묻는다. 헤더="KPI 배지", 질문="이 페이지 카드헤더에 KPI 배지 행을 넣을까요?", 옵션(2단계 추출 후보를 실제 값으로 채워 제시):

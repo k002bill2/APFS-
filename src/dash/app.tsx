@@ -88,7 +88,7 @@ import { ReviewStats } from './iam/report/review_stats';                        
 import { TrustFundCode } from './trs/sfund/trust_fund_code';                            // 자펀드코드 조회(S3_99 — 편집형 목록)
 import { AccountInfoManage, CashflowInfoManage } from './trs/mfund/trust_upload_forms'; // 계좌정보 관리(S3_103) · 입출금 정보관리(S3_105) — 업로드 폼
 import { ClosingFormManage } from './acc/baseinfo/closing_form_manage';              // 결산양식 관리(ACC-002 — 편집 그리드)
-import { DepreciationManage } from './acc/fixedasset/depreciation_manage';           // 감가상각비처리(ACC-018 — 상각액 자동계산·그리드 저장)
+import { DepreciationManage } from './acc/fixedasset/depreciation_manage';           // 감가상각비처리(ACC-018 — 상각액 자동계산·저장)
 import { GeneralJournalManage } from './acc/slip/general_journal_manage'; // 일반전표 관리(ACC-003)
 import { ClosingJournalManage } from './acc/closing/closing_journal_manage'; // 결산전표 관리(ACC-015)
 import { FiscalRolloverManage } from './acc/closing/fiscal_rollover_manage'; // 회기생성/전기이월(ACC-016)

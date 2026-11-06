@@ -254,7 +254,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
-  /* 필터 — 출자/배분은 툴바 칩 + 드로어가 **같은 state를 공유**한다(표시가 갈라지지 않게).
+  /* 필터 — 출자/배분은 툴바 칩에만 둔다(드로어 중복 금지 — 2026-11-05).
      나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
   const [fGb, setFGb] = useState<'' | Gb>('');
   const [fGp, setFGp] = useState('');
@@ -282,7 +282,6 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
   const filteredRows = useMemo(() => rows.filter(passes), [rows, passes]);
   const gpOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.gp))), [rows]);
   const fnOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.fn))), [rows]);
-  const gbOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.gb))), [rows]);
   /* pinned 합계 2행 — 인라인 배열 금지(참조가 매 렌더 바뀌면 고정행이 재생성된다). 필터 결과로 재계산 */
   const pinnedBottom = useMemo(() => [computeSubtotal(filteredRows), computeTotal(filteredRows)], [filteredRows]);
 
@@ -396,8 +395,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
             <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
             {/* 담당자 — 원문에 옵션·샘플 값이 없어 옵션을 생성하지 않는다(빈 목록 = '전체'만) */}
             <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
-            {/* 출자/배분 — 툴바 칩과 같은 state 공유(옵션은 행에서 파생) */}
-            <DrawerField label="출자/배분"><DrawerSelect value={fGb} onChange={(v) => setFGb(v as '' | Gb)} options={gbOptions} /></DrawerField>
+            {/* 출자/배분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
             {/* 기준일자 — 일(YYYY-MM-DD) 범위. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}
             <DrawerField label="기준일자" plain>
               <div className="flex items-center gap-2 flex-wrap">

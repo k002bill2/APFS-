@@ -38,7 +38,6 @@
 import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { LeafTabBody } from '../leaf_tabs';   // 리프 탭 묶음(opt-in)
 import type { LeafTabsSlot } from '../leaf_tabs';
@@ -178,13 +177,13 @@ const makeColumns = (patch: (id: string, p: Partial<RegularReportRow>) => void, 
   { field: 'rt', headerName: '보고구분', width: 110, cellStyle: flexCenter,
     cellRenderer: (p: any) => {
       if (p.value !== '월간보고서') return <StatusBadge tone="primary" label={p.value} size="lg" />;
-      /* 링크 배지 = 라벨 뒤 external 아이콘(자펀드별 조기경보 등급 배지와 같은 규약·같은 보정값 — fund_early_warning.tsx 주석이 정본) */
+      /* 링크 배지 = 화면스타일가이드 v1.2 4.2.2 링크형(③) — `StatusBadge link` 가 후행 external 아이콘·보정값·hover 밑줄을
+         소유한다(자펀드별 조기경보 자펀드수익률 셀과 같은 컴포넌트). 클릭·접근名은 감싸는 button 이 소유한다. */
       return (
         <button type="button" aria-label="월간보고서 상세 보기 (새 창)" title="월간보고 상세 (새 창)" onClick={openDetail}
           className="inline-flex items-center cursor-pointer border-0 p-0"
           style={{ font: 'inherit', background: 'transparent' }}>
-          <StatusBadge tone="primary" size="lg"
-            label={<>{p.value}<Icon name="external" size={13.5} stroke={2.4} style={{ position: 'relative', top: -0.75 }} /></>} />
+          <StatusBadge tone="primary" size="lg" label={p.value} link />
         </button>
       );
     } },
@@ -286,7 +285,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
-  /* 필터 — 보고구분은 툴바 칩 + 드로어가 **같은 state를 공유**한다(표시가 갈라지지 않게).
+  /* 필터 — 보고구분은 툴바 칩에만 둔다(드로어 중복 금지 — 2026-11-05).
      나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
   const [fRt, setFRt] = useState<'' | ReportKind>('');
   const [fGp, setFGp] = useState('');
@@ -315,7 +314,6 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
   const filteredRows = useMemo(() => rows.filter(passes), [rows, passes]);
   const gpOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.gp))), [rows]);
   const fundOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.fn))), [rows]);
-  const rtOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.rt))), [rows]);
 
   const onGridReady = useCallback((e: GridReadyEvent<RegularReportRow>) => { apiRef.current = e.api; }, []);
 
@@ -475,8 +473,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
                 <div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}><PeriodPicker mode="month" value={fTo} onChange={setFTo} ariaLabel="기준년월 종료" /></div>
               </div>
             </DrawerField>
-            {/* 보고구분 — 툴바 칩과 같은 state 공유(옵션은 행에서 파생) */}
-            <DrawerField label="보고구분"><DrawerSelect value={fRt} onChange={(v) => setFRt(v as '' | ReportKind)} options={rtOptions} /></DrawerField>
+            {/* 보고구분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>

@@ -234,7 +234,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
-  /* 필터 — 계정구분은 툴바 칩 + 드로어가 **같은 state를 공유**한다(표시가 갈라지지 않게).
+  /* 필터 — 계정구분은 툴바 칩에만 둔다(드로어 중복 금지 — 2026-11-05), 나머지는 드로어.
      SSOT=개별 state(빈 값=미적용, 열린 경계) */
   const [fAcc, setFAcc] = useState<'' | Acc>('');
   const [fGp, setFGp] = useState('');
@@ -448,8 +448,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
             {/* 운용사 — 옵션은 행 파생(관측 1건). 목업의 예시 옵션은 옮기지 않는다 */}
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            {/* 계정구분 — 툴바 FilterChip과 같은 state 공유(목업은 칩 그룹, 드로어에선 select로 표현) */}
-            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={(v) => setFAcc(v as '' | Acc)} options={ACC_OPTS} /></DrawerField>
+            {/* 계정구분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>

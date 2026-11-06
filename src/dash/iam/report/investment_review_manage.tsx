@@ -3,11 +3,13 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(모펀드·운용사·자펀드·계정구분·담당자·투자심의상태·투자심의기간)
-       → 투심상태 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter)
+       → 투자심의상태 FilterChip(툴바 좌) + 나머지는 상세필터 드로어(Sheet, apfs-detail-filter).
+         칩으로 올린 투자심의상태는 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts)
    - 목록 그리드 + 합계행     → AG Grid + pinnedBottom(useMemo 재계산, apfs-aggrid). 투자금액·승인금액 합계
    - 심사단계 워크플로우      → 행 선택 시 툴바 좌에 그 단계의 컨텍스트 액션 → 단계 전이(apfs-stage-workflow)
        ⚠ 목업은 그리드 셀 안 인라인 <select>로 확정/승인을 전이했으나, 규약(인라인 전이 금지)에 따라
-         툴바 컨텍스트 액션으로 옮긴다. 두 컬럼(투심일정 확정여부·투심결과 승인여부)은 읽기전용 StatusBadge로 유지.
+         툴바 컨텍스트 액션으로 옮긴다. 두 컬럼은 읽기전용 배지 — 투심일정 확정여부(미확정·확정·투심위취소)는 분류값이라
+         TagBadge(화면스타일가이드 v1.2 4.2.2, 투심위취소=muted — 2026-11-05 사용자 결정), 투심결과 승인여부는 StatusBadge.
        파생 단계: 미확정 → 확정(AlertDialog 확인) → 미결 → 가결/부결/조건부/보류, 미확정→투심위취소, 가결/조건부→승인취소.
    - 투자준법감시내역 CRUD    → 별개 엔티티. [준법감시 등록|수정] 1버튼(상태별) + [삭제](있을 때만). RowFormModal(apfs-form-modal)
    - 상세(명세) 팝업          → 포함(2026-10-08 사용자 요청 — opt-in 규약, apfs-spec-popup). InvestmentReviewDetailModal.
@@ -18,7 +20,7 @@ import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버�
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { UI } from '../../components';
-import type { Tone } from '../../components';
+import type { Tone, TagTone } from '../../components';
 import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';
@@ -42,12 +44,13 @@ import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공
 import { InvestmentReviewDetailModal } from './investment_review_detail_modal';
 export type { Confirm, Result, InvReviewRow } from './investment_review_data';
 
-const { Button, IconBtn, StatusBadge } = UI;
+const { Button, IconBtn, StatusBadge, TagBadge } = UI;
 
 /* ──────────────────────────────
    도메인 타입 · 상태 도메인
 ────────────────────────────── */
-const CONFIRM_TONE: Record<Confirm, Tone> = { 미확정: 'info', 확정: 'primary', 투심위취소: 'warning' };
+/* 확정여부 = 분류값 → TagBadge 톤(info·primary·muted 만). 투심위취소는 상태색(warning) 대신 muted(2026-11-05 사용자 결정) */
+const CONFIRM_TONE: Record<Confirm, TagTone> = { 미확정: 'info', 확정: 'primary', 투심위취소: 'muted' };
 const RES_TONE: Record<string, Tone> = { 미결: 'info', 가결: 'success', 부결: 'danger', 조건부: 'cyan', 보류: 'warning', 승인취소: 'warning' };
 const ST_TONE: Record<string, Tone> = { 일정: 'info', 결과: 'success' };
 /* 투심상태(일정/결과)는 res에서 파생 — 미결/미입력이면 '일정', 결과가 나오면 '결과'(목업 주석 307행) */
@@ -130,7 +133,8 @@ const columnDefs: ColDef<InvReviewRow>[] = [
   amt('inv', '투자금액', true),
   txt('ty', '투자유형', 120),
   txt('ob', '의무투자', 92), txt('sm', '일정규모 이하투자', 128), txt('ag', '농어업투자', 100),
-  badge('confirm', '투심일정 확정여부', 132, CONFIRM_TONE),
+  { field: 'confirm', headerName: '투심일정 확정여부', width: 132, cellStyle: flexCenter, sortable: true,
+    cellRenderer: (p: any) => (p.node.rowPinned || !p.value ? null : <TagBadge tone={CONFIRM_TONE[p.value as Confirm] ?? 'muted'} size="lg">{p.value}</TagBadge>) },
   amt('appr', '승인금액', false),
   date('pay', '투자금납입 예정일', 140),
   badge('res', '투심결과 승인여부', 132, RES_TONE, '미결'),
@@ -344,7 +348,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {single && <>
       {/* 확정여부 배지 + (확정 시)결과 배지 — 상태 표시. 전이는 아래 액션 버튼 */}
-      <StatusBadge tone={CONFIRM_TONE[single.confirm]} label={single.confirm} size="lg" />
+      <TagBadge tone={CONFIRM_TONE[single.confirm]} size="lg">{single.confirm}</TagBadge>
       {single.confirm === '확정' && <StatusBadge tone={RES_TONE[single.res || '미결'] ?? 'info'} label={single.res || '미결'} size="lg" />}
       {/* 상세 진입 ② — 전이 액션 맵 밖(전 단계 공통) */}
       <Button variant="ghost" size="sm" leadingIcon="eye" onClick={() => setModal({ kind: 'detail', id: single.id })}>상세</Button>
@@ -435,14 +439,13 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             {/* 검색어 입력은 기본 OFF(apfs-detail-filter opt-in 규약) — 이 페이지는 미사용이라 렌더하지 않는다.
-                목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·투자심의상태·투자심의기간.
+                목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·투자심의기간(투자심의상태는 툴바 칩 — 드로어 제외).
                 그리드 컬럼과 미연동인 항목(모펀드·계정구분·담당자)은 noop 캡션. 기간은 PeriodPicker day 2개(apfs-datepicker) */}
             <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             <DrawerField label="계정구분" noop><DrawerSelect value={fAg} onChange={setFAg} options={['농식품', '수산']} /></DrawerField>
             <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={['양한솔', '이성훈']} /></DrawerField>
-            <DrawerField label="투자심의상태"><DrawerSelect value={fState} onChange={(v) => setFState(v as '' | '일정' | '결과')} options={['일정', '결과']} /></DrawerField>
             <DrawerField label="투자심의기간" plain>
               <div className="flex items-center gap-2 flex-wrap">
                 <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="투자심의기간 시작일" /></div>
