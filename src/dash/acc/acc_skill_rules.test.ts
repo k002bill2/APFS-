@@ -18,6 +18,8 @@ const LIST_PAGES = [
   'daily_monthly_manage.tsx', 'subledger_manage.tsx', 'general_ledger_manage.tsx', 'trial_balance_manage.tsx', 'statement_kit.tsx',
   /* 결산관리 */
   'closing_journal_manage.tsx', 'fiscal_rollover_manage.tsx',
+  /* 농식품경영체(ACC-023·024) */
+  'agrifood_entity_manage.tsx', 'ir_info_manage.tsx',
 ];
 
 describe('① 회계 목록 단축키 — 상세필터가 열린 동안 끔', () => {
