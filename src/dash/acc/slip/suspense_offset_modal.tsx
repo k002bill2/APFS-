@@ -14,7 +14,8 @@ import { formatAmount } from './general_journal_model';
 import type { SuspenseRow } from './suspense_data';
 import { DEFAULT_OFFSET_REASON, remainingOf } from './suspense_model';
 import type { OffsetCheck, OffsetInput } from './suspense_model';
-import { SuspenseField, dayWrap, focusIn } from './suspense_clear_modal';
+import { SuspenseField } from './suspense_clear_modal';
+import { dayWrap, focusIn } from '../acc_form_helpers';
 
 const { Button, SaveButton } = UI;
 

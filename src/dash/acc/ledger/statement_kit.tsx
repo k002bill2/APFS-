@@ -39,9 +39,9 @@ import { demoLedger, todayStr } from './ledger_data';
 import type { LedgerLine } from './ledger_data';
 import { DEFAULT_COND, fiscalEnd, fiscalNo, fiscalStart, fundLabel, validateStatementDates, MSG } from './ledger_model';
 import type { LedgerCond, StatementRow } from './ledger_model';
-import { DrawerField, DayField, FlagCheck, flagChips } from './ledger_filter_ui';
+import { DrawerField, DayField, FlagCheck, flagChips } from '../ledger_filter_ui';
 import { AccountDetailModal } from './account_detail_modal';
-import { LedgerReportViewer, paginate } from './ledger_report_viewer';
+import { LedgerReportViewer, paginate } from '../ledger_report_viewer';
 
 const { Button, IconBtn } = UI;
 

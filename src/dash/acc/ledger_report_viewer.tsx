@@ -15,10 +15,10 @@
 import './ledger_report_viewer.css';
 import { useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { UI } from '../../components';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, type DialogHandle } from '../../ui/dialog';
-import { useHotkey, HOTKEYS } from '../../use-hotkey';
-import { printArea } from '../../print_grid';
+import { UI } from '../components';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, type DialogHandle } from '../ui/dialog';
+import { useHotkey, HOTKEYS } from '../use-hotkey';
+import { printArea } from '../print_grid';
 
 const { Button, IconBtn } = UI;
 

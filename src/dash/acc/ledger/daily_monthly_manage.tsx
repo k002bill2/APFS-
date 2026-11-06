@@ -49,7 +49,7 @@ import { FUND_ACCOUNTS } from '../slip/general_journal_data';
 import { demoLedger, todayStr } from './ledger_data';
 import { dailyStatement, fundLabel, monthlyStatement, MSG } from './ledger_model';
 import type { DailyRow, LedgerCond, MonthRow } from './ledger_model';
-import { DrawerField, DayField, DayRangeField, FlagCheck, flagChips } from './ledger_filter_ui';
+import { DrawerField, DayField, DayRangeField, FlagCheck, flagChips } from '../ledger_filter_ui';
 import { condOf, defaultFilter, errorField, resetFilter, switchTab, validateFilter } from './daily_monthly_model';
 import type { DmFilter, DmTab } from './daily_monthly_model';
 

@@ -56,7 +56,7 @@ import { LinkCell } from '../../link_cell';
 import { controlMinWidth } from '../../schemas/renderers';
 import { PARTNERS, todayStr } from '../slip/general_journal_data';
 import type { Partner } from '../slip/general_journal_data';
-import { DrawerField, DayRangeField } from '../ledger/ledger_filter_ui';
+import { DrawerField, DayRangeField } from '../ledger_filter_ui';
 import { FA_FUNDS, typeNamesOf } from './fixed_asset_data';
 import type { AssetChange, FixedAsset, VoucherStatus } from './fixed_asset_data';
 import {
