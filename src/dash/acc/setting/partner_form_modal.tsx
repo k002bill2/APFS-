@@ -18,8 +18,8 @@
        인스턴스를 유지한 채 그 컴포넌트만 다시 그린다(AG Grid React 셀은 AgGridReact 트리 안 포털이라 바깥 Provider 가 닿는다).
        같은 이유로 접근名 "N행" 도 node.rowIndex(행삭제 후 셀이 다시 안 그려져 낡는다) 대신 컨텍스트 순번으로 계산한다.
      주계좌: 행삭제로 주계좌가 사라지면 남은 첫 행을 주계좌로 승격한다(설계서에 없는 규칙 — 저장 검증 '주계좌를 지정해 주세요.'와 짝).
-     계좌 정보 도구 = 우측 toolbar, [삭제]는 선택 시에만(전표등록 분개 선례, 사용자 지정 2026-11-06) — 제목 줄 우측 끝(ml-auto)에
-       [선택 시에만: N건 선택됨 · 삭제] + [행추가]. [삭제]=danger(목록 선택 바와 동일). 선택 수는 onSelectionChanged·onRowDataUpdated → selCount state 로 동기화한다
+     계좌 정보 도구 = 제목 옆 좌측(apfs-form-modal 규약 7 — Section add 슬롯, ml-auto 금지), [삭제]는 선택 시에만·danger
+       (사용자 지정 2026-11-06) — [행추가] 뒤에 [선택 시에만: N건 선택됨 · 삭제]. [삭제]=danger(목록 선택 바와 동일). 선택 수는 onSelectionChanged·onRowDataUpdated → selCount state 로 동기화한다
        (getRowId 가 있어 행추가로 rowData 가 바뀌어도 기존 선택은 유지된다).
      셀 select = shouldSearch(옵션 수) 분기(SSOT searchable-select) — 은행명(17개)은 SearchableSelect(Popover 는 body 포털이라 셀·모달
        overflow 에 안 잘린다. 트리거 = <button> 이라 suppressCtrlKeys 가 셀 키를 격리), 계좌구분(5개)은 네이티브 <select>.
@@ -99,13 +99,15 @@ function Field({ label, children, className, plain, error, boxRef }: { label: st
   );
 }
 
-/* 섹션 = fieldset/legend(모달 크롬 규칙 3). 도구(actions)는 제목 줄 우측 끝 — 전표등록 분개 Section actions 선례(사용자 지정 2026-11-06) */
-function Section({ title, actions, children }: { title: string; actions?: React.ReactNode; children: React.ReactNode }) {
+/* 섹션 = fieldset/legend(모달 크롬 규칙 3). 도구 슬롯은 apfs-form-modal 규약 7:
+   add = 추가류·행 편집 도구(제목 바로 옆 좌측, ml-auto 금지) · actions = 조회·저장 등 섹션 액션(우측 끝) */
+function Section({ title, add, actions, children }: { title: string; add?: React.ReactNode; actions?: React.ReactNode; children: React.ReactNode }) {
   return (
     <fieldset className="border-0 p-0 m-0 mb-7" style={{ minWidth: 0 }}>
-      <legend className="w-full flex items-center gap-2 text-lg font-bold border-b-2 border-border pb-2 mb-3">
+      <legend className="w-full flex flex-wrap items-center gap-2 text-lg font-bold border-b-2 border-border pb-2 mb-3">
         <span>{title}</span>
-        {actions ? <span className="ml-auto">{actions}</span> : null}
+        {add}
+        {actions ? <span className="ml-auto flex items-center gap-1.5">{actions}</span> : null}
       </legend>
       {children}
     </fieldset>
@@ -409,15 +411,15 @@ export function PartnerFormModal({ mode, initial, pool, onSave, onClose }: {
           </Section>
 
           {/* ── 섹션 2 계좌 정보 — 반복행 편집 표(AG Grid) ── */}
-          <Section title="계좌 정보" actions={
-            <div className="flex flex-wrap gap-1.5 font-normal" role="toolbar" aria-label="계좌 정보 도구">
+          <Section title="계좌 정보" add={
+            <div className="flex flex-wrap items-center gap-1.5 font-normal" role="toolbar" aria-label="계좌 정보 도구">
+              <Button variant="outline" size="sm" leadingIcon="plus" onClick={addRow}>행추가</Button>
               {selCount > 0 ? (
                 <>
                   <span className="font-semibold self-center" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
                   <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={deleteRows}>삭제</Button>
                 </>
               ) : null}
-              <Button variant="outline" size="sm" leadingIcon="plus" onClick={addRow}>행추가</Button>
             </div>
           }>
             <div ref={gridBoxRef} className="apfs-grid-min border-y border-border" role="region" aria-label="계좌 정보 — 체크박스로 고른 뒤 삭제">

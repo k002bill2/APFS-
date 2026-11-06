@@ -160,13 +160,13 @@ export function JournalUploadModal({ partners, onSave, onClose }: {
 
           {/* ② 그리드 도구 */}
           <div className="flex items-center gap-2 flex-wrap mb-2" role="toolbar" aria-label="업로드 그리드 도구">
-            {/* 상태 문구는 좌측, 도구 버튼은 우측 정렬(mr-auto 가 남는 폭을 먹는다) */}
-            <span className="text-caption mr-auto" aria-live="polite" style={{ fontSize: 12.5 }}>
-              {loaded ? `예시 데이터 · ${String(rows.length)}행${errorCount ? ` · 오류 ${String(errorCount)}행` : ''}` : ''}
-            </span>
+            {/* 도구 버튼은 줄 맨 왼쪽(ml-auto·mr-auto 없음), 상태 문구는 버튼 뒤에 이어 붙인다 — apfs-form-modal 규약 7(사용자 지시 2026-11-06) */}
             <Button variant="outline" size="sm" leadingIcon="download" onClick={downloadTemplate}>양식다운로드</Button>
             <Button variant="outline" size="sm" leadingIcon="upload" onClick={loadDemo}>엑셀업로드</Button>
             <Button variant="outline" size="sm" leadingIcon="refresh" onClick={reset} disabled={!rows.length}>초기화</Button>
+            <span className="text-caption" aria-live="polite" style={{ fontSize: 12.5 }}>
+              {loaded ? `예시 데이터 · ${String(rows.length)}행${errorCount ? ` · 오류 ${String(errorCount)}행` : ''}` : ''}
+            </span>
           </div>
 
           {/* ③ 업로드 그리드 — 가로 스크롤(컬럼 폭 합 > 모달 폭) */}
