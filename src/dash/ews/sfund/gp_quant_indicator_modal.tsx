@@ -8,6 +8,8 @@
      입력항목 컴포넌트는 **등록=텍스트 입력 / 수정=체크박스** — 원문이 "의도된 차이"라 못박았다(구조 통일 대상 아님)
    - 행추가(지표구분·기준을 직접 입력하는 새 행) · 행삭제(선택 행). 원문은 행 클릭 선택이었으나, 그리드를 AG Grid 로
      옮기면서(2026-09-28) 프로젝트 규약대로 **선택 체크박스 열(SELECTION_COL)로만** 고른다(행 본문 클릭 선택 없음, 2026-09-22 결정).
+     배치(2026-11-06 사용자 지시): [+ 행추가]는 운용사 유형 select 바로 오른쪽 같은 줄(ml-auto 없음 — apfs-form-modal 규약 7),
+     그 뒤에 체크한 행이 있을 때만 "N건 선택됨 · [행삭제](danger)" — 선택 0건이면 DOM 에 없다. 그리드 아래 버튼 줄은 없앴다.
    - 저장 · 닫기. 저장은 원문처럼 토스트만(백엔드 없음 — 목록 데이터는 바꾸지 않는다).
 
    우리 규약: Radix Dialog(apfs-form-modal 모달 크롬 — 헤더/푸터 px-[46px]), DS Checkbox(라벨 래핑 금지 → aria-label),
@@ -148,13 +150,23 @@ export function GpQuantIndicatorModal({ mode, preType, onClose }: { mode: QuantM
         </DialogHeader>
 
         <div className="overflow-y-auto p-[46px]" style={{ fontSize: 13.5 }}>
-          <label className="flex items-center gap-2.5 mb-4" style={{ width: 'fit-content' }}>
-            <span className="font-semibold text-muted-foreground" style={{ fontSize: 13.5 }}>운용사 유형</span>
-            {/* 검색형(2026-09-29 사용자 지정 — 6종이지만 개별 opt-in). 박스는 기존 drawerInputStyle 그대로 */}
-            <SearchableSelect value={type} onChange={changeType} options={MGR_TYPES} ariaLabel="운용사 유형" triggerStyle={drawerInputStyle('select')} />
-          </label>
+          <div className="flex flex-wrap items-center gap-2.5 mb-4" role="toolbar" aria-label="운용사 유형·행 편집 도구">
+            <label className="flex items-center gap-2.5">
+              <span className="font-semibold text-muted-foreground" style={{ fontSize: 13.5 }}>운용사 유형</span>
+              {/* 검색형(2026-09-29 사용자 지정 — 6종이지만 개별 opt-in). 박스는 기존 drawerInputStyle 그대로 */}
+              <SearchableSelect value={type} onChange={changeType} options={MGR_TYPES} ariaLabel="운용사 유형" triggerStyle={drawerInputStyle('select')} />
+            </label>
+            {/* 행추가는 유형 select 바로 옆(규약 7 — 추가류는 라벨 옆 좌측), 선택 작업은 그 뒤 · 체크했을 때만 */}
+            <Button variant="outline" size="sm" leadingIcon="plus" onClick={addRow}>행추가</Button>
+            {selCount > 0 ? (
+              <>
+                <span className="font-semibold" aria-live="polite" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
+                <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={deleteRows}>행삭제</Button>
+              </>
+            ) : null}
+          </div>
 
-          <div ref={gridBoxRef} role="region" aria-label={`${title} — 지표별 사용여부·기준·입력항목. 선택 체크박스로 고른 뒤 행삭제`}>
+          <div ref={gridBoxRef} role="region" aria-label={`${title} — 지표별 사용여부·기준·입력항목. 체크박스로 행을 고르면 위 도구에 행삭제가 뜬다`}>
             <AgGridReact<EditRow>
               theme={apfsTheme}
               rowData={rows}
@@ -169,11 +181,6 @@ export function GpQuantIndicatorModal({ mode, preType, onClose }: { mode: QuantM
               onRowDataUpdated={onRowDataUpdated}
               overlayNoRowsTemplate="지표가 없습니다. 행추가로 새 지표를 입력하세요."
             />
-          </div>
-          <div className="flex items-center gap-2 mt-3">
-            <Button variant="outline" size="sm" leadingIcon="plus" onClick={addRow}>행추가</Button>
-            <Button variant="outline" size="sm" leadingIcon="trash" onClick={deleteRows}>행삭제</Button>
-            <span className="text-caption" aria-live="polite" style={{ fontSize: 12.5 }}>{selCount > 0 ? `${selCount}개 행 선택됨` : '체크박스로 행 선택'}</span>
           </div>
         </div>
 
