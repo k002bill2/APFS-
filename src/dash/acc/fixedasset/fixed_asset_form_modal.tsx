@@ -2,7 +2,7 @@
    - 섹션 2개(자산정보 · 관리정보) — 섹션형 모달(subfund_form_modal Section 규격), 컨트롤은 SchemaField 재사용(34px · 13.5px).
    - 자동 계산: 취득원가(C = A + B) · 잔존가액(취득원가 − 감가상각누계액 − 변동 감소액, 신규는 취득원가) · 상각률(fixed_asset_model deprRate).
    - 자산유형 = 선택한 계정구분의 유무형자산 계정만. 자산유형을 고르면 내용년수 기본값(비품 5년 등)을 채운다.
-   - 구입처·제조업체 = 거래처 검색 팝업(acc/slip/partner_search_modal 그대로 import — 회계 공용 위치 이동은 후속 과제).
+   - 구입처·제조업체 = 거래처 검색 팝업(acc/partner_search_modal 그대로 import — 회계 대분류 루트 공용).
    - 사용자 = 라디오(개인/부서/공용) + 개인·부서일 때만 선택 셀렉트(공용이면 비활성 표시).
    - 차량번호 = 자산유형이 차량 유형(차량운반구)일 때만 입력(설계서 '확인 필요' — 가정).
    - 저장 검증 = validateAsset(slide13 ③ 순서) — 첫 미충족 항목 빨간 테두리 + 인라인 문구 + 토스트 + 포커스.
@@ -21,8 +21,8 @@ import { PeriodPicker } from '../../ui/period-picker';
 import { toast } from '../../ui/sonner';
 import { formatAmount, parseAmount } from '../slip/general_journal_model';
 import type { Partner } from '../slip/general_journal_data';
-import { PartnerSearchModal } from '../slip/partner_search_modal';
-import { dayWrap, focusIn } from '../slip/suspense_clear_modal';
+import { PartnerSearchModal } from '../partner_search_modal';
+import { dayWrap, focusIn } from '../acc_form_helpers';
 import { ACQ_KINDS, DEPARTMENTS, DEPR_KINDS, EMPLOYEES, FA_FUNDS, USER_KINDS, findType, typesOf } from './fixed_asset_data';
 import type { AcqKind, DeprKind, FaFund, UserKind } from './fixed_asset_data';
 import { ASSET_MSG, acqCost, deprRate, rateLabel, validateAsset } from './fixed_asset_model';

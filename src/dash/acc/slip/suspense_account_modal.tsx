@@ -8,7 +8,8 @@ import type { FieldSpec } from '../../schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from '../../ui/dialog';
 import type { SuspenseRow } from './suspense_data';
 import { partnerAccounts, validateAccountChange } from './suspense_model';
-import { SuspenseField, focusIn } from './suspense_clear_modal';
+import { SuspenseField } from './suspense_clear_modal';
+import { focusIn } from '../acc_form_helpers';
 
 const { Button, SaveButton } = UI;
 

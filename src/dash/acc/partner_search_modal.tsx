@@ -13,19 +13,19 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GetRowIdParams, GridApi, RowDoubleClickedEvent, RowSelectionOptions, SelectionChangedEvent } from 'ag-grid-community';
-import { UI } from '../../components';
-import type { SubmitResult } from '../../components';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from '../../ui/dialog';
-import { Checkbox } from '../../ui/checkbox';
-import { toast } from '../../ui/sonner';
-import { SchemaField, drawerInputStyle } from '../../schemas/renderers';
-import type { FieldSpec } from '../../schemas/types';
-import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
-import '../../aggrid_shared.css';
-import { todayStr } from './general_journal_data';
-import type { Partner } from './general_journal_data';
-import { PARTNER_MSG, draftToPartner, emptyPartnerDraft, searchPartners, validatePartnerDraft } from './general_journal_model';
-import type { PartnerDraft, PartnerDraftCheck } from './general_journal_model';
+import { UI } from '../components';
+import type { SubmitResult } from '../components';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from '../ui/dialog';
+import { Checkbox } from '../ui/checkbox';
+import { toast } from '../ui/sonner';
+import { SchemaField, drawerInputStyle } from '../schemas/renderers';
+import type { FieldSpec } from '../schemas/types';
+import { apfsTheme, DEFAULT_COL_DEF } from '../aggrid_theme';
+import '../aggrid_shared.css';
+import { todayStr } from './slip/general_journal_data';
+import type { Partner } from './slip/general_journal_data';
+import { PARTNER_MSG, draftToPartner, emptyPartnerDraft, searchPartners, validatePartnerDraft } from './slip/general_journal_model';
+import type { PartnerDraft, PartnerDraftCheck } from './slip/general_journal_model';
 
 const { Button, SaveButton } = UI;
 
