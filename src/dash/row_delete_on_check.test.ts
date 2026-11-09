@@ -6,7 +6,7 @@
    버튼이 아니라 이 가드에 걸리지 않는다. */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { relative } from 'node:path';
+import { join, relative } from 'node:path';
 import { walkDash, DASH_DIR } from './test_src';
 
 const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
@@ -34,5 +34,26 @@ describe('반복행 편집 — [행삭제]는 체크했을 때만', () => {
   it('행마다 붙은 휴지통 버튼(표 셀 안 trash IconBtn)이 없다', () => {
     const hits = SRC.filter(({ src }) => /<td[^>]*>\s*<IconBtn[^>]*icon="trash"/.test(src)).map(({ file }) => file);
     expect(hits).toEqual([]);
+  });
+});
+
+/* 규칙이 하네스·문서에 남아 있는지(2026-11-09 사용자 "전체 스킬이나 룰, 문서에 저장해놔야해") — 한 곳이라도 지워지면
+   다음 작업자가 옛 서술(행별 휴지통 열 등)을 따라 되살린다. 파일 → 그 파일 안 규칙 문구 */
+describe('행삭제 규칙이 룰·스킬·문서에 남아 있다', () => {
+  const ROOT = join(DASH_DIR, '..', '..');
+  const DOCS: Record<string, string> = {
+    '.claude/rules/frontend-design-defaults.md': '16. 반복행 편집 표의 상시 `[행삭제]`',
+    '.claude/skills/apfs-form-modal/SKILL.md': '행삭제 = 체크했을 때만',
+    '.claude/skills/apfs-aggrid/SKILL.md': '[행삭제]는 체크했을 때만',
+    '.claude/skills/apfs-grid/SKILL.md': '행을 체크했을 때만 선택 바에 나타난다',
+    '.claude/skills/apfs-manage-page/SKILL.md': '[행삭제]는 첫 열 체크박스로 고른 행이 있을 때만',
+    '.claude/skills/dashboard-ui/SKILL.md': '반복행 행삭제 = 체크했을 때만',
+    '.claude/hooks/skill-rules.json': '"행삭제", "행 삭제"',
+    'docs/design-rules/REPORT-opus55-design-defaults.md': '| 16 | 반복행 상시 [행삭제]',
+    'scripts/uiux-doc/common_sections.py': "고른 행이 있을 때만 'N건 선택됨 · [행삭제]'",
+    'CLAUDE.md': '금지 패턴 16개',
+  };
+  it.each(Object.entries(DOCS))('%s', (file, marker) => {
+    expect(readFileSync(join(ROOT, file), 'utf8')).toContain(marker);
   });
 });

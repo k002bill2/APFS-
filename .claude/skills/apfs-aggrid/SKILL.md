@@ -78,7 +78,7 @@ const columnDefs: (ColDef<Row> | ColGroupDef<Row>)[] = [
 - AG Grid: 우측 열 = `type:'rightAligned'` + `numStyle()`(또는 `tabular-nums` 스타일). 좌측 열은 정렬을 **지정하지 않는다**(기본 좌측). No 열은 `{ fontVariantNumeric: 'tabular-nums' }` 만 — `rightAligned`·`textAlign:'center'` 금지.
 - 스키마 그리드(`ColumnSpec`): `align` 을 생략하면 `resolveAlign` 이 파생한다 — `amount`·`rate`·`number` → 우측, 나머지 → 좌측. **`type:'number'` 인 No/차수는 `align:'left'` 명시**, 율을 `type:'text'` 로 담은 열은 `align:'right'` 명시. `'center'` 는 타입에서 제거됐다. Excel 숫자셀 판정(`isNum`)도 같은 `resolveAlign` 을 쓴다(화면=엑셀).
 - 직접 만든 `<table>`: 숫자 열 `<th>`·`<td>` 모두 `textAlign:'right'`(+`tabular-nums`), 나머지는 정렬 지정 없음. 2단 헤더의 **묶음 제목(colSpan 상위 th)** 만 가운데 허용.
-- 예외(규약 밖): 선택 체크박스·라디오 열, 아이콘 전용 액션 열(휴지통 등), 표 전체 폭 빈 상태 문구. **값을 고르는 셀 안 select(확정여부 등)·텍스트 버튼 열(상세조회·Download·등록)은 예외가 아니다 → 좌측.**
+- 예외(규약 밖): 선택 체크박스·라디오 열, 아이콘 전용 액션 열(휴지통 등 — 단 반복행 편집 표의 행별 휴지통은 쓰지 않는다: 아래 "모달 안 편집 그리드" [행삭제] 규칙), 표 전체 폭 빈 상태 문구. **값을 고르는 셀 안 select(확정여부 등)·텍스트 버튼 열(상세조회·Download·등록)은 예외가 아니다 → 좌측.**
 - `<th>` 기본 정렬: `tailwind.config.js` 가 `preflight:false` 라 UA 기본 `th{text-align:center}` 가 살아 있다 → `src/styles/tailwind.css` base 레이어에 `th{text-align:left}` 를 둬서 지정 없는 th 도 좌측이 된다. 숫자 열 th 만 우측을 명시하면 된다(달력 요일 등 표가 아닌 th 는 `text-center` 를 명시).
 - 가드: `src/dash/grid_align.test.ts`(스키마 resolveAlign 검사 + `centerNum`·`align:'center'`·td/th 가운데·No 우측 소스 검사). 새 화면도 이 테스트가 통과해야 한다.
 
@@ -277,6 +277,7 @@ const onGroupSelection = useCallback((e: SelectionChangedEvent<Row>) => {
 - **`field` = 렌더러가 읽는 필드** — AG Grid 는 그 컬럼 `field` 값이 바뀔 때만 셀을 다시 그린다. 모드별로 다른 필드를 그리면(등록=`inpText` 입력 / 수정=`inp` 체크) 컬럼 정의도 모드별로 갈라 `field` 를 맞춘다.
 - **셀 안 컨트롤 키 격리** — 컬럼마다 `suppressKeyboardEvent: (p) => p.event.key === 'Tab' || !!p.event.target?.closest?.('input,button')`. `button` 절이 중요하다: DS `Checkbox`(Radix = `<button role=checkbox>`)에서 Space 가 그리드의 "Space=행 선택 토글"까지 먹는다. 입력칸의 방향키가 셀 이동으로 새는 것도 막는다(React `stopPropagation` 은 그리드 네이티브 리스너보다 늦어 무효 — `risk_grid.tsx` 실측).
 - **행 선택 = `SELECTION_COL` 체크박스**(원문이 행 클릭 선택이어도 체크박스 전용 규약을 따른다). "사용" 같은 **데이터 체크박스와 선택 체크박스는 별개 컬럼**이다. 삭제는 `getSelectedRows()` → `setRows(filter)` → `deselectAll()`.
+- **🔴 [행삭제]는 체크했을 때만(전 화면 규칙, 2026-11-09 사용자 "룰로 모두 적용")** — `[행추가]` 뒤에 `{selCount > 0 ? <>N건 선택됨 · [행삭제](danger)</> : null}`, 0건이면 DOM 에 없다. 상시 [행삭제]·행별 휴지통 열·행 클릭 선택 금지. 수제 `<table>` 반복행도 같다(→[[apfs-form-modal]] 규약 7 · `.claude/rules/frontend-design-defaults.md` 16 · 가드 `src/dash/row_delete_on_check.test.ts`).
 - **정렬 끔** — `EDIT_COL_DEF = { ...DEFAULT_COL_DEF, sortable: false }`(모듈 상수, 계약 6). 편집 중 정렬은 커서 아래 행 순서를 바꾸고 "새 행 = 마지막 행"을 깬다.
 - **행추가 포커스** — `focusIdRef.current = newRow.id` 후 `onRowDataUpdated` 에서 `requestAnimationFrame(() => box.querySelector('.ag-center-cols-container [row-id="…"] input[type=text]')?.focus())`. React 셀 렌더러는 rowDataUpdated 뒤에 붙으므로 한 프레임 미룬다. 같은 핸들러에서 선택 건수도 재동기화한다(유형 변경으로 rows 가 통째로 바뀌면 선택이 소멸).
 - **다이얼로그 안 sticky 헤더** — 공용 `aggrid_shared.css` 는 autoHeight 그리드 헤더를 GNB 아래(`top:58px`)에 붙인다. 다이얼로그 본문이 스크롤러면 헤더가 밀려 **첫 행을 8px 가린다** → `[role='dialog'] .ag-root-wrapper.ag-layout-auto-height .ag-header { top: 0 }` 규칙이 이미 있다(드로어·모달 공통). 검증: 헤더 하단 y == 1행 상단 y.

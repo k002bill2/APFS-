@@ -185,6 +185,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   보조 O:  ▣ 상세필터 │ ＋ 계정과목 등록 │ ↺ 삭제이력 │ ⟳ 조회        ← 계정과목 관리(2026-10-28 PR #366)
   편집형:  ▣ 상세필터 │ ＋ 행추가 │ ✓ 저장 │ ⟳ 조회                  ← 결산양식 관리(→[[apfs-aggrid]] "페이지 편집 그리드")
   ```
+  - **편집형의 [행삭제]·행삽입·이동은 툴바에 상시 두지 않는다 — 행을 체크했을 때만 선택 바에 나타난다**(0건이면 DOM 에 없음). 2026-11-09 사용자 "행삭제는 체크박스 체크시 나타나게해 이건 룰로 모두 적용하게 해" — 모달 안 반복행 표·편집 그리드 전부 같은 규칙(→[[apfs-form-modal]] 규약 7 · `.claude/rules/frontend-design-defaults.md` 16 · 가드 `src/dash/row_delete_on_check.test.ts`).
   - **⟳ 조회는 언제나 맨 끝이다.** 등록 외 툴바 진입 버튼(삭제이력 팝업 등 화면 단위 보조 화면)은 **등록 오른쪽·조회 왼쪽**에 `variant="outline" size="sm"` 으로 둔다. 선택한 행에 거는 액션은 툴바가 아니라 선택 바(`contextActions`)다.
   - 아이콘은 **화면 안에서 다른 뜻과 겹치지 않게** 고른다 — 삭제이력은 `history`(시계+되돌림). `clock` 은 GNB 방문기록, `trash` 는 선택 바 삭제와 겹친다(PR #366). 없는 아이콘은 `icons.tsx` MAP 에 lucide 이름으로 1줄 추가한다(기존 항목 변경 금지).
   - ⟳ **조회 = `<IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />` (라벨 "새로고침" 아님 — 2026-09-28 통일).** `hotkey` 로 `⌥R` 바인딩 + 툴팁 힌트(`조회 ⌥R`)가 같이 붙는다 — 페이지당 1개. `IconBtn`은 `icon="refresh"` **+ `onClick`이 있을 때** 클릭마다 아이콘을 +360° 누적 회전한다(1.6s ease-ds, 연타 시 이어 돎, 저모션 자동 비활성). `onClick` 없는 refresh 버튼은 돌지 않는다 — 무동작 버튼이 조회된 척하지 않게. 끄려면 `spinOnClick={false}`.
