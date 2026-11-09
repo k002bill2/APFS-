@@ -43,7 +43,7 @@ import {
   commitAccountChange, commitCancel, commitClear, commitOffset, defaultFilter, offsetPair, suspensePasses, validateOffset,
 } from './suspense_model';
 import type { ClearInput, OffsetInput, SuspenseFilter } from './suspense_model';
-import { PartnerSearchModal } from './partner_search_modal';
+import { PartnerSearchModal } from '../partner_search_modal';
 import { JournalEntryScreen } from './journal_entry_screen';
 import { SuspenseClearModal } from './suspense_clear_modal';
 import { SuspenseOffsetModal } from './suspense_offset_modal';

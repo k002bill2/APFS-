@@ -39,9 +39,9 @@ import { FUND_ACCOUNTS } from '../slip/general_journal_data';
 import { demoLedger, todayStr } from './ledger_data';
 import { DEFAULT_COND, fiscalStart, fundLabel, trialBalance, MSG } from './ledger_model';
 import type { LedgerCond } from './ledger_model';
-import { DrawerField, DayField, FlagCheck, flagChips } from './ledger_filter_ui';
+import { DrawerField, DayField, FlagCheck, flagChips } from '../ledger_filter_ui';
 import { AccountDetailModal } from './account_detail_modal';
-import { LedgerReportViewer } from './ledger_report_viewer';
+import { LedgerReportViewer } from '../ledger_report_viewer';
 import { gridRows, printSections, printPages } from './trial_balance_model';
 import type { TbGridRow, TbAmounts, TbPrintLine } from './trial_balance_model';
 

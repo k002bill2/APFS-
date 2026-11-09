@@ -14,7 +14,8 @@ import { PeriodPicker } from '../../ui/period-picker';
 import { toast } from '../../ui/sonner';
 import { TabBar, TabPanel } from '../../risk_page_kit';
 import { formatAmount } from '../slip/general_journal_model';
-import { SuspenseField as Field, dayWrap, focusIn } from '../slip/suspense_clear_modal';
+import { SuspenseField as Field } from '../slip/suspense_clear_modal';
+import { dayWrap, focusIn } from '../acc_form_helpers';
 import { isBalanced, lineSum, validateVouchers } from './fixed_asset_model';
 import type { VoucherDraft } from './fixed_asset_model';
 

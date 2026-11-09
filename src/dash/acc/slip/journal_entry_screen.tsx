@@ -70,7 +70,7 @@ import { BASE_CURRENCY, CURRENCIES, EVIDENCE_TYPES, FUND_ACCOUNTS, FUND_BANK_ACC
 import type { Currency, EvidenceType, FundAccount, JournalOrigin, JournalRow, Partner } from './general_journal_data';
 import type { AccountItem } from '../account_data';
 import { AccountSearchModal } from '../account_search_modal';
-import { PartnerSearchModal } from './partner_search_modal';
+import { PartnerSearchModal } from '../partner_search_modal';
 import { EvidenceUpload } from './missing_evidence_upload';   // 증빙첨부(ACC-006) 전용 업로더
 import { EVIDENCE_MSG, validateEvidence } from './missing_evidence_model';
 import type { EvidenceCheck } from './missing_evidence_model';

@@ -7,11 +7,11 @@
    필수 조건(기간·기준일) 칩은 onClear 를 넘기지 않는다(설계서: 필수라 ✕ 없음). */
 import { useId } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { Checkbox } from '../../ui/checkbox';
-import { PeriodPicker } from '../../ui/period-picker';
-import { controlMinWidth } from '../../schemas/renderers';
-import type { AppliedFilter } from '../../applied_filters';
-import type { LedgerCond } from './ledger_model';
+import { Checkbox } from '../ui/checkbox';
+import { PeriodPicker } from '../ui/period-picker';
+import { controlMinWidth } from '../schemas/renderers';
+import type { AppliedFilter } from '../applied_filters';
+import type { LedgerCond } from './ledger/ledger_model';
 
 export function DrawerField({ label, plain, required, errMsg, children }: { label: string; plain?: boolean; required?: boolean; errMsg?: string; children: ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
