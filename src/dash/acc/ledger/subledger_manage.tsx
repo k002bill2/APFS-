@@ -41,7 +41,7 @@ import { demoLedger, todayStr } from './ledger_data';
 import { MSG } from './ledger_model';
 import type { SubledgerRow } from './ledger_model';
 import { entryOf } from './ledger_journal_view';
-import { DrawerField, DayRangeField, FlagCheck } from './ledger_filter_ui';
+import { DrawerField, DayRangeField, FlagCheck } from '../ledger_filter_ui';
 import { SUBLEDGER_DEFAULT, subledgerRows, slipNoOf, validateFilter } from './subledger_model';
 import type { SubledgerFilter } from './subledger_model';
 

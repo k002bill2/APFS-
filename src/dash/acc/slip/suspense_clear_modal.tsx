@@ -7,7 +7,8 @@
 import React from 'react';
 import { UI } from '../../components';
 import { Icon } from '../../icons';
-import { SchemaField, controlMinWidth } from '../../schemas/renderers';
+import { SchemaField } from '../../schemas/renderers';
+import { dayWrap, focusIn } from '../acc_form_helpers';
 import type { FieldSpec } from '../../schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, type DialogHandle } from '../../ui/dialog';
 import { PeriodPicker } from '../../ui/period-picker';
@@ -51,11 +52,6 @@ export function InfoTip({ label, text }: { label: string; text: string }) {
   );
 }
 
-/* PeriodPicker 트리거는 w-full — fit-content 래퍼 필수(apfs-datepicker "폭") */
-export const dayWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
-
-/** 첫 번째 포커스 가능한 컨트롤로 이동(SchemaField 는 ref 를 노출하지 않는다) */
-export const focusIn = (el: HTMLElement | null) => el?.querySelector<HTMLElement>('input:not([disabled]),select,button,textarea')?.focus();
 
 const ro = (label: string): FieldSpec => ({ key: label, label, control: 'readonly' });
 const F_AMOUNT: FieldSpec = { key: 'amount', label: '정리금액', control: 'text', required: true };
