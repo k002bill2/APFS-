@@ -22,6 +22,8 @@ const LIST_PAGES = [
   'agrifood_entity_manage.tsx', 'ir_info_manage.tsx',
   /* 설정 — 휴일관리(ACC-025) holiday_manage.tsx 는 상세필터 없음(2026-11-06 사용자 결정) → 대상 아님 */
   'partner_manage.tsx',   // ACC-026
+  /* 자금관리(ACC-019~022) · 유무형자산(ACC-017) — 2026-11-09 점검에서 목록 누락 확인(코드는 이미 !filterOpen) */
+  'account_balance_manage.tsx', 'bank_account_manage.tsx', 'contribution_status_manage.tsx', 'daily_cash_manage.tsx', 'fixed_asset_manage.tsx',
 ];
 
 describe('① 회계 목록 단축키 — 상세필터가 열린 동안 끔', () => {
@@ -30,9 +32,9 @@ describe('① 회계 목록 단축키 — 상세필터가 열린 동안 끔', ()
     const calls = src.match(/useHotkey\(HOTKEYS\.(print|export|register)\.combo[^;]*;/g) ?? [];
     expect(calls.length).toBeGreaterThan(0);
     for (const c of calls) {
-      /* enabled 가 식이면 그대로, 이름 하나(listKeys 등)면 그 const 정의를 본다 */
+      /* enabled 식 안의 이름(listKeys 등)은 그 const 정의로 펼친다 — `listKeys && tab === 'summary'` 같은 합성식도 판정 */
       const expr = c.match(/enabled: ([^,}]*)/)?.[1].trim() ?? '';   // 쉼표 뒤 skipInDialog 등 다른 옵션은 제외
-      const named = /^\w+$/.test(expr) ? src.match(new RegExp(`const ${expr} = ([^;]*);`))?.[1] ?? '' : expr;
+      const named = expr.replace(/\b[A-Za-z_]\w*\b/g, (w) => src.match(new RegExp(`const ${w} = ([^;]*);`))?.[1] ?? w);
       expect(named, c).toMatch(/!filterOpen/);
     }
   });
@@ -59,6 +61,10 @@ const PAGER_PAGES = [
   'closing_journal_manage.tsx', 'fixed_asset_manage.tsx', 'general_journal_manage.tsx', 'suspense_manage.tsx',
   'bank_account_manage.tsx', 'contribution_status_manage.tsx', 'agrifood_entity_manage.tsx', 'ir_info_manage.tsx',
   'holiday_manage.tsx', 'partner_manage.tsx',
+  /* 2026-11-09 2차 — 10-28~11-03 화면 */
+  'account_code_manage.tsx', 'deleted_journal_manage.tsx', 'missing_evidence_manage.tsx', 'journal_search_manage.tsx',
+  /* 예외: 보조원장(subledger_manage)은 '현재 / 전체' 텍스트 유지 — 실데모 ~720행 = 37쪽이라 번호 전부를 그리면 푸터에
+     버튼 37개(골드 페이저에 생략 처리 없음). 많은 쪽 수용 페이저는 별도 결정 대상(2026-11-09). */
 ];
 describe('④ 회계 페이저 — 페이지 번호 버튼', () => {
   it.each(PAGER_PAGES)('%s', (f) => {
@@ -107,6 +113,17 @@ describe('⑦ 표시 옵션 = 툴바 우측 토글', () => {
   });
   it('출자금현황 단위 = 툴바 SegTabs', () => {
     expect(readSrc('contribution_status_manage.tsx')).toMatch(/<SegTabs size="sm" value=\{unit\}/);
+  });
+});
+
+/* ⑨ 푸터 = FooterActions 하나 — apfs-grid "푸터 액션 4종은 항시 노출·순서 고정"(2026-09-17 사용자 결정, 인쇄 = 그리드만).
+   회기생성/전기이월이 설계서 '하단도구 2개'를 이유로 IconBtn 2개를 직접 두어 인쇄·⌘P(printGrid)가 빠졌다 — ⌘P 가 브라우저
+   기본 인쇄로 GNB 까지 찍었다(2026-11-09 점검). footer_hotkey_hints 가드는 FooterActions 소비처만 보므로 여기서 막는다. */
+describe('⑨ 회계 푸터 = FooterActions', () => {
+  const footers = walkDash().filter((p) => p.includes(`${sep}acc${sep}`) && p.endsWith('.tsx')).filter((p) => readFileSync(p, 'utf8').includes('footerRight='));
+  it('대상이 있다', () => { expect(footers.length).toBeGreaterThan(10); });
+  it.each(footers.map((p) => [p.split(sep).pop() as string, p] as const))('%s', (_f, p) => {
+    expect(readFileSync(p, 'utf8')).toMatch(/footerRight=\{<FooterActions /);
   });
 });
 
