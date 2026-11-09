@@ -182,7 +182,7 @@ export function DepreciationManage({ onNav }: { onNav?: (r: string) => void }) {
   const selActions = selIds.length > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selIds.length)}건 선택됨</span>
-      <Button variant="outline" size="sm" leadingIcon="trash" onClick={askDelete}>삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={askDelete}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={clearSel}>선택 해제</Button>
     </>
   ) : null;

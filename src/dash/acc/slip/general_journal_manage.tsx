@@ -293,7 +293,7 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
         <Button variant="outline" size="sm" leadingIcon="refresh" onClick={() => setModal({ kind: 'reverse', id: single.id })}>역분개</Button>
         <Button variant="outline" size="sm" leadingIcon="layers" onClick={() => openEntry({ mode: 'copy', source: single })}>복사</Button>
       </>}
-      <Button variant="outline" size="sm" leadingIcon="trash" onClick={askDelete}>삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={askDelete}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={clearSel}>선택 해제</Button>
     </>
   ) : null;

@@ -175,6 +175,19 @@ describe('⑪ 회계 푸터 건수 = footerCount', () => {
   });
 });
 
+/* ⑫ 선택 바·섹션 도구의 [삭제] = primary + danger 채움(apfs-form-modal "목록 선택 바와 같은 danger").
+   2026-11-09 사용자 결정 "통일": 회계 10곳 중 4곳(감가상각·유무형자산·전표관리·결산전표)이 outline(+trash)이라 같은 메뉴 안에서
+   삭제의 무게가 갈렸다. 정본 `<Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} …>삭제</Button>`. */
+describe('⑫ 회계 [삭제] 버튼 = primary + danger', () => {
+  const dels = walkDash().filter((p) => p.includes(`${sep}acc${sep}`) && p.endsWith('.tsx'))
+    /* (?:=>|[^>])* — onClick={() => …} 의 => 에서 끊기지 않게(끊기면 그 버튼이 조용히 검사에서 빠진다) */
+    .flatMap((p) => (readFileSync(p, 'utf8').match(/<Button (?:=>|[^>])*>삭제<\/Button>/g) ?? []).map((b: string) => [p.split(sep).pop() as string, b] as const));
+  it('대상이 있다(10곳 — 정규식이 화살표 함수에서 끊겨 줄면 실패)', () => { expect(dels.length).toBeGreaterThanOrEqual(10); });
+  it.each(dels)('%s', (_f, b) => {
+    expect(b).toMatch(/^<Button variant="primary" size="sm" leadingIcon="trash" style=\{\{ background: 'var\(--danger\)' \}\} /);
+  });
+});
+
 describe('③ 삭제전표 긴 텍스트 칸 — 말줄임 렌더러', () => {
   const src = readSrc('deleted_journal_manage.tsx');
   it('textCell = truncate span', () => { expect(src).toMatch(/const textCell = [^\n]*className="min-w-0 truncate"/); });

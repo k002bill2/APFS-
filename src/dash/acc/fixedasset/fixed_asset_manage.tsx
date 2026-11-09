@@ -373,7 +373,7 @@ export function FixedAssetManage({ onNav }: { onNav?: (r: string) => void }) {
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       <Button variant="primary" size="sm" leadingIcon="file-check" onClick={askVoucher}>전표생성</Button>
       {tab === 'summary' && selCount === 1 && <Button variant="outline" size="sm" leadingIcon="refresh" onClick={askChange}>변동 등록</Button>}
-      <Button variant="outline" size="sm" leadingIcon="trash" onClick={askDelete}>삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={askDelete}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={clearSel}>선택 해제</Button>
     </>
   ) : null;
