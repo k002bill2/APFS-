@@ -3,8 +3,11 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(모펀드·운용사·자펀드·계정구분·조회기준·기준일자 시작~종료)
-       → **조회기준은 툴바 주 필터 FilterChip**(상세·요약·전체·출자·배분·기타, 목업 기본 '상세'),
-         나머지는 상세필터 드로어(Sheet). 항목 순서는 목업 검색박스 순서 그대로. 검색어는 OFF(목업에 없음).
+       → 목업 조회기준 select 6값(상세·요약·전체·출자·배분·기타)은 두 축이 섞여 있어 **둘로 나눈다**
+         (2026-11-06 사용자 결정): 표시 형태(상세·요약)는 **툴바 주 필터 FilterChip**(모드형 — 전체 없음,
+         목업 기본 '상세'), 거래구분(출자·배분·기타)은 상세필터 select('전체' = 빈 값) + 적용 칩.
+         목업의 '전체'는 '상세'와 결과가 같은 중복 값이라 표시 형태에서 뺐다(거래구분의 '전체'가 그 자리).
+         나머지도 상세필터 드로어(Sheet). 항목 순서는 목업 검색박스 순서 그대로. 검색어는 OFF(목업에 없음).
          목업 [조회] 버튼은 즉시 반영형이라 없다. 기준일자 목업 기본값 2024-08-12는 **적용하지 않는다**
          (빈 문자열 = 열린 경계, apfs-datepicker 함정).
    - 목록 그리드(28열) → AG Grid 단일 헤더 28열. 목업 `render()`처럼 **자펀드(거래) 그룹 단위**로
@@ -25,8 +28,9 @@
      (DEFAULT_COL_DEF는 공유 SSOT라 그대로 두고 컬럼 팩토리에서 덮는다).
    - **필터는 AG Grid External이 아니라 React에서 그룹 단위**로 건다 — 평탄화된 행을 거르면 소계가
      자기 멤버 없이 살아남는다. `passes(group)` → filteredGroups → displayRows 순서다.
-   - **조회기준 동작은 추론**이다(목업은 select만 있고 동작 미구현): 상세·전체=조합원행+소계, 요약=소계만,
-     출자·배분=그 거래구분 그룹만(상세 형태), 기타=출자·배분 둘 다 아닌 그룹(현재 데이터 0건 → 빈 그리드).
+   - **조회기준·거래구분 동작은 추론**이다(목업은 select만 있고 동작 미구현): 상세=조합원행+소계, 요약=소계만,
+     거래구분 출자·배분=그 거래구분 그룹만, 기타=출자·배분 둘 다 아닌 그룹(현재 데이터 0건 → 빈 그리드).
+     두 축은 독립이라 '요약 + 출자'처럼 함께 걸린다(나누기 전엔 거래로 거르면 늘 상세 형태였다).
    - **소계 행의 '-' 배치는 목업 `groupTotalsRow` 그대로**다 — 배분총액은 값이 있는데 납입총액·실입금총액은
      '-'다(비대칭이지만 원문이므로 고르게 펴지 않는다).
    - **배분거래등록(확인 버튼)은 현재 데이터로 도달할 수 없다** — `chk==='확인'`은 그룹2(출자)에만 있어
@@ -80,7 +84,7 @@ export interface TxGroup {
 
 /* 데모 데이터 — 목업 `GROUPS` 값 그대로(콤마 문자열 → number, 값 창작 없음).
    그룹1은 실데이터, 그룹2는 참고 화면 캡처(축소본)에서 옮긴 도메인 정합 샘플(목업 주석). */
-const GROUPS: TxGroup[] = [
+export const GROUPS: TxGroup[] = [
   {
     gi: 0, un: '미시간벤처캐피탈주식회사', fn: '미시간글로벌식품산업투자조합2호', acc: '농식품',
     rd: '2013-09-24', form: 10_000_000_000, tx: '배분', dtx: '배분', td: '2026-02-09',
@@ -148,24 +152,28 @@ const totalRow = (id: string, gi: number, t: GroupTotals): DistRow => ({
   bal: null, chk: null, red: null, memo: null,
 });
 
-/** 조회기준 — 목업 `#f-basis` 옵션 그대로. 동작은 추론(파일 상단 '한계') */
-type Basis = '상세' | '요약' | '전체' | '출자' | '배분' | '기타';
-const BASES: Basis[] = ['상세', '요약', '전체', '출자', '배분', '기타'];
-const DEFAULT_BASIS: Basis = '상세';
+/** 조회기준(툴바 칩) = 표시 형태 — 목업 `#f-basis` 6값 중 형태 축만(파일 상단 '구성'). 동작은 추론('한계') */
+type View = '상세' | '요약';
+export const VIEWS: View[] = ['상세', '요약'];
+export const DEFAULT_VIEW: View = '상세';
 
-/** 조회기준이 그룹을 거르는 규칙 — 출자·배분은 그 거래구분만, 기타는 둘 다 아닌 그룹 */
-const basisKeepsGroup = (basis: Basis, g: TxGroup): boolean =>
-  basis === '출자' || basis === '배분' ? g.tx === basis
-    : basis === '기타' ? g.tx !== '출자' && g.tx !== '배분'
+/** 거래구분(상세필터) — 목업 `#f-basis` 의 거래 축. '' = 전체(조건 없음) */
+type TxFilter = '' | '출자' | '배분' | '기타';
+export const TX_FILTERS: Exclude<TxFilter, ''>[] = ['출자', '배분', '기타'];
+
+/** 거래구분이 그룹을 거르는 규칙 — 출자·배분은 그 거래구분만, 기타는 둘 다 아닌 그룹, 빈 값은 전부 */
+export const txKeepsGroup = (f: TxFilter, g: TxGroup): boolean =>
+  f === '출자' || f === '배분' ? g.tx === f
+    : f === '기타' ? g.tx !== '출자' && g.tx !== '배분'
       : true;
 
 /** 그룹 배열 → 표시행. '요약'이면 소계 행만 남긴다(NO 셀은 그대로 '소 계') */
-function flatten(groups: TxGroup[], basis: Basis): DistRow[] {
+export function flatten(groups: TxGroup[], view: View): DistRow[] {
   const out: DistRow[] = [];
   let no = 0;
   for (const g of groups) {
     const t = totalsOf(g.members);
-    if (basis !== '요약') {
+    if (view !== '요약') {
       g.members.forEach((m, mi) => {
         no += 1;
         out.push({
@@ -378,16 +386,18 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
 
-  /* 필터 — 조회기준은 툴바 칩에만 둔다(드로어 중복 금지 — 2026-11-05) */
+  /* 필터 — 조회기준(표시 형태)은 툴바 칩에만 둔다(드로어 중복 금지 — 2026-11-05).
+     거래구분은 드로어에만 둔다(조회기준에서 나눈 거래 축 — 2026-11-06) */
   const [filterOpen, setFilterOpen] = useState(false);
-  const [basis, setBasis] = useState<Basis>(DEFAULT_BASIS);
+  const [view, setView] = useState<View>(DEFAULT_VIEW);
+  const [fTx, setFTx] = useState<TxFilter>('');
   const [fMf, setFMf] = useState('');     // 모펀드 — 그룹 컬럼 아님(no-op)
   const [fUn, setFUn] = useState('');
   const [fFn, setFFn] = useState('');
   const [fAcc, setFAcc] = useState('');
   const [fFrom, setFFrom] = useState(''); // 기준일자 시작 'YYYY-MM-DD'(빈 값=열린 경계)
   const [fTo, setFTo] = useState('');     // 기준일자 종료(동상)
-  const clearFilters = () => { setBasis(DEFAULT_BASIS); setFMf(''); setFUn(''); setFFn(''); setFAcc(''); setFFrom(''); setFTo(''); };
+  const clearFilters = () => { setView(DEFAULT_VIEW); setFMf(''); setFUn(''); setFFn(''); setFAcc(''); setFTx(''); setFFrom(''); setFTo(''); };
 
   /* deps []: setModal은 안정(useState 세터) — 매 렌더 새 배열이면 그리드가 컬럼을 재생성하며 폭이 되돌아간다 */
   const openTx = useCallback((gi: number, mode: 'register' | 'edit') => {
@@ -410,11 +420,11 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
     if (fAcc && g.acc !== fAcc) return false;
     if (fFrom && g.td < fFrom) return false;   // 기준일자 = 거래일자, 'YYYY-MM-DD' 사전식 비교
     if (fTo && g.td > fTo) return false;
-    return basisKeepsGroup(basis, g);
-  }, [fUn, fFn, fAcc, fFrom, fTo, basis]);
+    return txKeepsGroup(fTx, g);
+  }, [fUn, fFn, fAcc, fFrom, fTo, fTx]);
 
   const filteredGroups = useMemo(() => groups.filter(passes), [groups, passes]);
-  const displayRows = useMemo(() => flatten(filteredGroups, basis), [filteredGroups, basis]);
+  const displayRows = useMemo(() => flatten(filteredGroups, view), [filteredGroups, view]);
   /* 조합원 행 수 — 푸터 '총 N개'의 기준(목업 `#cnt`도 소계·합계를 세지 않는다) */
   /* pinned 합계 — 인라인 배열 금지(참조가 매 렌더 바뀌면 고정행이 재생성된다).
      결과가 0건이면 0으로 채운 가짜 합계행을 띄우지 않는다(빈 그리드 문구만 보이게) */
@@ -489,13 +499,14 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
       title="출자/분배조회(농금원)"
       favRoute="apfs-contribution"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 주 필터 칩(조회기준). 드로어 값 칩은 appliedFilters(둘째 줄). 행 선택이 없어 selbar는 존재하지 않는다 */
-      filterChips={BASES.map((b) => ({ key: b, label: b, active: basis === b, onSelect: () => setBasis(b) }))}
+      /* 툴바 좌 = 주 필터 칩(조회기준 = 표시 형태 상세·요약). 드로어 값 칩은 appliedFilters(둘째 줄). 행 선택이 없어 selbar는 존재하지 않는다 */
+      filterChips={VIEWS.map((v) => ({ key: v, label: v, active: view === v, onSelect: () => setView(v) }))}
       /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
       appliedFilters={[
         { label: '운용사', value: fUn, onClear: () => setFUn('') },
         { label: '자펀드', value: fFn, onClear: () => setFFn('') },
         { label: '계정구분', value: fAcc, onClear: () => setFAcc('') },
+        { label: '거래구분', value: fTx, onClear: () => setFTx('') },
         { label: '기준일자', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
       ]}
       toolbarRight={<>
@@ -538,7 +549,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
         />
       </div>
 
-      {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(모펀드·운용사·자펀드·계정구분·조회기준·기준일자).
+      {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(모펀드·운용사·자펀드·계정구분·조회기준 자리=거래구분·기준일자).
              검색어는 없다(목업 미포함). 모펀드는 그룹 컬럼과 미연동이라 noop 캡션 ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
@@ -553,7 +564,9 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
             <DrawerField label="자펀드"><DrawerSelect value={fFn} onChange={setFFn} options={fnOptions} /></DrawerField>
             {/* 목업은 전체/농식품/수산 칩 그룹 — DrawerSelect의 첫 옵션 '전체'가 같은 역할을 한다 */}
             <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            {/* 조회기준은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
+            {/* 조회기준(상세·요약)은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts).
+                그 자리엔 조회기준에서 나눈 거래 축(출자·배분·기타)을 둔다(2026-11-06) */}
+            <DrawerField label="거래구분"><DrawerSelect value={fTx} onChange={(v) => setFTx(v as TxFilter)} options={TX_FILTERS} /></DrawerField>
             {/* 기준일자 = 거래일자 범위. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}
             <DrawerField label="기준일자" plain>
               <div className="flex items-center gap-2 flex-wrap">
