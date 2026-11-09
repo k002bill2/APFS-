@@ -41,7 +41,7 @@ import '../../aggrid_shared.css';
 import { useState, useRef, useCallback, useMemo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { UI } from '../../components';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, AUTO_SIZE_CONTENT, numFmt } from '../../aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
@@ -262,7 +262,7 @@ export function JournalSearchManage({ onNav }: { onNav?: (r: string) => void }) 
         {/* 전표상세가 열려 있으면 뒤 목록 단축키(⌥R) 바인딩을 끈다 — IconBtn 은 enabled prop 이 없어 hotkey 를 조건부로 */}
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={listKeys ? HOTKEYS.refresh : undefined} />
       </>}
-      footerLeft={<span>{'총 ' + String(visible.length) + '건 중 ' + String(Math.min(shown, visible.length)) + '건 표시'}</span>}
+      footerLeft={<span>{footerCount(visible.length, Math.min(shown, visible.length))}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

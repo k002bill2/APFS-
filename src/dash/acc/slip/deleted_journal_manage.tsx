@@ -17,7 +17,7 @@ import '../../aggrid_shared.css';
 import { useState, useRef, useCallback, useMemo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { UI } from '../../components';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme';
 import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
@@ -205,7 +205,7 @@ export function DeletedJournalManage({ onNav }: { onNav?: (r: string) => void })
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
-      footerLeft={<span>{'총 ' + String(rows.length) + '건 중 ' + String(visible.length) + '건 · ' + String(Math.min(shown, visible.length)) + '건 표시 중'}</span>}
+      footerLeft={<span>{footerCount(visible.length, Math.min(shown, visible.length))}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

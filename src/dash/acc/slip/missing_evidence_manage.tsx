@@ -28,7 +28,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { UI } from '../../components';
 import type { Tone } from '../../components';
 import { Icon } from '../../icons';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, AUTO_SIZE_CONTENT, numFmt, numStyle } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection, dropHiddenSelection } from '../../aggrid_selection';
 import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
@@ -253,7 +253,7 @@ export function MissingEvidenceManage({ onNav }: { onNav?: (r: string) => void }
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={modal ? undefined : HOTKEYS.refresh} />
       </>}
-      footerLeft={<span>{'총 ' + String(visible.length) + '건 중 ' + String(Math.min(shown, visible.length)) + '건 표시'}</span>}
+      footerLeft={<span>{footerCount(visible.length, Math.min(shown, visible.length))}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

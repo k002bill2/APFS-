@@ -53,7 +53,7 @@ describe('재무상태표 설정', () => {
     expect(termHeader({ no: 2, start: '2026-01-01', end: '2026-06-30' }, '당')).toBe('제2(당)기 (2026-01-01 ~ 2026-12-31)');
     expect(termHeader({ no: 1, start: '2025-01-01', end: '2025-12-31' }, '전')).toBe('제1(전)기 (2025-01-01 ~ 2025-12-31)');
   });
-  it('푸터 건수 = 데이터 행(leaf·calc)만 · 거래가 없으면 0 · 푸터 문구 "총 N건 중 N건 표시"', () => {
+  it('푸터 건수 = 데이터 행(leaf·calc)만 · 거래가 없으면 0 · 푸터 문구 = footerCount(골드, 2026-11-09 통일)', () => {
     expect(dataRowCount(rows)).toBe(rows.filter((r) => r.kind === 'leaf' || r.kind === 'calc').length);
     expect(dataRowCount(rows)).toBeLessThan(rows.length);
     const empty = CFG.build([], DEFAULT_COND, CUR, PREV);
@@ -61,7 +61,7 @@ describe('재무상태표 설정', () => {
     expect(empty.some((r) => (r.kind === 'leaf' || r.kind === 'calc') && (r.cur || r.prev))).toBe(false);   // → hasData=false → rowData=[]
     const src = readSrc('statement_kit.tsx');
     expect(src).toContain('rowData={gridRows}');
-    expect(src).toContain('`총 ${String(count)}건 중 ${String(count)}건 표시`');
+    expect(src).toContain('footerCount(count, count)');
   });
   it('기준일 칩(당기·전기)은 onClear 없음(✕ 미노출)', () => {
     const chips = dateChips({ cur: CUR, prev: PREV });

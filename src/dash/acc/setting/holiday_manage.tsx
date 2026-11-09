@@ -42,7 +42,7 @@
 import '../../aggrid_shared.css';
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { controlMinWidth } from '../../schemas/renderers';
@@ -252,7 +252,7 @@ export function HolidayManage({ onNav }: { onNav?: (r: string) => void }) {
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{isList
-        ? '총 ' + String(rows.length) + '건 중 ' + String(visible.length) + '건 · ' + String(Math.min(shown, visible.length)) + '건 표시 중'
+        ? footerCount(visible.length, Math.min(shown, visible.length))
         : `${filter.year}년 ${filter.month}월 휴일 ${String(visible.length)}건`}</span>}
       footerCenter={isList && page.total > 1 ? (
         <>
