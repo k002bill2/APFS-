@@ -134,6 +134,33 @@ describe('⑨ 회계 푸터 = FooterActions', () => {
   });
 });
 
+/* ⑩ 툴바 SplitButton = 같은 1차 액션(등록)의 대체 경로 묶음만 — apfs-grid "허용되는 combo ①".
+   2026-11-09 사용자 결정: 감가상각 [저장 ▾ 계정과목 설정] · 자금일보 [자금일보 전자결재 ▾ 결재라인설정]은 성격이 다른 설정 화면을
+   ▾ 안에 숨겨 분리했다 — 설정 진입은 별도 outline 버튼(1차 액션 오른쪽 · 조회 왼쪽). iconOnly(푸터 인쇄 combo)는 대상 아님. */
+describe('⑩ 툴바 SplitButton = 등록 대체 경로만', () => {
+  const accTsx = walkDash().filter((p) => p.includes(`${sep}acc${sep}`) && p.endsWith('.tsx'));
+  const splits = accTsx.flatMap((p) => (readFileSync(p, 'utf8').match(/<SplitButton\b[\s\S]*?\/>/g) ?? [])
+    .filter((s) => !/\biconOnly\b/.test(s))
+    .map((s) => [p.split(sep).pop() as string, s] as const));
+  it('대상이 있다', () => { expect(splits.length).toBeGreaterThan(0); });
+  it.each(splits)('%s', (_f, s) => {
+    const labels = [s.match(/label="([^"]+)"/)?.[1] ?? '', ...[...s.matchAll(/label: '([^']+)'/g)].map((m) => m[1])];
+    for (const l of labels) expect(l, s).toMatch(/(등록|입력|업로드)$/);
+  });
+  it.each([
+    ['depreciation_manage.tsx', '저장', '계정과목 설정'],
+    ['daily_cash_manage.tsx', '자금일보 전자결재', '결재라인설정'],
+  ])('%s — [%s] 다음 [%s] outline 버튼, 그 다음 조회', (f, main, setting) => {
+    const bar = readSrc(f).match(/toolbarRight=\{<>([\s\S]*?)<\/>\}/)?.[1] ?? '';
+    const iMain = bar.indexOf(`>${main}</Button>`);
+    const iSet = bar.search(new RegExp(`<Button variant="outline" size="sm" leadingIcon="[\\w-]+" onClick=\\{[^\\n]*?\\}>${setting}</Button>`));
+    const iRefresh = bar.indexOf('icon="refresh"');
+    expect(iMain).toBeGreaterThan(-1);
+    expect(iSet).toBeGreaterThan(iMain);
+    expect(iRefresh).toBeGreaterThan(iSet);
+  });
+});
+
 describe('③ 삭제전표 긴 텍스트 칸 — 말줄임 렌더러', () => {
   const src = readSrc('deleted_journal_manage.tsx');
   it('textCell = truncate span', () => { expect(src).toMatch(/const textCell = [^\n]*className="min-w-0 truncate"/); });

@@ -3,7 +3,8 @@
 
    설계서 → 우리 규약
    - 브레드크럼·제목·☆·[메인으로] = GridFrame(favRoute acct-daily-cash).
-   - 툴바(apfs-grid): [상세필터](E01) → SplitButton [자금일보 전자결재(E04) │ ▾ 결재라인설정(E05)] → ⟳ 조회(E02, 맨 끝 · ⌥R).
+   - 툴바(apfs-grid): [상세필터](E01) → [자금일보 전자결재](E04) → [결재라인설정](E05) → ⟳ 조회(E02, 맨 끝 · ⌥R). 둘 다 outline 단독 버튼 —
+     설정 화면을 ▾ 안에 숨기던 SplitButton 은 분리했다(2026-11-09 사용자 결정, apfs-grid "허용 combo ①" = 같은 1차 액션의 대체 경로만).
      설계서 툴바의 기준일자 칸은 상세필터 드로어로 옮겼다(기간·일자 조건은 툴바에 두지 않는다).
    - 본문 = 그리드 1개(slide 10 — 2026-11-05 사용자 결정 "한 표로 가자") — 계정구분 제목 행·계좌 행·소계 행, 고정 하단 = 미출자자산 합계.
      2단 헤더 구분 | 거래은행{은행·이율(%)·상품명·개시일·만기일·계좌번호} | 기초시재 | 입금 | 출금 | 마감시재.
@@ -38,7 +39,6 @@ import { apfsTheme, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme
 import { dayWrap } from '../acc_form_helpers';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { PeriodPicker } from '../../ui/period-picker';
-import { SplitButton } from '../../ui/split-button';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { toast } from '../../ui/sonner';
 import { printGrid } from '../../print_grid';
@@ -235,8 +235,8 @@ export function DailyCashManage({ onNav }: { onNav?: (r: string) => void }) {
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        <SplitButton label="자금일보 전자결재" leadingIcon="file-check" onClick={openSubmit} menuLabel="전자결재 메뉴"
-          items={[{ label: '결재라인설정', icon: 'users', onSelect: openLine }]} />
+        <Button variant="outline" size="sm" leadingIcon="file-check" onClick={openSubmit}>자금일보 전자결재</Button>
+        <Button variant="outline" size="sm" leadingIcon="users" onClick={openLine}>결재라인설정</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={!filterOpen && modal === null ? HOTKEYS.refresh : undefined} />
       </>}
       footerLeft={<span>{`총 ${String(report.rowCount)}건 중 ${String(report.rowCount)}건 표시`}</span>}
