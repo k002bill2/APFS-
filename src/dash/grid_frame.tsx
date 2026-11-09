@@ -164,6 +164,9 @@ export interface GridFrameProps {
       '방금 건 필터' 툴팁(3초)을 띄우지 않는다 — 탭 전환은 필터를 건 게 아니다. 그 툴팁 레이어가 남아 있으면
       직후에 연 팝업의 첫 Esc 를 가져간다(2026-11-02 연동 모니터링 실측). 미지정이면 종전과 같다. */
   filterScope?: string;
+  /** 인라인 필터 패널(선택) — 카드헤더 아래·툴바(칩 줄) **위**에 항상 펼쳐 둔 필터 칸 묶음.
+      상세필터 드로어 대신 쓰는 화면만 넘긴다(자펀드정보관리 2026-11-09). 미지정이면 종전과 같다. */
+  filterPanel?: React.ReactNode;
   /** 푸터 좌: 건수 등 요약 텍스트 */
   footerLeft?: React.ReactNode;
   /** 푸터 중: 페이지네이션 */
@@ -177,7 +180,7 @@ export interface GridFrameProps {
 
 export function GridFrame({
   crumbs, title, sub, headerActions, cardTitle, kpis, favRoute,
-  toolbarLeft, toolbarRight, contextActions, appliedFilters, filterChips, filterScope, footerLeft, footerCenter, footerRight, children,
+  toolbarLeft, toolbarRight, contextActions, appliedFilters, filterChips, filterScope, filterPanel, footerLeft, footerCenter, footerRight, children,
 }: GridFrameProps) {
   const hasToolbar = Boolean(toolbarLeft || toolbarRight || contextActions || (filterChips && filterChips.length) || activeFilters(appliedFilters).length);
 
@@ -361,6 +364,11 @@ export function GridFrame({
           {kpis && <div className="flex gap-2.5 flex-wrap">{kpis}</div>}
         </div>
 
+        {/* 인라인 필터 패널 — 툴바 위. 툴바가 위 테두리를 그리므로 여기선 아래 여백만.
+            좌우 패딩 0 = 그리드(카드 끝까지 차는 본문) 왼쪽 끝선에 맞춘다(2026-11-09 사용자 "좌측은 그리드 왼쪽에 맞춰줘") */}
+        {/* data-filter-panel = 적용 칩 클릭이 같은 이름 칸을 찾는 범위([상세필터]가 없을 때 — filter_field_jump focusPanelField) */}
+        {filterPanel && <div data-filter-panel="" style={{ padding: '0 0 12px' }}>{filterPanel}</div>}
+
         {/* 툴바 — 한 줄만 쓴다(2026-09-24 사용자 결정): 우측 액션 shrink-0 고정, 좌측 칩은 넘치는 만큼만 +N 메뉴로 접힌다.
             ≤640px 에서만 좌/우 두 줄 적층(좌측 basis-full). */}
         {hasToolbar && (
@@ -376,7 +384,7 @@ export function GridFrame({
                 <div ref={topSentinelRef} aria-hidden="true" style={{ position: 'absolute', top: 0, left: 0, width: 1, height: 1, pointerEvents: 'none' }} />
                 <div ref={midSentinelRef} aria-hidden="true" style={{ position: 'absolute', top: '50%', left: 0, width: 1, height: 1, pointerEvents: 'none' }} />
               </div>
-              {!selecting && <FilterChipRow key={filterScope} chips={filterChips} applied={appliedFilters} />}
+              {!selecting && <FilterChipRow key={filterScope} chips={filterChips} applied={appliedFilters} jumpHint={filterPanel ? '필터에서 변경' : undefined} />}
             </div>
             <div className="flex items-center gap-1 shrink-0 max-[640px]:flex-wrap">{toolbarRight}</div>
           </div>

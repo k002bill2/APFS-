@@ -9,7 +9,8 @@
    - 시드 = v1.4 DEMO 5행 + S2_73 원문 DATA 1행(미시간, 결성). S2_73 원문 값은 asset_fund_info_data.ts 에서 바꾸지 않고 여기서 매핑만 한다.
      v1.4 행의 투자기준 칸은 미입력('-') — 결성 행의 `자펀드 정보 수정`(S2_75 팝업)으로 채운다.
    - 원문 S2_73 `등록` 버튼은 v1.4 `제안서접수 등록`으로 흡수된다(자펀드는 결성돼야 등재 — 투자기준은 결성 행에서만 입력).
-   - 원문 구분(운용사/자펀드) 검색은 v1.4 상세필터 `자펀드`가 대신한다. KPI 배지 행 없음(HITL '미포함'). */
+   - 원문 구분(운용사/자펀드) 검색은 v1.4 필터 `자펀드`가 대신한다. KPI 배지 행 없음(HITL '미포함').
+   - 필터는 상세필터 드로어가 아니라 칩 줄 위 인라인 패널(EXT.inlineFilters — 2026-11-09 사용자 지시). 자펀드 관리는 드로어 그대로. */
 import type { ColDef, ColGroupDef } from 'ag-grid-community';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
@@ -116,6 +117,7 @@ export const EXT: SubFundExt = {
   seed: [...DEMO, FUND_INFO_ROW],
   extraColumns: buildExtraColumns(),
   extraNumKeys: NUM_EXTRA,
+  inlineFilters: true,   // 상세필터 드로어 대신 칩 줄 위 인라인 필터(2026-11-09 사용자 지시)
   formedAction: {
     label: '자펀드 정보 수정',
     render: (row, onSave, onClose) => (
