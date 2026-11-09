@@ -12,8 +12,9 @@
    - 행 선택(체크박스만, multiRow) → 선택 바(GridFrame contextActions): [연마감] · [연마감(미결재포함)] · [선택 해제].
    - 행 더블클릭(E08) = 상세 팝업 없음(설계서) → 배선하지 않는다.
    - 상세필터 = Sheet 드로어, 즉시 반영(사용자 지시 2026-11-04 — 값을 바꾸면 목록·칩이 바로 바뀌고 [필터 적용] = 닫기). 조건 2개(기준년도 PeriodPicker year · 계정구분 셀렉트). 적용 칩 값만 + ×.
-   - 푸터 = 새 창 · 내보내기(엑셀, ⌥D). 인쇄 없음(설계서 하단도구 2개) — FooterActions 는 인쇄를 항상 그려
-     같은 마크업의 IconBtn 2개를 직접 둔다(grid_frame.tsx 는 건드리지 않는다). 그래서 ⌘P 도 바인딩하지 않는다.
+   - 푸터 = FooterActions(새 창 · 내보내기(엑셀, ⌥D) · 인쇄(⌘P = printGrid, 그리드만)). 설계서 하단도구는 2개(인쇄 없음)지만
+     푸터 4종 항시 노출(2026-09-17 사용자 결정)이 우선 — 페이저가 없어 전체보기만 빠진다(2026-11-09 점검: 직접 둔 IconBtn 2개라
+     ⌘P 가 브라우저 기본 인쇄로 GNB 까지 찍었다).
    - "인쇄·다운로드 권한 보유자만 노출" → RBAC 데모가 없어 항상 노출.
 
    결정·가정(PR "설계서와 다른 점" 에도 기재)
@@ -37,7 +38,7 @@ import type {
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { UI } from '../../components';
 import type { Tone } from '../../components';
-import { GridFrame } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, dropHiddenSelection, restoreSelection } from '../../aggrid_selection';
 import { controlMinWidth } from '../../schemas/renderers';
@@ -46,6 +47,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, 
 import { PeriodPicker } from '../../ui/period-picker';
 import { DrawerSelect } from '../../drawer_select';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
+import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import { todayStr } from '../slip/general_journal_data';
 import { FUND_ACCOUNTS, demoFiscalRows } from './fiscal_rollover_data';
@@ -236,6 +238,7 @@ export function FiscalRolloverManage({ onNav }: { onNav?: (r: string) => void })
   };
   /* 상세필터·회기 생성·확인창이 덮고 있으면 뒤 그리드 내보내기 단축키를 끈다 */
   const listKeys = !filterOpen && !createOpen && modal === null && !saving;
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys, skipInDialog: true });
 
   const selActions = selIds.length > 0 ? (
@@ -264,12 +267,8 @@ export function FiscalRolloverManage({ onNav }: { onNav?: (r: string) => void })
         <SaveButton onSubmit={save} />
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={listKeys ? HOTKEYS.refresh : undefined} />
       </>}
-      footerLeft={<span>{`총 ${String(rows.length)}건 중 ${String(visible.length)}건 표시`}</span>}
-      footerRight={<>
-        {/* E09 새 창 · E10 내보내기 — FooterActions 와 같은 마크업(인쇄 없음) */}
-        <IconBtn icon="external" label="새 창" size={32} onClick={() => window.open(location.href, '_blank')} hotkey={HOTKEYS.newWindow} />
-        <IconBtn icon="download" label="내보내기" size={32} onClick={exportExcel} shortcut={HOTKEYS.export} />
-      </>}>
+      footerLeft={<span>{footerCount(visible.length, visible.length)}</span>}
+      footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div ref={gridBoxRef} aria-busy={saving || undefined} role="region" aria-label={`${LABEL} 편집 그리드 — 체크박스로 회기를 고르면 선택 바에 연마감이 뜬다`}>
         <AgGridReact<FiscalRow>

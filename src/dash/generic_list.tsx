@@ -41,7 +41,7 @@ import './aggrid_shared.css';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
 import type { AppliedFilter } from './applied_filters';
-import { GridFrame, KpiBadge, FooterActions } from './grid_frame';
+import { GridFrame, KpiBadge, FooterActions, footerCount } from './grid_frame';
 import { LinkCell } from './link_cell';   // 셀 링크 공용본(상세 팝업 진입)
 import { DrawerSelect, DrawerMultiSelect } from './drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형) · 다중 선택(kind 'multi')
 import { parseMulti, joinMulti, formatMultiCell } from './ui/multi-select-value';   // 다중 선택 값 계약(JSON 배열 문자열)
@@ -793,7 +793,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           value={uniformConfirm(selRows.map((r) => r[c.key] as string | undefined))}
           onPick={(v) => bulkSetValue(c.key, v)} />
       ))}
-      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger)" }} onClick={bulkDelete}>삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger-fill)", color: "var(--danger-fill-foreground)" }} onClick={bulkDelete}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;
@@ -825,7 +825,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
         )}
         <IconBtn icon="refresh" label="조회" size={34} hotkey={HOTKEYS.refresh} onClick={() => { setRows(makeRows(schema, 23)); apiRef.current?.deselectAll(); apiRef.current?.paginationGoToFirstPage(); toast.success('조회되었습니다'); }} />
       </>}
-      footerLeft={'총 ' + String(totalForCount) + '개 중 ' + String(shown) + '개 항목 표시 중'}
+      footerLeft={footerCount(totalForCount, shown)}
       footerCenter={view === "list" && page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -948,7 +948,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
-              <AlertDialogAction onClick={() => doDelete(delRows.map((r) => r.id))} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
+              <AlertDialogAction onClick={() => doDelete(delRows.map((r) => r.id))} style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }}>삭제</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

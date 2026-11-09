@@ -30,7 +30,7 @@ import type {
 } from 'ag-grid-community';
 import * as XLSX from 'xlsx';
 import { UI } from '../../components';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, dropHiddenSelection, restoreSelection } from '../../aggrid_selection';
 import { Checkbox } from '../../ui/checkbox';
@@ -319,7 +319,7 @@ export function ClosingFormManage({ onNav }: { onNav?: (r: string) => void }) {
         <SaveButton onSubmit={save} />
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
-      footerLeft={<span>{`총 ${rows.length}건 중 ${shownCount}건 표시`}</span>}
+      footerLeft={<span>{footerCount(shownCount, shownCount)}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div ref={gridBoxRef} aria-busy={saving || undefined} role="region" aria-label={`${LABEL} 편집 그리드 — 체크박스로 행을 고르면 선택 바에 행삽입·행삭제·이동이 뜬다`}>

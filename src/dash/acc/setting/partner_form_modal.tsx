@@ -417,7 +417,7 @@ export function PartnerFormModal({ mode, initial, pool, onSave, onClose }: {
               {selCount > 0 ? (
                 <>
                   <span className="font-semibold self-center" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
-                  <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={deleteRows}>삭제</Button>
+                  <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={deleteRows}>삭제</Button>
                 </>
               ) : null}
             </div>

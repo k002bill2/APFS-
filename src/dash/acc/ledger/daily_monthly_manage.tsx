@@ -35,7 +35,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { CellStyle, ColDef, ColGroupDef, RowClassParams } from 'ag-grid-community';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { UI } from '../../components';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
@@ -229,7 +229,7 @@ export function DailyMonthlyManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
-      footerLeft={<span>{`총 ${String(count)}건 중 ${String(count)}건 표시`}</span>}
+      footerLeft={<span>{footerCount(count, count)}</span>}
       footerRight={<FooterActions onExport={exportExcel} onPrint={printIfReady} />}>
 
       <TabBar tabs={TABS} value={tab} onChange={changeTab} idBase={idBase} label="일/월계표 구분" />

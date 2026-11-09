@@ -34,7 +34,7 @@
 | `--ring` | — | 포커스 링 |
 
 ### 상태 (테마 적응형)
-`--success` `--warning` `--danger` `--info` (+ `*-soft` 배경, `*-text` 텍스트·배지 라벨 — 베이스 상태색은 칠 전용이라 텍스트로 쓰면 대비 미달) · shadcn `--destructive`(=`--danger`) / `--destructive-foreground`(**고정 `#FFFFFF`**, `.dark` 미재정의)
+`--success` `--warning` `--danger` `--info` (+ `*-soft` 배경, `*-text` 텍스트·배지 라벨 — 베이스 상태색은 칠 전용이라 텍스트로 쓰면 대비 미달) · shadcn `--destructive`(=`--danger`) / `--destructive-foreground`(**고정 `#FFFFFF`**, `.dark` 미재정의) · **위험 액션 버튼 면** `--danger-fill` / `--danger-fill-foreground`(적응형 쌍 — 라이트 `#C7340F`/`#FFFFFF` 5.35:1 · 다크 `#FF7E59`/`#10142E` 7.22:1, 2026-11-09. `--danger` 는 칠 전용이라 흰 글자 2.82:1)
 
 ### 차트 / 자금원천
 `--chart-1`…`--chart-19`(적응형) · `--chart-grid` · `--fs-agri/fish/ops/etc`(적응형)
@@ -63,7 +63,8 @@
 | **적응형 역할색** | `var(--primary)`, `var(--accent)` | `var(--primary-foreground)` / `var(--accent-foreground)` | foreground도 함께 플립 → 다크 대비 확보 |
 | **고정 솔리드/그라디언트** | `var(--brand-blue)`, `var(--brand-gray)`, `--brand-solid`, `--gradient-hero` | `var(--on-brand-solid)` | 배경이 안 플립하니 흰색 고정이 양 테마 동일(`--brand-solid` 6.3:1·`--brand-gray` 7.1:1·`--brand-blue` 4.47:1) |
 | **데이터색 칠** | 차트 팔레트, `gpColor`, `_color` | `var(--on-chart-fill)` | 임의 데이터색이라 `-foreground` 페어 없음(대비 미보장) |
-| **의미 상태색** | `bg-danger` 등 | `var(--destructive-foreground)` | white-on-danger 의미 페어(고정) |
+| **의미 상태색** | `bg-danger` 등(배지·점) | `var(--destructive-foreground)` | white-on-danger 의미 페어(고정) — 라이트 2.82:1 로 글자 대비는 미달(배지 미이관) |
+| **위험 액션 채움 버튼** | 선택 바·확인창 [삭제]·[취소 확인] | 면 `var(--danger-fill)` + `var(--danger-fill-foreground)` | 적응형 쌍이 함께 플립 → 양 테마 AA(5.35·7.22:1). 가드 `src/dash/danger_fill.test.ts` |
 
 ### ⚠ 트윈 함정
 **겉보기 동일한 두 컴포넌트가 반대 토큰을 필요로 할 수 있다.** 예: 달력의 선택일 셀 2종이 똑같이 생겼어도 —

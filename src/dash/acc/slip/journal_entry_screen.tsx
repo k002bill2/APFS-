@@ -459,7 +459,7 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
       <span className="font-semibold self-center" style={{ fontSize: 13 }}>{String(checked.size)}건 선택됨</span>
       <Button variant="outline" size="sm" leadingIcon="arrow-up" disabled={!canUp} onClick={() => setLines((ls) => moveChecked(ls, checked, -1))}>위로이동</Button>
       <Button variant="outline" size="sm" leadingIcon="arrow-down" disabled={!canDown} onClick={() => setLines((ls) => moveChecked(ls, checked, 1))}>아래로이동</Button>
-      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={removeChecked}>행삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={removeChecked}>행삭제</Button>
       <Button variant="outline" size="sm" onClick={() => setLines((ls) => duplicateChecked(ls, checked))}>행복사</Button>
       <Button variant="ghost" size="sm" onClick={clearSelection}>선택 해제</Button>
     </>

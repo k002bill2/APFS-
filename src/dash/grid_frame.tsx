@@ -19,6 +19,14 @@ import { APFS_DATA, MenuStore, useMenuSel } from './data';
 const { PageHeader } = Shell;
 const { Card, ColorChip, IconBtn } = UI;
 
+/* ===== 푸터 건수 문구 — footerLeft SSOT(2026-11-09 사용자 결정 "통일") =====
+   골드 `총 N개 중 M개 항목 표시 중` — N = 필터 후 행 수, M = 지금 쪽에 보이는 행 수(페이저 없는 화면은 N 과 같다).
+   필터 전 전체 수는 싣지 않는다(걸린 필터는 적용 칩이 보여 준다). 화면 고유 요약은 `extra` 로 · 뒤에(보조원장 `명세 N건`).
+   페이지가 문장을 직접 조립하지 않는다 — 가드 footer_count.test.ts · acc/acc_skill_rules ⑪. */
+export function footerCount(total: number, shown: number, extra?: string): string {
+  return '총 ' + String(total) + '개 중 ' + String(shown) + '개 항목 표시 중' + (extra ? ' · ' + extra : '');
+}
+
 /* ===== 푸터 액션 4종 — 전 페이지 공통(2026-09-17 사용자 결정) =====
    순서 고정: 전체보기(⛶) · 새 창(⧉) · 내보내기(⤓) · 인쇄(🖨). **항시 노출**이며 kebab(⋯) 은 폐기됐다
    (종전엔 내보내기·인쇄가 툴바 kebab / 등록 combo ⌄ / 푸터 폴백 kebab 안에 숨어 있었다).

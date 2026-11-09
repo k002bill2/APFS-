@@ -25,7 +25,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { UI } from '../../components';
 import type { Tone } from '../../components';
 import { Icon } from '../../icons';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, AUTO_SIZE_CONTENT, fmt } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection, dropHiddenSelection } from '../../aggrid_selection';
 import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
@@ -293,7 +293,7 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
         <Button variant="outline" size="sm" leadingIcon="refresh" onClick={() => setModal({ kind: 'reverse', id: single.id })}>역분개</Button>
         <Button variant="outline" size="sm" leadingIcon="layers" onClick={() => openEntry({ mode: 'copy', source: single })}>복사</Button>
       </>}
-      <Button variant="outline" size="sm" leadingIcon="trash" onClick={askDelete}>삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={askDelete}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={clearSel}>선택 해제</Button>
     </>
   ) : null;
@@ -325,7 +325,7 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
         {/* 전표등록·업로드가 열려 있으면 뒤 목록 단축키(⌥R) 바인딩을 끈다 — IconBtn 은 enabled prop 이 없어 hotkey 를 조건부로 */}
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={entry || uploadOpen ? undefined : HOTKEYS.refresh} />
       </>}
-      footerLeft={<span>{'총 ' + String(visible.length) + '건 중 ' + String(Math.min(shown, visible.length)) + '건 표시'}</span>}
+      footerLeft={<span>{footerCount(visible.length, Math.min(shown, visible.length))}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -416,7 +416,7 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
-              <SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }} onSubmit={() => commitDelete(modal.ids)}>삭제</SaveButton>
+              <SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onSubmit={() => commitDelete(modal.ids)}>삭제</SaveButton>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

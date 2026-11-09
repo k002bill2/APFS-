@@ -20,7 +20,7 @@ describe('gp_quant_indicator_modal — 행추가는 운용사 유형 옆, 행삭
 
   it('[행삭제]는 selCount > 0 조건부·danger, [행추가] 뒤', () => {
     const condAt = body.indexOf('{selCount > 0 ?');
-    const delM = body.match(/variant="primary" size="sm" leadingIcon="trash" style=\{\{ background: 'var\(--danger\)' \}\} onClick=\{deleteRows\}>행삭제</);
+    const delM = body.match(/variant="primary" size="sm" leadingIcon="trash" style=\{\{ background: 'var\(--danger-fill\)', color: 'var\(--danger-fill-foreground\)' \}\} onClick=\{deleteRows\}>행삭제</);
     expect(condAt).toBeGreaterThan(addAt);
     expect(delM).not.toBeNull();
     expect(body.indexOf(delM![0])).toBeGreaterThan(condAt);
