@@ -47,7 +47,7 @@ export function SelBar({ count, single, bulk, onDelete, onClear }: {
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(count)}건 선택됨</span>
       {count === 1 && single}
       {bulk}
-      {onDelete && <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={onDelete}>삭제</Button>}
+      {onDelete && <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={onDelete}>삭제</Button>}
       <Button variant="ghost" size="sm" onClick={onClear}>선택 해제</Button>
     </>
   );
@@ -66,7 +66,7 @@ export function DeleteDialog({ title, count, onConfirm, onClose }: { title: stri
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>취소</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
+          <AlertDialogAction onClick={onConfirm} style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }}>삭제</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -182,7 +182,7 @@ export function DepreciationManage({ onNav }: { onNav?: (r: string) => void }) {
   const selActions = selIds.length > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selIds.length)}건 선택됨</span>
-      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={askDelete}>삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={askDelete}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={clearSel}>선택 해제</Button>
     </>
   ) : null;
@@ -272,7 +272,7 @@ export function DepreciationManage({ onNav }: { onNav?: (r: string) => void }) {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
-              <SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }} onSubmit={() => runDelete(modal.key, modal.ids)}>삭제</SaveButton>
+              <SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onSubmit={() => runDelete(modal.key, modal.ids)}>삭제</SaveButton>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

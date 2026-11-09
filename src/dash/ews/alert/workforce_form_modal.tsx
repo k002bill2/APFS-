@@ -176,7 +176,7 @@ export function WorkforceReleaseDialog({ count, onConfirm, onClose }: {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>취소</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>해제등록</AlertDialogAction>
+          <AlertDialogAction onClick={onConfirm} style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }}>해제등록</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -202,7 +202,7 @@ export function WorkforceDeleteDialog({ count, onConfirm, onClose }: {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>취소</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
+          <AlertDialogAction onClick={onConfirm} style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }}>삭제</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

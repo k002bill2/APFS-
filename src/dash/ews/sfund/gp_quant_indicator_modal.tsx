@@ -161,7 +161,7 @@ export function GpQuantIndicatorModal({ mode, preType, onClose }: { mode: QuantM
             {selCount > 0 ? (
               <>
                 <span className="font-semibold" aria-live="polite" style={{ fontSize: 13 }}>{selCount}건 선택됨</span>
-                <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={deleteRows}>행삭제</Button>
+                <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={deleteRows}>행삭제</Button>
               </>
             ) : null}
           </div>
