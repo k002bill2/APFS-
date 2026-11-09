@@ -13,6 +13,7 @@
        적용 범위(slide 11 ③): 작성자·거래처·적요는 명세 행만 거르고 전잔은 그대로(subledger_model.test 고정).
    - 행 더블클릭 / Enter(E03) = 전표상세(ACC-003 JournalEntryScreen readOnly — [닫기]만). [전잔]·[소계] 행 무반응.
    - 푸터 = FooterActions: 전체보기 · 새 창(E04, 현재 route 새 탭) · 내보내기(E05, SheetJS · 금액 숫자 셀 · 토스트) · 인쇄.
+     페이저 = 공용 생략형 GridPager(`‹ 1 … 5 6 7 … 37 ›` — 실데모 ~720행 = 37쪽, 2026-11-09 사용자 결정).
 
    결정·가정(PM 확인 필요):
    - 설계서 하단 도구는 [새 창]·[내보내기] 2개지만 푸터 4종 상시 노출 규약(2026-09-17)으로 전체보기·인쇄(그리드 인쇄, ⌘P)도 둔다.
@@ -27,6 +28,7 @@ import type { ColDef, GridApi, GridReadyEvent, CellKeyDownEvent, RowDoubleClicke
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridPager } from '../../grid_pager';
 import { apfsTheme, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme';
 import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
@@ -184,13 +186,7 @@ export function SubledgerManage({ onNav }: { onNav?: (r: string) => void }) {
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(rows.length) + '개 중 ' + String(shown) + '개 항목 표시 중 · 명세 ' + String(entryCount) + '건'}</span>}
-      footerCenter={page.total > 1 ? (
-        <>
-          <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
-          <span className="tabular-nums" style={{ fontSize: 13 }}>{String(page.current + 1) + ' / ' + String(page.total)}</span>
-          <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => apiRef.current?.paginationGoToNextPage()} />
-        </>
-      ) : undefined}
+      footerCenter={page.total > 1 ? <GridPager current={page.current} total={page.total} onGo={(i) => apiRef.current?.paginationGoToPage(i)} /> : undefined}
       footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}>
 
       <div>

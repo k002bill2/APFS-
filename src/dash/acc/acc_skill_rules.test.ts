@@ -63,8 +63,6 @@ const PAGER_PAGES = [
   'holiday_manage.tsx', 'partner_manage.tsx',
   /* 2026-11-09 2차 — 10-28~11-03 화면 */
   'account_code_manage.tsx', 'deleted_journal_manage.tsx', 'missing_evidence_manage.tsx', 'journal_search_manage.tsx',
-  /* 예외: 보조원장(subledger_manage)은 '현재 / 전체' 텍스트 유지 — 실데모 ~720행 = 37쪽이라 번호 전부를 그리면 푸터에
-     버튼 37개(골드 페이저에 생략 처리 없음). 많은 쪽 수용 페이저는 별도 결정 대상(2026-11-09). */
 ];
 describe('④ 회계 페이저 — 페이지 번호 버튼', () => {
   it.each(PAGER_PAGES)('%s', (f) => {
@@ -72,6 +70,15 @@ describe('④ 회계 페이저 — 페이지 번호 버튼', () => {
     expect(src).toMatch(/<PageBtn key=\{i\} n=\{i \+ 1\} active=\{i === page\.current\} onClick=\{\(\) => apiRef\.current\?\.paginationGoToPage\(i\)\} \/>/);
     expect(src).toMatch(/aria-current=\{active \? 'page' : undefined\}/);
   });
+  /* 쪽이 많은 화면 = 공용 생략형 GridPager(`1 … 5 6 7 … 37`, 2026-11-09 사용자 결정). 보조원장 실데모 ~720행 = 37쪽 —
+     번호 전부면 버튼 37개라 '현재 / 전체' 텍스트로 두었던 것을 공용 페이저로 바꿨다. */
+  it('보조원장 = GridPager', () => {
+    expect(readSrc('subledger_manage.tsx')).toMatch(/<GridPager current=\{page\.current\} total=\{page\.total\} onGo=\{\(i\) => apiRef\.current\?\.paginationGoToPage\(i\)\} \/>/);
+  });
+  it.each(walkDash().filter((p) => p.includes(`${sep}acc${sep}`) && p.endsWith('.tsx')).map((p) => [p.split(sep).pop() as string, p] as const))(
+    '%s — "현재 / 전체" 텍스트 페이저 없음', (_f, p) => {
+      expect(readFileSync(p, 'utf8')).not.toMatch(/String\(page\.current \+ 1\) \+ ' \/ ' \+ String\(page\.total\)/);
+    });
 });
 
 /* ⑤ 데이터 연동 전(no-op) 항목은 적용 칩을 만들지 않는다 — apfs-detail-filter "no-op 항목은 칩을 만들지 않는다".

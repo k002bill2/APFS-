@@ -108,7 +108,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - 같은 함정이 `<p>`·`<ul>`·`<h1~h6>` 전반에 적용된다 — 이 저장소에서 시맨틱 태그를 새로 쓸 때는 `margin: 0`을 기본 반사로 붙인다(아래 `sub` 캡션이 `margin:'2px 0 0'`을 명시한 이유).
   - 툴바 행은 `padding: '6px 18px'`로 더 촘촘하다(의도된 위계 — 타이틀이 더 여유 있게). 타이틀 행만 바꿀 때 툴바를 따라 올리지 않는다.
 - **`sub` 캡션은 쓰지 않는다.** 화면 설명 문구는 제거 대상(사용자 결정). 단위 표기는 **`toolbarRight` 맨 앞에 12px caption** `단위: 원`으로.
-- **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `page.total>1`일 때만 페이저(`IconBtn chevron-left/right` + `PageBtn`) · `footerRight` = **`<FooterActions …/>` 하나**(`grid_frame.tsx` export).
+- **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `page.total>1`일 때만 페이저(새 화면 = 공용 `GridPager` · 기존 = `IconBtn chevron-left/right` + 로컬 `PageBtn`) · `footerRight` = **`<FooterActions …/>` 하나**(`grid_frame.tsx` export).
   - **푸터 액션 4종은 항시 노출이며 순서가 고정이다(2026-09-17 사용자 결정): 전체보기(⛶) · 새 창(⧉) · 내보내기(⤓) · 인쇄(🖨).** 인쇄는 화면 전용 출력물이 있으면 `printItems` 로 `[🖨 │ ⌄]` combo 가 된다(아래 ✅ ②). 페이지가 직접 `IconBtn`을 나열하지 않는다 — `footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}` 한 줄.
   - **단축키(2026-09-28)** — 네 아이콘 툴팁에 전부 단축키 힌트가 붙는다: 전체보기 `⌥A` · 새 창 `⌥O` · 내보내기 `⌥D` · 인쇄 `⌘P`.
     - 전체보기·새 창은 **`FooterActions` 가 직접 바인딩**한다(IconBtn `hotkey`) → **화면당 `<FooterActions>` 는 정확히 1개**(2개면 한 번 누름에 두 번 실행).
@@ -124,7 +124,8 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - ⛔ **kebab(⋯)은 전 화면에서 폐기됐다(2026-09-17).** 툴바 독립 kebab · 등록 combo의 `⌄` 절반 · 푸터 폴백 kebab(`!topMoreVisible && <MoreMenu>`) 셋 다 삭제했고, 그 안에 있던 내보내기·인쇄가 푸터 아이콘으로 항시 노출된다. `MoreMenu`/`MoreMenuItems`/`RegisterCombo`/`PoCMoreMenu` 로컬 복사본 39개와 `topMoreRef`/`topMoreVisible`/IntersectionObserver 폴백 배선(26파일)도 함께 제거됐다 — **다시 만들지 말 것.**
   - 툴바에 인쇄 `IconBtn`을 따로 두지 않는다(푸터와 중복 — investee_profile·investee_invest_stats에서 실제 2개가 됐다).
   - 단축키(⌥D 내보내기 · ⌘P 인쇄)는 그대로다 — 페이지의 `useHotkey` 소유이며 kebab 제거와 무관하다. kebab 의 `DropdownMenuShortcut` 힌트는 사라졌지만 **2026-09-28부터 푸터 아이콘 툴팁이 힌트를 보여준다**(위 "단축키" 항목).
-  - `PageBtn`은 골드(`asset_funding.tsx`·`subfund_manage.tsx`)에 **로컬 복사**돼 있는 헬퍼다 — 공유 export 아님, 골드에서 복사.
+  - **새 화면의 페이저 = 공용 `GridPager`(`src/dash/grid_pager.tsx`, 2026-11-09 사용자 결정)** — `footerCenter={page.total > 1 ? <GridPager current={page.current} total={page.total} onGo={(i) => apiRef.current?.paginationGoToPage(i)} /> : undefined}` 한 줄. 7쪽 이하는 골드와 같은 모양(번호 전부), 넘으면 `‹ 1 … 5 6 7 … 37 ›` 로 접는다(칸 수 항상 7 — 쪽을 넘겨도 푸터 폭 불변, 규칙은 순수 함수 `pageItems` + `grid_pager.test.ts`). 쪽 수가 수십이 될 수 있는 화면(원장·로그류)은 반드시 이것 — 번호 전부를 그리는 로컬 `PageBtn` 이나 `현재 / 전체` 텍스트로 대신하지 않는다(정본 `acc/ledger/subledger_manage.tsx`).
+  - 기존 화면의 `PageBtn` 은 골드(`asset_funding.tsx`·`subfund_manage.tsx`)에서 **로컬 복사**한 헬퍼(39곳)이고 그대로 유효하다 — 일괄 이관은 별도 작업. 새로 복사하지 않는다.
 - ⛔ **카드뷰(리스트 뷰|카드뷰 토글)는 폐기됐다(2026-09-11 사용자 결정).** 신규 페이지에 뷰 토글 `SegTabs`·`view` state·카드 렌더 분기를 **만들지 않는다** — 리스트 뷰 단일 표현이다. 전용 스킬 `apfs-card-view`도 같은 날 삭제됐다.
   - 스키마 트랙은 `schema.hideCardView: true`로 끈다(`generic_list.tsx`가 푸터 `SegTabs`를 렌더하지 않고 `view`를 `"list"` 파생값으로 고정). 기존 카드 렌더 코드는 아직 남아 있으나 도달 불가다.
   - typed 트랙은 플래그 없이 직접 제거한다 — `subfund_manage.tsx`가 `SegTabs`를 지우고 `const view = 'list'` 상수로 내린 형태가 정본.
