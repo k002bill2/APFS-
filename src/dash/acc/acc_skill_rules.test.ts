@@ -20,6 +20,8 @@ const LIST_PAGES = [
   'closing_journal_manage.tsx', 'fiscal_rollover_manage.tsx',
   /* 농식품경영체(ACC-023·024) */
   'agrifood_entity_manage.tsx', 'ir_info_manage.tsx',
+  /* 설정 — 휴일관리(ACC-025) holiday_manage.tsx 는 상세필터 없음(2026-11-06 사용자 결정) → 대상 아님 */
+  'partner_manage.tsx',   // ACC-026
 ];
 
 describe('① 회계 목록 단축키 — 상세필터가 열린 동안 끔', () => {

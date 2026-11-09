@@ -51,7 +51,7 @@ const DEMO_SHORT: Record<string, string> = { subfund: '1101', 'risk-manage': '21
    키는 nav 키 규약(leaf.path || leaf.label, data.ts)이라 라벨만 바뀌어도 어긋나지 않는다. 어긋나면 미사용이 0건이
    되므로 admin_menu_tree.test.ts('미사용(use:false) 리프가 존재한다')가 조용한 no-op 대신 실패로 알려준다. */
 const DEMO_UNUSED = new Set<string>([
-  'acct-holiday',               // 휴일관리 — 미구현 화면
+  'acct-ir-info',               // IR정보 조회 — 데모 '부' 예시(종전 acct-holiday 구현으로 교체. 미구현 route 6개가 전부 PR #411·#412 대상이라 구현 여부와 무관한 표시용)
   'review-stats',               // 투심보고 통계 — 미구현 화면
   'top-investee-manage',        // 우수투자기업 관리 — 미구현 화면
 ]);

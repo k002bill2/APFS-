@@ -110,6 +110,8 @@ import { BankAccountManage } from './acc/funds/bank_account_manage';            
 import { AccountBalanceManage } from './acc/funds/account_balance_manage';         // 계좌잔액(ACC-020)
 import { DailyCashManage } from './acc/funds/daily_cash_manage';                   // 자금일보(ACC-021)
 import { ContributionStatusManage } from './acc/funds/contribution_status_manage'; // 출자금현황 정보관리(ACC-022)
+import { HolidayManage } from './acc/setting/holiday_manage'; // 휴일관리(ACC-025)
+import { PartnerManage } from './acc/setting/partner_manage'; // 회계거래처관리(ACC-026)
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -336,6 +338,8 @@ function App() {
   else if (route === "acct-contribution-status") page = <ContributionStatusManage onNav={onNav} />;
   else if (route === "acct-agrifood-entity") page = <AgrifoodEntityManage onNav={onNav} />;
   else if (route === "acct-ir-info") page = <IrInfoManage onNav={onNav} />;
+  else if (route === "acct-holiday") page = <HolidayManage onNav={onNav} />;
+  else if (route === "acct-partner") page = <PartnerManage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;

@@ -68,6 +68,7 @@ description: APFS 리스트 페이지의 등록/수정/삭제 CRUD 모달(RowFor
    </div>
    ```
    - 버튼은 `UI.Button size="sm"`, 추가류는 `variant="outline" leadingIcon="plus"`.
+   - **편집 그리드(AG Grid) 섹션도 예외 없음 — 좌측 (2026-11-06 사용자 재확인).** 셀 편집 그리드 섹션(전표등록 분개 · 회계거래처 계좌 정보 · 운용사 정량지표)의 `[행추가]`·빈행삭제 등 도구도 제목 바로 옆 좌측이다. 같은 날 잠시 넣었던 '편집 그리드 우측 toolbar' 예외는 사용자가 철회했다 — 재제안 금지. **[삭제]·이동 같은 선택 작업은 행을 체크했을 때만 나타나고**(0건이면 DOM 에 없음), [삭제]는 목록 선택 바와 같은 danger(`variant="primary" leadingIcon="trash" style={{ background:'var(--danger)' }}`).
    - 목업 원문이 추가 버튼을 우측(`.sacts` 등)에 두어도 이 규칙이 우선한다. 모달 **푸터**(닫기·저장)는 이 규칙 대상이 아니다 — 기존대로 `DialogFooter` 우측.
    - 적용처: `registry_ledger_modals.tsx` `Section`(등록원부 입력/수정·조합원·전문인력 모달), `gp_quant_indicator_modal.tsx`(행추가·행삭제 좌측), 소제목 선례 `subfund_form_modal.tsx`(업무집행조합원 `행 추가`)·등록원부 `약력`. 가드 테스트: `registry_ledger_modals.test.ts` "Section — 추가 버튼은 제목 바로 옆 좌측".
    - ⚠ 미정합 잔존(별건): `program_help_modal.tsx`(섹션 아래 좌측 `action`). 손댈 때 이 규칙으로 맞춘다.
