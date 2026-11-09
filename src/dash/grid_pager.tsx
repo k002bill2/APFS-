@@ -1,7 +1,7 @@
 /* 공용 생략형 페이저 — GridFrame footerCenter 용 `‹ 1 … 5 6 7 … 37 ›` (2026-11-09 사용자 결정).
    골드 페이저(apfs-grid "푸터 골드 양식" — IconBtn chevron + 로컬 PageBtn)는 번호를 전부 그려 쪽이 많으면 버튼이 수십 개가 된다.
    7쪽 이하는 골드와 같은 모양(번호 전부), 넘으면 처음·현재±1·마지막만 두고 나머지를 … 로 접는다 — 칸 수가 항상 7 이라
-   쪽을 넘겨도 푸터 폭이 출렁이지 않는다. 쪽 번호는 AG Grid 와 같은 0-based(page.current · paginationGoToPage). */
+   쪽을 넘겨도 버튼 수가 바뀌지 않는다(폭은 숫자 자릿수 차만큼 수 px — 37쪽 실측 308↔316px). 쪽 번호는 AG Grid 와 같은 0-based(page.current · paginationGoToPage). */
 import { UI } from './components';
 
 const { IconBtn } = UI;
