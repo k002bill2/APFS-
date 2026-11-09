@@ -3,14 +3,15 @@
 
    구성(설계서 → 우리 규약):
    - 툴바: 필수 칩 그룹 '보기'(일반 · 관리보수·비관리보수 적용 — 설계서 "탭" → GridFrame filterChips required, 전체 칩 없음)
-       → [상세필터](E01) → [Σ 합계](E03, aria-pressed 토글) → SplitButton [+ 출자등록 │ ▾ 분배등록 · 엑셀 일괄등록](E04·E05·E06)
-       → 조회(E02, 맨 끝). 단위 캡션 'n 단위: 원' 은 toolbarRight 맨 앞. 설계서의 독립 3버튼은 등록 콤보 규약으로 묶는다.
+       → 단위(캡션 '단위: X' + SegTabs 원·천원·백만원) → [상세필터](E01) → [Σ 합계](E03, UI.Button pressed 토글)
+       → SplitButton [+ 출자등록 │ ▾ 분배등록 · 엑셀 일괄등록](E04·E05·E06) → 조회(E02, 맨 끝). 설계서의 독립 3버튼은 등록 콤보 규약으로 묶는다.
+       단위·합계는 행을 거르지 않는 표시 옵션이라 툴바 우측 토글 — 필터 칩 줄·상세필터에 두지 않는다(2026-11-09 사용자 결정, 계좌잔액 소계표시와 같은 모양).
    - 보기 '일반' = 설계서 와이어프레임 10열(계정구분·기준일·차수·구분·출자원금·분배원금(A)·수익(B)·총분배(A+B)·성과보수(D)·출자잔액).
      '관리보수·비관리보수 적용' = 컬럼 정의 표(slide 10 ②) 전 항목 — 원천세(C)·초과인센티브(E)·실지급액 3종을 더하고 2단 헤더(분배·보수·실지급액)로 묶는다.
    - 그리드: 체크박스 다중 선택 → 선택 바 [수정](1건, E07)·[삭제]·[선택 해제](E08). 행 더블클릭 / Enter = 그 행 구분의 등록 모달(수정, E07).
        차수·기준일·코드는 좌측, 금액만 우측. 차수 미채번 = '-'. 빈 결과 = '조회된 데이터가 없습니다.'(slide 17).
-   - 상세필터 드로어 4개(계정구분·구분·기준일(기간)·단위) — 즉시 반영, [필터 적용] = 닫기. 기간 시작 > 종료 = 두 칸 invalid + 안내 + 0건.
-       적용 칩 = 값만(× 개별 해제, 단위 칩 × = 원). 단위는 표시·엑셀만 환산하고 잔액·합계 계산은 원 단위로 한다.
+   - 상세필터 드로어 3개(계정구분·구분·기준일(기간)) — 즉시 반영, [필터 적용] = 닫기. 기간 시작 > 종료 = 두 칸 invalid + 안내 + 0건.
+       적용 칩 = 값만(× 개별 해제). 단위(툴바)는 표시·엑셀만 환산하고 잔액·합계 계산은 원 단위로 한다. [초기화]는 단위를 건드리지 않는다.
    - 합계(Σ) 행 = 현재 조회 결과(필터 후)의 금액 컬럼 합(원으로 합산 후 환산). 출자잔액은 누계라 합계 '-'.
    - 삭제 = 논리삭제(목록에서 빼서 deleted state 로) → 이후 출자잔액 자동 재계산. 확인 문구 '선택한 N건을 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.'
    - 푸터: 새 창(E09)·내보내기(E10, ⌥D)·인쇄(E11, printGrid). 내보내기 = 현재 보기의 표시 컬럼 · 현재 단위로 환산한 숫자 셀.
@@ -46,7 +47,16 @@ import { ContributionFormModal } from './contribution_form_modal';
 import type { ContribPatch } from './contribution_form_modal';
 import { ContributionUploadModal } from './contribution_upload_modal';
 
-const { Button, IconBtn } = UI;
+const { Button, IconBtn, SegTabs } = UI;
+
+/* 페이지 번호 버튼 — apfs-grid 푸터 골드(‹ 이전 · 번호 · 다음 ›). 공유 export 가 아니라 골드에서 복사하는 로컬 헬퍼 */
+function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined}
+      className="inline-flex items-center justify-center font-semibold cursor-pointer"
+      style={{ minWidth: 30, height: 30, padding: '0 8px', borderRadius: 8, border: '1px solid ' + (active ? 'var(--primary)' : 'var(--border)'), background: active ? 'var(--primary)' : 'transparent', color: active ? 'var(--primary-foreground)' : 'var(--foreground)', fontSize: 12.5 }}>{n}</button>
+  );
+}
 
 const PAGE_SIZE = 20;
 const TOTAL_ID = '__total';
@@ -125,18 +135,6 @@ function DrawerField({ label, children, plain }: { label: string; children: Reac
   );
 }
 
-/* Σ 합계 토글 — UI.Button 은 aria-pressed 를 받지 않고 IconBtn 아이콘 세트에 Σ 가 없어, Button outline sm 과 같은 클래스의 토글 버튼을 둔다 */
-function SumToggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
-  return (
-    <button type="button" aria-pressed={on} onClick={onToggle}
-      className="ui-btn ui-outline inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border transition-colors duration-tok-fast ease-ds px-[11px] py-1.5 text-[12.5px]"
-      style={on
-        ? { background: 'color-mix(in srgb, var(--primary) 12%, var(--card))', color: 'var(--foreground)', borderColor: 'var(--primary)' }
-        : { background: 'var(--card)', color: 'var(--foreground)', borderColor: 'var(--border-strong)' }}>
-      <span aria-hidden style={{ fontSize: 14, lineHeight: 1 }}>Σ</span>합계
-    </button>
-  );
-}
 
 /* ──────────────────────────────
    메인 컴포넌트
@@ -166,7 +164,7 @@ export function ContributionStatusManage({ onNav }: { onNav?: (r: string) => voi
   const [applied, setApplied] = useState<ContribFilter>(EMPTY_FILTER);
   const setF = <K extends keyof ContribFilter>(k: K) => (v: ContribFilter[K]) => setApplied((a) => ({ ...a, [k]: v }));
   const periodErr = validatePeriod(applied.from, applied.to);
-  const unit = applied.unit;
+  const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);   // 표시 옵션(툴바) — 필터 상태 아님
 
   const listKeys = modal === null && !filterOpen;
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', form: 'invest', mode: 'create' }), { enabled: listKeys, skipInDialog: true });
@@ -180,10 +178,10 @@ export function ContributionStatusManage({ onNav }: { onNav?: (r: string) => voi
   const pinned = useMemo<GridRow[]>(() => (sumOn ? [{ id: TOTAL_ID, pinned: true, ...totals, balance: null }] : []), [sumOn, totals]);
   const columnDefs = useMemo(() => buildColumns(view, unit), [view, unit]);
 
-  /* 필터를 바꾸면 선택 해제(apfs-detail-filter) */
-  useEffect(() => { apiRef.current?.deselectAll(); }, [applied]);
-
   const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
+  /* 필터를 바꾸면 선택 해제(apfs-detail-filter).
+     ref 를 먼저 비운다 — 안 비우면 뒤이은 rowData 갱신의 restoreSelection 이 낡은 ref 로 통과 행을 되살린다 */
+  useEffect(() => { selIdsRef.current = []; apiRef.current?.deselectAll(); }, [applied]);
   const onGridReady = useCallback((e: GridReadyEvent<GridRow>) => { apiRef.current = e.api; }, []);
   const onSelectionChanged = useCallback((e: SelectionChangedEvent<GridRow>) => {
     setSelIds(e.api.getSelectedRows().filter((r) => !isTotal(r)).map((r) => r.id));
@@ -261,7 +259,6 @@ export function ContributionStatusManage({ onNav }: { onNav?: (r: string) => voi
     ['계정구분', applied.account, () => setApplied((a) => ({ ...a, account: '' }))],
     ['구분', applied.kind, () => setApplied((a) => ({ ...a, kind: '' }))],
     ['기준일', applied.from || applied.to ? `${applied.from || '…'} ~ ${applied.to || '…'}` : '', () => setApplied((a) => ({ ...a, from: '', to: '' }))],
-    ['단위', unit === DEFAULT_UNIT ? '' : unit, () => setApplied((a) => ({ ...a, unit: DEFAULT_UNIT }))],
   ];
 
   /* E07 선택 바 [수정] — 1건 선택 시 행 더블클릭과 같은 그 행 구분의 수정 모달 */
@@ -288,10 +285,12 @@ export function ContributionStatusManage({ onNav }: { onNav?: (r: string) => voi
       filterChips={VIEWS.map((v) => ({ key: v.id, label: v.label, active: view === v.id, onSelect: () => setView(v.id), required: true }))}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>
+        {/* 금액 단위 — 표시 옵션(fund_stats 선례: 캡션 + SegTabs) */}
         <span className="text-caption" style={{ fontSize: 12 }}>{`단위: ${unit}`}</span>
+        <SegTabs size="sm" value={unit} onChange={(v: Unit) => setUnit(v)} options={UNITS.map((u) => ({ value: u, label: u }))} />
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
-        {/* E03 합계 */}
-        <SumToggle on={sumOn} onToggle={() => setSumOn((s) => !s)} />
+        {/* E03 합계 — 표시 옵션 토글(aria-pressed) */}
+        <Button variant="outline" size="sm" leadingIcon="sigma" pressed={sumOn} onClick={() => setSumOn((v) => !v)}>합계</Button>
         {/* E04 출자등록 · ▾ E05 분배등록 · E06 엑셀 일괄등록 */}
         <SplitButton label="출자등록" leadingIcon="plus" menuLabel="등록 방법 더보기" onClick={() => setModal({ kind: 'form', form: 'invest', mode: 'create' })}
           items={[
@@ -304,6 +303,7 @@ export function ContributionStatusManage({ onNav }: { onNav?: (r: string) => voi
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
+          {Array.from({ length: page.total }, (_, i) => <PageBtn key={i} n={i + 1} active={i === page.current} onClick={() => apiRef.current?.paginationGoToPage(i)} />)}
           <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => apiRef.current?.paginationGoToNextPage()} />
         </>
       ) : undefined}
@@ -350,7 +350,6 @@ export function ContributionStatusManage({ onNav }: { onNav?: (r: string) => voi
               </div>
               {periodErr && <p role="alert" className="m-0 mt-1 text-danger" style={{ fontSize: 12 }}>{periodErr}</p>}
             </DrawerField>
-            <DrawerField label="단위"><DrawerSelect value={unit} onChange={(v) => setF('unit')((v || DEFAULT_UNIT) as Unit)} options={[...UNITS]} noAll ariaLabel="단위" /></DrawerField>
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={() => setApplied(EMPTY_FILTER)}>초기화</Button>

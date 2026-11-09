@@ -198,6 +198,10 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
     - 새 combo 를 페이지에서 손으로 만들지 말 것 — 아래 함정 4건을 `SplitButton` 이 이미 피한다(가운데 구분선은 inline box-shadow 가 아닌 border, 래퍼 `overflow-hidden` 없음 → focus 링 보존 — 2026-09-24 두 번 다시 밟아 실측 확인).
   - 복원이 필요해질 때만 참조할 combo 구현 함정 4건(모두 실제로 밟았던 버그): `topMoreRef`는 실제 렌더되는 쪽이 들어야 함 · `UI.Button`으로 split을 만들 수 없음([[ui-button-not-radix-aschild-trigger]]) · 컨테이너 `overflow-hidden` 금지(focus 링 잘림) · 트리거에 `.apfs-menu-trigger` 금지([[global-focus-overhaul-exception-surfaces]]).
 - **내보내기 진입점은 푸터 아이콘 + ⌥D 두 곳.** 툴바에 독립 "엑셀" 버튼을 두지 않는다(종전 규약 유지 — 그 자리는 이제 kebab이 아니라 푸터다).
+- **표시 옵션 = 툴바 우측 토글(2026-11-09 사용자 결정 (a) — 회계 자금관리)**: 행을 거르지 않고 보이는 모양만 바꾸는 옵션(Σ 소계·합계 행, 금액 단위)은 `filterChips`(필터 칩 줄)·상세필터에 두지 않는다 — 칩 줄은 `role="group" aria-label="필터"` 라 필터로 읽히고 `+N` 에 접히며, 드로어에 두면 바꿀 때 적용 칩이 생기고 [초기화]에 휩쓸린다.
+  - 소계·합계 on/off = `<Button variant="outline" size="sm" leadingIcon="sigma" pressed={on} onClick={toggle}>소계표시</Button>` — `UI.Button` 의 `pressed` 가 `aria-pressed` + primary 테두리·12% 배경(inline)을 그린다. Button 클래스(`ui-btn ui-outline`…)를 복사한 로컬 토글 금지.
+  - 금액 단위 = `단위: X` 캡션 + `<SegTabs size="sm">`(원·천원·백만원 등, 선례 `iam/sfund/fund_stats.tsx`). 단위는 화면 state — 필터 모델에 넣지 않는다.
+  - 순서: `단위 캡션(+SegTabs) │ 상세필터 │ Σ 토글 │ (등록) │ ⟳ 조회`. 정본 `acc/funds/account_balance_manage.tsx`(소계표시)·`contribution_status_manage.tsx`(단위·합계), 가드 `acc/acc_skill_rules.test.ts` ⑦ · `button_pressed.test.ts`.
 - **타이틀은 메뉴 리프와 일치.** `cardTitle`·`title`·`crumbs` 리프를 **`data.ts` 메뉴 리프 라벨 문자열 그대로**(띄어쓰기 포함) 맞춘다. `cardTitle`이 `title`과 같으면 생략 가능(H1=`cardTitle ?? title`). **"○○ 목록" 같은 임의 축약 금지**(2026-09-11 "자펀드 목록"→"자펀드 관리" 정정). 매트릭스/집계형이 문서 정식명칭을 카드 제목으로 쓰는 것(asset_funding "…현황표")은 예외.
 
 ## 선택 액션 플로팅 바 (2026-09-15 사용자 지시, `contextActions` 슬롯 — 전 페이지 공통)

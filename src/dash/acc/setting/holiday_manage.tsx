@@ -64,6 +64,15 @@ import { HolidayCalendar, HolidayViewBar } from './holiday_calendar';
 
 const { Button, IconBtn, SegTabs, TagBadge } = UI;
 
+/* 페이지 번호 버튼 — apfs-grid 푸터 골드(‹ 이전 · 번호 · 다음 ›). 공유 export 가 아니라 골드에서 복사하는 로컬 헬퍼 */
+function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined}
+      className="inline-flex items-center justify-center font-semibold cursor-pointer"
+      style={{ minWidth: 30, height: 30, padding: '0 8px', borderRadius: 8, border: '1px solid ' + (active ? 'var(--primary)' : 'var(--border)'), background: active ? 'var(--primary)' : 'transparent', color: active ? 'var(--primary-foreground)' : 'var(--foreground)', fontSize: 12.5 }}>{n}</button>
+  );
+}
+
 const PAGE_SIZE = 20;
 const VIEWS = [{ value: 'calendar', label: '달력' }, { value: 'list', label: '목록' }];
 
@@ -212,8 +221,8 @@ export function HolidayManage({ onNav }: { onNav?: (r: string) => void }) {
   const selActions = isList && selCount > 0 ? (
     <>
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
-      {/* 수정 = 단일 대상 액션(selCount===1 게이트) — 2건 이상이면 숨기지 않고 비활성(회계거래처관리와 동일). E06·E07 삭제 = 다건 벌크 */}
-      <Button variant="primary" size="sm" disabled={selCount !== 1} onClick={() => { if (selCount === 1) openEdit(selIds[0]); }}>수정</Button>
+      {/* 수정 = 단일 대상 액션 — 정확히 1건일 때만 노출(apfs-aggrid single 게이트). E06·E07 삭제 = 다건 벌크 */}
+      {selCount === 1 && <Button variant="primary" size="sm" onClick={() => openEdit(selIds[0])}>수정</Button>}
       <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={() => setModal({ kind: 'delete', ids: selIds })}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={clearSel}>선택 해제</Button>
     </>
@@ -248,6 +257,7 @@ export function HolidayManage({ onNav }: { onNav?: (r: string) => void }) {
       footerCenter={isList && page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
+          {Array.from({ length: page.total }, (_, i) => <PageBtn key={i} n={i + 1} active={i === page.current} onClick={() => apiRef.current?.paginationGoToPage(i)} />)}
           <IconBtn icon="chevron-right" label="다음" size={32} onClick={() => apiRef.current?.paginationGoToNextPage()} />
         </>
       ) : undefined}

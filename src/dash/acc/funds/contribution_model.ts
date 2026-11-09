@@ -82,9 +82,8 @@ export interface ContribFilter {
   kind: ContribKind | '';
   from: string;
   to: string;
-  unit: Unit;
 }
-export const EMPTY_FILTER: ContribFilter = { account: '', kind: '', from: '', to: '', unit: '원' };
+export const EMPTY_FILTER: ContribFilter = { account: '', kind: '', from: '', to: '' };
 
 /** 필터 — 잔액은 이미 계산된 views 를 받아 거르기만 한다. 기간 오류면 0건 */
 export function filterViews(views: readonly ContribView[], f: ContribFilter): ContribView[] {
