@@ -22,6 +22,8 @@ const LIST_PAGES = [
   'agrifood_entity_manage.tsx', 'ir_info_manage.tsx',
   /* 설정 — 휴일관리(ACC-025) holiday_manage.tsx 는 상세필터 없음(2026-11-06 사용자 결정) → 대상 아님 */
   'partner_manage.tsx',   // ACC-026
+  /* 자금관리(ACC-019~022) · 유무형자산(ACC-017) — 2026-11-09 점검에서 목록 누락 확인(코드는 이미 !filterOpen) */
+  'account_balance_manage.tsx', 'bank_account_manage.tsx', 'contribution_status_manage.tsx', 'daily_cash_manage.tsx', 'fixed_asset_manage.tsx',
 ];
 
 describe('① 회계 목록 단축키 — 상세필터가 열린 동안 끔', () => {
@@ -30,9 +32,9 @@ describe('① 회계 목록 단축키 — 상세필터가 열린 동안 끔', ()
     const calls = src.match(/useHotkey\(HOTKEYS\.(print|export|register)\.combo[^;]*;/g) ?? [];
     expect(calls.length).toBeGreaterThan(0);
     for (const c of calls) {
-      /* enabled 가 식이면 그대로, 이름 하나(listKeys 등)면 그 const 정의를 본다 */
+      /* enabled 식 안의 이름(listKeys 등)은 그 const 정의로 펼친다 — `listKeys && tab === 'summary'` 같은 합성식도 판정 */
       const expr = c.match(/enabled: ([^,}]*)/)?.[1].trim() ?? '';   // 쉼표 뒤 skipInDialog 등 다른 옵션은 제외
-      const named = /^\w+$/.test(expr) ? src.match(new RegExp(`const ${expr} = ([^;]*);`))?.[1] ?? '' : expr;
+      const named = expr.replace(/\b[A-Za-z_]\w*\b/g, (w) => src.match(new RegExp(`const ${w} = ([^;]*);`))?.[1] ?? w);
       expect(named, c).toMatch(/!filterOpen/);
     }
   });
@@ -59,6 +61,8 @@ const PAGER_PAGES = [
   'closing_journal_manage.tsx', 'fixed_asset_manage.tsx', 'general_journal_manage.tsx', 'suspense_manage.tsx',
   'bank_account_manage.tsx', 'contribution_status_manage.tsx', 'agrifood_entity_manage.tsx', 'ir_info_manage.tsx',
   'holiday_manage.tsx', 'partner_manage.tsx',
+  /* 2026-11-09 2차 — 10-28~11-03 화면 */
+  'account_code_manage.tsx', 'deleted_journal_manage.tsx', 'missing_evidence_manage.tsx', 'journal_search_manage.tsx',
 ];
 describe('④ 회계 페이저 — 페이지 번호 버튼', () => {
   it.each(PAGER_PAGES)('%s', (f) => {
@@ -66,6 +70,15 @@ describe('④ 회계 페이저 — 페이지 번호 버튼', () => {
     expect(src).toMatch(/<PageBtn key=\{i\} n=\{i \+ 1\} active=\{i === page\.current\} onClick=\{\(\) => apiRef\.current\?\.paginationGoToPage\(i\)\} \/>/);
     expect(src).toMatch(/aria-current=\{active \? 'page' : undefined\}/);
   });
+  /* 쪽이 많은 화면 = 공용 생략형 GridPager(`1 … 5 6 7 … 37`, 2026-11-09 사용자 결정). 보조원장 실데모 ~720행 = 37쪽 —
+     번호 전부면 버튼 37개라 '현재 / 전체' 텍스트로 두었던 것을 공용 페이저로 바꿨다. */
+  it('보조원장 = GridPager', () => {
+    expect(readSrc('subledger_manage.tsx')).toMatch(/<GridPager current=\{page\.current\} total=\{page\.total\} onGo=\{\(i\) => apiRef\.current\?\.paginationGoToPage\(i\)\} \/>/);
+  });
+  it.each(walkDash().filter((p) => p.includes(`${sep}acc${sep}`) && p.endsWith('.tsx')).map((p) => [p.split(sep).pop() as string, p] as const))(
+    '%s — "현재 / 전체" 텍스트 페이저 없음', (_f, p) => {
+      expect(readFileSync(p, 'utf8')).not.toMatch(/String\(page\.current \+ 1\) \+ ' \/ ' \+ String\(page\.total\)/);
+    });
 });
 
 /* ⑤ 데이터 연동 전(no-op) 항목은 적용 칩을 만들지 않는다 — apfs-detail-filter "no-op 항목은 칩을 만들지 않는다".
@@ -107,6 +120,71 @@ describe('⑦ 표시 옵션 = 툴바 우측 토글', () => {
   });
   it('출자금현황 단위 = 툴바 SegTabs', () => {
     expect(readSrc('contribution_status_manage.tsx')).toMatch(/<SegTabs size="sm" value=\{unit\}/);
+  });
+});
+
+/* ⑨ 푸터 = FooterActions 하나 — apfs-grid "푸터 액션 4종은 항시 노출·순서 고정"(2026-09-17 사용자 결정, 인쇄 = 그리드만).
+   회기생성/전기이월이 설계서 '하단도구 2개'를 이유로 IconBtn 2개를 직접 두어 인쇄·⌘P(printGrid)가 빠졌다 — ⌘P 가 브라우저
+   기본 인쇄로 GNB 까지 찍었다(2026-11-09 점검). footer_hotkey_hints 가드는 FooterActions 소비처만 보므로 여기서 막는다. */
+describe('⑨ 회계 푸터 = FooterActions', () => {
+  const footers = walkDash().filter((p) => p.includes(`${sep}acc${sep}`) && p.endsWith('.tsx')).filter((p) => readFileSync(p, 'utf8').includes('footerRight='));
+  it('대상이 있다', () => { expect(footers.length).toBeGreaterThan(10); });
+  it.each(footers.map((p) => [p.split(sep).pop() as string, p] as const))('%s', (_f, p) => {
+    expect(readFileSync(p, 'utf8')).toMatch(/footerRight=\{<FooterActions /);
+  });
+});
+
+/* ⑩ 툴바 SplitButton = 같은 1차 액션(등록)의 대체 경로 묶음만 — apfs-grid "허용되는 combo ①".
+   2026-11-09 사용자 결정: 감가상각 [저장 ▾ 계정과목 설정] · 자금일보 [자금일보 전자결재 ▾ 결재라인설정]은 성격이 다른 설정 화면을
+   ▾ 안에 숨겨 분리했다 — 설정 진입은 별도 outline 버튼(1차 액션 오른쪽 · 조회 왼쪽). iconOnly(푸터 인쇄 combo)는 대상 아님. */
+describe('⑩ 툴바 SplitButton = 등록 대체 경로만', () => {
+  const accTsx = walkDash().filter((p) => p.includes(`${sep}acc${sep}`) && p.endsWith('.tsx'));
+  const splits = accTsx.flatMap((p) => (readFileSync(p, 'utf8').match(/<SplitButton\b[\s\S]*?\/>/g) ?? [])
+    .filter((s) => !/\biconOnly\b/.test(s))
+    .map((s) => [p.split(sep).pop() as string, s] as const));
+  it('대상이 있다', () => { expect(splits.length).toBeGreaterThan(0); });
+  it.each(splits)('%s', (_f, s) => {
+    const labels = [s.match(/label="([^"]+)"/)?.[1] ?? '', ...[...s.matchAll(/label: '([^']+)'/g)].map((m) => m[1])];
+    for (const l of labels) expect(l, s).toMatch(/(등록|입력|업로드)$/);
+  });
+  it.each([
+    ['depreciation_manage.tsx', '저장', '계정과목 설정'],
+    ['daily_cash_manage.tsx', '자금일보 전자결재', '결재라인설정'],
+  ])('%s — [%s] 다음 [%s] outline 버튼, 그 다음 조회', (f, main, setting) => {
+    const bar = readSrc(f).match(/toolbarRight=\{<>([\s\S]*?)<\/>\}/)?.[1] ?? '';
+    const iMain = bar.indexOf(`>${main}</Button>`);
+    const iSet = bar.search(new RegExp(`<Button variant="outline" size="sm" leadingIcon="[\\w-]+" onClick=\\{[^\\n]*?\\}>${setting}</Button>`));
+    const iRefresh = bar.indexOf('icon="refresh"');
+    expect(iMain).toBeGreaterThan(-1);
+    expect(iSet).toBeGreaterThan(iMain);
+    expect(iRefresh).toBeGreaterThan(iSet);
+  });
+});
+
+/* ⑪ 푸터 건수 = 공용 footerCount(골드 `총 N개 중 M개 항목 표시 중`, N = 필터 후 행 수 · M = 이 쪽에 보이는 행 수).
+   2026-11-09 사용자 결정 "통일": 회계에 `총 N건 중 M건 · K건 표시 중`(3수) / `총 N건 중 M건 표시` / 골드가 섞여 있었다.
+   문구는 grid_frame.footerCount 한 곳 — 페이지가 '표시' 문장을 직접 조립하지 않는다(휴일관리 달력 보기의 월 요약은 다른 문장이라 예외). */
+describe('⑪ 회계 푸터 건수 = footerCount', () => {
+  const footers = walkDash().filter((p) => p.includes(`${sep}acc${sep}`) && p.endsWith('.tsx')).filter((p) => readFileSync(p, 'utf8').includes('footerLeft='));
+  it('대상이 있다', () => { expect(footers.length).toBeGreaterThan(20); });
+  it.each(footers.map((p) => [p.split(sep).pop() as string, p] as const))('%s', (_f, p) => {
+    const src = readFileSync(p, 'utf8');
+    const fl = src.slice(src.indexOf('footerLeft='), src.indexOf('\n', src.indexOf('footerLeft=') + 1) + 400);
+    expect(fl).toMatch(/footerCount\(/);
+    expect(src).not.toMatch(/건 표시|개 항목 표시/);   // 페이지 안에 표시 문장 사본 금지(주석 포함 — 낡은 설명이 남지 않게)
+  });
+});
+
+/* ⑫ 선택 바·섹션 도구의 [삭제] = primary + danger 채움(apfs-form-modal "목록 선택 바와 같은 danger").
+   2026-11-09 사용자 결정 "통일": 회계 10곳 중 4곳(감가상각·유무형자산·전표관리·결산전표)이 outline(+trash)이라 같은 메뉴 안에서
+   삭제의 무게가 갈렸다. 정본 `<Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} …>삭제</Button>`. */
+describe('⑫ 회계 [삭제] 버튼 = primary + danger', () => {
+  const dels = walkDash().filter((p) => p.includes(`${sep}acc${sep}`) && p.endsWith('.tsx'))
+    /* (?:=>|[^>])* — onClick={() => …} 의 => 에서 끊기지 않게(끊기면 그 버튼이 조용히 검사에서 빠진다) */
+    .flatMap((p) => (readFileSync(p, 'utf8').match(/<Button (?:=>|[^>])*>삭제<\/Button>/g) ?? []).map((b: string) => [p.split(sep).pop() as string, b] as const));
+  it('대상이 있다(10곳 — 정규식이 화살표 함수에서 끊겨 줄면 실패)', () => { expect(dels.length).toBeGreaterThanOrEqual(10); });
+  it.each(dels)('%s', (_f, b) => {
+    expect(b).toMatch(/^<Button variant="primary" size="sm" leadingIcon="trash" style=\{\{ background: 'var\(--danger\)' \}\} /);
   });
 });
 

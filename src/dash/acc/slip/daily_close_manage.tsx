@@ -12,7 +12,7 @@
    - 월간 = 7열 캘린더(daily_close_calendar — 기존 schedule CalendarView 는 재사용 불가, 사유는 그 파일 머리 주석) · 주간 = 7열 보드 · 목록 = AG Grid 11열.
    - 목록: 체크박스는 마감 행만(E08) → 선택 바 "N건 선택됨 · [마감 취소] · [선택 해제]"(E09) · 더블클릭/Enter = 상태별 모달(E07).
    - 모달 4종 + 확인창: 일마감 처리(13p) · 일마감 상세/취소(14p) · 기간 일괄 마감(15p) · 일마감 처리이력(16p) · 마감 취소 확인.
-   - 하단: 월/주 집계 문장(목록은 "총 N건 중 N건 표시") + 푸터 새 창·내보내기·인쇄(⌥D·⌘P — 모달이 열린 동안 끔).
+   - 하단: 월/주 집계 문장(목록은 공용 footerCount 골드 문구) + 푸터 새 창·내보내기·인쇄(⌥D·⌘P — 모달이 열린 동안 끔).
    결정·가정
    - 회기·영업일/휴일·전표 집계(SFR-016-04/05)는 daily_close_data 데모 값. 마감 원장 키 = 계정구분+마감일자(일자는 회기 하나에만 속한다).
    - "계정구분을 선택해 주세요."(E02·13p 0·15p 0)는 select 에 빈 값이 없어 화면에서 도달하지 않는다(검증 함수에는 남김).
@@ -26,7 +26,7 @@
 import '../../aggrid_shared.css';
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { UI } from '../../components';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, AUTO_SIZE_CONTENT } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';
 import { controlMinWidth } from '../../schemas/renderers';
@@ -308,7 +308,7 @@ export function DailyCloseManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" leadingIcon="history" onClick={() => setModal({ kind: 'history' })}><span className="max-[1100px]:sr-only">마감이력</span></Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
-      footerLeft={<span>{view === 'list' ? `총 ${String(rows.length)}건 중 ${String(rows.length)}건 표시` : summary}</span>}
+      footerLeft={<span>{view === 'list' ? footerCount(rows.length, rows.length) : summary}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       <ViewBar legend={view !== 'list'}><SegTabs size="sm" options={VIEWS} value={view} onChange={(v: ViewMode) => setView(v)} /></ViewBar>

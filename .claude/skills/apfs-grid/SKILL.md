@@ -108,7 +108,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - 같은 함정이 `<p>`·`<ul>`·`<h1~h6>` 전반에 적용된다 — 이 저장소에서 시맨틱 태그를 새로 쓸 때는 `margin: 0`을 기본 반사로 붙인다(아래 `sub` 캡션이 `margin:'2px 0 0'`을 명시한 이유).
   - 툴바 행은 `padding: '6px 18px'`로 더 촘촘하다(의도된 위계 — 타이틀이 더 여유 있게). 타이틀 행만 바꿀 때 툴바를 따라 올리지 않는다.
 - **`sub` 캡션은 쓰지 않는다.** 화면 설명 문구는 제거 대상(사용자 결정). 단위 표기는 **`toolbarRight` 맨 앞에 12px caption** `단위: 원`으로.
-- **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `page.total>1`일 때만 페이저(`IconBtn chevron-left/right` + `PageBtn`) · `footerRight` = **`<FooterActions …/>` 하나**(`grid_frame.tsx` export).
+- **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `{footerCount(N, M)}`(`grid_frame.tsx` export → `총 N개 중 M개 항목 표시 중`, N = 필터 후 행 수 · M = 지금 쪽에 보이는 행 수 · 페이저 없으면 M = N · 화면 고유 요약은 셋째 인자로 ` · ` 뒤에 — 2026-11-09 사용자 결정 "통일": `총 N건 중 M건 · K건 표시 중`(3수)·`총 N건 중 M건 표시` 같은 페이지 조립 문장 금지, 가드 `footer_count.test.ts` · 회계 `acc_skill_rules` ⑪. 회계 밖 기존 화면 약 30곳은 아직 직접 조립 — 일괄 이관은 별도) · `footerCenter` = `page.total>1`일 때만 페이저(새 화면 = 공용 `GridPager` · 기존 = `IconBtn chevron-left/right` + 로컬 `PageBtn`) · `footerRight` = **`<FooterActions …/>` 하나**(`grid_frame.tsx` export).
   - **푸터 액션 4종은 항시 노출이며 순서가 고정이다(2026-09-17 사용자 결정): 전체보기(⛶) · 새 창(⧉) · 내보내기(⤓) · 인쇄(🖨).** 인쇄는 화면 전용 출력물이 있으면 `printItems` 로 `[🖨 │ ⌄]` combo 가 된다(아래 ✅ ②). 페이지가 직접 `IconBtn`을 나열하지 않는다 — `footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}` 한 줄.
   - **단축키(2026-09-28)** — 네 아이콘 툴팁에 전부 단축키 힌트가 붙는다: 전체보기 `⌥A` · 새 창 `⌥O` · 내보내기 `⌥D` · 인쇄 `⌘P`.
     - 전체보기·새 창은 **`FooterActions` 가 직접 바인딩**한다(IconBtn `hotkey`) → **화면당 `<FooterActions>` 는 정확히 1개**(2개면 한 번 누름에 두 번 실행).
@@ -124,7 +124,8 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - ⛔ **kebab(⋯)은 전 화면에서 폐기됐다(2026-09-17).** 툴바 독립 kebab · 등록 combo의 `⌄` 절반 · 푸터 폴백 kebab(`!topMoreVisible && <MoreMenu>`) 셋 다 삭제했고, 그 안에 있던 내보내기·인쇄가 푸터 아이콘으로 항시 노출된다. `MoreMenu`/`MoreMenuItems`/`RegisterCombo`/`PoCMoreMenu` 로컬 복사본 39개와 `topMoreRef`/`topMoreVisible`/IntersectionObserver 폴백 배선(26파일)도 함께 제거됐다 — **다시 만들지 말 것.**
   - 툴바에 인쇄 `IconBtn`을 따로 두지 않는다(푸터와 중복 — investee_profile·investee_invest_stats에서 실제 2개가 됐다).
   - 단축키(⌥D 내보내기 · ⌘P 인쇄)는 그대로다 — 페이지의 `useHotkey` 소유이며 kebab 제거와 무관하다. kebab 의 `DropdownMenuShortcut` 힌트는 사라졌지만 **2026-09-28부터 푸터 아이콘 툴팁이 힌트를 보여준다**(위 "단축키" 항목).
-  - `PageBtn`은 골드(`asset_funding.tsx`·`subfund_manage.tsx`)에 **로컬 복사**돼 있는 헬퍼다 — 공유 export 아님, 골드에서 복사.
+  - **새 화면의 페이저 = 공용 `GridPager`(`src/dash/grid_pager.tsx`, 2026-11-09 사용자 결정)** — `footerCenter={page.total > 1 ? <GridPager current={page.current} total={page.total} onGo={(i) => apiRef.current?.paginationGoToPage(i)} /> : undefined}` 한 줄. 7쪽 이하는 골드와 같은 모양(번호 전부), 넘으면 `‹ 1 … 5 6 7 … 37 ›` 로 접는다(칸 수 항상 7 — 쪽을 넘겨도 버튼 수 불변, 폭은 자릿수 차만큼 수 px, 규칙은 순수 함수 `pageItems` + `grid_pager.test.ts`). 쪽 수가 수십이 될 수 있는 화면(원장·로그류)은 반드시 이것 — 번호 전부를 그리는 로컬 `PageBtn` 이나 `현재 / 전체` 텍스트로 대신하지 않는다(정본 `acc/ledger/subledger_manage.tsx`).
+  - 기존 화면의 `PageBtn` 은 골드(`asset_funding.tsx`·`subfund_manage.tsx`)에서 **로컬 복사**한 헬퍼(39곳)이고 그대로 유효하다 — 일괄 이관은 별도 작업. 새로 복사하지 않는다.
 - ⛔ **카드뷰(리스트 뷰|카드뷰 토글)는 폐기됐다(2026-09-11 사용자 결정).** 신규 페이지에 뷰 토글 `SegTabs`·`view` state·카드 렌더 분기를 **만들지 않는다** — 리스트 뷰 단일 표현이다. 전용 스킬 `apfs-card-view`도 같은 날 삭제됐다.
   - 스키마 트랙은 `schema.hideCardView: true`로 끈다(`generic_list.tsx`가 푸터 `SegTabs`를 렌더하지 않고 `view`를 `"list"` 파생값으로 고정). 기존 카드 렌더 코드는 아직 남아 있으나 도달 불가다.
   - typed 트랙은 플래그 없이 직접 제거한다 — `subfund_manage.tsx`가 `SegTabs`를 지우고 `const view = 'list'` 상수로 내린 형태가 정본.
@@ -195,6 +196,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - ⛔ **폐기된 형태 2종 — 되돌리지 말 것**: ① `RegisterCombo`(등록+`⌄` split 버튼, 2026-09-11~09-17) ② 툴바 kebab 단독. 둘 다 보조 액션을 숨기는 구조였고, 그 항목이 이제 푸터에 상시 노출된다.
   - ✅ **허용되는 combo = 공용 `SplitButton`(`ui/split-button.tsx`) 2가지뿐 (2026-09-24 사용자 결정, 등록원부관리).** 위 폐기는 "보조 액션(내보내기·인쇄)을 `⌄` 안에 숨기는" combo 에 대한 것이다 — 아래 둘은 보조 액션을 숨기지 않으므로 허용:
     ① **툴바 — 같은 1차 액션의 대체 경로 묶음**: `[+ 등록원부입력 │ ⌄ 등록원부업로드]`(본체 = 가장 잦은 경로 1클릭, `⌄` = 일괄 업로드 등). 서로 다른 성격의 액션(등록+내보내기 등)을 섞지 않는다. 등록+업로드 조합은 `trust_upload_forms.tsx` `RegisterCombo`(= SplitButton 래퍼, [[apfs-manage-page]] 파일 업로드 행)도 같은 부품이다.
+      - ⛔ **1차 액션 + 설정 화면 진입을 묶지 않는다(2026-11-09 사용자 결정 — 재제안 금지).** 감가상각 `[저장 │ ▾ 계정과목 설정]` · 자금일보 `[자금일보 전자결재 │ ▾ 결재라인설정]` 을 분리했다 — 설정은 별도 `variant="outline" size="sm"` 버튼(1차 액션 오른쪽 · 조회 왼쪽, 위 "등록 외 툴바 진입 버튼"과 같은 자리). 판별: 본체와 ▾ 항목이 모두 등록·입력·업로드(같은 결과물을 만드는 다른 경로)일 때만 combo. 가드 `acc/acc_skill_rules.test.ts` ⑩.
     ② **푸터 인쇄 combo — 화면 전용 출력물**: `FooterActions`/`RiskPage` 에 `printItems` 를 넘기면 인쇄 아이콘이 `[🖨 │ ⌄]`(`SplitButton iconOnly`)가 된다. 본체 = 화면 인쇄(⌘P), `⌄` = 원문 목록바 `[출력▾]` 항목(등록원부 출력·발급이력 출력). **툴바에 별도 `[출력▾]` 을 두지 않는다.**
     - 새 combo 를 페이지에서 손으로 만들지 말 것 — 아래 함정 4건을 `SplitButton` 이 이미 피한다(가운데 구분선은 inline box-shadow 가 아닌 border, 래퍼 `overflow-hidden` 없음 → focus 링 보존 — 2026-09-24 두 번 다시 밟아 실측 확인).
   - 복원이 필요해질 때만 참조할 combo 구현 함정 4건(모두 실제로 밟았던 버그): `topMoreRef`는 실제 렌더되는 쪽이 들어야 함 · `UI.Button`으로 split을 만들 수 없음([[ui-button-not-radix-aschild-trigger]]) · 컨테이너 `overflow-hidden` 금지(focus 링 잘림) · 트리거에 `.apfs-menu-trigger` 금지([[global-focus-overhaul-exception-surfaces]]).
@@ -215,7 +217,7 @@ const selActions = selCount > 0 ? (        // selCount = selIds.length (→[[apf
   <>
     <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
     {single && <><StatusBadge … /><Button …>수정</Button></>}   {/* 단일 대상 액션은 1건일 때만 */}
-    <Button …>삭제</Button>
+    <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={askDelete}>삭제</Button>   {/* 2026-11-09 통일 — outline·ghost+빨간 글자 금지(회계 가드 ⑫, 회계 밖 기존 약 10곳은 별도 이관) */}
     <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
   </>
 ) : null;

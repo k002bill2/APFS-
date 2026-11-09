@@ -32,7 +32,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { CellKeyDownEvent, CellStyle, ColDef, RowClassParams, RowDoubleClickedEvent, ValueFormatterParams } from 'ag-grid-community';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { UI } from '../../components';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, fmt, numFmt, numStyle } from '../../aggrid_theme';
 import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
@@ -274,7 +274,7 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
         <Button variant="outline" size="sm" leadingIcon="sigma" pressed={showSubtotal} onClick={() => setShowSubtotal((v) => !v)}>소계표시</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={keysOn ? HOTKEYS.refresh : undefined} />
       </>}
-      footerLeft={<span>{`총 ${String(accounts.length)}건 중 ${String(shownAccounts)}건 표시`}</span>}
+      footerLeft={<span>{footerCount(shownAccounts, shownAccounts)}</span>}
       footerRight={<FooterActions onExport={exportExcel} onPrint={printIfReady} printItems={[{ label: '예금명세서 출력', icon: 'file', onSelect: openViewer }]} />}>
 
       <div>
