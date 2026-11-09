@@ -20,7 +20,8 @@ import { HISTORY_KINDS } from './daily_close_data';
 import type { HistoryEntry } from './daily_close_data';
 import { HISTORY_EMPTY, defaultHistoryFilter, filterHistory, validateRange } from './daily_close_model';
 import type { HistoryFilter } from './daily_close_model';
-import { SuspenseField as Field, dayWrap } from './suspense_clear_modal';
+import { SuspenseField as Field } from './suspense_clear_modal';
+import { dayWrap } from '../acc_form_helpers';
 
 const { Button, SaveButton, StatusBadge } = UI;
 

@@ -7,7 +7,7 @@
    결정·가정(보고서에도 기재)
    - 분개 그리드 = AG Grid 셀 렌더러 편집 그리드(결산양식 관리 ACC-002 관용구 복제 — 2026-10-29 사용자 지시). 정렬 끔(행 순서=데이터),
      선택은 체크박스로만(헤더 3상태 체크박스는 공용 SELECTION_COL 동작), 셀 입력은 30px(drawerInputStyle 기반 — 그리드 행 안이라 폼 34px 보다 낮다),
-     Σ 는 pinned 합계 행. 행을 고르면 섹션 도구 앞에 `N건 선택됨 · 위로/아래로 · 행삭제 · 행복사 · 선택 해제`가 뜬다.
+     Σ 는 pinned 합계 행. 행을 고르면 섹션 도구(제목 옆 좌측) 뒤에 `N건 선택됨 · 위로/아래로 · 행삭제 · 행복사 · 선택 해제`가 뜬다.
      검색 대상은 행 key 로 잡는다(행 이동 후 인덱스가 엇갈리지 않게). 셀 콜백은 actsRef 로 최신 form 을 본다(columnDefs 고정).
    - 닫기 경로는 전부 requestClose 한 곳 — dirty(스냅샷 비교)면 AlertDialog 확인. Dialog onOpenChange(false) 는 exit 애니메이션이
      이미 시작된 뒤라 거기서 막을 수 없어서 X·Esc·바깥 클릭을 각각 가로챈다.
@@ -70,7 +70,7 @@ import { BASE_CURRENCY, CURRENCIES, EVIDENCE_TYPES, FUND_ACCOUNTS, FUND_BANK_ACC
 import type { Currency, EvidenceType, FundAccount, JournalOrigin, JournalRow, Partner } from './general_journal_data';
 import type { AccountItem } from '../account_data';
 import { AccountSearchModal } from '../account_search_modal';
-import { PartnerSearchModal } from './partner_search_modal';
+import { PartnerSearchModal } from '../partner_search_modal';
 import { EvidenceUpload } from './missing_evidence_upload';   // 증빙첨부(ACC-006) 전용 업로더
 import { EVIDENCE_MSG, validateEvidence } from './missing_evidence_model';
 import type { EvidenceCheck } from './missing_evidence_model';
@@ -135,13 +135,15 @@ function Field({ label, required, plain, className, children }: { label: string;
   );
 }
 
-/* 섹션 — subfund_form_modal Section 규격(로컬 복제) */
-function Section({ title, children, actions }: { title: string; children: React.ReactNode; actions?: React.ReactNode }) {
+/* 섹션 — subfund_form_modal Section 규격(로컬 복제). 도구 슬롯은 apfs-form-modal 규약 7:
+   add = 추가류·행 편집 도구(제목 바로 옆 좌측, ml-auto 금지) · actions = 조회·저장 등 섹션 액션(우측 끝) */
+function Section({ title, children, add, actions }: { title: string; children: React.ReactNode; add?: React.ReactNode; actions?: React.ReactNode }) {
   return (
     <section className="mb-7" style={{ minWidth: 0 }}>
-      <div className="flex items-center justify-between gap-2 flex-wrap border-b-2 border-border pb-2 mb-3">
+      <div className="flex items-center gap-2 flex-wrap border-b-2 border-border pb-2 mb-3">
         <h3 className="m-0 text-lg font-bold">{title}</h3>
-        {actions}
+        {add}
+        {actions && <div className="ml-auto flex items-center gap-1.5">{actions}</div>}
       </div>
       {children}
     </section>
@@ -457,7 +459,7 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
       <span className="font-semibold self-center" style={{ fontSize: 13 }}>{String(checked.size)}건 선택됨</span>
       <Button variant="outline" size="sm" leadingIcon="arrow-up" disabled={!canUp} onClick={() => setLines((ls) => moveChecked(ls, checked, -1))}>위로이동</Button>
       <Button variant="outline" size="sm" leadingIcon="arrow-down" disabled={!canDown} onClick={() => setLines((ls) => moveChecked(ls, checked, 1))}>아래로이동</Button>
-      <Button variant="outline" size="sm" leadingIcon="trash" onClick={removeChecked}>행삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={removeChecked}>행삭제</Button>
       <Button variant="outline" size="sm" onClick={() => setLines((ls) => duplicateChecked(ls, checked))}>행복사</Button>
       <Button variant="ghost" size="sm" onClick={clearSelection}>선택 해제</Button>
     </>
@@ -628,13 +630,14 @@ export function JournalEntryScreen({ entry, onSave, onRestore, onClose, partners
                   </div>
                 </Section>
 
-                {/* ② 분개 그리드 — 결산양식 관리(ACC-002) 편집 그리드 규칙. 행을 고르면 도구 앞에 선택 작업이 붙는다 */}
-                <Section title="분개" actions={noGridTools ? undefined : (
-                  <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="분개 그리드 도구">
-                    {selTools}
+                {/* ② 분개 그리드 — 결산양식 관리(ACC-002) 편집 그리드 규칙. 도구 = 제목 바로 옆 좌측(apfs-form-modal 규약 7).
+                     항상 있는 도구가 앞, 행을 고르면 선택 작업이 뒤에 붙는다(체크해도 앞 버튼 위치가 흔들리지 않게) */}
+                <Section title="분개" add={noGridTools ? undefined : (
+                  <div className="flex flex-wrap items-center gap-1.5 font-normal" role="toolbar" aria-label="분개 그리드 도구">
                     <Button variant="outline" size="sm" leadingIcon="plus" disabled={readOnly} onClick={() => setLines((ls) => [...ls, emptyLine()])}>행추가</Button>
                     <Button variant="outline" size="sm" disabled={readOnly} onClick={removeBlank}>빈행삭제</Button>
                     <Button variant="outline" size="sm" disabled={readOnly} onClick={() => setLines((ls) => applyRepMemo(ls, form.memo))}>대표적요반영</Button>
+                    {selTools}
                   </div>
                 )}>
                   <div ref={gridBoxRef} className="apfs-grid-min" role="region" aria-label="분개 그리드 — 체크박스로 행을 고르면 도구에 위로·아래로이동·행삭제·행복사가 뜬다" onFocusCapture={trackRow}>

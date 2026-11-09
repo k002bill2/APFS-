@@ -35,6 +35,8 @@ import { FundStats } from './iam/sfund/fund_stats';                             
 // 관리자 3리프(2026-09-14 typed 페이지 전환, 공통관리 S0_106·S0_105·S0_102). 동상 — GenericListPage 폴백 앞 분기
 import { AccountCodeManage } from './acc/baseinfo/account_code_manage';                 // 계정과목 관리(ACC-001)
 import { DeletedJournalManage } from './acc/slip/deleted_journal_manage';           // 삭제전표 관리(ACC-004)
+import { AgrifoodEntityManage } from './acc/bizorg/agrifood_entity_manage';         // 경영체 정보 조회(ACC-023)
+import { IrInfoManage } from './acc/bizorg/ir_info_manage';                         // IR정보 조회(ACC-024)
 import { CodeManage } from './sys/setting/code_manage';                                  // 공통코드 관리(S0_106, master-detail)
 import { MenuManage } from './sys/setting/menu_manage';                                  // 메뉴 관리(S0_105, 계층 트리)
 import { UserPermissionManage } from './sys/user/user_permission_manage';             // 사용자 권한 관리(S0_102, 권한 매트릭스)
@@ -104,6 +106,12 @@ import { BalanceSheetManage } from './acc/ledger/balance_sheet_manage';
 import { IncomeStatementManage } from './acc/ledger/income_statement_manage';
 import { TrialBalanceManage } from './acc/ledger/trial_balance_manage';
 import { FixedAssetManage } from './acc/fixedasset/fixed_asset_manage';
+import { BankAccountManage } from './acc/funds/bank_account_manage';               // 계좌관리(ACC-019)
+import { AccountBalanceManage } from './acc/funds/account_balance_manage';         // 계좌잔액(ACC-020)
+import { DailyCashManage } from './acc/funds/daily_cash_manage';                   // 자금일보(ACC-021)
+import { ContributionStatusManage } from './acc/funds/contribution_status_manage'; // 출자금현황 정보관리(ACC-022)
+import { HolidayManage } from './acc/setting/holiday_manage'; // 휴일관리(ACC-025)
+import { PartnerManage } from './acc/setting/partner_manage'; // 회계거래처관리(ACC-026)
 import { Pages as EditorPages } from './editor_page';
 import { Toaster } from './ui/sonner';
 import { TooltipProvider } from './ui/tooltip';
@@ -324,6 +332,14 @@ function App() {
   else if (route === "acct-income-statement") page = <IncomeStatementManage onNav={onNav} />;
   else if (route === "acct-trial-balance") page = <TrialBalanceManage onNav={onNav} />;
   else if (route === "acct-fixed-asset") page = <FixedAssetManage onNav={onNav} />;
+  else if (route === "acct-bank-account") page = <BankAccountManage onNav={onNav} />;
+  else if (route === "acct-account-balance") page = <AccountBalanceManage onNav={onNav} />;
+  else if (route === "acct-daily-cash") page = <DailyCashManage onNav={onNav} />;
+  else if (route === "acct-contribution-status") page = <ContributionStatusManage onNav={onNav} />;
+  else if (route === "acct-agrifood-entity") page = <AgrifoodEntityManage onNav={onNav} />;
+  else if (route === "acct-ir-info") page = <IrInfoManage onNav={onNav} />;
+  else if (route === "acct-holiday") page = <HolidayManage onNav={onNav} />;
+  else if (route === "acct-partner") page = <PartnerManage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
   // 새 스키마에 남아 미시드 컬럼이 undefined로 노출되던 문제 방지(즐겨찾기 FAB 딥링크로 상시 노출되는 경로)
   else page = <GenericListPage key={route} route={route} onNav={onNav} />;

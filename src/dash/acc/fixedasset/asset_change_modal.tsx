@@ -13,7 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogD
 import { PeriodPicker } from '../../ui/period-picker';
 import { toast } from '../../ui/sonner';
 import { formatAmount, parseAmount } from '../slip/general_journal_model';
-import { SuspenseField as Field, dayWrap, focusIn } from '../slip/suspense_clear_modal';
+import { SuspenseField as Field } from '../slip/suspense_clear_modal';
+import { dayWrap, focusIn } from '../acc_form_helpers';
 import { CHANGE_KINDS, PROC_KINDS } from './fixed_asset_data';
 import type { AssetChange, ChangeKind, ProcKind } from './fixed_asset_data';
 import { CHANGE_MSG, previewChange, validateChange } from './fixed_asset_model';

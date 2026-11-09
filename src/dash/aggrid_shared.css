@@ -142,3 +142,19 @@
 .apfs-grid-min:has(+ .apfs-section-sep) .ag-floating-bottom .ag-row {
   border-bottom-color: transparent !important;
 }
+
+/* ── 팝업(읽기전용 상세 모달) 그리드의 위·아래 외곽선 (opt-in: .apfs-modal-grid) ──
+   증상: apfsTheme 는 wrapperBorder:false(페이지 프레임 카드용)라, 모달 본문에 놓인 그리드는 위·아래 경계가 없어
+        탭 머리·캡션·푸터와 표 영역이 구분되지 않았다(경영체·IR 상세보기 — acc/bizorg 5개 그리드).
+   수정: 이 클래스를 단 래퍼 안 그리드에만 위·아래 1px var(--border). 좌우는 목록 그리드처럼 열어 둔다.
+   이중선 방지: 마지막 행(또는 pinned 합계 행)의 행 하단선이 wrapper 하단선과 맞붙어 2px 로 보이므로
+        이 클래스 안에서만 그 행의 하단선을 지운다 — 경계선은 wrapper 하단선 하나. 0건(오버레이)이어도 wrapper 선은 남는다.
+   공용 테마(apfsTheme)는 건드리지 않는다 — 페이지 그리드는 동작이 바뀌지 않는다. */
+.apfs-modal-grid .ag-root-wrapper {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.apfs-modal-grid .ag-row-last,
+.apfs-modal-grid .ag-floating-bottom .ag-row {
+  border-bottom-color: transparent !important;
+}

@@ -67,6 +67,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
      <table className="w-full border-collapse min-w-[880px]">…</table>
    </div>
    ```
+   - **세로 열선**: 수제 `<table>` 도 AG Grid 와 같은 세로 열선 필수 — th/td 에 `1px solid var(--border)` 세로 border, 헤더 배경은 그리드 헤더와 동일(`var(--grid-header)`). 가로선만 있는 표 금지(2026-11-05 사용자 지적 — 자금일보 결재선 표, 이후 AG Grid 로 전환).
 2. **토큰만 사용.** 색/테두리/배경은 `var(--…)`·`color-mix`만. 하드코딩 hex 금지(다크 깨짐). 프레임 자체가 토큰 기반이라 라이트/다크 자동 양립.
 3. **반응형.** 모든 슬롯 행에 `flexWrap` 내장. 호출자는 슬롯 내부 묶음에도 좁을 때 적층되도록 둘 것. 입력이 있으면 폰트 ≥16px(responsive-ui).
 

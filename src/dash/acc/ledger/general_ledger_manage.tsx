@@ -39,7 +39,7 @@ import { FUND_ACCOUNTS } from '../slip/general_journal_data';
 import { demoLedger, todayStr } from './ledger_data';
 import { generalLedger, validatePeriod, MSG } from './ledger_model';
 import type { GeneralLedgerRow } from './ledger_model';
-import { DrawerField, DayRangeField, FlagCheck, flagChips } from './ledger_filter_ui';
+import { DrawerField, DayRangeField, FlagCheck, flagChips } from '../ledger_filter_ui';
 import { AccountDetailModal } from './account_detail_modal';
 import { defaultGeneralLedgerFilter, openingHeader, closingHeader } from './general_ledger_model';
 import type { GeneralLedgerFilter } from './general_ledger_model';
