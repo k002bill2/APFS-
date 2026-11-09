@@ -15,7 +15,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
 import { SELECTION_COL, restoreSelection, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝) — 형제 드로어(asset_funding·generic_list)와 동일
@@ -396,7 +396,7 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'apply' })}>제안서접수 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
-      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{footerCount(filteredRows.length, Math.min(shown, filteredRows.length))}</span>}
       footerCenter={view === 'list' && page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

@@ -34,7 +34,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { CellStyle, ColDef, ColGroupDef, ColSpanParams, RowClassParams, ValueFormatterParams } from 'ag-grid-community';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { UI } from '../../components';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme';
 import { dayWrap } from '../acc_form_helpers';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
@@ -239,7 +239,7 @@ export function DailyCashManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" leadingIcon="users" onClick={openLine}>결재라인설정</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={!filterOpen && modal === null ? HOTKEYS.refresh : undefined} />
       </>}
-      footerLeft={<span>{`총 ${String(report.rowCount)}건 중 ${String(report.rowCount)}건 표시`}</span>}
+      footerLeft={<span>{footerCount(report.rowCount, report.rowCount)}</span>}
       footerRight={<FooterActions onExport={exportExcel} onPrint={printIfReady} printItems={[{ label: '자금일보 출력', icon: 'file', onSelect: openViewer }]} />}>
 
       <div>

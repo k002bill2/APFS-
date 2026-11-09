@@ -29,7 +29,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { CellStyle, ColDef, GetRowIdParams, GridApi, GridReadyEvent, RowSelectionOptions, SelectionChangedEvent } from 'ag-grid-community';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { UI } from '../../components';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, AUTO_SIZE_CONTENT, numFmt } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';
 import { controlMinWidth } from '../../schemas/renderers';
@@ -204,7 +204,7 @@ export function DepreciationManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="outline" size="sm" leadingIcon="settings" onClick={() => setModal({ kind: 'account' })}>계정과목 설정</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={modal || filterOpen ? undefined : HOTKEYS.refresh} />
       </>}
-      footerLeft={<span>{`총 ${String(rows.length)}건 중 ${String(rows.length)}건 표시`}</span>}
+      footerLeft={<span>{footerCount(rows.length, rows.length)}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div>

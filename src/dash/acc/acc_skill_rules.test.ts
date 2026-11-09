@@ -161,6 +161,20 @@ describe('⑩ 툴바 SplitButton = 등록 대체 경로만', () => {
   });
 });
 
+/* ⑪ 푸터 건수 = 공용 footerCount(골드 `총 N개 중 M개 항목 표시 중`, N = 필터 후 행 수 · M = 이 쪽에 보이는 행 수).
+   2026-11-09 사용자 결정 "통일": 회계에 `총 N건 중 M건 · K건 표시 중`(3수) / `총 N건 중 M건 표시` / 골드가 섞여 있었다.
+   문구는 grid_frame.footerCount 한 곳 — 페이지가 '표시' 문장을 직접 조립하지 않는다(휴일관리 달력 보기의 월 요약은 다른 문장이라 예외). */
+describe('⑪ 회계 푸터 건수 = footerCount', () => {
+  const footers = walkDash().filter((p) => p.includes(`${sep}acc${sep}`) && p.endsWith('.tsx')).filter((p) => readFileSync(p, 'utf8').includes('footerLeft='));
+  it('대상이 있다', () => { expect(footers.length).toBeGreaterThan(20); });
+  it.each(footers.map((p) => [p.split(sep).pop() as string, p] as const))('%s', (_f, p) => {
+    const src = readFileSync(p, 'utf8');
+    const fl = src.slice(src.indexOf('footerLeft='), src.indexOf('\n', src.indexOf('footerLeft=') + 1) + 400);
+    expect(fl).toMatch(/footerCount\(/);
+    expect(src).not.toMatch(/건 표시|개 항목 표시/);   // 페이지 안에 표시 문장 사본 금지(주석 포함 — 낡은 설명이 남지 않게)
+  });
+});
+
 describe('③ 삭제전표 긴 텍스트 칸 — 말줄임 렌더러', () => {
   const src = readSrc('deleted_journal_manage.tsx');
   it('textCell = truncate span', () => { expect(src).toMatch(/const textCell = [^\n]*className="min-w-0 truncate"/); });

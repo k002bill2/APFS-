@@ -38,7 +38,7 @@ import type {
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { UI } from '../../components';
 import type { Tone } from '../../components';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, dropHiddenSelection, restoreSelection } from '../../aggrid_selection';
 import { controlMinWidth } from '../../schemas/renderers';
@@ -267,7 +267,7 @@ export function FiscalRolloverManage({ onNav }: { onNav?: (r: string) => void })
         <SaveButton onSubmit={save} />
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={listKeys ? HOTKEYS.refresh : undefined} />
       </>}
-      footerLeft={<span>{`총 ${String(rows.length)}건 중 ${String(visible.length)}건 표시`}</span>}
+      footerLeft={<span>{footerCount(visible.length, visible.length)}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
 
       <div ref={gridBoxRef} aria-busy={saving || undefined} role="region" aria-label={`${LABEL} 편집 그리드 — 체크박스로 회기를 고르면 선택 바에 연마감이 뜬다`}>

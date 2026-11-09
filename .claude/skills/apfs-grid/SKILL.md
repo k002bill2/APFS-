@@ -108,7 +108,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   - 같은 함정이 `<p>`·`<ul>`·`<h1~h6>` 전반에 적용된다 — 이 저장소에서 시맨틱 태그를 새로 쓸 때는 `margin: 0`을 기본 반사로 붙인다(아래 `sub` 캡션이 `margin:'2px 0 0'`을 명시한 이유).
   - 툴바 행은 `padding: '6px 18px'`로 더 촘촘하다(의도된 위계 — 타이틀이 더 여유 있게). 타이틀 행만 바꿀 때 툴바를 따라 올리지 않는다.
 - **`sub` 캡션은 쓰지 않는다.** 화면 설명 문구는 제거 대상(사용자 결정). 단위 표기는 **`toolbarRight` 맨 앞에 12px caption** `단위: 원`으로.
-- **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `총 N개 중 M개 항목 표시 중` · `footerCenter` = `page.total>1`일 때만 페이저(새 화면 = 공용 `GridPager` · 기존 = `IconBtn chevron-left/right` + 로컬 `PageBtn`) · `footerRight` = **`<FooterActions …/>` 하나**(`grid_frame.tsx` export).
+- **푸터 골드 양식**(리스트형·매트릭스형 공통): `footerLeft` = `{footerCount(N, M)}`(`grid_frame.tsx` export → `총 N개 중 M개 항목 표시 중`, N = 필터 후 행 수 · M = 지금 쪽에 보이는 행 수 · 페이저 없으면 M = N · 화면 고유 요약은 셋째 인자로 ` · ` 뒤에 — 2026-11-09 사용자 결정 "통일": `총 N건 중 M건 · K건 표시 중`(3수)·`총 N건 중 M건 표시` 같은 페이지 조립 문장 금지, 가드 `footer_count.test.ts` · 회계 `acc_skill_rules` ⑪. 회계 밖 기존 화면 약 30곳은 아직 직접 조립 — 일괄 이관은 별도) · `footerCenter` = `page.total>1`일 때만 페이저(새 화면 = 공용 `GridPager` · 기존 = `IconBtn chevron-left/right` + 로컬 `PageBtn`) · `footerRight` = **`<FooterActions …/>` 하나**(`grid_frame.tsx` export).
   - **푸터 액션 4종은 항시 노출이며 순서가 고정이다(2026-09-17 사용자 결정): 전체보기(⛶) · 새 창(⧉) · 내보내기(⤓) · 인쇄(🖨).** 인쇄는 화면 전용 출력물이 있으면 `printItems` 로 `[🖨 │ ⌄]` combo 가 된다(아래 ✅ ②). 페이지가 직접 `IconBtn`을 나열하지 않는다 — `footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}` 한 줄.
   - **단축키(2026-09-28)** — 네 아이콘 툴팁에 전부 단축키 힌트가 붙는다: 전체보기 `⌥A` · 새 창 `⌥O` · 내보내기 `⌥D` · 인쇄 `⌘P`.
     - 전체보기·새 창은 **`FooterActions` 가 직접 바인딩**한다(IconBtn `hotkey`) → **화면당 `<FooterActions>` 는 정확히 1개**(2개면 한 번 누름에 두 번 실행).

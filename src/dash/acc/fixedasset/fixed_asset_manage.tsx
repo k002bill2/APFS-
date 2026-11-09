@@ -36,7 +36,7 @@ import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버�
 import React, { useState, useRef, useEffect, useCallback, useMemo, useId } from 'react';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, AUTO_SIZE_CONTENT, fmt, numStyle } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';
 import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
@@ -403,7 +403,7 @@ export function FixedAssetManage({ onNav }: { onNav?: (r: string) => void }) {
         {tab === 'summary' && <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form' })}>유무형자산 등록</Button>}
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={modal ? undefined : HOTKEYS.refresh} />
       </>}
-      footerLeft={<span>{'총 ' + String(itemCount) + '건 중 ' + String(Math.min(shown, itemCount)) + '건 표시'}</span>}
+      footerLeft={<span>{footerCount(itemCount, Math.min(shown, itemCount))}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />

@@ -27,7 +27,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, CellKeyDownEvent, RowDoubleClickedEvent, CellStyle, RowClassRules } from 'ag-grid-community';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { UI } from '../../components';
-import { GridFrame, FooterActions } from '../../grid_frame';
+import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { GridPager } from '../../grid_pager';
 import { apfsTheme, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme';
 import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
@@ -185,7 +185,7 @@ export function SubledgerManage({ onNav }: { onNav?: (r: string) => void }) {
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
-      footerLeft={<span>{'총 ' + String(rows.length) + '개 중 ' + String(shown) + '개 항목 표시 중 · 명세 ' + String(entryCount) + '건'}</span>}
+      footerLeft={<span>{footerCount(rows.length, shown, '명세 ' + String(entryCount) + '건')}</span>}
       footerCenter={page.total > 1 ? <GridPager current={page.current} total={page.total} onGo={(i) => apiRef.current?.paginationGoToPage(i)} /> : undefined}
       footerRight={<FooterActions onExport={exportExcel} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />}>
 
