@@ -57,3 +57,34 @@ describe('jumpToFilterField — 드로어 DOM', () => {
     expect(await jumpToFilterField(chips, '검색어')).toBe(false);
   });
 });
+
+/* 드로어 없이 칸을 펼쳐 둔 화면(GridFrame filterPanel → [data-filter-panel], 자펀드정보관리 2026-11-09) —
+   [상세필터] 버튼이 없으면 같은 프레임 패널에서 aria-label 이 정확히 같은 칸으로 초점을 옮긴다 */
+describe('jumpToFilterField — 인라인 필터 패널', () => {
+  function mountInline(panel: string | null): Element {
+    const frame = document.createElement('div');
+    frame.setAttribute('data-grid-frame', '');
+    frame.innerHTML = (panel == null ? '' : `<div data-filter-panel="">${panel}</div>`) + '<div data-chips></div>';
+    document.body.appendChild(frame);
+    return frame.querySelector('[data-chips]')!;
+  }
+
+  it('패널의 같은 이름 칸으로 초점', async () => {
+    const chips = mountInline('<input id="kw" aria-label="검색어"><select id="fund" aria-label="자펀드"><option value="">자펀드</option></select><button id="yr" type="button" aria-label="사업연도">사업연도</button>');
+    expect(await jumpToFilterField(chips, '자펀드')).toBe(true);
+    expect(active()?.id).toBe('fund');
+    expect(await jumpToFilterField(chips, '사업연도')).toBe(true);
+    expect(active()?.id).toBe('yr');
+  });
+
+  it('이름이 정확히 같지 않으면 움직이지 않는다', async () => {
+    const chips = mountInline('<select id="fund" aria-label="자펀드구분"><option value="">자펀드구분</option></select>');
+    expect(await jumpToFilterField(chips, '자펀드')).toBe(false);
+  });
+
+  it('패널 밖(같은 프레임의 다른 버튼)은 고르지 않는다', async () => {
+    const chips = mountInline(null);
+    chips.parentElement!.insertAdjacentHTML('afterbegin', '<button type="button" aria-label="자펀드">x</button>');
+    expect(await jumpToFilterField(chips, '자펀드')).toBe(false);
+  });
+});

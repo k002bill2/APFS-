@@ -6,7 +6,8 @@
       못 찾으면 드로어만 연다(오류 없음 — 칩 항목명과 드로어 라벨이 다른 화면의 안전한 폴백).
    3. 그 항목을 드로어 가운데로 스크롤하고 첫 컨트롤에 초점. 강조 표시(배경·테두리)는 두지 않는다(2026-11-02 사용자 "배경색까진 필요없어" → "border도 필요없어").
    초점은 Radix 의 열림 자동 초점(마운트 직후) 뒤에 줘야 이긴다 → open 관측 후 rAF 2번.
-   ⚠ 칩의 '방금 건 필터' 툴팁(flash)을 먼저 꺼야 한다 — 남은 툴팁 레이어가 드로어의 첫 Esc 를 가져간다(FilterChipRow 가 끈다). */
+   ⚠ 칩의 '방금 건 필터' 툴팁(flash)을 먼저 꺼야 한다 — 남은 툴팁 레이어가 드로어의 첫 Esc 를 가져간다(FilterChipRow 가 끈다).
+   예외 — [상세필터] 버튼이 없고 칸을 펼쳐 둔 화면(GridFrame filterPanel)은 드로어를 열지 않고 패널의 같은 이름 칸에 바로 초점(focusPanelField). */
 
 export const FILTER_TRIGGER_TEXT = '상세필터';
 const OPEN_DIALOG = '[role="dialog"][data-state="open"]';
@@ -75,11 +76,23 @@ function focusField(dialog: Element, label: string): boolean {
 
 const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
 
-/** 칩(from) → 같은 GridFrame 의 상세필터를 열고 label 항목으로 이동. 트리거가 없으면 false(아무 일도 안 한다) */
+/** 드로어 없이 칸을 펼쳐 둔 화면(GridFrame filterPanel → `[data-filter-panel]`, 자펀드정보관리 2026-11-09) —
+    패널 안에서 aria-label 이 **정확히** 같은 칸에 초점. 칸에 보이는 캡션이 없어 aria-label 이 곧 항목명이다 */
+function focusPanelField(scope: ParentNode, label: string): boolean {
+  const panel = scope.querySelector('[data-filter-panel]');
+  const want = norm(label);
+  const el = panel ? [...panel.querySelectorAll<HTMLElement>(FOCUSABLE)].find((c) => c.getAttribute('aria-label') === want) : undefined;
+  if (!el) return false;
+  el.scrollIntoView({ block: 'nearest' });
+  el.focus({ preventScroll: true });
+  return true;
+}
+
+/** 칩(from) → 같은 GridFrame 의 상세필터를 열고 label 항목으로 이동. 트리거가 없으면 인라인 패널 칸으로, 그것도 없으면 false(아무 일도 안 한다) */
 export async function jumpToFilterField(from: Element | null, label: string): Promise<boolean> {
   const scope = from?.closest('[data-grid-frame]') ?? document;
   const trigger = [...scope.querySelectorAll<HTMLButtonElement>('button')].find((b) => norm(b.textContent) === FILTER_TRIGGER_TEXT);
-  if (!trigger) return false;
+  if (!trigger) return focusPanelField(scope, label);
   trigger.click();
   const t0 = performance.now();
   let dialog: Element | null = null;

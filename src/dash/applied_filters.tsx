@@ -75,10 +75,15 @@ const sigMap = (s: string) => new Map(s ? s.split(EN).map((e) => e.split(KV) as 
    즉시 반영형 드로어(감사로그 등)는 고르는 순간 값이 바뀌어, 바로 띄우면 드로어 뒤에서 3초가 다 지나 버린다. */
 const modalOpen = () => document.querySelector('[role="dialog"][data-state="open"],[role="alertdialog"][data-state="open"]') != null;
 
+/* 칩 값 버튼 aria 꼬리말 — 드로어 화면 '상세필터에서 변경'. 칸을 펼쳐 둔 화면(GridFrame filterPanel)은 GridFrame 이 '필터에서 변경'을 넘긴다
+   (그 화면엔 [상세필터]가 없다 — 칩 클릭은 패널의 같은 이름 칸으로 간다, filter_field_jump focusPanelField) */
+const JumpHint = React.createContext('상세필터에서 변경');
+
 /* 칩 값 = 상세필터로 가는 버튼. 칩 패딩까지 눌리게 음수 마진 + 같은 패딩으로 칩 왼쪽(× 없으면 오른쪽까지) 면을 덮는다 */
 function ValueButton({ f, onJump, clearable, children }: { f: AppliedFilter; onJump?: JumpFn; clearable: boolean; children: React.ReactNode }) {
+  const hint = React.useContext(JumpHint);
   return (
-    <button type="button" onClick={() => onJump?.(f.label, f.jumpTo)} aria-label={`${f.label}: ${f.value} — 상세필터에서 변경`}
+    <button type="button" onClick={() => onJump?.(f.label, f.jumpTo)} aria-label={`${f.label}: ${f.value} — ${hint}`}
       className="inline-flex items-center border-0 bg-transparent cursor-pointer min-w-0 text-left"
       style={{ color: 'inherit', fontFamily: 'inherit', fontSize: 'inherit', fontWeight: 'inherit', lineHeight: 'inherit',
         padding: clearable ? '5px 0 5px 11px' : '5px 11px', margin: clearable ? '-5px 0 -5px -11px' : '-5px -11px', borderRadius: 9 }}>
@@ -212,7 +217,7 @@ export function planChips<T extends { id: string; kind: string; chip?: { active:
   return { shown: order.filter((it) => vis.has(it.id)), hidden: order.filter((it) => !vis.has(it.id)) };
 }
 
-export function FilterChipRow({ chips = [], applied }: { chips?: readonly FilterChipItem[]; applied?: readonly AppliedFilter[] }) {
+export function FilterChipRow({ chips = [], applied, jumpHint }: { chips?: readonly FilterChipItem[]; applied?: readonly AppliedFilter[]; jumpHint?: string }) {
   const on = activeFilters(applied);
   const clearable = on.filter((f) => f.onClear);
   const items: Item[] = [
@@ -292,7 +297,7 @@ export function FilterChipRow({ chips = [], applied }: { chips?: readonly Filter
   const hiddenActive = hidden.some((it) => it.kind === 'applied' || (it.kind === 'chip' && it.chip.active));
 
   if (items.length === 0) return null;
-  return (
+  const row = (
     /* 남은 폭을 다 받는다(flex-1, basis 0 → 판정 폭 = 우측 액션을 뺀 나머지). */
     <div ref={boxRef} role="group" aria-label="필터" className="relative flex items-center min-w-0 flex-1 overflow-hidden"
       /* 세로 3px 여유 — overflow:hidden 이 칩 focus 링을 자르지 않게(음수 마진으로 줄 높이는 그대로) */
@@ -311,6 +316,7 @@ export function FilterChipRow({ chips = [], applied }: { chips?: readonly Filter
       </div>
     </div>
   );
+  return jumpHint ? <JumpHint.Provider value={jumpHint}>{row}</JumpHint.Provider> : row;
 }
 
 function TriggerFace({ n, tinted }: { n: number; tinted: boolean }) {
