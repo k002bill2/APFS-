@@ -3,8 +3,8 @@
 
    설계서 → 우리 규약
    - ① 브레드크럼·제목(메뉴 리프 '계좌잔액')·☆ 즐겨찾기·[메인으로] = GridFrame 규약. KPI 배지 행 없음.
-   - ② 툴바: [Σ 소계표시](E01 상태 필터 — 툴바 첫 칩 무리의 FilterChip, aria-pressed · 선택 음영 · 재클릭 해제) ·
-     [상세필터](E02) · ⟳ 조회(E03 — 재조회 + 토스트 "조회되었습니다"). 선택 체크박스 없음(조회 전용).
+   - ② 툴바 우: 단위 캡션 · [상세필터](E02) · [Σ 소계표시](E01 표시 옵션 토글 — UI.Button pressed(aria-pressed), 재클릭 해제) ·
+     ⟳ 조회(E03 — 재조회 + 토스트 "조회되었습니다"). 선택 체크박스 없음(조회 전용).
    - ③ 그리드 14열(설계서 순서): 계정구분·계좌번호·통화·예금종류(= 계정과목)·전잔·기간증가·기간감소·잔액·개설일·금융기관·적요·만기일·이자율·개설목적.
      금액 4열·이자율만 우측, 나머지 좌측. 계정구분 순 → 계좌번호 순. 헤더 정렬 끔(소계 위치 고정). 페이지 나눔 없음(계좌 수가 적다).
      소계표시 ON = 계정구분 그룹 끝 소계 행(--muted + 굵게, 계정구분 칸 '소계'). 맨 아래 pinned 합계 행(계좌 행만 합산).
@@ -18,8 +18,9 @@
      조회 결과 0건이면 내보내기·인쇄·예금명세서 출력 모두 "조회 결과가 없습니다.".
 
    결정·가정
-   - 소계표시 위치: 설계서는 [상세필터] 왼쪽 버튼이지만, 상태 필터 칩 규약(UI.FilterChip — aria-pressed)이라 툴바 왼쪽 칩 무리에 둔다.
-   - 미결재포함·잔액여부: 미결재 거래 데이터·잔액여부 의미가 없어 상태만 두고 거르지 않는다(캡션 '· 데이터 연동 후 적용', 칩은 기본값과 다를 때만).
+   - 소계표시 위치: 설계서는 [상세필터] 왼쪽 버튼. 행을 거르지 않는 표시 옵션이라 필터 칩 줄이 아니라 툴바 우측 토글로 둔다
+     (2026-11-09 사용자 결정 — 출자금현황 [Σ 합계]와 같은 모양, 순서는 상세필터 → 토글 → 조회).
+   - 미결재포함·잔액여부: 미결재 거래 데이터·잔액여부 의미가 없어 상태만 두고 거르지 않는다(캡션 '· 데이터 연동 후 적용'). 거르지 않으므로 적용 칩도 만들지 않는다(apfs-detail-filter — no-op 항목 칩 없음).
    - 만기여부 판정 기준일 = 데모 기준일(DEMO_TODAY). 만기일 없는 계좌는 '만기 전'. 만기기간을 지정하면 만기일 없는 계좌는 빠진다.
    - 기준기간을 비우면(× · 직접 삭제) 전 기간 — 전잔 0, 기간증감 = 전체 누계.
    - 예금명세서 합 계 = 계정구분(쪽 묶음)별 합계 — 설계서 샘플(합 계 = 그 계정구분 소계 합)대로. 전체 총계는 두지 않는다.
@@ -248,10 +249,8 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
     { label: '계정구분', value: applied.accountType, onClear: () => patch({ accountType: '' }) },
     { label: '기준기간', value: range(applied.from, applied.to), onClear: () => patch({ from: '', to: '' }) },
     ynChip('active', '사용여부'), ynChip('matured', '만기여부'), ynChip('freeWithdraw', '수시입출금여부'),
-    { label: '미결재포함', value: applied.includeUnapproved ? '미결재 포함' : '', onClear: () => patch({ includeUnapproved: false }) },
     { label: '개설기간', value: range(applied.openFrom, applied.openTo), onClear: () => patch({ openFrom: '', openTo: '' }) },
     { label: '만기기간', value: range(applied.maturityFrom, applied.maturityTo), onClear: () => patch({ maturityFrom: '', maturityTo: '' }) },
-    { label: '잔액여부', value: applied.balance.trim(), onClear: () => patch({ balance: '' }) },
   ];
 
   const ynSelect = (k: 'active' | 'matured' | 'freeWithdraw', label: string) => (
@@ -267,12 +266,12 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
       title={TITLE}
       favRoute={ROUTE}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* E01 소계표시 — 상태 필터 칩(aria-pressed · 선택 음영), 재클릭 = 해제 */
-      filterChips={[{ key: 'subtotal', label: 'Σ 소계표시', active: showSubtotal, onSelect: () => setShowSubtotal((v) => !v) }]}
       appliedFilters={chips}
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>단위: 원</span>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
+        {/* E01 소계표시 — 표시 옵션 토글(aria-pressed), 재클릭 = 해제. 필터가 아니라 칩 줄에 두지 않는다(2026-11-09 사용자 결정) */}
+        <Button variant="outline" size="sm" leadingIcon="sigma" pressed={showSubtotal} onClick={() => setShowSubtotal((v) => !v)}>소계표시</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={keysOn ? HOTKEYS.refresh : undefined} />
       </>}
       footerLeft={<span>{`총 ${String(accounts.length)}건 중 ${String(shownAccounts)}건 표시`}</span>}

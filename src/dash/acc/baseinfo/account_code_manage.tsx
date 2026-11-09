@@ -111,10 +111,10 @@ export function AccountCodeManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const visible = useMemo(() => filterAccounts(rows, { name: fName, cls: fCls, dc: fDc, contra: fContra, input: fInput, use: fUse }), [rows, fName, fCls, fDc, fContra, fInput, fUse]);
 
-  /* 필터를 바꾸면 선택을 전부 해제한다(2026-10-27 사용자 결정 — apfs-detail-filter) */
-  useEffect(() => { apiRef.current?.deselectAll(); }, [fName, fCls, fDc, fContra, fInput, fUse]);
-
   const selIdsRef = useRef<readonly string[]>([]); selIdsRef.current = selIds;
+  /* 필터를 바꾸면 선택을 전부 해제한다(2026-10-27 사용자 결정 — apfs-detail-filter).
+     ref 를 먼저 비운다 — 안 비우면 뒤이은 rowData 갱신의 restoreSelection 이 낡은 ref 로 통과 행을 되살린다 */
+  useEffect(() => { selIdsRef.current = []; apiRef.current?.deselectAll(); }, [fName, fCls, fDc, fContra, fInput, fUse]);
   const onGridReady = useCallback((e: GridReadyEvent<AccountRow>) => { apiRef.current = e.api; }, []);
   const onSelectionChanged = useCallback((e: SelectionChangedEvent<AccountRow>) => {
     setSelIds(e.api.getSelectedRows().map((r) => r.code));

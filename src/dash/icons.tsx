@@ -67,6 +67,7 @@ const MAP = {
   chart:["ChartLine","LineChart","TrendingUp"], "chart-bar":["ChartColumn","BarChart3","BarChart"],
   settings:["Settings"], target:["Target"], trending:["TrendingUp"], "trending-down":["TrendingDown"],
   calendar:["Calendar"], smartphone:["Smartphone"], bell:["Bell"], search:["Search"], menu:["Menu"], "panel-left":["PanelLeft"],
+  sigma:["Sigma"],   // Σ 소계·합계 표시 토글(2026-11-09)
   "chevron-right":["ChevronRight"], "chevron-down":["ChevronDown"], "chevron-left":["ChevronLeft"],
   more:["MoreHorizontal","Ellipsis"], sun:["Sun"], moon:["Moon"], x:["X"], check:["Check"],
   "check-circle":["CircleCheckBig","CheckCircle2","CircleCheck"], download:["Download"], upload:["Upload"],

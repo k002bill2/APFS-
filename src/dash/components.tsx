@@ -224,7 +224,10 @@ function FilterChip({ active, children, onClick, dot, count }: { active?: boolea
 }
 
 /* ---- Button ---- */
-function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, children, onClick, style, loading, loadingIcon = true, disabled }: { variant?: "primary" | "secondary" | "outline" | "ghost" | "accent"; size?: Size; leadingIcon?: string; trailingIcon?: string; children?: React.ReactNode; onClick?: (e?: any) => void; style?: React.CSSProperties; loading?: boolean; loadingIcon?: boolean; disabled?: boolean }) {
+/* pressed = 표시 옵션 토글(Σ 소계·합계 등)의 켜짐 — aria-pressed + primary 테두리·12% 배경(2026-11-09 사용자 결정 (a)).
+   클래스가 아니라 inline 으로 얹는다: 변형 클래스에 border-color 유틸을 겹치면 CSS 순서로 무음 소실된다(아래 variantCls 주석). */
+const PRESSED_STYLE: React.CSSProperties = { background: 'color-mix(in srgb, var(--primary) 12%, var(--card))', borderColor: 'var(--primary)', color: 'var(--foreground)' };
+function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, children, onClick, style, loading, loadingIcon = true, disabled, pressed }: { variant?: "primary" | "secondary" | "outline" | "ghost" | "accent"; size?: Size; leadingIcon?: string; trailingIcon?: string; children?: React.ReactNode; onClick?: (e?: any) => void; style?: React.CSSProperties; loading?: boolean; loadingIcon?: boolean; disabled?: boolean; pressed?: boolean }) {
   const sizeCls = size === "sm" ? "px-[11px] py-1.5 text-[12.5px]" : size === "lg" ? "px-5 py-[11px] text-[13.5px]" : "px-[15px] py-2 text-[13.5px]";
   const variantCls = {
     // 변형마다 border-color 유틸을 하나만 둔다 — 베이스 border-transparent + 변형 border-border-strong 처럼 둘을 겹치면
@@ -243,8 +246,9 @@ function Button({ variant = "primary", size = "md", leadingIcon, trailingIcon, c
       onClick={(e) => { if (loading || disabled) return; onClick?.(e); }}
       disabled={disabled}
       aria-busy={loading || undefined}
+      aria-pressed={pressed}
       className={cx("ui-btn ui-" + variant, "inline-flex items-center justify-center gap-[7px] cursor-pointer font-[inherit] font-semibold rounded-[9px] whitespace-nowrap border transition-colors duration-tok-fast ease-ds disabled:opacity-60 disabled:cursor-not-allowed", loading && "cursor-wait", sizeCls, variantCls)}
-      style={style}>{loading && loadingIcon ? <Icon name="loader" size={iconSize} stroke={2.2} className="animate-spin" /> : leadingIcon && <Icon name={leadingIcon} size={iconSize} stroke={2.2} />}{children}{trailingIcon && <Icon name={trailingIcon} size={iconSize} stroke={2.2} />}</motion.button>
+      style={pressed ? { ...PRESSED_STYLE, ...style } : style}>{loading && loadingIcon ? <Icon name="loader" size={iconSize} stroke={2.2} className="animate-spin" /> : leadingIcon && <Icon name={leadingIcon} size={iconSize} stroke={2.2} />}{children}{trailingIcon && <Icon name={trailingIcon} size={iconSize} stroke={2.2} />}</motion.button>
   );
 }
 

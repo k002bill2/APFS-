@@ -53,6 +53,63 @@ describe('② AUTO_SIZE_CONTENT 회계 그리드 — 잔여폭 흡수 컬럼 1�
   });
 });
 
+/* ④ 푸터 페이저 = ‹ 이전 · 페이지 번호 · 다음 › — apfs-grid "푸터 골드 양식"(IconBtn chevron + PageBtn).
+   2026-11-09 점검: 11-06 신규 6화면이 ‹ › 만 두어 몇 쪽인지·어느 쪽인지 보이지 않았다(회계 밖은 28곳 중 25곳이 번호). */
+const PAGER_PAGES = [
+  'closing_journal_manage.tsx', 'fixed_asset_manage.tsx', 'general_journal_manage.tsx', 'suspense_manage.tsx',
+  'bank_account_manage.tsx', 'contribution_status_manage.tsx', 'agrifood_entity_manage.tsx', 'ir_info_manage.tsx',
+  'holiday_manage.tsx', 'partner_manage.tsx',
+];
+describe('④ 회계 페이저 — 페이지 번호 버튼', () => {
+  it.each(PAGER_PAGES)('%s', (f) => {
+    const src = readSrc(f);
+    expect(src).toMatch(/<PageBtn key=\{i\} n=\{i \+ 1\} active=\{i === page\.current\} onClick=\{\(\) => apiRef\.current\?\.paginationGoToPage\(i\)\} \/>/);
+    expect(src).toMatch(/aria-current=\{active \? 'page' : undefined\}/);
+  });
+});
+
+/* ⑤ 데이터 연동 전(no-op) 항목은 적용 칩을 만들지 않는다 — apfs-detail-filter "no-op 항목은 칩을 만들지 않는다".
+   계좌잔액(2026-11-09 점검): 미결재포함·잔액여부가 행을 거르지 않는데 칩이 떠 필터가 걸린 것처럼 보였다. */
+describe('⑤ no-op 필터 항목 — 적용 칩 없음', () => {
+  const src = readSrc('account_balance_manage.tsx');
+  const noop = [...src.matchAll(/<Noop(?:Label|Check) label="([^"]+)"/g)].map((m) => m[1]);
+  it('no-op 항목이 있다(이름이 바뀌어 0건 통과하지 않게)', () => { expect(noop.length).toBeGreaterThan(0); });
+  it.each(noop)('%s', (label) => {
+    const chips = src.slice(src.indexOf('const chips: AppliedFilter[] = ['), src.indexOf('];', src.indexOf('const chips: AppliedFilter[] = [')));
+    expect(chips).not.toContain(`label: '${label}'`);
+  });
+});
+
+/* ⑥ 단일 대상 액션(수정)은 1건일 때만 노출 — 2건 이상이면 숨긴다(비활성 아님). apfs-aggrid "단일 대상 액션 = single 게이트".
+   2026-11-09 점검: 휴일관리·회계거래처관리만 disabled 로 남아 같은 회계 메뉴 안에서 동작이 갈렸다(회계 밖 사용 0곳). */
+describe('⑥ 선택 바 [수정] — 비활성 대신 숨김', () => {
+  const accTsx = walkDash().filter((p) => p.includes(`${sep}acc${sep}`) && p.endsWith('.tsx'));
+  it.each(accTsx.map((p) => [p.split(sep).pop() as string, p] as const))('%s', (_f, p) => {
+    expect(readFileSync(p, 'utf8')).not.toMatch(/disabled=\{selCount !== 1\}/);
+  });
+});
+
+/* ⑦ 표시 옵션(Σ 소계·합계 토글 · 금액 단위)은 툴바 우측 — 필터 칩 줄(filterChips)·상세필터에 두지 않는다
+   (2026-11-09 사용자 결정 (a)). 같은 자금관리 안에서 계좌잔액은 필터 칩, 출자금현황은 Button 클래스를 복사한 로컬 토글 +
+   상세필터 '단위'(바꾸면 적용 칩이 생김)로 갈려 있었다. 토글 = UI.Button `pressed`(aria-pressed), 단위 = `단위: X` 캡션 +
+   SegTabs(iam/sfund/fund_stats 선례). */
+describe('⑦ 표시 옵션 = 툴바 우측 토글', () => {
+  const accTsx = walkDash().filter((p) => p.includes(`${sep}acc${sep}`) && p.endsWith('.tsx'));
+  it.each(accTsx.map((p) => [p.split(sep).pop() as string, p] as const))('%s — 칩 줄·드로어·복사 버튼에 표시 옵션 없음', (_f, p) => {
+    const src = readFileSync(p, 'utf8');
+    expect(src).not.toMatch(/className="ui-btn /);                          // Button 클래스를 복사한 로컬 토글 금지
+    expect(src).not.toMatch(/<DrawerField label="단위"/);                    // 단위는 상세필터가 아니라 툴바
+    expect(src).not.toMatch(/filterChips=\{[^\n]*label: '[^']*(소계|합계)/); // 소계·합계 토글은 필터 칩이 아니다
+  });
+  it('계좌잔액 소계표시 · 출자금현황 합계 = Button pressed', () => {
+    expect(readSrc('account_balance_manage.tsx')).toMatch(/<Button [^>]*leadingIcon="sigma" pressed=\{showSubtotal\}/);
+    expect(readSrc('contribution_status_manage.tsx')).toMatch(/<Button [^>]*leadingIcon="sigma" pressed=\{sumOn\}/);
+  });
+  it('출자금현황 단위 = 툴바 SegTabs', () => {
+    expect(readSrc('contribution_status_manage.tsx')).toMatch(/<SegTabs size="sm" value=\{unit\}/);
+  });
+});
+
 describe('③ 삭제전표 긴 텍스트 칸 — 말줄임 렌더러', () => {
   const src = readSrc('deleted_journal_manage.tsx');
   it('textCell = truncate span', () => { expect(src).toMatch(/const textCell = [^\n]*className="min-w-0 truncate"/); });
