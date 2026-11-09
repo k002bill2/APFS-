@@ -186,7 +186,7 @@ type GovGridRow = Omit<GovSupport, 'status'> & { status: GovSupportStatus | null
 const GOV_TONE: Record<GovSupportStatus, 'info' | 'primary' | 'muted' | 'danger'> = { 예정: 'info', 진행: 'primary', 완료: 'muted', 취소: 'danger' };
 function GovStatusCell(p: ICellRendererParams<GovGridRow>) {
   const st = p.data?.status;
-  return st ? <StatusBadge tone={GOV_TONE[st]} label={st} size="sm" compact /> : null;
+  return st ? <StatusBadge tone={GOV_TONE[st]} label={st} size="lg" compact /> : null;
 }
 const GOV_HEAD = ['사업연도', '사업명', '주관기관', '지원유형', '지원기간', '지원금액', '진행상태', '비고'];
 const GOV_COLS: ColDef<GovGridRow>[] = [
@@ -235,7 +235,7 @@ const MAT_TONE: Record<BizMaterial['kind'], 'primary' | 'info'> = { 사업계획
 const demoPreview = (file: string) => toast(`${file} 미리보기(데모)`);
 const demoDownload = (file: string) => toast(`${file} 다운로드(데모)`);
 function MatKindCell(p: ICellRendererParams<BizMaterial>) {
-  return p.data ? <TagBadge tone={MAT_TONE[p.data.kind]} size="sm">{p.data.kind}</TagBadge> : null;
+  return p.data ? <TagBadge tone={MAT_TONE[p.data.kind]} size="lg">{p.data.kind}</TagBadge> : null;
 }
 /* 미리보기 — 아이콘 전용 버튼(접근名 = '<파일명> 미리보기'). 삭제전표 첨부 버튼과 같은 외관 */
 function PreviewCell(p: ICellRendererParams<BizMaterial>) {
