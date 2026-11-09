@@ -59,6 +59,7 @@ APFS = 농림수산식품모태펀드 투자자산관리시스템 **대시보드
 4. **테마 양립**: 라이트/다크 모두에서 대비/가독성 확인.
 5. **접근성**: 의미 있는 라벨, 키보드 포커스, 색만으로 정보 전달 금지(상태는 아이콘+텍스트 병행). 상세는 [[web-a11y]].
 6. **라우팅**: app.tsx가 route 문자열로 분기한다. 바스포크 페이지(main, risk, gp-health, accounting, schedule, subfund, asset, asset-funding, report* 등)는 명시 분기, **그 외 route는 전부 `GenericListPage`(스키마 주도, `src/dash/schemas/`)로 폴백**한다. route는 메뉴 리프의 한글 라벨(NFC)이 원칙이고 `apfs.route` localStorage에 **원시 문자열**로 영속화된다.
+7. **반복행 행삭제 = 체크했을 때만(전 화면 규칙, 2026-11-09 사용자 지시)**: 행을 추가·삭제하는 표(모달 반복행·편집 그리드)는 첫 열 선택 체크박스로 고른 행이 있을 때만 `N건 선택됨 · [행삭제]`를 보인다. 상시 [행삭제]·행별 휴지통·행 클릭 선택 금지. 상세 [[apfs-form-modal]] 규약 7, 규칙 `.claude/rules/frontend-design-defaults.md` 16.
 
 ## 관련 스킬 (상세는 각 스킬 참조 — 중복 금지)
 리스트/그리드 골격=[[apfs-grid]], AG Grid 본체=[[apfs-aggrid]], CRUD 모달=[[apfs-form-modal]], 상세필터=[[apfs-detail-filter]], 날짜/기간 선택=[[apfs-datepicker]], 단계 워크플로우=[[apfs-stage-workflow]], 읽기전용 명세 팝업=[[apfs-spec-popup]], 목업→관리 페이지 조립=[[apfs-manage-page]], 색 토큰=[[color-tokens]], 쌓임맥락=[[z-index]], 반응형=[[responsive-ui]], 접근성=[[web-a11y]].

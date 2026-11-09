@@ -23,6 +23,7 @@ paths:
 13. 색 좌측 스트라이프 강조 카드(`border-l-4` 컬러). 구분선용 1px 중립 `--border` 는 허용.
 14. hex·rgba 리터럴 색 → `color-tokens` 스킬 규약. 예외 목록은 그 스킬의 '정당한 hex 예외' 절이 정본(로고 SVG·`index.html` 부트·DS hex 라벨·scrim rgba). 기존 에디터 글자색 팔레트·외부 위젯 테마 주입은 현행 유지.
 15. 상태 배지 앞 점(bullet) — 이미 폐지됨(가드 `status_badge_no_dot.test.ts`).
+16. 반복행 편집 표의 상시 `[행삭제]`·행마다 붙은 휴지통 아이콘·행 클릭 선택 → **첫 열 선택 체크박스 + 체크했을 때만 `N건 선택됨 · [행삭제]`**(0건이면 DOM 에 없음, danger). 대표·주계좌 같은 값 체크박스는 선택이 아니다(선택 열을 따로). 2026-11-09 사용자 지시 "룰로 모두 적용" — 기존 화면도 적용 대상. 상세·예외는 apfs-form-modal 규약 7, 가드 `row_delete_on_check.test.ts`.
 
 ## 대신 이것을 쓴다 (Do)
 - **색**: 표면 `--bg` `--card` `--muted`, 글자 `--foreground` `--muted-foreground` `--caption`, 선 `--border` `--border-strong`.

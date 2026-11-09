@@ -39,6 +39,7 @@
 | 13 | 색 좌측 스트라이프 카드 | 템플릿형 강조, 상태색 의미 희석 | 현재 없음. `borderLeft` 히트는 전부 1–2px 중립 구분선(`shell.tsx:435`, `confirm_combo.tsx:29`, `custody_confirm_detail_modal.tsx:42`) | 신규 규칙 |
 | 14 | hex·rgba 리터럴 색 | 다크모드 추종 불가 | 실질 위반 없음. 비주석 hex 13줄 = 에디터 글자색 팔레트(`RichTextElements.tsx:47-54`)·외부 주소 위젯 테마(`AddressField.tsx:50-51`)·DS 스와치(`designsystem.tsx:182`). 단 6번 Hero의 `rgba(255,255,255,…)`(main.tsx:40,46,49,57 등)는 6번과 함께 처리 | 신규 규칙(`color-tokens` 스킬 참조) |
 | 15 | 상태 배지 앞 점 | 2026-09-24 사용자 결정으로 폐지 | 현재 없음(가드 `src/dash/status_badge_no_dot.test.ts`) | 기존 결정 재확인 |
+| 16 | 반복행 상시 [행삭제]·행별 휴지통·행 클릭 선택 | 2026-11-09 사용자 지시 "행삭제는 체크박스 체크시 나타나게해 이건 룰로 모두 적용하게 해" — 고르기 전엔 지울 대상이 없으니 버튼도 없다. 값 체크박스(대표·주계좌)를 선택으로 쓰면 '대표 지정 = 삭제 대상'이 된다 | 위반 2곳 전환(`asset_fund_info_modal.tsx` 운용사 표 — 상시 행삭제+행 클릭 선택 / `subfund_form_modal.tsx` 업무집행조합원·담당자 — 행별 휴지통). 이미 준수: `gp_quant_indicator_modal`·`journal_entry_screen`·`partner_form_modal`·`closing_form_manage`·`registry_ledger_modals`. 예외: `asset_funding` 우클릭(체크박스 열 없음) | 기존 화면도 적용(사용자 지시) · 가드 `row_delete_on_check.test.ts` |
 
 **금지하지 않은 것(의도적 선택으로 판단)**: `PopNumber`/`CountUp`/`TextsReveal`(`src/styles/transitions.css:128-129` 주석 · `src/dash/motion/count-up.tsx`; "사용자 도입" 여부는 확인 필요), `dialog-in` 3D 플립+blur(tailwind.config.js 주석, 2026-09-08/18 사용자 리포트 기반 조정), 인증 화면 `--radius-2xl`·`shadow-md`(claude.ai/design 캔버스 정본), 오버레이 `shadow-lg`.
 

@@ -46,7 +46,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 행 다중선택(기본) | 모듈 상수 `ROW_SELECTION = {mode:'multiRow',checkboxes:true,headerCheckbox:false,selectAll:'filtered',enableClickSelection:false}`(선택은 **체크박스로만** — 행 본문 클릭 선택 없음, 2026-09-22) + `selectionColumnDef={SELECTION_COL}` + `getRowId` 안정 id. **단일 대상 액션은 `selCount===1` 게이트, 삭제는 게이트 필터형 벌크**(2026-09-23 사용자 결정 — 종전 라디오 단일선택은 폐기). ⚠ **선택이 액션(삭제·단계전이·행 편집)을 만들 때만** — 조회 전용이면 `rowSelection` 자체를 두지 않는다. 라디오는 master-detail 좌 그리드 예외뿐 | [[apfs-aggrid]] |
 | 심사단계 셀 + 단계별 작업 버튼 + 전이 | **[[apfs-stage-workflow]]** (신규 패턴) | 이 조립표 |
 | 편집 팝업(flat ≤ 25필드) | `kind:'form'` PageSchema + `RowFormModal`(단계별 제목은 `title` prop) | [[apfs-form-modal]] |
-| 편집 팝업(섹션·반복행·첨부표) | 전용 섹션형 모달 — `SchemaField` 재사용 | [[apfs-form-modal]] "확장: 섹션형·반복행" |
+| 편집 팝업(섹션·반복행·첨부표) | 전용 섹션형 모달 — `SchemaField` 재사용. 반복행 **[행삭제]는 첫 열 체크박스로 고른 행이 있을 때만**(상시 행삭제·행별 휴지통 금지, 2026-11-09 전 화면 규칙) | [[apfs-form-modal]] "확장: 섹션형·반복행" · 규약 7 |
 | 다른 엔티티 1건 고르기(입력칸 옆 [검색] — 계정과목·거래처) | 공용 검색 팝업을 **import**(없으면 쓰는 범위의 루트에 신설), 고를 수 있는 범위는 호출부 `selectable` | [[apfs-form-modal]] "확장: 검색(선택) 팝업" |
 | 한 화면 분량 입력(헤더 + 분개 그리드 + 첨부) · 같은 상세의 조회/삭제 버전 | 전체 화면 `Dialog` + `mode` 유니온(새 상세 화면을 만들지 않고 모드 추가) | [[apfs-form-modal]] "확장: 전체 화면 입력 다이얼로그" |
 | 논리삭제 + 삭제이력 보기 | 삭제 = 목록에서 빼서 삭제이력 state 로 이동(최종수정자 = 삭제 처리자) · 툴바 보조 버튼 [삭제이력](`history` 아이콘, 등록 오른쪽·조회 왼쪽) → 조회 전용 팝업(행 선택 없음 · 엑셀 · 닫기) | 툴바 순서=[[apfs-grid]] "관리형 리스트 툴바·타이틀 규약" · 정본 `acc/baseinfo/account_delete_history_modal.tsx` |
