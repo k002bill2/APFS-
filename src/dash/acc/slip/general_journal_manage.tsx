@@ -293,7 +293,7 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
         <Button variant="outline" size="sm" leadingIcon="refresh" onClick={() => setModal({ kind: 'reverse', id: single.id })}>역분개</Button>
         <Button variant="outline" size="sm" leadingIcon="layers" onClick={() => openEntry({ mode: 'copy', source: single })}>복사</Button>
       </>}
-      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={askDelete}>삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={askDelete}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={clearSel}>선택 해제</Button>
     </>
   ) : null;
@@ -416,7 +416,7 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
-              <SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }} onSubmit={() => commitDelete(modal.ids)}>삭제</SaveButton>
+              <SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onSubmit={() => commitDelete(modal.ids)}>삭제</SaveButton>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

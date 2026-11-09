@@ -371,7 +371,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       {single.compliance && <Button variant="ghost" size="sm" leadingIcon="trash" style={{ color: 'var(--danger)' }} onClick={() => setModal({ kind: 'complianceDelete' })}>준법감시 삭제</Button>}
       </>}
       {/* 다건 선택 — 단건 전이 액션 대신 일괄 삭제만 */}
-      {selCount >= 2 && <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={() => setModal({ kind: 'bulkDelete', ids: [...selIds] })}>삭제</Button>}
+      {selCount >= 2 && <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={() => setModal({ kind: 'bulkDelete', ids: [...selIds] })}>삭제</Button>}
       <Button variant="ghost" size="sm" onClick={clearSelection}>선택 해제</Button>
     </>
   ) : null;
@@ -503,7 +503,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
-              <AlertDialogAction onClick={deleteCompliance} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
+              <AlertDialogAction onClick={deleteCompliance} style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }}>삭제</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -519,7 +519,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
-              <AlertDialogAction onClick={() => deleteSelected(modal.ids)} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
+              <AlertDialogAction onClick={() => deleteSelected(modal.ids)} style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }}>삭제</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

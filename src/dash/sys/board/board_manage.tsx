@@ -391,7 +391,7 @@ export function BoardManage({ onNav }: { onNav?: (r: string) => void }) {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
-              <SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }} onSubmit={() => commitDelete(modal.ids)}>삭제</SaveButton>
+              <SaveButton leadingIcon="trash" busyLabel="삭제 중" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onSubmit={() => commitDelete(modal.ids)}>삭제</SaveButton>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

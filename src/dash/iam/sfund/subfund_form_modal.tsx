@@ -93,7 +93,7 @@ function CheckedDeleteTools({ count, onDelete }: { count: number; onDelete: () =
   return count > 0 ? (
     <>
       <span className="font-semibold" aria-live="polite" style={{ fontSize: 13 }}>{count}건 선택됨</span>
-      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={onDelete}>행삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={onDelete}>행삭제</Button>
     </>
   ) : null;
 }

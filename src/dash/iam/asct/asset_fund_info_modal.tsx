@@ -192,7 +192,7 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
             {sel.size > 0 ? (
               <>
                 <span className="font-semibold" aria-live="polite" style={{ fontSize: 13 }}>{sel.size}건 선택됨</span>
-                <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={deleteGps}>행삭제</Button>
+                <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={deleteGps}>행삭제</Button>
               </>
             ) : null}
           </>}>

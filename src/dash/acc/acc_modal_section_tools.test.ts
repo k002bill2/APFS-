@@ -40,8 +40,8 @@ describe('회계 모달 Section — 행 편집 도구는 제목 바로 옆 좌�
   });
 
   it('선택 작업 [행삭제]·[삭제]는 danger', () => {
-    expect(readSrc('journal_entry_screen.tsx')).toMatch(/variant="primary" size="sm" leadingIcon="trash" style=\{\{ background: 'var\(--danger\)' \}\} onClick=\{removeChecked\}>행삭제</);
-    expect(readSrc('partner_form_modal.tsx')).toMatch(/variant="primary" size="sm" leadingIcon="trash" style=\{\{ background: 'var\(--danger\)' \}\} onClick=\{deleteRows\}>삭제</);
+    expect(readSrc('journal_entry_screen.tsx')).toMatch(/variant="primary" size="sm" leadingIcon="trash" style=\{\{ background: 'var\(--danger-fill\)', color: 'var\(--danger-fill-foreground\)' \}\} onClick=\{removeChecked\}>행삭제</);
+    expect(readSrc('partner_form_modal.tsx')).toMatch(/variant="primary" size="sm" leadingIcon="trash" style=\{\{ background: 'var\(--danger-fill\)', color: 'var\(--danger-fill-foreground\)' \}\} onClick=\{deleteRows\}>삭제</);
   });
 });
 

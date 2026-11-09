@@ -458,7 +458,7 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
       {/* 수정은 **단건 체크일 때만**(2026-09-23 사용자 결정). openEdit 안의 1건 가드는 방어로 남긴다. */}
       {selCount === 1 && <Button variant="primary" size="sm" leadingIcon="file" onClick={openEdit}>수정</Button>}
       {/* 삭제는 구분(등록/해제)과 무관하게 항상 노출 */}
-      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={openDelete}>삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={openDelete}>삭제</Button>
       {/* 이미 해제된 행은 다시 해제등록할 수 없다 — 2026-09-23 사용자 결정 */}
       {!selHasReleased && <Button variant="outline" size="sm" leadingIcon="check" onClick={openRelease}>해제등록</Button>}
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>

@@ -52,7 +52,7 @@ export function CancelConfirmDialog({ account, dates, withReason, onConfirm, onC
         )}
         <AlertDialogFooter>
           <AlertDialogCancel>취소</AlertDialogCancel>
-          <SaveButton leadingIcon="" busyLabel="취소 중" style={{ background: 'var(--danger)' }} onSubmit={submit}>취소 확인</SaveButton>
+          <SaveButton leadingIcon="" busyLabel="취소 중" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onSubmit={submit}>취소 확인</SaveButton>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -793,7 +793,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
           value={uniformConfirm(selRows.map((r) => r[c.key] as string | undefined))}
           onPick={(v) => bulkSetValue(c.key, v)} />
       ))}
-      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger)" }} onClick={bulkDelete}>삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: "var(--danger-fill)", color: "var(--danger-fill-foreground)" }} onClick={bulkDelete}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
     </>
   ) : null;
@@ -948,7 +948,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
-              <AlertDialogAction onClick={() => doDelete(delRows.map((r) => r.id))} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
+              <AlertDialogAction onClick={() => doDelete(delRows.map((r) => r.id))} style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }}>삭제</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

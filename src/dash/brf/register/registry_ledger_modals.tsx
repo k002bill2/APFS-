@@ -120,7 +120,7 @@ export function MiniTable({ heads, rows, act, label, right = [], empty = '변경
         <div className="flex items-center gap-1.5 flex-wrap" style={{ marginBottom: 8 }}>
           <span className="font-semibold" style={{ fontSize: 13 }}>{sel.length}건 선택됨</span>
           {sel.length === 1 && <Button variant="primary" size="sm" leadingIcon="file" onClick={open}>{openLabel}</Button>}
-          <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={remove}>삭제</Button>
+          <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={remove}>삭제</Button>
           <Button variant="ghost" size="sm" onClick={() => setSel([])}>선택 해제</Button>
         </div>
       )}
