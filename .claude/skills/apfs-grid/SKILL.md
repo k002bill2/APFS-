@@ -216,7 +216,7 @@ const selActions = selCount > 0 ? (        // selCount = selIds.length (→[[apf
   <>
     <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
     {single && <><StatusBadge … /><Button …>수정</Button></>}   {/* 단일 대상 액션은 1건일 때만 */}
-    <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={askDelete}>삭제</Button>   {/* 2026-11-09 통일 — outline·ghost+빨간 글자 금지(회계 가드 ⑫, 회계 밖 기존 약 10곳은 별도 이관) */}
+    <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={askDelete}>삭제</Button>   {/* 2026-11-09 통일 — 면은 --danger-fill 쌍(--danger + 흰 글자는 라이트 2.82:1 미달) · outline·ghost+빨간 글자 금지(회계 가드 ⑫, 회계 밖 기존 약 10곳은 별도 이관) */}
     <Button variant="ghost" size="sm" onClick={() => apiRef.current?.deselectAll()}>선택 해제</Button>
   </>
 ) : null;

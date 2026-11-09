@@ -20,7 +20,8 @@ APFS 대시보드의 색 토큰 규약. 전체 카탈로그·근거는 **`docs/C
 | 적응형 역할색 `var(--primary)`/`var(--accent)` | `var(--primary-foreground)`/`var(--accent-foreground)` (함께 플립) |
 | 고정 솔리드/그라디언트 `var(--brand-blue\|gray)`·`--brand-solid`·`--gradient-hero` | `var(--on-brand-solid)` (고정 흰색) |
 | 데이터색 칠(차트·`gpColor`) | `var(--on-chart-fill)` (대비 미보장) |
-| 의미 상태 `bg-danger` | `var(--destructive-foreground)` |
+| 의미 상태 `bg-danger`(배지·점) | `var(--destructive-foreground)` — ⚠ 라이트 흰 글자 2.82:1 미달(알림 개수 배지 등, 미이관) |
+| **위험 액션 채움 버튼**(선택 바·확인창 [삭제]·[취소 확인]) | 면 `var(--danger-fill)` + 글자 `var(--danger-fill-foreground)` — 적응형 쌍(라이트 #C7340F/흰 5.35:1 · 다크 #FF7E59/#10142E 7.22:1, 2026-11-09). `--danger` 면 + 흰 글자 금지. 가드 `danger_fill.test.ts` |
 
 **트윈 함정**: 겉보기 같은 컴포넌트도 배경이 적응형이냐 고정이냐로 전경이 반대가 된다. 컨테이너 배경을 토큰화하면 **자식 전경색도 반드시 함께** 점검.
 

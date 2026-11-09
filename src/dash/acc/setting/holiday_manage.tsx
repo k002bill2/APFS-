@@ -223,7 +223,7 @@ export function HolidayManage({ onNav }: { onNav?: (r: string) => void }) {
       <span className="font-semibold" style={{ fontSize: 13 }}>{String(selCount)}건 선택됨</span>
       {/* 수정 = 단일 대상 액션 — 정확히 1건일 때만 노출(apfs-aggrid single 게이트). E06·E07 삭제 = 다건 벌크 */}
       {selCount === 1 && <Button variant="primary" size="sm" onClick={() => openEdit(selIds[0])}>수정</Button>}
-      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={() => setModal({ kind: 'delete', ids: selIds })}>삭제</Button>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }} onClick={() => setModal({ kind: 'delete', ids: selIds })}>삭제</Button>
       <Button variant="ghost" size="sm" onClick={clearSel}>선택 해제</Button>
     </>
   ) : null;
@@ -310,7 +310,7 @@ export function HolidayManage({ onNav }: { onNav?: (r: string) => void }) {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
-              <AlertDialogAction onClick={() => doDelete(modal.ids)} style={{ background: 'var(--danger)', color: 'var(--destructive-foreground)' }}>삭제</AlertDialogAction>
+              <AlertDialogAction onClick={() => doDelete(modal.ids)} style={{ background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' }}>삭제</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
