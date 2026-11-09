@@ -7,6 +7,7 @@
    ⚠ 백엔드 없음 — 첨부는 파일명만 보관, 드래그앤드롭은 미구현(파일 선택 버튼만). apfs-form-modal 스킬 "escalation" 절 참조. */
 import React from 'react';
 import { UI } from '../../components';
+import { Checkbox } from '../../ui/checkbox';
 import { SchemaField, isPlainWrapControl } from '../../schemas/renderers';
 import type { FieldSpec } from '../../schemas/types';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from '../../ui/dialog';
@@ -17,7 +18,7 @@ import { RefreshCw, X as XIcon } from 'lucide-react';
 import { Attachment, AttachmentGroup, AttachmentMedia, AttachmentContent, AttachmentTitle, AttachmentActions, AttachmentAction } from '../../ui/attachment';
 
 const { useState, useRef } = React;
-const { Button, SaveButton, IconBtn } = UI;
+const { Button, SaveButton } = UI;
 
 const GP_KINDS = ['대표GP', '공동GP'];
 const DUTY_KINDS = ['GP담당자', '모태펀드담당자', 'RISK관리담당자'];
@@ -62,8 +63,40 @@ const thStyle: React.CSSProperties = { textAlign: 'left', fontSize: 13, fontWeig
 const tdStyle: React.CSSProperties = { padding: '4px 0', paddingRight: 8, verticalAlign: 'middle' };
 const thLast: React.CSSProperties = { ...thStyle, paddingRight: 0 };
 const tdLast: React.CSSProperties = { ...tdStyle, paddingRight: 0 };
-/* 행 삭제(아이콘 전용 버튼) = 값이 아닌 컨트롤 열 — 표 정렬 규약의 예외로 가운데 유지 */
-const tdCtrl: React.CSSProperties = { ...tdLast, textAlign: 'center' };
+/* 선택 체크박스 = 값이 아닌 컨트롤 열(첫 열, 44 — 그리드 SELECTION_COL 과 같은 폭) — 표 정렬 규약의 예외로 가운데 */
+const thCtrl: React.CSSProperties = { ...thStyle, width: 44, textAlign: 'center' };
+const tdCtrl: React.CSSProperties = { ...tdStyle, textAlign: 'center' };
+
+/* 반복행 선택 — 행삭제는 체크했을 때만 나타난다(2026-11-09 사용자 "룰로 모두 적용", 가드 row_delete_on_check.test.ts).
+   인덱스 키 표라 삭제 직후 선택을 비운다(인덱스가 밀려 다른 행을 가리킨다). 추가는 뒤에 붙어 기존 인덱스가 그대로다 */
+function useRowChecks(count: number) {
+  const [sel, setSel] = useState<ReadonlySet<number>>(() => new Set());
+  const toggle = (i: number) => setSel((p) => { const n = new Set(p); if (n.has(i)) n.delete(i); else n.add(i); return n; });
+  const all = count > 0 && sel.size === count;
+  const toggleAll = () => setSel(all ? new Set() : new Set(Array.from({ length: count }, (_, i) => i)));
+  return { sel, toggle, all, toggleAll, clear: () => setSel(new Set()) };
+}
+type RowChecks = ReturnType<typeof useRowChecks>;
+
+function HeadCheck({ rc, count, label }: { rc: RowChecks; count: number; label: string }) {
+  return (
+    <th style={thCtrl}>
+      <span className="inline-flex"><Checkbox checked={rc.all ? true : rc.sel.size > 0 ? 'indeterminate' : false} onCheckedChange={rc.toggleAll} disabled={count === 0} aria-label={`${label} 전체 선택`} /></span>
+    </th>
+  );
+}
+function RowCheck({ rc, i, label }: { rc: RowChecks; i: number; label: string }) {
+  return <td style={tdCtrl}><span className="inline-flex"><Checkbox checked={rc.sel.has(i)} onCheckedChange={() => rc.toggle(i)} aria-label={`${label} ${i + 1}행 선택`} /></span></td>;
+}
+/* 선택 작업 — 체크한 행이 있을 때만(0건이면 DOM 에 없음). 마크업은 gp_quant_indicator_modal 과 같다 */
+function CheckedDeleteTools({ count, onDelete }: { count: number; onDelete: () => void }) {
+  return count > 0 ? (
+    <>
+      <span className="font-semibold" aria-live="polite" style={{ fontSize: 13 }}>{count}건 선택됨</span>
+      <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={onDelete}>행삭제</Button>
+    </>
+  ) : null;
+}
 
 export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow; onSave: (patch: Partial<SubFundRow>) => void; onClose: () => void }) {
   const [v, setV] = useState<Record<string, string>>({
@@ -87,6 +120,10 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
     { kind: 'RISK관리담당자', name: '이성훈', email: 'leesh@apfs.kr' },
     { kind: 'GP담당자', name: '', email: '' },
   ]);
+  const gpChecks = useRowChecks(gps.length);
+  const dutyChecks = useRowChecks(duties.length);
+  const deleteGps = () => { setGps((p) => p.filter((_, k) => !gpChecks.sel.has(k))); gpChecks.clear(); };
+  const deleteDuties = () => { setDuties((p) => p.filter((_, k) => !dutyChecks.sel.has(k))); dutyChecks.clear(); };
   const [docs, setDocs] = useState<DocRow[]>(DOC_SLOTS.map(() => ({ date: '', file: '' })));
   const fileInput = useRef<HTMLInputElement>(null);
   const pendingDoc = useRef<number>(-1);
@@ -132,16 +169,17 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
               <div className="flex items-center gap-2 mb-2">
                 <span className="font-semibold text-caption" style={{ fontSize: 12 }}>업무집행조합원(GP)</span>
                 <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setGps((p) => [...p, { kind: '공동GP', name: '' }])}>행 추가</Button>
+                <CheckedDeleteTools count={gpChecks.sel.size} onDelete={deleteGps} />
                 <span className="text-caption" style={{ fontSize: 12 }}>— 대표·공동 GP를 행 단위로 추가/삭제</span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 420, tableLayout: 'fixed' }}>
-                  <thead><tr><th style={{ ...thStyle, width: 160 }}>구분</th><th style={thStyle}>기관명(GP)</th><th style={{ ...thLast, width: 40 }}></th></tr></thead>
+                  <thead><tr><HeadCheck rc={gpChecks} count={gps.length} label="업무집행조합원" /><th style={{ ...thStyle, width: 160 }}>구분</th><th style={thLast}>기관명(GP)</th></tr></thead>
                   <tbody>{gps.length === 0 && <UI.EmptyRow span={3} msg="등록된 업무집행조합원이 없습니다." hint="「행 추가」로 입력하세요." />}{gps.map((g, i) => (
-                    <tr key={i}>
+                    <tr key={i} style={{ background: gpChecks.sel.has(i) ? 'var(--row-selected)' : undefined }}>
+                      <RowCheck rc={gpChecks} i={i} label="업무집행조합원" />
                       <td style={tdStyle}><SchemaField fill field={s(`gpk${i}`, '구분', 'select', { options: GP_KINDS })} value={g.kind} onChange={(val) => setGps((p) => p.map((x, k) => (k === i ? { ...x, kind: val } : x)))} /></td>
-                      <td style={tdStyle}><SchemaField fill field={s(`gpn${i}`, '기관명', 'text')} value={g.name} onChange={(val) => setGps((p) => p.map((x, k) => (k === i ? { ...x, name: val } : x)))} /></td>
-                      <td style={tdCtrl}><IconBtn icon="trash" label="행 삭제" size={34} onClick={() => setGps((p) => p.filter((_, k) => k !== i))} /></td>
+                      <td style={tdLast}><SchemaField fill field={s(`gpn${i}`, '기관명', 'text')} value={g.name} onChange={(val) => setGps((p) => p.map((x, k) => (k === i ? { ...x, name: val } : x)))} /></td>
                     </tr>))}</tbody>
                 </table>
               </div>
@@ -188,17 +226,18 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
           <Section title="담당자" single>
             <div className="flex items-center gap-2 mb-2">
               <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setDuties((p) => [...p, { kind: 'GP담당자', name: '', email: '' }])}>행 추가</Button>
+              <CheckedDeleteTools count={dutyChecks.sel.size} onDelete={deleteDuties} />
               <span className="text-caption" style={{ fontSize: 12 }}>— 구분·성명·EMAIL을 행 단위로 추가/삭제</span>
             </div>
             <div className="overflow-x-auto mb-3.5">
               <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 560, tableLayout: 'fixed' }}>
-                <thead><tr><th style={{ ...thStyle, width: 180 }}>담당 구분</th><th style={{ ...thStyle, width: 200 }}>성명</th><th style={thStyle}>EMAIL</th><th style={{ ...thLast, width: 40 }}></th></tr></thead>
+                <thead><tr><HeadCheck rc={dutyChecks} count={duties.length} label="담당자" /><th style={{ ...thStyle, width: 180 }}>담당 구분</th><th style={{ ...thStyle, width: 200 }}>성명</th><th style={thLast}>EMAIL</th></tr></thead>
                 <tbody>{duties.length === 0 && <UI.EmptyRow span={4} msg="등록된 담당자가 없습니다." hint="「행 추가」로 입력하세요." />}{duties.map((d, i) => (
-                  <tr key={i}>
+                  <tr key={i} style={{ background: dutyChecks.sel.has(i) ? 'var(--row-selected)' : undefined }}>
+                    <RowCheck rc={dutyChecks} i={i} label="담당자" />
                     <td style={tdStyle}><SchemaField fill field={s(`dk${i}`, '담당 구분', 'select', { options: DUTY_KINDS })} value={d.kind} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, kind: val } : x)))} /></td>
                     <td style={tdStyle}><SchemaField fill field={s(`dn${i}`, '성명', 'text', { pii: true })} value={d.name} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, name: val } : x)))} /></td>
-                    <td style={tdStyle}><SchemaField fill field={s(`de${i}`, 'EMAIL', 'text', { pii: true })} value={d.email} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, email: val } : x)))} /></td>
-                    <td style={tdCtrl}><IconBtn icon="trash" label="행 삭제" size={34} onClick={() => setDuties((p) => p.filter((_, k) => k !== i))} /></td>
+                    <td style={tdLast}><SchemaField fill field={s(`de${i}`, 'EMAIL', 'text', { pii: true })} value={d.email} onChange={(val) => setDuties((p) => p.map((x, k) => (k === i ? { ...x, email: val } : x)))} /></td>
                   </tr>))}</tbody>
               </table>
             </div>

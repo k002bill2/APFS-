@@ -6,7 +6,9 @@
    - 검색조건: 자펀드 select(등록만 필수 *) · 투자기간 [년 숫자] 년 [시작일] ~ [종료일] · 결산월 select(1~12) 월
    - 한도관리: 지표구분(의무투자비율 고정 라벨) · 비율(%) · 투자시작일자 · 투자종료일자 — 원문에 행추가/행삭제 없음(단일행)
    - 운용사(공동GP): 대표(체크) · 운용사 · 사업자번호 · 운용사구분 select · 결산월 select · 보고운용사코드 — 행추가/행삭제.
-     원문 캡처에 선택 체크박스 열이 없어 **행 클릭으로 선택(하이라이트)** 후 행삭제한다(행 안 입력·체크 조작은 선택을 바꾸지 않는다).
+     원문은 행 클릭 선택이었으나 **첫 열 선택 체크박스**로 고르고, 체크한 행이 있을 때만 `N건 선택됨 · [행삭제]`가 뜬다
+     (2026-11-09 사용자 "행삭제는 체크박스 체크시 나타나게해 — 룰로 모두 적용", 가드 row_delete_on_check.test.ts).
+     선택 열은 대표 열(값)과 별개 — 대표를 체크해도 선택되지 않는다(partner_form_modal 의 주계좌·선택 열 분리와 같은 구조).
    - 등록은 두 표 모두 빈 상태("조회 내역이 없습니다.")로 시작, 수정은 클릭한 행으로 채운다(asset_fund_info_data.formFromRow).
    - 저장은 원문처럼 토스트만(백엔드 없음 — 목록 데이터는 바꾸지 않는다).
 
@@ -97,6 +99,9 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
   const patchLimit = (i: number, p: Partial<LimitRow>) => setForm((f) => ({ ...f, limits: f.limits.map((l, k) => (k === i ? { ...l, ...p } : l)) }));
   const patchGp = (id: string, p: Partial<GpRow>) => setForm((f) => ({ ...f, gps: f.gps.map((g) => (g.id === id ? { ...g, ...p } : g)) }));
   const toggleSel = (id: string) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  /* 헤더 전체 선택 — 전부/일부/없음 3상태(그리드 SELECTION_COL 헤더와 같은 계약) */
+  const allOn = form.gps.length > 0 && form.gps.every((g) => sel.has(g.id));
+  const toggleAll = () => setSel(allOn ? new Set() : new Set(form.gps.map((g) => g.id)));
 
   const addGp = () => {
     setForm((f) => ({ ...f, gps: [...f.gps, newGpRow()] }));
@@ -104,7 +109,7 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
     requestAnimationFrame(() => gpBodyRef.current?.querySelector<HTMLInputElement>('tr:last-child input')?.focus());
   };
   const deleteGps = () => {
-    if (sel.size === 0) { toast.error('삭제할 행을 선택하세요'); return; }
+    if (sel.size === 0) return;   // 버튼은 체크했을 때만 보인다(방어)
     const n = sel.size;
     setForm((f) => ({ ...f, gps: f.gps.filter((g) => !sel.has(g.id)) }));
     setSel(new Set());
@@ -120,16 +125,6 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
       dlgRef.current?.close();
     };
   };
-  const onRowClick = (e: React.MouseEvent, id: string) => {
-    if ((e.target as HTMLElement).closest('input,button,select,label,[role=checkbox]')) return;
-    toggleSel(id);
-  };
-  const onRowKey = (e: React.KeyboardEvent, id: string) => {
-    if (e.target !== e.currentTarget || (e.key !== ' ' && e.key !== 'Enter')) return;
-    e.preventDefault();
-    toggleSel(id);
-  };
-
   return (
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-[880px] max-h-[88vh]" onInteractOutside={(e) => e.preventDefault()}>
@@ -193,14 +188,24 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
 
           <Sec title="운용사" add={<>
             <Button variant="outline" size="sm" leadingIcon="plus" onClick={addGp}>행추가</Button>
-            <Button variant="outline" size="sm" leadingIcon="trash" onClick={deleteGps}>행삭제</Button>
-            <span className="text-caption font-normal" aria-live="polite" style={{ fontSize: 12.5 }}>{sel.size > 0 ? `${sel.size}개 행 선택됨` : ''}</span>
+            {/* 선택 작업은 체크했을 때만(0건이면 DOM 에 없음) — gp_quant_indicator_modal 과 같은 마크업 */}
+            {sel.size > 0 ? (
+              <>
+                <span className="font-semibold" aria-live="polite" style={{ fontSize: 13 }}>{sel.size}건 선택됨</span>
+                <Button variant="primary" size="sm" leadingIcon="trash" style={{ background: 'var(--danger)' }} onClick={deleteGps}>행삭제</Button>
+              </>
+            ) : null}
           </>}>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 760, tableLayout: 'fixed' }}>
-                <caption className="sr-only">운용사(공동GP) — 대표여부·운용사·사업자번호·운용사구분·결산월·보고운용사코드. 행을 눌러 선택한 뒤 행삭제</caption>
+              {/* minWidth 780 ≤ 모달 본문 788(880 - 46×2) — 넘으면 가로 스크롤이 생겨 마지막 열이 잘린다(선택 열 44 추가 때 804 로 넘었던 실측) */}
+              <table className="w-full border-collapse" style={{ fontSize: 13, minWidth: 780, tableLayout: 'fixed' }}>
+                <caption className="sr-only">운용사(공동GP) — 선택·대표여부·운용사·사업자번호·운용사구분·결산월·보고운용사코드. 첫 열 체크박스로 고르면 행삭제가 나타난다</caption>
                 <thead>
                   <tr>
+                    <th scope="col" style={{ ...thCtrl, width: 44 }}>
+                      <span className="inline-flex"><Checkbox checked={allOn ? true : sel.size > 0 ? 'indeterminate' : false} onCheckedChange={toggleAll}
+                        disabled={form.gps.length === 0} aria-label="운용사 전체 선택" /></span>
+                    </th>
                     <th scope="col" style={{ ...thCtrl, width: 56 }}>대표</th>
                     <th scope="col" style={th}>운용사</th>
                     <th scope="col" style={{ ...th, width: 140 }}>사업자번호</th>
@@ -211,12 +216,14 @@ export function AssetFundInfoModal({ mode, row, onClose, onSave, fundOptions = F
                   </tr>
                 </thead>
                 <tbody ref={gpBodyRef}>
-                  {form.gps.length === 0 ? <EmptyRow span={6} /> : form.gps.map((g) => {
+                  {form.gps.length === 0 ? <EmptyRow span={7} /> : form.gps.map((g) => {
                     const on = sel.has(g.id);
                     const name = g.name || '신규 운용사';
                     return (
-                      <tr key={g.id} tabIndex={0} aria-selected={on} onClick={(e) => onRowClick(e, g.id)} onKeyDown={(e) => onRowKey(e, g.id)}
-                        style={{ cursor: 'pointer', background: on ? 'var(--row-selected)' : undefined }}>
+                      <tr key={g.id} style={{ background: on ? 'var(--row-selected)' : undefined }}>
+                        <td style={tdCtrl}>
+                          <span className="inline-flex"><Checkbox checked={on} onCheckedChange={() => toggleSel(g.id)} aria-label={`${name} 선택`} /></span>
+                        </td>
                         <td style={tdCtrl}>
                           <span className="inline-flex"><Checkbox checked={g.rep} onCheckedChange={(v) => patchGp(g.id, { rep: v === true })} aria-label={`${name} 대표여부`} /></span>
                         </td>
