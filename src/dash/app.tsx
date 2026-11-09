@@ -35,6 +35,8 @@ import { FundStats } from './iam/sfund/fund_stats';                             
 // 관리자 3리프(2026-09-14 typed 페이지 전환, 공통관리 S0_106·S0_105·S0_102). 동상 — GenericListPage 폴백 앞 분기
 import { AccountCodeManage } from './acc/baseinfo/account_code_manage';                 // 계정과목 관리(ACC-001)
 import { DeletedJournalManage } from './acc/slip/deleted_journal_manage';           // 삭제전표 관리(ACC-004)
+import { AgrifoodEntityManage } from './acc/bizorg/agrifood_entity_manage';         // 경영체 정보 조회(ACC-023)
+import { IrInfoManage } from './acc/bizorg/ir_info_manage';                         // IR정보 조회(ACC-024)
 import { CodeManage } from './sys/setting/code_manage';                                  // 공통코드 관리(S0_106, master-detail)
 import { MenuManage } from './sys/setting/menu_manage';                                  // 메뉴 관리(S0_105, 계층 트리)
 import { UserPermissionManage } from './sys/user/user_permission_manage';             // 사용자 권한 관리(S0_102, 권한 매트릭스)
@@ -334,6 +336,8 @@ function App() {
   else if (route === "acct-account-balance") page = <AccountBalanceManage onNav={onNav} />;
   else if (route === "acct-daily-cash") page = <DailyCashManage onNav={onNav} />;
   else if (route === "acct-contribution-status") page = <ContributionStatusManage onNav={onNav} />;
+  else if (route === "acct-agrifood-entity") page = <AgrifoodEntityManage onNav={onNav} />;
+  else if (route === "acct-ir-info") page = <IrInfoManage onNav={onNav} />;
   else if (route === "acct-holiday") page = <HolidayManage onNav={onNav} />;
   else if (route === "acct-partner") page = <PartnerManage onNav={onNav} />;
   // key=route: 스키마 페이지 간 이동 시 완전 리마운트 — 이전 페이지의 rows/필터/페이지 상태가
