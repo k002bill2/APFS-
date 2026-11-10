@@ -11,12 +11,7 @@ import { Cell, AttachChips, controlMinWidth, drawerInputStyle } from './schemas/
 import { resolveFilterField, isEnumControl, YEAR_OPTIONS,filterValueMatches, defaultFilterValues, filterChipText, splitPair, joinPair } from './schemas/filter_field';
 import type { FilterField } from './schemas/filter_field';
 import type { PageSchema, DetailPopup } from './schemas/types';
-import { MonthlyReportModal } from './iam/report/monthly_report_modal';   // 읽기전용 상세 보고서 팝업(컬럼 detail 옵트인 스키마만)
-import { GpSpecModal } from './iam/report/gp_spec_modal';                 // 운용사 명세(S1_02) — 운용사 명세서 목록의 행 상세
-import { CompanyProfileModal } from './iam/ent/company_profile_modal'; // 투자기업 기업개요(S1_30) — 투자기업정보(통합)의 행 상세
-import { MgmtFeeDetailModal } from './iam/gp/mgmt_fee_detail_modal';   // 관리보수보고 상세조회(S1_43) — 지급일자 링크
-import { DueDiligChecklistModal } from './iam/gp/due_dilig_checklist_modal'; // 투자금실사보고서 체크리스트(S1_40) — 실사일자 링크
-import { GpRatioDetailModal } from './iam/gp/gp_ratio_detail_modal';       // 운용사정량지표상세(재무건정성비율)(S1_38) — 기준년월 링크
+import { DETAIL_MODALS, DETAIL_HINT } from './schemas/detail_popups';   // 상세 팝업 레지스트리(조립 지점) — 도메인 팝업은 거기서만 import
 import { foldGroups } from './grid_header_note';   // 2단 그룹헤더(ColumnSpec group 소비처)
 import { linksDetail } from './schemas/detail_link';   // detail 링크 술어 정본(소비처 3곳 공유)
 import { UNITS, DEFAULT_UNIT, isUnit, toUnit, amountHeader, formatUnit } from './schemas/unit';
@@ -381,29 +376,6 @@ function rowMatchesFilters(row: Row, schema: PageSchema, filterValues: Record<st
   if (tags.length > 0 && !tags.includes(row.category)) return false;
   return true;
 }
-
-/* 상세 팝업 레지스트리 — 스키마의 detail 키 → 팝업 컴포넌트. 스키마는 키만 선언하고 매핑은 여기가 갖는다.
-   팝업은 읽기전용이지만 **누른 행**을 받는다 — S1_43 산출내역·S1_40 체크리스트는 행마다 값이 다르다.
-   ⚠ `row` 를 안 넘기던 종전 코드 탓에 CompanyProfileModal 의 `row?` prop 이 한 번도 소비되지 않아
-     어느 행을 눌러도 헤더 대상명이 폴백 상수로 굳어 있었다(선언이 소비처까지 닿지 않는 그 부류).
-   타입 파라미터는 반변이라 `{ onClose }` 만 받는 기존 팝업도 그대로 할당된다 — 무수정으로 남겨 둔다. */
-const DETAIL_MODALS: Record<DetailPopup, (p: { onClose: () => void; row: Row }) => React.ReactElement> = {
-  monthlyReport: MonthlyReportModal,
-  gpSpec: GpSpecModal,
-  companyProfile: CompanyProfileModal,
-  mgmtFeeDetail: MgmtFeeDetailModal,
-  dueDiligChecklist: DueDiligChecklistModal,
-  gpRatioDetail: GpRatioDetailModal,
-};
-/* 링크 셀 title(동작 힌트) — 값은 절대 넣지 않는다 */
-const DETAIL_HINT: Record<DetailPopup, string> = {
-  monthlyReport: '월간보고 상세 보기',
-  gpSpec: '운용사 명세 보기',
-  companyProfile: '투자기업 기업개요 보기',
-  mgmtFeeDetail: '관리보수보고 상세조회',
-  dueDiligChecklist: '투자금실사보고서 체크리스트 조회',
-  gpRatioDetail: '운용사정량지표상세(재무건정성비율) 보기',
-};
 
 /* 합계(pinned bottom) 행 셀 — `schema.totals` 선언 스키마만 그 행이 있다(schemas/totals.ts).
    데이터 행 렌더러(링크·셀 select·첨부 칩·상태 배지)를 합계 행에 쓰지 않는다 — 합계의 '-' 가 배지로,

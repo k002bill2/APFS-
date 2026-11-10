@@ -815,15 +815,15 @@ function Gnb({ theme, onToggleTheme, onToggleLnb, wide, onToggleWide, notifs, on
         borderBottom: "1px solid var(--border)", gap: "clamp(6px, 1.5vw, 12px)", padding: "0 clamp(8px, 2vw, 16px)",
       }}><IconBtn icon="menu" onClick={onToggleLnb} label="메뉴 접기/펴기" size={38} hotkey={HOTKEYS.lnb} />{/* 두 장을 겹쳐 두고 .dark 에서 교체 — theme state 로 고르면 인쇄(print_theme 가 html.dark 만 뗌)에 흰 로고가 남는다 */}<img
         src={logoUrl}
-        alt="APFS 농업정책보험금융원"
+        alt={D.BRAND.logoAlt}
         className="dark:hidden"
         style={{ height: 24, width: "auto" }} /><img
         src={logoWhiteUrl}
-        alt="APFS 농업정책보험금융원"
+        alt={D.BRAND.logoAlt}
         className="hidden dark:inline"
         style={{ height: 24, width: "auto" }} /><div className="bg-border" style={{ width: 1, height: 22 }} /><div
         className="gnb-title font-bold whitespace-nowrap"
-        style={{ fontSize: 14.5, letterSpacing: "-.01em" }}>농림수산식품모태펀드 투자자산관리시스템</div><div className="flex-1" /><button
+        style={{ fontSize: 14.5, letterSpacing: "-.01em" }}>{D.BRAND.title}</div><div className="flex-1" /><button
         type="button"
         onClick={() => setCmdOpen(true)}
         aria-label="명령 팔레트 열기"
@@ -872,20 +872,8 @@ const ROUTE_META: Record<string, { label: string; crumbs: string[]; icon: string
     if (top.children) walk(top.children, []);
   }
   // 하드코딩 페이지(app.tsx에서 직접 라우팅)는 D.MENU 카테고리 라벨이 아니라
-  // '사용자가 실제로 본 페이지 제목'(각 페이지 PageHeader의 마지막 crumb)으로 정밀화한다.
-  // ⚠ 해당 페이지의 crumbs가 바뀌면 여기도 함께 갱신.
-  const pages: Record<string, { label: string; crumbs: string[]; icon: string }> = {
-    designsystem: { label: "디자인 시스템", crumbs: ["홈", "디자인 시스템"], icon: "layers" },
-    main: { label: "대시보드", crumbs: ["홈", "대시보드"], icon: "home" },
-    "risk-manage": { label: "조기경보 관리", crumbs: ["홈", "조기경보", "조기경보 관리"], icon: "shield-alert" },
-    /* 메뉴 밖 스키마 화면 — route 가 영문이라(2026-10-14) 여기 없으면 방문기록에 영문 route 가 그대로 보인다 */
-    "portfolio-performance": { label: "투자 성과·포트폴리오", crumbs: ["홈", "통계조회", "투자 성과·포트폴리오"], icon: "trending" },
-    "annual-invest-status": { label: "연도별 투자현황", crumbs: ["홈", "부처보고", "모태펀드", "연도별 투자현황"], icon: "file" },
-    schedule: { label: "일정·알림 센터", crumbs: ["홈", "일정·알림 센터"], icon: "calendar" },
-    "report-bucheo": { label: "연도별투자현황", crumbs: ["홈", "부처보고", "모태펀드", "연도별투자현황"], icon: "file" },
-    subfund: { label: "자펀드 관리", crumbs: ["홈", "투자자산관리", "자펀드 관리", "자펀드 관리"], icon: "landmark" },
-  };
-  for (const k in pages) idx[k] = pages[k];   // 페이지 제목이 카테고리 라벨보다 우선
+  // '사용자가 실제로 본 페이지 제목'으로 정밀화한다 — 목록은 과제 데이터(data.ts PAGE_TITLES)가 갖는다.
+  for (const k in D.PAGE_TITLES) idx[k] = D.PAGE_TITLES[k];   // 페이지 제목이 카테고리 라벨보다 우선
   return idx;
 })();
 function routeMeta(route: string) {
