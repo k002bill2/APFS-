@@ -4,7 +4,7 @@
       초점이 [닫기] 버튼으로 갔다(investee-profile). 못 찾으면 드로어만 여는 게 맞다.
    2. 캡션 없이 aria-label 만 있는 입력칸도 정확히 같은 이름이면 그 칸으로 간다 — '검색기준' 칸 안의 검색어 input(program-manage).
    화면 모양은 GridFrame([data-grid-frame]) 안 '상세필터' 버튼 → 누르면 Radix 드로어처럼 열린 dialog 를 body 에 붙인다. */
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { jumpToFilterField } from './filter_field_jump';
 
 beforeAll(() => {
@@ -75,6 +75,19 @@ describe('jumpToFilterField — 인라인 필터 패널', () => {
     expect(active()?.id).toBe('fund');
     expect(await jumpToFilterField(chips, '사업연도')).toBe(true);
     expect(active()?.id).toBe('yr');
+  });
+
+  /* 2026-11-10 사용자 "사업연도는 칩 클릭시 해당 컴포넌트에 focus 표시가 안된다" — 마우스 클릭 뒤 스크립트로 옮긴 초점은
+     버튼에 :focus-visible 이 안 붙는다(select 는 붙는다, Chrome 실측) → focusVisible:true 로 같은 초점 링을 요청한다 */
+  it('초점을 옮길 때 focusVisible 을 요청한다 — 버튼 칸(사업연도)도 초점 링이 보이게', async () => {
+    const chips = mountInline('<button id="yr" type="button" aria-label="사업연도">사업연도</button>');
+    const spy = vi.spyOn(HTMLElement.prototype, 'focus');
+    try {
+      expect(await jumpToFilterField(chips, '사업연도')).toBe(true);
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ focusVisible: true }));
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('이름이 정확히 같지 않으면 움직이지 않는다', async () => {
