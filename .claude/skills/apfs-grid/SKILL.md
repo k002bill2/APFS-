@@ -46,6 +46,7 @@ interface GridFrameProps {
   toolbarLeft?: ReactNode;   // 툴바 좌: 칩이 아닌 컨텍스트 설명만 (기본 칩은 filterChips, 적용 칩은 appliedFilters, 선택 액션은 contextActions)
   appliedFilters?: readonly AppliedFilter[]; // 적용 칩({label,value,onClear?}[]) → "필터 툴바" 절
   filterChips?: readonly FilterChipItem[];   // 기본 필터 칩({key,label,count?,active,onSelect}[]) — 넘치면 +N 메뉴 → "필터 툴바" 절
+  filterChipsMenu?: string;                  // (선택) 기본 칩 무리를 이 항목명의 드롭다운 칩 하나(`항목명: 현재값 ▾`)로 — 'all' 칩 label 은 값만('전체'). 2026-11-10 사용자 "기본필터가 공간을 너무 많이 잡아먹는다" → 자펀드정보관리 심사단계부터(310→~115px), 다른 화면은 사용자 확인 뒤 확대
   contextActions?: ReactNode;// 선택 컨텍스트 액션 묶음(수정·삭제·선택 해제·단계 전이…).
                              // 툴바 좌측에 렌더되다가 스크롤로 툴바가 가려지면 하단 플로팅 바로 **이동**한다.
                              // → 아래 "선택 액션 플로팅 바" 절. 안 넘기면 동작 변화 0.
@@ -165,7 +166,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 ```
 - **넘치는 만큼만 뒤에서부터 `+N ▾` 드롭다운으로 접는다** — 앞쪽 칩은 그대로. 판정은 `applied_filters.tsx` 의 순수 함수 `planChips`(그리디, 넘치면 트리거 폭 예약 후 재계산) + 보이지 않는 측정용 사본(전 항목 + `+99`)의 폭. 측정이 보이는 배치와 무관해 진동 없음.
 - **숨겨질 선택 칩은 첫 자리로 끌어올린다** — 메뉴에서 고른 칩이 active 가 되면 다음 렌더에서 slot 0 으로. 다중 선택(조기경보 등급)은 선택 칩이 하나라도 숨겨지면 **선택 칩 전부**를 원래 순서대로 앞에 모은다. **DOM 순서 자체를 바꾼다**(CSS `order` 금지 — 탭 순서 ≠ 보이는 순서, WCAG 2.4.3).
-- 메뉴: 기본 칩(✓ 선택 표시 + 건수) · 구분선 · 적용 칩(값 + × = 해제) · `전체 해제`. 숨긴 항목 중 걸린 필터가 있으면 `+N` 을 primary 틴트로. 트리거는 plain `<button>`(UI.Button 은 asChild 트리거 불가), 메뉴는 Radix 포털. 닫힌 뒤 초점은 트리거로(없어졌으면 행의 마지막 칩으로) — Radix 자동 복귀는 필터 변경 재렌더로 body 에 떨어졌다(실측).
+- 메뉴: 기본 칩(✓ 선택 표시 + 건수) · 구분선 · 적용 칩(값 = 그 필터 칸으로 이동 · × = 해제 · 행 호버/초점 = 항목명 툴팁 — 보이는 칩과 같은 규칙, 2026-11-10 → [[apfs-detail-filter]]) · `전체 해제`. 숨긴 항목 중 걸린 필터가 있으면 `+N` 을 primary 틴트로. 트리거는 plain `<button>`(UI.Button 은 asChild 트리거 불가), 메뉴는 Radix 포털. 닫힌 뒤 초점은 트리거로(없어졌으면 행의 마지막 칩으로) — Radix 자동 복귀는 필터 변경 재렌더로 body 에 떨어졌다(실측).
 - **페이지는 데이터만 넘긴다**: `filterChips={X.map((v) => ({ key, label, count, active, onSelect }))}` + `appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}`. 페이지가 `<FilterChip>`·깔때기·적용 칩 마크업을 그리지 않는다 — 가드 `applied_filters.test.ts`(GridFrame/RiskPage 소비 파일의 `<FilterChip`·`<Icon name="filter"`·'필터 제거'·`AppliedChip`/`FilterPill` 사본 금지). `toolbarLeft` 는 칩이 아닌 내용(캡션 등)만.
   - **필수 주 필터 = `FilterChipItem.required: true`**(2026-10-28 PR #365, 결산양식 관리 양식구분): 라벨 뒤 `*`(foreground·700) + sr-only " 필수" 를 `applied_filters.tsx` 가 그린다. 미선택 상태가 없는 조건이라 **`전체` 칩을 만들지 않고 항상 1개만 active**, active 칩을 다시 눌러도 풀리지 않는다(`onSelect` 에서 `k === 현재값` 이면 return). 그래서 아래 "`필터명: 전체`" 규칙의 대상이 아니다. 설계서의 콤보박스·"○○을 선택하세요" 검증은 미선택 상태가 없으므로 두지 않는다.
   - **긴 경로형 적용 칩 = `AppliedFilter.wide: true`**(2026-10-14 PR #328, 투자기업정보(통합) 조회 대상): 최대 480px·좁으면 2줄 줄바꿈, `+N` 으로 접히지 않는다(배치 계산은 최소 160px 만 선예약). 여러 단계 선택(모펀드 › 운용사 › 조합 › 기업)을 칩 여러 개로 쪼개지 않고 값 하나(구분자 ` › `)로 합칠 때 쓴다. × 는 그 단계 전부를 해제한다.
