@@ -118,6 +118,7 @@ export const EXT: SubFundExt = {
   extraColumns: buildExtraColumns(),
   extraNumKeys: NUM_EXTRA,
   inlineFilters: true,   // 상세필터 드로어 대신 칩 줄 위 인라인 필터(2026-11-09 사용자 지시)
+  stageMenu: true,       // 심사단계 기본 칩 무리 → 드롭다운 칩 하나(2026-11-10 사용자 "기본필터가 공간을 너무 많이 잡아먹는다")
   formedAction: {
     label: '자펀드 정보 수정',
     render: (row, onSave, onClose) => (

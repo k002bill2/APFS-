@@ -84,7 +84,9 @@ function focusPanelField(scope: ParentNode, label: string): boolean {
   const el = panel ? [...panel.querySelectorAll<HTMLElement>(FOCUSABLE)].find((c) => c.getAttribute('aria-label') === want) : undefined;
   if (!el) return false;
   el.scrollIntoView({ block: 'nearest' });
-  el.focus({ preventScroll: true });
+  /* focusVisible — 칩을 마우스로 누른 뒤 스크립트로 옮긴 초점은 버튼(사업연도 PeriodPicker)에 :focus-visible 이 안 붙어
+     초점 링이 안 보였다(select 는 붙는다 — 2026-11-10 사용자 지적, Chrome 실측). 미지원 브라우저는 옵션을 무시한다(종전과 같음) */
+  el.focus({ preventScroll: true, focusVisible: true } as FocusOptions);
   return true;
 }
 

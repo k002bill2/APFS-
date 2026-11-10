@@ -11,8 +11,10 @@
    - 적용 칩 = 값만 표시(항목명은 DS Tooltip·aria-label 로 회수), 최대 240px 말줄임. onClear 가 있는 칩만 ×.
      wide 칩 = 최대 480px·좁으면 2줄 줄바꿈, +N 으로 접지 않는다(배치 계산엔 minWidth 160 만 예약).
    - 칩 값(본문)은 버튼 — 누르면 같은 GridFrame 의 상세필터를 열고 그 항목으로 스크롤·초점(filter_field_jump.ts, 2026-11-02 사용자 요청).
-     × 는 형제 버튼(중첩 아님)이라 해제만 한다. +N 메뉴 항목은 종전대로 '제거'(숨은 칩의 해제 경로).
+     × 는 형제 버튼(중첩 아님)이라 해제만 한다. +N 메뉴의 적용 칩도 같은 규칙이다(2026-11-10 사용자 "x 로만 삭제, 칩 클릭은
+     그 필터 선택 컴포넌트로 초점") — 행 = 값 항목(이동)·× 항목(해제) 두 menuitem, 항목명은 행 툴팁(MenuChipTip).
    - 해제 가능한 적용 칩이 2개 이상이면 `전체 해제` — 각 칩의 onClear 를 차례로 부른다.
+   - 기본 칩 무리는 화면이 원하면 드롭다운 칩 하나로 접는다(FilterChipMenu ← GridFrame filterChipsMenu, 2026-11-10 자펀드정보관리부터).
    - 보이는 캡션 없음(role="group" aria-label 만).
    - 행 선택 중엔 GridFrame 이 이 행을 아예 렌더하지 않는다(선택 = 액션 영역, 필터와 별개).
    ⚠ 적용 칩 모양·'필터 제거' aria·기본 칩 렌더는 이 파일에만 둔다 — 가드 applied_filters.test.ts. */
@@ -39,8 +41,8 @@ export interface AppliedFilter {
   jumpTo?: string;
 }
 
-/** 칩 → 상세필터 이동 콜백 — label 은 플래시 툴팁 키, target 은 드로어에서 찾을 캡션(jumpTo) */
-type JumpFn = (label: string, target?: string) => void;
+/** 칩 → 상세필터 이동 콜백 — label 은 플래시 툴팁 키, target 은 드로어에서 찾을 캡션(jumpTo). 결과 = 그 칸을 찾아 초점을 줬는지 */
+type JumpFn = (label: string, target?: string) => Promise<boolean>;
 
 /** 기본(주) 필터 칩 한 개 — 툴바 첫 칩 무리. 라벨·건수·선택 상태만 넘긴다(FilterChip 렌더는 이 파일이 한다). */
 export interface FilterChipItem {
@@ -257,7 +259,7 @@ export function FilterChipRow({ chips = [], applied, jumpHint }: { chips?: reado
     clearTimeout(timers.current[label]);
     pending.current.delete(label);
     setFlashing((p) => (p.has(label) ? new Set([...p].filter((x) => x !== label)) : p));
-    void jumpToFilterField(boxRef.current, target ?? label);
+    return jumpToFilterField(boxRef.current, target ?? label);
   }, []);
   React.useEffect(() => {
     /* 모달이 닫힘 상태로 바뀌는 순간(data-state=closed) 모아 둔 항목을 띄운다 — 포털 위치와 무관하게 body 아래 속성 변화를 본다.
@@ -305,7 +307,7 @@ export function FilterChipRow({ chips = [], applied, jumpHint }: { chips?: reado
       {/* flash 는 보이는 줄에만 — 측정용 사본에 넘기면 0 크기 요소에 붙은 툴팁이 한 장 더 뜬다 */}
       {shown.map((it) => <React.Fragment key={it.id}><ItemView it={it} flash={it.kind === 'applied' && flashing.has(it.f.label)} onJump={jump} /></React.Fragment>)}
       {/* 숨긴 게 `전체 해제` 하나뿐이면 +0 트리거가 된다 → 그리지 않는다(칩별 × 는 보이는 칩에 그대로 있다) */}
-      {hidden.some((it) => it.kind !== 'clear') && <OverflowMenu key="more" hidden={hidden} tinted={hiddenActive} rowRef={boxRef} />}
+      {hidden.some((it) => it.kind !== 'clear') && <OverflowMenu key="more" hidden={hidden} tinted={hiddenActive} rowRef={boxRef} onJump={jump} />}
       {/* 측정용 사본 — 보이지 않고(visibility:hidden)·포커스·읽기 대상에서 빠진다.
           크기 0 + overflow:hidden 상자에 가둔다 — 가두지 않으면 max-content 사본이 페이지 가로 스크롤을 만든다(400px 실측 +312px). 자식 offsetWidth 는 잘림과 무관하다. */}
       <div aria-hidden="true" style={{ position: 'absolute', left: 0, top: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}>
@@ -328,19 +330,72 @@ function TriggerFace({ n, tinted }: { n: number; tinted: boolean }) {
   );
 }
 
+/* 기본 칩 무리를 드롭다운 칩 하나로 — GridFrame `filterChipsMenu`(선택, 미지정이면 종전 칩 무리).
+   2026-11-10 사용자 "기본필터인데 공간을 너무 많이 잡아먹는다" → 드롭다운 칩 1개, 자펀드정보관리부터(심사단계 310px → ~115px).
+   트리거 = `항목명: 현재값 ▾`(보이는 글자가 곧 접근名), 'all' 이 아닌 값이 걸리면 FilterChip 선택색(primary 틴트).
+   메뉴 = 값마다 menuitemradio(✓ + 건수) — +N 메뉴의 기본 칩 항목과 같은 모양. 'all' 칩 label 은 '전체' 처럼 값만 넘긴다.
+   트리거는 plain <button>(UI.FilterChip·UI.Button 은 forwardRef 가 없어 Radix asChild 트리거가 못 된다). */
+export function FilterChipMenu({ label, chips }: { label: string; chips: readonly FilterChipItem[] }) {
+  const active = chips.find((c) => c.active);
+  const tinted = Boolean(active && active.key !== 'all');
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button"
+          className={`inline-flex items-center gap-1 shrink-0 cursor-pointer font-[inherit] rounded-lg px-[11px] py-[5px] text-[12.5px] font-semibold border whitespace-nowrap ${tinted ? 'text-primary' : 'border-border-strong text-muted-foreground bg-card'}`}
+          style={tinted ? { background: 'color-mix(in srgb,var(--primary) 10%,transparent)', borderColor: 'color-mix(in srgb,var(--primary) 28%,transparent)' } : undefined}>
+          {label}: {active?.label ?? '전체'}<Icon name="chevron-down" size={13} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[160px]">
+        {chips.map((c) => (
+          <DropdownMenuItem key={c.key} onSelect={c.onSelect} aria-checked={c.active} role="menuitemradio">
+            <Icon name="check" size={14} style={{ opacity: c.active ? 1 : 0 }} />
+            <span className="flex-1 truncate">{c.label}</span>
+            {c.count != null && <span className="tabular-nums text-muted-foreground" style={{ fontSize: 12 }}>{c.count}</span>}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/* +N 메뉴 행 툴팁 — 본문 = 항목명만(ChipTip 과 같은 규칙), 행 전체(값+×)가 트리거, 네이티브 title 없음.
+   메뉴 항목은 호버·방향키 모두 초점을 받아 툴팁이 초점으로 열린다. 메뉴보다 늦게 열린 툴팁이 최상위 레이어라 Esc 를 먼저
+   받으므로 그 Esc 로 메뉴까지 닫는다 — Esc 1번(radix-tooltip-layer-eats-esc). side=left: 위에 띄우면 윗 행을 덮는다. */
+function MenuChipTip({ f, onEscape, children }: { f: AppliedFilter; onEscape: () => void; children: React.ReactElement }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="left" onEscapeKeyDown={onEscape}>{f.label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 /* +N 드롭다운 — 트리거는 plain <button>(UI.Button 은 Radix asChild 트리거가 못 된다). 메뉴는 포털이라 카드 overflow 에 안 잘린다.
    tinted = 숨긴 항목 중 걸려 있는 필터(적용 칩·선택된 기본 칩)가 있다 → 접혀 있어도 "걸린 게 있다"를 색으로 알린다. */
-function OverflowMenu({ hidden, tinted, rowRef }: { hidden: Item[]; tinted: boolean; rowRef: React.RefObject<HTMLDivElement> }) {
+function OverflowMenu({ hidden, tinted, rowRef, onJump }: { hidden: Item[]; tinted: boolean; rowRef: React.RefObject<HTMLDivElement>; onJump: JumpFn }) {
   const chips = hidden.filter((it): it is Extract<Item, { kind: 'chip' }> => it.kind === 'chip');
   const applied = hidden.filter((it): it is Extract<Item, { kind: 'applied' }> => it.kind === 'applied');
   const clear = hidden.find((it): it is Extract<Item, { kind: 'clear' }> => it.kind === 'clear');
   /* +N = 숨긴 **필터** 수 — `전체 해제`는 필터가 아니라 세지 않는다(세면 칩 2개 숨김에 +3 으로 보였다). */
   const n = chips.length + applied.length;
+  const hint = React.useContext(JumpHint);
+  /* 제어형 — 행 툴팁의 Esc 가 메뉴까지 닫을 수 있게(MenuChipTip) */
+  const [open, setOpen] = React.useState(false);
+  /* 값 항목을 고르면 여기 담아 두고 메뉴가 닫힌 뒤 이동한다 — 모달 메뉴의 FocusScope 는 열려 있는 동안 밖으로 간 초점을 되돌린다 */
+  const pendingJump = React.useRef<AppliedFilter | null>(null);
   /* 항목을 고르면 필터가 바뀌며 행 전체가 다시 그려져 Radix 의 자동 초점 복귀가 body 로 떨어진다(실측) —
      닫힌 뒤 다음 프레임에 트리거로 직접 되돌린다(키보드 사용자가 제자리에서 이어 가도록). */
   const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const refocus = () => {
+    /* 마지막 숨긴 항목을 해제하면 트리거 자체가 사라진다 → 행의 마지막 버튼(보이는 칩)으로 */
+    if (triggerRef.current?.isConnected) { triggerRef.current.focus(); return; }
+    const btns = rowRef.current?.querySelectorAll<HTMLButtonElement>(':scope > button, :scope > span > button');
+    btns?.[btns.length - 1]?.focus();
+  };
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <button ref={triggerRef} type="button" aria-label={`필터 ${n}개 더 보기`}
           className="inline-flex shrink-0 border-0 bg-transparent p-0 cursor-pointer rounded-lg" style={{ fontFamily: 'inherit' }}>
@@ -350,11 +405,12 @@ function OverflowMenu({ hidden, tinted, rowRef }: { hidden: Item[]; tinted: bool
       <DropdownMenuContent align="start" className="min-w-[200px] max-w-[320px]"
         onCloseAutoFocus={(e) => {
           e.preventDefault();
+          const f = pendingJump.current;
+          pendingJump.current = null;
           requestAnimationFrame(() => {
-            /* 마지막 숨긴 항목을 해제하면 트리거 자체가 사라진다 → 행의 마지막 버튼(보이는 칩)으로 */
-            if (triggerRef.current?.isConnected) { triggerRef.current.focus(); return; }
-            const btns = rowRef.current?.querySelectorAll<HTMLButtonElement>(':scope > button, :scope > span > button');
-            btns?.[btns.length - 1]?.focus();
+            /* 이동할 칸을 못 찾았고 드로어도 안 열렸으면 초점이 body 에 남는다 → 트리거로 되돌린다 */
+            if (f) { void onJump(f.label, f.jumpTo).then((ok) => { if (!ok && !modalOpen()) refocus(); }); return; }
+            refocus();
           });
         }}>
         {chips.map(({ id, chip }) => (
@@ -366,11 +422,20 @@ function OverflowMenu({ hidden, tinted, rowRef }: { hidden: Item[]; tinted: bool
         ))}
         {chips.length > 0 && applied.length > 0 && <DropdownMenuSeparator />}
         {applied.map(({ id, f }) => (
-          <DropdownMenuItem key={id} disabled={!f.onClear} onSelect={() => f.onClear?.()}
-            aria-label={f.onClear ? `${f.label} 필터 제거` : `${f.label}: ${f.value}`} title={`${f.label}: ${f.value}`}>
-            <span className="flex-1 truncate font-semibold" style={{ color: CHIP_FG }}>{f.value}</span>
-            {f.onClear && <Icon name="x" size={13} stroke={2.4} className="text-muted-foreground" />}
-          </DropdownMenuItem>
+          <MenuChipTip key={id} f={f} onEscape={() => setOpen(false)}>
+            {/* 한 행 = menuitem 두 개(버튼 중첩 금지) — ↓ 순서 값 → × → 다음 값 */}
+            <div className="flex items-center">
+              <DropdownMenuItem className="flex-1 min-w-0" onSelect={() => { pendingJump.current = f; }}
+                aria-label={`${f.label}: ${f.value} — ${hint}`}>
+                <span className="flex-1 truncate font-semibold" style={{ color: CHIP_FG }}>{f.value}</span>
+              </DropdownMenuItem>
+              {f.onClear && (
+                <DropdownMenuItem className="shrink-0 justify-center" style={{ padding: 8 }} onSelect={() => f.onClear?.()} aria-label={`${f.label} 필터 제거`}>
+                  <Icon name="x" size={13} stroke={2.4} className="text-muted-foreground" />
+                </DropdownMenuItem>
+              )}
+            </div>
+          </MenuChipTip>
         ))}
         {clear && <><DropdownMenuSeparator /><DropdownMenuItem onSelect={clear.run}>전체 해제</DropdownMenuItem></>}
       </DropdownMenuContent>
