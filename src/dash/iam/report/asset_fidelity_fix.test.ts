@@ -182,7 +182,7 @@ describe('③ S1_38 기준년월 → 운용사정량지표상세(재무건정성
   });
 
   it('GenericListPage 레지스트리 2곳(팝업·힌트)에 새 키가 있다(누락 = 클릭 시 런타임 오류)', () => {
-    const gl = src('generic_list.tsx');
+    const gl = src('detail_popups.ts');   // 2026-11-10 레지스트리를 generic_list → schemas/detail_popups 로 분리(공용 골격 도메인 무의존)
     expect(gl).toContain('gpRatioDetail: GpRatioDetailModal');
     expect(gl).toMatch(/gpRatioDetail: '[^']+'/);
   });
