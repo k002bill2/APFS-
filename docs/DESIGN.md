@@ -55,7 +55,7 @@
 
 ---
 
-## 4. 타이포그래피 스케일 (정본: `tokens.css:285-291`)
+## 4. 타이포그래피 스케일 (정본: `tokens.css:296-302`)
 
 유틸 클래스로 제공된다. **인라인 `fontSize` 하드코딩보다 이 클래스를 우선**한다.
 
@@ -90,7 +90,7 @@
 
 ---
 
-## 6. 모션 (정본: `tokens.css:293-317`)
+## 6. 모션 (정본: `tokens.css:304-330`)
 
 | 키프레임 | 용도 |
 |----------|------|
@@ -122,9 +122,9 @@
 
 | 계층 | 위치 | 내용 | 언제 |
 |------|------|------|------|
-| **① shadcn/Radix 프리미티브** | `src/dash/ui/*` (`.tsx` 34개) | dialog · sheet · popover · dropdown-menu · calendar · date-picker · tooltip · select-editor · command · accordion · alert · skeleton · spinner · sonner · scroll-area · context-menu · navigation-menu · input-group · editor … | 오버레이·포커스 트랩·키보드 조작이 필요한 **동작 있는** 컨트롤 |
-| **② APFS 자체 UI** | `src/dash/components.tsx:463` → `UI.*` | `ColorChip` `StatusBadge` `DeltaBadge` `StatCard` `Card` `ChartCard` `SegTabs` `FilterChip` `Button` `SaveButton` `IconBtn` `EmptyState` `EmptyRow` `CountPill` `Progress` `PopNumber` `TextSwap` `TextsReveal` `ClearableInput` (+ `toneVar`) | 대시보드 표현 요소 — 카드·배지·탭·버튼 |
-| **③ 자체 SVG 차트** | `src/dash/charts.tsx:527` → `Charts.*` | `Sparkline` `Donut` `ComposedBars` `GroupedBars` `LineTrend` `MultiLineTrend` `Treemap` `HBars` `Gauge` (+ `useMeasure` `fmtEok`) | 모든 시각화 |
+| **① shadcn/Radix 프리미티브** | `src/dash/ui/*` (`.tsx` 34개) | dialog · sheet · popover · dropdown-menu · calendar · date-picker · period-picker · tooltip · select-editor · searchable-select · multi-select · split-button · command · accordion · alert · skeleton · spinner · sonner · scroll-area · context-menu · navigation-menu · input-group · editor … | 오버레이·포커스 트랩·키보드 조작이 필요한 **동작 있는** 컨트롤 |
+| **② APFS 자체 UI** | `src/dash/components.tsx:524` → `UI.*` | `ColorChip` `StatusBadge` `TrendBadge` `TagBadge` `DeltaBadge` `StatCard` `Card` `ChartCard` `SegTabs` `FilterChip` `Button` `SaveButton` `IconBtn` `EmptyState` `EmptyRow` `CountPill` `Progress` `PopNumber` `TextSwap` `TextsReveal` `ClearableInput` (+ `toneVar`) | 대시보드 표현 요소 — 카드·배지·탭·버튼 |
+| **③ 자체 SVG 차트** | `src/dash/charts.tsx:583` → `Charts.*` | `Sparkline` `Donut` `ComposedBars` `GroupedBars` `LineTrend` `MultiLineTrend` `Treemap` `HBars` `Gauge` (+ `useMeasure` `fmtEok`) | 모든 시각화 |
 
 **선택 순서**: ① 있으면 ① → 없으면 ② 확장 → 새 표현이면 ③ 확장.
 
@@ -136,10 +136,12 @@
 ### 페이지 골격
 - 리스트/그리드/매트릭스 페이지는 `grid_frame.tsx`의 **`GridFrame`** 으로 골격(PageHeader · 카드헤더+KPI · 툴바 · 푸터)을 통일하고, KPI는 `KpiBadge`를 쓴다.
 - 테이블 본체는 AG Grid Community + 공유 테마 `aggrid_theme.ts`(`apfs-aggrid` 스킬).
+- 푸터 건수 문구는 `grid_frame.tsx`의 `footerCount()`(`총 N개 중 M개 항목 표시 중` — N=필터 후 행 수, M=이 쪽 행 수)로 통일하고(가드 `footer_count.test.ts`), 새 화면의 페이저는 공용 생략형 `GridPager`(`grid_pager.tsx`, `‹ 1 … 5 6 7 … 37 ›`)를 쓴다.
+- 1차 액션에 대체 경로를 붙일 땐 `ui/split-button.tsx`의 `SplitButton`(본체=주 동작, ▾=보조 메뉴). ▾에는 같은 동작의 대체 경로(예: 등록원부입력 ▾ 업로드)만 넣고, 설정 화면 진입은 별도 버튼으로 뺀다.
 
 ---
 
-## 9. 폼 컨트롤 규격 — 34px / 13.5px (정본: `schemas/renderers.tsx:112` `CONTROL_BOX`)
+## 9. 폼 컨트롤 규격 — 34px / 13.5px (정본: `schemas/renderers.tsx:114` `CONTROL_BOX`)
 
 모달·드로어의 모든 입력 컨트롤은 **높이 34px · 폰트 13.5px** 로 통일한다. `CONTROL_BOX`는 등록/수정 모달(SchemaField)과 상세필터 드로어가 **공유하는 SSOT**다 — 페이지로 값을 복사하지 않는다.
 
@@ -181,7 +183,7 @@ lineHeight:'20px', height:34, minHeight:34, fontFamily:'inherit'
 - **색만으로 정보 전달 금지** — StatusBadge는 tone(색) + 라벨 텍스트 병행.
 - **명도 대비** 텍스트 4.5:1 / 비텍스트 UI 3:1 — **라이트·다크 양 테마 모두** 확인.
 - **아이콘 버튼에 접근名** — `IconBtn`의 `label`이 `aria-label`로 간다. placeholder는 접근名이 아니다.
-- **초점 가시성** — 전역 `:focus-visible`이 outline 대신 `--ring` 1px 엣지 + 20% 4px 글로우 `box-shadow`를 준다(`tokens.css:249`). 개별 컴포넌트에서 지우지 않는다 — 예외(메뉴 항목·cmdk 입력·input-group 등)는 근거와 함께 `tokens.css`에 모여 있다.
+- **초점 가시성** — 전역 `:focus-visible`이 outline 대신 `--ring` 1px 엣지 + 20% 4px 글로우 `box-shadow`를 준다(`tokens.css:260`). 개별 컴포넌트에서 지우지 않는다 — 예외(메뉴 항목·cmdk 입력·input-group 등)는 근거와 함께 `tokens.css`에 모여 있다.
 - **자체 SVG 차트는 스크린리더가 못 읽는다** — 인접 텍스트/표로 대체 정보를 제공한다.
 - 터치 타깃 ≥ 24px(가능하면 44px), 체크박스 ≥ 17px.
 
@@ -201,6 +203,7 @@ lineHeight:'20px', height:34, minHeight:34, fontFamily:'inherit'
 | hex 하드코딩 (`#fff`·`text-white`·`fill="#fff"`) | `var(--…)` 토큰 |
 | `var(--primary)` 배경 + 하드코딩 흰 글자 | 짝 전경 `var(--primary-foreground)` |
 | `bg-primary/80` (opacity 모디파이어) | `color-mix(in srgb, var(--primary) 80%, transparent)` |
+| 위험 버튼에 `var(--danger)` 면 + 흰 글자(라이트 2.82:1) | `var(--danger-fill)` 면 + `var(--danger-fill-foreground)` ([COLOR_TOKENS.md](COLOR_TOKENS.md) §3) |
 | 임의 z 정수 `z-[999]` | `z-overlay/modal/popover/tooltip` 토큰 |
 | 인라인 `fontSize` 하드코딩 | `.t-*` 타이포 클래스 |
 | 고정 `width` 레이아웃 | `maxWidth` + `margin:"0 auto"` |

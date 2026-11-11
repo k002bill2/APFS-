@@ -1,6 +1,6 @@
 # APFS 개발환경
 
-> 실측: 2026-10-14 (최초 2026-09-16) · 대상: 이 저장소(`APFS-` 공유 체크아웃)
+> 실측: 2026-11-11 (최초 2026-09-16) · 대상: 이 저장소(`APFS-` 공유 체크아웃)
 >
 > **이 문서는 참고용 요약이다. 정본은 항상 오른쪽 "정본" 열의 파일이다.**
 > 값이 의심되면 "재측정" 명령을 돌려 대조한다 — 손으로 적은 실측값은 환경이 움직이면 조용히 거짓이 된다.
@@ -25,8 +25,9 @@
 | `npm run dev` | Vite dev 서버 (**포트 5273 고정**, `strictPort`) |
 | `npm run build` | `vite build` → `dist/` |
 | `npm run preview` | 빌드 산출물 미리보기 (**포트 4273 고정**) |
-| `npm test` | `vitest run` (테스트 파일 55개 — `vitest.config.ts` `include: src/dash/**/*.test.ts`) |
+| `npm test` | `vitest run` (테스트 파일 139개 · 테스트 2767개 — `vitest.config.ts` `include: src/dash/**/*.test.ts`) |
 | `npm run test:watch` | `vitest` watch |
+| `npm run lint` | `eslint src` (ESLint 10 + typescript-eslint + react-hooks + jsx-a11y, 설정 `eslint.config.mjs`) — 켠 규칙은 전부 error |
 
 - 번들러: **Vite** + `@vitejs/plugin-react`. JSX 변환은 빌드타임(esbuild).
 - 별칭 `@/` → `src/`. **`vite.config.ts`·`vitest.config.ts`의 `resolve.alias`와 `tsconfig.json`의 `paths` 세 곳 모두** 필요하다.
@@ -45,8 +46,8 @@
 
 ## 4. 배포
 
-`vercel.json` — `framework: vite` · `buildCommand: vite build` · `outputDirectory: dist`.
-`main` 브랜치 갱신 시 Vercel 자동 배포. **백엔드·API 없음** — 모든 데이터는 `src/dash/data.ts`의 `APFS_DATA` 더미다.
+`vercel.json` — `framework: vite` · `buildCommand: npm run lint && vite build` · `outputDirectory: dist`.
+`main` 브랜치 갱신 시 Vercel 자동 배포. **lint error 가 1건이라도 있으면 빌드가 실패해 배포되지 않는다** — PR 프리뷰 빌드도 같은 명령이라 머지 전 Vercel 체크에서 먼저 드러난다. **백엔드·API 없음** — 모든 데이터는 `src/dash/data.ts`의 `APFS_DATA` 더미다.
 
 ## 5. 브랜치 작업 = 워크트리
 
@@ -58,10 +59,12 @@
 | `bash scripts/wt.sh new <branch>` | 워크트리 생성(base `origin/main`) + `node_modules` CoW 복제 + 포트 배정 |
 | `bash scripts/wt.sh dev <branch>` | 배정된 포트로 dev 서버 실행 |
 | `bash scripts/wt.sh ls` / `rm <branch>` | 목록 / 제거(미커밋 변경 있으면 거부) |
+| `bash scripts/wt.sh setup <dir>` | `EnterWorktree` 도구로 만든 워크트리에 `node_modules`·포트만 배선 |
+| `bash scripts/wt.sh prune` | 죽은 포트 배정 정리 — `rm` 을 거치지 않고 지운 워크트리 뒤에 돌린다 |
 
 - 포트는 브랜치명 해시로 **5300~5389에 고정 배정**(배정표 `.claude/worktrees/.ports`). 충돌 시 풀 안에서 순환한다.
 - `node_modules`는 APFS clonefile(`cp -c`) 복제 — 심볼릭 링크로 공유하면 `node_modules/.vite` 캐시가 브랜치 간에 섞인다.
-- `.claude/hooks/block-main-write.sh` 가드(PreToolUse 훅)가 공유 체크아웃의 직접 쓰기를 차단한다. 가드 수정 시 `bash scripts/block-main-write.test.sh`.
+- `.claude/hooks/block-main-write.sh` 가드(PreToolUse 훅)가 공유 체크아웃의 직접 쓰기를 차단한다. 가드 수정 시 `bash scripts/block-main-write.test.sh`, `wt.sh` 포트 배정 수정 시 `bash scripts/wt.test.sh`.
 
 ## 6. 주요 스택
 
