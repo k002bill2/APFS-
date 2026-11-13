@@ -455,6 +455,12 @@ export const HistoryStore = {
     try { localStorage.setItem(HISTORY_KEY, JSON.stringify(next)); } catch { /* 무시 — 저장소 접근 불가 등 */ }
     window.dispatchEvent(new CustomEvent("apfs-history-change"));
   },
+  remove(route: string) {
+    const cur = this.get();
+    if (!cur.includes(route)) return;                     // 없으면 쓰기·이벤트 생략
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(cur.filter((r) => r !== route))); } catch { /* 무시 — 저장소 접근 불가 등 */ }
+    window.dispatchEvent(new CustomEvent("apfs-history-change"));
+  },
   clear() {
     try { localStorage.removeItem(HISTORY_KEY); } catch { /* 무시 — 저장소 접근 불가 등 */ }
     window.dispatchEvent(new CustomEvent("apfs-history-change"));

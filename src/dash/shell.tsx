@@ -257,16 +257,6 @@ function Lnb({ open, route, onNav, mobile, drawerOpen }) {
               isActive={!!(m.path && m.path === route)} route={route}
               expanded={expanded} setExpanded={setExpanded} onNav={navTo} />)}</NavigationMenuList></NavigationMenu>
         : <LnbTree menu={menu} open={open} route={route} expanded={expanded} setExpanded={setExpanded} onNav={onNav} />}<div
-        style={{ borderTop: "1px solid var(--border)", padding: open ? "8px 10px" : "8px" }}><button
-          onClick={() => onNav("designsystem")}
-          aria-current={route === "designsystem" ? "page" : undefined}
-          title={collapsed ? "디자인 시스템" : undefined}
-          className="relative w-full flex items-center cursor-pointer"
-          style={{
-            gap: 11, border: "none", font: "inherit", borderRadius: 9, padding: open ? "9px 10px" : "10px", justifyContent: open ? "flex-start" : "center",
-            background: route === "designsystem" ? "color-mix(in srgb,var(--primary) 12%,transparent)" : "transparent",
-            color: route === "designsystem" ? "var(--primary)" : "var(--nav-muted)", fontWeight: route === "designsystem" ? 700 : 500, fontSize: 13.5,
-          }}><Icon name="layers" size={20} />{open && <span className="whitespace-nowrap">디자인 시스템</span>}</button></div><div
         style={{ borderTop: "1px solid var(--border)", padding: open ? "10px 14px" : "10px 8px" }}>{open
           ? <div className="flex items-center gap-2.5"><ColorChip icon="shield-check" color="var(--success)" size={30} iconSize={16} /><div style={{ lineHeight: 1.3 }}><div className="font-bold" style={{ fontSize: 11.5 }}>보안 접속 정상</div><div className="t-caption" style={{ fontSize: 10.5 }}>내부망 · TLS 1.3</div></div></div>
           : <div className="flex justify-center"><Icon name="shield-check" size={18} style={{ color: "var(--success)" }} /></div>}</div>
@@ -339,12 +329,6 @@ function RailNav({ route, onNav, mobile, drawerOpen }) {
         <NavigationMenuList className="flex flex-col gap-1 py-3 px-2">{menu.map((m) => <RailItem
           key={m.id} m={m} route={route} expanded={expanded} setExpanded={setExpanded} onNav={navTo} />)}</NavigationMenuList>
       </NavigationMenu>
-      <div className="p-2" style={{ borderTop: "1px solid var(--border)" }}><button
-        onClick={() => navTo("designsystem")} aria-label="디자인 시스템" aria-current={route === "designsystem" ? "page" : undefined} title="디자인 시스템"
-        className="relative cursor-pointer flex items-center justify-center mx-auto my-0 transition-colors hover:bg-[var(--accent-surface)]"
-        style={{ width: 48, height: 48, borderRadius: 12, border: "none", font: "inherit",
-          background: route === "designsystem" ? "color-mix(in srgb,var(--primary) 13%,transparent)" : "transparent",
-          color: route === "designsystem" ? "var(--primary)" : "var(--foreground)" }}><Icon name="layers" size={21} stroke={route === "designsystem" ? 2.3 : 2} /></button></div>
       <div className="py-2.5 px-2 flex justify-center" style={{ borderTop: "1px solid var(--border)" }} title="보안 접속 정상 · 내부망 TLS 1.3"><Icon
         name="shield-check" size={18} style={{ color: "var(--success)" }} /></div>
     </nav>
