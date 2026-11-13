@@ -56,6 +56,20 @@ describe('jumpToFilterField — 드로어 DOM', () => {
     const chips = mount('<div><span>검색기준</span><div><input id="kw" type="text" aria-label="검색어 입력"></div></div>');
     expect(await jumpToFilterField(chips, '검색어')).toBe(false);
   });
+
+  /* 2026-11-13 사용자 "응" — 인라인 패널(아래 describe)과 같은 이유: 칩을 마우스로 누른 뒤 스크립트로 옮긴 초점은
+     버튼형 컨트롤(PeriodPicker·DrawerMultiSelect 트리거)에 :focus-visible 이 안 붙는다(Chrome) → focusVisible:true */
+  it('초점을 옮길 때 focusVisible 을 요청한다 — 버튼형 칸도 초점 링이 보이게', async () => {
+    const chips = mount('<div><span>기준년월</span><button id="ym" type="button">2026-11</button></div>');
+    const spy = vi.spyOn(HTMLElement.prototype, 'focus');
+    try {
+      expect(await jumpToFilterField(chips, '기준년월')).toBe(true);
+      expect(active()?.id).toBe('ym');
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ focusVisible: true }));
+    } finally {
+      spy.mockRestore();
+    }
+  });
 });
 
 /* 드로어 없이 칸을 펼쳐 둔 화면(GridFrame filterPanel → [data-filter-panel], 자펀드정보관리 2026-11-09) —

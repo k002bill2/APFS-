@@ -70,7 +70,8 @@ function focusField(dialog: Element, label: string): boolean {
   const target = control ?? box;
   if (!target) return false;
   (box ?? target).scrollIntoView({ block: 'center' });
-  control?.focus({ preventScroll: true });
+  /* focusVisible — focusPanelField 와 같은 이유(버튼형 칸은 스크립트 초점에 :focus-visible 이 안 붙는다, 2026-11-13 드로어 경로도) */
+  control?.focus({ preventScroll: true, focusVisible: true } as FocusOptions);
   return true;
 }
 
