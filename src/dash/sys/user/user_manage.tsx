@@ -260,7 +260,8 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
       title="사용자관리"
       favRoute="user-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      filterChips={STATUS_CHIPS.map((s) => ({ key: s || 'all', label: s || '상태: 전체', active: fStatus === s, onSelect: () => setFStatus(s) }))}
+      filterChipsMenu="상태"
+      filterChips={STATUS_CHIPS.map((s) => ({ key: s || 'all', label: s || '전체', active: fStatus === s, onSelect: () => setFStatus(s) }))}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>

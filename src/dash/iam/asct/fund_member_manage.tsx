@@ -382,7 +382,8 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
       favRoute="fund-member"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(계정구분) + 적용 중인 드로어 값 칩. 행 선택 중엔 선택 바(contextActions)가 나오고 칩은 접힌다. */
-      filterChips={(['', ...ACC_OPTS] as ('' | Acc)[]).map((s) => ({ key: s || 'all', label: s || '계정구분: 전체', active: fAcc === s, onSelect: () => setFAcc(s) }))}
+      filterChipsMenu="계정구분"
+      filterChips={(['', ...ACC_OPTS] as ('' | Acc)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fAcc === s, onSelect: () => setFAcc(s) }))}
       /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },

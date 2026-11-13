@@ -209,7 +209,8 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
       title="사용자 초대"
       favRoute="user-invite-gp"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      filterChips={STATE_CHIPS.map((s) => ({ key: s || 'all', label: s || '초대상태: 전체', active: fState === s, onSelect: () => setFState(s) }))}
+      filterChipsMenu="초대상태"
+      filterChips={STATE_CHIPS.map((s) => ({ key: s || 'all', label: s || '전체', active: fState === s, onSelect: () => setFState(s) }))}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>

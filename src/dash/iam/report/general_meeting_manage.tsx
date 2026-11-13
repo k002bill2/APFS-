@@ -419,7 +419,8 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
       favRoute="general-meeting"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 필터칩. 선택 중엔 비우고 선택 바(contextActions)가 대신한다 */
-      filterChips={(['', '일정', '결과'] as ('' | MeetingStatus)[]).map((s) => ({ key: s || 'all', label: s || '보고상태: 전체', active: fRst === s, onSelect: () => setFRst(s) }))}
+      filterChipsMenu="보고상태"
+      filterChips={(['', '일정', '결과'] as ('' | MeetingStatus)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fRst === s, onSelect: () => setFRst(s) }))}
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },

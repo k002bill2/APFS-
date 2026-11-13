@@ -1,7 +1,9 @@
 /* 툴바 FilterChip '전체' 라벨 가드(2026-09-24 사용자 규칙 — 전체 칩은 "필터명: 전체", 예: `등급: 전체`).
    툴바 칩 줄은 앞에 깔때기 아이콘만 있고 필터 이름이 안 보여서, 맨 '전체'만으로는 무엇의 전체인지 모른다.
    ⚠ 상세필터 드로어의 select '전체'는 위에 라벨이 있어 대상이 아니다(사용자 결정: 툴바 칩만).
-   ⚠ 값이 '전체' 문자열 자체인 칩(schedule·main_widgets)은 값은 두고 표시 라벨만 바꾼다 — 이 가드는 리터럴 패턴만 잡는다. */
+   ⚠ 값이 '전체' 문자열 자체인 칩(schedule·main_widgets)은 값은 두고 표시 라벨만 바꾼다 — 이 가드는 리터럴 패턴만 잡는다.
+   ⚠ 드롭다운 칩(GridFrame filterChipsMenu, 2026-11-13 전 화면)은 'all' label 이 '전체' 만이다 — 트리거가 `필터명: 전체 ▾` 로
+     항목명을 붙여 이 규칙을 지킨다(가드 filter_chip_menu_rule.test.ts). */
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';

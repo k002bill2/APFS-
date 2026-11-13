@@ -201,9 +201,6 @@ export interface SubFundExt {
   /* true = 상세필터 드로어 대신 칩 줄 위 인라인 필터 패널(subfund_filter_panel). [상세필터] 버튼·드로어가 없고,
      적용 칩은 그대로 아래 칩 줄에 뜬다 — 칩 클릭은 드로어 대신 패널 칸으로 간다(2026-11-09) */
   inlineFilters?: boolean;
-  /* true = 심사단계 기본 칩 무리(전체·신청·선정·결성·취소)를 드롭다운 칩 하나로(GridFrame filterChipsMenu — 2026-11-10
-     사용자 "기본필터가 공간을 너무 많이 잡아먹는다", 이 화면만 먼저). 자펀드 관리는 칩 무리 그대로 */
-  stageMenu?: boolean;
 }
 
 export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext?: SubFundExt }) {
@@ -393,8 +390,8 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
       cardTitle={ext?.title ?? '자펀드 관리'}
       favRoute={ext?.favRoute ?? 'subfund'}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      filterChips={(['' as const, ...STAGES] as ('' | Stage)[]).map((s) => ({ key: s || 'all', label: s || (ext?.stageMenu ? '전체' : '심사단계: 전체'), active: fStage === s, onSelect: () => setFStage(s) }))}
-      filterChipsMenu={ext?.stageMenu ? '심사단계' : undefined}
+      filterChips={(['' as const, ...STAGES] as ('' | Stage)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fStage === s, onSelect: () => setFStage(s) }))}
+      filterChipsMenu="심사단계"
       /* 인라인 모드 — 칩 줄 위 필터 패널. 고른 값은 아래 칩 줄에 적용 칩으로도 뜬다(2026-11-09 사용자 "옵션 선택시 필터칩이 하단에").
          칩 본문 클릭 = 패널의 같은 이름 칸으로 초점(filter_field_jump focusPanelField) — 칩 label 이 칸 aria-label 과 같아야 한다 */
       filterPanel={inline ? (

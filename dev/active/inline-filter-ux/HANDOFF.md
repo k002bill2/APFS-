@@ -1,7 +1,12 @@
 # HANDOFF — 자펀드정보관리 인라인 필터·칩 UX (2026-11-10)
 
 > **1차 완료(2026-11-10)** — PR **#424** `ecfc971` main 머지, 공유 체크아웃 ff 완료, 워크트리 제거.
-> 사용자 화면 확인: 11-10 "잘 보여". 아래 **남은 일 2건**은 사용자 결정 대기.
+> 사용자 화면 확인: 11-10 "잘 보여".
+> **2차(2026-11-13)** — 사용자 "1 모두 2 응" → 아래 남은 일 2건 **둘 다 구현**(워크트리 `feat/filter-chip-menu`, 포트 5314, 미커밋).
+> ① 범위 질문에 "전체 있는 필터 칩만" → 18파일·19화면 `filterChipsMenu`(보기 전환 9·조기경보 등급 복수 선택은 칩 유지),
+>   `SubFundExt.stageMenu` 삭제(자펀드 관리도 드롭다운), 가드 `filter_chip_menu_rule.test.ts`, 회귀 테스트 뒤집음.
+> ② `filter_field_jump.ts` `focusField` 에 `focusVisible: true` + 테스트.
+> 검증: lint 0 · `vite build` 0 · vitest 143파일/2817건(기준선 142/2813) · Codex working-tree 지적 0 · ego-browser 8화면 실측(라이트·다크·600px).
 
 ## 위치·상태
 | 항목 | 값 |

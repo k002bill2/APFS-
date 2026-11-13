@@ -169,7 +169,8 @@ export interface GridFrameProps {
       (넘치면 +N 메뉴로 접히고, 숨겨진 칩이 선택되면 첫 자리로 끌어올려진다 — applied_filters.tsx). */
   filterChips?: readonly FilterChipItem[];
   /** 기본 칩 무리를 이 항목명의 **드롭다운 칩 하나**(`항목명: 현재값 ▾`)로 접는다(선택 — applied_filters FilterChipMenu).
-      칩 폭을 아끼는 화면만 넘긴다(2026-11-10 자펀드정보관리 심사단계부터). 'all' 칩 label 은 값만('전체'). 미지정이면 종전과 같다. */
+      '전체' 있는 단일 선택 필터는 넘긴다(2026-11-10 자펀드정보관리 → 11-13 전 화면, 가드 filter_chip_menu_rule.test.ts).
+      'all' 칩 label 은 값만('전체'). 보기 전환·필수·복수 선택 칩은 넘기지 않는다(미지정이면 칩 무리). */
   filterChipsMenu?: string;
   /** 필터 맥락 키(선택) — 탭마다 필터 세트가 다른 화면이 활성 탭 id 를 넘긴다. 값이 바뀌면 칩 행을 새로 마운트해
       '방금 건 필터' 툴팁(3초)을 띄우지 않는다 — 탭 전환은 필터를 건 게 아니다. 그 툴팁 레이어가 남아 있으면

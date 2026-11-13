@@ -123,7 +123,7 @@ function useTrsmTab() {
   const facet = useMemo(() => filterTrsm(TRSM, { ...f, cd: '' }), [f]);   // 칩이 거는 응답코드만 뺀 모집단
   const counts = cdCounts(facet);
   const chips: FilterChipItem[] = CD_CHIPS.map((k) => ({
-    key: k || 'all', label: k ? CD_LABEL[k] : '응답코드: 전체', count: String(k ? counts[k] : facet.length), active: f.cd === k, onSelect: () => set({ cd: k }),
+    key: k || 'all', label: k ? CD_LABEL[k] : '전체', count: String(k ? counts[k] : facet.length), active: f.cd === k, onSelect: () => set({ cd: k }),
   }));
   const applied = toApplied([
     ['요청기간', rangeText(f.from, f.to), () => set({ from: '', to: '' })],
@@ -142,7 +142,7 @@ function usePrcsTab() {
   const facet = useMemo(() => filterPrcs(PRCS, { ...f, stts: '' }), [f]);   // 칩이 거는 처리상태만 뺀 모집단
   const counts = sttsCounts(facet);
   const chips: FilterChipItem[] = STTS_CHIPS.map((s) => ({
-    key: s || 'all', label: s || '처리상태: 전체', count: String(s ? counts[s] : facet.length), active: f.stts === s, onSelect: () => set({ stts: s }),
+    key: s || 'all', label: s || '전체', count: String(s ? counts[s] : facet.length), active: f.stts === s, onSelect: () => set({ stts: s }),
   }));
   const applied = toApplied([
     ['발생기간', rangeText(f.from, f.to), () => set({ from: '', to: '' })],
@@ -280,6 +280,7 @@ export function IntegrationMonitor({ onNav }: { onNav?: (r: string) => void }) {
       title="연동 모니터링"
       favRoute="integration-monitor"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
+      filterChipsMenu={isT ? '응답코드' : '처리상태'}
       filterChips={cur.chips}
       appliedFilters={cur.applied}
       filterScope={tab}
