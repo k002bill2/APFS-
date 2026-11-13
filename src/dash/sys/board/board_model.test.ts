@@ -3,7 +3,7 @@ import { demoPosts, TODAY, LOGIN_WRITER, CLK_NONE } from './board_data';
 import type { PostRow } from './board_data';
 import {
   postStatus, kindLabels, filterPosts, statusCounts, publishGate, publishNote, publishPosts, deletePosts, popupCount,
-  showBody, validClickUrl, imageFiles, pickOption, draftOf, validateDraft, buildPost, savePost, bodyParagraphs,
+  showBody, validClickUrl, imageFiles, pickOption, draftOf, validateDraft, buildPost, savePost, bodyParagraphs, maxKindCount,
 } from './board_model';
 import type { PostDraft } from './board_model';
 
@@ -229,5 +229,16 @@ describe('bodyParagraphs — 미리보기 본문(서식 없는 문단)', () => {
   it('빈 값 = [] · 깨진 JSON 은 HTML 처리', () => {
     expect(bodyParagraphs('')).toEqual([]);
     expect(bodyParagraphs('[미완성')).toEqual(['[미완성']);
+  });
+});
+
+describe('maxKindCount — 게시 종류 칸 폭 기준', () => {
+  it('데모 = 글마다 종류 1개 이하 → 1', () => { expect(maxKindCount(rows)).toBe(1); });
+  it('3종 다 고른 글이 하나라도 있으면 3', () => {
+    expect(maxKindCount([...rows, { ...by('p8'), kinds: ['팝업창', '팝업존', '배너'] }])).toBe(3);
+  });
+  it('빈 목록 · 일반 글만 → 0', () => {
+    expect(maxKindCount([])).toBe(0);
+    expect(maxKindCount([by('p3')])).toBe(0);
   });
 });

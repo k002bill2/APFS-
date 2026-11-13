@@ -9,7 +9,7 @@
        [게시]·[삭제] = 선택 바(contextActions, 체크한 행) · [등록] = 툴바 [게시글 등록](⌘⏎).
    - 그리드(체크·No·등록일·게시대상·제목·게시기간·상태·게시 종류·첨부·작성자·미리보기) → AG Grid 단일 헤더. 선택은 체크박스로만(ROW_SELECTION).
        제목 = LinkCell → 수정(Enter·더블클릭 동치) · 첨부 열 → 제목 뒤 확장자 칩(AttachChips, apfs-grid 첨부 규약) · 미리보기 열 = 아이콘 버튼(Enter 동치).
-       상태 배지 lg(게시중 success·게시예정 warning·게시종료 muted·미게시 info) · 게시 종류 배지 sm(종류 primary, 일반 muted).
+       상태 배지 lg(게시중 success·게시예정 warning·게시종료 muted·미게시 info) · 게시 종류 배지도 lg(종류 primary, 일반 muted — 상태 배지와 같은 크기).
    - 저장과 게시 분리(board_model): 등록창 [저장] = 미게시로만 저장 → 선택 바 [게시] = 미게시 행만 확정(게이트 필터형 벌크 — 이미 게시된 행은 제외 안내,
        전부 게시됨이면 확인창 없이 안내) → 그때부터 게시기간 기준 게시예정/게시중/게시종료. 게시된 글을 고쳐 저장하면 다시 미게시.
    - 등록/수정 → board_form_modal(섹션형 전용 모달) · 미리보기 → board_preview_modal · 게시·삭제 확인 → AlertDialog + SaveButton(게시 중/삭제 중).
@@ -45,7 +45,7 @@ import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공
 import { LinkCell } from '../../link_cell';
 import { demoPosts, AUDIENCES, KIND_FILTERS, LOGIN_WRITER, TODAY } from './board_data';
 import type { PostRow } from './board_data';
-import { POST_STATUSES, STATUS_TONE, postStatus, kindLabels, filterPosts, statusCounts, publishGate, publishNote, publishPosts, deletePosts, popupCount, savePost } from './board_model';
+import { POST_STATUSES, STATUS_TONE, postStatus, kindLabels, maxKindCount, filterPosts, statusCounts, publishGate, publishNote, publishPosts, deletePosts, popupCount, savePost } from './board_model';
 import type { PostStatus, PostDraft } from './board_model';
 import { BoardFormModal } from './board_form_modal';
 import { BoardPreviewModal } from './board_preview_modal';
@@ -69,30 +69,38 @@ const tabNum: CellStyle = { fontVariantNumeric: 'tabular-nums' };
 const flexCenter: CellStyle = { display: 'flex', alignItems: 'center' };
 const mutedNum: CellStyle = { ...tabNum, color: 'var(--muted-foreground)' };
 
-const makeColumns = (open: (m: ModalState) => void): ColDef<PostView>[] => [
-  { colId: NO_COL_ID, headerName: 'No', width: 60, maxWidth: 60, cellStyle: tabNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
-  { field: 'reg', headerName: '등록일', width: 128, minWidth: 128, cellStyle: tabNum, sort: 'desc' },
-  { colId: 'aud', headerName: '게시대상', width: 150, maxWidth: 220, cellStyle: { color: 'var(--muted-foreground)' }, valueGetter: (p) => p.data?.aud.join(', ') ?? '' },
-  /* 남는 폭 흡수 — flex 컬럼은 width=minWidth 동반(apfs-aggrid 계약 9) */
-  { field: 'title', headerName: '제목', flex: 1, width: 300, minWidth: 300, cellStyle: flexCenter,
+/* 컬럼 폭 = max(셀 글자 폭 + 패딩·테두리 32, 헤더 라벨 + 32 + 정렬 화살표 24) + 여유 ~4 — 우측 빈 공간 없이 내용에 붙인다(2026-11-13 실측·사용자 요청).
+   등록일(글자 92.5 → 130)·게시기간(203 → 240)은 말줄임이 나면 안 되는 칸이라 여유를 둔다 — 줄일 때는 셀 글꼴로 글자 폭을 다시 재고 정할 것.
+   정렬 없는 No·미리보기는 화살표 몫을 빼고, 게시대상은 최장 단일값 '농식품부·해수부'(89+32)까지 — 여러 개 고르면 말줄임. */
+/** 게시 종류 칸 폭 — 한 글에 붙은 종류 수 최대값별(lg 배지: 팝업창·팝업존 54 · 배너 43 · 간격 4 + 패딩 30). 0·1개는 헤더 폭(52+32+24)이 하한 */
+const KINDS_WIDTH = [108, 108, 144, 192] as const;
+
+const makeColumns = (open: (m: ModalState) => void, kindsW: number): ColDef<PostView>[] => [
+  { colId: NO_COL_ID, headerName: 'No', width: 56, maxWidth: 56, cellStyle: tabNum, sortable: false, valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1 },
+  { field: 'reg', headerName: '등록일', width: 130, minWidth: 130, cellStyle: tabNum, sort: 'desc' },
+  { colId: 'aud', headerName: '게시대상', width: 124, maxWidth: 220, cellStyle: { color: 'var(--muted-foreground)' }, valueGetter: (p) => p.data?.aud.join(', ') ?? '' },
+  /* 남는 폭 흡수 — flex 컬럼은 width=minWidth 동반(apfs-aggrid 계약 9).
+     minWidth 500 = 데모 최장 제목(사후관리 가이드라인 개정 + PDF 칩, 467px) + 셀 패딩 30 — 좁은 프레임에서도 제목이 안 잘린다(2026-11-13 실측) */
+  { field: 'title', headerName: '제목', flex: 1, width: 500, minWidth: 500, cellStyle: flexCenter,
     cellRenderer: (p: ICellRendererParams<PostView>) => (p.data ? (
       <span className="inline-flex items-center gap-2 min-w-0 max-w-full">
         <LinkCell value={p.data.title} hint="수정" onClick={() => open({ kind: 'form', id: p.data!.id })} />
         <AttachChips value={p.data.file} />
       </span>
     ) : null) },
-  { colId: 'period', headerName: '게시기간', width: 236, minWidth: 236, cellStyle: mutedNum, valueGetter: (p) => (p.data ? `${p.data.from} ~ ${p.data.to}` : '') },
-  { field: 'status', headerName: '상태', width: 104, maxWidth: 104, cellStyle: flexCenter,
+  { colId: 'period', headerName: '게시기간', width: 240, minWidth: 240, cellStyle: mutedNum, valueGetter: (p) => (p.data ? `${p.data.from} ~ ${p.data.to}` : '') },
+  { field: 'status', headerName: '상태', width: 100, maxWidth: 100, cellStyle: flexCenter,
     cellRenderer: (p: ICellRendererParams<PostView>) => (p.data ? <StatusBadge tone={STATUS_TONE[p.data.status]} label={p.data.status} size="lg" /> : null) },
-  { colId: 'kinds', headerName: '게시 종류', width: 160, minWidth: 110, maxWidth: 220, cellStyle: flexCenter, valueGetter: (p) => (p.data ? kindLabels(p.data).join(', ') : ''),
+  /* 폭은 전체 글 중 종류 최대 개수로 정한다(maxKindCount → KINDS_WIDTH) —3종 다 고른 글이 생기면 192 로 넓어져 한 줄(42px 행)에 든다 */
+  { colId: 'kinds', headerName: '게시 종류', width: kindsW, minWidth: 108, maxWidth: 220, cellStyle: flexCenter, valueGetter: (p) => (p.data ? kindLabels(p.data).join(', ') : ''),
     cellRenderer: (p: ICellRendererParams<PostView>) => (p.data ? (
       <span className="inline-flex flex-wrap items-center gap-1">
-        {kindLabels(p.data).map((k) => <StatusBadge key={k} tone={p.data!.kinds.length ? 'primary' : 'muted'} label={k} size="sm" />)}
+        {kindLabels(p.data).map((k) => <StatusBadge key={k} tone={p.data!.kinds.length ? 'primary' : 'muted'} label={k} size="lg" />)}
       </span>
     ) : null) },
-  { field: 'writer', headerName: '작성자', width: 100, maxWidth: 130 },
+  { field: 'writer', headerName: '작성자', width: 94, maxWidth: 130 },
   /* 아이콘 전용 액션 열 — 정렬 대상 아님(정렬 규약 예외) */
-  { colId: 'preview', headerName: '미리보기', width: 92, maxWidth: 92, sortable: false, cellStyle: flexCenter,
+  { colId: 'preview', headerName: '미리보기', width: 82, maxWidth: 82, sortable: false, cellStyle: flexCenter,
     cellRenderer: (p: ICellRendererParams<PostView>) => (p.data ? <IconBtn icon="eye" label={`미리보기 — ${p.data.title}`} size={30} onClick={() => open({ kind: 'preview', id: p.data!.id })} /> : null) },
 ];
 /* 다중 선택 — 체크박스로만 on/off(2026-09-22), 선택이 [게시]·[삭제]를 만든다. 모듈 상수(렌더마다 새 객체면 컬럼 폭이 되돌아간다) */
@@ -175,7 +183,12 @@ export function BoardManage({ onNav }: { onNav?: (r: string) => void }) {
     const next = { current: api.paginationGetCurrentPage(), total: api.paginationGetTotalPages(), rowCount: api.paginationGetRowCount() };
     setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
   }, []);
-  const columnDefs = useMemo(() => makeColumns(setModal), []);   // setModal 은 안정 → 컬럼 정의 고정
+  /* 게시 종류 칸 폭 = 전체 글 기준(필터 무관). 컬럼 정의는 마운트 때 폭으로 고정하고(setModal 도 안정),
+     이후 변화는 그 칸만 setColumnWidths 로 바꾼다 — 정의를 새로 만들면 사용자가 조절한 폭·정렬까지 선언값으로 되돌아간다(Codex P2) */
+  const kindsW = KINDS_WIDTH[Math.min(KINDS_WIDTH.length - 1, maxKindCount(rows))];
+  const [kindsW0] = useState(kindsW);
+  const columnDefs = useMemo(() => makeColumns(setModal, kindsW0), [kindsW0]);
+  useEffect(() => { apiRef.current?.setColumnWidths([{ key: 'kinds', newWidth: kindsW }]); }, [kindsW]);
   const onRowDoubleClicked = useCallback((e: RowDoubleClickedEvent<PostView>) => { if (e.data && !e.rowPinned) setModal({ kind: 'form', id: e.data.id }); }, []);
   const onCellKeyDown = useCallback((e: CellKeyDownEvent<PostView>) => {
     if ((e.event as KeyboardEvent | null)?.key !== 'Enter' || !e.data || e.rowPinned) return;

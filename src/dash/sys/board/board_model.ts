@@ -25,6 +25,8 @@ export function postStatus(r: Pick<PostRow, 'pub' | 'from' | 'to'>, today: strin
 
 /** 게시 종류 표시값 — 없으면 '일반' 한 개. */
 export const kindLabels = (r: Pick<PostRow, 'kinds'>): string[] => (r.kinds.length ? [...r.kinds] : [GENERAL_KIND]);
+/** 한 글에 붙은 게시 종류 수의 최대값(일반 글 = 0) — 목록 '게시 종류' 칸 폭을 정한다. */
+export const maxKindCount = (rows: readonly Pick<PostRow, 'kinds'>[]): number => rows.reduce((m, r) => Math.max(m, r.kinds.length), 0);
 
 export interface PostFilter { from?: string; to?: string; aud?: string; kind?: string; status?: string; q?: string }
 /** 목업 filtered() — 등록기간(빈 값 = 열린 경계) · 게시대상('전체' 대상 글은 모든 구분에 보인다) · 게시 종류 · 상태 · 제목 부분일치.
