@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Shell } from './shell';
 import { APFS_DATA, HistoryStore } from './data';
+import { HIDDEN_ROUTES, restorableRoute, purgeHiddenFromHistory } from './hidden_routes';
 import { DesignSystem } from './designsystem';
 import { Main } from './frt/widget/main';
 import { EarlyWarningManage } from './ews/alert/early_warning_manage';   // 조기경보 관리(관리형 리스트, S2_51). 구 risk_manage.tsx(FR-5.6 운영 콘솔)는 2026-11-03 삭제
@@ -154,6 +155,8 @@ const POPUP_ROUTES = new Set(["monthly-report"]);
 const USER_TOOLS: readonly UserTool[] = [
   { id: "file-box", label: "파일BOX", icon: "folder", hk: HOTKEYS.fileBox, Modal: FileBoxModal },
 ];
+// apfs.route·방문기록에 남길 route — 팝업 창 전용과 진입점을 숨긴 route(hidden_routes)는 제외
+const isTracked = (r: string) => !POPUP_ROUTES.has(r) && !HIDDEN_ROUTES.has(r);
 const routeTitleFor = (r: string) => APP_ROUTE_TITLES[r] || findMenuContext(r).title;
 
 const { useState, useEffect, useRef } = React;
@@ -172,11 +175,13 @@ if (ls.get("apfs.layoutReset", "") !== "1") {
   try { localStorage.removeItem("apfs.variant"); localStorage.removeItem("apfs.navstyle"); } catch { /* 무시 — 저장소 접근 불가 등 */ }
   ls.set("apfs.layoutReset", "1");
 }
+// 진입점을 숨긴 route 가 이전 방문기록에 남아 있으면 지운다 — 모듈 로드 시점이라 Shell 의 방문기록 초기 렌더보다 먼저 돈다.
+purgeHiddenFromHistory();
 
 function App() {
   const [theme, setTheme] = useState(() => ls.get("apfs.theme", "light"));
   // 삭제/개명된 route는 ROUTE_ALIAS로 승격(잔존 localStorage/방문기록 방어) — 안 하면 GenericListPage 폴백(영문 제네릭 표)
-  const [route, setRoute] = useState(() => aliasRoute(hashRoute() || ls.get("apfs.route", "designsystem")));
+  const [route, setRoute] = useState(() => aliasRoute(hashRoute() || restorableRoute(ls.get("apfs.route", "main"), "main")));
   const [lnbOpen, setLnbOpen] = useState(() => ls.get("apfs.lnb", "1") === "1");
   const [wide, setWide] = useState(() => ls.get("apfs.width", "fixed") === "full");
   const [navStyle, setNavStyle] = useState(() => ls.get("apfs.navstyle", "classic"));
@@ -198,7 +203,7 @@ function App() {
     ls.set("apfs.theme", theme);
   }, [theme]);
   useEffect(() => {
-    if (!POPUP_ROUTES.has(route)) ls.set("apfs.route", route);
+    if (isTracked(route)) ls.set("apfs.route", route);
     try {
       const nextHash = `#/${route}`;
       if (window.location.hash !== nextHash) window.history.replaceState(null, '', nextHash);
@@ -212,7 +217,7 @@ function App() {
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
-  useEffect(() => { if (!POPUP_ROUTES.has(route)) HistoryStore.push(route); }, [route]);   // 방문기록 적재(복원된 초기 라우트 포함)
+  useEffect(() => { if (isTracked(route)) HistoryStore.push(route); }, [route]);   // 방문기록 적재(복원된 초기 라우트 포함)
   useEffect(() => {                                            // 라우트 전환마다 로딩 스켈레톤 노출
     const changed = mountedRef.current;                        // 초기 마운트 false, 이후 전환 true
     setRouteChanged(changed);
