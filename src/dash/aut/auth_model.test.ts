@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   verifyCredentials, verifyOtp, verifyPwChange, verifyRegister, verifyRealName,
-  railSteps, LOGIN_RAIL, ISSUE_RAIL, RESET_RAIL, SIMPLE_AUTH_RAIL,
+  railSteps, LOGIN_RAIL, ISSUE_RAIL, RESET_RAIL, SIMPLE_AUTH_RAIL, showLoginRail,
   verifyReset, verifySimpleAuth, hasError,
   DEMO_ID, DEMO_PW, DEMO_REAL_NAME, LOCK_LIMIT, MSG, PW_RE,
 } from './auth_model';
@@ -97,6 +97,27 @@ describe('railSteps', () => {
   });
   it('만료 시나리오에서는 3단계가 실제 단계로 남는다', () => {
     expect(railSteps(LOGIN_RAIL(true, 3), 3)[2].status).toBe('current');
+  });
+});
+
+describe('showLoginRail — 로그인 단계 칩 노출(흐름이 시작된 뒤에만)', () => {
+  const base = { step: 1, mode: 'login', saStep: 1, resetDone: false } as const;
+  it('첫 화면은 어느 탭이든 칩 없이 입력만 — 탭을 눌러도 카드가 움직이지 않는다', () => {
+    expect(showLoginRail(base)).toBe(false);
+    expect(showLoginRail({ ...base, mode: 'simple' })).toBe(false);
+    expect(showLoginRail({ ...base, mode: 'reset' })).toBe(false);
+  });
+  it('2차 인증·비밀번호 변경·완료 단계에서는 레일을 보인다', () => {
+    expect([2, 3, 4].map((step) => showLoginRail({ ...base, step }))).toEqual([true, true, true]);
+  });
+  it('간편인증은 요청 뒤(통합인증창 대기·결과)부터 레일을 보인다', () => {
+    expect([2, 3].map((saStep) => showLoginRail({ ...base, mode: 'simple', saStep }))).toEqual([true, true]);
+  });
+  it('비밀번호 재설정은 메일 발송 뒤에 레일을 보인다', () => {
+    expect(showLoginRail({ ...base, mode: 'reset', resetDone: true })).toBe(true);
+  });
+  it('다른 탭의 진행 상태는 로그인 탭 첫 화면에 영향을 주지 않는다', () => {
+    expect(showLoginRail({ ...base, saStep: 3, resetDone: true })).toBe(false);
   });
 });
 

@@ -1,24 +1,96 @@
 /* 로그인(S0_001) — Shell 없는 단독 화면. 정본은 claude.ai/design 캔버스 `APFS 로그인 프로토타입.dc.html`의 로그인 플로우.
-   4단계(아이디·비밀번호 → 2차 인증(OTP) → (만료 시) 비밀번호 변경 → 완료)를 좌측 단계 레일과 함께 보여준다.
+   4단계(아이디·비밀번호 → 2차 인증(OTP) → (만료 시) 비밀번호 변경 → 완료)로 진행한다. 1단 카드 — 위에서부터 브랜드 헤더 · 탭(모든 단계) · 단계 칩 · 본문.
+   단계 칩은 흐름이 시작된 뒤에만 나온다 — 첫 화면은 어느 탭이든 브랜드와 입력만 보이고,
+   로그인은 2차 인증부터·간편인증은 요청 뒤·재설정은 메일 발송 뒤에 칩이 붙는다(판정 showLoginRail).
 
    ⚠ 실제 인증·TOTP 검증·계정 잠금은 수행하지 않는다. 모든 판정은 `auth_model`의 순수 함수가 하고
    이 파일은 그 결과를 그리기만 한다. 화면에 보이는 데모 계정·OTP 코드는 시연용 스캐폴딩이다.
    ⚠ 정본과의 차이(2026-09-18): "아이디 저장" 체크는 DS `Checkbox`(ui/checkbox.tsx)로 코드에서 **먼저** 바꿨다(전 화면 통일).
-     캔버스는 아직 네이티브 체크박스다 — 캔버스에서 재이식할 때 이 체크만은 DS 컴포넌트를 유지하고, 캔버스도 함께 갱신할 것. */
+     캔버스는 아직 네이티브 체크박스다 — 캔버스에서 재이식할 때 이 체크만은 DS 컴포넌트를 유지하고, 캔버스도 함께 갱신할 것.
+   ⚠ 정본과의 차이(2026-11-13, 사용자 지시): 캔버스의 좌측 레일 2단 카드를 코드에서 **먼저** 1단 카드로 바꿨다.
+     단계는 사용자 첨부 목업(S0_001_로그인.html `.steps`)처럼 캡션 없는 "N. 제목" 칩으로 단순화해 본문 위로,
+     로고·시스템명은 카드 상단 브랜드 헤더로 옮겼다. 칩은 흐름이 시작된 뒤에만 보인다(showLoginRail).
+     목업에서는 골격만 가져왔다 — 목업의 색·문구(에이핏)·정책 안내·데모 계정 표·재설정 모달은 옮기지 않았다.
+     캔버스는 아직 2단이다 — 재이식할 때 이 1단 구조와 showLoginRail 조건을 유지할 것. */
 import React, { useEffect, useRef, useState, type FormEvent } from 'react';
 import { UI } from '../../components';
 import { Checkbox } from '../../ui/checkbox';   // 아이디 저장 = DS 체크박스(전 화면 통일, 2026-09-18). Radix <button> 이라 <label> 래핑 금지 → htmlFor
+import { Icon } from '../../icons';
 import {
-  AuthLayout, SplitCard, Field, FormError, PrimaryBtn, SecondaryBtn, DonePanel,
-  OtpCode, Toast, Logo, InfoHint, useDemoOtp, useToast, T, StepPage, useStepDir,
+  AuthLayout, Field, FormError, PrimaryBtn, SecondaryBtn, DonePanel,
+  OtpCode, Toast, Logo, InfoHint, useDemoOtp, useToast, T, StepPage, useStepDir, FADE_UP_CARD,
 } from '../auth_shared';
 import {
-  railSteps, LOGIN_RAIL, RESET_RAIL, SIMPLE_AUTH_RAIL,
+  railSteps, LOGIN_RAIL, RESET_RAIL, SIMPLE_AUTH_RAIL, showLoginRail,
   verifyCredentials, verifyOtp, verifyPwChange, verifySimpleAuth, hasError,
-  verifyReset, DEMO_ID, LOCK_LIMIT, PW_POLICY_HINT, type PwChangeErrors,
+  verifyReset, DEMO_ID, LOCK_LIMIT, PW_POLICY_HINT, type PwChangeErrors, type RailStep,
 } from '../auth_model';
 
 const NO_PW_ERR: PwChangeErrors = { cur: null, next: null, confirm: null };
+
+const STATUS_LABEL = { done: '완료', current: '진행 중', todo: '예정' } as const;
+
+/** 카드 좌우 여백 — 헤더와 본문이 같은 값을 써서 로고·탭·입력칸의 왼쪽 선이 맞는다.
+    데스크톱 40(2026-11-13 사용자 지시 "좌우 패딩을 늘리자", 32→40), 좁은 화면은 24까지 줄인다. */
+const SIDE_PAD = 'clamp(24px,6vw,40px)';
+
+/** 단순화한 단계 표시 — 첨부 목업 `.steps` 처럼 캡션 없는 "N. 제목" 칩을 가로로 늘어놓고, 좁으면 줄을 바꾼다.
+    누르는 버튼이 아니라 진행 상태 표시다(Pill 과 같은 반경). 완료·진행·예정이 색으로만 갈리지 않게
+    완료 칩은 번호 자리에 체크를 놓고, 스크린리더엔 번호·상태 문구를 붙인다(보이는 번호는 sr-only 와 겹치지 않게 숨김).
+    체크를 번호에 "더하지" 않고 "바꿔" 넣는 이유: 완료가 늘수록 칩 줄이 넓어져 3·4단계에서 줄이 바뀌었다(실측 +17px/칩). */
+function StepChips({ steps }: { steps: RailStep[] }) {
+  return (
+    <ol aria-label="진행 단계" className="flex flex-wrap list-none m-0 p-0 gap-1.5" style={{ marginBottom: 22 }}>
+      {steps.map((s) => (
+        <li key={s.num} aria-current={s.status === 'current' ? 'step' : undefined}
+          className="inline-flex items-center gap-1"
+          style={{
+            /* 12px — 첨부 목업 .steps 와 같은 크기. 칩 4개 합계 396~400(2~4단계 실측) — 카드 폭이 이 값 + 좌우 여백 80 보다 작아지면 줄이 바뀐다. */
+            font: '700 12px/18px var(--font-sans)', padding: '4px 10px', borderRadius: 20,
+            ...(s.status === 'done' ? { background: 'var(--success-soft)', color: 'var(--success-text)' }
+              : s.status === 'current' ? { background: 'var(--primary)', color: 'var(--primary-foreground)' }
+                : { background: 'var(--muted)', color: 'var(--muted-foreground)' }),
+          }}>
+          <span className="sr-only">{s.num}단계 — {STATUS_LABEL[s.status]}: </span>
+          {s.done ? <Icon name="check" size={13} stroke={2.6} /> : <span aria-hidden="true">{s.num}.</span>}
+          {s.title}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** 로그인 1단 카드 — 브랜드 헤더(고정 브랜드 표면, 초대 온보딩과 같은 패턴) + 탭 + 단계 칩 + 본문.
+    탭이 칩보다 위다(2026-11-13 사용자 지시) — 칩이 나타나도 탭 줄은 제자리에 있다.
+    steps 가 null 이면 칩 줄을 그리지 않는다. 카드 한 벌을 유지하므로 칩이 나타나도 본문은 다시 마운트되지 않는다. */
+function LoginCard({ tabs, steps, children }: { tabs: React.ReactNode; steps: RailStep[] | null; children: React.ReactNode }) {
+  return (
+    /* 폭 500 — 2026-11-13 사용자 지시: "인증창의 너비를 줄이자"(540→480) 뒤 "단계가 줄내림 안 되게"(→500).
+       본문 420 = 500 − 좌우 여백 80 ≥ 칩 4개 합계 최대 400(완료 단계 실측). 여백(SIDE_PAD)·칩 크기를 바꾸면 이 폭도 다시 잰다. */
+    <div className="w-full overflow-hidden flex flex-col"
+      style={{ maxWidth: 500, background: 'var(--card)', borderRadius: 'var(--radius-2xl)', boxShadow: 'var(--shadow-md)', animation: FADE_UP_CARD }}>
+      {/* 고정 브랜드 표면 — 적응형 --primary 가 아니라 --brand-solid 라야 다크에서도 흰 글자 대비가 유지된다.
+          시스템명은 <p> — 페이지의 h1 은 본문의 단계 제목 하나다. 한 문장이라 사이 공백을 남겨 이어 읽히게 한다. */}
+      <header className="box-border" style={{ background: 'var(--brand-solid)', color: 'var(--on-brand-solid)', padding: `22px ${SIDE_PAD} 20px` }}>
+        <Logo white />
+        {/* 로고와의 간격 0·글자 크기는 사용자 지정값(2026-11-13: 19px/22px · 28px/30px). */}
+        <p className="flex flex-wrap items-baseline gap-x-2" style={{ margin: 0 }}>
+          {/* 85% — 19px 600 은 WCAG "큰 글자"(18.66px 700)가 아니라 4.5:1 이 필요하다. 78% 는 4.46:1(실측)로 모자랐다. */}
+          <span style={{ font: '600 19px/22px var(--font-sans)', letterSpacing: '0.006em', color: 'color-mix(in srgb, var(--on-brand-solid) 85%, transparent)' }}>농림수산식품모태펀드</span>{' '}
+          <span style={{ font: '700 28px/30px var(--font-sans)', letterSpacing: '-0.01em' }}>투자자산관리시스템</span>
+        </p>
+      </header>
+      {/* minHeight 560 — AuthLayout 이 카드를 세로 가운데 정렬하므로 본문 높이가 탭마다 다르면 탭을 누를 때 탭 줄이 위아래로 움직인다.
+          첫 화면에서 가장 긴 간편인증 탭(390px 폭 실측 545)을 덮는 값이라 세 탭의 카드 높이가 같다(옛 2단 카드 본문과 같은 값). */}
+      <div className="flex-1 box-border flex flex-col" style={{ padding: `clamp(22px,4.5vw,28px) ${SIDE_PAD} clamp(24px,4.5vw,32px)`, minHeight: 560 }}>
+        {/* 탭↔칩 세로 간격 24(2026-11-13 사용자 지시 "세로 간격 늘려", 16→24). */}
+        <div style={{ marginBottom: steps ? 24 : 30 }}>{tabs}</div>
+        {steps && <StepChips steps={steps} />}
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
   const [step, setStep] = useState(1);
@@ -108,8 +180,18 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
 
   const resetSimpleAuth = () => { setSaStep(1); setSaErr(null); };
 
-  /** 탭 전환 — 반대편 폼의 오류를 들고 가지 않는다. 로그인으로 돌아오면 재설정 결과도 접는다. */
+  /** 탭 전환 — 반대편 폼의 오류를 들고 가지 않는다. 로그인으로 돌아오면 재설정 결과도 접는다.
+      탭은 2단계~(2차 인증·비밀번호 변경·완료)에도 보인다(2026-11-13 사용자 지시). 그때 [로그인] 탭은 진행 중인 흐름 그대로 두고,
+      다른 탭으로 가면 로그인 흐름을 접고 1단계의 그 탭으로 간다. 2차 인증·비밀번호 변경 중이면 [뒤로]처럼 아이디는 남기되
+      OTP·비밀번호 변경 입력은 지운다(다시 로그인했을 때 옛 비밀번호가 채워져 나오지 않게). 완료 뒤에는 [처음부터 다시]와 같다. */
   const switchMode = (m: 'login' | 'reset' | 'simple') => {
+    if (step > 1) {
+      if (m === 'login') return;
+      if (step === 4) {
+        setId(''); setPw(''); setFails(0); setLocked(false);
+      }
+      setStep(1); setOtpIn(''); setOtpErr(null); setCur(''); setP1(''); setP2(''); setPwErr(NO_PW_ERR);
+    }
     setMode(m); setCredErr(null); setResetErr(null); setSaErr(null);
     if (m === 'login') { setResetDone(false); resetSimpleAuth(); }
   };
@@ -123,39 +205,25 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
 
   return (
     <AuthLayout>
-      <SplitCard
-        steps={mode === 'login'
-          ? railSteps(LOGIN_RAIL(pwExpired, step), step)
-          : mode === 'simple'
-            ? railSteps(SIMPLE_AUTH_RAIL, saStep)
-            : railSteps(RESET_RAIL, resetDone ? 2 : 1)}
-        railHead={<>
-          <Logo />
-          {/* 모바일은 한 줄(크기 차를 좁혀 나란히), md 이상은 2단 위계로 쌓는다.
-              크기는 className 으로 — 인라인 font 단축속성을 쓰면 반응형 크기를 덮어쓴다.
-              한 문장이라 사이에 공백을 남겨 스크린리더가 "…모태펀드 투자자산관리시스템"으로 이어 읽게 한다. */}
-          <p className="flex flex-wrap items-baseline gap-x-1.5 md:block" style={{ margin: '10px 0 clamp(14px,3.5vw,32px)' }}>
-            <span className="text-[13px] leading-[19px] md:leading-5 md:block" style={{
-              fontFamily: 'var(--font-sans)', fontWeight: 600, letterSpacing: '0.006em', color: 'var(--muted-foreground)',
-            }}>농림수산식품모태펀드</span>{' '}
-            <span className="text-[15px] leading-[21px] md:text-[23px] md:leading-[31px] md:block" style={{
-              fontFamily: 'var(--font-sans)', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--foreground)',
-            }}>투자자산관리시스템</span>
-          </p>
-        </>}>
+      <LoginCard
+        /* 로그인 ↔ 간편인증 ↔ 비밀번호 재설정 — 모든 단계에서 보인다(2단계~ 동작은 switchMode). */
+        tabs={
+          <UI.SegTabs value={mode} onChange={switchMode}
+            options={[
+              { value: 'login', label: '로그인' },
+              { value: 'simple', label: '간편인증' },
+              { value: 'reset', label: '비밀번호 재설정' },
+            ]} />
+        }
+        steps={!showLoginRail({ step, mode, saStep, resetDone }) ? null
+          : mode === 'login'
+            ? railSteps(LOGIN_RAIL(pwExpired, step), step)
+            : mode === 'simple'
+              ? railSteps(SIMPLE_AUTH_RAIL, saStep)
+              : railSteps(RESET_RAIL, resetDone ? 2 : 1)}>
 
         {step === 1 && (
           <StepPage dir={dir}>
-            {/* 로그인 ↔ 비밀번호 재설정. 2차 인증이 시작된 뒤(2단계~)에는 노출하지 않는다. */}
-            <div style={{ marginBottom: 30 }}>
-              <UI.SegTabs value={mode} onChange={switchMode}
-                options={[
-                  { value: 'login', label: '로그인' },
-                  { value: 'simple', label: '간편인증' },
-                  { value: 'reset', label: '비밀번호 재설정' },
-                ]} />
-            </div>
-
             {mode === 'login' ? (
               <>
                 <h1 style={T.title3}>아이디·비밀번호</h1>
@@ -325,7 +393,7 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
               <SecondaryBtn onClick={restart} style={{ minWidth: 160 }}>처음부터 다시</SecondaryBtn>
             </>} />
         )}
-      </SplitCard>
+      </LoginCard>
       <Toast toast={toast} />
 
     </AuthLayout>
