@@ -28,7 +28,8 @@ export const HOTKEYS = {
   schedule: { combo: { alt: true, key: 'e' } as HotkeyCombo, hint: ALT + 'E' },
   logout: { combo: { alt: true, key: 'l' } as HotkeyCombo, hint: ALT + 'L' },
   history: { combo: { alt: true, key: 'h' } as HotkeyCombo, hint: ALT + 'H' },     // 방문기록 드롭다운(PageHeader)
-  favorites: { combo: { alt: true, key: 'b' } as HotkeyCombo, hint: ALT + 'B' },   // 즐겨찾기 FAB 메뉴(B=Bookmark — ⌥F는 Win Chrome 메뉴라 회피)
+  fileBox: { combo: { alt: true, key: 'b' } as HotkeyCombo, hint: ALT + 'B' },     // 사용자 메뉴 파일BOX 팝업(목업 Alt+B — 2026-11-13 즐겨찾기에서 넘겨받음)
+  favorites: { combo: { alt: true, key: 'f' } as HotkeyCombo, hint: ALT + 'F' },   // 즐겨찾기 FAB 메뉴(F=Favorites — 2026-11-13 사용자 결정, ⌥B 는 파일BOX 로. ⚠ Windows Chrome 은 Alt+F 를 브라우저 메뉴로 먼저 가져갈 수 있다 — 미실측)
   refresh: { combo: { alt: true, key: 'r' } as HotkeyCombo, hint: ALT + 'R' },     // 리스트 툴바 조회(⌘R은 새로고침이라 회피)
   notif: { combo: { alt: true, key: 'n' } as HotkeyCombo, hint: ALT + 'N' },       // GNB 알림센터 열기(N=Notifications)
   lnb: { combo: { alt: true, key: '\\', code: 'Backslash' } as HotkeyCombo, hint: ALT + '\\' },   // GNB 메뉴(LNB) 접기/펴기 — 한글 자판에선 ₩ 키(같은 물리 키)

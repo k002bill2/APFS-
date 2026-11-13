@@ -11,7 +11,8 @@ COMMON_HTML = f"""
     <li>왼쪽부터 메뉴 접기/펴기 버튼, 로고(다크 테마에선 흰 로고), 시스템명.</li>
     <li>검색 상자 '메뉴·운용사·자펀드 검색' → 명령 팔레트. 전체 메뉴를 대분류별로 묶어 이름·중분류로 찾고, 고르면 바로 이동한다. 실제로 찾는 대상은 메뉴뿐이다(운용사·자펀드 데이터 검색은 아직 없음).</li>
     <li>오른쪽: 고정 너비/전체 너비 전환, 라이트/다크 전환, 알림(안 읽은 개수 배지), 사용자 메뉴(김정원 · 투자운용본부).</li>
-    <li>사용자 메뉴: 메모 · 일정 · 로그아웃. 각각 모달로 열린다. 로그아웃은 확인 모달만 있고 실제로 로그아웃하지 않는다 {D}</li>
+    <li>사용자 메뉴: 메모 · 일정 · 파일BOX · 로그아웃. 각각 모달로 열린다. 로그아웃은 확인 모달만 있고 실제로 로그아웃하지 않는다 {D}</li>
+    <li>파일BOX 모달: [내 파일함]·[운용사 제출 파일 관리] 탭, 검색칸, [업로드], 체크한 파일의 다운로드·삭제(내 파일함)·추가·교체(운용사 제출, 1건). [전체 화면]을 누르면 같은 목록의 파일BOX 화면(<code>#/file-box</code>)으로 간다 {D}</li>
   </ul>
   <h3>왼쪽 메뉴(LNB)</h3>
   <ul>
@@ -59,9 +60,9 @@ COMMON_HTML = f"""
       <tr><td class="k"><kbd>⌥W</kbd></td><td>고정 너비 / 전체 너비</td><td>전역</td></tr>
       <tr><td class="k"><kbd>⌥T</kbd></td><td>라이트 / 다크</td><td>전역</td></tr>
       <tr><td class="k"><kbd>⌥N</kbd></td><td>알림센터</td><td>전역</td></tr>
-      <tr><td class="k"><kbd>⌥M</kbd> <kbd>⌥E</kbd> <kbd>⌥L</kbd></td><td>메모 · 일정 · 로그아웃</td><td>전역</td></tr>
+      <tr><td class="k"><kbd>⌥M</kbd> <kbd>⌥E</kbd> <kbd>⌥B</kbd> <kbd>⌥L</kbd></td><td>메모 · 일정 · 파일BOX · 로그아웃</td><td>전역</td></tr>
       <tr><td class="k"><kbd>⌥H</kbd></td><td>방문기록</td><td>페이지 머리가 있는 화면</td></tr>
-      <tr><td class="k"><kbd>⌥B</kbd></td><td>즐겨찾기 목록 열기/닫기</td><td>전역(모달이 열려 있으면 무시)</td></tr>
+      <tr><td class="k"><kbd>⌥F</kbd></td><td>즐겨찾기 목록 열기/닫기</td><td>전역(모달이 열려 있으면 무시)</td></tr>
       <tr><td class="k"><kbd>⌥R</kbd></td><td>조회(다시 불러오기)</td><td>리스트 화면</td></tr>
       <tr><td class="k"><kbd>⌘⏎</kbd></td><td>등록 모달 열기</td><td>등록이 있는 리스트 화면</td></tr>
       <tr><td class="k"><kbd>⌥D</kbd></td><td>엑셀 내보내기</td><td>리스트 화면</td></tr>

@@ -28,7 +28,7 @@ APFS/
     ├── styles/tailwind.css     # @tailwind base/components/utilities
     └── dash/                   # 앱 모듈 (ES modules) — 페이지는 메뉴 도메인 폴더, 공용은 루트
         ├── aut/{login,otp}/                     # 인증(Shell 없음) — login=로그인 · otp=발급/초대 온보딩(비밀번호·OTP 등록), 루트=auth_model/auth_shared
-        ├── frt/{widget,schedule}/               # 대시보드 — widget=메인 대시보드(main)·위젯(main_widgets)·portfolio_performance · schedule=일정·알림
+        ├── frt/{widget,schedule,fbox}/          # 대시보드 — widget=메인 대시보드(main)·위젯(main_widgets)·portfolio_performance · schedule=일정·알림 · fbox=파일BOX(사용자 메뉴 팝업 + 전체 화면 route file-box)
         ├── iam/{mfund,asct,report,sfund,ent,gp}/    # 투자자산관리 (모태펀드·조합·사후보고·자펀드·투자기업·운용사)
         ├── ews/{alert,ent,sfund,valuation}/     # 조기경보
         ├── sfr/{occasionalreport,regularreport,verify,file}/  # 자펀드 보고 (수시·정기보고·실물검증·파일)

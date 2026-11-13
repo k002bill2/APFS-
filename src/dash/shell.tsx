@@ -6,7 +6,8 @@ import { APFS_DATA, useMenuSel, MenuStore, HistoryStore } from './data';
 import { MainWidgets } from './frt/widget/main_widgets';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuShortcut } from './ui/dropdown-menu';
 import { MenuHighlightProvider, useMenuHighlight, ItemHighlight } from './ui/menu-highlight';
-import { useHotkey, HOTKEYS } from './use-hotkey';   // 사용자 메뉴 ⌥ 단축키(도달 가능·입력창 자동 무시)
+import { useHotkey, HOTKEYS, ariaShortcut } from './use-hotkey';   // 사용자 메뉴 ⌥ 단축키(도달 가능·입력창 자동 무시)
+import type { HotkeyCombo } from './use-hotkey';
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from './ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
@@ -530,7 +531,19 @@ function NotifCenter({ open, onClose }: { open: boolean; onClose: () => void }) 
 }
 
 /* ---------- 사용자 메뉴 ---------- */
-function UserMenu({ onUserModal }: { onUserModal: (id: string) => void }) {
+/* 사용자 메뉴 도구 슬롯 — 셸은 도메인을 모르므로(core_domain_free) 도메인 화면이 띄우는 모달(파일BOX 등)은
+   조립 지점(app.tsx)이 AppShell `userTools` 로 넘긴다. 메뉴에선 일정 아래·로그아웃 위에 선언 순서대로 놓인다. */
+export type UserTool = {
+  id: string; label: string; icon: string;
+  hk?: { combo: HotkeyCombo; hint: string };
+  Modal: React.ComponentType<{ open: boolean; onClose: () => void; onNav: (r: string) => void }>;
+};
+/* 도구 단축키 — 훅을 배열 순회로 부를 수 없어 도구마다 빈 컴포넌트 하나 */
+function ToolHotkey({ combo, onFire }: { combo: HotkeyCombo; onFire: () => void }) {
+  useHotkey(combo, onFire);
+  return null;
+}
+function UserMenu({ onUserModal, tools = [] }: { onUserModal: (id: string) => void; tools?: readonly UserTool[] }) {
   // ⌥ 단축키 — OS 예약키(⌘M 최소화·⌘Q 종료)를 피한 도달 가능한 조합. 입력창에선 자동 무시.
   // hint와 combo가 HOTKEYS 단일 소스라 표시와 실제 바인딩이 어긋나지 않는다.
   useHotkey(HOTKEYS.memo.combo, () => onUserModal("memo"));
@@ -539,9 +552,12 @@ function UserMenu({ onUserModal }: { onUserModal: (id: string) => void }) {
   const items = [
     { id: "memo", label: "메모", icon: "memo", danger: false, hk: HOTKEYS.memo },
     { id: "schedule", label: "일정", icon: "calendar", danger: false, hk: HOTKEYS.schedule },
+    ...tools.map((t) => ({ id: t.id, label: t.label, icon: t.icon, danger: false, hk: t.hk })),
     { id: "logout", label: "로그아웃", icon: "external", danger: true, hk: HOTKEYS.logout },
   ];
   return (
+    <>
+    {tools.map((t) => t.hk && <ToolHotkey key={t.id} combo={t.hk.combo} onFire={() => onUserModal(t.id)} />)}
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button aria-label="사용자 메뉴" className="gnb-user-trigger flex items-center gap-2 cursor-pointer py-0.5 px-1" style={{ border: "none", background: "transparent", font: "inherit" }}>
@@ -560,12 +576,13 @@ function UserMenu({ onUserModal }: { onUserModal: (id: string) => void }) {
             {it.id === "logout" && <DropdownMenuSeparator />}
             <DropdownMenuItem danger={it.danger} onSelect={() => onUserModal(it.id)}>
               <Icon name={it.icon} size={16} className="shrink-0" />{it.label}
-              <DropdownMenuShortcut>{it.hk.hint}</DropdownMenuShortcut>
+              {it.hk && <DropdownMenuShortcut>{it.hk.hint}</DropdownMenuShortcut>}
             </DropdownMenuItem>
           </React.Fragment>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
+    </>
   );
 }
 
@@ -615,7 +632,7 @@ function FavoritesFab({ onNav }) {
   const drag = useRef<{ x: number; y: number; right: number; bottom: number; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
   const [tip, setTip] = useState(false);   // FAB 툴팁 — 메뉴가 열렸거나 드래그 중엔 숨긴다(메뉴·손가락을 가리지 않게)
-  // ⌥B 즐겨찾기 메뉴 토글 — 설정 모달(edit)이나 다른 모달이 열려 있으면 무시
+  // ⌥F 즐겨찾기 메뉴 토글 — 설정 모달(edit)이나 다른 모달이 열려 있으면 무시
   useHotkey(HOTKEYS.favorites.combo, () => { if (!document.querySelector('[role="dialog"]')) setOpen((o) => !o); }, { enabled: !edit });
   // 맨 위로 — 일정 이상 스크롤했을 때만 FAB 옆에 노출(스크롤 주체는 window)
   const [showTop, setShowTop] = useState(false);
@@ -717,7 +734,7 @@ function FavoritesFab({ onNav }) {
         onPointerCancel={onPointerUp}
         aria-label="즐겨찾기"
         aria-expanded={open}
-        aria-keyshortcuts="Alt+B"
+        aria-keyshortcuts={ariaShortcut(HOTKEYS.favorites.combo)}
         className={"shadow-lg flex items-center justify-center " + (dragging ? "cursor-grabbing" : "cursor-pointer")}
         style={{ width: FAB_SIZE, height: FAB_SIZE, borderRadius: 99, border: "none", background: "var(--brand-solid)", color: "var(--on-brand-solid)", touchAction: "none", userSelect: "none", transition: "transform .18s var(--ease)", transform: open ? "rotate(90deg) scale(1.04)" : dragging ? "scale(1.08)" : "none" }}>
         <Icon name={open ? "x" : "star"} size={20} stroke={2.2} />
@@ -775,7 +792,7 @@ function MenuCommand({ open, onOpenChange, onNav }: { open: boolean; onOpenChang
   );
 }
 
-function Gnb({ theme, onToggleTheme, onToggleLnb, wide, onToggleWide, notifs, onOpenNotif, onNav, onUserModal }) {
+function Gnb({ theme, onToggleTheme, onToggleLnb, wide, onToggleWide, notifs, onOpenNotif, onNav, onUserModal, userTools }) {
   const unread = notifs.filter((n) => !n.read).length;
   const [cmdOpen, setCmdOpen] = useState(false);
   useEffect(() => {
@@ -827,7 +844,7 @@ function Gnb({ theme, onToggleTheme, onToggleLnb, wide, onToggleWide, notifs, on
           icon="moon" altIcon="sun" swapped={theme === "dark"}
           onClick={onToggleTheme}
           label="라이트/다크"
-          size={32} iconSize={18} hotkey={HOTKEYS.theme} /><IconBtn icon="bell" onClick={onOpenNotif} label="알림" badge={unread} size={32} iconSize={18} hotkey={HOTKEYS.notif} /></div><UserMenu onUserModal={onUserModal} /></header>
+          size={32} iconSize={18} hotkey={HOTKEYS.theme} /><IconBtn icon="bell" onClick={onOpenNotif} label="알림" badge={unread} size={32} iconSize={18} hotkey={HOTKEYS.notif} /></div><UserMenu onUserModal={onUserModal} tools={userTools} /></header>
     </>
   );
 }
@@ -994,6 +1011,7 @@ function PageHeader({ crumbs, actions }: { crumbs: string[]; title?: React.React
 function AppShell(props) {
   const { wide, onToggleWide } = props;
   const { theme, onToggleTheme, route, onNav, lnbOpen, onToggleLnb, navStyle, notifs, children } = props;
+  const userTools: readonly UserTool[] = props.userTools ?? [];   // 사용자 메뉴 도구(파일BOX 등) — app.tsx 가 넘긴다
   const [notifOpen, setNotifOpen] = useState(false);
   const [userModal, setUserModal] = useState<string | null>(null);
   const mobile = useIsMobile(760);
@@ -1013,7 +1031,8 @@ function AppShell(props) {
         notifs={notifs}
         onOpenNotif={() => setNotifOpen(true)}
         onNav={navClose}
-        onUserModal={setUserModal} /><div className="grid flex-1 items-start" style={{
+        onUserModal={setUserModal}
+        userTools={userTools} /><div className="grid flex-1 items-start" style={{
           gridTemplateColumns: mobile ? "minmax(0,1fr)" : rail ? "64px minmax(0,1fr)" : `${lnbOpen ? 260 : 66}px minmax(0,1fr)`,
           ...(mobile || rail ? {} : { transition: "grid-template-columns var(--dur-slow) var(--ease)" }),
         }}>{rail
@@ -1023,7 +1042,7 @@ function AppShell(props) {
           style={{ padding: "14px 26px 104px" }}>{children}</main></NavContext.Provider></div>{mobile && <div
         aria-hidden="true"
         className={"lnb-backdrop" + (drawer ? " show" : "")}
-        onClick={() => setDrawer(false)} />}<FavoritesFab onNav={navClose} /><NotifCenter open={notifOpen} onClose={() => setNotifOpen(false)} /><CenterModal open={userModal === "memo"} onClose={() => setUserModal(null)} title="메모" icon="memo" width={620}>{ncMemoBody(true)}</CenterModal><CenterModal open={userModal === "schedule"} onClose={() => setUserModal(null)} title="일정" icon="calendar" width={880}><NcScheduleBody /></CenterModal><CenterModal open={userModal === "logout"} onClose={() => setUserModal(null)} title="로그아웃" icon="external" width={400} footer={[<button key="c" onClick={() => setUserModal(null)} className="bg-card cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "1px solid var(--border-strong)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>취소</button>, <button key="o" onClick={() => setUserModal(null)} className="bg-brand-blue cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "none", color: "var(--on-brand-solid)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>로그아웃</button>]}><div className="py-1.5 px-1 text-foreground" style={{ fontSize: 14, lineHeight: 1.6 }}>정말 로그아웃 하시겠습니까?</div></CenterModal></div>
+        onClick={() => setDrawer(false)} />}<FavoritesFab onNav={navClose} /><NotifCenter open={notifOpen} onClose={() => setNotifOpen(false)} />{userTools.map(({ id, Modal }) => <Modal key={id} open={userModal === id} onClose={() => setUserModal(null)} onNav={navClose} />)}<CenterModal open={userModal === "memo"} onClose={() => setUserModal(null)} title="메모" icon="memo" width={620}>{ncMemoBody(true)}</CenterModal><CenterModal open={userModal === "schedule"} onClose={() => setUserModal(null)} title="일정" icon="calendar" width={880}><NcScheduleBody /></CenterModal><CenterModal open={userModal === "logout"} onClose={() => setUserModal(null)} title="로그아웃" icon="external" width={400} footer={[<button key="c" onClick={() => setUserModal(null)} className="bg-card cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "1px solid var(--border-strong)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>취소</button>, <button key="o" onClick={() => setUserModal(null)} className="bg-brand-blue cursor-pointer" style={{ padding: "9px 16px", borderRadius: 10, border: "none", color: "var(--on-brand-solid)", font: "inherit", fontWeight: 700, fontSize: 13.5 }}>로그아웃</button>]}><div className="py-1.5 px-1 text-foreground" style={{ fontSize: 14, lineHeight: 1.6 }}>정말 로그아웃 하시겠습니까?</div></CenterModal></div>
   );
 }
 

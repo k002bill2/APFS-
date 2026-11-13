@@ -73,6 +73,7 @@ const MAP = {
   "check-circle":["CircleCheckBig","CheckCircle2","CircleCheck"], download:["Download"], upload:["Upload"],
   // TrendBadge 신규·해소(가이드 4.2.2) — 체크가 원 안에 갇힌 CircleCheck(check-circle 의 Big 은 체크가 원 밖으로 나간다)
   "circle-check":["CircleCheck","CheckCircle2"], "circle-plus":["CirclePlus","PlusCircle"],
+  folder:["Folder"],   // 사용자 메뉴 파일BOX(2026-11-13)
   inbox:["Inbox"], users:["Users"], activity:["Activity"], "alert-triangle":["TriangleAlert","AlertTriangle"],
   user:["User"], plus:["Plus"], filter:["Filter"], external:["ExternalLink"], refresh:["RefreshCw"],
   "arrow-right":["ArrowRight"], clock:["Clock"], history:["History"], layers:["Layers","Layers3"],

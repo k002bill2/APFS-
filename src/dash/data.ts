@@ -494,6 +494,7 @@ const PAGE_TITLES: Record<string, { label: string; crumbs: string[]; icon: strin
   "portfolio-performance": { label: "투자 성과·포트폴리오", crumbs: ["홈", "통계조회", "투자 성과·포트폴리오"], icon: "trending" },
   "annual-invest-status": { label: "연도별 투자현황", crumbs: ["홈", "부처보고", "모태펀드", "연도별 투자현황"], icon: "file" },
   schedule: { label: "일정·알림 센터", crumbs: ["홈", "일정·알림 센터"], icon: "calendar" },
+  "file-box": { label: "파일BOX", crumbs: ["홈", "파일BOX"], icon: "folder" },
   "report-bucheo": { label: "연도별투자현황", crumbs: ["홈", "부처보고", "모태펀드", "연도별투자현황"], icon: "file" },
   subfund: { label: "자펀드 관리", crumbs: ["홈", "투자자산관리", "자펀드 관리", "자펀드 관리"], icon: "landmark" },
 };

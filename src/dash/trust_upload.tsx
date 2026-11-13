@@ -75,17 +75,19 @@ export interface UploadModalProps {
   emptyMsg: string;
   /** 완료 토스트 — 파일 이름이 필요한 화면은 함수로 */
   doneMsg: string | ((files: string[]) => string);
+  /** (선택) [확인] 반영 — 올린 파일명을 목록에 넣는 화면만(파일BOX 내 파일함). 미지정 = 토스트만 */
+  onDone?: (files: string[]) => void;
   onClose: () => void;
 }
 
 /** 툴바 [업로드] → 업로드 모달(파일명 드롭존 + [확인]). 파일 처리·전송은 하지 않는다(브리프 규칙 5) */
-export function UploadModal({ title, label, hint, maxSize, removedMsg, emptyMsg, doneMsg, onClose }: UploadModalProps) {
+export function UploadModal({ title, label, hint, maxSize, removedMsg, emptyMsg, doneMsg, onDone, onClose }: UploadModalProps) {
   const dlgRef = useRef<DialogHandle>(null);
   const [files, setFiles] = useState<string[]>([]);
   /* SaveButton 계약: 파일 없음 = undefined(스피너 없이 즉시 토스트), 있음 = commit — '확인'→'업로드 중' 텍스트 스왑 후 닫힘 */
   const confirm = (): SubmitResult => {
     if (!files.length) { toast(emptyMsg); return; }
-    return () => { toast.success(typeof doneMsg === 'function' ? doneMsg(files) : doneMsg); dlgRef.current?.close(); };
+    return () => { onDone?.(files); toast.success(typeof doneMsg === 'function' ? doneMsg(files) : doneMsg); dlgRef.current?.close(); };
   };
   return (
     <Dialog ref={dlgRef} open onOpenChange={(o) => { if (!o) onClose(); }}>

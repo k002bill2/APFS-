@@ -13,6 +13,10 @@ import { LitigationManage } from './ews/alert/litigation_manage';   // 운용사
 import { WorkforceManage } from './ews/alert/workforce_manage';   // 운용인력 변동관리(관리형 리스트, S2_59 + 등록화면 S2_60 을 팝업으로 흡수)
 import { EwResultManage } from './ews/alert/ew_result_manage';   // 조기경보 결과정보 관리(섹션 2개 적층 + 생성·확정·마감 워크플로, S2_61 + 생성확인 S2_62)
 import { Schedule } from './frt/schedule/schedule';
+import { FileBox } from './frt/fbox/file_box';                                       // 파일BOX 전체 화면(FRT005, 메뉴 밖 앱 route)
+import { FileBoxModal } from './frt/fbox/file_box_modal';                           // 파일BOX 팝업 — 사용자 메뉴 도구 슬롯
+import { HOTKEYS } from './use-hotkey';
+import type { UserTool } from './shell';
 import { SubFundManage } from './iam/sfund/subfund_manage';   // 자펀드관리(관리형 리스트, 구조도 v1.4). 구 subfund.tsx(FR-5.3 대시보드)는 미라우팅
 import { Pages as ReportBucheoPages } from './brf/mfund/report_bucheo';
 import { GenericListPage, findMenuContext } from './generic_list';
@@ -140,13 +144,17 @@ const hashRoute = () => {
 // 스키마/메뉴 리프 라우트는 findMenuContext가 한글 label을 돌려주므로 여기서 제외.
 // (schedule은 MENU path에 없어 findMenuContext가 영문 'schedule'로 폴백 → 여기서 한글 지정)
 const APP_ROUTE_TITLES: Record<string, string> = {
-  main: "메인 대시보드", designsystem: "디자인 시스템", editor: "문서 편집기", schedule: "일정 관리",
+  main: "메인 대시보드", designsystem: "디자인 시스템", editor: "문서 편집기", schedule: "일정 관리", "file-box": "파일BOX",
   login: "로그인", "onboarding-issue": "발급 온보딩", "onboarding-invite": "초대 온보딩",
   "monthly-report": "월간보고",
 };
 // 팝업 창 전용 route — 메인 창과 localStorage 를 공유하므로 apfs.route·방문기록에 남기지 않는다
 // (남기면 메인 창을 새로고침했을 때 팝업 화면이 열린다).
 const POPUP_ROUTES = new Set(["monthly-report"]);
+/* GNB 사용자 메뉴 도구(일정 아래·로그아웃 위) — 셸은 도메인을 모르므로 조립 지점인 여기서 넘긴다(core_domain_free) */
+const USER_TOOLS: readonly UserTool[] = [
+  { id: "file-box", label: "파일BOX", icon: "folder", hk: HOTKEYS.fileBox, Modal: FileBoxModal },
+];
 // apfs.route·방문기록에 남길 route — 팝업 창 전용과 진입점을 숨긴 route(hidden_routes)는 제외
 const isTracked = (r: string) => !POPUP_ROUTES.has(r) && !HIDDEN_ROUTES.has(r);
 const routeTitleFor = (r: string) => APP_ROUTE_TITLES[r] || findMenuContext(r).title;
@@ -242,6 +250,7 @@ function App() {
   else if (route === "main") page = <Main onNav={onNav} navStyle={navStyle} onNavStyle={setNavStyle} />;
   else if (route === "risk-manage") page = <EarlyWarningManage onNav={onNav} />;
   else if (route === "schedule") page = <Schedule onNav={onNav} />;
+  else if (route === "file-box") page = <FileBox onNav={onNav} />;
   else if (route === "subfund") page = <SubFundManage onNav={onNav} />;
   else if (route === "asset-funding") page = <AssetFunding onNav={onNav} />;
   else if (route === "investment-review") page = <InvestmentReviewManage onNav={onNav} />;
@@ -380,6 +389,7 @@ function App() {
       wide={wide}
       onToggleWide={() => setWide((x) => !x)}
       notifs={notifs}
+      userTools={USER_TOOLS}
       onReadAll={() => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })))}>{loading ? <PageSkeleton withSpinner={routeChanged} /> : page}<Toaster theme={theme} /></AppShell>
     </TooltipProvider>
     </MotionConfig>
