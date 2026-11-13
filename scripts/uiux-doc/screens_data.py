@@ -1371,6 +1371,18 @@ SCREENS = {
         ],
         note="이전·다음 달, 일정 추가, 알림 전체 보기, 내보내기 버튼은 아직 동작하지 않는다.",
     ),
+    "file-box": dict(
+        label="파일BOX", sid="FRT005", file="frt/fbox/file_box.tsx",
+        summary="내 파일함(개인 보관 파일)과 운용사 제출 파일을 한 화면에서 보고, 올리고, 내려받는다. 사용자 메뉴 [파일BOX](⌥B) 모달의 [전체 화면]으로 들어온다.",
+        layout="탭 2개(내 파일함 · 운용사 제출 파일 관리) · 표 1장(내 파일함 3열 / 운용사 제출 6열) · 상세필터(내 파일함 = 파일명 / 운용사 제출 = 운용사·조합명·투자기업·파일명)",
+        features=[
+            "내 파일함: [업로드](PDF·HWP·DOCX·XLSX·ZIP, 최대 20MB)로 올리면 맨 위에 붙는다. 체크한 파일은 [다운로드]·[삭제](확인 대화상자).",
+            "운용사 제출 파일: 체크한 파일 [다운로드], 1건이면 [추가·교체] — 구분(추가 업로드(누락분 보완) / 교체(잘못 제출된 파일 대체))·사유·파일을 넣는다. 원본을 고치는 기능이 아니다. 행 더블클릭도 추가·교체.",
+            "다운로드: 1개(파일명 클릭·파일명 칸 Enter·우클릭 포함)는 안내 텍스트 파일(원본명.txt) 하나, 여러 개는 ZIP 하나로 받는다. 운용사 제출 파일 ZIP 은 운용사/조합명/투자기업 폴더로 나뉘고, 같은 이름은 (2)·(3) 을 붙인다.",
+            "사용자 메뉴의 파일BOX 모달과 같은 목록을 본다 — 모달에서 올린 파일이 이 화면에도 보인다.",
+            f"업로드는 파일명만 남기고, 내려받는 파일은 원본이 아닌 목업 안내 텍스트다. 방금 올린 파일의 크기는 '-' {D}",
+        ],
+    ),
     "editor": dict(
         label="문서 편집기", file="editor_page.tsx",
         summary="등록 모달에서 쓰는 서식 편집기(Plate)를 전체 페이지로 띄워 문서를 편집한다. 저장 버튼은 없고 내보내기로만 보관한다.",
@@ -1441,7 +1453,7 @@ SCREENS = {
 EXTRA_GROUPS = [
     dict(title="인증 화면", type="auth", routes=["login", "onboarding-issue", "onboarding-invite"],
          lead="GNB·LNB 없이 단독으로 뜨는 화면. 실제 인증·계정 활성화는 하지 않는 UI 시연이지만, 비밀번호 정책·잠금·OTP 같은 판정 규칙은 화면 안에서 실제로 동작한다."),
-    dict(title="앱 전용 화면", type="app", routes=["designsystem", "schedule", "editor"],
+    dict(title="앱 전용 화면", type="app", routes=["designsystem", "schedule", "file-box", "editor"],
          lead="업무 메뉴가 아닌 보조 화면."),
     dict(title="메뉴에 없는 업무 화면", type="app",
          routes=["report-form", "report-update-info", "monthly-report", "custody-confirm", "portfolio-performance", "annual-invest-status"],

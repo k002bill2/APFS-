@@ -10,7 +10,7 @@ APFS의 앱-스코프 키보드 단축키는 **단일 훅 + 단일 레지스트�
 
 - **정본 파일**: `src/dash/use-hotkey.ts` — `HOTKEYS`(레지스트리) + `useHotkey(combo, handler, opts)`(바인딩 훅).
 - **`HOTKEYS`는 힌트+바인딩 단일 소스** — 메뉴 표시(`DropdownMenuShortcut`)와 실제 키 바인딩(`useHotkey`)이 **같은 정의**를 참조한다. 한 곳만 바꾸면 표시와 동작이 동시에 따라온다.
-- **소비처**: `shell.tsx`(사용자 메뉴 ⌥M/E/L · GNB ⌥\·⌥W·⌥T·⌥N · 방문기록 ⌥H · 즐겨찾기 FAB ⌥B), `grid_frame.tsx` `FooterActions`(전체보기 ⌥A·새 창 ⌥O 바인딩 + 내보내기·인쇄 힌트), 리스트 페이지 40여 곳(등록 ⌘⏎ · 인쇄 ⌘P · 내보내기 ⌥D · 조회 ⌥R).
+- **소비처**: `shell.tsx`(사용자 메뉴 ⌥M/E/L + 도구 슬롯 ⌥B 파일BOX · GNB ⌥\·⌥W·⌥T·⌥N · 방문기록 ⌥H · 즐겨찾기 FAB ⌥F), `grid_frame.tsx` `FooterActions`(전체보기 ⌥A·새 창 ⌥O 바인딩 + 내보내기·인쇄 힌트), 리스트 페이지 40여 곳(등록 ⌘⏎ · 인쇄 ⌘P · 내보내기 ⌥D · 조회 ⌥R).
 - **힌트 표면 3종**(2026-09-28 — 툴팁이 있는 버튼은 단축키 힌트도 가진다):
   - `IconBtn hotkey={HOTKEYS.x}` = **바인딩 + 툴팁 힌트 + `aria-keyshortcuts`**. 버튼이 곧 액션인 경우(조회·알림·GNB 토글·푸터 전체보기/새 창).
   - `IconBtn shortcut={HOTKEYS.x}` / `SplitButton shortcut={HOTKEYS.x}` = **표시 전용**(힌트·aria만). 바인딩을 페이지 `useHotkey` 가 이미 소유할 때(푸터 인쇄·내보내기) — 둘 다 바인딩하면 한 번 누름에 두 번 실행된다.
@@ -30,7 +30,8 @@ APFS의 앱-스코프 키보드 단축키는 **단일 훅 + 단일 레지스트�
 | `⌥E` / `Alt+E` | 일정 모달 | `HOTKEYS.schedule` | shell | Mac 실측 / **Windows 미실측** |
 | `⌥L` / `Alt+L` | 로그아웃 모달 | `HOTKEYS.logout` | shell | Mac 실측 / **Windows 미실측** |
 | `⌥H` / `Alt+H` | 방문기록 드롭다운 토글 | `HOTKEYS.history` | shell `HistoryMenu`(IconBtn `hotkey`) | Mac 실측 / **Windows 미실측** |
-| `⌥B` / `Alt+B` | 즐겨찾기 FAB 메뉴 토글 | `HOTKEYS.favorites` | shell `FavoritesFab`(Radix 툴팁 힌트, 메뉴 열림·드래그 중 숨김) | Mac 실측 / **Windows 미실측** |
+| `⌥B` / `Alt+B` | 파일BOX 팝업(사용자 메뉴 도구) | `HOTKEYS.fileBox` | shell `UserMenu` 도구 슬롯(`ToolHotkey` — app.tsx `USER_TOOLS` 가 넘김) · 메뉴 `DropdownMenuShortcut` 힌트 | Mac 실측(2026-11-13 — 사용자 메뉴 힌트 `⌥B`·팝업 열림) / **Windows 미실측**. 목업 Alt+B 를 따르고 즐겨찾기를 옮기는 것은 사용자 결정(2026-11-13) |
+| `⌥F` / `Alt+F` | 즐겨찾기 FAB 메뉴 토글 | `HOTKEYS.favorites` | shell `FavoritesFab`(Radix 툴팁 힌트, 메뉴 열림·드래그 중 숨김) | Mac 실측(2026-11-13 — 메뉴 열림·`aria-keyshortcuts=Alt+F`) / **Windows 미실측 — Chrome 이 Alt+F(브라우저 메뉴)를 먼저 가져갈 위험**. 2026-11-13 사용자 결정(⌥B→파일BOX, 즐겨찾기 = ⌥F) |
 | `⌥N` / `Alt+N` | 알림센터 열기 | `HOTKEYS.notif` | shell `Gnb` 알림 IconBtn(`hotkey`) | Mac 실측 / **Windows 미실측** |
 | `⌥\` / `Alt+\` | LNB 메뉴 접기/펴기 | `HOTKEYS.lnb`(`code:'Backslash'` — 한글 자판 ₩ 키) | shell `Gnb`(IconBtn `hotkey`) | Mac 실측 / **Windows 미실측** |
 | `⌥W` / `Alt+W` | 고정/전체 너비 | `HOTKEYS.wide` | shell `Gnb` | Mac 실측 / **Windows 미실측** |
@@ -56,7 +57,7 @@ APFS의 앱-스코프 키보드 단축키는 **단일 훅 + 단일 레지스트�
   - 구현: ⌥S 임시저장 · ⌥K 마지막행 복사 추가 · ⌥Z 행 삭제(체크 행만) · ⌥C 이전 적요 복사 · ⌥I 행 삽입(설계서 Alt+A 대체) · ⌥↑/⌥↓ 행 이동(설계서 Alt+R 대체, 체크 행) · ⌥+ 행 추가(설계서 '마지막 행에서 ↓' 대체) · 계정코드+Tab(=칸 blur 시 `resolveCode`) · 키워드+Enter 검색(계정과목·거래처 칸) · 대표 적요 추종(`syncMemo`)+[대표적요반영] · 차액 발생 시 1행(`withAutoRow`, 금액 blur).
   - 부분: 금액 `+/-` — `+`(×1,000)만. `-` 는 마이너스전표 음수 입력과 겹쳐 제외.
   - 미구현: 차액에서 Enter 저장 버튼 이동(차액 칸은 표시 전용이라 포커스 대상이 없다).
-- 회피한 키: `⌥F`(Windows Chrome 메뉴) → 즐겨찾기는 `⌥B`·전체보기는 `⌥A`, `⌘R`(새로고침) → 조회는 `⌥R`, `⌘W`(탭 닫기) → 전체 너비는 `⌥W`.
+- 회피한 키: `⌥F`(Windows Chrome 메뉴) → 전체보기는 `⌥A`. 즐겨찾기는 원래 `⌥B` 로 피했으나 2026-11-13 사용자 결정으로 **`⌥F` 를 쓴다**(⌥B 는 파일BOX) — Windows 판별 테스트 대상, `⌘R`(새로고침) → 조회는 `⌥R`, `⌘W`(탭 닫기) → 전체 너비는 `⌥W`.
 
 ## Mac / Windows 대응 (질문 자주 나옴)
 **둘 다 정의돼 있다.** 코드가 플랫폼을 분기한다:
@@ -89,7 +90,7 @@ Windows Chromium은 `Alt+D`(주소창)·`Alt+E`(메뉴) 등 일부 단축키를 
   - **한 글자가 물리 키 여러 개에서 나오면 `codes`** — `'+'` 는 `Equal`(Shift 필요)·`NumpadAdd` 둘이라 `{ alt:true, key:'+', codes:['Equal','NumpadAdd'] }`. `codes` 가 있는 조합만 Shift 를 무시한다(Chrome 확대 ⌘=·⌘⇧= 관례) — 그 밖의 조합은 Shift 엄격 비교 그대로(회귀 테스트: ⌥⇧R 은 조회를 발화하지 않는다, `use_hotkey_keys.test.ts`). 훅 deps 는 `codes.join(',')` 문자열(배열 identity 금지). `ariaShortcut` 은 `Alt++` 를 만든다 — IconBtn 에 붙일 일이 생기면 `Plus` 표기로 바꿀 것.
   - **화면 상태가 있어야 의미 있는 단축키는 그 조건을 `enabled` 에 넣는다** — 훅은 매칭되면 무조건 preventDefault 하므로, 체크 행이 없는데 ⌥↑ 를 가로채면 스크롤·Radix select 열기 같은 기본 동작만 죽는다. 예: `{ enabled: hk.enabled && checked.size > 0 }`(전표등록 ⌥↑·⌥↓, 실측: 체크 0건이면 `defaultPrevented:false`).
 - **키 자동반복**: 키를 누르고 있으면 브라우저가 `keydown` 을 반복한다. 훅은 `e.repeat` 이면 **기본동작만 막고 액션은 실행하지 않는다**(첫 입력 1회) — 새 창 ⌥O 가 탭을 여러 개 열거나 토글이 홀짝으로 끝나지 않게. 반복 실행이 필요한 단축키(스크롤·증감 등)가 생기면 opt-in 옵션을 따로 만들 것.
-- **`aria-keyshortcuts` 표기**는 `use-hotkey.ts` 의 `ariaShortcut(combo)` 하나로 만든다 — mod 는 Mac=`Meta`·그 외=`Control`(힌트 ⌘/Ctrl 과 일치). 컴포넌트에서 문자열을 손으로 쓰지 않는다(예외: FAB 의 고정 `Alt+B`).
+- **`aria-keyshortcuts` 표기**는 `use-hotkey.ts` 의 `ariaShortcut(combo)` 하나로 만든다 — mod 는 Mac=`Meta`·그 외=`Control`(힌트 ⌘/Ctrl 과 일치). 컴포넌트에서 문자열을 손으로 쓰지 않는다(FAB 의 고정 `Alt+B` 도 2026-11-13 `ariaShortcut(HOTKEYS.favorites.combo)` 로 바꿨다 — 예외 없음).
 - **OS 계층 금지**: `⌘M`(최소화)·`⌘Q`(종료)·`⌘W`(닫기)·`⌘T`(새탭)·`⌘Tab`은 페이지에 도달조차 안 하므로 **쓰지 말 것**.
 - **키 선택은 한 번에** — 충돌이 나도 추측으로 연달아 바꾸지 말고 위 레지스트리 표로 확인 후 확정. (⌘E→⌥D 사례: 사용자 보고 충돌 후 ⌥ 티어로 이동.)
 
