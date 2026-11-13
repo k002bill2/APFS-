@@ -1352,6 +1352,7 @@ SCREENS = {
         label="디자인 시스템", file="designsystem.tsx",
         summary="컬러 토큰·타이포·공통 컴포넌트·차트 스타일을 한 화면에서 미리 본다. 메뉴·버튼 진입점이 없어 주소(<code>#/designsystem</code>)를 직접 입력해야 열린다.",
         features=[
+            "주소로 열어도 마지막 화면·방문기록에 남기지 않는다(주소 없이 다시 열면 직전 화면이 복원된다). 이전에 남은 기록도 앱을 열 때 지운다.",
             "컬러: 브랜드·차트 팔레트·자금 원천 고정색.",
             "타이포: 토큰별 크기 샘플(Display 34 · H1 23 …).",
             "공통 컴포넌트: StatCard·ChartCard·StatusBadge·FilterChip·SegTabs·IconBtn·Card, Alert 3종, Accordion·HoverCard·ScrollArea·Spinner·InputGroup·Item.",
