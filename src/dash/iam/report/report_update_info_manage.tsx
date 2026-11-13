@@ -281,7 +281,8 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌는 항상 필터 칩이다 — 선택이 표시 전용이라 selbar 가 존재하지 않는다(상단 주석 참조).
          드로어 값 칩도 없다: 투심상태는 이 칩 행이 이미 보여주고, 보고구분은 noop 이라 칩을 만들지 않는다. */
-      filterChips={(['', '승인', '보류', '부결'] as ('' | ReviewStatus)[]).map((s) => ({ key: s || 'all', label: s || '투심상태: 전체', active: fStat === s, onSelect: () => setFStat(s) }))}
+      filterChipsMenu="투심상태"
+      filterChips={(['', '승인', '보류', '부결'] as ('' | ReviewStatus)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fStat === s, onSelect: () => setFStat(s) }))}
       toolbarRight={<>
         {/* 금액 단위 전환 — 목업 listbar 의 '금액단위 원/백만원/억원' */}
         <span className="text-caption font-semibold" style={{ fontSize: 12, marginRight: 6 }}>금액단위</span>

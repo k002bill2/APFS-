@@ -299,7 +299,8 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       title="코드관리"
       favRoute="code-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      filterChips={(['', '여', '부'] as const).map((u) => ({ key: u || 'all', label: u ? `사용 ${u}` : '사용여부: 전체', active: fUse === u, onSelect: () => setFUse(u) }))}
+      filterChipsMenu="사용여부"
+      filterChips={(['', '여', '부'] as const).map((u) => ({ key: u || 'all', label: u || '전체', active: fUse === u, onSelect: () => setFUse(u) }))}
       appliedFilters={[
         { label: '검색어', value: fText.trim() ? `${SEARCH_FIELDS.find((f) => f.key === fField)?.label}: ${fText.trim()}` : '', onClear: () => setFText('') },
       ]}

@@ -300,7 +300,8 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
       title="메뉴관리"
       favRoute="menu-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      filterChips={UTYPE_CHIPS.map((u) => ({ key: u || 'all', label: u || '사용자 구분: 전체', active: fUtype === u, onSelect: () => setFUtype(u) }))}
+      filterChipsMenu="사용자 구분"
+      filterChips={UTYPE_CHIPS.map((u) => ({ key: u || 'all', label: u || '전체', active: fUtype === u, onSelect: () => setFUtype(u) }))}
       contextActions={selActions}
       /* 적용 중인 상세필터 — 항목별 개별 칩(값만 표시, 항목명은 × aria-label) */
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}

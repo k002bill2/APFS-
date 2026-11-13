@@ -14,7 +14,7 @@
      × 는 형제 버튼(중첩 아님)이라 해제만 한다. +N 메뉴의 적용 칩도 같은 규칙이다(2026-11-10 사용자 "x 로만 삭제, 칩 클릭은
      그 필터 선택 컴포넌트로 초점") — 행 = 값 항목(이동)·× 항목(해제) 두 menuitem, 항목명은 행 툴팁(MenuChipTip).
    - 해제 가능한 적용 칩이 2개 이상이면 `전체 해제` — 각 칩의 onClear 를 차례로 부른다.
-   - 기본 칩 무리는 화면이 원하면 드롭다운 칩 하나로 접는다(FilterChipMenu ← GridFrame filterChipsMenu, 2026-11-10 자펀드정보관리부터).
+   - '전체' 있는 단일 선택 기본 칩 무리는 드롭다운 칩 하나로 접는다(FilterChipMenu ← GridFrame filterChipsMenu, 2026-11-13 전 화면).
    - 보이는 캡션 없음(role="group" aria-label 만).
    - 행 선택 중엔 GridFrame 이 이 행을 아예 렌더하지 않는다(선택 = 액션 영역, 필터와 별개).
    ⚠ 적용 칩 모양·'필터 제거' aria·기본 칩 렌더는 이 파일에만 둔다 — 가드 applied_filters.test.ts. */
@@ -332,6 +332,7 @@ function TriggerFace({ n, tinted }: { n: number; tinted: boolean }) {
 
 /* 기본 칩 무리를 드롭다운 칩 하나로 — GridFrame `filterChipsMenu`(선택, 미지정이면 종전 칩 무리).
    2026-11-10 사용자 "기본필터인데 공간을 너무 많이 잡아먹는다" → 드롭다운 칩 1개, 자펀드정보관리부터(심사단계 310px → ~115px).
+   2026-11-13 사용자 "모두" → '전체' 있는 단일 선택 필터 전 화면(보기 전환·필수·복수 선택 칩 제외, 가드 filter_chip_menu_rule.test.ts).
    트리거 = `항목명: 현재값 ▾`(보이는 글자가 곧 접근名), 'all' 이 아닌 값이 걸리면 FilterChip 선택색(primary 틴트).
    메뉴 = 값마다 menuitemradio(✓ + 건수) — +N 메뉴의 기본 칩 항목과 같은 모양. 'all' 칩 label 은 '전체' 처럼 값만 넘긴다.
    트리거는 plain <button>(UI.FilterChip·UI.Button 은 forwardRef 가 없어 Radix asChild 트리거가 못 된다). */

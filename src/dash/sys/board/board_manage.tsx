@@ -272,7 +272,8 @@ export function BoardManage({ onNav }: { onNav?: (r: string) => void }) {
       title="게시판관리"
       favRoute="board-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      filterChips={STATUS_CHIPS.map((s) => ({ key: s || 'all', label: s || '상태: 전체', count: chipCount(s), active: fStatus === s, onSelect: () => setFStatus(s) }))}
+      filterChipsMenu="상태"
+      filterChips={STATUS_CHIPS.map((s) => ({ key: s || 'all', label: s || '전체', count: chipCount(s), active: fStatus === s, onSelect: () => setFStatus(s) }))}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       contextActions={selActions}
       toolbarRight={<>

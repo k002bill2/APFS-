@@ -382,7 +382,8 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       cardTitle="투심보고 확정 및 승인"
       favRoute="investment-review"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      filterChips={(['' as const, '일정' as const, '결과' as const]).map((s) => ({ key: s || 'all', label: s || '투자심의상태: 전체', active: fState === s, onSelect: () => setFState(s) }))}
+      filterChipsMenu="투자심의상태"
+      filterChips={(['' as const, '일정' as const, '결과' as const]).map((s) => ({ key: s || 'all', label: s || '전체', active: fState === s, onSelect: () => setFState(s) }))}
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },

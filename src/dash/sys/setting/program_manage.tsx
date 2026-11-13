@@ -49,7 +49,7 @@ const { Button, IconBtn, StatusBadge } = UI;
 const SEARCHABLE = true;
 const PAGE_SIZE = 20;
 const SEARCH_FIELDS: { key: ProgramField; label: string }[] = [{ key: 'pid', label: '프로그램ID' }, { key: 'pname', label: '프로그램명' }];
-const USE_CHIPS = [['', '사용여부: 전체'], ['여', '사용 여'], ['부', '사용 부']] as const;
+const USE_CHIPS = ['', '여', '부'] as const;
 const nowStamp = () => format(new Date(), 'yyyy-MM-dd HH:mm');
 const seedPrograms = () => demoPrograms(buildMenuRows());
 
@@ -331,7 +331,8 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
       title="프로그램관리"
       favRoute="program-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      filterChips={USE_CHIPS.map(([v, l]) => ({ key: v || 'all', label: l, active: fUse === v, onSelect: () => setFUse(v) }))}
+      filterChipsMenu="사용여부"
+      filterChips={USE_CHIPS.map((v) => ({ key: v || 'all', label: v || '전체', active: fUse === v, onSelect: () => setFUse(v) }))}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       toolbarRight={<>

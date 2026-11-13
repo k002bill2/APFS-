@@ -402,7 +402,8 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
       favRoute={tabs?.route ?? "regular-report"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(보고구분) + 적용 중인 드로어 값 칩. 선택 중엔 비우고 선택 바(contextActions)가 대신한다 */
-      filterChips={(['', '월간보고서', '반기보고서'] as ('' | ReportKind)[]).map((s) => ({ key: s || 'all', label: s || '보고구분: 전체', active: fRt === s, onSelect: () => setFRt(s) }))}
+      filterChipsMenu="보고구분"
+      filterChips={(['', '월간보고서', '반기보고서'] as ('' | ReportKind)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fRt === s, onSelect: () => setFRt(s) }))}
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },

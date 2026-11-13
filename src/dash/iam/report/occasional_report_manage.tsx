@@ -345,7 +345,8 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
       favRoute={tabs?.route ?? "occasional-report"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 필터칩. 선택 중엔 선택 바(contextActions)가 대신한다. 조회 팝업은 셀 링크(목업 S1_04 원본 구조) */
-      filterChips={(['', '미확인', '일부확인', '확인완료'] as ('' | Stage)[]).map((s) => ({ key: s || 'all', label: s || '확인상태: 전체', active: fStage === s, onSelect: () => setFStage(s) }))}
+      filterChipsMenu="확인상태"
+      filterChips={(['', '미확인', '일부확인', '확인완료'] as ('' | Stage)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fStage === s, onSelect: () => setFStage(s) }))}
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },

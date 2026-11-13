@@ -432,7 +432,8 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌 = 주 필터 칩(확정여부) + 적용 중인 드로어 값 칩. 선택 중엔 선택 바(contextActions)가 대신한다.
          기준일자 칩은 **목업 기본값과 다를 때만** 띄운다(기본값이 상시 칩으로 남으면 시끄럽다). */
-      filterChips={(['', '확정', '미확정'] as ('' | ConfirmState)[]).map((s) => ({ key: s || 'all', label: s || '확정여부: 전체', active: fConfirm === s, onSelect: () => setFConfirm(s) }))}
+      filterChipsMenu="확정여부"
+      filterChips={(['', '확정', '미확정'] as ('' | ConfirmState)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fConfirm === s, onSelect: () => setFConfirm(s) }))}
       appliedFilters={[
         { label: '기준일자', value: fBaseDate !== BASE_DATE ? String(fBaseDate) : '', onClear: () => setFBaseDate(BASE_DATE) },
       ]}

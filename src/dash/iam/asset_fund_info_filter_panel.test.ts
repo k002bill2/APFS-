@@ -240,9 +240,11 @@ describe('자펀드 관리(ext 없음) — 드로어 유지(회귀)', () => {
     expect(screen.queryByRole('combobox', { name: '모펀드' })).toBeNull();
   });
 
-  it('심사단계 기본 칩은 종전대로 값마다 칩이다(드롭다운은 자펀드정보관리만)', () => {
+  /* 2026-11-13 사용자 "모두" — '전체' 있는 기본 필터 칩은 전 화면 드롭다운 칩(가드 filter_chip_menu_rule.test.ts).
+     11-10 엔 자펀드정보관리만이라 여기서 칩 무리 유지를 고정했었다 */
+  it('심사단계 기본 칩도 드롭다운 칩 하나다 — 값 칩(신청…)은 툴바에 없다', () => {
     mount(h(SubFundManage, {}));
-    expect(screen.getByRole('button', { name: '신청' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: '심사단계: 전체' })?.getAttribute('aria-haspopup') ?? null).toBeNull();
+    expect(screen.getByRole('button', { name: '심사단계: 전체' }).getAttribute('aria-haspopup')).toBe('menu');
+    expect(screen.queryByRole('button', { name: '신청' })).toBeNull();
   });
 });
