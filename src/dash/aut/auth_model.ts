@@ -77,6 +77,18 @@ export const LOGIN_RAIL = (pwExpired: boolean, step: number): readonly RailDef[]
   { title: '완료', capTodo: '', capDone: '접속 완료' },
 ];
 
+export type LoginMode = 'login' | 'reset' | 'simple';
+
+/** 로그인 화면 단계 칩(이름은 옛 좌측 레일에서 이어진 rail) 노출(2026-11-13 사용자 지시 — "흐름이 시작된 뒤에만").
+    첫 화면은 어느 탭이든 칩 없이 입력만 보인다 — 탭을 눌러도 카드 높이·탭 위치가 바뀌지 않게.
+    레일은 흐름이 첫 입력을 넘긴 뒤 나온다: 로그인은 2차 인증부터, 간편인증은 요청 뒤, 재설정은 메일 발송 뒤. */
+export function showLoginRail(s: { step: number; mode: LoginMode; saStep: number; resetDone: boolean }): boolean {
+  if (s.step > 1) return true;
+  if (s.mode === 'simple') return s.saStep > 1;
+  if (s.mode === 'reset') return s.resetDone;
+  return false;
+}
+
 export const ISSUE_RAIL: readonly RailDef[] = [
   { title: '온보딩 링크 확인', capTodo: '메일의 [계정 활성화] 링크 접속', capDone: '계정 정보 확인 완료' },
   { title: '비밀번호·OTP 등록', capTodo: '비밀번호 설정 + 인증앱 등록', capDone: '등록 완료' },
@@ -191,13 +203,13 @@ export function verifySimpleAuth(name: string, birth: string, phone: string): st
   return null;
 }
 
-/** 재설정 — 메일 재발급 탭의 좌측 레일. 간단 정보를 받아 안내 메일을 보내는 2단계. */
+/** 재설정 — 메일 재발급 탭의 단계 표시(로그인 화면 단계 칩). 간단 정보를 받아 안내 메일을 보내는 2단계. */
 export const RESET_RAIL: readonly RailDef[] = [
   { title: '간단 정보 입력', capTodo: '성명·아이디로 계정 확인', capDone: '계정 확인 완료' },
   { title: '재발급 메일 발송', capTodo: '등록된 이메일로 안내 발송', capDone: '발송 완료' },
 ];
 
-/** 재설정 — 간편인증 탭의 좌측 레일. 가운데 단계는 외부 모듈(통합인증창)이 처리하므로
+/** 재설정 — 간편인증 탭의 단계 표시(로그인 화면 단계 칩). 가운데 단계는 외부 모듈(통합인증창)이 처리하므로
     앱이 그리는 화면은 앞뒤 두 단계뿐이다. */
 export const SIMPLE_AUTH_RAIL: readonly RailDef[] = [
   { title: '간편인증 요청', capTodo: '이름·생년월일·휴대폰번호 입력', capDone: '요청 완료' },
