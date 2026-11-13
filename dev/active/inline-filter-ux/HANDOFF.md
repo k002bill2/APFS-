@@ -2,7 +2,8 @@
 
 > **1차 완료(2026-11-10)** — PR **#424** `ecfc971` main 머지, 공유 체크아웃 ff 완료, 워크트리 제거.
 > 사용자 화면 확인: 11-10 "잘 보여".
-> **2차(2026-11-13)** — 사용자 "1 모두 2 응" → 아래 남은 일 2건 **둘 다 구현**(워크트리 `feat/filter-chip-menu`, 포트 5314, 미커밋).
+> **2차 완료(2026-11-13)** — 사용자 "1 모두 2 응" → 아래 남은 일 2건 **둘 다 구현**. PR **#429** `b971da3` main 머지
+> (커밋 `0c99829` 포커스 링 · `408d580` 드롭다운 칩), 공유 체크아웃 ff 완료, 워크트리·브랜치 제거. **이 작업은 남은 일 없음.**
 > ① 범위 질문에 "전체 있는 필터 칩만" → 18파일·19화면 `filterChipsMenu`(보기 전환 9·조기경보 등급 복수 선택은 칩 유지),
 >   `SubFundExt.stageMenu` 삭제(자펀드 관리도 드롭다운), 가드 `filter_chip_menu_rule.test.ts`, 회귀 테스트 뒤집음.
 > ② `filter_field_jump.ts` `focusField` 에 `focusVisible: true` + 테스트.
@@ -11,10 +12,10 @@
 ## 위치·상태
 | 항목 | 값 |
 |---|---|
-| 머지 | #424 `ecfc971`(커밋 `14083db`) — base main |
+| 머지 | 1차 #424 `ecfc971`(커밋 `14083db`) · 2차 #429 `b971da3`(커밋 `0c99829`·`408d580`) — base main |
 | 워크트리 | 없음(제거). 새로 이어가려면 `bash scripts/wt.sh new <새 브랜치>` |
-| 로컬 브랜치 | `feat/inline-filter-placeholder` 남음(원격은 GitHub 자동 삭제) — 지워도 됨 |
-| 미커밋 | 없음 — 이 HANDOFF.md 는 2026-11-13 브랜치 `docs/inline-filter-ux-handoff` 로 커밋(공유 체크아웃에서 옮김) |
+| 로컬 브랜치 | 없음(`feat/inline-filter-placeholder`·`feat/filter-chip-menu` 삭제) |
+| 미커밋 | 없음 |
 
 ## 반영된 것(#424) — 화면 `#/asset-fund-info-manage`
 | # | 사용자 요청 | 구현 위치 |
@@ -29,13 +30,13 @@
 검증(머지 전): lint 0 · `vite build` 0 · vitest 138파일/2762건 · Codex working-tree 지적 0 · ego-browser 실측 · fresh-context `/verify` PASS.
 테스트: `iam/asset_fund_info_filter_panel.test.ts` · `applied_filters_overflow.test.ts`(jsdom 폭 0 → 칩 전부 `+N` 로 접힘을 이용) · `filter_field_jump_dom.test.ts`.
 
-## 남은 일 — 사용자 결정 필요
-1. **드롭다운 칩을 다른 화면으로 확대할지** (메모리 `base-chips-dropdown-menu-decision`)
+## 남은 일 — ✅ 2건 모두 완료(2026-11-13, #429). 아래는 당시 기록
+1. ✅ **드롭다운 칩을 다른 화면으로 확대할지** → '전체' 있는 단일 선택 필터 19화면 전부(보기 전환 9·조기경보 등급은 칩 유지, 가드 `filter_chip_menu_rule.test.ts`). 아래 "값 4개 이상만 후보"·"subfund 칩 유지"는 폐기됨 (메모리 `base-chips-dropdown-menu-decision`)
    - 기본 칩을 쓰는 화면 32곳(11-10 실측). bespoke 28파일:
      `grep -rl --include='*.tsx' --include='*.ts' 'filterChips=' src/dash | grep -v '\.test\.'`
    - 적용법: 그 화면 `<GridFrame filterChipsMenu="항목명" …>` 한 줄 + 'all' 칩 label 을 값만('전체')으로. 값 2~3개(사용여부·결과)짜리는 칩이 더 짧을 수 있어 **값 4개 이상만 후보**.
    - 회귀 주의: 자펀드 관리(`subfund`)는 같은 컴포넌트지만 칩 유지 — 회귀 테스트가 고정해 둠.
-2. **상세 필터 드로어 경로에도 포커스 링** — `filter_field_jump.ts:73` `focusField` 의 `control?.focus({ preventScroll: true })` 에 `focusVisible: true` 추가 여부(미답 제안). 인라인 패널 경로(:89)와 같은 이유: 마우스 클릭 뒤 버튼형 컨트롤엔 `:focus-visible` 이 안 켜짐(Chrome). 테스트는 `filter_field_jump_dom.test.ts` 의 `objectContaining({ focusVisible: true })` 패턴 재사용.
+2. ✅ **상세 필터 드로어 경로에도 포커스 링** → `focusField` 에 `focusVisible: true` + 테스트. (당시 제안:) `filter_field_jump.ts:73` `focusField` 의 `control?.focus({ preventScroll: true })` 에 `focusVisible: true` 추가 여부(미답 제안). 인라인 패널 경로(:89)와 같은 이유: 마우스 클릭 뒤 버튼형 컨트롤엔 `:focus-visible` 이 안 켜짐(Chrome). 테스트는 `filter_field_jump_dom.test.ts` 의 `objectContaining({ focusVisible: true })` 패턴 재사용.
 
 ## 함정(재발 방지 — 메모리에 기록됨)
 - 팝오버 품은 칸을 `TooltipTrigger` 로 감싸면 포털 초점이 툴팁을 열어 Esc 를 먹음 → `radix-tooltip-layer-eats-esc`
@@ -43,6 +44,4 @@
 - `wt.sh new` 워크트리의 업스트림은 `origin/main` → 첫 push 는 반드시 `git push -u origin HEAD`
 
 ## 다음 세션 시작
-1. 이 파일을 읽는다(`dev/active/inline-filter-ux/HANDOFF.md`)
-2. 사용자에게 남은 일 1·2 중 무엇을 할지 묻는다
-3. 고르면 `bash scripts/wt.sh new feat/<이름>` → `bash scripts/wt.sh dev feat/<이름>` (포트 URL 을 사용자에게 알린다)
+이 작업은 끝났다 — 이어서 할 일 없음. 보기 전환 칩·조기경보 등급을 드롭다운으로 바꾸자는 제안은 사용자 요청 없이 하지 않는다.
