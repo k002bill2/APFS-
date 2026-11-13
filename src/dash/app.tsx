@@ -168,7 +168,7 @@ if (ls.get("apfs.layoutReset", "") !== "1") {
 function App() {
   const [theme, setTheme] = useState(() => ls.get("apfs.theme", "light"));
   // 삭제/개명된 route는 ROUTE_ALIAS로 승격(잔존 localStorage/방문기록 방어) — 안 하면 GenericListPage 폴백(영문 제네릭 표)
-  const [route, setRoute] = useState(() => aliasRoute(hashRoute() || ls.get("apfs.route", "designsystem")));
+  const [route, setRoute] = useState(() => aliasRoute(hashRoute() || ls.get("apfs.route", "main")));
   const [lnbOpen, setLnbOpen] = useState(() => ls.get("apfs.lnb", "1") === "1");
   const [wide, setWide] = useState(() => ls.get("apfs.width", "fixed") === "full");
   const [navStyle, setNavStyle] = useState(() => ls.get("apfs.navstyle", "classic"));
