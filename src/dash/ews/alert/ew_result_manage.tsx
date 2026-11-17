@@ -1,12 +1,12 @@
 /* 조기경보 결과정보 관리 — 관리형 페이지 (조기경보 > 조기경보 > 조기경보 결과정보 관리).
    출처: S2_61_조기경보_결과정보_관리.html(KRDS TO-BE) + S2_62(생성 확인 팝업 — 목업에 이미 이식돼 있음)
-   → APFS 디자인시스템으로 변형. 골드 레퍼런스: custody_verify_manage.tsx(섹션 적층형 + 상세필터 드로어).
+   → APFS 디자인시스템으로 변형. 골드 레퍼런스: custody_verify_manage.tsx(섹션 적층형 + 상세필터).
 
    구성(목업 → 우리 규약):
-   - 검색박스(기준년월 + [조회]) → **상세필터 드로어**(Sheet, apfs-detail-filter) 안의 `PeriodPicker mode="month"`.
+   - 검색박스(기준년월 + [조회]) → **칩 줄 위 인라인 필터 패널**(2026-11-17 드로어 폐기 — apfs-detail-filter)의 `PanelPeriod mode="month"`.
      [조회] 버튼은 없다 — 월을 고르면 즉시 반영된다. 적용 값은 GridFrame `appliedFilters` 칩(값만 + ×)으로 보인다.
      기준년월은 항상 값이 있어(빈 조회 조건이 없다) 칩이 상시 보이고, × = 기본값(2026-07)으로 되돌리기. 검색어는 OFF.
-   - `.actbar`(생성·확정·마감·마감해제) → 생성은 툴바 우 상세필터 오른쪽 `+ 생성` 버튼(등록 버튼 자리·형태, 월 단위라 행 선택과 무관),
+   - `.actbar`(생성·확정·마감·마감해제) → 생성은 툴바 우 새로고침 왼쪽 `+ 생성` 버튼(등록 버튼 자리·형태, 월 단위라 행 선택과 무관),
      확정·마감·마감해제는 **섹션1 체크박스 선택 액션**(2026-09-28 사용자 지시 "그리드에 체크박스로 기능 구현").
    - 섹션 2개(조기경보 생성 결과내역 · 운용사 재무정보 보고) → **GridFrame 하나 안에 세로로 쌓은 AG Grid 2개**.
      두 그리드 모두 multiRow 체크박스(apfs-aggrid "체크박스" 절 — 본문 클릭 선택 없음, SELECTION_COL).
@@ -40,15 +40,13 @@ import { GridFrame, FooterActions } from '../../grid_frame';
 import { SectionHead } from '../../risk_grid';   // 여러 표 세로 쌓기 공용 섹션 헤더
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // DS 체크박스 선택 열 + multiRow 선택 복원
-import { controlMinWidth } from '../../schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, CellStyle, GridApi, GridReadyEvent, SelectionChangedEvent, RowSelectionOptions } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
-import { PeriodPicker } from '../../ui/period-picker';
+import { FilterPanel, PanelPeriod } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { EwConfirmDialog } from './ew_result_dialogs';
 import { prevYm, setFlag, togglePerm } from './ew_result_model';   // 순수함수 — 유닛 테스트 대상
 
@@ -189,16 +187,6 @@ function toSheet<T>(cols: XCol<T>[], rows: T[]): XLSX.WorkSheet {
 ────────────────────────────── */
 const NO_ROWS = '<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회된 데이터가 없습니다.</span>';
 
-/* 드로어 필드 래퍼(custody_verify_manage 골드 복사) — PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 → <div> */
-function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </div>
-  );
-}
-
 /* 그리드 1장의 multiRow 선택 배선 — 선택 SSOT = `selIds`(배열, 건수는 파생). 두 섹션이 같은 배선을 한 벌씩 쓴다.
    rowData 가 바뀌어도(O/X 갱신) getRowId 가 같으면 선택이 유지되고, onRowDataUpdated 의 restoreSelection 이 되맞춘다. */
 function useGridSelection<T extends { id: string }>() {
@@ -256,7 +244,6 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
   const [results, setResults] = useState<Record<string, EwResultRow[]>>(RESULT_DEMO);
   const [reports, setReports] = useState<Record<string, GpReportRow[]>>(REPORT_DEMO);
   const [modal, setModal] = useState<ModalState>(null);
-  const [filterOpen, setFilterOpen] = useState(false);
 
   const sel1 = useGridSelection<EwResultRow>();
   const sel2 = useGridSelection<GpReportRow>();
@@ -269,8 +256,8 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
     setYmRaw(next);
   };
 
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null, skipInDialog: true });
 
   /* 섹션2 기준년월 = 선택 월의 전월(파일 상단 '한계·가정') */
   const reportYm = prevYm(ym);
@@ -348,11 +335,16 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
       cardTitle="조기경보 결과정보 관리"
       favRoute="ew-result-manage"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 적용 중인 드로어 값 칩 = appliedFilters. 기준년월은 비는 일이 없어 칩이 상시 보이고 × = 기본값 복귀 */
+      /* 적용 중인 패널 값 칩 = appliedFilters. 기준년월은 비는 일이 없어 칩이 상시 보이고 × = 기본값 복귀 */
       appliedFilters={[{ label: '기준년월', value: ym, onClear: () => setYm(BASE_YM) }]}
-      /* 툴바 우 = 상세필터 → 생성(월 단위, 선택 무관 — 등록 버튼 자리·형태, workforce_manage 선례) → 새로고침 */
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 항목 그대로(기준년월). 즉시 반영, [초기화] = 기본값(2026-07) 복원 */
+      filterPanel={
+        <FilterPanel label="조기경보 결과정보 조건" onReset={() => setYm(BASE_YM)}>
+          <PanelPeriod label="기준년월" mode="month" value={ym} onChange={setYm} />
+        </FilterPanel>
+      }
+      /* 툴바 우 = 생성(월 단위, 선택 무관 — 등록 버튼 자리·형태, workforce_manage 선례) → 새로고침 */
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'make' })}>생성</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -410,29 +402,6 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
           {...sel2.gridProps}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 목업 검색박스 항목 그대로(기준년월). 즉시 반영형이라 적용 버튼은 닫기만 한다 ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">조기경보 결과정보 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* PeriodPicker 트리거는 w-full 이라 fit-content 래퍼(apfs-datepicker "폭") */}
-            <DrawerField label="기준년월">
-              <div style={{ width: 'fit-content', minWidth: controlMinWidth('month'), maxWidth: '100%' }}>
-                <PeriodPicker mode="month" value={ym} onChange={setYm} ariaLabel="기준년월" />
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setYm(BASE_YM)}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 확인 다이얼로그 — 조건부 마운트. 닫힘 후 onClose 에서 state 해제 ── */}
       {dialog && (

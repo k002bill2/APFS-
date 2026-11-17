@@ -14,7 +14,8 @@
    provenance 기록이다(그 21필드는 S1_30 이 아니라 별도 캡처가 출처다 — 출처를 바꿔 적지 않는다).
 
    조회 대상 = 적용 필터 칩 1개(값만, '농식품모태펀드 › KB증권 › …', × = 전체로 해제 — 2026-10-14 사용자 지시,
-   다른 화면 필터 스타일 통일). wide — 최대 480px, 좁으면 2줄(구분자 'NBSP› ' 라 › 가 줄 끝에 붙는다). 툴바 우측 = 금액 단위 · 상세필터(드로어 4항목) · 조회(toast 만).
+   다른 화면 필터 스타일 통일). wide — 최대 480px, 좁으면 2줄(구분자 'NBSP› ' 라 › 가 줄 끝에 붙는다). 툴바 우측 = 금액 단위 · 조회(toast 만).
+   상세필터 = 칩 줄 위 인라인 패널 4칸(2026-11-17 드로어 폐기). 묶음 칩 '조회 대상' 클릭 = 첫 칸 '모펀드' 로 초점(jumpTo).
    상세필터 4항목은 이 기업 1건의 소속(모펀드·운용사·자펀드·투자기업 = QUERY_FIELDS 값)과 정확일치로 판정한다(빈 값 = 전체).
    하나라도 어긋나면 본문 대신 빈 상태를 보인다 — 2026-11-16 사용자 지시 "미연동 필터 전부 동작"(종전: 4항목 미연동 캡션, 본문 불변).
    원문 데이터가 기업 1건뿐이라 다른 기업 상세를 지어내지 않는다 → 예: 모펀드 'MOAF' = 해당 기업 없음(빈 상태)이 정상. */
@@ -27,8 +28,7 @@ import { CompanyProfileBody } from './company_profile_model';
 import { SOURCE_COUNTS, CO_NAME } from './company_profile_data';
 import { UNITS, DEFAULT_UNIT } from '../../schemas/unit';
 import type { Unit } from '../../schemas/unit';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본
+import { FilterPanel, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { toast } from '../../ui/sonner';
 
 const { Button, SegTabs, IconBtn, EmptyState } = UI;
@@ -49,23 +49,10 @@ const CO_OPTIONS = [CO_NAME];
 /** 조회 대상 판정 — 원문 기업 1건의 소속(QUERY_FIELDS 순서: 모펀드·운용사·자펀드·투자기업)과 항목별 정확일치. 빈 값 = 전체(통과) */
 export const profileMatches = (path: readonly string[]): boolean => QUERY_FIELDS.every((q, i) => !path[i] || path[i] === q.value);
 
-/* 상세필터 드로어 필드 — regular_report_manage 의 DrawerField 패턴 그대로 */
-function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}
-
 export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  /* 조회 대상 4종 SSOT — 적용 필터 칩과 상세필터 드로어가 공유한다. 기업 1건의 소속과 맞지 않으면 본문 대신 빈 상태(profileMatches) */
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  /* 조회 대상 4종 SSOT — 적용 필터 칩과 인라인 패널이 공유한다. 기업 1건의 소속과 맞지 않으면 본문 대신 빈 상태(profileMatches) */
   const [fMf, setFMf] = useState<string>(QUERY_FIELDS[0].value);
   const [fGp, setFGp] = useState<string>(QUERY_FIELDS[1].value);
   const [fFund, setFFund] = useState<string>(QUERY_FIELDS[2].value);
@@ -84,10 +71,19 @@ export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
       favRoute="investee-profile"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={[{ label: '조회 대상', value: path.some(Boolean) ? path.map((v) => v || '전체').join('\u00a0› ') : '', wide: true, jumpTo: '모펀드', onClear: clearFilters }]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 4칸 — (주)선양 1건의 소속과 대조해 본문/빈 상태를 가른다(profileMatches).
+         고른 값은 묶음 칩 '조회 대상' 하나에 보이고, 칩 클릭은 jumpTo '모펀드'(= 첫 칸 label)로 간다. [초기화] = 원문 기본값 복원 */
+      filterPanel={
+        <FilterPanel label="투자기업정보(통합) 조건" onReset={resetFilters}>
+          <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={MF_OPTIONS} />
+          <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={GP_OPTIONS} />
+          <PanelSelect label="자펀드" value={fFund} onChange={setFFund} options={FUND_OPTIONS} />
+          <PanelSelect label="투자기업" value={fCo} onChange={setFCo} options={CO_OPTIONS} />
+        </FilterPanel>
+      }
       toolbarRight={<>
         <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
         <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={(
@@ -104,28 +100,6 @@ export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
           ? <CompanyProfileBody variant="page" unit={unit} />
           : <EmptyState msg="조회 대상에 해당하는 투자기업이 없습니다. 상세필터 조건을 변경해 주세요." icon="search" height={260} />}
       </div>
-
-      {/* 상세필터 드로어 — 선례 regular_report_manage 와 동일(Sheet right · DrawerSelect).
-          4항목 모두 (주)선양 1건의 소속과 대조해 본문/빈 상태를 가른다(profileMatches) */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">조회 대상 투자기업을 고르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={MF_OPTIONS} /></DrawerField>
-            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={GP_OPTIONS} /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={FUND_OPTIONS} /></DrawerField>
-            <DrawerField label="투자기업"><DrawerSelect value={fCo} onChange={setFCo} options={CO_OPTIONS} /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={resetFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
     </GridFrame>
   );
 }

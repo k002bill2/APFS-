@@ -1,5 +1,6 @@
 /* 회계 화면 스킬 규약 가드 — 2026-10-30 점검에서 빠져 있던 3종(회계 대분류 루트: 대상이 baseinfo·slip·ledger 중분류).
-   ① 목록 단축키(⌘P·⌥D·⌘⏎)는 상세필터(Sheet)가 열린 동안 끈다 — apfs-grid "단축키". 드로어가 덮은 뒤 그리드가 인쇄됐다(실측).
+   ① 목록 단축키(⌘P·⌥D·⌘⏎)는 팝업이 덮은 동안 끈다(skipInDialog) — apfs-grid "단축키". 드로어가 덮은 뒤 그리드가 인쇄됐다(실측).
+      2026-11-17 상세필터 드로어 폐기(칩 줄 위 인라인 패널 — apfs-detail-filter) → `!filterOpen` 조건 대신 드로어 state 자체가 없어야 한다.
    ② AUTO_SIZE_CONTENT 그리드는 잔여폭 흡수 컬럼 1개(flex:1 + minWidth = width + suppressAutoSize, maxWidth 없음)
       — apfs-aggrid PR #362. 없으면 프레임이 컬럼 합보다 넓을 때 행이 마지막 컬럼에서 끝나 우측이 빈다(2560 실측 139px).
    ③ 삭제전표 거래처 칸 = 말줄임 렌더러 — display:flex 셀은 AG Grid 기본 말줄임이 안 걸려 글자가 '…' 없이 잘렸다. */
@@ -22,21 +23,18 @@ const LIST_PAGES = [
   'agrifood_entity_manage.tsx', 'ir_info_manage.tsx',
   /* 설정 — 휴일관리(ACC-025) holiday_manage.tsx 는 상세필터 없음(2026-11-06 사용자 결정) → 대상 아님 */
   'partner_manage.tsx',   // ACC-026
-  /* 자금관리(ACC-019~022) · 유무형자산(ACC-017) — 2026-11-09 점검에서 목록 누락 확인(코드는 이미 !filterOpen) */
+  /* 자금관리(ACC-019~022) · 유무형자산(ACC-017) — 2026-11-09 점검에서 목록 누락 확인 */
   'account_balance_manage.tsx', 'bank_account_manage.tsx', 'contribution_status_manage.tsx', 'daily_cash_manage.tsx', 'fixed_asset_manage.tsx',
 ];
 
-describe('① 회계 목록 단축키 — 상세필터가 열린 동안 끔', () => {
+describe('① 회계 목록 단축키 — 팝업이 덮은 동안 끔(skipInDialog) · 상세필터 드로어 없음', () => {
   it.each(LIST_PAGES)('%s', (f) => {
     const src = readSrc(f);
     const calls = src.match(/useHotkey\(HOTKEYS\.(print|export|register)\.combo[^;]*;/g) ?? [];
     expect(calls.length).toBeGreaterThan(0);
-    for (const c of calls) {
-      /* enabled 식 안의 이름(listKeys 등)은 그 const 정의로 펼친다 — `listKeys && tab === 'summary'` 같은 합성식도 판정 */
-      const expr = c.match(/enabled: ([^,}]*)/)?.[1].trim() ?? '';   // 쉼표 뒤 skipInDialog 등 다른 옵션은 제외
-      const named = expr.replace(/\b[A-Za-z_]\w*\b/g, (w) => src.match(new RegExp(`const ${w} = ([^;]*);`))?.[1] ?? w);
-      expect(named, c).toMatch(/!filterOpen/);
-    }
+    /* 상세필터는 칩 줄 위 인라인 패널(2026-11-17) — 열림 state(filterOpen)가 남아 있으면 드로어가 되살아난 것 */
+    expect(src).not.toMatch(/\bfilterOpen\b/);
+    for (const c of calls) expect(c).toMatch(/skipInDialog: true/);
   });
 });
 

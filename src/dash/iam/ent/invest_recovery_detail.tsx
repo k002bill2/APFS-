@@ -12,19 +12,15 @@
    - 조회 전용 — 등록/수정 없음. 행 선택도 없다(선택으로 실행할 액션이 없다).
    - 검색조건(2026-09-24 apfs-detail-filter typed 트랙으로 재구성 — 정본 audit_log.tsx):
      주 필터 = 조회기준 FilterChip(툴바 좌 첫 줄, facet count — 모드 전환) + 적용 칩(값만·항목별·×) +
-     상세필터 드로어(원문 순서: 운용사·자펀드·계정구분·기준일자 범위 한 항목). 판정은 모델 `filterRecovery`.
+     칩 줄 위 인라인 필터 패널(원문 순서: 운용사·자펀드·계정구분·기준일자 범위 한 항목 — 2026-11-17 드로어 폐기). 판정은 모델 `filterRecovery`.
      종전엔 운용사 칩·자펀드 select·기준일자 picker 가 툴바에 흩어져 있었고, 칩 건수가 다른 필터를
      무시했으며(facet 아님), 원문 계정구분(농식품·수산)이 "옵션 없음"으로 잘못 빠져 있었다. */
 import '../../aggrid_shared.css';
 import { useState, useMemo, useCallback } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, refreshNoColumn } from '../../aggrid_theme';
 import { Cell } from '../../schemas/renderers';
-import { controlMinWidth } from '../../schemas/renderers';
-import { PeriodPicker } from '../../ui/period-picker';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { UNITS, DEFAULT_UNIT, amountHeader } from '../../schemas/unit';
 import type { Unit } from '../../schemas/unit';
 import type { ColumnSpec } from '../../schemas/types';
@@ -36,23 +32,11 @@ import { RECOVERY_MODES, RECOVERY_TONES, RECOVERY_ACCOUNTS, findMode, recoverySu
 import type { RecoveryRow, RecoveryMode, RecoveryFilter } from './invest_recovery_detail_model';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';   // ⌥R 조회 · ⌘P 인쇄 · ⌥D 내보내기
 import { printGrid } from '../../print_grid';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSelect, PanelRange } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn, SegTabs } = UI;
 
 const MOTHER_FUND = '농식품모태펀드';   // 원문 검색박스의 읽기전용 `모펀드` 값
-
-/* 드로어 프리미티브 — audit_log.tsx 복사 관례(apfs-detail-filter typed 트랙) */
-function DrawerField({ label, children, plain }: { label: string; children: ReactNode; plain?: boolean }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-const dayWrap: CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
 
 /* 합계 행은 거래명 칸에 라벨을 넣고 나머지 식별 컬럼은 비운다(원문 tfoot: `합계` + 구분 라벨). */
 const SUMMARY_ROWS = (source: readonly RecoveryRow[]): RecoveryRow[] =>
@@ -98,13 +82,12 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
   const [modeKey, setModeKey] = useState<RecoveryMode['key']>(RECOVERY_MODES[0].key);
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
 
-  /* 검색조건 상태 SSOT — 드로어·툴바 칩·적용 칩이 모두 여기서 파생한다(즉시 적용, audit_log 동형). */
+  /* 검색조건 상태 SSOT — 패널·툴바 칩·적용 칩이 모두 여기서 파생한다(즉시 적용, audit_log 동형). */
   const [fGp, setFGp] = useState('');
   const [fFund, setFFund] = useState('');
   const [fAcc, setFAcc] = useState('');
   const [fFrom, setFFrom] = useState('');
   const [fTo, setFTo] = useState('');
-  const [filterOpen, setFilterOpen] = useState(false);
   const clearFilters = () => { setFGp(''); setFFund(''); setFAcc(''); setFFrom(''); setFTo(''); };
 
   const mode = findMode(modeKey);
@@ -123,7 +106,7 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
   const fundOptions = useMemo(() => [...new Set(mode.rows.map((r) => String(r.fund)))].sort(), [mode]);
   const filterOn = fGp !== '' || fFund !== '' || fAcc !== '' || fFrom !== '' || fTo !== '';
 
-  /* 적용 칩 — 항목별 개별 칩, 값만 표시(드로어 항목 전부). */
+  /* 적용 칩 — 항목별 개별 칩, 값만 표시(패널 항목 전부). label = 패널 칸 aria-label(칩 클릭 → 그 칸 초점) */
   const chips: [string, string, () => void][] = [
     ['운용사', fGp, () => setFGp('')],
     ['자펀드', fFund, () => setFFund('')],
@@ -132,8 +115,8 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
   ];
   const refresh = () => { clearFilters(); toast.success('조회되었습니다'); };
   // 푸터 툴팁 힌트(⌘P·⌥D)와 짝 — exportExcel 은 아래 const 라 화살표로 감싼다(TDZ 회피)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });   // 상세필터 시트가 덮고 있으면 뒤 푸터 액션은 닫혀 있다
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   const exportExcel = useCallback(() => {
     const cols = mode.columns;
@@ -159,10 +142,18 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
          바꾸면 컬럼과 데이터가 함께 바뀐다(원문 select와 같은 동작). 건수 = 그 모드에 나머지 조건을 건 facet. */
       filterChips={RECOVERY_MODES.map((m) => ({ key: m.key, label: m.label, count: modeCount(m), active: modeKey === m.key, onSelect: () => setModeKey(m.key) }))}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 항목·순서 = 원문 검색박스 그대로(운용사·자펀드·계정구분·기준일자). 검색어는 원문에 없어 OFF */
+      filterPanel={
+        <FilterPanel label="투자금 회수현황 조건">
+          <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={gpOptions.map((g) => ({ value: g, label: g }))} />
+          <PanelSelect label="자펀드" value={fFund} onChange={setFFund} options={fundOptions.map((v) => ({ value: v, label: v }))} />
+          <PanelSelect label="계정구분" value={fAcc} onChange={setFAcc} options={RECOVERY_ACCOUNTS.map((a) => ({ value: a, label: a }))} />
+          <PanelRange label="기준일자" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
+        </FilterPanel>
+      }
       toolbarRight={<>
         <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
         <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span aria-live="polite">
@@ -189,33 +180,6 @@ export function InvestRecoveryDetail({ onNav }: { onNav?: (r: string) => void })
       <p className="text-caption" style={{ fontSize: 11.5, margin: '10px 2px 0' }}>
         하단 합계 4줄은 원문과 같이 항상 <b>투자및회수</b> 데이터로 계산합니다 — 전체거래에는 전환·주식변동 등 순현금흐름이 아닌 행이 섞여 있습니다.
       </p>
-
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">투자금 회수현황을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* 항목·순서 = 원문 검색박스 그대로(운용사·자펀드·계정구분·기준일자). 검색어는 원문에 없어 OFF. */}
-            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions.map((g) => ({ value: g, label: g }))} /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions.map((v) => ({ value: v, label: v }))} /></DrawerField>
-            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={RECOVERY_ACCOUNTS.map((a) => ({ value: a, label: a }))} /></DrawerField>
-            <DrawerField label="기준일자" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="기준일자 시작일" /></div>
-                <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="기준일자 종료일" /></div>
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
     </GridFrame>
   );
 }

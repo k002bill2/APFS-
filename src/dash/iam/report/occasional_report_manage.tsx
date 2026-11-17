@@ -3,7 +3,7 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(모펀드·운용사·자펀드·계정구분·심사담당자·리스크담당자·구분·기간)
-       → 확인상태 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter)
+       → 확인상태 FilterChip(툴바 좌) + 칩 줄 위 인라인 필터 패널(apfs-detail-filter)
        ⚠ 목업이 `data-dat="실 옵션값 미확인 — 없는 값 생성 안 함"`으로 표시한 항목(구분·심사담당자·
          리스크담당자)은 옵션을 지어내지 않는다 — 선택지는 전부 행에 실린 값에서 파생한다.
        2026-11-16 사용자 지시(미연동 필터 전부 동작)로 종전 no-op 5항목이 행을 거른다(그리드 컬럼은 늘리지 않는다):
@@ -37,21 +37,18 @@ import { GridFrame, FooterActions } from '../../grid_frame';
 import { LeafTabBody } from '../leaf_tabs';   // 리프 탭 묶음(opt-in)
 import type { LeafTabsSlot } from '../leaf_tabs';
 import { apfsTheme, FIT_GRID_WIDTH, DEFAULT_COL_DEF } from '../../aggrid_theme';
-import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SelectionChangedEvent } from 'ag-grid-community';
 import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../../ui/alert-dialog';
-import { PeriodPicker } from '../../ui/period-picker';
 import { OccasionalReportModal } from './occasional_report_modal';
 import { GpSpecModal } from './gp_spec_modal';
 import { SubFundSpecModal, SPEC_SAMPLE_SUBFUND } from './subfund_spec_modal';   // 샘플 행 = 명세 팝업 공유본
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSelect, PanelRange } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 
 const { Button, IconBtn, StatusBadge } = UI;
@@ -192,18 +189,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </Wrap>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -230,11 +215,10 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
     (k: SpecKind) => setModal({ kind: k }),
     (role: Role, id: string) => setModal({ kind: 'confirm', role, ids: [id], skipped: 0, bulk: false }),
   ), []);
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
-  /* 필터 — 확인상태는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
+  /* 필터 — 확인상태는 툴바 칩, 나머지는 인라인 패널. SSOT=개별 state(빈 값=미적용) */
   const [fStage, setFStage] = useState<'' | Stage>('');
   const [fGp, setFGp] = useState('');
   const [fFund, setFFund] = useState('');
@@ -371,11 +355,25 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
         { label: '심사담당자', value: fJs, onClear: () => setFJs('') },
         { label: '리스크담당자', value: fRs, onClear: () => setFRs('') },
         { label: '구분', value: fKind, onClear: () => setFKind('') },
-        { label: '기간', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
+        { label: '기간 (보고일자)', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 검색어는 미사용(OFF). 목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·심사담당자·리스크담당자·구분·기간.
+         모펀드·계정구분·구분은 숨은 행 속성으로 거른다. 담당자 옵션은 행의 확인자명에서만 파생(값 생성 금지),
+         구분 옵션은 행의 체크리스트 대구분에서 파생한다. 기간은 PanelRange day — 칸·칩 label = 드로어 캡션 '기간 (보고일자)'(칩 클릭 이동은 정확일치) */
+      filterPanel={
+        <FilterPanel label="수시보고 확인 조건">
+          <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} />
+          <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={gpOptions} />
+          <PanelSelect label="자펀드" value={fFund} onChange={setFFund} options={fundOptions} />
+          <PanelSelect label="계정구분" value={fAcc} onChange={setFAcc} options={['농식품', '수산']} />
+          <PanelSelect label="심사담당자" value={fJs} onChange={setFJs} options={jsNames} />
+          <PanelSelect label="리스크담당자" value={fRs} onChange={setFRs} options={rsNames} />
+          <PanelSelect label="구분" value={fKind} onChange={setFKind} options={kindOptions} />
+          <PanelRange label="기간 (보고일자)" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
+        </FilterPanel>
+      }
       contextActions={selActions}
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
@@ -412,40 +410,6 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
         />
       </div>
       </LeafTabBody>
-
-      {/* ── 상세필터 드로어 — 검색어는 미사용(OFF). 항목이 전부 행을 거른다(숨은 행 속성 포함 — 파일 머리 주석) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">수시보고 확인 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* 목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·심사담당자·리스크담당자·구분·기간.
-                모펀드·계정구분·구분은 숨은 행 속성으로 거른다. 담당자 옵션은 행의 확인자명에서만 파생(값 생성 금지),
-                구분 옵션은 행의 체크리스트 대구분에서 파생한다. 기간은 PeriodPicker day 2개(apfs-datepicker) */}
-            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
-            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            <DrawerField label="심사담당자"><DrawerSelect value={fJs} onChange={setFJs} options={jsNames} /></DrawerField>
-            <DrawerField label="리스크담당자"><DrawerSelect value={fRs} onChange={setFRs} options={rsNames} /></DrawerField>
-            <DrawerField label="구분"><DrawerSelect value={fKind} onChange={setFKind} options={kindOptions} /></DrawerField>
-            <DrawerField label="기간 (보고일자)" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="조회기간 시작일" /></div>
-                <span className="text-caption">~</span>
-                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="조회기간 종료일" /></div>
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 확인 처리 확인(목업 클라이언트 회신 명시 UX — toast로 격하 금지). 비가역이라 설명에 명시 ── */}
       {modal?.kind === 'confirm' && confirmTargets.length > 0 && (

@@ -2,8 +2,8 @@
    출처: S1_10_보고_업데이트정보.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(보고구분 1항목)   → 상세필터 드로어(Sheet, apfs-detail-filter). 목업 항목이 하나뿐이라
-       드로어가 너무 빈약해지므로 주 필터(투심상태)를 드로어에도 함께 노출한다(골드 '확인상태' 동형).
+   - 검색박스(보고구분 1항목)   → 칩 줄 위 인라인 필터 패널 1칸(apfs-detail-filter).
+       주 필터(투심상태)는 툴바 칩이라 패널에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts).
        ⚠ 보고구분은 실데이터가 '투자심의관리' 1건뿐이어서 **옵션을 지어내지 않는다**(목업 유일 옵션만).
          그리드 컬럼이 아닌 숨은 행 속성 `rt` 로 거른다(2026-11-16 사용자 지시 "미연동 필터 전부 동작" — 종전 no-op).
          원문 선택지가 하나라 4행 전부 '투자심의관리'다 — 고르면 행은 그대로이고 적용 칩만 생긴다.
@@ -35,12 +35,11 @@ import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, fmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn, StatusBadge, SegTabs } = UI;
 
@@ -181,7 +180,7 @@ const EXCEL_TAIL: { header: string; get: (r: ReportUpdateRow) => string }[] = [
 const AMT_COL_IDX = EXCEL_TEXT.length;   // 승인금액 열 위치(숫자 서식 부여 대상)
 
 /* ──────────────────────────────
-   로컬 UI 조각 — 공유 export 가 아니라 골드에서 복사하는 것이 규약(MoreMenu·PageBtn·DrawerField…)
+   로컬 UI 조각 — 공유 export 가 아니라 골드에서 복사하는 것이 규약(MoreMenu·PageBtn…)
 ────────────────────────────── */
 
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
@@ -189,17 +188,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined}
       className="inline-flex items-center justify-center font-semibold cursor-pointer"
       style={{ minWidth: 30, height: 30, padding: '0 8px', borderRadius: 8, border: '1px solid ' + (active ? 'var(--primary)' : 'var(--border)'), background: active ? 'var(--primary)' : 'transparent', color: active ? 'var(--primary-foreground)' : 'var(--foreground)', fontSize: 12.5 }}>{n}</button>
-  );
-}
-
-function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </label>
   );
 }
 
@@ -212,11 +200,10 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [unit, setUnit] = useState<Unit>('원');             // 금액 단위 — 목업 기본값 '원'
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
-  /* 필터 — 주 필터(투심상태)는 툴바 칩, 보고구분은 드로어. SSOT=개별 state(빈 값=미적용) */
+  /* 필터 — 주 필터(투심상태)는 툴바 칩, 보고구분은 인라인 패널. SSOT=개별 state(빈 값=미적용) */
   const [fStat, setFStat] = useState<'' | ReviewStatus>('');
   const [fRt, setFRt] = useState('');      // 보고구분 — 숨은 행 속성 rt(옵션은 목업 유일값만)
   const clearFilters = () => { setFStat(''); setFRt(''); };
@@ -284,15 +271,21 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
       favRoute="report-update-info"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌는 항상 필터 칩이다 — 선택이 표시 전용이라 selbar 가 존재하지 않는다(상단 주석 참조).
-         드로어 값 칩은 보고구분 하나다 — 투심상태는 이 칩 행이 이미 보여준다. */
+         패널 값 칩은 보고구분 하나다 — 투심상태는 이 칩 행이 이미 보여준다. */
       filterChipsMenu="투심상태"
       filterChips={(['', '승인', '보류', '부결'] as ('' | ReviewStatus)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fStat === s, onSelect: () => setFStat(s) }))}
       appliedFilters={[{ label: '보고구분', value: fRt, onClear: () => setFRt('') }]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 항목(보고구분 1개). 검색어는 미사용(OFF). 보고구분은 숨은 행 속성 rt 로 거른다.
+         보고구분 — 목업 유일 옵션('투자심의관리')만 둔다. 없는 옵션을 생성하지 않는다(검토필요 메모) */
+      filterPanel={
+        <FilterPanel label="보고 업데이트정보 조건">
+          <PanelSelect label="보고구분" value={fRt} onChange={setFRt} options={['투자심의관리']} />
+        </FilterPanel>
+      }
       toolbarRight={<>
         {/* 금액 단위 전환 — 목업 listbar 의 '금액단위 원/백만원/억원' */}
         <span className="text-caption font-semibold" style={{ fontSize: 12, marginRight: 6 }}>금액단위</span>
         <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
@@ -325,28 +318,6 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 보고 업데이트 건이 없습니다.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 목업 검색박스 항목(보고구분 1개) + 주 필터(투심상태) 공유.
-           검색어는 미사용(OFF). 보고구분은 숨은 행 속성 rt 로 거른다 ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">보고 업데이트정보 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* 보고구분 — 목업 유일 옵션('투자심의관리')만 둔다. 없는 옵션을 생성하지 않는다(검토필요 메모) */}
-            <DrawerField label="보고구분"><DrawerSelect value={fRt} onChange={setFRt} options={['투자심의관리']} /></DrawerField>
-            {/* 투심상태는 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
     </GridFrame>
   );
 }

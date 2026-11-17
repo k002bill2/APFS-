@@ -4,14 +4,15 @@
 
    설계서 → 우리 규약
    - 제목·브레드크럼 = 메뉴 리프 라벨 "회기생성/전기이월"(설계서 "회기생성전기이월" 아님) · KPI 배지 행 미포함(kpis 미전달).
-   - 툴바 우: [상세필터] · [+ 회기 생성] · [저장] · 조회 IconBtn(설계서 순서 상세필터·조회·회기 생성·저장 → 툴바 규약 순서).
+   - 툴바 우: [+ 회기 생성] · [저장] · 조회 IconBtn(설계서 순서 상세필터·조회·회기 생성·저장 → 툴바 규약 순서, 상세필터는 칩 줄 위 인라인 패널).
    - 설계서 '그리드 저장' → '저장'(사용자 결정 2026-11-04, 결산양식 관리와 통일). 실행 버튼이라 SaveButton(아이콘 check — 설계서 '＋' 아이콘은 쓰지 않는다).
    - 그리드 = 체크박스 + 설계서 8컬럼 그대로. 상태 열은 두지 않는다 — 편집(U) 행은 편집한 칸이 옅은 경고 배경(--warning-soft)으로 보인다.
      마감기간종료일·이월기간종료일은 미마감('부') 행만 셀 안 날짜 선택(PeriodPicker day), 마감('여') 행은 읽기 전용 텍스트.
      이월기간시작일은 읽기 전용(마감기간종료일 + 1일 자동). 행 순서 = 계정구분·기수 순(정렬 끔 — 편집 그리드 관용구).
    - 행 선택(체크박스만, multiRow) → 선택 바(GridFrame contextActions): [연마감] · [연마감(미결재포함)] · [선택 해제].
    - 행 더블클릭(E08) = 상세 팝업 없음(설계서) → 배선하지 않는다.
-   - 상세필터 = Sheet 드로어, 즉시 반영(사용자 지시 2026-11-04 — 값을 바꾸면 목록·칩이 바로 바뀌고 [필터 적용] = 닫기). 조건 2개(기준년도 PeriodPicker year · 계정구분 셀렉트). 적용 칩 값만 + ×.
+   - 상세필터 = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 — apfs-detail-filter), 즉시 반영(사용자 지시 2026-11-04 — 값을 바꾸면 목록·칩이 바로 바뀐다).
+     조건 2개(기준년도 PanelPeriod year · 계정구분 PanelSelect). 적용 칩 값만 + ×. [초기화] = 기본값(당해년도) 복원.
    - 푸터 = FooterActions(새 창 · 내보내기(엑셀, ⌥D) · 인쇄(⌘P = printGrid, 그리드만)). 설계서 하단도구는 2개(인쇄 없음)지만
      푸터 4종 항시 노출(2026-09-17 사용자 결정)이 우선 — 페이저가 없어 전체보기만 빠진다(2026-11-09 점검: 직접 둔 IconBtn 2개라
      ⌘P 가 브라우저 기본 인쇄로 GNB 까지 찍었다).
@@ -42,10 +43,9 @@ import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, dropHiddenSelection, restoreSelection } from '../../aggrid_selection';
 import { controlMinWidth } from '../../schemas/renderers';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel } from '../../ui/alert-dialog';
 import { PeriodPicker } from '../../ui/period-picker';
-import { DrawerSelect } from '../../drawer_select';
+import { FilterPanel, PanelPeriod, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
@@ -111,17 +111,6 @@ const EXCEL_COLS: [string, (r: FiscalRow) => string][] = [
   ['마감여부', (r) => r.closed], ['이월회기', (r) => termLabel(r.carryTerm)], ['이월기간시작일', (r) => r.carryStart], ['이월기간종료일', (r) => r.carryEnd],
 ];
 
-/* plain=<div> 래퍼 — PeriodPicker(버튼 트리거)는 <label> 안에서 2회 토글된다(apfs-datepicker) */
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-
 type CloseModal = null | { ids: string[]; ok: string[]; includeUnapproved: boolean; skipped: string };
 
 export function FiscalRolloverManage({ onNav }: { onNav?: (r: string) => void }) {
@@ -141,10 +130,9 @@ export function FiscalRolloverManage({ onNav }: { onNav?: (r: string) => void })
   const [saving, setSaving] = useState(false);
   useEffect(() => { if (gridBoxRef.current) gridBoxRef.current.inert = saving; }, [saving]);
 
-  /* 상세필터 — 기준년도(기본 당해년도) · 계정구분. 즉시 반영 — 드로어 컨트롤이 이 state 를 바로 바꾼다 */
+  /* 상세필터 — 기준년도(기본 당해년도) · 계정구분. 즉시 반영 — 패널 칸이 이 state 를 바로 바꾼다 */
   const [fYear, setFYear] = useState(thisYear);
   const [fAccount, setFAccount] = useState('');
-  const [filterOpen, setFilterOpen] = useState(false);
   const resetFilters = () => { setFYear(thisYear); setFAccount(''); };
   const passes = useMemo(() => passesFilter({ year: fYear, account: fAccount }), [fYear, fAccount]);
   /* 필터가 바뀌면 선택을 전부 해제(2026-10-27 사용자 결정 — filter_clears_selection 가드) */
@@ -236,8 +224,8 @@ export function FiscalRolloverManage({ onNav }: { onNav?: (r: string) => void })
     XLSX.writeFile(wb, '회기생성_전기이월.xlsx');
     toast.success('Excel로 내보냈습니다');
   };
-  /* 상세필터·회기 생성·확인창이 덮고 있으면 뒤 그리드 내보내기 단축키를 끈다 */
-  const listKeys = !filterOpen && !createOpen && modal === null && !saving;
+  /* 회기 생성·확인창이 덮고 있거나 저장 중이면 뒤 그리드 내보내기 단축키를 끈다 */
+  const listKeys = !createOpen && modal === null && !saving;
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys, skipInDialog: true });
 
@@ -261,8 +249,14 @@ export function FiscalRolloverManage({ onNav }: { onNav?: (r: string) => void })
         { label: '기준년도', value: fYear ? `${fYear}년` : '', onClear: () => setFYear('') },
         { label: '계정구분', value: fAccount, onClear: () => setFAccount('') },
       ]}
+      /* 상세필터(E01) = 칩 줄 위 인라인 패널 — slide 11 조건 2개. 즉시 반영, [초기화] = 기본값(기준년도 = 당해년도) */
+      filterPanel={
+        <FilterPanel label="회기 조건" onReset={resetFilters}>
+          <PanelPeriod label="기준년도" mode="year" value={fYear} onChange={setFYear} />
+          <PanelSelect label="계정구분" value={fAccount} onChange={setFAccount} options={FUND_ACCOUNTS} searchable />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" disabled={saving} onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" disabled={saving} onClick={openCreate}>회기 생성</Button>
         <SaveButton onSubmit={save} />
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={listKeys ? HOTKEYS.refresh : undefined} />
@@ -289,31 +283,6 @@ export function FiscalRolloverManage({ onNav }: { onNav?: (r: string) => void })
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 조건에 해당하는 회기가 없습니다. [회기 생성]으로 최초 1기를 만드세요.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어(E01) — slide 11 조건 2개. 즉시 반영 ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">회기 목록을 기준년도·계정구분으로 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="기준년도" plain>
-              <div style={{ width: 'fit-content', minWidth: controlMinWidth('year'), maxWidth: '100%' }}>
-                <PeriodPicker mode="year" value={fYear} onChange={(v) => setFYear(v || '')} ariaLabel="기준년도" />
-              </div>
-            </DrawerField>
-            <DrawerField label="계정구분">
-              <DrawerSelect value={fAccount} onChange={setFAccount} options={FUND_ACCOUNTS} ariaLabel="계정구분" searchable />
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={resetFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── E03-1 / E03-2 연마감 확인 ── */}
       {modal && (

@@ -20,3 +20,14 @@ export function srcPath(basename: string): string {
 }
 
 export const readSrc = (basename: string): string => readFileSync(srcPath(basename), 'utf8');
+
+/** 인라인 필터 패널(`<FilterPanel …>…</FilterPanel>`, filter_panel.tsx) 소스 구간 — 상세필터 드로어(`<SheetContent>`) 대신 읽는다(2026-11-17).
+    한 파일에 패널이 없으면 '' */
+export function panelSrc(src: string): string {
+  const a = src.indexOf('<FilterPanel');
+  return a < 0 ? '' : src.slice(a, src.indexOf('</FilterPanel>', a));
+}
+
+/** 패널 칸 항목명 순서 — `<Panel* label="…"` (칩 label·칸 aria-label 과 같은 값) */
+export const panelLabels = (src: string): string[] =>
+  [...panelSrc(src).matchAll(/<Panel\w+ label="([^"]+)"/g)].map((m) => m[1]);

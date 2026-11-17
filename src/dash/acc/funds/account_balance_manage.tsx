@@ -3,15 +3,15 @@
 
    설계서 → 우리 규약
    - ① 브레드크럼·제목(메뉴 리프 '계좌잔액')·☆ 즐겨찾기·[메인으로] = GridFrame 규약. KPI 배지 행 없음.
-   - ② 툴바 우: 단위 캡션 · [상세필터](E02) · [Σ 소계표시](E01 표시 옵션 토글 — UI.Button pressed(aria-pressed), 재클릭 해제) ·
-     ⟳ 조회(E03 — 재조회 + 토스트 "조회되었습니다"). 선택 체크박스 없음(조회 전용).
+   - ② 툴바 우: 단위 캡션 · [Σ 소계표시](E01 표시 옵션 토글 — UI.Button pressed(aria-pressed), 재클릭 해제) ·
+     ⟳ 조회(E03 — 재조회 + 토스트 "조회되었습니다"). 선택 체크박스 없음(조회 전용). 상세필터(E02)는 칩 줄 위 인라인 패널.
    - ③ 그리드 14열(설계서 순서): 계정구분·계좌번호·통화·예금종류(= 계정과목)·전잔·기간증가·기간감소·잔액·개설일·금융기관·적요·만기일·이자율·개설목적.
      금액 4열·이자율만 우측, 나머지 좌측. 계정구분 순 → 계좌번호 순. 헤더 정렬 끔(소계 위치 고정). 페이지 나눔 없음(계좌 수가 적다).
      소계표시 ON = 계정구분 그룹 끝 소계 행(--muted + 굵게, 계정구분 칸 '소계'). 맨 아래 pinned 합계 행(계좌 행만 합산).
      행 더블클릭 / Enter(E04) = 계좌거래상세 팝업(account_txn_detail_modal). 소계·합계 행은 무반응.
-   - 상세필터 9개(slide 11) 즉시 반영([필터 적용] = 닫기): 계정구분(검색 셀렉트) · 기준기간(기본 전월 1일 ~ 오늘) · 사용여부(기본 여) ·
+   - 상세필터 9개(slide 11) = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 — apfs-detail-filter), 즉시 반영: 계정구분(검색 셀렉트) · 기준기간(기본 전월 1일 ~ 오늘) · 사용여부(기본 여) ·
      만기여부(기본 부) · 수시입출금여부 · 미결재포함 · 개설기간 · 만기기간 · 잔액여부. 기간 3종은 각각 시작 > 종료면 그 칸 invalid +
-     '시작일은 종료일보다 늦을 수 없습니다.' + 결과 0건. 기본값 칩은 진입부터 표시 — × = 전체/전 기간, [초기화] = 기본값.
+     패널 아래 '시작일은 종료일보다 늦을 수 없습니다.'(같은 문구라 한 줄) + 결과 0건. 기본값 칩은 진입부터 표시 — × = 전체/전 기간, [초기화] = 기본값.
    - ④ 푸터: 새 창(E05) · 내보내기(E06 ⌥D — '계좌잔액.xlsx', 소계 행은 켜져 있을 때만 + 합계 행, 금액 숫자 셀) ·
      인쇄(E07) = SplitButton [인쇄(⌘P) = 화면 그리드 printGrid │ ▾ 예금명세서 출력 = 리포트 뷰어(계정구분마다 쪽 · '계정구분 : X' · '기준일 : from - to' · 순·계정과목·금융기관·지점·계좌번호·잔액·이율·만기일 ·
      계정과목별 〈 소계 〉 · 절 끝 합 계)]. 자금일보(daily_cash_manage) 동형 — ⌘P·푸터 인쇄 본체 = printGrid 는 인쇄 진입점 가드(print_grid_guard) 규약.
@@ -19,7 +19,7 @@
 
    결정·가정
    - 소계표시 위치: 설계서는 [상세필터] 왼쪽 버튼. 행을 거르지 않는 표시 옵션이라 필터 칩 줄이 아니라 툴바 우측 토글로 둔다
-     (2026-11-09 사용자 결정 — 출자금현황 [Σ 합계]와 같은 모양, 순서는 상세필터 → 토글 → 조회).
+     (2026-11-09 사용자 결정 — 출자금현황 [Σ 합계]와 같은 모양, 순서는 토글 → 조회. 상세필터는 2026-11-17 칩 줄 위 인라인 패널로 옮겼다).
    - 미결재포함·잔액여부(2026-11-16 사용자 지시 "미연동 필터 전부 동작" — 종전 no-op 캡션·칩 없음):
      미결재포함(체크) = 결재 대기 거래 더미(account_balance_model.demoUnapprovedTxns)까지 더해 잔액을 다시 계산 — 계좌거래상세 팝업도 같은 거래를 본다.
      잔액여부 = 여/부 선택(2026-11-17 사용자 결정 — 종전 금액 입력) — 여 = 잔액 있음(≠ 0) · 부 = 잔액 0. 둘 다 적용 칩을 달고 × = 해제/비움.
@@ -36,13 +36,11 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { UI } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, fmt, numFmt, numStyle } from '../../aggrid_theme';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
-import { DrawerSelect } from '../../drawer_select';
+import { FilterPanel, PanelCheck, PanelRange, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import type { AppliedFilter } from '../../applied_filters';
-import { DrawerField, DayRangeField, FlagCheck } from '../ledger_filter_ui';
 import { LedgerReportViewer } from '../ledger_report_viewer';
 import { demoBankAccounts, demoCashTxns, DEMO_TODAY, FUNDS_ACCOUNT_TYPES } from './funds_data';
 import type { BankAccount } from './funds_data';
@@ -152,8 +150,7 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
   const base = useMemo(() => defaultFilter(DEMO_TODAY), []);
 
   /* E00 — 기본 조건(기준기간 전월 1일 ~ 오늘 · 사용 · 만기 전)으로 진입 */
-  const [applied, setApplied] = useState<BalanceFilter>(base);   // 드로어·칩·그리드 SSOT(즉시 반영)
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [applied, setApplied] = useState<BalanceFilter>(base);   // 패널·칩·그리드 SSOT(즉시 반영)
   const [showSubtotal, setShowSubtotal] = useState(false);
   const [modal, setModal] = useState<ModalState>(null);
   const [viewer, setViewer] = useState(false);
@@ -171,8 +168,8 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
   }] : []), [rows]);
   const accountById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
 
-  /* 상세필터·팝업·뷰어가 열린 동안 목록 단축키를 끈다(skipInDialog 와 이중) */
-  const keysOn = !filterOpen && !modal && !viewer;
+  /* 팝업·뷰어가 열린 동안 목록 단축키를 끈다(skipInDialog 와 이중) */
+  const keysOn = !modal && !viewer;
   /* E07 인쇄 본체(⌘P·푸터) = 화면 그리드 printGrid — 0건이면 안내 */
   const printIfReady = () => { if (!rows.length) { toast.error(NO_RESULT); return; } printGrid(); };
   useHotkey(HOTKEYS.print.combo, printIfReady, { enabled: keysOn, skipInDialog: true });
@@ -240,7 +237,7 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
     toast.success('저장했습니다');
   };
 
-  /* 적용 칩 — label = 드로어 캡션(칩 클릭 jump). 기본값 칩은 진입부터 표시, × = 전체/전 기간 */
+  /* 적용 칩 — label = 패널 칸 label(칩 클릭 jump). 기본값 칩은 진입부터 표시, × = 전체/전 기간 */
   const range = (from: string, to: string) => (from || to ? `${from || '…'} ~ ${to || '…'}` : '');
   const ynChip = (k: YnKey, label: string): AppliedFilter =>
     ({ label, value: applied[k] ? YN_TEXT[k][applied[k] as '여' | '부'] : '', onClear: () => patch({ [k]: '' } as Partial<BalanceFilter>) });
@@ -255,10 +252,10 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
   ];
 
   const ynSelect = (k: YnKey, label: string) => (
-    <DrawerField label={label}>
-      <DrawerSelect value={applied[k]} onChange={(v) => patch({ [k]: v as YesNo } as Partial<BalanceFilter>)} options={[...YES_NO]} ariaLabel={label} />
-    </DrawerField>
+    <PanelSelect label={label} value={applied[k]} onChange={(v) => patch({ [k]: v as YesNo } as Partial<BalanceFilter>)} options={[...YES_NO]} />
   );
+  /* 기간 3종 오류는 같은 문구(validatePeriod)라 한 줄로 — 패널 errors 는 문구를 key 로 쓴다 */
+  const errLines = [...new Set([errs.period, errs.open, errs.maturity])];
 
   const shownAccounts = accountCount(gridRows);
   return (
@@ -268,9 +265,22 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
       favRoute={ROUTE}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips}
+      /* 상세필터(E02) = 칩 줄 위 인라인 패널 — 9개 조건, 바꾸는 즉시 applied 반영. [초기화] = 기본값(기준기간 전월 1일 ~ 오늘 · 사용 · 만기 전) */
+      filterPanel={
+        <FilterPanel label={`${TITLE} 조회 조건`} onReset={() => setApplied(base)} errors={errLines}>
+          <PanelSelect label="계정구분" value={applied.accountType} onChange={setD('accountType')} options={[...FUNDS_ACCOUNT_TYPES]} searchable />
+          <PanelRange label="기준기간" mode="day" from={applied.from} to={applied.to} onFrom={setD('from')} onTo={setD('to')} invalid={!!errs.period} />
+          {ynSelect('active', '사용여부')}
+          {ynSelect('matured', '만기여부')}
+          {ynSelect('freeWithdraw', '수시입출금여부')}
+          <PanelCheck label="미결재포함" checked={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
+          <PanelRange label="개설기간" mode="day" from={applied.openFrom} to={applied.openTo} onFrom={setD('openFrom')} onTo={setD('openTo')} invalid={!!errs.open} />
+          <PanelRange label="만기기간" mode="day" from={applied.maturityFrom} to={applied.maturityTo} onFrom={setD('maturityFrom')} onTo={setD('maturityTo')} invalid={!!errs.maturity} />
+          {ynSelect('balance', '잔액여부')}
+        </FilterPanel>
+      }
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>단위: 원</span>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* E01 소계표시 — 표시 옵션 토글(aria-pressed), 재클릭 = 해제. 필터가 아니라 칩 줄에 두지 않는다(2026-11-09 사용자 결정) */}
         <Button variant="outline" size="sm" leadingIcon="sigma" pressed={showSubtotal} onClick={() => setShowSubtotal((v) => !v)}>소계표시</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={keysOn ? HOTKEYS.refresh : undefined} />
@@ -293,34 +303,6 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 결과가 없습니다. 검색 조건을 변경해 주세요.</span>'}
         />
       </div>
-
-      {/* ── 상세필터(E02) — 9개 조건, 바꾸는 즉시 applied 반영([필터 적용] = 닫기) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">{`${TITLE} 조회 조건`}</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="계정구분">
-              <DrawerSelect value={applied.accountType} onChange={setD('accountType')} options={[...FUNDS_ACCOUNT_TYPES]} ariaLabel="계정구분" searchable />
-            </DrawerField>
-            <DayRangeField label="기준기간" from={applied.from} to={applied.to} onFrom={setD('from')} onTo={setD('to')} errMsg={errs.period ?? undefined} />
-            {ynSelect('active', '사용여부')}
-            {ynSelect('matured', '만기여부')}
-            {ynSelect('freeWithdraw', '수시입출금여부')}
-            <FlagCheck label="미결재포함" value={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
-            <DayRangeField label="개설기간" from={applied.openFrom} to={applied.openTo} onFrom={setD('openFrom')} onTo={setD('openTo')} errMsg={errs.open ?? undefined} />
-            <DayRangeField label="만기기간" from={applied.maturityFrom} to={applied.maturityTo} onFrom={setD('maturityFrom')} onTo={setD('maturityTo')} errMsg={errs.maturity ?? undefined} />
-            {ynSelect('balance', '잔액여부')}
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setApplied(base)}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* E04 계좌거래상세 — 기준기간 = 화면 조회조건 */}
       {modal?.kind === 'detail' && (

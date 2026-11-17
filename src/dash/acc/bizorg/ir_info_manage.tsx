@@ -2,12 +2,13 @@
    출처: ACC-024 화면설계서(목록·조회조건 정의 표·IR 상세 팝업 슬라이드) → APFS 디자인시스템(ACC-004 deleted_journal_manage 골격).
 
    구성(설계서 → 우리 규약):
-   - 툴바: [상세필터] → 조회(항상 맨 끝). 등록 버튼·선택 바 없음.
+   - 툴바: 조회(항상 맨 끝). 등록 버튼·선택 바 없음. 상세필터는 칩 줄 위 인라인 패널.
    - 그리드 9열(운용사·자펀드·IR명·IR일자·장소·주관·참가수·등록자·등록일). 참가수만 우측(건수), 나머지 좌측(가운데 없음).
        IR명 = 굵게·말줄임·잔여폭 흡수. 참가수 = 참가경영체 배열 길이(데이터에 숫자를 적지 않는다). IR일자 내림차순(모델 정렬).
-   - 상세필터 드로어 6개(설계서 조건 정의 표 순서: IR명·운용사·자펀드·IR일자·장소·사용여부). 즉시 반영 — [필터 적용] = 닫기.
+   - 상세필터 = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 — apfs-detail-filter) 6개(설계서 조건 정의 표 순서: IR명·운용사·자펀드·IR일자·장소·사용여부).
+       즉시 반영. 기본값이 전부 빈 값이라 [초기화] 없음 — 칩 줄 `전체 해제`가 같은 일을 한다.
        자펀드 = 운용사를 고르면 그 운용사 자펀드만, 운용사가 바뀌면(칩 × 해제 포함) 자펀드를 비운다(모델 withGp).
-       IR일자 시작 > 종료 = 두 칸 invalid + 아래 안내 + 결과 0건(삭제전표 기간과 같은 문구·동작).
+       IR일자 시작 > 종료 = 두 칸 invalid + 패널 아래 안내 + 결과 0건(삭제전표 기간과 같은 문구·동작).
        사용여부는 그리드 열이 없지만 행 데이터 useYn 으로 거른다. 적용 조건 = 칩(값만, × 개별 해제).
    - 행 더블클릭 / Enter = IR 상세보기(2탭 — ir_detail_modal). 참가경영체 기업명 링크 → 경영체 상세보기 중첩.
    - 내보내기·새 창·인쇄 = 푸터 FooterActions. 엑셀 파일·시트명 'IR정보 조회', 참가수는 숫자 셀.
@@ -17,20 +18,16 @@
    - 백엔드가 없어 조회는 현재 조건 재조회 토스트만 띄운다. */
 import '../../aggrid_shared.css';
 import { useState, useRef, useCallback, useMemo } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, CellKeyDownEvent, RowDoubleClickedEvent, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
-import { PeriodPicker } from '../../ui/period-picker';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
-import { DrawerSelect } from '../../drawer_select';
+import { FilterPanel, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { demoEntities, demoIrs, GPS, YN } from './bizorg_data';
 import type { AgriEntity, IrEvent } from './bizorg_data';
 import { filterIrs, validatePeriod, fundOptions, withGp, participantCount, EMPTY_IR_FILTER } from './bizorg_model';
@@ -80,17 +77,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '참가수', get: (r) => participantCount(r), num: true, wch: 8 }, { header: '등록자', get: (r) => r.regBy }, { header: '등록일', get: (r) => r.regAt },
 ];
 
-function DrawerField({ label, children, plain }: { label: string; children: ReactNode; plain?: boolean }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-const dayWrap: CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -104,8 +90,7 @@ export function IrInfoManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [modal, setModal] = useState<ModalState>(null);
 
-  /* 상세필터 — applied = 드로어·칩·목록의 SSOT(즉시 반영) */
-  const [filterOpen, setFilterOpen] = useState(false);
+  /* 상세필터 — applied = 패널·칩·목록의 SSOT(즉시 반영) */
   const [applied, setApplied] = useState<IrFilter>(EMPTY_IR_FILTER);
   const setD = <K extends keyof IrFilter>(k: K) => (v: IrFilter[K]) => setApplied((a) => ({ ...a, [k]: v }));
   /* 운용사는 모델 withGp 로만 바꾼다 — 바뀌면 자펀드 리셋 */
@@ -113,9 +98,9 @@ export function IrInfoManage({ onNav }: { onNav?: (r: string) => void }) {
   const clearApplied = (patch: Partial<IrFilter>) => setApplied((a) => ({ ...a, ...patch }));
   const periodErr = validatePeriod(applied.from, applied.to);
 
-  /* 인쇄·내보내기는 모달·드로어가 열려 있지 않을 때만 */
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  /* 인쇄·내보내기는 모달이 열려 있지 않을 때만 */
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null, skipInDialog: true });
 
   const visible = useMemo(() => (periodErr ? [] : filterIrs(rows, applied)), [rows, applied, periodErr]);
 
@@ -177,8 +162,18 @@ export function IrInfoManage({ onNav }: { onNav?: (r: string) => void }) {
       favRoute="acct-ir-info"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 설계서 조건 정의 표 6개. 즉시 반영, IR일자 검증 문구는 패널 아래 */
+      filterPanel={
+        <FilterPanel label="IR정보 조회 조건" errors={[periodErr]}>
+          <PanelText label="IR명" value={applied.name} onChange={setD('name')} />
+          <PanelSelect label="운용사" value={applied.gp} onChange={setGp} options={[...GPS]} />
+          <PanelSelect label="자펀드" value={applied.fund} onChange={setD('fund')} options={[...fundOptions(applied.gp)]} />
+          <PanelRange label="IR일자" mode="day" from={applied.from} to={applied.to} onFrom={setD('from')} onTo={setD('to')} invalid={!!periodErr} />
+          <PanelText label="장소" value={applied.place} onChange={setD('place')} />
+          <PanelSelect label="사용여부" value={applied.useYn} onChange={setD('useYn')} options={[...YN]} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{footerCount(visible.length, Math.min(shown, visible.length))}</span>}
@@ -207,40 +202,6 @@ export function IrInfoManage({ onNav }: { onNav?: (r: string) => void }) {
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 결과가 없습니다. 검색 조건을 변경해 주세요.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 설계서 조건 정의 표 6개. 즉시 반영([필터 적용] = 닫기) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">IR 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="IR명">
-              <input type="text" value={applied.name} onChange={(e) => setD('name')(e.target.value)} placeholder="IR명" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="운용사"><DrawerSelect value={applied.gp} onChange={setGp} options={[...GPS]} ariaLabel="운용사" /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={applied.fund} onChange={setD('fund')} options={[...fundOptions(applied.gp)]} ariaLabel="자펀드" /></DrawerField>
-            <DrawerField label="IR일자" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={applied.from} onChange={setD('from')} ariaLabel="IR일자 시작일" invalid={!!periodErr} /></div>
-                <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={applied.to} onChange={setD('to')} ariaLabel="IR일자 종료일" invalid={!!periodErr} /></div>
-              </div>
-              {periodErr && <p role="alert" className="m-0 mt-1 text-danger" style={{ fontSize: 12 }}>{periodErr}</p>}
-            </DrawerField>
-            <DrawerField label="장소">
-              <input type="text" value={applied.place} onChange={(e) => setD('place')(e.target.value)} placeholder="장소" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="사용여부"><DrawerSelect value={applied.useYn} onChange={setD('useYn')} options={[...YN]} ariaLabel="사용여부" /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setApplied(EMPTY_IR_FILTER)}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── IR 상세보기 — 게이트는 modal state(행 스냅샷) ── */}
       {modal?.kind === 'detail' && <IrDetailModal ir={modal.row} entities={entities} onClose={() => setModal(null)} />}

@@ -5,7 +5,8 @@
 
    목업 → 우리 규약
    - pill 탭 2개(내 파일함 / 운용사 제출 파일 관리) → 공용 TabBar·TabPanel(WAI-ARIA 탭) · 활성 탭 그리드만 마운트, 탭마다 필터 유지.
-   - 탭바 우측 검색칸 → 상세필터 드로어 + 적용 칩. 내 파일함 = 파일명 / 운용사 제출 = 운용사·조합명·투자기업(select, 10개 이상이면 검색형)·파일명.
+   - 탭바 우측 검색칸 → 칩 줄 위 인라인 필터 패널(2026-11-17 드로어 폐기 — apfs-detail-filter) + 적용 칩. 탭마다 칸이 다르다:
+     내 파일함 = 파일명 / 운용사 제출 = 운용사·조합명·투자기업(select, 10개 이상이면 검색형)·파일명.
      주 필터 칩은 두지 않는다(목업 검색항목이 전부 이름 검색이라 칩으로 올릴 열거형이 없다).
    - 본문 드롭존 → 툴바 [업로드](등록 액션이 없는 화면 규약) + 공용 UploadModal(PDF·HWP·DOCX·XLSX·ZIP · 최대 20MB).
    - 파일 카드 목록·제출 파일 표 → AG Grid. 파일명 = 확장자 아이콘 + 링크(다운로드, Enter 동치).
@@ -20,7 +21,6 @@
    ⚠ 실제 업로드가 아니다 — 파일명만 있는 더미 목록을 화면 안에서 바꾼다. 다운로드는 원본이 아닌 목업 텍스트(·ZIP)다. */
 import '../../aggrid_shared.css';
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import type { ReactNode } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import type { GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent } from 'ag-grid-community';
 import { UI } from '../../components';
@@ -28,14 +28,12 @@ import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { GridPager } from '../../grid_pager';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';
-import { drawerInputStyle } from '../../schemas/renderers';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import { RowContextMenu } from '../../row_context_menu';
 import type { CtxItem, CtxMenuState } from '../../row_context_menu';
-import { DrawerSelect } from '../../drawer_select';
+import { FilterPanel, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { TabBar, TabPanel } from '../../risk_page_kit';
 import type { MyFile, SubFile } from './file_box_data';
 import { filterMy, filterSub, optionsOf, MY_F0, SUB_F0 } from './file_box_model';
@@ -52,24 +50,11 @@ const ID_BASE = 'fbox';
 const PAGE_SIZE = 20;
 const DANGER_FILL = { background: 'var(--danger-fill)', color: 'var(--danger-fill-foreground)' } as const;
 
-function DrawerField({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </label>
-  );
-}
-const NameInput = ({ value, onChange, onEnter }: { value: string; onChange: (v: string) => void; onEnter: () => void }) => (
-  <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder="파일명을 입력하세요" style={drawerInputStyle('text')}
-    onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) onEnter(); }} />
-);
 
 export function FileBox({ onNav }: { onNav?: (r: string) => void }) {
   const { my, sub } = useFileBox();
   const [tab, setTab] = useState<TabId>('my');
   const isMy = tab === 'my';
-  const [filterOpen, setFilterOpen] = useState(false);
   const [myF, setMyF] = useState<MyFilter>(MY_F0);
   const [subF, setSubF] = useState<SubFilter>(SUB_F0);
   const setSub = (p: Partial<SubFilter>) => setSubF((cur) => ({ ...cur, ...p }));
@@ -94,10 +79,9 @@ export function FileBox({ onNav }: { onNav?: (r: string) => void }) {
   const switchTab = (id: string) => { setTab(id as TabId); selIdsRef.current = []; setSelIds([]); };
   const exportExcel = () => (isMy ? exportMy(myRows) : exportSub(subRows));
   const refresh = () => { if (isMy) setMyF(MY_F0); else setSubF(SUB_F0); clearSel(); toast.success('조회되었습니다'); };
-  const resetFilters = () => (isMy ? setMyF(MY_F0) : setSubF(SUB_F0));
 
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   const onGridReady = useCallback((e: GridReadyEvent) => { apiRef.current = e.api; }, []);
   const onSelectionChanged = useCallback((e: SelectionChangedEvent) => { setSelIds(e.api.getSelectedRows().map((r: { id: string }) => r.id)); }, []);
@@ -164,9 +148,21 @@ export function FileBox({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={applied.map(([label, value, onClear]) => ({ label, value, onClear }))}
       filterScope={tab}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 활성 탭의 조건(탭마다 필터 유지). 기본값이 전부 빈 값이라 [초기화] 없음(칩 줄 전체 해제) */
+      filterPanel={
+        <FilterPanel label={`${isMy ? TABS[0].label : TABS[1].label} 조건`}>
+          {isMy ? (
+            <PanelText label="파일명" value={myF.name} onChange={(v) => setMyF({ name: v })} />
+          ) : (<>
+            <PanelSelect label="운용사" value={subF.org} onChange={(v) => setSub({ org: v })} options={optionsOf(sub, 'org')} />
+            <PanelSelect label="조합명" value={subF.fund} onChange={(v) => setSub({ fund: v })} options={optionsOf(sub, 'fund')} />
+            <PanelSelect label="투자기업" value={subF.co} onChange={(v) => setSub({ co: v })} options={optionsOf(sub, 'co')} />
+            <PanelText label="파일명" value={subF.name} onChange={(v) => setSub({ name: v })} />
+          </>)}
+        </FilterPanel>
+      }
       contextActions={selActions}
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {isMy && <Button variant="outline" size="sm" leadingIcon="upload" onClick={actions.openUpload}>업로드</Button>}
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -183,30 +179,6 @@ export function FileBox({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
       {actions.dialogs}
-
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">{`${isMy ? TABS[0].label : TABS[1].label} 목록을 거르는 상세 필터`}</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {isMy ? (
-              <DrawerField label="파일명"><NameInput value={myF.name} onChange={(v) => setMyF({ name: v })} onEnter={() => setFilterOpen(false)} /></DrawerField>
-            ) : (<>
-              <DrawerField label="운용사"><DrawerSelect value={subF.org} onChange={(v) => setSub({ org: v })} options={optionsOf(sub, 'org')} /></DrawerField>
-              <DrawerField label="조합명"><DrawerSelect value={subF.fund} onChange={(v) => setSub({ fund: v })} options={optionsOf(sub, 'fund')} /></DrawerField>
-              <DrawerField label="투자기업"><DrawerSelect value={subF.co} onChange={(v) => setSub({ co: v })} options={optionsOf(sub, 'co')} /></DrawerField>
-              <DrawerField label="파일명"><NameInput value={subF.name} onChange={(v) => setSub({ name: v })} onEnter={() => setFilterOpen(false)} /></DrawerField>
-            </>)}
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={resetFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
     </GridFrame>
   );
 }

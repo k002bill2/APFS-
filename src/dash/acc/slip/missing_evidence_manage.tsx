@@ -4,15 +4,15 @@
 
    구성(설계서 → 우리 규약)
    - 제목 "전표증빙 미첨부 관리"(메뉴 리프 라벨 — 설계서 "전표증빙미첨부관리" 아님) · KPI 배지 행 미포함.
-   - 툴바: [상세필터] → 조회(항상 맨 끝). 등록 버튼 없음(설계서에 없다).
+   - 툴바: 조회(항상 맨 끝). 등록 버튼 없음(설계서에 없다). 상세필터(E01)는 칩 줄 위 인라인 패널.
    - 그리드 = 체크박스 + 11컬럼(slide 10 순서 — 설계서 "컬럼 12개"는 체크박스 포함). 금액만 우측, 나머지 좌측(표 정렬 규약).
        결재 = 상태 배지, 첨부 = 아이콘 버튼(클릭 = 데모 열기 토스트 — 아이콘 전용 액션 열). 전표일 내림차순·순번 오름차순.
    - E03 행 선택(체크박스로만, multiRow) → 선택 바 `N건 선택됨 · [증빙첨부] · 선택 해제`. [증빙첨부]는 정확히 1건일 때만(E04).
    - E05 행 더블클릭(Enter 동일) = 그 행 1건 증빙첨부 — 체크 불필요. 체크박스 칸·첨부 버튼 더블클릭은 무시.
    - 증빙첨부 = ACC-003 전표 화면(JournalEntryScreen) mode 'evidence' — ③ 증빙·첨부만 입력, [저장]·[저장 후 닫기]·[닫기].
        상세에 넘기는 행은 modal state 스냅샷(저장으로 목록에서 빠져도 화면·exit 애니메이션 유지).
-   - 상세필터 7개(계정구분 검색형 · 기간 기본 당월 · 미결재포함 · 전표발생구분 · 작성자 · 거래처 · 적요). 즉시 반영 — 고르는 즉시
-       applied 반영, [필터 적용] = 닫기(X·Esc·바깥 클릭으로 닫아도 값 유지). 시작 > 종료 = 두 칸 invalid + 아래 안내 + 결과 0건
+   - 상세필터 = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 — apfs-detail-filter) 7개(계정구분 검색형 · 기간 기본 당월 · 미결재포함 ·
+       전표발생구분 · 작성자 · 거래처 · 적요). 즉시 반영 — 고르는 즉시 applied 반영. 시작 > 종료 = 두 칸 invalid + 패널 아래 안내 + 결과 0건
        (2026-11-03 사용자 지시, 정본 privacy_access_log). 적용 조건 = 칩(값만, × 개별 해제).
        기간 칩은 진입부터 떠 있고 × = 전 기간, [초기화] = 당월 복원.
    - 하단: 새 창·내보내기(FooterActions — ⌥O·⌥D) + ⌘P 인쇄. 권한 기반 노출은 RBAC 미구현이라 [증빙첨부]·[내보내기] 항상 노출.
@@ -24,26 +24,22 @@
    - 설계서 E03 "헤더 체크박스 — 단일 행만 선택 가능"은 프로젝트 선택 규약(multiRow + 단일 대상 액션은 1건 게이트)으로 대체.
    ⚠ 백엔드가 없어 증빙 저장은 화면 로컬 상태만 바꾼다(파일은 이름만 남는다). */
 import '../../aggrid_shared.css';
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
 import { Icon } from '../../icons';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, AUTO_SIZE_CONTENT, numFmt, numStyle } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection, dropHiddenSelection } from '../../aggrid_selection';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type {
   ColDef, GridApi, GridReadyEvent, IRowNode, CellStyle, RowSelectionOptions, SelectionChangedEvent, RowDoubleClickedEvent, CellKeyDownEvent,
 } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
-import { PeriodPicker } from '../../ui/period-picker';
-import { Checkbox } from '../../ui/checkbox';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본
+import { FilterPanel, PanelCheck, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { FUND_ACCOUNTS, JOURNAL_ORIGINS, todayStr } from './general_journal_data';
 import type { ApprovalStatus, JournalRow } from './general_journal_data';
 import { validateRange } from './general_journal_model';
@@ -116,18 +112,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '전표발생구분', get: (r) => r.origin }, { header: '전표번호', get: (r) => r.slipNo, wch: 16 },
 ];
 
-/* plain=<div> 래퍼 — PeriodPicker·체크박스(버튼 트리거)는 <label> 안에서 2회 토글된다(apfs-datepicker) */
-function DrawerField({ label, children, plain }: { label: string; children: React.ReactNode; plain?: boolean }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-const dayWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
-
 /* 행 안 버튼(첨부)에서 온 이벤트는 증빙첨부 열기로 취급하지 않는다(체크박스 칸 더블클릭은 SELECTION_COL 이 이미 막는다) */
 const fromButton = (ev: Event | null | undefined) => !!(ev?.target as Element | null)?.closest?.('button');
 
@@ -148,11 +132,10 @@ export function MissingEvidenceManage({ onNav }: { onNav?: (r: string) => void }
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [modal, setModal] = useState<ModalState>(null);
 
-  /* E01 상세필터 — applied = 드로어·칩·목록의 SSOT(초안 사본 없음 — 바꾸는 즉시 반영) */
-  const [filterOpen, setFilterOpen] = useState(false);
+  /* E01 상세필터 — applied = 패널·칩·목록의 SSOT(초안 사본 없음 — 바꾸는 즉시 반영) */
   const [applied, setApplied] = useState<MissingFilter>(base);
   const setD = <K extends keyof MissingFilter>(k: K) => (v: MissingFilter[K]) => setApplied((a) => ({ ...a, [k]: v }));
-  /* 기간 오류 — 렌더마다 applied 로 계산. 두 picker invalid + 아래 안내 + 결과 0건 */
+  /* 기간 오류 — 렌더마다 applied 로 계산. 두 picker invalid + 패널 아래 안내 + 결과 0건 */
   const periodErr = validateRange(applied.from, applied.to);
   const clearApplied = (patch: Partial<MissingFilter>) => setApplied((a) => ({ ...a, ...patch }));
 
@@ -163,8 +146,8 @@ export function MissingEvidenceManage({ onNav }: { onNav?: (r: string) => void }
   const doesExternalFilterPass = useCallback((node: IRowNode<JournalRow>) => (node.data ? passes(node.data) : true), [passes]);
   const visible = useMemo(() => rows.filter(passes), [rows, passes]);
 
-  /* 인쇄·내보내기는 증빙첨부 화면·드로어가 열려 있지 않을 때만 */
-  const listKeys = modal === null && !filterOpen;
+  /* 인쇄·내보내기는 증빙첨부 화면이 열려 있지 않을 때만 */
+  const listKeys = modal === null;
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys, skipInDialog: true });
 
@@ -249,8 +232,19 @@ export function MissingEvidenceManage({ onNav }: { onNav?: (r: string) => void }
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* E01 상세필터 = 칩 줄 위 인라인 패널 — 설계서 7개 조건. 즉시 반영, [초기화] = 기본값(기간 = 당월) 복원 */
+      filterPanel={
+        <FilterPanel label="전표증빙 미첨부 조건" onReset={() => setApplied(base)} errors={[periodErr]}>
+          <PanelSelect label="계정구분" value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} searchable />
+          <PanelRange label="기간" mode="day" from={applied.from} to={applied.to} onFrom={setD('from')} onTo={setD('to')} invalid={!!periodErr} />
+          <PanelCheck label="미결재포함" checked={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
+          <PanelSelect label="전표발생구분" value={applied.origin} onChange={setD('origin')} options={[...JOURNAL_ORIGINS]} />
+          <PanelText label="작성자" value={applied.writer} onChange={setD('writer')} />
+          <PanelText label="거래처" value={applied.partner} onChange={setD('partner')} />
+          <PanelText label="적요" value={applied.memo} onChange={setD('memo')} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={modal ? undefined : HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{footerCount(visible.length, Math.min(shown, visible.length))}</span>}
@@ -287,48 +281,6 @@ export function MissingEvidenceManage({ onNav }: { onNav?: (r: string) => void }
           overlayNoRowsTemplate="조회 조건에 해당하는 증빙 미첨부 전표가 없습니다."
         />
       </div>
-
-      {/* ── E01 상세필터 드로어 — 설계서 7개 조건. 즉시 반영([필터 적용] = 닫기) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">증빙 미첨부 전표 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="계정구분"><DrawerSelect value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} ariaLabel="계정구분" searchable /></DrawerField>
-            <DrawerField label="기간" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={applied.from} onChange={(v) => setD('from')(v || '')} ariaLabel="기간 시작일" invalid={!!periodErr} /></div>
-                <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={applied.to} onChange={(v) => setD('to')(v || '')} ariaLabel="기간 종료일" invalid={!!periodErr} /></div>
-              </div>
-              {periodErr && <p role="alert" className="m-0 mt-1 text-danger" style={{ fontSize: 12 }}>{periodErr}</p>}
-            </DrawerField>
-            <DrawerField label="미결재포함" plain>
-              <div className="inline-flex items-center gap-2" style={{ minHeight: 34 }}>
-                <Checkbox id="me-include-unapproved" aria-label="미결재포함" checked={applied.includeUnapproved} onCheckedChange={(c) => setD('includeUnapproved')(c === true)} />
-                <label htmlFor="me-include-unapproved" style={{ fontSize: 13.5, cursor: 'pointer', userSelect: 'none' }}>미결재 전표 포함(미상신·상신·반려)</label>
-              </div>
-            </DrawerField>
-            <DrawerField label="전표발생구분"><DrawerSelect value={applied.origin} onChange={setD('origin')} options={[...JOURNAL_ORIGINS]} ariaLabel="전표발생구분" /></DrawerField>
-            <DrawerField label="작성자">
-              <input type="text" value={applied.writer} onChange={(e) => setD('writer')(e.target.value)} placeholder="작성자" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="거래처">
-              <input type="text" value={applied.partner} onChange={(e) => setD('partner')(e.target.value)} placeholder="거래처" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="적요">
-              <input type="text" value={applied.memo} onChange={(e) => setD('memo')(e.target.value)} placeholder="적요" style={inputStyle('text')} />
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setApplied(base)}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── E04·E05 증빙첨부 — 게이트는 modal state(행 스냅샷). 저장으로 목록에서 빠져도 동기 언마운트되지 않는다 ── */}
       {modal?.kind === 'evidence' && (

@@ -22,6 +22,8 @@ export interface PeriodPickerProps {
   disabled?: boolean;
   placeholder?: string;
   yearRange?: [number, number];   // 연도 선택 범위(기본 2000~2035 — DatePicker와 동일)
+  /** 인라인 필터 패널 — 트리거엔 고른 값 대신 placeholder(항목명)를 늘 흐리게 보인다. 값은 그대로 받아 달력·그리드에 선택 표시·재클릭 해제가 살아 있다(고른 값은 적용 칩, filter_panel) */
+  fixedLabel?: boolean;
 }
 
 const PLACEHOLDER: Record<PeriodMode, string> = { day: '날짜 선택', month: '월 선택', monthOfYear: '월 선택', quarter: '분기 선택', half: '반기 선택', year: '연도 선택' };
@@ -54,14 +56,14 @@ const cellSelected = 'bg-primary text-primary-foreground hover:bg-primary hover:
 const navBtn = 'inline-flex items-center justify-center border-0 bg-transparent text-foreground rounded-[8px] h-8 w-8 cursor-pointer hover:bg-accent-surface disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 export function PeriodPicker(props: PeriodPickerProps) {
-  const { mode, value, onChange, ariaLabel, invalid, required, disabled, placeholder, yearRange = [2000, 2035] } = props;
+  const { mode, value, onChange, ariaLabel, invalid, required, disabled, placeholder, yearRange = [2000, 2035], fixedLabel } = props;
   // 일별 = 기존 DatePicker 그대로(달력·타임존 계약 재사용)
-  if (mode === 'day') return <DatePicker value={value} onChange={onChange} ariaLabel={ariaLabel} invalid={invalid} required={required} disabled={disabled} placeholder={placeholder} />;
+  if (mode === 'day') return <DatePicker value={value} onChange={onChange} ariaLabel={ariaLabel} invalid={invalid} required={required} disabled={disabled} placeholder={placeholder} fixedLabel={fixedLabel} />;
   return <GridPicker {...props} yearRange={yearRange} />;
 }
 
 /* 연도·월·분기·반기 — 버튼 그리드(훅은 day 분기 뒤라 별도 컴포넌트로 분리) */
-function GridPicker({ mode, value, onChange, ariaLabel, invalid, required, disabled, placeholder, yearRange }: PeriodPickerProps & { yearRange: [number, number] }) {
+function GridPicker({ mode, value, onChange, ariaLabel, invalid, required, disabled, placeholder, yearRange, fixedLabel }: PeriodPickerProps & { yearRange: [number, number] }) {
   const [open, setOpen] = React.useState(false);
   const [year, setYear] = React.useState(() => yearOf(value));
   React.useEffect(() => { if (open) setYear(yearOf(value)); }, [open, value]);   // 열 때마다 현재 값의 연도 페이지로
@@ -99,7 +101,7 @@ function GridPicker({ mode, value, onChange, ariaLabel, invalid, required, disab
           )}
         >
           {/* 34px 박스는 한 줄 전용 — '월 선택'이 좁은 칸에서 '월/선택' 2줄로 깨지지 않게 nowrap(DatePicker 와 동일). 폭은 소비처가 보장 */}
-          <span className={cn('whitespace-nowrap tabular-nums', !label && 'text-muted-foreground')}>{label || placeholder || PLACEHOLDER[mode]}</span>
+          <span className={cn('whitespace-nowrap tabular-nums', (!label || fixedLabel) && 'text-muted-foreground')}>{(fixedLabel ? '' : label) || placeholder || PLACEHOLDER[mode]}</span>
           <CalendarIcon className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
         </button>
       </PopoverTrigger>

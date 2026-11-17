@@ -19,7 +19,7 @@ function parseValue(v: string): Date | undefined {
   return isValid(d) ? d : undefined;
 }
 
-export function DatePicker({ value, onChange, invalid, required, disabled, placeholder = '날짜 선택', ariaLabel }: {
+export function DatePicker({ value, onChange, invalid, required, disabled, placeholder = '날짜 선택', ariaLabel, fixedLabel }: {
   value: string;
   onChange: (v: string) => void;
   invalid?: boolean;
@@ -30,6 +30,8 @@ export function DatePicker({ value, onChange, invalid, required, disabled, place
   // 트리거는 <button>이라 감싸는 <label>로 명명되지 않음(accname: label은 input류만 명명).
   // 네이티브 input이 받던 필드명을 보존하려면 소비처가 필드 라벨을 넘겨야 함.
   ariaLabel?: string;
+  /** 인라인 필터 패널 — 트리거엔 고른 값 대신 placeholder(항목명)를 늘 흐리게 보인다. 값은 그대로 받아 달력·그리드에 선택 표시·재클릭 해제가 살아 있다(고른 값은 적용 칩, filter_panel) */
+  fixedLabel?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   const selected = parseValue(value);
@@ -63,8 +65,8 @@ export function DatePicker({ value, onChange, invalid, required, disabled, place
           )}
         >
           {/* 34px 박스(content 20px)는 정확히 한 줄 — 좁은 칸에서 '날짜 선택'이 줄내림되면 박스를 넘친다. 폭은 소비처가 보장 */}
-          <span className={cn('whitespace-nowrap tabular-nums', !selected && 'text-muted-foreground')}>
-            {selected ? format(selected, 'yyyy-MM-dd') : placeholder}
+          <span className={cn('whitespace-nowrap tabular-nums', (!selected || fixedLabel) && 'text-muted-foreground')}>
+            {selected && !fixedLabel ? format(selected, 'yyyy-MM-dd') : placeholder}
           </span>
           <CalendarIcon className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
         </button>

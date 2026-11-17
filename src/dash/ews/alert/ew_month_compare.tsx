@@ -3,7 +3,8 @@
    형제 화면 `fund_early_warning.tsx`(S2_49)·`gp_early_warning.tsx`(S2_47)와 같은 구조·관례로 만든다.
 
    구성(목업 → 우리 규약):
-   - 검색박스(기준년월) + 표 아래 범례 토글(등급 3 · 변동 3) → **상세필터 드로어** 3섹션(기준년월·등급·변동).
+   - 검색박스(기준년월) + 표 아래 범례 토글(등급 3 · 변동 3) → **칩 줄 위 인라인 필터 패널** 3항목(기준년월·등급·변동,
+     2026-11-17 드로어 폐기 — apfs-detail-filter). 등급·변동은 체크 묶음 한 칸씩(role=group aria-label = 적용 칩 label).
      목업의 `조회` 버튼은 없앴다(백엔드가 없어 필터가 즉시 반영된다). `엑셀`·`출력` 툴바 버튼은 없애고
      **푸터 FooterActions**(내보내기·인쇄 아이콘) + ⌥D/⌘P 단축키가 소유한다(골드 동형).
    - 그리드 1개 · 단일 헤더 7컬럼(No·구분·모펀드·항목·등급·당월·전월).
@@ -25,21 +26,18 @@
 
    ⚠️ AG Grid v35.3.1(v33+) Theming API: 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지. */
 import '../../aggrid_shared.css';
-import React, { useState, useMemo, useId } from 'react';
+import { useState, useMemo } from 'react';
 import { UI } from '../../components';
 import type { Tone, TrendKind } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
-import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, CellStyle, CellClassParams } from 'ag-grid-community';
-import { Checkbox } from '../../ui/checkbox';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
-import { PeriodPicker } from '../../ui/period-picker';
+import { FilterPanel, PanelCell, PanelCheck, PanelPeriod } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import {
   rowsForMonth, GRADES, CHG_KEYS, CHG_KEY_LABEL,
   chgLabel, prevMonth, visibleRows, isDiff, sideText, buildAoa,
@@ -114,31 +112,6 @@ const COLUMNS: ColDef<NumberedRow>[] = [
     cellRenderer: (p: any) => (p.data ? <SideCell gp={p.data.gp} g={p.data.prev} /> : null) },
 ];
 
-/* ──────────────────────────────
-   드로어 프리미티브(골드 로컬 복사 — 공유 export 아님)
-────────────────────────────── */
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-
-/* 카테고리 토글 행 — DS Checkbox(ui/checkbox.tsx, Radix) + htmlFor 라벨.
-   Root 가 <button> 이라 <label> 로 감싸지 않는다(클릭 2회 발화) — id/htmlFor 명시 연결. */
-function DrawerCheckRow({ group, label, checked, onClick }: { group: string; label: string; checked: boolean; onClick: () => void }) {
-  const id = useId();
-  return (
-    <div className="flex items-center gap-3 py-2">
-      <Checkbox id={id} checked={checked} onCheckedChange={onClick} aria-label={`${group} ${label}`} />
-      <label htmlFor={id} className="font-semibold text-foreground cursor-pointer select-none" style={{ fontSize: 14 }}>{label}</label>
-    </div>
-  );
-}
-
 const NO_ROWS = '<span style="padding:40px 0;display:inline-block;color:var(--muted-foreground);font-size:13px">조건에 맞는 비교 결과가 없습니다.</span>';
 /* 필터가 rowData 자체를 비우므로 `noRowsToShow` 경로가 돈다. `noMatchingRows` 도 형제와 같이 둔다.
    객체 prop이라 모듈 상수(apfs-aggrid ⑦). */
@@ -152,7 +125,6 @@ const NO_ROWS_LOCALE = {
 ────────────────────────────── */
 export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
 
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fYm, setFYm] = useState('');   // 기본값 없음 — 미선택 상태로 시작(사용자 결정)
   const [gradeOn, setGradeOn] = useState<Record<Grade, boolean>>(ALL_GRADES_ON);
   const [chgOn, setChgOn] = useState<Record<ChgKey, boolean>>(ALL_CHG_ON);
@@ -178,8 +150,8 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('Excel로 내보냈습니다');
   };
 
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
 
   const gradeChipValue = GRADES.filter((g) => gradeOn[g]).join('·') || '등급 선택 안함';
   const chgChipValue = CHG_KEYS.filter((k) => chgOn[k]).map((k) => CHG_KEY_LABEL[k]).join('·') || '변동 선택 안함';
@@ -198,8 +170,29 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
         { label: '등급', value: gradeAll ? '' : gradeChipValue, onClear: () => setGradeOn(ALL_GRADES_ON) },
         { label: '변동', value: chgAll ? '' : chgChipValue, onClear: () => setChgOn(ALL_CHG_ON) },
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스(기준년월) + 범례 토글(등급·변동).
+         기준년월 = 그 달의 비교 결과(빈 칸 = 원문 시점). 등급·변동 = 체크 묶음(전부 끄면 0건 — 목업 그대로).
+         [초기화] = 기본값(기준년월 없음 · 등급·변동 전부 켬) 복원 */
+      filterPanel={
+        <FilterPanel label="조기경보 전월 비교 조건" onReset={clearFilters}>
+          <PanelPeriod label="기준년월" mode="month" value={fYm} onChange={setFYm} />
+          <PanelCell wide>
+            <div role="group" aria-label="등급" className="flex items-center flex-wrap" style={{ gap: 8 }}>
+              {GRADES.map((g) => (
+                <PanelCheck key={g} label={g} checked={gradeOn[g]} onChange={() => setGradeOn((p) => ({ ...p, [g]: !p[g] }))} />
+              ))}
+            </div>
+          </PanelCell>
+          <PanelCell wide>
+            <div role="group" aria-label="변동" className="flex items-center flex-wrap" style={{ gap: 8 }}>
+              {CHG_KEYS.map((k) => (
+                <PanelCheck key={k} label={CHG_KEY_LABEL[k]} checked={chgOn[k]} onChange={() => setChgOn((p) => ({ ...p, [k]: !p[k] }))} />
+              ))}
+            </div>
+          </PanelCell>
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       /* 목업 캡션 `총 N건 · 기준 X vs 전월 Y` — 기준년월은 선택했을 때만 앞에 붙인다(골드 푸터 캡션 위치) */
@@ -221,42 +214,6 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
         />
       </div>
 
-      {/* ── 상세필터 드로어 — 목업 검색박스(기준년월) + 범례 토글(등급·변동) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">조기경보 전월 비교 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* 기준년월 — 그 달의 비교 결과(빈 칸 = 원문 시점). PeriodPicker 트리거는 w-full 이라 fit-content 래퍼 */}
-            <DrawerField label="기준년월" plain>
-              <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
-                <PeriodPicker mode="month" value={fYm} onChange={(v) => setFYm(v || '')} ariaLabel="기준년월" />
-              </div>
-            </DrawerField>
-            <DrawerField label="등급" plain>
-              <div role="group" aria-label="등급">
-                {GRADES.map((g) => (
-                  <DrawerCheckRow key={g} group="등급" label={g} checked={gradeOn[g]} onClick={() => setGradeOn((p) => ({ ...p, [g]: !p[g] }))} />
-                ))}
-              </div>
-            </DrawerField>
-            <DrawerField label="변동" plain>
-              <div role="group" aria-label="변동">
-                {CHG_KEYS.map((k) => (
-                  <DrawerCheckRow key={k} group="변동" label={CHG_KEY_LABEL[k]} checked={chgOn[k]} onClick={() => setChgOn((p) => ({ ...p, [k]: !p[k] }))} />
-                ))}
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
     </GridFrame>
   );
 }

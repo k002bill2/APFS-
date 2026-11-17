@@ -4,7 +4,7 @@
    '전체'는 '상세'와 결과가 똑같은 중복 값이었다.
    → 툴바 칩 = 표시 형태 2개(모드형, 전체 없음) · 거래구분 = 상세필터 select('전체'=빈 값) + 적용 칩. */
 import { describe, it, expect } from 'vitest';
-import { readSrc } from '../../test_src';
+import { readSrc, panelLabels } from '../../test_src';
 import { VIEWS, DEFAULT_VIEW, TX_FILTERS, txKeepsGroup, flatten, GROUPS, motherFundOf } from './apfs_contribution_manage';
 
 const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
@@ -47,8 +47,8 @@ describe('거래구분 = 상세필터 select + 적용 칩', () => {
     expect(keep('기타')).toEqual([]);
   });
 
-  it('드로어 필드 캡션과 적용 칩 label 이 같은 "거래구분"이다(칩 클릭 → 그 칸으로 이동 전제)', () => {
-    expect(SRC).toMatch(/<DrawerField label="거래구분">/);
+  it('패널 칸 label 과 적용 칩 label 이 같은 "거래구분"이다(칩 클릭 → 그 칸으로 이동 전제)', () => {
+    expect(panelLabels(SRC)).toContain('거래구분');
     expect(SRC).toMatch(/\{ label: '거래구분', value: fTx,/);
   });
 });
@@ -75,7 +75,7 @@ describe('모펀드 = 그룹의 SP 조합원으로 거른다', () => {
     expect(SRC).toMatch(/if \(fMf && motherFundOf\(g\) !== fMf\) return false;/);
     expect(SRC).toMatch(/\}, \[fMf, fUn, fFn, fAcc, fFrom, fTo, fTx\]\);/);
     expect(SRC).toMatch(/\{ label: '모펀드', value: fMf, onClear: \(\) => setFMf\(''\) \}/);
-    expect(SRC).toMatch(/<DrawerField label="모펀드">/);
+    expect(panelLabels(SRC)).toContain('모펀드');
     expect(SRC).not.toMatch(/noop/);
   });
 });

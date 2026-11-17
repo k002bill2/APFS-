@@ -3,8 +3,9 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(검색기준+검색어·도움말·사용여부) + 구분(브리프) → 주 필터 1개 = 사용여부 FilterChip(전체/사용 여/사용 부, 툴바 좌)
-     (2026-09-15 사용자 지시로 도움말↔사용여부 교대 — 도움말은 드로어로 내려갔다. 주 필터와 드로어 항목은 배타다: 같은 필터를 양쪽에 두지 않는다)
-       + 상세필터 드로어(검색기준+검색어 한 줄·구분(대분류)·도움말). 검색어 opt-in(SEARCHABLE).
+     (2026-09-15 사용자 지시로 도움말↔사용여부 교대 — 도움말은 상세필터로 내려갔다. 주 필터와 상세필터 항목은 배타다: 같은 필터를 양쪽에 두지 않는다)
+       + 상세필터 = 칩 줄 위 인라인 패널(검색기준·검색어·구분(대분류)·도움말). 검색어 opt-in(SEARCHABLE).
+       검색기준은 '전체' 없는 고정 기본값(프로그램ID) select — 검색어의 뜻을 정하는 수식어라 칸에 값을 그대로 보이고(PanelSelect showValue) 칩을 따로 두지 않는다(검색어 칩이 '기준: 값'으로 보인다), 패널 [초기화] = 기본값 복원.
    - 그리드(No·프로그램ID·프로그램명·구분·사용여부·메뉴연결·최종수정일시·최종수정자·도움말·도움말 수정일시·도움말 수정자) → AG Grid, 내용 맞춤 + 내부 가로 스크롤.
    - 행 선택 → [수정][도움말][삭제](목업 gate) → 라디오 단일선택 + 툴바 좌 selbar. 더블클릭·Enter·우클릭 = 수정.
        삭제 게이트: **메뉴에 연결된 프로그램(linked)은 삭제 불가**(목업 subAlert 문구를 toast 로) — 미연결 임시 프로그램만 AlertDialog 확인 후 삭제.
@@ -22,10 +23,8 @@ import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { Popover, PopoverTrigger, PopoverContent } from '../../ui/popover';
@@ -42,7 +41,7 @@ import { demoPrograms, filterPrograms, gubunOptions, deleteBlocker, programPidTa
 import type { ProgramRow, ProgramField, HelpDoc } from './program_manage_model';
 import { programSchema } from './program_manage_schemas';
 import { ProgramHelpModal } from './program_help_modal';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSearch, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -90,14 +89,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '도움말', get: (r) => (r.help ? '있음' : '없음') }, { header: '도움말 수정일시', get: (r) => r.helpAt }, { header: '도움말 수정자', get: (r) => r.helpBy },
 ];
 
-function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </label>
-  );
-}
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined}
@@ -184,8 +175,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
 
-  /* 필터 — 사용여부는 툴바 칩, 나머지(검색어·검색기준·구분·도움말)는 드로어 */
-  const [filterOpen, setFilterOpen] = useState(false);
+  /* 필터 — 사용여부는 툴바 칩, 나머지(검색기준·검색어·구분·도움말)는 칩 줄 위 인라인 패널 */
   const [fHelp, setFHelp] = useState<'' | 'y' | 'n'>('');
   const [fField, setFField] = useState<ProgramField>('pid');
   const [fText, setFText] = useState('');
@@ -193,9 +183,9 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   const [fUse, setFUse] = useState<'' | '여' | '부'>('');
   const clearFilters = () => { setFHelp(''); setFField('pid'); setFText(''); setFGubun(''); setFUse(''); };
 
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   const gubuns = useMemo(() => gubunOptions(rows), [rows]);
   const visible = useMemo(() => filterPrograms(rows, { field: fField, kw: fText, help: fHelp, use: fUse, gubun: fGubun }), [rows, fField, fText, fHelp, fUse, fGubun]);
@@ -301,7 +291,7 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
   const formInitial = formModal?.mode === 'edit' && target ? { id: target.id, pid: target.pid, pname: target.pname, use: target.use ? '여' : '부' } : { use: '여' };
   const pageSize = showAll ? Math.max(visible.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
-  const chips: [string, string, () => void][] = [
+  const chips: [string, string, (() => void) | undefined][] = [
     ['검색어', fText.trim() && `${SEARCH_FIELDS.find((f) => f.key === fField)?.label}: ${fText.trim()}`, () => setFText('')],
     ['구분', fGubun, () => setFGubun('')],
     ['도움말', fHelp && (fHelp === 'y' ? '도움말 있음' : '도움말 없음'), () => setFHelp('')],
@@ -335,8 +325,19 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
       filterChips={USE_CHIPS.map((v) => ({ key: v || 'all', label: v || '전체', active: fUse === v, onSelect: () => setFUse(v) }))}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 검색기준·검색어(opt-in, 목업 검색박스처럼 나란히) · 구분 · 도움말(사용여부는 툴바 칩).
+         칸 label = 칩 label(검색기준·검색어 — 칩 클릭 이동의 전제). [초기화] = 기본값(검색기준 프로그램ID) 복원 */
+      filterPanel={
+        <FilterPanel label="프로그램관리 조건" onReset={clearFilters}>
+          {SEARCHABLE && <>
+            <PanelSelect label="검색기준" value={fField} onChange={(v) => setFField(v as ProgramField)} options={SEARCH_FIELDS.map((f) => ({ value: f.key, label: f.label }))} required showValue />
+            <PanelSearch value={fText} onChange={setFText} />
+          </>}
+          <PanelSelect label="구분" value={fGubun} onChange={setFGubun} options={gubuns.map((g) => ({ value: g, label: g }))} />
+          <PanelSelect label="도움말" value={fHelp} onChange={(v) => setFHelp(v as '' | 'y' | 'n')} options={[{ value: 'y', label: '있음' }, { value: 'n', label: '없음' }]} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>프로그램 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -377,38 +378,6 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      {/* ── 상세필터 드로어 — 검색기준(opt-in, 라벨 위 + select·검색어 한 줄) · 구분 · 도움말(사용여부는 툴바 칩) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">프로그램 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* 검색기준(라벨 위) 아래로 기준 select + 검색어 input 을 한 줄에 — 목업 검색박스와 같은 배열.
-                <label> 은 컨트롤 하나만 소유하므로 <div> 래퍼 + 각 컨트롤 aria-label 로 접근명을 준다. */}
-            {SEARCHABLE && (
-              <div className="block mb-4">
-                <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>검색기준</span>
-                <div className="flex items-center" style={{ gap: 8 }}>
-                  <div className="shrink-0">
-                    <DrawerSelect value={fField} onChange={(v) => setFField(v as ProgramField)} options={SEARCH_FIELDS.map((f) => ({ value: f.key, label: f.label }))} all={null} ariaLabel="검색기준" />
-                  </div>
-                  <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }}
-                    aria-label="검색어" placeholder="검색어" style={{ ...inputStyle('text'), width: 'auto', minWidth: 96, flex: 1 }} />
-                </div>
-              </div>
-            )}
-            <DrawerField label="구분"><DrawerSelect value={fGubun} onChange={setFGubun} options={gubuns.map((g) => ({ value: g, label: g }))} /></DrawerField>
-            <DrawerField label="도움말"><DrawerSelect value={fHelp} onChange={(v) => setFHelp(v as '' | 'y' | 'n')} options={[{ value: 'y', label: '있음' }, { value: 'n', label: '없음' }]} /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 프로그램 등록/수정(RowFormModal, 3필드 1단). 삭제는 selbar·우클릭(연결 프로그램 불가) ── */}
       {formModal && schema && (formModal.mode === 'create' || target) && (

@@ -2,11 +2,12 @@
    출처: ACC-001 화면설계서(slide9~25) → APFS 디자인시스템(user_manage 골격).
 
    구성(설계서 → 우리 규약):
-   - 툴바: [상세필터](E02) → [계정과목 등록](E03, ⌘⏎) → [삭제이력](E11) → 조회(E04, 항상 맨 끝). 주 필터칩 없음.
+   - 툴바: [계정과목 등록](E03, ⌘⏎) → [삭제이력](E11) → 조회(E04, 항상 맨 끝). 주 필터칩 없음. 상세필터(E02)는 칩 줄 위 인라인 패널.
    - 설계서 '전체펼치기'(E01) = 푸터 FooterActions 전체보기(showAll, ⌥A) — 사용자 확정. 툴바 토글을 따로 두지 않는다.
    - 그리드 9열(계정코드·계정과목명·계정분류·차대구분·차감구분·입력여부·사용여부·최초등록자·최종수정자) + 선택 체크박스.
        계정코드 오름차순, getRowId=계정코드. 선택은 체크박스로만 → 선택 바 [삭제]·[선택 해제](E05·E06). 행 더블클릭 = 수정 모달(E07).
-   - 상세필터 드로어 6개(계정과목명·계정분류·차대구분·차감구분·입력여부·사용여부) + 적용 칩(값만, × 개별 해제).
+   - 상세필터 = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 — apfs-detail-filter) 6개(계정과목명·계정분류·차대구분·차감구분·입력여부·사용여부)
+       + 적용 칩(값만, × 개별 해제). 기본값이 전부 '전체'(빈 값)라 [초기화] 없음 — 칩 줄 `전체 해제`가 같은 일을 한다.
    - 삭제 = 논리삭제: 목록에서 빼서 삭제이력(deletedRows)으로 옮기고 최종수정자 = 삭제 처리자(데모 사용자).
    - 엑셀(E09) = 푸터 내보내기 아이콘 + ⌥D.
    - KPI 배지 행 미포함(사용자 확정) · 카드헤더 sub 캡션 없음 · 카드뷰 없음 · 명세 팝업 없음.
@@ -17,16 +18,14 @@ import { UI } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../../ui/alert-dialog';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본
+import { FilterPanel, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { demoAccounts, demoDeletedAccounts, DEMO_USER, ACCOUNT_CLASSES, DC_TYPES, CONTRA_TYPES, YN } from './account_code_data';
 import type { AccountRow } from './account_code_data';
 import { filterAccounts, logicalDelete, sortByCode, blockedDeletes, DELETE_BLOCKED_MSG } from './account_code_model';
@@ -75,15 +74,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '사용여부', get: (r) => r.use }, { header: '최초등록자', get: (r) => r.createdBy }, { header: '최종수정자', get: (r) => r.updatedBy },
 ];
 
-function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </label>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -104,19 +94,17 @@ export function AccountCodeManage({ onNav }: { onNav?: (r: string) => void }) {
   const [modal, setModal] = useState<ModalState>(null);
 
   /* 상세필터(설계서 slide11 — 6개, 기본 '전체') */
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fName, setFName] = useState('');
   const [fCls, setFCls] = useState('');
   const [fDc, setFDc] = useState('');
   const [fContra, setFContra] = useState('');
   const [fInput, setFInput] = useState('');
   const [fUse, setFUse] = useState('');
-  const clearFilters = () => { setFName(''); setFCls(''); setFDc(''); setFContra(''); setFInput(''); setFUse(''); };
 
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  /* 인쇄·내보내기는 모달·드로어가 열려 있지 않을 때만 */
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null, skipInDialog: true });
+  /* 인쇄·내보내기는 모달이 열려 있지 않을 때만 */
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null, skipInDialog: true });
 
   const visible = useMemo(() => filterAccounts(rows, { name: fName, cls: fCls, dc: fDc, contra: fContra, input: fInput, use: fUse }), [rows, fName, fCls, fDc, fContra, fInput, fUse]);
 
@@ -215,8 +203,18 @@ export function AccountCodeManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* E02 상세필터 = 칩 줄 위 인라인 패널 — 설계서 6개 조건(검색어 opt-in 미사용: 계정과목명이 텍스트 조건). 즉시 반영 */
+      filterPanel={
+        <FilterPanel label="계정과목 조건">
+          <PanelText label="계정과목명" value={fName} onChange={setFName} />
+          <PanelSelect label="계정분류" value={fCls} onChange={setFCls} options={[...ACCOUNT_CLASSES]} />
+          <PanelSelect label="차대구분" value={fDc} onChange={setFDc} options={[...DC_TYPES]} />
+          <PanelSelect label="차감구분" value={fContra} onChange={setFContra} options={[...CONTRA_TYPES]} />
+          <PanelSelect label="입력여부" value={fInput} onChange={setFInput} options={[...YN]} />
+          <PanelSelect label="사용여부" value={fUse} onChange={setFUse} options={[...YN]} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>계정과목 등록</Button>
         {/* 삭제이력 아이콘 = history(시계+되돌림) — clock 은 GNB 방문기록, trash 는 선택 바 삭제와 겹친다. 조회는 툴바 맨 끝 */}
         <Button variant="outline" size="sm" leadingIcon="history" onClick={() => setModal({ kind: 'history' })}>삭제이력</Button>
@@ -252,31 +250,6 @@ export function AccountCodeManage({ onNav }: { onNav?: (r: string) => void }) {
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 결과가 없습니다. 검색 조건을 변경해 주세요.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 설계서 6개 조건(검색어 opt-in 미사용: 계정과목명이 텍스트 조건) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">계정과목 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="계정과목명">
-              <input type="text" value={fName} onChange={(e) => setFName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="계정과목명" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="계정분류"><DrawerSelect value={fCls} onChange={setFCls} options={[...ACCOUNT_CLASSES]} ariaLabel="계정분류" /></DrawerField>
-            <DrawerField label="차대구분"><DrawerSelect value={fDc} onChange={setFDc} options={[...DC_TYPES]} ariaLabel="차대구분" /></DrawerField>
-            <DrawerField label="차감구분"><DrawerSelect value={fContra} onChange={setFContra} options={[...CONTRA_TYPES]} ariaLabel="차감구분" /></DrawerField>
-            <DrawerField label="입력여부"><DrawerSelect value={fInput} onChange={setFInput} options={[...YN]} ariaLabel="입력여부" /></DrawerField>
-            <DrawerField label="사용여부"><DrawerSelect value={fUse} onChange={setFUse} options={[...YN]} ariaLabel="사용여부" /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 등록/수정 모달(E03·E07) ── */}
       {modal?.kind === 'form' && (modal.mode === 'create' || target) && (

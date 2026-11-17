@@ -2,13 +2,13 @@
    출처: S1_27_자펀드수탁관리_확정_.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(기준일자 단일·필수)  → 상세필터 드로어 1항목(PeriodPicker day). 대사 결과는 기준일마다 한 벌인 **스냅샷**이라
+   - 검색박스(기준일자 단일·필수)  → 칩 줄 위 인라인 필터 패널 1칸(PanelPeriod day). 대사 결과는 기준일마다 한 벌인 **스냅샷**이라
        숨은 속성 `asOf`(그리드 컬럼 없음)가 기준일자와 **같은 날**인 행만 보인다(2026-11-17 사용자 지시 "기준일자가 표를 거르게" —
        종전엔 행을 거르지 않는 조회 기준 컨텍스트). 시점 없는 조회는 없으므로 목업 기본값 `2026-07-31`(실 캡처 기준일)을 그대로 두고,
        비우거나 초기화하면 이 값으로 돌아간다(형제 탭 custody_verify 와 같은 관례 — 상세 팝업 부제에도 실린다).
        직전 시점(2026-06-30) 대사 3행은 창작 더미 — 기본 기준일에선 걸러져 첫 화면은 원문 24행 그대로다.
    - 툴바 좌 주 필터                → `확정여부` FilterChip(전체·확정·미확정). ⚠ 목업 검색박스엔 없는 **파생 칩**이다
-       (행 `confirm` 값에서 파생 — 수시보고 '확인상태' 파생 칩과 같은 관례). 칩에만 두고 드로어에 다시 두지 않는다(2026-11-05).
+       (행 `confirm` 값에서 파생 — 수시보고 '확인상태' 파생 칩과 같은 관례). 칩에만 두고 패널에 다시 두지 않는다(2026-11-05).
    - 3단 헤더 목록 그리드          → AG Grid 중첩 `ColGroupDef`(일치여부 > 투자자산/미투자자산 거래/미투자자산 > 리프),
        `marryChildren`. 합계행 없음 — 가산 가능한 금액 컬럼이 없다.
    - 행 선택(multiRow 체크박스, `SELECTION_COL`) → 1건일 때 선택 바 [수정] / 행 더블클릭=수정
@@ -38,16 +38,14 @@ import { GridFrame, FooterActions } from '../../grid_frame';
 import { LeafTabBody } from '../leaf_tabs';   // 리프 탭 묶음(opt-in)
 import type { LeafTabsSlot } from '../leaf_tabs';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
-import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SuppressKeyboardEventParams, SelectionChangedEvent, RowDoubleClickedEvent } from 'ag-grid-community';
 import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT, 좌측 고정 44px)
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
+import { FilterPanel, PanelPeriod } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
-import { PeriodPicker } from '../../ui/period-picker';
 import { CustodyConfirmDetailModal } from './custody_confirm_detail_modal';
 import { CustodyEntryModal } from './custody_confirm_entry_modal';
 import type { CustodyEntryValue } from './custody_confirm_entry_modal';
@@ -278,20 +276,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-/* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 암묵 연결이 안 되고(ariaLabel로 명명),
-   <label> 안 버튼 클릭이 라벨 활성화와 겹쳐 2회 토글되는 것을 막는다 */
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </Wrap>
-  );
-}
-
 /* 행 선택 — 선택 행 [수정](1건일 때만)이 액션이라 multiRow(apfs-aggrid "체크박스" 절, 2026-09-23 기본값).
    선택은 체크박스로만(enableClickSelection:false 명시). 헤더 전체선택은 SELECTION_COL 의 DS 헤더가 그리므로
    내장 헤더는 끄고 범위를 'filtered' 로 맞춘다. 모듈 상수(렌더마다 새 객체면 컬럼 폭이 되돌아간다). */
@@ -330,11 +314,10 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
     patchRow,
     (k: SpecKind) => setModal({ kind: k }),
   ), [patchRow]);
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
-  /* 필터 — 확정여부는 툴바 칩(드로어엔 없음, External Filter), 기준일자는 그날 대사 행만 rowData 로(snapRows) */
+  /* 필터 — 확정여부는 툴바 칩(패널엔 없음, External Filter), 기준일자는 그날 대사 행만 rowData 로(snapRows) */
   const [fConfirm, setFConfirm] = useState<'' | ConfirmState>('');
   const [fBaseDate, setFBaseDate] = useState(BASE_DATE);
   const clearFilters = () => { setFConfirm(''); setFBaseDate(BASE_DATE); };
@@ -450,20 +433,28 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
       title={tabs?.label ?? "자펀드수탁관리(확정)"}
       favRoute={tabs?.route ?? "custody-confirm"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 주 필터 칩(확정여부) + 적용 중인 드로어 값 칩. 선택 중엔 선택 바(contextActions)가 대신한다.
-         기준일자 칩은 **목업 기본값과 다를 때만** 띄운다(기본값이 상시 칩으로 남으면 시끄럽다). */
+      /* 툴바 좌 = 주 필터 칩(확정여부) + 적용 중인 패널 값 칩. 선택 중엔 선택 바(contextActions)가 대신한다.
+         기준일자 칩은 기본값이어도 늘 띄운다(2026-11-17 사용자 결정 (a): 기본값으로 걸린 조건도 칩 상시 — 패널 칸이 값을 안 보여 칩이 유일한 표시. × 는 기본값과 다를 때만(= 기본값 복원) — 종전 '기본값과 다를 때만' 관례를 뒤집음). */
       filterChipsMenu="확정여부"
       filterChips={(['', '확정', '미확정'] as ('' | ConfirmState)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fConfirm === s, onSelect: () => setFConfirm(s) }))}
       appliedFilters={[
-        { label: '기준일자', value: fBaseDate !== BASE_DATE ? String(fBaseDate) : '', onClear: () => setFBaseDate(BASE_DATE) },
+        { label: '기준일자', value: String(fBaseDate), onClear: fBaseDate !== BASE_DATE ? () => setFBaseDate(BASE_DATE) : undefined },
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 검색어는 미사용(OFF). 목업 검색박스는 기준일자 단일이고, 확정여부는 우리가 더한 파생 필터다
+         (툴바 칩이라 패널에 다시 두지 않는다 — 2026-11-05 사용자 지시, 가드 filter_chip_drawer_dup.test.ts).
+         기준일자 — 목업의 유일한 검색조건(필수). 그날 대사 결과만 보인다(스냅샷 — 같은 날).
+         시점 없는 조회는 없어 비우면 기본값으로 돌아간다(상세 팝업 부제에도 그대로 실린다). [초기화] = 기본 기준일 복원 */
+      filterPanel={
+        <FilterPanel label="자펀드 수탁 대사 조건" onReset={clearFilters}>
+          <PanelPeriod label="기준일자" mode="day" value={fBaseDate} onChange={(v) => setFBaseDate(v || BASE_DATE)} />
+        </FilterPanel>
+      }
       contextActions={selActions}
       /* 단위 캡션 없음 — 금액 컬럼이 없다(마크·상태만) */
       toolbarRight={<>
         {/* 목업 listbar `.acts` 순서 그대로: 불일치 건 알림 · 단건 등록(2026-09 회의록 반영분) */}
         <Button variant="outline" size="sm" onClick={() => setModal({ kind: 'mismatch' })}>불일치 건 알림</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'entry' })}>단건 등록</Button>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
@@ -501,32 +492,6 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
         />
       </div>
       </LeafTabBody>
-
-      {/* ── 상세필터 드로어 — 검색어는 미사용(OFF). 목업 검색박스는 기준일자 단일이고, 확정여부는 우리가 더한 파생 필터다 ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">자펀드 수탁 대사 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* 기준일자 — 목업의 유일한 검색조건(필수). 그날 대사 결과만 보인다(스냅샷 — 같은 날).
-                시점 없는 조회는 없어 비우면 기본값으로 돌아간다(상세 팝업 부제에도 그대로 실린다).
-                PeriodPicker 트리거는 w-full이라 fit-content 래퍼로 감싼다(apfs-datepicker "폭" 규칙) */}
-            <DrawerField label="기준일자" plain>
-              <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
-                <PeriodPicker mode="day" value={fBaseDate} onChange={(v) => setFBaseDate(v || BASE_DATE)} ariaLabel="기준일자" />
-              </div>
-            </DrawerField>
-            {/* 확정여부는 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 읽기전용 상세 팝업 — 상세보기 링크(또는 그 셀 Enter)가 연다. 행 선택·더블클릭과 무관 ── */}
       {modal?.kind === 'detail' && target && (

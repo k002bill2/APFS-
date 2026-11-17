@@ -2,7 +2,7 @@
    출처: S1_15_조합원정보등록.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(모펀드 1항목)  → 상세필터 드로어 1항목 + 적용 칩(값만·×). 목업 그리드에 모펀드 열은 없지만
+   - 검색박스(모펀드 1항목)  → 칩 줄 위 인라인 필터 패널 1칸 + 적용 칩(값만·×). 목업 그리드에 모펀드 열은 없지만
        행은 등록/수정 폼 1번 항목 `mf`(모펀드)를 저장하고 있어 **그 숨은 속성으로 거른다**(그리드 컬럼은 늘리지 않는다)
        — 2026-11-16 사용자 지시 "미연동 필터 전부 동작"(종전: no-op 캡션 + External Filter 미배선).
        External Filter(`isExternalFilterPresent`/`doesExternalFilterPass`) + 필터 변경 시 선택 전부 해제(fund_member_manage 동형).
@@ -35,7 +35,6 @@ import { apfsTheme, FIT_GRID_WIDTH, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, RowSelectionOptions, IRowNode, CellKeyDownEvent, CellContextMenuEvent, CellDoubleClickedEvent, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
@@ -45,7 +44,7 @@ import { RowContextMenu } from '../../row_context_menu';   // 우클릭 컨텍�
 import type { CtxItem, CtxMenuState } from '../../row_context_menu';
 import { MemberInfoFormModal } from './member_info_form_modal';
 import { MemberInfoDetailModal } from './member_info_detail_modal';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn } = UI;
 
@@ -144,18 +143,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </Wrap>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -174,7 +161,6 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
   const [ctx, setCtx] = useState<CtxMenuState>(null);
 
   /* 상세필터 — 목업 검색박스는 모펀드 1항목뿐. 숨은 행 속성 mf 로 거른다(빈 값 = 전체, 파일 상단 주석) */
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fMf, setFMf] = useState('');
   const clearFilters = () => setFMf('');
 
@@ -191,9 +177,9 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
   const columnDefs = useMemo(() => makeColumns(openDetail), [openDetail]);
 
   // 앱-스코프 단축키: ⌘⏎=조합원정보 등록(모달 열림 중엔 비활성 → 이중 열림 방지), ⌘P=인쇄, ⌥D=내보내기
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
 
   const onGridReady = useCallback((e: GridReadyEvent<MemberRow>) => { apiRef.current = e.api; }, []);
@@ -293,16 +279,22 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
       title="조합원정보조회"
       favRoute="member-info"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 — 주 필터 칩이 없는 화면이다(검색박스 유일 항목인 모펀드는 드로어 + 적용 칩).
+      /* 툴바 좌 — 주 필터 칩이 없는 화면이다(검색박스 유일 항목인 모펀드는 인라인 패널 + 적용 칩).
          목업 listbar의 `총 N건` 캡션을 건수 컨텍스트로 옮겼다(report_form_manage 동형) — 필터 후 건수 */
       toolbarLeft={selCount > 0 ? undefined : <>   {/* 선택 중엔 비운다 — selbar와 나란히 그려진다(GridFrame contextActions 계약) */}
         <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>조합원 {String(filteredRows.length)}건</span>
       </>}
-      /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
+      /* 적용 중인 패널 값 칩 — 값만 표시(접두사 없음) + × · label = 패널 칸 aria-label */
       appliedFilters={[{ label: '모펀드', value: fMf, onClear: () => setFMf('') }]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 항목 그대로(모펀드 1개). 검색어는 미사용(OFF).
+         모펀드는 그리드 컬럼이 아닌 숨은 행 속성 mf 로 거른다(2026-11-16 — 종전 미연동 캡션) */
+      filterPanel={
+        <FilterPanel label="조합원정보조회 조건">
+          <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={MF_OPTIONS} />
+        </FilterPanel>
+      }
       contextActions={selActions}
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>조합원정보 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -343,25 +335,6 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
       </div>
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
-
-      {/* ── 상세필터 드로어 — 목업 검색박스 항목 그대로(모펀드 1개). 검색어는 미사용(OFF).
-             모펀드는 그리드 컬럼이 아닌 숨은 행 속성 mf 로 거른다(2026-11-16 — 종전 미연동 캡션) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">조합원 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={MF_OPTIONS} /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 등록/수정 — 단일 폼 2모드(목업 openMember). 수정 모달 안 삭제는 onDelete로 삭제 확인 AlertDialog를 연다(fund_member 동형) ── */}
       {modal?.kind === 'create' && (

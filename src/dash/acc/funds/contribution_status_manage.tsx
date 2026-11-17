@@ -3,15 +3,17 @@
 
    구성(설계서 → 우리 규약):
    - 툴바: 필수 칩 그룹 '보기'(일반 · 관리보수·비관리보수 적용 — 설계서 "탭" → GridFrame filterChips required, 전체 칩 없음)
-       → 단위(캡션 '단위: X' + SegTabs 원·천원·백만원) → [상세필터](E01) → [Σ 합계](E03, UI.Button pressed 토글)
+       → 단위(캡션 '단위: X' + SegTabs 원·천원·백만원) → [Σ 합계](E03, UI.Button pressed 토글)
        → SplitButton [+ 출자등록 │ ▾ 분배등록 · 엑셀 일괄등록](E04·E05·E06) → 조회(E02, 맨 끝). 설계서의 독립 3버튼은 등록 콤보 규약으로 묶는다.
        단위·합계는 행을 거르지 않는 표시 옵션이라 툴바 우측 토글 — 필터 칩 줄·상세필터에 두지 않는다(2026-11-09 사용자 결정, 계좌잔액 소계표시와 같은 모양).
    - 보기 '일반' = 설계서 와이어프레임 10열(계정구분·기준일·차수·구분·출자원금·분배원금(A)·수익(B)·총분배(A+B)·성과보수(D)·출자잔액).
      '관리보수·비관리보수 적용' = 컬럼 정의 표(slide 10 ②) 전 항목 — 원천세(C)·초과인센티브(E)·실지급액 3종을 더하고 2단 헤더(분배·보수·실지급액)로 묶는다.
    - 그리드: 체크박스 다중 선택 → 선택 바 [수정](1건, E07)·[삭제]·[선택 해제](E08). 행 더블클릭 / Enter = 그 행 구분의 등록 모달(수정, E07).
        차수·기준일·코드는 좌측, 금액만 우측. 차수 미채번 = '-'. 빈 결과 = '조회된 데이터가 없습니다.'(slide 17).
-   - 상세필터 드로어 3개(계정구분·구분·기준일(기간)) — 즉시 반영, [필터 적용] = 닫기. 기간 시작 > 종료 = 두 칸 invalid + 안내 + 0건.
-       적용 칩 = 값만(× 개별 해제). 단위(툴바)는 표시·엑셀만 환산하고 잔액·합계 계산은 원 단위로 한다. [초기화]는 단위를 건드리지 않는다.
+   - 상세필터(E01) 3개(계정구분·구분·기준일(기간)) = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 — apfs-detail-filter), 즉시 반영.
+       기간 시작 > 종료 = 두 칸 invalid + 패널 아래 안내 + 0건.
+       적용 칩 = 값만(× 개별 해제). 단위(툴바)는 표시·엑셀만 환산하고 잔액·합계 계산은 원 단위로 한다. 기본값이 전부 빈 값이라 패널 [초기화]는 두지 않는다 —
+       칩 줄 [전체 해제]가 같은 일을 하고, 단위는 건드리지 않는다.
    - 합계(Σ) 행 = 현재 조회 결과(필터 후)의 금액 컬럼 합(원으로 합산 후 환산). 출자잔액은 누계라 합계 '-'.
    - 삭제 = 논리삭제(목록에서 빼서 deleted state 로) → 이후 출자잔액 자동 재계산. 확인 문구 '선택한 N건을 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.'
    - 푸터: 새 창(E09)·내보내기(E10, ⌥D)·인쇄(E11, printGrid). 내보내기 = 현재 보기의 표시 컬럼 · 현재 단위로 환산한 숫자 셀.
@@ -22,23 +24,19 @@
    ⚠ 백엔드가 없어 등록·수정·삭제는 화면 로컬 상태만 바꾼다. */
 import '../../aggrid_shared.css';
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import type { ReactNode } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, fmt, numStyle } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';
-import { dayWrap } from '../acc_form_helpers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions, ValueFormatterParams } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { SplitButton } from '../../ui/split-button';
-import { PeriodPicker } from '../../ui/period-picker';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../../ui/alert-dialog';
-import { DrawerSelect } from '../../drawer_select';
+import { FilterPanel, PanelRange, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { ACCOUNT_FILTER_LABELS, CONTRIB_KINDS, DEFAULT_UNIT, UNITS, demoContributions } from './contribution_data';
 import type { AccountFilterLabel, ContribKind, ContribRow, Unit } from './contribution_data';
 import { CONTRIB_MSG, EMPTY_FILTER, deleteConfirmMsg, filterViews, logicalDelete, negativeBalanceAfter, sumTotals, toUnit, validatePeriod, withBalances } from './contribution_model';
@@ -125,16 +123,6 @@ function buildColumns(view: View, unit: Unit): (ColDef<GridRow> | ColGroupDef<Gr
 /* 다중 선택 — 체크박스로만 on/off */
 const ROW_SELECTION: RowSelectionOptions<GridRow> = { mode: 'multiRow', checkboxes: true, headerCheckbox: false, selectAll: 'filtered', enableClickSelection: false };
 
-function DrawerField({ label, children, plain }: { label: string; children: ReactNode; plain?: boolean }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-
 
 /* ──────────────────────────────
    메인 컴포넌트
@@ -159,14 +147,13 @@ export function ContributionStatusManage({ onNav }: { onNav?: (r: string) => voi
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [modal, setModal] = useState<ModalState>(null);
 
-  /* 상세필터(E01) — applied = 드로어·칩·목록 SSOT(즉시 반영) */
-  const [filterOpen, setFilterOpen] = useState(false);
+  /* 상세필터(E01) — applied = 패널·칩·목록 SSOT(즉시 반영) */
   const [applied, setApplied] = useState<ContribFilter>(EMPTY_FILTER);
   const setF = <K extends keyof ContribFilter>(k: K) => (v: ContribFilter[K]) => setApplied((a) => ({ ...a, [k]: v }));
   const periodErr = validatePeriod(applied.from, applied.to);
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);   // 표시 옵션(툴바) — 필터 상태 아님
 
-  const listKeys = modal === null && !filterOpen;
+  const listKeys = modal === null;
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', form: 'invest', mode: 'create' }), { enabled: listKeys, skipInDialog: true });
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys, skipInDialog: true });
@@ -284,11 +271,18 @@ export function ContributionStatusManage({ onNav }: { onNav?: (r: string) => voi
       contextActions={selActions}
       filterChips={VIEWS.map((v) => ({ key: v.id, label: v.label, active: view === v.id, onSelect: () => setView(v.id), required: true }))}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터(E01) = 칩 줄 위 인라인 패널 — 3개 조건, 즉시 반영 */
+      filterPanel={
+        <FilterPanel label="출자금현황 조건" errors={[periodErr]}>
+          <PanelSelect label="계정구분" value={applied.account} onChange={(v) => setF('account')(v as AccountFilterLabel | '')} options={[...ACCOUNT_FILTER_LABELS]} />
+          <PanelSelect label="구분" value={applied.kind} onChange={(v) => setF('kind')(v as ContribKind | '')} options={[...CONTRIB_KINDS]} />
+          <PanelRange label="기준일" mode="day" from={applied.from} to={applied.to} onFrom={(v) => setF('from')(v || '')} onTo={(v) => setF('to')(v || '')} invalid={!!periodErr} />
+        </FilterPanel>
+      }
       toolbarRight={<>
         {/* 금액 단위 — 표시 옵션(fund_stats 선례: 캡션 + SegTabs) */}
         <span className="text-caption" style={{ fontSize: 12 }}>{`단위: ${unit}`}</span>
         <SegTabs size="sm" value={unit} onChange={(v: Unit) => setUnit(v)} options={UNITS.map((u) => ({ value: u, label: u }))} />
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* E03 합계 — 표시 옵션 토글(aria-pressed) */}
         <Button variant="outline" size="sm" leadingIcon="sigma" pressed={sumOn} onClick={() => setSumOn((v) => !v)}>합계</Button>
         {/* E04 출자등록 · ▾ E05 분배등록 · E06 엑셀 일괄등록 */}
@@ -330,33 +324,6 @@ export function ContributionStatusManage({ onNav }: { onNav?: (r: string) => voi
           overlayNoRowsTemplate={EMPTY_OVERLAY}
         />
       </div>
-
-      {/* ── 상세필터(E01) — 4개 조건, 즉시 반영 ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">출자금현황 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="계정구분"><DrawerSelect value={applied.account} onChange={(v) => setF('account')(v as AccountFilterLabel | '')} options={[...ACCOUNT_FILTER_LABELS]} ariaLabel="계정구분" /></DrawerField>
-            <DrawerField label="구분"><DrawerSelect value={applied.kind} onChange={(v) => setF('kind')(v as ContribKind | '')} options={[...CONTRIB_KINDS]} ariaLabel="구분" /></DrawerField>
-            <DrawerField label="기준일" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={applied.from} onChange={(v) => setF('from')(v || '')} ariaLabel="기준일 시작일" invalid={!!periodErr} /></div>
-                <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={applied.to} onChange={(v) => setF('to')(v || '')} ariaLabel="기준일 종료일" invalid={!!periodErr} /></div>
-              </div>
-              {periodErr && <p role="alert" className="m-0 mt-1 text-danger" style={{ fontSize: 12 }}>{periodErr}</p>}
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setApplied(EMPTY_FILTER)}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 출자등록·분배등록(E04·E05) / 수정(E07) ── */}
       {modal?.kind === 'form' && (modal.mode === 'create' || target) && (

@@ -37,7 +37,7 @@ const ALL_SENTINEL = '\u0000__all__';
 
 export function SearchableSelect({
   value, onChange, options, allLabel, placeholder = '선택', ariaLabel, invalid, required,
-  triggerStyle, activeStyle, fill, onFocus, onBlur,
+  triggerStyle, activeStyle, fill, onFocus, onBlur, dimEmpty,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -55,6 +55,8 @@ export function SearchableSelect({
   activeStyle?: React.CSSProperties;
   /** true 면 래퍼 폭을 꽉 채운다(폼 모달 FORM_SELECT_W 래퍼 안). */
   fill?: boolean;
+  /** 빈 값('' — 전체 항목 포함)을 흐린 글자로 — 인라인 필터 패널에서 allLabel 이 곧 항목명 placeholder 일 때(filter_panel) */
+  dimEmpty?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
 }) {
@@ -76,7 +78,7 @@ export function SearchableSelect({
   const withAll = allLabel != null;
   const current = items.find((o) => o.value === value);
   const shown = current ? current.label : value === '' && withAll ? allLabel : value || placeholder;
-  const isPlaceholder = !current && !(value === '' && withAll) && !value;
+  const isPlaceholder = !current && (dimEmpty || !(value === '' && withAll)) && !value;
   // 사이저 = 트리거가 가질 수 있는 모든 라벨. 가장 긴 것이 폭을 정한다.
   const sizers = React.useMemo(() => [...(withAll ? [allLabel as string] : []), ...items.map((o) => o.label), placeholder], [items, withAll, allLabel, placeholder]);
   // 열릴 때 현재 값에 하이라이트 — cmdk 가 그 항목으로 스크롤한다(cmdk value = 옵션 값, 함정 ③).

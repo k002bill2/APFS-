@@ -2,12 +2,13 @@
    (CLAUDE.md: 공용 골격은 중분류 루트, 설정은 화면 파일마다).
 
    설계서 → 우리 규약
-   - 툴바: [상세필터] · ⟳ 조회(E02). 선택 체크박스 없음(조회 전용).
+   - 툴바: ⟳ 조회(E02). 선택 체크박스 없음(조회 전용). 상세필터(E01)는 칩 줄 위 인라인 패널.
    - 그리드 6열: 계정코드 · 계정과목명(레벨 들여쓰기) · 제N(당)기[세부금액|합계금액] · 제N-1(전)기[세부금액|합계금액] 2단 헤더.
      입력계정·파생 세부 = 세부금액 열, 집계·계산·총계 = 합계금액 열. 계정코드 '중앙' → 좌측(정렬 규약). 헤더 정렬 끔(계층 순서).
-   - 상세필터 6개(slide 11 · E01 기준 — slide 15 의 기간형·체크박스형 변형은 따르지 않는다): 계정구분 · 당기기준일* · 전기기준일* ·
-     미결재포함(체크박스) · 모든계정포함(체크박스 — 2026-11-03 사용자 지시) · 결산전표포함(체크박스 — 체크 = 전부포함). 즉시 반영 — 고르는 즉시 applied 반영,
-     [필터 적용] = 닫기. 검증 실패(기준일 미입력 → 그 기준일 칸 · 전기 ≥ 당기 → 전기기준일 칸) = 칸 빨간 테두리 + 아래 안내, 결과 0건
+   - 상세필터 6개(slide 11 · E01 기준 — slide 15 의 기간형·체크박스형 변형은 따르지 않는다) = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 —
+     apfs-detail-filter): 계정구분 · 당기기준일* · 전기기준일* ·
+     미결재포함(체크박스) · 모든계정포함(체크박스 — 2026-11-03 사용자 지시) · 결산전표포함(체크박스 — 체크 = 전부포함). 즉시 반영 — 고르는 즉시 applied 반영.
+     검증 실패(기준일 미입력 → 그 기준일 칸 · 전기 ≥ 당기 → 전기기준일 칸) = 칸 빨간 테두리 + 패널 아래 안내, 결과 0건
      (2026-11-03 사용자 지시, 정본 privacy_access_log). 기준일 칩은 필수라 × 없음.
      계정구분: 설계서 '선택 필요·필수' 와 E00 '필터 없음 전체 조회' 가 충돌 → 기본 전체(빈 값)로 두고 × 로 해제 가능(PM 확인).
    - 행 더블클릭 / Enter(E03) = 「계정별 상세내역」(입력계정 행만 — 집계·계산·총계 행은 무반응, 설계서 "소계·합계 행 처리 확인 필요").
@@ -29,17 +30,16 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { UI } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, fmt, numFmt, numStyle } from '../../aggrid_theme';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
-import { DrawerSelect } from '../../drawer_select';
+import { FilterPanel, PanelCheck, PanelPeriod, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { FUND_ACCOUNTS } from '../slip/general_journal_data';
 import { demoLedger, todayStr } from './ledger_data';
 import type { LedgerLine } from './ledger_data';
 import { DEFAULT_COND, fiscalEnd, fiscalNo, fiscalStart, fundLabel, validateStatementDates, MSG } from './ledger_model';
 import type { LedgerCond, StatementRow } from './ledger_model';
-import { DrawerField, DayField, FlagCheck, flagChips } from '../ledger_filter_ui';
+import { flagChips } from '../ledger_filter_ui';
 import { AccountDetailModal } from './account_detail_modal';
 import { LedgerReportViewer, paginate } from '../ledger_report_viewer';
 
@@ -150,14 +150,14 @@ export function StatementKit({ config, onNav }: { config: StatementConfig; onNav
     return { ...DEFAULT_COND, fundAccount: '', cur: `${String(y)}-12-31`, prev: `${String(y - 1)}-12-31`, ...config.defaults };
   }, [today, config.defaults]);
 
-  const [applied, setApplied] = useState<StatementFilter>(base);   // 드로어·칩·그리드의 SSOT(초안 사본 없음 — 바꾸는 즉시 반영)
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [applied, setApplied] = useState<StatementFilter>(base);   // 패널·칩·그리드의 SSOT(초안 사본 없음 — 바꾸는 즉시 반영)
   const [detail, setDetail] = useState<{ code: string; name: string } | null>(null);
   const [viewer, setViewer] = useState(false);
 
   const patch = (p: Partial<StatementFilter>) => setApplied((a) => ({ ...a, ...p }));
   const setD = <K extends keyof StatementFilter>(k: K) => (v: StatementFilter[K]) => patch({ [k]: v } as Partial<StatementFilter>);
-  /* 기준일 검증 — 렌더마다 applied 로. 실패면 그 칸 표시 + 결과 0건(미입력 = 그 칸 · 전기 ≥ 당기 = 전기기준일 칸) */
+  /* 기준일 검증 — 렌더마다 applied 로. 실패면 그 칸 표시 + 결과 0건(미입력 = 그 칸 · 전기 ≥ 당기 = 전기기준일 칸).
+     문구는 dateErr 하나(curErr·prevErr 문구의 합집합과 같다 — 둘 다 미입력이어도 한 줄) → 패널 errors, curErr·prevErr 는 칸 invalid 표시용 */
   const dateErr = validateStatementDates(applied.cur, applied.prev);
   const curErr = !applied.cur ? MSG.dateRequired : undefined;
   const prevErr = !applied.prev ? MSG.dateRequired : dateErr === MSG.prevOrder ? MSG.prevOrder : undefined;
@@ -173,9 +173,9 @@ export function StatementKit({ config, onNav }: { config: StatementConfig; onNav
   const columnDefs = useMemo(() => makeColumns(cur, prev), [cur, prev]);
   const fund = fundLabel(applied.fundAccount);
 
-  /* 상세필터·팝업이 열린 동안 목록 단축키를 끈다(skipInDialog 와 이중 — 회계 가드 ①) */
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen && !detail && !viewer, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen && !detail && !viewer, skipInDialog: true });
+  /* 팝업이 열린 동안 목록 단축키를 끈다(skipInDialog 와 이중) */
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !detail && !viewer, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !detail && !viewer, skipInDialog: true });
 
   /* E03 — 입력계정 행만 */
   const openDetail = useCallback((r: StatementRow | undefined) => {
@@ -236,9 +236,19 @@ export function StatementKit({ config, onNav }: { config: StatementConfig; onNav
       favRoute={config.route}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips}
+      /* 상세필터(E01) = 칩 줄 위 인라인 패널 — 바꾸는 즉시 applied 반영. 검증 문구는 패널 아래, [초기화] = 기본값(당기·전기 기준일 = 회기말) */
+      filterPanel={
+        <FilterPanel label={`${config.title} 조회 조건`} onReset={() => setApplied(base)} errors={[dateErr]}>
+          <PanelSelect label="계정구분" value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} />
+          <PanelPeriod label="당기기준일" mode="day" value={applied.cur} onChange={setD('cur')} invalid={!!curErr} />
+          <PanelPeriod label="전기기준일" mode="day" value={applied.prev} onChange={setD('prev')} invalid={!!prevErr} />
+          <PanelCheck label="미결재포함" checked={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
+          <PanelCheck label="모든계정포함" checked={applied.includeAll} onChange={setD('includeAll')} />
+          <PanelCheck label="결산전표포함" checked={applied.includeClosing} onChange={setD('includeClosing')} />
+        </FilterPanel>
+      }
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>단위: 원</span>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{footerCount(count, count)}</span>}
@@ -258,31 +268,6 @@ export function StatementKit({ config, onNav }: { config: StatementConfig; onNav
           overlayNoRowsTemplate={MSG.noResult}
         />
       </div>
-
-      {/* ── 상세필터(E01) — 바꾸는 즉시 applied 반영([필터 적용] = 닫기) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">{`${config.title} 조회 조건`}</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="계정구분">
-              <DrawerSelect value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} ariaLabel="계정구분" />
-            </DrawerField>
-            <DayField label="당기기준일" required value={applied.cur} onChange={setD('cur')} errMsg={curErr} />
-            <DayField label="전기기준일" required value={applied.prev} onChange={setD('prev')} errMsg={prevErr} />
-            <FlagCheck label="미결재포함" value={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
-            <FlagCheck label="모든계정포함" value={applied.includeAll} onChange={setD('includeAll')} />
-            <FlagCheck label="결산전표포함" value={applied.includeClosing} onChange={setD('includeClosing')} />
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setApplied(base)}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {detail && (
         <AccountDetailModal src={src} cond={applied} account={detail} from={fiscalStart(applied.cur)} to={applied.cur} onClose={() => setDetail(null)} />

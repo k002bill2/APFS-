@@ -399,7 +399,7 @@ export function GridFrame({
               </div>
               {/* 드롭다운 칩은 칩 행 밖(shrink-0) — 칩 행은 남은 폭만 재서 적용 칩을 채운다 */}
               {!selecting && chipMenu && <FilterChipMenu label={filterChipsMenu!} chips={filterChips!} />}
-              {!selecting && <FilterChipRow key={filterScope} chips={chipMenu ? undefined : filterChips} applied={appliedFilters} jumpHint={filterPanel ? '필터에서 변경' : undefined} />}
+              {!selecting && <FilterChipRow key={filterScope} chips={chipMenu ? undefined : filterChips} applied={appliedFilters} />}
             </div>
             <div className="flex items-center gap-1 shrink-0 max-[640px]:flex-wrap">{toolbarRight}</div>
           </div>

@@ -3,7 +3,7 @@
    typed 화면은 컴포넌트 passes 가 실제로 부르는 export 술어(passesDrawerKeys)를 그대로 검사한다(복사본 아님).
    투심보고 통계(TablesPage)는 공용 골격의 판정(키가 있으면 eq · dayRange 는 기간 안)을 그대로 따라 걸러 본다. */
 import { describe, it, expect } from 'vitest';
-import { readSrc } from '../../test_src';
+import { readSrc, panelSrc, panelLabels } from '../../test_src';
 import { splitRange } from '../../risk_page_kit';
 import { buildColumnDefs } from '../../risk_grid';
 import type { Row } from '../../risk_table_meta';
@@ -21,7 +21,7 @@ import { REVIEW_STATS_TABLE } from './review_stats_data';
 const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
 const ids = (rows: readonly { id: string }[]) => rows.map((r) => r.id);
 
-/** 화면 배선 공통 단언 — 술어 호출·외부필터 활성·적용 칩 라벨(= 드로어 캡션)·미연동 캡션 제거 */
+/** 화면 배선 공통 단언 — 술어 호출·외부필터 활성·적용 칩 라벨(= 인라인 패널 칸 label, 2026-11-17 드로어 폐기)·미연동 캡션 제거 */
 function expectWired(file: string, call: string, active: string[], chips: string[]) {
   const src = strip(readSrc(file));
   expect(src, call).toContain(call);
@@ -29,7 +29,7 @@ function expectWired(file: string, call: string, active: string[], chips: string
   for (const a of active) expect(fa.split(' || '), `filterActive ⊃ ${a}`).toContain(a);
   for (const l of chips) {
     expect(src, `적용 칩 ${l}`).toContain(`{ label: '${l}', value:`);
-    expect(src, `드로어 캡션 ${l}`).toMatch(new RegExp(`<DrawerField label="${l}"`));
+    expect(panelLabels(src), `패널 칸 ${l}`).toContain(l);
   }
   expect(src).not.toMatch(/데이터 연동 후|noop/);
 }
@@ -158,7 +158,7 @@ describe('조합예상자금요청보고 — 모펀드·담당자·기준년월(
       ['fMf', 'fMgr', 'fYm'], ['모펀드', '담당자']);
     const src = strip(readSrc('fund_cash_forecast_manage.tsx'));
     expect(src).toContain("{ label: '기준년월', value: fYm,");
-    expect(src).toContain('<DrawerField label="기준년월" plain>');
+    expect(panelSrc(src)).toContain('<PanelPeriod label="기준년월" mode="month"');
     expect(src).toContain('options={mgrOptions}');
   });
 });

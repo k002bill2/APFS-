@@ -2,7 +2,8 @@
    출처: S0_106_코드관리.html(공통관리 KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(검색기준+검색어·사용여부)  → 주 필터 1개 = 사용여부 FilterChip(툴바 좌) + 상세필터 드로어(검색어·검색기준). 검색어 opt-in(SEARCHABLE).
+   - 검색박스(검색기준+검색어·사용여부)  → 주 필터 1개 = 사용여부 FilterChip(툴바 좌) + 상세필터 = 칩 줄 위 인라인 패널(검색어·검색기준). 검색어 opt-in(SEARCHABLE).
+       검색기준은 '전체' 없는 고정 기본값(코드구분) select — 검색어의 뜻을 정하는 수식어라 칸에 값을 그대로 보이고(PanelSelect showValue) 칩을 따로 두지 않는다(검색어 칩이 '기준: 값'으로 보인다), 패널 [초기화] = 기본값 복원.
    - 좌 코드구분 목록 ⟷ 우 선택 코드구분의 코드상세(master-detail) → GridFrame 하나 안에 2단 그리드(lg 이상 좌 440px / 우 잔여, 좁으면 세로 적층).
        각 패널은 자체 헤더 바(제목·건수·패널 액션)와 AG Grid 를 갖는다. 좌 선택(라디오)이 우측 데이터 소스를 정한다.
        우측은 코드구분 미선택이면 **empty state**(목업 overlay '좌측에서 코드구분을 선택해 주세요.')를 그리드 대신 그린다.
@@ -18,14 +19,11 @@ import '../../aggrid_shared.css';
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { UI } from '../../components';
-import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
@@ -38,8 +36,9 @@ import type { CodeGroup, CodeDetail } from './code_manage_data';
 import { groupSchema, detailSchema, upOption, upCodeOf, UP_NONE } from './code_manage_schemas';
 import { reseqSiblings, applyReseq } from './reseq';
 import { UseBadge } from '../admin_shared';
+import { FilterPanel, PanelSearch, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
-const { Button, IconBtn, EmptyState, ClearableInput } = UI;
+const { Button, IconBtn, EmptyState } = UI;
 
 const SEARCHABLE = true;
 const SEARCH_FIELDS: { key: 'code' | 'name'; label: string }[] = [{ key: 'code', label: '코드구분' }, { key: 'name', label: '코드구분명' }];
@@ -81,15 +80,6 @@ const GROUP_SELECTION: RowSelectionOptions<GroupView> = { mode: 'singleRow', che
    좌측과 달리 해제는 허용한다 — 우측 선택은 데이터 소스가 아니라 수정 대상 지정일 뿐이다. */
 const DETAIL_SELECTION: RowSelectionOptions<CodeDetail> = { mode: 'singleRow', checkboxes: true, enableClickSelection: false };
 
-function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </label>
-  );
-}
-
 /* 패널 헤더 바 — 좌/우 그리드 위의 제목·건수·패널 액션(목업 listbar). 툴바보다 한 단계 낮은 위계(13px, 얇은 하단선) */
 function PaneBar({ title, count, children }: { title: React.ReactNode; count: number; children?: React.ReactNode }) {
   return (
@@ -124,16 +114,15 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
 
-  /* 필터(코드구분 목록) — 사용여부는 툴바 칩, 검색어·검색기준은 드로어 */
-  const [filterOpen, setFilterOpen] = useState(false);
+  /* 필터(코드구분 목록) — 사용여부는 툴바 칩, 검색어·검색기준은 칩 줄 위 인라인 패널 */
   const [fUse, setFUse] = useState<'' | '여' | '부'>('');
   const [fField, setFField] = useState<'code' | 'name'>('code');
   const [fText, setFText] = useState('');
   const clearFilters = () => { setFUse(''); setFField('code'); setFText(''); };
 
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'group', mode: 'create' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'group', mode: 'create' }), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   const curG = curCode ? groups.find((g) => g.code === curCode) ?? null : null;
   const groupViews = useMemo<GroupView[]>(() => {
@@ -304,8 +293,14 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       appliedFilters={[
         { label: '검색어', value: fText.trim() ? `${SEARCH_FIELDS.find((f) => f.key === fField)?.label}: ${fText.trim()}` : '', onClear: () => setFText('') },
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 검색어(opt-in) + 검색기준(코드구분/코드구분명). 사용여부는 툴바 칩. [초기화] = 기본값(검색기준 코드구분) 복원 */
+      filterPanel={
+        <FilterPanel label="코드관리 조건" onReset={clearFilters}>
+          {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
+          <PanelSelect label="검색기준" value={fField} onChange={(v) => setFField(v as 'code' | 'name')} options={SEARCH_FIELDS.map((f) => ({ value: f.key, label: f.label }))} required showValue />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'group', mode: 'create' })}>코드구분 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -381,35 +376,6 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      {/* ── 상세필터 드로어 — 검색어(opt-in) + 검색기준(코드구분/코드구분명). 사용여부는 툴바 칩 ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">코드구분 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {SEARCHABLE && (
-              <DrawerField label="검색어">
-                <ClearableInput type="text" value={fText} onValueChange={setFText} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="검색기준 항목에서 부분일치" clearLabel="검색어 지우기" style={inputStyle('text')} />
-              </DrawerField>
-            )}
-            <DrawerField label="검색기준">
-              <div className="relative" style={{ width: 'fit-content', maxWidth: '100%' }}>
-                <select value={fField} onChange={(e) => setFField(e.target.value as 'code' | 'name')} style={{ ...inputStyle('select'), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
-                  {SEARCH_FIELDS.map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
-                </select>
-                <Icon name="chevron-down" size={16} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none' }} />
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 코드구분 등록/수정(RowFormModal, 5필드 1단) ── */}
       {groupModal && gSchema && (groupModal.mode === 'create' || editGroup) && (

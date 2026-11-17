@@ -8,13 +8,13 @@
      (favRoute 는 메뉴 path `shareholder-manage`).
 
    구성(목업 → 우리 규약)
-   - 검색박스 2항목(운용사·기간) → **상세필터 드로어**(Sheet). 툴바 FilterChip 세트는 만들지 않는다
+   - 검색박스 2항목(운용사·기간) → **칩 줄 위 인라인 필터 패널**(2026-11-17 드로어 폐기 — apfs-detail-filter). 툴바 FilterChip 세트는 만들지 않는다
      (주 필터로 삼을 열거형 축이 없다 — 운용사는 옵션이 1개뿐이다).
      검색어는 OFF(목업에 없음 — `SEARCHABLE` 게이트).
      ⚠ 기간 기본값 없음(사용자 확정) — 목업은 `2024-01-01 ~ 2025-03-31` 리터럴이지만 그 값은 목업 더미의
        시점이라 실화면에서 의미가 없다. 시작·종료 둘 다 빈 값으로 시작하고, 빈 쪽은 무제한 경계다.
    - 목업 [조회] 버튼 → 만들지 않는다(백엔드가 없어 필터가 즉시 반영된다 — 형제 골드 동일 판단).
-   - 목업 [등록] → 툴바 독립 버튼 `주주변동 등록`(상세필터 오른쪽·새로고침 왼쪽) + `⌘⏎`.
+   - 목업 [등록] → 툴바 독립 버튼 `주주변동 등록`(새로고침 왼쪽) + `⌘⏎`.
    - 목업 [해제등록] → **행 선택 selbar**(GridFrame contextActions).
    - 수정·삭제는 selbar 에 둔다 — 목업엔 없지만 2026-09-23 사용자 결정(형제 4화면 버튼 구성 통일).
      수정은 1건일 때만, 삭제는 구분 무관. 배선은 형제 litigation_manage 그대로다.
@@ -42,24 +42,21 @@ import type { TagTone } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';   // 34px 컨트롤·폭 하한 SSOT
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
-import { PeriodPicker } from '../../ui/period-picker';
 import { ShareholderFormModal, ShareholderReleaseModal, ShareholderDeleteDialog } from './shareholder_form_modal';
 import type { ShareholderFormValues } from './shareholder_form_modal';
 import { OPT_GP } from './shareholder_manage_schemas';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSearch, PanelSelect, PanelRange } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn, TagBadge } = UI;
 
 /* 검색어 입력은 기본 OFF(opt-in) — 목업 검색박스에 없다(apfs-detail-filter "예약 라벨 검색어").
-   상태(`fText`)·행 필터·칩 배선은 남겨 두고 **드로어 입력만** 이 플래그로 가린다(정본 asset_funding·permission_history).
+   상태(`fText`)·행 필터·칩 배선은 남겨 두고 **패널 칸만** 이 플래그로 가린다(정본 asset_funding·permission_history).
    입력이 숨겨져 값이 ''로 고정되므로 필터는 자연 무발동이고, `true` 한 줄로 전 컬럼 부분일치 검색이 살아난다. */
 const SEARCHABLE = false;
 
@@ -184,19 +181,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-
-/* 기간 PeriodPicker 래퍼 — 트리거가 `w-full` 이라 감싸지 않으면 드로어 전 폭으로 늘어난다(apfs-datepicker) */
-const dayWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
-
 /* 엑셀 파일명 — 라우트에 경로 구분자·Excel 금칙문자가 없어 라벨을 그대로 쓴다.
    시트명은 31자 제한이 있어 짧은 형태로 둔다. */
 const EXPORT_BASENAME = '운용사 주주변동관리';
@@ -232,11 +216,10 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
 
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
   /* 앱-스코프 단축키. 모달이 떠 있는 동안에는 등록(이중 열림)·내보내기(모달 위 다운로드)를 막는다. */
-  useHotkey(HOTKEYS.register.combo, () => openCreate(), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => openCreate(), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null, skipInDialog: true });
 
   /* ── 필터 SSOT(빈 값 = 미적용) — 목업 검색박스 2항목 순서 그대로(운용사 · 기간) ── */
   const [fText, setFText] = useState('');     // 검색어 — SEARCHABLE=false 면 입력이 숨겨져 ''로 고정(무발동)
@@ -409,8 +392,16 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips.map((c) => ({ label: c.key, value: c.value, onClear: c.clear }))}
       contextActions={selActions}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 항목·순서 그대로(운용사 · 기간). 기간은 시작 ~ 종료가 한 항목, **기본값 없음**.
+         검색어는 SEARCHABLE 게이트(OFF) */
+      filterPanel={
+        <FilterPanel label="운용사 주주변동관리 조건">
+          {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
+          <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={OPT_GP} />
+          <PanelRange label="기간" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={openCreate}>주주변동 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -447,38 +438,6 @@ export function ShareholderManage({ onNav }: { onNav?: (r: string) => void }) {
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 조건에 해당하는 주주변동이 없습니다.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 목업 검색박스 항목·순서 그대로(운용사 · 기간) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">운용사 주주변동 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {SEARCHABLE && (
-              <DrawerField label="검색어">
-                <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="운용사 · 변동구분 · 변동내역 등 전 컬럼 검색" style={inputStyle('text')} />
-              </DrawerField>
-            )}
-            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={OPT_GP} /></DrawerField>
-            {/* 기간 — 목업 `<label for="f-from">기간</label>` 한 줄(시작 `~` 종료). **기본값 없음**(사용자 확정).
-                PeriodPicker 는 <label>로 명명되지 않으므로 plain + ariaLabel, 트리거가 w-full 이라 fit-content 래퍼 필수. */}
-            <DrawerField label="기간" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="기간 시작" /></div>
-                <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="기간 종료" /></div>
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 팝업 3종 — 등록/수정(목업 openReg) · 해제등록(openRelease) · 삭제 확인(2026-09-23 사용자 결정) ── */}
       {modal?.kind === 'form' && (
