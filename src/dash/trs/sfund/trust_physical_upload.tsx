@@ -3,8 +3,10 @@
    - 유가증권관리(업로드) = 신규(현행 목업 없음): 위 형제 화면 구조를 그대로 준용한 빈 화면
 
    목업 → 우리 규약
-   - 검색박스 → 상세필터 드로어(항목·순서·기본값 원문). 운용사·조합은 원문 옵션이 없어 조회 조건으로만,
-     기준월·대분류·중분류는 행 값으로 **실제로 거른다**(대분류·중분류 옵션 '[B] 채권' → 행의 원문 코드 B).
+   - 검색박스 → 상세필터 드로어(항목·순서·기본값 원문). 다섯 항목 모두 행 값으로 **실제로 거른다**(trust_sub_data physicalRows):
+     기준월·대분류·중분류(옵션 '[B] 채권' → 행의 원문 코드 B) · 조합(행의 조합명 union) · 운용사(숨은 행 키 gp — 그리드 컬럼 없음).
+     운용사·조합은 원문 옵션이 없어 선택지 = 행의 실제 값(2026-11-16 사용자 지시 "미연동 필터 전부 동작" — 종전 no-op).
+     유가증권관리는 행이 없어 선택지도 비어 있다. 조건이 바뀌면 행 선택을 전부 해제한다(걸러진 행의 체크가 숨은 채 남지 않게 — 2026-10-27).
    - 업로드 박스 → 툴바 [업로드] → 업로드 모달(계좌정보 관리 패턴, 2026-09-24 사용자 결정). 파일 처리·전송은 하지 않는다(브리프 규칙 5):
      파일 선택 없이 확인 → 원문 토스트, 선택 후 확인 → 원문 완료 토스트 + 모달 닫힘.
    - 목록바 [수정]·[삭제] → 행 선택 selbar(GridFrame contextActions, trust_manage_kit SelBar). 수정은 1건일 때만 →
@@ -26,7 +28,7 @@ import { UploadModal } from '../../trust_upload';
 import { useRowSelection, SelBar, DeleteDialog, RowEditModal, formFromRow, rowPatch } from '../../trust_manage_kit';
 import { PHYSICAL_FORM, displayCode } from '../trust_manage_schemas';
 import {
-  PHYSICAL_TABLE, SECURITIES_TABLE, BIG_OPTIONS, MID_OPTIONS, optionCode,
+  PHYSICAL_TABLE, SECURITIES_TABLE, BIG_OPTIONS, MID_OPTIONS, physicalRows, rowOptions,
   GP_PLACEHOLDER, PHYSICAL_BASE_YM,
 } from '../trust_sub_data';
 
@@ -60,16 +62,21 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
   const { apiRef, selIds, onSelect, clear } = useRowSelection();
   const [modal, setModal] = useState<null | { kind: 'edit'; id: string } | { kind: 'delete' } | { kind: 'upload' }>(null);
 
-  const reset = () => { setGp(''); setUnion(''); setYm(cfg.baseYm); setBig(''); setMid(''); };
-  const shown = useMemo(() => rows.filter((r) =>
-    (!ym || r.ym === ym) && (!big || r.bigCode === optionCode(big)) && (!mid || r.midCode === optionCode(mid))), [rows, ym, big, mid]);
+  /* 조건이 바뀌면 선택 전부 해제(2026-10-27) — 걸러진 행의 체크가 숨은 채 남아 수정·삭제가 숨은 행에 걸리지 않게.
+     effect 가 아니라 같은 이벤트에서 비운다: 다음 렌더의 ReadGrid 가 빈 선택을 받아야 rowData 갱신 뒤 선택 복원(restoreSelection)이
+     낡은 id 로 남은 행을 다시 고르지 않는다(filter_clears_selection.test.ts '사전 필터 화면' 사례). */
+  const onFilter = (set: (v: string) => void) => (v: string) => { set(v); clear(); };
+  const reset = () => { setGp(''); setUnion(''); setYm(cfg.baseYm); setBig(''); setMid(''); clear(); };
+  const shown = useMemo(() => physicalRows(rows, { gp, union, ym, big, mid }), [rows, gp, union, ym, big, mid]);
+  const gpOptions = useMemo(() => rowOptions(rows, 'gp'), [rows]);
+  const unionOptions = useMemo(() => rowOptions(rows, 'union'), [rows]);
 
   const filters: FilterSpec[] = [
-    { label: '운용사', kind: 'select', value: gp, onChange: setGp, options: [], allLabel: GP_PLACEHOLDER, noop: true },
-    { label: '조합', kind: 'select', value: union, onChange: setUnion, options: [], noop: true },
-    { label: '기준월', kind: 'month', value: ym, onChange: setYm },
-    { label: '대분류', kind: 'select', value: big, onChange: setBig, options: BIG_OPTIONS },
-    { label: '중분류', kind: 'select', value: mid, onChange: setMid, options: MID_OPTIONS },
+    { label: '운용사', kind: 'select', value: gp, onChange: onFilter(setGp), options: gpOptions, allLabel: GP_PLACEHOLDER },
+    { label: '조합', kind: 'select', value: union, onChange: onFilter(setUnion), options: unionOptions },
+    { label: '기준월', kind: 'month', value: ym, onChange: onFilter(setYm) },
+    { label: '대분류', kind: 'select', value: big, onChange: onFilter(setBig), options: BIG_OPTIONS },
+    { label: '중분류', kind: 'select', value: mid, onChange: onFilter(setMid), options: MID_OPTIONS },
   ];
 
   /* 행 더블클릭·Enter·선택 바 [수정] — 같은 모달(참조 안정: ReadGrid onRowOpen 계약) */

@@ -10,11 +10,14 @@ import type { PageSchema } from './types';
    그래서 "샘플 키 ⊆ columns ∪ fields ∪ 표현키"를 레지스트리 전체에 강제한다.
 
    표현키: generic_list.makeRows 가 Row 계약을 맞추려고 읽는 자리(카드뷰·KPI·정렬). 컬럼이
-   아니어도 샘플이 제공할 수 있다 — 예: 관리보수관리는 금액 컬럼 key 가 'amount' 라 겹친다. */
+   아니어도 샘플이 제공할 수 있다 — 예: 관리보수관리는 금액 컬럼 key 가 'amount' 라 겹친다.
+   필터 키: filterSpecs[].key 는 그리드에 보이지 않는 **숨은 조회 값**(모펀드·계정구분·담당자 등)이라
+   컬럼이 아니어도 sample 이 싣는다(2026-11-16 "데이터 연동 후 적용 전부 동작"). 오타는 아래 역방향 단언이 잡는다. */
 const PRESENTATION_KEYS = new Set(['id', 'icon', 'color', 'trend', 'name', 'title', 'category', 'amount', 'change', 'status']);
 
+const filterKeys = (s: PageSchema) => Object.values(s.filterSpecs ?? {}).flatMap((f) => (f.key ? [f.key] : []));
 const keyUniverse = (s: PageSchema) =>
-  new Set<string>([...s.columns.map((c) => c.key), ...s.fields.map((f) => f.key), ...PRESENTATION_KEYS]);
+  new Set<string>([...s.columns.map((c) => c.key), ...s.fields.map((f) => f.key), ...filterKeys(s), ...PRESENTATION_KEYS]);
 
 const sampled = ALL_SCHEMAS.filter((s) => s.sample !== undefined);
 
@@ -30,6 +33,18 @@ describe('sample 키 불변식', () => {
       const unknown = new Set<string>();
       for (const row of s.sample!) for (const k of Object.keys(row)) if (!uni.has(k)) unknown.add(k);
       expect([...unknown], `${route}: 화면에 없는 키 — 셀이 빈칸으로 렌더된다`).toEqual([]);
+    },
+  );
+
+  /* 숨은 필터 키의 오타 방지 — filterSpecs[].key 가 columns/fields 밖이면 sample 어느 행엔가 실제로 있어야 한다
+     (없으면 filter_field.seeded 가드에 걸려 조용히 no-op 캡션으로 격하된다) */
+  it.each(sampled.map((s) => [s.route, s] as const))(
+    '%s — 숨은 필터 키(filterSpecs.key)는 sample 이 실제로 싣는다',
+    (route, s) => {
+      const shown = new Set<string>([...s.columns.map((c) => c.key), ...s.fields.map((f) => f.key)]);
+      const provided = new Set(s.sample!.flatMap((r) => Object.keys(r)));
+      const orphan = filterKeys(s).filter((k) => !shown.has(k) && !provided.has(k));
+      expect(orphan, `${route}: sample 에 없는 숨은 필터 키 — 필터가 no-op 으로 격하된다`).toEqual([]);
     },
   );
 

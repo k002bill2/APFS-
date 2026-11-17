@@ -14,6 +14,7 @@
 import React, { useMemo, useState } from 'react';
 import { toast } from './ui/sonner';
 import { DEFAULT_UNIT } from './schemas/unit';
+import { onOrBefore } from './schemas/filter_field';
 import type { Unit } from './schemas/unit';
 import { RiskPage, splitRange } from './risk_page_kit';
 import type { FilterSpec, RiskPageProps } from './risk_page_kit';
@@ -30,7 +31,8 @@ export interface FilterDef {
   allLabel?: string | null;
   /** 행 필터 키 — 이 컬럼(또는 시드된 행 키)을 가진 표에만 적용 */
   key?: string;
-  mode?: 'eq' | 'prefix';
+  /** eq = 같은 값 · prefix = 앞부분 일치 · asOf = 조회 시점(셀 ≤ 값, schemas/filter_field onOrBefore) */
+  mode?: 'eq' | 'prefix' | 'asOf';
 }
 
 export interface TablesPageConfig {
@@ -56,6 +58,7 @@ const matches = (f: FilterDef, v: string, r: Row) => {
     return (!a || d >= a) && (!b || d <= b);
   }
   if (f.kind === 'text') return String(cell).includes(v.trim());
+  if (f.mode === 'asOf') return onOrBefore(cell, v);
   return f.mode === 'prefix' ? String(cell).startsWith(v) : String(cell) === v;
 };
 

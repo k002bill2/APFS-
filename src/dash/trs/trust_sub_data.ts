@@ -7,7 +7,9 @@
    - 자펀드코드 조회      = S3_99 조합코드 관리 — 편집형 목록 4행
    출처: docs/mockups/03_자산수탁/*.html 의 `<tbody>`·`<script> DATA/LISTS` 를 2026-09-23 파싱 실측으로 옮겼다.
    값·순서·개수를 바꾸지 않는다(원문이 "데모 행"이라 적은 행도 원문 DATA 에 있는 한 그대로 싣는다 — 합성 금지는
-   makeRows 식 생성에 대한 것이다). 원문에 행이 없으면 원문 빈 상태 문구로 둔다. */
+   makeRows 식 생성에 대한 것이다). 원문에 행이 없으면 원문 빈 상태 문구로 둔다.
+   예외(2026-11-16 사용자 지시 "미연동 필터 전부 동작"): 검색조건이 거르는 숨은 행 키(org·gp)와 실물검증 화면용 사본
+   VERIFY_PAGE_TABLES(키 fund·ym 시드 + 직전 월 더미)를 더했다 — 원문 표(VERIFY_TABLES 등)의 행 수·표시값은 그대로다. */
 import type { TableMeta, Provenance, Row, ColMeta } from '../risk_table_meta';
 import type { Tone } from '../components';
 
@@ -63,12 +65,25 @@ const PHYSICAL_COLS: ColMeta[] = [
 ];
 
 /** 원문 DATA 1건. 표시값은 원문 render() 결과 그대로 — 자산/유형분류 = 코드 + (한글명), 사업자번호 = bizFmt 하이픈.
-    계좌번호·잔여주수·보유잔액·이자는 원문 null(`dash()` → '-'). bigCode·midCode 는 검색조건 매칭용 숨은 키(원문 r.big·r.mid). */
+    계좌번호·잔여주수·보유잔액·이자는 원문 null(`dash()` → '-'). bigCode·midCode 는 검색조건 매칭용 숨은 키(원문 r.big·r.mid).
+    gp 는 검색조건 운용사 매칭용 숨은 키(그리드 컬럼 없음 — 원문 운용사 select 는 옵션이 없어 행 값으로 선택지를 만든다,
+    2026-11-16 사용자 지시 "미연동 필터 전부 동작"). 값은 조합(KB신농사직설 투자조합)의 업무집행조합원. */
 export const PHYSICAL_ROWS: Row[] = [
   { id: 'phys-1', custodian: 'NONGHYUP', ym: '2026-07', seq: 1, big: 'B (채권)', mid: 'B2 (신주인수권부사채)',
     union: 'KB신농사직설 투자조합', item: '(주)에이피테크놀로지 제1회신주인수권부사', code: 'KR_BD0001892V', biz: '124-81-89654',
-    acct: null, shares: null, balance: null, interest: null, bigCode: 'B', midCode: 'B2' },
+    acct: null, shares: null, balance: null, interest: null, bigCode: 'B', midCode: 'B2', gp: 'KB인베스트먼트' },
 ];
+
+/** 실물자료 검색조건 — 빈 값 = 전체 */
+export interface PhysicalCond { gp: string; union: string; ym: string; big: string; mid: string }
+/** 검색조건 적용 — 운용사(숨은 키 gp) · 조합(union) · 기준월(ym) = 같은 값, 대분류·중분류 = 옵션 코드('[B] 채권' → B) */
+export function physicalRows(rows: readonly Row[], c: PhysicalCond): Row[] {
+  return rows.filter((r) => (!c.gp || r.gp === c.gp) && (!c.union || r.union === c.union) && (!c.ym || r.ym === c.ym)
+    && (!c.big || r.bigCode === optionCode(c.big)) && (!c.mid || r.midCode === optionCode(c.mid)));
+}
+/** 행 값 선택지 — 비어 있지 않은 고유값, 첫 등장 순(원문 select 옵션이 없는 운용사·조합) */
+export const rowOptions = (rows: readonly Row[], key: string): string[] =>
+  [...new Set(rows.map((r) => r[key]).filter((v): v is string => typeof v === 'string' && v !== ''))];
 
 export const PHYSICAL_TABLE: TableMeta = {
   id: 'physical', cols: PHYSICAL_COLS, rows: PHYSICAL_ROWS, empty: '조회된 실물자료가 없습니다.',
@@ -146,6 +161,31 @@ export const VERIFY_UNINV: TableMeta = {
 
 export const VERIFY_TABLES: TableMeta[] = [VERIFY_INVEST, VERIFY_UNINV_TX, VERIFY_UNINV];
 
+/* ── 실물검증비교조회 화면 표 — 2026-11-16 사용자 지시 "미연동 필터 전부 동작"(종전 자펀드·기준년월 no-op) ──
+   VERIFY_TABLES(원문 3장 — 원문 대조 테스트가 행·합계를 고정)는 그대로 두고, 검색조건 키를 싣고 직전 월 더미를 덧붙인 화면용 사본을 만든다.
+   - fund = 자펀드(원문 옵션 1개 → 전 행 그 값) · ym = 기준년월(월별 대사 결과 스냅샷이라 같은 월만 — eq).
+   - 직전 월(VERIFY_PRIOR_YM) 더미: 투자자산 1행(같은 보유) · 미투자자산 1행(MMDA 잔액만 다름) · 미투자자산 거래 0행(원문과 같은 빈 상태).
+     기본 기준년월(원문 2026-07)에서는 걸러져 보이지 않는다.
+   - 투자자산 합계 보유주수·잔액은 원문이 **보유 합계 리터럴**이라 원문 월 행만 보일 때만 리터럴, 그 밖(직전 월·기준년월 비움·0건)은 보이는 행 합. */
+export const VERIFY_PRIOR_YM = '2026-06';
+const VERIFY_PRIOR_ROWS: Record<string, Row[]> = {
+  verifyInvest: [{ id: 'vinv-p1', no: 1, oCo: '두나무(주)', oSh: 24462, oPr: 1810188000, oRd: '-', oBal: 1810188000,
+    cSh: 24462, cBal: 1810188000, cCo: '(주)두나무 보통주(구주)', mSh: '일치', mBal: '일치' }],
+  verifyUninv: [{ id: 'vun-p1', no: 1, oAcct: '3170025994621', oBal: 132415870, cBal: 132415870, cAcct: '3170025994621 (MMDA(농협)(공통))', mBal: '일치' }],
+};
+const sumOf = (rows: readonly Row[], k: string): number => rows.reduce((a, r) => { const v = r[k]; return a + (typeof v === 'number' ? v : 0); }, 0);
+const LITERAL_TOTAL: Record<string, number> = { oSh: VERIFY_INVEST_TOTAL.shares, oBal: VERIFY_INVEST_TOTAL.balance };
+const literalOrSum = (k: string) => (rows: readonly Row[]): number =>
+  (rows.length > 0 && rows.every((r) => r.ym === VERIFY_BASE_YM) ? LITERAL_TOTAL[k] : sumOf(rows, k));
+export const VERIFY_PAGE_TABLES: TableMeta[] = VERIFY_TABLES.map((t) => ({
+  ...t,
+  cols: t.id === VERIFY_INVEST.id ? t.cols.map((c) => (c.key in LITERAL_TOTAL ? { ...c, total: literalOrSum(c.key) } : c)) : t.cols,
+  rows: [
+    ...t.rows.map((r) => ({ ...r, fund: VERIFY_FUND, ym: VERIFY_BASE_YM })),
+    ...(VERIFY_PRIOR_ROWS[t.id] ?? []).map((r) => ({ ...r, fund: VERIFY_FUND, ym: VERIFY_PRIOR_YM })),
+  ],
+}));
+
 /* ═══════════════ 신규 — 유가증권비교조회 ═══════════════
    원천 목업이 없다. 형제 S3_101 섹션1(투자자산: 운용사·수탁기관·일치여부 2단 헤더)의 컬럼을 그대로 준용한 표 1장.
    섹션 제목·합계·행은 만들지 않는다(원문 근거 없음). */
@@ -178,7 +218,9 @@ export const CODE_TABLE: TableMeta = {
 export const FUND_CODE_PROVENANCE = prov('S3_99_조합코드_관리.html');
 export const FUND_CODE_ORGS = ['농협중앙회'] as const;
 /** 원문 DATA 4행("1행은 원본 실데이터, 이하 데모 행" — 원문 주석 그대로, 4행 모두 원문 리터럴).
-    자조합수탁·모태수탁은 원문 boolean(체크박스) → 'Y'/'N'(Cell 계약 — 엑셀에도 그대로 나간다) */
+    자조합수탁·모태수탁은 원문 boolean(체크박스) → 'Y'/'N'(Cell 계약 — 엑셀에도 그대로 나간다).
+    org 는 검색조건 수탁기관 매칭용 숨은 키(그리드 컬럼 없음). 원문 옵션이 농협중앙회 1개라 4행 모두 그 값이다
+    (2026-11-16 사용자 지시 "미연동 필터 전부 동작" — 종전 no-op). */
 export const FUND_CODE_TABLE: TableMeta = {
   id: 'fundCode',
   cols: [
@@ -190,9 +232,12 @@ export const FUND_CODE_TABLE: TableMeta = {
     { key: 'mo', label: '모태수탁', kind: 'badge', tones: { Y: 'success', N: 'muted' }, width: 110, flex: 0 },
   ],
   rows: [
-    { id: 'fc-1', no: 1, nm: '와이앤아처 로컬 리노베이션 투자조합', code: 'CAZ00001', sub: 'Y', mo: 'Y' },
-    { id: 'fc-2', no: 2, nm: '농식품 스마트팜 투자조합 제1호', code: 'CAZ00002', sub: 'N', mo: 'Y' },
-    { id: 'fc-3', no: 3, nm: '청년농업인 창업 투자조합', code: 'CAZ00003', sub: 'N', mo: 'N' },
-    { id: 'fc-4', no: 4, nm: '수산식품 벤처투자조합', code: 'CAZ00004', sub: 'Y', mo: 'N' },
+    { id: 'fc-1', no: 1, nm: '와이앤아처 로컬 리노베이션 투자조합', code: 'CAZ00001', sub: 'Y', mo: 'Y', org: FUND_CODE_ORGS[0] },
+    { id: 'fc-2', no: 2, nm: '농식품 스마트팜 투자조합 제1호', code: 'CAZ00002', sub: 'N', mo: 'Y', org: FUND_CODE_ORGS[0] },
+    { id: 'fc-3', no: 3, nm: '청년농업인 창업 투자조합', code: 'CAZ00003', sub: 'N', mo: 'N', org: FUND_CODE_ORGS[0] },
+    { id: 'fc-4', no: 4, nm: '수산식품 벤처투자조합', code: 'CAZ00004', sub: 'Y', mo: 'N', org: FUND_CODE_ORGS[0] },
   ],
 };
+
+/** 자펀드코드 검색조건 — 수탁기관(숨은 키 org) 같은 값. 빈 값 = 전체 */
+export const fundCodeRows = (rows: readonly Row[], org: string): Row[] => rows.filter((r) => !org || r.org === org);

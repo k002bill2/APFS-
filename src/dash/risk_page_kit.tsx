@@ -106,12 +106,15 @@ function FilterControl({ f }: { f: FilterSpec }) {
       </DrawerField>
     );
   }
-  /* 연도·월·일 = PeriodPicker(apfs-datepicker). 트리거가 w-full 이라 fit-content 래퍼 필수("폭" 규칙) */
+  /* 연도·월·일 = PeriodPicker(apfs-datepicker). 트리거가 w-full 이라 fit-content 래퍼 필수("폭" 규칙).
+     allLabel null = 빈 값이 없는 항목(시점 스냅샷 — 평가년월·기준년월) → 같은 값 재클릭(피커의 유일한 해제)을 무시한다.
+     비우면 두 시점의 스냅샷이 한 표에 섞인다(칩 × 도 같은 이유로 없다 — specsToApplied). */
   const minW = controlMinWidth(f.kind === 'day' ? 'date' : f.kind);
+  const pick = (v: string | undefined) => { if (v || f.allLabel !== null) f.onChange(v || ''); };
   return (
     <DrawerField label={f.label} plain noop={f.noop}>
       <div style={{ width: 'fit-content', minWidth: minW, maxWidth: '100%' }}>
-        <PeriodPicker mode={f.kind} value={f.value} onChange={(v) => f.onChange(v || '')} ariaLabel={f.label} />
+        <PeriodPicker mode={f.kind} value={f.value} onChange={pick} ariaLabel={f.label} />
       </div>
     </DrawerField>
   );

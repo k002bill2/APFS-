@@ -20,13 +20,15 @@
    결정·가정
    - 소계표시 위치: 설계서는 [상세필터] 왼쪽 버튼. 행을 거르지 않는 표시 옵션이라 필터 칩 줄이 아니라 툴바 우측 토글로 둔다
      (2026-11-09 사용자 결정 — 출자금현황 [Σ 합계]와 같은 모양, 순서는 상세필터 → 토글 → 조회).
-   - 미결재포함·잔액여부: 미결재 거래 데이터·잔액여부 의미가 없어 상태만 두고 거르지 않는다(캡션 '· 데이터 연동 후 적용'). 거르지 않으므로 적용 칩도 만들지 않는다(apfs-detail-filter — no-op 항목 칩 없음).
+   - 미결재포함·잔액여부(2026-11-16 사용자 지시 "미연동 필터 전부 동작" — 종전 no-op 캡션·칩 없음):
+     미결재포함(체크) = 결재 대기 거래 더미(account_balance_model.demoUnapprovedTxns)까지 더해 잔액을 다시 계산 — 계좌거래상세 팝업도 같은 거래를 본다.
+     잔액여부 = 여/부 선택(2026-11-17 사용자 결정 — 종전 금액 입력) — 여 = 잔액 있음(≠ 0) · 부 = 잔액 0. 둘 다 적용 칩을 달고 × = 해제/비움.
    - 만기여부 판정 기준일 = 데모 기준일(DEMO_TODAY). 만기일 없는 계좌는 '만기 전'. 만기기간을 지정하면 만기일 없는 계좌는 빠진다.
    - 기준기간을 비우면(× · 직접 삭제) 전 기간 — 전잔 0, 기간증감 = 전체 누계.
    - 예금명세서 합 계 = 계정구분(쪽 묶음)별 합계 — 설계서 샘플(합 계 = 그 계정구분 소계 합)대로. 전체 총계는 두지 않는다.
    - 권한 기반 노출(내보내기·인쇄·팝업 인쇄/엑셀)은 RBAC 미구현이라 항상 노출. 설계서 "새 창" 팝업·뷰어는 프로젝트 팝업 규약(Dialog). */
 import '../../aggrid_shared.css';
-import { useCallback, useId, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import type { CellKeyDownEvent, CellStyle, ColDef, RowClassParams, RowDoubleClickedEvent, ValueFormatterParams } from 'ag-grid-community';
@@ -34,21 +36,19 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { UI } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, fmt, numFmt, numStyle } from '../../aggrid_theme';
-import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
-import { Checkbox } from '../../ui/checkbox';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import { DrawerSelect } from '../../drawer_select';
 import type { AppliedFilter } from '../../applied_filters';
-import { DrawerField, DayRangeField } from '../ledger_filter_ui';
+import { DrawerField, DayRangeField, FlagCheck } from '../ledger_filter_ui';
 import { LedgerReportViewer } from '../ledger_report_viewer';
 import { demoBankAccounts, demoCashTxns, DEMO_TODAY, FUNDS_ACCOUNT_TYPES } from './funds_data';
 import type { BankAccount } from './funds_data';
 import {
   defaultFilter, filterErrors, buildBalanceRows, withSubtotals, totals, accountCount,
-  buildDepositStatement, statementPages, periodLabel, rateLabel, YES_NO,
+  buildDepositStatement, statementPages, periodLabel, rateLabel, YES_NO, demoUnapprovedTxns, effectiveTxns,
 } from './account_balance_model';
 import type { BalanceFilter, BalanceRow, StatementPage, YesNo } from './account_balance_model';
 import { AccountTxnDetailModal } from './account_txn_detail_modal';
@@ -60,7 +60,6 @@ const TITLE = '계좌잔액';
 const REPORT_TITLE = '예금명세서';
 const PER_PAGE = 34;
 const NO_RESULT = '조회 결과가 없습니다.';
-const NOOP_CAPTION = '· 데이터 연동 후 적용';
 const RATE_FMT = '0.00"%"';   // 이자율 숫자 셀(엑셀 우측 정렬)
 
 /* ──────────────────────────────
@@ -132,16 +131,14 @@ function StatementPrintPage({ page, index, count, period }: { page: StatementPag
 }
 
 /* 여/부 칩 값 — 칩은 값만 보이므로 값 자체가 뜻을 담게 */
-const YN_TEXT: Record<'active' | 'matured' | 'freeWithdraw', Record<'여' | '부', string>> = {
+type YnKey = 'active' | 'matured' | 'freeWithdraw' | 'balance';
+const YN_TEXT: Record<YnKey, Record<'여' | '부', string>> = {
   active: { 여: '사용', 부: '미사용' },
   matured: { 여: '만기', 부: '만기 전' },
   freeWithdraw: { 여: '수시입출금', 부: '수시입출금 아님' },
+  balance: { 여: '잔액 있음', 부: '잔액 없음' },
 };
 
-/* 데이터 연동 전 항목 캡션 — 칩 jump 가 캡션 자신의 텍스트로 찾으므로 안쪽 span 으로 둔다 */
-function NoopLabel({ label }: { label: string }) {
-  return <>{label}<span className="text-caption font-normal" style={{ fontSize: 12, marginLeft: 6 }}>{NOOP_CAPTION}</span></>;
-}
 
 type ModalState = null | { kind: 'detail'; account: BankAccount };
 
@@ -151,6 +148,7 @@ type ModalState = null | { kind: 'detail'; account: BankAccount };
 export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void }) {
   const accounts = useMemo(() => demoBankAccounts(), []);
   const txns = useMemo(() => demoCashTxns(accounts), [accounts]);
+  const unapproved = useMemo(() => demoUnapprovedTxns(accounts, DEMO_TODAY), [accounts]);   // 미결재포함 체크 시 더할 결재 대기 거래
   const base = useMemo(() => defaultFilter(DEMO_TODAY), []);
 
   /* E00 — 기본 조건(기준기간 전월 1일 ~ 오늘 · 사용 · 만기 전)으로 진입 */
@@ -164,7 +162,8 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
   const setD = <K extends keyof BalanceFilter>(k: K) => (v: BalanceFilter[K]) => patch({ [k]: v } as Partial<BalanceFilter>);
   const errs = filterErrors(applied);
 
-  const rows = useMemo(() => buildBalanceRows(accounts, txns, applied, DEMO_TODAY), [accounts, txns, applied]);
+  const rows = useMemo(() => buildBalanceRows(accounts, txns, applied, DEMO_TODAY, unapproved), [accounts, txns, applied, unapproved]);
+  const detailTxns = useMemo(() => effectiveTxns(txns, unapproved, applied.includeUnapproved), [txns, unapproved, applied.includeUnapproved]);
   const gridRows = useMemo(() => (showSubtotal ? withSubtotals(rows) : rows), [rows, showSubtotal]);
   const pinned = useMemo<BalanceRow[]>(() => (rows.length ? [{
     id: '__total', kind: 'subtotal', accountId: '', accountType: '', accountNo: '', currency: '', subject: '', ...totals(rows),
@@ -243,17 +242,19 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
 
   /* 적용 칩 — label = 드로어 캡션(칩 클릭 jump). 기본값 칩은 진입부터 표시, × = 전체/전 기간 */
   const range = (from: string, to: string) => (from || to ? `${from || '…'} ~ ${to || '…'}` : '');
-  const ynChip = (k: 'active' | 'matured' | 'freeWithdraw', label: string): AppliedFilter =>
+  const ynChip = (k: YnKey, label: string): AppliedFilter =>
     ({ label, value: applied[k] ? YN_TEXT[k][applied[k] as '여' | '부'] : '', onClear: () => patch({ [k]: '' } as Partial<BalanceFilter>) });
   const chips: AppliedFilter[] = [
     { label: '계정구분', value: applied.accountType, onClear: () => patch({ accountType: '' }) },
     { label: '기준기간', value: range(applied.from, applied.to), onClear: () => patch({ from: '', to: '' }) },
     ynChip('active', '사용여부'), ynChip('matured', '만기여부'), ynChip('freeWithdraw', '수시입출금여부'),
+    { label: '미결재포함', value: applied.includeUnapproved ? '미결재 포함' : '', onClear: () => patch({ includeUnapproved: false }) },
     { label: '개설기간', value: range(applied.openFrom, applied.openTo), onClear: () => patch({ openFrom: '', openTo: '' }) },
     { label: '만기기간', value: range(applied.maturityFrom, applied.maturityTo), onClear: () => patch({ maturityFrom: '', maturityTo: '' }) },
+    ynChip('balance', '잔액여부'),
   ];
 
-  const ynSelect = (k: 'active' | 'matured' | 'freeWithdraw', label: string) => (
+  const ynSelect = (k: YnKey, label: string) => (
     <DrawerField label={label}>
       <DrawerSelect value={applied[k]} onChange={(v) => patch({ [k]: v as YesNo } as Partial<BalanceFilter>)} options={[...YES_NO]} ariaLabel={label} />
     </DrawerField>
@@ -309,14 +310,10 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
             {ynSelect('active', '사용여부')}
             {ynSelect('matured', '만기여부')}
             {ynSelect('freeWithdraw', '수시입출금여부')}
-            <NoopCheck label="미결재포함" value={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
+            <FlagCheck label="미결재포함" value={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
             <DayRangeField label="개설기간" from={applied.openFrom} to={applied.openTo} onFrom={setD('openFrom')} onTo={setD('openTo')} errMsg={errs.open ?? undefined} />
             <DayRangeField label="만기기간" from={applied.maturityFrom} to={applied.maturityTo} onFrom={setD('maturityFrom')} onTo={setD('maturityTo')} errMsg={errs.maturity ?? undefined} />
-            <label className="block mb-4">
-              <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}><NoopLabel label="잔액여부" /></span>
-              <input type="text" inputMode="numeric" value={applied.balance} onChange={(e) => setD('balance')(e.target.value.replace(/[^\d]/g, ''))}
-                placeholder="금액" style={inputStyle('text')} />
-            </label>
+            {ynSelect('balance', '잔액여부')}
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={() => setApplied(base)}>초기화</Button>
@@ -327,7 +324,7 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
 
       {/* E04 계좌거래상세 — 기준기간 = 화면 조회조건 */}
       {modal?.kind === 'detail' && (
-        <AccountTxnDetailModal account={modal.account} txns={txns} from={applied.from} to={applied.to} onClose={() => setModal(null)} />
+        <AccountTxnDetailModal account={modal.account} txns={detailTxns} from={applied.from} to={applied.to} onClose={() => setModal(null)} />
       )}
       {viewer && (
         <LedgerReportViewer title={REPORT_TITLE} pages={pages} fileName={`${REPORT_TITLE}_${applied.accountType || '전체'}_${periodLabel(applied.from, applied.to, '_')}`}
@@ -335,16 +332,5 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
           onSave={saveReport} onClose={() => setViewer(false)} />
       )}
     </GridFrame>
-  );
-}
-
-/* 미결재포함 — DS Checkbox + htmlFor 라벨(ledger FlagCheck 동형) + 데이터 연동 캡션 */
-function NoopCheck({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
-  const id = useId();
-  return (
-    <div className="flex items-center gap-2 mb-4">
-      <Checkbox id={id} checked={value} onCheckedChange={(c) => onChange(c === true)} />
-      <label htmlFor={id} className="font-semibold text-muted-foreground cursor-pointer select-none" style={{ fontSize: 14 }}><NoopLabel label={label} /></label>
-    </div>
   );
 }

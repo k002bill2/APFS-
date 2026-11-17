@@ -6,7 +6,7 @@
    AG Grid 는 jsdom 에서 무거워 props 만 기록하는 빈 컴포넌트로 바꾼다(missing_evidence_screen.test 와 같은 방식). globals:false → afterEach cleanup. */
 import React from 'react';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { TooltipProvider } from '../ui/tooltip';
 import { AssetFundInfoManage, EXT } from './asct/asset_fund_info_manage';
 import { SubFundManage } from './sfund/subfund_manage';
@@ -74,13 +74,15 @@ describe('자펀드정보관리 — 인라인 필터', () => {
     expect(passingIds()).toEqual(['sf-2']);
   });
 
-  /* 2026-11-10 사용자 "공통 컴포넌트는 수정하지 말고 여기 있는 애들 선택 후에도 placeholder 가 고정으로 보이게" — 미연동 칸 포함 */
-  it('미연동 칸(칩 없음)도 고른 뒤 칸이 항목명으로 돌아간다', () => {
+  /* 2026-11-10 사용자 "공통 컴포넌트는 수정하지 말고 여기 있는 애들 선택 후에도 placeholder 가 고정으로 보이게".
+     2026-11-16 미연동 필터 전부 동작 — 계정구분도 이제 칩이 생긴다(종전 '칩 없음' 고정을 뒤집음) */
+  it('계정구분도 고른 뒤 칸이 항목명으로 돌아가고, 값은 칩에만 보인다', () => {
     mount(h(AssetFundInfoManage));
     const sel = screen.getByRole('combobox', { name: '계정구분' }) as HTMLSelectElement;
     fireEvent.change(sel, { target: { value: '농식품투자계정(농안기금)' } });
     expect(sel.value).toBe('');
     expect(sel.options[sel.selectedIndex].text).toBe('계정구분');
+    expect(screen.getByRole('button', { name: '계정구분: 농식품투자계정(농안기금) — 필터에서 변경' })).toBeTruthy();
   });
 
   /* 2026-11-09 사용자 "옵션 선택시 필터칩이 하단에 들어와야해" — 패널 아래 칩 줄에 적용 칩. 칩 본문 = 그 칸으로 이동, × = 해제 */
@@ -123,22 +125,25 @@ describe('자펀드정보관리 — 인라인 필터', () => {
     expect(screen.getByRole('button', { name: '심사단계: 결성' })).toBeTruthy();
   });
 
-  it('미연동 항목은 칩을 만들지 않는다', () => {
+  /* 2026-11-16 미연동 필터 전부 동작 — 종전 '미연동 항목은 칩을 만들지 않는다'를 뒤집음: 모펀드도 칩 + × 해제 */
+  it('모펀드도 칩을 만들고, ×로 해제하면 전 행이 돌아온다', () => {
     mount(h(AssetFundInfoManage));
     fireEvent.change(screen.getByRole('combobox', { name: '모펀드' }), { target: { value: 'MOAF' } });
-    expect(screen.queryByRole('button', { name: '모펀드 필터 제거' })).toBeNull();
+    expect(screen.getByRole('button', { name: '모펀드: MOAF — 필터에서 변경' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '모펀드 필터 제거' }));
+    expect(passingIds().length).toBe(EXT.seed.length);
   });
 
-  /* 2026-11-10 사용자 "이 칩들은 툴팁이 안보이네" — 미연동 안내는 DS Tooltip. 네이티브 title 은 select 의 title(고른 값)에
-     덮이거나 환경에 따라 안 뜬다(적용 칩 ChipTip 과 같은 부품). jsdom 은 .focus() 가 focusin 을 내 React onFocus 로 연다 */
-  it('미연동 칸 5개는 초점이 가면 DS 툴팁 "데이터 연동 후 적용" 을 보이고, 네이티브 title 은 없다', () => {
+  /* 2026-11-10 엔 미연동 5칸에 미연동 안내 DS 툴팁을 띄웠다. 2026-11-16 다섯 칸 모두 행을 거르게 되어 툴팁을 걷었다 —
+     칸에 값이 안 보이는 패널이라 적용 칩이 유일한 신호다. 네이티브 title 도 여전히 없다 */
+  it('종전 미연동 칸 5개는 초점이 가도 툴팁이 없고, 네이티브 title 도 없다', () => {
     const cells = [['모펀드', 'combobox'], ['계정구분', 'combobox'], ['심사담당자', 'combobox'], ['리스크담당자', 'combobox'], ['기준일자', 'button']] as const;
     for (const [name, role] of cells) {
       mount(h(AssetFundInfoManage));
       const el = screen.getByRole(role, { name });
       expect(el.closest('[title]'), name).toBeNull();
       act(() => el.focus());
-      expect(screen.getByRole('tooltip').textContent, name).toBe('데이터 연동 후 적용');
+      expect(screen.queryByRole('tooltip'), name).toBeNull();
       cleanup();
     }
   });
@@ -161,10 +166,41 @@ describe('자펀드정보관리 — 인라인 필터', () => {
     expect(screen.queryByRole('tooltip')).toBeNull();
   });
 
-  it('미연동 항목(모펀드 등)은 행을 거르지 않는다(거짓 필터링 금지)', () => {
+  /* 2026-11-16 미연동 필터 전부 동작 — 종전 '행을 거르지 않는다'를 뒤집음. 숨은 행 속성(mf·ag·manager·risk)으로 거른다.
+     원문 S2_73 행(fi-1)은 숨은 속성이 없어 SubFundManage 가 채운다(withHidden — 6번째 행: 심사 이성훈·리스크 양한솔) */
+  it('모펀드·계정구분·담당자 2종은 숨은 행 속성으로 거르고 칩을 만든다', () => {
+    const cases: [string, string, string[]][] = [
+      ['모펀드', 'MOAF', ['sf-5']],
+      ['계정구분', '수산투자계정', ['sf-5']],
+      ['심사담당자', '이성훈', ['sf-2', 'sf-4', 'fi-1']],
+      ['리스크담당자', '양한솔', ['sf-2', 'sf-3', 'fi-1']],
+    ];
+    for (const [name, value, ids] of cases) {
+      mount(h(AssetFundInfoManage));
+      expect(passingIds().length, name).toBe(EXT.seed.length);
+      fireEvent.change(screen.getByRole('combobox', { name }), { target: { value } });
+      expect(passingIds(), name).toEqual(ids);
+      expect(screen.getByRole('button', { name: `${name}: ${value} — 필터에서 변경` }), name).toBeTruthy();
+      cleanup();
+    }
+  });
+
+  /* 기준일자 = 그날까지 등록된 자펀드(등록일시 ≤ 값). 달력 연·월 드롭다운으로 2026년 5월을 띄워 19일을 고른다(오늘 날짜와 무관) */
+  it('기준일자를 고르면 그날까지 등록된 자펀드만 남고 칩이 생긴다', async () => {
     mount(h(AssetFundInfoManage));
-    fireEvent.change(screen.getByRole('combobox', { name: '모펀드' }), { target: { value: 'MOAF' } });
-    expect(passingIds().length).toBe(EXT.seed.length);
+    fireEvent.click(screen.getByRole('button', { name: '기준일자' }));
+    const grid = await screen.findByRole('grid');
+    const pop = grid.closest('[role="dialog"]') as HTMLElement;
+    const selects = within(pop).getAllByRole('combobox') as HTMLSelectElement[];
+    const yearSel = selects.find((s) => [...s.options].some((o) => o.value === '2026'))!;
+    const monthSel = selects.find((s) => s !== yearSel)!;
+    fireEvent.change(yearSel, { target: { value: '2026' } });
+    fireEvent.change(monthSel, { target: { value: '4' } });   // 0-기준 월 = 5월
+    const day = within(screen.getByRole('grid')).getAllByRole('button').find((b) => b.textContent === '19')!;
+    fireEvent.click(day);
+    expect(passingIds()).toEqual(EXT.seed.filter((r) => r.rd <= '2026-05-19').map((r) => r.id));
+    expect(passingIds()).not.toContain('sf-1');   // 2026-05-20 등록 — 하루 차이로 빠진다
+    expect(screen.getByRole('button', { name: '기준일자: 2026-05-19 — 필터에서 변경' })).toBeTruthy();
   });
 });
 

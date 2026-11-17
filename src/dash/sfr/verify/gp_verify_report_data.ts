@@ -3,9 +3,10 @@
    - 표 3장(투자자산 · 미투자자산 거래 · 미투자자산) — 각각 운용사·수탁기관·일치여부 2단 헤더 + tfoot 합계.
    - 행·합계는 원문 정적 `<tbody>`/`<tfoot>` 리터럴 그대로(값·순서·개수 불변). 금액은 원문 `data-won`(원 단위 숫자),
      원문 칸이 `-`(data-won 없음)면 null(화면 `-`).
+   - 화면은 원문 표 대신 GP_VERIFY_PAGE_TABLES(검색조건 키 fund·ym 시드 + 직전 월 더미 — 2026-11-16 사용자 지시, 파일 끝)를 쓴다.
    - 형제 수탁보고 S3_101(trust_sub_data.ts VERIFY_*)과 구조는 닮았지만 **컬럼 순서·펀드·행이 다르다**
      (S5_120 은 수탁기관 묶음이 투자기업/종목/계좌번호 → 보유주수 → 잔액 순) — 공유하지 않고 원문대로 따로 둔다. */
-import type { TableMeta, Provenance, ColMeta } from '../../risk_table_meta';
+import type { TableMeta, Provenance, ColMeta, Row } from '../../risk_table_meta';
 import type { Tone } from '../../components';
 
 export const GP_VERIFY_SRC = 'docs/mockups/05_MOAF/S5_120_실물검증_조회.html';
@@ -90,3 +91,22 @@ export const GP_VERIFY_UNINV: TableMeta = {
 };
 
 export const GP_VERIFY_TABLES: TableMeta[] = [GP_VERIFY_INVEST, GP_VERIFY_UNINV_TX, GP_VERIFY_UNINV];
+
+/* ═══════════════ 화면 표 — 검색조건 키 시드 + 직전 월 더미 ═══════════════
+   2026-11-16 사용자 지시 "미연동 필터 전부 동작"(종전 자펀드·기준년월 no-op). GP_VERIFY_TABLES(원문 — 테스트가 행·tfoot 를 고정)는
+   그대로 두고 화면용 사본을 만든다(그리드 컬럼은 늘리지 않는다 — 숨은 행 키):
+   - fund = 자펀드(원문 옵션 1개 → 전 행 그 값) · ym = 기준년월(월별 실물검증 결과 스냅샷이라 같은 월만 — eq).
+   - 직전 월(GP_VERIFY_PRIOR_YM) 더미: 투자자산 4행(이엑스첼스케어는 4월 투자라 3월엔 없다) · 미투자자산 1행(잔액만 다름) ·
+     미투자자산 거래 0행(원문과 같은 빈 상태). 기본 기준년월(원문 2026-04)에서는 걸러져 보이지 않는다. 합계는 'sum' 이라 보이는 행에서 다시 더한다. */
+export const GP_VERIFY_PRIOR_YM = '2026-03';
+const PRIOR_ROWS: Record<string, Row[]> = {
+  gpVerifyInvest: GP_VERIFY_INVEST.rows.filter((r) => r.id !== 'gvi-4').map((r, i) => ({ ...r, id: `gvi-p${String(i + 1)}`, no: i + 1 })),
+  gpVerifyUninv: [{ id: 'gvu-p1', no: 1, oAcct: '3170026409581(농협은행)', oBal: 91248730, cAcct: '3170026409581(MMDA(농협)(공통))', cBal: 91248730, mBal: '일치' }],
+};
+export const GP_VERIFY_PAGE_TABLES: TableMeta[] = GP_VERIFY_TABLES.map((t) => ({
+  ...t,
+  rows: [
+    ...t.rows.map((r) => ({ ...r, fund: GP_VERIFY_FUND, ym: GP_VERIFY_BASE_YM })),
+    ...(PRIOR_ROWS[t.id] ?? []).map((r) => ({ ...r, fund: GP_VERIFY_FUND, ym: GP_VERIFY_PRIOR_YM })),
+  ],
+}));

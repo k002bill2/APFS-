@@ -32,6 +32,9 @@ export interface InvReviewRow {
   confirm: Confirm; appr: number | null; pay: string; res: Result;
   compliance?: Record<string, unknown> | null;   // 투자준법감시내역(백엔드 없음 — 폼값 보관). 있으면 수정/삭제 노출
   detail?: InvReviewDetail;   // 상세 팝업 데이터(원문 `detail`)
+  /* 숨은 행 속성 — 원문 DATA 필드가 아니다. 목록 화면(investment_review_manage)이 시드해 상세필터
+     모펀드·계정구분·담당자가 거른다(2026-11-16). 그리드 컬럼 없음, 백엔드라면 조회 파라미터 */
+  mf?: string; acct?: string; mgr?: string;
 }
 
 export const INV_REVIEW_ROWS: readonly InvReviewRow[] = [

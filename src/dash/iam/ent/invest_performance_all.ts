@@ -21,8 +21,17 @@
    (모펀드 제외 — CHECK_REPORT 모펀드 규칙). 옵션·기본값은 원문 그대로:
    계정구분 = chipGroup 전체·농식품·수산(기본 전체) · 통계기준 = <select> 자펀드기준 1개(기본 선택, '전체' 없음) ·
    데이터기준 = chipGroup 운용사보고·월말확정(기본 운용사보고, '전체' 없음) · 기준일자 = 2026-07-31.
-   네 항목 모두 **원문 행에 대응 값이 없다**(계정구분·통계기준·데이터기준·기준일자 컬럼 없음 — `농식품 여부` Y/N 은
-   계정구분과 다른 축이라 대신 쓰지 않는다) → 전부 no-op(`· 데이터 연동 후 적용`). 원문 조회 버튼도 토스트뿐(S1_33:398). */
+   원문 행에는 네 항목의 대응 칸이 없다(`농식품 여부` Y/N 은 계정구분과 다른 축이라 대신 쓰지 않는다). 원문 조회 버튼도 토스트뿐(S1_33:398).
+   2026-11-16 사용자 지시 "미연동 필터 전부 동작"로 4항목을 배선했다(데이터기준은 11-17 · 종전 전부 no-op — 그리드 컬럼은 늘리지 않는다):
+   · 계정구분 = 숨은 행 속성 acctType. 원문 1행(현대동양농식품사모투자전문회사)은 '농식품' → 수산은 0건(빈 상태)이 정상.
+   · 통계기준 = 숨은 속성 statBasis('자펀드기준', 원문 선택지 1개). 재계산할 대안 기준이 없어 그 값이 곧 현재 수치다 — 키만 배선.
+   · 기준일자 = 조회 시점(mode 'asOf') — **최초 투자일자(firstInvestDate) ≤ 기준일자**인 투자건만 남긴다(투자실적은 쌓이는 목록).
+     원문 1행 2011-10-25 ≤ 기본값 2026-07-31 이라 기본 상태 1건 그대로.
+   · 데이터기준 = 숨은 행 속성 dataBasis(2026-11-17 사용자 결정 "동작시키기" — '전체' 없는 기준 선택기는 기준별 수치).
+     원문 1행 = '운용사보고'. sample 2행째는 같은 투자건의 **월말확정 변형(창작 더미)** — 다른 통계 화면과 같은 규칙으로
+     투자금액·회수금액에 확정률 0.98(운용사보고 중 월말 미확정분 제외)을 곱하고, 결성액·건수·일자·여부는 그대로 둔다
+     (회수총액 = 회수원금 + 회수수익 · 투자잔액 0 유지). 기본값 운용사보고 + allLabel null(칩 × 없음·초기화 = 기본값)이라
+     기본 상태는 원문 1행·`합계 1건` 그대로다 — 원문 행 수 가드는 기본 상태에 보이는 행으로 센다. */
 import type { PageSchema } from '../../schemas/types';
 
 export const schema: PageSchema = {
@@ -73,10 +82,10 @@ export const schema: PageSchema = {
   fields: [],
   filters: ['계정구분', '통계기준', '데이터기준', '기준일자'],
   filterSpecs: {
-    계정구분: { kind: 'select', options: ['농식품', '수산'] },
-    통계기준: { kind: 'select', options: ['자펀드기준'], def: '자펀드기준', allLabel: null },
-    데이터기준: { kind: 'select', options: ['운용사보고', '월말확정'], def: '운용사보고', allLabel: null },
-    기준일자: { kind: 'day', def: '2026-07-31' },
+    계정구분: { kind: 'select', options: ['농식품', '수산'], key: 'acctType' },
+    통계기준: { kind: 'select', options: ['자펀드기준'], def: '자펀드기준', allLabel: null, key: 'statBasis' },
+    데이터기준: { kind: 'select', options: ['운용사보고', '월말확정'], def: '운용사보고', allLabel: null, key: 'dataBasis' },
+    기준일자: { kind: 'day', def: '2026-07-31', key: 'firstInvestDate', mode: 'asOf' },
   },
   // 원문 Y/N/O/X 태그 도메인 — 여부 6컬럼이 공유한다(.tag g/n/d).
   statusDomain: [
@@ -109,7 +118,9 @@ export const schema: PageSchema = {
     },
   },
   sample: [
-    { no: 1, year: '2010', sector: '8대사업', fundName: '현대동양농식품사모투자전문회사', registeredAt: '2011-04-04', fundAmount: 32000000000, investee: '(주)진바이오텍', bizSector: '축산관련산업', bizContent: '동물사료 원료 생산(동물자원과학 R&D)', investMethod: 'BW', reviewDate: '2011-10-13', firstInvestDate: '2011-10-25', investSeqNo: '1', investAmt: 5000000000, agriInvestRatio: '-', fundInvestRatio: '-', investPeriod: '4년', recoverPrincipal: 5000000000, recoverProfit: 2500000000, recoverTotal: 7500000000, writedown: 0, convertedAmt: 0, investBalance: 0, isFullRecovered: 'O', isAgri: 'Y', isVenture: 'N', isMandatory: 'Y', isBelowScale: 'Y', isStartupInvest: 'X', foundDate: '2000-03-15', location: '충남', mgmtType: '일반기업', seqNo: 1 },
+    { no: 1, year: '2010', sector: '8대사업', fundName: '현대동양농식품사모투자전문회사', registeredAt: '2011-04-04', fundAmount: 32000000000, investee: '(주)진바이오텍', bizSector: '축산관련산업', bizContent: '동물사료 원료 생산(동물자원과학 R&D)', investMethod: 'BW', reviewDate: '2011-10-13', firstInvestDate: '2011-10-25', investSeqNo: '1', investAmt: 5000000000, agriInvestRatio: '-', fundInvestRatio: '-', investPeriod: '4년', recoverPrincipal: 5000000000, recoverProfit: 2500000000, recoverTotal: 7500000000, writedown: 0, convertedAmt: 0, investBalance: 0, isFullRecovered: 'O', isAgri: 'Y', isVenture: 'N', isMandatory: 'Y', isBelowScale: 'Y', isStartupInvest: 'X', foundDate: '2000-03-15', location: '충남', mgmtType: '일반기업', seqNo: 1, acctType: '농식품', statBasis: '자펀드기준', dataBasis: '운용사보고' },
+    // ↓ 창작 더미(원문 아님) — 데이터기준 '월말확정' 변형. 투자·회수 금액 × 확정률 0.98, 나머지는 원문 1행 그대로.
+    { no: 1, year: '2010', sector: '8대사업', fundName: '현대동양농식품사모투자전문회사', registeredAt: '2011-04-04', fundAmount: 32000000000, investee: '(주)진바이오텍', bizSector: '축산관련산업', bizContent: '동물사료 원료 생산(동물자원과학 R&D)', investMethod: 'BW', reviewDate: '2011-10-13', firstInvestDate: '2011-10-25', investSeqNo: '1', investAmt: 4900000000, agriInvestRatio: '-', fundInvestRatio: '-', investPeriod: '4년', recoverPrincipal: 4900000000, recoverProfit: 2450000000, recoverTotal: 7350000000, writedown: 0, convertedAmt: 0, investBalance: 0, isFullRecovered: 'O', isAgri: 'Y', isVenture: 'N', isMandatory: 'Y', isBelowScale: 'Y', isStartupInvest: 'X', foundDate: '2000-03-15', location: '충남', mgmtType: '일반기업', seqNo: 1, acctType: '농식품', statBasis: '자펀드기준', dataBasis: '월말확정' },
   ],
   provenance: {
     capturedAt: '2026-09-15',

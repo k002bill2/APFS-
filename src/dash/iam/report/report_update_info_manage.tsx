@@ -5,7 +5,8 @@
    - 검색박스(보고구분 1항목)   → 상세필터 드로어(Sheet, apfs-detail-filter). 목업 항목이 하나뿐이라
        드로어가 너무 빈약해지므로 주 필터(투심상태)를 드로어에도 함께 노출한다(골드 '확인상태' 동형).
        ⚠ 보고구분은 실데이터가 '투자심의관리' 1건뿐이어서 **옵션을 지어내지 않는다**(목업 유일 옵션만).
-         행 필드가 아니라 상태만 보관하는 noop 필터다 → `passes`에 넣지 않는다.
+         그리드 컬럼이 아닌 숨은 행 속성 `rt` 로 거른다(2026-11-16 사용자 지시 "미연동 필터 전부 동작" — 종전 no-op).
+         원문 선택지가 하나라 4행 전부 '투자심의관리'다 — 고르면 행은 그대로이고 적용 칩만 생긴다.
    - 주 필터(투심상태)         → 툴바 좌 FilterChip(전체·승인·보류·부결). 행 `stat` 연동.
    - 목록바 금액단위 토글       → 툴바 우 `금액단위` 캡션 + SegTabs(원/백만원/억원, 기본 원).
        그리드는 `context={{ unit }}`로 단위를 받고 단위가 바뀌면 `refreshCells({force:true})`로 재포맷한다.
@@ -60,20 +61,24 @@ export interface ReportUpdateRow {
   pdt: string;             // 투자금납입 예정일 — 목업 '-' 문자 그대로(텍스트 N/A)
   ftype: string;           // 파일구분(⚠ 동상)
   reg: string;             // 등록/변경일시 'YYYY-MM-DD HH:mm'
+  rt: string;              // 보고구분 — 숨은 행 속성(그리드 컬럼 없음, 상세필터만 거른다)
 }
 
 /* 목업 `statTag()` 의 g/a/n 매핑 그대로 — 승인=g(success) · 보류=a(warning) · 부결=n(info) */
 const STAT_TONE: Record<ReviewStatus, Tone> = { 승인: 'success', 보류: 'warning', 부결: 'info' };
 
-const DEMO: ReportUpdateRow[] = [
-  { id: 'ru-1', gb: '정기', gp: '한국투자파트너스', fd: '한투 청년농식품투자조합', co: '그린바이오텍', stat: '승인', sdt: '2026-04-18', amt: 5_000_000_000, pdt: '2026-06-30', ftype: '투자심의보고서', reg: '2026-04-18 14:22' },
-  { id: 'ru-2', gb: '정기', gp: 'IMM인베스트먼트', fd: 'IMM 농식품 스마트투자조합', co: '스마트팜테크', stat: '승인', sdt: '2026-04-05', amt: 3_000_000_000, pdt: '2026-06-15', ftype: '투자심의보고서', reg: '2026-04-05 09:47' },
-  { id: 'ru-3', gb: '수시', gp: 'KB증권', fd: '현대동양농식품사모투자전문회사', co: '푸드테크랩', stat: '보류', sdt: '2026-03-27', amt: 2_000_000_000, pdt: '-', ftype: '투자심의보고서', reg: '2026-03-27 16:03' },
-  { id: 'ru-4', gb: '정기', gp: '한국투자파트너스', fd: '한투 청년농식품투자조합', co: '애그리넷', stat: '부결', sdt: '2026-03-11', amt: 1_500_000_000, pdt: '-', ftype: '투자심의보고서', reg: '2026-03-11 11:18' },
+export const DEMO: ReportUpdateRow[] = [
+  { id: 'ru-1', gb: '정기', gp: '한국투자파트너스', fd: '한투 청년농식품투자조합', co: '그린바이오텍', stat: '승인', sdt: '2026-04-18', amt: 5_000_000_000, pdt: '2026-06-30', ftype: '투자심의보고서', reg: '2026-04-18 14:22', rt: '투자심의관리' },
+  { id: 'ru-2', gb: '정기', gp: 'IMM인베스트먼트', fd: 'IMM 농식품 스마트투자조합', co: '스마트팜테크', stat: '승인', sdt: '2026-04-05', amt: 3_000_000_000, pdt: '2026-06-15', ftype: '투자심의보고서', reg: '2026-04-05 09:47', rt: '투자심의관리' },
+  { id: 'ru-3', gb: '수시', gp: 'KB증권', fd: '현대동양농식품사모투자전문회사', co: '푸드테크랩', stat: '보류', sdt: '2026-03-27', amt: 2_000_000_000, pdt: '-', ftype: '투자심의보고서', reg: '2026-03-27 16:03', rt: '투자심의관리' },
+  { id: 'ru-4', gb: '정기', gp: '한국투자파트너스', fd: '한투 청년농식품투자조합', co: '애그리넷', stat: '부결', sdt: '2026-03-11', amt: 1_500_000_000, pdt: '-', ftype: '투자심의보고서', reg: '2026-03-11 11:18', rt: '투자심의관리' },
 ];
 /* 초기 선택 행 — 목업 `sel:1`(1행). 선택 SSOT 는 React state 이고 그리드가 따라간다 */
 const PAGE_SIZE = 20;
 const TOTAL_ID = '__total';
+
+/** 상세필터의 보고구분 조건(빈 값 = 미적용). 컴포넌트 passes 가 부르고 테스트가 직접 검증한다 */
+export const passesDrawerKeys = (r: ReportUpdateRow, f: { rt: string }): boolean => !f.rt || r.rt === f.rt;
 
 /* ──────────────────────────────
    금액 단위 전환 (원/백만원/억원) — 데이터는 원 단위 저장. 목업 listbar `.unit` 이식
@@ -187,11 +192,11 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, children }: { label: string; noop?: boolean; children: React.ReactNode }) {
+function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </label>
@@ -213,15 +218,14 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
 
   /* 필터 — 주 필터(투심상태)는 툴바 칩, 보고구분은 드로어. SSOT=개별 state(빈 값=미적용) */
   const [fStat, setFStat] = useState<'' | ReviewStatus>('');
-  const [fRt, setFRt] = useState('');      // 보고구분 — 행 컬럼 아님(no-op, 옵션은 목업 유일값만)
+  const [fRt, setFRt] = useState('');      // 보고구분 — 숨은 행 속성 rt(옵션은 목업 유일값만)
   const clearFilters = () => { setFStat(''); setFRt(''); };
 
-  /* 보고구분(fRt)은 행 필드가 아니므로 술어에 넣지 않는다(noop 필터) */
   const passes = useCallback((r: ReportUpdateRow) => {
     if (fStat && r.stat !== fStat) return false;
-    return true;
-  }, [fStat]);
-  const filterActive = Boolean(fStat);
+    return passesDrawerKeys(r, { rt: fRt });
+  }, [fStat, fRt]);
+  const filterActive = Boolean(fStat || fRt);
   useEffect(() => { apiRef.current?.onFilterChanged(); }, [passes]);
   /* 단위 변경 → 승인금액 셀(context.unit 참조) 재포맷. 본문 + pinned 합계행 모두 */
   useEffect(() => { apiRef.current?.refreshCells({ force: true }); }, [unit]);
@@ -280,9 +284,10 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
       favRoute="report-update-info"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 툴바 좌는 항상 필터 칩이다 — 선택이 표시 전용이라 selbar 가 존재하지 않는다(상단 주석 참조).
-         드로어 값 칩도 없다: 투심상태는 이 칩 행이 이미 보여주고, 보고구분은 noop 이라 칩을 만들지 않는다. */
+         드로어 값 칩은 보고구분 하나다 — 투심상태는 이 칩 행이 이미 보여준다. */
       filterChipsMenu="투심상태"
       filterChips={(['', '승인', '보류', '부결'] as ('' | ReviewStatus)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fStat === s, onSelect: () => setFStat(s) }))}
+      appliedFilters={[{ label: '보고구분', value: fRt, onClear: () => setFRt('') }]}
       toolbarRight={<>
         {/* 금액 단위 전환 — 목업 listbar 의 '금액단위 원/백만원/억원' */}
         <span className="text-caption font-semibold" style={{ fontSize: 12, marginRight: 6 }}>금액단위</span>
@@ -322,7 +327,7 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
       </div>
 
       {/* ── 상세필터 드로어 — 목업 검색박스 항목(보고구분 1개) + 주 필터(투심상태) 공유.
-           검색어는 미사용(OFF). 컬럼 미연동 필터는 caption 으로 no-op(apfs-detail-filter) ── */}
+           검색어는 미사용(OFF). 보고구분은 숨은 행 속성 rt 로 거른다 ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -332,7 +337,7 @@ export function ReportUpdateInfoManage({ onNav }: { onNav?: (r: string) => void 
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             {/* 보고구분 — 목업 유일 옵션('투자심의관리')만 둔다. 없는 옵션을 생성하지 않는다(검토필요 메모) */}
-            <DrawerField label="보고구분" noop><DrawerSelect value={fRt} onChange={setFRt} options={['투자심의관리']} /></DrawerField>
+            <DrawerField label="보고구분"><DrawerSelect value={fRt} onChange={setFRt} options={['투자심의관리']} /></DrawerField>
             {/* 투심상태는 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
           </div>
           <SheetFooter>

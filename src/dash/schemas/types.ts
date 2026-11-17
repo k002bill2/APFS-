@@ -98,6 +98,8 @@ export interface TotalsSpec {
    · def: 원문 초기값 — 마운트 시 적용되고 '초기화'가 이 값으로 되돌린다.
    · allLabel: null = 원문 select 에 '전체'가 없다(빈 선택지·칩 × 없음, def 필수).
    · key: 행 매칭 키. **생략 = no-op**(원문 행에 그 값이 없음 → `· 데이터 연동 후 적용` 캡션).
+   · mode: 'asOf' = 조회 시점(기준일자·기준년월·기준년도) — 정확일치 대신 **셀 ≤ 값**(onOrBefore)으로 거른다.
+           정확일치로 두면 날짜 하나를 고르는 순간 거의 0건이 된다. day·month·select(연도) 에 쓴다.
    판정 정본은 filter_field.ts(resolveFilterField · filterValueMatches · defaultFilterValues). */
 export const FILTER_KINDS = ['select', 'text', 'day', 'month', 'dayRange', 'monthRange', 'codeName', 'multi'] as const;
 export type SchemaFilterKind = typeof FILTER_KINDS[number];
@@ -107,6 +109,7 @@ export interface SchemaFilterSpec {
   def?: string;
   allLabel?: null;
   key?: string;
+  mode?: 'asOf';
 }
 export interface PageSchema {
   route: string; title: string; kind: 'list'|'form'; entity: string;
@@ -176,6 +179,7 @@ export const PageSchemaZ = z.object({
     def: z.string().optional(),
     allLabel: z.null().optional(),
     key: z.string().optional(),
+    mode: z.literal('asOf').optional(),
   })).optional(),
   statusDomain: z.array(z.object({ label: z.string(), tone: z.enum(TONE_VALUES) })).optional(),
   sample: z.array(z.record(z.string(), z.union([z.string(), z.number()]))).optional(),

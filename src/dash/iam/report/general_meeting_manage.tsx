@@ -6,6 +6,8 @@
        → 보고상태 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter)
        ⚠ 목업 기본 총회기간(2025-08-28~2026-08-28)은 데모값이라 이식하지 않는다(초기값 '' = 미적용).
        ⚠ 담당자는 행 컬럼이 아니라 상세(`detail.gen.mgr`)에 있다 — 그 값으로 실제 필터링한다.
+       모펀드·계정구분은 그리드 컬럼이 아닌 숨은 행 속성 `mf`·`acc` 로 거른다(2026-11-16 사용자 지시 "미연동 필터 전부 동작"
+         — 종전 no-op). 넥스트지 지방활성화 농식품 투자조합 1건만 MOAF. 계정구분은 3건 모두 농식품(조합명이 전부 농식품 — 수산은 0건이 정상).
    - 목록 그리드                → AG Grid 단일 헤더(apfs-aggrid). **합계행 없음**(금액 컬럼이 없다).
        **행 선택 = 체크박스 multiRow**(2026-09-24 사용자 결정 — 정기보고와 동형) → 선택 바에서 확정여부 일괄 변경.
        일정은 선택 행 전부, 결과는 일정 '확정' 행만 대상(게이트 필터형 — 제외 건수는 toast).
@@ -62,6 +64,9 @@ export interface MeetingRow {
   sch: '' | ConfirmPick;        // 일정 확정여부('' = 미선택, 목업의 빈 option). '제외' = 선택 바 콤보에서만 지정(2026-11-02)
   res: '' | ConfirmPick;        // 결과 확정여부(sch==='확정'일 때만 의미). '제외' 동상
   detail: MeetingDetail;
+  /* 숨은 행 속성(그리드 컬럼 없음 — 상세필터만 거른다. 백엔드라면 조회 파라미터) */
+  mf: string;                   // 모펀드
+  acc: '농식품' | '수산';        // 계정구분
 }
 
 /* 보고상태 배지 톤 — 목업 `statusTag`의 `.tag.b`(일정)/`.tag.g`(결과) */
@@ -75,11 +80,11 @@ const EXCLUDED = '제외';   // 선택 바 콤보 3번째 값(confirm_combo with
 const GT_OPTIONS = ['정기총회', '임시총회', '간담회', '보고회', '결성총회', '해산총회', '청산총회', '기타'];
 
 /* 데모 데이터 — 목업 DATA 3행(실데이터 1건 + 도메인 정합 샘플 2건)을 값까지 그대로 옮겼다. 텍스트 N/A='-' */
-const DEMO: MeetingRow[] = [
+export const DEMO: MeetingRow[] = [
   {
     id: 'gm-1', no: 1, gp: '(주)넥스트지인베스트먼트', fund: '넥스트지 지방활성화 농식품 투자조합',
     rst: '일정', gt: '임시총회', gdate: '2026-06-02', title: '2026년 제5회 임시조합원총회',
-    agenda: '규약 변경 승인의 건', sch: '미확정', res: '',
+    agenda: '규약 변경 승인의 건', sch: '미확정', res: '', mf: 'MOAF', acc: '농식품',
     detail: {
       gen: { fund: '넥스트지 지방활성화 농식품 투자조합', gtype: '임시총회', gdt: '2026-06-02 10:00', mgr: '이승재', place: '주식회사 넥스트지인베스트먼트 대회의실', title: '2026년 제5회 임시조합원총회', resolform: '서면결의', shorten: 'N', resolway: '서면결의' },
       report: [],
@@ -90,7 +95,7 @@ const DEMO: MeetingRow[] = [
   {
     id: 'gm-2', no: 2, gp: '아이엠엠인베스트먼트(주)', fund: 'IMM 농식품 스마트투자조합',
     rst: '결과', gt: '정기총회', gdate: '2026-03-14', title: '2026년 제1기 정기조합원총회',
-    agenda: '결산보고 승인의 건', sch: '확정', res: '확정',
+    agenda: '결산보고 승인의 건', sch: '확정', res: '확정', mf: '농식품모태펀드', acc: '농식품',
     detail: {
       gen: { fund: 'IMM 농식품 스마트투자조합', gtype: '정기총회', gdt: '2026-03-14 14:00', mgr: '이승재', place: '아이엠엠인베스트먼트 본사 회의실', title: '2026년 제1기 정기조합원총회', resolform: '현장결의', shorten: 'N', resolway: '보통결의' },
       report: [{ ord: '1', content: '2025년 결산 및 운용현황 보고' }],
@@ -101,7 +106,7 @@ const DEMO: MeetingRow[] = [
   {
     id: 'gm-3', no: 3, gp: '한국투자파트너스(주)', fund: '한투 청년농식품투자조합',
     rst: '일정', gt: '임시총회', gdate: '2026-07-21', title: '2026년 제2회 임시조합원총회',
-    agenda: '업무집행조합원 변경 승인의 건', sch: '미확정', res: '',
+    agenda: '업무집행조합원 변경 승인의 건', sch: '미확정', res: '', mf: '농식품모태펀드', acc: '농식품',
     detail: {
       gen: { fund: '한투 청년농식품투자조합', gtype: '임시총회', gdt: '2026-07-21 11:00', mgr: '이승재', place: '서면결의(현장 미개최)', title: '2026년 제2회 임시조합원총회', resolform: '서면결의', shorten: 'Y', resolway: '서면결의' },
       report: [],
@@ -112,6 +117,11 @@ const DEMO: MeetingRow[] = [
 ];
 
 const PAGE_SIZE = 20;
+
+/** 상세필터의 모펀드·계정구분 조건(빈 값 = 미적용). 컴포넌트 passes 가 부르고 테스트가 직접 검증한다 */
+export interface MeetingDrawerFilter { mf: string; acc: string }
+export const passesDrawerKeys = (r: MeetingRow, f: MeetingDrawerFilter): boolean =>
+  (!f.mf || r.mf === f.mf) && (!f.acc || r.acc === f.acc);
 
 /* 폭 관련 그리드 prop(`autoSizeStrategy`·`defaultColDef`)은 `aggrid_theme.ts`의 공용 상수를 쓴다 —
    인라인 리터럴 금지 이유(렌더마다 새 객체 → 폭이 선언값으로 되돌아감)는 그 파일 주석이 정본. */
@@ -248,12 +258,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </Wrap>
@@ -310,8 +320,8 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
   const [fGt, setFGt] = useState('');        // 총회구분
   const [fFrom, setFFrom] = useState('');    // 총회기간 시작(총회일자 기준)
   const [fTo, setFTo] = useState('');        // 총회기간 종료(동상)
-  const [fMf, setFMf] = useState('');        // 모펀드 — 행 컬럼 아님(no-op)
-  const [fAcc, setFAcc] = useState('');      // 계정구분 — 행 컬럼 아님(no-op)
+  const [fMf, setFMf] = useState('');        // 모펀드 — 숨은 행 속성 mf
+  const [fAcc, setFAcc] = useState('');      // 계정구분 — 숨은 행 속성 acc
   const clearFilters = () => { setFRst(''); setFGp(''); setFFund(''); setFMgr(''); setFGt(''); setFFrom(''); setFTo(''); setFMf(''); setFAcc(''); };
 
   const passes = useCallback((r: MeetingRow) => {
@@ -322,9 +332,9 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
     if (fGt && r.gt !== fGt) return false;
     if (fFrom && r.gdate < fFrom) return false;
     if (fTo && r.gdate > fTo) return false;
-    return true;
-  }, [fRst, fGp, fFund, fMgr, fGt, fFrom, fTo]);
-  const filterActive = Boolean(fRst || fGp || fFund || fMgr || fGt || fFrom || fTo);
+    return passesDrawerKeys(r, { mf: fMf, acc: fAcc });
+  }, [fRst, fGp, fFund, fMgr, fGt, fFrom, fTo, fMf, fAcc]);
+  const filterActive = Boolean(fRst || fGp || fFund || fMgr || fGt || fFrom || fTo || fMf || fAcc);
   /* 필터가 바뀌면 선택을 전부 해제한다 — 걸러진 행의 체크가 보이지 않는 채로 남아 액션이 숨은 행에 걸리지 않게(2026-10-27) */
   useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
@@ -422,8 +432,10 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
       filterChipsMenu="보고상태"
       filterChips={(['', '일정', '결과'] as ('' | MeetingStatus)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fRst === s, onSelect: () => setFRst(s) }))}
       appliedFilters={[
+        { label: '모펀드', value: fMf, onClear: () => setFMf('') },
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
+        { label: '계정구분', value: fAcc, onClear: () => setFAcc('') },
         { label: '담당자', value: fMgr, onClear: () => setFMgr('') },
         { label: '총회구분', value: fGt, onClear: () => setFGt('') },
         { label: '총회기간', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
@@ -467,7 +479,7 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
         />
       </div>
 
-      {/* ── 상세필터 드로어 — 검색어는 미사용(OFF). 컬럼 미연동 필터는 caption으로 no-op(apfs-detail-filter) ── */}
+      {/* ── 상세필터 드로어 — 검색어는 미사용(OFF). 항목이 전부 행을 거른다(숨은 행 속성 포함 — 파일 머리 주석) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -477,12 +489,12 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             {/* 목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·총회구분·총회기간.
-                그리드 컬럼과 미연동인 항목(모펀드·계정구분)은 noop 캡션. 담당자는 행 상세값으로 실제 필터링한다.
+                모펀드·계정구분은 숨은 행 속성(mf·acc)으로, 담당자는 행 상세값으로 거른다.
                 보고상태는 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시). 기간은 PeriodPicker day 2개 */}
-            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
+            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
+            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
             <DrawerField label="담당자"><DrawerSelect value={fMgr} onChange={setFMgr} options={mgrOptions} /></DrawerField>
             <DrawerField label="총회구분"><DrawerSelect value={fGt} onChange={setFGt} options={GT_OPTIONS} /></DrawerField>
             {/* PeriodPicker 트리거는 w-full이라 fit-content 래퍼로 감싼다(apfs-datepicker "폭" 규칙) */}

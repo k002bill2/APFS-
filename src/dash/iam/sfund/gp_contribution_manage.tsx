@@ -8,8 +8,10 @@
          목업의 [조회] 버튼은 즉시 반영형이라 없다.
        ⚠ 기준일자는 **일(YYYY-MM-DD) 범위**다 → `PeriodPicker mode="day"` 2개. 목업 기본값
          `2000-01-01 ~ 2026-08-12`은 **적용하지 않는다**(빈 문자열 = 열린 경계, apfs-datepicker 함정).
-       ⚠ 행 컬럼과 미연동인 항목(모펀드·계정구분·담당자)은 `noop` 캡션만 두고 `passes`에 넣지 않는다.
-         담당자는 원문에 옵션·샘플 값이 없어 옵션을 **지어내지 않는다**(빈 목록).
+       모펀드·계정구분·담당자는 그리드 컬럼이 아닌 숨은 행 속성(mf·acc·mgr)으로 거른다(2026-11-16 사용자 지시 — 종전 no-op).
+         12행이 한 자펀드의 거래라 세 값 모두 전 행 같다(자펀드 관리 sf-4·조합원정보 FUND 와 같은 개체 — 값 일치) →
+         MOAF·수산을 고르면 0건이 정상이다(행 단위로 값을 나누지 않는다).
+         담당자는 원문에 옵션이 없어 선택지 = 행에 시드한 실제 값(첫 등장 순)이다(옵션 목록을 따로 지어내지 않는다).
    - 목록 그리드 → AG Grid **2단 그룹헤더**(기타조합원 배분·모태펀드 배분 각 5열, `marryChildren`) +
      **pinned 합계 2행**(목업 tfoot 소계·합계 둘 다). 행 선택·등록·워크플로우 없음 → selbar도 없다.
    - 기준일자 셀 → **링크(LinkCell)**: 클릭·Enter로 `일자별출자배분관리` 상세 팝업
@@ -29,7 +31,7 @@
    - 배지 톤은 목업이 출자·배분을 같은 `tag b`로 칠하지만, 우리는 **출자=info · 배분=primary**로 갈랐다
      (같은 색이면 열 전체가 한 덩어리로 보여 구분 컬럼의 의미가 사라진다. 문구·값은 원문 그대로).
    - **담당자 필터의 의미**(출자자(LP) 측인지 운용사(GP) 측인지)는 목업 설계메모 [개발자 확인 필요]로 남아 있다 →
-     옵션을 두지 않는다.
+     농금원(출자자) 측 자펀드 담당자로 가정하고 자펀드 관리의 같은 자펀드(sf-4) 심사담당자 값을 싣는다(확정되면 키만 바꾼다).
    - 배분 5열은 엑셀 flatten이 `colDef.field`를 쓰므로 목업 배열 `o`/`m`을 **개별 키(o0..o4·m0..m4)**로 펼쳤다. */
 import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -72,6 +74,10 @@ export interface GpContribRow {
   dist: number;               // 배분합계
   bal: number | null;         // 출자잔액 — 합계 2행은 null('-')
   match: Match | null;        // 수탁일치여부 — 합계 2행은 null('-')
+  /* 상세필터 숨은 속성(그리드 컬럼 없음 — 백엔드라면 조회 파라미터). 자펀드 1개의 값이라 전 행 동일(head) */
+  mf: string;                 // 모펀드
+  acc: string;                // 계정구분
+  mgr: string;                // 담당자(파일 상단 '한계' — LP 측 가정)
 }
 
 /* 데모 데이터 — 목업 `DATA` 12행 값 그대로(콤마 문자열 → number, 값 창작 없음).
@@ -80,8 +86,12 @@ const GP = 'KB증권(주)';
 const FN = '현대동양농식품사모투자전문회사';
 const CMT = 32_000_000_000;
 const CMTM = 15_700_000_000;
+/* 숨은 속성 — 이 자펀드(현대동양) 한 개의 값. 자펀드 관리 DEMO sf-4·조합원정보 FUND 와 같게 둔다 */
+const MF = '농식품모태펀드';
+const ACC = '농식품';
+const MGR = '이성훈';
 /* 반복 필드를 한 곳에 모은 헬퍼 — 값이 아니라 '같은 값의 반복'을 표현한다 */
-const head = (no: number, gb: Gb, bd: string) => ({ id: 'gc-' + no, no, gp: GP, fn: FN, cmt: CMT, cmtM: CMTM, gb, bd });
+const head = (no: number, gb: Gb, bd: string) => ({ id: 'gc-' + no, no, gp: GP, fn: FN, cmt: CMT, cmtM: CMTM, gb, bd, mf: MF, acc: ACC, mgr: MGR });
 /* 출자 5행은 배분 10칸이 전부 0(목업 동일) */
 const ZERO_DIST = { o0: 0, o1: 0, o2: 0, o3: 0, o4: 0, m0: 0, m1: 0, m2: 0, m3: 0, m4: 0, dist: 0 };
 
@@ -223,12 +233,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </Wrap>
@@ -261,9 +271,9 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
   const [fFn, setFFn] = useState('');
   const [fFrom, setFFrom] = useState('');   // 기준일자 시작 'YYYY-MM-DD'(빈 값=열린 경계)
   const [fTo, setFTo] = useState('');       // 기준일자 종료 'YYYY-MM-DD'(동상)
-  const [fMf, setFMf] = useState('');       // 모펀드 — 행 컬럼 아님(no-op)
-  const [fAcc, setFAcc] = useState('');     // 계정구분 — 행 컬럼 아님(no-op)
-  const [fMgr, setFMgr] = useState('');     // 담당자 — 원문에 옵션·샘플 값 없음(no-op, 옵션 없음)
+  const [fMf, setFMf] = useState('');       // 모펀드 — 숨은 행 속성 mf
+  const [fAcc, setFAcc] = useState('');     // 계정구분 — 숨은 행 속성 acc
+  const [fMgr, setFMgr] = useState('');     // 담당자 — 숨은 행 속성 mgr(선택지 = 행 실제 값)
   const clearFilters = () => { setFGb(''); setFGp(''); setFFn(''); setFFrom(''); setFTo(''); setFMf(''); setFAcc(''); setFMgr(''); };
 
   const passes = useCallback((r: GpContribRow) => {
@@ -272,9 +282,12 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
     if (fGb && r.gb !== fGb) return false;
     if (fFrom && r.bd < fFrom) return false;
     if (fTo && r.bd > fTo) return false;
+    if (fMf && r.mf !== fMf) return false;
+    if (fAcc && r.acc !== fAcc) return false;
+    if (fMgr && r.mgr !== fMgr) return false;
     return true;
-  }, [fGp, fFn, fGb, fFrom, fTo]);
-  const filterActive = Boolean(fGp || fFn || fGb || fFrom || fTo);
+  }, [fGp, fFn, fGb, fFrom, fTo, fMf, fAcc, fMgr]);
+  const filterActive = Boolean(fGp || fFn || fGb || fFrom || fTo || fMf || fAcc || fMgr);
   useEffect(() => { apiRef.current?.onFilterChanged(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<GpContribRow>) => (node.data ? passes(node.data) : true), [passes]);
@@ -282,6 +295,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
   const filteredRows = useMemo(() => rows.filter(passes), [rows, passes]);
   const gpOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.gp))), [rows]);
   const fnOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.fn))), [rows]);
+  const mgrOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.mgr))), [rows]);   // 원문 옵션 없음 → 행 실제 값
   /* pinned 합계 2행 — 인라인 배열 금지(참조가 매 렌더 바뀌면 고정행이 재생성된다). 필터 결과로 재계산 */
   const pinnedBottom = useMemo(() => [computeSubtotal(filteredRows), computeTotal(filteredRows)], [filteredRows]);
 
@@ -341,8 +355,11 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
       filterChips={(['', '출자', '배분'] as ('' | Gb)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fGb === s, onSelect: () => setFGb(s) }))}
       /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
       appliedFilters={[
+        { label: '모펀드', value: fMf, onClear: () => setFMf('') },
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFn, onClear: () => setFFn('') },
+        { label: '계정구분', value: fAcc, onClear: () => setFAcc('') },
+        { label: '담당자', value: fMgr, onClear: () => setFMgr('') },
         { label: '기준일자', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
       ]}
       toolbarRight={<>
@@ -381,7 +398,7 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
       </div>
 
       {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(모펀드·운용사·자펀드·계정구분·담당자·출자/배분·기준일자).
-             검색어는 미사용(OFF). 컬럼 미연동 항목은 noop 캡션(apfs-detail-filter) ── */}
+             검색어는 미사용(OFF). 그리드 컬럼이 없는 항목(모펀드·계정구분·담당자)은 숨은 행 속성으로 거른다 ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -390,12 +407,12 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
+            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFn} onChange={setFFn} options={fnOptions} /></DrawerField>
-            <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            {/* 담당자 — 원문에 옵션·샘플 값이 없어 옵션을 생성하지 않는다(빈 목록 = '전체'만) */}
-            <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
+            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
+            {/* 담당자 — 원문에 옵션이 없어 선택지 = 행에 시드한 실제 값(mgrOptions) */}
+            <DrawerField label="담당자"><DrawerSelect value={fMgr} onChange={setFMgr} options={mgrOptions} /></DrawerField>
             {/* 출자/배분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
             {/* 기준일자 — 일(YYYY-MM-DD) 범위. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}
             <DrawerField label="기준일자" plain>

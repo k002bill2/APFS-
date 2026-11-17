@@ -17,7 +17,9 @@
 
    ── 검색조건(S1_42:231-240) ── 원문 `.searchbox` 라벨 순서 그대로: 운용사·자펀드·투자기업·기간
    (모펀드 제외 — CHECK_REPORT 모펀드 규칙). 원문에 없던 대분류·유형·전달형태 필터는 뺐다(모달 필드로는 남는다).
-   · 운용사 = 원문 <select> 옵션 `KB증권` 1개('전체' 없음, 기본 선택). 원문 행에 운용사 컬럼이 없다 → no-op.
+   · 운용사 = 원문 <select> 옵션 `KB증권` 1개('전체' 없음, 기본 선택). 원문 행에 운용사 컬럼이 없어 **숨은 행 속성 gpKey**
+     (조회 운용사 = 원문 옵션 표기)로 거른다 — 2026-11-16 사용자 지시 "미연동 필터 전부 동작"(종전 no-op). 그리드 컬럼은 늘리지 않는다.
+     원문 선택지가 1개뿐이라 3행 전부 그 값('KB증권')이다 → 기본값이 행을 줄이지 않는다(키만 배선).
    · 자펀드 = 원문 옵션 전체·현대동양농식품사모투자전문회사 → subFund 정확일치(3행 중 1행이 그 값).
    · 투자기업 = 원문 `코드 + 명칭 + 검색` 묶음(codeName) → investee 명칭 부분일치(원문 3행은 투자기업이 비어 있다).
    · 기간 = 원문 범위(기본 2000-01-01~2026-08-12) → 해당일자(recordDate) 범위. 3행 모두 범위 안이라 기본값이 행을 줄이지 않는다. */
@@ -55,7 +57,7 @@ export const schema: PageSchema = {
   ],
   filters: ['운용사', '자펀드', '투자기업', '기간'],
   filterSpecs: {
-    운용사: { kind: 'select', options: ['KB증권'], def: 'KB증권', allLabel: null },
+    운용사: { kind: 'select', options: ['KB증권'], def: 'KB증권', allLabel: null, key: 'gpKey' },
     자펀드: { kind: 'select', options: ['현대동양농식품사모투자전문회사'], key: 'subFund' },
     투자기업: { kind: 'codeName', key: 'investee' },
     기간: { kind: 'dayRange', def: '2000-01-01~2026-08-12', key: 'recordDate' },
@@ -70,9 +72,9 @@ export const schema: PageSchema = {
   hideKpis: true,
   hideMetrics: true,
   sample: [
-    { no: 1, majorCat: '일반 사후관리', subFund: '유니 수산식품 투자조합1호', investee: '', recordDate: '2018-11-02', recordType: '기타', content: '민사소송 향후 전략(법무법인 한결, 10:30)', deliveryType: '회의', counterpart: '', documents: '' },
-    { no: 2, majorCat: '제재조치', subFund: '그린농림수산식품투자조합', investee: '', recordDate: '2013-04-08', recordType: '투자비율위반', content: '2년차 40% 투자비율 위반', deliveryType: '공문', counterpart: '', documents: '' },
-    { no: 3, majorCat: '일반 사후관리', subFund: '현대동양농식품사모투자전문회사', investee: '', recordDate: '2014-04-25', recordType: '기타', content: '- 2011년 5월 3일 금융위원회에 등록한 현대동양PEF\n- 동아원(주)에 대한 100억 투자집행 보류시킴(주가조작 혐의로 금융당국 조사중)\n- 320억 약정금액 중 3년차 투자금액 192억(60%) 중 100억 투자완료\n- 농식품투자조합이 아닌 PEF형태로 법제14조 의무투자비율 위반 적용 받지 않음\n- 다만, 규약 위반에 해당할 수 있으나, 추후 금융당국 조사 결과에 따라 관리보수 삭감 여부를 결정할 예정', deliveryType: '공문', counterpart: '', documents: '' },
+    { no: 1, majorCat: '일반 사후관리', subFund: '유니 수산식품 투자조합1호', investee: '', recordDate: '2018-11-02', recordType: '기타', content: '민사소송 향후 전략(법무법인 한결, 10:30)', deliveryType: '회의', counterpart: '', documents: '', gpKey: 'KB증권' },
+    { no: 2, majorCat: '제재조치', subFund: '그린농림수산식품투자조합', investee: '', recordDate: '2013-04-08', recordType: '투자비율위반', content: '2년차 40% 투자비율 위반', deliveryType: '공문', counterpart: '', documents: '', gpKey: 'KB증권' },
+    { no: 3, majorCat: '일반 사후관리', subFund: '현대동양농식품사모투자전문회사', investee: '', recordDate: '2014-04-25', recordType: '기타', content: '- 2011년 5월 3일 금융위원회에 등록한 현대동양PEF\n- 동아원(주)에 대한 100억 투자집행 보류시킴(주가조작 혐의로 금융당국 조사중)\n- 320억 약정금액 중 3년차 투자금액 192억(60%) 중 100억 투자완료\n- 농식품투자조합이 아닌 PEF형태로 법제14조 의무투자비율 위반 적용 받지 않음\n- 다만, 규약 위반에 해당할 수 있으나, 추후 금융당국 조사 결과에 따라 관리보수 삭감 여부를 결정할 예정', deliveryType: '공문', counterpart: '', documents: '', gpKey: 'KB증권' },
   ],
   provenance: {
     capturedAt: '2026-09-15',

@@ -16,6 +16,7 @@ export interface FilterField {
   options: string[];    // year/enum/multi 선택지 (그 외 [])
   columnKey?: string;   // 행 데이터에서 매칭할 키 (해결 가능할 때만 — 없으면 행필터 불가)
   allLabel?: null;      // null = 원문 select 에 '전체'가 없다(빈 선택지·칩 × 없음) — filterSpecs 전용
+  asOf?: true;          // 조회 시점(기준일자·기준년월·기준년도) — 셀 ≤ 값이면 통과(onOrBefore). filterSpecs mode:'asOf' 전용
 }
 
 /** 'a~b' ↔ [a, b] — 범위(from~to)·코드/명칭(code~name) 공용. 둘 다 비면 '' (= 비활성) */
@@ -33,6 +34,16 @@ const isEnumLabel = (s: string) => /(구분|유형|종류|상태|기준)/.test(s
     (2026-09-24: 종전엔 select 만 enum 이라 위원구분·사용여부 등이 자유 텍스트로 떨어졌다). makeRows 시드와 공유. */
 export const isEnumControl = (control: string): boolean => control === 'select' || control === 'radio' || control === 'switch';
 
+/** 조회 시점 판정 — 셀 날짜가 고른 시점 **이전(같은 날·달·해 포함)**이면 통과.
+    값 'YYYY' · 'YYYY-MM' · 'YYYY-MM-DD' 의 길이만큼 셀 앞부분을 잘라 문자열 비교한다(ISO 형식이라 문자열 비교 = 시간 비교).
+    날짜가 아닌 셀('-'·'')은 시점이 없어 거른다. 값이 비면 통과(비활성). typed 페이지·TablesPage 도 이 함수를 쓴다. */
+export function onOrBefore(cell: unknown, value: string): boolean {
+  if (!value) return true;
+  const rv = String(cell ?? '');
+  if (!/^\d{4}/.test(rv)) return false;
+  return rv.slice(0, value.length) <= value;
+}
+
 const year = (label: string, columnKey?: string): FilterField => ({ label, kind: 'year', options: [...YEAR_OPTIONS], columnKey });
 
 export function resolveFilterField(label: string, schema: PageSchema): FilterField {
@@ -47,7 +58,7 @@ export function resolveFilterField(label: string, schema: PageSchema): FilterFie
   // 0) 명시 명세(schema.filterSpecs, opt-in) — 원문 옵션·범위·코드/명칭을 싣는다. key 생략 = no-op.
   const spec = schema.filterSpecs?.[label];
   if (spec) {
-    const base = { label, columnKey: spec.key ? colKey(spec.key) : undefined, ...(spec.allLabel === null ? { allLabel: null } : {}) };
+    const base = { label, columnKey: spec.key ? colKey(spec.key) : undefined, ...(spec.allLabel === null ? { allLabel: null } : {}), ...(spec.mode === 'asOf' ? { asOf: true as const } : {}) };
     if (spec.kind === 'select' || spec.kind === 'multi') {
       /* options 생략 + key 가 sample 에 시드 → 행의 실제 값(비어있지 않은 고유값, 첫 등장 순)을 선택지로.
          목업 옵션을 옮겨 적으면 'KB증권' vs 행 'KB증권(주)' 처럼 정확일치(enum)가 깨져 조용히 0건이 된다.
@@ -109,7 +120,7 @@ export function resolveFilterField(label: string, schema: PageSchema): FilterFie
 }
 
 /** 값-필터 1개가 셀 값 하나를 통과시키는가(tag·columnKey 없음은 호출부가 거른다).
-    text/number = 부분일치 · year/month/enum/date = 정확일치 ·
+    asOf(조회 시점) = 셀 ≤ 값(onOrBefore) · text/number = 부분일치 · year/month/enum/date = 정확일치 ·
     dayRange/monthRange = 경계 포함 범위(한쪽이 비면 열린 경계 — 'YYYY-MM(-DD)' 은 문자열 비교가 곧 시간 비교) ·
     codeName = 명칭 부분일치(원문 행에 코드 컬럼이 없어 코드는 조회 파라미터로만 남는다) ·
     multi = 고른 값 중 하나라도 셀 값과 같으면 통과(OR) — 셀이 다중 선택 저장값이면 교집합이 있으면 통과. */
@@ -118,6 +129,7 @@ export function filterValueMatches(ff: FilterField, value: string, cell: unknown
     const cellVals = parseMulti(cell);
     return parseMulti(value).some((v) => cellVals.includes(v));
   }
+  if (ff.asOf) return onOrBefore(cell, value);
   const rv = String(cell ?? '');
   if (ff.kind === 'text' || ff.kind === 'number') return rv.toLowerCase().includes(value.toLowerCase());
   if (ff.kind === 'dayRange' || ff.kind === 'monthRange') {

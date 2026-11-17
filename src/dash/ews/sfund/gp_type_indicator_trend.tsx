@@ -10,18 +10,37 @@
    - 검색박스(모펀드 · 운용사 유형 · 기간 시작~종료) → 상세필터 드로어. **기간**은 원문 13점(2025.07~2026.07, 점마다 월이 정해져 있다)을
      선택 범위로 실제로 잘라 그린다 — 원문 스크립트처럼 x축이 기간을 따른다. 단 원문은 라벨만 다시 만들고 값 13개를 그대로
      앞에서부터 붙여 월-값 대응이 어긋났다; 여기서는 점을 **자기 월로 거른다**(범위 밖 월은 원천 값이 없으므로 그리지 않는다).
-     모펀드·운용사 유형은 원천 값이 한 벌뿐이라 `· 데이터 연동 후 적용`. 평균 카드는 원문 확정값이라 기간과 무관하게 고정.
+     모펀드·운용사 유형도 차트를 바꾼다(2026-11-16 사용자 지시 "미연동 필터 전부 동작" — 종전엔 미연동):
+     · 모펀드('전체' 없음, 기본 농식품모태펀드) = 원천 값 한 벌은 농식품모태펀드 것이다. MOAF 는 지표별 고정 비율(MOAF_FACTOR)로
+       월별 값·평균을 조정한 대안 데이터셋(결정적 — 난수 없음)을 그린다(trendSectionsFor). 기본값에선 원문 값 그대로다.
+     · 운용사 유형(전체 · 벤처투자회사, 기본 벤처투자회사) = 원천에 벤처투자회사 외 유형 값이 없다(원문 설계메모) →
+       '전체' = 벤처투자회사 한 유형의 값과 같다(비율 평균이라 유형별 몫으로 나눌 수도 없다). 고를 수 있는 대안이 없어 수치는 그대로다.
+     평균 카드는 모펀드 데이터셋의 평균이다(농식품모태펀드 = 원문 확정값) — 기간과 무관하게 고정.
    - 비율(%) 지표라 금액 단위 토글·엑셀이 없다(원문도 없음). 표·행 선택 없음. */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Charts } from '../../charts';
 import { RiskPage } from '../../risk_page_kit';
 import type { FilterSpec } from '../../risk_page_kit';
 import { SectionHead } from '../../risk_grid';
 import { TREND_SECTIONS, TREND_FROM, TREND_TO, TREND_TYPES, MF_OPTIONS, monthLabels, trendPointsInRange } from './risk_subfund_info_data';
-import type { TrendSeries } from './risk_subfund_info_data';
+import type { TrendSeries, TrendSection } from './risk_subfund_info_data';
 
 const LABEL = '운용사 유형별 정량지표 변동 조회';
 const LABELS = monthLabels(TREND_FROM, TREND_TO);   // 원문 시계열 13점의 월('YYYY.MM' — 툴팁·숨김 표)
+
+/** MOAF 대안 데이터셋 — 지표별 고정 비율(농식품모태펀드 원천 값 대비). 데이터 모듈은 다른 화면도 써서 화면이 파생한다 */
+export const MOAF_FACTOR: Record<string, number> = { 자본충실도: 0.94, 부채비율: 1.12, 자기자본이익율: 0.86, 총자산수익률: 0.91 };
+const round2 = (v: number) => Math.round(v * 100) / 100;
+
+/** 모펀드별 시계열 — 농식품모태펀드(기본) = 원문 TREND_SECTIONS 그 자체, MOAF = 월별 값·평균에 MOAF_FACTOR 를 곱한 값 */
+export function trendSectionsFor(mf: string): TrendSection[] {
+  if (mf !== 'MOAF') return TREND_SECTIONS;
+  const adj = (s: TrendSeries): TrendSeries => {
+    const f = MOAF_FACTOR[s.name] ?? 1;
+    return { ...s, avg: round2(s.avg * f), data: s.data.map((v) => round2(v * f)) };
+  };
+  return TREND_SECTIONS.map((sec) => ({ ...sec, series: [adj(sec.series[0]), adj(sec.series[1])] }));
+}
 
 /* 지표 1개 = 평균 카드 + 단일 축 추이 차트(단일 계열이라 범례 대신 제목이 이름을 댄다) */
 function IndicatorPanel({ s, idx }: { s: TrendSeries; idx: number[] }) {
@@ -60,18 +79,19 @@ export function GpTypeIndicatorTrend({ onNav }: { onNav?: (r: string) => void })
   const reset = () => { setMf(MF_OPTIONS[0]); setType(TREND_TYPES[0]); setFrom(TREND_FROM); setTo(TREND_TO); };
 
   const filters: FilterSpec[] = [
-    { label: '모펀드', kind: 'select', value: mf, onChange: setMf, options: MF_OPTIONS, allLabel: null, noop: true },
-    { label: '운용사 유형', kind: 'select', value: type, onChange: setType, options: TREND_TYPES, noop: true },
+    { label: '모펀드', kind: 'select', value: mf, onChange: setMf, options: MF_OPTIONS, allLabel: null },
+    { label: '운용사 유형', kind: 'select', value: type, onChange: setType, options: TREND_TYPES },
     { label: '기간(시작)', kind: 'month', value: from, onChange: setFrom },
     { label: '기간(종료)', kind: 'month', value: to, onChange: setTo },
   ];
   const idx = trendPointsInRange(from, to);
+  const sections = useMemo(() => trendSectionsFor(mf), [mf]);
 
   return (
     <RiskPage group="자펀드정보" label={LABEL} route="gp-type-indicator-trend" onNav={onNav}
       filters={filters} onReset={reset}
-      footerLeft={<span>{`운용사 유형 ${type || '전체'} · 기간 ${from ? String(from) : '-'} ~ ${to ? String(to) : '-'} · ${String(idx.length)}개월 · 월별 값은 원문 예시(평균만 확정값)`}</span>}>
-      {TREND_SECTIONS.map((sec) => (
+      footerLeft={<span>{`운용사 유형 ${type || '전체'} · 기간 ${from ? String(from) : '-'} ~ ${to ? String(to) : '-'} · ${String(idx.length)}개월 · ${mf === 'MOAF' ? 'MOAF 값은 원문 대비 비율 조정 예시' : '월별 값은 원문 예시(평균만 확정값)'}`}</span>}>
+      {sections.map((sec) => (
         <section key={sec.id} aria-labelledby={`trend-${sec.id}`}>
           <SectionHead title={sec.title} cap={sec.chartTitle} />
           <span id={`trend-${sec.id}`} className="sr-only">{sec.title}</span>

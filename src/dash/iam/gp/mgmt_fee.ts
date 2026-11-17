@@ -48,17 +48,20 @@ export const schema: PageSchema = {
      운용사·자펀드·계정구분·담당자·보고구분·지급구분·지급기간(모펀드 제외 — CHECK_REPORT 모펀드 규칙).
      지급기간은 원문 그대로 **범위**(dayRange, 기본 2026-05-12~2026-08-12)이고 payDate 로 거른다 — 종전의
      단일 `지급일자` 대체는 원문과 다른 조건이라 되돌렸다(범위는 filterSpecs 가 표현하므로 tag 로 떨어지지 않는다).
-     행 매칭(`key`) — 원문 옵션 값이 원문 행에 있는 항목만 거른다:
+     행 매칭(`key`):
      · 운용사(원문 16개 옵션 — 행 값 제이비인베스트먼트(주) 포함) → gp · 보고구분(관리보수) → reportType ·
        지급구분(지급·삭감) → payType · 자펀드(원문 옵션 '전체'뿐 → text 격하) → subFund 부분일치.
-     · 계정구분(chipGroup 전체·농식품·수산) · 담당자(원문 옵션 '전체'뿐 → text 격하) = 행에 값 없음 → no-op.
+     · 계정구분·담당자 = 원문 행에 칸이 없어 **숨은 행 속성**으로 거른다(그리드 컬럼은 늘리지 않는다 — 백엔드라면 조회 파라미터)
+       — 2026-11-16 사용자 지시 "미연동 필터 전부 동작"(종전 no-op):
+       계정구분(chipGroup 전체·농식품·수산) → acctType(원문 1행 = 메가농식품벤처투자조합3호 → '농식품', 수산은 0건) ·
+       담당자(원문 옵션 '전체'뿐) → manager(자펀드담당자 예시값 '양한솔') — 선택지는 행 실제 값(sample 고유값)으로 만든다.
      원문 1행(2026-07-03)은 기본 지급기간 안이라 기본값이 행을 줄이지 않는다. */
   filters: ['운용사', '자펀드', '계정구분', '담당자', '보고구분', '지급구분', '지급기간'],
   filterSpecs: {
     운용사: { kind: 'select', key: 'gp', options: ['제이비인베스트먼트(주)', '씨제이인베스트먼트(주)', '어니스트벤처스(유)', '미시간벤처캐피탈주식회사', '롯데벤처스(주)', '씨케이디창업투자(주)', '가이아벤처파트너스(유)', '타임윅스인베스트먼트(주)', '엔브이씨파트너스 주식회사', '하랑기술투자 주식회사', '시너지아이비투자 주식회사', '(주)데일리파트너스', '(주)탭엔젤파트너스', '인라이트벤처스(주)', '(주)넥스트지인베스트먼트', '(주)노틸러스인베스트먼트'] },
     자펀드: { kind: 'select', key: 'subFund' },
-    계정구분: { kind: 'select', options: ['농식품', '수산'] },
-    담당자: { kind: 'select' },
+    계정구분: { kind: 'select', options: ['농식품', '수산'], key: 'acctType' },
+    담당자: { kind: 'select', key: 'manager' },
     보고구분: { kind: 'select', options: ['관리보수'], key: 'reportType' },
     지급구분: { kind: 'select', options: ['지급', '삭감'], key: 'payType' },
     지급기간: { kind: 'dayRange', def: '2026-05-12~2026-08-12', key: 'payDate' },
@@ -73,7 +76,7 @@ export const schema: PageSchema = {
   hideKpis: true,
   hideMetrics: true,
   sample: [
-    { no: 1, gp: '제이비인베스트먼트(주)', subFund: '메가농식품벤처투자조합3호', reportType: '관리보수', payDate: '2026-07-03', payType: '지급', amount: 191482240, isConfirmed: '미확정' },
+    { no: 1, gp: '제이비인베스트먼트(주)', subFund: '메가농식품벤처투자조합3호', reportType: '관리보수', payDate: '2026-07-03', payType: '지급', amount: 191482240, isConfirmed: '미확정', acctType: '농식품', manager: '양한솔' },
   ],
   provenance: {
     capturedAt: '2026-09-15',

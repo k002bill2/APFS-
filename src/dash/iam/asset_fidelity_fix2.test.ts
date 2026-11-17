@@ -86,13 +86,16 @@ const SCREENS = [
   ['S1_43_관리보수관리.html', 'mgmt-fee'],
 ] as const;
 
-/** 행 매칭 키는 원문 판단(스키마 머리 주석)이라 대조에서 뺀다 — 나머지(kind·options·def·allLabel)는 원문 그대로여야 한다 */
+/** 행 매칭 키·판정 방식(mode asOf)은 원문 판단(스키마 머리 주석)이라 대조에서 뺀다 — 나머지(kind·options·def·allLabel)는 원문 그대로여야 한다 */
 const shape = (s: SchemaFilterSpec | undefined) => {
   if (!s) return undefined;
-  const { key: _key, ...rest } = s;
+  const { key: _key, mode: _mode, ...rest } = s;
   return rest;
 };
-const rowsOf = (sc: PageSchema) => sc.sample ?? [];
+/* 원문 행 = '전체' 없는 고정 기본값 select(allLabel null)의 기본값에 해당하는 행. 그 select 의 다른 값은 창작 변형 행을
+   sample 에 둔다(2026-11-17 전체 투자실적 데이터기준 월말확정) — 원문 대조에서 뺀다 */
+const rowsOf = (sc: PageSchema) => (sc.sample ?? []).filter((r) =>
+  Object.values(sc.filterSpecs ?? {}).every((f) => f.allLabel !== null || !f.key || !f.def || r[f.key] === undefined || r[f.key] === f.def));
 /** GenericListPage rowMatchesFilters 와 같은 판정(값-필터 AND, columnKey 없는 필터는 no-op) */
 const passes = (sc: PageSchema, row: Record<string, unknown>, fv: Record<string, string>) =>
   Object.entries(fv).every(([label, v]) => {
@@ -141,17 +144,19 @@ describe('A. 검색조건 = 원문 .searchbox (라벨 순서·옵션·기본값�
     }
   });
 
-  it('원문 옵션이 행 값과 어긋나는 select 는 no-op 이다(스키마 머리 주석 판단의 근거)', () => {
-    const cases: [string, string, string][] = [['investee-employment', '자펀드', 'subFund'], ['invest-due-diligence', '운용사', 'gp']];
-    for (const [route, label, rowKey] of cases) {
+  /* 2026-11-16 "미연동 필터 전부 동작": 표시 칸과 표기가 어긋나는 원문 옵션은 표시 칸이 아니라 원문 옵션 표기를 담은 숨은 키로 거른다(종전 no-op) */
+  it('원문 옵션이 행 값과 어긋나는 select 는 표시 칸이 아니라 숨은 키로 거른다(스키마 머리 주석 판단의 근거)', () => {
+    const cases: [string, string, string, string][] = [['investee-employment', '자펀드', 'subFund', 'subFundKey'], ['invest-due-diligence', '운용사', 'gp', 'gpKey']];
+    for (const [route, label, rowKey, hiddenKey] of cases) {
       const sc = resolveSchema(route);
       const vals = new Set(rowsOf(sc).map((r) => String(r[rowKey])));
       expect(sc.filterSpecs![label].options!.some((o) => vals.has(o)), `${route} · ${label} 원문 불일치`).toBe(false);
-      expect(resolveFilterField(label, sc).columnKey).toBeUndefined();
+      expect(resolveFilterField(label, sc).columnKey).toBe(hiddenKey);
     }
-    // S1_38 운용사: 원문 설계 메모가 "NH투자증권으로 조회했는데 2건이 함께 나옴"이라 적었다 → no-op
+    // S1_38 운용사: 원문 설계 메모가 "NH투자증권으로 조회했는데 2건이 함께 나옴"이라 적었다 → 표시 칸 gp 로는 거르지 않는다.
+    // 2026-11-16 "미연동 필터 전부 동작": 숨은 조회 운용사 queryGp(2행 공통 'NH투자증권')로 거른다 — 기본값이 2행을 그대로 둔다
     expect(M1('S1_38_운용사_재무정보_조회.html')).toContain('운용사 필터가 실제로 결과를 좁히는지');
-    expect(resolveFilterField('운용사', resolveSchema('gp-financial')).columnKey).toBeUndefined();
+    expect(resolveFilterField('운용사', resolveSchema('gp-financial')).columnKey).toBe('queryGp');
   });
 
   it('명세 라벨은 tag 로 떨어지지 않는다(표 0건 폴백 금지)', () => {

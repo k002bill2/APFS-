@@ -7,7 +7,11 @@
    - 기준기간 한쪽(또는 양쪽)이 비면 열린 범위로 본다 — 시작 없음 = 처음부터(전잔 0), 종료 없음 = 끝까지.
    - 만기여부: 만기일이 있고 기준일(today) 이전이면 '만기'(funds_model.isMatured). 만기일 없는 계좌는 '만기 전'.
    - 만기기간: 한쪽이라도 지정하면 만기일 없는 계좌는 제외. 개설기간도 같은 열린 범위 규칙.
-   - 미결재포함·잔액여부: 미결재 거래 데이터·잔액여부 의미가 없어 상태만 두고 거르지 않는다(화면 '· 데이터 연동 후 적용').
+   - 미결재포함·잔액여부(2026-11-16 사용자 지시 "미연동 필터 전부 동작" — 종전 no-op):
+     · 미결재포함 = 결재 대기 거래(demoUnapprovedTxns — 기준일 결정적 더미)를 더해 잔액을 다시 계산한다. 기본(해제) = 승인 거래만 = 종전 수치.
+     · 잔액여부 = 여/부 선택(2026-11-17 사용자 결정 — 종전 금액 입력·'그 금액 이상' 가정을 버림. 같은 드로어의 사용여부·만기여부와 같은 모양).
+       여 = 잔액(기간 말 closing)이 0 이 아닌 계좌 · 부 = 잔액 0 인 계좌 · 빈 값 = 전체. 여·부는 정확한 여집합이다(음수 잔액은 '여').
+       계좌 속성이 아니라 잔액 계산 뒤에 거르므로 filterAccounts 가 아니라 buildBalanceRows 에서 적용한다.
    - 소계 = 계정구분별(그리드), 〈 소계 〉 = 계정구분 안 계정과목별(출력). 합계는 계좌 행만 더한다(소계 중복 합산 금지). */
 import { FUNDS_ACCOUNT_TYPES } from './funds_data';
 import type { BankAccount, CashTxn } from './funds_data';
@@ -28,10 +32,10 @@ export interface BalanceFilter {
   active: YesNo;              // 사용여부
   matured: YesNo;             // 만기여부
   freeWithdraw: YesNo;        // 수시입출금여부
-  includeUnapproved: boolean; // 미결재포함(데이터 연동 후 적용)
+  includeUnapproved: boolean; // 미결재포함 — 결재 대기 거래까지 잔액에 더한다
   openFrom: string; openTo: string;           // 개설기간
   maturityFrom: string; maturityTo: string;   // 만기기간
-  balance: string;            // 잔액여부(숫자 — 데이터 연동 후 적용)
+  balance: YesNo;             // 잔액여부 — 여 = 잔액 있음(≠ 0) · 부 = 잔액 0
 }
 
 /** 기본값 — 계정구분 전체 · 기준기간 전월 1일 ~ 오늘 · 사용여부 여 · 만기여부 부 · 나머지 전체/빈 값 */
@@ -103,16 +107,40 @@ export function sortBalanceRows<T extends Pick<BalanceRow, 'accountType' | 'acco
   return [...rows].sort((a, b) => typeOrder(a.accountType) - typeOrder(b.accountType) || a.accountNo.localeCompare(b.accountNo));
 }
 
-/** 계좌 × 기준기간 잔액 → 정렬된 계좌 행. 기간 오류면 [] */
-export function buildBalanceRows(accounts: readonly BankAccount[], txns: readonly CashTxn[], f: BalanceFilter, today: string): BalanceRow[] {
+/** 미결재 거래 더미 — 결재 대기(미상신·상신) 전표의 입출금(실데이터에선 전표 결재 상태로 가른다).
+    funds_data 의 승인 거래(demoCashTxns)는 다른 자금관리 화면과 공유하는 시드 난수 흐름이라 손대지 않고 여기서 결정적으로 만든다(난수 없음):
+    사용 중인 수시입출금 계좌(보통예금·MMDA·기업자유예금)마다 기준일(today) 1건 — 순번 짝수 = 입금 2천만원×(순번+1), 홀수 = 출금 1천만원×(순번+1). */
+export function demoUnapprovedTxns(accounts: readonly BankAccount[], today: string): CashTxn[] {
+  const day = today.replace(/-/g, '');
+  return accounts.filter((a) => a.active && a.freeWithdraw).map((a, i): CashTxn => {
+    const dep = i % 2 === 0;
+    return {
+      id: `unapproved-${a.id}`, accountId: a.id, date: today,
+      deposit: dep ? 20_000_000 * (i + 1) : 0, withdraw: dep ? 0 : 10_000_000 * (i + 1),
+      partner: a.partner, memo: dep ? '출자금 수납(미결재)' : '운영비 지급(미결재)', slipNo: `${day}-${String(901 + i)}`,
+    };
+  });
+}
+
+/** 잔액 계산에 쓰는 거래 — 미결재포함이면 승인 거래 + 결재 대기 거래, 아니면 승인 거래만(같은 참조) */
+export const effectiveTxns = (txns: readonly CashTxn[], unapproved: readonly CashTxn[], includeUnapproved: boolean): readonly CashTxn[] =>
+  (includeUnapproved && unapproved.length ? [...txns, ...unapproved] : txns);
+
+/** 잔액여부 판정 — 여 = 잔액 ≠ 0 · 부 = 잔액 = 0 · 빈 값 = 전체(둘은 정확한 여집합) */
+export const balanceMatches = (closing: number, yn: YesNo): boolean => (yn === '여' ? closing !== 0 : yn === '부' ? closing === 0 : true);
+
+/** 계좌 × 기준기간 잔액 → 정렬된 계좌 행. 기간 오류면 [].
+    unapproved = 미결재 거래(미결재포함일 때만 더한다) · 잔액여부 = 여(잔액 ≠ 0) / 부(잔액 0) */
+export function buildBalanceRows(accounts: readonly BankAccount[], txns: readonly CashTxn[], f: BalanceFilter, today: string, unapproved: readonly CashTxn[] = []): BalanceRow[] {
   const from = normFrom(f.from), to = normTo(f.to);
+  const all = effectiveTxns(txns, unapproved, f.includeUnapproved);
   return sortBalanceRows(filterAccounts(accounts, f, today).map((a): BalanceRow => {
-    const b = periodBalance(txns, a.id, from, to);
+    const b = periodBalance(all, a.id, from, to);
     return {
       id: a.id, kind: 'account', accountId: a.id, accountType: a.accountType, accountNo: a.accountNo, currency: a.currency, subject: a.subject,
       ...b, openDate: a.openDate, bank: a.bank, branch: a.branch, memo: a.memo, maturityDate: a.maturityDate, rate: a.rate, purpose: a.purpose,
     };
-  }));
+  }).filter((r) => balanceMatches(r.closing, f.balance)));
 }
 
 const sumAmounts = (rows: readonly BalanceAmounts[]): BalanceAmounts => rows.reduce(

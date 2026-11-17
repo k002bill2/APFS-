@@ -7,10 +7,13 @@
    - 검색박스(모펀드·운용사·자펀드·계정구분·담당자·기준년월)
                            → 계정구분 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter).
                              검색어는 OFF(목업에 없음). 항목 순서는 목업 그대로.
-       ⚠ 담당자는 목업이 `data-dat="원천 데이터에 옵션·CDTP 없음 — 실 담당자 목록 미확인"`으로 못 박아
-         옵션을 지어내지 않는다(options=[], noop).
-       ⚠ 기준년월은 행에 기준년월 필드가 없어 **noop**(상태만, `· 데이터 연동 후 적용` 캡션).
-         초기값은 ''이다 — 목업의 `value="2026-05"`는 데모 표시값이라 필터 기본값으로 승격하지 않는다.
+       2026-11-16 사용자 지시("미연동 필터 전부 동작")로 종전 no-op 3항목이 행을 거른다(그리드 컬럼은 늘리지 않는다):
+       · 모펀드 = 숨은 행 속성 `mf`(블루오션수산투자조합2호 1건만 MOAF, 나머지 농식품모태펀드).
+       · 담당자 = 숨은 행 속성 `mgr`. 목업이 `data-dat="원천 데이터에 옵션·CDTP 없음 — 실 담당자 목록 미확인"`으로 못 박아
+         선택지는 행에 실린 값에서만 파생한다(옵션 창작 금지).
+       · 기준년월 = 조회 시점 — **등록일시(reg) ≤ 기준년월**인 조합만(onOrBefore). 그 시점에 등록돼 있던 조합의 보고다.
+         초기값은 ''(= 전부 통과)이다 — 목업의 `value="2026-05"`는 데모 표시값이라 필터 기본값으로 승격하지 않는다.
+         수정일시(upd)는 미보고 행이 null 이라 시점 기준으로 쓰지 않는다(고르는 순간 미보고 행이 사라진다).
    - 목록바(단위 전환)     → 툴바 우측 `단위` 캡션 + SegTabs(원/백만원/억원, **기본 원** = 목업 기본값).
                              그리드 `context={{ unit }}` + 단위 변경 시 `refreshCells({force:true})`로
                              본문·pinned 합계행을 함께 재포맷한다(asset_funding 동형).
@@ -38,6 +41,7 @@ import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { PeriodPicker } from '../../ui/period-picker';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { onOrBefore } from '../../schemas/filter_field';   // 조회 시점 판정(셀 ≤ 값) SSOT
 
 const { Button, IconBtn, StatusBadge, SegTabs } = UI;
 
@@ -59,25 +63,34 @@ export interface CashForecastRow {
   n2e: number | null; n2m: number | null; n2l: number | null;   // 다다음월 초순·중순·말
   att: '보고' | '미보고';    // 첨부파일(보고 상태)
   upd: string | null;        // 수정일시
+  /* 숨은 행 속성(그리드 컬럼 없음 — 상세필터만 거른다. 백엔드라면 조회 파라미터) */
+  mf: string;                // 모펀드
+  mgr: string;               // 담당자(모태펀드 담당자)
 }
 
 /* 숫자 N/A는 null(문자 '-' 금지) → 포매터가 '-'로 표시하고 합계는 0으로 취급.
    row1 = 목업 원천 샘플(예상금액 전부 미보고 → null), row2·3 = 목업 도메인 정합 예시. */
 const N = null;
-const DEMO: CashForecastRow[] = [
+export const DEMO: CashForecastRow[] = [
   { id: 'cf-1', no: 1, gp: '나우아이비캐피탈(주)', fn: '나우농식품투자펀드5호', acct: '농식품', reg: '2022-08-03',
     total: 14_000_000_000, a: 10_000_000_000, b: 7_000_000_000, rb: 7_000_000_000, bal: 3_000_000_000, tgt: 'O',
-    n1e: N, n1m: N, n1l: N, n2e: N, n2m: N, n2l: N, att: '미보고', upd: N },
+    n1e: N, n1m: N, n1l: N, n2e: N, n2m: N, n2l: N, att: '미보고', upd: N, mf: '농식품모태펀드', mgr: '양한솔' },
   { id: 'cf-2', no: 2, gp: '미래에셋벤처투자(주)', fn: '미래에셋농식품투자조합1호', acct: '농식품', reg: '2021-05-10',
     total: 20_000_000_000, a: 12_000_000_000, b: 9_000_000_000, rb: 9_000_000_000, bal: 3_000_000_000, tgt: 'O',
-    n1e: 500_000_000, n1m: 300_000_000, n1l: 200_000_000, n2e: 400_000_000, n2m: 0, n2l: 100_000_000, att: '보고', upd: '2026-05-15' },
+    n1e: 500_000_000, n1m: 300_000_000, n1l: 200_000_000, n2e: 400_000_000, n2m: 0, n2l: 100_000_000, att: '보고', upd: '2026-05-15', mf: '농식품모태펀드', mgr: '이성훈' },
   { id: 'cf-3', no: 3, gp: '수산벤처투자(주)', fn: '블루오션수산투자조합2호', acct: '수산', reg: '2023-02-20',
     total: 8_000_000_000, a: 5_000_000_000, b: 3_000_000_000, rb: 3_000_000_000, bal: 2_000_000_000, tgt: 'O',
-    n1e: 200_000_000, n1m: 100_000_000, n1l: 0, n2e: 150_000_000, n2m: 0, n2l: 0, att: '보고', upd: '2026-05-18' },
+    n1e: 200_000_000, n1m: 100_000_000, n1l: 0, n2e: 150_000_000, n2m: 0, n2l: 0, att: '보고', upd: '2026-05-18', mf: 'MOAF', mgr: '양한솔' },
 ];
 
 const PAGE_SIZE = 20;
 const ACCTS: Acct[] = ['농식품', '수산'];
+
+/** 상세필터의 모펀드·담당자·기준년월 조건(빈 값 = 미적용). 기준년월은 등록일시 ≤ 기준년월(onOrBefore).
+    컴포넌트 passes 가 부르고 테스트가 직접 검증한다 */
+export interface CashDrawerFilter { mf: string; mgr: string; ym: string }
+export const passesDrawerKeys = (r: CashForecastRow, f: CashDrawerFilter): boolean =>
+  (!f.mf || r.mf === f.mf) && (!f.mgr || r.mgr === f.mgr) && onOrBefore(r.reg, f.ym);
 
 /* 상태 배지 톤 — 목업 `.tag` 클래스 대응(tgt: b/n, att: g/a) */
 const TGT_TONE: Record<'O' | 'X', Tone> = { O: 'primary', X: 'muted' };   /* X=대상아님 → 목업 .tag n(중립) = muted */
@@ -217,12 +230,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 }
 
 /* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 */
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: ReactNode }) {
+function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </Wrap>
@@ -246,20 +259,18 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
   const [fAcct, setFAcct] = useState<'' | Acct>('');
   const [fGp, setFGp] = useState('');
   const [fFund, setFFund] = useState('');
-  const [fMf, setFMf] = useState('');     // 모펀드 — 행 컬럼 아님(no-op)
-  const [fMgr, setFMgr] = useState('');   // 담당자 — 원천 옵션 미확인(no-op, 옵션 없음)
-  const [fYm, setFYm] = useState('');     // 기준년월 — 행에 기준년월 필드가 없음(no-op)
+  const [fMf, setFMf] = useState('');     // 모펀드 — 숨은 행 속성 mf
+  const [fMgr, setFMgr] = useState('');   // 담당자 — 숨은 행 속성 mgr(선택지 = 행 값)
+  const [fYm, setFYm] = useState('');     // 기준년월 — 등록일시(reg) ≤ 기준년월
   const clearFilters = () => { setFAcct(''); setFGp(''); setFFund(''); setFMf(''); setFMgr(''); setFYm(''); };
 
-  /* no-op 필터(fMf·fMgr·fYm)는 passes·filterActive 양쪽에서 제외한다 —
-     passes에 넣으면 표가 비고, filterActive에 넣으면 외부필터가 거짓으로 켜진다 */
   const passes = useCallback((r: CashForecastRow) => {
     if (fAcct && r.acct !== fAcct) return false;
     if (fGp && r.gp !== fGp) return false;
     if (fFund && r.fn !== fFund) return false;
-    return true;
-  }, [fAcct, fGp, fFund]);
-  const filterActive = Boolean(fAcct || fGp || fFund);
+    return passesDrawerKeys(r, { mf: fMf, mgr: fMgr, ym: fYm });
+  }, [fAcct, fGp, fFund, fMf, fMgr, fYm]);
+  const filterActive = Boolean(fAcct || fGp || fFund || fMf || fMgr || fYm);
   useEffect(() => { apiRef.current?.onFilterChanged(); }, [passes]);
   /* 단위 변경 → 금액 셀(context.unit 참조) 재포맷. 본문 + pinned 합계행 모두 */
   useEffect(() => { apiRef.current?.refreshCells({ force: true }); }, [unit]);
@@ -271,6 +282,8 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
   const pinnedBottom = useMemo(() => [computeTotal(filteredRows)], [filteredRows]);
   const gpOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.gp))), [rows]);
   const fundOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.fn))), [rows]);
+  /* 담당자 옵션 — 원천에 옵션 목록이 없어 행에 실린 담당자에서만 파생(첫 등장 순) */
+  const mgrOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.mgr))), [rows]);
 
   const onGridReady = useCallback((e: GridReadyEvent<CashForecastRow>) => { apiRef.current = e.api; }, []);
   const onPaginationChanged = useCallback(() => {
@@ -319,8 +332,11 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
       filterChipsMenu="계정구분"
       filterChips={(['', ...ACCTS] as ('' | Acct)[]).map((a) => ({ key: a || 'all', label: a || '전체', active: fAcct === a, onSelect: () => setFAcct(a) }))}
       appliedFilters={[
+        { label: '모펀드', value: fMf, onClear: () => setFMf('') },
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
+        { label: '담당자', value: fMgr, onClear: () => setFMgr('') },
+        { label: '기준년월', value: fYm, onClear: () => setFYm('') },
       ]}
       toolbarRight={<>
         {/* 금액 단위 전환(목업 목록바 `.unit`) — 캡션 + 세그먼트. 현재 값은 SegTabs가 보여주므로 캡션은 '단위'만 */}
@@ -362,7 +378,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
       </div>
 
       {/* ── 상세필터 드로어 — 목업 검색박스 항목·순서 그대로(모펀드·운용사·자펀드·계정구분·담당자·기준년월).
-             검색어는 없다(목업 미포함). 컬럼 미연동 항목은 noop 캡션(apfs-detail-filter) ── */}
+             검색어는 없다(목업 미포함). 모펀드·담당자는 숨은 행 속성, 기준년월은 등록일시로 거른다(파일 머리 주석) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -371,13 +387,13 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
+            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
             {/* 계정구분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
-            <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
+            <DrawerField label="담당자"><DrawerSelect value={fMgr} onChange={setFMgr} options={mgrOptions} /></DrawerField>
             {/* 기준년월 = PeriodPicker month('YYYY-MM'). 트리거가 w-full이라 fit-content 래퍼 필수(apfs-datepicker 폭 규칙) */}
-            <DrawerField label="기준년월" plain noop>
+            <DrawerField label="기준년월" plain>
               <div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}>
                 <PeriodPicker mode="month" value={fYm} onChange={setFYm} ariaLabel="기준년월" />
               </div>

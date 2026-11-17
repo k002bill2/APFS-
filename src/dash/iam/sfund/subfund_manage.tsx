@@ -30,6 +30,7 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { RowFormModal } from '../../generic_list_modal';
 import { SubFundFormEditModal } from './subfund_form_modal';   // 결성조합 수정 — 섹션형 전용 모달
 import { APPLY_SCHEMA, SELECT_SCHEMA, OPT_AG, OPT_FG, OPT_FS, OPT_MANAGER, OPT_MF, CUR_YEAR } from './subfund_manage_schemas';
+import { onOrBefore } from '../../schemas/filter_field';   // 조회 시점 판정(셀 ≤ 값) — 기준일자
 import { PeriodPicker } from '../../ui/period-picker';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
 import { SubFundFilterPanel } from './subfund_filter_panel';   // ext.inlineFilters 화면(자펀드정보관리)의 칩 줄 위 필터
@@ -60,18 +61,36 @@ export interface SubFundRow {
   otype?: string; cogp?: string; ps?: string; pe?: string;
   must?: number | null; small?: number | null; r1?: number | null; r2?: number | null; r3?: number | null; r4?: number | null; nia?: number | null;
   extForm?: unknown;   // 확장 팝업이 마지막으로 저장한 원본 폼(재오픈 시 그대로 복원 — 열로 투영되지 않는 항목 보존). 소비처가 타입을 안다
+  /* 상세필터 숨은 속성 — 그리드 컬럼은 없다(백엔드라면 조회 파라미터로 거를 값). 2026-11-16 사용자 지시(미연동 필터 전부 동작)로
+     모펀드·계정구분·심사담당자·리스크담당자가 이 키로 행을 거른다(같은 값 eq). 선택지 표기(OPT_MF·OPT_AG·OPT_MANAGER) 그대로 싣는다.
+     확장 시드(자펀드정보관리 원문 행)처럼 비어 있으면 SubFundManage 가 결정적으로 채운다(withHidden) */
+  mf?: string; ag?: string; manager?: string; risk?: string;
 }
 
 /* 데모 데이터 — 4개 심사단계(신청·선정·결성·취소) 전부 포함. 금액 N/A=null(문자 '-' 아님), 텍스트 N/A='-'.
    도메인 정합: 납입(p1) 전제 없으면 회수·투자·배분=0. 금액 단위=원. */
 const N = null;
 export const DEMO: SubFundRow[] = [
-  { id: 'sf-1', no: 1, y: '2026', rt: '정기', ch: '1', stg: '신청', ctype: '-', cg: '-', cs: '-', gp1: '대성창업투자', gp2: '-', fn: '대성 스마트농업 스케일업 투자조합(가칭)', fd: '-', rd: '2026-05-20', yrs: N, dur: N, mat: '-', rate: N, lgp: N, lmo: '-', c1: N, c2: N, c3: N, v1: N, v2: N, v3: N, p1: 0, p2: 0, rec: 0, ti: 0, tir: N, mi: 0, mir: N, dist: 0, mul: N, st: '-', liq: '-' },
-  { id: 'sf-2', no: 2, y: '2026', rt: '정기', ch: '1', stg: '선정', ctype: '벤처투자조합', cg: '일반', cs: '그린바이오', gp1: '한국투자파트너스', gp2: '-', fn: '한투 그린바이오 투자조합', fd: '-', rd: '2026-03-10', yrs: N, dur: 8, mat: '-', rate: 8, lgp: 10, lmo: 'N', c1: 25e9, c2: 12e9, c3: 13e9, v1: 25e9, v2: 12e9, v3: 13e9, p1: 0, p2: 0, rec: 0, ti: 0, tir: N, mi: 0, mir: N, dist: 0, mul: N, st: '-', liq: '-' },
-  { id: 'sf-3', no: 3, y: '2018', rt: '정기', ch: '1', stg: '결성', ctype: '벤처투자조합', cg: '일반', cs: '스마트농업', gp1: 'IMM인베스트먼트', gp2: '-', fn: 'IMM 농식품 스마트투자조합', fd: '2018-06-15', rd: '2018-06-15', yrs: 8, dur: 8, mat: '2026-06-14', rate: 8, lgp: 10, lmo: 'N', c1: 30e9, c2: 15e9, c3: 15e9, v1: 30e9, v2: 15e9, v3: 15e9, p1: 28e9, p2: 14e9, rec: 5e9, ti: 22e9, tir: 73.3, mi: 15e9, mir: 50, dist: 3e9, mul: 0.96, st: '운영중', liq: '-' },
-  { id: 'sf-4', no: 4, y: '2010', rt: '정기', ch: '1', stg: '결성', ctype: '사모투자전문회사', cg: '특수목적', cs: '8대사업', gp1: 'KB증권', gp2: '유안타인베스트먼트', fn: '현대동양농식품사모투자전문회사', fd: '2011-04-04', rd: '2011-04-04', yrs: 15.2, dur: 7, mat: '2018-04-03', rate: 8, lgp: 10, lmo: 'N', c1: 32e9, c2: 15.7e9, c3: 16.3e9, v1: 32e9, v2: 15.7e9, v3: 16.3e9, p1: 26_642_000_000, p2: 13_071_000_000, rec: 32_713_473_321, ti: 24_999_990_000, tir: 78.1, mi: 19_531_240_000, mir: 61, dist: 30_272_493_937, mul: 1.14, st: '청산완료', liq: '2018-06-28' },
-  { id: 'sf-5', no: 5, y: '2025', rt: '수시', ch: '2', stg: '취소', ctype: '-', cg: '-', cs: '-', gp1: '○○인베스트먼트', gp2: '-', fn: '○○ 수산벤처 투자조합(신청취소)', fd: '-', rd: '2025-09-01', yrs: N, dur: N, mat: '-', rate: N, lgp: N, lmo: '-', c1: N, c2: N, c3: N, v1: N, v2: N, v3: N, p1: 0, p2: 0, rec: 0, ti: 0, tir: N, mi: 0, mir: N, dist: 0, mul: N, st: '-', liq: '-' },
+  { id: 'sf-1', no: 1, y: '2026', rt: '정기', ch: '1', stg: '신청', ctype: '-', cg: '-', cs: '-', gp1: '대성창업투자', gp2: '-', fn: '대성 스마트농업 스케일업 투자조합(가칭)', fd: '-', rd: '2026-05-20', yrs: N, dur: N, mat: '-', rate: N, lgp: N, lmo: '-', c1: N, c2: N, c3: N, v1: N, v2: N, v3: N, p1: 0, p2: 0, rec: 0, ti: 0, tir: N, mi: 0, mir: N, dist: 0, mul: N, st: '-', liq: '-', mf: '농식품모태펀드', ag: '농식품투자계정', manager: '양한솔', risk: '이성훈' },
+  { id: 'sf-2', no: 2, y: '2026', rt: '정기', ch: '1', stg: '선정', ctype: '벤처투자조합', cg: '일반', cs: '그린바이오', gp1: '한국투자파트너스', gp2: '-', fn: '한투 그린바이오 투자조합', fd: '-', rd: '2026-03-10', yrs: N, dur: 8, mat: '-', rate: 8, lgp: 10, lmo: 'N', c1: 25e9, c2: 12e9, c3: 13e9, v1: 25e9, v2: 12e9, v3: 13e9, p1: 0, p2: 0, rec: 0, ti: 0, tir: N, mi: 0, mir: N, dist: 0, mul: N, st: '-', liq: '-', mf: '농식품모태펀드', ag: '농식품투자계정(농안기금)', manager: '이성훈', risk: '양한솔' },
+  { id: 'sf-3', no: 3, y: '2018', rt: '정기', ch: '1', stg: '결성', ctype: '벤처투자조합', cg: '일반', cs: '스마트농업', gp1: 'IMM인베스트먼트', gp2: '-', fn: 'IMM 농식품 스마트투자조합', fd: '2018-06-15', rd: '2018-06-15', yrs: 8, dur: 8, mat: '2026-06-14', rate: 8, lgp: 10, lmo: 'N', c1: 30e9, c2: 15e9, c3: 15e9, v1: 30e9, v2: 15e9, v3: 15e9, p1: 28e9, p2: 14e9, rec: 5e9, ti: 22e9, tir: 73.3, mi: 15e9, mir: 50, dist: 3e9, mul: 0.96, st: '운영중', liq: '-', mf: '농식품모태펀드', ag: '농식품투자계정', manager: '양한솔', risk: '양한솔' },
+  { id: 'sf-4', no: 4, y: '2010', rt: '정기', ch: '1', stg: '결성', ctype: '사모투자전문회사', cg: '특수목적', cs: '8대사업', gp1: 'KB증권', gp2: '유안타인베스트먼트', fn: '현대동양농식품사모투자전문회사', fd: '2011-04-04', rd: '2011-04-04', yrs: 15.2, dur: 7, mat: '2018-04-03', rate: 8, lgp: 10, lmo: 'N', c1: 32e9, c2: 15.7e9, c3: 16.3e9, v1: 32e9, v2: 15.7e9, v3: 16.3e9, p1: 26_642_000_000, p2: 13_071_000_000, rec: 32_713_473_321, ti: 24_999_990_000, tir: 78.1, mi: 19_531_240_000, mir: 61, dist: 30_272_493_937, mul: 1.14, st: '청산완료', liq: '2018-06-28', mf: '농식품모태펀드', ag: '농식품투자계정', manager: '이성훈', risk: '이성훈' },
+  { id: 'sf-5', no: 5, y: '2025', rt: '수시', ch: '2', stg: '취소', ctype: '-', cg: '-', cs: '-', gp1: '○○인베스트먼트', gp2: '-', fn: '○○ 수산벤처 투자조합(신청취소)', fd: '-', rd: '2025-09-01', yrs: N, dur: N, mat: '-', rate: N, lgp: N, lmo: '-', c1: N, c2: N, c3: N, v1: N, v2: N, v3: N, p1: 0, p2: 0, rec: 0, ti: 0, tir: N, mi: 0, mir: N, dist: 0, mul: N, st: '-', liq: '-', mf: 'MOAF', ag: '수산투자계정', manager: '양한솔', risk: '이성훈' },
 ];
+
+/* 숨은 속성 채우기 — 확장 시드(자펀드정보관리 S2_73 원문 행)는 숨은 속성이 없다(원문 매핑 파일은 그대로 둔다).
+   비어 있으면 무엇을 골라도 탈락하므로 결정적으로 채운다: 모펀드·계정구분 = 첫 선택지(다수 값), 담당자 2종 = 행 순번으로 번갈아. 있는 값은 그대로 */
+export const withHidden = (rows: readonly SubFundRow[]): SubFundRow[] => rows.map((r, i) => ({
+  ...r, mf: r.mf ?? OPT_MF[0], ag: r.ag ?? OPT_AG[0], manager: r.manager ?? OPT_MANAGER[i % 2], risk: r.risk ?? OPT_MANAGER[(i + 1) % 2],
+}));
+const HIDDEN_KEYS = new Set<string>(['mf', 'ag', 'manager', 'risk']);   // 검색어 대상 밖 — 화면에 안 보이는 값에 검색이 걸리지 않게
+
+/* 숨은 속성·기준일자 판정(2026-11-16 — 종전엔 행을 거르지 않았다). 빈 값 = 미적용.
+   기준일자 = 그 날짜까지 등록된 자펀드(등록일시 rd ≤ 값, onOrBefore). 결성일(fd)은 미결성 행이 '-' 라 쓰지 않는다 */
+export interface HiddenFilters { mf: string; ag: string; manager: string; risk: string; asOf: string }
+export const hiddenPasses = (r: SubFundRow, f: HiddenFilters): boolean =>
+  (!f.mf || r.mf === f.mf) && (!f.ag || r.ag === f.ag) && (!f.manager || r.manager === f.manager)
+  && (!f.risk || r.risk === f.risk) && onOrBefore(r.rd, f.asOf);
 
 /* 합계 대상(가산 가능한 금액만). 비율·배수·연수는 합계 없음(null → '-') */
 const SUM_KEYS = ['c1', 'c2', 'c3', 'v1', 'v2', 'v3', 'p1', 'p2', 'rec', 'ti', 'mi', 'dist'] as const;
@@ -165,15 +184,15 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-/* 드로어 필드 래퍼 — 라벨 + 컨트롤. noop=컬럼 미연동 필터(캡션으로 no-op 신호, apfs-detail-filter 규약) */
+/* 드로어 필드 래퍼 — 라벨 + 컨트롤(항목이 전부 행을 거른다 — 미연동 캡션 없음) */
 /* plain=true → <label> 대신 <div>: PeriodPicker/DatePicker 트리거는 <button>이라 <label> 암묵 연결이 안 되고(ariaLabel로 명명),
    <label> 안 버튼 클릭이 라벨 활성화와 겹쳐 2회 토글되는 것을 막는다 */
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </Wrap>
@@ -204,7 +223,7 @@ export interface SubFundExt {
 }
 
 export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext?: SubFundExt }) {
-  const seed = ext?.seed ?? DEMO;
+  const seed = useMemo(() => withHidden(ext?.seed ?? DEMO), [ext]);   // 숨은 속성이 빈 확장 시드 행을 채운다(withHidden)
   const inline = ext?.inlineFilters === true;
   const cols = useMemo(() => (ext ? [...columnDefs, ...ext.extraColumns] : columnDefs), [ext]);
   const numKeys = useMemo(() => (ext ? new Set([...NUM_KEYS, ...ext.extraNumKeys]) : NUM_KEYS), [ext]);
@@ -237,11 +256,11 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
   const [fYear, setFYear] = useState('');
   const [fRt, setFRt] = useState('');
   const [fSt, setFSt] = useState('');
-  const [fMf, setFMf] = useState('');          // 모펀드 — 그리드 컬럼 아님(no-op)
-  const [fManager, setFManager] = useState(''); // 심사담당자 — 동적 사용자 데이터(no-op)
-  const [fAsOf, setFAsOf] = useState('');       // 기준일자(no-op)
-  const [fAg, setFAg] = useState('');           // 계정구분 — 행에 컬럼 없음(no-op)
-  const [fRisk, setFRisk] = useState('');       // 리스크담당자 — 동적 사용자 데이터(no-op)
+  const [fMf, setFMf] = useState('');          // 모펀드 — 숨은 행 속성 mf
+  const [fManager, setFManager] = useState(''); // 심사담당자 — 숨은 행 속성 manager
+  const [fAsOf, setFAsOf] = useState('');       // 기준일자 — 등록일시 rd ≤ 값(빈 값 = 전체)
+  const [fAg, setFAg] = useState('');           // 계정구분 — 숨은 행 속성 ag
+  const [fRisk, setFRisk] = useState('');       // 리스크담당자 — 숨은 행 속성 risk
   const clearFilters = () => { setFStage(''); setFText(''); setFFund(''); setFType(''); setFYear(''); setFRt(''); setFSt(''); setFMf(''); setFManager(''); setFAsOf(''); setFAg(''); setFRisk(''); };
   /* 인라인 패널 배선 — 같은 state 를 키로 묶어 넘긴다(드로어와 SSOT 공유) */
   const panelSet: Record<SubFundFilterKey, (v: string) => void> = {
@@ -251,15 +270,15 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
 
   const passes = useCallback((r: SubFundRow) => {
     if (fStage && r.stg !== fStage) return false;
-    if (fText && !Object.values(r).some((v) => typeof v !== 'object' && String(v ?? '').toLowerCase().includes(fText.toLowerCase()))) return false;   // 객체(extForm)는 검색 대상 아님
+    if (fText && !Object.entries(r).some(([k, v]) => !HIDDEN_KEYS.has(k) && typeof v !== 'object' && String(v ?? '').toLowerCase().includes(fText.toLowerCase()))) return false;   // 객체(extForm)·숨은 속성은 검색 대상 아님
     if (fFund && r.fn !== fFund) return false;
     if (fType && r.ctype !== fType) return false;
     if (fYear && r.y !== fYear) return false;
     if (fRt && r.rt !== fRt) return false;
     if (fSt && r.st !== fSt) return false;
-    return true;
-  }, [fStage, fText, fFund, fType, fYear, fRt, fSt]);
-  const filterActive = Boolean(fStage || fText || fFund || fType || fYear || fRt || fSt);
+    return hiddenPasses(r, { mf: fMf, ag: fAg, manager: fManager, risk: fRisk, asOf: fAsOf });
+  }, [fStage, fText, fFund, fType, fYear, fRt, fSt, fMf, fAg, fManager, fRisk, fAsOf]);
+  const filterActive = Boolean(fStage || fText || fFund || fType || fYear || fRt || fSt || fMf || fAg || fManager || fRisk || fAsOf);
   /* 필터가 바뀌면 선택을 전부 해제한다 — 걸러진 행의 체크가 보이지 않는 채로 남아 액션이 숨은 행에 걸리지 않게(2026-10-27) */
   useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
@@ -268,7 +287,9 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
   const filteredRows = useMemo(() => rows.filter(passes), [rows, passes]);
   /* pinned 합계행 — 행이 단계 전이·등록으로 바뀌므로 useMemo 재계산(참조 안정 + stale 방지, apfs-aggrid 계약4) */
   const pinnedBottom = useMemo(() => [computeTotal(filteredRows)], [filteredRows]);
-  const formedFunds = useMemo(() => rows.filter((r) => r.stg === '결성').map((r) => r.fn), [rows]);   // 자펀드 필터=결성 행만(결성돼야 자펀드 등재)
+  const formedFunds = useMemo(() => rows.filter((r) => r.stg === '결성').map((r) => r.fn), [rows]);
+  /* 담당자 선택지 = 기본 명단 ∪ 행에 저장된 이름(결성조합 수정은 담당자를 자유 입력한다 — 저장한 새 이름으로도 거를 수 있게, Codex P2) */
+  const managerOpts = useMemo(() => [...new Set([...OPT_MANAGER, ...rows.flatMap((r) => [r.manager ?? '', r.risk ?? ''])].filter(Boolean))], [rows]);   // 자펀드 필터=결성 행만(결성돼야 자펀드 등재)
 
   // 카드뷰→리스트 뷰 복귀 시 그리드가 재마운트되므로, 카드에서 고른 선택(selId)을 그리드 선택으로 되돌려 심사단계 액션이 이어지게 한다
   /* 선택 SSOT = selIds(배열). multiRow 라 복원도 **선택 전체**를 되돌린다 — 첫 id 만 되살리면 clearSelection 이
@@ -347,7 +368,8 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
     const row: SubFundRow = { ...DEMO[0], id: crypto.randomUUID(), no: nextNo, y: String(f.y || today().slice(0, 4)), rt: String(f.rt || '정기'), ch: String(f.ch || '1'), stg: '신청',
       ctype: f.ctype || '-', cg: '-', cs: f.cs || '-', gp1: f.gp1 || '(미입력)', gp2: '-', fn: f.fn || '(신규 접수 조합)', rd: String(f.applyDate || today()),
       dur: numOr(f.dur), rate: numOr(f.rate), c1: numOr(f.c1), c2: numOr(f.c2), c3: N, v1: numOr(f.c1), v2: numOr(f.c2), v3: N,
-      attach: f.attach || '' };   // 첨부파일명 보존(Codex P2) — DocumentsField가 vals.attach로 직렬화한 이름을 행에 실음
+      attach: f.attach || '',   // 첨부파일명 보존(Codex P2) — DocumentsField가 vals.attach로 직렬화한 이름을 행에 실음
+      mf: f.mf || '', ag: f.ag || '', manager: '', risk: '' };   // 숨은 속성 — 폼의 모펀드·계정구분을 싣고 담당자는 미배정(DEMO[0] 값을 물려받지 않게)
     setRows((prev) => [row, ...prev]);
     setModal(null);
     setSelIds([row.id]);
@@ -357,12 +379,14 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
     if (!single) return;
     const was = single.stg;
     const c1 = numOr(f.c1, single.c1), c2 = numOr(f.c2, single.c2);
+    /* 계정구분·자펀드담당자는 상세필터(계정구분·심사담당자)가 거르는 숨은 속성이라 저장값을 행에 싣는다(Codex P2 — 안 실으면 저장한 담당자로 걸러도 안 나온다) */
     patchRow(single.id, { stg: target, gp1: f.gp1 || single.gp1, fn: f.fn || single.fn, ctype: f.ctype || single.ctype, cs: f.cs || single.cs,
+      ag: f.ag ?? single.ag, manager: f.manager ?? single.manager,   // 폼에서 비우면 '' 로 저장(옛 값으로 되돌리지 않는다 — Codex P2 같은 계열)
       dur: numOr(f.dur, single.dur), rate: numOr(f.rate, single.rate), c1, c2, c3: c1 != null && c2 != null ? c1 - c2 : single.c3, v1: c1, v2: c2, v3: c1 != null && c2 != null ? c1 - c2 : single.v3 });
     setModal(null);
     toast.success(was === '신청' ? '선정조합으로 등록되었습니다 — 심사단계 선정' : '수정되었습니다');
   };
-  const selectInitial = single ? { id: single.id, y: single.y, gp1: single.gp1 === '-' ? '' : single.gp1, fn: single.fn, c1: single.c1 ?? '', c2: single.c2 ?? '', dur: single.dur ?? '', rate: single.rate ?? '', ctype: single.ctype === '-' ? '' : single.ctype, cs: single.cs === '-' ? '' : single.cs, my: single.stg === '결성' ? '결성' : single.stg === '취소' ? '취소' : '미결성', selDate: today() } : undefined;
+  const selectInitial = single ? { id: single.id, y: single.y, gp1: single.gp1 === '-' ? '' : single.gp1, fn: single.fn, c1: single.c1 ?? '', c2: single.c2 ?? '', dur: single.dur ?? '', rate: single.rate ?? '', ctype: single.ctype === '-' ? '' : single.ctype, cs: single.cs === '-' ? '' : single.cs, ag: single.ag ?? '', manager: single.manager ?? '', my: single.stg === '결성' ? '결성' : single.stg === '취소' ? '취소' : '미결성', selDate: today() } : undefined;
 
   const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
@@ -395,17 +419,22 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
       /* 인라인 모드 — 칩 줄 위 필터 패널. 고른 값은 아래 칩 줄에 적용 칩으로도 뜬다(2026-11-09 사용자 "옵션 선택시 필터칩이 하단에").
          칩 본문 클릭 = 패널의 같은 이름 칸으로 초점(filter_field_jump focusPanelField) — 칩 label 이 칸 aria-label 과 같아야 한다 */
       filterPanel={inline ? (
-        <SubFundFilterPanel onChange={(k, v) => panelSet[k](v)} fundOptions={formedFunds}
+        <SubFundFilterPanel onChange={(k, v) => panelSet[k](v)} fundOptions={formedFunds} managerOptions={managerOpts}
           values={{ text: fText, mf: fMf, fund: fFund, ag: fAg, type: fType, year: fYear, rt: fRt, manager: fManager, risk: fRisk, st: fSt, asOf: fAsOf }} />
       ) : undefined}
       /* 적용 중인 상세필터 — 항목별 개별 칩(각각 ×로 해제). 라벨=드로어 항목명(apfs-detail-filter) */
       appliedFilters={[
         { label: '검색어', value: fText, onClear: () => setFText('') },
+        { label: '모펀드', value: fMf, onClear: () => setFMf('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
+        { label: '계정구분', value: fAg, onClear: () => setFAg('') },
         { label: '자펀드구분', value: fType, onClear: () => setFType('') },
         { label: '사업연도', value: fYear && fYear + '년', onClear: () => setFYear('') },
         { label: '정기/수시', value: fRt, onClear: () => setFRt('') },
+        { label: '심사담당자', value: fManager, onClear: () => setFManager('') },
+        { label: '리스크담당자', value: fRisk, onClear: () => setFRisk('') },
         { label: '조합상태', value: fSt, onClear: () => setFSt('') },
+        { label: '기준일자', value: fAsOf, onClear: () => setFAsOf('') },
       ]}
       contextActions={selActions}
       toolbarRight={<>
@@ -479,7 +508,7 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
         </div>
       )}
 
-      {/* ── 상세필터 드로어 — 검색어 최상단 고정(apfs-detail-filter), 컬럼 미연동 필터는 캡션으로 no-op 신호 ── */}
+      {/* ── 상세필터 드로어 — 검색어 최상단 고정(apfs-detail-filter). 항목이 전부 행을 거른다(숨은 속성 포함) ── */}
       {!inline && <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -493,18 +522,19 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
             </DrawerField>
             {/* 원본(목업) 검색박스 순서 그대로: 모펀드·자펀드·계정구분·자펀드구분·사업연도·정기/수시·심사담당자·리스크담당자·조합상태·기준일자.
                 목업 11항목 중 심사단계는 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts).
-                그리드 컬럼과 미연동인 항목(모펀드·계정구분·담당자 2종·기준일자)은 noop 캡션(apfs-detail-filter). 연도/일자는 PeriodPicker 표준(apfs-datepicker) */}
-            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={OPT_MF} /></DrawerField>
+                그리드 컬럼이 없는 항목(모펀드·계정구분·담당자 2종)은 숨은 행 속성으로, 기준일자는 등록일시 ≤ 값으로 거른다(2026-11-16 — 종전 no-op).
+                연도/일자는 PeriodPicker 표준(apfs-datepicker) */}
+            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={OPT_MF} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={formedFunds} /></DrawerField>
-            <DrawerField label="계정구분" noop><DrawerSelect value={fAg} onChange={setFAg} options={OPT_AG} /></DrawerField>
+            <DrawerField label="계정구분"><DrawerSelect value={fAg} onChange={setFAg} options={OPT_AG} /></DrawerField>
             <DrawerField label="자펀드구분"><DrawerSelect value={fType} onChange={setFType} options={OPT_FG} /></DrawerField>
             {/* PeriodPicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW) 적용 — 형제 DatePicker 소비처(renderers·generic_list)와 동일 */}
             <DrawerField label="사업연도" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('year'), maxWidth: '100%' }}><PeriodPicker mode="year" value={fYear} onChange={setFYear} ariaLabel="사업연도" yearRange={[2000, CUR_YEAR + 1]} /></div></DrawerField>
             <DrawerField label="정기/수시"><DrawerSelect value={fRt} onChange={setFRt} options={['정기', '수시']} /></DrawerField>
-            <DrawerField label="심사담당자" noop><DrawerSelect value={fManager} onChange={setFManager} options={OPT_MANAGER} /></DrawerField>
-            <DrawerField label="리스크담당자" noop><DrawerSelect value={fRisk} onChange={setFRisk} options={OPT_MANAGER} /></DrawerField>
+            <DrawerField label="심사담당자"><DrawerSelect value={fManager} onChange={setFManager} options={managerOpts} /></DrawerField>
+            <DrawerField label="리스크담당자"><DrawerSelect value={fRisk} onChange={setFRisk} options={managerOpts} /></DrawerField>
             <DrawerField label="조합상태"><DrawerSelect value={fSt} onChange={setFSt} options={OPT_FS} /></DrawerField>
-            <DrawerField label="기준일자" noop plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" /></div></DrawerField>
+            <DrawerField label="기준일자" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" /></div></DrawerField>
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>

@@ -4,10 +4,13 @@
 
    | 리프                | 원본   | 표                                   | 검색조건(→ 행 필터 키)                     |
    |---------------------|--------|--------------------------------------|--------------------------------------------|
-   | 실물검증비교조회    | S3_101 | 투자자산(합계) · 미투자자산 거래(0건) · 미투자자산(합계) | 자펀드(—) · 기준년월(—)      |
-   | 유가증권비교조회    | 신규   | S3_101 투자자산 구조 1장(0건)        | 자펀드(—) · 기준년월(—)                    |
+   | 실물검증비교조회    | S3_101 | 투자자산(합계) · 미투자자산 거래(0건) · 미투자자산(합계) | 자펀드(fund) · 기준년월(ym) |
+   | 유가증권비교조회    | 신규   | S3_101 투자자산 구조 1장(0건)        | 자펀드(fund) · 기준년월(ym) — 행 0건이라 미적용 |
    | 공통코드조회        | S3_100 | 코드 목록                            | 코드구분(grp — 원문 LISTS 키)              |
-   (—) = 행에 대응 키 없음 → `· 데이터 연동 후 적용`. 원문 `조회` 버튼은 두지 않는다(즉시 반영).
+   fund·ym = 화면에 그리지 않는 숨은 행 키(2026-11-16 사용자 지시 "미연동 필터 전부 동작" — 종전 no-op).
+   실물검증은 VERIFY_PAGE_TABLES(원문 3장 + 키 시드 + 직전 월 더미 — trust_sub_data.ts)로 자펀드 = 같은 값 · 기준년월 = 같은 월(월별 대사 스냅샷)을 거른다.
+   유가증권비교조회는 원천 행이 없는 신규 화면이라(기본 '전체'에서 보일 행을 지어낼 수 없다) 키만 배선하고 TablesPage 가
+   미연동 캡션을 남긴다 — 행이 생기면 그대로 거른다. 원문 `조회` 버튼은 두지 않는다(즉시 반영).
 
    공통코드 2리프(이 파일 공통코드조회 · 모태수탁 공통코드)가 스키마 트랙이 아닌 이유: 목록이 **코드구분 선택으로 통째로 바뀌는** 화면이다(원문 `LISTS[코드구분]`,
    기본값 유형분류/거래구분, 나머지 구분은 원문 빈 상태 문구). 스키마 필터는 기본값이 없고, 코드구분은 컬럼에 없어
@@ -17,28 +20,30 @@
 import React from 'react';
 import { TablesPage } from '../../risk_tables_page';
 import type { TablesPageConfig } from '../../risk_tables_page';
-import { VERIFY_TABLES, VERIFY_FUND, VERIFY_BASE_YM, SECURITIES_COMPARE, CODE_TABLE, CODE_GROUPS, CODE_DEFAULT } from '../trust_sub_data';
+import { VERIFY_PAGE_TABLES, VERIFY_FUND, VERIFY_BASE_YM, SECURITIES_COMPARE, CODE_TABLE, CODE_GROUPS, CODE_DEFAULT } from '../trust_sub_data';
 
 type P = { onNav?: (r: string) => void };
 const SYSTEM = '수탁보고';
 
-const VERIFY: TablesPageConfig = {
+export const VERIFY: TablesPageConfig = {
   system: SYSTEM, group: '자펀드 수탁', label: '실물검증비교조회', route: 'trust-physical-compare',
-  tables: VERIFY_TABLES, unit: true,
+  tables: VERIFY_PAGE_TABLES, unit: true,
   filters: [
-    /* 원문 자펀드 select 옵션 1개('전체' 없음) — 조회 대상 파라미터(행에 자펀드 칸 없음) */
-    { label: '자펀드', kind: 'select', def: VERIFY_FUND, options: [VERIFY_FUND], allLabel: null },
-    { label: '기준년월', kind: 'month', def: VERIFY_BASE_YM },
+    /* 원문 자펀드 select 옵션 1개('전체' 없음) — 숨은 키 fund(전 행 그 값) */
+    { label: '자펀드', kind: 'select', def: VERIFY_FUND, options: [VERIFY_FUND], allLabel: null, key: 'fund' },
+    /* 기준년월 — 숨은 키 ym 같은 월(직전 월 더미 VERIFY_PRIOR_YM 이 있다) */
+    { label: '기준년월', kind: 'month', def: VERIFY_BASE_YM, key: 'ym', allLabel: null },   // 스냅샷 — 비우면 두 달이 섞인다
   ],
 };
 
-const SECURITIES_COMPARE_PAGE: TablesPageConfig = {
+export const SECURITIES_COMPARE_PAGE: TablesPageConfig = {
   system: SYSTEM, group: '자펀드 수탁', label: '유가증권비교조회', route: 'trust-securities-compare',
   tables: [SECURITIES_COMPARE], unit: true,
-  /* 형제 S3_101 검색조건 항목 준용 — 자펀드 옵션은 원천이 없어 비운다(형제 화면의 자펀드 값을 끌어오지 않는다) */
+  /* 형제 S3_101 검색조건 항목 준용 — 자펀드 옵션은 원천이 없어 비운다(형제 화면의 자펀드 값을 끌어오지 않는다).
+     키는 형제와 같은 fund·ym 으로 배선 — 행이 0건이라 지금은 TablesPage 가 미연동 캡션을 단다(머리말 참조) */
   filters: [
-    { label: '자펀드', kind: 'select', def: '', options: [] },
-    { label: '기준년월', kind: 'month', def: '' },
+    { label: '자펀드', kind: 'select', def: '', options: [], key: 'fund' },
+    { label: '기준년월', kind: 'month', def: '', key: 'ym' },
   ],
 };
 

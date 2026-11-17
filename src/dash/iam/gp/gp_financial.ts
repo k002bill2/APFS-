@@ -8,9 +8,13 @@
 
    ── 검색조건(S1_38:221-234) ── 원문은 **운용사·기준년월 2항목**이다(원문에 없는 GP구분 필터는 뺐다).
    · 운용사 = 원문 형태 그대로 `코드 입력(NHLIB) + 명칭(NH투자증권) + G.P 검색` 묶음(codeName, 기본 NHLIB~NH투자증권).
-     **no-op** 이다: 원문 설계 메모(S1_38:281)가 "운용사=NH투자증권으로 조회했는데 결과 그리드엔 NH투자증권·농협은행
-     2건이 함께 나옴 — 운용사 필터가 실제로 결과를 좁히는지 확인 필요"라 적었다. 기본값으로 거르면 원문 2행이 1행이 된다.
-     행에 GP 코드 컬럼도 없다. 검색 팝업(GPLIST) 대신 명칭 입력이 검색어 역할을 한다.
+     원문 설계 메모(S1_38:281)가 "운용사=NH투자증권으로 조회했는데 결과 그리드엔 NH투자증권·농협은행 2건이 함께 나옴"이라
+     적었다 — 운용사명(gp)으로 거르면 기본값만으로 원문 2행이 1행이 된다. 그래서 표시 칸 gp 가 아니라 **숨은 행 속성
+     queryGp(이 행을 돌려준 조회 운용사 = 원문 캡처의 조회값 'NH투자증권', 2행 공통)** 로 명칭 부분일치한다
+     — 2026-11-16 사용자 지시 "미연동 필터 전부 동작"(종전 no-op). 그리드 컬럼은 늘리지 않는다.
+     원문 GPLIST 의 다른 운용사(KB증권)로 조회하면 0건이다 — 더미 행을 sample 에 두지 않는다(sample = 원문 행이라
+     "기본값 = sample 전 행" 불변식(asset_fidelity_fix2)과 충돌한다).
+     행에 GP 코드 컬럼은 없다 — 코드는 조회 파라미터로만 남는다(codeName 판정 규약). 검색 팝업(GPLIST) 대신 명칭 입력이 검색어 역할을 한다.
    · 기준년월 = 원문 월 선택 1개(기본 2026-01) → baseYm 정확일치. 2행 모두 2026-01 이라 기본값이 행을 줄이지 않는다. */
 import type { PageSchema } from '../../schemas/types';
 
@@ -44,7 +48,7 @@ export const schema: PageSchema = {
   /* 라벨 '운용사'는 컬럼 라벨('운용사명')과 달라도 filterSpecs 가 명시 명세로 해결한다 — tag 로 떨어지지 않는다. */
   filters: ['운용사', '기준년월'],
   filterSpecs: {
-    운용사: { kind: 'codeName', def: 'NHLIB~NH투자증권' },
+    운용사: { kind: 'codeName', def: 'NHLIB~NH투자증권', key: 'queryGp' },
     기준년월: { kind: 'month', def: '2026-01', key: 'baseYm' },
   },
   searchable: true,
@@ -55,8 +59,8 @@ export const schema: PageSchema = {
   hideMetrics: true,
   unitToggle: true,
   sample: [
-    { no: 1, gp: 'NH투자증권', gpType: '증권회사', baseYm: '2026-01', currentAssets: 2644195000000, nonCurrentAssets: 79024930000000, totalAssets: 81669125000000, currentLiab: 11946785000000, nonCurrentLiab: 60596193000000, totalLiab: 72542978000000, capital: 1943851000000, totalEquity: 9126147000000, sales: 2930572000000, cogs: 960201000000, sga: 906334000000, ordinaryProfit: 968385000000, netProfit: 748144000000 },
-    { no: 2, gp: '농협은행', gpType: '은행', baseYm: '2026-01', currentAssets: 32113041000000, nonCurrentAssets: 416769614000000, totalAssets: 448882655000000, currentLiab: 340863906000000, nonCurrentLiab: 81789985000000, totalLiab: 422653891000000, capital: 2423567000000, totalEquity: 26228764000000, sales: 17491329000000, cogs: 12145119000000, sga: 2851443000000, ordinaryProfit: 2125463000000, netProfit: 1565023000000 },
+    { no: 1, gp: 'NH투자증권', gpType: '증권회사', baseYm: '2026-01', currentAssets: 2644195000000, nonCurrentAssets: 79024930000000, totalAssets: 81669125000000, currentLiab: 11946785000000, nonCurrentLiab: 60596193000000, totalLiab: 72542978000000, capital: 1943851000000, totalEquity: 9126147000000, sales: 2930572000000, cogs: 960201000000, sga: 906334000000, ordinaryProfit: 968385000000, netProfit: 748144000000, queryGp: 'NH투자증권' },
+    { no: 2, gp: '농협은행', gpType: '은행', baseYm: '2026-01', currentAssets: 32113041000000, nonCurrentAssets: 416769614000000, totalAssets: 448882655000000, currentLiab: 340863906000000, nonCurrentLiab: 81789985000000, totalLiab: 422653891000000, capital: 2423567000000, totalEquity: 26228764000000, sales: 17491329000000, cogs: 12145119000000, sga: 2851443000000, ordinaryProfit: 2125463000000, netProfit: 1565023000000, queryGp: 'NH투자증권' },
   ],
   provenance: {
     capturedAt: '2026-09-15',

@@ -8,7 +8,8 @@
          목업 [조회] 버튼은 즉시 반영형이라 없다.
        ⚠ 목업 기본 선택값(계정구분 '농식품' · 운용사 'KB증권(주)' · 자펀드 selected)은 **적용하지 않는다** —
          6행 전부가 같은 값이라 첫 화면이 "필터가 걸린 상태"로 보인다(열린 경계 = 전체).
-       ⚠ 모펀드는 행 컬럼이 아니라 no-op(`· 데이터 연동 후 적용` 캡션)이다.
+       모펀드는 그리드 컬럼이 아닌 숨은 행 속성 `mf` 로 거른다(2026-11-16 "데이터 연동 후 적용 전부 동작" — 종전 no-op).
+         6행이 한 자펀드의 조합원이라 모펀드도 하나(농식품모태펀드)다 → MOAF 를 고르면 0건이 정상이다(행 단위로 값을 나누지 않는다).
        ⚠ 운용사 옵션은 **행에서 파생**한다(관측값 KB증권(주) 1건). 목업의 IMM인베스트먼트·한국투자파트너스는
          원문 주석이 "그 외 옵션 예시"라고 밝힌 예시값이라 옮기지 않는다(옵션 창작 금지).
    - 목록 그리드(13컬럼 단일 헤더) → AG Grid(apfs-aggrid) + **pinned 합계행**(목업 tfoot).
@@ -60,6 +61,7 @@ const { Button, IconBtn, StatusBadge } = UI;
 /* 자펀드 컨텍스트 — 목업에서 6행 모두가 공유하는 상위 고정값(운용사·자펀드·계정구분·등록일·결성액).
    `as const`로 acc를 리터럴 타입에 고정해 행 스프레드가 유니온과 맞는다. */
 const FUND = {
+  mf: '농식품모태펀드',
   gp: 'KB증권(주)',
   fn: '현대동양농식품사모투자전문회사',
   acc: '농식품',
@@ -69,6 +71,7 @@ const FUND = {
 
 export interface FundMemberRow {
   id: string; no: number;
+  mf: string;                  // 모펀드 — 숨은 속성(그리드 컬럼 없음, 상세필터 모펀드가 거른다)
   gp: string;                  // 운용사
   fn: string;                  // 자펀드
   acc: '농식품' | '수산';       // 계정구분(목업 설계메모: '자펀드계정' → 표준어 '계정구분')
@@ -195,12 +198,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-/* 드로어 필드 래퍼 — noop=컬럼 미연동 필터(캡션으로 no-op 신호)(apfs-detail-filter) */
-function DrawerField({ label, noop, children }: { label: string; noop?: boolean; children: React.ReactNode }) {
+/* 드로어 필드 래퍼 — 라벨 + 컨트롤(항목이 전부 행을 거른다 — 미연동 캡션 없음) */
+function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </label>
@@ -239,16 +242,17 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
   const [fAcc, setFAcc] = useState<'' | Acc>('');
   const [fGp, setFGp] = useState('');
   const [fFund, setFFund] = useState('');
-  const [fMf, setFMf] = useState('');       // 모펀드 — 행 컬럼 아님(no-op)
+  const [fMf, setFMf] = useState('');       // 모펀드 — 숨은 행 속성 mf
   const clearFilters = () => { setFAcc(''); setFGp(''); setFFund(''); setFMf(''); };
 
   const passes = useCallback((r: FundMemberRow) => {
     if (fAcc && r.acc !== fAcc) return false;
     if (fGp && r.gp !== fGp) return false;
     if (fFund && r.fn !== fFund) return false;
+    if (fMf && r.mf !== fMf) return false;
     return true;
-  }, [fAcc, fGp, fFund]);
-  const filterActive = Boolean(fAcc || fGp || fFund);
+  }, [fAcc, fGp, fFund, fMf]);
+  const filterActive = Boolean(fAcc || fGp || fFund || fMf);
   /* 필터가 바뀌면 선택을 전부 해제한다 — 걸러진 행의 체크가 보이지 않는 채로 남아 액션이 숨은 행에 걸리지 않게(2026-10-27) */
   useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
@@ -386,6 +390,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
       filterChips={(['', ...ACC_OPTS] as ('' | Acc)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fAcc === s, onSelect: () => setFAcc(s) }))}
       /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
       appliedFilters={[
+        { label: '모펀드', value: fMf, onClear: () => setFMf('') },
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
       ]}
@@ -445,7 +450,7 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
+            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             {/* 운용사 — 옵션은 행 파생(관측 1건). 목업의 예시 옵션은 옮기지 않는다 */}
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
