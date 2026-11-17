@@ -1,10 +1,10 @@
 /* 조기경보 관리 — 관리형 리스트 페이지 (조기경보 > 조기경보 > 조기경보 관리, route `risk-manage`).
    출처: S2_51_조기경보_조회.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
-   골드 레퍼런스: `regular_report_manage.tsx`(월 범위 PeriodPicker · 합계행/행선택 없음 · 드로어+적용칩).
+   골드 레퍼런스: `regular_report_manage.tsx`(월 범위 PeriodPicker · 합계행/행선택 없음 · 필터 칸+적용칩).
 
    구성(목업 → 우리 규약):
    - 검색박스(운용사·자펀드·기간(시작~종료)·등급 멀티셀렉트)
-       → **툴바 좌 = `전체` + 등급 3칩** + 상세필터 드로어(Sheet). 드로어 항목은
+       → **툴바 좌 = `전체` + 등급 3칩** + 칩 줄 위 인라인 필터 패널(2026-11-17 드로어 폐기 — apfs-detail-filter). 패널 칸은
          목업 검색박스 순서 그대로(운용사·자펀드·**기간**) — 목업도 `<label for="f-from">기간</label>` 한 줄이라
          시작~종료 두 컨트롤을 `~`로 묶은 **1항목**이다. 검색어는 OFF(목업에 없음).
          목업의 [조회] 버튼은 즉시 반영형이라 페이지엔 만들지 않는다(골드 동일 판단).
@@ -32,8 +32,8 @@
        등급 칩 건수(facet)도 그 기간 행으로 센다. 빈 값은 여전히 허용하지 않는다
        (PeriodPicker 재클릭 해제 시 목업 기본값 `2026-07`로 복귀).
        표시 위치는 **툴바 우측 캡션 → 칩 행 인라인 적용칩**으로 옮겼다(2026-09-21 사용자 지시).
-       값이 늘 있으므로 **기본값(`2026-07 ~ 2026-07`)과 다를 때만** 칩을 띄우고, ×는 '제거'가 아니라
-       **기본값 복귀**다. 칩 항목명은 드로어 캡션과 같은 `기간`이고(칩 → 항목 이동), ×의 aria-label은
+       값이 늘 있으므로 기본값(`2026-07 ~ 2026-07`)이어도 칩을 늘 띄우고(2026-11-17 사용자 결정 (a) — 패널 칸이 값을 안 보여
+       칩이 유일한 표시), ×는 기본값과 다를 때만 붙고 '제거'가 아니라 **기본값 복귀**다. 칩 항목명은 패널 칸 label 과 같은 `기간`이고(칩 → 칸 이동), ×의 aria-label은
        공용 `applied_filters.tsx`가 정하는 `기간 필터 제거`다.
    - 목록 그리드 → AG Grid **단일 헤더 7컬럼**(목업 `render()` head 그대로).
        합계행 없음(가산 가능한 금액 컬럼이 없다) · 2단 그룹헤더 없음 · **행 선택 없음**(읽기전용 모니터링
@@ -63,17 +63,14 @@ import { UI } from '../../components';
 import type { Tone } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
-import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
-import { PeriodPicker } from '../../ui/period-picker';
 import { EarlyWarningTrendModal } from './early_warning_trend_modal';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSelect, PanelRange } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { EW_BASE_YM, EW_PREV_YM } from './ew_period';
 
 const { Button, IconBtn, StatusBadge } = UI;
@@ -205,21 +202,7 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-
 const ALL_GRADES_ON: Record<EarlyWarningGrade, boolean> = { 정상: true, 주의: true, 경고: true };
-
-/* 기간 PeriodPicker 래퍼 — 트리거가 `w-full`이라 감싸지 않으면 드로어 전 폭으로 늘어난다(apfs-datepicker).
-   폭 하한은 공용 SSOT `controlMinWidth`(month는 select/enum과 같은 130). 참조 `audit_log.tsx:85` 동형. */
-const monthWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' };
 
 /* ⚠ `overlayNoRowsTemplate`은 **rowData 자체가 빈** 경우에만 쓰인다. 필터로 0행이 된 경우는 AG Grid가
    별도 오버레이(`noMatchingRows`)를 띄워 기본 영문 "No Matching Rows"가 그대로 노출된다(v35 실측).
@@ -242,9 +225,8 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [chartOpen, setChartOpen] = useState(false);
 
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   /* 필터 SSOT — 등급(다중 토글, 초기 3개 ON) · 운용사 · 자펀드(External Filter) · 기간(rowData 단계 — periodRows) */
   const [grades, setGrades] = useState<Record<EarlyWarningGrade, boolean>>(ALL_GRADES_ON);
@@ -321,7 +303,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
   /* `전체` 칩 건수 = 등급 facet의 합(상수 금지 — 운용사·자펀드 필터가 걸리면 함께 줄어야 한다) */
   const gradeTotal = GRADES.reduce((s, g) => s + gradeFacet[g], 0);
-  /* 기준년월 칩(항목명 '기간' = 드로어 캡션, 칩 → 항목 이동) 노출 조건 — 값이 늘 있으므로 **목업 기본값과 다를 때만** 띄운다(선례 custody_confirm_manage) */
+  /* 기준년월 칩(항목명 '기간' = 패널 칸 label, 칩 → 칸 이동)의 × 조건 — 기본값과 다를 때만 × (칩은 늘 — 2026-11-17 사용자 결정 (a)) */
   const periodChanged = fFrom !== BASE_FROM || fTo !== BASE_TO;
 
   return (
@@ -341,16 +323,27 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
         ...GRADES.map((g) => ({ key: g, label: g, count: String(gradeFacet[g]), active: !allGradesOn && grades[g], onSelect: () => toggleGrade(g) })),
       ]}
       /* 적용 필터 칩 — 값만 표시(접두사 없음) + ×.
-         ⚠ 기준년월은 행을 거르지 않는 조회 기준이라 값이 늘 있다 → **기본값과 다를 때만** 칩을 띄우고,
-           ×는 '제거'가 아니라 **기본값 복귀**다. */
+         ⚠ 기준년월은 값이 늘 있다 → 칩은 늘 띄우고(사용자 결정 (a)), ×는 기본값과 다를 때만 — '제거'가 아니라 **기본값 복귀**다. */
       appliedFilters={[
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
-        { label: '기간', value: periodChanged ? String(fFrom) + ' ~ ' + String(fTo) : '', onClear: () => { setFFrom(BASE_FROM); setFTo(BASE_TO); } },   // 드로어 캡션 '기간'과 같게(칩 → 항목 이동)
+        { label: '기간', value: String(fFrom) + ' ~ ' + String(fTo), onClear: periodChanged ? () => { setFFrom(BASE_FROM); setFTo(BASE_TO); } : undefined },   // 패널 칸 label '기간'과 같게(칩 → 칸 이동)
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 순서 그대로(운용사·자펀드·기간 — 시작 ~ 종료가 한 항목).
+         검색어는 미사용(OFF, 목업에 없음). 등급은 툴바 칩이 소유한다(패널 중복 배치 금지).
+         기간 — 목업 `<label for="f-from">기간</label>` 한 줄(시작 `~` 종료), **`mode`는 `month`**다: 목업이
+         `aria-label="기간 시작 (기준월)"`로 월 단위이고 행 데이터·그리드 컬럼도 `YYYY-MM`이라 일 단위로 바꾸면 조회 기준이 행과 어긋난다.
+         기준년월이 이 범위 안인 행만 보인다(2026-11-17). 빈 값은 허용하지 않고 해제 시 목업 기본값으로 되돌린다
+         (선례 custody_confirm_manage 기준일자). [초기화] = 기본값(기간 2026-07 ~ 2026-07 · 등급 전체) 복원 */
+      filterPanel={
+        <FilterPanel label="조기경보 관리 조건" onReset={clearFilters}>
+          <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={gpOptions} />
+          <PanelSelect label="자펀드" value={fFund} onChange={setFFund} options={fundOptions} />
+          <PanelRange label="기간" mode="month" from={fFrom} to={fTo} onFrom={(v) => setFFrom(v || BASE_FROM)} onTo={(v) => setFTo(v || BASE_TO)} />
+        </FilterPanel>
+      }
       toolbarRight={<>
         <Button variant="outline" size="sm" leadingIcon="chart" onClick={() => setChartOpen(true)}>차트</Button>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
@@ -380,40 +373,6 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 조건에 해당하는 자료가 없습니다.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(운용사·자펀드·기간 — 시작 ~ 종료가 한 항목).
-             검색어는 미사용(OFF, 목업에 없음). 등급은 툴바 칩이 소유한다(드로어 중복 배치 금지) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">조기경보 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            {/* 기간 — 목업 `<label for="f-from">기간</label>` 한 줄(시작 `~` 종료). 마크업은 감사로그
-                드로어(`audit_log.tsx:244-250`)를 그대로 따르되 **`mode`만 `month`**다: 목업이
-                `aria-label="기간 시작 (기준월)"`로 월 단위이고 행 데이터·그리드 컬럼도 `YYYY-MM`이라
-                일 단위로 바꾸면 조회 기준이 행과 어긋난다.
-                기준년월이 이 범위 안인 행만 보인다(2026-11-17). 빈 값은 허용하지 않고 해제 시 목업 기본값으로 되돌린다
-                (선례 custody_confirm_manage 기준일자). PeriodPicker는 `<label>`로 명명되지 않으므로
-                `plain` + `ariaLabel`, 트리거가 `w-full`이라 fit-content 래퍼가 필수. */}
-            <DrawerField label="기간" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={monthWrap}><PeriodPicker mode="month" value={fFrom} onChange={(v) => setFFrom(v || BASE_FROM)} ariaLabel="기간 시작" /></div>
-                <span className="text-caption">~</span>
-                <div style={monthWrap}><PeriodPicker mode="month" value={fTo} onChange={(v) => setFTo(v || BASE_TO)} ariaLabel="기간 종료" /></div>
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {chartOpen && <EarlyWarningTrendModal onClose={() => setChartOpen(false)} />}
 

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 /* 자펀드정보관리 인라인 필터(2026-11-09 사용자 지시 — "상세필터 drawer 삭제하고 필터칩 라인 위에 필터를 구성").
-   같은 SubFundManage 를 쓰는 자펀드 관리(route subfund)는 드로어를 그대로 둔다(ext.inlineFilters opt-in).
-   - 인라인: 검색어 + select 8 + 사업연도·기준일자 PeriodPicker = 11칸, 항목명은 placeholder·접근名. [상세필터] 버튼·드로어·적용 칩 없음.
+   2026-11-17 전 화면 확대(상세필터 드로어 폐기) — 같은 SubFundManage 를 쓰는 자펀드 관리(route subfund)도 같은 패널이다
+   (종전 ext.inlineFilters opt-in 플래그는 사라졌다).
+   - 인라인: 검색어 + select 8 + 사업연도·기준일자 PeriodPicker = 11칸, 항목명은 placeholder·접근名. [상세필터] 버튼·드로어 없음.
    - 값을 바꾸면 즉시 그리드 External Filter 가 거른다(apfs-detail-filter "즉시 반영").
    AG Grid 는 jsdom 에서 무거워 props 만 기록하는 빈 컴포넌트로 바꾼다(missing_evidence_screen.test 와 같은 방식). globals:false → afterEach cleanup. */
 import React from 'react';
@@ -39,8 +40,11 @@ const passingIds = () => {
 const SELECTS = ['모펀드', '자펀드', '계정구분', '자펀드구분', '정기/수시', '심사담당자', '리스크담당자', '조합상태'];
 
 describe('자펀드정보관리 — 인라인 필터', () => {
-  it('EXT 가 인라인 필터를 켠다', () => {
-    expect(EXT.inlineFilters).toBe(true);
+  it('자펀드 관리(route subfund)도 같은 패널을 쓴다 — [상세필터] 버튼·드로어 없이 검색어 칸이 있다', () => {
+    mount(h(SubFundManage, {}));
+    expect(screen.queryByRole('button', { name: '상세필터' })).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('textbox', { name: '검색어' })).toBeTruthy();
   });
 
   it('11칸이 접근名으로 보이고, [상세필터]·드로어는 없다', () => {
@@ -269,11 +273,13 @@ describe('인라인 필터 패널 — 칸 표시값', () => {
   });
 });
 
-describe('자펀드 관리(ext 없음) — 드로어 유지(회귀)', () => {
-  it('[상세필터] 버튼이 있고 인라인 칸은 없다', () => {
+describe('자펀드 관리(ext 없음) — 같은 인라인 패널(회귀)', () => {
+  it('[상세필터] 버튼이 없고 자펀드정보관리와 같은 11칸이 펼쳐져 있다', () => {
     mount(h(SubFundManage, {}));
-    expect(screen.getByRole('button', { name: '상세필터' })).toBeTruthy();
-    expect(screen.queryByRole('combobox', { name: '모펀드' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '상세필터' })).toBeNull();
+    for (const name of SELECTS) expect(screen.getByRole('combobox', { name }), name).toBeTruthy();
+    expect(screen.getByRole('button', { name: '사업연도' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '기준일자' })).toBeTruthy();
   });
 
   /* 2026-11-13 사용자 "모두" — '전체' 있는 기본 필터 칩은 전 화면 드롭다운 칩(가드 filter_chip_menu_rule.test.ts).

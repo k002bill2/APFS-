@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { activeFilters, planChips, valueSig, freshLabels } from './applied_filters';
-import { readSrc } from './test_src';
+import { readSrc, panelLabels } from './test_src';
 
 describe('freshLabels — 필터를 건 직후 툴팁을 띄울 칩(2026-10-26)', () => {
   const sig = (...kv: [string, string][]) => valueSig(kv.map(([label, value]) => ({ label, value })));
@@ -116,33 +116,40 @@ describe('activeFilters', () => {
   it('undefined 는 빈 배열', () => expect(activeFilters(undefined)).toEqual([]));
 });
 
-/* 적용 칩 클릭 → 상세필터의 그 항목(2026-11-02 사용자 요청, filter_field_jump.ts). 칩이 프레임 안 [상세필터] 버튼을 텍스트로 찾으므로
-   적용 칩을 쓰는 화면은 그 라벨의 버튼을 반드시 가진다 — 라벨을 바꾸면 칩 클릭이 조용히 아무 일도 안 한다. */
-describe('적용 칩 → 상세필터 이동 계약', () => {
-  it('appliedFilters 를 넘기는 화면은 모두 `상세필터` 버튼을 그린다', () => {
-    const users = walk(ROOT).filter((f) => f.endsWith('.tsx') && /appliedFilters=/.test(strip(readFileSync(f, 'utf8'))));
+/* 적용 칩 클릭 → 필터 패널의 그 칸(2026-11-02 사용자 요청, filter_field_jump.ts). 2026-11-17 상세필터 드로어 폐기 —
+   "자펀드정보관리를 참고해서 모든 페이지의 상세필터를 페이지 위치로". 칩은 같은 프레임 [data-filter-panel] 에서 aria-label 로 칸을 찾으므로
+   적용 칩을 쓰는 화면은 패널을 반드시 넘기고, 드로어·[상세필터] 버튼을 다시 만들지 않는다. */
+describe('적용 칩 → 필터 패널 이동 계약', () => {
+  const users = walk(ROOT).filter((f) => f.endsWith('.tsx') && /appliedFilters=/.test(strip(readFileSync(f, 'utf8'))));
+  it('appliedFilters 를 넘기는 화면은 모두 filterPanel 을 넘긴다', () => {
     expect(users.length).toBeGreaterThan(30);
-    const missing = users.filter((f) => !/>상세필터</.test(strip(readFileSync(f, 'utf8')))).map((f) => relative(ROOT, f));
+    const missing = users.filter((f) => !/filterPanel=/.test(strip(readFileSync(f, 'utf8')))).map((f) => relative(ROOT, f));
     expect(missing).toEqual([]);
+  });
+  it('[상세필터] 버튼·상세 필터 드로어가 남은 화면이 없다(전 화면 — 칩을 안 쓰는 화면 포함)', () => {
+    const left = walk(ROOT).filter((f) => f.endsWith('.tsx') && /<SheetTitle>상세 필터<|>상세필터</.test(strip(readFileSync(f, 'utf8')))).map((f) => relative(ROOT, f));
+    expect(left).toEqual([]);
   });
   it('칩 값은 이동 버튼이고, GridFrame 루트가 이동 범위를 표시한다', () => {
     const own = readFileSync(join(ROOT, OWNER), 'utf8');
     expect(own).toContain('jumpToFilterField(boxRef.current, target ?? label)');
     expect(own).toContain('onJump?.(f.label, f.jumpTo)');
-    expect(own).toContain('상세필터에서 변경');
+    expect(own).toContain("const JUMP_HINT = '필터에서 변경'");
+    expect(own).not.toContain('상세필터에서 변경');
     expect(readFileSync(join(ROOT, 'dash/grid_frame.tsx'), 'utf8')).toContain('data-grid-frame=""');
   });
-  /* 2026-11-03 전수 점검(116 route · 칩 222개를 실제 jumpToFilterField 로 판정) — 드로어만 열리던 화면 3곳의 교정.
-     칩 항목명 = 드로어 캡션이 원칙이고, 칩 하나가 여러 칸을 대표하는 묶음 칩만 jumpTo 로 첫 칸을 가리킨다 */
-  it('칩 항목명이 드로어 캡션과 다르던 화면 — 캡션으로 맞추거나 jumpTo 로 첫 칸을 가리킨다', () => {
+  /* 2026-11-03 전수 점검(116 route · 칩 222개를 실제 jumpToFilterField 로 판정) — 칩 항목명이 칸 이름과 다르던 화면 3곳의 교정.
+     칩 항목명 = 칸 이름(패널 aria-label)이 원칙이고, 칩 하나가 여러 칸을 대표하는 묶음 칩만 jumpTo 로 첫 칸을 가리킨다 */
+  it('칩 항목명이 칸 이름과 다르던 화면 — 칸 이름으로 맞추거나 jumpTo 로 첫 칸을 가리킨다', () => {
     const inv = readSrc('investee_profile.tsx');
     expect(inv).toMatch(/label: '조회 대상',[^}]*jumpTo: '모펀드'/);
+    expect(panelLabels(inv)).toContain('모펀드');
     const ars = readSrc('all_report_status.tsx');
     expect(ars).toContain("['기준일자', fFrom || fTo");
-    expect(ars).toContain('<DrawerField label="기준일자"');
+    expect(panelLabels(ars)).toContain('기준일자');
     const ew = readSrc('early_warning_manage.tsx');
-    expect(ew).toContain("{ label: '기간', value: periodChanged");
-    expect(ew).toContain('<DrawerField label="기간"');
+    expect(ew).toContain("{ label: '기간', value: String(fFrom) + ' ~ ' + String(fTo), onClear: periodChanged ?");   // 기본값이어도 칩 상시(2026-11-17 사용자 결정 (a))
+    expect(panelLabels(ew)).toContain('기간');
   });
 });
 

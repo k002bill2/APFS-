@@ -1,38 +1,37 @@
 /* 미결계정 관리(ACC-005) — 회계 > 전표관리 > 미결계정 관리, route `acct-suspense`.
-   골격 정본 = 같은 중분류 general_journal_manage.tsx(툴바·선택 바·상세필터 드로어·칩·푸터·엑셀).
+   골격 정본 = 같은 중분류 general_journal_manage.tsx(툴바·선택 바·상세필터 인라인 패널·칩·푸터·엑셀).
 
    구성(설계서 → 우리 규약)
    - 제목 "미결계정 관리"(메뉴 리프 라벨) · KPI 배지 행 미포함 · 명세 팝업·카드뷰 없음.
-   - 툴바: [상세필터] · 조회(IconBtn, 맨 끝). 처리 버튼 [정리][정리취소][채권채무상계][거래처 계좌 변경]은 행 선택 시 선택 바에 노출,
+   - 툴바: 조회(IconBtn, 맨 끝) — 상세필터는 칩 줄 위 인라인 패널. 처리 버튼 [정리][정리취소][채권채무상계][거래처 계좌 변경]은 행 선택 시 선택 바에 노출,
      조건 불충족이면 disabled(게이트 = suspense_model canClear·canCancel·canOffset·canChangeAccount).
    - 그리드 15컬럼 + 다중 체크박스(체크박스로만 선택). 계좌정보·예금주는 채무 건만, 채권 건은 '-'.
    - 발생전표번호·정리전표번호 셀 클릭(E09) = 전표상세(journal_entry_screen readOnly — [닫기]만).
      전표는 페이지 상태 맵(fixture + 정리/상계로 생성분, 정리취소 시 삭제)에서 찾는다.
-   - 상세필터 7개 — 즉시 반영(고르는 즉시 조건 반영, [필터 적용] = 닫기 — X·Esc·바깥 클릭으로 닫아도 값 유지).
-     발생기간·정리기간 시작 > 종료 = 그 칸 invalid + 아래 안내 + 결과 0건(2026-11-03 사용자 지시, 정본 privacy_access_log).
+   - 상세필터 = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 — apfs-detail-filter) 7개 — 즉시 반영(고르는 즉시 조건 반영).
+     발생기간·정리기간 시작 > 종료 = 그 칸 invalid + 패널 아래 안내 + 결과 0건(2026-11-03 사용자 지시, 정본 privacy_access_log).
+     거래처 = 읽기 전용 입력 + [검색](거래처 검색 팝업) + 해제 — 공용 칸이 없어 PanelCell 안에 조립(role=group aria-label=거래처).
      기본값 = 정리여부 부 · 발생기간 2022-01-01~오늘(진입·[초기화]).
    결정·가정
    - 정리 칸(정리일·정리전표번호·정리결재상태)은 최근 정리전표, 정리금액은 누적정리금액을 보인다(부분정리 진행이 보이게).
    - 거래처 필터는 검색 팝업에서 고른 거래처명과 일치하는 건만(부분일치 아님). */
 import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, AUTO_SIZE_CONTENT, fmt } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection, dropHiddenSelection } from '../../aggrid_selection';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
+import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellStyle, RowSelectionOptions, SelectionChangedEvent, CellKeyDownEvent, ICellRendererParams } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel } from '../../ui/alert-dialog';
 import type { DialogHandle } from '../../ui/dialog';
-import { PeriodPicker } from '../../ui/period-picker';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
-import { DrawerSelect } from '../../drawer_select';
+import { FilterPanel, PanelCell, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { FUND_ACCOUNTS, PARTNERS, todayStr } from './general_journal_data';
 import type { ApprovalStatus, JournalRow, Partner } from './general_journal_data';
 import { validateRange } from './general_journal_model';
@@ -115,31 +114,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-/* plain=<div> 래퍼 — PeriodPicker(버튼 트리거)는 <label> 안에서 2회 토글된다(apfs-datepicker) */
-function DrawerField({ label, plain, errMsg, children }: { label: string; plain?: boolean; errMsg?: string; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-      {errMsg && <span role="alert" className="text-danger block mt-1" style={{ fontSize: 12 }}>{errMsg}</span>}
-    </Wrap>
-  );
-}
-
-const dayWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
-
-/* 범위 컨트롤 — risk_page_kit.tsx FilterControl `dayRange` 와 같은 마크업 복제(그쪽은 export 없음) */
-function DayRange({ label, from, to, onFrom, onTo, invalid }: { label: string; from: string; to: string; onFrom: (v: string) => void; onTo: (v: string) => void; invalid?: boolean }) {
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <div style={dayWrap}><PeriodPicker mode="day" value={from} onChange={(v) => onFrom(v || '')} ariaLabel={`${label} 시작일`} invalid={invalid} /></div>
-      <span className="text-caption">~</span>
-      <div style={dayWrap}><PeriodPicker mode="day" value={to} onChange={(v) => onTo(v || '')} ariaLabel={`${label} 종료일`} invalid={invalid} /></div>
-    </div>
-  );
-}
-
 type ModalState = null
   | { kind: 'clear'; ids: string[]; targets: SuspenseRow[] }   // 대상 행은 열 때 고정(반영 후 exit 동안 잔액 0 으로 바뀌어 보이지 않게)
   | { kind: 'offset'; ids: string[]; claim: SuspenseRow; debt: SuspenseRow }   // 짝 스냅샷(열 때 고정 — exit 동안 상계금액이 0 으로 바뀌지 않게). 저장 검증은 rowsRef 최신 원장
@@ -171,9 +145,8 @@ export function SuspenseManage({ onNav }: { onNav?: (r: string) => void }) {
   const [partners, setPartners] = useState<Partner[]>(() => [...PARTNERS]);
   const addPartner = useCallback((p: Partner) => setPartners((ps) => (ps.some((x) => x.custNo === p.custNo) ? ps : [...ps, p])), []);
 
-  /* 필터 SSOT — 드로어 컨트롤이 f 를 바로 고친다(즉시 반영 — 초안 사본 없음). [초기화] = 기본값 */
+  /* 필터 SSOT — 패널 칸이 f 를 바로 고친다(즉시 반영 — 초안 사본 없음). [초기화] = 기본값 */
   const [f, setF] = useState<SuspenseFilter>(base);
-  const [filterOpen, setFilterOpen] = useState(false);
   const [partnerPick, setPartnerPick] = useState(false);
   const setD = <K extends keyof SuspenseFilter>(k: K, v: SuspenseFilter[K]) => setF((x) => ({ ...x, [k]: v }));
   /* 범위 검증은 렌더마다 — 실패한 기간마다 그 칸 표시, 하나라도 실패면 결과 0건 */
@@ -189,8 +162,8 @@ export function SuspenseManage({ onNav }: { onNav?: (r: string) => void }) {
   const doesExternalFilterPass = useCallback((node: IRowNode<SuspenseRow>) => (node.data ? passes(node.data) : true), [passes]);
   const visible = useMemo(() => rows.filter(passes), [rows, passes]);
 
-  /* 전표상세·상세필터·처리 팝업이 열려 있으면 뒤 목록 단축키를 끈다(⌘P 는 입력창에서도 발화) */
-  const listKeys = !viewSlip && !filterOpen && modal === null;
+  /* 전표상세·처리 팝업이 열려 있으면 뒤 목록 단축키를 끈다(⌘P 는 입력창에서도 발화) — 거래처 검색 팝업은 skipInDialog 가 덮는다 */
+  const listKeys = !viewSlip && modal === null;
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys, skipInDialog: true });
 
@@ -321,8 +294,26 @@ export function SuspenseManage({ onNav }: { onNav?: (r: string) => void }) {
         { label: '정리기간', value: rangeLabel(f.clearFrom, f.clearTo), onClear: () => clearF({ clearFrom: '', clearTo: '' }) },
         { label: '정리여부', value: f.clearedYn ? `정리 ${f.clearedYn}` : '', onClear: () => clearF({ clearedYn: '' }) },
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 7개, 즉시 반영. [초기화] = 기본값(정리여부 부 · 발생기간 2022-01-01~오늘) */
+      filterPanel={
+        <FilterPanel label="미결계정 조건" onReset={() => setF(base)} errors={[occurErr, clearErr]}>
+          <PanelSelect label="계정구분" value={f.fundAccount} onChange={(v) => setD('fundAccount', v)} options={FUND_ACCOUNTS} />
+          {/* 거래처 — 검색 팝업에서 고른 거래처명(정확일치). 공용 칸이 없어 화면에서 조립(코드+명칭 묶음과 같은 PanelCell wide + role=group) */}
+          <PanelCell wide>
+            <div role="group" aria-label="거래처" className="flex items-center" style={{ gap: 6 }}>
+              <input type="text" readOnly value={f.partner} placeholder="거래처" aria-label="거래처" style={{ ...inputStyle('text'), width: 120, minWidth: 0, background: 'var(--muted)' }} />
+              <Button variant="outline" size="sm" leadingIcon="search" onClick={() => setPartnerPick(true)}>검색</Button>
+              {f.partner && <IconBtn icon="x" label="거래처 선택 해제" size={32} onClick={() => setD('partner', '')} />}
+            </div>
+          </PanelCell>
+          <PanelText label="적요" value={f.memo} onChange={(v) => setD('memo', v)} />
+          <PanelSelect label="계정과목" value={f.accountName} onChange={(v) => setD('accountName', v)} options={SUSPENSE_ACCOUNT_NAMES} />
+          <PanelRange label="발생기간" mode="day" from={f.occurFrom} to={f.occurTo} onFrom={(v) => setD('occurFrom', v)} onTo={(v) => setD('occurTo', v)} invalid={!!occurErr} />
+          <PanelRange label="정리기간" mode="day" from={f.clearFrom} to={f.clearTo} onFrom={(v) => setD('clearFrom', v)} onTo={(v) => setD('clearTo', v)} invalid={!!clearErr} />
+          <PanelSelect label="정리여부" value={f.clearedYn} onChange={(v) => setD('clearedYn', v as SuspenseFilter['clearedYn'])} options={CLEARED_YN} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={viewSlip ? undefined : HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{footerCount(visible.length, Math.min(shown, visible.length))}</span>}
@@ -359,40 +350,6 @@ export function SuspenseManage({ onNav }: { onNav?: (r: string) => void }) {
           overlayNoRowsTemplate="조회 조건에 해당하는 미결 건이 없습니다."
         />
       </div>
-
-      {/* ── 상세필터 7개 — 즉시 반영([필터 적용] = 닫기) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">미결계정 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="계정구분"><DrawerSelect value={f.fundAccount} onChange={(v) => setD('fundAccount', v)} options={FUND_ACCOUNTS} ariaLabel="계정구분" /></DrawerField>
-            <DrawerField label="거래처" plain>
-              <div className="flex items-center gap-2">
-                <input type="text" readOnly value={f.partner} placeholder="검색으로 선택" aria-label="거래처" style={{ ...inputStyle('text'), background: 'var(--muted)' }} />
-                <Button variant="outline" size="sm" leadingIcon="search" onClick={() => setPartnerPick(true)}>검색</Button>
-                {f.partner && <IconBtn icon="x" label="거래처 선택 해제" size={32} onClick={() => setD('partner', '')} />}
-              </div>
-            </DrawerField>
-            <DrawerField label="적요"><input type="text" value={f.memo} onChange={(e) => setD('memo', e.target.value)} placeholder="적요 일부" style={inputStyle('text')} /></DrawerField>
-            <DrawerField label="계정과목"><DrawerSelect value={f.accountName} onChange={(v) => setD('accountName', v)} options={SUSPENSE_ACCOUNT_NAMES} ariaLabel="계정과목" /></DrawerField>
-            <DrawerField label="발생기간" plain errMsg={occurErr ?? undefined}>
-              <DayRange label="발생기간" from={f.occurFrom} to={f.occurTo} onFrom={(v) => setD('occurFrom', v)} onTo={(v) => setD('occurTo', v)} invalid={!!occurErr} />
-            </DrawerField>
-            <DrawerField label="정리기간" plain errMsg={clearErr ?? undefined}>
-              <DayRange label="정리기간" from={f.clearFrom} to={f.clearTo} onFrom={(v) => setD('clearFrom', v)} onTo={(v) => setD('clearTo', v)} invalid={!!clearErr} />
-            </DrawerField>
-            <DrawerField label="정리여부"><DrawerSelect value={f.clearedYn} onChange={(v) => setD('clearedYn', v as SuspenseFilter['clearedYn'])} options={CLEARED_YN} ariaLabel="정리여부" /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setF(base)}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {partnerPick && (
         <PartnerSearchModal open onOpenChange={(o) => { if (!o) setPartnerPick(false); }}

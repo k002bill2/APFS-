@@ -25,7 +25,7 @@ function setup() {
   render(h(TooltipProvider, null,
     h('div', { 'data-grid-frame': '' },
       h('div', { 'data-filter-panel': '' }, h('select', { 'aria-label': '정기/수시' }, h('option', { value: '' }, '정기/수시'))),
-      h(FilterChipRow, { applied, jumpHint: '필터에서 변경' }))));
+      h(FilterChipRow, { applied }))));
   return { clearRt, clearSt };
 }
 const openMenu = () => fireEvent.keyDown(screen.getByRole('button', { name: /필터 \d+개 더 보기/ }), { key: 'Enter' });

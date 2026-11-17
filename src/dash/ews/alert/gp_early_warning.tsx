@@ -2,7 +2,7 @@
    출처: docs/mockups/02_조기경보/S2_47_운용사별_조기경보_조회.html (KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(모펀드·운용사·기준년월) → 상세필터 드로어 3항목. 목업 툴바의 `조회` 버튼은 없앴다
+   - 검색박스(모펀드·운용사·기준년월) → 칩 줄 위 인라인 필터 패널 3항목(2026-11-17 드로어 폐기 — apfs-detail-filter). 목업 툴바의 `조회` 버튼은 없앴다
      (백엔드가 없어 필터가 즉시 반영된다). `엑셀`·`출력`은 툴바가 아니라 **푸터 FooterActions**가 소유한다.
    - 운용사구분 4종(벤처투자회사·증권회사·여신전문금융회사·은행) → **세로로 쌓인 그리드 4개**.
      탭으로 합치지 않는다 — 구분마다 지표1·지표2 컬럼(자본충실도/영업용순자본비율/…)이 달라 하나의
@@ -25,23 +25,20 @@
 
    ⚠️ AG Grid v35.3.1(v33+) Theming API: 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지. */
 import '../../aggrid_shared.css';   // 합계행 opacity 버그 보정 + 공유 그리드 스타일(합계행이 없어도 공유 규칙은 필요)
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { SectionHead } from '../../risk_grid';
 import { apfsTheme, DEFAULT_COL_DEF, numStyle } from '../../aggrid_theme';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';   // 드로어 컨트롤 34px SSOT — 페이지 로컬 복제 금지
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, IRowNode, CellStyle, CellKeyDownEvent, ValueFormatterParams, RowDoubleClickedEvent } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
-import { PeriodPicker } from '../../ui/period-picker';
 import { GpEarlyWarningFinModal } from './gp_early_warning_fin_modal';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSearch, PanelSelect, PanelPeriod } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { EW_BASE_YM, EW_PREV_YM, atEwYm } from './ew_period';
 
 const { Button, IconBtn, StatusBadge } = UI;
@@ -58,7 +55,7 @@ export interface GpEwRow {
   mf: string;          // 모펀드
   gp: string;          // 운용사
   kind: GpKind;        // 운용사구분
-  ym: string;          // 평가 기준년월 — 숨은 속성(그리드 컬럼 없음, 상세필터 기준년월이 거른다)
+  ym: string;          // 평가 기준년월 — 숨은 속성(그리드 컬럼 없음, 필터 패널 기준년월이 거른다)
   m1: number | null; m1g: Grade | null;                        // 지표1 [비율·등급]
   m2: number | null; m2g: Grade | null;                        // 지표2 [비율·등급]
   roe: number | null; roeG: Grade | null; roeA: number | null; // 자기자본이익률 [비율·등급·연환산]
@@ -79,7 +76,7 @@ const GRADE_TONE: Record<Grade, Tone> = { 정상: 'success', 주의: 'warning', 
 const MOTHER_FUND = '농식품모태펀드';
 
 /* 검색어 게이트 — 목업 검색박스에 검색어 입력이 없어 **OFF**로 둔다.
-   되살릴 때는 이 상수만 true 로 바꾸면 드로어 필드와 `passes` 판정이 함께 살아난다. */
+   되살릴 때는 이 상수만 true 로 바꾸면 패널 칸과 `passes` 판정이 함께 살아난다. */
 const SEARCHABLE = false;
 
 /* ──────────────────────────────
@@ -265,21 +262,6 @@ function flattenForExcel(defs: AnyDef[]) {
   return { heads, keys, merges };
 }
 
-/* ──────────────────────────────
-   드로어 프리미티브(골드 로컬 복사 — 공유 export 아님)
-────────────────────────────── */
-/* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 암묵 연결이 안 되고(ariaLabel로 명명),
-   <label> 안 버튼 클릭이 라벨 활성화와 겹쳐 2회 토글되는 것을 막는다 */
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-
 const GP_OPTIONS: string[] = SECTIONS.map((s) => RAW[s.kind].gp);
 const NO_ROWS = '<span style="padding:40px 0;display:inline-block;color:var(--muted-foreground);font-size:13px">조건에 맞는 운용사가 없습니다.</span>';
 /* ⚠ `overlayNoRowsTemplate`은 **rowData 자체가 빈** 경우에만 쓰인다. 필터로 0행이 된 경우 AG Grid v35는
@@ -300,11 +282,10 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
   const [modalRow, setModalRow] = useState<GpEwRow | null>(null);
 
   /* 필터 — 모펀드·운용사는 행 필터(External Filter), 기준년월은 그 시점 행만 rowData 로(periodRows) */
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fMf, setFMf] = useState('');
   const [fGp, setFGp] = useState('');
   const [fYm, setFYm] = useState('');   // 기본값 없음 — 미선택 상태로 시작한다
-  const [q, setQ] = useState('');   // 검색어 — SEARCHABLE 게이트가 OFF면 드로어에 렌더되지 않는다
+  const [q, setQ] = useState('');   // 검색어 — SEARCHABLE 게이트가 OFF면 패널에 렌더되지 않는다
   const clearFilters = () => { setFMf(''); setFGp(''); setFYm(''); setQ(''); };
 
   const passes = useCallback((r: GpEwRow) => {
@@ -379,8 +360,8 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
      ⚠ 팝업이 열린 동안 ⌥D 는 끕다 — 팝업은 자체 `엑셀` 버튼을 가지므로 키보드 경로만 그걸 지나쳐
        배경 그리드(다른 데이터)를 내려받는 것은 혼란이다. ⌘P·⌥D 모두 skipInDialog — 팝업(dialog)이 열려 있으면 브라우저로 넘긴다
        (⌘P 가 그리드만 인쇄로 바뀐 10-26 이후로는 팝업 뒤 목록이 찍혔다 — 2026-10-31 사용자 결정). */
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !modalRow && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !modalRow, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
 
   return (
     <GridFrame
@@ -397,8 +378,17 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '기준년월', value: fYm, onClear: () => setFYm('') },
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 3항목(모펀드·운용사·기준년월) 순서 그대로.
+         기준년월 — 그 달 평가 결과만 보인다(빈 칸 = 원문 시점 2026-07). 팝업 부제에도 실린다. 검색어는 SEARCHABLE 게이트(OFF) */
+      filterPanel={
+        <FilterPanel label="운용사별 조기경보 조건">
+          {SEARCHABLE && <PanelSearch value={q} onChange={setQ} />}
+          <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={[MOTHER_FUND]} />
+          <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={GP_OPTIONS} />
+          <PanelPeriod label="기준년월" mode="month" value={fYm} onChange={setFYm} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       /* 페이저 없음(그리드당 1행) → footerCenter 미전달, FooterActions 에 onToggleAll 미전달(버튼 3개) */
@@ -437,41 +427,6 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
           </section>
         ))}
       </div>
-
-      {/* ── 상세필터 드로어 — 목업 검색박스 3항목(모펀드·운용사·기준년월) 순서 그대로 ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">운용사별 조기경보 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드">
-              <DrawerSelect value={fMf} onChange={setFMf} options={[MOTHER_FUND]} ariaLabel="모펀드" />
-            </DrawerField>
-            <DrawerField label="운용사">
-              <DrawerSelect value={fGp} onChange={setFGp} options={GP_OPTIONS} ariaLabel="운용사" />
-            </DrawerField>
-            {/* 기준년월 — 그 달 평가 결과만 보인다(빈 칸 = 원문 시점 2026-07). 팝업 부제에도 실린다.
-                PeriodPicker 트리거는 w-full 이라 fit-content 래퍼로 감싼다(apfs-datepicker "폭" 규칙) */}
-            <DrawerField label="기준년월" plain>
-              <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
-                <PeriodPicker mode="month" value={fYm} onChange={(v) => setFYm(v || '')} ariaLabel="기준년월" />
-              </div>
-            </DrawerField>
-            {SEARCHABLE && (
-              <DrawerField label="검색어">
-                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="운용사명" style={inputStyle('text')} />
-              </DrawerField>
-            )}
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 재무정보 팝업 — 행 더블클릭(또는 셀 Enter/Space)이 연다. 행 선택과 무관 ── */}
       {modalRow && (

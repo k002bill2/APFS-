@@ -1,4 +1,4 @@
-/* 일마감(ACC-007) 화면 계약 — 소스 문자열 가드. 상세필터가 없는 화면이라 acc_skill_rules 가드 ①(!filterOpen)에서 빠지므로
+/* 일마감(ACC-007) 화면 계약 — 소스 문자열 가드. 상세필터가 없는 화면이라 acc_skill_rules 가드 ①(필터 패널 화면의 단축키 skipInDialog)에서 빠지므로
    단축키·잔여폭 컬럼·truncate 셀·오류 단일 표시를 여기서 지킨다. */
 import { describe, it, expect } from 'vitest';
 import { readSrc } from '../../test_src';

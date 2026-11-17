@@ -3,7 +3,8 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(검색기준+검색어·사용자 구분·레벨·사용여부) → 주 필터 1개 = 사용자 구분 FilterChip(툴바 좌)
-       + 나머지 = 상세필터 드로어(검색어·검색기준·레벨·사용여부, apfs-detail-filter). 검색어는 이 화면이 opt-in(SEARCHABLE).
+       + 나머지 = 상세필터 = 칩 줄 위 인라인 패널(검색어·검색기준·레벨·사용여부, apfs-detail-filter). 검색어는 이 화면이 opt-in(SEARCHABLE).
+       검색기준은 '전체' 없는 고정 기본값(메뉴명) select — 검색어의 뜻을 정하는 수식어라 칸에 값을 그대로 보이고(PanelSelect showValue) 칩을 따로 두지 않는다(검색어 칩이 '기준: 값'으로 보인다), 패널 [초기화] = 기본값 복원.
    - 계층형 1~3레벨 트리 그리드(＋/－ 펼침)   → AG Grid Community 엔 Tree Data 가 없다(Enterprise) → 목업처럼 **평탄 행 +
        펼침 상태(expanded Set)로 visibleRows 를 React 에서 계산**한다. 필터가 하나라도 걸리면 평면(전체 매칭) 모드(목업 `searching`).
        펼침 토글은 메뉴명 셀의 버튼(aria-expanded) · 툴바 [전체 펼치기/접기] · 우클릭 메뉴 · 메뉴명 셀 Enter(부모 행).
@@ -23,11 +24,9 @@ import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import { _stopPropagationForAgGrid } from 'ag-grid-community';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
@@ -41,9 +40,9 @@ import { reseqSiblings, applyReseq } from './reseq';
 import { UseBadge } from '../admin_shared';
 import { MenuFormModal } from './menu_form_modal';
 import type { MenuPatch, MenuPreset } from './menu_form_modal';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSearch, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
-const { Button, IconBtn, StatusBadge, ClearableInput } = UI;
+const { Button, IconBtn, StatusBadge } = UI;
 
 /* 검색어 입력 opt-in(apfs-detail-filter) — 목업 검색박스 첫 항목이 검색기준+검색어라 이 화면은 켠다 */
 const SEARCHABLE = true;
@@ -117,15 +116,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '사용자 구분', get: (r) => utypeLabel(r.utypes) }, { header: '사용여부', get: (r) => (r.use ? '여' : '부') },
 ];
 
-function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </label>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -143,8 +133,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
 
-  /* 필터 — 사용자 구분은 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
-  const [filterOpen, setFilterOpen] = useState(false);
+  /* 필터 — 사용자 구분은 툴바 칩, 나머지는 칩 줄 위 인라인 패널. SSOT=개별 state(빈 값=미적용) */
   const [fUtype, setFUtype] = useState<typeof UTYPE_CHIPS[number]>('');
   const [fField, setFField] = useState<keyof MenuRow>('name');
   const [fText, setFText] = useState('');
@@ -153,9 +142,9 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
   const clearFilters = () => { setFUtype(''); setFField('name'); setFText(''); setFLvl(''); setFUse(''); };
   const searching = Boolean(fUtype || fText.trim() || fLvl || fUse);   // 목업: 필터가 하나라도 걸리면 평면 모드
 
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   const programs = useMemo(() => programsOf(rows), [rows]);
   const match = useCallback((r: MenuRow) => {
@@ -275,7 +264,7 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('Excel로 내보냈습니다');
   };
 
-  const chips: [string, string, () => void][] = [
+  const chips: [string, string, (() => void) | undefined][] = [
     ['검색어', fText.trim() && `${SEARCH_FIELDS.find((f) => f.key === fField)?.label}: ${fText.trim()}`, () => setFText('')],
     ['레벨', fLvl && `레벨 ${fLvl}`, () => setFLvl('')],
     ['사용여부', fUse, () => setFUse('')],
@@ -305,8 +294,17 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
       contextActions={selActions}
       /* 적용 중인 상세필터 — 항목별 개별 칩(값만 표시, 항목명은 × aria-label) */
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 검색어(opt-in) 맨 앞 + 검색기준 · 레벨 · 사용여부(목업 검색박스 순서, 사용자 구분은 툴바 칩).
+         [초기화] = 기본값(검색기준 메뉴명) 복원 */
+      filterPanel={
+        <FilterPanel label="메뉴관리 조건" onReset={clearFilters}>
+          {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
+          <PanelSelect label="검색기준" value={fField as string} onChange={(v) => setFField(v as keyof MenuRow)} options={SEARCH_FIELDS.map((f) => ({ value: f.key as string, label: f.label }))} required showValue />
+          <PanelSelect label="레벨" value={fLvl} onChange={setFLvl} options={['1', '2', '3'].map((v) => ({ value: v, label: v }))} />
+          <PanelSelect label="사용여부" value={fUse} onChange={setFUse} options={['여', '부'].map((v) => ({ value: v, label: v }))} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* 전체 펼치기/접기 — 평면(검색) 모드에서는 의미가 없어 비활성 */}
         <Button variant="ghost" size="sm" leadingIcon={allExpanded ? 'collapse-v' : 'expand-v'} disabled={searching} onClick={toggleAll}>{allExpanded ? '전체 접기' : '전체 펼치기'}</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>메뉴 등록</Button>
@@ -338,30 +336,6 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      {/* ── 상세필터 드로어 — 검색어(opt-in) 최상단 + 검색기준 · 레벨 · 사용여부(목업 검색박스 순서, 사용자 구분은 툴바 칩) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">메뉴 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {SEARCHABLE && (
-              <DrawerField label="검색어">
-                <ClearableInput type="text" value={fText} onValueChange={setFText} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="검색기준 항목에서 부분일치" clearLabel="검색어 지우기" style={inputStyle('text')} />
-              </DrawerField>
-            )}
-            <DrawerField label="검색기준"><DrawerSelect value={fField as string} onChange={(v) => setFField(v as keyof MenuRow)} options={SEARCH_FIELDS.map((f) => ({ value: f.key as string, label: f.label }))} all={null} /></DrawerField>
-            <DrawerField label="레벨"><DrawerSelect value={fLvl} onChange={setFLvl} options={['1', '2', '3'].map((v) => ({ value: v, label: v }))} /></DrawerField>
-            <DrawerField label="사용여부"><DrawerSelect value={fUse} onChange={setFUse} options={['여', '부'].map((v) => ({ value: v, label: v }))} /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 등록/수정 모달 — 전용(레벨↔상위·프로그램 검색·단축번호 중복확인) ── */}
       {modal?.kind === 'create' && (

@@ -62,7 +62,7 @@
       "skillName": "apfs-detail-filter",
       "priority": "high",
       "enforcement": "suggest",
-      "keywords": ["상세필터", "상세 필터", "필터 드로어", "필터 항목", "필터 칩", "필터 패널", "필터 컨트롤", "filter drawer", "detail filter", "year picker", "연도 필터", "값 필터", "filterValues", "resolveFilterField", "DrawerSelect", "드로어 select", "기간 필터", "기간 검증", "범위 검증", "필터 적용 검증", "멀티셀렉트", "멀티 셀렉트", "다중 선택 셀렉트", "multi-select", "MultiSelect", "DrawerMultiSelect", "다중 선택", "복수 선택"],
+      "keywords": ["상세필터", "상세 필터", "필터 드로어", "필터 항목", "필터 칩", "필터 패널", "인라인 필터", "필터 칸", "검색 조건", "FilterPanel", "filterPanel", "PanelSelect", "필터 컨트롤", "filter drawer", "detail filter", "year picker", "연도 필터", "값 필터", "filterValues", "resolveFilterField", "DrawerSelect", "드로어 select", "기간 필터", "기간 검증", "범위 검증", "필터 적용 검증", "멀티셀렉트", "멀티 셀렉트", "다중 선택 셀렉트", "multi-select", "MultiSelect", "DrawerMultiSelect", "다중 선택", "복수 선택"],
       "intentPatterns": ["(상세\\s?필터|필터\\s?(드로어|항목|칩|패널|컨트롤|drawer)).*(만들|추가|작성|수정|바꾸|변경|개선|build|add|edit)", "(필터).*(년도|연도|year|열거|enum|select|체크박스|checkbox|값 선택)"]
     },
     {

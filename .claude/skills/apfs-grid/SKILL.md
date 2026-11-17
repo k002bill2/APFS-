@@ -50,7 +50,8 @@ interface GridFrameProps {
   contextActions?: ReactNode;// 선택 컨텍스트 액션 묶음(수정·삭제·선택 해제·단계 전이…).
                              // 툴바 좌측에 렌더되다가 스크롤로 툴바가 가려지면 하단 플로팅 바로 **이동**한다.
                              // → 아래 "선택 액션 플로팅 바" 절. 안 넘기면 동작 변화 0.
-  toolbarRight?: ReactNode;  // 툴바 우: 새로고침·상세필터 등
+  filterPanel?: ReactNode;   // 상세필터 = 칩 줄 위 인라인 패널(<FilterPanel> — 2026-11-17 전 화면, 드로어·[상세필터] 버튼 폐기) → [[apfs-detail-filter]]
+  toolbarRight?: ReactNode;  // 툴바 우: 단위·등록·새로고침 등
   footerLeft?: ReactNode;    // 푸터 좌: 건수 등 요약
   footerCenter?: ReactNode;  // 푸터 중: 페이지네이션
   footerRight?: ReactNode;   // 푸터 우: **<FooterActions/> 하나**(전체보기·새 창·내보내기·인쇄 4종 SSOT)
@@ -136,9 +137,9 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
   선택은 **체크박스로만** on/off 한다 — 행 본문 클릭 선택은 전 페이지에서 해제됐다(2026-09-22 사용자 결정, 09-17 의 클릭 누적선택 규약을 뒤집음. 규약·역사는 → [[apfs-aggrid]] "체크박스" 절). `generic_list.tsx`가 `rowSelection` prop 자체를 `undefined`로 넘겨 **선택 컬럼이 생성되지 않는다**(체크만 푸는 게 아니다). 선택이 없어지면 툴바의 `삭제`/`선택 해제` 분기(`selCount > 0`)도 자동으로 도달 불가가 된다 — 수정은 행 더블클릭·Enter, 삭제는 우클릭 메뉴가 대체 경로다. ⚠️ `rowSelection` 객체는 **모듈 상수**여야 한다([[apfs-aggrid]] ⑦ — 인라인 리터럴은 렌더마다 컬럼 재생성 → 폭 되돌림).
 - **툴바 칩의 '전체'는 `필터명: 전체`로 쓴다** (2026-09-24 사용자 규칙, 필터명 뒤 콜론 `:` + 공백). 예: `등급: 전체 21` · `심사단계: 전체` · `사용자 구분: 전체`. 칩 줄 앞에는 깔때기 아이콘만 있고 필터 이름이 보이지 않아서, 맨 `전체`만 있으면 무엇의 전체인지 알 수 없다.
   - '전체' 있는 단일 선택 필터는 드롭다운 칩이라(아래 "필터 툴바" 절, 2026-11-13) 필터명은 `filterChipsMenu="필터명"` 으로 넘기고 'all' 칩 label 은 `'전체'` 만 — 트리거가 `필터명: 전체 ▾` 로 그려 이 규칙을 그대로 지킨다. 칩 무리로 남는 조기경보 등급(복수 선택)만 `등급: 전체` 를 칩 label 에 직접 쓴다.
-  - 필터명은 그 화면 **상세필터 드로어 라벨**(`DrawerField label`)을 띄어쓰기까지 그대로 쓴다. 드로어에 없으면 목업 검색항목명이나 컬럼 헤더명을 쓴다. 이름을 새로 짓지 않는다.
+  - 필터명은 그 화면 **상세필터 패널 칸 이름**(`<Panel* label>`)을 띄어쓰기까지 그대로 쓴다. 패널에 없으면 목업 검색항목명이나 컬럼 헤더명을 쓴다. 이름을 새로 짓지 않는다.
   - **값이 `'전체'` 문자열 자체**인 칩(`schedule.tsx` 종류, `main_widgets.tsx` 펀드)은 값을 그대로 두고 **표시 라벨만** 분기한다: `{k === "전체" ? "종류: 전체" : k}`. 배열 값을 바꾸면 `=== "전체"` 비교가 조용히 깨진다.
-  - 대상은 **툴바 `FilterChip`만**이다. 드로어 select의 `전체` 옵션은 위에 라벨이 있으므로 그대로 둔다. 적용 필터가 없을 때 보이는 `전체` 안내 문구, 그리고 '전체'가 "모두"가 아니라 도메인 값인 칩(`apfs_contribution_manage` 조회기준)도 대상이 아니다.
+  - 대상은 **툴바 `FilterChip`만**이다. 패널 select 의 빈 값 항목은 항목명(placeholder)이 대신하므로 대상이 아니다. 적용 필터가 없을 때 보이는 `전체` 안내 문구, 그리고 '전체'가 "모두"가 아니라 도메인 값인 칩(`apfs_contribution_manage` 조회기준)도 대상이 아니다.
   - 가드 테스트: `src/dash/filter_chip_all_label.test.ts`. `>전체</FilterChip>`, `'전체'}</FilterChip>`, `['', '전체']` 패턴이 있으면 실패한다.
 - **상태별 건수는 툴바 요약 문장이 아니라 필터 칩 안에.** `UI.FilterChip`의 `count` prop(라벨 뒤 11.5px 볼드 `tabular-nums`, **색은 칩 라벨과 동일 — 별도 `opacity`를 주지 않는다**)에 건수를 넘긴다 — 칩 = "이 상태를 몇 건 보게 되는지"를 누르기 전에 보여주는 곳이고, 툴바 우측 요약은 **총 건수 한 줄**(`기간 내 … N건`, `aria-live="polite"`)만 남긴다(2026-09-15 사용자 지시, `permission_history.tsx`·`audit_log.tsx`).
   - ⚠️ **건수는 facet count로 센다** — 그 칩이 거는 필터**만 빼고** 나머지 필터를 적용한 모집단 기준. 화면에 이미 있는 `visible`(전 필터 적용)로 세면 칩 하나를 누른 순간 나머지 칩이 전부 `0`이 돼 비교 기능이 죽는다. 별도 `facet` memo를 하나 더 둔다(`전체` 칩 = `facet.length`).
@@ -175,7 +176,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 - 행 선택 중(선택 액션 바가 좌측 차지): 깔때기와 칩 줄(`FilterChipRow`)을 통째로 감춘다(`grid_frame.tsx` `selecting`) — 페이지가 `selCount>0 ? null` 로 칩을 끌 필요 없음. 그래서 필터를 바꿀 때 선택을 해제하지 않으면 칩이 계속 안 보인다 — 외부 필터 화면은 필터 effect 에서 `deselectAll()`(2026-10-27 → [[apfs-detail-filter]]).
 - 우측 액션 `shrink-0` 고정. ≤640px 만 좌측 `basis-full` 로 좌/우 두 줄 적층(칩 행 폭 = 남은 폭이라 판정이 자동으로 맞는다).
 - 보이는 캡션 없음(`role="group" aria-label="필터"`). 적용 칩 = 값만·240px 말줄임·항목명은 DS Tooltip(호버·× 포커스)/aria 로(2026-10-26 네이티브 title 대체 — 필터 적용 직후 3초 자동 노출·모달 중엔 닫힐 때까지 지연 → [[apfs-detail-filter]]). 해제 가능 ≥2 이면 `전체 해제`. **`+N` 의 N = 숨긴 필터(기본 칩+적용 칩) 수 — `전체 해제`는 세지 않는다**(2026-09-29: 필터 2개 숨김이 `+3` 으로 보인 버그). 숨긴 게 `전체 해제` 하나뿐이면 `+N` 트리거를 그리지 않는다(`+0` 금지).
-- **적용 칩 값 클릭 = 상세필터 드로어를 열고 그 항목으로 스크롤·초점**(강조 표시 없음)(2026-11-02, `filter_field_jump.ts`). 전제: 툴바 드로어 버튼 텍스트 `상세필터` 고정 · 칩 `label` = 드로어 캡션 정확일치(불일치면 드로어만 열림). 규약·함정(flash 툴팁 Esc·rAF 스로틀 측정) → [[apfs-detail-filter]] "적용 칩 클릭".
+- **적용 칩 값 클릭 = 칩 줄 위 필터 패널의 그 칸으로 초점**(강조 표시 없음)(2026-11-02 → 11-17 패널, `filter_field_jump.ts`). 전제: GridFrame `filterPanel` · 칩 `label` = 칸 aria-label 정확일치(불일치면 아무 일도 안 한다 — 가드 `filter_panel_labels.test.ts`). 규약·함정 → [[apfs-detail-filter]] "적용 칩 클릭".
 - ⚠️ **`전체 해제` = 칩별 `onClear` 를 한 이벤트에서 연달아 호출** → 클로저의 객체 state 를 복사해 지우는 onClear 는 마지막만 남는다. 반드시 함수형 업데이트. 실제 사례: `generic_list.removeFilter`.
 - 칩 행 컨테이너는 `overflow:hidden` 이라 세로 3px 패딩+음수 마진으로 focus 링 여유를 둔다.
 
@@ -184,10 +185,11 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 
 - 🔀 **툴바 형태는 하나다(2026-09-17 사용자 결정 — combo 폐기, 단 2026-09-24 허용 예외 2종은 아래 ✅).** 1차 액션(등록)이 있으면 **단독 outline 버튼**, 없으면 아무것도 두지 않는다. 보조 액션(내보내기·인쇄)은 툴바가 아니라 **푸터 `FooterActions`**가 항시 노출한다.
   ```
-  등록 O:  단위: 원 │ ▣ 상세필터 │ ＋ <도메인 액션명> 등록 │ ⟳ 조회
-  등록 X:  단위: 원 │ ▣ 상세필터 │ ⟳ 조회
-  보조 O:  ▣ 상세필터 │ ＋ 계정과목 등록 │ ↺ 삭제이력 │ ⟳ 조회        ← 계정과목 관리(2026-10-28 PR #366)
-  편집형:  ▣ 상세필터 │ ＋ 행추가 │ ✓ 저장 │ ⟳ 조회                  ← 결산양식 관리(→[[apfs-aggrid]] "페이지 편집 그리드")
+  등록 O:  단위: 원 │ ＋ <도메인 액션명> 등록 │ ⟳ 조회
+  등록 X:  단위: 원 │ ⟳ 조회
+  보조 O:  ＋ 계정과목 등록 │ ↺ 삭제이력 │ ⟳ 조회        ← 계정과목 관리(2026-10-28 PR #366)
+  편집형:  ＋ 행추가 │ ✓ 저장 │ ⟳ 조회                  ← 결산양식 관리(→[[apfs-aggrid]] "페이지 편집 그리드")
+  (상세필터는 툴바 버튼이 아니라 카드헤더 아래·칩 줄 위 `filterPanel` 칸 — 2026-11-17 [상세필터] 버튼 폐기)
   ```
   - **편집형의 [행삭제]·행삽입·이동은 툴바에 상시 두지 않는다 — 행을 체크했을 때만 선택 바에 나타난다**(0건이면 DOM 에 없음). 2026-11-09 사용자 "행삭제는 체크박스 체크시 나타나게해 이건 룰로 모두 적용하게 해" — 모달 안 반복행 표·편집 그리드 전부 같은 규칙(→[[apfs-form-modal]] 규약 7 · `.claude/rules/frontend-design-defaults.md` 16 · 가드 `src/dash/row_delete_on_check.test.ts`).
   - **⟳ 조회는 언제나 맨 끝이다.** 등록 외 툴바 진입 버튼(삭제이력 팝업 등 화면 단위 보조 화면)은 **등록 오른쪽·조회 왼쪽**에 `variant="outline" size="sm"` 으로 둔다. 선택한 행에 거는 액션은 툴바가 아니라 선택 바(`contextActions`)다.
@@ -207,7 +209,7 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 - **표시 옵션 = 툴바 우측 토글(2026-11-09 사용자 결정 (a) — 회계 자금관리)**: 행을 거르지 않고 보이는 모양만 바꾸는 옵션(Σ 소계·합계 행, 금액 단위)은 `filterChips`(필터 칩 줄)·상세필터에 두지 않는다 — 칩 줄은 `role="group" aria-label="필터"` 라 필터로 읽히고 `+N` 에 접히며, 드로어에 두면 바꿀 때 적용 칩이 생기고 [초기화]에 휩쓸린다.
   - 소계·합계 on/off = `<Button variant="outline" size="sm" leadingIcon="sigma" pressed={on} onClick={toggle}>소계표시</Button>` — `UI.Button` 의 `pressed` 가 `aria-pressed` + primary 테두리·12% 배경(inline)을 그린다. Button 클래스(`ui-btn ui-outline`…)를 복사한 로컬 토글 금지.
   - 금액 단위 = `단위: X` 캡션 + `<SegTabs size="sm">`(원·천원·백만원 등, 선례 `iam/sfund/fund_stats.tsx`). 단위는 화면 state — 필터 모델에 넣지 않는다.
-  - 순서: `단위 캡션(+SegTabs) │ 상세필터 │ Σ 토글 │ (등록) │ ⟳ 조회`. 정본 `acc/funds/account_balance_manage.tsx`(소계표시)·`contribution_status_manage.tsx`(단위·합계), 가드 `acc/acc_skill_rules.test.ts` ⑦ · `button_pressed.test.ts`.
+  - 순서: `단위 캡션(+SegTabs) │ Σ 토글 │ (등록) │ ⟳ 조회`. 정본 `acc/funds/account_balance_manage.tsx`(소계표시)·`contribution_status_manage.tsx`(단위·합계), 가드 `acc/acc_skill_rules.test.ts` ⑦ · `button_pressed.test.ts`.
 - **타이틀은 메뉴 리프와 일치.** `cardTitle`·`title`·`crumbs` 리프를 **`data.ts` 메뉴 리프 라벨 문자열 그대로**(띄어쓰기 포함) 맞춘다. `cardTitle`이 `title`과 같으면 생략 가능(H1=`cardTitle ?? title`). **"○○ 목록" 같은 임의 축약 금지**(2026-09-11 "자펀드 목록"→"자펀드 관리" 정정). 매트릭스/집계형이 문서 정식명칭을 카드 제목으로 쓰는 것(asset_funding "…현황표")은 예외.
 
 ## 선택 액션 플로팅 바 (2026-09-15 사용자 지시, `contextActions` 슬롯 — 전 페이지 공통)

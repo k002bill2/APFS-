@@ -1,10 +1,10 @@
 /* 유무형자산관리(ACC-017) — 회계 > 고정자산 > 유무형자산관리, route `acct-fixed-asset`.
    설계서 정본: ACC-017 슬라이드 9~15(화면·그리드·상세필터·모달 3종) · 17~26(이벤트 E00~E10).
-   골격 정본 = acc/slip/general_journal_manage · suspense_manage(툴바·선택 바·상세필터 드로어·칩·푸터·엑셀) · 탭 = ledger/daily_monthly_manage(TabBar).
+   골격 정본 = acc/slip/general_journal_manage · suspense_manage(툴바·선택 바·상세필터·칩·푸터·엑셀) · 탭 = ledger/daily_monthly_manage(TabBar).
 
    구성(설계서 → 우리 규약)
    - 제목 "유무형자산관리"(메뉴 리프 라벨) · KPI 배지 행 미포함(사용자 결정 → kpis 미전달) · 카드헤더 sub 캡션 없음.
-   - 툴바: [상세필터](E01) → [+ 유무형자산 등록](E02 · 총괄 탭만, ⌘⏎) → ⟳ 조회(E10 · ⌥R). 엑셀은 푸터 내보내기(E09 · ⌥D)만,
+   - 툴바: [+ 유무형자산 등록](E02 · 총괄 탭만, ⌘⏎) → ⟳ 조회(E10 · ⌥R). 상세필터(E01)는 칩 줄 위 인라인 패널. 엑셀은 푸터 내보내기(E09 · ⌥D)만,
      새 창·인쇄도 푸터(FooterActions — 회계 화면 공통).
    - 탭 2개(E03 · 공용 TabBar): 총괄 / 변동내역. 전환 시 선택 초기화 · 필터 유지. 활성 탭 그리드만 마운트한다.
    - 그리드 = 설계서 컬럼 순서(총괄 체크박스 + 19 · 변동내역 체크박스 + 15). 계정구분 > 자산유형 그룹 순서로 정렬하고
@@ -17,9 +17,9 @@
        총괄 = [전표생성](E06) · [변동 등록](E04 · 정확히 1건) · [삭제](E07) · [선택 해제]
        변동내역 = [전표생성](E06) · [삭제](E07 = 변동 취소) · [선택 해제]
    - 행 더블클릭/Enter(E08) = 등록/수정 모달(총괄만). 전표번호 셀 = 링크(클릭·Enter) → 일반전표 관리로 이동.
-   - 상세필터 6개(즉시 반영 — 값을 바꾸는 순간 목록·칩 반영, [필터 적용]은 닫기만 · account_code_manage 동형):
+   - 상세필터 6개 = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 — apfs-detail-filter. 즉시 반영 — 값을 바꾸는 순간 목록·칩 반영):
      기준년월*(PeriodPicker month · 기본 당월 · 비울 수 없음) · 계정구분 · 자산유형(계정구분 종속) · 자산번호 · 자산명 · 취득기간.
-     취득기간 시작 > 종료면 그 항목 인라인 오류 '취득기간을 확인해 주세요.' + 범위 조건만 무시. 적용 칩은 값만, 기준년월 칩 × = 당월 복원.
+     취득기간 시작 > 종료면 그 칸 invalid + 패널 아래 '취득기간을 확인해 주세요.' + 범위 조건만 무시. 적용 칩은 값만, 기준년월 칩 × = 당월 복원.
    - 기준년월 이후 취득일로 저장하면 info 토스트 "기준년월(YYYY-MM) 이후 취득 자산이라 목록에 표시되지 않습니다.".
    - 업무 규칙은 fixed_asset_model(+테스트) — 페이지는 배선만.
 
@@ -33,30 +33,25 @@
    - 처분손익: 변동 등록 모달의 H 는 설계서 산식 H = D − E − G + F 그대로 표시하고, 전표 분개의 처분손익은 차대 균형이 보장되는
      F − E(장부가 − 매각액)로 잡는다 — H(표시)와 분개 처분손익(F − E) 불일치, PM 산식 확정 필요(설계서 샘플: H = −1,054 / 분개 손실 68). */
 import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
-import React, { useState, useRef, useEffect, useCallback, useMemo, useId } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, useId } from 'react';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, AUTO_SIZE_CONTENT, fmt, numStyle } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';
-import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, CellStyle, RowSelectionOptions, SelectionChangedEvent, RowDoubleClickedEvent, CellKeyDownEvent, ICellRendererParams, RowClassParams } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel } from '../../ui/alert-dialog';
 import type { DialogHandle } from '../../ui/dialog';
-import { PeriodPicker } from '../../ui/period-picker';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
-import { DrawerSelect } from '../../drawer_select';
+import { FilterPanel, PanelPeriod, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { TabBar, TabPanel } from '../../risk_page_kit';
 import { LinkCell } from '../../link_cell';
-import { controlMinWidth } from '../../schemas/renderers';
 import { PARTNERS, todayStr } from '../slip/general_journal_data';
 import type { Partner } from '../slip/general_journal_data';
-import { DrawerField, DayRangeField } from '../ledger_filter_ui';
 import { FA_FUNDS, typeNamesOf } from './fixed_asset_data';
 import type { AssetChange, FixedAsset, VoucherStatus } from './fixed_asset_data';
 import {
@@ -187,7 +182,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
       style={{ minWidth: 30, height: 30, padding: '0 8px', borderRadius: 8, border: '1px solid ' + (active ? 'var(--primary)' : 'var(--border)'), background: active ? 'var(--primary)' : 'transparent', color: active ? 'var(--primary-foreground)' : 'var(--foreground)', fontSize: 12.5 }}>{n}</button>
   );
 }
-const monthWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('month'), maxWidth: '100%' };
 
 type ModalState = null
   | { kind: 'form'; id?: string }
@@ -221,10 +215,9 @@ export function FixedAssetManage({ onNav }: { onNav?: (r: string) => void }) {
   const [partners, setPartners] = useState<Partner[]>(() => [...PARTNERS]);
   const addPartner = useCallback((p: Partner) => setPartners((ps) => (ps.some((x) => x.custNo === p.custNo) ? ps : [...ps, p])), []);
 
-  /* 필터 SSOT(E01) — 상세필터는 즉시 반영(드로어 값을 바꾸는 순간 목록·칩 반영, [필터 적용]은 닫기만 — account_code_manage 동형).
-     취득기간 시작 > 종료면 그 항목 인라인 오류 + 범위 조건만 무시(effectiveFilter). 기준년월은 필수 — 비울 수 없다 */
+  /* 필터 SSOT(E01) — 상세필터(칩 줄 위 인라인 패널)는 즉시 반영(칸 값을 바꾸는 순간 목록·칩 반영).
+     취득기간 시작 > 종료면 그 칸 invalid + 패널 아래 오류 + 범위 조건만 무시(effectiveFilter). 기준년월은 필수 — 비울 수 없다 */
   const [f, setF] = useState<FaFilter>(base);
-  const [filterOpen, setFilterOpen] = useState(false);
   const setFv = <K extends keyof FaFilter>(k: K, v: FaFilter[K]) => setF((x) => reconcileType({ ...x, [k]: v }));
   const clearF = (patch: Partial<FaFilter>) => setF((x) => reconcileType({ ...x, ...patch }));
   const rangeErr = rangeError(f);
@@ -357,8 +350,8 @@ export function FixedAssetManage({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('Excel로 내보냈습니다');
   };
 
-  /* 모달·드로어가 열려 있으면 뒤 목록 단축키를 끈다(⌘P 는 입력창에서도 발화) */
-  const listKeys = modal === null && !filterOpen;
+  /* 모달이 열려 있으면 뒤 목록 단축키를 끈다(⌘P 는 입력창에서도 발화) */
+  const listKeys = modal === null;
   useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form' }), { enabled: listKeys && tab === 'summary', skipInDialog: true });
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys, skipInDialog: true });
@@ -380,7 +373,6 @@ export function FixedAssetManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const editTarget: AssetView | undefined = modal?.kind === 'form' && modal.id ? allViews.find((v) => v.id === modal.id) : undefined;
   const typeOptions = typeNamesOf(f.fund);
-  const closeOnEnter = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); };
 
   return (
     <GridFrame
@@ -396,10 +388,21 @@ export function FixedAssetManage({ onNav }: { onNav?: (r: string) => void }) {
         { label: '자산유형', value: f.assetType, onClear: () => clearF({ assetType: '' }) },
         { label: '자산번호', value: f.assetNo.trim(), onClear: () => clearF({ assetNo: '' }) },
         { label: '자산명', value: f.name.trim(), onClear: () => clearF({ name: '' }) },
-        { label: '취득기간', value: rangeLabel(ef.from, ef.to), onClear: () => clearF({ from: '', to: '' }) },   // 범위 오류면 조건이 무시되므로 칩도 없다
+        { label: '취득기간', value: rangeLabel(f.from, f.to), onClear: () => clearF({ from: '', to: '' }) },   // 입력한 값 그대로 — 패널 칸은 값을 안 보여 칩이 유일한 표시다. 범위 오류면 조건은 무시되고 패널 아래 오류 문구가 그 사실을 알린다
       ]}
+      /* E01 상세필터 6개 = 칩 줄 위 인라인 패널 — 즉시 반영. [초기화] = 기본값(당월 · 나머지 해제) */
+      filterPanel={
+        <FilterPanel label="유무형자산 조건" onReset={() => setF(base)} errors={[rangeErr]}>
+          {/* 필수 — 같은 달 재클릭(해제)은 무시해 비지 않게 한다 */}
+          <PanelPeriod label="기준년월" mode="month" value={f.ym} onChange={(v) => { if (v) setFv('ym', v); }} />
+          <PanelSelect label="계정구분" value={f.fund} onChange={(v) => setFv('fund', v)} options={FA_FUNDS} />
+          <PanelSelect label="자산유형" value={f.assetType} onChange={(v) => setFv('assetType', v)} options={typeOptions} />
+          <PanelText label="자산번호" value={f.assetNo} onChange={(v) => setFv('assetNo', v)} />
+          <PanelText label="자산명" value={f.name} onChange={(v) => setFv('name', v)} />
+          <PanelRange label="취득기간" mode="day" from={f.from} to={f.to} onFrom={(v) => setFv('from', v || '')} onTo={(v) => setFv('to', v || '')} invalid={!!rangeErr} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {tab === 'summary' && <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form' })}>유무형자산 등록</Button>}
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={modal ? undefined : HOTKEYS.refresh} />
       </>}
@@ -470,37 +473,6 @@ export function FixedAssetManage({ onNav }: { onNav?: (r: string) => void }) {
           />
         )}
       </TabPanel>
-
-      {/* ── E01 상세필터 6개 — 즉시 반영(값을 바꾸는 순간 목록·칩 반영). [필터 적용]은 닫기만, [초기화]는 기본값(당월·나머지 해제) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">유무형자산 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="기준년월" plain required>
-              {/* 필수 — 같은 달 재클릭(해제)은 무시해 비지 않게 한다 */}
-              <div style={monthWrap}><PeriodPicker mode="month" value={f.ym} onChange={(v) => { if (v) setFv('ym', v); }} ariaLabel="기준년월" required /></div>
-            </DrawerField>
-            <DrawerField label="계정구분"><DrawerSelect value={f.fund} onChange={(v) => setFv('fund', v)} options={FA_FUNDS} ariaLabel="계정구분" /></DrawerField>
-            <DrawerField label="자산유형"><DrawerSelect value={f.assetType} onChange={(v) => setFv('assetType', v)} options={typeOptions} ariaLabel="자산유형" /></DrawerField>
-            <DrawerField label="자산번호">
-              <input type="text" value={f.assetNo} onChange={(e) => setFv('assetNo', e.target.value)} onKeyDown={closeOnEnter} placeholder="자산번호 일부" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="자산명">
-              <input type="text" value={f.name} onChange={(e) => setFv('name', e.target.value)} onKeyDown={closeOnEnter} placeholder="자산명 일부" style={inputStyle('text')} />
-            </DrawerField>
-            <DayRangeField label="취득기간" from={f.from} to={f.to} onFrom={(v) => setFv('from', v || '')} onTo={(v) => setFv('to', v || '')}
-              errMsg={rangeErr ?? undefined} />
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setF(base)}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── E02 등록 · E08 수정 ── */}
       {modal?.kind === 'form' && (!modal.id || editTarget) && (

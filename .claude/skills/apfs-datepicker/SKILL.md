@@ -11,7 +11,7 @@ APFS는 네이티브 `<input type="date">`를 쓰지 않는다. 전 화면 일�
 - **정본 컴포넌트**: `src/dash/ui/date-picker.tsx`(`DatePicker`) + `calendar.tsx` + `popover.tsx`.
 - **`DatePicker`(일자) 소비처는 단 2곳** — 모든 `control:'date'`/`kind:'date'`/`type:'date'` 메타가 이 둘로 수렴(연도 선택은 아래 PeriodPicker 절):
   - `schemas/renderers.tsx` `SchemaField` `case 'date'` (폼 모달 — →[[apfs-form-modal]])
-  - `generic_list.tsx` 필터 드로어 `kind === 'date'` (상세 필터 — →[[apfs-detail-filter]])
+  - `generic_list.tsx` 필터 패널 `kind === 'date'` → `PanelPeriod mode="day"` (상세 필터 — →[[apfs-detail-filter]]. 패널 칸은 `filter_panel.tsx` 가 120px 칸 폭을 정한다 — 아래 fit-content 래퍼 불필요)
 - **의존성**: `react-day-picker@10.0.1` · `date-fns@4.4.0` · `@radix-ui/react-popover@1.1.17`.
 
 ## 핵심 계약 (CRITICAL)
@@ -73,7 +73,7 @@ import { controlMinWidth } from './schemas/renderers';   // 폭 하한 SSOT(fit-
 <div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}><PeriodPicker mode="quarter" value={q} onChange={setQ} ariaLabel="분기" /></div>   // 'YYYY-Qn'
 ```
 - **폼 모달 소비처(2026-09-17 신설, 09-22 `month`·09-29 `monthOfYear` 추가)**: `schemas/renderers.tsx` `case 'year'`·`'month'`·`'monthOfYear'`(셋 다 같은 fit-content 래퍼 — 폼 모달 폭 규약(apfs-form-modal 규칙 7)의 **예외**라 달력 폭은 바꾸지 않는다) — 스키마가 `control:'year'` 를 선언하면 `SchemaField` 가 `PeriodPicker mode='year'` 를 렌더한다(`case 'date'` 와 같은 fit-content 래퍼, `minW=130`). 첫 적용은 `iam/mfund/subfund_notice_manage.ts` 의 사업연도(구 `control:'number'`). 값 계약 `'YYYY'`.
-- 골드 소비처: `src/dash/iam/sfund/subfund_manage.tsx` 상세필터(사업연도=year, 기준일자=day, **둘 다 fit-content 래퍼로 감쌈**). 검증: 연도 그리드 열림 → 2018 클릭 → 트리거 `2018년`·필터 행 수 감소·칩 `사업연도:2018년`; day는 달력(rdp) 렌더. **트리거 폭 ≈130(year)/≈120(day)** — 드로어 전체 폭(≈368) 아님.
+- 골드 소비처: `src/dash/iam/sfund/subfund_filter_panel.tsx` 상세필터 패널(사업연도=year, 기준일자=day — `PanelPeriod` 가 칸 폭(120px)을 정한다, 2026-11-17 드로어 폐기 전엔 fit-content 래퍼로 감쌌다). 검증: 연도 그리드 열림 → 2018 클릭 → 트리거 `2018년`·필터 행 수 감소·칩 `사업연도:2018년`; day는 달력(rdp) 렌더. **트리거 폭 ≈130(year)/≈120(day)** — 드로어 전체 폭(≈368) 아님.
 
 ## 범위/필터 작성 시 (날짜 2개로 기간)
 범위는 별도 컴포넌트가 아니라 **단일 `DatePicker` 2개**(시작/종료)로 구성하고 상태를 직접 소유한다. 이때 함정:

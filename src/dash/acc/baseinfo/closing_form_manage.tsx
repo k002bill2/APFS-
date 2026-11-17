@@ -5,7 +5,7 @@
    - 양식구분(재무상태표/손익계산서, 필수) = 툴바 주 필터 칩 2개(GridFrame `filterChips`, 정기보고 관용구). 필수라 '전체' 칩이 없고
      항상 1개만 active — active 칩을 다시 눌러도 해제되지 않는다. 양식구분마다 행 세트가 따로이고, 바꾸면 그 세트를 다시 불러온다.
      (설계서 콤보박스·'양식구분을 선택하세요' 검증은 미선택 상태가 없어 두지 않는다.)
-   - 툴바 우: 상세필터 · 행추가 · 저장 · 조회.
+   - 툴바 우: 행추가 · 저장 · 조회. 상세필터는 칩 줄 위 인라인 패널.
    - 행 작업(행삽입 · 행삭제 · 위로이동 · 아래로이동)은 선택 바(GridFrame `contextActions` — 관리형 선택 바 규약,
      정기보고·자펀드 관리 관용구)에 둔다. 체크박스로 1건 이상 고르면 툴바 좌측 칩 자리가 `N건 선택됨 · 작업 · 선택 해제`로
      바뀌고, 툴바가 화면 밖이면 플로팅 바로 옮겨 간다. 단건 작업(행삽입·위로·아래로)은 1건일 때만 노출(참고 화면의
@@ -16,9 +16,10 @@
    - 행 상태 I/U/D 는 행에 싣는다(closing_form_data.ts). 삭제(D) 행은 저장 전까지 흐림+취소선으로 남고,
      다시 골라 [행삭제]를 누르면 직전 상태로 복구된다. 신규(I) 행 삭제는 즉시 제거.
    - 계정코드·계정코드명은 직접 입력하지 않고 [검색] → 계정과목 검색 팝업(ACC-001 공통)으로만 채운다.
-   - 상세필터 = 계정코드명(텍스트 + [검색]) 1개, 부분일치. 검색어 박스(searchable)는 두지 않는다.
-     즉시 반영 — 타이핑·[검색] 선택 즉시 조건 반영, [필터 적용] = 닫기(X·Esc·바깥 클릭으로 닫아도 값 유지), [초기화] = 빈 값
-     (2026-11-03 사용자 지시, 정본 privacy_access_log). 범위 항목이 없어 검증 실패 상태는 없다.
+   - 상세필터 = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 — apfs-detail-filter), 계정코드명(텍스트 + [검색]) 1개, 부분일치.
+     검색어 박스(searchable)는 두지 않는다. 공용 칸이 없어 PanelCell 안에 조립(role=group aria-label=계정코드명).
+     즉시 반영 — 타이핑·[검색] 선택 즉시 조건 반영(2026-11-03 사용자 지시, 정본 privacy_access_log). 기본값이 빈 값이라 [초기화] 없음 —
+     적용 칩 × 가 같은 일을 한다. 범위 항목이 없어 검증 실패 상태는 없다.
    - 저장(E03): 양식구분 → 변경 건수 → 편집 행 검증(위반 셀 빨간 테두리) → 저장 중 → "N건 저장되었습니다".
    한계: 백엔드가 없어 저장은 화면 안 저장본(양식구분별)만 바꾼다 — 새로고침하면 더미로 돌아간다. */
 import '../../aggrid_shared.css';
@@ -34,8 +35,8 @@ import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, dropHiddenSelection, restoreSelection } from '../../aggrid_selection';
 import { Checkbox } from '../../ui/checkbox';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { drawerInputStyle } from '../../schemas/renderers';
+import { FilterPanel, PanelCell } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
@@ -163,8 +164,7 @@ export function ClosingFormManage({ onNav }: { onNav?: (r: string) => void }) {
   const [selIds, setSelIds] = useState<string[]>([]);
   const [search, setSearch] = useState<SearchTarget>(null);
 
-  /* 상세필터 — 계정코드명 부분일치. 드로어 입력이 fAcct 를 바로 고친다(즉시 반영 — 초안 사본 없음) */
-  const [filterOpen, setFilterOpen] = useState(false);
+  /* 상세필터 — 계정코드명 부분일치. 패널 입력이 fAcct 를 바로 고친다(즉시 반영 — 초안 사본 없음) */
   const [fAcct, setFAcct] = useState('');
   const passes = useMemo(() => passesFilter(fAcct), [fAcct]);
   /* 필터가 바뀌면 선택을 전부 해제(2026-10-27 사용자 결정 — filter_clears_selection 가드) */
@@ -280,11 +280,11 @@ export function ClosingFormManage({ onNav }: { onNav?: (r: string) => void }) {
     XLSX.writeFile(wb, `${LABEL}_${kind}.xlsx`);
     toast.success('Excel로 내보냈습니다');
   };
-  /* 상세필터·계정과목 검색 팝업이 덮고 있으면 뒤 그리드 인쇄·내보내기 단축키를 끈다(⌘P 는 입력창에서도 발화) */
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen && !search, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen && !search, skipInDialog: true });
+  /* 계정과목 검색 팝업이 덮고 있으면 뒤 그리드 인쇄·내보내기 단축키를 끈다(⌘P 는 입력창에서도 발화) */
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !search, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !search, skipInDialog: true });
 
-  /* 계정과목 검색 반영 — 행이면 코드/명을 그 행에, 필터면 드로어 사본에 */
+  /* 계정과목 검색 반영 — 행이면 코드/명을 그 행에, 필터면 패널 조건(fAcct)에 */
   const onPickAccount = (a: AccountItem) => {
     if (search?.kind === 'row') patch(search.id, { acctCode: a.code, acctName: a.name });
     else if (search?.kind === 'filter') setFAcct(a.name);
@@ -312,9 +312,21 @@ export function ClosingFormManage({ onNav }: { onNav?: (r: string) => void }) {
       /* 툴바 좌 = 주 필터 칩(양식구분, 필수라 '전체' 없음 · 칩 안 `*` 필수 표시) + 적용 중인 상세필터 값 칩 */
       filterChips={FORM_KINDS.map((k) => ({ key: k, label: k, active: kind === k, onSelect: () => changeKind(k), required: true }))}
       appliedFilters={[{ label: '계정코드명', value: fAcct, onClear: () => setFAcct('') }]}
+      /* 상세필터(E01) = 칩 줄 위 인라인 패널 — 조건 1개: 계정코드명(텍스트 + [검색], 부분일치). 저장 중엔 잠근다 */
+      filterPanel={
+        <FilterPanel label="결산양식 조건">
+          <PanelCell wide>
+            <div role="group" aria-label="계정코드명" className="flex items-center" style={{ gap: 6 }}>
+              <input type="text" value={fAcct} placeholder="계정코드명" aria-label="계정코드명" disabled={saving}
+                onChange={(e) => setFAcct(e.target.value)}
+                style={{ ...drawerInputStyle('text'), width: 120, minWidth: 0 }} />
+              <Button variant="outline" size="md" disabled={saving} onClick={() => setSearch({ kind: 'filter', keyword: fAcct })}>검색</Button>
+            </div>
+          </PanelCell>
+        </FilterPanel>
+      }
       contextActions={selActions}
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" disabled={saving} onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" disabled={saving} onClick={addRow}>행추가</Button>
         <SaveButton onSubmit={save} />
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
@@ -342,33 +354,6 @@ export function ClosingFormManage({ onNav }: { onNav?: (r: string) => void }) {
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">양식 행이 없습니다. 행추가로 새 행을 입력하세요.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어(E01) — 조건 1개: 계정코드명(텍스트 + [검색], 부분일치) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">결산양식 행을 계정코드명으로 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* plain(div) — 입력칸과 [검색] 버튼을 함께 품어 <label> 암묵 연결이 버튼 클릭을 가로채지 않게 */}
-            <div className="block mb-4">
-              <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>계정코드명</span>
-              <div className="flex items-center gap-1.5">
-                <input type="text" value={fAcct} placeholder="계정코드명 입력" aria-label="계정코드명"
-                  onChange={(e) => setFAcct(e.target.value)}
-                  style={{ ...drawerInputStyle('text'), flex: 1, minWidth: 0 }} />
-                <Button variant="outline" size="md" onClick={() => setSearch({ kind: 'filter', keyword: fAcct })}>검색</Button>
-              </div>
-            </div>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setFAcct('')}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 계정과목 검색 팝업(ACC-001 공통) — 행 [검색]·상세필터 [검색] 공용 ── */}
       <AccountSearchModal

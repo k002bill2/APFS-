@@ -2,13 +2,13 @@
    출처: ACC-019 화면설계서(2026.10.26 v1.0) slide 9~20 → APFS 디자인시스템(ACC-001 account_code_manage 골격).
 
    구성(설계서 → 우리 규약):
-   - 툴바: [상세필터](E01) → [계좌 등록](E02, ⌘⏎ — 설계서 '등록' → 도메인 액션명) → 조회(E03, 항상 맨 끝).
+   - 툴바: [계좌 등록](E02, ⌘⏎ — 설계서 '등록' → 도메인 액션명) → 조회(E03, 항상 맨 끝). 상세필터(E01)는 칩 줄 위 인라인 패널.
    - 그리드 14열(계정구분·계좌코드·계좌별칭·계좌번호·금융기관·지점명·계정과목·사용여부·수시입출금·상품가입액·이자율·개설일·만기일·통화)
        + 선택 체크박스(E04) → 선택 바 [수정](1건, E06)·[삭제]·[선택 해제]. 계좌코드 오름차순, getRowId=id. 행 더블클릭 / Enter = 수정 모달(E06).
        상품가입액·이자율 = 우측(수량형), 나머지 좌측(가운데 정렬 없음). 숫자 N/A = '-'. 계좌번호는 마스크 없이 전체 표시.
        임시저장 행 = 계좌코드 옆 '임시' muted 배지.
-   - 상세필터 드로어 7개(계정구분·계정과목명·거래기관·사용여부·개설일·만기일·만기여부) — 즉시 반영([필터 적용] = 닫기),
-       개설일 > 만기일 = 두 칸 invalid + 안내 + 0건. 적용 조건 = 칩(값만, × 개별 해제).
+   - 상세필터 7개(계정구분·계정과목명·거래기관·사용여부·개설일·만기일·만기여부) = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 —
+       apfs-detail-filter), 즉시 반영. 개설일 > 만기일 = 두 칸 invalid + 패널 아래 안내 + 0건. 적용 조건 = 칩(값만, × 개별 해제).
    - 삭제(E05) = 확인 모달 → 논리삭제(목록에서 제거) + 토스트. 설계서에 삭제이력 버튼이 없어 두지 않는다(코드 재사용 방지용 이력만 state 로 보관).
    - 새 창(E07)·내보내기(E08, ⌥D, '계좌관리.xlsx') = 푸터 FooterActions.
    - KPI 배지 행 미포함 · 카드헤더 sub 캡션 없음.
@@ -18,22 +18,18 @@
    ⚠ 백엔드가 없어 등록·수정·삭제는 화면 로컬 상태만 바꾼다. */
 import '../../aggrid_shared.css';
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import type { ReactNode } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';
-import { dayWrap } from '../acc_form_helpers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions, ICellRendererParams } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
-import { PeriodPicker } from '../../ui/period-picker';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../../ui/alert-dialog';
-import { DrawerSelect, DrawerMultiSelect } from '../../drawer_select';
+import { FilterPanel, PanelMulti, PanelPeriod, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { PARTNERS } from '../slip/general_journal_data';
 import type { Partner } from '../slip/general_journal_data';
 import { DEMO_USER } from '../baseinfo/account_code_data';
@@ -102,16 +98,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '개설일', get: (r) => dash(r.openDate) }, { header: '만기일', get: (r) => dash(r.maturityDate) }, { header: '통화', get: (r) => r.currency },
 ];
 
-function DrawerField({ label, children, plain }: { label: string; children: ReactNode; plain?: boolean }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-
 const pad2 = (n: number) => String(n).padStart(2, '0');
 const nowStamp = (): string => { const d = new Date(); return `${String(d.getFullYear())}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
 
@@ -134,16 +120,15 @@ export function BankAccountManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [modal, setModal] = useState<ModalState>(null);
 
-  /* 상세필터 — applied = 드로어·칩·목록의 SSOT(즉시 반영) */
-  const [filterOpen, setFilterOpen] = useState(false);
+  /* 상세필터 — applied = 패널·칩·목록의 SSOT(즉시 반영) */
   const [applied, setApplied] = useState<BankAccountFilter>(EMPTY_FILTER);
   const setD = <K extends keyof BankAccountFilter>(k: K) => (v: BankAccountFilter[K]) => setApplied((a) => ({ ...a, [k]: v }));
   const periodErr = filterPeriodError(applied);
 
-  const listKeys = modal === null && !filterOpen;
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  const listKeys = modal === null;
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null, skipInDialog: true });
 
   /* E00 초기 조회 · E01 상세필터 */
   const visible = useMemo(() => filterBankAccounts(rows, applied, DEMO_TODAY), [rows, applied]);
@@ -247,8 +232,19 @@ export function BankAccountManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* E01 상세필터 = 칩 줄 위 인라인 패널 — 설계서 7개 조건, 즉시 반영. 개설일 = 이후(≥) · 만기일 = 이전(≤) */
+      filterPanel={
+        <FilterPanel label="계좌관리 조건" errors={[periodErr]}>
+          <PanelSelect label="계정구분" value={applied.accountType} onChange={setD('accountType')} options={[...FUNDS_ACCOUNT_TYPES]} searchable />
+          <PanelMulti label="계정과목명" value={applied.subjects} onChange={setD('subjects')} options={[...ACCOUNT_NO_REQUIRED_SUBJECTS]} searchable />
+          <PanelMulti label="거래기관" value={applied.banks} onChange={setD('banks')} options={[...BANKS]} searchable />
+          <PanelSelect label="사용여부" value={applied.use} onChange={(v) => setD('use')(v as BankAccountFilter['use'])} options={[...YN]} />
+          <PanelPeriod label="개설일" mode="day" value={applied.openFrom} onChange={setD('openFrom')} invalid={!!periodErr} />
+          <PanelPeriod label="만기일" mode="day" value={applied.maturityTo} onChange={setD('maturityTo')} invalid={!!periodErr} />
+          <PanelSelect label="만기여부" value={applied.matured} onChange={(v) => setD('matured')(v as BankAccountFilter['matured'])} options={[...YN]} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>계좌 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={listKeys ? HOTKEYS.refresh : undefined} />
       </>}
@@ -282,35 +278,6 @@ export function BankAccountManage({ onNav }: { onNav?: (r: string) => void }) {
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 결과가 없습니다. 검색 조건을 변경해 주세요.</span>'}
         />
       </div>
-
-      {/* ── E01 상세필터 드로어 — 설계서 7개 조건. 즉시 반영([필터 적용] = 닫기) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">계좌 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="계정구분" plain><DrawerSelect value={applied.accountType} onChange={setD('accountType')} options={[...FUNDS_ACCOUNT_TYPES]} ariaLabel="계정구분" searchable /></DrawerField>
-            <DrawerField label="계정과목명" plain><DrawerMultiSelect value={applied.subjects} onChange={setD('subjects')} options={[...ACCOUNT_NO_REQUIRED_SUBJECTS]} ariaLabel="계정과목명" searchable /></DrawerField>
-            <DrawerField label="거래기관" plain><DrawerMultiSelect value={applied.banks} onChange={setD('banks')} options={[...BANKS]} ariaLabel="거래기관" searchable /></DrawerField>
-            <DrawerField label="사용여부"><DrawerSelect value={applied.use} onChange={(v) => setD('use')(v as BankAccountFilter['use'])} options={[...YN]} ariaLabel="사용여부" /></DrawerField>
-            <DrawerField label="개설일" plain>
-              <div style={dayWrap}><PeriodPicker mode="day" value={applied.openFrom} onChange={setD('openFrom')} ariaLabel="개설일(이후)" invalid={!!periodErr} /></div>
-            </DrawerField>
-            <DrawerField label="만기일" plain>
-              <div style={dayWrap}><PeriodPicker mode="day" value={applied.maturityTo} onChange={setD('maturityTo')} ariaLabel="만기일(이전)" invalid={!!periodErr} /></div>
-              {periodErr && <p role="alert" className="m-0 mt-1 text-danger" style={{ fontSize: 12 }}>{periodErr}</p>}
-            </DrawerField>
-            <DrawerField label="만기여부"><DrawerSelect value={applied.matured} onChange={(v) => setD('matured')(v as BankAccountFilter['matured'])} options={[...YN]} ariaLabel="만기여부" /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setApplied(EMPTY_FILTER)}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── E02 등록 · E06 수정 모달 ── */}
       {modal?.kind === 'form' && (modal.mode === 'create' || target) && (

@@ -65,7 +65,7 @@ function BoxMark({ state }: { state: boolean | 'indeterminate' }) {
   );
 }
 
-export function MultiSelect({ value, onChange, options, emptyLabel = '전체', ariaLabel, triggerStyle, searchable, selectAll = true, invalid, required }: {
+export function MultiSelect({ value, onChange, options, emptyLabel = '전체', ariaLabel, triggerStyle, searchable, selectAll = true, invalid, required, placeholder }: {
   value: readonly string[];
   onChange: (v: string[]) => void;
   options: ReadonlyArray<SelectOption>;
@@ -81,12 +81,16 @@ export function MultiSelect({ value, onChange, options, emptyLabel = '전체', a
   /** 폼 검증 상태 → 트리거 aria-invalid / aria-required(스키마 폼 'multiselect'). 테두리 색은 triggerStyle 이 맡는다 */
   invalid?: boolean;
   required?: boolean;
+  /** 인라인 필터 패널 — 트리거에 고른 요약 대신 이 항목명을 늘 흐린 글자로 보인다(고른 값은 적용 칩이 보인다).
+      접근名도 요약 없이 ariaLabel 그대로(칩 클릭 이동이 aria-label 정확일치로 칸을 찾는다) */
+  placeholder?: string;
 }) {
   const [open, setOpen] = React.useState(false);
   const listRef = React.useRef<HTMLDivElement>(null);
   const items = React.useMemo(() => options.map(norm), [options]);
   const selected = items.filter((o) => value.includes(o.value));
-  const parts = multiSelectSummaryParts(selected.map((o) => o.label), emptyLabel);
+  const fixed = placeholder != null;
+  const parts = fixed ? { head: placeholder, rest: '' } : multiSelectSummaryParts(selected.map((o) => o.label), emptyLabel);
   const shown = parts.head + parts.rest;
   const withSearch = shouldSearch(items.length, searchable);
   const showAll = selectAll && items.length > 1;
@@ -94,8 +98,9 @@ export function MultiSelect({ value, onChange, options, emptyLabel = '전체', a
   // 폭 사이저 = 나올 수 있는 가장 넓은 요약 후보 — 처음부터 그 폭이라 골라도 칸 폭이 출렁이지 않는다(196→223px 실측).
   // 반환이 options 순서라 첫 라벨이 i번째면 '외 N' 의 최댓값은 뒤에 남은 옵션 수 → items.slice(i)
   const sizers = React.useMemo(
-    () => [multiSelectSummaryParts([], emptyLabel), ...items.map((_, i) => multiSelectSummaryParts(items.slice(i).map((o) => o.label), emptyLabel))],
-    [items, emptyLabel],
+    () => (fixed ? [parts] : [multiSelectSummaryParts([], emptyLabel), ...items.map((_, i) => multiSelectSummaryParts(items.slice(i).map((o) => o.label), emptyLabel))]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fixed 면 parts 는 placeholder 만으로 정해진다
+    [items, emptyLabel, fixed, placeholder],
   );
 
   const toggle = (v: string) => {
@@ -123,7 +128,7 @@ export function MultiSelect({ value, onChange, options, emptyLabel = '전체', a
           role="combobox"
           aria-expanded={open}
           aria-haspopup="listbox"
-          aria-label={ariaLabel ? `${ariaLabel}: ${shown}` : undefined}
+          aria-label={ariaLabel ? (fixed ? ariaLabel : `${ariaLabel}: ${shown}`) : undefined}
           aria-invalid={invalid || undefined}
           aria-required={required || undefined}
           onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); setOpen(true); } }}
@@ -135,7 +140,7 @@ export function MultiSelect({ value, onChange, options, emptyLabel = '전체', a
             {sizers.map((p, i) => (
               <span key={i} aria-hidden style={{ gridArea: '1 / 1', display: 'flex', visibility: 'hidden', height: 0, overflow: 'hidden' }}><SummaryLine {...p} /></span>
             ))}
-            <span style={{ gridArea: '1 / 1', display: 'flex', minWidth: 0, overflow: 'hidden' }}><SummaryLine {...parts} /></span>
+            <span style={{ gridArea: '1 / 1', display: 'flex', minWidth: 0, overflow: 'hidden', ...(fixed ? { color: 'var(--muted-foreground)' } : null) }}><SummaryLine {...parts} /></span>
           </span>
           <ChevronDown aria-hidden size={16} strokeWidth={2} style={{ flexShrink: 0, color: 'var(--muted-foreground)' }} />
         </button>

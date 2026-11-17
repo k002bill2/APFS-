@@ -10,7 +10,7 @@
    규칙:
    - 적용 칩 = 값만 표시(항목명은 DS Tooltip·aria-label 로 회수), 최대 240px 말줄임. onClear 가 있는 칩만 ×.
      wide 칩 = 최대 480px·좁으면 2줄 줄바꿈, +N 으로 접지 않는다(배치 계산엔 minWidth 160 만 예약).
-   - 칩 값(본문)은 버튼 — 누르면 같은 GridFrame 의 상세필터를 열고 그 항목으로 스크롤·초점(filter_field_jump.ts, 2026-11-02 사용자 요청).
+   - 칩 값(본문)은 버튼 — 누르면 같은 GridFrame 의 필터 패널에서 그 칸으로 초점(filter_field_jump.ts, 2026-11-02 사용자 요청 · 11-17 패널).
      × 는 형제 버튼(중첩 아님)이라 해제만 한다. +N 메뉴의 적용 칩도 같은 규칙이다(2026-11-10 사용자 "x 로만 삭제, 칩 클릭은
      그 필터 선택 컴포넌트로 초점") — 행 = 값 항목(이동)·× 항목(해제) 두 menuitem, 항목명은 행 툴팁(MenuChipTip).
    - 해제 가능한 적용 칩이 2개 이상이면 `전체 해제` — 각 칩의 onClear 를 차례로 부른다.
@@ -73,19 +73,18 @@ export function freshLabels(prev: string | null, cur: string): string[] {
   return [...sigMap(cur)].filter(([k, v]) => before.get(k) !== v).map(([k]) => k);
 }
 const sigMap = (s: string) => new Map(s ? s.split(EN).map((e) => e.split(KV) as [string, string]) : []);
-/* 모달(상세필터 드로어 등)이 열려 있으면 칩이 가려져 있다 — 그동안 바뀐 항목은 모아 두었다가 닫힐 때 띄운다(2026-10-26 사용자 결정).
-   즉시 반영형 드로어(감사로그 등)는 고르는 순간 값이 바뀌어, 바로 띄우면 드로어 뒤에서 3초가 다 지나 버린다. */
+/* 모달(팝업)이 열려 있으면 칩이 가려져 있다 — 그동안 바뀐 항목은 모아 두었다가 닫힐 때 띄운다(2026-10-26 사용자 결정 —
+   당시 즉시 반영형 상세필터 드로어가 계기. 2026-11-17 드로어는 칩 줄 위 패널로 바뀌었고 팝업 안에서 필터가 바뀌는 경우에 남는다). */
 const modalOpen = () => document.querySelector('[role="dialog"][data-state="open"],[role="alertdialog"][data-state="open"]') != null;
 
-/* 칩 값 버튼 aria 꼬리말 — 드로어 화면 '상세필터에서 변경'. 칸을 펼쳐 둔 화면(GridFrame filterPanel)은 GridFrame 이 '필터에서 변경'을 넘긴다
-   (그 화면엔 [상세필터]가 없다 — 칩 클릭은 패널의 같은 이름 칸으로 간다, filter_field_jump focusPanelField) */
-const JumpHint = React.createContext('상세필터에서 변경');
+/* 칩 값 버튼 aria 꼬리말 — 칩 클릭은 칩 줄 위 필터 패널의 같은 이름 칸으로 간다(filter_field_jump focusPanelField).
+   2026-11-17 상세필터 드로어 폐기로 전 화면 '필터에서 변경' 하나(구 드로어 화면 분기 제거) */
+const JUMP_HINT = '필터에서 변경';
 
 /* 칩 값 = 상세필터로 가는 버튼. 칩 패딩까지 눌리게 음수 마진 + 같은 패딩으로 칩 왼쪽(× 없으면 오른쪽까지) 면을 덮는다 */
 function ValueButton({ f, onJump, clearable, children }: { f: AppliedFilter; onJump?: JumpFn; clearable: boolean; children: React.ReactNode }) {
-  const hint = React.useContext(JumpHint);
   return (
-    <button type="button" onClick={() => onJump?.(f.label, f.jumpTo)} aria-label={`${f.label}: ${f.value} — ${hint}`}
+    <button type="button" onClick={() => onJump?.(f.label, f.jumpTo)} aria-label={`${f.label}: ${f.value} — ${JUMP_HINT}`}
       className="inline-flex items-center border-0 bg-transparent cursor-pointer min-w-0 text-left"
       style={{ color: 'inherit', fontFamily: 'inherit', fontSize: 'inherit', fontWeight: 'inherit', lineHeight: 'inherit',
         padding: clearable ? '5px 0 5px 11px' : '5px 11px', margin: clearable ? '-5px 0 -5px -11px' : '-5px -11px', borderRadius: 9 }}>
@@ -219,7 +218,7 @@ export function planChips<T extends { id: string; kind: string; chip?: { active:
   return { shown: order.filter((it) => vis.has(it.id)), hidden: order.filter((it) => !vis.has(it.id)) };
 }
 
-export function FilterChipRow({ chips = [], applied, jumpHint }: { chips?: readonly FilterChipItem[]; applied?: readonly AppliedFilter[]; jumpHint?: string }) {
+export function FilterChipRow({ chips = [], applied }: { chips?: readonly FilterChipItem[]; applied?: readonly AppliedFilter[] }) {
   const on = activeFilters(applied);
   const clearable = on.filter((f) => f.onClear);
   const items: Item[] = [
@@ -318,7 +317,7 @@ export function FilterChipRow({ chips = [], applied, jumpHint }: { chips?: reado
       </div>
     </div>
   );
-  return jumpHint ? <JumpHint.Provider value={jumpHint}>{row}</JumpHint.Provider> : row;
+  return row;
 }
 
 function TriggerFace({ n, tinted }: { n: number; tinted: boolean }) {
@@ -381,7 +380,6 @@ function OverflowMenu({ hidden, tinted, rowRef, onJump }: { hidden: Item[]; tint
   const clear = hidden.find((it): it is Extract<Item, { kind: 'clear' }> => it.kind === 'clear');
   /* +N = 숨긴 **필터** 수 — `전체 해제`는 필터가 아니라 세지 않는다(세면 칩 2개 숨김에 +3 으로 보였다). */
   const n = chips.length + applied.length;
-  const hint = React.useContext(JumpHint);
   /* 제어형 — 행 툴팁의 Esc 가 메뉴까지 닫을 수 있게(MenuChipTip) */
   const [open, setOpen] = React.useState(false);
   /* 값 항목을 고르면 여기 담아 두고 메뉴가 닫힌 뒤 이동한다 — 모달 메뉴의 FocusScope 는 열려 있는 동안 밖으로 간 초점을 되돌린다 */
@@ -427,7 +425,7 @@ function OverflowMenu({ hidden, tinted, rowRef, onJump }: { hidden: Item[]; tint
             {/* 한 행 = menuitem 두 개(버튼 중첩 금지) — ↓ 순서 값 → × → 다음 값 */}
             <div className="flex items-center">
               <DropdownMenuItem className="flex-1 min-w-0" onSelect={() => { pendingJump.current = f; }}
-                aria-label={`${f.label}: ${f.value} — ${hint}`}>
+                aria-label={`${f.label}: ${f.value} — ${JUMP_HINT}`}>
                 <span className="flex-1 truncate font-semibold" style={{ color: CHIP_FG }}>{f.value}</span>
               </DropdownMenuItem>
               {f.onClear && (

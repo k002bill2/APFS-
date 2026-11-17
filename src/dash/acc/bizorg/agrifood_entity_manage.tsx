@@ -3,12 +3,13 @@
 
    구성(설계서 → 우리 규약):
    - 제목은 메뉴 라벨 '경영체 정보 조회'(설계서 표기 '경영체정보조회'는 쓰지 않는다).
-   - 툴바: [상세필터] → 조회(항상 맨 끝). 등록 버튼·선택 바 없음.
+   - 툴바: 조회(항상 맨 끝). 등록 버튼·선택 바 없음. 상세필터는 칩 줄 위 인라인 패널.
    - 설계서 그리드 체크박스 → 두지 않는다(선택으로 하는 액션이 0개라 rowSelection 없음).
    - 그리드 9열(사업자번호·기업명·기업구분·주식구분·여성기업여부·외부감사여부·사용여부·최초등록자·최종수정자).
        설계서의 '가운데' 정렬 → 전부 좌측(수량형 숫자 열이 없다 — 표 정렬 규약). 기업명 = 굵게·말줄임·잔여폭 흡수.
        기업명 가나다순(모델 정렬).
-   - 상세필터 드로어 6개(기업명·기업구분·주식구분·여성기업여부·외부감사여부·사용여부). 즉시 반영 — [필터 적용] = 닫기, [초기화] = 전부 비움.
+   - 상세필터 = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 — apfs-detail-filter) 6개(기업명·기업구분·주식구분·여성기업여부·외부감사여부·사용여부).
+       즉시 반영. 기본값이 전부 빈 값이라 [초기화] 없음 — 칩 줄 `전체 해제`가 같은 일을 한다.
        적용 조건 = 칩(값만, × 개별 해제).
    - 행 더블클릭 / Enter = 경영체 상세보기(5탭 — entity_detail_modal, IR 상세의 참가경영체 링크와 같은 모달).
    - 새 창·내보내기·인쇄 = 푸터 FooterActions. 엑셀 파일·시트명 '경영체 정보 조회'.
@@ -18,19 +19,16 @@
    - 백엔드가 없어 조회는 현재 조건 재조회 토스트만 띄운다. */
 import '../../aggrid_shared.css';
 import { useState, useRef, useCallback, useMemo } from 'react';
-import type { ReactNode } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
-import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, CellKeyDownEvent, RowDoubleClickedEvent, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
-import { DrawerSelect } from '../../drawer_select';
+import { FilterPanel, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { demoEntities, CORP_KINDS, STOCK_KINDS, WOMEN_YN, YN } from './bizorg_data';
 import type { AgriEntity } from './bizorg_data';
 import { filterEntities, EMPTY_ENTITY_FILTER } from './bizorg_model';
@@ -80,15 +78,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '사용여부', get: (r) => r.useYn }, { header: '최초등록자', get: (r) => r.createdBy }, { header: '최종수정자', get: (r) => r.updatedBy },
 ];
 
-function DrawerField({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </label>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -101,15 +90,14 @@ export function AgrifoodEntityManage({ onNav }: { onNav?: (r: string) => void })
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [modal, setModal] = useState<ModalState>(null);
 
-  /* 상세필터 — applied = 드로어·칩·목록의 SSOT(즉시 반영) */
-  const [filterOpen, setFilterOpen] = useState(false);
+  /* 상세필터 — applied = 패널·칩·목록의 SSOT(즉시 반영) */
   const [applied, setApplied] = useState<EntityFilter>(EMPTY_ENTITY_FILTER);
   const setD = <K extends keyof EntityFilter>(k: K) => (v: EntityFilter[K]) => setApplied((a) => ({ ...a, [k]: v }));
   const clearApplied = (patch: Partial<EntityFilter>) => setApplied((a) => ({ ...a, ...patch }));
 
-  /* 인쇄·내보내기는 모달·드로어가 열려 있지 않을 때만 */
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  /* 인쇄·내보내기는 모달이 열려 있지 않을 때만 */
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null, skipInDialog: true });
 
   const visible = useMemo(() => filterEntities(rows, applied), [rows, applied]);
 
@@ -161,8 +149,18 @@ export function AgrifoodEntityManage({ onNav }: { onNav?: (r: string) => void })
       favRoute="acct-agrifood-entity"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 설계서 6개 조건. 즉시 반영 */
+      filterPanel={
+        <FilterPanel label="경영체 정보 조회 조건">
+          <PanelText label="기업명" value={applied.name} onChange={setD('name')} />
+          <PanelSelect label="기업구분" value={applied.corpKind} onChange={setD('corpKind')} options={[...CORP_KINDS]} />
+          <PanelSelect label="주식구분" value={applied.stockKind} onChange={setD('stockKind')} options={[...STOCK_KINDS]} />
+          <PanelSelect label="여성기업여부" value={applied.womenYn} onChange={setD('womenYn')} options={[...WOMEN_YN]} />
+          <PanelSelect label="외부감사여부" value={applied.auditYn} onChange={setD('auditYn')} options={[...YN]} />
+          <PanelSelect label="사용여부" value={applied.useYn} onChange={setD('useYn')} options={[...YN]} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{footerCount(visible.length, Math.min(shown, visible.length))}</span>}
@@ -191,31 +189,6 @@ export function AgrifoodEntityManage({ onNav }: { onNav?: (r: string) => void })
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 결과가 없습니다. 검색 조건을 변경해 주세요.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 설계서 6개 조건. 즉시 반영([필터 적용] = 닫기) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">경영체 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="기업명">
-              <input type="text" value={applied.name} onChange={(e) => setD('name')(e.target.value)} placeholder="기업명" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="기업구분"><DrawerSelect value={applied.corpKind} onChange={setD('corpKind')} options={[...CORP_KINDS]} ariaLabel="기업구분" /></DrawerField>
-            <DrawerField label="주식구분"><DrawerSelect value={applied.stockKind} onChange={setD('stockKind')} options={[...STOCK_KINDS]} ariaLabel="주식구분" /></DrawerField>
-            <DrawerField label="여성기업여부"><DrawerSelect value={applied.womenYn} onChange={setD('womenYn')} options={[...WOMEN_YN]} ariaLabel="여성기업여부" /></DrawerField>
-            <DrawerField label="외부감사여부"><DrawerSelect value={applied.auditYn} onChange={setD('auditYn')} options={[...YN]} ariaLabel="외부감사여부" /></DrawerField>
-            <DrawerField label="사용여부"><DrawerSelect value={applied.useYn} onChange={setD('useYn')} options={[...YN]} ariaLabel="사용여부" /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setApplied(EMPTY_ENTITY_FILTER)}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 경영체 상세보기 — 게이트는 modal state(행 스냅샷) ── */}
       {modal?.kind === 'detail' && <EntityDetailModal entity={modal.row} onClose={() => setModal(null)} />}

@@ -2,7 +2,8 @@
    출처: S0_104_감사로그.html(공통관리 KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(기간·결과·행위자·검색어) → 주 필터 1개 = 결과 FilterChip(툴바 좌) + 상세필터 드로어(검색어·기간(PeriodPicker day ×2)·유형·행위자).
+   - 검색박스(기간·결과·행위자·검색어) → 주 필터 1개 = 결과 FilterChip(툴바 좌) + 상세필터 = 칩 줄 위 인라인 패널(검색어·기간(시작~종료 한 칸)·유형·행위자).
+       기간 기본값 = DEMO_RANGE(첫 진입부터 칩), 칩 × = 전 기간, 패널 [초기화] = 기본값 복원.
        유형(접속·계정·권한변경·비정상 접근)은 브리프의 "접속·권한변경·비정상 접근 행" 구분 — 행위 문자열에서 파생(audit_log_model.kindOf).
    - 그리드(No·일시·행위자·유형·행위·대상·IP·결과) → AG Grid 단일 헤더, 결과 배지(정상 success·실패 warning·차단 danger).
    - 행 상세(브리프) → 더블클릭/Enter(또는 우클릭 메뉴 '상세') → 읽기 전용 kv 다이얼로그. 목업은 선택 없음이었으나 상세 요구로 추가.
@@ -11,15 +12,12 @@
    ⚠ 실제 접근 로그·보안 이벤트·정책 판정이 아니다 — 데모 행을 로컬로 조회만 한다(브리프). 실명 아님. */
 import '../../aggrid_shared.css';
 import { useState, useRef, useCallback, useMemo } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
-import { PeriodPicker } from '../../ui/period-picker';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription , type DialogHandle} from '../../ui/dialog';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
@@ -29,7 +27,7 @@ import { RowContextMenu } from '../../row_context_menu';
 import type { CtxItem, CtxMenuState } from '../../row_context_menu';
 import { demoLogs, filterLogs, resultCounts, AUDIT_RESULTS, AUDIT_KINDS, RESULT_TONE, KIND_TONE, DEMO_RANGE } from './audit_log_model';
 import type { AuditRow, AuditResult, AuditKind } from './audit_log_model';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSearch, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -60,17 +58,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '일시', get: (r) => r.ts }, { header: '행위자', get: (r) => r.actor }, { header: '유형', get: (r) => r.kind },
   { header: '행위', get: (r) => r.action }, { header: '대상', get: (r) => r.target }, { header: 'IP', get: (r) => r.ip }, { header: '결과', get: (r) => r.result },
 ];
-
-function DrawerField({ label, children, plain }: { label: string; children: ReactNode; plain?: boolean }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-const dayWrap: CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
 
 /* 행 상세 — 읽기 전용 kv(한글 가로 배열 규약) */
 function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void }) {
@@ -114,7 +101,6 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
 
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fResult, setFResult] = useState<typeof RESULT_CHIPS[number]>('');
   const [fFrom, setFFrom] = useState<string>(DEMO_RANGE[0]);
   const [fTo, setFTo] = useState<string>(DEMO_RANGE[1]);
@@ -123,8 +109,8 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
   const [fText, setFText] = useState('');
   const clearFilters = () => { setFResult(''); setFFrom(DEMO_RANGE[0]); setFTo(DEMO_RANGE[1]); setFKind(''); setFActor(''); setFText(''); };
 
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   const visible = useMemo(() => filterLogs(DEMO, { from: fFrom, to: fTo, result: fResult, kind: fKind, actor: fActor, kw: fText }), [fFrom, fTo, fResult, fKind, fActor, fText]);
   /* 결과 칩의 건수는 "결과만 빼고" 나머지 필터를 적용한 모집단 기준(facet count).
@@ -178,8 +164,16 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
       filterChipsMenu="결과"
       filterChips={RESULT_CHIPS.map((r) => ({ key: r || 'all', label: r || '전체', count: chipCount(r), active: fResult === r, onSelect: () => setFResult(r) }))}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 즉시 반영, [초기화] = 기본값(기간 = DEMO_RANGE) 복원 */
+      filterPanel={
+        <FilterPanel label="감사로그 조건" onReset={clearFilters}>
+          {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
+          <PanelRange label="기간" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
+          <PanelSelect label="유형" value={fKind} onChange={setFKind} options={AUDIT_KINDS.map((k) => ({ value: k, label: k }))} />
+          <PanelText label="행위자" value={fActor} onChange={setFActor} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(DEMO.length) + '건 중 ' + String(visible.length) + '건 표시 중'}</span>}
@@ -204,35 +198,6 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">감사로그를 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {SEARCHABLE && (
-              <DrawerField label="검색어">
-                <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="행위 · 대상" style={inputStyle('text')} />
-              </DrawerField>
-            )}
-            <DrawerField label="기간" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="기간 시작일" /></div>
-                <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="기간 종료일" /></div>
-              </div>
-            </DrawerField>
-            <DrawerField label="유형"><DrawerSelect value={fKind} onChange={setFKind} options={AUDIT_KINDS.map((k) => ({ value: k, label: k }))} /></DrawerField>
-            <DrawerField label="행위자"><input type="text" value={fActor} onChange={(e) => setFActor(e.target.value)} placeholder="로그인 아이디" style={inputStyle('text')} /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {detail && <AuditDetailModal row={detail} onClose={() => setDetailId(null)} />}
     </GridFrame>

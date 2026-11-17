@@ -1,14 +1,14 @@
 /* 법률/규약위반사항 관리 — 관리형 리스트 페이지 (조기경보 > 조기경보 > 법률/규약위반사항 관리).
    출처: S2_53_법률_규약위반사항_관리.html(KRDS TO-BE) + 등록화면 S2_54(팝업으로 흡수) → APFS 디자인시스템으로 변형.
-   형제 골드: `early_warning_manage.tsx`(같은 대분류·단일헤더·드로어+적용칩) · `subfund_manage.tsx`(행선택→액션→모달).
+   형제 골드: `early_warning_manage.tsx`(같은 대분류·단일헤더·필터 패널+적용칩) · `subfund_manage.tsx`(행선택→액션→모달).
 
    구성(목업 → 우리 규약)
-   - 검색박스 3항목(구분·운용사/자펀드·기간) → **상세필터 드로어**(Sheet). 툴바 FilterChip 세트는 만들지 않는다
+   - 검색박스 3항목(구분·운용사/자펀드·기간) → **칩 줄 위 인라인 필터 패널**(2026-11-17 드로어 폐기 — apfs-detail-filter). 툴바 FilterChip 세트는 만들지 않는다
      (주 필터로 삼을 열거형 축이 없다 — 목업 `구분`은 등급 같은 상태축이 아니라 **검색 대상 종류**다).
      검색어는 OFF(목업에 없음 — `SEARCHABLE` 게이트).
      ⚠ 기간 기본값 없음(사용자 확정) — 시작·종료 둘 다 빈 값으로 시작하고, 빈 쪽은 무제한 경계다.
    - 목업 [조회] 버튼 → 만들지 않는다(백엔드가 없어 필터가 즉시 반영된다 — 형제 골드 동일 판단).
-   - 목업 [등록] → 툴바 독립 버튼 `위반사항 등록`(상세필터 오른쪽·새로고침 왼쪽) + `⌘⏎`.
+   - 목업 [등록] → 툴바 독립 버튼 `위반사항 등록`(새로고침 왼쪽) + `⌘⏎`.
    - 목업 [수정]·[삭제]·[해제등록] → **행 선택 selbar**(GridFrame contextActions). 목업 캡션
      "행을 선택해 수정(1건)·삭제·해제등록·엑셀 처리"는 selbar 가 대신하므로 별도 캡션을 두지 않는다.
    - 목업 [엑셀] → 툴바가 아니라 푸터 `FooterActions` 내보내기 + `⌥D`(apfs-grid 푸터 골드 양식).
@@ -38,24 +38,21 @@ import type { TagTone } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';   // 34px 컨트롤·폭 하한 SSOT
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
-import { PeriodPicker } from '../../ui/period-picker';
 import { ViolationFormModal, ViolationReleaseModal, ViolationDeleteDialog } from './violation_form_modal';
 import type { ViolationFormValues } from './violation_form_modal';
 import { OPT_GP, OPT_FUND, OPT_SEARCH_KIND } from './violation_manage_schemas';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSearch, PanelSelect, PanelRange } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn, TagBadge } = UI;
 
 /* 검색어 입력은 기본 OFF(opt-in) — 목업 검색박스에 없다(apfs-detail-filter "예약 라벨 검색어").
-   상태(`fText`)·행 필터·칩 배선은 남겨 두고 **드로어 입력만** 이 플래그로 가린다(정본 asset_funding·permission_history).
+   상태(`fText`)·행 필터·칩 배선은 남겨 두고 **패널 칸만** 이 플래그로 가린다(정본 asset_funding·permission_history).
    입력이 숨겨져 값이 ''로 고정되므로 필터는 자연 무발동이고, `true` 한 줄로 전 컬럼 부분일치 검색이 살아난다. */
 const SEARCHABLE = false;
 
@@ -194,19 +191,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-
-/* 기간 PeriodPicker 래퍼 — 트리거가 `w-full` 이라 감싸지 않으면 드로어 전 폭으로 늘어난다(apfs-datepicker) */
-const dayWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
-
 /* 엑셀 파일명 — 라우트에 `/` 가 있어 파일명으로 쓸 수 없다(경로 구분자). 시트명도 Excel 금칙문자다. */
 const EXPORT_BASENAME = '법률_규약위반사항 관리';
 const EXPORT_SHEET = '법률규약위반사항';
@@ -242,11 +226,10 @@ export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
 
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
   /* 앱-스코프 단축키. 모달이 떠 있는 동안에는 등록(이중 열림)·내보내기(모달 위 다운로드)를 막는다. */
-  useHotkey(HOTKEYS.register.combo, () => openCreate(), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => openCreate(), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null, skipInDialog: true });
 
   /* ── 필터 SSOT(빈 값 = 미적용) — 목업 검색박스 3항목 순서 그대로 ──
      fKind = **검색 대상 종류**(운용사/자펀드). 그리드의 `구분`(등록/해제) 컬럼과 무관하다.
@@ -441,8 +424,17 @@ export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips.map((c) => ({ label: c.key, value: c.value, onClear: c.clear }))}
       contextActions={selActions}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 항목·순서 그대로(구분 · 운용사/자펀드 · 기간). 기간은 시작 ~ 종료가 한 항목, **기본값 없음**.
+         검색어는 SEARCHABLE 게이트(OFF) */
+      filterPanel={
+        <FilterPanel label="법률/규약위반사항 조건">
+          {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
+          <PanelSelect label="구분" value={fKind} onChange={changeKind} options={[...OPT_SEARCH_KIND]} />
+          <PanelSelect label="운용사/자펀드" value={fTarget} onChange={setFTarget} options={targetOptions} />
+          <PanelRange label="기간" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={openCreate}>위반사항 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -479,40 +471,6 @@ export function ViolationManage({ onNav }: { onNav?: (r: string) => void }) {
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 조건에 해당하는 위반사항이 없습니다.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 목업 검색박스 항목·순서 그대로(구분 · 운용사/자펀드 · 기간) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">법률/규약위반사항 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {SEARCHABLE && (
-              <DrawerField label="검색어">
-                <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="운용사 · 자펀드 · 위반형태 등 전 컬럼 검색" style={inputStyle('text')} />
-              </DrawerField>
-            )}
-            {/* ⚠ 이 `구분`은 **검색 대상 종류**(운용사/자펀드)다 — 그리드의 `구분`(등록/해제) 컬럼이 아니다 */}
-            <DrawerField label="구분"><DrawerSelect value={fKind} onChange={changeKind} options={[...OPT_SEARCH_KIND]} /></DrawerField>
-            <DrawerField label="운용사/자펀드"><DrawerSelect value={fTarget} onChange={setFTarget} options={targetOptions} /></DrawerField>
-            {/* 기간 — 목업 `<label for="f-from">기간</label>` 한 줄(시작 `~` 종료). **기본값 없음**(사용자 확정).
-                PeriodPicker 는 <label>로 명명되지 않으므로 plain + ariaLabel, 트리거가 w-full 이라 fit-content 래퍼 필수. */}
-            <DrawerField label="기간" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="기간 시작" /></div>
-                <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="기간 종료" /></div>
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 팝업 3종 — 등록/수정(목업 openReg) · 해제등록(openRelease) · 삭제 확인(openDelete) ── */}
       {modal?.kind === 'form' && (

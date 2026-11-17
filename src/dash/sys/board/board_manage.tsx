@@ -3,8 +3,8 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(등록기간·게시대상·게시 종류·상태·제목 + [초기화][조회]) → 주 필터 1개 = 상태 FilterChip(`상태: 전체` + 4값, facet 건수)
-       + 상세필터 드로어(제목(검색어 opt-in, 최상단) · 등록기간(PeriodPicker day ×2, 칩 1개) · 게시대상 · 게시 종류).
-       [조회] → 툴바 조회 아이콘(⌥R) · [초기화] → 드로어 [초기화].
+       + 상세필터 = 칩 줄 위 인라인 패널(제목(검색어 opt-in, 맨 앞) · 등록기간(시작~종료 한 칸, 칩 1개) · 게시대상 · 게시 종류).
+       [조회] → 툴바 조회 아이콘(⌥R) · [초기화] → 칩 줄 `전체 해제`·⟳ 조회(기본값이 전부 빈 값이라 패널 [초기화] 없음).
    - 목록바(총 N건 · 페이지당 건수 · 엑셀 · 선택 삭제 · 게시 · 등록) → 푸터 건수·페이저(10건)·전체보기(⌥A) · 엑셀 = 푸터 내보내기(⌥D) ·
        [게시]·[삭제] = 선택 바(contextActions, 체크한 행) · [등록] = 툴바 [게시글 등록](⌘⏎).
    - 그리드(체크·No·등록일·게시대상·제목·게시기간·상태·게시 종류·첨부·작성자·미리보기) → AG Grid 단일 헤더. 선택은 체크박스로만(ROW_SELECTION).
@@ -23,17 +23,14 @@
    ⚠ 실제 게시·팝업 송출·파일 업로드가 아니다 — 화면 로컬 더미 상태만 바꾼다(실명 아님). */
 import '../../aggrid_shared.css';
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
 import { format } from 'date-fns';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { AttachChips, controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
-import { PeriodPicker } from '../../ui/period-picker';
+import { AttachChips } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions, ICellRendererParams } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel } from '../../ui/alert-dialog';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
@@ -41,7 +38,7 @@ import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { RowContextMenu } from '../../row_context_menu';
 import type { CtxItem, CtxMenuState } from '../../row_context_menu';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본
+import { FilterPanel, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { LinkCell } from '../../link_cell';
 import { demoPosts, AUDIENCES, KIND_FILTERS, LOGIN_WRITER, TODAY } from './board_data';
 import type { PostRow } from './board_data';
@@ -52,7 +49,7 @@ import { BoardPreviewModal } from './board_preview_modal';
 
 const { Button, SaveButton, IconBtn, StatusBadge } = UI;
 
-const SEARCHABLE = true;   // 목업 검색박스에 제목 입력이 있다 → 드로어 최상단 '제목'
+const SEARCHABLE = true;   // 목업 검색박스에 제목 입력이 있다 → 패널 맨 앞 '제목'
 const PAGE_SIZE = 10;      // 목업 페이지당 건수 기본값(10개씩)
 
 type PostView = PostRow & { status: PostStatus };
@@ -122,17 +119,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
       style={{ minWidth: 30, height: 30, padding: '0 8px', borderRadius: 8, border: '1px solid ' + (active ? 'var(--primary)' : 'var(--border)'), background: active ? 'var(--primary)' : 'transparent', color: active ? 'var(--primary-foreground)' : 'var(--foreground)', fontSize: 12.5 }}>{n}</button>
   );
 }
-/* plain = 버튼 트리거(PeriodPicker)라 <label> 대신 <div>(라벨 활성화와 겹친 2회 토글 방지) */
-function DrawerField({ label, children, plain }: { label: string; children: ReactNode; plain?: boolean }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-const dayWrap: CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
 
 /* ──────────────────────────────
    메인 컴포넌트
@@ -148,7 +134,6 @@ export function BoardManage({ onNav }: { onNav?: (r: string) => void }) {
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
 
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fStatus, setFStatus] = useState<typeof STATUS_CHIPS[number]>('');
   const [fFrom, setFFrom] = useState('');
   const [fTo, setFTo] = useState('');
@@ -157,9 +142,9 @@ export function BoardManage({ onNav }: { onNav?: (r: string) => void }) {
   const [fTitle, setFTitle] = useState('');
   const clearFilters = () => { setFStatus(''); setFFrom(''); setFTo(''); setFAud(''); setFKind(''); setFTitle(''); };
 
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', id: null }), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', id: null }), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   const visible = useMemo<PostView[]>(() => filterPosts(rows, { from: fFrom, to: fTo, aud: fAud, kind: fKind, status: fStatus, q: fTitle })
     .map((r) => ({ ...r, status: postStatus(r) })), [rows, fFrom, fTo, fAud, fKind, fStatus, fTitle]);
@@ -288,9 +273,17 @@ export function BoardManage({ onNav }: { onNav?: (r: string) => void }) {
       filterChipsMenu="상태"
       filterChips={STATUS_CHIPS.map((s) => ({ key: s || 'all', label: s || '전체', count: chipCount(s), active: fStatus === s, onSelect: () => setFStatus(s) }))}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 즉시 반영. 기본값이 전부 빈 값이라 [초기화] 없음(칩 줄 전체 해제·⟳ 조회) */
+      filterPanel={
+        <FilterPanel label="게시판관리 조건">
+          {SEARCHABLE && <PanelText label="제목" value={fTitle} onChange={setFTitle} />}
+          <PanelRange label="등록기간" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
+          <PanelSelect label="게시대상" value={fAud} onChange={setFAud} options={AUDIENCES.filter((a) => a !== '전체')} />
+          <PanelSelect label="게시 종류" value={fKind} onChange={setFKind} options={[...KIND_FILTERS]} />
+        </FilterPanel>
+      }
       contextActions={selActions}
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', id: null })}>게시글 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -330,35 +323,6 @@ export function BoardManage({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">게시글 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {SEARCHABLE && (
-              <DrawerField label="제목">
-                <input type="text" value={fTitle} onChange={(e) => setFTitle(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="제목을 입력하세요" style={inputStyle('text')} />
-              </DrawerField>
-            )}
-            <DrawerField label="등록기간" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="등록기간 시작일" /></div>
-                <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="등록기간 종료일" /></div>
-              </div>
-            </DrawerField>
-            <DrawerField label="게시대상"><DrawerSelect value={fAud} onChange={setFAud} options={AUDIENCES.filter((a) => a !== '전체')} /></DrawerField>
-            <DrawerField label="게시 종류"><DrawerSelect value={fKind} onChange={setFKind} options={[...KIND_FILTERS]} /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {modal?.kind === 'form' && (modal.id === null || formRow) && (
         <BoardFormModal row={formRow} writer={LOGIN_WRITER} onSave={save} onClose={() => setModal(null)} />

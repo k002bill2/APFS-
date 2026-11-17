@@ -3,8 +3,8 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(모펀드·운용사·자펀드·계정구분 4항목 + [조회] 버튼)
-       → **계정구분 FilterChip**(툴바 좌, 목업 chipGroup 그대로 전체·농식품·수산) + 상세필터 드로어(Sheet).
-         드로어 항목 순서는 목업 검색박스 순서 그대로(모펀드·운용사·자펀드·계정구분). 검색어는 OFF(미요청).
+       → **계정구분 FilterChip**(툴바 좌, 목업 chipGroup 그대로 전체·농식품·수산) + 칩 줄 위 인라인 필터 패널(apfs-detail-filter).
+         패널 항목 순서는 목업 검색박스 순서 그대로(모펀드·운용사·자펀드 — 계정구분은 칩). 검색어는 OFF(미요청).
          목업 [조회] 버튼은 즉시 반영형이라 없다.
        ⚠ 목업 기본 선택값(계정구분 '농식품' · 운용사 'KB증권(주)' · 자펀드 selected)은 **적용하지 않는다** —
          6행 전부가 같은 값이라 첫 화면이 "필터가 걸린 상태"로 보인다(열린 경계 = 전체).
@@ -41,7 +41,6 @@ import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, numFmt, numStyle } from 
 import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, RowSelectionOptions, IRowNode, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, ValueFormatterParams } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
@@ -51,7 +50,7 @@ import { RowFormModal } from '../../generic_list_modal';
 import { RowContextMenu } from '../../row_context_menu';
 import type { CtxItem, CtxMenuState } from '../../row_context_menu';
 import { CREATE_SCHEMA, EDIT_SCHEMA, CLS_OPTS, TYPE_OPTS } from './fund_member_manage_schemas';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -198,18 +197,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-/* 드로어 필드 래퍼 — 라벨 + 컨트롤(항목이 전부 행을 거른다 — 미연동 캡션 없음) */
-function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -231,13 +218,12 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
 
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
   // 앱-스코프 단축키: ⌘⏎=조합원 등록(모달 열림 중엔 비활성 → 이중 열림 방지), ⌘P=인쇄, ⌥D=내보내기
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'create' }), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
-  /* 필터 — 계정구분은 툴바 칩에만 둔다(드로어 중복 금지 — 2026-11-05), 나머지는 드로어.
+  /* 필터 — 계정구분은 툴바 칩에만 둔다(패널 중복 금지 — 2026-11-05), 나머지는 인라인 패널.
      SSOT=개별 state(빈 값=미적용, 열린 경계) */
   const [fAcc, setFAcc] = useState<'' | Acc>('');
   const [fGp, setFGp] = useState('');
@@ -385,20 +371,29 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
       title="자펀드별조합원조회"
       favRoute="fund-member"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 주 필터 칩(계정구분) + 적용 중인 드로어 값 칩. 행 선택 중엔 선택 바(contextActions)가 나오고 칩은 접힌다. */
+      /* 툴바 좌 = 주 필터 칩(계정구분) + 적용 중인 패널 값 칩. 행 선택 중엔 선택 바(contextActions)가 나오고 칩은 접힌다. */
       filterChipsMenu="계정구분"
       filterChips={(['', ...ACC_OPTS] as ('' | Acc)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fAcc === s, onSelect: () => setFAcc(s) }))}
-      /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
+      /* 적용 중인 패널 값 칩 — 값만 표시(접두사 없음) + × · label = 패널 칸 aria-label(칩 클릭 → 그 칸 초점) */
       appliedFilters={[
         { label: '모펀드', value: fMf, onClear: () => setFMf('') },
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 순서 그대로(모펀드·운용사·자펀드). 검색어는 미사용(OFF).
+         계정구분은 툴바 칩이라 패널에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts).
+         운용사 옵션은 행 파생(관측 1건) — 목업의 예시 옵션은 옮기지 않는다 */
+      filterPanel={
+        <FilterPanel label="자펀드별조합원조회 조건">
+          <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} />
+          <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={gpOptions} />
+          <PanelSelect label="자펀드" value={fFund} onChange={setFFund} options={fundOptions} />
+        </FilterPanel>
+      }
       contextActions={selActions}
       toolbarRight={<>
         {/* 금액 단위 표기 — 캡션. 목업 설계메모대로 단위 전환 토글은 두지 않는다(편집 있는 관리화면) */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>조합원 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -440,28 +435,6 @@ export function FundMemberManage({ onNav }: { onNav?: (r: string) => void }) {
       </div>
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
-
-      {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(모펀드·운용사·자펀드·계정구분). 검색어는 미사용(OFF) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">자펀드별 조합원 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
-            {/* 운용사 — 옵션은 행 파생(관측 1건). 목업의 예시 옵션은 옮기지 않는다 */}
-            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            {/* 계정구분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 등록/수정 — 목업 openForm(mode) 2모드. 수정 모달 안 [삭제]는 onDelete로 삭제 확인 AlertDialog를 연다 ──
              ⚠ create에 initial을 넘기면 RowFormModal의 "select 첫 옵션 시드"가 통째로 꺼진다(initial 분기).

@@ -2,7 +2,7 @@
    출처: S1_26_자펀드수탁관리_실물검증_.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(자펀드·기준일·종목) → 상세필터 드로어(Sheet, apfs-detail-filter). 종목은 2026-09 회의록 추가 항목. 목업 [조회] 버튼은 즉시 반영형이라 없고,
+   - 검색박스(자펀드·기준일·종목) → 칩 줄 위 인라인 필터 패널(apfs-detail-filter). 종목은 2026-09 회의록 추가 항목. 목업 [조회] 버튼은 즉시 반영형이라 없고,
      [엑셀] 버튼은 툴바 kebab '내보내기 (Excel)'로 흡수한다(apfs-grid: 독립 엑셀 버튼 금지). 검색어는 OFF.
    - 섹션 3개(투자자산 · 미투자자산 거래 · 미투자자산) → **GridFrame 하나 안에 세로로 쌓은 AG Grid 3개**.
      세 표 모두 2단 헤더(운용사·수탁기관·일치여부·메모)라 `ColGroupDef` + `marryChildren`(apfs-aggrid).
@@ -44,21 +44,18 @@ import { SectionHead } from '../../risk_grid';   // 여러 표 세로 쌓기 공
 import { LeafTabBody } from '../leaf_tabs';   // 리프 탭 묶음(opt-in)
 import type { LeafTabsSlot } from '../leaf_tabs';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, ValueFormatterParams, CellStyle, CellKeyDownEvent } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
-import { PeriodPicker } from '../../ui/period-picker';
 import { CustodyMemoModal } from './custody_verify_memo_modal';
 import type { CustodyMemoCtx } from './custody_verify_memo_modal';
 import { CustodyEditModal } from './custody_verify_edit_modal';
 import type { CustodyEditValue } from './custody_verify_edit_modal';
 import { SubFundSpecModal, SPEC_SAMPLE_SUBFUND } from '../report/subfund_spec_modal';   // 샘플 행 = 명세 팝업 공유본
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSelect, PanelPeriod, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 
 const { Button, IconBtn, StatusBadge } = UI;
@@ -98,7 +95,7 @@ export interface NonInvestRow {
 }
 
 /* 상세필터 기준일 기본값 — COMMON 규약은 "목업 기본값을 필터 초기값으로 쓰지 않는다"이지만, 기준일은 대사 스냅샷의 시점이라
-   빈 값(= 시점 없음)이 성립하지 않는다(옆 탭 custody_confirm 과 같은 관례 — 초기화·칩 × 도 이 값으로 되돌린다).
+   빈 값(= 시점 없음)이 성립하지 않는다(옆 탭 custody_confirm 과 같은 관례 — [초기화]·칩 × 는 이 값으로 되돌리고, 칩은 기본값이어도 늘 표시).
    메모 팝업의 `기준일자` 시드이기도 하다 — 비워두면 팝업이 빈 날짜로 열려 저장이 막힌다. */
 export const BASE_DATE = '2026-04-30';
 
@@ -326,20 +323,6 @@ const WIDE_KEYS = new Set(['fn', 'gpCorp', 'cuCorp', 'gpItem', 'cuItem', 'gpAcct
    페이지 로컬 프리미티브(골드 복사 — 공유 export 아님)
 ────────────────────────────── */
 
-/* 드로어 필드 래퍼(항목이 전부 행을 거른다 — 미연동 캡션 없음).
-   plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 */
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </Wrap>
-  );
-}
-
 const NO_ROWS = '<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회된 데이터가 없습니다.</span>';
 
 /* ──────────────────────────────
@@ -380,11 +363,10 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
   const [nonInvest, setNonInvest] = useState<NonInvestRow[]>(NONINVEST_DEMO);
   const [modal, setModal] = useState<ModalState>(null);
 
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
-  /* 필터 — 드로어 3항목(목업 검색박스 순서 그대로: 자펀드·기준일·종목). 세 항목 모두 행을 거른다.
+  /* 필터 — 패널 3칸(목업 검색박스 순서 그대로: 자펀드·기준일·종목). 세 항목 모두 행을 거른다.
      행이 세 배열로 갈려 있어 External Filter(그리드 1개 전제)가 아니라 **React 쪽에서 각각 filter**한다. */
   const [fFund, setFFund] = useState('');
   const [fAsOf, setFAsOf] = useState(BASE_DATE);   // 기준일 — 숨은 속성 asOf 같은 날(atBaseDate). 메모 팝업 기준일자 시드
@@ -492,18 +474,27 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
       title={tabs?.label ?? "자펀드 수탁관리"}
       favRoute={tabs?.route ?? "custody-verify"}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 적용 중인 드로어 값 칩 = appliedFilters(둘째 줄). 주 필터(FilterChip 그룹)는 없어 toolbarLeft 도 없다 — 목업 검색박스가 자펀드·기준일·종목 3개이고
+      /* 적용 중인 패널 값 칩 = appliedFilters(둘째 줄 — label = 패널 칸 aria-label). 주 필터(FilterChip 그룹)는 없어 toolbarLeft 도 없다 — 목업 검색박스가 자펀드·기준일·종목 3개이고
          자펀드는 값이 하나라 칩 그룹으로 펼칠 축이 아니다. 행 선택이 없어 selbar도 없다.
-         값만 표시(항목명 접두사 없음) + ×. 기준일은 기본값과 다를 때만 칩 — ×는 기본값으로 되돌린다(옆 탭 custody_confirm 관례) */
+         값만 표시(항목명 접두사 없음) + ×. 기준일 칩은 기본값이어도 늘 띄운다(2026-11-17 사용자 결정 (a): 기본값으로 걸린 조건도 칩 상시 — 패널 칸이 값을 안 보여 칩이 유일한 표시. × 는 기본값과 다를 때만(= 기본값 복원), 옆 탭 custody_confirm 과 같음). */
       appliedFilters={[
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
-        { label: '기준일', value: fAsOf !== BASE_DATE ? fAsOf : '', onClear: () => setFAsOf(BASE_DATE) },
+        { label: '기준일', value: fAsOf, onClear: fAsOf !== BASE_DATE ? () => setFAsOf(BASE_DATE) : undefined },
         { label: '종목', value: fItem.trim(), onClear: () => setFItem('') },
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 순서 그대로(자펀드·기준일·종목). 검색어는 미사용(OFF).
+         기준일 — 숨은 속성 asOf 같은 날(대사 스냅샷). 비우면 기본값으로(시점 없는 조회는 없다 — custody_confirm 관례).
+         종목 — 기획서 2026-09 회의록 추가 항목. 부분일치. [초기화] = 기준일 기본값 복원 */
+      filterPanel={
+        <FilterPanel label="자펀드 실물검증 조건" onReset={clearFilters}>
+          <PanelSelect label="자펀드" value={fFund} onChange={setFFund} options={fundOptions} />
+          <PanelPeriod label="기준일" mode="day" value={fAsOf} onChange={(v) => setFAsOf(v || BASE_DATE)} />
+          <PanelText label="종목" value={fItem} onChange={setFItem} />
+        </FilterPanel>
+      }
       toolbarRight={<>
         {/* 금액 단위 표기 — 캡션. 단위 토글은 규칙상 미적용(파일 상단 '한계') */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       /* 푸터 좌 = 섹션별 건수(페이지네이션이 없어 '총 N개 중 M개' 형식이 성립하지 않는다) */
@@ -559,35 +550,6 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
         />
       </div>
       </LeafTabBody>
-
-      {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(자펀드·기준일·종목). 검색어는 미사용(OFF) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">자펀드 실물검증 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            {/* 기준일 — 숨은 속성 asOf 같은 날(대사 스냅샷). 비우면 기본값으로(시점 없는 조회는 없다 — custody_confirm 관례).
-                PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel */}
-            <DrawerField label="기준일" plain>
-              <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
-                <PeriodPicker mode="day" value={fAsOf} onChange={(v) => setFAsOf(v || BASE_DATE)} ariaLabel="기준일" />
-              </div>
-            </DrawerField>
-            {/* 종목 — 기획서 2026-09 회의록 추가 항목(목업 placeholder '종목명 검색' 그대로). 부분일치 */}
-            <DrawerField label="종목">
-              <input type="text" value={fItem} onChange={(e) => setFItem(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="종목명 검색" style={inputStyle('text')} />
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 메모 등록 팝업 — 조건부 마운트(open prop 없음) ── */}
       {modal?.kind === 'memo' && memoTarget && (

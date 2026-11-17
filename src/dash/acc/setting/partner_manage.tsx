@@ -3,13 +3,14 @@
    → APFS 디자인시스템(골드 acc/baseinfo/account_code_manage 골격).
 
    설계서 → 우리 규약:
-   - 툴바: [상세필터](E01) → [회계거래처 등록](E02, ⌘⏎) → 조회(E03, IconBtn refresh 맨 끝). 주 필터칩 없음.
+   - 툴바: [회계거래처 등록](E02, ⌘⏎) → 조회(E03, IconBtn refresh 맨 끝). 주 필터칩 없음. 상세필터(E01)는 칩 줄 위 인라인 패널.
    - 그리드 10열(거래처번호·내부거래처코드·거래처유형·거래처명·사업자등록번호·대표자명·관리번호·국내/해외·국가·대표회사전화번호)
      + 선택 체크박스. 거래처번호 오름차순, getRowId=거래처번호.
      기본 정렬 표시 없음(데이터 순서로 오름차순 — filterPartners 가 sortByNo, 사용자 지적 2026-11-06). 헤더 클릭 정렬은 그대로.
      거래처명 = 잔여폭 흡수 컬럼(flex:1, AUTO_SIZE_CONTENT 규약 ②).
      코드·번호·여부 모두 좌측 정렬(표 정렬 규약 — 가운데 정렬 없음).
-   - 상세필터 드로어 6개(거래처유형·거래처명·대표자명·사업자등록번호·국내/해외·국가) — 즉시 반영, [초기화], 적용 칩(값만, × 개별 해제).
+   - 상세필터 = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 — apfs-detail-filter) 6개(거래처유형·거래처명·대표자명·사업자등록번호·국내/해외·국가)
+     — 즉시 반영, 적용 칩(값만, × 개별 해제). 기본값이 전부 '전체'(빈 값)라 [초기화] 없음 — 칩 줄 `전체 해제`가 같은 일을 한다.
    - 선택은 체크박스로만 → 선택 바 "N건 선택됨 · [수정] · [삭제] · [선택 해제]"(E04). 행 더블클릭/Enter/[수정] = 「회계거래처 수정」(E06).
      [수정]은 1건 선택일 때만 활성(2건 이상이면 비활성 — 숨기지 않음).
    - 삭제(E05) = 게이트(연결 전표 1건이라도 → 토스트 후 전체 중단) → AlertDialog 「삭제 확인」 → 논리삭제(목록에서 제거).
@@ -30,7 +31,7 @@
    - 필터를 바꾸면 선택 전부 해제(apfs-detail-filter 2026-10-27).
 
    설계서와 다른 점(PM 확인 대기):
-   ① 상세필터 [필터 적용] 버튼 방식 → 즉시 반영(2026-11-03 전 화면 통일). [필터 적용]은 닫기만 한다.
+   ① 상세필터 [필터 적용] 버튼 방식 → 즉시 반영(2026-11-03 전 화면 통일). 2026-11-17 칩 줄 위 인라인 패널로 옮겨 [필터 적용] 버튼 자체가 없다.
    ② 툴바 [등록] → [회계거래처 등록](도메인 액션명 — 축약 금지 규약).
    ③ 모달 제목 단일 → 「회계거래처 등록」/「회계거래처 수정」 분리.
    ④ E04 '다건 선택 시 허용 안함' vs E05 '다건 선택 시 전체 중단' 모순 → 다건 선택 허용 + 게이트 전체 중단으로 구현.
@@ -50,16 +51,14 @@ import { UI } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, AUTO_SIZE_CONTENT } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';
-import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../../ui/alert-dialog';
-import { DrawerSelect } from '../../drawer_select';
+import { FilterPanel, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { demoPartners, PARTNER_TYPES, REGIONS, COUNTRIES } from './partner_data';
 import type { PartnerRow } from './partner_data';
 import { filterPartners, sortByNo, nextPartnerNo, appendHistory, localYmd, deleteGate, logicalDelete, DELETE_BLOCKED_MSG } from './partner_model';
@@ -108,15 +107,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '대표회사전화번호', get: (r) => r.phone },
 ];
 
-function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </label>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -136,19 +126,17 @@ export function PartnerManage({ onNav }: { onNav?: (r: string) => void }) {
   const [modal, setModal] = useState<ModalState>(null);
 
   /* 상세필터(설계서 slide11 — 6개, 기본 '전체'). 즉시 반영 */
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fType, setFType] = useState('');
   const [fName, setFName] = useState('');
   const [fCeo, setFCeo] = useState('');
   const [fBizNo, setFBizNo] = useState('');
   const [fRegion, setFRegion] = useState('');
   const [fCountry, setFCountry] = useState('');
-  const clearFilters = () => { setFType(''); setFName(''); setFCeo(''); setFBizNo(''); setFRegion(''); setFCountry(''); };
 
-  /* E02 등록 ⌘⏎ · 인쇄 · E08 내보내기 ⌥D — 모달·드로어가 열려 있지 않을 때만 */
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  /* E02 등록 ⌘⏎ · 인쇄 · E08 내보내기 ⌥D — 모달이 열려 있지 않을 때만 */
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null, skipInDialog: true });
 
   /* E00 진입 = 필터 없음 전체 조회 */
   const visible = useMemo(() => filterPartners(rows, { type: fType, name: fName, ceo: fCeo, bizNo: fBizNo, region: fRegion, country: fCountry }), [rows, fType, fName, fCeo, fBizNo, fRegion, fCountry]);
@@ -233,7 +221,7 @@ export function PartnerManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const pageSize = showAll ? Math.max(visible.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
-  /* 적용 칩 label = 드로어 캡션 정확일치(칩 클릭 → 그 칸으로 이동) */
+  /* 적용 칩 label = 패널 칸 label 정확일치(칩 클릭 → 그 칸으로 이동) */
   const chips: [string, string, () => void][] = [
     ['거래처유형', fType, () => setFType('')],
     ['거래처명', fName.trim(), () => setFName('')],
@@ -253,8 +241,6 @@ export function PartnerManage({ onNav }: { onNav?: (r: string) => void }) {
     </>
   ) : null;
 
-  const textKeys = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); };
-
   return (
     <GridFrame
       crumbs={['홈', '회계', '설정', '회계거래처관리']}
@@ -263,8 +249,18 @@ export function PartnerManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* E01 상세필터 = 칩 줄 위 인라인 패널 — 설계서 6개 조건, 즉시 반영(검색어 opt-in 미사용: 거래처명이 텍스트 조건) */
+      filterPanel={
+        <FilterPanel label="회계거래처 조건">
+          <PanelSelect label="거래처유형" value={fType} onChange={setFType} options={[...PARTNER_TYPES].reverse()} />
+          <PanelText label="거래처명" value={fName} onChange={setFName} />
+          <PanelText label="대표자명" value={fCeo} onChange={setFCeo} />
+          <PanelText label="사업자등록번호" value={fBizNo} onChange={setFBizNo} />
+          <PanelSelect label="국내/해외" value={fRegion} onChange={setFRegion} options={[...REGIONS]} />
+          <PanelSelect label="국가" value={fCountry} onChange={setFCountry} options={[...COUNTRIES]} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>회계거래처 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -299,35 +295,6 @@ export function PartnerManage({ onNav }: { onNav?: (r: string) => void }) {
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 결과가 없습니다. 검색 조건을 변경해 주세요.</span>'}
         />
       </div>
-
-      {/* ── E01 상세필터 드로어 — 설계서 6개 조건, 즉시 반영(검색어 opt-in 미사용: 거래처명이 텍스트 조건) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">회계거래처 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="거래처유형"><DrawerSelect value={fType} onChange={setFType} options={[...PARTNER_TYPES].reverse()} ariaLabel="거래처유형" /></DrawerField>
-            <DrawerField label="거래처명">
-              <input type="text" value={fName} onChange={(e) => setFName(e.target.value)} onKeyDown={textKeys} placeholder="거래처명" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="대표자명">
-              <input type="text" value={fCeo} onChange={(e) => setFCeo(e.target.value)} onKeyDown={textKeys} placeholder="대표자명" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="사업자등록번호">
-              <input type="text" value={fBizNo} onChange={(e) => setFBizNo(e.target.value)} onKeyDown={textKeys} placeholder="숫자만 입력해도 됩니다" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="국내/해외"><DrawerSelect value={fRegion} onChange={setFRegion} options={[...REGIONS]} ariaLabel="국내/해외" /></DrawerField>
-            <DrawerField label="국가"><DrawerSelect value={fCountry} onChange={setFCountry} options={[...COUNTRIES]} ariaLabel="국가" /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── E02 등록 / E06 수정 모달 ── */}
       {modal?.kind === 'form' && (modal.mode === 'create' || target) && (

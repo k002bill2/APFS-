@@ -2,7 +2,7 @@
    출처: S0_101_사용자관리.html(공통관리 KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(사용자구분·상태·소속기관·검색어)  → 주 필터 1개 = 상태 FilterChip(툴바 좌) + 상세필터 드로어(검색어·사용자구분·소속기관). 검색어 opt-in(SEARCHABLE).
+   - 검색박스(사용자구분·상태·소속기관·검색어)  → 주 필터 1개 = 상태 FilterChip(툴바 좌) + 상세필터 = 칩 줄 위 인라인 패널(검색어·사용자구분·소속기관). 검색어 opt-in(SEARCHABLE).
    - 사용자 그리드(No·성명·로그인 아이디·이메일·구분·소속유형·소속·권한·상태·최근 접속일시) → AG Grid 단일 헤더(apfs-aggrid), 상태 배지 lg.
    - 행 선택 → 상태·구분별 액션(목업 gate: 수정·온보딩 메일·담당자 교체·잠금 해제·비밀번호 만료 처리·OTP 재발급)
        → 라디오 단일선택 + 툴바 좌 selbar 에 **열린 액션만** 노출(apfs-stage-workflow 선택 SSOT). 게이팅은 user_manage_model.gateFor.
@@ -17,10 +17,8 @@ import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
@@ -36,7 +34,7 @@ import { UserFormModal } from './user_form_modal';
 import type { UserPatch } from './user_form_modal';
 import { MailPreviewDialog, MASKED_LINK } from './admin_mail_preview';
 import type { MailSpec } from './admin_mail_preview';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSearch, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -95,14 +93,6 @@ function otpMail(u: UserRow): MailSpec {
   };
 }
 
-function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </label>
-  );
-}
 
 /* ──────────────────────────────
    메인 컴포넌트
@@ -124,17 +114,16 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
 
-  /* 필터 — 상태는 툴바 칩, 나머지는 드로어(목업 검색박스 순서: 사용자구분·상태·소속기관·검색어) */
-  const [filterOpen, setFilterOpen] = useState(false);
+  /* 필터 — 상태는 툴바 칩, 나머지는 칩 줄 위 인라인 패널(목업 검색박스 순서: 사용자구분·상태·소속기관·검색어) */
   const [fStatus, setFStatus] = useState<typeof STATUS_CHIPS[number]>('');
   const [fType, setFType] = useState('');
   const [fOrg, setFOrg] = useState('');
   const [fText, setFText] = useState('');
   const clearFilters = () => { setFStatus(''); setFType(''); setFOrg(''); setFText(''); };
 
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   const visible = useMemo(() => filterUsers(rows, { type: fType, status: fStatus, org: fOrg, kw: fText }), [rows, fType, fStatus, fOrg, fText]);
 
@@ -264,8 +253,15 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
       filterChips={STATUS_CHIPS.map((s) => ({ key: s || 'all', label: s || '전체', active: fStatus === s, onSelect: () => setFStatus(s) }))}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 검색어(opt-in) 맨 앞 + 사용자구분 · 소속기관(상태는 툴바 칩). 즉시 반영, 기본값이 전부 빈 값이라 [초기화] 없음 */
+      filterPanel={
+        <FilterPanel label="사용자관리 조건">
+          {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
+          <PanelSelect label="사용자구분" value={fType} onChange={setFType} options={UTYPES.map((u) => ({ value: u, label: u }))} />
+          <PanelSelect label="소속기관" value={fOrg} onChange={setFOrg} options={ORGS.map((o) => ({ value: o.id, label: `${o.name} (${o.type})` }))} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>사용자 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -304,29 +300,6 @@ export function UserManage({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      {/* ── 상세필터 드로어 — 검색어(opt-in) 최상단 + 사용자구분 · 소속기관(상태는 툴바 칩) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">사용자 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {SEARCHABLE && (
-              <DrawerField label="검색어">
-                <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="성명 · 로그인 아이디 · 이메일" style={inputStyle('text')} />
-              </DrawerField>
-            )}
-            <DrawerField label="사용자구분"><DrawerSelect value={fType} onChange={setFType} options={UTYPES.map((u) => ({ value: u, label: u }))} /></DrawerField>
-            <DrawerField label="소속기관"><DrawerSelect value={fOrg} onChange={setFOrg} options={ORGS.map((o) => ({ value: o.id, label: `${o.name} (${o.type})` }))} /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 등록/수정 모달 ── */}
       {modal?.kind === 'form' && (modal.mode === 'create' || target) && (

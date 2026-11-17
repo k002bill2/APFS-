@@ -3,7 +3,7 @@
    대사 결과는 그 시점 값 한 벌(스냅샷)이라 숨은 행 속성 asOf 가 **같은 날**인 행만 남긴다(atBaseDate).
    - 기본 기준일(BASE_DATE)은 원문 1행 그대로(R0) · 직전 시점(2026-03-31) 더미 1행은 기본에선 걸러진다. */
 import { describe, expect, it } from 'vitest';
-import { readSrc } from '../../test_src';
+import { readSrc, panelSrc } from '../../test_src';
 import { BASE_DATE, INVEST_DEMO, atBaseDate } from './custody_verify_manage';
 
 const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
@@ -29,13 +29,15 @@ describe('기준일 = 대사 스냅샷 시점(같은 날)', () => {
     expect(new Set(INVEST_DEMO.map((r) => r.fn)).size).toBe(1);
   });
 
-  it('세 섹션 모두 기준일로 거르고, 칩·초기화는 기본 기준일로 되돌린다(custody_confirm 관례)', () => {
+  it('세 섹션 모두 기준일로 거르고, 칩은 늘 보이며 ×·[초기화]는 기본 기준일로 되돌린다(custody_confirm 관례)', () => {
     expect(SRC).toMatch(/atBaseDate\(invest, fAsOf\)/);
     expect(SRC).toMatch(/atBaseDate\(trade, fAsOf\)/);
     expect(SRC).toMatch(/atBaseDate\(nonInvest, fAsOf\)/);
-    expect(SRC).toMatch(/\{ label: '기준일', value: fAsOf !== BASE_DATE \? fAsOf : '', onClear: \(\) => setFAsOf\(BASE_DATE\) \}/);
+    expect(SRC).toMatch(/\{ label: '기준일', value: fAsOf, onClear: fAsOf !== BASE_DATE \? \(\) => setFAsOf\(BASE_DATE\) : undefined \}/);   // 기본값이어도 칩 상시, × 는 기본값과 다를 때만(2026-11-17 사용자 결정 (a))
+    expect(SRC).toMatch(/const clearFilters = \(\) => \{ setFFund\(''\); setFAsOf\(BASE_DATE\); setFItem\(''\); \};/);
+    expect(SRC).toMatch(/<FilterPanel label="[^"]+" onReset=\{clearFilters\}>/);   // [초기화] = 기본 기준일 복원
     expect(SRC).toMatch(/onChange=\{\(v\) => setFAsOf\(v \|\| BASE_DATE\)\}/);
-    expect(SRC).toMatch(/<DrawerField label="기준일" plain>/);
+    expect(panelSrc(SRC)).toMatch(/<PanelPeriod label="기준일" mode="day"/);
     expect(SRC).not.toMatch(/noop/);
   });
 });

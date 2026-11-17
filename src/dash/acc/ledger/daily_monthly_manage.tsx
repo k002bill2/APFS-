@@ -23,8 +23,8 @@
    - 푸터 도구: 새 창(E05 · ⌥O, 현재 route 새 탭) · 내보내기(E06 · ⌥D, 화면 표 그대로 + 금액 숫자 셀) · 인쇄(E07 · ⌘P, 그리드만 printGrid).
 
    결정·가정(PM 확인 필요)
-   - 미결재포함·모든계정포함·결산전표포함 = 체크박스(FlagCheck — 2026-11-03 사용자 지시 '~포함 필터는 전부 체크박스').
-   - 일계표 계정구분 다중 선택 = 셀렉트형 다중 선택(DrawerMultiSelect → ui/multi-select — 맨 위 '전체 선택' 3상태 · 하단 개수/선택 해제,
+   - 미결재포함·모든계정포함·결산전표포함 = 체크박스(패널 PanelCheck — 2026-11-03 사용자 지시 '~포함 필터는 전부 체크박스').
+   - 일계표 계정구분 다중 선택 = 셀렉트형 다중 선택(패널 PanelMulti → ui/multi-select — 맨 위 '전체 선택' 3상태 · 하단 개수/선택 해제,
      하나도 안 고르면 전체). 설계서는 태그형 다중 셀렉트.
    - 월계표 계정구분 칩은 필수 조건이라 ✕ 없음(설계서 와이어프레임은 ✕ 표기 — E04 '필수 조건 미입력 시 조회 불가'를 따름).
    - 월계표 '계좌번호 필수입력 계정만 집계'(레거시 대응)는 계정과목 데이터에 그 플래그가 없어 미반영 — 사용된 입력계정 전부 집계.
@@ -37,11 +37,10 @@ import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { UI } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
-import { DrawerSelect, DrawerMultiSelect } from '../../drawer_select';
+import { FilterPanel, PanelCheck, PanelMulti, PanelPeriod, PanelRange, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { multiSelectSummary } from '../../ui/multi-select';
 import { TabBar, TabPanel } from '../../risk_page_kit';
 import type { AppliedFilter } from '../../applied_filters';
@@ -49,7 +48,7 @@ import { FUND_ACCOUNTS } from '../slip/general_journal_data';
 import { demoLedger, todayStr } from './ledger_data';
 import { dailyStatement, fundLabel, monthlyStatement, MSG } from './ledger_model';
 import type { DailyRow, LedgerCond, MonthRow } from './ledger_model';
-import { DrawerField, DayField, DayRangeField, FlagCheck, flagChips } from '../ledger_filter_ui';
+import { flagChips } from '../ledger_filter_ui';
 import { condOf, defaultFilter, errorField, resetFilter, switchTab, validateFilter } from './daily_monthly_model';
 import type { DmFilter, DmTab } from './daily_monthly_model';
 
@@ -117,8 +116,7 @@ export function DailyMonthlyManage({ onNav }: { onNav?: (r: string) => void }) {
   const idBase = useId();
 
   const [tab, setTab] = useState<DmTab>('daily');                 // E00 — 첫 번째 탭(일계표) 활성
-  const [applied, setApplied] = useState<DmFilter>(base);         // E00 — 필터 없음 전체 조회(계정구분 전체 · 기준일 오늘). 드로어·칩·그리드의 SSOT(초안 사본 없음)
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [applied, setApplied] = useState<DmFilter>(base);         // E00 — 필터 없음 전체 조회(계정구분 전체 · 기준일 오늘). 패널·칩·그리드의 SSOT(초안 사본 없음)
 
   const patch = (p: Partial<DmFilter>) => setApplied((a) => ({ ...a, ...p }));
   const setD = <K extends keyof DmFilter>(k: K) => (v: DmFilter[K]) => patch({ [k]: v } as Partial<DmFilter>);
@@ -195,12 +193,12 @@ export function DailyMonthlyManage({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('Excel로 내보냈습니다');
   };
 
-  /* E07 인쇄 = 그리드만(printGrid) · E06 ⌥D — 상세필터가 열린 동안 끈다(회계 가드 ①) */
+  /* E07 인쇄 = 그리드만(printGrid) · E06 ⌥D — 팝업(다이얼로그)이 열린 동안은 skipInDialog 가 끈다 */
   /* 조회 불가(blocked) 상태면 내보내기와 같이 막는다 — 빈 그리드·오류 문구를 인쇄하지 않게 */
   /* 조회 불가(월계표 계정구분 미선택 등)면 내보내기처럼 막는다 — 그 외엔 그리드만 인쇄(print_grid_guard: ⌘P 콜백 → printGrid) */
   const printIfReady = () => { if (blocked) { toast.error(blocked); return; } printGrid(); };
-  useHotkey(HOTKEYS.print.combo, printIfReady, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printIfReady, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   /* 적용 칩 — 기준일·기간은 필수라 ✕ 없음, 월계표 계정구분도 필수라 ✕ 없음 */
   const chips: AppliedFilter[] = tab === 'daily'
@@ -224,9 +222,27 @@ export function DailyMonthlyManage({ onNav }: { onNav?: (r: string) => void }) {
       favRoute="acct-daily-monthly"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips}
+      /* 상세필터(E01) = 칩 줄 위 인라인 패널 — 현재 탭 조건, 바꾸는 즉시 applied 반영. 검증 문구는 패널 아래, [초기화] = 탭 기본값 */
+      filterPanel={
+        <FilterPanel label={`${TAB_LABEL[tab]} 조회 조건`} onReset={resetApplied} errors={[blocked]}>
+          {tab === 'daily' ? (
+            <>
+              <PanelMulti label="계정구분" value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} />
+              <PanelPeriod label="기준일" mode="day" value={applied.date} onChange={setD('date')} invalid={errField === 'date'} />
+            </>
+          ) : (
+            <>
+              <PanelSelect label="계정구분" value={applied.fundAccount[0] ?? ''} onChange={(v) => setD('fundAccount')(v ? [v] : [])} options={[...FUND_ACCOUNTS]} />
+              <PanelRange label="기간" mode="day" from={applied.from} to={applied.to} onFrom={setD('from')} onTo={setD('to')} invalid={errField === 'period'} />
+            </>
+          )}
+          <PanelCheck label="미결재포함" checked={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
+          <PanelCheck label="모든계정포함" checked={applied.includeAll} onChange={setD('includeAll')} />
+          <PanelCheck label="결산전표포함" checked={applied.includeClosing} onChange={setD('includeClosing')} />
+        </FilterPanel>
+      }
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>단위: 원</span>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{footerCount(count, count)}</span>}
@@ -262,41 +278,6 @@ export function DailyMonthlyManage({ onNav }: { onNav?: (r: string) => void }) {
         )}
       </TabPanel>
 
-      {/* ── 상세필터(E01) — 현재 탭 조건. 바꾸는 즉시 applied 반영([필터 적용] = 닫기) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">{`${TAB_LABEL[tab]} 조회 조건`}</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {tab === 'daily' ? (
-              <>
-                <DrawerField label="계정구분" plain>
-                  <DrawerMultiSelect value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} ariaLabel="계정구분" />
-                </DrawerField>
-                <DayField label="기준일" required value={applied.date} onChange={setD('date')} errMsg={errField === 'date' ? MSG.dateRequired : undefined} />
-              </>
-            ) : (
-              <>
-                <DrawerField label="계정구분" required errMsg={errField === 'fund' ? MSG.fundRequired : undefined}>
-                  <DrawerSelect value={applied.fundAccount[0] ?? ''} onChange={(v) => setD('fundAccount')(v ? [v] : [])} options={[...FUND_ACCOUNTS]} all="선택" ariaLabel="계정구분" />
-                </DrawerField>
-                <DayRangeField label="기간" required from={applied.from} to={applied.to} onFrom={setD('from')} onTo={setD('to')}
-                  errMsg={errField === 'period' ? (blocked ?? undefined) : undefined} />
-              </>
-            )}
-            <FlagCheck label="미결재포함" value={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
-            <FlagCheck label="모든계정포함" value={applied.includeAll} onChange={setD('includeAll')} />
-            <FlagCheck label="결산전표포함" value={applied.includeClosing} onChange={setD('includeClosing')} />
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={resetApplied}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
     </GridFrame>
   );
 }

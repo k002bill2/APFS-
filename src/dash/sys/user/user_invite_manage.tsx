@@ -3,7 +3,7 @@
    출처: S0_103_사용자초대_운용사.html(공통관리 KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(운용사·재직상태·검색어) → 주 필터 1개 = 초대상태 FilterChip(툴바 좌, 브리프) + 상세필터 드로어(검색어·운용사·재직상태). 검색어 opt-in.
+   - 검색박스(운용사·재직상태·검색어) → 주 필터 1개 = 초대상태 FilterChip(툴바 좌, 브리프) + 상세필터 = 칩 줄 위 인라인 패널(검색어·운용사·재직상태). 검색어 opt-in.
    - 그리드(No·운용사·성명·이메일·재직·초대상태·초대일시·만료) → AG Grid 단일 헤더. 초대상태 배지 lg.
    - 행 선택 → [초대 발송](재직·미초대) [재발송][초대 취소](초대발송) [메일 미리보기](항상) — 브리프의 초대 생성·재발송·취소 UI.
        게이팅은 user_invite_model.inviteGate. 발송·재발송·취소는 AlertDialog 확인 후 로컬 상태 전이 + 발송 일시 기록(유효 72시간).
@@ -18,10 +18,8 @@ import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle, RowSelectionOptions } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
@@ -34,7 +32,7 @@ import { demoPersonnel, filterInvites, inviteGate, inviteState, INVITE_STATES, I
 import type { InviteRow, InviteState } from './user_invite_model';
 import { MailPreviewDialog, MASKED_LINK } from './admin_mail_preview';
 import type { MailSpec } from './admin_mail_preview';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSearch, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -80,14 +78,6 @@ function inviteMail(r: InviteView): MailSpec {
   };
 }
 
-function DrawerField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </label>
-  );
-}
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -105,15 +95,14 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
 
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fState, setFState] = useState<typeof STATE_CHIPS[number]>('');
   const [fOrg, setFOrg] = useState('');
   const [fActive, setFActive] = useState<'' | '재직' | '퇴사'>('');
   const [fText, setFText] = useState('');
   const clearFilters = () => { setFState(''); setFOrg(''); setFActive(''); setFText(''); };
 
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   const visible = useMemo<InviteView[]>(() => filterInvites(rows, { org: fOrg, active: fActive, state: fState, kw: fText })
     .map((r) => ({ ...r, orgn: orgName(r.org), state: inviteState(r), expiresAt: inviteExpiresAt(r.invitedAt) })), [rows, fOrg, fActive, fState, fText]);
@@ -213,8 +202,15 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
       filterChips={STATE_CHIPS.map((s) => ({ key: s || 'all', label: s || '전체', active: fState === s, onSelect: () => setFState(s) }))}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 검색어(opt-in) · 운용사 · 재직상태(초대상태는 툴바 칩). 즉시 반영, 기본값이 전부 빈 값이라 [초기화] 없음 */
+      filterPanel={
+        <FilterPanel label="사용자 초대 조건">
+          {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
+          <PanelSelect label="운용사" value={fOrg} onChange={setFOrg} options={orgsOf('GP').map((o) => ({ value: o.id, label: o.name }))} />
+          <PanelSelect label="재직상태" value={fActive} onChange={(v) => setFActive(v as '' | '재직' | '퇴사')} options={[{ value: '재직', label: '재직' }, { value: '퇴사', label: '퇴사' }]} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(rows.length) + '명 중 ' + String(visible.length) + '명 표시 중'}</span>}
@@ -244,28 +240,6 @@ export function UserInviteManage({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">초대 대상 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {SEARCHABLE && (
-              <DrawerField label="검색어">
-                <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="성명 · 이메일" style={inputStyle('text')} />
-              </DrawerField>
-            )}
-            <DrawerField label="운용사"><DrawerSelect value={fOrg} onChange={setFOrg} options={orgsOf('GP').map((o) => ({ value: o.id, label: o.name }))} /></DrawerField>
-            <DrawerField label="재직상태"><DrawerSelect value={fActive} onChange={(v) => setFActive(v as '' | '재직' | '퇴사')} options={[{ value: '재직', label: '재직' }, { value: '퇴사', label: '퇴사' }]} /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 초대 메일 미리보기 — 발송 가능한 행이면 [이 내용으로 초대 발송] ── */}
       {previewRow && (

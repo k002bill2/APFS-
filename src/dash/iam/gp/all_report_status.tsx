@@ -12,8 +12,8 @@
      화면 이름 `전체 보고현황`이 거짓이 되므로 6개를 모두 싣는다(2026-09-15 정정).
    - 원문이 2단 헤더인 표(운용사 출자배분: 기타조합원·모태펀드)는 ColumnSpec.group → ColGroupDef로 접는다.
    - 원문 tfoot의 소계·합계는 데이터 행이 아니라 `pinnedBottomRowData`로 하단 고정한다.
-   - 검색박스(모펀드·운용사·자펀드·계정구분·기준일자) → 상세필터 드로어 + 적용 칩(값만·×). 툴바에 두 번째 칩 줄을 두지 않는다.
-       `모펀드`는 원문에서 읽기전용 단일값(농식품모태펀드)이라 드로어에 표시만 한다.
+   - 검색박스(모펀드·운용사·자펀드·계정구분·기준일자) → 칩 줄 위 인라인 필터 패널 + 적용 칩(값만·×). 툴바에 두 번째 칩 줄을 두지 않는다.
+       `모펀드`는 원문에서 읽기전용 단일값(농식품모태펀드)이라 패널에 값 표시만 한다(고를 것이 없는 select 를 만들지 않는다).
        `계정구분`은 원문 `chipGroup('f-acc',['전체','농식품','수산'])` 이 도메인이다(종전 "옵션 없음"은 오기). 원문 표
        행에 계정구분 칸이 없어 모델이 **숨은 행 속성 `acc`**(자펀드의 계정, 전 행 '농식품')를 싣고 그 값으로 거른다 + 적용 칩
        (2026-11-16 사용자 지시 "미연동 필터 전부 동작" — 종전 no-op 캡션). '수산'을 고르면 0건이 정상이다.
@@ -23,31 +23,28 @@
    ⚠ 실제 보고 접수·승인 판정이 아니다 — 로컬 데모 행을 조회만 한다. */
 import '../../aggrid_shared.css';
 import { useState, useCallback, useMemo } from 'react';
-import type { CSSProperties } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
-import { Cell, controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
+import { Cell } from '../../schemas/renderers';
 import { foldGroups } from '../../grid_header_note';   // 2단 그룹헤더 접기 SSOT(GenericListPage 와 공유)
 import { UNITS, DEFAULT_UNIT, formatUnit, amountHeader } from '../../schemas/unit';
 import type { Unit } from '../../schemas/unit';
 import type { ColumnSpec } from '../../schemas/types';
-import { PeriodPicker } from '../../ui/period-picker';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, ICellRendererParams, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { REPORT_TABS, findTab, distinctValues, filterRows } from './all_report_status_model';
 import type { ReportRow, ReportTab } from './all_report_status_model';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelCell, PanelSearch, PanelSelect, PanelRange } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn, SegTabs } = UI;
 
 const ACCOUNTS = ['농식품', '수산'];   // 원문 chipGroup('f-acc') 도메인
-/* 드로어 선택지 = 6개 표 전체의 합집합. 탭을 바꿔도 필터가 유지되므로, 현재 표 기준으로 뽑으면
+/* 패널 선택지 = 6개 표 전체의 합집합. 탭을 바꿔도 필터가 유지되므로, 현재 표 기준으로 뽑으면
    걸린 값이 선택지에서 사라져 select 가 `전체`로 거짓 표시된다. */
 const allValues = (k: 'gp' | 'subFund') => [...new Set(REPORT_TABS.flatMap((t) => distinctValues(t, k)))].sort();
 const GP_OPTIONS = allValues('gp');
@@ -90,26 +87,12 @@ function toColDef(c: ColumnSpec, tab: ReportTab, unit: Unit): ColDef<ReportRow> 
 const toColumnDefs = (tab: ReportTab, unit: Unit): (ColDef<ReportRow> | ColGroupDef<ReportRow>)[] =>
   foldGroups(tab.columns.map((c) => toColDef(c, tab, unit)), tab.columns);
 
-function DrawerField({ label, children, plain }: { label: string; children: React.ReactNode; plain?: boolean }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </Wrap>
-  );
-}
-const dayWrap: CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
 export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
   const [tabKey, setTabKey] = useState(REPORT_TABS[0].key);
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fGp, setFGp] = useState('');
   const [fSubFund, setFSubFund] = useState('');
   const [fFrom, setFFrom] = useState('');
@@ -161,15 +144,15 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
     toast.success(`${tab.label} 표를 Excel로 내보냈습니다`);
   }, [tab, visible, unit, pinnedBottom]);
 
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   const refresh = () => { clearFilters(); toast.success('조회되었습니다'); };
   const chips: [string, string, () => void][] = [
     ['운용사', fGp, () => setFGp('')],
     ['자펀드', fSubFund, () => setFSubFund('')],
     ['계정구분', fAcc, () => setFAcc('')],
-    ['기준일자', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }],   // 드로어 캡션과 같게(칩 → 항목 이동)
+    ['기준일자', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }],   // 패널 칸 label 과 같게(칩 → 그 칸 초점)
     ['검색어', fText.trim(), () => setFText('')],
   ];
 
@@ -182,12 +165,27 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
       /* 기본 필터 = 보고 구분(6개 표 전환). 표가 바뀌면 컬럼·건수·필터 도메인이 함께 바뀐다. 넘치면 +N 메뉴로 접힌다. */
       filterChips={REPORT_TABS.map((t) => ({ key: t.key, label: t.label, count: tabCount(t), active: tabKey === t.key, onSelect: () => onTab(t.key) }))}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 원문 검색박스 순서(모펀드·검색어·운용사·자펀드·계정구분·기준일자).
+         모펀드는 원문에서도 읽기전용 단일값이라 값만 보인다(고를 것이 없는 select 를 만들지 않는다 — 값이 보이는 칸이라 칩 없음) */
+      filterPanel={
+        <FilterPanel label={`${tab.label} 조건`}>
+          <PanelCell>
+            <div className="flex items-center rounded-[8px] bg-muted text-muted-foreground whitespace-nowrap" title="모펀드" style={{ height: 34, padding: '0 11px', fontSize: 13.5 }}>
+              <span className="sr-only">모펀드 </span>{MOTHER_FUND}
+            </div>
+          </PanelCell>
+          <PanelSearch label="검색어" value={fText} onChange={setFText} />
+          <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={GP_OPTIONS} />
+          <PanelSelect label="자펀드" value={fSubFund} onChange={setFSubFund} options={SUBFUND_OPTIONS} />
+          <PanelSelect label="계정구분" value={fAcc} onChange={setFAcc} options={ACCOUNTS} />
+          <PanelRange label="기준일자" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
+        </FilterPanel>
+      }
       toolbarRight={<>
         {hasAmount && <>
           <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
           <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />
         </>}
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span aria-live="polite">
@@ -211,39 +209,6 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 결과가 없습니다. 기간·조건을 변경해 주세요.</span>'}
         />
       </div>
-
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">{tab.label} 표를 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드" plain>
-              {/* 원문에서도 읽기전용 단일값이다 — 고를 것이 없는 select를 만들지 않는다 */}
-              <div className="flex items-center rounded-[8px] bg-muted text-muted-foreground" style={{ minHeight: 38, padding: '0 11px', fontSize: 13.5 }}>{MOTHER_FUND}</div>
-            </DrawerField>
-            <DrawerField label="검색어">
-              <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="제목 · 투자기업 · 안건" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={GP_OPTIONS} /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={fSubFund} onChange={setFSubFund} options={SUBFUND_OPTIONS} /></DrawerField>
-            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={ACCOUNTS} /></DrawerField>
-            <DrawerField label="기준일자" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="기준일자 시작일" /></div>
-                <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="기준일자 종료일" /></div>
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
     </GridFrame>
   );
 }

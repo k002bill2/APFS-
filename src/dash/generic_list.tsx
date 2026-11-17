@@ -7,7 +7,7 @@ import { APFS_DATA } from './data';
 import { RowFormModal, statusTone } from './generic_list_modal';
 import type { Row } from './generic_list_modal';
 import { resolveSchema } from './schemas';
-import { Cell, AttachChips, controlMinWidth, drawerInputStyle } from './schemas/renderers';   // controlMinWidth = 컨트롤 폭 하한 SSOT(fit-content 짝)
+import { Cell, AttachChips, drawerInputStyle } from './schemas/renderers';
 import { resolveFilterField, isEnumControl, YEAR_OPTIONS,filterValueMatches, defaultFilterValues, filterChipText, splitPair, joinPair } from './schemas/filter_field';
 import type { FilterField } from './schemas/filter_field';
 import type { PageSchema, DetailPopup } from './schemas/types';
@@ -23,10 +23,6 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, 
 import { useHotkey, HOTKEYS } from './use-hotkey';   // 앱-스코프 단축키(⌘⏎ 등록·⌘P 인쇄·⌥D 내보내기)
 import { printGrid } from './print_grid';
 import { toast } from './ui/sonner';
-import { Checkbox } from './ui/checkbox';   // 상세필터 카테고리 태그 = DS Checkbox(Radix)
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { DatePicker } from './ui/date-picker';
-import { PeriodPicker } from './ui/period-picker';   // 월 선택 필터(kind:'month') — 값 'YYYY-MM'
 import * as XLSX from 'xlsx';   // SheetJS — 클라이언트 전용 .xlsx 생성(쓰기 전용: XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, ICellRendererParams, IRowNode, CellContextMenuEvent, CellKeyDownEvent, SuppressKeyboardEventParams } from 'ag-grid-community';
@@ -38,12 +34,12 @@ import type { CtxItem, CtxMenuState } from './row_context_menu';
 import type { AppliedFilter } from './applied_filters';
 import { GridFrame, KpiBadge, FooterActions, footerCount } from './grid_frame';
 import { LinkCell } from './link_cell';   // 셀 링크 공용본(상세 팝업 진입)
-import { DrawerSelect, DrawerMultiSelect } from './drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형) · 다중 선택(kind 'multi')
+import { FilterPanel, PanelCell, PanelSearch, PanelText, PanelSelect, PanelMulti, PanelPeriod, PanelRange, PanelCheck } from './filter_panel';   // 상세필터 인라인 패널 칸(apfs-detail-filter)
 import { parseMulti, joinMulti, formatMultiCell } from './ui/multi-select-value';   // 다중 선택 값 계약(JSON 배열 문자열)
 import { ConfirmCombo, uniformConfirm } from './confirm_combo';   // 확정/미확정 inlineSelect 컬럼의 선택 바 일괄 변경   // 공통 양식 셸 + KPI 배지(apfs-grid 스킬 SSOT)
 
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
-const { Button, StatusBadge, IconBtn, ColorChip, SegTabs, DeltaBadge, ClearableInput } = UI;
+const { Button, StatusBadge, IconBtn, ColorChip, SegTabs, DeltaBadge } = UI;
 const D = APFS_DATA;
 
 /* MENU 트리 노드 형태 — data.ts의 MENU는 선언 타입 없는 이질적 리터럴 배열이라
@@ -188,113 +184,58 @@ function MiniBars({ data, color }: { data: number[]; color: string }) {
 /* KpiBadge는 grid_frame.tsx(GridFrame SSOT)에서 import — 인라인 정의 제거(apfs-grid 양식 이관) */
 
 
-/* ── 드로어 체크 행 — DS Checkbox + htmlFor 라벨(Root 가 <button> 이라 <label> 로 감싸지 않는다) ── */
-function DrawerCheckRow({ label, checked, onClick }: { label: string; checked: boolean; onClick: () => void }) {
-  const id = React.useId();
-  return (
-    <div className="flex items-center gap-3 py-2">
-      <Checkbox id={id} checked={checked} onCheckedChange={onClick} aria-label={label} />
-      <label htmlFor={id} className="font-semibold text-foreground cursor-pointer select-none" style={{ fontSize: 14 }}>{label}</label>
-    </div>
-  );
-}
-
-/* 예약 라벨: 상세필터 최상단 공통 검색어 — 스키마 filters 배열과 무관한 별도 슬롯이며,
+/* 예약 라벨: 상세필터 맨 앞 공통 검색어 — 스키마 filters 배열과 무관한 별도 슬롯이며,
    노출은 `schema.searchable` opt-in(기본 OFF)에 달렸다. 현재 켜둔 스키마는 없다.
    resolveFilterField를 타지 않고(휴리스틱이 tag로 오판 → 표 증발) rowMatchesFilters에서 특수 처리:
    행의 전 컬럼 부분일치(OR), 다른 필터와는 AND. 이 처리는 opt-in 여부와 무관하게 유지한다. */
 export const SEARCH_LABEL = "검색어";
 
-function DrawerFilterControl({ ff, value, onChange, onEnter }: { ff: FilterField; value: string; onChange: (v: string) => void; onEnter?: () => void }) {
-  // Enter로 즉시 적용 — 한글 IME 조합 확정 Enter(isComposing)는 무시해 오적용 방지
-  const onKeyDown = (e: React.KeyboardEvent) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) onEnter?.(); };
-  let control: React.ReactNode;
-  if (ff.kind === "year" || ff.kind === "enum") {
-    // Safari menulist는 세로 padding을 무시해 select가 input보다 낮게 렌더됨(WebKit 22 vs 37px).
-    // appearance:none으로 높이를 맞추고, 사라진 네이티브 화살표는 chevron으로 보강. (date는 달력 아이콘 보존 위해 미적용)
-    // 공용 DrawerSelect(fit-content 래퍼+chevron 동일) — enum 옵션이 많으면(운용사 16~23개 등) 검색형. year 는 숫자 나열이라 네이티브 유지.
-    control = <DrawerSelect value={value} onChange={onChange} options={ff.options} all={ff.allLabel !== null ? "전체" : null} ariaLabel={ff.label} searchable={ff.kind === "year" ? false : undefined} />;
-  } else if (ff.kind === "date") {
-    // 일자선택 — shadcn Radix Calendar(Popover). 값은 'YYYY-MM-DD' 문자열 유지(정확일치 필터 계약). DatePicker 트리거는 w-full이라 fit-content 래퍼로 폭 규칙 적용.
-    control = <div style={{ width: "fit-content", minWidth: controlMinWidth("date"), maxWidth: "100%" }}><DatePicker value={value} onChange={onChange} ariaLabel={ff.label} /></div>;
-  } else if (ff.kind === "month") {
-    // 월선택 — PeriodPicker 월 그리드. 값은 'YYYY-MM' 문자열(정확일치 필터 계약 — rowMatchesFilters). 트리거가 w-full이라 date와 같은 fit-content 래퍼(minW=130).
-    control = <div style={{ width: "fit-content", minWidth: controlMinWidth("month"), maxWidth: "100%" }}><PeriodPicker mode="month" value={value} onChange={onChange} ariaLabel={ff.label} /></div>;
-  } else if (ff.kind === "dayRange" || ff.kind === "monthRange" || ff.kind === "codeName") {
-    // 두 칸 컨트롤(범위 시작~종료 · 코드+명칭) — PeriodPicker 트리거가 <button> 이라 <label> 로 감싸면 이중 토글된다 → <div> 래퍼
-    return <DrawerPairControl ff={ff} value={value} onChange={onChange} onKeyDown={onKeyDown} />;
-  } else if (ff.kind === "multi") {
-    // 다중 선택 — 트리거가 <button> 이라 <label> 대신 <div> 래퍼(이중 토글 방지, drawer_select DrawerMultiSelect 주석).
-    // 값은 JSON 배열 문자열 — [] 는 '' 라 setVal 이 키째 지워 비활성(=전체)이 된다. 접근名은 ariaLabel.
-    return (
-      <div className="block mb-4">
-        <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>
-          {ff.label}
-          {!ff.columnKey && <span className="font-medium text-caption" style={{ marginLeft: 6 }}>· 데이터 연동 후 적용</span>}
-        </span>
-        <DrawerMultiSelect value={parseMulti(value)} onChange={(a) => onChange(joinMulti(a))} options={ff.options} ariaLabel={ff.label} />
-      </div>
-    );
-  } else if (ff.kind === "number") {
-    control = <input type="number" value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} placeholder="값 입력" style={drawerInputStyle("number")} />;
-  } else {
-    control = <input type="text" value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} placeholder={ff.label + " 입력"} style={drawerInputStyle("text")} />;
+/* ── 스키마 필터 한 칸 — resolveFilterField 의 kind 를 인라인 패널 칸(filter_panel)으로 그린다 ──
+   칸 접근名 = 항목 라벨 = 적용 칩 label(칩 클릭 이동의 전제). columnKey 없는 값-필터는 noop(툴팁 '데이터 연동 후 적용') */
+function PanelFilterControl({ ff, value, onChange }: { ff: FilterField; value: string; onChange: (v: string) => void }) {
+  const noop = !ff.columnKey;
+  switch (ff.kind) {
+    case "year":
+      return <PanelSelect label={ff.label} value={value} onChange={onChange} options={ff.options} required={ff.allLabel === null} searchable={false} noop={noop} />;
+    case "enum":
+      return <PanelSelect label={ff.label} value={value} onChange={onChange} options={ff.options} required={ff.allLabel === null} noop={noop} />;
+    case "date":
+      return <PanelPeriod label={ff.label} mode="day" value={value} onChange={onChange} noop={noop} />;
+    case "month":
+      return <PanelPeriod label={ff.label} mode="month" value={value} onChange={onChange} noop={noop} />;
+    case "dayRange":
+    case "monthRange": {
+      const [a, b] = splitPair(value);
+      return <PanelRange label={ff.label} mode={ff.kind === "dayRange" ? "day" : "month"} from={a} to={b}
+        onFrom={(v) => onChange(joinPair(v, b))} onTo={(v) => onChange(joinPair(a, v))} noop={noop} />;
+    }
+    case "codeName": {
+      // 원문 `코드 입력 + 명칭 입력` — 친 값은 칸에 그대로. 칩 하나가 그룹(aria-label=항목)을 가리킨다
+      const [a, b] = splitPair(value);
+      return (
+        <PanelCell noop={noop} wide>
+          <div role="group" aria-label={ff.label} className="flex items-center" style={{ gap: 6 }}>
+            <input type="text" value={a} onChange={(e) => onChange(joinPair(e.target.value, b))} aria-label={ff.label + " 코드"} placeholder={ff.label + " 코드"} style={{ ...drawerInputStyle("text"), width: 120, minWidth: 0 }} />
+            <input type="text" value={b} onChange={(e) => onChange(joinPair(a, e.target.value))} aria-label={ff.label + "명"} placeholder={ff.label + "명"} style={{ ...drawerInputStyle("text"), width: 120, minWidth: 0 }} />
+          </div>
+        </PanelCell>
+      );
+    }
+    case "multi":
+      return <PanelMulti label={ff.label} value={parseMulti(value)} onChange={(a) => onChange(joinMulti(a))} options={ff.options} />;
+    case "number":
+      return <PanelText label={ff.label} type="number" value={value} onChange={onChange} noop={noop} />;
+    default:
+      return <PanelText label={ff.label} value={value} onChange={onChange} noop={noop} />;
   }
-  return (
-    <label className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>
-        {ff.label}
-        {/* 매칭 컬럼이 없어 더미데이터를 거를 수 없는 필터(조회 파라미터) — 무신호 no-op 방지 */}
-        {!ff.columnKey && <span className="font-medium text-caption" style={{ marginLeft: 6 }}>· 데이터 연동 후 적용</span>}
-      </span>
-      {control}
-    </label>
-  );
 }
 
-/* 두 칸 필터(filterSpecs opt-in 전용) — 값은 'a~b' 한 문자열(splitPair/joinPair 정본).
-   dayRange·monthRange = 원문 `시작 ~ 종료` 두 달력 · codeName = 원문 `코드 입력 + 명칭 입력`(검색 팝업 대신 명칭 입력이 검색어). */
-function DrawerPairControl({ ff, value, onChange, onKeyDown }: { ff: FilterField; value: string; onChange: (v: string) => void; onKeyDown: (e: React.KeyboardEvent) => void }) {
-  const [a, b] = splitPair(value);
-  let body: React.ReactNode;
-  if (ff.kind === "codeName") {
-    body = (
-      <div className="flex items-center gap-2">
-        <input type="text" value={a} onChange={(e) => onChange(joinPair(e.target.value, b))} onKeyDown={onKeyDown} aria-label={ff.label + " 코드"} placeholder="코드" style={{ ...drawerInputStyle("text"), width: 110, flex: "none" }} />
-        <input type="text" value={b} onChange={(e) => onChange(joinPair(a, e.target.value))} onKeyDown={onKeyDown} aria-label={ff.label + "명"} placeholder={ff.label + "명"} style={{ ...drawerInputStyle("text"), flex: 1, minWidth: 0 }} />
-      </div>
-    );
-  } else {
-    const mode = ff.kind === "dayRange" ? "day" : "month";
-    const wrap: React.CSSProperties = { width: "fit-content", minWidth: controlMinWidth(ff.kind === "dayRange" ? "date" : "month"), maxWidth: "100%" };
-    body = (
-      <div className="flex items-center gap-2 flex-wrap">
-        <div style={wrap}><PeriodPicker mode={mode} value={a} onChange={(v) => onChange(joinPair(v || "", b))} ariaLabel={ff.label + " 시작"} /></div>
-        <span className="text-caption">~</span>
-        <div style={wrap}><PeriodPicker mode={mode} value={b} onChange={(v) => onChange(joinPair(a, v || ""))} ariaLabel={ff.label + " 종료"} /></div>
-      </div>
-    );
-  }
-  return (
-    <div className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>
-        {ff.label}
-        {!ff.columnKey && <span className="font-medium text-caption" style={{ marginLeft: 6 }}>· 데이터 연동 후 적용</span>}
-      </span>
-      {body}
-    </div>
-  );
-}
-
-/* ── 우측 슬라이드인: 스키마 기반 상세 필터 드로어 ──
-   schema.filters 각 항목을 타입에 맞는 컨트롤로 노출한다 — 값-필터는 값 픽커, 카테고리는 on/off 토글.
-   **즉시 반영형**(2026-09-11 사용자 결정 — typed 페이지 asset_funding·subfund_manage와 통일): 선택·입력하는
-   즉시 부모 filterValues가 갱신돼 표가 줄어든다. draft 사본을 두고 "필터 적용"에서 커밋하던 방식은 폐기.
-   그래서 상태 SSOT는 부모의 `applied` 하나뿐이며(드로어 로컬 상태 없음), 툴바 칩 ×로 외부에서 값이 빠져도
-   재동기화 effect 없이 즉시 반영된다. 푸터 "필터 적용"은 **닫기** 역할(값은 이미 적용됨), "초기화"는 즉시 전체 해제.
-   Portal로 body 직계 렌더(루트 dashFade transform의 영향 차단), 좁은 화면은 maxWidth 92vw로 축소. */
-function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
-  open: boolean; onClose: () => void; schema: PageSchema; applied: Record<string, string>; onApply: (next: Record<string, string>) => void;
+/* ── 스키마 기반 상세필터 — 칩 줄 위 인라인 패널(2026-11-17 사용자 지시 — 드로어 폐기, 자펀드정보관리 정본) ──
+   schema.filters 각 항목을 타입에 맞는 칸으로 노출한다 — 값-필터는 값 칸, 카테고리는 체크 칸.
+   **즉시 반영형**: 고르는 즉시 부모 filterValues 가 갱신돼 표가 줄어든다. 상태 SSOT 는 부모의 `applied` 하나.
+   검색어(schema.searchable)는 맨 앞 고정. [초기화]는 filterSpecs def(원문 기본값)가 있는 스키마만 — 그 밖은 칩 줄 `전체 해제`. */
+function ListFilterPanel({ schema, applied, onApply }: {
+  schema: PageSchema; applied: Record<string, string>; onApply: (next: Record<string, string>) => void;
 }) {
   const filters = schema.filters ?? [];
   // 값 변경 = 즉시 적용. 빈 값("" = 전체/미선택)은 키째 지워 비활성으로 만든다(rowMatchesFilters 계약).
@@ -303,51 +244,17 @@ function ListFilterDrawer({ open, onClose, schema, applied, onApply }: {
     if (v === "") delete next[label]; else next[label] = v;
     onApply(next);
   };
-  const toggleTag = (label: string) => {
-    const next = { ...applied };
-    if (next[label]) delete next[label]; else next[label] = label;
-    onApply(next);
-  };
-  // 입력 중 Enter = 드로어 닫기(값은 이미 반영돼 있다). IME 조합 확정 Enter는 제외
-  const closeOnEnter = (e: React.KeyboardEvent) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) onClose(); };
+  const defaults = defaultFilterValues(schema);
   return (
-    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-        <SheetHeader>
-          <SheetTitle>상세 필터</SheetTitle>
-          <SheetDescription className="sr-only">목록을 조건으로 거르는 상세 필터</SheetDescription>
-          <IconBtn icon="x" onClick={onClose} label="닫기" size={38} />
-        </SheetHeader>
-        <div className="flex-1 overflow-y-auto" style={{ padding: "20px clamp(14px,3vw,20px)" }}>
-          {/* 검색어 — 예약 라벨, opt-in(schema.searchable). 최상단 고정, 전 컬럼 부분일치 검색 */}
-          {schema.searchable && (
-            <label className="block mb-4">
-              <span className="block font-semibold text-muted-foreground" style={{ fontSize: 13, marginBottom: 6 }}>{SEARCH_LABEL}</span>
-              <ClearableInput type="text" value={applied[SEARCH_LABEL] ?? ""} onValueChange={(v) => setVal(SEARCH_LABEL, v)} onKeyDown={closeOnEnter} placeholder="검색어 입력" clearLabel="검색어 지우기" style={drawerInputStyle("text")} />
-            </label>
-          )}
-          {filters.length === 0 && !schema.searchable ? (
-            <div className="text-caption text-center" style={{ fontSize: 13, padding: "28px 0" }}>설정 가능한 필터가 없습니다.</div>
-          ) : (
-            /* 섹션 제목("필터 항목")은 두지 않는다(2026-09-11 사용자 결정) — 드로어 제목 '상세 필터'가 이미
-               내용을 지시하므로 중복이다. 항목 라벨이 곧 소제목 역할을 한다. */
-            <div className="flex flex-col">
-              {filters.map((label) => {
-                const ff = resolveFilterField(label, schema);
-                return ff.kind === "tag"
-                  ? <DrawerCheckRow key={label} label={label} checked={!!applied[label]} onClick={() => toggleTag(label)} />
-                  : <DrawerFilterControl key={label} ff={ff} value={applied[label] ?? ""} onChange={(v) => setVal(label, v)} onEnter={onClose} />;
-              })}
-            </div>
-          )}
-        </div>
-        <SheetFooter>
-          {/* 초기화 = 즉시 원문 기본값으로(filterSpecs def — 미선언 스키마는 전체 해제, 드로어는 열린 채) · 필터 적용 = 닫기(값은 이미 적용됨) — typed 페이지와 동일 */}
-          <Button variant="outline" size="md" onClick={() => onApply(defaultFilterValues(schema))}>초기화</Button>
-          <Button variant="primary" size="md" style={{ flex: 1 }} onClick={onClose}>필터 적용</Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+    <FilterPanel onReset={Object.keys(defaults).length ? () => onApply(defaults) : undefined}>
+      {schema.searchable && <PanelSearch value={applied[SEARCH_LABEL] ?? ""} onChange={(v) => setVal(SEARCH_LABEL, v)} label={SEARCH_LABEL} />}
+      {filters.map((label) => {
+        const ff = resolveFilterField(label, schema);
+        return ff.kind === "tag"
+          ? <PanelCheck key={label} label={label} checked={!!applied[label]} onChange={(on) => setVal(label, on ? label : "")} />
+          : <PanelFilterControl key={label} ff={ff} value={applied[label] ?? ""} onChange={(v) => setVal(label, v)} />;
+      })}
+    </FilterPanel>
   );
 }
 
@@ -461,7 +368,6 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   const hasDetail = (row: Row) => linksDetail(detailCol, (row as Record<string, unknown>)[detailCol?.key ?? '']);
   const openDetail = (row: Row) => { if (detailCol?.detail) setDetail({ kind: detailCol.detail, row }); };
   /* 상단 kebab 가시성 — 뷰포트에서 벗어나면(스크롤) 푸터 kebab 폴백을 노출(골드 subfund_manage 동형) */
-  const [filterOpen, setFilterOpen] = useState(false);
   /* 금액 단위 토글 — `schema.unitToggle` 이 선언돼 있어도 **소비처가 없어** 화면에 안 나오고
      금액이 원 원시값으로 굳어 있었다(2026-09-16 Codex 4R P1). group·note·pinned 와 같은 부류다.
      환산은 **셀 렌더·엑셀 경계에서만** 한다 — rows 에 환산값을 써넣으면 KPI 합계·필터 비교값까지 흔들린다. */
@@ -716,9 +622,9 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
 
   /* 앱-스코프 단축키 — 등록 ⌘⏎(편집 가능 + 모달 닫힘일 때만)·인쇄 ⌘P·내보내기 ⌥D. 힌트는 kebab의 DropdownMenuShortcut */
-  useHotkey(HOTKEYS.register.combo, () => setModal({ mode: 'create' }), { enabled: editable && modal === null && detail === null && !filterOpen && ctx === null, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ mode: 'create' }), { enabled: editable && modal === null && detail === null && ctx === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   // 행 복사 — 스키마 컬럼(스파크라인 trend 제외)을 TSV로.
   const copyRow = (row: Row) => {
@@ -784,12 +690,13 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       </>)}
       contextActions={selActions}
       appliedFilters={appliedFilters}
+      /* 상세필터 = 칩 줄 위 인라인 패널(apfs-detail-filter). 필터도 검색어도 없으면 패널 없음 */
+      filterPanel={(schema.filters?.length || schema.searchable) ? <ListFilterPanel schema={schema} applied={filterValues} onApply={applyFilters} /> : undefined}
       toolbarRight={<>
         {unitOn && <>
           <span className="text-caption" style={{ fontSize: 12 }}>금액 단위</span>
           <SegTabs size="sm" options={UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as Unit)} />
         </>}
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* 등록 버튼 — 라벨은 도메인 액션명 그대로(스키마 entity, '공고 등록' 등), "등록"으로 줄이지 않는다.
             보조 액션(내보내기·인쇄)은 푸터 FooterActions 가 항시 노출한다(2026-09-17 kebab·combo 폐기). */}
         {editable && (
@@ -928,13 +835,6 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
 
       {/* 읽기전용 상세 보고서 팝업 — 스키마가 detail을 선언한 컬럼에서만 열린다(그 외 페이지엔 없음) */}
       {detail && React.createElement(DETAIL_MODALS[detail.kind], { onClose: () => setDetail(null), row: detail.row })}
-
-      <ListFilterDrawer
-        open={filterOpen}
-        onClose={() => setFilterOpen(false)}
-        schema={schema}
-        applied={filterValues}
-        onApply={applyFilters} />
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
     </GridFrame>

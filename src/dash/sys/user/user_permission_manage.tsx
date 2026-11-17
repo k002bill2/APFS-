@@ -3,7 +3,7 @@
 
    구성(목업 → 우리 규약):
    - 검색박스 없음(목업 원본)                 → 원래는 필터를 두지 않았으나 **사용자 지시(2026-09-15 "상세필터 추가해줘")로
-       상세필터 드로어를 추가**했다. 항목은 그리드 컬럼에서만 파생(명칭·사용자 구분·사용여부·최종수정일) — 컬럼에 없는
+       상세필터를 추가**했다(2026-11-17 드로어 폐기 → 칩 줄 위 인라인 패널). 항목은 그리드 컬럼에서만 파생(명칭·사용자 구분·사용여부·최종수정일) — 컬럼에 없는
        조건은 여전히 발명하지 않는다(apfs-detail-filter). 주 필터 FilterChip 줄은 두지 않는다(행 5건 규모라 과하다):
        적용값은 툴바 좌측 개별 칩으로만 보이고, 선택 행이 있으면 그 자리는 selbar 가 가져간다(메뉴 관리와 동일).
    - 권한 목록 그리드(No·명칭·사용자 구분·설명·최종수정·최종수정일·사용여부·사용자수) → AG Grid 단일 헤더(apfs-aggrid).
@@ -30,9 +30,6 @@ import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../../ui/alert-dialog';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
-import { PeriodPicker } from '../../ui/period-picker';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { RowContextMenu } from '../../row_context_menu';
 import type { CtxItem, CtxMenuState } from '../../row_context_menu';
 import { buildMenuRows, UTYPES } from '../admin_menu_tree';
@@ -41,7 +38,7 @@ import { UserPermissionModal } from './user_permission_modal';
 import type { PermRow, PermPatch, PermMode } from './user_permission_modal';
 import { matrixRows, grant, PERM_KEYS, permNameTaken } from './user_permission_model';
 import type { PermMap } from './user_permission_model';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelPeriod, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn } = UI;
 
@@ -103,20 +100,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '사용여부', get: (r) => (r.use ? '여' : '부') }, { header: '사용자수', get: (r) => r.users },
 ];
 
-/* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 암묵 연결이 안 되고(ariaLabel 로 명명),
-   <label> 안 버튼 클릭이 라벨 활성화와 겹쳐 2회 토글되는 것을 막는다(apfs-detail-filter) */
-function DrawerField({ label, hint, plain, children }: { label: string; hint?: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{hint && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · {hint}</span>}
-      </span>
-      {children}
-    </Wrap>
-  );
-}
-
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined}
@@ -143,8 +126,7 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
 
-  /* 상세필터 — SSOT=개별 state(빈 값=미적용). 항목은 전부 그리드 컬럼 파생(명칭·사용자 구분·사용여부·최종수정일) */
-  const [filterOpen, setFilterOpen] = useState(false);
+  /* 상세필터(칩 줄 위 인라인 패널) — SSOT=개별 state(빈 값=미적용). 항목은 전부 그리드 컬럼 파생(명칭·사용자 구분·사용여부·최종수정일) */
   const [fName, setFName] = useState('');
   const [fUtype, setFUtype] = useState('');
   const [fUse, setFUse] = useState('');
@@ -171,9 +153,9 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
   ];
 
   // 앱-스코프 단축키: ⌘⏎=권한 등록(모달 열림 중엔 비활성), ⌘P=인쇄, ⌥D=내보내기
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'form', mode: 'create' }), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
 
   /* 선택 SSOT = React state(selId). 그리드 라디오는 선택 변경 이벤트로 동기화, 신규 등록 후엔 onRowDataUpdated 로 되맞춘다 */
@@ -297,8 +279,17 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
       )}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스가 없어 항목 순서는 그리드 컬럼 순서(명칭·사용자 구분·사용여부·최종수정일).
+         최종수정일은 '선택일 이후'(≥) — 그 뜻은 적용 칩 값 `≥ 날짜` 가 보인다. 기본값이 전부 빈 값이라 [초기화] 없음 */
+      filterPanel={
+        <FilterPanel label="사용자권한관리 조건">
+          <PanelText label="명칭" value={fName} onChange={(v) => { setFName(v); firstPage(); }} />
+          <PanelSelect label="사용자 구분" value={fUtype} onChange={(v) => { setFUtype(v); firstPage(); }} options={UTYPES} />
+          <PanelSelect label="사용여부" value={fUse} onChange={(v) => { setFUse(v); firstPage(); }} options={['여', '부']} />
+          <PanelPeriod label="최종수정일" mode="day" value={fSince} onChange={(v) => { setFSince(v); firstPage(); }} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form', mode: 'create' })}>권한 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -337,35 +328,6 @@ export function UserPermissionManage({ onNav }: { onNav?: (r: string) => void })
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      {/* ── 상세필터 드로어 — 목업 검색박스가 없어 항목 순서는 그리드 컬럼 순서(명칭·사용자 구분·사용여부·최종수정일) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">권한 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="명칭">
-              <input type="text" value={fName} onChange={(e) => { setFName(e.target.value); firstPage(); }}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }}
-                placeholder="권한 명칭 부분일치" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="사용자 구분"><DrawerSelect value={fUtype} onChange={(v) => { setFUtype(v); firstPage(); }} options={UTYPES} /></DrawerField>
-            <DrawerField label="사용여부"><DrawerSelect value={fUse} onChange={(v) => { setFUse(v); firstPage(); }} options={['여', '부']} /></DrawerField>
-            {/* PeriodPicker 트리거는 w-full 이라 fit-content 래퍼로 감싸 폭 규칙(minW) 적용(apfs-datepicker "폭") */}
-            <DrawerField label="최종수정일" hint="선택일 이후" plain>
-              <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
-                <PeriodPicker mode="day" value={fSince} onChange={(v) => { setFSince(v); firstPage(); }} ariaLabel="최종수정일(선택일 이후)" />
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 권한 설정 모달(등록/수정/복사) — 필드 + 메뉴별 기능 권한 매트릭스 ── */}
       {modal?.kind === 'form' && (modal.mode === 'create' || target) && (

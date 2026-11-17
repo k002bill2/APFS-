@@ -296,7 +296,7 @@ const onGroupSelection = useCallback((e: SelectionChangedEvent<Row>) => {
 - **셀 컨트롤 키 격리에 `select` 포함**: `closest('input,button,select')` — 셀 안 `<select>` 의 방향키가 셀 이동으로 샌다.
 - **셀 컨트롤 높이 30px** — `drawerInputStyle('text')` 에 `height/minHeight: 30, padding: '0 8px'`, select 도 30px 명시. 행 42px 안이라 폼 34px(`CONTROL_BOX`)보다 낮게 둔다(전표 분개 그리드도 30px).
 - **셀 컨트롤 접근名 = 표시 행 순번**(`${rowIndex + 1}행 출력명`) — 편집 중인 값을 넣으면 타이핑마다 접근名이 바뀐다. 행 [검색] 버튼은 `<span className="sr-only"> 3행 계정코드명</span>` 로 대상을 붙인다.
-- **버튼 배치**: 툴바 우 `[상세필터] [행추가] [저장] [조회]`(조회 맨 끝) · 선택 바(`contextActions`) `N건 선택됨 · 행삽입 · 행삭제 · 위로이동 · 아래로이동 · 선택 해제` — 행삽입·이동은 `single`(정확히 1건)일 때만, 경계 행의 위로/아래로는 disabled, 행삭제는 다건. 이동은 필터로 숨은 행을 건너뛴다.
+- **버튼 배치**: 툴바 우 `[행추가] [저장] [조회]`(조회 맨 끝 — 상세필터는 칩 줄 위 패널) · 선택 바(`contextActions`) `N건 선택됨 · 행삽입 · 행삭제 · 위로이동 · 아래로이동 · 선택 해제` — 행삽입·이동은 `single`(정확히 1건)일 때만, 경계 행의 위로/아래로는 disabled, 행삭제는 다건. 이동은 필터로 숨은 행을 건너뛴다.
 - **저장 = `SaveButton onSubmit={save}`**([[apfs-form-modal]] 6 계약): 검증 실패 → 오류 행으로 `setRows` + `return;` / 통과 → `setSaving(true)` + commit 함수 반환. **저장 중 잠금**: 그리드 래퍼에 `ref.inert = saving`(+`aria-busy`), 툴바·선택 바 버튼 `disabled={saving}`, `refresh`·주 필터 전환은 `if (saving) return`(⌥R 단축키 경로 포함). 그래서 검증을 통과한 스냅샷이 곧 저장 대상이다.
 - **외부 필터는 변경 행을 항상 통과시킨다**(`r.status !== '' || 조건`) — 편집 중인 행이 필터에 걸려 사라지지 않게. 필터 effect 의 `deselectAll()`·`onModelUpdated={dropHiddenSelection}` 은 그대로 건다([[apfs-detail-filter]]).
 - 엑셀은 `D` 행을 뺀다(저장 후 모습과 같게).
@@ -339,5 +339,5 @@ const onGroupSelection = useCallback((e: SelectionChangedEvent<Row>) => {
 ## 참조
 - 바깥 양식(GridFrame): [[apfs-grid]] — `import { GridFrame, KpiBadge } from './grid_frame';`. props: `crumbs·title·cardTitle·kpis·toolbarLeft/Right·footerLeft/Center/Right`(toolbar/pager prop을 발명하지 말 것).
 - 수정/등록 모달: [[apfs-form-modal]]
-- 상세필터 드로어: [[apfs-detail-filter]]
+- 상세필터(칩 줄 위 인라인 패널): [[apfs-detail-filter]]
 - 색 토큰: [[color-tokens]] · 반응형: [[responsive-ui]] · 출처→스키마: [[apfs-capture-schema]]

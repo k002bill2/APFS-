@@ -1,6 +1,6 @@
 /* 전표검색(ACC-008) 화면 계약 — 소스 문자열 가드. 그리드 20열 순서(slide 10) · 차변·대변만 우측 · 검증·토스트 문구 연결. */
 import { describe, it, expect } from 'vitest';
-import { readSrc } from '../../test_src';
+import { readSrc, panelLabels } from '../../test_src';
 
 const src = readSrc('journal_search_manage.tsx');
 /* columnDefs 블록만 — EXPORT_COLS 는 field: 를 쓰지 않는다 */
@@ -21,18 +21,17 @@ describe('전표검색 화면 계약', () => {
     expect(right).toEqual(['debit', 'credit']);
     expect((src.match(/rightAligned/g) ?? []).length).toBe(2);
   });
-  it('상세필터 즉시 반영 — 기간·금액·금액(외화)을 applied 로 각자 검증, 실패면 결과 0건 · [필터 적용] = 닫기(2026-11-03)', () => {
+  it('상세필터 즉시 반영 — 기간·금액·금액(외화)을 applied 로 각자 검증, 실패면 결과 0건 · 문구는 패널 아래(2026-11-03 · 11-17 인라인 패널)', () => {
     expect(src).toContain('validateRange(applied.from, applied.to)');
     expect(src).toContain('validateAmountRange(applied.amountMin, applied.amountMax)');
     expect(src).toContain('validateForeignAmountRange(applied.foreignAmountMin, applied.foreignAmountMax)');
     expect(src).toMatch(/rangeBad \? \[\] : filterLines\(rows, applied\)/);
-    expect(src).toMatch(/onClick=\{\(\) => setFilterOpen\(false\)\}>필터 적용</);
+    expect(src).toContain('errors={[periodErr, amountErr, fxErr]}');
+    expect(src).not.toMatch(/<Sheet\b|setFilterOpen/);
     expect(src).not.toMatch(/commitFilter|enterCommits|setDraft|toast\.error\(err\)/);
   });
   it('상세필터 20항목 — slide 11 정의표 순서', () => {
-    const drawer = src.slice(src.indexOf('<SheetContent'), src.indexOf('</SheetContent>'));
-    const labels = [...drawer.matchAll(/<DrawerField label="([^"]+)"/g)].map((m) => m[1]);
-    expect(labels).toEqual([
+    expect(panelLabels(src)).toEqual([
       '계정구분', '기간', '작성자', '계정과목', '거래처', '적요', '전표번호', '작성부서', '전표구분', '전표발생구분',
       '상단적요', '금액', '통화', '금액(외화)', '손익부서', '손익사원', '증빙구분', '증빙파일명', '증빙미첨부사유', '거래처 사업자등록번호',
     ]);

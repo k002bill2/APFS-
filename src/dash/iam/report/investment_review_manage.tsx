@@ -3,8 +3,8 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(모펀드·운용사·자펀드·계정구분·담당자·투자심의상태·투자심의기간)
-       → 투자심의상태 FilterChip(툴바 좌) + 나머지는 상세필터 드로어(Sheet, apfs-detail-filter).
-         칩으로 올린 투자심의상태는 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts)
+       → 투자심의상태 FilterChip(툴바 좌) + 나머지는 칩 줄 위 인라인 필터 패널(apfs-detail-filter).
+         칩으로 올린 투자심의상태는 패널에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts)
        모펀드·계정구분·담당자는 그리드 컬럼이 아닌 숨은 행 속성 `mf`·`acct`·`mgr` 로 거른다(2026-11-16 사용자 지시
          "미연동 필터 전부 동작" — 종전 no-op). 원문 3행에 행 순서로 시드한다(DRAWER_SEED): 상주-어니스트 애그테크 1건만
          MOAF, 계정구분은 3건 모두 농식품(조합명이 전부 농식품·애그테크라 수산으로 둘 근거가 없다 → 수산은 0건이 정상),
@@ -29,10 +29,8 @@ import { Icon } from '../../icons';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, CellDoubleClickedEvent, IRowNode, ValueFormatterParams, CellStyle, RowSelectionOptions } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../../ui/dropdown-menu';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
@@ -40,11 +38,10 @@ import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { RowFormModal } from '../../generic_list_modal';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../../ui/alert-dialog';
-import { PeriodPicker } from '../../ui/period-picker';
 import { COMPLIANCE_SCHEMA } from './investment_review_manage_schemas';
 import { INV_REVIEW_ROWS } from './investment_review_data';
 import type { Confirm, Result, InvReviewRow } from './investment_review_data';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSelect, PanelRange } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { InvestmentReviewDetailModal } from './investment_review_detail_modal';
 export type { Confirm, Result, InvReviewRow } from './investment_review_data';
 
@@ -175,18 +172,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </Wrap>
-  );
-}
-
 /* 투심결과 입력 드롭다운 — 확정·미결/보류 단계에서 결과를 하나 고른다(툴바 1곳 규약, 버튼 폭발 방지).
    ⚠ UI.Button은 ...rest/forwardRef가 없어 <DropdownMenuTrigger asChild><Button>이 Radix의 onPointerDown·ref를
      못 받아 메뉴가 안 열린다(2026-09-11 런타임 확인). 골드 MoreMenu처럼 트리거에 스타일을 직접 얹는다.
@@ -224,11 +209,10 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
-  /* 필터 — 투심상태(일정/결과)는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
+  /* 필터 — 투심상태(일정/결과)는 툴바 칩, 나머지는 인라인 패널. SSOT=개별 state(빈 값=미적용) */
   const [fState, setFState] = useState<'' | '일정' | '결과'>('');
   const [fGp, setFGp] = useState('');
   const [fFund, setFFund] = useState('');
@@ -407,10 +391,22 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
         { label: '담당자', value: fMgr, onClear: () => setFMgr('') },
         { label: '투자심의기간', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 검색어 입력은 기본 OFF(apfs-detail-filter opt-in 규약).
+         목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·투자심의기간(투자심의상태는 툴바 칩 — 패널 제외).
+         모펀드·계정구분·담당자는 숨은 행 속성(mf·acct·mgr)으로 거른다. 기간은 PanelRange day */
+      filterPanel={
+        <FilterPanel label="투심보고 확정 및 승인 조건">
+          <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} />
+          <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={gpOptions} />
+          <PanelSelect label="자펀드" value={fFund} onChange={setFFund} options={fundOptions} />
+          <PanelSelect label="계정구분" value={fAg} onChange={setFAg} options={['농식품', '수산']} />
+          <PanelSelect label="담당자" value={fMgr} onChange={setFMgr} options={['양한솔', '이성훈']} />
+          <PanelRange label="투자심의기간" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
+        </FilterPanel>
+      }
       contextActions={selActions}
       toolbarRight={<>
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
@@ -447,38 +443,6 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
             overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 투자심의 건이 없습니다.</span>'}
           />
         </div>
-
-      {/* ── 상세필터 드로어 — 검색어는 미사용(OFF). 항목이 전부 행을 거른다(숨은 행 속성 포함 — 파일 머리 주석) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">투자심의 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* 검색어 입력은 기본 OFF(apfs-detail-filter opt-in 규약) — 이 페이지는 미사용이라 렌더하지 않는다.
-                목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·투자심의기간(투자심의상태는 툴바 칩 — 드로어 제외).
-                모펀드·계정구분·담당자는 숨은 행 속성(mf·acct·mgr)으로 거른다. 기간은 PeriodPicker day 2개(apfs-datepicker) */}
-            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
-            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            <DrawerField label="계정구분"><DrawerSelect value={fAg} onChange={setFAg} options={['농식품', '수산']} /></DrawerField>
-            <DrawerField label="담당자"><DrawerSelect value={fMgr} onChange={setFMgr} options={['양한솔', '이성훈']} /></DrawerField>
-            <DrawerField label="투자심의기간" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="투자심의기간 시작일" /></div>
-                <span className="text-caption">~</span>
-                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="투자심의기간 종료일" /></div>
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 투자준법감시내역 등록/수정 — 스키마 주도(apfs-form-modal). 제목은 상태별 title ── */}
       {modal?.kind === 'complianceReg' && single && (

@@ -2,8 +2,8 @@
    출처: S0_107_권한변경이력.html(공통관리 KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(기간·대상 사용자·변경유형·행위자·검색어 + [이번 달]) → 전 항목이 상세필터 드로어
-       (검색어·기간(PeriodPicker day ×2)·대상 사용자·변경유형·행위자). 툴바 좌는 적용 칩만. [이번 달] = 툴바 ghost 버튼. 기본 기간 = 이번 달(월초~월말, 데모 고정 기준일 기준).
+   - 검색박스(기간·대상 사용자·변경유형·행위자·검색어 + [이번 달]) → 전 항목이 칩 줄 위 인라인 패널
+       (검색어·기간(시작~종료 한 칸)·대상 사용자·변경유형·행위자, 패널 [초기화] = 기본 기간 복원). 툴바 좌는 적용 칩만. [이번 달] = 툴바 ghost 버튼. 기본 기간 = 이번 달(월초~월말, 데모 고정 기준일 기준).
    - 그리드(No·일시·변경유형·권한·변경 요약·적용 대상·행위자·발생프로그램) → AG Grid 단일 헤더. 변경 요약 셀 = 추가N·회수M 또는 전→후.
    - 행 더블클릭/Enter(또는 우클릭 메뉴 '상세 보기') → 상세 다이얼로그(`PermissionHistoryDetailModal`, 읽기 전용 — 편집 액션 없음).
    - 등록 없음(조회 전용) → 툴바 kebab 단독. 엑셀 = kebab + 푸터 download + ⌥D. 표시 건수 요약은 푸터 좌(aria-live).
@@ -11,15 +11,11 @@
    ⚠ 실제 감사 데이터·권한변경 수집이 아니다 — 데모 행을 로컬로 조회만 한다(브리프). 실명 아님. */
 import '../../aggrid_shared.css';
 import { useState, useCallback, useMemo } from 'react';
-import type { CSSProperties } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
-import { PeriodPicker } from '../../ui/period-picker';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, CellKeyDownEvent, CellContextMenuEvent, RowDoubleClickedEvent, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
@@ -29,7 +25,7 @@ import type { CtxItem, CtxMenuState } from '../../row_context_menu';
 import { demoHistory, filterHistory, summaryText, cntAdd, cntRev, usersOf, monthRange, CT_TONE, CHANGE_TYPES } from './permission_history_model';
 import type { HistEntry, ChangeType } from './permission_history_model';
 import { PermissionHistoryDetailModal } from './permission_history_detail_modal';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSearch, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -90,18 +86,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '행위자', get: (r) => r.actor }, { header: '발생프로그램', get: (r) => r.src }, { header: 'IP', get: (r) => r.ip }, { header: '사유', get: (r) => r.reason },
 ];
 
-/* plain=<div> 래퍼 — PeriodPicker(버튼 트리거)는 <label> 안에서 2회 토글되므로(apfs-datepicker) */
-function DrawerField({ label, children, plain }: { label: string; children: React.ReactNode; plain?: boolean }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-const dayWrap: CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -109,8 +93,7 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
 
-  /* 필터 — 전 항목이 상세필터 드로어(툴바 좌는 적용 칩만). 기본 기간 = 이번 달(데모 고정 기준일) */
-  const [filterOpen, setFilterOpen] = useState(false);
+  /* 필터 — 전 항목이 칩 줄 위 인라인 패널(툴바 좌는 적용 칩만). 기본 기간 = 이번 달(데모 고정 기준일) */
   const [fType, setFType] = useState<ChangeType | ''>('');
   const [[from0, to0]] = useState(() => monthRange());
   const [fFrom, setFFrom] = useState(from0);
@@ -121,8 +104,8 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
   const clearFilters = () => { setFType(''); setFFrom(from0); setFTo(to0); setFUser(''); setFActor(''); setFText(''); };
   const thisMonth = () => { const [f, t] = monthRange(); setFFrom(f); setFTo(t); };
 
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   const visible = useMemo(() => filterHistory(DEMO, { from: fFrom, to: fTo, user: fUser, type: fType, actor: fActor, kw: fText }), [fFrom, fTo, fUser, fType, fActor, fText]);
   const onRowDoubleClicked = useCallback((e: RowDoubleClickedEvent<HistEntry>) => { if (e.data && !e.rowPinned) setDetailId(e.data.id); }, []);
@@ -170,9 +153,18 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
       favRoute="permission-history"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 검색어(opt-in) · 기간 · 대상 사용자 · 변경유형 · 행위자. 즉시 반영, [초기화] = 기본값(기간 = 이번 달) 복원 */
+      filterPanel={
+        <FilterPanel label="권한 변경이력 조건" onReset={clearFilters}>
+          {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
+          <PanelRange label="기간" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
+          <PanelSelect label="대상 사용자" value={fUser} onChange={setFUser} options={USER_OPTIONS.map((u) => ({ value: u, label: u }))} />
+          <PanelSelect label="변경유형" value={fType} onChange={(v) => setFType(v as ChangeType | '')} options={CHANGE_TYPES.map((t) => ({ value: t, label: t }))} />
+          <PanelText label="행위자" value={fActor} onChange={setFActor} />
+        </FilterPanel>
+      }
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="calendar" onClick={thisMonth}>이번 달</Button>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span aria-live="polite">{'총 ' + String(DEMO.length) + '건 중 ' + String(visible.length) + '건 표시 중'}</span>}
@@ -197,37 +189,6 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
-      {/* ── 상세필터 드로어 — 검색어(opt-in) · 기간 · 대상 사용자 · 변경유형 · 행위자 ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">권한 변경이력을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {SEARCHABLE && (
-              <DrawerField label="검색어">
-                <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="메뉴 · 권한" style={inputStyle('text')} />
-              </DrawerField>
-            )}
-            <DrawerField label="기간" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="기간 시작일" /></div>
-                <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="기간 종료일" /></div>
-              </div>
-            </DrawerField>
-            <DrawerField label="대상 사용자"><DrawerSelect value={fUser} onChange={setFUser} options={USER_OPTIONS.map((u) => ({ value: u, label: u }))} /></DrawerField>
-            <DrawerField label="변경유형"><DrawerSelect value={fType} onChange={(v) => setFType(v as ChangeType | '')} options={CHANGE_TYPES.map((t) => ({ value: t, label: t }))} /></DrawerField>
-            <DrawerField label="행위자"><input type="text" value={fActor} onChange={(e) => setFActor(e.target.value)} placeholder="행위 수행자" style={inputStyle('text')} /></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {detail && <PermissionHistoryDetailModal entry={detail} onClose={() => setDetailId(null)} />}
     </GridFrame>

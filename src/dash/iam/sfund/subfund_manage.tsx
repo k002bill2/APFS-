@@ -2,8 +2,7 @@
    출처: 통합_화면_구조도_v1.4 · 자펀드관리_목업.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(11필터)      → 심사단계 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter)
-                             (ext.inlineFilters 화면은 드로어 대신 칩 줄 위 인라인 패널 — subfund_filter_panel)
+   - 검색박스(11필터)      → 심사단계 드롭다운 칩(툴바 좌) + 칩 줄 위 인라인 필터 패널(subfund_filter_panel, apfs-detail-filter)
    - 2단 헤더 그리드+합계  → AG Grid ColGroupDef + pinned 합계행(useMemo 재계산, apfs-aggrid)
    - 심사단계 워크플로우   → 행(라디오) 선택 시 툴바 좌에 단계별 컨텍스트 액션 → 단계 전이(공고관리 패턴)
    - 편집 팝업 3종         → 제안서접수/선정조합 = RowFormModal(스키마), 결성조합 수정 = 섹션형 전용 모달
@@ -19,21 +18,17 @@ import type { Tone } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';   // 공유 테마(회색 선택)·포매터 SSOT
 import { SELECTION_COL, restoreSelection, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝) — 형제 드로어(asset_funding·generic_list)와 동일
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, ValueFormatterParams, CellStyle, RowSelectionOptions } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';   // 앱-스코프 단축키(⌘⏎ 제안서접수 등록·⌘P 인쇄)
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import { RowFormModal } from '../../generic_list_modal';
 import { SubFundFormEditModal } from './subfund_form_modal';   // 결성조합 수정 — 섹션형 전용 모달
-import { APPLY_SCHEMA, SELECT_SCHEMA, OPT_AG, OPT_FG, OPT_FS, OPT_MANAGER, OPT_MF, CUR_YEAR } from './subfund_manage_schemas';
+import { APPLY_SCHEMA, SELECT_SCHEMA, OPT_AG, OPT_MANAGER, OPT_MF } from './subfund_manage_schemas';
 import { onOrBefore } from '../../schemas/filter_field';   // 조회 시점 판정(셀 ≤ 값) — 기준일자
-import { PeriodPicker } from '../../ui/period-picker';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
-import { SubFundFilterPanel } from './subfund_filter_panel';   // ext.inlineFilters 화면(자펀드정보관리)의 칩 줄 위 필터
+import { SubFundFilterPanel } from './subfund_filter_panel';   // 칩 줄 위 인라인 필터 패널(apfs-detail-filter)
 import type { SubFundFilterKey } from './subfund_filter_panel';
 
 const { Button, IconBtn, StatusBadge, ColorChip } = UI;
@@ -184,21 +179,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-/* 드로어 필드 래퍼 — 라벨 + 컨트롤(항목이 전부 행을 거른다 — 미연동 캡션 없음) */
-/* plain=true → <label> 대신 <div>: PeriodPicker/DatePicker 트리거는 <button>이라 <label> 암묵 연결이 안 되고(ariaLabel로 명명),
-   <label> 안 버튼 클릭이 라벨 활성화와 겹쳐 2회 토글되는 것을 막는다 */
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </Wrap>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -217,14 +197,10 @@ export interface SubFundExt {
   /* 결성 행에만 붙는 추가 작업 — 결성돼야 자펀드로 등재되므로 투자기준 편집도 결성 행 대상 */
   /* render 의 onSave 는 행 반영만 한다(모달을 닫지 않음) — 모달은 스스로 닫히고 끝나면 onClose 를 부른다 */
   formedAction: { label: string; render: (row: SubFundRow, onSave: (patch: Partial<SubFundRow>) => void, onClose: () => void) => React.ReactNode };
-  /* true = 상세필터 드로어 대신 칩 줄 위 인라인 필터 패널(subfund_filter_panel). [상세필터] 버튼·드로어가 없고,
-     적용 칩은 그대로 아래 칩 줄에 뜬다 — 칩 클릭은 드로어 대신 패널 칸으로 간다(2026-11-09) */
-  inlineFilters?: boolean;
 }
 
 export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext?: SubFundExt }) {
   const seed = useMemo(() => withHidden(ext?.seed ?? DEMO), [ext]);   // 숨은 속성이 빈 확장 시드 행을 채운다(withHidden)
-  const inline = ext?.inlineFilters === true;
   const cols = useMemo(() => (ext ? [...columnDefs, ...ext.extraColumns] : columnDefs), [ext]);
   const numKeys = useMemo(() => (ext ? new Set([...NUM_KEYS, ...ext.extraNumKeys]) : NUM_KEYS), [ext]);
   const sheetName = ext?.title ?? '자펀드관리';
@@ -242,13 +218,12 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
   /* 상단 kebab이 스크롤로 화면 밖에 나가면 푸터 kebab을 대신 노출(IntersectionObserver, root=뷰포트).
      툴바는 sticky가 아니라 스크롤로 사라지고 푸터는 sticky bottom이라 항상 보이므로 성립(grid_frame 구조) */
   const [modal, setModal] = useState<ModalState>(null);
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
   // 앱-스코프 단축키: ⌘⏎=제안서접수 등록(모달 열림 중엔 비활성 → 이중 열림 방지), ⌘P=인쇄.
-  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'apply' }), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => setModal({ kind: 'apply' }), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
-  /* 필터 — 심사단계는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
+  /* 필터 — 심사단계는 툴바 칩, 나머지는 인라인 패널. SSOT=개별 state(빈 값=미적용) */
   const [fStage, setFStage] = useState<'' | Stage>('');
   const [fText, setFText] = useState('');
   const [fFund, setFFund] = useState('');
@@ -262,7 +237,7 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
   const [fAg, setFAg] = useState('');           // 계정구분 — 숨은 행 속성 ag
   const [fRisk, setFRisk] = useState('');       // 리스크담당자 — 숨은 행 속성 risk
   const clearFilters = () => { setFStage(''); setFText(''); setFFund(''); setFType(''); setFYear(''); setFRt(''); setFSt(''); setFMf(''); setFManager(''); setFAsOf(''); setFAg(''); setFRisk(''); };
-  /* 인라인 패널 배선 — 같은 state 를 키로 묶어 넘긴다(드로어와 SSOT 공유) */
+  /* 인라인 패널 배선 — 같은 state 를 키로 묶어 넘긴다 */
   const panelSet: Record<SubFundFilterKey, (v: string) => void> = {
     text: setFText, mf: setFMf, fund: setFFund, ag: setFAg, type: setFType, year: setFYear,
     rt: setFRt, manager: setFManager, risk: setFRisk, st: setFSt, asOf: setFAsOf,
@@ -416,13 +391,13 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       filterChips={(['' as const, ...STAGES] as ('' | Stage)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fStage === s, onSelect: () => setFStage(s) }))}
       filterChipsMenu="심사단계"
-      /* 인라인 모드 — 칩 줄 위 필터 패널. 고른 값은 아래 칩 줄에 적용 칩으로도 뜬다(2026-11-09 사용자 "옵션 선택시 필터칩이 하단에").
+      /* 칩 줄 위 필터 패널(2026-11-09 자펀드정보관리 → 11-17 전 화면). 고른 값은 아래 칩 줄에 적용 칩으로 뜬다.
          칩 본문 클릭 = 패널의 같은 이름 칸으로 초점(filter_field_jump focusPanelField) — 칩 label 이 칸 aria-label 과 같아야 한다 */
-      filterPanel={inline ? (
+      filterPanel={
         <SubFundFilterPanel onChange={(k, v) => panelSet[k](v)} fundOptions={formedFunds} managerOptions={managerOpts}
           values={{ text: fText, mf: fMf, fund: fFund, ag: fAg, type: fType, year: fYear, rt: fRt, manager: fManager, risk: fRisk, st: fSt, asOf: fAsOf }} />
-      ) : undefined}
-      /* 적용 중인 상세필터 — 항목별 개별 칩(각각 ×로 해제). 라벨=드로어 항목명(apfs-detail-filter) */
+      }
+      /* 적용 중인 상세필터 — 항목별 개별 칩(각각 ×로 해제). 라벨=패널 칸 aria-label(apfs-detail-filter) */
       appliedFilters={[
         { label: '검색어', value: fText, onClear: () => setFText('') },
         { label: '모펀드', value: fMf, onClear: () => setFMf('') },
@@ -440,7 +415,6 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
       toolbarRight={<>
         {/* 금액 단위 표기 — 캡션. 카드헤더 sub 캡션을 없애면서 여기로 이동 */}
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
-        {!inline && <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>}
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'apply' })}>제안서접수 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -507,41 +481,6 @@ export function SubFundManage({ onNav, ext }: { onNav?: (r: string) => void; ext
           ))}
         </div>
       )}
-
-      {/* ── 상세필터 드로어 — 검색어 최상단 고정(apfs-detail-filter). 항목이 전부 행을 거른다(숨은 속성 포함) ── */}
-      {!inline && <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">자펀드 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="검색어">
-              <UI.ClearableInput type="text" value={fText} onValueChange={setFText} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="조합명·GP·단계 등 전 컬럼 검색" clearLabel="검색어 지우기" style={inputStyle('text')} />
-            </DrawerField>
-            {/* 원본(목업) 검색박스 순서 그대로: 모펀드·자펀드·계정구분·자펀드구분·사업연도·정기/수시·심사담당자·리스크담당자·조합상태·기준일자.
-                목업 11항목 중 심사단계는 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts).
-                그리드 컬럼이 없는 항목(모펀드·계정구분·담당자 2종)은 숨은 행 속성으로, 기준일자는 등록일시 ≤ 값으로 거른다(2026-11-16 — 종전 no-op).
-                연도/일자는 PeriodPicker 표준(apfs-datepicker) */}
-            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={OPT_MF} /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={formedFunds} /></DrawerField>
-            <DrawerField label="계정구분"><DrawerSelect value={fAg} onChange={setFAg} options={OPT_AG} /></DrawerField>
-            <DrawerField label="자펀드구분"><DrawerSelect value={fType} onChange={setFType} options={OPT_FG} /></DrawerField>
-            {/* PeriodPicker 트리거는 w-full이라 fit-content 래퍼로 감싸 폭 규칙(minW) 적용 — 형제 DatePicker 소비처(renderers·generic_list)와 동일 */}
-            <DrawerField label="사업연도" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('year'), maxWidth: '100%' }}><PeriodPicker mode="year" value={fYear} onChange={setFYear} ariaLabel="사업연도" yearRange={[2000, CUR_YEAR + 1]} /></div></DrawerField>
-            <DrawerField label="정기/수시"><DrawerSelect value={fRt} onChange={setFRt} options={['정기', '수시']} /></DrawerField>
-            <DrawerField label="심사담당자"><DrawerSelect value={fManager} onChange={setFManager} options={managerOpts} /></DrawerField>
-            <DrawerField label="리스크담당자"><DrawerSelect value={fRisk} onChange={setFRisk} options={managerOpts} /></DrawerField>
-            <DrawerField label="조합상태"><DrawerSelect value={fSt} onChange={setFSt} options={OPT_FS} /></DrawerField>
-            <DrawerField label="기준일자" plain><div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" /></div></DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>}
 
       {/* ── 편집 팝업: 스키마 주도(apfs-form-modal). 제목은 단계별로 title 오버라이드 ── */}
       {modal?.kind === 'apply' && (

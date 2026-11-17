@@ -31,7 +31,7 @@ export function DrawerSelect({ value, onChange, options, all = '전체', noAll, 
   if (shouldSearch(options.length, searchable)) {
     return (
       <div style={{ width: wrapW, maxWidth: '100%' }}>
-        <SearchableSelect value={value} onChange={onChange} options={options} allLabel={allLabel} ariaLabel={ariaLabel} fill={fill}
+        <SearchableSelect value={value} onChange={onChange} options={options} allLabel={allLabel} ariaLabel={ariaLabel} fill={fill} placeholder={placeholder} dimEmpty={placeholder != null}
           triggerStyle={{ ...drawerInputStyle('select'), maxWidth: '100%', ...fillW }} />
       </div>
     );
@@ -47,6 +47,8 @@ export function DrawerSelect({ value, onChange, options, all = '전체', noAll, 
       <select aria-label={ariaLabel} value={value} onChange={(e) => onChange(e.target.value)} title={pickedLabel}
         style={{ ...drawerInputStyle('select'), ...fillW, ...(dim ? { color: 'var(--muted-foreground)' } : null), appearance: 'none', WebkitAppearance: 'none', paddingRight: 32 }}>
         {allLabel != null && <option value="" style={optStyle}>{allLabel}</option>}
+        {/* '전체' 없는 필수 선택(인라인 패널) — 항목명은 닫힌 상자에만 보이고 목록에선 고를 수 없다 */}
+        {allLabel == null && placeholder != null && <option value="" disabled hidden>{placeholder}</option>}
         {options.map((o) => typeof o === 'string'
           ? <option key={o} value={o} style={optStyle}>{o}</option>
           : <option key={o.value} value={o.value} style={optStyle}>{o.label}</option>)}
@@ -58,18 +60,22 @@ export function DrawerSelect({ value, onChange, options, all = '전체', noAll, 
 
 /** 상세필터 드로어 다중선택 select — 박스 규격은 DrawerSelect 와 같은 drawerInputStyle('select').
    [] = emptyLabel('전체'). 트리거가 <button> 이라 <label> 래퍼(DrawerField 기본) 대신 plain 래퍼에 둔다(2회 토글 방지). */
-export function DrawerMultiSelect({ value, onChange, options, emptyLabel = '전체', ariaLabel, searchable }: {
+export function DrawerMultiSelect({ value, onChange, options, emptyLabel = '전체', ariaLabel, searchable, placeholder, fill }: {
   value: readonly string[];
   onChange: (v: string[]) => void;
   options: ReadonlyArray<SelectOption>;
   emptyLabel?: string;
   ariaLabel?: string;
   searchable?: boolean;
+  /** 인라인 패널 — 트리거에 고른 요약 대신 항목명을 늘 보인다(고른 값은 적용 칩, filter_panel PanelMulti) */
+  placeholder?: string;
+  /** 부모 폭을 채운다(고정폭 칸) */
+  fill?: boolean;
 }) {
   return (
-    <div style={{ width: 'fit-content', maxWidth: '100%' }}>
-      <MultiSelect searchable={searchable} value={value} onChange={onChange} options={options} emptyLabel={emptyLabel} ariaLabel={ariaLabel}
-        triggerStyle={{ ...drawerInputStyle('select'), maxWidth: '100%' }} />
+    <div style={{ width: fill ? '100%' : 'fit-content', maxWidth: '100%' }}>
+      <MultiSelect searchable={searchable} value={value} onChange={onChange} options={options} emptyLabel={emptyLabel} ariaLabel={ariaLabel} placeholder={placeholder}
+        triggerStyle={{ ...drawerInputStyle('select'), maxWidth: '100%', ...(fill ? { width: '100%', minWidth: 0 } : null) }} />
     </div>
   );
 }

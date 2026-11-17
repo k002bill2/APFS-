@@ -2,34 +2,30 @@
    출처: ACC-004 화면설계서 → APFS 디자인시스템(ACC-001 account_code_manage 골격).
 
    구성(설계서 → 우리 규약):
-   - 툴바: [상세필터] → 조회(항상 맨 끝). 등록 버튼·선택 체크박스·선택 바 없음(설계서에 없다).
+   - 툴바: 조회(항상 맨 끝). 등록 버튼·선택 체크박스·선택 바 없음(설계서에 없다). 상세필터는 칩 줄 위 인라인 패널.
    - 그리드 11열(계정구분·전표일·순번·적요·금액·거래처·첨부·작성자·전표발생구분·최초등록자·최종수정자).
        전표일 내림차순·순번 오름차순(모델 정렬). 행 더블클릭 / Enter = 전표상세(조회 전용 전체 화면 팝업).
        첨부 = 아이콘 버튼 셀(클릭 시 데모 다운로드 토스트) — 아이콘 전용 액션 열이라 정렬 규약 예외지만 가운데 정렬은 쓰지 않는다.
-   - 상세필터 드로어 6개(계정구분·기간·전표발생구분·작성자·거래처·적요). 즉시 반영 — 고르는 즉시 applied 반영, [필터 적용] = 닫기
-       (X·Esc·바깥 클릭으로 닫아도 값 유지). 기간 시작 > 종료 = 두 칸 invalid + 아래 안내 + 결과 0건(2026-11-03 사용자 지시, 정본 privacy_access_log).
-       적용 조건 = 칩(값만, × 개별 해제).
+   - 상세필터 = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 — apfs-detail-filter) 6개(계정구분·기간·전표발생구분·작성자·거래처·적요).
+       즉시 반영 — 고르는 즉시 applied 반영. 기간 시작 > 종료 = 두 칸 invalid + 패널 아래 안내 + 결과 0건(2026-11-03 사용자 지시, 정본 privacy_access_log).
+       적용 조건 = 칩(값만, × 개별 해제). 기본값이 전부 빈 값이라 [초기화] 없음 — 칩 줄 `전체 해제`가 같은 일을 한다.
    - 전표상세 = ACC-003 전표 화면(JournalEntryScreen) mode 'deleted' — 조회 전용 + 삭제 안내 배너 + [복원]·[닫기].
    - 복원 = 상세의 [복원] → 확인 → 목록에서 제외 + 토스트. 상세에 넘기는 행은 modal state 스냅샷(복원 후에도 exit 애니메이션 유지).
    - 엑셀 = 푸터 내보내기 아이콘 + ⌥D(금액은 숫자 셀). 권한 기반 노출은 RBAC 미구현이라 [복원]·[내보내기] 항상 노출.
    ⚠ 백엔드가 없어 복원은 화면 로컬 상태만 바꾼다(일반전표관리 목록으로 실제 이동하지 않음). */
 import '../../aggrid_shared.css';
 import { useState, useRef, useCallback, useMemo } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, CellKeyDownEvent, RowDoubleClickedEvent, CellStyle, ICellRendererParams } from 'ag-grid-community';
 import { Paperclip } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
-import { PeriodPicker } from '../../ui/period-picker';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본
+import { FilterPanel, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { demoDeletedJournals } from './deleted_journal_data';
 import { FUND_ACCOUNTS, JOURNAL_ORIGINS } from './general_journal_data';
 import type { DeletedJournal } from './deleted_journal_data';
@@ -100,17 +96,6 @@ const EXPORT_COLS: XCol[] = [
   { header: '최초등록자', get: (r) => r.createdBy }, { header: '최종수정자', get: (r) => r.updatedBy },
 ];
 
-function DrawerField({ label, children, plain }: { label: string; children: ReactNode; plain?: boolean }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-const dayWrap: CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
-
 /* 행 안 버튼(첨부)에서 온 이벤트는 상세 열기로 취급하지 않는다 */
 const fromButton = (ev: Event | null | undefined) => !!(ev?.target as Element | null)?.closest?.('button');
 
@@ -126,17 +111,16 @@ export function DeletedJournalManage({ onNav }: { onNav?: (r: string) => void })
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 0 });
   const [modal, setModal] = useState<ModalState>(null);
 
-  /* 상세필터 — applied = 드로어·칩·목록의 SSOT(초안 사본 없음 — 바꾸는 즉시 반영) */
-  const [filterOpen, setFilterOpen] = useState(false);
+  /* 상세필터 — applied = 패널·칩·목록의 SSOT(초안 사본 없음 — 바꾸는 즉시 반영) */
   const [applied, setApplied] = useState<DeletedFilter>(EMPTY_FILTER);
   const setD = <K extends keyof DeletedFilter>(k: K) => (v: DeletedFilter[K]) => setApplied((a) => ({ ...a, [k]: v }));
-  /* 기간 오류 — 렌더마다 applied 로 계산. 두 picker invalid + 아래 안내 + 결과 0건 */
+  /* 기간 오류 — 렌더마다 applied 로 계산. 두 picker invalid + 패널 아래 안내 + 결과 0건 */
   const periodErr = validatePeriod(applied.from, applied.to);
   const clearApplied = (patch: Partial<DeletedFilter>) => setApplied((a) => ({ ...a, ...patch }));
 
-  /* 인쇄·내보내기는 모달·드로어가 열려 있지 않을 때만 */
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  /* 인쇄·내보내기는 모달이 열려 있지 않을 때만 */
+  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null, skipInDialog: true });
 
   const visible = useMemo(() => (periodErr ? [] : filterDeleted(rows, applied)), [rows, applied, periodErr]);
 
@@ -201,8 +185,18 @@ export function DeletedJournalManage({ onNav }: { onNav?: (r: string) => void })
       favRoute="acct-deleted-journal"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 설계서 6개 조건. 즉시 반영, 기간 검증 문구는 패널 아래 */
+      filterPanel={
+        <FilterPanel label="삭제전표 조건" errors={[periodErr]}>
+          <PanelSelect label="계정구분" value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} searchable />
+          <PanelRange label="기간" mode="day" from={applied.from} to={applied.to} onFrom={setD('from')} onTo={setD('to')} invalid={!!periodErr} />
+          <PanelSelect label="전표발생구분" value={applied.origin} onChange={setD('origin')} options={[...JOURNAL_ORIGINS]} />
+          <PanelText label="작성자" value={applied.writer} onChange={setD('writer')} />
+          <PanelText label="거래처" value={applied.partner} onChange={setD('partner')} />
+          <PanelText label="적요" value={applied.memo} onChange={setD('memo')} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{footerCount(visible.length, Math.min(shown, visible.length))}</span>}
@@ -231,42 +225,6 @@ export function DeletedJournalManage({ onNav }: { onNav?: (r: string) => void })
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 결과가 없습니다. 검색 조건을 변경해 주세요.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 설계서 6개 조건. 즉시 반영([필터 적용] = 닫기) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">삭제전표 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="계정구분"><DrawerSelect value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} ariaLabel="계정구분" searchable /></DrawerField>
-            <DrawerField label="기간" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={applied.from} onChange={setD('from')} ariaLabel="기간 시작일" invalid={!!periodErr} /></div>
-                <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={applied.to} onChange={setD('to')} ariaLabel="기간 종료일" invalid={!!periodErr} /></div>
-              </div>
-              {periodErr && <p role="alert" className="m-0 mt-1 text-danger" style={{ fontSize: 12 }}>{periodErr}</p>}
-            </DrawerField>
-            <DrawerField label="전표발생구분"><DrawerSelect value={applied.origin} onChange={setD('origin')} options={[...JOURNAL_ORIGINS]} ariaLabel="전표발생구분" /></DrawerField>
-            <DrawerField label="작성자">
-              <input type="text" value={applied.writer} onChange={(e) => setD('writer')(e.target.value)} placeholder="작성자" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="거래처">
-              <input type="text" value={applied.partner} onChange={(e) => setD('partner')(e.target.value)} placeholder="거래처" style={inputStyle('text')} />
-            </DrawerField>
-            <DrawerField label="적요">
-              <input type="text" value={applied.memo} onChange={(e) => setD('memo')(e.target.value)} placeholder="적요" style={inputStyle('text')} />
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={() => setApplied(EMPTY_FILTER)}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 전표상세 — 게이트는 modal state(행 스냅샷). 복원으로 rows 에서 빠져도 동기 언마운트되지 않는다 ── */}
       {modal?.kind === 'detail' && (

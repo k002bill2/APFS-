@@ -3,7 +3,7 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(모펀드·운용사·자펀드·계정구분·담당자·총회구분·총회기간)
-       → 보고상태 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter)
+       → 보고상태 FilterChip(툴바 좌) + 칩 줄 위 인라인 필터 패널(apfs-detail-filter)
        ⚠ 목업 기본 총회기간(2025-08-28~2026-08-28)은 데모값이라 이식하지 않는다(초기값 '' = 미적용).
        ⚠ 담당자는 행 컬럼이 아니라 상세(`detail.gen.mgr`)에 있다 — 그 값으로 실제 필터링한다.
        모펀드·계정구분은 그리드 컬럼이 아닌 숨은 행 속성 `mf`·`acc` 로 거른다(2026-11-16 사용자 지시 "미연동 필터 전부 동작"
@@ -25,20 +25,17 @@ import { UI } from '../../components';
 import type { Tone } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';
-import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, SuppressKeyboardEventParams, SelectionChangedEvent, RowClassParams } from 'ag-grid-community';
 import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
-import { PeriodPicker } from '../../ui/period-picker';
 import { ConfirmCombo, uniformConfirm } from '../../confirm_combo';
 import type { ConfirmPick } from '../../confirm_combo';
 import { GeneralMeetingDetailModal } from './general_meeting_detail_modal';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSelect, PanelRange } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 
 const { Button, IconBtn, StatusBadge } = UI;
@@ -258,18 +255,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </Wrap>
-  );
-}
-
 /* 행 선택 — 확정여부 일괄 변경이 N건에 그대로 적용되는 액션이라 multiRow(apfs-aggrid "체크박스" 절, 정기보고 동형).
    선택은 체크박스로만(enableClickSelection:false). 헤더 전체선택은 SELECTION_COL 의 DS 헤더가 그리므로
    내장 헤더는 끄고 범위를 'filtered' 로 맞춘다. 모듈 상수(렌더마다 새 객체면 컬럼 폭이 되돌아간다). */
@@ -308,11 +293,10 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
   /* setModal(useState 세터)·patchRow(useCallback []) 둘 다 안정 참조라 deps []로 컬럼 정의를 고정한다
      (매 렌더 새 배열이면 AG Grid가 컬럼을 재생성하며 폭을 선언값으로 되돌린다) */
   const columnDefs = useMemo(() => makeColumns((id: string) => setModal({ kind: 'detail', id }), patchRow), [patchRow]);
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
-  /* 필터 — 보고상태는 툴바 칩, 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
+  /* 필터 — 보고상태는 툴바 칩, 나머지는 인라인 패널. SSOT=개별 state(빈 값=미적용) */
   const [fRst, setFRst] = useState<'' | MeetingStatus>('');
   const [fGp, setFGp] = useState('');
   const [fFund, setFFund] = useState('');
@@ -440,9 +424,22 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
         { label: '총회구분', value: fGt, onClear: () => setFGt('') },
         { label: '총회기간', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 검색어는 미사용(OFF). 목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·총회구분·총회기간.
+         모펀드·계정구분은 숨은 행 속성(mf·acc)으로, 담당자는 행 상세값으로 거른다.
+         보고상태는 툴바 칩이라 패널에 다시 두지 않는다(2026-11-05 사용자 지시). 기간은 PanelRange day */
+      filterPanel={
+        <FilterPanel label="조합원총회 조건">
+          <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} />
+          <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={gpOptions} />
+          <PanelSelect label="자펀드" value={fFund} onChange={setFFund} options={fundOptions} />
+          <PanelSelect label="계정구분" value={fAcc} onChange={setFAcc} options={['농식품', '수산']} />
+          <PanelSelect label="담당자" value={fMgr} onChange={setFMgr} options={mgrOptions} />
+          <PanelSelect label="총회구분" value={fGt} onChange={setFGt} options={GT_OPTIONS} />
+          <PanelRange label="총회기간" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
+        </FilterPanel>
+      }
       contextActions={selActions}
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
@@ -478,40 +475,6 @@ export function GeneralMeetingManage({ onNav }: { onNav?: (r: string) => void })
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 조합원총회 건이 없습니다.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 검색어는 미사용(OFF). 항목이 전부 행을 거른다(숨은 행 속성 포함 — 파일 머리 주석) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">조합원총회 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* 목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·총회구분·총회기간.
-                모펀드·계정구분은 숨은 행 속성(mf·acc)으로, 담당자는 행 상세값으로 거른다.
-                보고상태는 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시). 기간은 PeriodPicker day 2개 */}
-            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
-            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            <DrawerField label="담당자"><DrawerSelect value={fMgr} onChange={setFMgr} options={mgrOptions} /></DrawerField>
-            <DrawerField label="총회구분"><DrawerSelect value={fGt} onChange={setFGt} options={GT_OPTIONS} /></DrawerField>
-            {/* PeriodPicker 트리거는 w-full이라 fit-content 래퍼로 감싼다(apfs-datepicker "폭" 규칙) */}
-            <DrawerField label="총회기간" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="총회기간 시작일" /></div>
-                <span className="text-caption">~</span>
-                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="총회기간 종료일" /></div>
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 읽기전용 상세 팝업 — 제목 링크(또는 제목 셀 Enter)가 연다. 행 선택과 무관 ── */}
       {modal?.kind === 'detail' && target && <GeneralMeetingDetailModal row={target} onClose={() => setModal(null)} />}

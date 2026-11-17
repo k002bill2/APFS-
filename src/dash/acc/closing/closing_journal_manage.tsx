@@ -4,7 +4,7 @@
 
    구성(설계서 → 우리 규약):
    - 제목 "결산전표 관리"(메뉴 리프 라벨 — 설계서 "결산전표관리" 아님) · KPI 배지 행 미포함(사용자 결정 → kpis 미전달).
-   - 툴바: [상세필터] Sheet · [+ 전표 등록](설계서 [등록] — 업로드가 없어 콤보가 아닌 독립 버튼, 라벨은 도메인 액션명) · 조회 IconBtn.
+   - 툴바: [+ 전표 등록](설계서 [등록] — 업로드가 없어 콤보가 아닌 독립 버튼, 라벨은 도메인 액션명) · 조회 IconBtn. 상세필터(E01)는 칩 줄 위 인라인 패널.
      결재상태 칩 없음(ACC-003 과 동일 — 결재 조건은 상세필터 '승인여부'로만). 기간(전표일, 기본 전월 1일~오늘)은 상세필터에서만 편집.
    - 그리드 = slide 10 컬럼 순서 그대로(체크박스 + 14컬럼, ACC-003 컬럼 정의 관용구). 목록 합계행 없음.
    - 행 선택(체크박스만, multiRow) → 선택 바 결재상신(1건+) · 삭제 · 선택 해제(설계서 액션 바 → GridFrame contextActions).
@@ -15,33 +15,30 @@
 
    결정·가정(보고서에도 기재)
    - 업무 규칙은 closing_journal_model(쌍 연결 pairId + 전표번호 `-R`, 환원 전표일 = 다음날, 쌍 상신·쌍 삭제, 원전표 수정 시 환원 재생성).
-   - 상세필터는 즉시 반영(사용자 지시 2026-11-04 — ACC-003 general_journal_manage 와 같은 구조): 드로어 컨트롤이 적용 state 를 바로 바꾸고
-     [필터 적용] = 닫기(X·Esc·바깥 클릭으로 닫아도 값 유지), [초기화] = 기본값(기간 전월 1일~오늘·나머지 빈 값) 복원.
-     기간·자금집행예정기간 시작>종료 = 그 칸 invalid + 아래 안내(validateRange 렌더마다) + 결과 0건(막지 않고 표시만 — apfs-detail-filter 규약).
+   - 상세필터 = 칩 줄 위 인라인 패널(2026-11-17 드로어 폐기 — apfs-detail-filter), 즉시 반영(사용자 지시 2026-11-04 — ACC-003 general_journal_manage 와 같은 구조):
+     패널 칸이 적용 state 를 바로 바꾸고, [초기화] = 기본값(기간 전월 1일~오늘·나머지 빈 값) 복원.
+     기간·자금집행예정기간 시작>종료 = 그 칸 invalid + 패널 아래 안내(validateRange 렌더마다) + 결과 0건(막지 않고 표시만 — apfs-detail-filter 규약).
      전표발생구분 선택지 = 전체/가결산/가결산(환원)/결산(CLOSING_ORIGINS — 일반전표 JOURNAL_ORIGINS 와 별개).
    - 삭제 = 결재 미상신·반려만(당일자 조건 없음 — ACC-003 과 다름). 조건 밖 건이 하나라도 섞이면 전체 중단 + 안내(설계서 업무 규칙 우선).
      쌍 중 하나만 골라도 짝을 같이 지운다 — 확인 문구 뒤에 쌍 안내 1문장을 덧붙인다(쌍이 섞였을 때만).
    - 결재상신 확인 문구 = 설계서 원문("선택한 전표를 결재 상신하시겠습니까?") + 쌍이 섞였을 때만 쌍 안내 1문장. 불가 건은 skip 후 건수 안내(ACC-003 관용구).
    - [조회]는 현재 조건 그대로 재조회 흉내(선택 해제 + 토스트). */
 import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
 import { Icon } from '../../icons';
 import { GridFrame, FooterActions, footerCount } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, AUTO_SIZE_CONTENT, fmt } from '../../aggrid_theme';
 import { SELECTION_COL, restoreSelection, dropHiddenSelection } from '../../aggrid_selection';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, IRowNode, CellStyle, RowSelectionOptions, SelectionChangedEvent, RowDoubleClickedEvent, CellKeyDownEvent } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel } from '../../ui/alert-dialog';
-import { PeriodPicker } from '../../ui/period-picker';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
-import { DrawerSelect } from '../../drawer_select';
+import { FilterPanel, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { APPROVAL_YN, CURRENT_USER, FUND_ACCOUNTS, PARTNERS, todayStr } from '../slip/general_journal_data';
 import type { ApprovalStatus, JournalOrigin, JournalRow, Partner } from '../slip/general_journal_data';
 import { EMPTY_DETAIL, defaultPeriod, journalPasses, validateRange } from '../slip/general_journal_model';
@@ -124,32 +121,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-/* plain=<div> 래퍼 — PeriodPicker(버튼 트리거)는 <label> 안에서 2회 토글된다(apfs-datepicker) */
-function DrawerField({ label, plain, errMsg, children }: { label: string; plain?: boolean; errMsg?: string; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-      {errMsg && <span role="alert" className="text-danger block mt-1" style={{ fontSize: 12 }}>{errMsg}</span>}
-    </Wrap>
-  );
-}
-
-/* PeriodPicker 트리거는 w-full — fit-content 래퍼 필수("폭" 규칙) */
-const dayWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
-
-/* 범위 컨트롤 — risk_page_kit.tsx FilterControl `dayRange` 와 같은 마크업 복제(그쪽은 export 없음) */
-function DayRange({ label, from, to, onFrom, onTo, invalid }: { label: string; from: string; to: string; onFrom: (v: string) => void; onTo: (v: string) => void; invalid?: boolean }) {
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <div style={dayWrap}><PeriodPicker mode="day" value={from} onChange={(v) => onFrom(v || '')} ariaLabel={`${label} 시작일`} invalid={invalid} /></div>
-      <span className="text-caption">~</span>
-      <div style={dayWrap}><PeriodPicker mode="day" value={to} onChange={(v) => onTo(v || '')} ariaLabel={`${label} 종료일`} invalid={invalid} /></div>
-    </div>
-  );
-}
-
 type Detail = typeof EMPTY_DETAIL;
 type ModalState = null
   | { kind: 'submit'; ids: string[]; paired: boolean }
@@ -188,8 +159,7 @@ export function ClosingJournalManage({ onNav }: { onNav?: (r: string) => void })
   const [fFrom, setFFrom] = useState(baseFrom);
   const [fTo, setFTo] = useState(baseTo);
   const [fd, setFd] = useState<Detail>(EMPTY_DETAIL);
-  const [filterOpen, setFilterOpen] = useState(false);
-  /* 드로어 컨트롤이 조건을 바로 고친다(즉시 반영 — 초안 사본 없음). [초기화] = 기본 조건 */
+  /* 패널 칸이 조건을 바로 고친다(즉시 반영 — 초안 사본 없음). [초기화] = 기본 조건 */
   const setDetail = <K extends keyof Detail>(k: K, v: Detail[K]) => setFd((d) => ({ ...d, [k]: v }));
   const resetFilter = () => { setFFrom(baseFrom); setFTo(baseTo); setFd(EMPTY_DETAIL); };
   /* 범위 검증은 렌더마다 — 한쪽만 비우면 열린 경계(참고 risk_page_kit dayRange). 실패면 그 칸 표시 + 결과 0건 */
@@ -208,8 +178,8 @@ export function ClosingJournalManage({ onNav }: { onNav?: (r: string) => void })
   const doesExternalFilterPass = useCallback((node: IRowNode<JournalRow>) => (node.data ? shownIdsRef.current.has(node.data.id) : true), []);
   const visible = useMemo(() => rows.filter((r) => shownIds.has(r.id)), [rows, shownIds]);
 
-  /* 전표등록·상세필터·확인 팝업이 열려 있으면 뒤 목록의 등록·인쇄·내보내기 단축키를 끈다(⌘P 는 입력창에서도 발화) */
-  const listKeys = modal === null && !entry && !filterOpen;
+  /* 전표등록·확인 팝업이 열려 있으면 뒤 목록의 등록·인쇄·내보내기 단축키를 끈다(⌘P 는 입력창에서도 발화) */
+  const listKeys = modal === null && !entry;
   useHotkey(HOTKEYS.register.combo, () => openEntry({ mode: 'new' }), { enabled: listKeys, skipInDialog: true });
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: listKeys, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: listKeys, skipInDialog: true });
@@ -297,7 +267,7 @@ export function ClosingJournalManage({ onNav }: { onNav?: (r: string) => void })
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       contextActions={selActions}
       appliedFilters={[
-        /* 기본값(전월 1일~오늘)으로 시작하는 기간 칩 — × = 기간 조건 해제(빈 값, 전 기간), 상세필터 [초기화]로 기본값 복원.
+        /* 기본값(전월 1일~오늘)으로 시작하는 기간 칩 — × = 기간 조건 해제(빈 값, 전 기간), 패널 [초기화]로 기본값 복원.
            참고 risk_page_kit specsToApplied dayRange(`onClear: () => f.onChange('')`)와 같은 동작 */
         { label: '기간', value: rangeLabel(fFrom, fTo), onClear: () => { setFFrom(''); setFTo(''); } },
         { label: '계정구분', value: fd.fundAccount, onClear: () => setFd((d) => ({ ...d, fundAccount: '' })) },
@@ -309,11 +279,24 @@ export function ClosingJournalManage({ onNav }: { onNav?: (r: string) => void })
         { label: '전표번호', value: fd.slipNo.trim(), onClear: () => setFd((d) => ({ ...d, slipNo: '' })) },
         { label: '자금집행예정기간', value: rangeLabel(fd.dueFrom, fd.dueTo), onClear: () => setFd((d) => ({ ...d, dueFrom: '', dueTo: '' })) },
       ]}
+      /* E01 상세필터 = 칩 줄 위 인라인 패널 — slide 11 조건 9개 순서 그대로. 즉시 반영, [초기화] = 기본 조건(기간 = 전월 1일~오늘) */
+      filterPanel={
+        <FilterPanel label="결산전표 조건" onReset={resetFilter} errors={[periodErr, dueErr]}>
+          <PanelSelect label="계정구분" value={fd.fundAccount} onChange={(v) => setDetail('fundAccount', v)} options={FUND_ACCOUNTS} />
+          <PanelRange label="기간" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} invalid={!!periodErr} />
+          <PanelSelect label="승인여부" value={fd.approvedYn} onChange={(v) => setDetail('approvedYn', v as Detail['approvedYn'])} options={APPROVAL_YN} />
+          <PanelSelect label="전표발생구분" value={fd.origin} onChange={(v) => setDetail('origin', v as '' | JournalOrigin)} options={CLOSING_ORIGINS} />
+          <PanelText label="작성자" value={fd.writer} onChange={(v) => setDetail('writer', v)} />
+          <PanelText label="거래처" value={fd.partner} onChange={(v) => setDetail('partner', v)} />
+          <PanelText label="적요" value={fd.memo} onChange={(v) => setDetail('memo', v)} />
+          <PanelText label="전표번호" value={fd.slipNo} onChange={(v) => setDetail('slipNo', v)} />
+          <PanelRange label="자금집행예정기간" mode="day" from={fd.dueFrom} to={fd.dueTo} onFrom={(v) => setDetail('dueFrom', v)} onTo={(v) => setDetail('dueTo', v)} invalid={!!dueErr} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         {/* E02 등록 — 업로드가 없어 콤보가 아닌 독립 버튼 */}
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => openEntry({ mode: 'new' })}>전표 등록</Button>
-        {/* E03 조회. 전표등록·상세필터·확인창이 열려 있으면 뒤 목록 단축키(⌥R) 바인딩을 끈다(listKeys) — IconBtn 은 enabled prop 이 없어 hotkey 를 조건부로 */}
+        {/* E03 조회. 전표등록·확인창이 열려 있으면 뒤 목록 단축키(⌥R) 바인딩을 끈다(listKeys) — IconBtn 은 enabled prop 이 없어 hotkey 를 조건부로 */}
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={listKeys ? HOTKEYS.refresh : undefined} />
       </>}
       footerLeft={<span>{footerCount(visible.length, Math.min(shown, visible.length))}</span>}
@@ -350,36 +333,6 @@ export function ClosingJournalManage({ onNav }: { onNav?: (r: string) => void })
           overlayNoRowsTemplate="조회 조건에 해당하는 전표가 없습니다."
         />
       </div>
-
-      {/* ── E01 상세필터 — slide 11 조건 9개 순서 그대로. 즉시 반영([필터 적용] = 닫기) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">결산전표 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="계정구분"><DrawerSelect value={fd.fundAccount} onChange={(v) => setDetail('fundAccount', v)} options={FUND_ACCOUNTS} ariaLabel="계정구분" /></DrawerField>
-            <DrawerField label="기간" plain errMsg={periodErr ?? undefined}>
-              <DayRange label="기간" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} invalid={!!periodErr} />
-            </DrawerField>
-            <DrawerField label="승인여부"><DrawerSelect value={fd.approvedYn} onChange={(v) => setDetail('approvedYn', v as Detail['approvedYn'])} options={APPROVAL_YN} ariaLabel="승인여부" /></DrawerField>
-            <DrawerField label="전표발생구분"><DrawerSelect value={fd.origin} onChange={(v) => setDetail('origin', v as '' | JournalOrigin)} options={CLOSING_ORIGINS} ariaLabel="전표발생구분" /></DrawerField>
-            <DrawerField label="작성자"><input type="text" value={fd.writer} onChange={(e) => setDetail('writer', e.target.value)} placeholder="작성자명 일부" style={inputStyle('text')} /></DrawerField>
-            <DrawerField label="거래처"><input type="text" value={fd.partner} onChange={(e) => setDetail('partner', e.target.value)} placeholder="거래처명 일부" style={inputStyle('text')} /></DrawerField>
-            <DrawerField label="적요"><input type="text" value={fd.memo} onChange={(e) => setDetail('memo', e.target.value)} placeholder="적요 일부" style={inputStyle('text')} /></DrawerField>
-            <DrawerField label="전표번호"><input type="text" value={fd.slipNo} onChange={(e) => setDetail('slipNo', e.target.value)} placeholder="전표번호 일부" style={inputStyle('text')} /></DrawerField>
-            <DrawerField label="자금집행예정기간" plain errMsg={dueErr ?? undefined}>
-              <DayRange label="자금집행예정기간" from={fd.dueFrom} to={fd.dueTo} onFrom={(v) => setDetail('dueFrom', v)} onTo={(v) => setDetail('dueTo', v)} invalid={!!dueErr} />
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={resetFilter}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── E05 결재상신 확인 — 실행 버튼 = SaveButton(서버 실행 흉내, 저장 중 다이얼로그 잠금) ── */}
       {modal?.kind === 'submit' && (

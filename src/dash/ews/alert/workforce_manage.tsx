@@ -12,14 +12,14 @@
      `workforce-manage` 를 쓴다.
 
    구성(목업 → 우리 규약)
-   - 검색박스 3항목(구분 · 운용사/자펀드 · 기간) → **상세필터 드로어**(Sheet). 툴바 FilterChip 세트는
+   - 검색박스 3항목(구분 · 운용사/자펀드 · 기간) → **칩 줄 위 인라인 필터 패널**(2026-11-17 드로어 폐기 — apfs-detail-filter). 툴바 FilterChip 세트는
      만들지 않는다. 검색어는 OFF(목업에 없음 — `SEARCHABLE` 게이트).
      ⚠ **이 화면의 유일한 신규 패턴 = 종속 select**. `구분`(운용사/자펀드)이 `운용사/자펀드` select 의
        옵션 목록을 바꾼다(목업 `LISTS` + `fillTarget()`). 상세는 `fScope` 선언부 주석 참조.
      ⚠ 기간 기본값 없음 — 목업은 `2026-01-01 ~ 2026-04-30` 리터럴이지만 그 값은 목업 더미의 시점이라
        실화면에서 의미가 없다. 시작·종료 둘 다 빈 값으로 시작하고, 빈 쪽은 무제한 경계다(형제 3화면 동일).
    - 목업 [조회] 버튼 → 만들지 않는다(백엔드가 없어 필터가 즉시 반영된다 — 형제 골드 동일 판단).
-   - 목업 [등록] → 툴바 독립 버튼 `운용인력변동 등록`(상세필터 오른쪽·새로고침 왼쪽) + `⌘⏎`.
+   - 목업 [등록] → 툴바 독립 버튼 `운용인력변동 등록`(새로고침 왼쪽) + `⌘⏎`.
    - 목업 [해제등록] → **행 선택 selbar**(GridFrame contextActions)
      (`선택 해제`는 도메인 액션이 아니라 전 화면 공통 어포던스라 함께 둔다 — 형제 8화면 동일).
    - 수정·삭제는 selbar 에 둔다 — 목업엔 없지만 2026-09-23 사용자 결정(형제 4화면 버튼 구성 통일).
@@ -66,24 +66,21 @@ import type { TagTone } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF } from '../../aggrid_theme';
 import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';   // 34px 컨트롤·폭 하한 SSOT
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, IRowNode, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
-import { PeriodPicker } from '../../ui/period-picker';
 import { WorkforceFormModal, WorkforceReleaseDialog, WorkforceDeleteDialog } from './workforce_form_modal';
 import type { WorkforceFormValues } from './workforce_form_modal';
 import { OPT_GP, OPT_FUND } from './workforce_manage_schemas';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSearch, PanelSelect, PanelRange } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn, TagBadge } = UI;
 
 /* 검색어 입력은 기본 OFF(opt-in) — 목업 검색박스에 없다(apfs-detail-filter "예약 라벨 검색어").
-   상태(`fText`)·행 필터·칩 배선은 남겨 두고 **드로어 입력만** 이 플래그로 가린다(정본 asset_funding·permission_history).
+   상태(`fText`)·행 필터·칩 배선은 남겨 두고 **패널 칸만** 이 플래그로 가린다(정본 asset_funding·permission_history).
    입력이 숨겨져 값이 ''로 고정되므로 필터는 자연 무발동이고, `true` 한 줄로 전 컬럼 부분일치 검색이 살아난다. */
 const SEARCHABLE = false;
 
@@ -214,19 +211,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-
-/* 기간 PeriodPicker 래퍼 — 트리거가 `w-full` 이라 감싸지 않으면 드로어 전 폭으로 늘어난다(apfs-datepicker) */
-const dayWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
-
 /* 엑셀 파일명 — 라우트에 경로 구분자·Excel 금칙문자가 없어 라벨을 그대로 쓴다(메뉴 라벨 = 공백 있는 형태).
    시트명은 31자 제한이 있어 짧은 형태로 둔다. */
 const EXPORT_BASENAME = '운용인력 변동관리';
@@ -270,12 +254,11 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
 
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
   /* 앱-스코프 단축키. 모달이 떠 있는 동안에는 등록(이중 열림)·내보내기(모달 위 다운로드)를 막는다.
      `print` 는 UI 표면이 없는 골격 단축키다(형제 전 화면 공통). */
-  useHotkey(HOTKEYS.register.combo, () => openCreate(), { enabled: modal === null && !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null && !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.register.combo, () => openCreate(), { enabled: modal === null, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: modal === null, skipInDialog: true });
 
   /* ── 필터 SSOT(빈 값 = 미적용) — 목업 검색박스 3항목 순서 그대로(구분 · 운용사/자펀드 · 기간) ──
      ⚠⚠ **라벨 충돌 경고**: 여기 `fScope`(필터 라벨 "구분")의 값 도메인은 **운용사/자펀드**이고,
@@ -310,7 +293,7 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
     return true;
   }, [fText, fScope, fTarget, fFrom, fTo]);
   /* ⚠ `fScope` 는 **여기 넣지 않는다** — 항상 값이 있어(''가 될 수 없다) 넣는 순간 외부 필터가
-     영구 ON 이 되고, 지울 수 없는 칩이 생긴다. `fTarget` 이 비면 스코프는 아무 일도 하지 않는다. */
+     영구 ON 이 된다(`구분` 칩은 스코프 표시용으로 늘 뜨지만 × 가 없다 — 아래 chips). `fTarget` 이 비면 스코프는 아무 일도 하지 않는다. */
   const filterActive = Boolean(fText || fTarget || fFrom || fTo);
   /* 필터가 바뀌면 선택을 전부 해제한다 — 걸러진 행의 체크가 보이지 않는 채로 남아 액션이 숨은 행에 걸리지 않게(2026-10-27) */
   useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
@@ -440,13 +423,15 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
 
   /* 적용 필터 칩 — 항목별 개별 칩, **값만 표시**(항목명 접두사 없음) + ×.
      기간은 한쪽만 채워도 칩이 뜬다(빈 쪽은 열린 경계로 표시).
-     ⚠ `구분`(스코프)은 칩이 없다 — 행을 거르지 않는 modifier 라 끌 것이 없다(위 filterActive 주석 참조).
-       대상 칩의 aria-label 은 드로어 라벨과 같은 `운용사/자펀드` 로 고정한다(스코프가 바뀌어도 안정적). */
+     ⚠ `구분`(스코프)은 행을 거르지 않는 modifier 라 끌 것이 없다(위 filterActive 주석 참조) → 칩은 늘 뜨고 × 가 없다.
+       패널 칸은 고른 값을 보이지 않으므로(값은 칩에만 — apfs-detail-filter) 지금 스코프를 알리는 곳이 이 칩뿐이다(2026-11-17).
+       대상 칩의 aria-label 은 패널 칸 label 과 같은 `운용사/자펀드` 로 고정한다(스코프가 바뀌어도 안정적). */
   const chips = ([
     { key: '검색어', on: !!fText, value: fText, clear: () => setFText('') },
+    { key: '구분', on: true, value: fScope },
     { key: '운용사/자펀드', on: !!fTarget, value: fTarget, clear: () => setFTarget('') },
     { key: '기간', on: !!(fFrom || fTo), value: `${fFrom ? String(fFrom) : ''} ~ ${fTo ? String(fTo) : ''}`, clear: () => { setFFrom(''); setFTo(''); } },
-  ] as { key: string; on: boolean; value: string; clear: () => void }[]).filter((c) => c.on);
+  ] as { key: string; on: boolean; value: string; clear?: () => void }[]).filter((c) => c.on);
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다.
      이 화면은 toolbarLeft 를 쓰지 않는다(적용 필터 칩은 둘째 줄 appliedFilters 로 옮겼다).
@@ -474,8 +459,18 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips.map((c) => ({ label: c.key, value: c.value, onClear: c.clear }))}
       contextActions={selActions}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 항목·순서 그대로(구분 · 운용사/자펀드 · 기간). 기간은 시작 ~ 종료가 한 항목, **기본값 없음**.
+         검색어는 SEARCHABLE 게이트(OFF). [초기화] = 기본값(구분 = 운용사) 복원 */
+      filterPanel={
+        <FilterPanel label="운용인력 변동관리 조건" onReset={clearFilters}>
+          {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
+          {/* 칸은 늘 '' 를 보이므로(값은 칩에만) 같은 스코프를 다시 골라도 onChange 가 온다 — 드로어 시절처럼 무시해야 대상이 안 지워진다 */}
+          <PanelSelect label="구분" value={fScope} onChange={(v) => { if (v !== fScope) changeScope(v); }} options={SCOPE_VALUES} required />
+          <PanelSelect label="운용사/자펀드" value={fTarget} onChange={setFTarget} options={SCOPE_OPTIONS[fScope]} />
+          <PanelRange label="기간" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
+        </FilterPanel>
+      }
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={openCreate}>운용인력변동 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
@@ -511,48 +506,6 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조회 조건에 해당하는 운용인력 변동이 없습니다.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 목업 검색박스 항목·순서 그대로(구분 · 운용사/자펀드 · 기간) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">운용인력 변동 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {SEARCHABLE && (
-              <DrawerField label="검색어">
-                <input type="text" value={fText} onChange={(e) => setFText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) setFilterOpen(false); }} placeholder="운용사 · 자펀드 · 인력구분 등 전 컬럼 검색" style={inputStyle('text')} />
-              </DrawerField>
-            )}
-            {/* 구분 — **스코프 스위치**(운용사/자펀드). 전체 옵션 없음(목업 원문) → `all={null}` 로 명시 억제.
-                그리드 컬럼 `구분`(등록/해제)과는 라벨만 같고 무관하다(위 상태 선언부 경고 참조). */}
-            <DrawerField label="구분">
-              <DrawerSelect value={fScope} onChange={changeScope} options={SCOPE_VALUES} all={null} />
-            </DrawerField>
-            {/* 운용사/자펀드 — 옵션이 구분에 따라 통째로 바뀐다(목업 `LISTS` + `fillTarget()`).
-                전체 옵션은 DrawerSelect 기본값('전체', value='')이라 `all` 을 넘기지 않는다(패밀리 관용구).
-                구분을 바꾸면 값이 '전체'('')로 리셋된다(changeScope) — 안 하면 0행이 조용히 나온다. */}
-            <DrawerField label="운용사/자펀드">
-              <DrawerSelect value={fTarget} onChange={setFTarget} options={SCOPE_OPTIONS[fScope]} />
-            </DrawerField>
-            {/* 기간 — 목업 `<label for="f-from">기간</label>` 한 줄(시작 `~` 종료). **기본값 없음**.
-                PeriodPicker 는 <label>로 명명되지 않으므로 plain + ariaLabel, 트리거가 w-full 이라 fit-content 래퍼 필수. */}
-            <DrawerField label="기간" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={dayWrap}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="기간 시작" /></div>
-                <span className="text-caption">~</span>
-                <div style={dayWrap}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="기간 종료" /></div>
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* ── 팝업 3종 — 등록/수정(목업 openReg) · 해제등록 확인(목업 openRelease · alertdialog) · 삭제 확인(2026-09-23 사용자 결정) ── */}
       {modal?.kind === 'form' && (

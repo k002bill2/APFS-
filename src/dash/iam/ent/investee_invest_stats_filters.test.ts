@@ -8,7 +8,7 @@ import {
   recomputeStats, recomputeMatrix, recomputeRegion,
 } from './investee_invest_stats_model';
 import type { MatrixRow, StatsFilter } from './investee_invest_stats_model';
-import { readSrc } from '../../test_src';
+import { readSrc, panelSrc } from '../../test_src';
 
 const F = (p: Partial<StatsFilter>): StatsFilter => ({ ...STATS_FILTER_DEFAULT, ...p });
 const isTotal = (r: MatrixRow) => r.label.replace(/\s/g, '') === '합계';
@@ -135,8 +135,8 @@ describe('기준일자 — 그 연도 뒤 연도 행을 뺀다(조회 시점)', 
 
 describe('화면 배선', () => {
   const src = readSrc('investee_invest_stats.tsx');
-  it('5종은 noop 캡션이 없고 판단 보류(건수기준)만 남는다', () => {
-    const noopFields = [...src.matchAll(/<DrawerField label="([^"]+)"[^>]*\bnoop\b/g)].map((m) => m[1]);
+  it('5종은 noop 칸(툴팁 데이터 연동 후 적용)이 아니고 판단 보류(건수기준)만 남는다', () => {
+    const noopFields = [...panelSrc(src).matchAll(/<Panel\w+ label="([^"]+)"[^>]*\bnoop\b/g)].map((m) => m[1]);
     expect(noopFields).toEqual(['건수기준']);
   });
   it('수치를 바꾸는 5종은 적용 칩을 단다(건수기준은 없음)', () => {

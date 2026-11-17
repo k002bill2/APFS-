@@ -3,13 +3,13 @@
 
    구성(목업 → 우리 규약):
    - 투자실적구분(경영형태별·분야별·산업별·연도별) → **툴바 FilterChip 4개**(단일 선택)만
-     (드로어 중복 금지 — 2026-11-05). 목업 목록바 캡션 `투자실적 현황 · {구분}`은 카드 제목이 이미 같은 말을 하므로
+     (패널 중복 금지 — 2026-11-05). 목업 목록바 캡션 `투자실적 현황 · {구분}`은 카드 제목이 이미 같은 말을 하므로
      문구 대신 칩 앞 `Icon layers`로 대체한다.
    - 크로스탭 3뷰(경영형태별·분야별·산업별) → 2단 그룹헤더(`ColGroupDef` marryChildren) ·
      행 = 지표(투자건수·투자금액) × 연도 3(2011~2013). 목업 `VIEWS`·`crossTable()` 로직 그대로.
    - 연도별 뷰 → 3단 중첩 그룹헤더(`ColGroupDef` 안 `ColGroupDef`) 리프 24개 + pinned 합계행(YEARTOTAL 원문값).
    - 금액 단위 전환(원/백만원/억원, 기본 억원) → 캡션 + SegTabs + 그리드 `context={{unit}}` + `refreshCells`.
-   - 검색박스(모펀드·계정구분·연도기준·투자실적구분·데이터기준·기준일자) → 상세필터 드로어(목업 순서 그대로).
+   - 검색박스(모펀드·계정구분·연도기준·투자실적구분·데이터기준·기준일자) → 칩 줄 위 인라인 필터 패널(목업 순서 그대로).
      투자실적구분 외 5종은 표 수치를 다시 계산한다(아래 '검색조건 재계산' — 2026-11-16 사용자 지시, 종전 no-op). 검색어는 OFF.
    - 엑셀 → SheetJS. 다단 헤더는 `flattenForExcel`을 **재귀로 일반화**(깊이 N → 헤더 N행 + 세로/가로 병합).
    - KPI 배지 행·`sub` 캡션·카드뷰·명세 팝업·행 선택·등록 없음(읽기전용 통계 화면).
@@ -18,7 +18,7 @@
    한계·가정(결정 기록)
    - 필터 5종(모펀드·계정구분·연도기준·데이터기준·기준일자)은 통계표라 행을 거르지 않고 **수치를 다시 계산**한다
      (crossRowsFor · yearDataFor — 2026-11-16 사용자 지시 "미연동 필터 전부 동작", 종전 no-op). 행을 거르는 술어가 아니라
-     rowData·합계행을 바꾸므로 External Filter 대신 재계산 결과를 그리드에 넘긴다. 5종은 적용 칩(값 + ×)을 단다.
+     rowData·합계행을 바꾸므로 External Filter 대신 재계산 결과를 그리드에 넘긴다. 5종은 적용 칩(값 + × — 모펀드는 기본값이어도 늘 표시, × 는 기본값과 다를 때만)을 단다.
    - 뷰마다 컬럼·행·합계행이 통째로 바뀌므로 `<AgGridReact key={view}>`로 **리마운트**한다 —
      `autoSizeStrategy`는 최초 렌더 1회만 적용돼 교체만으로는 폭이 재산정되지 않는다(apfs-aggrid ⑥ 함정).
    - 크로스탭 수치는 목업 주석대로 **도메인 정합 샘플**(2011 원천 실값 × 연도 배수 1/1.08/1.15, 건당 3.2억).
@@ -32,16 +32,13 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';
-import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, ValueFormatterParams, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
-import { PeriodPicker } from '../../ui/period-picker';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS — 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSelect, PanelPeriod } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { onOrBefore } from '../../schemas/filter_field';   // 조회 시점 판정(셀 ≤ 값) 공용본
 import { apportion } from '../../stat_apportion';   // 통계 몫 배분 공용(src/dash 루트 — 여러 대분류)
 
@@ -473,7 +470,7 @@ function flattenForExcel(defs: StatColDefs, unitOf: (key: string) => string | nu
 }
 
 /* ──────────────────────────────
-   드로어·페이저·kebab (골드 로컬 복사 — 공유 export 아님)
+   페이저·kebab (골드 로컬 복사 — 공유 export 아님)
 ────────────────────────────── */
 
 function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: () => void }) {
@@ -481,19 +478,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined}
       className="inline-flex items-center justify-center font-semibold cursor-pointer"
       style={{ minWidth: 30, height: 30, padding: '0 8px', borderRadius: 8, border: '1px solid ' + (active ? 'var(--primary)' : 'var(--border)'), background: active ? 'var(--primary)' : 'transparent', color: active ? 'var(--primary-foreground)' : 'var(--foreground)', fontSize: 12.5 }}>{n}</button>
-  );
-}
-
-/* 드로어 필드 래퍼 — 라벨 + 컨트롤(항목이 전부 수치를 바꾼다 — 미연동 캡션 없음) · plain=<label> 대신 <div>(버튼 트리거 이중 토글 방지) */
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </Wrap>
   );
 }
 
@@ -508,9 +492,9 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: CROSS_ROWS[DEFAULT_VIEW as CrossView].length });
 
   /* 상세필터 — 투자실적구분(=view)은 뷰를 바꾸고 나머지 5종은 수치를 다시 계산한다(상단 '한계'·'검색조건 재계산') */
-  const [filterOpen, setFilterOpen] = useState(false);
   /* 모펀드 = 목업 select 에 '전체'가 없다(농식품모태펀드·MOAF) → 기본 농식품모태펀드 = 원문 수치 그대로, MOAF 만 대안 데이터(2026-11-16 사용자 결정 "고정 기본값의 다른 값은 데이터 추가").
-      칩은 기본값과 다를 때만, ×·초기화는 기본값으로 */
+      칩은 기본값이어도 늘 현재 값을 보인다(필수라 × 없음 — 인라인 패널 칸엔 고른 값이 안 보여 칩이 유일한 표시, 2026-11-17 · 정본 RiskPage specsToApplied).
+      [초기화]는 기본값으로 */
   const [fMf, setFMf] = useState(MF_DEFAULT);       // 모펀드
   const [fAcc, setFAcc] = useState('');     // 계정구분
   const [fYBase, setFYBase] = useState(''); // 연도기준
@@ -527,8 +511,8 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
   const rows = isYearView ? yearData.rows : (crossData ?? CROSS_ROWS[view as CrossView]);
   const columnDefs = isYearView ? YEAR_COLUMNS : CROSS_COLUMNS[view as CrossView];
 
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   const onGridReady = useCallback((e: GridReadyEvent<StatRow>) => { apiRef.current = e.api; }, []);
   const onPaginationChanged = useCallback(() => {
@@ -583,20 +567,31 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
       title="자펀드 투자실적현황"
       favRoute="fund-invest-status"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 주 필터 칩(투자실적구분 4뷰, 단일 선택) + 수치를 바꾸는 드로어 5종의 적용 칩(값 + ×) */
+      /* 툴바 좌 = 주 필터 칩(투자실적구분 4뷰, 단일 선택) + 수치를 바꾸는 패널 5칸의 적용 칩(값 + × — 모펀드는 기본값이어도 늘 표시, × 는 기본값과 다를 때만) */
       filterChips={VIEWS.map((v) => ({ key: v, label: v, active: view === v, onSelect: () => setView(v) }))}
       appliedFilters={[
-        { label: '모펀드', value: fMf === MF_DEFAULT ? '' : fMf, onClear: () => setFMf(MF_DEFAULT) },
+        { label: '모펀드', value: fMf, onClear: fMf !== MF_DEFAULT ? () => setFMf(MF_DEFAULT) : undefined },   // 2026-11-17 사용자 결정 (a): 기본값으로 걸린 조건도 칩 상시 — 패널 칸이 값을 안 보여 칩이 유일한 표시. × 는 기본값과 다를 때만(= 기본값 복원)
         { label: '계정구분', value: fAcc, onClear: () => setFAcc('') },
         { label: '연도기준', value: fYBase, onClear: () => setFYBase('') },
         { label: '데이터기준', value: fDBase, onClear: () => setFDBase('') },
         { label: '기준일자', value: fAsOf, onClear: () => setFAsOf('') },
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 순서 그대로(모펀드·계정구분·연도기준·투자실적구분·데이터기준·기준일자).
+         투자실적구분은 툴바 칩이라 패널에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts).
+         나머지 5종은 수치 재계산. 검색어는 OFF(만들지 않는다). [초기화] = 모펀드 기본값 복원 */
+      filterPanel={
+        <FilterPanel label="자펀드 투자실적현황 조건" onReset={resetFilters}>
+          <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} required />
+          <PanelSelect label="계정구분" value={fAcc} onChange={setFAcc} options={['농식품', '수산']} />
+          <PanelSelect label="연도기준" value={fYBase} onChange={setFYBase} options={['출자사업연도', '결성연도', '등록연도']} />
+          <PanelSelect label="데이터기준" value={fDBase} onChange={setFDBase} options={['운용사보고', '월말확정']} />
+          <PanelPeriod label="기준일자" mode="day" value={fAsOf} onChange={setFAsOf} />
+        </FilterPanel>
+      }
       toolbarRight={<>
         {/* 금액 단위 전환(목업 목록바 `.unitwrap`) — 캡션 + 세그먼트 */}
         <span className="text-caption" style={{ fontSize: 12.5 }}>{'단위: ' + unit}</span>
         <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(rows.length) + '개 중 ' + String(Math.min(shown, rows.length)) + '개 항목 표시 중'}</span>}
@@ -629,36 +624,6 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 투자실적이 없습니다.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(모펀드·계정구분·연도기준·투자실적구분·데이터기준·기준일자).
-             투자실적구분은 툴바 칩, 나머지 5종은 수치 재계산. 검색어는 OFF(만들지 않는다). ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">투자실적 현황 조회 조건을 고르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} all={null} /></DrawerField>
-            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            <DrawerField label="연도기준"><DrawerSelect value={fYBase} onChange={setFYBase} options={['출자사업연도', '결성연도', '등록연도']} /></DrawerField>
-            {/* 투자실적구분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
-            <DrawerField label="데이터기준"><DrawerSelect value={fDBase} onChange={setFDBase} options={['운용사보고', '월말확정']} /></DrawerField>
-            {/* 기준일자 — PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}
-            <DrawerField label="기준일자" plain>
-              <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
-                <PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" />
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={resetFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
     </GridFrame>
   );
 }

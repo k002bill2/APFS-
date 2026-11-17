@@ -1,25 +1,21 @@
 /* risk_page_kit.tsx — 조기경보 기업정보·자펀드정보·가치평가 typed 화면의 **바깥 양식** 공용 부품.
    GridFrame(apfs-grid) 위에 이 화면군이 반복하는 것만 얹는다:
-   - 검색박스 → 상세필터 드로어(목업 검색박스 항목·순서 그대로) + 적용 칩(값만) — apfs-detail-filter "typed 페이지 트랙"
+   - 검색박스 → 칩 줄 위 인라인 필터 패널(목업 검색박스 항목·순서 그대로) + 적용 칩(값만) — apfs-detail-filter "typed 페이지 트랙"
    - 금액 단위 토글(원/백만원/억원 — schemas/unit.ts SSOT) · 탭(원문 여러 화면을 한 리프로 통합한 경우)
    - 단축키 ⌥D 내보내기 · ⌘P 인쇄, 푸터 FooterActions(내보내기 진입은 푸터 아이콘 + ⌥D 두 곳)
    목업 스캐폴딩(GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모)은 옮기지 않는다 — 셸이 소유한다.
    KPI 배지 행 없음(브리프 규칙 5) · 카드뷰 없음 · 검색어 입력 없음(목업 검색박스에 없다 — SEARCHABLE opt-in 규약). */
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { UI } from './components';
 import { GridFrame, FooterActions } from './grid_frame';
 import type { AppliedFilter } from './applied_filters';
 import type { SplitButtonItem } from './ui/split-button';
-import { controlMinWidth, drawerInputStyle as inputStyle } from './schemas/renderers';   // 드로어 컨트롤 34px SSOT
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './ui/sheet';
-import { PeriodPicker } from './ui/period-picker';
 import { useHotkey, HOTKEYS } from './use-hotkey';
 import { printGrid } from './print_grid';
 import { toast } from './ui/sonner';
 import { UNITS } from './schemas/unit';
 import type { Unit } from './schemas/unit';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { DrawerSelect as SharedDrawerSelect } from './drawer_select';   // 상세필터 select 공용본
+import { FilterPanel, PanelPeriod, PanelRadio, PanelRange, PanelSelect, PanelText } from './filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 
 const { Button, IconBtn, SegTabs } = UI;
 
@@ -36,11 +32,12 @@ export interface FilterSpec {
   options?: readonly string[];
   /** 빈 값('') 선택지 라벨. null = 빈 선택지 없음(원문 select 에 '전체' 가 없는 항목 — 구분) */
   allLabel?: string | null;
-  /** 행 컬럼과 연동되지 않는 조회 조건 — 드로어에 `· 데이터 연동 후 적용` 캡션(무신호 무효 필터 금지) */
+  /** 행 컬럼과 연동되지 않는 조회 조건 — 칸 툴팁 '데이터 연동 후 적용'(무신호 무효 필터 금지) */
   noop?: boolean;
   /** text 입력 placeholder(원문 그대로) */
   placeholder?: string;
-  /** false = 적용 칩 숨김 — 기본값이 있으나 아직 적용 전인 조건(값은 드로어에 그대로 보인다) */
+  /** false = 적용 칩 숨김 — 기본값이 있으나 아직 적용 전인 조건(등록원부 비활성원부). 칸에 값이 보이는 항목(radio·text)만 쓴다 —
+      값 숨김 칸(select·피커)에 쓰면 고른 값이 화면 어디에도 안 보인다(2026-11-17 인라인 패널) */
   chip?: boolean;
 }
 
@@ -48,98 +45,31 @@ export interface FilterSpec {
 export const splitRange = (v: string): [string, string] => { const [a = '', b = ''] = v.split('~'); return [a, b]; };
 export const joinRange = (a: string, b: string): string => (a || b ? `${a}~${b}` : '');
 
-/* 드로어 필드 — plain=true 면 <label> 대신 <div>(PeriodPicker 트리거는 <button> 이라 라벨 이중 토글 방지) */
-function DrawerField({ label, plain, noop, children }: { label: string; plain?: boolean; noop?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="flex items-center gap-1 font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-        {noop && <span className="font-normal" style={{ fontSize: 12, marginLeft: 6 }}>· 데이터 연동 후 적용</span>}
-      </span>
-      {children}
-    </Wrap>
-  );
-}
-
-// 상세필터 select — 공용 DrawerSelect(drawer_select.tsx, 옵션 많으면 검색형)로 위임. allLabel: undefined=‘전체’, null=전체 항목 없음.
-function DrawerSelect({ f }: { f: FilterSpec }) {
-  return <SharedDrawerSelect value={f.value} onChange={f.onChange} options={f.options ?? []} all={f.allLabel === undefined ? '전체' : f.allLabel} ariaLabel={f.label} />;
-}
-
-/* 배타 선택 — DS RadioGroup. Item 은 <button role=radio> 라 <label> 로 감싸지 않고 htmlFor 로 잇는다(ui/radio-group.tsx 규약) */
-function DrawerRadio({ f }: { f: FilterSpec }) {
-  const base = `flt-${f.label.replace(/\s+/g, '')}`;
-  return (
-    <RadioGroup value={f.value} onValueChange={f.onChange} aria-label={f.label}>
-      {(f.options ?? []).map((o, i) => (
-        <span key={o} className="inline-flex items-center gap-1.5">
-          <RadioGroupItem id={`${base}-${i}`} value={o} />
-          <label htmlFor={`${base}-${i}`} className="cursor-pointer" style={{ fontSize: 14 }}>{o}</label>
-        </span>
-      ))}
-    </RadioGroup>
-  );
-}
-
-const dayWrap: React.CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
-
+/* 검색조건 한 칸 — 인라인 패널 칸(filter_panel)으로 그린다(2026-11-17 상세필터 드로어 폐기 — apfs-detail-filter).
+   칸 접근名 = f.label = 적용 칩 label(칩 클릭 이동의 전제). noop = 툴팁 '데이터 연동 후 적용' */
 function FilterControl({ f }: { f: FilterSpec }) {
-  if (f.kind === 'select') return <DrawerField label={f.label} noop={f.noop}><DrawerSelect f={f} /></DrawerField>;
-  if (f.kind === 'radio') return <DrawerField label={f.label} plain noop={f.noop}><DrawerRadio f={f} /></DrawerField>;
-  if (f.kind === 'text') {
-    return (
-      <DrawerField label={f.label} noop={f.noop}>
-        <input type="text" value={f.value} onChange={(e) => f.onChange(e.target.value)} placeholder={f.placeholder} style={inputStyle('text')} />
-      </DrawerField>
-    );
+  if (f.kind === 'select') {
+    return <PanelSelect label={f.label} value={f.value} onChange={f.onChange} options={f.options ?? []} required={f.allLabel === null} noop={f.noop} />;
   }
+  if (f.kind === 'radio') return <PanelRadio label={f.label} value={f.value} onChange={f.onChange} options={f.options ?? []} />;
+  if (f.kind === 'text') return <PanelText label={f.label} value={f.value} onChange={f.onChange} noop={f.noop} />;
   if (f.kind === 'dayRange') {
     const [a, b] = splitRange(f.value);
-    return (
-      <DrawerField label={f.label} plain noop={f.noop}>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div style={dayWrap}><PeriodPicker mode="day" value={a} onChange={(v) => f.onChange(joinRange(v || '', b))} ariaLabel={`${f.label} 시작`} /></div>
-          <span className="text-caption">~</span>
-          <div style={dayWrap}><PeriodPicker mode="day" value={b} onChange={(v) => f.onChange(joinRange(a, v || ''))} ariaLabel={`${f.label} 종료`} /></div>
-        </div>
-      </DrawerField>
-    );
+    return <PanelRange label={f.label} mode="day" from={a} to={b} onFrom={(v) => f.onChange(joinRange(v, b))} onTo={(v) => f.onChange(joinRange(a, v))} noop={f.noop} />;
   }
-  /* 연도·월·일 = PeriodPicker(apfs-datepicker). 트리거가 w-full 이라 fit-content 래퍼 필수("폭" 규칙).
-     allLabel null = 빈 값이 없는 항목(시점 스냅샷 — 평가년월·기준년월) → 같은 값 재클릭(피커의 유일한 해제)을 무시한다.
+  /* 연도·월·일 = PeriodPicker(apfs-datepicker).
+     allLabel null = 빈 값이 없는 항목(시점 스냅샷 — 평가년월·기준년월) → 해제('')를 무시한다.
      비우면 두 시점의 스냅샷이 한 표에 섞인다(칩 × 도 같은 이유로 없다 — specsToApplied). */
-  const minW = controlMinWidth(f.kind === 'day' ? 'date' : f.kind);
-  const pick = (v: string | undefined) => { if (v || f.allLabel !== null) f.onChange(v || ''); };
-  return (
-    <DrawerField label={f.label} plain noop={f.noop}>
-      <div style={{ width: 'fit-content', minWidth: minW, maxWidth: '100%' }}>
-        <PeriodPicker mode={f.kind} value={f.value} onChange={pick} ariaLabel={f.label} />
-      </div>
-    </DrawerField>
-  );
+  const pick = (v: string) => { if (v || f.allLabel !== null) f.onChange(v); };
+  return <PanelPeriod label={f.label} mode={f.kind} value={f.value} onChange={pick} noop={f.noop} />;
 }
 
-export function FilterDrawer({ open, onOpenChange, filters, onReset, title }: {
-  open: boolean; onOpenChange: (o: boolean) => void; filters: FilterSpec[]; onReset: () => void; title: string;
-}) {
+/** 검색조건 패널 — RiskPage 가 GridFrame filterPanel 로 넘긴다. [초기화] = onReset(시점 기본값 복원) */
+export function FilterPanelOf({ filters, onReset, title }: { filters: FilterSpec[]; onReset: () => void; title: string }) {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-        <SheetHeader>
-          <SheetTitle>상세 필터</SheetTitle>
-          <SheetDescription className="sr-only">{title} 조회 조건</SheetDescription>
-          <IconBtn icon="x" onClick={() => onOpenChange(false)} label="닫기" size={38} />
-        </SheetHeader>
-        <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-          {filters.map((f) => <FilterControl key={f.label} f={f} />)}
-        </div>
-        <SheetFooter>
-          <Button variant="outline" size="md" onClick={onReset}>초기화</Button>
-          <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => onOpenChange(false)}>필터 적용</Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+    <FilterPanel label={`${title} 조회 조건`} onReset={onReset}>
+      {filters.map((f) => <FilterControl key={f.label} f={f} />)}
+    </FilterPanel>
   );
 }
 
@@ -233,7 +163,7 @@ export interface RiskPageProps {
   unitNote?: string;
   /** 토글이 없는 금액 화면의 단위 캡션(예: '단위: 원') */
   unitCaption?: string;
-  /** 상세필터 오른쪽 · 새로고침 왼쪽 버튼(등록·저장 — apfs-grid 툴바 순서) */
+  /** 새로고침 왼쪽 버튼(등록·저장 — apfs-grid 툴바 순서) */
   actions?: React.ReactNode;
   footerLeft: React.ReactNode;
   onExport?: () => void;
@@ -247,9 +177,8 @@ export interface RiskPageProps {
 }
 
 export function RiskPage({ system = '조기경보', group, label, route, onNav, filters = [], onReset, unit, onUnit, unitNote, unitCaption, actions, footerLeft, onExport, printItems, exportEnabled = true, contextActions, children }: RiskPageProps) {
-  const [open, setOpen] = useState(false);
-  useHotkey(HOTKEYS.export.combo, () => onExport?.(), { enabled: !!onExport && exportEnabled && !open, skipInDialog: true });
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !open, skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => onExport?.(), { enabled: !!onExport && exportEnabled, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
   const refresh = () => { onReset(); toast.success('조회되었습니다'); };
   return (
     <GridFrame
@@ -259,17 +188,16 @@ export function RiskPage({ system = '조기경보', group, label, route, onNav, 
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       contextActions={contextActions || undefined}
       appliedFilters={specsToApplied(filters)}
+      filterPanel={filters.length > 0 ? <FilterPanelOf filters={filters} onReset={onReset} title={label} /> : undefined}
       toolbarRight={<>
         {unitCaption && <span className="text-caption" style={{ fontSize: 12 }}>{unitCaption}</span>}
         {unit && onUnit && <UnitToggle unit={unit} onChange={onUnit} note={unitNote} />}
-        {filters.length > 0 && <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setOpen(true)}>상세필터</Button>}
         {actions}
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={footerLeft}
       footerRight={<FooterActions onExport={onExport} printItems={printItems} />}>
       {children}
-      {filters.length > 0 && <FilterDrawer open={open} onOpenChange={setOpen} filters={filters} onReset={onReset} title={label} />}
     </GridFrame>
   );
 }

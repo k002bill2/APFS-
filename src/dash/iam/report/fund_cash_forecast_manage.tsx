@@ -5,7 +5,7 @@
    - 타이틀                → 메뉴 리프 라벨 '조합예상자금요청보고' (2026-09-14 메뉴 개편으로 목업 h1과 일치하게 됨)
                              (apfs-grid "타이틀=메뉴 리프" 규약 — crumbs 리프·title·favRoute 모두 리프 기준).
    - 검색박스(모펀드·운용사·자펀드·계정구분·담당자·기준년월)
-                           → 계정구분 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter).
+                           → 계정구분 FilterChip(툴바 좌) + 칩 줄 위 인라인 필터 패널(apfs-detail-filter).
                              검색어는 OFF(목업에 없음). 항목 순서는 목업 그대로.
        2026-11-16 사용자 지시("미연동 필터 전부 동작")로 종전 no-op 3항목이 행을 거른다(그리드 컬럼은 늘리지 않는다):
        · 모펀드 = 숨은 행 속성 `mf`(블루오션수산투자조합2호 1건만 MOAF, 나머지 농식품모태펀드).
@@ -26,21 +26,17 @@
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
 import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유) — 없으면 합계행이 안 보인다
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import type { ReactNode } from 'react';
 import { UI } from '../../components';
 import type { Tone } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, fmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';   // 공유 테마·포매터 SSOT
-import { controlMinWidth } from '../../schemas/renderers';   // 컨트롤 폭 하한 SSOT(fit-content 짝)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, IRowNode, ValueFormatterParams, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
-import { PeriodPicker } from '../../ui/period-picker';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSelect, PanelPeriod } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { onOrBefore } from '../../schemas/filter_field';   // 조회 시점 판정(셀 ≤ 값) SSOT
 
 const { Button, IconBtn, StatusBadge, SegTabs } = UI;
@@ -229,19 +225,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-/* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 */
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </Wrap>
-  );
-}
-
 /* ──────────────────────────────
    메인 컴포넌트
 ────────────────────────────── */
@@ -251,11 +234,10 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
-  /* 필터 — 계정구분은 툴바 칩에만(드로어 중복 금지 — 2026-11-05), 나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
+  /* 필터 — 계정구분은 툴바 칩에만(패널 중복 금지 — 2026-11-05), 나머지는 인라인 패널. SSOT=개별 state(빈 값=미적용) */
   const [fAcct, setFAcct] = useState<'' | Acct>('');
   const [fGp, setFGp] = useState('');
   const [fFund, setFFund] = useState('');
@@ -327,7 +309,7 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
       title="조합예상자금요청보고"
       favRoute="fund-cash-forecast"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 주 필터 칩(계정구분, 목업 검색박스의 chipGroup) (적용 중인 드로어 값 칩 운용사·자펀드는 appliedFilters 둘째 줄).
+      /* 툴바 좌 = 주 필터 칩(계정구분, 목업 검색박스의 chipGroup) (적용 중인 패널 값 칩은 appliedFilters 둘째 줄 — label = 패널 칸 aria-label).
          계정구분은 칩 자체가 적용 상태를 보여주므로 값 칩을 따로 만들지 않는다. */
       filterChipsMenu="계정구분"
       filterChips={(['', ...ACCTS] as ('' | Acct)[]).map((a) => ({ key: a || 'all', label: a || '전체', active: fAcct === a, onSelect: () => setFAcct(a) }))}
@@ -338,11 +320,22 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
         { label: '담당자', value: fMgr, onClear: () => setFMgr('') },
         { label: '기준년월', value: fYm, onClear: () => setFYm('') },
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 항목·순서 그대로(모펀드·운용사·자펀드·담당자·기준년월).
+         계정구분은 툴바 칩이라 패널에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts).
+         검색어는 없다(목업 미포함). 모펀드·담당자는 숨은 행 속성, 기준년월(PeriodPicker month)은 등록일시로 거른다(파일 머리 주석) */
+      filterPanel={
+        <FilterPanel label="조합예상자금요청보고 조건">
+          <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} />
+          <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={gpOptions} />
+          <PanelSelect label="자펀드" value={fFund} onChange={setFFund} options={fundOptions} />
+          <PanelSelect label="담당자" value={fMgr} onChange={setFMgr} options={mgrOptions} />
+          <PanelPeriod label="기준년월" mode="month" value={fYm} onChange={setFYm} />
+        </FilterPanel>
+      }
       toolbarRight={<>
         {/* 금액 단위 전환(목업 목록바 `.unit`) — 캡션 + 세그먼트. 현재 값은 SegTabs가 보여주므로 캡션은 '단위'만 */}
         <span className="text-caption font-semibold" style={{ fontSize: 12, marginRight: 6 }}>단위</span>
         <SegTabs size="sm" value={unit} onChange={(v) => setUnit(v as Unit)} options={UNITS.map((u) => ({ value: u, label: u }))} />
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
@@ -376,36 +369,6 @@ export function FundCashForecastManage({ onNav }: { onNav?: (r: string) => void 
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 보고 건이 없습니다.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 목업 검색박스 항목·순서 그대로(모펀드·운용사·자펀드·계정구분·담당자·기준년월).
-             검색어는 없다(목업 미포함). 모펀드·담당자는 숨은 행 속성, 기준년월은 등록일시로 거른다(파일 머리 주석) ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">조합예상자금요청보고 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
-            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            {/* 계정구분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
-            <DrawerField label="담당자"><DrawerSelect value={fMgr} onChange={setFMgr} options={mgrOptions} /></DrawerField>
-            {/* 기준년월 = PeriodPicker month('YYYY-MM'). 트리거가 w-full이라 fit-content 래퍼 필수(apfs-datepicker 폭 규칙) */}
-            <DrawerField label="기준년월" plain>
-              <div style={{ width: 'fit-content', minWidth: controlMinWidth('select'), maxWidth: '100%' }}>
-                <PeriodPicker mode="month" value={fYm} onChange={setFYm} ariaLabel="기준년월" />
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
     </GridFrame>
   );
 }

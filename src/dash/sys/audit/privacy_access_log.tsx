@@ -4,16 +4,17 @@
    구성(목업 → 우리 규약):
    - 탭 [접근기록 | 통계] → risk_page_kit TabBar/TabPanel(WAI-ARIA 탭, 활성 패널만 마운트). 툴바·조회 조건은 두 탭 공통(목업 "두 탭 공통").
    - 조회 조건(개인정보 관련메뉴·기간·행위자·IP + [초기화][조회]) →
-       툴바 칩 무리 없음 — 조건 4개 전부 상세필터 드로어(개인정보 관련메뉴 select · 기간 PeriodPicker day ×2 · 행위자 · IP), 적용 조건은 값 칩.
-       (2026-11-02 사용자 결정: 메뉴마다 칩 1개씩 = 8칩은 과하다 → 주 필터 칩 삭제, 메뉴 조건은 드로어 select 로 옮김)
-       드로어는 고르는 즉시 반영 — 같은 중분류 골드 audit_log 와 같다([필터 적용]은 닫기). 2026-11-02 초안(draft) 방식 폐기: 메뉴를 고르고
-       X·Esc·바깥 클릭으로 닫으면 선택이 버려져 '메뉴 필터가 안 된다'로 보였다. 시작 > 종료면 기간 칸 빨간 테두리 + 아래 안내(목업 문구), 결과 0건.
-       기간은 기본값(2026-09-28 ~ 2026-10-28 = 목업 defCond)으로 시작: 칩 × = 전 기간, 드로어 [초기화] = 기본값. 툴바 [조회] = 기본 조건 복원 + 토스트(관리자 골드와 같다).
+       툴바 칩 무리 없음 — 조건 4개 전부 칩 줄 위 인라인 패널(개인정보 관련메뉴 select · 기간 시작~종료 한 칸 · 행위자 · IP), 적용 조건은 값 칩.
+       (2026-11-02 사용자 결정: 메뉴마다 칩 1개씩 = 8칩은 과하다 → 주 필터 칩 삭제, 메뉴 조건은 상세필터 select 로 옮김.
+        2026-11-17 상세필터 드로어 폐기 → 칩 줄 위 인라인 패널 — apfs-detail-filter)
+       패널은 고르는 즉시 반영 — 같은 중분류 골드 audit_log 와 같다. 2026-11-02 초안(draft) 방식 폐기: 메뉴를 고르고
+       X·Esc·바깥 클릭으로 닫으면 선택이 버려져 '메뉴 필터가 안 된다'로 보였다. 시작 > 종료면 기간 칸 빨간 테두리 + 패널 아래 안내(목업 문구), 결과 0건.
+       기간은 기본값(2026-09-28 ~ 2026-10-28 = 목업 defCond)으로 시작: 칩 × = 전 기간, 패널 [초기화] = 기본값. 툴바 [조회] = 기본 조건 복원 + 토스트(관리자 골드와 같다).
    - 접근기록 그리드(No·일시·행위자·메뉴명·행위·IP, 일시 최신순, 목업 15건 페이지) → AG Grid 단일 헤더 + 페이지 20(프로젝트 상수) + 푸터 이전/다음·전체보기.
    - 통계(기간별 추이 일/주/월 · 메뉴별 접근 현황 · 사용자별 접근 현황) → privacy_access_stats.tsx(추이 = 선 차트, 나머지 = ReadGrid ×2). 집계는 조회 결과에서 파생(model).
    - 하단 [새 창][내보내기][인쇄] → 푸터 FooterActions(새 창 ⌥O 는 공용 부품에 이미 있다 · 내보내기 ⌥D · 인쇄 ⌘P). 내보내기 = 활성 탭(접근기록 1시트 / 통계 3시트).
    결정·가정:
-   - 메뉴 select 는 목업 첫 조건이라 드로어 맨 위에 둔다. 통계 메뉴별 표도 이 값으로 좁혀진다. 행위 필터는 목업 조회 조건에 없어 넣지 않는다(넣으면 발명).
+   - 메뉴 select 는 목업 첫 조건이라 패널 맨 앞에 둔다. 통계 메뉴별 표도 이 값으로 좁혀진다. 행위 필터는 목업 조회 조건에 없어 넣지 않는다(넣으면 발명).
    - 목업의 "기간을 입력하세요"(기간 필수)는 이식하지 않았다 — 프로젝트의 '기본값으로 시작하는 기간' 규약(× = 전 기간)을 따른다. 전 기간이면 추이 표는 결과 행의 최소~최대 날짜로 버킷을 만든다.
    - IP 는 앞부분 일치(목업 스크립트 `indexOf===0`), 행위자는 대소문자 무시 부분일치(목업 그대로).
    - 메뉴명은 평문 — 목업의 메뉴명 링크는 다른 목업 파일로 가는 href 라 옮기지 않았다(행 상세·이동 없음). 행 선택·더블클릭 상세 없음(조회 전용, 목업에 없다).
@@ -22,16 +23,13 @@
    ⚠ 실제 접속 로그 수집이 아니다 — 데모 행을 로컬로 조회만 한다. */
 import '../../aggrid_shared.css';
 import { useState, useRef, useCallback, useMemo } from 'react';
-import type { CSSProperties, MutableRefObject, ReactNode } from 'react';
+import type { MutableRefObject } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, DEFAULT_COL_DEF, NO_COL_ID, refreshNoColumn } from '../../aggrid_theme';
-import { controlMinWidth, drawerInputStyle as inputStyle } from '../../schemas/renderers';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(audit_log 와 같은 부품)
-import { PeriodPicker } from '../../ui/period-picker';
+import { FilterPanel, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(audit_log 와 같은 부품)
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridApi, GridReadyEvent, CellStyle } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { TabBar, TabPanel } from '../../risk_page_kit';
 import { exportTables } from '../../risk_excel';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
@@ -55,7 +53,7 @@ const DEMO: AccessRow[] = demoAccessRows();   // 정적 데모(조회 전용)
 type Tab = 'list' | 'stats';
 const TABS: { id: Tab; label: string }[] = [{ id: 'list', label: '접근기록' }, { id: 'stats', label: '통계' }];
 
-/* 조건 4개(메뉴·기간·행위자·IP) 전부 드로어가 소유 — 고르는 즉시 반영. 툴바 칩 무리 없음 */
+/* 조건 4개(메뉴·기간·행위자·IP) 전부 인라인 패널이 소유 — 고르는 즉시 반영. 툴바 칩 무리 없음 */
 const DEFAULT_FILTER: AccessFilter = Object.freeze({ menu: '', ...DEFAULT_PERIOD, actor: '', ip: '' });
 const MENU_OPTIONS = PRIVACY_MENUS.map((m) => ({ value: m.id, label: m.label }));
 const menuLabel = (id: string) => PRIVACY_MENUS.find((m) => m.id === id)?.label ?? '';
@@ -122,72 +120,33 @@ function AccessGrid({ rows, pageSize, apiRef, onPage }: {
 }
 
 /* ──────────────────────────────
-   상세필터 드로어 — 개인정보 관련메뉴·기간·행위자·IP. 바꾸는 즉시 applied 에 반영([필터 적용] = 닫기, [초기화] = 기본 조건)
+   상세필터 = 칩 줄 위 인라인 패널 — 개인정보 관련메뉴·기간·행위자·IP. 바꾸는 즉시 applied 에 반영([초기화] = 기본 조건).
+   시작 > 종료 안내는 패널 아래 한 줄(role=alert) — 칸 아래에 두지 않는다
 ────────────────────────────── */
-function DrawerField({ label, children, plain }: { label: string; children: ReactNode; plain?: boolean }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>{label}</span>
-      {children}
-    </Wrap>
-  );
-}
-const dayWrap: CSSProperties = { width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' };
-
-const errText: CSSProperties = { fontSize: 12.5, color: 'var(--danger-text)', margin: '6px 0 0' };
-
-function FilterSheet({ open, onOpenChange, value, onPatch, onReset }: {
-  open: boolean; onOpenChange: (o: boolean) => void; value: AccessFilter; onPatch: (p: Partial<AccessFilter>) => void; onReset: () => void;
+function AccessFilterPanel({ value, onPatch, onReset }: {
+  value: AccessFilter; onPatch: (p: Partial<AccessFilter>) => void; onReset: () => void;
 }) {
   const setD = (k: keyof AccessFilter) => (v: string) => onPatch({ [k]: v });
   const periodErr = validatePeriod(value.from, value.to);
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-        <SheetHeader>
-          <SheetTitle>상세 필터</SheetTitle>
-          <SheetDescription className="sr-only">개인정보 접근기록을 거르는 상세 필터</SheetDescription>
-          <IconBtn icon="x" onClick={() => onOpenChange(false)} label="닫기" size={38} />
-        </SheetHeader>
-        <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-          <DrawerField label="개인정보 관련메뉴">
-            <DrawerSelect value={value.menu} onChange={setD('menu')} options={MENU_OPTIONS} />
-          </DrawerField>
-          <DrawerField label="기간" plain>
-            <div className="flex items-center gap-2 flex-wrap">
-              <div style={dayWrap}><PeriodPicker mode="day" value={value.from} onChange={(v) => setD('from')(v || '')} ariaLabel="기간 시작일" invalid={!!periodErr} /></div>
-              <span className="text-caption">~</span>
-              <div style={dayWrap}><PeriodPicker mode="day" value={value.to} onChange={(v) => setD('to')(v || '')} ariaLabel="기간 종료일" invalid={!!periodErr} /></div>
-            </div>
-            {periodErr && <p role="alert" style={errText}>{periodErr}</p>}
-          </DrawerField>
-          <DrawerField label="행위자">
-            <input type="text" value={value.actor} onChange={(e) => setD('actor')(e.target.value)} placeholder="로그인 아이디" style={inputStyle('text')} />
-          </DrawerField>
-          <DrawerField label="IP">
-            <input type="text" value={value.ip} onChange={(e) => setD('ip')(e.target.value)} placeholder="예: 10.0.1" style={inputStyle('text')} />
-          </DrawerField>
-        </div>
-        <SheetFooter>
-          <Button variant="outline" size="md" onClick={onReset}>초기화</Button>
-          <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => onOpenChange(false)}>필터 적용</Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+    <FilterPanel label={`${LABEL} 조건`} onReset={onReset} errors={[periodErr]}>
+      <PanelSelect label="개인정보 관련메뉴" value={value.menu} onChange={setD('menu')} options={MENU_OPTIONS} />
+      <PanelRange label="기간" mode="day" from={value.from} to={value.to} onFrom={setD('from')} onTo={setD('to')} invalid={!!periodErr} />
+      <PanelText label="행위자" value={value.actor} onChange={setD('actor')} />
+      <PanelText label="IP" value={value.ip} onChange={setD('ip')} />
+    </FilterPanel>
   );
 }
 
-/* 조회 조건 — applied = 드로어·적용 칩·목록·통계의 SSOT(초안 사본 없음 — 바꾸는 즉시 반영) */
+/* 조회 조건 — applied = 패널·적용 칩·목록·통계의 SSOT(초안 사본 없음 — 바꾸는 즉시 반영) */
 function useAccessFilter() {
   const [applied, setApplied] = useState<AccessFilter>(DEFAULT_FILTER);
-  const [open, setOpen] = useState(false);
   const patch = (p: Partial<AccessFilter>) => setApplied((a) => ({ ...a, ...p }));
   const reset = () => setApplied(DEFAULT_FILTER);
-  return { applied, open, setOpen, patch, reset };
+  return { applied, patch, reset };
 }
 
-/* 적용 조건 칩(값만, × 개별 해제) — 드로어 순서 그대로 */
+/* 적용 조건 칩(값만, × 개별 해제) — 패널 순서 그대로 */
 function appliedChips(a: AccessFilter, patch: (p: Partial<AccessFilter>) => void): AppliedFilter[] {
   return [
     { label: '개인정보 관련메뉴', value: menuLabel(a.menu), onClear: () => patch({ menu: '' }) },
@@ -219,8 +178,8 @@ export function PrivacyAccessLog({ onNav }: { onNav?: (r: string) => void }) {
     if (tab === 'list') exportList(visible); else exportStats(stats, unit);
     toast.success('Excel로 내보냈습니다');
   };
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !f.open, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !f.open, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
   const onPage = useCallback(() => {
     const api = apiRef.current; if (!api) return;
@@ -242,8 +201,8 @@ export function PrivacyAccessLog({ onNav }: { onNav?: (r: string) => void }) {
       favRoute={ROUTE}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={appliedChips(applied, f.patch)}
+      filterPanel={<AccessFilterPanel value={applied} onPatch={f.patch} onReset={f.reset} />}
       toolbarRight={<>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => f.setOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{footerText}</span>}
@@ -261,8 +220,6 @@ export function PrivacyAccessLog({ onNav }: { onNav?: (r: string) => void }) {
           ? <div><AccessGrid rows={visible} pageSize={pageSize} apiRef={apiRef} onPage={onPage} /></div>
           : <PrivacyAccessStats stats={stats} unit={unit} onUnit={setUnit} />}
       </TabPanel>
-
-      <FilterSheet open={f.open} onOpenChange={f.setOpen} value={applied} onPatch={f.patch} onReset={f.reset} />
     </GridFrame>
   );
 }

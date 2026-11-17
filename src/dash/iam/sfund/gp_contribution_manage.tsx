@@ -3,10 +3,10 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(모펀드·운용사·자펀드·계정구분·담당자·출자/배분·기준일자 시작~종료)
-       → **출자/배분 FilterChip**(툴바 좌, 목업도 칩버튼 그룹이다) + 상세필터 드로어(Sheet, apfs-detail-filter).
-         드로어 항목 순서는 목업 검색박스 순서 그대로. 검색어는 OFF(opt-in 미요청).
+       → **출자/배분 FilterChip**(툴바 좌, 목업도 칩버튼 그룹이다) + 칩 줄 위 인라인 필터 패널(apfs-detail-filter).
+         패널 항목 순서는 목업 검색박스 순서 그대로. 검색어는 OFF(opt-in 미요청).
          목업의 [조회] 버튼은 즉시 반영형이라 없다.
-       ⚠ 기준일자는 **일(YYYY-MM-DD) 범위**다 → `PeriodPicker mode="day"` 2개. 목업 기본값
+       ⚠ 기준일자는 **일(YYYY-MM-DD) 범위**다 → `PanelRange mode="day"`(PeriodPicker 2개). 목업 기본값
          `2000-01-01 ~ 2026-08-12`은 **적용하지 않는다**(빈 문자열 = 열린 경계, apfs-datepicker 함정).
        모펀드·계정구분·담당자는 그리드 컬럼이 아닌 숨은 행 속성(mf·acc·mgr)으로 거른다(2026-11-16 사용자 지시 — 종전 no-op).
          12행이 한 자펀드의 거래라 세 값 모두 전 행 같다(자펀드 관리 sf-4·조합원정보 FUND 와 같은 개체 — 값 일치) →
@@ -39,17 +39,14 @@ import { UI } from '../../components';
 import type { Tone } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF, numFmt, numStyle } from '../../aggrid_theme';
-import { controlMinWidth } from '../../schemas/renderers';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ColGroupDef, GridApi, GridReadyEvent, IRowNode, CellKeyDownEvent, CellStyle, ValueFormatterParams } from 'ag-grid-community';
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
-import { PeriodPicker } from '../../ui/period-picker';
 import { GpContributionDetailModal } from './gp_contribution_detail_modal';
-import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { FilterPanel, PanelSelect, PanelRange } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
 import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
 
 const { Button, IconBtn, StatusBadge } = UI;
@@ -233,18 +230,6 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
-  const Wrap: any = plain ? 'div' : 'label';
-  return (
-    <Wrap className="block mb-4">
-      <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}
-      </span>
-      {children}
-    </Wrap>
-  );
-}
-
 type ModalState = null | { kind: 'detail'; id: string };
 
 /* ──────────────────────────────
@@ -260,12 +245,11 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
   /* deps []: setModal은 안정(useState 세터) — 매 렌더 새 배열이면 그리드가 컬럼을 재생성하며 폭이 되돌아간다 */
   const openDetail = useCallback((id: string) => setModal({ kind: 'detail', id }), []);
   const columnDefs = useMemo(() => makeColumns(openDetail), [openDetail]);
-  const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
-  useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
-  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
+  useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
+  useHotkey(HOTKEYS.export.combo, () => exportExcel(), { skipInDialog: true });
 
-  /* 필터 — 출자/배분은 툴바 칩에만 둔다(드로어 중복 금지 — 2026-11-05).
-     나머지는 드로어. SSOT=개별 state(빈 값=미적용) */
+  /* 필터 — 출자/배분은 툴바 칩에만 둔다(패널 중복 금지 — 2026-11-05).
+     나머지는 인라인 패널. SSOT=개별 state(빈 값=미적용) */
   const [fGb, setFGb] = useState<'' | Gb>('');
   const [fGp, setFGp] = useState('');
   const [fFn, setFFn] = useState('');
@@ -350,10 +334,10 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
       title="출자/분배조회(자펀드)"
       favRoute="gp-contribution"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 주 필터 칩(출자/배분) + 적용 중인 드로어 값 칩. 행 선택이 없어 selbar는 존재하지 않는다. */
+      /* 툴바 좌 = 주 필터 칩(출자/배분) + 적용 중인 패널 값 칩. 행 선택이 없어 selbar는 존재하지 않는다. */
       filterChipsMenu="출자/배분"
       filterChips={(['', '출자', '배분'] as ('' | Gb)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fGb === s, onSelect: () => setFGb(s) }))}
-      /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
+      /* 적용 중인 패널 값 칩 — 값만 표시(접두사 없음) + × · label = 패널 칸 aria-label */
       appliedFilters={[
         { label: '모펀드', value: fMf, onClear: () => setFMf('') },
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
@@ -362,9 +346,22 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
         { label: '담당자', value: fMgr, onClear: () => setFMgr('') },
         { label: '기준일자', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
       ]}
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 순서 그대로(모펀드·운용사·자펀드·계정구분·담당자·출자/배분·기준일자).
+         검색어는 미사용(OFF). 그리드 컬럼이 없는 항목(모펀드·계정구분·담당자)은 숨은 행 속성으로 거른다.
+         담당자 — 원문에 옵션이 없어 선택지 = 행에 시드한 실제 값(mgrOptions). 기준일자 = 일(YYYY-MM-DD) 범위.
+         출자/배분은 툴바 칩이라 패널에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */
+      filterPanel={
+        <FilterPanel label="출자/분배조회(자펀드) 조건">
+          <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} />
+          <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={gpOptions} />
+          <PanelSelect label="자펀드" value={fFn} onChange={setFFn} options={fnOptions} />
+          <PanelSelect label="계정구분" value={fAcc} onChange={setFAcc} options={['농식품', '수산']} />
+          <PanelSelect label="담당자" value={fMgr} onChange={setFMgr} options={mgrOptions} />
+          <PanelRange label="기준일자" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
+        </FilterPanel>
+      }
       toolbarRight={<>
         <span className="text-caption font-semibold whitespace-nowrap" style={{ fontSize: 12, marginRight: 6 }}>단위: 원</span>
-        <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
       footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
@@ -396,39 +393,6 @@ export function GpContributionManage({ onNav }: { onNav?: (r: string) => void })
           overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">조건에 맞는 출자·배분 내역이 없습니다.</span>'}
         />
       </div>
-
-      {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(모펀드·운용사·자펀드·계정구분·담당자·출자/배분·기준일자).
-             검색어는 미사용(OFF). 그리드 컬럼이 없는 항목(모펀드·계정구분·담당자)은 숨은 행 속성으로 거른다 ── */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
-          <SheetHeader>
-            <SheetTitle>상세 필터</SheetTitle>
-            <SheetDescription className="sr-only">출자/분배조회(자펀드) 목록을 거르는 상세 필터</SheetDescription>
-            <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
-            <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
-            <DrawerField label="자펀드"><DrawerSelect value={fFn} onChange={setFFn} options={fnOptions} /></DrawerField>
-            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            {/* 담당자 — 원문에 옵션이 없어 선택지 = 행에 시드한 실제 값(mgrOptions) */}
-            <DrawerField label="담당자"><DrawerSelect value={fMgr} onChange={setFMgr} options={mgrOptions} /></DrawerField>
-            {/* 출자/배분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
-            {/* 기준일자 — 일(YYYY-MM-DD) 범위. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}
-            <DrawerField label="기준일자" plain>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="기준일자 시작일" /></div>
-                <span className="text-caption">~</span>
-                <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fTo} onChange={setFTo} ariaLabel="기준일자 종료일" /></div>
-              </div>
-            </DrawerField>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>
-            <Button variant="primary" size="md" style={{ flex: 1 }} onClick={() => setFilterOpen(false)}>필터 적용</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {/* 상세 팝업 — 조건부 마운트(open prop 없음) */}
       {detailRow && <GpContributionDetailModal row={detailRow} onClose={() => setModal(null)} />}
