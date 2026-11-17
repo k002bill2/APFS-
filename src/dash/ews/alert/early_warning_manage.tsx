@@ -24,10 +24,12 @@
          · 남긴 것 = **다중 선택**: 그 외 상태에서는 단순 토글이라 `주의`+`경고` 동시 조회가 된다.
            목업 `gradeSel`의 멀티셀렉트 능력을 버리지 않기 위함이며, 순수 단일선택으로 바꾸지 않는다.
          필터 대상은 목업대로 **`fng`(자펀드 등급)** 이다 — `gpg`가 아니다.
-   - ⚠ **기준년월은 행 필터가 아니라 조회 기준 컨텍스트**다. 목업 `render()`는 `gp`·`fn`·`gradeSel[r.fng]`만
-       행을 거르고 기간은 `viewlbl` 캡션(`'· '+from+' ~ '+to`)에만 쓴다. 더미가 전부 `2026-07`이라
-       행 필터로 배선하면 월을 바꾸는 순간 그리드가 통째로 빈다 → `passes`에 넣지 않는다.
-       선례 `custody_confirm_manage.tsx`(기준일자)와 동일 판단이고, 같은 선례를 따라 **빈 값을 허용하지 않는다**
+   - **기간(기준년월 시작~종료)은 행의 `기준년월`이 그 범위 안인 행만 보인다**(2026-11-17 사용자 지시 "기준년월이 표를 거르게" —
+       종전엔 목업 `render()`처럼 `viewlbl` 캡션에만 쓰는 조회 기준 컨텍스트였다). 원문·확장 21행은 전부 `2026-07` 이라
+       직전월(2026-06) 평가 8행을 창작 더미로 더했다(같은 운용사·자펀드, 등급만 그 시점 값) — 기본 `2026-07 ~ 2026-07` 에선
+       걸러져 첫 화면은 종전 21행 그대로다. 그 밖의 달만 고르면 0건, 시작 > 종료면 0건.
+       ⚠ External Filter 가 아니라 rowData 단계(periodRows)에서 거른다 — 기본 상태엔 External Filter 가 꺼져 있어 더미가 샌다.
+       등급 칩 건수(facet)도 그 기간 행으로 센다. 빈 값은 여전히 허용하지 않는다
        (PeriodPicker 재클릭 해제 시 목업 기본값 `2026-07`로 복귀).
        표시 위치는 **툴바 우측 캡션 → 칩 행 인라인 적용칩**으로 옮겼다(2026-09-21 사용자 지시).
        값이 늘 있으므로 **기본값(`2026-07 ~ 2026-07`)과 다를 때만** 칩을 띄우고, ×는 '제거'가 아니라
@@ -51,7 +53,7 @@
      자펀드 = `custody_confirm_manage.tsx`·`fund_cash_forecast_manage.tsx`의 조합명).
      ⚠ 운용사↔자펀드 짝은 **이 화면의 데모 조합**이다 — 저장소 어디에도 정본 매핑이 없다(파일마다 다른 짝을 쓴다).
    - `gpg`(운용사 종합등급)는 운용사 단위 등급이므로 **같은 운용사면 항상 같은 값**으로 맞췄다(행마다 다르면 데이터 모순).
-   - `ym`은 전 행 `2026-07` 고정(목업 동일) — 기준년월이 조회 기준 컨텍스트라는 위 결정과 짝이다.
+   - `ym`은 원문·확장 21행 `2026-07`(목업 동일), 직전월 더미 8행 `2026-06` 이다. No 는 시점마다 1부터(기준년월 열로 구분).
    - `no`는 **행에 고정된 값**이다. 목업 `render()`는 필터 후 1부터 다시 매기지만, 정렬 가능한 그리드에서
      연번을 재계산하면 정렬과 싸운다(골드 `regular_report_manage`와 동일 결정).
    - 운용사·자펀드 셀은 목업에서도 링크가 아니다(명세 팝업 opt-in 미요청 — apfs-spec-popup). */
@@ -72,6 +74,7 @@ import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
 import { EarlyWarningTrendModal } from './early_warning_trend_modal';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { EW_BASE_YM, EW_PREV_YM } from './ew_period';
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -94,12 +97,12 @@ export interface EarlyWarningRow {
   fng: EarlyWarningGrade;     // 종합등급(자펀드) — 등급 칩이 거르는 대상
 }
 
-/* 목업 검색박스 기본값 `2026-07 ~ 2026-07`(= 조회 기준 컨텍스트). 초기화·해제도 이 값으로 되돌린다. */
-const BASE_FROM = '2026-07';
-const BASE_TO = '2026-07';
+/* 목업 검색박스 기본값 `2026-07 ~ 2026-07`(원문 시점 — ew_period.ts). 초기화·해제도 이 값으로 되돌린다. */
+const BASE_FROM = EW_BASE_YM;
+const BASE_TO = EW_BASE_YM;
 
 const MF = '농식품모태펀드';
-const YM = '2026-07';
+const YM = EW_BASE_YM;
 
 /* 데모 데이터 — [운용사, 운용사등급, 자펀드, 자펀드등급].
    1~4행 = 목업 DATA 원문 그대로. 5행부터는 저장소에 이미 쓰는 이름으로 확장(파일 상단 '한계' 참조). */
@@ -130,6 +133,29 @@ const RAW: [string, EarlyWarningGrade, string, EarlyWarningGrade][] = [
 const DEMO: EarlyWarningRow[] = RAW.map(([gp, gpg, fn, fng], i) => ({
   id: 'ew-' + (i + 1), no: i + 1, mf: MF, ym: YM, gp, gpg, fn, fng,
 }));
+
+/* ↓ 창작 더미(원문 아님) — 직전월(2026-06) 평가 8행. 같은 운용사·자펀드, 등급만 그 시점 값.
+   운용사 등급은 같은 운용사면 같은 값(위 '한계' 규칙을 그 시점 안에서도 지킨다). */
+const RAW_PREV: [string, EarlyWarningGrade, string, EarlyWarningGrade][] = [
+  ['(주)유니창업투자', '정상', '유니 수산식품 투자조합1호', '주의'],
+  ['(주)유니창업투자', '정상', '유니 농식품 투자조합2호', '정상'],
+  ['한국투자파트너스', '정상', '한투 청년농식품투자조합', '정상'],
+  ['한국투자파트너스', '정상', '한투 수산벤처투자조합', '정상'],
+  ['그린루트벤처스', '주의', '스마트네이처투자조합1호', '주의'],
+  ['그린루트벤처스', '주의', '농식품혁신스타트업투자조합', '경고'],
+  ['코어밸류파트너스', '주의', '메가농식품벤처투자조합3호', '정상'],
+  ['코어밸류파트너스', '주의', '센트럴생거진천농식품투자조합', '주의'],
+];
+const PREV_DEMO: EarlyWarningRow[] = RAW_PREV.map(([gp, gpg, fn, fng], i) => ({
+  id: 'ew-prev-' + (i + 1), no: i + 1, mf: MF, ym: EW_PREV_YM, gp, gpg, fn, fng,
+}));
+
+/** 화면 행 전체(기간이 고르기 전) — 원문 → 직전월 순(최근 시점 먼저). 새로고침도 이 배열로 되돌린다.
+    ⚠ 원문을 앞에 둬야 운용사·자펀드 선택지(행 첫 등장 순)가 종전 순서 그대로다 */
+export const EW_MANAGE_ROWS: EarlyWarningRow[] = [...DEMO, ...PREV_DEMO];
+
+/** 기간 판정 — 행의 기준년월이 시작~종료(YYYY-MM 문자열 비교, 양끝 포함) 안. 시작 > 종료면 0건 */
+export const inPeriod = (ym: string, from: string, to: string): boolean => ym >= from && ym <= to;
 
 const PAGE_SIZE = 20;
 
@@ -211,7 +237,7 @@ const NO_ROWS_LOCALE = {
 ────────────────────────────── */
 export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<EarlyWarningRow> | null>(null);
-  const [rows, setRows] = useState<EarlyWarningRow[]>(DEMO);
+  const [rows, setRows] = useState<EarlyWarningRow[]>(EW_MANAGE_ROWS);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [chartOpen, setChartOpen] = useState(false);
@@ -220,7 +246,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
-  /* 필터 SSOT — 등급(다중 토글, 초기 3개 ON) · 운용사 · 자펀드 · 기준년월(행 필터 아님) */
+  /* 필터 SSOT — 등급(다중 토글, 초기 3개 ON) · 운용사 · 자펀드(External Filter) · 기간(rowData 단계 — periodRows) */
   const [grades, setGrades] = useState<Record<EarlyWarningGrade, boolean>>(ALL_GRADES_ON);
   const [fGp, setFGp] = useState('');
   const [fFund, setFFund] = useState('');
@@ -240,7 +266,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
   const allGradesOn = GRADES.every((g) => grades[g]);
   const clearFilters = () => { setGrades(ALL_GRADES_ON); setFGp(''); setFFund(''); setFFrom(BASE_FROM); setFTo(BASE_TO); };
 
-  /* 목업 `render()`의 술어 그대로: gp·fn·gradeSel[r.fng]. 기간은 들어가지 않는다(조회 기준 컨텍스트). */
+  /* 목업 `render()`의 술어 그대로: gp·fn·gradeSel[r.fng]. 기간은 그 앞 단계(periodRows)에서 거른다. */
   const passes = useCallback((r: EarlyWarningRow) => {
     if (fGp && r.gp !== fGp) return false;
     if (fFund && r.fn !== fFund) return false;
@@ -253,17 +279,19 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<EarlyWarningRow>) => (node.data ? passes(node.data) : true), [passes]);
 
-  const filteredRows = useMemo(() => rows.filter(passes), [rows, passes]);
+  /* 기간 안 행(그리드 rowData·facet) → 나머지 조건까지 거른 행(푸터·엑셀) */
+  const periodRows = useMemo(() => rows.filter((r) => inPeriod(r.ym, fFrom, fTo)), [rows, fFrom, fTo]);
+  const filteredRows = useMemo(() => periodRows.filter(passes), [periodRows, passes]);
   /* 목업 `refreshTarget()` 동형 — 옵션은 행 데이터에서 유도(AND 조건) */
   const gpOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.gp))), [rows]);
   const fundOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.fn))), [rows]);
   /* 칩 건수 = facet count — **등급 필터만 빼고** 나머지를 적용한 모집단 기준(apfs-grid).
      화면에 보이는 행으로 세면 칩 하나를 누른 순간 나머지가 전부 0이 돼 비교 기능이 죽는다. */
   const gradeFacet = useMemo(() => {
-    const base = rows.filter((r) => (!fGp || r.gp === fGp) && (!fFund || r.fn === fFund));
+    const base = periodRows.filter((r) => (!fGp || r.gp === fGp) && (!fFund || r.fn === fFund));
     return GRADES.reduce((acc, g) => { acc[g] = base.filter((r) => r.fng === g).length; return acc; },
       {} as Record<EarlyWarningGrade, number>);
-  }, [rows, fGp, fFund]);
+  }, [periodRows, fGp, fFund]);
 
   const onGridReady = useCallback((e: GridReadyEvent<EarlyWarningRow>) => { apiRef.current = e.api; }, []);
   const onPaginationChanged = useCallback(() => {
@@ -272,7 +300,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
     setPage((p) => (p.current === next.current && p.total === next.total && p.rowCount === next.rowCount ? p : next));
   }, []);
 
-  const refresh = () => { setRows([...DEMO]); clearFilters(); toast.success('조회되었습니다'); };
+  const refresh = () => { setRows([...EW_MANAGE_ROWS]); clearFilters(); toast.success('조회되었습니다'); };
 
   /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
   const exportExcel = () => {
@@ -289,7 +317,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('Excel로 내보냈습니다');
   };
 
-  const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
+  const pageSize = showAll ? Math.max(periodRows.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
   /* `전체` 칩 건수 = 등급 facet의 합(상수 금지 — 운용사·자펀드 필터가 걸리면 함께 줄어야 한다) */
   const gradeTotal = GRADES.reduce((s, g) => s + gradeFacet[g], 0);
@@ -338,7 +366,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
       <div>
         <AgGridReact<EarlyWarningRow>
           theme={apfsTheme}
-          rowData={rows}
+          rowData={periodRows}
           columnDefs={COLUMNS}
           getRowId={(p) => p.data.id}
           domLayout="autoHeight"
@@ -369,7 +397,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
                 드로어(`audit_log.tsx:244-250`)를 그대로 따르되 **`mode`만 `month`**다: 목업이
                 `aria-label="기간 시작 (기준월)"`로 월 단위이고 행 데이터·그리드 컬럼도 `YYYY-MM`이라
                 일 단위로 바꾸면 조회 기준이 행과 어긋난다.
-                행을 거르지 않는 조회 기준이라 빈 값을 허용하지 않고 해제 시 목업 기본값으로 되돌린다
+                기준년월이 이 범위 안인 행만 보인다(2026-11-17). 빈 값은 허용하지 않고 해제 시 목업 기본값으로 되돌린다
                 (선례 custody_confirm_manage 기준일자). PeriodPicker는 `<label>`로 명명되지 않으므로
                 `plain` + `ariaLabel`, 트리거가 `w-full`이라 fit-content 래퍼가 필수. */}
             <DrawerField label="기간" plain>

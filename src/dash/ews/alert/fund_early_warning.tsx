@@ -20,8 +20,9 @@
    한계·가정:
    - 행 데이터는 목업 `DATA` 실측 **1행**이 전부다 — 없는 자펀드를 창작하지 않는다.
      등급 3단계(정상·주의·경고) 중 **주의 샘플은 원문에 없어 만들지 않는다**(목업 설계메모 명시).
-   - `기준년월`은 **행을 거르는 필터가 아니라 조회 기준 컨텍스트**다(형제 S2_47·custody_confirm_manage 동형).
-     `passes`에 넣지 않고 푸터 캡션·엑셀 파일명에만 싣는다.
+   - `기준년월`은 그 달 평가 결과만 보인다(2026-11-17 사용자 지시 "기준년월이 표를 거르게" — 종전엔 행을 거르지 않는
+     조회 기준 컨텍스트). 숨은 속성 `ym`(그리드 컬럼 없음)이 조회 시점과 같은 행만 rowData 로 넘긴다(ew_period.ts, 형제 S2_47 동형).
+     기본값은 여전히 없다 — **빈 칸 = 원문 시점(2026-07)**이라 첫 화면은 원문 1행 그대로. 직전월(2026-06)은 같은 자펀드의 창작 더미.
    - 모펀드 옵션 `MOAF` 는 목업 `<select id="f-mf">` 원문 그대로다(행에는 없는 값이라 고르면 0행이 된다).
 
    ⚠️ AG Grid v35.3.1(v33+) Theming API: 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지. */
@@ -42,6 +43,7 @@ import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
 import { FundEarlyWarningYieldModal } from './fund_early_warning_yield_modal';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { EW_BASE_YM, EW_PREV_YM, atEwYm } from './ew_period';
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -67,6 +69,7 @@ export interface FundEwRow {
   l3: Grade;       // 한도관리 > 투자자산
   l4: Grade;       // 한도관리 > 미투자자산
   total: Grade;    // 종합등급
+  ym: string;      // 평가 기준년월 — 숨은 속성(그리드 컬럼 없음, 상세필터 기준년월이 거른다)
 }
 
 /* 등급 → 배지 톤. 목업 `warn()`: `.tag.g`=정상 · `.tag.a`=주의 · `.tag.d`=경고 */
@@ -92,16 +95,26 @@ const SEARCHABLE = false;
 /* ──────────────────────────────
    데이터 — 목업 `DATA` 실측 1행 그대로. 신규 행 생성 금지.
 ────────────────────────────── */
-const ROWS: FundEwRow[] = [
+export const FUND_EW_ROWS: FundEwRow[] = [
   {
     id: 'fundew-1', no: 1,
     mf: MOTHER_FUND, gp: '(주)유니창업투자', fn: '유니 수산식품 투자조합1호', cs: '수산',
     ret: '경고', viol: '정상', mgr: '정상', staff: '정상',
-    l1: '경고', l2: '경고', l3: '경고', l4: '정상', total: '경고',
+    l1: '경고', l2: '경고', l3: '경고', l4: '정상', total: '경고', ym: EW_BASE_YM,
+  },
+  /* ↓ 창작 더미(원문 아님) — 직전월(2026-06) 평가분. 같은 자펀드, 등급만 그 시점 값(원문에 없는 '주의'는 쓰지 않는다) */
+  {
+    id: `fundew-1-${EW_PREV_YM}`, no: 1,
+    mf: MOTHER_FUND, gp: '(주)유니창업투자', fn: '유니 수산식품 투자조합1호', cs: '수산',
+    ret: '정상', viol: '정상', mgr: '정상', staff: '정상',
+    l1: '경고', l2: '정상', l3: '경고', l4: '정상', total: '경고', ym: EW_PREV_YM,
   },
 ];
 
-const FUND_OPTIONS: string[] = ROWS.map((r) => r.fn);
+/** 그 시점 행(빈 기준년월 = 원문 시점) — rowData 와 푸터·엑셀이 같은 배열을 쓴다 */
+export const fundEwRowsAt = (fYm: string): FundEwRow[] => FUND_EW_ROWS.filter((r) => atEwYm(r.ym, fYm));
+
+const FUND_OPTIONS: string[] = [...new Set(FUND_EW_ROWS.map((r) => r.fn))];
 
 /* ──────────────────────────────
    컬럼 정의 — 리프 14(선두 5 + 등급 4 + 한도관리 그룹 4 + 종합등급 1)
@@ -263,7 +276,7 @@ export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
   const apiRef = useRef<GridApi<FundEwRow> | null>(null);
   const [modalRow, setModalRow] = useState<FundEwRow | null>(null);
 
-  /* 필터 — 모펀드·자펀드는 행 필터, 기준년월은 조회 기준 컨텍스트(행을 거르지 않음) */
+  /* 필터 — 모펀드·자펀드는 행 필터(External Filter), 기준년월은 그 시점 행만 rowData 로(periodRows) */
   const [filterOpen, setFilterOpen] = useState(false);
   const [fMf, setFMf] = useState('');
   const [fFn, setFFn] = useState('');
@@ -276,14 +289,15 @@ export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
     return (!fMf || r.mf === fMf) && (!fFn || r.fn === fFn);
   }, [fMf, fFn, q]);
 
-  /* 기준년월은 행을 거르지 않으므로 filterActive 에 넣지 않는다 */
+  /* 기준년월은 rowData 단계에서 거르므로 External Filter 판정(filterActive)에 넣지 않는다 */
   const filterActive = Boolean(fMf || fFn || (SEARCHABLE && q));
   useEffect(() => { apiRef.current?.onFilterChanged(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<FundEwRow>) => (node.data ? passes(node.data) : true), [passes]);
 
   /* 표시 건수(푸터 캡션·엑셀 본문 공용) — 화면=엑셀 불변식 */
-  const visible = useMemo(() => ROWS.filter(passes), [passes]);
+  const periodRows = useMemo(() => fundEwRowsAt(fYm), [fYm]);
+  const visible = useMemo(() => periodRows.filter(passes), [periodRows, passes]);
 
   const onGridReady = useCallback((e: GridReadyEvent<FundEwRow>) => { apiRef.current = e.api; }, []);
 
@@ -344,7 +358,7 @@ export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 적용된 필터 칩(값만)은 둘째 줄(appliedFilters). FilterChip 세트는 두지 않는다 —
          목업 검색박스에 카테고리형 주 필터가 없다(형제 S2_47 과 같은 판단).
-         기준년월은 조회 기준 컨텍스트 — 선택했을 때만 칩으로 띄운다 */
+         기준년월은 선택했을 때만 칩으로 띄운다(빈 칸 = 원문 시점이라 칩이 없다) */
       appliedFilters={[
         { label: '모펀드', value: fMf, onClear: () => setFMf('') },
         { label: '자펀드', value: fFn, onClear: () => setFFn('') },
@@ -366,7 +380,7 @@ export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
       <div className="apfs-grid-min">
         <AgGridReact<FundEwRow>
           theme={apfsTheme}
-          rowData={ROWS}
+          rowData={periodRows}
           columnDefs={COLUMNS}
           getRowId={(p) => p.data.id}
           domLayout="autoHeight"
@@ -396,7 +410,7 @@ export function FundEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
             <DrawerField label="자펀드">
               <DrawerSelect value={fFn} onChange={setFFn} options={FUND_OPTIONS} ariaLabel="자펀드" />
             </DrawerField>
-            {/* 기준년월 — 행을 거르지 않고 조회 기준을 정하는 값.
+            {/* 기준년월 — 그 달 평가 결과만 보인다(빈 칸 = 원문 시점 2026-07).
                 PeriodPicker 트리거는 w-full 이라 fit-content 래퍼로 감싼다(apfs-datepicker "폭" 규칙) */}
             <DrawerField label="기준년월" plain>
               <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>

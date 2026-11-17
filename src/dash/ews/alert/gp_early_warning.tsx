@@ -16,9 +16,11 @@
    이식하지 않는다(셸이 소유). 원문 미정의 사항은 재무정보 팝업 파일의 주석에 남겼다.
 
    한계·가정:
-   - 행 데이터는 목업 실측 4행(구분당 1행)이 전부다 — 없는 운용사를 창작하지 않는다.
-   - `기준년월`은 **행을 거르는 필터가 아니라 조회 기준 컨텍스트**다(custody_confirm_manage의 기준일자와 동형).
-     `passes`에 넣지 않고 팝업 헤더/푸터 캡션에만 싣는다.
+   - 행 데이터는 목업 실측 4행(구분당 1행) — 없는 운용사를 창작하지 않는다. 직전월(2026-06) 평가분만 같은 운용사의 창작 더미다.
+   - `기준년월`은 그 달 평가 결과만 보인다(2026-11-17 사용자 지시 "기준년월이 표를 거르게" — 종전엔 행을 거르지 않는
+     조회 기준 컨텍스트). 행의 숨은 속성 `ym`(그리드 컬럼 없음)이 조회 시점과 같은 행만 rowData 로 넘긴다(ew_period.ts).
+     기본값은 여전히 없다(아래 2026-09-21 결정) — **빈 칸 = 원문 시점(2026-07)**이라 첫 화면은 원문 4행 그대로다.
+     ⚠ External Filter(filterActive)가 아니라 rowData 에서 거른다 — 기본 상태엔 External Filter 가 꺼져 있어 더미가 새어 나온다.
    - 각 지표 비율의 산출식은 원문에 정의가 없다(결과값만 제공) — 출처 값을 그대로 둔다(apfs-spec-popup 규약 7).
 
    ⚠️ AG Grid v35.3.1(v33+) Theming API: 레거시 CSS(ag-grid.css/ag-theme-*.css) import 금지. */
@@ -40,6 +42,7 @@ import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
 import { GpEarlyWarningFinModal } from './gp_early_warning_fin_modal';
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { EW_BASE_YM, EW_PREV_YM, atEwYm } from './ew_period';
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -55,6 +58,7 @@ export interface GpEwRow {
   mf: string;          // 모펀드
   gp: string;          // 운용사
   kind: GpKind;        // 운용사구분
+  ym: string;          // 평가 기준년월 — 숨은 속성(그리드 컬럼 없음, 상세필터 기준년월이 거른다)
   m1: number | null; m1g: Grade | null;                        // 지표1 [비율·등급]
   m2: number | null; m2g: Grade | null;                        // 지표2 [비율·등급]
   roe: number | null; roeG: Grade | null; roeA: number | null; // 자기자본이익률 [비율·등급·연환산]
@@ -83,7 +87,7 @@ const SEARCHABLE = false;
    [운용사, 지표1 비율·등급, 지표2 비율·등급, ROE 비율·등급·연환산, ROA 비율·등급·연환산,
     법령위반 건수·등급, 주주변동 건수·등급, 소송여부 건수·등급, 총점 점수·등급]
 ────────────────────────────── */
-const RAW: Record<GpKind, Omit<GpEwRow, 'id' | 'no' | 'mf' | 'kind'>> = {
+const RAW: Record<GpKind, Omit<GpEwRow, 'id' | 'no' | 'mf' | 'kind' | 'ym'>> = {
   벤처투자회사: {
     gp: '마이다스동아인베스트먼트(주)',
     m1: 166.53, m1g: '정상', m2: 0.2, m2g: '정상',
@@ -110,6 +114,31 @@ const RAW: Record<GpKind, Omit<GpEwRow, 'id' | 'no' | 'mf' | 'kind'>> = {
   },
 };
 
+/* ↓ 창작 더미(원문 아님) — 직전월(2026-06) 평가분. 같은 운용사, 비율·점수·등급만 그 시점 값.
+   표시 자릿수는 원문 이하(고정폭 컬럼 불변). 증권회사는 07월 총점 경고의 전 단계(주의)로 둔다. */
+const RAW_PREV: Record<GpKind, Omit<GpEwRow, 'id' | 'no' | 'mf' | 'kind' | 'ym' | 'gp'>> = {
+  벤처투자회사: {
+    m1: 158.21, m1g: '정상', m2: 0.35, m2g: '정상',
+    roe: 3.82, roeG: '정상', roeA: 1.91, roa: 3.79, roaG: '정상', roaA: 1.89,
+    lawN: 0, lawG: '정상', shN: 0, shG: '정상', suitN: 0, suitG: '정상', score: 100, scoreG: '정상',
+  },
+  증권회사: {
+    m1: 231.06, m1g: '정상', m2: 98.4, m2g: '주의',
+    roe: 9.87, roeG: '정상', roeA: 0, roa: 1.21, roaG: '정상', roaA: 0,
+    lawN: 0, lawG: '정상', shN: 0, shG: '정상', suitN: 0, suitG: '정상', score: 80, scoreG: '주의',
+  },
+  여신전문금융회사: {
+    m1: 13.05, m1g: '정상', m2: 121.6, m2g: '정상',
+    roe: 6.88, roeG: '정상', roeA: 4.55, roa: 0.94, roaG: '정상', roaA: 0.61,
+    lawN: 0, lawG: '정상', shN: 0, shG: '정상', suitN: 0, suitG: '정상', score: 100, scoreG: '정상',
+  },
+  은행: {
+    m1: 112.9, m1g: '정상', m2: 19.4, m2g: '경고',
+    roe: 4.21, roeG: '정상', roeA: 398.7, roa: 0.25, roaG: '정상', roaA: 23.1,
+    lawN: 0, lawG: '정상', shN: 0, shG: '정상', suitN: 0, suitG: '정상', score: 89.5, scoreG: '주의',
+  },
+};
+
 /* 섹션 정의 — 번호·구분명·지표1/2 라벨. 목업 섹션 순서 그대로(1 벤처투자회사 → 4 은행). */
 interface SectionSpec { no: number; kind: GpKind; m1: string; m2: string }
 const SECTIONS: SectionSpec[] = [
@@ -119,11 +148,17 @@ const SECTIONS: SectionSpec[] = [
   { no: 4, kind: '은행', m1: 'BIS자기자본비율', m2: '유동성커버리지비율' },
 ];
 
-/* 구분별 행(각 1건). No 는 그리드마다 1부터 — 목업 각 표의 `No` 열과 동일. */
-const ROWS: Record<GpKind, GpEwRow[]> = SECTIONS.reduce((acc, s) => {
-  acc[s.kind] = [{ id: 'gpew-' + s.no, no: 1, mf: MOTHER_FUND, kind: s.kind, ...RAW[s.kind] }];
+/* 구분별 행 — 원문 1건(기준년월 2026-07) + 직전월 더미 1건. No 는 시점마다 1부터 — 목업 각 표의 `No` 열과 동일. */
+export const GP_EW_ROWS: Record<GpKind, GpEwRow[]> = SECTIONS.reduce((acc, s) => {
+  acc[s.kind] = [
+    { id: 'gpew-' + s.no, no: 1, mf: MOTHER_FUND, kind: s.kind, ym: EW_BASE_YM, ...RAW[s.kind] },
+    { id: `gpew-${s.no}-${EW_PREV_YM}`, no: 1, mf: MOTHER_FUND, kind: s.kind, ym: EW_PREV_YM, gp: RAW[s.kind].gp, ...RAW_PREV[s.kind] },
+  ];
   return acc;
 }, {} as Record<GpKind, GpEwRow[]>);
+
+/** 구분별 그 시점 행(빈 기준년월 = 원문 시점) — rowData 와 푸터·엑셀이 같은 배열을 쓴다 */
+export const gpEwRowsAt = (kind: GpKind, fYm: string): GpEwRow[] => GP_EW_ROWS[kind].filter((r) => atEwYm(r.ym, fYm));
 
 /* ──────────────────────────────
    컬럼 정의 — 선두 4(No·모펀드·운용사·운용사구분) + 2단 그룹헤더 지표 18 = 22 리프
@@ -264,7 +299,7 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
   const apisRef = useRef<Partial<Record<GpKind, GridApi<GpEwRow>>>>({});
   const [modalRow, setModalRow] = useState<GpEwRow | null>(null);
 
-  /* 필터 — 모펀드·운용사는 행 필터, 기준년월은 조회 기준 컨텍스트(행을 거르지 않음) */
+  /* 필터 — 모펀드·운용사는 행 필터(External Filter), 기준년월은 그 시점 행만 rowData 로(periodRows) */
   const [filterOpen, setFilterOpen] = useState(false);
   const [fMf, setFMf] = useState('');
   const [fGp, setFGp] = useState('');
@@ -285,12 +320,17 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<GpEwRow>) => (node.data ? passes(node.data) : true), [passes]);
 
-  /* 구분별 표시 건수(푸터 캡션·엑셀 본문 공용) */
+  /* 구분별 그 시점 행(그리드 rowData) → 표시 행(푸터 캡션·엑셀 본문 공용) */
+  const periodRows = useMemo(() => {
+    const out = {} as Record<GpKind, GpEwRow[]>;
+    SECTIONS.forEach((s) => { out[s.kind] = gpEwRowsAt(s.kind, fYm); });
+    return out;
+  }, [fYm]);
   const visible = useMemo(() => {
     const out = {} as Record<GpKind, GpEwRow[]>;
-    SECTIONS.forEach((s) => { out[s.kind] = ROWS[s.kind].filter(passes); });
+    SECTIONS.forEach((s) => { out[s.kind] = periodRows[s.kind].filter(passes); });
     return out;
-  }, [passes]);
+  }, [periodRows, passes]);
   const totalShown = SECTIONS.reduce((n, s) => n + visible[s.kind].length, 0);
 
   const onGridReady = useCallback((kind: GpKind) => (e: GridReadyEvent<GpEwRow>) => { apisRef.current[kind] = e.api; }, []);
@@ -351,7 +391,7 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 적용된 필터 칩(값만)은 둘째 줄(appliedFilters). FilterChip 세트는 두지 않는다 —
          목업 검색박스에 카테고리형 주 필터가 없고, 4개 그리드가 이미 운용사구분 분해라 칩이 중복이다.
-         기준년월은 조회 기준 컨텍스트 — 선택했을 때만 칩으로 띄운다 */
+         기준년월은 선택했을 때만 칩으로 띄운다(빈 칸 = 원문 시점이라 칩이 없다) */
       appliedFilters={[
         { label: '모펀드', value: fMf, onClear: () => setFMf('') },
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
@@ -380,7 +420,7 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
             <div className="apfs-grid-min">
               <AgGridReact<GpEwRow>
                 theme={apfsTheme}
-                rowData={ROWS[s.kind]}
+                rowData={periodRows[s.kind]}
                 columnDefs={COLUMNS[s.kind]}
                 getRowId={(p) => p.data.id}
                 domLayout="autoHeight"
@@ -413,7 +453,7 @@ export function GpEarlyWarning({ onNav }: { onNav?: (r: string) => void }) {
             <DrawerField label="운용사">
               <DrawerSelect value={fGp} onChange={setFGp} options={GP_OPTIONS} ariaLabel="운용사" />
             </DrawerField>
-            {/* 기준년월 — 행을 거르지 않고 조회 기준을 정하는 값(팝업 부제에 실린다).
+            {/* 기준년월 — 그 달 평가 결과만 보인다(빈 칸 = 원문 시점 2026-07). 팝업 부제에도 실린다.
                 PeriodPicker 트리거는 w-full 이라 fit-content 래퍼로 감싼다(apfs-datepicker "폭" 규칙) */}
             <DrawerField label="기준년월" plain>
               <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
