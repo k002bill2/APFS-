@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   defaultFilter, filterAccounts, filterErrors, buildBalanceRows, withSubtotals, totals, accountCount,
   txnDetail, buildDepositStatement, statementPages, periodLabel, rateLabel, PERIOD_ERROR,
+  demoUnapprovedTxns, effectiveTxns, balanceMatches,
 } from './account_balance_model';
 import type { BalanceFilter, BalanceRow } from './account_balance_model';
 import { demoBankAccounts, demoCashTxns, DEMO_TODAY, FUNDS_ACCOUNT_TYPES } from './funds_data';
@@ -12,6 +13,7 @@ import { periodBalance, isMatured } from './funds_model';
 const ACCTS = demoBankAccounts();
 const TXNS = demoCashTxns(ACCTS);
 const DEF = defaultFilter(DEMO_TODAY);
+const PENDING = demoUnapprovedTxns(ACCTS, DEMO_TODAY);
 const ALL: BalanceFilter = { ...DEF, active: '', matured: '', from: '', to: '' };
 
 describe('defaultFilter', () => {
@@ -56,8 +58,13 @@ describe('filterAccounts', () => {
     const until = filterAccounts(ACCTS, { ...ALL, openTo: '2019-12-31' }, DEMO_TODAY);
     expect(until.every((a) => a.openDate <= '2019-12-31')).toBe(true);
   });
-  it('미결재포함·잔액여부는 결과에 영향 없음(데이터 연동 후 적용)', () => {
-    expect(filterAccounts(ACCTS, { ...DEF, includeUnapproved: true, balance: '100' }, DEMO_TODAY)).toEqual(filterAccounts(ACCTS, DEF, DEMO_TODAY));
+  /* 2026-11-16 뒤집음 — 종전 "결과에 영향 없음(미연동)". 둘 다 계좌 속성이 아니라 잔액 계산 단계에서 적용된다 */
+  it('미결재포함·잔액여부는 계좌 조건이 아니다 — 계좌 필터는 그대로, 잔액 행(buildBalanceRows)은 바뀐다', () => {
+    expect(filterAccounts(ACCTS, { ...ALL, includeUnapproved: true, balance: '부' }, DEMO_TODAY)).toEqual(filterAccounts(ACCTS, ALL, DEMO_TODAY));
+    const base = buildBalanceRows(ACCTS, TXNS, DEF, DEMO_TODAY, PENDING);
+    expect(buildBalanceRows(ACCTS, TXNS, { ...DEF, includeUnapproved: true }, DEMO_TODAY, PENDING)).not.toEqual(base);
+    const all = buildBalanceRows(ACCTS, TXNS, ALL, DEMO_TODAY, PENDING);
+    expect(buildBalanceRows(ACCTS, TXNS, { ...ALL, balance: '여' }, DEMO_TODAY, PENDING).length).toBeLessThan(all.length);
   });
   it('세 기간 각각 시작 > 종료 = 오류 문구 + 0건', () => {
     const cases: Partial<BalanceFilter>[] = [
@@ -102,6 +109,67 @@ describe('buildBalanceRows', () => {
     for (const x of fromOnly) expect(x.closing).toBe(periodBalance(TXNS, x.accountId, '2026-01-01', '9999-12-31').closing);
     const toOnly = buildBalanceRows(ACCTS, TXNS, { ...ALL, to: '2025-12-31' }, DEMO_TODAY);
     for (const x of toOnly) expect(x.closing).toBe(periodBalance(TXNS, x.accountId, '0000-01-01', '2025-12-31').closing);
+  });
+});
+
+describe('미결재포함 — 결재 대기 거래 더미를 더해 잔액 재계산', () => {
+  const base = buildBalanceRows(ACCTS, TXNS, DEF, DEMO_TODAY, PENDING);
+  const withU = buildBalanceRows(ACCTS, TXNS, { ...DEF, includeUnapproved: true }, DEMO_TODAY, PENDING);
+  it('기본(해제) = 미결재 거래를 넘겨도 종전 수치 그대로', () => {
+    expect(base).toEqual(buildBalanceRows(ACCTS, TXNS, DEF, DEMO_TODAY));
+    expect(effectiveTxns(TXNS, PENDING, false)).toBe(TXNS);
+  });
+  it('결정적 더미 — 사용 중 수시입출금 계좌마다 기준일 1건(입금·출금 번갈아), 다시 만들어도 같다', () => {
+    expect(PENDING).toEqual(demoUnapprovedTxns(ACCTS, DEMO_TODAY));
+    expect(PENDING.length).toBe(ACCTS.filter((a) => a.active && a.freeWithdraw).length);
+    expect(PENDING.every((t) => t.date === DEMO_TODAY && (t.deposit > 0) !== (t.withdraw > 0))).toBe(true);
+    expect(PENDING.some((t) => t.withdraw > 0)).toBe(true);
+    expect(new Set([...TXNS, ...PENDING].map((t) => t.id)).size).toBe(TXNS.length + PENDING.length);
+  });
+  it('체크 = 같은 계좌 · 미결재 계좌만 기간증감·잔액이 더미만큼 바뀐다 · 합계도 바뀐다', () => {
+    expect(withU.map((r) => r.id)).toEqual(base.map((r) => r.id));
+    for (const [i, r] of withU.entries()) {
+      const p = PENDING.filter((t) => t.accountId === r.accountId);
+      const dep = p.reduce((s, t) => s + t.deposit, 0), wd = p.reduce((s, t) => s + t.withdraw, 0);
+      expect(r.opening).toBe(base[i].opening);
+      expect([r.increase, r.decrease, r.closing]).toEqual([base[i].increase + dep, base[i].decrease + wd, base[i].closing + dep - wd]);
+      expect(r.closing).toBeGreaterThanOrEqual(0);
+    }
+    expect(withU.some((r, i) => r.closing !== base[i].closing)).toBe(true);
+    expect(totals(withU).closing).toBe(totals(base).closing + PENDING.reduce((s, t) => s + t.deposit - t.withdraw, 0));
+  });
+  it('계좌거래상세도 같은 거래를 본다 — 마지막 잔액 = 행 잔액', () => {
+    const r = withU.find((x) => PENDING.some((t) => t.accountId === x.accountId))!;
+    expect(txnDetail(effectiveTxns(TXNS, PENDING, true), r.accountId, DEF.from, DEF.to).balance).toBe(r.closing);
+  });
+  it('기준기간이 기준일 전에 끝나면 더미가 들어가지 않는다', () => {
+    const f = { ...DEF, to: '2026-10-31' };
+    expect(buildBalanceRows(ACCTS, TXNS, { ...f, includeUnapproved: true }, DEMO_TODAY, PENDING)).toEqual(buildBalanceRows(ACCTS, TXNS, f, DEMO_TODAY, PENDING));
+  });
+});
+
+/* 2026-11-17 사용자 결정 — 잔액여부는 여/부 선택(종전 금액 입력 '그 금액 이상' 가정 폐기). 사용여부·만기여부와 같은 모양 */
+describe('잔액여부 — 여 = 잔액 있음(≠ 0) · 부 = 잔액 0', () => {
+  const all = buildBalanceRows(ACCTS, TXNS, ALL, DEMO_TODAY, PENDING);
+  it('판정 함수: 여·부는 정확한 여집합(음수 잔액은 여) · 빈 값 = 전체', () => {
+    expect([balanceMatches(0, '여'), balanceMatches(0, '부'), balanceMatches(0, '')]).toEqual([false, true, true]);
+    expect([balanceMatches(-5, '여'), balanceMatches(-5, '부')]).toEqual([true, false]);
+    expect([balanceMatches(10, '여'), balanceMatches(10, '부')]).toEqual([true, false]);
+  });
+  it('빈 값 = 전체 · 여 + 부 = 전체(겹침·누락 없음)', () => {
+    expect(buildBalanceRows(ACCTS, TXNS, { ...ALL, balance: '' }, DEMO_TODAY, PENDING)).toEqual(all);
+    const yes = buildBalanceRows(ACCTS, TXNS, { ...ALL, balance: '여' }, DEMO_TODAY, PENDING);
+    const no = buildBalanceRows(ACCTS, TXNS, { ...ALL, balance: '부' }, DEMO_TODAY, PENDING);
+    expect(yes.every((r) => r.closing !== 0)).toBe(true);
+    expect(no.every((r) => r.closing === 0)).toBe(true);
+    expect(no.length).toBeGreaterThan(0);                                  // 더미에 잔액 0 계좌가 있다(전체 조건에서)
+    expect([...yes, ...no].map((r) => r.id).sort()).toEqual(all.map((r) => r.id).sort());
+    expect(totals(no).closing).toBe(0);
+  });
+  it('미결재포함과 함께 걸면 재계산된 잔액으로 판정', () => {
+    const withU = buildBalanceRows(ACCTS, TXNS, { ...ALL, includeUnapproved: true }, DEMO_TODAY, PENDING);
+    const got = buildBalanceRows(ACCTS, TXNS, { ...ALL, includeUnapproved: true, balance: '여' }, DEMO_TODAY, PENDING);
+    expect(got.map((r) => r.id)).toEqual(withU.filter((r) => r.closing !== 0).map((r) => r.id));
   });
 });
 

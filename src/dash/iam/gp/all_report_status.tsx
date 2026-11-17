@@ -14,8 +14,9 @@
    - 원문 tfoot의 소계·합계는 데이터 행이 아니라 `pinnedBottomRowData`로 하단 고정한다.
    - 검색박스(모펀드·운용사·자펀드·계정구분·기준일자) → 상세필터 드로어 + 적용 칩(값만·×). 툴바에 두 번째 칩 줄을 두지 않는다.
        `모펀드`는 원문에서 읽기전용 단일값(농식품모태펀드)이라 드로어에 표시만 한다.
-       `계정구분`은 원문 `chipGroup('f-acc',['전체','농식품','수산'])` 이 도메인이다(종전 "옵션 없음"은 오기). 다만 원문 표
-       행에 계정구분 칸이 없어 거를 키가 없다 → 드로어에 컨트롤만 두고 no-op(`· 데이터 연동 후 적용`), 칩도 만들지 않는다.
+       `계정구분`은 원문 `chipGroup('f-acc',['전체','농식품','수산'])` 이 도메인이다(종전 "옵션 없음"은 오기). 원문 표
+       행에 계정구분 칸이 없어 모델이 **숨은 행 속성 `acc`**(자펀드의 계정, 전 행 '농식품')를 싣고 그 값으로 거른다 + 적용 칩
+       (2026-11-16 사용자 지시 "미연동 필터 전부 동작" — 종전 no-op 캡션). '수산'을 고르면 0건이 정상이다.
    - 금액 단위(원|백만원|억원) 토글 → `schemas/unit.ts` 공유 SSOT. 금액 컬럼이 있는 탭에서만 렌더.
    - 등록 없음(조회 전용) → 툴바 kebab 단독 + 푸터 폴백. 엑셀·인쇄 = kebab + 푸터 download + ⌥D/⌘P.
    - KPI 배지 행 미포함 · 카드뷰 없음 · 행 선택 없음(선택으로 실행할 액션이 없다).
@@ -89,12 +90,12 @@ function toColDef(c: ColumnSpec, tab: ReportTab, unit: Unit): ColDef<ReportRow> 
 const toColumnDefs = (tab: ReportTab, unit: Unit): (ColDef<ReportRow> | ColGroupDef<ReportRow>)[] =>
   foldGroups(tab.columns.map((c) => toColDef(c, tab, unit)), tab.columns);
 
-function DrawerField({ label, children, plain, noop }: { label: string; children: React.ReactNode; plain?: boolean; noop?: boolean }) {
+function DrawerField({ label, children, plain }: { label: string; children: React.ReactNode; plain?: boolean }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </Wrap>
@@ -114,7 +115,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
   const [fFrom, setFFrom] = useState('');
   const [fTo, setFTo] = useState('');
   const [fText, setFText] = useState('');
-  const [fAcc, setFAcc] = useState('');   // no-op — 행에 계정구분 키가 없다(헤더 주석)
+  const [fAcc, setFAcc] = useState('');   // 계정구분 — 숨은 행 속성 acc(헤더 주석)
 
   const tab = findTab(tabKey);
   const clearFilters = () => { setFGp(''); setFSubFund(''); setFAcc(''); setFFrom(''); setFTo(''); setFText(''); };
@@ -124,10 +125,10 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
      (종전: 전환 시 필터를 비웠다 — 칩 건수가 선택 칩만 필터 기준이라 비교가 깨졌다, Codex P2) */
   const onTab = (k: string) => setTabKey(k);
 
-  const visible = useMemo(() => filterRows(tab, { gp: fGp, subFund: fSubFund, from: fFrom, to: fTo, kw: fText }),
-    [tab, fGp, fSubFund, fFrom, fTo, fText]);
+  const visible = useMemo(() => filterRows(tab, { gp: fGp, subFund: fSubFund, acc: fAcc, from: fFrom, to: fTo, kw: fText }),
+    [tab, fGp, fSubFund, fAcc, fFrom, fTo, fText]);
   /* 보고 구분 칩 건수 = 그 표에 현재 조건을 건 결과(facet) — 누르면 보게 될 건수와 같다 */
-  const tabCount = (t: ReportTab) => String(filterRows(t, { gp: fGp, subFund: fSubFund, from: fFrom, to: fTo, kw: fText }).length);
+  const tabCount = (t: ReportTab) => String(filterRows(t, { gp: fGp, subFund: fSubFund, acc: fAcc, from: fFrom, to: fTo, kw: fText }).length);
 
   /* 원문 tfoot(소계·합계)은 **캡처한 리터럴**이지 우리가 계산한 값이 아니다 —
      `합계` 행의 약정총액(32,000,000,000)은 12행의 합이 아니라 조합 약정액이라 필터링된
@@ -139,7 +140,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
      필터가 전 행과 일치할 때 플래그가 꺼져 전체 기준 합계가 "걸러진 표의 합계"로 남는다.
      값이 우연히 같더라도 사용자에게는 필터가 켜진 화면이므로, 상태로 판정한다
      (invest_recovery_detail 의 `filterOn` 과 같은 규약). */
-  const filtered = fGp !== '' || fSubFund !== '' || fFrom !== '' || fTo !== '' || fText.trim() !== '';
+  const filtered = fGp !== '' || fSubFund !== '' || fAcc !== '' || fFrom !== '' || fTo !== '' || fText.trim() !== '';
   const pinnedBottom = filtered ? undefined : tab.pinnedBottom;
 
   const hasAmount = tab.columns.some((c) => c.type === 'amount');
@@ -167,6 +168,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
   const chips: [string, string, () => void][] = [
     ['운용사', fGp, () => setFGp('')],
     ['자펀드', fSubFund, () => setFSubFund('')],
+    ['계정구분', fAcc, () => setFAcc('')],
     ['기준일자', fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', () => { setFFrom(''); setFTo(''); }],   // 드로어 캡션과 같게(칩 → 항목 이동)
     ['검색어', fText.trim(), () => setFText('')],
   ];
@@ -227,7 +229,7 @@ export function AllReportStatus({ onNav }: { onNav?: (r: string) => void }) {
             </DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={GP_OPTIONS} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fSubFund} onChange={setFSubFund} options={SUBFUND_OPTIONS} /></DrawerField>
-            <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={ACCOUNTS} /></DrawerField>
+            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={ACCOUNTS} /></DrawerField>
             <DrawerField label="기준일자" plain>
               <div className="flex items-center gap-2 flex-wrap">
                 <div style={dayWrap}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="기준일자 시작일" /></div>

@@ -2,10 +2,11 @@
    출처: S1_15_조합원정보등록.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(모펀드 1항목)  → 상세필터 드로어 1항목. 목업 그리드에 모펀드 열이 없어 **행 필터와 미연동**이라
-       `DrawerField noop`(· 데이터 연동 후 적용). 연동 항목이 0개라 External Filter
-       (`isExternalFilterPresent`/`doesExternalFilterPass`)를 배선하지 않는다 — 항상 true인 술어는 죽은 코드다.
-       따라서 **필터 결과 집합 === rows** 이고, 적용 칩도 생기지 않는다(드로어는 열리되 적용될 값이 없다).
+   - 검색박스(모펀드 1항목)  → 상세필터 드로어 1항목 + 적용 칩(값만·×). 목업 그리드에 모펀드 열은 없지만
+       행은 등록/수정 폼 1번 항목 `mf`(모펀드)를 저장하고 있어 **그 숨은 속성으로 거른다**(그리드 컬럼은 늘리지 않는다)
+       — 2026-11-16 사용자 지시 "미연동 필터 전부 동작"(종전: no-op 캡션 + External Filter 미배선).
+       External Filter(`isExternalFilterPresent`/`doesExternalFilterPass`) + 필터 변경 시 선택 전부 해제(fund_member_manage 동형).
+       초기 행이 0건이라 기본 상태는 그대로 빈 그리드다 — 등록한 행이 모펀드 값대로 걸러진다.
    - 목록 그리드(NO·조합원·사업자번호/주민번호·주소·전화번호·비고·상세조회) → AG Grid 단일 헤더.
        금액 컬럼이 없어 합계행 없음. 선언 폭 합(1212 = 선택 컬럼 44 포함)이 프레임(1280)보다 좁아 `FIT_GRID_WIDTH`로 채우고,
        **주소만 maxWidth 없이** 두어 잉여를 흡수시킨다(apfs-aggrid 폭 규약).
@@ -23,17 +24,17 @@
        CRUD 관리화면이라 규칙상 미적용, 읽기전용 상세조회 팝업에만 적용).
 
    한계·가정:
-   - `mf`(모펀드)는 그리드 컬럼이 아니지만 **등록/수정 폼 1번 항목**이라 행에 왕복 저장한다(목록 표시·필터 대상 아님).
+   - `mf`(모펀드)는 그리드 컬럼이 아니지만 **등록/수정 폼 1번 항목**이라 행에 왕복 저장한다(목록 표시 안 함 — 상세필터 모펀드가 이 값으로 거른다).
    - 전화번호·비고는 목업 샘플이 공란이라 muted '-'로 표시한다(없는 값 창작 금지).
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·LNB는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유). */
 import '../../aggrid_shared.css';   // 공유 보정 CSS(헤더 sticky — 합계행은 없지만 전 그리드 공통)
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, FIT_GRID_WIDTH, DEFAULT_COL_DEF } from '../../aggrid_theme';
-import { SELECTION_COL } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
+import { SELECTION_COL, dropHiddenSelection } from '../../aggrid_selection';   // 행선택 컬럼 = DS Checkbox(SSOT)
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, RowSelectionOptions, CellKeyDownEvent, CellContextMenuEvent, CellDoubleClickedEvent, CellStyle } from 'ag-grid-community';
+import type { ColDef, GridApi, GridReadyEvent, SelectionChangedEvent, RowSelectionOptions, IRowNode, CellKeyDownEvent, CellContextMenuEvent, CellDoubleClickedEvent, CellStyle } from 'ag-grid-community';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
@@ -69,6 +70,10 @@ const DEMO: MemberRow[] = [];
 
 /* 모펀드 옵션 — 목업 검색박스/등록폼 select 2종 그대로 */
 const MF_OPTIONS = ['농식품모태펀드', 'MOAF'];
+
+/* 상세필터 술어 — 모펀드 = 숨은 행 속성 mf 정확일치(빈 값 = 전체). 단위 테스트가 직접 부른다 */
+export interface MemberFilters { mf: string }
+export const memberPasses = (r: MemberRow, f: MemberFilters): boolean => !f.mf || r.mf === f.mf;
 
 const PAGE_SIZE = 20;
 
@@ -139,12 +144,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </Wrap>
@@ -168,11 +173,18 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
   const [modal, setModal] = useState<ModalState>(null);
   const [ctx, setCtx] = useState<CtxMenuState>(null);
 
-  /* 상세필터 — 목업 검색박스는 모펀드 1항목뿐이고 그리드 컬럼과 미연동이라 state만 둔다(no-op).
-     연동 항목이 0개이므로 External Filter를 배선하지 않는다 → 표시 집합 === rows(파일 상단 주석). */
+  /* 상세필터 — 목업 검색박스는 모펀드 1항목뿐. 숨은 행 속성 mf 로 거른다(빈 값 = 전체, 파일 상단 주석) */
   const [filterOpen, setFilterOpen] = useState(false);
   const [fMf, setFMf] = useState('');
   const clearFilters = () => setFMf('');
+
+  const passes = useCallback((r: MemberRow) => memberPasses(r, { mf: fMf }), [fMf]);
+  const filterActive = Boolean(fMf);
+  /* 필터가 바뀌면 선택을 전부 해제한다 — 걸러진 행의 체크가 보이지 않는 채로 남아 액션이 숨은 행에 걸리지 않게(2026-10-27) */
+  useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
+  const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
+  const doesExternalFilterPass = useCallback((node: IRowNode<MemberRow>) => (node.data ? passes(node.data) : true), [passes]);
+  const filteredRows = useMemo(() => rows.filter(passes), [rows, passes]);
 
   const openDetail = useCallback((r: MemberRow) => setModal({ kind: 'detail', id: r.id }), []);
   /* openDetail은 useCallback(deps [])로 안정 → 컬럼 정의 고정(매 렌더 새 배열이면 그리드가 컬럼을 재생성하며 폭을 되돌린다) */
@@ -247,10 +259,10 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
 
   const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
 
-  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음) ── */
+  /* ── Excel(.xlsx) — 단일 헤더(합계행 없음). 필터 결과만 내보낸다(화면=엑셀) ── */
   const exportExcel = () => {
     const head = EXPORT_COLS.map((c) => c.header);
-    const body = rows.map((r) => EXPORT_COLS.map((c) => {
+    const body = filteredRows.map((r) => EXPORT_COLS.map((c) => {
       const v = c.get(r);
       if (typeof v === 'number') return v;
       return v;
@@ -262,7 +274,7 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
     toast.success('Excel로 내보냈습니다');
   };
 
-  const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
+  const pageSize = showAll ? Math.max(filteredRows.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측과 하단 플로팅 바 **중 한 곳에만** 렌더한다(contextActions 슬롯) */
@@ -281,18 +293,20 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
       title="조합원정보조회"
       favRoute="member-info"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 — 주 필터 칩이 없는 화면이다(검색박스 유일 항목인 모펀드가 행과 미연동).
-         목업 listbar의 `총 N건` 캡션을 건수 컨텍스트로 옮겼다(report_form_manage 동형) */
+      /* 툴바 좌 — 주 필터 칩이 없는 화면이다(검색박스 유일 항목인 모펀드는 드로어 + 적용 칩).
+         목업 listbar의 `총 N건` 캡션을 건수 컨텍스트로 옮겼다(report_form_manage 동형) — 필터 후 건수 */
       toolbarLeft={selCount > 0 ? undefined : <>   {/* 선택 중엔 비운다 — selbar와 나란히 그려진다(GridFrame contextActions 계약) */}
-        <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>조합원 {String(rows.length)}건</span>
+        <span className="text-caption font-semibold" style={{ fontSize: 12.5 }}>조합원 {String(filteredRows.length)}건</span>
       </>}
+      /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
+      appliedFilters={[{ label: '모펀드', value: fMf, onClear: () => setFMf('') }]}
       contextActions={selActions}
       toolbarRight={<>
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'create' })}>조합원정보 등록</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
-      footerLeft={<span>{'총 ' + String(rows.length) + '개 중 ' + String(Math.min(shown, rows.length)) + '개 항목 표시 중'}</span>}
+      footerLeft={<span>{'총 ' + String(filteredRows.length) + '개 중 ' + String(Math.min(shown, filteredRows.length)) + '개 항목 표시 중'}</span>}
       footerCenter={page.total > 1 ? (
         <>
           <IconBtn icon="chevron-left" label="이전" size={32} onClick={() => apiRef.current?.paginationGoToPreviousPage()} />
@@ -315,20 +329,23 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
           selectionColumnDef={SELECTION_COL}
           pagination paginationPageSize={pageSize} suppressPaginationPanel
           preventDefaultOnContextMenu
+          isExternalFilterPresent={isExternalFilterPresent}
+          doesExternalFilterPass={doesExternalFilterPass}
+          onModelUpdated={dropHiddenSelection}   // 수정으로 선택 행이 조건 밖에 나가면 선택 해제(2026-10-27)
           onGridReady={onGridReady}
           onSelectionChanged={onSelectionChanged}
           onPaginationChanged={onPaginationChanged}
           onCellDoubleClicked={onCellDoubleClicked}
           onCellKeyDown={onCellKeyDown}
           onCellContextMenu={handleCellContextMenu}
-          overlayNoRowsTemplate={'<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">등록된 조합원이 없습니다.</span>'}
+          overlayNoRowsTemplate={`<span style="padding:40px 0;color:var(--muted-foreground);font-size:13px">${filterActive ? '조건에 맞는 조합원이 없습니다.' : '등록된 조합원이 없습니다.'}</span>`}
         />
       </div>
 
       <RowContextMenu state={ctx} onClose={() => setCtx(null)} />
 
       {/* ── 상세필터 드로어 — 목업 검색박스 항목 그대로(모펀드 1개). 검색어는 미사용(OFF).
-             모펀드는 그리드 컬럼과 미연동이라 noop 캡션(apfs-detail-filter) ── */}
+             모펀드는 그리드 컬럼이 아닌 숨은 행 속성 mf 로 거른다(2026-11-16 — 종전 미연동 캡션) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -337,7 +354,7 @@ export function MemberInfoManage({ onNav }: { onNav?: (r: string) => void }) {
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={MF_OPTIONS} /></DrawerField>
+            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={MF_OPTIONS} /></DrawerField>
           </div>
           <SheetFooter>
             <Button variant="outline" size="md" onClick={clearFilters}>초기화</Button>

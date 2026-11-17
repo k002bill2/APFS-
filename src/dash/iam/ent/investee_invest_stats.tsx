@@ -15,8 +15,12 @@
    ⚠ 원문 `건수기준`(투자건수·투자금액) select 는 **동작이 배선돼 있지 않다**(스크립트에 블록
      전환 로직 없음 — 2026-09-16 실측). 두 블록은 항상 함께 그려진다. 한때 이 컨트롤로 블록을
      하나만 남겼었는데, 그건 원문에 없는 동작이고 보고서 절반을 숨겼다(Codex 3라운드 P1).
+     2026-11-16 "미연동 필터 전부 동작" 이후에도 건수기준만 **판단 보류(no-op 캡션 유지)** — 원문 실데이터는 '투자건수'뿐이고
+     '투자금액'은 목업이 추론한 옵션이라 재계산할 의미가 정해지지 않았다.
+   ⚠ 모펀드·계정구분·연도기준·데이터기준·기준일자는 표 수치를 **다시 계산**한다(2026-11-16 사용자 지시 — 종전 no-op).
+     계산 규칙·기본 상태 불변(원문 배열 그대로)은 `investee_invest_stats_model.ts` recomputeStats 가 SSOT 다.
    ⚠ 표가 넓어 가로 스크롤은 **각 표의 래퍼 안에만** 둔다(페이지 전체가 가로로 밀리지 않게). */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { useHotkey, HOTKEYS } from '../../use-hotkey';   // ⌘P 인쇄 · ⌥D 내보내기(푸터 툴팁 힌트와 짝)
@@ -29,11 +33,12 @@ import { controlMinWidth } from '../../schemas/renderers';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용(XLSX.read 미사용)
 import {
   SALES_SCALE_HEADERS, INVEST_TYPE_HEADERS, INVEST_TYPE_GROUPS, REGION_GROUPS,
-  SALES_SCALE_ROWS, INVEST_TYPE_ROWS, REGION_ROWS, SOURCE_COUNTS,
+  SALES_SCALE_ROWS, INVEST_TYPE_ROWS, REGION_ROWS, SOURCE_COUNTS, recomputeStats,
 } from './investee_invest_stats_model';
 import type { MatrixRow, RegionRow } from './investee_invest_stats_model';
 
 const { Button, IconBtn, SegTabs } = UI;
+const MF_DEFAULT = '농식품모태펀드';   // 모펀드 기본값(목업 select 에 '전체' 없음)
 
 /* 표 밀도 — 투자기업정보(통합) 페이지(company_profile_model `page` variant)와 같은 시각 언어(2026-09-24).
    셀은 사방 테두리를 그대로 두고, 표를 `border-hidden` 으로 감싸 바깥 테두리만 지운다 —
@@ -77,7 +82,7 @@ const COUNT_BASES = ['투자건수', '투자금액'];
 const DATA_BASES = ['운용사보고', '월말확정'];
 
 /* 드로어 항목 래퍼 — fund_invest_status.tsx 와 같은 모양(공용 export 가 없어 같은 관례로 둔다).
-   noop = 행 데이터와 미연동 → `· 데이터 연동 후 적용` 캡션(무신호 무효 필터 금지). */
+   noop = 판단 보류 항목(건수기준) → `· 데이터 연동 후 적용` 캡션(무신호 무효 필터 금지). */
 function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
@@ -178,23 +183,28 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
   const [filterOpen, setFilterOpen] = useState(false);   // 상세필터 드로어 — 아래 단축키 enabled 가 읽는다(선언이 단축키보다 아래면 TDZ)
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
 
-  /* 상세필터 — 원문 검색박스 7항목. 투자실적구분(=view)만 표를 바꾸고 나머지 6종은 noop:
-     집계표 원천이 고정 상수라 거를 차원이 없다(값을 지어내 행을 바꾸지 않는다).
-     ⚠ 건수기준은 noop 이어야 한다 — 블록 숨김에 배선하면 보고서 절반이 사라진다(상단 ⚠, Codex P1).
+  /* 상세필터 — 원문 검색박스 7항목. 투자실적구분(=view)은 표를 전환하고, 모펀드·계정구분·연도기준·데이터기준·기준일자는
+     표 수치를 다시 계산한다(recomputeStats — 2026-11-16 사용자 지시 "미연동 필터 전부 동작", 종전 no-op).
+     ⚠ 건수기준은 판단 보류 noop 이다 — 블록 숨김에 배선하면 보고서 절반이 사라진다(상단 ⚠, Codex P1).
      기준일자 기본값(원문 2026-07-31)은 적용하지 않는다 — 자펀드 투자실적현황과 같은 열린 경계. */
-  const [fMf, setFMf] = useState('');       // 모펀드
+  /* 모펀드 = 목업 select 에 '전체'가 없다(농식품모태펀드·MOAF) → 기본 농식품모태펀드 = 원문 수치 그대로, MOAF 만 대안 데이터(2026-11-16 사용자 결정 "고정 기본값의 다른 값은 데이터 추가").
+      칩은 기본값과 다를 때만, ×·초기화는 기본값으로 */
+  const [fMf, setFMf] = useState(MF_DEFAULT);       // 모펀드
   const [fAcc, setFAcc] = useState('');     // 계정구분
   const [fYBase, setFYBase] = useState(''); // 연도기준
   const [fCnt, setFCnt] = useState('');     // 건수기준
   const [fDBase, setFDBase] = useState(''); // 데이터기준
   const [fAsOf, setFAsOf] = useState('');   // 기준일자
-  const resetFilters = () => { setFMf(''); setFAcc(''); setFYBase(''); setFCnt(''); setFDBase(''); setFAsOf(''); setView(VIEWS[0].key); };
+  const resetFilters = () => { setFMf(MF_DEFAULT); setFAcc(''); setFYBase(''); setFCnt(''); setFDBase(''); setFAsOf(''); setView(VIEWS[0].key); };
   /* 조회 — 원천이 정적 상수라 재조회할 원본이 없다. 알림만(가짜 데이터 갱신 금지) */
   const refresh = () => toast.success('조회되었습니다');
 
+  /* 검색조건 반영 3표 — 기본 기준이면 원문 상수 그대로(같은 참조), 아니면 재계산한 새 배열 */
+  const stats = useMemo(() => recomputeStats({ mf: fMf, acc: fAcc, yBase: fYBase, dBase: fDBase, asOf: fAsOf }), [fMf, fAcc, fYBase, fDBase, fAsOf]);
+  const isSource = stats.salesScale === SALES_SCALE_ROWS && stats.investType === INVEST_TYPE_ROWS && stats.region === REGION_ROWS;
   const isMatrix = view !== 'region';
   // 두 블록(투자건수·투자금액)은 **함께** 그린다 — 원문이 그렇고, 하나만 남기면 보고서 절반이 사라진다.
-  const rows = view === 'salesScale' ? SALES_SCALE_ROWS : INVEST_TYPE_ROWS;
+  const rows = view === 'salesScale' ? stats.salesScale : stats.investType;
   const headers = view === 'salesScale' ? SALES_SCALE_HEADERS : INVEST_TYPE_HEADERS;
   const meta = VIEWS.find((v) => v.key === view)!;
 
@@ -205,13 +215,13 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
       : ['NO', '소재지', ...REGION_GROUPS.flatMap((g) => g.children.map((c) => `${g.label} ${c}`))];
     const body = isMatrix
       ? rows.map((r) => [r.block, r.label, ...r.values.map((v) => (fmtVal(v, r.block === '투자금액', unit)))])
-      : REGION_ROWS.map((r) => [r.no, r.region, ...r.values.map((v, i) => (fmtVal(v, i === 2, unit)))]);
+      : stats.region.map((r) => [r.no, r.region, ...r.values.map((v, i) => (fmtVal(v, i === 2, unit)))]);
     const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, meta.label);
     XLSX.writeFile(wb, `투자실적현황(투자기업)_${meta.label}_${unit}.xlsx`);
     toast.success(`${meta.label} 표를 Excel로 내보냈습니다 (단위: ${unit})`);
-  }, [isMatrix, headers, rows, meta, unit]);
+  }, [isMatrix, headers, rows, stats.region, meta, unit]);
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });   // ⌥D — 푸터 내보내기 툴팁 힌트와 짝
 
   return (
@@ -223,15 +233,25 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
       /* 원문 `투자실적구분` — 이것만이 실제로 그리드를 전환한다(원문 스크립트 `.gridblock` 토글).
          모드 전환이라 기본 필터 칩으로 둔다(2026-09-24 — 한 줄 툴바, 넘치면 +N 메뉴).
          나머지 검색조건(모펀드·계정구분·연도기준·건수기준·데이터기준·기준일자)은 상세필터 드로어에 둔다
-         (자펀드 투자실적현황과 같은 패턴). 전부 noop 이라 적용 칩은 만들지 않는다. */
+         (자펀드 투자실적현황과 같은 패턴). 수치를 바꾸는 5종은 적용 칩(값 + ×)을 단다 — 판단 보류인 건수기준은 칩 없음. */
       filterChips={VIEWS.map((v) => ({ key: v.key, label: v.label, active: view === v.key, onSelect: () => setView(v.key) }))}
+      appliedFilters={[
+        { label: '모펀드', value: fMf === MF_DEFAULT ? '' : fMf, onClear: () => setFMf(MF_DEFAULT) },
+        { label: '계정구분', value: fAcc, onClear: () => setFAcc('') },
+        { label: '연도기준', value: fYBase, onClear: () => setFYBase('') },
+        { label: '데이터기준', value: fDBase, onClear: () => setFDBase('') },
+        { label: '기준일자', value: fAsOf, onClear: () => setFAsOf('') },
+      ]}
       toolbarRight={<>
         <span className="text-muted-foreground" style={{ fontSize: 13 }}>금액 단위</span>
         <SegTabs size="sm" options={STAT_UNITS as unknown as string[]} value={unit} onChange={(v: string) => setUnit(v as StatUnit)} />
         <Button variant="ghost" size="sm" leadingIcon="panel-left" onClick={() => setFilterOpen(true)}>상세필터</Button>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}
-      footerLeft={<span>{`모펀드 농식품모태펀드 · 매출액별 ${SOURCE_COUNTS.salesScale}행 · 투자형태별 ${SOURCE_COUNTS.investType}행 · 소재지별 ${SOURCE_COUNTS.region}행 (원문 그대로)`}</span>}
+      /* 원문 기준(기본 상태)이면 종전 문구 그대로, 검색조건이 수치를 바꾸면 그 조건·행 수와 재계산 표시 */
+      footerLeft={<span>{isSource
+        ? `모펀드 농식품모태펀드 · 매출액별 ${SOURCE_COUNTS.salesScale}행 · 투자형태별 ${SOURCE_COUNTS.investType}행 · 소재지별 ${SOURCE_COUNTS.region}행 (원문 그대로)`
+        : `모펀드 ${fMf} · 매출액별 ${stats.salesScale.length}행 · 투자형태별 ${stats.investType.length}행 · 소재지별 ${stats.region.length}행 (검색조건 반영 재계산)`}</span>}
       footerRight={<FooterActions onExport={exportExcel} />}>
       <div style={{ padding: '20px 2px 8px', minHeight: 320 }}>
         {view === 'salesScale' && (
@@ -277,13 +297,13 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
 
         {view === 'region' && (
           <Section title="소재지별 투자실적" caption={`투자건수·투자금액 각 건수/비율 2단 헤더 · 금액 단위: ${unit}`}>
-            <RegionTable rows={REGION_ROWS} unit={unit} />
+            <RegionTable rows={stats.region} unit={unit} />
           </Section>
         )}
       </div>
 
       {/* ── 상세필터 드로어 — 원문 검색박스 순서 그대로(모펀드·계정구분·연도기준·투자실적구분·건수기준·데이터기준·기준일자).
-             투자실적구분만 표시를 바꾸고 나머지는 noop 캡션. 검색어는 OFF(만들지 않는다). ── */}
+             투자실적구분은 툴바 칩, 5종은 수치 재계산, 건수기준만 판단 보류 noop 캡션. 검색어는 OFF(만들지 않는다). ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -292,14 +312,14 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={MOTHER_FUNDS} /></DrawerField>
-            <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={ACCOUNTS} /></DrawerField>
-            <DrawerField label="연도기준" noop><DrawerSelect value={fYBase} onChange={setFYBase} options={YEAR_BASES} /></DrawerField>
+            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={MOTHER_FUNDS} all={null} /></DrawerField>
+            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={ACCOUNTS} /></DrawerField>
+            <DrawerField label="연도기준"><DrawerSelect value={fYBase} onChange={setFYBase} options={YEAR_BASES} /></DrawerField>
             {/* 투자실적구분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
             <DrawerField label="건수기준" noop><DrawerSelect value={fCnt} onChange={setFCnt} options={COUNT_BASES} /></DrawerField>
-            <DrawerField label="데이터기준" noop><DrawerSelect value={fDBase} onChange={setFDBase} options={DATA_BASES} /></DrawerField>
+            <DrawerField label="데이터기준"><DrawerSelect value={fDBase} onChange={setFDBase} options={DATA_BASES} /></DrawerField>
             {/* 기준일자 — PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker), fit-content 래퍼로 폭 고정 */}
-            <DrawerField label="기준일자" noop plain>
+            <DrawerField label="기준일자" plain>
               <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
                 <PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" />
               </div>

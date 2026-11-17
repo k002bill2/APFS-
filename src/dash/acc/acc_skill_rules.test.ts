@@ -81,15 +81,23 @@ describe('④ 회계 페이저 — 페이지 번호 버튼', () => {
     });
 });
 
-/* ⑤ 데이터 연동 전(no-op) 항목은 적용 칩을 만들지 않는다 — apfs-detail-filter "no-op 항목은 칩을 만들지 않는다".
-   계좌잔액(2026-11-09 점검): 미결재포함·잔액여부가 행을 거르지 않는데 칩이 떠 필터가 걸린 것처럼 보였다. */
-describe('⑤ no-op 필터 항목 — 적용 칩 없음', () => {
+/* ⑤ 계좌잔액 미결재포함·잔액여부 — 동작하므로 no-op 캡션 없음 · 적용 칩 있음.
+   2026-11-09 점검 땐 둘이 행을 거르지 않는 no-op 이라 "no-op 항목은 칩을 만들지 않는다"(apfs-detail-filter)를 고정했다.
+   2026-11-16 사용자 지시 "미연동 필터 전부 동작"으로 둘 다 실제로 적용돼(account_balance_model) 이 블록을 뒤집었다 —
+   이제 걸린 조건이 칩으로 보여야 한다(칩 label = 드로어 캡션, 칩 클릭 jump). */
+describe('⑤ 계좌잔액 미결재포함·잔액여부 — 동작 항목은 캡션 없음 · 적용 칩 있음', () => {
   const src = readSrc('account_balance_manage.tsx');
-  const noop = [...src.matchAll(/<Noop(?:Label|Check) label="([^"]+)"/g)].map((m) => m[1]);
-  it('no-op 항목이 있다(이름이 바뀌어 0건 통과하지 않게)', () => { expect(noop.length).toBeGreaterThan(0); });
-  it.each(noop)('%s', (label) => {
-    const chips = src.slice(src.indexOf('const chips: AppliedFilter[] = ['), src.indexOf('];', src.indexOf('const chips: AppliedFilter[] = [')));
-    expect(chips).not.toContain(`label: '${label}'`);
+  const chips = src.slice(src.indexOf('const chips: AppliedFilter[] = ['), src.indexOf('];', src.indexOf('const chips: AppliedFilter[] = [')));
+  it('no-op 캡션·컴포넌트가 없다', () => {
+    expect(src).not.toMatch(/Noop(?:Label|Check)|NOOP_CAPTION|데이터 연동 후 적용/);
+  });
+  /* 잔액여부는 2026-11-17 여/부 선택으로 바뀌어 사용여부·만기여부와 같은 ynSelect/ynChip 경로로 그린다 */
+  it.each([
+    ['미결재포함', `label="미결재포함"`, `label: '미결재포함'`],
+    ['잔액여부', `ynSelect('balance', '잔액여부')`, `ynChip('balance', '잔액여부')`],
+  ])('%s — 드로어 항목 + 적용 칩', (_label, drawer, chip) => {
+    expect(src).toContain(drawer);
+    expect(chips).toContain(chip);
   });
 });
 

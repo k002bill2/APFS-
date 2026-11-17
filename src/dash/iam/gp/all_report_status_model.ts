@@ -170,22 +170,29 @@ const apfsContribRows: ReportRow[] = [
   { id: 'ac-1', no: '1', gp: 'KB증권(주)', subFund: '현대동양농식품사모투자전문회사', fundAmount: 32_000_000_000, member: '농식품모태펀드', memberType: 'SP', memberCommit: 15_700_000_000, memberCommitTotal: 32_000_000_000, tradeType: '출자', tradeDetail: '설립출자', tradeDate: '2011-05-13', paidAmt: 785_000_000, fundPaidTotal: 1_600_000_000, principalDist: '-', profitDistPreTax: '-', fundDistTotal: '-', otherDist: '-', priorLossReserve: '-', withholdingTax: '-', netDeposit: '-', netDepositTotal: '-', holdBalance: 785_000_000 },
 ];
 
+/* 계정구분 — 원문 표 행에는 칸이 없다 → **숨은 행 속성 `acc`** 로 싣는다(그리드 컬럼·검색어 대상 아님 — 둘 다 tab.columns 만 본다).
+   2026-11-16 사용자 지시 "미연동 필터 전부 동작"(종전: 드로어 no-op 캡션). 6개 표의 행이 전부 한 자펀드
+   (현대동양농식품사모투자전문회사 — 자펀드별조합원조회 FUND.acc '농식품')의 거래라 같은 값을 싣는다 →
+   '수산'을 고르면 0건이 정상이다(한 자펀드의 행을 계정별로 나누지 않는다). 집계 행(pinnedBottom)엔 싣지 않는다. */
+const SUBFUND_ACC: Readonly<Record<string, string>> = { 현대동양농식품사모투자전문회사: '농식품' };
+const withAcc = (rows: readonly ReportRow[]): ReportRow[] => rows.map((r) => ({ ...r, acc: SUBFUND_ACC[String(r.subFund ?? '')] ?? '' }));
+
 export const REPORT_TABS: readonly ReportTab[] = [
   {
     key: 'review', label: '투자심의', sheet: '투자심의 현황', dateKey: 'investDate',
     columns: allReportStatusSchema.columns,   // ← 스키마가 정본(복사 금지)
     statusDomain: [...(allReportStatusSchema.statusDomain ?? []), ...YN_TONES],
-    rows: reviewRows,
+    rows: withAcc(reviewRows),
   },
   {
     key: 'occasional', label: '수시보고', sheet: '수시보고 현황', dateKey: 'inputDate',
-    columns: occasionalColumns, statusDomain: YN_TONES, rows: occasionalRows,
+    columns: occasionalColumns, statusDomain: YN_TONES, rows: withAcc(occasionalRows),
   },
   {
     key: 'meeting', label: '조합원총회', sheet: '조합원총회 현황', dateKey: 'meetingDate',
     columns: meetingColumns,
     statusDomain: [...(allReportStatusSchema.statusDomain ?? []), ...YN_TONES],
-    rows: meetingRows,
+    rows: withAcc(meetingRows),
   },
   {
     // 원문이 빈 표다. 행을 지어내지 않는다 — 빈 상태가 원문 충실이다.
@@ -195,11 +202,11 @@ export const REPORT_TABS: readonly ReportTab[] = [
   {
     key: 'gpContribution', label: '운용사 출자배분', sheet: '운용사 출자배분관리', dateKey: 'baseDate',
     columns: gpContribColumns, statusDomain: YN_TONES,
-    rows: gpContribRows, pinnedBottom: gpContribTotals,
+    rows: withAcc(gpContribRows), pinnedBottom: gpContribTotals,
   },
   {
     key: 'apfsContribution', label: '농금원 출자배분', sheet: '농금원 출자배분관리', dateKey: 'tradeDate',
-    columns: apfsContribColumns, statusDomain: YN_TONES, rows: apfsContribRows,
+    columns: apfsContribColumns, statusDomain: YN_TONES, rows: withAcc(apfsContribRows),
   },
 ];
 
@@ -209,14 +216,15 @@ export const findTab = (key: string): ReportTab => REPORT_TABS.find((t) => t.key
 export const distinctValues = (tab: ReportTab, key: string): string[] =>
   [...new Set(tab.rows.map((r) => String(r[key] ?? '')).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'));
 
-export interface ReportFilters { gp: string; subFund: string; from: string; to: string; kw: string }
+export interface ReportFilters { gp: string; subFund: string; acc: string; from: string; to: string; kw: string }
 
-/** 행 필터 — 운용사·자펀드는 완전일치, 기준일자는 탭의 주 날짜 컬럼 범위, 검색어는 전 컬럼 부분일치. */
+/** 행 필터 — 운용사·자펀드·계정구분(숨은 속성 acc)은 완전일치, 기준일자는 탭의 주 날짜 컬럼 범위, 검색어는 전 컬럼 부분일치. */
 export function filterRows(tab: ReportTab, f: ReportFilters): ReportRow[] {
   const kw = f.kw.trim().toLowerCase();
   return tab.rows.filter((r) => {
     if (f.gp && String(r.gp ?? '') !== f.gp) return false;
     if (f.subFund && String(r.subFund ?? '') !== f.subFund) return false;
+    if (f.acc && String(r.acc ?? '') !== f.acc) return false;
     const d = String(r[tab.dateKey] ?? '');
     // '-'(미정) 행은 기간을 걸면 빠진다 — 날짜가 없는 행을 기간 안에 있다고 볼 수 없다.
     if (f.from && !(d >= f.from)) return false;

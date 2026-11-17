@@ -28,6 +28,9 @@
      (DEFAULT_COL_DEF는 공유 SSOT라 그대로 두고 컬럼 팩토리에서 덮는다).
    - **필터는 AG Grid External이 아니라 React에서 그룹 단위**로 건다 — 평탄화된 행을 거르면 소계가
      자기 멤버 없이 살아남는다. `passes(group)` → filteredGroups → displayRows 순서다.
+   - **모펀드 = 그룹의 SP 조합원**(motherFundOf)으로 거른다(2026-11-16 사용자 지시 — 종전 no-op). 모태펀드는 자펀드에
+     특별조합원(SP)으로 출자하므로 그 조합원명이 곧 모펀드다(숨은 속성을 따로 싣지 않고 있는 칸을 쓴다). 현재 두 그룹 모두
+     SP 가 농식품모태펀드라 MOAF 를 고르면 0건이 정상이다(조합원 표와 모순되는 값을 지어내지 않는다).
    - **조회기준·거래구분 동작은 추론**이다(목업은 select만 있고 동작 미구현): 상세=조합원행+소계, 요약=소계만,
      거래구분 출자·배분=그 거래구분 그룹만, 기타=출자·배분 둘 다 아닌 그룹(현재 데이터 0건 → 빈 그리드).
      두 축은 독립이라 '요약 + 출자'처럼 함께 걸린다(나누기 전엔 거래로 거르면 늘 상세 형태였다).
@@ -166,6 +169,9 @@ export const txKeepsGroup = (f: TxFilter, g: TxGroup): boolean =>
   f === '출자' || f === '배분' ? g.tx === f
     : f === '기타' ? g.tx !== '출자' && g.tx !== '배분'
       : true;
+
+/** 모펀드 = 그룹의 SP(특별조합원) 조합원명 — 모태펀드가 SP 로 출자한다(파일 상단 '한계'). SP 가 없으면 '' */
+export const motherFundOf = (g: TxGroup): string => g.members.find((m) => m.mg === 'SP')?.mem ?? '';
 
 /** 그룹 배열 → 표시행. '요약'이면 소계 행만 남긴다(NO 셀은 그대로 '소 계') */
 export function flatten(groups: TxGroup[], view: View): DistRow[] {
@@ -361,12 +367,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
 }
 
 /* plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 */
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: ReactNode }) {
+function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </Wrap>
@@ -391,7 +397,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
   const [filterOpen, setFilterOpen] = useState(false);
   const [view, setView] = useState<View>(DEFAULT_VIEW);
   const [fTx, setFTx] = useState<TxFilter>('');
-  const [fMf, setFMf] = useState('');     // 모펀드 — 그룹 컬럼 아님(no-op)
+  const [fMf, setFMf] = useState('');     // 모펀드 — 그룹의 SP 조합원(motherFundOf)
   const [fUn, setFUn] = useState('');
   const [fFn, setFFn] = useState('');
   const [fAcc, setFAcc] = useState('');
@@ -415,13 +421,14 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
   /* ⚠ 필터는 **그룹 단위**다 — 평탄화된 행을 거르면 소계가 자기 멤버 없이 살아남는다(파일 상단 '한계').
      AG Grid External Filter를 쓰지 않는 이유도 같다(행 단위로만 동작). */
   const passes = useCallback((g: TxGroup) => {
+    if (fMf && motherFundOf(g) !== fMf) return false;
     if (fUn && g.un !== fUn) return false;
     if (fFn && g.fn !== fFn) return false;
     if (fAcc && g.acc !== fAcc) return false;
     if (fFrom && g.td < fFrom) return false;   // 기준일자 = 거래일자, 'YYYY-MM-DD' 사전식 비교
     if (fTo && g.td > fTo) return false;
     return txKeepsGroup(fTx, g);
-  }, [fUn, fFn, fAcc, fFrom, fTo, fTx]);
+  }, [fMf, fUn, fFn, fAcc, fFrom, fTo, fTx]);
 
   const filteredGroups = useMemo(() => groups.filter(passes), [groups, passes]);
   const displayRows = useMemo(() => flatten(filteredGroups, view), [filteredGroups, view]);
@@ -503,6 +510,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
       filterChips={VIEWS.map((v) => ({ key: v, label: v, active: view === v, onSelect: () => setView(v) }))}
       /* 적용 중인 드로어 값 칩 — 값만 표시(접두사 없음) + × */
       appliedFilters={[
+        { label: '모펀드', value: fMf, onClear: () => setFMf('') },
         { label: '운용사', value: fUn, onClear: () => setFUn('') },
         { label: '자펀드', value: fFn, onClear: () => setFFn('') },
         { label: '계정구분', value: fAcc, onClear: () => setFAcc('') },
@@ -550,7 +558,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
       </div>
 
       {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(모펀드·운용사·자펀드·계정구분·조회기준 자리=거래구분·기준일자).
-             검색어는 없다(목업 미포함). 모펀드는 그룹 컬럼과 미연동이라 noop 캡션 ── */}
+             검색어는 없다(목업 미포함). 모펀드는 그룹의 SP 조합원으로 거른다(motherFundOf) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -559,7 +567,7 @@ export function ApfsContributionManage({ onNav }: { onNav?: (r: string) => void 
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
+            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fUn} onChange={setFUn} options={unOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFn} onChange={setFFn} options={fnOptions} /></DrawerField>
             {/* 목업은 전체/농식품/수산 칩 그룹 — DrawerSelect의 첫 옵션 '전체'가 같은 역할을 한다 */}

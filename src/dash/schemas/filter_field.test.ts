@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveFilterField, YEAR_OPTIONS, filterValueMatches, filterChipText } from './filter_field';
+import { resolveFilterField, YEAR_OPTIONS, filterValueMatches, filterChipText, onOrBefore } from './filter_field';
 import { joinMulti } from '../ui/multi-select-value';
 import { schema as gongo } from '../iam/mfund/subfund_notice_manage';
 import { schema as yearInv } from '../brf/mfund/annual_invest_status';
@@ -22,7 +22,8 @@ describe('resolveFilterField — 필터 라벨 → 컨트롤 타입 도출', () 
   });
 
   it('스키마(fields:[]) 무매칭 날짜형 라벨 → date, columnKey 없음(행필터 불가)', () => {
-    const ff = resolveFilterField('기준일', yearInv);
+    // 휴리스틱 탐침 — 연도별 투자현황은 2026-11-16 기준일을 filterSpecs(asOf)로 연동했으므로 명세를 떼고 본다
+    const ff = resolveFilterField('기준일', { ...yearInv, filterSpecs: undefined });
     expect(ff.kind).toBe('date');
     expect(ff.columnKey).toBeUndefined();
   });
@@ -201,5 +202,34 @@ describe('다중 선택 필터(kind multi)', () => {
     const ff = resolveFilterField('분야', base);
     expect(filterChipText(ff, joinMulti(['성장']))).toBe('성장');
     expect(filterChipText(ff, joinMulti(['성장', '회수', 'ESG']))).toBe('성장 외 2');
+  });
+});
+
+describe('조회 시점(asOf) — 기준일자·기준년월·기준년도는 셀 ≤ 값', () => {
+  it('onOrBefore — 값 길이(년·년월·일자)만큼 셀을 잘라 비교, 같은 날·달·해 포함', () => {
+    expect(onOrBefore('2025-03-10', '2025-03-10')).toBe(true);
+    expect(onOrBefore('2025-03-11', '2025-03-10')).toBe(false);
+    expect(onOrBefore('2025-03-31', '2025-03')).toBe(true);
+    expect(onOrBefore('2025-04-01', '2025-03')).toBe(false);
+    expect(onOrBefore('2025-12-31', '2025')).toBe(true);
+    expect(onOrBefore('2026-01-01', '2025')).toBe(false);
+  });
+  it('날짜가 아닌 셀은 시점이 없어 거르고, 빈 값은 비활성(통과)', () => {
+    expect(onOrBefore('-', '2025-03-10')).toBe(false);
+    expect(onOrBefore(undefined, '2025-03-10')).toBe(false);
+    expect(onOrBefore('-', '')).toBe(true);
+  });
+  it('filterSpecs mode:asOf → asOf 필드가 되고 filterValueMatches 가 정확일치 대신 ≤ 로 판정', () => {
+    const s = { ...DEFAULT_SCHEMA('asof-probe'), filters: ['기준일자'], sample: [{ regDt: '2025-01-05' }], filterSpecs: { 기준일자: { kind: 'day' as const, key: 'regDt', mode: 'asOf' as const } } };
+    const ff = resolveFilterField('기준일자', s);
+    expect(ff).toMatchObject({ kind: 'date', columnKey: 'regDt', asOf: true });
+    expect(filterValueMatches(ff, '2025-06-30', '2025-01-05')).toBe(true);
+    expect(filterValueMatches(ff, '2024-12-31', '2025-01-05')).toBe(false);
+  });
+  it('mode 없는 day 는 종전대로 정확일치', () => {
+    const s = { ...DEFAULT_SCHEMA('asof-probe'), filters: ['기준일자'], sample: [{ regDt: '2025-01-05' }], filterSpecs: { 기준일자: { kind: 'day' as const, key: 'regDt' } } };
+    const ff = resolveFilterField('기준일자', s);
+    expect(ff.asOf).toBeUndefined();
+    expect(filterValueMatches(ff, '2025-06-30', '2025-01-05')).toBe(false);
   });
 });

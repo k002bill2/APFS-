@@ -5,7 +5,7 @@
    → 툴바 칩 = 표시 형태 2개(모드형, 전체 없음) · 거래구분 = 상세필터 select('전체'=빈 값) + 적용 칩. */
 import { describe, it, expect } from 'vitest';
 import { readSrc } from '../../test_src';
-import { VIEWS, DEFAULT_VIEW, TX_FILTERS, txKeepsGroup, flatten, GROUPS } from './apfs_contribution_manage';
+import { VIEWS, DEFAULT_VIEW, TX_FILTERS, txKeepsGroup, flatten, GROUPS, motherFundOf } from './apfs_contribution_manage';
 
 const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
 const SRC = strip(readSrc('apfs_contribution_manage.tsx'));
@@ -50,5 +50,32 @@ describe('거래구분 = 상세필터 select + 적용 칩', () => {
   it('드로어 필드 캡션과 적용 칩 label 이 같은 "거래구분"이다(칩 클릭 → 그 칸으로 이동 전제)', () => {
     expect(SRC).toMatch(/<DrawerField label="거래구분">/);
     expect(SRC).toMatch(/\{ label: '거래구분', value: fTx,/);
+  });
+});
+
+/* 모펀드 — 2026-11-16 사용자 지시(미연동 필터 전부 동작). 종전엔 미연동 캡션만 달고 그룹을 거르지 않았다.
+   모태펀드는 자펀드에 SP(특별조합원)로 출자하므로 그룹의 SP 조합원명이 곧 모펀드다(숨은 속성을 따로 싣지 않는다). */
+describe('모펀드 = 그룹의 SP 조합원으로 거른다', () => {
+  const keep = (mf: string) => GROUPS.filter((g) => !mf || motherFundOf(g) === mf).map((g) => g.gi);
+
+  it('두 그룹 모두 SP 가 농식품모태펀드다 — 기본(빈 값)·농식품모태펀드는 전 그룹, MOAF 는 0건(조합원 표와 모순되는 값을 짓지 않는다)', () => {
+    expect(GROUPS.map(motherFundOf)).toEqual(['농식품모태펀드', '농식품모태펀드']);
+    expect(keep('')).toEqual(GROUPS.map((g) => g.gi));
+    expect(keep('농식품모태펀드')).toEqual(GROUPS.map((g) => g.gi));
+    expect(keep('MOAF')).toEqual([]);
+    expect(flatten(GROUPS.filter((g) => motherFundOf(g) === 'MOAF'), '상세')).toEqual([]);
+  });
+
+  it('SP 조합원이 없는 그룹은 어떤 모펀드에도 걸리지 않는다', () => {
+    const noSp = { ...GROUPS[0], members: GROUPS[0].members.filter((m) => m.mg !== 'SP') };
+    expect(motherFundOf(noSp)).toBe('');
+  });
+
+  it('passes 가 모펀드를 거르고, 적용 칩·캡션이 동작 상태다(미연동 캡션 없음)', () => {
+    expect(SRC).toMatch(/if \(fMf && motherFundOf\(g\) !== fMf\) return false;/);
+    expect(SRC).toMatch(/\}, \[fMf, fUn, fFn, fAcc, fFrom, fTo, fTx\]\);/);
+    expect(SRC).toMatch(/\{ label: '모펀드', value: fMf, onClear: \(\) => setFMf\(''\) \}/);
+    expect(SRC).toMatch(/<DrawerField label="모펀드">/);
+    expect(SRC).not.toMatch(/noop/);
   });
 });

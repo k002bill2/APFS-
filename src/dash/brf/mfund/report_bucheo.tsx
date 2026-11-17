@@ -7,13 +7,14 @@
    목업 → 우리 규약
    - 탭 없음 — 옛 탭 2 '연도별투자현황상세'(04 목업)는 원본 화면에 없는 탭이라 삭제했다(2026-09-24 사용자 결정).
    - 검색박스 → 상세필터 드로어: 기준월(원문 2026-08) · 계정구분(전체/농식품/수산) · 조회기준(선정년도/결성년도 라디오).
-     기준월·계정구분은 행에 대응 칸이 없어 조회 조건(`· 데이터 연동 후 적용`).
+     기준월·계정구분은 표 수치를 다시 계산한다(report_bucheo_model.yearlyRows — 2026-11-16 사용자 지시, 종전 no-op):
+     기준월 = 그 연도보다 뒤인 연도 행 제외 · 계정구분 = 연도 행마다 농식품/수산 몫(두 몫의 합 = 원문 값). 기본값이면 원문 그대로.
    - 조회기준 → 원문처럼 **데이터셋 자체가 바뀌고**(DATA_SEL ↔ DATA_FORM) 연도 컬럼 헤더가 선택값이 된다.
    - 금액 단위 토글: 기본 백만원(원문 `var UNIT='백만원'`).
    - 합계행: 조합수·금액은 합산, 연도는 '-', 투자배수 = (ΣB1+ΣB2+ΣC)/ΣA(원문 tfoot 1.63).
    - 원문 `.foot-note` 3줄은 화면 안내문이라 표 아래에 둔다(설계 메모 `.note` 는 옮기지 않는다).
    - 원문 [조회] 는 즉시 반영이라 두지 않는다. 엑셀은 푸터 내보내기(⌥D) — 표 그대로. KPI·카드뷰·행 선택 없음. */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { toast } from '../../ui/sonner';
 import type { Unit } from '../../schemas/unit';
 import { RiskPage } from '../../risk_page_kit';
@@ -24,6 +25,7 @@ import {
   YEARLY_BASE_YM, ACCOUNT_TYPES, BASES, YEARLY_FOOTNOTES, YEARLY_TABLES,
 } from '../brief_data';
 import type { Basis } from '../brief_data';
+import { yearlyRows } from './report_bucheo_model';
 
 const LABEL = '연도별투자현황';
 /** 원문 초기 단위 `var UNIT='백만원'` */
@@ -38,11 +40,11 @@ function ReportBucheo({ onNav }: { onNav?: (route: string) => void }) {
   const reset = () => { setYm(YEARLY_BASE_YM); setAcc(''); setBasis('선정년도'); setUnit(DEFAULT_UNIT); };
 
   const table = YEARLY_TABLES[basis];
-  const rows = table.rows;
+  const rows = useMemo(() => yearlyRows(table.rows, acc, ym), [table, acc, ym]);
 
   const filters: FilterSpec[] = [
-    { label: '기준월', kind: 'month', value: ym, onChange: setYm, noop: true },
-    { label: '계정구분', kind: 'select', value: acc, onChange: setAcc, options: ACCOUNT_TYPES, noop: true },
+    { label: '기준월', kind: 'month', value: ym, onChange: setYm },
+    { label: '계정구분', kind: 'select', value: acc, onChange: setAcc, options: ACCOUNT_TYPES },
     { label: '조회기준', kind: 'radio', value: basis, onChange: (v) => setBasis(v as Basis), options: BASES },
   ];
 

@@ -102,7 +102,7 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
   const [v, setV] = useState<Record<string, string>>({
     fn: nz(row.fn), fd: nz(row.fd), rd: nz(row.rd), mat: nz(row.mat), liq: nz(row.liq), st: row.st === '-' ? OPT_FS[0] : row.st, regNo: '',
     c1: nz(row.c1), c2: nz(row.c2), v1: nz(row.v1), v2: nz(row.v2), unitAmt: '', closeMonth: '12',
-    ctype: row.ctype === '-' ? OPT_FG[0] : row.ctype, cs: row.cs === '-' ? OPT_FC[0] : row.cs, ag: OPT_AG[0], tc: OPT_TC[0], pt: OPT_PT[0], payRounds: '',
+    ctype: row.ctype === '-' ? OPT_FG[0] : row.ctype, cs: row.cs === '-' ? OPT_FC[0] : row.cs, ag: row.ag || OPT_AG[0], tc: OPT_TC[0], pt: OPT_PT[0], payRounds: '',
     dur: nz(row.dur), rate: nz(row.rate), mgmtFee: '', perfFee: '',
     lgp: nz(row.lgp), lmo: '', lossOrder: '선GP', pm: '', note: '',
   });
@@ -115,9 +115,12 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
     if (row.gp2 && row.gp2 !== '-') list.push({ kind: '공동GP', name: row.gp2 });
     return list.length ? list : [{ kind: '대표GP', name: '' }];
   });
+  /* 모태펀드담당자·RISK관리담당자 = 행의 숨은 속성 manager·risk(상세필터 심사담당자·리스크담당자가 거르는 값) — 열 때 싣고 저장 때 되돌린다 */
+  const DUTY_EMAIL: Record<string, string> = { 양한솔: 'yhs8566@apfs.kr', 이성훈: 'leesh@apfs.kr' };
+  const duty = (kind: string, name: string): DutyRow => ({ kind, name, email: DUTY_EMAIL[name] ?? '' });
   const [duties, setDuties] = useState<DutyRow[]>([
-    { kind: '모태펀드담당자', name: '양한솔', email: 'yhs8566@apfs.kr' },
-    { kind: 'RISK관리담당자', name: '이성훈', email: 'leesh@apfs.kr' },
+    duty('모태펀드담당자', row.manager ?? '양한솔'),
+    duty('RISK관리담당자', row.risk ?? '이성훈'),
     { kind: 'GP담당자', name: '', email: '' },
   ]);
   const gpChecks = useRowChecks(gps.length);
@@ -145,6 +148,10 @@ export function SubFundFormEditModal({ row, onSave, onClose }: { row: SubFundRow
       fd: dateOr(v.fd, row.fd), rd: dateOr(v.rd, row.rd), mat: dateOr(v.mat, row.mat), liq: dateOr(v.liq, row.liq), st: v.st || row.st,
       c1, c2, c3: minus(c1, c2), v1, v2, v3: minus(v1, v2),
       ctype: v.ctype, cs: v.cs, dur: numOr(v.dur, row.dur), rate: numOr(v.rate, row.rate), lgp: numOr(v.lgp, row.lgp),
+      ag: v.ag || row.ag,
+      /* 지우거나 행을 삭제하면 미배정('') — 옛 담당자로 되돌리지 않는다(Codex P2: 지운 사람이 필터에 계속 걸렸다) */
+      manager: duties.find((d) => d.kind === '모태펀드담당자')?.name.trim() ?? '',
+      risk: duties.find((d) => d.kind === 'RISK관리담당자')?.name.trim() ?? '',
     });
   };
   const yLabel = `${row.y}년 ${row.rt}${row.ch ? row.ch + '차' : ''}`;

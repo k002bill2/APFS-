@@ -7,8 +7,10 @@
 
    목업 → 우리 규약
    - 검색박스(자펀드[·투자기업]·평가년월) → 상세필터 드로어. 자펀드·투자기업은 행 컬럼으로 **실제로 거른다**.
-     평가년월은 행에 대응 컬럼이 없어 `· 데이터 연동 후 적용`(조회 기준 컨텍스트 — 푸터 캡션·칩에만 싣는다).
-     원문 자펀드 select 에 '전체' 가 없는 화면(S2_87·S2_89)은 빈 선택지 없이 옮긴다.
+     평가년월은 평가 시점 스냅샷이라 숨은 행 속성 ym 의 **같은 값**으로 거른다(2026-11-16 사용자 지시 "미연동 필터
+     전부 동작" — 종전엔 미연동). 원문 행은 평가년월 기본값(EVAL_BASE_YM), 직전 분기(PREV_YM) 평가분은 화면이 더미 행으로 덧붙인다
+     (같은 자펀드·투자기업 — 평가년월만 바꿔도 행이 바뀌게). 기본 상태에선 더미 행이 걸러져 행 수·합계가 종전과 같다.
+     그리드 컬럼은 늘리지 않는다. 원문 자펀드 select 에 '전체' 가 없는 화면(S2_87·S2_89)은 빈 선택지 없이 옮긴다.
    - 트리거 셀 단일 클릭 + 셀 Enter/Space → 근거 팝업(골드 fund_early_warning 자펀드수익률 셀과 같은 계약: 링크 모양 +
      external 아이콘 · ARIA 는 gridcell 에). 원문도 `.lnk-trig` 버튼 단일 클릭이다.
    - 팝업이 열린 동안 ⌥D 는 끈다(팝업은 자체 엑셀 버튼 — 배경 목록을 내려받지 않게).
@@ -22,7 +24,7 @@ import type { FilterSpec } from '../../risk_page_kit';
 import { ReadGrid } from '../../risk_grid';
 import { exportTables } from '../../risk_excel';
 import { IrrBasisModal } from './irr_basis_modal';
-import type { TableMeta } from '../../risk_table_meta';
+import type { TableMeta, Row } from '../../risk_table_meta';
 import { EVAL_BASE_YM } from './risk_valuation_data';
 import type { IrrBasis } from './risk_irr_data';
 import {
@@ -31,10 +33,24 @@ import {
   IRR_FUND, IRR_FUND_BASIS, IRR_FUND_FUNDS,
 } from './risk_irr_data';
 
-interface IrrConfig {
+/** 직전 분기 평가년월 — 더미 평가분의 시점 */
+export const PREV_YM = '2025-09';
+
+/** 평가년월 시드 — 원문 행 = 기본 평가년월, 더미 행 = 직전 분기. 데이터 모듈(risk_irr_data)은 근거 팝업도 써서 화면이 파생한다 */
+const withYm = (t: TableMeta, prev: Row[]): Row[] =>
+  [...t.rows.map((r) => ({ ...r, ym: EVAL_BASE_YM })), ...prev.map((r) => ({ ...r, ym: PREV_YM }))];
+
+/** 검색조건 술어 — 자펀드·투자기업·평가년월(스냅샷 = 같은 값). 빈 값은 통과 */
+export function irrRows(rows: readonly Row[], f: { fund: string; co: string; ym: string }): Row[] {
+  return rows.filter((r) => (!f.fund || r.fund === f.fund) && (!f.co || r.co === f.co) && (!f.ym || r.ym === f.ym));
+}
+
+export interface IrrConfig {
   label: string;
   route: string;
   table: TableMeta;
+  /** 화면 행 전체(원문 행 + 직전 분기 더미 행, 숨은 ym 시드) — table.rows 는 원문 그대로(열 폭 산정용) */
+  rows: Row[];
   basis: IrrBasis;
   funds: readonly string[];
   /** 원문 자펀드 select 에 '전체' 가 있는가 */
@@ -52,16 +68,13 @@ function IrrPage({ cfg, onNav }: { cfg: IrrConfig; onNav?: (r: string) => void }
   const [open, setOpen] = useState(false);
 
   const reset = () => { setUnit(DEFAULT_UNIT); setFund(cfg.defaultFund); setCo(''); setYm(EVAL_BASE_YM); };
-  const rows = useMemo(
-    () => cfg.table.rows.filter((r) => (!fund || r.fund === fund) && (!co || r.co === co)),
-    [cfg.table, fund, co],
-  );
+  const rows = useMemo(() => irrRows(cfg.rows, { fund, co, ym }), [cfg.rows, fund, co, ym]);
   const onLink = useCallback(() => setOpen(true), []);
 
   const filters: FilterSpec[] = [
     { label: '자펀드', kind: 'select', value: fund, onChange: setFund, options: cfg.funds, allLabel: cfg.fundAll ? '전체' : null },
     ...(cfg.companies ? [{ label: '투자기업', kind: 'select' as const, value: co, onChange: setCo, options: cfg.companies }] : []),
-    { label: '평가년월', kind: 'month', value: ym, onChange: setYm, noop: true },
+    { label: '평가년월', kind: 'month', value: ym, onChange: setYm, allLabel: null },   // 스냅샷 — 비우면 두 분기가 섞인다
   ];
 
   const exportExcel = () => {
@@ -80,16 +93,20 @@ function IrrPage({ cfg, onNav }: { cfg: IrrConfig; onNav?: (r: string) => void }
   );
 }
 
-const CONTRACT: IrrConfig = {
+/* 직전 분기 더미 평가분 — 원문 행과 같은 운용사·자펀드·투자기업, 평가금액·IRR 만 그 시점 값. 표시 길이는 원문 이하(열 폭 불변) */
+export const CONTRACT: IrrConfig = {
   label: '투자기업별(계약별) IRR', route: 'irr-by-contract', table: IRR_CONTRACT, basis: IRR_CONTRACT_BASIS,
+  rows: withYm(IRR_CONTRACT, [{ ...IRR_CONTRACT.rows[0], id: 'irrc-prev-1', eval: 980044884, irr: '-1.12' }]),
   funds: IRR_CONTRACT_FUNDS, fundAll: false, defaultFund: IRR_CONTRACT_FUNDS[0],
 };
-const INVESTEE: IrrConfig = {
+export const INVESTEE: IrrConfig = {
   label: '투자기업별 IRR', route: 'irr-by-investee', table: IRR_INVESTEE, basis: IRR_INVESTEE_BASIS,
+  rows: withYm(IRR_INVESTEE, [{ ...IRR_INVESTEE.rows[0], id: 'irri-prev-1', ev: 980044884, irr: -1.12 }]),
   funds: IRR_INVESTEE_FUNDS, fundAll: true, defaultFund: IRR_INVESTEE_DEFAULT_FUND, companies: IRR_INVESTEE_COMPANIES,
 };
-const FUND: IrrConfig = {
+export const FUND: IrrConfig = {
   label: '자펀드별 IRR', route: 'irr-by-fund', table: IRR_FUND, basis: IRR_FUND_BASIS,
+  rows: withYm(IRR_FUND, [{ ...IRR_FUND.rows[0], id: 'irrf-prev-1', recover: 5547282719, balance: 15312427939, nav: 14910548039, irr: '0.47' }]),
   funds: IRR_FUND_FUNDS, fundAll: false, defaultFund: IRR_FUND_FUNDS[0],
 };
 

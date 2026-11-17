@@ -47,7 +47,7 @@ description: APFS "여러 표 세로 쌓기"(멀티 그리드) 조회 화면 규
    };
    export function MyPage({ onNav }: P) { return <TablesPage cfg={MY_PAGE} onNav={onNav} />; }
    ```
-   - `filters[].key` 가 있으면 **그 키를 가진 표의 행만** 거른다. 키가 없거나 어떤 표에도 없으면 `· 데이터 연동 후 적용`(무신호 무효 필터 금지).
+   - `filters[].key` 가 있으면 **그 키를 가진 표의 행만** 거른다(`mode`: eq·prefix·asOf — asOf = 조회 시점, 셀 ≤ 값). 키가 없거나 어떤 표에도 없으면 `· 데이터 연동 후 적용`(무신호 무효 필터 금지) — 단 2026-11-16부터 새 조건은 행에 숨은 키를 시드해 동작시킨다(apfs-detail-filter "미연동 필터를 새로 만들지 않는다").
 3. **라우트 배선** — `app.tsx` 에 import + `else if (route === "<path>") page = <MyPage onNav={onNav} />;`. route 는 `data.ts` MENU 리프의 `path`(없으면 label). 메뉴 리프는 임의 추가 금지(정본=메뉴구성도 시트).
 4. **표가 1장뿐이면** 이 스킬이 아니다 — 섹션 헤더 없이 표만 그려진다(기본 레이아웃 쪽이 맞는지 먼저 판단).
 

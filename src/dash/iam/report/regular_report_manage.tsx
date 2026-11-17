@@ -8,8 +8,9 @@
        ⚠ 기준년월은 **월(YYYY-MM) 범위 선택기**다(목업 설계메모 "셀렉트 금지") → `PeriodPicker mode="month"` 2개.
          목업 기본값 `2026-04 ~ 2026-04`은 **적용하지 않는다** — 9행 중 1행만 남아 첫 화면이 빈약해진다.
          빈 문자열 = 열린 경계(apfs-datepicker 함정).
-       ⚠ 행 컬럼과 미연동인 항목(모펀드·계정구분·담당자)은 `noop` 캡션만 두고 `passes`에 넣지 않는다.
-         담당자는 원천에 옵션·샘플 값이 없어 옵션을 **지어내지 않는다**(빈 목록).
+       모펀드·계정구분·담당자는 그리드 컬럼이 아닌 숨은 행 속성 `mf`·`acc`·`mgr` 로 거른다(2026-11-16 사용자 지시
+         "미연동 필터 전부 동작" — 종전 no-op). 9행이 한 자펀드의 보고라 값도 하나씩이다(농식품모태펀드·농식품·양한솔) →
+         MOAF·수산을 고르면 0건이 정상이다(행 단위로 값을 나누지 않는다). 담당자 선택지는 행 값에서만 파생한다(옵션 창작 금지).
    - 목록 그리드 → AG Grid 단일 헤더(apfs-aggrid). **합계행 없음**(금액 컬럼이 없는 엔티티) ·
      **행 선택 = 체크박스 multiRow**(2026-09-24 사용자 결정) — 선택 바에서 확정여부 일괄 변경(확정/미확정).
      보고 내역이 없는 행(확정여부 빈칸)은 변경 대상에서 빼고 toast로 알린다(apfs-aggrid 게이트 필터형).
@@ -80,31 +81,42 @@ export interface RegularReportRow {
   updatedAt: string | null;    // 수정일시 — 목업 문자열 그대로. 보고 없으면 null
   confirmed: ConfirmPick | null;  // 확정여부 — 보고 없으면 null(빈 셀). '제외' = 선택 바 콤보에서만 지정(2026-11-02)
   fundStatus: string;          // 조합상태
+  /* 숨은 행 속성(그리드 컬럼 없음 — 상세필터만 거른다. 백엔드라면 조회 파라미터) */
+  mf: string;                  // 모펀드
+  acc: '농식품' | '수산';       // 계정구분
+  mgr: string;                 // 담당자(모태펀드 담당자)
 }
 
 /* 데모 데이터 — 목업 `<tbody>` 9행 그대로(값 창작 없음). 9행 모두 같은 운용사·자펀드·조합상태다. */
 const GP = '엔비에이치(NBH)캐피탈 주식회사';
 const FN = 'AJ-ISU경기도애그리푸드투자조합';
 const ST = '운영중';
+/* 자펀드 컨텍스트(숨은 행 속성) — 9행이 공유하는 모펀드·계정구분·담당자 */
+const CTX = { mf: '농식품모태펀드', acc: '농식품', mgr: '양한솔' } as const;
 /* 월간보고서 첨부파일명 패턴 — 8행만 원문이 다르다(조합명에 하이픈 1개 추가 + " (2)" 접미사)라 리터럴로 둔다 */
 const FILE = (mm: string) => `[보고서] AJ-ISU경기도애그리푸드투자조합 월간보고서_26.${mm}.pdf`;
 
-const DEMO: RegularReportRow[] = [
-  { id: 'rr-1', no: 1, gp: GP, fn: FN, ymKey: '2026-01', ymLabel: '2026년 01월', rt: '월간보고서', file: FILE('01'), updatedAt: '2026-02-06 오후 1:47:50', confirmed: '확정', fundStatus: ST },
-  { id: 'rr-2', no: 2, gp: GP, fn: FN, ymKey: '2026-02', ymLabel: '2026년 02월', rt: '월간보고서', file: FILE('02'), updatedAt: '2026-03-06 오후 4:41:27', confirmed: '확정', fundStatus: ST },
-  { id: 'rr-3', no: 3, gp: GP, fn: FN, ymKey: '2026-03', ymLabel: '2026년 03월', rt: '월간보고서', file: FILE('03'), updatedAt: '2026-04-06 오후 9:52:22', confirmed: '확정', fundStatus: ST },
-  { id: 'rr-4', no: 4, gp: GP, fn: FN, ymKey: '2026-04', ymLabel: '2026년 04월', rt: '월간보고서', file: FILE('04'), updatedAt: '2026-05-07 오후 5:55:38', confirmed: '확정', fundStatus: ST },
-  { id: 'rr-5', no: 5, gp: GP, fn: FN, ymKey: '2026-05', ymLabel: '2026년 05월', rt: '월간보고서', file: FILE('05'), updatedAt: '2026-06-04 오후 4:27:21', confirmed: '확정', fundStatus: ST },
-  { id: 'rr-6', no: 6, gp: GP, fn: FN, ymKey: '2026-06', ymLabel: '2026년 06월', rt: '월간보고서', file: FILE('06'), updatedAt: '2026-07-07 오후 8:35:43', confirmed: '확정', fundStatus: ST },
+export const DEMO: RegularReportRow[] = [
+  { id: 'rr-1', no: 1, gp: GP, fn: FN, ymKey: '2026-01', ymLabel: '2026년 01월', rt: '월간보고서', file: FILE('01'), updatedAt: '2026-02-06 오후 1:47:50', confirmed: '확정', fundStatus: ST, ...CTX },
+  { id: 'rr-2', no: 2, gp: GP, fn: FN, ymKey: '2026-02', ymLabel: '2026년 02월', rt: '월간보고서', file: FILE('02'), updatedAt: '2026-03-06 오후 4:41:27', confirmed: '확정', fundStatus: ST, ...CTX },
+  { id: 'rr-3', no: 3, gp: GP, fn: FN, ymKey: '2026-03', ymLabel: '2026년 03월', rt: '월간보고서', file: FILE('03'), updatedAt: '2026-04-06 오후 9:52:22', confirmed: '확정', fundStatus: ST, ...CTX },
+  { id: 'rr-4', no: 4, gp: GP, fn: FN, ymKey: '2026-04', ymLabel: '2026년 04월', rt: '월간보고서', file: FILE('04'), updatedAt: '2026-05-07 오후 5:55:38', confirmed: '확정', fundStatus: ST, ...CTX },
+  { id: 'rr-5', no: 5, gp: GP, fn: FN, ymKey: '2026-05', ymLabel: '2026년 05월', rt: '월간보고서', file: FILE('05'), updatedAt: '2026-06-04 오후 4:27:21', confirmed: '확정', fundStatus: ST, ...CTX },
+  { id: 'rr-6', no: 6, gp: GP, fn: FN, ymKey: '2026-06', ymLabel: '2026년 06월', rt: '월간보고서', file: FILE('06'), updatedAt: '2026-07-07 오후 8:35:43', confirmed: '확정', fundStatus: ST, ...CTX },
   /* 7행 — 반기보고서. 목업은 보고 내역이 없어 빈칸이지만 빈 셀을 두지 않기로 해(2026-09-24) 보고서·수정일시·확정여부는 샘플.
      ymKey는 상반기 말('2026-06')로 둬 기준년월 범위 필터에 걸리게 한다(표시값은 원문 '2026년 1/2분기'). */
-  { id: 'rr-7', no: 7, gp: GP, fn: FN, ymKey: '2026-06', ymLabel: '2026년 1/2분기', rt: '반기보고서', file: '[보고서] AJ-ISU경기도애그리푸드투자조합 반기보고서_26.1H.pdf', updatedAt: '2026-07-30 오후 3:12:08', confirmed: '미확정', fundStatus: ST },
-  { id: 'rr-8', no: 8, gp: GP, fn: FN, ymKey: '2026-07', ymLabel: '2026년 07월', rt: '월간보고서', file: '[보고서] AJ-ISU-경기도애그리푸드투자조합 월간보고서_26.07 (2).pdf', updatedAt: '2026-08-07 오후 4:09:29', confirmed: '확정', fundStatus: ST },
+  { id: 'rr-7', no: 7, gp: GP, fn: FN, ymKey: '2026-06', ymLabel: '2026년 1/2분기', rt: '반기보고서', file: '[보고서] AJ-ISU경기도애그리푸드투자조합 반기보고서_26.1H.pdf', updatedAt: '2026-07-30 오후 3:12:08', confirmed: '미확정', fundStatus: ST, ...CTX },
+  { id: 'rr-8', no: 8, gp: GP, fn: FN, ymKey: '2026-07', ymLabel: '2026년 07월', rt: '월간보고서', file: '[보고서] AJ-ISU-경기도애그리푸드투자조합 월간보고서_26.07 (2).pdf', updatedAt: '2026-08-07 오후 4:09:29', confirmed: '확정', fundStatus: ST, ...CTX },
   /* 9행 — 목업은 보고 내역 없음(빈칸)이지만 7행과 같은 이유로 보고서·수정일시·확정여부는 샘플 */
-  { id: 'rr-9', no: 9, gp: GP, fn: FN, ymKey: '2026-08', ymLabel: '2026년 08월', rt: '월간보고서', file: FILE('08'), updatedAt: '2026-09-07 오후 2:18:44', confirmed: '미확정', fundStatus: ST },
+  { id: 'rr-9', no: 9, gp: GP, fn: FN, ymKey: '2026-08', ymLabel: '2026년 08월', rt: '월간보고서', file: FILE('08'), updatedAt: '2026-09-07 오후 2:18:44', confirmed: '미확정', fundStatus: ST, ...CTX },
 ];
 
 const PAGE_SIZE = 20;
+
+/** 상세필터의 모펀드·계정구분·담당자 조건(빈 값 = 미적용). 컴포넌트 passes 가 부르고 테스트가 직접 검증한다 */
+export interface RegularDrawerFilter { mf: string; acc: string; mgr: string }
+export const passesDrawerKeys = (r: RegularReportRow, f: RegularDrawerFilter): boolean =>
+  (!f.mf || r.mf === f.mf) && (!f.acc || r.acc === f.acc) && (!f.mgr || r.mgr === f.mgr);
 
 /* 폭 관련 그리드 prop(`autoSizeStrategy`·`defaultColDef`)은 `aggrid_theme.ts`의 공용 상수를 쓴다 —
    인라인 리터럴 금지 이유(렌더마다 새 객체 → 폭이 선언값으로 되돌아감)는 그 파일 주석이 정본. */
@@ -237,12 +249,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </Wrap>
@@ -292,9 +304,9 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
   const [fFund, setFFund] = useState('');
   const [fFrom, setFFrom] = useState('');   // 기준년월 시작 'YYYY-MM'(빈 값=열린 경계)
   const [fTo, setFTo] = useState('');       // 기준년월 종료 'YYYY-MM'(동상)
-  const [fMf, setFMf] = useState('');       // 모펀드 — 행 컬럼 아님(no-op)
-  const [fAcc, setFAcc] = useState('');     // 계정구분 — 행 컬럼 아님(no-op)
-  const [fMgr, setFMgr] = useState('');     // 담당자 — 원천에 옵션·샘플 값 없음(no-op, 옵션 없음)
+  const [fMf, setFMf] = useState('');       // 모펀드 — 숨은 행 속성 mf
+  const [fAcc, setFAcc] = useState('');     // 계정구분 — 숨은 행 속성 acc
+  const [fMgr, setFMgr] = useState('');     // 담당자 — 숨은 행 속성 mgr(선택지 = 행 값)
   const clearFilters = () => { setFRt(''); setFGp(''); setFFund(''); setFFrom(''); setFTo(''); setFMf(''); setFAcc(''); setFMgr(''); };
 
   const passes = useCallback((r: RegularReportRow) => {
@@ -303,9 +315,9 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
     if (fFund && r.fn !== fFund) return false;
     if (fFrom && r.ymKey < fFrom) return false;
     if (fTo && r.ymKey > fTo) return false;
-    return true;
-  }, [fRt, fGp, fFund, fFrom, fTo]);
-  const filterActive = Boolean(fRt || fGp || fFund || fFrom || fTo);
+    return passesDrawerKeys(r, { mf: fMf, acc: fAcc, mgr: fMgr });
+  }, [fRt, fGp, fFund, fFrom, fTo, fMf, fAcc, fMgr]);
+  const filterActive = Boolean(fRt || fGp || fFund || fFrom || fTo || fMf || fAcc || fMgr);
   /* 필터가 바뀌면 선택을 전부 해제한다 — 걸러진 행의 체크가 보이지 않는 채로 남아 액션이 숨은 행에 걸리지 않게(2026-10-27) */
   useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
@@ -314,6 +326,8 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
   const filteredRows = useMemo(() => rows.filter(passes), [rows, passes]);
   const gpOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.gp))), [rows]);
   const fundOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.fn))), [rows]);
+  /* 담당자 옵션 — 원천에 옵션 목록이 없어 행에 실린 담당자에서만 파생(첫 등장 순) */
+  const mgrOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.mgr))), [rows]);
 
   const onGridReady = useCallback((e: GridReadyEvent<RegularReportRow>) => { apiRef.current = e.api; }, []);
 
@@ -405,8 +419,11 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
       filterChipsMenu="보고구분"
       filterChips={(['', '월간보고서', '반기보고서'] as ('' | ReportKind)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fRt === s, onSelect: () => setFRt(s) }))}
       appliedFilters={[
+        { label: '모펀드', value: fMf, onClear: () => setFMf('') },
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
+        { label: '계정구분', value: fAcc, onClear: () => setFAcc('') },
+        { label: '담당자', value: fMgr, onClear: () => setFMgr('') },
         { label: '기준년월', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
       ]}
       contextActions={selActions}
@@ -451,7 +468,7 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
       </LeafTabBody>
 
       {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(모펀드·운용사·자펀드·계정구분·담당자·기준년월·보고구분).
-             검색어는 미사용(OFF). 컬럼 미연동 항목은 noop 캡션(apfs-detail-filter) ── */}
+             검색어는 미사용(OFF). 모펀드·계정구분·담당자는 숨은 행 속성으로 거른다(파일 머리 주석) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -460,12 +477,12 @@ export function RegularReportManage({ onNav, tabs }: { onNav?: (r: string) => vo
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
+            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            {/* 담당자 — 원천에 옵션·샘플 값이 없어 옵션을 생성하지 않는다(빈 목록 = '전체'만) */}
-            <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={[]} /></DrawerField>
+            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
+            {/* 담당자 — 원천에 옵션 목록이 없어 행에 실린 담당자에서만 파생한다(옵션 창작 금지) */}
+            <DrawerField label="담당자"><DrawerSelect value={fMgr} onChange={setFMgr} options={mgrOptions} /></DrawerField>
             {/* 기준년월 — 월(YYYY-MM) 범위. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}
             <DrawerField label="기준년월" plain>
               <div className="flex items-center gap-2 flex-wrap">

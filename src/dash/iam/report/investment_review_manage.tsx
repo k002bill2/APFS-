@@ -5,6 +5,10 @@
    - 검색박스(모펀드·운용사·자펀드·계정구분·담당자·투자심의상태·투자심의기간)
        → 투자심의상태 FilterChip(툴바 좌) + 나머지는 상세필터 드로어(Sheet, apfs-detail-filter).
          칩으로 올린 투자심의상태는 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts)
+       모펀드·계정구분·담당자는 그리드 컬럼이 아닌 숨은 행 속성 `mf`·`acct`·`mgr` 로 거른다(2026-11-16 사용자 지시
+         "미연동 필터 전부 동작" — 종전 no-op). 원문 3행에 행 순서로 시드한다(DRAWER_SEED): 상주-어니스트 애그테크 1건만
+         MOAF, 계정구분은 3건 모두 농식품(조합명이 전부 농식품·애그테크라 수산으로 둘 근거가 없다 → 수산은 0건이 정상),
+         담당자는 원문 선택지 양한솔·이성훈을 나눠 싣는다.
    - 목록 그리드 + 합계행     → AG Grid + pinnedBottom(useMemo 재계산, apfs-aggrid). 투자금액·승인금액 합계
    - 심사단계 워크플로우      → 행 선택 시 툴바 좌에 그 단계의 컨텍스트 액션 → 단계 전이(apfs-stage-workflow)
        ⚠ 목업은 그리드 셀 안 인라인 <select>로 확정/승인을 전이했으나, 규약(인라인 전이 금지)에 따라
@@ -74,8 +78,19 @@ const stageOf = (r: InvReviewRow): Stage => {
 /* 선택 체크박스 열 colId(AG Grid 내장 selection column) — 더블클릭 상세 진입에서 제외한다 */
 const SEL_COL_ID = 'ag-Grid-SelectionColumn';
 
-/* 목록 행 = 원문 S1_01 `var DATA` 3건(investment_review_data.ts — 합성 행 없음). 새로고침은 이 원본으로 되돌린다 */
-const DEMO: InvReviewRow[] = [...INV_REVIEW_ROWS];
+/* 목록 행 = 원문 S1_01 `var DATA` 3건(investment_review_data.ts — 합성 행 없음) + 숨은 행 속성 시드. 새로고침은 이 배열로 되돌린다.
+   시드는 행 순서(인덱스)로 붙인다 — 원문 행 모듈은 그대로 둔다 */
+const DRAWER_SEED: Pick<InvReviewRow, 'mf' | 'acct' | 'mgr'>[] = [
+  { mf: '농식품모태펀드', acct: '농식품', mgr: '양한솔' },
+  { mf: 'MOAF', acct: '농식품', mgr: '이성훈' },
+  { mf: '농식품모태펀드', acct: '농식품', mgr: '양한솔' },
+];
+export const DEMO: InvReviewRow[] = INV_REVIEW_ROWS.map((r, i) => ({ ...r, ...DRAWER_SEED[i] }));
+
+/** 상세필터의 모펀드·계정구분·담당자 조건(빈 값 = 미적용). 컴포넌트 passes 가 부르고 테스트가 직접 검증한다 */
+export interface InvDrawerFilter { mf: string; acct: string; mgr: string }
+export const passesDrawerKeys = (r: InvReviewRow, f: InvDrawerFilter): boolean =>
+  (!f.mf || r.mf === f.mf) && (!f.acct || r.acct === f.acct) && (!f.mgr || r.mgr === f.mgr);
 
 /* 합계 대상(가산 가능한 금액만) — 투자금액·승인금액 */
 const SUM_KEYS = ['inv', 'appr'] as const;
@@ -160,12 +175,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </Wrap>
@@ -219,9 +234,9 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
   const [fFund, setFFund] = useState('');
   const [fFrom, setFFrom] = useState('');
   const [fTo, setFTo] = useState('');
-  const [fMf, setFMf] = useState('');        // 모펀드 — 행 컬럼 아님(no-op)
-  const [fAg, setFAg] = useState('');        // 계정구분 — 행 컬럼 아님(no-op)
-  const [fMgr, setFMgr] = useState('');      // 담당자 — 동적 사용자 데이터(no-op)
+  const [fMf, setFMf] = useState('');        // 모펀드 — 숨은 행 속성 mf
+  const [fAg, setFAg] = useState('');        // 계정구분 — 숨은 행 속성 acct
+  const [fMgr, setFMgr] = useState('');      // 담당자 — 숨은 행 속성 mgr
   const clearFilters = () => { setFState(''); setFGp(''); setFFund(''); setFFrom(''); setFTo(''); setFMf(''); setFAg(''); setFMgr(''); };
 
   const passes = useCallback((r: InvReviewRow) => {
@@ -230,9 +245,9 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
     if (fFund && r.fn !== fFund) return false;
     if (fFrom && r.dt < fFrom) return false;
     if (fTo && r.dt > fTo) return false;
-    return true;
-  }, [fState, fGp, fFund, fFrom, fTo]);
-  const filterActive = Boolean(fState || fGp || fFund || fFrom || fTo);
+    return passesDrawerKeys(r, { mf: fMf, acct: fAg, mgr: fMgr });
+  }, [fState, fGp, fFund, fFrom, fTo, fMf, fAg, fMgr]);
+  const filterActive = Boolean(fState || fGp || fFund || fFrom || fTo || fMf || fAg || fMgr);
   /* 필터가 바뀌면 선택을 전부 해제한다 — 걸러진 행의 체크가 보이지 않는 채로 남아 액션이 숨은 행에 걸리지 않게(2026-10-27) */
   useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
@@ -385,8 +400,11 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
       filterChipsMenu="투자심의상태"
       filterChips={(['' as const, '일정' as const, '결과' as const]).map((s) => ({ key: s || 'all', label: s || '전체', active: fState === s, onSelect: () => setFState(s) }))}
       appliedFilters={[
+        { label: '모펀드', value: fMf, onClear: () => setFMf('') },
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
+        { label: '계정구분', value: fAg, onClear: () => setFAg('') },
+        { label: '담당자', value: fMgr, onClear: () => setFMgr('') },
         { label: '투자심의기간', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
       ]}
       contextActions={selActions}
@@ -430,7 +448,7 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
           />
         </div>
 
-      {/* ── 상세필터 드로어 — 검색어는 미사용(OFF). 컬럼 미연동 필터는 caption으로 no-op(apfs-detail-filter) ── */}
+      {/* ── 상세필터 드로어 — 검색어는 미사용(OFF). 항목이 전부 행을 거른다(숨은 행 속성 포함 — 파일 머리 주석) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -441,12 +459,12 @@ export function InvestmentReviewManage({ onNav }: { onNav?: (r: string) => void 
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             {/* 검색어 입력은 기본 OFF(apfs-detail-filter opt-in 규약) — 이 페이지는 미사용이라 렌더하지 않는다.
                 목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·담당자·투자심의기간(투자심의상태는 툴바 칩 — 드로어 제외).
-                그리드 컬럼과 미연동인 항목(모펀드·계정구분·담당자)은 noop 캡션. 기간은 PeriodPicker day 2개(apfs-datepicker) */}
-            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
+                모펀드·계정구분·담당자는 숨은 행 속성(mf·acct·mgr)으로 거른다. 기간은 PeriodPicker day 2개(apfs-datepicker) */}
+            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            <DrawerField label="계정구분" noop><DrawerSelect value={fAg} onChange={setFAg} options={['농식품', '수산']} /></DrawerField>
-            <DrawerField label="담당자" noop><DrawerSelect value={fMgr} onChange={setFMgr} options={['양한솔', '이성훈']} /></DrawerField>
+            <DrawerField label="계정구분"><DrawerSelect value={fAg} onChange={setFAg} options={['농식품', '수산']} /></DrawerField>
+            <DrawerField label="담당자"><DrawerSelect value={fMgr} onChange={setFMgr} options={['양한솔', '이성훈']} /></DrawerField>
             <DrawerField label="투자심의기간" plain>
               <div className="flex items-center gap-2 flex-wrap">
                 <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="투자심의기간 시작일" /></div>

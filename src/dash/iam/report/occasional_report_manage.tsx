@@ -5,8 +5,12 @@
    - 검색박스(모펀드·운용사·자펀드·계정구분·심사담당자·리스크담당자·구분·기간)
        → 확인상태 FilterChip(툴바 좌) + 상세필터 드로어(Sheet, apfs-detail-filter)
        ⚠ 목업이 `data-dat="실 옵션값 미확인 — 없는 값 생성 안 함"`으로 표시한 항목(구분·심사담당자·
-         리스크담당자)은 옵션을 지어내지 않는다. 담당자는 행에 실제로 기록된 확인자명에서만 파생하고,
-         구분은 옵션 없이 noop 캡션만 남긴다.
+         리스크담당자)은 옵션을 지어내지 않는다 — 선택지는 전부 행에 실린 값에서 파생한다.
+       2026-11-16 사용자 지시(미연동 필터 전부 동작)로 종전 no-op 5항목이 행을 거른다(그리드 컬럼은 늘리지 않는다):
+         · 모펀드·계정구분 = 숨은 행 속성 `mf`·`acc`(유안타 수산투자조합 1건만 MOAF·수산, 나머지 농식품모태펀드·농식품)
+         · 심사담당자·리스크담당자 = 확인 컬럼 `jsBy`·`rsBy`(확인자명) 정확일치 — 미확인 행은 담당자 값이 없어 걸러진다
+         · 구분 = 숨은 행 속성 `kind` — 수시보고서 체크리스트의 대구분(운용사관련·조합운영관련·투자기업관련·기타,
+           occasional_report_modal) 중 제목에 맞는 값. 선택지는 행 값(첫 등장 순)
    - 목록 그리드                → AG Grid 단일 헤더(apfs-aggrid). **합계행 없음** — 금액 컬럼이 없는 엔티티다.
    - 확인 워크플로우            → **셀 안 [확인] 버튼**(심사담당·리스크담당) → 확인 모달 → 확인자명 배지.
        + **행 선택 = 체크박스 multiRow**(2026-09-28 사용자 지시 — 조합원총회 방식 적용) → 선택 바에서
@@ -62,6 +66,10 @@ export interface OccReportRow {
   gp: string; fn: string; title: string;
   jsBy: string | null;  // 심사담당 확인자명(null=미확인). 확인 후 취소 불가
   rsBy: string | null;  // 리스크담당 확인자명(null=미확인). 확인 후 취소 불가
+  /* 숨은 행 속성(그리드 컬럼 없음 — 상세필터만 거른다. 백엔드라면 조회 파라미터) */
+  mf: string;           // 모펀드
+  acc: '농식품' | '수산'; // 계정구분
+  kind: string;         // 구분 — 수시보고 체크리스트 대구분
 }
 
 /* 확인상태 — jsBy·rsBy 조합에서 파생(SSOT). 필터 칩·툴바 액션 맵의 키 */
@@ -74,15 +82,21 @@ const stageOf = (r: OccReportRow): Stage =>
       백엔드/인증이 없는 프로토타입이므로 세션 조회로 키우지 않는다. */
 const CONFIRMER = '홍길동';
 
-/* 데모 데이터 — 파생 단계 전부 포함(미확인·일부확인·확인완료). 텍스트 N/A='-' */
-const DEMO: OccReportRow[] = [
-  { id: 'or-1', no: 1, ind: '2026-08-11', occ: '2026-08-03', gp: '마그나인베스트먼트(주)', fn: '마그나 GREEN 펀드', title: '쿠엔즈버킷 조건부 합의서 및 주주간계약 체결 보고', jsBy: null, rsBy: null },
-  { id: 'or-2', no: 2, ind: '2026-04-02', occ: '2026-03-28', gp: 'KB인베스트먼트', fn: 'KB농식품1호투자조합', title: '투자기업 회생절차 개시 관련 수시보고', jsBy: null, rsBy: null },
-  { id: 'or-3', no: 3, ind: '2026-04-15', occ: '2026-04-10', gp: 'IMM인베스트먼트', fn: 'IMM 농식품 스마트투자조합', title: '핵심운용인력(대표펀드매니저) 변경 통지', jsBy: CONFIRMER, rsBy: null },
-  { id: 'or-4', no: 4, ind: '2026-05-06', occ: '2026-05-02', gp: '한국투자파트너스', fn: '한투 청년농식품투자조합', title: '출자자 지분 양수도 승인 요청', jsBy: null, rsBy: null },
-  { id: 'or-5', no: 5, ind: '2026-05-20', occ: '2026-05-18', gp: '유안타인베스트먼트', fn: '유안타 수산투자조합', title: '투자기업 소송 발생 보고', jsBy: CONFIRMER, rsBy: CONFIRMER },
-  { id: 'or-6', no: 6, ind: '2026-05-27', occ: '2026-05-25', gp: '대성창업투자', fn: '대성 농식품벤처투자조합', title: '조합 결산 일정 지연 관련 보고', jsBy: null, rsBy: null },
+/* 데모 데이터 — 파생 단계 전부 포함(미확인·일부확인·확인완료). 텍스트 N/A='-'. 끝의 mf·acc·kind 는 숨은 행 속성 */
+export const DEMO: OccReportRow[] = [
+  { id: 'or-1', no: 1, ind: '2026-08-11', occ: '2026-08-03', gp: '마그나인베스트먼트(주)', fn: '마그나 GREEN 펀드', title: '쿠엔즈버킷 조건부 합의서 및 주주간계약 체결 보고', jsBy: null, rsBy: null, mf: '농식품모태펀드', acc: '농식품', kind: '투자기업관련' },
+  { id: 'or-2', no: 2, ind: '2026-04-02', occ: '2026-03-28', gp: 'KB인베스트먼트', fn: 'KB농식품1호투자조합', title: '투자기업 회생절차 개시 관련 수시보고', jsBy: null, rsBy: null, mf: '농식품모태펀드', acc: '농식품', kind: '투자기업관련' },
+  { id: 'or-3', no: 3, ind: '2026-04-15', occ: '2026-04-10', gp: 'IMM인베스트먼트', fn: 'IMM 농식품 스마트투자조합', title: '핵심운용인력(대표펀드매니저) 변경 통지', jsBy: CONFIRMER, rsBy: null, mf: '농식품모태펀드', acc: '농식품', kind: '조합운영관련' },
+  { id: 'or-4', no: 4, ind: '2026-05-06', occ: '2026-05-02', gp: '한국투자파트너스', fn: '한투 청년농식품투자조합', title: '출자자 지분 양수도 승인 요청', jsBy: null, rsBy: null, mf: '농식품모태펀드', acc: '농식품', kind: '조합운영관련' },
+  { id: 'or-5', no: 5, ind: '2026-05-20', occ: '2026-05-18', gp: '유안타인베스트먼트', fn: '유안타 수산투자조합', title: '투자기업 소송 발생 보고', jsBy: CONFIRMER, rsBy: CONFIRMER, mf: 'MOAF', acc: '수산', kind: '투자기업관련' },
+  { id: 'or-6', no: 6, ind: '2026-05-27', occ: '2026-05-25', gp: '대성창업투자', fn: '대성 농식품벤처투자조합', title: '조합 결산 일정 지연 관련 보고', jsBy: null, rsBy: null, mf: '농식품모태펀드', acc: '농식품', kind: '기타' },
 ];
+
+/** 상세필터의 모펀드·계정구분·심사담당자·리스크담당자·구분 조건(빈 값 = 미적용). 컴포넌트 passes 가 부르고 테스트가 직접 검증한다 */
+export interface OccDrawerFilter { mf: string; acc: string; js: string; rs: string; kind: string }
+export const passesDrawerKeys = (r: OccReportRow, f: OccDrawerFilter): boolean =>
+  (!f.mf || r.mf === f.mf) && (!f.acc || r.acc === f.acc)
+  && (!f.js || r.jsBy === f.js) && (!f.rs || r.rsBy === f.rs) && (!f.kind || r.kind === f.kind);
 
 const PAGE_SIZE = 20;
 
@@ -178,12 +192,12 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </Wrap>
@@ -226,11 +240,11 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
   const [fFund, setFFund] = useState('');
   const [fFrom, setFFrom] = useState('');
   const [fTo, setFTo] = useState('');
-  const [fMf, setFMf] = useState('');        // 모펀드 — 행 컬럼 아님(no-op)
-  const [fAcc, setFAcc] = useState('');      // 계정구분 — 행 컬럼 아님(no-op)
-  const [fJs, setFJs] = useState('');        // 심사담당자 — 지정 담당자 필드가 원문 미정의(no-op)
-  const [fRs, setFRs] = useState('');        // 리스크담당자 — 동상(no-op)
-  const [fKind, setFKind] = useState('');    // 구분 — 공통코드 옵션값 미확인(no-op, 옵션 없음)
+  const [fMf, setFMf] = useState('');        // 모펀드 — 숨은 행 속성 mf
+  const [fAcc, setFAcc] = useState('');      // 계정구분 — 숨은 행 속성 acc
+  const [fJs, setFJs] = useState('');        // 심사담당자 — 심사담당 확인자명(jsBy)
+  const [fRs, setFRs] = useState('');        // 리스크담당자 — 리스크담당 확인자명(rsBy)
+  const [fKind, setFKind] = useState('');    // 구분 — 숨은 행 속성 kind(체크리스트 대구분)
   const clearFilters = () => { setFStage(''); setFGp(''); setFFund(''); setFFrom(''); setFTo(''); setFMf(''); setFAcc(''); setFJs(''); setFRs(''); setFKind(''); };
 
   /* 기간은 **보고일자(ind)** 기준 — 목업 라벨이 '기간'뿐이라 목록의 주 일자에 건다(보고일자/상황발생일자 중) */
@@ -240,9 +254,9 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
     if (fFund && r.fn !== fFund) return false;
     if (fFrom && r.ind < fFrom) return false;
     if (fTo && r.ind > fTo) return false;
-    return true;
-  }, [fStage, fGp, fFund, fFrom, fTo]);
-  const filterActive = Boolean(fStage || fGp || fFund || fFrom || fTo);
+    return passesDrawerKeys(r, { mf: fMf, acc: fAcc, js: fJs, rs: fRs, kind: fKind });
+  }, [fStage, fGp, fFund, fFrom, fTo, fMf, fAcc, fJs, fRs, fKind]);
+  const filterActive = Boolean(fStage || fGp || fFund || fFrom || fTo || fMf || fAcc || fJs || fRs || fKind);
   /* 필터가 바뀌면 선택을 전부 해제한다 — 걸러진 행의 체크가 보이지 않는 채로 남아 액션이 숨은 행에 걸리지 않게(2026-10-27) */
   useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
@@ -254,6 +268,8 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
   /* 담당자 옵션 — 목업이 "없는 값 생성 안 함"으로 못 박아, 행에 실제로 기록된 확인자명에서만 파생한다 */
   const jsNames = useMemo(() => Array.from(new Set(rows.map((r) => r.jsBy).filter((v): v is string => Boolean(v)))), [rows]);
   const rsNames = useMemo(() => Array.from(new Set(rows.map((r) => r.rsBy).filter((v): v is string => Boolean(v)))), [rows]);
+  /* 구분 옵션 — 공통코드 옵션값이 원문 미확인이라 행에 실린 대구분에서만 파생(첫 등장 순) */
+  const kindOptions = useMemo(() => Array.from(new Set(rows.map((r) => r.kind))), [rows]);
 
   const onGridReady = useCallback((e: GridReadyEvent<OccReportRow>) => { apiRef.current = e.api; }, []);
   const onPaginationChanged = useCallback(() => {
@@ -348,8 +364,13 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
       filterChipsMenu="확인상태"
       filterChips={(['', '미확인', '일부확인', '확인완료'] as ('' | Stage)[]).map((s) => ({ key: s || 'all', label: s || '전체', active: fStage === s, onSelect: () => setFStage(s) }))}
       appliedFilters={[
+        { label: '모펀드', value: fMf, onClear: () => setFMf('') },
         { label: '운용사', value: fGp, onClear: () => setFGp('') },
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
+        { label: '계정구분', value: fAcc, onClear: () => setFAcc('') },
+        { label: '심사담당자', value: fJs, onClear: () => setFJs('') },
+        { label: '리스크담당자', value: fRs, onClear: () => setFRs('') },
+        { label: '구분', value: fKind, onClear: () => setFKind('') },
         { label: '기간', value: fFrom || fTo ? `${fFrom || '…'} ~ ${fTo || '…'}` : '', onClear: () => { setFFrom(''); setFTo(''); } },
       ]}
       contextActions={selActions}
@@ -392,7 +413,7 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
       </div>
       </LeafTabBody>
 
-      {/* ── 상세필터 드로어 — 검색어는 미사용(OFF). 컬럼 미연동 필터는 caption으로 no-op(apfs-detail-filter) ── */}
+      {/* ── 상세필터 드로어 — 검색어는 미사용(OFF). 항목이 전부 행을 거른다(숨은 행 속성 포함 — 파일 머리 주석) ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -402,15 +423,15 @@ export function OccasionalReportManage({ onNav, tabs }: { onNav?: (r: string) =>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             {/* 목업 검색박스 항목 순서: 모펀드·운용사·자펀드·계정구분·심사담당자·리스크담당자·구분·기간.
-                그리드 컬럼과 미연동인 항목은 noop 캡션. 담당자 옵션은 행의 확인자명에서만 파생(값 생성 금지),
-                구분은 공통코드 옵션값이 원문 미확인이라 옵션 없이 둔다. 기간은 PeriodPicker day 2개(apfs-datepicker) */}
-            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
+                모펀드·계정구분·구분은 숨은 행 속성으로 거른다. 담당자 옵션은 행의 확인자명에서만 파생(값 생성 금지),
+                구분 옵션은 행의 체크리스트 대구분에서 파생한다. 기간은 PeriodPicker day 2개(apfs-datepicker) */}
+            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
             <DrawerField label="운용사"><DrawerSelect value={fGp} onChange={setFGp} options={gpOptions} /></DrawerField>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            <DrawerField label="심사담당자" noop><DrawerSelect value={fJs} onChange={setFJs} options={jsNames} /></DrawerField>
-            <DrawerField label="리스크담당자" noop><DrawerSelect value={fRs} onChange={setFRs} options={rsNames} /></DrawerField>
-            <DrawerField label="구분" noop><DrawerSelect value={fKind} onChange={setFKind} options={[]} /></DrawerField>
+            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
+            <DrawerField label="심사담당자"><DrawerSelect value={fJs} onChange={setFJs} options={jsNames} /></DrawerField>
+            <DrawerField label="리스크담당자"><DrawerSelect value={fRs} onChange={setFRs} options={rsNames} /></DrawerField>
+            <DrawerField label="구분"><DrawerSelect value={fKind} onChange={setFKind} options={kindOptions} /></DrawerField>
             <DrawerField label="기간 (보고일자)" plain>
               <div className="flex items-center gap-2 flex-wrap">
                 <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}><PeriodPicker mode="day" value={fFrom} onChange={setFFrom} ariaLabel="조회기간 시작일" /></div>

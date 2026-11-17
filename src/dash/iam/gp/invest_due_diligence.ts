@@ -54,22 +54,25 @@ export const schema: PageSchema = {
   fields: [],
   /* 검색조건(S1_40:206-223) — 원문 `.searchbox` 라벨 순서 그대로: 운용사·자펀드·계정구분·담당자·보고여부·투자기간
      (모펀드는 읽기전용 표시 칸이라 제외 — CHECK_REPORT 모펀드 규칙). 원문에 없던 투자기업·투자유형·확정여부 필터는 뺐다.
-     행에 값이 없는 항목은 **행을 지어내지 않고** filterSpecs 로 no-op 을 명시한다(종전 "tag 로 떨어져 표 0건" 위험은
-     명시 명세가 막는다 — 명세 라벨은 tag 도출을 타지 않는다). 행 매칭(`key`) 판단:
-     · 운용사 = 원문 <select> 옵션 `원익투자파트너스` 1개('전체' 없음, 기본 선택). 7행 값은 `원익투자파트너스(주)` 라
-       정확일치가 성립하지 않는다(원문 내부 표기 불일치) → no-op. 접두 매칭 같은 새 규칙을 만들지 않는다.
+     행 매칭(`key`) — 2026-11-16 사용자 지시 "데이터 연동 후 적용을 전부 동작하게"로 미연동 4항목에 숨은 행 속성을 시드했다
+     (그리드 컬럼은 늘리지 않는다 — 백엔드라면 조회 파라미터로 거를 값이다):
+     · 운용사 = 원문 옵션 `원익투자파트너스` 1개('전체' 없음, 기본 선택). 표시 칸 gp 는 `원익투자파트너스(주)` 라 표기가 달라
+       정확일치가 안 된다 → 운용사 코드 역할의 숨은 속성 gpKey(=원문 옵션 표기)로 거른다. 7행 전부 같은 운용사라 기본값이 행을 줄이지 않는다.
      · 자펀드 = 원문 옵션 '(전체)'뿐(선택지 미확인) → 빈 select 금지 규약대로 text 격하, subFund 부분일치.
-     · 계정구분(chipGroup 전체·농식품·수산) · 담당자·보고여부(원문 옵션 '전체'뿐 → text 격하) = 행에 값 없음 → no-op.
+     · 계정구분(chipGroup 전체·농식품·수산) = 숨은 속성 acctType. 7행이 한 자펀드(원익 Agtech 투자조합)의 투자건이라
+       전부 농식품 — 수산을 고르면 0건이 정상이다(행 단위로 나눠 싣지 않는다). 기본 '전체'라 7행 그대로.
+     · 담당자 = 숨은 속성 manager(한 자펀드라 1명, 양한솔) — 원문 옵션이 '전체'뿐이라 선택지는 행 실제 값(sample 고유값)으로 만든다.
+     · 보고여부 = 숨은 속성 reported(보고일자가 있으면 'Y', 없으면 'N') — 선택지는 행 실제 값.
      · 투자기간 = 원문 범위(기본 2024-08-12~2026-08-12) → **최초 투자일자**(firstInvestDate) 범위.
        `투자일자` 컬럼은 미보고 4행이 '-' 라 기본 범위만으로 원문 행이 사라진다 — 7행 전부 값이 있는 최초 투자일자가
        '투자한 기간'의 뜻에도 맞다. 7행 모두 기본 범위 안이라 기본값이 행을 줄이지 않는다. */
   filters: ['운용사', '자펀드', '계정구분', '담당자', '보고여부', '투자기간'],
   filterSpecs: {
-    운용사: { kind: 'select', options: ['원익투자파트너스'], def: '원익투자파트너스', allLabel: null },
+    운용사: { kind: 'select', options: ['원익투자파트너스'], def: '원익투자파트너스', allLabel: null, key: 'gpKey' },
     자펀드: { kind: 'select', key: 'subFund' },
-    계정구분: { kind: 'select', options: ['농식품', '수산'] },
-    담당자: { kind: 'select' },
-    보고여부: { kind: 'select' },
+    계정구분: { kind: 'select', options: ['농식품', '수산'], key: 'acctType' },
+    담당자: { kind: 'select', key: 'manager' },
+    보고여부: { kind: 'select', key: 'reported' },
     투자기간: { kind: 'dayRange', def: '2024-08-12~2026-08-12', key: 'firstInvestDate' },
   },
   statusDomain: [
@@ -83,13 +86,13 @@ export const schema: PageSchema = {
   hideKpis: true,
   hideMetrics: true,
   sample: [
-    { no: 1, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '(주)어비스컴퍼니', investType: 'CB', firstInvestDate: '2025-11-04', remainDays: '보고완료', investDate: '2025-11-04', dueDiligDate: '2026-06-22', reportDate: '2026-06-23', reportFile: '어비스컴퍼니_투자금실사보고서.pdf', updatedAt: '-', isConfirmed: '-', note: '-' },
-    { no: 2, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '(주)애즈위메이크', investType: '우선주(신주)', firstInvestDate: '2025-05-29', remainDays: '보고완료', investDate: '2025-05-29', dueDiligDate: '2026-05-29', reportDate: '2026-06-22', reportFile: '애즈위메이크_투자금실사보고서.pdf', updatedAt: '-', isConfirmed: '-', note: '-' },
-    { no: 3, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '농업회사법인 삼진푸드(주)', investType: '우선주(신주)', firstInvestDate: '2026-01-30', remainDays: '171일 전', investDate: '-', dueDiligDate: '-', reportDate: '-', reportFile: '-', updatedAt: '-', isConfirmed: '-', note: '-' },
-    { no: 4, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '(주)라피고', investType: '우선주(신주)', firstInvestDate: '2025-09-26', remainDays: '45일 전', investDate: '-', dueDiligDate: '-', reportDate: '-', reportFile: '-', updatedAt: '-', isConfirmed: '-', note: '-' },
-    { no: 5, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '(주)당근마켓', investType: '보통주(구주)', firstInvestDate: '2025-07-25', remainDays: '보고 대상 제외', investDate: '-', dueDiligDate: 'X', reportDate: '-', reportFile: '-', updatedAt: '-', isConfirmed: '-', note: '-' },
-    { no: 6, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '(주)로보스', investType: '우선주(신주)', firstInvestDate: '2025-05-23', remainDays: '보고완료', investDate: '2025-05-23', dueDiligDate: '2026-05-12', reportDate: '2026-05-27', reportFile: '로보스_투자금실사보고서.pdf', updatedAt: '-', isConfirmed: '-', note: '-' },
-    { no: 7, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '인테이크(주)', investType: '우선주(신주)', firstInvestDate: '2025-04-04', remainDays: '130일 초과', investDate: '-', dueDiligDate: '-', reportDate: '-', reportFile: '-', updatedAt: '-', isConfirmed: '-', note: '-' },
+    { no: 1, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '(주)어비스컴퍼니', investType: 'CB', firstInvestDate: '2025-11-04', remainDays: '보고완료', investDate: '2025-11-04', dueDiligDate: '2026-06-22', reportDate: '2026-06-23', reportFile: '어비스컴퍼니_투자금실사보고서.pdf', updatedAt: '-', isConfirmed: '-', note: '-', gpKey: '원익투자파트너스', acctType: '농식품', manager: '양한솔', reported: 'Y' },
+    { no: 2, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '(주)애즈위메이크', investType: '우선주(신주)', firstInvestDate: '2025-05-29', remainDays: '보고완료', investDate: '2025-05-29', dueDiligDate: '2026-05-29', reportDate: '2026-06-22', reportFile: '애즈위메이크_투자금실사보고서.pdf', updatedAt: '-', isConfirmed: '-', note: '-', gpKey: '원익투자파트너스', acctType: '농식품', manager: '양한솔', reported: 'Y' },
+    { no: 3, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '농업회사법인 삼진푸드(주)', investType: '우선주(신주)', firstInvestDate: '2026-01-30', remainDays: '171일 전', investDate: '-', dueDiligDate: '-', reportDate: '-', reportFile: '-', updatedAt: '-', isConfirmed: '-', note: '-', gpKey: '원익투자파트너스', acctType: '농식품', manager: '양한솔', reported: 'N' },
+    { no: 4, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '(주)라피고', investType: '우선주(신주)', firstInvestDate: '2025-09-26', remainDays: '45일 전', investDate: '-', dueDiligDate: '-', reportDate: '-', reportFile: '-', updatedAt: '-', isConfirmed: '-', note: '-', gpKey: '원익투자파트너스', acctType: '농식품', manager: '양한솔', reported: 'N' },
+    { no: 5, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '(주)당근마켓', investType: '보통주(구주)', firstInvestDate: '2025-07-25', remainDays: '보고 대상 제외', investDate: '-', dueDiligDate: 'X', reportDate: '-', reportFile: '-', updatedAt: '-', isConfirmed: '-', note: '-', gpKey: '원익투자파트너스', acctType: '농식품', manager: '양한솔', reported: 'N' },
+    { no: 6, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '(주)로보스', investType: '우선주(신주)', firstInvestDate: '2025-05-23', remainDays: '보고완료', investDate: '2025-05-23', dueDiligDate: '2026-05-12', reportDate: '2026-05-27', reportFile: '로보스_투자금실사보고서.pdf', updatedAt: '-', isConfirmed: '-', note: '-', gpKey: '원익투자파트너스', acctType: '농식품', manager: '양한솔', reported: 'Y' },
+    { no: 7, gp: '원익투자파트너스(주)', subFund: '2022 원익 스마트 혁신 Agtech투자조합', investee: '인테이크(주)', investType: '우선주(신주)', firstInvestDate: '2025-04-04', remainDays: '130일 초과', investDate: '-', dueDiligDate: '-', reportDate: '-', reportFile: '-', updatedAt: '-', isConfirmed: '-', note: '-', gpKey: '원익투자파트너스', acctType: '농식품', manager: '양한솔', reported: 'N' },
   ],
   provenance: {
     capturedAt: '2026-09-15',

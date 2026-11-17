@@ -191,9 +191,9 @@ describe('투심보고 통계 — S1_28 투심승인정보조회', () => {
     expect(html).toContain(`id="f-date1" value="${from}"`);
     expect(html).toContain(`id="f-date2" value="${to}"`);
   });
-  it('행에 칸이 없는 조건(모펀드·계정구분·기준일자)은 행을 거르지 않는다(데이터 연동 후 적용) · 운용사/자펀드만 행 필터', () => {
+  it('모펀드·계정구분은 숨은 행 키(mf·acct), 기준일자는 납입 예정일(payd)로 거른다(2026-11-16 — 종전 no-op) · 운용사/자펀드는 원문 칸', () => {
     const keyed = Object.fromEntries(REVIEW_STATS_PAGE.filters.map((f) => [f.label, f.key]));
-    expect(keyed).toEqual({ 모펀드: undefined, 운용사: 'gp', 자펀드: 'fund', 계정구분: undefined, 기준일자: undefined });
+    expect(keyed).toEqual({ 모펀드: 'mf', 운용사: 'gp', 자펀드: 'fund', 계정구분: 'acct', 기준일자: 'payd' });
     /* 운용사·자펀드 선택지는 원문 행 값(창작 없음) */
     for (const g of GP_OPTIONS) expect(REVIEW_STATS_TABLE.rows.some((r) => r.gp === g)).toBe(true);
     for (const f of FUND_OPTIONS) expect(REVIEW_STATS_TABLE.rows.some((r) => r.fund === f)).toBe(true);

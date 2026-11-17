@@ -116,7 +116,10 @@ describe('② S1_33 전체 투자실적 합계 행 = 원문 tfoot', () => {
   it('`합계 1건` · 금액 합산 8칸 · `-` 칸 · 연번 2 — 33칸 전부 원문과 같다', () => {
     const expected = tfootCells(html);
     expect(expected).toHaveLength(schema.columns.length);
-    const total = computeSchemaTotal(schema, schema.sample!)!;
+    /* 기본 상태(데이터기준 운용사보고)에 보이는 원문 행 — sample 2행째는 월말확정 창작 변형(2026-11-17)이라 원문 tfoot 대조에서 뺀다 */
+    const shown = schema.sample!.filter((r) => r.dataBasis === '운용사보고');
+    expect(shown).toHaveLength(1);
+    const total = computeSchemaTotal(schema, shown)!;
     expect(schema.columns.map((c) => total[c.key])).toEqual(expected);
     expect(total.no).toBe('합계 1건');
     expect(total.seqNo).toBe(2);

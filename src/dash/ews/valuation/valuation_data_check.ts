@@ -5,9 +5,10 @@
    원문 셀 표시값을 옮긴다 — 금액 칸이 null 이면 원문 amtCell 이 '미보고' 를 그리므로 '미보고' 문자열,
    '해당없음' 은 그대로, 상장여부는 원문 listedTag('N') 가 그리는 '비상장'. 무형자산상각비는 원문이 0 이다
    (설계메모 [확인 필요]: 실보고 0 인지 결측인지 원문 확인 필요 — 값은 바꾸지 않는다).
-   검색조건 `평가년월`(원문 기본 2025-12)은 행에 평가년월 컬럼이 없는 **조회 기준**이다 → 상세필터에 월 선택으로 두되
-   행을 거르지 않는다(filter_field.ts '…년월' 휴리스틱 → kind month · columnKey 없음 → `· 데이터 연동 후 적용` 캡션).
-   스키마 필터에는 기본값 메커니즘이 없어 2025-12 를 미리 고르지 않는다(골드 fund_early_warning 과 같은 "기본값 없음").
+   검색조건 `평가년월`(원문 기본 2025-12)은 숨은 행 속성 ym(그리드 컬럼 없음)으로 **조회 시점**(mode asOf — 평가년월이
+   고른 달 이전·같은 달인 행)을 거른다(2026-11-16 사용자 지시 "미연동 필터 전부 동작" — 종전엔 미연동). 원문 행은 2025-12 평가분이라
+   2025-12 이후를 고르면 보이고 그 이전을 고르면 0건이다. 직전 시점 더미 행은 두지 않는다 — 원문 1건(sample 1행)을 고정하는
+   출처 충실성 테스트(risk_pages_17)가 있다. 기본값(def)도 두지 않는다 — 종전처럼 미선택(칩 없음)이 기본 상태다.
    부채비율·ROE 는 원문 pctCell(백분율 텍스트)이라 'text'. 조회 전용 — fields 없음. KPI: 미포함(브리프 규칙 5). */
 import type { PageSchema } from '../../schemas/types';
 
@@ -38,6 +39,9 @@ export const schema: PageSchema = {
   ],
   fields: [],
   filters: ['평가년월'],
+  filterSpecs: {
+    평가년월: { kind: 'month', key: 'ym', mode: 'asOf' },
+  },
   hideCardView: true,
   hideRowSelection: true,
   hideKpis: true,
@@ -48,7 +52,7 @@ export const schema: PageSchema = {
       invest: 1000000000, bal: 1000000000, shares: '해당없음', totShares: '166,000', ratio: '해당없음', listed: '비상장',
       asset: '미보고', capital: '미보고', debt: '미보고', sales: '미보고', opInc: '미보고', netInc: '미보고', ebit: '미보고',
       dep: '미보고', amort: 0, debtRatio: '미보고', ebitda: '미보고', recovered: 19489041, netAsset: '미보고', roe: '미보고',
-      parValue: '해당없음', closeMonth: '12' },
+      parValue: '해당없음', closeMonth: '12', ym: '2025-12' },
   ],
   provenance: {
     capturedAt: '2026-09-23',

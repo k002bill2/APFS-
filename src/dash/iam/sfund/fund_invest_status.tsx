@@ -10,15 +10,15 @@
    - 연도별 뷰 → 3단 중첩 그룹헤더(`ColGroupDef` 안 `ColGroupDef`) 리프 24개 + pinned 합계행(YEARTOTAL 원문값).
    - 금액 단위 전환(원/백만원/억원, 기본 억원) → 캡션 + SegTabs + 그리드 `context={{unit}}` + `refreshCells`.
    - 검색박스(모펀드·계정구분·연도기준·투자실적구분·데이터기준·기준일자) → 상세필터 드로어(목업 순서 그대로).
-     투자실적구분 외 5종은 행 컬럼과 미연동(noop) — `· 데이터 연동 후 적용` 캡션. 검색어는 OFF.
+     투자실적구분 외 5종은 표 수치를 다시 계산한다(아래 '검색조건 재계산' — 2026-11-16 사용자 지시, 종전 no-op). 검색어는 OFF.
    - 엑셀 → SheetJS. 다단 헤더는 `flattenForExcel`을 **재귀로 일반화**(깊이 N → 헤더 N행 + 세로/가로 병합).
    - KPI 배지 행·`sub` 캡션·카드뷰·명세 팝업·행 선택·등록 없음(읽기전용 통계 화면).
    목업의 GNB/LNB 토글·출처시스템 메뉴·서브탭·설계메모는 프로토타입 스캐폴딩이라 이식하지 않는다(셸이 소유).
 
    한계·가정(결정 기록)
-   - 필터 5종(모펀드·계정구분·연도기준·데이터기준·기준일자)은 **noop**이다. 원문이 조회 동작을 정의하지 않았고
-     행 데이터에 대응 컬럼도 없다. 값이 행을 거르지 않으므로 **External Filter를 배선하지 않는다**
-     (항상 통과하는 술어는 죽은 코드). 표시를 바꾸는 항목은 투자실적구분(=뷰)뿐이라 적용 칩도 생기지 않는다.
+   - 필터 5종(모펀드·계정구분·연도기준·데이터기준·기준일자)은 통계표라 행을 거르지 않고 **수치를 다시 계산**한다
+     (crossRowsFor · yearDataFor — 2026-11-16 사용자 지시 "미연동 필터 전부 동작", 종전 no-op). 행을 거르는 술어가 아니라
+     rowData·합계행을 바꾸므로 External Filter 대신 재계산 결과를 그리드에 넘긴다. 5종은 적용 칩(값 + ×)을 단다.
    - 뷰마다 컬럼·행·합계행이 통째로 바뀌므로 `<AgGridReact key={view}>`로 **리마운트**한다 —
      `autoSizeStrategy`는 최초 렌더 1회만 적용돼 교체만으로는 폭이 재산정되지 않는다(apfs-aggrid ⑥ 함정).
    - 크로스탭 수치는 목업 주석대로 **도메인 정합 샘플**(2011 원천 실값 × 연도 배수 1/1.08/1.15, 건당 3.2억).
@@ -28,7 +28,7 @@
      **행마다 표시**한다. 단위 보조표기는 목업 `(건)`/`(억원)`을 한 줄 캡션으로 붙였다.
    - 동명 리프(산업별 `관련산업` ×4)는 `field`를 평탄화 인덱스 `c0..cN`으로 부여한다(headerName만 중복). */
 import '../../aggrid_shared.css';   // 합계(floating) 행 opacity:0 stuck 버그 보정(공유)
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
 import { apfsTheme, fmt, numFmt, numStyle, AUTO_SIZE_CONTENT, DEFAULT_COL_DEF } from '../../aggrid_theme';
@@ -42,8 +42,11 @@ import { PeriodPicker } from '../../ui/period-picker';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS — 쓰기 전용(XLSX.read 미사용 → 알려진 파싱 CVE 비해당)
 import { DrawerSelect } from '../../drawer_select';   // 상세필터 select 공용본(옵션 많으면 검색형)
+import { onOrBefore } from '../../schemas/filter_field';   // 조회 시점 판정(셀 ≤ 값) 공용본
+import { apportion } from '../../stat_apportion';   // 통계 몫 배분 공용(src/dash 루트 — 여러 대분류)
 
 const { Button, IconBtn, SegTabs } = UI;
+const MF_DEFAULT = '농식품모태펀드';   // 모펀드 기본값(목업 select 에 '전체' 없음)
 
 /* ──────────────────────────────
    뷰(투자실적구분) · 단위
@@ -208,8 +211,9 @@ const YEAR_TOTAL_ROW: YearRow = {
   rTot: YEAR_TOTAL_RAW.rTot, rMo: YEAR_TOTAL_RAW.rMo, rMi: YEAR_TOTAL_RAW.rMi,
   gTot: YEAR_TOTAL_RAW.gTot, gCh: YEAR_TOTAL_RAW.gCh, gSg: YEAR_TOTAL_RAW.gSg, gEt: YEAR_TOTAL_RAW.gEt,
 };
-/* 정적 합계행 — 행이 변하지 않으므로 모듈 상수(apfs-aggrid 계약4: 인라인 배열 금지, 정적이면 상수).
-   값도 원문 확정값이라 rows 합산으로 재계산하지 않는다(원문이 일부러 불일치를 남겼다 — 상단 '한계'). */
+/* 정적 합계행 — 기본 상태에선 행이 변하지 않으므로 모듈 상수(apfs-aggrid 계약4: 인라인 배열 금지, 정적이면 상수).
+   값도 원문 확정값이라 rows 합산으로 재계산하지 않는다(원문이 일부러 불일치를 남겼다 — 상단 '한계').
+   검색조건이 수치를 바꿀 때만 yearDataFor 가 재합산한 합계행으로 바뀐다. */
 const YEAR_PINNED: StatRow[] = [YEAR_TOTAL_ROW];
 
 /* 연도별 금액 컬럼(단위 환산 대상) — 나머지는 건수 */
@@ -327,6 +331,111 @@ const CROSS_COLUMNS: Record<CrossView, StatColDefs> = {
 };
 
 /* ──────────────────────────────
+   검색조건 재계산 — 2026-11-16 사용자 지시 "미연동 필터 전부 동작"(종전 모펀드·계정구분·연도기준·데이터기준·기준일자 no-op).
+   통계표라 행을 거르지 않고 **수치를 다시 계산**한다(백엔드라면 조회 파라미터로 다시 집계할 값). 전부 결정적(칸 위치로 정한다).
+   · 모펀드·계정구분('전체' 기본) = 칸마다 첫 선택지 몫 round(v×w), 다른 선택지 = v − 첫 몫(몫의 합 = 원 값).
+     w = 농식품모태펀드 0.86 · 농식품 0.90 에 칸 위치로 ±0.04. 건수는 1건, 금액은 0.1억 단위로 나눈다.
+     크로스탭 금액은 나눈 건수 × 건당 3.2억(목업 규칙 유지).
+   · 연도기준 = 출자사업연도(기본) 0 · 결성연도 1 · 등록연도 2 년씩 연도 축을 민다. 크로스탭은 표 앞 연도를 목업 배수 규칙
+     (연 1.08배)으로 역산하고, 연도별은 시작 연도(2010) 앞을 0 으로 둔다. 표 끝 밖으로 밀린 값은 빠진다.
+   · 데이터기준 월말확정 = 투자금액(크로스탭 금액 행 · 연도별 투자실적 금액)에 칸별 확정률 0.96~1.00(운용사보고 중 월말 미확정분
+     제외). 건수와 결성·조성 약정액은 그대로.
+   · 기준일자 = 그 연도보다 뒤 연도 행을 뺀다(조회 시점 — onOrBefore).
+   · 합계는 바뀐 값으로 다시 합산한다(연도별: 그룹 합계 열·누적 열·합계행). 리프가 원문과 같으면(빈 값 ≡ 출자사업연도 ≡
+     운용사보고, 빠지는 연도 없음) **원문 상수를 그대로** 돌려준다 — 연도별 원문 합계·누적은 행 합과 일부 어긋나(상단 '한계')
+     재합산하면 기본 상태 수치가 바뀐다.
+────────────────────────────── */
+export interface StatusFilter { mf: string; acc: string; yBase: string; dBase: string; asOf: string }
+export const STATUS_FILTER_DEFAULT: Readonly<StatusFilter> = Object.freeze({ mf: '', acc: '', yBase: '', dBase: '', asOf: '' });
+
+const YEAR_SHIFT: Readonly<Record<string, number>> = { 결성연도: 1, 등록연도: 2 };
+const AMT_STEP = 1e7;   // 금액 몫·확정 반올림 단위 0.1억(화면 억원 소수 1자리)
+const roundTo = (v: number, step: number) => Math.round(v / step) * step;
+const jitter = (r: number, c: number) => ((Math.abs(r * 7 + c * 3) % 3) - 1) * 0.04;
+/** 2지선다 몫 — 미선택('전체')이면 원 값, 첫 선택지면 round(v×w), 그 외(둘째 선택지)면 나머지 */
+const split = (v: number, sel: string, first: string, w: number, step: number) =>
+  (!sel ? v : sel === first ? roundTo(v * w, step) : v - roundTo(v * w, step));
+const shareCell = (v: number, f: StatusFilter, r: number, c: number, step = 1) =>
+  split(split(v, f.mf === 'MOAF' ? 'MOAF' : '', '농식품모태펀드', 0.86 + jitter(r, c), step), f.acc, '농식품', 0.9 + jitter(c, r), step);   // 모펀드: 농식품모태펀드 = 원문(전체 없음), MOAF = 나머지 몫
+/** 월말확정 확정률 — 칸 위치로 0.96~1.00 */
+const confirmRate = (r: number, c: number) => 1 - (Math.abs(r * 3 + c * 7) % 5) / 100;
+/** 크로스탭 연도 배수 — 표 앞 연도(연도기준 이동분)는 연 1.08배 규칙으로 역산 */
+const multOf = (y: number) => CROSS_MULT[y] ?? 1 / 1.08 ** (CROSS_YEARS[0] - y);
+
+/** 크로스탭 모펀드·계정구분 몫 — **연도별 표의 투자건수 비율**을 행 총량에 걸고 칸에 배분한다(stat_apportion).
+    칸마다 따로 반올림하면 1~4건 칸에서 몫이 0 이 돼 같은 조건인데 뷰마다 비율이 갈렸다(수산: 경영형태별 9.5% · 산업별 4.6%).
+    계정구분은 농식품 몫을 배분하고 수산 = 나머지(칸마다 상보). 모펀드 농식품모태펀드 = 원문(목업 select 에 전체 없음) */
+function crossShareRow(raw: number[], f: StatusFilter): number[] {
+  if (f.mf !== 'MOAF' && !f.acc) return raw;
+  const cnt = (g: Partial<StatusFilter>) => (yearDataFor({ ...STATUS_FILTER_DEFAULT, ...g }).total.iCnt as number);
+  const all = cnt({});
+  const byMf = f.mf === 'MOAF' ? apportion(raw, sum(raw) * (cnt({ mf: 'MOAF' }) / all), raw) : raw;
+  if (!f.acc) return byMf;
+  const mfOnly = f.mf === 'MOAF' ? { mf: 'MOAF' } : {};
+  const first = apportion(byMf, sum(byMf) * (cnt({ ...mfOnly, acc: '농식품' }) / cnt(mfOnly)), byMf);
+  return f.acc === '농식품' ? first : byMf.map((v, i) => v - first[i]);
+}
+const sum = (a: readonly number[]) => a.reduce((x, y) => x + y, 0);
+
+/** 크로스탭 재계산 — 리프·행이 원문과 같으면 원문 상수(CROSS_ROWS) 그대로 */
+export function crossRowsFor(view: CrossView, f: StatusFilter): StatRow[] {
+  const cfg = CROSS[view];
+  const shift = YEAR_SHIFT[f.yBase] ?? 0;
+  const base = CROSS_ROWS[view];
+  const out: StatRow[] = METRICS.flatMap((metric) => CROSS_YEARS.filter((y) => onOrBefore(String(y), f.asOf)).map((y) => {
+    const src = y - shift;
+    const counts = crossShareRow(cfg.c11.map((v) => Math.round(v * multOf(src))), f);
+    const vals = metric !== '투자금액' ? counts
+      : counts.map((c, i) => (f.dBase === '월말확정' ? roundTo(c * AMT_PER_CASE * confirmRate(src, i), AMT_STEP) : c * AMT_PER_CASE));
+    return {
+      id: `${view}-${metric}-${y}`, metric, y,
+      ...Object.fromEntries(vals.map((v, i) => ['c' + i, v])),
+      [TOTAL_KEY]: vals.reduce((a, b) => a + b, 0),
+    } as CrossRow;
+  }));
+  const same = out.length === base.length && out.every((r, i) => Object.keys(r).every((k) => r[k] === base[i][k]));
+  return same ? base : out;
+}
+
+/* 연도별 리프(검색조건이 직접 바꾸는 칸) — 합계·누적 열은 리프에서 다시 낸다 */
+const YEAR_LEAVES = ['inv1', 'inv2', 'inv3', 'inv4', 'inv5', 'fm1', 'fm2', 'iCnt', 'iAmt', 'rMo', 'rMi', 'gCh', 'gSg', 'gEt'] as const;
+const YEAR_MONEY_LEAVES = new Set<string>(['iAmt', 'rMo', 'rMi', 'gCh', 'gSg', 'gEt']);
+const CUM_KEYS = new Set<string>(['fCumCnt', 'fCumAmt', 'iCumCnt', 'iCumAmt']);
+
+/** 연도별 재계산 — 행 + 합계행. 리프·행이 원문과 같으면 원문 상수(YEAR_ROWS·YEAR_TOTAL_ROW) 그대로 */
+export function yearDataFor(f: StatusFilter): { rows: StatRow[]; total: StatRow } {
+  const shift = YEAR_SHIFT[f.yBase] ?? 0;
+  const byYear = new Map(YEAR_ROWS.map((r) => [r.y as number, r]));
+  const kept = YEAR_ROWS.filter((r) => onOrBefore(String(r.y), f.asOf));
+  const cum = { f: 0, fa: 0, i: 0, ia: 0 };
+  let same = kept.length === YEAR_ROWS.length;
+  const rows = kept.map((orig) => {
+    const sy = (orig.y as number) - shift;   // 연도기준 — 이 행에 실리는 원 연도
+    const src = byYear.get(sy);
+    const v = Object.fromEntries(YEAR_LEAVES.map((k, c) => {
+      const x = shareCell(src ? (src[k] as number) : 0, f, sy, c, YEAR_MONEY_LEAVES.has(k) ? AMT_STEP : 1);
+      return [k, k === 'iAmt' && f.dBase === '월말확정' ? roundTo(x * confirmRate(sy, c), AMT_STEP) : x];
+    })) as Record<(typeof YEAR_LEAVES)[number], number>;
+    if (YEAR_LEAVES.some((k) => v[k] !== orig[k])) same = false;
+    const inv0 = v.inv1 + v.inv2 + v.inv3 + v.inv4 + v.inv5;
+    const rTot = v.rMo + v.rMi;
+    cum.f += inv0; cum.fa += rTot; cum.i += v.iCnt; cum.ia += v.iAmt;
+    return {
+      id: orig.id, y: orig.y, ...v, inv0, fm0: v.fm1 + v.fm2,
+      fCnt: inv0, fAmt: rTot, fCumCnt: cum.f, fCumAmt: cum.fa, iCumCnt: cum.i, iCumAmt: cum.ia,
+      rTot, gTot: v.gCh + v.gSg + v.gEt,
+    } as YearRow;
+  });
+  if (same) return { rows: YEAR_ROWS, total: YEAR_TOTAL_ROW };
+  const total: YearRow = { id: YEAR_TOTAL_ROW.id, y: null };
+  for (const k of Object.keys(YEAR_TOTAL_ROW)) {
+    if (k === 'id' || k === 'y') continue;
+    total[k] = CUM_KEYS.has(k) ? null : rows.reduce((a, r) => a + (r[k] as number), 0);   // 누적 4칸은 원문 tfoot 처럼 '-'
+  }
+  return { rows, total };
+}
+
+/* ──────────────────────────────
    Excel 헤더 — 깊이 N 재귀 일반화(연도별 3단 · 크로스탭 2단)
    subfund_manage의 2단 전용 flattenForExcel을 일반화했다: 리프는 자기 행부터 마지막 행까지 세로 병합,
    그룹은 자식 리프 폭만큼 가로 병합. 금액 리프 헤더엔 선택 단위를 덧붙인다(커뮤니티 xlsx는 셀 스타일을
@@ -375,13 +484,13 @@ function PageBtn({ n, active, onClick }: { n: number; active: boolean; onClick: 
   );
 }
 
-/* noop=컬럼 미연동 필터(캡션으로 no-op 신호) · plain=<label> 대신 <div>(버튼 트리거 이중 토글 방지) */
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+/* 드로어 필드 래퍼 — 라벨 + 컨트롤(항목이 전부 수치를 바꾼다 — 미연동 캡션 없음) · plain=<label> 대신 <div>(버튼 트리거 이중 토글 방지) */
+function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </Wrap>
@@ -398,17 +507,24 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: CROSS_ROWS[DEFAULT_VIEW as CrossView].length });
 
-  /* 상세필터 — 투자실적구분(=view)만 표시를 바꾸고 나머지 5종은 noop(상단 '한계') */
+  /* 상세필터 — 투자실적구분(=view)은 뷰를 바꾸고 나머지 5종은 수치를 다시 계산한다(상단 '한계'·'검색조건 재계산') */
   const [filterOpen, setFilterOpen] = useState(false);
-  const [fMf, setFMf] = useState('');       // 모펀드
+  /* 모펀드 = 목업 select 에 '전체'가 없다(농식품모태펀드·MOAF) → 기본 농식품모태펀드 = 원문 수치 그대로, MOAF 만 대안 데이터(2026-11-16 사용자 결정 "고정 기본값의 다른 값은 데이터 추가").
+      칩은 기본값과 다를 때만, ×·초기화는 기본값으로 */
+  const [fMf, setFMf] = useState(MF_DEFAULT);       // 모펀드
   const [fAcc, setFAcc] = useState('');     // 계정구분
   const [fYBase, setFYBase] = useState(''); // 연도기준
   const [fDBase, setFDBase] = useState(''); // 데이터기준
   const [fAsOf, setFAsOf] = useState('');   // 기준일자 — 목업 기본값 2026-07-31은 적용하지 않는다(열린 경계)
-  const resetFilters = () => { setFMf(''); setFAcc(''); setFYBase(''); setFDBase(''); setFAsOf(''); setView(DEFAULT_VIEW); };
+  const resetFilters = () => { setFMf(MF_DEFAULT); setFAcc(''); setFYBase(''); setFDBase(''); setFAsOf(''); setView(DEFAULT_VIEW); };
 
   const isYearView = view === '연도별';
-  const rows = isYearView ? YEAR_ROWS : CROSS_ROWS[view as CrossView];
+  /* 검색조건 반영 — 기본 기준이면 원문 상수 그대로(같은 참조), 아니면 재계산한 새 배열 */
+  const stFilter = useMemo<StatusFilter>(() => ({ mf: fMf, acc: fAcc, yBase: fYBase, dBase: fDBase, asOf: fAsOf }), [fMf, fAcc, fYBase, fDBase, fAsOf]);
+  const yearData = useMemo(() => yearDataFor(stFilter), [stFilter]);
+  const crossData = useMemo(() => (isYearView ? null : crossRowsFor(view as CrossView, stFilter)), [isYearView, view, stFilter]);
+  const yearPinned = useMemo(() => (yearData.total === YEAR_TOTAL_ROW ? YEAR_PINNED : [yearData.total]), [yearData]);
+  const rows = isYearView ? yearData.rows : (crossData ?? CROSS_ROWS[view as CrossView]);
   const columnDefs = isYearView ? YEAR_COLUMNS : CROSS_COLUMNS[view as CrossView];
 
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
@@ -431,7 +547,7 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
   const exportExcel = () => {
     const moneyUnitOf = (k: string) => (isYearView && YEAR_MONEY.has(k) ? unit : null);
     const { head, keys, merges } = flattenForExcel(columnDefs, moneyUnitOf);
-    const src = isYearView ? [...rows, YEAR_TOTAL_ROW] : rows;   // 화면=엑셀 불변식(본문 + pinned 합계행)
+    const src = isYearView ? [...rows, yearData.total] : rows;   // 화면=엑셀 불변식(본문 + pinned 합계행)
     const cell = (r: StatRow, k: string): { v: string | number; z?: string } => {
       if (k === 'metric') {
         const m = (r as CrossRow).metric;
@@ -467,8 +583,15 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
       title="자펀드 투자실적현황"
       favRoute="fund-invest-status"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
-      /* 툴바 좌 = 주 필터 칩(투자실적구분 4뷰, 단일 선택). 드로어 항목이 전부 noop이라 적용 칩은 없다. */
+      /* 툴바 좌 = 주 필터 칩(투자실적구분 4뷰, 단일 선택) + 수치를 바꾸는 드로어 5종의 적용 칩(값 + ×) */
       filterChips={VIEWS.map((v) => ({ key: v, label: v, active: view === v, onSelect: () => setView(v) }))}
+      appliedFilters={[
+        { label: '모펀드', value: fMf === MF_DEFAULT ? '' : fMf, onClear: () => setFMf(MF_DEFAULT) },
+        { label: '계정구분', value: fAcc, onClear: () => setFAcc('') },
+        { label: '연도기준', value: fYBase, onClear: () => setFYBase('') },
+        { label: '데이터기준', value: fDBase, onClear: () => setFDBase('') },
+        { label: '기준일자', value: fAsOf, onClear: () => setFAsOf('') },
+      ]}
       toolbarRight={<>
         {/* 금액 단위 전환(목업 목록바 `.unitwrap`) — 캡션 + 세그먼트 */}
         <span className="text-caption" style={{ fontSize: 12.5 }}>{'단위: ' + unit}</span>
@@ -495,7 +618,7 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
           columnDefs={columnDefs}
           context={{ unit }}   // 금액 포매터(moneyFmt/crossFmt)가 참조. 단위 변경 시 useEffect가 refreshCells로 재적용
           getRowId={(p) => p.data.id}
-          pinnedBottomRowData={isYearView ? YEAR_PINNED : undefined}
+          pinnedBottomRowData={isYearView ? yearPinned : undefined}
           domLayout="autoHeight"
           defaultColDef={DEFAULT_COL_DEF}
           /* 연도별=25컬럼(내용 맞춤) · 크로스탭=좁은 매트릭스(컬럼 flex로 폭 채움 → 전략 없음) */
@@ -508,7 +631,7 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
       </div>
 
       {/* ── 상세필터 드로어 — 목업 검색박스 순서 그대로(모펀드·계정구분·연도기준·투자실적구분·데이터기준·기준일자).
-             투자실적구분만 표시를 바꾸고 나머지는 noop 캡션. 검색어는 OFF(만들지 않는다). ── */}
+             투자실적구분은 툴바 칩, 나머지 5종은 수치 재계산. 검색어는 OFF(만들지 않는다). ── */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="right" hideClose className="w-[408px] max-w-[92vw]">
           <SheetHeader>
@@ -517,13 +640,13 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            <DrawerField label="모펀드" noop><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} /></DrawerField>
-            <DrawerField label="계정구분" noop><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
-            <DrawerField label="연도기준" noop><DrawerSelect value={fYBase} onChange={setFYBase} options={['출자사업연도', '결성연도', '등록연도']} /></DrawerField>
+            <DrawerField label="모펀드"><DrawerSelect value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} all={null} /></DrawerField>
+            <DrawerField label="계정구분"><DrawerSelect value={fAcc} onChange={setFAcc} options={['농식품', '수산']} /></DrawerField>
+            <DrawerField label="연도기준"><DrawerSelect value={fYBase} onChange={setFYBase} options={['출자사업연도', '결성연도', '등록연도']} /></DrawerField>
             {/* 투자실적구분은 툴바 칩이라 드로어에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts) */}
-            <DrawerField label="데이터기준" noop><DrawerSelect value={fDBase} onChange={setFDBase} options={['운용사보고', '월말확정']} /></DrawerField>
+            <DrawerField label="데이터기준"><DrawerSelect value={fDBase} onChange={setFDBase} options={['운용사보고', '월말확정']} /></DrawerField>
             {/* 기준일자 — PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel(apfs-datepicker) */}
-            <DrawerField label="기준일자" noop plain>
+            <DrawerField label="기준일자" plain>
               <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
                 <PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일자" />
               </div>

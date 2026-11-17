@@ -3,7 +3,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { APFS_DATA } from '../data';
 import { readSrc } from '../test_src';
 import { resolveSchema, ALL_SCHEMAS } from '../schemas';
-import { resolveFilterField } from '../schemas/filter_field';
+import { resolveFilterField, filterValueMatches, defaultFilterValues } from '../schemas/filter_field';
 import { REPORT_TABS } from './gp/all_report_status_model';
 import { SOURCE_COUNTS as PROFILE_COUNTS, PROVENANCE as PROFILE_PROV, formatProfileUnit } from './ent/company_profile_data';
 import { SOURCE_COUNTS as STATS_COUNTS, SALES_SCALE_ROWS, INVEST_TYPE_ROWS, REGION_ROWS, PROVENANCE as STATS_PROV } from './ent/investee_invest_stats_model';
@@ -190,7 +190,15 @@ describe('원문 행 충실성 — 합성 더미 금지', () => {
     ['mgmt-fee', 1],
     ['top-investee-manage', 0],
   ] as const)('%s 의 행 수는 원문 그대로 %i건이다', (route, n) => {
-    expect(resolveSchema(route).sample!.length).toBe(n);
+    /* 기본 상태에 보이는 행으로 센다 — '전체' 없는 기준 선택기의 다른 값은 창작 변형 행을 sample 에 둔다
+       (2026-11-17 전체 투자실적 데이터기준 월말확정). 기본 상태 행 수가 원문과 같아야 한다(R0). */
+    const s = resolveSchema(route);
+    const fv = defaultFilterValues(s);
+    const shown = s.sample!.filter((r) => Object.entries(fv).every(([label, v]) => {
+      const ff = resolveFilterField(label, s);
+      return !v || !ff.columnKey || filterValueMatches(ff, v, r[ff.columnKey]);
+    }));
+    expect(shown.length).toBe(n);
   });
 
   /* 샘플 값 지점검 — 키 remap 이 어긋나면 셀이 조용히 빈칸이 된다(에러 없음).

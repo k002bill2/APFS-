@@ -10,9 +10,14 @@
    (모펀드는 농식품모태펀드 단일이라 제외 — CHECK_REPORT 모펀드 규칙). 옵션·기본값은 원문 <select>/chipGroup 그대로.
    행 매칭(`key`) 판단 — 원문 조회 버튼은 토스트뿐(S1_32:382)이라 **원문 옵션 값이 원문 행에 실제로 있을 때만** 행을 거른다:
    · 운용사 = 원문 옵션 NH투자증권 = 3행 gp 값 → gp 로 거른다.
-   · 자펀드 = 원문 옵션 `엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사`가 3행 자펀드(NH농식품밸류업투자조합)에
-     없다(원문 내부 불일치) → 거르면 선택 즉시 0건이라 no-op(`· 데이터 연동 후 적용`). 행을 옵션에 맞춰 고치지 않는다.
-   · 계정구분(전체·농식품·수산 chipGroup) · 담당자(원문 옵션 '전체'뿐 — 빈 select 금지 규약상 text 로 격하) = 행에 값 없음 → no-op.
+   2026-11-16 사용자 지시 "미연동 필터 전부 동작"로 미연동 3항목에 **숨은 행 속성**을 시드했다
+   (그리드 컬럼은 늘리지 않는다 — 백엔드라면 조회 파라미터로 거를 값이다. 종전 no-op):
+   · 자펀드 = 원문 옵션 `엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사`가 표시 칸 subFund(NH농식품밸류업투자조합)와
+     표기가 다르다(원문 내부 불일치) → 표시 칸은 그대로 두고 자펀드 코드 역할의 숨은 속성 subFundKey(=원문 옵션 표기, 3행 공통)로 거른다.
+     원문 옵션은 지우거나 바꾸지 않는다.
+   · 계정구분(전체·농식품·수산 chipGroup) = 숨은 속성 acctType. 3행이 한 자펀드(NH농식품밸류업투자조합)의 투자기업이라
+     전부 농식품 — 수산을 고르면 0건이 정상이다(행 단위로 나눠 싣지 않는다). 기본 '전체'라 3행 그대로.
+   · 담당자 = 숨은 속성 manager(한 자펀드라 1명, 양한솔) — 원문 옵션이 '전체'뿐이라 선택지는 행 실제 값(sample 고유값)으로 만든다.
    · 기준년월 = 원문 범위(from~to, 기본 2026-06~2026-06) → baseYm 범위. 3행 모두 2026-06 이라 기본값이 행을 줄이지 않는다. */
 import type { PageSchema } from '../../schemas/types';
 
@@ -47,9 +52,9 @@ export const schema: PageSchema = {
   filters: ['운용사', '자펀드', '계정구분', '담당자', '기준년월'],
   filterSpecs: {
     운용사: { kind: 'select', options: ['NH투자증권'], key: 'gp' },
-    자펀드: { kind: 'select', options: ['엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사'] },
-    계정구분: { kind: 'select', options: ['농식품', '수산'] },
-    담당자: { kind: 'select' },
+    자펀드: { kind: 'select', options: ['엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사'], key: 'subFundKey' },
+    계정구분: { kind: 'select', options: ['농식품', '수산'], key: 'acctType' },
+    담당자: { kind: 'select', key: 'manager' },
     기준년월: { kind: 'monthRange', def: '2026-06~2026-06', key: 'baseYm' },
   },
   statusDomain: [
@@ -63,9 +68,9 @@ export const schema: PageSchema = {
     rules: { salesAmt: 'sum', totalEmployees: 'sum', youthEmployees: 'sum', attachment: 'dash', updatedAt: 'dash', isUploaded: 'dash' },
   },
   sample: [
-    { no: 1, gp: 'NH투자증권', subFund: 'NH농식품밸류업투자조합', bizNo: '214-88-12345', firstInvestDate: '2024-03-15', investee: '(주)그린팜테크', baseYm: '2026-06', salesAmt: 12500000000, totalEmployees: 85, youthEmployees: 32, attachment: '고용현황_그린팜_202606.xlsx', updatedAt: '2026-07-10 14:22', isUploaded: '완료' },
-    { no: 2, gp: 'NH투자증권', subFund: 'NH농식품밸류업투자조합', bizNo: '305-81-54321', firstInvestDate: '2023-11-20', investee: '(주)오션프레시', baseYm: '2026-06', salesAmt: 8300000000, totalEmployees: 47, youthEmployees: 19, attachment: '고용현황_오션_202606.xlsx', updatedAt: '2026-07-09 10:05', isUploaded: '완료' },
-    { no: 3, gp: 'NH투자증권', subFund: 'NH농식품밸류업투자조합', bizNo: '128-86-99001', firstInvestDate: '2025-01-10', investee: '팜커넥트(주)', baseYm: '2026-06', salesAmt: 3150000000, totalEmployees: 23, youthEmployees: 11, attachment: '', updatedAt: '2026-07-11 09:41', isUploaded: '미완료' },
+    { no: 1, gp: 'NH투자증권', subFund: 'NH농식품밸류업투자조합', bizNo: '214-88-12345', firstInvestDate: '2024-03-15', investee: '(주)그린팜테크', baseYm: '2026-06', salesAmt: 12500000000, totalEmployees: 85, youthEmployees: 32, attachment: '고용현황_그린팜_202606.xlsx', updatedAt: '2026-07-10 14:22', isUploaded: '완료', subFundKey: '엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사', acctType: '농식품', manager: '양한솔' },
+    { no: 2, gp: 'NH투자증권', subFund: 'NH농식품밸류업투자조합', bizNo: '305-81-54321', firstInvestDate: '2023-11-20', investee: '(주)오션프레시', baseYm: '2026-06', salesAmt: 8300000000, totalEmployees: 47, youthEmployees: 19, attachment: '고용현황_오션_202606.xlsx', updatedAt: '2026-07-09 10:05', isUploaded: '완료', subFundKey: '엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사', acctType: '농식품', manager: '양한솔' },
+    { no: 3, gp: 'NH투자증권', subFund: 'NH농식품밸류업투자조합', bizNo: '128-86-99001', firstInvestDate: '2025-01-10', investee: '팜커넥트(주)', baseYm: '2026-06', salesAmt: 3150000000, totalEmployees: 23, youthEmployees: 11, attachment: '', updatedAt: '2026-07-11 09:41', isUploaded: '미완료', subFundKey: '엔에이치애그리비즈밸류크리에이티브제일호 사모투자합자회사', acctType: '농식품', manager: '양한솔' },
   ],
   provenance: {
     capturedAt: '2026-09-15',

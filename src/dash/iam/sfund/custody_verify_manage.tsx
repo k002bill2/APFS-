@@ -21,7 +21,9 @@
    한계·가정(결정 기록)
    - **섹션2·3은 원문 샘플이 없다**(목업 `<tbody>`가 '조회된 데이터가 없습니다.' 한 줄) → 빈 상태로 둔다. 값 창작 금지.
    - **조회조건은 추론**이다 — 목업에 [검색] 영역 자체가 없어 자펀드·기준일·종목 3항목을 목업대로 넣었다.
-     기준일은 행 컬럼과 미연동이라 `noop`(데이터 연동 후 적용)이고, 실제로 거르는 건 자펀드·종목이다.
+     기준일은 대사 시점 스냅샷이라 숨은 행 속성 `asOf`(검증 기준일)가 **같은 날**인 행만 보인다(atBaseDate — 2026-11-16 사용자 지시,
+     종전 no-op). 기본 2026-04-30 행은 원문 그대로이고, 직전 시점(2026-03-31) 섹션1 대사 1행을 더미로 더했다
+     (같은 자펀드·종목, 감액 전이라 일치). 섹션2·3은 시점마다 비어 있다(원문 샘플 없음).
      종목은 부분일치로 섹션1 투자기업(운용사·수탁기관)·섹션2 종목(운용사·수탁기관)을 거르고, 종목 개념이 없는
      섹션3(계좌번호)은 거르지 않는다.
    - **수정은 섹션1만** — 기획서가 수정 버튼·판단 기준(자산유형)을 섹션1에만 정의한다. 일치여부 재계산은 그 행의
@@ -76,6 +78,7 @@ export interface InvestAssetRow {
   cuCorp: string; cuShares: number | null; cuBal: number | null;                              // 수탁기관 보관내역(수정 팝업에서 비울 수 있다)
   matchShares: MatchResult; matchBal: MatchResult;
   memos: VerifyMemo[];
+  asOf: string;                                                                               // 검증 기준일 — 숨은 속성(그리드 컬럼 없음, 상세필터 기준일이 거른다)
 }
 export interface NonInvestTradeRow {
   id: string; no: number; fn: string;
@@ -83,6 +86,7 @@ export interface NonInvestTradeRow {
   cuItem: string; cuShares: number | null; cuBal: number;
   matchShares: MatchResult; matchBal: MatchResult;
   memos: VerifyMemo[];
+  asOf: string;   // 검증 기준일(숨은 속성)
 }
 export interface NonInvestRow {
   id: string; no: number; fn: string;
@@ -90,26 +94,36 @@ export interface NonInvestRow {
   cuAcct: string; cuBal: number;
   matchBal: MatchResult;
   memos: VerifyMemo[];
+  asOf: string;   // 검증 기준일(숨은 속성)
 }
 
-/* 데모 데이터 — 목업 `<tbody>` 값 그대로(창작 없음).
+/* 상세필터 기준일 기본값 — COMMON 규약은 "목업 기본값을 필터 초기값으로 쓰지 않는다"이지만, 기준일은 대사 스냅샷의 시점이라
+   빈 값(= 시점 없음)이 성립하지 않는다(옆 탭 custody_confirm 과 같은 관례 — 초기화·칩 × 도 이 값으로 되돌린다).
+   메모 팝업의 `기준일자` 시드이기도 하다 — 비워두면 팝업이 빈 날짜로 열려 저장이 막힌다. */
+export const BASE_DATE = '2026-04-30';
+
+/** 기준일 판정 — 대사 결과는 그 시점 값 한 벌이라 **같은 날**(eq)만 남긴다(누적 목록이 아니므로 ≤ 가 아니다) */
+export const atBaseDate = <T extends { asOf: string }>(rows: readonly T[], date: string): T[] => rows.filter((r) => r.asOf === date);
+
+/* 데모 데이터 — 기본 기준일 1행은 목업 `<tbody>` 값 그대로(창작 없음) + 직전 시점 더미 1행(아래 주석).
    섹션1 1행: 전환사채 원금 A=25억, 감액 B=25억 → 운용사 잔액 A-B=0 이나 수탁 잔액 25억 → **불일치**(목업 설계메모).
    보유주수는 양쪽 모두 '-'(주식이 아닌 사채) → 숫자 N/A는 null(문자 '-' 금지, apfs-manage-page SOP 5).
    자산유형 '채권'은 목업 행 `<span class="tag b">채권</span>` 그대로(설계메모: 유일한 실데이터가 전환사채). */
-const INVEST_DEMO: InvestAssetRow[] = [
+export const INVEST_DEMO: InvestAssetRow[] = [
   { id: 'cv-i1', no: 1, fn: '유니 수산식품 투자조합1호', assetType: '채권',
     gpCorp: '(주)남양 f&b', gpShares: null, gpPrin: 2_500_000_000, gpImpair: 2_500_000_000, gpBal: 0,
     cuCorp: '주식회사남양에프앤비무보증사모전환사채', cuShares: null, cuBal: 2_500_000_000,
-    matchShares: '-', matchBal: '불일치', memos: [] },
+    matchShares: '-', matchBal: '불일치', memos: [], asOf: BASE_DATE },
+  /* 직전 시점 더미(2026-11-16 — 기준일이 행을 거르게 되면서 추가, 기본 기준일에선 걸러져 안 보인다).
+     같은 자펀드·종목의 2026-03-31 대사: 감액(B)이 잡히기 전이라 운용사 잔액(A-B) = 수탁 잔액 → 일치 */
+  { id: 'cv-i1-2603', no: 1, fn: '유니 수산식품 투자조합1호', assetType: '채권',
+    gpCorp: '(주)남양 f&b', gpShares: null, gpPrin: 2_500_000_000, gpImpair: 0, gpBal: 2_500_000_000,
+    cuCorp: '주식회사남양에프앤비무보증사모전환사채', cuShares: null, cuBal: 2_500_000_000,
+    matchShares: '-', matchBal: '일치', memos: [], asOf: '2026-03-31' },
 ];
 /* 섹션2·3 — 목업에 샘플 행이 없다('조회된 데이터가 없습니다.'). 임의 데이터를 만들지 않는다. */
 const TRADE_DEMO: NonInvestTradeRow[] = [];
 const NONINVEST_DEMO: NonInvestRow[] = [];
-
-/* 상세필터 기준일 기본값 — COMMON 규약은 "목업 기본값을 필터 초기값으로 쓰지 않는다"이지만,
-   이 값은 **행을 거르지 않고**(기준일은 noop) 메모 팝업의 `기준일자` 시드로만 쓰이므로 예외로 유지한다.
-   비워두면 팝업이 빈 날짜로 열려 저장이 막힌다. */
-const BASE_DATE = '2026-04-30';
 
 /* ──────────────────────────────
    컬럼 정의 — 목업 헤더 순서·집합 그대로(2단 그룹: 운용사·수탁기관·일치여부·메모)
@@ -312,14 +326,14 @@ const WIDE_KEYS = new Set(['fn', 'gpCorp', 'cuCorp', 'gpItem', 'cuItem', 'gpAcct
    페이지 로컬 프리미티브(골드 복사 — 공유 export 아님)
 ────────────────────────────── */
 
-/* 드로어 필드 래퍼 — noop=행 컬럼 미연동 필터(캡션으로 no-op 신호, apfs-detail-filter 규약).
+/* 드로어 필드 래퍼(항목이 전부 행을 거른다 — 미연동 캡션 없음).
    plain=true → <label> 대신 <div>: PeriodPicker 트리거는 <button>이라 <label> 안에서 2회 토글된다 */
-function DrawerField({ label, noop, plain, children }: { label: string; noop?: boolean; plain?: boolean; children: React.ReactNode }) {
+function DrawerField({ label, plain, children }: { label: string; plain?: boolean; children: React.ReactNode }) {
   const Wrap: any = plain ? 'div' : 'label';
   return (
     <Wrap className="block mb-4">
       <span className="block font-semibold text-muted-foreground" style={{ fontSize: 14, marginBottom: 6 }}>
-        {label}{noop && <span className="font-normal text-caption" style={{ fontSize: 12 }}> · 데이터 연동 후 적용</span>}
+        {label}
       </span>
       {children}
     </Wrap>
@@ -370,19 +384,19 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
-  /* 필터 — 드로어 3항목(목업 검색박스 순서 그대로: 자펀드·기준일·종목). 실제로 거르는 건 자펀드·종목이다.
+  /* 필터 — 드로어 3항목(목업 검색박스 순서 그대로: 자펀드·기준일·종목). 세 항목 모두 행을 거른다.
      행이 세 배열로 갈려 있어 External Filter(그리드 1개 전제)가 아니라 **React 쪽에서 각각 filter**한다. */
   const [fFund, setFFund] = useState('');
-  const [fAsOf, setFAsOf] = useState(BASE_DATE);   // 기준일 — 행 컬럼 아님(no-op). 메모 팝업 기준일자 시드
+  const [fAsOf, setFAsOf] = useState(BASE_DATE);   // 기준일 — 숨은 속성 asOf 같은 날(atBaseDate). 메모 팝업 기준일자 시드
   const [fItem, setFItem] = useState('');          // 종목 — 부분일치(섹션1 투자기업 · 섹션2 종목, 섹션3 제외)
   /* 초기화는 기준일을 빈 값이 아니라 목업 기본값으로 되돌린다(위 BASE_DATE 주석 — 팝업 시드가 비면 저장이 막힌다) */
   const clearFilters = () => { setFFund(''); setFAsOf(BASE_DATE); setFItem(''); };
 
   const q = fItem.trim();
   const hit = useCallback((...names: string[]) => !q || names.some((n) => n.includes(q)), [q]);
-  const investRows = useMemo(() => invest.filter((r) => (!fFund || r.fn === fFund) && hit(r.gpCorp, r.cuCorp)), [invest, fFund, hit]);
-  const tradeRows = useMemo(() => trade.filter((r) => (!fFund || r.fn === fFund) && hit(r.gpItem, r.cuItem)), [trade, fFund, hit]);
-  const nonInvestRows = useMemo(() => nonInvest.filter((r) => !fFund || r.fn === fFund), [nonInvest, fFund]);
+  const investRows = useMemo(() => atBaseDate(invest, fAsOf).filter((r) => (!fFund || r.fn === fFund) && hit(r.gpCorp, r.cuCorp)), [invest, fAsOf, fFund, hit]);
+  const tradeRows = useMemo(() => atBaseDate(trade, fAsOf).filter((r) => (!fFund || r.fn === fFund) && hit(r.gpItem, r.cuItem)), [trade, fAsOf, fFund, hit]);
+  const nonInvestRows = useMemo(() => atBaseDate(nonInvest, fAsOf).filter((r) => !fFund || r.fn === fFund), [nonInvest, fAsOf, fFund]);
   /* 자펀드 옵션 — 세 섹션 행에서 파생(원문에 별도 코드 목록이 없다) */
   const fundOptions = useMemo(
     () => Array.from(new Set([...invest.map((r) => r.fn), ...trade.map((r) => r.fn), ...nonInvest.map((r) => r.fn)])),
@@ -480,9 +494,10 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 적용 중인 드로어 값 칩 = appliedFilters(둘째 줄). 주 필터(FilterChip 그룹)는 없어 toolbarLeft 도 없다 — 목업 검색박스가 자펀드·기준일·종목 3개이고
          자펀드는 값이 하나라 칩 그룹으로 펼칠 축이 아니다. 행 선택이 없어 selbar도 없다.
-         값만 표시(항목명 접두사 없음) + ×. 기준일은 no-op이라 칩을 만들지 않는다 */
+         값만 표시(항목명 접두사 없음) + ×. 기준일은 기본값과 다를 때만 칩 — ×는 기본값으로 되돌린다(옆 탭 custody_confirm 관례) */
       appliedFilters={[
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
+        { label: '기준일', value: fAsOf !== BASE_DATE ? fAsOf : '', onClear: () => setFAsOf(BASE_DATE) },
         { label: '종목', value: fItem.trim(), onClear: () => setFItem('') },
       ]}
       toolbarRight={<>
@@ -555,10 +570,11 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
             <DrawerField label="자펀드"><DrawerSelect value={fFund} onChange={setFFund} options={fundOptions} /></DrawerField>
-            {/* 기준일 — 행에 기준일 컬럼이 없어 no-op. PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel */}
-            <DrawerField label="기준일" noop plain>
+            {/* 기준일 — 숨은 속성 asOf 같은 날(대사 스냅샷). 비우면 기본값으로(시점 없는 조회는 없다 — custody_confirm 관례).
+                PeriodPicker는 <label>로 명명되지 않으므로 plain + ariaLabel */}
+            <DrawerField label="기준일" plain>
               <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
-                <PeriodPicker mode="day" value={fAsOf} onChange={setFAsOf} ariaLabel="기준일" />
+                <PeriodPicker mode="day" value={fAsOf} onChange={(v) => setFAsOf(v || BASE_DATE)} ariaLabel="기준일" />
               </div>
             </DrawerField>
             {/* 종목 — 기획서 2026-09 회의록 추가 항목(목업 placeholder '종목명 검색' 그대로). 부분일치 */}
