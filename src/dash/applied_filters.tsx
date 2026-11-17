@@ -363,11 +363,23 @@ export function FilterChipMenu({ label, chips }: { label: string; chips: readonl
 
 /* +N 메뉴 행 툴팁 — 본문 = 항목명만(ChipTip 과 같은 규칙), 행 전체(값+×)가 트리거, 네이티브 title 없음.
    메뉴 항목은 호버·방향키 모두 초점을 받아 툴팁이 초점으로 열린다. 메뉴보다 늦게 열린 툴팁이 최상위 레이어라 Esc 를 먼저
-   받으므로 그 Esc 로 메뉴까지 닫는다 — Esc 1번(radix-tooltip-layer-eats-esc). side=left: 위에 띄우면 윗 행을 덮는다. */
+   받으므로 그 Esc 로 메뉴까지 닫는다 — Esc 1번(radix-tooltip-layer-eats-esc). side=left: 위에 띄우면 윗 행을 덮는다.
+   제어형(2026-11-17 사용자 "넘친 리스트에 마우스 오버시 툴팁이 … 안 뜨는 부분"): 포인터가 값↔× 를 오가면 Radix 메뉴가 그 사이
+   메뉴 본체로 초점을 옮겨(onItemLeave) 행 툴팁이 닫혔다 곧바로 다시 열린다. 비제어 Radix 툴팁은 다시 열 때 문서에 'tooltip.open' 을
+   쏘고, 닫힘 애니메이션으로 남아 있던 **자기** 콘텐츠가 그걸 받아 스스로 닫았다(× 와 ×→값 복귀에서 매번 안 뜸 — 실측 열림 3~5ms 뒤 closed).
+   제어형이면 그 자기-닫기가 아직 false 인 open prop 과 같아 무시된다(ChipTip 과 같은 모양).
+   행 안에 머무는 blur 는 닫지 않는다(keepOpenOnBlur) — ① 같은 행 다른 항목으로(방향키 값→×: blur·focus 가 한 번에 묶여, 제어형에선
+   열기 요청이 갱신 전 open=true 를 보고 무시돼 닫힘만 남았다) ② 포인터가 행 위에 있는 채 메뉴 본체로(값→× 사이 경유 — 닫혔다
+   다시 열리며 깜빡였다). 다른 항목·행 밖으로 가면 Radix 가 닫는다(다른 행 = 그 행의 'tooltip.open', 메뉴 밖 = 포인터 유예 영역 이탈). */
+const keepOpenOnBlur = (e: React.FocusEvent<HTMLElement>) => {
+  const row = e.currentTarget, to = e.relatedTarget as Element | null;
+  if (row.contains(to) || (to?.getAttribute('role') === 'menu' && row.matches(':hover'))) e.preventDefault();
+};
 function MenuChipTip({ f, onEscape, children }: { f: AppliedFilter; onEscape: () => void; children: React.ReactElement }) {
+  const [open, setOpen] = React.useState(false);
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
+    <Tooltip open={open} onOpenChange={setOpen}>
+      <TooltipTrigger asChild onBlur={keepOpenOnBlur}>{children}</TooltipTrigger>
       <TooltipContent side="left" onEscapeKeyDown={onEscape}>{f.label}</TooltipContent>
     </Tooltip>
   );

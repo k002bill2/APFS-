@@ -6,13 +6,35 @@
    jsdom 은 폭이 0 이라 적용 칩이 전부 +N 으로 접힌다 — 별도 폭 조작 없이 메뉴를 시험할 수 있다. globals:false → afterEach cleanup. */
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { TooltipProvider } from './ui/tooltip';
 import { FilterChipRow, type AppliedFilter } from './applied_filters';
 
 globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as unknown as typeof ResizeObserver;
 Element.prototype.scrollIntoView ??= function scrollIntoView() {};
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+
+/* 툴팁 콘텐츠(메뉴 제외)에만 열림/닫힘 animationName 을 달리 준다 — jsdom 엔 CSS 애니메이션이 없어 Presence 가 닫자마자 내려 버리는데,
+   이러면 닫힘 애니메이션 중(unmountSuspended)으로 남는다(animationend 가 없어 계속 남는다 = 브라우저의 닫힘 잔류). */
+const TIP = '[data-radix-popper-content-wrapper] > [data-side]:not([role="menu"])';
+function stubTooltipExitAnimation() {
+  const orig = window.getComputedStyle.bind(window);
+  vi.spyOn(window, 'getComputedStyle').mockImplementation((el: Element, pseudo?: string | null) => {
+    const s = orig(el, pseudo);
+    if (!(el instanceof Element) || !el.matches(TIP)) return s;
+    return new Proxy(s, {
+      get: (t, p) => {
+        if (p === 'animationName') return el.getAttribute('data-state') === 'closed' ? 'exit' : 'enter';
+        const v = Reflect.get(t, p);
+        return typeof v === 'function' ? v.bind(t) : v;
+      },
+    });
+  });
+}
+const openTips = () => [...document.querySelectorAll(TIP)].filter((el) => el.getAttribute('data-state') !== 'closed');
+/** 열려 있는(닫힘 애니메이션 중이 아닌) 툴팁 본문 — 없으면 null */
+const openTip = () => openTips()[0]?.querySelector('[role="tooltip"]')?.textContent ?? null;
+const openTipCount = () => openTips().length;
 
 const h = React.createElement;
 function setup() {
@@ -57,5 +79,38 @@ describe('+N 메뉴 적용 칩 — 값=이동 · ×=해제 · 툴팁', () => {
     fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
     expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  /* 2026-11-17 사용자 "너비를 초과한 리스트에 마우스 오버시 툴팁이 잘 작동 안 해 … 어느 부분에서는 안 뜨는 부분" —
+     포인터가 값 항목을 벗어나면 Radix 메뉴가 메뉴 본체로 초점을 옮겨 행 툴팁이 닫히고(닫힘 애니메이션 시작), 같은 행 × 에 들어오면
+     다시 연다. 비제어 Radix 툴팁은 다시 열 때 'tooltip.open' 을 문서에 쏘는데, 아직 남아 있는 **자기** 콘텐츠가 그걸 받아 스스로 닫았다
+     (실측: 열림 → 3~5ms 뒤 closed, × 와 '×→값' 복귀에서 매번). */
+  it('닫힘 애니메이션 중인 행 툴팁을 다시 열어도 스스로 꺼지지 않는다(값 → 메뉴 본체 → 같은 행 ×)', async () => {
+    stubTooltipExitAnimation();
+    setup();
+    openMenu();
+    const value = await screen.findByRole('menuitem', { name: '정기/수시: 정기 — 필터에서 변경' });
+    await waitFor(() => expect(document.activeElement).toBe(value));
+    expect(openTip()).toBe('정기/수시');
+    fireEvent.pointerMove(document);   // 포인터 사용으로 전환 — 키보드 모드면 Radix 가 메뉴 본체 초점을 첫 항목으로 되돌린다
+    act(() => screen.getByRole('menu').focus());   // 포인터가 행을 떠남(Radix onItemLeave) — 닫힘 애니메이션 중으로 남는다
+    expect(openTip()).toBeNull();
+    act(() => screen.getByRole('menuitem', { name: '정기/수시 필터 제거' }).focus());
+    expect(openTip()).toBe('정기/수시');
+  });
+
+  /* 방향키 이동은 blur·focus 가 한 번에 묶여 처리된다 — 제어형에서 이 둘을 Radix 에 그대로 맡기면 열기 요청이 아직 갱신 전인 open=true 를
+     보고 무시돼 닫힘만 남았다(실측: 값 → × 에서 툴팁 사라짐). 같은 행 안 초점 이동은 닫지 않고, 다른 행으로 가면 그 행 툴팁 하나만 뜬다. */
+  it('방향키로 같은 행 값 → × 로 가면 툴팁이 유지되고, 다음 행으로 가면 그 행 툴팁 하나만 뜬다', async () => {
+    stubTooltipExitAnimation();
+    setup();
+    openMenu();
+    const value = await screen.findByRole('menuitem', { name: '정기/수시: 정기 — 필터에서 변경' });
+    await waitFor(() => expect(document.activeElement).toBe(value));
+    act(() => screen.getByRole('menuitem', { name: '정기/수시 필터 제거' }).focus());
+    expect(openTip()).toBe('정기/수시');
+    act(() => screen.getByRole('menuitem', { name: '조합상태: 청산중 — 필터에서 변경' }).focus());
+    expect(openTip()).toBe('조합상태');
+    expect(openTipCount()).toBe(1);
   });
 });
