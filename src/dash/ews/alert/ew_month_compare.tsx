@@ -14,7 +14,9 @@
 
    한계·가정:
    - 행 데이터는 목업 `DATA` 6행이 전부다(→ `ew_month_compare_model.ts`). 운용사 창작 금지.
-   - `기준년월`은 **행을 거르지 않는 조회 기준 컨텍스트**다(형제 S2_47·S2_49 동형). 기본값 없음(사용자 결정).
+   - `기준년월`은 그 달의 비교 결과로 표를 바꾼다(2026-11-17 사용자 지시 "기준년월이 표를 거르게" — 종전엔 행을 거르지 않는
+     조회 기준 컨텍스트). 기본값 없음(사용자 결정) — **빈 칸 = 원문 시점(2026-07)**, 2026-06 은 원문 전월 등급을 당월로 올린
+     파생 보기(전전월만 창작 더미), 그 밖의 달은 0건(rowsForMonth · ew_period.ts).
      빈 값 가드 3곳: 적용 칩 · 푸터 캡션(`기준 X vs 전월 Y`) · 엑셀 파일명.
    - 필터 판정은 목업 `passFilter`/`chgKey` 를 그대로 옮긴 순수 함수(모델 모듈, 단위 테스트 有).
      → 신규는 변동 필터 대상이 아니고(항상 표시), 해소는 `개선·해소` 버킷, 등급은 당월 **또는** 전월 매칭.
@@ -39,7 +41,7 @@ import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';
 import { PeriodPicker } from '../../ui/period-picker';
 import {
-  ROWS, GRADES, CHG_KEYS, CHG_KEY_LABEL,
+  rowsForMonth, GRADES, CHG_KEYS, CHG_KEY_LABEL,
   chgLabel, prevMonth, visibleRows, isDiff, sideText, buildAoa,
 } from './ew_month_compare_model';
 import type { Grade, ChgKey, NumberedRow } from './ew_month_compare_model';
@@ -160,8 +162,8 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
   const chgAll = CHG_KEYS.every((k) => chgOn[k]);
   const prevYm = prevMonth(fYm);
 
-  /* 필터 + 재번호 — 화면·엑셀 공용 */
-  const visible = useMemo(() => visibleRows(ROWS, gradeOn, chgOn), [gradeOn, chgOn]);
+  /* 기준년월(빈 값 = 원문 시점)의 비교 행 → 등급·변동 필터 + 재번호 — 화면·엑셀 공용 */
+  const visible = useMemo(() => visibleRows(rowsForMonth(fYm), gradeOn, chgOn), [fYm, gradeOn, chgOn]);
 
   const refresh = () => { clearFilters(); toast.success('조회되었습니다'); };
 
@@ -228,7 +230,7 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* 기준년월 — 행을 거르지 않는 조회 기준. PeriodPicker 트리거는 w-full 이라 fit-content 래퍼 */}
+            {/* 기준년월 — 그 달의 비교 결과(빈 칸 = 원문 시점). PeriodPicker 트리거는 w-full 이라 fit-content 래퍼 */}
             <DrawerField label="기준년월" plain>
               <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
                 <PeriodPicker mode="month" value={fYm} onChange={(v) => setFYm(v || '')} ariaLabel="기준년월" />

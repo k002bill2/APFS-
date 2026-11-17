@@ -25,7 +25,7 @@ import type { CustodyConfirmRow, Mark, ConfirmState } from './custody_confirm_ma
 const { Button, SaveButton } = UI;
 
 /** 저장 값 — 행에서 id·no를 뺀 나머지(일치여부는 마크에서 파생해 함께 싣는다) */
-export type CustodyEntryValue = Omit<CustodyConfirmRow, 'id' | 'no'>;
+export type CustodyEntryValue = Omit<CustodyConfirmRow, 'id' | 'no' | 'asOf'>;   // asOf 는 저장 시 화면이 지금 기준일자로 단다
 
 /* 라벨 + 컨트롤 래퍼 — `custody_verify_memo_modal`의 Field 규격 그대로(로컬 복사).
    plain=true → `<label>` 대신 `<div>`: RadioGroupItem은 <button role=radio>라 <label> 안에 두면 클릭이 2회 발화한다 */

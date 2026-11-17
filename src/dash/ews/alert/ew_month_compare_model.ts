@@ -3,6 +3,7 @@
    (`DATA`·`ORDER`·`chg`·`chgKey`·`passFilter`·`prevMonth`)를 **그대로** 옮겼다.
    화면(`ew_month_compare.tsx`)과 분리한 이유: vitest 는 `src/dash` 하위 `.test.ts` 만 읽으므로
    판정 로직을 JSX 없는 모듈에 두어야 단위 테스트가 가능하다(선례 `audit_log_model.ts`). */
+import { EW_BASE_YM, EW_PREV_YM, ewYm } from './ew_period';
 
 export type Grade = '정상' | '주의' | '경고';
 /* 변동 버킷 — 목업 범례 `data-k`(up=악화 · down=개선/해소 · same=지속). 신규는 버킷이 없다(null). */
@@ -35,6 +36,24 @@ export const ROWS: EwCompareRow[] = [
   { id: 'ewmc-5', gu: '자펀드 조기경보', mf: '농식품투자조합', it: '유동성비율',           gp: '(유)와프인베스트먼트', cur: '',     prev: '정상' },
   { id: 'ewmc-6', gu: '자펀드 조기경보', mf: '농식품투자조합', it: '자기자본이익률',       gp: '(유)에버그로우인베',  cur: '주의', prev: '주의' },
 ];
+
+/* 기준년월별 비교 행(2026-11-17 사용자 지시 "기준년월이 표를 거르게" — ew_period.ts).
+   ROWS = 기준 2026-07 vs 전월 2026-06(원문). 2026-06 기준 보기는 원문 행의 **전월 등급을 당월로** 올리고,
+   그 전월(2026-05) 등급만 창작 더미(원문 아님)로 단다 → 두 보기가 2026-06 을 같은 등급으로 보여 준다(테스트가 단언).
+   두 달 모두 대상이 아닌 행(2026-07 신규였던 ewmc-4)은 그 보기에 없다. 그 밖의 달은 0건. */
+const GRADE_2026_05: Record<string, Grade | ''> = {
+  'ewmc-1': '정상', 'ewmc-2': '주의', 'ewmc-3': '경고', 'ewmc-4': '', 'ewmc-5': '정상', 'ewmc-6': '',
+};
+export const PREV_VIEW_ROWS: EwCompareRow[] = ROWS
+  .map((r) => ({ ...r, id: `${r.id}-${EW_PREV_YM}`, cur: r.prev, prev: GRADE_2026_05[r.id] ?? '' }))
+  .filter((r) => r.cur || r.prev);
+
+/** 기준년월(빈 값 = 원문 시점)의 비교 행 */
+export function rowsForMonth(fYm: string): EwCompareRow[] {
+  const ym = ewYm(fYm);
+  if (ym === EW_BASE_YM) return ROWS;
+  return ym === EW_PREV_YM ? PREV_VIEW_ROWS : [];
+}
 
 /* 목업 `chgKey` 그대로 — 신규는 범례에 없어 필터 대상 아님(null = 항상 표시), 해소는 down 버킷 */
 export function chgKey(cur: Grade | '', prev: Grade | ''): ChgKey | null {

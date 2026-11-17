@@ -2,9 +2,11 @@
    출처: S1_27_자펀드수탁관리_확정_.html(KRDS TO-BE) → APFS 디자인시스템으로 변형.
 
    구성(목업 → 우리 규약):
-   - 검색박스(기준일자 단일·필수)  → 상세필터 드로어 1항목(PeriodPicker day). **행 필터가 아니라 조회 기준 컨텍스트**라
-       목업 기본값 `2026-07-31`(실 캡처 기준일)을 그대로 유지한다 — 상세 팝업 부제에 실리는 값이라 빈 값이 될 수 없다.
-       (apfs-detail-filter의 "목업 기본값을 필터 초기값으로 쓰지 않는다"는 **행을 거르는 필터**에 대한 규약이다.)
+   - 검색박스(기준일자 단일·필수)  → 상세필터 드로어 1항목(PeriodPicker day). 대사 결과는 기준일마다 한 벌인 **스냅샷**이라
+       숨은 속성 `asOf`(그리드 컬럼 없음)가 기준일자와 **같은 날**인 행만 보인다(2026-11-17 사용자 지시 "기준일자가 표를 거르게" —
+       종전엔 행을 거르지 않는 조회 기준 컨텍스트). 시점 없는 조회는 없으므로 목업 기본값 `2026-07-31`(실 캡처 기준일)을 그대로 두고,
+       비우거나 초기화하면 이 값으로 돌아간다(형제 탭 custody_verify 와 같은 관례 — 상세 팝업 부제에도 실린다).
+       직전 시점(2026-06-30) 대사 3행은 창작 더미 — 기본 기준일에선 걸러져 첫 화면은 원문 24행 그대로다.
    - 툴바 좌 주 필터                → `확정여부` FilterChip(전체·확정·미확정). ⚠ 목업 검색박스엔 없는 **파생 칩**이다
        (행 `confirm` 값에서 파생 — 수시보고 '확인상태' 파생 칩과 같은 관례). 칩에만 두고 드로어에 다시 두지 않는다(2026-11-05).
    - 3단 헤더 목록 그리드          → AG Grid 중첩 `ColGroupDef`(일치여부 > 투자자산/미투자자산 거래/미투자자산 > 리프),
@@ -53,6 +55,7 @@ import { CustodyMismatchAlertModal } from './custody_mismatch_alert_modal';
 import { GpSpecModal } from '../report/gp_spec_modal';
 import { SubFundSpecModal, SPEC_SAMPLE_SUBFUND } from '../report/subfund_spec_modal';   // 샘플 행 = 명세 팝업 공유본
 import { LinkCell } from '../../link_cell';   // 셀 링크 공용본(상세 진입)
+import { atBaseDate } from './custody_verify_manage';   // 기준일 같은 날 판정(스냅샷) — 형제 탭과 같은 술어
 
 const { Button, IconBtn, StatusBadge } = UI;
 
@@ -70,6 +73,7 @@ export interface CustodyConfirmRow {
   niBal: Mark;                        // 일치여부 > 미투자자산 [잔액]
   status: MatchStatus;                // 상세보기 셀에 링크 텍스트로 표시
   confirm: ConfirmState;
+  asOf: string;                       // 대사 기준일 — 숨은 속성(그리드 컬럼 없음, 상세필터 기준일자가 같은 날만 거른다)
 }
 
 /* 마크 배지 톤 — 목업 `tagCls`: O=.tag.g(ok) · X=.tag.d(danger) · '-'=.tag.n(회색, 아래 MarkCell) */
@@ -78,8 +82,10 @@ const MARK_TONE: Record<'O' | 'X', Tone> = { O: 'success', X: 'danger' };
 const CONFIRM_OPTIONS: ConfirmState[] = ['확정', '미확정'];
 
 /* 기준일자 기본값 — 목업 검색박스 `value="2026-07-31"`(실 화면 캡처 기준일).
-   조회 기준 컨텍스트라 초기화(clearFilters)·칩 제거도 이 값으로 되돌린다(빈 값 금지 — 필수 항목). */
+   대사 스냅샷의 시점이라 초기화(clearFilters)·칩 제거도 이 값으로 되돌린다(빈 값 금지 — 필수 항목). */
 const BASE_DATE = '2026-07-31';
+/** 직전 시점 — 창작 더미 대사분의 기준일(월말) */
+export const PREV_DATE = '2026-06-30';
 
 /* 데모 데이터 — 목업 DATA 24행을 값까지 그대로 옮겼다(전체 약 152건 중 실 캡처 발췌).
    [운용사, 자펀드, 투자자산 보유주수·잔액, 미투자자산 거래 보유주수·잔액, 미투자자산 잔액, 일치여부, 확정여부] */
@@ -111,8 +117,17 @@ const RAW: [string, string, Mark, Mark, Mark, Mark, Mark, MatchStatus, ConfirmSt
 ];
 
 const DEMO: CustodyConfirmRow[] = RAW.map(([gp, fn, invShares, invBal, ntShares, ntBal, niBal, status, confirm], i) => ({
-  id: 'cc-' + (i + 1), no: i + 1, gp, fn, invShares, invBal, ntShares, ntBal, niBal, status, confirm,
+  id: 'cc-' + (i + 1), no: i + 1, gp, fn, invShares, invBal, ntShares, ntBal, niBal, status, confirm, asOf: BASE_DATE,
 }));
+
+/* ↓ 창작 더미(원문 아님) — 직전 시점(2026-06-30) 대사 3행. 원문 1·2·6행과 같은 운용사·자펀드이고,
+   6월 말에는 미투자자산 잔액까지 맞아 일치·확정이었던 것으로 둔다(7월 말에 1·2행이 불일치로 바뀐 흐름). No 는 시점마다 1부터. */
+const PREV_DEMO: CustodyConfirmRow[] = [DEMO[0], DEMO[1], DEMO[5]].map((r, i) => ({
+  ...r, id: 'cc-prev-' + (i + 1), no: i + 1, niBal: 'O', status: '일치', confirm: '확정', asOf: PREV_DATE,
+}));
+
+/** 화면 행 전체(기준일자가 고르기 전) — 원문 24행 + 직전 시점 더미. 새로고침도 이 배열로 되돌린다 */
+export const CONFIRM_ROWS: CustodyConfirmRow[] = [...DEMO, ...PREV_DEMO];
 
 const PAGE_SIZE = 20;
 
@@ -298,7 +313,7 @@ type ModalState = null
 /* tabs(opt-in) — 메뉴 리프가 원문 화면 2개를 탭으로 묶을 때(leaf_tabs.tsx). 미지정이면 종전 화면 그대로 */
 export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => void; tabs?: LeafTabsSlot }) {
   const apiRef = useRef<GridApi<CustodyConfirmRow> | null>(null);
-  const [rows, setRows] = useState<CustodyConfirmRow[]>(DEMO);
+  const [rows, setRows] = useState<CustodyConfirmRow[]>(CONFIRM_ROWS);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: DEMO.length });
   const [modal, setModal] = useState<ModalState>(null);
@@ -319,20 +334,24 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
   useHotkey(HOTKEYS.print.combo, printGrid, { enabled: !filterOpen, skipInDialog: true });
   useHotkey(HOTKEYS.export.combo, () => exportExcel(), { enabled: !filterOpen, skipInDialog: true });
 
-  /* 필터 — 확정여부는 툴바 칩(드로어엔 없음), 기준일자는 조회 기준 컨텍스트(행 필터 아님) */
+  /* 필터 — 확정여부는 툴바 칩(드로어엔 없음, External Filter), 기준일자는 그날 대사 행만 rowData 로(snapRows) */
   const [fConfirm, setFConfirm] = useState<'' | ConfirmState>('');
   const [fBaseDate, setFBaseDate] = useState(BASE_DATE);
   const clearFilters = () => { setFConfirm(''); setFBaseDate(BASE_DATE); };
 
   const passes = useCallback((r: CustodyConfirmRow) => !fConfirm || r.confirm === fConfirm, [fConfirm]);
-  /* 기준일자는 행을 거르지 않으므로 External Filter 판정에 넣지 않는다 */
+  /* 기준일자는 rowData 단계(snapRows)에서 거르므로 External Filter 판정에 넣지 않는다 — 기본 상태엔 External Filter 가
+     꺼져 있어, 전체 행을 rowData 로 넘기면 직전 시점 더미가 첫 화면에 샌다 */
   const filterActive = Boolean(fConfirm);
   /* 필터가 바뀌면 선택을 정리한다 — 걸러진 행의 체크가 보이지 않는 채로 남지 않게 */
   useEffect(() => { apiRef.current?.onFilterChanged(); apiRef.current?.deselectAll(); }, [passes]);
+  useEffect(() => { apiRef.current?.deselectAll(); }, [fBaseDate]);
   const isExternalFilterPresent = useCallback(() => filterActive, [filterActive]);
   const doesExternalFilterPass = useCallback((node: IRowNode<CustodyConfirmRow>) => (node.data ? passes(node.data) : true), [passes]);
 
-  const filteredRows = useMemo(() => rows.filter(passes), [rows, passes]);
+  /* 그날 대사 행(그리드 rowData·불일치 알림) → 확정여부까지 거른 행(푸터·엑셀) */
+  const snapRows = useMemo(() => atBaseDate(rows, fBaseDate), [rows, fBaseDate]);
+  const filteredRows = useMemo(() => snapRows.filter(passes), [snapRows, passes]);
 
   const onGridReady = useCallback((e: GridReadyEvent<CustodyConfirmRow>) => { apiRef.current = e.api; }, []);
 
@@ -373,19 +392,20 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
   const target = modal?.kind === 'detail' ? rows.find((r) => r.id === modal.id) ?? null : null;
   const entryTarget = modal?.kind === 'entry' && modal.id ? rows.find((r) => r.id === modal.id) ?? null : null;
 
-  /* 단건 등록/수정 저장 — 수정은 id·no 유지, 등록은 끝에 추가(no = 최대+1, 목업 `DATA.push`). 불변 갱신 */
+  /* 단건 등록/수정 저장 — 수정은 id·no·asOf 유지, 등록은 지금 기준일자의 대사로 끝에 추가
+     (no = 같은 기준일 안 최대+1, 목업 `DATA.push`). 불변 갱신 */
   const saveEntry = (v: CustodyEntryValue) => {
     if (modal?.kind !== 'entry') return;
     const { id } = modal;
     if (id) { setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...v } : r))); apiRef.current?.deselectAll(); }
     else setRows((prev) => {
-      const no = prev.reduce((m, r) => Math.max(m, r.no), 0) + 1;
-      return [...prev, { ...v, id: 'cc-new-' + no + '-' + Date.now(), no }];
+      const no = atBaseDate(prev, fBaseDate).reduce((m, r) => Math.max(m, r.no), 0) + 1;
+      return [...prev, { ...v, id: 'cc-new-' + no + '-' + Date.now(), no, asOf: fBaseDate }];
     });
     setModal(null);
   };
 
-  const refresh = () => { setRows([...DEMO]); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
+  const refresh = () => { setRows([...CONFIRM_ROWS]); apiRef.current?.deselectAll(); clearFilters(); toast.success('조회되었습니다'); };
 
   /* 선택 컨텍스트 액션 — GridFrame 이 툴바 좌측에 렌더한다(선택 중엔 필터 칩을 +N 안으로 접는다).
      [수정]·[상세보기]+상태 배지는 단일 대상이라 1건일 때만(`single` 게이트) */
@@ -421,7 +441,7 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
     toast.success('Excel로 내보냈습니다');
   };
 
-  const pageSize = showAll ? Math.max(rows.length, 1) : PAGE_SIZE;
+  const pageSize = showAll ? Math.max(snapRows.length, 1) : PAGE_SIZE;
   const shown = Math.min(pageSize, Math.max(0, page.rowCount - page.current * pageSize));
 
   return (
@@ -460,7 +480,7 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
       <div>
         <AgGridReact<CustodyConfirmRow>
           theme={apfsTheme}
-          rowData={rows}
+          rowData={snapRows}
           columnDefs={columnDefs}
           getRowId={(p) => p.data.id}
           domLayout="autoHeight"
@@ -491,8 +511,8 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
             <IconBtn icon="x" onClick={() => setFilterOpen(false)} label="닫기" size={38} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto" style={{ padding: '20px clamp(14px,3vw,20px)' }}>
-            {/* 기준일자 — 목업의 유일한 검색조건(필수). 행을 거르지 않고 조회 기준을 정하는 값이라
-                no-op 캡션 대신 값을 유지한다(상세 팝업 부제에 그대로 실린다).
+            {/* 기준일자 — 목업의 유일한 검색조건(필수). 그날 대사 결과만 보인다(스냅샷 — 같은 날).
+                시점 없는 조회는 없어 비우면 기본값으로 돌아간다(상세 팝업 부제에도 그대로 실린다).
                 PeriodPicker 트리거는 w-full이라 fit-content 래퍼로 감싼다(apfs-datepicker "폭" 규칙) */}
             <DrawerField label="기준일자" plain>
               <div style={{ width: 'fit-content', minWidth: controlMinWidth('date'), maxWidth: '100%' }}>
@@ -522,8 +542,8 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
         <CustodyEntryModal row={entryTarget ?? undefined} onSave={saveEntry} onClose={() => setModal(null)} />
       )}
 
-      {/* ── 불일치 건 알림 — 전체 행 기준(목업 DATA.filter) ── */}
-      {modal?.kind === 'mismatch' && <CustodyMismatchAlertModal rows={rows} onClose={() => setModal(null)} />}
+      {/* ── 불일치 건 알림 — 그날 대사 행 기준(목업 DATA.filter — 확정여부 칩과 무관, 다른 기준일 행은 넣지 않는다) ── */}
+      {modal?.kind === 'mismatch' && <CustodyMismatchAlertModal rows={snapRows} onClose={() => setModal(null)} />}
 
     </GridFrame>
   );
