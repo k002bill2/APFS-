@@ -180,27 +180,27 @@ export function LoginDemo({ onNav }: { onNav?: (route: string) => void }) {
 
   const resetSimpleAuth = () => { setSaStep(1); setSaErr(null); };
 
-  /** 탭 전환 — 반대편 폼의 오류를 들고 가지 않는다. 로그인으로 돌아오면 재설정 결과도 접는다.
-      탭은 2단계~(2차 인증·비밀번호 변경·완료)에도 보인다(2026-11-13 사용자 지시). 그때 [로그인] 탭은 진행 중인 흐름 그대로 두고,
-      다른 탭으로 가면 로그인 흐름을 접고 1단계의 그 탭으로 간다. 2차 인증·비밀번호 변경 중이면 [뒤로]처럼 아이디는 남기되
-      OTP·비밀번호 변경 입력은 지운다(다시 로그인했을 때 옛 비밀번호가 채워져 나오지 않게). 완료 뒤에는 [처음부터 다시]와 같다. */
-  const switchMode = (m: 'login' | 'reset' | 'simple') => {
-    if (step > 1) {
-      if (m === 'login') return;
-      if (step === 4) {
-        setId(''); setPw(''); setFails(0); setLocked(false);
-      }
-      setStep(1); setOtpIn(''); setOtpErr(null); setCur(''); setP1(''); setP2(''); setPwErr(NO_PW_ERR);
-    }
-    setMode(m); setCredErr(null); setResetErr(null); setSaErr(null);
-    if (m === 'login') { setResetDone(false); resetSimpleAuth(); }
-  };
-
   const restart = () => {
     setStep(1); setId(''); setPw(''); setFails(0); setLocked(false); setCredErr(null);
     setOtpIn(''); setOtpErr(null); setCur(''); setP1(''); setP2(''); setPwErr(NO_PW_ERR);
     setMode('login'); setResetDone(false); setResetErr(null);
     setResetName(''); setResetId(''); setSaName(''); setSaBirth(''); setSaPhone(''); resetSimpleAuth();
+  };
+
+  /** 탭 전환 — 반대편 폼의 오류를 들고 가지 않는다. 로그인으로 돌아오면 재설정 결과도 접는다.
+      탭은 2단계~(2차 인증·비밀번호 변경·완료)에도 보인다(2026-11-13 사용자 지시). 그때 [로그인] 탭은 진행 중인 흐름 그대로 두고,
+      다른 탭으로 가면 로그인 흐름을 접고 1단계의 그 탭으로 간다. 2차 인증·비밀번호 변경 중이면 아이디만 남기고
+      비밀번호·OTP·비밀번호 변경 입력은 지운다(다시 로그인했을 때 옛 비밀번호가 채워져 나오지 않게).
+      완료 뒤에는 [처음부터 다시](restart)를 그대로 부른 뒤 그 탭으로 간다 — 간편인증·재설정 입력까지 같이 지운다.
+      (2026-11-17 #432 리뷰 1·2번, 테스트 login_tab_switch.test.ts) */
+  const switchMode = (m: 'login' | 'reset' | 'simple') => {
+    if (step > 1) {
+      if (m === 'login') return;
+      if (step === 4) { restart(); setMode(m); return; }
+      setStep(1); setPw(''); setOtpIn(''); setOtpErr(null); setCur(''); setP1(''); setP2(''); setPwErr(NO_PW_ERR);
+    }
+    setMode(m); setCredErr(null); setResetErr(null); setSaErr(null);
+    if (m === 'login') { setResetDone(false); resetSimpleAuth(); }
   };
 
   return (
