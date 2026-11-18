@@ -43,9 +43,9 @@ function ReportBucheo({ onNav }: { onNav?: (route: string) => void }) {
   const rows = useMemo(() => yearlyRows(table.rows, acc, ym), [table, acc, ym]);
 
   const filters: FilterSpec[] = [
-    { label: '기준월', kind: 'month', value: ym, onChange: setYm },
+    { label: '기준월', kind: 'month', value: ym, def: YEARLY_BASE_YM, onChange: setYm },
     { label: '계정구분', kind: 'select', value: acc, onChange: setAcc, options: ACCOUNT_TYPES },
-    { label: '조회기준', kind: 'radio', value: basis, onChange: (v) => setBasis(v as Basis), options: BASES },
+    { label: '조회기준', kind: 'radio', value: basis, def: '선정년도', onChange: (v) => setBasis(v as Basis), options: BASES },
   ];
 
   const exportExcel = () => {

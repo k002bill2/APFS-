@@ -58,8 +58,8 @@ function CorpInfoTabsPage({ label, route, tabs, idBase, onNav }: { label: string
   const targetOptions = useMemo(() => corpTargetOptions(tab, gubun), [tab, gubun]);
 
   const filters: FilterSpec[] = [
-    { label: '기준일자', kind: 'day', value: date, onChange: setDate, allLabel: '' },
-    { label: '구분', kind: 'select', value: gubun, onChange: (v) => { setGubun(v as Gubun); setTarget(''); }, options: GUBUN_OPTIONS, allLabel: null },
+    { label: '기준일자', kind: 'day', value: date, def: CORP_BASE_DATE, onChange: setDate, allLabel: '' },
+    { label: '구분', kind: 'select', value: gubun, def: '운용사', onChange: (v) => { setGubun(v as Gubun); setTarget(''); }, options: GUBUN_OPTIONS, allLabel: null },
     /* 원문 라벨 '운용사/자펀드' 는 구분 선택에 따라 '운용사'/'자펀드' 로 바뀐다(원문 스크립트 동적 관계) */
     { label: gubun, kind: 'select', value: target, onChange: setTarget, options: targetOptions },
   ];

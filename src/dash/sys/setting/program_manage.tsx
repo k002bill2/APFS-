@@ -5,7 +5,7 @@
    - 검색박스(검색기준+검색어·도움말·사용여부) + 구분(브리프) → 주 필터 1개 = 사용여부 FilterChip(전체/사용 여/사용 부, 툴바 좌)
      (2026-09-15 사용자 지시로 도움말↔사용여부 교대 — 도움말은 상세필터로 내려갔다. 주 필터와 상세필터 항목은 배타다: 같은 필터를 양쪽에 두지 않는다)
        + 상세필터 = 칩 줄 위 인라인 패널(검색기준·검색어·구분(대분류)·도움말). 검색어 opt-in(SEARCHABLE).
-       검색기준은 '전체' 없는 고정 기본값(프로그램ID) select — 검색어의 뜻을 정하는 수식어라 칸에 값을 그대로 보이고(PanelSelect showValue) 칩을 따로 두지 않는다(검색어 칩이 '기준: 값'으로 보인다), 패널 [초기화] = 기본값 복원.
+       검색기준은 '전체' 없는 고정 기본값(프로그램ID) select — 검색어의 뜻을 정하는 수식어라 칸에 값을 그대로 보이고(PanelSelect showValue) 칩을 따로 두지 않는다(검색어 칩이 '기준: 값'으로 보인다), 칩 줄 [초기화] = 기본값 복원.
    - 그리드(No·프로그램ID·프로그램명·구분·사용여부·메뉴연결·최종수정일시·최종수정자·도움말·도움말 수정일시·도움말 수정자) → AG Grid, 내용 맞춤 + 내부 가로 스크롤.
    - 행 선택 → [수정][도움말][삭제](목업 gate) → 라디오 단일선택 + 툴바 좌 selbar. 더블클릭·Enter·우클릭 = 수정.
        삭제 게이트: **메뉴에 연결된 프로그램(linked)은 삭제 불가**(목업 subAlert 문구를 toast 로) — 미연결 임시 프로그램만 AlertDialog 확인 후 삭제.
@@ -325,10 +325,11 @@ export function ProgramManage({ onNav }: { onNav?: (r: string) => void }) {
       filterChips={USE_CHIPS.map((v) => ({ key: v || 'all', label: v || '전체', active: fUse === v, onSelect: () => setFUse(v) }))}
       contextActions={selActions}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      filterReset={{ run: clearFilters, dirty: fHelp !== '' || fField !== 'pid' || fText !== '' || fGubun !== '' || fUse !== '' }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 검색기준·검색어(opt-in, 목업 검색박스처럼 나란히) · 구분 · 도움말(사용여부는 툴바 칩).
          칸 label = 칩 label(검색기준·검색어 — 칩 클릭 이동의 전제). [초기화] = 기본값(검색기준 프로그램ID) 복원 */
       filterPanel={
-        <FilterPanel label="프로그램관리 조건" onReset={clearFilters}>
+        <FilterPanel label="프로그램관리 조건">
           {SEARCHABLE && <>
             <PanelSelect label="검색기준" value={fField} onChange={(v) => setFField(v as ProgramField)} options={SEARCH_FIELDS.map((f) => ({ value: f.key, label: f.label }))} required showValue />
             <PanelSearch value={fText} onChange={setFText} />

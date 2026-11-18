@@ -9,7 +9,7 @@
         2026-11-17 상세필터 드로어 폐기 → 칩 줄 위 인라인 패널 — apfs-detail-filter)
        패널은 고르는 즉시 반영 — 같은 중분류 골드 audit_log 와 같다. 2026-11-02 초안(draft) 방식 폐기: 메뉴를 고르고
        X·Esc·바깥 클릭으로 닫으면 선택이 버려져 '메뉴 필터가 안 된다'로 보였다. 시작 > 종료면 기간 칸 빨간 테두리 + 패널 아래 안내(목업 문구), 결과 0건.
-       기간은 기본값(2026-09-28 ~ 2026-10-28 = 목업 defCond)으로 시작: 칩 × = 전 기간, 패널 [초기화] = 기본값. 툴바 [조회] = 기본 조건 복원 + 토스트(관리자 골드와 같다).
+       기간은 기본값(2026-09-28 ~ 2026-10-28 = 목업 defCond)으로 시작: 칩 × = 전 기간, 칩 줄 [초기화] = 기본값. 툴바 [조회] = 기본 조건 복원 + 토스트(관리자 골드와 같다).
    - 접근기록 그리드(No·일시·행위자·메뉴명·행위·IP, 일시 최신순, 목업 15건 페이지) → AG Grid 단일 헤더 + 페이지 20(프로젝트 상수) + 푸터 이전/다음·전체보기.
    - 통계(기간별 추이 일/주/월 · 메뉴별 접근 현황 · 사용자별 접근 현황) → privacy_access_stats.tsx(추이 = 선 차트, 나머지 = ReadGrid ×2). 집계는 조회 결과에서 파생(model).
    - 하단 [새 창][내보내기][인쇄] → 푸터 FooterActions(새 창 ⌥O 는 공용 부품에 이미 있다 · 내보내기 ⌥D · 인쇄 ⌘P). 내보내기 = 활성 탭(접근기록 1시트 / 통계 3시트).
@@ -40,6 +40,7 @@ import { demoAccessRows, PRIVACY_MENUS, DEFAULT_PERIOD } from './privacy_access_
 import type { AccessRow } from './privacy_access_data';
 import { filterAccess, validatePeriod, buildStats, TREND_TABLE, MENU_TABLE, USER_TABLE, TREND_UNITS } from './privacy_access_model';
 import type { AccessFilter, AccessStats, TrendUnit } from './privacy_access_model';
+import { filtersDirty } from '../../applied_filters';
 import type { AppliedFilter } from '../../applied_filters';
 import { PrivacyAccessStats } from './privacy_access_stats';
 
@@ -120,16 +121,16 @@ function AccessGrid({ rows, pageSize, apiRef, onPage }: {
 }
 
 /* ──────────────────────────────
-   상세필터 = 칩 줄 위 인라인 패널 — 개인정보 관련메뉴·기간·행위자·IP. 바꾸는 즉시 applied 에 반영([초기화] = 기본 조건).
+   상세필터 = 칩 줄 위 인라인 패널 — 개인정보 관련메뉴·기간·행위자·IP. 바꾸는 즉시 applied 에 반영(칩 줄 [초기화] = 기본 조건).
    시작 > 종료 안내는 패널 아래 한 줄(role=alert) — 칸 아래에 두지 않는다
 ────────────────────────────── */
-function AccessFilterPanel({ value, onPatch, onReset }: {
-  value: AccessFilter; onPatch: (p: Partial<AccessFilter>) => void; onReset: () => void;
+function AccessFilterPanel({ value, onPatch }: {
+  value: AccessFilter; onPatch: (p: Partial<AccessFilter>) => void;
 }) {
   const setD = (k: keyof AccessFilter) => (v: string) => onPatch({ [k]: v });
   const periodErr = validatePeriod(value.from, value.to);
   return (
-    <FilterPanel label={`${LABEL} 조건`} onReset={onReset} errors={[periodErr]}>
+    <FilterPanel label={`${LABEL} 조건`} errors={[periodErr]}>
       <PanelSelect label="개인정보 관련메뉴" value={value.menu} onChange={setD('menu')} options={MENU_OPTIONS} />
       <PanelRange label="기간" mode="day" from={value.from} to={value.to} onFrom={setD('from')} onTo={setD('to')} invalid={!!periodErr} />
       <PanelText label="행위자" value={value.actor} onChange={setD('actor')} />
@@ -201,7 +202,8 @@ export function PrivacyAccessLog({ onNav }: { onNav?: (r: string) => void }) {
       favRoute={ROUTE}
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={appliedChips(applied, f.patch)}
-      filterPanel={<AccessFilterPanel value={applied} onPatch={f.patch} onReset={f.reset} />}
+      filterPanel={<AccessFilterPanel value={applied} onPatch={f.patch} />}
+      filterReset={{ run: f.reset, dirty: filtersDirty(applied, DEFAULT_FILTER) }}
       toolbarRight={<>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />
       </>}

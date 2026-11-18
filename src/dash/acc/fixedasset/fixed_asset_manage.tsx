@@ -48,6 +48,7 @@ import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { FilterPanel, PanelPeriod, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
+import { filtersDirty } from '../../applied_filters';
 import { TabBar, TabPanel } from '../../risk_page_kit';
 import { LinkCell } from '../../link_cell';
 import { PARTNERS, todayStr } from '../slip/general_journal_data';
@@ -392,7 +393,7 @@ export function FixedAssetManage({ onNav }: { onNav?: (r: string) => void }) {
       ]}
       /* E01 상세필터 6개 = 칩 줄 위 인라인 패널 — 즉시 반영. [초기화] = 기본값(당월 · 나머지 해제) */
       filterPanel={
-        <FilterPanel label="유무형자산 조건" onReset={() => setF(base)} errors={[rangeErr]}>
+        <FilterPanel label="유무형자산 조건" errors={[rangeErr]}>
           {/* 필수 — 같은 달 재클릭(해제)은 무시해 비지 않게 한다 */}
           <PanelPeriod label="기준년월" mode="month" value={f.ym} onChange={(v) => { if (v) setFv('ym', v); }} />
           <PanelSelect label="계정구분" value={f.fund} onChange={(v) => setFv('fund', v)} options={FA_FUNDS} />
@@ -402,6 +403,7 @@ export function FixedAssetManage({ onNav }: { onNav?: (r: string) => void }) {
           <PanelRange label="취득기간" mode="day" from={f.from} to={f.to} onFrom={(v) => setFv('from', v || '')} onTo={(v) => setFv('to', v || '')} invalid={!!rangeErr} />
         </FilterPanel>
       }
+      filterReset={{ run: () => setF(base), dirty: filtersDirty(f, base) }}
       toolbarRight={<>
         {tab === 'summary' && <Button variant="outline" size="sm" leadingIcon="plus" onClick={() => setModal({ kind: 'form' })}>유무형자산 등록</Button>}
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={modal ? undefined : HOTKEYS.refresh} />

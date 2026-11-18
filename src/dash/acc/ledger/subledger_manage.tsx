@@ -35,6 +35,7 @@ import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import { FilterPanel, PanelCheck, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
+import { filtersDirty } from '../../applied_filters';
 import { FUND_ACCOUNTS } from '../slip/general_journal_data';
 import { JournalEntryScreen } from '../slip/journal_entry_screen';   // 전표상세 = ACC-003 전표 화면 readOnly
 import type { EntryState } from '../slip/general_journal_model';
@@ -174,7 +175,7 @@ export function SubledgerManage({ onNav }: { onNav?: (r: string) => void }) {
       appliedFilters={chips}
       /* 상세필터(E01) = 칩 줄 위 인라인 패널 — 설계서 8개 조건, 바꾸는 즉시 applied 반영. [초기화] = 기본값(작성계정과목만 = 여) */
       filterPanel={
-        <FilterPanel label="계정별보조부 조회 조건" onReset={() => setApplied(SUBLEDGER_DEFAULT)} errors={[periodErr]}>
+        <FilterPanel label="계정별보조부 조회 조건" errors={[periodErr]}>
           <PanelSelect label="계정구분" value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} />
           <PanelRange label="기간" mode="day" from={applied.from} to={applied.to} onFrom={setD('from')} onTo={setD('to')} invalid={!!periodErr} />
           <PanelCheck label="작성계정과목만" checked={applied.writtenOnly} onChange={setD('writtenOnly')} />
@@ -185,6 +186,7 @@ export function SubledgerManage({ onNav }: { onNav?: (r: string) => void }) {
           <PanelText label="적요" value={applied.memo} onChange={setD('memo')} />
         </FilterPanel>
       }
+      filterReset={{ run: () => setApplied(SUBLEDGER_DEFAULT), dirty: filtersDirty(applied, SUBLEDGER_DEFAULT) }}
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>단위: 원</span>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />

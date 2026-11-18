@@ -4,7 +4,7 @@
    구성(목업 → 우리 규약):
    - 검색박스(등록기간·게시대상·게시 종류·상태·제목 + [초기화][조회]) → 주 필터 1개 = 상태 FilterChip(`상태: 전체` + 4값, facet 건수)
        + 상세필터 = 칩 줄 위 인라인 패널(제목(검색어 opt-in, 맨 앞) · 등록기간(시작~종료 한 칸, 칩 1개) · 게시대상 · 게시 종류).
-       [조회] → 툴바 조회 아이콘(⌥R) · [초기화] → 칩 줄 `전체 해제`·⟳ 조회(기본값이 전부 빈 값이라 패널 [초기화] 없음).
+       [조회] → 툴바 조회 아이콘(⌥R) · [초기화] → 칩 줄 [초기화](칩 × 연쇄)·⟳ 조회(기본값이 전부 빈 값이라 filterReset 없음).
    - 목록바(총 N건 · 페이지당 건수 · 엑셀 · 선택 삭제 · 게시 · 등록) → 푸터 건수·페이저(10건)·전체보기(⌥A) · 엑셀 = 푸터 내보내기(⌥D) ·
        [게시]·[삭제] = 선택 바(contextActions, 체크한 행) · [등록] = 툴바 [게시글 등록](⌘⏎).
    - 그리드(체크·No·등록일·게시대상·제목·게시기간·상태·게시 종류·첨부·작성자·미리보기) → AG Grid 단일 헤더. 선택은 체크박스로만(ROW_SELECTION).
@@ -273,7 +273,7 @@ export function BoardManage({ onNav }: { onNav?: (r: string) => void }) {
       filterChipsMenu="상태"
       filterChips={STATUS_CHIPS.map((s) => ({ key: s || 'all', label: s || '전체', count: chipCount(s), active: fStatus === s, onSelect: () => setFStatus(s) }))}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
-      /* 상세필터 = 칩 줄 위 인라인 패널 — 즉시 반영. 기본값이 전부 빈 값이라 [초기화] 없음(칩 줄 전체 해제·⟳ 조회) */
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 즉시 반영. 기본값이 전부 빈 값이라 filterReset 없음(칩 줄 [초기화] = 칩 × 연쇄·⟳ 조회) */
       filterPanel={
         <FilterPanel label="게시판관리 조건">
           {SEARCHABLE && <PanelText label="제목" value={fTitle} onChange={setFTitle} />}

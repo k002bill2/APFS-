@@ -71,10 +71,11 @@ export function InvesteeProfile({ onNav }: { onNav?: (r: string) => void }) {
       favRoute="investee-profile"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={[{ label: '조회 대상', value: path.some(Boolean) ? path.map((v) => v || '전체').join('\u00a0› ') : '', wide: true, jumpTo: '모펀드', onClear: clearFilters }]}
+      filterReset={{ run: resetFilters, dirty: fMf !== QUERY_FIELDS[0].value || fGp !== QUERY_FIELDS[1].value || fFund !== QUERY_FIELDS[2].value || fCo !== QUERY_FIELDS[3].value }}
       /* 상세필터 = 칩 줄 위 인라인 패널 4칸 — (주)선양 1건의 소속과 대조해 본문/빈 상태를 가른다(profileMatches).
          고른 값은 묶음 칩 '조회 대상' 하나에 보이고, 칩 클릭은 jumpTo '모펀드'(= 첫 칸 label)로 간다. [초기화] = 원문 기본값 복원 */
       filterPanel={
-        <FilterPanel label="투자기업정보(통합) 조건" onReset={resetFilters}>
+        <FilterPanel label="투자기업정보(통합) 조건">
           <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={MF_OPTIONS} />
           <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={GP_OPTIONS} />
           <PanelSelect label="자펀드" value={fFund} onChange={setFFund} options={FUND_OPTIONS} />

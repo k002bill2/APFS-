@@ -428,12 +428,14 @@ export function FundStats({ onNav }: { onNav?: (r: string) => void }) {
         { label: '데이터기준', value: fDbasis, onClear: () => setFDbasis('') },
         { label: '기준일자', value: fDate, onClear: () => setFDate('') },
       ]}
+      /* clearFilters 가 되돌리는 것 전부 — 연도기준 칩(yearBasis) 포함 */
+      filterReset={{ run: clearFilters, dirty: fMf !== MF_DEFAULT || fAcct !== '' || fDbasis !== '' || fDate !== '' || yearBasis !== DEFAULT_YEAR_BASIS }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 항목·순서 그대로(모펀드·계정구분·연도기준·데이터기준·기준일자).
          검색어는 없다(목업 미포함). 연도기준은 툴바 칩이라 패널에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts).
          계정구분 — 목업은 전체/농식품/수산 칩 그룹, PanelSelect 의 빈 값(전체)이 같은 역할을 한다. 나머지 4종은 행·금액 재계산.
          [초기화] = 모펀드·연도기준 기본값 복원 */
       filterPanel={
-        <FilterPanel label="종합통계(확정) 조건" onReset={clearFilters}>
+        <FilterPanel label="종합통계(확정) 조건">
           <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} required />
           <PanelSelect label="계정구분" value={fAcct} onChange={setFAcct} options={['농식품', '수산']} />
           <PanelSelect label="데이터기준" value={fDbasis} onChange={setFDbasis} options={['운용사보고', '월말확정']} />

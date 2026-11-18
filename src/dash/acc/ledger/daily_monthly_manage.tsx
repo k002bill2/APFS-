@@ -41,6 +41,7 @@ import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import { FilterPanel, PanelCheck, PanelMulti, PanelPeriod, PanelRange, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
+import { filtersDirty } from '../../applied_filters';
 import { multiSelectSummary } from '../../ui/multi-select';
 import { TabBar, TabPanel } from '../../risk_page_kit';
 import type { AppliedFilter } from '../../applied_filters';
@@ -224,7 +225,7 @@ export function DailyMonthlyManage({ onNav }: { onNav?: (r: string) => void }) {
       appliedFilters={chips}
       /* 상세필터(E01) = 칩 줄 위 인라인 패널 — 현재 탭 조건, 바꾸는 즉시 applied 반영. 검증 문구는 패널 아래, [초기화] = 탭 기본값 */
       filterPanel={
-        <FilterPanel label={`${TAB_LABEL[tab]} 조회 조건`} onReset={resetApplied} errors={[blocked]}>
+        <FilterPanel label={`${TAB_LABEL[tab]} 조회 조건`} errors={[blocked]}>
           {tab === 'daily' ? (
             <>
               <PanelMulti label="계정구분" value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} />
@@ -241,6 +242,8 @@ export function DailyMonthlyManage({ onNav }: { onNav?: (r: string) => void }) {
           <PanelCheck label="결산전표포함" checked={applied.includeClosing} onChange={setD('includeClosing')} />
         </FilterPanel>
       }
+      /* [초기화]는 현재 탭 칸만 되돌린다 — 그 탭의 복원 결과와 다를 때만 dirty(다른 탭 칸 차이는 무시) */
+      filterReset={{ run: resetApplied, dirty: filtersDirty(applied, resetFilter(applied, tab, base)) }}
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>단위: 원</span>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />

@@ -74,7 +74,7 @@ function UploadListPage({ cfg, onNav }: { cfg: UploadPageConfig; onNav?: (r: str
   const filters: FilterSpec[] = [
     { label: '운용사', kind: 'select', value: gp, onChange: onFilter(setGp), options: gpOptions, allLabel: GP_PLACEHOLDER },
     { label: '조합', kind: 'select', value: union, onChange: onFilter(setUnion), options: unionOptions },
-    { label: '기준월', kind: 'month', value: ym, onChange: onFilter(setYm) },
+    { label: '기준월', kind: 'month', value: ym, def: cfg.baseYm, onChange: onFilter(setYm) },
     { label: '대분류', kind: 'select', value: big, onChange: onFilter(setBig), options: BIG_OPTIONS },
     { label: '중분류', kind: 'select', value: mid, onChange: onFilter(setMid), options: MID_OPTIONS },
   ];

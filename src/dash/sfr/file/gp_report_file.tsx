@@ -58,7 +58,7 @@ export function GpReportFile({ onNav }: { onNav?: (r: string) => void }) {
   const shown = useMemo(() => GP_REPORT_FILE_TABLE.rows.filter((r) => !rpt || r.rpt === rpt), [rpt]);
 
   const filters: FilterSpec[] = [
-    { label: '보고구분', kind: 'select', value: rpt, onChange: setRpt, options: RPT_OPTIONS, allLabel: null },
+    { label: '보고구분', kind: 'select', value: rpt, def: RPT_OPTIONS[0], onChange: setRpt, options: RPT_OPTIONS, allLabel: null },
   ];
 
   const exportExcel = () => {

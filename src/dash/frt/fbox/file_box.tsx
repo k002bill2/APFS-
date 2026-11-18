@@ -148,7 +148,7 @@ export function FileBox({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={applied.map(([label, value, onClear]) => ({ label, value, onClear }))}
       filterScope={tab}
-      /* 상세필터 = 칩 줄 위 인라인 패널 — 활성 탭의 조건(탭마다 필터 유지). 기본값이 전부 빈 값이라 [초기화] 없음(칩 줄 전체 해제) */
+      /* 상세필터 = 칩 줄 위 인라인 패널 — 활성 탭의 조건(탭마다 필터 유지). 기본값이 전부 빈 값이라 filterReset 없음(칩 줄 [초기화] = 칩 × 연쇄) */
       filterPanel={
         <FilterPanel label={`${isMy ? TABS[0].label : TABS[1].label} 조건`}>
           {isMy ? (

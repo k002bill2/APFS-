@@ -35,7 +35,7 @@ describe('기준일 = 대사 스냅샷 시점(같은 날)', () => {
     expect(SRC).toMatch(/atBaseDate\(nonInvest, fAsOf\)/);
     expect(SRC).toMatch(/\{ label: '기준일', value: fAsOf, onClear: fAsOf !== BASE_DATE \? \(\) => setFAsOf\(BASE_DATE\) : undefined \}/);   // 기본값이어도 칩 상시, × 는 기본값과 다를 때만(2026-11-17 사용자 결정 (a))
     expect(SRC).toMatch(/const clearFilters = \(\) => \{ setFFund\(''\); setFAsOf\(BASE_DATE\); setFItem\(''\); \};/);
-    expect(SRC).toMatch(/<FilterPanel label="[^"]+" onReset=\{clearFilters\}>/);   // [초기화] = 기본 기준일 복원
+    expect(SRC).toMatch(/filterReset=\{\{ run: clearFilters, dirty: fFund !== '' \|\| fAsOf !== BASE_DATE \|\| fItem !== '' \}\}/);   // [초기화](칩 줄 끝) = 기본 기준일 복원, 처음과 다를 때만
     expect(SRC).toMatch(/onChange=\{\(v\) => setFAsOf\(v \|\| BASE_DATE\)\}/);
     expect(panelSrc(SRC)).toMatch(/<PanelPeriod label="기준일" mode="day"/);
     expect(SRC).not.toMatch(/noop/);

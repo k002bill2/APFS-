@@ -79,10 +79,10 @@ export function GpTypeIndicatorTrend({ onNav }: { onNav?: (r: string) => void })
   const reset = () => { setMf(MF_OPTIONS[0]); setType(TREND_TYPES[0]); setFrom(TREND_FROM); setTo(TREND_TO); };
 
   const filters: FilterSpec[] = [
-    { label: '모펀드', kind: 'select', value: mf, onChange: setMf, options: MF_OPTIONS, allLabel: null },
-    { label: '운용사 유형', kind: 'select', value: type, onChange: setType, options: TREND_TYPES },
-    { label: '기간(시작)', kind: 'month', value: from, onChange: setFrom },
-    { label: '기간(종료)', kind: 'month', value: to, onChange: setTo },
+    { label: '모펀드', kind: 'select', value: mf, def: MF_OPTIONS[0], onChange: setMf, options: MF_OPTIONS, allLabel: null },
+    { label: '운용사 유형', kind: 'select', value: type, def: TREND_TYPES[0], onChange: setType, options: TREND_TYPES },
+    { label: '기간(시작)', kind: 'month', value: from, def: TREND_FROM, onChange: setFrom },
+    { label: '기간(종료)', kind: 'month', value: to, def: TREND_TO, onChange: setTo },
   ];
   const idx = trendPointsInRange(from, to);
   const sections = useMemo(() => trendSectionsFor(mf), [mf]);

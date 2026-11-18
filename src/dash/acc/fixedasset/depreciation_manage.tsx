@@ -115,7 +115,7 @@ export function DepreciationManage({ onNav }: { onNav?: (r: string) => void }) {
   const changeAccount = (a: DeprFundAccount) => { if (a !== account) setAccount(a); };
   /* E01 기준년월(상세필터, 즉시 반영) — 같은 달 재클릭(빈 값)은 무시해 항상 값이 있다 */
   const changeYm = (v: string) => { if (v) setYm(v); };
-  const resetYm = () => setYm(baseYm);   // 패널 [초기화] · 적용 칩 × = 기본값(필수 조건이라 해제 없음)
+  const resetYm = () => setYm(baseYm);   // 칩 줄 [초기화] · 적용 칩 × = 기본값(필수 조건이라 해제 없음)
 
   /* E04 조회 — 현재 조건으로 재계산(rows 는 조건·원장에서 파생). 삭제한 행은 되살리지 않는다 */
   const refresh = () => { clearSel(); toast.success(MSG.queried); };
@@ -185,10 +185,11 @@ export function DepreciationManage({ onNav }: { onNav?: (r: string) => void }) {
       appliedFilters={[{ label: '기준년월', value: ym, onClear: resetYm }]}
       /* E01 상세필터 = 칩 줄 위 인라인 패널 — 조건 1개(기준년월), 즉시 반영. [초기화] = 기본값 */
       filterPanel={
-        <FilterPanel label="감가상각 계산 조건" onReset={resetYm}>
+        <FilterPanel label="감가상각 계산 조건">
           <PanelPeriod label="기준년월" mode="month" value={ym} onChange={changeYm} />
         </FilterPanel>
       }
+      filterReset={{ run: resetYm, dirty: ym !== baseYm }}
       toolbarRight={<>
         <Button variant="outline" size="sm" leadingIcon="check" onClick={saveGrid}>저장</Button>
         <Button variant="outline" size="sm" leadingIcon="settings" onClick={() => setModal({ kind: 'account' })}>계정과목 설정</Button>

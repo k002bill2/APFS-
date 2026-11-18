@@ -459,10 +459,11 @@ export function WorkforceManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips.map((c) => ({ label: c.key, value: c.value, onClear: c.clear }))}
       contextActions={selActions}
+      filterReset={{ run: clearFilters, dirty: fText !== '' || fScope !== '운용사' || fTarget !== '' || fFrom !== '' || fTo !== '' }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 항목·순서 그대로(구분 · 운용사/자펀드 · 기간). 기간은 시작 ~ 종료가 한 항목, **기본값 없음**.
          검색어는 SEARCHABLE 게이트(OFF). [초기화] = 기본값(구분 = 운용사) 복원 */
       filterPanel={
-        <FilterPanel label="운용인력 변동관리 조건" onReset={clearFilters}>
+        <FilterPanel label="운용인력 변동관리 조건">
           {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
           {/* 칸은 늘 '' 를 보이므로(값은 칩에만) 같은 스코프를 다시 골라도 onChange 가 온다 — 드로어 시절처럼 무시해야 대상이 안 지워진다 */}
           <PanelSelect label="구분" value={fScope} onChange={(v) => { if (v !== fScope) changeScope(v); }} options={SCOPE_VALUES} required />

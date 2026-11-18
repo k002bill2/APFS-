@@ -164,20 +164,20 @@ function KpiBadge(props: { icon: string; color: string; label: string; value: Re
 툴바는 **한 줄만** 쓴다. 둘째 줄·가로 스크롤은 폐기(같은 날 두 차례 시도 후 사용자가 교체).
 
 ```
-[깔때기] [기본 필터 칩…] [적용 칩(값 ×)…] [전체 해제] [+N ▾] ········ [우측 액션]
+[깔때기] [기본 필터 칩…] [적용 칩(값 ×)…] [+N ▾] [⟲ 초기화] ········ [우측 액션]
 ```
 - **'전체' 있는 단일 선택 기본 필터 = 드롭다운 칩 하나**(2026-11-10 자펀드정보관리 심사단계 310→112px → 2026-11-13 사용자 "모두", 범위 "전체 있는 필터 칩만" — 19화면): `<GridFrame filterChipsMenu="필터명" filterChips={…('' → { key:'all', label:'전체' })}>`. 트리거 `필터명: 현재값 ▾`(값이 '전체'가 아니면 primary 틴트), 메뉴 = 값마다 menuitemradio(✓ + 건수). 탭마다 필터명이 다르면 식으로 넘긴다(`filterChipsMenu={isT ? '응답코드' : '처리상태'}`). 값 라벨은 접두사 없이(`사용 여` ✗ → `여` — 트리거가 `사용여부: 여`). **대상 아님(칩 무리 그대로)**: 보기 전환 칩('전체'·필터명 없음 — 경영형태별·분야별, 상세·요약 등), 필수 칩(`required`), 복수 선택(조기경보 등급). 가드 `filter_chip_menu_rule.test.ts`(`'X: 전체'` 리터럴 금지 · `|| 'all'` 칩이면 `filterChipsMenu=` 필수, 예외 목록 `MULTI_OK`).
 - **넘치는 만큼만 뒤에서부터 `+N ▾` 드롭다운으로 접는다** — 앞쪽 칩은 그대로. 판정은 `applied_filters.tsx` 의 순수 함수 `planChips`(그리디, 넘치면 트리거 폭 예약 후 재계산) + 보이지 않는 측정용 사본(전 항목 + `+99`)의 폭. 측정이 보이는 배치와 무관해 진동 없음.
 - **숨겨질 선택 칩은 첫 자리로 끌어올린다** — 메뉴에서 고른 칩이 active 가 되면 다음 렌더에서 slot 0 으로. 다중 선택(조기경보 등급)은 선택 칩이 하나라도 숨겨지면 **선택 칩 전부**를 원래 순서대로 앞에 모은다. **DOM 순서 자체를 바꾼다**(CSS `order` 금지 — 탭 순서 ≠ 보이는 순서, WCAG 2.4.3).
-- 메뉴: 기본 칩(✓ 선택 표시 + 건수) · 구분선 · 적용 칩(값 = 그 필터 칸으로 이동 · × = 해제 · 행 호버/초점 = 항목명 툴팁 — 보이는 칩과 같은 규칙, 2026-11-10 → [[apfs-detail-filter]]) · `전체 해제`. 숨긴 항목 중 걸린 필터가 있으면 `+N` 을 primary 틴트로. 트리거는 plain `<button>`(UI.Button 은 asChild 트리거 불가), 메뉴는 Radix 포털. 닫힌 뒤 초점은 트리거로(없어졌으면 행의 마지막 칩으로) — Radix 자동 복귀는 필터 변경 재렌더로 body 에 떨어졌다(실측).
+- 메뉴: 기본 칩(✓ 선택 표시 + 건수) · 구분선 · 적용 칩(값 = 그 필터 칸으로 이동 · × = 해제 · 행 호버/초점 = 항목명 툴팁 — 보이는 칩과 같은 규칙, 2026-11-10 → [[apfs-detail-filter]]). [초기화]는 메뉴에 들어가지 않는다. 숨긴 항목 중 걸린 필터가 있으면 `+N` 을 primary 틴트로. 트리거는 plain `<button>`(UI.Button 은 asChild 트리거 불가), 메뉴는 Radix 포털. 닫힌 뒤 초점은 트리거로(없어졌으면 행의 마지막 칩으로) — Radix 자동 복귀는 필터 변경 재렌더로 body 에 떨어졌다(실측).
 - **페이지는 데이터만 넘긴다**: `filterChips={X.map((v) => ({ key, label, count, active, onSelect }))}` + `appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}`. 페이지가 `<FilterChip>`·깔때기·적용 칩 마크업을 그리지 않는다 — 가드 `applied_filters.test.ts`(GridFrame/RiskPage 소비 파일의 `<FilterChip`·`<Icon name="filter"`·'필터 제거'·`AppliedChip`/`FilterPill` 사본 금지). `toolbarLeft` 는 칩이 아닌 내용(캡션 등)만.
   - **필수 주 필터 = `FilterChipItem.required: true`**(2026-10-28 PR #365, 결산양식 관리 양식구분): 라벨 뒤 `*`(foreground·700) + sr-only " 필수" 를 `applied_filters.tsx` 가 그린다. 미선택 상태가 없는 조건이라 **`전체` 칩을 만들지 않고 항상 1개만 active**, active 칩을 다시 눌러도 풀리지 않는다(`onSelect` 에서 `k === 현재값` 이면 return). 그래서 아래 "`필터명: 전체`" 규칙의 대상이 아니다. 설계서의 콤보박스·"○○을 선택하세요" 검증은 미선택 상태가 없으므로 두지 않는다.
   - **긴 경로형 적용 칩 = `AppliedFilter.wide: true`**(2026-10-14 PR #328, 투자기업정보(통합) 조회 대상): 최대 480px·좁으면 2줄 줄바꿈, `+N` 으로 접히지 않는다(배치 계산은 최소 160px 만 선예약). 여러 단계 선택(모펀드 › 운용사 › 조합 › 기업)을 칩 여러 개로 쪼개지 않고 값 하나(구분자 ` › `)로 합칠 때 쓴다. × 는 그 단계 전부를 해제한다.
 - 행 선택 중(선택 액션 바가 좌측 차지): 깔때기와 칩 줄(`FilterChipRow`)을 통째로 감춘다(`grid_frame.tsx` `selecting`) — 페이지가 `selCount>0 ? null` 로 칩을 끌 필요 없음. 그래서 필터를 바꿀 때 선택을 해제하지 않으면 칩이 계속 안 보인다 — 외부 필터 화면은 필터 effect 에서 `deselectAll()`(2026-10-27 → [[apfs-detail-filter]]).
 - 우측 액션 `shrink-0` 고정. ≤640px 만 좌측 `basis-full` 로 좌/우 두 줄 적층(칩 행 폭 = 남은 폭이라 판정이 자동으로 맞는다).
-- 보이는 캡션 없음(`role="group" aria-label="필터"`). 적용 칩 = 값만·240px 말줄임·항목명은 DS Tooltip(호버·× 포커스)/aria 로(2026-10-26 네이티브 title 대체 — 필터 적용 직후 3초 자동 노출·모달 중엔 닫힐 때까지 지연 → [[apfs-detail-filter]]). 해제 가능 ≥2 이면 `전체 해제`. **`+N` 의 N = 숨긴 필터(기본 칩+적용 칩) 수 — `전체 해제`는 세지 않는다**(2026-09-29: 필터 2개 숨김이 `+3` 으로 보인 버그). 숨긴 게 `전체 해제` 하나뿐이면 `+N` 트리거를 그리지 않는다(`+0` 금지).
+- 보이는 캡션 없음(`role="group" aria-label="필터"`). 적용 칩 = 값만·240px 말줄임·항목명은 DS Tooltip(호버·× 포커스)/aria 로(2026-10-26 네이티브 title 대체 — 필터 적용 직후 3초 자동 노출·모달 중엔 닫힐 때까지 지연 → [[apfs-detail-filter]]). **줄 끝 [초기화] 하나**(2026-11-18 패널 [초기화]·[전체 해제] 통합 — GridFrame `filterReset={{ run, dirty }}`, 처음과 다를 때만·칩 0개여도 보임. 미지정 화면은 해제 가능 ≥2 이면 칩 × 연쇄 → [[apfs-detail-filter]] 패널 절). [초기화]는 배치(`planChips`) 밖 — 폭을 먼저 떼고 나머지 칩을 채우며 `+N` 으로 접히지 않는다. **`+N` 의 N = 숨긴 필터(기본 칩+적용 칩) 수**(2026-09-29: 필터 2개 숨김이 `+3` 으로 보인 버그).
 - **적용 칩 값 클릭 = 칩 줄 위 필터 패널의 그 칸으로 초점**(강조 표시 없음)(2026-11-02 → 11-17 패널, `filter_field_jump.ts`). 전제: GridFrame `filterPanel` · 칩 `label` = 칸 aria-label 정확일치(불일치면 아무 일도 안 한다 — 가드 `filter_panel_labels.test.ts`). 규약·함정 → [[apfs-detail-filter]] "적용 칩 클릭".
-- ⚠️ **`전체 해제` = 칩별 `onClear` 를 한 이벤트에서 연달아 호출** → 클로저의 객체 state 를 복사해 지우는 onClear 는 마지막만 남는다. 반드시 함수형 업데이트. 실제 사례: `generic_list.removeFilter`.
+- ⚠️ **[초기화](filterReset 미지정 화면) = 칩별 `onClear` 를 한 이벤트에서 연달아 호출** → 클로저의 객체 state 를 복사해 지우는 onClear 는 마지막만 남는다. 반드시 함수형 업데이트. 실제 사례: `generic_list.removeFilter`.
 - 칩 행 컨테이너는 `overflow:hidden` 이라 세로 3px 패딩+음수 마진으로 focus 링 여유를 둔다.
 
 ## 관리형 리스트 툴바·타이틀 규약 (2026-09-11 subfund_manage에서 정립)

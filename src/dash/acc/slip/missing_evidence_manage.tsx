@@ -40,6 +40,7 @@ import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { FilterPanel, PanelCheck, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
+import { filtersDirty } from '../../applied_filters';
 import { FUND_ACCOUNTS, JOURNAL_ORIGINS, todayStr } from './general_journal_data';
 import type { ApprovalStatus, JournalRow } from './general_journal_data';
 import { validateRange } from './general_journal_model';
@@ -234,7 +235,7 @@ export function MissingEvidenceManage({ onNav }: { onNav?: (r: string) => void }
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       /* E01 상세필터 = 칩 줄 위 인라인 패널 — 설계서 7개 조건. 즉시 반영, [초기화] = 기본값(기간 = 당월) 복원 */
       filterPanel={
-        <FilterPanel label="전표증빙 미첨부 조건" onReset={() => setApplied(base)} errors={[periodErr]}>
+        <FilterPanel label="전표증빙 미첨부 조건" errors={[periodErr]}>
           <PanelSelect label="계정구분" value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} searchable />
           <PanelRange label="기간" mode="day" from={applied.from} to={applied.to} onFrom={setD('from')} onTo={setD('to')} invalid={!!periodErr} />
           <PanelCheck label="미결재포함" checked={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
@@ -244,6 +245,7 @@ export function MissingEvidenceManage({ onNav }: { onNav?: (r: string) => void }
           <PanelText label="적요" value={applied.memo} onChange={setD('memo')} />
         </FilterPanel>
       }
+      filterReset={{ run: () => setApplied(base), dirty: filtersDirty(applied, base) }}
       toolbarRight={<>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={modal ? undefined : HOTKEYS.refresh} />
       </>}

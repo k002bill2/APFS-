@@ -4,7 +4,7 @@
    구성(목업 → 우리 규약):
    - 검색박스(검색기준+검색어·사용자 구분·레벨·사용여부) → 주 필터 1개 = 사용자 구분 FilterChip(툴바 좌)
        + 나머지 = 상세필터 = 칩 줄 위 인라인 패널(검색어·검색기준·레벨·사용여부, apfs-detail-filter). 검색어는 이 화면이 opt-in(SEARCHABLE).
-       검색기준은 '전체' 없는 고정 기본값(메뉴명) select — 검색어의 뜻을 정하는 수식어라 칸에 값을 그대로 보이고(PanelSelect showValue) 칩을 따로 두지 않는다(검색어 칩이 '기준: 값'으로 보인다), 패널 [초기화] = 기본값 복원.
+       검색기준은 '전체' 없는 고정 기본값(메뉴명) select — 검색어의 뜻을 정하는 수식어라 칸에 값을 그대로 보이고(PanelSelect showValue) 칩을 따로 두지 않는다(검색어 칩이 '기준: 값'으로 보인다), 칩 줄 [초기화] = 기본값 복원.
    - 계층형 1~3레벨 트리 그리드(＋/－ 펼침)   → AG Grid Community 엔 Tree Data 가 없다(Enterprise) → 목업처럼 **평탄 행 +
        펼침 상태(expanded Set)로 visibleRows 를 React 에서 계산**한다. 필터가 하나라도 걸리면 평면(전체 매칭) 모드(목업 `searching`).
        펼침 토글은 메뉴명 셀의 버튼(aria-expanded) · 툴바 [전체 펼치기/접기] · 우클릭 메뉴 · 메뉴명 셀 Enter(부모 행).
@@ -294,10 +294,11 @@ export function MenuManage({ onNav }: { onNav?: (r: string) => void }) {
       contextActions={selActions}
       /* 적용 중인 상세필터 — 항목별 개별 칩(값만 표시, 항목명은 × aria-label) */
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      filterReset={{ run: clearFilters, dirty: fUtype !== '' || fField !== 'name' || fText !== '' || fLvl !== '' || fUse !== '' }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 검색어(opt-in) 맨 앞 + 검색기준 · 레벨 · 사용여부(목업 검색박스 순서, 사용자 구분은 툴바 칩).
          [초기화] = 기본값(검색기준 메뉴명) 복원 */
       filterPanel={
-        <FilterPanel label="메뉴관리 조건" onReset={clearFilters}>
+        <FilterPanel label="메뉴관리 조건">
           {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
           <PanelSelect label="검색기준" value={fField as string} onChange={(v) => setFField(v as keyof MenuRow)} options={SEARCH_FIELDS.map((f) => ({ value: f.key as string, label: f.label }))} required showValue />
           <PanelSelect label="레벨" value={fLvl} onChange={setFLvl} options={['1', '2', '3'].map((v) => ({ value: v, label: v }))} />

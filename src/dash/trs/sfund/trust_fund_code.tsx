@@ -32,7 +32,7 @@ export function TrustFundCode({ onNav }: { onNav?: (r: string) => void }) {
   const [modal, setModal] = useState<null | { kind: 'edit'; id: string } | { kind: 'delete' }>(null);
 
   const filters: FilterSpec[] = [
-    { label: '수탁기관', kind: 'select', value: org, onChange: setOrg, options: FUND_CODE_ORGS, allLabel: null },
+    { label: '수탁기관', kind: 'select', value: org, def: FUND_CODE_ORGS[0], onChange: setOrg, options: FUND_CODE_ORGS, allLabel: null },
   ];
   const reset = () => setOrg(FUND_CODE_ORGS[0]);
   const shown = useMemo(() => fundCodeRows(rows, org), [rows, org]);

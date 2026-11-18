@@ -72,9 +72,9 @@ function IrrPage({ cfg, onNav }: { cfg: IrrConfig; onNav?: (r: string) => void }
   const onLink = useCallback(() => setOpen(true), []);
 
   const filters: FilterSpec[] = [
-    { label: '자펀드', kind: 'select', value: fund, onChange: setFund, options: cfg.funds, allLabel: cfg.fundAll ? '전체' : null },
+    { label: '자펀드', kind: 'select', value: fund, def: cfg.defaultFund, onChange: setFund, options: cfg.funds, allLabel: cfg.fundAll ? '전체' : null },
     ...(cfg.companies ? [{ label: '투자기업', kind: 'select' as const, value: co, onChange: setCo, options: cfg.companies }] : []),
-    { label: '평가년월', kind: 'month', value: ym, onChange: setYm, allLabel: null },   // 스냅샷 — 비우면 두 분기가 섞인다
+    { label: '평가년월', kind: 'month', value: ym, def: EVAL_BASE_YM, onChange: setYm, allLabel: null },   // 스냅샷 — 비우면 두 분기가 섞인다
   ];
 
   const exportExcel = () => {
