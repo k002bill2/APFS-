@@ -141,3 +141,35 @@ describe('MultiSelect — 트리거 요약', () => {
     expect(sizers).toEqual(['전체', '동일 외 2', '동일 외 1', '기타']);
   });
 });
+
+/* 옵션 라벨 잘림 없음(2026-11-17) — SearchableSelect 와 같은 팝오버 계약(searchable-select.test.ts 참조). */
+describe('MultiSelect — 옵션 라벨 잘림 없음', () => {
+  const LONG = [
+    { value: 'x', label: '엔비에이치(NBH)-케이프 2023 K-Farm 투자조합' },
+    { value: 'y', label: '롯데농식품테크펀드2호' },
+  ];
+  const openLong = () => {
+    render(React.createElement(MultiSelect, { value: [], onChange: vi.fn(), options: LONG, ariaLabel: '자펀드', searchable: true }));
+    fireEvent.click(screen.getByRole('combobox', { name: /^자펀드/ }));
+  };
+  const sizerTexts = () => [...document.querySelectorAll('[data-option-sizer] > *')].map((n) => n.textContent);
+
+  it('옵션 라벨은 말줄임 대신 줄바꿈된다', () => {
+    openLong();
+    const labels = screen.getAllByRole('option').map((o) => o.querySelector('span:not([aria-hidden])') as HTMLElement);
+    expect(labels).toHaveLength(3);
+    for (const s of labels) {
+      expect(s.className).not.toMatch(/\btruncate\b/);
+      expect(s.className).toMatch(/\bwhitespace-normal\b/);
+    }
+  });
+
+  it('폭 사이저가 전 라벨(전체 선택 포함)을 갖고, 검색으로 항목이 줄어도 그대로다', () => {
+    openLong();
+    const all = ['전체 선택', ...LONG.map((o) => o.label)];
+    expect(sizerTexts()).toEqual(all);
+    fireEvent.change(screen.getByRole('combobox', { name: '자펀드 검색' }), { target: { value: '없는값' } });
+    expect(screen.queryAllByRole('option')).toHaveLength(0);
+    expect(sizerTexts()).toEqual(all);
+  });
+});
