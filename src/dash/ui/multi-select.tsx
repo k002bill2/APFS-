@@ -21,7 +21,7 @@ import * as React from 'react';
 import { Check, ChevronDown, Minus } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from './popover';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem, CommandSeparator } from './command';
-import { shouldSearch, type SelectOption } from './searchable-select';
+import { shouldSearch, OPTION_POPOVER_STYLE, OPTION_LABEL_CLASS, optionListGutter, OptionWidthSizer, type SelectOption } from './searchable-select';
 import { UI } from '../components';
 import { cn } from '@/lib/utils';
 
@@ -95,6 +95,8 @@ export function MultiSelect({ value, onChange, options, emptyLabel = '전체', a
   const withSearch = shouldSearch(items.length, searchable);
   const showAll = selectAll && items.length > 1;
   const all = selectAllState(selected.length, items.length);
+  // 팝오버 폭 사이저(searchable-select.tsx OptionWidthSizer) — 보일 수 있는 모든 항목 라벨
+  const optionLabels = React.useMemo(() => [...(showAll ? ['전체 선택'] : []), ...items.map((o) => o.label)], [showAll, items]);
   // 폭 사이저 = 나올 수 있는 가장 넓은 요약 후보 — 처음부터 그 폭이라 골라도 칸 폭이 출렁이지 않는다(196→223px 실측).
   // 반환이 options 순서라 첫 라벨이 i번째면 '외 N' 의 최댓값은 뒤에 남은 옵션 수 → items.slice(i)
   const sizers = React.useMemo(
@@ -145,20 +147,20 @@ export function MultiSelect({ value, onChange, options, emptyLabel = '전체', a
           <ChevronDown aria-hidden size={16} strokeWidth={2} style={{ flexShrink: 0, color: 'var(--muted-foreground)' }} />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="p-0"
-        style={{ width: 'max(var(--radix-popover-trigger-width), 220px)', maxWidth: 'min(420px, calc(100vw - 32px))' }}
+      <PopoverContent align="start" className="p-0" style={OPTION_POPOVER_STYLE}
         onOpenAutoFocus={withSearch ? undefined : (e) => { e.preventDefault(); listRef.current?.focus(); }}>
         {/* 접근名은 cmdk label prop 으로 — aria-label 은 cmdk 가 덮거나(List → 'Suggestions') 가린다(Input → 루트 라벨 labelledby).
             searchable-select.tsx 함정 ④⑤ · multi-select.test.ts */}
         <Command loop label={ariaLabel ? `${ariaLabel} 검색` : '옵션 검색'} onKeyDown={onListKeyDown}>
           {withSearch && <CommandInput placeholder="검색" aria-label={ariaLabel ? `${ariaLabel} 검색` : '옵션 검색'} className="h-9 py-2 text-[13.5px]" />}
-          <CommandList ref={listRef} className="max-h-[280px] p-1" label={ariaLabel ?? '옵션 목록'} aria-multiselectable="true">
+          <CommandList ref={listRef} className={cn('max-h-[280px] p-1', withSearch && optionListGutter(optionLabels.length))} label={ariaLabel ?? '옵션 목록'} aria-multiselectable="true">
+            <OptionWidthSizer labels={optionLabels} trail={24} />
             {withSearch && <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>}
             {showAll && (
               <>
                 <CommandItem value={ALL_SENTINEL} keywords={['전체 선택']} onSelect={toggleAll} aria-checked={all === 'indeterminate' ? 'mixed' : all} className="py-1.5 gap-2 font-medium">
                   <BoxMark state={all} />
-                  <span className="flex-1 truncate">전체 선택</span>
+                  <span className={OPTION_LABEL_CLASS}>전체 선택</span>
                 </CommandItem>
                 <CommandSeparator />
               </>
@@ -169,7 +171,7 @@ export function MultiSelect({ value, onChange, options, emptyLabel = '전체', a
                 // cmdk 식별자 = 값(유일), 라벨은 검색 키워드 — 라벨을 식별자로 쓰면 같은 라벨·다른 값 옵션이 한 항목으로 묶인다(함정 ③)
                 <CommandItem key={o.value} value={o.value} keywords={o.value !== o.label ? [o.label] : undefined} onSelect={() => toggle(o.value)} aria-checked={on} className="py-1.5 gap-2">
                   <BoxMark state={on} />
-                  <span className="flex-1 truncate">{o.label}</span>
+                  <span className={OPTION_LABEL_CLASS}>{o.label}</span>
                 </CommandItem>
               );
             })}
