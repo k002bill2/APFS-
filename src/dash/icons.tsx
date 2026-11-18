@@ -76,7 +76,7 @@ const MAP = {
   folder:["Folder"],   // 사용자 메뉴 파일BOX(2026-11-13)
   inbox:["Inbox"], users:["Users"], activity:["Activity"], "alert-triangle":["TriangleAlert","AlertTriangle"],
   user:["User"], plus:["Plus"], filter:["Filter"], external:["ExternalLink"], refresh:["RefreshCw"],
-  "rotate-ccw":["RotateCcw","Undo2"],   // 필터 패널 [초기화] = 기본값 복원 — ⟳ 조회(refresh)와 구분(2026-11-17 사용자 "초기화 아이콘과 조회 아이콘이 같아")
+  "rotate-ccw":["RotateCcw","Undo2"],   // 칩 줄 [초기화] = 기본값 복원 — ⟳ 조회(refresh)와 구분(2026-11-17 사용자 "초기화 아이콘과 조회 아이콘이 같아")
   "arrow-right":["ArrowRight"], clock:["Clock"], history:["History"], layers:["Layers","Layers3"],
   maximize:["Maximize2","Maximize"], minimize:["Minimize2","Minimize"],
   printer:["Printer"],   // 푸터 인쇄 액션(FooterActions) — kebab 인쇄 항목을 대체(2026-09-17)

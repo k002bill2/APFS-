@@ -39,7 +39,7 @@ export function MotherFundValuation({ onNav }: { onNav?: (r: string) => void }) 
   const detailRows = useMemo(() => MF_DETAIL.rows.filter((r) => !ym || r.ym === ym), [ym]);
   const onEdit = useCallback((_r: Row, key: string, value: number) => setInputs((p) => ({ ...p, [key]: value })), []);
 
-  const filters: FilterSpec[] = [{ label: '평가년월', kind: 'month', value: ym, onChange: setYm }];
+  const filters: FilterSpec[] = [{ label: '평가년월', kind: 'month', value: ym, def: EVAL_BASE_YM, onChange: setYm }];
   const save = () => toast.success('미투자자산·기타자산·기타부채를 저장했습니다');
   const exportExcel = () => {
     exportTables(LABEL, [

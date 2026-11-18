@@ -40,6 +40,7 @@ import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import { FilterPanel, PanelCheck, PanelRange, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
+import { filtersDirty } from '../../applied_filters';
 import type { AppliedFilter } from '../../applied_filters';
 import { LedgerReportViewer } from '../ledger_report_viewer';
 import { demoBankAccounts, demoCashTxns, DEMO_TODAY, FUNDS_ACCOUNT_TYPES } from './funds_data';
@@ -267,7 +268,7 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
       appliedFilters={chips}
       /* 상세필터(E02) = 칩 줄 위 인라인 패널 — 9개 조건, 바꾸는 즉시 applied 반영. [초기화] = 기본값(기준기간 전월 1일 ~ 오늘 · 사용 · 만기 전) */
       filterPanel={
-        <FilterPanel label={`${TITLE} 조회 조건`} onReset={() => setApplied(base)} errors={errLines}>
+        <FilterPanel label={`${TITLE} 조회 조건`} errors={errLines}>
           <PanelSelect label="계정구분" value={applied.accountType} onChange={setD('accountType')} options={[...FUNDS_ACCOUNT_TYPES]} searchable />
           <PanelRange label="기준기간" mode="day" from={applied.from} to={applied.to} onFrom={setD('from')} onTo={setD('to')} invalid={!!errs.period} />
           {ynSelect('active', '사용여부')}
@@ -279,6 +280,7 @@ export function AccountBalanceManage({ onNav }: { onNav?: (r: string) => void })
           {ynSelect('balance', '잔액여부')}
         </FilterPanel>
       }
+      filterReset={{ run: () => setApplied(base), dirty: filtersDirty(applied, base) }}
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>단위: 원</span>
         {/* E01 소계표시 — 표시 옵션 토글(aria-pressed), 재클릭 = 해제. 필터가 아니라 칩 줄에 두지 않는다(2026-11-09 사용자 결정) */}

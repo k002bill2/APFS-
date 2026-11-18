@@ -31,6 +31,7 @@ import { SELECTION_COL, dropHiddenSelection } from './aggrid_selection';   // �
 import './aggrid_shared.css';
 import { RowContextMenu } from './row_context_menu';   // 우클릭 컨텍스트 메뉴(Community 대체)
 import type { CtxItem, CtxMenuState } from './row_context_menu';
+import { filtersDirty } from './applied_filters';
 import type { AppliedFilter } from './applied_filters';
 import { GridFrame, KpiBadge, FooterActions, footerCount } from './grid_frame';
 import { LinkCell } from './link_cell';   // 셀 링크 공용본(상세 팝업 진입)
@@ -233,7 +234,7 @@ function PanelFilterControl({ ff, value, onChange }: { ff: FilterField; value: s
 /* ── 스키마 기반 상세필터 — 칩 줄 위 인라인 패널(2026-11-17 사용자 지시 — 드로어 폐기, 자펀드정보관리 정본) ──
    schema.filters 각 항목을 타입에 맞는 칸으로 노출한다 — 값-필터는 값 칸, 카테고리는 체크 칸.
    **즉시 반영형**: 고르는 즉시 부모 filterValues 가 갱신돼 표가 줄어든다. 상태 SSOT 는 부모의 `applied` 하나.
-   검색어(schema.searchable)는 맨 앞 고정. [초기화]는 filterSpecs def(원문 기본값)가 있는 스키마만 — 그 밖은 칩 줄 `전체 해제`. */
+   검색어(schema.searchable)는 맨 앞 고정. [초기화]는 패널이 아니라 칩 줄 끝 하나(GenericListPage filterReset — filterSpecs def 가 있는 스키마만). */
 function ListFilterPanel({ schema, applied, onApply }: {
   schema: PageSchema; applied: Record<string, string>; onApply: (next: Record<string, string>) => void;
 }) {
@@ -244,9 +245,8 @@ function ListFilterPanel({ schema, applied, onApply }: {
     if (v === "") delete next[label]; else next[label] = v;
     onApply(next);
   };
-  const defaults = defaultFilterValues(schema);
   return (
-    <FilterPanel onReset={Object.keys(defaults).length ? () => onApply(defaults) : undefined}>
+    <FilterPanel>
       {schema.searchable && <PanelSearch value={applied[SEARCH_LABEL] ?? ""} onChange={(v) => setVal(SEARCH_LABEL, v)} label={SEARCH_LABEL} />}
       {filters.map((label) => {
         const ff = resolveFilterField(label, schema);
@@ -351,6 +351,8 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   // 상태 SSOT: 필터 라벨 → 선택값(빈 값/부재 = 비활성). 칩·행필터 모두 여기서 파생.
   // 초기값 = 원문 검색박스 기본값(filterSpecs def, opt-in) — 미선언 스키마는 {}(종전 동작)
   const [filterValues, setFilterValues] = useState<Record<string, string>>(() => defaultFilterValues(schema));
+  /* 칩 줄 [초기화] 대상 기본값 — filterSpecs def 가 있는 스키마만(없으면 칩 × 연쇄 [초기화] — applied_filters) */
+  const filterDefaults = useMemo(() => { const d = defaultFilterValues(schema); return Object.keys(d).length ? d : null; }, [schema]);
   const [page, setPage] = useState({ current: 0, total: 1, rowCount: 23 });   // AG Grid 페이지네이션 미러
   const [viewState] = useState("list");
   // 카드뷰 미사용 스키마(hideCardView)는 SegTabs를 숨기고 리스트 뷰로 고정 — view === "list" 게이트가 모두 참이 된다
@@ -395,7 +397,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
   /* 필터 변경 단일 관문 — 드로어(즉시 반영)·툴바 칩 ×·초기화가 모두 이 함수를 거친다.
      여기서만 첫 페이지로 되돌리므로 경로마다 정책이 갈리지 않는다(칩 ×만 페이지 유지되던 불일치 해소). */
   const applyFilters = (next: Record<string, string>) => { setFilterValues(next); apiRef.current?.paginationGoToFirstPage(); };
-  /* 함수형 업데이트 — 적용 필터 줄의 `전체 해제`가 칩별 onClear 를 연달아 부르므로, 클로저의 filterValues 를
+  /* 함수형 업데이트 — 칩 줄 [초기화](filterReset 없는 스키마)가 칩별 onClear 를 연달아 부르므로, 클로저의 filterValues 를
      복사하면 마지막 호출만 남는다(stale closure). */
   const removeFilter = (label: string) => {
     setFilterValues((p) => { const n = { ...p }; delete n[label]; return n; });
@@ -692,6 +694,7 @@ export function GenericListPage({ route, onNav }: { route: string; onNav: (r: st
       appliedFilters={appliedFilters}
       /* 상세필터 = 칩 줄 위 인라인 패널(apfs-detail-filter). 필터도 검색어도 없으면 패널 없음 */
       filterPanel={(schema.filters?.length || schema.searchable) ? <ListFilterPanel schema={schema} applied={filterValues} onApply={applyFilters} /> : undefined}
+      filterReset={filterDefaults ? { run: () => applyFilters(filterDefaults), dirty: filtersDirty(filterValues, filterDefaults) } : undefined}
       toolbarRight={<>
         {unitOn && <>
           <span className="text-caption" style={{ fontSize: 12 }}>금액 단위</span>

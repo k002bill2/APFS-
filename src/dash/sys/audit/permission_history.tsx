@@ -3,7 +3,7 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(기간·대상 사용자·변경유형·행위자·검색어 + [이번 달]) → 전 항목이 칩 줄 위 인라인 패널
-       (검색어·기간(시작~종료 한 칸)·대상 사용자·변경유형·행위자, 패널 [초기화] = 기본 기간 복원). 툴바 좌는 적용 칩만. [이번 달] = 툴바 ghost 버튼. 기본 기간 = 이번 달(월초~월말, 데모 고정 기준일 기준).
+       (검색어·기간(시작~종료 한 칸)·대상 사용자·변경유형·행위자, 칩 줄 [초기화] = 기본 기간 복원). 툴바 좌는 적용 칩만. [이번 달] = 툴바 ghost 버튼. 기본 기간 = 이번 달(월초~월말, 데모 고정 기준일 기준).
    - 그리드(No·일시·변경유형·권한·변경 요약·적용 대상·행위자·발생프로그램) → AG Grid 단일 헤더. 변경 요약 셀 = 추가N·회수M 또는 전→후.
    - 행 더블클릭/Enter(또는 우클릭 메뉴 '상세 보기') → 상세 다이얼로그(`PermissionHistoryDetailModal`, 읽기 전용 — 편집 액션 없음).
    - 등록 없음(조회 전용) → 툴바 kebab 단독. 엑셀 = kebab + 푸터 download + ⌥D. 표시 건수 요약은 푸터 좌(aria-live).
@@ -153,9 +153,10 @@ export function PermissionHistory({ onNav }: { onNav?: (r: string) => void }) {
       favRoute="permission-history"
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      filterReset={{ run: clearFilters, dirty: fType !== '' || fFrom !== from0 || fTo !== to0 || fUser !== '' || fActor !== '' || fText !== '' }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 검색어(opt-in) · 기간 · 대상 사용자 · 변경유형 · 행위자. 즉시 반영, [초기화] = 기본값(기간 = 이번 달) 복원 */
       filterPanel={
-        <FilterPanel label="권한 변경이력 조건" onReset={clearFilters}>
+        <FilterPanel label="권한 변경이력 조건">
           {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
           <PanelRange label="기간" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
           <PanelSelect label="대상 사용자" value={fUser} onChange={setFUser} options={USER_OPTIONS.map((u) => ({ value: u, label: u }))} />

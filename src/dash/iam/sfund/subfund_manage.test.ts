@@ -87,7 +87,7 @@ describe('자펀드 관리 인라인 패널 — 종전 미연동 5항목이 행�
     expect(dlg.querySelectorAll('div[data-state]')).toHaveLength(0);
   });
 
-  it('모펀드·계정구분·심사담당자·리스크담당자를 고르면 행이 줄고, 칩이 바로 보인다 · 전체 해제하면 5행', () => {
+  it('모펀드·계정구분·심사담당자·리스크담당자를 고르면 행이 줄고, 칩이 바로 보인다 · [초기화]하면 5행', () => {
     mount();
     const dlg = panel();
     fireEvent.change(within(dlg).getByRole('combobox', { name: '모펀드' }), { target: { value: '농식품모태펀드' } });
@@ -101,9 +101,9 @@ describe('자펀드 관리 인라인 패널 — 종전 미연동 5항목이 행�
     for (const [label, value] of [['모펀드', '농식품모태펀드'], ['계정구분', '농식품투자계정'], ['심사담당자', '양한솔'], ['리스크담당자', '이성훈']]) {
       expect(screen.getByRole('button', { name: `${label}: ${value} — 필터에서 변경` }), label).toBeTruthy();
     }
-    /* 기본값이 전부 빈 값인 화면이라 패널 [초기화]는 없다(apfs-detail-filter) — 칩 줄 '전체 해제'가 같은 일을 한다 */
+    /* [초기화]는 패널이 아니라 칩 줄 끝 하나(2026-11-18) — 기본값이 전부 빈 값인 화면이라 칩 × 를 차례로 부른다 */
     expect(within(dlg).queryByRole('button', { name: '초기화' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: '전체 해제' }));
+    fireEvent.click(screen.getByRole('button', { name: '초기화' }));
     expect(passingIds()).toEqual(ALL);
   });
 

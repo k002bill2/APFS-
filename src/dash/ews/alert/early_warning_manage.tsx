@@ -329,6 +329,8 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
         { label: '자펀드', value: fFund, onClear: () => setFFund('') },
         { label: '기간', value: String(fFrom) + ' ~ ' + String(fTo), onClear: periodChanged ? () => { setFFrom(BASE_FROM); setFTo(BASE_TO); } : undefined },   // 패널 칸 label '기간'과 같게(칩 → 칸 이동)
       ]}
+      /* 등급은 객체라 참조 대신 값으로 — 전부 ON(= ALL_GRADES_ON)이 아니면 다름. 기간은 periodChanged */
+      filterReset={{ run: clearFilters, dirty: !allGradesOn || fGp !== '' || fFund !== '' || periodChanged }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 순서 그대로(운용사·자펀드·기간 — 시작 ~ 종료가 한 항목).
          검색어는 미사용(OFF, 목업에 없음). 등급은 툴바 칩이 소유한다(패널 중복 배치 금지).
          기간 — 목업 `<label for="f-from">기간</label>` 한 줄(시작 `~` 종료), **`mode`는 `month`**다: 목업이
@@ -336,7 +338,7 @@ export function EarlyWarningManage({ onNav }: { onNav?: (r: string) => void }) {
          기준년월이 이 범위 안인 행만 보인다(2026-11-17). 빈 값은 허용하지 않고 해제 시 목업 기본값으로 되돌린다
          (선례 custody_confirm_manage 기준일자). [초기화] = 기본값(기간 2026-07 ~ 2026-07 · 등급 전체) 복원 */
       filterPanel={
-        <FilterPanel label="조기경보 관리 조건" onReset={clearFilters}>
+        <FilterPanel label="조기경보 관리 조건">
           <PanelSelect label="운용사" value={fGp} onChange={setFGp} options={gpOptions} />
           <PanelSelect label="자펀드" value={fFund} onChange={setFFund} options={fundOptions} />
           <PanelRange label="기간" mode="month" from={fFrom} to={fTo} onFrom={(v) => setFFrom(v || BASE_FROM)} onTo={(v) => setFTo(v || BASE_TO)} />

@@ -576,11 +576,13 @@ export function FundInvestStatus({ onNav }: { onNav?: (r: string) => void }) {
         { label: '데이터기준', value: fDBase, onClear: () => setFDBase('') },
         { label: '기준일자', value: fAsOf, onClear: () => setFAsOf('') },
       ]}
+      /* resetFilters 가 되돌리는 것 전부 — 투자실적구분 칩(view) 포함 */
+      filterReset={{ run: resetFilters, dirty: fMf !== MF_DEFAULT || fAcc !== '' || fYBase !== '' || fDBase !== '' || fAsOf !== '' || view !== DEFAULT_VIEW }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 순서 그대로(모펀드·계정구분·연도기준·투자실적구분·데이터기준·기준일자).
          투자실적구분은 툴바 칩이라 패널에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts).
          나머지 5종은 수치 재계산. 검색어는 OFF(만들지 않는다). [초기화] = 모펀드 기본값 복원 */
       filterPanel={
-        <FilterPanel label="자펀드 투자실적현황 조건" onReset={resetFilters}>
+        <FilterPanel label="자펀드 투자실적현황 조건">
           <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={['농식품모태펀드', 'MOAF']} required />
           <PanelSelect label="계정구분" value={fAcc} onChange={setFAcc} options={['농식품', '수산']} />
           <PanelSelect label="연도기준" value={fYBase} onChange={setFYBase} options={['출자사업연도', '결성연도', '등록연도']} />

@@ -106,8 +106,8 @@ export function SubfundGradeTrend({ onNav }: { onNav?: (r: string) => void }) {
   const reset = () => { setMf(MF_OPTIONS[0]); setYear(GRADE_BASE_YEAR); };
 
   const filters: FilterSpec[] = [
-    { label: '모펀드', kind: 'select', value: mf, onChange: setMf, options: MF_OPTIONS, allLabel: null },
-    { label: '기준년도', kind: 'year', value: year, onChange: setYear },
+    { label: '모펀드', kind: 'select', value: mf, def: MF_OPTIONS[0], onChange: setMf, options: MF_OPTIONS, allLabel: null },
+    { label: '기준년도', kind: 'year', value: year, def: GRADE_BASE_YEAR, onChange: setYear },
   ];
   const { years, tables: [fund, mgr] } = useMemo(() => gradeView(mf, year), [mf, year]);
   const exportExcel = () => {

@@ -170,11 +170,13 @@ export function EwMonthCompare({ onNav }: { onNav?: (r: string) => void }) {
         { label: '등급', value: gradeAll ? '' : gradeChipValue, onClear: () => setGradeOn(ALL_GRADES_ON) },
         { label: '변동', value: chgAll ? '' : chgChipValue, onClear: () => setChgOn(ALL_CHG_ON) },
       ]}
+      /* 등급·변동은 객체라 참조 대신 값으로 — 전부 켬(gradeAll·chgAll)이 아니면 다름 */
+      filterReset={{ run: clearFilters, dirty: fYm !== '' || !gradeAll || !chgAll }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스(기준년월) + 범례 토글(등급·변동).
          기준년월 = 그 달의 비교 결과(빈 칸 = 원문 시점). 등급·변동 = 체크 묶음(전부 끄면 0건 — 목업 그대로).
          [초기화] = 기본값(기준년월 없음 · 등급·변동 전부 켬) 복원 */
       filterPanel={
-        <FilterPanel label="조기경보 전월 비교 조건" onReset={clearFilters}>
+        <FilterPanel label="조기경보 전월 비교 조건">
           <PanelPeriod label="기준년월" mode="month" value={fYm} onChange={setFYm} />
           <PanelCell wide>
             <div role="group" aria-label="등급" className="flex items-center flex-wrap" style={{ gap: 8 }}>

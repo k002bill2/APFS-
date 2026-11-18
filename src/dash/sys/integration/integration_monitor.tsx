@@ -26,13 +26,14 @@
      조회 전용이고 `rowSelection` 을 두지 않는다(선택이 만드는 액션이 없다 — apfs-aggrid "조회 전용").
    - 배지 톤: 처리상태·응답코드는 목업 tag 색(g/b/a/d/n)을 success/info/warning/danger/muted 로 1:1(model `STTS_TONE`·`cdTone`).
      송수신은 목업 수신 파랑·송신 초록이지만 초록이 '성공'과 겹쳐 송신 = primary. 연계기관은 목업 회색 tag 이나 정보가 없는 장식이라 평문.
-   - 기간 기본값 2026-09-28 ~ 2026-10-28(목업 검색박스 초기값, 두 탭 같음) — 첫 진입부터 칩이 뜨고 ×=전 기간, 패널 [초기화]=기본값.
+   - 기간 기본값 2026-09-28 ~ 2026-10-28(목업 검색박스 초기값, 두 탭 같음) — 첫 진입부터 칩이 뜨고 ×=전 기간, 칩 줄 [초기화]=기본값.
    - 검색어 입력 없음(목업 검색박스에 없다 — SEARCHABLE opt-in 규약).
    ⚠ 실제 외부연동 송수신·배치 반영 모니터링이 아니다 — 데모 행을 로컬로 조회만 한다. 연계기관·인터페이스ID·오류코드는 목업 예시값. */
 import '../../aggrid_shared.css';
 import { useState, useCallback, useMemo } from 'react';
 import { UI } from '../../components';
 import { GridFrame, FooterActions } from '../../grid_frame';
+import { filtersDirty } from '../../applied_filters';
 import type { AppliedFilter, FilterChipItem } from '../../applied_filters';
 import { apfsTheme, DEFAULT_COL_DEF, AUTO_SIZE_CONTENT, refreshNoColumn } from '../../aggrid_theme';
 import { AgGridReact } from 'ag-grid-react';
@@ -216,10 +217,11 @@ export function IntegrationMonitor({ onNav }: { onNav?: (r: string) => void }) {
       filterChips={cur.chips}
       appliedFilters={cur.applied}
       filterScope={tab}
+      filterReset={{ run: cur.reset, dirty: filtersDirty(cur.f, isT ? TRSM_F0 : PRCS_F0) }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 활성 탭의 항목만(송수신: 연계기관·연계방식·송수신·요청기간 / 처리이력: 대상테이블·발생기간).
          즉시 반영, [초기화] = 활성 탭 기본값(기간 포함) 복원 */
       filterPanel={
-        <FilterPanel label={`${tabLabel} 조건`} onReset={cur.reset}>
+        <FilterPanel label={`${tabLabel} 조건`}>
           {isT ? (
             <>
               <PanelSelect label="연계기관" value={t.f.inst} onChange={(v) => t.set({ inst: v })} options={INSTS} />

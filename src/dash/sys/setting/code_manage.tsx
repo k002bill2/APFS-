@@ -3,7 +3,7 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(검색기준+검색어·사용여부)  → 주 필터 1개 = 사용여부 FilterChip(툴바 좌) + 상세필터 = 칩 줄 위 인라인 패널(검색어·검색기준). 검색어 opt-in(SEARCHABLE).
-       검색기준은 '전체' 없는 고정 기본값(코드구분) select — 검색어의 뜻을 정하는 수식어라 칸에 값을 그대로 보이고(PanelSelect showValue) 칩을 따로 두지 않는다(검색어 칩이 '기준: 값'으로 보인다), 패널 [초기화] = 기본값 복원.
+       검색기준은 '전체' 없는 고정 기본값(코드구분) select — 검색어의 뜻을 정하는 수식어라 칸에 값을 그대로 보이고(PanelSelect showValue) 칩을 따로 두지 않는다(검색어 칩이 '기준: 값'으로 보인다), 칩 줄 [초기화] = 기본값 복원.
    - 좌 코드구분 목록 ⟷ 우 선택 코드구분의 코드상세(master-detail) → GridFrame 하나 안에 2단 그리드(lg 이상 좌 440px / 우 잔여, 좁으면 세로 적층).
        각 패널은 자체 헤더 바(제목·건수·패널 액션)와 AG Grid 를 갖는다. 좌 선택(라디오)이 우측 데이터 소스를 정한다.
        우측은 코드구분 미선택이면 **empty state**(목업 overlay '좌측에서 코드구분을 선택해 주세요.')를 그리드 대신 그린다.
@@ -293,9 +293,10 @@ export function CodeManage({ onNav }: { onNav?: (r: string) => void }) {
       appliedFilters={[
         { label: '검색어', value: fText.trim() ? `${SEARCH_FIELDS.find((f) => f.key === fField)?.label}: ${fText.trim()}` : '', onClear: () => setFText('') },
       ]}
+      filterReset={{ run: clearFilters, dirty: fUse !== '' || fField !== 'code' || fText !== '' }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 검색어(opt-in) + 검색기준(코드구분/코드구분명). 사용여부는 툴바 칩. [초기화] = 기본값(검색기준 코드구분) 복원 */
       filterPanel={
-        <FilterPanel label="코드관리 조건" onReset={clearFilters}>
+        <FilterPanel label="코드관리 조건">
           {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
           <PanelSelect label="검색기준" value={fField} onChange={(v) => setFField(v as 'code' | 'name')} options={SEARCH_FIELDS.map((f) => ({ value: f.key, label: f.label }))} required showValue />
         </FilterPanel>

@@ -80,7 +80,7 @@ export function TablesPage({ cfg, onNav }: { cfg: TablesPageConfig; onNav?: (r: 
   }))), [cfg, vals]);
 
   const filters: FilterSpec[] = cfg.filters.map((f) => ({
-    label: f.label, kind: f.kind, value: vals[f.label] ?? '', options: f.options, allLabel: f.allLabel,
+    label: f.label, kind: f.kind, value: vals[f.label] ?? '', def: f.def, options: f.options, allLabel: f.allLabel,
     onChange: (v: string) => setVals((p) => ({ ...p, [f.label]: v })), noop: !live(f),
   }));
 

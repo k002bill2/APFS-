@@ -35,6 +35,7 @@ import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import { FilterPanel, PanelCheck, PanelRange, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
+import { filtersDirty } from '../../applied_filters';
 import { FUND_ACCOUNTS } from '../slip/general_journal_data';
 import { demoLedger, todayStr } from './ledger_data';
 import { generalLedger, validatePeriod, MSG } from './ledger_model';
@@ -131,7 +132,7 @@ export function GeneralLedgerManage({ onNav }: { onNav?: (r: string) => void }) 
       appliedFilters={chips}
       /* 상세필터(E01) = 칩 줄 위 인라인 패널 — 바꾸는 즉시 applied 반영. 검증 문구는 패널 아래, [초기화] = 기본값(기간 = 당기 1/1 ~ 오늘) */
       filterPanel={
-        <FilterPanel label="총계정원장 조회 조건" onReset={() => setApplied(base)} errors={[periodErr]}>
+        <FilterPanel label="총계정원장 조회 조건" errors={[periodErr]}>
           <PanelSelect label="계정구분" value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} />
           <PanelRange label="기간" mode="day" from={applied.from} to={applied.to} onFrom={setD('from')} onTo={setD('to')} invalid={!!periodErr} />
           <PanelCheck label="미결재포함" checked={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
@@ -139,6 +140,7 @@ export function GeneralLedgerManage({ onNav }: { onNav?: (r: string) => void }) 
           <PanelCheck label="결산전표포함" checked={applied.includeClosing} onChange={setD('includeClosing')} />
         </FilterPanel>
       }
+      filterReset={{ run: () => setApplied(base), dirty: filtersDirty(applied, base) }}
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>단위: 원</span>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />

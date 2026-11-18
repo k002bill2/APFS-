@@ -40,6 +40,7 @@ import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { toast } from '../../ui/sonner';
 import { printGrid } from '../../print_grid';
 import { FilterPanel, PanelPeriod, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
+import { filtersDirty } from '../../applied_filters';
 import type { AppliedFilter } from '../../applied_filters';
 import { LedgerReportViewer } from '../ledger_report_viewer';
 import { demoBankAccounts, demoCashTxns } from './funds_data';
@@ -216,11 +217,12 @@ export function DailyCashManage({ onNav }: { onNav?: (r: string) => void }) {
       appliedFilters={chips}
       /* 상세필터(E01) = 칩 줄 위 인라인 패널 — 바꾸는 즉시 applied 반영. 기준일자 오류는 패널 아래, [초기화] = 오늘 · 전체 */
       filterPanel={
-        <FilterPanel label="자금일보 조회 조건" onReset={() => setApplied(defaultFilter())} errors={[dateErr]}>
+        <FilterPanel label="자금일보 조회 조건" errors={[dateErr]}>
           <PanelPeriod label="기준일자" mode="day" value={applied.date} onChange={setDate} invalid={!!dateErr} />
           <PanelSelect label="계정구분" value={applied.accountType} onChange={setType} options={accountTypeOptions(applied.date)} />
         </FilterPanel>
       }
+      filterReset={{ run: () => setApplied(defaultFilter()), dirty: filtersDirty(applied, defaultFilter()) }}
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>단위: 원</span>
         <Button variant="outline" size="sm" leadingIcon="file-check" onClick={openSubmit}>자금일보 전자결재</Button>

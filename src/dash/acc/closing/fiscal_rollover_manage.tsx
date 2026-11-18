@@ -251,11 +251,12 @@ export function FiscalRolloverManage({ onNav }: { onNav?: (r: string) => void })
       ]}
       /* 상세필터(E01) = 칩 줄 위 인라인 패널 — slide 11 조건 2개. 즉시 반영, [초기화] = 기본값(기준년도 = 당해년도) */
       filterPanel={
-        <FilterPanel label="회기 조건" onReset={resetFilters}>
+        <FilterPanel label="회기 조건">
           <PanelPeriod label="기준년도" mode="year" value={fYear} onChange={setFYear} />
           <PanelSelect label="계정구분" value={fAccount} onChange={setFAccount} options={FUND_ACCOUNTS} searchable />
         </FilterPanel>
       }
+      filterReset={{ run: resetFilters, dirty: fYear !== thisYear || fAccount !== '' }}
       toolbarRight={<>
         <Button variant="outline" size="sm" leadingIcon="plus" disabled={saving} onClick={openCreate}>회기 생성</Button>
         <SaveButton onSubmit={save} />

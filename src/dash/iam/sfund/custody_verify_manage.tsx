@@ -482,11 +482,12 @@ export function CustodyVerifyManage({ onNav, tabs }: { onNav?: (r: string) => vo
         { label: '기준일', value: fAsOf, onClear: fAsOf !== BASE_DATE ? () => setFAsOf(BASE_DATE) : undefined },
         { label: '종목', value: fItem.trim(), onClear: () => setFItem('') },
       ]}
+      filterReset={{ run: clearFilters, dirty: fFund !== '' || fAsOf !== BASE_DATE || fItem !== '' }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 순서 그대로(자펀드·기준일·종목). 검색어는 미사용(OFF).
          기준일 — 숨은 속성 asOf 같은 날(대사 스냅샷). 비우면 기본값으로(시점 없는 조회는 없다 — custody_confirm 관례).
          종목 — 기획서 2026-09 회의록 추가 항목. 부분일치. [초기화] = 기준일 기본값 복원 */
       filterPanel={
-        <FilterPanel label="자펀드 실물검증 조건" onReset={clearFilters}>
+        <FilterPanel label="자펀드 실물검증 조건">
           <PanelSelect label="자펀드" value={fFund} onChange={setFFund} options={fundOptions} />
           <PanelPeriod label="기준일" mode="day" value={fAsOf} onChange={(v) => setFAsOf(v || BASE_DATE)} />
           <PanelText label="종목" value={fItem} onChange={setFItem} />

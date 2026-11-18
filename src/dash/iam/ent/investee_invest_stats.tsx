@@ -225,11 +225,13 @@ export function InvesteeInvestStats({ onNav }: { onNav?: (r: string) => void }) 
         { label: '데이터기준', value: fDBase, onClear: () => setFDBase('') },
         { label: '기준일자', value: fAsOf, onClear: () => setFAsOf('') },
       ]}
+      /* resetFilters 가 되돌리는 것 전부 — 투자실적구분 칩(view)·건수기준(noop) 포함 */
+      filterReset={{ run: resetFilters, dirty: fMf !== MF_DEFAULT || fAcc !== '' || fYBase !== '' || fCnt !== '' || fDBase !== '' || fAsOf !== '' || view !== VIEWS[0].key }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 원문 검색박스 순서 그대로(모펀드·계정구분·연도기준·투자실적구분·건수기준·데이터기준·기준일자).
          투자실적구분은 툴바 칩이라 패널에 다시 두지 않는다(2026-11-05 사용자 지시 — 가드 filter_chip_drawer_dup.test.ts).
          5종은 수치 재계산, 건수기준만 판단 보류 noop(칸 툴팁). 검색어는 OFF(만들지 않는다). [초기화] = 모펀드 기본값 복원 */
       filterPanel={
-        <FilterPanel label="투자실적현황(투자기업) 조건" onReset={resetFilters}>
+        <FilterPanel label="투자실적현황(투자기업) 조건">
           <PanelSelect label="모펀드" value={fMf} onChange={setFMf} options={MOTHER_FUNDS} required />
           <PanelSelect label="계정구분" value={fAcc} onChange={setFAcc} options={ACCOUNTS} />
           <PanelSelect label="연도기준" value={fYBase} onChange={setFYBase} options={YEAR_BASES} />

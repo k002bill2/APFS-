@@ -39,7 +39,7 @@ description: 현행시스템/KRDS 목업 HTML(+spec.json)을 APFS 관리형 리�
 | 검색박스(인라인 N개 필터) | **주 필터 1개=툴바 `FilterChip`**(예: 심사단계, 전체 칩은 `심사단계: 전체` → [[apfs-grid]]) + 나머지=**칩 줄 위 인라인 필터 패널**(GridFrame `filterPanel` + `filter_panel.tsx` — 2026-11-17 드로어 폐기), 검색어는 **기본 OFF opt-in**(필요한 페이지만 `searchable`/`SEARCHABLE`로 켜고, 켜질 때만 최상단 — 자동 추가 금지), 컬럼 미연동 필터는 `· 데이터 연동 후 적용` 캡션 | [[apfs-detail-filter]] |
 | 필수 조건(미선택 상태 없는 양식구분 등) · 긴 경로형 조건 | 툴바 칩 `filterChips` 에 `required: true`(`전체` 칩 없음) · 적용 칩 `appliedFilters` 에 `wide: true` | [[apfs-grid]] "필터 툴바" |
 | 다중 선택 항목(목업 `<select multiple>` · 설계서 '다중 선택/복수 선택' · 같은 이름 체크박스 나열) | **멀티 셀렉트가 기본**(2026-11-03 사용자 지시) — 상세필터 = 패널 `PanelMulti`(빈 배열 = 전체), 등록/수정 폼 = `MultiSelect`. 체크박스 나열·tag 토글로 만들지 않는다(권한·매트릭스처럼 칸마다 독립 설정인 체크 그룹만 예외). 스키마(GenericListPage) 트랙 = 폼 `control:'multiselect'`(상세필터 자동 다중 선택) · 단일값 컬럼 필터는 filterSpecs `kind:'multi'`(2026-11-03) | [[apfs-detail-filter]] typed 트랙 "다중 선택" · [[apfs-form-modal]] multi-select |
-| 기간 기본값(전월 1일~오늘 등) · [필터 적용] 시 범위 검증 | 기본값 칩(× = 전 기간, [초기화] = 기본값) · 초안(draft) 드로어 | [[apfs-detail-filter]] "typed 페이지 트랙"의 '적용 방식 2가지'·'기본값으로 시작하는 기간' |
+| 기간 기본값(전월 1일~오늘 등) · [필터 적용] 시 범위 검증 | 기본값 칩(× = 전 기간, 칩 줄 [초기화] = 기본값) · 초안(draft) 드로어 | [[apfs-detail-filter]] "typed 페이지 트랙"의 '적용 방식 2가지'·'기본값으로 시작하는 기간' |
 | 2단 헤더 그리드 + tfoot 합계 | AG Grid `ColGroupDef`(`marryChildren`) + `pinnedBottomRowData=useMemo([computeTotal(filteredRows)])` | [[apfs-aggrid]] |
 | 셀 안 편집 + [저장] 일괄 반영(행추가·행삽입·행삭제 토글·이동) | 저장형 편집 그리드 — 행 상태 I/U/D, 저장 중 `inert` 잠금 | [[apfs-aggrid]] "페이지 편집 그리드 — 저장형 I/U/D" |
 | 상세로 들어가는 셀(제목·문서번호·전표번호) | `LinkCell`(`src/dash/link_cell.tsx`) + `onCellKeyDown` Enter 동치 | [[apfs-aggrid]] "셀 링크" |

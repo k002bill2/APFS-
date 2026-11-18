@@ -221,9 +221,9 @@ describe('A. opt-in — 미선언 스키마는 종전 동작', () => {
   it('GenericListPage 가 초기값·초기화·행 판정을 filter_field 정본으로 한다', () => {
     const g = src('generic_list.tsx');
     expect(g).toMatch(/useState<Record<string, string>>\(\(\) => defaultFilterValues\(schema\)\)/);
-    /* 초기화 = 인라인 패널 [초기화](2026-11-17 드로어 폐기) — 기본값(defaultFilterValues)이 있는 스키마만 onReset 으로 넘긴다 */
-    expect(g).toMatch(/const defaults = defaultFilterValues\(schema\);/);
-    expect(g).toMatch(/onReset=\{Object\.keys\(defaults\)\.length \? \(\) => onApply\(defaults\) : undefined\}/);
+    /* 초기화 = 칩 줄 끝 [초기화](2026-11-18 패널 [초기화]·[전체 해제] 통합) — 기본값(defaultFilterValues)이 있는 스키마만 filterReset 으로 넘긴다 */
+    expect(g).toMatch(/const filterDefaults = useMemo\(\(\) => \{ const d = defaultFilterValues\(schema\); return Object\.keys\(d\)\.length \? d : null; \}, \[schema\]\);/);
+    expect(g).toMatch(/filterReset=\{filterDefaults \? \{ run: \(\) => applyFilters\(filterDefaults\), dirty: filtersDirty\(filterValues, filterDefaults\) \} : undefined\}/);
     expect(g).toMatch(/filterValueMatches\(ff, value,/);
   });
 

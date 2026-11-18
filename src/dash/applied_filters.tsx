@@ -1,6 +1,6 @@
 /* 필터 칩 행 — GridFrame 툴바 좌측의 SSOT (2026-09-24 사용자 결정, 전 화면 공통).
 
-   한 줄만 쓴다. 칩 순서 = [기본 필터 칩(FilterChip)…] [적용 칩(값 ×)…] [전체 해제]. 넘치면 **넘치는 만큼만**
+   한 줄만 쓴다. 칩 순서 = [기본 필터 칩(FilterChip)…] [적용 칩(값 ×)…] [+N] [초기화]. 넘치면 **넘치는 만큼만**
    뒤에서부터 `+N ▾` 드롭다운으로 접는다 — 앞쪽 칩은 그대로 보인다. 숨겨진 기본 칩이 선택(active)되면 그 칩을
    **첫 자리로 끌어올려** 항상 보이게 한다(DOM 순서 자체를 바꾼다 — CSS order 는 탭 순서와 어긋나 WCAG 2.4.3 위반).
 
@@ -13,7 +13,11 @@
    - 칩 값(본문)은 버튼 — 누르면 같은 GridFrame 의 필터 패널에서 그 칸으로 초점(filter_field_jump.ts, 2026-11-02 사용자 요청 · 11-17 패널).
      × 는 형제 버튼(중첩 아님)이라 해제만 한다. +N 메뉴의 적용 칩도 같은 규칙이다(2026-11-10 사용자 "x 로만 삭제, 칩 클릭은
      그 필터 선택 컴포넌트로 초점") — 행 = 값 항목(이동)·× 항목(해제) 두 menuitem, 항목명은 행 툴팁(MenuChipTip).
-   - 해제 가능한 적용 칩이 2개 이상이면 `전체 해제` — 각 칩의 onClear 를 차례로 부른다.
+   - 줄 끝 [초기화] 하나(2026-11-18 사용자 "초기화 전체해제는 중복이야" → 패널 [초기화]·칩 줄 [전체 해제]를 합침).
+     화면이 기본값 복원(reset = GridFrame filterReset)을 주면 처음과 다를 때(dirty)만 — 칩이 0개여도 보인다(기본 기간을 × 로 지운 상태).
+     안 주면(기본값이 전부 빈 값) 해제 가능한 칩이 2개 이상일 때 각 칩의 onClear 를 차례로 부른다(종전 전체 해제).
+     +N 으로 접지 않는다(기본값으로 돌아가는 유일한 경로) — 폭을 먼저 떼어 두고 나머지 칩을 채운다.
+     누른 뒤 버튼이 사라지면 초점은 같은 프레임 패널 첫 칸으로(body 에 떨어뜨리지 않는다). 가드 filter_reset.test.ts.
    - '전체' 있는 단일 선택 기본 칩 무리는 드롭다운 칩 하나로 접는다(FilterChipMenu ← GridFrame filterChipsMenu, 2026-11-13 전 화면).
    - 보이는 캡션 없음(role="group" aria-label 만).
    - 행 선택 중엔 GridFrame 이 이 행을 아예 렌더하지 않는다(선택 = 액션 영역, 필터와 별개).
@@ -32,7 +36,7 @@ export interface AppliedFilter {
   label: string;
   /** 표시 값. 빈 문자열/공백이면 적용되지 않은 것으로 보고 칩을 만들지 않는다 */
   value: string;
-  /** 없으면 × 없이 표시만 하고 전체 해제 대상에서도 빠진다 */
+  /** 없으면 × 없이 표시만 하고 [초기화](기본값 복원이 없는 화면의 칩 × 연쇄) 대상에서도 빠진다 */
   onClear?: () => void;
   /** 긴 경로형 값 — 최대 480px, 좁으면 2줄 줄바꿈(+N 으로 접히지 않고 최소 160px 을 예약한다) */
   wide?: boolean;
@@ -53,6 +57,21 @@ export interface FilterChipItem {
   onSelect: () => void;
   /** 필수 조건 칩 — 라벨 뒤에 `*`(foreground·700, 간격 2px — active 칩에서도 같은 색) + sr-only " 필수". 미지정이면 종전과 같다 */
   required?: boolean;
+}
+
+/** 칩 줄 끝 [초기화] — 화면 필터를 처음 상태(기본값)로 되돌린다. GridFrame `filterReset` 으로 넘긴다 */
+export interface FilterReset {
+  run: () => void;
+  /** 지금 필터가 처음 상태와 다른가 — false 면 버튼을 그리지 않는다(기본값 비교는 화면 몫, filtersDirty) */
+  dirty: boolean;
+}
+
+/** 필터 상태가 기본값과 다른가 — 빈 값('' · undefined · null · [])은 서로 같다고 본다(키가 지워진 것과 '' 는 같은 '조건 없음').
+    배열(다중 선택)은 순서까지 본다. 중첩 객체는 쓰지 않는다(필터 값은 문자열·배열·불리언·숫자) */
+export function filtersDirty(cur: object, base: object): boolean {
+  const norm = (v: unknown) => (v == null || v === '' || (Array.isArray(v) && v.length === 0) ? '' : Array.isArray(v) ? JSON.stringify(v) : v);
+  const a = cur as Record<string, unknown>, b = base as Record<string, unknown>;
+  return [...new Set([...Object.keys(a), ...Object.keys(b)])].some((k) => norm(a[k]) !== norm(b[k]));
 }
 
 export const activeFilters = (items: readonly AppliedFilter[] | undefined): AppliedFilter[] =>
@@ -159,7 +178,7 @@ const CHIP_BG = 'color-mix(in srgb, var(--primary) 10%, transparent)';
 type Item =
   | { id: string; kind: 'chip'; chip: FilterChipItem }
   | { id: string; kind: 'applied'; f: AppliedFilter }
-  | { id: string; kind: 'clear'; run: () => void };
+  | { id: string; kind: 'reset'; run: () => void };
 
 function ItemView({ it, flash, onJump }: { it: Item; flash?: boolean; onJump?: JumpFn }) {
   if (it.kind === 'chip') {
@@ -171,11 +190,12 @@ function ItemView({ it, flash, onJump }: { it: Item; flash?: boolean; onJump?: J
     return <FilterChip active={c.active} onClick={c.onSelect} count={c.count}>{label}</FilterChip>;
   }
   if (it.kind === 'applied') return <Chip f={it.f} flash={flash} onJump={onJump} />;
+  /* 아이콘 rotate-ccw = 종전 패널 [초기화]와 같은 모양(2026-11-17 — ⟳ 조회 refresh 와 구별) */
   return (
-    <button type="button" onClick={it.run}
-      className="border-0 bg-transparent cursor-pointer text-muted-foreground hover:text-foreground underline-offset-2 hover:underline shrink-0"
-      style={{ fontSize: 12.5, padding: '4px 6px', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
-      전체 해제
+    <button type="button" onClick={it.run} data-filter-reset=""
+      className="inline-flex items-center border-0 bg-transparent cursor-pointer text-muted-foreground hover:text-foreground underline-offset-2 hover:underline shrink-0"
+      style={{ gap: 4, fontSize: 12.5, padding: '4px 6px', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+      <Icon name="rotate-ccw" size={13} />초기화
     </button>
   );
 }
@@ -218,14 +238,15 @@ export function planChips<T extends { id: string; kind: string; chip?: { active:
   return { shown: order.filter((it) => vis.has(it.id)), hidden: order.filter((it) => !vis.has(it.id)) };
 }
 
-export function FilterChipRow({ chips = [], applied }: { chips?: readonly FilterChipItem[]; applied?: readonly AppliedFilter[] }) {
+export function FilterChipRow({ chips = [], applied, reset }: { chips?: readonly FilterChipItem[]; applied?: readonly AppliedFilter[]; reset?: FilterReset }) {
   const on = activeFilters(applied);
   const clearable = on.filter((f) => f.onClear);
   const items: Item[] = [
     ...chips.map((c): Item => ({ id: 'c:' + c.key, kind: 'chip', chip: c })),
     ...on.map((f): Item => ({ id: 'a:' + f.label, kind: 'applied', f })),
-    ...(clearable.length >= 2 ? [{ id: 'clear', kind: 'clear', run: () => clearable.forEach((f) => f.onClear?.()) } as Item] : []),
   ];
+  /* [초기화] — 배치(planChips) 밖에 둔다: 접히지 않고 늘 줄 끝(머리 주석) */
+  const resetRun = reset ? (reset.dirty ? reset.run : null) : clearable.length >= 2 ? () => clearable.forEach((f) => f.onClear?.()) : null;
 
   /* 필터를 걸면(새 항목·값 변경) 그 칩의 툴팁을 FLASH_MS 동안 띄운다. 첫 렌더는 기준선만 잡는다(페이지 진입 기본값은 안 띄움).
      타이머는 행이 항목별로 갖는다 — 3초 안에 다른 필터를 걸어도 앞 칩 타이머가 끊기지 않고, +N 에서 다시 펼쳐진 칩이 만료 뒤 또 뜨지 않는다.
@@ -252,6 +273,21 @@ export function FilterChipRow({ chips = [], applied }: { chips?: readonly Filter
     else flashNow(fresh);
   }, [vSig, flashNow]);
   const boxRef = React.useRef<HTMLDivElement>(null);
+  /* 누른 뒤 처음 상태가 되면 버튼이 사라져 초점이 body 로 떨어진다 → 같은 프레임 패널 첫 칸으로(키보드 사용자가 제자리에서 다시 고르게).
+     클릭 순간 버튼에 초점이 있었을 때만 — Safari 는 마우스 클릭에 초점을 주지 않아, activeElement 만 보면 버튼이 남아 있어도 패널로 튄다 */
+  const resetItem: Extract<Item, { kind: 'reset' }> | null = resetRun ? {
+    id: 'reset', kind: 'reset',
+    run: () => {
+      const btn = boxRef.current?.querySelector(':scope > button[data-filter-reset]');
+      const hadFocus = Boolean(btn) && btn === document.activeElement;
+      resetRun();
+      requestAnimationFrame(() => {
+        if (!hadFocus || btn?.isConnected) return;
+        const panel = (boxRef.current?.closest('[data-grid-frame]') ?? document).querySelector('[data-filter-panel]');
+        panel?.querySelector<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')?.focus();
+      });
+    },
+  } : null;
   /* 칩 값 클릭 → 상세필터의 그 항목. 그 칩의 flash 툴팁을 먼저 끈다 — 제어형(open||flash)이라 클릭으로도 안 닫히고,
      남은 툴팁 레이어가 드로어의 첫 Esc 를 가져간다(radix-tooltip-layer-eats-esc). */
   const jump = React.useCallback((label: string, target?: string) => {
@@ -276,7 +312,7 @@ export function FilterChipRow({ chips = [], applied }: { chips?: readonly Filter
 
   const measureRef = React.useRef<HTMLDivElement>(null);
   const [m, setM] = React.useState<{ w: Record<string, number>; trigger: number; avail: number } | null>(null);
-  const sig = items.map((it) => it.id + (it.kind === 'chip' ? `${it.chip.label}${String(it.chip.count ?? '')}${it.chip.active}` : it.kind === 'applied' ? it.f.value : '')).join('|');
+  const sig = items.map((it) => it.id + (it.kind === 'chip' ? `${it.chip.label}${String(it.chip.count ?? '')}${it.chip.active}` : it.kind === 'applied' ? it.f.value : '')).join('|') + (resetItem ? '|reset' : '');
   React.useLayoutEffect(() => {
     const box = boxRef.current, mm = measureRef.current;
     if (!box || !mm) return;
@@ -294,10 +330,12 @@ export function FilterChipRow({ chips = [], applied }: { chips?: readonly Filter
     return () => ro.disconnect();
   }, [sig]);
 
-  const { shown, hidden } = m ? planChips(items, m.w, m.avail, m.trigger) : { shown: items, hidden: [] as Item[] };
+  /* [초기화] 폭(+gap)을 먼저 떼고 나머지 칩을 채운다 */
+  const resetW = resetItem && m ? (m.w.reset ?? 0) + GAP : 0;
+  const { shown, hidden } = m ? planChips(items, m.w, m.avail - resetW, m.trigger) : { shown: items, hidden: [] as Item[] };
   const hiddenActive = hidden.some((it) => it.kind === 'applied' || (it.kind === 'chip' && it.chip.active));
 
-  if (items.length === 0) return null;
+  if (items.length === 0 && !resetItem) return null;
   const row = (
     /* 남은 폭을 다 받는다(flex-1, basis 0 → 판정 폭 = 우측 액션을 뺀 나머지). */
     <div ref={boxRef} role="group" aria-label="필터" className="relative flex items-center min-w-0 flex-1 overflow-hidden"
@@ -305,13 +343,13 @@ export function FilterChipRow({ chips = [], applied }: { chips?: readonly Filter
       style={{ gap: GAP, padding: 3, margin: -3 }}>
       {/* flash 는 보이는 줄에만 — 측정용 사본에 넘기면 0 크기 요소에 붙은 툴팁이 한 장 더 뜬다 */}
       {shown.map((it) => <React.Fragment key={it.id}><ItemView it={it} flash={it.kind === 'applied' && flashing.has(it.f.label)} onJump={jump} /></React.Fragment>)}
-      {/* 숨긴 게 `전체 해제` 하나뿐이면 +0 트리거가 된다 → 그리지 않는다(칩별 × 는 보이는 칩에 그대로 있다) */}
-      {hidden.some((it) => it.kind !== 'clear') && <OverflowMenu key="more" hidden={hidden} tinted={hiddenActive} rowRef={boxRef} onJump={jump} />}
+      {hidden.length > 0 && <OverflowMenu key="more" hidden={hidden} tinted={hiddenActive} rowRef={boxRef} onJump={jump} />}
+      {resetItem && <ItemView it={resetItem} />}
       {/* 측정용 사본 — 보이지 않고(visibility:hidden)·포커스·읽기 대상에서 빠진다.
           크기 0 + overflow:hidden 상자에 가둔다 — 가두지 않으면 max-content 사본이 페이지 가로 스크롤을 만든다(400px 실측 +312px). 자식 offsetWidth 는 잘림과 무관하다. */}
       <div aria-hidden="true" style={{ position: 'absolute', left: 0, top: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}>
         <div ref={measureRef} className="flex items-center" style={{ width: 'max-content', visibility: 'hidden', gap: GAP }}>
-          {items.map((it) => <span key={it.id} data-fid={it.id} className="inline-flex shrink-0"><ItemView it={it} /></span>)}
+          {[...items, ...(resetItem ? [resetItem] : [])].map((it) => <span key={it.id} data-fid={it.id} className="inline-flex shrink-0"><ItemView it={it} /></span>)}
           <span data-trigger className="inline-flex"><TriggerFace n={99} tinted={false} /></span>
         </div>
       </div>
@@ -389,8 +427,7 @@ function MenuChipTip({ f, onEscape, children }: { f: AppliedFilter; onEscape: ()
 function OverflowMenu({ hidden, tinted, rowRef, onJump }: { hidden: Item[]; tinted: boolean; rowRef: React.RefObject<HTMLDivElement>; onJump: JumpFn }) {
   const chips = hidden.filter((it): it is Extract<Item, { kind: 'chip' }> => it.kind === 'chip');
   const applied = hidden.filter((it): it is Extract<Item, { kind: 'applied' }> => it.kind === 'applied');
-  const clear = hidden.find((it): it is Extract<Item, { kind: 'clear' }> => it.kind === 'clear');
-  /* +N = 숨긴 **필터** 수 — `전체 해제`는 필터가 아니라 세지 않는다(세면 칩 2개 숨김에 +3 으로 보였다). */
+  /* +N = 숨긴 필터 수([초기화]는 배치 밖이라 여기 오지 않는다) */
   const n = chips.length + applied.length;
   /* 제어형 — 행 툴팁의 Esc 가 메뉴까지 닫을 수 있게(MenuChipTip) */
   const [open, setOpen] = React.useState(false);
@@ -448,7 +485,6 @@ function OverflowMenu({ hidden, tinted, rowRef, onJump }: { hidden: Item[]; tint
             </div>
           </MenuChipTip>
         ))}
-        {clear && <><DropdownMenuSeparator /><DropdownMenuItem onSelect={clear.run}>전체 해제</DropdownMenuItem></>}
       </DropdownMenuContent>
     </DropdownMenu>
   );

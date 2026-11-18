@@ -3,7 +3,7 @@
 
    구성(목업 → 우리 규약):
    - 검색박스(기간·결과·행위자·검색어) → 주 필터 1개 = 결과 FilterChip(툴바 좌) + 상세필터 = 칩 줄 위 인라인 패널(검색어·기간(시작~종료 한 칸)·유형·행위자).
-       기간 기본값 = DEMO_RANGE(첫 진입부터 칩), 칩 × = 전 기간, 패널 [초기화] = 기본값 복원.
+       기간 기본값 = DEMO_RANGE(첫 진입부터 칩), 칩 × = 전 기간, 칩 줄 [초기화] = 기본값 복원.
        유형(접속·계정·권한변경·비정상 접근)은 브리프의 "접속·권한변경·비정상 접근 행" 구분 — 행위 문자열에서 파생(audit_log_model.kindOf).
    - 그리드(No·일시·행위자·유형·행위·대상·IP·결과) → AG Grid 단일 헤더, 결과 배지(정상 success·실패 warning·차단 danger).
    - 행 상세(브리프) → 더블클릭/Enter(또는 우클릭 메뉴 '상세') → 읽기 전용 kv 다이얼로그. 목업은 선택 없음이었으나 상세 요구로 추가.
@@ -164,9 +164,10 @@ export function AuditLog({ onNav }: { onNav?: (r: string) => void }) {
       filterChipsMenu="결과"
       filterChips={RESULT_CHIPS.map((r) => ({ key: r || 'all', label: r || '전체', count: chipCount(r), active: fResult === r, onSelect: () => setFResult(r) }))}
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
+      filterReset={{ run: clearFilters, dirty: fResult !== '' || fFrom !== DEMO_RANGE[0] || fTo !== DEMO_RANGE[1] || fKind !== '' || fActor !== '' || fText !== '' }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 즉시 반영, [초기화] = 기본값(기간 = DEMO_RANGE) 복원 */
       filterPanel={
-        <FilterPanel label="감사로그 조건" onReset={clearFilters}>
+        <FilterPanel label="감사로그 조건">
           {SEARCHABLE && <PanelSearch value={fText} onChange={setFText} />}
           <PanelRange label="기간" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} />
           <PanelSelect label="유형" value={fKind} onChange={setFKind} options={AUDIT_KINDS.map((k) => ({ value: k, label: k }))} />

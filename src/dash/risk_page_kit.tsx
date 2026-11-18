@@ -28,6 +28,9 @@ export interface FilterSpec {
   kind: 'select' | 'day' | 'month' | 'year' | 'radio' | 'text' | 'dayRange';
   value: string;
   onChange: (v: string) => void;
+  /** 기본값(처음 상태) — 칩 줄 [초기화]가 보일지(value ≠ def) 판정. 미지정 = ''. 화면 onReset 이 되돌리는 값과 같아야 한다 —
+      RiskPage 가 onReset 을 칩 줄 [초기화](GridFrame filterReset)로 건다 */
+  def?: string;
   /** select 선택지(원문 옵션 — '전체' 제외) */
   options?: readonly string[];
   /** 빈 값('') 선택지 라벨. null = 빈 선택지 없음(원문 select 에 '전체' 가 없는 항목 — 구분) */
@@ -64,10 +67,10 @@ function FilterControl({ f }: { f: FilterSpec }) {
   return <PanelPeriod label={f.label} mode={f.kind} value={f.value} onChange={pick} noop={f.noop} />;
 }
 
-/** 검색조건 패널 — RiskPage 가 GridFrame filterPanel 로 넘긴다. [초기화] = onReset(시점 기본값 복원) */
-export function FilterPanelOf({ filters, onReset, title }: { filters: FilterSpec[]; onReset: () => void; title: string }) {
+/** 검색조건 패널 — RiskPage 가 GridFrame filterPanel 로 넘긴다([초기화]는 칩 줄 끝 — RiskPage filterReset) */
+export function FilterPanelOf({ filters, title }: { filters: FilterSpec[]; title: string }) {
   return (
-    <FilterPanel label={`${title} 조회 조건`} onReset={onReset}>
+    <FilterPanel label={`${title} 조회 조건`}>
       {filters.map((f) => <FilterControl key={f.label} f={f} />)}
     </FilterPanel>
   );
@@ -155,7 +158,7 @@ export interface RiskPageProps {
   route: string;
   onNav?: (r: string) => void;
   filters?: FilterSpec[];
-  /** 필터·단위 등 화면 상태를 기본값으로 되돌린다(드로어 초기화 · 새로고침 공용) */
+  /** 필터·단위 등 화면 상태를 기본값으로 되돌린다(칩 줄 [초기화] · 새로고침 공용) */
   onReset: () => void;
   unit?: Unit;
   onUnit?: (u: Unit) => void;
@@ -180,6 +183,9 @@ export function RiskPage({ system = '조기경보', group, label, route, onNav, 
   useHotkey(HOTKEYS.export.combo, () => onExport?.(), { enabled: !!onExport && exportEnabled, skipInDialog: true });
   useHotkey(HOTKEYS.print.combo, printGrid, { skipInDialog: true });
   const refresh = () => { onReset(); toast.success('조회되었습니다'); };
+  /* 칩 줄 [초기화] — 처음(def)과 다를 때만 보인다. def 를 빠뜨리면 첫 화면부터 [초기화]가 떠서 드러난다(브라우저 전수 점검).
+     dirty 는 필터 값만 본다 — 금액 단위·화면 편집값(평가 입력 등)만 바꾼 상태엔 필터 줄 버튼을 띄우지 않는다(⟳ 조회가 화면 전체를 되돌린다) */
+  const filterReset = filters.length > 0 ? { run: onReset, dirty: filters.some((f) => f.value !== (f.def ?? '')) } : undefined;
   return (
     <GridFrame
       crumbs={['홈', system, group, label]}
@@ -188,7 +194,8 @@ export function RiskPage({ system = '조기경보', group, label, route, onNav, 
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       contextActions={contextActions || undefined}
       appliedFilters={specsToApplied(filters)}
-      filterPanel={filters.length > 0 ? <FilterPanelOf filters={filters} onReset={onReset} title={label} /> : undefined}
+      filterPanel={filters.length > 0 ? <FilterPanelOf filters={filters} title={label} /> : undefined}
+      filterReset={filterReset}
       toolbarRight={<>
         {unitCaption && <span className="text-caption" style={{ fontSize: 12 }}>{unitCaption}</span>}
         {unit && onUnit && <UnitToggle unit={unit} onChange={onUnit} note={unitNote} />}

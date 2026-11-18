@@ -153,3 +153,16 @@ describe('적용 칩 → 필터 패널 이동 계약', () => {
   });
 });
 
+/* 패널 [초기화] 폐지(2026-11-18 사용자 "초기화 전체해제는 중복이야" → 칩 줄 끝 [초기화] 하나, 동작 가드 filter_reset.test.ts).
+   기본값 복원은 GridFrame `filterReset={{ run, dirty }}` 로만 넘긴다 — 패널에 다시 버튼을 두면 두 버튼이 또 생긴다. */
+describe('패널 [초기화] 폐지', () => {
+  it('FilterPanel 은 [초기화] 버튼·onReset 을 갖지 않는다', () => {
+    const src = strip(readSrc('filter_panel.tsx'));
+    expect(src).not.toMatch(/onReset/);
+    expect(src).not.toMatch(/>초기화</);
+  });
+  it('어느 화면도 <FilterPanel> 에 onReset 을 넘기지 않는다', () => {
+    const hits = walk(ROOT).filter((p) => /<FilterPanel\b[^>]*\bonReset=/.test(readFileSync(p, 'utf8'))).map((p) => relative(ROOT, p));
+    expect(hits).toEqual([]);
+  });
+});

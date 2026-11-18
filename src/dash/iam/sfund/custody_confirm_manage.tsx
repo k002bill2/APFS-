@@ -440,12 +440,13 @@ export function CustodyConfirmManage({ onNav, tabs }: { onNav?: (r: string) => v
       appliedFilters={[
         { label: '기준일자', value: String(fBaseDate), onClear: fBaseDate !== BASE_DATE ? () => setFBaseDate(BASE_DATE) : undefined },
       ]}
+      filterReset={{ run: clearFilters, dirty: fConfirm !== '' || fBaseDate !== BASE_DATE }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 검색어는 미사용(OFF). 목업 검색박스는 기준일자 단일이고, 확정여부는 우리가 더한 파생 필터다
          (툴바 칩이라 패널에 다시 두지 않는다 — 2026-11-05 사용자 지시, 가드 filter_chip_drawer_dup.test.ts).
          기준일자 — 목업의 유일한 검색조건(필수). 그날 대사 결과만 보인다(스냅샷 — 같은 날).
          시점 없는 조회는 없어 비우면 기본값으로 돌아간다(상세 팝업 부제에도 그대로 실린다). [초기화] = 기본 기준일 복원 */
       filterPanel={
-        <FilterPanel label="자펀드 수탁 대사 조건" onReset={clearFilters}>
+        <FilterPanel label="자펀드 수탁 대사 조건">
           <PanelPeriod label="기준일자" mode="day" value={fBaseDate} onChange={(v) => setFBaseDate(v || BASE_DATE)} />
         </FilterPanel>
       }

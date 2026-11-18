@@ -337,9 +337,10 @@ export function EwResultManage({ onNav }: { onNav?: (r: string) => void }) {
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       /* 적용 중인 패널 값 칩 = appliedFilters. 기준년월은 비는 일이 없어 칩이 상시 보이고 × = 기본값 복귀 */
       appliedFilters={[{ label: '기준년월', value: ym, onClear: () => setYm(BASE_YM) }]}
+      filterReset={{ run: () => setYm(BASE_YM), dirty: ym !== BASE_YM }}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 목업 검색박스 항목 그대로(기준년월). 즉시 반영, [초기화] = 기본값(2026-07) 복원 */
       filterPanel={
-        <FilterPanel label="조기경보 결과정보 조건" onReset={() => setYm(BASE_YM)}>
+        <FilterPanel label="조기경보 결과정보 조건">
           <PanelPeriod label="기준년월" mode="month" value={ym} onChange={setYm} />
         </FilterPanel>
       }

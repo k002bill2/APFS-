@@ -49,6 +49,7 @@ import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { FilterPanel, PanelSelect, PanelText, PanelRange, PanelTextRange } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
+import { filtersDirty } from '../../applied_filters';
 import { CURRENCIES, EVIDENCE_TYPES, FUND_ACCOUNTS, JOURNAL_ORIGINS, PL_DEPTS, PL_EMPLOYEES, todayStr } from './general_journal_data';
 import { validateRange } from './general_journal_model';
 import { SEARCH_SLIP_KINDS, demoSearchLines } from './journal_search_data';
@@ -238,7 +239,7 @@ export function JournalSearchManage({ onNav }: { onNav?: (r: string) => void }) 
       appliedFilters={chips.map(([label, value, onClear]) => ({ label, value, onClear }))}
       /* E01 상세필터 = 칩 줄 위 인라인 패널 — slide 11 정의표 순서(No.1~20). 즉시 반영, [초기화] = 기본값(기간 = 당월) 복원 */
       filterPanel={
-        <FilterPanel label="전표검색 조건" onReset={() => setApplied(defaultSearchFilter(todayStr()))} errors={[periodErr, amountErr, fxErr]}>
+        <FilterPanel label="전표검색 조건" errors={[periodErr, amountErr, fxErr]}>
           <PanelSelect label="계정구분" value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} searchable />
           <PanelRange label="기간" mode="day" from={applied.from} to={applied.to} onFrom={setD('from')} onTo={setD('to')} invalid={!!periodErr} />
           <PanelText label="작성자" value={applied.writer} onChange={setD('writer')} />
@@ -261,6 +262,8 @@ export function JournalSearchManage({ onNav }: { onNav?: (r: string) => void }) 
           <PanelText label="거래처 사업자등록번호" value={applied.partnerBizNo} onChange={setD('partnerBizNo')} />
         </FilterPanel>
       }
+      /* 복원 대상은 누르는 시점의 당월 — 비교도 렌더마다 같은 식으로 만든 값과(객체 동일성 아님) */
+      filterReset={{ run: () => setApplied(defaultSearchFilter(todayStr())), dirty: filtersDirty(applied, defaultSearchFilter(todayStr())) }}
       toolbarRight={<>
         {/* 전표상세가 열려 있으면 뒤 목록 단축키(⌥R) 바인딩을 끈다 — IconBtn 은 enabled prop 이 없어 hotkey 를 조건부로 */}
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={listKeys ? HOTKEYS.refresh : undefined} />

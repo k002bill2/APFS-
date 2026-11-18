@@ -35,6 +35,7 @@ import { useHotkey, HOTKEYS } from '../../use-hotkey';
 import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import { FilterPanel, PanelCheck, PanelPeriod, PanelSelect } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
+import { filtersDirty } from '../../applied_filters';
 import { FUND_ACCOUNTS } from '../slip/general_journal_data';
 import { demoLedger, todayStr } from './ledger_data';
 import { DEFAULT_COND, fiscalStart, fundLabel, trialBalance, MSG } from './ledger_model';
@@ -234,7 +235,7 @@ export function TrialBalanceManage({ onNav }: { onNav?: (r: string) => void }) {
       appliedFilters={chips}
       /* 상세필터(E01) = 칩 줄 위 인라인 패널 — 바꾸는 즉시 applied 반영. 검증 문구는 패널 아래, [초기화] = 기본값(기준일 = 당일) */
       filterPanel={
-        <FilterPanel label={`${TITLE} 조회 조건`} onReset={() => setApplied(base)} errors={[asOfErr]}>
+        <FilterPanel label={`${TITLE} 조회 조건`} errors={[asOfErr]}>
           <PanelSelect label="계정구분" value={applied.fundAccount} onChange={setD('fundAccount')} options={[...FUND_ACCOUNTS]} />
           <PanelPeriod label="기준일" mode="day" value={applied.asOf} onChange={setD('asOf')} invalid={!!asOfErr} />
           <PanelCheck label="미결재포함" checked={applied.includeUnapproved} onChange={setD('includeUnapproved')} />
@@ -242,6 +243,7 @@ export function TrialBalanceManage({ onNav }: { onNav?: (r: string) => void }) {
           <PanelCheck label="결산전표포함" checked={applied.includeClosing} onChange={setD('includeClosing')} />
         </FilterPanel>
       }
+      filterReset={{ run: () => setApplied(base), dirty: filtersDirty(applied, base) }}
       toolbarRight={<>
         <span className="text-caption" style={{ fontSize: 12 }}>단위: 원</span>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={HOTKEYS.refresh} />

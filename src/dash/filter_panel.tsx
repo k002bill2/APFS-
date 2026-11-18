@@ -10,7 +10,7 @@
    - 즉시 반영 — 값 state 는 화면이 소유하고 여기선 그리기만 한다(apfs-detail-filter "즉시 반영").
    - 범위(시작~종료)는 한 항목 = `role=group aria-label=<항목>` 안에 두 칸. 칩 하나가 그룹을 가리킨다.
    - 미연동(noop) 칸은 행을 거르지 않고 칩도 없다 → DS Tooltip '데이터 연동 후 적용'(포털발 이벤트는 skipPortal 로 거른다).
-   - [초기화]는 기본값이 빈 값이 아닌 화면(기간 기본값·필수 조건)만 onReset 으로 넘긴다 — 그 밖은 칩 줄 `전체 해제` 가 같은 일을 한다.
+   - [초기화]는 패널에 두지 않는다 — 칩 줄 끝 하나(GridFrame `filterReset`, 2026-11-18 사용자 "초기화 전체해제는 중복이야").
    - 검증 문구(시작 > 종료·필수 미입력)는 칸 아래가 아니라 패널 맨 아래 한 줄(role=alert) — 칸 격자를 깨지 않는다. */
 import { useId } from 'react';
 import type React from 'react';
@@ -26,7 +26,7 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import type { SelectOption } from './ui/searchable-select';
 
-const { Button, ClearableInput } = UI;
+const { ClearableInput } = UI;
 
 /** 칸에 고른 값을 보이지 않는다(값은 적용 칩에만). false 면 전 화면 칸이 고른 값을 보인다 */
 const FIXED_PLACEHOLDER = true;
@@ -81,12 +81,10 @@ export function PanelCell({ noop, wide, style, children }: { noop?: boolean; wid
   );
 }
 
-/** 패널 — 칸 묶음 + (선택) [초기화] + (선택) 검증 문구. GridFrame `filterPanel` 에 넘긴다 */
-export function FilterPanel({ label = '검색 조건', onReset, errors, children }: {
+/** 패널 — 칸 묶음 + (선택) 검증 문구. GridFrame `filterPanel` 에 넘긴다([초기화]는 GridFrame `filterReset` → 칩 줄 끝) */
+export function FilterPanel({ label = '검색 조건', errors, children }: {
   /** 그룹 접근名 */
   label?: string;
-  /** 기본값 복원 — 기본값이 빈 값이 아닌 화면만(그 밖은 칩 줄 `전체 해제`) */
-  onReset?: () => void;
   /** 검증 문구 — 빈 값·false 는 건너뛴다 */
   errors?: ReadonlyArray<string | false | null | undefined>;
   children: ReactNode;
@@ -97,7 +95,6 @@ export function FilterPanel({ label = '검색 조건', onReset, errors, children
     /* 컨테이너는 초점을 받지 않는다 — 자식 select 의 키를 capture 단계에서 가로채기만 한다(openListOnNavKey) */
     <div role="group" aria-label={label} className="flex flex-wrap items-center" style={{ gap: 8 }} onKeyDownCapture={openListOnNavKey}>
       {children}
-      {onReset && <Button variant="ghost" size="sm" leadingIcon="rotate-ccw" onClick={onReset}>초기화</Button>}
       {errs.length > 0 && (
         <div className="basis-full">
           {errs.map((m) => <span key={m} role="alert" className="text-danger block" style={{ fontSize: 12 }}>{m}</span>)}

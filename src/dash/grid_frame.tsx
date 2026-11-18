@@ -12,7 +12,7 @@ import { SplitButton } from './ui/split-button';
 import { HOTKEYS } from './use-hotkey';
 import { printGrid } from './print_grid';
 import { FilterChipMenu, FilterChipRow, activeFilters } from './applied_filters';
-import type { AppliedFilter, FilterChipItem } from './applied_filters';
+import type { AppliedFilter, FilterChipItem, FilterReset } from './applied_filters';
 import type { SplitButtonItem } from './ui/split-button';
 import { APFS_DATA, MenuStore, useMenuSel } from './data';
 
@@ -162,7 +162,7 @@ export interface GridFrameProps {
       소비처는 선택 시 `toolbarLeft` 를 비우고 이 prop 에 묶음을 넘긴다.
       이 prop 을 넘기지 않는 페이지는 동작 변화가 없다(기본 off). */
   contextActions?: React.ReactNode;
-  /** 적용된 필터 — 툴바 아래 둘째 줄(값이 있는 항목이 있을 때만). 칩·전체 해제·aria 는 applied_filters.tsx 가 소유한다.
+  /** 적용된 필터 — 툴바 아래 둘째 줄(값이 있는 항목이 있을 때만). 칩·[초기화]·aria 는 applied_filters.tsx 가 소유한다.
       툴바 좌측에 적용 칩을 직접 그리지 않는다(2026-09-24 전 화면 규약, 가드 applied_filters.test.ts). */
   appliedFilters?: readonly AppliedFilter[];
   /** 기본(주) 필터 칩 — 깔때기 뒤 첫 칩 무리. 페이지가 FilterChip 을 직접 그리지 않고 데이터로 넘긴다
@@ -179,6 +179,10 @@ export interface GridFrameProps {
   /** 인라인 필터 패널(선택) — 카드헤더 아래·툴바(칩 줄) **위**에 항상 펼쳐 둔 필터 칸 묶음.
       상세필터 드로어 대신 쓰는 화면만 넘긴다(자펀드정보관리 2026-11-09). 미지정이면 종전과 같다. */
   filterPanel?: React.ReactNode;
+  /** 필터를 처음 상태(기본값)로 — 칩 줄 끝 [초기화] 하나(2026-11-18 패널 [초기화]·칩 줄 [전체 해제] 통합).
+      기본값이 빈 값이 아닌 화면(기본 기간·필수 조건)만 넘긴다. dirty = filtersDirty(현재, 기본값) — 처음과 같으면 버튼이 없다.
+      미지정이면 해제 가능한 칩이 2개 이상일 때 칩 × 를 차례로 부르는 [초기화]가 된다(applied_filters.tsx). */
+  filterReset?: FilterReset;
   /** 푸터 좌: 건수 등 요약 텍스트 */
   footerLeft?: React.ReactNode;
   /** 푸터 중: 페이지네이션 */
@@ -192,10 +196,10 @@ export interface GridFrameProps {
 
 export function GridFrame({
   crumbs, title, sub, headerActions, cardTitle, kpis, favRoute,
-  toolbarLeft, toolbarRight, contextActions, appliedFilters, filterChips, filterChipsMenu, filterScope, filterPanel, footerLeft, footerCenter, footerRight, children,
+  toolbarLeft, toolbarRight, contextActions, appliedFilters, filterChips, filterChipsMenu, filterScope, filterPanel, filterReset, footerLeft, footerCenter, footerRight, children,
 }: GridFrameProps) {
   const chipMenu = Boolean(filterChipsMenu && filterChips && filterChips.length);
-  const hasToolbar = Boolean(toolbarLeft || toolbarRight || contextActions || (filterChips && filterChips.length) || activeFilters(appliedFilters).length);
+  const hasToolbar = Boolean(toolbarLeft || toolbarRight || contextActions || (filterChips && filterChips.length) || activeFilters(appliedFilters).length || filterReset?.dirty);
 
   const hasFooter = Boolean(footerLeft || footerCenter || footerRight);
 
@@ -399,7 +403,7 @@ export function GridFrame({
               </div>
               {/* 드롭다운 칩은 칩 행 밖(shrink-0) — 칩 행은 남은 폭만 재서 적용 칩을 채운다 */}
               {!selecting && chipMenu && <FilterChipMenu label={filterChipsMenu!} chips={filterChips!} />}
-              {!selecting && <FilterChipRow key={filterScope} chips={chipMenu ? undefined : filterChips} applied={appliedFilters} />}
+              {!selecting && <FilterChipRow key={filterScope} chips={chipMenu ? undefined : filterChips} applied={appliedFilters} reset={filterReset} />}
             </div>
             <div className="flex items-center gap-1 shrink-0 max-[640px]:flex-wrap">{toolbarRight}</div>
           </div>

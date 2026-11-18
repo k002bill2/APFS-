@@ -120,7 +120,7 @@ export function GpReportQuery({ onNav }: { onNav?: (r: string) => void }) {
   const reset = () => { setPicked(first); setUnit(DEFAULT_UNIT); };
 
   const filters: FilterSpec[] = [
-    { label: '보고항목', kind: 'select', value: picked, onChange: setPicked, options: REPORT_ITEMS.map(optionLabel), allLabel: null },
+    { label: '보고항목', kind: 'select', value: picked, def: first, onChange: setPicked, options: REPORT_ITEMS.map(optionLabel), allLabel: null },
   ];
 
   const exportExcel = () => {

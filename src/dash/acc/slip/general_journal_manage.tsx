@@ -37,6 +37,7 @@ import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { FilterPanel, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
+import { filtersDirty } from '../../applied_filters';
 import { APPROVAL_YN, CURRENT_USER, FUND_ACCOUNTS, JOURNAL_ORIGINS, PARTNERS, demoJournals, todayStr } from './general_journal_data';
 import type { ApprovalStatus, JournalOrigin, JournalRow, Partner } from './general_journal_data';
 import { EMPTY_DETAIL, deleteGateMessage, canSubmit, commitJournal, commitJournals, defaultPeriod, deleteGate, journalPasses, submitForApproval, validateRange } from './general_journal_model';
@@ -276,7 +277,7 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
       headerActions={<Button variant="outline" size="sm" leadingIcon="chevron-left" onClick={() => onNav && onNav('main')}>메인으로</Button>}
       contextActions={selActions}
       appliedFilters={[
-        /* 기본값(전월 1일~오늘)으로 시작하는 기간 칩 — × = 기간 조건 해제(빈 값, 전 기간), 패널 [초기화]로 기본값 복원.
+        /* 기본값(전월 1일~오늘)으로 시작하는 기간 칩 — × = 기간 조건 해제(빈 값, 전 기간), 칩 줄 [초기화]로 기본값 복원.
            참고 risk_page_kit specsToApplied dayRange(`onClear: () => f.onChange('')`)와 같은 동작 */
         { label: '기간', value: rangeLabel(fFrom, fTo), onClear: () => { setFFrom(''); setFTo(''); } },
         { label: '계정구분', value: fd.fundAccount, onClear: () => setFd((d) => ({ ...d, fundAccount: '' })) },
@@ -290,7 +291,7 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
       ]}
       /* 상세필터 = 칩 줄 위 인라인 패널 — slide 11 조건 9개 순서 그대로. 즉시 반영, [초기화] = 기본 조건(기간 = 전월 1일~오늘) */
       filterPanel={
-        <FilterPanel label="일반전표 조건" onReset={resetFilter} errors={[periodErr, dueErr]}>
+        <FilterPanel label="일반전표 조건" errors={[periodErr, dueErr]}>
           <PanelSelect label="계정구분" value={fd.fundAccount} onChange={(v) => setDetail('fundAccount', v)} options={FUND_ACCOUNTS} />
           <PanelRange label="기간" mode="day" from={fFrom} to={fTo} onFrom={setFFrom} onTo={setFTo} invalid={!!periodErr} />
           <PanelSelect label="승인여부" value={fd.approvedYn} onChange={(v) => setDetail('approvedYn', v as Detail['approvedYn'])} options={APPROVAL_YN} />
@@ -302,6 +303,7 @@ export function GeneralJournalManage({ onNav }: { onNav?: (r: string) => void })
           <PanelRange label="자금집행예정기간" mode="day" from={fd.dueFrom} to={fd.dueTo} onFrom={(v) => setDetail('dueFrom', v)} onTo={(v) => setDetail('dueTo', v)} invalid={!!dueErr} />
         </FilterPanel>
       }
+      filterReset={{ run: resetFilter, dirty: fFrom !== baseFrom || fTo !== baseTo || filtersDirty(fd, EMPTY_DETAIL) }}
       toolbarRight={<>
         <SplitButton label="전표 등록" leadingIcon="plus" menuLabel="전표 등록 방법 더보기" onClick={() => openEntry({ mode: 'new' })}
           items={[{ label: '전표 업로드', icon: 'upload', onSelect: openUpload }]} />

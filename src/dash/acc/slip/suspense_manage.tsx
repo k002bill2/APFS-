@@ -32,6 +32,7 @@ import { printGrid } from '../../print_grid';
 import { toast } from '../../ui/sonner';
 import * as XLSX from 'xlsx';   // SheetJS 쓰기 전용
 import { FilterPanel, PanelCell, PanelRange, PanelSelect, PanelText } from '../../filter_panel';   // 상세필터 인라인 패널(apfs-detail-filter)
+import { filtersDirty } from '../../applied_filters';
 import { FUND_ACCOUNTS, PARTNERS, todayStr } from './general_journal_data';
 import type { ApprovalStatus, JournalRow, Partner } from './general_journal_data';
 import { validateRange } from './general_journal_model';
@@ -296,7 +297,7 @@ export function SuspenseManage({ onNav }: { onNav?: (r: string) => void }) {
       ]}
       /* 상세필터 = 칩 줄 위 인라인 패널 — 7개, 즉시 반영. [초기화] = 기본값(정리여부 부 · 발생기간 2022-01-01~오늘) */
       filterPanel={
-        <FilterPanel label="미결계정 조건" onReset={() => setF(base)} errors={[occurErr, clearErr]}>
+        <FilterPanel label="미결계정 조건" errors={[occurErr, clearErr]}>
           <PanelSelect label="계정구분" value={f.fundAccount} onChange={(v) => setD('fundAccount', v)} options={FUND_ACCOUNTS} />
           {/* 거래처 — 검색 팝업에서 고른 거래처명(정확일치). 공용 칸이 없어 화면에서 조립(코드+명칭 묶음과 같은 PanelCell wide + role=group) */}
           <PanelCell wide>
@@ -313,6 +314,7 @@ export function SuspenseManage({ onNav }: { onNav?: (r: string) => void }) {
           <PanelSelect label="정리여부" value={f.clearedYn} onChange={(v) => setD('clearedYn', v as SuspenseFilter['clearedYn'])} options={CLEARED_YN} />
         </FilterPanel>
       }
+      filterReset={{ run: () => setF(base), dirty: filtersDirty(f, base) }}
       toolbarRight={<>
         <IconBtn icon="refresh" label="조회" size={34} onClick={refresh} hotkey={viewSlip ? undefined : HOTKEYS.refresh} />
       </>}
